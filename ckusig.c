@@ -4,13 +4,10 @@
   Author: Jeffrey Altman (jaltman@columbia.edu),
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
-  York.  The C-Kermit software may not be, in whole or in part, licensed or
-  sold for profit as a software product itself, nor may it be included in or
-  distributed with commercial products or otherwise distributed by commercial
-  concerns to their clients or customers without written permission of the
-  Office of Kermit Development and Distribution, Columbia University.  This
-  copyright notice must not be removed, altered, or obscured.
+  Copyright (C) 1985, 2000,
+    Trustees of Columbia University in the City of New York.
+    All rights reserved.  See the C-Kermit COPYING.TXT file or the
+    copyright text in the ckcmai.c module for disclaimer and permissions.
 */
 #include "ckcsym.h"
 #include "ckcasc.h"			/* ASCII character symbols */
@@ -44,9 +41,17 @@ extern ckjmpbuf cmjbuf;
 SIGTYP (*msignal(int type, SIGTYP (*func)(int)))(int);
 #endif /* MAC */
 
+#ifdef STRATUS
+/* We know these are set here.  MUST unset them before the definitions. */
+#define signal vsignal
+#define alarm valarm
+SIGTYP (*vsignal(int type, SIGTYP (*func)(int)))(int);
+int valarm(int interval);
+#endif /* STRATUS */
+
 #ifdef AMIGA
 #define signal asignal
-#define alarm aarlarm
+#define alarm aalarm
 #define SIGALRM (_NUMSIG+1)
 #define SIGTYP void
 SIGTYP (*asignal(int type, SIGTYP (*func)(int)))(int);
@@ -57,7 +62,7 @@ unsigned aalarm(unsigned);
 DWORD
 ckgetIP(void)
 {
-   __asm 
+   __asm
    {
       mov eax, dword ptr [esp+0x10]
       jmp ckgetIP + 0x18
@@ -69,13 +74,13 @@ ckgetIP(void)
 
 #ifdef NT
 DWORD
-exception_filter( void ) 
+exception_filter( void )
 {
    GetExceptionInformation ;
    return( EXCEPTION_EXECUTE_HANDLER ) ;
 }
 void
-crash( void ) 
+crash( void )
 {
    int x = 0, y = 0 ;
     x / y ;
@@ -85,7 +90,7 @@ crash( void )
 #ifndef NOCCTRAP
 int
 #ifdef CK_ANSIC
-cc_execute( ckjptr(sj_buf), ck_sigfunc dofunc, ck_sigfunc failfunc ) 
+cc_execute( ckjptr(sj_buf), ck_sigfunc dofunc, ck_sigfunc failfunc )
 #else
 cc_execute( sj_buf, dofunc, failfunc)
     ckjptr(sj_buf);
@@ -111,7 +116,7 @@ cc_execute( sj_buf, dofunc, failfunc)
    sj_buf->context.EFlags = 530 ;
    sj_buf->context.Eip = ckgetIP()+0x0C ;
 #else /* COMMENT */
-   __asm 
+   __asm
    {
       mov eax, dword ptr [sj_buf]
       push eax
@@ -135,7 +140,7 @@ cc_execute( sj_buf, dofunc, failfunc)
 #ifdef NTASM
           __asm
             {
-                mov esp, ESPToRestore 
+                mov esp, ESPToRestore
             }
             isinterrupted = 0 ;
 #endif /* NTASM */
@@ -145,19 +150,23 @@ cc_execute( sj_buf, dofunc, failfunc)
 #else /* NTASM */
              rc = -1 ;
 #endif  /* NTASM */
-         } else {			
+         } else {
 #ifdef NT
             __try {
-               (*dofunc)(NULL) ;
-            } 
-            __except( exception_filter() )
+               (*dofunc)(NULL);
+            }
+            __except(exception_filter())
             {
                debug(F100,"cc_execute __except","",0);
-               debug(F111,"exception_filter","_exception_code", GetExceptionCode() ) ;
-               longjmp(ckjdref(sj_buf),SIGINT) ;
+               debug(F111,
+		     "exception_filter",
+		     "_exception_code",
+		     etExceptionCode()
+		     );
+               longjmp(ckjdref(sj_buf),SIGINT);
             }
 #else /* NT */
-            (*dofunc)(NULL) ;
+            (*dofunc)(NULL);
 #endif /* NT */
          }
    return rc ;
@@ -171,7 +180,7 @@ alrm_execute(ckjptr(sj_buf),
 	     ck_sighand handler,
 	     ck_sigfunc dofunc,
 	     ck_sigfunc failfunc
-	     ) 
+	     )
 
 #else /* Not ANSIC C ... */
 
@@ -205,7 +214,7 @@ _PROTOTYP(SIGTYP (*savhandler), (int));
 #ifndef COMMENT
     GetThreadContext(GetCurrentThread(), &(sj_buf->context));
 #else
-   __asm 
+   __asm
    {
       mov eax, dword ptr [sj_buf]
       push eax
@@ -229,16 +238,19 @@ _PROTOTYP(SIGTYP (*savhandler), (int));
 		) {
 	(*failfunc)(NULL) ;
 	rc = -1 ;
-    } else {	
-#ifdef NT 
+    } else {
+#ifdef NT
        __try {
           (*dofunc)(NULL) ;
-       } 
+       }
        __except( exception_filter() )
        {
           debug(F100,"alrm_execute __except","",0);
-          debug(F111,"exception_filter","_exception_code", GetExceptionCode() ) ;
-          longjmp(ckjdref(sj_buf),SIGINT) ;
+          debug(F111,"exception_filter",
+		"_exception_code",
+		GetExceptionCode()
+		);
+          longjmp(ckjdref(sj_buf),SIGINT);
        }
 #else /* NT */
        (*dofunc)(NULL) ;
@@ -257,7 +269,7 @@ cc_alrm_execute(ckjptr(sj_buf),
 		ck_sighand handler,
 		ck_sigfunc dofunc,
 		ck_sigfunc failfunc
-		) 
+		)
 
 #else /* Not ANSIC C ... */
 
@@ -290,7 +302,7 @@ _PROTOTYP(SIGTYP (*savhandler), (int));
 #ifndef COMMENT
     GetThreadContext( GetCurrentThread(), &(sj_buf->context) ) ;
 #else
-   __asm 
+   __asm
    {
       mov eax, dword ptr [sj_buf]
       push eax
@@ -314,24 +326,27 @@ _PROTOTYP(SIGTYP (*savhandler), (int));
 		) {
 	(*failfunc)(NULL) ;
 	rc = -1 ;
-    } else {			
+    } else {
 #ifdef NT
        __try {
           (*dofunc)(NULL) ;
-       } 
+       }
        __except( exception_filter() )
        {
-          debug(F100,"cc_alrm_execute __except","",0);
-          debug(F111,"exception_filter","_exception_code", GetExceptionCode() ) ;
-          longjmp(ckjdref(sj_buf),SIGINT) ;
+	   debug(F100,"cc_alrm_execute __except","",0);
+	   debug(F111,
+		 "exception_filter",
+		 "_exception_code",
+		 GetExceptionCode()
+		 );
+	   longjmp(ckjdref(sj_buf),SIGINT) ;
        }
 #else /* NT */
        (*dofunc)(NULL) ;
 #endif /* NT */
     }
-    alarm(savalrm) ;
-    if ( savhandler )
-      signal( SIGALRM, savhandler ) ;
-    return rc ;
+    alarm(savalrm);
+    if (savhandler)
+      signal(SIGALRM,savhandler);
+    return(rc);
 }
-

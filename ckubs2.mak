@@ -1,22 +1,29 @@
-# CKUBS2.MAK, Thu Aug 22 18:32:45 1996
+# CKUBS2.MAK Sun May 23 11:52:55 1999
 #
-CKVER= "6.0.192 Beta.029"
+CKVER= "7.0.195 Beta.07"
 #
 # Abbreviated version for 2.10 / 2.11 BSD, which chokes on full-size makefile
 # because "Make: out of memory".
+#
+# C-Kermit 6.0 was the last version that could be built with an interactive
+# command parser under the 2.11 BSD memory model -- it fit into the overlay
+# structure with only a few bytes to spare.
+#
+# C-Kermit 7.0 and later can be built only in command-line form.
 #
 # Instructions:
 #   1. Make sure there are no other files called "makefile" or "Makefile"
 #      in the same directory.
 #   2. Change the name of this file to "makefile".
 #   3. Read below about the strings file.
-#   4. "make bsd211"
+#   4. "make bsd211" (for interactive version) or
+#      "make bsd211noicp" (for command-line-only version).
 #   5. If you are not on a system with /usr/lib/ctimed (2.10BSD for example),
 #      type "make bsd210" (which will compile cku2tm.c into 'ctimed')
 #      and then install 'ctimed' in the right place (default is /usr/lib).
 #   6. 2.11BSD includes ctimed and the necessary stub routines.  The 'ctimed'
-#      path is in <paths.h>.  The "libstubs.a" (obtained via a "-lstubs" at link
-#      time) contains the stub routines.
+#      path is in <paths.h>.  The "libstubs.a" (obtained via a "-lstubs" at
+#      link time) contains the stub routines.
 #
 # Authors: Frank da Cruz, Columbia University, fdc@columbia.edu,
 # and Steven M Schultz, sms@wlv.iipo.gtegsc.com.
@@ -32,6 +39,7 @@ CKVER= "6.0.192 Beta.029"
 # + again 11-13 Jun 96, for version 6.0.192, fdc.
 # 18 Jul 96 to incorporate new 'ctimed' and stubs, sms.
 # 22 Aug 96 to reshuffle overlays, fdc.
+# 23 May 99 for C-Kermit 7.0: add new modules and command-line-only build, fdc.
 ###########################################################################
 #
 # 2.10BSD and 2.11BSD (the latter to a larger extent) are the same as 4.3BSD
@@ -40,11 +48,11 @@ CKVER= "6.0.192 Beta.029"
 # A string extraction method is used to put approx. 16KB of strings into a
 # file.  The module ckustr.c needs to find this file when C-Kermit runs.
 # The pathname where this file will reside is defined below (change it if
-# necessary).  After make is finished, the file cku192.sr must be moved to
+# necessary).  After make is finished, the file cku195.sr must be moved to
 # where ckustr.c has been told to look for it, or you can define an
 # environment variable KSTR to override the built-in pathname, for example:
 #
-#  setenv KSTR `pwd`/cku192.sr
+#  setenv KSTR `pwd`/cku195.sr
 #
 # If the resulting wermit program sprews garbage all over your screen, it's
 # because it is reading the wrong strings file.
@@ -54,7 +62,7 @@ CKVER= "6.0.192 Beta.029"
 # or one of the overlays is too big.  The sum of the data (mostly strings.o)
 # and bss (mostly static buffers) sizes must be less than about 52K (56K is
 # the maximum, but about 4K is needed for stdio buffers that are added in at
-# runtime).  If the comibed data+bss size exceeds 52K, start chopping away
+# runtime).  If the combined data+bss size exceeds 52K, start chopping away
 # at static buffers.  When it is borderline (> 52K but < 56K), performance
 # will be terrible -- screen output will be very slow and jerky because
 # stdio functions are doing a system call per character because they could
@@ -63,7 +71,7 @@ CKVER= "6.0.192 Beta.029"
 # The maximum number of overlays is 15, but the fewer overlays, the better
 # the peformance.  The smaller the root segment, the bigger the overlays can
 # be:
-# 
+#
 #   Root   Overlay
 #   56KB     8KB
 #   48KB    16KB
@@ -106,16 +114,37 @@ OPT=-O
 EFLAGS=-DBSD43 -DLCKDIR -DNODEBUG -DNOTLOG -DNODIAL \
 	-DNOCSETS -DNOHELP -DNOSCRIPT -DNOSPL -DNOXMIT -DNOSETBUF \
 	-DNOMSEND -DNOFRILLS -DNOPARSEN -DNOAPC $(KFLAGS) \
-	-DSTR_FILE=\\\"/usr/local/lib/cku192.sr\\\"
+	-DSTR_FILE=\\\"/usr/local/lib/cku195.sr\\\"
 LNKFLAGS= -i
 CC=./ckustr.sed
 CC2=cc
 #
 ###########################################################################
 #
-# Dependencies section and overlay structure.
+# Dependencies section and overlay structure for the command-line only version.
 
 wermit: ckcmai.$(EXT) ckucmd.$(EXT) ckuusr.$(EXT) ckuus2.$(EXT) \
+	ckuus3.$(EXT) ckuus4.$(EXT) ckuus5.$(EXT) ckcpro.$(EXT) \
+	ckcfns.$(EXT) ckcfn2.$(EXT) ckcfn3.$(EXT) ckuxla.$(EXT) \
+	ckucon.$(EXT) ckutio.$(EXT) ckufio.$(EXT) ckudia.$(EXT) \
+	ckuscr.$(EXT) ckcnet.$(EXT) ckuus6.$(EXT) ckuus7.$(EXT) \
+	ckuusx.$(EXT) ckuusy.$(EXT) ckusig.$(EXT) ckustr.o strings.o \
+	ckctel.$(EXT) ckclib.$(EXT)
+	$(CC2) $(LNKFLAGS) -o wermit \
+		ckutio.$(EXT) ckusig.$(EXT)  \
+		 -Z ckcfns.$(EXT) ckuus3.$(EXT) ckuusy.$(EXT) \
+                    ckclib.$(EXT) ckcmai.$(EXT) \
+		 -Z ckcpro.$(EXT) ckuus4.$(EXT) ckuus5.$(EXT) \
+		    ckuus6.$(EXT) ckuus2.$(EXT) ckctel.$(EXT) \
+		 -Z ckucmd.$(EXT) ckuxla.$(EXT) ckuscr.$(EXT) \
+		    ckuusr.$(EXT) ckuus7.$(EXT) ckudia.$(EXT) \
+		    ckcfn2.$(EXT) ckcfn3.$(EXT) \
+		 -Z ckcnet.$(EXT) ckuusx.$(EXT) ckufio.$(EXT) ckucon.$(EXT) \
+		 -Y ckustr.o strings.o $(LIBS)
+
+# This is for the interactive version, which is too big as of C-Kermit 7.0.
+
+wermiti: ckcmai.$(EXT) ckucmd.$(EXT) ckuusr.$(EXT) ckuus2.$(EXT) \
 	ckuus3.$(EXT) ckuus4.$(EXT) ckuus5.$(EXT) ckcpro.$(EXT) \
 	ckcfns.$(EXT) ckcfn2.$(EXT) ckcfn3.$(EXT) ckuxla.$(EXT) \
 	ckucon.$(EXT) ckutio.$(EXT) ckufio.$(EXT) ckudia.$(EXT) \
@@ -141,56 +170,66 @@ strings.o: strings
 ###########################################################################
 # Dependencies for each module...
 #
-ckcmai.$(EXT): ckcmai.c ckcker.h ckcdeb.h ckcsym.h ckcasc.h ckcnet.h ckcsig.h
+ckcmai.$(EXT): ckcmai.c ckcker.h ckcdeb.h ckcsym.h ckcasc.h ckcnet.h ckcsig.h \
+		ckctel.h ckclib.h
 
-ckcpro.$(EXT): ckcpro.c ckcker.h ckcdeb.h ckcasc.h
+ckclib.$(EXT): ckclib.c ckclib.h ckcdeb.h ckcasc.h ckcsym.h
+
+ckcpro.$(EXT): ckcpro.c ckcker.h ckcdeb.h ckcasc.h ckctel.h ckclib.h
 	$(CC) CFLAGS=${EFLAGS} -c ckcpro.c
 
 ckcpro.c: ckcpro.w wart ckcdeb.h ckcasc.h ckcker.h
 	./wart ckcpro.w ckcpro.c
 
 ckcfns.$(EXT): ckcfns.c ckcker.h ckcdeb.h ckcsym.h ckcasc.h ckcxla.h \
-		ckuxla.h
+		ckuxla.h ckctel.h ckclib.h
 
-ckcfn2.$(EXT): ckcfn2.c ckcker.h ckcdeb.h ckcsym.h ckcasc.h ckcxla.h ckuxla.h
+ckcfn2.$(EXT): ckcfn2.c ckcker.h ckcdeb.h ckcsym.h ckcasc.h ckcxla.h ckuxla.h \
+		ckctel.h ckclib.h
 
 ckcfn3.$(EXT): ckcfn3.c ckcker.h ckcdeb.h ckcsym.h ckcasc.h ckcxla.h \
-		ckuxla.h
+		ckuxla.h ckctel.h ckclib.h
 
-ckuxla.$(EXT): ckuxla.c ckcker.h ckcdeb.h ckcxla.h ckuxla.h
+ckuxla.$(EXT): ckuxla.c ckcker.h ckcdeb.h ckcxla.h ckuxla.h ckctel.h ckclib.h
 
 ckuusr.$(EXT): ckuusr.c ckucmd.h ckcker.h ckuusr.h ckcdeb.h ckcxla.h ckuxla.h \
-		ckcasc.h ckcnet.h
+		ckcasc.h ckcnet.h ckctel.h ckclib.h
 
 ckuus2.$(EXT): ckuus2.c ckucmd.h ckcker.h ckuusr.h ckcdeb.h ckcxla.h ckuxla.h \
-		ckcasc.h
+		ckcasc.h ckctel.h ckclib.h
 
 ckuus3.$(EXT): ckuus3.c ckucmd.h ckcker.h ckuusr.h ckcdeb.h ckcxla.h ckuxla.h \
-		ckcasc.h ckcnet.h
+		ckcasc.h ckcnet.h ckctel.h ckclib.h
 
 ckuus4.$(EXT): ckuus4.c ckucmd.h ckcker.h ckuusr.h ckcdeb.h ckcxla.h ckuxla.h \
-		ckcasc.h ckcnet.h
+		ckcasc.h ckcnet.h ckctel.h ckclib.h
 
-ckuus5.$(EXT): ckuus5.c ckucmd.h ckcker.h ckuusr.h ckcdeb.h ckcasc.h
+ckuus5.$(EXT): ckuus5.c ckucmd.h ckcker.h ckuusr.h ckcdeb.h ckcasc.h \
+		ckctel.h ckclib.h
 
-ckuus6.$(EXT): ckuus6.c ckucmd.h ckcker.h ckuusr.h ckcdeb.h ckcasc.h
+ckuus6.$(EXT): ckuus6.c ckucmd.h ckcker.h ckuusr.h ckcdeb.h ckcasc.h \
+		ckctel.h ckclib.h
 
 ckuus7.$(EXT): ckuus7.c ckucmd.h ckcker.h ckuusr.h ckcdeb.h ckcxla.h ckuxla.h \
-		ckcasc.h ckcnet.h
+		ckcasc.h ckcnet.h ckctel.h ckclib.h
 
-ckuusx.$(EXT): ckuusx.c  ckcker.h ckuusr.h ckcdeb.h ckcasc.h ckcsig.h
+ckuusx.$(EXT): ckuusx.c  ckcker.h ckuusr.h ckcdeb.h ckcasc.h ckcsig.h \
+		ckctel.h ckclib.h
 
-ckuusy.$(EXT): ckuusy.c  ckcker.h ckcdeb.h ckcasc.h
+ckuusy.$(EXT): ckuusy.c  ckcker.h ckcdeb.h ckcasc.h ckctel.h ckclib.h
 
-ckucmd.$(EXT): ckucmd.c ckcasc.h ckucmd.h ckcdeb.h
+ckucmd.$(EXT): ckucmd.c ckcasc.h ckucmd.h ckcdeb.h ckctel.h ckclib.h
 
-ckufio.$(EXT): ckufio.c ckcdeb.h ckuver.h
+ckufio.$(EXT): ckufio.c ckcdeb.h ckuver.h ckctel.h ckclib.h
 
-ckutio.$(EXT): ckutio.c ckcdeb.h ckcnet.h ckuver.h
+ckutio.$(EXT): ckutio.c ckcdeb.h ckcnet.h ckuver.h ckctel.h ckclib.h
 
-ckucon.$(EXT): ckucon.c ckcker.h ckcdeb.h ckcasc.h ckcnet.h ckcsig.h
+ckucon.$(EXT): ckucon.c ckcker.h ckcdeb.h ckcasc.h ckcnet.h ckcsig.h \
+		ckctel.h ckclib.h
 
-ckcnet.$(EXT): ckcnet.c ckcdeb.h ckcker.h ckcnet.h ckcsig.h
+ckcnet.$(EXT): ckcnet.c ckcdeb.h ckcker.h ckcnet.h ckcsig.h ckctel.h ckclib.h
+
+ckctel.$(EXT): ckcsym.h ckcdeb.h ckcker.h ckcnet.h ckctel.h ckclib.h
 
 wart: ckwart.$(EXT)
 	$(CC) $(LNKFLAGS) -o wart ckwart.$(EXT)
@@ -199,21 +238,30 @@ ckcmdb.$(EXT): ckcmdb.c ckcdeb.h
 
 ckwart.$(EXT): ckwart.c
 
-ckudia.$(EXT): ckudia.c ckcker.h ckcdeb.h ckucmd.h ckcasc.h ckcsig.h
+ckudia.$(EXT): ckudia.c ckcker.h ckcdeb.h ckucmd.h ckcasc.h ckcsig.h \
+		ckctel.h ckclib.h
 	$(CC) CFLAGS=${EFLAGS} -c ckudia.c
 
-ckuscr.$(EXT): ckuscr.c ckcker.h ckcdeb.h ckcasc.h ckcsig.h
+ckuscr.$(EXT): ckuscr.c ckcker.h ckcdeb.h ckcasc.h ckcsig.h ckctel.h ckclib.h
 
-ckusig.$(EXT): ckusig.c ckcsig.h ckcasc.h ckcdeb.h ckcker.h ckcnet.h ckuusr.h
+ckusig.$(EXT): ckusig.c ckcsig.h ckcasc.h ckcdeb.h ckcker.h ckcnet.h ckuusr.h \
+		ckctel.h ckclib.h
 
 #2.11BSD
 #
 bsd211:
 	@echo "Making C-Kermit $(CKVER) for 2.10/2.11BSD with overlays..."
-	@echo -n "Be sure to install cku192.sr with the same pathname"
+	@echo -n "Be sure to install cku195.sr with the same pathname"
 	@echo " specified in ckustr.c!"
 	chmod +x ckustr.sed
-	make wermit CFLAGS="${OPT} ${EFLAGS}" LIBS=-lstubs
+	make wermiti CFLAGS="${OPT} ${EFLAGS}" LIBS=-lstubs
+
+bsd211noicp:
+	@echo "Making C-Kermit $(CKVER) for 2.10/2.11BSD NOICP..."
+	@echo -n "Be sure to install cku195.sr with the same pathname"
+	@echo " specified in ckustr.c!"
+	chmod +x ckustr.sed
+	make wermit CFLAGS="${OPT} ${EFLAGS} -DNOICP" LIBS=-lstubs
 
 #2.10BSD
 #
@@ -221,10 +269,10 @@ bsd210:
 	@echo -n "Be sure to install ctimed with the same pathname"
 	@echo " specified in ckustr.c for STR_CTIMED!"
 	@echo "Making C-Kermit $(CKVER) for 2.10/2.11BSD with overlays..."
-	@echo -n "Be sure to install cku192.sr with the same pathname"
+	@echo -n "Be sure to install cku195.sr with the same pathname"
 	@echo " specified in ckustr.c!"
 	chmod +x ckustr.sed
-	make wermit CFLAGS="${OPT} ${EFLAGS} \
+	make wermiti CFLAGS="${OPT} ${EFLAGS} \
 			-DSTR_CTIMED=\\\"/usr/lib/ctimed\\\""
 
 ctimed:
@@ -233,5 +281,5 @@ ctimed:
 #Clean up intermediate and object files
 clean:
 	@echo 'Removing intermediate files...'
-	-rm -f *.$(EXT) ckcpro.c wart strings cku192.sr ctimed wermit xs.c
+	-rm -f *.$(EXT) ckcpro.c wart strings cku195.sr ctimed wermit xs.c
 	-rm -f xxmk.c mk.c x.c

@@ -1,28 +1,29 @@
 #include "ckcsym.h"
+char *dialv = "Dial Command, 7.0.131, 22 Dec 1999";
+
 #ifndef NOLOCAL
 #ifndef NODIAL
 #ifndef NOICP
 
-char *dialv = "Dial Command, 6.0.091, 6 Sep 96";
+#ifndef CK_ATDT
+#define CK_ATDT
+#endif /* CK_ATDT */
 
 #ifndef NOOLDMODEMS        /* Unless instructed otherwise, */
 #define OLDMODEMS          /* keep support for old modems. */
 #endif /* NOOLDMODEMS */
 
 #ifndef M_OLD		   /* Hide old modem keywords in SET MODEM table. */
-#define M_OLD 0            /* Define as to CM_INV to make them invisible. */
-#endif /* M_OLD */ 
+#define M_OLD 0		   /* Define as CM_INV to make them invisible. */
+#endif /* M_OLD */
 
 /*  C K U D I A	 --  Module for automatic modem dialing. */
 
 /*
-  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
-  York.  The C-Kermit software may not be, in whole or in part, licensed or
-  sold for profit as a software product itself, nor may it be included in or
-  distributed with commercial products or otherwise distributed by commercial
-  concerns to their clients or customers without written permission of the
-  Office of Kermit Development and Distribution, Columbia University.  This
-  copyright notice must not be removed, altered, or obscured.
+  Copyright (C) 1985, 2000,
+    Trustees of Columbia University in the City of New York.
+    All rights reserved.  See the C-Kermit COPYING.TXT file or the
+    copyright text in the ckcmai.c module for disclaimer and permissions.
 */
 
 /*
@@ -56,11 +57,14 @@ char *dialv = "Dial Command, 6.0.091, 6 Sep 96";
   Manual, and thus should be portable to all systems that implement those
   functions, and where alarm() and signal() work as they do in UNIX.
 
-  TO ADD SUPPORT FOR ANOTHER MODEM, do the following, all in this module:
+  HOW TO ADD SUPPORT FOR ANOTHER MODEM:
 
-  1. Define a modem-type number symbol (n_XXX) for it, the next highest one.
+  1. In ckuusr.h, define a modem-type number symbol (n_XXX) for the new modem,
+     the next highest one.
 
-  2. Adjust MAX_MDM to the new number of modem types.
+  2. In ckuusr.h, adjust MAX_MDM to the new number of modem types.
+
+The remaining steps are in this module:
 
   3. Create a MDMINF structure for it.  NOTE: The wake_str should include
      all invariant setup info, e.g. enable result codes, BREAK transparency,
@@ -72,14 +76,22 @@ char *dialv = "Dial Command, 6.0.091, 6 Sep 96";
   5. Add the user-visible (SET MODEM) name and corresponding modem number
      to the mdmtab[] array, in alphabetical order by modem-name string.
 
-  6. Read through the code and add any modem-specific sections as necessary.
+  6. If this falls into a class like is_rockwell, is_supra, etc, add the new
+     one to the definition of the class.
+
+  7. Adjust the gethrn() routine to account for any special numeric result
+     codes (if it's a Hayes compatible modem).
+
+  8. Read through the code and add any modem-specific sections as necessary.
      For most modern Hayes-compatible modems, no specific code will be
      needed.
 
   NOTE: The MINIDIAL symbol is used to build this module to include support
   for only a minimum number of standard and/or generally useful modem types,
-  namely Hayes, CCITT V.25bis, "Unknown", and None.  When adding support for
-  a new modem type, keep it outside of the MINIDIAL sections.
+  namely Hayes 1200 and 2400, ITU-T (CCITT) V.25bis and V.25ter (V.250),
+  Generic-High-Speed, "Unknown", and None.  When adding support for a new
+  modem type, keep it outside of the MINIDIAL sections unless it deserves to
+  be in it.
 */
 
 #include "ckcdeb.h"
@@ -95,11 +107,15 @@ char *dialv = "Dial Command, 6.0.091, 6 Sep 96";
 #ifdef OS2ONLY
 #define INCL_VIO			/* Needed for ckocon.h */
 #include <os2.h>
+#undef COMMENT
 #include "ckocon.h"
 #endif /* OS2ONLY */
 
 #ifdef NT
+#include <windows.h>
+#include <tapi.h>
 #include "cknwin.h"
+#include "ckntap.h"
 #endif /* NT */
 #ifdef OS2
 #include "ckowin.h"
@@ -163,7 +179,20 @@ int valarm(int interval);
 #define putchar(x) conoc(x)
 #endif /* OS2 */
 
-#ifdef BIGBUFOK /* Only for verions that are not tight on memory */
+#ifndef NOHINTS
+extern int hints;
+#endif /* NOHINTS */
+
+#ifdef CK_TAPI
+extern int tttapi;
+extern int tapipass;
+#endif /* CK_TAPI */
+
+#ifdef CKLOGDIAL
+extern int dialog;
+#endif /* CKLOGDIAL */
+
+#ifdef BIGBUFOK /* Only for versions that are not tight on memory */
 
 char * dialmsg[] = {			/* DIAL status strings */
 
@@ -202,13 +231,15 @@ char * dialmsg[] = {			/* DIAL status strings */
     "Blacklisted",			    /* 30 */
     "Delayed",    			    /* 31 */
     "Fax connection",			    /* 32 */
-    NULL				    /* 33 */
+    "TAPI reported failure - reason unknown", /* 33 */
+    NULL				    /* 34 */
 };
 #endif /* BIGBUFOK */
 
-#ifndef NOSPL
-char modemmsg[80];			/* DIAL response from modem */
+#ifdef NOSPL
+static
 #endif /* NOSPL */
+char modemmsg[128] = { NUL, NUL };	/* DIAL response from modem */
 
 #ifdef NTSIG
 extern int TlsIndex;
@@ -218,9 +249,20 @@ int					/* SET DIAL parameters */
   dialhng = 1,				/* DIAL HANGUP, default is ON */
   dialdpy = 0,				/* DIAL DISPLAY, default is OFF */
   mdmspd  = 0,				/* DIAL SPEED-MATCHING (0 = OFF) */
+  mdmspk  = 1,				/* MODEM SPEAKER */
+  mdmvol  = 2,				/* MODEM VOLUME */
   dialtmo = 0,				/* DIAL TIMEOUT */
   dialatmo = -1,			/* ANSWER TIMEOUT */
   dialksp = 0,				/* DIAL KERMIT-SPOOF, 0 = OFF */
+  dialidt = 0,				/* DIAL IGNORE-DIALTONE */
+#ifndef CK_RTSCTS
+  /* If we can't do RTS/CTS then there's no flow control at first */
+  /* So we might easily lose the echo to the init string and the OK */
+  /* and then give "No response from modem" errors. */
+  dialpace = 150,			/* DIAL PACING */
+#else
+  dialpace = -1,
+#endif /* CK_RTSCTS */
 #ifdef NOMDMHUP
   dialmhu = 0;				/* DIAL MODEM-HANGUP, 0 = OFF */
 #else
@@ -230,8 +272,14 @@ int					/* SET DIAL parameters */
 int
   dialec = 0,				/* DIAL ERROR-CORRECTION */
   dialdc = 0,				/* DIAL COMPRESSION  */
-  dialfc = FLO_AUTO,			/* DIAL FLOW-CONTROL */
-  dialmth = XYDM_D,			/* DIAL METHOD */
+#ifdef VMS
+  /* VMS can only use Xon/Xoff */
+  dialfc = FLO_XONX,			/* DIAL FLOW-CONTROL */
+#else
+  dialfc = FLO_AUTO,
+#endif /* VMS */
+  dialmth = XYDM_D,			/* DIAL METHOD (Tone, Pulse, Defalt) */
+  dialmauto = 1,			/* DIAL METHOD is AUTO */
   dialesc = 0;				/* DIAL ESCAPE */
 
 int telephony = 0;			/* Command-line '-T' option */
@@ -242,6 +290,8 @@ long dialmax = 0L,			/* Modem's max interface speed */
 int dialsta = DIA_UNK;			/* Detailed return code (ckuusr.h) */
 
 int is_rockwell = 0;
+int is_motorola = 0;
+int is_supra = 0;
 int is_hayeshispd = 0;
 
 char *dialdir[MAXDDIR];			/* DIAL DIRECTORY filename array */
@@ -257,14 +307,17 @@ char *dialixp = NULL;			/* DIAL INTL-PREFIX */
 char *dialixs = NULL;			/* DIAL INTL-SUFFIX */
 char *dialldp = NULL;			/* DIAL LD-PREFIX */
 char *diallds = NULL;			/* DIAL LD-SUFFIX */
-char *dialpxx = NULL;			/* DIAL PBX-EXCHANGE */
-char *dialpxi = NULL;			/* DIAL INTERNAL-PREFIX */
-char *dialpxo = NULL;			/* DIAL OUTSIDE-PREFIX */
+char *diallcp = NULL;			/* DIAL LOCAL-PREFIX */
+char *diallcs = NULL;			/* DIAL LOCAL-SUFFIX */
+char *dialpxi = NULL;			/* DIAL PBX-INTERNAL-PREFIX */
+char *dialpxo = NULL;			/* DIAL PBX-OUTSIDE-PREFIX */
 char *dialsfx = NULL;			/* DIAL SUFFIX */
 char *dialtfp = NULL;			/* DIAL TOLL-FREE-PREFIX */
 extern char * d_name;
-extern char * dialtfc[];
+extern char * dialtfc[];		/* DIAL TOLL-FREE-AREA-CODE */
+extern char * dialpxx[];		/* DIAL PBX-EXCHANGE */
 extern int ntollfree;
+extern int ndialpxx;
 char *dialname  = NULL;			/* Descriptive name for modem */
 char *dialdcon  = NULL;			/* DC ON command */
 char *dialdcoff = NULL;			/* DC OFF command */
@@ -278,7 +331,46 @@ char *dialswfc  = NULL;			/* (Local) software f.c. command */
 char *dialnofc  = NULL;			/* No (Local) flow control command */
 char *dialtone  = NULL;			/* Command to force tone dialing */
 char *dialpulse = NULL;			/*  ..to force pulse dialing */
+char *dialx3    = NULL;			/* Ignore dialtone */
 char *mdmname   = NULL;
+
+char *dialspon  = NULL;			/* Speaker On command */
+char *dialspoff = NULL;			/* Speaker Off command */
+char *dialvol1  = NULL;			/* Volume Low command */
+char *dialvol2  = NULL;			/* Volume Medium command */
+char *dialvol3  = NULL;			/* Volume High command */
+
+char *dialini2  = NULL;			/* Second init string */
+char *dialmac   = NULL;			/* DIAL macro */
+extern char * dialpucc[];		/* DIAL Pulse countries */
+extern int ndialpucc;
+extern char * dialtocc[];		/* DIAL Tone countries */
+extern int ndialtocc;
+
+/* Countries where pulse dialing must be used (tone is not available) */
+static char * pulsecc[] = { NULL };	/* (Unknown at present) */
+
+/* Countries where tone dialing may safely be the default. */
+/* "+" marks countries where pulse is also allowed. */
+/* Both Pulse and Tone are allowed in Austria & Switzerland but it is not */
+/* yet known if Tone is universally in those countries. */
+static char * tonecc[] = {
+    "1",				/* + North American Numbering Plan */
+    "31",				/*   Netherlands */
+    "32",				/*   Belgium */
+    "33",				/*   France */
+    "352",				/*   Luxembourg */
+    "353",				/*   Ireland */
+    "354",				/*   Iceland */
+    "358",				/*   Finland */
+    "39",				/*   Italy */
+    "44",				/* + UK */
+    "45",				/*   Denmark */
+    "46",				/*   Sweden */
+    "47",				/*   Norway */
+    "49",				/* + Germany */
+    NULL
+};
 
 #ifndef MINIDIAL
 /*
@@ -335,12 +427,12 @@ char *tb_name[] = {			/* Array of model names */
 
 extern int flow, local, mdmtyp, quiet, backgrd, parity, seslog, network;
 extern int carrier, duplex, mdmsav;
-#ifdef NETCONN
 extern int ttnproto;
-#endif /* NETCONN */
-extern CHAR stchr;
 extern long speed;
 extern char ttname[], sesfil[];
+#ifndef NOXFER
+extern CHAR stchr;
+#endif /* NOXFER */
 
 /*  Failure codes  */
 
@@ -349,12 +441,15 @@ extern char ttname[], sesfil[];
 #define F_MODEM		3		/* modem-detected failure */
 #define F_MINIT		4		/* cannot initialize modem */
 
+#ifndef CK_TAPI
 static
+#endif /* CK_TAPI */
 #ifdef OS2
  volatile
 #endif /* OS2 */
  int fail_code =  0;			/* Default failure reason. */
 
+static int xredial = 0;
 static int func_code;			/* 0 = dialing, nonzero = answering */
 static int partial;
 static int mymdmtyp = 0;
@@ -373,7 +468,7 @@ _PROTOTYP (static VOID dreset, (void) );
 _PROTOTYP (static int (*xx_ok), (int,int) );
 _PROTOTYP (static int ddinc, (int) );
 _PROTOTYP (int dialhup, (void) );
-_PROTOTYP (static int getok, (int,int) );
+_PROTOTYP (int getok, (int,int) );
 _PROTOTYP (char * ck_time, (void) );
 _PROTOTYP (static VOID ttslow, (char *, int) );
 #ifdef COMMENT
@@ -383,91 +478,9 @@ _PROTOTYP (static VOID waitfor, (char *) );
 _PROTOTYP (static VOID dialoc, (char) );
 _PROTOTYP (static int didweget, (char *, char *) );
 _PROTOTYP (static VOID spdchg, (long) );
-#ifndef MINIDIAL
-#ifdef OLDTBCODE
-_PROTOTYP (static VOID tbati3, (int) );
-#endif /* OLDTBCODE */
-#endif /* MINIDIAL */
 _PROTOTYP (static int dialfail, (int) );
 _PROTOTYP (static VOID gethrw, (void) );
 _PROTOTYP (static VOID gethrn, (void) );
-
-/*
- * Define symbolic modem numbers.
- *
- * The numbers MUST correspond to the ordering of entries
- * within the modemp array, and start at one (1).
- *
- * It is assumed that there are relatively few of these
- * values, and that the high(er) bytes of the value may
- * be used for modem-specific mode information.
- *
- * REMEMBER that only the first eight characters of these
- * names are guaranteed to be unique.
- */
-
-#ifdef MINIDIAL				/* Minimum dialer support */
-					/* Only for CCITT, HAYES, and UNK */
-#define		n_CCITT		 1	/* CCITT/ITU-T V.25bis */
-#define		n_HAYES		 2	/* Hayes 2400 */
-#define		n_UNKNOWN	 3	/* Unknown */
-#define         n_UDEF           4	/* User-Defined */
-#define		MAX_MDM		 4	/* Number of modem types */
-
-#else					/* Full-blown dialer support */
-
-#define		n_ATTDTDM	 1
-#define         n_ATTISN         2
-#define		n_ATTMODEM	 3
-#define		n_CCITT		 4
-#define		n_CERMETEK	 5
-#define		n_DF03		 6
-#define		n_DF100		 7
-#define		n_DF200		 8
-#define		n_GDC		 9
-#define		n_HAYES		10
-#define		n_PENRIL	11
-#define		n_RACAL		12
-#define		n_UNKNOWN       13
-#define		n_VENTEL	14
-#define		n_CONCORD	15
-#define		n_ATTUPC	16	/* aka UNIX PC and ATT7300 */
-#define		n_ROLM          17      /* Rolm CBX DCM */
-#define		n_MICROCOM	18	/* Microcoms in SX command mode */
-#define         n_USR           19	/* Modern USRs */
-#define         n_TELEBIT       20      /* Telebits of all kinds */
-#define         n_DIGITEL       21	/* Digitel DT-22 (CCITT variant) */
-
-#define         n_H_1200        22	/* Hayes 1200 */
-#define		n_H_ULTRA       23	/* Hayes Ultra and maybe Optima */
-#define		n_H_ACCURA      24	/* Hayes Accura and maybe Optima */
-#define         n_PPI           25	/* Practical Peripherals */
-#define         n_DATAPORT      26	/* AT&T Dataport */
-#define         n_BOCA          27	/* Boca */
-#define		n_MOTOROLA      28	/* Motorola Fastalk or Lifestyle */
-#define		n_DIGICOMM	29	/* Digicomm Connection */
-#define		n_DYNALINK      30	/* Dynalink 1414VE */
-#define		n_INTEL		31	/* Intel 14400 Faxmodem */
-#define		n_UCOM_AT	32	/* Microcoms in AT mode */
-#define		n_MULTI		33	/* Multitech MT1432 */
-#define		n_SUPRA		34	/* SupraFAXmodem */
-#define	        n_ZOLTRIX	35	/* Zoltrix */
-#define		n_ZOOM		36	/* Zoom */
-#define		n_ZYXEL		37	/* ZyXEL */
-#define         n_TAPI          38	/* Microsoft Windows dialer */
-#define         n_TBNEW         39	/* Newer Telebit models */
-#define		n_MAXTECH       40	/* MaxTech XM288EA */
-#define         n_UDEF          41	/* User-Defined */
-#define         n_RWV32         42	/* Generic Rockwell V.32 */
-#define         n_RWV32B        43	/* Generic Rockwell V.32bis */
-#define         n_RWV34         44	/* Generic Rockwell V.34 */
-#define		n_MWAVE		45	/* IBM Mwave Adapter */
-#define         n_TELEPATH      46	/* Gateway Telepath */
-#define         n_MICROLINK     47	/* MicroLink modems */
-#define         n_CARDINAL      48	/* Cardinal modems */
-#define		MAX_MDM		48	/* Number of modem types */
-
-#endif /* MINIDIAL */
 
 int dialudt = n_UDEF;			/* Number of user-defined type */
 
@@ -506,7 +519,7 @@ MDMINF CCITT =				/* CCITT / ITU-T V.25bis autodialer */
   If there is, this code has never been tested on it.  See the Digitel entry.
 */
     {
-    "CCITT / ITU-T V.25bis autodialer",
+    "Any CCITT / ITU-T V.25bis conformant modem",
     "",			/* pulse command */
     "",			/* tone command */
     40,			/* dial_time -- programmable -- */
@@ -530,10 +543,17 @@ MDMINF CCITT =				/* CCITT / ITU-T V.25bis autodialer */
     "",			/* ec_off_str */
     "",			/* dc_on_str */
     "",			/* dc_off_str */
-    "",			/* aa_on_str */
-    "",			/* aa_off_str */
+    "CIC\015",		/* aa_on_str */
+    "DIC\015",		/* aa_off_str */
     "",			/* sb_on_str */
     "",			/* sb_off_str */
+    "",			/* sp_off_str */
+    "",			/* sp_on_str */
+    "",			/* vol1_str */
+    "",			/* vol2_str */
+    "",			/* vol3_str */
+    "",			/* ignoredt */
+    "",			/* ini2 */
     0L,			/* max_speed */
     CKD_V25,		/* capas */
     NULL		/* No ok_fn    */
@@ -549,9 +569,13 @@ MDMINF HAYES =				/* Hayes 2400 and compatible modems */
     ",",				/* pause_chars */
     2,					/* pause_time */
 #ifdef OS2
-    "ATQ0&S0&C1&D2\015",		/* wake_str */
+    "ATE1Q0V1&S0&C1&D2\015",		/* wake_str */
+#else
+#ifdef VMS
+    "ATQ0&S1\015",			/* wake_str */
 #else
     "ATQ0\015",				/* wake_str */
+#endif /* VMS */
 #endif /* OS2 */
     0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
@@ -573,6 +597,13 @@ MDMINF HAYES =				/* Hayes 2400 and compatible modems */
     "ATS0=0\015",			/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     2400L,				/* max_speed */
     CKD_AT,				/* capas */
     getok				/* ok_fn */
@@ -616,6 +647,13 @@ MDMINF UNKNOWN =			/* Information for "Unknown" modem */
     "",					/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "",					/* sp_off_str */
+    "",					/* sp_on_str */
+    "",					/* vol1_str */
+    "",					/* vol2_str */
+    "",					/* vol3_str */
+    "",					/* ignoredt */
+    "",					/* ini2 */
     0L,					/* max_speed */
     0,					/* capas */
     NULL				/* ok_fn */
@@ -652,6 +690,13 @@ MDMINF ATTISN =				/* AT&T ISN Network */
     "",					/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "",					/* sp_off_str */
+    "",					/* sp_on_str */
+    "",					/* vol1_str */
+    "",					/* vol2_str */
+    "",					/* vol3_str */
+    "",					/* ignoredt */
+    "",					/* ini2 */
     0L,					/* max_speed */
     0,					/* capas */
     NULL				/* ok_fn */
@@ -728,6 +773,13 @@ MDMINF ATTMODEM =	/* information for AT&T switched-network modems */
     "",					/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "",					/* sp_off_str */
+    "",					/* sp_on_str */
+    "",					/* vol1_str */
+    "",					/* vol2_str */
+    "",					/* vol3_str */
+    "",					/* ignoredt */
+    "",					/* ini2 */
     0L,					/* max_speed */
     CKD_AT,				/* capas */
     NULL				/* ok_fn */
@@ -748,7 +800,7 @@ MDMINF ATTDTDM = /* AT&T Digital Terminal Data Module  */
     "",					/* wake_prompt */
     "",					/* dmode_str */
     "",					/* dmode_prompt */
-    "%s\015",				/* dial_str */ 
+    "%s\015",				/* dial_str */
     0,					/* dial_rate */
     0,					/* esc_time */
     0,					/* esc_char */
@@ -764,6 +816,13 @@ MDMINF ATTDTDM = /* AT&T Digital Terminal Data Module  */
     "",					/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "",					/* sp_off_str */
+    "",					/* sp_on_str */
+    "",					/* vol1_str */
+    "",					/* vol2_str */
+    "",					/* vol3_str */
+    "",					/* ignoredt */
+    "",					/* ini2 */
     0L,					/* max_speed */
     0,					/* capas */
     NULL				/* ok_fn */
@@ -803,10 +862,17 @@ MDMINF DIGITEL =        /* Digitel DT-22 CCITT variant used in Brazil */
     "",					/* ec_off_str */
     "",					/* dc_on_str */
     "",					/* dc_off_str */
-    "",					/* aa_on_str */
-    "",					/* aa_off_str */
+    "CIC\015",				/* aa_on_str */
+    "DIC\015",				/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "",					/* sp_off_str */
+    "",					/* sp_on_str */
+    "",					/* vol1_str */
+    "",					/* vol2_str */
+    "",					/* vol3_str */
+    "",					/* ignoredt */
+    "",					/* ini2 */
     0L,					/* max_speed */
     CKD_V25,				/* capas */
     getok				/* ok_fn */
@@ -821,7 +887,11 @@ MDMINF H_1200 =		/* Hayes 1200 and compatible modems */
     35,					/* dial_time */
     ",",				/* pause_chars */
     2,					/* pause_time */
+#ifdef OS2
+    "ATE1Q0V1\015",			/* wake_str */
+#else
     "ATQ0\015",				/* wake_str */
+#endif /* OS2 */
     0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
     "",					/* dmode_str */
@@ -842,6 +912,13 @@ MDMINF H_1200 =		/* Hayes 1200 and compatible modems */
     "ATS0=0\015",			/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "",					/* ignoredt */
+    "",					/* ini2 */
     1200L,				/* max_speed */
     CKD_AT,				/* capas */
     getok				/* ok_fn */
@@ -857,9 +934,13 @@ MDMINF H_ULTRA =			/* Hayes high-speed */
     ",",				/* pause_chars */
     2,					/* pause_time */
 #ifdef OS2
-    "ATQ0X4N1Y0&S0&C1&D2S37=0S82=128\015", /* wake_str */
+    "ATE1Q0V1X4N1Y0&S0&C1&D2S37=0S82=128\015", /* wake_str */
+#else
+#ifdef VMS
+    "ATQ0X4N1Y0&S1S37=0S82=128\015",	/* wake_str */
 #else
     "ATQ0X4N1Y0S37=0S82=128\015",	/* wake_str */
+#endif /* VMS */
 #endif /* OS2 */
     0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
@@ -869,7 +950,7 @@ MDMINF H_ULTRA =			/* Hayes high-speed */
     0,					/* dial_rate */
     1100,				/* esc_time */
     43,					/* esc_char */
-    "ATQ0H0\015",			/* hup_str */ 
+    "ATQ0H0\015",			/* hup_str */
     "AT&K3\015",			/* hwfc_str */   /* OK for U,O */
     "AT&K4\015",			/* swfc_str */   /* OK for U,O */
     "AT&K0\015",			/* nofc_str */   /* OK for U,O */
@@ -881,6 +962,13 @@ MDMINF H_ULTRA =			/* Hayes high-speed */
     "ATS0=0\015",			/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     115200L,				/* max_speed */  /* (varies) */
     CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
     getok				/* ok_fn */
@@ -896,9 +984,13 @@ MDMINF H_ACCURA =			/* Hayes Accura */
     ",",				/* pause_chars */
     2,					/* pause_time */
 #ifdef OS2
-    "ATQ0X4N1Y0&S0&C1&D2S37=0S82=128\015", /* wake_str */
+    "ATE1Q0V1X4N1Y0&S0&C1&D2S37=0\015",	/* wake_str */
 #else
-    "ATQ0X4N1Y0S37=0S82=128\015",	/* wake_str */
+#ifdef VMS
+    "ATQ0X4N1Y0&S1S37=0\015",		/* wake_str */
+#else
+    "ATQ0X4N1Y0S37=0\015",		/* wake_str */
+#endif /* VMS */
 #endif /* OS2 */
     0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
@@ -908,7 +1000,7 @@ MDMINF H_ACCURA =			/* Hayes Accura */
     0,					/* dial_rate */
     1100,				/* esc_time */
     43,					/* esc_char */
-    "ATQ0H0\015",			/* hup_str */ 
+    "ATQ0H0\015",			/* hup_str */
     "AT&K3\015",			/* hwfc_str */
     "AT&K4\015",			/* swfc_str */
     "AT&K0\015",			/* nofc_str */
@@ -920,6 +1012,13 @@ MDMINF H_ACCURA =			/* Hayes Accura */
     "ATS0=0\015",			/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     115200L,				/* max_speed */  /* (varies) */
     CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
     getok				/* ok_fn */
@@ -943,9 +1042,13 @@ MDMINF PPI =				/* Practical Peripherals  */
 #endif /* OS2 */
 #else /* So now we use Y0 instead */
 #ifdef OS2
-    "ATQ0X4N1&S0&C1&D2Y0S37=0\015",	/* wake_str */
+    "ATE1Q0V1X4N1&S0&C1&D2Y0S37=0\015",	/* wake_str */
+#else
+#ifdef VMS
+    "ATQ0X4N1Y0&S1S37=0\015",		/* wake_str */
 #else
     "ATQ0X4N1Y0S37=0\015",		/* wake_str */
+#endif /* VMS */
 #endif /* OS2 */
 #endif /* COMMENT */
     0,					/* wake_rate */
@@ -968,6 +1071,13 @@ MDMINF PPI =				/* Practical Peripherals  */
     "ATS0=0\015",			/* aa_off_str */
     "",					/* sb_on_str  */
     "",					/* sb_off_str  */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     115200L,				/* max_speed */
     CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
     getok				/* ok_fn */
@@ -987,9 +1097,13 @@ MDMINF DATAPORT =			/* AT&T Dataport  */
        supported on the V.32 and lower models.  So let's not touch it.
     */
 #ifdef OS2
-    "ATQ0E1X6&Q0S78=0\015",		/* wake_str */
+    "ATQ0E1V1X6&S0&C1&D2&Q0S78=0\015",	/* wake_str */
 #else
-    "ATQ0E1X6&S0&C1&D2&Q0S78=0\015",	/* wake_str */
+#ifdef VMS
+    "ATQ0E1X6&S1&Q0S78=0\015",		/* wake_str */
+#else
+    "ATQ0E1X6&Q0S78=0\015",		/* wake_str */
+#endif /* VMS */
 #endif /* OS2 */
     0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
@@ -1011,6 +1125,13 @@ MDMINF DATAPORT =			/* AT&T Dataport  */
     "ATS0=0\015",			/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     57600L,				/* max_speed */
     CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
     getok				/* ok_fn */
@@ -1026,9 +1147,13 @@ MDMINF UCOM_AT =			/* Microcom DeskPorte FAST ES 28.8 */
     ",",				/* pause_chars */
     2,					/* pause_time */
 #ifdef OS2
-    "ATQ0X4\\N0F0&S0&C1&D2\\K5\015",	/* wake_str */
+    "ATE1Q0V1X4\\N0F0&S0&C1&D2\\K5\015", /* wake_str */
+#else
+#ifdef VMS
+    "ATQ0X4F0&S1\\K5\015",		/* wake_str */
 #else
     "ATQ0X4F0\\K5\015",			/* wake_str */
+#endif /* VMS */
 #endif /* OS2 */
     0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
@@ -1043,13 +1168,20 @@ MDMINF UCOM_AT =			/* Microcom DeskPorte FAST ES 28.8 */
     "AT\\Q1\015",			/* swfc_str */
     "AT\\H0\\Q0\015",			/* nofc_str */
     "AT\\N3\015",			/* ec_on_str */
-    "AT\015",				/* ec_off_str */
+    "AT\\N0\015",			/* ec_off_str */
     "AT%C3\015",			/* dc_on_str */
     "AT%C0\015",			/* dc_off_str */
     "ATS0=1\015",			/* aa_on_str */
     "ATS0=0\015",			/* aa_off_str */
     "AT-J0\015",			/* sb_on_str */
     "AT-J1\015",			/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     115200L,				/* max_speed */
     CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
     getok				/* ok_fn */
@@ -1065,9 +1197,13 @@ MDMINF ZOOM =				/* Zoom Telephonics V.32bis  */
     ",",				/* pause_chars */
     2,					/* pause_time */
 #ifdef OS2
-    "ATQ0E1N1W1X4&S0&C1&D2S82=128S95=47\015", /* wake_str */
+    "ATE1Q0V1N1W1X4&S0&C1&D2S82=128S95=47\015", /* wake_str */
+#else
+#ifdef VMS
+    "ATQ0E1N1W1X4&S1S82=128S95=47\015",	/* wake_str */
 #else
     "ATQ0E1N1W1X4S82=128S95=47\015",	/* wake_str */
+#endif /* VMS */
 #endif /* OS2 */
     0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
@@ -1089,6 +1225,13 @@ MDMINF ZOOM =				/* Zoom Telephonics V.32bis  */
     "ATS0=0\015",			/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     57600L,				/* max_speed */
     CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
     getok				/* ok_fn */
@@ -1104,9 +1247,13 @@ MDMINF ZYXEL =				/* ZyXEL U-Series */
     ",",				/* pause_chars */
     2,					/* pause_time */
 #ifdef OS2
-    "ATQ0E1&S0&C1&D2&N0X5&Y1\015",	/* wake_str */
+    "ATE1Q0V1&S0&C1&D2&N0X5&Y1\015",	/* wake_str */
+#else
+#ifdef VMS
+    "ATQ0E1&S1&N0X5&Y1\015",		/* wake_str */
 #else
     "ATQ0E1&N0X5&Y1\015",		/* wake_str */
+#endif /* VMS */
 #endif /* OS2 */
     0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
@@ -1128,6 +1275,13 @@ MDMINF ZYXEL =				/* ZyXEL U-Series */
     "ATS0=0\015",			/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     57600L,				/* max_speed */
     CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
     getok				/* ok_fn */
@@ -1143,9 +1297,13 @@ MDMINF ZOLTRIX =			/* Zoltrix */
     ",",				/* pause_chars */
     2,					/* pause_time */
 #ifdef OS2
-   "ATQ0E1F0W1X4Y0&S0&C1&D2\\K5S82=128S95=41\015", /* wake_str */
+   "ATE1Q0V1F0W1X4Y0&S0&C1&D2\\K5S82=128S95=41\015", /* wake_str */
+#else
+#ifdef VMS
+   "ATQ0E1F0W1X4Y0&S1\\K5S82=128S95=41\015", /* wake_str */
 #else
    "ATQ0E1F0W1X4Y0\\K5S82=128S95=41\015", /* wake_str */
+#endif /* VMS */
 #endif /* OS2 */
     0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
@@ -1167,6 +1325,13 @@ MDMINF ZOLTRIX =			/* Zoltrix */
     "ATS0=0\015",			/* aa_off_str */
     "AT\\N0\015",			/* sb_on_str */
     "AT&Q0\015",			/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     57600L,				/* max_speed */
     CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
     getok				/* ok_fn */
@@ -1186,9 +1351,13 @@ MDMINF MOTOROLA = {			/* Motorola FasTalk II or Lifestyle */
     ",",				/* pause_chars */
     2,					/* pause_time */
 #ifdef OS2
-    "ATQ0E1X4&S0&C1&D2\\K5\\V1\015",	/* wake_str */
+    "ATE1Q0V1X4&S0&C1&D2\\K5\\V1\015",	/* wake_str */
+#else
+#ifdef VMS
+    "ATQ0E1X4&S1\\K5\\V1\015",		/* wake_str */
 #else
     "ATQ0E1X4\\K5\\V1\015",		/* wake_str */
+#endif /* VMS */
 #endif /* OS2 */
     0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
@@ -1210,6 +1379,13 @@ MDMINF MOTOROLA = {			/* Motorola FasTalk II or Lifestyle */
     "ATS0=0\015",			/* aa_off_str */
     "AT\\J0\015",			/* sb_on_str */
     "AT\\J1\015",			/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     57600L,				/* max_speed */
     CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
     getok				/* ok_fn */
@@ -1225,9 +1401,13 @@ MDMINF BOCA =				/* Boca */
     ",",				/* pause_chars */
     2,					/* pause_time */
 #ifdef OS2
-    "ATQ0E1F1N1W1&S0&C1&D2\\K5S37=11S82=128S95=47X4\015", /* wake_str */
+    "ATE1Q0V1F1N1W1&S0&C1&D2\\K5S37=11S82=128S95=47X4\015", /* wake_str */
+#else
+#ifdef VMS
+    "ATQ0E1F1N1W1&S1\\K5S37=11S82=128S95=47X4\015", /* wake_str */
 #else
     "ATQ0E1F1N1W1\\K5S37=11S82=128S95=47X4\015", /* wake_str */
+#endif /* VMS */
 #endif /* OS2 */
     0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
@@ -1249,6 +1429,13 @@ MDMINF BOCA =				/* Boca */
     "ATS0=0\015",			/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     57600L,				/* max_speed */
     CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
     getok				/* ok_fn */
@@ -1264,13 +1451,17 @@ MDMINF INTEL =				/* Intel */
     ",",				/* pause_chars */
     2,					/* pause_time */
 #ifdef OS2
-    "ATQ0E1Y0X4&S0&C1&D2\\K1\\V2S25=50\015", /* wake_str */
+    "ATE1Q0V1Y0X4&S0&C1&D2\\K1\\V2S25=50\015", /* wake_str */
 #else
-    "ATQ0E1Y0X4\\K1\\V2S25=50\015", /* wake_str */
+#ifdef VMS
+    "ATQ0E1Y0X4&S1\\K1\\V2S25=50\015",	/* wake_str */
+#else
+    "ATQ0E1Y0X4\\K1\\V2S25=50\015",	/* wake_str */
+#endif /* VMS */
 #endif /* OS2 */
     0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
-    "ATB1+FCLASS=0\015",		/* dmode_str */ 
+    "ATB1+FCLASS=0\015",		/* dmode_str */
     "OK\015",				/* dmode_prompt */
     "ATD%s\015",			/* dial_str */
     0,					/* dial_rate */
@@ -1288,6 +1479,13 @@ MDMINF INTEL =				/* Intel */
     "ATS0=0\015",			/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     57600L,				/* max_speed */
     CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
     getok				/* ok_fn */
@@ -1296,16 +1494,22 @@ MDMINF INTEL =				/* Intel */
 static
 MDMINF MULTITECH =			/* Multitech */
     {
-    "Multitech MT1432 Series MultiModem II",
+    "Multitech MT1432 or MT2834 Series",
     "ATP\015",				/* pulse command */
     "ATT\015",				/* tone command */
     35,					/* dial_time */
     ",",				/* pause_chars */
     2,					/* pause_time */
+/* #P0 (= no parity) is not listed in the manual for newer models */
+/* so it has been removed from all three copies of the Multitech wake_str */
 #ifdef OS2
-    "ATQ0E1X4&S0&C1&D2&E8&Q0%E1#P0\015", /* wake_str */
+    "ATE1Q0V1X4&S0&C1&D2&E8&Q0%E1\015", /* wake_str */
 #else
-    "ATQ0E1X4&E8&Q0%E1#P0\015",		/* wake_str */
+#ifdef VMS
+    "ATQ0E1X4&S1&E8&Q0%E1\015",		/* wake_str */
+#else
+    "ATQ0E1X4&E8&Q0%E1\015",		/* wake_str */
+#endif /* VMS */
 #endif /* OS2 */
     0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
@@ -1327,6 +1531,13 @@ MDMINF MULTITECH =			/* Multitech */
     "ATS0=0\015",			/* aa_off_str */
     "AT$BA0\015",			/* sb_on_str (= "baud adjust off") */
     "AT$BA1\015",			/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     57600L,				/* max_speed */
     CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
     getok				/* ok_fn */
@@ -1342,9 +1553,13 @@ MDMINF SUPRA =				/* Supra */
     ",",				/* pause_chars */
     2,					/* pause_time */
 #ifdef OS2
-    "ATQ0E1N1W0X4Y0&S0&C1&D2\\K5S82=128\015", /* wake_str */
+    "ATQ0E1V1N1W0X4Y0&S0&C1&D2\\K5S82=128\015", /* wake_str */
+#else
+#ifdef VMS
+    "ATQ0E1N1W0X4Y0&S1\\K5S82=128\015",	/* wake_str */
 #else
     "ATQ0E1N1W0X4Y0\\K5S82=128\015",	/* wake_str */
+#endif /* VMS */
 #endif /* OS2 */
     0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
@@ -1366,7 +1581,64 @@ MDMINF SUPRA =				/* Supra */
     "ATS0=0\015",			/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM\015",				/* sp_off_str */
+    "ATL\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     57600L,				/* max_speed */
+    CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
+    getok				/* ok_fn */
+};
+
+static
+MDMINF SUPRAX =				/* Supra Express */
+    {
+    "Diamond Supra Express V.90",
+    "ATP\015",				/* pulse command */
+    "ATT\015",				/* tone command */
+    35,					/* dial_time */
+    ",",				/* pause_chars */
+    2,					/* pause_time */
+#ifdef OS2
+    "ATQ0E1V1W0X4&C1&D2&S0\\K5\015",	/* wake_str */
+#else
+#ifdef VMS
+    "ATQ0E1W0X4&S1\\K5\015",		/* wake_str */
+#else
+    "ATQ0E1W0X4\\K5\015",		/* wake_str */
+#endif /* VMS */
+#endif /* OS2 */
+    0,					/* wake_rate */
+    "OK\015",				/* wake_prompt */
+    "",					/* dmode_str */
+    "",					/* dmode_prompt */
+    "ATD%s\015",			/* dial_str */
+    0,					/* dial_rate */
+    1100,				/* esc_time */
+    43,					/* esc_char */
+    "ATQ0H0\015",			/* hup_str */
+    "AT&K3\015",			/* hwfc_str */
+    "AT&K4\015",			/* swfc_str */
+    "AT&K0\015",			/* nofc_str */
+    "AT\\N3\015",			/* ec_on_str */
+    "AT\\N1\015",			/* ec_off_str */
+    "AT%C2\015",			/* dc_on_str */
+    "AT%C0\015",			/* dc_off_str */
+    "ATS0=1\015",			/* aa_on_str */
+    "ATS0=0\015",			/* aa_off_str */
+    "",					/* sb_on_str */
+    "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM\015",				/* sp_off_str */
+    "ATL\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
+    230400L,				/* max_speed */
     CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
     getok				/* ok_fn */
 };
@@ -1381,9 +1653,13 @@ MDMINF MAXTECH =			/* MaxTech */
     ",",				/* pause_chars */
     2,					/* pause_time */
 #ifdef OS2
-    "ATQ0E1X4Y0&S0&C1&D2&L0&M0\\K5\015", /* wake_str */
+    "ATQ0E1V1X4Y0&S0&C1&D2&L0&M0\\K5\015", /* wake_str */
+#else
+#ifdef VMS
+    "ATQ0E1X4Y0&L0&M0&S1\\K5\015",	/* wake_str */
 #else
     "ATQ0E1X4Y0&L0&M0\\K5\015",		/* wake_str */
+#endif /* VMS */
 #endif /* OS2 */
     0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
@@ -1405,6 +1681,13 @@ MDMINF MAXTECH =			/* MaxTech */
     "ATS0=0\015",			/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     115200L,				/* max_speed */
     CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
     getok				/* ok_fn */
@@ -1420,7 +1703,7 @@ MDMINF ROLM =		/* IBM / Siemens / Rolm 8000, 9000, 9751 CBX DCM */
     "",					/* pause_chars */
     0,					/* pause_time */
     "\015\015",				/* wake_str */
-    5,					/* wake_rate */
+    50,					/* wake_rate */
     "MODIFY?",				/* wake_prompt */
     "",					/* dmode_str */
     "",					/* dmode_prompt */
@@ -1440,6 +1723,13 @@ MDMINF ROLM =		/* IBM / Siemens / Rolm 8000, 9000, 9751 CBX DCM */
     "",					/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "",					/* sp_off_str */
+    "",					/* sp_on_str */
+    "",					/* vol1_str */
+    "",					/* vol2_str */
+    "",					/* vol3_str */
+    "",					/* ignoredt */
+    "",					/* ini2 */
     19200L,				/* max_speed */
     0,					/* capas */
     NULL				/* ok_fn */
@@ -1455,9 +1745,17 @@ MDMINF USR =				/* USR Courier and Sportster modems */
     ",",				/* pause_chars */
     2,					/* pause_time */
 #ifdef OS2
-    "ATQ0X4&A3&S0&C1&D2&N0&Y3\015",	/* wake_str */
+    "ATQ0E1V1X4&A3&S0&C1&D2&N0&Y3S14=0\015", /* wake_str */
 #else
-    "ATQ0X4&A3&N0&Y3\015",		/* wake_str */
+#ifdef SUNOS4
+    "ATQ0X4&A3&S0&N0&Y3S14=0\015",	/* wake_str -- needs &S0 in SunOS */
+#else
+#ifdef VMS
+    "ATQ0X4&A3&S1&N0&Y3S14=0\015",	/* wake_str -- needs &S1 in VMS */
+#else
+    "ATQ0X4&A3&N0&Y3S14=0\015",		/* wake_str */
+#endif /* VMS */
+#endif /* SUNOS4 */
 #endif /* OS2 */
     0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
@@ -1479,60 +1777,68 @@ MDMINF USR =				/* USR Courier and Sportster modems */
     "ATS0=0\015",			/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
-    57600L,				/* max_speed */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
+    115200L,				/* max_speed */
     CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
     getok				/* ok_fn */
 };
 
-#ifdef OLDTBCODE
+
 static
-MDMINF TELEBIT =			/* All Telebits */
+MDMINF USRX2 =				/* USR XJ-CC1560 X2 56K */
     {
-    "Telebit - all models",
+    "US Robotics / Megahertz CC/XJ-CC1560 X2",
     "ATP\015",				/* pulse command */
     "ATT\015",				/* tone command */
-    60,					/* dial_time */
+    35,					/* dial_time */
     ",",				/* pause_chars */
     2,					/* pause_time */
-/*
-  NOTE: The wake_string MUST contain the I command (model query), and otherwise
-  must contain commands that work on ALL Telebit models.  Here we ensure that
-  result codes are returned (Q0), and ask for extended result codes (X1), and
-  ensure that the escape sequence is +++ and it is enabled.  And also, make
-  sure the final character is not a digit (whose echo might be mistaken for a
-  result code).  The Ctrl-Q (\021) and multiple A's are recommended by Telebit.
-*/
 #ifdef OS2
-    "\021AAAAATQ0X1&S0&C1&D2S12=50 S50=0 I\015", /* wake_str. */
+    "ATQ0E1V1X4&A3&S0&B2&C1&D2&N0\015",	/* wake_str */
 #else
-    "\021AAAAATQ0X1S12=50 S50=0 I\015", /* wake_str. */
+#ifdef VMS
+    "ATQ0X4&A3&B2&N0&S1\015",		/* wake_str */
+#else
+    "ATQ0X4&A3&B2&N0\015",		/* wake_str */
+#endif /* VMS */
 #endif /* OS2 */
-    100,				/* wake_rate = 100 msec */
+    0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
     "",					/* dmode_str */
     "",					/* dmode_prompt */
-    "ATD%s\015",			/* dial_str, Note: no T or P */
-    80,					/* dial_rate */
-    1100,				/* esc_time (guard time) */
+    "ATD%s\015",			/* dial_str */
+    0,					/* dial_rate */
+    1100,				/* esc_time */
     43,					/* esc_char */
     "ATQ0H0\015",			/* hup_str */
-    "ATS58=2S68=2\015",			/* hwfc_str */
-    "ATS58=3S68=3\015",			/* swfc_str */
-    "ATS58=0S68=0\015",			/* nofc_str */
-    "",					/* ec_on_str */
-    "",					/* ec_off_str */
-    "",					/* dc_on_str */
-    "",					/* dc_off_str */
+    "AT&H1&I0\015",			/* hwfc_str */
+    "AT&H2&I2\015",			/* swfc_str */
+    "AT&H0&I0\015",			/* nofc_str */
+    "AT&M4\015",			/* ec_on_str */
+    "AT&M0\015",			/* ec_off_str */
+    "AT&K1\015",			/* dc_on_str */
+    "AT&K0\015",			/* dc_off_str */
     "ATS0=1\015",			/* aa_on_str */
     "ATS0=0\015",			/* aa_off_str */
-    "",					/* sb_on_str */
-    "",					/* sb_off_str */
-    0L,					/* max_speed */
-    CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW|CKD_TB, /* capas */
+    "AT&B1\015",			/* sb_on_str */
+    "AT&B0\015",			/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
+    115200L,				/* max_speed */
+    CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
     getok				/* ok_fn */
 };
-
-#else
 
 static
 MDMINF OLDTB =				/* Old Telebits */
@@ -1544,9 +1850,13 @@ MDMINF OLDTB =				/* Old Telebits */
     ",",				/* pause_chars */
     2,					/* pause_time */
 #ifdef OS2
-    "\021AAAAATQ0X1&S0&C1&D2S12=50S50=0S54=3\015", /* wake_str. */
+    "\021AAAAATQ0E1V1X1&S0&C1&D2S12=50S50=0S54=3\015", /* wake_str. */
 #else
+#ifdef VMS
     "\021AAAAATQ0X1S12=50S50=0S54=3\015", /* wake_str. */
+#else
+    "\021AAAAATQ0X1&S1S12=50S50=0S54=3\015", /* wake_str. */
+#endif /* VMS */
 #endif /* OS2 */
     100,				/* wake_rate = 100 msec */
     "OK\015",				/* wake_prompt */
@@ -1568,6 +1878,13 @@ MDMINF OLDTB =				/* Old Telebits */
     "ATS0=0\015",			/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     19200L,				/* max_speed */
     CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW|CKD_TB|CKD_KS, /* capas */
     getok				/* ok_fn */
@@ -1583,9 +1900,13 @@ MDMINF NEWTB =				/* New Telebits */
     ",",				/* pause_chars */
     2,					/* pause_time */
 #ifdef OS2
-    "\021AAAAATQ0X2&S0&C1&D2S12=50S50=0S61=1S63=0\015", /* wake_str. */
+    "\021AAAAATQ0E1V1X2&S0&C1&D2S12=50S50=0S61=0S63=0\015", /* wake_str. */
 #else
-    "\021AAAAATQ0X2S12=50S50=0S61=1S63=0\015", /* wake_str. */
+#ifdef VMS
+    "\021AAAAATQ0X2&S1S12=50S50=0S61=0S63=0\015", /* wake_str. */
+#else
+    "\021AAAAATQ0X2S12=50S50=0S61=0S63=0\015", /* wake_str. */
+#endif /* VMS */
 #endif /* OS2 */
     100,				/* wake_rate = 100 msec */
     "OK\015",				/* wake_prompt */
@@ -1607,11 +1928,18 @@ MDMINF NEWTB =				/* New Telebits */
     "ATS0=0\015",			/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     38400L,				/* max_speed */
     CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW|CKD_TB|CKD_KS, /* capas */
     getok				/* ok_fn */
 };
-#endif /* OLDTBCODE */
+#endif /* MINIDIAL */
 
 static
 MDMINF DUMMY = /* dummy information for modems that are handled elsewhere */
@@ -1643,11 +1971,19 @@ MDMINF DUMMY = /* dummy information for modems that are handled elsewhere */
     "",					/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "",					/* sp_off_str */
+    "",					/* sp_on_str */
+    "",					/* vol1_str */
+    "",					/* vol2_str */
+    "",					/* vol3_str */
+    "",					/* ignoredt */
+    "",					/* ini2 */
     0L,					/* max_speed */
     0,					/* capas */
     NULL				/* ok_fn */
 };
 
+#ifndef MINIDIAL
 static
 MDMINF RWV32 =				/* Generic Rockwell V.32 */
     {
@@ -1658,9 +1994,13 @@ MDMINF RWV32 =				/* Generic Rockwell V.32 */
     ",",				/* pause_chars */
     2,					/* pause_time */
 #ifdef OS2
-    "ATQ0X4W1Y0&S0&C1&D2%E2\\K5+FCLASS=0N1S37=0\015", /* wake_str */
+    "ATQ0E1V1X4W1Y0&S0&C1&D2%E2\\K5+FCLASS=0N1S37=0\015", /* wake_str */
+#else
+#ifdef VMS
+    "ATQ0X4W1Y0&S1%E2\\K5+FCLASS=0N1S37=0\015", /* wake_str */
 #else
     "ATQ0X4W1Y0%E2\\K5+FCLASS=0N1S37=0\015", /* wake_str */
+#endif /* VMS */
 #endif /* OS2 */
     0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
@@ -1682,6 +2022,13 @@ MDMINF RWV32 =				/* Generic Rockwell V.32 */
     "ATS0=0\015",			/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     57600L,				/* max_speed */
     CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
     getok				/* ok_fn */
@@ -1697,9 +2044,13 @@ MDMINF RWV32B =				/* Generic Rockwell V.32bis */
     ",",				/* pause_chars */
     2,					/* pause_time */
 #ifdef OS2
-    "ATQ0X4W1Y0&S0&C1&D2%E2\\K5+FCLASS=0N1S37=0\015", /* wake_str */
+    "ATQ0E1V1X4W1Y0&S0&C1&D2%E2\\K5+FCLASS=0N1S37=0\015", /* wake_str */
+#else
+#ifdef VMS
+    "ATQ0X4W1Y0&S1%E2\\K5+FCLASS=0N1S37=0\015", /* wake_str */
 #else
     "ATQ0X4W1Y0%E2\\K5+FCLASS=0N1S37=0\015", /* wake_str */
+#endif /* VMS */
 #endif /* OS2 */
     0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
@@ -1721,6 +2072,13 @@ MDMINF RWV32B =				/* Generic Rockwell V.32bis */
     "ATS0=0\015",			/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     57600L,				/* max_speed */
     CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
     getok				/* ok_fn */
@@ -1736,9 +2094,13 @@ MDMINF RWV34 =				/* Generic Rockwell V.34 Data/Fax */
     ",",				/* pause_chars */
     2,					/* pause_time */
 #ifdef OS2
-    "ATQ0X4W1Y0%E2&S0&C1&D2\\K5+FCLASS=0+MS=11,1\015", /* wake_str */
+    "ATQ0E1V1X4W1Y0%E2&S0&C1&D2\\K5+FCLASS=0+MS=11,1\015", /* wake_str */
+#else
+#ifdef VMS
+    "ATQ0X4W1Y0&S1%E2\\K5+FCLASS=0+MS=11,1\015", /* wake_str */
 #else
     "ATQ0X4W1Y0%E2\\K5+FCLASS=0+MS=11,1\015", /* wake_str */
+#endif /* VMS */
 #endif /* OS2 */
     0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
@@ -1760,6 +2122,63 @@ MDMINF RWV34 =				/* Generic Rockwell V.34 Data/Fax */
     "ATS0=0\015",			/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
+    115200L,				/* max_speed */
+    CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
+    getok				/* ok_fn */
+};
+
+static
+MDMINF RWV90 =				/* Generic Rockwell V.90 Data/Fax */
+    {
+    "Generic Rockwell V.90 56K modem",	/* ATI3, ATI4, and ATI6 for details */
+    "ATP\015",				/* pulse command */
+    "ATT\015",				/* tone command */
+    35,					/* dial_time */
+    ",",				/* pause_chars */
+    2,					/* pause_time */
+#ifdef OS2
+    "AT&F0Q0E1V1&S0&C1&D1W1%E2\\K5+FCLASS=0N1S0=0S37=0\\V1\015",
+#else
+#ifdef VMS
+    "AT&F0Q0&S1W1%E2\\K5+FCLASS=0N1S0=0S37=0\\V1\015", /* wake_str */
+#else
+    "AT&F0Q0W1%E2\\K5+FCLASS=0N1S0=0S37=0\\V1\015", /* wake_str */
+#endif /* VMS */
+#endif /* OS2 */
+    0,					/* wake_rate */
+    "OK\015",				/* wake_prompt */
+    "",					/* dmode_str */
+    "",					/* dmode_prompt */
+    "ATD%s\015",			/* dial_str */
+    0,					/* dial_rate */
+    1100,				/* esc_time */
+    43,					/* esc_char */
+    "ATQ0H0\015",			/* hup_str */
+    "AT&K3\015",			/* hwfc_str */
+    "AT&K4S32=17S33=19\015",		/* swfc_str */
+    "AT&K0\015",			/* nofc_str */
+    "AT&Q5S36=7S48=7\\N3\015",		/* ec_on_str */
+    "AT&Q0S48=128\\N1\015",		/* ec_off_str */
+    "AT%C3\015",			/* dc_on_str */
+    "ATS46=136%C0\015",			/* dc_off_str */
+    "ATS0=1\015",			/* aa_on_str */
+    "ATS0=0\015",			/* aa_off_str */
+    "",					/* sb_on_str */
+    "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     115200L,				/* max_speed */
     CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
     getok				/* ok_fn */
@@ -1775,9 +2194,13 @@ MDMINF MWAVE =				/* IBM Mwave */
     ",",				/* pause_chars */
     2,					/* pause_time */
 #ifdef OS2
-    "ATQ0X4Y0&S0&C1&D2&M0&Q0&N1\\K3\\T0%E2S28=0\015", /* wake_str */
+    "ATQ0E1V1X4Y0&S0&C1&D2&M0&Q0&N1\\K3\\T0%E2S28=0\015", /* wake_str */
+#else
+#ifdef VMS
+    "ATQ0X4Y0&M0&S1&Q0&N1&S0\\K3\\T0%E2S28=0\015", /* wake_str */
 #else
     "ATQ0X4Y0&M0&Q0&N1&S0\\K3\\T0%E2S28=0\015", /* wake_str */
+#endif /* VMS */
 #endif /* OS2 */
     0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
@@ -1799,6 +2222,13 @@ MDMINF MWAVE =				/* IBM Mwave */
     "ATS0=0\015",			/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     57600L,				/* max_speed */
     CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW, /* capas */
     getok				/* ok_fn */
@@ -1814,9 +2244,13 @@ MDMINF TELEPATH =			/* Gateway 2000 Telepath */
     ",",				/* pause_chars */
     2,					/* pause_time */
 #ifdef OS2
-    "ATQ0X4&S0&C1&D2&N0&Y2#CLS=0S13=0S15=0S19=0\015", /* wake_str */
+    "ATQ0E1V1X4&S0&C1&D2&N0&Y2#CLS=0S13=0S15=0S19=0\015", /* wake_str */
+#else
+#ifdef VMS
+    "ATQ0X4&N0&S1&Y1#CLS=0S13=0S15=0S19=0\015", /* wake_str */
 #else
     "ATQ0X4&N0&Y1#CLS=0S13=0S15=0S19=0\015", /* wake_str */
+#endif /* VMS */
 #endif /* OS2 */
     0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
@@ -1838,8 +2272,15 @@ MDMINF TELEPATH =			/* Gateway 2000 Telepath */
     "ATS0=0\015",			/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     57600L,				/* max_speed */
-    CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW, /* capas */
+    CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
     getok				/* ok_fn */
 };
 
@@ -1853,9 +2294,13 @@ MDMINF CARDINAL =			/* Cardinal - based on Rockwell V.34 */
     ",",				/* pause_chars */
     2,					/* pause_time */
 #ifdef OS2
-    "ATQ0X4W1Y0%E2&S0&C1&D2\\K5+FCLASS=0+MS=11,1\015", /* wake_str */
+    "ATQ0E1V1X4W1Y0%E2&S0&C1&D2\\K5+FCLASS=0+MS=11,1\015", /* wake_str */
+#else
+#ifdef VMS
+    "ATQ0X4W1Y0&S1%E2\\K5+FCLASS=0+MS=11,1\015", /* wake_str */
 #else
     "ATQ0X4W1Y0%E2\\K5+FCLASS=0+MS=11,1\015", /* wake_str */
+#endif /* VMS */
 #endif /* OS2 */
     0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
@@ -1877,13 +2322,20 @@ MDMINF CARDINAL =			/* Cardinal - based on Rockwell V.34 */
     "ATS0=0\015",			/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     115200L,				/* max_speed */
     CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
     getok				/* ok_fn */
 };
 
 /*
-  Now the "old" modems, all grouped together, and also within 
+  Now the "old" modems, all grouped together, and also within
   "if not defined MINIDIAL"...
 */
 #ifdef OLDMODEMS
@@ -1918,6 +2370,13 @@ MDMINF CERMETEK =	/* Information for "Cermetek Info-Mate 212 A" modem */
     "",					/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "",					/* sp_off_str */
+    "",					/* sp_on_str */
+    "",					/* vol1_str */
+    "",					/* vol2_str */
+    "",					/* vol3_str */
+    "",					/* ignoredt */
+    "",					/* ini2 */
     1200L,				/* max_speed */
     0,					/* capas */
     NULL				/* ok_fn */
@@ -1953,6 +2412,13 @@ MDMINF DF03 =		/* information for "DEC DF03-AC" modem */
     "",					/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "",					/* sp_off_str */
+    "",					/* sp_on_str */
+    "",					/* vol1_str */
+    "",					/* vol2_str */
+    "",					/* vol3_str */
+    "",					/* ignoredt */
+    "",					/* ini2 */
     0L,					/* max_speed */
     0,					/* capas */
     NULL				/* ok_fn */
@@ -1998,6 +2464,13 @@ MDMINF DF100 =		/* information for "DEC DF100-series" modem */
     "",					/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "",					/* sp_off_str */
+    "",					/* sp_on_str */
+    "",					/* vol1_str */
+    "",					/* vol2_str */
+    "",					/* vol3_str */
+    "",					/* ignoredt */
+    "",					/* ini2 */
     0L,					/* max_speed */
     0,					/* capas */
     NULL				/* ok_fn */
@@ -2047,6 +2520,13 @@ MDMINF DF200 =		/* information for "DEC DF200-series" modem */
     "",					/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "",					/* sp_off_str */
+    "",					/* sp_on_str */
+    "",					/* vol1_str */
+    "",					/* vol2_str */
+    "",					/* vol3_str */
+    "",					/* ignoredt */
+    "",					/* ini2 */
     0L,					/* max_speed */
     0,					/* capas */
     NULL				/* ok_fn */
@@ -2082,6 +2562,13 @@ MDMINF GDC =		/* information for "GeneralDataComm 212A/ED" modem */
     "",					/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "",					/* sp_off_str */
+    "",					/* sp_on_str */
+    "",					/* vol1_str */
+    "",					/* vol2_str */
+    "",					/* vol3_str */
+    "",					/* ignoredt */
+    "",					/* ini2 */
     1200L,				/* max_speed */
     0,					/* capas */
     NULL				/* ok_fn */
@@ -2117,6 +2604,13 @@ MDMINF PENRIL =		/* information for "Penril" modem */
     "",					/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "",					/* sp_off_str */
+    "",					/* sp_on_str */
+    "",					/* vol1_str */
+    "",					/* vol2_str */
+    "",					/* vol3_str */
+    "",					/* ignoredt */
+    "",					/* ini2 */
     0L,					/* max_speed */
     0,					/* capas */
     NULL				/* ok_fn */
@@ -2152,6 +2646,13 @@ MDMINF RACAL =				/* Racal Vadic VA4492E */
     "",					/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "",					/* sp_off_str */
+    "",					/* sp_on_str */
+    "",					/* vol1_str */
+    "",					/* vol2_str */
+    "",					/* vol3_str */
+    "",					/* ignoredt */
+    "",					/* ini2 */
     0L,					/* max_speed */
     0,					/* capas */
     NULL				/* ok_fn */
@@ -2187,6 +2688,13 @@ MDMINF VENTEL =				/* Information for Ven-Tel modem */
     "",					/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "",					/* sp_off_str */
+    "",					/* sp_on_str */
+    "",					/* vol1_str */
+    "",					/* vol2_str */
+    "",					/* vol3_str */
+    "",					/* ignoredt */
+    "",					/* ini2 */
     0L,					/* max_speed */
     0,					/* capas */
     NULL				/* ok_fn */
@@ -2222,6 +2730,13 @@ MDMINF CONCORD =	/* Info for Condor CDS 220 2400b modem */
     "",					/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "",					/* sp_off_str */
+    "",					/* sp_on_str */
+    "",					/* vol1_str */
+    "",					/* vol2_str */
+    "",					/* vol3_str */
+    "",					/* ignoredt */
+    "",					/* ini2 */
     2400L,				/* max_speed */
     0,					/* capas */
     NULL				/* ok_fn */
@@ -2268,25 +2783,35 @@ MDMINF MICROCOM =	/* Microcom modems in native SX mode */
     "",					/* aa_off_str */
     "",					/* sb_on_str */
     "",					/* sb_off_str */
+    "SA2",				/* sp_off_str */
+    "SA0",				/* sp_on_str */
+    "",					/* vol1_str */
+    "",					/* vol2_str */
+    "",					/* vol3_str */
+    "",					/* ignoredt */
+    "",					/* ini2 */
     0L,					/* max_speed */
     CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW|CKD_KS, /* capas */
     getok				/* ok_fn */
 };
 
-
 static
 MDMINF MICROLINK =			/* MicroLink ... */
     {					/* 14.4TQ,TL,PC;28.8TQ,TQV;2440T/TR */
-    "MicroLink 14.4 or 28.8",		/* ELSA GmbH, Aachen */
+    "ELSA MicroLink 14.4, 28.8, 33.6 or 56K", /* ELSA GmbH, Aachen */
     "ATP\015",				/* pulse command */
     "ATT\015",				/* tone command */
     35,					/* dial_time */
     ",",				/* pause_chars */
     2,					/* pause_time */
 #ifdef OS2
-    "ATQ0X4&S0\\D0&C1&D2\\K5\015",	/* wake_str */
+    "ATQ0E1V1X4&S0\\D0&C1&D2\\K5\015",	/* wake_str */
+#else
+#ifdef VMS
+    "ATQ0X4&S1\\K5\015",		/* wake_str */
 #else
     "ATQ0X4\\K5\015",			/* wake_str */
+#endif /* VMS */
 #endif /* OS2 */
     0,					/* wake_rate */
     "OK\015",				/* wake_prompt */
@@ -2308,12 +2833,901 @@ MDMINF MICROLINK =			/* MicroLink ... */
     "ATS0=0\015",			/* aa_off_str */
     "\\J0",				/* sb_on_str (?) */
     "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
+    57600L,				/* max_speed */
+    CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
+    getok				/* ok_fn */
+};
+
+static
+MDMINF ULINKV250 =			/* MicroLink V.250 */
+    {					/* 56Kflex, V.90; V.250 command set */
+    "ELSA MicroLink 56K V.250",		/* ELSA GmbH, Aachen */
+    "ATP\015",				/* pulse command */
+    "ATT\015",				/* tone command */
+    35,					/* dial_time */
+    ",",				/* pause_chars */
+    2,					/* pause_time */
+#ifdef OS2
+    /* \D0 = DSR & CTS always on but hwfc overrides on CTS. */
+    "ATQ0E1V1X4&S0\\D0&C1&D2\015",	/* wake_str */
+#else
+#ifdef VMS
+    "ATQ0X4&S1\015",			/* wake_str */
+#else
+    "ATQ0X4\015",			/* wake_str */
+#endif /* VMS */
+#endif /* OS2 */
+    0,					/* wake_rate */
+    "OK\015",				/* wake_prompt */
+    "",					/* dmode_str */
+    "",					/* dmode_prompt */
+    "ATD%s\015",			/* dial_str */
+    0,					/* dial_rate */
+    1100,				/* esc_time */
+    43,					/* esc_char */
+    "ATQ0H0\015",			/* hup_str */
+    "AT+IFC=2,2\015",			/* hwfc_str */
+    "AT+IFC=1,1\015",			/* swfc_str */
+    "AT+IFC=0,0\015",			/* nofc_str */
+    "AT+ES=3,0\015",			/* ec_on_str */
+    "AT+ES=1,0\015",			/* ec_off_str */
+    "AT+DS=3,0,2048,32\015",		/* dc_on_str */
+    "AT+DS=0,0\015",			/* dc_off_str */
+
+    "ATS0=1\015",			/* aa_on_str */
+    "ATS0=0\015",			/* aa_off_str */
+    "",					/* sb_on_str (?) */
+    "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
+    57600L,				/* max_speed */
+    CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
+    getok				/* ok_fn */
+};
+#endif /* MINIDIAL */
+
+static
+MDMINF ITUTV250 =			/* ITU-T V.250 conforming modem */
+{
+    "Any ITU-T V.25ter/V.250 conformant modem",
+    "ATP\015",				/* pulse command */
+    "ATT\015",				/* tone command */
+    35,					/* dial_time */
+    ",",				/* pause_chars */
+    2,					/* pause_time */
+#ifdef OS2
+    "ATQ0E1V1X4&S0&C1&D2\015",		/* wake_str */
+#else
+#ifdef VMS
+    "ATQ0X4&S1\015",			/* wake_str */
+#else
+    "ATQ0X4\015",			/* wake_str */
+#endif /* VMS */
+#endif /* OS2 */
+    0,					/* wake_rate */
+    "OK\015",				/* wake_prompt */
+    "",					/* dmode_str */
+    "",					/* dmode_prompt */
+    "ATD%s\015",			/* dial_str */
+    0,					/* dial_rate */
+    1100,				/* esc_time */
+    43,					/* esc_char */
+    "ATQ0H0\015",			/* hup_str */
+    "AT+IFC=2,2\015",			/* hwfc_str */
+    "AT+IFC=1,1\015",			/* swfc_str */
+    "AT+IFC=0,0\015",			/* nofc_str */
+    "AT+ES=3,0,2;+EB=1,0,30\015",	/* ec_on_str */
+    "AT+ES=0\015",			/* ec_off_str */
+    "AT+DS=3,0\015",			/* dc_on_str */
+    "AT+DS=0,0\015",			/* dc_off_str */
+    "ATS0=1\015",			/* aa_on_str */
+    "ATS0=0\015",			/* aa_off_str */
+    "",					/* sb_on_str */
+    "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
+    57600L,				/* max_speed */
+    CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
+    getok				/* ok_fn */
+};
+
+#ifndef CK_TAPI
+static
+#endif /* CK_TAPI */
+MDMINF GENERIC =			/* Generic high speed ... */
+    {
+    "Generic high-speed AT command set",
+    "ATP\015",				/* pulse command */
+    "ATT\015",				/* tone command */
+    35,					/* dial_time */
+    ",",				/* pause_chars */
+    2,					/* pause_time */
+    "AT&F\015",				/* wake_str */
+    0,					/* wake_rate */
+    "OK\015",				/* wake_prompt */
+    "",					/* dmode_str */
+    "",					/* dmode_prompt */
+    "ATD%s\015",			/* dial_str */
+    0,					/* dial_rate */
+    1100,				/* esc_time */
+    43,					/* esc_char */
+    "ATQ0H\015",			/* hup_str */
+    "",					/* hwfc_str */
+    "",					/* swfc_str */
+    "",					/* nofc_str */
+    "",					/* ec_on_str */
+    "",					/* ec_off_str */
+    "",					/* dc_on_str */
+    "",					/* dc_off_str */
+    "ATS0=1\015",			/* aa_on_str */
+    "ATS0=0\015",			/* aa_off_str */
+    "",					/* sb_on_str */
+    "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
     57600L,				/* max_speed */
     CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW, /* capas */
     getok				/* ok_fn */
 };
 
+#ifndef MINIDIAL
+static
+MDMINF XJACK =				/* Megahertz X-Jack */
+    {
+    "Megahertz X-Jack XJ3144 / CC6144",
+    "ATP\015",				/* pulse command */
+    "ATT\015",				/* tone command */
+    35,					/* dial_time */
+    ",",				/* pause_chars */
+    2,					/* pause_time */
+#ifdef OS2
+    "ATQ0E1V1X4N1&C1&D2\\K5\015",	/* wake_str */
+#else
+    "ATQ0X4N1\\K5\015",			/* wake_str */
+#endif /* OS2 */
+    0,					/* wake_rate */
+    "OK\015",				/* wake_prompt */
+    "",					/* dmode_str */
+    "",					/* dmode_prompt */
+    "ATD%s\015",			/* dial_str */
+    0,					/* dial_rate */
+    1100,				/* esc_time */
+    43,					/* esc_char */
+    "ATQ0H\015",			/* hup_str */
+    "AT&K3\015",			/* hwfc_str */
+    "AT&K4\015",			/* swfc_str */
+    "AT&K0\015",			/* nofc_str */
+    "AT\\N3&Q5\015",			/* ec_on_str */
+    "AT\\N1&Q0\015",			/* ec_off_str */
+    "AT%C3\015",			/* dc_on_str */
+    "AT%C0\015",			/* dc_off_str */
+    "ATS0=1\015",			/* aa_on_str */
+    "ATS0=0\015",			/* aa_off_str */
+    "",					/* sb_on_str */
+    "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
+    57600L,				/* max_speed */
+    CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
+    getok				/* ok_fn */
+};
 
+static
+MDMINF SPIRITII =			/* QuickComm Spirit II */
+    {
+    "QuickComm Spirit II",
+    "ATP\015",				/* pulse command */
+    "ATT\015",				/* tone command */
+    35,					/* dial_time */
+    ",",				/* pause_chars */
+    2,					/* pause_time */
+    "AT&F\015",				/* wake_str */
+    0,					/* wake_rate */
+    "OK\015",				/* wake_prompt */
+    "",					/* dmode_str */
+    "",					/* dmode_prompt */
+    "ATD%s\015",			/* dial_str */
+    0,					/* dial_rate */
+    1100,				/* esc_time */
+    43,					/* esc_char */
+    "ATQ0H\015",			/* hup_str */
+    "AT*F3\015",			/* hwfc_str */
+    "AT*F2\015",			/* swfc_str */
+    "AT*F0\015",			/* nofc_str */
+    "AT*E6\015",			/* ec_on_str */
+    "AT*E0\015",			/* ec_off_str */
+    "AT*E9\015",			/* dc_on_str */
+    "AT*E0\015",			/* dc_off_str */
+    "ATS0=2\015",			/* aa_on_str */
+    "ATS0=0\015",			/* aa_off_str */
+    "",					/* sb_on_str */
+    "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
+    57600L,				/* max_speed */
+    CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
+    getok				/* ok_fn */
+};
+
+static
+MDMINF MONTANA = {			/* Motorola Montana */
+    "Motorola Montana",			/* Name */
+    "ATP\015",				/* pulse command */
+    "ATT\015",				/* tone command */
+    35,					/* dial_time */
+    ",",				/* pause_chars */
+    2,					/* pause_time */
+#ifdef OS2
+    "ATQ0E1V1X4&S0&C1&D2\\K5\\V1\015",	/* wake_str */
+#else
+#ifdef VMS
+    "ATQ0E1X4&S1\\K5\\V1\015",		/* wake_str */
+#else
+    "ATQ0E1X4\\K5\\V1\015",		/* wake_str */
+#endif /* VMS */
+#endif /* OS2 */
+    0,					/* wake_rate */
+    "OK\015",				/* wake_prompt */
+    "",					/* dmode_str */
+    "",					/* dmode_prompt */
+    "ATD%s\015",			/* dial_str */
+    0,					/* dial_rate */
+    1100,				/* esc_time */
+    43,					/* esc_char */
+    "ATQ0H0\015",			/* hup_str */
+    "AT\\Q3\015",			/* hwfc_str */
+    "AT\\Q1\015",			/* swfc_str */
+    "AT\\Q0\015",			/* nofc_str */
+    "AT\\N4\015",			/* ec_on_str */
+    "AT\\N1\015",			/* ec_off_str */
+    "AT%C1\015",			/* dc_on_str */
+    "AT%C0\015",			/* dc_off_str */
+    "ATS0=1\015",			/* aa_on_str */
+    "ATS0=0\015",			/* aa_off_str */
+    "AT\\J0\015",			/* sb_on_str */
+    "AT\\J1\015",			/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
+    57600L,				/* max_speed */
+    CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
+    getok				/* ok_fn */
+};
+
+static
+MDMINF COMPAQ = {			/* Compaq Data+Fax Modem */
+    "Compaq Data+Fax Modem",		/* Name */
+    "ATP\015",				/* pulse command */
+    "ATT\015",				/* tone command */
+    35,					/* dial_time */
+    ",",				/* pause_chars */
+    2,					/* pause_time */
+#ifdef OS2
+    "ATQ0E1V1X4&S0&C1&D2\015",		/* wake_str */
+#else
+#ifdef VMS
+    "ATQ0E1X4&S1\015",			/* wake_str */
+#else
+    "ATQ0E1X4\015",			/* wake_str */
+#endif /* VMS */
+#endif /* OS2 */
+    0,					/* wake_rate */
+    "OK\015",				/* wake_prompt */
+    "",					/* dmode_str */
+    "",					/* dmode_prompt */
+    "ATD%s\015",			/* dial_str */
+    0,					/* dial_rate */
+    1100,				/* esc_time */
+    43,					/* esc_char */
+    "ATQ0H0\015",			/* hup_str */
+    "AT\\Q3\015",			/* hwfc_str (same as &K3) */
+    "AT\\Q1\015",			/* swfc_str (same as &K4) */
+    "AT\\Q0\015",			/* nofc_str (same as &K0) */
+    "AT\\N3\015",			/* ec_on_str */
+    "AT\\N0\015",			/* ec_off_str */
+    "AT%C1\015",			/* dc_on_str */
+    "AT%C0\015",			/* dc_off_str */
+    "ATS0=1\015",			/* aa_on_str */
+    "ATS0=0\015",			/* aa_off_str */
+    "AT\\N3\015",			/* sb_on_str */
+    "AT\\N1\015",			/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL0\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
+    115200L,				/* max_speed */
+    CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
+    getok				/* ok_fn */
+};
+
+
+static
+MDMINF FUJITSU = {			/* Fujitsu */
+    "Fujitsu Fax/Modem Adapter",	/* Name */
+    "ATP\015",				/* pulse command */
+    "ATT\015",				/* tone command */
+    35,					/* dial_time */
+    ",",				/* pause_chars */
+    2,					/* pause_time */
+#ifdef OS2
+    "ATQ0E1V1X4&S0&C1&D2\\K5\\N3\015",	/* wake_str */
+#else
+#ifdef VMS
+    "ATQ0E1X4&S1\\K5\\N3\015",		/* wake_str */
+#else
+    "ATQ0E1X4\\K5\\N3\015",		/* wake_str */
+#endif /* VMS */
+#endif /* OS2 */
+    0,					/* wake_rate */
+    "OK\015",				/* wake_prompt */
+    "",					/* dmode_str */
+    "",					/* dmode_prompt */
+    "ATD%s\015",			/* dial_str */
+    0,					/* dial_rate */
+    1100,				/* esc_time */
+    43,					/* esc_char */
+    "ATQ0H0\015",			/* hup_str */
+    "AT&K3\\Q3\015",			/* hwfc_str */
+    "AT&K4\\Q1\015",			/* swfc_str */
+    "AT&K0\\Q0\015",			/* nofc_str */
+    "AT\\N3\015",			/* ec_on_str */
+    "AT\\N0\015",			/* ec_off_str */
+    "AT%C1",				/* dc_on_str */
+    "AT%C0",				/* dc_off_str */
+    "ATS0=1\015",			/* aa_on_str */
+    "ATS0=0\015",			/* aa_off_str */
+    "AT\\J0\015",			/* sb_on_str */
+    "AT\\J1\015",			/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
+    115200L,				/* max_speed */
+    CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
+    getok				/* ok_fn */
+};
+
+static
+MDMINF MHZATT =				/* Megahertz AT&T V.34 */
+    {
+    "Megahertz AT&T V.34",
+    "ATP\015",				/* pulse command */
+    "ATT\015",				/* tone command */
+    35,					/* dial_time */
+    ",",				/* pause_chars */
+    2,					/* pause_time */
+#ifdef OS2
+    "ATQ0E1V1X4N1&C1&D2\\K5\015",	/* wake_str */
+#else
+    "ATQ0X4N1\\K5\015",			/* wake_str */
+#endif /* OS2 */
+    0,					/* wake_rate */
+    "OK\015",				/* wake_prompt */
+    "",					/* dmode_str */
+    "",					/* dmode_prompt */
+    "ATD%s\015",			/* dial_str */
+    0,					/* dial_rate */
+    1100,				/* esc_time */
+    43,					/* esc_char */
+    "ATQ0H\015",			/* hup_str */
+    "AT&K3\015",			/* hwfc_str */
+    "AT&K4\015",			/* swfc_str */
+    "AT&K0\015",			/* nofc_str */
+    "AT\\N3\015",			/* ec_on_str */
+    "AT\\N0\015",			/* ec_off_str */
+    "AT%C1\"H3\015",			/* dc_on_str */
+    "AT%C0\"H0\015",			/* dc_off_str */
+    "ATS0=1\015",			/* aa_on_str */
+    "ATS0=0\015",			/* aa_off_str */
+    "AT\\J0\015",			/* sb_on_str */
+    "AT\\J1\015",			/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
+    115200L,				/* max_speed */
+    CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
+    getok				/* ok_fn */
+};
+
+static
+MDMINF SUPRASON =			/* SupraSonic */
+    {
+    "Diamond SupraSonic 288V+",		/* Diamond Multimedia Systems Inc */
+    "ATP\015",				/* pulse command */
+    "ATT\015",				/* tone command */
+    35,					/* dial_time */
+    ",",				/* pause_chars */
+    2,					/* pause_time */
+#ifdef OS2
+    "ATQ0E1V1N1W0X4Y0&S0&C1&D2\015",	/* wake_str */
+#else
+#ifdef VMS
+    "ATQ0E1N1W0X4Y0&S1\015",		/* wake_str */
+#else
+    "ATQ0E1N1W0X4Y0\015",		/* wake_str */
+#endif /* VMS */
+#endif /* OS2 */
+    0,					/* wake_rate */
+    "OK\015",				/* wake_prompt */
+    "",					/* dmode_str */
+    "",					/* dmode_prompt */
+    "ATD%s\015",			/* dial_str */
+    0,					/* dial_rate */
+    1100,				/* esc_time */
+    43,					/* esc_char */
+    "ATQ0H0\015",			/* hup_str */
+    "AT&K3\015",			/* hwfc_str */
+    "AT&K4\015",			/* swfc_str */
+    "AT&K\015",				/* nofc_str */
+    "AT&Q5\\N3S48=7\015",		/* ec_on_str */
+    "AT&Q0\\N1\015",			/* ec_off_str */
+    "AT%C3S46=138\015",			/* dc_on_str */
+    "AT%C0S46=136\015",			/* dc_off_str */
+    "ATS0=1\015",			/* aa_on_str */
+    "ATS0=0\015",			/* aa_off_str */
+    "",					/* sb_on_str */
+    "",					/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM\015",				/* sp_off_str */
+    "ATL\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
+    115200L,				/* max_speed */
+    CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
+    getok				/* ok_fn */
+};
+
+static
+MDMINF BESTDATA =			/* Best Data */
+    {
+    "Best Data Fax Modem",		/* Best Data Fax Modem */
+    "ATP\015",				/* pulse command */
+    "ATT\015",				/* tone command */
+    35,					/* dial_time */
+    ",",				/* pause_chars */
+    2,					/* pause_time */
+#ifdef OS2
+    "ATQ0E1V1N1W0X4Y0&S0&C1&D2\015",	/* wake_str */
+#else
+#ifdef VMS
+    "ATQ0E1N1W0X4Y0&S1\015",		/* wake_str */
+#else
+    "ATQ0E1N1W0X4Y0\015",		/* wake_str */
+#endif /* VMS */
+#endif /* OS2 */
+    0,					/* wake_rate */
+    "OK\015",				/* wake_prompt */
+    "",					/* dmode_str */
+    "",					/* dmode_prompt */
+    "ATD%s\015",			/* dial_str */
+    0,					/* dial_rate */
+    1100,				/* esc_time */
+    43,					/* esc_char */
+    "ATQ0H0\015",			/* hup_str */
+    "AT&K3\015",			/* hwfc_str */
+    "AT&K4\015",			/* swfc_str */
+    "AT&K\015",				/* nofc_str */
+    "AT&Q6\\N3\015",			/* ec_on_str */
+    "AT&Q0\\N1\015",			/* ec_off_str */
+    "AT%C3\015",			/* dc_on_str */
+    "AT%C0\015",			/* dc_off_str */
+    "ATS0=1\015",			/* aa_on_str */
+    "ATS0=0\015",			/* aa_off_str */
+    "AT\\N3\015",			/* sb_on_str */
+    "AT\\N0\015",			/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
+    57600L,				/* max_speed */
+    CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
+    getok				/* ok_fn */
+};
+
+static
+MDMINF ATT1900 =			/* AT&T Secure Data STU III 1900 */
+    {
+    "AT&T Secure Data STU III Model 1900", /* name */
+    "",					/* pulse command */
+    "",					/* tone command */
+    35,					/* dial_time */
+    ",",				/* pause_chars */
+    2,					/* pause_time */
+#ifdef OS2
+    "ATQ0E1V1X4\015",			/* wake_str */
+#else
+    "ATQ0E1X4\015",			/* wake_str */
+#endif /* OS2 */
+    0,					/* wake_rate */
+    "OK\015",				/* wake_prompt */
+    "",					/* dmode_str */
+    "",					/* dmode_prompt */
+    "ATD%s\015",			/* dial_str */
+    0,					/* dial_rate */
+    1100,				/* esc_time */
+    43,					/* esc_char */
+    "ATQ0H0\015",			/* hup_str */
+    "",					/* hwfc_str */
+    "",					/* swfc_str */
+    "",					/* nofc_str */
+    "",					/* ec_on_str */
+    "",					/* ec_off_str */
+    "",					/* dc_on_str */
+    "",					/* dc_off_str */
+    "ATS0=1\015",			/* aa_on_str */
+    "ATS0=0\015",			/* aa_off_str */
+    "",					/* sb_on_str */
+    "",					/* sb_off_str */
+    "",					/* sp_on_str */
+    "",					/* sp_off_str */
+    "",					/* vol1_str */
+    "",					/* vol2_str */
+    "",					/* vol3_str */
+    "",					/* ignoredt */
+    "",					/* ini2 */
+    9600L,				/* max_speed */
+    CKD_AT|CKD_SB|CKD_HW,		/* capas */
+    getok				/* ok_fn */
+};
+
+/*
+  Experimentation showed that hardly any of the documented commands did
+  anything other that print ERROR.  At first there was no communication at
+  all at 9600 bps -- turns out the interface speed was stuck at 2400.
+  ATS28=130 (given at 2400 bps) allowed it to work at 9600.
+*/
+static
+MDMINF ATT1910 =			/* AT&T Secure Data STU III 1910 */
+    {					/* Adds V.32bis, V.42, V.42bis */
+    "AT&T Secure Data STU III Model 1910", /* name */
+
+/* Believe it or not, "ATT" and "ATP" result in ERROR */
+
+    "",					/* pulse command */
+    "",					/* tone command */
+    35,					/* dial_time */
+    ",",				/* pause_chars */
+    2,					/* pause_time */
+#ifdef OS2
+    "ATQ0E1V1X4\015",			/* wake_str */
+#else
+    "ATQ0E1X4\015",			/* wake_str */
+#endif /* OS2 */
+    0,					/* wake_rate */
+    "OK\015",				/* wake_prompt */
+    "",					/* dmode_str */
+    "",					/* dmode_prompt */
+    "ATD%s\015",			/* dial_str */
+    0,					/* dial_rate */
+    1100,				/* esc_time */
+    43,					/* esc_char */
+    "ATQ0H0\015",			/* hup_str */
+    "",					/* hwfc_str */
+    "",					/* swfc_str */
+    "",					/* nofc_str */
+#ifdef COMMENT
+/* These are evidently read-only registers */
+    "ATS46=138S47=0\015",		/* ec_on_str */
+    "ATS46=138S47=128\015",		/* ec_off_str */
+    "ATS46=138S47=0\015",		/* dc_on_str */
+    "ATS46=138S47=128\015",		/* dc_off_str */
+#else
+    "",
+    "",
+    "",
+    "",
+#endif /* COMMENT */
+    "ATS0=1\015",			/* aa_on_str */
+    "ATS0=0\015",			/* aa_off_str */
+    "",					/* sb_on_str */
+    "",					/* sb_off_str */
+    "",					/* sp_on_str */
+    "",					/* sp_off_str */
+    "",					/* vol1_str */
+    "",					/* vol2_str */
+    "",					/* vol3_str */
+    "",					/* ignoredt */
+    "",					/* ini2 */
+    9600L,				/* max_speed */
+    CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW,	/* capas */
+    getok				/* ok_fn */
+};
+
+static
+MDMINF KEEPINTOUCH =			/* AT&T KeepinTouch Card Modem */
+    {
+    "AT&T KeepinTouch V.32bis Card Modem", /* Name */
+    "ATP\015",				/* pulse command */
+    "ATT\015",				/* tone command */
+    35,					/* dial_time */
+    ",",				/* pause_chars */
+    2,					/* pause_time */
+#ifdef OS2
+/* This used to include &C1&S0&D2+Q0 but that gives ERROR */
+    "ATQ0E1V1X4&S0&C1&D2\\K5\015",	/* wake_str */
+#else
+#ifdef VMS
+    "ATQ0E1X4&S1\\K5\015",		/* wake_str */
+#else
+    "ATQ0E1X4\\K5\015",			/* wake_str */
+#endif /* VMS */
+#endif /* OS2 */
+    0,					/* wake_rate */
+    "OK\015",				/* wake_prompt */
+    "",					/* dmode_str */
+    "",					/* dmode_prompt */
+    "ATD%s\015",			/* dial_str */
+    0,					/* dial_rate */
+    1100,				/* esc_time */
+    43,					/* esc_char */
+    "ATQ0H0\015",			/* hup_str */
+    "AT\\Q3\015",			/* hwfc_str */
+    "AT\\Q1\\X0\015",			/* swfc_str */
+    "AT\\Q0\015",			/* nofc_str */
+    "AT\\N3-J1\015",			/* ec_on_str */
+    "AT\\N1\015",			/* ec_off_str */
+    "AT%C3\"H3\015",			/* dc_on_str */
+    "AT%C0\"H0\015",			/* dc_off_str */
+    "ATS0=1\015",			/* aa_on_str */
+    "ATS0=0\015",			/* aa_off_str */
+    "ATN0\\J0\015",			/* sb_on_str */
+    "ATN1\\J1\015",			/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "",					/* vol1_str */
+    "",					/* vol2_str */
+    "",					/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
+    57600L,				/* max_speed */
+    CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
+    getok				/* ok_fn */
+};
+
+static
+MDMINF ROLM_AT =		/* Rolm data phone with AT command set */
+    {
+    "Rolm 244PC or 600 Series with AT Command Set",
+    "",					/* pulse command */
+    "",					/* tone command */
+    35,					/* dial_time */
+    ",",				/* pause_chars */
+    2,					/* pause_time */
+#ifdef OS2
+    "ATE1Q0V1\015",			/* wake_str */
+#else
+    "ATQ0\015",				/* wake_str */
+#endif /* OS2 */
+    0,					/* wake_rate */
+    "OK\015",				/* wake_prompt */
+    "",					/* dmode_str */
+    "",					/* dmode_prompt */
+    "ATDT%s\015",			/* dial_str -- always Tone */
+    0,					/* dial_rate */
+    1100,				/* esc_time */
+    43,					/* esc_char */
+    "ATQ0H0\015",			/* hup_str */
+    "",					/* hwfc_str */
+    "",					/* swfc_str */
+    "",					/* nofc_str */
+    "",					/* ec_on_str */
+    "",					/* ec_off_str */
+    "",					/* dc_on_str */
+    "",					/* dc_off_str */
+    "ATS0=1\015",			/* aa_on_str */
+    "ATS0=0\015",			/* aa_off_str */
+    "",					/* sb_on_str */
+    "",					/* sb_off_str */
+    "",					/* sp_on_str */
+    "",					/* sp_off_str */
+    "",					/* vol1_str */
+    "",					/* vol2_str */
+    "",					/* vol3_str */
+    "",					/* ignoredt */
+    "",					/* ini2 */
+    19200L,				/* max_speed */
+    CKD_AT,				/* capas */
+    getok				/* ok_fn */
+};
+
+static
+MDMINF ATLAS =				/* Atlas / Newcom ixfC 33.6 */
+    {
+    "Atlas / Newcom 33600ixfC Data/Fax Modem", /* Name */
+    "ATP\015",				/* pulse command */
+    "ATT\015",				/* tone command */
+    35,					/* dial_time */
+    ",",				/* pause_chars */
+    2,					/* pause_time */
+#ifdef OS2
+    "ATZ0&FQ0V1&C1&D2\015",		/* wake_str */
+#else
+    "ATZ0&FQ0V1\015",			/* wake_str */
+#endif /* OS2 */
+    0,					/* wake_rate */
+    "OK\015",				/* wake_prompt */
+    "",					/* dmode_str */
+    "",					/* dmode_prompt */
+    "ATD%s\015",			/* dial_str */
+    0,					/* dial_rate */
+    1100,				/* esc_time */
+    43,					/* esc_char */
+    "ATQ0H0\015",			/* hup_str */
+    "AT&K3\015",			/* hwfc_str */
+    "AT&K4\015",			/* swfc_str */
+    "AT&K0\015",			/* nofc_str */
+    "AT\"H3\015",			/* ec_on_str */
+    "AT\"H0\015",			/* ec_off_str */
+    "AT%C1\015",			/* dc_on_str */
+    "AT%C0\015",			/* dc_off_str */
+    "ATS0=1\015",			/* aa_on_str */
+    "ATS0=0\015",			/* aa_off_str */
+    "ATN0\\J0\015",			/* sb_on_str */
+    "ATN1\\J1\015",			/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
+    115200L,				/* max_speed */
+    CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
+    getok				/* ok_fn */
+};
+
+static
+MDMINF CODEX = {			/* Motorola Codex */
+    "Motorola Codex 326X Series",	/* Name - AT&V to see settings */
+    "ATP\015",				/* pulse command */
+    "ATT\015",				/* tone command */
+    35,					/* dial_time */
+    ",",				/* pause_chars */
+    2,					/* pause_time */
+#ifdef OS2
+    /* &M0=Async (not sync) */
+    /* *MM0=Automatic modulation negotiation */
+    /* *DE22=Automatic data rate */
+    "ATZQ0E1V1X4Y0*DE22*MM0&C1&M0&S0&D2\015", /* wake_str */
+#else
+#ifdef VMS
+    "ATZQ0E1V1X4Y0*DE22*MM0&C1&M0&S1\015", /* wake_str */
+#else
+    "ATZQ0E1V1X4Y0*DE22*MM0&C1&M0\015",	/* wake_str */
+#endif /* VMS */
+#endif /* OS2 */
+    0,					/* wake_rate */
+    "OK\015",				/* wake_prompt */
+    "",					/* dmode_str */
+    "",					/* dmode_prompt */
+    "ATD%s\015",			/* dial_str */
+    0,					/* dial_rate */
+    1100,				/* esc_time */
+    43,					/* esc_char */
+    "ATQ0H0\015",			/* hup_str */
+    "AT*MF1*FL3\015",			/* hwfc_str */
+    "AT*MF1*FL1\015",			/* swfc_str */
+    "AT*MF0*FL0\015",			/* nofc_str */
+    "AT*EC0*SM3*SC0\015",		/* ec_on_str */
+    "AT*SM0\015",			/* ec_off_str */
+    "AT*DC1\015",			/* dc_on_str */
+    "AT*DC0\015",			/* dc_off_str */
+    "AT*AA5S0=1\015",			/* aa_on_str */
+    "AT*AA5S0=0\015",			/* aa_off_str */
+    "AT*SC1\015",			/* sb_on_str */
+    "AT*SC0\015",			/* sb_off_str */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3*BD2\015",			/* ignoredt */
+    "",					/* ini2 */
+    115200L,				/* max_speed */
+    CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
+    getok				/* ok_fn */
+};
+
+static
+MDMINF MT5634ZPX =			/* Multitech */
+    {
+    "Multitech MT5634ZPX",		/* name */
+    "ATP\015",				/* pulse command */
+    "ATT\015",				/* tone command */
+    35,					/* dial_time */
+    ",",				/* pause_chars */
+    2,					/* pause_time */
+#ifdef OS2
+    "ATE1Q0V1X4&S0&C1&D2&Q0\015",	/* wake_str */
+#else
+#ifdef VMS
+    "ATQ0E1X4&S1&Q0\015",		/* wake_str */
+#else
+    "ATQ0E1X4&Q0\015",			/* wake_str */
+#endif /* VMS */
+#endif /* OS2 */
+    0,					/* wake_rate */
+    "OK\015",				/* wake_prompt */
+    "",					/* dmode_str */
+    "",					/* dmode_prompt */
+    "ATD%s\015",			/* dial_str */
+    0,					/* dial_rate */
+    1100,				/* esc_time */
+    43,					/* esc_char */
+    "ATQ0H0\015",			/* hup_str */
+    "AT&K3\015",			/* hwfc_str */
+    "AT&K4\015",			/* swfc_str */
+    "AT&K0\015",			/* nofc_str */
+    "AT\\N3\015",			/* ec_on_str */
+    "AT\\N1\015",			/* ec_off_str */
+    "AT%C1\015",			/* dc_on_str */
+    "AT%C0\015",			/* dc_off_str */
+    "ATS0=1\015",			/* aa_on_str */
+    "ATS0=0\015",			/* aa_off_str */
+    "AT\\J0\015",			/* sb_on_str */
+    "AT\\J1\015",			/* sb_off_str (NOT SUPPORTED) */
+    "ATM1\015",				/* sp_on_str */
+    "ATM0\015",				/* sp_off_str */
+    "ATL1\015",				/* vol1_str */
+    "ATL2\015",				/* vol2_str */
+    "ATL3\015",				/* vol3_str */
+    "ATX3\015",				/* ignoredt */
+    "",					/* ini2 */
+    115200L,				/* max_speed */
+    CKD_AT|CKD_SB|CKD_EC|CKD_DC|CKD_HW|CKD_SW, /* capas */
+    getok				/* ok_fn */
+};
 #endif /* MINIDIAL */
 
 /* END MDMINF STRUCT DEFINITIONS */
@@ -2326,10 +3740,15 @@ MDMINF MICROLINK =			/* MicroLink ... */
 
 MDMINF *modemp[] = {
 #ifdef MINIDIAL
+    NULL,				/*  0 */
     &CCITT,				/*  1 */
     &HAYES,				/*  2 */
-    &UNKNOWN				/*  3 */
-#else
+    &UNKNOWN,				/*  3 */
+    &DUMMY,				/*  4 */
+    &GENERIC,				/*  5 */
+    &ITUTV250				/*  6 */
+#else  /* Not MINIDIAL */
+    NULL,				/*  0 */
     &ATTDTDM,				/*  1 */
     &ATTISN,				/*  2 */
     &ATTMODEM,				/*  3 */
@@ -2371,11 +3790,7 @@ MDMINF *modemp[] = {
     NULL,
 #endif /* OLDMODEMS */
     &USR,				/* 19 USR Courier and Sportster */
-#ifdef OLDTBCODE
-    &TELEBIT,
-#else
     &OLDTB,				/* 20 Old Telebits */
-#endif /* OLDTBCODE */
     &DIGITEL,				/* 21 Digitel CCITT */
     &H_1200,				/* 22 Hayes 1200 */
     &H_ULTRA,				/* 23 Hayes Ultra */
@@ -2394,11 +3809,7 @@ MDMINF *modemp[] = {
     &ZOOM,				/* 36 Zoom */
     &ZYXEL,				/* 37 ZyXEL */
     &DUMMY,				/* 38 TAPI */
-#ifdef OLDTBCODE
-    &TELEBIT,
-#else
     &NEWTB,				/* 39 New-Telebit */
-#endif /* OLDTBCODE */
     &MAXTECH,				/* 40 MaxTech */
     &DUMMY,				/* 41 User-defined */
     &RWV32,				/* 42 Rockwell V.32 */
@@ -2407,7 +3818,28 @@ MDMINF *modemp[] = {
     &MWAVE,				/* 45 IBM Mwave */
     &TELEPATH,				/* 46 Gateway 2000 Telepath II 28.8 */
     &MICROLINK,				/* 47 MicroLink modems */
-    &CARDINAL				/* 48 Cardinal */
+    &CARDINAL,				/* 48 Cardinal */
+    &GENERIC,				/* 49 Generic high-speed */
+    &XJACK,				/* 50 Megahertz-Xjack */
+    &SPIRITII,				/* 51 QuickComm Spirit II */
+    &MONTANA,				/* 52 Motorola Montana */
+    &COMPAQ,				/* 53 Compaq Data+Fax */
+    &FUJITSU,				/* 54 Fujitsu */
+    &MHZATT,				/* 55 Megahertz AT&T V.34 */
+    &SUPRASON,				/* 56 Suprasonic */
+    &BESTDATA,				/* 57 Best Data */
+    &ATT1900,				/* 58 AT&T Secure Data STU III 1900 */
+    &ATT1910,				/* 59 AT&T Secure Data STU III 1910 */
+    &KEEPINTOUCH,			/* 60 AT&T KeepinTouch */
+    &USRX2,				/* 61 USR XJ-1560 X2 */
+    &ROLM_AT,				/* 62 Rolm with AT command set */
+    &ATLAS,				/* 63 Atlas / Newcom */
+    &CODEX,				/* 64 Motorola Codex */
+    &MT5634ZPX,				/* 65 Multitech MT5634ZPX */
+    &ULINKV250,				/* 66 Microlink V.250 56K */
+    &ITUTV250,				/* 67 Generic ITU-T V.250 */
+    &RWV90,				/* 68 Rockwell V.90 56K */
+    &SUPRAX				/* 69 Diamond Supra Express V.90 */
 #endif /* MINIDIAL */
 };
 /*
@@ -2418,15 +3850,23 @@ MDMINF *modemp[] = {
  */
 struct keytab mdmtab[] = {
 #ifndef MINIDIAL
+    "3com-usr-megahertz-56k", n_USRX2,  0,
+    "atlas-newcom-33600ifxC", n_ATLAS,  0,
+    "att-1900-stu-iii", n_ATT1900,      0,
+    "att-1910-stu-iii", n_ATT1910,      0,
+    "att-7300",		n_ATTUPC,	0,
     "att-dataport",	n_DATAPORT,	0,
     "att-dtdm",		n_ATTDTDM,	0,
-    "attdtdm",		n_ATTDTDM,	CM_INV,	/* old name */
     "att-isn",          n_ATTISN,       0,
-    "attisn",           n_ATTISN,       CM_INV,	/* old name */
+    "att-keepintouch",  n_KEEPINTOUCH,  0,
     "att-switched-net", n_ATTMODEM,	0,
-    "attmodem",		n_ATTMODEM,	CM_INV,	/* old name */
-    "att-7300",		n_ATTUPC,	0,
+
     "att7300",		n_ATTUPC,	CM_INV,	/* old name */
+    "attdtdm",		n_ATTDTDM,	CM_INV,	/* old name */
+    "attisn",           n_ATTISN,       CM_INV,	/* old name */
+    "attmodem",		n_ATTMODEM,	CM_INV,	/* old name */
+
+    "bestdata",         n_BESTDATA,     0,
     "boca",		n_BOCA,		0,
 #endif /* MINIDIAL */
     "ccitt-v25bis",	n_CCITT,	CM_INV, /* Name changed to ITU-T */
@@ -2434,6 +3874,9 @@ struct keytab mdmtab[] = {
     "cardinal",         n_CARDINAL,     0,
 #ifdef OLDMODEMS
     "cermetek",		n_CERMETEK,	M_OLD,
+#endif /* OLDMODEMS */
+    "compaq",           n_COMPAQ,       0,
+#ifdef OLDMODEMS
     "concord",		n_CONCORD,	M_OLD,
 #endif /* OLDMODEMS */
     "courier",          n_USR,          CM_INV,
@@ -2447,12 +3890,16 @@ struct keytab mdmtab[] = {
 #endif /* MINIDIAL */
     "direct",		0,		CM_INV,	/* Synonym for NONE */
 #ifndef MINIDIAL
+    "fujitsu",          n_FUJITSU,      0,
     "gateway-telepath", n_TELEPATH,     0,
 #ifdef OLDMODEMS
     "gdc-212a/ed",	n_GDC,		M_OLD,
+    "ge",               n_GENERIC,	CM_INV|CM_ABR,
+    "gen",              n_GENERIC,	CM_INV|CM_ABR,
     "gendatacomm",	n_GDC,		CM_INV,	/* Synonym for GDC */
 #endif /* OLDMODEMS */
 #endif /* MINIDIAL */
+    "generic-high-speed", n_GENERIC,    0,
     "h", 	   	n_HAYES,	CM_INV|CM_ABR,
     "ha", 	   	n_HAYES,	CM_INV|CM_ABR,
     "hay",    		n_HAYES,	CM_INV|CM_ABR,
@@ -2470,9 +3917,19 @@ struct keytab mdmtab[] = {
     "hst-courier",      n_USR,          CM_INV,	/* Synonym for COURIER */
     "intel",		n_INTEL,        0,
 #endif /* MINIDIAL */
+
+    "itu-t-v250",       n_ITUTV250,     CM_INV,
+    "itu-t-v25ter/v250",n_ITUTV250,     0,
     "itu-t-v25bis",	n_CCITT,	0,	/* New name for CCITT */
+
 #ifndef MINIDIAL
-    "maxtech",		n_MAXTECH,	0,
+    "maxtech",		n_MAXTECH,     0,
+
+    "megahertz-att-v34",    n_MHZATT,  0, /* Megahertzes */
+    "megahertz-xjack",      n_XJACK,   CM_INV|CM_ABR,
+    "megahertz-xjack-33.6", n_XJACK,   0,
+    "megahertz-xjack-56k",  n_USRX2,   0, /* 3COM/USR/Megahertz 33.6 PC Card */
+
     "mi",		n_MICROCOM,	CM_INV|CM_ABR,
     "mic",		n_MICROCOM,	CM_INV|CM_ABR,
     "micr",		n_MICROCOM,	CM_INV|CM_ABR,
@@ -2483,7 +3940,12 @@ struct keytab mdmtab[] = {
     "microcom-at-mode",	n_UCOM_AT,	0, /* Microcom DeskPorte, etc */
     "microcom-sx-mode",	n_MICROCOM,	0, /* Microcom AX,QX,SX, native mode */
     "microlink",        n_MICROLINK,    0,
+    "microlink-v250",   n_ULINKV250,    0,
+    "motorola-codex",   n_CODEX,        0,
     "motorola-fastalk", n_MOTOROLA,	0,
+    "motorola-lifestyle",n_MOTOROLA,	0,
+    "motorola-montana", n_MONTANA,	0,
+    "mt5634zpx",        n_MT5634ZPX,    0,
     "multitech",	n_MULTI,	0,
     "mwave",		n_MWAVE,	0,
 #endif /* MINIDIAL */
@@ -2502,30 +3964,39 @@ struct keytab mdmtab[] = {
     "rockwell-v32",	n_RWV32,	0,
     "rockwell-v32bis",	n_RWV32B,	0,
     "rockwell-v34",	n_RWV34,	0,
+    "rockwell-v90",	n_RWV90,	0,
+    "rolm",             n_ROLM,		CM_INV|CM_ABR,
+    "rolm-244pc",       n_ROLMAT,       0,
+    "rolm-600-series",  n_ROLMAT,       0,
     "rolm-dcm",		n_ROLM,		0,
+    "spirit-ii",        n_SPIRITII,     0,
     "sportster",        n_USR,          CM_INV,
-    "supra",		n_SUPRA,	0,
-    "tapi",		n_TAPI,		CM_INV,
-#ifndef OLDTBCODE
+    "sup",	        n_SUPRA,	CM_INV|CM_ABR,
+    "supr",	        n_SUPRA,	CM_INV|CM_ABR,
+    "supra",	        n_SUPRA,	CM_INV|CM_ABR,
+    "supra-express-v90",n_SUPRAX,       0,
+    "suprafaxmodem",	n_SUPRA,	0,
+    "suprasonic",	n_SUPRASON,	0,
+#ifdef CK_TAPI
+    "tapi",		n_TAPI,		0,
+#endif /* CK_TAPI */
     "te",               n_TBNEW,        CM_INV|CM_ABR,
     "tel",              n_TBNEW,        CM_INV|CM_ABR,
     "telebit",          n_TBNEW,        0,
-#else
-    "te",               n_TELEBIT,      CM_INV|CM_ABR,
-    "tel",              n_TELEBIT,      CM_INV|CM_ABR,
-    "telebit",          n_TELEBIT,      0,
-#endif /* OLDTBCODE */
     "telepath",         n_TELEPATH,     CM_INV,
 #endif /* MINIDIAL */
     "unknown",		n_UNKNOWN,	0,
     "user-defined",     n_UDEF,		0,
 #ifndef MINIDIAL
-    "usr",              n_USR,          CM_INV|CM_ABR,
-/* Keep the next one for backwards compatibility, but it's the same as H2400 */
-    "usr-212a",		n_HAYES,	CM_INV,
-    "usr-courier",      n_USR,          CM_INV,
-    "usr-sportster",    n_USR,          CM_INV,
-    "usrobotics",       n_USR,          0,
+
+    "usr",               n_USR,         CM_INV|CM_ABR,
+    "usr-212a",		 n_HAYES,	CM_INV,
+    "usr-courier",       n_USR,         CM_INV,
+    "usr-megahertz-56k", n_USRX2,       0,
+    "usr-sportster",     n_USR,         CM_INV,
+    "usr-xj1560-x2",     n_USRX2,       CM_INV,
+    "usrobotics",        n_USR,         0,
+
     "v25bis",		n_CCITT,	CM_INV, /* Name changed to ITU-T */
 #ifdef OLDMODEMS
     "ventel",		n_VENTEL,	M_OLD,
@@ -2533,8 +4004,8 @@ struct keytab mdmtab[] = {
     "zoltrix",		n_ZOLTRIX,	0,
     "zoom",		n_ZOOM,		0,
     "zyxel",		n_ZYXEL,	0,
-    "",                 0,              0
 #endif /* MINIDIAL */
+    "",                 0,              0
 };
 int nmdm = (sizeof(mdmtab) / sizeof(struct keytab)) - 1; /* Number of modems */
 
@@ -2543,17 +4014,12 @@ int nmdm = (sizeof(mdmtab) / sizeof(struct keytab)) - 1; /* Number of modems */
 #define D_PARTIAL 3
 
 static int tries = 0;
-static int mdmecho = 0;	/* assume modem does not echo */
+static int mdmecho = 0;			/* Assume modem does not echo */
 
-static char *p;		/* For command strings & messages */
+static char *p;				/* For command strings & messages */
 
-#ifdef DYNAMIC
-#define LBUFL 256
-static char *lbuf = NULL;
-#else
-#define LBUFL 100
-static char lbuf[LBUFL];
-#endif /* DYNAMIC */
+#define LBUFL 200
+static char lbuf[LBUFL+4];
 
 #ifdef DYNAMIC
 #define RBUFL 256
@@ -2576,21 +4042,58 @@ static ckjmpbuf sjbuf;
 #ifdef CK_ANSIC
 static SIGTYP (*savalrm)(int);	/* For saving alarm handler */
 static SIGTYP (*savint)(int);	/* For saving interrupt handler */
-#else 
+#else
 static SIGTYP (*savalrm)();	/* For saving alarm handler */
 static SIGTYP (*savint)();	/* For saving interrupt handler */
 #endif /* CK_ANSIC */
 
-#ifndef MINIDIAL
-#ifdef OLDTBCODE
-int tbmodel = 0;		/* Telebit modem model */
+#ifdef CKLOGDIAL
+static VOID
+dologdial(s) char *s; {
+    char buf2[16];
+    char * r = NULL;
+    int x, m, n;
+    extern char cxlogbuf[], uidbuf[], myhost[];
 
-char *
-gtbmodel() {			/* Function to return name of Telebit model */
-    if (tbmodel < 0 || tbmodel > TB__MAX) tbmodel = TB_UNK;
-    return(tb_name[tbmodel]);
+    if (!s) s = "";
+    if ((x = strlen(s)) > 0) {		/* Replace spaces by underscores */
+	r = (char *)malloc(x+1);
+	if (r) {
+	    int i;
+	    for (i = 0; i <= x; i++) {
+		if (s[i] != 0 && s[i] <= SP)
+		  r[i] = '_';
+		else
+		  r[i] = s[i];
+	    }
+	    s = r;
+	}
+    }
+    p = ckdate();
+    n = ckstrncpy(cxlogbuf,p,CXLOGBUFL);
+    m = strlen(uidbuf)+strlen(myhost)+strlen(ttname)+strlen(s)+strlen(buf2)+32;
+    if (n+m < CXLOGBUFL-1) {
+	p = cxlogbuf+n;
+	if (diallcc && diallac)
+	  sprintf(buf2,"+%s(%s)",diallcc,diallac);
+	else
+	  strcpy(buf2,"Unknown");
+	sprintf(p," %s %s T=DIAL H=%s D=%s N=%s O=%s ",
+		uidbuf,
+		ckgetpid(),
+		myhost,
+		ttname,
+		s,
+		buf2
+		);
+	debug(F110,"dologdial cxlogbuf",cxlogbuf,0);
+    } else
+      sprintf(p,"LOGDIAL BUFFER OVERFLOW");
+    if (r) free(r);
 }
-#endif /* OLDTBCODE */
+#endif /* CKLOGDIAL */
+
+#ifndef MINIDIAL
 
 #ifdef COMMENT
 static VOID
@@ -2613,9 +4116,11 @@ dialtime(foo) int foo;			/* Timer interrupt handler */
     fail_code = F_TIME;			/* Failure reason = timeout */
     debug(F100,"dialtime caught SIGALRM","",0);
 #ifdef BEBOX
+#ifdef BE_DR_7
     alarm_expired();
+#endif /* BE_DR_7 */
 #endif /* BEBOX */
-#ifdef OS2 
+#ifdef OS2
     signal(SIGALRM, dialtime);
 #endif /* OS2 */
 #ifdef __EMX__
@@ -2636,7 +4141,7 @@ dialtime(foo) int foo;			/* Timer interrupt handler */
 #ifdef NTSIG
     if (foo == SIGALRM)
       PostAlarmSigSem();
-    else 
+    else
       PostCtrlCSem();
 #else /* NTSIG */
 #ifdef NT
@@ -2670,6 +4175,10 @@ dialint(foo) int foo;			/* Keyboard interrupt handler */
 #endif /* OSK */
 #ifdef NTSIG
     PostCtrlCSem() ;
+#ifdef CK_TAPI
+    PostTAPIConnectSem();
+    PostTAPIAnswerSem();
+#endif /* CK_TAPI */
 #else /* NTSIG */
 #ifdef NT
     cklongjmp(ckjaddr(sjbuf),1);
@@ -2687,25 +4196,29 @@ dialint(foo) int foo;			/* Keyboard interrupt handler */
 */
 static int
 ddinc(n) int n; {
-    int c;
-
 #ifdef TNCODE
+    int c = 0;
     int done = 0;
     debug(F101,"ddinc entry n","",n);
     while (!done) {
 	c = ttinc(n);
 	debug(F000,"ddinc","",c);
 	if (c < 0) return(c);
-	if (c == IAC && network && ttnproto == NP_TELNET) {
+#ifndef OS2
+	if ((c == IAC) && network && (ttnproto == NP_TELNET)) {
 	    switch (tn_doop((CHAR)(c & 0xff),duplex,ttinc)) {
 	      case 2: duplex = 0; continue;
 	      case 1: duplex = 1;
 	      default: continue;
 	    }
 	} else done = 1;
+#else /* OS2 */
+	done = !(c == IAC && network && ttnproto == NP_TELNET);
+	scriptwrtbuf(c);	/* TELNET negotiations handled by emulator */
+#endif /* OS2 */
     }
     return(c & 0xff);
-#else
+#else  /* TNCODE */
     debug(F101,"ddinc entry n","",n);
     return(ttinc(n));
 #endif /* TNCODE */
@@ -2714,22 +4227,35 @@ ddinc(n) int n; {
 static VOID
 ttslow(s,millisec) char *s; int millisec; { /* Output s-l-o-w-l-y */
 #ifdef TCPSOCKET
-    extern int tn_nlm, tn_b_nlm, me_binary;
+    extern int tn_nlm, tn_b_nlm;
 #endif /* TCPSOCKET */
-    if (dialdpy && duplex)		/* Echo the command in case modem */
-      printf("%s\n",s);			/* isn't echoing commands. */
+    debug(F111,"ttslow",s,millisec);
+    if (dialdpy && (duplex || !mdmecho)) { /* Echo the command in case modem */
+	printf("%s\n",s);		/* isn't echoing commands. */
+#ifdef OS2
+	{
+	    char *s2 = s;		/* Echo to emulator */
+	    while (*s2) {
+		scriptwrtbuf((USHORT)*s2++);
+	    }
+	    scriptwrtbuf((USHORT)CR);
+	    scriptwrtbuf((USHORT)LF);
+	}
+#endif /* OS2 */
+    }
     for (; *s; s++) {
 	ttoc(*s);
 #ifdef TCPSOCKET
 	if (*s == CR && network && ttnproto == NP_TELNET) {
-       if (!me_binary && tn_nlm != TNL_CR)
-    	  ttoc((char)((tn_nlm == TNL_CRLF) ? LF : NUL));
-        else if (me_binary &&
-            (tn_b_nlm == TNL_CRLF || tn_b_nlm == TNL_CRNUL))
-    	  ttoc((char)((tn_b_nlm == TNL_CRLF) ? LF : NUL));
+	    if (!TELOPT_ME(TELOPT_BINARY) && tn_nlm != TNL_CR)
+	      ttoc((char)((tn_nlm == TNL_CRLF) ? LF : NUL));
+	    else if (TELOPT_ME(TELOPT_BINARY) &&
+		     (tn_b_nlm == TNL_CRLF || tn_b_nlm == TNL_CRNUL))
+	      ttoc((char)((tn_b_nlm == TNL_CRLF) ? LF : NUL));
         }
 #endif /* TCPSOCKET */
-	msleep(millisec);
+	if (millisec > 0)
+	  msleep(millisec);
     }
 }
 
@@ -2823,57 +4349,71 @@ dialoc(c) char c;
     }
 }
 
+char *
+getdm(x) int x; {			/* Return dial modifier */
+    MDMINF * mp;
+    int m;
+    int ishayes = 0;
+    m = mdmtyp;
+    if (m < 1)
+      if (mdmsav > -1)
+	m = mdmsav;
+    if (m < 1)
+      return("");
 #ifndef MINIDIAL
-#ifdef OLDTBCODE
-/*
-  tbati3() -- Routine to find out Telebit model when ATI reports "965"
-  or "971". This routine sends another query, ATI3, to get further info
-  to narrow down the model number.  Argument is ATI response as integer.
-  Result: sets tbmodel variable to Telebit model.
-*/
-static VOID
-tbati3(n) int n; {
-    int status;
-    ttflui();				/* Flush input buffer */
-    ttslow("ATI3\015",100);		/* Send ATI3<CR> */
-    status = getok(5,0);		/* Get OK response, nonstrict */
-    if (status < 1) {			/* ERROR or timeout */
-	tbmodel = TB_UNK;
-	debug(F111,"tbati3 fails",rbuf,status);
-	return;
-    }
-    debug(F110,"tbati3 rbuf",rbuf,0);
-
-/* Got a good response, check the model info */
-
-    if (n == 965) {			/* "965" - various models. */
-	if (didweget(rbuf,"T1600")) {
-	    tbmodel = TB_1600;			/* T1600 */
-	} else if (didweget(rbuf,"T3000")) {
-	    tbmodel = TB_3000;			/* T3000 */
-	} else if (didweget(rbuf,"World")) {
-	    tbmodel = TB_WBLA;			/* WorldBlazer */
-	} else if (didweget(rbuf,"Version B") || /* TrailBlazer-Plus models */
-		   didweget(rbuf,"TBSA") ||
-		   didweget(rbuf,"TBRM") ||
-		   didweget(rbuf,"DC")) { 	/* Ven-Tel EC18K */
-	    tbmodel = TB_PLUS;
-	} else tbmodel = TB_UNK;		/* Others: Unknown */
-
-    } else if (n == 971) {		/* "971" could be T1500 or T1600. */
-	if (didweget(rbuf,"T1500"))
-	  tbmodel = TB_1500;
-	else tbmodel = TB_2500;
-    }					/* Other, don't change tbmodel. */
-}
-#endif /* OLDTBCODE */
+    if (m == n_TAPI)
+      m = n_HAYES;
 #endif /* MINIDIAL */
+    mp = modemp[m];
+    ishayes = mp->capas & CKD_AT;
+    switch (x) {
+      case VN_DM_LP:
+	return(ishayes ? "," : "");
+      case VN_DM_SP:
+#ifdef MINIDIAL
+	return("");
+#else
+	return(m == n_USR ? "/" : "");
+#endif /* MINIDIAL */
+      case VN_DM_PD:
+	return(ishayes ? "P" : "");
+      case VN_DM_TD:
+	return(ishayes ? "T" : "");
+      case VN_DM_WA:
+	return(ishayes ? "@" : "");
+      case VN_DM_WD:
+	return(ishayes ? "W" : "");
+      case VN_DM_RC:
+	return(ishayes ? ";" : "");
+    }
+    return("");
+}
+
+static VOID
+getdialmth() {
+    if (dialmauto && diallcc) {		/* If DIAL METHOD AUTO... */
+	int i;				/* and we know our area code... */
+	for (i = 0; i < ndialtocc; i++) { /* First check Tone countries list */
+	    if (!strcmp(dialtocc[i],diallcc)) {
+		dialmth = XYDM_T;
+		break;
+	    }
+	}
+	for (i = 0; i < ndialpucc; i++) { /* Then Pulse countries list */
+	    if (!strcmp(dialpucc[i],diallcc)) {
+		dialmth = XYDM_P;
+		break;
+	    }
+	}
+    }
+}
 
 VOID				/* Get dialing defaults from environment */
 getdialenv() {
     char *p = NULL;
+    int i, x;
 
-    makestr(&p,getenv("K_DIAL_DIRECTORY")); /* Dialing directories */
+    makestr(&p,getenv("K_DIAL_DIRECTORY"));
     if (p) {
 	int i;
 	xwords(p,(MAXDDIR - 2),dialdir,0);
@@ -2885,13 +4425,31 @@ getdialenv() {
 	}
 	ndialdir = i;
     }
-    makestr(&diallcc,getenv("K_COUNTRYCODE")); /* My country code */
-    makestr(&dialixp,getenv("K_LD_PREFIX"));   /* My long-distance prefix */
-    makestr(&dialldp,getenv("K_INTL_PREFIX")); /* My international prefix */
-    makestr(&dialldp,getenv("K_TF_PREFIX"));   /* Ny Toll-free prefix */
+    xmakestr(&diallcc,getenv("K_COUNTRYCODE")); /* My country code */
+    xmakestr(&dialixp,getenv("K_LD_PREFIX"));   /* My long-distance prefix */
+    xmakestr(&dialldp,getenv("K_INTL_PREFIX")); /* My international prefix */
+    xmakestr(&dialldp,getenv("K_TF_PREFIX"));   /* Ny Toll-free prefix */
+
+#ifndef NOICP
+    p = getenv("K_DIAL_METHOD");	/* Local dial method */
+    if (p) if (*p) {
+	extern struct keytab dial_m[];
+	extern int ndial_m;
+	i = lookup(dial_m,p,ndial_m,&x);
+	if (i > -1) {
+	    if (i == XYDM_A) {
+		dialmauto = 1;
+		dialmth = XYDM_D;
+	    } else {
+		dialmauto = 0;
+		dialmth = i;
+	    }
+	}
+    }
+#endif /* NOICP */
 
     p = NULL;
-    makestr(&p,getenv("K_TF_AREACODE")); /* Toll-free areacodes */
+    xmakestr(&p,getenv("K_TF_AREACODE")); /* Toll-free areacodes */
     if (p) {
 	int i;
 	xwords(p,7,dialtfc,0);
@@ -2902,7 +4460,27 @@ getdialenv() {
 	      dialtfc[i] = dialtfc[i+1];
 	}
 	ntollfree = i;
+	free(p);
     }
+    for (i = 0; i < MAXTPCC; i++) {	/* Clear Tone/Pulse country lists */
+	dialtocc[i] = NULL;
+	dialpucc[i] = NULL;
+    }
+    for (i = 0; i < MAXTPCC; i++) {	/* Init Tone country list */
+	if (tonecc[i])
+	  makestr(&(dialtocc[i]),tonecc[i]);
+	else
+	  break;
+    }
+    ndialtocc = i;
+    for (i = 0; i < MAXTPCC; i++) {	/* Init Pulse country list */
+	if (pulsecc[i])
+	  makestr(&(dialpucc[i]),pulsecc[i]);
+	else
+	  break;
+    }
+    ndialpucc = i;
+
     if (diallcc) {			/* Have country code */
 	if (!strcmp(diallcc,"1")) {	/* If it's 1 */
 	    if (!dialldp)		/* Set these prefixes... */
@@ -2911,14 +4489,22 @@ getdialenv() {
 	      makestr(&dialtfp,"1");
 	    if (!dialixp)
 	      makestr(&dialixp,"011");
-	    if (ntollfree == 0) {	/* Toll-free area codes... */
+	    if (ntollfree == 0) {	/* Toll-free area codes */
 		if (dialtfc[0] = malloc(4)) {
-		    strcpy(dialtfc[0],"800");
+		    strcpy(dialtfc[0],"800"); /* 1970-something */
 		    ntollfree++;
-		}
-		if (dialtfc[1] = malloc(4)) {
-		    strcpy(dialtfc[1],"888");
-		    ntollfree++;
+		    if (dialtfc[1] = malloc(4)) {
+			strcpy(dialtfc[1],"888"); /* 1996 */
+			ntollfree++;
+			if (dialtfc[2] = malloc(4)) {
+			    strcpy(dialtfc[2],"877"); /* 5 April 1998 */
+			    ntollfree++;
+			    if (dialtfc[3] = malloc(4)) {
+				strcpy(dialtfc[3],"866"); /* Soon */
+				ntollfree++;
+			    }
+			}
+		    }
 		}
 	    }
 	} else if (!strcmp(diallcc,"358") &&
@@ -2935,10 +4521,29 @@ getdialenv() {
 	      makestr(&dialixp,"00");
 	}
     }
-    makestr(&diallac,getenv("K_AREACODE"));
-    makestr(&dialpxo,getenv("K_PBX_XCH"));
-    makestr(&dialpxi,getenv("K_PBX_ICP"));
-    makestr(&dialpxx,getenv("K_PBX_OCP"));
+    xmakestr(&diallac,getenv("K_AREACODE"));
+    xmakestr(&dialpxo,getenv("K_PBX_OCP"));
+    xmakestr(&dialpxi,getenv("K_PBX_ICP"));
+    p = getenv("K_PBX_XCH");
+#ifdef COMMENT
+    xmakestr(&dialpxx,p);
+#else
+    if (p) if (*p) {
+	int x;
+	char * s = NULL;
+	char * pp[MAXPBXEXCH+1];
+	makestr(&s,p);			/* Make a copy for poking */
+	if (s) {
+	    xwords(s,MAXPBXEXCH+1,pp,0); /* Note: pp[] is 1-based. */
+	    for (i = 0; i <= MAXPBXEXCH; i++) {
+                if (!pp[i+1]) break;
+		makestr(&(dialpxx[i]),pp[i+1]);
+		ndialpxx++;
+	    }
+	    makestr(&s,NULL);		/* Free poked copy */
+	}
+    }
+#endif /* COMMENT */
 }
 
 static int
@@ -2962,9 +4567,11 @@ dialfail(x) int x; {
 	else if (dial_what == DW_DIAL)
 	  printf ("%s interval expired.\n",
 		  func_code == 0 ? "DIAL TIMEOUT" : "ANSWER timeout");
-	else printf("Timeout.\n");
+	else
+	  printf("Timeout.\n");
+	fflush(stdout);
 	if (mp->capas & CKD_AT)
-	  ttoc('\015');		/* Send CR to interrupt dialing */
+	  ttoc('\015');			/* Send CR to interrupt dialing */
 	/* Some Hayes modems don't fail with BUSY on busy lines */
 	dialsta = DIA_TIMO;
 	debug(F110,"dial","timeout",0);
@@ -2972,6 +4579,7 @@ dialfail(x) int x; {
 
       case F_INT:			/* Dialing interrupted */
 	printf ("Interrupted.\n");
+	fflush(stdout);
 	debug(F110,"dial","interrupted",0);
 	if (mp->capas & CKD_AT)
 	  ttoc('\015');			/* Send CR to interrupt dialing */
@@ -2991,7 +4599,7 @@ dialfail(x) int x; {
                         " Call did not come in."
                         );
 	printf("\n");
-	debug(F110,"dial",lbuf?lbuf:"",0);
+	debug(F110,"dial",lbuf,0);
 	if (dialsta < 0) dialsta = DIA_UNSP;
 	break;
 
@@ -3004,13 +4612,13 @@ dialfail(x) int x; {
     default:
 	printf("unknown\n");
 	debug(F110,"dial","unknown",0);
+	fflush(stdout);
 	if (mp->capas & CKD_AT)
 	  ttoc('\015');			/* Send CR to interrupt dialing */
 	dialsta = DIA_INTR;
     }
 
 #ifdef DYNAMIC
-    if (lbuf) free(lbuf); lbuf = NULL;
     if (rbuf) free(rbuf); rbuf = NULL;
     if (fbuf) free(fbuf); fbuf = NULL;
 #endif /* DYNAMIC */
@@ -3023,10 +4631,19 @@ dialfail(x) int x; {
 
 /* Returns 1 if call completed, 0 otherwise */
 
-static int waitct, mdmwait, mdmstat = 0;
-int mdmwaitd = 10 ;   /* difference between dialtmo and mdmwait */
+static int mdmwait, mdmstat = 0;
+#ifndef CK_TAPI
+static
+#endif /* CK_TAPI */
+int waitct;
+int mdmwaitd = 10 ;			/* dialtmo / mdmwait difference */
 static char c;
 static char *telnbr;
+
+static int wr = 0;			/* wr = wake rate */
+static char * ws;			/* ws = wake string */
+static char * xnum = NULL;
+static int inited = 0;
 
 static SIGTYP
 #ifdef CK_ANSIC
@@ -3036,42 +4653,97 @@ _dodial(threadinfo) VOID * threadinfo;
 #endif /* CK_ANSIC */
 /* _dodial */ {
     char c2;
-    char *s, *ws;
+    char *dcmd, *s, *flocmd = NULL;
     int x = 0, n = F_TIME;
 
 #ifdef NTSIG
+    signal( SIGINT, dialint );
     if (threadinfo) {			/* Thread local storage... */
 	TlsSetValue(TlsIndex,threadinfo);
     }
 #endif /* NTSIG */
 
+    dcmd = dialcmd ? dialcmd : mp->dial_str;
+    if ((int)strlen(dcmd) + (int)strlen(telnbr) > (LBUFL - 2)) {
+	printf("DIAL command + phone number too long!\n");
+	dreset();
+#ifdef DYNAMIC
+	if (rbuf) free(rbuf); rbuf = NULL;
+	if (fbuf) free(fbuf); fbuf = NULL;
+#endif /* DYNAMIC */
+#ifdef NTSIG
+	ckThreadEnd(threadinfo);
+#endif /* NTSIG */
+	SIGRETURN;	 /* No conversation with modem to complete dialing */
+    }
+    makestr(&xnum,telnbr);
+
+    getdialmth();			/* Get dial method */
+
+#ifdef CK_ATDT
+    /* Combine the SET DIAL METHOD command with the DIAL command string */
+    if (!dialcmd &&			/* Using default DIAL command */
+	(mdmcapas & CKD_AT) &&		/* AT command set only */
+	((dialmth == XYDM_T && !dialtone) || /* and using default */
+	 (dialmth == XYDM_P && !dialpulse))) { /* modem commands... */
+	char c;
+	debug(F110,"dial atdt xnum 1",xnum,0);
+	s = dcmd;
+	debug(F110,"dial atdt s",s,0);
+	if (*telnbr != 'T' &&
+	    *telnbr != 'P' &&
+	    *telnbr != 't' &&
+	    *telnbr != 'p' &&
+	    !ckstrcmp(s,"atd",3,0) &&
+	    s[3] != 'T' &&
+	    s[3] != 'P' &&
+	    s[3] != 't' &&
+	    s[3] != 'p') {
+	    char xbuf[200];
+	    c = (dialmth == XYDM_T) ? 'T' : 'P';
+	    if (islower(s[0]))
+	      c = tolower(c);
+	    if ((int)strlen(telnbr) < 199) {
+		sprintf(xbuf,"%c%s",c,telnbr);
+		makestr(&xnum,xbuf);
+	    }
+	}
+    }
+#endif /* CK_ATDT */
+    debug(F111,"ckdial",xnum,xredial);
+
     /* Hang up the modem (in case it wasn't "on hook") */
     /* But only if SET DIAL HANGUP ON... */
 
-    if (dialhup() < 0) {		/* Hangup first */
-	debug(F100,"ckdial dialhup failed","",0);
+    if (!xredial) {			/* Modem not initalized yet. */
+	inited = 0;
+    }
+    if (!xredial || !inited) {
+	if (dialhup() < 0) {		/* Hangup first */
+	    debug(F100,"ckdial dialhup failed","",0);
 #ifndef MINIDIAL
-	if (mdmcapas & CKD_TB)		/* Telebits might need a BREAK */
-	  ttsndb();			/*  first. */
+	    if (mdmcapas & CKD_TB)	/* Telebits might need a BREAK */
+	      ttsndb();			/*  first. */
 #endif /* MINIDIAL */
-	if (dialhng && dialsta != DIA_PART) { /* If hangup failed, */
-	    ttclos(0);			/* close and reopen the device. */
-	    if (ttopen(ttname,&local,mymdmtyp,0) < 0) {
-		printf("Sorry, Can't hang up communication device.\n");
-		printf("Try 'set line %s' again.\n",ttname);
-		dialsta = DIA_HANG;
+	    if (dialhng && dialsta != DIA_PART) { /* If hangup failed, */
+		ttclos(0);		/* close and reopen the device. */
+		if (ttopen(ttname,&local,mymdmtyp,0) < 0) {
+		    printf("Sorry, Can't hang up communication device.\n");
+		    printf("Try 'set line %s' again.\n",ttname);
+		    dialsta = DIA_HANG;
 #ifdef DYNAMIC
-		if (lbuf) free(lbuf); lbuf = NULL;
-		if (rbuf) free(rbuf); rbuf = NULL;
-		if (fbuf) free(fbuf); fbuf = NULL;
+		    if (rbuf) free(rbuf); rbuf = NULL;
+		    if (fbuf) free(fbuf); fbuf = NULL;
 #endif /* DYNAMIC */
-		dreset();
+		    dreset();
 #ifdef NTSIG
-		ckThreadEnd(threadinfo);
+		    ckThreadEnd(threadinfo);
 #endif /* NTSIG */
-		SIGRETURN;
+		    SIGRETURN;
+		}
 	    }
 	}
+	inited = 0;			/* We hung up so must reinit */
     }
 #ifndef MINIDIAL
     /* Don't start talking to Rolm too soon */
@@ -3079,9 +4751,7 @@ _dodial(threadinfo) VOID * threadinfo;
       msleep(500);
 #endif /* MINIDIAL */
 
-/* Send init-string */
-
-    if (dialsta != DIA_PART
+    if (dialsta != DIA_PART		/* Some initial setups. */
 #ifndef MINIDIAL
 	&& mymdmtyp != n_ATTUPC
 #endif /* MINIDIAL */
@@ -3089,11 +4759,12 @@ _dodial(threadinfo) VOID * threadinfo;
 	fail_code = F_MINIT;		/* Default failure code */
 	dial_what = DW_INIT;		/* What I'm Doing Now   */
 	if (dialdpy) {			/* If showing progress, */
-	    p = ck_time();		/* display timestamp.   */
-	    if (*p) printf(" Initializing: %s...\n",p);
+	    p = ck_time();		/* get timestamp.   */
+	    if (!inited)
+	      if (*p)
+		printf(" Initializing: %s...\n",p);
 	}
     }
-
 #ifndef MINIDIAL
 #ifdef ATT7300
     if (mymdmtyp == n_ATTUPC) {
@@ -3108,15 +4779,15 @@ _dodial(threadinfo) VOID * threadinfo;
 	dial_what = DW_DIAL;
 	if (dialdpy) {			/* If showing progress */
 	    p = ck_time();		/* get current time; */
-	    if (*p) printf(" Dialing: %s...\n",p);
+	    if (*p)
+	      printf(" Dialing: %s...\n",p);
 	}
-	alarm(waitct);			/* Do alarm properly */
+	alarm(waitct);			/* Set alarm */
 	if (attdial(ttname,speed,telnbr)) { /* dial internal modem */
 	    dreset();			/* reset alarms, etc. */
 	    printf(" Call failed.\r\n");
 	    dialhup();	        	/* Hangup the call */
 #ifdef DYNAMIC
-	    if (lbuf) free(lbuf); lbuf = NULL;
 	    if (rbuf) free(rbuf); rbuf = NULL;
 	    if (fbuf) free(fbuf); fbuf = NULL;
 #endif /* DYNAMIC */
@@ -3129,12 +4800,20 @@ _dodial(threadinfo) VOID * threadinfo;
 	dreset();			/* reset alarms, etc. */
 	ttpkt(speed,FLO_DIAX,parity);	/* cancel dialing ioctl */
 	if (!quiet && !backgrd) {
-	    if (dialdpy) printf("\n");
-	    printf(" Call complete.\r\n");
+	    if (dialdpy) {
+		printf("\n");
+		printf(" Call complete.\r\n");
+	    } else if (modemmsg[0])
+		printf(" Call complete: \"%s\".\r\n",(char *)modemmsg);
+	    else
+	      printf(" Call complete.\r\n");
 	}
+#ifdef CKLOGDIAL
+	dologdial(telnbr);
+#endif /* CKLOGDIAL */
+
 	dialsta = DIA_OK;
 #ifdef DYNAMIC
-	if (lbuf) free(lbuf); lbuf = NULL;
 	if (rbuf) free(rbuf); rbuf = NULL;
 	if (fbuf) free(fbuf); fbuf = NULL;
 #endif /* DYNAMIC */
@@ -3144,18 +4823,71 @@ _dodial(threadinfo) VOID * threadinfo;
 	SIGRETURN;	/* No conversation with modem to complete dialing */
     } else
 #endif /* ATT7300 */
-    if (mymdmtyp == n_TAPI) {		/* Windows dialer */
-	printf("INSERT CALL TO WINDOWS TELEPHONY API HERE\n");
+#ifdef CK_TAPI
+      if (tttapi && !tapipass) {	/* TAPI Dialing */
+	  switch (func_code) {
+	    case 0:			/* Dial */
+	      if (cktapidial(telnbr)) {
+		  fail_code = 0;
+		  if (partial) {
+		      dialsta = DIA_PART;
+		  } else {
+		      dialsta = DIA_OK;
+		      speed = ttgspd();
+		  }
+	      } else {
+		  if (dialsta == DIA_PART)
+		    cktapihangup();
+		  if (!fail_code)
+		    fail_code = F_MODEM;
+		  dialsta = DIA_TAPI;
+	      }
+	      break;
+	    case 1: {			/* Answer */
+		long strttime = time((long *)NULL);
+		long diff = 0;
+		do {
+		    if (dialatmo) {
+			strttime += diff;
+			waitct   -= diff;
+		    }
+		    fail_code = 0;
+		    if (cktapianswer()) { /* SUCCESS */
+			dialsta = DIA_OK;
+			speed = ttgspd();
+			break;
+		    } else {		/* FAILURE */
+			if (fail_code) {
+			    dialsta = DIA_TAPI;
+			    break;
+			} else {
+			    fail_code = F_MODEM;
+			    dialsta = DIA_TAPI;
+			}
+		    }
+		    if (dialatmo) {
+			diff = time((long *)NULL) - strttime;
+		    }
+		} while (dialatmo ? (diff < waitct) : 1);
+		break;
+	    }
+	  }
 #ifdef NTSIG
-	ckThreadEnd(threadinfo);
+	  ckThreadEnd(threadinfo);
 #endif /* NTSIG */
-	SIGRETURN;
-    } else
+	  SIGRETURN;
+      } else
+#endif /* CK_TAPI */
 #endif /* MINIDIAL */
 
 /* Modems with AT command set... */
 
       if ((mdmcapas & CKD_AT) && dialsta != DIA_PART) {
+
+	  if (dialpace > -1)		/* Set intercharacter pacing */
+	    wr = dialpace;
+	  else
+	    wr = mp->wake_rate;
 
 	  if (dialini)			/* Get wakeup/init string */
 	    ws = dialini;
@@ -3163,8 +4895,125 @@ _dodial(threadinfo) VOID * threadinfo;
 	    ws = mp->wake_str;
 	  if (!ws) ws = "\015";		/* If none, use CR */
 
-	  for (tries = 4; tries > 0; tries--) {	/* Send it */
-	      ttslow(ws,mp->wake_rate);
+	  /* First get the modem's attention and enable result codes */
+
+	  for (tries = 0; tries < 5; tries++) { /* Send short command */
+	      if (tries > 0) {
+		  ttoc('\015');		/* AT must go first for speed */
+		  msleep(wr);		/* detection. */
+	      }
+	      ttslow("ATQ0\015",wr);
+	      mdmstat = getok(tries < 2 ? 2 : tries, 1); /* Get response */
+	      if (mdmstat > 0) break;	/* OK - done */
+	      if (dialdpy && tries > 0) {
+		  printf("\r\n No response from modem, retrying%s...\r\n",
+			 (tries > 1) ? " again" : "");
+		  fflush(stdout);
+	      }
+	      ttflui();
+	      switch (tries) {
+		case 0: msleep(100); break;
+		case 1: ttsndb(); break;
+		default:
+		  if (network) {
+		      ttsndb();
+		  } else {
+		      if (tries == 2)
+			tthang();
+		      else
+			mdmhup();
+		      inited = 0;
+		  }
+	      }
+	      fflush(stdout);
+	  }
+	  debug(F101,"ckdial ATQ0 mdmstat","",mdmstat);
+
+	  if (xredial && inited) {	/* Redialing... */
+	      ttoc('\015');		/* Cancel previous */
+	      msleep(250);		/* Wait a bit */
+#ifdef COMMENT
+/* This wasn't the problem... */
+	      ttflui();			/* Clear out stuff from modem setup */
+	      ttslow("ATS7=60\015",wr);	/* Redo carrier wait */
+	      getok(4,1);		/* Get response */
+#endif /* COMMENT */
+	      alarm(0);			/* Just in case... */
+	      ttflui();			/* Clear out stuff from modem setup */
+	      goto REDIAL;		/* Skip setup - we already did it */
+	  }
+/*
+  Do flow control next because a long init string echoing back could
+  cause data overruns, causing us to miss the OK, or (worse) to get out
+  of sync entirely.
+*/
+	  x = 0;			/* User said SET DIAL FLOW RTS/CTS */
+	  if (dialfc == FLO_RTSC ||	/* Even if Kermit's FLOW isn't...  */
+	      (dialfc == FLO_AUTO && flow == FLO_RTSC)) {
+	      if (dialhwfc) {		/* User-defined HWFC string */
+		  if (*dialhwfc) {
+		      x = 1;
+		      flocmd = dialhwfc;
+		  }
+	      } else if ((mdmcapas & CKD_HW) && *(mp->hwfc_str)) {
+		  x = 1;
+		  flocmd = mp->hwfc_str;
+	      }
+	  } else if (dialfc == FLO_XONX || /* User said SET DIAL FLOW SOFT */
+		     (dialfc == FLO_AUTO && flow == FLO_XONX)) {
+	      if (dialswfc) {
+		  if (*dialswfc) {
+		      x = 1;
+		      flocmd = dialswfc;
+		  }
+	      } else if ((mdmcapas & CKD_SW) && *(mp->swfc_str)) {
+		  x = 1;
+		  flocmd = mp->swfc_str;
+	      }
+	  } else if (dialfc == FLO_NONE) { /* User said SET DIAL FLOW NONE */
+	      if (dialnofc) {
+		  if (*dialnofc) {
+		      x = 1;
+		      flocmd = dialnofc;
+		  }
+	      } else if (mp->nofc_str && *(mp->nofc_str)) {
+		  x = 1;
+		  flocmd = mp->nofc_str;
+	      }
+	  }
+	  if (x) {			/* Send the flow control command */
+	      debug(F110,"ckdial flocmd",flocmd,0);
+	      for (tries = 4; tries > 0; tries--) { /* Send the command */
+		  ttslow(flocmd,wr);
+		  mdmstat = getok(5,1);
+		  if (mdmstat > 0) break;
+		  if (dialdpy && tries > 1)
+		    printf(" No response from modem, retrying%s...\n",
+			   (tries < 4) ? " again" : "");
+	      }
+
+#ifdef CK_TTSETFLOW
+#ifdef CK_RTSCTS
+/*
+  So far only ckutio.c has ttsetflow().
+  We have just told the modem to turn on RTS/CTS flow control and the modem
+  has said OK.  But we ourselves have not turned it on yet because of the
+  disgusting ttpkt(...FLO_DIAL...) hack.  So now, if the computer does not
+  happen to be asserting RTS, the modem will no longer send characters to it.
+  So at EXACTLY THIS POINT, we must enable RTS/CTS in the device driver.
+*/
+	      if (dialfc == FLO_RTSC ||
+		  (dialfc == FLO_AUTO && flow == FLO_RTSC)) {
+		  ttsetflow(FLO_RTSC);
+	      }
+#endif /* CK_RTSCTS */
+#endif /* CK_TTSETFLOW */
+	  }
+	  ttflui();			/* Clear out stuff from modem setup */
+	  msleep(250);
+
+	  for (tries = 4; tries > 0; tries--) { /* Send init string */
+	      ttslow(ws,wr);
 	      mdmstat = getok(4,1);	/* Get response */
 	      if (mdmstat > 0) break;
 	      if (dialdpy && tries > 1)
@@ -3173,411 +5022,27 @@ _dodial(threadinfo) VOID * threadinfo;
 	  }
 	  debug(F101,"ckdial wake_str mdmstat","",mdmstat);
 
-	  if (mdmstat < 1) { 		/* Initialized OK? */
-	      dialfail(F_MINIT); /* No, fail. */
+	  if (mdmstat < 1) {		/* Initialized OK? */
+	      dialfail(F_MINIT);	/* No, fail. */
 #ifdef NTSIG
 	      ckThreadEnd(threadinfo);
 #endif /* NTSIG */
 	      SIGRETURN;
-	  } else {			/* Yes. */
-	      char hbuf[16];
-
-	      if (mdmwait > 255)	/* If larger than maximum, */
-		mdmwait = 255;		/* make it maximum. */
-
-	      sprintf(hbuf,"ATS7=%d%c",mdmwait,13); /* S7 carrier wait time */
-	      ttslow(hbuf,mp->wake_rate); /* Set it. */
-	      mdmstat = getok(4,1);	/* Get response from modem */
-	      /* If it gets an error, go ahead anyway */
-	      debug(F101,"ckdial S7 mdmstat","",mdmstat);
 	  }
 
 #ifndef MINIDIAL
-#ifdef OLDTBCODE
-/*
-  Telebit modems fall into two basic groups: old and new.  The functions and
-  command sets are different between the two groups, and also vary by specific
-  models within each group, and even by firmware ROM revision number.  Read
-  ckcker.bwr for details.
-
-  Commands used by C-Kermit include:
-
-    Old       New            Meaning
-    -------   --------       ----------------------------------------
-    Q0        Q0             Enable result codes.
-    X1        X1             Extended result codes.
-    X1        X1             Extended result codes + BUSY, NO DIALTONE, etc.
-    I         I              Model number inquiry.
-    I3        I3             Additional model information inquiry.
-    S12=50    S12=50         Escape sequence guard time (1 sec).
-    S2=43     S2=43          Escape character is '+'.
-    S7=xx     S7=xx          DIAL TIMEOUT, calculated or SET by user.
-    S48=0     S48=0          7-bit data (Kermit's PARITY is not NONE).
-    S48=1     S48=1          8-bit data (Kermit's PARITY is NONE).
-    S50=0     S50=0          Automatic speed & protocol determination.
-    S50=3     S50=3          2400/1200/300 bps.
-    S50=6     S50=6          V.32 (9600 bps).
-    S50=255   S50=255        PEP mode.
-    S110=1    S190=1 S191=7  Allow compression in PEP mode.
-    S51=?     S51=?          DTE interface speed (left alone by Kermit).
-    S54=3     S61=0 S63=0    Pass BREAK signal (always).
-    S58=2     S58=2          RTS/CTS flow control if Kermit's FLOW is RTS/CTS.
-    S58=?     S58=?          S58 unchanged if Kermit's FLOW is not RTS/CTS.
-    S68=255   S68=255        Use flow control specified by S58 (always).
-    S95=0     S180=0         MNP disabled (SET DIAL MNP-ENABLE OFF)
-    S95=2     S180=3         MNP, fallback to direct (also as V.42 fallback)
-    S97=1     S180=2         Enable V.42 (LAPM) error correction
-    S98=3                    Enable compression in both directions
-    S106=1                   V.42bis compression enable
-
-For Kermit Spoof (same commands for all models that support it):
-
-    S111=0                   No Kermit spoofing
-    S111=10                  Kermit with no parity
-    S111=11                  Kermit with odd parity
-    S111=12                  Kermit with even parity
-    S111=13                  Kermit with mark parity
-    S111=14                  Kermit with space parity
-    S112=??                  Kermit's start-of-packet character (stchr).
-*/
-	  if (mdmcapas & CKD_TB) { /* Telebits... */
-
-	      int S111;			/* Telebit Kermit spoof register */
-	      char tbcmdbuf[64];	/* Telebit modem command buffer */
-	      char *ecstr = "";		/* Pointer to EC-enable string */
-	      char *dprstr = "";	/* Pointer to dial protocol string */
-/*
-  If user defined a DIAL INIT-STRING, send that now, otherwise send built-in
-  Telebit string.  Try up to 4 times to get OK or 0 response from modem.
-  NOTE: The default init string *must* be independent of Telebit model.
-*/
-	      ws = dialini ? dialini : TELEBIT.wake_str;
-	      debug(F110,"ckdial telebit init string",ws,0);
-	      for (tries = 4; tries > 0; tries--) {
-		  ttsndb();		/* Begin by sending BREAK */
-		  ttslow(ws,mp->wake_rate); /* Send wakeup string */
-		  mdmstat = getok(5,0);	/* Get modem's response */
-		  if (mdmstat) break;	/* If response OK, done */
-		  if (dialdpy && tries > 1)
-		    printf(" No response from modem, retrying%s...\n",
-			   (tries < 4) ? " again" : "");
-		  msleep(300);		/* Otherwise, sleep 1/3 second */
-		  dialhup();		/* Hang up */
-		  ttflui();		/* Flush input buffer and try again */
-	      }
-	      if (mdmstat < 1) {	/* If we didn't get a response, */
-		  dialfail(F_MINIT); /* fail. */
-#ifdef NTSIG
-		  ckThreadEnd(threadinfo);
-#endif /* NTSIG */
-		  SIGRETURN;
-	      }
-	      if (!dialini) {		/* If using built-in init strings... */
-/*
-  Try to get the model number.  It should be in the getok() response buffer,
-  rbuf[], because the Telebit init string asks for it with the "I" command.
-  If the model number is 965, we have to make another query to narrow it down.
-*/
-		  if (didweget(rbuf,"962") || /* Check model number */
-		      didweget(rbuf,"961") ||
-		      didweget(rbuf,"963")) {
-		      tbmodel = TB_BLAZ; /* Trailblazer */
-		  } else if (didweget(rbuf,"972")) {
-		      tbmodel = TB_2500; /* T2500 */
-		  } else if (didweget(rbuf,"968")) {
-		      tbmodel = TB_1000;	/* T1000 */
-		  } else if (didweget(rbuf,"966") ||
-			     didweget(rbuf,"967") ||
-			     didweget(rbuf,"964")) {
-		      tbmodel = TB_PLUS; /* Trailblazer-Plus */
-		  } else if (didweget(rbuf,"969")) {
-		      tbmodel = TB_QBLA; /* Qblazer */
-		  } else if (didweget(rbuf,"970")) {
-		      tbmodel = TB_QBLA; /* Qblazer Plus */
-		  } else if (didweget(rbuf,"965")) { /* Most new models */
-		      tbati3(965);	/* Go find out */
-		  } else if (didweget(rbuf,"971")) { /* T1500 or T2500 */
-		      tbati3(971);	/* Go find out */
-		  } else if (didweget(rbuf,"123") || didweget(rbuf,"960")) {
-		      tbmodel = TB_UNK;	/* Telebit in Hayes mode */
-		  }
-		  debug(F111,"Telebit model",tb_name[tbmodel],tbmodel);
-		  if (dialdpy)
-		    printf("Telebit model: %s\n",tb_name[tbmodel]);
-		  ttflui();
-/*
-  Flow control.  If C-Kermit's FLOW-CONTROL is RTS/CTS, then we set this on
-  the modem too.  Unfortunately, many versions of UNIX only allow RTS/CTS
-  to be set outside of Kermit (e.g. by selecting a special device name).
-  In that case, Kermit doesn't know that it should set RTS/CTS on the modem,
-  in which case the user SET MODEM FLOW appropriately.
-*/
-		  if (flow == FLO_RTSC) { /* RTS/CTS active in Kermit */
-		      sprintf(tbcmdbuf,
-			      "ATS7=%d S48=%d S50=0 S58=2 S68=255\015",
-			      mdmwait, parity ? 0 : 1);
-		  } else
-		    sprintf(tbcmdbuf,	/* Otherwise, don't touch modem's fc */
-			    "ATS7=%d S48=%d S50=0 S68=255\015",
-			    mdmwait, parity ? 0 : 1);
-		  s = tbcmdbuf;
-		  debug(F110,"ckdial Telebit init step 2",s,0);
-		  for (tries = 4; tries > 0; tries--) {
-		      ttslow(s,mp->wake_rate);
-		      mdmstat = getok(5,1);
-		      if (mdmstat) break;
-		      if (dialdpy && tries > 1)
-			printf(" No response from modem, retrying%s...\n",
-			       (tries < 4) ? " again" : "");
-		      msleep(500);
-		      ttflui();
-		  }
-		  if (mdmstat < 1) {
-		      dialfail(F_MINIT);
-#ifdef NTSIG
-		      ckThreadEnd(threadinfo);
-#endif /* NTSIG */
-		      SIGRETURN;
-		  }
-/*
-  Model-dependent items, but constant per model.
-*/
-		  switch (tbmodel) {
-		    case TB_BLAZ:
-		    case TB_PLUS:	/* TrailBlazer-Plus */
-		    case TB_1000:	/* T1000 */
-		    case TB_2000:	/* T2000 */
-		    case TB_2500:	/* T2500 */
-#ifdef COMMENT
-/* Code from edit 183 told modem to follow RS-232 wrt CD and DTR */
-		      /* DTR, CD, follow RS-232, pass BREAK */
-		      sprintf(tbcmdbuf,"ATS52=1 S53=4 S54=3\015");
-#else
-/* But everybody agreed we should not touch modem's CD and DTR settings. */
-		      /* Just pass BREAK */
-		      sprintf(tbcmdbuf,"ATS54=3\015");
-#endif /* COMMENT */
-		      break;
-		    case TB_1600:	/* T1600 */
-		    case TB_3000:	/* T3000 */
-		    case TB_WBLA:	/* WorldBlazer */
-		    case TB_QBLA:	/* Qblazer */
-#ifdef COMMENT
-/* Code from edit 183 */
-		      /* Follow RS-232, No CONNECT suffix, pass BREAK */
-		      sprintf(tbcmdbuf,"AT&C1&D2&Q0 S59=0 S61=0 S63=0\015");
-#else
-/*
-  Everybody agrees we should not touch modem's CD and DTR settings.
-  Also no more &Q0, no more S59=0 (doesn't matter, so don't touch).
-  So this section now deals only with treatment of BREAK.
-  Here we also raise the result code from X1 to X2, which allows
-  the T1600, T3000, and WB to supply NO DIALTONE, BUSY, RRING, and DIALING.
-  X2 means something else on the other models.
-*/
-		      /* Transmit BREAK in sequence, raise result code. */
-		      sprintf(tbcmdbuf,"ATX2 S61=0 S63=0\015");
-#endif /* COMMENT */
-		      break;
-		    default:		/* Others, do nothing */
-		      tbcmdbuf[0] = NUL;
-		      break;
-		  }
-		  s = tbcmdbuf;
-		  if (*s) {
-		      debug(F110,"ckdial Telebit init step 3",s,0);
-		      for (tries = 4; tries > 0; tries--) {
-			  ttslow(s,mp->wake_rate);
-			  mdmstat = getok(5,1);
-			  if (mdmstat) break;
-			  if (dialdpy && tries > 1)
-			    printf(" No response from modem, retrying%s...\n",
-				   (tries < 4) ? " again" : "");
-			  msleep(500);
-			  ttflui();
-		      }
-		      if (mdmstat < 1)
-			dialfail(F_MINIT);
-		  } else debug(F100,"ckdial Telebit init step 3 skipped","",0);
-
-/* Error correction, MNP or V.42 */
-
-		  if (dialec) {		/* User wants error correction */
-		      switch (tbmodel) { /* which implies fallback to MNP. */
-			case TB_PLUS:	/* BC7.00 and up firmware */
-			case TB_2000:	/* now really the same as TB+ ? */
-			case TB_2500:	/* LAPM+compress->MNP->direct */
-			  ecstr = "S50=0 S95=2 S97=1 S98=3 S106=1";
-			  break;
-			case TB_1600:
-			case TB_3000:
-			case TB_WBLA:
-			case TB_QBLA:
-#ifdef COMMENT
-			  /* V.42, fallback = lock speed */
-			  ecstr = "S180=2 S181=0";
-#else
-/* Better not to mess with S181, let it be used however user has it set. */
-/* S180=2 allows fallback to MNP, S180=1 disallows fallback to MNP. */
-			  ecstr = "S180=2";	/* V.42 */
-#endif /* COMMENT */
-			  break;
-			default:
-			  if (dialdpy)
-			    printf(
-"V.42 not supported by this Telebit model\n");
-		      }
-		  } else {		/* Handle DIAL ERROR-CORRE.. setting */
-		      switch (tbmodel) {
-			case TB_BLAZ:	/* TrailBlazer */
-			case TB_PLUS:	/* TrailBlazer-Plus */
-			case TB_1000:	/* T1000 */
-			case TB_2000:	/* T2000 */
-			case TB_2500:	/* T2500 */
-			  ecstr = dialec ? "S95=2" : "S95=0"; /* ON, OFF */
-			  break;
-			case TB_1600:	/* T1600 */
-			case TB_3000:	/* T3000 */
-			case TB_WBLA:	/* WorldBlazer */
-			case TB_QBLA:	/* Qblazer */
-			  ecstr = dialec ? "S180=3" : "S180=0"; /* ON, OFF */
-			  /* (Leave S181 fallback method alone) */
-			  break;
-			default:
-			  ecstr = "";
-		      }
-		  }
-
-/* Dialing protocol */
-
-		  dprstr = "";	/* Initialize dialing protocol string */
-		  p = "";		/* and message string */
-		  switch (mymdmtyp) {
-		    case n_TELEBIT:	/* Start at highest and work down */
-		      p = "standard";
-		      switch (tbmodel) { /* First group starts with PEP */
-			case TB_BLAZ:	/* TrailBlazer */
-			case TB_PLUS:	/* TrailBlazer-Plus */
-			case TB_1000:	/* T1000 */
-			case TB_2000:	/* T2000 */
-			case TB_2500:	/* T2500 */
-			  dprstr = "S50=0 S110=1"; /* PEP, compression. */
-			  break;
-			case TB_WBLA:	/* WorldBlazer has PEP */
-			  dprstr = "S50=0 S190=1 S191=7"; /* PEP, */
-			  break;	/* compression allowed. */
-			case TB_1600:	/* T1600 doesn't have PEP */
-			case TB_3000:	/* T3000 doesn't */
-			case TB_QBLA:	/* Qblazer doesn't*/
-			default:
-			  dprstr = "S50=0"; /* No PEP available */
-			  break;
-		      }
-		      break;
-
-#ifdef COMMENT
-/* Who needs it? */
-		    case n_TBS:		/* Telebit up to 2400 Baud */
-		      p = "300/1200/2400 Baud"; /* Leave S90 alone assuming */
-		      dprstr = "S50=3";	/* already set for V.22 vs 212A */
-		      break;
-		    case n_TB3:		/* Telebit V.32 */
-		      if (tbmodel == TB_3000 || tbmodel == TB_1600 ||
-			  tbmodel == TB_2500 || tbmodel == TB_WBLA) {
-			  p = "V.32";
-		    /* Note: we don't touch S51 (interface speed) here. */
-		    /* We're already talking to the modem, and the modem */
-		    /* SHOULD be able to make a V.32 call no matter what */
-		    /* its interface speed is.  (In practice, however, */
-		    /* that is not always true.) */
-			  dprstr = "S50=6";
-		      } else if (dialdpy)
-			printf("V.32 not supported by this Telebit model.\n");
-		      break;
-
-		    case n_TBPEP:	/* Force PEP Protocol */
-		      /* Models that don't support PEP */
-		      if (tbmodel != TB_1600 &&
-			  tbmodel != TB_3000 &&
-			  tbmodel != TB_QBLA) {
-			  p = "PEP";
-			  if (tbmodel == TB_WBLA) /* WorldBlazer */
-			    dprstr = "S50=255 S190=1 S191=7";
-			  else if (tbmodel != TB_1000)
-			    dprstr = "S50=255 S110=1"; /* TrailBlazer, etc. */
-			  else dprstr = "S50=255"; /* T1000, no compression */
-		      } else if (dialdpy)
-			printf("PEP not supported by this Telebit model.\n");
-		      break;
-#endif /* COMMENT */
-		  }
-
-		  /* Telebit Kermit Spoof */
-
-		  if (dialksp) {
-		      p = "Kermit Spoof";
-		      switch (parity) {	/* S111 value depends on parity */
-			case 'e': S111 = 12; break;
-			case 'm': S111 = 13; break;
-			case 'o': S111 = 11; break;
-			case 's': S111 = 14; break;
-			case 0:
-			default:  S111 = 10; break;
-		      }
-		      if (tbmodel != TB_QBLA)
-			sprintf(tbcmdbuf,"AT%s %s S111=%d S112=%d\015",
-				ecstr,dprstr,S111,stchr);
-		      else {		/* Qblazer has no Kermit spoof */
-			  sprintf(tbcmdbuf,"AT%s %s\015", ecstr,dprstr);
-			  p = "No Kermit Spoof";
-			  if (dialdpy)
-			    printf("Kermit Spoof not supported by Qblazer\n");
-		      }
-		  } else {		/* KERMIT-SPOOF OFF */
-		      p = "No Kermit Spoof";
-		      sprintf(tbcmdbuf,"AT%s %s %s\015",
-			      ecstr, dprstr,
-			      (tbmodel == TB_QBLA) ? "" : "S111=0");
-		  }
-		  s = tbcmdbuf;
-		  debug(F111,"ckdial Telebit config",p,speed);
-		  debug(F110,"ckdial Telebit init step 4",s,0);
-		  if (*s) {
-		      for (tries = 4; tries > 0; tries--) {
-			  ttslow(s,mp->wake_rate);
-			  mdmstat = getok(5,1);
-			  if (mdmstat) break;
-			  if (dialdpy && tries > 1)
-			    printf(" No response from modem, retrying%s...\n",
-				   (tries < 4) ? " again" : "");
-			  msleep(500);
-			  ttflui();
-		      }
-		      debug(F101,"ckdial telebit init mdmstat","",mdmstat);
-		      if (mdmstat < 1)
-			dialfail(F_MINIT);
-		  }
-	      }
-	      /* Done with Telebit protocols, remove bits from modem type */
-	      /* Except nonverbal bit */
-	      debug(F101,"ckdial Telebit mymdmtyp","",mymdmtyp);
-	  }
-#endif /* OLDTBCODE */
-
     } else if (mymdmtyp == n_ATTDTDM && dialsta != DIA_PART) { /* AT&T ... */
 	ttsndb();			/* Send BREAK */
 #endif /* MINIDIAL */
 
-    } else if ( dialsta != DIA_PART ) { /* All others */
-
-
+    } else if (dialsta != DIA_PART) { /* All others */
 
 	/* Place modem into command mode */
 
 	ws = dialini ? dialini : mp->wake_str;
 	if (ws && (int)strlen(ws) > 0) {
-	    debug(F111,"ckdial default, wake string", ws, mp->wake_rate);
-	    ttslow(ws, mp->wake_rate);
+	    debug(F111,"ckdial default, wake string", ws, wr);
+	    ttslow(ws, wr);
 	} else debug(F100,"ckdial no wake_str","",0);
 	if (mp->wake_prompt && (int)strlen(mp->wake_prompt) > 0) {
 	    debug(F110,"ckdial default, waiting for wake_prompt",
@@ -3592,36 +5057,38 @@ For Kermit Spoof (same commands for all models that support it):
 	debug(F100,"ckdial got wake prompt","",0);
 	msleep(500);			/* Allow settling time */
     }
+
 /* Handle error correction, data compression, and flow control... */
 
-    if ( dialsta != DIA_PART
-#ifndef MINIDIAL
-#ifdef OLDTBCODE
-	&& !(mdmcapas & CKD_TB)		/* Telebits already done. */
-#endif /* OLDTBCODE */
-#endif /* MINIDIAL */
-	) {
+    if (dialsta != DIA_PART) {
 
 	/* Enable/disable error-correction */
 
 	x = 0;
 	if (dialec) {			/* DIAL ERROR-CORRECTION is ON */
 	    if (dialecon) {		/* SET DIAL STRING ERROR-CORRECTION */
+		if (*dialecon) {
+		    x = 1;
+		    ttslow(dialecon, wr);
+		}
+	    } else if ((mdmcapas & CKD_EC) && *(mp->ec_on_str)) {
 		x = 1;
-		ttslow(dialecon, mp->wake_rate);		
-	    } else if (mdmcapas & CKD_EC) {
-		x = 1;
-		ttslow(mp->ec_on_str, mp->wake_rate);
-	    } else printf(
+		ttslow(mp->ec_on_str, wr);
+	    }
+#ifdef COMMENT
+	    else printf(
 		  "WARNING - I don't know how to turn on EC for this modem\n"
 		     );
+#endif /* COMMENT */
 	} else {
-	    if (dialecoff) {		/* SET DIAL STRING */
+	    if (dialecoff) {		/* DIAL ERROR-CORRECTION OFF */
+		if (*dialecoff) {
+		    x = 1;
+		    ttslow(dialecoff, wr);
+		}
+	    } else if ((mdmcapas & CKD_EC) && *(mp->ec_off_str)) {
 		x = 1;
-		ttslow(dialecoff, mp->wake_rate);		
-	    } else if (mdmcapas & CKD_EC) { /* Or built-in one... */
-		x = 1;
-		ttslow(mp->ec_off_str, mp->wake_rate);
+		ttslow(mp->ec_off_str, wr);
 	    }
 #ifdef COMMENT
 	    else printf(
@@ -3650,21 +5117,28 @@ For Kermit Spoof (same commands for all models that support it):
 		printf(
 "WARNING - You can't have compression without error correction.\n");
 	    } else if (dialdcon) {	/* SET DIAL STRING ... */
+		if (*dialdcon) {
+		    x = 1;
+		    ttslow(dialdcon, wr);
+		}
+	    } else if ((mdmcapas & CKD_DC) && *(mp->dc_on_str)) {
 		x = 1;
-		ttslow(dialdcon, mp->wake_rate);		
-	    } else if (mdmcapas & CKD_DC) {
-		x = 1;
-		ttslow(mp->dc_on_str, mp->wake_rate);
-	    } else printf(
+		ttslow(mp->dc_on_str, wr);
+	    }
+#ifdef COMMENT
+	    else printf(
 		  "WARNING - I don't know how to turn on DC for this modem\n"
 			  );
+#endif /* COMMENT */
 	} else {
-	    if (dialdcoff) {		/* SET DIAL STRING */
+	    if (dialdcoff) {
+		if (*dialdcoff) {
+		    x = 1;
+		    ttslow(dialdcoff, wr);
+		}
+	    } else if ((mdmcapas & CKD_DC) && *(mp->dc_off_str)) {
 		x = 1;
-		ttslow(dialdcoff, mp->wake_rate);		
-	    } else if (mdmcapas & CKD_DC) { /* Or built-in one... */
-		x = 1;
-		ttslow(mp->dc_off_str, mp->wake_rate);
+		ttslow(mp->dc_off_str, wr);
 	    }
 #ifdef COMMENT
 	    else printf(
@@ -3676,69 +5150,15 @@ For Kermit Spoof (same commands for all models that support it):
 	    x = (*xx_ok)(5,1);
 	    if (x < 0) printf("WARNING - Trouble enabling compression\n");
 	}
-
-/* Flow control */
-
-	x = 0;				/* User said SET DIAL FLOW RTS/CTS */
-	if ( dialfc == FLO_RTSC ||	/* Even if Kermit's FLOW isn't...  */
-	    (dialfc == FLO_AUTO && flow == FLO_RTSC)) {	
-	    if (dialhwfc) {		/* User-defined HWFC string */
-		x = 1;
-		ttslow(dialhwfc, mp->wake_rate);
-	    } else if (mdmcapas & CKD_HW) { /* or built-in one */
-		x = 1;
-		ttslow(mp->hwfc_str, mp->wake_rate);
-	    } else
-	      printf("WARNING - I don't know how to enable modem's HWFC.\n");
-
-	} else if ( dialfc == FLO_XONX || /* User said SET DIAL FLOW SOFT */
-		   (dialfc == FLO_AUTO && flow == FLO_XONX)) {
-	    if (dialswfc) {
-		x = 1;
-		ttslow(dialswfc, mp->wake_rate);
-	    } else if (mdmcapas & CKD_SW) {
-		x = 1;
-		ttslow(mp->swfc_str, mp->wake_rate);
-	    }
-
-	} else if (dialfc == FLO_NONE) { /* User said SET DIAL FLOW NONE */
-	    if (dialnofc) {
-		x = 1;
-		ttslow(dialnofc, mp->wake_rate);
-	    } else if (mp->nofc_str && *(mp->nofc_str)) {
-		x = 1;
-		ttslow(mp->nofc_str, mp->wake_rate);
-	    }
-	}
-	if (x && xx_ok) {		/* Get modem's response */
-	    x = (*xx_ok)(5,1);
-	    if (x < 0)
-	     printf("WARNING - Trouble %sabling modem's local flow control\n",
-		    (dialfc == FLO_NONE) ? "dis" : "en");
-#ifdef CK_TTSETFLOW
-#ifdef CK_RTSCTS
-/*
-  So far only ckutio.c has ttsetflow().
-  We have just told the modem to turn on RTS/CTS flow control and the modem
-  has said OK.  But we ourselves have not turned it on yet because of the
-  disgusting ttpkt(...FLO_DIAL...) hack.  So now, if the computer does not
-  happen to be asserting RTS, the modem will no longer send characters to it.
-  So at EXACTLY THIS POINT, we must enable RTS/CTS in the device driver.
-*/
-	    if (dialfc == FLO_RTSC ||
-		(dialfc == FLO_AUTO && flow == FLO_RTSC))
-	      ttsetflow(FLO_RTSC);
-#endif /* CK_RTSCTS */
-#endif /* CK_TTSETFLOW */
-	}
     }
 
+#ifndef NOXFER
 #ifndef MINIDIAL
     if (mdmcapas & CKD_KS && dialsta != DIA_PART) { /* Kermit spoof */
 	int r;				/* Register */
 	char tbcmdbuf[20];		/* Command buffer */
 	switch (mymdmtyp) {
-  
+
 	  case n_MICROCOM:		/* Microcoms in SX mode */
   	    if (dialksp)
 	      sprintf(tbcmdbuf,"APM1;KMC%d\015",stchr);
@@ -3765,33 +5185,113 @@ For Kermit Spoof (same commands for all models that support it):
 		}
 		sprintf(tbcmdbuf,"ATS111=%d S112=%d\015",r,stchr);
 	    }
-	    ttslow(tbcmdbuf, mp->wake_rate);
+	    ttslow(tbcmdbuf, wr);
 
 /* Not all Telebit models have the Kermit spoof, so ignore response. */
 
 	    if (xx_ok) {		/* Get modem's response */
 		x = (*xx_ok)(5,1);
-#ifdef COMMENT
-		if (x < 0)
-		  printf("WARNING - Trouble %sabling Kermit spoof\n",
-			 (dialksp == FLO_NONE) ? "dis" : "en");
-#endif /* COMMENT */
 	    }
 	}
     }
 #endif /* MINIDIAL */
+#endif /* NOXFER */
+
+    /* Speaker */
+
+    if ((mdmcapas & CKD_AT) && (dialsta != DIA_PART) &&
+	!dialspon && !dialspoff &&
+	!dialvol1 && !dialvol2 &&!dialvol3) {
+	/* AT command set and commands have not been customized */
+	/* so combine speaker and volume commands. */
+	if (mdmspk)
+	  sprintf(lbuf,"ATM1L%d%c",mdmvol,13);
+	else
+	  sprintf(lbuf,"ATM0%c",13);
+	ttslow(lbuf,wr);		/* Send command */
+	getok(5,1);			/* Get but ignore response */
+    } else if (dialsta != DIA_PART) {	/* Customized or not AT commands */
+	x = 0;				/* Do it the hard way */
+	if (mdmspk) {
+	    if (dialspon) {
+		if (*dialspon) {
+		    x = 1;
+		    ttslow(dialspon,wr);
+		}
+	    } else {
+		x = 1;
+		ttslow(mp->sp_on_str,wr);
+	    }
+	} else {
+	    /* s = dialspoff ? dialspoff : mp->sp_off_str; */
+	    if (dialspoff) {
+		if (*dialspoff) {
+		    x = 1;
+		    ttslow(dialspoff,wr);
+		}
+	    } else {
+		x = 1;
+		ttslow(mp->sp_off_str,wr);
+	    }
+	}
+	if (x) {
+	    if (xx_ok)			/* Get response */
+	      x = (*xx_ok)(5,1);
+	    if (x && mdmspk) {		/* Good response and speaker on? */
+		switch (mdmvol) {	/* Yes, send volume command. */
+		  case 0:
+		  case 1:
+		    s = dialvol1 ? dialvol1 : mp->vol1_str; break;
+		  case 2:
+		    s = dialvol2 ? dialvol2 : mp->vol2_str; break;
+		  case 3:
+		    s = dialvol3 ? dialvol3 : mp->vol3_str; break;
+		  default:
+		    s = NULL;
+		}
+		if (s) if (*s) {	/* Send volume command. */
+		    ttslow(s, wr);
+		    if (xx_ok)		/* Get response but ignore it */
+		      (*xx_ok)(5,1);
+		}
+	    }
+	}
+    }
+
+#ifndef CK_ATDT
+    /* Dialing Method */
 
     if (dialmth && dialsta != DIA_PART) { /* If dialing method specified... */
 	char *s = "";			/* Do it here... */
 
-	if (dialmth == XYDM_T)		/* Tone */
-	  s = dialtone ? dialtone : mp->tone;
-	else if (dialmth == XYDM_P)	/* Pulse */
-	  s = dialpulse ? dialpulse : mp->pulse;
+	if (dialmth == XYDM_T && dialtone) /* Tone */
+	  s = dialtone;
+	else if (dialmth == XYDM_P && dialpulse) /* Pulse */
+	  s = dialpulse;
 	if (s) if (*s) {
-	    ttslow(s, mp->dial_rate);
-	    if (xx_ok)		/* Get modem's response */
-	      (*xx_ok)(5,1);	/* (but ignore it...) */
+	    ttslow(s, wr);
+	    if (xx_ok)			/* Get modem's response */
+	      (*xx_ok)(5,1);		/* (but ignore it...) */
+	}
+    }
+#endif /* CK_ATDT */
+
+    if (dialidt) {			/* Ignore dialtone? */
+	char *s = "";
+	s = dialx3 ? dialx3 : mp->ignoredt;
+	if (s) if (*s) {
+	    ttslow(s, wr);
+	    if (xx_ok)			/* Get modem's response */
+	      (*xx_ok)(5,1);		/* (but ignore it...) */
+	}
+    }
+    {
+	char *s = "";			/* Last-minute init string? */
+	s = dialini2 ? dialini2 : mp->ini2;
+	if (s) if (*s) {
+	    ttslow(s, wr);
+	    if (xx_ok)			/* Get modem's response */
+	      (*xx_ok)(5,1);		/* (but ignore it...) */
 	}
     }
     if (func_code == 1) {		/* ANSWER (not DIAL) */
@@ -3799,7 +5299,7 @@ For Kermit Spoof (same commands for all models that support it):
 	s = dialaaon ? dialaaon : mp->aa_on_str;
 	if (!s) s = "";
 	if (*s) {
-	    ttslow(s, mp->dial_rate);
+	    ttslow(s, (dialpace > -1) ? wr : mp->dial_rate);
 	    if (xx_ok)			/* Get modem's response */
 	      (*xx_ok)(5,1);		/* (but ignore it...) */
 	} else {
@@ -3819,7 +5319,7 @@ For Kermit Spoof (same commands for all models that support it):
 	    s = dialaaoff ? dialaaoff : mp->aa_off_str;
 #endif /* COMMENT */
 	    if (s) if (*s) {
-		ttslow(s, mp->dial_rate);
+		ttslow(s, (dialpace > -1) ? wr : mp->dial_rate);
 		if (xx_ok)		/* Get modem's response */
 		  (*xx_ok)(5,1);	/* (but ignore it...) */
 	    }
@@ -3827,7 +5327,7 @@ For Kermit Spoof (same commands for all models that support it):
 	    /* Put modem into dialing mode, if the modem requires it. */
 
 	    if (mp->dmode_str && *(mp->dmode_str)) {
-		ttslow(mp->dmode_str, mp->dial_rate);
+		ttslow(mp->dmode_str, (dialpace > -1) ? wr : mp->dial_rate);
 		savalrm = signal(SIGALRM,dialtime);
 		alarm(10);
 		/* Wait for prompt, if any expected */
@@ -3837,61 +5337,45 @@ For Kermit Spoof (same commands for all models that support it):
 		}
 		alarm(0);		/* Turn off alarm on dialing prompts */
 		signal(SIGALRM,savalrm); /* Restore alarm */
-		ttflui(); /* Clear out stuff from waking modem up */
 	    }
 	}
-
-/* Allocate a buffer for the dialing string. */
-
-#ifdef DYNAMIC
-	if (!lbuf) {			/* If, for some reason, this is NULL */
-	    if (!(lbuf = malloc(LBUFL+1))) { /* allocate it... */
-		dialsta = DIA_IE;
-#ifdef NTSIG
-		ckThreadEnd(threadinfo);
-#endif /* NTSIG */
-		SIGRETURN;
-	    }
+	if (mdmcapas & CKD_AT &&	/* AT command set */
+	    dialsta != DIA_PART) {
+	    if (mdmwait > 255)		/* If larger than maximum, */
+	      mdmwait = 255;		/* make it maximum. */
+	    if (dialesc > 0 &&		/* Modem escape character is set */
+		dialmhu > 0) {		/* Hangup method is modem command */
+		int x = dialesc;
+		if (dialesc < 0 || dialesc > 127)
+		  x = 128;
+		sprintf(lbuf,
+			"ATS2=%dS7=%d\015",
+			dialesc ? x : mp->esc_char, mdmwait);
+	    } else
+	      sprintf(lbuf,"ATS7=%d%c",mdmwait,13);
+	    ttslow(lbuf,wr);		/* Set it. */
+	    mdmstat = getok(5,1);	/* Get response from modem */
+	    /* If it gets an error, go ahead anyway */
+	    debug(F101,"ckdial S7 mdmstat","",mdmstat);
 	}
-#endif /* DYNAMIC */
+	ttflui();			/* Clear out stuff from modem setup */
+	inited = 1;			/* Remember modem is initialized */
 
-	if (mdmcapas & CKD_AT && dialsta != DIA_PART) {
-	    sprintf(lbuf,"ATS2=%d\015",	/* Set the escape character */
-		    dialesc ? dialesc : mp->esc_char);
-	    ttslow(lbuf, mp->dial_rate);
-	    if (xx_ok)			/* Get modem's response */
-	      x = (*xx_ok)(5,1);
-	    if (x < 0)
-	      printf(
-		     "WARNING - Problem setting modem's escape character\n"
-		     );
-	}
-	s = dialcmd ? dialcmd : mp->dial_str;
-
-	if ((int)strlen(s) + (int)strlen(telnbr) > LBUFL) {
-	    printf("DIAL command + phone number too long!\n");
-	    dreset();
-#ifdef DYNAMIC
-	    if (lbuf) free(lbuf); lbuf = NULL;
-	    if (rbuf) free(rbuf); rbuf = NULL;
-	    if (fbuf) free(fbuf); fbuf = NULL;
-#endif /* DYNAMIC */
-#ifdef NTSIG
-	    ckThreadEnd(threadinfo);
-#endif /* NTSIG */
-	    SIGRETURN;	 /* No conversation with modem to complete dialing */
-	}
-
-	sprintf(lbuf, s, telnbr);
-
+      REDIAL:
+	sprintf(lbuf, dcmd, xnum);
 	debug(F110,"dialing",lbuf,0);
-	ttslow(lbuf,mp->dial_rate);	/* Send the dialing string */
+	/* Send the dialing string */
+	ttslow(lbuf,dialpace > -1 ? wr : mp->dial_rate);
 
 	fail_code = F_MODEM;		/* New default failure code changes */
 	dial_what = DW_DIAL;		/* and our state, too. */
 	if (dialdpy) {			/* If showing progress */
 	    p = ck_time();		/* get current time; */
 	    if (*p) printf(" Dialing: %s...\n",p);
+#ifdef VMS
+	    printf(" \n");
+	    fflush(stdout);
+#endif /* VMS */
 	}
 	alarm(waitct);			/* This much time allowed. */
 	debug(F101,"ckdial waitct","",waitct);
@@ -3947,12 +5431,12 @@ For Kermit Spoof (same commands for all models that support it):
 		    x = ttxin(x,(CHAR *)lbuf);
 		    if ((x > 0) && dialdpy) conol(lbuf);
 		} else if (network && x < 0) { /* Connection dropped */
+		    inited = 0;
 #ifdef NTSIG
 		    ckThreadEnd(threadinfo);
 #endif /* NTSIG */
 		    dialsta = DIA_IO;	/* Call it an I/O error */
 #ifdef DYNAMIC
-		    if (lbuf) free(lbuf); lbuf = NULL;
 		    if (rbuf) free(rbuf); rbuf = NULL;
 		    if (fbuf) free(fbuf); fbuf = NULL;
 #endif /* DYNAMIC */
@@ -4003,12 +5487,18 @@ For Kermit Spoof (same commands for all models that support it):
 	lbuf[++n] = '\0';		/* Terminate response from modem */
 	debug(F111,"ckdial modem response",lbuf,n);
 #ifndef NOSPL
-	strncpy(modemmsg,lbuf,79);	/* Call result message */
+	ckstrncpy(modemmsg,lbuf,LBUFL);	/* Call result message */
+	lbuf[79] = NUL;
 	{
 	    int x;			/* Strip junk from end */
 	    x = (int)strlen(modemmsg) - 1;
-	    while ((modemmsg[x] < (char) 33) && (x > -1))
-	      modemmsg[x--] = NUL;
+	    while (x > -1) {
+		if (modemmsg[x] < (char) 33)
+		  modemmsg[x] = NUL;
+		else
+		  break;
+		x--;
+	    }
 	}
 #endif /* NOSPL */
 	if (mdmcapas & CKD_AT) {	/* Hayes AT command set */
@@ -4115,15 +5605,15 @@ For Kermit Spoof (same commands for all models that support it):
 #ifndef MINIDIAL
 	      case n_ATTMODEM:
 		/* Careful - "Connected" / "Not Connected" */
-		if (didweget(lbuf,"Busy")) { 
+		if (didweget(lbuf,"Busy")) {
 		    mdmstat = D_FAILED;
 		    dialsta = DIA_BUSY;
 		} else if (didweget(lbuf,"Not connected") ||
-			   didweget(lbuf,"Not Connected")) { 
+			   didweget(lbuf,"Not Connected")) {
 		    mdmstat = D_FAILED;
 		    dialsta = DIA_NOCA;
 		} else if (didweget(lbuf,"No dial tone") ||
-			   didweget(lbuf,"No Dial Tone")) { 
+			   didweget(lbuf,"No Dial Tone")) {
 		    mdmstat = D_FAILED;
 		    dialsta = DIA_NODT;
 		} else if (didweget(lbuf,"No answer") ||
@@ -4141,13 +5631,13 @@ For Kermit Spoof (same commands for all models that support it):
 		if (didweget(lbuf,"ANSWERED")) {
 		    mdmstat = CONNECTED;
 		    dialsta = DIA_OK;
-		} else if (didweget(lbuf,"BUSY")) { 
+		} else if (didweget(lbuf,"BUSY")) {
 		    mdmstat = D_FAILED;
 		    dialsta = DIA_BUSY;
-		} else if (didweget(lbuf,"DISCONNECT")) { 
+		} else if (didweget(lbuf,"DISCONNECT")) {
 		    mdmstat = D_FAILED;
 		    dialsta = DIA_DISC;
-		} else if (didweget(lbuf,"NO ANSWER")) { 
+		} else if (didweget(lbuf,"NO ANSWER")) {
 		    mdmstat = D_FAILED;
 		    dialsta = DIA_NOAN;
 		} else if (didweget(lbuf,"WRONG ADDRESS")) {
@@ -4159,13 +5649,13 @@ For Kermit Spoof (same commands for all models that support it):
 	      case n_ATTDTDM:
 		if (didweget(lbuf,"ANSWERED")) {
 		    mdmstat = CONNECTED;
-		} else if (didweget(lbuf,"BUSY")) { 
+		} else if (didweget(lbuf,"BUSY")) {
 		    mdmstat = D_FAILED;
 		    dialsta = DIA_BUSY;
-		} else if (didweget(lbuf,"CHECK OPTIONS")) { 
+		} else if (didweget(lbuf,"CHECK OPTIONS")) {
 		    mdmstat = D_FAILED;
 		    dialsta = DIA_ERR;
-		} else if (didweget(lbuf,"DISCONNECTED")) { 
+		} else if (didweget(lbuf,"DISCONNECTED")) {
 		    mdmstat = D_FAILED;
 		    dialsta = DIA_DISC;
 		} else if (didweget(lbuf,"DENIED")) {
@@ -4180,7 +5670,7 @@ For Kermit Spoof (same commands for all models that support it):
 #endif /* ATT6300 */
 #endif /* DEBUG */
 		break;
-		
+
 #ifdef OLDMODEMS
 	      case n_CERMETEK:
 		if (didweget(lbuf,"\016A")) {
@@ -4263,7 +5753,7 @@ For Kermit Spoof (same commands for all models that support it):
 	      case n_PENRIL:
 		if (didweget(lbuf,"OK")) {
 		    mdmstat = CONNECTED;
-		} else if (didweget(lbuf,"BUSY")) { 
+		} else if (didweget(lbuf,"BUSY")) {
 		    mdmstat = D_FAILED;
 		    dialsta = DIA_BUSY;
 		    } else if (didweget(lbuf,"NO RING")) {
@@ -4299,7 +5789,7 @@ For Kermit Spoof (same commands for all models that support it):
 		} else if (didweget(lbuf,"BUSY")) {
 		    mdmstat = D_FAILED;
 		    dialsta = DIA_BUSY;
-		} else if (didweget(lbuf,"DOES NOT ANSWER")) { 
+		} else if (didweget(lbuf,"DOES NOT ANSWER")) {
 		    mdmstat = D_FAILED;
 		    dialsta = DIA_NOAN;
 		}
@@ -4323,8 +5813,8 @@ For Kermit Spoof (same commands for all models that support it):
 	      case n_CONCORD:
 		if (didweget(lbuf,"INITIATING"))
 		  mdmstat = CONNECTED;
-		else if (didweget(lbuf,"BUSY")) { 
-		    mdmstat = D_FAILED;			
+		else if (didweget(lbuf,"BUSY")) {
+		    mdmstat = D_FAILED;
 		    dialsta = DIA_BUSY;
 		} else if (didweget(lbuf,"CALL FAILED")) {
 		    mdmstat = D_FAILED;
@@ -4335,16 +5825,16 @@ For Kermit Spoof (same commands for all models that support it):
 
 	      case n_MICROCOM:
 		/* "RINGBACK" means phone line ringing, continue */
-		if (didweget(lbuf,"NO CONNECT")) { 
+		if (didweget(lbuf,"NO CONNECT")) {
 		    mdmstat = D_FAILED;
 		    dialsta = DIA_NOCA;
-		} else if (didweget(lbuf,"BUSY")) { 
+		} else if (didweget(lbuf,"BUSY")) {
 		    mdmstat = D_FAILED;
 		    dialsta = DIA_BUSY;
-		} else if (didweget(lbuf,"NO DIALTONE")) { 
+		} else if (didweget(lbuf,"NO DIALTONE")) {
 		    mdmstat = D_FAILED;
 		    dialsta = DIA_NODT;
-		} else if (didweget(lbuf,"COMMAND ERROR")) { 
+		} else if (didweget(lbuf,"COMMAND ERROR")) {
 		    mdmstat = D_FAILED;
 		    dialsta = DIA_ERR;
 		} else if (didweget(lbuf,"IN USE")) {
@@ -4369,7 +5859,7 @@ For Kermit Spoof (same commands for all models that support it):
 
     debug(F101,"ckdial alarm off","",x);
     alarm(0);
-    if (mdmstat == D_FAILED )	{	/* Failure detected by modem  */
+    if (mdmstat == D_FAILED) {		/* Failure detected by modem  */
         dialfail(F_MODEM);
 #ifdef NTSIG
 	ckThreadEnd(threadinfo);
@@ -4379,7 +5869,8 @@ For Kermit Spoof (same commands for all models that support it):
 	msleep(500);
 	debug(F100,"dial partial","",0);
     } else {				/* Call was completed */
-	msleep(1000);			/* In case DTR blinks  */
+	int x;
+	msleep(700);			/* In case modem signals blink  */
 	debug(F100,"dial succeeded","",0);
 	if (
 #ifndef MINIDIAL
@@ -4391,6 +5882,14 @@ For Kermit Spoof (same commands for all models that support it):
 	    alarm(3);			/* In case ttpkt() gets stuck... */
 	    ttpkt(speed,FLO_DIAX,parity); /* Cancel dialing state ioctl */
 	}
+/*
+  In case CD went off in the interval between call completion and return
+  from ttpkt()...
+*/
+	if (carrier == CAR_AUT || carrier == CAR_ON)
+	  if ((x = ttgmdm()) >= 0)
+	    if (!(x & BM_DCD))
+	      printf("WARNING: Carrier seems to have dropped...\n");
     }
     dreset();				/* Reset alarms and signals. */
     if (!quiet && !backgrd) {
@@ -4400,6 +5899,11 @@ For Kermit Spoof (same commands for all models that support it):
 		   "Partial c" :
 		   "C",
 		   p );
+	} else if (modemmsg[0]) {
+	    printf (" %sall complete: \"%s\".\n",
+		    (mdmstat == D_PARTIAL) ? "Partial c" : "C",
+		    (char *)modemmsg
+		    );
 	} else {
 	    printf (" %sall complete.\n",
 		    (mdmstat == D_PARTIAL) ?
@@ -4408,9 +5912,11 @@ For Kermit Spoof (same commands for all models that support it):
 		    );
 	}
     }
+#ifdef CKLOGDIAL
+    dologdial(telnbr);
+#endif /* CKLOGDIAL */
 
 #ifdef DYNAMIC
-    if (lbuf) free(lbuf); lbuf = NULL;
     if (rbuf) free(rbuf); rbuf = NULL;
     if (fbuf) free(fbuf); fbuf = NULL;
 #endif /* DYNAMIC */
@@ -4420,7 +5926,6 @@ For Kermit Spoof (same commands for all models that support it):
 #endif /* NTSIG */
     SIGRETURN;
 }
-
 
 static SIGTYP
 #ifdef CK_ANSIC
@@ -4436,7 +5941,7 @@ faildial(threadinfo) VOID * threadinfo;
 
 /*
   nbr = number to dial (string)
-  x1  = Retry counter 
+  x1  = Retry counter
   x2  = Number counter
   fc  = Function code:
         0 == DIAL
@@ -4444,11 +5949,12 @@ faildial(threadinfo) VOID * threadinfo;
         2 == INIT/CONFIG
         3 == PARTIAL DIAL
 */
+
 int
 #ifdef OLD_DIAL
 ckdial(nbr) char *nbr;
 #else
-ckdial(nbr, x1, x2, fc) char *nbr; int x1, x2, fc;
+ckdial(nbr, x1, x2, fc, redial) char *nbr; int x1, x2, fc, redial;
 #endif /* OLD_DIAL */
 /* ckdial */ {
 #define ERMSGL 50
@@ -4456,6 +5962,10 @@ ckdial(nbr, x1, x2, fc) char *nbr; int x1, x2, fc;
     int n = F_TIME;
     char *s;
     long spdmax;
+#ifdef OS2
+    extern int term_io;
+    int term_io_sav = term_io;
+#endif /* OS2 */
 
     char *mmsg = "Sorry, DIAL memory buffer can't be allocated\n";
 
@@ -4466,6 +5976,20 @@ ckdial(nbr, x1, x2, fc) char *nbr; int x1, x2, fc;
     }
     func_code = fc;			/* Make global to this module */
     telnbr = nbr;
+    xredial = redial;
+    debug(F111,"ckdial entry partial",ckitoa(fc),partial);
+    debug(F111,"ckdial entry number",nbr,redial);
+
+#ifdef CK_TAPI_X
+    if (tttapi && tapipass) {
+	if (modemp[n_TAPI] = cktapiGetModemInf()) {
+	    mymdmtyp = n_TAPI;
+	} else {
+	    mymdmtyp = mdmtyp;
+	    modemp[n_TAPI] = &GENERIC;
+	}
+    } else
+#endif /* CK_TAPI */
     mymdmtyp = mdmtyp;
     if (mymdmtyp < 0) {			/* Whoa, network dialing... */
 	if (mdmsav > -1)
@@ -4474,19 +5998,37 @@ ckdial(nbr, x1, x2, fc) char *nbr; int x1, x2, fc;
     if (mymdmtyp < 0) {
 	printf("Invalid modem type %d - internal error.\n",mymdmtyp);
 	dialsta = DIA_NOMO;
-	return 0;
+	return(0);
     }
     dial_what = DW_NOTHING;		/* Doing nothing at first. */
     nonverbal = 0;
 
 /* These are ONLY for the purpose of interpreting numeric result codes. */
 
+    is_motorola =
+#ifdef MINIDIAL
+      0
+#else
+      mymdmtyp == n_SUPRA || mymdmtyp == n_SUPRASON;
+#endif /* MINIDIAL */
+	;
+
+    is_motorola =
+#ifdef MINIDIAL
+      0
+#else
+      mymdmtyp == n_MOTOROLA || mymdmtyp == n_MONTANA;
+#endif /* MINIDIAL */
+	;
+
     is_rockwell =
 #ifdef MINIDIAL
       0
 #else
-      mymdmtyp == n_RWV32 || mymdmtyp == n_RWV32B || mymdmtyp == n_RWV34 ||
-	mymdmtyp == n_BOCA || mymdmtyp == n_TELEPATH || mymdmtyp == n_CARDINAL
+      mymdmtyp == n_RWV32 || mymdmtyp == n_RWV32B ||
+	mymdmtyp == n_RWV34 || mymdmtyp == n_RWV90 ||
+	  mymdmtyp == n_BOCA || mymdmtyp == n_TELEPATH ||
+	    mymdmtyp == n_CARDINAL || mymdmtyp == n_BESTDATA
 #endif /* MINIDIAL */
 	;
 
@@ -4498,13 +6040,15 @@ ckdial(nbr, x1, x2, fc) char *nbr; int x1, x2, fc;
 #endif /* MINIDIAL */
 	;
 
-#ifdef OLDTBCODE
-#ifndef MINIDIAL
-    tbmodel = TB_UNK;			/* Initialize Telebit model */
+    is_supra =
+#ifdef MINIDIAL
+      0
+#else
+      mymdmtyp == n_SUPRA || mymdmtyp == n_SUPRAX || n_SUPRASON
 #endif /* MINIDIAL */
-#endif /* OLDTBCODE */
+	;
 
-    mp = modemp[mymdmtyp - 1];		/* Set pointer to modem info */
+    mp = modemp[mymdmtyp];		/* Set pointer to modem info */
     if (!mp) {
 	printf("Sorry, handler for this modem type not yet filled in.\n");
 	dialsta = DIA_NOMO;
@@ -4516,11 +6060,6 @@ ckdial(nbr, x1, x2, fc) char *nbr; int x1, x2, fc;
 #endif /* COMMENT */
 
 #ifdef DYNAMIC
-    if (!(lbuf = malloc(LBUFL+1))) {    /* Allocate input line buffer */
-	printf("%s", mmsg);
-	dialsta = DIA_IE;
-	return 0;
-    }
     *lbuf = NUL;
     debug(F101,"DIAL lbuf malloc ok","",LBUFL+1);
 
@@ -4528,7 +6067,6 @@ ckdial(nbr, x1, x2, fc) char *nbr; int x1, x2, fc;
 	if (!(rbuf = malloc(RBUFL+1))) {    /* Allocate input line buffer */
 	    printf("%s", mmsg);
 	    dialsta = DIA_IE;
-	    if (lbuf) free(lbuf); lbuf = NULL;
 	    return 0;
 	} else
 	  debug(F101,"DIAL rbuf malloc ok","",RBUFL+1);
@@ -4536,7 +6074,6 @@ ckdial(nbr, x1, x2, fc) char *nbr; int x1, x2, fc;
     if (!(fbuf = malloc(FULLNUML+1))) {    /* Allocate input line buffer */
 	printf("%s", mmsg);
 	dialsta = DIA_IE;
-	if (lbuf) free(lbuf); lbuf = NULL;
 	if (rbuf) free(rbuf); rbuf = NULL;
 	return 0;
     }
@@ -4554,12 +6091,15 @@ ckdial(nbr, x1, x2, fc) char *nbr; int x1, x2, fc;
 	perror(errmsg);
 	dialsta = DIA_OPEN;
 #ifdef DYNAMIC
-	if (lbuf) free(lbuf); lbuf = NULL;
 	if (rbuf) free(rbuf); rbuf = NULL;
 	if (fbuf) free(fbuf); fbuf = NULL;
 #endif /* DYNAMIC */
 	return 0;
     }
+
+#ifdef CK_TAPI
+    if (!tttapi) {
+#endif /* CK_TAPI */
 
 /* Condition console terminal and communication line */
 
@@ -4577,7 +6117,6 @@ ckdial(nbr, x1, x2, fc) char *nbr; int x1, x2, fc;
 	    perror(errmsg);
 	    dialsta = DIA_OPEN;
 #ifdef DYNAMIC
-	    if (lbuf) free(lbuf); lbuf = NULL;
 	    if (rbuf) free(rbuf); rbuf = NULL;
 	    if (fbuf) free(fbuf); fbuf = NULL;
 #endif /* DYNAMIC */
@@ -4591,21 +6130,30 @@ ckdial(nbr, x1, x2, fc) char *nbr; int x1, x2, fc;
 	&& (strcmp(ttname,"/nil"))
 #endif /* OSK */
 #endif /* UNIX */
+#ifdef CK_TAPI
+	     && !tttapi
+#endif /* CK_TAPI */
 	    ) {
 	    printf("Sorry, Can't condition communication line\n");
 	    printf("Try 'set line %s' again\n",ttname);
 	    dialsta = DIA_OPEN;
 #ifdef DYNAMIC
-	    if (lbuf) free(lbuf); lbuf = NULL;
 	    if (rbuf) free(rbuf); rbuf = NULL;
 	    if (fbuf) free(fbuf); fbuf = NULL;
 #endif /* DYNAMIC */
 	    return 0;
 	}
     }
+#ifdef CK_TAPI
+    }
+#endif /* CK_TAPI */
+
     /* Modem's escape sequence... */
 
-    c = (char) (dialesc ? dialesc : mp->esc_char);
+    if (dialesc < 0 || dialesc > 127)
+      c = NUL;
+    else
+      c = (char) (dialesc ? dialesc : mp->esc_char);
     mdmcapas = dialcapas ? dialcapas : mp->capas;
 
     xx_ok = mp->ok_fn;			/* Pointer to response reader */
@@ -4636,6 +6184,7 @@ ckdial(nbr, x1, x2, fc) char *nbr; int x1, x2, fc;
 	if (x > 0) {
 	    if (telnbr[x-1] == ';') {
 		partial = 1;
+		debug(F110,"ckdial sets partial=1:",telnbr,0);
 	    } else if (partial) {
 		sprintf(fbuf,"%s;", telnbr); /* add one */
 		telnbr = fbuf;
@@ -4650,23 +6199,36 @@ ckdial(nbr, x1, x2, fc) char *nbr; int x1, x2, fc;
 	waitct = (dialatmo > -1) ? dialatmo : 0;
     } else {				/* DIAL */
 	if (dialtmo < 1) {		/* Automatic computation. */
-	    waitct = 1 * (int)strlen(telnbr) ; /* Worst case dial time */
-	    waitct += mp->dial_time;	/* dialtone + completion wait times */
-	    for (s = telnbr; *s; s++) {	/* add in pause characters time */
-		for (p = mp->pause_chars; *p; p++)
-		  if (*s == *p) {
-		      waitct += mp->pause_time;
-		      break;
-		  }
+#ifdef CK_TAPI
+	    if (tttapi && !tapipass) {
+		waitct = 1 * (int)strlen(telnbr) ; /* Worst case dial time */
+		waitct += 60;		/* dialtone + completion wait times */
+		for (s = telnbr; *s; s++) { /* add in pause characters time */
+		    if (*s == ',') {
+			waitct += 2; /* unless it was changed in the modem */
+		    } else if (*s == 'W' ||
+			       *s == 'w' ||
+			       *s == '$' ||
+			       *s == '@'
+			       ) {
+			waitct += 8;
+		    }
+		}
+	    } else {
+#endif /* CK_TAPI */
+		waitct = 1 * (int)strlen(telnbr) ;
+		/* dialtone + completion wait times */
+		waitct += mp->dial_time;
+		for (s = telnbr; *s; s++) {
+		    for (p = mp->pause_chars; *p; p++)
+		      if (*s == *p) {
+			  waitct += mp->pause_time;
+			  break;
+		      }
+		}
+#ifdef CK_TAPI
 	    }
-#ifdef COMMENT
-#ifndef MINIDIAL
-#ifdef OLDTBCODE
-	if (mymdmtyp == n_TBPEP)
-	  waitct += 30;			/* Longer connect wait for PEP call */
-#endif /* OLDTBCODE */
-#endif /* MINIDIAL */
-#endif /* COMMENT */
+#endif /* CK_TAPI */
 	} else waitct = dialtmo;	/* User-specified timeout */
     }
 
@@ -4676,16 +6238,19 @@ ckdial(nbr, x1, x2, fc) char *nbr; int x1, x2, fc;
   We set mdmwait to be 5 seconds less than waitct, to increase the
   chance that we get a response from the modem before timing out.
 */
-    if (waitct < 0) waitct = 0;
-    if (fc == 0) {			/* DIAL */
-
+    if (waitct <= 0) {			/* 0 or negative means wait forever  */
+	waitct = 254;
+	mdmwait = 0;
+    } else {
 #ifdef XWAITCT
-	/* Addtl wait slop can be defined at compile time */	
+	/* Addtl wait slop can be defined at compile time */
 	waitct += XWAITCT;
 #endif /* XWAITCT */
-	if (waitct < 25) waitct = 25;
+	if (waitct < 60 + mdmwaitd)
+	  waitct = 60 + mdmwaitd;
 	mdmwait = waitct - mdmwaitd;
-    } else {				/* ANSWER */
+    }
+    if (fc != 0) {			/* ANSWER */
 #ifdef COMMENT
 /*
   This is wrong.  mdmwait is the value given to S7 in Hayeslike modems.
@@ -4695,7 +6260,7 @@ ckdial(nbr, x1, x2, fc) char *nbr; int x1, x2, fc;
   ANSWER timeout is 0 (meaning "wait forever"), the following statement sets
   S7 to 0, which, on some modems (like the USR Sportster) makes it hang up
   and report NO CARRIER the instant the phone rings.
-*/	
+*/
 	mdmwait = waitct;
 #else
 	mdmwait = 60;			/* Always wait 60 seconds. */
@@ -4703,6 +6268,10 @@ ckdial(nbr, x1, x2, fc) char *nbr; int x1, x2, fc;
 
     }
     if (!quiet && !backgrd) {		/* Print information messages. */
+#ifdef VMS
+	printf(" \n");
+	fflush(stdout);
+#endif /* VMS */
 	if (fc == 1)
 	  printf(" Waiting for phone call...\n");
 	else
@@ -4712,6 +6281,11 @@ ckdial(nbr, x1, x2, fc) char *nbr; int x1, x2, fc;
 		printf(" Via modem server: %s, modem: %s\n",
 		       ttname, gmdmtyp() );
 	    } else {
+#ifdef CK_TAPI
+		if (tttapi && !tapipass)
+		  printf(" Device: %s, modem: %s", ttname, "TAPI" );
+		else
+#endif /* CK_TAPI */
 		printf(" Device: %s, modem: %s",
 		       ttname, gmdmtyp() );
 		if (speed > -1L)
@@ -4721,15 +6295,30 @@ ckdial(nbr, x1, x2, fc) char *nbr; int x1, x2, fc;
 	    }
 	    spdmax = dialmax > 0L ? dialmax : mp->max_speed;
 
-	    if (!network &&  spdmax > 0L && speed > spdmax) {
+	    if (!network &&  spdmax > 0L && speed > spdmax
+#ifdef CK_TAPI
+		 && (!tttapi || tapipass)
+#endif /* CK_TAPI */
+#ifndef NOHINTS
+		&& hints
+#endif /* NOHINTS */
+		 ) {
+#ifndef NOHINTS
+		printf("\n*************************");
+#endif /* NOHINTS */
 		printf(
-"\n  WARNING - interface speed %ld might be too high for this modem type.\n",
+"\nHINT: interface speed %ld might be too high for this modem type.\n",
 		       speed
 		       );
 		printf(
-"  If dialing fails, SET SPEED to %ld or less and try again.\n\n",
+"If dialing fails, SET SPEED to %ld or less and try again.\n",
 		       spdmax
 		       );
+#ifndef NOHINTS
+		printf("(Use SET HINTS OFF to suppress future hints.)\n");
+		printf("\n*************************\n");
+#endif /* NOHINTS */
+		printf("\n");
 	    }
 	    printf(" %s timeout: ", fc == 0 ? "Dial" : "Answer");
 	    if (waitct > 0)
@@ -4751,14 +6340,18 @@ ckdial(nbr, x1, x2, fc) char *nbr; int x1, x2, fc;
     }
     debug(F111,"ckdial",ttname,(int) (speed / 10L));
     debug(F101,"ckdial timeout","",waitct);
+#ifdef OS2
+    term_io = 0;
+#endif /* OS2 */
 
 /* Set timer and interrupt handlers. */
-    savint = signal( SIGINT, dialint ) ; /* And terminal interrupt handler. */ 
+    savint = signal( SIGINT, dialint ) ; /* And terminal interrupt handler. */
     cc_alrm_execute(ckjaddr(sjbuf), 0, dialtime, _dodial, faildial);
     signal(SIGINT, savint);
 #ifdef OS2
     if (dialsta == DIA_OK)		/* Dialing is completed */
       DialerSend(OPT_KERMIT_CONNECT, 0);
+    term_io = term_io_sav;
 #endif /* OS2 */
     if (dialsta == DIA_PART || dialsta == DIA_OK)
       return(1);			/* Dial attempt succeeded */
@@ -4797,14 +6390,14 @@ oktimo(foo) int foo;			/* Alarm handler for getok(). */
     /* signal(SIGALRM,SIG_IGN); */
     debug(F100,"oktimo() SIGALRM caught -- SIG_IGN set","",0) ;
 #endif /* OS2 */
-    
+
 #ifdef OSK				/* OS-9, see comment in dialtime(). */
     sigmask(-1);
 #endif /* OSK */
 #ifdef NTSIG
     if ( foo == SIGALRM )
       PostAlarmSigSem();
-    else 
+    else
       PostCtrlCSem();
 #else /* NTSIG */
 #ifdef NT
@@ -4828,12 +6421,23 @@ dook(threadinfo) VOID * threadinfo ;
 /* dook */ {
     CHAR c;
     int i, x;
-
+#ifdef IKSD
+    extern int inserver;
+#endif /* IKSD */
 #ifdef NTSIG
+    signal(SIGINT,oktimo);
     if (threadinfo) {			/* Thread local storage... */
 	TlsSetValue(TlsIndex,threadinfo);
     }
 #endif /* NTSIG */
+#ifdef CK_LOGIN
+#ifdef NT
+#ifdef IKSD
+    if (inserver)
+      setntcreds();
+#endif /* IKSD */
+#endif /* NT */
+#endif /* CK_LOGIN */
 
     if (mdmcapas & CKD_V25) {		/* CCITT, easy... */
         waitfor("VAL");
@@ -4912,7 +6516,11 @@ dook(threadinfo) VOID * threadinfo ;
 		*/
 		if (!strcmp(rbuf+RBUFL-4,"OK\015\012")) /* Good response */
 		  okstatus = 1;
+		if (!strcmp(rbuf+RBUFL-3,"OK\012")) /* Good response */
+		  okstatus = 1;
 		else if (!strcmp(rbuf+RBUFL-7,"ERROR\015\012"))	/* Error */
+		  okstatus = -1;
+		else if (!strcmp(rbuf+RBUFL-6,"ERROR\012"))	/* Error */
 		  okstatus = -1;
 		break;
 	      /* Check whether modem echoes its commands... */
@@ -4953,7 +6561,7 @@ failok(threadinfo) VOID * threadinfo;
     SIGRETURN;
 }
 
-static int
+int
 getok(n, strict) int n, strict; {
     debug(F101,"getok entry n","",n);
     okstatus = 0;
@@ -5072,7 +6680,7 @@ gethrn() {
 	debug(F110,"dial hayesnv lbuf",lbuf,0);
 	debug(F111,"dial hayesnv got",nbuf,i);
 	/*
-	   Separate any non-numeric suffix from the numeric 
+	   Separate any non-numeric suffix from the numeric
 	   result code with a null.
 	*/
 	for (j = i-1; (j > -1) && !isdigit(nbuf[j]); j--)
@@ -5143,9 +6751,16 @@ gethrn() {
 	    mdmstat = D_FAILED;
 	    dialsta = DIA_NOAN;
 	    break;
-	  case 9:			/* CONNECT 2400 */
-	  case 10:
-	    spdchg(2400L); /* Change speed if necessary. */
+
+	  case 9:
+#ifndef MINIDIAL
+	    if (mymdmtyp == n_XJACK || mymdmtyp == n_SUPRAX) {
+		spdchg(600);
+		break;
+	    } /* fall thru */
+#endif /* MINIDIAL */
+	  case 10:			/* CONNECT 2400 */
+	    spdchg(2400L);		/* Change speed if necessary. */
 	    mdmstat = CONNECTED;
 	    break;
 
@@ -5155,7 +6770,7 @@ gethrn() {
 
 	  case 11:
 	    if (mymdmtyp == n_USR) {
-		if (dialdpy) printf(" Ringing...\r\n");		
+		if (dialdpy) printf(" Ringing...\r\n");
 	    } else {
 		spdchg(4800L);		/* CONNECT 4800 */
 		mdmstat = CONNECTED;
@@ -5167,32 +6782,44 @@ gethrn() {
 		  printf("\r\n Answered by voice.\r\n");
 		mdmstat = D_FAILED;
 		dialsta = DIA_VOIC;
+	    } else if (mymdmtyp == n_KEEPINTOUCH) {
+		spdchg(7200L);
+		mdmstat = CONNECTED;
 	    } else {
 		spdchg(9600L);
 		mdmstat = CONNECTED;
 	    }
 	    break;
 	  case 13:
-	    if (mymdmtyp == n_USR)
-	      spdchg(9600L); 
-	    if (is_rockwell || mymdmtyp == n_ZOLTRIX)
-	      spdchg(7200L); 
+	    if (mymdmtyp == n_ATT1900 || mymdmtyp == n_ATT1910) {
+		if (dialdpy) printf(" Wait...\r\n");
+		break;
+	    } else if (mymdmtyp == n_USR || mymdmtyp == n_USRX2)
+	      spdchg(9600L);
+	    else if (is_rockwell || is_supra ||
+		mymdmtyp == n_ZOLTRIX || mymdmtyp == n_XJACK)
+	      spdchg(7200L);
 	    else if (mymdmtyp != n_MICROLINK) /* 12000 */
 	      spdchg(14400L);
 	    mdmstat = CONNECTED;
 	    break;
 	  case 14:
-	    if (is_rockwell)
-	      spdchg(12000L); 
+	    if (is_rockwell || is_supra || mymdmtyp == n_XJACK)
+	      spdchg(12000L);
 	    else if (mymdmtyp == n_DATAPORT || mymdmtyp == n_MICROLINK)
 	      spdchg(14400L);
+	    else if (mymdmtyp == n_KEEPINTOUCH)
+	      spdchg(9600L);
 	    else if (mymdmtyp != n_USR && mymdmtyp != n_ZOLTRIX)
 	      spdchg(19200L);
 	    mdmstat = CONNECTED;
 	    break;
 	  case 15:
-	    if (is_rockwell || mymdmtyp == n_ZOLTRIX)
+	    if (is_rockwell || is_supra ||
+		mymdmtyp == n_ZOLTRIX || mymdmtyp == n_XJACK)
 	      spdchg(14400L);
+	    else if (mymdmtyp == n_USR)
+	      spdchg(1200L);
 	    else if (mymdmtyp == n_ZYXEL || mymdmtyp == n_INTEL)
 	      spdchg(7200L);
 	    else if (mymdmtyp == n_DATAPORT)
@@ -5202,8 +6829,11 @@ gethrn() {
 	    mdmstat = CONNECTED;
 	    break;
 	  case 16:
-	    if (is_rockwell || mymdmtyp == n_ZOLTRIX)
+	    if (is_rockwell || is_supra ||
+		mymdmtyp == n_ZOLTRIX || mymdmtyp == n_XJACK)
 	      spdchg(19200L);
+	    else if (mymdmtyp == n_USR)
+	      spdchg(2400L);
 	    else if (mymdmtyp == n_DATAPORT)
 	      spdchg(7200L);
 	    else if (mymdmtyp != n_ZYXEL && mymdmtyp != n_INTEL) /* 12000 */
@@ -5211,18 +6841,24 @@ gethrn() {
 	    mdmstat = CONNECTED;
 	    break;
 	  case 17:
-	    if (mymdmtyp != n_DATAPORT)	/* 16800 */
+	    if (mymdmtyp != n_DATAPORT || mymdmtyp == n_XJACK)	/* 16800 */
 	      spdchg(38400L);
 	    else if (mymdmtyp == n_ZYXEL || mymdmtyp == n_INTEL)
 	      spdchg(14400L);
+	    else if (mymdmtyp == n_KEEPINTOUCH)
+	      spdchg(14400L);
+	    else if (mymdmtyp == n_USR)
+	      spdchg(9600L);
 	    mdmstat = CONNECTED;
 	    break;
 	  case 18:
-	    if (is_rockwell || mymdmtyp == n_ZOLTRIX)
+	    if (is_rockwell || is_supra ||
+		mymdmtyp == n_ZOLTRIX || mymdmtyp == n_XJACK
+		|| mymdmtyp == n_MHZATT)
 	      spdchg(57600L);
 	    else if (mymdmtyp == n_INTEL)
 	      spdchg(19200L);
-	    else if (mymdmtyp == n_USR)
+	    else if (mymdmtyp == n_USR || mymdmtyp == n_USRX2)
 	      spdchg(4800L);
 	    mdmstat = CONNECTED;
 	    break;
@@ -5236,7 +6872,7 @@ gethrn() {
 	    mdmstat = CONNECTED;
 	    break;
 	  case 20:
-	    if (mymdmtyp == n_USR)
+	    if (mymdmtyp == n_USR || mymdmtyp == n_USRX2)
 	      spdchg(7200L);
 	    else if (mymdmtyp == n_DATAPORT)
 	      spdchg(2400L);
@@ -5252,23 +6888,26 @@ gethrn() {
 	    mdmstat = CONNECTED;
 	    break;
 	  case 22:
-	    if (is_rockwell)
+	    if (is_rockwell || is_supra || mymdmtyp == n_XJACK)
 	      spdchg(8880L);
 	    else if (mymdmtyp == n_DATAPORT)
 	      spdchg(9600L);
+	    else if (mymdmtyp == n_KEEPINTOUCH)
+	      spdchg(300L);
 	    else if (!is_hayeshispd)
 	      spdchg(1200L);
 	    mdmstat = CONNECTED;
 	    break;
 	  case 23:
-	    if (is_hayeshispd || mymdmtyp == n_MULTI)
+	    if (is_hayeshispd || is_supra ||
+		mymdmtyp == n_MULTI || mymdmtyp == n_XJACK)
 	      spdchg(8880L);
 	    else if (mymdmtyp != n_DATAPORT && !is_rockwell) /* 12000 */
 	      spdchg(2400L);
 	    mdmstat = CONNECTED;
 	    break;
 	  case 24:
-	    if (is_rockwell) {
+	    if (is_rockwell ||  is_supra || mymdmtyp == n_XJACK) {
 		mdmstat = D_FAILED;
 		dialsta = DIA_DELA;	/* Delayed */
 		break;
@@ -5276,47 +6915,53 @@ gethrn() {
 	      spdchg(7200L);
 	    else if (mymdmtyp == n_DATAPORT)
 	      spdchg(14400L);
-	    else if (mymdmtyp == n_INTEL)
+	    else if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH)
 	      spdchg(1200L);
 	    mdmstat = CONNECTED;
 	    break;
 	  case 25:
-	    if (mymdmtyp == n_MOTOROLA)
+	    if (mymdmtyp == n_USR || mymdmtyp == n_USRX2)
+	      spdchg(14400L);
+	    else if (is_motorola)
 	      spdchg(9600L);
-	    else if (mymdmtyp == n_INTEL)
+	    else if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH)
 	      spdchg(2400L);
 	    mdmstat = CONNECTED;
 	    break;
 	  case 26:
 	    if (mymdmtyp == n_DATAPORT)
 	      spdchg(19200L);
-	    else if (mymdmtyp == n_INTEL)
+	    else if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH)
 	      spdchg(4800L);
 	    mdmstat = CONNECTED;
 	    break;
 	  case 27:
 	    if (mymdmtyp == n_DATAPORT)
 	      spdchg(38400L);
-	    else if (mymdmtyp == n_INTEL)
+	    else if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH)
 	      spdchg(7200L);
+	    else if (mymdmtyp == n_MHZATT)
+	      spdchg(8880L);
 	    mdmstat = CONNECTED;
 	    break;
 	  case 28:
 	    if (mymdmtyp == n_DATAPORT)
 	      spdchg(7200L);
-	    else if (mymdmtyp == n_INTEL)
+	    else if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH)
 	      spdchg(9600L);
+	    else if (mymdmtyp == n_MHZATT)
+	      spdchg(38400L);
 	    mdmstat = CONNECTED;
 	    break;
 	  case 29:
-	    if (mymdmtyp == n_MOTOROLA)
+	    if (is_motorola)
 	      spdchg(4800L);
 	    else if (mymdmtyp == n_DATAPORT)
 	      spdchg(19200L);
 	    mdmstat = CONNECTED;
 	    break;
 	  case 30:
-	    if (mymdmtyp == n_INTEL) {
+	    if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH) {
 		spdchg(14400L);
 		mdmstat = CONNECTED;
 	    } /* fall thru on purpose... */
@@ -5324,17 +6969,20 @@ gethrn() {
 	    if (mymdmtyp == n_UCOM_AT || mymdmtyp == n_MICROLINK) {
 		spdchg(4800L);
 		mdmstat = CONNECTED;
-	    } else if (mymdmtyp == n_MOTOROLA) {
+	    } else if (is_motorola) {
 		spdchg(57600L);
 		mdmstat = CONNECTED;
 	    }
 	    break;
 	  case 32:
-	    if (is_rockwell) {
+	    if (is_rockwell || is_supra || mymdmtyp == n_XJACK) {
 		mdmstat = D_FAILED;
 		dialsta = DIA_BLCK;	/* Blacklisted */
 	    } else if (mymdmtyp == n_UCOM_AT || mymdmtyp == n_MICROLINK) {
 		spdchg(9600L);
+		mdmstat = CONNECTED;
+	    } else if (mymdmtyp == n_KEEPINTOUCH) {
+		spdchg(300L);
 		mdmstat = CONNECTED;
 	    } else if (mymdmtyp == n_INTEL) {
 		spdchg(2400L);
@@ -5342,19 +6990,23 @@ gethrn() {
 	    }
 	    break;
 	  case 33:			/* FAX connection */
-	    if (is_rockwell || mymdmtyp == n_ZOLTRIX) {
+	    if (is_rockwell || is_supra ||
+		mymdmtyp == n_ZOLTRIX || mymdmtyp == n_XJACK) {
 		mdmstat = D_FAILED;
 		dialsta = DIA_FAX;
 	    } else if (mymdmtyp == n_UCOM_AT ||
-		       mymdmtyp == n_MOTOROLA ||
+		       is_motorola ||
 		       mymdmtyp == n_MICROLINK
 		       ) {
 		spdchg(9600L);
 		mdmstat = CONNECTED;
+	    } else if (mymdmtyp == n_MHZATT) {
+		spdchg(115200L);
+		mdmstat = CONNECTED;
 	    }
 	    break;
 	  case 34:
-	    if (mymdmtyp == n_INTEL) {
+	    if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH) {
 		spdchg(1200L);
 		mdmstat = CONNECTED;
 	    } else if (mymdmtyp == n_MICROLINK) {
@@ -5366,26 +7018,26 @@ gethrn() {
 	    if (is_rockwell) {
 		spdchg(300L);
 		dialsta = CONNECTED;
-	    } else if (mymdmtyp == n_MOTOROLA) {
+	    } else if (is_motorola) {
 		spdchg(14400L);
 		mdmstat = CONNECTED;
-	    } else if (mymdmtyp == n_INTEL) {
+	    } else if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH) {
 		spdchg(2400L);
 		mdmstat = CONNECTED;
 	    } else if (mymdmtyp == n_MICROLINK) {
 		spdchg(7200L);
 		mdmstat = CONNECTED;
-	    } else if (mymdmtyp == n_ZOLTRIX) /* "DATA" */
+	    } else if (mymdmtyp == n_ZOLTRIX || mymdmtyp == n_XJACK) /* DATA */
 	      mdmstat = CONNECTED;
 	    break;
 	  case 36:
 	    if (mymdmtyp == n_UCOM_AT) {
 		spdchg(19200L);
 		mdmstat = CONNECTED;
-	    } else if (mymdmtyp == n_MOTOROLA) {
+	    } else if (is_motorola) {
 		spdchg(1200L);
 		mdmstat = CONNECTED;
-	    } else if (mymdmtyp == n_INTEL) {
+	    } else if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH) {
 		spdchg(4800L);
 		mdmstat = CONNECTED;
 	    }
@@ -5394,19 +7046,19 @@ gethrn() {
 	    if (mymdmtyp == n_UCOM_AT) {
 		spdchg(19200L);
 		mdmstat = CONNECTED;
-	    } else if (mymdmtyp == n_MOTOROLA) {
+	    } else if (is_motorola) {
 		spdchg(2400L);
 		mdmstat = CONNECTED;
-	    } else if (mymdmtyp == n_INTEL) {
+	    } else if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH) {
 		spdchg(7200L);
 		mdmstat = CONNECTED;
 	    }
 	    break;
 	  case 38:
-	    if (mymdmtyp == n_MOTOROLA) {
+	    if (is_motorola) {
 		spdchg(4800L);
 		mdmstat = CONNECTED;
-	    } else if (mymdmtyp == n_INTEL) {
+	    } else if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH) {
 		spdchg(9600L);
 		mdmstat = CONNECTED;
 	    } /* fall thru on purpose... */
@@ -5414,7 +7066,7 @@ gethrn() {
 	    if (mymdmtyp == n_UCOM_AT) {
 		spdchg(38400L);
 		mdmstat = CONNECTED;
-	    } else if (mymdmtyp == n_MOTOROLA) {
+	    } else if (is_motorola) {
 		spdchg(9600L);
 		mdmstat = CONNECTED;
 	    } else if (mymdmtyp == n_MICROLINK) {
@@ -5426,19 +7078,23 @@ gethrn() {
 	    if (mymdmtyp == n_UCOM_AT) {
 		mdmstat = D_FAILED;
 		dialsta = DIA_NOCA;
-	    } else if (mymdmtyp == n_MOTOROLA || mymdmtyp == n_INTEL) {
+	    } else if (is_motorola || mymdmtyp == n_INTEL ||
+		       mymdmtyp == n_KEEPINTOUCH) {
 		spdchg(14400L);
 		mdmstat = CONNECTED;
 	    }
 	    break;
 	  case 41:
-	    if (mymdmtyp == n_MOTOROLA) {
+	    if (is_motorola) {
 		spdchg(19200L);
 		mdmstat = CONNECTED;
 	    }
 	    break;
 	  case 42:
-	    if (mymdmtyp == n_MOTOROLA) {
+	    if (mymdmtyp == n_KEEPINTOUCH) {
+		spdchg(300L);
+		mdmstat = CONNECTED;
+	    } else if (is_motorola) {
 		spdchg(38400L);
 		mdmstat = CONNECTED;
 	    } /* fall thru on purpose... */
@@ -5446,33 +7102,37 @@ gethrn() {
 	    if (mymdmtyp == n_UCOM_AT) {
 		spdchg(57600L);
 		mdmstat = CONNECTED;
-	    }
+	    } else if (mymdmtyp == n_USRX2)
+	      mdmstat = CONNECTED;	/* 168000 */
 	    break;
 	  case 44:
 	    if (is_rockwell) {
 		spdchg(8800L);
 		dialsta = CONNECTED;
-	    } else if (mymdmtyp == n_MOTOROLA) {
+	    } else if (is_motorola) {
 		spdchg(7200L);
 		mdmstat = CONNECTED;
-	    } else if (mymdmtyp == n_INTEL) {
+	    } else if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH) {
 		spdchg(1200L);
 		mdmstat = CONNECTED;
 	    }
 	    break;
 	  case 45:
-	    if (mymdmtyp == n_MOTOROLA) {
+	    if (is_motorola) {
 		spdchg(57600L);
 		mdmstat = CONNECTED;
-	    } else if (mymdmtyp == n_INTEL) {
+	    } else if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH) {
 		spdchg(2400L);
+		mdmstat = CONNECTED;
+	    } else if (n_USR) {
+		spdchg(14400L);
 		mdmstat = CONNECTED;
 	    }
 	    break;
 	  case 46:
 	    if (is_rockwell)
 	      spdchg(1200L);
-	    else if (mymdmtyp == n_INTEL)
+	    else if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH)
 	      spdchg(4800L);
 	    else
 	      spdchg(8880L);		/* 75/1200 split speed */
@@ -5481,7 +7141,7 @@ gethrn() {
 	  case 47:
 	    if (is_rockwell)
 	      spdchg(2400L);
-	    else if (mymdmtyp == n_INTEL)
+	    else if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH)
 	      spdchg(7200L);
 	    else
 	      printf("CONNECT 1200/75 - Not supported by C-Kermit\r\n");
@@ -5490,7 +7150,7 @@ gethrn() {
 	  case 48:
 	    if (is_rockwell)
 	      spdchg(4800L);
-	    else if (mymdmtyp == n_INTEL)
+	    else if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH)
 	      spdchg(9600L);
 	    else
 	      spdchg(7200L);
@@ -5504,7 +7164,7 @@ gethrn() {
 	  case 50:			/* CONNECT FAST */
 	    if (is_rockwell)
 	      spdchg(9600L);
-	    else if (mymdmtyp == n_INTEL)
+	    else if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH)
 	      spdchg(14400L);
 	    mdmstat = CONNECTED;
 	    break;
@@ -5526,7 +7186,7 @@ gethrn() {
 	    if (is_rockwell) {
 		spdchg(19200L);
 		mdmstat = CONNECTED;
-	    } else if (mymdmtyp == n_INTEL) {
+	    } else if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH) {
 		spdchg(1200L);
 		mdmstat = CONNECTED;
 	    } else if (mymdmtyp == n_TELEBIT) {
@@ -5536,25 +7196,25 @@ gethrn() {
 	    }
 	    break;
 	  case 55:
-	    if (mymdmtyp == n_INTEL) {
+	    if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH) {
 		spdchg(2400L);
 		mdmstat = CONNECTED;
 	    }
 	    break;
 	  case 56:
-	    if (mymdmtyp == n_INTEL) {
+	    if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH) {
 		spdchg(4800L);
 		mdmstat = CONNECTED;
 	    }
 	    break;
 	  case 57:
-	    if (mymdmtyp == n_INTEL) {
+	    if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH) {
 		spdchg(7200L);
 		mdmstat = CONNECTED;
 	    }
 	    break;
 	  case 58:
-	    if (mymdmtyp == n_INTEL) {
+	    if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH) {
 		spdchg(9600L);
 		mdmstat = CONNECTED;
 	    }
@@ -5564,7 +7224,7 @@ gethrn() {
 	      mdmstat = CONNECTED;
 	    break;
 	  case 60:
-	    if (mymdmtyp == n_INTEL) {
+	    if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH) {
 		spdchg(14400L);
 		mdmstat = CONNECTED;
 	    }
@@ -5573,38 +7233,41 @@ gethrn() {
 	    if (mymdmtyp == n_INTEL) {
 		spdchg(1200L);
 		mdmstat = CONNECTED;
+	    } else if (is_supra) {
+		spdchg(28800L);
+		mdmstat = CONNECTED;
 	    }
 	    break;
 	  case 65:
-	    if (mymdmtyp == n_INTEL) {
+	    if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH) {
 		spdchg(2400L);
 		mdmstat = CONNECTED;
 	    }
 	    break;
 	  case 66:
-	    if (mymdmtyp == n_INTEL) {
+	    if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH) {
 		spdchg(4800L);
 		mdmstat = CONNECTED;
 	    }
 	    break;
 	  case 67:
-	    if (mymdmtyp == n_INTEL) {
+	    if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH) {
 		spdchg(7200L);
 		mdmstat = CONNECTED;
 	    }
 	    break;
 	  case 68:
-	    if (mymdmtyp == n_INTEL) {
+	    if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH) {
 		spdchg(9600L);
 		mdmstat = CONNECTED;
 	    }
 	    break;
 	  case 69:
-	    if (mymdmtyp == n_INTEL)	/* 12000 */
+	    if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH) /* 12000 */
 	      mdmstat = CONNECTED;
 	    break;
 	  case 70:
-	    if (mymdmtyp == n_INTEL) {
+	    if (mymdmtyp == n_INTEL || mymdmtyp == n_KEEPINTOUCH) {
 		spdchg(14400L);
 		mdmstat = CONNECTED;
 	    }
@@ -5619,14 +7282,33 @@ gethrn() {
 	      mdmstat = CONNECTED;
 	    break;
 	  case 85:
-	    if (mymdmtyp == n_USR)
+	    if (mymdmtyp == n_USR || mymdmtyp == n_USRX2)
 	      spdchg(19200L);
 	    mdmstat = CONNECTED;
 	    break;
+	  case 91:			/* 21600 */
+	  case 99:			/* 24000 */
+	  case 103:			/* 26400 */
+	    if (mymdmtyp == n_USRX2)
+	      mdmstat = CONNECTED;
+	    break;
+	  case 107:
+	    if (mymdmtyp == n_USR || mymdmtyp == n_USRX2) {
+		spdchg(28800L);
+		mdmstat = CONNECTED;
+	    }
+	    break;
+	  case 151:			/* 312000 */
+	  case 155:			/* 336000 */
+	    if (mymdmtyp == n_USRX2)
+	      mdmstat = CONNECTED;
+	    break;
+
 #endif /* MINIDIAL */
 	  default:
 #ifndef MINIDIAL
-	    if (mymdmtyp == n_USR || is_hayeshispd || is_rockwell)
+	    if (mymdmtyp == n_USR || mymdmtyp == n_USRX2 ||
+		is_hayeshispd || is_rockwell)
 #endif /* MINIDIAL */
 	      if (i > 12)		/* There are hundreds of them... */
 		mdmstat = CONNECTED;
@@ -5692,7 +7374,12 @@ gethrw() {
     } else if (didweget(lbuf,"CONNECT")) {
 	mdmstat = CONNECTED;
     } else if (didweget(lbuf,"OK")) {
-	mdmstat = D_PARTIAL;
+	if (partial) {
+	    mdmstat = D_PARTIAL;
+	} else {
+	    mdmstat = D_FAILED;
+	    dialsta = DIA_ERR;
+	}
     } else if (didweget(lbuf,"NO CARRIER")) {
 	mdmstat = D_FAILED;
 	dialsta = DIA_NOCA;
@@ -5720,25 +7407,67 @@ gethrw() {
     } else if (didweget(lbuf,"FAX")) {
 	mdmstat = D_FAILED;
 	dialsta = DIA_FAX;
+    } else if (didweget(lbuf,"WAIT - CONNECTING") ||
+	       didweget(lbuf,"WAIT-CONNECTING")) { /* AT&T STU-III 19xx */
+	mdmstat = 0;
     } else if (didweget(lbuf,"DELAYED")) {
 	mdmstat = D_FAILED;
 	dialsta = DIA_DELA;
     } else if (didweget(lbuf,"BLACKLISTED")) {
 	mdmstat = D_FAILED;
 	dialsta = DIA_BLCK;
+    } else if (didweget(lbuf,"COMPRESSION")) {
+	mdmstat = 0;
+    } else if (didweget(lbuf,"PROTOCOL")) {
+	mdmstat = 0;
     } else if (didweget(lbuf,"DIAL LOCKED")) { /* Germany, Austria, Schweiz */
 	mdmstat = D_FAILED;
 	dialsta = DIA_BLCK;
-    } else if (didweget(lbuf,"RING")) {
+    } else if ( didweget(lbuf,"RING") ||
+	        didweget(lbuf,"RING1") || /* Distinctive Ring 1 */
+		didweget(lbuf,"RING2") || /* Distinctive Ring 2 */
+		didweget(lbuf,"RING3") ) {
 	mdmstat = (func_code == 0) ? D_FAILED : 0;
-	dialsta = DIA_RING;			
+	dialsta = DIA_RING;
     } else if (didweget(lbuf,"ERROR")) {
 	mdmstat = D_FAILED;
 	dialsta = DIA_ERR;
-    } else if (didweget(lbuf,"CARRIER")) { /* Boca */
+    } else if (didweget(lbuf,"CARRIER")) { /* Boca / Rockwell family */
+#ifdef COMMENT
+	if (is_rockwell)
+#endif /* COMMENT */
+	  mdmstat = 0;
+#ifdef COMMENT
+	/* Does CARRIER ever mean the same as CONNECT? */
+	else
+	  mdmstat = CONNECTED;
+#endif /* COMMENT */
+    } else if (didweget(lbuf,"DATA")) {	/* Boca / Rockwell family */
+	/* This message is sent when the modem is in FAX mode  */
+	/* So setting this to CONNECTED may not be appropriate */
+	/* We must send ATO\015 to the modem in response       */
+	/* Then we will get a CONNECTED message                */
 	mdmstat = CONNECTED;
-    } else if (didweget(lbuf,"DATA")) {	/* Boca */
-	mdmstat = CONNECTED;
+    } else if (didweget(lbuf,"DIGITAL LINE")) {
+	mdmstat = D_FAILED;
+	dialsta = DIA_DIGI;
+    } else if (didweget(lbuf,"DATE")) { /* Caller ID Date */
+	debug(F110,"CALLID DATE",lbuf,0);
+	/* Format is "DATE     =   MMDD"   */
+    } else if (didweget(lbuf,"TIME")) { /* Caller ID Time */
+	/* Format is "TIME     =   HHMM"   */
+	debug(F110,"CALLID TIME",lbuf,0);
+    } else if (didweget(lbuf,"NAME")) { /* Caller ID Name */
+	/* Format is "NAME     =   <listing name>"   */
+	debug(F110,"CALLID NAME",lbuf,0);
+    } else if (didweget(lbuf,"NMBR")) { /* Caller ID Number */
+	/* Format is "NMBR     =   <number>, 'P' or 'O'"   */
+	/* 	'P' means Privacy Requested 		   */
+	/*      'O' means Out of Service or Not available  */
+	debug(F110,"CALLID NMBR",lbuf,0);
+    } else if (didweget(lbuf,"MESG")) { /* Caller ID Unrecognized Message */
+	/* Format is "MESG     =   <tag><length><data><checksum>"   */
+	debug(F110,"CALLID MESG",lbuf,0);
     }
 }
 
@@ -5793,11 +7522,28 @@ mdmhup() {
 #ifdef MDMHUP
     int m, x = 0;
     int xparity;
-    char *s, *p;
+    char *s, *p, c;
     MDMINF * mp = NULL;
+
+    debug(F101,"mdmhup dialmhu","",dialmhu); /* MODEM-HANGUP METHOD */
+    debug(F101,"mdmhup local","",local);
 
     if (dialmhu == 0 || local == 0)	/* If DIAL MODEM-HANGUP is OFF, */
       return(0);			/*  or not in local mode, fail. */
+
+    if (dialesc < 0)
+      return(0);			/* No modem escape-character, fail. */
+
+#ifdef CK_TAPI
+    if (tttapi && !tapipass)		/* Don't hangup if using TAPI */
+      return(0);
+#endif /* CK_TAPI */
+
+    x = ttchk();
+    debug(F101,"mdmhup ttchk","",x);
+    if (x < 0)				/* There appears to be no connection */
+      return(0);
+    x = 0;
 
 #ifdef OS2
 /*
@@ -5811,27 +7557,56 @@ mdmhup() {
 	  return(0);			/* No carrier, skip the rest */
     }
 #endif /* OS2 */
-    
-    if (mymdmtyp < 0)
+
+    debug(F111,"mdmhup network",ttname,network);
+    debug(F101,"mdmhup mymdmtyp","",mymdmtyp);
+    debug(F101,"mdmhup mdmtyp","",mdmtyp);
+    /* In case of HANGUP before DIAL */
+    if (network && mdmtyp < 1)		/* SET HOST but no subsequent */
+      return(0);			/* SET MODEM TYPE... */
+    if (mymdmtyp == 0 && mdmtyp > 0)
+      mymdmtyp = mdmtyp;
+    if (mymdmtyp < 1)			/* Not using a modem */
       return(0);
-    if (mymdmtyp > 0) mp = modemp[mymdmtyp - 1];
-    if (!mp) return(0);
+    if (mymdmtyp > 0)			/* An actual modem... */
+      mp = modemp[mymdmtyp];
+    if (!mp) {				/* Get pointer to its MDMINF struct */
+	debug(F100,"mdmhup no MDMINF","",0);
+	return(0);
+    }
+    mdmcapas = dialcapas ? dialcapas : mp->capas;
+    xx_ok = mp->ok_fn;			/* Pointer to response reader */
 
-    s = dialhcmd ? dialhcmd : mp->hup_str;
-    if (!s) return(0);
-    if (!*s) return(0);
-
+    s = dialhcmd ? dialhcmd : mp->hup_str; /* Get hangup command */
+    if (!s) s = "";
     debug(F110,"mdmhup hup_str",s,0);
-    xparity = parity;			/* Set PARITY to NONE temporarily */
+    if (!*s) return(0);			/* If none, fail. */
 
+    if (ttpkt(speed,FLO_DIAL,parity) < 0) /* Condition line for dialing */
+      return(-1);
+
+    xparity = parity;			/* Set PARITY to NONE temporarily */
+    parity = 0;
+
+    /* In case they gave a SET MODEM ESCAPE command recently... */
+
+    if (dialesc < 0 || dialesc > 127)
+      c = NUL;
+    else
+      c = (char) (dialesc ? dialesc : mp->esc_char);
+
+    if (mdmcapas & CKD_AT) {		/* Hayes compatible */
+	escbuf[0] = c;
+	escbuf[1] = c;
+	escbuf[2] = c;
+	escbuf[3] = NUL;
+    } else {				/* Other */
+	escbuf[0] = c;
+	escbuf[1] = NUL;
+    }
+    debug(F110,"mdmhup escbuf",escbuf,0);
     if (escbuf[0]) {			/* Have escape sequence? */
-	debug(F110,"mdmhup escbuf",escbuf,0);
 	debug(F101,"mdmhup esc_time",0,mp->esc_time);
-	parity = 0;
-	if (ttpkt(speed,FLO_DIAL,parity) < 0) { /* Condition line */
-	    parity = xparity;
-	    return(-1);			/*  for dialing. */
-	}
 	if (mp->esc_time)		/* If we have a guard time */
 	  msleep(mp->esc_time);		/* Pause for guard time */
 	debug(F100,"mdmhup pause 1 OK","",0);
@@ -5842,10 +7617,11 @@ mdmhup() {
 		parity = xparity;
 		return(-1);
 	    }
+	    debug(F110,"mdmhup ttslow net ok",escbuf,0);
 	} else {
 #endif /* NETCONN */
-	    ttslow((char *)escbuf,mp->wake_rate); /* Send escape sequence */
-	    debug(F110,"mdmhup net ttslow ok",escbuf,0);
+	    ttslow((char *)escbuf,wr); /* Send escape sequence */
+	    debug(F110,"mdmhup ttslow ok",escbuf,0);
 #ifdef NETCONN
 	}
 #endif /* NETCONN */
@@ -5855,33 +7631,33 @@ mdmhup() {
 	else
 	  msleep(500);			/* Wait half a sec for echoes. */
 	debug(F100,"mdmhup pause 1 OK","",0);
-#ifdef COMMENT	
+#ifdef COMMENT
 	ttflui();			/* Flush response or echo, if any */
 	debug(F100,"mdmhup ttflui OK","",0);
 #endif /* COMMENT */
-	ttslow(s,mp->wake_rate);	/* Now Send hangup string */
-	debug(F110,"mdmhup ttslow ok",s,0);
+    }
+    ttslow(s,wr);			/* Now Send hangup string */
+    debug(F110,"mdmhup ttslow ok",s,0);
 /*
   This is not exactly right, but it works.
   If we are online:
     the modem says OK when it gets the escape sequence,
-    and it says NO CARRIER when it gets the hangup command.    
+    and it says NO CARRIER when it gets the hangup command.
   If we are offline:
     the modem does NOT say OK (or anything else) when it gets the esc sequence,
     but it DOES say OK (and not NO CARRIER) when it gets the hangup command.
   So the following function should read the OK in both cases.
   Of course, this is somewhat Hayes-specific...
 */
-	if (xx_ok) {			/* Look for OK response */
-	    debug(F100,"mdmhup calling response function","",0);
-	    x = (*xx_ok)(3,1);		/* Give it 3 seconds, be strict. */
-	    debug(F101,"mdmhup hangup response","",x);
-	    msleep(500);		/* Wait half a sec */
-	    ttflui();			/* Get rid of NO CARRIER, if any */
-	} else {			/* No OK function, */
-	    x = 1;			/* so assume it worked */
-	    debug(F101,"mdmhup no ok_fn","",x);
-	}
+    if (xx_ok) {			/* Look for OK response */
+	debug(F100,"mdmhup calling response function","",0);
+	x = (*xx_ok)(3,1);		/* Give it 3 seconds, be strict. */
+	debug(F101,"mdmhup hangup response","",x);
+	msleep(500);			/* Wait half a sec */
+	ttflui();			/* Get rid of NO CARRIER, if any */
+    } else {				/* No OK function, */
+	x = 1;				/* so assume it worked */
+	debug(F101,"mdmhup no ok_fn","",x);
     }
     parity = xparity;			/* Restore prevailing parity */
     return(x);				/* Return OK function's return code. */
@@ -5893,8 +7669,6 @@ mdmhup() {
 }
 
 #else /* NODIAL */
-
-char *dialv = "Dial Command Disabled";
 
 int					/* To allow NODIAL versions to */
 mdmhup() {				/* call mdmhup(), so calls to  */

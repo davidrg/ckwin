@@ -1,94 +1,198 @@
-; File CKEPAGE.SCR
+#!/usr/local/bin/kermit +
 ;
+; File APAGE.KSC
+; Version 4.0
+;
+if < \v(version) 700000 end 1 C-Kermit 7.0 or later required.
+
+; TAP/IXO alphanumeric paging script for Kermit 95 and C-Kermit.
 ; Authors: F. da Cruz and C. Gianone, Columbia University, September 1996.
 ;
-; For use with C-Kermit 6.0.192 or later.
+; For use with C-Kermit 7.0 / K95 1.1.17 or later.
+; For a detailed explanation, consult "Using C-Kermit", 2nd Ed., pp.454-456.
+;
+; Version 2.0: July 1997:
+;  1. To make TAPMSG fit into 1K for small C-Kermit versions.
+;  2. Change END to STOP within SWITCH to work around bug.
+; Version 3.0: September 1997:
+;  1. Change STOP back to END because bug is fixed.
+;  2. Added robustness.
+; Version 4.0: August 1998:
+;  1. Additional robustness - requires 2K command buffer.
+;  2. Diagnostics.
+;
+; WARNING: Automatic redialing is restricted or illegal in some
+; countries.  Modify the lines marked "IF LEGAL!" if below this applies
+; in your location.
 ;
 ; TAPMSG, defined below, is an alphanumeric pager dialing script that
-; implements the TAP protocol for sending one-line alphanumeric pages.
-; To use the script, save it into a file, then tell C-Kermit to "take"
-; the file.  Now you have the TAPMSG macro defined.  It assumes you have
-; already made the phone connection.  Then invoke it with two arguments:
-; the pager ID and the message.
+; implements the Telocator Alphanumeric Protocol (TAP), also known as IXO,
+; for sending one-line alphanumeric pages.  TAPMSG assumes the connection
+; to the paging service is already made.
 ;
-; Of course, it is also easy to define a macro for making the connection and
-; then sending the page, for example (just a sample, change as required):
-
-define APAGE {
-    set modem type usr         ; I have a USR modem
-    set port com1              ; on COM1
-    set speed 2400             ; Must use 2400 bps for paging
-    set parity even            ; and even parity
-    set flow xon/xoff          ; and Xon/Xoff flow control
-    set modem flow none        ; end-to-end, not local
-    set dial retries 10        ; Allow 10 redials
-    dial 5554321               ; Call the pager service
-    if success -               ; If the call is answered
-      tapmsg \%1 {\%2}         ; Send the page
-    else end 1 Page failed.    ; otherwise fail
-}
-
-; To invoke the APAGE macro, put it in a file, edit it as necessary for your
-; setup, tell C-Kermit to "take" the file, and then just type:
+; The APAGE macro makes a connection to the paging service and then uses
+; TAPMSG to send the page.  Here is a SAMPLE; you will need to adjust it
+; to work with your paging service.  Hint: Some paging services are very
+; picky about modem configurations.  For example, experience has shown
+; that to dial a certain service successfully with a USR 28.8 modem, just
+; about all of the modem's features must be turned off prior to dialing.
+; If you have trouble connecting to your service and staying connected,
+; try removing the ";" from the left margin of the commands marked
+; UNCOMMENT below.
+;
+; Replace values in lines marked (*) with the ones appropriate for your
+; computer, modem, and paging service:
+;
+; UNIX-SPECIFIC INSTRUCTIONS:
+; 1. Make sure C-Kermit 7.0 is installed and has permission to use
+;    dialout devices.
+; 2. Call this file "alphapage" or other name of your choice;
+; 3. Change the first line show the full pathname of the C-Kermit 7.0
+:    executable;
+; 4. Give this file execute permission ("chmod +x alphapage");
+; 5. Put this file in a directory that is in the PATH of users who need
+;    to send pages;
+; 6. Invoke with command-line arguments, e.g.:
+;
+;      alphapage "+1 (212) 555-1234" "This is a message"
+;
+;    Use shell quoting rules to group words into arguments.
+;
+; GENERAL INSTRUCTIONS (work on all platforms).
+;
+; To invoke the APAGE macro, put it in a file, edit it as necessary for
+; your setup, tell C-Kermit to "take" the file (which installs the APAGE
+; and TAPMSG definitions) and then to send a page, just type:
 ;
 ;   apage number { this is a message }
 ;
-; at the C-Kermit> prompt.  Note: the phone number should not contain any
-; spaces or else you have to enclose it in braces:
+; at the C-Kermit> prompt, for example:
 ;
-;   apage { 1 212 555-1212 } { this is a message }
+;   apage 99997654321 { Please call the office }
+;
+; Note: the pager ID number should not contain any spaces or else you must
+; enclose it in braces:
+;
+;   apage { 999 76 543 21 } { This is a message }
 ;
 ; Ditto for the message.
+;
+; DEBUGGING: If you want to see diagnostic and progress messages, type
+; "define testing 1" at the Kermit prompt before trying to send a page.
+;
+local usage \%m
+assign \%m \fbasename(\%0)
 
-COMMENT - TAPMSG - Send a one-line alpha page using TAP
-;   \%1 = Pager ID
-;   \%2 = Message
+define usage { exit 1 {usage: \%m <phonenumber> <message>} }
+
+if not def TESTING def TESTING 0 ; Set to 1 for testing / debugging
+if \m(TESTING) {		 ; So we can watch what happens
+    set dial display on
+    set input echo on
+    set terminal echo local    ; So output goes in session log
+    log session                ; Creates session.log in current directory
+    log transact               ; Creates transact.log in current directory
+}
+
+define APAGE {
+    local rc number            ; rc = Return code for this macro
+    if < \v(argc) 2 end 1 PIN required
+    asg number 5554321         ; (*) Paging service phone number
+    set modem type usr         ; (*) I have a USR modem
+    set port /dev/tty01        ; (*) on this device
+    if fail end 1 SET PORT failed
+    set speed 1200             ; (*) Must use 1200 bps for paging
+    set parity even            ; (*) and even parity
+    set flow none              ; (*) and no flow control
+    set modem flow none        ; (*) ...
+    set modem error-correction off
+    set modem data-compression off
+    set modem speed-matching off
+    set output pacing 200      ; Talk s-l-o-w-l-y to the paging service
+    set dial retries 20        ; (*) Allow 20 redials (IF LEGAL!)
+    set dial interval 1        ; (*) 1 sec between redial attempts (IF LEGAL!)
+    dial \m(number)            ; Call the pager service
+    asg rc \v(status)	       ; Save DIAL status
+    if = \m(rc) 0 {            ; If the call is answered
+        tapmsg \%1 {\%2}       ; Send the page
+        asg rc \v(status)      ; Save the result
+    } else {                   ; Otherwise
+        echo Page failed.      ; Fail.
+    }
+    hangup                     ; Hang up the phone
+    ;
+    ; For shared in-out ports you might need to reset the port's original
+    ; speed here and maybe also send it some kind of reset command like ATZ0.
+    ;
+    set modem type \v(modem)   ; Restore default modem settings
+    end \m(rc)                 ; Return
+}
+
+; TAPMSG Telocator Alphanumeric Protocol execution.  Call with:
+;   \%1 = Pager ID (PIN)
+;   \%2 = Message (single line)
+;  Assumes connection is made.  Uses TAP to send PIN and 1-line message.
 ;
 def TAPMSG {
-    local \%i \%m \%s block    ; Local variables
-    asg \%m \2\%1\13\%2\13\3   ; <STX>ID<CR>msg<CR><ETX>
-    asg \%s \fchecksum(\%m)    ; Get checksum and make block
-    asg block \%m\fchar(\fmod(\%s/256,16)+48)-
+    local \%i \%m \%s blk		; Local variables
+    asg \%m \2\%1\13\%2\13\3		; <STX>ID<CR>msg<CR><ETX>
+    asg \%s \fchecksum(\%m)		; Get checksum and make block
+    asg blk \%m\fchar(\fmod(\%s/256,16)+48)-
 \fchar(\fmod(\%s/16,16)+48)-
-\fchar(\fmod(\%s,16)+48)\13    ; Checksummed TAP block
-
-    for \%i 1 3 1 {            ; Try 3 times to get prompt
-        output \13             ; Send <CR>
-        input 3 ID=            ; Wait for "ID="
-        if success break
+\fchar(\fmod(\%s,16)+48)\13		; Checksummed TAP block
+    if \m(TESTING) xecho WAITING FOR ID= PROMPT...
+    for \%i 1 6 1 {			; Try six times to get prompt
+	out \13				; Send <CR>
+	in 3 ID=			; Wait for "ID="
+	if succ break
+        if \m(TESTING) xecho NO ID= PROMPT - TRYING AGAIN
     }
-    if > \%i 3 end 1 No prompt
-    for \%i 1 3 1 {            ; Send <ESC>PG1, get <ACK>
-        msleep 500
+    if > \%i 6 end 1 FAILED: No "ID=" prompt after 6 tries
+    for \%i 1 8 1 {			; Send <ESC>PG1, get <ACK>
+	msleep 500
 	output \{27}PG1\13
-	minput 3 {\6\13} {\21\13} {\27\4\13}
-        switch \v(minput) {
-          :0, continue                ; Timeout
-          :1, break                   ; <ACK>
-          :2, continue                ; <NAK>
-          :3, end 1 Forced disconnect ; Fatal error
-       }
-       break
+        if \m(TESTING) echo SENT <ESC>PG1(\%i)...
+	minput 3 {\6\13} {\21\13} {ID=} {\27\4\13}
+        if \m(TESTING) echo RESULT=\v(minput)
+	switch \v(minput) {
+	  :0, continue			; Timeout
+	  :1, break			; <ACK>
+	  :2, continue			; <NAK>
+	  :3, out \{27}PG1\13, continue
+	  :4, end 1 Forced disconnect	; Forced disconnect - fatal
+	}
+	break
     }
-    if > \%i 3 end 1 Timed out or unknown response
-    input 5 \27[p\13                  ; Wait for go-ahead
-    if fail end 1 No go-ahead         ; Didn't get it
-    for \%i 1 3 1 {                   ; Try three times
-        msleep 500
-        output \m(block)              ; Send block
-	minput 5 {\6\13} {\21\13} {\13\27\4\13} {\30\13}
-        switch \v(minput) {           ; Get response
-          :0, continue                ; Timeout
-          :1, break                   ; <ACK> - success
-          :2, continue                ; <NAK>
-          :3, end 1 Forced disconnect
-          :4, end 1 Illegal message
-       }
-       output \4\13                   ; Sign off with <EOT>
-       input 5 \27\4\13               ; Get <ESC><EOT> back
-       break                          ; But ignore timeout
+    if > \%i 8 end 1 Timeout during TAP
+    in 10 \27[p\13			; Wait for go-ahead
+    if fail end 1 No go-ahead		; Didn't get it
+    for \%i 1 8 1 {			; Try eight times
+	msleep 500
+	output \m(blk)			; Send block
+        if \m(TESTING) echo SENT BLOCK (\%i)...
+	minput 8 {\6\13} {\21\13} {\13\27\4\13} {\30\13}
+        if \m(TESTING) echo RESULT=\v(minput)
+	switch \v(minput) {             ; Get response
+	  :0, continue                  ; Timeout
+	  :1, break                     ; <ACK> - success
+	  :2, continue                  ; <NAK>
+	  :3, end 1 Forced Disconnect
+	  :4, echo ERROR - RETRYING, continue
+	}
+	out \4\13                       ; Sign off with <EOT>
+	in 8 \27\4\13                   ; Get <ESC><EOT> back
+	break                           ; But ignore timeout
     }
-    if > \%i 3 end 1 Timed out or unknown response
-    end 0
+    if > \%i 8 end 1 Too many retries
 }
+
+; If invoked as a "kerbang" script execute it now.
+
+if equal "\%0" "\v(cmdfil)" {
+    if not def \%1 usage
+    if not def \%2 usage
+    apage {\%1} {\%2}
+    exit \v(status)
+}
+
 ; (End)

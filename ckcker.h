@@ -4,22 +4,29 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
-  York.  The C-Kermit software may not be, in whole or in part, licensed or
-  sold for profit as a software product itself, nor may it be included in or
-  distributed with commercial products or otherwise distributed by commercial
-  concerns to their clients or customers without written permission of the
-  Office of Kermit Development and Distribution, Columbia University.  This
-  copyright notice must not be removed, altered, or obscured.
+  Copyright (C) 1985, 2000,
+    Trustees of Columbia University in the City of New York.
+    All rights reserved.  See the C-Kermit COPYING.TXT file or the
+    copyright text in the ckcmai.c module for disclaimer and permissions.
 */
 
 #ifndef CKCKER_H
 #define CKCKER_H
 
+#define I_AM_KERMIT  0			/* Personalities */
+#define I_AM_TELNET  1
+#define I_AM_RLOGIN  2
+#define I_AM_IKSD    3
+
+#ifndef NOSTREAMING
+#ifndef STREAMING
+#define STREAMING
+#endif /* STREAMING */
+#endif /* NOSTREAMING */
 /*
   If NEWDEFAULTS is defined then:
-   - RECEIVE PACKET-LENGTH is 2048 rather than 90
-   - WINDOW is 20 rather than 1
+   - RECEIVE PACKET-LENGTH is 4095 rather than 90
+   - WINDOW is 30 rather than 1
    - BLOCK-CHECK is 3 rather than 1
    - FILE TYPE is BINARY rather than TEXT
 */
@@ -50,7 +57,27 @@
 #endif /* WHATAMI */
 #endif /* pdp11 */
 
+#ifdef UIDBUFLEN
+#define LOGINLEN UIDBUFLEN
+#else
 #define LOGINLEN 32			/* Length of server login field */
+#endif /* UIDBUFLEN */
+
+/* Bell values */
+
+#define   XYB_NONE  0			/* No bell */
+#define   XYB_AUD   1			/* Audible bell */
+#define   XYB_VIS   2			/* Visible bell */
+#define   XYB_BEEP  0			/* Audible Beep */
+#define   XYB_SYS   4			/* Audible System Sounds */
+
+/* File status bits */
+
+#define FS_OK   1			/* File transferred OK */
+#define FS_REFU 2			/* File was refused */
+#define FS_DISC 4			/* File was discarded */
+#define FS_INTR 8			/* Transfer was interrupted by user */
+#define FS_ERR  16			/* Fatal error during transfer */
 
 /* Control-character (un)prefixing options */
 
@@ -64,17 +91,19 @@
 #define  DEST_D 0	/*  DISK */
 #define  DEST_S 1	/*  SCREEN */
 #define  DEST_P 2	/*  PRINTER */
+#define  DEST_N 3	/*  NOWHERE (calibration run) */
 
 /* File transfer protocols */
 
 #define  PROTO_K    0	/*   Kermit   */
 #ifdef CK_XYZ
-#define  PROTO_X    1	/*   XMODEM   */
-#define  PROTO_Y    2	/*   YMODEM   */
-#define  PROTO_G    3	/*   YMODEM-g */
-#define  PROTO_Z    4	/*   ZMODEM   */
-#define  PROTO_O    5   /*   OTHER    */
-#define  NPROTOS    6   /*   How many */
+#define  PROTO_X    1	/*   XMODEM     */
+#define  PROTO_XC   2	/*   XMODEM-CRC */
+#define  PROTO_Y    3	/*   YMODEM     */
+#define  PROTO_G    4	/*   YMODEM-g */
+#define  PROTO_Z    5	/*   ZMODEM   */
+#define  PROTO_O    6   /*   OTHER    */
+#define  NPROTOS    7   /*   How many */
 #else
 #define  NPROTOS    1   /*   How many */
 #endif /* CK_XYZ */
@@ -92,6 +121,7 @@ struct ck_p {				/* C-Kermit Protocol info structure */
     int fnrp;				/* Receive filename path stripping */
     char * h_b_init;		/* Host receive initiation string - text   */
     char * h_t_init;		/* Host receive initiation string - binary */
+    char * h_x_init;		/* Host server string */
     char * p_b_scmd;		/* SEND cmd for external protocol - text   */
     char * p_t_scmd;		/* SEND cmd for external protocol - binary */
     char * p_b_rcmd;		/* RECV cmd for external protocol - text   */
@@ -123,6 +153,40 @@ struct sysdata {
 */
 };
 
+#define SET_ON   1	/* General values for settings that can be ON */
+#define SET_OFF  0			/* OFF, */
+#define SET_AUTO 2			/* or AUTO */
+
+#define PATH_OFF 0	/* Pathnames off (to be stripped) */
+#define PATH_REL 1      /* Pathnames on, left relative if possible */
+#define PATH_ABS 2      /* Pathnames absolute always */
+#define PATH_AUTO 4	/* Pathnames handled automatically */
+
+/* GET Options */
+
+#define GOPT_DEL 1			/* Delete source file */
+#define GOPT_REC 2			/* Recursive */
+#define GOPT_RES 4			/* Recover (Resend) */
+#define GOPT_CMD 8			/* Filename is a Command */
+
+/* GET Transfer Modes */
+
+#define GMOD_TXT 0			/* Text */
+#define GMOD_BIN 1			/* Binary */
+#define GMOD_AUT 2			/* Auto */
+#define GMOD_LBL 3			/* Labeled */
+
+/* GET Filename Options */
+
+#define GNAM_LIT 0			/* Literal */
+#define GNAM_CNV 1			/* Converted */
+
+/* GET Pathname Options */
+
+#define GPTH_OFF 0			/* Pathnames Off */
+#define GPTH_REL 1			/* Pathnames Relative */
+#define GPTH_ABX 2			/* Pathnames Absolute */
+
 #ifndef NOSPL
 /*
   The IF REMOTE-ONLY command is available only in versions
@@ -141,6 +205,18 @@ struct sysdata {
 
 /* Systems whose CONNECT modules can execute Application Program Commands */
 
+#ifdef NOSPL				/* Script programming language */
+#ifdef CK_APC				/* is required for APC. */
+#undef CK_APC
+#endif /* CK_APC */
+#ifndef NOAPC
+#define NOAPC
+#endif /* NOAPC */
+#ifndef NOAUTODL
+#define NOAUTODL
+#endif /* NOAUTODL */
+#endif /* NOSPL */
+
 #ifndef NOAPC				/* Unless they said NO APC */
 #ifndef CK_APC				/* And they didn't already define it */
 #ifdef OS2				/* OS/2 gets it */
@@ -155,12 +231,6 @@ struct sysdata {
 #endif /* CK_APC */
 #endif /* NOAPC */
 
-#ifdef NOSPL				/* Script programming language */
-#ifdef CK_APC				/* is required for APC. */
-#undef CK_APC
-#endif /* CK_APC */
-#endif /* NOSPL */
-
 #ifdef CK_APC				/* APC buffer length */
 #define APCBUFLEN (CMDBL + 10)
 #define APC_OFF 0	/* APC OFF (disabled) */
@@ -168,7 +238,8 @@ struct sysdata {
 #define APC_UNCH 2	/* APC UNCHECKED (enabled for ALL commands) */
 #define APC_INACTIVE 0	/* APC not in use */
 #define APC_REMOTE   1	/* APC in use from Remote */
-#define APC_LOCAL    2	/* APC being used from with Kermit */
+#define APC_LOCAL    2	/* APC being used from within Kermit */
+#ifndef NOAUTODL
 #ifndef CK_AUTODL	/* Autodownload */
 #ifdef OS2
 #define CK_AUTODL
@@ -178,20 +249,47 @@ struct sysdata {
 #else
 #ifdef VMS
 #define CK_AUTODL
+#else
+#ifdef CK_AUTODL
+#undef CK_AUTODL
+#endif /* CK_AUTODL  */
+#endif /* NOAUTODL */
 #endif /* VMS */
 #endif /* UNIX */
 #endif /* OS2 */
 #endif /* CK_AUTODL */
+
+#else  /* CK_APC not defined */
+
+#ifdef NOICP
+#ifdef UNIX
+#ifndef CK_AUTODL
+#define CK_AUTODL
+#endif /* CK_AUTODL */
+#endif /* UNIX */
+#else  /* Not NOICP... */
+#ifdef CK_AUTODL
+#undef CK_AUTODL
+#endif /* CK_AUTODL */
+#endif /* NOICP */
 #endif /* CK_APC */
 
-/* Codes for what we are doing now */
+#ifdef NOAUTODL
+#ifdef CK_AUTODL
+#undef CK_AUTODL
+#endif /* CK_AUTODL */
+#endif /* NOAUTODL */
+
+/* Codes for what we are doing now - bit mask values */
 
 #define W_NOTHING  0			/* Nothing */
+#define W_INIT     1			/* Initializing protocol */
 #define W_SEND     2			/* SENDing or MAILing */
 #define W_RECV     4			/* RECEIVEing or GETting */
 #define W_REMO     8			/* Doing a REMOTE command */
 #define W_CONNECT 16			/* CONNECT mode */
 #define W_COMMAND 32			/* Command mode */
+#define W_DIALING 64			/* Dialing a modem */
 
 #ifndef NOWHATAMI
 #ifndef WHATAMI
@@ -200,11 +298,16 @@ struct sysdata {
 #endif /* NOWHATAMI */
 
 #ifdef WHATAMI				/* Bit mask positions for WHATAMI */
-#define WM_SERVE  1			/* Server mode */
-#define WM_FMODE  2			/* File transfer mode */
-#define WM_FNAME  4			/* File name conversion */
-#define WM_FLAG3  8			/* Flag for Bit3 */
-#define WM_FLAG  32			/* Flag that says we got this info */
+#define WMI_SERVE   1			/* Server mode */
+#define WMI_FMODE   2			/* File transfer mode */
+#define WMI_FNAME   4			/* File name conversion */
+#define WMI_STREAM  8			/* I have a reliable transport */
+#define WMI_CLEAR  16			/* I have a clear channel */
+#define WMI_FLAG   32			/* Flag that WHATAMI field is valid */
+/* WHATAMI2 bits... */
+#define WMI2_XMODE  1			/* Transfer mode auto(0)/manual(1) */
+#define WMI2_RECU   2			/* Transfer is recursive */
+#define WMI2_FLAG  32			/* Flag that WHATAMI2 field is valid */
 #endif /* WHATAMI */
 
 /* Terminal types */
@@ -242,11 +345,11 @@ struct sysdata {
 /* Override these from cc command line via -DMAXRP=nnn */
 
 #ifdef DYNAMIC
-#ifndef MAXRP 
+#ifndef MAXRP
 #define MAXRP 9024
 #endif /* MAXRP */
 #else  /* not DYNAMIC */
-#ifndef MAXRP 
+#ifndef MAXRP
 #ifdef pdp11
 #define MAXRP 1024
 #else
@@ -259,7 +362,6 @@ struct sysdata {
   Override these from cc command line via -DSBSIZ=nnn, -DRBSIZ=nnn.
   Or just -DBIGBUFOK.
 */
-
 #ifndef MAXGETPATH			/* Maximum number of directories */
 #ifdef BIGBUFOK				/* for GET path... */
 #define MAXGETPATH 128
@@ -272,14 +374,18 @@ struct sysdata {
 #ifdef OS2
 #define QBUFL 4095
 #else
+#ifdef BIGBUFOK
+#define QBUFL 4095
+#else
 #define QBUFL 1023
+#endif /* BIGBUFOK */
 #endif /* OS2 */
 #endif /* NOSPL */
 
 #ifdef DYNAMIC
-#ifndef SBSIZ 
+#ifndef SBSIZ
 #ifdef BIGBUFOK				/* If big buffers are safe... */
-#define SBSIZ 90500			/* Allow for 10 x 9024 or 20 x 4096 */
+#define SBSIZ 290000			/* Allow for 10 x 9024 or 20 x 4096 */
 #else					/* Otherwise... */
 #ifdef pdp11
 #define SBSIZ 3020
@@ -289,9 +395,9 @@ struct sysdata {
 #endif /* BIGBUFOK */
 #endif /* SBSIZ */
 
-#ifndef RBSIZ 
+#ifndef RBSIZ
 #ifdef BIGBUFOK
-#define RBSIZ 90500
+#define RBSIZ 290000
 #else
 #ifdef pdp11
 #define RBSIZ 3020
@@ -314,6 +420,12 @@ struct sysdata {
 #endif /* pdp11 */
 #endif /* DYNAMIC */
 
+#ifdef BIGBUFOK
+#define PKTMSGLEN 1023
+#else
+#define PKTMSGLEN 80
+#endif /* BIGBUFOK */
+
 /* Kermit parameters and defaults */
 
 #define CTLQ	   '#'			/* Control char prefix I will use */
@@ -334,7 +446,7 @@ struct sysdata {
 
 #ifdef NEWDEFAULTS
 #define DRPSIZ	  4095			/* Default incoming packet size. */
-#define DFWSIZ      20			/* Default window size */
+#define DFWSIZ      30			/* Default window size */
 #define DFBCT        3			/* Default block-check type */
 #else
 #define DRPSIZ	    90			/* Default incoming packet size. */
@@ -377,6 +489,14 @@ struct sysdata {
 #define DFSUSP      0
 #endif /* UNIX */
 
+#ifndef DFCDMSG
+#ifdef UNIXOROSK
+#define DFCDMSG "{{./.readme}{README.TXT}{READ.ME}}"
+#else
+#define DFCDMSG "{{README.TXT}{READ.ME}}"
+#endif /* UNIXOROSK */
+#endif /* DFCDMSG */
+
 /* Files */
 
 #define ZCTERM      0	    	/* Console terminal */
@@ -390,22 +510,73 @@ struct sysdata {
 #define ZSYSFN	    8		/* Input/Output from a system function */
 #define ZRFILE      9           /* Local file for READ (in) */
 #define ZWFILE     10           /* Local file for WRITE (out) */
-#define ZMFILE     11		/* Miscellaneous output file, e.g. for XLATE */
-#define ZNFILS     12	    	/* How many defined file numbers */
+#define ZMFILE     11		/* Miscellaneous file, e.g. for XLATE */
+#define ZDIFIL     12		/* DIAL log */
+#define ZNFILS     13	    	/* How many defined file numbers */
+
+#ifdef CKCHANNELIO
+
+/* File modes */
+
+#define FM_REA      1			/* Read */
+#define FM_WRI      2			/* Write */
+#define FM_APP      4			/* Append */
+#define FM_RWA      7			/* Read/Write/Append mask */
+#define FM_BIN      8			/* Binary */
+#define FM_RWB     15			/* Read/Write/Append/Binary mask */
+#define FM_CMD     16			/* Command */
+#define FM_EOF     64			/* (status) At EOF */
+
+/* File errors */
+
+#define FX_NER      0			/* No error */
+#define FX_SYS     -1			/* System error */
+#define FX_EOF     -2			/* End of file */
+#define FX_NOP     -3			/* Channel not open */
+#define FX_CHN     -4			/* Channel out of range */
+#define FX_RNG     -5			/* Argument range error */
+#define FX_FNF     -6			/* File not found */
+#define FX_BFN     -7			/* Bad or missing filename */
+#define FX_NMF     -8			/* No more files */
+#define FX_FOP     -9			/* Forbidden operation */
+#define FX_ACC    -10			/* Access denied */
+#define FX_BOM    -11			/* Bad combination of open modes */
+#define FX_OFL    -12			/* Buffer overflow */
+#define FX_LNU    -13			/* Current line number unknown */
+#define FX_NYI    -99			/* Feature not implemented yet */
+#define FX_UNK   -999			/* Unknown error */
+
+_PROTOTYP( int z_open, (char *, int) );
+_PROTOTYP( int z_close, (int) );
+_PROTOTYP( int z_out, (int, char *, int, int) );
+_PROTOTYP( int z_in, (int, char *, int, int, int) );
+_PROTOTYP( int z_flush, (int) );
+_PROTOTYP( int z_seek, (int, long) );
+_PROTOTYP( int z_line, (int, long) );
+_PROTOTYP( int z_getmode, (int) );
+_PROTOTYP( int z_getfnum, (int) );
+_PROTOTYP( long z_getpos, (int) );
+_PROTOTYP( long z_getline, (int) );
+_PROTOTYP( long z_count, (int, int) );
+_PROTOTYP( char * z_getname, (int) );
+_PROTOTYP( char * ckferror, (int) );
+
+#endif /* CKCHANNELIO */
 
 /*  Buffered file i/o ...  */
+#ifdef OS2				/* K-95 */
+#define INBUFSIZE 32768
+#define OBUFSIZE 32768
+#else
 #ifdef pdp11
 #define INBUFSIZE 512
 #define OBUFSIZE 512
 #else
-#ifdef VMS		/* In VMS, allow for longest possible RMS record */
+/* In VMS, allow for longest possible RMS record */
+#ifdef VMS
 #define INBUFSIZE 32768			/* File input buffer size */
 #define OBUFSIZE 32768			/* File output buffer size */
 #else  /* Not VMS */
-#ifdef BIGBUFOK				/* Systems where memory is */
-#define INBUFSIZE 32768			/* not a problem... */
-#define OBUFSIZE 32768
-#else /* Not BIGBUFOK */
 #ifdef STRATUS
 #ifdef DYNAMIC
 #define INBUFSIZE 32767			/* File input buffer size */
@@ -415,34 +586,61 @@ struct sysdata {
 #define OBUFSIZE 4096			/* File output buffer size */
 #endif /* DYNAMIC */
 #else /* not STRATUS */
-#ifdef OS2				/* OS/2 and friends */
-#ifdef NT
-#define INBUFSIZE 32768			/* Windows 95 and NT */
+#ifdef BIGBUFOK				/* Systems where memory is */
+#define INBUFSIZE 32768			/* not a problem... */
 #define OBUFSIZE 32768
-#else
-#define INBUFSIZE 4095			/* OS/2 HPFS block allocation */
-#define OBUFSIZE 4095
-#endif /* NT */
-#else
+#else /* Not BIGBUFOK */
 #define INBUFSIZE 1024
 #define OBUFSIZE 1024
-#endif /* OS2 */
 #endif /* STRATUS */
 #endif /* BIGBUFOK */
 #endif /* VMS */
 #endif /* pdp11 */
+#endif /* OS2 */
 
-/* get the next char; sorta like a getc() macro */
+/* File-transfer character in/out macros for buffered i/o */
+
+/* Get the next file byte */
+#ifndef CKCMAI
+#ifndef NOXFER
+extern char ** sndarray;
+#endif /* NOXFER */
+#endif /* CKCMAI */
+#ifdef NOSPL
 #define zminchar() (((--zincnt)>=0) ? ((int)(*zinptr++) & 0377) : zinfill())
+#else
+#ifdef NOXFER
+#define zminchar() (((--zincnt)>=0) ? ((int)(*zinptr++) & 0377) : zinfill())
+#else
+#define zminchar() \
+(sndarray?agnbyte():(((--zincnt)>=0) ? ((int)(*zinptr++) & 0377) : zinfill()))
+#endif /* NOXFER */
+#endif /* NOSPL */
 
-/* stuff a character into the input buffer */
+/* Stuff a character into the input buffer */
 #define zmstuff(c) zinptr--, *zinptr = c, zincnt++
 
-/* put a character to a file, like putchar() macro */
+/* Put a character to a file */
 #define zmchout(c) \
-((*zoutptr++=(char)(c)),(((++zoutcnt)>=OBUFSIZE)?zoutdump():0))
+((*zoutptr++=(char)(c)),(((++zoutcnt)>=zobufsize)?zoutdump():0))
 
 /* Screen functions */
+
+#ifdef NODISPLAY
+#define xxscreen(a,b,c,d)
+#define ckscreen(a,b,c,d)
+#else
+_PROTOTYP( VOID ckscreen, (int, char, long, char *) );
+#ifdef VMS
+#define xxscreen(a,b,c,d) \
+if (local && fdispla != XYFD_N) \
+ckscreen((int)a,(char)b,(long)c,(char *)d)
+#else
+#define xxscreen(a,b,c,d) \
+if (local && !backgrd && fdispla != XYFD_N) \
+ckscreen((int)a,(char)b,(long)c,(char *)d)
+#endif /* VMS */
+#endif /* NODISPLAY */
 
 #define SCR_FN 1    	/* filename */
 #define SCR_AN 2    	/* as-name */
@@ -471,10 +669,30 @@ struct sysdata {
 
 /* Macros */
 
+#ifndef CKCMAI
+extern int tcp_incoming;		/* Used by ENABLE macro */
+#endif /* CKCMAI */
+
+#ifndef TCPSOCKET
+/*
+  ENABLED tells whether a server-side service is enabled.
+  0 = disabled, 1 = local, 2 = remote.
+  A "set host *" connection is technically local but logically remote
+*/
+#define ENABLED(x) ((local && (x & 1)) || (!local && (x & 2)))
+#else
+#define ENABLED(x) (((local && !tcp_incoming) && (x & 1)) || \
+((!local || tcp_incoming) && (x&2)))
+#endif /* TCPSOCKET */
+
+/* These are from the book */
+
 #define tochar(ch)  (((ch) + SP ) & 0xFF )	/* Number to character */
 #define xunchar(ch) (((ch) - SP ) & 0xFF )	/* Character to number */
-#define ctl(ch)     (((ch) ^ 64 ) & 0xFF )	/* Controllify/Uncontrollify */
+#define ctl(ch)     (((ch) ^ 64 ) & 0xFF )	/* Control/Uncontrol toggle */
 #define unpar(ch)   (((ch) & 127) & 0xFF )	/* Clear parity bit */
+
+/* Modem and dialing definitions */
 
 #ifndef NODIAL
 
@@ -518,13 +736,15 @@ struct sysdata {
 #define DIA_BLCK  30			/* Blacklisted */
 #define DIA_DELA  31			/* Delayed */
 #define DIA_FAX   32			/* Fax */
+#define DIA_DIGI  33                    /* Digital Line */
+#define DIA_TAPI  34			/* TAPI dialing failure */
 #define DIA_UERR  98			/* Unknown error */
 #define DIA_UNSP  99		/* Unspecified failure detected by modem */
 
 #define MDMINF	struct mdminf
 
 MDMINF {			/* Structure for modem-specific information */
-    
+
     char * name;		/* Descriptive name */
     char * pulse;		/* Command to force pulse dialing */
     char * tone;		/* Command to force tone dialing */
@@ -552,6 +772,13 @@ MDMINF {			/* Structure for modem-specific information */
     char * aa_off_str;		/* Autoanswer off string */
     char * sb_on_str;		/* Speed buffering on string */
     char * sb_off_str;		/* Speed buffering off string */
+    char * sp_on_str;		/* Speaker on string */
+    char * sp_off_str;		/* Speaker off string */
+    char * vol1_str;		/* Volume low string */
+    char * vol2_str;		/* Volume med string */
+    char * vol3_str;		/* Volume high string */
+    char * ignoredt;		/* Ignore dialtone string */
+    char * ini2;		/* Last-minute init string */
     long   max_speed;		/* Maximum interface speed */
     long   capas;		/* Capability bits */
     /* function to read modem's response string to a non-dialing command */
@@ -605,6 +832,7 @@ struct pktinfo {			/* Packet information structure */
 #define SM_PRINT    5
 
 /* File-related symbols and structures */
+/* Used by SET FILE command but also by protocol and i/o modules */
 
 #define XMODE_A 0	/* Transfer mode Automatic */
 #define XMODE_M 1	/* Transfer mode Manual    */
@@ -619,12 +847,14 @@ struct pktinfo {			/* Packet information structure */
 #define     XYFT_L 3	/*    Labeled (tagged binary) (VMS or OS/2) */
 #define     XYFT_U 4    /*    Binary Undefined (VMS) */
 #define     XYFT_M 5	/*    MacBinary (Macintosh) */
+#define     XYFT_D 99   /*    Debug (for session logs) */
 #define   XYFILW 2      /*  Warning */
 #define   XYFILD 3      /*  Display */
 #define     XYFD_N 0    /*    None, Off */
 #define     XYFD_R 1    /*    Regular, Dots */
 #define     XYFD_C 2    /*    Cursor-positioning (e.g. with curses) */
-#define     XYFD_S 3    /*    Simple counter */
+#define     XYFD_S 3    /*    CRT Screen */
+#define     XYFD_B 4    /*    Brief */
 #define   XYFILC 4      /*  Character set */
 #define   XYFILF 5      /*  Record Format */
 #define     XYFF_S  0   /*    Stream */
@@ -655,8 +885,6 @@ struct pktinfo {			/* Packet information structure */
 #define     XYFZ_N 0    /*    New, Create */
 #define     XYFZ_A 1    /*    New, append if file exists, else create */
 #define     XYFZ_O 2    /*    Old, file must exist */
-#define     XYFZ_X 3    /*    Output to pipe/process */
-#define     XYFZ_Y 4    /*    Input from pipe/process */
 #define   XYFILS 12     /*  File Byte Size */
 #define   XYFILL 13     /*  File Label (VMS) */
 #define   XYFILI 14     /*  File Incomplete */
@@ -667,13 +895,134 @@ struct pktinfo {			/* Packet information structure */
 #define     XYFA_C 015  /*    CR (as in OS-9 or Mac OS) */
 #define     XYFA_2 000  /*  CRLF -- Note: this must be defined as 0 */
 #define   XYFILY 18     /*  Destination */
+#define   XYFILV 19	/*  EOF Detection Method */
+#define     XYEOF_L 0   /*    File length */
+#define     XYEOF_Z 1   /*    Ctrl-Z in file */
+#define   XYFILH 20     /*  OUTPUT parameters - buffered, blocking, etc */
+#define   XYFIBP 21	/*  BINARY-PATTERN */
+#define   XYFITP 22     /*  TEXT-PATTERN */
+#define   XYFIPA 23     /*  PATTERNS ON/OFF */
+#define   XYFILU 24     /*  UCS ... */
 
+/* Connection closed reasons */
+
+#define WC_REMO   0			/* Closed by remote */
+#define WC_CLOS   1			/* Closed from our end */
+#define WC_TELOPT 2			/* Telnet negotiation failure */
+
+#ifdef BIGBUFOK
+#define FTPATTERNS 256
+#else
+#define FTPATTERNS 64
+#endif /* BIGBUFOK */
+
+#ifdef OS2
 struct tt_info_rec {			/* Terminal emulation info */
-    char *x_name;
-    char *x_id;
+    char  *x_name;
+    char *x_aliases[4];
+    char  *x_id;
 };
+#endif /* OS2 */
 
-/* ANSI-style forward declarations for protocol-related functions. */
+#ifndef NOIKSD
+#ifdef IKSDB				/* IKSD Database definitions */
+
+/* Field values */
+
+#define DBF_INUSE    1			/* Flag bits... In use */
+#define DBF_USER     2			/* Real user (versus anonymous) */
+#define DBF_LOGGED   4			/* Logged in (versus not) */
+
+/* Data Definitions... */
+
+/* Numeric fields, hex, right justified, 0-filled on left */
+
+#define db_FLAGS     0			/* Field 0: Flags */
+#define DB_FLAGS     0			/* Offset: 0 */
+#define dB_FLAGS     4			/* Length: 4 (hex digits) */
+
+#define db_ATYPE     1			/* Field 1: Authentication type */
+#define DB_ATYPE     4			/* 4 hex digits */
+#define dB_ATYPE     4
+
+#define db_AMODE     2			/* Field 2: Authentication mode */
+#define DB_AMODE     8			/* 4 hex digits */
+#define dB_AMODE     4
+
+#define db_STATE     3			/* Field 3: State - 4 hex digits*/
+#define DB_STATE    12			/* 4 hex digits */
+#define dB_STATE     4
+
+#define db_MYPID     4			/* Field 4: My PID */
+#define DB_MYPID    16			/* 16 hex digits left padded with 0 */
+#define dB_MYPID    16
+
+#define db_SADDR     5			/* Field 5: Server (my) IP address */
+#define DB_SADDR    32			/* 16 hex digits left padded with 0 */
+#define dB_SADDR    16
+
+#define db_CADDR     6			/* Field 6: Client IP address */
+#define DB_CADDR    48			/* 16 hex digits left padded with 0 */
+#define dB_CADDR    16
+
+/* Date-time fields (17 right-adjusted in 18 for Y10K readiness) */
+
+#define db_START     7			/* Field 7: Session start date-time */
+#define DB_START    65			/* 64 is leading space for Y10K */
+#define dB_START    17
+
+#define db_LASTU     8			/* Field 8: Last lastu date-time */
+#define DB_LASTU    83			/* 82 is leading space for Y10K */
+#define dB_LASTU    17
+
+#define db_ULEN      9			/* Field 9: Length of Username */
+#define DB_ULEN    100			/* 4 hex digits */
+#define dB_ULEN      4
+
+#define db_DLEN     10			/* Field 10: Length of Directory */
+#define DB_DLEN    104			/* 4 hex digits */
+#define dB_DLEN      4
+
+#define db_ILEN     11			/* Field 11: Length of Info */
+#define DB_ILEN    108			/* 4 hex digits */
+#define dB_ILEN      4
+
+#define db_PAD1     12			/* Field 12: (Reserved) */
+#define DB_PAD1    112			/* filled with spaces */
+#define dB_PAD1    912
+
+/* String fields, all right-padded with blanks */
+
+#define db_USER     13			/* Field 13: Username */
+#define DB_USER   1024			/* right-padded with spaces */
+#define dB_USER   1024
+
+#define db_DIR      14			/* Field 14: Current directory */
+#define DB_DIR    2048			/* right-padded with spaces */
+#define dB_DIR    1024
+
+#define db_INFO     15			/* Field 15: State-specific info */
+#define DB_INFO   3072			/* right-padded with spaces */
+#define dB_INFO   1024
+
+#define DB_RECL   4096			/* Database record length */
+
+/* Offset, length, and type of each field thru its db_XXX symbol */
+
+#define DBT_HEX 1			/* Hexadecimal number */
+#define DBT_STR 2			/* String */
+#define DBT_DAT 3			/* Date-Time yyyymmdd hh:mm:ss */
+#define DBT_UND 9			/* Undefined and blank */
+
+struct iksdbfld {
+    int off;				/* Position (offset) */
+    int len;				/* Length (bytes) */
+    int typ;				/* Data type */
+};
+#endif /* IKSDB */
+#endif /* NOIKSD */
+
+/* ANSI forward declarations for protocol-related functions. */
 
 _PROTOTYP( int input, (void) );
 _PROTOTYP( int inibufs, (int, int) );
@@ -683,23 +1032,27 @@ _PROTOTYP( int mkrbuf, (int) );
 _PROTOTYP( int spack, (char, int, int, CHAR *) );
 _PROTOTYP( VOID proto, (void) );
 _PROTOTYP( int rpack, (void) );
-_PROTOTYP( int ack1, (CHAR *) );
-_PROTOTYP( int ackn, (int) );
-_PROTOTYP( int ackns, (int, CHAR *) );
+_PROTOTYP( int ack, (void) );
 _PROTOTYP( int nack, (int) );
+_PROTOTYP( int ackn, (int) );
+_PROTOTYP( int ack1, (CHAR *) );
+_PROTOTYP( int ackns, (int, CHAR *) );
+#ifdef STREAMING
+_PROTOTYP( int fastack, (void) );
+#endif /* STREAMING */
 _PROTOTYP( int resend, (int) );
 _PROTOTYP( int errpkt, (CHAR *) );
-_PROTOTYP( VOID logpkt, (char, int, CHAR *) );
+_PROTOTYP( VOID logpkt, (char, int, CHAR *, int) );
 _PROTOTYP( CHAR dopar, (CHAR) );
-_PROTOTYP( int chk1, (CHAR *) );
-_PROTOTYP( unsigned int chk2, (CHAR *) );
+_PROTOTYP( int chk1, (CHAR *, int) );
+_PROTOTYP( unsigned int chk2, (CHAR *, int) );
 _PROTOTYP( unsigned int chk3, (CHAR *, int) );
 _PROTOTYP( int sipkt, (char) );
+_PROTOTYP( int sopkt, (void) );
 _PROTOTYP( int sinit, (void) );
 _PROTOTYP( VOID rinit, (CHAR *) );
 _PROTOTYP( int spar, (CHAR *) );
 _PROTOTYP( int rcvfil, (char *) );
-_PROTOTYP( CHAR * rpar, (void) );
 _PROTOTYP( CHAR * rpar, (void) );
 _PROTOTYP( int gnfile, (void) );
 _PROTOTYP( int getsbuf, (int) );
@@ -715,55 +1068,51 @@ _PROTOTYP( char *getreason, (char *) );
 _PROTOTYP( int scmd, (char, CHAR *) );
 _PROTOTYP( int encstr, (CHAR *) );
 _PROTOTYP( int decode, (CHAR *, int (*)(char), int) );
+_PROTOTYP( int bdecode, (CHAR *, int (*)(char)) );
 _PROTOTYP( int fnparse, (char *) );
 _PROTOTYP( int syscmd, (char *, char *) );
 _PROTOTYP( int cwd, (char *) );
-_PROTOTYP( VOID screen, (int, char, long, char *) );
 _PROTOTYP( int remset, (char *) );
 _PROTOTYP( int initattr, (struct zattr *) );
 _PROTOTYP( int gattr, (CHAR *, struct zattr *) );
 _PROTOTYP( int adebu, (char *, struct zattr *) );
 _PROTOTYP( int canned, (CHAR *) );
 _PROTOTYP( int opent, (struct zattr *) );
+_PROTOTYP( int ckopenx, (struct zattr *) );
 _PROTOTYP( int opena, (char *, struct zattr *) );
 _PROTOTYP( int openi, (char *) );
 _PROTOTYP( int openo, (char *, struct zattr *, struct filinfo *) );
+_PROTOTYP( int openc, (int, char *) );
 _PROTOTYP( int reof, (char *, struct zattr *) );
 _PROTOTYP( VOID reot, (void) );
 _PROTOTYP( int sfile, (int) );
-_PROTOTYP( int sattr, (int) );
+_PROTOTYP( int sattr, (int, int) );
 _PROTOTYP( int sdata, (void) );
-_PROTOTYP( int seof, (CHAR *) );
-_PROTOTYP( int sxeof, (CHAR *) );
+_PROTOTYP( int seof, (int) );
+_PROTOTYP( int sxeof, (int) );
 _PROTOTYP( int seot, (void) );
 _PROTOTYP( int window, (int) );
-_PROTOTYP( int errmsg, (char *) );
 _PROTOTYP( int clsif, (void) );
 _PROTOTYP( int clsof, (int) );
 _PROTOTYP( CHAR setgen, (char, char *, char *, char *) );
 _PROTOTYP( int getpkt, (int, int) );
+_PROTOTYP( int maxdata, (void) );
 _PROTOTYP( int putsrv, (char) );
 _PROTOTYP( int puttrm, (char) );
 _PROTOTYP( int putque, (char) );
 _PROTOTYP( int putfil, (char) );
+_PROTOTYP( int putmfil, (char) );
+_PROTOTYP( int zputfil, (char) );
 _PROTOTYP( VOID zdstuff, (CHAR) );
-_PROTOTYP( int tinit, (void) );
+_PROTOTYP( int tinit, (int) );
 _PROTOTYP( VOID pktinit, (void) );
-_PROTOTYP( VOID rinit, (CHAR *) );
 _PROTOTYP( VOID resetc, (void) );
 _PROTOTYP( VOID xsinit, (void) );
 _PROTOTYP( int adjpkl, (int,int,int) );
 _PROTOTYP( int chktimo, (int,int) );
 _PROTOTYP( int nxtpkt, (void) );
-_PROTOTYP( int ack, (void) );
-_PROTOTYP( int ackns, (int, CHAR *) );
-_PROTOTYP( int ackn, (int) );
-_PROTOTYP( int ack1, (CHAR *) );
-_PROTOTYP( int nack, (int) );
 _PROTOTYP( VOID rcalcpsz, (void) );
-_PROTOTYP( int resend, (int) );
-_PROTOTYP( int errpkt, (CHAR *) );
-_PROTOTYP( int srinit, (int, int) );
+_PROTOTYP( int srinit, (int, int, int) );
 _PROTOTYP( VOID tstats, (void) );
 _PROTOTYP( VOID fstats, (void) );
 _PROTOTYP( VOID intmsg, (long) );
@@ -780,12 +1129,20 @@ _PROTOTYP( SIGTYP stptrap, (int) );
 _PROTOTYP( SIGTYP trap, (int) );
 #endif /* COMMENT */
 _PROTOTYP( char * ck_errstr, (void) );
+#ifndef NOXFER
+_PROTOTYP( int agnbyte, (void) );
+#endif /* NOXFER */
+_PROTOTYP( int xgnbyte, (int, int) );
+_PROTOTYP( int xpnbyte, (int, int, int, int (*)(char)) );
 
 /* User interface functions needed by main program, etc. */
 
+_PROTOTYP( int doconect, (int) );
+_PROTOTYP( VOID setflow, (void) );
 _PROTOTYP( VOID prescan, (int) );
 _PROTOTYP( VOID setint, (void) );
 _PROTOTYP( VOID doinit, (void) );
+_PROTOTYP( VOID dofast, (void) );
 _PROTOTYP( VOID cmdini, (void) );
 _PROTOTYP( int dotake, (char *) );
 _PROTOTYP( int cmdlin, (void) );
@@ -796,15 +1153,18 @@ _PROTOTYP (int mdmhup, (void) );
 _PROTOTYP( VOID herald, (void) );
 _PROTOTYP( VOID fixcmd, (void) );
 _PROTOTYP( int doarg, (char) );
+_PROTOTYP( int doxarg, (char **, int) );
 _PROTOTYP( VOID usage, (void) );
-_PROTOTYP( VOID doclean, (void) );
-_PROTOTYP( int sndhlp, (char *) );
+_PROTOTYP( VOID doclean, (int) );
+_PROTOTYP( int sndhlp, () );
+_PROTOTYP( int sndstring, (char *) );
 _PROTOTYP( VOID ckhost, (char *, int) );
 _PROTOTYP( int gettcs, (int, int) );
-_PROTOTYP( VOID makestr, (char **, char *) );
 _PROTOTYP( VOID getdialenv, (void) );
 _PROTOTYP( VOID setprefix, (int) );
-_PROTOTYP( VOID initproto, (int,char *,char *,char *,char *,char *,char *) );
+_PROTOTYP(VOID initproto,(int,char *,char *,char *,char *,char *,char*,char*));
+_PROTOTYP( VOID initpat, (void) );
+_PROTOTYP( VOID initcsets, (void) );
 _PROTOTYP( char * getsysid, (char *) );
 _PROTOTYP( int getsysix, (char *) );
 #ifdef CK_TIMERS
@@ -816,26 +1176,39 @@ _PROTOTYP( int is_a_tty, (int) );
 _PROTOTYP( int snddir, (char *) );
 _PROTOTYP( int snddel, (char *) );
 _PROTOTYP( int sndtype, (char *) );
-_PROTOTYP( int dooutput, (char *) );
+_PROTOTYP( int dooutput, (char *, int) );
 _PROTOTYP( int isabsolute, (char *) );
-_PROTOTYP( int chkspkt, (char *) );
 _PROTOTYP( VOID whoarewe, (void) );
+_PROTOTYP( int ckmkdir, (int, char *, char **, int, int) );
+_PROTOTYP( int autoexitchk, (CHAR) );
+_PROTOTYP( VOID fcps, (void) );
+#ifdef OS2
+_PROTOTYP( VOID logchar, (unsigned short) );
+#else /* OS2 */
+_PROTOTYP( VOID logchar, (char) );
+#endif /* OS2 */
+_PROTOTYP( VOID logstr, (char *, int) );
+
+#ifdef NOLOCAL
+#define dologend()
+#else
+_PROTOTYP( VOID dologend, (void) );
+#endif /* NOLOCAL */
+
+#ifdef NODISPLAY
+#define fxdinit(a)
+#else
+_PROTOTYP( VOID fxdinit, (int) );
+#endif /* NODISPLAY */
 
 #ifdef CK_APC
-_PROTOTYP( int kstart, (CHAR) );
-_PROTOTYP( int zstart, (CHAR) );
-#ifdef CK_XYZ
 _PROTOTYP( int chkspkt, (char *) );
+_PROTOTYP( int kstart, (CHAR) );
+_PROTOTYP( VOID autodown, (int));
+#ifdef CK_XYZ
+_PROTOTYP( int zstart, (CHAR) );
 #endif /* CK_XYZ */
 #endif /* CK_APC */
-
-#ifdef KANJI
-_PROTOTYP( int zkanji, (int (*)(void)) ); /* Kanji function prototypes */
-_PROTOTYP( int zkanjf, (void) );
-_PROTOTYP( int zkanjz, (void) );
-_PROTOTYP( int xkanjz, (int (*)(char) ) );
-_PROTOTYP( int xkanji, (int, int (*)(char) ) );
-#endif /* KANJI */
 
 #endif /* CKCKER_H */
 

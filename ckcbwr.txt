@@ -1,32 +1,44 @@
-CKERMIT.BWR          "Beware File" for C-Kermit Version 6.0        -*- text -*-
+CKCBWR.TXT           "Beware File" for C-Kermit Version 7.0        -*- text -*-
 
-As of C-Kermit version:  6.0.192
-This file last updated:  Fri Sep  6 23:23:23 1996
+As of C-Kermit version:  7.0.197
+This file last updated:  8 February 2000
 
 Authors: Frank da Cruz and Christine M. Gianone, Columbia University.
 
-  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
-  York.  The C-Kermit software may not be, in whole or in part, licensed or
-  sold for profit as a software product itself, nor may it be included in or
-  distributed with commercial products or otherwise distributed by commercial
-  concerns to their clients or customers without written permission of the
-  Office of Kermit Development and Distribution, Columbia University.  This
-  copyright notice must not be removed, altered, or obscured.
+  Copyright (C) 1985, 2000,
+    Trustees of Columbia University in the City of New York.
+    All rights reserved.  See the C-Kermit COPYING.TXT file or the
+    copyright text in the ckcmai.c module for disclaimer and permissions.
 
-Report problems, suggestions, fixes, etc, to Frank da Cruz:
+Report problems, suggestions, fixes, etc, to:
 
   The Kermit Project
   Columbia University
   612 West 115th Street
-  New York NY 10025-7799  USA
-  Email: fdc@columbia.edu
+  New York NY 10025-7799
+  USA
+  Email: kermit-support@columbia.edu
+  Web:   http://www.columbia.edu/kermit/
+  News:  comp.protocols.kermit.misc
 
-C-Kermit 6.0 is documented in the book "Using C-Kermit" by Frank da Cruz and
-Christine M. Gianone, Second Edition, 1997, Digital Press / Butterworth-
-Heinemann, Woburn, MA, USA, ISBN 1-55558-164-1.  Price: US $39.95.  Available
-in book and computer stores, or order by phone, call Columbia University at
-+1 212 854-3703, or Butterworth-Heinemann at +1 800 366-2665.  A German edition
-is available from Verlag Heinz Heise in Hannover, Germany.
+
+DOCUMENTATION
+
+  Frank da Cruz and Christine M. Gianone, "Using C-Kermit", Second Edition,
+  1997, Digital Press / Butterworth-Heinemann, Woburn, MA, ISBN 1-55558-164-1
+  US single-copy price: $44.95; quantity discounts available.  Available in
+  computer bookstores or directly from Columbia University:
+
+    The Kermit Project
+    Columbia University
+    612 West 115th Street
+    New York NY  10025-7799  USA
+    Telephone: +1 (212) 854-3703
+    Email: kermit-orders@columbia.edu
+    Web: http://www.columbia.edu/kermit/
+
+  The CKERMIT2.TXT file contains supplementary info for C-Kermit 7.0 to be
+  used until the 3rd edition of the manual is ready.
 
 
 WHAT IS IN THIS FILE
@@ -34,23 +46,23 @@ WHAT IS IN THIS FILE
 This is the "beware file" for C-Kermit.  It contains hints and tips,
 frequently asked questions (and answers), troubleshooting advice, limitations
 and restrictions, known bugs, etc, that apply to all C-Kermit variations.
-This file is supplemented by a system-specific "beware file" for each major
+This file is supplemented by a platform-specific "beware file" for each major
 system where C-Kermit runs:
 
-  ckuker.bwr - All variations of UNIX: HP-UX, AIX, SCO, Solaris, etc.
-  ckoker.bwr - IBM OS/2
-  ckvker.bwr - Digital Equipment Corporation VMS and OpenVMS
-  cklker.bwr - Stratus VOS
-  ckdker.bwr - Data General AOS/VS
-  ckmker.bwr - Apple Macintosh
-  ckiker.bwr - Commodore Amiga
-  cksker.bwr - Atari ST
-  ck9ker.bwr - Microware OS-9
-  ckpker.bwr - Bell Labs Plan 9
+  ckubwr.txt - All variations of UNIX: Linux, HP-UX, AIX, SCO, Solaris, etc.
+  ckvbwr.txt - Compaq / Digital Equipment Corporation VMS and OpenVMS
+  cklbwr.txt - Stratus VOS
+  ckdbwr.txt - Data General AOS/VS
+  ckmbwr.txt - Apple Macintosh
+  ckibwr.txt - Commodore Amiga
+  cksbwr.txt - Atari ST
+  ck9bwr.txt - Microware OS-9
+  ckpbwr.txt - Bell Labs Plan 9
 
 This file contains the following sections:
 
-   (1) INCOMPATIBILE CHANGES IN VERSION 6.0
+   (0) BUGS DISCOVERED SINCE C-KERMIT 7.0 WAS RELEASED
+   (1) INCOMPATIBLE CHANGES
    (2) THE C-KERMIT COMMAND PARSER
    (3) MULTIPLE SESSIONS
    (4) NETWORK COMMUNICATION
@@ -65,9 +77,95 @@ This file contains the following sections:
   (13) SCRIPT PROGRAMMING
 
 
-(1) INCOMPATIBILE CHANGES IN VERSION 6.0
+(0) BUGS DISCOVERED SINCE C-KERMIT 7.0 WAS RELEASED
 
-This is not necessarily an exhaustive list.
+The following bugs are known but not yet fixed:
+
+ 1. If you try:
+
+      kermit -g <file>
+
+    where file does not exist in the client directory it returns the error:
+
+      FAILURE: No filespec given!
+
+    instead of:
+
+      FAILURE: <file> does not exist.
+
+ 2. True ISO 8601 date-time format is not supported: yyyymmddThhmmss
+    or yyyymmdd hhmmss.  Kermit supports yyyymmdd_hh:mm:ss.
+
+ 3. Log into IKSD
+    GET file1 newname
+    Switch to the client's command prompt
+    SEND file2
+    file2 will be stored on IKSD as newname
+
+ 4. The new built-in LOGIN command will conflict with any existing LOGIN
+    macros.  This is always the case with new commands, but LOGIN is an
+    especially likely name for a macro.  To work around, either rename your
+    LOGIN macro to something else, or else invoke it with "do login <args>".
+
+ 5. If a Hayes-command-set modem has "reset on DTR loss" set (&D3) and
+    the modem prints OK upon reset, even when the reset happened because
+    of DTR loss, Kermit can become mighty confused, especially after a
+    HANGUP command.  Elsa MicroLink modems (a German brand) has this
+    peculiarity.  The Kermit bug is that the HANGUP command will drop DTR
+    even if you SET MODEM HANGUP-METHOD MODEM-COMMAND, *if* the modem
+    command fails.  C-Kermit has always operated this way on the assumption
+    that if the user says to HANGUP, the user means it.  However, in this
+    case, dropping DTR produces the unexpected OK response, and then all
+    future dialog is out of sync.  There is no way for the user to tell 
+    C-Kermit NOT to drop DTR under these circumstances.  This will be
+    fixed in the next release.
+
+ 6. (Not a bug.)  All RENAME operations are performed using the underlying
+    system services for renaming a file.  If the underlying system service
+    does not allow files to be renamed across disks, these operations fail.
+    This includes the RENAME command and SEND, RECEIVE, or GET /MOVE-TO.  This
+    might not be clear enough in the documentation.  Note that in UNIX, there
+    is no obvious way for a user to tell whether two directories are on the
+    same disk.
+
+ 7. Various typos and syntax errors in the makefile and source file.  The
+    most serious error prevented any and all SCO OSR5 builds from working.
+    All these are fixed in C-Kermit 7.0.197, which simply allows builds to
+    succeed that didn't in 7.0.196, but which makes no functional changes.
+
+ 8. Modem signal detection does not work in SCO OSR5 and Unixware 7.
+
+ 9. The new SHIFT command does not decrement \v(argc) if it is used within
+    an IF { } or ELSE { } block.
+
+10. The -b command-line option has no effect if given before -l (the order
+    of command-line options should not matter; however the current situation
+    has always been the case).
+
+11. When C-Kermit translates from (say) Latin-1 to UTF-8, it does not convert
+    the C1 bytes.
+
+12. If you TAKE <file> <arg1> <arg2> -- i.e. specify args, then the same args
+    remain in effect for the next TAKE command.  This is not really a bug,
+    since it's documented, but it's not optimal either, and probably will be
+    changed in the next release, so don't depend on this behavior.  In the
+    meantime, work around by UNDEF'ing \%1, \%2, ... after any TAKE command
+    that includes arguments.
+
+13. The HEBREW7 translation table has a typo.
+
+14. SET TRANSFER CHARACTER-SET TRANSPARENT sets up a garbage translation.
+    Workaround: give a SET FILE CHARACTER-SET command afterwards. 
+
+15. Automatic text/binary mode switching via filename patterns should ignore
+    pathname prefixes and backup suffixes, but does not.
+
+
+(1) INCOMPATIBLE CHANGES
+
+These are not necessarily exhaustive lists.
+
+The following incompatible changes were made in C-Kermit 6.0:
 
  . Unless you tell C-Kermit otherwise, if a serial or network connection
    seems to be open, and you attempt to EXIT or to SET LINE or SET HOST or
@@ -82,24 +180,44 @@ This is not necessarily an exhaustive list.
  . The default for SET FILE INCOMPLETE was changed from DISCARD to KEEP to
    allow for file transfer recovery.
 
- . The default file-transfer block-check is now 3, rather than 1.
+ . The default file-transfer block-check is now 3, rather than 1.  If the
+   other Kermit does not support this, the two will drop back to type 1
+   automatically.
 
  . The default flow-control is now "auto" ("do the right thing"), not Xon/Xoff.
 
- . Backslash (\) is no longer a line continuation character.
+ . Backslash (\) is no longer a command continuation character.  Only -
+   (hyphen, dash) may be used for this in C-Kermit 6.0 and later.
 
  . Negative INPUT timeout now results in infinite wait, rather than 1 second.
+
+And in version 6.1:
+
+ . The "multiline GET" command is gone.  Now use:
+
+     get <remote-name> <local-name>
+
+   or:
+
+     get /as-name:<local-name> <remote-name>
+
+   If either name contains spaces, enclose it in braces.
+
+ . To request list of files from the server, you must now use MGET rather
+   than GET:
+
+      mget file1 file2 file3 ...
+
+See ckermit2.txt Section 0 for additional items and further detail.
+
 
 (2) THE C-KERMIT COMMAND PARSER
 
 When using the command-line processor ("kermit -l /dev/tty00 -b 19200", etc),
 note that in some cases the order of the command-line options makes a
 difference, contrary to the expectation that order of command-line options
-should not matter.  In this case, the -b option must be given after the -l
+should not matter.  For example, the -b option must be given after the -l
 option if it is to have any effect.
-
-If you specify an alternate initialization file on the command line (using the
--y option) and the file doesn't exist or can't be opened, no error is reported.
 
 In the interactive command parser:
 
@@ -122,13 +240,6 @@ the desired command in the -C argument, for example:
 
    kermit -C "take dial.scr"
 
-Reportedly, if you attempt to interrupt Kermit while it is executing its
-initialization file, and you do this rapidly enough, e.g. by sending a
-constant stream of Ctrl-C's at a very high rate of speed, depending on the
-underlying operating system (reported only on a couple versions of UNIX),
-duplicate Kermit processes might be created -- cause unknown, cure unknown,
-workaround: don't do it.
-
 If you use the backslash (\) prefix to enter a control character, space, or
 question mark into a command literally, the backslash disappears and is
 replaced by the quoted character.  If it was a control character, it is shown
@@ -150,16 +261,12 @@ completed name correctly.  But internally the file name is recognized anyway.
 Question-mark help does not work during execution of an ASKQ command.  The
 question marks are simply accepted as text.
 
-The maximum length for a variable name is 20 characters.  For array
-declarations and references, that includes the subscript.  So, for example:
-
-  \%a[\m(max_services)]
-
-is one character too long (this can be changed by redefining the symbol VNAML
-in ckuusr.h and recompiling C-Kermit).
-
+The maximum length for a variable name is between 256 and 4096 characters,
+depending on the platform; for array declarations and references, that
+includes the subscript.
+                                                     Sample
 Some other maximums to watch out for:      Symbol    Value Defined in
-							         
+
  Nesting level for command files:           MAXTAKE      30  ckuusr.h
  Nesting level for macros:                  MACLEVEL     50  ckuusr.h
  Nesting level for FOR / WHILE loops:       FORDEPTH     10  ckuusr.h
@@ -172,6 +279,9 @@ Some other maximums to watch out for:      Symbol    Value Defined in
  Number of characters in a command:         CMDBL      1024  ckucmd.h
  Number of chars in a field of a command:   ATMBL       256  ckucmd.h
  \fexecute() recursion depth limit:         CMDDEP       20  ckucmd.h
+
+The actual values of most of these items can vary with version and
+configuration, and are listed by SHOW FEATURES.
 
 ASK and ASKQ strip leading and trailing spaces from what the user types.  This
 happens way down deep in the command parser -- it's nothing special about ASK
@@ -193,6 +303,9 @@ cannot be included in a C string, since it is the C string terminator.
 If you really want to output a backslash followed by a B, an L, or an N (as is
 needed to configure certain modems, etc), use "output \\B".
 
+In C-Kermit 6.1 or later, you can disarm and re-arm the special OUTPUT-command
+escapes (\B, \L, and \N) with SET OUTPUT SPECIAL-ESCAPES { OFF, ON }.
+
 
 (3) MULTIPLE SESSIONS
 
@@ -210,11 +323,36 @@ TCP/IP networking installed on your computer.
 
 On UNIX systems that support the "term" program, you can establish a
 connection to another UNIX system with C-Kermit and then achieve multiple
-sessions using "term" client programs like trsh (see ckuker.bwr and the term
+sessions using "term" client programs like trsh (see ckubwr.txt and the term
 documentation for details).
 
 
 (4) NETWORK COMMUNICATION
+
+The most frequently asked question in many newsgroups is "Why does it take
+such a loooong time to make a telnet connection to (or from) my (e.g.) Linux
+PC?" (this applies to C-Kermit or to regular Telnet).  This question has
+two answers, one of them specific to C-Kermit 7.0:
+
+ 1. Most telnet servers nowadays perform reverse DNS lookups on the client
+    (for security and/or logging reasons).  If the Telnet client cannot be
+    found by the local DNS server, the DNS request goes out to the Internet at
+    large, and this can take quite some time.  The solution to this problem is
+    to make sure that both client and host are registered in DNS.
+
+ 2. C-Kermit 7.0 strictly enforces Telnet protocol rules.  One such rule is
+    that all negotiations must be responded to.  If C-Kermit sends a
+    negotiation and the host does not respond, C-Kermit will wait a long time
+    for the reply (in case the network is congested or the host is slow), but
+    eventually will time out.  To eliminate the waits (and therefore risk
+    possible protocol mismatches -- or worse --  between Telnet client and
+    server), tell C-Kermit to SET TELNET WAIT OFF (or include the /NOWAIT
+    switch with the TELNET command).
+
+C-Kermit itself performs reverse DNS lookups unless you tell it not to.  This
+is to allow C-Kermit to let you know which host it is actually connected to
+in case you have made a connection to a "host pool" (multihomed host).  You
+can disable C-Kermit's reverse DNS lookup with SET TCP REVERSE-DNS-LOOKUP OFF.
 
 In multiuser operating systems such as UNIX and VMS, TCP/IP RLOGIN connections
 are available only to privileged users, since "login" is a privileged socket.
@@ -261,71 +399,46 @@ screen.  However, you can still capture them in the debug log ("log debug").
 
 C-Kermit version 6.0 has a new set of SET TCP commands, to control TCP-level
 parameters, such as "keepalive" protocol (that allows C-Kermit to detect
-more quickly and reliably when a connection is broken).  In case you should
-see a message like:
-
-  Could not get SO_KEEPALIVE: Protocol not available
-
-it means that the underlying TCP/IP stack does not support this feature.
-Don't worry, no harm is done.  You can make this message go away by adding:
-
-  SET TCP KEEPALIVE OFF
-
-Similarly for the other SET TCP commands.
+more quickly and reliably when a connection is broken).  Use SHOW NET to see
+their values and SET TCP to change them.
 
 
 (5) THE SERVICES DIRECTORY
 
-Until edit 190, the login macros (such as UNIXLOGIN, VMSLOGIN, etc), which are
-used in the services directory, had their respective system prompts
-hard-coded, so if the prompt on the system you were logging in to differed
-from the one in the macro, the macro would time out and report failure (even
-though it actually did log you in).  These macros have been changed in edit
-190 to allow you to override the default prompt.  As explained on pp.297-301
-of "Using C-Kermit", the format of a services directory entry is:
-
-  entry-name  login-macro-name  user-id  connection-macro-name + arguments
-
-For example:
-
-  chemistry   vmslogin   ivan   call hayes com1 2400 7654321
-
-If you want to specify the system prompt to look for after logging in, you
-can do it by grouping it after the login macro name in braces, like this:
-
-  chemistry   {vmslogin CHEM:}  ivan   call hayes com1 2400 7654321
-
-For reference, here are the standard login macros and the default prompts:
-
-  UNIXLOGIN     \13\10$\32  (i.e. CR, LF, dollar sign, space)
-  VMSLOGIN      \13\10$\32  (ditto)
-  CISLOGIN      CompuServe Information Service
-  DOWLOGIN      ENTER QUERY
-  VMLINELOGIN   (Not applicable)
-  VMFULLOGIN    (Not applicable)
+Is explained fully in "Using C-Kermit", 2nd Edition, Chapter 7.
 
 
 (6) MODEMS AND DIALING
 
-(Also see MODEMS.DOC and DIALING.DOC)
+Warning: Some phone companies are eliminating the busy signal.  Instead,
+they issue a voice message such as "press 1 to automatically redial until
+the number answers, or...".  Obviously this is a disaster for modem calls.
+If your service has this feature, there's nothing Kermit can do about it.
+Your modem will respond with NO CARRIER rather than BUSY, and Kermit will
+declare the call a failure, rather than trying to redial the same number.
 
 The list of modem types supported by C-Kermit is obtained by typing:
 
   set modem type ?
 
-at the C-Kermit> prompt.  Note that the ITU-T (V.25bis) modem type is only
-for asynchronous mode, not synchronous (HDLC) mode -- there is no support
-in C-Kermit for synchronous communication (except for SET NET X.25, which
-is available in SunOS and Solaris with SunLink X.25, and in Stratus VOS,
-but that still has nothing to do with V.25bis modems).
+at the C-Kermit> prompt.  Note that the ITU-T (V.25bis) modem type is
+supported only in asynchronous mode, not synchronous (HDLC) mode -- there is
+no support in C-Kermit for synchronous communication (except for SET NET X.25,
+which is only available on certain platforms).
 
-If you have a high-speed, error-correcting, data-compressing modem, you should
-generally use the following settings:
+If a built-in modem type doesn't work for you, and the modem is a modern
+high-speed (data compressing, error correcting) modem that uses the Hayes AT
+command set, try:
 
-  set speed 57600 ; Or 38400, the highest supported by both Kermit & the modem
-  set modem speed-matching off  ; Use speed buffering.
-  set modem error-correction on ; Enable error-correction and compression.
-  set modem data-compression on
+  SET MODEM TYPE GENERIC-HIGH-SPEED
+
+Modems can be used by C-Kermit only when they are visible as or through a
+regular serial port device.  Note that certain modems can not be used in this
+normal way on many kinds of computers: Winmodems, RPI modems, Controllerless
+modems, the IBM Mwave, etc; all of these require special drivers that perform
+some, most, or all of the modem's functions in software.  Such drivers are
+generally NOT available in UNIX or other non-Windows (or non-OS/2, in the case
+of the Mwave) platforms.
 
 An important change in C-Kermit 6.0 is that when you give a SET MODEM TYPE
 command to tell Kermit what kind of modem you have, Kermit also sets a number
@@ -333,23 +446,56 @@ of other modem-related parameters automatically from its internal modem
 database.  Thus, the order in which you give modem-related commands is
 significant, whereas in prior releases they could be given in any order.
 
+In particular, MODEM SPEED-MATCHING is set according to whether the modem
+is known to be capable of speed buffering.  SET MODEM TYPE HAYES-2400
+automatically turns SPEED-MATCHING ON, because when the Hayes 2400 reports
+a particular speed in its CONNECT message, that means its interface speed
+has changed to that speed, and C-Kermit's must change accordingly if it is
+to continue communicating.  This might cause some confusion if you use
+"set modem type hayes" for dialing a more advanced type of modem.
+
 The new default for flow control is "auto", meaning "do the right thing".
 So (for example) if your version of C-Kermit supports SET FLOW RTS/CTS and
 your modem also supports RTS/CTS, then Kermit will automatically set its
 flow control to RTS/CTS *and* set modem's flow control to RTS/CTS too before
 attempting to use the modem.
 
-ADDING NEW MODEM TYPES TO C-KERMIT (see MODEMS.DOC)
+For this reason, don't assume that "set modem type hayes" should be used for
+any modem that uses the Hayes AT command set.  "set modem type hayes" really
+does mean Hayes 1200 or 2400, which in turn means no hardware flow control,
+and no speed buffering.  This choice will rarely work with a modern high-speed
+modem.
 
 
 (7) DIALING HINTS AND TIPS
 
-(Also see DIALING.DOC)
+If you want to dial a number that starts with #, you'll need to quote the
+"#" character (as \# or \{35}), since it is also a comment introducer:
+
+  C-Kermit>dial #98765421-1-212-5551212   ; Looks like a comment
+  ?You must specify a number to dial
+  C-Kermit>dial \#98765421-1-212-5551212  ; Works OK
+
+When using a dialing directory, remember what happens if a name is not found:
+
+  C-Kermit>dial xyzcorp
+  Lookup: "xyzcorp" - not found - dialing as given
+
+This normally does no harm, but some modems might behave strangely when given
+dial strings that contain certain letters.  For example, a certain German
+modem treats any dial string that contains the letter "s" as a command to
+fetch a number from its internal list, and replies OK to the ATD command,
+which is normally not a valid response except for partial dialing.  To avoid
+this situation, use:
+
+  lookup xyzcorp
+  if success dial
 
 Remember: In many C-Kermit implementations (depending on the underlying
-operating system -- mostly Windows, OS/2, and System-V-based UNIX versions),
-you can't CONNECT to a modem and type the modem's dialing command (like
-"ATDT7654321") manually, unless you first tell C-Kermit to:
+operating system -- mostly Windows, OS/2, and System-V-based UNIX versions,
+and in C-Kermit 6.1, also VMS), you can't CONNECT to a modem and type the
+modem's dialing command (like "ATDT7654321") manually, unless you first tell
+C-Kermit to:
 
   SET CARRIER-WATCH OFF
 
@@ -357,7 +503,7 @@ This is because (in these implementations), the CONNECT command requires the
 modem's Carrier Detect (CD) signal to be on, but the CD signal doesn't come on
 until after dialing is complete.  This requirement is what allows C-Kermit to
 pop back to its prompt automatically when the connection is hung up.  See the
-description of SET CARRIER in "Using C-Kermit".
+description of SET CARRIER-WATCH in "Using C-Kermit".
 
 Similarly, if your dialed connection drops when CARRIER-WATCH is set to AUTO
 or ON, you can't CONNECT back to the (now disconnected) screen to see what
@@ -367,61 +513,28 @@ Don't SET FLOW RTS/CTS if your modem is turned off, or if it is not presenting
 the CTS signal.  Otherwise, the serial device driver might get stuck waiting
 for this signal to appear.
 
-Here are a few points to clarify the purpose of SET MODEM SPEED-MATCHING:
-
- 0. The name was changed from SET DIAL SPEED-MATCHING to SET MODEM
-    SPEED-MATCHING in edit 192, as part of the overhaul of the dialing
-    features.
-
- 1. This command does not do anything at all to the modem.  Rather, it is used
-    to inform C-Kermit about the modem's configuration: whether the modem's
-    interface speed is "fixed", or it changes its interface speed when a
-    connection is made.  In the latter case, C-Kermit changes its own speed in
-    response to the speed given in the modem's CONNECT message.  By default,
-    SPEED-MATCHING is ON, so Kermit does indeed attempt to change its speed.
-    If your modem is set to have a fixed interface speed, you must SET MODEM
-    SPEED-MATCHING OFF.
-
- 2. When MODEM SPEED-MATCHING is ON:
-
-    (a) Your modem must be configured to report its *interface* speed in the
-        CONNECT message, rather than the connection (modulation) speed.
-
-    (b) Your computer (and C-Kermit) must support all connection speeds that
-        might be reported by your modem.  SET SPEED ? will give you a list of
-        the speeds that your version of C-Kermit knows about.
-
- 3. If conditions (a) and (b) cannot be satisfied, then you must:
-
-    (a) Configure your modem to lock its interface speed
-
-    (b) Tell C-Kermit to SET MODEM SPEED-MATCHING OFF
-
-To illustrate, suppose you have a V.32bis modem.  When it connects to a
-remote V.32bis modem, it might issue a message like:
-
-  CONNECT 14400
-
-But 14400 bps is not a speed that is supported by certain operating systems
-and so C-Kermit might fail to adjust its speed according to this report.
-Therefore, you must lock the modem's interface speed at a higher speed (such
-as 19200, 38400, or 57600) that is supported by C-Kermit, set C-Kermit to the
-same speed, and tell C-Kermit to SET MODEM SPEED-MATCHING OFF.
+The HANGUP command has no effect when C-Kermit is in remote mode.  This is
+on purpose.  If C-Kermit could hang up its own controlling terminal, this
+would (a) most likely leave behind zombie processes, and (b) pose a security
+risk.
 
 If you have a high-speed, error-correcting, data-compressing, speed-buffering
-modem, you should always SET MODEM SPEED-MATCHING OFF, and you should fix the
-modem's interface speed as high as possible, preferably four times higher than
-its maximum connection (modulation) speed to allow compression to work at full
-advantage.  In this type of setup, you must also have an effective means of
-flow control enabled between C-Kermit and the modem, preferably hardware
-(RTS/CTS) flow control.
+modem, you should fix the modem's interface speed as high as possible,
+preferably (at least) four times higher than its maximum connection
+(modulation) speed to allow compression to work at full advantage.  In this
+type of setup, you must also have an effective means of flow control enabled
+between C-Kermit and the modem, preferably hardware (RTS/CTS) flow control.
+On platforms that do not support hardware flow control, it is usually possible
+to select software flow control (Xon/Xoff), and C-Kermit will do its best to
+set the modem for local Xon/Xoff flow control too (but then, of course,
+Ctrl-S and Ctrl-Q characters can not be transmitted on the connection).
 
 C-Kermit knows about a large number of modems, depending on how it was built
 (type "set modem type ?" and "show features" for further info).  This
 knowledge is imbedded in the SET MODEM and DIAL commands.  If you are having
 trouble dialing your modem, SET DIAL DISPLAY ON to watch the dialing
-interactions between C-Kermit and your modem.  Consult pages 65-66 of "Using
-C-Kermit" for modem-dialing troubleshooting instructions.
+interactions between C-Kermit and your modem.  Consult Chapters 3-4 of "Using
+C-Kermit" (2nd Ed) for modem-dialing troubleshooting instructions.
 
 If it takes your call longer to be completed than the timeout interval that
 C-Kermit calculates, you can use the SET DIAL TIMEOUT command to override
@@ -437,6 +550,15 @@ higher than your modem's maximum, the modem will say "ERROR" and you will get
 a "Failure to initialize modem" error.  In that case, use SET DIAL TIMEOUT to
 override C-Kermit's calculation of the timeout value with the highest value
 that is legal for your modem, e.g. 60.
+
+If you DIAL a modem, disconnect, then SET HOST or TELNET, and then HANGUP,
+Kermit sends the modem's hangup command, such as "+++ATHO".  There is no good
+way to avoid this, because this case can't reliably be distinguished from the
+case in which the user does SET HOST <terminal-server>, SET MODEM TYPE <name>,
+DIAL.  In both cases we have a valid modem type selected and we have a network
+connection.  If you want to DIAL and then later make a regular network
+connection, you will have to SET MODEM TYPE NONE or SET MODEM HANGUP RS232 to
+avoid this phenomenon.
 
 The SET MODEM KERMIT-SPOOF command works only for Telebit and US Robotics
 modem types; it is OFF by default.  You may wish to experiment with large
@@ -468,14 +590,14 @@ might be a modem configuration problem).  Dialing "by hand", "blind" still
 works.  Also, reportedly "For people who do have DEC modems directly connected
 to DEC computers the DF03, DF100-series, and DF200-series modem dialers should
 work.  The only thing that is not straightforward is that the DF124-CA,
-DF124-CM modems must use the the DF200-series since they speak Digital Modem
+DF124-CM modems must use the DF200-series since they speak Digital Modem
 Command Language (DMCL) and AT commands.  The Digital Scholar Plus is a DF242
 so it uses the DF200-series."
 
 If C-Kermit's dialing methods are insufficient for your purposes, you can
 write a C-Kermit script program to do the dialing.
 
-DIALING AND FLOW CONTROL
+(7.1) DIALING AND FLOW CONTROL
 
 Most modern modems support RTS/CTS (if they support any hardware flow control
 at all), but some computers use different RS-232 circuits for the same
@@ -486,6 +608,8 @@ RTS, and modem's CD to the computer's CTS.  HOWEVER, C-Kermit does not know
 you have done this.  So if you have (say) SET FLOW DTR/CD, C-Kermit will make
 no attempt to tell the modem to use RTS/CTS.  You probably did this yourself
 when you configured the modem.
+
+(7.2) ESCAPE SEQUENCE GUARD TIME
 
 A "TIES" (Time-Independent Escape Sequence) modem does not require any guard
 time around its escape sequence.  The following text:
@@ -522,7 +646,7 @@ DIAL MODEM-HANGUP OFF.
 
 How to DIAL from a TCP/IP reverse terminal server (modem server):
 
- 1. (only if neccessary) SET TELNET ECHO REMOTE
+ 1. (only if necessary) SET TELNET ECHO REMOTE
  2. SET HOST <terminal-server-ip-name-or-address> [ <port> ]
  3. SET MODEM <modem-type>
  4. (only if necessary) SET DIAL HANGUP OFF
@@ -540,9 +664,8 @@ Many terminal servers only give you a 7-bit connection, so if you can't make
 it 8-bit, tell Kermit to "set parity space".
 
 The following story, regarding trouble transferring 8-bit files through a
-reverse terminal server:
-
-A contributed story about Annex terminal servers (begin quote):
+reverse terminal server, was contributed by an Annex terminal server user
+(begin quote):
 
 Using C-Kermit on an HP 9000 712/80 running the HP-UX 10.0 operating system.
 The HP was connected to a Xylogics Annex MICRO-ELS-UX R7.1 8 port terminal
@@ -667,10 +790,34 @@ given a LOG SESSION command.
 
 (12) FILE TRANSFER
 
+C-Kermit 7.0 is the first release of C-Kermit to use fast (rather than robust
+and therefore slow) protocol defaults: long packets, sliding windows,
+control-character unprefixing, and streaming where possible.  This makes most
+transfers (partner willing) dramatically faster "out of the box" but might
+break some combinations that worked before.  If transfers with C-Kermit 7.0
+fail where transfers worked with earlier C-Kermit versions, try the following:
+
+ a. ROBUST: this command reverts to the most conservative protocol settings.
+ b. CAUTIOUS: Selects medium but cautious protocol settings.
+ c. SET PREFIXING ALL: Disables control-character unprefixing.
+ d. SET STREAMING OFF: Disables streaming.
+
+File transfer failures can occur for all sorts of reasons, many of them listed
+in Chapter 10 of the manual.  Another one came up recently when using Kermit
+on a certain laptop with its built-in modem: the modem's "auto timeout delay"
+was hanging up the connection in the middle of a file transfer.  Most modems,
+even if they have this feature, do not have it enabled by default.  But if you
+experience otherwise inexplicable disconnections in the midst of your Kermit
+sessions, check the modem manual for such things as "idle timeout", "auto
+timeout", etc, and add the command to disable this feature to Kermit's init
+string for this modem.
+
 If you have a multihop connection, with the interior nodes in CONNECT
 mode (Kermit, Telnet, Rlogin, or any other), you can expect (a) file transfer
 to be slower, and (b) the connection to be less transparent (to control
-characters, perhaps to the 8th bit) than a more direct connection.
+characters, perhaps to the 8th bit) than a more direct connection.  C-Kermit
+7.0 has a "-0" (dash-zero) command-line option to make it 100% transparent
+in cases where it is to be used in the middle.
 
 The recovery feature (RESEND command) that was added in edit 190 works only
 for binary-mode transfers.  In order for this feature to be useful at all, the
@@ -699,7 +846,18 @@ RENAME if you ever intend to use the recovery feature:
    when receiving the remainder of the file during a RESEND operation, will
    report back the wrong name.  Nothing can be done about this because the
    name is reported back before the receiving Kermit program finds out that
-   it is a recovery operation.   
+   it is a recovery operation.
+
+Also watch out for DISABLE DELETE, since this implicitly sets FILE COLLISION
+RENAME.  And note tht DELETE is DISABLEd automatically any time you Kermit
+is in local mode (i.e. it makes a connection).  Also note that for purposes
+of DISABLE and ENABLE, "set host *" connections do not count as local mode
+even though, strictly speaking, they are.
+
+When using ADD SEND-LIST and entering a wildcard in the list, there is no way
+to specify "automatic switching" -- the file type still must be text or
+binary.  To work around, use regular expressions to create separate wildcards
+for the text and binary files.
 
 Automatic directory creation for received files does not work for pathnames
 given in the "-a" command-line argument.
@@ -708,9 +866,9 @@ There are no command-line arguments for "set file names { literal, converted }"
 or "set { send, receive } pathnames { on, off }", but you can include these
 (or any other) commands on the command line in the -C option string.
 
-When referring to MS-DOS, Atari ST, OS/2, or other file specifications that
-contain backslash characters in a C-Kermit command, you might have to double
-each backslash, for example:
+When referring to MS-DOS, Windows, Atari ST, OS/2, or other file
+specifications that contain backslash characters in a C-Kermit command, you
+might have to double each backslash, for example:
 
   C-Kermit>get c:\\directory\\foo.txt
 
@@ -722,13 +880,15 @@ need 4 (yes, 4) copies of each backslash:
 
   C-Kermit>get c:\\\\directory\\\\foo.txt
 
-But read about the new command, SET COMMAND QUOTING OFF, in the manual.
+But read about SET COMMAND QUOTING OFF in the manual.
 
-ANOTHER NOTE: In Kermit 95 and OS/2 C-Kermit, this restriction is lifted as
-far as referring to files on the local PC.  You can now refer to these files
-using natural PC notation, e.g.
+ANOTHER NOTE: In Kermit 95, this restriction is lifted as far as referring
+to files on the local PC.  You can now refer to these files using natural PC
+notation, e.g.
 
   C-Kermit>send c:\letters\oofa.txt
+
+in any command field that knowingly parses a filename.
 
 Attempting to cancel local-mode file reception at a very early stage (i.e.
 before data packets are exchanged) with X or Z does not work.  Workarounds:
@@ -753,10 +913,8 @@ yet, switch to a real Kermit program, such as MS-DOS Kermit.
 
 When using C-Kermit to transfer files with the HP48SX calculator, you must
 SET FLOW NONE.  The HP48SX does not support flow control, and evidently also
-becomes confused if you attempt to use it.
-
-Occasionally, when receiving files in remote mode using a large window
-size, attempts to cancel a file (X) can take a long time.
+becomes confused if you attempt to use it.  You might also need to use
+SET SEND PAUSE 100 (or other number).
 
 The fullscreen file transfer display will not work right if your terminal type
 is set incorrectly, or is not known to the host operating system.  Even when
@@ -792,22 +950,28 @@ SET FILE COLLISION BACKUP is the default.  This means:
 
  - If you send the same file lots of times, there will be many backup files.
    There is no automatic mechanism within Kermit to delete them, no notion of
-   a "version retention count", etc.
+   a "version retention count", etc, but you can use the PURGE command to
+   clean them up.
 
  - If a file arrives that has the same name as a directory, the file transfer
-   fails.  Send the file with another name, or use SET FILE COLLISION RENAME.
+   fails because Kermit will not rename a directory.  Send the file with
+   another name, or use SET FILE COLLISION RENAME.
+
+ - If the directory lacks write permission, the file transfer fails even if
+   you have write access to the file that is being backed up; in that case,
+   switch to SET FILE COLLISION OVERWRITE or APPEND, or send to a different
+   directory.
 
 SET FILE COLLISION UPDATE depends on the date/time stamp in the attribute
-packet.  However, this is recorded in local time, not GMT, and there is no
-indication of time zone.  The time is expressed to the precision of 1 second,
-but some file systems do not record with this precision -- for example, MS-DOS
-records the file date/time only to the nearest 2 seconds.  This might cause
-update operations to send more files than necessary.
+packet.  However, this is recorded in local time, not Universal Time (GMT),
+and there is no indication of time zone.  The time is expressed to the
+precision of 1 second, but some file systems do not record with this precision
+-- for example, MS-DOS records the file date/time only to the nearest 2
+seconds.  This might cause update operations to send more files than
+necessary.
 
-SET FILE COLLISION OVERWRITE is risky, use it with caution.  Under certain
-conditions, the existing file can be deleted even if the incoming file is
-refused.
-
+(This paragraph does NOT apply to UNIX, where, as of C-Kermit 6.1, C-Kermit
+pipes incoming mail and print material directly the mail or print program):
 When C-Kermit is receiving files from another Kermit program that has been
 given the MAIL or REMOTE PRINT command, C-Kermit follows the current filename
 collision action.  This can be disconcerting if the action was (for example)
@@ -817,25 +981,6 @@ RENAME because the file collision action occurs when the filename packet is
 received, and the PRINT or MAIL disposition only comes later, in the Attribute
 packet.
 
-The STATISTICS command will produce an incorrect efficiency report if (a) it
-does not know the true communication speed (e.g. on a network connection), or
-(b) it knows the true serial interface speed to a modem, but the modem is
-using a different communication speed with the other modem.  Similarly, in
-these circumstances, C-Kermit's automatic calculation of the packet timeout
-interval might also be incorrect, which can cause file transfers to fail.  One
-solution to the latter problem is to SET SEND and RECEIVE TIMEOUT to
-appropriate values for your true communication speed and packet length.
-
-TELNET option negotiations are not handled during file transfer.  So far, no
-ill effects have been noted.
-
-Why is Kermit file transfer over a TCP/IP connection slower than FTP?  Because
-the Kermit program on the remote end of the connection is not running directly
-on a TCP socket, but rather running underneath a TELNET server, usually on a
-pseudoterminal and under a login shell, with the vast amounts of per-character
-overhead all of that implies.  Future Kermit releases will be able to act
-directly as TCP servers, eliminating all this overhead.
-
 Execution of multiple file transfers by C-Kermit from a command file when
 in remote mode might exhibit long delays between each transfer.  To avoid
 this, just include the command "SET DELAY 0" in your command file before any
@@ -844,26 +989,26 @@ of the file-transfer commands.
 
 (13) SCRIPT PROGRAMMING
 
-The CKERMIT.INI file that was originally distributed with C-Kermit 5A(188)
-and (189) contained a nonfunctional CISLOGIN (CompuServe Login) macro.
-Fixed in CKERMIT.INI dated September 2, 1993, or later.
+13.1. Comments Versus the SCRIPT Command
 
 Remember that ";" and "#" introduce comments when (a) they are the first
 character on the line, or (b) they are preceded by at least one blank or
-tab.  Thus constructions like:
+tab within a line.  Thus constructions like:
 
   INPUT 5 ;
-  SCRIPT ~0 #--#--# 
+  SCRIPT ~0 #--#--#
 
 must be coded using backslash notation to keep the data from being ignored:
 
   INPUT 5 \59			; 59 is the decimal ASCII code for ";"
-  SCRIPT ~0 \43--#--#		; 43 is the decimal ASCII code for "#"
+  SCRIPT ~0 \35--#--#		; 43 is the decimal ASCII code for "#"
 
 or, more simply:
 
   INPUT 5 \;                    ; Just quote the semicolon
   SCRIPT ~0 \#--#--#            ; Just quote the "#"
+
+13.2. Alphabetic Case and the INPUT Command
 
 INPUT and REINPUT caseless string comparisons do not work for non-ASCII
 (international) characters.  Workaround: SET INPUT CASE OBSERVE.  Even then,
@@ -873,6 +1018,8 @@ case-conversion functions \Flower() and \Fupper().  C-Kermit does not know the
 collating sequence for different character sets and languages.  (On the other
 hand, it might work depending on such items as how Kermit was linked, whether
 your operating supports "locales", etc)
+
+13.3. NUL (0) Characters in C-Kermit Commands
 
 You can't include a NUL character (\0) in C-Kermit command text without
 terminating the character string in which it appears.  For example:
@@ -913,32 +1060,18 @@ was input.  Also, \v(incount) will be set to 1.
 
 \v(incount) and \v(inchar) are NOT affected by the CLEAR command.
 
-GOTO can be used sort of like switch/case.  For example, if you know that the
-value of \%a is 1, 2, or 3, you can "goto \%a" provided you have labels :1,
-:2, and :3.  What it missing, however, is an automatic way to trap failing
-GOTOs, similar to the "default:" clause of a C switch() statement.
+13.4. \ffiles() and \fnextfile() Peculiarities
 
 The following script program:
 
-  set count \ffiles(oofa.*)
-  :loop
-  send \fnextfile()
-  if count goto loop
-
-does not work as expected.  The SEND command (and any other command that
-parses a filename, including TAKE) implicitly calls the same internal function
-that \ffiles() calls, and thus destroys the file list set up in the first
-line.  To accomplish this type of operation: (1) give the wild filespec to
-\ffiles(); (2) loop through the file list and assign each filename to an array
-element; (3) use the array of filenames in subsequent file-related commands.
-Example:
-
-  asg \%n \ffiles(\%1)
-  declare \&f[\%n]
-  for \%i 1 \%n 1 { asg \&f[\%i] \fnextfile() }
-  for \%i 1 \%n 1 {
-      send \&f[\%i]
+  for \%i 1 \ffiles(oofa.*) 1 {
+      send \fnextfile()
   }
+
+did not work as expected in C-Kermit 6.0 and earlier but does work in
+C-Kermit 6.1 and later.
+
+13.5. Commands That Have Only Local Effect
 
 Certain settings are local to each command level, meaning that subordinate
 command levels (macros or command files) can change them without affecting
@@ -978,4 +1111,89 @@ decremented at the same level at which it was set.
 
 NOTE: "WHILE COUNT" did not work prior to edit 095 of ckuusr.c, 19 Jan 93.
 
-(End of CKERMIT.BWR)
+13.6. Literal Braces in Function Calls
+
+Since braces are used in function calls to indicate grouping, there is no way
+to pass literal braces to the function itself.  Solution: Define a variable
+containing the string that has braces.  Example:
+
+  define \%a ab{cd
+  echo \fsubstring(\%a)
+  ab{cd
+
+If the string is to start with a leading brace and end with a closing brace,
+then double braces must appear around the string (which itself is enclosed in
+braces):
+
+  define \%a {{{foo}}}
+  echo \fsubstring(\%a)
+  {foo}
+
+This also works for any other kind of string:
+
+  define \%a {{ab{cd}}
+  echo \fsubstring(\%a)
+  ab{cd
+
+13.7. Defining Variables on the C-Kermit Command Line
+
+To define variables on the C-Kermit command line, use the -C command-line
+option with one or more DEFINE or ASSIGN commands.  Note that the C-Kermit
+command line must cope with the quoting rules of your shell.  Examples:
+
+  kermit -C "define \\%a foo, define phonenumber 7654321"
+
+In this case we follow UNIX quoting rules by doubling the backslash.  Once
+C-Kermit starts, the \%a and \m(phonenumber) variables are defined as
+indicated and can be used in the normal way.
+
+In DOS or Windows or OS/2 the command would be:
+
+  kermit -C "define \%%a foo, define phonenumber 7654321"
+
+Here we need to double the percent sign rather than the backslash because
+of DOS shell quoting rules.
+
+13.8. Per-Character Echo Check with the OUTPUT Command
+
+Sometimes the OUTPUT command must be used to send commands or data to a device
+in "echoplex" mode, meaning that characters must be sent one at a time, and
+the next character can not be sent until the echo from the previous one has
+been received.  For example, a certain PBX might have this characteristic.
+Let's say a Kermit script is used to program the PBX.  If characters are sent
+too fast, they can be lost.  It would seem that the command:
+
+  SET OUTPUT PACING <milliseconds>
+
+could be used to take care of this, but the pacing interval is constant and
+must be set large enough to allow even the slowest echo to finish.  If the
+script is large (an actual example is 14,000 lines long), this can cause it
+to take hours longer than it needs to.
+
+Here is a macro you can use to OUTPUT a string in an Echoplex environment:
+
+  define XOUTPUT {
+      local \%c \%i
+      set output pacing 0
+      for \%i 1 \flen(\%*) 1 {
+	  asg \%c \fsubstr(\%*,\%i,1)
+          output \%c
+	  input 2 \%c
+      }
+  }
+
+C-Kermit 7.0 or later is required.
+
+It sends one character at a time and then waits up to 2 seconds for the
+character to be echoed back, but continues to the next character as soon
+as the echo appears, so no time is wasted.  You can add an IF FAIL clause
+after the INPUT in case you want to do something special about failure
+to detect an echo within the timeout period.  Obviously you can also change
+the 2-second limit, and adjust the script in any other desired way.
+
+13.9. Other...
+
+Escape sequences (or any strings that contain control characters) can't be
+used as labels, GOTO targets, or SWITCH cases.
+
+(End of CKCBWR.TXT)

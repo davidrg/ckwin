@@ -1,5 +1,5 @@
 #include "ckcsym.h"
-char *wartv = "Wart Version 2A(010) 4 Apr 95";
+char *wartv = "Wart Version 2.14, 10 Nov 1999";
 
 #define CKWART_C
 
@@ -31,11 +31,10 @@ char *wartv = "Wart Version 2A(010) 4 Apr 95";
   Authors: Jeff Damens, Frank da Cruz
   Columbia University Center for Computing Activites.
   First released November 1984.
-  Copyright (C) 1984, 1996, Trustees of Columbia University in the City of New
-  York.  Permission is granted to any individual or institution to use this
-  software as long as it is not sold for profit.  This copyright notice must be
-  retained.  This software may not be included in commercial products without
-  written permission of Columbia University.
+  Copyright (C) 1984, 2000,
+    Trustees of Columbia University in the City of New York.
+    All rights reserved.  See the C-Kermit COPYING.TXT file or the
+    copyright text in the ckcmai.c module for disclaimer and permissions.
 */
 
 /*
@@ -55,6 +54,9 @@ char *wartv = "Wart Version 2A(010) 4 Apr 95";
 #ifdef printf
 #undef printf
 #endif /* printf */
+#ifdef fprintf
+#undef fprintf
+#endif /* fprintf */
 #endif /* STRATUS */
 
 #ifdef MAC
@@ -62,15 +64,27 @@ char *wartv = "Wart Version 2A(010) 4 Apr 95";
 #ifdef printf
 #undef printf
 #endif /* printf */
+#ifdef fprintf
+#undef fprintf
+#endif /* fprintf */
 #endif /* MAC */
 
+#ifdef UNIX
+/* And UNIX */
+#ifdef printf
+#undef printf
+#endif /* printf */
+#ifdef fprintf
+#undef fprintf
+#endif /* fprintf */
+#endif /* UNIX */
 /*
- The following "char" should be changed to "short", "int", or "long" if your
- wart program will generate more than 127 states.  Since wart is used mainly
- with C-Kermit, which has about 50 states, "char" is adequate.  This 
- keeps the program about 3K-4K smaller.
+  The following "char" should be changed to "short", "int", or "long" if your
+  wart program will generate more than 127 states.  Since wart is used mainly
+  with C-Kermit, which has about 80 states, "char" is adequate.  This keeps
+  the program about 3K-4K smaller, which can be critical on 16-bit
+  architectures.
 */
-
 #ifdef IRIX60
 /*
   Also use short or int if your compiler complains inordinately about
@@ -83,7 +97,7 @@ char *wartv = "Wart Version 2A(010) 4 Apr 95";
 
 #define C_L 014				/* Formfeed */
 
-#define SEP 1	    	    	    	/* Token types */
+#define SEP 1				/* Token types */
 #define LBRACK 2
 #define RBRACK 3
 #define WORD 4
@@ -131,7 +145,6 @@ _PROTOTYP( VOID emptytbl, (void) );
 _PROTOTYP( VOID addaction, (int, int, int) );
 _PROTOTYP( VOID writetbl, (FILE *) );
 _PROTOTYP( VOID warray, (FILE *, char *, int [], int, char *) );
-_PROTOTYP( VOID fatal, (char *) );
 _PROTOTYP( VOID prolog, (FILE *) );
 _PROTOTYP( VOID epilogue, (FILE *) );
 _PROTOTYP( VOID copyrest, (FILE *, FILE *) );
@@ -177,8 +190,12 @@ char *txt2 = "()\n\
 
 /* Data type of state table is inserted here (short or int) */
 
-char *txt2a = " tbl[];\n    while (1) {\n	c = input() - 32;\n\
-        if (c < 0 || c > 95) c = 0;\n";
+char *txt2a =
+" tbl[];\n\
+    while (1) {\n\
+	c = input() - 32;\n\
+	debug(F000,\"PROTO input\",ckitoa(state),c+32);\n\
+	if (c < 0 || c > 95) c = 0;\n";
 
 char *txt2b = "	if ((actno = tbl[c + state*96]) != -1)\n\
 	    switch(actno) {\n";
@@ -220,7 +237,7 @@ teststate(state,t) int state; trans t; {
 
 trans
 rdinput(infp,outfp) FILE *infp,*outfp; {
-    trans x,rdrules();
+    trans x;
     lines = 1;				/* line counter */
     nstates = 0;			/* no states */
     nacts = 0;				/* no actions yet */
@@ -300,7 +317,7 @@ VOID
 rdstates(fp,ofp) FILE *fp,*ofp; {
     int c;
     char wordbuf[MAXWORD];
-    while ((c = getc(fp)) != EOF && c != '\n')   {
+    while ((c = getc(fp)) != EOF && c != '\n') {
 	if (isspace(c) || c == C_L) continue;	/* skip whitespace */
 	ungetc(c,fp);			/* put char back */
 	rdword(fp,wordbuf);		/* read the whole word */
@@ -309,7 +326,7 @@ rdstates(fp,ofp) FILE *fp,*ofp; {
     }
     lines++;
 }
-		
+
 /*
  * allocate a new, empty transition node
  *
@@ -336,7 +353,7 @@ rdrules(fp,out) FILE *fp,*out; {
     trans head,cur,prev;
     int curtok;
     head = cur = prev = NULL;
-    while ((curtok = gettoken(fp)) != SEP) 
+    while ((curtok = gettoken(fp)) != SEP)
 
       switch(curtok) {
 	case LBRACK:
@@ -346,7 +363,7 @@ rdrules(fp,out) FILE *fp,*out; {
 	    fatal("duplicate state list");
 	  statelist(fp,cur);		/* set states */
 	  continue;			/* prepare to read char */
-	  
+
 	case WORD:
 	  if ((int)strlen(tokval) != 1)
 	    fatal("multiple chars in state");
@@ -363,7 +380,7 @@ rdrules(fp,out) FILE *fp,*out; {
 	  prev = cur;
 	  cur = NULL;
 	  copyact(fp,out,nacts);
-	  break; 
+	  break;
 	default: fatal("bad input format");
       }
     return(head);
@@ -381,11 +398,11 @@ statelist(fp,t) FILE *fp; trans t; {
     while (curtok != RBRACK) {
 	if (curtok != COMMA) fatal("missing comma");
 	if ((curtok = gettoken(fp)) != WORD) fatal("missing state name");
-        if ((sval = lkup(tokval)) == -1) {
+	if ((sval = lkup(tokval)) == -1) {
 	    fprintf(stderr,"state %s undefined\n",tokval);
 	    fatal("undefined state");
 	}
-        setwstate(sval,t);	
+	setwstate(sval,t);
 	curtok = gettoken(fp);
     }
 }
@@ -470,13 +487,23 @@ warray(fp,nam,cont,siz,typ) FILE *fp; char *nam; int cont[],siz; char *typ; {
     int i;
     fprintf(fp,"%s %s[] = {\n",typ,nam);
     for (i = 0; i < siz - 1; ) {
-	fprintf(fp,"%2d, ",cont[i]);
+	fprintf(fp," %2d,",cont[i]);
 	if ((++i % 16) == 0) putc('\n',fp);
     }
-    fprintf(fp,"%2d ",cont[siz-1]);
-    fprintf(fp,"};\n");
+    fprintf(fp,"%2d\n};\n",cont[siz-1]);
 }
 
+#ifndef STRATUS
+#ifdef MAINTYPE
+/*
+  If you get complaints about "main: return type is not blah",
+  define MAINTYPE on the CC command line, e.g. "CFLAGS=-DMAINTYPE=int".
+*/
+MAINTYPE
+#else
+#ifdef CK_SCOV5
+int
+#else
 #ifdef __DECC
 #ifdef __ALPHA
 int
@@ -486,11 +513,22 @@ VOID
 #else
 #ifdef STRATUS
 int
+#ifdef __GNUC__
+int
 #else
+/*
+  The default case should be int, not VOID, but it's been this way for
+  years (no doubt for a reason) and who knows how many builds would break
+  if I changed it.
+*/
 VOID
+#endif /* __GNUC__ */
 #endif /* STRATUS */
 #endif /* __DECC */
-main(argc,argv) int argc; char *argv[]; {
+#endif /* CK_SCOV5 */
+#endif /* MAINTYPE */
+#endif /* STRATUS */
+main(argc,argv) int argc; char **argv; {
     trans head;
     int state,c;
     FILE *infile,*outfile;
@@ -706,5 +744,3 @@ lkup(name) char *name; {
       if (strcmp(cur->name,name) == 0) return(cur->val);
     return(-1);
 }
-
-

@@ -1,5 +1,3 @@
-#define NEWDPL
-
 /*  C K C F N 2  --  System-independent Kermit protocol support functions... */
 
 /*  ...Part 2 (continued from ckcfns.c)  */
@@ -8,13 +6,10 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
-  York.  The C-Kermit software may not be, in whole or in part, licensed or
-  sold for profit as a software product itself, nor may it be included in or
-  distributed with commercial products or otherwise distributed by commercial
-  concerns to their clients or customers without written permission of the
-  Office of Kermit Development and Distribution, Columbia University.  This
-  copyright notice must not be removed, altered, or obscured.
+  Copyright (C) 1985, 2000,
+    Trustees of Columbia University in the City of New York.
+    All rights reserved.  See the C-Kermit COPYING.TXT file or the
+    copyright text in the ckcmai.c module for disclaimer and permissions.
 */
 /*
  Note -- if you change this file, please amend the version number and date at
@@ -26,77 +21,15 @@
 #include "ckcasc.h"			/* ASCII symbols */
 #include "ckcker.h"			/* Kermit symbols */
 #include "ckcxla.h"			/* Translation */
+#include "ckcnet.h"			/* IKS and VMS #define TCPSOCKET */
 
 #ifdef TCPSOCKET			/* For TELNET business in spack() */
-#ifndef NP_TELNET			/* Avoid dragging in ckcnet.h */
-#define NP_TELNET  1
-#define TNL_CR     0			/* CR sends bare carriage return */
-#define TNL_CRNUL  1			/* CR and NUL */
-#define TNL_CRLF   2			/* CR and LF */
-#define TNL_LF     3			/* LF instead of CR */
-#endif /* NP_TELNET */
-extern int tn_nlm, ttnproto;
-extern int me_binary, tn_b_nlm;
+extern int tn_nlm, ttnproto, tn_b_nlm;
 #endif /* TCPSOCKET */
 
-#ifdef DYNAMIC
-extern struct pktinfo *s_pkt;		/* array of pktinfo structures */
-extern struct pktinfo *r_pkt;		/* array of pktinfo structures */
-#else
-extern struct pktinfo s_pkt[];		/* array of pktinfo structures */
-extern struct pktinfo r_pkt[];		/* array of pktinfo structures */
-#endif /* DYNAMIC */
+extern int parity, network, local, interrupted, fatalio, wasclosed;
 
-extern int sseqtbl[], rseqtbl[], sbufuse[], sacktbl[], wslots, winlo,
-  sbufnum, rbufnum, pktpaus;
-
-extern int ttprty;			/* from ck*tio.c */
-extern int autopar;
-
-extern int spsiz, spmax, rpsiz, timint, timef, npad, bestlen, maxsend;
-extern int rpt, rptq, rptflg, capas, spsizf, en_fin, tsecs, network, flow;
-extern int pktnum, sndtyp, rcvtyp, bctr, bctu, bctl, rsn, rln, maxtry, size;
-extern int osize, maxsize, spktl, rpktl, nfils, stdouf, warn, parity;
-extern int turn, turnch,  delay, displa, pktlog, tralog, seslog, xflg, mypadn;
-extern int hcflg, local, server, cxseen, czseen, discard, slostart;
-extern int nakstate, quiet, success, xitsta, what;
-extern int spackets, rpackets, timeouts, retrans, crunched, urpsiz;
-
-extern long filcnt, filrej, ffc, flci, flco, tlci, tlco, tfc, speed;
-
-extern char *cmarg, filnam[], *hlptxt;
-
-extern CHAR padch, mypadc, eol, seol, ctlq, sstate;
-extern CHAR *recpkt, *data, myinit[];
-extern CHAR *srvptr, stchr, mystch, *rdatap;
-extern CHAR padbuf[];
-#ifdef pdp11
-  extern CHAR srvcmd[];
-  extern CHAR *pktmsg;
-#else
-#ifdef DYNAMIC
-  extern CHAR *srvcmd;
-  extern CHAR *pktmsg;
-#else
-  extern CHAR srvcmd[];
-  extern CHAR pktmsg[];
-#endif /* DYNAMIC */
-#endif /* pdp11 */
-
-int numerrs = 0;			/* Number of packet errors so far */
-int rcvtimo = 0;			/* Timeout for receiving a packet */
-
-#ifdef CK_TIMERS
-int rrttbl[64], srttbl[64];		/* Packet timestamp tables */
-extern int rttflg;
-#define RTT_SCALE 1000
-long
-  rttsamples,				/* Round trip time samples */
-  rttdelay,				/* RTT delay */
-  pktintvl,				/* Interpacket arrival time */
-  rttvariance,				/* RTT variance */
-  rttstddev;				/* RTT standard deviation */
-#endif /* CK_TIMERS */
+int kstartactive = 0;			/* Flag for kstart() in a packet */
 
 static CHAR p_tbl[] = {			/* Even parity table for dopar(). */
     (CHAR) '\000',			/* ANSI C casts '\ooo' constants  */
@@ -229,6 +162,121 @@ static CHAR p_tbl[] = {			/* Even parity table for dopar(). */
     (CHAR) '\377'
 };
 
+/*  D O P A R  --  Add an appropriate parity bit to a character  */
+
+CHAR
+#ifdef CK_ANSIC
+dopar(register CHAR ch)
+#else
+dopar(ch) register CHAR ch;
+#endif /* CK_ANSIC */
+    {
+    register unsigned int a;
+    if (!parity
+#ifdef TCPSOCKET
+        || (network && (ttnproto == NP_TELNET) && (TELOPT_ME(TELOPT_BINARY)))
+#ifndef NOXFER
+	|| (!local && sstelnet)		/* TELNET BINARY MODE */
+#endif /* NOXFER */
+#endif /* TCPSOCKET */
+        ) return((CHAR) (ch & 255)); else a = ch & 127;
+    switch (parity) {
+	case 'e':  return(p_tbl[a]);	             /* Even */
+	case 'm':  return((CHAR) (a | 128));         /* Mark */
+	case 'o':  return((CHAR) (p_tbl[a] ^ 128));  /* Odd */
+	case 's':  return((CHAR) a);	             /* Space */
+	default:   return((CHAR) a);                 /* Something illegal */
+    }
+}
+
+#ifndef NOXFER				/* Rest of this file... */
+
+#define NEWDPL				/* New dynamic packet length method */
+
+#ifdef VMS
+extern int batch;
+#else
+extern int backgrd;
+#endif /* VMS */
+
+#ifdef DYNAMIC
+extern struct pktinfo *s_pkt;		/* array of pktinfo structures */
+extern struct pktinfo *r_pkt;		/* array of pktinfo structures */
+#else
+extern struct pktinfo s_pkt[];		/* array of pktinfo structures */
+extern struct pktinfo r_pkt[];		/* array of pktinfo structures */
+#endif /* DYNAMIC */
+
+extern int sseqtbl[], rseqtbl[], sbufuse[], sacktbl[], wslots, winlo,
+  sbufnum, rbufnum, pktpaus, reliable;
+
+#ifdef STREAMING
+static int dontsend = 0;
+extern int streaming;
+#endif /* STREAMING */
+
+extern int ttprty;			/* from ck*tio.c */
+extern int autopar;
+
+extern int spsiz, spmax, rpsiz, timint, timef, npad, bestlen, maxsend;
+extern int rpt, rptq, rptflg, capas, spsizf, en_fin, tsecs, flow;
+extern int pktnum, sndtyp, rcvtyp, bctr, bctu, bctl, rsn, rln, maxtry, size;
+extern int osize, maxsize, spktl, rpktl, nfils, stdouf, fsecs;
+extern int turn, turnch, displa, pktlog, seslog, xflg, mypadn;
+extern int hcflg, server, cxseen, czseen, discard, slostart;
+extern int nakstate, quiet, success, xitsta, what, filestatus;
+extern int spackets, rpackets, timeouts, retrans, crunched, urpsiz;
+extern int carrier, fdispla, srvidl;
+
+#ifdef GFTIMER
+extern CKFLOAT fptsecs, fpfsecs, fpxfsecs;
+#endif /* GFTIMER */
+
+extern long filcnt, filrej, ffc, flci, flco, tlci, tlco, tfc, speed;
+extern long filcps, tfcps;
+
+extern char *cmarg, filnam[];
+
+extern CHAR padch, mypadc, eol, seol, ctlq, sstate;
+extern CHAR *recpkt, *data, myinit[];
+extern CHAR *srvptr, stchr, mystch, *rdatap;
+extern CHAR padbuf[];
+extern CHAR * epktmsg;
+extern int epktrcvd, epktsent;
+
+#ifdef OS2				/* AUTODOWNLOAD parameters */
+extern int adl_kmode, adl_zmode;	/* Match Packet to signal download */
+extern char * adl_kstr;			/* KERMIT Download String */
+extern char * adl_zstr;			/* ZMODEM Download String */
+#endif /* OS2 */
+
+#ifdef CK_AUTODL
+CHAR ksbuf[96] = { NUL, NUL };		/* Autodownload "Kermit Start" buf */
+#endif /* CK_AUTODL */
+
+int numerrs = 0;			/* Number of packet errors so far */
+int rcvtimo = 0;			/* Timeout for receiving a packet */
+int idletmo = 0;			/* Flag for idle timeout */
+
+long filcps = 0L;			/* CPS most recent file transferred */
+long tfcps  = 0L;			/* CPS most recent transaction */
+long xfsecs = 0L;			/* Elapsed time for most recent file */
+#ifdef GFTIMER
+CKFLOAT fpxfsecs = 0.0;			/* Ditto, but floating point */
+#endif /* GFTIMER */
+
+#ifdef CK_TIMERS
+int rrttbl[64], srttbl[64];		/* Packet timestamp tables */
+extern int rttflg;
+#define RTT_SCALE 1000
+long
+  rttsamples,				/* Round trip time samples */
+  rttdelay,				/* RTT delay */
+  pktintvl,				/* Interpacket arrival time */
+  rttvariance,				/* RTT variance */
+  rttstddev;				/* RTT standard deviation */
+#endif /* CK_TIMERS */
+
 /* CRC generation tables */
 
 long crcta[16] = { 0L, 010201L, 020402L, 030603L, 041004L,
@@ -247,11 +295,15 @@ long crctb[16] = { 0L, 010611L, 021422L, 031233L, 043044L,
   "Improving Kermit Performance", Dr Dobb's Journal, February 1996.
 */
 
+
 /*  R T T I N I T  --  Initialize timers at start of transaction  */
 
 VOID
 rttinit() {				/* Initialize round-trip timing */
     int i;
+
+    if (timint == 0)
+      return;
 
     rttsamples  = 0L;			/* Samples (packets) */
     rttvariance = 0L;			/* Variance in delay */
@@ -261,7 +313,7 @@ rttinit() {				/* Initialize round-trip timing */
 
     /* Tables of timestamps indexed by packet sequence number */
 
-    for (i = 0; i < 64; i++) {		
+    for (i = 0; i < 64; i++) {
 	rrttbl[i] = -1;			/* Time each packet was received */
 	srttbl[i] = -1;			/* Time each packet was sent */
     }
@@ -272,7 +324,7 @@ rttinit() {				/* Initialize round-trip timing */
 /*
   Call with nakstate == 0 if file sender, nonzero if receiver,
   and n == packet sequence number of the packet we just received.
- 
+
   Returns:
   -1 on failure with rcvtimo set to timint (what the user said), or:
    0 on success with rcvtimo set to dynamically calculated value:
@@ -297,6 +349,9 @@ getrtt(nakstate, n) int nakstate, n; {
       return(-1);
 
     /* rtimer() (reset timer) is not called until 1st data packet */
+#ifdef GFTIMER
+    /* rftimer(); */
+#endif /* GFTIMER */
     /* S (F [ A ] D* Z)* B */
 
     /* NOTE: we calculate both the round-trip time AND the packet */
@@ -368,6 +423,14 @@ getrtt(nakstate, n) int nakstate, n; {
 	  rcvtimo += rcvtimo + 2;
 	else if (rpackets < 64)
 	  rcvtimo += rcvtimo / 2 + 1;
+        /* On a reliable link, don't try too hard to time out. */
+	/* Especially on fast local network connections. */
+        if (server && what == W_NOTHING) /* Server command wait */
+	  rcvtimo = rcvtimo;		/* == srvtim */
+        else if (reliable == SET_ON && rcvtimo > 0) /* Reliable */
+	  rcvtimo = rcvtimo +15;	/* and not server command wait */
+        else                            /* Not reliable or server cmd wait */
+	  rcvtimo = rcvtimo;
 	if (rcvtimo < mintime)		/* Lower bound */
 	  rcvtimo = mintime;
 	if (maxtime > 0) {		/* User specified an upper bound */
@@ -395,30 +458,39 @@ getrtt(nakstate, n) int nakstate, n; {
 */
 int
 input() {
-    int type, acktype;			/* Received packet type */
+    int type = 0, acktype;		/* Received packet type */
     int x, y, k;			/* Workers */
     int z, pi, nf;			/* Worker, packet index, NAK flag */
     int nak2ack = 0;
 
-    debug(F101,"input sstate","",sstate);
-    debug(F101," nakstate","",nakstate);
-    debug(F000," sndtyp","",sndtyp);
+    debug(F000,"input sstate","",sstate);
+    debug(F101,"input nakstate","",nakstate);
+    debug(F000,"input sndtyp","",sndtyp);
+    debug(F101,"input xitsta","",xitsta);
+    debug(F101,"input what","",what);
 
     while (1) {				/* Big loop... */
-
+/*
+  It is ttchk()'s responsibility to tell us if the connection is broken,
+  and to do so instantly and nondestructively -- no blocking, etc, that would
+  slow down file transfer.
+*/
+	if (ttchk() < 0) {
+	    debug(F100,"input CONNECTION BROKEN","",0);
+	    fatalio = 1;
+	    return('q');
+	}
 	if (sstate != 0) {		/* If a start state is in effect, */
 	    type = sstate;		/* return it like a packet type, */
 	    sstate = 0;			/* and then nullify it. */
 	    numerrs = 0;		/* (PWP) no errors so far */
 	    return(type);
 	}
-	
 	if (nakstate) {			/* This section for file receiver. */
-
 	    if (wslots > 1) {		/* If we're doing windows, */
 		x = rseqtbl[winlo];	/* see if desired packet already in. */
-		debug(F101," winlo","",winlo);
-		debug(F101," rseqtbl[winlo]","",rseqtbl[winlo]);
+		debug(F101,"input winlo","",winlo);
+		debug(F101,"input rseqtbl[winlo]","",rseqtbl[winlo]);
 		if (x > -1) {		/* Already there? */
 		    if (r_pkt[x].pk_seq == winlo) { /* (double check) */
 			rsn = winlo;	            /* Yes, return its info */
@@ -432,20 +504,41 @@ input() {
 		}
 	    }
 	    type = rpack();	        /* Try to read a packet. */
-	    debug(F111,"input recv",(char *) rdatap,(int) type);
+	    debug(F101,"input rpack","",type);
+
 	    while (type == 'e') {	/* Handle echoes */
-		debug(F000,"echo discarded","",type);
-		type = rpack();	
-	    }		
+		debug(F101,"input echo discarded","",type);
+		type = rpack();
+	    }
+#ifdef DEBUG
+	    if (deblog) {
+		if (type == 'D')
+		  debug(F011,"input type D=",(char *)rdatap,39);
+		else
+		  debug(F000,"input type",(char *)rdatap,type);
+	    }
+#endif /* DEBUG */
 #ifndef OLDCHKINT
 	    if (type == 'z') {
+		epktrcvd = 1;
 		errpkt((CHAR *)"User cancelled.");
-		strcpy((char *)pktmsg,"User cancelled.");
 		type = 'E';
 		break;
 	    }
 #endif /* OLDCHKINT */
-	    if (type < -1) return('q'); /* Ctrl-C or connection lost */
+	    if (type < -1) {
+		char * s;
+		s = (type == -2) ?
+		  "FAILED - Interrupted" :
+		    "FAILED - Connection lost";
+
+		xxscreen(SCR_PT,'q',0L,s);
+		debug(F111,"XXX wasclosed",s,wasclosed);
+#ifdef CKLOGDIAL
+		dologend();
+#endif /* CKLOGDIAL */
+		return('q');		/* Ctrl-C or connection lost */
+	    }
 	    if (type < 0) {		/* Receive window full */
 		/* Another thing to do here would be to delete */
 		/* the highest packet and NAK winlo.  But that */
@@ -454,7 +547,6 @@ input() {
 		debug(F101,"rpack receive window full","",0);
 		dumprbuf();
 		errpkt((CHAR *)"Receive window full.");
-		strcpy((char *)pktmsg,"Receive window full.");
 		type = 'E';
 		break;
 	    }
@@ -462,13 +554,21 @@ input() {
 
 #ifdef OLDCHKINT
 	    if (chkint() < 0) {		/* Check for console interrupts. */
-		errpkt((CHAR *)"User cancelled.");
-		strcpy((char *)pktmsg,"User cancelled.");
+		errpkt((CHAR *)"User cancelled."); /* (old way) */
 		type = 'E';
 		break;
 	    }
 #endif /* OLDCHKINT */
 
+#ifdef STREAMING
+	    if (streaming) {		/* Streaming */
+		if (type == 'Q' || type == 'T') { /* Errors are fatal. */
+		    crunched++;		/* For statistics */
+		    errpkt((CHAR *)"Transmission error on reliable link.");
+		    type = 'E';
+		}
+	    }
+#endif /* STREAMING */
 	    if (type == 'E') {
 		debug(F101,"input got E, nakstate","",nakstate);
 		break;			/* Error packet */
@@ -507,15 +607,22 @@ input() {
 		    debug(F101,"ZZZ NAKing winlo","",winlo);
 		    if (nack(winlo) < 0) { /* we have to NAK winlo (again) */
 			errpkt((CHAR *)"Too many retries."); /* Too many */
-			strcpy((char *)pktmsg,"Timed out."); /* Give up */
 			type = 'E';
 			break;
 		    }
-		} 
+		}
 		continue;
 	    }
 
 	    if (type == 'T') {		/* Timeout */
+#ifndef OS2
+		/* K95 does this its own way */
+		if (server && srvidl) {
+		    idletmo = 1;
+		    debug(F101,"SERVER IDLE TIMEOUT","",srvidl);
+		    return('q');
+		}
+#endif /* OS2 */
 #ifdef CK_TIMERS
 		rcvtimo++;		/* Stretch the timeout a little */
 #endif /* CK_TIMERS */
@@ -523,20 +630,26 @@ input() {
 		debug(F101,"input receive-state timeout, winlo","",winlo);
 		/* NAK only the packet at window-low */
 		debug(F101,"input sending NAK for winlo","",winlo);
-		if (ttchk() > 0)	/* Don't give up if there is still */
+		x = ttchk();
+		if (x > 0)		/* Don't give up if there is still */
 		  continue;		/* something to read. */
+		else if (x < 0) {
+#ifdef CKLOGDIAL
+		    dologend();
+#endif /* CKLOGDIAL */
+		    fatalio = 1;
+		    return('q');	/* Connection Lost */
+		}
 		if (nack(winlo) < 0) {
 		    debug(F101,"input sent too many naks","",winlo);
 		    errpkt((CHAR *)"Too many retries.");
-		    strcpy((char *)pktmsg,"Sent too many NAKs.");
 		    type = 'E';
 		    break;
 		} else continue;
 	    }
-
 	    if (rsn == winlo) {		/* Got the packet we want, done. */
 #ifdef CK_TIMERS
-		if (rttflg)		/* Dynamic round trip timers? */
+		if (rttflg && timint)	/* Dynamic round trip timers? */
 		  getrtt(nakstate, rsn); /* yes, do it. */
 #endif /* CK_TIMERS */
 		debug(F101,"input rsn=winlo","",rsn);
@@ -545,65 +658,43 @@ input() {
 
 	    /* Got a packet out of order. */
 
-	    debug(F101,"input recv got packet out of order","",rsn);
+	    debug(F101,"input out of sequence, rsn","",rsn);
 	    k = rseqtbl[rsn];		/* Get window slot of this packet. */
-	    debug(F101,"input recv rseqtbl[rsn]","",k);
+	    debug(F101,"input rseqtbl[rsn]","",k);
 	    if (k < 0) {
 		debug(F101,"input recv can't find index for rcvd pkt","",rsn);
 		/* Was "Internal error 21" */
+		/* This should not happen  */
 		errpkt((CHAR *)"Sliding windows protocol error.");
-		strcpy((char *)pktmsg,"Sliding windows protocol error.");
 		type = 'E';
 		break;
-	    }		
+	    }
 	    y = chkwin(rsn,winlo,wslots); /* See what window it's in. */
 	    debug(F101,"input recv chkwin","",y);
 	    if (y == 1) {		/* From previous window. */
-		resend(rsn);		/* Resend the ACK (might have data) */
+#ifdef STREAMING
+		if (!streaming)		/* NO RESEND IF STREAMING! */
+#endif /* STREAMING */
+		  resend(rsn);		/* Resend the ACK (might have data) */
 		freerpkt(rsn);		/* Get rid of received packet */
-		continue;
+		continue;		/* Back to wait for another packet */
 	    } else {			/* In this window or out of range */
 		if (y < 0)		/* If out of range entirely, */
 		  freerpkt(rsn);	/* release its buffer */
 
-#ifdef COMMENT /* Ignore this and read what comes afterwards... */
-/*
-  We have received a packet, but not the one we want.  It would seem to
-  make sense to always send a NAK for the most desired packet (winlo).  But
-  consider this scenario: a packet arrived damaged so we NAK'd it above;
-  then packets winlo+1, winlo+2, ... winlo+n arrive, each one making us
-  send another NAK for winlo, so the other Kermit gets n NAKs for winlo, and
-  either would have to resend it n times, or if n > retry limit, give up
-  because of too many retries.  So we compromise: If a packet arrives
-  that is not the most desired packet (winlo), we NAK winlo, BUT ONLY IF
-  it has not been NAK'd before.
-*/
-		x = sseqtbl[winlo];	/* Get index of most desired packet */
-		if (s_pkt[x].pk_rtr == 0 ||   /* Not NAK'd before? */
-		    rbufnum < 1) {	      /* Or receive window full? */
-		    if (nack(winlo) < 0) {    /* One or both, so NAK it now. */
-			errpkt((CHAR *)"Too many retries."); /* Too many */
-			strcpy((char *)pktmsg,"Timed out."); /* Give up */
-			type = 'E';
-			break;
-		    } else continue;
-		} else continue;
-#endif /* COMMENT */
+#ifdef STREAMING
+		if (streaming) {	/* Streaming (this shouldn't happen) */
+		    errpkt((CHAR *)"Sequence error on reliable link.");
+		    type = 'E';
+		    break;
+		}
+#endif /* STREAMING */
 
-/*
-  In version 5A(189), the strategy was revised to send NAKs for the oldest
-  missing packet that had not been NAK'd before, which requires a search.
-  Thus, if winlo was already NAK'd, instead of doing nothing, we send a NAK
-  for the "lowest" as-yet-unNAK'd missing packet.
+/* If our receive window is full, NAK window-low */
 
-  If our receive window is full, however, we have no choice but to NAK winlo:
-*/
-		debug(F101,"XXX checking rbufnum","",rbufnum);
 		if (rbufnum < 1) {	/* Receive window full? */
-		    debug(F101,"XXX out of buffers","",rbufnum); /* Yes */
 		    if (nack(winlo) < 0) {    /* No choice, must NAK winlo. */
 			errpkt((CHAR *)"Too many retries."); /* Too many */
-			strcpy((char *)pktmsg,"Timed out."); /* Give up */
 			type = 'E';
 			break;
 		    } else continue;
@@ -618,16 +709,12 @@ input() {
   the already-NAK'd missing packets are already on their way.  Note, we do not
   NAK ahead of ourselves, as that only creates unnecessary retransmissions.
 */
-		debug(F101,"XXX winlo","",winlo);
 		for (x = winlo; x != rsn; x = (x + 1) % 64) {
-		    debug(F101,"XXX x","",x);
 		    if (rseqtbl[x] > -1) /* Have I received packet x? */
 		      continue;		 /* Yes, check next sequence number. */
-		    debug(F101,"XXX missing pkt","",x);
 		    pi = sseqtbl[x];	 /* No, have I NAK'd it yet? */
 		    if (pi < 0 || s_pkt[pi].pk_rtr == 0) {
 			nack(x);	 /* No, NAK it now. */
-			debug(F101,"XXX nak","",x);
 			break;
 		    }
 		}
@@ -635,8 +722,15 @@ input() {
 /*!!!*/
 	} else {			/* Otherwise file sender... */
 
+#ifdef STREAMING
+	    if (streaming && sndtyp == 'D') {
+		debug(F101,"STREAMING input streaming","",streaming);
+		debug(F000,"STREAMING input sndtyp","",sndtyp);
+		rsn = winlo;
+		type = 'Y';		/* Pretend we got an ACK */
+	    }
+#endif /* STREAMING */
 	    if (!nak2ack) {		/* NAK(n+1) = ACK(n) */
-
 		if (wslots > 1) {	/* Packet at winlo already ACK'd? */
 		    if (sacktbl[winlo]) { /* If so,  */
 			sacktbl[winlo] = 0; /* Turn off the ACK'd flag */
@@ -648,28 +742,49 @@ input() {
 			break;
 		    }
 		}
-		type = rpack();		/* Try to read an acknowledgement */
+#ifdef STREAMING
+		if (!(streaming && sndtyp == 'D')) { /* Not streaming | data */
+		    type = rpack();	/* Try to read an acknowledgement */
+		} else {		/* Streaming and in Data phase */
+		    type = 'Y';		/* Assume all is normal */
+		    if (chkint() < 0)	/* Check for console interrupts. */
+		      type = 'z';
+		    else if (ttchk() > 4 + bctu) /* Check for return traffic */
+		      type = rpack();
+		    debug(F000,"input streaming type","",type);
+		}
+#endif /* STREAMING */
 		debug(F111,"input send",(char *) rdatap,(int) type);
 		while (type == 'e') {	/* Handle echoes */
 		    debug(F000,"echo discarded","",type);
-		    type = rpack();	
-		}		
+		    type = rpack();
+		}
 #ifndef OLDCHKINT
 		if (type == 'z') {
+		    epktrcvd = 1;
 		    errpkt((CHAR *)"User cancelled.");
-		    strcpy((char *)pktmsg,"User cancelled.");
 		    type = 'E';
 		    break;
 		}
 #endif /* OLDCHKINT */
-		if (type == -2) return('q');
+		if (type < -1) {
+		    xxscreen(SCR_PT,'q',0L,
+			   ((char *)((type == -2) ?
+			   "Interrupted" :
+			   "Connection lost"))
+			   );
+#ifdef CKLOGDIAL
+		    if (type != -2)
+		      dologend();
+#endif /* CKLOGDIAL */
+		    return('q');	/* Ctrl-C or connection lost */
+		}
 		if (type == -1) {
 		    errpkt((CHAR *)"Receive window full"); /* was "internal */
 		    debug(F101," wslots","",wslots); /* error 18" */
 		    debug(F101," winlo","",winlo);
 		    debug(F101," pktnum","",pktnum);
 		    dumprbuf();
-		    strcpy((char *)pktmsg,"Can't allocate receive buffer");
 		    type = 'E';
 		    break;
 		}
@@ -678,24 +793,32 @@ input() {
 #ifdef OLDCHKINT
 		if (chkint() < 0) {	/* Check for console interrupts. */
 		    errpkt((CHAR *)"User cancelled.");
-		    strcpy((char *)pktmsg,"User cancelled.");
 		    return(type = 'E');
 		}
 #endif /* OLDCHKINT */
 
 		/* Got a packet */
 
+#ifdef STREAMING
+		if (streaming) {		/* Streaming */
+		    if (type == 'Q' || type == 'T') { /* Errors are fatal. */
+			crunched++;	/* For statistics */
+			errpkt((CHAR *)"Transmission error on reliable link.");
+			type = 'E';
+		    }
+		}
+#endif /* STREAMING */
 		if (type == 'E') {
 		    debug(F101,"input send got E, nakstate","",nakstate);
 		    break;		/* Error packet */
 		}
-		if (type == 'Q') {	/* Crunched packet */ 
+		if (type == 'Q') {	/* Crunched packet */
 		    crunched++;		/* For statistics */
 		    numerrs++;		/* For packet resizing */
 		    x = resend(winlo);	/* Resend window-low */
 		    if (x < 0) {
 			type = 'E';
-			errpkt(pktmsg);
+			errpkt((CHAR *)"Too many retries");
 			break;
 		    }
 		    continue;
@@ -710,7 +833,7 @@ input() {
 		    debug(F101,"input send resending winlo","",winlo);
 		    if (resend(winlo) < 0) { /* Check retries */
 			debug(F101,"input send too many resends","",maxtry);
-			errpkt(pktmsg);
+			errpkt((CHAR *)"Too many retries");
 			return(type = 'E');
 		    }
 #ifdef NEWDPL
@@ -752,7 +875,7 @@ input() {
 				bestlen = spsiz;
 				debug(F101,"bestlen B","",bestlen);
 			    }
-#ifdef DEBUG			
+#ifdef DEBUG
 			    if (deblog) {
 				debug(F101,"bestlen retry","",s_pkt[x].pk_rtr);
 				debug(F101,"bestlen len","",s_pkt[x].pk_len);
@@ -767,7 +890,7 @@ input() {
 				  bestlen = spmax;
 				debug(F101,"bestlen A","",bestlen);
 			    }
-#ifdef DEBUG			
+#ifdef DEBUG
 			    if (deblog) {
 				debug(F101,"bestlen wslots","",wslots);
 				debug(F101,"bestlen maxsend","",maxsend);
@@ -805,7 +928,7 @@ input() {
 #endif /* NEWDPL */
 
 #ifdef CK_TIMERS
-		    if (rttflg)		/* If doing dynamic timers */
+		    if (rttflg && timint) /* If doing dynamic timers */
 		      getrtt(nakstate, rsn); /* call routine to set it. */
 #endif /* CK_TIMERS */
 /*
@@ -834,7 +957,7 @@ input() {
 		    x = resend(winlo);	/* Resend current packet */
 		    if (x < 0) {
 			type = 'E';
-			errpkt(pktmsg);
+			errpkt((CHAR *)"Too many retries");
 			break;
 		    } else continue;	/* Resend ok, go read another packet */
 		} else {		/* Other cases, just ignore */
@@ -845,6 +968,14 @@ input() {
 	    }
 	    if (type == 'N') {		/* NAK */
 		numerrs++;		/* Count an error */
+#ifdef STREAMING
+		if (streaming) {		/* Streaming */
+		    errpkt((CHAR *)"NAK received on reliable link.");
+		    type = 'E';
+		    break;
+		}
+#endif /* STREAMING */
+
 		debug(F101,"input send NAK","",rsn);
 #ifdef NEWDPL
 		/* Reduce prevailing packet length */
@@ -863,7 +994,7 @@ input() {
 		}
 #endif /* NEWDPL */
 		freerpkt(rsn);		/* Free buffer where NAK lies. */
-		if (y == 0) {		/* In current window */		
+		if (y == 0) {		/* In current window */
 		    debug(F100," in window","",0);
 		    k = sseqtbl[rsn];	/* Get pointer to NAK'd packet. */
 		    if (k < 0 || (k > -1 && s_pkt[k].pk_typ == ' ')) {
@@ -873,7 +1004,7 @@ input() {
 		    }
 		    if (x < 0) {	/* Resend error is fatal.  */
 			type = 'E';
-			errpkt(pktmsg);
+			errpkt((CHAR *)"Too many retries");
 			break;
 		    } else continue;	/* Resend ok, go read another packet */
 		} else if ((rsn == (pktnum + 1) % 64)) { /* NAK for next pkt */
@@ -882,7 +1013,7 @@ input() {
 			x = resend(winlo); /* Resend window-low */
 			if (x < 0) {
 			    type = 'E';
-			    errpkt(pktmsg);
+			    errpkt((CHAR *)"Too many retries");
 			    break;
 			}
 			continue;	/* Go back and read another pkt */
@@ -892,7 +1023,7 @@ input() {
 		    if (x == 0 && (sndtyp == 'S' || sndtyp == 'I')) {
 			resend(0);	/* ACK for S or I packet missing */
 			continue;	/* so resend the S or I */
-		    }		
+		    }
 		    rsn = x;		/* Else, treat NAK(n+1) as ACK(n) */
 		    nak2ack = 1;	/* Go back and process the ACK */
 		    continue;
@@ -900,7 +1031,6 @@ input() {
 		    debug(F101," NAK out of window","",rsn); /* bad... */
 		    type = 'E';
 		    errpkt((CHAR *)"NAK out of window");
-		    strcpy((char *)pktmsg,"NAK out of window.");
 		    break;
 		} else continue;	/* Ignore other NAKs */
 	    }				/* End of file-sender NAK handler */
@@ -911,44 +1041,32 @@ input() {
 	    }
 	}				/* End of file-sender section */
     }					/* End of input() while() loop */
-    if (wslots == 1) {
+/*
+  When the window size is 1 and we have the packet we want, there can not
+  possibly be anything waiting for us on the connection that is useful to us.
+  However, there might be redundant copies of a packet we already got, which
+  would cause needless cycles of repeated packets.  Therefore we flush the
+  communications input buffer now to try to get rid of undesired and unneeded
+  packets that we have not read yet.
+*/
+    if (wslots == 1
+#ifdef STREAMING
+	&& !streaming			/* But not when streaming */
+#endif /* STREAMING */
+	) {
 	debug(F100,"input about to flush","",0);
 	ttflui();		/* Got what we want, clear input buffer. */
     }
 #ifndef NEWDPL
-    if (!nakstate)		/* When sending */
-      rcalcpsz();		/* recalculate size every packet */
+    if (!nakstate)			/* When sending */
+      rcalcpsz();			/* recalculate size every packet */
 #endif /* NEWDPL */
+    if (type == 'E')
+      xitsta |= (what ? what : 1);	/* Remember what failed. */
+    debug(F101,"input winlo","",winlo);
+    debug(F101,"input rsn","",rsn);
     debug(F000,"input returning type","",type);
-    return(rcvtyp = type);	/* Success, return packet type. */
-}
-
-/*  D O P A R  --  Add an appropriate parity bit to a character  */
-
-/*
-  (PWP) this is still used in the Mac terminal emulator, so we have to keep it
-*/
-CHAR
-#ifdef CK_ANSIC
-dopar(register CHAR ch)
-#else
-dopar(ch) register CHAR ch;
-#endif /* CK_ANSIC */
-    {
-    register unsigned int a;
-    if (!parity
-#ifdef TCPSOCKET        
-        || (network &&		/* TELNET BINARY MODE */
-	    (ttnproto == NP_TELNET) && (me_binary) )
-#endif /* TCPSOCKET */
-        ) return((CHAR) (ch & 255)); else a = ch & 127;
-    switch (parity) {
-	case 'e':  return(p_tbl[a]);	             /* Even */
-	case 'm':  return((CHAR) (a | 128));         /* Mark */
-	case 'o':  return((CHAR) (p_tbl[a] ^ 128));  /* Odd */
-	case 's':  return((CHAR) a);	             /* Space */
-	default:   return((CHAR) a);                 /* Something illegal */
-    }
+    return(rcvtyp = type);		/* Success, return packet type. */
 }
 
 #ifdef PARSENSE
@@ -1028,10 +1146,16 @@ parchk(s,start,n) CHAR *s, start; int n;
   the operating system.
 
   Call with a timout interval.  Returns it, adjusted if necessary.
-*/  
+*/
 int
 chktimo(timo,flag) int timo, flag; {
     long cps, z; int x, y;
+#ifdef STREAMING
+    debug(F101,"chktimo streaming","",streaming);
+    if (streaming)
+      return(0);
+#endif /* STREAMING */
+
     debug(F101,"chktimo timo","",timo); /* Timeout before adjustment */
     debug(F101,"chktimo flag","",flag);
 
@@ -1070,7 +1194,7 @@ chktimo(timo,flag) int timo, flag; {
   spack() sends a packet of the given type, sequence number n, with len data
   characters pointed to by d, in either a regular or extended- length packet,
   depending on len.  Returns the number of bytes actually sent, or else -1
-  upon failure.  Uses global npad, padch, mystch, bctu, data.  Leaves packet 
+  upon failure.  Uses global npad, padch, mystch, bctu, data.  Leaves packet
   fully built and null-terminated for later retransmission by resend().
   Updates global sndpktl (send-packet length).
 
@@ -1089,30 +1213,45 @@ spack(pkttyp,n,len,d) char pkttyp; int n, len; CHAR *d;
 #endif /* CK_ANSIC */
 /* spack */ {
     register int i;
-    int j, k, x, lp, longpkt, copy;
+    int j, k, x, lp, longpkt, copy, loglen;
 
-#ifdef GETMSEC
-    long t1, t2;
-#endif /* GETMSEC */
+#ifdef GFTIMER
+    CKFLOAT t1 = 0.0, t2 = 0.0;
+#endif /* GFTIMER */
 
     register CHAR *cp, *mydata;
     unsigned crc;
 
-    debug(F101,"spack n","",n);
-    debug(F111,"spack data",data,data);
-    /* debug(F101,"spack d","",d); */
-    debug(F101,"spack len","",len);
-
     copy = (d != data);			/* Flag whether data must be copied  */
+
+#ifdef DEBUG
+    if (deblog) {			/* Save lots of function calls! */
+	debug(F101,"spack n","",n);
+	if (pkttyp != 'D') {		/* Data packets would be too long */
+	    debug(F111,"spack data",data,data);
+	    debug(F111,"spack d",d,d);
+	}
+	debug(F101,"spack len","",len);
+	debug(F101,"spack copy","",copy);
+    }
+#endif /* DEBUG */
+
     longpkt = (len + bctl + 2) > 94;	/* Decide whether it's a long packet */
     mydata = data - 7 + (longpkt ? 0 : 3); /* Starting position of header */
-    debug(F101," mydata","",mydata);
-
-    k = sseqtbl[n];			/* Packet structure info for pkt n */ 
-    debug(F101," sseqtbl[n]","",k);
-    if (k < 0) {
-	debug(F101,"spack sending packet out of window","",n);
-    } else {				/* Record packet info */
+    k = sseqtbl[n];			/* Packet structure info for pkt n */
+#ifdef DEBUG
+    if (deblog) {			/* Save 2 more function calls... */
+	debug(F101,"spack mydata","",mydata);
+	debug(F101,"spack sseqtbl[n]","",k);
+	if (k < 0) {
+#ifdef STREAMING
+	    if (!streaming)
+#endif /* STREAMING */
+	      debug(F101,"spack sending packet out of window","",n);
+	}
+    }
+#endif /* DEBUG */
+    if (k > -1) {
 	s_pkt[k].pk_adr = mydata;	/* Remember address of packet. */
 	s_pkt[k].pk_seq = n;		/* Record sequence number */
 	s_pkt[k].pk_typ = pkttyp;	/* Record packet type */
@@ -1129,15 +1268,34 @@ spack(pkttyp,n,len,d) char pkttyp; int n, len; CHAR *d;
     mydata[i++] = pkttyp;		/* TYPE field */
     j = len + bctl;			/* Length of data + block check */
     if (longpkt) {			/* Long packet? */
-	int x;				/* Work around SCO Xenix/286 */
+	int x;				/* Yes, work around SCO Xenix/286 */
+#ifdef CKTUNING
+	unsigned int chk;
+#endif /* CKTUNING */
 	x = j / 95;			/* compiler bug... */
-        mydata[lp] = tochar(0);		/* Yes, set LEN to zero */
-        mydata[i++] = tochar(x);	/* High part */
-        mydata[i++] = tochar(j % 95);	/* Low part */
-        mydata[i] = '\0';		/* Header checksum */
-        mydata[i++] = tochar(chk1(mydata+lp));
+        mydata[lp] = tochar(0);		/* Set LEN to zero */
+        mydata[i++] = tochar(x);	/* Extended length, high byte */
+        mydata[i++] = tochar(j % 95);	/* Extended length, low byte */
+#ifdef CKTUNING
+        /* Header checksum - skip the function calls and loops */
+	  chk = (unsigned) mydata[lp]   +
+	        (unsigned) mydata[lp+1] +
+	        (unsigned) mydata[lp+2] +
+		(unsigned) mydata[lp+3] +
+		(unsigned) mydata[lp+4] ;
+	mydata[i++] = tochar((CHAR) ((((chk & 0300) >> 6) + chk) & 077));
+#else
+        mydata[i] = '\0';		/* Terminate for header checksum */
+        mydata[i++] = tochar(chk1(mydata+lp,5));
+#endif /* CKTUNING */
     } else mydata[lp] = tochar(j+2);	/* Normal LEN */
-
+/*
+  When sending a file, the data is already in the right place.  If it weren't,
+  it might make sense to optimize this section by using memcpy or bcopy
+  (neither of which are portable), but only if our packets were rather long.
+  When receiving, we're only sending ACKs so it doesn't matter.  So count the
+  following loop as a sleeping dog.
+*/
     if (copy)				/* Data field built in place? */
       for ( ; len--; i++) mydata[i] = *d++; /* No, must copy. */
     else				/* Otherwise, */
@@ -1146,178 +1304,290 @@ spack(pkttyp,n,len,d) char pkttyp; int n, len; CHAR *d;
 
     switch (bctu) {			/* Block check */
 	case 1:				/* 1 = 6-bit chksum */
-	    mydata[i++] = tochar(chk1(mydata+lp));
+	    mydata[i++] = tochar(chk1(mydata+lp,i-lp));
 	    break;
 	case 2:				/* 2 = 12-bit chksum */
-	    j = chk2(mydata+lp);
+	    j = chk2(mydata+lp,i-lp);
 	    mydata[i++] = (unsigned)tochar((j >> 6) & 077);
    	    mydata[i++] = (unsigned)tochar(j & 077);
 	    break;
         case 3:				/* 3 = 16-bit CRC */
-	    crc = chk3(mydata+lp,parity);
+	    crc = chk3(mydata+lp,i-lp);
 	    mydata[i++] = (unsigned)tochar(((crc & 0170000)) >> 12);
 	    mydata[i++] = (unsigned)tochar((crc >> 6) & 077);
 	    mydata[i++] = (unsigned)tochar(crc & 077);
 	    break;
 	case 4:				/* 2 = 12-bit chksum, blank-free */
-	    j = chk2(mydata+lp);	
+	    j = chk2(mydata+lp,i-lp);
 	    mydata[i++] =
 	      (unsigned)(tochar((unsigned)(((j >> 6) & 077) + 1)));
    	    mydata[i++] = (unsigned)(tochar((unsigned)((j & 077) + 1)));
 	    break;
     }
+    loglen = i;
     mydata[i++] = seol;			/* End of line (packet terminator) */
 #ifdef TCPSOCKET
 /*
   If TELNET connection and packet terminator is carriage return,
   we must stuff either LF or NUL, according to SET TELNET NEWLINE-MODE
-  (tn_nlm), to meet the TELNET specification, unless user said RAW.
+  (tn_nlm), to meet the TELNET NVT specification, unless user said RAW.
 
   If NEWLINE-MODE is set to LF instead of CR, we still send CR-NUL
   on a NVT connection and CR on a binary connection.
 */
-    if (seol == CR && network && ttnproto == NP_TELNET) {
-        switch (me_binary ? tn_b_nlm : tn_nlm) { /* NVT or BINARY */
-            case TNL_CR:
-                break;
-            case TNL_CRNUL:
-                mydata[i++] = NUL ;
-                break;
-            case TNL_CRLF:
-                mydata[i++] = LF ;
-                break;
-            }
-      }
+    if (
+#ifdef STREAMING
+	!dontsend &&
+#endif /* STREAMING */
+	((network && ttnproto == NP_TELNET) || (!local && sstelnet))
+	&& seol == CR) {
+        switch (TELOPT_ME(TELOPT_BINARY) ? tn_b_nlm : tn_nlm) {
+	  case TNL_CR:			/* NVT or BINARY */
+	    break;
+	  case TNL_CRNUL:
+	    mydata[i++] = NUL;
+	    break;
+	  case TNL_CRLF:
+	    mydata[i++] = LF;
+	    break;
+	}
+    }
 #endif /* TCPSOCKET */
     mydata[i] = '\0';			/* Terminate string */
-    logpkt('s',n,mydata);		/* Log packet */
+    if (
+#ifdef STREAMING
+	!dontsend &&
+#endif /* STREAMING */
+	pktlog
+	)				/* Save a function call! */
+      logpkt('s',n,mydata,loglen);	/* Log the packet */
 
     /* (PWP) add the parity quickly at the end */
-    switch (parity) {
-      case 'e':				/* Even */
-	for (cp = &mydata[i-1]; cp >= mydata; cp--)
-	  *cp = p_tbl[*cp];
-	break;
-      case 'm':				/* Mark */
-	for (cp = &mydata[i-1]; cp >= mydata; cp--)
-	  *cp |= 128;
-	break;
-      case 'o':				/* Odd */
-	for (cp = &mydata[i-1]; cp >= mydata; cp--)
-	  *cp = p_tbl[*cp] ^ 128;
-	break;
-      case 's':				/* Space */
-	for (cp = &mydata[i-1]; cp >= mydata; cp--)
-	  *cp &= 127;
-	break;
+    if (parity) {
+	switch (parity) {
+	  case 'e':			/* Even */
+	    for (cp = &mydata[i-1]; cp >= mydata; cp--)
+	      *cp = p_tbl[*cp];
+	    break;
+	  case 'm':			/* Mark */
+	    for (cp = &mydata[i-1]; cp >= mydata; cp--)
+	      *cp |= 128;
+	    break;
+	  case 'o':			/* Odd */
+	    for (cp = &mydata[i-1]; cp >= mydata; cp--)
+	      *cp = p_tbl[*cp] ^ 128;
+	    break;
+	  case 's':			/* Space */
+	    for (cp = &mydata[i-1]; cp >= mydata; cp--)
+	      *cp &= 127;
+	    break;
+	}
     }
     if (pktpaus) msleep(pktpaus);	/* Pause if requested */
-    if (npad) ttol(padbuf,npad);	/* Send any padding */
-#ifdef CK_TIMERS
-    if (pkttyp == 'N')
-      srttbl[n > 0 ? n-1 : 63] = gtimer();
-    else
-      srttbl[n] = gtimer();
-#endif /* CK_TIMERS */
-    spktl = i;				/* Remember packet length */
-    if (k > -1)
-      s_pkt[k].pk_len = spktl;		/* also in packet info structure */
+    x = 0;
 
-#ifdef GETMSEC
-    if (deblog) t1 = getmsec();
-#endif /* GETMSEC */
-
-    x = ttol(mydata,spktl);
-    if (spktl > maxsend) maxsend = spktl;
-
-#ifdef GETMSEC
-    if (deblog)  {
-	t2 = getmsec();
-	if (t2 > -1L && t1 > -1L)
-	  debug(F101,"spack ttol time","",t2-t1);
+    if (npad) {
+#ifdef STREAMING
+	if (dontsend)
+	  x = 0;
 	else
-	  debug(F100,"spack ttol time error","",0);
+#endif /* STREAMING */
+	  x = ttol(padbuf,npad);	/* Send any padding */
     }
-#endif /* GETMSEC */
+    if (x > -1) {
+#ifdef CK_TIMERS
+	if (timint > 0) {
+	    if (pkttyp == 'N')
+	      srttbl[n > 0 ? n-1 : 63] = gtimer();
+	    else
+	      srttbl[n] = gtimer();
+	}
+#endif /* CK_TIMERS */
+	spktl = i;			/* Remember packet length */
+	if (k > -1)
+	  s_pkt[k].pk_len = spktl;	/* also in packet info structure */
 
-    debug(F101,"spack ttol returns","",x);
-    if (x < 0)
-      return(x);
+#ifdef DEBUG
+#ifdef GFTIMER
+/*
+  This code shows (in the debug log) how long it takes write() to execute.
+  Sometimes on a congested TCP connection, it can surprise you -- 90 seconds
+  or more...
+*/
+	if (
+#ifdef STREAMING
+	    !dontsend &&
+#endif /* STREAMING */
+	    deblog
+	    )
+	  t1 = gftimer();
+#endif /* GFTIMER */
+#endif /* DEBUG */
+
+#ifdef STREAMING
+	if (dontsend) {
+	    debug(F000,"STREAMING spack skipping","",pkttyp);
+	    x = 0;
+	} else
+#endif /* STREAMING */
+	x = ttol(mydata,spktl);		/* Send the packet */
+    }
+#ifdef STREAMING
+    if (!dontsend) {
+#endif /* STREAMING */
+	debug(F101,"spack spktl","",spktl);
+	debug(F101,"spack ttol returns","",x);
+	if (x < 0) {			/* Failed. */
+	    if (local && x < -1) {
+		xxscreen(SCR_ST,ST_ERR,0L,"FAILED: Connection lost");
+		/* We can't send an E packet because the connection is lost. */
+		epktsent = 1;		/* So pretend we sent one. */
+		fatalio = 1;		/* Remember we got a fatal i/o error */
+#ifdef CKLOGDIAL
+		dologend();
+#endif /* CKLOGDIAL */
+		ckstrncpy((char *)epktmsg,"Connection lost",PKTMSGLEN);
+	    }
+	    return(x);
+	}
+	if (spktl > maxsend)		/* Keep track of longest packet sent */
+	  maxsend = spktl;
+#ifdef DEBUG
+#ifdef GFTIMER
+	if (deblog)  {			/* Log elapsed time for write() */
+	    t2 = gftimer();
+	    debug(F101,"spack ttol msec","",(long)((t2-t1)*1000.0));
+	}
+#endif /* GFTIMER */
+#endif /* DEBUG */
+#ifdef STREAMING
+    }
+#endif /* STREAMING */
+
     sndtyp = pkttyp;			/* Remember packet type for echos */
-    spackets++;				/* Count it. */
-    flco += spktl;			/* Count the characters */
-    tlco += spktl;			/* for statistics... */
-    dumpsbuf();				/* Dump send buffers to debug log */
-    debug(F100,"spack about to call screen","",0);
-    debug(F111," with mydata=",mydata,n);
-    screen(SCR_PT,pkttyp,(long)n,(char *)mydata); /* Update screen */
+    if (!dontsend) {			/* If really sent, */
+	spackets++;			/* count it. */
+	flco += spktl;			/* Count the characters */
+	tlco += spktl;			/* for statistics... */
+#ifdef DEBUG
+	if (deblog) {			/* Save two function calls! */
+	    dumpsbuf();			/* Dump send buffers to debug log */
+	    debug(F111,"spack calling screen, mydata=",mydata,n);
+	}
+#endif /* DEBUG */
+    }
+    if (local) {
+	int x = 0;
+	if (fdispla != XYFD_N) x = 1;
+	if ((fdispla == XYFD_B) && (pkttyp == 'D' || pkttyp == 'Y')) x = 0;
+	if (x)
+	  xxscreen(SCR_PT,pkttyp,(long)n,(char *)mydata); /* Update screen */
+    }
     return(spktl);			/* Return length */
 }
-
+
 /*  C H K 1  --  Compute a type-1 Kermit 6-bit checksum.  */
 
 int
-chk1(pkt) register CHAR *pkt; {
+chk1(pkt,len) register CHAR *pkt; register int len; {
     register unsigned int chk;
-    chk = chk2(pkt);
+#ifdef CKTUNING
+#ifdef COMMENT
+    register unsigned int m;		/* Avoid function call */
+    m = (parity) ? 0177 : 0377;
+    for (chk = 0; len-- > 0; pkt++)
+      chk += *pkt & m;
+#else
+    chk = 0;
+    while (len-- > 0) chk += (unsigned) *pkt++;
+#endif /* COMMENT */
+#else
+    chk = chk2(pkt,len);
+#endif /* CKTUNING */
     chk = (((chk & 0300) >> 6) + chk) & 077;
+    debug(F101,"chk1","",chk);
     return((int) chk);
 }
 
 /*  C H K 2  --  Compute the numeric sum of all the bytes in the packet.  */
 
 unsigned int
-chk2(pkt) register CHAR *pkt; {
-    register long chk; register unsigned int m;
+chk2(pkt,len) register CHAR *pkt; register int len; {
+    register long chk;
+#ifdef COMMENT
+    register unsigned int m;
     m = (parity) ? 0177 : 0377;
-    for (chk = 0; *pkt != '\0'; pkt++)
+    for (chk = 0; len-- > 0; pkt++)
       chk += *pkt & m;
+#else
+    /* Parity has already been stripped */
+    chk = 0L;
+    while (len-- > 0) chk += (unsigned) *pkt++;
+#endif /* COMMENT */
+    debug(F101,"chk2","",(unsigned int) (chk & 07777));
     return((unsigned int) (chk & 07777));
 }
 
-
 /*  C H K 3  --  Compute a type-3 Kermit block check.  */
 /*
- Calculate the 16-bit CRC-CCITT of a null-terminated string using a lookup 
+ Calculate the 16-bit CRC-CCITT of a null-terminated string using a lookup
  table.  Assumes the argument string contains no embedded nulls.
 */
+#ifdef COMMENT
 unsigned int
-chk3(pkt,parity) register CHAR *pkt; int parity; {
+chk3(pkt,parity,len) register CHAR *pkt; int parity; register int len; {
     register long c, crc;
     register unsigned int m;
     m = (parity) ? 0177 : 0377;
-    for (crc = 0; *pkt != '\0'; pkt++) {
+    for (crc = 0; len-- > 0; pkt++) {
 	c = crc ^ (long)(*pkt & m);
 	crc = (crc >> 8) ^ (crcta[(c & 0xF0) >> 4] ^ crctb[c & 0x0F]);
     }
     return((unsigned int) (crc & 0xFFFF));
 }
+#else
+unsigned int
+chk3(pkt,len) register CHAR *pkt; register int len; {
+    register long c, crc;
+    for (crc = 0; len-- > 0; pkt++) {
+	c = crc ^ (long)(*pkt);
+	crc = (crc >> 8) ^ (crcta[(c & 0xF0) >> 4] ^ crctb[c & 0x0F]);
+    }
+    debug(F101,"chk3","",(unsigned int) (crc & 0xFFFF));
+    return((unsigned int) (crc & 0xFFFF));
+}
+#endif /* COMMENT */
 
+/*  N X T P K T  --  Next Packet  */
+/*
+  Get packet number of next packet to send and allocate a buffer for it.
+  Returns:
+    0 on success, with global pktnum set to the packet number;
+   -1 on failure to allocate buffer (fatal);
+   -2 if resulting packet number is outside the current window.
+*/
 int
 nxtpkt() {				/* Called by file sender */
-    int j, n;
+    int j, n, x;
 
     debug(F101,"nxtpkt pktnum","",pktnum);
     debug(F101,"nxtpkt winlo ","",winlo);
     n = (pktnum + 1) % 64;		/* Increment packet number mod 64 */
-#ifdef COMMENT 
-/*
-  Suggested by Alan Grieg.  A packet can be sent out of window in 
-  circumstances involving acks received out of order, ...  Have to think
-  about this...
-*/
-    if (chkwin(n,winlo,wslots)) {
-	debug(F101,"nxtpkt n not in window","",n);
-	return(-1);
+    debug(F101,"nxtpkt n","",n);
+#ifdef STREAMING
+    if (!streaming) {
+	x = chkwin(n,winlo,wslots);	/* Don't exceed window boundary */
+	debug(F101,"nxtpkt chkwin","",x);
+	if (x)
+	  return(-2);
+	j = getsbuf(n);			/* Get a buffer for packet n */
+	if (j < 0) {
+	    debug(F101,"nxtpkt getsbuf failure","",j);
+	    return(-1);
+	}
     }
-#endif
-    j = getsbuf(n);			/* Get a buffer for packet n */
-    if (j < 0) {
-	debug(F101,"nxtpkt can't getsbuf","",j);
-	return(-1);
-    }
-    pktnum = n;	      
-    debug(F101,"nxtpkt bumped pktnum to","",pktnum);
+#endif /* STREAMING */
+    pktnum = n;
     return(0);
 }
 
@@ -1332,9 +1602,37 @@ ack() {					/* Acknowledge the current packet. */
     return(ackns(winlo,(CHAR *)""));
 }
 
+#ifdef STREAMING
+int
+fastack() {				/* Acknowledge packet n */
+    int j, k, n, x;
+    n = winlo;
+
+    k = rseqtbl[n];			/* First find received packet n. */
+    debug(F101,"STREAMING fastack k","",k);
+    freesbuf(n);			/* Free current send-buffer, if any */
+    if ((j = getsbuf(n)) < 0) {
+	/* This can happen if we have to re-ACK an old packet that has */
+        /* already left the window.  It does no harm. */
+	debug(F101,"STREAMING fastack can't getsbuf","",n);
+    }
+    dontsend = 1;
+    x = spack('Y',n,0,(CHAR *)"");	/* Now send it (but not really) */
+    dontsend = 0;
+    if (x < 0) return(x);
+    debug(F101,"STREAMING fastack x","",x);
+    if (k > -1)
+      freerbuf(k);			/* don't need it any more */
+    if (j > -1)
+      freesbuf(j);			/* and don't need to keep ACK either */
+    winlo = (winlo + 1) % 64;
+    return(0);
+}
+#endif /* STREAMING */
+
 int
 ackns(n,s) int n; CHAR *s; {		/* Acknowledge packet n */
-    int j, k;
+    int j, k, x;
     debug(F111,"ackns",s,n);
 
     k = rseqtbl[n];			/* First find received packet n. */
@@ -1345,7 +1643,8 @@ ackns(n,s) int n; CHAR *s; {		/* Acknowledge packet n */
         /* already left the window.  It does no harm. */
 	debug(F101,"ackns can't getsbuf","",n);
     }
-    spack('Y',n,(int)strlen((char *)s),s); /* Now send it. */
+    x = spack('Y',n,(int)strlen((char *)s),s); /* Now send it. */
+    if (x < 0) return(x);
     debug(F101,"ackns winlo","",winlo);
     debug(F101,"ackns n","",n);
     if (n == winlo) {			/* If we're acking winlo */
@@ -1365,8 +1664,9 @@ ackn(n) int n; {			/* Send ACK for packet number n */
 
 int
 ack1(s) CHAR *s; {			/* Send an ACK with data. */
-    debug(F110,"ack1",(char *) s,0);
-    return(ackns(winlo, s));
+    if (!s) s = (CHAR *)"";
+    debug(F110,"ack1",(char *)s,0);
+    return(ackns(winlo,s));
 }
 
 /* N A C K  --   Send a Negative ACKnowledgment. */
@@ -1379,7 +1679,7 @@ ack1(s) CHAR *s; {			/* Send an ACK with data. */
 */
 int
 nack(n) int n; {
-    int i;
+    int i, x;
 
     if (n < 0 || n > 63) {
 	debug(F101,"nack bad pkt num","",n);
@@ -1397,14 +1697,14 @@ nack(n) int n; {
 /* Note, don't free this buffer.  Eventually an ACK will come, and that */
 /* will set it free.  If not, well, it's back to ground zero anyway...  */
 
-    spack('N',n,0,(CHAR *) "");		/* NAKs never have data. */
-    return(0);
+    x = spack('N',n,0,(CHAR *) "");	/* NAKs never have data. */
+    return(x);
 }
 
 #ifndef NEWDPL				/* This routine no longer used */
 /*
  * (PWP) recalculate the optimal packet length in the face of errors.
- * This is a modified version of the algorithm by John Chandler in Kermit/370, 
+ * This is a modified version of the algorithm by John Chandler in Kermit/370,
  * see "Dynamic Packet Size Control", Kermit News, V2 #1, June 1988.
  *
  * This implementation minimizes the total overhead equation, which is
@@ -1456,7 +1756,7 @@ rcalcpsz() {
 
     /* then set x = packet length ** 2 */
     x = x * ( ffc / (long) numerrs);	/* careful of overflow */
-    
+
     /* calculate the long integer sqrt(x) quickly */
     q = 500;
     q = (q + x/q) >> 1;
@@ -1499,9 +1799,9 @@ rcalcpsz() {
 int
 resend(n) int n; {			/* Send packet n again. */
     int j, k, x;
-#ifdef GETMSEC
-    long t1, t2;
-#endif /* GETMSEC */
+#ifdef GFTIMER
+    CKFLOAT t1 = 0.0, t2 = 0.0;
+#endif /* GFTIMER */
 
     debug(F101,"resend seq","",n);
 
@@ -1512,7 +1812,7 @@ resend(n) int n; {			/* Send packet n again. */
 	if (nakstate && k == 1) {
 /*
   Packet n is in the previous window and we are the file receiver.
-  We already sent the ACK and deallocated its buffer so we can't just 
+  We already sent the ACK and deallocated its buffer so we can't just
   retransmit the ACK.  Rather than give up, we try some tricks...
 */
 	    if (n == 0 && spackets < 63 && myinit[0]) { /* ACK to Send-Init */
@@ -1527,8 +1827,9 @@ resend(n) int n; {			/* Send packet n again. */
 		bctlsav = bctl;		/* Save current block check length */
 		bctusav = bctu;		/* and type */
 		bctu = bctl = 1;	/* Set block check to 1 */
-		spack('Y',0,(int)strlen((char *)myinit),(CHAR *)myinit);
-		logpkt('#',n,(CHAR *)"<reconstructed>"); /* Log it */
+		x = spack('Y',0,(int)strlen((char *)myinit),(CHAR *)myinit);
+		if (x < 0) return(x);
+		logpkt('#',n,(CHAR *)"<reconstructed>",0); /* Log it */
 		bctu = bctusav;		/* Restore block check type */
 		bctl = bctlsav;		/* and length */
 
@@ -1542,10 +1843,11 @@ resend(n) int n; {			/* Send packet n again. */
   interruption of the file transfer, the flags are still set, so we'll catch
   up on the next packet.
 */
-		spack('Y',n,0,(CHAR *) "");
+		x = spack('Y',n,0,(CHAR *) "");
+		if (x < 0) return(x);
 	    }
 	    retrans++;
-	    screen(SCR_PT,'%',(long)pktnum,"Retransmission");
+	    xxscreen(SCR_PT,'%',(long)pktnum,"Retransmission");
 	    return(0);
 	} else {
 /*
@@ -1556,13 +1858,7 @@ resend(n) int n; {			/* Send packet n again. */
 */
 	    debug(F101,"RESEND PKT NOT IN WINDOW","",n);
 	    debug(F101,"RESEND k","",k);
-#ifdef COMMENT
-	    sprintf((char *)pktmsg,
-		    "   resend error: NIW, n=%d, k=%d.",n,k);
-	    return(-2);
-#else
 	    return(0);
-#endif /* COMMENT */
 	}
     }
 
@@ -1571,7 +1867,7 @@ resend(n) int n; {			/* Send packet n again. */
     debug(F101,"resend pktinfo index","",k);
 
     if (s_pkt[j].pk_rtr++ > maxtry) {	/* Found it but over retry limit */
-	strcpy((char *)pktmsg,"Too many retries.");
+	xitsta |= what;
 	return(-1);
     }
     debug(F101," retry","",s_pkt[j].pk_rtr); /* OK so far */
@@ -1580,7 +1876,7 @@ resend(n) int n; {			/* Send packet n again. */
 	if (nakstate) {			/* (This shouldn't happen any more) */
 	    nack(n);
 	    retrans++;
-	    screen(SCR_PT,'%',(long)pktnum,"(resend)");
+	    xxscreen(SCR_PT,'%',(long)pktnum,"(resend)");
 	    return(s_pkt[j].pk_rtr);
 	} else {			/* No packet to resend! */
 #ifdef COMMENT
@@ -1589,8 +1885,8 @@ resend(n) int n; {			/* Send packet n again. */
   X to the sender to cancel the file.  But since we're cancelling anyway,
   there's no need to give a scary message.
 */
-	    sprintf((char *)pktmsg,
-		    "resend logic error: NPS, n=%d, j=%d.",n,j); 
+	    sprintf((char *)epktmsg,
+		    "resend logic error: NPS, n=%d, j=%d.",n,j);
 	    return(-2);
 #else
 /* Just ignore it. */
@@ -1598,44 +1894,111 @@ resend(n) int n; {			/* Send packet n again. */
 #endif /* COMMENT */
 	}
     }
-#ifdef GETMSEC
-    if (deblog) t1 = getmsec();
-#endif /* GETMSEC */
+#ifdef DEBUG
+#ifdef GFTIMER
+    if (deblog) t1 = gftimer();
+#endif /* GFTIMER */
+#endif /* DEBUG */
 
     /* Everything ok, send the packet */
 #ifdef CK_TIMERS
-    srttbl[n] = gtimer();		/* Update the timer */
+    if (timint > 0)
+      srttbl[n] = gtimer();		/* Update the timer */
 #endif /* CK_TIMERS */
     x = ttol(s_pkt[j].pk_adr,s_pkt[j].pk_len);
 
-#ifdef GETMSEC
+#ifdef DEBUG
+#ifdef GFTIMER
     if (deblog)  {
-	t2 = getmsec();
-	if (t2 > -1L && t1 > -1L)
-	  debug(F101,"resend ttol time","",t2-t1);
-	else
-	  debug(F100,"resend ttol time error","",0);
+	t2 = gftimer();
+	debug(F101,"resend ttol msec","",(long)((t2-t1)*1000.0));
     }
-#endif /* GETMSEC */
+#endif /* GFTIMER */
+#endif /* DEBUG */
     debug(F101,"resend ttol returns","",x);
 
     retrans++;				/* Count a retransmission */
-    screen(SCR_PT,'%',(long)pktnum,"(resend)");	/* Tell user about resend */
-    logpkt('S',n,s_pkt[j].pk_adr);	/* Log the resent packet */
+    xxscreen(SCR_PT,'%',(long)pktnum,"(resend)"); /* Tell user about resend */
+    logpkt('S',n,s_pkt[j].pk_adr, s_pkt[j].pk_len); /* Log the resent packet */
     return(s_pkt[j].pk_rtr);		/* Return the number of retries. */
 }
 
+/*  E R R P K T  --  Send an Error Packet  */
+
 int
-errpkt(reason) CHAR *reason; {		/* Send an error packet. */
+errpkt(reason) CHAR *reason; {		/* ...containing the reason given */
+    extern int rtimo, state, justone;
     int x, y;
+    czseen = 1;				/* Also cancels batch */
+    state = 0;				/* Reset protocol state */
+    debug(F110,"errpkt",reason,0);
+    tlog(F110,"Protocol Error:",(char *)reason,0L);
+    xxscreen(SCR_EM,0,0L,reason);
     encstr(reason);
-    y = spack('E',pktnum,size,data);
-    x = quiet; quiet = 1; 		/* Close files silently. */
-    clsif(); clsof(1);
-    quiet = x;
-#ifdef COMMENT
-    screen(SCR_TC,0,0l,"");
-#endif /* COMMENT */
+    x = spack('E',pktnum,size,data);
+    ckstrncpy((char *)epktmsg,(char *)reason,PKTMSGLEN);
+    y = quiet; quiet = 1; epktsent = 1;	/* Close files silently. */
+    clsif(); clsof(discard);
+    quiet = y;
+/*
+  I just sent an E-packet.  I'm in local mode, I was receiving a file,
+  I'm not a server, and sliding windows are in use.  Therefore, there are
+  likely to be a bunch of packets already "in the pipe" on their way to me
+  by the time the remote sender gets the E-packet.  So the next time I
+  CONNECT or try to start another protocol operation, I am likely to become
+  terribly confused by torrents of incoming material.  To prevent this,
+  the following code soaks up packets from the connection until there is an
+  error or timeout, without wasting too much time waiting.
+
+  Exactly the same problem occurs when I am in remote mode or if I am
+  in server mode with the justone flag set.  In remote mode not only
+  does the packet data potentially get echo'd back to the sender which
+  is confusing to the user in CONNECT mode, but it also may result in the
+  host performing bizarre actions such as suspending the process if ^Z is
+  unprefixed, etc.
+
+  Furthermore, thousands of packets bytes in the data stream prevent the
+  client from being able to process Telnet Kermit Option negotiations
+  properly.
+*/
+#ifdef STREAMING
+    /* Because streaming sets the timeout to 0... */
+    if (streaming) {
+	timint = rcvtimo = rtimo;
+	streaming = 0;
+    }
+#endif /* STREAMING */
+    if (what == W_RECV &&
+        (!server || server && justone) &&
+        (wslots > 1 || streaming)) {
+#ifdef GFTIMER
+	CKFLOAT oldsec, sec = (CKFLOAT) 0.0;
+#else
+	int oldsec, sec = 0;
+#endif /* GFTIMER */
+	debug(F101,"errpkt draining","",wslots);
+	xxscreen(SCR_ST,ST_MSG,0l,"Draining incoming packets, wait...");
+	while (x > -1) {		/* Don't bother if no connection */
+	    oldsec = sec;
+#ifdef GFTIMER
+	    sec = gftimer();
+	    if (oldsec != (CKFLOAT) 0.0)
+	      timint = rcvtimo = (int) (sec - oldsec + 0.5);
+#else
+	    sec = gtimer();
+	    if (oldsec != 0)
+	      timint = rcvtimo = sec - oldsec + 1;
+#endif /* GFTIMER */
+	    if (timint < 1)
+	      timint = rcvtimo = 1;
+	    msleep(50);			/* Allow a bit of slop */
+	    x = rpack();		/* Read a packet */
+	    if (x == 'T' || x == 'z')	/* Timed out means we're done */
+	      break;
+	    xxscreen(SCR_PT,x,rsn,"");	/* Let user know */
+	}
+	xxscreen(SCR_ST,ST_MSG,0l,"Drain complete.");
+    }
     if (what < W_CONNECT)
       xitsta |= what;			/* Remember what failed. */
     success = 0;
@@ -1651,65 +2014,384 @@ scmd(char t, CHAR *dat)
 scmd(t,dat) char t; CHAR *dat;
 #endif /* CK_ANSIC */
 /* scmd */ {
-    if (encstr(dat) < 0)		/* Encode the command string */
-      return(-1);
-    spack(t,pktnum,size,data);
-    return(0);
+    int x;
+    extern char * srimsg;
+    debug(F000,"scmd",dat,t);
+    if (encstr(dat) < 0) {		/* Encode the command string */
+	srimsg = "String too long";
+	return(-1);
+    }
+    x = spack(t,pktnum,size,data);
+    debug(F101,"scmd spack","",x);
+    return(x);
 }
 
+/* Compose and Send GET packet */
+
+struct opktparm {			/* O-Packet item list */
+    CHAR * opktitem;
+    struct opktparm * opktnext;
+};
+
+struct opktparm * opkthead = NULL;	/* Linked list of O-packet fields */
+int opktcnt = 0;			/* O-Packet counter */
+char * srimsg = NULL;			/* GET-Packet error message */
+
+/* S O P K T  --  Send O-Packet */
+/*
+  Sends one O-Packet each time called, using first-fit method of filling
+  the packet from linked list of parameters pointed to by opkthead.
+  To be called repeatedly until list is empty or there is an error.
+  Returns:
+   -1 on failure.
+    0 on success and no more fields left to send.
+    1 on success but with more fields left to be sent.
+*/
+
 int
-srinit(reget, retrieve) int reget, retrieve; { /* Send R, H, or J packet */
-    if (encstr((CHAR *)cmarg) < 0)	/* Encode the filename. */
-      return(-1);
-    if (retrieve)
-      spack((char)'H',pktnum,size,data); /* Send the packet. */
-    else
-      spack((char)(reget ? 'J' : 'R'),pktnum,size,data); /* Send the packet. */
-    return(0);
+sopkt() {
+    int n = 0;				/* Field number in this packet */
+    int rc = 0;				/* Return code */
+    int len = 0;			/* Data field length */
+    char c = NUL;
+    struct opktparm * o = NULL;
+    struct opktparm * t = NULL;
+    struct opktparm * prev = NULL;
+    CHAR * dsave = data;
+    int x, ssave = spsiz;
+
+    srimsg = NULL;			/* Error message */
+    o = opkthead;			/* Point to head of list */
+    if (!o) {				/* Oops, no list... */
+	srimsg = "GET Packet Internal Error 1";
+	debug(F100,"sopkt NULL list","",0);
+	return(-1);
+    }
+    while (o) {				/* Go thru linked list... */
+	c = *(o->opktitem);		/* Parameter code */
+	debug(F000,"sopkt",o->opktitem,c);
+	x = encstr((CHAR *)o->opktitem);
+	debug(F111,"sopkt encstr",dsave,x);
+	if (x < 0) {			/* Encode this item */
+	    if (n == 0) {		/* Failure, first field in packet */
+		debug(F100,"sopkt overflow","",0);
+		spsiz = ssave;		/* Restore these */
+		data = dsave;
+		o = opkthead;		/* Free linked list */
+		while (o) {
+		    if (o->opktitem) free(o->opktitem);
+		    t = o->opktnext;
+		    free(o);
+		    o = t;
+		}
+		opkthead = NULL;
+		srimsg = "GET Packet Too Long for Server";
+		return(-1);		/* Fail */
+	    } else {			/* Not first field in packet */
+		debug(F110,"sopkt leftover",o->opktitem,0);
+		prev = o;		/* Make this one the new previous */
+		o = o->opktnext;	/* Get next */
+		c = NUL;		/* So we know we're not done */
+		*data = NUL;		/* Erase any partial encoding */
+		continue;		/* We can try this one again later */
+	    }
+	}
+	n++;				/* Encoding was successful */
+	debug(F111,"sopkt field",data,x);
+	len += x;			/* Total data field length */
+	data += x;			/* Set up for next field... */
+	spsiz -= x;
+	free(o->opktitem);		/* Free item just encoded */
+	if (o == opkthead) {		/* If head */
+	    opkthead = o->opktnext;	/* Move head to next */
+	    free(o);			/* Free this list node */
+	    o = opkthead;
+	} else {			/* If not head */
+	    o = o->opktnext;		/* Get next */
+	    prev->opktnext = o;		/* Link previous to next */
+	}
+	if (c == '@')			/* Loop exit */
+	  break;
+	if (!o && !opkthead) {		/* Set up End Of Parameters Field */
+	    o = (struct opktparm *)malloc(sizeof(struct opktparm));
+	    if (o) {
+		opkthead = o;
+		if (!(o->opktitem = (CHAR *)malloc(3))) {
+		    free(o);
+		    srimsg = "GET Packet Internal Error 8";
+		    return(-1);
+		}
+		strcpy((char *)(o->opktitem), "@ ");
+		debug(F111,"sopkt o->opktitem",o->opktitem,
+		      strlen((char *)(o->opktitem)));
+		o->opktnext = NULL;
+	    }
+	}
+    }
+    data = dsave;			/* Restore globals */
+    spsiz = ssave;
+    debug(F110,"sopkt data",data,0);
+    debug(F101,"sopkt opktcnt","",opktcnt);
+    if (opktcnt++ > 0) {
+	if (nxtpkt() < 0) {		/* Get next packet number and buffer */
+	    srimsg = "GET Packet Internal Error 9";
+	    return(-1);
+	}
+    }
+    debug(F101,"sopkt pktnum","",pktnum);
+    rc = spack((char)'O',pktnum,len,data); /* Send O-Packet */
+    debug(F101,"sopkt spack","",rc);
+    if (rc < 0)				/* Failed */
+      srimsg = "Send Packet Failure";	/* Set message */
+    else				/* Succeeded */
+      rc = (c == '@') ? 0 : 1;		/* 1 = come back for more, 0 = done */
+    debug(F101,"sopkt rc","",rc);
+    return(rc);
 }
+
+/* S R I N I T  --  Send GET packet  */
+/*
+  Sends the appropriate GET-Class packet.
+  Returns:
+  -1 on error
+   0 if packet sent successfully and we can move on to the next state
+   1 if an O-packet was sent OK but more O packets still need to be sent.
+*/
+int
+srinit(reget, retrieve, opkt) int reget, retrieve, opkt; {
+    int x = 0;
+    extern int oopts, omode;
+    CHAR * p = NULL;
+#ifdef RECURSIVE
+    extern int recursive;
+    debug(F101,"srinit recursive","",recursive);
+#endif /* RECURSIVE */
+    debug(F101,"srinit reget","",reget);
+    debug(F101,"srinit retrieve","",retrieve);
+    debug(F101,"srinit opkt","",opkt);
+    debug(F101,"srinit oopts","",oopts);
+    debug(F101,"srinit omode","",omode);
+    debug(F110,"srinit cmarg",cmarg,0);
+    srimsg = NULL;
+
+    opktcnt = 0;
+    if (!cmarg) cmarg = "";
+    if (!*cmarg) {
+	srimsg = "GET with no filename";
+	debug(F100,"srinit null cmarg","",0);
+	return(-1);
+    }
+    if (opkt) {				/* Extended GET is totally different */
+	char buf[8];
+	struct opktparm * o = NULL;
+	struct opktparm * prev = NULL;
+
+        buf[0] = NUL;
+
+	/* Build O-Packet fields and send (perhaps first) O-Packet */
+
+	if (oopts > -1) {		/* Write Option flags */
+	    o = (struct opktparm *)malloc(sizeof(struct opktparm));
+	    if (!o) {
+		srimsg = "GET Packet Internal Error 2";
+		debug(F100,"srinit malloc fail O1","",0);
+		return(-1);
+	    }
+	    sprintf(buf,"Ox%d",oopts);
+	    x = (int) strlen(buf+2);
+	    buf[1] = tochar(x);
+	    o->opktitem = (CHAR *)malloc(x + 3);
+	    if (!o->opktitem) {
+		srimsg = "GET Packet Internal Error 3";
+		debug(F100,"srinit malloc fail O2","",0);
+		return(-1);
+	    }
+	    strcpy((char *)(o->opktitem),buf);
+	    o->opktnext = NULL;
+	    if (!opkthead)
+	      opkthead = o;
+	    prev = o;
+	}
+	if (omode > -1) {		/* If Xfer Mode specified, write it */
+	    o = (struct opktparm *)malloc(sizeof(struct opktparm));
+	    if (!o) {
+		srimsg = "GET Packet Internal Error 4";
+		debug(F100,"srinit malloc fail M1","",0);
+		return(-1);
+	    }
+	    sprintf(buf,"Mx%d",omode);
+	    x = (int) strlen(buf+2);
+	    buf[1] = tochar(x);
+	    o->opktitem = (CHAR *)malloc(x + 3);
+	    if (!o->opktitem) {
+		srimsg = "GET Packet Internal Error 5";
+		debug(F100,"srinit malloc fail O2","",0);
+		return(-1);
+	    }
+	    strcpy((char *)(o->opktitem),buf);
+	    o->opktnext = NULL;
+	    if (!opkthead)
+	      opkthead = o;
+	    else
+	      prev->opktnext = o;
+	    prev = o;
+	}
+
+	/* Same deal for oname and opath eventually but not needed now... */
+
+	x = strlen(cmarg);		/* Now do filename */
+	if (x > spsiz - 4) {
+	    srimsg = "GET Packet Too Long for Server";
+	    return(-1);
+	}
+	o = (struct opktparm *)malloc(sizeof(struct opktparm));
+	if (!o) {
+	    srimsg = "GET Packet Internal Error 6";
+	    debug(F100,"srinit malloc fail F1","",0);
+	    return(-1);
+	}
+	o->opktitem = (CHAR *)malloc(x + 3);
+	if (!o->opktitem) {
+	    srimsg = "GET Packet Internal Error 7";
+	    debug(F100,"srinit malloc fail F2","",0);
+	    return(-1);
+	}
+	p = o->opktitem;
+	*p++ = 'F';
+	if (x > 94) {			/* Too long for normal length */
+	    *p++ = SYN;			/* Escape length with Ctrl-V */
+	    *p++ = tochar(x / 95);
+	    *p++ = tochar(x % 95);
+	} else {			/* Normal encoding for 94 or less */
+	    *p++ = tochar(x);
+	}
+	strcpy((char *)p,cmarg);	/* Copy the filename */
+	o->opktnext = NULL;
+	if (!opkthead)
+	  opkthead = o;
+	else
+	  prev->opktnext = o;
+	prev = o;
+
+	/* End of Parameters */
+
+	prev->opktnext = NULL;		/* End of list. */
+	return(sopkt());
+    }
+
+    /* Not Extended GET */
+
+    if (encstr((CHAR *)cmarg) < 0) {	/* Encode the filename. */
+	srimsg = "GET Packet Too Long for Server";
+	return(-1);
+    }
+    if (retrieve) {			/* Send the packet. */
+#ifdef RECURSIVE
+	if (recursive)
+	  x = spack((char)'W',pktnum,size,data); /* GET /DELETE /RECURSIVE */
+	else
+#endif /* RECURSIVE */
+	  x = spack((char)'H',pktnum,size,data); /* GET /DELETE */
+    }
+#ifdef RECURSIVE
+    else if (recursive)
+      x = spack((char)'V',pktnum,size,data); /* GET /RECURSIVE */
+#endif /* RECURSIVE */
+    else
+      x = spack((char)(reget ? 'J' : 'R'),pktnum,size,data); /* GET */
+    if (x < 0)
+      srimsg = "Send Packet Failure";
+    return(x < 0 ? x : 0);
+}
+
 
 /*  K S T A R T  --  Checks for a Kermit packet while in terminal mode.  */
 
-#ifdef CK_APC
-int 
+/*  (or command mode...)  */
+
+#ifdef CK_AUTODL
+int
 #ifdef CK_ANSIC
 kstart(CHAR ch)
 #else
 kstart(ch) CHAR ch;
 #endif /* CK_ANSIC */
 /* kstart */ {
-    static int buflen = 94;
-    static CHAR buf[95];
     static CHAR * p = NULL;
-    extern CHAR stchr, eol;
+
+#ifdef OS2
+    static CHAR * pk = NULL;
+#endif /* OS2 */
+    ch &= 0177;				/* Strip 8th bit */
+
+    /* Because we're in cooked mode at the command prompt... */
+
+    if (ch == LF) {
+	debug(F110,"kstart","ch == LF",0);
+	if ((what == W_COMMAND || what == W_INIT || what == W_NOTHING)) {
+	    if (eol == CR) {
+		ch = eol;
+		debug(F110,"kstart","ch = CR",0);
+	    }
+	}
+    }
+
+#ifdef OS2
+    if (adl_kmode == ADL_STR) {
+	if (!ch)
+	  return(0);
+	if (!pk)
+	  pk = adl_kstr;
+
+	if (ch == *pk) {
+	    pk++;
+	    if (*pk == '\0') {
+		pk = adl_kstr;
+		debug(F100, "kstart Kermit Start String","",0);
+		return(PROTO_K + 1);
+	    }
+	} else
+	  pk = adl_kstr;
+    }
+#endif /* OS2 */
 
     if (ch == stchr) {			/* Start of packet */
-	p = buf;
+        if (what == W_COMMAND)
+	  kstartactive = 1;
+	p = ksbuf;
 	*p = ch;
 	debug(F101,"kstart SOP","",ch);
     } else if (ch == eol) {		/* End of packet */
+	kstartactive = 0;
 	if (p) {
+	    debug(F101,"kstart EOL","",ch);
 	    p++;
-	    if (p - buf < 94 ) { 
+	    if (p - ksbuf < 94 ) {
 		int rc = 0;
-		*p = ch;
-		p++;
+		*p++ = ch;
 		*p = NUL;
-		if (rc = chkspkt((char *)buf))
-		  debug(F111,"kstart EOP", buf, ch);
+		rc = chkspkt((char *)ksbuf);
+		debug(F111,"kstart EOP chkspkt", ksbuf, rc);
 		p = NULL;
 		if (!rc) return(0);
-		return(rc == 1 ? PROTO_K + 1 : 0 - (PROTO_K + 1));
+		if (rc == 2) rc = -1;
+		debug(F111,"kstart ksbuf",ksbuf,rc);
+		return(rc);
 	    } else {
+		debug(F110,"kstart","p - ksbuf >= 94",0);
 		p = NULL;
 	    }
-	} 
+	}
     } else if (p) {
+	if (ch < SP)
+	  kstartactive = 0;
 	p++;
-	if (p - buf < 94)
-	  *p = ch;
-	else 
-	  p = NULL;
+	if (p - ksbuf < 94) {
+	    *p = ch;
+	} else {
+	    p = NULL;
+	    debug(F110,"kstart","p - ksbuf >= 94",0);
+	}
     }
     return(0);
 }
@@ -1718,7 +2400,7 @@ kstart(ch) CHAR ch;
 
 /*  Z S T A R T  --  Checks for a ZMODEM packet while in terminal mode.  */
 
-int 
+int
 #ifdef CK_ANSIC
 zstart(CHAR ch)
 #else
@@ -1728,24 +2410,149 @@ zstart(ch) CHAR ch;
     static CHAR * matchstr = (CHAR *) "\030B00";
     /* "rz\r**\030B00000000000000\r\033J\021"; */
     static CHAR * p = NULL;
+    extern int inserver;
+
+    if (inserver)
+      return(0);
 
     if (!ch)
       return(0);
-    if (!p)
-      p = matchstr;
-
+    if (!p) {
+#ifdef OS2
+	p = adl_zmode == ADL_PACK ? matchstr : adl_zstr;
+#else
+	p = matchstr;
+#endif /* OS2 */
+    }
     if (ch == *p) {
 	p++;
 	if (*p == '\0') {
+#ifdef OS2
+	    if (adl_zmode == ADL_PACK) {
+		p = matchstr;
+		debug(F100, "zstart Zmodem SOP","",0);
+	    } else {
+		p = adl_zstr;
+		debug(F100, "zstart Zmodem Start String","",0);
+	    }
+#else
 	    p = matchstr;
 	    debug(F100, "zstart Zmodem SOP","",0);
+#endif /* OS2 */
 	    return(PROTO_Z + 1);
 	}
-    } else 
-      p = matchstr;
+    } else {
+#ifdef OS2
+	p = adl_zmode == ADL_PACK ? matchstr : adl_zstr;
+#else
+	p = matchstr;
+#endif /* OS2 */
+    }
     return(0);
 }
 #endif /* CK_XYZ */
+
+#ifndef NOICP
+#ifdef CK_APC
+/*  A U T O D O W N  */
+
+#ifdef CK_ANSIC
+VOID
+autodown(int ch)
+#else
+VOID
+autodown(ch) int ch;
+#endif /* CK_ANSIC */
+/* autodown */ {
+
+/* The Kermit and Zmodem Auto-download calls go here */
+
+    extern int justone;			/* From protocol module */
+    extern int debses, protocol, apcactive, autodl, inautodl;
+#ifdef DCMDBUF
+    extern char *apcbuf;
+#else
+    extern char apcbuf[];
+#endif /* DCMDBUF */
+#ifdef OS2
+    extern int apclength, term_io;
+#endif /* OS2 */
+    int k = 0;
+
+    if ((autodl || inautodl
+#ifdef IKS_OPTION
+	 || TELOPT_SB(TELOPT_KERMIT).kermit.me_start
+#endif /* IKS_OPTION */
+	 ) && !debses) {
+#ifdef CK_XYZ
+#ifdef XYZ_INTERNAL
+	extern int p_avail;
+#else
+	int p_avail = 1;
+#endif /* XYZ_INTERNAL */
+	if (p_avail && zstart((CHAR) ch)) {
+	    debug(F100, "Zmodem download","",0);
+            strcpy(apcbuf,"receive /protocol:zmodem");
+	    apcactive = APC_LOCAL;
+#ifdef OS2
+	    apclength = strlen(apcbuf) ;
+	    term_io = FALSE;		/* Disable Emulator I/O */
+	    SetConnectMode(FALSE);
+#endif /* OS2 */
+	    return;
+	}
+#endif /* CK_XYZ */
+
+	/* First try... */
+	k = kstart((CHAR) ch);
+	if (
+#ifdef NOSERVER
+	    k > 0
+#else /* NOSERVER */
+	    k
+#endif /* NOSERVER */
+	    ) {				/* We saw a valid S or I packet */
+	    if (k < 0) {		/* Stuff RECEIVE into APC buffer */
+		justone = 1;
+		switch (protocol) {
+#ifdef CK_XYZ
+		  case PROTO_G:
+		    strcpy(apcbuf,"set proto kermit, server, set protocol g");
+		    break;
+		  case PROTO_X:
+		    strcpy(apcbuf,"set proto kermit,server,set proto xmodem");
+		    break;
+                  case PROTO_XC:
+		    strcpy(apcbuf,
+			   "set proto kermit,server,set proto xmodem-crc");
+                      break;
+		  case PROTO_Y:
+		    strcpy(apcbuf,"set proto kermit,server, set protocol y");
+		    break;
+		  case PROTO_Z:
+		    strcpy(apcbuf,"set proto kermit,server,set proto zmodem");
+		    break;
+#endif /* CK_XYZ */
+		  case PROTO_K:
+		    strcpy(apcbuf,"server");
+		    break;
+		}
+	    } else {
+		justone = 0;
+                strcpy(apcbuf,"receive /protocol:kermit");
+	    }
+	    apcactive = APC_LOCAL;
+#ifdef OS2
+	    apclength = strlen(apcbuf);
+	    term_io = FALSE;		/* Stop handling I/O */
+	    SetConnectMode(FALSE);	/* Waiting for a timeout to occur */
+#endif /* OS2 */
+	    return;
+	}
+    }
+}
+#endif /* CK_APC */
+#endif /* NOICP */
 
 /*  C H K S P K T  --  Check if buf contains a valid S or I packet  */
 
@@ -1771,35 +2578,41 @@ chkspkt(buf) char *buf; {
     s += (len - 3);			/* Position of checksum */
     chk = (CHAR) (*s);			/* Checksum */
     *s = NUL;
-    if (xunchar(chk) != chk1((CHAR *) (buf+1))) return(0); /* Check it */
+    if (xunchar(chk) != chk1((CHAR *)(buf+1),buflen-2)) /* Check it */
+      return(0);
     *s = chk;
     return(type == 'S' ? 1 : 2);
 }
-#endif /* CK_APC */
+#endif /* CK_AUTODL */
 
 /* R P A C K  --  Read a Packet */
 
 /*
- rpack reads a packet and returns the packet type, or else Q if the
- packet was invalid, or T if a timeout occurred.  Upon successful return, sets
- the values of global rsn (received sequence number),  rln (received
- data length), and rdatap (pointer to null-terminated data field), and
- returns the packet type.
+  rpack reads a packet and returns the packet type, or else Q if the
+  packet was invalid, or T if a timeout occurred.  Upon successful return,
+  sets the values of global rsn (received sequence number),  rln (received
+  data length), and rdatap (pointer to null-terminated data field), and
+  returns the packet type.  NOTE: This is an inner-loop function so must be
+  efficient.  Protect function calls by if-tests where possible, e.g.
+  "if (pktlog) logpkt(...);".
 */
 int
 rpack() {
     register int i, j, x, lp;		/* Local variables */
+#ifdef CKTUNING
+    unsigned int chk;
+#endif /* CKTUNING */
     int k, type, chklen;
     unsigned crc;
-    CHAR pbc[4];			/* Packet block check */
+    CHAR pbc[5];			/* Packet block check */
     CHAR *sohp;				/* Pointer to SOH */
     CHAR e;				/* Packet end character */
 
-#ifdef GETMSEC
-    long t1, t2;
-#endif /* GETMSEC */
+#ifdef GFTIMER
+    CKFLOAT t1 = 0.0, t2 = 0.0;
+#endif /* GFTIMER */
 
-    debug(F101,"entering rpack, pktnum","",pktnum);
+    debug(F101,"rpack pktnum","",pktnum);
 
 #ifndef OLDCHKINT
     if (chkint() < 0)			/* Check for console interrupts. */
@@ -1807,9 +2620,10 @@ rpack() {
 #endif /* OLDCHKINT */
 
     k = getrbuf();			/* Get a new packet input buffer. */
-    debug(F101,"rpack getrbuf","",k);
-    if (k < 0) return(-1);		/* Return like this if none free. */
-    if (pktmsg) *pktmsg = NUL;
+    /* debug(F101,"rpack getrbuf","",k); */
+    if (k < 0) {			/* Return like this if none free. */
+	return(-1);
+    }
     recpkt = r_pkt[k].bf_adr;
     *recpkt = '\0';			/* Clear receive buffer. */
     sohp = recpkt;			/* Initialize pointers to it. */
@@ -1819,9 +2633,49 @@ rpack() {
 
 /* Try to get a "line". */
 
-#ifdef GETMSEC
-    if (deblog) t1 = getmsec();
-#endif /* GETMSEC */
+#ifdef CK_AUTODL
+    debug(F110,"rpack ksbuf",ksbuf,0);
+    if (ksbuf[0]) {			/* Kermit packet already */
+	int x;				/* collected for us in CONNECT mode */
+	CHAR *s1 = recpkt, *s2 = ksbuf;
+	j = 0;
+	while (*s2) {			/* Copy and get length */
+	    *s1++ = *s2++;		/* No point optimizing this since */
+	    j++;			/* it's never more than ~20 chars */
+	}
+	*s1 = NUL;
+#ifdef PARSENSE
+	x = parchk(recpkt, stchr, j);	/* Check parity */
+	debug(F000,"autodownload parity","",parity);
+	debug(F000,"autodownload parchk","",x);
+	if (x > -1 && parity != x) {
+	    autopar = 1;
+	    parity = x;
+	}
+#endif /* PARSENSE */
+	ksbuf[0] = NUL;			/* Don't do this next time! */
+
+    } else {				/* Normally go read a packet */
+#endif /* CK_AUTODL */
+
+#ifdef DEBUG
+	if (deblog) {
+	    debug(F101,"rpack timint","",timint);
+	    debug(F101,"rpack rcvtimo","",rcvtimo);
+	    debug(F101,"rpack streaming","",streaming);
+#ifdef GFTIMER
+	    /* Measure how long it takes to read a packet */
+	    t1 = gftimer();
+#endif /* GFTIMER */
+	}
+#endif /* DEBUG */
+
+/* JUST IN CASE (otherwise this could clobber streaming) */
+
+	if ((timint == 0 || streaming) && rcvtimo != 0) {
+	    debug(F101,"rpack timint 0 || streaming but rcvtimo","",rcvtimo);
+	    rcvtimo = 0;
+	}
 
 #ifdef PARSENSE
 #ifdef UNIX
@@ -1829,130 +2683,174 @@ rpack() {
   So far the final turn argument is only for ck[uvdl]tio.c.  Should be added
   to the others too.  (turn == handshake character.)
 */
-    j = ttinl(recpkt,r_pkt[k].bf_len - 1,rcvtimo,e,stchr,turn);
+	j = ttinl(recpkt,r_pkt[k].bf_len - 1,rcvtimo,e,stchr,turn);
 #else
 #ifdef VMS
-    j = ttinl(recpkt,r_pkt[k].bf_len - 1,rcvtimo,e,stchr,turn);
+	j = ttinl(recpkt,r_pkt[k].bf_len - 1,rcvtimo,e,stchr,turn);
 #else
 #ifdef datageneral
-    j = ttinl(recpkt,r_pkt[k].bf_len - 1,rcvtimo,e,stchr,turn);
+	j = ttinl(recpkt,r_pkt[k].bf_len - 1,rcvtimo,e,stchr,turn);
 #else
 #ifdef STRATUS
-    j = ttinl(recpkt,r_pkt[k].bf_len - 1,rcvtimo,e,stchr,turn);
+	j = ttinl(recpkt,r_pkt[k].bf_len - 1,rcvtimo,e,stchr,turn);
 #else
 #ifdef OS2
-    j = ttinl(recpkt,r_pkt[k].bf_len - 1,rcvtimo,e,stchr,turn);
+	j = ttinl(recpkt,r_pkt[k].bf_len - 1,rcvtimo,e,stchr,turn);
 #else
 #ifdef OSK
-    j = ttinl(recpkt,r_pkt[k].bf_len - 1,rcvtimo,e,stchr,turn);
+	j = ttinl(recpkt,r_pkt[k].bf_len - 1,rcvtimo,e,stchr,turn);
 #else
-    j = ttinl(recpkt,r_pkt[k].bf_len - 1,rcvtimo,e,stchr);
+	j = ttinl(recpkt,r_pkt[k].bf_len - 1,rcvtimo,e,stchr);
 #endif /* OSK */
 #endif /* OS2 */
 #endif /* STRATUS */
 #endif /* datageneral */
 #endif /* VMS */
 #endif /* UNIX */
-    if (parity != ttprty) autopar = 1;
-    parity = ttprty; 
+	if (parity != 0 && parity != 's' && ttprty != 0) {
+	    if (parity != ttprty) autopar = 1;
+	    parity = ttprty;
+	}
 #else /* !PARSENSE */
-    j = ttinl(recpkt,r_pkt[k].bf_len - 1,rcvtimo,e);
+	j = ttinl(recpkt,r_pkt[k].bf_len - 1,rcvtimo,e);
 #endif /* PARSENSE */
 
-#ifdef GETMSEC
-    if (deblog)  {
-	t2 = getmsec();
-	if (t2 > -1L && t1 > -1L)
-	  debug(F101,"rpack ttinl time","",t2-t1);
-	else
-	  debug(F100,"rpack ttinl time error","",0);
-    }
-#endif /* GETMSEC */
-
-    if (j < 0) {
-	debug(F101,"rpack: ttinl fails","",j); /* Otherwise, */
-	freerbuf(k);			/* Free this buffer */
-	if (j < -1) {			/* Bail out if ^C^C typed. */
-	    debug(F101,"rpack ^C server","",server);
-	    debug(F101,"rpack ^C en_fin","",en_fin);
-	    if (server == 0) return(j);	/* But not if in server mode */
-	    else if (en_fin) return(j);	/* with DISABLE FINISH */
-	    else return(-2);
+#ifdef DEBUG
+	if (deblog)  {
+	    debug(F101,"rpack ttinl len","",j);
+#ifdef GFTIMER
+	    t2 = gftimer();
+	    debug(F101,"rpack ttinl msec","",(long)((t2-t1)*1000.0));
+#endif /* GFTIMER */
 	}
-	if (nakstate)			/* Call it a timeout. */
-	  screen(SCR_PT,'T',(long)winlo,"");
-	else
-	  screen(SCR_PT,'T',(long)pktnum,"");
-	logpkt('r',-1,(CHAR *)"<timeout>");
-	if (flow == 1) ttoc(XON);	/* In case of Xoff blockage. */
-	return('T');
+#endif /* DEBUG */
+
+	if (j < 0) {
+	    /* -1 == timeout, -2 == ^C, -3 == connection lost or fatal i/o */
+	    debug(F101,"rpack: ttinl fails","",j); /* Otherwise, */
+	    freerbuf(k);		/* Free this buffer */
+	    if (j < -1) {		/* Bail out if ^C^C typed. */
+		if (j == -2) {
+		    interrupted = 1;
+		    debug(F101,"rpack ^C server","",server);
+		    debug(F101,"rpack ^C en_fin","",en_fin);
+		} else if (j == -3) {
+		    fatalio = 1;
+		    debug(F101,"rpack fatalio","",en_fin);
+		}
+		return(j);
+	    }
+	    if (nakstate)		/* j == -1 is a read timeout */
+	      xxscreen(SCR_PT,'T',(long)winlo,"");
+	    else
+	      xxscreen(SCR_PT,'T',(long)pktnum,"");
+	    logpkt('r',-1,(CHAR *)"<timeout>",0);
+	    if (flow == 1) ttoc(XON);	/* In case of Xoff blockage. */
+	    return('T');
+	}
+#ifdef CK_AUTODL
     }
+#endif /* CK_AUTODL */
+
     rpktl = j;
     tlci += j;				/* All OK, Count the characters. */
     flci += j;
 
+/* Find start of packet */
+
 #ifndef PARSENSE
-/* THEN eliminate this loop... */
     for (i = 0; (recpkt[i] != stchr) && (i < j); i++)
       sohp++;				/* Find mark */
     if (i++ >= j) {			/* Didn't find it. */
-	logpkt('r',-1,"<timeout>");
+	logpkt('r',-1,"<timeout>",0);
 	freerbuf(k);
 	return('T');
-    }    
+    }
 #else
-    i = 1;
+    i = 1;				/* ttinl does this for us */
 #endif /* PARSENSE */
 
-    rpackets++;
+    rpackets++;				/* Count received packet. */
     lp = i;				/* Remember LEN position. */
-    if ((j = xunchar(recpkt[i++])) == 0) {
-        if ((j = lp+5) > MAXRP) return('Q'); /* Long packet */
+    if ((j = xunchar(recpkt[i++])) == 0) { /* Get packet length.  */
+        if ((j = lp+5) > MAXRP) {	/* Long packet */
+	    return('Q');		/* Too long */
+	}
+
+#ifdef CKTUNING
+	/* Save some function-call and loop overhead... */
+#ifdef COMMENT
+	/* ttinl() already removed parity */
+	if (parity)
+#endif /* COMMENT */
+	  chk = (unsigned) ((unsigned) recpkt[i-1] +
+			    (unsigned) recpkt[i]   +
+			    (unsigned) recpkt[i+1] +
+			    (unsigned) recpkt[i+2] +
+			    (unsigned) recpkt[i+3]
+			    );
+#ifdef COMMENT
+	else
+	  chk = (unsigned) ((unsigned) (recpkt[i-1] & 077) +
+			    (unsigned) (recpkt[i]   & 077) +
+			    (unsigned) (recpkt[i+1] & 077) +
+			    (unsigned) (recpkt[i+2] & 077) +
+			    (unsigned) (recpkt[i+3] & 077)
+			    );
+#endif /* COMMENT */
+	if (xunchar(recpkt[j]) != ((((chk & 0300) >> 6) + chk) & 077))
+#else
 	x = recpkt[j];			/* Header checksum. */
 	recpkt[j] = '\0';		/* Calculate & compare. */
-	if (xunchar(x) != chk1(recpkt+lp)) {
-	    freerbuf(k);
-	    logpkt('r',-1,(CHAR *)"<crunched:hdr>");
-	    screen(SCR_PT,'%',(long)pktnum,"Bad packet header");
-	    return('Q');
-	}
+	if (xunchar(x) != chk1(recpkt+lp,5))
+#endif /* CKTUNING */
+	  {
+	      freerbuf(k);
+	      logpkt('r',-1,(CHAR *)"<crunched:hdr>",0);
+	      xxscreen(SCR_PT,'%',(long)pktnum,"Bad packet header");
+	      return('Q');
+	  }
+#ifndef CKTUNING
 	recpkt[j] = x;			/* Checksum ok, put it back. */
+#endif /* CKTUNING */
 	rln = xunchar(recpkt[j-2]) * 95 + xunchar(recpkt[j-1]) - bctl;
 	j = 3;				/* Data offset. */
     } else if (j < 3) {
 	debug(F101,"rpack packet length less than 3","",j);
 	freerbuf(k);
-	logpkt('r',-1,(CHAR *)"<crunched:len>");
-	screen(SCR_PT,'%',(long)pktnum,"Bad packet length");
+	logpkt('r',-1,(CHAR *)"<crunched:len>",0);
+	xxscreen(SCR_PT,'%',(long)pktnum,"Bad packet length");
 	return('Q');
     } else {
 	rln = j - bctl - 2;		/* Regular packet */
 	j = 0;				/* No extended header */
     }
     rsn = xunchar(recpkt[i++]);		/* Sequence number */
-    logpkt('r',rsn,sohp);
+    if (pktlog)				/* Save a function call! */
+      logpkt('r',rsn,sohp,rln+bctl+j+4);
     if (rsn < 0 || rsn > 63) {
 	debug(F101,"rpack bad sequence number","",rsn);
 	freerbuf(k);
-	logpkt('r',rsn,(CHAR *)"<crunched:seq>");
-	screen(SCR_PT,'%',(long)pktnum,"Bad sequence number");
+	if (pktlog)
+	  logpkt('r',rsn,(CHAR *)"<crunched:seq>",0);
+	xxscreen(SCR_PT,'%',(long)pktnum,"Bad sequence number");
 	return('Q');
     }
 /*
   If this packet has the same type as the packet just sent, assume it is
   an echo and ignore it.  Don't even bother with the block check calculation:
   even if the packet is corrupted, we don't want to NAK an echoed packet.
-  (And we certainly don't want to NAK an ACK or NAK!)
+  Nor must we NAK an ACK or NAK.
 */
     type = recpkt[i++];			/* Get packet's TYPE field */
     if (type == sndtyp || (nakstate && (type == 'N' /* || type == 'Y' */ ))) {
 	debug(F000,"rpack echo","",type); /* If it's an echo */
 	freerbuf(k);			/* Free this buffer */
-	logpkt('#',rsn,(CHAR *)"<echo:ignored>");
-	return('e');			/* return special (lowercase) code */
+	logpkt('#',rsn,(CHAR *)"<echo:ignored>",0);
+	return('e');			/* Return special (lowercase) code */
     }
 /*
-  Separate the data from the block check, accounting for the case where    
+  Separate the data from the block check, accounting for the case where
   a packet was retransmitted after the block check switched.
 */
     if (type == 'I' || type == 'S') {	/* I & S packets always have type 1 */
@@ -1962,105 +2860,119 @@ rpack() {
 	chklen = xunchar(recpkt[lp]) - 2;
 	rln = rln + bctl - chklen;
     } else chklen = bctl;
-    debug(F101,"rpack bctl","",bctl);
-    debug(F101,"rpack chklen","",chklen);
-
+#ifdef DEBUG
+    if (deblog) {			/* Save 2 function calls */
+	debug(F101,"rpack bctl","",bctl);
+	debug(F101,"rpack chklen","",chklen);
+    }
+#endif /* DEBUG */
     i += j;				/* Buffer index of DATA field */
     rdatap = recpkt+i;			/* Pointer to DATA field */
-    if ((j = rln + i) > r_pkt[k].bf_len ) { /* Make sure it fits */
-	debug(F101,"packet sticks out too far","",j);
+    if ((j = rln + i) > r_pkt[k].bf_len) { /* Make sure it fits */
+	debug(F101,"packet too long","",j);
 	freerbuf(k);
-	logpkt('r',rsn,(CHAR *)"<overflow>");
+	logpkt('r',rsn,(CHAR *)"<overflow>",0);
 	return('Q');
     }
-
     for (x = 0; x < chklen; x++)	/* Copy the block check */
-      pbc[x] = recpkt[j+x];
+      pbc[x] = recpkt[j+x];		/* 3 bytes at most. */
     pbc[x] = '\0';			/* Null-terminate block check string */
-    recpkt[j] = '\0';			/*  and the packet DATA field. */
-    
+    recpkt[j] = '\0';			/* and the packet Data field. */
+
     if (chklen == 2 && bctu == 4) {	/* Adjust for Blank-Free-2 */
 	chklen = 4;			/* (chklen is now a misnomer...) */
 	debug(F100,"rpack block check B","",0);
     }
     switch (chklen) {			/* Check the block check */
-	case 1:				/* Type 1, 6-bit checksum */
-	    if (xunchar(*pbc) != chk1(recpkt+lp)) {
+      case 1:				/* Type 1, 6-bit checksum */
+	if (xunchar(*pbc) != chk1(recpkt+lp,j-lp)) {
+#ifdef DEBUG
+	    if (deblog) {
 		debug(F110,"checked chars",recpkt+lp,0);
-	        debug(F101,"block check","",(int) xunchar(*pbc));
-		debug(F101,"should be","",chk1(recpkt+lp));
-		freerbuf(k);
-		logpkt('r',-1,(CHAR *)"<crunched:chk1>");
-		screen(SCR_PT,'%',(long)pktnum,"Checksum error");
-		return('Q');
- 	    }
-	    break;
-	case 2:				/* Type 2, 12-bit checksum */
-	    x = xunchar(*pbc) << 6 | xunchar(pbc[1]);
-	    if (x != chk2(recpkt+lp)) {	/* No match */
-		if (type == 'E') {	/* Allow E packets to have type 1 */
-		    recpkt[j++] = pbc[0];    
-		    recpkt[j] = '\0';
-		    if (xunchar(pbc[1]) == chk1(recpkt+lp))
-		      break;
-		    else
-		      recpkt[--j] = '\0';
-		}
-		debug(F110,"checked chars",recpkt+lp,0);
-	        debug(F101,"block check","", x);
-		debug(F101,"should be","", (int) chk2(recpkt+lp));
-		freerbuf(k);
-		logpkt('r',-1,(CHAR *)"<crunched:chk2>");
-		screen(SCR_PT,'%',(long)pktnum,"Checksum error");
-		return('Q');
+		debug(F101,"block check (1)","",(int) xunchar(*pbc));
+		debug(F101,"should be (1)","",chk1(recpkt+lp,j-lp));
 	    }
-	    break;
-	case 3:				/* Type 3, 16-bit CRC */
-	    crc = (xunchar(pbc[0]) << 12)
-	        | (xunchar(pbc[1]) << 6)
-		| (xunchar(pbc[2]));
-	    if (crc != chk3(recpkt+lp,parity)) {
-		if (type == 'E') {	/* Allow E packets to have type 1 */
-		    recpkt[j++] = pbc[0];    
-		    recpkt[j++] = pbc[1];
-		    recpkt[j] = '\0';
-		    if (xunchar(pbc[2]) == chk1(recpkt+lp))
-		      break;
-		    else { j -=2; recpkt[j] = '\0'; }
-		}
-		debug(F110,"checked chars",recpkt+lp,0);
-	        debug(F101,"block check","",xunchar(*pbc));
-		debug(F101,"should be","",(int) chk3(recpkt+lp,parity));
-		freerbuf(k);
-		logpkt('r',-1,(CHAR *)"<crunched:chk3>");
-		screen(SCR_PT,'%',(long)pktnum,"CRC error");
-		return('Q');
-	    }
-	    break;
-	case 4:				/* Type 4 = Type 2, no blanks. */
-	    x = (unsigned)((xunchar(*pbc) - 1) << 6) |
-	        (unsigned)(xunchar(pbc[1]) - 1);
-	    if (x != chk2(recpkt+lp)) {
-		if (type == 'E') {	/* Allow E packets to have type 1 */
-		    recpkt[j++] = pbc[0];    
-		    recpkt[j] = '\0';
-		    if (xunchar(pbc[1]) == chk1(recpkt+lp))
-		      break;
-		    else
-		      recpkt[--j] = '\0';
-		}
-		debug(F101,"bad type B block check","",x);
-		freerbuf(k);
-		logpkt('r',-1,(CHAR *)"<crunched:chkb>");
-		screen(SCR_PT,'%',(long)pktnum,"Checksum error");
-		return('Q');
-	    }
-	    break;
-	default:			/* Shouldn't happen... */
+#endif /* DEBUG */
 	    freerbuf(k);
-	    logpkt('r',-1,(CHAR *)"<crunched:chkx>");
-	    screen(SCR_PT,'%',(long)pktnum,"(crunched)");
+	    logpkt('r',-1,(CHAR *)"<crunched:chk1>",0);
+	    xxscreen(SCR_PT,'%',(long)pktnum,"Checksum error");
 	    return('Q');
+	}
+	break;
+      case 2:				/* Type 2, 12-bit checksum */
+	x = xunchar(*pbc) << 6 | xunchar(pbc[1]);
+	if (x != chk2(recpkt+lp,j-lp)) { /* No match */
+	    if (type == 'E') {		/* Allow E packets to have type 1 */
+		recpkt[j++] = pbc[0];
+		recpkt[j] = '\0';
+		if (xunchar(pbc[1]) == chk1(recpkt+lp,j-lp))
+		  break;
+		else
+		  recpkt[--j] = '\0';
+	    }
+#ifdef DEBUG
+	    if (deblog) {
+		debug(F110,"checked chars",recpkt+lp,0);
+		debug(F101,"block check (2)","", x);
+		debug(F101,"should be (2)","", (int) chk2(recpkt+lp,j-lp));
+	    }
+#endif /* DEBUG */
+	    freerbuf(k);
+	    logpkt('r',-1,(CHAR *)"<crunched:chk2>",0);
+	    xxscreen(SCR_PT,'%',(long)pktnum,"Checksum error");
+	    return('Q');
+	}
+	break;
+      case 3:				/* Type 3, 16-bit CRC */
+	crc = (xunchar(pbc[0]) << 12)
+	    | (xunchar(pbc[1]) << 6)
+	    | (xunchar(pbc[2]));
+	if (crc != chk3(recpkt+lp,j-lp)) {
+	    if (type == 'E') {		/* Allow E packets to have type 1 */
+		recpkt[j++] = pbc[0];
+		recpkt[j++] = pbc[1];
+		recpkt[j] = '\0';
+		if (xunchar(pbc[2]) == chk1(recpkt+lp,j-lp))
+		  break;
+		else { j -=2; recpkt[j] = '\0'; }
+	    }
+#ifdef DEBUG
+	    if (deblog) {
+		debug(F110,"checked chars",recpkt+lp,0);
+		debug(F101,"block check (3)","",xunchar(*pbc));
+		debug(F101,"should be (3)","",(int) chk3(recpkt+lp,j-lp));
+	    }
+#endif /* DEBUG */
+	    freerbuf(k);
+	    logpkt('r',-1,(CHAR *)"<crunched:chk3>",0);
+	    xxscreen(SCR_PT,'%',(long)pktnum,"CRC error");
+	    return('Q');
+	}
+	break;
+      case 4:				/* Type 4 = Type 2, no blanks. */
+	x = (unsigned)((xunchar(*pbc) - 1) << 6) |
+	  (unsigned)(xunchar(pbc[1]) - 1);
+	if (x != chk2(recpkt+lp,j-lp)) {
+	    if (type == 'E') {	/* Allow E packets to have type 1 */
+		recpkt[j++] = pbc[0];
+		recpkt[j] = '\0';
+		if (xunchar(pbc[1]) == chk1(recpkt+lp,j-lp))
+		  break;
+		else
+		  recpkt[--j] = '\0';
+	    }
+	    debug(F101,"bad type B block check","",x);
+	    freerbuf(k);
+	    logpkt('r',-1,(CHAR *)"<crunched:chkb>",0);
+	    xxscreen(SCR_PT,'%',(long)pktnum,"Checksum error");
+	    return('Q');
+	}
+	break;
+      default:			/* Shouldn't happen... */
+	freerbuf(k);
+	logpkt('r',-1,(CHAR *)"<crunched:chkx>",0);
+	xxscreen(SCR_PT,'%',(long)pktnum,"(crunched)");
+	return('Q');
     }
     debug(F101,"rpack block check OK","",rsn);
 
@@ -2073,7 +2985,7 @@ rpack() {
     if ((x = rseqtbl[rsn]) != -1) {	/* Already a packet with this number */
 	retrans++;			/* Count it for statistics */
 	debug(F101,"rpack got dup","",rsn);
-	logpkt('r',rsn,(CHAR *)"<duplicate>");
+	logpkt('r',rsn,(CHAR *)"<duplicate>",0);
 	freerbuf(x);			/* Free old buffer, keep new packet. */
 	r_pkt[k].pk_rtr++;		/* Count this as a retransmission. */
     }
@@ -2081,14 +2993,21 @@ rpack() {
 /* New packet, not seen before, enter it into the receive window. */
 
 #ifdef CK_TIMERS
-    rrttbl[rsn] = gtimer();		/* Timestamp */
+    if (timint > 0)
+      rrttbl[rsn] = gtimer();		/* Timestamp */
 #endif /* CK_TIMERS */
 
     rseqtbl[rsn] = k;			/* Make back pointer */
     r_pkt[k].pk_seq = rsn;		/* Record in packet info structure */
     r_pkt[k].pk_typ = type;		/* Sequence, type,... */
     r_pkt[k].pk_adr = rdatap;		/* pointer to data buffer */
-    screen(SCR_PT,(char)type,(long)rsn,(char *)sohp); /* Update screen */
+    if (local) {			/* Save a function call! */
+	int x = 0;
+	if (fdispla != XYFD_N) x = 1;
+	if (fdispla == XYFD_B && (type == 'D' || sndtyp == 'D')) x = 0;
+	if (x)				/* Update screen */
+	  xxscreen(SCR_PT,(char)type,(long)rsn,(char *)sohp);
+    }
     return(type);			/* Return packet type */
 }
 
@@ -2098,29 +3017,94 @@ rpack() {
 
 VOID
 #ifdef CK_ANSIC
-logpkt(char c,int n, CHAR *s)
+logpkt(char c,int n, CHAR *s, int len)
 #else
-logpkt(c,n,s) char c; int n; CHAR *s;
+logpkt(c,n,s,len) char c; int n; CHAR *s; int len;
 #endif /* CK_ANSIC */
 /* logpkt */ {
+#ifdef UNPREFIXZERO
+    extern FILE *fp[];
+#endif /* UNPREFIXZERO */
     char plog[20];
-    if (pktlog && *s) {
-	if (n < 0)
+    if (pktlog) if (chkfn(ZPFILE) > 0) {
+	if (n < 0)			/* Construct entry header */
 	  sprintf(plog,"%c-xx-%02d-",c,(gtimer()%60));
 	else
 	  sprintf(plog,"%c-%02d-%02d-",c,n,(gtimer()%60));
-	if (zsout(ZPFILE,plog) < 0) pktlog = 0;
-	else if (zsoutl(ZPFILE,(char *)s) < 0) pktlog = 0;
+	if (zsoutx(ZPFILE,plog,(int)strlen(plog)) < 0) {
+	    pktlog = 0;
+	} else {
+	    if (len == 0)
+	      len = strlen((char *)s);
+	    if (zsoutx(ZPFILE,(char *)s,len) < 0) {
+		pktlog = 0;
+	    } else if (zsoutx(ZPFILE,
+#ifdef UNIX
+			      "\n", 1
+#else
+#ifdef datageneral
+			      "\n", 1
+#else
+#ifdef OSK
+			      "\r", 1
+#else
+#ifdef MAC
+			      "\r", 1
+#else
+			      "\015\012", 2
+#endif /* MAC */
+#endif /* OSK */
+#endif /* datageneral */
+#endif /* UNIX */
+			      ) < 0) {
+		pktlog = 0;
+	    }
+	}
     }
 }
-
-#ifdef TLOG
 
 /*  T S T A T S  --  Record statistics in transaction log  */
 
 VOID
 tstats() {
     char *tp;
+#ifdef GFTIMER
+    CKFLOAT xx;				/* Elapsed time divisor */
+#endif /* GFTIMER */
+
+    debug(F101,"tstats xfsecs","",xfsecs);
+    debug(F101,"tstats filcnt","",filcnt);
+    if (filcnt == 1) {			/* Get timing for statistics */
+	tsecs = xfsecs;			/* Single file, we already have it */
+#ifdef GFTIMER
+	debug(F101,"tstats fpxfsecs","",(int)fpxfsecs);
+	fptsecs = fpxfsecs;
+#endif /* GFTIMER */
+    } else {				/* Multiple files */
+	tsecs = gtimer();		/* Get current time */
+#ifdef GFTIMER
+	fptsecs = gftimer();
+#endif /* GFTIMER */
+    }
+#ifdef GFTIMER
+    if (fptsecs <= GFMINTIME)		/* Calculate CPS */
+      fptsecs = (CKFLOAT) GFMINTIME;
+    debug(F101,"tstats fptsecs","",(int)fptsecs);
+    xx = (CKFLOAT) tfc / fptsecs;
+    if (sizeof(long) <= 4) {		/* doesn't account for 16-bit longs */
+	if (xx  > 2147483647.0)
+	  tfcps = 2147483647L;	        /* 31 bits */
+	else
+	  tfcps = (long) xx;
+    } else
+      tfcps = (long) xx;
+#else
+    if (tsecs < 2L)
+      tsecs = 1L;
+    debug(F101,"tstats tsecs","",tsecs);
+    tfcps = tfc / tsecs;
+#endif /* GFTIMER */
+
     ztime(&tp);				/* Get time stamp */
     tlog(F100,"","",0L);		/* Leave a blank line */
     tlog(F110,"Transaction complete",tp,0L);  /* Record it */
@@ -2138,36 +3122,70 @@ tstats() {
 
 /* Record timing info for one or more files */
 
+#ifdef GFTIMER
+    if (filcnt - filrej == 1) {
+	tlog(F101," elapsed time (seconds)  ","",(long) fpxfsecs);
+	tlog(F101," effective data rate     ","",filcps);
+    } else {
+	tlog(F101," elapsed time (seconds)  ","",(long) fptsecs);
+	tlog(F101," effective data rate     ","",(long) xx);
+    }
+#else
     tlog(F101," elapsed time (seconds)  ","",(long) tsecs);
     if (tsecs > 0) {
 	long lx;
 	lx = (tfc * 10L) / (long) tsecs;
 	tlog(F101," effective data rate     ","",lx/10L);
-	if (speed <= 0L) speed = ttgspd();
-#ifdef COMMENT
-	if (speed > 0L && speed != 8880L && network == 0) {
-	    lx = (lx * 100L) / speed;
-	    tlog(F101," efficiency (percent)    ","",lx);
-	}
-#endif /* COMMENT */
     }
+#endif /* GFTIMER */
     tlog(F100,"","",0L);		/* Leave a blank line */
 }
 
 /*  F S T A T S  --  Record file statistics in transaction log  */
 
 VOID
-fstats() {
-    tfc += ffc;
-    if (!discard && !cxseen && !czseen && what != W_NOTHING)
-      tlog(F101," complete, size","",ffc);
+fcps() {
+#ifdef GFTIMER
+    double xx;
+    fpxfsecs = gftimer() - fpfsecs;
+    if (fpxfsecs <= GFMINTIME)
+      fpxfsecs = (CKFLOAT) GFMINTIME;
+    xx = (CKFLOAT) ffc / fpxfsecs;
+    if (sizeof(long) <= 4) {
+	if (xx  > 2147483647.0)
+	  tfcps = 2147483647L;		/* 31 bits */
+	else
+	  filcps = (long) xx;
+    } else
+      filcps = (long) xx;
+    if (sizeof(int) >= 4)
+      xfsecs = (int) fpxfsecs;
+    else if (fpxfsecs < 32768.0)
+      xfsecs = (int) fpxfsecs;
+    else
+      xfsecs = 32767;
+#else /* GFTIMER */
+    xfsecs = gtimer() - fsecs;
+    if (xfsecs < 1L) xfsecs = 1L;
+    filcps = ffc / xfsecs;
+#endif /* GFTIMER */
 }
-#else /* NOTLOG */
-VOID
-tstats() {}
 
 VOID
 fstats() {
+    extern long cps;
     tfc += ffc;
-}
+#ifdef DEBUG
+    if (deblog) {
+	debug(F101,"fstats tfc","",tfc);
+	debug(F101,"fstats what","",what);
+	debug(F110,"fstats epktmsg",epktmsg,0);
+    }
+#endif /* DEBUG */
+#ifdef TLOG
+    if (!discard && !cxseen && !czseen && what != W_NOTHING && !*epktmsg)
+      tlog(F101," complete, size","",ffc);
 #endif /* TLOG */
+}
+
+#endif /* NOXFER */

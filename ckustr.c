@@ -1,14 +1,4 @@
 /*
-  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
-  York.  The C-Kermit software may not be, in whole or in part, licensed or
-  sold for profit as a software product itself, nor may it be included in or
-  distributed with commercial products or otherwise distributed by commercial
-  concerns to their clients or customers without written permission of the
-  Office of Kermit Development and Distribution, Columbia University.  This
-  copyright notice must not be removed, altered, or obscured.
-*/
-
-/*
  * ckustr.c - string extraction/restoration routines
 */
 
@@ -21,7 +11,7 @@
   STR_FILE must be defined as a quoted string on the cc command line,
   for example:
 
-  	-DSTR_FILE=\\\"/usr/local/lib/cku192.sr\\\"
+  	-DSTR_FILE=\\\"/usr/local/lib/cku196.sr\\\"
 
   This is the file where the strings go, and where C-Kermit looks for them
   at runtime.
@@ -30,7 +20,7 @@
 #ifdef STR_FILE
 char	*StringFile = STR_FILE;
 #else
-char	*StringFile = "/usr/local/lib/cku192.sr";
+char	*StringFile = "/usr/local/lib/cku196.sr";
 #endif /* STR_FILE */
 
 /*
@@ -148,7 +138,7 @@ perror(str)
  * stubs for the ctime() and getpw*() functions.  In 2.11BSD these are
  * present in the libstubs.a library and accessed via "-lstubs" at link time.
  *
- * 2.10BSD's cpp has the BSD2_10 symbol builtin.  Other systems without 
+ * 2.10BSD's cpp has the BSD2_10 symbol builtin.  Other systems without
  * libstubs.a will need to define (via a -D option in CFLAGS) 'BSD2_10'.
 */
 

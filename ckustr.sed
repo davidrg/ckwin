@@ -6,7 +6,7 @@
 # the kermit executable be sure to install kermit.sr and make it readable
 # by the public (mode 444).
 
-STRINGS=cku192.sr
+STRINGS=cku195.sr
 
 # Get filename and arguments.
 initargs=$@

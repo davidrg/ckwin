@@ -5,6 +5,7 @@ CO=`{sed -n 's/^O=//p' /$cputype/mkfile}
 
 OFILES=\
 	ckcmai.$O \
+	ckclib.$O \
 	ckutio.$O \
 	ckufio.$O \
 	ckcfns.$O \
@@ -26,7 +27,9 @@ OFILES=\
 	ckudia.$O \
 	ckuscr.$O \
 	ckcnet.$O \
-	ckusig.$O
+	ckctel.$O \
+	ckusig.$O \
+	ckcuni.$O
 
 HFILES=\
 	ckcasc.h \
@@ -47,7 +50,7 @@ TARG=kermit
 </sys/src/cmd/mkone
 
 # source gets too many warnings to include -w, even with -B
-CFLAGS= -D_POSIX_SOURCE -DPOSIX -DNOUUCP -D_BSD_EXTENSION -DCK_RTSCTS -DBIGBUFOK -DCK_SYSINI="/sys/lib/kermit/ckermit.ini" -DCK_INI_B -DNETCONN -DPlan9
+CFLAGS= -D_POSIX_SOURCE -DPOSIX -DNOUUCP -D_BSD_EXTENSION -DCK_RTSCTS -DBIGBUFOK -DCK_SYSINI="/sys/lib/kermit/ckermit.ini" -DCK_INI_B -DNOSYSLOG -DNOWTMP -DNOIKSD -DNOREALPATH -DPlan9
 
 ckcpro.c:	$CO.wart ckcpro.w
 	./$CO.wart ckcpro.w ckcpro.c

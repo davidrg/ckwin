@@ -1,23 +1,21 @@
 #include "ckcsym.h"
+
 #ifndef NOICP
 
 /*  C K U U S 7 --  "User Interface" for C-Kermit, part 7  */
- 
+
 /*
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
-  York.  The C-Kermit software may not be, in whole or in part, licensed or
-  sold for profit as a software product itself, nor may it be included in or
-  distributed with commercial products or otherwise distributed by commercial
-  concerns to their clients or customers without written permission of the
-  Office of Kermit Development and Distribution, Columbia University.  This
-  copyright notice must not be removed, altered, or obscured.
+  Copyright (C) 1985, 2000,
+    Trustees of Columbia University in the City of New York.
+    All rights reserved.  See the C-Kermit COPYING.TXT file or the
+    copyright text in the ckcmai.c module for disclaimer and permissions.
 */
- 
+
 /*
-  This file created from parts of ckuus3.c, which became to big for
+  This file created from parts of ckuus3.c, which became too big for
   Mark Williams Coherent compiler to handle.
 */
 
@@ -31,19 +29,24 @@
 #include "ckcnet.h"			/* Network symbols */
 #include "ckuusr.h"			/* User interface symbols */
 #include "ckucmd.h"
-#ifdef CKOUNI
-#include "ckouni.h"
-#endif /* CKOUNI */
+
+#ifdef VMS
+#ifndef TCPSOCKET
+#include <errno.h>
+#endif /* TCPSOCKET */
+#endif /* VMS */
 
 #ifdef OS2
 #ifndef NT
-#define INCL_NOPM 
-#define INCL_VIO            /* needed for ckocon.h */
+#define INCL_NOPM
+#define INCL_VIO			/* Needed for ckocon.h */
 #define INCL_DOSMODULEMGR
 #include <os2.h>
 #undef COMMENT
 #else /* NT */
 #define APIRET ULONG
+#include <windows.h>
+#include <tapi.h>
 #include "cknwin.h"
 #include "ckntap.h"
 #endif /* NT */
@@ -61,7 +64,14 @@
 #endif /* putchar */
 #define putchar(x) conoc(x)
 extern int mskkeys;
-#endif /* OS2 */    
+#endif /* OS2 */
+
+#ifdef CK_AUTHENTICATION
+#include "ckuath.h"
+#endif /* CK_AUTHENTICATION */
+#ifdef CK_SSL
+#include "ck_ssl.h"
+#endif /* CK_SSL */
 
 #ifdef STRATUS				/* Stratus Computer, Inc.  VOS */
 #ifdef putchar
@@ -74,20 +84,181 @@ extern int mskkeys;
 #define getchar(x) coninc(0)
 #endif /* STRATUS */
 
+char * slmsg = NULL;
+static char * tmpslmsg = NULL;
+
 static int x, y = 0, z;
 static char *s;
 
+extern CHAR feol;
+extern int g_matchdot, saveask, hints;
+
+extern char * k_info_dir;
+
+#ifndef NOSPL
+extern int nmac;
+extern struct mtab *mactab;
+#endif /* NOSPL */
+
+#ifndef NOXFER
 #ifdef CK_SPEED
 extern short ctlp[];			/* Control-char prefixing table */
 #endif /* CK_SPEED */
 
+#ifdef PIPESEND
+extern char * sndfilter;
+extern char * rcvfilter;
+#endif /* PIPESEND */
+
+extern char * snd_move;
+extern char * snd_rename;
+extern char * g_snd_move;
+extern char * g_snd_rename;
+extern char * rcv_move;
+extern char * rcv_rename;
+extern char * g_rcv_move;
+extern char * g_rcv_rename;
+
+#ifdef PATTERNS
+extern char *binpatterns[], *txtpatterns[];
+extern int patterns;
+#endif /* PATTERNS */
+
+extern char * remdest;
+#ifdef CK_TMPDIR
+char * dldir = NULL;
+#endif /* CK_TMPDIR */
+
+extern struct ck_p ptab[];
+
+extern int protocol, remfile, rempipe, remappd, reliable, xreliable, fmask,
+  fncnv, frecl, maxrps, wslotr, bigsbsiz, bigrbsiz, urpsiz, rpsiz, spsiz,
+  bctr, npad, timef, timint, spsizr, spsizf, maxsps, spmax, nfils, displa,
+  atcapr, pkttim, rtimo, fncact, mypadn, fdispla, f_save, pktpaus, setreliable,
+  fnrpath, fnspath, atenci, atenco, atdati, atdato, atleni, atleno, atblki,
+  atblko, attypi, attypo, atsidi, atsido, atsysi, atsyso, atdisi, atdiso;
+
+extern int stathack;
+
+#ifdef STRATUS
+extern int atfrmi, atfrmo, atcrei, atcreo, atacti, atacto;
+#endif /* STRATUS */
+#ifdef CK_PERMS
+extern int atlpri, atlpro, atgpri, atgpro;
+#endif /* CK_PERMS */
+
+extern CHAR
+  sstate, eol, seol, stchr, mystch, mypadc, padch, ctlq, myctlq;
+
+#ifdef IKSD
+extern int inserver;
+#ifdef IKSDCONF
+extern int iksdcf;
+#endif /* IKSDCONF */
+#endif /* IKSD */
+
+extern char *cmarg, *cmarg2;
+
+#ifndef NOFRILLS
+extern char optbuf[];			/* Buffer for MAIL or PRINT options */
+extern int rprintf;			/* REMOTE PRINT flag */
+#endif /* NOFRILLS */
+#endif /* NOXFER */
+
+#ifdef CK_TRIGGER
+extern char * tt_trigger[];
+#endif /* CK_TRIGGER */
+
+extern int tcs_transp;
+#ifdef PCTERM
+extern int tt_pcterm;
+#endif /* PCTERM */
+#ifdef NT
+extern int tt_vtnt;
+#endif /* NT */
+
+/* Note: gcc -Wall wants braces around each keyword table entry. */
+
+static struct keytab psltab[] = {	/* SET LINE/PORT command options */
+    { "/connect", SL_CNX, 0 },
+#ifdef VMS
+    { "/noshare", SL_NSH, 0 },
+#endif /* VMS */
+    { "/server",  SL_SRV, 0 },
+#ifdef VMS
+    { "/share",   SL_SHR, 0 },
+#endif /* VMS */
+    { "", 0, 0 }
+};
+static int npsltab = sizeof(psltab)/sizeof(struct keytab) - 1;
+
 #ifdef NETCONN
+static struct keytab shtab[] = {	/* SET HOST command options */
+#ifdef NETCMD
+    "/command",      SL_CMD,    CM_INV,	/* (COMMAND is also a network type) */
+#endif /* NETCMD */
+    "/connect",      SL_CNX,    0,
+    "/network-type", SL_NET,    CM_ARG,
+    "/nowait",       SL_NOWAIT, 0,
+#ifndef NOSPL
+    "/password",     SL_PSW,    CM_ARG,
+#endif /* NOSPL */
+#ifdef NETCMD
+    "/pipe",         SL_CMD,    0,
+#endif /* NETCMD */
+#ifdef NETPTY
+    "/pty",          SL_PTY,    0,
+#endif /* NETPTY */
+    "/server",       SL_SRV,    0,
+    "/userid",       SL_UID,    CM_ARG,
+    "/wait",         SL_WAIT,   0,
+    "", 0, 0
+};
+static int nshtab = sizeof(shtab)/sizeof(struct keytab) - 1;
+
+static struct keytab shteltab[] = {	/* TELNET command options */
+#ifdef CK_AUTHENTICATION
+    "/auth",         SL_AUTH, CM_ARG,
+#endif /* CK_AUTHENTICATION */
+#ifdef CK_ENCRYPTION
+    "/encrypt",      SL_ENC,  CM_ARG,
+#endif /* CK_ENCRYPTION */
+    "/nowait",       SL_NOWAIT, 0,
+#ifndef NOSPL
+    "/password",     SL_PSW, CM_ARG,
+#endif /* NOSPL */
+    "/userid",       SL_UID, CM_ARG,
+    "/wait",         SL_WAIT,   0,
+    "", 0 ,0
+};
+static int nshteltab = sizeof(shteltab)/sizeof(struct keytab) - 1;
+
+#ifdef RLOGCODE
+static struct keytab shrlgtab[] = {	/* SET HOST RLOGIN command options */
+#ifdef CK_KERBEROS
+#ifdef CK_ENCRYPTION
+    "/encrypt",      SL_ENC, 0,
+#endif /* CK_ENCRYPTION */
+    "/k4",           SL_KRB4, CM_INV,
+    "/k5",           SL_KRB5, CM_INV,
+    "/kerberos4",    SL_KRB4, 0,
+    "/kerberos5",    SL_KRB5, 0,
+    "/kerberos_iv",  SL_KRB4, CM_INV,
+    "/kerberos_v",   SL_KRB5, CM_INV,
+    "/krb4",         SL_KRB4, CM_INV,
+    "/krb5",         SL_KRB5, CM_INV,
+#endif /* CK_KERBEROS */
+    "", 0 ,0
+};
+static int nshrlgtab = sizeof(shrlgtab)/sizeof(struct keytab)-1;
+#endif /* RLOGCODE */
+
 extern struct keytab netcmd[];
+extern int nnets;
 #ifndef NODIAL
 extern int dirline;
-extern int nnets, nnetdir;		/* Network services directory */
+extern int nnetdir;			/* Network services directory */
 extern char *netdir[];
-_PROTOTYP( VOID ndinit, (void) );
 _PROTOTYP( VOID ndreset, (void) );
 char *nh_p[MAXDNUMS + 1];		/* Network directory entry pointers */
 char *nh_p2[MAXDNUMS + 1];		/* Network directory entry nettype */
@@ -103,38 +274,51 @@ _PROTOTYP(static int remtxt, (char **) );
 _PROTOTYP(VOID rmsg, (void) );
 _PROTOTYP(static int remcfm, (void) );
 
-#ifndef NOPUSH
 extern int nopush;
-#endif /* NOPUSH */
 
 int mdmsav = -1;			/* Save modem type around network */
+extern int isguest;			/* Global flag for anonymous login */
 
 extern xx_strp xxstring;
 
-extern int remfile, rempipe, remappd; /* REMOTE output redirection */
-extern char * remdest;
+extern int success, binary, b_save, ckwarn, msgflg, quiet, cmask, pflag, local,
+  nettype, escape, mdmtyp, duplex, dfloc, network, cdtimo, autoflow, tnlm,
+  sosi, tlevel, lf_opts, backgrd, flow, debses, parity, ttnproto, ckxech,
+  x_ifnum, cmflgs, haveline, cxtype, cxflow[];
 
-#ifdef CK_TMPDIR
-char * dldir = NULL;
-#endif /* CK_TMPDIR */
-
-extern struct ck_p ptab[];
-extern int protocol;
-
-extern int success, nfilp, fmask, fncnv, frecl, binary, warn, msgflg, quiet;
-extern int cmask, maxrps, wslotr, bigsbsiz, bigrbsiz, urpsiz, rpsiz, spsiz;
-extern int spsizr, spsizf, maxsps, spmax, pflag, bctr, npad, timef, timint;
-extern int pkttim, rtimo, local, nfils, displa, atcapr, nettype, escape;
-extern int mdmtyp, duplex, dfloc, network, cdtimo, fncact, mypadn, autoflow;
-extern int tnlm, sosi, tlevel, lf_opts, backgrd, flow, fdispla, b_save, f_save;
-extern int fnrpath, fnspath, debses, parity, pktpaus, ttnproto, ckxech;
-extern int x_ifnum;
-extern int
-  atenci, atenco, atdati, atdato, atleni, atleno, atblki, atblko,
-  attypi, attypo, atsidi, atsido, atsysi, atsyso, atdisi, atdiso;
 extern char psave[];			/* For saving & restoring prompt */
+extern int sprmlen, rprmlen;
 
 #ifdef OS2
+static struct keytab strmkeytab[] = {
+    "clear",   0, 0,
+    "default", 1, 0
+};
+static int nstrmkeytab = sizeof(strmkeytab)/sizeof(struct keytab);
+
+static struct keytab strmswitab[] = {
+    "/literal", 0, 0
+};
+static int nstrmswitab = sizeof(strmswitab)/sizeof(struct keytab);
+
+static struct keytab normrev[] = {
+    "dark-display", 0, 0,
+    "light-display", 1, 0,
+    "normal",   0, 0,
+    "reverse",  1, 0
+};
+
+static struct keytab prnmtab[] = {
+    "auto", 1, 0,
+    "copy", 2, 0,
+    "off",  0, 0,
+    "on",   1, CM_INV,			/* Compatibility with XPRINT version */
+    "transparent", 3, 0
+};
+static int nprnmtab = sizeof(prnmtab)/sizeof(struct keytab);
+
+extern int tt_diff_upd;
+
 #ifdef NT
 #define stricmp _stricmp
 extern int tt_attr_bug;
@@ -142,47 +326,44 @@ extern int tt_attr_bug;
 extern int tt_rows[], tt_cols[];
 extern int tt_cols_usr;
 extern int tt_szchng[VNUM];
-int tt_modechg = 1;
-extern struct _vtG G[4], *GL, *GR, *GNOW, *SSGL;
-struct _vtG savedG[4];
+int tt_modechg = TVC_ENA;
+extern struct _vtG G[4];
 extern int priority;
 extern bool send_c1;
 int send_c1_usr = FALSE;
 extern int sgrcolors;
-#else
+extern int marginbell, marginbellcol;
+extern int autoscroll, wy_autopage;
+extern int tt_sac;
+extern int dec_nrc, dec_lang, dec_kbd;
+#else /* OS2 */
 extern int tt_rows, tt_cols;
 #endif /*  OS2 */
-
-#ifdef STRATUS
-extern int atfrmi, atfrmo, atcrei, atcreo, atacti, atacto;
-#endif /* STRATUS */
 
 extern int tt_escape;
 extern long speed;
 
-extern CHAR 
-  feol, sstate, eol, seol, stchr, mystch, mypadc, padch, ctlq, myctlq;
-
-extern char *cmarg, *cmarg2, *dftty;
+extern char *dftty;
 
 extern char *tp, *lp;			/* Temporary buffer & pointers */
-#ifndef NOFRILLS
-extern char optbuf[];			/* Buffer for MAIL or PRINT options */
-extern int rprintf;			/* REMOTE PRINT flag */
-#endif /* NOFRILLS */
 extern char ttname[];
 
 int tttapi = 0;				/* is Line TAPI? */
 struct keytab * tapilinetab = NULL;
+struct keytab * _tapilinetab = NULL;
 int ntapiline = 0;
 
 #ifdef NETCONN				/* Network items */
 
 #ifdef ANYX25
-extern int revcall, closgr, cudata, nx25, npadx3;
+extern int revcall, closgr, cudata, nx25;
 extern char udata[];
+extern struct keytab x25tab[];
+#ifndef IBMX25
+extern int npadx3;
 extern CHAR padparms[];
-extern struct keytab x25tab[], padx3tab[];
+extern struct keytab padx3tab[];
+#endif /* IBMX25 */
 #endif /* ANYX25 */
 
 #ifdef OS2
@@ -195,23 +376,50 @@ extern char pipename[];
 #endif /* NPIPE */
 
 #ifdef TCPSOCKET
-#ifdef TNCODE
-extern int tn_init;
-#endif /* TNCODE */
-_PROTOTYP( int tn_snaws, (void) );
+static struct keytab tcprawtab[] = {	/* SET HOST options */
+    "/default",    NP_DEFAULT,    CM_INV,
+#ifdef CK_AUTHENTICATION
+#ifdef CK_KERBEROS
+#ifdef RLOGCODE
+    "/ek4login",    NP_EK4LOGIN,    0,
+    "/ek5login",    NP_EK5LOGIN,    0,
+    "/k4login",     NP_K4LOGIN,     0,
+    "/k5login",     NP_K5LOGIN,     0,
+#endif /* RLOGCODE */
+#endif /* CK_KERBEROS */
+#endif /* CK_AUTHENTICATION */
+    "/no-telnet-init", NP_NONE,   0,
+    "/none",       NP_NONE,   CM_INV,
+    "/raw-socket", NP_TCPRAW, 0,
+#ifdef RLOGCODE
+    "/rlogin",     NP_RLOGIN, 0,
+#endif /* RLOGCODE */
+#ifdef CK_SSL
+    "/ssl",        NP_SSL,    0,
+    "/ssl-telnet", NP_SSL_TELNET, 0,
+#endif /* CK_SSL */
+    "/telnet",     NP_TELNET, 0,
+#ifdef CK_SSL
+    "/tls",        NP_TLS,    0,
+    "/tls-telnet", NP_TLS_TELNET, 0,
+#endif /* CK_SSL */
+    "", 0, 0
+};
+static int ntcpraw = (sizeof(tcprawtab) / sizeof(struct keytab)) - 1;
+
 #ifdef RLOGCODE
 _PROTOTYP( int rlog_naws, (void) );
 #endif /* RLOGCODE */
-extern int nawsflg;
-
-extern int me_binary, u_binary;
 #endif /* TCPSOCKET */
 
 #ifdef SUPERLAT
 extern char slat_pwd[18];
 #endif /* SUPERLAT */
-
 #endif /* NETCONN */
+
+#ifdef TNCODE
+extern int tn_wait_flg;
+#endif /* TNCODE */
 
 #ifdef COMMENT
 #ifndef NOSETKEY
@@ -238,13 +446,100 @@ extern int nkverbs;
 #endif /* NOSETKEY */
 #endif /* COMMENT */
 
+#ifdef OS2				/* AUTODOWNLOAD parameters */
+extern int    adl_kmode, adl_zmode;	/* Match Packet to signal download */
+extern char * adl_kstr;			/* KERMIT Download String */
+extern char * adl_zstr;			/* ZMODEM Download String */
+extern int adl_kc0, adl_zc0;		/* Process ADL C0s in emulation */
+#endif /* OS2 */
+
 /* Keyword tables ... */
 
-extern struct keytab onoff[], filtab[], rltab[];
+extern struct keytab onoff[], rltab[];
 extern int nrlt;
- 
+
+/* SET FILE parameters */
+
+static struct keytab filtab[] = {
+#ifndef NOXFER
+#ifdef PATTERNS
+    "binary-patterns",   XYFIBP, 0,
+#endif /* PATTERNS */
+    "bytesize",         XYFILS, 0,
+#ifndef NOCSETS
+    "character-set",    XYFILC, 0,
+#endif /* NOCSETS */
+    "collision",        XYFILX, 0,
+    "destination",      XYFILY, 0,
+    "display",          XYFILD, CM_INV,
+#ifdef CK_TMPDIR
+    "download-directory", XYFILG, 0,
+#endif /* CK_TMPDIR */
+#endif /* NOXFER */
+    "end-of-line",      XYFILA, 0,
+    "eol",              XYFILA, CM_INV,
+#ifdef CK_CTRLZ
+    "eof",              XYFILV, 0,
+#endif /* CK_CTRLZ */
+    "fastlookups",      9997,   CM_INV,
+#ifndef NOXFER
+    "incomplete",       XYFILI, 0,
+#ifdef CK_LABELED
+    "label",            XYFILL, 0,
+#endif /* CK_LABELED */
+    "names",            XYFILN, 0,
+#ifdef UNIX
+    "output",           XYFILH, 0,
+#endif /* UNIX */
+#ifdef PATTERNS
+    "patterns",         XYFIPA, 0,
+#endif /* PATTERNS */
+#ifdef VMS
+    "record-length",    XYFILR, 0,
+#endif /* VMS */
+#ifdef PATTERNS
+    "text-patterns",    XYFITP, 0,
+#endif /* PATTERNS */
+#endif /* NOXFER */
+    "type",             XYFILT, 0,
+#ifdef UNICODE
+    "ucs",              XYFILU, 0,
+#endif /* UNICODE */
+#ifndef NOXFER
+    "warning",          XYFILW, CM_INV
+#endif /* NOXFER */
+};
+static int nfilp = (sizeof(filtab) / sizeof(struct keytab));
+
+struct keytab pathtab[] = {
+    "absolute",  PATH_ABS,  0,
+    "none",      PATH_OFF,  CM_INV,
+    "off",       PATH_OFF,  0,
+    "on",        PATH_ABS,  CM_INV,
+    "relative",  PATH_REL,  0
+};
+int npathtab = (sizeof(pathtab) / sizeof(struct keytab));
+
+struct keytab rpathtab[] = {
+    "absolute",  PATH_ABS,  0,
+    "auto",      PATH_AUTO, 0,
+    "none",      PATH_OFF,  CM_INV,
+    "off",       PATH_OFF,  0,
+    "on",        PATH_ABS,  CM_INV,
+    "relative",  PATH_REL,  0
+};
+int nrpathtab = (sizeof(rpathtab) / sizeof(struct keytab));
+
+#ifdef CK_CTRLZ
+struct keytab eoftab[] = {		/* EOF detection method */
+    "ctrl-z",          1, 0,
+    "length",          0, 0,
+    "noctrl-z",        0, CM_INV
+};
+#endif /* CK_CTRLZ */
+
 struct keytab fttab[] = {		/* File types for SET FILE TYPE */
-    "ascii",     XYFT_B, CM_INV,
+    "ascii",     XYFT_T, CM_INV,
 #ifdef VMS
     "b",         XYFT_B, CM_INV|CM_ABR,
 #endif /* VMS */
@@ -264,7 +559,7 @@ struct keytab fttab[] = {		/* File types for SET FILE TYPE */
 int nfttyp = (sizeof(fttab) / sizeof(struct keytab));
 
 static struct keytab rfttab[] = {	/* File types for REMOTE SET FILE */
-    "ascii",     XYFT_B, CM_INV,
+    "ascii",     XYFT_T, CM_INV,
     "binary",    XYFT_B, 0,
 #ifdef VMS
     "labeled",   XYFT_L, 0,
@@ -277,20 +572,61 @@ static struct keytab rfttab[] = {	/* File types for REMOTE SET FILE */
 };
 static int nrfttyp = (sizeof(rfttab) / sizeof(struct keytab));
 
+#ifdef OS2ORUNIX
+#define ZOF_BLK  0
+#define ZOF_NBLK 1
+#define ZOF_BUF  2
+#define ZOF_NBUF 3
+static struct keytab zoftab[] = {
+    "blocking",    ZOF_BLK,  0,
+    "buffered",    ZOF_BUF,  0,
+    "nonblocking", ZOF_NBLK, 0,
+    "unbuffered",  ZOF_NBUF, 0
+};
+static int nzoftab = (sizeof(zoftab) / sizeof(struct keytab));
+#endif /* OS2ORUNIX */
+
+#ifdef CK_AUTHENTICATION
+extern int auth_type_user[];
+int sl_auth_type_user[AUTHTYPLSTSZ] = {AUTHTYPE_NULL, AUTHTYPE_NULL};
+int sl_auth_saved = 0;
+int sl_topt_a_su = 0;
+int sl_topt_a_s_saved = 0;
+int sl_topt_a_cm = 0;
+int sl_topt_a_c_saved = 0;
+#endif /* CK_AUTHENTICATION */
+#ifdef CK_ENCRYPTION
+extern int cx_type;
+int sl_cx_type = 0;
+int sl_cx_saved = 0;
+int sl_topt_e_su = 0;
+int sl_topt_e_sm = 0;
+int sl_topt_e_s_saved = 0;
+int sl_topt_e_cu = 0;
+int sl_topt_e_cm = 0;
+int sl_topt_e_c_saved = 0;
+#endif /* CK_ENCRYPTION */
 extern char uidbuf[];
 static int uidflag = 0;
+char sl_uidbuf[UIDBUFLEN] = { NUL, NUL };
+int  sl_uid_saved = 0;
+#ifdef TNCODE
+int  sl_tn_wait = 0;
+int  sl_tn_saved = 0;
+#endif /* TNCODE */
+
+extern int query;			/* Global flag for QUERY active */
 
 #ifndef NOSPL
-
-int query = 0;				/* Global flag for QUERY active */
-
+#ifndef NOXFER
 static struct keytab vartyp[] = {	/* Variable types for REMOTE QUERY */
-    "global", (int) 'G', CM_INV,
-    "kermit", (int) 'K', 0,
-    "system", (int) 'S', 0,
-    "user",   (int) 'G', 0
+    "global",   (int) 'G', CM_INV,
+    "kermit",   (int) 'K', 0,
+    "system",   (int) 'S', 0,
+    "user",     (int) 'G', 0
 };
 static int nvartyp = (sizeof(vartyp) / sizeof(struct keytab));
+#endif /* NOXFER */
 #endif /* NOSPL */
 
 #ifdef CK_TIMERS
@@ -301,7 +637,7 @@ static struct keytab timotab[] = {	/* Timer types */
 #endif /* CK_TIMERS */
 
 #ifdef DCMDBUF
-extern char *atxbuf, *atmbuf;			/* Atom buffer */
+extern char *atxbuf, *atmbuf;		/* Atom buffer */
 extern char *cmdbuf;			/* Command buffer */
 extern char *line, *tmpbuf;		/* Character buffers for anything */
 extern int *intime;			/* INPUT TIMEOUT */
@@ -317,8 +653,12 @@ extern int intime[];
 
 #ifndef NOCSETS
 extern struct keytab fcstab[];		/* For SET FILE CHARACTER-SET */
+extern struct csinfo fcsinfo[];		/* File character set info. */
 extern struct keytab ttcstab[];
 extern int nfilc, fcharset, tcharset, ntermc, tcsr, tcsl;
+#ifdef CKOUNI
+extern int tt_utf8;
+#endif /* CKOUNI */
 #ifdef OS2
 _PROTOTYP( int os2setcp, (int) );
 _PROTOTYP( int os2getcp, (void) );
@@ -326,8 +666,9 @@ _PROTOTYP( void os2debugoff, (void) );
 #endif /* OS2 */
 #endif /* NOCSETS */
 
-#ifndef NOSPL
 extern int cmdlvl;			/* Overall command level */
+
+#ifndef NOSPL
 #ifdef DCMDBUF
 extern int *inpcas;			/* INPUT CASE setting on cmd stack */
 #else
@@ -337,9 +678,7 @@ extern int inpcas[];
 
 #ifdef CK_CURSES
 #ifndef VMS
-#ifndef COHERENT
 _PROTOTYP(int tgetent,(char *, char *));
-#endif /* COHERENT */
 #else
 #ifdef __DECC
 _PROTOTYP(int tgetent,(char *, char *));
@@ -355,9 +694,10 @@ _PROTOTYP(int tgetent,(char *, char *));
 #define XMITX 4
 #define XMITS 5
 #define XMITW 6
+#define XMITT 7
 
 #define XMBUFL 50
-extern int xmitf, xmitl, xmitp, xmitx, xmits, xmitw;
+extern int xmitf, xmitl, xmitp, xmitx, xmits, xmitw, xmitt;
 char xmitbuf[XMBUFL+1] = { NUL };	/* TRANSMIT eof string */
 
 struct keytab xmitab[] = {		/* SET TRANSMIT */
@@ -367,7 +707,8 @@ struct keytab xmitab[] = {		/* SET TRANSMIT */
     "linefeed", XMITL, 0,
     "locking-shift", XMITS, 0,
     "pause",    XMITW, 0,
-    "prompt",   XMITP, 0
+    "prompt",   XMITP, 0,
+    "timeout",  XMITT, 0
 };
 int nxmit = (sizeof(xmitab) / sizeof(struct keytab));
 #endif /* NOXMIT */
@@ -400,23 +741,28 @@ struct keytab colxtab[] = { /* SET FILE COLLISION options */
 int ncolx = (sizeof(colxtab) / sizeof(struct keytab));
 
 static struct keytab rfiltab[] = {	/* for REMOTE SET FILE */
+#ifndef NOCSETS
+    "character-set", XYFILC, 0,
+#endif /* NOCSETS */
     "collision",     XYFILX, 0,
+    "incomplete",    XYFILI, 0,
     "names",         XYFILN, 0,
     "record-length", XYFILR, 0,
     "type",          XYFILT, 0
 };
 int nrfilp = (sizeof(rfiltab) / sizeof(struct keytab));
 
-struct keytab eoftab[] = {   		/* File eof delimiters */
+struct keytab eoltab[] = {   		/* File eof delimiters */
     "cr",        XYFA_C, 0,
     "crlf",      XYFA_2, 0,
     "lf",        XYFA_L, 0
 };
-static int neoftab = (sizeof(eoftab) / sizeof(struct keytab));
+static int neoltab = (sizeof(eoltab) / sizeof(struct keytab));
 
 struct keytab fntab[] = {   		/* File naming */
     "converted", XYFN_C, 0,
-    "literal",   XYFN_L, 0
+    "literal",   XYFN_L, 0,
+    "standard",  XYFN_C, CM_INV
 };
 int nfntab = (sizeof(fntab) / sizeof(struct keytab));
 
@@ -433,6 +779,8 @@ static struct keytab trmtab[] = {
     "arrow-keys",    XYTARR, 0,
 #endif /* OS2 */
 #ifdef NT
+    "at",	     XYTATTR, CM_INV|CM_ABR,
+    "att",	     XYTATTR, CM_INV|CM_ABR,
     "attr",	     XYTATTR, CM_INV|CM_ABR,
     "attr-bug",      XYTATTBUG, CM_INV,
 #endif /* NT */
@@ -445,6 +793,8 @@ static struct keytab trmtab[] = {
 #endif /* CK_AUTODL */
 #endif /* CK_APC */
 #ifdef OS2
+    "autopage",      XYTAPAGE,  0,
+    "autoscroll",    XYTASCRL,  0,
     "bell",          XYTBEL, CM_INV,
 #endif /* OS2 */
     "bytesize",      XYTBYT, 0,
@@ -467,6 +817,9 @@ static struct keytab trmtab[] = {
     "cursor",        XYTCUR, 0,
 #endif /* OS2 */
     "debug",         XYTDEB, 0,
+#ifdef OS2
+    "dg-unix-mode",     XYTUNX, 0,
+#endif /* OS2 */
     "echo",          XYTEC,  0,
     "escape-character", XYTESC, 0,
 #ifdef OS2
@@ -476,11 +829,12 @@ static struct keytab trmtab[] = {
 #endif /* OS2 */
     "height",        XYTHIG, 0,
 #ifdef OS2
-#ifdef COMMENT
-    /* not needed anymore -- 5a(191) new screen handler mechanism */
-    "hide-cursor",   XYTHCU, 0,
-#endif /* COMMENT */
+    "idle-send",     XYTIDLE,0,
+#ifndef NOCSETS
+    "kbd-follows-gl/gr", XYTKBDGL, 0,
+#endif /* NOCSETS */
     "key",           XYTKEY, 0,
+    "keyboard-mode", XYTKBMOD, 0,
     "keypad-mode",   XYTKPD, 0,
 #endif /* OS2 */
 #ifndef NOCSETS
@@ -491,12 +845,22 @@ static struct keytab trmtab[] = {
 #endif /* OS2 */
 #endif /* NOCSETS */
     "locking-shift", XYTSO,  0,
+#ifdef OS2
+    "margin-bell",   XYTMBEL, 0,
+#endif /* OS2 */
 #ifdef OS2MOUSE
     "mouse",         XYTMOU, CM_INV,
 #endif /* OS2MOUSE */
     "newline-mode",  XYTNL,  0,
 #ifdef OS2
     "output-pacing", XYTPAC, 0,
+#ifdef PCTERM
+    "pcterm",        XYTPCTERM, 0,
+#endif /* PCTERM */
+#endif /* OS2 */
+#ifdef OS2ORUNIX
+    "print",         XYTPRN, 0,
+#endif /* OS2ORUNIX */
 #ifndef NOCSETS
 #ifdef OS2
     "remote-character-set", XYTRCS,  0,
@@ -504,28 +868,51 @@ static struct keytab trmtab[] = {
     "remote-character-set", XYTRCS,  CM_INV,
 #endif /* OS2 */
 #endif /* NOCSETS */
+#ifdef OS2
     "roll-mode",     XYTROL, 0,
+    "s",             XYTUPD, CM_ABR|CM_INV,
+    "sc",            XYTUPD, CM_ABR|CM_INV,
+    "scr",           XYTUPD, CM_ABR|CM_INV,
+    "scree",         XYTUPD, CM_ABR|CM_INV,
+    "screen",        XYTUPD, CM_ABR|CM_INV,
+    "screen-",       XYTUPD, CM_ABR|CM_INV,
+    "screen-mode",   XYTSCNM,   0,
+    "screen-optimize", XYTOPTI, 0,
     "screen-update", XYTUPD, 0,
     "scrollback",    XYSCRS, 0,
     "send-data",     XYTSEND, 0,
     "send-end-of-block", XYTSEOB, 0,
     "sgr-colors",    XYTSGRC, 0,
+    "sni-ch.code",   XYTSNICC, 0,
+    "sni-firmware-versions", XYTSNIFV, 0,
+    "sni-language",  XYTVTLNG, 0,
+    "sni-pagemode",  XYTSNIPM, CM_INV,
+    "sni-scrollmode",XYTSNISM, CM_INV,
+    "spacing-attribute-character", XYTSAC, CM_INV,
     "statusline",    XYTSTAT, 0,
     "transmit-timeout", XYTCTS, 0,
+#endif /* OS2 */
+#ifdef CK_TRIGGER
+    "trigger",       XYTRIGGER, 0,
+#endif /* CK_TRIGGER */
+#ifdef OS2
     "type",          XYTTYP, 0,
 #else
     "type",          XYTTYP, CM_INV,
 #endif /* OS2 */
 
-#ifdef OS2
 #ifndef NOCSETS
-#ifdef CKOUNI
+#ifdef UNICODE
     "unicode",       XYTUNI, CM_INV,
-#endif /* CKOUNI */
+#endif /* UNICODE */
 #endif /* NOCSETS */
+#ifdef OS2
+    "unix-mode",     XYTUNX, CM_INV,
 #ifdef NT
     "video-change",  XYTVCH, 0,
 #endif /* NT */
+    "vt-language",   XYTVTLNG, 0,
+    "vt-nrc-mode",   XYTVTNRC, 0,
 #endif /* OS2 */
     "width",         XYTWID, 0,
 #ifdef OS2
@@ -555,15 +942,77 @@ int nroll = (sizeof(rolltab) / sizeof(struct keytab));
 #define TT_GR_G1  1
 #define TT_GR_G2  2
 #define TT_GR_G3  3
+#define TT_GR_KBD 4
 struct keytab graphsettab[] = {  /* DEC VT Graphic Sets */
     "all",   TT_GR_ALL, 0,
     "g0",    TT_GR_G0,  0,
     "g1",    TT_GR_G1,  0,
     "g2",    TT_GR_G2,  0,
-    "g3",    TT_GR_G3,  0
+    "g3",    TT_GR_G3,  0,
+    "keyboard", TT_GR_KBD, 0,
+    "", 0, 0
 };
-int ngraphset = (sizeof(graphsettab) / sizeof(struct keytab));
+int ngraphset = (sizeof(graphsettab) / sizeof(struct keytab)) - 1;
 
+struct keytab adltab[] = {		/* Autodownload Options */
+    "kermit", 		TAD_K,  	0,
+    "off",		TAD_OFF, 	0,
+    "on",		TAD_ON,		0,
+    "zmodem",	 	TAD_Z,  	0
+};
+int nadltab = (sizeof(adltab) / sizeof(struct keytab));
+
+struct keytab adlxtab[] = {		/* Autodownload Options */
+    "c0-conflicts",     TAD_X_C0,       0,
+    "detection-method", TAD_X_DETECT, 	0,
+    "string", 		TAD_X_STR,  	0
+};
+int nadlxtab = (sizeof(adlxtab) / sizeof(struct keytab));
+
+struct keytab adldtab[] = {		/* Auto-dl Detection Methods */
+    "packet",	ADL_PACK,	0,
+    "string",	ADL_STR,	0
+};
+int nadldtab = (sizeof(adldtab) / sizeof(struct keytab));
+
+struct keytab adlc0tab[] = {		/* Auto-dl Detection Methods */
+    "ignored-by-emulator",	0,	0,
+    "processed-by-emulator",	1,	0
+};
+int nadlc0tab = (sizeof(adlc0tab) / sizeof(struct keytab));
+
+struct keytab vtlangtab[] = {
+    "belgian",        VTL_BELGIAN , 0,
+    "british",        VTL_BRITISH , 0,
+    "canadian",       VTL_CANADIAN, 0,
+    "czech",          VTL_CZECH   , 0,
+    "danish",         VTL_DANISH  , 0,
+    "dutch",          VTL_DUTCH   , 0,
+    "finnish",        VTL_FINNISH , 0,
+    "french",         VTL_FRENCH  , 0,
+    "french-canadian",VTL_FR_CAN  , 0,
+    "german",         VTL_GERMAN  , 0,
+    "greek",          VTL_GREEK   , 0,
+    "hebrew",         VTL_HEBREW  , 0,
+    "hungarian",      VTL_HUNGARIA, 0,
+    "italian",        VTL_ITALIAN , 0,
+    "latin-american", VTL_LATIN_AM, 0,
+    "north-american", VTL_NORTH_AM, 0,
+    "norwegian",      VTL_NORWEGIA, 0,
+    "polish",         VTL_POLISH  , 0,
+    "portugese",      VTL_PORTUGES, 0,
+    "romanian",       VTL_ROMANIAN, 0,
+    "russian",        VTL_RUSSIAN , 0,
+    "scs",            VTL_SCS     , CM_INV,
+    "slovak",         VTL_SLOVAK  , 0,
+    "spanish",        VTL_SPANISH , 0,
+    "swedish",        VTL_SWEDISH , 0,
+    "swiss-french",   VTL_SW_FR   , 0,
+    "swiss-german",   VTL_SW_GR   , 0,
+    "turkish-f",      VTL_TURK_F  , CM_INV,
+    "turkish-q",      VTL_TURK_Q  , CM_INV
+};
+int nvtlangtab = (sizeof(vtlangtab) / sizeof(struct keytab));
 #endif /* OS2 */
 
 struct keytab crdtab[] = {		/* Carriage-return display */
@@ -583,6 +1032,30 @@ static struct keytab apctab[] = {	/* Terminal APC parameters */
 #endif /* NOLOCAL */
 
 extern int autodl;
+
+struct keytab beltab[] = {		/* Terminal bell mode */
+#ifdef OS2
+    "audible", XYB_AUD,  0,
+    "none",    XYB_NONE, 0,
+#else
+    "audible", XYB_AUD,  CM_INV,
+    "none",    XYB_NONE, CM_INV,
+#endif /* OS2 */
+#ifdef OS2
+    "off",     XYB_NONE, CM_INV,
+    "on",      XYB_AUD,  CM_INV,
+#else
+    "off",     XYB_NONE, 0,
+    "on",      XYB_AUD,  0,
+#endif /* OS2 */
+#ifdef OS2
+    "visible", XYB_VIS,  0,
+#endif /* OS2 */
+    "", 0, 0
+};
+int nbeltab = sizeof(beltab)/sizeof(struct keytab) - 1;
+
+int tt_unicode = 1;			/* Use Unicode if possible */
 
 #ifdef OS2
 /*
@@ -606,17 +1079,17 @@ struct keytab os2devtab[] = {
     "com7", 7, 0,
     "com8", 8, 0
 #ifdef OS2ONLY
-   ,"slipcom1", 1, 0,          /* For use with SLIP driver */
-    "slipcom2", 2, 0,
-    "slipcom3", 3, 0,          /* shared access            */
+   ,"slipcom1", 1, 0,			/* For use with SLIP driver */
+    "slipcom2", 2, 0,			/* shared access */
+    "slipcom3", 3, 0,
     "slipcom4", 4, 0,
     "slipcom5", 5, 0,
     "slipcom6", 6, 0,
     "slipcom7", 7, 0,
     "slipcom8", 8, 0,
-    "pppcom1", 1, 0,          /* For use with PPP driver */
-    "pppcom2", 2, 0,
-    "pppcom3", 3, 0,          /* shared access            */
+    "pppcom1", 1, 0,			/* For use with PPP driver */
+    "pppcom2", 2, 0,			/* shared access */
+    "pppcom3", 3, 0,
     "pppcom4", 4, 0,
     "pppcom5", 5, 0,
     "pppcom6", 6, 0,
@@ -639,9 +1112,9 @@ struct keytab os2ppptab[] = {
     "8",    8, CM_INV,
     "9",    9, CM_INV,
     "ppp0", 0, 0,
-    "ppp1", 1, 0,          /* For use with PPP driver */
-    "ppp2", 2, 0,
-    "ppp3", 3, 0,          /* shared access            */
+    "ppp1", 1, 0,			/* For use with PPP driver */
+    "ppp2", 2, 0,			/* shared access */
+    "ppp3", 3, 0,
     "ppp4", 4, 0,
     "ppp5", 5, 0,
     "ppp6", 6, 0,
@@ -654,7 +1127,7 @@ int nos2ppp = (sizeof(os2ppptab) / sizeof(struct keytab));
 
 /*
   Terminal parameters that can be set by SET commands.
-  Used by the ck?con.c terminal emulator code.  
+  Used by the ck?con.c terminal emulator code.
   For now, only used for #ifdef OS2.  Should add these for Macintosh.
 */
 int tt_arrow = TTK_NORM;		/* Arrow key mode: normal (cursor) */
@@ -665,15 +1138,12 @@ int tt_type = TT_VT320;			/* Terminal type, initially VT320 */
 int tt_type_mode = TT_VT320;    	/* Terminal type set by host command */
 int tt_cursor = 0;			/* Terminal cursor, 0 = Underline */
 int tt_cursor_usr = 0;			/* Users Terminal cursor type */
+int tt_cursorena_usr = 1;		/* Users Terminal cursor enabled */
 int tt_answer = 0;			/* Terminal answerback (disabled) */
 int tt_scrsize[VNUM] = {512,512,512,1};	/* Terminal scrollback buffer size */
-int tt_bell = XYB_AUD | XYB_SYS;	/* Bell (system sounds) */
 int tt_roll[VNUM] = {1,1,1,1};		/* Terminal roll (on) */
 int tt_pacing = 0;			/* Terminal output-pacing (none) */
 int tt_inpacing = 0;			/* Terminal input-pacing (none) */
-#ifdef COMMENT 
-int tt_hide = 0;			/* Terminal hide-cursor (off) */
-#endif /* COMMENT */
 int tt_ctstmo = 15;			/* Terminal transmit-timeout */
 int tt_codepage = -1;			/* Terminal code-page */
 int tt_update = 100;			/* Terminal screen-update interval */
@@ -684,14 +1154,19 @@ int tt_font = TTF_ROM;			/* Terminal screen font */
 int tt_status = 1;			/* Terminal status line displayed */
 int tt_status_usr = 1;
 #else  /* KUI */
+#ifdef K95G
+int tt_status = 1;			/* Terminal status line displayed */
+int tt_status_usr = 1;
+#else /* K95G */
 int tt_status = 0;			/* Terminal status line displayed */
 int tt_status_usr = 0;
+#endif /* K95G */
 #endif /* KUI */
-#ifdef CKOUNI
-int tt_unicode = 1;			/* Use Unicode if possible */
-#endif /* CKOUNI */
 int tt_senddata = 0;			/* Let host read terminal data */
 extern int wy_blockend;			/* Terminal Send Data EOB type */
+int tt_hidattr = 1;			/* Attributes are hidden */
+int tt_idlesnd_tmo = 0;			/* Idle Send Timeout, disabled */
+char * tt_idlesnd_str = NULL;		/* Idle Send String, none */
 
 extern unsigned char colornormal, colorselect,
 colorunderline, colorstatus, colorhelp, colorborder,
@@ -702,16 +1177,9 @@ extern int trueblink, trueunderline, truereverse;
 extern int bgi, fgi;
 extern int scrninitialized[];
 
-struct keytab beltab[] = {		/* Terminal bell mode */
-    "audible", XYB_AUD, 0,
-    "none",    XYB_NONE, 0,
-    "visible", XYB_VIS, 0
-};
-int nbeltab = sizeof(beltab)/sizeof(struct keytab);
-
 struct keytab audibletab[] = {		/* Terminal Bell Audible mode */
     "beep",          XYB_BEEP, 0,	/* Values ORd with bell mode */
-    "system-sounds", XYB_SYS, 0   
+    "system-sounds", XYB_SYS, 0
 };
 int naudibletab = sizeof(audibletab)/sizeof(struct keytab);
 
@@ -759,16 +1227,35 @@ struct keytab ttycoltab[] = {			/* Terminal Screen coloring */
 };
 int ncolors = (sizeof(ttycoltab) / sizeof(struct keytab));
 
-#define TTATTBLI 0
-#define TTATTREV 1
-#define TTATTUND 2
+#define TTATTNOR  0
+#define TTATTBLI  1
+#define TTATTREV  2
+#define TTATTUND  3
+#define TTATTPRO  4
+#define TTATTBLD  5
+#define TTATTDIM  6
+#define TTATTINV  7
+#define TTATTDONE 8
 
 struct keytab ttyattrtab[] = {
     "blink", 	TTATTBLI, 0,
+    "protected",TTATTPRO, 0,
     "reverse",	TTATTREV, 0,
     "underline",TTATTUND, 0
 };
 int nattrib = (sizeof(ttyattrtab) / sizeof(struct keytab));
+
+struct keytab ttyprotab[] = {
+    "bold",        TTATTBLD, 0,
+    "dim",	   TTATTDIM, 0,
+    "done",	   TTATTDONE, CM_INV,
+    "invisible",   TTATTINV, 0,
+    "normal",	   TTATTNOR, 0,
+    "reverse",	   TTATTREV, 0,
+    "underlined",  TTATTUND, 0
+
+};
+int nprotect = (sizeof(ttyprotab) / sizeof(struct keytab));
 
 struct keytab ttyseobtab[] = {
     "crlf_etx",	 1, 0,
@@ -810,19 +1297,33 @@ struct keytab ttycurtab[] = {
 int ncursors = 3;
 
 struct keytab ttyptab[] = {
+    "aixterm",  TT_AIXTERM, 0,          /* IBM AIXterm */
     "ansi-bbs", TT_ANSI,    0,		/* ANSI.SYS (BBS) */
     "at386",    TT_AT386,   0,		/* Unixware ANSI */
-    "avatar/0+", TT_ANSI,   0,          /* AVATAR/0+ */
+    "avatar/0+",TT_ANSI,    0,          /* AVATAR/0+ */
+    "ba80",     TT_BA80,    0,          /* Nixdorf BA80 */
+    "be",       TT_BEOS,    CM_INV|CM_ABR,
+    "beos-ansi",TT_BEOS,    CM_INV,     /* BeOS ANSI */
+    "beterm",   TT_BEOS,    0,          /* BeOS Terminal (as of PR2 ) */
+    "d200",     TT_DG200,   CM_INV|CM_ABR, /* Data General DASHER 200 */
+    "d210",     TT_DG210,   CM_INV|CM_ABR, /* Data General DASHER 210 */
+    "d217",     TT_DG217,   CM_INV|CM_ABR, /* Data General DASHER 217 */
     "dg200",    TT_DG200,   0,		/* Data General DASHER 200 */
-    "dg210",    TT_DG200,   0,          /* Data General DASHER 210 */
+    "dg210",    TT_DG210,   0,          /* Data General DASHER 210 */
+    "dg217",    TT_DG217,   0,          /* Data General DASHER 217 */
+    "h1500",    TT_HZL1500, CM_INV,    	/* Hazeltine 1500 */
     "h19",      TT_H19,     CM_INV,	/* Heath-19 */
     "heath19",  TT_H19,     0,		/* Heath-19 */
-    "hp2621",   TT_HP2621,  0,		/* HP 2621A */
+    "hft",      TT_HFT,     0,          /* IBM High Function Terminal */
+    "hp2621a",  TT_HP2621,  0,		/* HP 2621A */
+    "hpterm",   TT_HPTERM,  0,		/* HP TERM */
     "hz1500",   TT_HZL1500, 0,    	/* Hazeltine 1500 */
-#ifdef COMMENT
-    "ibm",      TT_IBM,     CM_INV,     /* IBM 3101-xx,3161 */
-#endif /* COMMENT */
+    "ibm3151",  TT_IBM31,   CM_INV,	/* IBM 3101-xx,3161 */
+    "linux",    TT_LINUX,   0,          /* Linux */
+    "qansi",    TT_QANSI,   0,		/* QNX ANSI */
+    "qnx",      TT_QNX,     0,		/* QNX Console */
     "scoansi",  TT_SCOANSI, 0,		/* SCO ANSI */
+    "sni-97801",TT_97801, 0,		/* SNI 97801 */
 /*
   The idea of NONE is to let the console driver handle the escape sequences,
   which, in theory at least, would give not only ANSI emulation, but also any
@@ -854,11 +1355,20 @@ struct keytab ttyptab[] = {
     "tvi950",  TT_TVI950, 0,
     "vc404",   TT_VC4404, 0,
     "vc4404",  TT_VC4404, CM_INV,
+    "vip7809", TT_VIP7809, 0,
     "vt100",   TT_VT100, 0,
     "vt102",   TT_VT102, 0,
     "vt220",   TT_VT220, 0,
+    "vt220pc", TT_VT220PC, 0,
     "vt320",   TT_VT320, 0,
+    "vt320pc", TT_VT320PC, 0,
     "vt52",    TT_VT52,  0,
+#ifdef NT
+    "vtnt",    TT_VTNT,  0,
+#else /* NT */
+    "vtnt",    TT_VTNT,  CM_INV,
+#endif /* NT */
+    "wy160",   TT_WY160, 0,
     "wy30",    TT_WY30,  0,
     "wy370",   TT_WY370, 0,
     "wy50",    TT_WY50,  0,
@@ -871,22 +1381,35 @@ struct keytab ttyptab[] = {
 int nttyp = (sizeof(ttyptab) / sizeof(struct keytab));
 
 struct keytab ttkeytab[] = {
+    "aixterm",  TT_AIXTERM, 0,          /* IBM AIXterm */
     "ansi-bbs",  TT_ANSI,    0,		/* ANSI.SYS (BBS) */
     "at386",     TT_AT386,   0,		/* Unixware ANSI */
-    "avatar/0+", TT_ANSI,   0,          /* AVATAR/0+ */
+    "avatar/0+", TT_ANSI,    0,         /* AVATAR/0+ */
+    "ba80",      TT_BA80,    0,         /* Nixdorf BA80 */
+    "be",        TT_BEOS,    CM_INV|CM_ABR,
+    "beos-ansi", TT_BEOS,    CM_INV,    /* BeOS ANSI */
+    "beterm",    TT_BEOS,    0,         /* BeOS Terminal (as of PR2) */
+    "d200",      TT_DG200,   CM_INV|CM_ABR, /* Data General DASHER 200 */
+    "d210",      TT_DG210,   CM_INV|CM_ABR, /* Data General DASHER 210 */
+    "d217",      TT_DG217,   CM_INV|CM_ABR, /* Data General DASHER 217 */
     "dg200",     TT_DG200,   0,		/* Data General DASHER 200 */
-    "dg210",     TT_DG200,   0,         /* Data General DASHER 210 */
-    "emacs",     TT_MAX+1,   0,         /* Emacs mode */ 
+    "dg210",     TT_DG210,   0,    	/* Data General DASHER 210 */
+    "dg217",     TT_DG217,   0,    	/* Data General DASHER 217 */
+    "emacs",     TT_KBM_EMACS,   0,     /* Emacs mode */
     "h19",       TT_H19,     CM_INV,	/* Heath-19 */
     "heath19",   TT_H19,     0,		/* Heath-19 */
-    "hebrew",    TT_MAX+2,   0,         /* Hebrew mode */
-    "hp2621",    TT_HP2621,  0,		/* HP 2621A */
+    "hebrew",    TT_KBM_HEBREW,   0,    /* Hebrew mode */
+    "hft",       TT_HFT,     0,         /* IBM High Function Terminal */
+    "hp2621a",   TT_HP2621,  0,		/* HP 2621A */
+    "hpterm",    TT_HPTERM,  0,		/* HP TERM */
     "hz1500",    TT_HZL1500, 0,    	/* Hazeltine 1500 */
-#ifdef COMMENT
-    "ibm",       TT_IBM,     CM_INV,    /* IBM 3101-xx,3161 */
-#endif /* COMMENT */
-    "russian",   TT_MAX+3,   0,         /* Russian mode */
+    "ibm3151",   TT_IBM31,   CM_INV,	/* IBM 3101-xx,3161 */
+    "linux",     TT_LINUX,   0,         /* Linux */
+    "qansi",     TT_QANSI,         0,   /* QNX ANSI */
+    "qnx",       TT_QNX,           0,   /* QNX */
+    "russian",   TT_KBM_RUSSIAN,   0,   /* Russian mode */
     "scoansi",   TT_SCOANSI, 0,		/* SCO ANSI */
+    "sni-97801", TT_97801, 0,           /* SNI 97801 */
 #ifdef OS2PM
 #ifdef COMMENT
     "tek4014", TT_TEK40, 0,
@@ -898,11 +1421,17 @@ struct keytab ttkeytab[] = {
     "tvi950",  TT_TVI950, 0,
     "vc404",   TT_VC4404, 0,
     "vc4404",  TT_VC4404, CM_INV,
+    "vip7809", TT_VIP7809, 0,
     "vt100",   TT_VT100, 0,
     "vt102",   TT_VT102, 0,
     "vt220",   TT_VT220, 0,
+    "vt220pc", TT_VT220PC, 0,
     "vt320",   TT_VT320, 0,
+    "vt320pc", TT_VT320PC, 0,
     "vt52",    TT_VT52,  0,
+    "vtnt",    TT_VTNT,  CM_INV,
+    "wp",      TT_KBM_WP,   0,		/* Word Perfect mode */
+    "wy160",   TT_WY160,  0,
     "wy30",    TT_WY30,  0,
     "wy370",   TT_WY370, 0,
     "wy50",    TT_WY50,  0,
@@ -913,6 +1442,17 @@ struct keytab ttkeytab[] = {
     "wyse60",  TT_WY60,  CM_INV
 };
 int nttkey = (sizeof(ttkeytab) / sizeof(struct keytab));
+
+struct keytab kbmodtab[] = {
+    "normal",  KBM_EN, 0,
+    "none",    KBM_EN, CM_INV,
+    "emacs",   KBM_EM, 0,
+    "english", KBM_EN, CM_INV,
+    "hebrew",  KBM_HE, 0,
+    "russian", KBM_RU, 0,
+    "wp",      KBM_WP, 0
+};
+int nkbmodtab = (sizeof(kbmodtab) / sizeof(struct keytab));
 
 struct keytab prtytab[] = { /* OS/2 Priority Levels */
     "foreground-server", XYP_SRV, 0,
@@ -925,9 +1465,13 @@ int nprty = (sizeof(prtytab) / sizeof(struct keytab));
 
 #ifdef NT
 struct keytab win95tab[] = { /* Win95 work-arounds */
+    "8.3-filenames",         XYW8_3, 0,
     "alt-gr", 		     XYWAGR, 0,
     "keyboard-translation",  XYWKEY, 0,
-    "overlapped-io",         XYWOIO, 0
+    "lucida-substitutions",  XYWLUC, 0,
+    "overlapped-io",         XYWOIO, 0,
+    "popups",                XYWPOPUP, 0,
+    "select-bug",            XYWSELECT, 0
 };
 int nwin95 = (sizeof(win95tab) / sizeof(struct keytab));
 #endif /* NT */
@@ -1027,6 +1571,7 @@ static struct keytab fdtab[] = {	/* SET FILE DISPLAY options */
     "quiet",  XYFD_N, CM_INV
 
 #else					/* Not Mac */
+    "brief", XYFD_B, 0,			/* Brief */
     "crt", XYFD_S, 0,			/* CRT display */
 #ifdef CK_CURSES
 #ifdef COMMENT
@@ -1050,20 +1595,57 @@ struct keytab rsrtab[] = {		/* For REMOTE SET RECEIVE */
 int nrsrtab = (sizeof(rsrtab) / sizeof(struct keytab));
 
 /* Send/Receive Parameters */
- 
+
 struct keytab srtab[] = {
+    "backup", XYBUP, 0,
+#ifndef NOCSETS
+    "character-set-selection", XYCSET, 0,
+#endif /* NOCSETS */
     "control-prefix", XYQCTL, 0,
+#ifdef CKXXCHAR
+    "double-character", XYDBL, 0,
+#endif /* CKXXCHAR */
     "end-of-packet", XYEOL, 0,
+#ifdef PIPESEND
+    "filter", XYFLTR, 0,
+#endif /* PIPESEND */
+#ifdef CKXXCHAR
+    "ignore-character", XYIGN, 0,
+#endif /* CKXXCHAR */
+    "move-to", XYMOVE, 0,
+    "negotiation-string-max-length", XYINIL, CM_INV,
     "packet-length", XYLEN, 0,
     "pad-character", XYPADC, 0,
     "padding", XYNPAD, 0,
     "pathnames", XYFPATH, 0,
     "pause", XYPAUS, 0,
     "quote", XYQCTL, CM_INV,		/* = CONTROL-PREFIX */
+    "rename-to", XYRENAME, 0,
     "start-of-packet", XYMARK, 0,
-    "timeout", XYTIMO, 0
+    "timeout", XYTIMO, 0,
+#ifdef VMS
+    "version-numbers", 887, 0,		/* VMS version numbers */
+#endif /* VMS */
+    "", 0, 0
 };
-int nsrtab = (sizeof(srtab) / sizeof(struct keytab));
+int nsrtab = (sizeof(srtab) / sizeof(struct keytab)) - 1;
+
+#ifdef UNICODE
+#define UCS_BOM 1
+#define UCS_BYT 2
+static struct keytab ucstab[] = {
+    "bom",        UCS_BOM, 0,
+    "byte-order", UCS_BYT, 0,
+    "", 0, 0
+};
+int nucstab = (sizeof(ucstab) / sizeof(struct keytab)) - 1;
+
+static struct keytab botab[] = {
+    "big-endian", 0, 0,
+    "little-endian", 1, 0
+};
+static int nbotab = 2;
+#endif /* UNICODE */
 
 /* REMOTE SET */
 
@@ -1071,12 +1653,13 @@ struct keytab rmstab[] = {
     "attributes",  XYATTR, 0,
     "block-check", XYCHKT, 0,
     "file",        XYFILE, 0,
-    "incomplete",  XYIFD,  0,
+    "incomplete",  XYIFD,  CM_INV, /* REMOTE SET FILE INCOMPLETE preferred */
     "receive",     XYRECV, 0,
     "retry",       XYRETR, 0,
     "server",      XYSERV, 0,
     "transfer",    XYXFER, 0,
-    "window",      XYWIND, 0
+    "window",      XYWIND, 0,
+    "xfer",        XYXFER, CM_INV
 };
 int nrms = (sizeof(rmstab) / sizeof(struct keytab));
 
@@ -1086,7 +1669,7 @@ struct keytab attrtab[] = {
 #endif /* STRATUS */
     "all",           AT_XALL, 0,
 #ifdef COMMENT
-    "blocksize",     AT_BLKS, 0,	/* not used */
+    "blocksize",     AT_BLKS, 0,	/* (not used) */
 #endif /* COMMENT */
 #ifndef NOCSETS
     "character-set", AT_ENCO, 0,
@@ -1104,18 +1687,29 @@ struct keytab attrtab[] = {
     "off",           AT_ALLN, 0,
     "on",            AT_ALLY, 0,
 #ifdef COMMENT
-    "os-specific",   AT_SYSP, 0,	/* not used by UNIX or VMS */
+    "os-specific",   AT_SYSP, 0,	/* (not used by UNIX or VMS) */
 #endif /* COMMENT */
+#ifdef CK_PERMS
+    "protection",    AT_LPRO, 0,
+    "permissions",   AT_LPRO, CM_INV,
+#endif /* CK_PERMS */
     "system-id",     AT_SYSI, 0,
     "type",          AT_FTYP, 0
 };
 int natr = (sizeof(attrtab) / sizeof(struct keytab)); /* how many attributes */
 
 #ifndef NOSPL
-extern int indef, inecho, insilence, inbufsize;
+extern int indef, inecho, insilence, inbufsize, inautodl, inintr;
 extern char * inpbuf, * inpbp;
+#ifdef OS2
+extern int interm;
+#endif /* OS2 */
 struct keytab inptab[] = {		/* SET INPUT parameters */
+#ifdef CK_AUTODL
+    "autodownload",    IN_ADL, 0,
+#endif /* CK_AUTODL */
     "buffer-length",   IN_BUF, 0,
+    "cancellation",    IN_CAN, 0,
     "case",            IN_CAS, 0,
     "default-timeout", IN_DEF, CM_INV,	/* There is no default timeout */
     "echo",            IN_ECH, 0,
@@ -1123,6 +1717,9 @@ struct keytab inptab[] = {		/* SET INPUT parameters */
     "pacing",          IN_PAC, CM_INV,
 #endif /* OS2 */
     "silence",         IN_SIL, 0,
+#ifdef OS2
+    "terminal",	       IN_TRM, 0,
+#endif /* OS2 */
     "timeout-action",  IN_TIM, 0
 };
 int ninp = (sizeof(inptab) / sizeof(struct keytab));
@@ -1139,11 +1736,23 @@ struct keytab incast[] = {		/* SET INPUT CASE parameters */
 #endif /* NOSPL */
 
 struct keytab nabltab[] = {		/* For any command that needs */
-    "disabled", 0, 0,			/* these keywords... */
-    "enabled",  1, 0
+    "disabled", 0, 0,
+    "enabled",  1, 0,
+    "off",      0, CM_INV,		/* these keywords... */
+    "on",       1, CM_INV
 };
+int nnabltab = sizeof(nabltab) / sizeof(struct keytab);
 
-#ifdef OS2 
+#ifdef OS2
+struct keytab tvctab[] = {		/* SET TERM VIDEO-CHANGE */
+    "disabled",   TVC_DIS, 0,
+    "enabled",    TVC_ENA, 0
+#ifdef NT
+    ,"win95-safe", TVC_W95, 0
+#endif /* NT */
+};
+int ntvctab = sizeof(tvctab) / sizeof(struct keytab);
+
 struct keytab msktab[] = { /* SET MS-DOS KERMIT compatibilities */
 #ifdef COMMENT
     "color", MSK_COLOR,  0,
@@ -1152,13 +1761,13 @@ struct keytab msktab[] = { /* SET MS-DOS KERMIT compatibilities */
 };
 int nmsk = (sizeof(msktab) / sizeof(struct keytab));
 
-struct keytab scrnupd[] = { /* SET TERMINAL SCREEN-UPDATE */
-    "fast", TTU_FAST,  0,          
-    "smooth", TTU_SMOOTH, 0        
+struct keytab scrnupd[] = {		/* SET TERMINAL SCREEN-UPDATE */
+    "fast", TTU_FAST,  0,
+    "smooth", TTU_SMOOTH, 0
 };
 int nscrnupd = (sizeof(scrnupd) / sizeof(struct keytab));
 
-struct keytab termfont[] = { /* SET TERMINAL FONT */
+struct keytab termfont[] = {		/* SET TERMINAL FONT */
 #ifdef COMMENT
     "cp111", TTF_111, 0,
     "cp112", TTF_112, 0,
@@ -1196,20 +1805,38 @@ int ntermfont = (sizeof(termfont) / sizeof(struct keytab));
 
 struct keytab anbktab[] = {		/* For any command that needs */
     "message", 2, 0,			/* these keywords... */
-    "off",     0, 0,			
+    "off",     0, 0,
     "on",      1, 0,
     "unsafe-messag0", 99, CM_INV,
     "unsafe-message", 3,  CM_INV
 };
 int nansbk = (sizeof(anbktab) / sizeof(struct keytab));
 
+int win95_popup = 1;
+#ifdef NT
+int win95altgr  = 0;
+#ifdef KUI
+int win95lucida = 0;
+#else /* KUI */
+int win95lucida = 1;
+#endif /* KUI */
+extern int win95selectbug;
+extern int win95_8_3;
+
+#ifdef COMMENT
+extern CHAR (*xlr[MAXTCSETS+1][MAXFCSETS+1])(CHAR);
+extern struct keytab tcstab[];
+extern int ntcs;
+#endif /* COMMENT */
+extern int maxow, maxow_usr; owwait;    /* Overlapped I/O variables */
+#endif /* NT */
 #endif /* OS2 */
 
-
+
 /* The following routines broken out of doprm() to give compilers a break. */
 
 /*  S E T O N  --  Parse on/off (default on), set parameter to result  */
- 
+
 int
 seton(prm) int *prm; {
     int x, y;
@@ -1218,7 +1845,24 @@ seton(prm) int *prm; {
     *prm = y;
     return(1);
 }
- 
+
+/*  S E T O N A U T O --  Parse on/off/auto (default auto) & set result */
+
+struct keytab onoffaut[] = {
+    "auto", SET_AUTO, 0,		/* 2 */
+    "off",  SET_OFF,  0,		/* 0 */
+    "on",   SET_ON,   0			/* 1 */
+};
+
+int
+setonaut(prm) int *prm; {
+    int x, y;
+    if ((y = cmkey(onoffaut,3,"","auto",xxstring)) < 0) return(y);
+    if ((x = cmcfm()) < 0) return(x);
+    *prm = y;
+    return(1);
+}
+
 /*  S E T N U M  --  Set parameter to result of cmnum() parse.  */
 /*
  Call with pointer to integer variable to be set,
@@ -1228,7 +1872,6 @@ seton(prm) int *prm; {
 */
 int
 setnum(prm,x,y,max) int x, y, *prm, max; {
-    extern int cmflgs;
     debug(F101,"setnum","",y);
     if (y == -3) {
 	printf("\n?Value required\n");
@@ -1247,7 +1890,7 @@ setnum(prm,x,y,max) int x, y, *prm, max; {
     *prm = x;
     return(1);
 }
- 
+
 /*  S E T C C  --  Set parameter var to an ASCII control character value.  */
 /*
   Parses a number, or a literal control character, or a caret (^) followed
@@ -1263,7 +1906,7 @@ setcc(dflt,var) char *dflt; int *var; {
  numeric ASCII value,\n\
  or in ^X notation,\n\
  or preceded by a backslash and entered literally";
-    
+
     /* This is a hack to turn off complaints from expression evaluator. */
     x_ifnum = 1;
     y = cmnum(hlpmsg, dflt, 10, &x, xxstring); /* Parse a number */
@@ -1316,10 +1959,867 @@ setcc(dflt,var) char *dflt; int *var; {
     return(1);
 }
 
+#ifndef NOSPL				/* The SORT command... */
+
+static struct keytab srtswtab[] = {	/* SORT command switches */
+    "/case",    SRT_CAS, CM_ARG,
+    "/key",     SRT_KEY, CM_ARG,
+    "/numeric", SRT_NUM, 0,
+    "/range",   SRT_RNG, CM_ARG,
+    "/reverse", SRT_REV, 0
+};
+static int nsrtswtab = sizeof(srtswtab)/sizeof(struct keytab);
+
+extern char **a_ptr[];			/* Array pointers */
+extern int a_dim[];			/* Array dimensions */
+
+int
+dosort() {				/* Do the SORT command */
+    char c, *p = NULL, ** ap, ** xp = NULL;
+    struct FDB sw, fl, cm;
+    int hi, lo;
+    int xn = 0, xr = -1, xk = -1, xc = -1, xs = 0;
+    int getval = 0, range[2], confirmed = 0;
+
+    cmfdbi(&sw,				/* First FDB - command switches */
+	   _CMKEY,			/* fcode */
+	   "Array name or switch",
+	   "",				/* default */
+	   "",				/* addtl string data */
+	   nsrtswtab,			/* addtl numeric data 1: tbl size */
+	   4,				/* addtl numeric data 2: 4 = cmswi */
+	   NULL,			/* Processing function */
+	   srtswtab,			/* Keyword table */
+	   &fl				/* Pointer to next FDB */
+	   );
+    cmfdbi(&fl,				/* Anything that doesn't match */
+	   _CMFLD,			/* fcode */
+	   "Array name",		/* hlpmsg */
+	   "",				/* default */
+	   "",				/* addtl string data */
+	   0,				/* addtl numeric data 1 */
+	   0,				/* addtl numeric data 2 */
+	   NULL,
+	   NULL,
+	   &cm
+	   );
+    cmfdbi(&cm,				/* Or premature confirmation */
+	   _CMCFM,			/* fcode */
+	   "",				/* hlpmsg */
+	   "",				/* default */
+	   "",				/* addtl string data */
+	   0,				/* addtl numeric data 1 */
+	   0,				/* addtl numeric data 2 */
+	   NULL,
+	   NULL,
+	   NULL
+	   );
+
+    range[0] = -1;
+    range[1] = -1;
+
+    while (1) {				/* Parse 0 or more switches */
+	x = cmfdb(&sw);
+	if (x < 0)
+	  return(x);
+	if (cmresult.fcode != _CMKEY)	/* Break out if not a switch */
+	  break;
+	c = cmgbrk();
+	getval = (c == ':' || c == '=');
+	if (getval && !(cmresult.kflags & CM_ARG)) {
+	    printf("?This switch does not take arguments\n");
+	    return(-9);
+	}
+	switch (cmresult.nresult) {
+	  case SRT_REV:
+	    xr = 1;
+	    break;
+	  case SRT_KEY:
+	    if (getval) {
+		if ((y = cmnum("Column for comparison (1-based)",
+			       "1",10,&x,xxstring)) < 0)
+		  return(y);
+		xk = x - 1;
+	    } else
+	      xk = 0;
+	    break;
+	  case SRT_CAS:
+	    if (getval) {
+		if ((y = cmkey(onoff,2,"","on",xxstring)) < 0)
+		  return(y);
+		xc = y;
+	    } else
+	      xc = 1;
+	    break;
+	  case SRT_RNG:			/* /RANGE */
+	    if (getval) {
+		char buf[32];
+		char buf2[16];
+		int i;
+		char * p, * q;
+		if ((y = cmfld("low:high element","1",&s,NULL)) < 0)
+		  return(y);
+		s = brstrip(s);
+		ckstrncpy(buf,s,32);
+		p = buf;
+		for (i = 0; *p && i < 2; i++) { /* Get low and high */
+		    q = p;		/* Start of this piece */
+		    while (*p) {	/* Find end of this piece */
+			if (*p == ':') {
+			    *p = NUL;
+			    p++;
+			    break;
+			}
+			p++;
+		    }
+		    y = 15;		/* Evaluate this piece */
+		    s = buf2;
+		    zzstring(q,&s,&y);
+		    s = evalx(buf2);
+		    if (s) if (*s) ckstrncpy(buf2,s,16);
+		    if (!rdigits(buf2)) {
+			printf("?Not numeric: %s\n",buf2);
+			return(-9);
+		    }
+		    range[i] = atoi(buf2);
+		}
+	    }
+	    break;
+	  case SRT_NUM:			/* /NUMERIC */
+	    xn = 1;
+	    break;
+	  default:
+	    return(-2);
+	}
+    }
+    switch (cmresult.fcode) {
+      case _CMCFM:
+	confirmed = 1;
+	break;
+      case _CMFLD:
+	ckstrncpy(line,cmresult.sresult,LINBUFSIZ); /* Safe copy of name */
+	s = line;
+	break;
+      default:
+	printf("?Unexpected function code: %d\n",cmresult.fcode);
+	return(-9);
+    }
+    if (confirmed) {
+	printf("?Array name required\n");
+	return(-9);
+    }
+    sprintf(tmpbuf,"Second array to sort according to %s",s);
+    debug(F101,"XXX 1","",0);
+    if ((x = cmfld(tmpbuf,"",&p,NULL)) < 0)
+      if (x != -3)
+	return(x);
+    debug(F101,"XXX 2","",0);
+    tmpbuf[0] = NUL;
+    strcpy(tmpbuf,p);
+    p = tmpbuf;
+    if ((x = cmcfm()) < 0)		/* Get confirmation */
+      return(x);
+    debug(F101,"XXX 3","",0);
+
+    x = arraybounds(s,&lo,&hi);		/* Get array index & bounds */
+    if (x < 0) {			/* Check */
+	printf("?Bad array name: %s\n",s);
+	return(-9);
+    }
+    if (lo > -1) range[0] = lo;		/* Set range */
+    if (hi > -1) range[1] = hi;
+    ap = a_ptr[x];			/* Get pointer to array element list */
+    if (!ap) {				/* Check */
+	printf("?Array not declared: %s\n", s);
+	return(-9);
+    }
+    if (range[0] < 0)			/* Starting element */
+      range[0] = 1;
+    if (range[1] < 0)			/* Final element */
+      range[1] = a_dim[x];
+    if (range[1] > a_dim[x]) {
+	printf("?range %d:%d exceeds array dimension %d\n",
+	       range[0],range[1],a_dim[x]
+	       );
+	return(-9);
+    }
+    ap += range[0];
+    xs = range[1] - range[0] + 1;	/* Number of elements to sort */
+    if (xs < 1) {			/* Check */
+	printf("?Bad range: %d:%d\n",range[0],range[1]);
+	return(-9);
+    }
+    if (xk < 0) xk = 0;			/* Key position */
+    if (xr < 0) xr = 0;			/* Reverse flag */
+    if (xn)				/* Numeric flag */
+      xc = 2;
+    else if (xc < 0)			/* Not numeric */
+      xc = inpcas[cmdlvl];		/* so alpha case option */
+
+    if (*p) {				/* Parallel array given? */
+	y = xarray(p);			/* Yes, get its index. */
+	if (y < 0) {
+	    printf("?Bad array name: %s\n", p);
+	    return(-9);
+	}
+	if (y != x) {			/* If the 2 arrays are different  */
+	    xp = a_ptr[y];		/* Pointer to 2nd array element list */
+	    if (!xp) {
+		printf("?Array not declared: %s\n", p);
+		return(-9);
+	    }
+	    if (a_dim[y] < range[1]) {
+		printf("?Array %s smaller than %s\n", p, s);
+		return(-9);
+	    }
+	    xp += range[0];		/* Set base to same as 1st array */
+	}
+    }
+    debug(F101,"XXX xp","",xp);
+    debug(F101,"XXX xc","",xc);
+    sh_sort(ap,xp,xs,xk,xr,xc);		/* Sort the array(s) */
+    return(success = 1);		/* Always succeeds */
+}
+#endif /* NOSPL */
+
+static struct keytab purgtab[] = {	/* PURGE command switches */
+    "/after",        PU_AFT,  CM_ARG,
+    "/ask",          PU_ASK,  0,
+    "/before",       PU_BEF,  CM_ARG,
+    "/delete",       PU_DELE, CM_INV,
+#ifdef UNIXOROSK
+    "/dotfiles",     PU_DOT,  0,
+#endif /* UNIXOROSK */
+    "/except",       PU_EXC,  CM_ARG,
+    "/heading",      PU_HDG,  0,
+    "/keep",         PU_KEEP, CM_ARG,
+    "/larger-than",  PU_LAR,  CM_ARG,
+    "/list",         PU_LIST, 0,
+    "/log",          PU_LIST, CM_INV,
+    "/noask",        PU_NASK, 0,
+    "/nodelete",     PU_NODE, CM_INV,
+#ifdef UNIXOROSK
+    "/nodotfiles",   PU_NODOT,0,
+#endif /* UNIXOROSK */
+    "/noheading",    PU_NOH,  0,
+    "/nol",          PU_NOLI, CM_INV|CM_ABR,
+    "/nolist",       PU_NOLI, 0,
+    "/nolog",        PU_NOLI, CM_INV,
+#ifdef CK_TTGWSIZ
+    "/nopage",       PU_NOPA, 0,
+#endif /* CK_TTGWSIZ */
+    "/not-after",    PU_NAF,  CM_ARG,
+    "/not-before",   PU_NBF,  CM_ARG,
+    "/not-since",    PU_NAF,  CM_INV|CM_ARG,
+#ifdef CK_TTGWSIZ
+    "/page",         PU_PAGE, 0,
+#endif /* CK_TTGWSIZ */
+    "/quiet",        PU_QUIE, CM_INV,
+#ifdef RECURSIVE
+    "/recursive",    PU_RECU, 0,
+#endif /* RECURSIVE */
+    "/since",        PU_AFT,  CM_ARG|CM_INV,
+    "/simulate",     PU_NODE, 0,
+    "/smaller-than", PU_SMA,  CM_ARG,
+    "/verbose",      PU_VERB, CM_INV
+};
+static int npurgtab = sizeof(purgtab)/sizeof(struct keytab);
+
+int
+bkupnum(s,i) char * s; int *i; {
+    int k = 0, pos = 0;
+    char * p = NULL, *q;
+    *i = pos;
+    if (!s) s = "";
+    if (!*s)
+      return(-1);
+    if ((k = strlen(s)) < 5)
+      return(-1);
+
+    if (s[k-1] != '~')
+      return(-1);
+    pos = k - 2;
+    q = s + pos;
+    while (q >= s && isdigit(*q)) {
+	p = q--;
+	pos--;
+    }
+    if (!p)
+      return(-1);
+    if (q < s+2)
+      return(-1);
+    if (*q != '~' || *(q-1) != '.')
+      return(-1);
+    pos--;
+    *i = pos;
+    debug(F111,"bkupnum",s+pos,pos);
+    return(atoi(p));
+}
+
+#ifdef CKPURGE
+/* Presently only for UNIX because we need direct access to the file array. */
+/* Not needed for VMS anyway, because we don't make backup files there. */
+
+#define MAXKEEP 32			/* Biggest /KEEP: value */
+
+static int
+  pu_keep = 0, pu_list = 0, pu_dot = 0, pu_ask = 0, pu_hdg = 0;
+
+#ifdef CK_TTGWSIZ
+static int pu_page = -1;
+#else
+static int pu_page = 0;
+#endif /* CK_TTGWSIZ */
+
+#ifndef NOSHOW
+VOID
+showpurgopts() {			/* SHOW PURGE command options */
+    int x = 0;
+    extern int optlines;
+    prtopt(&optlines,"PURGE");
+    if (pu_ask > -1) {
+	x++;
+	prtopt(&optlines, pu_ask ? "/ASK" : "/NOASK");
+    }
+#ifdef UNIXOROSK
+    if (pu_dot > -1) {
+	x++;
+	prtopt(&optlines, pu_dot ? "/DOTFILES" : "/NODOTFILES");
+    }
+#endif /* UNIXOROSK */
+    if (pu_keep > -1) {
+	x++;
+	sprintf(tmpbuf, "%s:%d", "/KEEP", pu_keep);
+	prtopt(&optlines,tmpbuf);
+    }
+    if (pu_list > -1) {
+	x++;
+	prtopt(&optlines, pu_list ? "/LIST" : "/NOLIST");
+    }
+    if (pu_hdg > -1) {
+	x++;
+	prtopt(&optlines, pu_hdg ? "/HEADING" : "/NOHEADING");
+    }
+#ifdef CK_TTGWSIZ
+    if (pu_page > -1) {
+	x++;
+	prtopt(&optlines, pu_page ? "/PAGE" : "/NOPAGE");
+    }
+#endif /* CK_TTGWSIZ */
+    if (!x) prtopt(&optlines,"(no options set)");
+    prtopt(&optlines,"");
+}
+#endif /* NOSHOW */
+
+int
+setpurgopts() {				/* Set PURGE command options */
+    int c, z, getval = 0;
+    int
+      x_keep  = -1, x_list = -1, x_page = -1,
+      x_hdg   = -1, x_ask  = -1, x_dot  = -1;
+
+    while (1) {
+	if ((y = cmswi(purgtab,npurgtab,"Switch","",xxstring)) < 0) {
+	    if (y == -3)
+	      break;
+	    else
+	      return(y);
+	}
+	c = cmgbrk();
+	if ((getval = (c == ':' || c == '=')) && !(cmgkwflgs() & CM_ARG)) {
+	    printf("?This switch does not take an argument\n");
+	    return(-9);
+	}
+	if (!getval && (cmgkwflgs() & CM_ARG)) {
+	    printf("?This switch requires an argument\n");
+	    return(-9);
+	}
+	switch (y) {
+	  case PU_KEEP:
+	    z = 1;
+	    if (c == ':' || c == '=')
+	      if ((y = cmnum("How many backup files to keep",
+			     "1",10,&z,xxstring)) < 0)
+		return(y);
+	    if (z < 0 || z > MAXKEEP) {
+		printf("?Please specify a number between 0 and %d\n",
+		       MAXKEEP
+		       );
+		return(-9);
+	    }
+	    x_keep = z;
+	    break;
+	  case PU_LIST:
+	  case PU_VERB:
+	    x_list = 1;
+	    break;
+	  case PU_QUIE:
+	  case PU_NOLI:
+	    x_list = 0;
+	    break;
+#ifdef CK_TTGWSIZ
+	  case PU_PAGE:
+	    x_page = 1;
+	    break;
+	  case PU_NOPA:
+	    x_page = 0;
+	    break;
+#endif /* CK_TTGWSIZ */
+	  case PU_HDG:
+	    x_hdg = 1;
+	    break;
+	  case PU_NOH:
+	    x_hdg = 0;
+	    break;
+	  case PU_ASK:
+	    x_ask = 1;
+	    break;
+	  case PU_NASK:
+	    x_ask = 0;
+	    break;
+#ifdef UNIXOROSK
+	  case PU_DOT:
+	    x_dot = 1;
+	    break;
+	  case PU_NODOT:
+	    x_dot = 0;
+	    break;
+#endif /* UNIXOROSK */
+	  default:
+	    printf("?This option can not be set\n");
+	    return(-9);
+	}
+    }
+    if ((x = cmcfm()) < 0)		/* Get confirmation */
+      return(x);
+    if (x_keep > -1)			/* Set PURGE defaults. */
+      pu_keep = x_keep;
+    if (x_list > -1)
+      pu_list = x_list;
+#ifdef CK_TTGWSIZ
+    if (x_page > -1)
+      pu_page = x_page;
+#endif /* CK_TTGWSIZ */
+    if (x_hdg > -1)
+      pu_hdg = x_hdg;
+    if (x_ask > -1)
+      pu_ask = x_ask;
+    if (x_dot > -1)
+      pu_dot = x_dot;
+    return(success = 1);
+}
+
+int
+dopurge() {				/* Do the PURGE command */
+    extern char ** mtchs;
+    extern int xaskmore, cmd_rows, recursive;
+    int simulate = 0, asking = 0;
+    int listing = 0, paging = -1, lines = 0, deleting = 1, errors = 0;
+    struct FDB sw, sf, cm;
+    int g, i, j, k, m = 0, n, x, y, z, done = 0, count = 0, flags = 0;
+    int tokeep = 0, getval = 0, havename = 0, confirmed = 0;
+    int xx[MAXKEEP+1];			/* Array of numbers to keep */
+    int min = -1;
+    int x_hdg = 0, fs = 0, rc = 0;
+    long minsize = -1L, maxsize = -1L;
+    char namebuf[CKMAXPATH+4];
+    char basebuf[CKMAXPATH+4];
+    char
+      * pu_aft = NULL,
+      * pu_bef = NULL,
+      * pu_naf = NULL,
+      * pu_nbf = NULL,
+      * pu_exc = NULL;
+    char * pxlist[8];			/* Exception list */
+
+    if (pu_keep > -1)			/* Set PURGE defaults. */
+      tokeep = pu_keep;
+    if (pu_list > -1)
+      listing = pu_list;
+#ifdef CK_TTGWSIZ
+    if (pu_page > -1)
+      paging = pu_page;
+#endif /* CK_TTGWSIZ */
+
+    for (i = 0; i <= MAXKEEP; i++)	/* Clear this number buffer */
+      xx[i] = 0;
+    for (i = 0; i < 8; i++)		/* Initialize these... */
+      pxlist[i] = NULL;
+
+    g_matchdot = matchdot;		/* Save these... */
+    saveask = xaskmore;
+
+    cmfdbi(&sw,				/* 1st FDB - PURGE switches */
+	   _CMKEY,			/* fcode */
+	   "Filename or switch",	/* hlpmsg */
+	   "",				/* default */
+	   "",				/* addtl string data */
+	   npurgtab,			/* addtl numeric data 1: tbl size */
+	   4,				/* addtl numeric data 2: 4 = cmswi */
+	   xxstring,			/* Processing function */
+	   purgtab,			/* Keyword table */
+	   &sf				/* Pointer to next FDB */
+	   );
+    cmfdbi(&sf,				/* 2nd FDB - filespec to purge */
+	   _CMIFI,			/* fcode */
+	   "",
+	   "",				/* default */
+	   "",				/* addtl string data */
+	   0,				/* addtl numeric data 1 */
+	   0,				/* addtl numeric data 2 */
+	   xxstring,
+	   NULL,
+	   &cm
+	   );
+    cmfdbi(&cm,				/* Or premature confirmation */
+	   _CMCFM,			/* fcode */
+	   "",				/* hlpmsg */
+	   "",				/* default */
+	   "",				/* addtl string data */
+	   0,				/* addtl numeric data 1 */
+	   0,				/* addtl numeric data 2 */
+	   NULL,
+	   NULL,
+	   NULL
+	   );
+
+    while (!havename && !confirmed) {
+	x = cmfdb(&sw);			/* Parse something */
+	if (x < 0) {			/* Error */
+	    rc = x;
+	    goto xpurge;
+	} else if (cmresult.fcode == _CMKEY) {
+	    char c;
+	    c = cmgbrk();
+	    if ((getval = (c == ':' || c == '=')) && !(cmgkwflgs() & CM_ARG)) {
+		printf("?This switch does not take an argument\n");
+		rc = -9;
+		goto xpurge;
+	    }
+	    if (!getval && (cmgkwflgs() & CM_ARG)) {
+		printf("?This switch requires an argument\n");
+		rc = -9;
+		goto xpurge;
+	    }
+	    switch (k = cmresult.nresult) {
+	      case PU_KEEP:
+		z = 1;
+		if (c == ':' || c == '=') {
+		    if ((y = cmnum("How many backup files to keep",
+				   "1",10,&z,xxstring)) < 0) {
+			rc = y;
+			goto xpurge;
+		    }
+		}
+		if (z < 0 || z > MAXKEEP) {
+		    printf("?Please specify a number between 0 and %d\n",
+			   MAXKEEP
+			   );
+		    rc = -9;
+		    goto xpurge;
+		}
+		tokeep = z;
+		break;
+	      case PU_LIST:
+		listing = 1;
+		break;
+	      case PU_NOLI:
+		listing = 0;
+		break;
+#ifdef CK_TTGWSIZ
+	      case PU_PAGE:
+		paging = 1;
+		break;
+	      case PU_NOPA:
+		paging = 0;
+		break;
+#endif /* CK_TTGWSIZ */
+	      case PU_DELE:
+		deleting = 1;
+		break;
+	      case PU_NODE:
+		deleting = 0;
+		simulate = 1;
+		listing = 1;
+		break;
+	      case PU_ASK:
+		asking = 1;
+		break;
+	      case PU_NASK:
+		asking = 0;
+		break;
+	      case PU_AFT:
+	      case PU_BEF:
+	      case PU_NAF:
+	      case PU_NBF:
+		if ((x = cmdate("File-time","",&s,0,xxstring)) < 0) {
+		    if (x == -3) {
+			printf("?Date-time required\n");
+			rc = -9;
+		    } else
+		      rc = x;
+		    goto xpurge;
+		}
+		fs++;
+		switch (k) {
+		  case PU_AFT: makestr(&pu_aft,s); break;
+		  case PU_BEF: makestr(&pu_bef,s); break;
+		  case PU_NAF: makestr(&pu_naf,s); break;
+		  case PU_NBF: makestr(&pu_nbf,s); break;
+		}
+		break;
+	      case PU_SMA:
+	      case PU_LAR:
+		if ((x = cmnum("File size in bytes","0",10,&y,xxstring)) < 0) {
+		    rc = x;
+		    goto xpurge;
+		}
+		fs++;
+		switch (cmresult.nresult) {
+		  case PU_SMA: minsize = y; break;
+		  case PU_LAR: maxsize = y; break;
+		}
+		break;
+	      case PU_DOT:
+		matchdot = 1;
+		break;
+	      case PU_NODOT:
+		matchdot = 0;
+		break;
+	      case PU_EXC:
+		if ((x = cmfld("Pattern","",&s,xxstring)) < 0) {
+		    if (x == -3) {
+			printf("?Pattern required\n");
+			rc = -9;
+		    } else
+		      rc = x;
+		    goto xpurge;
+		}
+		fs++;
+		makestr(&pu_exc,s);
+		break;
+	      case PU_HDG:
+		x_hdg = 1;
+		break;
+#ifdef RECURSIVE
+	      case PU_RECU:		/* /RECURSIVE */
+		recursive = 2;
+		break;
+#endif /* RECURSIVE */
+	      default:
+		printf("?Not implemented yet - \"%s\"\n",atmbuf);
+		rc = -9;
+		goto xpurge;
+	    }
+	} else if (cmresult.fcode == _CMIFI) {
+	    havename = 1;
+	} else if (cmresult.fcode == _CMCFM) {
+	    confirmed = 1;
+	} else {
+	    rc = -2;
+	    goto xpurge;
+	}
+    }
+    if (havename) {
+#ifdef CKREGEX
+	sprintf(line,"%s.~[1-9]*~",cmresult.sresult);
+#else
+	sprintf(line,"%s.~*~",cmresult.sresult);
+#endif /* CKREGEX */
+    } else {
+#ifdef CKREGEX
+	strcpy(line,"*.~[1-9]*~");
+#else
+	strcpy(line,"*.~*~");
+#endif /* CKREGEX */
+    }
+    if (!confirmed) {
+	if ((x = cmcfm()) < 0) {
+	    rc = x;
+	    goto xpurge;
+	}
+    }
+    /* Parse finished - now action */
+
+#ifdef CK_LOGIN
+    if (isguest) {
+	printf("?File deletion by guests not permitted.\n");
+	rc = -9;
+	goto xpurge;
+    }
+#endif /* CK_LOGIN */
+
+#ifdef CK_TTGWSIZ
+    if (paging < 0)			/* /[NO]PAGE not given */
+      paging = xaskmore;		/* so use prevailing */
+#endif /* CK_TTGWSIZ */
+
+    lines = 0;
+    if (x_hdg > 0) {
+	printf("Purging %s, keeping %d...%s\n",
+	       s,
+	       tokeep,
+	       simulate ? " (SIMULATION)" : "");
+	lines += 2;
+    }
+    flags = ZX_FILONLY;
+    if (recursive) flags |= ZX_RECURSE;
+    n = nzxpand(line,flags);		/* Get list of backup files */
+    if (tokeep < 1) {			/* Deleting all of them... */
+	for (i = 0; i < n; i++) {
+	    if (fs) if (fileselect(mtchs[i],
+				   pu_aft,pu_bef,pu_naf,pu_nbf,
+				   minsize,maxsize,0,8,pxlist) < 1) {
+		if (listing > 0) {
+		    printf(" %s (SKIPPED)\n",mtchs[i]);
+#ifdef CK_TTGWSIZ
+		    if (paging)
+		      if (++lines > cmd_rows - 3) {
+			  if (!askmore()) goto xpurge; else lines = 0;
+		      }
+#endif /* CK_TTGWSIZ */
+		}
+		continue;
+	    }
+	    if (asking) {
+		int x;
+		sprintf(tmpbuf," Delete %s? ",mtchs[i]);
+		x = getyesno(tmpbuf,1);
+		switch (x) {
+		  case 0: continue;
+		  case 1: break;
+		  case 2: goto xpurge;
+		}
+	    }
+	    x = deleting ? zdelet(mtchs[i]) : 0;
+	    if (x > -1) {
+		if (listing)
+		  printf(" %s (%s)\n", mtchs[i],deleting ? "OK" : "SELECTED");
+		count++;
+	    } else {
+		errors++;
+		if (listing)
+		  printf(" %s (FAILED)\n", mtchs[i]);
+	    }
+#ifdef CK_TTGWSIZ
+	    if (listing && paging)
+	      if (++lines > cmd_rows - 3) {
+		  if (!askmore()) goto xpurge; else lines = 0;
+	      }
+#endif /* CK_TTGWSIZ */
+	}
+	goto xpurge;
+    }
+    if (n < tokeep) {			/* Not deleting any */
+	count = 0;
+	if (listing)
+	  printf(" Matches = %d: Not enough to purge.\n");
+	goto xpurge;
+    }
+
+    /* General case - delete some but not others */
+
+    sh_sort(mtchs,NULL,n,0,0,filecase);	/* Alphabetize the list (ESSENTIAL) */
+
+    g = 0;				/* Start of current group */
+    for (i = 0; i < n; i++) {		/* Go thru sorted file list */
+	x = znext(namebuf);		/* Get next file */
+	if (x < 1 || !namebuf[0] || i == n - 1)	/* No more? */
+	  done = 1;			/* NOTE: 'done' must be 0 or 1 only */
+	if (fs) if (fileselect(namebuf,
+			       pu_aft,pu_bef,pu_naf,pu_nbf,
+			       minsize,maxsize,0,8,pxlist) < 1) {
+	    if (listing > 0) {
+		printf(" %s (SKIPPED)\n",namebuf);
+		if (++lines > cmd_rows - 3)
+		  if (!askmore()) goto xpurge; else lines = 0;
+	    }
+	    continue;
+	}
+	if (x > 0)
+	  if ((m = bkupnum(namebuf,&z)) < 0) /* This file's backup number. */
+	    continue;
+	for (j = 0; j < tokeep; j++) {	/* Insert in list. */
+	    if (m > xx[j]) {
+		for (k = tokeep - 1; k > j; k--)
+		  xx[k] = xx[k-1];
+		xx[j] = m;
+		break;
+	    }
+	}
+	/* New group? */
+	if (done || (i > 0 && ckstrcmp(namebuf,basebuf,z,1))) {
+	    if (i + done - g > tokeep) { /* Do we have enough to purge? */
+		min = xx[tokeep-1];	/* Yes, lowest backup number to keep */
+		debug(F111,"dopurge group",basebuf,min);
+		for (j = g; j < i + done; j++) { /* Go through this group */
+		    x = bkupnum(mtchs[j],&z);    /* Get file backup number */
+		    if (x > 0 && x < min) {      /* Below minimum? */
+			x = deleting ? zdelet(mtchs[j]) : 0;
+			if (x < 0) errors++;
+			if (listing)
+			  printf(" %s (%s)\n",
+				 mtchs[j],
+				 ((x < 0) ? "ERROR" :
+				  (deleting ? "DELETED" : "SELECTED"))
+				 );
+			count++;
+		    } else if (listing)	/* Not below minimum - keep this one */
+		      printf(" %s (KEPT)\n",mtchs[j]);
+#ifdef CK_TTGWSIZ
+		    if (listing && paging)
+		      if (++lines > cmd_rows - 3) {
+			  if (!askmore()) goto xpurge; else lines = 0;
+		      }
+#endif /* CK_TTGWSIZ */
+		}
+	    } else if (listing && paging) { /* Not enough to purge */
+		printf(" %s.~*~ (KEPT)\n",basebuf);
+#ifdef CK_TTGWSIZ
+		if (++lines > cmd_rows - 3) {
+		    if (!askmore()) goto xpurge; else lines = 0;
+		}
+#endif /* CK_TTGWSIZ */
+	    }
+	    for (j = 0; j < tokeep; j++) /* Clear the backup number list */
+	      xx[j] = 0;
+	    g = i;			/* Reset the group pointer */
+	}
+	if (done)			/* No more files, done. */
+	  break;
+	strncpy(basebuf,namebuf,z);	/* Set basename of this file */
+	basebuf[z] = NUL;
+    }
+  xpurge:				/* Common exit point */
+    if (g_matchdot > -1) {
+	matchdot = g_matchdot;		/* Restore these... */
+	g_matchdot = -1;
+    }
+#ifdef CK_TTGWSIZ
+    if (saveask > -1) {
+	xaskmore = saveask;
+	saveask = -1;
+    }
+#endif /* CK_TTGWSIZ */
+    if (rc < 0) return(rc);		/* Parse error */
+    if (x_hdg)
+      printf("Files purged: %d%s\n",
+	     count,
+	     deleting ? "" : " (not really)"
+	     );
+    return(success = count > 0 ? 1 : (errors > 0) ? 0 : 1);
+}
+#endif /* CKPURGE */
+
+#ifndef NOXFER
+#ifndef NOLOCAL
 int
 doxdis() {
-    int x, y, z;
+    extern int nolocal;
+    int x, y = 0, z;
+#ifdef COMMENT
     char *s;
+#endif /* COMMENT */
 
     if ((x = cmkey(fdtab,nfdtab,"file transfer display style","",
 		   xxstring)) < 0)
@@ -1327,41 +2827,60 @@ doxdis() {
 #ifdef CK_PCT_BAR
     if ((y = cmkey(fdftab,2,"","thermometer",xxstring)) < 0)
       return(y);
-    thermometer = y;
 #endif /* CK_PCT_BAR */
     if ((z = cmcfm()) < 0) return(z);
 #ifdef CK_CURSES
     if (x == XYFD_C) {			/* FULLSCREEN */
+#ifdef COMMENT
 #ifndef MYCURSES
 	extern char * trmbuf;		/* Real curses */
 	int z;
+#endif /* MYCURSES */
+#endif /* COMMENT */
+
+        if (nolocal)			/* Nothing to do in this case */
+            return(success = 1);
+
+#ifdef COMMENT
+#ifndef MYCURSES
+#ifndef VMS
 	s = getenv("TERM");
+        debug(F110,"doxdis TERM",s,0);
 	if (!s) s = "";
-#ifndef COHERENT
-	if (*s)
-	  z = tgetent(trmbuf,s);
-	else
-	  z = 0;
-	debug(F111,"SET tgetent",s,z);
+	fxdinit(x);
+	if (*s && trmbuf) {		/* Don't call tgetent */
+	    z = tgetent(trmbuf,s);	/* if trmbuf not allocated */
+	    debug(F111,"doxdis tgetent",s,z);
+	} else {
+	    z = 0;
+	    debug(F110,"doxdis tgetent skipped",s,0);
+	}
 	if (z < 1) {
-#ifdef VMS
-	    printf("Sorry, terminal type not supported: \"%s\"\n",s);
-#else
 	    printf("Sorry, terminal type unknown: \"%s\"\n",s);
-#endif /* VMS */
 	    return(success = 0);
 	}
-#endif /* COHERENT */
+#endif /* VMS */
 #endif /* MYCURSES */
+#else
+	fxdinit(x);
+#endif /* COMMENT */
+
+#ifdef CK_PCT_BAR
+	thermometer = y;
+#endif /* CK_PCT_BAR */
+
 	line[0] = '\0';			/* (What's this for?) */
     }
 #endif /* CK_CURSES */
     fdispla = x;			/* It's OK. */
     return(success = 1);
 }
+#endif /* NOLOCAL */
+#endif /* NOXFER */
 
 int
 setfil(rmsflg) int rmsflg; {
+#ifndef NOXFER
     if (rmsflg) {
 	if ((y = cmkey(rfiltab,nrfilp,"Remote file parameter","",
 		       xxstring)) < 0) {
@@ -1371,19 +2890,20 @@ setfil(rmsflg) int rmsflg; {
 	    } else return(y);
 	}
     } else {
+#endif /* NOXFER */
 	if ((y = cmkey(filtab,nfilp,"File parameter","",xxstring)) < 0)
 	  return(y);
+#ifndef NOXFER
     }
+#endif /* NOXFER */
     switch (y) {
 #ifdef COMMENT				/* Not needed */
       case XYFILB:			/* Blocksize */
-	sprintf(tmpbuf,"%d",DBLKSIZ);
-	if ((y = cmnum("file block size",tmpbuf,10,&z,xxstring)) < 0)
+	if ((y = cmnum("file block size",ckitoa(DBLKSIZ),10,&z,xxstring)) < 0)
 	  return(y);
 	if ((x = cmcfm()) < 0) return(x);
 	if (rmsflg) {
-	    sprintf(tmpbuf,"%d",z);
-	    sstate = setgen('S', "311", tmpbuf, "");
+	    sstate = setgen('S', "311", ckitoa(z), "");
 	    return((int) sstate);
 	} else {
 	    fblksiz = z;
@@ -1391,6 +2911,7 @@ setfil(rmsflg) int rmsflg; {
 	}
 #endif /* COMMENT */
 
+#ifndef NOXFER
       case XYFILS:			/* Byte size */
 	if ((y = cmnum("file byte size (7 or 8)","8",10,&z,xxstring)) < 0)
 	  return(y);
@@ -1404,75 +2925,65 @@ setfil(rmsflg) int rmsflg; {
 	return(success = 1);
 
 #ifndef NOCSETS
-      case XYFILC:			/* Character set */
-	if ((x = cmkey(fcstab,nfilc,"local file code","ascii", xxstring)) < 0)
-	  return(x);
-	if ((z = cmcfm()) < 0) return(z);
-	fcharset = x;
-#ifndef MAC
-	if (tcharset == TC_TRANSP) {	/* Automatically pick XFER CHAR */
-	    if (fcharset == FC_USASCII ||
-		fcharset == FC_UKASCII ||
-		fcharset == FC_DUASCII ||
-		fcharset == FC_FIASCII ||
-		fcharset == FC_FRASCII ||
-		fcharset == FC_FCASCII ||
-		fcharset == FC_GEASCII ||
-		fcharset == FC_ITASCII ||
-		fcharset == FC_NOASCII ||
-		fcharset == FC_POASCII ||
-		fcharset == FC_SPASCII ||
-		fcharset == FC_SWASCII ||
-		fcharset == FC_CHASCII
-		)
-	      tcharset = TC_1LATIN;
-	    else if (fcharset == FC_1LATIN ||
-		     fcharset == FC_DECMCS ||
-		     fcharset == FC_NEXT   ||
-		     fcharset == FC_CP437  ||
-		     fcharset == FC_CP850  ||
-		     fcharset == FC_APPQD  ||
-		     fcharset == FC_DGMCS  ||
-		     fcharset == FC_HPR8
-		     )
-	      tcharset = TC_1LATIN;
-#ifndef NOLATIN2
-	    else if (fcharset == FC_HUASCII ||
-		     fcharset == FC_2LATIN  ||
-		     fcharset == FC_CP852
-		     )
-	      tcharset = TC_2LATIN;
-#endif /* NOLATIN2 */
-#ifndef NOCYRIL
-	    else if (fcharset == FC_CYRILL ||
-		     fcharset == FC_CP866  ||
-		     fcharset == FC_KOI7   ||
-		     fcharset == FC_KOI8
-		     )
-	      tcharset = TC_CYRILL;
-#endif /* NOCYRIL */
-#ifndef NOKANJI
-	    else if (fcharset == FC_JIS7  ||
-		     fcharset == FC_SHJIS ||
-		     fcharset == FC_JEUC  ||
-		     fcharset == FC_JDEC
-		     )
-	      tcharset = TC_JEUC;
-#endif /* NOKANJI */
-#ifndef NOHEBREW
-	    else if (fcharset == FC_HE7 ||
-		     fcharset == FC_HEBREW ||
-		     fcharset == FC_CP862
-		     )
-	      tcharset = TC_HEBREW;
-#endif /* NOKANJI */
-	}
-#endif /* MAC */
-	return(success = 1);
+      case XYFILC: {			/* Character set */
+	  char * csetname = NULL;
+	  extern int
+	    r_cset, s_cset, afcset[];	/* SEND CHARACTER-SET AUTO or MANUAL */
+
+	  struct FDB kw, fl;
+	  cmfdbi(&kw,			/* First FDB - command switches */
+		 _CMKEY,		/* fcode */
+		 rmsflg ? "server character-set name" : "",  /* help */
+		 "",			/* default */
+		 "",			/* addtl string data */
+		 nfilc,			/* addtl numeric data 1: tbl size */
+		 0,			/* addtl numeric data 2: 0 = keyword */
+		 xxstring,		/* Processing function */
+		 fcstab,		/* Keyword table */
+		 rmsflg ? &fl : NULL	/* Pointer to next FDB */
+	   );
+	  cmfdbi(&fl,			/* Anything that doesn't match */
+		 _CMFLD,		/* fcode */
+		 "",			/* hlpmsg */
+		 "",			/* default */
+		 "",			/* addtl string data */
+		 0,			/* addtl numeric data 1 */
+		 0,			/* addtl numeric data 2 */
+		 xxstring,
+		 NULL,
+		 NULL
+		 );
+	  if ((x = cmfdb(&kw)) < 0)
+	    return(x);
+	  if (cmresult.fcode == _CMKEY) {
+	      x = cmresult.nresult;
+	      csetname = fcsinfo[x].keyword;
+	  } else {
+	      ckstrncpy(line,cmresult.sresult,LINBUFSIZ);
+	      csetname = line;
+	  }
+	  if ((z = cmcfm()) < 0) return(z);
+	  if (rmsflg) {
+	      sstate = setgen('S', "320", csetname, "");
+	      return((int) sstate);
+	  }
+	  fcharset = x;
+	  if (s_cset == XMODE_A)	/* If SEND CHARACTER-SET is AUTO */
+	    if (x > -1 && x <= MAXFCSETS)
+	      if (afcset[x] > -1 && afcset[x] <= MAXTCSETS)
+		tcharset = afcset[x]; /* Pick corresponding xfer charset */
+	  setxlatype(tcharset,fcharset); /* Translation type */
+	  /* If I say SET FILE CHARACTER-SET blah, I want to be blah! */
+	  r_cset = XMODE_M;		/* Don't switch incoming set! */
+	  return(success = 1);
+      }
 #endif /* NOCSETS */
 
+#ifndef NOLOCAL
       case XYFILD:			/* Display */
 	return(doxdis());
+#endif /* NOLOCAL */
+#endif /* NOXFER */
 
       case XYFILA:			/* End-of-line */
 #ifdef NLCHAR
@@ -1481,11 +2992,11 @@ setfil(rmsflg) int rmsflg; {
 	  s = "cr";
 	else if (NLCHAR == 012)
 	  s = "lf";
-	if ((x = cmkey(eoftab, neoftab,
+	if ((x = cmkey(eoltab, neoltab,
 		       "local text-file line terminator",s,xxstring)) < 0)
 	  return(x);
 #else
-	if ((x = cmkey(eoftab, neoftab,
+	if ((x = cmkey(eoltab, neoltab,
 		       "local text-file line terminator","crlf",xxstring)) < 0)
 	  return(x);
 #endif /* NLCHAR */
@@ -1493,14 +3004,14 @@ setfil(rmsflg) int rmsflg; {
 	feol = (CHAR) x;
 	return(success = 1);
 
+#ifndef NOXFER
       case XYFILN:			/* Names */
 	if ((x = cmkey(fntab,nfntab,"how to handle filenames","converted",
 		       xxstring)) < 0)
 	  return(x);
 	if ((z = cmcfm()) < 0) return(z);
 	if (rmsflg) {
-	    sprintf(tmpbuf,"%d",1 - x);
-	    sstate = setgen('S', "301", tmpbuf, "");
+	    sstate = setgen('S', "301", ckitoa(1 - x), "");
 	    return((int) sstate);
 	} else {
 	    ptab[protocol].fncn = x;	/* Set structure */
@@ -1510,13 +3021,12 @@ setfil(rmsflg) int rmsflg; {
 	}
 
       case XYFILR:			/* Record length */
-	sprintf(tmpbuf,"%d",DLRECL);
-	if ((y = cmnum("file record length",tmpbuf,10,&z,xxstring)) < 0)
+	if ((y = cmnum("file record length",
+		       ckitoa(DLRECL),10,&z,xxstring)) < 0)
 	  return(y);
 	if ((x = cmcfm()) < 0) return(x);
 	if (rmsflg) {
-	    sprintf(tmpbuf,"%d",z);
-	    sstate = setgen('S', "312", tmpbuf, "");
+	    sstate = setgen('S', "312", ckitoa(z), "");
 	    return((int) sstate);
 	} else {
 	    frecl = z;
@@ -1530,13 +3040,12 @@ setfil(rmsflg) int rmsflg; {
 	  return(x);
 	if ((y = cmcfm()) < 0) return(y);
 	if (rmsflg) {
-	    sprintf(tmpbuf,"%d",x);
-	    sstate = setgen('S', "314", tmpbuf, "");
+	    sstate = setgen('S', "314", ckitoa(x), "");
 	    return((int) sstate);
 	} else {
 	    forg = x;
 	    return(success = 1);
-	}	
+	}
 #endif /* COMMENT */
 
 #ifdef COMMENT				/* Not needed */
@@ -1546,8 +3055,7 @@ setfil(rmsflg) int rmsflg; {
 	  return(x);
 	if ((y = cmcfm()) < 0) return(y);
 	if (rmsflg) {
-	    sprintf(tmpbuf,"%d",x);
-	    sstate = setgen('S', "313", tmpbuf, "");
+	    sstate = setgen('S', "313", ckitoa(x), "");
 	    return((int) sstate);
 	} else {
 	    frecfm = x;
@@ -1562,14 +3070,14 @@ setfil(rmsflg) int rmsflg; {
 	  return(x);
 	if ((y = cmcfm()) < 0) return(y);
 	if (rmsflg) {
-	    sprintf(tmpbuf,"%d",x);
-	    sstate = setgen('S', "315", tmpbuf, "");
+	    sstate = setgen('S', "315", ckitoa(x), "");
 	    return((int) sstate);
 	} else {
 	    fcctrl = x;
 	    return(success = 1);
-	}	
+	}
 #endif /* COMMENT */
+#endif /* NOXFER */
 
       case XYFILT:			/* Type */
 	if ((x = cmkey(rmsflg ? rfttab  : fttab,
@@ -1591,35 +3099,45 @@ setfil(rmsflg) int rmsflg; {
 #ifdef MAC
 	(void) mac_setfildflg(binary);
 #endif /* MAC */
+#ifndef NOXFER
 	if (rmsflg) {
-	    char buf[4];		/* Allow for LABELED in VMS & OS/2 */
-	    sprintf(buf,"%d",x);
-	    sstate = setgen('S', "300", buf, "");
+	    /* Allow for LABELED in VMS & OS/2 */
+	    sstate = setgen('S', "300", ckitoa(x), "");
 	    return((int) sstate);
 	} else {
+#endif /* NOXFER */
 	    return(success = 1);
+#ifndef NOXFER
 	}
+#endif /* NOXFER */
 
+#ifndef NOXFER
       case XYFILX:			/* Collision Action */
 	if ((x = cmkey(colxtab,ncolx,"Filename collision action","backup",
 		       xxstring)) < 0)
 	  return(x);
 	if ((y = cmcfm()) < 0) return(y);
+#ifdef CK_LOGIN
+	if (isguest) {
+	    /* Don't let guests change existing files */
+	    printf("?This command not valid for guests\n");
+	    return(-9);
+	}
+#endif /* CK_LOGIN */
 	fncact = x;
 	ptab[protocol].fnca = x;
 	if (rmsflg) {
-	    sprintf(tmpbuf,"%d",fncact);
-	    sstate = setgen('S', "302", tmpbuf, "");
+	    sstate = setgen('S', "302", ckitoa(fncact), "");
 	    return((int) sstate);
 	} else {
-	    if (fncact == XYFX_R) warn = 1; /* SET FILE WARNING implications */
-	    if (fncact == XYFX_X) warn = 0; /* ... */
+	    if (fncact == XYFX_R) ckwarn = 1; /* FILE WARNING implications */
+	    if (fncact == XYFX_X) ckwarn = 0; /* ... */
 	    return(success = 1);
 	}
 
       case XYFILW:			/* Warning/Write-Protect */
-	if ((x = seton(&warn)) < 0) return(x);
-	if (warn)
+	if ((x = seton(&ckwarn)) < 0) return(x);
+	if (ckwarn)
 	  fncact = XYFX_R;
 	else
 	  fncact = XYFX_X;
@@ -1639,8 +3157,23 @@ setfil(rmsflg) int rmsflg; {
 	return(success);
 #endif /* CK_LABELED */
 
-      case XYFILI:			/* INCOMPLETE */
-	return(doprm(XYIFD,rmsflg));
+      case XYFILI: {			/* INCOMPLETE */
+	  extern struct keytab ifdatab[];
+	  extern int keep;
+	  if ((y = cmkey(ifdatab,3,"","auto",xxstring)) < 0) return(y);
+	  if ((x = cmcfm()) < 0) return(x);
+	  if (rmsflg) {
+	      sstate = setgen('S',
+			      "310",
+			      y == 0 ? "0" : (y == 1 ? "1" : "2"),
+			      ""
+			      );
+	      return((int) sstate);
+	  } else {
+	      keep = y;
+	      return(success = 1);
+	  }
+      }
 
 #ifdef CK_TMPDIR
       case XYFILG: {			/* Download directory */
@@ -1670,8 +3203,7 @@ setfil(rmsflg) int rmsflg; {
 	  }
 #else
 #ifdef MAC
-	  strncpy(temp,homdir,32);
-	  x = strlen(temp);
+	  x = ckstrncpy(temp,homdir,32);
 	  if (x > 0) if (temp[x-1] != ':') { temp[x] = ':'; temp[x+1] = NUL; }
 	  if ((x = cmtxt("Name of Macintosh volume and/or folder,\n\
  or press the Return key for the desktop on the boot disk",
@@ -1696,7 +3228,7 @@ setfil(rmsflg) int rmsflg; {
 #endif /* MAC */
 
 #ifdef ZFNQFP
-	  if (fnp = zfnqfp(s,TMPBUFSIZ - 1,tmpbuf)) {
+	  if ((fnp = zfnqfp(s,TMPBUFSIZ - 1,tmpbuf))) {
 	      if (fnp->fpath)
 		if ((int) strlen(fnp->fpath) > 0)
 		  s = fnp->fpath;
@@ -1711,25 +3243,161 @@ setfil(rmsflg) int rmsflg; {
 	    return(x);
 #endif /* MAC */
 
+#ifdef CK_LOGIN
+	if (isguest) {
+	    /* Don't let guests change existing files */
+	    printf("?This command not valid for guests\n");
+	    return(-9);
+	}
+#endif /* CK_LOGIN */
 	  x = strlen(line);
 
 #ifdef datageneral
 	  if (line[x-1] == ':')		/* homdir ends in colon, */
 	    line[x-1] = NUL;		/* and "dir" doesn't like that... */
 #endif /* datageneral */
-	 
-	  if (dldir)
-	    free(dldir);
-	  dldir = NULL;
 
-	  if (x && (dldir = malloc(x + 1)))
-	    strcpy(dldir, line);
-
-	  return(success = 1);
+          makestr(&dldir,line);
+	  return(success = (dldir != NULL));
       }
 #endif /* CK_TMPDIR */
       case XYFILY:
 	return(setdest());
+#endif /* NOXFER */
+
+#ifdef CK_CTRLZ
+      case XYFILV: {			/* EOF */
+	  extern int eofmethod;
+	  if ((x = cmkey(eoftab,3,"end-of-file detection method","",
+			 xxstring)) < 0)
+	    return(x);
+	  if ((y = cmcfm()) < 0)
+	    return(y);
+	  eofmethod = x;
+	  return(success = 1);
+      }
+#endif /* CK_CTRLZ */
+
+#ifndef NOXFER
+#ifdef UNIX
+      case XYFILH: {			/* OUTPUT */
+	  extern int zofbuffer, zobufsize, zofblock;
+#ifdef DYNAMIC
+	  extern char * zoutbuffer;
+#endif /* DYNAMIC */
+
+	  if ((x = cmkey(zoftab,nzoftab,"output file writing method","",
+			 xxstring)) < 0)
+	    return(x);
+	  if (x == ZOF_BUF || x == ZOF_NBUF) {
+	      if ((y = cmnum("output buffer size","32768",10,&z,xxstring)) < 0)
+		return(y);
+	      if (z < 1) {
+		  printf("?Bad size - %d\n", z);
+		  return(-9);
+	      }
+	  }
+	  if ((y = cmcfm()) < 0) return(y);
+	  switch (x) {
+	    case ZOF_BUF:
+	    case ZOF_NBUF:
+	      zofbuffer = (x == ZOF_BUF);
+	      zobufsize = z;
+	      break;
+	    case ZOF_BLK:
+	    case ZOF_NBLK:
+	      zofblock = (x == ZOF_BLK);
+	      break;
+	  }
+#ifdef DYNAMIC
+	  if (zoutbuffer) free(zoutbuffer);
+	  if (!(zoutbuffer = (char *)malloc(z))) {
+	      printf("MEMORY ALLOCATION ERROR - FATAL\n");
+	      doexit(BAD_EXIT,-1);
+	  } else
+	    zobufsize = z;
+#else
+	  if (z <= OBUFSIZE) {
+	      zobufsize = z;
+	  } else {
+	      printf("?Sorry, %d is too big - %d is the maximum\n",z,OBUFSIZE);
+	      return(-9);
+	  }
+#endif /* DYNAMIC */
+	  return(success = 1);
+      }
+#endif /* UNIX */
+
+#ifdef PATTERNS
+      case XYFIBP:			/* BINARY-PATTERN */
+      case XYFITP: {			/* TEXT-PATTERN */
+	  char * tmp[FTPATTERNS];
+	  int i, n = 0;
+	  while (n < FTPATTERNS) {
+	      tmp[n] = NULL;
+	      if ((x = cmfld("Pattern","",&s,xxstring)) < 0)
+		break;
+	      strcpy(line,s);
+	      s = brstrip(line);
+	      makestr(&(tmp[n++]),s);
+	  }
+	  if (x == -3) x = cmcfm();
+	  for (i = 0; i <= n; i++) {
+	      if (x > -1) {
+		  if (y == XYFIBP)
+		    makestr(&(binpatterns[i]),tmp[i]);
+		  else
+		    makestr(&(txtpatterns[i]),tmp[i]);
+	      }
+	      free(tmp[i]);
+	  }
+	  if (y == XYFIBP)		/* Null-terminate the list */
+	    makestr(&(binpatterns[i]),NULL);
+	  else
+	    makestr(&(txtpatterns[i]),NULL);
+	  return(x);
+      }
+
+      case XYFIPA:			/* PATTERNS */
+	if ((x = setonaut(&patterns)) < 0)
+	  return(x);
+	return(success = 1);
+#endif /* PATTERNS */
+#endif /* NOXFER */
+
+#ifdef UNICODE
+      case XYFILU: {			/* UCS */
+	  extern int ucsorder, ucsbom, byteorder;
+	  if ((x = cmkey(ucstab,nucstab,"","",xxstring)) < 0)
+	    return(x);
+	  switch (x) {
+	    case UCS_BYT:
+	      if ((y = cmkey(botab,nbotab,
+			     "Byte order",
+			     byteorder ? "little-endian" : "big-endian",
+			     xxstring
+			     )
+		   ) < 0)
+		return(y);
+	      if ((x = cmcfm()) < 0)
+		return(x);
+	      ucsorder = y;
+	      return(success = 1);
+	    case UCS_BOM:
+	      if ((y = cmkey(onoff,2,"","on",xxstring)) < 0)
+		return(y);
+	      if ((x = cmcfm()) < 0)
+		return(x);
+	      ucsbom = y;
+	      return(success = 1);
+	    default:
+	      return(-2);
+	  }
+      }
+#endif /* UNICODE */
+
+      case 9997:			/* FASTLOOKUPS */
+	return(success = seton(&stathack));
 
       default:
 	printf("?unexpected file parameter\n");
@@ -1737,11 +3405,12 @@ setfil(rmsflg) int rmsflg; {
     }
 }
 
+#ifndef NOLOCAL
 #ifdef OS2
 /* MS-DOS KERMIT compatibility modes */
 int
 setmsk() {
-    if ((y = cmkey(msktab,nmsk,"MS-DOS Kermit compatibility mode", 
+    if ((y = cmkey(msktab,nmsk,"MS-DOS Kermit compatibility mode",
                     "keycodes",xxstring)) < 0) return(y);
 
     switch ( y ) {
@@ -1755,21 +3424,54 @@ setmsk() {
         return(-2);
     }
 }
-#endif
+#endif /* OS2 */
 
-#ifndef NOLOCAL
+int
+settrmtyp() {
+#ifdef OS2
+#ifdef TNCODE
+    extern int ttnum;			 /* Last Telnet Terminal Type sent */
+    extern int ttnumend;		 /* Has end of list been found */
+#endif /* TNCODE */
+    if ((x = cmkey(ttyptab,nttyp,"","vt320",xxstring)) < 0)
+      return(x);
+    if ((y = cmcfm()) < 0)
+      return(y);
+    settermtype(x,1);
+#ifdef TNCODE
+    /* So we send the correct terminal name to the host if it asks for it */
+    ttnum = -1;				/* Last Telnet Terminal Type sent */
+    ttnumend = 0;			/* end of list not found */
+#endif /* TNCODE */
+    return(success = 1);
+#else  /* Not OS2 */
+    printf(
+"\n Sorry, this version of C-Kermit does not support the SET TERMINAL TYPE\n");
+    printf(
+" command.  Type \"help set terminal\" for further information.\n");
+#endif /* OS2 */
+    return(success = 0);
+}
+
 int
 settrm() {
     int i = 0;
 #ifdef OS2
-    extern int colorreset, erasemode;
+    extern int colorreset, user_erasemode;
 #endif /* OS2 */
-
     if ((y = cmkey(trmtab,ntrm,"", "",xxstring)) < 0) return(y);
 #ifdef MAC
     printf("\n?Sorry, not implemented yet.  Please use the Settings menu.\n");
     return(-9);
 #else
+#ifdef IKSD
+    if (inserver) {
+	if ((y = cmcfm()) < 0) return(y);
+        printf("?Sorry, command disabled.\r\n");
+        return(success = 0);
+    }
+#endif /* IKSD */
+
     switch (y) {
       case XYTBYT:			/* SET TERMINAL BYTESIZE */
 	if ((y = cmnum("bytesize for terminal connection","8",10,&x,
@@ -1785,17 +3487,21 @@ settrm() {
 	    cmask = 0377;
 	    parity = 0;
 	}
+#ifdef OS2
+	if (IS97801(tt_type_mode))
+	  SNI_bitmode(x);
+#endif /* OS2 */
         return(success = 1);
 
       case XYTSO:			/* SET TERMINAL LOCKING-SHIFT */
 	return(seton(&sosi));
 
       case XYTNL:			/* SET TERMINAL NEWLINE-MODE */
-	return(seton(&tnlm)); 
+	return(seton(&tnlm));
 
 #ifdef OS2
       case XYTCOL:
-	if ((x = cmkey(ttycoltab,ncolors,"","terminal",xxstring)) < 0) 
+	if ((x = cmkey(ttycoltab,ncolors,"","terminal",xxstring)) < 0)
 	  return(x);
 	else if (x == TTCOLRES) {
 	    if ((y = cmkey(ttcolmodetab,ncolmode,
@@ -1811,7 +3517,7 @@ settrm() {
 	      return(y);
 	    if ((z = cmcfm()) < 0)
 	      return(z);
-	    erasemode = y;
+	    user_erasemode = y;
 	    return(success=1);
 	} else {			/* No parse error */
 	    int fg = 0, bg = 0;
@@ -1838,7 +3544,7 @@ settrm() {
 	      case TTCOLREV:
 		colorreverse = fg | bg << 4;
 		break;
-	      case TTCOLUND:   
+	      case TTCOLUND:
 		colorunderline = fg | bg << 4;
 		break;
 	      case TTCOLGRP:
@@ -1869,29 +3575,23 @@ settrm() {
 	}
 	return(success = 1);
 
-      case XYTCUR:			/* SET TERMINAL CURSOR */
-	if ((x = cmkey(ttycurtab,ncursors,"","underline",xxstring)) < 0)
-	  return(x);
-	if ((y = cmcfm()) < 0) return(y);
-        tt_cursor = tt_cursor_usr = x;
-	return(success = 1);
+      case XYTCUR: {			/* SET TERMINAL CURSOR */
+	  extern int cursorena[];
+          extern int cursoron[] ;       /* Cursor state on/off       */
+	  if ((x = cmkey(ttycurtab,ncursors,"","underline",xxstring)) < 0)
+	    return(x);
+	  if ((z = cmkey(onoff,2,"","on",xxstring)) < 0)
+	    return(z);
+	  if ((y = cmcfm()) < 0) return(y);
+	  tt_cursor = tt_cursor_usr = x;
+	  cursorena[VTERM] = tt_cursorena_usr = z;/* turn cursor on/off */
+          cursoron[VTERM] = FALSE; /* Force newcursor to restore the cursor */
+	  return(success = 1);
+      }
 #endif /* OS2 */
 
       case XYTTYP:			/* SET TERMINAL TYPE */
-#ifdef OS2
-	if ((x = cmkey(ttyptab,nttyp,"","vt320",xxstring)) < 0) 
-	  return(x);
-	if ((y = cmcfm()) < 0) 
-	  return(y);
-	settermtype(x,1);
-	return(success=1);
-#else  /* Not OS2 */
-	printf(
-"\n Sorry, this version of C-Kermit does not support the SET TERMINAL TYPE\n");
-	printf(
-" command.  Type \"help set terminal\" for further information.\n");
-#endif /* OS2 */
-	return(success = 0);
+	return(settrmtyp());
 
 #ifdef OS2
       case XYTARR:			/* SET TERMINAL ARROW-KEYS */
@@ -1906,8 +3606,28 @@ settrm() {
 	tt_keypad = x;			/* TTK_NORM / TTK_APPL; see ckuusr.h */
 	return(success = 1);
 
+      case XYTUNX: {			/* SET TERM UNIX-MODE (DG) */
+        extern int dgunix,dgunix_usr;
+	x = seton(&dgunix);
+	dgunix_usr = dgunix;
+	return(x);
+      }
+      case XYTKBMOD: {			/* SET TERM KEYBOARD MODE */
+	  extern int tt_kb_mode;
+	  if ((x = cmkey(kbmodtab,
+			 nkbmodtab,
+			 "normal",
+			 "special keyboard mode for terminal emulation",
+			 xxstring)
+	       ) < 0)
+	    return(x);
+	  if ((y = cmcfm()) < 0) return(y);
+	  tt_kb_mode = x;
+	  return(success = 1);
+      }
+
       case XYTWRP:			/* SET TERMINAL WRAP */
-	return(seton(&tt_wrap)); 
+	return(seton(&tt_wrap));
 
       case XYSCRS:
 	if ((y = cmnum("CONNECT scrollback buffer size, lines","2000",10,&x,
@@ -1918,22 +3638,12 @@ settrm() {
 	/* scrollback buffer given the maximum */
 	/* process memory space of 512MB       */
 	if (x < 256 || x > 2000000L) {
-	    printf("\n?The size must be between 256 and 2,000,000.\n"); 
+	    printf("\n?The size must be between 256 and 2,000,000.\n");
 	    return(success = 0);
- 	} 
+ 	}
 	if ((y = cmcfm()) < 0) return(y);
-#ifndef VSCRNINIT
-	if ( (ULONG) x < VscrnGetBufferSize(VTERM) ) {
-	    printf("\nWarning: the scrollback buffer will be emptied on the");
-	    printf(" next CONNECT,\n");
-	    printf("unless the buffer is restored to %d lines.\n",
-		   VscrnGetBufferSize(VTERM));
-        }
-#endif /* VSCRNINIT */
 	tt_scrsize[VTERM] = x;
-#ifdef VSCRNINIT
 	VscrnInit(VTERM);
-#endif /* VSCRNINIT */
 	return(success = 1);
 #endif /* OS2 */
 
@@ -1944,43 +3654,72 @@ settrm() {
 	if ((x = cmkey(
 #ifdef CKOUNI
                        txrtab,ntxrtab,
-#else /* CKOUNI */
+#else  /* CKOUNI */
                        ttcstab,ntermc,
 #endif /* CKOUNI */
-		       "remote terminal character-set","",xxstring)) < 0) 
+		       "remote terminal character-set","",xxstring)) < 0)
 	  return(x);
-	if (x == FC_TRANSP) {		/* TRANSPARENT? */
+	if (
+#ifdef CKOUNI
+            x == TX_TRANSP
+#else  /* CKOUNI */
+            x == FC_TRANSP
+#endif /* CKOUNI */
+           ) {		/* TRANSPARENT? */
 	    if ((x = cmcfm()) < 0) return(x); /* Confirm the command */
 #ifdef CKOUNI
+            tt_utf8 = 0;		/* Turn off the UTF8 flag */
 	    tcsr = tcsl = TX_ASCII;	/* Make them both the same */
 #else /* CKOUNI */
 	    tcsr = tcsl = FC_USASCII;
 #endif /* CKOUNI */
+	    tcs_transp = 1;
 #ifdef OS2
+#ifdef UNICODE
+            dec_kbd = tcsr = tcsl = TX_TRANSP;
+#else /* UNICODE */
 	    y = os2getcp();		/* Default is current code page */
 	    switch (y) {
-#ifdef CKOUNI
-	    case 437: tcsr = tcsl = TX_CP437; break;
-	    case 850: tcsr = tcsl = TX_CP850; break;
-	    case 852: tcsr = tcsl = TX_CP852; break;
-	    case 857: tcsr = tcsl = TX_CP857; break;
-	    case 862: tcsr = tcsl = TX_CP862; break;
-	    case 866: tcsr = tcsl = TX_CP866; break;
-	    case 869: tcsr = tcsl = TX_CP869; break;
-#else /* CKOUNI */
-	    case 437: tcsr = tcsl = FC_CP437; break;
-	    case 850: tcsr = tcsl = FC_CP850; break;
-	    case 852: tcsr = tcsl = FC_CP852; break;
-	    case 862: tcsr = tcsl = FC_CP862; break;
-	    case 866: tcsr = tcsl = FC_CP866; break;
-#endif /* CKOUNI */
+	      case 437: tcsr = tcsl = FC_CP437; break;
+	      case 850: tcsr = tcsl = FC_CP850; break;
+	      case 852: tcsr = tcsl = FC_CP852; break;
+	      case 862: tcsr = tcsl = FC_CP862; break;
+	      case 866: tcsr = tcsl = FC_CP866; break;
 	    }
+#endif /* UNICODE */
+
+#ifdef UNICODE
+	    if (!cs_is_nrc(tcsl)) {
+		G[0].def_designation = G[0].designation = TX_ASCII;
+		G[0].init = TRUE;
+		G[0].def_c1 = G[0].c1 = FALSE;
+		G[0].size = cs94;
+		G[0].national = FALSE;
+                dec_nrc = TX_ASCII;
+	    } else
+	      dec_nrc = tcsl;
+
+	    for (i = cs_is_nrc(tcsl) ? 0 : 1; i < 4; i++) {
+		G[i].def_designation = G[i].designation = tcsl;
+		G[i].init = TRUE;
+		G[i].def_c1 = G[i].c1 = FALSE;
+		switch (cs_size(G[i].designation)) { /* 94, 96, or 128 */
+		case 128:
+		case 96:
+		    G[i].size = G[i].def_size = cs96;
+		    break;
+		case 94:
+		    G[i].size = G[i].def_size = cs94;
+		    break;
+		default:
+		    G[i].size = G[i].def_size = csmb;
+		    break;
+		}
+		G[i].national = cs_is_nrc(x);
+	    }
+#else /* UNICODE */
 	    for (i = 0; i < 4; i++) {
-#ifdef CKOUNI
-		G[i].def_designation = G[i].designation = TX_TRANSP;
-#else /* CKOUNI */
 		G[i].def_designation = G[i].designation = FC_TRANSP;
-#endif /* CKOUNI */
 		G[i].init = FALSE;
 		G[i].size = G[i].def_size = cs96;
 		G[i].c1 = G[i].def_c1 = FALSE;
@@ -1990,22 +3729,45 @@ settrm() {
 		G[i].ltoi = NULL;
 		G[i].itor = NULL;
             }
+#endif /* UNICODE */
 #endif /* OS2 */
 	    return(success = 1);
 	}
+	tcs_transp = 0;
 
-/* Not transparent, so get local set to translate it into */
+#ifdef CKOUNI
+	if (x == TX_UTF8) {
+	    if ((x = cmcfm()) < 0)	/* Confirm the command */
+	      return(x);
+	    tt_utf8 = 1;		/* Turn this on if we are UTF8 */
+	    return(success = 1);
+	}
+#endif /* CKOUNI */
+
+/* Not transparent or UTF8, so get local set to translate it into */
 
 	s = "";
 #ifdef OS2
  	y = os2getcp();			/* Default is current code page */
 	switch (y) {
-	   case 437: s = "cp437"; break;
-	   case 850: s = "cp850"; break;
-	   case 852: s = "cp852"; break;
-	   case 862: s = "cp862"; break;
-	   case 866: s = "cp866"; break;
-	 }
+	  case 437: s = "cp437"; break;
+	  case 850: s = "cp850"; break;
+	  case 852: s = "cp852"; break;
+	  case 857: s = "cp857"; break;
+	  case 858: s = "cp858"; break;
+	  case 862: s = "cp862"; break;
+	  case 866: s = "cp866"; break;
+	  case 869: s = "cp869"; break;
+	  case 1250: s = "cp1250"; break;
+	  case 1251: s = "cp1251"; break;
+	  case 1252: s = "cp1252"; break;
+	  case 1253: s = "cp1253"; break;
+	  case 1254: s = "cp1254"; break;
+	  case 1255: s = "cp1255"; break;
+	  case 1256: s = "cp1256"; break;
+	  case 1257: s = "cp1257"; break;
+	  case 1258: s = "cp1258"; break;
+	}
 #ifdef OS2ONLY
 /*
    If the user has loaded a font with SET TERMINAL FONT then we want
@@ -2020,24 +3782,25 @@ settrm() {
 	    }
 	}
 #endif /* OS2ONLY */
-#else
-					/* Make current file char set */
-	for (y = 0; y <= nfilc; y++)	/* be the default... */
-	  if (fcstab[y].kwval == fcharset) {
-	      s = fcstab[y].kwd;
-	      break;
-	  }
+#else  /* Not K95... */
+	s = fcsinfo[fcharset].keyword;
 #endif /* OS2 */
 
 	if ((y = cmkey(
 #ifdef CKOUNI
                        txrtab,ntxrtab,
 #else /* CKOUNI */
-                       fcstab,nfilc,
+                       ttcstab,ntermc,
 #endif /* CKOUNI */
 		       "local character-set",s,xxstring)) < 0)
 	  return(y);
 
+#ifdef UNICODE
+          if (y == TX_UTF8) {
+              printf("?UTF8 may not be used as a local character set.\r\n");
+              return(-9);
+          }
+#endif /* UNICODE */
 #ifdef OS2
 	if ((z = cmkey(graphsettab,ngraphset,
 		       "DEC VT intermediate graphic set","all",xxstring)) < 0)
@@ -2049,8 +3812,15 @@ settrm() {
 	}
 	tcsr = x;			/* Remote character set */
 	tcsl = y;			/* Local character set */
+#ifdef CKOUNI
+        tt_utf8 = 0;			/* Turn off UTF8 flag */
+#endif /* CKOUNI */
+
 	if (z == TT_GR_ALL) {
 	    int i;
+#ifdef UNICODE
+            dec_kbd = x;
+#endif /* UNICODE */
 	    for (i = 0; i < 4; i++) {
 		G[i].def_designation = G[i].designation = x;
 		G[i].init = TRUE;
@@ -2073,6 +3843,10 @@ settrm() {
 		G[0].designation = G[0].def_designation = FC_USASCII;
 		G[0].size = G[0].def_size = cs94;
             }
+#ifdef UNICODE
+        } else if (z == TT_GR_KBD) {    /* Keyboard only */
+            dec_kbd = x;
+#endif /* UNICODE */
         } else {			/* Specific Gn */
 	    G[z].def_designation = G[z].designation = x;
 	    G[z].init = TRUE;
@@ -2097,7 +3871,7 @@ settrm() {
 	tcsl = y;			/* Local character set */
 #endif /* OS2 */
 	return(success = 1);
-#endif /* CKOUNI */
+#endif /* UNICODE */
 #endif /* NOCSETS */
 
 #ifndef NOCSETS
@@ -2107,12 +3881,24 @@ settrm() {
 #ifdef OS2
  	y = os2getcp();			/* Default is current code page */
 	switch (y) {
-	   case 437: s = "cp437"; break;
-	   case 850: s = "cp850"; break;
-	   case 852: s = "cp852"; break;
-	   case 862: s = "cp862"; break;
-	   case 866: s = "cp866"; break;
-	 }
+	  case 437: s = "cp437"; break;
+	  case 850: s = "cp850"; break;
+	  case 852: s = "cp852"; break;
+	  case 857: s = "cp857"; break;
+	  case 858: s = "cp858"; break;
+	  case 862: s = "cp862"; break;
+	  case 866: s = "cp866"; break;
+	  case 869: s = "cp869"; break;
+	  case 1250: s = "cp1250"; break;
+	  case 1251: s = "cp1251"; break;
+	  case 1252: s = "cp1252"; break;
+	  case 1253: s = "cp1253"; break;
+	  case 1254: s = "cp1254"; break;
+	  case 1255: s = "cp1255"; break;
+	  case 1256: s = "cp1256"; break;
+	  case 1257: s = "cp1257"; break;
+	  case 1258: s = "cp1258"; break;
+	}
 #ifdef OS2ONLY
 /*
    If the user has loaded a font with SET TERMINAL FONT then we want
@@ -2144,6 +3930,13 @@ settrm() {
 		       "local character-set",s,xxstring)) < 0)
 	  return(y);
 
+#ifdef UNICODE
+          if (y == TX_UTF8) {
+              printf("?UTF8 may not be used as a local character set.\r\n");
+              return(-9);
+          }
+#endif /* UNICODE */
+
 #ifdef OS2
         if ((z = cmcfm()) < 0) return(z); /* Confirm the command */
 	tcsl = y;			/* Local character set */
@@ -2165,10 +3958,11 @@ settrm() {
 #endif /* NOCSETS */
 
 #ifndef NOCSETS
-#ifdef CKOUNI
-      case XYTUNI: /* SET TERMINAL UNICODE */
-	return(success = seton(&tt_unicode));
-#endif /* CKOUNI */
+#ifdef UNICODE
+      case XYTUNI:			/* SET TERMINAL UNICODE */
+	return(seton(&tt_unicode));
+#endif /* UNICODE */
+
       case XYTRCS:			/* SET TERMINAL REMOTE-CHARACTER-SET */
 	/* set terminal character-set <remote> <Graphic-set> */
 	if ((x = cmkey(
@@ -2177,21 +3971,25 @@ settrm() {
 #else /* CKOUNI */
                 ttcstab,ntermc,
 #endif /* CKOUNI */
-		       "remote terminal character-set","",xxstring)) < 0) 
+		       "remote terminal character-set","",xxstring)) < 0)
 	  return(x);
-#ifndef KUI
+
 	/* KUI can't have a Transparent Character Set */
-#ifdef CKOUNI
+#ifdef UNICODE
 	if (x == TX_TRANSP)
-#else /* CKOUNI */
+#else /* UNICODE */
 	if (x == FC_TRANSP)
-#endif /* CKOUNI */
+#endif /* UNICODE */
 	  {				/* TRANSPARENT? */
 	      if ((x = cmcfm()) < 0)	/* Confirm the command */
 		return(x);
+#ifndef OS2
 	      tcsr = tcsl;		/* Make both sets the same */
-#ifdef OS2
+#else
 #ifdef CKOUNI
+              tt_utf8 = 0;		/* Turn off UTF8 flag */
+              tcsr = tcsl = dec_kbd = TX_TRANSP; /* No translation */
+
 	      if (!cs_is_nrc(tcsl)) {
 		  G[0].def_designation = G[i].designation = TX_ASCII;
 		  G[0].init = TRUE;
@@ -2217,7 +4015,8 @@ settrm() {
 		  }
 		  G[i].national = cs_is_nrc(x);
 	      }
-#else /* CKOUNI */ 
+#else /* CKOUNI */
+	      tcsr = tcsl;		/* Make both sets the same */
 	      for (i = 0; i < 4; i++) {
 		  G[i].def_designation = G[i].designation = FC_TRANSP;
 		  G[i].init = FALSE;
@@ -2233,7 +4032,15 @@ settrm() {
 #endif /* OS2 */
 	      return(success = 1);
 	  }
-#endif /* KUI */
+
+#ifdef CKOUNI
+	if (x == TX_UTF8) {
+	    if ((x = cmcfm()) < 0) return(x); /* Confirm the command */
+	    tt_utf8 = 1;		/* Turn it on if we are UTF8 */
+	    return(success = 1);
+	}
+#endif /* CKOUNI */
+
 #ifdef OS2
 	if ((z = cmkey(graphsettab,ngraphset,
 		       "DEC VT intermediate graphic set","all",xxstring)) < 0)
@@ -2244,8 +4051,15 @@ settrm() {
 	      return(eol);
 	}
 	tcsr = x;			/* Remote character set */
+#ifdef CKOUNI
+	tt_utf8 = 0;			/* Turn off UTF8 flag */
+#endif /* CKOUNI */
+
 	if (z == TT_GR_ALL) {
 	    int i;
+#ifdef UNICODE
+            dec_kbd = x;
+#endif /* UNICODE */
 	    for (i = 0; i < 4; i++) {
 		G[i].def_designation = G[i].designation = x;
 		G[i].init = TRUE;
@@ -2268,6 +4082,10 @@ settrm() {
 		G[0].designation = G[0].def_designation = FC_USASCII;
 		G[0].size = G[0].def_size = cs94;
             }
+#ifdef UNICODE
+        } else if (z == TT_GR_KBD) {    /* Keyboard only */
+            dec_kbd = x;
+#endif /* UNICODE */
         } else {			/* Specific Gn */
 	    G[z].def_designation = G[z].designation = x;
 	    G[z].init = TRUE;
@@ -2298,10 +4116,10 @@ settrm() {
 		       "remote", xxstring)) < 0) return(x);
 	if ((y = cmcfm()) < 0) return(y);
 	duplex = x;
-	return(success = 1); 
+	return(success = 1);
 
       case XYTESC:			/* SET TERM ESC */
-	if ((x = cmkey(nabltab,2,"","enabled",xxstring)) < 0)
+	if ((x = cmkey(nabltab,nnabltab,"","enabled",xxstring)) < 0)
 	  return(x);
 	if ((y = cmcfm()) < 0) return(y);
 	tt_escape = x;
@@ -2311,7 +4129,7 @@ settrm() {
 	if ((x = cmkey(crdtab,2,"", "normal", xxstring)) < 0) return(x);
 	if ((y = cmcfm()) < 0) return(y);
 	tt_crd = x;
-	return(success = 1); 
+	return(success = 1);
 
 #ifdef OS2
       case XYTANS: {			/* SET TERMINAL ANSWERBACK */
@@ -2320,18 +4138,18 @@ settrm() {
   do NOT let them change it, and we definitely do not let the host set it.
   This is a security feature.
 
-  As of 1.1.8 we allow the SET TERM ANSWERBACK MESSAGE <string> to be 
+  As of 1.1.8 we allow the SET TERM ANSWERBACK MESSAGE <string> to be
   used just as MS-DOS Kermit does.  C0 and C1 controls as well as DEL
   are not allowed to be used as characters.  They are translated to
   underscore.  This may not be set by APC.
 */
-	  if ((x = cmkey(anbktab,nansbk,"", "off", xxstring)) < 0) 
+	  if ((x = cmkey(anbktab,nansbk,"", "off", xxstring)) < 0)
 	    return(x);
 	  if (x < 2) {
-	      if ((y = cmcfm()) < 0) 
+	      if ((y = cmcfm()) < 0)
 		return(y);
 	      tt_answer = x;
-	      return(success = 1); 
+	      return(success = 1);
 	  } else if ( x == 2 || x == 3) {
 	      int len = 0;
 	      extern int safeanswerbk;
@@ -2353,14 +4171,13 @@ settrm() {
 		  useranswerbk[z] = '\0';
 		  safeanswerbk = 1 ;	/* TRUE */
 	      } else {
-		  strncpy( useranswerbk, s, 65 );
-		  useranswerbk[65] = '\0';
+		  ckstrncpy(useranswerbk,s,60);	/* (see ckocon.c) */
 		  safeanswerbk = 0;	/* FALSE */
 	      }
 	      updanswerbk();
 	      return(success = 1);
 	  } else
-	    return(success = 0); 
+	    return(success = 0);
       }
 #endif /* OS2 */
 
@@ -2374,18 +4191,121 @@ settrm() {
 	if (apcactive == APC_LOCAL ||
 	    (apcactive == APC_REMOTE && apcstatus != APC_UNCH))
 	  return(success = 0);
-	apcstatus = y;	
+	apcstatus = y;
 	return(success = 1);
 
 #ifdef CK_AUTODL
-  case XYTAUTODL:
-    return(success = seton(&autodl));	/* AUTODOWNLOAD ON, OFF */    
+      case XYTAUTODL:			/* AUTODOWNLOAD */
+#ifndef OS2
+	x = seton(&autodl);		/* For C-Kermit: ON, OFF, AUTO */
+	if (x > 0)
+	  success = 1;
+	return(x);
+#else /* OS2 */
+	if ((y = cmkey(adltab,nadltab,"Auto-download options","",
+		       xxstring)) < 0)
+	  return(y);
+	switch (y) {
+	  case TAD_ON:
+	  case TAD_OFF:
+	    if ((x = cmcfm()) < 0)
+	      return(x);
+	    autodl = y;
+	    break;
+	  case TAD_K:
+	    if ((y = cmkey(adlxtab,nadlxtab,"","", xxstring)) < 0)
+	      return(y);
+	    switch (y) {
+	      case TAD_X_C0:
+		if ((y = cmkey(adlc0tab,nadlc0tab,"",
+			       "processed-by-emulator",xxstring)) < 0)
+		  return(y);
+		if ((x = cmcfm()) < 0)
+		  return(x);
+		adl_kc0 = y;
+		break;
+	      case TAD_X_DETECT:
+		if ((y = cmkey(adldtab,nadldtab,"","packet",xxstring)) < 0)
+		  return(y);
+		if ((x = cmcfm()) < 0)
+		  return(x);
+		adl_kmode = y;
+		break;
+	      case TAD_X_STR:
+		if ((y = cmtxt("Kermit start string","KERMIT READY TO SEND...",
+			       &s,xxstring)) < 0)
+		  return(y);
+		free(adl_kstr);
+		adl_kstr = strdup(s);
+		break;
+	    }
+	    break;
+
+	  case TAD_Z:
+	    if ((y = cmkey(adlxtab,nadlxtab,"","",xxstring)) < 0)
+	      return(y);
+	    switch (y) {
+	      case TAD_X_C0:
+		if ((y = cmkey(adlc0tab,nadlc0tab,"",
+			       "processed-by-emulator",xxstring)) < 0)
+		  return(y);
+		if ((x = cmcfm()) < 0)
+		  return(x);
+		adl_zc0 = y;
+		break;
+	      case TAD_X_DETECT:
+		if ((y = cmkey(adldtab,nadldtab,"","packet",xxstring)) < 0)
+		  return(y);
+		if ((x = cmcfm()) < 0)
+		  return(x);
+		adl_zmode = y;
+		break;
+	      case TAD_X_STR:
+		if ((y = cmtxt("","rz\\{13}",&s,xxstring)) < 0)
+		  return(y);
+		free(adl_zstr);
+		adl_zstr = strdup(s);
+		break;
+	    }
+	    break;
+	}
+	return(success = 1);
+#endif /* OS2 */
 #endif /* CK_AUTODL */
 #endif /* CK_APC */
 
 #ifdef OS2
       case XYTBEL:
         return(success = setbell());
+
+      case XYTMBEL:			/* MARGIN-BELL */
+	if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
+	if (y) {			/* ON */
+	    if ((z = cmnum("Column at which to set margin bell",
+			   "72",10,&x,xxstring)) < 0)
+	      return(z);
+	}
+	if ((z = cmcfm()) < 0) return(z);
+	marginbell = y;
+	marginbellcol = x;
+	return(success = 1);
+
+      case XYTIDLE:			/* IDLE-SEND */
+	if ((z = cmnum("seconds of idle time to wait, or 0 to disable",
+		       "0",10,&x,xxstring)) < 0)
+	  return(z);
+	if ((y = cmtxt("string to send, may contain kverbs and variables",
+		       "\\v(newline)",&s,xxstring)) < 0)
+	  return(y);
+	tt_idlesnd_tmo = x;
+	if (tt_idlesnd_str) {
+	    free(tt_idlesnd_str);
+	    tt_idlesnd_str = NULL;
+	}
+	s = brstrip(s);
+	tt_idlesnd_str = strdup(s);
+	puterror(VTERM);
+	return(success = 1);
 #endif /* OS2 */
 
       case XYTDEB:			/* TERMINAL DEBUG */
@@ -2399,6 +4319,14 @@ settrm() {
 	return(y);
 
 #ifdef OS2
+      case XYTASCRL:                    /* SET TERMINAL AUTOSCROLL */
+          y = seton(&autoscroll);
+          return(y);
+
+      case XYTAPAGE:                    /* SET TERMINAL AUTOPAGE */
+          y = seton(&wy_autopage);
+          return(y);
+
       case XYTROL:			/* SET TERMINAL ROLL */
         if ((y = cmkey(rolltab,nroll,"scrollback mode","insert",xxstring))<0)
             return(y);
@@ -2416,7 +4344,7 @@ settrm() {
 	int cp = -1;
 	y = cmnum("PC code page to use during terminal emulation",
 		  "850",10,&x,xxstring);
-	if ((x = setnum(&cp,x,y,2000)) < 0) return(x);
+	if ((x = setnum(&cp,x,y,11000)) < 0) return(x);
 	if (os2setcp(cp) != 1) {
 #ifdef NT
 	    if (isWin95())
@@ -2434,11 +4362,6 @@ settrm() {
 	return(1);
     }
 
-#ifdef  COMMENT
-      case XYTHCU:			/* SET TERMINAL HIDE-CURSOR */
-	return(seton(&tt_hide));
-#endif /* COMMENT */
-
       case XYTPAC:			/* SET TERMINAL OUTPUT-PACING */
 	y = cmnum(
 	   "Pause between sending each character during CONNECT, milliseconds",
@@ -2448,9 +4371,10 @@ settrm() {
 #ifdef OS2MOUSE
       case XYTMOU: {			/* SET TERMINAL MOUSE */
 	  int old_mou = tt_mouse;
-	  seton(&tt_mouse);
-	  if ( tt_mouse != old_mou )
-	    if ( tt_mouse )
+	  if ((x = seton(&tt_mouse)) < 0)
+	    return(x);
+	  if (tt_mouse != old_mou)
+	    if (tt_mouse)
 	      os2_mouseon();
 	    else
 	      os2_mouseoff();
@@ -2505,44 +4429,46 @@ settrm() {
 	  }
 	  tt_cols[VTERM] = x;
 	  tt_cols_usr = x;
-#ifdef VSCRNINIT
 	  VscrnSetWidth( VTERM, x);
-#ifdef TCPSOCKET
-	  if (nawsflg) {
-	      tn_snaws();
+#ifdef TNCODE
+	  if (TELOPT_ME(TELOPT_NAWS))
+	    tn_snaws();
+#endif /* TNCODE */
 #ifdef RLOGCODE
-	      rlog_naws();
+	  if (TELOPT_ME(TELOPT_NAWS))
+	    rlog_naws();
 #endif /* RLOGCODE */
-	  }
-#endif /* TCPSOCKET */
-#else /* VSCRNINIT */
-	  VscrnSetWidth( VTERM, -1);
-#endif /* VSCRNINIT */
+
 /*
    We do not set tt_szchng here because that would result in the screen buffer
-   being reallocated and the screen cleared.  But that is not necessary when 
+   being reallocated and the screen cleared.  But that is not necessary when
    only the screen width is being changed since the buffer allocates the full
    width
-*/ 
+*/
 #else  /* Not OS/2 */
 	  tt_cols = x;
 #endif /* OS2 */
 	  return(success = 1);
       }
 
-      case XYTHIG: 
+      case XYTHIG:
    	if ((y = cmnum(
 #ifdef OS2
-"number of rows in display window during CONNECT, not including status line",
+ "number of rows in display window during CONNECT, not including status line",
+ tt_status?"24":"25",
 #else
-"number of rows on your screen",
+ "24","number of rows on your screen",
 #endif /* OS2 */
-		       "24",10,&x,xxstring)) < 0)
+		       10,&x,xxstring)) < 0)
 	  return(y);
 	if ((y = cmcfm()) < 0) return(y);
 
 #ifdef OS2
-        if (IsOS2FullScreen()) {
+	if (tt_modechg == TVC_DIS) {
+	    printf("\n?SET TERMINAL VIDEO-CHANGE DISABLED\n");
+	    return(success = 0);
+	}
+	if (IsOS2FullScreen()) {
             if (tt_status && x != 24 && x != 42 && x != 49 && x != 59) {
                 printf("\n?The height must be 24, 42, 49");
 #ifdef NT
@@ -2554,13 +4480,33 @@ settrm() {
 	    } else if (!tt_status &&
 		       x != 25 &&
 		       x != 43 &&
-		       x != 50 &&
-		       x != 60) {
+		       x != 50) {
                 printf("\n?The height must be 25, 43, 50");
 #ifdef NT
                 printf(" or 60 under Windows 95.\n.");
 #else /* NT */
                 printf(" or 60 in a Full Screen session.\n.");
+#endif /* NT */
+                return(success = 0);
+	    }
+	} else if (tt_modechg == TVC_W95) {
+            if (tt_status && x != 24 && x != 42 && x != 49) {
+                printf("\n?The height must be 24, 42, 49");
+#ifdef NT
+                printf(" under Windows 95.\n.");
+#else /* NT */
+                printf(" in a Full Screen session.\n.");
+#endif /* NT */
+                return(success = 0);
+	    } else if (!tt_status &&
+		       x != 25 &&
+		       x != 43 &&
+		       x != 50) {
+                printf("\n?The height must be 25, 43, 50");
+#ifdef NT
+                printf(" under Windows 95.\n.");
+#else /* NT */
+                printf(" in a Full Screen session.\n.");
 #endif /* NT */
                 return(success = 0);
 	    }
@@ -2572,34 +4518,90 @@ settrm() {
 	}
         if (x > 8192/tt_cols[VTERM]) {
             printf(
-"\n?The max screen area is 8192 cells: %d(rows) x %d(cols) = %d cells.\n",
+ "\n?The max screen area is 8192 cells: %d(rows) x %d(cols) = %d cells.\n",
 		   x,tt_cols[VTERM],x*tt_cols[VTERM]);
             return(success = 0);
 	}
-#ifdef VSCRNINIT 
         tt_szchng[VTERM] = 1;
         tt_rows[VTERM] = x;
         VscrnInit( VTERM );		/* Height set here */
-#ifdef TCPSOCKET
-        if (nawsflg){
-            tn_snaws();
+#ifdef TNCODE
+	  if (TELOPT_ME(TELOPT_NAWS))
+	    tn_snaws();
+#endif /* TNCODE */
 #ifdef RLOGCODE
-            rlog_naws();
+	  if (TELOPT_ME(TELOPT_NAWS))
+	    rlog_naws();
 #endif /* RLOGCODE */
-        }
-#endif /* TCPSOCKET */
-#else /* VSCRNINIT */
-        tt_rows[VTERM] = x;
-        VscrnSetHeight( VTERM, -1 );
-        tt_szchng[VTERM] = 1;
-#endif /* VSCRNINIT */
 #else  /* Not OS/2 */
 	tt_rows = x;
 #endif /* OS2 */
         return(success = 1);
 
 #ifdef OS2
-    case XYTUPD: { 
+      case XYTPRN: {			/* Print Mode */
+	  extern bool xprint, cprint, aprint, uprint;
+	  if ((y = cmkey(prnmtab,nprnmtab,"","off", xxstring)) < 0) return(y);
+	  if ((x = cmcfm()) < 0) return(x);
+	  switch (y) {
+	    case 0:
+	      if (cprint || uprint || aprint || xprint)
+                printeroff();
+	      cprint = xprint = uprint = aprint = 0;
+	      break;
+	    case 1:
+	      if (!(cprint || uprint || aprint || xprint))
+                printeron();
+	      aprint = 1;
+	      cprint = xprint = uprint = 0;
+	      break;
+	    case 2:
+	      if (!(cprint || uprint || aprint || xprint))
+                printeron();
+	      cprint = 1;
+	      aprint = xprint = uprint = 0;
+	      break;
+	    case 3:
+	      if (!(cprint || uprint || aprint || xprint))
+                printeron();
+	      uprint = 1;
+	      aprint = xprint = cprint = 0;
+	      break;
+	  }
+	  return(1);
+      }
+#else
+#ifdef XPRINT
+      case XYTPRN: {
+	  extern int tt_print;
+	  if ((x = seton(&tt_print)) < 0)
+	    return(x);
+	  return(success = 1);
+      }
+#endif /* XPRINT */
+#endif /* OS2 */
+
+#ifdef OS2
+      case XYTSCNM: {
+	  extern int decscnm, decscnm_usr;
+	  if ((y = cmkey(normrev,4,"",
+			 decscnm_usr?"reverse":"normal",
+			 xxstring)
+	       ) < 0)
+	    return(y);
+	  if ((x = cmcfm()) < 0) return(x);
+	  decscnm_usr = y;
+	  if (decscnm != decscnm_usr)
+            flipscreen(VTERM);
+	  return(1);
+    }
+    case XYTOPTI:
+        if ((y = cmkey(onoff,2,"",tt_diff_upd?"on":"off",
+                        xxstring)) < 0) return(y);
+        if ((x = cmcfm()) < 0) return(x);
+        tt_diff_upd = y;
+        return(1);
+    case XYTUPD: {
 	int mode, delay;
 	if ((mode = cmkey(scrnupd,nscrnupd,"","fast",xxstring)) < 0) {
 	    return(mode);
@@ -2624,7 +4626,7 @@ settrm() {
 	  if ((x = cmkey(termctrl,ntermctrl,"","7",xxstring)) < 0) {
 	      return(x);
 	  } else {
-	      if ((y = cmcfm()) < 0) 
+	      if ((y = cmcfm()) < 0)
 		  return(y);
 	      switch ( x ) {
 	      case 8:
@@ -2635,12 +4637,12 @@ settrm() {
 		  send_c1 = send_c1_usr = FALSE;
 		  break;
 	      }
-	  }	   
+	  }
 	  return(success = TRUE);
 	  break;
 
 #ifdef PCFONTS
-      case XYTFON: 
+      case XYTFON:
 	if ( !IsOS2FullScreen() ) {
 	    printf(
         "\n?SET TERMINAL FONT is only supported in Full Screen sessions.\n");
@@ -2662,13 +4664,77 @@ settrm() {
 	}
 	break;
 #endif /* PCFONTS */
-      case XYTVCH:
-	if ((x = cmkey(nabltab,2,"","enabled",xxstring)) < 0)
-	  return(x);
-	if ((y = cmcfm()) < 0) return(y);
-	tt_modechg = x;
-	return(1);
+      case XYTVCH: {
+	  extern int pheight, marginbot, cmd_rows, cmd_cols;
+	  if ((x = cmkey(tvctab,ntvctab,"",isWin95()?"win95-safe":"enabled",
+			 xxstring)) < 0)
+	    return(x);
+	  if ((y = cmcfm()) < 0) return(y);
+	  if (x != tt_modechg) {
+	      switch (x) {
+		case TVC_DIS:
+		  /* When disabled the heights of all of the virtual screens */
+		  /* must be equal to the physical height of the console     */
+		  /* window and may not be changed.                          */
+		  /* The width of the window may not be altered.             */
+		  tt_modechg = TVC_ENA;			/* Termporary */
+		  if (marginbot > pheight-(tt_status?1:0))
+		    marginbot = pheight-(tt_status?1:0);
+		  tt_szchng[VCMD] = 1 ;
+		  tt_rows[VCMD] = pheight;
+		  VscrnInit(VCMD);
+		  SetCols(VCMD);
+		  cmd_rows = y;
 
+		  tt_szchng[VTERM] = 2 ;
+		  tt_rows[VTERM] = pheight - (tt_status?1:0);
+		  VscrnInit(VTERM);
+
+		  break;
+
+		case TVC_ENA:
+		  /* When enabled the physical height of the console windows */
+		  /* should be adjusted to the height of the virtual screen  */
+		  /* The width may be set to anything.                       */
+		  /* nothing to do                                           */
+		  break;
+
+	      case TVC_W95:
+		  /* Win95-safe mode allows the physical height to change    */
+		  /* but restricts it to a width of 80 and a height equal to */
+		  /* 25, 43, or 50.  Must be adjusted now.                   */
+		  /* The virtual heights must be equal to the above.         */
+		  if (pheight != 25 && pheight != 43 && pheight != 50) {
+		      if (pheight < 25)
+			y = 25;
+		      else if (pheight < 43)
+			y = 43;
+		      else
+			y = 50;
+		  } else
+		    y = pheight;
+
+		  tt_modechg = TVC_ENA;	/* Temporary */
+
+		  tt_szchng[VCMD] = 1;
+		  tt_rows[VCMD] = y;
+		  tt_cols[VCMD] = 80;
+		  VscrnInit(VCMD);
+		  SetCols(VCMD);
+		  cmd_rows = y;
+		  cmd_cols = 80;
+
+		  marginbot = y-(tt_status?1:0);
+		  tt_szchng[VTERM] = 2;
+		  tt_rows[VTERM] = y - (tt_status?1:0);
+		  tt_cols[VTERM] = 80;
+		  VscrnInit(VTERM);
+		  break;
+	      }
+	      tt_modechg = x;
+	  }
+	  return(1);
+      }
       case XYTSTAT: {
           extern int marginbot;
           if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
@@ -2683,48 +4749,36 @@ settrm() {
                 }
               tt_status_usr = tt_status = y;
               if (y) {
-#ifdef VSCRNINIT 
                     tt_szchng[VTERM] = 2;
                     tt_rows[VTERM]--;
                     VscrnInit(VTERM);  /* Height set here */
-#ifdef TCPSOCKET
-                    if (nawsflg) {
-                        tn_snaws();
+#ifdef TNCODE
+		    if (TELOPT_ME(TELOPT_NAWS))
+		      tn_snaws();
+#endif /* TNCODE */
 #ifdef RLOGCODE
-                        rlog_naws();
+		    if (TELOPT_ME(TELOPT_NAWS))
+		      rlog_naws();
 #endif /* RLOGCODE */
-                    }
-#endif /* TCPSOCKET */
-#else /* VSCRNINIT */
-                    tt_rows[VTERM]--;
-                    VscrnSetHeight(VTERM, -1);
-                    tt_szchng[VTERM] = 1;
-#endif /* VSCRNINIT */
               } else {
-#ifdef VSCRNINIT 
-                    tt_szchng[VTERM] = 1;
-                    tt_rows[VTERM]++;
-                    VscrnInit(VTERM);  /* Height set here */
-#ifdef TCPSOCKET
-                    if (nawsflg){
-                        tn_snaws();
+		  tt_szchng[VTERM] = 1;
+		  tt_rows[VTERM]++;
+		  VscrnInit(VTERM);	/* Height set here */
+#ifdef TNCODE
+		  if (TELOPT_ME(TELOPT_NAWS))
+		    tn_snaws();
+#endif /* TNCODE */
 #ifdef RLOGCODE
-                        rlog_naws();
+		  if (TELOPT_ME(TELOPT_NAWS))
+		    rlog_naws();
 #endif /* RLOGCODE */
-                    }
-#endif /* TCPSOCKET */
-#else /* VSCRNINIT */
-                    tt_rows[VTERM]++;
-                    VscrnSetHeight(VTERM, -1);
-                    tt_szchng[VTERM] = 1;
-#endif /* VSCRNINIT */
               }
           }
           return(1);
       }
 #endif /* OS2 */
 
-#ifdef NT	
+#ifdef NT
       case XYTATTBUG:
 	if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
 	if ((x = cmcfm()) < 0) return(x);
@@ -2752,9 +4806,9 @@ settrm() {
 	  return(1);
 
       case XYTATTR:
-	if ((x = cmkey(ttyattrtab,nattrib,"","underline",xxstring)) < 0) 
+	if ((x = cmkey(ttyattrtab,nattrib,"","underline",xxstring)) < 0)
 	  return(x);
-	switch ( x ) {
+	switch (x) {
 	  case TTATTBLI:
 	    if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
 	    if ((x = cmcfm()) < 0) return(x);
@@ -2762,35 +4816,82 @@ settrm() {
 #ifndef KUI
 	    if ( !trueblink && trueunderline ) {
 		trueunderline = 0;
-		printf("\nWarning: Underline being simulated by color.");
+		printf("Warning: Underline being simulated by color.\n");
 	    }
 
 #endif /* KUI */
 	    break;
+
 	  case TTATTREV:
 	    if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
 	    if ((x = cmcfm()) < 0) return(x);
 	    truereverse = y;
 	    break;
+
 	  case TTATTUND:
 	    if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
 	    if ((x = cmcfm()) < 0) return(x);
 	    trueunderline = y;
 #ifndef KUI
-	    if ( !trueblink && trueunderline ) {
+	    if (!trueblink && trueunderline) {
 		trueblink = 1;
-		printf("\nWarning: True blink mode is active.");
+		printf("Warning: True blink mode is active.\n");
 	    }
 #endif /* KUI */
 	    break;
+
+	  case TTATTPRO: {	/* Set default Protected Character attribute */
+	      extern vtattrib WPattrib;    /* current WP Mode Attrib */
+	      extern vtattrib defWPattrib; /* default WP Mode Attrib */
+	      vtattrib wpa = {0,0,0,0,0,1,0,0,0};	/* Protected */
+	      int done = 0;
+
+	      x = 0;
+	      while (!done) {
+		  if ((y = cmkey(ttyprotab,nprotect,"",
+				 x?"done":"dim",xxstring)) < 0)
+		    return(y);
+		  switch (y) {
+		    case TTATTNOR:
+		      break;
+		    case TTATTBLI:	/* Blinking doesn't work */
+		      wpa.blinking = TRUE;
+		      break;
+		    case TTATTREV:
+		      wpa.reversed = TRUE;
+		      break;
+		    case TTATTUND:
+		      wpa.underlined = TRUE;
+		      break;
+		    case TTATTBLD:
+		      wpa.bold = TRUE;
+		      break;
+		    case TTATTDIM:
+		      wpa.dim = TRUE;
+		      break;
+		    case TTATTINV:
+		      wpa.invisible = TRUE ;
+		      break;
+		    case TTATTDONE:
+		      done = TRUE;
+		      break;
+		  }
+		  x = 1;		/* One attribute has been chosen */
+	      }
+	      if ((x = cmcfm()) < 0) return(x);
+	      WPattrib = defWPattrib = wpa;
+	      break;
+	  }
 	}
 	return(1);
 
       case XYTKEY: {			/* SET TERMINAL KEY */
 	  int t, x, y;
 	  int clear = 0, deflt = 0;
+	  int confirmed = 0;
 	  int flag = 0;
-	  int kc;			/* Key code */
+	  int kc = -1;			/* Key code */
+          int litstr = 0;               /* Literal String? */
 	  char *s = NULL;		/* Key binding */
 #ifndef NOKVERBS
 	  char *p = NULL;		/* Worker */
@@ -2799,35 +4900,63 @@ settrm() {
 	  extern int os2gks;
 	  extern int mskkeys;
 	  extern int initvik;
+          struct FDB kw,sw,nu,cm;
 
-	  if ((t = cmkey(ttkeytab,nttkey,"","",xxstring)) < 0) 
+          defevt.type = error;
+
+	  if ((t = cmkey(ttkeytab,nttkey,"","",xxstring)) < 0)
 	    return(t);
-	  x_ifnum = 1;
-	  y = cmnum("numeric key code, or the words CLEAR or DEFAULT,",
-		   "",10,&kc,xxstring);
-	  x_ifnum = 0;
-	  if (y < 0) {
-	      debug(F111,"SET KEY",atmbuf,y);
-	      if (y == -2) {		/* Not a valid number */
-		  /* Check for SET TERM KEY <term> CLEAR */
-		  if ((y = strlen(atmbuf)) < 0)
-		    return(-2);
-		  if (!xxstrcmp(atmbuf,"clear",y))
-		    clear = 1;
-		  else if (!xxstrcmp(atmbuf,"default",y))
-		    deflt = 1;
-		  else
-		    return(-2);
-		  if ((x = cmcfm()) < 0)
-		    return(x);
-		  if (clear)
-		    clearkeymap(t);
-		  if (deflt)
-		    defaultkeymap(t);
-		  initvik = 1;		/* Update the VIK table */
-		  return(1);
-	      } else if (y == -3) {	/* SET TERM KEY <terminal> <Return> */
-		  /* Prompt for a keystroke */
+	  cmfdbi(&nu,			/* First FDB - command switches */
+		 _CMNUM,		/* fcode */
+		 "/literal, keycode, or action",
+		 "",			/* default */
+		 "",			/* addtl string data */
+		 10,			/* addtl numeric data 1: radix */
+		 0,			/* addtl numeric data 2: 0 */
+		 xxstring,		/* Processing function */
+		 NULL,			/* Keyword table */
+		 &sw			/* Pointer to next FDB */
+		 );			/*  */
+	  cmfdbi(&sw,			/* Second FDB - switches */
+		 _CMKEY,		/* fcode */
+		 "",
+		 "",			/* default */
+		 "",			/* addtl string data */
+		 nstrmswitab,		/* addtl numeric data 1: tbl size */
+		 4,			/* addtl numeric data 2: 4 = cmswi */
+		 xxstring,		/* Processing function */
+		 strmswitab,		/* Keyword table */
+		 &kw			/* Pointer to next FDB */
+		 );
+	  cmfdbi(&kw,			/* Third FDB - command switches */
+		 _CMKEY,		/* fcode */
+		 "/literal, keycode, or action",
+		 "",			/* default */
+		 "",			/* addtl string data */
+		 nstrmkeytab,		/* addtl numeric data 1: tbl size */
+		 0,			/* addtl numeric data 2 */
+		 xxstring,		/* Processing function */
+		 strmkeytab,		/* Keyword table */
+		 &cm			/* Pointer to next FDB */
+		 );
+	  cmfdbi(&cm,			/* Final FDB - Confirmation */
+		 _CMCFM,		/* fcode */
+		 "",
+		 "",			/* default */
+		 "",			/* addtl string data */
+		 0,         		/* addtl numeric data 1: tbl size */
+		 0,			/* addtl numeric data 2: 4 = cmswi */
+		 xxstring,		/* Processing function */
+		 NULL,			/* Keyword table */
+		 NULL			/* Pointer to next FDB */
+		 );
+	  while (kc < 0) {
+	      x = cmfdb(&nu);		/* Parse something */
+              if (x < 0)
+                return(x);
+
+	      switch (cmresult.fcode) {
+                case _CMCFM:
 		  printf(" Press key to be defined: ");
 		  conbin((char)escape);	/* Put terminal in binary mode */
 		  os2gks = 0;		/* Turn off Kverb preprocessing */
@@ -2838,10 +4967,31 @@ settrm() {
 		      printf("?Error reading key\n");
 		      return(0);
 		  }
-		  shokeycode(kc);	/* Show current definition */
+		  shokeycode(kc,t);	/* Show current definition */
 		  flag = 1;		/* Remember it's a multiline command */
-	    } else			/* Error */
-	      return(y);
+                  break;
+		case _CMNUM:
+		  kc = cmresult.nresult;
+		  break;
+		case _CMKEY:
+		  if (cmresult.fdbaddr == &sw) { /* Switch */
+		      if (cmresult.nresult == 0)
+			litstr = 1;
+		  } else if (cmresult.fdbaddr == &kw) { /* Keyword */
+		      if (cmresult.nresult == 0)
+			clear = 1;
+		      else
+			deflt = 1;
+		      if ((x = cmcfm()) < 0)
+			return(x);
+		      if (clear)
+			clearkeymap(t);
+		      else if (deflt)
+		        defaultkeymap(t);
+		      initvik = 1;
+		      return(1);
+		  }
+	      }
 	  }
 
     /* Normal SET TERMINAL KEY <terminal> <scancode> <value> command... */
@@ -2866,8 +5016,8 @@ settrm() {
 	def_again:
 	  if (flag) prompt(NULL);
 	  if ((y = cmtxt("key definition,\n\
-or Ctrl-C to cancel this command,\n\
-or Enter to restore default definition",
+ or Ctrl-C to cancel this command,\n\
+ or Enter to restore default definition",
 			 "",&s,NULL)) < 0) {
 	      if (flag)			/* Handle parse errors */
 		goto def_again;
@@ -2892,7 +5042,7 @@ or Enter to restore default definition",
 	      if ((x > 0) &&
 		  (s[x] == 'K' || s[x] == 'k')
 		  ) {			/* Have K */
-  
+
 		  if ((x == 1 && s[x-1] == CMDQ) ||
 		      (x > 1 && s[x-1] == CMDQ && s[x-2] != CMDQ)) {
 		      line[y++] = CMDQ;	/* Make it \\K */
@@ -2923,7 +5073,7 @@ or Enter to restore default definition",
 	  p = s;
 	  if (*p++ == CMDQ) {
 	      if (*p == '{') p++;
-	      p = (*p == 'k' || *p == 'K') ? p + 1 : NULL; 
+	      p = (*p == 'k' || *p == 'K') ? p + 1 : NULL;
 	  }
 #endif /* NOKVERBS */
 
@@ -2931,10 +5081,12 @@ or Enter to restore default definition",
 	    case 0:			/* Clear individual key def */
 	      deletekeymap(t,kc);
 	      break;
-	    case 1: 
-	      defevt.type = key;	/* Single character */
-	      defevt.key.scancode = *s;
-	      break;
+	    case 1:
+              if (!litstr) {
+		  defevt.type = key;	/* Single character */
+		  defevt.key.scancode = *s;
+		  break;
+              }
 	    default:			/* Character string */
 #ifndef NOKVERBS
 	      if (p) {
@@ -2948,23 +5100,307 @@ or Enter to restore default definition",
 		  }
 	      }
 #endif /* NOKVERBS */
-	      defevt.type = macro;
-	      defevt.macro.string = (char *) malloc(strlen(s)+1);
-	      if (defevt.macro.string)
-		strcpy(defevt.macro.string, s);
+              if (litstr) {
+		  defevt.type = literal;
+		  defevt.literal.string = (char *) malloc(strlen(s)+1);
+		  if (defevt.literal.string)
+		    strcpy(defevt.literal.string, s);
+              } else {
+		  defevt.type = macro;
+		  defevt.macro.string = (char *) malloc(strlen(s)+1);
+		  if (defevt.macro.string)
+		    strcpy(defevt.macro.string, s);
+              }
 	      break;
 	  }
 	  insertkeymap(t, kc, defevt);
-	  if (flag) 
+	  if (flag)
 	    cmsetp(psave);
 	  initvik = 1;			/* Update VIK table */
 	  return(1);
       }
+
+#ifdef PCTERM
+      case XYTPCTERM:                   /* PCTERM Keyboard Mode */
+        if ((x = seton(&tt_pcterm)) < 0) return(x);
+        return(success = 1);
+#endif /* PCTERM */
+#endif /* OS2 */
+
+#ifdef CK_TRIGGER
+      case XYTRIGGER:
+	if ((y = cmtxt("String to trigger automatic return to command mode",
+		       "",&s,xxstring)) < 0)
+	  return(y);
+	makelist(s,tt_trigger,TRIGGERS);
+	return(1);
+#endif /* CK_TRIGGER */
+
+#ifdef OS2
+      case XYTSAC:
+	if ((y = cmnum("ASCII value to use for spacing attributes",
+		       "32",10,&x,xxstring)) < 0)
+          return(y);
+	if ((y = cmcfm()) < 0) return(y);
+	tt_sac = x;
+	return(success = 1);
+
+      case XYTKBDGL: {      /* SET TERM KBD-FOLLOWS-GL/GR */
+          extern int tt_kb_glgr;        /* from ckoco3.c */
+          if ((x = seton(&tt_kb_glgr)) < 0)
+              return(x);
+          return(success = 1);
+      }
+#ifndef NOCSETS
+      case XYTVTLNG:        /* SET TERM DEC-LANGUAGE */
+	if ((y = cmkey(vtlangtab,nvtlangtab,"VT language",
+		       "north-american",xxstring)) < 0)
+	  return(y);
+	if ((x = cmcfm()) < 0) return(x);
+
+	/* A real VT terminal would use the language to set the   */
+	/* default keyboard language for both 8-bit multinational */
+	/* and 7-bit national modes.  For 8-bit mode it would     */
+	/* set the terminal character-set to the ISO set if it    */
+	/* is not already set.                                    */
+	/* Latin-1 can be replaced by DEC Multinational           */
+	switch (y) {
+          case VTL_NORTH_AM:  /* North American */
+	    /* Multinational: Latin-1   */
+	    /* National:      US_ASCII  */
+	    dec_lang = y;
+	    dec_nrc = TX_ASCII;
+	    dec_kbd = TX_8859_1;
+	    break;
+          case VTL_BRITISH :
+	    /* Multinational: Latin-1   */
+	    /* National:      UK_ASCII  */
+	    dec_lang = y;
+	    dec_nrc = TX_BRITISH;
+	    dec_kbd = TX_8859_1;
+	    break;
+          case VTL_FRENCH  :
+          case VTL_BELGIAN :
+          case VTL_CANADIAN:
+	    /* Multinational: Latin-1   */
+	    /* National:      FR_ASCII  */
+	    dec_lang = y;
+	    dec_nrc = TX_FRENCH;
+	    dec_kbd = TX_8859_1;
+	    break;
+          case VTL_FR_CAN  :
+	    /* Multinational: Latin-1   */
+	    /* National:      FC_ASCII  */
+	    dec_lang = y;
+	    dec_nrc = TX_CN_FRENCH;
+	    dec_kbd = TX_8859_1;
+	    break;
+          case VTL_DANISH  :
+          case VTL_NORWEGIA:
+	    /* Multinational: Latin-1   */
+	    /* National:      NO_ASCII  */
+	    dec_lang = y;
+	    dec_nrc = TX_NORWEGIAN;
+	    dec_kbd = TX_8859_1;
+	    break;
+          case VTL_FINNISH :
+	    /* Multinational: Latin-1   */
+	    /* National:      FI_ASCII  */
+	    dec_lang = y;
+	    dec_nrc = TX_FINNISH;
+	    dec_kbd = TX_8859_1;
+	    break;
+          case VTL_GERMAN  :
+	    /* Multinational: Latin-1   */
+	    /* National:      GR_ASCII  */
+	    dec_lang = y;
+	    dec_nrc = TX_GERMAN;
+	    dec_kbd = TX_8859_1;
+	    break;
+          case VTL_DUTCH   :
+	    /* Multinational: Latin-1   */
+	    /* National:      DU_ASCII  */
+	    dec_lang = y;
+	    dec_nrc = TX_DUTCH;
+	    dec_kbd = TX_8859_1;
+	    break;
+          case VTL_ITALIAN :
+	    /* Multinational: Latin-1   */
+	    /* National:      IT_ASCII  */
+	    dec_lang = y;
+	    dec_nrc = TX_ITALIAN;
+	    dec_kbd = TX_8859_1;
+	    break;
+          case VTL_SW_FR   :
+          case VTL_SW_GR   :
+	    /* Multinational: Latin-1   */
+	    /* National:      CH_ASCII  */
+	    dec_lang = y;
+	    dec_nrc = TX_SWISS;
+	    dec_kbd = TX_8859_1;
+	    break;
+          case VTL_SWEDISH :
+	    /* Multinational: Latin-1   */
+	    /* National:      SW_ASCII  */
+	    dec_lang = y;
+	    dec_nrc = TX_SWEDISH;
+	    dec_kbd = TX_8859_1;
+	    break;
+          case VTL_SPANISH :
+	    /* Multinational: Latin-1   */
+	    /* National:      SP_ASCII  */
+	    dec_lang = y;
+	    dec_nrc = TX_SPANISH;
+	    dec_kbd = TX_8859_1;
+	    break;
+          case VTL_PORTUGES:
+	    /* Multinational: Latin-1   */
+	    /* National:      Portugese ASCII  */
+	    dec_lang = y;
+	    dec_nrc = TX_PORTUGUESE;
+	    dec_kbd = TX_8859_1;
+	    break;
+          case VTL_HEBREW  :
+	    /* Multinational: Latin-Hebrew / DEC-Hebrew  */
+	    /* National:      DEC 7-bit Hebrew  */
+	    dec_lang = y;
+	    dec_nrc = TX_HE7;
+	    dec_kbd = TX_8859_8;
+	    break;
+          case VTL_GREEK   :
+	    /* Multinational: Latin-Greek / DEC-Greek   */
+	    /* National:      DEC Greek NRC             */
+	    /* is ELOT927 equivalent to DEC Greek????   */
+	    dec_lang = y;
+	    dec_nrc = TX_ELOT927;
+	    dec_kbd = TX_8859_7;
+	    break;
+#ifdef COMMENT
+          case VTL_TURK_Q  :
+          case VTL_TURK_F  :
+	    /* Multinational: Latin-Turkish / DEC-Turkish   */
+	    /* National:      DEC 7-bit Turkish             */
+	    break;
+#endif /* COMMENT */
+          case VTL_HUNGARIA:
+	    /* Multinational: Latin-2   */
+	    /* National:      no national mode  */
+	    dec_lang = y;
+	    dec_nrc = TX_HUNGARIAN;
+	    dec_kbd = TX_8859_2;
+	    break;
+          case VTL_SLOVAK  :
+          case VTL_CZECH   :
+          case VTL_POLISH  :
+          case VTL_ROMANIAN:
+	    /* Multinational: Latin-2   */
+	    /* National:      no national mode  */
+	    dec_lang = y;
+	    dec_nrc = TX_ASCII;
+	    dec_kbd = TX_8859_2;
+	    break;
+          case VTL_RUSSIAN :
+	    /* Multinational: Latin-Cyrillic / KOI-8   */
+	    /* National:      DEC Russian NRC  */
+	    dec_lang = y;
+	    dec_nrc = TX_KOI7;
+	    dec_kbd = TX_8859_5;
+	    break;
+          case VTL_LATIN_AM:
+	    /* Multinational: not listed in table   */
+	    /* National:      not listed in table  */
+	    dec_lang = y;
+	    dec_nrc = TX_ASCII;
+	    dec_kbd = TX_8859_1;
+	    break;
+#ifdef COMMENT
+          case VTL_SCS     :
+	    /* Multinational: Latin-2   */
+	    /* National:      SCS NRC   */
+	    break;
+#endif /* COMMENT */
+          default:
+	    return(success = 0);
+	}
+	if (IS97801(tt_type_mode)) {
+	    SNI_bitmode(cmask == 0377 ? 8 : 7);
+	}
+	return(success = 1);
+#endif /* NOCSETS */
+
+      case XYTVTNRC: {			/* SET TERM DEC-NRC-MODE */
+	  extern int decnrcm_usr, decnrcm;        /* from ckoco3.c */
+	  if ((x = seton(&decnrcm_usr)) < 0)
+            return(x);
+	  decnrcm = decnrcm_usr;
+	  return(success = 1);
+      }
+      case XYTSNIPM: {                  /* SET TERM SNI-PAGEMODE */
+          extern int sni_pagemode, sni_pagemode_usr;
+          if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
+          if ((x = cmcfm()) < 0) return(x);
+          sni_pagemode_usr = sni_pagemode = y;
+          return(success = 1);
+      }
+      case XYTSNISM: {                  /* SET TERM SNI-SCROLLMODE */
+          extern int sni_scroll_mode, sni_scroll_mode_usr;
+          if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
+          if ((x = cmcfm()) < 0) return(x);
+          sni_scroll_mode_usr = sni_scroll_mode = y;
+          return(success = 1);
+      }
+      case XYTSNICC: {  /* SET TERM SNI-CH.CODE */
+	  extern int sni_chcode_usr;
+	  if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
+	  if ((x = cmcfm()) < 0) return(x);
+	  sni_chcode_usr = y;
+	  SNI_chcode(y);
+	  return(success = 1);
+      }
+      case XYTSNIFV: {  /* SET TERM SNI-FIRMWARE-VERSIONS */
+	  extern CHAR sni_kbd_firmware[], sni_term_firmware[];
+	  CHAR kbd[7],term[7];
+
+	  if ((x = cmfld("Keyboard Firmware Version",sni_kbd_firmware,
+			 &s, xxstring)) < 0)
+            return(x);
+	  if ((int)strlen(s) != 6) {
+	      printf("?Sorry - the firmware version must be 6 digits long\n");
+	      return(-9);
+	  }
+	  for (i = 0; i < 6; i++) {
+	      if (!isdigit(s[i])) {
+   printf("?Sorry - the firmware version can only contain digits [0-9]\n");
+                  return(-9);
+              }
+	  }
+	  strcpy(kbd,s);
+
+	  if ((x = cmfld("Terminal Firmware Version",sni_term_firmware,
+			 &s, xxstring)) < 0)
+            return(x);
+	  if ((int)strlen(s) != 6) {
+	      printf("?Sorry - the firmware version must be 6 digits long\n");
+	      return(-9);
+	  }
+	  for (i = 0; i < 6; i++) {
+	      if (!isdigit(s[i])) {
+   printf("?Sorry - the firmware version can only contain digits [0-9]\n");
+                   return(-9);
+              }
+	  }
+	  strcpy(term,s);
+	  if ((x = cmcfm()) < 0) return(x);
+
+	  strcpy(sni_kbd_firmware,kbd);
+	  strcpy(sni_term_firmware,term);
+	  return(success = 1);
+    }
 #endif /* OS2 */
 
       default:				/* Shouldn't get here. */
 	return(-2);
-    } 
+    }
 #endif /* MAC */
 #ifdef COMMENT
     /*
@@ -2984,7 +5420,15 @@ settitle(void) {
     extern char usertitle[];
     if ((y = cmtxt("title text","",&s,xxstring)) < 0)
       return(y);
-    strncpy(usertitle,s,63);
+#ifdef IKSD
+    if (inserver) {
+        printf("?Sorry, command disabled.\r\n");
+        return(success = 0);
+    }
+#endif /* IKSD */
+
+    ckstrncpy(usertitle,s,64);
+    os2settitle("",1);
     return(1);
 }
 
@@ -3008,6 +5452,8 @@ setdialer(void) {
     extern int mskkeys;
     extern int initvik;
 
+    defevt.type = error;
+
     if (( x = cmkey(dialertab, ndialer,
 		    "Kermit-95 dialer work-arounds",
 		    "", xxstring)) < 0 )
@@ -3026,6 +5472,12 @@ setdialer(void) {
     if ((y = cmtxt("Key definition","",&s,xxstring)) < 0)
       return(y);
 
+#ifdef IKSD
+    if (inserver) {
+        printf("?Sorry, command disabled.\r\n");
+        return(success = 0);
+    }
+#endif /* IKSD */
     s = brstrip(s);
 #ifndef NOKVERBS
     p = s;				/* Save this place */
@@ -3044,7 +5496,7 @@ setdialer(void) {
 	if ((x > 0) &&
 	    (s[x] == 'K' || s[x] == 'k')
 	    ) {				/* Have K */
-  
+
 	    if ((x == 1 && s[x-1] == CMDQ) ||
 		(x > 1 && s[x-1] == CMDQ && s[x-2] != CMDQ)) {
 		line[y++] = CMDQ;	/* Make it \\K */
@@ -3074,7 +5526,7 @@ setdialer(void) {
     p = s;
     if (*p++ == CMDQ) {
 	if (*p == '{') p++;
-	p = (*p == 'k' || *p == 'K') ? p + 1 : NULL; 
+	p = (*p == 'k' || *p == 'K') ? p + 1 : NULL;
     }
 #endif /* NOKVERBS */
 
@@ -3082,13 +5534,20 @@ setdialer(void) {
     /* remember to treat Wyse and Televideo terminals special */
     /* because of their use of Kverbs for Backspace and Enter */
     for (t = 0; t <= TT_MAX; t++) {
-	if (ISWY50(t) || ISTVI(t)) {
+        if ( ISDG200(t) && kc == 264) {
+	    extern char * udkfkeys[] ;
+	    if (kc == 264) {		/* \Kdgbs */
+		if (udkfkeys[83])
+		  free(udkfkeys[83]);
+		udkfkeys[83] = strdup(s);
+	    }
+	} else if (ISWYSE(t) || ISTVI(t)) {
 	    extern char * udkfkeys[] ;
 	    if (kc == 264) {		/* \Kwybs or \Ktvibs */
 		if (udkfkeys[32])
 		  free(udkfkeys[32]);
 		udkfkeys[32] = strdup(s);
-	    }	
+	    }
 	    if (kc == 269) {		/* \Kwyenter and \Kwyreturn */
 		if (udkfkeys[39])	/* \Ktvienter and \Ktvireturn */
 		  free(udkfkeys[39]);
@@ -3102,7 +5561,7 @@ setdialer(void) {
 	      case 0:			/* Clear individual key def */
 		deletekeymap(t,kc);
 		break;
-	      case 1: 
+	      case 1:
 		defevt.type = key;	/* Single character */
 		defevt.key.scancode = *s;
 		break;
@@ -3134,15 +5593,6 @@ setdialer(void) {
 #endif /* OS2 */
 
 #ifdef NT
-CHAR (*win95kcs)(CHAR) = NULL;
-int win95altgr = 0;
-int win95kl2 = 0;
-
-extern CHAR (*xlr[MAXTCSETS+1][MAXFCSETS+1])(CHAR);
-extern struct keytab tcstab[];
-extern int ntcs;
-extern int maxow, owwait;		/* Overlapped I/O variables */
-
 int
 setwin95( void ) {
     int x, y, z;
@@ -3152,7 +5602,30 @@ setwin95( void ) {
 		    "keyboard-translation",
 		    xxstring)) < 0 )
 	return (y);
-    switch ( y ) {
+    switch (y) {
+      case XYWPOPUP:
+	if ((y = cmkey(onoff,2,"popups are used to prompt the user for data",
+		       "on",xxstring)) < 0)
+	  return(y);
+	if ((x = cmcfm()) < 0) return(x);
+	win95_popup = y;
+	return(1);
+
+      case XYW8_3:
+	if ((y = cmkey(onoff,2,"8.3 FAT file names","off",xxstring)) < 0)
+	  return(y);
+	if ((x = cmcfm()) < 0) return(x);
+	win95_8_3 = y;
+	return(1);
+
+      case XYWSELECT:
+	if ((y = cmkey(onoff,2,"\"select()\" fails on write","off",
+             xxstring)) < 0)
+	  return(y);
+	if ((x = cmcfm()) < 0) return(x);
+	win95selectbug = y;
+	return(1);
+
       case XYWAGR:
 	if ((y = cmkey(onoff,2,"Right-Alt is Alt-Gr","off",xxstring)) < 0)
 	  return(y);
@@ -3161,37 +5634,58 @@ setwin95( void ) {
 	return(1);
 
       case XYWOIO:
-	if ((y = cmkey(onoff,2,"Use Overlapped I/O","off",xxstring)) < 0)
+	if ((y = cmkey(onoff,2,"Use Overlapped I/O","on",xxstring)) < 0)
 	  return(y);
-	if ( y ) {
-	    if ((x = cmnum("Num of max I/O requests","1",10,&z,xxstring)) < 0)
+	if (y) {
+	    if ((x = cmnum("Maximum number of outstanding I/O requests",
+			   "10",10,&z,xxstring)) < 0)
 	      return(x);
-	    if ( z < 1 || z > 5 ) {
-		printf("?max I/O requests must be between 1 and 5.\n");
+	    if (z < 1 || z > 30) {
+		printf(
+"?Maximum outstanding I/O requests must be between 1 and 30.\n");
 		return(-9);
 	    }
 	} else
 	  z = 1;
 	if ((x = cmcfm()) < 0) return(x);
 	owwait = !y;
-	maxow = z;
+	maxow = maxow_usr = z;
 	return(1);
 
       case XYWKEY:
+#ifndef COMMENT
+        printf("\n?\"Keyboard-Translation\" is no longer required.\n");
+        return(-9);
+#else /* COMMENT */
 	if (( z = cmkey(tcstab, ntcs,
-			 "Keyboard Character Set",
-			 "latin1-iso",
-			 xxstring)) < 0 )
-	    return (z);
+			"Keyboard Character Set",
+			"latin1-iso",
+			xxstring)) < 0)
+	  return (z);
 	if ((x = cmcfm()) < 0)
 	  return(x);
 
-	win95kl2 = (z == TC_2LATIN);
+	win95kcsi = z;
+	win95kl2 = (win95kcsi == TC_2LATIN);
 
-	if ( z == TC_TRANSP )
-	  win95kcs = NULL;
-	else 
-	  win95kcs = xlr[z][tcsl];
+	if (win95kcsi == TC_TRANSP) {
+	    win95kcs = NULL;
+	} else {
+#ifdef UNICODE
+	    win95kcs = xlr[win95kcsi][tx2fc(tcsl)];
+#else /* UNICODE */
+	    win95kcs = xlr[win95kcsi][tcsl];
+#endif /* UNICODE */
+	}
+	return(1);
+#endif /* COMMENT */
+
+      case XYWLUC:
+	if ((y = cmkey(onoff,2,"Unicode-to-Lucida-Console substitutions",
+		       "on",xxstring)) < 0)
+	  return(y);
+	if ((x = cmcfm()) < 0) return(x);
+	win95lucida = y;
 	return(1);
 
       default:
@@ -3218,44 +5712,78 @@ setprty (
 
     if ((x = cmcfm()) < 0)
       return (x);
+#ifdef IKSD
+    if (inserver &&
+#ifdef IKSDCONF
+         iksdcf
+#else
+         1
+#endif /* IKSDCONF */
+    ) {
+	if ((y = cmcfm()) < 0) return(y);
+        printf("?Sorry, command disabled.\r\n");
+        return(success = 0);
+    }
+#endif /* IKSD */
     priority = y;
-    return(TRUE); 
+    return(TRUE);
 }
+#endif /* OS2 */
 
 int
-setbell(
-#ifdef CK_ANSIC
-    void
-#endif /* CK_ANSIC */
- /* setbell */ ) {
+setbell() {
     int z, y, x;
 
     if ((y = cmkey(beltab,nbeltab,
-        "how console and terminal bells should\nbe generated",
-        "audible",xxstring)) < 0)
+#ifdef OS2
+        "how console and terminal bells should\nbe generated", "audible",
+#else
+        "Whether Kermit should ring the terminal bell (beep)", "on",
+#endif /* OS2 */
+		   xxstring)) < 0)
 	  return(y);
 
-    switch ( y ) {
-        case XYB_NONE:
-        case XYB_VIS:
-    	    if ((x = cmcfm()) < 0)
-                return(x);
-            tt_bell = y;
-            break;
-
-        case XYB_AUD:
-            if ((x = cmkey(audibletab, naudibletab,
-             "how audible console and terminal\nbells should be generated",
-                "beep",xxstring))<0)
-                return(x);
-            if ((z = cmcfm()) < 0)
-                return(z);
-            tt_bell = y | x;
-            break;
-        }
-	return(1);
+#ifdef IKSD
+    if (inserver) {
+	if ((y = cmcfm()) < 0) return(y);
+        printf("?Sorry, command disabled.\r\n");
+        return(success = 0);
     }
+#endif /* IKSD */
+
+    switch (y) {			/* SET BELL */
+      case XYB_NONE:
+#ifdef OS2
+      case XYB_VIS:
 #endif /* OS2 */
+	if ((x = cmcfm()) < 0)
+	  return(x);
+#ifdef OS2
+	tt_bell = y;
+#else
+	tt_bell = 0;
+#endif /* OS2 */
+	break;
+
+      case XYB_AUD:
+#ifdef OS2
+	if ((x = cmkey(audibletab, naudibletab,
+	       "how audible console and terminal\nbells should be generated",
+		       "beep",xxstring))<0)
+	  return(x);
+	if ((z = cmcfm()) < 0)
+	  return(z);
+	tt_bell = y | x;
+#else
+	/* This lets C-Kermit accept but ignore trailing K95 keywords */
+	if ((x = cmtxt("Confirm with carriage return","",&s,xxstring)) < 0)
+	  return(x);
+	tt_bell = 1;
+#endif /* OS2 */
+	break;
+    }
+    return(1);
+}
 
 #ifdef OS2MOUSE
 int
@@ -3271,11 +5799,20 @@ setmou(
     if ((y = cmkey(mousetab,nmtab,"","",xxstring)) < 0)
       return(y);
 
+#ifdef IKSD
+    if (inserver) {
+	if ((y = cmcfm()) < 0) return(y);
+        printf("?Sorry, command disabled.\r\n");
+        return(success = 0);
+    }
+#endif /* IKSD */
+
     if (y == XYM_ON) {			/* MOUSE ACTIVATION */
         int old_mou = tt_mouse;
-        seton(&tt_mouse);
-        if ( tt_mouse != old_mou )
-          if ( tt_mouse )
+        if ((x = seton(&tt_mouse)) < 0)
+            return(x);
+        if (tt_mouse != old_mou)
+          if (tt_mouse)
             os2_mouseon();
           else
             os2_mouseoff();
@@ -3283,6 +5820,7 @@ setmou(
     }
 
     if (y == XYM_CLEAR) {		/* Reset Mouse Defaults */
+	if ((x = cmcfm()) < 0) return(x);
 	mousemapinit(-1,-1);
 	initvik = 1;			/* Update VIK Table */
 	return 1;
@@ -3333,7 +5871,7 @@ or Enter to restore default definition",
 	if ((x > 0) &&
 	    (s[x] == 'K' || s[x] == 'k')
 	    ) {				/* Have K */
-	    
+
 	    if ((x == 1 && s[x-1] == CMDQ) ||
 		(x > 1 && s[x-1] == CMDQ && s[x-2] != CMDQ)) {
 		line[y++] = CMDQ;	/* Make it \\K */
@@ -3363,7 +5901,7 @@ or Enter to restore default definition",
     p = s;
     if (*p++ == CMDQ) {
 	if (*p == '{') p++;
-	p = (*p == 'k' || *p == 'K') ? p + 1 : NULL; 
+	p = (*p == 'k' || *p == 'K') ? p + 1 : NULL;
     }
 #else
     p = NULL;
@@ -3390,7 +5928,7 @@ or Enter to restore default definition",
 	    if (y > -1) {
             /* Assign the kverb to the event */
             mousemap[button][event].type = kverb;
-            mousemap[button][event].kverb.id = F_KVERB | y; 
+            mousemap[button][event].kverb.id = F_KVERB | y;
             break;
 	    }
 	}
@@ -3409,13 +5947,14 @@ or Enter to restore default definition",
 #endif /* OS2MOUSE */
 #endif /* NOLOCAL */
 
+#ifndef NOXFER
 int					/* SET SEND/RECEIVE */
 setsr(xx, rmsflg) int xx; int rmsflg; {
     if (xx == XYRECV)
       strcpy(line,"Parameter for inbound packets");
     else
       strcpy(line,"Parameter for outbound packets");
- 
+
     if (rmsflg) {
 	if ((y = cmkey(rsrtab,nrsrtab,line,"",xxstring)) < 0) {
 	    if (y == -3) {
@@ -3436,7 +5975,7 @@ setsr(xx, rmsflg) int xx; int rmsflg; {
 	      ctlq = (CHAR) y;		/* RECEIVE prefix, use with caution! */
 	    else
 	      myctlq = (CHAR) y;	/* SEND prefix, OK to change */
-	    return(success = 1); 
+	    return(success = 1);
 	} else {
 	    printf("?Illegal value for prefix character\n");
 	    return(-9);
@@ -3454,21 +5993,26 @@ setsr(xx, rmsflg) int xx; int rmsflg; {
 	else
 	  seol = (CHAR) z;
 	return(success = y);
- 
+
       case XYLEN:
 	y = cmnum("Maximum number of characters in a packet","90",10,&x,
 		  xxstring);
 	if (xx == XYRECV) {		/* Receive... */
 	    if ((y = setnum(&z,x,y,maxrps)) < 0)
 	      return(y);
+	    if (protocol != PROTO_K) {
+		printf("?Sorry, this command does not apply to %s protocol.\n",
+		       ptab[protocol].p_name
+		       );
+		printf("Use SET SEND PACKET-LENGTH for XYZMODEM\n");
+		return(-9);
+	    }
 	    if (z < 10) {
 		printf("Sorry, 10 is the minimum\n");
 		return(-9);
 	    }
 	    if (rmsflg) {
-		tp = tmpbuf;
-		sprintf(tp,"%d",z);
-		sstate = setgen('S', "401", tp, "");
+		sstate = setgen('S', "401", ckitoa(z), "");
 		return((int) sstate);
 	    } else {
 		if (protocol == PROTO_K) {
@@ -3476,13 +6020,7 @@ setsr(xx, rmsflg) int xx; int rmsflg; {
 		    y = adjpkl(z,wslotr,bigrbsiz);
 		    if (y != z) {
 			urpsiz = y;
-			if (
-#ifndef NOSPL
-			    cmdlvl == 0
-#else
-			    tlevel < 0
-#endif /* NOSPL */
-			    )
+			if (!cmdsrc())
 			  if (msgflg) printf(
 " Adjusting receive packet-length to %d for %d window slots\n",
 					     y, wslotr);
@@ -3492,7 +6030,8 @@ setsr(xx, rmsflg) int xx; int rmsflg; {
 		    rpsiz =  (y > 94) ? 94 : y;
 		} else {
 #ifdef CK_XYZ
-		    if (protocol == PROTO_X && z != 128 && z != 1024) {
+		    if ((protocol == PROTO_X || protocol == PROTO_XC) &&
+                         z != 128 && z != 1024) {
 			printf("Sorry, bad packet length for XMODEM.\n");
 			printf("Please use 128 or 1024.\n");
 			return(-9);
@@ -3512,20 +6051,15 @@ setsr(xx, rmsflg) int xx; int rmsflg; {
 		if (z > MAXSP) z = MAXSP;
 		spsiz = z;		/* Set it */
 		y = adjpkl(spsiz,wslotr,bigsbsiz);
-		if (y != spsiz &&
-#ifndef NOSPL
-		    cmdlvl == 0
-#else
-		    tlevel < 0
-#endif /* NOSPL */
-		    )
+		if (y != spsiz && !cmdsrc())
 		  if (msgflg)
 		    printf("Adjusting packet size to %d for %d window slots\n",
 			   y,wslotr);
 	    } else
 	      y = z;
 #ifdef CK_XYZ
-	    if (protocol == PROTO_X && z != 128 && z != 1024) {
+	    if ((protocol == PROTO_X || protocol == PROTO_XC) &&
+                 z != 128 && z != 1024) {
 		printf("Sorry, bad packet length for XMODEM.\n");
 		printf("Please use 128 or 1024.\n");
 		return(-9);
@@ -3536,14 +6070,8 @@ setsr(xx, rmsflg) int xx; int rmsflg; {
 	    ptab[protocol].spktflg = spsizf;
 	    ptab[protocol].spktlen = spsiz;
 	}
-	if (pflag && protocol == PROTO_K &&
-#ifndef NOSPL
-	    cmdlvl == 0
-#else
-	    tlevel < 0
-#endif /* NOSPL */
-	    ) {
-	    if (z > 94 && msgflg) {
+	if (pflag && protocol == PROTO_K && !cmdsrc()) {
+	    if (z > 94 && !reliable && msgflg) {
 		/* printf("Extended-length packets requested.\n"); */
 		if (bctr < 2 && z > 200) printf("\
 Remember to SET BLOCK 2 or 3 for long packets.\n");
@@ -3576,8 +6104,14 @@ Make sure your timeout interval is long enough for %d-byte packets.\n",z);
 #endif /* DOOMSDAY */
 	if (xx == XYRECV)
 	  stchr = (CHAR) z;
-	else
-	  mystch = (CHAR) z;
+	else {
+	    mystch = (CHAR) z;
+#ifdef IKS_OPTION
+	    /* If IKS negotiation in use   */
+	    if (TELOPT_U(TELOPT_KERMIT) || TELOPT_ME(TELOPT_KERMIT))
+	      tn_siks(KERMIT_SOP);	/* Report change to other side */
+#endif /* IKS_OPTION */
+        }
 	return(success = y);
 
       case XYNPAD:			/* PADDING */
@@ -3589,23 +6123,19 @@ Make sure your timeout interval is long enough for %d-byte packets.\n",z);
 	else
 	  npad = (CHAR) z;
 	return(success = y);
- 
+
       case XYPADC:			/* PAD-CHARACTER */
 	if ((y = setcc("0",&z)) < 0) return(y);
 	if (xx == XYRECV) mypadc = z; else padch = z;
 	return(success = y);
- 
+
       case XYTIMO:			/* TIMEOUT */
 	if (xx == XYRECV) {
-	    char buf[16];		/* Construct default */
-	    sprintf(buf,"%d",URTIME);
-	    y = cmnum("Packet timeout interval",buf,10,&x,xxstring);
+	    y = cmnum("Packet timeout interval",ckitoa(URTIME),10,&x,xxstring);
 	    if ((y = setnum(&z,x,y,94)) < 0) return(y);
 
 	    if (rmsflg) {		/* REMOTE SET RECEIVE TIMEOUT */
-		tp = tmpbuf;		/*   Tell Kermit server what */
-		sprintf(tp,"%d",z);	/*   timeout to ask me to use. */
-		sstate = setgen('S', "402", tp, "");
+		sstate = setgen('S', "402", ckitoa(z), "");
 		return((int) sstate);
 	    } else {			/* SET RECEIVE TIMEOUT */
 		pkttim = z;		/*   Value to put in my negotiation */
@@ -3614,15 +6144,15 @@ Make sure your timeout interval is long enough for %d-byte packets.\n",z);
 	} else {			/* SET SEND TIMEOUT */
 #ifdef CK_TIMERS
 	    extern int rttflg, mintime, maxtime;
-	    int tmin, tmax;
+	    int tmin = 0, tmax = 0;
 #endif /* CK_TIMERS */
 	    y = cmnum("Packet timeout interval","",10,&x,xxstring);
 	    if (y == -3) {		/* They cancelled a previous */
 		x = DMYTIM;		/* SET SEND command, so restore */
-		y = 0;			/* the default */
 		timef = 0;		/* and turn off the override flag */
+		y = cmcfm();
 	    }
-#ifdef CK_TIMERS	    
+#ifdef CK_TIMERS
 	    if (y < 0) return(y);
 	    if (x < 0) {
 		printf("?Out of range - %d\n",x);
@@ -3652,21 +6182,29 @@ Make sure your timeout interval is long enough for %d-byte packets.\n",z);
 #endif /* CK_TIMERS */
 	    timef = 1;			/* Turn on the override flag */
 	    timint = rtimo = z;		/* Override value for me to use */
+#ifdef CK_TIMERS
 	    if (rttflg) {		/* Lower and upper bounds */
 		mintime = tmin;
 		maxtime = tmax;
 	    }
+#endif /* CK_TIMERS */
 	}
 	return(success = 1);
 
       case XYFPATH:			/* PATHNAMES */
-	if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
+	if (xx == XYRECV) {
+	    y = cmkey(rpathtab,nrpathtab,"","auto",xxstring);
+	} else {
+	    y = cmkey(pathtab,npathtab,"","off",xxstring);
+	}
+	if (y < 0) return(y);
+
 	if ((x = cmcfm()) < 0) return(x);
 	if (xx == XYRECV) {		/* SET RECEIVE PATHNAMES */
-	    fnrpath = 1 - y;		/* OFF (with their heads!), ON */
+	    fnrpath = y;
 	    ptab[protocol].fnrp = fnrpath;
 	} else {			/* SET SEND PATHNAMES */
-	    fnspath = 1 - y;		/* OFF, ON */
+	    fnspath = y;
 	    ptab[protocol].fnsp = fnspath;
 	}
 	return(success = 1);		/* Note: 0 = ON, 1 = OFF */
@@ -3679,10 +6217,253 @@ Make sure your timeout interval is long enough for %d-byte packets.\n",z);
 	pktpaus = z;
 	return(success = 1);
 
+#ifdef CKXXCHAR				/* SET SEND/RECEIVE IGNORE/DOUBLE */
+      case XYIGN:
+      case XYDBL: {
+	  int i, zz;
+	  short *p;
+	  extern short dblt[];
+	  extern int dblflag, ignflag;
+
+	  /* Make space for a temporary copy of the ignore/double table */
+
+	  zz = y;
+#ifdef COMMENT
+	  if (zz == XYIGN && xx == XYSEND) {
+	      blah blah who cares
+	  }
+	  if (zz == XYDBL && xx == XYRECV) {
+	      blah blah
+	  }
+#endif /* COMMENT */
+	  p = (short *)malloc(256 * sizeof(short));
+	  if (!p) {
+	      printf("?Internal error - malloc failure\n");
+	      return(-9);
+	  }
+	  for (i = 0; i < 256; i++) p[i] = dblt[i]; /* Copy current table */
+
+	  while (1) {			/* Collect a list of numbers */
+#ifndef NOSPL
+	      x_ifnum = 1;		/* Turn off complaints from eval() */
+#endif /* NOSPL */
+	      if ((x = cmnum(zz == XYDBL ?
+			     "Character to double" :
+			     "Character to ignore",
+			     "",10,&y,xxstring
+			     )) < 0) {
+#ifndef NOSPL
+		  x_ifnum = 0;
+#endif /* NOSPL */
+		  if (x == -3)		/* Done */
+		    break;
+		  if (x == -2) {
+		      if (p) { free(p); p = NULL; }
+		      debug(F110,"SET S/R DOUBLE/IGNORE atmbuf",atmbuf,0);
+		      if (!ckstrcmp(atmbuf,"none",4,0) ||
+			  !ckstrcmp(atmbuf,"non",3,0) ||
+			  !ckstrcmp(atmbuf,"no",2,0) ||
+			  !ckstrcmp(atmbuf,"n",1,0)) {
+			  if ((x = cmcfm()) < 0) /* Get confirmation */
+			    return(x);
+			  for (y = 0; y < 256; y++)
+			    dblt[y] &= (zz == XYDBL) ? 1 : 2;
+			  if (zz == XYDBL) dblflag = 0;
+			  if (zz == XYIGN) ignflag = 0;
+			  return(success = 1);
+		      } else {
+			  printf(
+			    "?Please specify a number or the word NONE\n");
+			  return(-9);
+		      }
+		  } else {
+		      free(p);
+		      p = NULL;
+		      return(x);
+		  }
+	      }
+#ifndef NOSPL
+	      x_ifnum = 0;
+#endif /* NOSPL */
+	      if (y < 0 || y > 255) {
+		  printf("?Please enter a character code in range 0-255\n");
+		  free(p);
+		  p = NULL;
+		  return(-9);
+	      }
+	      p[y] |= (zz == XYDBL) ? 2 : 1;
+	      if (zz == XYDBL) dblflag = 1;
+	      if (zz == XYIGN) ignflag = 1;
+	  } /* End of while loop */
+
+	  if ((x = cmcfm()) < 0) return(x);
+/*
+  Get here only if they have made no mistakes.  Copy temporary table back to
+  permanent one, then free temporary table and return successfully.
+*/
+	  if (p) {
+	      for (i = 0; i < 256; i++) dblt[i] = p[i];
+	      free(p);
+	      p = NULL;
+	  }
+	  return(success = 1);
+      }
+#endif /* CKXXCHAR */
+
+#ifdef PIPESEND
+      case XYFLTR: {			/* SET { SEND, RECEIVE } FILTER */
+	  if ((y = cmtxt((xx == XYSEND) ?
+		"Filter program for sending files -\n\
+ use \\v(filename) to substitute filename" :
+		"Filter program for receiving files -\n\
+ use \\v(filename) to substitute filename",
+			 "",&s,NULL)) < 0)
+	    return(y);
+	  if (!*s) {			/* Removing a filter... */
+	      if (xx == XYSEND && sndfilter) {
+		  free(sndfilter);
+		  sndfilter = NULL;
+	      } else if (rcvfilter) {
+		  free(rcvfilter);
+		  rcvfilter = NULL;
+	      }
+	      return(success = 1);
+	  }				/* Adding a filter... */
+	  s = brstrip(s);		/* Strip any braces */
+	  y = strlen(s);
+	  if (xx == XYSEND) {		/* For SEND filter... */
+	      for (x = 0; x < y; x++) {	/* make sure they included "\v(...)" */
+		  if (s[x] != '\\') continue;
+		  if (s[x+1] == 'v') break;
+	      }
+	      if (x == y) {
+		  printf(
+	      "?Filter must contain a replacement variable for filename.\n"
+			 );
+		  return(-9);
+	      }
+	  }
+	  if (xx == XYSEND) {
+	      makestr(&sndfilter,s);
+	  } else {
+	      makestr(&rcvfilter,s);
+	  }
+	  return(success = 1);
+      }
+#endif /* PIPESEND */
+
+      case XYINIL:
+	y = cmnum("Max length for protocol init string","-1",10,&x,xxstring);
+	if ((y = setnum(&z,x,y,-1)) < 0)
+	  return(y);
+	if (xx == XYSEND)
+	  sprmlen = z;
+	else
+	  rprmlen = z;
+	return(success = 1);
+
+#ifndef NOCSETS
+      case XYCSET: {			/* CHARACTER-SET-SELECTION */
+	  extern struct keytab xfrmtab[];
+	  extern int r_cset, s_cset;
+	  if ((y = cmkey(xfrmtab,2,"","automatic",xxstring)) < 0)
+	    return(y);
+	  if ((x = cmcfm()) < 0)
+	    return(x);
+	  if (xx == XYSEND)
+	    s_cset = y;
+	  else
+	    r_cset = y;
+	  return(success = 1);
+      }
+#endif /* NOCSETS */
+
+      case XYBUP:
+	if ((y = cmkey(onoff,2,"","on",xxstring)) < 0)
+	  return(y);
+	if ((x = cmcfm()) < 0) return(x);
+	if (xx == XYSEND) {
+	    extern int skipbup;
+	    skipbup = (y == 0) ? 1 : 0;
+	    return(success = 1);
+	} else {
+	    printf(
+"?Please use SET FILE COLLISION to choose the desired action\n");
+	    return(-9);
+	}
+
+      case XYMOVE:
+	y = cmdir("Directory to move file(s) to after successful transfer",
+		  "",&s,xxstring);
+	if (y < 0 && y != -3)
+	  return(y);
+	strcpy(line,s);
+	s = brstrip(line);
+	if ((x = cmcfm()) < 0)
+	  return(x);
+	if (xx == XYSEND) {
+	    if (*s) {
+		makestr(&snd_move,s);
+		makestr(&g_snd_move,s);
+	    } else {
+		makestr(&snd_move,NULL);
+		makestr(&g_snd_move,NULL);
+	    }
+	} else {
+	    if (*s) {
+		makestr(&rcv_move,s);
+		makestr(&g_rcv_move,s);
+	    } else {
+		makestr(&rcv_move,NULL);
+		makestr(&g_rcv_move,NULL);
+	    }
+	}
+	return(success = 1);
+
+      case XYRENAME:
+	y = cmdir("Template to rename file(s) to after successful transfer",
+		  "",&s,NULL);
+	if (y < 0 && y != -3)
+	  return(y);
+	strcpy(line,s);
+	s = brstrip(line);
+	if ((x = cmcfm()) < 0)
+	  return(x);
+	if (xx == XYSEND) {
+	    if (*s) {
+		makestr(&snd_rename,s);
+		makestr(&g_snd_rename,s);
+	    } else {
+		makestr(&snd_rename,NULL);
+		makestr(&g_snd_rename,NULL);
+	    }
+	} else {
+	    if (*s) {
+		makestr(&rcv_rename,s);
+		makestr(&g_rcv_rename,s);
+	    } else {
+		makestr(&rcv_rename,NULL);
+		makestr(&g_rcv_rename,NULL);
+	    }
+	}
+	return(success = 1);
+
+#ifdef VMS
+      case 887:			/* VERSION-NUMBERS */
+	if (xx == XYSEND) {
+	    extern int vmssversions;
+	    return(seton(&vmssversions));
+	} else {
+	    extern int vmsrversions;
+	    return(seton(&vmsrversions));
+	}
+#endif /* VMS */
+
       default:
 	return(-2);
     }					/* End of SET SEND/RECEIVE... */
 }
+#endif /* NOXFER */
 
 #ifndef NOXMIT
 int
@@ -3724,14 +6505,20 @@ or text lines during transmission","0",10,&x,xxstring);
 	if ((y = setnum(&z,x,y,1000)) < 0) return(y);
 	xmitw = z;
 	return(success = 1);
+      case XMITT:			/* Timeout */
+	y = cmnum("Seconds to wait for each character to echo",
+		  "1",10,&x,xxstring);
+	if ((y = setnum(&z,x,y,1000)) < 0) return(y);
+	xmitt = z;
+	return(success = 1);
       default:
 	return(-2);
     }
 }
 #endif /* NOXMIT */
-
+
 /*  D O R M T  --  Do a remote command  */
- 
+
 VOID
 rmsg() {
     if (pflag)
@@ -3744,6 +6531,9 @@ rmsg() {
 #endif /* CK_NEED_SIG */
       );
 }
+
+#ifndef NOXFER
+static int xzcmd = 0;			/* Global copy of REMOTE cmd index */
 
 /*  R E M C F M  --  Confirm a REMOTE command  */
 /*
@@ -3773,8 +6563,22 @@ or type carriage return to confirm the command",
 	free(remdest);
 	remdest = NULL;
     }
-    if (!*s)				/* No redirection indicator */
-      return(1);
+    debug(F101,"remcfm local","",local);
+    debug(F110,"remcfm s",s,0);
+    debug(F101,"remcfm cmd","",xzcmd);
+
+    if (!*s) {				/* No redirection indicator */
+	if (!local &&
+	    (xzcmd == XZDIR || xzcmd == XZTYP ||
+	     xzcmd == XZXIT || xzcmd == XZSPA ||
+	     xzcmd == XZHLP || xzcmd == XZPWD ||
+	     xzcmd == XZLGI || xzcmd == XZLGO ||
+	     xzcmd == XZWHO || xzcmd == XZHOS)) {
+	    printf("?\"%s\" has no effect in remote mode\n",cmdbuf);
+	    return(-9);
+	} else
+	  return(1);
+    }
     c = *s;				/* We have something */
     if (c != '>' && c != '|') {		/* Is it > or | ? */
 	printf("?Not confirmed\n");	/* No */
@@ -3796,6 +6600,14 @@ or type carriage return to confirm the command",
     }
     remfile = 1;			/* Set global results */
     rempipe = (c == '|');
+    if (rempipe
+#ifndef NOPUSH
+	&& nopush
+#endif /* NOPUSH */
+	) {
+	printf("?Sorry, access to external commands is disabled.\n");
+	return(-9);
+    }
     makestr(&remdest,s);
 #ifndef NODEBUG
     if (deblog) {
@@ -3852,9 +6664,23 @@ remtxt(p) char ** p; {
 	remdest = NULL;
     }
     s = *p;
-    if (!*s)				/* No redirection indicator */
-      return(1);			/* Done */
-
+    if (!s)				/* No redirection indicator */
+      s = "";
+    if (!*s) {				/* Ditto */
+	if (!local &&
+	    (xzcmd == XZDIR || xzcmd == XZTYP ||
+	     xzcmd == XZXIT || xzcmd == XZSPA ||
+	     xzcmd == XZHLP || xzcmd == XZPWD ||
+	     xzcmd == XZLGI || xzcmd == XZLGO ||
+	     xzcmd == XZWHO || xzcmd == XZHOS)) {
+	    printf("?\"%s\" has no effect in remote mode\n",cmdbuf);
+	    if (hints) {
+		printf("Hint: try again with an output redirector.\n");
+	    }
+	    return(-9);
+	} else
+	  return(1);
+    }
     bpos = -1;				/* Position of > (bracket) */
     ppos = -1;				/* Position of | (pipe) */
     x = strlen(s);			/* Length of cmtxt() string */
@@ -3869,15 +6695,27 @@ remtxt(p) char ** p; {
 	  ppos = i;
     }
     if (bpos < 0 && ppos < 0) {		/* No redirectors. */
+	if (!local &&
+	    (xzcmd == XZDIR || xzcmd == XZTYP ||
+	     xzcmd == XZXIT || xzcmd == XZSPA ||
+	     xzcmd == XZHLP || xzcmd == XZPWD ||
+	     xzcmd == XZLGI || xzcmd == XZLGO ||
+	     xzcmd == XZWHO || xzcmd == XZHOS)) {
+	    printf("?\"%s\" has no effect in remote mode\n",cmdbuf);
+	    if (hints) {
+		printf("Hint: try again with an output redirector.\n");
+	    }
+	    return(-9);
+	}
 	s = brstrip(s);			/* Remove outer braces if any. */
 	*p = s;				/* Point to result */
 	return(1);			/* and return. */
-    }    
+    }
     remfile = 1;			/* It's | or > */
     i = -1;				/* Get leftmost symbol */
     if (bpos > -1)			/* Bracket */
       i = bpos;
-    if (ppos > -1 && ppos < bpos) {	/* or pipe */
+    if (ppos > -1 && (ppos < bpos || bpos < 0)) { /* or pipe */
 	i = ppos;
 	rempipe = 1;
     }
@@ -3918,15 +6756,153 @@ remtxt(p) char ** p; {
 }
 
 int
-dormt(xx) int xx; {			/* REMOTE commands */
+plogin(xx) int xx; {
+    char *p1 = NULL, *p2 = NULL, *p3 = NULL;
+    int psaved = 0, rc = 0;
+#ifdef CK_RECALL
+    int sv_recall = -1;			/* For turning off command recall */
+    extern int on_recall;		/* around Password prompting */
+#endif /* CK_RECALL */
+    debug(F101,"plogin local","",local);
+
+    if (!local || (network && ttchk() < 0)) {
+	printf("?No connection\n");
+	return(-9);
+    }
+    if ((x = cmfld("User ID","",&s,xxstring)) < 0) { /* Get User ID */
+	if (x != -3) return(x);
+    }
+    y = strlen(s);
+    if (y > 0) {
+	if ((p1 = malloc(y + 1)) == NULL) {
+	    printf("?Internal error: malloc\n");
+	    rc = -9;
+	    goto XZXLGI;
+	} else
+	  strcpy(p1,s);
+	if ((rc = cmfld("Password","",&s,xxstring)) < 0)
+	  if (rc != -3) goto XZXLGI;
+	y = strlen(s);
+	if (y > 0) {
+	    if ((p2 = malloc(y + 1)) == NULL) {
+		printf("?Internal error: malloc\n");
+		rc = -9;
+		goto XZXLGI;
+	    } else
+	      strcpy(p2,s);
+	    if ((rc = cmfld("Account","",&s,xxstring)) < 0)
+	      if (rc != -3) goto XZXLGI;
+	    y = strlen(s);
+	    if (y > 0) {
+		if ((p3 = malloc(y + 1)) == NULL) {
+		    printf("?Internal error: malloc\n");
+		    rc = -9;
+		    goto XZXLGI;
+		} else
+		  strcpy(p3,s);
+	    }
+	}
+    }
+    if ((rc = remtxt(&s)) < 0)		/* Confirm & handle redirectors */
+      goto XZXLGI;
+
+    if (!p1) {				/* No Userid specified... */
+	/* Prompt for username, password, and account */
+#ifdef CK_RECALL
+	sv_recall = on_recall;
+	on_recall = 0;
+#endif /* CK_RECALL */
+	cmsavp(psave,PROMPTL);		/* Save old prompt */
+	psaved = 1;
+	debug(F110,"REMOTE LOGIN saved",psave,0);
+
+	cmsetp("Username: ");		/* Make new prompt */
+	concb((char)escape);		/* Put console in cbreak mode */
+	cmini(1);
+	prompt(xxstring);
+	rc = -9;
+	for (x = -1; x < 0; ) {		/* Prompt till they answer */
+	    cmres();			/* Reset the parser */
+	    x = cmtxt("","",&s,NULL);	/* Get a literal line of text */
+	}
+	y = strlen(s);
+	if (y < 1) {
+	    printf("?Canceled\n");
+	    goto XZXLGI;
+	}
+	if ((p1 = malloc(y + 1)) == NULL) {
+	    printf("?Internal error: malloc\n");
+	    goto XZXLGI;
+	} else
+	  strcpy(p1,s);
+
+	cmsetp("Password: ");		/* Make new prompt */
+	concb((char)escape);		/* Put console in cbreak mode */
+	cmini(0);			/* No echo */
+	prompt(xxstring);
+	for (x = -1; x < 0 && x != -3; ) { /* Get answer */
+	    cmres();			/* Reset the parser */
+	    x = cmtxt("","",&s,NULL);	/* Get literal line of text */
+	}
+	if ((p2 = malloc((int)strlen(s) + 1)) == NULL) {
+	    printf("?Internal error: malloc\n");
+	    goto XZXLGI;
+	} else
+	  strcpy(p2,s);
+	printf("\r\n");
+	if ((rc = cmcfm()) < 0)
+	  goto XZXLGI;
+    }
+    sstate = setgen('I',p1,p2,p3);	/* Get here with at least user ID */
+    rc = 0;
+
+  XZXLGI:				/* Common exit point */
+    if (psaved)
+      cmsetp(psave);			/* Restore original prompt */
+#ifdef CK_RECALL
+    if (sv_recall > -1)			/* Put back command recall */
+      on_recall = sv_recall;
+#endif /* CK_RECALL */
+    if (p3) { free(p3); p3 = NULL; }	/* Free malloc'd storage */
+    if (p2) { free(p2); p2 = NULL; }
+    if (p1) { free(p1); p1 = NULL; }
+    if (rc > -1) {
+	if (local && rc > -1)		/* If local, flush tty input buffer */
+	  ttflui();
+    }
+    return(rc);
+}
+
+#ifdef OS2
+int
+dormt(xx) int xx; {
+    int rc = 0;
+    extern int term_io;
+    int term_io_sav = term_io;
+    term_io = 0;
+    rc = xxdormt(xx);
+    term_io = term_io_sav;
+    return rc;
+}
+
+
+int
+xxdormt(xx) int xx;
+#else /* OS2 */
+int
+dormt(xx) int xx;
+#endif /* OS2 */
+{					/* REMOTE commands */
     int x, y, retcode;
     char *s, sbuf[50], *s2;
- 
+
     remfile = 0;			/* Clear these */
     rempipe = 0;
     remappd = 0;
 
     if (xx < 0) return(xx);		/* REMOTE what? */
+
+    xzcmd = xx;				/* Make global copy of arg */
 
     if (xx == XZSET) {			/* REMOTE SET */
 	if ((y = cmkey(rmstab,nrms,"","",xxstring)) < 0) {
@@ -3939,7 +6915,7 @@ dormt(xx) int xx; {			/* REMOTE commands */
     }
 
     switch (xx) {			/* Others... */
- 
+
       case XZCWD:			/* CWD (CD) */
 	if ((x = cmtxt("Remote directory name","",&s,xxstring)) < 0)
 	  return(x);
@@ -3957,7 +6933,7 @@ dormt(xx) int xx; {			/* REMOTE commands */
 	if (*s != NUL) {		/* If directory name given, */
 					/* get password on separate line. */
 	    if (tlevel > -1) {		/* From take file... */
- 
+
 		if (fgets(sbuf,50,tfile[tlevel]) == NULL)
 		  fatal("take file ends prematurely in 'remote cwd'");
 		debug(F110," pswd from take file",s2,0);
@@ -3965,18 +6941,22 @@ dormt(xx) int xx; {			/* REMOTE commands */
 		     x > 0 && (sbuf[x-1] == NL || sbuf[x-1] == CR);
 		     x--)
 		  sbuf[x-1] = '\0';
- 
+
 	    } else {			/* From terminal... */
- 
+
 		printf(" Password: ");	/* get a password */
-		while (
+#ifdef IKSD
+                if (!local && inserver) {
+                    x = coninc(0);
+                } else
+#endif /* IKSD */
 #ifdef OS2
-		       ((x = is_a_tty(0) ? coninc(0) : /* with no echo ... */
-			 getchar()) != NL) && (x != CR)
-#else
-		       ((x = getchar()) != NL) && (x != CR)
+		  x = is_a_tty(0) ? coninc(0) : /* with no echo ... */
+                    getchar();
+#else /* OS2 */
+                x = getchar();
 #endif /* OS2 */
-		       ) {
+		while ((x != NL) && (x != CR)) {
 		    if ((x &= 0177) == '?') {
 			printf("? Password of remote directory\n Password: ");
 			s2 = sbuf;
@@ -3990,6 +6970,19 @@ dormt(xx) int xx; {			/* REMOTE commands */
 			*sbuf = NUL;
 		    } else
 		      *s2++ = x;
+
+                    /* Get the next character */
+#ifdef IKSD
+                    if (!local && inserver) {
+                        x = coninc(0);
+                    } else
+#endif /* IKSD */
+#ifdef OS2
+                    x = is_a_tty(0) ? coninc(0) : /* with no echo ... */
+		      getchar();
+#else /* OS2 */
+                    x = getchar();
+#endif /* OS2 */
 		}
 		*s2 = NUL;
 		putchar('\n');
@@ -4016,7 +7009,7 @@ dormt(xx) int xx; {			/* REMOTE commands */
 	if (local) ttflui();		/* If local, flush tty input buffer */
 	retcode = sstate = rfilop(s,'E');
 	break;
- 
+
       case XZDIR:			/* Directory */
 	if ((x = cmtxt("Remote directory or file specification","",&s,
 		       xxstring)) < 0)
@@ -4027,88 +7020,55 @@ dormt(xx) int xx; {			/* REMOTE commands */
 	rmsg();
 	retcode = sstate = setgen('D',s,"","");
 	break;
- 
+
       case XZHLP:			/* Help */
 	if ((x = remcfm()) < 0) return(x);
 	sstate = setgen('H',"","","");
 	retcode = 0;
-	break; 
-
-#ifndef NOPUSH
-/* Why is this ifdef'd? */
+	break;
 
       case XZHOS:			/* Host */
-	if (nopush) {
-	    if ((x = remcfm()) < 0) return(x);
-	    printf("?Not available - %s\n",cmdbuf);
-	    return(-2);
-	}
-	if ((x = cmtxt("Command for remote system","",&cmarg,xxstring)) < 0)
+	if ((x = cmtxt("Command for remote system","",&s,xxstring)) < 0)
 	  return(x);
-	if ((x = remtxt(&cmarg)) < 0)
+	if ((x = remtxt(&s)) < 0)
 	  return(x);
-	if ((y = (int)strlen(cmarg)) < 1)
+	if ((y = (int)strlen(s)) < 1)
 	  return(x);
+	strcpy(line,s);
+	cmarg = line;
 	rmsg();
 	retcode = sstate = 'c';
-	break; 
-#endif /* NOPUSH */
+	break;
 
 #ifndef NOFRILLS
       case XZKER:
-	if ((x = cmtxt("Command for remote Kermit","",&cmarg,xxstring)) < 0)
+	if ((x = cmtxt("Command for remote Kermit","",&s,xxstring)) < 0)
 	  return(x);
-	if ((x = remtxt(&cmarg)) < 0)
+	if ((x = remtxt(&s)) < 0)
 	  return(x);
-	if ((int)strlen(cmarg) < 1)  {
+	if ((int)strlen(s) < 1)  {
 	    if (x == -3) {
 		printf("?Remote Kermit command required\n");
 		return(-9);
 	    } else return(x);
 	}
+	strcpy(line,s);
+	cmarg = line;
 	retcode = sstate = 'k';
 	rmsg();
-	break; 
+	break;
 
-      case XZLGI: {			/* Login */
-	  char *p1, *p2, *p3;
-	  if ((x = cmfld("User ID","",&s,xxstring)) < 0)
-	    return(x);
-	  if ((p1 = malloc((int)strlen(s) + 1)) == NULL) {
-	      printf("Internal error: malloc\n");
-	      return(-2);
-	  } else
-	    strcpy(p1,s);
-	  if ((x = cmfld("Password","",&s,xxstring)) < 0)
-	    return(x);
-	  if ((p2 = malloc((int)strlen(s) + 1)) == NULL) {
-	      printf("Internal error: malloc\n");
-	      return(-2);
-	  } else
-	    strcpy(p2,s);
-	  if ((x = cmtxt("Account or carriage return","",
-			 &s,xxstring)) < 0 && x != -3)
-	    return(x);
-	  if ((x = remtxt(&s)) < 0)
-	    return(x);
-	  if ((p3 = malloc((int)strlen(s) + 1)) == NULL) {
-	      printf("Internal error: malloc\n");
-	      return(-2);
-	  } else
-	    strcpy(p3,s);
-	  sstate = setgen('I',p1,p2,p3);
-	  if (p3) { free(p3); p3 = NULL; }
-	  if (p2) { free(p2); p2 = NULL; }
-	  if (p1) { free(p1); p1 = NULL; }
+      case XZLGI:			/* Login */
+	return(plogin(XXREM));
+
+      case XZLGO: {			/* Logout */
+	  extern int bye_active;
+	  if ((x = remcfm()) < 0) return(x);
+	  sstate = setgen('I',"","","");
 	  retcode = 0;
-	  break; 
+	  bye_active = 1;		/* Close connection when done */
+	  break;
       }
-
-      case XZLGO:			/* Logout */
-	if ((x = remcfm()) < 0) return(x);
-	sstate = setgen('I',"","","");
-	retcode = 0;
-	break; 
 
       case XZPRI:			/* Print */
 	if (!atdiso || !atcapr) {	/* Disposition attribute off? */
@@ -4144,7 +7104,7 @@ dormt(xx) int xx; {			/* REMOTE commands */
 	retcode = 0;
 	break;
 #endif /* NOFRILLS */
-	
+
       case XZSPA:			/* Space */
 	if ((x = cmtxt("Confirm, or remote directory name",
 		       "",&s,xxstring)) < 0)
@@ -4153,14 +7113,14 @@ dormt(xx) int xx; {			/* REMOTE commands */
 	  return(x);
 	retcode = sstate = setgen('U',s,"","");
 	break;
-    
+
 #ifndef NOFRILLS
       case XZTYP:			/* Type */
 	if ((x = cmtxt("Remote file specification","",&s,xxstring)) < 0)
 	  return(x);
 	if ((int)strlen(s) < 1) {
 	    printf("?Remote filename required\n");
-	    return(-9);	
+	    return(-9);
 	}
 	if ((x = remtxt(&s)) < 0)
 	  return(x);
@@ -4168,7 +7128,7 @@ dormt(xx) int xx; {			/* REMOTE commands */
 	retcode = sstate = rfilop(s,'T');
 	break;
 #endif /* NOFRILLS */
- 
+
 #ifndef NOFRILLS
       case XZWHO:
 	if ((x = cmtxt("Remote user name, or carriage return",
@@ -4179,13 +7139,13 @@ dormt(xx) int xx; {			/* REMOTE commands */
 	retcode = sstate = setgen('W',s,"","");
 	break;
 #endif /* NOFRILLS */
- 
+
       case XZPWD:			/* PWD */
 	if ((x = remcfm()) < 0) return(x);
 	sstate = setgen('A',"","","");
 	retcode = 0;
-	break; 
-    
+	break;
+
 #ifndef NOSPL
       case XZQUE: {			/* Query */
 	  char buf[2];
@@ -4193,7 +7153,13 @@ dormt(xx) int xx; {			/* REMOTE commands */
 	  extern int qbufn;
 	  if ((y = cmkey(vartyp,nvartyp,"","",xxstring)) < 0)
 	    return(y);
-	  if ((x = cmtxt("Remote variable name","",&s,NULL)) < 0) /* No eval */
+	  if ((x = cmtxt(y == 'F' ? "Remote function invocation" :
+			 ('K' ? "Remote variable name or function":
+			 "Remote variable name"),
+			 "",
+			 &s,
+			 (y == 'K') ? xxstring : NULL
+			 )) < 0)	/* Don't evaluate */
 	    return(x);
 	  if ((x = remtxt(&s)) < 0)
 	    return(x);
@@ -4251,7 +7217,7 @@ dormt(xx) int xx; {			/* REMOTE commands */
 	      else
 		return(x);
 	  }
-	  strncpy(buf,s,MAXPATHLEN);
+	  ckstrncpy(buf,s,MAXPATHLEN);
 	  if ((x = cmfld("Name of remote destination file or directory",
 			 "",&s, xxstring)) < 0) {
 	      if (x == -3) {
@@ -4259,13 +7225,13 @@ dormt(xx) int xx; {			/* REMOTE commands */
 		  return(-9);
 	      } else return(x);
 	  }
+	  strcpy(tmpbuf,s);
 	  if ((x = remcfm()) < 0)
 	    return(x);
 	  if (local) ttflui();		/* If local, flush tty input buffer */
-	  retcode = sstate = setgen('K',buf,s,"");
+	  retcode = sstate = setgen('K',buf,tmpbuf,"");
 	  break;
       }
-
       case XZREN: {			/* Rename */
 	  char buf[MAXPATHLEN+1];
 	  buf[MAXPATHLEN] = '\0';
@@ -4276,37 +7242,64 @@ dormt(xx) int xx; {			/* REMOTE commands */
 		  return(-9);
 	      } else return(x);
 	  }
-	  strncpy(buf,s,MAXPATHLEN);
+	  ckstrncpy(buf,s,MAXPATHLEN);
 	  if ((x = cmfld("New name of remote file","",&s, xxstring)) < 0) {
 	      if (x == -3) {
 		  printf("?Name of remote file required\n");
 		  return(-9);
 	      } else return(x);
 	  }
+	  strcpy(tmpbuf,s);
 	  if ((x = remcfm()) < 0)
 	    return(x);
-	  if (local) ttflui();		/* If local, flush tty input buffer */
-	  retcode = sstate = setgen('R',buf,s,"");
+	  if (local) ttflui();		/* If local, flush device buffer */
+	  retcode = sstate = setgen('R',buf,tmpbuf,"");
 	  break;
       }
+      case XZMKD:			/* mkdir */
+      case XZRMD:			/* rmdir */
+	if ((x = cmtxt((xx == XZMKD) ?
+		       "Name of remote directory to create" :
+		       "Name of remote directory to delete",
+		       "",
+		       &s,
+		       xxstring
+		       )) < 0) {
+	    if (x == -3) {
+		printf("?Name required\n");
+		return(-9);
+	    } else return(x);
+	}
+	if ((x = remtxt(&s)) < 0)
+	  return(x);
+	if (local) ttflui();		/* If local, flush tty input buffer */
+	retcode = sstate = rfilop(s, (char)(xx == XZMKD ? 'm' : 'd'));
+	break;
+
+      case XZXIT:			/* Exit */
+	if ((x = remcfm()) < 0) return(x);
+	sstate = setgen('X',"","","");
+	retcode = 0;
+	break;
 
       default:
         if ((x = remcfm()) < 0) return(x);
         printf("?Not implemented - %s\n",cmdbuf);
         return(-2);
     }
-    if (local) ttflui();		/* If local, flush tty input buffer */
+    if (local && retcode > -1)		/* If local, flush tty input buffer */
+      ttflui();
     return(retcode);
 }
- 
- 
+
+
 /*  R F I L O P  --  Remote File Operation  */
- 
+
 CHAR
 #ifdef CK_ANSIC
 rfilop(char * s, char t)
 #else
-rfilop(s,t) char *s, t; 
+rfilop(s,t) char *s, t;
 #endif /* CK_ANSIC */
 /* rfilop */ {
     if (*s == NUL) {
@@ -4316,6 +7309,7 @@ rfilop(s,t) char *s, t;
     debug(F111,"rfilop",s,t);
     return(setgen(t,s,"",""));
 }
+#endif /* NOXFER */
 
 #ifdef ANYX25
 int
@@ -4370,6 +7364,7 @@ setx25() {
     }
 }
 
+#ifndef IBMX25
 int
 setpadp() {
     if ((y = cmkey(padx3tab,npadx3,"PAD X.3 parameter name","",xxstring)) < 0)
@@ -4548,13 +7543,15 @@ setpadp() {
     padparms[x] = z;
     return(success = 1);
 }
-#endif /* ANYX25 */ 
+#endif /* IBMX25 */
+#endif /* ANYX25 */
 
+#ifndef NOXFER
 int
 setat(rmsflg) int rmsflg; {
     int xx;
     if ((y = cmkey(attrtab,natr,"File Attribute packets","",xxstring)) < 0)
-      return(y);    
+      return(y);
     if (y == AT_XALL) {			/* ATTRIBUTES ALL ON or ALL OFF */
 	if ((z = seton(&xx)) < 0) return(z);
 	if (rmsflg) {
@@ -4577,6 +7574,12 @@ setat(rmsflg) int rmsflg; {
 	    atsido = xx;
 	    atsysi = xx;		/* System-dependent params in/out */
 	    atsyso = xx;
+#ifdef CK_PERMS				/* Protection */
+	    atlpri = xx;		/* Local in */
+	    atlpro = xx;		/* Local out */
+	    atgpri = xx;		/* Generic in */
+	    atgpro = xx;		/* Generic out */
+#endif /* CK_PERMS */
 #ifdef STRATUS
 	    atfrmi = xx;		/* Format in/out */
 	    atfrmo = xx;
@@ -4607,7 +7610,17 @@ setat(rmsflg) int rmsflg; {
 /* than telling it not to send them.  The protocol does not (yet) define */
 /* codes for "in-and-out-at-the-same-time". */
 
-    switch(y) {
+    switch (y) {
+#ifdef CK_PERMS
+/* We're lumping local and generic protection together for now... */
+      case AT_LPRO:
+      case AT_GPRO:
+	if (rmsflg) {
+	    sstate = setgen('S', "143", z ? "1" : "0", "");
+	    return((int) sstate);
+	}
+	atlpri = atlpro = atgpri = atgpro = z; break;
+#endif /* CK_PERMS */
       case AT_DISP:
 	if (rmsflg) {
 	    sstate = setgen('S', "142", z ? "1" : "0", "");
@@ -4685,6 +7698,7 @@ setat(rmsflg) int rmsflg; {
     }
     return(1);
 }
+#endif /* NOXFER */
 
 #ifndef NOSPL
 int
@@ -4694,7 +7708,9 @@ setinp() {
 #ifdef OS2
       case IN_PAC:			/* SET INPUT PACING */
 	z = cmnum("milliseconds","0",10,&x,xxstring);
-	return(setnum(&tt_inpacing,x,z,94));
+	return(setnum(&tt_inpacing,x,z,1000));
+      case IN_TRM:			/* SET INPUT TERMINAL */
+	return(seton(&interm));
 #endif /* OS2 */
       case IN_DEF:			/* SET INPUT DEFAULT-TIMEOUT */
 	z = cmnum("Positive number","",10,&x,xxstring);
@@ -4715,10 +7731,10 @@ setinp() {
 	z = cmnum("Seconds of inactivity before INPUT fails","",10,&x,
 		  xxstring);
 	return(setnum(&insilence,x,z,-1));
+
       case IN_BUF:			/* SET INPUT BUFFER-SIZE */
-	sprintf(tmpbuf, "%d", INPBUFSIZ);
 	if ((z = cmnum("Number of bytes in INPUT buffer",
-		       tmpbuf,10,&x, xxstring)) < 0)
+		       ckitoa(INPBUFSIZ),10,&x, xxstring)) < 0)
 	  return(z);
 	if ((y = cmcfm()) < 0) return(y);
 	inbufsize = 0;
@@ -4734,6 +7750,15 @@ setinp() {
 	inbufsize = x;
 	for (x = 0; x <= inbufsize; x++)
 	  inpbuf[x] = NUL;
+	return(success = 1);
+
+#ifdef CK_AUTODL
+      case IN_ADL:			/* AUTODOWNLOAD */
+	return(seton(&inautodl));
+#endif /* CK_AUTODL */
+
+      case IN_CAN:			/* SET INPUT INTERRUPTS */
+	return(seton(&inintr));
     }
     return(0);
 }
@@ -4747,14 +7772,14 @@ ndreset() {
     if (!ndinited)			/* Don't free garbage... */
       return;
     for (i = 0; i < nhcount; i++) {	/* Clean out previous list */
-	if (nh_p[i]) 
+	if (nh_p[i])
 	  free(nh_p[i]);
 	nh_p[i] = NULL;
-	if (nh_p2[i]) 
+	if (nh_p2[i])
 	  free(nh_p2[i]);
 	nh_p2[i] = NULL;
 	for (j = 0; j < 4; j++) {
-	    if (nh_px[j][i]) 
+	    if (nh_px[j][i])
 	      free(nh_px[j][i]);
 	    nh_px[j][i] = NULL;
 	}
@@ -4789,12 +7814,13 @@ getnetenv() {
     makestr(&p,getenv("K_NET_DIRECTORY")); /* Dialing directories */
     if (p) {
 	int i;
-	xwords(p,(MAXDDIR - 2),netdir,0);
-	for (i = 0; i < (MAXDDIR - 1); i++) { /* Fill in any gaps... */
+	xwords(p,MAXDDIR,netdir,0);
+	for (i = 0; i < MAXDDIR; i++) { /* Fill in any gaps... */
 	    if (!netdir[i+1])
 	      break;
 	    else
 	      netdir[i] = netdir[i+1];
+            debug(F111,"netdir[i]",netdir[i],i);
 	}
 	nnetdir = i;
     }
@@ -4802,7 +7828,7 @@ getnetenv() {
 #endif /* NETCONN */
 #endif /* NODIAL */
 
-int	
+int
 #ifdef CK_ANSIC
 lunet(char *s)				/* s = name to look up   */
 #else
@@ -4810,10 +7836,10 @@ lunet(s) char *s;
 #endif /* CK_ANSIC */
 /* lunet */ {
 #ifndef NODIAL				/* This depends on DIAL... */
-    int n, n1, n3, n4, t, i, j, k, dd = 0;
+    int n, n1, t, dd = 0;
     int ambiguous = 0;
     FILE * f;
-    char *line = NULL, *pp, *p2;
+    char *line = NULL;
     extern int dialdpy;
     int netdpy = dialdpy;
     char *info[8];
@@ -4863,7 +7889,7 @@ lunet(s) char *s;
 	  continue;
 
 	xwords(line,7,info,0);		/* Parse it */
-	
+
 	if (!info[1] || !info[2] || !info[3]) /* Required fields */
 	  continue;
 	if (*info[1] == ';')		/* Full-line comment */
@@ -4874,7 +7900,7 @@ lunet(s) char *s;
 	  continue;			/* Can't possibly match */
 	if (ambiguous && n != n1)
 	  continue;
-	if (xxstrcmp(s,info[1],n1))	/* Compare using length of */
+	if (ckstrcmp(s,info[1],n1,0))	/* Compare using length of */
 	  continue;			/* search string s. */
 
 	/* Have a match */
@@ -4913,11 +7939,11 @@ lunet(s) char *s;
 	    strcpy(n_name,info[1]);
 	} else {			/* Second or subsequent one */
 	    if ((int) strlen(info[1]) == t) /* Lengths compare */
-	      if (!xxstrcmp(n_name,info[1],t)) /* Caseless compare OK */
+	      if (!ckstrcmp(n_name,info[1],t,0)) /* Caseless compare OK */
 		continue;
 
 	    /* Name given by user matches entries with different names */
-	    
+
 	    if (ambiguous)		/* Been here before */
 	      break;
 
@@ -4940,6 +7966,147 @@ lunet(s) char *s;
 #endif /* NETCONN */
 
 #ifndef NOLOCAL
+/*  C L S C O N N X  --  Close connection  */
+
+int
+clsconnx(ask) int ask; {
+    int x, rc = 0;
+    debug(F101,"clsconnx local","",local);
+    if (local) {
+	x = ask ? hupok(1) : 1;		/* Make sure it's OK to close */
+	if (!x) {
+	    rc = -1;
+	    debug(F101,"clsconnx hupok says no","",rc);
+	    return(rc);
+	}
+	ttflui();			/* Clear away buffered up junk */
+#ifndef NODIAL
+#ifdef OS2ONLY
+/* Don't hangup a line that is shared with the SLIP or PPP driver */
+	if (!ttslip && !ttppp)
+#endif /* OS2ONLY */
+	  mdmhup();
+#endif /* NODIAL */
+	if (network && msgflg)
+	  printf(" Closing connection\n");
+	ttclos(0);			/* Close old connection, if any */
+	rc = 1;
+	{
+	    extern int wasclosed, whyclosed;
+	    if (wasclosed) {
+		whyclosed = WC_CLOS;
+#ifndef NOSPL
+                if (nmac) {		/* Any macros defined? */
+		    int k;		/* Yes */
+		    /* printf("ON_CLOSE CLSCONNX\n"); */
+		    wasclosed = 0;
+		    k = mlook(mactab,"on_close",nmac);	/* Look this up */
+		    if (k >= 0) {			/* If found, */
+			if (dodo(k,ckitoa(whyclosed),0) > -1) /* set it up, */
+			  parser(1);			/* and execute it */
+		    }
+		}
+#endif /* NOSPL */
+		whyclosed = WC_REMO;
+		wasclosed = 0;
+	    }
+	}
+    }
+#ifdef VMS				/* Or maybe #ifndef UNIX? */
+    else {				/* Need to do this in VMS to */
+	ttclos(0);			/* free the tty channel number */
+	rc = 1;				/* obtained in ttopen() or else */
+    }					/* subsequent ttopen's won't work */
+#endif /* VMS */
+#ifdef CKLOGDIAL
+    dologend();
+#endif /* CKLOGDIAL */
+    haveline = 0;
+    if (mdmtyp < 0) {			/* Switching from net to async? */
+	if (mdmsav > -1)		/* Restore modem type from last */
+	  mdmtyp = mdmsav;		/* SET MODEM command, if any. */
+	else
+	  mdmtyp = 0;
+	mdmsav = -1;
+    }
+    if (network)
+      network = 0;
+#ifdef NETCONN
+    if (oldplex > -1) {			/* Restore previous duplex setting. */
+	duplex = oldplex;
+	oldplex = -1;
+    }
+#endif /* NETCONN */
+#ifndef MAC
+    strcpy(ttname,dftty);		/* Restore default communication */
+#endif /* MAC */
+    local = dfloc;			/* device and local/remote status */
+    if (local) {
+	cxtype = CXT_DIRECT;		/* Something reasonable */
+	speed = ttgspd();		/* Get the current speed */
+    } else {
+	cxtype = CXT_REMOTE;
+	speed = -1L;
+    }
+#ifndef NOXFER
+    if (xreliable > -1 && !setreliable) {
+	reliable = xreliable;
+	debug(F101,"clsconnx reliable A","",reliable);
+    } else if (!setreliable) {
+	reliable = SET_AUTO;
+	debug(F101,"clsconnx reliable B","",reliable);
+    }
+#endif /* NOXFER */
+    setflow();				/* Revert flow control */
+    return(rc);
+}
+
+VOID
+slrestor() {
+    int x;
+#ifdef CK_AUTHENTICATION
+    if (sl_auth_saved) {
+        for (x = 0; x < AUTHTYPLSTSZ; x++)
+	  auth_type_user[x] = sl_auth_type_user[x];
+        sl_auth_saved = 0;
+    }
+    if (sl_topt_a_s_saved) {
+        TELOPT_DEF_S_U_MODE(TELOPT_AUTHENTICATION) = sl_topt_a_su;
+        sl_topt_a_s_saved = 0;
+    }
+    if (sl_topt_a_c_saved) {
+        TELOPT_DEF_C_ME_MODE(TELOPT_AUTHENTICATION) = sl_topt_a_cm;
+        sl_topt_a_c_saved = 0;
+    }
+#endif /* CK_AUTHENTICATION */
+#ifdef CK_ENCRYPTION
+    if (sl_cx_saved) {
+        cx_type = sl_cx_type;
+        sl_cx_saved = 0;
+    }
+    if (sl_topt_e_s_saved) {
+        TELOPT_DEF_S_U_MODE(TELOPT_ENCRYPTION)  = sl_topt_e_su;
+        TELOPT_DEF_S_ME_MODE(TELOPT_ENCRYPTION) = sl_topt_e_sm;
+        sl_topt_e_s_saved = 0;
+    }
+    if (sl_topt_e_c_saved) {
+        TELOPT_DEF_C_U_MODE(TELOPT_ENCRYPTION)  = sl_topt_e_cu;
+        TELOPT_DEF_C_ME_MODE(TELOPT_ENCRYPTION) = sl_topt_e_cm;
+        sl_topt_e_c_saved = 0;
+    }
+#endif /* CK_ENCRYPTION */
+    if (sl_uid_saved) {
+        ckstrncpy(uidbuf,sl_uidbuf,UIDBUFLEN);
+        sl_uid_saved = 0;
+    }
+#ifdef TNCODE
+    if (sl_tn_saved) {
+        tn_wait_flg = sl_tn_wait;
+        sl_tn_saved = 0;
+    }
+#endif /* TNCODE */
+}
+
 /* S E T L I N -- parse name of and then open communication device. */
 /*
   Call with:
@@ -4948,20 +8115,55 @@ lunet(s) char *s;
             active connection (if any);
     zz != 0 means if user doesn't give a device name, then close the
             current connection and restore the default communication device.
+    fc == 0 to just make the connection, 1 to also CONNECT (e.g. "telnet").
 */
+int netsave = -1;
+
+static char * tmpstring = NULL;
+static char * tmpusrid = NULL;
+
 int
-setlin(xx, zz) int xx, zz; {
-    int i;
+setlin(xx, zz, fc) int xx, zz, fc; {
+    extern char pwbuf[], * g_pswd;
+    extern int pwflg, pwcrypt, g_pflg, g_pcpt, nolocal;
+    int wait;
+    int tn_wait_sv;
+    int mynet;
+    int _local = -1;
+    int c, i, haveswitch = 0;
+    int getval = 0;
+    int wild = 0;			/* Filespec has wildcards */
+    int cx = 0;				/* Connect after */
+    int sx = 0;				/* Become server after */
+#ifdef CK_ENCRYPTION
+    int encrypt = 0;                    /* Encrypted? */
+    int e_type = -1;                    /* Telnet /ENCRYPT type */
+#endif /* CK_ENCRYPTION */
+#ifdef CK_AUTHENTICATION
+    int a_type = -1;			/* Authentication type */
+#endif /* CK_AUTHENTICATION */
+#ifdef VMS
+    int shr = 0;			/* Share serial device */
+#endif /* VMS */
+    int confirmed = 0;			/* Command has been entered */
+    struct FDB sw, tx, nx;
+#ifdef OS2
+    struct FDB fl;
+#endif /* OS2 */
+
     char * ss;
+#ifdef TCPSOCKET
+    int rawflg = 0;
+#endif /* TCPSOCKET */
 
 #ifdef OS2
 #define SRVBUFSIZ PIPENAML
-#else
+#else /* OS2 */
 #define SRVBUFSIZ 63
 #endif /* OS2 */
 
     char srvbuf[SRVBUFSIZ+1];
-    char * service;
+    char hostname[15*65];
 
 #ifdef OS2
 #ifdef NT
@@ -4971,244 +8173,636 @@ setlin(xx, zz) int xx, zz; {
 #endif /* NT */
 #endif /* OS2 */
 
-    service = srvbuf;
-    *service = NUL;
+    debug(F101,"setline fc","",fc);
+    debug(F101,"setline zz","",zz);
+
+#ifdef TNCODE
+    tn_wait_sv = tn_wait_flg;
+    wait = tn_wait_flg;
+#else
+    tn_wait_sv = 0;
+    wait = 0;
+#endif /* TNCODE */
+
+    mynet = nettype;
+
+    if (nolocal) {
+	slmsg = "Making connections is disabled";
+	printf("?Sorry, making connections is disabled\n");
+	return(-9);
+    }
+    if (netsave > -1)
+      nettype = netsave;
+
+    if (fc != 0 || zz == 0)		/* Preset /CONNECT switch */
+      cx = 1;
+
+    debug(F101,"setline cx","",cx);
+
+    *srvbuf = NUL;
+
+    line[0] = NUL;
+    s = line;
+
+#ifdef NETCONN
+#ifndef NOSPL
+#ifdef CK_SRP
+    if (tmpstring)
+        makestr(&tmpstring,NULL);
+#endif /* CK_SRP */
+#ifdef RLOGCODE
+    if (tmpusrid)
+        makestr(&tmpusrid,NULL);
+#endif /* RLOGCODE */
+#endif /* NOSPL */
+#endif /* NETCONN */
+
+    autoflow = 1;			/* Enable automatic flow setting */
 
     if (xx == XYHOST) {			/* SET HOST <hostname> */
 #ifndef NETCONN
-        printf("?Network connections not supported\n");
+	slmsg = "Network connections not supported";
+        printf("?%s\n",slmsg);
 	return(-9);
-#else
-	if (
-#ifdef DECNET
-	    (nettype != NET_DEC) &&
-#endif /* DECNET */
-	    (nettype != NET_SX25) &&
-	    (nettype != NET_VX25) &&
-#ifdef NPIPE
-	    (nettype != NET_PIPE) &&
-#endif /* NPIPE */
-#ifdef CK_NETBIOS
-	    (nettype != NET_BIOS) &&
-#endif /* CK_NETBIOS */
-#ifdef SUPERLAT
-	    (nettype != NET_SLAT) &&
-#endif /* SUPERLAT */
-#ifdef NETFILE
-	    (nettype != NET_FILE) &&
-#endif /* NETFILE */
-	    (nettype != NET_TCPB)) {
-	    printf("?Network type not supported\n");
+#else /* NETCONN */
+#ifndef NOPUSH
+	if ((mynet == NET_CMD || mynet == NET_PTY) && nopush) {
+	    slmsg = "Access to external commands is disabled";
+	    printf("?Sorry, access to external commands is disabled\n");
 	    return(-9);
 	}
-#ifdef CK_NETBIOS
-	if (nettype == NET_BIOS) {
-	    if ((x = cmtxt( zz ? 
-    "server name, *,\n or carriage return to close an open connection" :
-    "server name, *,\n or carriage return to resume an open connection",
-			   "",&s,xxstring)) < 0)
-	      return(x);
-	    strcpy(line,s);
-	    s = line;
-	} else
-#endif /* CK_NETBIOS */
-#ifdef NPIPE
-	  if (nettype == NET_PIPE) {
-	      if ((x = cmtxt( zz ? 
-    "server name, *,\n or carriage return to close an open connection" :
-    "server name, *,\n or carriage return to resume an open connection",
-			    "",&s,xxstring)) < 0)
-		return(x);
-	      if (*s != '\0') {
-		  if (strcmp(s,"*")) {	/* If remote, */
-		      strcpy(line,"\\\\"); /* begin with server name */
-		      strcat(line,s);
-		  } else {
-		      line[0]='\0';
-		  }	
-		  strcat(line,"\\pipe\\"); /* Make this a pipe name */
-		  strcat(line,pipename);   /* Add the name of the pipe */
-		  s = line;
-	      }
-	  } else	
-#endif /* NPIPE */
+#endif /* NOPUSH */
+
+/*
+  Here we parse optional switches and then the hostname or whatever,
+  which depends on the network type.  The tricky part is, the network type
+  can be set by a switch.
+*/
+#ifndef NOSPL
+	makestr(&g_pswd,pwbuf);		/* Save global pwbuf */
+	g_pflg = pwflg;			/* and flag */
+	g_pcpt = pwcrypt;
+#endif /* NOSPL */
+
+	confirmed = 0;
+	haveswitch = 0;
 #ifdef NETFILE
-	    if (nettype == NET_FILE) {
-		if ((x = cmtxt( zz ? 
-    "file name,\n or carriage return to close an open connection" :
-    "file name,\n or carriage return to resume an open connection",
-			       "",&s,xxstring)) < 0)
-		  return(x);
-		if (*s != '\0')
-		  strcpy(line,s);
-		s = line;
-	    } else
+	if (mynet != NET_FILE) {
 #endif /* NETFILE */
-#ifdef SUPERLAT
-	      if (nettype == NET_SLAT) {
-		  slat_pwd[0] = NUL;	/* Erase any previous one */
-
-		  /* Just get a text string */
-
-		  if ((x = cmfld( zz ?
-   "service, node/port,\n or carriage return to close an open connection" :
-   "service, node/port,\n or carriage return to resume an open connection",
-				 "",&s,xxstring)) < 0) {
-		      if (x != -3)	/* Parse error */
-			return(x);	/* return it */
-		      else if (!network) {
-			  printf("?Host name or address required\n");
-			  return(-9);
-		      } else if (!zz)	/* No hostname given */
-			return(1);	/* and none required, */
-		  } /* continue current connection. */
-		  if (*s) {		/* If they gave a host name... */
-		      strcpy(line,s);
-		      if ((x = cmfld(
-		  "password,\n or carriage return if no password required",
-				     "",
-				     &s,
-				     xxstring
-				     )) < 0 && x != -3)
-			return(x);
-		      strncpy(slat_pwd,s,17); /* Set the password, if any */
-		  }
-		  if ((x = cmcfm()) < 0) return(x); /* Confirm the command */
-		  s = line;
-	      } else
-#endif /* SUPERLAT */
-		if (nettype != NET_TCPB) { /* Not a TCP/IP connection */
-		    /* Just get a text string */
-		    if ((x = cmtxt(zz ?
-    "Network host name,\n or carriage return to close an open connection" :
-    "Network host name,\n or carriage return to resume an open connection",
-				   "",&s,xxstring)) < 0)
-		      return(x);
-		    strcpy(line,s);
-		    s = line;
-		} else {		/* TCP/IP connection... */
-		    /* Parse for host and service separately. */
-#ifndef OS2	      
-		    ss =  zz ?
- "IP host name or number,\n or carriage return to close an open connection" :
- "IP host name or number,\n or carriage return to resume an open connection";
-#else /* OS2 */
-		    if (ttnproto != NP_RLOGIN && ttnproto != NP_TELNET) {
-			ss = zz ?
- "IP host name, number, *,\n or carriage return to close an open connection" :
- "IP host name, number, *,\n or carriage return to resume an open connection";
-		    } else {
-			ss = zz ?
- "IP host name or number,\n or carriage return to close an open connection" :
- "IP host name or number,\n or carriage return to resume an open connection";
+	    ss = (mynet == NET_CMD || mynet == NET_PTY) ?
+	      "Command, or switch" :
+		(mynet == NET_TCPA || mynet == NET_TCPB) ?
+		  "Hostname, ip-address, or switch" :
+		    "Host or switch";
+	    if (fc) {
+                if (ttnproto == NP_TELNET || ttnproto == NP_KERMIT) {
+                    if (nshteltab) {
+			haveswitch++;
+			cmfdbi(&sw,_CMKEY,ss,"","",nshteltab,4,xxstring,
+			     shteltab,&nx);
 		    }
-#endif /* OS2 */
-		    if ((x = cmfld(ss,"",&s,xxstring)) < 0) {
-			if (x != -3)	/* Parse error */
-			  return(x);	/* return it */
-			else if (!network) {
-			    printf("?Host name or address required\n");
-			    return(-9);
-			} else if (!zz)	/* No hostname given */
-			  return(1);	/* and none required, */
-		    } /* continue current connection. */
-		    if (*s) {		/* If they gave a host name... */
-			debug(F110,"setlin host s 1",s,0);
-#ifdef NOLISTEN		  
-			if (nettype == NET_TCPB && *s == '*') {
-			    printf(
-"?Sorry, incoming connections not supported in this version of Kermit.\n"
-				   );
-			    return(-9);
-			}
-#endif /* NOLISTEN */
-			strcpy(line,s); /* Make a copy */
-			s = line;
-			debug(F110,"setlin host line[]",line,0);
-#ifdef RLOGCODE	
-			/* Allow a username if rlogin is requested */
-			if (ttnproto == NP_RLOGIN) {
-			    int y;
-			    uidflag = 0;
-#ifdef VMS	
-			    strcpy(service,"513"); /* Set service to login */
-#else /* VMS */
-#ifdef OS2_LOGIN_IS_513
-			    strcpy(service,"513"); 
-#else /* OS2 */
-			    strcpy(service,"login");
-#endif /* OS2 */
-#endif /* VMS */
-			    y = cmfld("Userid on remote system",
-				      uidbuf,&s,xxstring);
-			    if (y < 0 && y != -3)
-			      return(y);
-			    if ((int)strlen(s) > 63) {
-				printf("Sorry, too long\n");
-				return(-9);
-			    }
-			    strcpy(uidbuf,s);
-			    if (uidbuf[0])
-			      uidflag = 1;
-			} else {
-#endif /* RLOGCODE */
-			    s = line;	/* TELNET or SET HOST */
-			    /* Check for "host:service" */
-			    for ( ; (*s != '\0') && (*s != ':'); s++) ;
-			    if (*s) {	/* Service, save it */
-				*s++ = NUL;
-				strncpy(service,s,SRVBUFSIZ);
-				service[SRVBUFSIZ] = NUL;
-			    } else {	/* No :service, let them type one. */
-				if (*line != '*') {
-				    if (ttnproto == NP_KERMIT) {
-					if ((x = cmfld(
-					       "TCP service name or number",
-						       "",&s,xxstring)
-					     ) < 0 && x != -3)
-					  return(x);
-				    } else if (ttnproto == NP_RLOGIN) {
-					if ((x = cmfld(
-       "TCP service name or number,\n or carriage return for rlogin (513)",
-       "513",&s,xxstring)
-					     ) < 0 && x != -3)
-					  return(x);
-				    } else {
-					if ((x = cmfld(
-					     "TCP service name or number",
-						       "",&s,xxstring)
-					     ) < 0 && x != -3)
-					  return(x);
-				    }
-				} else { /* Not incoming */
-				    if ((x = cmfld(
-						"TCP service name or number",
- 						   "",&s,xxstring)
-					 ) < 0 && x != -3)
-				      return(x);
-				}
-				if (*s) { /* If they gave a service, */
-				    strncpy(srvbuf,s,SRVBUFSIZ); /* copy it */
-				} 
-			    }
+                }
 #ifdef RLOGCODE
-			}
+                else if (ttnproto == NP_RLOGIN) {
+                    if (nshrlgtab) {
+			haveswitch++;
+			cmfdbi(&sw,_CMKEY,ss,"","",nshrlgtab,4,xxstring,
+			       shrlgtab,&nx);
+		    }
+                }
 #endif /* RLOGCODE */
-			if ((x = cmcfm()) < 0) /* Confirm the command */
+	    } else {
+		haveswitch++;
+		cmfdbi(&sw,_CMKEY,ss,"","",nshtab,4,xxstring,shtab,&nx);
+	    }
+#ifdef NETFILE
+	}
+#endif /* NETFILE */
+	if (mynet == NET_TCPB || mynet == NET_SLAT) {
+	    cmfdbi(&nx,_CMFLD,"Host","","",0,0,xxstring,NULL,NULL);
+#ifdef NETFILE
+	} else if (mynet == NET_FILE) {
+	    cmfdbi(&nx,_CMIFI,"Filename","","",0,0,xxstring,NULL,NULL);
+#endif /* NETFILE */
+#ifdef PTYORPIPE
+	} else if (mynet == NET_CMD || mynet == NET_PTY) {
+	    cmfdbi(&nx,_CMTXT,"Command","","",0,0,xxstring,NULL,NULL);
+#endif /* PTYORPIPE */
+	} else {
+	    cmfdbi(&nx,_CMTXT,"Host","","",0,0,xxstring,NULL,NULL);
+	}
+	while (1) {
+	    x = cmfdb(haveswitch ? &sw : &nx);
+	    debug(F101,"setlin cmfdb","",x);
+	    if (x < 0)
+	      if (x != -3)
+		return(x);
+	    if (x == -3) {
+		if ((x = cmcfm()) < 0) {
+		    return(x);
+		} else {
+		    confirmed = 1;
+		    break;
+		}
+	    }
+	    if (cmresult.fcode != _CMKEY) {    /* Not a switch */
+		strcpy(line,cmresult.sresult); /* Save the data that */
+		s = line;		       /* was parsed... */
+		if (cmresult.fcode == _CMIFI) {
+		    wild = cmresult.nresult;
+		} else if (cmresult.fcode == _CMTXT) {
+		    confirmed = 1;
+		}
+		break;			/* and break out of this loop */
+	    }
+	    c = cmgbrk();		/* Have switch - get break character */
+	    getval = (c == ':' || c == '='); /* Must parse an agument? */
+	    if (getval && !(cmresult.kflags & CM_ARG)) {
+		printf("?This switch does not take arguments\n");
+		return(-9);
+	    }
+	    if (!getval && (cmgkwflgs() & CM_ARG)) {
+		printf("?This switch requires an argument\n");
+		return(-9);
+	    }
+	    switch (cmresult.nresult) { /* It's a switch.. */
+	      case SL_CNX:		/* /CONNECT */
+		cx = 1;
+		sx = 0;
+		break;
+	      case SL_SRV:		/* /SERVER */
+		cx = 0;
+		sx = 1;
+		break;
+#ifdef NETCMD
+	      case SL_CMD:		/* /COMMAND */
+		netsave = mynet;
+		mynet = NET_CMD;
+		break;
+#endif /* NETCMD */
+#ifdef NETPTY
+	      case SL_PTY:		/* /PTY */
+		netsave = mynet;
+		mynet = NET_PTY;
+		break;
+#endif /* NETPTY */
+	      case SL_NET:		/* /NETWORK-TYPE */
+		if ((x = cmkey(netcmd,nnets,"","",xxstring)) < 0)
+		  return(x);
+		mynet = x;
+		break;
+#ifndef NOSPL
+	      case SL_PSW:		/* /PASSWORD: */
+		if (!getval)
+		  break;
+                if ((x = cmfld("Password","",&s,xxstring)) < 0) {
+                    if (x == -3) {
+                        makestr(&tmpstring,"");
+                    } else {
+                        return(x);
+                    }
+                } else {
+                    s = brstrip(s);
+                    if ((x = (int)strlen(s)) > PWBUFL) {
+			slmsg = "Internal error";
+                        printf("?Sorry, too long - max = %d\n",PWBUFL);
+                        return(-9);
+                    }
+                    makestr(&tmpstring,s);
+                }
+		break;
+#endif /* NOSPL */
+	      case SL_UID:		/* /USERID: */
+		if (!getval)
+		  break;
+                if ((x = cmfld("Userid","",&s,xxstring)) < 0) {
+                    if (x == -3) {
+                        makestr(&tmpusrid,"");
+                    } else {
+                        return(x);
+                    }
+                } else {
+                    s = brstrip(s);
+                    if ((x = (int)strlen(s)) > 63) {
+			slmsg = "Internal error";
+                        printf("?Sorry, too long - max = %d\n",63);
+                        return(-9);
+                    }
+                    makestr(&tmpusrid,s);
+                }
+		break;
+#ifdef CK_AUTHENTICATION
+#ifdef CK_SRP
+              case SL_SRP:
+                a_type = AUTHTYPE_SRP;
+                break;
+#endif /* CK_SRP */
+#ifdef CK_SSL
+              case SL_SSL:
+                a_type = AUTHTYPE_SSL;
+                break;
+#endif /* CK_SSL */
+#ifdef NT
+              case SL_NTLM:
+                a_type = AUTHTYPE_NTLM;
+                break;
+#endif /* NT */
+#ifdef CK_KERBEROS
+              case SL_KRB4:
+                a_type = AUTHTYPE_KERBEROS_V4;
+                if (ttnproto == NP_RLOGIN)
+		  ttnproto =
+#ifdef CK_ENCRYPTION
+		    encrypt ? NP_EK4LOGIN :
+#endif /* CK_ENCRYPTION */
+		      NP_K4LOGIN;
+                else if (ttnproto == NP_K5LOGIN)
+		  ttnproto = NP_K4LOGIN;
+#ifdef CK_ENCRYPTION
+                else if (ttnproto == NP_EK5LOGIN)
+		  ttnproto = NP_EK4LOGIN;
+#endif /* CK_ENCRYPTION */
+                break;
+	      case SL_KRB5:
+                a_type = AUTHTYPE_KERBEROS_V5;
+                if (ttnproto == NP_RLOGIN)
+		  ttnproto =
+#ifdef CK_ENCRYPTION
+		    encrypt ? NP_EK5LOGIN :
+#endif /* CK_ENCRYPTION */
+		      NP_K5LOGIN;
+		else if (ttnproto == NP_K4LOGIN)
+		  ttnproto = NP_K5LOGIN;
+#ifdef CK_ENCRYPTION
+		else if (ttnproto == NP_EK4LOGIN)
+		  ttnproto = NP_EK5LOGIN;
+#endif /* CK_ENCRYPTION */
+		break;
+#endif /* CK_KERBEROS */
+	      case SL_AUTH: {
+		  extern struct keytab autyptab[];
+		  extern int nautyp;
+		  if ((x = cmkey(autyptab,nautyp,"type of authentication",
+				 "automatic",xxstring)) < 0)
+                    return(x);
+		  a_type = x;
+		  break;
+	      }
+#endif /* CK_AUTHENTICATION */
+#ifdef CK_ENCRYPTION
+              case SL_ENC:
+		switch (ttnproto) {
+		  case NP_K4LOGIN:
+                    ttnproto = NP_EK4LOGIN;
+                    encrypt = 1;
+                    break;
+		  case NP_K5LOGIN:
+                    ttnproto = NP_EK5LOGIN;
+                    encrypt = 1;
+                    break;
+                  case NP_KERMIT:
+		  case NP_TELNET: {
+		      static struct keytab * tnetbl = NULL;
+		      static int ntnetbl = 0;
+		      x = ck_get_crypt_table(&tnetbl,&ntnetbl);
+		      debug(F101,"ck_get_crypt_table x","",x);
+		      debug(F101,"ck_get_crypt_table n","",ntnetbl);
+		      if (x < 1 || !tnetbl || ntnetbl < 1) /* Didn't get it */
+                        x = 0;
+		      if (!x) {
+			  slmsg = "Internal error";
+			  printf("?Oops, types not loaded\n");
+			  return(-9);
+		      }
+		      if ((x = cmkey(tnetbl,ntnetbl,"type of encryption",
+				     "automatic",xxstring)) < 0)
+                        return(x);
+		      e_type = x;
+		      break;
+		  }
+		}
+                break;
+#endif /* CK_ENCRYPTION */
+	      case SL_WAIT:
+		wait = 1;
+		break;
+	      case SL_NOWAIT:
+		wait = 0;
+		break;
+	    }
+	}
+
+#ifdef NETFILE
+	if (mynet == NET_FILE)		/* Parsed by cmifi() */
+	  if ((x = cmcfm()) < 0)	/* Needs confirmation */
+	    return(x);
+#endif /* NETFILE */
+
+#ifdef NETCMD
+	if (mynet == NET_CMD || mynet == NET_PTY) {
+	    char *p = NULL;
+	    if (!confirmed) {
+		if ((x = cmtxt("Rest of command","",&s,xxstring)) < 0)
+		  return(x);
+		if (*s) {
+		    strncat(line," ",LINBUFSIZ);
+		    strncat(line,s,LINBUFSIZ);
+		}
+		s = line;
+	    }
+	    s = brstrip(s);
+	    makestr(&p,s);
+	    strcpy(line,p);
+	    makestr(&p,NULL);
+	    s = line;
+	}
+	debug(F110,"SUNDAY 2",line,0);
+#endif /* NETCMD */
+
+#ifdef NPIPE				/* Named pipe */
+	if (mynet == NET_PIPE) {	/* Needs backslash twiddling */
+	    if (*s) {
+		if (strcmp(s,"*")) {	/* If remote, */
+		    strcpy(line,"\\\\"); /* begin with server name */
+		    strncat(line,s,LINBUFSIZ);
+		} else {
+		    line[0]='\0';
+		}
+		strncat(line,"\\pipe\\", LINBUFSIZ); /* Make it a pipe name */
+		strncat(line,pipename, LINBUFSIZ); /* Add name of pipe */
+		s = line;
+	    }
+	}
+#endif /* NPIPE */
+
+#ifdef SUPERLAT
+	if (mynet == NET_SLAT) {	/* Needs password, etc. */
+	    slat_pwd[0] = NUL;		/* Erase any previous password */
+
+	    if (*s) {			/* If they gave a host name... */
+		if ((x = cmfld(
+		     "password,\n or carriage return if no password required",
+			       "",
+			       &s,
+			       xxstring
+			       )) < 0 && x != -3)
+		  return(x);
+		ckstrncpy(slat_pwd,s,18); /* Set the password, if any */
+	    }
+	    if ((x = cmcfm()) < 0) return(x); /* Confirm the command */
+	    s = line;
+	}
+#endif /* SUPERLAT */
+
+#ifdef TCPSOCKET
+	if (mynet == NET_TCPB) {	/* TCP/IP connection */
+	    debug(F110,"setlin service 0",srvbuf,0);
+	    debug(F110,"setlin host s 2",s,0);
+	    if (*s) {		/* If they gave a host name... */
+		debug(F110,"setlin host s 1",s,0);
+#ifdef NOLISTEN
+		if (mynet == NET_TCPB && *s == '*') {
+		    slmsg = "Incoming connections not supported";
+		    printf(
+     "?Sorry, incoming connections not supported in this version of Kermit.\n"
+			   );
+		    return(-9);
+		}
+#endif /* NOLISTEN */
+#ifdef RLOGCODE
+		/* Allow a username if rlogin is requested */
+		if (ttnproto == NP_RLOGIN
+#ifdef CK_AUTHENTICATION
+#ifdef CK_KERBEROS
+		    || ttnproto == NP_K4LOGIN || ttnproto == NP_EK4LOGIN
+		    || ttnproto == NP_K4LOGIN || ttnproto == NP_EK4LOGIN
+#endif /* CK_KERBEROS */
+#endif /* CK_AUTHENTICATION */
+		     ) {
+		    int y;
+		    uidflag = 0;
+		    /* Check for "host:service" */
+		    for ( ; (*s != '\0') && (*s != ':'); s++) ;
+		    if (*s) {	/* Service, save it */
+			*s = NUL;
+			ckstrncpy(srvbuf,++s,SRVBUFSIZ);
+		    } else {		/* No :service, then use default. */
+#ifdef VMS
+			switch (ttnproto) {
+			  case NP_RLOGIN:
+			    strcpy(srvbuf,"513"); /* Use "login" */
+			    break;
+                          case NP_K4LOGIN:
+			  case NP_K5LOGIN:
+			    strcpy(srvbuf,"543"); /* Use "klogin" */
+			    break;
+                          case NP_EK4LOGIN:
+			  case NP_EK5LOGIN:
+			    strcpy(srvbuf,"2105"); /* Use "eklogin" */
+			    break;
+			}
+#else /* VMS */
+			switch (ttnproto) {
+			  case NP_RLOGIN:
+			    strcpy(srvbuf,"login");
+			    break;
+                          case NP_K4LOGIN:
+                          case NP_K5LOGIN:
+			    strcpy(srvbuf,"klogin");
+			    break;
+                          case NP_EK4LOGIN:
+                          case NP_EK5LOGIN:
+			    strcpy(srvbuf,"eklogin");
+			    break;
+			}
+#endif /* VMS */
+		    }
+		    if (!confirmed) {
+			y = cmfld("Userid on remote system",
+				  uidbuf,&s,xxstring);
+			if (y < 0 && y != -3)
+			  return(y);
+			if ((int)strlen(s) > 63) {
+			    slmsg = "Internal error";
+			    printf("Sorry, too long\n");
+			    return(-9);
+			}
+                        makestr(&tmpusrid,s);
+		    }
+		} else {	/* TELNET or SET HOST */
+#endif /* RLOGCODE */
+		    /* s = line; */
+		    /* Check for "host:service" */
+		    for ( ; (*s != '\0') && (*s != ':'); s++) ;
+		    if (*s) {	/* Service, save it */
+			*s = NUL;
+			ckstrncpy(srvbuf,++s,SRVBUFSIZ);
+		    } else if (!confirmed) {
+			/* No :service, let them type one. */
+			if (*line != '*') { /* Not incoming */
+			    if (ttnproto == NP_KERMIT) {
+				if ((x = cmfld(
+					       "TCP service name or number",
+					       "kermit",&s,xxstring)
+				     ) < 0 && x != -3)
+				  return(x);
+#ifdef RLOGCODE
+			    } else if (ttnproto == NP_RLOGIN) {
+				if ((x = cmfld(
+  "TCP service name or number,\n or carriage return for rlogin (513)",
+					       "login",&s,xxstring)
+				     ) < 0 && x != -3)
+				  return(x);
+#ifdef CK_AUTHENTICATION
+#ifdef CK_KERBEROS
+			    } else if (ttnproto == NP_K4LOGIN ||
+				       ttnproto == NP_K5LOGIN) {
+				if ((x = cmfld(
+  "TCP service name or number,\n or carriage return for klogin (543)",
+					       "klogin",&s,xxstring)
+				     ) < 0 && x != -3)
+				  return(x);
+			    } else if (ttnproto == NP_EK4LOGIN ||
+				       ttnproto == NP_EK5LOGIN) {
+				if ((x = cmfld(
+  "TCP service name or number,\n or carriage return for eklogin (2105)",
+					       "eklogin",&s,xxstring)
+				     ) < 0 && x != -3)
+				  return(x);
+#endif /* CK_KERBEROS */
+#endif /* CK_AUTHENTICATION */
+#endif /* RLOGCODE */
+			    } else {
+				if ((x = cmfld(
+					       "TCP service name or number",
+					       "telnet",&s,xxstring)
+				     ) < 0 && x != -3)
+				  return(x);
+			    }
+			} else { /* Incoming connection */
+			    if ((x = cmfld("TCP service name or number",
+					   "",&s,xxstring)
+				 ) < 0 && x != -3)
+			      return(x);
+			}
+			if (*s)		/* If they gave a service, */
+			  ckstrncpy(srvbuf,s,SRVBUFSIZ); /* copy it */
+		    }
+#ifdef RLOGCODE
+		}
+#endif /* RLOGCODE */
+		if (!confirmed) {
+                    char * defproto;
+                    switch (ttnproto) {
+		      case NP_RLOGIN:
+                        defproto = "/rlogin";
+                        break;
+  		      case NP_K4LOGIN:
+		        defproto = "/k4login";
+		    	break;
+                      case NP_K5LOGIN:
+                        defproto = "/k5login";
+                        break;
+                      case NP_EK4LOGIN:
+                        defproto = "/ek4login";
+                        break;
+                      case NP_EK5LOGIN:
+		        defproto = "/ek5login";
+		    	break;
+		      case NP_KERMIT:
+		      case NP_TELNET:
+                        defproto = "/telnet";
+                        break;
+		      default:
+                        defproto = "/default";
+                    }
+		    if ((x = cmkey(tcprawtab,ntcpraw,"Switch",defproto,
+				   xxstring)) < 0) {
+			if (x != -3)
+			  return(x);
+			else if ((x = cmcfm()) < 0)
 			  return(x);
 		    } else {
-			line[0] = NUL;
+			rawflg = x;
+			if ((x = cmcfm()) < 0)
+			  return(x);
+			switch (rawflg) {
+#ifdef CK_SSL
+                          case NP_SSL:
+			    ttnproto = rawflg;
+			    ssl_only_flag = 1;
+			    tls_only_flag = 0;
+			    break;
+
+                          case NP_TLS:
+			    ttnproto = rawflg;
+			    ssl_only_flag = 0;
+			    tls_only_flag = 1;
+			    break;
+
+                          case NP_SSL_TELNET:
+                            ttnproto = NP_TELNET;
+                            ssl_only_flag = 1;
+                            tls_only_flag = 0;
+                            break;
+
+                          case NP_TLS_TELNET:
+                            ttnproto = NP_TELNET;
+                            ssl_only_flag = 0;
+                            tls_only_flag = 1;
+                            break;
+#endif /* CK_SSL */
+                          case NP_NONE:
+			  case NP_TCPRAW:
+                          case NP_RLOGIN:
+                          case NP_K4LOGIN:
+                          case NP_K5LOGIN:
+                          case NP_EK4LOGIN:
+                          case NP_EK5LOGIN:
+			  case NP_TELNET:
+			  case NP_KERMIT:
+			  default:
+			    ttnproto = rawflg;
+#ifdef CK_SSL
+			    ssl_only_flag = 0;
+			    tls_only_flag = 0;
+#endif /* CK_SSL */
+			    break;
+			}
 		    }
 		}
+	    }
+	    s = line;
+	}
+#endif /* TCPSOCKET */
 
-	s = line;
-	debug(F110,"setlin service 0",srvbuf,0);
-	debug(F110,"setlin host s 2",s,0);
+	if (!*s) {
+	    if (!network) {
+		slmsg = "Hostname or address required";
+		printf("?%s\n",slmsg);
+		return(-9);
+	    } else if (!zz) { /* No hostname given */
+#ifdef CKLOGDIAL
+#ifdef NETCONN
+		dolognet();
+#endif /* NETCONN */
+#endif /* CKLOGDIAL */
+		if (cx) {
+		    success = doconect(0);
+#ifdef CKLOGDIAL
+		    if (ttchk() < 0)
+		      dologend();
+#endif /* CKLOGDIAL */
+		    return(success);
+		} else
+		  return(1);
+	    }
+	}
 
 #ifndef NODIAL
 	/* Look up in network directory */
 	x = 0;
-	debug(F101,"setlin nettype 1","",nettype);
+	debug(F101,"setlin mynet 1","",mynet);
 	debug(F111,"setlin nnetdir",s,nnetdir);
 	if (*s == '=') {		/* If number starts with = sign */
 	    s++;			/* strip it */
@@ -5223,6 +8817,7 @@ setlin(xx, zz) int xx, zz; {
 	    else			/* otherwise */
 	      nhcount = 0;		/* we didn't find any there */
 	    if (x < 0) {		/* Internal error? */
+		slmsg = "Network directory lookup error";
 		printf("?Fatal network directory lookup error - %s\n",line);
 		return(-9);
 	    }
@@ -5232,47 +8827,31 @@ setlin(xx, zz) int xx, zz; {
 
 	/* New connection wanted.  Make a copy of the host name/address... */
 
-	strncpy(tmpbuf,s,TMPBUFSIZ);	/* Because we are reusing line[] */
+	ckstrncpy(tmpbuf,s,TMPBUFSIZ);	/* Because we are reusing line[] */
 	s = tmpbuf;			/* for net directory entries...  */
-	debug(F110,"setlin host s 5",s,0);
-	if (!hupok(1))
+	debug(F111,"setlin host s 5",s,mdmtyp);
+	if (clsconnx(1) < 0)		/* Close current connection */
 	  return(success = 0);
-
-	ttflui();			/* Clear away buffered up junk */
-#ifndef NODIAL
-	mdmhup();
-#endif /* NODIAL */
-	ttclos(0);			/* Close old connection, if any */
-	if (oldplex > -1)		/* Restore duplex setting. */
-	  duplex = oldplex;
 	if (*s) {			/* They gave a hostname */
-	    x = 1;			/* Network connection always local */
+	    _local = 1;			/* Network connection always local */
 	    if (mdmsav < 0)
 	      mdmsav = mdmtyp;		/* Remember old modem type */
-	    mdmtyp = -nettype;		/* Special code for network */
-	    if (nettype == NET_TCPB) {	/* For TCP/IP telnet connections */
+	    mdmtyp = -mynet;		/* Special code for network */
+	    if (mynet == NET_TCPB) {	/* For TCP/IP telnet connections */
 		oldplex = duplex;	/* Remember previous duplex */
 		duplex = 0;		/* Set full duplex and let */
 		                        /* negotiations change if necessary. */
 	    }
 	} else {			/* They just said "set host" */
-	    if (network && msgflg)
-	      printf(" Closing connection\n");
 	    s = dftty;			/* So go back to normal */
-	    x = dfloc;			/* default tty, location, */
-	    network = 0;		/* No more network connection. */
-	    if (oldplex > -1)
-	      duplex = oldplex;		/* Restore old duplex setting. */
-	    if (mdmtyp < 0) {		/* Switching from net to serial? */
-		if (mdmsav > -1) {	/* Restore modem type from last */
-		    mdmtyp = mdmsav;	/* SET MODEM command, if any. */
-		    mdmsav = -1;
-		} else
-		  mdmtyp = 0;
-	    }
+	    _local = dfloc;		/* default tty, location, */
 	    if (zz) {
-		if (autoflow)		/* Maybe change flow control */
-		  setflow();
+		setflow();		/* Maybe change flow control */
+		haveline = 1;		/* (* is this right? *) */
+					/* why aren't we calling clsconnx()? */
+#ifdef CKLOGDIAL
+		dologend();
+#endif /* CKLOGDIAL */
 		return(success = 1);
 	    }
 	}
@@ -5286,7 +8865,7 @@ setlin(xx, zz) int xx, zz; {
 	|| xx == XYTAPI_LIN		/* SET TAPI LINE */
 #endif /* CK_TAPI */
 	) {
-#ifdef OS2			
+#ifdef OS2
 /*
   User can type:
     COM1..COM8 = Regular COM port
@@ -5298,19 +8877,58 @@ setlin(xx, zz) int xx, zz; {
 	s = "Communication device name";
 #ifdef CK_TAPI
 	if (TAPIAvail)
-          cktapiBuildLineTable(&tapilinetab, &ntapiline);
-	if (tapilinetab && ntapiline > 0)
-	  s = "Communication device name, or \"TAPI\"";
-	else if ( xx == XYTAPI_LIN ) {
+          cktapiBuildLineTable(&tapilinetab, &_tapilinetab, &ntapiline);
+	if (!(tapilinetab && _tapilinetab && ntapiline > 0) &&
+	    xx == XYTAPI_LIN ) {
+	    slmsg = "TAPI device not configured";
 	    printf("\nNo TAPI Line Devices are configured for this system\n");
 	    return(-9);
 	}
-	if (xx == XYTAPI_LIN)
-          s = "tapi";
-	else  /* Query the user */
+	if (xx == XYTAPI_LIN) {		/* Default (first) TAPI line */
+	    s = "tapi";			/* (whatever it is) */
+	} else {			/* Query the user */
 #endif /* CK_TAPI */
-	  if ((x = cmfld(s,dftty,&s,xxstring)) < 0)
-	    return(x);
+
+/* Now parse optional switches and then device name */
+
+	    confirmed = 0;
+	    cmfdbi(&sw,_CMKEY,"Device name, or switch",
+		   "","",npsltab,4,xxstring,psltab,&fl);
+	    cmfdbi(&fl,_CMFLD,"",dftty,"",0,0,xxstring,NULL,NULL);
+	    while (1) {
+		x = cmfdb(&sw);
+		debug(F101,"setlin cmfdb","",x);
+		if (x < 0)
+		  if (x != -3)
+		    return(x);
+		if (x == -3) {
+		    if ((x = cmcfm()) < 0) {
+			return(x);
+		    } else {
+			confirmed = 1;
+			break;
+		    }
+		}
+		if (cmresult.fcode == _CMFLD) {
+		    s = cmresult.sresult;
+		    break;
+		} else if (cmresult.fcode == _CMKEY) {
+		    switch (cmresult.nresult) {
+		      case SL_CNX:	/* /CONNECT */
+			cx = 1;
+			sx = 0;
+			break;
+		      case SL_SRV:	/* /SERVER */
+			cx = 0;
+			sx = 1;
+			break;
+		    }
+		}
+	    }
+#ifdef CK_TAPI
+	}
+#endif /* CK_TAPI */
+
 	debug(F110,"OS2 SET PORT s",s,0);
 	y = lookup(os2devtab,s,nos2dev,&x); /* Look up in keyword table */
 	debug(F101,"OS2 SET PORT x","",x);
@@ -5349,6 +8967,7 @@ setlin(xx, zz) int xx, zz; {
 	    /* Rest must be numeric */
 	    debug(F110,"OS2 SET PORT HANDLE _subst s",s,0);
 	    if (!rdigits(s)) {
+		slmsg = "Invalid file handle";
 		printf("?Invalid format for file handle\n");
 		return(-9);
 	    }
@@ -5360,187 +8979,272 @@ setlin(xx, zz) int xx, zz; {
 	} else {			/* A normal COMx port or a string */
 	    s = brstrip(s);		/* Strip braces if any */
 #ifdef NT
+#ifdef CK_TAPI
 	    /* Windows TAPI support - Look up in keyword table */
-	    if (tapilinetab && ntapiline > 0) {
-		if (!xxstrcmp(s,"tapi",4)) {
+	    if (tapilinetab && _tapilinetab && ntapiline > 0) {
+		if (!ckstrcmp(s,"tapi",4,0)) {
 
 		    /* Find out what the lowest numbered TAPI device is */
 		    /* and use it as the default.                       */
 		    int j = 9999, k = -1;
-		    for (i = 0; i < ntapiline; i++ ) {
+		    for (i = 0; i < ntapiline; i++) {
 		    	if (tapilinetab[i].kwval < j) {
 			    j = tapilinetab[i].kwval;
 			    k = i;
 			}
-		    }		
+		    }
 		    if (k >= 0)
-		      s = tapilinetab[k].kwd;
-		    else s = "";
+		      s = _tapilinetab[k].kwd;
+		    else
+		      s = "";
 
-		    if ((y = cmkey(tapilinetab,ntapiline,
+		    if ((y = cmkey(_tapilinetab,ntapiline,
 				   "TAPI device name",s,xxstring)) < 0)
 		      return(y);
 
 		    xxtapi = 1;
-#ifdef COMMENT
-		    y = lookup(tapilinetab,s,ntapiline,&x);
-#endif /* COMMENT */
-		    if (y > -1)
-		      s = tapilinetab[y].kwd;
+
+		    /* Get the non Underscored string */
+		    for (i = 0; i < ntapiline; i++ ) {
+		    	if (tapilinetab[i].kwval == y) {
+			    s = tapilinetab[i].kwd;
+			    break;
+			}
+		    }
 		} else
 		  xxtapi = 0;
 	    }
+#endif /* CK_TAPI */
 #else /* NT */
 	    /* not OS/2 SLIP or PPP */
 	    xxslip = xxppp = 0;
 #endif /* NT */
         }
+	strcpy(tmpbuf,s);		/* Copy to a safe place */
+	s = tmpbuf;
 	if ((x = cmcfm()) < 0)
 	  return(x);
 
 #else /* !OS2 */
 
-	if ((x = cmtxt("Communication device name",dftty,&s,xxstring)) < 0)
-	  return(x);
+	cmfdbi(&sw,_CMKEY,"Device name, or switch",
+	       "","",npsltab,4,xxstring,psltab,&tx);
+	cmfdbi(&tx,_CMTXT,"",dftty,"",0,0,xxstring,NULL,NULL);
+	while (!confirmed) {
+	    x = cmfdb(&sw);
+	    debug(F101,"setlin cmfdb","",x);
+	    if (x < 0)
+	      if (x != -3)
+		return(x);
+	    if (x == -3) {
+		if ((x = cmcfm()) < 0) {
+		    return(x);
+		} else {
+		    confirmed = 1;
+		    break;
+		}
+	    }
+	    switch (cmresult.fcode) {
+	      case _CMTXT:
+		strcpy(tmpbuf,cmresult.sresult);
+		s = tmpbuf;
+		debug(F110,"setlin CMTXT",tmpbuf,0);
+		confirmed = 1;
+		break;
+	      case _CMKEY:		/* Switch */
+		debug(F101,"setlin CMKEY",tmpbuf,cmresult.nresult);
+		switch (cmresult.nresult) {
+		  case SL_CNX:		/* /CONNECT */
+		    cx = 1;
+		    sx = 0;
+		    break;
+		  case SL_SRV:		/* /SERVER */
+		    cx = 0;
+		    sx = 1;
+		    break;
+#ifdef VMS
+		  case SL_SHR:		/* /SHARE */
+		    shr = 1;
+		    break;
+		  case SL_NSH:		/* /NOSHARE */
+		    shr = 0;
+		    break;
+#endif /* VMS */
+		}
+		continue;
+	      default:
+		debug(F101,"setlin bad cmfdb result","",cmresult.fcode);
+		slmsg = "Internal error";
+		printf("?Internal parsing error\n");
+		return(-9);
+	    }
+	}
 #endif /* OS2 */
-
-	strcpy(tmpbuf,s);
-	s = tmpbuf;
-	if (!hupok(1))
+	if (!confirmed)
+	  if ((x = cmcfm()) < 0)
+	    return(x);
+	debug(F101,"setlin confirmed mdmtyp","",mdmtyp);
+	if (clsconnx(1) < 0)		/* Close the connection */
 	  return(success = 0);
-
-	if (local) ttflui();		/* Clear away buffered up junk */
-#ifndef NODIAL
-#ifdef OS2ONLY
-/* Don't hangup a line that is shared with the SLIP or PPP driver */
-	if (!ttslip && !ttppp)
-#endif /* OS2ONLY */
-	mdmhup();
-#endif /* NODIAL */
-	ttclos(0);			/* Close old line, if any was open */
 	if (*s) {			/* They gave a device name */
-	    x = -1;			/* Let ttopen decide about it */
+	    _local = -1;		/* Let ttopen decide about it */
 	} else {			/* They just said "set line" */
 	    s = dftty;			/* so go back to normal tty */
-	    x = dfloc;			/* and mode. */
+	    _local = dfloc;		/* and mode. */
 	}
+#ifdef VMS
+	{
+	    extern int ok_to_share;
+	    ok_to_share = shr;
+	}
+#endif /* VMS */
 
 #ifdef OS2				/* Must wait until after ttclos() */
 #ifdef NT				/* to change these settings       */
+#ifdef CK_TAPI
 	tttapi = xxtapi;
+#endif /* CK_TAPI */
 #else
 	ttslip = xxslip;
 	ttppp  = xxppp;
 #endif /* NT */
 	debug(F110,"OS2 SET PORT final s",s,"");
 #endif /* OS2 */
-
-#ifdef NETCONN
-	if (mdmtyp < 0) {		/* Switching from net to async? */
-	    if (mdmsav > -1)		/* Restore modem type from last */
-	      mdmtyp = mdmsav;		/* SET MODEM command, if any. */
-	    else
-	      mdmtyp = 0;
-	    mdmsav = -1;
-	}
-	if (oldplex > -1) {		/* Restore previous duplex setting. */
-	    duplex = oldplex;
-	    oldplex = -1;
-	}
-	if (network) {
-#ifdef TNCODE
-/* This should be unnecessary, since ttclos() did it already? */
-/* But it can't hurt ... */
-	    tn_init = 0;		/* TELNET not init'd any more. */
-#endif /* TNCODE */
-	    network = 0;		/* No more network. */
-	}
-#endif /* NETCONN */
     }
-#ifdef COMMENT
-/*
-  The following is removed, not so much because it's a horrible hack, but
-  because it only works if the SET FLOW command was given *before* the SET
-  LINE command, whereas normally these commands can be given in any order.
-*/
-#ifdef NEXT
-/*
-  This is a horrible hack, but it's nice for users.  On the NeXT, you select
-  RTS/CTS hardware flow control not by system calls, but by referring to the
-  device with a different name.  If the user has asked for RTS/CTS flow
-  control on a NeXT, but used the non-RTS/CTS device name in the SET LINE
-  command, we make the appropriate substitute here.  I wonder how much bigger
-  this section of code will grow as the years go by... 
-*/
-    if ((flow == FLO_RTSC) &&		/* RTS/CTS flow control selected */
-	strcmp(s,dftty)) {		/*  ...on external port? */
-	y = strlen(s);			/* Yes, insert "f" as next-to-last */
-	if (s[y-2] != 'f') {		/* character in device name if not */
-	    strcpy(line,s);		/* already there... */
-	    line[y] = line[y-1];	/* So /dev/cua => /dev/cufa, etc. */
-	    line[y-1] = 'f';
-	    line[y+1] = '\0';
-	    s = line;
-	}
-    }
-#endif /* NEXT */
-#endif /* COMMENT */
-
     success = 0;
     if (mdmtyp > -1) {			/* Serial connections... */
-	if ((y = ttopen(s,&x,mdmtyp,cdtimo)) > -1 ) { /* Open the new line */
+	/* Open the new line */
+	if ((y = ttopen(s,&_local,mdmtyp,cdtimo)) > -1) {
+	    cxtype = (mdmtyp > 0) ? CXT_MODEM : CXT_DIRECT;
+#ifdef COMMENT
+	    flow = cxflow[cxtype];	/* Set connection type and flow */
+#else
+	    setflow();			/* Only if autoflow()! */
+#endif /* COMMENT */
 	    success = 1;
+#ifdef CK_TAPI
+	    /* if the line is a tapi device, then we need to auto-execute */
+	    /* SET MODEM TYPE TAPI - which we do the equivalent of here.  */
+	    if (xxtapi) {
+		extern int usermdm;
+		usermdm = 0;
+		initmdm(38);   		/* From ckudia.c n_TAPI == 38 */
+	    }
+#endif /* CK_TAPI */
+
 	} else {
 #ifdef OS2ONLY
 	    if (!strcmp(s,dftty))   /* Do not generate an error with dftty */
 	      ;
 	    else if (y == -6 && ttslip) {
-		printf("Unable to access SLIP driver.\n");
+		slmsg = "Can't access SLIP driver";
+		if (!quiet || cmdsrc() == 0)
+		  printf("?Unable to access SLIP driver.\n");
 	    } else if (y == -6 && ttppp) {
-		printf("Unable to access PPP driver (wrong interface?)\n");
+		if (!quiet || cmdsrc() == 0)
+		  slmsg = "Can't access PPP driver";
+		printf("?Unable to access PPP driver (wrong interface?)\n");
 	    } else
 #endif /* OS2ONLY */
 	      if (y == -2) {
-		  printf("?Timed out, no carrier.\n");
-		  printf("Try SET CARRIER OFF and SET LINE again, or else\n");
-		  printf("SET MODEM, SET LINE, and then DIAL.\n");
+		  slmsg = "Timed out - no carrier";
+		  if (!quiet || cmdsrc() == 0) {
+		      printf("?Timed out, no carrier.\n");
+		      printf(
+			"Try SET CARRIER OFF and SET LINE again, or else\n");
+		      printf("SET MODEM, SET LINE, and then DIAL.\n");
+		  }
 	      } else if (y == -3) {
-		  printf("Sorry, access to lock denied: %s\n",s);
+		  slmsg = "Access to lock denied";
+		  if (!quiet || cmdsrc() == 0) {
+#ifdef UNIX
+		      printf(
+"Sorry, write access to UUCP lockfile directory denied.\n");
+#ifndef NOHINTS
+		      if (hints) {
+			  printf("\n*************************\n");
+			  printf(
+"HINT (Use SET HINTS OFF to suppress future hints):\n");
+			  printf(
+"Please read the installation instructions file, %sckuins.txt,\n",
+				 k_info_dir ? k_info_dir : ""
+				 );
+			  printf(
+"or the UNIX appendix of the manual, \"Using C-Kermit\".\n"
+				 );
+			  printf("*************************\n\n");
+		      }
+#endif /* NOHINTS */
+#else
+		      printf("Sorry, access to lock denied: %s\n",s);
+#endif /* UNIX */
+		  }
 	      } else if (y == -4) {
-		  printf("Sorry, access to device denied: %s\n",s);
+		  slmsg = "Access to device denied";
+		  if (!quiet || cmdsrc() == 0) {
+		      printf("Sorry, access to device denied: %s\n",s);
+#ifdef UNIX
+#ifndef NOHINTS
+		      if (hints) {
+			  printf("\n*************************\n");
+			  printf(
+"HINT (Use SET HINTS OFF to suppress future hints):\n");
+			  printf(
+"Please read the installation instructions file, %sckuins.txt,\n",
+				 k_info_dir ? k_info_dir : ""
+				 );
+			  printf(
+"or the UNIX appendix of the manual, \"Using C-Kermit\".\n"
+				 );
+			  printf("*************************\n\n");
+		      }
+#endif /* NOHINTS */
+#endif /* UNIX */
+		  }
 	      } else if (y == -5) {
+		  slmsg = "Device is in use or unavailable";
+		  if (!quiet || cmdsrc() == 0)
 #ifdef VMS
-		  printf(
+		    printf(
 		   "Sorry, device is in use or otherwise unavailable: %s\n",s);
 #else
-		  printf("Sorry, device is in use: %s\n",s);
+		    printf("Sorry, device is in use: %s\n",s);
 #endif /* VMS */
 	      } else {			/* Other error. */
-#ifdef COMMENT
-#ifndef VMS
-#endif /* COMMENT */
-		  if (errno) {
-		      int x;		/* Find a safe, long buffer */
-		      x = strlen(line) + 2; /* for the error message. */
-		      if (LINBUFSIZ - x > 100) { /* Allow room for 100 chars */
-			  tp = line + x;
-			  sprintf(tp,"Sorry, can't open connection: %s",s);
-			  perror(tp);
-		      } else printf("Sorry, can't open connection: %s\n",s);
-		  } else
-#ifdef COMMENT
+		  slmsg = "Device open failed";
+		  if (
+#ifdef VMS
+		      1
+#else
+		      errno
 #endif /* VMS */
-#endif /* COMMENT */
+		      ) {
+		      int x;		/* Find a safe, long buffer */
+		      makestr(&tmpslmsg,ck_errstr());
+		      slmsg = tmpslmsg;
+#ifndef VMS
+		      debug(F111,"setlin serial errno",slmsg,errno);
+#endif /* VMS */
+		      if (!quiet || cmdsrc() == 0) {
+			  x = strlen(line) + 2; /* for the error message. */
+			  if (LINBUFSIZ - x > 100) { /* Room for 100 chars */
+			      tp = line + x;
+			      sprintf(tp,"Sorry, can't open connection: %s",s);
+			      perror(tp);
+			  } else
+			    printf("Sorry, can't open connection: %s\n",s);
+		      }
+		  } else if (!quiet || cmdsrc() == 0)
 		    printf("Sorry, can't open connection: %s\n",s);
 	      }
 	}
     }
 #ifdef NETCONN
-    else {				/* Network connection */
+    else {				/* mdmtyp < 0: Network connection */
 	char *p;
 	int i, n;
 #ifndef NODIAL
-	debug(F101,"setlin nettype 3","",nettype);
+	debug(F101,"setlin mynet 3","",mynet);
 	debug(F101,"setlin nhcount","",nhcount);
 	if ((nhcount > 1) && !quiet && !backgrd) {
 	    int k;
@@ -5576,17 +9280,18 @@ setlin(xx, zz) int xx, zz; {
 	    if (nhcount > 0) {		/* If we found at least one entry... */
 		strcpy(line,nh_p[i]);	/* Copy the current entry to line[] */
 		if (lookup(netcmd,nh_p2[i],nnets,&x) > -1) { /* Net type */
-		    nettype = netcmd[x].kwval;
-		    mdmtyp  = 0 - nettype;
-		    debug(F101,"setlin nettype 4","",nettype);
+		    mynet = netcmd[x].kwval;
+		    mdmtyp  = 0 - mynet;
+		    debug(F101,"setlin mynet 4","",mynet);
 		} else {
+		    slmsg = "Network type not supported";
 		    printf("Error - network type \"%s\" not supported\n",
 			   nh_p2[i]
 			   );
 		    continue;
-		}		    
+		}
 
-		switch (nettype) {	/* Net-specific things */
+		switch (mynet) {	/* Net-specific things */
 
 		  case NET_TCPB: {	/* TCP/IP */
 #ifdef TCPSOCKET
@@ -5597,48 +9302,77 @@ setlin(xx, zz) int xx, zz; {
 		      debug(F110,"setlin service 1",line,0);
 		      for (q = line; (*q != '\0') && (*q != ':'); q++)
 			;
-		      if (*q == ':') { *q++ == NUL; flag = 1; }
+		      if (*q == ':') { *q++ = NUL; flag = 1; }
 		      debug(F111,"setlin service 2",line,flag);
 
 		      /* Get service, if any, from directory entry */
 
-		      if (!*service) {
+		      if (!*srvbuf) {
 			  if (nh_px[0][i]) {
-			      strncpy(srvbuf,nh_px[0][i],SRVBUFSIZ);
-			      debug(F110,"setlin service 3",service,0);
-			  }			  
+			      ckstrncpy(srvbuf,nh_px[0][i],SRVBUFSIZ);
+			      debug(F110,"setlin service 3",srvbuf,0);
+			  }
 			  if (flag) {
-			      strncpy(srvbuf,q,SRVBUFSIZ);
-			      debug(F110,"setlin service 4",service,0);
-			  }			  
+			      ckstrncpy(srvbuf,q,SRVBUFSIZ);
+			      debug(F110,"setlin service 4",srvbuf,0);
+			  }
 		      }
 
-		      /* If we have a service, append to host name/address */
+                      /* Save the hostname */
+                      strcpy(hostname,line);
 
-		      if (*service) {
-			  strcat(line, ":"); /* separated by a colon. */
-			  strncat(line, service, LINBUFSIZ);
+		      /* If we have a service, append to host name/address */
+		      if (*srvbuf) {
+			  strncat(line, ":", LINBUFSIZ);
+			  strncat(line, srvbuf, LINBUFSIZ);
 			  debug(F110,"setlin service 5",line,0);
 		      }
 #ifdef RLOGCODE
 		      /* If no service given but command was RLOGIN */
-
 		      else if (ttnproto == NP_RLOGIN) {	/* add this... */
-			  strcat(line, ":login");
+			  strncat(line, ":login",LINBUFSIZ);
 			  debug(F110,"setlin service 6",line,0);
 		      }
+#ifdef CK_AUTHENTICATION
+#ifdef CK_KERBEROS
+		      else if (ttnproto == NP_K4LOGIN ||
+			       ttnproto == NP_K5LOGIN) { /* add this... */
+			  strncat(line, ":klogin",LINBUFSIZ);
+			  debug(F110,"setlin service 7",line,0);
+		      }
+		      else if (ttnproto == NP_EK4LOGIN ||
+			       ttnproto == NP_EK5LOGIN) { /* add this... */
+			  strncat(line, ":eklogin",LINBUFSIZ);
+			  debug(F110,"setlin service 8",line,0);
+		      }
+#endif /* CK_KERBEROS */
+#endif /* CK_AUTHENTICATION */
 #endif /* RLOGCODE */
 		      else {		/* Otherwise, add ":telnet". */
-			  strcat(line, ":telnet");
-			  debug(F110,"setlin service 7",line,0);
-		      }       
+			  strncat(line, ":telnet", LINBUFSIZ);
+			  debug(F110,"setlin service 9",line,0);
+		      }
+
+                      if (tmpusrid) if (tmpusrid[0]) {
+                          ckstrncpy(uidbuf,tmpusrid,UIDBUFLEN);
+                          makestr(&tmpusrid,NULL);
+                          uidflag = 1;
+                      }
 
 		      /* Fifth field, if any, is user ID (for rlogin) */
 
 		      if (nh_px[1][i] && !uidflag)
-			strncpy(uidbuf,nh_px[1][i],63);
+			ckstrncpy(uidbuf,tmpusrid,UIDBUFLEN);
 #ifdef RLOGCODE
-		      if (ttnproto == NP_RLOGIN && !uidbuf[0]) {
+		      if ((ttnproto == NP_RLOGIN
+#ifdef CK_AUTHENTICATION
+#ifdef CK_KERBEROS
+			   || ttnproto == NP_K4LOGIN || ttnproto == NP_EK4LOGIN
+			   || ttnproto == NP_K5LOGIN || ttnproto == NP_EK5LOGIN
+#endif /* CK_KERBEROS */
+#endif /* CK_AUTHENTICATION */
+			   ) && !uidbuf[0]) {
+			  slmsg = "Username required";
 			  printf("Username required for rlogin\n");
 			  return(-9);
 		      }
@@ -5656,7 +9390,7 @@ setlin(xx, zz) int xx, zz; {
 				strcpy(pipename,"\\pipe\\");
 				strncat(srvbuf,nh_px[0][i],PIPENAML-6);
 			    } else {
-				strncpy(pipename,nh_px[0][i],PIPENAML);
+				ckstrncpy(pipename,nh_px[0][i],PIPENAML);
 			    }
 			    debug(F110,"setlin pipeneme",pipename,0);
 			}
@@ -5668,7 +9402,7 @@ setlin(xx, zz) int xx, zz; {
 #ifdef SUPERLAT
 		    if (!slat_pwd[0]) {	/* User didn't give a password */
 			if (nh_px[0][i]) { /* But directory entry has one */
-			    strncpy(slat_pwd,nh_px[0][i],17);
+			    ckstrncpy(slat_pwd,nh_px[0][i],18);
 			    debug(F110,"setlin SuperLAT password",slat_pwd,0);
 			}
 		    }
@@ -5676,23 +9410,25 @@ setlin(xx, zz) int xx, zz; {
 		    break;
 
 		  case NET_SX25:	/* X.25 keyword parameters */
+		  case NET_IX25:
 		  case NET_VX25: {
-#ifdef ANYX25		    
+#ifdef ANYX25
 		      int k;		/* Cycle through the four fields */
 		      for (k = 0; k < 4; k++) {
 			  if (!nh_px[k][i]) /* Bail out if none left */
 			    break;
-			  if (!xxstrcmp(nh_px[k][i],"cug=",4)) {
+			  if (!ckstrcmp(nh_px[k][i],"cug=",4,0)) {
 			      closgr = atoi(nh_px[k][i]+4);
 			      debug(F101,"X25 CUG","",closgr);
-			  } else if (!xxstrcmp(nh_px[k][i],"cud=",4)) {
+			  } else if (!ckstrcmp(nh_px[k][i],"cud=",4,0)) {
 			      cudata = 1;
-			      strncpy(udata,nh_px[k][i]+4,MAXCUDATA);
+			      ckstrncpy(udata,nh_px[k][i]+4,MAXCUDATA);
 			      debug(F110,"X25 CUD",cudata,0);
-			  } else if (!xxstrcmp(nh_px[k][i],"rev=",4)) {
-			      revcall = !xxstrcmp(nh_px[k][i]+4,"=on",3);
+			  } else if (!ckstrcmp(nh_px[k][i],"rev=",4,0)) {
+			      revcall = !ckstrcmp(nh_px[k][i]+4,"=on",3,0);
 			      debug(F101,"X25 REV","",revcall);
-			  } else if (!xxstrcmp(nh_px[k][i],"pad=",4)) {
+#ifndef IBMX25
+			  } else if (!ckstrcmp(nh_px[k][i],"pad=",4,0)) {
 			      int x3par, x3val;
 			      char *s1, *s2;
 			      s1 = s2 = nh_px[k][i]+4; /* PAD parameters */
@@ -5714,6 +9450,7 @@ setlin(xx, zz) int xx, zz; {
 				  } else
 				    s2++;
 			      }
+#endif /* IBMX25 */
 			  }
 		      }
 #endif /* ANYX25 */
@@ -5725,34 +9462,390 @@ setlin(xx, zz) int xx, zz; {
 		}
 	    } else {			/* No directory entries found. */
 		strcpy(line,tmpbuf);	/* Put this back... */
-		if (nettype == NET_TCPB)
-		  if (service)		/* If user gave a service */
-		    if (*service) {	/* append it to host name/address */
-			strcat(line, ":");
-			strcat(line, service);
-		    }
+		if (mynet == NET_TCPB)	/* If the user gave a TCP service */
+                  strcpy(hostname,line);
+		  if (*srvbuf) {	/* append it to host name/address */
+		      strncat(line, ":", LINBUFSIZ);
+		      strncat(line, srvbuf,LINBUFSIZ);
+		  }
 	    }
 #endif /* NODIAL */
 	    /*
 	       Get here with host name/address and all net-specific
 	       parameters set, ready to open the connection.
 	    */
-	    mdmtyp = -nettype;		/* This should have been done */
+	    mdmtyp = -mynet;		/* This should have been done */
 					/* already but just in case ... */
 
 	    debug(F110,"setlin net line[] before ttopen",line,0);
-	    debug(F101,"setlin net mdmtyp before ttopen",line,mdmtyp);
+	    debug(F101,"setlin net mdmtyp before ttopen","",mdmtyp);
+	    debug(F101,"setlin net ttnproto","",ttnproto);
 
-	    if ((y = ttopen(line, &x, mdmtyp, 0 )) < 0) { /* Try to open */
-#ifndef VMS
+#ifdef CK_AUTHENTICATION
+            if ((ttnproto == NP_TELNET || ttnproto == NP_KERMIT) &&
+                 a_type > -1) {
+                if (!sl_auth_saved) {
+                    int x;
+                    for (x = 0; x < AUTHTYPLSTSZ; x++)
+		      sl_auth_type_user[x] = auth_type_user[x];
+                    sl_auth_saved = 1;
+                }
+                if (!sl_topt_a_s_saved) {
+                    sl_topt_a_su = TELOPT_DEF_S_U_MODE(TELOPT_AUTHENTICATION);
+                    sl_topt_a_s_saved = 1;
+                }
+                if (!sl_topt_a_c_saved) {
+                    sl_topt_a_cm = TELOPT_DEF_C_ME_MODE(TELOPT_AUTHENTICATION);
+                    sl_topt_a_c_saved = 1;
+                }
+                switch (a_type) {
+                  case AUTHTYPE_AUTO:
+                    auth_type_user[0] = AUTHTYPE_AUTO;
+                    TELOPT_DEF_S_U_MODE(TELOPT_AUTHENTICATION) = TN_NG_RQ;
+                    TELOPT_DEF_C_ME_MODE(TELOPT_AUTHENTICATION) = TN_NG_RQ;
+                    break;
+                  case AUTHTYPE_NULL:
+		    auth_type_user[0] = AUTHTYPE_NULL;
+		    TELOPT_DEF_S_U_MODE(TELOPT_AUTHENTICATION) = TN_NG_RF;
+		    TELOPT_DEF_C_ME_MODE(TELOPT_AUTHENTICATION) = TN_NG_RF;
+		    break;
+#ifdef CK_SRP
+		  case AUTHTYPE_SRP:
+                    auth_type_user[0] = AUTHTYPE_SRP;
+                    auth_type_user[1] = AUTHTYPE_NULL;
+                    TELOPT_DEF_S_U_MODE(TELOPT_AUTHENTICATION) = TN_NG_MU;
+                    TELOPT_DEF_C_ME_MODE(TELOPT_AUTHENTICATION) = TN_NG_MU;
+                    break;
+#endif /* CK_SRP */
+#ifdef CK_SSL
+		  case AUTHTYPE_SSL:
+                    auth_type_user[0] = AUTHTYPE_SSL;
+                    auth_type_user[1] = AUTHTYPE_NULL;
+                    TELOPT_DEF_S_U_MODE(TELOPT_AUTHENTICATION) = TN_NG_MU;
+                    TELOPT_DEF_C_ME_MODE(TELOPT_AUTHENTICATION) = TN_NG_MU;
+                    break;
+#endif /* CK_SSL */
+#ifdef NT
+		  case AUTHTYPE_NTLM:
+                    auth_type_user[0] = AUTHTYPE_NTLM;
+                    auth_type_user[1] = AUTHTYPE_NULL;
+                    TELOPT_DEF_S_U_MODE(TELOPT_AUTHENTICATION) = TN_NG_MU;
+                    TELOPT_DEF_C_ME_MODE(TELOPT_AUTHENTICATION) = TN_NG_MU;
+                    break;
+#endif /* NT */
+#ifdef CK_KERBEROS
+		  case AUTHTYPE_KERBEROS_V4:
+                    auth_type_user[0] = AUTHTYPE_KERBEROS_V4;
+                    auth_type_user[1] = AUTHTYPE_NULL;
+                    TELOPT_DEF_S_U_MODE(TELOPT_AUTHENTICATION) = TN_NG_MU;
+                    TELOPT_DEF_C_ME_MODE(TELOPT_AUTHENTICATION) = TN_NG_MU;
+                    break;
+
+		  case AUTHTYPE_KERBEROS_V5:
+                    auth_type_user[0] = AUTHTYPE_KERBEROS_V5;
+                    auth_type_user[1] = AUTHTYPE_NULL;
+                    TELOPT_DEF_S_U_MODE(TELOPT_AUTHENTICATION) = TN_NG_MU;
+                    TELOPT_DEF_C_ME_MODE(TELOPT_AUTHENTICATION) = TN_NG_MU;
+                    break;
+#endif /* CK_KERBEROS */
+                }
+            }
+
+            /*
+               If the user is going to require a Kerberos connection
+               of a particular type, let's make sure we have a valid TGT.
+            */
+	    slmsg = "Authentication failure";
+            if ((ttnproto == NP_TELNET || ttnproto == NP_KERMIT) &&
+		(line[0] == '*' &&
+		 TELOPT_DEF_S_U_MODE(TELOPT_AUTHENTICATION) == TN_NG_MU ||
+		 line[0] != '*' &&
+		 TELOPT_DEF_C_ME_MODE(TELOPT_AUTHENTICATION) == TN_NG_MU)
+		) {
+#ifdef CK_KERBEROS
+                if ( auth_type_user[0] == AUTHTYPE_KERBEROS_V4 ) {
+                    extern int krb4_autoget;
+                    if (!ck_krb4_is_installed()) {
+			printf(
+        "?Required authentication method (Kerberos 4) is not installed\n"
+			       );
+                        slrestor();
+			return(success = 0);
+                    }
+#ifdef COMMENT
+                    /* This code results in false failures when using */
+                    /* kerberos to machines in realms other than the  */
+                    /* default since we don't know the realm of the   */
+                    /* other machine until perform the reverse DNS    */
+                    /* lookup.                                        */
+		    else if (line[0] != '*' && !ck_krb4_is_tgt_valid() &&
+			       (!krb4_autoget ||
+				krb4_autoget && !ck_krb4_autoget_TGT(NULL))) {
+                        printf(
+        "?Kerberos 4: Ticket Getting Ticket not valid.\n"
+			       );
+                        slrestor();
+                        return(success = 0);
+                    }
+#endif /* COMMENT */
+                } else if (auth_type_user[0] == AUTHTYPE_KERBEROS_V5) {
+                    extern int krb5_autoget;
+                    if (!ck_krb5_is_installed()) {
+			printf(
+        "?Required authentication method (Kerberos 5) is not installed\n"
+			       );
+                        slrestor();
+                        return(success = 0);
+                    }
+#ifdef COMMENT
+                    /* This code results in false failures when using */
+                    /* kerberos to machines in realms other than the  */
+                    /* default since we don't know the realm of the   */
+                    /* other machine until perform the reverse DNS    */
+                    /* lookup.                                        */
+		    else if (line[0] != '*' && !ck_krb5_is_tgt_valid() &&
+			       (!krb5_autoget ||
+				krb5_autoget && !ck_krb5_autoget_TGT(NULL))) {
+                        printf(
+        "?Kerberos 5: Ticket Getting Ticket not valid.\n"
+			       );
+                        slrestor();
+                        return(success = 0);
+                    }
+#endif /* COMMENT */
+                }
+#endif /* CK_KERBEROS */
+#ifdef NT
+                if (auth_type_user[0] == AUTHTYPE_NTLM) {
+                    if (!ck_ntlm_is_installed()) {
+			printf(
+        "?Required authentication method (NTLM) is not installed\n"
+			       );
+                        slrestor();
+                        return(success = 0);
+                    } else if (line[0] != '*' && !ck_ntlm_is_valid()) {
+                        printf("?NTLM: Credentials are unavailable.\n");
+                        slrestor();
+                        return(success = 0);
+                    }
+                }
+#endif /* NT */
+#ifdef CK_SSL
+                if (auth_type_user[0] == AUTHTYPE_SSL) {
+                    if (!ck_ssleay_is_installed()) {
+			printf(
+        "?Required authentication method (SSL) is not installed\n"
+			       );
+                        slrestor();
+                        return(success = 0);
+                    }
+                }
+#endif /* CK_SSL */
+#ifdef CK_SRP
+                if (auth_type_user[0] == AUTHTYPE_SRP) {
+                    if (!ck_srp_is_installed()) {
+			printf(
+        "?Required authentication method (SRP) is not installed\n"
+			       );
+                        slrestor();
+                        return(success = 0);
+                    }
+                }
+#endif /* CK_SRP */
+            }
+#endif /* CK_AUTHENTICATION */
+#ifdef CK_ENCRYPTION
+            if ((ttnproto == NP_TELNET || ttnproto == NP_KERMIT) &&
+                 e_type > -1) {
+                if (!sl_cx_saved) {
+                    sl_cx_type = cx_type;
+                    sl_cx_saved = 1;
+                }
+                if (!sl_topt_e_s_saved) {
+                    sl_topt_e_su = TELOPT_DEF_S_U_MODE(TELOPT_ENCRYPTION);
+                    sl_topt_e_sm = TELOPT_DEF_S_ME_MODE(TELOPT_ENCRYPTION);
+                    sl_topt_e_s_saved = 1;
+                }
+                if (!sl_topt_e_c_saved) {
+                    sl_topt_e_cu = TELOPT_DEF_C_U_MODE(TELOPT_ENCRYPTION);
+                    sl_topt_e_cm = TELOPT_DEF_C_ME_MODE(TELOPT_ENCRYPTION);
+                    sl_topt_e_c_saved = 1;
+                }
+                cx_type = e_type;
+                if (cx_type == CX_AUTO) {
+                    TELOPT_DEF_S_U_MODE(TELOPT_ENCRYPTION) = TN_NG_RQ;
+                    TELOPT_DEF_S_ME_MODE(TELOPT_ENCRYPTION) = TN_NG_RQ;
+                    TELOPT_DEF_C_U_MODE(TELOPT_ENCRYPTION) = TN_NG_RQ;
+                    TELOPT_DEF_C_ME_MODE(TELOPT_ENCRYPTION) = TN_NG_RQ;
+                } else if (cx_type == CX_NONE) {
+                    TELOPT_DEF_S_U_MODE(TELOPT_ENCRYPTION) = TN_NG_RF;
+                    TELOPT_DEF_S_ME_MODE(TELOPT_ENCRYPTION) = TN_NG_RF;
+                    TELOPT_DEF_C_U_MODE(TELOPT_ENCRYPTION) = TN_NG_RF;
+                    TELOPT_DEF_C_ME_MODE(TELOPT_ENCRYPTION) = TN_NG_RF;
+                } else {
+                    TELOPT_DEF_S_U_MODE(TELOPT_ENCRYPTION) = TN_NG_MU;
+                    TELOPT_DEF_S_ME_MODE(TELOPT_ENCRYPTION) = TN_NG_MU;
+                    TELOPT_DEF_C_U_MODE(TELOPT_ENCRYPTION) = TN_NG_MU;
+                    TELOPT_DEF_C_ME_MODE(TELOPT_ENCRYPTION) = TN_NG_MU;
+                }
+            }
+            if (ttnproto == NP_EK4LOGIN || ttnproto == NP_EK5LOGIN ||
+		(ttnproto == NP_TELNET || ttnproto == NP_KERMIT) &&
+		((line[0] == '*' &&
+		  TELOPT_DEF_S_U_MODE(TELOPT_ENCRYPTION) == TN_NG_MU &&
+		  TELOPT_DEF_S_ME_MODE(TELOPT_ENCRYPTION) == TN_NG_MU) ||
+		 (line[0] != '*' &&
+		  TELOPT_DEF_C_U_MODE(TELOPT_ENCRYPTION) == TN_NG_MU &&
+		  TELOPT_DEF_C_ME_MODE(TELOPT_ENCRYPTION) == TN_NG_MU))
+		) {
+                if (!ck_crypt_is_installed()) {
+		    slmsg = "Encryption failure";
+                    printf("?Required Encryption methods are not installed\n");
+                    slrestor();
+                    return(success = 0);
+                }
+            }
+#endif /* CK_ENCRYPTION */
+#ifdef RLOGCODE
+#ifdef CK_KERBEROS
+#ifdef KRB4
+            if (ttnproto == NP_K4LOGIN || ttnproto == NP_EK4LOGIN) {
+                extern int krb4_autoget;
+                char tgt[256];
+                char * realm;
+
+                /* this is fine except for one huge problem         */
+                /* we don't have the full hostname at this point    */
+                /* so we really need to perform a DNS lookup before */
+                /* calling ttopen().                                */
+
+                realm = ck_krb4_realmofhost(ckgetfqhostname(hostname));
+                sprintf(tgt,"krbtgt.%s@%s",realm,realm);
+
+                if (!ck_krb4_is_installed()) {
+		    printf(
+        "?Required authentication method (Kerberos 4) is not installed\n"
+			   );
+                    slrestor();
+                    return(success = 0);
+                } else {
+                    if ((ck_krb4_tkt_isvalid(tgt) <= 0) &&
+			(!krb4_autoget ||
+			 krb4_autoget && !ck_krb4_autoget_TGT(realm))) {
+			printf(
+			   "?Kerberos 4: Ticket Getting Ticket not valid.\n");
+			slrestor();
+			return(success = 0);
+                    }
+                }
+            }
+#endif /* KRB4 */
+#ifdef KRB5
+            if (ttnproto == NP_K5LOGIN || ttnproto == NP_EK5LOGIN) {
+                extern int krb5_autoget;
+                char tgt[256];
+                char * realm;
+
+                /* this is fine except for one huge problem         */
+                /* we don't have the full hostname at this point    */
+                /* so we really need to perform a DNS lookup before */
+                /* calling ttopen().                                */
+
+                realm = ck_krb5_realmofhost(ckgetfqhostname(hostname));
+                sprintf(tgt,"krbtgt/%s@%s",realm,realm);
+
+                if (!ck_krb5_is_installed()) {
+		    printf(
+        "?Required authentication method (Kerberos 5) is not installed\n"
+			   );
+                    slrestor();
+                    return(success = 0);
+                } else if (!((ck_krb5_tkt_isvalid(NULL,tgt) > 0) ||
+                              ck_krb5_is_tgt_valid()) &&
+			   (!krb5_autoget ||
+			    krb5_autoget && !ck_krb5_autoget_TGT(realm))) {
+                    printf("?Kerberos 5: Ticket Getting Ticket not valid.\n");
+                    slrestor();
+                    return(success = 0);
+                }
+            }
+#endif /* KRB5 */
+#endif /* CK_KERBEROS */
+#endif /* RLOGCODE */
+
+#ifdef NETCONN
+#ifndef NOSPL
+            if (tmpstring) {
+                if (tmpstring[0]) {
+                    ckstrncpy(pwbuf,tmpstring,PWBUFL+1);
+                    pwflg = 1;
+                    pwcrypt = 0;
+                } else
+                    pwflg = 0;
+                makestr(&tmpstring,NULL);
+            }
+#ifdef RLOGCODE
+            if (tmpusrid) if (tmpusrid[0]) {
+                if (!sl_uid_saved) {
+                    ckstrncpy(sl_uidbuf,uidbuf,UIDBUFLEN);
+                    sl_uid_saved = 1;
+                }
+		ckstrncpy(uidbuf,tmpusrid,UIDBUFLEN);
+                makestr(&tmpusrid,NULL);
+                uidflag = 1;
+            }
+#endif /* RLOGCODE */
+#endif /* NOSPL */
+#endif /* NETCONN */
+
+#ifdef TNCODE
+            if (!sl_tn_saved) {
+                sl_tn_wait = tn_wait_flg;
+                sl_tn_saved = 1;
+            }
+	    tn_wait_flg = wait;
+#endif /* TNCODE */
+
+	    /* Try to open */
+	    if ((y = ttopen(line, &_local, mdmtyp, 0 )) < 0) {
+                slrestor();
+		slmsg = "Network connection failure";
+#ifdef VMS
+		if (hints && !cmdsrc() && ttnproto == NP_RLOGIN) {
+		    slmsg = "RLOGIN failure";
+		    printf("*************************\n");
+		    printf("Hint: The RLOGIN port is privileged in VMS.\n");
+		    printf("(Use SET HINTS OFF to suppress future hints.)\n");
+		    printf("*************************\n");
+		}
+#else  /* Not VMS... */
 		if (errno) {
 		    int x;
 		    debug(F111,"set host line, errno","",errno);
+		    makestr(&tmpslmsg,ck_errstr());
+		    slmsg = tmpslmsg;
 		    x = strlen(line) + 2;
 		    if (LINBUFSIZ - x > 100) {
 			tp = line + x;
+#ifdef OS2
+			printf("Can't connect to %s\n",line);
+#else /* OS2 */
+#ifdef COMMENT
 			sprintf(tp,"Can't connect to %s",line);
 			perror(tp);
+#endif /* COMMENT */
+#ifdef UNIX
+			if (hints && !cmdsrc() && ttnproto == NP_RLOGIN) {
+			    slmsg = "RLOGIN failure";
+			    printf("*************************\n");
+			    printf(
+			     "Hint: The RLOGIN port is privileged in UNIX.\n");
+			    printf(
+			    "(Use SET HINTS OFF to suppress future hints.)\n");
+			    printf("*************************\n");
+			}
+#endif /* UNIX */
+#endif /* OS2 */
 		    } else printf("Can't connect to %s\n",line);
 		} else
 #endif /* VMS */
@@ -5760,6 +9853,34 @@ setlin(xx, zz) int xx, zz; {
 		continue;
 	    } else {
 		success = 1;
+		switch (mynet) {
+		  case NET_TCPA:
+		  case NET_TCPB:
+		    cxtype = CXT_TCPIP;
+		    break;
+		  case NET_SLAT:
+		    cxtype = CXT_LAT;
+		    break;
+		  case NET_SX25:
+		  case NET_IX25:
+		  case NET_HX25:
+		  case NET_VX25:
+		    cxtype = CXT_X25;
+		    break;
+		  case NET_BIOS:
+		    cxtype = CXT_NETBIOS;
+		    break;
+		  case NET_FILE:
+		  case NET_PIPE:
+		  case NET_CMD:
+		  case NET_DLL:
+		  case NET_PTY:
+		    cxtype = CXT_PIPE;
+		    break;
+		  default:
+		    cxtype = CXT_PIPE;
+		    break;
+		}
 		break;
 	    }
 	} /* for-loop */
@@ -5778,33 +9899,1622 @@ setlin(xx, zz) int xx, zz; {
 #endif /* MAC */
 	speed = ttgspd();
 	network = 0;			/* No network connection active */
+	haveline = 0;
+	if (mdmtyp < 0) {		/* Switching from net to async? */
+	    if (mdmsav > -1)		/* Restore modem type from last */
+	      mdmtyp = mdmsav;		/* SET MODEM command, if any. */
+	    else
+	      mdmtyp = 0;
+	    mdmsav = -1;
+	}
 	return(0);			/* Return failure */
     }
-    if (x > -1) local = x;		/* Opened ok, set local/remote. */
+    if (_local > -1) local = _local;	/* Opened ok, set local/remote. */
+    slmsg = NULL;
     network = (mdmtyp < 0);		/* Remember connection type. */
     strcpy(ttname,s);			/* Copy name into real place. */
-    speed = ttgspd();			/* Get the current speed. */
-    debug(F111,"set line ",ttname,local);
+    debug(F110,"setlin ok",ttname,0);
+    debug(F101,"setlin network","",network);
+    if (!network)
+      speed = ttgspd();			/* Get the current speed. */
+    debug(F101,"setlin local","",local);
 #ifdef NETCONN
-    if (network)
+    if (network) {
+	debug(F101,"setlin mynet","",mynet);
+#ifndef NOXFER
+	/* Force prefixing of 255 on TCP/IP connections... */
+	if (mynet == NET_TCPB) {
+	    debug(F101,"setlin reliable A","",reliable);
 #ifdef CK_SPEED
-      /* Force prefixing of 255 on TCP/IP connections... */
-      if (nettype == NET_TCPB) {
-	  ctlp[255] = 1;
-      } else
+	    ctlp[(unsigned)255] = 1;
 #endif /* CK_SPEED */
-	if (nettype == NET_SX25 || nettype == NET_VX25)
-	  duplex = 1;			/* Local echo for X.25 */
+	    if (reliable != SET_OFF || !setreliable)
+	      reliable = SET_ON;	/* Transport is reliable end to end */
+	    debug(F101,"setlin reliable B","",reliable);
+	} else if (mynet == NET_SX25 ||
+		   mynet == NET_VX25 ||
+		   mynet == NET_IX25 ||
+		   mynet == NET_HX25) {
+	    duplex = 1;			/* Local echo for X.25 */
+	    if (reliable != SET_OFF || !setreliable)
+	      reliable = SET_ON;	/* Transport is reliable end to end */
+	}
+#endif /* NOXFER */
+    }
 #endif /* NETCONN */
+#ifndef NOXFER
+    debug(F101,"setlin reliable","",reliable);
+#endif /* NOXFER */
 #ifdef OS2
     if (mdmtyp <= 0)			/* Network or Direct Connection */
       DialerSend(OPT_KERMIT_CONNECT, 0);
 #endif /* OS2 */
-    if (autoflow)			/* Maybe change flow control */
-      setflow();
+
+    setflow();				/* Set appropriate flow control */
+
+    haveline = 1;
+#ifdef CKLOGDIAL
+#ifdef NETCONN
+    if (network)			/* Start connection log record */
+      dolognet();
+    else
+#endif /* NETCONN */
+      dologline();
+#endif /* CKLOGDIAL */
+
+#ifndef NOSPL
+    if (local) {
+	if (nmac) {			/* Any macros defined? */
+	    int k;			/* Yes */
+	    k = mlook(mactab,"on_open",nmac);	/* Look this up */
+	    if (k >= 0) {			/* If found, */
+		if (dodo(k,ttname,0) > -1)	/* set it up, */
+		  parser(1);			/* and execute it */
+	    }
+	}
+    }
+#endif /* NOSPL */
+
+    if (local && (cx || sx)) {		/* /CONNECT or /SERVER switch given */
+	extern int carrier;
+	if (xx == XYLINE && carrier != CAR_OFF) { /* on serial connection... */
+	    /* Open() turns on DTR -- wait up to a second for CD to come up */
+	    int i, x;
+	    for (i = 0; i < 10; i++) {	/* WAIT 1 CD... */
+		x = ttgmdm();
+		if (x < 0 || x & BM_DCD)
+		  break;
+		msleep(100);
+	    }
+	}
+	if (cx) {			/* /CONNECT */
+	    success = doconect(0);
+#ifdef CKLOGDIAL
+	    if (ttchk() < 0)
+	      dologend();
+#endif /* CKLOGDIAL */
+	    return(success);
+#ifndef NOXFER
+	} else if (sx) {		/* /SERVER */
+	    sstate = 'x';
+#ifdef MAC
+	    what = W_RECV;
+	    scrcreate();
+#endif /* MAC */
+	    if (local) displa = 1;
+#ifdef AMIGA
+	    reqoff();			/* No DOS requestors while server */
+#endif /* AMIGA */
+#endif /* NOXFER */
+	}
+    }
     return(success = 1);
 }
 #endif /* NOLOCAL */
+
+#ifdef CKCHANNELIO
+/*
+  C-Library based file-i/o package for scripts.  This should be portable to
+  all C-Kermit versions since it uses the same APIs we have always used for
+  processing command files.  The entire channel i/o package is contained
+  herein, apart from some keyword table entries in the main keyword table
+  and the help text in the HELP command module.
+
+  On platforms like VMS and VOS, this package handles only UNIX-style
+  stream files.  If desired, it can be replaced for those platforms by
+  <#>ifdef'ing out this code and adding the equivalent replacement routines
+  to the ck?fio.c module, e.g. for RMS-based file i/o in ckvfio.c.
+*/
+
+/* Define NOSTAT if the <#>include causes trouble. */
+
+#ifndef NOSTAT
+#ifdef VMS
+#ifdef VAXC				/* As it does in VAX C */
+#define NOSTAT
+#endif /* VAXC */
+#endif /* VMS */
+#endif /* NOSTAT */
+
+#ifndef NOSTAT
+#include <sys/stat.h>
+#endif /* NOSTAT */
+
+#ifdef NLCHAR
+static int z_lt = 1;			/* Length of line terminator */
+#else
+static int z_lt = 2;
+#endif /* NLCHAR */
+
+struct ckz_file {			/* C-Kermit file struct */
+    FILE * z_fp;			/* Includes the C-Lib file struct */
+    unsigned int z_flags;		/* Plus C-Kermit mode flags, */
+    long z_nline;			/* current line number if known, */
+    char z_name[CKMAXPATH+2];		/* and the file's name. */
+};
+static struct ckz_file * z_file = NULL;	/* Array of C-Kermit file structs */
+static int z_inited = 0;		/* Flag for array initialized */
+int z_maxchan = Z_MAXCHAN;		/* Max number of C-Kermit channels */
+int z_openmax = CKMAXOPEN;		/* Max number of open files overall */
+int z_nopen = 0;			/* How many channels presently open */
+int z_error = 0;			/* Most recent error */
+int z_filcount = -1;			/* Most recent FILE COUNT result */
+
+#define RD_LINE 0			/* FILE READ options */
+#define RD_CHAR 1
+#define RD_SIZE 2
+
+#define WR_LINE RD_LINE			/* FILE WRITE options */
+#define WR_CHAR RD_CHAR
+#define WR_SIZE RD_SIZE
+#define WR_STRI 3
+#define WR_LPAD 4
+#define WR_RPAD 5
+
+#ifdef UNIX
+extern int ckmaxfiles;			/* Filled in by sysinit(). */
+#endif /* UNIX */
+
+/* See ckcker.h for error numbers */
+/* See ckcdeb.h for Z_MAXCHAN and CKMAXOPEN definitions */
+/* NOTE: For VMS we might be able to fill in ckmaxfiles */
+/* from FILLM and CHANNELCNT -- find out about these... */
+
+static char * fopnargs[] = {		/* Mode combinations for fopen() */
+#ifdef COMMENT
+    /* All combinations of rwa */
+    "",  "r",  "w",  "rw",  "a",  "ra",  "wa",  "rwa", /* Text mode */
+    "b", "rb", "wb", "rwb", "ab", "rab", "wab", "rwab" /* Binary mode */
+#else
+    /* Combinations and syntax permitted by C libraries... */
+    "",  "r",  "w",  "r+",  "a",  "",   "a",  "", /* Text mode */
+#ifdef OS2
+    "",  "rb", "wb", "r+b", "ab", "",   "ab", "" /* Binary modes for K95 */
+#else
+#ifdef VMS
+    "",  "rb", "wb", "r+b", "ab", "",   "ab", "" /* Binary modes for VMS */
+#else
+    "",  "r",   "w", "r+",  "a",  "",   "a",  "" /* Binary modes for UNIX */
+#endif /* VMS */
+#endif /* OS2 */
+#endif /* COMMENT */
+};
+static int nfopnargs = sizeof(fopnargs) / sizeof(char *);
+
+char *					/* Error messages */
+ckferror(n) int n; {
+    switch (n) {
+      case FX_NER: return("No error");
+      case FX_SYS: return(ck_errstr());
+      case FX_EOF: return("End of file");
+      case FX_NOP: return("File not open");
+      case FX_CHN: return("Channel out of range");
+      case FX_RNG: return("Parameter out of range");
+      case FX_NMF: return("Too many files open");
+      case FX_FOP: return("Operation conflicts with OPEN mode");
+      case FX_NYI: return("OPEN mode not supported");
+      case FX_BOM: return("Illegal combination of OPEN modes");
+      case FX_ACC: return("Access denied");
+      case FX_FNF: return("File not found");
+      case FX_OFL: return("Buffer overflow");
+      case FX_LNU: return("Current line number unknown");
+      case FX_UNK: return("Operation fails - reason unknown");
+      default: return("Error number out of range");
+    }
+}
+
+/*
+  Z _ O P E N --  Open a file for the requested type of access.
+
+  Call with:
+    name:  Name of file to be opened.
+    flags: Any combination of FM_xxx values except FM_EOF (ckcker.h).
+  Returns:
+    >= 0 on success: The assigned channel number
+    <  0 on failure: A negative FX_xxx error code (ckcker.h).
+*/
+int
+z_open(name, flags) char * name; int flags; {
+    int i, n;
+    FILE * t;
+    char * mode;
+    debug(F111,"z_open",name,flags);
+    if (!name) name = "";		/* Check name argument */
+    if (!name[0])
+      return(z_error = FX_BFN);
+    if (flags & FM_CMD)			/* Opening pipes not implemented yet */
+      return(z_error = FX_NYI);		/* (and not portable either) */
+    debug(F101,"z_open nfopnargs","",nfopnargs);
+    if (flags < 0 || flags >= nfopnargs) /* Range check flags */
+      return(z_error = FX_RNG);
+    mode = fopnargs[flags];		/* Get fopen() arg */
+    debug(F111,"z_open fopen args",mode,flags);
+    if (!mode[0])			/* Check for illegal combinations */
+      return(z_error = FX_BOM);
+    if (!z_inited) {			/* If file structs not inited */
+	debug(F101,"z_open z_maxchan 1","",z_maxchan);
+#ifdef UNIX
+	debug(F101,"z_open ckmaxfiles","",ckmaxfiles);
+	if (ckmaxfiles > 0) {		/* Set in ck?tio.c: sysinit() */
+	    int x;
+	    x = ckmaxfiles - ZNFILS - 5;
+	    if (x > z_maxchan)		/* sysconf() value greater than */
+	      z_maxchan = x;		/* value from header files. */
+	    debug(F101,"z_open z_maxchan 2","",z_maxchan);
+	}
+#endif /* UNIX */
+	if (z_maxchan < Z_MINCHAN)	/* Allocate at least this many. */
+	  z_maxchan = Z_MINCHAN;
+	debug(F101,"z_open z_maxchan 3","",z_maxchan);
+	/* Note: This could be a pretty big chunk of memory */
+	/* if z_maxchan is a big number.  If this becomes a problem */
+	/* we'll need to malloc and free each element at open/close time */
+	if (!(z_file = (struct ckz_file *)
+	      malloc(sizeof(struct ckz_file) * (z_maxchan + 1))))
+	  return(z_error = FX_NMF);
+	for (i = 0; i < z_maxchan; i++) {
+	    z_file[i].z_fp = NULL;
+	    z_file[i].z_flags = 0;
+	    z_file[i].z_nline = 0;
+	    *(z_file[i].z_name) = '\0';
+	}
+	z_inited = 1;			/* Remember we did */
+    }
+    for (n = -1, i = 0; i < z_maxchan; i++) {
+	if (!z_file[i].z_fp) {
+	    n = i;
+	    break;
+	}
+    }
+    if (n < 0 || n >= z_maxchan)	/* Any free channels? */
+      return(z_error = FX_NMF);		/* No, fail. */
+    errno = 0;
+
+    z_file[n].z_flags = 0;		/* In case of failure... */
+
+    t = fopen(name, mode);		/* Try to open the file. */
+    if (!t) {				/* Failed... */
+	debug(F111,"z_open error",name,errno);
+#ifdef EMFILE
+	if (errno == EMFILE)
+	  return(z_error = FX_NMF);
+#endif /* EMFILE */
+	return(z_error = (errno ?  FX_SYS : FX_UNK)); /* Return error code */
+    }
+#ifdef NT
+#ifdef O_SEQUENTIAL
+    if (t)				/* Caching hint for NT */
+      _setmode(_fileno(t),O_SEQUENTIAL);
+#endif /* O_SEQUENTIAL */
+#endif /* NT */
+    z_nopen++;				/* Open, count it. */
+    z_file[n].z_fp = t;			/* Stash the file pointer */
+    z_file[n].z_flags = flags;		/* and the flags */
+    z_error = 0;
+    zfnqfp(name,CKMAXPATH,z_file[n].z_name); /* and the file's full name */
+    return(n);				/* Return the channel number */
+}
+
+int
+z_close(channel) int channel; {		/* Close file on given channel */
+    int x;
+    FILE * t;
+    if (!z_inited)			/* Called before any files are open? */
+      return(z_error = FX_NOP);
+    if (channel >= z_maxchan)		/* Channel out of range? */
+      return(z_error = FX_CHN);
+    if (!(t = z_file[channel].z_fp))	/* Channel wasn't open? */
+      return(z_error = FX_NOP);
+    errno = 0;				/* Set errno 0 to get a good reading */
+    x = fclose(t);			/* Try to close */
+    if (x == EOF)			/* On failure */
+      return(z_error = FX_SYS);		/* indicate system error. */
+    z_nopen--;				/* Closed OK, decrement open count */
+    z_file[channel].z_fp = NULL;	/* Set file pointer to NULL */
+    z_file[channel].z_nline = 0;	/* Current line number is 0 */
+    z_file[channel].z_flags = 0;	/* Set flags to 0 */
+    *(z_file[channel].z_name) = '\0';	/* Clear name */
+    return(z_error = 0);
+}
+
+/*
+  Z _ O U T  --  Output string to channel.
+
+  Call with:
+    channel:     Channel number to write to.
+    s:           String to write.
+    length > -1: How many characters of s to write.
+    length < 0:  Write entire NUL-terminated string.
+    flags == 0:  Supply line termination.
+    flags >  0:  Don't supply line termination.
+    flags <  0:  Write 'length' NUL characters.
+  Special case:
+    If flags > -1 and s is empty or NULL and length == 1, write 1 NUL.
+  Returns:
+    Number of characters written to channel on success, or
+    negative FX_xxx error code on failure.
+*/
+int
+z_out(channel,s,length,flags) int channel, flags, length; char * s; {
+    FILE * t;
+    int x, n;
+    char c = '\0';
+
+    if (!s) s = "";			/* Guard against null pointer */
+#ifdef DEBUG
+    if (deblog) {
+	debug(F111,"z_out",s,channel);
+	debug(F101,"z_out length","",length);
+	debug(F101,"z_out flags","",flags);
+    }
+#endif /* DEBUG */
+    if (!z_inited)			/* File i/o inited? */
+      return(z_error = FX_NOP);
+    if (channel >= z_maxchan)		/* Channel in range? */
+      return(z_error = FX_CHN);
+    if (!(t = z_file[channel].z_fp))	/* File open? */
+      return(z_error = FX_NOP);
+    if (!((z_file[channel].z_flags) & (FM_WRI|FM_APP)))	/* In write mode? */
+      return(z_error = FX_FOP);
+    n = length;				/* Length of string to write */
+    if (n < 0) {			/* Negative means get it ourselves */
+	if (flags < 0)			/* Except when told to write NULs in */
+	  return(z_error = FX_RNG);	/* which case args are inconsistent */
+	n = strlen(s);			/* Get length of string arg */
+    }
+    errno = 0;				/* Reset errno */
+    debug(F101,"z_out n","",n);
+    if (flags < 0) {			/* Writing NULs... */
+	int i;
+	for (i = 0; i < n; i++) {
+	    x = fwrite(&c,1,1,t);
+	    if (x < 1)
+	      return(z_error = (errno ? FX_SYS : FX_UNK));
+	}
+	z_file[channel].z_nline = -1;	/* Current line no longer known */
+	z_error = 0;
+	return(i);
+    } else {				/* Writing string arg */
+	if (n == 1 && !s[0])		/* Writing one char but it's NUL */
+	  x = fwrite(&c,1,1,t);
+	else				/* Writing non-NUL char or string */
+	  x = fwrite(s,1,n,t);
+	debug(F101,"z_out fwrite",ckitoa(x),errno);
+	if (x < n)			/* Failure to write requested amount */
+	  return(z_error = (errno ? FX_SYS : FX_UNK)); /* Return error */
+	if (flags == 0) {		/* If supplying line termination */
+	    if (fwrite("\n",1,1,t))	/* do that  */
+	      x += z_lt;		/* count the terminator */
+	    if (z_file[channel].z_nline > -1) /* count this line */
+	      z_file[channel].z_nline++;
+	} else {
+	    z_file[channel].z_nline = -1; /* Current line no longer known */
+	}
+    }
+    z_error = 0;
+    return(x);
+}
+
+#define Z_INBUFLEN 64
+
+/*
+  Z _ I N  --  Multichannel i/o file input function.
+
+  Call with:
+    channel number to read from.
+    s = address of destination buffer.
+    buflen = destination buffer length.
+    length = Number of bytes to read, must be < buflen.
+    flags: 0 = read a line; nonzero = read the given number of bytes.
+  Returns:
+    Number of bytes read into buffer or a negative error code.
+    A terminating NUL is deposited after the last byte that was read.
+*/
+int
+z_in(channel,s,buflen,length,flags)
+ int channel, buflen, length, flags; char * s;
+/* z_in */ {
+    int i, j, x;
+    FILE * t;
+    char * p;
+
+    if (!z_inited)			/* Check everything... */
+      return(z_error = FX_NOP);
+    if (channel >= z_maxchan)
+      return(z_error = FX_CHN);
+    if (!(t = z_file[channel].z_fp))
+      return(z_error = FX_NOP);
+    if (!((z_file[channel].z_flags) & FM_REA))
+      return(z_error = FX_FOP);
+    if (!s)				/* Check destination */
+     return(z_error = FX_RNG);
+    s[0] = NUL;
+    if (length == 0)			/* Read 0 bytes - easy. */
+      return(z_error = 0);
+    debug(F101,"z_in channel","",channel);
+    debug(F101,"z_in buflen","",buflen);
+    debug(F101,"z_in length","",length);
+    debug(F101,"z_in flags","",flags);
+    if (length < 0 || buflen < 0)	/* Check length args */
+      return(z_error = FX_RNG);
+    if (buflen <= length)
+      return(z_error = FX_RNG);
+    errno = 0;				/* Reset errno */
+    if (flags) {			/* Read block or byte */
+	i = fread(s,1,length,t);
+#ifdef DEBUG
+	if (deblog) {
+	    debug(F111,"z_in block",s,i);
+	    debug(F101,"z_in block errno","",errno);
+	    debug(F101,"z_in block ferror","",ferror(t));
+	    debug(F101,"z_in block feof","",feof(t));
+	}
+#endif /* DEBUG */
+	z_file[channel].z_nline = -1;	/* Current line no longer known */
+    } else {				/* Read line */
+#ifndef COMMENT
+	/* This method is used because it's simpler than the others */
+        /* and also marginally faster. */
+	for (i = 0; i < length; i++) {
+	    if ((x = getc(t)) == EOF)
+	      break;
+	    s[i] = x;
+	    if (s[i] == '\n') {
+		s[i] = '\0';
+		break;
+	    }
+	}
+	debug(F111,"z_in line byte loop",ckitoa(errno),i);
+	if (z_file[channel].z_nline > -1)
+	  z_file[channel].z_nline++;
+#else
+#ifdef COMMENT2
+	/* Straightforward but strlen() slows it down. */
+	s[0] = '\0';
+	i = 0;
+	if (fgets(s,length,t)) {
+	    i = strlen(s);
+	    if (i > 0 && s[i-1] == '\n') i--;
+	}
+	debug(F111,"z_in line fgets",ckitoa(errno),i);
+	if (z_file[channel].z_nline > -1)
+	  z_file[channel].z_nline++;
+#else
+	/* This is a do-it-yourself fgets() with its own readahead and */
+	/* putback.  It's a bit faster than real fgets() but not enough */
+	/* to justify the added complexity or the risk of the ftell() and */
+	/* fseek() calls failing. */
+	int k, flag = 0;
+	long pos;
+	for (i = 0; !flag && i <= (length - Z_INBUFLEN); i += Z_INBUFLEN) {
+	    k = ((length - i) < Z_INBUFLEN) ? length - i : Z_INBUFLEN;
+	    if ((x = fread(s+i,1,k,t)) < 1)
+	      break;
+	    s[i+x] = '\0';
+	    for (j = 0; j < x; j++) {
+		if (s[i+j] == '\n') {
+		    s[i+j] = '\0';
+		    flag ++;
+		    pos = ftell(t);
+		    if (pos > -1) {
+			pos -= (x - j - 1);
+			x = fseek(t, pos, 0);
+			i += j;
+			break;
+		    } else
+		      return(z_error = FX_SYS);
+		}
+	    }
+	}
+	if (z_file[channel].z_nline > -1)
+	  z_file[channel].z_nline++;
+	debug(F111,"z_in line chunk loop",ckitoa(errno),i);
+#endif /* COMMENT2 */
+#endif /* COMMENT */
+    }
+    debug(F111,"z_in i",ckitoa(errno),i);
+    if (i < 0) i = 0;			/* NUL-terminate result */
+    s[i] = '\0';
+    if (i > 0) {
+	z_error = 0;
+	return(i);
+    }
+    if (i == 0 && feof(t))		/* EOF on reading? */
+      return(z_error = FX_EOF);		/* Return EOF code */
+    return(errno ? (z_error = -1) : i);	/* Return length or system error */
+}
+
+int
+z_flush(channel) int channel; {		/* Flush output channel */
+    FILE * t;
+    int x;
+    if (!z_inited)			/* Regular checks */
+      return(z_error = FX_NOP);
+    if (channel >= z_maxchan)
+      return(z_error = FX_CHN);
+    if (!(t = z_file[channel].z_fp))
+      return(z_error = FX_NOP);
+    if (!((z_file[channel].z_flags) & (FM_WRI|FM_APP)))	/* Write access? */
+      return(z_error = FX_FOP);
+    errno = 0;				/* Reset errno */
+    x = fflush(t);			/* Try to flush */
+    return(x ? (z_error = FX_SYS) : 0);	/* Return system error or 0 if OK */
+}
+
+int
+#ifdef CK_ANSIC
+z_seek(int channel, long pos)		/* Move file pointer to byte */
+#else
+z_seek(channel,pos) int channel; long pos; /* (seek to given position) */
+#endif /* CK_ANSIC */
+{
+    int i, x = 0, rc;
+    FILE * t;
+    if (!z_inited)			/* Check... */
+      return(z_error = FX_NOP);
+    if (channel >= z_maxchan)
+      return(z_error = FX_CHN);
+    if (!(t = z_file[channel].z_fp))
+      return(z_error = FX_NOP);
+    if (pos < 0L) {
+	x = 2;
+	pos = (pos == -2) ? -1L : 0L;
+    }
+    errno = 0;
+    rc = fseek(t,pos,x);		/* Try to seek */
+    debug(F111,"z_seek",ckitoa(errno),rc);
+    if (rc < 0)				/* OK? */
+      return(z_error = FX_SYS);	/* No. */
+    z_file[channel].z_nline = ((pos || x) ? -1 : 0);
+    return(z_error = 0);
+}
+
+int
+#ifdef CK_ANSIC
+z_line(int channel, long pos)		/* Move file pointer to line */
+#else
+z_line(channel,pos) int channel; long pos; /* (seek to given position) */
+#endif /* CK_ANSIC */
+{
+    int i, len, x = 0;
+    long current = 0L, prev = -1L, old = -1L;
+    FILE * t;
+    char tmpbuf[256];
+    if (!z_inited)			/* Check... */
+      return(z_error = FX_NOP);
+    if (channel >= z_maxchan)
+      return(z_error = FX_CHN);
+    if (!(t = z_file[channel].z_fp))
+      return(z_error = FX_NOP);
+    debug(F101,"z_line pos","",pos);
+    if (pos < 0L) {			/* EOF wanted */
+        long n;
+	n = z_file[channel].z_nline;
+	if (n < 0) {
+	    rewind(t);
+	    n = 0;
+	}
+	while (1) {			/* This could take a while... */
+	    if ((x = getc(t)) == EOF)
+	      break;
+	    if (x == '\n') {
+		n++;
+		if (pos == -2) {
+		    old = prev;
+		    prev = ftell(t);
+		}
+	    }
+	}
+	if (pos == -2) {
+	    if ((x = z_seek(channel,old)) < 0)
+	      return(z_error = x);
+	    else
+	      n--;
+	}
+	z_file[channel].z_nline = n;
+	return(z_error = 0);
+    }
+    if (pos == 0L) {			/* Rewind wanted */
+	z_file[channel].z_nline = 0L;
+	rewind(t);
+	debug(F100,"z_line rewind","",0);
+	return(0L);
+    }
+    tmpbuf[255] = NUL;			/* Make sure buf is NUL terminated */
+    current = z_file[channel].z_nline;	/* Current line */
+    /*
+      If necessary the following could be optimized, e.g. for positioning
+      to a previous line in a large file without starting over.
+    */
+    if (current < 0 || pos < current) {	/* Not known or behind us... */
+	debug(F101,"z_line rewinding","",pos);
+	if ((x = z_seek(channel, 0L)) < 0) /* Rewind */
+	  return(z_error = x);
+	if (pos == 0)			/* If 0th line wanted we're done */
+	  return(z_error = 0);
+	current = 0;
+    }
+    while (current < pos) {		/* Search for specified line */
+	if (fgets(tmpbuf,255,t)) {
+	    len = strlen(tmpbuf);
+	    if (len > 0 && tmpbuf[len-1] == '\n') {
+		current++;
+		debug(F111,"z_line read",ckitoa(len),current);
+	    } else if (len == 0) {
+		return(z_error = FX_UNK);
+	    }
+	} else {
+	    z_file[channel].z_nline = -1L;
+	    debug(F101,"z_line premature EOF","",current);
+	    return(z_error = FX_EOF);
+	}
+    }
+    z_file[channel].z_nline = current;
+    debug(F101,"z_line result","",current);
+    z_error = 0;
+    return(current);
+}
+
+char *
+z_getname(channel) int channel; {	/* Return name of file on channel */
+    FILE * t;
+    if (!z_inited) {
+	z_error = FX_NOP;
+	return(NULL);
+    }
+    if (channel >= z_maxchan) {
+	z_error = FX_CHN;
+	return(NULL);
+    }
+    if (!(t = z_file[channel].z_fp)) {
+	z_error = FX_NOP;
+	return(NULL);
+    }
+    return((char *)(z_file[channel].z_name));
+}
+
+int
+z_getmode(channel) int channel; {	/* Return OPEN modes of channel */
+    FILE * t;				/* 0 if file not open */
+#ifndef NOSTAT
+    struct stat statbuf;
+#endif /* NOSTAT */
+    int x;
+    if (!z_inited)
+      return(0);
+    if (channel >= z_maxchan)
+      return(z_error = FX_CHN);
+    if (!(t = z_file[channel].z_fp))
+      return(0);
+    x = z_file[channel].z_flags;
+    if (feof(t)) {			/* This might not work for */
+	x |= FM_EOF;			/* output files */
+#ifndef NOSTAT
+    /* But this does if we can use it. */
+    } else if (stat(z_file[channel].z_name,&statbuf) > -1) {
+	if (ftell(t) == statbuf.st_size)
+	  x |= FM_EOF;
+#endif /* NOSTAT */
+    }
+    return(x);
+}
+
+long
+z_getpos(channel) int channel; {	/* Get file pointer position */
+    FILE * t;				/* on this channel */
+    long x;
+    if (!z_inited)
+      return(z_error = FX_NOP);
+    if (channel >= z_maxchan)
+      return(z_error = FX_CHN);
+    if (!(t = z_file[channel].z_fp))
+      return(z_error = FX_NOP);
+    x = ftell(t);
+    return((x < 0L) ? (z_error = FX_SYS) : x);
+}
+
+long
+z_getline(channel) int channel; {	/* Get current line number */
+    FILE * t;				/* in file on this channel */
+    long rc;
+    if (!z_inited)
+      return(z_error = FX_NOP);
+    if (channel >= z_maxchan)
+      return(z_error = FX_CHN);
+    if (!(t = z_file[channel].z_fp))
+      return(z_error = FX_NOP);
+    debug(F101,"z_getline","",z_file[channel].z_nline);
+    rc = z_file[channel].z_nline;
+    return((rc < 0) ? (z_error = FX_LNU) : rc);
+}
+
+int
+z_getfnum(channel) int channel; {	/* Get file number / handle */
+    FILE * t;				/* for file on this channel */
+    if (!z_inited)
+      return(z_error = FX_NOP);
+    if (channel >= z_maxchan)
+      return(z_error = FX_CHN);
+    if (!(t = z_file[channel].z_fp))
+      return(z_error = FX_NOP);
+    z_error = 0;
+    return(fileno(t));
+}
+
+/*
+  Line-oriented counts and seeks are as dumb as they can be at the moment.
+  Later we can speed them up by building little indexes.
+*/
+long
+z_count(channel, what) int channel, what; { /* Count bytes or lines in file */
+    FILE * t;
+    int i, x;
+    long pos, count = 0L;
+    if (!z_inited)			/* Check stuff... */
+      return(z_error = FX_NOP);
+    if (channel >= z_maxchan)
+      return(z_error = FX_CHN);
+    if (!(t = z_file[channel].z_fp))
+      return(z_error = FX_NOP);
+    pos = ftell(t);			/* Save current file pointer */
+    errno = 0;
+    z_error = 0;
+    if (what == RD_CHAR) {		/* Size in bytes requested */
+	if (!fseek(t,0L,2)) {		/* Seek to end */
+	    count = ftell(t);		/* Get file pointer */
+	    fseek(t,pos,0);		/* Restore file file pointer */
+	    return(count);
+	} else				/* Fallback in case seek fails */
+	  return(zgetfs(z_file[channel].z_name));
+    }
+    rewind(t);				/* Line count requested - rewind. */
+    while (1) {				/* Count lines. */
+	if ((x = getc(t)) == EOF)	/* Stupid byte loop */
+	  break;			/* but it works as well as anything */
+	if (x == '\n')			/* else... */
+	  count++;
+    }
+    x = fseek(t,pos,0);			/* Restore file pointer */
+    return(count);
+}
+
+/* User interface for generalized channel-oriented file i/o */
+
+struct keytab fctab[] = {		/* FILE subcommands */
+    "close",      FIL_CLS, 0,
+    "count",      FIL_COU, 0,
+    "flush",      FIL_FLU, 0,
+    "list",       FIL_LIS, 0,
+    "open",       FIL_OPN, 0,
+    "read",       FIL_REA, 0,
+    "rewind",     FIL_REW, 0,
+    "seek",       FIL_SEE, 0,
+    "status",     FIL_STA, 0,
+    "write",      FIL_WRI, 0
+};
+int nfctab = (sizeof (fctab) / sizeof (struct keytab));
+
+static struct keytab fcswtab[] = {	/* OPEN modes */
+    "/append",    FM_APP,  0,
+    "/binary",    FM_BIN,  0,
+#ifdef COMMENT
+    "/command",   FM_CMD,  0,		/* Not implemented */
+#endif /* COMMENT */
+    "/read",      FM_REA,  0,
+    "/write",     FM_WRI,  0
+};
+static int nfcswtab = (sizeof (fcswtab) / sizeof (struct keytab));
+
+static struct keytab fclkwtab[] = {	/* CLOSE options */
+    "all",        1,       0
+};
+
+static struct keytab fsekwtab[] = {	/* SEEK symbols */
+    "eof",        1,       0,
+    "last",       2,       0
+};
+static int nfsekwtab = (sizeof (fsekwtab) / sizeof (struct keytab));
+
+#define SEE_LINE  RD_LINE		/* SEEK options */
+#define SEE_CHAR  RD_CHAR
+#define SEE_REL   3
+#define SEE_ABS   4
+
+static struct keytab fskswtab[] = {
+    "/absolute",  SEE_ABS,  0,
+    "/byte",      SEE_CHAR, 0,
+    "/character", SEE_CHAR, CM_INV,
+    "/line",      SEE_LINE, 0,
+    "/relative",  SEE_REL,  0
+};
+static int nfskswtab = (sizeof (fskswtab) / sizeof (struct keytab));
+
+#define COU_LINE  RD_LINE		/* COUNT options */
+#define COU_CHAR  RD_CHAR
+#define COU_LIS   3
+#define COU_NOL   4
+
+static struct keytab fcoswtab[] = {
+    "/bytes",     COU_CHAR, 0,
+    "/characters",COU_CHAR, CM_INV,
+    "/lines",     COU_LINE, 0,
+    "/list",      COU_LIS,  0,
+    "/nolist",    COU_NOL,  0,
+    "/quiet",     COU_NOL,  CM_INV
+};
+static int nfcoswtab = (sizeof (fcoswtab) / sizeof (struct keytab));
+
+static struct keytab frdtab[] = {	/* READ types */
+    "/block",     RD_SIZE, CM_INV|CM_ARG,
+    "/byte",      RD_CHAR, CM_INV,
+    "/character", RD_CHAR, 0,
+    "/line",      RD_LINE, 0,
+    "/size",      RD_SIZE, CM_ARG
+};
+static int nfrdtab = (sizeof (frdtab) / sizeof (struct keytab));
+
+static struct keytab fwrtab[] = {	/* WRITE types */
+    "/block",     WR_SIZE, CM_INV|CM_ARG,
+    "/byte",      WR_CHAR, CM_INV,
+    "/character", WR_CHAR, 0,
+    "/line",      WR_LINE, 0,
+    "/lpad",      WR_LPAD, CM_ARG,
+    "/rpad",      WR_RPAD, CM_ARG,
+    "/size",      WR_SIZE, CM_ARG,
+    "/string",    WR_STRI, 0
+};
+static int nfwrtab = (sizeof (fwrtab) / sizeof (struct keytab));
+
+static char blanks[] = "\040\040\040\040"; /* Some blanks for formatting */
+
+int
+dofile(op) int op; {			/* Do the FILE command */
+    char vnambuf[VNAML];		/* Buffer for variable names */
+    char *vnp = NULL;			/* Pointer to same */
+    char zfilnam[CKMAXPATH+2];
+    char * p;
+    struct FDB fl, sw, nu;
+    long z;
+    int rsize, filmode = 0, relative = -1, eofflg = 0;
+    int rc, x, y, cx, n, getval, dummy, confirmed, listing = -1;
+    int charflag = 0, sizeflag = 0;
+    int pad = 32, wr_lpad = 0, wr_rpad = 0;
+
+    if (op == XXFILE) {			/* FILE command was given */
+	/* Get subcommand */
+	if ((cx = cmkey(fctab,nfctab,"Operation","",xxstring)) < 0) {
+	    if (cx == -3) {
+		printf("?File operation required\n");
+		x = -9;
+	    }
+	    return(cx);
+	}
+    } else {				/* Shorthand command was given */
+	switch (op) {
+	  case XXF_CL: cx = FIL_CLS; break; /* FCLOSE */
+	  case XXF_FL: cx = FIL_FLU; break; /* FFLUSH */
+	  case XXF_LI: cx = FIL_LIS; break; /* FLIST */
+	  case XXF_OP: cx = FIL_OPN; break; /* etc... */
+	  case XXF_RE: cx = FIL_REA; break;
+	  case XXF_RW: cx = FIL_REW; break;
+	  case XXF_SE: cx = FIL_SEE; break;
+	  case XXF_ST: cx = FIL_STA; break;
+	  case XXF_WR: cx = FIL_WRI; break;
+	  case XXF_CO: cx = FIL_COU; break;
+	  default: return(-2);
+	}
+    }
+    switch (cx) {			/* Do requested subcommand */
+      case FIL_OPN:			/* OPEN */
+	cmfdbi(&sw,			/* Switches */
+	       _CMKEY,			/* fcode */
+	       "Variable or switch",	/* hlpmsg */
+	       "",			/* default */
+	       "",			/* addtl string data */
+	       nfcswtab,		/* addtl numeric data 1: tbl size */
+	       4,			/* addtl numeric data 2: 4 = cmswi */
+	       xxstring,		/* Processing function */
+	       fcswtab,			/* Keyword table */
+	       &fl			/* Pointer to next FDB */
+	       );
+	cmfdbi(&fl,			/* Anything that doesn't match */
+	       _CMFLD,			/* fcode */
+	       "Variable",		/* hlpmsg */
+	       "",
+	       "",
+	       0,
+	       0,
+	       NULL,
+	       NULL,
+	       NULL
+	       );
+	while (1) {
+	    x = cmfdb(&sw);		/* Parse something */
+	    if (x < 0) {
+		if (x == -3) {
+		    printf("?Variable name and file name required\n");
+		    x = -9;
+		}
+		return(x);
+	    }
+	    if (cmresult.fcode == _CMFLD)
+	      break;
+	    else if (cmresult.fcode == _CMKEY) {
+		char c;
+		c = cmgbrk();
+		if ((getval =
+		     (c == ':' || c == '=')) && !(cmgkwflgs() & CM_ARG)) {
+		    printf("?This switch does not take an argument\n");
+		    return(-9);
+		}
+#ifdef COMMENT
+		/* Uncomment if we add any switches ere that take args */
+		if (!getval && (cmgkwflgs() & CM_ARG)) {
+		    printf("?This switch requires an argument\n");
+		    return(-9);		/* (none do...) */
+		}
+#endif /* COMMENT */
+		filmode |= cmresult.nresult; /* OR in the file mode */
+	    } else
+	      return(-2);
+	}
+	strcpy(vnambuf,cmresult.sresult); /* Not a switch - get the string */
+	if (!vnambuf[0] || chknum(vnambuf)) { /* (if there is one...) */
+	    printf("?Variable name required\n");
+	    return(-9);
+	}
+	vnp = vnambuf;			/* Check variable-name syntax */
+	if (vnambuf[0] == CMDQ &&
+	    (vnambuf[1] == '%' || vnambuf[1] == '&'))
+	  vnp++;
+	y = 0;
+	if (*vnp == '%' || *vnp == '&') {
+	    if ((y = parsevar(vnp,&x,&dummy)) < 0) {
+		printf("?Syntax error in variable name\n");
+		return(-9);
+	    }
+	}
+	if (!(filmode & FM_RWA))	/* If no access mode specified */
+	  filmode |= FM_REA;		/* default to /READ. */
+
+	y = 0;				/* Now parse the filename */
+	if ((filmode & FM_RWA) == FM_WRI)
+	  x = cmofi("Name of new file","",&s,xxstring);
+	else if ((filmode & FM_RWA) == FM_REA)
+	  x = cmifi("Name of existing file","",&s,&y,xxstring);
+	else {
+	    x = cmiofi("Filename","",&s,&y,xxstring);
+	    debug(F101,"fopen /append x","",x);
+	}
+	if (x == -9) {
+	    if (zchko(s) < 0) {
+		printf("Can't create \"%s\"\n",s);
+		return(x);
+	    }
+	} else if (x < 0) {
+	    if (x == -3) {
+		printf("?Filename required\n");
+		x = -9;
+	    }
+	    return(x);
+	}
+	if (y) {			/* No wildcards */
+	    printf("?Wildcards not allowed here\n");
+	    return(-9);
+	}
+	if (filmode & (FM_APP|FM_WRI)) { /* Check output access */
+	    if (zchko(s) < 0) {		 /* and set error code if denied */
+		z_error = FX_ACC;
+		printf("?Write access denied - \"%s\"\n",s);
+		return(-9);
+	    }
+	}
+	ckstrncpy(zfilnam,s,CKMAXPATH);	/* Is OK - make safe copy */
+	if ((x = cmcfm()) < 0)		/* Get confirmation of command */
+	  return(x);
+	if ((n = z_open(zfilnam,filmode)) < 0) {
+	    printf("?OPEN failed - %s: %s\n",zfilnam,ckferror(n));
+	    return(-9);
+	}
+	addmac(vnambuf,ckitoa(n));	/* Assign channel number to variable */
+	return(success = 1);
+
+      case FIL_REW:			/* REWIND */
+	if ((x = cmnum("Channel number","",10,&n, xxstring)) < 0) {
+	    if (x == -3) {
+		printf("?Channel number required\n");
+		x = -9;
+	    }
+	    return(x);
+	}
+	if ((x = cmcfm()) < 0)
+	  return(x);
+	if ((rc = z_seek(n,0L)) < 0) {
+	    printf("?REWIND failed - Channel %d: %s\n",n,ckferror(rc));
+	    return(-9);
+	}
+	return(success = 1);
+
+      case FIL_CLS:			/* CLOSE */
+	  cmfdbi(&sw,			/* Second FDB - switches */
+		 _CMKEY,		/* fcode */
+		 "Channel number; or keyword",
+		 "",
+		 "",			/* addtl string data */
+		 1,			/* addtl numeric data 1: tbl size */
+		 0,			/* addtl numeric data 2: 4 = cmswi */
+		 xxstring,		/* Processing function */
+		 fclkwtab,		/* Keyword table */
+		 &nu			/* Pointer to next FDB */
+		 );
+	  cmfdbi(&nu,			/* First FDB - command switches */
+		 _CMNUM,		/* fcode */
+		 "",
+		 "",			/* default */
+		 "",			/* addtl string data */
+		 10,			/* addtl numeric data 1: radix */
+		 0,			/* addtl numeric data 2: 0 */
+		 xxstring,		/* Processing function */
+		 NULL,			/* Keyword table */
+		 NULL			/* Pointer to next FDB */
+		 );			/*  */
+	x = cmfdb(&sw);			/* Parse something */
+	if (x < 0) {
+	    if (x == -3) {
+		printf("?Channel number or ALL required\n");
+		x = -9;
+	    }
+	    return(x);
+	}
+	if (cmresult.fcode == _CMNUM)
+	  n = cmresult.nresult;
+	else if (cmresult.fcode == _CMKEY)
+	  n = -1;
+	if ((x = cmcfm()) < 0)
+	  return(x);
+	rc = 1;
+	if (n < 0) {
+	    int count = 0;
+	    int i;
+	    for (i = 0; i < z_maxchan; i++) {
+		x = z_close(i);
+		if (x == FX_SYS) {
+		    printf("?CLOSE failed - Channel %d: %s\n",n,ckferror(x));
+		    rc = 0;
+		} else if (x > -1)
+		  count++;
+	    }
+	    debug(F101,"FILE CLOSE ALL","",count);
+	} else if ((x = z_close(n)) < 0) {
+	    printf("?CLOSE failed - Channel %d: %s\n",n,ckferror(x));
+	    return(-9);
+	}
+	return(success = rc);
+
+      case FIL_REA:			/* READ */
+      case FIL_WRI:			/* WRITE */
+	rsize = 0;
+	cmfdbi(&sw,			/* Switches */
+	       _CMKEY,			/* fcode */
+	       "Channel or switch",	/* hlpmsg */
+	       "",			/* default */
+	       "",			/* addtl string data */
+	       (cx == FIL_REA) ? nfrdtab : nfwrtab,
+	       4,			/* addtl numeric data 2: 4 = cmswi */
+	       xxstring,		/* Processing function */
+	       (cx == FIL_REA) ? frdtab : fwrtab, /* Keyword table */
+	       &nu			/* Pointer to next FDB */
+	       );
+	cmfdbi(&nu,			/* Channel number */
+	       _CMNUM,			/* fcode */
+	       "Channel",
+	       "",			/* default */
+	       "",			/* addtl string data */
+	       10,			/* addtl numeric data 1: radix */
+	       0,			/* addtl numeric data 2: 0 */
+	       xxstring,		/* Processing function */
+	       NULL,			/* Keyword table */
+	       NULL			/* Pointer to next FDB */
+	       );
+	do {
+	    x = cmfdb(&sw);		/* Parse something */
+	    if (x < 0) {
+		if (x == -3) {
+		    printf("?Channel number required\n");
+		    x = -9;
+		}
+		return(x);
+	    }
+	    if (cmresult.fcode == _CMNUM) /* Channel number */
+	      break;
+	    else if (cmresult.fcode == _CMKEY) { /* Switch */
+		char c;
+		c = cmgbrk();
+		if ((getval =
+		     (c == ':' || c == '=')) && !(cmgkwflgs() & CM_ARG)) {
+		    printf("?This switch does not take an argument\n");
+		    return(-9);
+		}
+		if (!getval && (cmgkwflgs() & CM_ARG)) {
+		    printf("?This switch requires an argument\n");
+		    return(-9);
+		}
+		switch (cmresult.nresult) {
+		  case WR_LINE:
+		    charflag = 0;
+		    sizeflag = 0;
+		    rsize = 0;
+		    break;
+		  case WR_CHAR:
+		    rsize = 1;
+		    charflag = 1;
+		    sizeflag = 1;
+		    break;
+		  case WR_SIZE:
+		    if ((x = cmnum("Bytes","",10,&rsize, xxstring)) < 0) {
+			if (x == -3) {
+			    printf("?Number required\n");
+			    x = -9;
+			}
+			return(x);
+		    }
+		    charflag = 0;
+		    sizeflag = 1;
+		    break;
+		  case WR_STRI:
+		    rsize = 1;
+		    charflag = 0;
+		    sizeflag = 0;
+		    break;
+		  case WR_LPAD:
+		  case WR_RPAD:
+		    if ((x = cmnum("Numeric ASCII character value",
+				   "32",10,&pad, xxstring)) < 0)
+		      return(x);
+		    if (cmresult.nresult == WR_LPAD)
+		      wr_lpad = 1;
+		    else
+		      wr_rpad = 1;
+		    break;
+		}
+		debug(F101,"FILE READ rsize 2","",rsize);
+	    } else
+	      return(-2);
+	} while
+	  (cmresult.fcode == _CMKEY);
+
+	n = cmresult.nresult;		/* Channel */
+	debug(F101,"FILE READ/WRITE channel","",n);
+
+	if (cx == FIL_WRI) {		/* WRITE */
+	    int len = 0;
+	    if ((x = cmtxt("Text","",&s,xxstring)) < 0)
+	      return(x);
+	    strcpy(line,s);		/* Make a safe copy */
+	    s = line;
+	    s = brstrip(s);		/* Strip braces */
+	    if (charflag) {		/* Write one char */
+		len = 1;		/* So length = 1 */
+		rsize = 1;		/* Don't supply terminator */
+	    } else if (!sizeflag) {	/* Write a string */
+		len = -1;		/* So length is unspecified */
+	    } else {			/* Write a block of given size */
+		int i, k, xx;
+		if (rsize > TMPBUFSIZ) {
+		    z_error = FX_OFL;
+		    printf("?Buffer overflow\n");
+		    return(-9);
+		}
+		len = rsize;		/* rsize is really length */
+		rsize = 1;		/* Don't supply a terminator */
+		xx = strlen(s);		/* Size of given string */
+		if (xx >= len) {	/* Bigger or equal */
+		    s[len] = NUL;
+		} else if (wr_lpad) {	/* Smaller, left-padding requested */
+		    for (i = 0; i < len - xx; i++) /* Must make a copy */
+		      tmpbuf[i] = pad;
+		    strcpy(tmpbuf+i,s);
+		    tmpbuf[len] = NUL;
+		    s = tmpbuf;		/* Redirect write source */
+		} else {		/* Smaller with right-padding */
+		    for (i = xx; i < len; i++)
+		      s[i] = pad;
+		    s[len] = NUL;
+		}
+	    }
+	    if ((rc = z_out(n,s,len,rsize)) < 0) { /* Try to write */
+		printf("?Channel %d WRITE error: %s\n",n,ckferror(rc));
+		return(-9);
+	    }
+	} else {			/* FIL_REA READ */
+	    confirmed = 0;
+	    vnambuf[0] = NUL;
+	    x = cmfld("Variable name","",&s,NULL);
+	    debug(F111,"FILE READ cmfld",s,x);
+	    if (x < 0) {
+		if (x == -3 || !*s) {
+		    if ((x = cmcfm()) < 0)
+		      return(x);
+		    else
+		      confirmed++;
+		} else
+		  return(x);
+	    }
+	    strcpy(vnambuf,s);
+	    debug(F111,"FILE READ vnambuf",vnambuf,confirmed);
+	    if (vnambuf[0]) {		/* Variable name given, check it */
+		if (!confirmed) {
+		    x = cmcfm();
+		    if (x < 0)
+		      return(x);
+		    else
+		      confirmed++;
+		}
+		vnp = vnambuf;
+		if (vnambuf[0] == CMDQ &&
+		    (vnambuf[1] == '%' || vnambuf[1] == '&'))
+		  vnp++;
+		y = 0;
+		if (*vnp == '%' || *vnp == '&') {
+		    if ((y = parsevar(vnp,&x,&dummy)) < 0) {
+			printf("?Syntax error in variable name\n");
+			return(-9);
+		    }
+		}
+	    }
+	    debug(F111,"FILE READ variable",vnambuf,confirmed);
+
+	    if (!confirmed)
+	      if ((x = cmcfm()) < 0)
+		return(x);
+
+	    line[0] = NUL;		/* Clear destination buffer */
+	    if (rsize >= LINBUFSIZ)	/* Don't overrun it */
+	      rsize = LINBUFSIZ - 1;
+
+	    if (rsize == 0)		/* Read a line */
+	      rc = z_in(n,line,LINBUFSIZ,LINBUFSIZ-1,0);
+	    else
+	      rc = z_in(n,line,LINBUFSIZ,rsize,1); /* Read a block */
+	    if (rc < 0) {		/* Error... */
+		debug(F101,"FILE READ error","",rc);
+		debug(F101,"FILE READ errno","",errno);
+		if (rc == FX_EOF) {	/* EOF - fail but no error message */
+		    return(success = 0);
+		} else {		/* Other error - fail and print msg */
+		    printf("?READ error: %s\n",ckferror(rc));
+		    return(-9);
+		}
+	    }
+	    debug(F110,"FILE READ data",line,0);
+	    if (vnambuf[0])		/* Read OK - If variable name given */
+	      addmac(vnambuf,line);	/* Assign result to variable */
+	    else			/* otherwise */
+	      printf("%s\n",line);	/* just print it */
+	}
+	return(success = 1);
+
+      case FIL_SEE:			/* SEEK */
+      case FIL_COU:			/* COUNT */
+	rsize = RD_CHAR;		/* Defaults to /BYTE */
+	cmfdbi(&sw,			/* Switches */
+	       _CMKEY,			/* fcode */
+	       "Channel or switch",	/* hlpmsg */
+	       "",			/* default */
+	       "",			/* addtl string data */
+	       ((cx == FIL_SEE) ? nfskswtab : nfcoswtab),
+	       4,			/* addtl numeric data 2: 4 = cmswi */
+	       xxstring,		/* Processing function */
+	       ((cx == FIL_SEE) ? fskswtab : fcoswtab),
+	       &nu			/* Pointer to next FDB */
+	       );
+	cmfdbi(&nu,			/* Channel number */
+	       _CMNUM,			/* fcode */
+	       "Channel",
+	       "",			/* default */
+	       "",			/* addtl string data */
+	       10,			/* addtl numeric data 1: radix */
+	       0,			/* addtl numeric data 2: 0 */
+	       xxstring,		/* Processing function */
+	       NULL,			/* Keyword table */
+	       NULL			/* Pointer to next FDB */
+	       );
+	do {
+	    x = cmfdb(&sw);		/* Parse something */
+	    if (x < 0) {
+		if (x == -3) {
+		    printf("?Channel number required\n");
+		    x = -9;
+		}
+		return(x);
+	    }
+	    if (cmresult.fcode == _CMNUM) /* Channel number */
+	      break;
+	    else if (cmresult.fcode == _CMKEY) { /* Switch */
+		char c;
+		c = cmgbrk();
+		if ((getval =
+		     (c == ':' || c == '=')) && !(cmgkwflgs() & CM_ARG)) {
+		    printf("?This switch does not take an argument\n");
+		    return(-9);
+		}
+		if (cx == FIL_SEE) {
+		    switch (cmresult.nresult) {
+		      case SEE_REL: relative = 1; break;
+		      case SEE_ABS: relative = 0; break;
+		      default: rsize = cmresult.nresult;
+		    }
+		} else if (cx == FIL_COU) {
+		    switch (cmresult.nresult) {
+		      case COU_LIS: listing = 1; break;
+		      case COU_NOL: listing = 0; break;
+		      default: rsize = cmresult.nresult;
+		    }
+		}
+	    }
+	} while
+	  (cmresult.fcode == _CMKEY);
+
+	n = cmresult.nresult;		/* Channel */
+	debug(F101,"FILE SEEK/COUNT channel","",n);
+	if (cx == FIL_COU) {
+	    if ((x = cmcfm()) < 0)
+	      return(x);
+	    z_filcount = z_count(n,rsize);
+	    if (z_filcount < 0) {
+		rc = z_filcount;
+		printf("?COUNT error: %s\n",ckferror(rc));
+		return(-9);
+	    }
+	    if (listing < 0)
+	      listing = !cmdsrc();
+	    if (listing)
+	      printf(" %ld %s%s\n",
+		     z_filcount,
+		     ((rsize == RD_CHAR) ? "byte" : "line"),
+		     ((z_filcount == 1L) ? "" : "s")
+		     );
+	    return(success = (z_filcount > -1) ? 1 : 0);
+	}
+	cmfdbi(&sw,			/* SEEK symbolic targets (EOF) */
+	       _CMKEY,			/* fcode */
+	       "Channel number;\n or keyword",
+	       "",
+	       "",			/* addtl string data */
+	       nfsekwtab,		/* addtl numeric data 1: table size */
+	       0,			/* addtl numeric data 2: 4 = cmswi */
+	       xxstring,		/* Processing function */
+	       fsekwtab,		/* Keyword table */
+	       &nu			/* Pointer to next FDB */
+	       );
+	cmfdbi(&nu,			/* Channel number */
+	       _CMNUM,			/* fcode */
+	       "",
+	       "",			/* default */
+	       "",			/* addtl string data */
+	       10,			/* addtl numeric data 1: radix */
+	       0,			/* addtl numeric data 2: 0 */
+	       xxstring,		/* Processing function */
+	       NULL,			/* Keyword table */
+	       NULL			/* Pointer to next FDB */
+	       );
+	x = cmfdb(&sw);			/* Parse something */
+	if (x < 0) {
+	    if (x == -3) {
+		printf("?Channel number or EOF required\n");
+		x = -9;
+	    }
+	    return(x);
+	}
+	if (cmresult.fcode == _CMNUM) {
+	    y = cmresult.nresult;
+	    debug(F110,"FILE SEEK atmbuf",atmbuf,0);
+	    if (relative < 0) {
+		if (cx == FIL_SEE && (atmbuf[0] == '+' || atmbuf[0] == '-'))
+		  relative = 1;
+		else
+		  relative = 0;
+	    }
+	} else if (cmresult.fcode == _CMKEY) {
+	    eofflg = cmresult.nresult;
+	    relative = 0;
+	    y = 0 - eofflg;
+	}
+	if ((x = cmcfm()) < 0)
+	  return(x);
+	z = y;				/* Convert to long */
+	y = 1;				/* Recycle this */
+	z_flush(n);
+	debug(F101,"FILE SEEK relative","",relative);
+	debug(F101,"FILE SEEK rsize","",rsize);
+
+	if (rsize == RD_CHAR) {		/* Seek to byte position */
+	    if (relative) {
+		long pos;
+		pos = z_getpos(n);
+		if (pos < 0L) {
+		    rc = pos;
+		    printf("?Relative SEEK failed: %s\n",ckferror(rc));
+		    return(-9);
+		}
+		z += pos;
+	    } else {
+		if (z < 0 && !eofflg) {	/* Negative arg but not relative */
+		    y = 0;		/* Remember this was bad */
+		    z = 0;		/* but substitute 0 */
+		}
+	    }
+	    debug(F101,"FILE SEEK /CHAR z","",z);
+	    if (z < 0 && !eofflg) {
+		z_error = FX_RNG;
+		return(success = 0);
+	    }
+	    if ((rc = z_seek(n,z)) < 0) {
+		if (rc == FX_EOF) return(success = 0);
+		printf("?SEEK /BYTE failed - Channel %d: %s\n",n,ckferror(rc));
+		return(-9);
+	    }
+	} else {			/* Seek to line */
+	    if (relative) {
+		long pos;
+		pos = z_getline(n);
+		debug(F101,"FILE SEEK /LINE pos","",pos);
+		if (pos < 0L) {
+		    rc = pos;
+		    printf("?Relative SEEK failed: %s\n",ckferror(rc));
+		    return(-9);
+		}
+		z += pos;
+	    }
+	    debug(F101,"FILE SEEK /LINE z","",z);
+	    if (z < 0 && !eofflg) {
+		z_error = FX_RNG;
+		return(success = 0);
+	    }
+	    if ((rc = z_line(n,z)) < 0) {
+		if (rc == FX_EOF) return(success = 0);
+		printf("?SEEK /LINE failed - Channel %d: %s\n",n,ckferror(rc));
+		return(-9);
+	    }
+	}
+	return(success = y);
+
+      case FIL_LIS: {			/* LIST open files */
+#ifdef CK_TTGWSIZ
+	  extern int cmd_rows, cmd_cols;
+#endif /* CK_TTGWSIZ */
+          extern int xaskmore;
+	  int i, x, n = 0, paging = 0;
+	  char * s;
+
+	  if ((x = cmcfm()) < 0)
+	    return(x);
+
+#ifdef CK_TTGWSIZ
+	  if (cmd_rows > 0 && cmd_cols > 0)
+#endif /* CK_TTGWSIZ */
+	    paging = xaskmore;
+
+	  printf("System open file limit: %4d\n", z_openmax);
+	  printf("Maximum for FILE OPEN:  %4d\n", z_maxchan);
+	  printf("Files currently open:   %4d\n\n", z_nopen);
+	  n = 4;
+	  for (i = 0; i < z_maxchan; i++) {
+	      s = z_getname(i);		/* Got one? */
+	      if (s) {			/* Yes */
+		  char m[8];
+		  m[0] = NUL;
+		  printf("%2d. %s",i,s); /* Print name */
+		  n++;			 /* Count it */
+		  x = z_getmode(i);	 /* Get modes & print them */
+		  if (x > -1) {
+		      if (x & FM_REA) strcat(m,"R");
+		      if (x & FM_WRI) strcat(m,"W");
+		      if (x & FM_APP) strcat(m,"A");
+		      if (x & FM_BIN) strcat(m,"B");
+		      if (m[0])
+			printf(" (%s)",m);
+		      if (x & FM_EOF)
+			printf(" [EOF]");
+		      else
+			printf(" %ld",z_getpos(i)); /* And file position too */
+		  }
+		  printf("\n");
+#ifdef CK_TTGWSIZ
+		  if (paging > 0) {	/* Pause at end of screen */
+		      if (n > cmd_rows - 3) {
+			  if (!askmore())
+			    break;
+			  else
+			    n = 0;
+		      }
+		  }
+#endif /* CK_TTGWSIZ */
+	      }
+	  }
+	  return(success = 1);
+      }
+
+      case FIL_FLU:			/* FLUSH */
+	if ((x = cmnum("Channel number","",10,&n, xxstring)) < 0) {
+	    if (x == -3) {
+		printf("?Channel number required\n");
+		x = -9;
+	    }
+	    return(x);
+	}
+	if ((x = cmcfm()) < 0)
+	  return(x);
+	if ((rc = z_flush(n)) < 0) {
+	    printf("?FLUSH failed - Channel %d: %s\n",n,ckferror(rc));
+	    return(-9);
+	}
+	return(success = 1);
+
+      case FIL_STA:			/* STATUS */
+	if ((x = cmnum("Channel number","",10,&n, xxstring)) < 0) {
+	    if (x == -3) {
+		printf("?Channel number required\n");
+		x = -9;
+	    }
+	    return(x);
+	}
+	if ((x = cmcfm()) < 0)
+	  return(x);
+	p = blanks + 3;			/* Tricky formatting... */
+	if (n < 1000) p--;
+	if (n < 100) p--;
+	if (n < 10) p--;
+	if ((rc = z_getmode(n)) < 0) {
+	    printf("Channel %d:%s%s\n",n,p,ckferror(rc));
+	    return(success = 0);
+	} else if (!rc) {
+	    printf("Channel %d:%sNot open\n",n,p);
+	    return(success = 0);
+	} else {
+	    long xx;
+	    s = z_getname(n);
+	    if (!s) s = "(name unknown)";
+	    printf("Channel %d:%sOpen\n",n,p);
+	    printf(" File:        %s\n Modes:      ",s);
+	    if (rc & FM_REA) printf(" /READ");
+	    if (rc & FM_WRI) printf(" /WRITE");
+	    if (rc & FM_APP) printf(" /APPEND");
+	    if (rc & FM_BIN) printf(" /BINARY");
+	    if (rc & FM_CMD) printf(" /COMMAND");
+	    if (rc & FM_EOF) printf(" [EOF]");
+	    printf("\n Size:        %ld\n",z_count(n,RD_CHAR));
+	    printf(" At byte:     %ld\n",z_getpos(n));
+	    xx = z_getline(n);
+	    if (xx > -1)
+	      printf(" At line:     %ld\n",xx);
+	    return(success = 1);
+	}
+      default:
+	return(-2);
+    }
+}
+#endif /* CKCHANNELIO */
 
 #ifndef NOSETKEY
 /* Save Key maps and in OS/2 Mouse maps */
@@ -5825,19 +11535,23 @@ savkeys(name,disp) char * name; int disp; {
     } else savfil = zopeno(ZMFILE,name,NULL,NULL);
 
     if (savfil) {
-	ztime(&tp);
-	zsout(ZMFILE, "; C-Kermit SAVE KEYMAP file: ");
-	zsoutl(ZMFILE,tp);
 #ifdef OS2
+	ztime(&tp);
+	zsout(ZMFILE, "; Kermit 95 SAVE KEYMAP file: ");
+	zsoutl(ZMFILE,tp);
 	if (mskkeys) {
 	    zsoutl(ZMFILE,
 	 "if eq \"\\v(program)\" \"C-Kermit\" set mskermit keycodes on");
 	} else {
 	    zsoutl(ZMFILE,
-         "if NOT eq \"\\v(program)\" \"C-Kermit\" stop 1 C-Kermit required."); 
+         "if NOT eq \"\\v(program)\" \"C-Kermit\" stop 1 C-Kermit required.");
 	    zsoutl(ZMFILE,"set mskermit keycodes off");
 	}
 	zsoutl(ZMFILE,"");
+#else /* OS2 */
+	ztime(&tp);
+	zsout(ZMFILE, "; C-Kermit SAVE KEYMAP file: ");
+	zsoutl(ZMFILE,tp);
 #endif /* OS2 */
 
 	zsoutl(ZMFILE,"; Clear previous keyboard mappings ");
@@ -5864,8 +11578,13 @@ savkeys(name,disp) char * name; int disp; {
 
 		for (j = 0; j < len; j++) {
 		    char ch = macrotab[i][j];
-		    if (ch <= SP || ch >= DEL || 
-			 ch == '-' || ch == ',') {
+		    if (ch <= SP || ch >= DEL ||
+			 ch == '-' || ch == ',' ||
+                         ch == '{' || ch == '}' ||
+                         ch == ';' || ch == '?' ||
+                         ch == '.' || ch == '\'' ||
+                         ch == '\\' || ch == '/' ||
+                         ch == '#') {
 			sprintf(buf, "\\{%d}", ch);
 			zsout(ZMFILE,buf);
 		    } else {
@@ -5887,8 +11606,8 @@ savkeys(name,disp) char * name; int disp; {
 			break;
 		    if (j != nkverbs) {
 #ifdef OS2
-			sprintf(buf, "set key \\%d \\K%s\t; %s", 
-				mskkeys ? cktomsk(i) : i, 
+			sprintf(buf, "set key \\%d \\K%s\t; %s",
+				mskkeys ? cktomsk(i) : i,
 				kverbs[j].kwd, keyname(i)
 				);
 			zsoutl(ZMFILE,buf);
@@ -5897,12 +11616,12 @@ savkeys(name,disp) char * name; int disp; {
 			zsoutl(ZMFILE,buf);
 #endif
 		    }
-		} else 
+		} else
 #endif /* NOKVERBS */
 		  {
 #ifdef OS2
-		      sprintf(buf, "set key \\%d \\{%d}\t; %s", 
-			      mskkeys ? cktomsk(i) : i, 
+		      sprintf(buf, "set key \\%d \\{%d}\t; %s",
+			      mskkeys ? cktomsk(i) : i,
 			      keymap[i],
 			      keyname(i)
 			      );
@@ -5927,15 +11646,15 @@ savkeys(name,disp) char * name; int disp; {
 	    sprintf(buf, "; SET TERMINAL KEY %s", ttkeytab[k].kwd );
 	    zsoutl(ZMFILE,buf);
 
-	    for (pnode = ttkeymap[ttkeytab[k].kwval]; 
+	    for (pnode = ttkeymap[ttkeytab[k].kwval];
 		 pnode;
 		 pnode = pnode->next
 		 ) {
 		switch (pnode->def.type) {
 		  case key:
-		    sprintf(buf, "set terminal key %s \\%d \\{%d}\t; %s", 
+		    sprintf(buf, "set terminal key %s \\%d \\{%d}\t; %s",
          		    ttkeytab[k].kwd,
-			    mskkeys ? cktomsk(pnode->key) : pnode->key, 
+			    mskkeys ? cktomsk(pnode->key) : pnode->key,
 			    pnode->def.key.scancode,
 			    keyname(pnode->key)
 			    );
@@ -5946,9 +11665,9 @@ savkeys(name,disp) char * name; int disp; {
 		      if (kverbs[j].kwval == (pnode->def.kverb.id & ~F_KVERB))
 			break;
 		    if (j != nkverbs) {
-			sprintf(buf, "set terminal key %s \\%d \\K%s\t; %s", 
+			sprintf(buf, "set terminal key %s \\%d \\K%s\t; %s",
 				ttkeytab[k].kwd,
-				mskkeys ? cktomsk(pnode->key) : pnode->key, 
+				mskkeys ? cktomsk(pnode->key) : pnode->key,
 				kverbs[j].kwd, keyname(pnode->key)
 				);
 			zsoutl(ZMFILE,buf);
@@ -5963,8 +11682,40 @@ savkeys(name,disp) char * name; int disp; {
 
 		      for (j = 0; j < len; j++) {
 			  char ch = pnode->def.macro.string[j];
-			  if (ch <= SP || ch >= DEL || 
-			      ch == '-' || ch == ',') {
+			  if (ch <= SP || ch >= DEL ||
+                               ch == '-' || ch == ',' ||
+                               ch == '{' || ch == '}' ||
+                               ch == ';' || ch == '?' ||
+                               ch == '.' || ch == '\'' ||
+                               ch == '\\' || ch == '/' ||
+                               ch == '#') {
+			      sprintf(buf, "\\{%d}", ch);
+			      zsout(ZMFILE,buf);
+			  } else {
+			      sprintf(buf, "%c", ch);
+			      zsout(ZMFILE,buf);
+			  }
+		      }
+		      sprintf(buf, "\t; %s", keyname(pnode->key));
+		      zsoutl(ZMFILE,buf);
+		      break;
+		  }
+		  case literal: {
+		      int len = strlen((char *)pnode->def.literal.string);
+		      sprintf(buf,"set terminal key %s /literal \\%d ",
+			      ttkeytab[k].kwd,
+			      mskkeys ? cktomsk(pnode->key) : pnode->key);
+		      zsout(ZMFILE,buf);
+
+		      for (j = 0; j < len; j++) {
+			  char ch = pnode->def.literal.string[j];
+			  if (ch <= SP || ch >= DEL ||
+                               ch == '-' || ch == ',' ||
+                               ch == '{' || ch == '}' ||
+                               ch == ';' || ch == '?' ||
+                               ch == '.' || ch == '\'' ||
+                               ch == '\\' || ch == '/' ||
+                               ch == '#') {
 			      sprintf(buf, "\\{%d}", ch);
 			      zsout(ZMFILE,buf);
 			  } else {
@@ -5977,18 +11728,21 @@ savkeys(name,disp) char * name; int disp; {
 		      break;
 		  }
 		  case esc:
-		    sprintf(buf,"set terminal key %s \\%d \\{27}\\{%d}\t; %s", 
+		    sprintf(buf,
+		       "set terminal key %s /literal \\%d \\{%d}\\{%d}\t; %s",
 			    ttkeytab[k].kwd,
-			    mskkeys ? cktomsk(pnode->key) : pnode->key, 
+			    mskkeys ? cktomsk(pnode->key) : pnode->key,
+			    ISDG200(ttkeytab[k].kwval) ? 30 : 27,
 			    pnode->def.esc.key & ~F_ESC,
 			    keyname(pnode->key)
 			    );
 		    zsoutl(ZMFILE,buf);
 		    break;
 		  case csi:
-		    sprintf(buf,"set terminal key %s \\%d \\{27}[\\{%d}\t; %s",
+		    sprintf(buf,
+		       "set terminal key %s /literal \\%d \\{27}[\\{%d}\t; %s",
 			    ttkeytab[k].kwd,
-			    mskkeys ? cktomsk(pnode->key) : pnode->key, 
+			    mskkeys ? cktomsk(pnode->key) : pnode->key,
 			    pnode->def.csi.key & ~F_CSI,
 			    keyname(pnode->key)
 			    );
@@ -6011,6 +11765,14 @@ savkeys(name,disp) char * name; int disp; {
 }
 #endif /* NOSETKEY */
 
+#ifdef OS2
+struct keytab cmdtrmopt[] = {
+    "scrollback", 0, 0
+};
+
+_PROTOTYP(int savscrbk, (int, char *, int));
+#endif /* OS2 */
+
 int
 dosave(xx) int xx; {
     int x, y, disp;
@@ -6021,9 +11783,47 @@ dosave(xx) int xx; {
 #endif /* ZFNQFP */
 
     switch (xx) {
+#ifdef OS2
+    case XSCMD:
+    case XSTERM:
+	if ((y = cmkey(cmdtrmopt,1,"What to save","scrollback",xxstring)) < 0)
+	  return(y);
+	z = cmofi("Name of Scrollback file","scrollbk.txt",&s,xxstring);
+	if (z < 0) return(z);
+	if (z == 2) {
+	    printf("?Sorry, %s is a directory name\n",s);
+	    return(-9);
+	}
+#ifdef ZFNQFP
+	if (fnp = zfnqfp(s,TMPBUFSIZ - 1,tmpbuf)) {
+	    if (fnp->fpath)
+		if ((int) strlen(fnp->fpath) > 0)
+		  s = fnp->fpath;
+	}
+#endif /* ZFNQFP */
+
+	strcpy(line,s);
+	s = line;
+#ifdef MAC
+	z = 0;
+#else
+	if ((z = cmkey(disptb,2,"Disposition","new",xxstring)) < 0)
+	  return(z);
+#endif /* MAC */
+	disp = z;
+	if ((x = cmcfm()) < 0) return(x);
+        switch (xx) {
+	  case XSCMD:
+            return(success = savscrbk(VCMD,s,disp));
+	  case XSTERM:
+            return(success = savscrbk(VTERM,s,disp));
+	  default:
+            return(success = 0);
+        }
+#endif /* OS2 */
 #ifndef NOSETKEY
       case XSKEY:
-	y = cmofi("Name of INI file","keymap.ini",&s,xxstring);
+	y = cmofi("Name of Kermit command file","keymap.ksc",&s,xxstring);
 	if (y < 0) return(y);
 	if (y == 2) {
 	    printf("?Sorry, %s is a directory name\n",s);
@@ -6045,7 +11845,7 @@ dosave(xx) int xx; {
 	if ((y = cmkey(disptb,2,"Disposition","new",xxstring)) < 0)
 	  return(y);
 #endif /* MAC */
-	disp = y;    
+	disp = y;
 	if ((x = cmcfm()) < 0) return(x);
 	return (savkeys(s,disp));
 #endif /* NOSETKEY */
@@ -6056,4 +11856,1405 @@ dosave(xx) int xx; {
 	return(success = 0);
     }
 }
+
+/*
+  R E A D T E X T
+
+  Read text with a custom prompt into given buffer using command parser but
+  with no echoing or entry into recall buffer.
+*/
+int
+readtext(prmpt, buffer, bufsiz) char * prmpt; char * buffer; int bufsiz; {
+#ifdef CK_RECALL
+    int sv_recall;			/* For turning off command recall */
+    extern int on_recall;		/* around Password prompting */
+#endif /* CK_RECALL */
+    int rc;
+#ifdef OS2
+    extern int vmode;
+    int vmode_sav = vmode;
+
+    if (win95_popup
+#ifdef IKSD
+         && !inserver
+#endif /* IKSD */
+         )
+      return(popup_readtext(vmode,prmpt,buffer,bufsiz,0));
+
+    if (vmode == VTERM) {
+        vmode = VCMD;
+        VscrnIsDirty(VTERM);
+        VscrnIsDirty(VCMD);
+    }
+#endif /* OS2 */
+
+#ifdef CK_RECALL
+    sv_recall = on_recall;		/* Save and turn off command recall */
+    on_recall = 0;
+#endif /* CK_RECALL */
+    cmsavp(psave,PROMPTL);		/* Save old prompt */
+    cmsetp(prmpt);			/* Make new prompt */
+    concb((char)escape);		/* Put console in cbreak mode */
+    cmini(1);				/* and echo mode */
+    if (pflag) prompt(xxstring);	/* Issue prompt if at top level */
+    cmres();				/* Reset the parser */
+    for (rc = -1; rc < 0; ) {		/* Prompt till they answer */
+        rc = cmtxt("","",&s,NULL);	/* Get a literal line of text */
+        cmres();			/* Reset the parser again */
+    }
+    ckstrncpy(buffer,s,bufsiz);
+#ifdef CK_RECALL
+    on_recall = sv_recall;		/* Restore command recall */
+#endif /* CK_RECALL */
+    cmsetp(psave);			/* Restore original prompt */
+
+#ifdef OS2
+    if (vmode != vmode_sav) {
+        vmode = VTERM;
+        VscrnIsDirty(VCMD);
+        VscrnIsDirty(VTERM);
+    }
+#endif /* OS2 */
+    return(0);
+}
+#endif /* NOICP */
+
+/* A general function to allow a Password or other information  */
+/* to be read from the command prompt without it going into     */
+/* the recall buffer or being echo'd.                           */
+
+int
+readpass(prmpt, buffer, bufsiz) char * prmpt; char * buffer; int bufsiz; {
+#ifdef NOICP
+    printf("%s", prmpt);
+    gets(buffer);
+    return(1);
+#else  /* NOICP */
+#ifdef CK_RECALL
+    int sv_recall;			/* For turning off command recall */
+    extern int on_recall;		/* around Password prompting */
+#endif /* CK_RECALL */
+    int rc;
+#ifdef OS2
+    extern int vmode;
+    int vmode_sav = vmode;
+#endif /* OS2 */
+#ifdef CKSYSLOG
+    int savlog;
+#endif /* CKSYSLOG */
+#ifdef OS2
+    if (win95_popup
+#ifdef IKSD
+         && !inserver
+#endif /* IKSD */
+         )
+      return(popup_readpass(vmode,prmpt,buffer,bufsiz,0));
+#endif /* OS2 */
+#ifdef CKSYSLOG
+    savlog = ckxsyslog;			/* Save and turn off syslogging */
+    ckxsyslog = 0;
+#endif /* CKSYSLOG */
+#ifdef OS2
+    if (vmode == VTERM) {
+        vmode = VCMD;
+        VscrnIsDirty(VTERM);
+        VscrnIsDirty(VCMD);
+    }
+#endif /* OS2 */
+#ifdef CK_RECALL
+    sv_recall = on_recall;		/* Save and turn off command recall */
+    on_recall = 0;
+#endif /* CK_RECALL */
+    cmsavp(psave,PROMPTL);		/* Save old prompt */
+    cmsetp(prmpt);			/* Make new prompt */
+    concb((char)escape);		/* Put console in cbreak mode */
+    cmini(0);				/* and no-echo mode */
+    if (pflag) prompt(xxstring);	/* Issue prompt if at top level */
+    cmres();				/* Reset the parser */
+    for (rc = -1; rc < 0; ) {		/* Prompt till they answer */
+        rc = cmtxt("","",&s,NULL);	/* Get a literal line of text */
+        cmres();			/* Reset the parser again */
+    }
+    ckstrncpy(buffer,s,bufsiz);
+#ifdef CK_RECALL
+    on_recall = sv_recall;		/* Restore command recall */
+#endif /* CK_RECALL */
+    printf("\r\n");			/* Echo a CRLF */
+    cmsetp(psave);			/* Restore original prompt */
+    cmini(1);				/* Restore echo mode */
+#ifdef OS2
+    if (vmode != vmode_sav) {
+        vmode = VTERM;
+        VscrnIsDirty(VCMD);
+        VscrnIsDirty(VTERM);
+    }
+#endif /* OS2 */
+#ifdef CKSYSLOG
+    ckxsyslog = savlog;			/* Restore syslogging */
+#endif /* CKSYSLOG */
+    return(0);
+#endif /* NOICP */
+}
+
+#ifndef NOICP
+struct keytab authtab[] = {		/* Available authentication types */
+#ifdef CK_KERBEROS
+    "k4",        AUTH_KRB4, CM_INV,
+    "k5",        AUTH_KRB5, CM_INV,
+    "kerberos4", AUTH_KRB4, 0,
+    "kerberos5", AUTH_KRB5, 0,
+    "krb4",      AUTH_KRB4, CM_INV,
+    "krb5",      AUTH_KRB5, CM_INV,
+#endif /* CK_KERBEROS */
+#ifdef NT
+    "ntlm",      AUTH_NTLM, 0,
+#endif /* NT */
+#ifdef CK_SRP
+    "srp",       AUTH_SRP,  0,
+#endif /* CK_SRP */
+#ifdef CK_SSL
+    "ssl",       AUTH_SSL,  0,
+#endif /* CK_SSL */
+    "",         0,      0
+};
+int authtabn = sizeof(authtab)/sizeof(struct keytab)-1;
+
+#ifdef CK_KERBEROS
+struct keytab kerbtab[] = {		/* Kerberos authentication types */
+    "k4",        AUTH_KRB4, CM_INV,
+    "k5",        AUTH_KRB5, CM_INV,
+    "kerberos4", AUTH_KRB4, 0,
+    "kerberos5", AUTH_KRB5, 0,
+    "krb4",      AUTH_KRB4, CM_INV,
+    "krb5",      AUTH_KRB5, CM_INV
+};
+int kerbtabn = sizeof(kerbtab)/sizeof(struct keytab);
+
+static struct keytab krb_s_tbl[] = {	/* AUTHENTICATE command switches: */
+    "/cache",   KRB_S_CA, CM_ARG
+};
+static int krb_s_n = sizeof(krb_s_tbl)/sizeof(struct keytab);
+
+static struct keytab krb_v_tbl[] = {	/* KERBEROS version values: */
+    "4",    4, 0,
+    "5",    5, 0,			/* (add others as needed...) */
+    "auto", 0, 0			/* Note: 0 = auto */
+};
+static int krb_v_n = sizeof(krb_v_tbl)/sizeof(struct keytab);
+
+static struct keytab krb_a_tbl[] = {	/* KERBEROS actions: */
+    "destroy",           KRB_A_DE, 0,
+    "initialize",        KRB_A_IN, 0,
+    "list-credentials",  KRB_A_LC, 0
+};
+static int krb_a_n = sizeof(krb_a_tbl)/sizeof(struct keytab);
+
+static struct keytab krb4_i_tbl[] = {	/* KERBEROS 4 INITIALIZE switches: */
+    "/brief",            KRB_I_BR, 0,      /* /BRIEF       */
+    "/instance",         KRB_I_IN, CM_ARG, /* /INSTANCE:   */
+    "/lifetime",         KRB_I_LF, CM_ARG, /* /LIFETIME:   */
+    "/not-preauth",      KRB_I_NPA, 0,     /* /NOT-PREAUTH */
+    "/password",         KRB_I_PW, CM_ARG, /* /PASSWORD:   */
+#ifdef OS2
+    "/popup",            KRB_I_POP, 0,     /* /POPUP       */
+#endif /* OS2 */
+    "/preauth",          KRB_I_PA, 0,      /* /PREAUTH     */
+    "/realm",            KRB_I_RL, CM_ARG, /* /REALM:      */
+    "/verbose",          KRB_I_VB, 0,      /* /VERBOSE     */
+    "", 0, 0
+};
+static int krb4_i_n = sizeof(krb4_i_tbl)/sizeof(struct keytab) - 1;
+
+static struct keytab krb5_i_tbl[] = {	/* KERBEROS 5 INITIALIZE switches: */
+    "/addresses",        KRB_I_ADR, CM_ARG,
+    "/forwardable",      KRB_I_FW,  0,	   /* /FORWARDABLE */
+    "/instance",         KRB_I_IN, CM_ARG, /* /INSTANCE:   */
+    "/k4",               KRB_I_K4,  CM_INV, /* /KERBEROS4   */
+    "/kerberos4",        KRB_I_K4,  0,      /* /KERBEROS4   */
+    "/krb4",             KRB_I_K4,  CM_INV, /* /KERBEROS4   */
+    "/lifetime",         KRB_I_LF,  CM_ARG, /* /LIFETIME:   */
+    "/no-k4",            KRB_I_NK4, CM_INV,/* /NO-KERBEROS4 */
+    "/no-kerberos4",     KRB_I_NK4, 0,     /* /NO-KERBEROS4 */
+    "/no-krb4",          KRB_I_NK4, CM_INV,/* /NO-KERBEROS4 */
+    "/not-forwardable",  KRB_I_NFW, 0,	   /* /NOT-FORWARDABLE */
+    "/not-proxiable",    KRB_I_NPR, 0,     /* /NOT-PROXIABLE   */
+    "/password",         KRB_I_PW,  CM_ARG, /* /PASSWORD:   */
+#ifdef OS2
+    "/popup",            KRB_I_POP, 0,     /* /POPUP       */
+#endif /* OS2 */
+    "/postdate",         KRB_I_PD, CM_ARG, /* /POSTDATE:   */
+    "/pr",               KRB_I_PR, CM_INV|CM_ABR, /* to allow for */
+    "/pro",              KRB_I_PR, CM_INV|CM_ABR, /* different spellings */
+    "/prox",             KRB_I_PR, CM_INV|CM_ABR,
+    "/proxiable",        KRB_I_PR, 0,      /* /PROXIABLE   */
+    "/proxyable",        KRB_I_PR, CM_INV, /* /PROXYABLE   */
+    "/realm",            KRB_I_RL, CM_ARG, /* /REALM:      */
+    "/renew",            KRB_I_RN, 0,	   /* /RENEW       */
+    "/renewable",        KRB_I_RB, CM_ARG, /* /RENEWABLE:  */
+    "/service",          KRB_I_SR, CM_ARG, /* /SERVICE:    */
+    "/validate",         KRB_I_VA, 0, 	   /* /VALIDATE    */
+    "", 0, 0
+};
+static int krb5_i_n = sizeof(krb5_i_tbl)/sizeof(struct keytab) - 1;
+
+static struct keytab klctab[] = {	/* List Credentials switches*/
+    "/addresses",  XYKLCAD, 0,
+    "/encryption", XYKLCEN, 0,
+    "/flags",      XYKLCFL, 0
+};
+static int nklctab = sizeof(klctab)/sizeof(struct keytab);
+
+extern int krb_action;
+extern struct krb_op_data krb_op;
+
+extern struct krb5_list_cred_data krb5_lc;
+extern struct krb5_init_data krb5_init;
+extern char * krb5_d_principal;		/* Default principal */
+extern char * krb5_d_instance;
+extern char * krb5_d_realm;		/* Default realm */
+extern char * krb5_d_cc;		/* Default credentials cache */
+extern char * krb5_d_srv;               /* Default service name */
+extern int    krb5_d_lifetime;          /* Default lifetime */
+extern int    krb5_d_forwardable;
+extern int    krb5_d_proxiable;
+extern int    krb5_d_renewable;
+extern int    krb5_autoget;
+extern int    krb5_autodel;
+extern int    krb5_d_getk4;
+extern int    krb5_checkaddrs;
+
+extern struct krb4_init_data krb4_init;
+extern char * krb4_d_principal;		/* Default principal */
+extern char * krb4_d_realm;		/* Default realm */
+extern char * krb4_d_srv;               /* Default service name */
+extern int    krb4_d_lifetime;          /* Default lifetime */
+extern int    krb4_d_preauth;
+extern char * krb4_d_instance;
+extern int    krb4_autoget;
+extern int    krb4_autodel;
+extern int    krb4_checkaddrs;
+#endif /* CK_KERBEROS */
+
+#ifndef NOSHOW
+#ifdef CK_AUTHENTICATION
+int
+sho_auth(cx) int cx; {
+    extern int auth_type_user[];
+    int i;
+    char * p;
+    int kv = 0, all = 0;
+
+#ifdef IKSD
+    if (inserver) {
+        printf("?Sorry, command disabled.\r\n");
+        return(success = 0);
+    }
+#endif /* IKSD */
+    if (cx) {
+        kv = cx;
+    } else if (auth_type_user[0] != AUTHTYPE_AUTO) {
+        kv = auth_type_user[0];
+    } else {
+        all = 1;
+        kv = AUTHTYPE_KERBEROS_V4;
+    }
+    while (kv) {
+        switch (kv) {
+	  case AUTHTYPE_KERBEROS_V4:
+            kv = all ? AUTHTYPE_KERBEROS_V5 : 0;
+            if (ck_krb4_is_installed())
+	      printf(" Authentication:      Kerberos 4\n");
+            else {
+                printf(" Authentication:      Kerberos 4 (not installed)\n");
+                continue;
+            }
+#ifdef CK_KERBEROS
+            if (krb_action < 0) {
+                p = "(none)";
+            } else {
+                for (p = "", i = 0; i < krb_a_n; i++) {
+                    if (krb_action == krb_a_tbl[i].kwval) {
+                        p = krb_a_tbl[i].kwd;
+                        break;
+                    }
+                }
+            }
+            printf(" Action:              %s\n", p);
+            printf(" Default lifetime     %d\n",krb4_d_lifetime);
+            printf(" Lifetime:            %d (minutes)\n",krb4_init.lifetime);
+            printf(" Default preauth:     %d\n",krb4_d_preauth);
+            printf(" Preauth:             %d\n",krb4_init.preauth);
+            printf(" Default principal:   \"%s\"\n",
+                    krb4_d_principal ? krb4_d_principal : "");
+            printf(" Principal:           \"%s\"\n",
+                    krb4_init.principal ? krb4_init.principal : "");
+            printf(" Default realm:       \"%s\"\n",
+                    krb4_d_realm ? krb4_d_realm : "");
+            printf(" Realm:               \"%s\"\n",
+                    krb4_init.realm ? krb4_init.realm : "");
+            printf(" Default instance:    \"%s\"\n",
+                    krb4_d_instance ? krb4_d_instance : "");
+            printf(" Instance:            \"%s\"\n",
+                    krb4_init.instance ? krb4_init.instance : "");
+            printf(" Auto-Get TGTs:       %d\n",krb4_autoget);
+            printf(" Auto-Destroy TGTs:   %s\n",
+                    krb4_autodel==KRB_DEL_NO?"never":
+                    krb4_autodel==KRB_DEL_CL?"on-close":"on-exit");
+            printf(" Check IP Addresses:  %d\n",krb4_checkaddrs);
+#ifdef COMMENT
+            printf(" Password:    \"%s\"\n",
+                    krb4_init.password  ? krb4_init.password  : "");
+#endif /* COMMENT */
+#endif /* CK_KERBEROS */
+            printf("\n");
+            break;
+	  case AUTHTYPE_KERBEROS_V5:
+            kv = all ? AUTHTYPE_SSL : 0;
+            if (ck_krb5_is_installed())
+	      printf(" Authentication:      Kerberos 5\n");
+            else {
+                printf(" Authentication:      Kerberos 5 (not installed)\n");
+                continue;
+            }
+
+#ifdef CK_KERBEROS
+            printf(" Cache file:          %s\n",
+                    krb_op.cache ? krb_op.cache : "(none)");
+            printf(" Default cache:       %s\n",
+                    krb5_d_cc ? krb5_d_cc : "(none)");
+            if (krb_action < 0) {
+                p = "(none)";
+            } else  {
+                for (p = "", i = 0; i < krb_a_n; i++) {
+                    if (krb_action == krb_a_tbl[i].kwval) {
+                        p = krb_a_tbl[i].kwd;
+                        break;
+                    }
+                }
+            }
+            printf(" Action:              %s\n", p);
+
+            printf(" Default forwardable  %d\n",krb5_d_forwardable);
+            printf(" Forwardable:         %d\n",krb5_init.forwardable);
+            printf(" Default lifetime     %d\n",krb5_d_lifetime);
+            printf(" Lifetime:            %d (minutes)\n",krb5_init.lifetime);
+            printf(" Postdate:            \"%s\"\n",
+                    krb5_init.postdate ? krb5_init.postdate: "");
+            printf(" Default proxiable:   %d\n",krb5_d_proxiable);
+            printf(" Proxiable:           %d\n",krb5_init.proxiable);
+            printf(" Renew:               %d\n",krb5_init.renew);
+            printf(" Default renewable:   %d (minutes)\n",krb5_d_renewable);
+            printf(" Renewable:           %d (minutes)\n",krb5_init.renewable);
+            printf(" Service:             \"%s\"\n",
+                    krb5_init.service ? krb5_init.service : "");
+            printf(" Validate:            %d\n",krb5_init.validate);
+            printf(" Default principal:   \"%s\"\n",
+                    krb5_d_principal ? krb5_d_principal : "");
+            printf(" Principal:           \"%s\"\n",
+                    krb5_init.principal ? krb5_init.principal : "");
+            printf(" Default instance:    \"%s\"\n",
+                    krb5_d_instance ? krb5_d_instance : "");
+            printf(" Default realm:       \"%s\"\n",
+                    krb5_d_realm ? krb5_d_realm : "");
+            printf(" Realm:               \"%s\"\n",
+                    krb5_init.realm ? krb5_init.realm : "");
+            printf(" Auto-Get TGTs:       %d\n",krb5_autoget);
+            printf(" Auto-Destroy TGTs:   %s\n",
+                    krb5_autodel==KRB_DEL_NO?"never":
+                    krb5_autodel==KRB_DEL_CL?"on-close":"on-exit");
+            printf(" Default get K4 TGTs: %d\n",krb5_d_getk4);
+            printf(" Get K4 TGTs: %d\n",krb5_init.getk4);
+            printf(" Check IP Addresses:  %d\n",krb5_checkaddrs);
+            printf(" IP-Addresses:        ");
+            if (krb5_init.addrs) {
+                for (i = 0; krb5_init.addrs[i]; i++) {
+                    if (i)
+		      printf(",");
+                    printf("%s",krb5_init.addrs[i]);
+                }
+                printf("\n");
+            } else
+	      printf("(use default)\n");
+#ifdef COMMENT
+            printf(" Password:            \"%s\"\n",
+                    krb5_init.password  ? krb5_init.password  : "");
+#endif /* COMMENT */
+#endif /* CK_KERBEROS */
+            printf("\n");
+            break;
+	  case AUTHTYPE_SSL:
+            kv = 0;
+            if (ck_ssleay_is_installed())
+	      printf(" Authentication:      SSL/TLS\n");
+            else {
+                printf(" Authentication:      SSL/TLS (not installed)\n");
+                continue;
+            }
+
+#ifdef CK_SSL
+            printf(" RSA Certs file: %s\n",ssl_rsa_cert_file?
+                  ssl_rsa_cert_file:"(none)");
+            printf(" RSA Key file: %s\n",ssl_rsa_key_file?
+                  ssl_rsa_key_file:"(none)");
+            printf(" DSA Certs file: %s\n",ssl_dsa_cert_file?
+                  ssl_dsa_cert_file:"(none)");
+            printf(" DH Key file: %s\n",ssl_dh_key_file?
+                  ssl_dh_key_file:"(none)");
+            printf(" DH Param file: %s\n",ssl_dh_param_file?
+                  ssl_dh_param_file:"(none)");
+            printf(" CRL file: %s\n",ssl_crl_file?
+                  ssl_crl_file:"(none)");
+            printf(" CRL dir: %s\n",ssl_crl_dir?
+                    ssl_crl_dir:"(none)");
+            printf(" Verify file: %s\n",ssl_verify_file?
+                  ssl_verify_file:"(none)");
+            printf(" Verify dir: %s\n",ssl_verify_dir?
+                  ssl_verify_dir:"(none)");
+            printf(" Cipher list:\n");
+	    if (ssl_con == NULL) {
+		SSL_library_init();
+		ssl_ctx = (SSL_CTX *)
+		  SSL_CTX_new((SSL_METHOD *)TLSv1_method());
+		if (ssl_ctx != NULL)
+		  ssl_con= (SSL *) SSL_new(ssl_ctx);
+	    }
+	    if (ssl_con != NULL) {
+		CHAR * p = NULL;
+		int i;
+
+		for (i = 0; ; i++) {
+		    p = (CHAR *) SSL_get_cipher_list(ssl_con,i);
+		    if (p == NULL)
+		      break;
+		    printf("    %s\n",p);
+		}
+	    }
+            printf(" Certs OK? %s\n",ssl_certsok_flag? "yes" : "no");
+            printf(" Debug mode: %s\n", ssl_debug_flag ? "on" : "off");
+            printf(" Verbose mode: %s\n", ssl_verbose_flag ? "on" : "off");
+            printf(" Verify mode: %s\n",
+                    ssl_verify_flag == SSL_VERIFY_NONE ? "none" :
+                    ssl_verify_flag == SSL_VERIFY_PEER ? "peer-cert" :
+                    "fail-if-no-peer-cert");
+            printf(" SSL only? %s\n", ssl_only_flag ? "yes" : "no");
+            printf(" TLS only? %s\n", tls_only_flag ? "yes" : "no");
+#endif /* CK_SSL */
+            break;
+	  case AUTHTYPE_NTLM:
+            kv = 0;
+            if (ck_ntlm_is_installed()) {
+                printf(" Authentication:      NTLM\n");
+                printf(" No options\n");
+            } else {
+                printf(" Authentication:      NTLM (not installed)\n");
+                continue;
+            }
+            printf("\n");
+            break;
+	  case AUTHTYPE_SRP:
+            kv = 0;
+            if (ck_srp_is_installed()) {
+                printf(" Authentication:      SRP\n");
+                printf(" No options\n");
+            } else {
+                printf(" Authentication:      SRP (not installed)\n");
+                continue;
+            }
+            printf("\n");
+            break;
+        }
+    }
+    return(success = 1);
+}
+#endif /* CK_AUTHENTICATION */
+#endif /* NOSHOW */
+
+#ifdef CK_KERBEROS
+
+/*  C P _ A U T H  --  AUTHENTICATE command parsing  */
+
+int
+cp_auth() {				/* Command_Parse AUTHENTICATE */
+    int c, i, n;			/* Workers */
+    int rc = 0;				/* Return code */
+    int getval;				/* Parsing helpers */
+    int tmpauth = 0;			/* Temporary authentication type */
+    int kv = 0;				/* Temporary Kerberos version */
+    int tmp_action = -1;		/* Temporary Kerberos action */
+    int tmp_klc = 0;			/* Temporary list-credentials */
+    char tmphlp[256];			/* For building help message */
+    char * p;
+    char * tmppswd  = NULL;		/* Password */
+    char * tmpprinz = NULL;		/* Principal */
+    char * tmprealm = NULL;             /* Realm */
+    char * tmpcache = NULL;		/* Cache file */
+    char * tmpinst  = NULL;             /* K4 Instance */
+    char * tmpaddrs[KRB5_NUM_OF_ADDRS];
+#ifdef CK_RECALL
+    int sv_recall;			/* For turning off command recall */
+    extern int on_recall;		/* around Password prompting */
+#endif /* CK_RECALL */
+    struct stringint {			/* Temporary array for switch values */
+	char * sval;			/* String value */
+	int ival;			/* Integer value */
+    } pv[KRB_I_MAX+1];			/* This many */
+    struct FDB kw, sw, fl;		/* FDBs for each parse function */
+
+    krb_action = -1;			/* Initialize Kerberos action. */
+    tmp_action = -1;			/* And our local copy. */
+    for (i = 0; i < KRB5_NUM_OF_ADDRS; i++)
+      tmpaddrs[i] = NULL;
+
+    if ((y = cmkey(kerbtab,kerbtabn,"authentication type","",xxstring)) < 0)
+      {
+	  if (y == -3)
+	    printf("?Authentication type not specified - nothing happens\n");
+	  return(y);
+      }
+    tmpauth = y;
+    debug(F101,"kerberos authentication","",tmpauth);
+    switch (tmpauth) {
+      case AUTH_KRB4: kv = 4; break;	/* Don't assume values are the same */
+      case AUTH_KRB5: kv = 5; break;
+      default:
+	printf("?Authentication type not supported: \"%s\"\n",atmbuf);
+	return(-9);
+    }
+
+    /* From here down is Kerberos */
+    ini_kerb();				/* Reset Init data to defaults */
+
+    if (kv == 4) {			/* Set K4 defaults */
+        if (krb4_d_realm)
+	  makestr(&tmprealm,krb4_d_realm);
+        if (krb4_d_principal)
+	  makestr(&tmpprinz,krb4_d_principal);
+        if (krb4_d_instance)
+	  makestr(&tmpinst,krb4_d_instance);
+    } else if (kv == 5) {		/* Set K5 defaults */
+        if (krb5_d_cc)
+	  makestr(&tmpcache,krb5_d_cc);
+        if (krb5_d_realm)
+	  makestr(&tmprealm,krb5_d_realm);
+        if (krb5_d_principal)
+	  makestr(&tmpprinz,krb5_d_principal);
+        if (krb5_d_instance)
+	  makestr(&tmpinst,krb5_d_instance);
+    }
+
+    for (i = 0; i <= KRB_I_MAX; i++) {	/* Initialize switch values */
+	pv[i].sval = NULL;		/* to null pointers */
+	pv[i].ival = 0;			/* and 0 int values */
+    }
+
+    if (kv == 4) {			/* Kerberos 4 */
+        pv[KRB_I_LF].ival = krb4_d_lifetime;
+        pv[KRB_I_PA].ival = krb4_d_preauth;
+
+	if ((n = cmkey(krb_a_tbl,krb_a_n,"Kerberos 4 action","",xxstring)) < 0)
+	  {
+	      if (n == -3)
+		printf("?Action not specified - nothing happens.\n");
+	      return(n);
+	  }
+    } else if (kv == 5) {		/* Kerberos 5 */
+        pv[KRB_I_FW].ival = krb5_d_forwardable;
+        pv[KRB_I_PR].ival = krb5_d_proxiable;
+        pv[KRB_I_LF].ival = krb5_d_lifetime;
+        pv[KRB_I_RB].ival = krb5_d_renewable;
+        pv[KRB_I_K4].ival = krb5_d_getk4;
+
+	/* Make help message that shows switches and action keywords */
+	strcpy(tmphlp,"Kerberos 5 action, one of the following:\n ");
+	for (i = 0; i < krb_a_n; i++) {
+	    strcat(tmphlp,krb_a_tbl[i].kwd);
+	    if (i == krb_a_n - 1)
+	      strcat(tmphlp,"\nor switch");
+	    else
+	  strcat(tmphlp,"   ");
+	}
+	/* Set up first set of chained FDB's */
+
+	cmfdbi(&sw,			/* First FDB - command switches */
+	       _CMKEY,			/* fcode */
+	       tmphlp,			/* hlpmsg */
+	       "",			/* default (none) */
+	       "",			/* addtl string data */
+	       krb_s_n,			/* Switch table size */
+	       4,			/* addtl numeric data 2: 4 = cmswi */
+	       xxstring,		/* Processing function */
+	       krb_s_tbl,		/* Switch table */
+	       &kw			/* Pointer to next FDB */
+	       );
+	cmfdbi(&kw,			/* Second FDB - action keywords */
+	       _CMKEY,			/* fcode */
+	       "Kerberos action",	/* hlpmsg */
+	       "",			/* default (none) */
+	       "",			/* addtl string data */
+	       krb_a_n,			/* Switch table size */
+	       0,			/* addtl num data (0 = NOT switch) */
+	       xxstring,		/* Processing function */
+	       krb_a_tbl,		/* Keyword table */
+	       NULL			/* Pointer to next FDB (none) */
+	       );
+
+	/* Parse */
+
+	while (1) {			/* Parse 0 or more switches */
+	    rc = cmfdb(&sw);		/* Parse something */
+	    debug(F101,"kerberos cmfdb 1 rc","",rc);
+	    if (rc < 0) {			/* Error */
+		if (rc == -3)
+		  printf("?Action not specified - nothing happens.\n");
+		return(rc);		/* or reparse needed */
+	    }
+	    if (cmresult.fdbaddr != &sw) /* Break out if not a switch */
+	      break;
+	    c = cmgbrk();		/* Have switch - get break character */
+	    getval = (c == ':' || c == '='); /* Must parse an agument? */
+	    if (getval && !(cmresult.kflags & CM_ARG)) {
+		printf("?This switch does not take arguments\n");
+		return(-9);		/* OK because nothing malloc'd yet */
+	    }
+	    if (!getval && (cmgkwflgs() & CM_ARG)) {
+		printf("?This switch requires an argument\n");
+		return(-9);
+	    }
+	    n = cmresult.nresult;	/* Numeric result = switch value */
+	    debug(F101,"kerberos command switch","",n);
+
+	    switch (n) {		/* Handle the switch */
+	      case KRB_S_CA:		/* /CACHE:<filename> */
+		p = krb5_d_cc ? krb5_d_cc : "";
+		if ((y = cmofi("Name of cache file",p,&s,xxstring)) < 0) {
+		    if (y == -3)
+		      s = NULL;
+		    else
+		      return(y);
+		}
+		makestr(&tmpcache,s);
+		break;
+	      default:
+		printf("?Unexpected switch value - internal error\n");
+		return(-9);		/* (if) nothing malloc'd yet. */
+	    }
+	}
+	if (cmresult.fdbaddr != &kw) {	/* Checking... */
+	    printf("?Unexpected result - internal error\n");
+	    return(-9);			/* Nothing malloc'd yet. */
+	}
+	n = cmresult.nresult;		/* Get keyword value */
+    } else {
+	printf("?Unexpected Kerberos version - Internal error\n");
+	return(-9);
+    }
+    debug(F101,"kerberos action","",n);
+    switch (n) {
+      case KRB_A_IN:			/* INITIALIZE */
+      case KRB_A_DE:			/* DESTROY */
+      case KRB_A_LC:			/* LIST-CREDENTIALS */
+	tmp_action = n;			/* OK, set */
+	break;
+      default:				/* Not OK, punt. */
+	printf("?Unexpected action - internal error\n");
+	return(-9);
+    }
+    if (tmp_action == KRB_A_IN) {	/* Action is INITIALIZE */
+	int x;
+	cmfdbi(&sw,			/* INITIALIZE switches */
+	       _CMKEY,			/* fcode */
+	       "Principal,\n or optional INITIALIZE switch(es)", /* hlpmsg */
+	       "",			/* default (none) */
+	       "",			/* addtl string data */
+	       kv == 4 ?  krb4_i_n : krb5_i_n, /* Switch table size */
+	       4,			/* addtl numeric data 2: 4 = cmswi */
+	       xxstring,		/* Processing function */
+	       kv == 4 ?  krb4_i_tbl : krb5_i_tbl,	/* Switch table */
+	       &fl			/* Pointer to next FDB */
+	       );
+	cmfdbi(&fl,			/* 3rd FDB - command to send from */
+	       _CMFLD,			/* fcode */
+	       "Principal",		/* hlpmsg */
+	       kv == 4 ? krb4_d_principal : krb5_d_principal, /* principal */
+	       "",			/* addtl string data */
+	       0,			/* addtl numeric data 1 */
+	       0,			/* addtl numeric data 2 */
+	       xxstring,
+	       NULL,
+	       NULL
+	       );
+	while (1) {			/* Parse INIT switches or principal */
+	    rc = cmfdb(&sw);
+	    debug(F101,"kerberos cmfdb 2 rc","",rc);
+	    if (rc < 0) {
+		if (rc == -3)
+		  printf("?Principal name required\n");
+		goto kerbx;
+	    }
+	    debug(F101,"kerberos cmfdb 2 fcode","",cmresult.fcode);
+	    if (cmresult.fcode != _CMKEY) /* Not a switch, quit switch loop */
+	      break;
+	    c = cmgbrk();		/* Switch - get break character */
+	    debug(F101,"kerberos cmfdb 2 cmgbrk","",c);
+	    getval = (c == ':' || c == '=');
+	    if (getval && !(cmresult.kflags & CM_ARG)) {
+		printf("?This switch does not take arguments\n");
+		return(-9);		/* OK because nothing malloc'd yet */
+	    }
+	    if (!getval && (cmgkwflgs() & CM_ARG)) {
+		printf("?This switch requires an argument\n");
+		return(-9);
+	    }
+	    n = cmresult.nresult;	/* Numeric result = switch value */
+	    switch (n) {
+	      /* These don't take args... */
+              case KRB_I_PA:            /* /PREAUTH */
+	      case KRB_I_FW:		/* /FORWARDABLE */
+	      case KRB_I_PR:		/* /PROXIABLE */
+              case KRB_I_RN:		/* /RENEW */
+	      case KRB_I_VA:		/* /VALIDATE */
+              case KRB_I_NPA:           /* /NOT-PREAUTH */
+              case KRB_I_NFW:		/* /NOT-FORWARDABLE */
+              case KRB_I_NPR:		/* /NOT-PROXIABLE */
+              case KRB_I_VB:            /* /VERBOSE */
+              case KRB_I_BR:            /* /BRIEF */
+              case KRB_I_K4:            /* /KERBEROS4 */
+              case KRB_I_NK4:           /* /NO-KERBEROS4 */
+              case KRB_I_POP:           /* /POPUP */
+		if (getval) {
+		    printf("?This switch does not take a value\n");
+		    rc = -9;
+		    goto kerbx;
+		}
+                switch (n) {
+		  case KRB_I_NPA:
+                    pv[KRB_I_PA].ival = 0;
+                    break;
+		  case KRB_I_NFW:
+                    pv[KRB_I_FW].ival = 0;
+                    break;
+		  case KRB_I_NPR:
+                    pv[KRB_I_PR].ival = 0;
+                    break;
+		  case KRB_I_VB:
+                    pv[KRB_I_BR].ival = 0;
+                    break;
+                  case KRB_I_NK4:
+                    pv[KRB_I_K4].ival = 0;
+                    break;
+		  default:
+                    pv[n].ival = 1;
+                }
+		break;
+
+		/* These do take arguments */
+
+	      case KRB_I_RB:		/* /RENEWABLE:<minutes> */
+		pv[n].ival = 0;
+		if (!getval) break;
+		if ((rc = cmnum("Minutes",ckitoa(krb5_init.renewable),
+				10,&y, xxstring)) < 0)
+		  goto kerbx;
+		pv[n].ival = y;
+		break;
+
+	      case KRB_I_LF:		/* /LIFETIME:<minutes> */
+		pv[n].ival = 0;
+		sprintf(tmpbuf,"%d",	/* Default is previous value */
+			kv == 4 ?
+			krb4_init.lifetime :
+			krb5_init.lifetime
+			);
+		if (!getval) break;
+		if ((rc = cmnum("Minutes",tmpbuf,10,&y, xxstring)) < 0)
+		  goto kerbx;
+		pv[n].ival = y;
+		break;
+
+	      case KRB_I_PD:		/* /POSTDATE:<timestamp> */
+		if (pv[n].sval) {
+		    free(pv[n].sval);
+		    pv[n].sval = NULL;
+		}
+		if (!getval) break;
+		if ((rc = cmdate("date-time","",&s,0,xxstring)) < 0)
+		  goto kerbx;
+		makestr(&(pv[n].sval),s);
+		break;
+
+	      case KRB_I_SR:		/* /SERVICE:<name> */
+		if (pv[n].sval) {
+		    free(pv[n].sval);
+		    pv[n].sval = NULL;
+		}
+		if (!getval) break;
+		if ((rc = cmfld("Service-name","",&s,xxstring)) < 0)
+		  goto kerbx;
+		makestr(&(pv[n].sval),s);
+		break;
+
+              case KRB_I_RL:		/* /REALM:<name> */
+		if (pv[n].sval) {
+		    free(pv[n].sval);
+		    pv[n].sval = NULL;
+		}
+		if (!getval) break;
+		if (kv == 4)
+		  p = krb4_d_realm ? krb4_d_realm : "";
+		else
+		  p = krb5_d_realm ? krb5_d_realm : "";
+		if ((rc = cmfld("Realm",p,&s,xxstring)) < 0)
+		  goto kerbx;
+		makestr(&(pv[n].sval),s);
+		break;
+
+	      case KRB_I_IN:		/* /INSTANCE:<name> */
+		if (pv[n].sval) {
+		    free(pv[n].sval);
+		    pv[n].sval = NULL;
+		}
+		if (!getval) break;
+                if (kv == 4)
+                    p = krb4_d_instance ? krb4_d_instance : "";
+                else
+                    p = krb5_d_instance ? krb5_d_instance : "";
+		if ((rc = cmfld("Instance",p,&s,xxstring)) < 0)
+		  goto kerbx;
+		makestr(&(pv[n].sval),s);
+		break;
+
+	      case KRB_I_PW:		/* /PASSWORD:<password> */
+		if (pv[n].sval) {
+		    free(pv[n].sval);
+		    pv[n].sval = NULL;
+		}
+		if (!getval) break;
+		if ((rc = cmfld("Password","",&s,xxstring)) < 0)
+		  goto kerbx;
+		makestr(&(pv[n].sval),s);
+		break;
+
+              case KRB_I_ADR:		/* /ADDRESSES:{<address-list>} */
+		if (pv[n].sval) {
+		    free(pv[n].sval);
+		    pv[n].sval = NULL;
+		}
+		if (!getval) break;
+		if ((rc = cmfld("List of IP addresses","",&s,xxstring)) < 0)
+		  goto kerbx;
+		makelist(s,tmpaddrs,KRB5_NUM_OF_ADDRS);
+		for (i = 0; i < KRB5_NUM_OF_ADDRS && tmpaddrs[i]; i++) {
+		    if (inet_addr(tmpaddrs[i]) == 0xffffffff) {
+			printf("invalid ip address: %s\n",tmpaddrs[i]);
+			rc = -9;
+			goto kerbx;
+		    }
+		}
+		break;
+
+	      default:
+		printf("?Unexpected switch value - internal error\n");
+		rc = -9;
+		goto kerbx;
+	    }
+	}
+	if (cmresult.fcode != _CMFLD) {
+	    printf("?Unexected result - internal error\n");
+	    rc = -9;
+	    goto kerbx;
+	}
+        /* cmresult.sresult may be of the form PRINCIPAL@REALM */
+        i = ckindex("@",cmresult.sresult,0,0,0);
+        if (i != 0) {
+            makestr(&tmprealm,&cmresult.sresult[i]);
+            cmresult.sresult[i-1] = '\0';
+        }
+	makestr(&tmpprinz,cmresult.sresult); /* Principal (user) */
+
+	if ((rc = cmcfm()) < 0)	{	/* Now get confirmation */
+            if (rc == -3) {
+#ifdef IKSD
+		if (inserver) {
+		    printf("?Sorry, command disabled\r\n");
+		    return(success = 0);
+		}
+#endif /* IKSD */
+		printf("?Principal name required\n");
+            }
+            goto kerbx;
+        }
+#ifdef IKSD
+        if (inserver) {
+            printf("?Sorry, command disabled\r\n");
+            return(success = 0);
+        }
+#endif /* IKSD */
+        if (!tmpprinz || !tmpprinz[0]) {
+            printf("?Principal name required\n");
+            goto kerbx;
+        }
+        if (!pv[KRB_I_RN].ival && !pv[KRB_I_VA].ival) {
+            /* Don't use a password if Validating or Renewing */
+	    if (pv[KRB_I_PW].sval) {	/* If they gave a /PASSWORD switch */
+		makestr(&tmppswd,pv[KRB_I_PW].sval); /* use this value */
+	    } else {			/* Otherwise must prompt for it */
+		char prmpt[80];
+                if (pv[KRB_I_RL].sval)
+		  sprintf(prmpt,"%s@%s's Password: ",
+			  tmpprinz,pv[KRB_I_RL].sval);
+                else if (tmprealm)
+		  sprintf(prmpt,"%s@%s's Password: ",
+			  tmpprinz,tmprealm);
+                else
+		  sprintf(prmpt,"%s's Password: ",tmpprinz);
+#ifdef OS2
+                if (pv[KRB_I_POP].ival) {
+                    char passwd[80]="";
+                    readpass(prmpt,passwd,80);
+                    makestr(&tmppswd,passwd);
+                    memset(passwd,0,80);
+                } else {
+#endif /* OS2 */
+#ifdef CK_RECALL
+		    sv_recall = on_recall; /* Save & turn off command recall */
+		    on_recall = 0;
+#endif /* CK_RECALL */
+		    cmsavp(psave,PROMPTL); /* Save old prompt */
+		    cmsetp(prmpt);	/* Make new prompt */
+		    concb((char)escape); /* Put console in cbreak mode */
+		    cmini(0);		/* and no-echo mode */
+		    /* Issue prompt if at top level */
+		    if (pflag) prompt(xxstring);
+		    cmres();		/* Reset the parser */
+		    for (rc = -1; rc < 0; ) { /* Prompt till they answer */
+			/* Get a literal line of text */
+			rc = cmtxt("","",&s,NULL);
+			cmres();	/* Reset the parser again */
+		    }
+		    makestr(&tmppswd,s);
+#ifdef CK_RECALL
+		    on_recall = sv_recall; /* Restore command recall */
+#endif /* CK_RECALL */
+		    printf("\n");	/* Echo a CRLF */
+		    cmsetp(psave);	/* Restore original prompt */
+#ifdef OS2
+                }
+#endif /* OS2 */
+	    }
+	    x = 0;			/* Check for password */
+	    if (tmppswd)
+	      if (*tmppswd)
+		x = 1;
+	    if (!x) {
+		printf("?Password required\n");
+		goto kerbx;
+	    }
+        }
+    } else if (kv == 5 && tmp_action == KRB_A_LC) { /* LIST-CREDENTIALS */
+	tmp_klc = 0;
+	while (1) {
+	    if ((x = cmkey(klctab,nklctab,"Switch","",xxstring)) < 0) {
+		if (x == -3) {
+		    if ((rc = cmcfm()) < 0)
+		      goto kerbx;
+		    else
+		      break;
+		} else {
+		    rc = x;
+		    goto kerbx;
+		}
+	    }
+	    tmp_klc |= x;
+	}
+    } else if ((rc = cmcfm()) < 0)	/* DESTROY, just confirm */
+	goto kerbx;
+
+/* Done - Move confirmed data to final locations */
+
+    krb_action = tmp_action;		/* Action requested */
+    krb_op.version = kv;		/* Kerberos version */
+    krb_op.cache = tmpcache;		/* Cache file */
+    tmpcache = NULL;			/* So we don't free it */
+
+    switch (krb_action) {
+      case KRB_A_IN:			/* INITIALIZE */
+        if (kv == 5) {
+            krb5_init.forwardable = pv[KRB_I_FW].ival;
+            krb5_init.proxiable   = pv[KRB_I_PR].ival;
+            krb5_init.lifetime    = pv[KRB_I_LF].ival;
+            krb5_init.renew       = pv[KRB_I_RN].ival;
+            krb5_init.renewable   = pv[KRB_I_RB].ival;
+            krb5_init.validate    = pv[KRB_I_VA].ival;
+
+            /* Here we just reassign the pointers and then set them to NULL */
+            /* so they won't be freed below. */
+
+            krb5_init.postdate = pv[KRB_I_PD].sval; pv[KRB_I_PD].sval = NULL;
+            krb5_init.service  = pv[KRB_I_SR].sval; pv[KRB_I_SR].sval = NULL;
+	    if (pv[KRB_I_RL].sval) {
+		krb5_init.realm  = pv[KRB_I_RL].sval; pv[KRB_I_RL].sval = NULL;
+            } else if (tmprealm) {
+                krb5_init.realm = tmprealm; tmprealm = NULL;
+            }
+            if (pv[KRB_I_IN].sval) {
+                krb5_init.instance = pv[KRB_I_IN].sval;
+		pv[KRB_I_IN].sval = NULL;
+            } else if ( tmpinst ) {
+                krb5_init.instance = tmpinst;
+		tmpinst = NULL;
+            }
+            if (tmpprinz) {
+                krb5_init.principal = tmpprinz;
+                tmpprinz = NULL;
+            }
+            krb5_init.password = tmppswd;
+            tmppswd = NULL;
+
+            krb5_init.getk4 = pv[KRB_I_K4].ival;
+            if (krb5_init.getk4) {
+                krb4_init.lifetime = pv[KRB_I_LF].ival;
+                if (krb5_init.realm)
+                    makestr(&krb4_init.realm,krb5_init.realm);
+                krb4_init.preauth  = krb4_d_preauth;
+                krb4_init.verbose  = pv[KRB_I_BR].ival ? 0 : 1;
+                if (krb5_init.principal)
+                    makestr(&krb4_init.principal,krb5_init.principal);
+                if (krb5_init.principal)
+                    makestr(&krb4_init.password,krb5_init.password);
+            }
+	    for (i = 0; i < KRB5_NUM_OF_ADDRS; i++) {
+                krb5_init.addrs[i] = tmpaddrs[i];
+                tmpaddrs[i] = NULL;
+            }
+	} else if (kv == 4) {		/* Same deal for Kerberos 4 */
+            krb4_init.lifetime = pv[KRB_I_LF].ival;
+	    if (pv[KRB_I_RL].sval) {
+		krb4_init.realm  = pv[KRB_I_RL].sval;
+		pv[KRB_I_RL].sval = NULL;
+            } else if ( tmprealm ) {
+                krb4_init.realm  = tmprealm;
+		tmprealm = NULL;
+            }
+            if (pv[KRB_I_IN].sval) {
+                krb4_init.instance = pv[KRB_I_IN].sval;
+		pv[KRB_I_IN].sval = NULL;
+            } else if ( tmpinst ) {
+                krb4_init.instance = tmpinst;
+		tmpinst = NULL;
+            }
+            krb4_init.preauth  = pv[KRB_I_PA].ival;
+            krb4_init.verbose  = pv[KRB_I_BR].ival ? 0 : 1;
+
+            if (tmpprinz) {
+                krb4_init.principal = tmpprinz;
+                tmpprinz = NULL;
+            }
+            krb4_init.password = tmppswd;
+            tmppswd = NULL;
+        }
+	break;
+      case KRB_A_LC:			/* List Credentials */
+	krb5_lc.encryption = tmp_klc & XYKLCEN;
+	krb5_lc.flags = tmp_klc & XYKLCFL;
+	krb5_lc.addr  = tmp_klc & XYKLCAD;
+	break;
+    }
+
+/* Common exit - Free temporary storage */
+
+  kerbx:
+    for (i = 0; i <= KRB_I_MAX; i++) {	/* Free malloc'd switch data */
+	if (pv[i].sval)
+	  free(pv[i].sval);
+    }
+    for (i = 0; i < KRB5_NUM_OF_ADDRS; i++) {
+        if (tmpaddrs[i])
+	  free(tmpaddrs[i]);
+    }
+    if (tmpprinz) free(tmpprinz);	/* And these too. */
+    if (tmppswd)  free(tmppswd);
+    if (tmpcache) free(tmpcache);
+    if (tmprealm) free(tmprealm);
+    if (tmpinst)  free(tmpinst);
+
+    return(rc);				/* Return the return code */
+}
+#endif /* CK_KERBEROS */
+
+#ifdef CK_LOGIN
+int
+#ifdef CK_ANSIC
+ckxlogin(CHAR * userid, CHAR * passwd, CHAR * acct, int promptok)
+#else /* CK_ANSIC */
+ckxlogin(userid, passwd, acct, promptok)
+  CHAR * userid; CHAR * passwd; CHAR * acct; int promptok;
+#endif /* CK_ANSIC */
+/* ckxlogin */ {
+#ifdef CK_RECALL
+    int sv_recall;			/* For turning off command recall */
+    extern int on_recall;		/* around Password prompting */
+#endif /* CK_RECALL */
+#ifdef CK_PAM
+    extern int guest;
+#endif /* CK_PAM */
+    int rprompt = 0;			/* Restore prompt */
+#ifdef CKSYSLOG
+    int savlog;
+#endif /* CKSYSLOG */
+
+    extern int what, srvcdmsg;
+
+    int x = 0, ok = 0, rc = 0;
+    CHAR * _u = NULL, * _p = NULL, * _a = NULL;
+
+    debug(F111,"ckxlogin userid",userid,promptok);
+    debug(F110,"ckxlogin passwd",passwd,0);
+
+    isguest = 0;			/* Global "anonymous" flag */
+
+    if (!userid) userid = (CHAR *)"";
+    if (!passwd) passwd = (CHAR *)"";
+
+    debug(F111,"ckxlogin userid",userid,what);
+
+#ifdef CK_RECALL
+    sv_recall = on_recall;		/* Save and turn off command recall */
+    on_recall = 0;
+#endif /* CK_RECALL */
+
+#ifdef CKSYSLOG
+    savlog = ckxsyslog;			/* Save and turn off syslogging */
+#endif /* CKSYSLOG */
+
+    if ((!*userid || !*passwd) &&	/* Need to prompt for missing info */
+	promptok) {
+        cmsavp(psave,PROMPTL);		/* Save old prompt */
+	debug(F110,"ckxlogin saved",psave,0);
+	rprompt = 1;
+    }
+    if (!*userid) {
+	if (!promptok)
+	  return(0);
+        cmsetp("Username: ");	        /* Make new prompt */
+        concb((char)escape);		/* Put console in cbreak mode */
+        cmini(1);
+
+/* Flush typeahead */
+
+#ifdef IKS_OPTION
+	debug(F101,
+	      "ckxlogin TELOPT_SB(TELOPT_KERMIT).kermit.me_start",
+	      "",
+	      TELOPT_SB(TELOPT_KERMIT).kermit.me_start
+	      );
+#endif /* IKS_OPTION */
+
+	while (ttchk() > 0) {
+	    x = ttinc(0);
+	    debug(F101,"ckxlogin flush user x","",x);
+#ifdef TNCODE
+	    if (sstelnet) {
+		if (x == IAC) {
+		    x = tn_doop((CHAR)(x & 0xff),ckxech,ttinc);
+		    debug(F101,"ckxlogin user tn_doop","",x);
+#ifdef IKS_OPTION
+		    debug(F101,
+		      "ckxlogin user TELOPT_SB(TELOPT_KERMIT).kermit.me_start",
+		      "",
+		      TELOPT_SB(TELOPT_KERMIT).kermit.me_start
+		      );
+#endif /* IKS_OPTION */
+
+		    if (x < 0)
+		      goto XCKXLOG;
+		    switch (x) {
+		      case 1: ckxech = 1; break; /* Turn on echoing */
+		      case 2: ckxech = 0; break; /* Turn off echoing */
+#ifdef IKS_OPTION
+		      case 4:			 /* IKS event */
+			if (!TELOPT_SB(TELOPT_KERMIT).kermit.me_start)
+			  break;		 /* else fall thru... */
+#endif /* IKS_OPTION */
+		      case 6:			 /* Logout */
+			goto XCKXLOG;
+		    }
+		}
+	    }
+#endif /* TNCODE */
+	}
+        if (pflag) prompt(xxstring);	/* Issue prompt if at top level */
+        cmres();			/* Reset the parser */
+        for (x = -1; x < 0;) {		/* Prompt till they answer */
+	    /* Get a literal line of text */
+            x=cmtxt("Your username, or \"ftp\", or \"anonymous\"","",&s,NULL);
+            if (x == -4 || x == -10) {
+                printf("\r\nLogin cancelled\n");
+#ifdef CKSYSLOG
+		ckxsyslog = savlog;
+#endif /* CKSYSLOG */
+                doexit(GOOD_EXIT,0);
+            }
+	    if (sstate)			/* Did a packet come instead? */
+	      goto XCKXLOG;
+            cmres();			/* Reset the parser again */
+        }
+        if ((_u = (CHAR *)malloc((int)strlen(s) + 1)) == NULL) {
+            printf("?Internal error: malloc\n");
+	    goto XCKXLOG;
+        } else {
+            strcpy((char *)_u,s);
+            userid = _u;
+        }
+    }
+    ok = zvuser((char *)userid);	/* Verify username */
+    debug(F111,"ckxlogin zvuser",userid,ok);
+
+    if (!*passwd && promptok
+#ifdef CK_PAM
+	&& guest
+#endif /* CK_PAM */
+	) {
+        char prmpt[80];
+
+#ifdef CKSYSLOG
+        savlog = ckxsyslog;		/* Save and turn off syslogging */
+        ckxsyslog = 0;
+#endif /* CKSYSLOG */
+
+/* Flush typeahead again */
+
+	while (ttchk() > 0) {
+	    x = ttinc(0);
+	    debug(F101,"ckxlogin flush user x","",x);
+#ifdef TNCODE
+	    if (sstelnet) {
+		if (x == IAC) {
+		    x = tn_doop((CHAR)(x & 0xff),ckxech,ttinc);
+		    debug(F101,"ckxlogin pass tn_doop","",x);
+#ifdef IKS_OPTION
+		    debug(F101,
+		      "ckxlogin pass TELOPT_SB(TELOPT_KERMIT).kermit.me_start",
+		      "",
+		      TELOPT_SB(TELOPT_KERMIT).kermit.me_start
+		      );
+#endif /* IKS_OPTION */
+		    if (x < 0)
+		      goto XCKXLOG;
+		    switch (x) {
+		      case 1: ckxech = 1; break; /* Turn on echoing */
+		      case 2: ckxech = 0; break; /* Turn off echoing */
+		      case 4:			 /* IKS event */
+			if (!TELOPT_SB(TELOPT_KERMIT).kermit.me_start)
+			  break;		 /* else fall thru... */
+		      case 6:			 /* Logout */
+			goto XCKXLOG;
+		    }
+		}
+	    }
+#endif /* TNCODE */
+	}
+        if (!strcmp((char *)userid,"anonymous") ||
+	    !strcmp((char *)userid,"ftp") )
+	  sprintf(prmpt,"Enter e-mail address as Password: ");
+        else if (*userid && strlen((char *)userid) < 60) {
+#ifdef NT
+            extern CHAR * pReferenceDomainName;
+            if (pReferenceDomainName)
+	      sprintf(prmpt,"Enter %s\\\\%s's Password: ",
+		      pReferenceDomainName,userid);
+            else
+#endif /* NT */
+	      sprintf(prmpt,"Enter %s's Password: ",userid);
+        } else
+	  sprintf(prmpt,"Enter Password: ");
+	cmsetp(prmpt);			/* Make new prompt */
+	concb((char)escape);		/* Put console in cbreak mode */
+        if (strcmp((char *)userid,"anonymous") &&
+	    strcmp((char *)userid,"ftp") ) /* and if not anonymous */
+	  cmini(0);			/* and no-echo mode */
+	else
+	  cmini(1);
+	if (pflag) prompt(xxstring);	/* Issue prompt if at top level */
+	cmres();			/* Reset the parser */
+	for (x = -1; x < 0;) {		/* Prompt till they answer */
+	    x = cmtxt("","",&s,NULL);	/* Get a literal line of text */
+            if (x == -4 || x == -10) {
+                printf("\r\nLogin cancelled\r\n");
+#ifdef CKSYSLOG
+		ckxsyslog = savlog;
+#endif /* CKSYSLOG */
+                doexit(GOOD_EXIT,0);
+            }
+	    if (sstate)			/* In case of a Kermit packet */
+	      goto XCKXLOG;
+	    cmres();			/* Reset the parser again */
+	}
+	printf("\r\n");			/* Echo a CRLF */
+	if ((_p = (CHAR *)malloc((int)strlen(s) + 1)) == NULL) {
+	    printf("?Internal error: malloc\n");
+	    goto XCKXLOG;
+	} else {
+	    strcpy((char *)_p,s);
+	    passwd = _p;
+	}
+    }
+#ifdef CK_PAM
+    else {
+	cmres();			/* Reset the parser */
+
+	/* We restore the prompt now because the PAM engine will call  */
+	/* readpass() which will overwrite psave. */
+	if (rprompt) {
+	    cmsetp(psave);		/* Restore original prompt */
+	    debug(F110,"ckxlogin restored",psave,0);
+	    rprompt = 0;
+	}
+    }
+#endif /* CK_PAM */
+
+#ifdef CKSYSLOG
+    ckxsyslog = savlog;
+#endif /* CKSYSLOG */
+
+    if (ok) {
+	ok = zvpass((char *)passwd);	/* Check password */
+	debug(F101,"ckxlogin zvpass","",ok);
+    }
+
+    if (ok > 0 && isguest) {
+#ifndef NOPUSH
+	nopush = 1;
+#endif /* NOPUSH */
+	srvcdmsg = 1;
+    }
+    rc = ok;				/* Set the return code */
+    if ((char *)uidbuf != (char *)userid)
+      ckstrncpy(uidbuf,(char *)userid,UIDBUFLEN); /* Remember username */
+
+  XCKXLOG:				/* Common exit */
+#ifdef CK_RECALL
+    on_recall = sv_recall;		/* Restore command recall */
+#endif /* CK_RECALL */
+#ifdef CKSYSLOG
+    ckxsyslog = savlog;			/* In case of GOTO above */
+#endif /* CKSYSLOG */
+    if (rprompt) {
+	cmsetp(psave);			/* Restore original prompt */
+	debug(F110,"ckxlogin restored",psave,0);
+    }
+    if (_u || _p || _a) {
+        if (_u) free(_u);
+        if (_p) free(_p);
+        if (_a) free(_a);
+    }
+    return(rc);
+}
+
+int
+ckxlogout() {
+    /* zvlogout(); */
+    doexit(GOOD_EXIT,0);		/* doexit calls zvlogout */
+    return(0);				/* not reached */
+}
+#endif /* CK_LOGIN */
 #endif /* NOICP */

@@ -4,13 +4,10 @@
   Author: Frank da Cruz <fdc@columbia.edu>
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
-  York.  The C-Kermit software may not be, in whole or in part, licensed or
-  sold for profit as a software product itself, nor may it be included in or
-  distributed with commercial products or otherwise distributed by commercial
-  concerns to their clients or customers without written permission of the
-  Office of Kermit Development and Distribution, Columbia University.  This
-  copyright notice must not be removed, altered, or obscured.
+  Copyright (C) 1985, 2000,
+    Trustees of Columbia University in the City of New York.
+    All rights reserved.  See the C-Kermit COPYING.TXT file or the
+    copyright text in the ckcmai.c module for disclaimer and permissions.
 */
 #ifndef CKCNET_H
 #define CKCNET_H
@@ -28,6 +25,12 @@
 #define NET_BIOS 8			/* IBM NetBios */
 #define NET_SLAT 9			/* Meridian Technologies' SuperLAT */
 #define NET_FILE 10			/* Read from a file */
+#define NET_CMD  11                     /* Read from a sub-process */
+#define NET_DLL  12                     /* Load a DLL for use as comm channel*/
+#define NET_SSH  13                     /* Use SSH */
+#define NET_IX25 14			/* IBM AIX 4.1 X.25 */
+#define NET_HX25 15			/* HP-UX 10 X.25 */
+#define NET_PTY  16			/* Pseudoterminal */
 
 #ifdef OS2				/* In OS/2, only the 32-bit */
 #ifndef __32BIT__			/* version gets NETBIOS */
@@ -43,12 +46,6 @@
 #endif /* SUPERLAT */
 #endif /* _M_PPC */
 
-#ifdef _M_ALPHA
-#ifdef SUPERLAT
-#undef SUPERLAT
-#endif /* SUPERLAT */
-#endif /* _M_ALPHA */
-
 #ifdef NPIPE				/* For items in common to */
 #define NPIPEORBIOS			/* Named Pipes and NETBIOS */
 #endif /* NPIPE */
@@ -60,36 +57,92 @@
 
 /* Network virtual terminal protocols */
 
+#define NP_DEFAULT 255
 #define NP_NONE 0			/* None (async) */
 #define NP_TELNET 1			/* TCP/IP telnet */
 #define NP_VTP 2			/* ISO Virtual Terminal Protocol */
 #define NP_X3 3				/* CCITT X.3 */
 #define NP_X28 4			/* CCITT X.28 */
 #define NP_X29 5			/* CCITT X.29 */
-#define NP_RLOGIN 6         /* TCP/IP Rlogin */
-#define NP_KERMIT 7         /* TCP/IP Kermit */
-#define NP_FTP    8         /* TCP/IP FTP */
+#define NP_RLOGIN 6			/* TCP/IP Remote login */
+#define NP_KERMIT 7			/* TCP/IP Kermit */
+#define NP_FTP    8			/* TCP/IP FTP */
+#define NP_TCPRAW 9			/* TCP/IP Raw socket */
+#define NP_TCPUNK 10                    /* TCP/IP Unknown */
+#define NP_SSL 11                       /* TCP/IP SSLv23 */
+#define NP_TLS 12                       /* TCP/IP TLSv1 */
+#define NP_SSL_TELNET 13                /* TCP/IP Telnet over SSLv23 */
+#define NP_TLS_TELNET 14                /* TCP/IP Telnet over TLSv1 */
+#define NP_K4LOGIN     15               /* TCP/IP Kerberized remote login */
+#define NP_EK4LOGIN    16               /* TCP/IP Encrypted Kerberized ... */
+#define NP_K5LOGIN     17               /* TCP/IP Kerberized remote login */
+#define NP_EK5LOGIN    18               /* TCP/IP Encrypted Kerberized ... */
 
 #define NP_CTERM 20			/* DEC CTERM */
 #define NP_LAT 21			/* DEC LAT */
 /* others here... */
 
-/* TELNET Newline Mode */
-       
-#define TNL_CR     0			/* CR sends bare carriage return */
-#define TNL_CRNUL  1			/* CR and NUL */
-#define TNL_CRLF   2			/* CR and LF */
-#define TNL_LF     3            /* LF instead of CR */
-
-/* TELNET Binary Mode */
-
-#define    TN_BM_RF 0       /*  Negotiation REFUSED */
-#define    TN_BM_AC 1       /*  Negotiation ACCEPTED */
-#define    TN_BM_RQ 2       /*  Negotiation REQUESTED */
-
 /* RLOGIN Modes */
-#define    RL_RAW     0     /*  Do Not Process XON/XOFF */
-#define    RL_COOKED  1     /*  Do Process XON/XOFF */
+#define    RL_RAW     0			/*  Do Not Process XON/XOFF */
+#define    RL_COOKED  1			/*  Do Process XON/XOFF */
+
+/* Encryption types */
+
+#define CX_NONE    999
+
+#ifdef ENCTYPE_ANY
+#define CX_AUTO ENCTYPE_ANY
+#else
+#define CX_AUTO 0
+#endif /* ENCTYPE_ANY */
+
+#ifdef ENCTYPE_DES_CFB64
+#define CX_DESC64 ENCTYPE_DES_CFB64
+#else
+#define CX_DESC64 1
+#endif /* ENCTYPE_DES_CFB64 */
+
+#ifdef ENCTYPE_DES_OFB64
+#define CX_DESO64 ENCTYPE_DES_OFB64
+#else
+#define CX_DESO64 2
+#endif /* ENCTYPE_DES_OFB64 */
+
+#ifdef ENCTYPE_DES3_CFB64
+#define CX_DES3C64 ENCTYPE_DES3_CFB64
+#else
+#define CX_DES3C64 3
+#endif /* ENCTYPE_DES_CFB64 */
+
+#ifdef ENCTYPE_DES3_OFB64
+#define CX_DESO64 ENCTYPE_DES3_OFB64
+#else
+#define CX_DES3O64 4
+#endif /* ENCTYPE_DES_OFB64 */
+
+#ifdef ENCTYPE_CAST5_40_CFB64
+#define CX_C540C64 ENCTYPE_CAST5_40_CFB64
+#else
+#define CX_C540C64 8
+#endif /* ENCTYPE_CAST5_40_CFB64 */
+
+#ifdef ENCTYPE_CAST5_40_OFB64
+#define CX_C540O64 ENCTYPE_CAST5_40_OFB64
+#else
+#define CX_C540O64 9
+#endif /* ENCTYPE_CAST5_40_OFB64 */
+
+#ifdef ENCTYPE_CAST128_CFB64
+#define CX_C128C64 ENCTYPE_CAST128_CFB64
+#else
+#define CX_C128C64 10
+#endif /* ENCTYPE_CAST128_CFB64 */
+
+#ifdef ENCTYPE_CAST128_OFB64
+#define CX_C128O64 ENCTYPE_CAST128_OFB64
+#else
+#define CX_C128O64 11
+#endif /* ENCTYPE_CAST128_OFB64 */
 
 /* Basic network function prototypes, common to all. */
 
@@ -99,10 +152,9 @@ _PROTOTYP( int netflui, (void) );
 _PROTOTYP( int nettchk, (void) );
 _PROTOTYP( int netbreak, (void) );
 _PROTOTYP( int netinc, (int) );
-_PROTOTYP( int netxin, (int, char*) );
-_PROTOTYP( int nettol, (char *, int) );
-_PROTOTYP( int nettoc, (char) );
-
+_PROTOTYP( int netxin, (int, CHAR *) );
+_PROTOTYP( int nettol, (CHAR *, int) );
+_PROTOTYP( int nettoc, (CHAR) );
 /*
   SunLink X.25 support by Marcello Frutig, Catholic University,
   Rio de Janeiro, Brazil, 1990.
@@ -125,6 +177,23 @@ _PROTOTYP( int nettoc, (char) );
 #ifdef SUNX25
 #define ANYX25
 #endif /* SUNX25 */
+
+#ifdef IBMX25				/* AIX 4.1 X.25 */
+#ifndef AIX41
+#undef IBMX25
+#else /* AIX41 */
+#define ANYX25
+#define MAX_USER_DATA NPI_MAX_DATA	/* used for buffer sizes */
+#endif /* AIX41 */
+#endif /* IBMX25 */
+
+#ifdef HPX25				/* HP-UX 10.* X.25 */
+#ifndef HPUX10
+#undef HPX25
+#else /* HPUX10 */
+#define ANYX25
+#endif /* HPUX10 */
+#endif /* HPX25 */
 
 #ifdef ANYX25
 #ifndef NETCONN				/* ANYX25 implies NETCONN */
@@ -172,6 +241,18 @@ _PROTOTYP( int nettoc, (char) );
 #endif /* ANYX25 */
 
 #ifdef SUNX25
+#ifdef SOLARIS25			/* and presumably SunLink 9.xx */
+#include <fcntl.h>
+#include <errno.h>
+#include <sys/ioccom.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/sockio.h>
+#include <sundev/syncstat.h>
+#include <netx25/x25_pk.h>
+#include <netx25/x25_ctl.h>
+#include <netx25/x25_ioctl.h>
+#else
 #include <sys/ioctl.h>			/* X.25 includes, Sun only */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,14 +272,78 @@ _PROTOTYP( int nettoc, (char) );
 #include <netx25/x25_pk.h>
 #include <netx25/x25_ctl.h>
 #include <netx25/x25_ioctl.h>
+#endif /* SOLARIS25 */
 #endif /* SUNX25 */
 
 #ifdef ANYX25
 
+#ifdef IBMX25				/* X.25 includes, AIX only */
+#include <fcntl.h>
+#include <sys/twtypes.h>
+#include <sys/twlib.h>
+
+#include <sys/stream.h>
+#include <stropts.h>
+
+#define NPI_20				/* required to include the whole NPI */
+#include <sys/npi_20.h>
+#include <sys/npiapi.h>
+#include <sys/pktintf.h>
+
+#include <odmi.h>			/* required for access to the ODM   */
+#include <sys/cfgodm.h>			/* database, needed to find out the */
+					/* local NUA. see x25local_nua()    */
+
+
+/* IBM X25 NPI generic primitive type */
+typedef union N_npi_ctl_t {
+    ulong		PRIM_type;		/* generic primitive type */
+    char		buffer[NPI_MAX_CTL];	/* maximum primitive size */
+    N_bind_ack_t        bind_ack;
+    N_bind_req_t        bind_req;
+    N_conn_con_t        conn_con;
+    N_conn_ind_t        conn_ind;
+    N_conn_req_t        conn_req;
+    N_conn_res_t        conn_res;
+    N_data_req_t        data_req;
+    N_data_ind_t        data_ind;
+    N_discon_ind_t      discon_ind;
+    N_discon_req_t      discon_req;
+    N_error_ack_t       error_ack;
+    N_exdata_ind_t      exdata_ind;
+    N_info_ack_t        info_ack;
+    N_ok_ack_t          ok_ack;
+    N_reset_con_t       reset_con;
+    N_reset_req_t       reset_req;
+    N_reset_ind_t       reset_ind;
+} N_npi_ctl_t;
+
+/* some extra definitions to help out */
+typedef char	x25addr_t[45];		/* max 40 defined by CCITT */
+typedef char	N_npi_data_t[NPI_MAX_DATA];
+
+/* fd or server waiting for connections, used by netclos and netopen */
+extern int x25serverfd;
+
+#endif /* IBMX25 */
+
+#ifdef HPX25				/* X.25 includes, HP-UX only */
+#include <x25/ccittproto.h>
+#include <x25/x25.h>
+#include <x25/x25addrstr.h>
+#include <x25/x25codes.h>
+#include <x25/x25hd_ioctl.h>
+#include <x25/x25ioctls.h>
+#include <x25/x25str.h>
+#include <sys/ioctl.h>
+#endif /* HPX25 */
+
 /* C-Kermit X.3 / X.25 / X.29 / X.121 support functions */
 
-_PROTOTYP( VOID shopad, (void) );
-_PROTOTYP( VOID shox25, (void) );
+/* (riehm: this list of functions isn't quite right for AIX) */
+
+_PROTOTYP( int shopad, (int) );
+_PROTOTYP( int shox25, (int) );
 _PROTOTYP( VOID initpad, (void) );
 _PROTOTYP( VOID setpad, (CHAR *, int) );
 _PROTOTYP( VOID readpad, (CHAR *, int, CHAR *) );
@@ -218,6 +363,15 @@ _PROTOTYP( int setpadp, (void) );
 _PROTOTYP( int setx25, (void) );
 _PROTOTYP( int x25xin, (int, CHAR *) );
 _PROTOTYP( int x25inl, (CHAR *, int, int, CHAR) );
+
+#ifdef IBMX25
+					/* setup x25 */
+_PROTOTYP( ulong x25bind, (int, char *, char *, int, int, int, ulong) );
+_PROTOTYP( int x25call, (int, char *, char *) ); /* connect to remote */
+_PROTOTYP( int x25unbind, (int) );	/* disconnect */
+_PROTOTYP( char *x25prim, (int) );	/* display primitives */
+_PROTOTYP( int x25local_nua, (char *) ); /* find local NUA */
+#endif /* IBMX25 */
 
 #endif /* ANYX25 */
 
@@ -243,7 +397,7 @@ _PROTOTYP( int x25inl, (CHAR *, int, int, CHAR) );
 #endif /* TCPIPLIB */
 #endif /* DEC_TCPIP */
 
-/* TGV/SRI MultiNet, TCP/IP for VAX/VMS */
+/* SRI/TGV/Cisco/Process MultiNet, TCP/IP for VAX/VMS */
 
 #ifdef MULTINET				/* MULTINET implies TCPSOCKET */
 #ifndef TCPSOCKET
@@ -291,6 +445,28 @@ _PROTOTYP( int x25inl, (CHAR *, int, int, CHAR) );
 #endif /* TCPSOCKET */
 #endif /* INTERLAN */
 
+#ifdef BEOSORBEBOX
+#ifndef TCPIPLIB
+#define TCPIPLIB
+#endif /* TCPIPLIB */
+#define socket_errno    h_errno
+#define socket_read(x,y,z) 	recv(x,y,sizeof(char),z)
+#define socket_write(x,y,z) 	send(x,y,sizeof(char),z)
+#define socket_ioctl	ioctl
+#define socket_close(x)         closesocket(x)
+#ifndef FIONBIO
+#define FIONBIO 2
+#endif /* FIONBIO */
+#ifndef COHERENT			/* eh? */
+#ifndef FIONREAD
+#define FIONREAD       1
+#endif /* FIONREAD */
+#endif /* COHERENT */
+#ifndef SIOCATMARK
+#define SIOCATMARK     3
+#endif /* SIOCATMARK */
+#endif /* BEOSORBEBOX */
+
 #ifdef COMMENT /* no longer used but might come in handy again later... */
 /*
   CK_READ0 can (and should) be defined if and only if:
@@ -310,19 +486,101 @@ _PROTOTYP( int x25inl, (CHAR *, int, int, CHAR) );
 #endif /* CK_READ0 */
 #endif /* COMMENT */
 
+#ifdef TCPSOCKET
+#ifndef NOHADDRLIST
+#ifndef HADDRLIST
+#ifdef SUNOS41
+#define HADDRLIST
+#endif /* SUNOS41 */
+#ifdef SOLARIS
+#define HADDRLIST
+#endif /* SOLARIS */
+#ifdef LINUX
+#define HADDRLIST
+#endif /* LINUX */
+#ifdef AIXRX
+#define HADDRLIST
+#endif /* AIXRS */
+#ifdef HPUX
+#define HADDRLIST
+#endif /* HPUX */
+#ifdef IRIX
+#define HADDRLIST
+#endif /* IRIX */
+#ifdef I386IX
+#define HADDRLIST
+#endif /* I386IX */
+#endif /* HADDRLIST */
+#endif /* NOHADDRLIST */
+#endif /* TCPSOCKET */
+
 /* Telnet protocol */
 
 #ifdef TCPSOCKET			/* TCPSOCKET implies TNCODE */
 #ifndef TNCODE				/* Which means... */
 #define TNCODE				/* Compile in telnet code */
 #endif /* TNCODE */
+
+/*
+   Platforms where we must call gethostname(buf,len) and then
+   gethostbyname(buf) to get local IP address, rather than calling
+   gethostbyname("").
+*/
+#ifndef CKGHNLHOST
+#ifdef datageneral
+#define CKGHNLHOST
+#else
+#ifdef SOLARIS
+#define CKGHNLHOST
+#else
+#ifdef SUNOS4
+#define CKGHNLHOST
+#else
+#ifdef UNIXWARE
+#define CKGHNLHOST
+#else
+#ifdef SINIX
+#define CKGHNLHOST
+#endif /* SINIX */
+#endif /* UNIXWARE */
+#endif /* SUNOS4 */
+#endif /* SOLARIS */
+#endif /* datageneral */
+#endif /* CKGHNLHOST */
+
+/*
+  Telnet local-echo buffer, used for saving up user data that can't be
+  properly displayed and/or evaluated until pending Telnet negotiations are
+  complete.  TTLEBUF is defined for platforms (like UNIX) where net i/o is
+  done by the same routines that do serial i/o (in which case the relevant
+  code goes into the ck?tio.c module, in the ttinc(), ttchk(), etc, routines);
+  NETLETBUF is defined for platforms (like VMS) that use different APIs for
+  network and serial i/o, and enables the copies of the same routines that
+  are in ckcnet.c.
+*/
+#ifndef TTLEBUF
+#ifdef UNIX
+#define TTLEBUF
+#else
+#ifdef datageneral
+#define TTLEBUF
+#endif /* datageneral */
+#endif /* UNIX */
+#endif /* TTLEBUF */
+
+#ifndef NETLEBUF
+#ifdef VMS
+#define NETLEBUF
+#endif /* VMS */
+#endif /* NETLEBUF */
+
 #ifndef RLOGCODE			/* What about Rlogin? */
 #ifndef NORLOGIN
 /*
   Rlogin can be enabled only for UNIX versions that have both SIGURG
   (SCO doesn't) and CK_TTGWSIZ (OSF/1 doesn't), so we don't assume that
   any others have these without verifying first.  Not that it really makes
-  much difference since you can only use Rlogin if you are root...
+  little difference since you can only use Rlogin if you are root...
 */
 #ifdef SUNOS41
 #define RLOGCODE
@@ -331,6 +589,12 @@ _PROTOTYP( int x25inl, (CHAR *, int, int, CHAR) );
 #define RLOGCODE
 #else
 #ifdef HPUX9
+#define RLOGCODE
+#else
+#ifdef HPUX10
+#define RLOGCODE
+#else
+#ifdef OSF40
 #define RLOGCODE
 #else
 #ifdef NEXT
@@ -360,8 +624,10 @@ _PROTOTYP( int x25inl, (CHAR *, int, int, CHAR) );
 #endif /* UNIXWARE */
 #endif /* AIX41 */
 #endif /* NEXT */
-#endif /* SOLARIS */
+#endif /* OSF40 */
+#endif /* HPUX10 */
 #endif /* HPUX9 */
+#endif /* SOLARIS */
 #endif /* SUNOS41 */
 #endif /* NORLOGIN */
 #ifdef VMS				/* VMS */
@@ -376,6 +642,12 @@ _PROTOTYP( int x25inl, (CHAR *, int, int, CHAR) );
 #endif /* TCPSOCKET */
 #endif /* SUNX25 */
 
+#ifndef TCPSOCKET
+#ifndef NO_DNS_SRV
+#define NO_DNS_SRV
+#endif /* NO_DNS_SRV */
+#endif /* TCPSOCKET */
+
 /* This is the TCPSOCKET section... */
 
 #ifdef TCPSOCKET
@@ -384,17 +656,57 @@ _PROTOTYP( int x25inl, (CHAR *, int, int, CHAR) );
 #define NETCONN
 #endif /* NETCONN */
 
-#ifdef TCPSOCKET			/* select() is required to support */
-#ifndef NOLISTEN			/* incoming connections. */
-#ifndef SELECT
+#ifndef NO_DNS_SRV
+#ifdef OS2ONLY
+#define NO_DNS_SRV
+#endif /* OS2ONLY */
+#ifdef VMS
+#define NO_DNS_SRV
+#endif /* VMS */
+#ifdef STRATUS
+#define NO_DNS_SRV
+#endif /* STRATUS */
+#ifdef datageneral
+#define NO_DNS_SRV
+#endif /* datageneral */
+#ifdef ultrix
+#define NO_DNS_SRV
+#endif /* ultrix */
+#ifdef NEXT
+#define NO_DNS_SRV
+#endif /* NEXT */
+#endif /* NO_DNS_SRV */
+
+#ifndef CK_DNS_SRV                      /* Use DNS SRV records to determine */
+#ifndef NO_DNS_SRV                      /* host and ports */
+#define CK_DNS_SRV
+#endif /* NO_DNS_SRV */
+#endif /* CK_DNS_SRV */
+
+#ifndef NOLISTEN			/* select() is required to support */
+#ifndef SELECT				/* incoming connections. */
+#ifndef VMS
 #ifndef OS2
 #define NOLISTEN
 #endif /* OS2 */
+#endif /* VMS */
 #endif /* SELECT */
 #endif /* NOLISTEN */
-#endif /* TCPSOCKET */
 
 /* BSD sockets library header files */
+
+#ifdef VMS
+/*
+  Because bzero() and bcopy() are not portable among VMS versions,
+  or compilers, or TCP/IP products, etc.
+*/
+#ifndef bzero
+#define bzero(s,n) memset(s,0,n)
+#endif /* bzero */
+#ifndef bcopy
+#define bcopy(h,a,l) memcpy(a,h,l)
+#endif /* bcopy */
+#endif /* VMS */
 
 #ifdef UNIX				/* UNIX section */
 
@@ -435,16 +747,26 @@ _PROTOTYP( void bzero, (char *, int) );
 #include <interlan/il_errno.h>
 #include <interlan/in.h>
 #include <interlan/telnet.h>		/* Why twice ? ? ? */
-#else					/* Normal BSD TCP/IP library */
+#else /* Not Interlan */
+#ifdef BEOSORBEBOX
+#include <socket.h>
+#else /* Not BEBOX */			/* Normal BSD TCP/IP library */
+#ifdef COMMENT
 #ifndef HPUX
 #include <arpa/telnet.h>
 #endif /* HPUX */
+#endif /* COMMENT */
+#ifdef SCO234
+#include <sys/errno.tcp.h>
+#include <sys/types.tcp.h>
+#endif /* SCO234 */
 #include <sys/socket.h>
 #ifdef WOLLONGONG
 #include <sys/in.h>
 #else
 #include <netinet/in.h>
 #endif /* WOLLONGONG */
+#endif /* BEOSORBEBOX */
 #endif /* INTERLAN */
 
 #ifndef EXCELAN
@@ -456,7 +778,9 @@ _PROTOTYP( void bzero, (char *, int) );
 #else
 #ifndef OXOS
 #ifndef HPUX
+#ifndef BEOSORBEBOX
 #include <arpa/inet.h>
+#endif /* BEOSORBEBOX */
 #endif /* HPUX */
 #else /* OXOS */
 /* In too many releases of X/OS, <arpa/inet.h> declares inet_addr() as
@@ -506,9 +830,6 @@ unsigned long inet_network();
   -DINADDRX can be included in the CFLAGS on the cc command line.
 */
 #ifndef NOINADDRX
-#ifdef DGUX540				/* Data General UX 5.40 */
-#define INADDRX
-#endif /* DGUX540 */
 #ifdef DU2				/* DEC Ultrix 2.0 */
 #define INADDRX
 #endif /* DU2 */
@@ -518,23 +839,23 @@ unsigned long inet_network();
 
 #ifdef VMS				/* (Open)VMS section */
 
-#ifdef WINTCP				/* WIN/TCP = PathWay for VMS */
-#ifdef OLD_TWG
-#include "twg$tcp:[netdist.include.sys]errno.h"
-#include "twg$tcp:[netdist.include.sys]types2.h"   /* avoid some duplicates */
-#else
-#include <errno.h>
-#include "twg$tcp:[netdist.include.sys]types.h"
-#endif /* OLD_TWG */
-#include "twg$tcp:[netdist.include.sys]socket.h"
-#include "twg$tcp:[netdist.include]netdb.h"
-#include "twg$tcp:[netdist.include.sys]domain.h"
-#include "twg$tcp:[netdist.include.sys]protosw.h"
-#include "twg$tcp:[netdist.include.netinet]in.h"
-#include "twg$tcp:[netdist.include.sys]ioctl.h"
-#endif /* WINTCP */
-
 #ifdef MULTINET				/* TGV MultiNet */
+/*
+  In C-Kermit 7.0 Beta.08 we started getting scads of compile time warnings
+  in Multinet builds: "blah" is implicitly declared as a function, where blah
+  is socket_read/write/close, ntohs, htons, getpeername, accept, select, etc.
+  I have no idea why -- these routines are declared in the header files below,
+  and the includes haven't changed.  The executable still seems to work OK.
+  Messing with the order of the following includes is disastrous.
+*/
+#ifdef MULTINET_NO_PROTOTYPES
+#undef MULTINET_NO_PROTOTYPES
+#endif /* MULTINET_NO_PROTOTYPES */
+
+#ifdef  __cplusplus
+#undef  __cplusplus
+#endif /*  __cplusplus */
+
 #include "multinet_root:[multinet.include]errno.h"
 #include "multinet_root:[multinet.include.sys]types.h"
 #include "multinet_root:[multinet.include.sys]socket.h"
@@ -542,12 +863,28 @@ unsigned long inet_network();
 #include "multinet_root:[multinet.include.netinet]in.h"
 #include "multinet_root:[multinet.include.arpa]inet.h"
 #include "multinet_root:[multinet.include.sys]ioctl.h"
+
+#ifdef COMMENT
+/*
+  No longer needed because now bzero/bcopy are macros defined as
+  memset/memmove in all VMS builds.
+*/
 /*
   We should be able to pick these up from <strings.h> but it's
-  not portable between VAXC and DECC.
+  not portable between VAXC and DECC.  And even with DECC 5.x we have a
+  difference between VAX and Alpha.  We get warnings here on the VAX
+  with DECC 5.6-003 but they are not fatal.
 */
+#ifndef __DECC_VER
+#ifndef bzero
 _PROTOTYP( void bzero, (char *, int) );
+#endif /* bzero */
+#ifndef bcopy
 _PROTOTYP( void bcopy, (char *, char *, int) );
+#endif /* bcopy */
+#endif /* __DECC_VER */
+#endif /* COMMENT */
+
 #ifdef __DECC
 /*
    If compiling under DEC C the socket calls must not be prefixed with
@@ -566,18 +903,58 @@ _PROTOTYP( void bcopy, (char *, char *, int) );
 #define alarm decc$alarm
 #endif /* COMMENT */
 #endif /* __DECC */
-#endif /* MULTINET */
+
+#else /* Not MULTINET */
+
+#ifdef WINTCP				/* WIN/TCP = PathWay for VMS */
+#ifdef OLD_TWG
+#include "twg$tcp:[netdist.include.sys]errno.h"
+#include "twg$tcp:[netdist.include.sys]types2.h" /* avoid some duplicates */
+#else
+#include "twg$tcp:[netdist.include]socket_aliases.h"
+#include <errno.h>
+#include "twg$tcp:[netdist.include.sys]types.h"
+#endif /* OLD_TWG */
+#include "twg$tcp:[netdist.include.sys]socket.h"
+#include "twg$tcp:[netdist.include]netdb.h"
+#include "twg$tcp:[netdist.include.sys]domain.h"
+#include "twg$tcp:[netdist.include.sys]protosw.h"
+#include "twg$tcp:[netdist.include.netinet]in.h"
+#include "twg$tcp:[netdist.include.arpa]inet.h"
+#include "twg$tcp:[netdist.include.sys]ioctl.h"
+
+#else /* Not WINTCP */
 
 #ifdef DEC_TCPIP
+#ifdef UCX50
+#ifndef IF_DOT_H
+#define IF_DOT_H
+#endif /*  IF_DOT_H */
+#endif /* UCX50 */
+
+#ifdef IF_DOT_H
+#include <if.h>				/* Needed to put up u_int typedef */
+#else
+#ifdef NEEDUINT
+typedef unsigned int u_int;
+#endif /* NEEDUINT */
+#endif /* IF_DOT_H */
+
 #include <in.h>
 #include <netdb.h>
 #include <socket.h>
 #include "ckvioc.h"
 #define socket_errno errno
+
+#ifdef COMMENT
+/*
+  No longer needed because now bzero/bcopy are macros defined as
+  memset/memmove in all VMS builds.
+*/
 /*
   Translation: In <strings.h>, which exists only for DECC >= 5.2, bzero()
   and bcopy() are declared only for OpenVMS >= 7.0.  This still might need
-  adjustment for DECC 5.0 and (if there is such a thing) 5.1.
+  adjustment for DECC 5.0 and higher.
 */
 #ifdef __DECC_VER
 #ifdef VMSV70
@@ -594,10 +971,13 @@ _PROTOTYP( void bcopy, (char *, char *, int) );
 #define bzero(s,n) memset(s,0,n)
 #define bcopy(h,a,l) memmove(a,h,l)
 #endif /* __DECC_VER */
+#endif /* COMMENT */
+
 #define socket_read 	read
 #define socket_write 	write
 #define socket_ioctl	ioctl
 #define socket_close    close
+
 #ifdef __DECC
 int ioctl (int d, int request, void *argp);
 #else
@@ -672,9 +1052,9 @@ typedef	struct fd_set {
 #define	FD_ISSET(n, p)	((p)->fds_bits[(n)/NFDBITS] & (1 << ((n) % NFDBITS)))
 #define	FD_COPY(f, t)	bcopy(f, t, sizeof(*(f)))
 #define	FD_ZERO(p)	bzero(p, sizeof(*(p)))
-
 #endif /* !NBBY */
-#endif /* DEC_TCPIP */
+
+#else  /* Not DEC_TCPIP */
 
 #ifdef CMU_TCPIP
 #include <types.h>
@@ -684,8 +1064,12 @@ typedef	struct fd_set {
 #include <ioctl.h>
 #include "ckvioc.h"
 #define socket_errno errno
-#define bzero(s,n) memset(s,0,n) 
+#ifdef COMMENT
+/* This is now done above for all VMS builds */
+#define bzero(s,n) memset(s,0,n)
 #define bcopy(h,a,l) memmove(a,h,l)
+#endif /* COMMENT */
+
 /*
  * Routines supplied in LIBCMU.OLB
  */
@@ -693,14 +1077,13 @@ typedef	struct fd_set {
 #define socket_read 	cmu_read
 #define socket_write 	cmu_write
 #define socket_close    cmu_close
+
 #endif /* CMU_TCPIP */
+#endif /* DEC_TCPIP */
+#endif /* WINTCP */
+#endif /* MULTINET */
 
 #else /* Not VMS */
-
-#ifdef BEBOX
-#define TCPIPLIB
-#define socket_close(x) closesocket(x)
-#endif /* BEBOX */
 
 #ifdef OS2
 #include "ckonet.h"
@@ -717,9 +1100,15 @@ typedef	struct fd_set {
 #endif /* STRATUS */
 
 #ifdef OSK
+#ifndef OSKXXC
 #include <inet/in.h>
 #include <inet/netdb.h>
 #include <inet/socket.h>
+#else
+#include <INET/in.h>
+#include <INET/netdb.h>
+#include <INET/socket.h>
+#endif /* OSKXXC */
 #define bzero(s,n) memset(s,0,n)
 #define bcopy(h,a,l) memcpy(a,h,l)
 typedef char * caddr_t; /* core address type */
@@ -730,81 +1119,24 @@ typedef char * caddr_t; /* core address type */
 #endif /* TCPSOCKET */
 
 #ifdef TNCODE				/* If we're compiling telnet code... */
-/*
-  Make sure telnet symbols are defined; can't rely on library header files
-  for any of them.
-*/
-#ifndef IAC				/* First the telnet commands */
-#define IAC 255
-#endif /* IAC */
-#ifndef DONT
-#define DONT 254
-#endif /* DONT */
-#ifndef DO
-#define DO 253
-#endif /* DO */
-#ifndef WONT
-#define WONT 252
-#endif /* WONT */
-#ifndef WILL
-#define WILL 251
-#endif /* WILL */
-#ifndef SB
-#define SB 250
-#endif /* SB */
-#ifndef BREAK
-#define BREAK 243
-#endif /* BREAK */
-#ifndef SE
-#define SE 240
-#endif /* SE */
-
-/* Then the options */
-#ifndef TELOPT_BINARY 
-#define TELOPT_BINARY 0
-#endif /* TELOPT_BINARY */
-#ifndef TELOPT_ECHO			
-#define TELOPT_ECHO 1
-#endif /* TELOPT_ECHO */
-#ifndef TELOPT_SGA
-#define	TELOPT_SGA 3
-#endif /* TELOPT_SGA */
-#ifndef TELOPT_STATUS
-#define	TELOPT_STATUS 5
-#endif /* TELOPT_STATUS */
-#ifndef TELOPT_TTYPE
-#define	TELOPT_TTYPE 24
-#endif /* TELOPT_TTYPE */
-#ifndef TELOPT_NAWS
-#define TELOPT_NAWS 31
-#endif  /* TELOPT_NAWS */
-#ifndef NTELOPTS
-#define	NTELOPTS 24
-#endif /* NTELOPTS */
-#ifndef TELOPT_NEWENVIRON
-#define TELOPT_NEWENVIRON 39
-#endif /* TELOPT_NEWENVIRON */
-
-#ifdef OS2
-#define CK_ENVIRONMENT
-#endif /* OS2 */
-
-/* Systems where we know we can define TELNET NAWS automatically. */
-
-#ifndef CK_NAWS				/* In other words, if both */
-#ifdef CK_TTGWSIZ			/* TNCODE and TTGWSIZ are defined */
-#define CK_NAWS				/* then we can do NAWS. */
-#endif /* CK_TTGWSIZ */
-#endif /* CK_NAWS */
-
-/* Telnet protocol functions defined in C-Kermit */
-
-_PROTOTYP( int tn_ini, (void) );	/* Telnet protocol support */
-_PROTOTYP( int tn_sopt, (int, int) );
-_PROTOTYP( int tn_doop, (CHAR, int, int (*)(int) ) );
-_PROTOTYP( int tn_sttyp, (void) );
-_PROTOTYP( int tn_snenv, (CHAR *, int) ) ;
-_PROTOTYP( int tnsndbrk, (void) );
+#ifndef IKS_OPTION
+#ifndef STRATUS
+#define IKS_OPTION
+#endif /* STRATUS */
+#endif /* IKS_OPTION */
+#include "ckctel.h"
+#else
+extern int sstelnet;
+#ifdef IKSD
+#undef IKSD
+#endif /* IKSD */
+#ifndef NOIKSD
+#define NOIKSD
+#endif /* NOIKSD */
+#ifdef IKS_OPTION
+#undef IKS_OPTION
+#endif /* IKS_OPTION */
+#endif /* TNCODE */
 
 #ifndef NOTCPOPTS
 /*
@@ -839,6 +1171,7 @@ _PROTOTYP( int tnsndbrk, (void) );
 #endif /* SO_RCVBUF */
 #endif /* NOTCPOPTS */
 
+#ifdef TCPSOCKET
 #ifdef SOL_SOCKET
 #ifdef TCP_NODELAY
 _PROTOTYP( int no_delay, (int) );
@@ -846,60 +1179,38 @@ _PROTOTYP( int no_delay, (int) );
 #ifdef SO_KEEPALIVE
 _PROTOTYP( int keepalive, (int) ) ;
 #endif /* SO_KEEPALIVE */
-#ifdef SO_LINGER 
+#ifdef SO_LINGER
 _PROTOTYP( int ck_linger, (int, int) ) ;
 #endif /* SO_LINGER */
 #ifdef SO_SNDBUF
-_PROTOTYP( int sendbuf,(int) ) ; 
+_PROTOTYP( int sendbuf,(int) ) ;
 #endif /* SO_SNDBUF */
 #ifdef SO_RCVBUF
 _PROTOTYP( int recvbuf, (int) ) ;
 #endif /* SO_RCVBUF */
+#ifdef SO_DONTROUTE
+_PROTOTYP(int dontroute, (int));
+#endif /* SO_DONTROUTE */
 #endif /* SOL_SOCKET */
+_PROTOTYP( int getlocalipaddr, (VOID));
+_PROTOTYP( int getlocalipaddrs, (char *,int,int));
+_PROTOTYP( char * ckgetpeer, (VOID));
+_PROTOTYP( char * ckgetfqhostname,(char *));
 
-/* On HP-9000/500 HP-UX 5.21 this stuff is not defined in any header file */
+/* AIX */
 
-#ifdef hp9000s500
-#ifndef NEEDSELECTDEFS
-#define NEEDSELECTDEFS
-#endif /* NEEDSELECTDEFS */
-#endif /* hp9000s500 */
-
-#ifdef NEEDSELECTDEFS
-typedef long fd_mask;
-#ifndef NBBY
-#define NBBY 8
-#endif /* NBBY */
-#ifndef FD_SETSIZE
-#define FD_SETSIZE 32
-#endif /* FD_SETSIZE */
-#ifndef NFDBITS
-#define NFDBITS (sizeof(fd_mask) * NBBY)
-#endif /* NFDBITS */
-#ifndef howmany
-#define howmany(x,y) (((x)+((y)-1))/(y))
-#endif /* howmany */
-typedef struct fd_set {
-    fd_mask fds_bits[howmany(FD_SETSIZE, NFDBITS)];
-} fd_set;
-#ifndef FD_SET
-#define FD_SET(n,p) ((p)->fds_bits[(n)/NFDBITS] |= (1 << ((n) % NFDBITS)))
-#endif /* FD_SET */
-#ifndef FD_CLR
-#define FD_CLR(n,p) ((p)->fds_bits[(n)/NFDBITS] &= ~(1 << ((n) % NFDBITS)))
-#endif /* FD_CLR */
-#ifndef FD_ISSET
-#define FD_ISSET(n,p) ((p)->fds_bits[(n)/NFDBITS] & (1 << ((n) % NFDBITS)))
-#endif /* FD_ISSET */
-#ifndef FD_COPY
-#define FD_COPY(f,t) (bcopy(f,t,sizeof(*(f)))
-#endif /* FD_COPY */
-#ifndef FD_ZERO
-#define FD_ZERO(p) bzero((char *)(p),sizeof(*(p)))
-#endif /* FD_ZERO */
-#endif /* NEEDSELECTDEFS */
-
-#endif /* TNCODE */
+#ifdef AIXRS
+#ifndef TCP_NODELAY
+#define TCP_NODELAY 0x1
+#endif /* TCP_NODELAY */
+#ifndef TCP_MAXSEG
+#define TCP_MAXSEG 0x2
+#endif /* TCP_MAXSEG */
+#ifndef TCP_KEEPALIVE
+#define TCP_KEEPALIVE 0x8
+#endif /* TCP_KEEPALIVE */
+#endif /* AIXRS */
+#endif /* TCPSOCKET */
 
 #ifdef RLOGCODE
 #ifndef CK_TTGWSIZ
@@ -912,5 +1223,43 @@ SORRY_RLOGIN_REQUIRES_TTGWSIZ_see_ckcplm.doc
 SORRY_CK_NAWS_REQUIRES_TTGWSIZ_see_ckcplm.doc
 #endif /* CK_TTGWSIZ */
 #endif /* CK_NAWS */
+
+#ifndef PF_INET
+#ifdef  AF_INET
+#define PF_INET AF_INET
+#endif /* AF_INET */
+#endif /* PF_INET */
+
+#ifndef IPPORT_ECHO
+#define IPPORT_ECHO 7
+#endif /* IPPORT_ECHO */
+
+#ifdef CK_KERBEROS
+#ifdef RLOGCODE
+_PROTOTYP(int ck_krb_rlogin,(CHAR *, int, CHAR *, CHAR *, CHAR *,
+                              struct sockaddr_in *,
+                              struct sockaddr_in *, int, int));
+#endif /* RLOGCODE */
+#endif /* CK_KERBEROS */
+
+_PROTOTYP( VOID ini_kerb, ( void ) );   /* Kerberos initialization routine */
+_PROTOTYP( int doauth, (int) );         /* AUTHENTICATE action routine */
+
+#ifdef CK_DNS_SRV
+_PROTOTYP(int locate_srv_dns,(const char *host, const char *service,
+			      const char *protocol, struct sockaddr **addr_pp,
+			      int *naddrs));
+#endif /* CK_DNS_SRV */
+
+#ifndef NOHTTP
+_PROTOTYP(int http_get, (char *,char **,char *,char *,char,char *,char *));
+_PROTOTYP(int http_head, (char *,char **,char *,char *,char,char *,char *));
+_PROTOTYP(int http_put, (char *,char **,char *,char *,char *,char,char *,
+			 char *));
+_PROTOTYP(int http_delete, (char *,char **,char *,char *,char,char *));
+_PROTOTYP(int http_post, (char *,char **,char *,char *,char *,char,char *,
+		  char *));
+_PROTOTYP(int http_index, (char *,char **,char *,char *,char,char *,char *));
+#endif /* NOHTTP */
 
 #endif /* CKCNET_H */

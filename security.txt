@@ -1,0 +1,2674 @@
+
+SECURITY FEATURES FOR AUTHENTICATION AND ENCRYPTION OF TCP/IP CONNECTIONS
+IN C-KERMIT 7.0 AND KERMIT 95 1.1.19
+
+30 January 2000
+
+CONTENTS
+
+    1. INTRODUCTION
+    2. DISCLAIMERS
+    3. AVAILABILITY
+    3.1  Authentication and Encryption in Kermit 95
+    3.1.1  Kerberos in Kermit 95
+    3.1.2  Secure Remote Password (SRP) in Kermit 95
+    3.1.3  NTLM in Kermit 95
+    3.1.4  OpenSSL support for SSLv3 and TLSv1 in Kermit 95
+    3.2  Authentication and Encryption in C-Kermit
+    3.2.1  Kerberos in C-Kermit
+    3.2.2  Secure Remote Password (SRP) in C-Kermit
+    3.2.3  OpenSSL support for SSLv3 and TLSv1 in C-Kermit
+    3.2.4  Shadow Passwords in C-Kermit
+    3.2.5  Pluggable Authentication Modules (PAM) in C-Kermit
+    4. GLOSSARY
+    5. AUTHENTICATION PROTOCOL OVERVIEWS
+    5.1 KERBEROS
+    5.2 SECURE REMOTE PASSWORD (SRP)
+    5.3 NT LAN MANAGER (NTLM)
+    5.4 SSLv3 and TLSv1
+    6. AUTHENTICATION AND ENCRYPTION COMMANDS
+    6.1. TELNET-Related Commands
+    6.2. The SET AUTHENTICATION Command
+    6.2.1. Kerberos settings
+    6.2.2. SRP settings
+    6.2.3. SSL and TLS settings
+    6.3. The AUTHENTICATE Command
+    7. EFFECTS OF ENCRYPTION ON FILE TRANSFER PERFORMANCE
+    8. MULTI-HOMED HOSTS AND NETWORK ADDRESS TRANSLATORS
+    9. OTHER NOTES
+   10. VARIABLES
+   10.1 GENERAL AUTHENTICATION VARIABLES
+   10.2 KERBEROS VARIABLES
+   10.3 SSL/TLS VARIABLES
+   11. FUNCTIONS
+   12. SCRIPTING HINTS
+   12.1. Kerberos Autoget
+   12.2. Autodestruction of Kerberos credentials
+   12.3. Automated Prompting for Usernames
+   12.4. Password Inclusion in Script Files
+   12.5  Using Kermit Scripts to Produce Secure Telnet Services
+   13. USING OTHER SECURITY METHODS WITH KERMIT
+   13.1  Implementing other security methods for Kermit 95
+   14. AN INTRODUCTION TO CERTIFICATES AND CERTIFICATE AUTHORITIES WITH OPENSSL
+   14.1  What Are Certificates, Private Keys, CSRs, CAs, and CRLs?
+   14.2  RSA Certificates v. DSA Certificates
+   14.3  Should You Be Your own Certificate Authority?
+   14.4  Generating a DSA CA (self-signed) certificate
+   14.5  Generating a DSA CSR
+   14.6  Generating a RSA CA (self-signed) certificate
+   14.7  Generating a RSA CSR
+   14.8  Signing a CSR with your CA certificate
+   14.9  Revoking a Certificate
+   14.10 Generating a CRL
+
+
+1. INTRODUCTION
+
+  This document describes Kerberos(TM), Secure Remote Password (SRP)(TM)
+  protocol, Secure Sockets Layer (SSL)/Transport Layer Security (TLS), and
+  other security implementations in, or to be used with, current or
+  forthcoming releases of Kermit software.  All information presented here
+  is preliminary and subject to review, change, or withdrawal prior to final
+  release.  NOTE: The terms "Windows 95" and "Windows 9x" in this document
+  refer to both Windows 95 and Windows 98; the term "Windows NT" refers to
+  Windows NT 3.51 and later and to Windows 2000.
+
+Security is a hot topic on the Internet, and security methods abound.  Secure
+connection methods are supported indirectly by the methods described in
+"Supplement to 'Using C-Kermit', Second Edition", file ckermit2.txt, Section
+2.7.4.  This document describes authentication methods that can be built into
+Kermit 95 and C-Kermit.  Presently these are: Kerberos, Secure Remote Password
+(SRP), Secure Sockets Layer(SSL)/Transport Layer Security(TLS), and Microsoft
+NT LAN Manager (NTLM).
+
+A secure connection is one that provides:
+
+ . Authentication of the user to the host/service without the transmission
+   of the user's password;
+
+ . Authentication of the host to the user; and:
+
+ . A shared secret that can be used with an encryption algorithm to ensure
+   the data transmitted over the connection is understood by only the
+   client and host.
+
+C-Kermit and Kermit 95 are capable of creating and accepting secure
+connections via a variety of methods:
+
+ . Incoming and outgoing secure connections may be established using Telnet
+   protocol coupled with Kerberos(TM), Secure Remote Password (SRP)(TM),
+   Secure Sockets Layer (SSL)/Transport Layer Security (TLS), and Microsoft
+   NTLM.
+
+ . Outgoing secure connections may be established using Rlogin protocol
+   coupled with Kerberos (TM).
+
+ . Incoming and outgoing secure connections may be established using
+   Secure Sockets Layer (SSL)/Transport Layer Security (TLS) alone.
+
+1.1. Kerberos
+
+Kerberos(TM) is a method, developed at Massachusetts Institute of Technology,
+by which two parties communicating over a TCP/IP connection can authenticate
+each other through a trusted third party without sending passwords or
+encryption keys in clear text over the network.  Kerberos protocols are
+defined in Internet RFCs 1510, 1964, and others.  You can read more about
+Kerberos at:
+
+  http://web.mit.edu/kerberos/www/
+  http://nii.isi.edu/info/kerberos/
+  http://nii.isi.edu/publications/kerberos-neuman-tso.html
+
+There are, in fact, two Kerberos protocols: Kerberos IV (4) and Kerberos V
+(5), the latter being the more flexible and secure protocol.  The two are
+totally separate and incompatible.  Any given site might support neither,
+either one, or both.
+
+When both the client and server support the same version of Kerberos (4 or 5),
+then Kerberos authentication with or without encryption can be negotiated.
+
+A "Kerberized" version of Kermit can make a connection to a non-Kerberized
+host, and a non-Kerberized host can accept a connection from a Kerberized
+version of Kermit, as long as neither side is configured to require Kerberos
+authentication.
+
+1.2. SRP
+
+Secure Remote Password (SRP)(TM) protocol is a method, developed at Stanford
+University, by which two parties communicating over a TCP/IP connection can
+authenticate each other in a secure manner through a Zero Knowledge
+Identification system.  SRP protocols have not yet been accepted as RFCs.
+You can read more about SRP at:
+
+  http://srp.stanford.edu/srp/
+
+Once authentication has been achieved with either Kerberos or SRP, a shared
+secret is available which can be used to establish an encrypted session.
+
+1.3. NTLM
+
+NT Lan Manager (NTLM) authentication is only implemented in Kermit 95.
+Its only use is to authenticate Kermit 95 to Microsoft's NT Services for
+Unix Telnetd.  NTLM does not negotiate a shared secret and therefore
+cannot be used to establish encrypted sessions.  Therefore, connections
+made with NTLM should not be considered secure.
+
+1.4. Encryption
+
+Export of encryption software or algorithms is regulated by United States law
+(see Section 2).  United States and Canadian residents may contact the Kermit
+Project for encryption modules that can be used to provide secure
+communications using one of the following encryption algorithms via the Telnet
+Encryption Option:
+
+   cast128_cfb64   cast5_40_cfb64   des_cfb64   des3_cfb64
+   cast128_ofb64   cast5_40_ofb64   des_ofb64   des3_ofb64
+
+Netscape's Secure Sockets Layer (SSL) and its IETF-approved successor,
+Transport Layer Security (TLS), provide for authentication and encryption of
+TCP/IP communications using a combination of public key and symmetric
+cryptographic algorithms.  Authentication of the server (and optionally the
+client) is performed by exchanging ITU-T X.509 certificate chains (see Section
+14 below), which are then verified by the receiver.  Unlike raw public keys,
+X.509 certificates may be revoked by issuing a certificate revocation list
+(CRL) which is to be checked by the receiver during verification of the
+certificate chain.
+
+The encryption provided by SSL/TLS is more secure than the encryption
+negotiatied by the Telnet Encryption Option.  This additional security is
+provided by a combination of the use of longer encryption keys; the
+availability of stronger symmetric cryptographic algorithms; and the signing
+of each transmitted block with a message digest algorithm.
+
+TLS may be used in conjunction wth Telnet Authentication methods such as
+Kerberos, Secure Remote Password, and NTLM to provide the highest level of
+data privacy with the strongest forms of mutual authentication.
+
+The Kermit modules used to implement SSL/TLS are available only to residents
+of the United States and Canada due to the restrictions on the export of
+software that provides "crypto with a hole" functionality.
+
+
+2. DISCLAIMERS
+
+Current US law forbids export of strong encryption software from the USA to
+all countries except Canada.  Thus security modules are not included with
+Kermit; they must be obtained separately from the sources listed below, in
+compliance with the terms and conditions given at those sites and with United
+States and international law.  For an overview of this issue, see (for
+example):
+
+  http://www.mozilla.org/crypto-faq.html
+
+Kermit software, when combined with the security modules listed in this
+document, has been verified to negotiate and conduct authenticated and
+encrypted sessions with Kerberos and/or SRP services on Internet hosts at
+Columbia University and other test sites, with Kermit features such as
+interactive terminal access, file transfer, and scripting operating
+successfully over Kerberized connections, with any exceptions noted below.
+
+The Kermit Project does not and can not claim or warrant the external
+Kerberos, SRP, OpenSSL or other third-party modules to be free of loopholes
+or bugs.  Authentication via Kerberos and/or SRP is not unbreakable.  Any
+encryption method can be broken.  Any software that is used for
+authentication or encryption should be analyzed for weaknesses, backdoors,
+bugs, and loopholes by the site and/or end user before use.
+
+The Kermit Project and Columbia University make no claim or warranty as to any
+particular level of security achievable by Kermit software in conjunction with
+either Kerberos or Secure Remote Password protocol, and may on no account be
+held liable for any damage resulting from its use (a more complete statement
+to this effect is found in the C-Kermit 7.0 license).
+
+Functional limitations:
+
+ . Kerberos authentication is available only on Telnet and Rlogin connections.
+
+ . Secure Remote Password authentication is available only on Telnet
+   connections.
+
+ . NTLM authentication is available only on Windows 95/98 and NT and only
+   on Telnet connections.
+
+ . SSL/TLS may be used as its own connection protocol or on Telnet
+   connections.
+
+ . Kerberos support is not available in Kermit 95 for OS/2 due to lack
+   of Kerberos implementations for OS/2.
+
+
+3. AVAILABILITY
+
+3.1 Authentication and Encryption in Kermit 95
+
+Kermit 95 comes precompiled with support for Kerberos 4, Kerberos 5, Secure
+Remote Password, NT Lan Manager authentication, and OpenSSL's SSLv3 and TLSv1.
+
+3.1.1. Kerberos in Kermit 95
+
+Beginning with version 1.1.16, Kermit 95 supports Kerberos Telnet
+Authentication when any of the following Kerberos IV or Kerberos V
+implementations are installed on a Windows 95 or Windows NT workstation:
+
+  Kerberos version 4:
+    . MIT Leash distribution:
+        http://web.mit.edu/is/help/mink/
+
+  For version 5:
+    . MIT distribution:
+        http://web.mit.edu/kerberos/www/
+    . Cygnus Solutions' KerbNet 1.2:
+        http://www.cygnus.com/techie/kerbnet/
+
+Both Kerberos IV and Kerberos V may be installed on the same PC, and the same
+copy of Kermit 95 can use either Kerberos version to make Telnet connections.
+As of Kermit 95 1.1.18 Kerberized Rlogin connections are supported if the
+Kerberos DLLs export necessary functionality.
+
+When Kerberos IV and/or Kerberos V are installed and the DLLs are located in
+the PATH, Kermit 95 attempts to negotiate authentication with the host's
+Telnet server if the host is Kerberized and if you have not instructed
+Kermit 95 to the contrary.
+
+In addition, if the appropriate encryption patch (obtained from the Kermit
+Project) is installed, two-way encryption is also negotiated and used if
+authentication was negotiated.  The encryption patch is available WITH EXPORT
+RESTRICTIONS at:
+
+  http://www.kermit-project.org/noexport.html
+
+Due to the length of the shared secret negotiated by Kerberos only 56-bit DES
+encryption can be used.
+
+Per-PC configuration files may or may not be necessary at your installation.
+If your site's DNS servers supply Kerberos realm information, no
+configuration files are needed and you can skip ahead to Section 3.1.2.
+
+3.1.1.1 Notes on the Kerberos IV configuration files:
+
+MIT's Leash uses three configuration files which are placed into the \WINDOWS
+directory: LEASH.INI (user settings), KRB.CON and KRBREALM.CON.  KRB.CON and
+KRBREALM.CON are used by Kerberos IV to map your host's domain name to a
+realm and then to determine the name of the Kerberos server for that realm.
+As distributed from MIT, these files are set up for MIT's realm, domain,
+and host information, so if you are not at MIT you'll need to substitute the
+information for your own site; for example:
+
+KRB.CON:
+  CC.COLUMBIA.EDU
+  CC.COLUMBIA.EDU kerberos.cc.columbia.edu
+  KERMIT.COLUMBIA.EDU kerberos.cc.columbia.edu
+  COLUMBIA.EDU kerberos.cc.columbia.edu
+  .KERBEROS.OPTION. dns
+
+The first line is the default Kerberos IV realm to be used.  The subsequent
+lines list realms and the hostnames to be used to contact the KDC for that
+realm.
+
+KRBREALM.CON:
+  .CC.COLUMBIA.EDU CC.COLUMBIA.EDU
+  CC.COLUMBIA.EDU CC.COLUMBIA.EDU
+  .COLUMBIA.EDU CC.COLUMBIA.EDU
+  COLUMBIA.EDU CC.COLUMBIA.EDU
+  .KERMIT.COLUMBIA.EDU CC.COLUMBIA.EDU
+  KERMIT.COLUMBIA.EDU CC.COLUMBIA.EDU
+
+Each line specifies either a domain name prefaced with a '.' or a host name
+and the Kerberos IV realm to which it belongs.
+
+The Leash Kerberos IV implementation does not contain support for server
+side functionality.  Therefore, K95 cannot authenticate incoming connections
+with Kerberos IV.  It also does not include support for pre-authenticated
+ticket granting ticket requests.
+
+3.1.1.2. Notes on the Kerberos V configuration file
+
+Kerberos V uses a single configuration file, KRB5.CONF (or KRB5.INI on
+Windows).  This file must be customized for the domains, realms, and hosts
+used in your network environment.  For example:
+
+[libdefaults]
+        default_realm = CC.COLUMBIA.EDU
+        default_tkt_enctypes = des-cbc-crc
+        default_tgs_enctypes = des-cbc-crc
+        ticket_lifetime = 600
+        dns_fallback = true
+
+[domain_realm]
+        .cc.columbia.edu = CC.COLUMBIA.EDU
+        cc.columbia.edu = CC.COLUMBIA.EDU
+        .columbia.edu = CC.COLUMBIA.EDU
+        columbia.edu = CC.COLUMBIA.EDU
+
+[realms]
+        CC.COLUMBIA.EDU = {
+                kdc = kerberos.columbia.edu:88
+                admin_server = kerberos.columbia.edu:749
+                default_domain = cc.columbia.edu
+                supported_enctypes = des-cbc-crc:normal des-cbc-crc:v4
+                supported_keytypes = des:normal des-cbc-crc:v4
+        }
+
+3.1.2. Secure Remote Password protocol in Kermit 95
+
+Beginning with version 1.1.16, Kermit 95 supports Telnet Authentication via
+Secure Remote Password protocol without any additional software.
+
+In addition, if the appropriate encryption patch (obtained from the Kermit
+Project) is installed, two-way encryption is also negotiated and used if
+authentication was negotiated.  The encryption patch is available WITH EXPORT
+RESTRICTIONS at:
+
+  http://www.kermit-project.org/noexport.html
+
+Kermit 95 contains support for authenticating incoming connections using SRP.
+Unfortunately, there are no Windows based tools for creating the SRP password
+file.  However, once a password and config file are created on Unix they can
+be copied to Windows.  Use the SRP_ETC or ETC environment variables to specify
+where the "tpasswd" and "tpasswd.conf" files are stored.
+
+3.1.3. NT LAN Manager Authentication in Kermit 95
+
+NTLM authentication is a feature of Windows 95/98, NT, and Windows 2000.  It
+is used to authenticate Windows clients to Windows services.  Telnet Auth
+NTLM is implemented in the Microsoft Telnet Daemon that ships with NT
+Services for Unix and with Windows 2000.
+
+Windows 95/98 only contains support for the client whereas NT contains
+support for both client and server.  Kermit 95 can authenticate incoming
+connections with NTLM when it is executing on NT.
+
+3.1.4. OpenSSL support for SSLv3 and TLSv1 in Kermit 95
+
+OpenSSL security is available in Kermit 95 1.1.18 and later.  OpenSSL sources
+may be retrieved from the web site http://www.openssl.org/.  As of this
+writing the current release of OpenSSL is 0.9.4 and 0.9.5 is under
+development.  Kermit 95 works with the binaries produced by compiling either
+0.9.4 or 0.9.5.  Patches to enable OpenSSL to be compiled for OS/2 are
+located at:
+
+  http://www.geocities.com/SiliconValley/Hills/8057/files/openssl.html
+
+On Windows, OpenSSL must be compiled and linked to use the NT DLL option
+without Debug information.  Compiling the DLLs with support for debugging
+links the DLLs to an incompatible C Run Time Library DLL.
+
+On OS/2, OpenSSL must be compiled to use the DLL version of the run time
+library.
+
+For proper operation of OpenSSL and Kermit 95, the OpenSSL DLLs must be
+available in the PATH.  In addition, the OPENSSL_CONF environment variable
+should also be defined appropriately.
+
+OpenSSL does not define default locations for certificates and revocation
+lists therefore the appropriate SET AUTH { SSL, TLS } commands must be
+specified in the K95CUSTOM.INI (or IKSD.KSC) file in order for certificate
+verification to be performed.
+
+Due to patent licensing restrictions on RSA and IDEA algorithms within the
+United States, any binaries that the Kermit Project might distribute to
+provide SSL/TLS support for Kermit 95 do not contain RSA key exchange;
+RSA authentication; or RC2, RC4, and IDEA ciphers.
+
+If you wish to provide support for authentication of clients using public
+key certificates you must provide a custom X509_to_user() function to
+provide the certificate to local userid mapping.  An example function which
+uses the /UID field of the Certificate Subject name follows:
+
+  int
+  X509_to_user(X509 *peer_cert, char *userid, int len)
+  {
+      int err;
+
+      if (!(peer_cert && userid) || len <= 0)
+          return -1;
+
+      /* userid is in cert subject /UID */
+      err = X509_NAME_get_text_by_NID(X509_get_subject_name(peer_cert),
+                                       NID_uniqueIdentifier, userid, len);
+      if (err > 0)
+          return 0;
+      return -1;
+  }
+
+This function must be compiled into a DLL called "X5092UID.DLL".  It should
+be linked to the OpenSSL libraries and the DLL version of the run time
+library.
+
+
+3.2. Authentication and Encryption in C-Kermit 7.0
+
+C-Kermit 7.0 may be compiled with support Kerberos 4, Kerberos 5, Secure
+Remote Password, and OpenSSL's SSLv3 and TLSv1.
+
+3.2.1. Kerberos in C-Kermit 7.0
+
+This section is current as of C-Kermit 7.0.196 Beta.11.
+
+Kerberos IV and Kerberos V support is available for Unix versions of C-Kermit
+7.0.  Kerberos support in C-Kermit is provided for both outgoing and incoming
+connections (SET HOST /SERVER * <port> /TELNET or the Internet Kermit
+Service).
+
+Kerberized C-Kermit binaries are not available due to export restrictions (see
+Section 2); you must build your own binary from a combination of Columbia
+source code and Kerberos libraries from other sources.
+
+ 1a. Retrieve a Kerberos 5 1.1 source code kit from the appropriate site:
+
+       http://web.mit.edu/kerberos/www/ or
+       http://web.mit.edu/network/kerberos-form.html
+
+ 1b. Choose a Kerberos 4 installation (from MIT) and retrieve a source code
+     kit from the appropriate site:
+
+       http://web.mit.edu/kerberos/www/ or
+       http://web.mit.edu/network/kerberos-form.html
+
+ 2. Obtain the C-Kermit Authentication and Encryption support modules from
+    Columbia University.  These are not available by FTP due to export
+    restrictions.  Contact kermit-support@columbia.edu for details.
+
+ 3. Build and install Kerberos on your system according to the instructions
+    that come with the Kerberos distribution you have chosen.
+
+ 4. Add a new entry to the C-Kermit makefile for your platform, that adds the
+    following CFLAGS:
+
+      -DCK_AUTHENTICATION -DCK_KERBEROS
+
+    For Kerberos 4 include:
+
+      -DKRB4
+
+    For Kerberos 5 include:
+
+      -DKRB5
+
+    For Kerberos 4 compatibility mode with Kerberos 5:
+
+      -DKRB5 -DKRB524 -DKRB4
+
+    If you have the source file ck_crp.c and desire DES encryption include:
+
+      -DCK_ENCRYPTION -DCK_DES
+
+    Use "krbmit" as the target for builds with ck_crp.c and "krbmit-export"
+    for builds without ck_crp.c.
+
+    Add the path to the Kerberos header files using the -I switch.  The
+    location of these files are host specific.  For example:
+
+      -I/usr/kerberos/include
+
+    Add the path to the Kerberos libraries using the -L switch.  The
+    location of these files are host specific.  For example:
+
+      -L/usr/kerberos/lib
+
+    Add the appropriate libraries.  For Kerberos 4 include:
+
+      -lkrb
+
+    For Kerberos 5 include:
+
+      -lkrb5 -lcom_err -lcrypto
+
+    For Kerberos 4 compatibility mode with Kerberos 5 include:
+
+      -ldes425 -lkrb5 -lcom_err -lcrypto
+
+    Make sure the new entry points to the appropriate include files, and links
+    with the appropriate libraries.  Use the "linux+krb5", "linux+krb5+krb4",
+    and "sunos41gcc+krb4" makefile entries as models.
+
+Note that the select() version of the CONNECT-command module (ckucns.c) must
+be used rather than the older fork() based (ckucon.c) version.
+
+Keep the Kerberos support modules private, and put the C-Kermit binary where
+it can be used, but not where it can be accessed by anonymous ftp or by anyone
+who is outside the USA or Canada.
+
+When C-Kermit 7.0 is built with Kerberos support and installed as an Internet
+Kermit Service Daemon (IKSD), Kerberos is offered for authenticating incoming
+connections.  To authenticate incoming connections there must be a valid
+keytab file providing local access to the key necessary for decrypting
+meesages encoded in the server's key.
+
+3.2.2. Secure Remote Password protocol in C-Kermit
+
+This section is current as of C-Kermit 7.0.196 Beta.11.
+
+Secure Remote Password (SRP) support is available for Unix versions of
+C-Kermit 7.0.  SRP support in C-Kermit is provided for both outgoing and
+incoming connections (SET HOST /SERVER * <port> /TELNET or the Internet Kermit
+Service).
+
+SRP C-Kermit binaries are not available due to export restrictions (see
+Section 2); you must build your own binary from a combination of Columbia
+source code and SRP libraries from other sources.
+
+ 1. Retrieve the SRP 1.5.0 source code kit from:
+
+      http://srp.stanford.edu/srp/
+
+ 2. Obtain the C-Kermit Authentication and Encryption support modules from
+    Columbia University.  These are not available by FTP due to export
+    restrictions.  Contact kermit-support@columbia.edu for details.
+
+ 3. Build SRP with the GMP math library.  Be sure to read the installation
+    instructions before installing because SRP replaces many standard Unix
+    system files and failure to follow the procedures may leave you locked
+    out of your system.
+
+ 4. Add a new entry to the C-Kermit makefile for your platform, that adds
+    the following CFLAGS:
+
+      -DCK_AUTHENTICATION -DCK_SRP
+
+    If you have the source file ck_crp.c include:
+
+      -DCK_ENCRYPTION
+
+    For CAST encryption (requires ck_crp.c) add:
+
+      -DCK_CAST
+
+    If using the Eric A. Young DES encryption library (available separately
+    and as a part of the OpenSSL project <http://www.openssl.org>)
+    (requires ck_crp.c) add:
+
+      -DCK_DES -DLIBDES
+
+    Use "srpmit" as the target for builds with ck_crp.c and "srpmit-export"
+    for builds without ck_crp.c.
+
+    Add the path to the SRP header files using the -I switch.  The
+    location of these files are host specific.  For example:
+
+      -I/usr/srp/include
+
+    Add the path to the SRP libraries using the -L switch.  The
+    location of these files are host specific.  For example:
+
+      -L/usr/srp/lib
+
+    Add the appropriate libraries.  (Include des only if you have the
+    Eric A. Young library):
+
+      -lsrp -lgmp -ldes
+
+    Make sure the new entry points to the appropriate include files, and
+    links with the appropriate libraries.  Use the "linux+srp" and
+    "linux+krb5+krb4+srp" makefile entries as models.
+
+Note that the select() version of the CONNECT-command module (ckucns.c) must
+be used rather than the older fork() based (ckucon.c) version.
+
+Keep the SRP support modules private, and put the C-Kermit binary where
+it can be used, but not where it can be accessed by anonymous ftp or by anyone
+who is outside the USA or Canada.
+
+When C-Kermit 7.0 is installed as an Internet Kermit Service (IKSD), SRP
+is offered for authenticating incoming connections.
+
+3.2.3   OpenSSL support for SSLv3 and TLSv1 in C-Kermit 7.0.
+
+This section is current as of C-Kermit 7.0.196 Beta.11.
+
+OpenSSL support is available for Unix versions of C-Kermit 7.0.  SSLv3 and
+TLSv1 support in C-Kermit is provided for both outgoing and incoming
+connections (SET HOST /SERVER * <port> /TELNET or the Internet Kermit Service).
+
+OpenSSL C-Kermit binaries are not available due to export restrictions (see
+Section 2); you must build your own binary from a combination of Columbia
+source code and the OpenSSL libraries from other sources.
+
+ 1. Retrieve the OpenSSL 0.9.4 source code kit from:
+
+      http://www.openssl.org/
+
+ 2. Obtain the C-Kermit Authentication and Encryption support modules from
+    Columbia University.  These are not available by FTP due to export
+    restrictions.  Contact kermit-support@columbia.edu for details.
+
+ 3. Build OpenSSL according to the installation instructions.  Be aware that
+    OpenSSL includes support for algorithms which are covered by patents
+    or claimed as intellectual property in the United States (and perhaps
+    some other countries.)  Use of these algorithms without the proper
+    licenses can make you liable to legal action.  Be sure to read the
+    entire README file before building and installing OpenSSL.
+
+    If you wish to support ADH ciphers you must define SSL_ALLOW_ADH when
+    building OpenSSL.
+
+ 4. Add a new entry to the C-Kermit makefile for your platform, that adds
+    the following CFLAGS:
+
+      -DCK_AUTHENTICATION -DCK_SSL
+
+    Use "krbmit" as the target for builds.
+
+    Add the path to the OpenSSL header files using the -I switch.  The
+    location of these files is host-specific.  For example:
+
+      -I/usr/local/ssl/include
+
+    Add the path to the OpenSSL libraries using the -L switch.  The
+    location of these files is host-specific.  For example:
+
+      -L/usr/local/ssl/lib
+
+    Add the appropriate libraries:
+
+      -lssl -lcrypto
+
+    Make sure the new entry points to the appropriate include files, and
+    links with the appropriate libraries.  Use the "linux+openssl" and
+    "linux+krb5+krb4+srp+openssl" makefile entries as models.
+
+Note that the select() version of the CONNECT-command module (ckucns.c) must
+be used rather than the older fork() based (ckucon.c) version.
+
+Keep the OpenSSL support modules private, and put the C-Kermit binary where
+it can be used, but not where it can be accessed by anonymous ftp or by anyone
+who is outside the USA or Canada.
+
+When C-Kermit 7.0 is installed as an Internet Kermit Service (IKSD), TLSv1
+is offered for authenticating incoming connections via the Telnet START_TLS
+option.
+
+If you wish to provide support for authentication of clients using public
+key certificates you must provide a custom X509_to_user() function to
+provide the certificate to local userid mapping.  An example function which
+uses the /UID field of the Certificate Subject name may be activated by
+specifying
+
+   make <entry> KFLAGS=-DX509_UID_TO_USER
+
+when compiling C-Kermit.  The X509_to_user() function is the last function
+in the ck_ssl.c module.
+
+3.2.4.  Shadow Passwords in C-Kermit 7.0.
+
+Shadow password files are used in many versions of Unix to provide a greater
+level of security for user passwords stored on the local disk.  The standard
+Unix password file must be world readable in order to processes to determine
+the location of the user's shell, home directory, and other permissions.  By
+moving the passwords into a separate file that only stores passwords, access
+to the file can be restricted to only those processes that are authorized to
+perform authentication.
+
+When C-Kermit 7.0 is used as the Internet Kermit Service on systems that are
+configured to use shadow passwords the following CFLAG must be added to the
+makefile entry:
+
+  -DCK_SHADOW
+
+3.2.5.  Pluggable Authentication Module (PAM) support in C-Kermit 7.0
+
+PAM is implemented in many versions of Unix so system administrators can
+add new forms of authentication for interactive login (console, telnet,
+rlogin, ...) without requiring recompilation of each service.
+
+When C-Kermit 7.0 is used as the Internet Kermit Service on systems that are
+configured to use PAM the following CFLAG must be added to the makefile
+entry:
+
+  -DCK_PAM
+
+and the following libraries may have to be included:
+
+  -lpam -ldl
+
+C-Kermit 7.0's support for PAM is limited to Interactive Login.  PAM is
+not compatible with the Kermit Protocol's REMOTE LOGIN mechanism.
+
+4. KERBEROS GLOSSARY
+
+Listed alphabetically, not topologically.
+
+Entity
+  In this document, a user, host, or service.
+
+Authentication
+  The process by which one entity proves its identity to another
+  entity on the Internet.
+
+Client
+  An entity that can obtain a ticket (see Ticket).
+
+Credentials Cache
+  The location where Kerberos stores tickets.  The credentials cache
+  can be a file or a buffer in memory.
+
+Expiration
+  Invalidation of a ticket after a certain period of time.  A ticket's
+  lifetime is chosen by the user when obtaining the ticket; the maximum
+  allowable lifetime for different kinds of tickets is set by the site
+  administrator.
+
+Forwardable Tickets
+  Kerberos tickets that can be forwarded (copied) to a remote machine,
+  where they can be used, eliminating the need to obtain new Ticket Granting
+  Tickets (q.v.) on that machine, e.g. for Telnetting from machine A to
+  machine B and then from machine B to machine C.
+
+Host
+  A computer that can be accessed over a network.
+
+KDC
+  Key Distribution Center, a machine that issues Kerberos tickets.
+
+Preauthenticated Ticket Granting Ticket Request
+  The client must include a time stamp encrypted with the user's password
+   when requesting the TGT from the KDC.  This allows the KDC to only
+   deliver a TGT to a valid user.  When preauthentication is not used
+   the TGT may be attacked offline to determine the user's password.
+
+Postdated Ticket
+  A ticket that does not become valid until after a specified time.
+  This allows for secure unattended operations.
+
+Principal
+  A string that names a specific entity to which a set of credentials may
+  be assigned.  It generally has three parts, primary/instance@REALM:
+   1. Primary:  Identifies the user or service.
+   2. Instance: Usually a hostname or REALM.
+   3. REALM:    Logical network served by a single Kerberos database and KDC.
+
+Proxiable Ticket
+  A ticket that may be given to a service to allow the service to impersonate
+  the user for whom the ticket has been issued.
+
+Ticket
+  A temporary set of electronic credentials that verifies the identity of
+  its owner to a particular service.
+
+TGT
+  Ticket Granting Ticket.  A special ticket that lets its owner obtain
+  additional tickets within the same realm.  A TGT is obtained during the
+  initial authentication process.
+
+
+5. OVERVIEW OF AUTHENTICATION PROTOCOLS
+
+The following sections attempt to provide an overview of how each of the
+supported authentication protocols operates.
+
+5.1 KERBEROS OVERVIEW
+
+Before making a Kerberized connection, you have to know which Kerberos
+version, 4 or 5, is supported by the host or service you want to connect
+to, and you must be registered in the Kerberos database at the host's
+site.  Contact the site administrator for details.
+
+Before authentication to a specific service (such as Telnet) can succeed, you
+must login to the site's Kerberos Ticket Granting Server.  Depending on the
+Kerberos implementation and installation options this may be done
+automatically when you log in to your operating system.  Otherwise you can
+do it with external utilities from MIT or Cygnus (such as Leash, KRB5, or
+KerbNet), or with Kermit's built-in functionality, explained below.
+
+Once a Ticket Granting Ticket (TGT) is retrieved, Kermit can use it to retrieve
+additional tickets for each host (service) you wish to connect to.  These
+service tickets may be used to authenticate you with the host automatically
+during a specified time interval.  When authentication is successful, you are
+logged in to the host and no Login: or Password: prompt does appear when
+connecting.
+
+Besides providing credentials for use during authentication, the service
+ticket also contains a session key to be used for encrypting the
+communications.  After the connection is authenticated, Kermit (if the
+necessary encryption capabilities are available) attempts to negotiate
+bidirectional encryption using either the DES-CFB64 or DES-OFB64 algorithms.
+If one of these is negotiated, it is used in one or both directions,
+depending on what the server agreed to.
+
+When Kerberos V authentication is used, Kermit supports credential forwarding
+by transferring your Ticket Granting Tickets to the host that you are
+connecting to, so you can make additional authenticated connections from that
+host to any others that accept those tickets.  This provides a single sign-on
+capability to the network.
+
+Successful operation of Kerberos requires that all machines have their dates
+and times synchronized.  Be aware that PC clocks can drift, and this can
+cause authentication failures.
+
+
+5.2 SECURE REMOTE PASSWORD (SRP) OVERVIEW
+
+SRP requires no special configuration of the client.  When Kermit is used to
+connect to a host that supports SRP, the user name is transmitted
+automatically to the host and then a Password prompt is displayed in the
+Kermit command screen.  This indicates that the password will not be sent to
+the host over the communication channel.  Instead the password is used as part
+of a negotiation in which authentication is either mutual or none at all.
+
+The result of a mutual authentication is a shared secret which is used to
+generate two different keys for encrypting the incoming and outgoing data.
+SRP hosts support CAST-128-CFB64, CAST-128-OFB64, CAST-40-CFB64,
+CAST-40-OFB64, DES-CFB64, DES-OFB64, DES3-CFB64, DES3-OFB64 encryption
+algorithms.
+
+
+5.3 NT LAN MANAGER (NTLM) OVERVIEW
+
+Microsoft's native authentication method is NTLM.  It is implemented in
+Windows 9x and NT and requires no configuration on the part of the user.
+When K95 is used on either Win9x or NT it can be used as an NTLM Telnet
+client to authenticate to Microsoft's NT Services for Unix Telnet Server
+or to a K95 configured to accept incoming connections.
+
+When K95 is used on NT it can be configured to accept incoming connections
+and authenticate NTLM Telnet clients.
+
+NTLM is a weak form of authentication.  It provides no shared secret
+and cannot be used as a means of securing a connection with encryption.
+
+
+5.4 SSLv3 and TLSv1 OVERVIEW
+
+(Also see Section 14 for an introduction to the concept of certificates.)
+
+Secure Sockets Layer Version 3 (SSLv3) and its successor Transport Layer
+Security Version 1 (TLSv1) were originally designed for use by Web browsers.
+They provide a framework for using public-key certificates to negotiate
+server and (optionally) client authentication and bidirectional encryption.
+The encryption provided by SSLv3 and TLSv1 is stronger than that provided
+by the Telnet Encryption option.
+
+SSLv3 and TLSv1 connections may be negotiated in two different ways.  First,
+the connection may be SSL/TLS-only, which is used when connecting to HTTPS
+services or SSL/TLS tunnels.  SSL/TLS may also be negotiatied after the
+connection is established via negotiations performed in some other protocol
+(such as Telnet.)
+
+Kermit supports both kinds of connections:
+
+ . Pure SSLv3 connections via SET HOST <host> <port> /SSL
+
+ . Pure TLSv1 connections via SET HOST <host> <port> /TLS
+
+ . SSLv3 connections negotiated by Tim Hudson's Telnet AUTH SSL option
+
+ . TLSv1 connections negotiated by the IETF TN3270E Working Group's
+   TELNET START_TLS option
+
+The SSL and TLS negotations provide the client with authentication of the
+host computer when the host's X.509 certificate is verified.  Authentication
+of the client may be performed by the use of an X.509 certificate issued to
+the end user, or via one of the supported Telnet Authentication methods.
+Even though the data channel is encrypted, the transmission of passwords to
+the host should still be avoided to prevent theft by a compromised host.
+
+For verification of certificates to be performed, the root certificates of
+the certificate authorities (CAs) must be available.  If you are not acting
+as your own CA you might want to use the file of root certificates at
+http://www.e-softinc.com/cacerts.txt.  This file is produced by E-Soft, Inc.,
+as part of its monthly survey on secure server usage.  After downloading,
+this file can be used by Kermit via the command:
+
+  SET AUTH SSL VERIFY-FILE <path>/cacerts.txt
+
+When Kermit is used as an IKSD, client certificates can be used for automatic
+login.  If a certificate-to-userid mapping function is provided, the IKSD
+logs the user in automatically if the certificate is verified and the
+specified userid exists on the system.  Kermit also supports the use of a
+".tlslogin" file that allows a certificate to be used to login automatically
+to an account without a certificate-to-userid mapping function.  When Kermit
+receives a username via the Telnet New-Environment variable after it has
+received and verified a client certificate, it looks in the home directory
+corresponding to the username for a file called ".tlslogin".  If the file
+contains the certificate presented by the client, the client is logged in as
+the requested user without a password.
+
+The method for negotiating Tim Hudson's Telnet AUTH SSL option is open to a
+man-in-the-middle attack which is capable of disabling the use of SSL before
+the negotiation is begun.  It should only be used in conjunction with:
+
+   SET TELNET AUTHENTICATION TYPE SSL
+   SET TELOPT AUTHENTICATION REQUIRED
+
+When using IKSD with START_TLS you should create an /etc/iksd.conf file
+and place within it commands pointing to the certificate and key files:
+
+  set auth tls rsa-cert-file /usr/local/ssl/certs/telnetd-rsa.pem
+  set auth tls rsa-key-file  /usr/local/ssl/certs/telnetd-rsa-key.pem
+  set auth tls dsa-cert-file /usr/local/ssl/certs/telnetd-dsa.pem
+  set auth tls dsa-key-file  /usr/local/ssl/certs/telnetd-dsa-key.pem
+
+as well as the list of ciphers that you are willing to accept:
+
+  set auth tls cipher 3DES:DSS
+
+Note: A Unix telnetd that supports START_TLS is available from
+
+  ftp://ftp.runestig.com/pub/starttls/inetutils-1.3.2-tls.tar.gz
+
+This telnetd supports verification of certificate chains for both client and
+server including support for certificate revocation lists.
+
+
+6. AUTHENTICATION AND ENCRYPTION COMMANDS
+
+Kermit has a full repertoire of commands for selecting and controlling
+security.  Bear in mind that these are targeted primarily at the network
+or site manager and not at the "ordinary" user.  In a typical application,
+a university that has a site license for Kermit 95 creates a customized
+installation CD for its user community that contains all the appropriate
+security (and other) setups, so end users get secure connections without
+doing anything special or even knowning that they have them.
+
+In all Kermit commands:
+
+  KERBEROS4 can be abbreviated KRB4 or K4
+  KERBEROS5 can be abbreviated KRB5 or K5
+
+Some of Kermit's Kerberos-related commands are rather complex, but remember
+that you don't have to memorize them, or any other Kermit commands.  Use "?"
+at any point to feel your way through the command, or type HELP for the
+desired command to see a brief explanation.
+
+The CHECK KERBEROS command tells whether your version of Kermit has been built
+to include the Kerberos support even if it cannot function on your system.
+
+The CHECK NTLM command tells whether your version of Kermit has been built
+to include the NTLM support even if it cannot function on your system.
+
+The CHECK SRP command tells whether your version of Kermit has been built
+to include the SRP support even if it cannot function on your system.
+
+The CHECK SSL/TLS command tells whether your version of Kermit has been built
+to include the SSL/TLS support even if it cannot function on your system.
+
+IF AVAILABLE KERBEROS4 (or KRB4, or K4) tells whether Kerberos 4 is actually
+available in your version of Kermit (e.g. if the Kerberos 4 DLLs are installed
+on your Windows 95 PC).
+
+IF AVAILABLE KERBEROS5 (KRB5, K5) tells whether Kerberos 5 is available in
+your version of Kermit.
+
+IF AVAILABLE NTLM tells whether NT Lan Manager protocol is available in your
+version of Kermit.
+
+IF AVAILABLE SRP tells whether Secure Remote Password protocol is available
+in your version of Kermit.
+
+IF AVAILABLE { SSL, TLS } tells whether SSL/TLS protocol is available in your
+version of Kermit.
+
+
+6.1. TELNET-Related Security Commands
+
+SET TELOPT [{ /CLIENT, /SERVER }] AUTHENTICATION
+        { ACCEPTED, REFUSED, REQUESTED, REQUIRED }
+  ACCEPT or REFUSE authentication bids, or actively REQUEST authentication.
+  REQUIRED refuses and closes the connection if authentication is not
+  successfully negotiated when either making or accepting connections.
+  ACCEPTED by default.
+
+SET TELNET AUTHENTICATION TYPE { AUTOMATIC, KERBEROS4, KERBEROS5, NTLM, SRP,
+                                 SSL, NONE }
+  AUTOMATIC allows the host to choose the preferred type of authentication.
+  Other values allow a specific authentication method to be specified.
+  AUTOMATIC is the default.  The list of options varies depending on the
+  authentication types selected at compilation time.  When combined with SET
+  TELOPT AUTH REQUIRED, a specific authentication method can be required.
+
+SET TELNET AUTHENTICATION FORWARDING { ON, OFF }
+  When Kermit is the client, set this to ON to forward forwardable Kerberos V
+  Ticket Granting Tickets to the host after authentication is complete, so you
+  can make additional authenticated connections from there.  When Kermit is
+  the server, set this to ON to accept forwardable Kerberos V TGTs from the
+  client.  OFF by default.
+
+SET TELNET AUTHENTICATION HOW-FLAG { ANY, MUTUAL, ONE-WAY }
+  Specifies which values for the HOW-FLAG should be accepted as a client
+  or offered as a server.  The default is ANY.
+
+SET TELNET AUTHENTICATION ENCRYPT-FLAG { ANY, NONE, TELOPT }
+  Specifies which values for the ENCRYPT-FLAG should be accepted as a client
+  or offered as a server.  The default is ANY.
+
+SET TELOPT [{ /CLIENT, /SERVER }] ENCRYPTION
+        { ACCEPTED, REFUSED, REQUESTED, REQUIRED }
+        { ACCEPTED, REFUSED, REQUESTED, REQUIRED }
+  The first parameter specifies the Kermit to peer state.  The second
+  parameter specifies the peer to Kermit state.  The default is ACCEPTED
+  ACCEPTED.
+
+SET TELNET ENCRYPTION TYPE { AUTOMATIC, CAST128_CFB64, CAST128_OFB64,
+  CAST5_40_CFB64, CAST5_40_OFB64, DES_CFB64, DES_OFB64,
+  DES3_CFB64, DES3_OFB64, NONE }
+  AUTOMATIC allows the host to choose the preferred type of encryption.
+  Other values allow a specific encryption method to be specified.
+  AUTOMATIC is the default.  The list of options varies depending
+  on the encryption types selected at compilation time.  An encryption
+  method can only be used if there is enough key data available.
+  Kerberos can use only DES encryption because it provides a shared
+  secret only 56 bits in length.
+
+SET TELOPT [{ /CLIENT, /SERVER }] START_TLS
+        { ACCEPTED, REFUSED, REQUESTED, REQUIRED }
+  ACCEPT or REFUSE a request to negotiate TLS, or actively REQUEST
+  that TLS be negotiated.  REQUIRED refuses and closes the connection if
+  the peer refuses to negotiate TLS or the TLS negotiations end in failure.
+  ACCEPTED by default when a client.  REQUESTED by default when a server.
+
+SET TELNET ENVIRONMENT USER <name>
+SET LOGIN USERID <name>
+  If a <name> is given, it sent to host during Telnet negotiations; if this
+  switch is given but the string is omitted, no user ID is sent to the host.
+  If this command is not given, your current USERID value, \v(userid), is
+  sent.  When a userid is sent to the host it is a request to login as the
+  specified user.
+
+SET LOGIN PASSWORD <password>
+  If a <password> is given, it is treated as the password to be used (if
+  required) by any Telnet Authentication protocol (Kerberos Ticket retrieval,
+  Secure Remote Password (SRP), or X.509 certificate private key decryption.)
+  If no password is specified a prompt is issued to request the password if
+  one is required for the negotiated authentication method.
+
+SET TELNET DEBUG ON
+  Displays all TELNET negotiations in full detail.
+
+TELNET /AUTH:<type> /ENCRYPT:<type> /USERID:[<name>] /PASSWORD:[<string>]
+       <host> <port>
+  The TELNET command is a shortcut for making interactive connections.
+  It is the equivalent of specifying:
+
+    SET TELOPT AUTH ...
+    SET TELNET AUTH TYPE ...
+    SET TELOPT ENCRYPT ...
+    SET TELNET ENCRYPT TYPE ...
+    SET LOGIN USERID ...
+    SET LOGIN PASSWORD ...
+    SET HOST /CONNECT <host> <port> /TELNET
+
+  /AUTH:<type> is equivalent to SET TELNET AUTH TYPE <type> and
+  SET TELOPT AUTH REQUIRED with the following exceptions.  If the type
+  is AUTO, then SET TELOPT AUTH REQUESTED is executed and if the type
+  is NONE, then SET TELOPT AUTH REFUSED is executed.
+
+  /ENCRYPT:<type> is equivalent to SET TELNET ENCRYPT TYPE <type>
+  and SET TELOPT ENCRYPT REQUIRED REQUIRED with the following exceptions.
+  If the type is AUTO then SET TELOPT AUTH REQUESTED REQUESTED is executed
+  and if the type is NONE then SET TELOPT ENCRYPT REFUSED REFUSED is
+  executed.
+
+  /USERID:[<name>]
+  This switch is equivalent to SET LOGIN USERID <name> or SET TELNET
+  ENVIRONMENT USER <name>.  If a string is given, it sent to host during
+  Telnet negotiations; if this switch is given but the string is omitted, no
+  user ID is sent to the host.  If this switch is not given, your current
+  USERID value, \v(userid), is sent.  When a userid is sent to the host
+  it is a request to login as the specified user.
+
+  /PASSWORD:[<string>]
+  This switch is equivalent to SET LOGIN PASSWORD.  If a string is given,
+  it is treated as the password to be used (if required) by any Telnet
+  Authentication protocol (Kerberos Ticket retrieval, Secure Remote
+  Password, or X.509 certificate private key decryption.)  If no password
+  switch is specified a prompt is issued to request the password if one
+  is required for the negotiated authentication method.
+
+SHOW TELNET
+  Displays current TELNET settings, including authentication and
+  encryption.
+
+6.2. The SET AUTHENTICATION Command
+
+The SET AUTHENTICATION command lets you configure the behavior of Kermit's
+authentication methods and set defaults for the AUTHENTICATE commands so you
+don't always have to include all the switches if you give more than one
+AUTHENTICATE command in one Kermit session:
+
+If you always use the same setup, you can put the appropropriate SET
+AUTHENTICATION commands in your Kermit customization file: k95custom.ini
+(Windows) or .mykermrc (UNIX).
+
+6.2.1 Kerberos Set Commands
+
+SET AUTHENTICATION { KERBEROS4, KERBEROS5 } AUTODESTROY
+  { ON-CLOSE, ON-EXIT, NEVER }
+  When ON, Kermit destroys all credentials in the default
+  credentials cache upon Kermit termination.  Default is NEVER.
+
+SET AUTHENTICATION { KERBEROS4, KERBEROS5 } AUTOGET { ON, OFF }
+  When ON, if the host offers Kerberos 4 or Kerberos 5 authentication and
+  Kermit is configured to use that authentication method and there is no
+  TGT, Kermit automatically attempts to retrieve one by prompting for the
+  password (and principal if needed.)  Default is ON.
+
+SET AUTHENTICATION KERBEROS5 CREDENTIALS-CACHE <filename>
+  Specifies an alternative credentials cache.  This is useful when you need
+  to maintain two or more sets of credentials for different realms or
+  roles.  The default is specified by the environment variable KRB5CCNAME
+  or as reported by the Kerberos 5 library.
+
+SET AUTHENTICATION KERBEROS5 FORWARDABLE { ON, OFF }
+  ON specifies that Kerberos 5 credentials should be forwardable to the
+  host.  If SET TELNET AUTHENTICATION FORWARDING is ON, forwardable
+  credentials are sent to the host.  Default is OFF.
+
+SET AUTHENTICATION KERBEROS5 GET-K4-TGT { ON, OFF }
+  ON specifies that Kerberos 4 credentials should be requested each
+  time Kerberos 5 credentials are requested with AUTH KERBEROS5 INIT.
+  The default is OFF.
+
+SET AUTHENTICATION KERBEROS4 INSTANCE <instance>
+  Allows a Kerberos 4 instance to be specified as a default (if needed).
+
+SET AUTHENTICATION { KERBEROS4, KERBEROS5 } LIFETIME <minutes>
+  Specifies the lifetime of the TGTs requested from the KDC.  The default
+  is 600 minutes (10 hours).
+
+SET AUTHENTICATION KERBEROS4 PREAUTH { ON, OFF }
+  Allows Kerberos 4 preauthenticated TGT requests to be turned off.  The
+  default is ON.  Only use if absolutely necessary.  We recommend that
+  preauthenticated requests be required for all tickets returned by a KDC
+  to a requestor.
+
+SET AUTHENTICATION { KERBEROS4, KERBEROS5 } PRINCIPAL <name>
+  When Kermit starts, it attempts to set the principal name to that stored
+  in the current credentials cache.  If no credential cache exists, the
+  current SET LOGIN USERID value is used.  SET LOGIN USERID is set to the
+  operating systems current username when Kermit is started.  To force
+  Kermit to prompt the user for the principal name when requesting TGTs,
+  place
+
+    SET AUTH K4 PRINCIPAL {}
+    SET AUTH K5 PRINCIPAL {}
+
+  in the Kermit initialization file or connection script.
+
+SET AUTHENTICATION { KERBEROS4, KERBEROS5 } PROMPT PASSWORD <prompt>
+  Specifies a custom prompt to be used when prompting for a password.  The
+  Kerberos prompt strings may contain two "%s" replacement fields.  The
+  first %s is replaced by the principal name; the second by the realm.
+
+SET AUTHENTICATION { KERBEROS4, KERBEROS5 } PROMPT PRINCIPAL <prompt>
+  Specifies a custom prompt to be used when prompting for the Kerberos
+  principal name.  No %s replacement fields may be included.  Kermit
+  prompts for a principal name when retrieving a TGT if the command:
+
+    SET AUTHENTICATION { KERBEROS4, KERBEROS5 } PRINCIPAL {}
+
+  has been issued.
+
+SET AUTHENTICATION KERBEROS5 PROXIABLE { ON, OFF }
+  When ON, specifies that Kerberos 5 credentials should be proxiable.
+  The default is OFF.
+
+SET AUTHENTICATION KERBEROS5 RENEWABLE <minutes>
+  When <minutes> is greater than the ticket lifetime a TGT may be
+  renewed with AUTH K5 INIT /RENEW instead of granting a new ticket
+  as long as the ticket is not expired and it's within the renewable
+  lifetime.  Default is 0 (zero) minutes.
+
+SET AUTHENTICATION { KERBEROS4, KERBEROS5 } REALM <name>
+  If no default is set, the default realm configured for the Kerberos
+  libraries is used.  Abbreviations are accepted.
+
+SET AUTHENTICATION { KERBEROS4, KERBEROS5 } SERVICE-NAME <name>
+  This command specifies the service ticket name used to authenticate
+  to the host when Kermit is used as a client; or the service ticket
+  name accepted by Kermit when it is acting as the host.
+  If no default is set, the default service name for Kerberos 4 is
+  "rcmd" and for Kerberos 5 is "host".
+
+6.2.2 SRP Set Commands
+
+SET AUTHENTICATE SRP PROMPT PASSWORD <text>
+  Specifies a custom prompt to be used when prompting for a password.
+  <prompt> may contain a single instance of "%s" which is replaced
+  by the user's login name.
+
+6.2.3 SSL and TLS (OpenSSL) Set Commands
+
+In all of the following commands "SSL" and "TLS" are aliases.
+
+SET AUTHENTICATE { SSL, TLS } CIPHER-LIST <list of ciphers>
+  This command applies to both SSL and TLS.  A colon-separated list of any
+  of the following (case-sensitive) options is accepted, depending on the
+  options chosen when OpenSSL was compiled (without the doublequotes):
+
+  Key Exchange Algorithms:
+    "kRSA"      RSA key exchange
+    "kDHr"      Diffie-Hellman key exchange (key from RSA cert)
+    "kDHd"      Diffie-Hellman key exchange (key from DSA cert)
+    "kEDH'      Ephemeral Diffie-Hellman key exchange (temporary key)
+
+  Authentication Algorithm:
+    "aNULL"     No authentication
+    "aRSA"      RSA authentication
+    "aDSS"      DSS authentication
+    "aDH"       Diffie-Hellman authentication
+
+  Cipher Encoding Algorithm:
+    "eNULL"     No encodiing
+    "DES"       DES encoding
+    "3DES"      Triple DES encoding
+    "RC4"       RC4 encoding
+    "RC2"       RC2 encoding
+    "IDEA"      IDEA encoding
+
+  MAC Digest Algorithm:
+    "MD5"       MD5 hash function
+    "SHA1"      SHA1 hash function
+    "SHA"       SHA hash function (should not be used)
+
+  Aliases:
+    "ALL"       all ciphers
+    "SSLv2"     all SSL version 2.0 ciphers (should not be used)
+    "SSLv3"     all SSL version 3.0 ciphers
+    "EXP"       all export ciphers (40-bit)
+    "EXPORT56"  all export ciphers (56-bit)
+    "LOW"       all low strength ciphers (no export)
+    "MEDIUM"    all ciphers with 128-bit encryption
+    "HIGH"      all ciphers using greater than 128-bit encryption
+    "RSA"       all ciphers using RSA key exchange
+    "DH"        all ciphers using Diffie-Hellman key exchange
+    "EDH"       all ciphers using Ephemeral Diffie-Hellman key exchange
+    "ADH"       all ciphers using Anonymous Diffie-Hellman key exchange
+    "DSS"       all ciphers using DSS authentication
+    "NULL"      all ciphers using no encryption
+
+Each item in the list may include a prefix modifier:
+
+    "+"         move cipher(s) to the current location in the list
+    "-"         remove cipher(s) from the list (may be added again by
+                a subsequent list entry)
+    "!"         kill cipher from the list (it may not be added again
+                by a subsequent list entry)
+
+If no modifier is specified the entry is added to the list at the current
+position.  "+" may also be used to combine tags to specify entries such as
+"RSA+RC4" describes all ciphers that use both RSA and RC4.
+
+For example, all available ciphers not including ADH key exchange:
+
+  ALL:!ADH:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP
+
+All algorithms including ADH and export but excluding patented algorithms:
+
+  HIGH:MEDIUM:LOW:EXPORT56:EXP:ADH:!kRSA:!aRSA:!RC4:!RC2:!IDEA
+
+The OpenSSL command
+
+  openssl ciphers -v <list of ciphers>
+
+may be used to list all of the ciphers and the order described by a specific
+<list of ciphers>.
+
+SET AUTHENTICATE { SSL, TLS } CRL-DIR <directory>
+  Specifies a directory that contains certificate revocation files, where
+  each file is named by the hash of the certificate issuer name.
+
+  OpenSSL expects the hash symlinks to be made like this:
+
+    ln -s crl.pem `openssl crl -hash -noout -in crl.pem`.r0
+
+  Since all file systems do not have symlinks you can use the following
+  command in Kermit to copy the crl.pem file to the hash file name:
+
+     copy crl.pem {\fcommand(openssl crl -hash -noout -in crl.pem).r0}
+
+  This produces a hash based on the issuer field in the CRL such
+  that the issuer field of a Cert may be quickly mapped to the
+  correct CRL.
+
+SET AUTHENTICATE { SSL, TLS } CRL-FILE <filename>
+  Specifies a file that contains a list of certificate revocations.
+
+SET AUTHENTICATE { SSL, TLS } DEBUG { ON, OFF }
+  Tells whether debug information should be displayed about the SSL/TLS
+  connection.  When DEBUG is ON, the VERIFY command does not terminate
+  connections when set to FAIL-IF-NO-PEER-CERT and a certificate is
+  presented that cannot be successfully verified; instead each error is
+  displayed but the connection automatically continues.
+
+SET AUTHENTICATE { SSL, TLS } DH-PARAM-FILE <filename>
+  Specifies a file containing DH parameters which are used to generate
+  temporary DH keys.  If a DH parameter file is not provided Kermit uses a
+  fixed set of parameters depending on the negotiated key length.  Kermit
+  provides DH parameters for key lengths of 512, 768, 1024, 1536, and 2048
+  bits.
+
+SET AUTHENTICATE { SSL, TLS } DSA-CERT-FILE <filename>
+  Specifies a file containing a DSA certificate to be sent to the peer to
+  authenticate the host or end user.  The file may contain the matching DH
+  private key instead of using the DSA-KEY-FILE command.
+
+SET AUTHENTICATE { SSL, TLS } DSA-KEY-FILE <filename>
+  Specifies a file containing the private DH key that matches the DSA
+  certificate specified with DSA-CERT-FILE.  This command is only necessary
+  if the private key is not appended to the certificate in the file
+  specified by DSA-CERT-FILE.
+
+Note: When Kermit is running as an IKSD it cannot support encrypted private
+keys.  If your private key file is encrypted you can use the following command
+to unencrypted (provided you know that pass phrase):
+
+  openssl dsa -in <encrypted-key-file> -out <unencrypted-key-file>
+
+SET AUTHENTICATE { SSL, TLS } RSA-CERT-FILE <filename>
+  Specifies a file containing a RSA certificate to be sent to the peer to
+  authenticate the host or end user.  The file may contain the matching RSA
+  private key instead of using the RSA-KEY-FILE command.
+
+SET AUTHENTICATE { SSL, TLS } RSA-KEY-FILE <filename>
+  Specifies a file containing the private RSA key that matches the RSA
+  certificate specified with RSA-CERT-FILE.  This command is only necessary
+  if the private key is not appended to the certificate in the file
+  specified by RSA-CERT-FILE.
+
+Note: When Kermit is running as an IKSD it cannot support encrypted private
+keys.  If your private key file is encrypted you can use the following command
+to unencrypted (provided you know that pass phrase):
+
+  openssl rsa -in <encrypted-key-file> -out <unencrypted-key-file>
+
+SET AUTHENTICATE { SSL, TLS } VERBOSE { ON, OFF }
+  Specifies whether information about the authentication (the certificate
+  chain) should be displayed upon making a connection.
+
+SET AUTHENTICATE { SSL, TLS } VERIFY { NO, PEER-CERT, FAIL-IF-NO-PEER-CERT }
+  Specifies whether certificates should be requested from the peer; whether
+  they should be verified when they are presented; and whether they should
+  be required.  When set to NO (the default for IKSD), Kermit does not
+  request that the peer send a certificate and if one is presented it is
+  ignored.  When set to PEER-CERT (the default when not IKSD), Kermit
+  requests a certificate be sent by the peer.  If the certificate is
+  presented, it is verified.  Any errors during the verification process
+  result in queries to the end user.  When set to FAIL-IF-NO-PEER-CERT,
+  Kermit asks the peer to send a certificate.  If the certificate is not
+  presented or fails to verify successfully, the connection is terminated
+  without querying the user.
+
+  If an anonymous cipher (i.e., ADH) is desired the NO setting must be
+  used; otherwise the receipt of the peer certificate request is
+  interpreted as a protocol error and the negotiation fails.
+
+  If you wish to allow the peer to authenticate using either an X.509
+  certificate to userid mapping function or via use of a ~/.tlslogin file,
+  you must use either PEER-CERT or FAIL-IF-NO-PEER-CERT.  Otherwise, any
+  certificates that are presented are ignored.  In other words, use NO if
+  you want to disable the ability to use certificates to authenticate a
+  peer.
+
+SET AUTHENTICATE { SSL, TLS } VERIFY-DIR <directory>
+  Specifies a directory that contains root CA certificate files used to
+  verify the certificate chains presented by the peer.  Each file is named
+  by a hash of the certificate.
+
+  OpenSSL expects the hash symlinks to be made like this:
+
+    ln -s cert.pem `openssl x509 -hash -noout -in cert.pem`.0
+
+  Since all file systems do not have symlinks you can use the following
+  command in Kermit to copy the cert.pem file to the hash file name:
+
+     copy cert.pem {\fcommand(openssl x509 -hash -noout -in cert.pem).0}
+
+  This produces a hash based on the subject field in the cert such that the
+  certificate may be quickly found.
+
+SET AUTHENTICATE { SSL, TLS } VERIFY-FILE <file>
+  Specifies a file that contains root CA certificates to be used for
+  verifying certificate chains.
+
+
+6.3. The AUTHENTICATE Command (Kerberos Only)
+
+The AUTHENTICATE command obtains or destroys Kerberos tickets and lists
+information about them.  The general format is:
+
+  AUTHENTICATE { KERBEROS4, KERBEROS5 [ switches ] } <action> [ switches ]
+
+The use of command switches is described in ckermit2.txt, section 1.5.
+The actions are INITIALIZE, DESTROY, and LIST-CREDENTIALS:
+
+  AUTH {K4,K5} { INITIALIZE [switches], DESTROY, LIST-CREDENTIALS [switches] }
+
+The INITIALIZE command is the most complex, and its format is different for
+Kerberos 4 and Kerberos 5.  For Kerberos 4, the format is:
+
+AUTH K4 INITIALIZE [ /INSTANCE:<name> /LIFETIME:<minutes> -
+  /PASSWORD:<password> /PREAUTH /REALM:<name> <principal> ]
+
+All switches are optional.  Kerberos 4 INITIALIZE switches are as follows:
+
+/INSTANCE:<name>
+  Allows an Instance to be specified (see Glossary).
+
+/LIFETIME:<number>
+  Specifies the requested lifetime in minutes for the ticket.  If no lifetime
+  is specified, 600 minutes is used.  If the lifetime is greater than the
+  maximum supported by the ticket granting service, the resulting lifetime
+  is shortened accordingly.
+
+/NOT-PREAUTH
+  Instructs Kermit to send a ticket granting ticket (TGT) request to the KDC
+  without any preauthentication data.
+
+/PASSWORD:<string>
+  Allows the inclusion of a password in a script file.  If no /PASSWORD switch
+  is included, you are prompted on a separate line.  The password switch is
+  provided for use by automated scripts.  However, we strongly recommend that
+  it not be used because clear text passwords can be easily compromised.
+
+/PREAUTH
+  Instructs Kermit to send a preauthenticated ticket granting ticket (TGT)
+  request to the KDC instead of a plaintext request.  The default when
+  supported by the Kerberos libraries.
+
+/REALM:<name>
+  Allows an alternative Realm to be specified (see Glossary).
+
+<principal>
+  may be of the form:
+  userid[.instance[.instance]]@[realm]
+  Can be omitted if it is the same as your username or SET LOGIN USERID
+  value on the client system.
+
+The format for Kerberos 5 is as follows:
+
+AUTH K5 [ /CACHE:<filename> ] { INITIALIZE ..., DESTROY, LIST-CREDENTIALS ...}
+
+The INITIALIZE command for Kerberos 5 can include a number of switches;
+all are optional:
+
+AUTH K5 [ /CACHE:<filename> ] INITITIALIZE [ /ADDRESSES:<addr-list>
+  /FORWARDABLE /KERBEROS4 /LIFETIME:<minutes> /PASSWORD:<password>
+  /POSTDATE:<date-time> /PROXIABLE /REALM:<name> /RENEW /RENEWABLE:<minutes>
+  /SERVICE:<name> /VALIDATE <principal> ]
+
+Kerberos 5 INITIALIZE switches are:
+
+/ADDRESSES:{list of ip-addresses}
+  Specifies a list of IP addresses that should be placed in the Ticket
+  Granting Ticket in addition to the local machine addresses.
+
+/FORWARDABLE
+  Requests forwardable tickets.
+
+/KERBEROS4
+  Instructs Kermit to get Kerberos 4 tickets in addition to Kerberos 5
+  tickets.  If Kerberos 5 tickets are not supported by the server, a mild
+  warning is printed and Kerberos 4 tickets are requested.
+
+/LIFETIME:<number>
+  Specifies the requested lifetime in minutes for the ticket.  If no
+  lifetime is specified, 600 minutes is used.  If the lifetime is greater
+  than the maximum supported by the ticket granting service, the resulting
+  lifetime is shortened.
+
+/NO-KERBEROS4
+  Instructs Kermit to not attempt to retrieve Kerberos 4 credentials.
+
+/NOT-FORWARDABLE
+  Requests non-forwardable tickets.
+
+/NOT-PROXIABLE
+  Requests non-proxiable tickets.
+
+/PASSWORD:<string>
+  Allows the inclusion of a password in a script.  If no password is
+  specified you are prompted for one.  The password switch is provided for
+  use by automated scripts.  However, we strongly recommend that it not be
+  used because clear-text passwords can be easily compromised.  See Chapter
+  19 of "Using C-Kermit".
+
+/POSTDATE:<date-time>
+  Requests a postdated ticket, valid starting at <date-time>.  Postdated
+  tickets are issued with the invalid flag set, and need to be fed back to
+  the KDC before use with the /VALIDATE switch.  See ckermit2.txt section
+  1.6 for acceptable date-time formats.
+
+/PROXIABLE
+  Requests proxiable tickets.
+
+/REALM:<string>
+  Allows an alternative realm to be specified.
+
+/RENEW
+  Requests renewal of a renewable Ticket Granting Ticket.  Note that
+  an expired ticket cannot be renewed even if it is within its renewable
+  lifetime.
+
+/RENEWABLE:<number>
+  Requests renewable tickets, with a total lifetime of <number> minutes.
+
+/SERVICE:<string>
+  Allows a service other than the ticket granting service to be specified.
+
+/VALIDATE
+  Requests that the Ticket Granting Ticket in the cache (with the invalid
+  flag set) be passed to the KDC for validation.  If the ticket is within
+  its requested time range, the cache is replaced with the validated
+  ticket.
+
+<principal>
+  May be of the form:
+    userid[/instance][@realm]
+  Can be omitted if it is the same principal as stored in the current ticket
+  cache at the time Kermit started; or the current username if a ticket
+  cache did not exist.
+
+Note: Kerberos 5 always attempts to retrieve a Ticket Granting Ticket (TGT)
+using the preauthenticated TGT request.
+
+AUTHORIZE K5 LIST-CREDENTIALS [ /ADDRESSES /ENCRYPTION /FLAGS ]
+  Shows start time, expiration time, service or principal name, plus
+  the following additional information depending the switches:
+
+/ADDRESSES
+  Displays the hostnames and/or IP addresses embedded within the
+  tickets.
+
+/ENCRYPTION displays the encryption used by each ticket (if applicable):
+  DES-CBC-CRC
+  DES-CBC-MD4
+  DES-CBC-MD5
+  DES3-CBC-SHA
+
+/FLAGS provides the following information (if applicable) for each ticket:
+  F - Ticket is Forwardable
+  f - Ticket was Forwarded
+  P - Ticket is Proxiable
+  p - Ticket is a Proxy
+  D - Ticket may be Postdated
+  d - Ticket has been Postdated
+  i - Ticket is Invalid
+  R - Ticket is Renewable
+  I - Ticket is the Initial Ticket
+  H - Ticket has been authenticated by Hardware
+  A - Ticket has been Pre-authenticated
+
+6.4. OTHER SECURITY-RELATED COMMANDS
+
+SET TCP ADDRESS [ <ip-address> ]
+  Specify the IP address of the computer that C-Kermit is running on.
+  Normally this is not necessary.  The exceptions would be if the host is
+  multihomed (e.g. one host pointed to by many IP addresses, or one of many
+  hosts pointed to by a "common" IP address) or has multiple physical network
+  adapters, with a different address for each adapter, AND you want C-Kermit
+  to either (a) accept an incoming TCP connection ("set host *") or (b) get a
+  Kerberos ticket.
+
+SET TCP REVERSE-DNS-LOOKUP { ON, OFF }
+  Specifies whether or not a Reverse DNS Lookup should be performed to
+  determine the hostname assigned to the IP address used to connect to the
+  host.
+
+  In order for mutual authentication to succeed, the client and the server
+  must agree on the name to be used for the server.  It is common for servers
+  to have more than one name.  This is especially true for clusters of servers
+  that provide the same function and are referenced by an alias.  For instance
+  www.foo.com might be an alias for three machines www-1.foo.com,
+  www-2.foo.com, and www-3.foo.com.  If the hosts are configured to use
+  separate credentials for authentication it will be necessary to know which
+  host is actually in use since "www.foo.com" is not equal to "www-1.foo.com".
+
+  On the other hand, since DNS is not a secure service, using an additional
+  lookup to verify the name associated with a particular IP address increases
+  the susceptibility that the authentication may be forged by an attacker.
+
+  For the highest level of security, Reverse DNS Lookups should be turned OFF.
+
+
+7. EFFECTS OF ENCRYPTION ON FILE TRANSFER PERFORMANCE
+
+Encryption and the subsequent decryption of a data stream can result in 10%
+to 60% reduction in file transfer performance depending on the encryption
+algorithm.  Encrypted data streams are uncompressible, thus reducing
+throughput on PPP connections.
+
+
+8. MULTI-HOMED HOSTS AND NETWORK ADDRESS TRANSLATORS
+
+Kermit is designed to allow authentication with hosts whose names resolve to
+multiple (randomized) IP addresses.
+
+However, this does not always work on Windows 95 or Windows NT 3.5x due to
+their caching of DNS information.  For instance, at Columbia University the
+CUNIX name resolves to one of six machines, each with a different name, such
+as HOSTA, HOSTB, etc.  When telneting to CUNIX, you might be given IP address
+128.59.35.136.  But even though the DNS servers are properly configured to
+return the proper name (e.g. HOSTB) for that IP address, Windows 95 returns
+CUNIX because it retrieves the information from its internal cache instead of
+performing another network call.  This means that instead of retrieving a
+ticket for the service:
+
+  rcmd.hostb@CC.COLUMBIA.EDU
+
+we get a ticket for:
+
+  rcmd.cunix@CC.COLUMBIA.EDU
+
+This use of the wrong ticket produces the following error: "Can't decode
+authenticator (krb_rd_req)".
+
+Kerberos 4 has no problems with NATs but fails with Multihomed systems.  Why?
+A K4 ticket has room for only a single IP address and that IP address is
+assigned not by the client but by the KDC.  The result is that when K4 is
+used from behind a NAT the IP address that is placed into the ticket is the
+IP address of the NAT, not the IP address of the client machine.  This means
+the ticket is good only on the far side of the NAT and not on the near side.
+It also means that when a K4 ticket is used with a multihomed host that the
+ticket is good only on the interface that was used to acquire the ticket in
+the first place.
+
+Kerberos 5 has no problems with multihomed hosts because the ticket supports
+multiple IP addresses and those IP addresses are inserted into the ticket by
+the client, not by the KDC.  However, this also means that K5 fails when it
+is used through a NAT.  The address in the ticket is the private IP address
+and not the address that the KDC sees.  This can be worked around if the
+client uses a kinit that allows a list of additional IP addresses to be
+specified for inclusion in the TGT.  Kermit supports this capability with the
+
+  AUTH K5 INIT /ADDRESSES:{list of addresses}
+
+command.  The only problem is that in most cases the end user does not
+know what the IP addresses is on the far side of the NAT.
+
+9. OTHER NOTES
+
+In Kermit 95, the authentication type and encryption levels are displayed in
+the terminal-screen status Line as follows:
+
+  K4  - Kerberos IV
+  K5  - Kerberos V
+  NTLM- NT Lan Manager
+  SRP - Secure Remote Password
+
+  pp  - No encryption
+  Ep  - Encryption to host, plaintext from host
+  pD  - Plaintext to host, encryption from host
+  ED  - Encryption both directions
+  SSL - Secure Sockets Layer (both directions)
+  TLS - Transport Layer Security (both directions)
+
+Encrypted sessions become unreadable if even one bit of data is inserted into
+or deleted from the data stream.  One damaged bit results in nine damaged
+bytes but subsequent bytes remain readable.  But since TCP/IP is a reliable
+transport by definition, none of this should occur.
+
+Windows login names are not case-sensitive.  However, Unix login names are.
+If the Unix login name is "fred" but Windows was logged in using the name
+"Fred", authentication appears to succeed but telnetd closes the connection
+after Telnet negotiations are complete.  There are several solutions to this
+problem:
+
+ . Make sure the Windows login name is case identical to the Unix login name.
+   (If Windows has recorded the login in the registry as "Fred" it won't
+   matter if you login to Windows using "fred".  The only way to correct
+   this problem is to edit the Registry.)
+
+ . Use the SET LOGIN USERID <name> command to set the proper login name
+   before connecting to the telnet server.
+
+ . Use the SET AUTHENTICATE { KERBEROS4, KERBEROS5 } PRINCIPAL <name> command
+   to set the proper principal name before connecting to the telnet server.
+
+ . Specify the remote username in the <principal> of your AUTHENTICATE Kxxx
+   INITIALIZE command.
+
+Kermit adjusts the case of the name if and only if a case insensitive
+comparison of the SET LOGIN USERID name and the name in the authentication
+ticket shows no differences.
+
+
+10. VARIABLES
+
+10.1 GENERAL AUTHENTICATION VARIABLES
+
+\v(authname)  - Only valid when Kermit is accepting a connection.  This
+                variable contains the name of the user that has been
+                authenticated as opposed to \v(userid) which contains the
+                name the user chose to login as.  This distinction is
+                important for \v(authstate) = "user" since this means that
+                although we were able to authenticate the user as \v(authname)
+                we could not verify that she has authorization to access
+                the account of \v(userid).
+
+\v(authstate) - String indicating current state of authentication:
+                "rejected" - Rejected or otherwise not authenticated
+                "unknown"  - Anonymous connection
+                "other"    - We know him, but not his name
+                "user"     - We know his name
+                "valid"    - We know him, and he needs no password
+
+\v(authtype) - String indicating which telnet (or other) authentication method
+               is in use.
+               "NULL"              - No authentication
+               "KERBEROS_V4"       - Kerberos 4
+               "KERBEROS_V5"       - Kerberos 5
+               "SRP"               - Secure Remote Password
+               "NTLM"              - NT Lan Manager
+               "X_509_CERTIFICATE" - X.509 certificate
+
+
+10.2 KERBEROS VARIABLES
+
+\v(krb5cc)    - Current kerberos V credentials cache.
+\v(krb5princ) - Current kerberos V principal name.
+\v(krb5realm) - Current kerberos V realm name.
+\v(krb5errno) - Last Kerberos V errno
+\v(krb5errmsg)- Last Kerberos V error message
+
+\v(krb4princ) - Current kerberos IV principal name.
+\v(krb4realm) - Current kerberos IV realm name.
+\v(krb4errno) - Last Kerberos IV errno
+\v(krb4errmsg)- Last Kerberos IV error message
+
+10.3 SSL/TLS VARIABLES
+
+\v(x509_issuer)  - The issuer string from the peer's X.509 certificate
+\v(x509_subject) - The subject string from the peer's X.509 certificate
+
+
+11. FUNCTIONS
+
+All Kerberos functions require the Kerberos version number, 4 or 5, as the
+first argument (n).
+
+\fkrbtickets(n)
+  The number of active Kerberos n (4 or 5) tickets.  This resets the
+  ticket list used by \fkrbnextticket(n).
+
+\fkrbnextticket(n)
+  The next ticket in the Kerberos n (4 or 5) ticket list that was set up by
+  the most recent invocation of \fkrbtickets(n).
+
+\fkrbisvalid(n,name)
+  The name is a ticket name, as returned by \fkrbnextticket(n).  Returns
+  1 if the ticket is valid, 0 if not valid.  A ticket is valid if all the
+  following conditions are true:
+
+    (i)   it exists in the current cache file;
+    (ii)  it is not expired;
+    (iii) it is not marked invalid (K5 only);
+    (iv)  it was issued from the current IP address
+
+  This value can be used in an IF statement, e.g.:
+
+    if \fkrbisvalid(4,krbtgt.FOO.BAR.EDU@FOO.BAR.EDU) ...
+
+\fkrbtimeleft(n,name)
+  The name is a ticket name, as returned by \fkrbnextticket(n).  Returns
+  the number of seconds remaining in the ticket's lifetime.
+
+\fkrbflags(n,name)
+  The name is a ticket name, as returned by \fkrbnextticket(n).  Returns
+  the flags string as reported with AUTH K5 LIST /FLAGS.  This string can
+  be searched for a particular flag using the \findex() function when
+  SET CASE is ON (for case sensitive searches).  Flag strings are only
+  available for K5 tickets.
+
+Kerberos 5 functions operate against the current credential-cache file as set
+by SET AUTHORIZATION K5 CREDENTIALS-FILE <filename>.
+
+
+12. SCRIPTING HINTS
+
+12.1.  Kerberos Autoget
+
+When developing scripts to be used without user interaction you should turn
+off the Kerberos AutoGet TGT feature with
+
+  SET AUTHENTICATION KERBEROS4 AUTOGET OFF
+  SET AUTHENTICATION KERBEROS5 AUTOGET OFF
+
+When autoget mode is disabled, Kermit does not automatically perform the
+function of KINIT. Instead this automation can be scripted; for example:
+
+  SET TELOPT AUTHENTICATION REQUIRED
+  SET HOST <host>:<port> /TELNET
+  IF FAILURE {
+      AUTHENTICATE K4 INIT ; (or K5)
+      SET HOST <host>:<port>
+      IF FAILURE { do whatever on failure }
+  }
+
+or place the following in your K95CUSTOM.INI file to insure a valid
+Ticket Granting Ticket each time you start K95:
+
+  IF AVAILABLE KERBEROS4 {
+    IF NOT \Fkrbisvalid(4,krbtgt.\v(krb4realm)@\v(krb4realm)) {
+      echo Kerberos 4 Ticket Granting Ticket is invalid!
+      AUTH K4 INIT
+    }
+  }
+
+  IF AVAILABLE KERBEROS5 {
+    IF NOT \Fkrbisvalid(5,krbtgt/\v(krb5realm)@\v(krb5realm)) {
+      echo Kerberos 5 Ticket Granting Ticket is invalid!
+      AUTH K5 INIT
+    }
+  }
+
+
+12.2. Autodestruction of Kerberos Credentials
+
+When Kermit is used on a machine in a public lab and Kerberos is used for
+authentication it is often desireable to not have the Kerberos credentials
+survive the current session.  To automate the destruction of Kerberos
+credentials use:
+
+   SET AUTH {K4, K5} AUTODESTROY { ON-CLOSE, ON-EXIT }
+
+12.3.  Automated prompting for usernames
+
+To prevent Kermit from using the username reported by the local operating
+system for the remote userid and kerberos principal use:
+
+  SET LOGIN USERID {}
+  SET AUTHENTICATION KERBEROS4 PRINCIPAL {}
+  SET AUTHENTICATION KERBEROS5 PRINCIPAL {}
+
+This forces Kermit to prompt the user for the userid and principal
+when requesting credentials.
+
+12.4.  Password Inclusion in Script Files
+
+Although it is not recommended (since storing passwords openly in a file,
+especially on a PC, is a serious security risk), connections may be scripted
+without user interaction:
+
+  SET HOST /PASSWORD:<password> /USERID:<user> <host> <port> /TELNET
+
+The security risk can be avoided if the script prompts for the password:
+
+  ASKQ \%p Password:
+  SET HOST PASSWORD:\%p /USERID:<user> <host> <port> /TELNET
+  UNDEF \%p
+
+Of course, if the /PASSWORD switch is not specified Kermit prompts for the
+password automatically when the host requests the use of authentication.
+
+12.5   Using Kermit Scripts to Produce Secure Telnet Services
+
+The following series of commands causes a Kermit script to accept only
+authenticated and encrypted connections:
+
+  SET TELOPT /SERVER AUTH REQUIRE
+  SET TELOPT /SERVER ENCRYPT REQUIRE REQUIRE
+  SET HOST * <port> /TELNET
+  IF FAILURE { do appropriate error handling }
+
+The \v(authstate) variable tells the script which level of authentication has
+been achieved.  If the value is "valid" that means that the account specified
+by \v(userid) has been authenticated and authorized for use by \v(authname).
+If the value of \v(authstate) is "user" then \v(authname) has been
+authenticated but she does not have known authorization to access the account
+\v(userid).  This usually means that some additional verification is needed.
+
+  IF EQ "\v(authstate)" "valid" {
+    proceed without further authorization
+  }
+  IF EQ "\v(authstate)" "user" {
+    perform further authorization before providing service
+  }
+
+It is important to realize that when a Kermit script is used in this manner,
+the Telnet negotiations provide authentication of the user and potentially
+encryption of the data communication.  There is no facility in a Kermit script
+to change the ownership of the currently running process from the user that
+started it to the user ID of the authenticated user.  This means that the
+script the authenticated user is accessing has all of the privileges of the
+process executer and not the authenticated user.
+
+Another important fact to remember is that secure access to an insecure
+environment is not secure.  If you are using Windows 95 or 98 to run scripts,
+while it is possible to use Kerberos or SRP to authenticate the incoming
+clients, the insecure nature of the Windows environment means that it is
+impossible for the Kerberos service key tables and SRP password databases to
+be protected from tampering; the security in this case is no stronger than
+than the security of Windows 9x.
+
+13. USING OTHER SECURITY METHODS WITH KERMIT
+
+Other protocols can be used to create secure connections that are not
+currently implemented in Kermit, such as Secure Shell (SSH).  The fact that
+SSH is not integrated into Kermit software does not mean that Kermit cannot
+be used in conjunction with it.  SSH provides for tunneling, which allows a
+localhost proxy to be configured to take insecure connections on the local
+machine and connect them via secure connections to remote hosts.
+
+Secure connection clients can be used as the communication channel in C-Kermit
+7.0 and Kermit 95 1.1.16 via the PTY (Unix only) and PIPE commands.
+See Section 2.7 of ckermit2.txt for details.
+
+Firewalls based on access lists, proxies, and SOCKS do not provide secure
+connections.  However, they do restrict the ports that may be used to
+communicate between the Internet and the Intranet which makes it more
+difficult for someone to break into the Intranet from outside.  They do not
+protect the network from internal attacks nor do they protect a connection,
+once made, from eavesdropping or hijacking.  They may be used in conjunction
+with secure connection systems but should not be used as a replacement for
+them.  (The Windows 95 and NT versions of Kermit 95 do not support SOCKS; the
+OS/2 version has built-in support for SOCKS4.  C-Kermit can be built as a
+SOCKS client if you have a SOCKS library; otherwise you can run SOCKSified
+Telnet or Rlogin clients through C-Kermit with the PIPE command.)
+
+NEC distributes a SOCKS5 Winsock shim for Windows 9x/NT at
+
+  ftp://ftp.nec.co.jp/pub/packages/sotools/
+
+13.1  Implementing Other Security Methods for Kermit 95
+
+Kermit 95 provides an interface that allows it to use a DLL to provide an
+alternative mechanism for implementing secure communication methods.  The DLL
+is loaded via a network type command:
+
+  SET NETWORK TYPE DLL <dll-file>
+
+The connection is then made with a SET HOST command
+
+  SET HOST <command line>
+
+where the <command line> is passed to the DLL after the normal Kermit quoting
+rules are applied.
+
+/* Kermit 95 - External Network DLL specification
+ * July 16 1998
+ * Jeffrey Altman <jaltman@columbia.edu>
+ *
+ * The following specification defines a set of functions to be exported from
+ * a DLL in order for the DLL to work with Kermit 95 version 1.1.17 or higher.
+ *
+ * The DLL is loaded by Kermit 95 via use of the command:
+ *   SET NETWORK TYPE DLL <dllname>
+ *
+ * Notes:
+ *   The functions specified here must be thread safe.  It is possible
+ *   for multiple threads to be calling any combination of functions
+ *   simultaneously.
+ *
+ *   The 1.1.17 interface does not provide for the ability of the
+ *   DLL to query the user with echoing input, nor is the a method
+ *   for querying the values of Kermit variables such as 'userid'
+ *   or Kermit version number.  This will be added in a later release.
+ */
+
+
+/*
+ * N E T O P E N - Network Open
+ *
+ * The network open function is called by Kermit 95 when a new connection
+ * is desired.  Usually in response to:
+ *    SET HOST <command_line>
+ *
+ * Parameters:
+ *   command_line - the command line specified in the SET HOST command
+ *                  after quoting rules and variables have been applied.
+ *   termtype     - a string representing either the currently selected
+ *                  terminal type or a user specified string as per
+ *                  SET TELNET TERMINAL <string>
+ *   height       - initial height of the terminal window (chars)
+ *   width        - initial width of the terminal window (chars)
+ *   readpass     - a pointer to a function to be used to read a password
+ *                  without echoing
+ *
+ * Return values:
+ *   0   on success
+ *   < 0 on failure
+ *
+ *   return codes should be defined such that they can be passed to
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+netopen(char * command_line, char * termtype, int height, int width,
+        int (* readpass)(char * prompt,char * buffer, int length));
+
+/*
+ * N E T C L O S - Network Close
+ *
+ * The network close function is called by Kermit 95 when the user requests
+ * a disconnect or in response to fatal error.
+ *
+ * Parameters: None
+ *
+ * Return values:
+ *   0   on success
+ *   < 0 on failure
+ *
+ *   return codes should be defined such that they can be passed to
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+netclos(void) ;
+
+/*
+ * N E T T C H K - Network Terminal I/O Check
+ *
+ * The network terminal i/o check function is called regularly by Kermit 95
+ * to poll the status of the connection and to retrieve the number of input
+ * characters waiting to be processed.  Because it is called frequently this
+ * function should be designed to be low cost.
+ *
+ * Parameters: None
+ *
+ * Return values:
+ *   >= 0 number of characters waiting in the input queue
+ *   < 0  indicates a fatal error on the connection and the connection
+ *        should be closed.
+ *
+ *   return codes should be defined such that they can be passed to
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+nettchk(void);
+
+/*
+ * N E T F L U I - Network Flush Input
+ *
+ * The network flush input function should clear the connection's input
+ * queue.
+ *
+ * Parameters: None
+ *
+ * Return values:
+ *   0    indicates success
+ *   < 0  indicates an error
+ *
+ *   return codes should be defined such that they can be passed to
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+netflui(void);
+
+
+/*
+ * N E T B R E A K - Network Break
+ *
+ * The network break signal is called in response to a user initiated
+ * break command.  For example, on a serial device this should result in
+ * a Break signal and on a Telnet connection a Break Command is sent.
+ * For connection types without an equivalent simply return 0.
+ *
+ * Parameters: None
+ *
+ * Return values:
+ *   0    indicates success
+ *   < 0  indicates an error
+ *
+ *   return codes should be defined such that they can be passed to
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+netbreak(void);
+
+
+/*
+ * N E T I N C - Network Input Character
+ *
+ * The network input character is used to read the next character from
+ * the input queue.
+ *
+ * Parameters:
+ *   timeout - 0   indicates no timeout, block until the next character
+ *                 is available;
+ *             > 0 indicates a timeout value in seconds;
+ *             < 0 indicates a timeout value in milliseconds;
+ *
+ * Return values:
+ *   >= 0 is interpreted as a valid character
+ *   -1   is a timeout [errorstr() is not called]
+ *   < -1 is a fatal error
+ *
+ *   return codes < -1 should be defined such that they can be passed to
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+netinc(int timeout);
+
+
+/*
+ * N E T X I N - Network Extended Input
+ *
+ * The network extended input is called to read a large number of waiting
+ * input characters.  It will never be called with a number larger than
+ * reported as available and waiting by nettchk().  The function may return
+ * fewer characters than is requested.  This function should not block.
+ *
+ * Parameters:
+ *   count  - number of characters to be read
+ *   buffer - buffer of length count to be used to store the data
+ *
+ * Return values:
+ *   >= 0  the number of characters actually returned by the function
+ *   < 0  indicates an error
+ *
+ *   return codes should be defined such that they can be passed to
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+netxin(int count, char * buffer);
+
+/*
+ * N E T T O C - Network Terminal Output Character
+ *
+ * The network terminal output character transmits a single character
+ *
+ * Parameters:
+ *   c - a single character to be output
+ *
+ * Return values:
+ *   0    indicates success
+ *   < 0  indicates an error
+ *
+ *   return codes should be defined such that they can be passed to
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+nettoc(int c);
+
+/*
+ * N E T T O L - Network Terminal Output Line
+ *
+ * The network terminal output line is used to output one or more
+ * characters.
+ *
+ * Parameters:
+ *   buffer - contains the characters to be output
+ *   count  - the number of characters to be output from buffer
+ *
+ * Return values:
+ *   >= 0 the number of characters actually output.  The function
+ *        should make its best attempt to transmit all 'count'
+ *        characters.
+ *   < 0  indicates a fatal error
+ *
+ *   return codes should be defined such that they can be passed to
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+nettol(char * buffer, int count);
+
+/*
+ * T T V T - Terminal to Virtual Terminal Mode
+ *
+ * Terminal to Virtual Terminal Mode is called to notify the DLL that
+ * Kermit 95 is about to enter terminal mode communications.  This means
+ * either the CONNECT or DIAL commands will be sending output.  In most
+ * cases, this will be either printable text or escape sequences.
+ *
+ * Parameters: None
+ *
+ * Return values:
+ *   0    indicates success
+ *   < 0  indicates an error
+ *
+ *   return codes should be defined such that they can be passed to
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+ttvt(void);
+
+/*
+ * T T P K T - Terminal to Packet Mode
+ *
+ * Terminal to Packet Mode is called to notify the DLL that
+ * Kermit 95 is about to enter file transfer operations.
+ *
+ * Parameters: None
+ *
+ * Return values:
+ *   0    indicates success
+ *   < 0  indicates an error
+ *
+ *   return codes should be defined such that they can be passed to
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+ttpkt(void);
+
+/*
+ * T T R E S - Terminal Restore Mode
+ *
+ * Terminal Restore Mode is called to notify the DLL that it should
+ * Kermit 95 restore to default settings.
+ *
+ * Parameters: None
+ *
+ * Return values:
+ *   0    indicates success
+ *   < 0  indicates an error
+ *
+ *   return codes should be defined such that they can be passed to
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+ttres(void);
+
+
+/*
+ * T E R M I N F O - Terminal Information
+ *
+ * The terminal information function is called whenever the terminal
+ * type or window size is changed.
+ *
+ * Parameters:
+ *   termtype     - a string representing either the currently selected
+ *                  terminal type or a user specified string as per
+ *                  SET TELNET TERMINAL <string>
+ *   height       - initial height of the terminal window (chars)
+ *   width        - initial width of the terminal window (chars)
+ *
+ * Return values: None
+ */
+
+void
+terminfo(char * termtype, int height, int width);
+
+/*
+ * V E R S I O N - Version String
+ *
+ * Version is called to get a user displayable version string for use
+ * as part of the SHOW NETWORK command.
+ *
+ * Parameters: None
+ *
+ * Return values:
+ *   a string which will not be deleted by the caller.
+ */
+
+const char *
+version(void);
+
+/*
+ * E R R O R S T R - Error String
+ *
+ * Error string is called to retrieve a user displayable error message
+ * describing the type of error being reported by the function.
+ *
+ * Parameters:
+ *   error - the error value reported by the DLL function.
+ *
+ * Return values:
+ *   a string which will not be deleted by the caller.
+ */
+
+const char *
+errorstr(int error);
+
+
+14. AN INTRODUCTION TO CERTIFICATES AND CERTIFICATE AUTHORITIES WITH OPENSSL
+
+This is a brief introduction to certificates, certificate authorities and how
+to use them.  RSA Security, Inc., has a very good Frequently Asked Questions
+list:
+
+  http://www.rsasecurity.com/rsalabs/faq/questions.html
+
+The FAQ covers many topics related to cryptography as well as how public key
+certificates work and how they are to be used.
+
+14.1  What Are Certificates, Private Keys, CSRs, CAs, and CRLs?
+
+Public key (asymetric) cryptography defines a class of algorithms for key
+exchange that include RSA and Diffie-Hellman (DH).  These algorithms provide a
+mechanism to create a shared secret that can be used for encrypting future
+communications.  Anyone listening to the exchange would be no closer to
+figuring out the value of the shared secret than if they were to take a guess.
+
+There are two parts to the exchange.  A private key that is never disclosed,
+and a public key that may be viewed by all.  A X.509 certificate is a standard
+package for distributing a public key with identifying features such that the
+authenticity and validity of the public key may be verified by a recipient.
+
+The authenticity and validity of a certificate is provided by a combination of
+information provided within the certificates (the subject, the issuer, dates
+of validity, ...) as well as the trust that is placed in the certificate
+issuer (the Certificate Authority, or CA).  The CA signs each of the
+certificates that it issues with its own certificate.  With a copy of the CA's
+certificate it is possible to validate all of the certificates that were
+signed by the CA's private key.
+
+A user who wants to have a certificate signed by a CA creates a Certificate
+Signing Request (CSR).  The CSR is an unsigned certificate which is presented
+to the CA along with information verifying the identity and desired use for
+the certificate.  The CA signs the CSR producing a certificate that is valid
+for a specific time frame which is then returned to the user.
+
+If the private key of the certificate were to be compromised the CA may revoke
+the certificate.  The CA publishes a Certificate Revocation List (CRL) on a
+periodic basis containing a list of all certificates that would otherwise be
+valid if they were not revoked.  It is the responsibility of the verifier to
+check not only the authenticity of the certificate but also whether or not it
+has been revoked by the issuer.
+
+14.2  RSA certificates vs. DSA Certificates
+
+The important differences between RSA and DSA certificates are:
+
+ . The RSA algorithms are faster than DSA.
+
+ . The RSA algorithms are supported by all the major browsers whereas DSA
+    are not.
+
+ . The RSA algorithms are patented in the United States (until Sept 29, 2000)
+   which requires payments of licensing fees for producers of software
+   utilizing them, whereas DSA is free.
+
+ . The RSA private and public key pairs may be used for encrypting data as
+   well as signing.  DSA private and public key pairs may only be used for
+   signing.  Therefore, products incorporating DSA algorithms are easier to
+   export from the United States.
+
+Due to the patent issues surrounding the RSA algorithms, the Kermit Project
+does not maintain a library or distribute any binaries that are built with the
+RSA algorithms.  This policy can change when the RSA patent expires.
+
+14.3  Should You Be Your Own Certificate Authority?
+
+There are many companies that believe that providing CA services is big
+business.  These include but are not limited to:
+
+   Verisign <http://www.verisign.com>
+   Thawte Consulting <http://www.thawte.com>
+   CertiSign Cerificadora Digital Ltda. <http://www.certisign.com.br>
+   IKS CmbH <http://www.iks-jena.de>
+   Uptime Commerce Ltd. <http://www.uptimecommerce.com>
+   BelSign NV/SA <http://www.belsign.be>
+
+The root CA certificates of these companies certificates are included most of
+the popular browsers.  This provides an ease-of-use advantage to the
+recipients of certificates they sign since the root certificates do not need
+to be otherwise distributed in order to authenticate the signed certificates.
+
+On the other hand, as is pointed out by C. Ellison and B. Schneier in their
+paper, "Ten Risks of PKI: What You're Not Being Told About Public Key
+Infrastructure" <http://www.counterpane.com/pki-risks.html>, using the
+commercial CA services it makes it difficult to decide whether or not a
+certificate should be trusted for a particular purpose, especially if you want
+to use certificates to authenticate an end user to a system for remote access.
+In this situation it is necessary to not only be able to authenticate a
+certificate but be able to know that the information within the certificate,
+such as the uniqueIdentifier used for the User ID, is tightly controlled and
+in fact unique in your environment.
+
+If you choose to be your own CA you will need to configure your environment.
+Create the following directory trees to store the DSA and RSA CAs.
+
+   openssl/dsaCA/certs/
+   openssl/dsaCA/crl/
+   openssl/dsaCA/private/
+   openssl/dsaCA/newcerts/
+   openssl/dsaCA/requests/
+
+   openssl/rsaCA/certs/
+   openssl/rsaCA/crl/
+   openssl/rsaCA/private/
+   openssl/rsaCA/newcerts/
+   openssl/rsaCA/requests/
+
+Place the openssl.cnf file into the openssl directory.  Edit it to meet the
+requirements of your organization.    Create two sections [ CA_DSA ] and
+[ CA_RSA ]:
+
+  [ CA_DSA ]
+
+  dir             = <openssl_path>/dsaCA/  # Where everything is kept
+  certs           = $dir/certs             # Where the issued certs are kept
+  crl_dir         = $dir/crl               # Where the issued crl are kept
+  database        = $dir/index.txt         # database index file.
+  new_certs_dir   = $dir/newcerts          # default place for new certs.
+
+  certificate     = $dir/certs/cacert.pem  # The CA certificate
+  serial          = $dir/ca.srl            # The current serial number
+  crl             = $dir/crl.pem           # The current CRL
+  private_key     = $dir/private/cakey.pem # The private key
+  RANDFILE        = $dir/private/.rand     # private random number file
+
+  x509_extensions = x509v3_extensions      # The extentions to add to the cert
+  default_days    = 365                    # how long to certify for
+  default_crl_days= 30                     # how long before next CRL
+  default_md      = sha1                   # which md to use.
+  preserve        = no                     # keep passed DN ordering
+
+
+  [ CA_RSA ]
+
+  dir             = <openssl_path>/rsaCA/  # Where everything is kept
+  certs           = $dir/certs             # Where the issued certs are kept
+  crl_dir         = $dir/crl               # Where the issued crl are kept
+  database        = $dir/index.txt         # database index file.
+  new_certs_dir   = $dir/newcerts          # default place for new certs.
+
+  certificate     = $dir/certs/cacert.pem  # The CA certificate
+  serial          = $dir/ca.srl            # The current serial number
+  crl             = $dir/crl.pem           # The current CRL
+  private_key     = $dir/private/cakey.pem # The private key
+  RANDFILE        = $dir/private/.rand     # private random number file
+
+  x509_extensions = x509v3_extensions      # The extentions to add to the cert
+  default_days    = 365                    # how long to certify for
+  default_crl_days= 30                     # how long before next CRL
+  default_md      = sha1                   # which md to use.
+  preserve        = no                     # keep passed DN ordering
+
+If you wish to use the uniqueIdentifier field to perform certificate to user
+ID mapping, add it after the emailAddress field.
+
+To avoid the need to specify the location of the openssl.cnf file, set the
+environment variable OPENSSL_CNF to be equal to the full path of the file.
+If you do not create this environment variable you will need to include the
+option:
+
+  -config <path>/openssl.cnf
+
+to each openssl command.
+
+Create the file that stores the next available serial number for each CA:
+
+   openssl/dsaCA/ca.srl
+   openssl/rsaCA/ca.srl
+
+The format of this file is a hex value followed by a LF (0x0A) character.
+The value "01" is an appropriate initial value.
+
+Create an empty file to store the index of signed certificates:
+
+   openssl/dsaCA/index.txt
+   openssl/rsaCA/index.txt
+
+Now you are ready to create the DSA and RSA CA certificates for your
+organization.
+
+
+14.4  Generating a DSA CA (self-signed) Certificate
+
+Change the current working directory to openssl/dsaCA/.
+
+Generate the DSA parameters to be used when generating the keys for use with
+your certificates.
+
+  openssl dsaparam 1024 -out dsa1024.pem
+
+Generate the self-signed certificate you will use as the CA certificate for
+your organization.
+
+  openssl req -x509 -newkey dsa:dsa1024.pem -days <days> \
+    -keyout private/cakey.pem -out certs/cacert.pem
+
+The <days> parameter should be replaced by the number of days you want this
+certificate to remain valid.  All certificates signed by this certificate
+become invalid when this certificate expires.
+
+Be sure to not forget the pass-phrase you use to protect the private key of
+the CA certificate.  If you do not wish to encrypt the CA's private key you
+may specify the -nodes option.  But this is highly discouraged.
+
+You can check the contents of the CA certificate with the command:
+
+  openssl x509 -text -in certs/cacert.pem
+
+14.5  Generating a DSA CSR
+
+Change the current working directory to openssl/dsaCA/.
+
+If you have not already created a set of DSA parameters, you must generate a
+set:
+
+  openssl dsaparam 1024 -out dsa1024.pem
+
+It is safe to reuse the DSA parameters.
+
+Generate the DSA certificate request
+
+  openssl req -newkey dsa:dsa1024.pem -keyout private/<name>-key.pem \
+    -out requests/<name>-req.pem
+
+<name> should be replaced by something that identifies the files.  Perhaps
+the hostname or userid for which the certificate is being generated.
+
+If you are generating a CSR for use as a host certificate, be sure to specify
+the fully qualified domain name as reported by the DNS as the Common Name for
+the certificate.  Otherwise, it will not be recognized as belonging to the
+host it is installed on by its clients.
+
+Be sure not to forget the pass-phrase you use to protect the private key of
+the CA certificate.  The certificate (after signing) is unusable without it.
+Use the -nodes option if you wish to store the key unencrypted.
+
+You can check the contents of the CSR with the command:
+
+  openssl req -text -in requests/<name>-req.pem
+
+The CSR now stored in requests/<name>-req.pem may be sent to one of the
+commerical CAs if you do not wish to be your own CA.
+
+14.6  Generating a RSA CA (self-signed) certificate
+
+Change the current working directory to openssl/rsaCA/.
+
+Generate the self-signed certificate you will use as the CA certificate for
+your organization.
+
+  openssl req -x509 -newkey rsa:1024 -days <days> \
+    -keyout private/cakey.pem -out certs/cacert.pem
+
+The <days> parameter should be replaced by the number of days you want this
+certificate to remain valid.  All certificates signed by this certificate
+become invalid when this certificate expires.
+
+Be sure not to forget the pass-phrase you use to protect the private key of
+the CA certificate.  If you do not wish to encrypt the CA's private key you
+may specify the -nodes option.  But this is highly discouraged.
+
+You can check the contents of the CA certificate with the command:
+
+  openssl x509 -text -in certs/cacert.pem
+
+14.7  Generating a RSA CSR
+
+Change the current working directory to openssl/rsaCA/.
+
+  openssl req -newkey rsa:1024 -keyout private/<name>-key.pem \
+    -out requests/<name>-req.pem
+
+<name> should be replaced by something that identifies the files.  Perhaps
+the hostname or userid for which the certificate is being generated.
+
+If you are generating a CSR for use as a host certificate be sure to specify
+the fully qualified domain name as reported by the DNS as the Common Name for
+the certificate.  Otherwise, it is not recognized as belonging to the host it
+is installed on by its clients.
+
+Be sure not to forget the pass-phrase you use to protect the private key of
+the CA certificate.  The certificate (after signing) is unusable without it.
+Use the -nodes option if you wish to store the key unencrypted.
+
+You can check the contents of the CSR with the command:
+
+  openssl req -text -in requests/<name>-req.pem
+
+The CSR now stored in requests/<name>-req.pem may be sent to one of the
+commerical CAs if you do not wish to be your own CA.
+
+14.8  Signing a CSR with your CA certificate
+
+If you are signing a DSA certificate change directory to openssl/dsaCA/ and
+use a <caname> of "CA_DSA".  If you are signing a RSA certificate change
+directory to openssl/rsaCA/ and use a <caname> of "CA_RSA".
+
+  openssl ca -name <caname> -in requests/<name>-req.pem \
+    -out certs/<name>.pem -days <days>
+
+The <days> parameter should be replaced by the number of days you want the
+signed certificate to remain valid.  If you want to specify a specific date
+range you can replace the -days parameters with:
+
+ -startdate YYMMDDHHMMSSZ  - certificate validity notBefore
+ -enddate YYMMDDHHMMSSZ    - certificate validity notAfter
+
+The file certs/<name>.pem now contains a signed certificate that may be used
+by a host or client for authentication in conjunction with its matching
+private key (private/<name>-key.pem.)
+
+An alternative method of signing the CSR is to use the command:
+
+  openssl x509 -req -in requests/<name>-req.pem -CA certs/cacert.pem \
+    -CAkey private/cakey.pem -out certs/<name>.pem -days <days> \
+    -CAserial ca.srl -CAcreateserial
+
+The "openssl x509" command provides greater functionality at the expense of
+ease of use.  The X509 may be used to assign X.509v3 certificate extensions
+with the -extfile and -extensions switches.  It may also be used to produce
+certificates that may only be used for specific purposes.
+
+You can check the contents of the CA certificate with the command:
+
+  openssl x509 -text -in certs/<name>.pem
+
+14.9  Revoking a Certificate
+
+If you are revoking a DSA certificate change directory to openssl/dsaCA/ and
+use a <caname> of "CA_DSA".  If you are revoking a RSA certificate change
+directory to openssl/rsaCA/ and use a <caname> of "CA_RSA".
+
+  openssl ca -name <caname> -revoke -in certs/<name>.pem
+
+marks the certificate as being revoked in the index.txt file.  It is
+necessary to revoke a certificate with a given subject name if you wish to
+generate a new certificate with an identical subject name.  Once a
+certificate is revoked it is listed in the next generated CRL.
+
+14.10  Generating a CRL
+
+If you are generating a CRL for your DSA certificates change directory to
+openssl/dsaCA/ and use a <caname> of "CA_DSA".  If you are generating a CRL
+for your RSA certificate change directory to openssl/rsaCA/ and use a <caname>
+of "CA_RSA".
+
+  openssl ca -name <caname> -gencrl -out crl/<date>-crl.pem
+
+<date> should be replaced by the date the crl was generated.
+
+You can check the contents of the CRL with the command
+
+  openssl crl -in crl/<date>-crl.pem -text
+
+The current CRL should be placed somewhere it is publicly and easily
+accessible.  For instance, by HTTP or FTP.  The CRL is signed by the CA
+certificate
+
+(End)

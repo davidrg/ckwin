@@ -4,11 +4,11 @@
 
 /*
   Author: Howie Kaye, Columbia University Center for Computing Activities.
-  Copyright (C) 1985, 1992, Trustees of Columbia University in the City of New
-  York.  Permission is granted to any individual or institution to use this
-  software as long as it is not sold for profit.  This copyright notice must be
-  retained.  This software may not be included in commercial products without
-  written permission of Columbia University.
+
+  Copyright (C) 1985, 1999,
+    Trustees of Columbia University in the City of New York.
+    All rights reserved.  See the C-Kermit COPYING.TXT file or the
+    copyright text in the ckcmai.c module for disclaimer and permissions.
 */
 /* Use the real ones in this module! */
 #ifdef malloc
@@ -85,7 +85,9 @@ _PROTOTYP( static char *maybe_check_range, (char *) );
 _PROTOTYP( static VOID maybe_quit, (char *) );
 _PROTOTYP( static int ask, (char *) );
 
+#ifndef min
 #define min(x,y) ((x) < (y) ? (x) : (y))
+#endif /* min */
 #define RANGE "ABCDEFGHIJKLMNOP"
 #define INTSIZE  sizeof(int)
 #define LONGSIZE sizeof(long)
@@ -111,7 +113,7 @@ dcalloc(nelem, elsize) int nelem, elsize; {
 
     cp = dmalloc(nelem * elsize);
     if (cp)
-	bzero(cp, nelem * elsize);
+	memset(cp, 0, nelem * elsize);
     return(cp);
 }
 
@@ -255,7 +257,7 @@ m_insert(cp) register char *cp; {
     disabled ++;
 }
 
-static
+static VOID
 m_insert2(cp) register char *cp; {
     register int i;
 
@@ -283,7 +285,7 @@ m_delete(cp) register char *cp; {
 	    m_used2[i] = 0;
 	    return(2);
 	}
-    if (disabled) 
+    if (disabled)
 	return(0);
 
     maybe_quit("Freeing unmalloc'ed pointer");
@@ -308,7 +310,7 @@ VOID
 m_done() {
     register int i,j=0;
 
-    if (disabled) 
+    if (disabled)
 	return;
     for(i = 0; i < BUCKETS; i++)
 	if (m_used[i] != 0) {
@@ -363,7 +365,7 @@ ask(str) char *str; {
     char buf[100];
     FILE *in;
     int fd;
-    
+
     fd = dup(fileno(stdin));
     in = fdopen(fd, "r");
     while(1) {

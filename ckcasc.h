@@ -3,16 +3,13 @@
   Mnemonics for ASCII control characters (and Space) for use with C-Kermit.
 */
 /*
-  Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
+  Author: Frank da Cruz (fdc@columbia.edu).
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
-  York.  The C-Kermit software may not be, in whole or in part, licensed or
-  sold for profit as a software product itself, nor may it be included in or
-  distributed with commercial products or otherwise distributed by commercial
-  concerns to their clients or customers without written permission of the
-  Office of Kermit Development and Distribution, Columbia University.  This
-  copyright notice must not be removed, altered, or obscured.
+  Copyright (C) 1985, 2000,
+    Trustees of Columbia University in the City of New York.
+    All rights reserved.  See the C-Kermit COPYING.TXT file or the
+    copyright text in the ckcmai.c module for disclaimer and permissions.
 */
 #ifndef CKCASC_H
 #define CKCASC_H
@@ -36,7 +33,7 @@
 #define SI    15      	/* Shift In Ctrl-O */
 #define DLE   16      	/* Datalink Escape Ctrl-P */
 #define XON   17      	/* XON Ctrl-Q */
-#define DC1   17      
+#define DC1   17
 #define DC2   18	/* Ctrl-R */
 #define XOFF  19      	/* XOFF Ctrl-S */
 #define DC3   19
@@ -60,14 +57,13 @@
 /*
   These are needed in OS/2, so let's not cause any unnecessary conflicts.
 */
-#define CSI  0233     /* 8-bit Control Sequence Introducer */
-#define SS2  0216     /* 8-bit Single Shift 2 */
-#define SS3  0217     /* 8-bit Single Shift 3 */
-#define DCS  0220     /* 8-bit Device Control String Introducer */
-#define ST8  0234     /* 8-bit String Terminator */
-#define OSC  0235     /* 8-bit Operating System Command */
-#define PM8  0236     /* 8-bit Privacy Message */
-#define APC  0237     /* 8-bit Application Program Command */
+#define _CSI  0233      /* 8-bit Control Sequence Introducer */
+#define _SS2  0216      /* 8-bit Single Shift 2 */
+#define _SS3  0217      /* 8-bit Single Shift 3 */
+#define _DCS  0220      /* 8-bit Device Control String Introducer */
+#define _ST8  0234      /* 8-bit String Terminator */
+#define _OSC  0235      /* 8-bit Operating System Command */
+#define _PM8  0236      /* 8-bit Privacy Message */
+#define _APC  0237      /* 8-bit Application Program Command */
 #endif /* OS2 */
 #endif /* CKCASC_H */
-

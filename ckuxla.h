@@ -8,22 +8,20 @@
   for other C-Kermit implementations -- Macintosh, etc.
 */
 /*
-  Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
+  Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
-  York.  The C-Kermit software may not be, in whole or in part, licensed or
-  sold for profit as a software product itself, nor may it be included in or
-  distributed with commercial products or otherwise distributed by commercial
-  concerns to their clients or customers without written permission of the
-  Office of Kermit Development and Distribution, Columbia University.  This
-  copyright notice must not be removed, altered, or obscured.
+  Copyright (C) 1985, 2000,
+    Trustees of Columbia University in the City of New York.
+    All rights reserved.  See the C-Kermit COPYING.TXT file or the
+    copyright text in the ckcmai.c module for disclaimer and permissions.
+
 */
 
 #ifndef CKUXLA_H
 #define CKUXLA_H
 
-/* Codes for local file character sets */
+/* Codes for file character sets */
 
 /* ISO 646 and other ISO-646-like 7-bit sets */
 
@@ -58,7 +56,7 @@
 /* Cyrillic sets */
 
 #define FC_CYRILL  24  /* ISO 8859-5 Latin/Cyrillic */
-#define FC_CP866   25  /* Microsoft CP866 Cyrillic */
+#define FC_CP866   25  /* PC Code Page 866 Cyrillic */
 #define FC_KOI7    26  /* KOI-7 = Short KOI */
 #define FC_KOI8    27  /* KOI-8 */
 
@@ -75,11 +73,45 @@
 #define FC_HEBREW  33  /* 8-Bit ISO 8859-8 Latin/Hebrew */
 #define FC_CP862   34  /* Hebrew PC Code Page */
 
-#define MAXFCSETS  34  /* Highest file character set number */
+/* Greek sets */
+
+#define FC_ELOT    35  /* 7-Bit ELOT 927 Greek */
+#define FC_GREEK   36  /* 8-Bit ISO 8859-7 Latin/Greek */
+#define FC_CP869   37  /* Greek PC Code Page */
+
+/* New Roman sets with Euro symbol */
+
+#define FC_9LATIN  38  /* ISO 8859-15 Latin Alphabet 9 */
+#define FC_CP923   38  /* Same as Latin-9 */
+#define FC_CP858   39  /* Western Europe with Euro */
+
+/* Other new additions */
+
+#define FC_CP855   40  /* Cyrillic PC Code Page */
+#define FC_CP1251  41  /* Cyrillic Windows */
+#define FC_BULGAR  42  /* Bulgarian PC code page */
+#define FC_CP1250  43  /* Latin 2 Windows (different from Latin-2)*/
+#define FC_MAZOVIA 44  /* Polish Mazovia PC code page */
+
+/* Unicode */
+
+#define FC_UCS2    45  /* ISO-10646 / Unicode UCS-2 */
+#define FC_UTF8    46  /* ISO-10646 / Unicode UTF-8 */
+
+/* Recent additions */
+
+#define FC_KOI8R   47  /* KOI8-R (RFC1489) - Russian + boxdrawing */
+#define FC_KOI8U   48  /* KOI8-U (RFC2319) - Ukrainian + boxdrawing */
+
+#define MAXFCSETS  48  /* Highest file character set number */
 
 #ifdef OS2
-#define FC_DECSPEC 253                  /* Not a real character-set */
+#define FC_DECSPEC 253 /* Not real character-sets */
 #define FC_DECTECH 252
 #endif /* OS2 */
+
+#ifdef UNICODE
+_PROTOTYP( VOID initxlate, (int, int) );
+#endif /* UNICODE */
 
 #endif /* CKUXLA_H */

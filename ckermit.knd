@@ -29,7 +29,7 @@ USA-Today         tcp/ip kanga.ins.cwru.edu   ; Cleveland Freenet
 ;
 UofIowa           tcp/ip grind.isca.uiowa.edu ; Search a huge ftp site
                                               ; and download with Kermit...
-Info-ANU          tcp/ip info.anu.edu.au      ; Australia 
+Info-ANU          tcp/ip info.anu.edu.au      ; Australia
 Archie            tcp/ip archie.sura.net      ; USA MD
 Archie            tcp/ip archie.unl.edu       ; USA NE
 Archie            tcp/ip archie.ans.net       ; USA NY

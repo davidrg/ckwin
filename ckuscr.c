@@ -1,29 +1,22 @@
 #include "ckcsym.h"
-#ifdef NOLOCAL
-char *loginv = "";
-#else
+
 #ifndef NOICP
 #ifndef NOSCRIPT
-char *loginv = "Script Command, 6.0.028, 8 Feb 96";
+char *loginv = "Script Command, 7.0.030, 21 Oct 1998";
 
-/*  C K U S C R  --  Login script for logging onto remote system */
+/*  C K U S C R  --  expect-send script implementation  */
 
 /*
-  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
-  York.  The C-Kermit software may not be, in whole or in part, licensed or
-  sold for profit as a software product itself, nor may it be included in or
-  distributed with commercial products or otherwise distributed by commercial
-  concerns to their clients or customers without written permission of the
-  Office of Kermit Development and Distribution, Columbia University.  This
-  copyright notice must not be removed, altered, or obscured.
+  Copyright (C) 1985, 2000,
+    Trustees of Columbia University in the City of New York.
+    All rights reserved.  See the C-Kermit COPYING.TXT file or the
+    copyright text in the ckcmai.c module for disclaimer and permissions.
 
   Original (version 1, 1985) author: Herm Fischer, Encino, CA.
   Contributed to Columbia University in 1985 for inclusion in C-Kermit 4.0.
-  Author and maintainer since 1985: Frank da Cruz, Columbia University,
+  Maintained since 1985 by Frank da Cruz, Columbia University,
   fdc@columbia.edu.
-*/
 
-/*
   The module takes a UUCP-style script of the "expect send [expect send] ..."
   format.  It is intended to operate similarly to the way the common
   UUCP L.sys login entries work.  Conditional responses are supported:
@@ -91,15 +84,18 @@ int valarm(int interval);
 
 extern int sessft;
 extern int local, flow, seslog, mdmtyp, msgflg, duplex, backgrd, secho, quiet;
-#ifdef NETCONN
 extern int network, ttnproto;
-#endif /* NETCONN */
 extern long speed;
 extern char ttname[];
 
 #ifdef NTSIG
 extern int TlsIndex;
 #endif /* NTSIG */
+#ifdef IKSD
+extern int inserver;
+#endif /* IKSD */
+
+static int is_tn = 0;			/* Do Telnet negotiations */
 
 #ifndef NOSPL
 #ifdef DCMDBUF
@@ -115,10 +111,10 @@ static int scr_echo;			/* Whether to echo script commands */
 
 static int exp_alrm = 15;		/* Time to wait for expect string */
 #define SND_ALRM 15			/* Time to allow for sending string */
-#define NULL_EXP 2			/* Time to pause on null expect strg*/ 
+#define NULL_EXP 2			/* Time to pause on null expect strg*/
 #define DEL_MSEC 300			/* Milliseconds to pause on ~d */
 
-#define SBUFL 512		
+#define SBUFL 512
 static char seq_buf[SBUFL], *s;		/* expect-send sequence buffer */
 static int got_it, no_cr;
 
@@ -137,13 +133,15 @@ static ckjmpbuf alrmrng;
 static SIGTYP
 #ifdef CK_ANSIC
 scrtime(int foo)			/* modem read failure handler, */
-#else 
+#else
 scrtime(foo) int foo;			/* Alarm handler */
 #endif /* CK_ANSIC */
 /* scrtime */ {
 
 #ifdef BEBOX
+#ifdef BE_DR_7
     alarm_expired();
+#endif /* BE_DR_7 */
 #endif /* BEBOX */
 #ifdef NTSIG
     if (foo == SIGALRM)
@@ -173,7 +171,7 @@ sequenc() {
     char c, oct_char;
 
     no_cr = 0;				/* output needs cr appended */
-    for (i = 0; i < SBUFL; ) {		
+    for (i = 0; i < SBUFL; ) {
 	if (*s == '\0' || *s == '-' || isspace(*s) ) { /* done */
 	    seq_buf[i] = '\0';
 	    return(0) ;
@@ -204,7 +202,7 @@ sequenc() {
 		}
 		case 'w': {			/* wait count */
 		    exp_alrm = 15;		/* default to 15 sec */
-		    if (isdigit(*(s+1))) { 
+		    if (isdigit(*(s+1))) {
 			s++;
 			exp_alrm = *s & 15;
 			if (isdigit(*(s+1)) ) {
@@ -252,7 +250,7 @@ myflsh() {
 	concnt = 0;
     }
     if (sescnt > 0) {
-	if (zsoutx(ZSFILE, (char *) sesbuf, sescnt) < 0) seslog = 0;
+        logstr((char *) sesbuf, sescnt);
 	sescnt = 0;
     }
 }
@@ -276,10 +274,19 @@ dorseq(threadinfo) VOID * threadinfo;
     int burst = 0;			/* chars remaining in input burst */
 
 #ifdef NTSIG
+    setint();
     if (threadinfo) {			/* Thread local storage... */
 	TlsSetValue(TlsIndex,threadinfo);
     }
 #endif /* NTSIG */
+#ifdef CK_LOGIN
+#ifdef NT
+#ifdef IKSD
+    if (inserver)
+      setntcreds();
+#endif /* IKSD */
+#endif /* NT */
+#endif /* CK_LOGIN */
 
     while (!got_it) {
 	for (i = 0; i < rseql-1; i++) rseqgot[i] = rseqgot[i+1];
@@ -294,9 +301,7 @@ dorseq(threadinfo) VOID * threadinfo;
 #ifdef NETCONN
 #ifdef TNCODE
 /* Check for telnet protocol negotiation */
-	if (network &&
-	    (ttnproto == NP_TELNET) &&
-	    ( (x & 0xff) == IAC) ) { /* Break from input burst for "tn_doop" */
+	if (((x & 0xff) == IAC) && is_tn) { /* Telnet negotiation */
 	    myflsh();
 	    burst = 0;
 	    switch (tn_doop((CHAR)(x & 0xff),duplex,ttinc)) {
@@ -318,8 +323,9 @@ dorseq(threadinfo) VOID * threadinfo;
 	    if (sessft != 0 || rseqgot[rseql-1] != '\012')
 #endif /* OSK */
 #endif /* UNIX */
-	      sesbuf[sescnt++] = rseqgot[rseql-1];
-	if ((int)strlen(rseqtrace) < SBUFL-2 ) 
+	      if (rseqgot[rseql-1])	/* Filter out NULs */
+		sesbuf[sescnt++] = rseqgot[rseql-1];
+	if ((int)strlen(rseqtrace) < SBUFL-2 )
 	  strcat(rseqtrace,dbchr(rseqgot[rseql-1]));
 	got_it = (!strncmp(rseqe, rseqgot, rseql));
 	if (burst <= 0) {		/* Flush buffered output */
@@ -334,7 +340,7 @@ dorseq(threadinfo) VOID * threadinfo;
 	    if (burst > MAXBURST)
 	      burst = MAXBURST;
 	}
-    }    
+    }
 #ifdef NTSIG
     ckThreadEnd(threadinfo);
 #endif /* NTSIG */
@@ -345,22 +351,22 @@ static SIGTYP
 #ifdef CK_ANSIC
 failrseq(void * threadinfo)
 #else /* CK_ANSIC */
-failrseq(threadinfo) VOID * threadinfo; 
+failrseq(threadinfo) VOID * threadinfo;
 #endif /* CK_ANSIC */
 /* failrseq */ {
-     got_it = 0;			/* Timed out here */    
+     got_it = 0;			/* Timed out here */
      SIGRETURN;
 }
 
 /*
   Receive sequence -- see if expected response comes,
   return success (or failure) in got_it.
-*/ 
+*/
 static VOID
 recvseq() {
     char *e, got[7], trace[SBUFL];
     int i, l;
-    
+
     sequenc();
     l = (int)strlen(e=seq_buf);		/* no more than 7 chars allowed */
     if (l > 7) {
@@ -403,20 +409,29 @@ static SIGTYP
 #ifdef CK_ANSIC
 dooseq(void * threadinfo)
 #else /* CK_ANSIC */
-dooseq(threadinfo) VOID * threadinfo; 
+dooseq(threadinfo) VOID * threadinfo;
 #endif /* CK_ANSIC */
 {
     int l;
     char *sb;
 #ifdef TCPSOCKET
-    extern int tn_nlm, tn_b_nlm, me_binary;
+    extern int tn_nlm, tn_b_nlm;
 #endif /* TCPSOCKET */
 
 #ifdef NTSIG
+    setint();
     if (threadinfo) {			/* Thread local storage... */
 	TlsSetValue(TlsIndex,threadinfo);
     }
 #endif /* NTSIG */
+#ifdef CK_LOGIN
+#ifdef NT
+#ifdef IKSD
+    if (inserver)
+      setntcreds();
+#endif /* IKSD */
+#endif /* NT */
+#endif /* CK_LOGIN */
 
     l = (int)strlen(seq_buf);
     tlog(F111,"sending sequence ",seq_buf,(long) l);
@@ -424,42 +439,51 @@ dooseq(threadinfo) VOID * threadinfo;
     if (!strcmp(seq_buf,"EOT")) {
 	ttoc(dopar('\004'));
 	if (scr_echo) conol("<EOT>");
-	if (seslog && duplex) if (zsout(ZSFILE,"<EOT>") < 0)
-	  seslog = 0;
+	if (seslog && duplex)
+            logstr("<EOT>",5);
     } else if (!strcmp(seq_buf,"BREAK") ||
 	       !strcmp(seq_buf,"\\b") ||
 	       !strcmp(seq_buf,"\\B")) {
 	ttsndb();
 	if (scr_echo) conol("<BREAK>");
-	if (seslog) if (zsout(ZSFILE,"{BREAK}") < 0) seslog = 0;
+	if (seslog)
+	  logstr("{BREAK}",7);
     } else {
 	if (l > 0) {
 	    for ( sb = seq_buf; *sb; sb++)
 	      *sb = dopar(*sb);	/* add parity */
 	    ttol((CHAR *)seq_buf,l); /* send it */
-	    if (scr_echo && duplex) conxo(l,seq_buf);
+	    if (scr_echo && duplex) {
+#ifdef OS2
+		{			/* Echo to emulator */
+		    char *s = seq_buf;
+		    while (*s) {
+			scriptwrtbuf((USHORT)*s);
+		    }
+		}
+#endif /* OS2 */
+		conxo(l,seq_buf);
+	    }
 	    if (seslog && duplex) /* log it */
-	      if (zsout(ZSFILE,seq_buf) < 0)
-		seslog=0;
+	      logstr(seq_buf,strlen(seq_buf));
 	}
 	if (!no_cr) {
 	    ttoc( dopar(CR) );
 #ifdef TCPSOCKET
-	    if (network && ttnproto == NP_TELNET) {
-		if (!me_binary && tn_nlm != TNL_CR)
+	    if (is_tn) {
+		if (!TELOPT_ME(TELOPT_BINARY) && tn_nlm != TNL_CR)
 		  ttoc((char)((tn_nlm == TNL_CRLF) ?
 			      dopar(LF) : dopar(NUL)));
-		else if (me_binary &&
+		else if (TELOPT_ME(TELOPT_BINARY) &&
 			 (tn_b_nlm == TNL_CRLF || tn_b_nlm == TNL_CRNUL))
 		  ttoc((char)((tn_b_nlm == TNL_CRLF) ?
 			      dopar(LF) : dopar(NUL)));
 	    }
 #endif /* TCPSOCKET */
 	    if (seslog && duplex)
-	      if (zchout(ZSFILE,dopar(CR)) < 0)
-		seslog = 0;
+	      logchar(dopar(CR));
 	}
-    }    
+    }
 #ifdef NTSIG
     ckThreadEnd(threadinfo);
 #endif /* NTSIG */
@@ -470,10 +494,10 @@ SIGTYP
 #ifdef CK_ANSIC
 failoseq(void * threadinfo)
 #else /* CK_ANSIC */
-failoseq(threadinfo) VOID * threadinfo; 
+failoseq(threadinfo) VOID * threadinfo;
 #endif /* CK_ANSIC */
 /* failoseq */ {
-     oseqret = -1;		/* else -- alarm rang */    
+     oseqret = -1;		/* else -- alarm rang */
      SIGRETURN;
 }
 
@@ -483,10 +507,10 @@ outseq() {
 
     oseqret = 0;			/* Initialize return code */
     while(1) {
-	delay = sequenc();  
+	delay = sequenc();
 	alrm_execute( ckjaddr(alrmrng), SND_ALRM, scrtime, dooseq, failoseq ) ;
 
-	if (!delay) 
+	if (!delay)
 	  return(oseqret);
 #ifndef MAC
 	msleep(DEL_MSEC);		/* delay, loop to next send */
@@ -539,6 +563,12 @@ dologin(cmdstr) char *cmdstr; {
 #endif /* NETCONN */
 	  printf("Executing SCRIPT through %s, speed %ld.\n",ttname,speed);
     }
+#ifdef TNCODE
+    /* TELNET input must be scanned for IAC */
+    is_tn = (local && network && (ttnproto == NP_TELNET)) ||
+	    (!local && sstelnet);
+#endif /* TNCODE */
+
     *seq_buf = 0;
     for (e = s; *e; e++) strcat(seq_buf, dbchr(*e) );
 #ifdef COMMENT
@@ -547,7 +577,7 @@ dologin(cmdstr) char *cmdstr; {
 #endif /* COMMENT */
     tlog(F110,"SCRIPT string: ",seq_buf, 0L);
 
-/* Condition console terminal and communication line... */ 
+/* Condition console terminal and communication line... */
 
     if (ttvt(speed,flow) < 0) {
 	printf("Sorry, Can't condition communication line\n");
@@ -600,23 +630,13 @@ failret:
 VOID
 flushi() {
     int n, x;
-#ifdef NETCONN
-#ifdef TNCODE
-    int is_tn=0;
-#endif /* TNCODE */
-#endif /* NETCONN */
-
-#ifdef TNCODE
-	/* TELNET input must be scanned for IAC */
-	is_tn = (network && (ttnproto == NP_TELNET));
-#endif /* TNCODE */
     if (
 	seslog				/* Logging session? */
 	|| scr_echo			/* Or console echoing? */
 #ifdef NETCONN
 #ifdef TNCODE
 	/* TELNET input must be scanned for IAC */
-	|| is_tn 
+	|| is_tn
 #endif /* TNCODE */
 #endif /* NETCONN */
 	) {
@@ -664,4 +684,3 @@ flushi() {
 char *loginv = "Script Command Disabled";
 #endif /* NOSCRIPT */
 #endif /* NOICP */
-#endif /* NOLOCAL */

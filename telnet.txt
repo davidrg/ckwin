@@ -1,0 +1,1005 @@
+TELNET FUNCTIONALITY FOR C-KERMIT 7.0 AND KERMIT 95 1.1.19
+
+  Jeffrey Altman
+  The Kermit Project
+  Columbia University
+
+Most recent update: Tue Jan  30, 2000
+
+
+CONTENTS
+
+  1. INTRODUCTION
+  2. SUPPORTED TELNET OPTIONS
+  3. TELNET OPTION MANAGEMENT
+  4. TELNET COMMAND SUMMARY
+  5. DIAGNOSING AND FIXING PROBLEMS CONNECTING TO TELNET SERVERS
+
+
+1. INTRODUCTION
+
+The Telnet protocol is one of the original protocols developed for the 
+ARPAnet, the precursor to today's Internet.  Telnet has evolved since 
+the early 1970s due to the extensibility provided by its "option" model.
+To quote RFC854:
+
+   "The purpose of the TELNET Protocol is to provide a fairly general,
+   bi-directional, eight-bit byte oriented communications facility.  Its
+   primary goal is to allow a standard method of interfacing terminal
+   devices and terminal-oriented processes to each other.  It is
+   envisioned that the protocol may also be used for terminal-terminal
+   communication ("linking") and process-process communication
+   (distributed computation)."
+
+Not so long ago the requirements for a Telnet client were fairly minimal:
+support echo management, window size notification, terminal type negotiation,
+and perhaps the transmission of environment variables from the client to the
+server.  Option negotiations were not time sensitive nor were they
+interdependent.  Everyone was happy as long as each option specification was
+followed and infinite negotiation loops were avoided.
+
+This simplicity began to change with the introduction of telnet options 
+that provide for mutual authentication, data encryption, transport layer 
+security, and synchronization of remote processes.  The new options have order
+and timing dependencies that require increased sophistication from both client
+and server even though the original Telnet protocol specification did not 
+change.
+
+Prior to C-Kermit 7.0 and K95 1.1.18, Kermit implemented Telnet protocol by
+opening a connection to the host and then transmitting the options that it
+supported.  What happened next was determined by how the connection was being
+used.  If the user told Kermit to:
+
+  TELNET <host>
+
+then, immediately after the telnet options were transmitted, the terminal
+emulator started and began reading the incoming data.  The rest of the Telnet
+protocol implementation was purely reactive (with minor exceptions such as
+window-size changes): when a Telnet option was received it would be processed
+and a response sent if necessary.
+
+However, if the user said:
+
+  SET HOST <host>
+
+then, after the telnet options were transmitted, Kermit would wait for the
+next command from the user.  If a CONNECT command was next the behavior would
+be the same as for TELNET <host>.  However, if Kermit was executing a script
+containing a series of INPUT and OUTPUT commands, the incoming telnet option
+negotiations would be processed while waiting for INPUT.
+
+This was adequate when there were no ordering or timing requirements for the
+Telnet negotiations.  But with the introduction of authentication,
+encryption, transport-layer security, and the Kermit option for managing the
+states of the Kermit server on both the workstation and host (see iksd.txt),
+it is necessary for Telnet negotiations to take place before the TELNET
+command enters the terminal emulator or the SET HOST command completes and
+allows any subsequent INPUT and OUTPUT commands to execute.
+
+The timing requirements for the telnet options supported by Kermit are as
+follows:
+
+ . START_TLS (Transport Layer Security) must be negotiated or refused before
+   any other option.
+
+ . AUTH (Authentication) must be negotiated or refused before ENCRYPT.  AUTH
+   must also be negotiated before the login process is initiated.
+
+ . ENCRYPT (Encryption) must be negotiated/refused in both directions before
+   it is safe to transmit any data that might be considered private, including
+   Telnet options such as terminal type, location, xdisplay, or environment
+   variables.  ENCRYPT may not be negotiated if START_TLS has been negotiated
+   or if AUTH has not been.
+
+ . KERMIT (Internet Kermit Service) must wait for a response to any request
+   for the peer to either turn on or off the Kermit Server capabilities in
+   order to facilitate automatic uploading or downloading of files or
+   processing of remote commands.
+
+ . NEW_ENV (Transmission of Environment Variables to the Host) must be 
+   negotiated before the login process is initiated if the USER variable
+   is to be requested from the client.
+
+The result is that Kermit must, to the best of its ability, attempt to
+process all of the above options before TELNET enters CONNECT mode or SET
+HOST completes to process the next command.  Therefore it might take Kermit
+longer to make a connection to a host than before.
+
+The reality is actually far different.  Even if the CONNECT mode or first
+INPUT command was executed sooner no user data could be received until the
+Telnet negotiations were complete.  In addition, the timing of the initial
+INPUT command used to require that the length of time it takes to process the
+Telnet negotiations be factored in.  This is no longer necessary and was
+inappropriate in the first place.  A login script should not have to be
+modified for different connection types; the telnet negotiations should be
+transparent to the script.  In C-Kermit 7.0 and Kermit 95 1.1.18 they are.
+
+
+2. SUPPORTED TELNET OPTIONS
+
+BINARY (Binary Transmission Mode)                  [RFC  856]
+
+When a telnet session is initiated, the connection is in Network Virtual
+Terminal (NVT) mode.  NVT mode provides for special treatment of the carriage
+return (CR) control character to provide for deterministic parsing of the
+input stream.  Every CR that is transmitted must be followed by a line feed
+(LF) control character or a NUL control character.  This enables an NVT to
+distiguish between the Carriage Return function and the End of Line indicator.
+This works fine for textual data.  But in transmission of random binary data
+there is the possibility that the sequence CR NUL might be misinterpreted.
+
+Binary mode removes the ambiguity by removing the requirement that 
+CR be followed by either LF or NUL.  It is negotiatied separately
+in each direction of data transmission.  Binary transmission mode is
+not required for transferring files with Kermit protocol but it might be
+required when transfering files with Xmodem, Ymodem, or Zmodem.
+
+Binary mode is one of the most frequently misimplemented telnet options.
+Many implementation will negotiate Binary mode in only one direction
+but apply it in both.  Kermit provides workarounds for
+these problems with its SET TELNET BUG BINARY-ME-MEANS-U-TOO and 
+SET TELNET BUG BINARY-U-MEANS-ME-TOO commands.
+
+Kermit also provides the SET TELNET BINARY-TRANSFER-MODE command to
+automatically enter binary mode at the start of a file transfer
+and return to NVT mode when the transfer is completed.
+
+ECHO (Echo Mode)                                   [RFC  857] 
+
+When a telnet session is initiated, data is not echoed by the receiver.
+This means that a telnet client must echo each character locally as
+it is being sent to the host.  While this reduces network traffic it 
+can cause problems with terminal emulation and echoing of sensitive data.
+
+The echo option allows the each side to specify that it intends to 
+echo the data that it receives.  Normally this would be used to negotiate
+that the server should echo the data it receives from the client.  While it
+is possible for the client to state that it will echo the data received
+from the server this makes no sense and if negotiatied could result in
+an infinite loop of a single character being echoed back and forth.
+
+As a piece of telnet trivia, the BSD 4.2 telnet client would echo 
+incoming data sent by the server if the host requested it.  Kermit
+will always respond WONT ECHO to a DO ECHO request when it is the client.
+
+SUPPRESS GO AHEAD (Suppress Go Ahead commands)     [RFC  858]
+
+When a telnet session is initiated, all data transmitted by the sender is to
+be followed by a Go Ahead (GA) command sequence.  This is to enable telnet to
+be used over half-duplex (two-way alternate) connections, and it gives the
+telnet partner permission to transmit.  But to our knowledge, all telnet
+sessions used over the Internet are full duplex connections.  The Suppress Go
+Ahead (SGA) option is negotiated in both directions to suppress the
+transmission of the GA commands and treat the connection as full duplex
+(two-way simultaneous).
+
+LOGOUT (Logout user from host)                     [RFC  727]
+
+Some operating systems such as VMS support the notion of a login session
+that can continue across separate telnet connections.  If a telnet 
+connection is prematurely interrupted by a network failure, the user
+may reconnect to a pre-existing session on their next login attempt.
+
+The Telnet Logout option is sent by the telnet client just before the
+tcp/ip socket is closed to indicate to the host that the connection is
+being intentionally terminated by the user and is not being closed
+due to a network error.
+
+SEND LOCATION (Send Terminal Location)             [RFC  779]
+
+The Send Location option provides the host with a method for requesting
+the location of the telnet client.  When a location string has been
+specified with the SET TELNET LOCATION command, Kermit transmits
+this string to the host upon request.
+
+TERMINAL TYPE (Negotiate Terminal Type)            [RFC 1091]
+
+The Terminal Type option allows the client and server to 
+agree to a common terminal type that they both support.  C-Kermit
+reports the value of the local TERM environment variable.  Since Kermit 95
+supports more than 30 terminal types, it continues to offer additional
+terminal tyeps to the host until the host accepts one.
+
+NAWS (Negotiate About Window Size)                 [RFC 1073]
+
+The Negotiate About Windows Size (NAWS) lets the client report its current
+Window size to the host.  Every time the client's window size changes, the new
+size is reported to the host automatically.  It is not possible for the host
+to report a window size to the client.
+
+XDISPLOC (Report X Window Display location)        [RFC 1096]
+
+The X Windows display option is used to report to the host the address
+of the local X Windows Server.  Kermit sends the contents of the
+local DISPLAY environment variable or the string specified by the
+SET TELNET ENVIRONMENT DISPLAY command.  
+
+AUTHENTICATION (Authenticate end user to host)     [Internet-Draft]
+
+The AUTHENTICATION option is used to determine which if any authentication
+method such as Kerberos 4, Kerberos 5, Secure Remote Password, etc, should
+be used to authenticate the user to the host.
+
+ENCRYPTION (Encrypt session)                       [Internet-Draft]
+
+The ENCRYPTION option is used in conjunction with the AUTHENTICATE option
+to encrypt all the data transmitted during the session.  The ENCRYPTION
+option must be negotiated separately in each direction.
+
+NEW ENVIRONMENT (Report Environment to host)       [RFC 1572]
+
+The NEW ENVIRONMENT option is used by the client to reply to requests 
+from the server for either all or specified environment variables such
+as DISPLAY, USERNAME, ACCOUNT, JOB, PRINTER, and SYSTEMTYPE.  When the
+NEW ENVIRONMENT option is used to transmit the username, many telnet 
+servers skip their login or username prompt and go directly to the 
+password prompt.
+
+START TLS (Transmit Telnet over TLS)               [Internet-Draft]
+
+The START TLS option is used by the client and server to determine whether the
+telnet session should be restarted after first establishing a TLSv1 session.
+TLS provides strong encryption and optionally authenticates the client and the
+server using X.509 certificates.  START_TLS can be used with the AUTHENTICATE
+option.  When negotiatied START_TLS replaces the ENCRYPTION option.
+
+KERMIT (Synchronize Kermit File Transfers)         [Internet-Draft]
+
+The Kermit option (invented by the Kermit Project) is designed to 
+allow a Kermit file-transfer client and a Kermit server to synchronize
+their operations.  This allows a change in "mode" of the server to
+automatically switch the client into the complementary mode, and vice
+versa.
+
+FORWARD X (Transmit X Windows data over Telnet)    [Internet-Draft]
+
+The FORWARD X option (invented by the Kermit Project) allows the
+telnet server to redirect all output from X Windows clients and 
+transmit it across to telnet connection.  The telnet client then
+forwards the data to the local X Windows server.  When the telnet
+connection is encrypted, both the telnet data and X Windows session data
+are protected.
+
+3. TELNET OPTION MANAGEMENT
+
+One of the benefits of processing all the Telnet options during the SET HOST
+and TELNET commands is that it is now possible to configure policy 
+requirements for a valid connection.  This capability is necessary when the
+connection must be secure (authenticated and encrypted) or else fail.  
+Policies are specified with the new command:
+
+  SET TELOPT [ <switch> ] <option> <local-mode>
+  SET TELOPT [ <switch> ] <option> <remote-mode>
+  SET TELOPT [ <switch> ] <option> <local-mode> <remote-mode>
+
+Which of the SET TELOPT command forms is used is dependent on the telnet 
+option.  Some options, such as authentication, terminal type and window size, 
+are negotiated in one direction and others, such as binary, encryption and 
+kermit are negotiated separately in each direction.  For each option, the
+mode can be:
+
+ACCEPTED
+  Kermit does not offer the option but if the peer requests it
+  Kermit agrees to use it.
+
+REFUSED
+  Kermit does not offer the option and if the peer requests it
+  Kermit refuses to use it.
+
+REQUESTED
+  Kermit requests the option but agrees not to use it if the peer
+  refuses it.
+
+REQUIRED
+  Kermit requests the option and terminates the connection if
+  the peer refuses it.
+
+The optional <switch> can be:
+
+/CLIENT
+  Specifies that the command is being used to set the configuration for when 
+  Kermit is the Telnet client.  This is the default when Kermit is not acting
+  as an Internet Kermit Service.
+
+/SERVER
+  Specifies that the command is being used to set the configuration
+  for when Kermit is the Telnet server.  Kermit is a telnet server when it
+  is accepting incoming connections with SET HOST * or when it is acting as
+  an Internet Kermit Service.  This is the default when Kermit is acting as 
+  an Internet Kermit Service.
+
+The options that can be configured and their default settings, as viewed by
+SHOW TELOPT, are:
+
+       Telnet Option  Me (client)   U (client)  Me (server)   U (server)
+
+              BINARY     ACCEPTED     ACCEPTED     ACCEPTED     ACCEPTED
+                             WONT         WONT
+                ECHO      REFUSED     ACCEPTED    REQUESTED      REFUSED
+                             WONT         WONT
+   SUPPRESS-GO-AHEAD     ACCEPTED     ACCEPTED    REQUESTED    REQUESTED
+                             WONT         WONT
+       SEND-LOCATION    REQUESTED      REFUSED      REFUSED      REFUSED
+                             WONT         WONT
+       TERMINAL-TYPE    REQUESTED      REFUSED      REFUSED    REQUESTED
+                             WONT         WONT
+                NAWS    REQUESTED      REFUSED      REFUSED    REQUESTED
+                             WONT         WONT
+            XDISPLOC      REFUSED      REFUSED      REFUSED      REFUSED
+                             WONT         WONT
+      AUTHENTICATION    REQUESTED      REFUSED      REFUSED    REQUESTED
+                             WONT         WONT
+          ENCRYPTION    REQUESTED    REQUESTED    REQUESTED    REQUESTED
+                             WONT         WONT
+     NEW-ENVIRONMENT    REQUESTED      REFUSED      REFUSED    REQUESTED
+                             WONT         WONT
+           start-tls     ACCEPTED      REFUSED      REFUSED    REQUESTED
+                             WONT         WONT
+              kermit    REQUESTED    REQUESTED    REQUESTED    REQUESTED
+                             WONT         WONT
+           forward-X      REFUSED     ACCEPTED      REFUSED      REFUSED
+                             WONT         WONT
+
+The second line listed for each option shows the currently negotiated state
+of the option for the current connection.
+
+The SET TELOPT command should be used instead of the older commands:
+
+  SET TELNET AUTHENTICATION { ACCEPTED, REFUSED, REQUESTED, REQUIRED }
+  SET TELNET BINARY-MODE    { ACCEPTED, REFUSED, REQUESTED, REQUIRED }
+  SET TELNET ENCRYPTION     { ACCEPTED, REFUSED, REQUESTED, REQUIRED }
+  SET TELNET ENVIRONMENT    { ON, OFF }
+  SET TELNET NAWS           { ACCEPTED, REFUSED, REQUESTED, REQUIRED }
+  SET TELNET XDISPLAY-LOC   { ACCEPTED, REFUSED, REQUESTED, REQUIRED }
+
+which are now considered obsolete (but still supported).
+
+
+4. TELNET COMMAND SUMMARY
+
+TELNET /AUTH:<type> /ENCRYPT:<type> /USERID:<name> /PASSWORD:<string>
+       <host> <port>
+  The TELNET command is a shortcut for making interactive connections.
+  It is the equivalent of specifying:
+
+    SET TELOPT AUTH ...
+    SET TELNET AUTH TYPE ...
+    SET TELOPT ENCRYPT ...
+    SET TELNET ENCRYPT TYPE ...
+    SET LOGIN USERID ...
+    SET LOGIN PASSWORD ...
+    SET HOST /CONNECT <host> <port> /TELNET
+
+  /AUTH:<type> is equivalent to SET TELNET AUTH TYPE <type> and
+  SET TELOPT AUTH REQUIRED with the following exceptions.  If the type
+  is AUTO, then SET TELOPT AUTH REQUESTED is executed and if the type
+  is NONE, then SET TELOPT AUTH REFUSED is executed.
+
+  /ENCRYPT:<type> is equivalent to SET TELNET ENCRYPT TYPE <type>
+  and SET TELOPT ENCRYPT REQUIRED REQUIRED with the following exceptions.
+  If the type is AUTO then SET TELOPT AUTH REQUESTED REQUESTED is executed
+  and if the type is NONE then SET TELOPT ENCRYPT REFUSED REFUSED is
+  executed.
+
+  /USERID:[<name>]
+  This switch is equivalent to SET LOGIN USERID <name> or SET TELNET
+  ENVIRONMENT USER <name>.  If a string is given, it sent to host during
+  Telnet negotiations; if this switch is given but the string is omitted, no
+  user ID is sent to the host.  If this switch is not given, your current
+  USERID value, \v(userid), is sent.  When a userid is sent to the host
+  it is a request to login as the specified user.
+
+  /PASSWORD:[<string>]
+  This switch is equivalent to SET LOGIN PASSWORD.  If a string is given,
+  it is treated as the password to be used (if required) by any Telnet
+  Authentication protocol (Kerberos Ticket retrieval, Secure Remote
+  Password, or X.509 certificate private key decryption.)  If no password
+  switch is specified a prompt is issued to request the password if one
+  is required for the negotiated authentication method.
+
+For TCP/IP TELNET connections, which are in NVT (ASCII) mode by default:
+
+SET LOGIN USERID <name>
+  If a <name> is given, it sent to host during Telnet negotiations; if this
+  switch is given but the string is omitted, no user ID is sent to the host.
+  If this command is not given, your current USERID value, \v(userid), is
+  sent.  When a userid is sent to the host it is a request to login as the
+  specified user.
+
+SET LOGIN PASSWORD <password>
+  If a <password> is given, it is treated as the password to be used (if
+  required) by any Telnet Authentication protocol (Kerberos Ticket retrieval,
+  Secure Remote Password (SRP), or X.509 certificate private key decryption.)
+  If no password is specified a prompt is issued to request the password if
+  one is required for the negotiated authentication method.
+
+SET TELNET AUTHENTICATION TYPE { AUTOMATIC, KERBEROS_IV, KERBEROS_V,
+  NTLM, SSL, SRP, NONE } [ { ... } ... ]
+  AUTOMATIC allows the host to choose the preferred type of authentication.
+  Other values allow a specific authentication method to be used.  AUTOMATIC
+  is the default.  Available options can vary depending on configuration;
+  type SET TELNET AUTHENTICATION TYPE ? for a list.
+
+  When the type is AUTOMATIC and Kermit is accepting incoming connections
+  the supported authentication methods will be offered in the following
+  order:
+
+    NTLM (windows only)
+    Kerberos 5
+    Kerberos 4
+    Secure Remote Password
+    SSL
+
+  This is the equivalent of the command:
+
+    SET TELNET AUTH TYPE NTLM KRB5 KRB4 SRP SSL
+
+SET TELNET AUTHENTICATION FORWARDING { ON, OFF }
+  Set this to ON to forward Kerberos V ticket-granting-tickets to the host
+  after authentication is complete.  OFF by default.
+
+SET TELNET AUTHENTICATION ENCRYPT-FLAG { ANY, NONE, TELOPT }
+  Use this command to specify which AUTH telopt encryption flags may be
+  accepted in client mode or offered in server mode.  The default is ANY.
+
+SET TELNET AUTHENTICATION HOW-FLAG { ANY, ONE-WAY, MUTUAL }
+  Use this command to specify which AUTH telopt how flags may be
+  accepted in client mode or offered in server mode.  The default is ANY.
+
+SET TELNET BINARY-TRANSFER-MODE { ON, OFF }
+  Set this command to ON if you want to force Kermit to negotiate 
+  Telnet Binary in both directions when performing file transfers.  
+  Default is OFF.  Alias SET TELNET BINARY-XFER-MODE.
+
+SET TELNET BUG BINARY-ME-MEANS-U-TOO { ON, OFF }
+  Set this to ON to try to overcome TELNET binary-mode misnegotiations by
+  C-Kermit's TELNET partner.
+
+SET TELNET BUG BINARY-U-MEANS-ME-TOO { ON, OFF }
+  Set this to ON to try to overcome TELNET binary-mode misnegotiations by
+  C-Kermit's TELNET partner.
+
+SET TELNET BUG INFINITE-LOOP-CHECK { ON, OFF }
+  Set this to ON to prevent Kermit from responding to a telnet negotiation
+  sequence that enters an infinite loop.  The default is OFF because this
+  should never occur.
+
+SET TELNET BUG SB-IMPLIES-WILL-DO { ON, OFF }
+  Set this to ON to allow Kermit to respond to telnet sub-negotiations if
+  the peer forgets to respond to WILL with DO or to DO with WILL before
+  sending a SB (subnegotiation).
+
+SET TELNET DEBUG ON
+  Displays all TELNET negotiations in full detail.
+
+SET TELNET DELAY-SB { ON, OFF }
+  When ON, telnet subnegotiation responses are delayed until after all
+  authentication and encryption options are either successfully negotiated
+  or refused.  This ensures that private data is protected.  When OFF, telnet
+  subnegotiation responses are sent immediately.  The default is ON.
+
+SET TELNET ECHO { LOCAL, REMOTE }
+  C-Kermit's initial echoing state for TELNET connections, LOCAL by default.
+  After the connection is made, TELNET negotiations determine the echoing.
+
+SET TELNET ENCRYPTION TYPE { AUTOMATIC, CAST128_CFB64, CAST128_OFB64,
+  CAST5_40_CFB64, CAST5_40_OFB64, DES_CFB64, DES_OFB64,
+  DES3_CFB64, DES3_OFB64, NONE }
+  AUTOMATIC allows the host to choose the preferred type of encryption.
+  Other values allow a specific encryption method to be specified.
+  AUTOMATIC is the default.  The list of options will vary depending
+  on the encryption types selected at compilation time.
+
+  When the type is AUTOMATIC and Kermit is accepting incoming connections
+  the supported encryption methods will be offered in the following order:
+
+    DES3_CFB64
+    CAST128_CFB64
+    DES_CFB64
+    CAST5_40_CFB64
+    DES3_OFB64
+    CAST128_OFB64
+    DES_OFB64
+    CAST5_40_OFB64
+
+SET TELNET ENVIRONMENT { variable-name [ value ] }
+  This feature lets Kermit send the values of certain environment variables
+  to the other computer if it asks for them.  The variable-name can be any
+  of the "well-known" variables "USER", "JOB", "ACCT", "PRINTER",
+  "SYSTEMTYPE", or "DISPLAY".  The default values are taken from your
+  environment; use this command to change or remove them.
+
+  The most commonly used variables and their default values are:
+
+  USER:
+    Telnet servers that request this value will use it as the name of the
+    account to be accessed and will therefore not prompt you for a username.
+    If a password is required to access the specified user's account only
+    the password prompt will be issued.  The default value is the name of
+    the user on the local machine.  This value may also be set with the
+    command SET LOGIN USER <name>.
+
+  DISPLAY:
+    This variable is used to specify the location of the X Windows Server
+    to be used by X Windows client applications executed on the remote host.
+    This value is used by three telnet options: ENVIRONMENT, XDISPLOC, and
+    FORWARD-X.  The default value is retrieved from the value of the DISPLAY
+    environment variable in the local environment.
+
+  PRINTER:
+    This variable is used to specify the location of the LPR printer to be
+    used for printing files on the host.  This variable is not set by
+    default.
+
+  SYSTEM:
+    This variable is used to specify the operating system type of the local
+    machine.  The default value is determined by Kermit.  Typical values
+    are "UNIX", "VMS", "WIN32", and "OS2".
+
+  See RFC1572 for further details.
+
+SET TELNET LOCATION [ text ]
+  Location string to send to the Telnet server if it asks.  By default this
+  is picked up from the LOCATION environment variable.  Give this command
+  with no text to disable this feature.
+
+SET TELNET NEWLINE-MODE { NVT, BINARY-MODE } { OFF, ON, RAW }
+  Determines how carriage returns are handled on TELNET connections.
+  There are separate settings for NVT (ASCII) mode and binary mode.
+  ON (default for NVT mode) means CRLF represents CR.
+  OFF means CR followed by NUL represents CR.
+  RAW (default for BINARY mode) means CR stands for itself.
+
+SET TELNET PROMPT-FOR-USERID <prompt>
+  Specifies a custom prompt to be used when prompting for a userid.
+  Kermit will prompt for a userid if
+    SET LOGIN USERID {}
+  has been issued prior to a telnet authentication negotiation for
+  an authentication type that requires the transmission of a name.
+  (e.g. Secure Remote Password).
+
+SET TELNET REMOTE-ECHO { ON, OFF }
+  Applies only to incoming connections created with:
+    SET HOST * <port> /TELNET
+  This command determines whether Kermit will actually echo characters
+  received from the remote when it has negotiated to do so.  The default
+  is ON.  Remote echoing may be turned off when it is necessary to read
+  a password with the INPUT command.
+
+SET TELNET TERMINAL-TYPE name
+  The terminal type to send to the remote TELNET host.  If none is given,
+  your current SET TERMINAL TYPE value is sent, e.g. VT220.
+
+SET TELNET TRANSFER-MODE { ON, OFF }
+  When ON (OFF by default) and BINARY negotiations are not REFUSED Kermit
+  will attempt to negotiate BINARY mode in each direction before the start
+  of each file transfer.  After the transfer is complete BINARY mode will
+  be restored to the pre-transfer state.
+
+SET TELNET WAIT-FOR-NEGOTIATIONS { ON, OFF }
+  Each Telnet option must be fully negotiated either On or Off before the
+  session can continue.  This is especially true with options that require
+  subnegotiations such as Authentication, Encryption, and Kermit; for
+  proper support of these options Kermit must wait for the negotiations to
+  complete.  Of course, Kermit has no way of knowing whether a reply is
+  delayed or not coming at all, and so will wait forever before continuing
+  the session.  If you know that Kermit's Telnet partner will not be sending
+  the required replies, you should instruct Kermit to REFUSE specific
+  options with the SET TELOPT command.  If you do not know which command
+  the host is not responding to set this option of OFF.
+
+
+5. DIAGNOSING AND FIXING PROBLEMS CONNECTING TO TELNET SERVERS
+
+After we replaced the Telnet engine and added support for the new
+functionality we found many Telnet servers that do not adhere to the Telnet
+protocol as described in the IETF RFCs.  Here are some of the most common
+bugs and the workarounds that Kermit provides the user to avoid them.
+
+BUG: Telnet Server does not respond to telnet options.
+
+Description:
+  The telnet protocol requires that all initial requests for action (WILL or
+  DO) must be responded to either in the affirmative (DO or WILL) or in the
+  negative (DONT or WONT).  A negative response is required for all
+  unrecognized options.  A failure to respond to a Telnet option may result
+  in the peer waiting forever.
+
+  This behavior is known to exist in the following telnet servers:
+
+  AOS/VS II Release 2.20.00.39
+  IBM OS/2 Warp 4.0 (all versions not configured with authentication modules)
+
+Symptom:
+
+  Kermit connects to the host, waits two minutes, and then reports a telnet
+  protocol error followed by the list of outstanding negotiations.  Kermit
+  has sent a Telnet option such as WILL AUTH and is waiting for the required
+  response which never comes.  In C-Kermit you will see "Negotiations...."
+  with many dots.  In K95 you will see the "spinner" twirl.
+
+  Example:
+
+  DNS Lookup...  Trying xxx.xxx.xxx.xxx...  Reverse DNS Lookup... (OK)
+  Negotiations... ?Telnet Protocol Timeout
+  ?Telnet waiting for response to WILL TERMINAL-TYPE
+  ?Telnet waiting for response to WILL NAWS
+  ?Telnet waiting for response to WILL AUTHENTICATION
+  ?Telnet waiting for response to WILL NEW-ENVIRONMENT
+
+  **** AOS/VS II  Release 2.20.00.39 / Press NEW-LINE to begin logging on ****
+
+  Too slow - input timed out
+
+Workaround:
+
+  For each of the telnet options listed as missing a response issue a
+
+    SET TELOPT <option> REFUSED [REFUSED]
+
+  command.  For instance:
+
+    SET TELOPT TERMINAL-TYPE REFUSED
+    SET TELOPT NAWS REFUSED
+    SET TELOPT AUTHENTICATION REFUSED
+    SET TELOPT NEW-ENVIRONMENT REFUSED
+
+BUG: Server sends a subnegotiation without negotiating the option
+
+Description:
+  The telnet protocol requires that subnegotiations not be sent until the
+  peers have agreed to WILL or DO the specified option.  All subnegotiations
+  received in a WONT or DONT state are to be ignored.
+
+Symptom:
+  There are two possibilities.  In the first, the host sends a subnegotiation
+  such as
+
+     IAC SB TERM_TYPE SEND IAC SE
+
+  without Kermit attempting to use the telnet option.
+
+     IAC WILL TERM_TYPE
+     IAC DO TERM_TYPE
+
+  In this case the subnegotiation request will be ignored and the
+  subnegotiation response
+
+     IAC SB TERM_TYPE IS <type> IAC SE
+
+  will not be sent.  How this affects the sender of the illegal subnegotation
+  is unknown.
+
+  In the second scenario, Kermit sends
+
+     IAC WILL TERM_TYPE
+
+  but the host sends the subnegotiation without responding to the request with
+
+     IAC DO TERM_TYPE
+
+  This scenario degenerates into the previous bug.  (See "Telnet Server does
+  not respond to telnet options it does not recognize.")
+
+Workaround:
+  For the first scenario, there is nothing that can be done.  Kermit is
+  already ignoring the subnegotiations and there is nothing that Kermit
+  can do to force the host to adhere to the protocol.  If you have a
+  support contract with the maker of the Telnet Server, file a report.
+
+  For the second scenario, Kermit implements a workaround which is on by
+  default:
+
+    SET TELNET BUG SB-IMPLIES-WILL-DO ON
+
+  This causes Kermit to treat
+
+     IAC SB TERM_TYPE SEND IAC SE
+
+  as if it were
+
+     IAC WILL TERM_TYPE
+     IAC SB TERM_TYPE SEND IAC SE
+
+
+BUG: Server sends DO TERM_TYPE but then never asks for the terminal type.
+
+Description:
+  Although it is not required by the Telnet Terminal-Type RFC, it makes
+  sense that if a server asks the client to negotiate the terminal
+  type, that it will actually go through with the negotiation.
+
+Symptom:
+  Kermit reports that Terminal Type negotiation is in use but the terminal
+  type is not configured properly on the host.
+
+Workaround:
+  There isn't much that can be done other than to instruct Kermit to:
+
+     SET TELOPT TERMINAL-TYPE REFUSE
+
+  so that it doesn't appear to the user that the terminal type has
+  indeed been negotiated.
+
+BUG: Server negotiates BINARY mode in one direction but uses it in both.
+
+Description:
+  When either the client or the server says it WILL BINARY and the peer
+  accepts, it is an indication that CR is to be sent without a following
+  NUL or LF by the sender of WILL BINARY.  A misunderstanding about the
+  meaning of this negotiation can prevent files from being transfered as
+  the packet lengths and checksums will not match.
+
+Symptom:
+  File transfers fail, reporting checksum or packet length errors.
+
+Workaround:
+  Use SET TERMINAL DEBUG ON to determine which direction the host is
+  negotiating BINARY mode in.
+
+  Then use either:
+
+    SET TELNET BUG BINARY-ME-MEANS-U-TOO ON
+
+  or:
+
+    SET TELNET BUG BINARY-U-MEANS-ME-TOO ON
+
+  to instruct Kermit to follow the broken behavior.
+
+
+PROBLEM: A connection is made to the Telnet Server but then it takes 30 to 60
+  seconds for a login prompt, or disconnects without displaying a prompt.
+
+Description:
+  The host is trying to resolve a host name for the IP Address assigned to
+  your computer and is unable to.  Check with your network administrator
+  or ISP to make sure that the IP address you are using has a valid DNS
+  entry for reverse lookups (IP address to name).
+
+
+PROBLEM: The Telnet Server does not display a "login:" or "Username:" prompt
+  and instead immediately displays the "Password:" prompt.
+
+Description:
+  The server you are connecting to supports the Telnet environment option
+  and has been given your username on the workstation during the telnet
+  option negotiations.
+
+Workaround:
+  If your username on the workstation is not the same as the username
+  on the host, or if you are using a script that requires a username
+  or login prompt, use the command:
+
+    SET TELNET ENVIRONMENT USER {<username>}
+
+  or:
+
+    SET LOGIN USERID {<username>}
+
+  to specify your name on the host; or disable this option with:
+
+    SET TELOPT NEW-ENVIRONMENT REFUSED
+
+
+BUG: The host echos input but never negotiates WILL ECHO.
+
+Description:
+  The Telnet protocol requires that all Telnet options be in a state of I
+  DONT and you WONT until otherwise negotiated.  That means that unless a
+  host says WILL ECHO it should not echo data; the client should echo it
+  locally.
+
+Symptom:
+  Failure to follow the protocol definition can result in no echoing or
+  double echoing.  This kind of confusion has been seen with two
+  well-known sites:
+
+    The USA Library of Congress
+    Dow Jones News Retrieval
+
+Workaround:
+  SET TELNET ECHO REMOTE
+  SET TELOPT ECHO REFUSE
+
+
+BUG: BSDI BSD/OS 3.1 Telnetd improperly implements WILL BINARY mode.
+
+Description:
+  The BSDI telnetd when it negotiaties WILL BINARY (host to client) binary
+  mode refuses to transmit CR control characters.  The man page for telnetd
+  states, "Binary mode has no common interpretation except between similar
+  operating systems (Unix in this case)."  The implementors clearly have
+  misread RFC-856 (TELNET BINARY TRANSMISSION) which clearly states that
+  the only affect that BINARY mode has on the channel is to disable NVT
+  (network virtual terminal) handling of CR (CR no longer must be followed
+  by NUL if it is not followed by LF) and that the 8th data bit must not
+  be stripped.
+
+Symptom:
+  By refusing to transmit CR control characters and translate them to LF
+  the BSDI telnetd causes end of lines to be misinterpreted by the
+  terminal and for file transfers to become corrupted if the host is
+  allowed to negotiate WILL BINARY.
+
+Workaround:
+  SET TELOPT BINARY ACCEPT REFUSE
+
+
+PROBLEM:  The host supports Telnet AUTH but you wish to login manually
+
+Description:
+  You are using Kermit to connect to a host that supports Telnet
+  Authentication except you need to login manually for one of the
+  following reasons:
+
+  . You do not have credentials that match the supported Telnet AUTH
+    type.  For example, the host supports Kerberos 5 but you do not
+    have a principal defined in the Kerberos realm even though you
+    have a valid account on the host.
+
+  . You wish to login to an Internet Kermit Service anonymously.
+
+Workaround:
+    SET TELOPT AUTH REFUSE
+
+
+PROBLEM:  Applications on the host are unable to open the DISPLAY
+
+Description:
+  Some applications such as the editor 'emacs' are dual mode.  They execute
+  either in terminal mode or as an X Windows client.  If the application
+  terminates with an error that it is unable to open the DISPLAY it could
+  be for one of the following reasons:
+
+  . a DISPLAY environment variable is defined in the shell's script that is
+    executed at login and it points to an invalid value;
+
+  . there is a DISPLAY environment variable defined on the local machine
+    which has been forwarded to the host by Kermit and the specified
+    DISPLAY is unreachable.
+
+  . a SET TELNET ENVIRONMENT DISPLAY command was issued prior to connecting
+    to the host and the specified DISPLAY value is invalid.
+
+Workaround:
+  If you wish to use the application as an X Windows client you must
+  have a working X Windows Server running on your local machine and specify
+  a valid DISPLAY string for your server.  This can either be specified on
+  the host via
+
+     export DISPLAY=<host>:<display>[.<screen>]
+
+  or by specifying the display in Kermit with the command
+
+     SET TELNET ENVIRONMENT DISPLAY [<host>:]<display>[.<screen>]
+
+  If your telnet server supports any of the following telnet options:
+
+     . X-Display Location
+     . Environment Variables
+     . X-Windows Forwarding
+
+  then Kermit will transmit the DISPLAY value to the host during the initial
+  telnet negotiations.
+
+  If you wish to use the application in terminal mode you can prevent Kermit
+  from transmitting the local DISPLAY value to the host by issuing the
+  following commands:
+
+     SET TELOPT XDISPLOC REFUSE
+     SET TELOPT FORWARD-X REFUSE
+     SET TELNET ENVIRONMENT DISPLAY
+
+PROBLEM: The Telnet Server is the Microsoft Windows 2000 Telnet Service
+
+Description:
+  The Microsoft Windows 2000 (and NT Services for Unix) Telnet Service is a 
+  bit of a challenge to work with due to limitations that are imposed by the
+  Windows platform and the choices made by the developers.  The Telnet Service
+  supports three terminal emulations (ANSI, VT100, and VTNT) and two types of
+  end user login (Telnet AUTH NTLM and plaintext domain\username/password.)
+  Depending on the choices that are made will determine the levels of 
+  functionality that can be obtained for the service.
+
+  Terminal types:
+
+  ANSI and VT100 are considered to be the same terminal type by Microsoft
+  even though they have some very significant differences.  The Microsoft
+  ANSI is closest to the Kermit 95 "ANSI-BBS" which should be used in 
+  preference to VT100 when communicating with this service.  The VTNT
+  terminal type is Microsoft specific (and undocumented.)  Kermit 95 
+  implements a reverse engineered implementation.  VTNT uses raw Win32
+  data structures to implement transmission of screen snapshots from the
+  service to the client; and keystroke events from the client to the service.
+  VTNT is the preferred terminal type to use with the Microsoft Telnet service
+  provided that you do not need access to Kermit 95 keyboard verbs or any 
+  form of scripting.  If Keyboard verbs or scripting are required ANSI or 
+  VT100 must be used.  
+
+  When using ANSI or VT100 the Backspace key must send BS and not DEL.
+
+  ANSI and VT100 do not support color whereas VTNT does.
+
+  VTNT supports Unicode characters.  ANSI and VT100 only support the local
+  ANSI code page.  You must configure the Kermit local and remote character
+  sets to properly convert between ANSI code pages.
+
+  End user login:
+
+  The Microsoft provides two forms of end user login.  The first is via the
+  use of "login:" and "password:" prompts.  The username is either the name
+  of a user with a local account; or a domain\name which specifies a user 
+  with an account in the provided domain.  Since the login is performed over
+  an unencrypted channel the password is easily stolen by monitoring the local 
+  network traffic.
+
+  The second method is a proprietary (and undocumented) Telnet authentication
+  method based upon the NT Lan Manager (NTLM) protocol.  This protocol has 
+  also been reverse engineered and implemented in Kermit 95.  NTLM only works
+  if the client machine shares the same domain (or security authority) as the
+  machine the service is running on.  NTLM does not produce a shared secret
+  that can be used for encrypting the connection.  NTLM can only be 
+  implemented on Windows 9x, NT, or Windows 2000 so connections from other
+  operating systems must use plaintext logins.
+
+  If NTLM is used, the user can only log into the service with the identity
+  they are logged into the local workstation.  If another username is desired
+  NTLM must be disabled on the client (SET TELOPT AUTH REFUSE).
+  
+  Other quirks:
+
+  The Microsoft Telnet Service implements Telnet NAWS (Negotiate About Window 
+  Size) but only listens to it when the connection is initially established.
+  This has two side effects when used with Kermit.  First, the Telnet Service
+  may completely ignore the screen size reported by Kermit if it is not sent
+  immediately after the Telnet Service agrees to use NAWS.  Second, the Telnet
+  Service will not recognize changes to the screen size after the connection
+  is established.
+
+  The Microsoft Telnet Service does not create a proper environment for the
+  end user.  The user's profile, home directory and environment variables are 
+  not loaded onto the system.  Applications that require this information may
+  fail to execute or otherwise run incorrectly.
+   
+  The Microsoft Telnet Service only allows a single telnet session to be
+  running at any one time.
+  
+  The Microsoft Telnet Service provides no mechansim for performing file 
+  transfers.
+
+  The Microsoft Telnet Service performs its job by taking snapshots of the
+  console's active virtual window.  This means that it is possible for data
+  to be lost due to scrolling or other screen updates between snapshots.
+  This can play havoc with scripts and prevents Kermit from being able to
+  store data into its scrollback buffers.
+
+  Recommendations:
+
+  If using Kermit 95 and scripts are not required:
+
+     SET TERMINAL TYPE VTNT
+     SET TELNET DELAY-SB OFF
+     SET KEY \264 \8
+  
+  If scripts are required:
+
+     SET TERMINAL TYPE ANSI
+     SET TELNET DELAY-SB OFF
+     SET KEY \264 \8
+
+  If you are using Kermit 95 on a Windows platform and wish to login as
+  a user other than yourself:
+
+     SET TELOPT AUTH REFUSE
+
+  or
+
+     TELNET /AUTH:none <host>
+
+  If you are using C-Kermit:
+
+      SET TELNET TERMINAL ANSI
+      SET TELNET DELAY-SB OFF
+
+(End of TELNET.TXT)
