@@ -1,85 +1,76 @@
-# Makefile to build C-Kermit for Berkeley, Microsoft, Interactive, 
-#		and ATT Unix 
-# for Berkeley Unix 4.x, "make bsd"
-# for Microsoft xenix (/286, pc/at, etc) "make xenix"
-# for Interactive on pc/xt "make pcix"
-# for Interactive on other host "make is3"
-# for Bell generic III/V "make sys3"
-# for Pro-3xx Venix 1.0 "make provx1"
-# for NCR Tower 1632, "make tower1"
-
+# -- Makefile to build C-Kermit for Motorola SYSTEM V/68 R1 --
+#
+###########################################################################
+#
+#  Compile and Link variables:
+#
 LNKFLAGS=
-
-make: 
-	@echo 'Make what?  You must tell which system to make C-Kermit for.'
-
-wermit: ckmain.o ckcmd.o ckuser.o ckusr2.o ckusr3.o ckprot.o ckfns.o ckfns2.o \
-		 ckconu.o ckxunx.o ckzunx.o ckdial.o cklogi.o makefile
-	cc $(LNKFLAGS) -o wermit ckmain.o ckxunx.o ckzunx.o ckfns.o ckfns2.o \
-		 ckprot.o ckcmd.o ckusr2.o ckusr3.o ckuser.o ckconu.o \
-		 ckdial.o cklogi.o
-
-ckmain.o: ckmain.c ckermi.h
-
-ckuser.o: ckuser.c ckcmd.h ckermi.h ckuser.h
-
-ckusr2.o: ckusr2.c ckcmd.h ckermi.h ckuser.h
-
-ckusr3.o: ckusr3.c ckcmd.h ckermi.h ckuser.h
-
-ckcmd.o: ckcmd.c ckcmd.h ckdebu.h
-
-ckprot.o: ckprot.w wart ckermi.h
-	wart ckprot.w ckprot.c ; cc $(CFLAGS) -c ckprot.c
-
-ckfns.o: ckfns.c ckermi.h ckdebu.h
-
-ckfns2.o: ckfns.c ckermi.h ckdebu.h
-
-ckzunx.o: ckzunx.c ckermi.h ckdebu.h
-
-ckxunx.o: ckxunx.c ckdebu.h
-
-ckconu.o: ckconu.c ckermi.h
-
-wart: ckwart.o
-	cc $(LNKFLAGS) -o wart ckwart.o
-
-ckwart.o: ckwart.c
-
-ckdial.o: ckdial.c
-
-cklogi.o: cklogi.c
-
-#Berkeley Unix
-bsd:
-	make wermit "CFLAGS= -DBSD4"
-
-#Microsoft "Xenix/286" e.g., as sold by IBM for PC/AT
-xenix:
-	make wermit "CFLAGS= -DXENIX -DUXIII -F3000 -i" "LNKFLAGS = -F3000 -i"
-
-#PC/IX, Interactive Corp System III port for IBM PC/XT as sold by IBM
-pcix:
-	make wermit "CFLAGS= -DPCIX -DUXIII -DISIII -Dsdata=sdatax -O -i" \
-		"LNKFLAGS = -i"
-
-#interactive corp system III port --
-is3:
-	make wermit "CFLAGS = -DISIII -DUXIII -Ddata=datax -O -i" \
-		"LNKFLAGS = -i"
-
-#plain old Bell System III or System V without strange things
+CC2= cc
+#
+###########################################################################
+#
+#  Targets
+#
+all: help
+help:
+	@echo "You must specify a target: sysv68, sys3, sys3alt, or clean"
+	@false
+#
+#SYSTEM V/68, A&TT System III, or System V (with I&D space)
+sysv68: sys3
 sys3:
-	make wermit "CFLAGS = -DUXIII -i -O" "LNKFLAGS = -i"
-
-#DEC Pro-3xx with Venix 1.0
-provx1:
-	make wart "CFLAGS= " "LNKFLAGS= "
-	make wermit "CFLAGS = -DPROVX1 -md780" \
-		"LNKFLAGS= -u _sleep -lc -md780"
-
-#NCR Tower 1632, OS 1.02
-tower1:
-	make wermit "CFLAGS = -DTOWER1"
-
+	make kermit "CFLAGS = -DUXIII -DDEBUG -DTLOG -DFP_FILE -i -O" \
+		"LNKFLAGS = -i -lc"
+#
+#System III or System V-like, non-pcc, without TLOG, only buffered IO 
+sys3alt:
+	make kermit "CFLAGS = -DUXIII -DDEBUG -O" \
+		"LNKFLAGS = -lc"
+#Cleanup
+clean:
+	rm -f *.[osL] kermit wart ckcpro.c a.out core
+#
+###########################################################################
+#
+#
+# Dependencies Section:
+#
+kermit: ckcmai.o ckucmd.o ckuusr.o ckuus2.o ckuus3.o ckcpro.o ckcfns.o \
+                 ckcfn2.o ckucon.o ckutio.o ckufio.o ckudia.o ckuscr.o
+	$(CC2) -o kermit ckcmai.o ckutio.o ckufio.o ckcfns.o \
+                 ckcfn2.o ckcpro.o ckucmd.o ckuus2.o ckuus3.o ckuusr.o \
+                 ckucon.o ckudia.o ckuscr.o $(LNKFLAGS)
+#
+ckcmai.o: ckcmai.c ckcker.h ckcdeb.h
+#
+ckuusr.o: ckuusr.c ckucmd.h ckcker.h ckuusr.h ckcdeb.h
+#
+ckuus2.o: ckuus2.c ckucmd.h ckcker.h ckuusr.h ckcdeb.h
+#
+ckuus3.o: ckuus3.c ckucmd.h ckcker.h ckuusr.h ckcdeb.h
+#
+ckucmd.o: ckucmd.c ckucmd.h ckcdeb.h
+#
+ckcpro.o: ckcpro.c ckcker.h ckcdeb.h
+#
+ckcpro.c: ckcpro.w wart
+	./wart ckcpro.w ckcpro.c
+#
+ckcfns.o: ckcfns.c ckcker.h ckcdeb.h
+#
+ckcfn2.o: ckcfn2.c ckcker.h ckcdeb.h
+#
+ckufio.o: ckufio.c ckcker.h ckcdeb.h
+#
+ckutio.o: ckutio.c ckcdeb.h
+#
+ckucon.o: ckucon.c ckcker.h ckcdeb.h
+#
+wart: ckwart.o
+	$(CC) -o wart ckwart.o $(LNKFLAGS)
+#
+ckwart.o: ckwart.c
+#
+ckudia.o: ckudia.c ckcker.h ckcdeb.h
+#
+ckuscr.o: ckuscr.c ckcker.h ckcdeb.h
