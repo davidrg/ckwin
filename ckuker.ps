@@ -1,0 +1,6176 @@
+%!PS-Adobe-1.0
+%%Title: ckuhdr.mss
+%%DocumentFonts: (atend)
+%%Creator: Frank da Cruz,718W,0000, and Scribe 6(1600)
+%%CreationDate: 6 February 1989 10:05
+%%Pages: (atend)
+%%EndComments
+% PostScript Prelude for Scribe.
+/BS {/SV save def 0.0 792.0 translate .01 -.01 scale} bind def
+/ES {showpage SV restore} bind def
+/SC {setrgbcolor} bind def
+/FMTX matrix def
+/RDF {WFT SLT 0.0 eq
+  {SSZ 0.0 0.0 SSZ neg 0.0 0.0 FMTX astore}
+  {SSZ 0.0 SLT neg sin SLT cos div SSZ mul SSZ neg 0.0 0.0 FMTX astore}
+  ifelse makefont setfont} bind def
+/SLT 0.0 def
+/SI { /SLT exch cvr def RDF} bind def
+/WFT /Courier findfont def
+/SF { /WFT exch findfont def RDF} bind def
+/SSZ 1000.0 def
+/SS { /SSZ exch 100.0 mul def RDF} bind def
+/AF { /WFT exch findfont def /SSZ exch 100.0 mul def RDF} bind def
+/MT /moveto load def
+/XM {currentpoint exch pop moveto} bind def
+/UL {gsave newpath moveto dup 2.0 div 0.0 exch rmoveto
+   setlinewidth 0.0 rlineto stroke grestore} bind def
+/LH {gsave newpath moveto setlinewidth
+   0.0 rlineto
+   gsave stroke grestore} bind def
+/LV {gsave newpath moveto setlinewidth
+   0.0 exch rlineto
+   gsave stroke grestore} bind def
+/BX {gsave newpath moveto setlinewidth
+   exch
+   dup 0.0 rlineto
+   exch 0.0 exch neg rlineto
+   neg 0.0 rlineto
+   closepath
+   gsave stroke grestore} bind def
+/BX1 {grestore} bind def
+/BX2 {setlinewidth 1 setgray stroke grestore} bind def
+/PB {/PV save def newpath translate
+    100.0 -100.0 scale pop /showpage {} def} bind def
+/PE {PV restore} bind def
+/GB {/PV save def newpath translate rotate
+    div dup scale 100.0 -100.0 scale /showpage {} def} bind def
+/GE {PV restore} bind def
+/FB {dict dup /FontMapDict exch def begin} bind def
+/FM {cvn exch cvn exch def} bind def
+/FE {end /original-findfont /findfont load def  /findfont
+   {dup FontMapDict exch known{FontMapDict exch get} if
+   original-findfont} def} bind def
+/BC {gsave moveto dup 0 exch rlineto exch 0 rlineto neg 0 exch rlineto closepath clip} bind def
+/EC /grestore load def
+/SH /show load def
+/MX {exch show 0.0 rmoveto} bind def
+/W {0 32 4 -1 roll widthshow} bind def
+/WX {0 32 5 -1 roll widthshow 0.0 rmoveto} bind def
+%%EndProlog
+%%Page: 0 1
+BS
+0 SI
+15 /Times-Bold AF
+22928 28325 MT
+(C-KERMIT USER GUIDE)SH
+13 SS 
+16676 31684 MT
+(For UNIX, VMS, and Many Other Operating Systems)SH
+10 SS 
+28222 34567 MT
+(Version 4E\050072\051)SH
+/Times-Roman SF
+27055 36959 MT
+(C. Gianone, F. da Cruz)SH
+20860 39351 MT
+(Columbia University Center for Computing Activities)SH
+25862 40547 MT
+(New York, New York 10027)SH
+/Times-Italic SF
+28166 44135 MT
+(February 8, 1989)SH
+/Times-Roman SF
+26610 48919 MT
+(Copyright \050C\051 1981,1988)SH
+20111 50115 MT
+(Trustees of Columbia University in the City of New York)SH
+/Times-Italic SF
+18429 52507 MT
+(Permission is granted to any individual or institution to use, copy,)SH
+18178 53703 MT
+(or redistribute this document so long as it is not sold for profit, and)SH
+23291 54899 MT
+(provided this copyright notice is retained.)SH
+ES
+%%Page: 1 2
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(1. UNIX KERMIT)SH
+10 /Times-Italic AF
+52275 XM
+(Page 1)SH
+46800 50 8280 5709 UL
+16 /Times-Bold AF
+8280 8272 MT
+(1. UNIX KERMIT)SH
+10 /Times-Italic AF
+8280 10566 MT
+(Program:)SH
+/Times-Roman SF
+14280 XM
+(Frank da Cruz, Bill Catchings,)
+262 W( Jeff Damens, Columbia University; Herm Fischer, Encino CA;)261 W
+14280 11671 MT
+(contributions by many others.)SH
+/Times-Italic SF
+8280 12776 MT
+(Language:)SH
+/Times-Roman SF
+14280 XM
+(C)SH
+/Times-Italic SF
+8280 13881 MT
+(Documentation:)SH
+/Times-Roman SF
+14280 14986 MT
+(Christine Gianone, Frank da Cruz)SH
+/Times-Italic SF
+8280 16091 MT
+(Version:)SH
+/Courier SF
+14280 XM
+(4E\050072\051)SH
+/Times-Italic SF
+8280 17196 MT
+(Date:)SH
+/Times-Roman SF
+14280 XM
+(February 8, 1989)SH
+8280 19588 MT
+(C-Kermit is an implementation of Kermit, written modularly and)
+104 W( transportably in C. The protocol state transition)103 W
+8280 20784 MT
+(table is written in)97 W
+/Times-Italic SF
+15890 XM
+(wart)SH
+/Times-Roman SF
+(, a \050non-proprietary\051 lex-like preprocessor for)
+97 W( C. System-dependent primitive functions are)98 W
+8280 21980 MT
+(isolated into separately compiled modules so that the)
+89 W( program should be easily portable among Unix systems and)88 W
+8280 23176 MT
+(also to non-Unix systems that have C compilers, such as VAX/VMS, Data General AOS/VS, Apollo Aegis,)
+137 W( the)138 W
+8280 24372 MT
+(Apple Macintosh, and the Commodore Amiga.  This document applies to Unix implementations)
+7 W( of C-Kermit, and in)6 W
+8280 25568 MT
+(most ways also to the VMS, Data General, and other implementations.)SH
+12 /Times-Bold AF
+8280 28156 MT
+(Unix Kermit Capabilities At A Glance:)SH
+10 /Times-Roman AF
+9280 29947 MT
+(Local operation:)SH
+34480 XM
+(Yes)SH
+9280 31052 MT
+(Remote operation:)SH
+34480 XM
+(Yes)SH
+9280 32157 MT
+(Login scripts:)SH
+34480 XM
+(Yes \050UUCP style\051)SH
+9280 33262 MT
+(Transfer text files:)SH
+34480 XM
+(Yes)SH
+9280 34367 MT
+(Transfer binary files:)SH
+34480 XM
+(Yes)SH
+9280 35472 MT
+(Wildcard send:)SH
+34480 XM
+(Yes)SH
+9280 36577 MT
+(File transfer interruption:)SH
+34480 XM
+(Yes)SH
+9280 37682 MT
+(Filename collision avoidance:)SH
+34480 XM
+(Yes)SH
+9280 38787 MT
+(Can time out:)SH
+34480 XM
+(Yes)SH
+9280 39892 MT
+(8th-bit prefixing:)SH
+34480 XM
+(Yes)SH
+9280 40997 MT
+(Repeat count prefixing:)SH
+34480 XM
+(Yes)SH
+9280 42102 MT
+(Alternate block checks:)SH
+34480 XM
+(Yes)SH
+9280 43207 MT
+(Terminal emulation:)SH
+34480 XM
+(Yes)SH
+9280 44312 MT
+(Communication settings:)SH
+34480 XM
+(Yes)SH
+9280 45417 MT
+(Transmit BREAK:)SH
+34480 XM
+(Yes \050most versions\051)SH
+9280 46522 MT
+(Support for dialout modems:)SH
+34480 XM
+(Yes)SH
+9280 47627 MT
+(IBM mainframe communication:)SH
+34480 XM
+(Yes)SH
+9280 48732 MT
+(Transaction logging:)SH
+34480 XM
+(Yes)SH
+9280 49837 MT
+(Session logging:)SH
+34480 XM
+(Yes)SH
+9280 50942 MT
+(Debug logging:)SH
+34480 XM
+(Yes)SH
+9280 52047 MT
+(Packet logging:)SH
+34480 XM
+(Yes)SH
+9280 53152 MT
+(Act as server:)SH
+34480 XM
+(Yes)SH
+9280 54257 MT
+(Talk to server:)SH
+34480 XM
+(Yes)SH
+9280 55362 MT
+(Advanced server functions:)SH
+34480 XM
+(Yes)SH
+9280 56467 MT
+(Local file management:)SH
+34480 XM
+(Yes)SH
+9280 57572 MT
+(Command/Init files:)SH
+34480 XM
+(Yes)SH
+9280 58677 MT
+(UUCP and multiuser line locking:)SH
+34480 XM
+(Yes)SH
+9280 59782 MT
+(Long packets:)SH
+34480 XM
+(Yes)SH
+9280 60887 MT
+(Sliding Windows:)SH
+34480 XM
+(No)SH
+9280 61992 MT
+(File attributes packets:)SH
+34480 XM
+(No)SH
+9280 63097 MT
+(Command macros:)SH
+34480 XM
+(No)SH
+9280 64202 MT
+(Raw file transmit:)SH
+34480 XM
+(No)SH
+/Times-Italic SF
+8280 66594 MT
+(All numbers in the C-Kermit documentation are decimal unless noted otherwise.)SH
+/Times-Roman SF
+8280 68986 MT
+(C-Kermit provides traditional Unix command line operation)
+290 W( as well as interactive command prompting and)291 W
+8280 70182 MT
+(execution. The)
+460 W( command line)
+105 W( options provide access to a basic subset of C-Kermit's capabilities; the interactive)104 W
+8280 71378 MT
+(command set is far richer.)SH
+ES
+%%Page: 2 3
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 2)SH
+12 /Times-Bold AF
+33087 XM
+(Kermit User Guide: UNIX KERMIT 1)SH
+46800 50 6120 5709 UL
+10 /Times-Roman AF
+6120 7886 MT
+(On systems with dialout)
+75 W( modems, C-Kermit's command file, DIAL command, and login script facilities provide a)76 W
+6120 9082 MT
+(counterpart to UUCP for file transfer with)
+98 W( non-UNIX operating systems, including the use of scheduled \050e.g. late)97 W
+6120 10278 MT
+(night\051 unattended operation.)SH
+14 /Times-Bold AF
+6120 13880 MT
+(1.1. The Unix File System)SH
+10 /Times-Roman AF
+6120 15998 MT
+(Consult your Unix manual for details about the file system under your version of Unix.)
+40 W( In)
+332 W( general, Unix files have)41 W
+6120 17194 MT
+(lowercase names, possibly containing one or more dots or other special characters.  Unix directories are tree-)200 W
+6120 18390 MT
+(structured. Directory)
+250 W( levels are separated by slash \050``)SH
+/Courier SF
+(/)SH
+/Times-Roman SF
+(''\051 characters.  For example,)SH
+/Courier SF
+8520 20045 MT
+(/usr/foo/bar)SH
+/Times-Roman SF
+6120 21762 MT
+(denotes the file)70 W
+/Courier SF
+12690 XM
+(bar)SH
+/Times-Roman SF
+14810 XM
+(in the directory)70 W
+/Courier SF
+21380 XM
+(/usr/foo)SH
+/Times-Roman SF
+(. Alphabetic)
+390 W( case is significant in Unix file and)
+70 W( directory names,)71 W
+6120 22958 MT
+(i.e. ``)147 W
+/Courier SF
+(a)SH
+/Times-Roman SF
+('' is a different file \050or directory\051 from ``)147 W
+/Courier SF
+(A)SH
+/Times-Roman SF
+(''. Wildcard)
+544 W( or "meta" characters allow groups)
+147 W( of files to be)146 W
+6120 24154 MT
+(specified. ``)250 W
+/Courier SF
+(*)SH
+/Times-Roman SF
+('' matches any string; ``)SH
+/Courier SF
+(?)SH
+/Times-Roman SF
+('' matches any single character.)SH
+6120 26546 MT
+(When C-Kermit is invoked with file arguments specified on the)
+55 W( Unix command line, the Unix shell \050Bourne Shell,)56 W
+6120 27742 MT
+(C-Shell, K-Shell, etc\051 expands the meta characters itself, and in this case a wider variety is available.  For example,)SH
+/Courier SF
+8520 29397 MT
+(kermit -s ~/ck[uvm]*.{upd,bwr}])SH
+/Times-Roman SF
+6120 31114 MT
+(is expanded by the Berkeley C-Shell into a list of all the files in the user's home directory \050)73 W
+/Courier SF
+(~/)SH
+/Times-Roman SF
+(\051 that start with)
+73 W( the)72 W
+6120 32310 MT
+(characters ")45 W
+/Courier SF
+(ck)SH
+/Times-Roman SF
+(", followed by a)
+45 W( single character ``)46 W
+/Courier SF
+(u)SH
+/Times-Roman SF
+('', ``)46 W
+/Courier SF
+(v)SH
+/Times-Roman SF
+('', or ``)46 W
+/Courier SF
+(m)SH
+/Times-Roman SF
+('', followed by zero or more characters, followed)46 W
+6120 33506 MT
+(by a dot, followed by one of)
+73 W( the strings ``)72 W
+/Courier SF
+(upd)SH
+/Times-Roman SF
+('' or ``)72 W
+/Courier SF
+(bwr)SH
+/Times-Roman SF
+(''. Internally,)
+394 W( the C-Kermit program itself expands only)72 W
+6120 34702 MT
+(the ``)SH
+/Courier SF
+(*)SH
+/Times-Roman SF
+('' and ``)SH
+/Courier SF
+(?)SH
+/Times-Roman SF
+('' meta characters.)SH
+6120 37094 MT
+(Unix files are)
+46 W( linear \050sequential\051 streams of 8-bit bytes.  Text files consist of 7-bit ASCII characters, with the high-)47 W
+6120 38290 MT
+(order bit off \0500\051, and lines separated by the Unix newline character, which is linefeed \050LF, ASCII 10\051.)
+202 W( This)653 W
+6120 39486 MT
+(distinguishes Unix text files from those on most)
+92 W( other ASCII systems, in which lines are separated by a carriage-)93 W
+6120 40682 MT
+(return linefeed sequence \050CRLF, ASCII 13, followed by linefeed,)
+30 W( ASCII 10\051.  Binary files are likely to contain data)29 W
+6120 41878 MT
+(in the high bits of the file bytes, and have no particular line or record structure.)SH
+6120 44270 MT
+(When transferring files, C-Kermit will convert between upper and lower case filenames and between LF and CRLF)35 W
+6120 45466 MT
+(line terminators automatically, unless)
+9 W( told to do otherwise.  When binary files must be transferred, the program must)8 W
+6120 46662 MT
+(be instructed not)
+70 W( to perform LF/CRLF conversion \050)71 W
+/Courier SF
+(-i)SH
+/Times-Roman SF
+28718 XM
+(on the command line or "set file type binary" interactively;)71 W
+6120 47858 MT
+(see below\051.)SH
+14 /Times-Bold AF
+6120 51460 MT
+(1.2. File Transfer)SH
+10 /Times-Roman AF
+6120 53578 MT
+(If C-Kermit is in local mode,)
+59 W( the screen \050stdout\051 is continously updated to show the progress of the file transer.  A)58 W
+6120 54774 MT
+(dot is printed for every four data packets, other packets are shown by type:)SH
+8120 56565 MT
+(I)SH
+9120 XM
+(Exchange Parameter Information)SH
+8120 57670 MT
+(R)SH
+9120 XM
+(Receive Initiate)SH
+8120 58775 MT
+(S)SH
+9120 XM
+(Send Initiate)SH
+8120 59880 MT
+(F)SH
+9120 XM
+(File Header)SH
+8120 60985 MT
+(G)SH
+9120 XM
+(Generic Server Command)SH
+8120 62090 MT
+(C)SH
+9120 XM
+(Remote Host Command)SH
+8120 63195 MT
+(N)SH
+9120 XM
+(Negative Acknowledgement \050NAK\051)SH
+8120 64300 MT
+(E)SH
+9120 XM
+(Fatal Error)SH
+8120 65405 MT
+(T)SH
+9120 XM
+(Indicates a timeout occurred)SH
+8120 66510 MT
+(Q)SH
+9120 XM
+(Indicates a damaged, undesired, or illegal packet was received)SH
+/Courier SF
+8120 67615 MT
+(%)SH
+/Times-Roman SF
+9120 XM
+(Indicates a packet was retransmitted)SH
+6120 69406 MT
+(You may type certain "interrupt" commands during file transfer:)SH
+8120 71197 MT
+(Control-F:)SH
+14120 XM
+(Interrupt the current File, and go on to the next \050if any\051.)SH
+ES
+%%Page: 3 4
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(1.2. File Transfer)SH
+10 /Times-Italic AF
+52275 XM
+(Page 3)SH
+46800 50 8280 5709 UL
+/Times-Roman SF
+10280 7886 MT
+(Control-B:)SH
+16280 XM
+(Interrupt the entire Batch of files, terminate the transaction.)SH
+10280 8991 MT
+(Control-R:)SH
+16280 XM
+(Resend the current packet)SH
+10280 10096 MT
+(Control-A:)SH
+16280 XM
+(Display a status report for the current transaction.)SH
+8280 11887 MT
+(These interrupt characters differ from the ones used in other Kermit implementations to avoid conflict)
+263 W( with)264 W
+8280 13083 MT
+(commonly used Unix shell interrupt characters.  With Version 7, System III, and)
+146 W( System V implementations of)145 W
+8280 14279 MT
+(Unix, interrupt commands must be preceeded)
+9 W( by the 'connect' escape character \050e.g. normally-)10 W
+/Courier SF
+(\134)SH
+/Times-Roman SF
+(\051. Ctrl-F)
+270 W( and Ctrl-B)10 W
+8280 15475 MT
+(are effective only during the transfer of data \050D\051 packets, and cannot be used to interrupt a transfer that has)
+52 W( not yet)51 W
+8280 16671 MT
+(reached that stage.)SH
+/Times-Italic SF
+10280 18462 MT
+(CAUTION:)SH
+/Times-Roman SF
+15633 XM
+(If Control-F or Control-B is used to cancel an incoming file, and)
+121 W( a file of the same name)122 W
+10280 19567 MT
+(previously existed,)103 W
+/Times-Italic SF
+18291 XM
+(and)SH
+/Times-Roman SF
+20144 XM
+(the "file warning" feature)
+103 W( is not enabled, then the previous copy of the file will)102 W
+10280 20672 MT
+(disappear.)SH
+/Times-Italic SF
+8280 23064 MT
+(EMERGENCY EXIT:)11 W
+/Times-Roman SF
+17396 XM
+(When running Unix Kermit in remote mode,)
+11 W( if you have started a protocol operation \050sending)12 W
+8280 24260 MT
+(or receiving a file, server command wait, etc\051, you will not be able to communicate with)
+42 W( the terminal in the normal)41 W
+8280 25456 MT
+(way. In)
+372 W( particular,)
+61 W( you cannot stop the protocol by typing the normal Unix interrupt characters, since the terminal)62 W
+8280 26652 MT
+(has been put in "raw mode".  If you need)
+71 W( to regain control quickly -- for instance, because the protocol is stuck --)70 W
+8280 27848 MT
+(you can type two Control-C's directly to the Unix Kermit program \050"connect" first if necessary\051:)SH
+10280 29368 MT
+(Control-C Control-C)SH
+8280 30888 MT
+(This will cause the program to display,)SH
+/Courier SF
+10280 32346 MT
+(^C^C...)SH
+/Times-Roman SF
+8280 33866 MT
+(exit, and restore the terminal to normal.)SH
+14 /Times-Bold AF
+8280 37468 MT
+(1.3. Command Line Operation)SH
+10 /Times-Roman AF
+8280 39586 MT
+(The C-Kermit command line syntax conforms to the Proposed Syntax Standards for Unix System Commands)
+96 W( put)97 W
+23187 50 30268 39786 UL
+8280 40782 MT
+(forth by Kathy)
+1 W( Hemenway and Helene Armitage of AT&T Bell Laboratories in)SH
+/Times-Italic SF
+40331 XM
+(Unix/World)SH
+/Times-Roman SF
+(, Vol.1, No.3, 1984.  The)SH
+8280 41978 MT
+(rules that apply are:)SH
+/Symbol SF
+10070 43883 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Command names must be between 2 and 9 characters \050"kermit" is 6\051.)SH
+/Symbol SF
+10070 44988 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Command names must include lower case letters and digits only.)SH
+/Symbol SF
+10070 46093 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(An option name is a single character.)SH
+/Symbol SF
+10070 47198 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Options are delimited by ')SH
+/Courier SF
+(-)SH
+/Times-Roman SF
+('.)SH
+/Symbol SF
+10070 48303 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Options with no arguments may be grouped \050bundled\051 behind one delimiter.)SH
+/Symbol SF
+10070 49408 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Option-arguments cannot be optional.)SH
+/Symbol SF
+10070 50513 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Arguments immediately follow options, separated by whitespace.)SH
+/Symbol SF
+10070 51618 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(The order of options does not matter.)SH
+/Symbol SF
+10070 52723 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(')SH
+/Courier SF
+(-)SH
+/Times-Roman SF
+(' preceded and followed by whitespace means standard input.)SH
+8280 54514 MT
+(A group of bundled options may end with an option that has an argument.)SH
+8280 56906 MT
+(The following notation is used in command descriptions:)SH
+/Times-Italic SF
+8280 58697 MT
+(fn)SH
+/Times-Roman SF
+12280 XM
+(A Unix file)
+249 W( specification, possibly containing the "wildcard" characters `)250 W
+/Courier SF
+(*)SH
+/Times-Roman SF
+(' or `)250 W
+/Courier SF
+(?)SH
+/Times-Roman SF
+(' \050`)250 W
+/Courier SF
+(*)SH
+/Times-Roman SF
+(' matches all)250 W
+12280 59802 MT
+(character strings, `)SH
+/Courier SF
+(?)SH
+/Times-Roman SF
+(' matches)
+250 W( any single character\051.)SH
+/Times-Italic SF
+8280 61379 MT
+(fn1)SH
+/Times-Roman SF
+12280 XM
+(A Unix file specification which may not contain `)SH
+/Courier SF
+(*)SH
+/Times-Roman SF
+(' or `)SH
+/Courier SF
+(?)SH
+/Times-Roman SF
+('.)SH
+/Times-Italic SF
+8280 62956 MT
+(rfn)SH
+/Times-Roman SF
+12280 XM
+(A remote file specification in the remote system's own)
+50 W( syntax, which may denote a single file or a group)49 W
+12280 64061 MT
+(of files.)SH
+/Times-Italic SF
+8280 65638 MT
+(rfn1)SH
+/Times-Roman SF
+12280 XM
+(A remote file specification which should denote only a single file.)SH
+/Times-Italic SF
+8280 67215 MT
+(n)SH
+/Times-Roman SF
+12280 XM
+(A decimal number between 0 and 94.)SH
+/Times-Italic SF
+8280 68792 MT
+(c)SH
+/Times-Roman SF
+12280 XM
+(A decimal number between 0 and 127 representing the value of an ASCII character.)SH
+/Times-Italic SF
+8280 70369 MT
+(cc)SH
+/Times-Roman SF
+12280 XM
+(A decimal number between 0 and 31, or else exactly 127, representing the value)
+147 W( of an ASCII control)148 W
+12280 71474 MT
+(character.)SH
+ES
+%%Page: 4 5
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 4)SH
+12 /Times-Bold AF
+32187 XM
+(Kermit User Guide: UNIX KERMIT 1.3)SH
+46800 50 6120 5709 UL
+10 /Courier AF
+6120 7886 MT
+([ ])SH
+/Times-Roman SF
+10120 XM
+(Any field in square braces is optional.)SH
+/Courier SF
+6120 9463 MT
+({x,y,z})SH
+/Times-Roman SF
+10120 10568 MT
+(Alternatives are listed in curly braces.)SH
+6120 12960 MT
+(C-Kermit command line options may specify)
+40 W( any combination of actions and settings.  If C-Kermit is invoked with)41 W
+6120 14156 MT
+(a command line that specifies no actions, then it will issue a prompt and)
+85 W( begin interactive dialog.  Action options)84 W
+6120 15352 MT
+(specify either protocol transactions or terminal connection.)SH
+/Courier SF
+6120 17143 MT
+(-s)SH
+/Times-Italic SF
+7920 XM
+(fn)SH
+/Times-Roman SF
+10120 XM
+(Send the specified file)
+49 W( or files.  If)50 W
+/Times-Italic SF
+24153 XM
+(fn)SH
+/Times-Roman SF
+25231 XM
+(contains wildcard \050meta\051 characters, the Unix shell expands it into a)50 W
+10120 18248 MT
+(list. If)250 W
+/Times-Italic SF
+13009 XM
+(fn)SH
+/Times-Roman SF
+14037 XM
+(is ')SH
+/Courier SF
+(-)SH
+/Times-Roman SF
+(' then kermit sends from standard input, which may come from a file:)SH
+/Courier SF
+12520 19903 MT
+(kermit -s - < foo.bar)SH
+/Times-Roman SF
+10120 21620 MT
+(or a parallel process:)SH
+/Courier SF
+12520 23275 MT
+(ls -l | grep christin | kermit -s -)SH
+/Times-Roman SF
+10120 24992 MT
+(You cannot use this mechanism to send terminal typein.  If you)
+56 W( want to send a file whose actual name is)55 W
+10120 26097 MT
+(``)SH
+/Courier SF
+(-)SH
+/Times-Roman SF
+('' you can precede it with a path name, as in)SH
+/Courier SF
+12520 27752 MT
+(kermit -s ./-)SH
+6120 29469 MT
+(-r)SH
+/Times-Roman SF
+10120 XM
+(Receive a file or files.  Wait passively for files to arrive.)SH
+/Courier SF
+6120 31046 MT
+(-k)SH
+/Times-Roman SF
+10120 XM
+(Receive \050passively\051 a file or files, sending them to standard)
+106 W( output.  This option can be used in several)107 W
+10120 32151 MT
+(ways:)SH
+/Courier SF
+10120 33880 MT
+(kermit -k)SH
+/Times-Roman SF
+12120 34985 MT
+(Displays the incoming files on your screen; to be used only in "local mode" \050see below\051.)SH
+/Courier SF
+10120 36562 MT
+(kermit -k >)SH
+/Times-Italic SF
+17320 XM
+(fn1)SH
+/Times-Roman SF
+12120 37667 MT
+(Sends the incoming file or files)
+242 W( to the named file,)241 W
+/Times-Italic SF
+34561 XM
+(fn1)SH
+/Times-Roman SF
+(. If)
+732 W( more than one file arrives, all are)241 W
+12120 38772 MT
+(concatenated together into the single file)SH
+/Times-Italic SF
+28617 XM
+(fn1)SH
+/Times-Roman SF
+(.)SH
+/Courier SF
+10120 40349 MT
+(kermit -k | command)SH
+/Times-Roman SF
+12120 41454 MT
+(Pipes the incoming data \050single or multiple files\051 to the indicated command, as in)SH
+/Courier SF
+14520 43109 MT
+(kermit -k | sort > sorted.stuff)SH
+6120 44900 MT
+(-a)SH
+/Times-Italic SF
+7920 XM
+(fn1)SH
+/Times-Roman SF
+10120 XM
+(If you have specified a file transfer option, you may give)
+74 W( an alternate name for a single file with the)73 W
+/Courier SF
+51720 XM
+(-a)SH
+/Times-Roman SF
+10120 46005 MT
+(\050"as"\051 option.  For example,)SH
+/Courier SF
+12520 47660 MT
+(kermit -s foo -a bar)SH
+/Times-Roman SF
+10120 49377 MT
+(sends the file)59 W
+/Courier SF
+15824 XM
+(foo)SH
+/Times-Roman SF
+17934 XM
+(telling the receiver that its name is)60 W
+/Courier SF
+32380 XM
+(bar)SH
+/Times-Roman SF
+(. If)
+370 W( more than one file arrives or is sent, only)60 W
+10120 50482 MT
+(the first file is affected by the)SH
+/Courier SF
+22145 XM
+(-a)SH
+/Times-Roman SF
+23595 XM
+(option:)SH
+/Courier SF
+12520 52137 MT
+(kermit -ra baz)SH
+/Times-Roman SF
+10120 53854 MT
+(stores the first incoming file under the name)SH
+/Courier SF
+28062 XM
+(baz)SH
+/Times-Roman SF
+(.)SH
+/Courier SF
+6120 55431 MT
+(-x)SH
+/Times-Roman SF
+10120 XM
+(Begin server operation.  May be used in either local or remote mode.)SH
+6120 57823 MT
+(Before proceeding, a few words about remote and local operation)
+28 W( are necessary.  C-Kermit is "local" if it is running)27 W
+6120 59019 MT
+(on PC or workstation that you are using directly, or if it is running on a multiuser system and transferring files over)33 W
+6120 60215 MT
+(an external communication line -- not your job's controlling terminal or console.  C-Kermit is remote if it is running)16 W
+6120 61411 MT
+(on a multiuser system and transferring files over its own controlling terminal's)
+208 W( communication line \050normally)209 W
+/Courier SF
+6120 62607 MT
+(/dev/tty)SH
+/Times-Roman SF
+(\051, connected to your PC or workstation.)SH
+6120 64999 MT
+(If you are running C-Kermit on a PC, it is normally used in local mode, with the "back port" designated)
+112 W( for file)111 W
+6120 66195 MT
+(transfer and terminal connection.  If you are running C-Kermit on a multiuser \050timesharing\051 system,)
+60 W( it is in remote)61 W
+6120 67391 MT
+(mode unless you explicitly point it at an external)
+195 W( line for file transfer or terminal connection.  The following)194 W
+6120 68587 MT
+(command sets C-Kermit's "mode":)SH
+/Courier SF
+6120 70378 MT
+(-l)SH
+/Times-Italic SF
+7920 XM
+(dev)SH
+/Times-Roman SF
+10120 XM
+(Line -- Specify a terminal line to use for file transfer and terminal connection, as in)SH
+ES
+%%Page: 5 6
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(1.3. Command Line Operation)SH
+10 /Times-Italic AF
+52275 XM
+(Page 5)SH
+46800 50 8280 5709 UL
+/Courier SF
+14680 7824 MT
+(kermit -l /dev/ttyi5)SH
+/Times-Roman SF
+8280 10216 MT
+(When an external line is being used, you will)
+37 W( also need some additional options for successful communication with)38 W
+8280 11412 MT
+(the remote system:)SH
+/Courier SF
+8280 13203 MT
+(-b)SH
+/Times-Italic SF
+10080 XM
+(n)SH
+/Times-Roman SF
+12280 XM
+(Baud -- Specify the baud rate for the line given in the)SH
+/Courier SF
+33887 XM
+(-l)SH
+/Times-Roman SF
+35337 XM
+(option, as in)SH
+/Courier SF
+14680 14858 MT
+(kermit -l /dev/ttyi5 -b 9600)SH
+/Times-Roman SF
+12280 16575 MT
+(This option should always be included with the)174 W
+/Courier SF
+32838 XM
+(-l)SH
+/Times-Roman SF
+34462 XM
+(option, since the speed of an external line is)
+174 W( not)173 W
+12280 17680 MT
+(necessarily what you expect.)SH
+/Courier SF
+8280 19257 MT
+(-p)SH
+/Times-Italic SF
+10080 XM
+(x)SH
+/Times-Roman SF
+12280 XM
+(Parity --)
+5 W( e,o,m,s,n \050even, odd, mark, space, or none\051.  If parity is other than none, then the 8th-bit prefixing)6 W
+12280 20362 MT
+(mechanism will be used)
+175 W( for transferring 8-bit binary data, provided the opposite Kermit agrees.  The)174 W
+12280 21467 MT
+(default parity is none.)SH
+/Courier SF
+8280 23044 MT
+(-t)SH
+/Times-Roman SF
+12280 XM
+(Specifies half duplex, line turnaround with XON as the handshake character.)SH
+8280 25436 MT
+(The following commands may be used only with a C-Kermit which is local either)
+30 W( by default or else because the)31 W
+/Courier SF
+53880 XM
+(-l)SH
+/Times-Roman SF
+8280 26632 MT
+(option has been specified.)SH
+/Courier SF
+8280 28423 MT
+(-g)SH
+/Times-Italic SF
+10080 XM
+(rfn)SH
+/Times-Roman SF
+12280 XM
+(Actively request a remote server to send the named file or)
+100 W( files;)99 W
+/Times-Italic SF
+39139 XM
+(rfn)SH
+/Times-Roman SF
+40655 XM
+(is a file specification in the remote)99 W
+12280 29528 MT
+(host's own syntax.  If)111 W
+/Times-Italic SF
+21723 XM
+(fn)SH
+/Times-Roman SF
+22862 XM
+(happens to contain any special shell characters, like space, ')111 W
+/Courier SF
+(*)SH
+/Times-Roman SF
+(', ')111 W
+/Courier SF
+([)SH
+/Times-Roman SF
+(', etc, these)111 W
+12280 30633 MT
+(must be quoted, as in)SH
+/Courier SF
+14680 32288 MT
+(kermit -g x\134*.\134?)SH
+/Times-Roman SF
+12280 34005 MT
+(or)SH
+/Courier SF
+14680 35660 MT
+(kermit -g "profile exec")SH
+8280 37377 MT
+(-f)SH
+/Times-Roman SF
+12280 XM
+(Send a 'finish' command to a remote server.)SH
+/Courier SF
+8280 38954 MT
+(-c)SH
+/Times-Roman SF
+12280 XM
+(Establish a terminal connection over the specified or default communication line, before any)
+169 W( protocol)168 W
+12280 40059 MT
+(transaction takes place.)
+342 W( Get)
+935 W( back to the local system by typing the escape character \050normally)343 W
+12280 41164 MT
+(Control-Backslash\051 followed by the letter 'c'.)SH
+/Courier SF
+8280 42741 MT
+(-n)SH
+/Times-Roman SF
+12280 XM
+(Like)SH
+/Courier SF
+14396 XM
+(-c)SH
+/Times-Roman SF
+(, but)33 W
+/Times-Italic SF
+17690 XM
+(after)SH
+/Times-Roman SF
+19862 XM
+(a protocol transaction takes place;)33 W
+/Courier SF
+33885 XM
+(-c)SH
+/Times-Roman SF
+35368 XM
+(and)SH
+/Courier SF
+37095 XM
+(-n)SH
+/Times-Roman SF
+38578 XM
+(may both be)
+33 W( used in the same command.)32 W
+12280 43846 MT
+(The use of)SH
+/Courier SF
+16751 XM
+(-n)SH
+/Times-Roman SF
+18201 XM
+(and)SH
+/Courier SF
+19895 XM
+(-c)SH
+/Times-Roman SF
+21345 XM
+(is illustrated below.)SH
+8280 45637 MT
+(If the other Kermit is on a remote system, the)76 W
+/Courier SF
+27454 XM
+(-l)SH
+/Times-Roman SF
+28980 XM
+(and)SH
+/Courier SF
+30750 XM
+(-b)SH
+/Times-Roman SF
+32276 XM
+(options should also be included with the)76 W
+/Courier SF
+49169 XM
+(-r)SH
+/Times-Roman SF
+(,)SH
+/Courier SF
+50945 XM
+(-k)SH
+/Times-Roman SF
+(, or)76 W
+/Courier SF
+53880 XM
+(-s)SH
+/Times-Roman SF
+8280 46833 MT
+(options.)SH
+8280 49225 MT
+(Several other command-line options are provided:)SH
+/Courier SF
+8280 51016 MT
+(-i)SH
+/Times-Roman SF
+12280 XM
+(Specifies that)
+5 W( files should be sent or received exactly "as is" with no conversions.  This option is necessary)4 W
+12280 52121 MT
+(for transmitting binary files.  It may also be)
+30 W( used in Unix-to-Unix transfers \050it must be given to)31 W
+/Times-Italic SF
+51021 XM
+(both)SH
+/Times-Roman SF
+53080 XM
+(Unix)SH
+12280 53226 MT
+(Kermit programs\051, where it will improve)
+54 W( performance by circumventing the normal text-file conversions,)53 W
+12280 54331 MT
+(and will allow mixture of text and binary files in a single file group.)SH
+/Courier SF
+8280 55908 MT
+(-w)SH
+/Times-Roman SF
+12280 XM
+(Write-Protect -- Avoid filename collisions for incoming files.)SH
+/Courier SF
+8280 57485 MT
+(-e)SH
+/Times-Italic SF
+10080 XM
+(n)SH
+/Times-Roman SF
+12280 XM
+(Extended packet length -- Specify that C-Kermit is allowed to receive packets)
+9 W( up to length)10 W
+/Times-Italic SF
+48885 XM
+(n)SH
+/Times-Roman SF
+(, where)10 W
+/Times-Italic SF
+52598 XM
+(n)SH
+/Times-Roman SF
+53358 XM
+(may)SH
+12280 58590 MT
+(be between 10 and some)
+22 W( large number, like 1000, depending on the system.  The default maximum length)21 W
+12280 59695 MT
+(for received packets is)
+122 W( 90.  Packets longer than 94 will be used only if the other Kermit supports, and)123 W
+12280 60800 MT
+(agrees to use, the "long packet" protocol extension.)SH
+/Courier SF
+8280 62377 MT
+(-q)SH
+/Times-Roman SF
+12280 XM
+(Quiet -- Suppress screen update during file transfer, for instance to allow a file transfer to proceed in the)62 W
+12280 63482 MT
+(background.)SH
+/Courier SF
+8280 65059 MT
+(-d)SH
+/Times-Roman SF
+12280 XM
+(Debug --)
+40 W( Record debugging information in the file)41 W
+/Courier SF
+33104 XM
+(debug.log)SH
+/Times-Roman SF
+38795 XM
+(in the current directory.  Use this option)41 W
+12280 66164 MT
+(if you believe the program is misbehaving, and show the resulting log to your local Kermit maintainer.)SH
+/Courier SF
+8280 67741 MT
+(-h)SH
+/Times-Roman SF
+12280 XM
+(Help -- Display a brief synopsis of the command line options.)SH
+8280 69532 MT
+(The command line may contain no more than one protocol action option.)SH
+8280 71924 MT
+(Files are)
+100 W( sent with their own names, except that lowercase letters are raised to upper, pathnames are stripped off,)99 W
+ES
+%%Page: 6 7
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 6)SH
+12 /Times-Bold AF
+32187 XM
+(Kermit User Guide: UNIX KERMIT 1.3)SH
+46800 50 6120 5709 UL
+10 /Times-Roman AF
+6120 7886 MT
+(certain special characters like \050`)36 W
+/Courier SF
+(~)SH
+/Times-Roman SF
+('\051 and \050`)36 W
+/Courier SF
+(#)SH
+/Times-Roman SF
+('\051 are changed to `)36 W
+/Courier SF
+(X)SH
+/Times-Roman SF
+(', and)
+36 W( if the file name begins with a period, an `)37 W
+/Courier SF
+(X)SH
+/Times-Roman SF
+(' is)37 W
+6120 9082 MT
+(inserted before it.  Incoming files are stored)
+20 W( under their own names except that uppercase letters are lowered, and, if)19 W
+/Courier SF
+6120 10278 MT
+(-w)SH
+/Times-Roman SF
+7620 XM
+(was specified, a "generation number" is appended to the name if it has the same name as an existing file which)51 W
+6120 11474 MT
+(would otherwise be overwritten.  If the)74 W
+/Courier SF
+22468 XM
+(-a)SH
+/Times-Roman SF
+23992 XM
+(option is included, then the same rules apply to its)
+74 W( argument.  The file)73 W
+6120 12670 MT
+(transfer display shows any transformations performed upon filenames.)SH
+6120 15062 MT
+(During transmission, files are encoded as follows:)SH
+/Symbol SF
+7910 16967 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Control characters are converted to prefixed printables.)SH
+/Symbol SF
+7910 18956 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Sequences of repeated characters are collapsed via repeat counts, if the other Kermit is also capable of)56 W
+8620 20061 MT
+(repeated-character compression.)SH
+/Symbol SF
+7910 22050 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(If parity is being used on the communication line, data characters with the 8th)
+198 W( \050parity\051 bit on are)197 W
+8620 23155 MT
+(specially prefixed, provided the other Kermit is capable)
+118 W( of 8th-bit prefixing; if not, 8-bit binary files)119 W
+8620 24260 MT
+(cannot be successfully transferred.)SH
+/Symbol SF
+7910 26249 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Conversion is done between Unix)
+19 W( newlines and carriage-return-linefeed sequences unless the)18 W
+/Courier SF
+46396 XM
+(-i)SH
+/Times-Roman SF
+47864 XM
+(option)SH
+8620 27354 MT
+(was specified.)SH
+12 /Times-Bold AF
+6120 29942 MT
+(Command Line Examples:)SH
+10 /Courier AF
+8520 32428 MT
+(kermit -l /dev/ttyi5 -b 1200 -cn -r)SH
+/Times-Roman SF
+6120 34145 MT
+(This command connects you to the system on the other end of)58 W
+/Courier SF
+31869 XM
+(ttyi5)SH
+/Times-Roman SF
+35177 XM
+(at 1200)
+58 W( baud, where you presumably log in)59 W
+6120 35341 MT
+(and run Kermit with a 'send' command.  After you escape back, C-Kermit waits for a file \050or files\051 to arrive.  When)23 W
+6120 36537 MT
+(the file transfer is completed, you are reconnected to the remote system so that you can logout.)SH
+/Courier SF
+8520 39023 MT
+(kermit -l /dev/ttyi4 -b 1800 -cntp m -r -a foo)SH
+/Times-Roman SF
+6120 40740 MT
+(This command is like the preceding one, except the remote system in this)
+12 W( case uses half duplex communication with)13 W
+6120 41936 MT
+(mark parity.  The first file that arrives is stored under the name)SH
+/Courier SF
+31504 XM
+(foo)SH
+/Times-Roman SF
+(.)SH
+/Courier SF
+8520 44422 MT
+(kermit -l /dev/ttyi6 -b 9600 -c | tek)SH
+/Times-Roman SF
+6120 46139 MT
+(This example uses Kermit to connect your terminal to the system at the other end of)SH
+/Courier SF
+39949 XM
+(ttyi6)SH
+/Times-Roman SF
+(. The)
+250 W( C-Kermit terminal)SH
+6120 47335 MT
+(connection does not provide any particular terminal emulation, so C-Kermit's standard)
+220 W( i/o is piped through a)221 W
+6120 48531 MT
+(\050hypothetical\051 program called tek, which performs \050say\051 Tektronix emulation.)SH
+/Courier SF
+8520 51017 MT
+(kermit -l /dev/ttyi6 -b 9600 -nf)SH
+/Times-Roman SF
+6120 52734 MT
+(This command would be used to shut down a remote server and then connect to the remote system, in order)
+57 W( to log)56 W
+6120 53930 MT
+(out or to make further use of it.  The)SH
+/Courier SF
+20923 XM
+(-n)SH
+/Times-Roman SF
+22373 XM
+(option is invoked)SH
+/Times-Italic SF
+29568 XM
+(after)SH
+/Courier SF
+31707 XM
+(-f)SH
+/Times-Roman SF
+33157 XM
+(\050)SH
+/Courier SF
+(-c)SH
+/Times-Roman SF
+34940 XM
+(would have been invoked before\051.)SH
+/Courier SF
+8520 56416 MT
+(kermit -l /dev/ttyi6 -b 9600 -qg foo.\134* &)SH
+/Times-Roman SF
+6120 58133 MT
+(This command causes C-Kermit to be invoked in the background, getting a group)
+10 W( of files from a remote server \050note)11 W
+6120 59329 MT
+(the quoting of the `)33 W
+/Courier SF
+(*)SH
+/Times-Roman SF
+(' character\051.  No display occurs on the screen, and the)
+33 W( keyboard is not sampled for interruption)32 W
+6120 60525 MT
+(commands. This)
+250 W( allows other work to be done while file transfers proceed in the background.)SH
+/Courier SF
+8520 63011 MT
+(kermit -l /dev/ttyi6 -b 9600 -g foo.\134* > foo.log < /dev/null &)SH
+/Times-Roman SF
+6120 64728 MT
+(This command is like)
+107 W( the previous one, except the file transfer display has been redirected to the file)108 W
+/Courier SF
+48470 XM
+(foo.log)SH
+/Times-Roman SF
+(.)SH
+6120 65924 MT
+(Standard input is also redirected, to prevent C-Kermit from sampling it for interruption commands.)SH
+/Courier SF
+8520 68410 MT
+(kermit -iwx)SH
+/Times-Roman SF
+6120 70127 MT
+(This command starts up C-Kermit as)
+235 W( a server.  Files are transmitted with no newline/carriage-return-linefeed)234 W
+6120 71323 MT
+(conversion; the)255 W
+/Courier SF
+13018 XM
+(-i)SH
+/Times-Roman SF
+14724 XM
+(option is necessary for binary file transfer and recommended for Unix-to-Unix transfers.)256 W
+ES
+%%Page: 7 8
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(1.3. Command Line Operation)SH
+10 /Times-Italic AF
+52275 XM
+(Page 7)SH
+46800 50 8280 5709 UL
+/Times-Roman SF
+8280 7886 MT
+(Incoming files that have the same names as existing files are given new, unique names.)SH
+/Courier SF
+10680 10372 MT
+(kermit -l /dev/ttyi6 -b 9600)SH
+/Times-Roman SF
+8280 12089 MT
+(This command sets the communication line and speed.  Since no action is specified, C-Kermit issues a prompt)
+54 W( and)53 W
+8280 13285 MT
+(enters an interactive dialog with)
+84 W( you.  Any settings given on the command line remain in force during the dialog,)85 W
+8280 14481 MT
+(unless explicitly changed.)SH
+/Courier SF
+10680 16967 MT
+(kermit)SH
+/Times-Roman SF
+8280 18684 MT
+(This command starts up Kermit interactively with all default settings.)SH
+8280 21076 MT
+(The next example shows how)
+55 W( Unix Kermit might be used to send an entire directory tree from one Unix system to)54 W
+8280 22272 MT
+(another, using the tar program as Kermit's standard input and)
+112 W( output.  On the orginating system, in this case the)113 W
+8280 23468 MT
+(remote, type \050for instance\051:)SH
+/Courier SF
+10680 25954 MT
+(tar cf - /usr/fdc | kermit -is -)SH
+/Times-Roman SF
+8280 27671 MT
+(This causes tar to send the directory)91 W
+/Courier SF
+23553 XM
+(/usr/fdc)SH
+/Times-Roman SF
+28694 XM
+(\050and all its files)
+91 W( and all its subdirectories and all their files...\051 to)90 W
+8280 28867 MT
+(standard output instead of to)
+128 W( a tape; kermit receives this as standard input and sends it as a binary file.  On the)129 W
+8280 30063 MT
+(receiving system, in this case the local one, type \050for instance\051:)SH
+/Courier SF
+10680 32549 MT
+(kermit -il /dev/ttyi5 -b 9600 -k | tar xf -)SH
+/Times-Roman SF
+8280 34266 MT
+(Kermit receives the tar archive, and sends it via standard output to its own copy of tar, which)
+122 W( extracts from it a)121 W
+8280 35462 MT
+(replica of the original directory tree.)SH
+8280 37854 MT
+(A final example shows how a Unix compression utility might be used to speed up Kermit file transfers:)SH
+/Courier SF
+10680 39509 MT
+(compress file | kermit -is -)
+SH( \050)2400 W
+/Courier-Oblique SF
+(sender)SH
+/Courier SF
+(\051)SH
+10680 40540 MT
+(kermit -ik | uncompress)
+SH( \050)5400 W
+/Courier-Oblique SF
+(receiver)SH
+/Courier SF
+(\051)SH
+12 /Times-Bold AF
+8280 43128 MT
+(Exit Status Codes:)SH
+10 /Times-Roman AF
+8280 44542 MT
+(Unix Kermit returns an exit status of zero, except when)
+79 W( a fatal error is encountered, where the exit status is set to)80 W
+8280 45738 MT
+(one. With)
+756 W( background operation \050e.g., `)253 W
+/Courier SF
+(&)SH
+/Times-Roman SF
+(' at end of)
+253 W( invoking command line\051 driven by scripted interactive)252 W
+8280 46934 MT
+(commands \050redirected standard input and/or take files\051, any failed interactive command \050such as failed dial or)
+28 W( script)29 W
+8280 48130 MT
+(attempt\051 causes the fatal error exit.)SH
+14 /Times-Bold AF
+8280 51732 MT
+(1.4. Interactive Operation)SH
+10 /Times-Roman AF
+8280 53850 MT
+(C-Kermit's interactive command prompt is ")124 W
+/Courier SF
+(C-Kermit>)SH
+/Times-Roman SF
+(". In)
+498 W( response)
+124 W( to this prompt, you may type any valid)123 W
+8280 55046 MT
+(interactive C-Kermit command.  C-Kermit)
+15 W( executes the command and then prompts you for another command.  The)16 W
+8280 56242 MT
+(process continues until you instruct the program to terminate.)SH
+8280 58634 MT
+(Commands begin with a keyword,)
+11 W( normally an English verb, such as "send".  You may omit trailing characters from)10 W
+8280 59830 MT
+(any keyword, so)
+5 W( long as you specify sufficient characters to distinguish it from any other keyword valid in that field.)6 W
+8280 61026 MT
+(Certain commonly-used keywords \050such)
+17 W( as "send", "receive", "connect"\051 also have special non-unique abbreviations)16 W
+8280 62222 MT
+(\050"s" for "send", "r" for "receive", "c" for "connect"\051.)SH
+8280 64614 MT
+(Certain characters have special functions during typein of interactive commands:)SH
+/Courier SF
+10280 66405 MT
+(?)SH
+/Times-Roman SF
+12280 XM
+(Question mark, typed at)
+71 W( any point in a command, will produce a message explaining what is possible or)72 W
+12280 67510 MT
+(expected at that)
+4 W( point.  Depending on the context, the message may be a brief phrase, a menu of keywords,)3 W
+12280 68615 MT
+(or a list of files.)SH
+/Courier SF
+10280 70192 MT
+(ESC)SH
+/Times-Roman SF
+12280 XM
+(\050The Escape or Altmode key\051 -- Request completion of the current keyword)
+44 W( or filename, or insertion of a)45 W
+12280 71297 MT
+(default value.  The result will be a beep if the requested operation fails.)SH
+ES
+%%Page: 8 9
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 8)SH
+12 /Times-Bold AF
+32187 XM
+(Kermit User Guide: UNIX KERMIT 1.4)SH
+46800 50 6120 5709 UL
+10 /Courier AF
+8120 7886 MT
+(TAB)SH
+/Times-Roman SF
+10120 XM
+(\050The horizontal Tab key\051 -- Same as ESC.)SH
+/Courier SF
+8120 9463 MT
+(DEL)SH
+/Times-Roman SF
+10120 XM
+(\050The Delete or Rubout key\051 -- Delete the previous character from the command.  You)
+93 W( may also use BS)92 W
+10120 10568 MT
+(\050Backspace, Control-H\051 for this function.)SH
+/Courier SF
+8120 12145 MT
+(^W)SH
+/Times-Roman SF
+10120 XM
+(\050Control-W\051 -- Erase the rightmost word from the command line.)SH
+/Courier SF
+8120 13722 MT
+(^U)SH
+/Times-Roman SF
+10120 XM
+(\050Control-U\051 -- Erase the entire command.)SH
+/Courier SF
+8120 15299 MT
+(^R)SH
+/Times-Roman SF
+10120 XM
+(\050Control-R\051 -- Redisplay the current command.)SH
+/Courier SF
+8120 16876 MT
+(SP)SH
+/Times-Roman SF
+10120 XM
+(\050Space\051 -- Delimits fields \050keywords, filenames, numbers\051 within a command.)SH
+/Courier SF
+8120 18453 MT
+(CR)SH
+/Times-Roman SF
+10120 XM
+(\050Carriage Return\051 -- Enters the command for execution.  LF \050Linefeed\051 or FF \050formfeed\051 may also be used)15 W
+10120 19558 MT
+(for this purpose.)SH
+/Courier SF
+8120 21135 MT
+(\134)SH
+/Times-Roman SF
+10120 XM
+(\050Backslash\051 --)
+78 W( Enter any of the above characters into the command, literally.  To enter a backslash, type)77 W
+10120 22240 MT
+(two backslashes in a row \050)140 W
+/Courier SF
+(\134\134)SH
+/Times-Roman SF
+(\051. A)
+530 W( backslash at the end of a command line causes the next line to)
+140 W( be)141 W
+10120 23345 MT
+(treated as a continuation line; this is useful for readability in command files,)
+153 W( especially in the 'script')152 W
+10120 24450 MT
+(command.)SH
+/Courier SF
+8120 26027 MT
+(^Z)SH
+/Times-Roman SF
+10120 XM
+(\050Control-Z\051 -- On systems \050like Berkeley Unix, Ultrix\051 with job control, suspend Kermit, i.e. put it into the)8 W
+10120 27132 MT
+(background in such a way that it can be brought back into the foreground \050e.g. with an ')222 W
+/Courier SF
+(fg)SH
+/Times-Roman SF
+(' shell)222 W
+10120 28237 MT
+(command\051 with all its settings intact.)SH
+6120 30028 MT
+(You may type the)
+39 W( editing characters \050)40 W
+/Courier SF
+(DEL)SH
+/Times-Roman SF
+(,)SH
+/Courier SF
+23749 XM
+(^W)SH
+/Times-Roman SF
+(, etc\051 repeatedly, to delete all the way back to the prompt.  No action)40 W
+6120 31224 MT
+(will be performed until the command is entered by typing carriage return, linefeed, or formfeed.  If you)
+72 W( make any)71 W
+6120 32420 MT
+(mistakes, you will receive an informative error)
+4 W( message and a new prompt -- make liberal use of `)5 W
+/Courier SF
+(?)SH
+/Times-Roman SF
+(' and ESC to feel)5 W
+6120 33616 MT
+(your way through the commands.  One important command is "help" -- you should use it)
+126 W( the first time you run)125 W
+6120 34812 MT
+(C-Kermit.)SH
+6120 37204 MT
+(A command line beginning with a percent sign ``)145 W
+/Courier SF
+(%)SH
+/Times-Roman SF
+('' is ignored.  Such lines may)
+145 W( be used to include illustrative)146 W
+6120 38400 MT
+(commentary in Kermit command dialogs.)SH
+6120 40792 MT
+(Interactive C-Kermit accepts)
+122 W( commands from files as well as from the keyboard.  When you start C-Kermit, the)121 W
+6120 41988 MT
+(program looks for the file)48 W
+/Courier SF
+16886 XM
+(.kermrc)SH
+/Times-Roman SF
+21384 XM
+(in your home or current directory \050first it)
+48 W( looks in the home directory, then in)49 W
+6120 43184 MT
+(the current)
+123 W( one\051 and executes any commands it finds there.  These commands must be in interactive format, not)122 W
+6120 44380 MT
+(Unix command-line format.  A "take" command is)
+12 W( also provided for use at any time during an interactive session, to)13 W
+6120 45576 MT
+(allow interactive-format commands to be executed from a file; command files may be nested)
+148 W( to any reasonable)147 W
+6120 46772 MT
+(depth.)SH
+6120 49164 MT
+(Here is a brief list of C-Kermit interactive commands:)SH
+16087 50774 MT
+(%)SH
+17420 XM
+(Comment)SH
+16587 51879 MT
+(!)SH
+17420 XM
+(Execute a Unix shell command, or start a shell.)SH
+15476 52984 MT
+(bye)SH
+17420 XM
+(Terminate and log out a remote Kermit server.)SH
+14865 54089 MT
+(close)SH
+17420 XM
+(Close a log file.)SH
+13810 55194 MT
+(connect)SH
+17420 XM
+(Establish a terminal connection to a remote system.)SH
+15254 56299 MT
+(cwd)SH
+17420 XM
+(Change Working Directory \050also, cd\051.)SH
+15420 57404 MT
+(dial)SH
+17420 XM
+(Dial a telephone number.)SH
+13310 58509 MT
+(directory)SH
+17420 XM
+(Display a directory listing.)SH
+15032 59614 MT
+(echo)SH
+17420 XM
+(Display arguments literally.)SH
+15420 60719 MT
+(exit)SH
+17420 XM
+(Exit from the program, closing any open files.)SH
+14642 61824 MT
+(finish)SH
+17420 XM
+(Instruct a remote Kermit server to exit, but not log out.)SH
+15698 62929 MT
+(get)SH
+17420 XM
+(Get files from a remote Kermit server.)SH
+13976 64034 MT
+(hangup)SH
+17420 XM
+(Hang up the phone \050for use in local mode\051.)SH
+15198 65139 MT
+(help)SH
+17420 XM
+(Display a help message for a given command.)SH
+15642 66244 MT
+(log)SH
+17420 XM
+(Open a log file -- debugging, packet, session, transaction.)SH
+15364 67349 MT
+(quit)SH
+17420 XM
+(Same as 'exit'.)SH
+14033 68454 MT
+(receive)SH
+17420 XM
+(Passively wait for files to arrive.)SH
+14143 69559 MT
+(remote)SH
+17420 XM
+(Issue file management commands to a remote Kermit server.)SH
+14698 70664 MT
+(script)SH
+17420 XM
+(Execute a login script with a remote system.)SH
+15087 71769 MT
+(send)SH
+17420 XM
+(Send files.)SH
+ES
+%%Page: 9 10
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(1.4. Interactive Operation)SH
+10 /Times-Italic AF
+52275 XM
+(Page 9)SH
+46800 50 8280 5709 UL
+/Times-Roman SF
+16637 7886 MT
+(server)SH
+19580 XM
+(Begin server operation.)SH
+17969 8991 MT
+(set)SH
+19580 XM
+(Set various parameters.)SH
+16969 10096 MT
+(show)SH
+19580 XM
+(Display values of 'set' parameters.)SH
+16859 11201 MT
+(space)SH
+19580 XM
+(Display current disk space usage.)SH
+15635 12306 MT
+(statistics)SH
+19580 XM
+(Display statistics about most recent transaction.)SH
+17414 13411 MT
+(take)SH
+19580 XM
+(Execute commands from a file.)SH
+8280 15803 MT
+(The 'set' parameters are:)SH
+14193 17413 MT
+(block-check)SH
+19580 XM
+(Level of packet error detection.)SH
+16914 18518 MT
+(delay)SH
+19580 XM
+(How long to wait before sending first packet.)SH
+16358 19623 MT
+(duplex)SH
+19580 XM
+(Specify which side echoes during 'connect'.)SH
+12418 20728 MT
+(escape-character)SH
+19580 XM
+(Prefix for "escape commands" during 'connect'.)SH
+17747 21833 MT
+(file)SH
+19580 XM
+(Set various file parameters.)SH
+14081 22938 MT
+(flow-control)SH
+19580 XM
+(Communication line full-duplex flow control.)SH
+14859 24043 MT
+(handshake)SH
+19580 XM
+(Communication line half-duplex turnaround character.)SH
+14636 25148 MT
+(incomplete)SH
+19580 XM
+(Disposition for incompletely received files.)SH
+17580 26253 MT
+(line)SH
+19580 XM
+(Communication line device name.)SH
+13470 27358 MT
+(modem-dialer)SH
+19580 XM
+(Type of modem-dialer on communication line.)SH
+16747 28463 MT
+(parity)SH
+19580 XM
+(Communication line character parity.)SH
+16191 29568 MT
+(prompt)SH
+19580 XM
+(The C-Kermit program's interactive command prompt.)SH
+16193 30673 MT
+(receive)SH
+19580 XM
+(Parameters for inbound packets.)SH
+17192 31778 MT
+(retry)SH
+19580 XM
+(Packet retransmission limit.)SH
+17247 32883 MT
+(send)SH
+19580 XM
+(Parameters for outbound packets.)SH
+16803 33988 MT
+(speed)SH
+19580 XM
+(Communication line speed.)SH
+15747 35093 MT
+(terminal)SH
+19580 XM
+(Terminal parameters.)SH
+8280 37485 MT
+(The 'remote' commands are:)SH
+17414 39095 MT
+(cwd)SH
+19580 XM
+(Change remote working directory.)SH
+16692 40200 MT
+(delete)SH
+19580 XM
+(Delete remote files.)SH
+15470 41305 MT
+(directory)SH
+19580 XM
+(Display a listing of remote file names.)SH
+17358 42410 MT
+(help)SH
+19580 XM
+(Request help from a remote server.)SH
+17413 43515 MT
+(host)SH
+19580 XM
+(A command to the remote host in its own command language.)SH
+16859 44620 MT
+(space)SH
+19580 XM
+(Display current disk space usage on remote system.)SH
+17358 45725 MT
+(type)SH
+19580 XM
+(Display a remote file on your screen.)SH
+17358 46830 MT
+(who)SH
+19580 XM
+(Display who's logged in, or get information about a user.)SH
+8280 49222 MT
+(Most of these commands are described adequately in the Kermit User Guide or the Kermit book.  Special)
+22 W( aspects of)23 W
+8280 50418 MT
+(certain Unix Kermit commands are described below.)SH
+13 /Times-Bold AF
+25829 53777 MT
+(The 'send' command)SH
+10 /Times-Roman AF
+8280 56150 MT
+(Syntax:)SH
+/Courier SF
+11836 XM
+(send)SH
+/Times-Italic SF
+14836 XM
+(fn)SH
+/Courier SF
+16814 XM
+(-)SH
+/Times-Italic SF
+18014 XM
+(or)SH
+/Courier SF
+19503 XM
+(- send)600 W
+/Times-Italic SF
+24303 XM
+(fn1 rfn1)350 W
+/Times-Roman SF
+8280 58542 MT
+(Send the file or files denoted by)95 W
+/Times-Italic SF
+21971 XM
+(fn)SH
+/Times-Roman SF
+23094 XM
+(to the other Kermit, which should be running as)
+95 W( a server, or which should be)94 W
+8280 59738 MT
+(given the 'receive' command.  Each file is sent under its)
+50 W( own name \050as described above, or as specified by the 'set)51 W
+8280 60934 MT
+(file names' command\051.  If the second form of the 'send' command is used, i.e.  with)23 W
+/Times-Italic SF
+42526 XM
+(fn1)SH
+/Times-Roman SF
+44076 XM
+(denoting a single Unix file,)22 W
+/Times-Italic SF
+8280 62130 MT
+(rfn1)SH
+/Times-Roman SF
+10204 XM
+(may be specified as a name to send it under.  The 'send' command)
+7 W( may be abbreviated to 's', even though 's' is)8 W
+8280 63326 MT
+(not a unique abbreviation for a top-level C-Kermit command.)SH
+8280 65718 MT
+(The wildcard \050meta\051)
+32 W( characters `)31 W
+/Courier SF
+(*)SH
+/Times-Roman SF
+(' and `)31 W
+/Courier SF
+(?)SH
+/Times-Roman SF
+(' are accepted in)31 W
+/Times-Italic SF
+32282 XM
+(fn)SH
+/Times-Roman SF
+(. If)
+312 W( `)31 W
+/Courier SF
+(?)SH
+/Times-Roman SF
+(' is to be included, it must be prefixed by `)31 W
+/Courier SF
+(\134)SH
+/Times-Roman SF
+(' to)31 W
+8280 66914 MT
+(override its normal function of providing help.)
+115 W( `)481 W
+/Courier SF
+(*)SH
+/Times-Roman SF
+(' matches any string, `)116 W
+/Courier SF
+(?)SH
+/Times-Roman SF
+(' matches any single character.  Other)116 W
+8280 68110 MT
+(notations for file groups, like `)132 W
+/Courier SF
+([a-z]og)SH
+/Times-Roman SF
+(', are not available in interactive commands \050though)
+132 W( of course they are)131 W
+8280 69306 MT
+(available on the)
+52 W( command line\051.  When)53 W
+/Times-Italic SF
+24646 XM
+(fn)SH
+/Times-Roman SF
+25727 XM
+(contains `)53 W
+/Courier SF
+(*)SH
+/Times-Roman SF
+(' or `)53 W
+/Courier SF
+(?)SH
+/Times-Roman SF
+(' characters, there is a limit to the number of files that)53 W
+8280 70502 MT
+(can be matched, which varies from system)
+78 W( to system.  If you get the message "Too many files match" then you'll)77 W
+8280 71698 MT
+(have to make a more judicious selection.  If)SH
+/Times-Italic SF
+25999 XM
+(fn)SH
+/Times-Roman SF
+27027 XM
+(was of the form)SH
+ES
+%%Page: 10 11
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 10)SH
+12 /Times-Bold AF
+32187 XM
+(Kermit User Guide: UNIX KERMIT 1.4)SH
+46800 50 6120 5709 UL
+10 /Courier AF
+8520 7824 MT
+(usr/longname/anotherlongname/*)SH
+/Times-Roman SF
+6120 9541 MT
+(then C-Kermit's string space will fill up rapidly -- try doing a cwd \050see)
+34 W( below\051 to the path in question and reissuing)35 W
+6120 10737 MT
+(the command.)SH
+6120 13129 MT
+(In interactive mode, C-Kermit does)
+179 W( not presently understand ")178 W
+/Courier SF
+(~)SH
+/Times-Roman SF
+(" notation for "home directory", as used in the)178 W
+6120 14325 MT
+(C-Shell and K-Shell, nor does it understand ")SH
+/Courier SF
+([abc])SH
+/Times-Roman SF
+(" or ")SH
+/Courier SF
+({txt,doc})SH
+/Times-Roman SF
+(" filename metacharacter notation.)SH
+/Times-Italic SF
+6120 16717 MT
+(Note)SH
+/Times-Roman SF
+8388 XM
+(-- C-Kermit sends only from the current or specified directory.  It)
+129 W( does not traverse directory trees.  If the)130 W
+6120 17913 MT
+(source directory contains subdirectories, they will)
+223 W( be skipped.  By the same token, C-Kermit does not create)222 W
+6120 19109 MT
+(directories when receiving files.  If you have a need to do this, you can pipe tar through C-Kermit, as shown)
+48 W( in the)49 W
+6120 20305 MT
+(example on page 7, or under System III/V Unix you can use cpio.)SH
+/Times-Italic SF
+6120 22697 MT
+(Another Note)139 W
+/Times-Roman SF
+12009 XM
+(-- The 'send')
+139 W( command does not skip over "invisible" files that match the file specification; Unix)138 W
+6120 23893 MT
+(systems usually treat files whose names)
+179 W( start with a dot \050like)180 W
+/Courier SF
+32565 XM
+(.login)SH
+/Times-Roman SF
+(,)SH
+/Courier SF
+36845 XM
+(.cshrc)SH
+/Times-Roman SF
+(, and)180 W
+/Courier SF
+42999 XM
+(.kermrc)SH
+/Times-Roman SF
+(\051 as invisible.)180 W
+6120 25089 MT
+(Similarly for "temporary" files whose names start with ")SH
+/Courier SF
+(#)SH
+/Times-Roman SF
+(".)SH
+13 /Times-Bold AF
+22986 28448 MT
+(The 'receive' command)SH
+10 /Times-Roman AF
+6120 30821 MT
+(Syntax:)SH
+/Courier SF
+9676 XM
+(receive -)600 W
+/Times-Italic SF
+16276 XM
+(or)SH
+/Courier SF
+17765 XM
+(- receive)600 W
+/Times-Italic SF
+24365 XM
+(fn1)SH
+/Times-Roman SF
+6120 33213 MT
+(Passively wait for files to arrive from the other Kermit, which)
+84 W( must be given the 'send' command -- the 'receive')83 W
+6120 34409 MT
+(command does not work in conjunction with a server \050use 'get' for that\051.  If)21 W
+/Times-Italic SF
+36929 XM
+(fn1)SH
+/Times-Roman SF
+38478 XM
+(is specified, store the first incoming)22 W
+6120 35605 MT
+(file under that name.  The 'receive' command may be abbreviated to 'r'.)SH
+13 /Times-Bold AF
+23887 38964 MT
+(The 'get' command:)SH
+10 /Times-Roman AF
+6120 41337 MT
+(Syntax:)SH
+/Courier SF
+10376 XM
+(get)SH
+/Times-Italic SF
+12776 XM
+(rfn)SH
+/Courier-Oblique SF
+10920 42992 MT
+(or)SH
+/Courier SF
+(: get)SH
+/Courier-Oblique SF
+15720 44023 MT
+(rfn)SH
+15720 45054 MT
+(fn1)SH
+/Times-Roman SF
+6120 46771 MT
+(Request a remote)
+126 W( Kermit server to send the named file or files.  Since a remote file specification \050or list\051 might)125 W
+6120 47967 MT
+(contain spaces, which normally delimit fields of a C-Kermit command, an alternate form of the command is)224 W
+6120 49163 MT
+(provided to allow the inbound file to be given a new name:)
+99 W( type 'get' alone on a line, and you will be prompted)98 W
+6120 50359 MT
+(separately for the remote and local file specifications, for example)SH
+/Courier SF
+8520 52014 MT
+(C-Kermit>get)SH
+1800 50 13920 52214 UL
+9120 53045 MT
+(Remote file specification: profile exec)SH
+7200 50 25320 53245 UL
+9120 54076 MT
+(Local name to store it under: profile.exec)SH
+7200 50 27120 54276 UL
+/Times-Roman SF
+6120 55793 MT
+(As with 'receive', if more than one file arrives as a result of the 'get' command, only the first will be stored under)57 W
+6120 56989 MT
+(the alternate)
+51 W( name given by)50 W
+/Times-Italic SF
+17674 XM
+(fn1)SH
+/Times-Roman SF
+(; the remaining files will be stored under their own names if possible.  If a `)50 W
+/Courier SF
+(?)SH
+/Times-Roman SF
+(' is to)50 W
+6120 58185 MT
+(be included in the remote file specification, you must prefix it with `)37 W
+/Courier SF
+(\134)SH
+/Times-Roman SF
+(' to suppress its normal function of)
+37 W( providing)38 W
+6120 59381 MT
+(help.)SH
+6120 61773 MT
+(If you have started a multiline 'get' command, you may escape from its)
+90 W( lower-level prompts by typing a carriage)89 W
+6120 62969 MT
+(return in response to the prompt, e.g.)SH
+/Courier SF
+8520 64624 MT
+(C-Kermit>get)SH
+1800 50 13920 64824 UL
+9120 65655 MT
+(Remote file specification: foo)SH
+1800 50 25320 65855 UL
+9120 66686 MT
+(Local name to store it under:)SH
+/Courier-Oblique SF
+27120 XM
+(\050Type a carriage return here\051)SH
+/Courier SF
+8520 67717 MT
+(\050cancelled\051)SH
+8520 68748 MT
+(C-Kermit>)SH
+ES
+%%Page: 11 12
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(1.4. Interactive Operation)SH
+10 /Times-Italic AF
+51775 XM
+(Page 11)SH
+46800 50 8280 5709 UL
+13 /Times-Bold AF
+25145 8071 MT
+(The 'server' command:)SH
+10 /Times-Roman AF
+8280 10444 MT
+(The 'server' command places C-Kermit in "server mode" on the currently selected communication line.  All)
+36 W( further)37 W
+8280 11640 MT
+(commands must arrive as valid Kermit packets from the Kermit on the other)
+131 W( end of the line.  The Unix Kermit)130 W
+8280 12836 MT
+(server can respond to the following commands:)SH
+8280 14627 MT
+(Command)SH
+24480 XM
+(Server Response)SH
+4167 50 8280 14827 UL
+6693 50 24480 14827 UL
+8780 15732 MT
+(get)SH
+24980 XM
+(Sends files)SH
+8780 16837 MT
+(send)SH
+24980 XM
+(Receives files)SH
+8780 17942 MT
+(bye)SH
+24980 XM
+(Attempts to log itself out)SH
+8780 19047 MT
+(finish)SH
+24980 XM
+(Exits to level from which it was invoked)SH
+8780 20152 MT
+(remote directory)SH
+24980 XM
+(Sends directory lising)SH
+8780 21257 MT
+(remote delete)SH
+24980 XM
+(Removes files)SH
+8780 22362 MT
+(remote cwd)SH
+24980 XM
+(Changes working directory \050also, remote cd\051)SH
+8780 23467 MT
+(remote type)SH
+24980 XM
+(Sends files to your screen)SH
+8780 24572 MT
+(remote space)SH
+24980 XM
+(Reports about its disk usage)SH
+8780 25677 MT
+(remote who)SH
+24980 XM
+(Shows who's logged in)SH
+8780 26782 MT
+(remote host)SH
+24980 XM
+(Executes a Unix shell command)SH
+8780 27887 MT
+(remote help)SH
+24980 XM
+(Lists these capabilities)SH
+8280 29678 MT
+(The Unix Kermit server cannot always respond properly to a BYE command.  It will)
+200 W( attempt to do so using)201 W
+8280 30874 MT
+(")SH
+/Courier SF
+(kill\050\051)SH
+/Times-Roman SF
+(", but this will not work on all systems or under all conditions because of the)
+219 W( complicated process)218 W
+8280 32070 MT
+(structures that can be set up under Unix.)SH
+8280 34462 MT
+(If the Kermit server is directed at an external line \050i.e. it is in "local)
+44 W( mode"\051 then the console may be used for other)45 W
+8280 35658 MT
+(work if you have 'set file display off';)
+30 W( normally the program expects the console to be used to observe file transfers)29 W
+8280 36854 MT
+(and enter status queries or interruption commands.)
+187 W( The)
+625 W( way to get C-Kermit into background operation from)188 W
+8280 38050 MT
+(interactive command level varies from system to system \050e.g. on Berkeley Unix you would halt)
+3 W( the program with)2 W
+/Courier SF
+53880 XM
+(^Z)SH
+/Times-Roman SF
+8280 39246 MT
+(and then use the C-Shell 'bg' command)
+52 W( to continue it in the background\051.  The more common method is to invoke)53 W
+8280 40442 MT
+(the program with the desired command line arguments, including ")SH
+/Courier SF
+(-q)SH
+/Times-Roman SF
+(", and with a terminating ")SH
+/Courier SF
+(&)SH
+/Times-Roman SF
+(".)SH
+8280 42834 MT
+(When the Unix Kermit server is given a)
+62 W( 'remote host' command, it executes it using the shell invoked upon login,)61 W
+8280 44030 MT
+(e.g. the Bourne shell or the Berkeley C-Shell.)SH
+13 /Times-Bold AF
+19421 47389 MT
+(The 'remote', 'bye', and 'finish' commands:)SH
+10 /Times-Roman AF
+8280 49762 MT
+(C-Kermit may itself request services from a remote Kermit)
+103 W( server.  In addition to 'send' and 'get', the following)104 W
+8280 50958 MT
+(commands may also be sent from C-Kermit to a Kermit server:)SH
+10280 52749 MT
+(remote cwd [)SH
+/Times-Italic SF
+(directory)SH
+/Times-Roman SF
+(])SH
+12280 53854 MT
+(If the optional remote directory specification is included,)
+109 W( you will be prompted on a separate line for a)110 W
+12280 54959 MT
+(password, which will not echo as you type it.)
+77 W( If)
+402 W( the remote system does not require a password for this)76 W
+12280 56064 MT
+(operation, just type a carriage return.  'remote cd' is a synomym for this command.)SH
+10280 57855 MT
+(remote delete rfn)SH
+22280 XM
+(delete remote file or files.)SH
+10280 58960 MT
+(remote directory [)SH
+/Times-Italic SF
+(rfn)SH
+/Times-Roman SF
+(])SH
+22280 XM
+(directory listing of remote files.)SH
+10280 60065 MT
+(remote host)SH
+/Times-Italic SF
+15224 XM
+(command)SH
+/Times-Roman SF
+22280 XM
+(command in remote host's own command language.)SH
+10280 61170 MT
+(remote space)SH
+22280 XM
+(disk usage report from remote host.)SH
+10280 62275 MT
+(remote type [)SH
+/Times-Italic SF
+(rfn)SH
+/Times-Roman SF
+(])SH
+22280 XM
+(display remote file or files on the screen.)SH
+10280 63380 MT
+(remote who [)SH
+/Times-Italic SF
+(user)SH
+/Times-Roman SF
+(])SH
+22280 XM
+(display information about who's logged in.)SH
+10280 64485 MT
+(remote help)SH
+22280 XM
+(display remote server's capabilities.)SH
+10280 66276 MT
+(bye)SH
+/Times-Italic SF
+11974 XM
+(and)SH
+/Times-Roman SF
+13724 XM
+(finish:)SH
+12280 67381 MT
+(When connected to a remote Kermit server, these commands cause the remote server to terminate; 'finish')17 W
+12280 68486 MT
+(returns it to)
+39 W( Kermit or system command level \050depending on the implementation or how the program was)40 W
+12280 69591 MT
+(invoked\051; 'bye' also requests it to log itself out.)SH
+ES
+%%Page: 12 13
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 12)SH
+12 /Times-Bold AF
+32187 XM
+(Kermit User Guide: UNIX KERMIT 1.4)SH
+46800 50 6120 5709 UL
+13 SS 
+20492 8071 MT
+(The 'log' and 'close' commands:)SH
+10 /Times-Roman AF
+6120 10444 MT
+(Syntax:)SH
+/Courier SF
+9426 XM
+(log {debugging, packets, session, transactions})SH
+/Times-Roman SF
+38226 XM
+([)SH
+/Times-Italic SF
+38809 XM
+(fn1)SH
+/Times-Roman SF
+40337 XM
+(])SH
+6120 12836 MT
+(C-Kermit's progress may be logged in various ways.  The 'log' command opens a log, the 'close' command)
+48 W( closes)47 W
+6120 14032 MT
+(it. In)
+256 W( addition, all open logs are closed by the 'exit' and 'quit' commands.)
+3 W( A)
+257 W( name may be specified for a log file; if)4 W
+6120 15228 MT
+(the name is omitted, the file is created with a default name as shown below.)SH
+6120 17019 MT
+(log debugging)SH
+8120 18124 MT
+(This produces a voluminous log of the internal workings of C-Kermit, of)
+267 W( use to Kermit developers or)268 W
+8120 19229 MT
+(maintainers in tracking down)
+46 W( suspected bugs in the C-Kermit program.  Use of this feature dramatically slows)45 W
+8120 20334 MT
+(down the Kermit protocol.  Default name:)SH
+/Courier SF
+25173 XM
+(debug.log)SH
+/Times-Roman SF
+(.)SH
+6120 21911 MT
+(log packets)SH
+8120 23016 MT
+(This produces a record of all the packets that go in and)
+79 W( out of the communication port.  This log is of use to)78 W
+8120 24121 MT
+(Kermit maintainers who are tracking down protocol problems in either C-Kermit or any)
+48 W( Kermit that C-Kermit)49 W
+8120 25226 MT
+(is connected to.  Default name:)SH
+/Courier SF
+21062 XM
+(packet.log)SH
+/Times-Roman SF
+(.)SH
+6120 26803 MT
+(log session)SH
+8120 27908 MT
+(This log will contain a copy of everything you see)
+83 W( on your screen during the 'connect' command, except for)84 W
+8120 29013 MT
+(local messages or interaction with local escape commands.  Default name:)SH
+/Courier SF
+38364 XM
+(session.log)SH
+/Times-Roman SF
+(.)SH
+6120 30590 MT
+(log transactions)SH
+8120 31695 MT
+(The transaction log)
+16 W( is a record of all the files that were sent or received while transaction logging was in effect.)17 W
+8120 32800 MT
+(It includes time stamps and statistics, filename transformations, and records)
+219 W( of any errors that may have)218 W
+8120 33905 MT
+(occurred. The)
+298 W( transaction log allows you to)
+24 W( have long unattended file transfer sessions without fear of missing)25 W
+8120 35010 MT
+(some vital screen message.  Default name:)SH
+/Courier SF
+25644 XM
+(transact.log)SH
+/Times-Roman SF
+(.)SH
+6120 36801 MT
+(The 'close' command explicitly closes a log, e.g. 'close debug'.)SH
+/Times-Italic SF
+6120 39193 MT
+(Note:)SH
+/Times-Roman SF
+9074 XM
+(Debug and Transaction logs are a compile-time option; C-Kermit may be compiled without these logs,)
+116 W( in)115 W
+6120 40389 MT
+(which case it will run)
+74 W( faster, it will take up less space on the disk, and the commands relating to them will not be)75 W
+6120 41585 MT
+(present.)SH
+13 /Times-Bold AF
+19392 44944 MT
+(Local File Management Commands:)SH
+10 /Times-Roman AF
+6120 47317 MT
+(Unix Kermit allows some degree of local file management from interactive command level:)SH
+6120 49108 MT
+(directory [)SH
+/Times-Italic SF
+(fn)SH
+/Times-Roman SF
+(])SH
+8120 50213 MT
+(Displays a listing of the names, modes, sizes, and dates of files matching)12 W
+/Times-Italic SF
+37662 XM
+(fn)SH
+/Times-Roman SF
+38702 XM
+(\050which defaults to `)13 W
+/Courier SF
+(*)SH
+/Times-Roman SF
+('\051. Equivalent)276 W
+8120 51318 MT
+(to `)SH
+/Courier SF
+(ls -l)SH
+/Times-Roman SF
+('.)SH
+6120 52895 MT
+(cwd [directory-name])SH
+8120 54000 MT
+(Changes Kermit's working directory to the one given, or to the default directory if the directory name is)188 W
+8120 55105 MT
+(omitted. This)
+421 W( command affects only the Kermit process and any processes it may subsequently create.  You)85 W
+8120 56210 MT
+(may also type "cd" instead of "cwd".)SH
+6120 57787 MT
+(space)SH
+8120 58892 MT
+(Display information about disk space and/or quota in the current directory and device.)SH
+/Courier SF
+6120 60469 MT
+(!)SH
+/Times-Roman SF
+7320 XM
+([)SH
+/Times-Italic SF
+(command)SH
+/Times-Roman SF
+(])SH
+8120 61574 MT
+(The command is executed by the Unix shell.  If no command is specified, then an interactive shell is)
+76 W( started;)77 W
+8120 62679 MT
+(exiting from the shell, e.g. by typing Control-D or 'exit', will)
+34 W( return you to C-Kermit command level.  Use the)33 W
+8120 63784 MT
+(`)SH
+/Courier SF
+(!)SH
+/Times-Roman SF
+(' command to provide file management or other functions not explicitly provided by C-Kermit)
+84 W( commands.)85 W
+8120 64889 MT
+(The `)SH
+/Courier SF
+(!)SH
+/Times-Roman SF
+(' command has certain peculiarities:)SH
+/Symbol SF
+9910 66794 MT
+(\267)SH
+/Times-Roman SF
+10620 XM
+(C-Kermit attempts to use your preferred, customary \050login\051 shell.)SH
+/Symbol SF
+9910 67899 MT
+(\267)SH
+/Times-Roman SF
+10620 XM
+(At least one space must separate the '!' from the shell command.)SH
+/Symbol SF
+9910 69004 MT
+(\267)SH
+/Times-Roman SF
+10620 XM
+(A 'cd' \050change directory\051 command)
+264 W( executed in this manner will have no effect -- use the)263 W
+10620 70109 MT
+(C-Kermit 'cwd' command instead.)SH
+ES
+%%Page: 13 14
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(1.4. Interactive Operation)SH
+10 /Times-Italic AF
+51775 XM
+(Page 13)SH
+46800 50 8280 5709 UL
+13 /Times-Bold AF
+22470 8071 MT
+(The 'set' and 'show' Commands:)SH
+10 /Times-Roman AF
+8280 10444 MT
+(Since Kermit is designed to allow diverse systems to communicate, it)
+24 W( is often necessary to issue special instructions)25 W
+8280 11640 MT
+(to allow the program to adapt to peculiarities of)
+53 W( the another system or the communication path.  These instructions)52 W
+8280 12836 MT
+(are accomplished by the 'set' command.  The)
+62 W( 'show' command may be used to display current settings.  Here is a)63 W
+8280 14032 MT
+(brief synopsis of settings available in the current release of C-Kermit:)SH
+8280 15823 MT
+(block-check {1, 2, 3})SH
+10280 16928 MT
+(Determines the level of per-packet error detection.  "1" is a single-character 6-bit)
+55 W( checksum, folded to include)56 W
+10280 18033 MT
+(the values of all bits from each character.  "2" is a 2-character, 12-bit checksum.  "3" is a 3-character, 16-bit)84 W
+10280 19138 MT
+(cyclic redundancy check \050CRC\051.  The higher the block check, the)
+49 W( better the error detection and correction and)50 W
+10280 20243 MT
+(the higher)
+388 W( the resulting overhead.  Type 1 is most commonly used; it is supported by all Kermit)387 W
+10280 21348 MT
+(implementations, and it has proven adequate in most)
+38 W( circumstances.  Types 2 or 3 would be used to advantage)39 W
+10280 22453 MT
+(when transferring 8-bit binary files over noisy lines.)SH
+8280 24030 MT
+(delay)SH
+/Times-Italic SF
+10696 XM
+(n)SH
+/Times-Roman SF
+10280 25135 MT
+(How many seconds to wait before sending the first)
+80 W( packet after a 'send' command.  Used in remote mode to)81 W
+10280 26240 MT
+(give you time to escape back to your local Kermit and issue a 'receive' command.  Normally 5 seconds.)SH
+8280 27817 MT
+(duplex {full, half})SH
+10280 28922 MT
+(For use during 'connect'.  Specifies which side is doing the echoing; 'full' means)
+60 W( the other side, 'half' means)61 W
+10280 30027 MT
+(C-Kermit must echo typein itself.)SH
+8280 31604 MT
+(escape-character)SH
+/Times-Italic SF
+15192 XM
+(cc)SH
+/Times-Roman SF
+10280 32709 MT
+(For use during 'connect' to get C-Kermit's attention.  The escape character acts as a prefix to)
+170 W( an 'escape)171 W
+10280 33814 MT
+(command', for instance to close the connection and return to)
+79 W( C-Kermit or Unix command level.  The normal)78 W
+10280 34919 MT
+(escape character is Control-Backslash \05028\051.)
+20 W( The)
+291 W( escape character is also used in System III/V implementations)21 W
+10280 36024 MT
+(to prefix interrupt commands during file transfers.)SH
+8280 37601 MT
+(file {display, names, type, warning})SH
+10280 38706 MT
+(Establish various file-related parameters:)SH
+10280 40497 MT
+(display {on, off})SH
+12280 41602 MT
+(Normally 'on'; when in local mode, display progress of file transfers on the screen \050stdout\051, and)
+59 W( listen to)58 W
+12280 42707 MT
+(the keyboard \050stdin\051 for interruptions.)
+163 W( If)
+578 W( off \050-q on command line\051 none of this is done, and the file)164 W
+12280 43812 MT
+(transfer may proceed in the background oblivious to any other work concurrently)
+156 W( done at the console)155 W
+12280 44917 MT
+(terminal.)SH
+10280 46494 MT
+(names {converted, literal})SH
+12280 47599 MT
+(Normally converted, which means that)
+117 W( outbound filenames have path specifications stripped, lowercase)116 W
+12280 48704 MT
+(letters raised to upper, tildes and extra periods changed to X's, and an X inserted in front)
+18 W( of any name that)19 W
+12280 49809 MT
+(starts with period.  Incoming files have uppercase letters lowered.  Literal means that)
+200 W( none of these)199 W
+12280 50914 MT
+(conversions are done; therefore, any directory path appearing in)
+115 W( a received file specification must exist)116 W
+12280 52019 MT
+(and be write-accessible.  When literal naming)
+64 W( is being used, the sender should not use path names in the)63 W
+12280 53124 MT
+(file specification unless the same path exists on the target system and is writable.)SH
+10280 54701 MT
+(type {binary, text} [{7, 8}])SH
+12280 55806 MT
+(The file type is normally text, which means that conversion is done between Unix)
+42 W( newline characters and)41 W
+12280 56911 MT
+(the carriage-return/linefeed sequences required by the canonical)
+111 W( Kermit file transmission format, and in)112 W
+12280 58016 MT
+(common use on non-Unix systems.  Binary means)
+104 W( to transmit file contents without conversion.  Binary)103 W
+12280 59121 MT
+(\050`)SH
+/Courier SF
+(-i)SH
+/Times-Roman SF
+(' in)
+338 W( command line notation\051 is necessary for binary files, and desirable in all Unix-to-Unix)339 W
+12280 60226 MT
+(transactions to cut down on overhead.)SH
+12280 61803 MT
+(The optional)
+50 W( trailing parameter tells the bytesize for file transfer.  It is 8 by default.  If you specify 7, the)49 W
+12280 62908 MT
+(high order bit will be stripped from each byte of sent and)
+8 W( received files.  This is useful for transferring text)9 W
+12280 64013 MT
+(files that may have)
+112 W( extraneous high order bits set in their disk representation \050e.g.  Wordstar or similar)111 W
+12280 65118 MT
+(word processor files\051.)SH
+10280 66695 MT
+(warning {on, off})SH
+12280 67800 MT
+(Normally off, which means that incoming files will silently overwrite existing files of the same)
+137 W( name.)136 W
+12280 68905 MT
+(When on \050`)27 W
+/Courier SF
+(-w)SH
+/Times-Roman SF
+(' on command line\051 Kermit will check)
+27 W( if an arriving file would overwrite an existing file; if)28 W
+12280 70010 MT
+(so, it will construct a new name for the arriving)
+20 W( file, of the form)19 W
+/Courier SF
+38384 XM
+(foo~)SH
+/Times-Italic SF
+(n)SH
+/Times-Roman SF
+(, where foo is the name they share)19 W
+12280 71115 MT
+(and)SH
+/Times-Italic SF
+14008 XM
+(n)SH
+/Times-Roman SF
+14792 XM
+(is a "generation number"; if)34 W
+/Times-Italic SF
+26304 XM
+(foo)SH
+/Times-Roman SF
+27866 XM
+(exists, then the new file will be called)34 W
+/Courier SF
+43497 XM
+(foo~1)SH
+/Times-Roman SF
+(. If)318 W
+/Courier SF
+48266 XM
+(foo)SH
+/Times-Roman SF
+50351 XM
+(and)SH
+/Courier SF
+52080 XM
+(foo~1)SH
+ES
+%%Page: 14 15
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 14)SH
+12 /Times-Bold AF
+32187 XM
+(Kermit User Guide: UNIX KERMIT 1.4)SH
+46800 50 6120 5709 UL
+10 /Times-Roman AF
+10120 7886 MT
+(exist, the new file will be)31 W
+/Courier SF
+20666 XM
+(foo~2)SH
+/Times-Roman SF
+(, and so)
+31 W( on.  If the new name would be longer than the maximum length)30 W
+10120 8991 MT
+(for a filename, then characters would be deleted from the end)
+20 W( first, for instance,)21 W
+/Courier SF
+42534 XM
+(thelongestname)SH
+/Times-Roman SF
+51205 XM
+(on a)21 W
+10120 10096 MT
+(system with a limit of 14 characters would become)SH
+/Courier SF
+30756 XM
+(thelongestn~1)SH
+/Times-Roman SF
+(.)SH
+/Times-Italic SF
+12120 11887 MT
+(CAUTION:)SH
+/Times-Roman SF
+17312 XM
+(If Control-F or Control-B is used to cancel an incoming file, and a file of the same)40 W
+12120 12992 MT
+(name previously existed,)12 W
+/Times-Italic SF
+22377 XM
+(and)SH
+/Times-Roman SF
+24139 XM
+(the "file warning" feature is not enabled,)
+12 W( then the previous copy of)13 W
+12120 14097 MT
+(the file will disappear.)SH
+6120 15888 MT
+(flow-control {none, xon/xoff})SH
+8120 16993 MT
+(Normally xon/xoff for full duplex flow)
+27 W( control.  Should be set to 'none' if the other system cannot do xon/xoff)28 W
+8120 18098 MT
+(flow control, or)
+1 W( if you have issued a 'set handshake' command.  If set to xon/xoff, then handshake should be set)SH
+8120 19203 MT
+(to none.)
+48 W( This)
+348 W( setting applies during both terminal connection and file transfer.)49 W
+/Times-Italic SF
+40746 XM
+(Warning:)SH
+/Times-Roman SF
+44878 XM
+(This command may)49 W
+8120 20308 MT
+(have no effect on certain Unix systems, where Kermit puts the communication line into 'rawmode',)
+215 W( and)214 W
+8120 21413 MT
+(rawmode precludes flow control.)SH
+6120 22990 MT
+(incomplete {discard, keep})SH
+8120 24095 MT
+(Disposition for incompletely received files.  If an incoming file is interrupted or an error occurs during transfer,)10 W
+8120 25200 MT
+(the part that was received so far is normally discarded.  If you "set incomplete keep" then such file)
+61 W( fragments)62 W
+8120 26305 MT
+(will be kept.)SH
+6120 27882 MT
+(handshake {xon, xoff, cr, lf, bell, esc, none})SH
+8120 28987 MT
+(Normally none.  Otherwise, half-duplex communication line turnaround handshaking is done,)
+148 W( which means)149 W
+8120 30092 MT
+(Unix Kermit will not reply to a packet until it has received the indicated handshake character or has)
+47 W( timed out)46 W
+8120 31197 MT
+(waiting for it;)
+43 W( the handshake setting applies only during file transfer.  If you set handshake to other than none,)44 W
+8120 32302 MT
+(then flow should be set to none.)SH
+6120 33879 MT
+(line [device-name])SH
+8120 34984 MT
+(The device name for the communication line to be)
+274 W( used for file transfer and terminal connection, e.g.)275 W
+/Courier SF
+8120 36089 MT
+(/dev/ttyi3)SH
+/Times-Roman SF
+(. If)
+284 W( you specify a device name, Kermit will be in local mode, and you should remember to issue)16 W
+8120 37194 MT
+(any other necessary 'set' commands, such as 'set speed'.)
+19 W( If)
+290 W( you omit the device name, Kermit will revert to its)20 W
+8120 38299 MT
+(default mode of operation.  If you specify)45 W
+/Courier SF
+25393 XM
+(/dev/tty)SH
+/Times-Roman SF
+(, Kermit)
+45 W( will enter remote mode \050useful when logged in)44 W
+8120 39404 MT
+(through the "back port" of)
+100 W( a system normally used as a local-mode workstation\051.  When Unix Kermit enters)101 W
+8120 40509 MT
+(local mode, it attempts to synchronize with other)
+4 W( programs \050like uucp\051 that use external communication lines so)3 W
+8120 41614 MT
+(as to prevent two programs using the same line at once; before attempting to lock the specified line, it will close)SH
+8120 42719 MT
+(and unlock any external)
+67 W( line that was previously in use.  The method used for locking is the "uucp lock file",)66 W
+8120 43824 MT
+(explained in more detail later.)SH
+6120 45401 MT
+(modem-dialer {direct, hayes, racalvadic, ventel, ...})SH
+8120 46506 MT
+(The type)
+59 W( of modem dialer on the communication line.  "Direct" indicates either there is no dialout modem, or)58 W
+8120 47611 MT
+(that if the line requires carrier detection)
+217 W( to open, then 'set line' will hang waiting for an incoming call.)218 W
+8120 48716 MT
+("Hayes", "Ventel", and the others indicate that 'set line' \050or the -l argument\051 will)
+4 W( prepare for a subsequent 'dial')3 W
+8120 49821 MT
+(command for the given dialer.  Support for new dialers is added from time to time, so type 'set modem ?' for)
+24 W( a)25 W
+8120 50926 MT
+(list of those supported in your copy of)
+87 W( Kermit.  See the description of the 'dial' command.)86 W
+/Times-Italic SF
+46282 XM
+(NOTE:)SH
+/Times-Roman SF
+49843 XM
+(the "set)86 W
+8120 52031 MT
+(modem" command must be given)SH
+/Times-Italic SF
+21833 XM
+(before)SH
+/Times-Roman SF
+24638 XM
+(the "set line" command.)SH
+6120 53608 MT
+(parity {even, odd, mark, space, none})SH
+8120 54713 MT
+(Specify character parity for use in packets and terminal connection, normally none.  If other than)
+226 W( none,)225 W
+8120 55818 MT
+(C-Kermit will seek to use the 8th-bit prefixing mechanism for transferring 8-bit)
+21 W( binary data, which can be used)22 W
+8120 56923 MT
+(successfully only if the other Kermit agrees; if not, 8-bit binary data cannot be successfully transferred.)SH
+6120 58500 MT
+(prompt [string])SH
+8120 59605 MT
+(The given string will be substituted for ")65 W
+/Courier SF
+(C-Kermit)SH
+/Times-Roman SF
+(>" as this program's prompt.)
+65 W( If)
+382 W( the string is omitted, the)66 W
+8120 60710 MT
+(prompt will revert to ")33 W
+/Courier SF
+(C-Kermit>)SH
+/Times-Roman SF
+(". If)
+316 W( the string is enclosed in)
+33 W( doublequotes, the quotes will be stripped and)32 W
+8120 61815 MT
+(any leading and trailing blanks will be retained.)SH
+6120 63392 MT
+(send)SH
+/Times-Italic SF
+8203 XM
+(parameter)SH
+/Times-Roman SF
+8120 64497 MT
+(Establish parameters to use when sending packets.  These will be in)
+21 W( effect only for the initial packet sent, since)20 W
+8120 65602 MT
+(the other Kermit may override these parameters during the protocol parameter exchange \050unless noted below\051.)SH
+8120 67393 MT
+(end-of-packet)SH
+/Times-Italic SF
+13923 XM
+(cc)SH
+/Times-Roman SF
+10120 68498 MT
+(Specifies the)
+114 W( control character needed by the other Kermit to recognize the end of a packet.  C-Kermit)113 W
+10120 69603 MT
+(sends this character at the end of each)
+248 W( packet.  Normally 13 \050carriage return\051, which most Kermit)249 W
+10120 70708 MT
+(implementations require.  Other Kermits require no)
+97 W( terminator at all, still others may require a different)96 W
+10120 71813 MT
+(terminator, like linefeed \05010\051.)SH
+ES
+%%Page: 15 16
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(1.4. Interactive Operation)SH
+10 /Times-Italic AF
+51775 XM
+(Page 15)SH
+46800 50 8280 5709 UL
+/Times-Roman SF
+10280 7886 MT
+(packet-length)SH
+/Times-Italic SF
+15973 XM
+(n)SH
+/Times-Roman SF
+12280 8991 MT
+(Specify the maximum packet length to)
+30 W( send.  Normally 90.  Shorter packet lengths can be useful on noisy)29 W
+12280 10096 MT
+(lines, or with systems or front ends or networks that have small buffers.)
+10 W( The)
+271 W( shorter the packet, the higher)11 W
+12280 11201 MT
+(the overhead, but)
+4 W( the lower the chance of a packet being corrupted by noise, and the less time to retransmit)3 W
+12280 12306 MT
+(corrupted packets.  This command)
+178 W( overrides the value requested by the other Kermit during protocol)179 W
+12280 13411 MT
+(initiation unless the other Kermit requests a shorter length.)SH
+10280 14988 MT
+(pad-character)SH
+/Times-Italic SF
+15971 XM
+(cc)SH
+/Times-Roman SF
+12280 16093 MT
+(Designate a character to send before each packet.)
+274 W( Normally,)
+799 W( none is sent.  Outbound padding is)275 W
+12280 17198 MT
+(sometimes necessary for communicating with slow half duplex systems that provide no other means of)117 W
+12280 18303 MT
+(line turnaround control.  It can also)
+55 W( be used to send special characters to communications equipment that)56 W
+12280 19408 MT
+(needs to be put in "transparent" or "no echo" mode, when this can be accomplished in by feeding it a)132 W
+12280 20513 MT
+(certain control character.)SH
+10280 22090 MT
+(padding)SH
+/Times-Italic SF
+13752 XM
+(n)SH
+/Times-Roman SF
+12280 23195 MT
+(How many pad characters to send, normally 0.)SH
+10280 24772 MT
+(start-of-packet)SH
+/Times-Italic SF
+16361 XM
+(cc)SH
+/Times-Roman SF
+12280 25877 MT
+(The normal)
+125 W( Kermit packet prefix is Control-A \0501\051; this command changes the prefix C-Kermit puts on)126 W
+12280 26982 MT
+(outbound packets.  The only reasons this should)
+136 W( ever be changed would be: Some piece of equipment)135 W
+12280 28087 MT
+(somewhere between the two Kermit programs will not pass through a Control-A; or, some piece of of)132 W
+12280 29192 MT
+(equipment similarly)
+4 W( placed is echoing its input.  In the latter case, the recipient of such an echo can change)3 W
+12280 30297 MT
+(the packet prefix for outbound)
+122 W( packets to be different from that of arriving packets, so that the echoed)123 W
+12280 31402 MT
+(packets will be ignored.  The opposite Kermit must also be told to)
+170 W( change the prefix for its inbound)169 W
+12280 32507 MT
+(packets.)SH
+10280 34084 MT
+(timeout)SH
+/Times-Italic SF
+13586 XM
+(n)SH
+/Times-Roman SF
+12280 35189 MT
+(Specifies the number of)
+74 W( seconds you want the other Kermit to wait for a packet before timing it out and)73 W
+12280 36294 MT
+(requesting retransmission.)SH
+8280 38085 MT
+(receive)SH
+/Times-Italic SF
+11417 XM
+(parameter)SH
+/Times-Roman SF
+10280 39190 MT
+(Establish parameters to request the other Kermit to use when sending packets.)SH
+10280 40981 MT
+(end-of-packet)SH
+/Times-Italic SF
+16083 XM
+(cc)SH
+/Times-Roman SF
+12280 42086 MT
+(Requests the other Kermit to terminate its packets with the specified character.)SH
+10280 43663 MT
+(packet-length)SH
+/Times-Italic SF
+15973 XM
+(n)SH
+/Times-Roman SF
+12280 44768 MT
+(Specify the maximum packet length to)
+175 W( that you want the other Kermit to send, normally 90.  If you)174 W
+12280 45873 MT
+(specify a length of 95 or greater, then it will be used if the other Kermit supports, and)
+70 W( agrees to use, the)71 W
+12280 46978 MT
+(Kermit protocol extension for)
+58 W( long packets.  In this case, the maximum length depends upon the systems)57 W
+12280 48083 MT
+(involved, but)
+125 W( there would normally be no reason for packets to be more than about 1000 characters in)126 W
+12280 49188 MT
+(length. The)
+250 W( 'show parameters' command displays C-Kermit's current and maximum packet lengths.)SH
+10280 50765 MT
+(pad-character)SH
+/Times-Italic SF
+15971 XM
+(cc)SH
+/Times-Roman SF
+12280 51870 MT
+(C-Kermit normally does not need to have incoming)
+20 W( packets preceded with pad characters.  This command)21 W
+12280 52975 MT
+(allows C-Kermit to request the other Kermit to use)SH
+/Times-Italic SF
+32861 XM
+(cc)SH
+/Times-Roman SF
+33999 XM
+(as a pad character.  Default)SH
+/Times-Italic SF
+45133 XM
+(cc)SH
+/Times-Roman SF
+46271 XM
+(is NUL, ASCII 0.)SH
+10280 54552 MT
+(padding)SH
+/Times-Italic SF
+13752 XM
+(n)SH
+/Times-Roman SF
+12280 55657 MT
+(How many pad characters to ask for, normally 0.)SH
+10280 57234 MT
+(start-of-packet)SH
+/Times-Italic SF
+16361 XM
+(cc)SH
+/Times-Roman SF
+12280 58339 MT
+(Change the prefix C-Kermit looks)
+124 W( for on inbound packets to correspond with what the other Kermit is)123 W
+12280 59444 MT
+(sending.)SH
+10280 61021 MT
+(timeout)SH
+/Times-Italic SF
+13586 XM
+(n)SH
+/Times-Roman SF
+12280 62126 MT
+(Normally, each Kermit partner sets its packet timeout)
+8 W( interval based on what the opposite Kermit requests.)7 W
+12280 63231 MT
+(This command allows you to override the normal procedure and specify a timeout interval for)
+200 W( Unix)201 W
+12280 64336 MT
+(Kermit to use when waiting for packets)
+103 W( from the other Kermit.  If you specify 0, then no timeouts will)102 W
+12280 65441 MT
+(occur, and Unix Kermit will wait forever for expected packets to arrive.)SH
+8280 67232 MT
+(speed {0, 110, 150, 300, 600, 1200, 1800, 2400, 4800, 9600, 19200})SH
+10280 68337 MT
+(The transmission speed \050"baud rate"\051 for the external)
+92 W( communication line.  This command cannot be used to)91 W
+10280 69442 MT
+(change the speed of your own console)
+80 W( terminal.  Many Unix systems are set up in such a way that you must)81 W
+10280 70547 MT
+(give this command)
+87 W( after a 'set line' command before you can use the line.  'set baud' is a synomym for 'set)86 W
+10280 71652 MT
+(speed'. Use)
+250 W( 19200 with caution -- it may not work on all systems.)SH
+ES
+%%Page: 16 17
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 16)SH
+12 /Times-Bold AF
+32187 XM
+(Kermit User Guide: UNIX KERMIT 1.4)SH
+46800 50 6120 5709 UL
+10 /Times-Roman AF
+6120 7886 MT
+(terminal)SH
+8120 8991 MT
+(Used for specifying terminal parameters.  Currently, 'bytesize' is the only parameter provided, and it can be)
+15 W( set)14 W
+8120 10096 MT
+(to 7 or 8.  It's 7 by default.)SH
+13 /Times-Bold AF
+23127 13455 MT
+(The 'show' Command:)SH
+10 /Times-Roman AF
+6120 15828 MT
+(Syntax:)SH
+/Courier SF
+9426 XM
+(show {parameters, versions})SH
+/Times-Roman SF
+6120 18220 MT
+(The "show" command)
+156 W( with the default argument of "parameters" displays the values of all the 'set' parameters)157 W
+6120 19416 MT
+(described above.  If)
+69 W( you type "show versions", then C-Kermit will display the version numbers and dates of all its)68 W
+6120 20612 MT
+(internal modules.  You)
+77 W( should use the "show versions" command to ascertain the vintage of your Kermit program)78 W
+6120 21808 MT
+(before reporting problems to Kermit maintainers.)SH
+13 /Times-Bold AF
+22153 25167 MT
+(The 'statistics' Command:)SH
+10 /Times-Roman AF
+6120 27540 MT
+(The statistics command displays)
+84 W( information about the most recent Kermit protocol transaction, including file and)83 W
+6120 28736 MT
+(communication line i/o, timing and efficiency, as)
+153 W( well as what encoding options were in effect \050such as 8th-bit)154 W
+6120 29932 MT
+(prefixing, repeat-count compression\051.)SH
+13 /Times-Bold AF
+20022 33291 MT
+(The 'take' and 'echo' Commands:)SH
+10 /Times-Roman AF
+6120 35664 MT
+(Syntax:)SH
+/Courier SF
+9426 XM
+(take)SH
+/Times-Italic SF
+12426 XM
+(fn1)SH
+/Courier SF
+7370 36860 MT
+(echo)SH
+/Times-Italic SF
+10370 XM
+([text to be echoed])SH
+/Times-Roman SF
+6120 39252 MT
+(The 'take' command instructs C-Kermit to execute commands from the named file.)
+172 W( The)
+593 W( file may contain any)171 W
+6120 40448 MT
+(interactive C-Kermit commands, including 'take'; command files)
+22 W( may be nested to any reasonable depth, but it may)23 W
+6120 41644 MT
+(not contain text to be sent to a remote system during the 'connect' command.  This means that a command file like)41 W
+6120 42840 MT
+(this:)SH
+/Courier SF
+8520 44495 MT
+(set line /dev/tty17)SH
+8520 45526 MT
+(set speed 9600)SH
+8520 46557 MT
+(connect)SH
+8520 47588 MT
+(login myuserid)SH
+8520 48619 MT
+(mypassword)SH
+/Courier-Oblique SF
+8520 49650 MT
+(etc)SH
+/Times-Roman SF
+6120 51367 MT
+(will not send "login myserid" or any)
+SH( of the following text to the remote system.  To carry on a canned dialog, use the)1 W
+6120 52563 MT
+('script' command, described later.)SH
+6120 54955 MT
+(The ')26 W
+/Courier SF
+(%)SH
+/Times-Roman SF
+(' command is useful for including comments in take-command files.)
+26 W( It)
+301 W( may only be used at the beginning of)25 W
+6120 56151 MT
+(a line.)SH
+6120 58543 MT
+(The 'echo' command may be used within command files to issue greetings, announce progress, ring the terminal)106 W
+6120 59739 MT
+(bell, etc.  The 'echo' command should not be confused with the Unix 'echo' command, which can)
+42 W( be used to show)41 W
+6120 60935 MT
+(how meta characters would be expanded.  The Kermit echo command simply displays its)
+111 W( text argument \050almost\051)112 W
+6120 62131 MT
+(literally at the terminal; the argument may contain octal escapes)
+122 W( of the form ``)121 W
+/Courier SF
+(\134ooo)SH
+/Times-Roman SF
+('', where)121 W
+/Courier SF
+45447 XM
+(o)SH
+/Times-Roman SF
+46418 XM
+(is an octal digit)121 W
+6120 63327 MT
+(\0500-7\051, and there may be 1, 2, or 3 such digits, whose value specify an ASCII)
+13 W( character, such as ``)14 W
+/Courier SF
+(\134007)SH
+/Times-Roman SF
+('' \050or ``)14 W
+/Courier SF
+(\13407)SH
+/Times-Roman SF
+('')SH
+6120 64523 MT
+(or just ``)117 W
+/Courier SF
+(\1347)SH
+/Times-Roman SF
+(''\051 for)
+117 W( beep, ``)116 W
+/Courier SF
+(\134012)SH
+/Times-Roman SF
+('' for newline, etc.  Of course, each backslash must be must be entered twice in)116 W
+6120 65719 MT
+(order for it to be passed along to the echo command by the Kermit command parser.)SH
+6120 68111 MT
+(Take-command files are in exactly the same syntax as interactive commands.  Note that this implies)
+13 W( that if you want)14 W
+6120 69307 MT
+(to include special characters like question)
+125 W( mark or backslash that you would have to quote with backslash when)124 W
+6120 70503 MT
+(typing interactive commands,)
+47 W( you must quote these characters the same way in command files.  Long lines may be)48 W
+6120 71699 MT
+(continued by ending them with a single backslash.)SH
+ES
+%%Page: 17 18
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(1.4. Interactive Operation)SH
+10 /Times-Italic AF
+51775 XM
+(Page 17)SH
+46800 50 8280 5709 UL
+/Times-Roman SF
+8280 7886 MT
+(Command files may be used in lieu of command macros, which have)
+167 W( not been implemented in this version of)166 W
+8280 9082 MT
+(C-Kermit. For)
+410 W( instance, if you commonly connect to a system)
+80 W( called 'B' that is connected to ttyh7 at 4800 baud,)81 W
+8280 10278 MT
+(you could create a file called)SH
+/Courier SF
+20054 XM
+(b)SH
+/Times-Roman SF
+20904 XM
+(containing the commands)SH
+/Courier SF
+10680 11933 MT
+(% C-Kermit command file to connect to System B thru /dev/ttyh7)SH
+10680 12964 MT
+(set line /dev/ttyh7)SH
+10680 13995 MT
+(set speed 4800)SH
+10680 15026 MT
+(% Beep and give message)SH
+10680 16057 MT
+(echo \134\134007Connecting to System B...)SH
+10680 17088 MT
+(connect)SH
+/Times-Roman SF
+8280 18805 MT
+(and then simply type 'take b' \050or 't b' since no)
+117 W( other commands begin with the letter 't'\051 whenever you wish to)116 W
+8280 20001 MT
+(connect to system B. Note the comment lines and the beep inserted into the 'echo' command.)SH
+8280 22393 MT
+(For connecting to IBM)
+173 W( mainframes, a number of 'set' commands are required; these, too, can be conveniently)174 W
+8280 23589 MT
+(collected into a 'take' file like this one:)SH
+/Courier SF
+10680 25244 MT
+(% Sample C-Kermit command file to set up current line)SH
+10680 26275 MT
+(% for IBM mainframe communication)SH
+10680 27306 MT
+(%)SH
+10680 28337 MT
+(set parity mark)SH
+10680 29368 MT
+(set handshake xon)SH
+10680 30399 MT
+(set flow-control none)SH
+10680 31430 MT
+(set duplex half)SH
+/Times-Roman SF
+8280 33822 MT
+(Note that no single command is available to wipe out all of these settings and return)
+46 W( C-Kermit to its default startup)45 W
+8280 35018 MT
+(state; to do that, you can either restart)
+76 W( the program, or else make a command file that executes the necessary 'set')77 W
+8280 36214 MT
+(commands:)SH
+/Courier SF
+10680 37869 MT
+(% Sample C-Kermit command file to restore normal settings)SH
+10680 38900 MT
+(%)SH
+10680 39931 MT
+(set parity none)SH
+10680 40962 MT
+(set handshake none)SH
+10680 41993 MT
+(set flow-control xon/xoff)SH
+10680 43024 MT
+(set duplex full)SH
+/Times-Roman SF
+8280 45416 MT
+(An implicit 'take' command is executed upon your)47 W
+/Courier SF
+29320 XM
+(.kermrc)SH
+/Times-Roman SF
+33817 XM
+(file when C-Kermit starts up, upon either interactive)46 W
+8280 46612 MT
+(or command-line invocation.  The)17 W
+/Courier SF
+22252 XM
+(.kermrc)SH
+/Times-Roman SF
+26719 XM
+(file should contain 'set' or other commands you)
+17 W( want to be in effect at)18 W
+8280 47808 MT
+(all times.  For instance, you might want)
+103 W( override the default action when incoming files have the same names as)102 W
+8280 49004 MT
+(existing files -- in that case, put the command)SH
+/Courier SF
+10680 50659 MT
+(set file warning on)SH
+/Times-Roman SF
+8280 52376 MT
+(in your)52 W
+/Courier SF
+11495 XM
+(.kermrc)SH
+/Times-Roman SF
+15997 XM
+(file. On)
+354 W( some non-Unix systems that run C-Kermit, the initialization file might have a)
+52 W( different)53 W
+8280 53572 MT
+(name, such as)SH
+/Courier SF
+14112 XM
+(kermit.ini)SH
+/Times-Roman SF
+(.)SH
+8280 55964 MT
+(Errors encountered during execution of take files)
+211 W( \050such as failure to complete dial or script operations\051 cause)210 W
+8280 57160 MT
+(termination of)
+119 W( the current take file, popping to the level that invoked it \050take file, interactive level, or the shell\051.)120 W
+8280 58356 MT
+(When kermit is executed in the background, errors during execution of a take file are fatal.)SH
+8280 60748 MT
+(Under Unix, you may also use the shell's redirection mechanism to cause C-Kermit to execute commands from a)90 W
+8280 61944 MT
+(file:)SH
+/Courier SF
+10680 63599 MT
+(kermit < cmdfile)SH
+/Times-Roman SF
+8280 65316 MT
+(or you can even pipe commands in from another process:)SH
+/Courier SF
+10680 66971 MT
+(command | kermit)SH
+ES
+%%Page: 18 19
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 18)SH
+12 /Times-Bold AF
+32187 XM
+(Kermit User Guide: UNIX KERMIT 1.4)SH
+46800 50 6120 5709 UL
+13 SS 
+22406 8071 MT
+(The 'connect' Command:)SH
+10 /Times-Roman AF
+6120 10444 MT
+(The 'connect' command \050'c' is an acceptable non-unique abbreviation for 'connect'\051 links)
+52 W( your terminal to another)53 W
+6120 11640 MT
+(computer as if it were a local terminal to that computer, through the device specified in the)
+92 W( most recent 'set line')91 W
+6120 12836 MT
+(command, or through the default device if your system is a PC or workstation.  All characters)
+129 W( you type at your)130 W
+6120 14032 MT
+(keyboard are sent out the communication line \050and if you have 'set duplex half', also)
+18 W( displayed on your screen\051, and)17 W
+6120 15228 MT
+(all characters arriving at the communication port are displayed on the screen.)
+142 W( Current)
+536 W( settings of speed, parity,)143 W
+6120 16424 MT
+(duplex, and)
+89 W( flow-control are honored, and the data connection is 7 bits wide unless you have given the command)88 W
+6120 17620 MT
+('set terminal bytesize 8'.  If you have issued a 'log)
+51 W( session' command, everything you see on your screen will also)52 W
+6120 18816 MT
+(be recorded to your session log.  This provides a way to "capture" files from remote systems that don't have)
+26 W( Kermit)25 W
+6120 20012 MT
+(programs available.)SH
+6120 22404 MT
+(To get back to)
+73 W( your own system, you must type the escape character, which is Control-Backslash \050)74 W
+/Courier SF
+(^\134)SH
+/Times-Roman SF
+(\051 unless you)74 W
+6120 23600 MT
+(have changed it with the 'set escape' command, followed by a single-character command,)
+127 W( such as 'c' for "close)126 W
+6120 24796 MT
+(connection". Single-character)
+250 W( commands include:)SH
+7120 26587 MT
+(c)SH
+10120 XM
+(Close the connection)SH
+7120 28134 MT
+(b)SH
+10120 XM
+(Send a BREAK signal)SH
+7120 29681 MT
+(0)SH
+10120 XM
+(\050zero\051 send a null)SH
+7120 31228 MT
+(s)SH
+10120 XM
+(Give a status report about the connection)SH
+7120 32775 MT
+(h)SH
+10120 XM
+(Hangup the phone)SH
+/Courier SF
+7120 34322 MT
+(^\134)SH
+/Times-Roman SF
+10120 XM
+(Send Control-Backslash itself \050whatever you have)
+17 W( defined the escape character to be, typed twice in a row)18 W
+10120 35427 MT
+(sends one copy of it\051.)SH
+6120 37218 MT
+(Uppercase and control equivalents for \050most of\051 these letters are also accepted.)
+149 W( A)
+546 W( space typed after the escape)148 W
+6120 38414 MT
+(character is ignored.  Any other character will produce a beep.)SH
+6120 40806 MT
+(The connect command simply displays incoming characters on the screen.  It is)
+236 W( assumed any screen control)237 W
+6120 42002 MT
+(sequences sent by the host will be handled by the firmware or emulation)
+23 W( software in your terminal or PC.  If special)22 W
+6120 43198 MT
+(terminal emulation is desired, then the 'connect' command can invoked from the Unix command line \050)81 W
+/Courier SF
+(-c)SH
+/Times-Roman SF
+49972 XM
+(or)SH
+/Courier SF
+51137 XM
+(-n)SH
+/Times-Roman SF
+(\051,)SH
+6120 44394 MT
+(piped through a terminal emulation filter, e.g.)SH
+/Courier SF
+8520 46049 MT
+(kermit -l /dev/acu -b 1200 -c | tek)SH
+13 /Times-Bold AF
+22621 49408 MT
+(The 'hangup' command:)SH
+10 /Times-Roman AF
+6120 51781 MT
+(The 'hangup' command attempts to hang up the modem on a local-mode dialout connection.)SH
+13 /Times-Bold AF
+23670 55140 MT
+(The 'dial' command:)SH
+10 /Times-Roman AF
+6120 57513 MT
+(Syntax:)SH
+/Courier SF
+9426 XM
+(dial)SH
+/Times-Italic SF
+12426 XM
+(telephone-number-string)SH
+/Times-Roman SF
+6120 59905 MT
+(This command controls dialout modems; you should have already issued a "set)
+84 W( line" and "set speed" command to)83 W
+6120 61101 MT
+(identify the terminal device, and a "set modem" command to identify the type)
+48 W( of modem to be used for dialing.  In)49 W
+6120 62297 MT
+(the "dial" command, you supply the phone number and the Kermit program feeds it to the modem in the appropriate)17 W
+6120 63493 MT
+(format and then)
+112 W( interprets dialer return codes and modem signals to inform you whether the call was completed.)113 W
+6120 64689 MT
+(The telephone-number-string may contain imbedded modem-dialer commands, such)
+52 W( as comma for Hayes pause, or)51 W
+6120 65885 MT
+(`)SH
+/Courier SF
+(&)SH
+/Times-Roman SF
+(' for Ventel dialtone wait and `)SH
+/Courier SF
+(%)SH
+/Times-Roman SF
+(' for Ventel pause \050consult your modem manual for details\051.)SH
+6120 68277 MT
+(At the time of this writing, support is included for the following modems:)SH
+/Symbol SF
+7910 70182 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(AT&T 7300 Internal Modem)SH
+/Symbol SF
+7910 71287 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Cermetek Info-Mate 212A)SH
+ES
+%%Page: 19 20
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(1.4. Interactive Operation)SH
+10 /Times-Italic AF
+51775 XM
+(Page 19)SH
+46800 50 8280 5709 UL
+/Symbol SF
+10070 8000 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Concord Condor CDS 220)SH
+/Symbol SF
+10070 9105 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(DEC DF03-AC)SH
+/Symbol SF
+10070 10210 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(DEC DF100 Series)SH
+/Symbol SF
+10070 11315 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(DEC DF200 Series)SH
+/Symbol SF
+10070 12420 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(General DataComm 212A/ED)SH
+/Symbol SF
+10070 13525 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Hayes Smartmodem and compatibles)SH
+/Symbol SF
+10070 14630 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Penril)SH
+/Symbol SF
+10070 15735 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Racal Vadic)SH
+/Symbol SF
+10070 16840 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Rolm CBX)SH
+/Symbol SF
+10070 17945 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(US Robotics 212A)SH
+/Symbol SF
+10070 19050 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Ventel)SH
+8280 20841 MT
+(Support for)
+42 W( new modems is added to the program from time to time; you can check the current list by typing ")43 W
+/Courier SF
+(set)SH
+8280 22037 MT
+(modem ?)SH
+/Times-Roman SF
+(".)SH
+8280 24429 MT
+(There are also)
+48 W( two "generic" modem types -- "direct" \050i.e. no modem at all, so that no attempt is made to deal with)47 W
+8280 25625 MT
+(modem signals\051, and)
+92 W( "unknown" \050which tells C-Kermit to attempt to honor modem signals, but leaves the dialing)93 W
+8280 26821 MT
+(mechanism unspecified\051.)SH
+8280 29213 MT
+(The device used for dialing out is the one selected in the most recent "set line" command)
+58 W( \050or on a workstation, the)57 W
+8280 30409 MT
+(default line if no "set line" command was given\051.  The "dial" command calls attempts to lock the terminal device's)53 W
+8280 31605 MT
+(path \050see the section on line locking below\051 and to establish a call)
+15 W( on an exclusive basis.  If it is desired to dial a call)14 W
+8280 32801 MT
+(and then return to the shell \050such as to)
+36 W( do kermit activities depending on standard in/out redirection\051, it is necessary)37 W
+8280 33997 MT
+(to place the dialed call under one device name \050say, ")20 W
+/Courier SF
+(/dev/cua0)SH
+/Times-Roman SF
+("\051 and then escape to the shell)20 W
+/Times-Italic SF
+47550 XM
+(within Kermit)19 W
+/Times-Roman SF
+53367 XM
+(on a)19 W
+8280 35193 MT
+(linked device)
+17 W( which is separate from the dialed line \050say, ")18 W
+/Courier SF
+(/dev/cul0)SH
+/Times-Roman SF
+("\051. This)
+286 W( is the same technique used by uucp)18 W
+8280 36389 MT
+(\050to allow locks to be placed separately for dialing and conversing\051.)SH
+8280 38781 MT
+(Because modem dialers have strict requirements to override the carrier-detect signal most Unix)
+137 W( implementations)136 W
+8280 39977 MT
+(expect, the sequence for dialing is more rigid than most other C-Kermit procedures.)SH
+8280 42369 MT
+(Example one:)SH
+/Courier SF
+10680 44024 MT
+(kermit -l /dev/cul0 -b 1200)SH
+16200 50 10680 44224 UL
+10680 45055 MT
+(C-Kermit>set modem-dialer hayes)SH
+/Courier-Oblique SF
+31680 XM
+(hint: abbreviate)SH
+/Courier SF
+41880 XM
+(set m h)SH
+13200 50 16080 45255 UL
+10680 46086 MT
+(C-Kermit>dial 9,5551212)SH
+8400 50 16080 46286 UL
+10680 47117 MT
+(Connected!)SH
+10680 48148 MT
+(C-Kermit>connect)SH
+/Courier-Oblique SF
+31680 XM
+(hint: abbreviate)SH
+/Courier SF
+41880 XM
+(c)SH
+4200 50 16080 48348 UL
+/Courier-Oblique SF
+10680 49179 MT
+(logon, request remote server, etc.)SH
+/Courier SF
+10680 50210 MT
+(^\134c)SH
+/Courier-Oblique SF
+31680 XM
+(escape back)SH
+1800 50 10680 50410 UL
+/Courier SF
+10680 51241 MT
+(C-Kermit> ...)SH
+10680 52272 MT
+(C-Kermit>quit)SH
+/Courier-Oblique SF
+31680 XM
+(hint: abbreviate)SH
+/Courier SF
+41880 XM
+(q)SH
+2400 50 16080 52472 UL
+/Times-Roman SF
+8280 53989 MT
+(this disconnects modem, and unlocks line.)SH
+8280 56381 MT
+(Example two:)SH
+/Courier SF
+10680 58036 MT
+(kermit)SH
+3600 50 10680 58236 UL
+10680 59067 MT
+(C-Kermit>set modem-dialer ventel)SH
+13800 50 16080 59267 UL
+10680 60098 MT
+(C-Kermit>set line /dev/cul0)SH
+10800 50 16080 60298 UL
+10680 61129 MT
+(C-Kermit>dial 9&5551212%)SH
+9000 50 16080 61329 UL
+10680 62160 MT
+(Connected!)SH
+10680 63191 MT
+(C-Kermit> ...)SH
+/Times-Roman SF
+8280 64908 MT
+(Example three:)SH
+/Courier SF
+10680 66563 MT
+(kermit)SH
+10680 67594 MT
+(C-Kermit>take my-dial-procedure)SH
+13200 50 16080 67794 UL
+10680 68625 MT
+(Connected!)SH
+/Courier-Oblique SF
+10680 70280 MT
+(file my-dial-procedure)SH
+/Courier SF
+(:)SH
+10680 71311 MT
+(set modem hayes)SH
+ES
+%%Page: 20 21
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 20)SH
+12 /Times-Bold AF
+32187 XM
+(Kermit User Guide: UNIX KERMIT 1.4)SH
+46800 50 6120 5709 UL
+10 /Courier AF
+8520 7824 MT
+(set line /dev/tty99)SH
+8520 8855 MT
+(dial 5551212)SH
+8520 9886 MT
+(connect)SH
+/Times-Roman SF
+6120 11603 MT
+(In general, C-Kermit requires that the modem provide the "carrier detect" \050CD\051 signal when a call is in progress, and)7 W
+6120 12799 MT
+(remove that signal when the call completes or the line drops.  If a modem)
+37 W( switch setting is available to force CD, it)36 W
+6120 13995 MT
+(should normally not be in that setting.  C-Kermit also requires \050on)
+234 W( most systems\051 that the modem track the)235 W
+6120 15191 MT
+(computer's "data terminal ready" \050DTR\051 signal.  If a switch setting is available to simulate DTR asserted within)
+35 W( the)34 W
+6120 16387 MT
+(modem, then it should normally not)
+16 W( be in that setting.  Otherwise the modem will be unable to hang up at the end of)17 W
+6120 17583 MT
+(a call or when interrupts are received by Kermit.)SH
+6120 19975 MT
+(For Hayes 1200  dialers, two important switch settings are #1 and #6.)
+42 W( Switch)
+332 W( #1 should be normally be UP so that)41 W
+6120 21171 MT
+(the modem can act according)
+7 W( to your computer's DTR signal.  But if your computer, or particular implementation of)8 W
+6120 22367 MT
+(Kermit, cannot control DTR, then switch 1 should be DOWN.  Switch #6 should normally be)
+65 W( UP so carrier-detect)64 W
+6120 23563 MT
+(functions properly \050but put)
+56 W( it DOWN if you have trouble with the UP position\051.  Switches #2 \050English versus digit)57 W
+6120 24759 MT
+(result codes\051 and #4 \050Hayes echoes modem commands\051 may)
+182 W( be in either position.  Hayes 2400 modems have)181 W
+6120 25955 MT
+(equivalent "software" switches.)SH
+6120 28347 MT
+(If you want to interrupt a)
+6 W( dial command in progress \050for instance, because you just realize that you gave it the wrong)7 W
+6120 29543 MT
+(number\051, type a Control-C to get back to command level.)SH
+13 /Times-Bold AF
+22948 32902 MT
+(The 'script' Command:)SH
+10 /Times-Roman AF
+6120 35275 MT
+(Syntax:)SH
+/Courier SF
+9426 XM
+(script)SH
+/Times-Italic SF
+13626 XM
+(expect send [expect send] . . .)SH
+/Times-Roman SF
+6120 37667 MT
+("expect" has the syntax:)SH
+/Times-Italic SF
+15990 XM
+(expect[-send-expect[-send-expect[...]]])SH
+/Times-Roman SF
+6120 40059 MT
+(The 'script' command carries on a "canned dialog" with a)
+120 W( remote system, in which data is sent according to the)119 W
+6120 41255 MT
+(remote system's responses.  The typical use is for logging in to a remote system automatically.)SH
+6120 43647 MT
+(C-Kermit's script facility)
+SH( operates in a manner similar to that commonly used by the Unix UUCP system's ")1 W
+/Courier SF
+(L.sys)SH
+/Times-Roman SF
+(")SH
+6120 44843 MT
+(file entries.  A login script is a sequence of the form:)SH
+/Courier-Oblique SF
+8520 46498 MT
+(expect send [expect send] . . .)SH
+/Times-Roman SF
+6120 48215 MT
+(where)SH
+/Times-Italic SF
+8844 XM
+(expect)SH
+/Times-Roman SF
+11679 XM
+(is a prompt or message to be issued)
+31 W( by the remote site, and)30 W
+/Times-Italic SF
+35851 XM
+(send)SH
+/Times-Roman SF
+37964 XM
+(is the string \050names, numbers, etc\051 to)30 W
+6120 49411 MT
+(return, and expects are separated from sends by spaces.  The send may also be the keyword)
+7 W( EOT, to send Control-D,)8 W
+6120 50607 MT
+(or BREAK, to send a break signal.  Letters in sends may be prefixed by `)SH
+/Courier SF
+(~)SH
+/Times-Roman SF
+(' to send special characters, including:)SH
+/Courier SF
+8120 52398 MT
+(~b)SH
+/Times-Roman SF
+10120 XM
+(backspace)SH
+/Courier SF
+8120 53503 MT
+(~s)SH
+/Times-Roman SF
+10120 XM
+(space)SH
+/Courier SF
+8120 54608 MT
+(~q)SH
+/Times-Roman SF
+10120 XM
+(`)SH
+/Courier SF
+(?)SH
+/Times-Roman SF
+('\050trapped by Kermit's command interpreter\051)SH
+/Courier SF
+8120 55713 MT
+(~n)SH
+/Times-Roman SF
+10120 XM
+(linefeed)SH
+/Courier SF
+8120 56818 MT
+(~r)SH
+/Times-Roman SF
+10120 XM
+(carriage return)SH
+/Courier SF
+8120 57923 MT
+(~t)SH
+/Times-Roman SF
+10120 XM
+(tab)SH
+/Courier SF
+8120 59028 MT
+(~')SH
+/Times-Roman SF
+10120 XM
+(single quote)SH
+/Courier SF
+8120 60133 MT
+(~~)SH
+/Times-Roman SF
+10120 XM
+(tilde)SH
+/Courier SF
+8120 61238 MT
+(~")SH
+/Times-Roman SF
+10120 XM
+(double quote)SH
+/Courier SF
+8120 62343 MT
+(~x)SH
+/Times-Roman SF
+10120 XM
+(XON \050Control-Q\051)SH
+/Courier SF
+8120 63448 MT
+(~c)SH
+/Times-Roman SF
+10120 XM
+(don't append a carriage return)SH
+/Courier SF
+8120 64553 MT
+(~)SH
+/Times-Italic SF
+(o[o[o]])SH
+/Times-Roman SF
+12276 XM
+(an octal character)SH
+/Courier SF
+8120 65658 MT
+(~d)SH
+/Times-Roman SF
+10120 XM
+(delay approx 1/3 second during send)SH
+/Courier SF
+8120 66763 MT
+(~w)SH
+/Times-Italic SF
+([d[d]])SH
+/Times-Roman SF
+12376 XM
+(wait specified interval during expect, then time out)SH
+6120 68554 MT
+(As with some UUCP systems, sent strings are followed by)SH
+/Courier SF
+29758 XM
+(~r)SH
+/Times-Roman SF
+31208 XM
+(unless they have a)SH
+/Courier SF
+38762 XM
+(~c)SH
+/Times-Roman SF
+(.)SH
+6120 70946 MT
+(Only the last 7 characters in each expect are matched.  A null)32 W
+/Times-Italic SF
+31307 XM
+(expect)SH
+/Times-Roman SF
+(, e.g.)32 W
+/Courier SF
+36118 XM
+(~0)SH
+/Times-Roman SF
+37599 XM
+(or two adjacent dashes, causes a short)31 W
+ES
+%%Page: 21 22
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(1.4. Interactive Operation)SH
+10 /Times-Italic AF
+51775 XM
+(Page 21)SH
+46800 50 8280 5709 UL
+/Times-Roman SF
+8280 7886 MT
+(delay before proceeding to the next send sequence.  A null expect always succeeds.)SH
+8280 10278 MT
+(As with UUCP, if the expect string does not arrive, the script attempt fails.  If)
+30 W( you expect that a sequence might not)31 W
+8280 11474 MT
+(arrive, as with UUCP, conditional sequences may be expressed in the form:)SH
+/Courier-Oblique SF
+10680 13129 MT
+(-send-expect[-send-expect[...]])SH
+/Times-Roman SF
+8280 14846 MT
+(where dashed sequences are followed as long as previous)
+41 W( expects fail.  Timeouts for expects can be specified using)40 W
+/Courier SF
+8280 16042 MT
+(~w)SH
+/Times-Roman SF
+(;)SH
+/Courier SF
+10008 XM
+(~w)SH
+/Times-Roman SF
+11458 XM
+(with no arguments waits 15 seconds.)SH
+/Times-Italic SF
+8280 18434 MT
+(Expect/send)SH
+/Times-Roman SF
+13558 XM
+(transactions can be easily be debugged by logging)
+196 W( transactions.  This records all exchanges, both)197 W
+8280 19630 MT
+(expected and actual.  The script execution will also be logged in the session log, if that is activated.)SH
+8280 22022 MT
+(Note that `)1 W
+/Courier SF
+(\134)SH
+/Times-Roman SF
+(' characters in login scripts, as in any other C-Kermit interactive)
+1 W( commands, must be doubled up.  A line)SH
+8280 23218 MT
+(may be ended with a single `)SH
+/Courier SF
+(\134)SH
+/Times-Roman SF
+(' for continuation.)SH
+8280 25610 MT
+(Example one:)SH
+8280 28002 MT
+(Using a modem, dial a UNIX host site.  Expect "login" \050...gin\051, and if it doesn't come,)
+13 W( simply send a null string with)14 W
+8280 29198 MT
+(a)SH
+/Courier SF
+9035 XM
+(~r)SH
+/Times-Roman SF
+(. \050Some)
+372 W( Unixes require either an EOT or a BREAK instead of the null sequence, depending on the particular)61 W
+8280 30394 MT
+(site's "logger" program.\051  After providing user id and password, respond "x" to a question-mark prompt, expect the)43 W
+8280 31590 MT
+(Bourne shell ")101 W
+/Courier SF
+($)SH
+/Times-Roman SF
+(" prompt)
+101 W( \050and send return if it doesn't arrive\051.  Then cd to directory kermit, and run the program)100 W
+8280 32786 MT
+(called "wermit", entering the interactive connect state after wermit is loaded.)SH
+/Courier SF
+10680 34441 MT
+(set modem ventel)SH
+10680 35472 MT
+(set line /dev/tty77)SH
+10680 36503 MT
+(set baud 1200)SH
+10680 37534 MT
+(dial 9&5551212)SH
+10680 38565 MT
+(script gin:--gin:--gin: smith ssword: mysecret ~q x $--$ \134)SH
+11280 39596 MT
+(cd~skermit $ wermit)SH
+10680 40627 MT
+(connect)SH
+/Times-Roman SF
+8280 42344 MT
+(Note that 'set line' is issued)SH
+/Times-Italic SF
+19668 XM
+(after)SH
+/Times-Roman SF
+21807 XM
+('set modem', but)SH
+/Times-Italic SF
+28862 XM
+(before)SH
+/Times-Roman SF
+31667 XM
+('set baud' or other line-related parameters.)SH
+8280 44736 MT
+(Example two:)SH
+8280 47128 MT
+(Using a modem, dial the Telenet network.  This network expects)
+132 W( three returns with slight delays between them.)133 W
+8280 48324 MT
+(These are sent following)
+120 W( null expects.  The single return is here sent as a null string, with a return appended by)119 W
+8280 49520 MT
+(default. Four)
+540 W( returns are sent to)
+145 W( be safe before looking for the prompt.  Then the Telenet id and password are)146 W
+8280 50716 MT
+(entered. Then)
+322 W( Telenet is instructed to connect to a host site)
+36 W( \050c 12345\051.  The host has a data switch that asks "which)35 W
+8280 51912 MT
+(system"; the)
+39 W( script responds "myhost" \050if the "which system" prompt doesn't appear, the Telenet connect command)40 W
+8280 53108 MT
+(is reissued\051.  The script waits for an ``)178 W
+/Courier SF
+(@)SH
+/Times-Roman SF
+('' prompt from the host, then sends the user ID \050"joe"\051 and)
+178 W( password)177 W
+8280 54304 MT
+(\050"secret"\051, looks for another ``)160 W
+/Courier SF
+(@)SH
+/Times-Roman SF
+('' prompt, runs Kermit, and in response to the)
+160 W( Kermit's prompt \050which ends in)161 W
+8280 55500 MT
+(``)SH
+/Courier SF
+(>)SH
+/Times-Roman SF
+(''\051, gives the commands "set parity even" and)
+56 W( "server".  Files are then exchanged.  The commands are in a take)55 W
+8280 56696 MT
+(file; note the continuation of the 'script' command onto several lines using the `)SH
+/Courier SF
+(\134)SH
+/Times-Roman SF
+(' terminator.)SH
+/Courier SF
+10680 58351 MT
+(set modem hayes)SH
+10680 59382 MT
+(set line /dev/acu)SH
+10680 60413 MT
+(set speed 1200)SH
+10680 61444 MT
+(set parity mark)SH
+10680 62475 MT
+(dial 9,5551212)SH
+10680 63506 MT
+(script ~0 ~0 ~0 ~0 ~0 ~0 ~0 ~0 @--@--@ id~saa001122 = 002211 @ \134)SH
+13080 64537 MT
+(c~s12345 ystem-c~s12345-ystem myhost @ joe~ssecret @ kermit \134)SH
+13080 65568 MT
+(> set~sparity~seven > server)SH
+10680 66599 MT
+(send some.stuff)SH
+10680 67630 MT
+(get some.otherstuff)SH
+10680 68661 MT
+(bye)SH
+10680 69692 MT
+(quit)SH
+/Times-Roman SF
+8280 71409 MT
+(Since these commands may be)
+149 W( executed totally in the background, they can also be scheduled.  A typical shell)150 W
+ES
+%%Page: 22 23
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 22)SH
+12 /Times-Bold AF
+32187 XM
+(Kermit User Guide: UNIX KERMIT 1.4)SH
+46800 50 6120 5709 UL
+10 /Times-Roman AF
+6120 7886 MT
+(script, which might be scheduled by cron, would be as follows \050csh used for this example\051:)SH
+/Courier SF
+8520 9541 MT
+(#)SH
+8520 10572 MT
+(#keep trying to dial and log onto remote host and exchange files)SH
+8520 11603 MT
+(#wait 10 minutes before retrying if dial or script fail.)SH
+8520 12634 MT
+(#)SH
+8520 13665 MT
+(cd someplace)SH
+8520 14696 MT
+(while \050 1 \051)SH
+13320 15727 MT
+(kermit < /tonight.cmd >> nightly.log &)SH
+13320 16758 MT
+(if \050 ! $status \051 break)SH
+13320 17789 MT
+(sleep 600)SH
+8520 18820 MT
+(end)SH
+/Times-Roman SF
+6120 20537 MT
+(File)SH
+/Courier SF
+8033 XM
+(tonight.cmd)SH
+/Times-Roman SF
+14990 XM
+(might have two takes)
+107 W( in it, for example, one to take a file with the set modem, set line, set)106 W
+6120 21733 MT
+(baud, dial, and script, and a second take of a)
+69 W( file with send/get commands for the remote server.  The last lines of)70 W
+/Courier SF
+6120 22929 MT
+(tonight.cmd)SH
+/Times-Roman SF
+12970 XM
+(should be a bye and a quit.)SH
+13 /Times-Bold AF
+23344 26288 MT
+(The 'help' Command:)SH
+10 /Times-Roman AF
+6120 28661 MT
+(Syntax:)SH
+/Courier SF
+9776 XM
+(help)SH
+/Courier-Oblique SF
+7920 29692 MT
+(or)SH
+/Courier SF
+(: help)SH
+/Courier-Oblique SF
+13320 XM
+(keyword)SH
+7920 30723 MT
+(or)SH
+/Courier SF
+(: help {set, remote})SH
+/Courier-Oblique SF
+21720 XM
+(keyword)SH
+/Times-Roman SF
+6120 33115 MT
+(Brief help messages or menus are always available at interactive command level)
+70 W( by typing a question mark at any)69 W
+6120 34311 MT
+(point. A)
+274 W( slightly more verbose form of help is available)
+12 W( through the 'help' command.  The 'help' command with no)13 W
+6120 35507 MT
+(arguments prints a brief summary of how to enter commands)
+59 W( and how to get further help.  'help' may be followed)58 W
+6120 36703 MT
+(by one of the top-level C-Kermit command keywords, such)
+135 W( as 'send', to request information about a command.)136 W
+6120 37899 MT
+(Commands such as 'set' and 'remote' have a further level of help.  Thus you may type 'help', 'help)
+13 W( set', or 'help set)12 W
+6120 39095 MT
+(parity'; each will provide a successively more detailed level of help.)SH
+13 /Times-Bold AF
+20347 42454 MT
+(The 'exit' and 'quit' Commands:)SH
+10 /Times-Roman AF
+6120 44827 MT
+(These two commands are identical.  Both of them do the following:)SH
+/Symbol SF
+7910 46732 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Attempt to insure that the terminal is returned to normal.)SH
+/Symbol SF
+7910 47837 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Relinquish access to any communication line assigned via 'set line'.)SH
+/Symbol SF
+7910 48942 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Relinquish any uucp and multiuser locks on the communications line.)SH
+/Symbol SF
+7910 50047 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Hang up the modem, if the communications line supports data terminal ready.)SH
+/Symbol SF
+7910 51152 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Close any open logs or other files.)SH
+6120 52943 MT
+(After exit from C-Kermit, your default directory will be the)
+140 W( same as when you started the program.  The 'exit')141 W
+6120 54139 MT
+(command is issued implicitly whenever C-Kermit halts normally, e.g. after a command line invocation,)
+152 W( or after)151 W
+6120 55335 MT
+(certain kinds of interruptions.)SH
+14 /Times-Bold AF
+6120 58937 MT
+(1.5. UUCP Lock Files)SH
+10 /Times-Roman AF
+6120 61055 MT
+(Unix has no standard way of obtaining exclusive access to an external communication line.)
+13 W( When)
+277 W( you issue the 'set)14 W
+6120 62251 MT
+(line' command to Unix Kermit, Unix)
+125 W( would normally grant you access to the line even if some other process is)124 W
+6120 63447 MT
+(making use of it.  The method adopted by most Unix systems to handle this situation is)
+149 W( the "UUCP lock file".)150 W
+6120 64643 MT
+(UUCP, the Unix-to-Unix Copy program, creates a file)
+175 W( in its directory \050usually)174 W
+/Courier SF
+39711 XM
+(/usr/spool/uucp)SH
+/Times-Roman SF
+(, on some)174 W
+6120 65839 MT
+(systems)SH
+/Courier SF
+9537 XM
+(/etc/locks)SH
+/Times-Roman SF
+(\051 with a name like)SH
+/Courier SF
+23008 XM
+(LCK..)SH
+/Times-Italic SF
+(name)SH
+/Times-Roman SF
+(, where)SH
+/Times-Italic SF
+31367 XM
+(name)SH
+/Times-Roman SF
+33783 XM
+(is the device name, for instance)SH
+/Courier SF
+46641 XM
+(tty07)SH
+/Times-Roman SF
+(.)SH
+6120 68231 MT
+(Unix Kermit uses UUCP lock files in order to avoid conflicts with UUCP, tip,)
+96 W( or other programs that follow this)97 W
+6120 69427 MT
+(convention. Whenever)
+280 W( you attempt to access an external line)
+15 W( using the 'set line' command or `)14 W
+/Courier SF
+(-l)SH
+/Times-Roman SF
+(' on the command)14 W
+6120 70623 MT
+(line, Kermit)
+48 W( looks in the UUCP directory for a lock file corresponding to that device.  For instance, if you 'set line)49 W
+6120 71819 MT
+(/dev/ttyi6' then Kermit looks for the file)SH
+ES
+%%Page: 23 24
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(1.5. UUCP Lock Files)SH
+10 /Times-Italic AF
+51775 XM
+(Page 23)SH
+46800 50 8280 5709 UL
+/Courier SF
+10680 7824 MT
+(/usr/spool/uucp/LCK..ttyi6)SH
+/Times-Roman SF
+8280 9541 MT
+(If it finds this file, it gives you an error message and a directory listing of the file so that)
+12 W( you can see who is using it,)11 W
+8280 10737 MT
+(e.g.)SH
+/Courier SF
+10680 12392 MT
+(-r--r--r-- 1)
+600 W( fdc)
+SH( 4)
+4200 W( May  7 13:02 /usr/spool/uucp/LCK..ttyi6)SH
+/Times-Roman SF
+8280 14109 MT
+(In this case, you would look up user fdc to find out how soon the line will become free.)SH
+8280 16501 MT
+(This convention requires that the uucp directory be publicly readable and writable.  If it is not, the)
+114 W( program will)115 W
+8280 17697 MT
+(issue an appropriate warning message, but will allow you to proceed at your own risk \050and the)
+67 W( risk of anyone else)66 W
+8280 18893 MT
+(who might also be using the same line\051.)SH
+8280 21285 MT
+(If no lock file is found, Unix Kermit)
+52 W( will attempt create one, thus preventing anyone who subsequently tries to run)53 W
+8280 22481 MT
+(Kermit, UUCP, tip, or similar programs on the same line from)
+63 W( gaining access until you release the line.  If Kermit)62 W
+8280 23677 MT
+(could not create the lock file \050for instance because the uucp directory)
+108 W( is write-protected\051, then you will receive a)109 W
+8280 24873 MT
+(warning message but will be allowed to proceed at your -- and everyone else's -- risk.  When)
+110 W( Kermit terminates)109 W
+8280 26069 MT
+(normally, your lock file is removed.)SH
+8280 28461 MT
+(Even when the lock directory is writable and readable, the)
+132 W( locking mechanism depends upon all users using the)133 W
+8280 29657 MT
+(same name for the same)
+222 W( device.  If a device has more than one path associated with it, then a lock can be)221 W
+8280 30853 MT
+(circumvented by using an alias.)SH
+8280 33245 MT
+(When a lock-creating program)
+68 W( abruptly terminates, e.g. because it crashes or is killed via shell command, the lock)69 W
+8280 34441 MT
+(file remains in the uucp directory, spuriously indicating)
+36 W( that the line is in use.  If the lock file is owned by yourself,)35 W
+8280 35637 MT
+(you may remove it.  Otherwise, you'll have to get the owner or the system manager to remove it,)
+47 W( or else wait for a)48 W
+8280 36833 MT
+(system task to do so; uucp supports a function \050uuclean\051 which removes these files after a predetermined age -- uucp)9 W
+8280 38029 MT
+(sites tend to run this function periodically via crontab.)SH
+8280 40421 MT
+(Locking is not needed, or used, if communications occur over the user's login terminal line \050normally)SH
+/Courier SF
+49219 XM
+(/dev/tty)SH
+/Times-Roman SF
+(\051.)SH
+8280 42813 MT
+(It may be seen that line locking is fraught with peril.)
+178 W( It)
+608 W( is included in Unix Kermit only because other Unix)179 W
+8280 44009 MT
+(communication programs rely on it.  While it is naturally desirable to assure exclusive access)
+110 W( to a line, it is also)109 W
+8280 45205 MT
+(undesirable to refuse access to a vacant line only because of)
+9 W( a spurious lock file, or because the uucp directory is not)10 W
+8280 46401 MT
+(appropriately protected.)SH
+14 /Times-Bold AF
+8280 50003 MT
+(1.6. C-Kermit under Berkeley or System III/V Unix:)SH
+10 /Times-Roman AF
+8280 52121 MT
+(C-Kermit may be interrupted at command)
+169 W( level or during file transfer by typing Control-C.  The program will)168 W
+8280 53317 MT
+(perform its normal exit function, restoring the terminal and releasing any)
+137 W( lock.  If a protocol transaction was in)138 W
+8280 54513 MT
+(progress, an error packet will be sent to the opposite Kermit so that it can terminate cleanly.)SH
+8280 56905 MT
+(C-Kermit may be invoked in the background \050")6 W
+/Courier SF
+(&)SH
+/Times-Roman SF
+(" on shell commmand line\051.  If a background process is "killed", the)5 W
+8280 58101 MT
+(user will have to manually)
+27 W( remove any lock file and may need to restore the modem.  This is because the kill signal)28 W
+8280 59297 MT
+(\050)SH
+/Courier SF
+(kill\050)SH
+/Times-Italic SF
+(x)SH
+/Courier SF
+(,9\051)SH
+/Times-Roman SF
+(\051 cannot be trapped by Kermit.)SH
+8280 61689 MT
+(During execution of a)
+106 W( system command \050'directory', 'cwd', or `)105 W
+/Courier SF
+(!)SH
+/Times-Roman SF
+('\051, C-Kermit can often be returned to command)105 W
+8280 62885 MT
+(level by typing a single Control-C.  \050With System III/V, the)
+20 W( usual interrupt function \050often the DEL key\051 is replaced)21 W
+8280 64081 MT
+(by Control-C.\051)SH
+8280 66473 MT
+(Under Berkeley Unix only: C-Kermit may also be interrupted by)SH
+/Courier SF
+34443 XM
+(^Z)SH
+/Times-Roman SF
+35893 XM
+(to put the process in the background.)SH
+8280 68865 MT
+(Control-C, Control-Z, and Control-)142 W
+/Courier SF
+(\134)SH
+/Times-Roman SF
+23837 XM
+(lose their normal functions)
+142 W( during terminal connection and also during file)141 W
+8280 70061 MT
+(transfer when the controlling tty line is being used for packet i/o.)SH
+ES
+%%Page: 24 25
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 24)SH
+12 /Times-Bold AF
+32187 XM
+(Kermit User Guide: UNIX KERMIT 1.6)SH
+46800 50 6120 5709 UL
+10 /Times-Roman AF
+6120 7886 MT
+(If you are running C-Kermit)
+198 W( in "quiet mode" in the foreground, then interrupting the program with a console)199 W
+6120 9082 MT
+(interrupt like Control-C will)
+22 W( not restore the terminal to normal conversational operation.  This is because the system)21 W
+6120 10278 MT
+(call to enable console interrupt)
+144 W( traps will cause the program to block if it's running in the background, and the)145 W
+6120 11474 MT
+(primary reason for quiet mode is)
+10 W( to allow the program to run in the background without blocking, so that you can do)9 W
+6120 12670 MT
+(other work in the foreground.)SH
+6120 15062 MT
+(If C-Kermit is run in the background \050"&" on shell commmand line\051, then the interrupt signal)
+143 W( \050Control-C\051 \050and)144 W
+6120 16258 MT
+(System III/V quit signal\051 are ignored.  This prevents an interrupt signal intended for a foreground job)
+207 W( \050say a)206 W
+6120 17454 MT
+(compilation\051 from being trapped by a background Kermit session.)SH
+14 /Times-Bold AF
+6120 21056 MT
+(1.7. C-Kermit on the DEC Pro-3xx with Pro/Venix Version 1)SH
+10 /Times-Roman AF
+6120 23174 MT
+(The DEC Professional 300 series are PDP-11/23 based personal computers.  Venix Version)
+253 W( 1 is a Unix v7)254 W
+6120 24370 MT
+(derivative. It)
+473 W( should not be confused with Venix Version 2, which is based on ATT System V; these comments)111 W
+6120 25566 MT
+(apply to Venix Version 1 only.  C-Kermit runs in local mode on the Pro-3)86 W
+/Times-Italic SF
+(xx)SH
+/Times-Roman SF
+38129 XM
+(when invoked from the)
+86 W( console; the)87 W
+6120 26762 MT
+(default device is)2 W
+/Courier SF
+12930 XM
+(/dev/com1.dout)SH
+/Times-Roman SF
+(. When)
+254 W( connected to a remote system \050using C-Kermit's 'connect' command\051,)1 W
+6120 27958 MT
+(Pro/Venix itself \050not Kermit\051 provides VT52 terminal emulation.  Terminal operation)
+157 W( at high speeds \050like 9600)158 W
+6120 29154 MT
+(baud\051 requires xon/xoff flow control, which unfortunately interferes with applications such as the)
+54 W( EMACS that use)53 W
+6120 30350 MT
+(Control-Q and Control-S as commands.)SH
+6120 32742 MT
+(When logging in to a Pro-3xx \050or any workstation\051 through the "back port", it may be necessary to give the)210 W
+6120 33938 MT
+(command "set line /dev/tty" in order to get C-Kermit to function correctly in remote mode \050on a system)
+44 W( in which it)43 W
+6120 35134 MT
+(normally expects to be operating in local mode\051.)SH
+14 /Times-Bold AF
+6120 38736 MT
+(1.8. C-Kermit under VAX/VMS)SH
+10 /Times-Roman AF
+6120 40854 MT
+(C-Kermit can be built)
+28 W( using VAX-11 C to run under VMS.  Most of the descriptions in this manual hold true, but it)29 W
+6120 42050 MT
+(should be noted that as of this writing the VMS support is not thoroughly)
+64 W( tested, and no explicit support exists for)63 W
+6120 43246 MT
+(the various types of VMS files and their attributes.)SH
+6120 45638 MT
+(The C-Kermit init file for VMS is called)SH
+/Courier SF
+22563 XM
+(KERMIT.INI)SH
+/Times-Roman SF
+(.)SH
+14 /Times-Bold AF
+6120 49240 MT
+(1.9. C-Kermit on the Macintosh and other Systems)SH
+10 /Times-Roman AF
+6120 51358 MT
+(The "protocol kernel" of C-Kermit is also used by Columbia's Macintosh Kermit.  The user and system)
+41 W( interface is)42 W
+6120 52554 MT
+(entirely different, and is covered in a separate document.)SH
+6120 54946 MT
+(There is also a Kermit for the Commodore Amiga)
+175 W( based on C-Kermit, as well as versions for MS-DOS, Data)174 W
+6120 56142 MT
+(General operating systems, etc.)SH
+14 /Times-Bold AF
+6120 59744 MT
+(1.10. C-Kermit Restrictions and Known Bugs)SH
+10 /Times-Roman AF
+8120 61862 MT
+(1.)SH
+9120 XM
+(Editing characters:  The program's interactive command interrupt, delete, and kill)
+234 W( characters are)235 W
+7482 50 9120 62062 UL
+9120 62967 MT
+(Control-C, Delete \050or Backspace\051, and Control-U, respectively.  There is)
+78 W( currently no way to change)77 W
+9120 64072 MT
+(them to suit your taste or match those used by your shell, in case those are different.)SH
+8120 66282 MT
+(2.)SH
+9120 XM
+(Flow control:)
+102 W( C-Kermit)
+455 W( attempts to use XON/XOFF flow control during protocol operations, but it)103 W
+5241 50 9120 66482 UL
+9120 67387 MT
+(also puts the communication line into "rawmode".  On many systems, rawmode)
+37 W( disables flow control,)36 W
+9120 68492 MT
+(so even though you may have "set flow xon/xoff", no flow control will)
+15 W( be done.  This is highly system)16 W
+9120 69597 MT
+(and Unix-version dependent.)SH
+8120 71807 MT
+(3.)SH
+9120 XM
+(Modem controls:  If a connection is made over a)
+89 W( communication line \050rather than on the controlling)88 W
+6672 50 9120 72007 UL
+ES
+%%Page: 25 26
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(1.10. C-Kermit Restrictions and Known Bugs)SH
+10 /Times-Italic AF
+51775 XM
+(Page 25)SH
+46800 50 8280 5709 UL
+/Times-Roman SF
+11280 7886 MT
+(terminal line\051, and that line has modem controls, \050e.g. data terminal ready)
+244 W( and carrier detection)245 W
+11280 8991 MT
+(implementation\051, returning to the shell level will disconnect the conversation.  In that case, one should)24 W
+11280 10096 MT
+(use interactive mode)
+386 W( commands, and avoid use of piped shell-level operation \050also see 'set)387 W
+11280 11201 MT
+(modem-dialer' and 'dial' commands.\051)SH
+10280 13411 MT
+(4.)SH
+11280 XM
+(Login Scripts:  The present login scripts implementation follows the Unix conventions)
+205 W( of uucp's)204 W
+5622 50 11280 13611 UL
+11280 14516 MT
+(")SH
+/Courier SF
+(L.sys)SH
+/Times-Roman SF
+(" file, rather than the normal Kermit "INPUT/OUTPUT" style.)SH
+10280 16726 MT
+(5.)SH
+11280 XM
+(Dial-out vs dial-in)
+83 W( communications lines:  C-Kermit requires a dial-out or dedicated line for the "set)84 W
+16667 50 11280 16926 UL
+11280 17831 MT
+(line" or "-l" options.)
+52 W( Most)
+352 W( systems have some lines dedicated to dial-in, which they enable "loggers")51 W
+11280 18936 MT
+(on, and some lines available for dial-out.  Recent releases of Unix \050ATT)
+337 W( & Berkeley\051 have)338 W
+11280 20041 MT
+(mechanisms for changing the directionality of a line.)SH
+10280 22251 MT
+(6.)SH
+11280 XM
+(Using C-Kermit on Local Area Networks:  C-Kermit can successfully)
+82 W( operate at speeds up to 19200)81 W
+16990 50 11280 22451 UL
+11280 23356 MT
+(baud over LANs, provided the network buffers are big enough to accommodate Kermit packets.)SH
+11280 25566 MT
+(When computers are)
+406 W( connected to LANs through asynchronous terminal interfaces, then the)407 W
+11280 26671 MT
+(connection should be)
+3 W( configured to do XON/XOFF flow control between the network interface and the)2 W
+11280 27776 MT
+(computer, rather than passing these)
+45 W( signals through transparently.  This can help prevent Kermit from)46 W
+11280 28881 MT
+(overrunning the LAN's buffers if they)
+4 W( are small \050or if the LAN is congested\051, and will can also prevent)3 W
+11280 29986 MT
+(the LAN from overrunning a slow Kermit's buffers.)SH
+11280 32196 MT
+(If the network hardware cannot accept 100 characters at a time, and flow control cannot be done)174 W
+11280 33301 MT
+(between the network and the computer, then Kermit's)
+67 W( "set send/receive packet-length" command can)66 W
+11280 34406 MT
+(be used to shorten the packets.)SH
+10280 36616 MT
+(7.)SH
+11280 XM
+(Resetting terminal after abnormal termination)
+41 W( or kill: When C-Kermit terminates abnormally \050say, for)42 W
+21246 50 11280 36816 UL
+11280 37721 MT
+(example, by a kill command issued)
+71 W( by the operator\051 the user may need to reset the terminal state.  If)70 W
+11280 38826 MT
+(commands do not seem to be accepted at the shell)
+129 W( prompt, try Control-J "stty sane" Control-J \050use)130 W
+11280 39931 MT
+("reset" on Berkeley Unix\051.  That should take the terminal out of "raw mode" if it was stuck there.)SH
+10280 42141 MT
+(8.)SH
+11280 XM
+(Remote host commands may time-out on lengthy activity:  Using "remote host")
+261 W( to instruct the)260 W
+24799 50 11280 42341 UL
+11280 43246 MT
+(C-Kermit server to invoke Unix functions \050like "make"\051 that might)
+37 W( take a long time to produce output)38 W
+11280 44351 MT
+(can cause timeout conditions.)SH
+10280 46561 MT
+(9.)SH
+11280 XM
+(XOFF deadlocks:)
+27 W( When)
+303 W( connecting back to C-Kermit after a transaction, or after finishing the server,)26 W
+6832 50 11280 46761 UL
+11280 47666 MT
+(it may be necessary to type a Control-Q to clear up an)
+7 W( XOFF deadlock.  There's not much the program)8 W
+11280 48771 MT
+(can do about this...)SH
+14 /Times-Bold AF
+8280 52373 MT
+(1.11. How to Build C-Kermit for a Unix System)SH
+10 /Times-Roman AF
+8280 54491 MT
+(The C-Kermit files, as distributed from Columbia, all begin with the prefix "ck".  You should make a directory for)55 W
+8280 55687 MT
+(these files and then cd to it.  A makefile is provided to build C-Kermit for various Unix systems \050there)
+41 W( are separate)42 W
+8280 56883 MT
+(makefiles for VMS and the Macintosh\051.  As distributed, the makefile has the name)
+78 W( ")77 W
+/Courier SF
+(ckuker.mak)SH
+/Times-Roman SF
+(". You)
+404 W( should)77 W
+8280 58079 MT
+(rename it to ")37 W
+/Courier SF
+(makefile)SH
+/Times-Roman SF
+(" and then type)
+37 W( "make xxx", where xxx is the symbol for your system, for instance "make)38 W
+8280 59275 MT
+(bsd" to make)
+79 W( C-Kermit for 4.x BSD Unix.  The result will be a program called "wermit".  You should test this to)78 W
+8280 60471 MT
+(make sure it works; if it does, then you can rename it to "kermit" and)
+27 W( install it for general use.  See the makefile for)28 W
+8280 61667 MT
+(a list of the systems supported and the corresponding "make" arguments.)SH
+ES
+%%Page: 26 27
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 26)SH
+12 /Times-Bold AF
+31587 XM
+(Kermit User Guide: UNIX KERMIT 1.12)SH
+46800 50 6120 5709 UL
+14 SS 
+6120 8138 MT
+(1.12. Adapting C-Kermit to Other Systems)SH
+10 /Times-Roman AF
+6120 10256 MT
+(C-Kermit is designed for portability.  The level of portability is)
+23 W( indicated in parentheses after the module name: "C")22 W
+6120 11452 MT
+(means any system that has a C compiler that)
+113 W( conforms to the description in "The C Programming Language" by)114 W
+6120 12648 MT
+(Kernighan &)
+107 W( Ritchie \050Prentice-Hall, 1978\051.  "Cf" is like "C", but also requires "standard" features like printf and)106 W
+6120 13844 MT
+(fprintf, argument passing via argv/argc, and so on,)
+39 W( as described in Kernighan & Ritchie.  "Unix" means the module)40 W
+6120 15040 MT
+(should be useful under any Unix implementation; it requires features such as)
+19 W( fork\050\051 and pipes.  Anything else means)18 W
+6120 16236 MT
+(that the module is particular to the indicated system.  C-Kermit file names are of the form:)SH
+/Courier SF
+6120 18628 MT
+(ck<)SH
+/Times-Italic SF
+(system)SH
+/Courier SF
+(><)SH
+/Times-Italic SF
+(what)SH
+/Courier SF
+(>.<)SH
+/Times-Italic SF
+(type)SH
+/Courier SF
+(>)SH
+/Times-Roman SF
+6120 21020 MT
+(where the part before the dot is no more than 6 characters long, the part after)
+12 W( the dot no more than 3 characters long,)13 W
+6120 22216 MT
+(and:)SH
+/Courier SF
+6120 24608 MT
+(<)SH
+/Times-Italic SF
+(type)SH
+/Courier SF
+(>)SH
+/Times-Roman SF
+9236 XM
+(is the file type:)SH
+7120 26399 MT
+(c:)SH
+10120 XM
+(C language source)SH
+7120 27504 MT
+(h:)SH
+10120 XM
+(Header file for C language source)SH
+7120 28609 MT
+(w:)SH
+10120 XM
+(Wart preprocessor source, converted by Wart \050or Lex\051 to a C program)SH
+7120 29714 MT
+(nr:)SH
+10120 XM
+(Nroff/Troff text formatter source)SH
+7120 30819 MT
+(mss:)SH
+10120 XM
+(Scribe text formatter source)SH
+7120 31924 MT
+(doc:)SH
+10120 XM
+(Documentation)SH
+7120 33029 MT
+(ps:)SH
+10120 XM
+(Documentation, Postscript format)SH
+7120 34134 MT
+(hlp:)SH
+10120 XM
+(Help text)SH
+7120 35239 MT
+(bld:)SH
+10120 XM
+(Instructions for building the program)SH
+7120 36344 MT
+(bwr:)SH
+10120 XM
+(A "beware" file - list of known bugs)SH
+7120 37449 MT
+(upd:)SH
+10120 XM
+(Program update log)SH
+7120 38554 MT
+(mak:)SH
+10120 XM
+(Makefile)SH
+/Courier SF
+6120 40946 MT
+(<)SH
+/Times-Italic SF
+(system)SH
+/Courier SF
+(>)SH
+/Times-Roman SF
+10236 XM
+(is a single character to tell what system the file applies to:)SH
+7120 42737 MT
+(9:)SH
+10120 XM
+(OS-9)SH
+7120 43842 MT
+(a:)SH
+10120 XM
+(Descriptive material, documentation)SH
+7120 44947 MT
+(c:)SH
+10120 XM
+(All systems with C compilers)SH
+7120 46052 MT
+(d:)SH
+10120 XM
+(Data General)SH
+7120 47157 MT
+(h:)SH
+10120 XM
+(Harris computers \050reserved\051)SH
+7120 48262 MT
+(i:)SH
+10120 XM
+(Commodore Amiga \050Intuition\051)SH
+7120 49367 MT
+(m:)SH
+10120 XM
+(Macintosh)SH
+7120 50472 MT
+(o:)SH
+10120 XM
+(OS/2)SH
+7120 51577 MT
+(p:)SH
+10120 XM
+(IBM PC, PC-DOS \050reserved\051)SH
+7120 52682 MT
+(u:)SH
+10120 XM
+(Unix and Unix-like systems)SH
+7120 53787 MT
+(v:)SH
+10120 XM
+(VAX/VMS)SH
+7120 54892 MT
+(w:)SH
+10120 XM
+(Wart)SH
+/Courier SF
+6120 57284 MT
+(<)SH
+/Times-Italic SF
+(what)SH
+/Courier SF
+(>)SH
+/Times-Roman SF
+9515 XM
+(is mnemonic \050up to 3 characters\051 for what's in the file:)SH
+7120 59075 MT
+(aaa:)SH
+10120 XM
+(A "read-me" file, like this one)SH
+7120 60180 MT
+(cmd:)SH
+10120 XM
+(Command parsing)SH
+7120 61285 MT
+(con:)SH
+10120 XM
+(Connect command)SH
+7120 62390 MT
+(deb:)SH
+10120 XM
+(Debug/Transaction Log formats, Typedefs)SH
+7120 63495 MT
+(dia:)SH
+10120 XM
+(Modem/Dialer control)SH
+7120 64600 MT
+(fio:)SH
+10120 XM
+(System-depdendent File I/O)SH
+7120 65705 MT
+(fns:)SH
+10120 XM
+(Protocol support functions)SH
+7120 66810 MT
+(fn2:)SH
+10120 XM
+(More protocol support functions)SH
+7120 67915 MT
+(ker:)SH
+10120 XM
+(General C-Kermit definitions, information, documentation)SH
+7120 69020 MT
+(mai:)SH
+10120 XM
+(Main program)SH
+7120 70125 MT
+(pro:)SH
+10120 XM
+(Protocol)SH
+7120 71230 MT
+(scr:)SH
+10120 XM
+(Script command)SH
+ES
+%%Page: 27 28
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(1.12. Adapting C-Kermit to Other Systems)SH
+10 /Times-Italic AF
+51775 XM
+(Page 27)SH
+46800 50 8280 5709 UL
+/Times-Roman SF
+9280 7886 MT
+(tio:)SH
+12280 XM
+(System-dependent terminal i/o & control and interrupt handing)SH
+9280 8991 MT
+(usr:)SH
+12280 XM
+(User interface)SH
+9280 10096 MT
+(us2:)SH
+12280 XM
+(More user interface)SH
+9280 11201 MT
+(us3:)SH
+12280 XM
+(Still more user interface)SH
+8280 13593 MT
+(Examples:)SH
+/Courier SF
+8280 15384 MT
+(ckufio.c)SH
+/Times-Roman SF
+16280 XM
+(File i/o for Unix)SH
+/Courier SF
+8280 16489 MT
+(ckmtio.c)SH
+/Times-Roman SF
+16280 XM
+(Terminal i/o for Macintosh)SH
+/Courier SF
+8280 17594 MT
+(ckuker.mss)SH
+/Times-Roman SF
+16280 XM
+(Scribe source for for Kermit User Guide chapter)SH
+/Courier SF
+8280 18699 MT
+(ckuker.nr)SH
+/Times-Roman SF
+16280 XM
+(Nroff source file for Unix C-Kermit man page)SH
+8280 21091 MT
+(The following material discusses each of the C-Kermit modules briefly.)SH
+/Courier SF
+8280 22882 MT
+(ckcmai.c, ckcker.h, ckcdeb.h \050Cf\051)SH
+/Times-Roman SF
+(:)SH
+10280 23987 MT
+(This is the main program.  It contains)
+33 W( declarations for global variables and a small amount of code to initialize)34 W
+10280 25092 MT
+(some variables and invoke)
+249 W( the command parser.  In its distributed form, it assumes that command line)248 W
+10280 26197 MT
+(arguments are passed to it via argc and argv.  Since this portion of code is only several lines long,)
+39 W( it should be)40 W
+10280 27302 MT
+(easy to)
+66 W( replace for systems that have different styles of user interaction.  The header files define symbols and)65 W
+10280 28407 MT
+(macros used by the various modules of C-Kermit.)15 W
+/Courier SF
+30857 XM
+(ckcdeb.h)SH
+/Times-Roman SF
+35922 XM
+(is the only header file that is included by all the)16 W
+10280 29512 MT
+(C-Kermit modules, so it)
+201 W( contains not only the debug format definitions, but also any compiler-dependent)200 W
+10280 30617 MT
+(typedefs.)SH
+/Courier SF
+8280 32194 MT
+(ckwart.c \050Cf\051, ckcpro.w \050C\051)SH
+/Times-Roman SF
+(:)SH
+10280 33299 MT
+(The ckcpro module embodies the Kermit protocol state)
+50 W( table and the code to accomplish state switching.  It is)49 W
+10280 34404 MT
+(written in "wart", a language which may be)
+68 W( regarded as a subset of the Unix "lex" lexical analyzer generator.)69 W
+10280 35509 MT
+(Wart implements enough of lex to allow the ckprot)
+70 W( module to function.  Lex itself was not used because it is)69 W
+10280 36614 MT
+(proprietary. The)
+736 W( protocol module)243 W
+/Courier SF
+25326 XM
+(ckcpro.w)SH
+/Times-Roman SF
+30619 XM
+(is read by wart, and a system-independent C program is)243 W
+10280 37719 MT
+(produced. The)
+250 W( syntax of a Wart program is illustrated by)SH
+/Courier SF
+33498 XM
+(ckcpro.w)SH
+/Times-Roman SF
+(, and is described in)SH
+/Courier SF
+46519 XM
+(ckwart.doc)SH
+/Times-Roman SF
+(.)SH
+/Courier SF
+8280 39296 MT
+(ckcfns.c \050C\051)SH
+/Times-Roman SF
+(:)SH
+10280 40401 MT
+(The module contains all the Kermit protocol)
+55 W( support functions -- packet formation, encoding, decoding, block)56 W
+10280 41506 MT
+(check calculation, filename and data conversion, protocol parameter)
+180 W( negotiation, and high-level interaction)179 W
+10280 42611 MT
+(with the communication line and)
+48 W( file system.  To accommodate small systems, this module has been split into)49 W
+10280 43716 MT
+(two --)SH
+/Courier SF
+12946 XM
+(ckcfns.c)SH
+/Times-Roman SF
+17996 XM
+(and)SH
+/Courier SF
+19690 XM
+(ckcfn2.c)SH
+/Times-Roman SF
+(.)SH
+/Courier SF
+8280 45293 MT
+(ckutio.c)SH
+/Times-Roman SF
+(:)SH
+10280 46398 MT
+(This module contains the)
+5 W( system-dependent primitives for communication line i/o, timers, and interrupts for the)6 W
+10280 47503 MT
+(various versions of Unix.  Certain important variables are defined in this module, which determine whether)126 W
+10280 48608 MT
+(C-Kermit is by default remote or local, what the default communication device is, and)
+7 W( so forth.  The tio module)8 W
+10280 49713 MT
+(maintains its own private database of file descriptors and modes for)
+79 W( the console terminal and the file transfer)78 W
+10280 50818 MT
+(communication line so that other modules \050like ckcfns or the terminal connect module\051 need not be concerned)47 W
+10280 51923 MT
+(with them.  The variations among Unix implementations with respect to)
+228 W( terminal control and timers are)227 W
+10280 53028 MT
+(accommodated via conditional compilation.)SH
+/Courier SF
+8280 54605 MT
+(ckufio.c)SH
+/Times-Roman SF
+(:)SH
+10280 55710 MT
+(This module contains system-dependent primitives)
+267 W( for file i/o, wildcard \050meta character\051 expansion, file)266 W
+10280 56815 MT
+(existence and access checking, and system command execution for the)
+57 W( various versions of Unix.  It maintains)58 W
+10280 57920 MT
+(an internal database of i/o "channels" \050file pointers in this case\051 for the)
+57 W( files C-Kermit cares about -- the input)56 W
+10280 59025 MT
+(file \050the)
+70 W( file which is being sent\051, the output file \050the file being received\051, the various logs, the screen, and so)71 W
+10280 60130 MT
+(forth. This)
+588 W( module varies little among Unix)
+169 W( implementations except for the wildcard expansion code; the)168 W
+10280 61235 MT
+(directory structure of 4.2bsd Unix is different from that of other Unix systems.  Again, variation among Unix)67 W
+10280 62340 MT
+(systems is selected using conditional compilation.)SH
+/Courier SF
+8280 63917 MT
+(ckuusr.h, ckuusr.c, ckuus2.c, ckuus3.c)SH
+/Times-Roman SF
+31330 XM
+(\050Unix\051:)SH
+10280 65022 MT
+(This is the "user interface" for)
+123 W( C-Kermit.  It includes the command parser, the screen output functions, and)124 W
+10280 66127 MT
+(console input functions.  The command parser comes in)
+188 W( two pieces -- the traditional Unix command line)187 W
+10280 67232 MT
+(decoder \050which is quite small and compact\051, and the interactive keyword parser \050which is rather large\051.  This)82 W
+10280 68337 MT
+(module is fully replacable; its interface to the)
+5 W( other modules is very simple, and is explained at the beginning of)4 W
+10280 69442 MT
+(the source file.  The ckuusr module)
+60 W( also includes code to execute any commands directly which don't require)61 W
+10280 70547 MT
+(the Kermit protocol)
+19 W( -- local file management, etc.  The module is rated "Unix" because it makes occasional use)18 W
+10280 71652 MT
+(of the)SH
+/Courier SF
+12835 XM
+(system\050\051)SH
+/Times-Roman SF
+17885 XM
+(function.)SH
+ES
+%%Page: 28 29
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 28)SH
+12 /Times-Bold AF
+31587 XM
+(Kermit User Guide: UNIX KERMIT 1.12)SH
+46800 50 6120 5709 UL
+10 /Times-Roman AF
+8120 7886 MT
+(Note that while)SH
+/Courier SF
+14536 XM
+(ckuusr)SH
+/Times-Roman SF
+18386 XM
+(is logically one module, it has been split)
+SH( up into three C source files, plus a header file)1 W
+8120 8991 MT
+(for the symbols they share in common.  This is to accommodate small systems that cannot handle)
+20 W( big modules.)19 W
+/Courier SF
+8120 10096 MT
+(ckuusr.c)SH
+/Times-Roman SF
+13461 XM
+(has the command line and top-level interactive)
+291 W( command parser;)292 W
+/Courier SF
+42217 XM
+(ckuus2.c)SH
+/Times-Roman SF
+47559 XM
+(has the help)292 W
+8120 11201 MT
+(command and strings;)275 W
+/Courier SF
+18028 XM
+(ckuus3)SH
+/Times-Roman SF
+22153 XM
+(has the set and remote commands along with)
+275 W( the logging, screen, and)274 W
+8120 12306 MT
+("interrupt" functions.)SH
+/Courier SF
+6120 13883 MT
+(ckucmd.c, ckucmd.h)SH
+/Times-Roman SF
+17170 XM
+(\050Cf\051:)SH
+8120 14988 MT
+(This is an interactive command parsing package developed for C-Kermit.  It is written portably enough)
+77 W( to be)76 W
+8120 16093 MT
+(usable on any system that)
+24 W( has a C compiler that supports functions like printf.  The file name parsing functions)25 W
+8120 17198 MT
+(depend upon primitives defined in the fio module; if these primitives cannot be supplied for a certain)
+67 W( system,)66 W
+8120 18303 MT
+(then the filename parsing functions can be deleted,)
+78 W( and the package will still be useful for parsing keywords,)79 W
+8120 19408 MT
+(numbers, arbitrary text strings, and)
+242 W( so forth.  The style of interaction is the same as that found on the)241 W
+8120 20513 MT
+(DECSYSTEM-20.)SH
+/Courier SF
+6120 22090 MT
+(ckucon.c)SH
+/Times-Roman SF
+11170 XM
+(\050Unix\051:)SH
+8120 23195 MT
+(This is the connect module.)
+267 W( As)
+782 W( supplied, it should operate in any Unix environment, or any C-based)266 W
+8120 24300 MT
+(environment that provides)
+34 W( the fork\050\051 function.  The module requires access to global variables that specify line)35 W
+8120 25405 MT
+(speed, parity, duplex, flow control,)
+91 W( etc, and invokes functions from the tio module to accomplish the desired)90 W
+8120 26510 MT
+(settings and input/output, and functions from the fio module to perform session logging.)
+281 W( No)
+814 W( terminal)282 W
+8120 27615 MT
+(emulation is performed, but since standard i/o is used for the console,)
+113 W( this may be piped through a terminal)112 W
+8120 28720 MT
+(emulation filter.  The ckucon function may be entirely replaced, so long as the global settings are honored by)
+SH( its)1 W
+8120 29825 MT
+(replacement. PC)
+474 W( implementations of)
+112 W( C-Kermit may require the ck?con module to do screen control, escape)111 W
+8120 30930 MT
+(sequence interpretation, etc, and may also wish to write special code to get the best possible performance.)SH
+/Courier SF
+6120 32507 MT
+(ckudia.c)SH
+/Times-Roman SF
+11170 XM
+(\050Unix\051:)SH
+8120 33612 MT
+(This is the)
+211 W( dialer module.  As supplied, it handles Hayes, Ventel, Penril, Racal-Vadic, and several other)210 W
+8120 34717 MT
+(modems.)SH
+/Courier SF
+6120 36294 MT
+(ckuscr.c)SH
+/Times-Roman SF
+11170 XM
+(\050Unix\051:)SH
+8120 37399 MT
+(This is the login script module.  As supplied, it handles uucp-style scripts.)SH
+6120 39791 MT
+(Moving C-Kermit to a new system entails:)SH
+8120 41582 MT
+(1.)SH
+9120 XM
+(Creating a new)16 W
+/Courier SF
+15472 XM
+(ck?tio)SH
+/Times-Roman SF
+19338 XM
+(module in C, assembler, or whatever)
+16 W( language is most appropriate for system)15 W
+9120 42687 MT
+(programming on the new system.  If the system is Unix-like, then support may be)
+101 W( added within the)102 W
+/Courier SF
+9120 43792 MT
+(ckutio.c)SH
+/Times-Roman SF
+14170 XM
+(module itself using conditional compilation.)SH
+8120 46002 MT
+(2.)SH
+9120 XM
+(Creating a new)SH
+/Courier SF
+15424 XM
+(ck?fio)SH
+/Times-Roman SF
+19274 XM
+(module, as above.)SH
+8120 48212 MT
+(3.)SH
+9120 XM
+(If the system is not Unix-like, then a new)120 W
+/Courier SF
+26976 XM
+(ckuusr)SH
+/Times-Roman SF
+30945 XM
+(module may be required, as well as a different)119 W
+9120 49317 MT
+(invocation of it from)SH
+/Courier SF
+17675 XM
+(ckcmai)SH
+/Times-Roman SF
+(.)SH
+8120 51527 MT
+(4.)SH
+9120 XM
+(If the)
+171 W( distributed connect module doesn't work or performs poorly, then it may be replaced.  For)172 W
+9120 52632 MT
+(instance, interrupt-driven i/o may be required, especially if the system doesn't have forks.)SH
+6120 54423 MT
+(Those who favor a different style of user/program interaction from that)
+119 W( provided in)118 W
+/Courier SF
+41185 XM
+(ckuusr.c)SH
+/Times-Roman SF
+46353 XM
+(may replace the)118 W
+6120 55619 MT
+(entire module, for instance with one that)
+312 W( provides a mouse/window/icon environment, a menu/function-key)313 W
+6120 56815 MT
+(environment, etc.)SH
+6120 59207 MT
+(A few guidelines should be followed to maintain portability:)SH
+/Symbol SF
+7910 61112 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Keep variable and function names to 6 characters)
+91 W( or less.  Don't use identifiers that are distinguished)90 W
+8620 62217 MT
+(from one another only by alphabetic case.)SH
+/Symbol SF
+7910 64206 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Keep modules small.  For instance, on a PDP-11 it is necessary to keep the code)
+165 W( segment of each)166 W
+8620 65311 MT
+(module below 8K)
+63 W( in order to allow the segment mapping to occur which is necessary to run programs)62 W
+8620 66416 MT
+(larger than 64K on a non-I-and-D-space machine.)SH
+/Symbol SF
+7910 68405 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Keep strings short; many compilers have restrictive maximum lengths; 128 is the smallest)
+115 W( maximum)116 W
+8620 69510 MT
+(string constant length we've encountered so far.)SH
+/Symbol SF
+7910 71499 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Keep \050f,s\051printf formats short.  If these exceed some compiler dependent maximum \050say,)
+44 W( 128\051 memory)43 W
+ES
+%%Page: 29 30
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(C-Kermit)SH
+10 /Times-Italic AF
+51775 XM
+(Page 29)SH
+46800 50 8280 5709 UL
+/Times-Roman SF
+10780 7886 MT
+(will be overwritten and the program will probably core dump.)SH
+/Symbol SF
+10070 9875 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Do not introduce system dependencies into)SH
+/Courier SF
+28278 XM
+(ckcpro.w)SH
+/Times-Roman SF
+33328 XM
+(or)SH
+/Courier SF
+34411 XM
+(ckcfn*.c)SH
+/Times-Roman SF
+(.)SH
+/Symbol SF
+10070 11864 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(If a variable is a character, declare as CHAR, not int, to prevent the)
+111 W( various sign extension and byte)112 W
+10780 12969 MT
+(swapping foulups that occur when characters are placed in integer variables.)SH
+/Symbol SF
+10070 14958 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Remember that different systems may use different length words for different things.  Don't assume an)39 W
+10780 16063 MT
+(integer can be used as a pointer, etc.)SH
+/Symbol SF
+10070 18052 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Don't declare static functions; these can wreak havoc with systems that do segment mapping.)SH
+/Symbol SF
+10070 20041 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(In conditional compilations expressions, use)261 W
+/Courier SF
+30084 XM
+(#ifdef)SH
+/Times-Roman SF
+34195 XM
+(and)SH
+/Courier SF
+36150 XM
+(#ifndef)SH
+/Times-Roman SF
+40861 XM
+(and not)261 W
+/Courier SF
+44605 XM
+(#if)SH
+/Times-Roman SF
+(, which is not)262 W
+10780 21146 MT
+(supported by some compilers.  Also, don't use any operators in these expressions; many compilers)
+37 W( will)36 W
+10780 22251 MT
+(fail to understand expressions)
+17 W( like)18 W
+/Courier SF
+24782 XM
+(#ifdef FOO | BAR)18 W
+/Times-Roman SF
+(. Also,)
+286 W( don't put trailing tokens on)18 W
+/Courier SF
+48858 XM
+(#else)SH
+/Times-Roman SF
+('s)SH
+10780 23356 MT
+(or)SH
+/Courier SF
+11863 XM
+(#endif)SH
+/Times-Roman SF
+('s \050use)SH
+/Courier SF
+18351 XM
+(/*)SH
+/Times-Roman SF
+19801 XM
+(comments)SH
+/Courier SF
+24162 XM
+(*/)SH
+/Times-Roman SF
+(\051.)SH
+/Symbol SF
+10070 25345 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Don't define multiline macros.)SH
+8280 27136 MT
+(In general, remember that this program will have to be compilable by old compilers and runnable on small systems.)SH
+ES
+%%Page: 30 31
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 30)SH
+12 /Times-Bold AF
+43052 XM
+(Kermit User Guide)SH
+46800 50 6120 5709 UL
+ES
+%%Page: 31 32
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(C-Kermit)SH
+10 /Times-Italic AF
+51775 XM
+(Page 31)SH
+46800 50 8280 5709 UL
+16 /Times-Bold AF
+8280 8272 MT
+(Index)SH
+8 /Times-Roman AF
+12280 10429 MT
+(Autodialer 14,)
+400 W( 18)SH
+12280 12277 MT
+(Background 8,)
+400 W( 11)SH
+12280 14125 MT
+(C-Kermit 1)400 W
+12280 15973 MT
+(Dialout Modem)
+SH( 18)400 W
+12280 17821 MT
+(Emergency Exit)
+SH( 3)400 W
+12280 19669 MT
+(File Warning)
+SH( 3)400 W
+12280 21517 MT
+(Hayes Modem)
+SH( 20)400 W
+12280 23365 MT
+(IBM 17)400 W
+12280 25213 MT
+(Modem 18)400 W
+12280 27061 MT
+(TELENET 21)400 W
+12280 28909 MT
+(UNIX Kermit)
+SH( 1)400 W
+12280 30757 MT
+(Warning 3)400 W
+ES
+%%Page: 32 33
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 32)SH
+12 /Times-Bold AF
+43052 XM
+(Kermit User Guide)SH
+46800 50 6120 5709 UL
+ES
+%%Page: i 34
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(C-Kermit)SH
+10 /Times-Italic AF
+52497 XM
+(Page i)SH
+46800 50 8280 5709 UL
+16 /Times-Bold AF
+25591 8272 MT
+(Table of Contents)SH
+12 SS 
+8280 10684 MT
+(1. UNIX KERMIT)SH
+54480 XM
+(1)SH
+10 SS 
+9780 12074 MT
+(1.1. The Unix File System)SH
+54580 XM
+(2)SH
+9780 13154 MT
+(1.2. File Transfer)SH
+54580 XM
+(2)SH
+9780 14234 MT
+(1.3. Command Line Operation)SH
+54580 XM
+(3)SH
+9780 15314 MT
+(1.4. Interactive Operation)SH
+54580 XM
+(7)SH
+9780 16394 MT
+(1.5. UUCP Lock Files)SH
+54080 XM
+(22)SH
+9780 17474 MT
+(1.6. C-Kermit under Berkeley or System III/V Unix:)SH
+54080 XM
+(23)SH
+9780 18554 MT
+(1.7. C-Kermit on the DEC Pro-3xx with Pro/Venix Version 1)SH
+54080 XM
+(24)SH
+9780 19634 MT
+(1.8. C-Kermit under VAX/VMS)SH
+54080 XM
+(24)SH
+9780 20714 MT
+(1.9. C-Kermit on the Macintosh and other Systems)SH
+54080 XM
+(24)SH
+9780 21794 MT
+(1.10. C-Kermit Restrictions and Known Bugs)SH
+54080 XM
+(24)SH
+9780 22874 MT
+(1.11. How to Build C-Kermit for a Unix System)SH
+54080 XM
+(25)SH
+9780 23954 MT
+(1.12. Adapting C-Kermit to Other Systems)SH
+54080 XM
+(26)SH
+12 SS 
+8280 25478 MT
+(Index)SH
+53880 XM
+(31)SH
+ES
+%%Trailer
+%%Pages: 34 
+%%DocumentFonts: Times-Roman Times-Bold Times-Italic Courier Symbol Courier-Oblique

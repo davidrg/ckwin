@@ -1,0 +1,8 @@
+CKMMAK.HQX is a Makefile for MacKermit.  It needs to be converted
+by BinHex into a regular document.
+
+To build MacKermit, use this Makefile with MPW C.  All the files you
+need are here, except for environs.h and glueenvirons.a.0 from APDA.
+These are distributed by Apple for free on AppleLink.  These are how
+MacKermit tells that it's on an SE or a Mac II, and what version of
+System is running.

@@ -1,0 +1,63 @@
+Date: Thu 26 May 88 16:42:08-EDT
+From: Christine Gianone <SY.CHRISTINE@CU20B.COLUMBIA.EDU>
+Subject: Announcing Macintosh Kermit Version 0.9(40)
+To: Info-Kermit@CU20B.COLUMBIA.EDU, Info-Mac@SUMEX-AIM.STANFORD.EDU
+Keywords: MacKermit 0.9(40)
+
+This is to announce Macintosh Kermit 0.9(40), by Paul Placeway of
+Ohio State University and Matthias Aebi of ECOFIN Research and Consulting, Ltd,
+Zuerich.  MacKermit 0.9(40) runs on all Macs except the 128K original.  If you
+have a 128K Mac, you should keep version 0.8(34), the last formal release.
+
+As of 0.9, MacKermit has been translated into Apple MPW C, so that it can be
+edited, compiled, and built on the Macintosh itself.  This translation was
+based on work by Jim Noble of Planning Research Corporation, who converted
+MacKermit 0.8(34) from SUMACC C (which had to be cross-compiled on a UNIX
+system) to Megamax C.  Matthias converted Jim's version to MPW C, and he also
+added many of the new features listed below.  After that, Paul Placeway
+integrated the program with version 4E of C-Kermit and added additional new
+features, also shown below.
+
+ - Long packet support
+ - The cursor with open desk accessories now works correctly
+ - New program icon
+ - New settings files are no longer TEXT
+ - Settings can now be written back to an already existing settings file
+ - Key redefinition function built in to Kermit, no more CKMKEY
+ - Server mode directory listing feature
+ - Multifile (folder) send
+ - Server "Delete" file command
+ - Server "Space" command
+ - Get whole folder content from the server with filename ":"
+ - Support of menu command keys (key macros)
+ - Terminal settings dialog separated from communication settings
+ - Non-transparent terminal mode
+ - Display of statistics and protocol version to "About Kermit" dialog
+ - Parity problems fixed
+ - More efficient file transfer in many cases, especially when parity in use
+ - Session logging (screen capture)
+ - Transaction logging
+ - Multifinder support
+ - Additions to the VT102 emulator (smooth scrolling, etc)
+ - Rearrangement of menus and displays
+ - Program no longer hangs if remote response window gets too full
+ - Program now works correctly on 64K ROM machines
+ - A new manual
+
+The new files are among those in KER:CK*.* on CU20B.COLUMBIA.EDU, available
+via anonymous FTP, and on BITNET, as CK* * from KERMSRV at CUVMA.  In
+particular:
+
+ CKMKER.HQX is the MacKermit application, in BinHex Version 4 format
+ CKMKER.DOC is the new Kermit User Guide chapter for MacKermit
+ CKMKER.MSS is the Scribe source for the manual chapter
+
+If you want sources, the files you need (using Unix notation for brevity) are:
+CK[CMU]*.[CHRW], that is, all files whose names start with CK, followed by C,
+M, or U, and then some more characters, with a filetype of C, H, R, or W.  You
+also need the file CKMMAK.HQX, which is the "makefile" in BinHex v4 format.
+
+Thanks to all the Info-Kermit readers who have been beta-testing different
+versions of this program since last October.  And many thanks to Paul and
+Matthias for putting this release together and making it available.  Please
+report any problems to Info-Kermit-Request@CU20B.

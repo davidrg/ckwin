@@ -1,0 +1,148 @@
+Date: Mon 22 Feb 88 00:28:49-PST
+From: Bob Larson <BLARSON@ECLA.USC.EDU>
+Subject: Os9/68k C-Kermit 4E Bugs & Problems
+
+Known problems and limitations of ckermit 4E(070) for os9/68k
+
+The alarm faking routines for the script and dial facilities is
+incomplete.  I have not had problems with them in practice.
+
+Timouts of 8 hours or greater are not supported.
+
+I've noticed that a timeout occurs after recieving about 500 bytes via
+a get command.
+
+-------
+
+One other note about the microcom modem: the single-character enter
+command mode should be disabled (or at least changed from ^A).  Use
+the SE0 command to do this.
+
+More os9/68k C-KERMIT Bugs and Fixes.....
+
+[Why do bugs always show themselfs at inconvenient moments?]
+
+The midnight timeout problem was much worse than I expected, and I found
+a better solution to the problem.  (Timeouts are now limited to 8 hours or
+less.)
+
+The parity stripping code had been moved to the tio code, and I didn't notice.
+My new version now does parity stripping as required.
+
+I made a couple of mistakes in the microcom dialer which caused it to fail
+in extra long responce mode.
+
+The first two arguments of memcpy should be cast to (char *).  I realize a
+#define will be needed on systems that don't have memcpy.  (4.3bsd has bcopy
+which just has the first two arguments reversed.)
+
+I fixed a bug in ckudia.c of a possible array out of bounds assignement.
+
+Bug and fix for osk C-kermit:
+
+Symptom: set file commands cause address errors
+
+Fix: remove the "int z;" declaration from the switch statement
+following case XYFILE: in ckuus3.c.  This is apparently a compiler
+bug.  (z is declared at the top of the routine and a separate
+variable is not needed.)
+
+Some of the variables in cmcmai are declared without type (other than
+the unspecified default int.)  Shouldn't the ; following the cmask and
+fmask declarations be changed to , to match the style of the rest of the
+file?
+
+-------
+
+22-Mar-88 11:02:34-EST,1460;000000000001
+Mail-From: SY.CHRISTINE created at 22-Mar-88 11:02:29
+Date: Tue 22 Mar 88 11:02:29-EST
+From: Christine M Gianone <SY.CHRISTINE@CU20B.COLUMBIA.EDU>
+Subject: [Bob Larson <BLARSON@ecla.usc.edu>:
+   os9/68k ckermit timeout problem understood]
+To: sy.fdc@CU20B.COLUMBIA.EDU
+Message-ID: <12384382062.192.SY.CHRISTINE@CU20B.COLUMBIA.EDU>
+
+FYI.....
+                ---------------
+Date: Mon 21 Mar 88 22:05:26-PST
+From: Bob Larson <BLARSON@ecla.usc.edu>
+Subject: os9/68k ckermit timeout problem understood
+To: info-kermit@cu20b.columbia.edu
+Message-Id: <12384273372.37.BLARSON@ECLA.USC.EDU>
+
+[It seems that cu20b.columbia.edu is no longer in our host table.
+Did it get dropped from the sri-nic table or is it just to many hosts
+for our tops-20 systems fixed table again?]
+
+After watching numerous file transfers, I think a finaly understand the
+timeouts I mentioned in the ck9ker.bwr file.  My hard disk is very fragmented,
+and apperently it takes long enough to allocate another extent to a file
+to exceed the default 7 second timeout.  As the fragmentation gets worse,
+the extents get smaller making the problem occur more often.  Fix: clean
+up the disk, get a faster disk, or increase the timeout.
+
+------------------------------
+
+Date: Sun 6 Nov 88 17:11:29-PST
+From: Bob Larson <BLARSON@ecla.usc.edu>
+Subject: Bug in os9/68k C-Kermit
+
+Here is a bug fix for os9/68k ckermit.  It is vital on systems
+where address 0 is protected from reading, and should be applied
+on all systems.
+
+*** ck9tio.c.orig
+--- ck9tio.c
+**************
+*** 221,226
+  	if(_gs_devn(2, myttystr+1) < 0) return -1;
+      } else strcpy(myttystr+1, cp);
+      strcpy(dfttystr, myttystr);
+      return 0;
+  }
+   
+--- 221,227 -----
+  	if(_gs_devn(2, myttystr+1) < 0) return -1;
+      } else strcpy(myttystr+1, cp);
+      strcpy(dfttystr, myttystr);
++     dftty = &dfttystr[0];
+      return 0;
+  }
+   
+*** ckcmai.c.orig
+--- ckcmai.c
+**************
+*** 290,295
+      xargc = argc;                       /* Make global copies of argc */
+      xargv = argv;                       /* ...and argv. */
+      sstate = 0;                         /* No default start state. */
+      strcpy(ttname,dftty);               /* Set up default tty name. */
+      local = dfloc;                      /* whether it's local or remote. */
+      parity = dfprty;                    /* Set initial parity, */
+--- 290,296 -----
+      xargc = argc;                       /* Make global copies of argc */
+      xargv = argv;                       /* ...and argv. */
+      sstate = 0;                         /* No default start state. */
++     if (sysinit() < 0) doexit(BAD_EXIT); /* And system-dependent things. */
+      strcpy(ttname,dftty);               /* Set up default tty name. */
+      local = dfloc;                      /* whether it's local or remote. */
+      parity = dfprty;                    /* Set initial parity, */
+**************
+*** 294,300
+      local = dfloc;                      /* whether it's local or remote. */
+      parity = dfprty;                    /* Set initial parity, */
+      flow = dfflow;                      /* and flow control. */
+-     if (sysinit() < 0) doexit(BAD_EXIT); /* And system-dependent things. */
+  
+  /*** attempt to take ini file before doing command line ***/
+  
+--- 295,300 -----
+      local = dfloc;                      /* whether it's local or remote. */
+      parity = dfprty;                    /* Set initial parity, */
+      flow = dfflow;                      /* and flow control. */
+  
+  /*** attempt to take ini file before doing command line ***/
+  
+------------------------------
+

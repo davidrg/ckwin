@@ -1,0 +1,65 @@
+
+
+
+     UUENCODE(1)       UNIX 5.0(1June1980)   UUENCODE(1)
+
+
+     NAME
+          uuencode,uudecode - encode/decode a binary file for
+          transmission via mail
+
+     SYNOPSIS
+          uuencode [ source ] remotedest | mmmmaaaaiiiillll sys1!sys2!..!decode
+          uudecode [ file ]
+
+     DESCRIPTION
+          Uuencode and uudecode are used to send a binary file via
+          uucp (or other) mail.  This combination can be used over
+          indirect mail links even when uusend(1C) is not available.
+
+          Uuencode takes the named source file (default standard
+          input) and produces an encoded version on the standard
+          output.  The encoding uses only printing ASCII characters,
+          and includes the mode of the file and the remotedest for
+          recreation on the remote system.
+
+          Uudecode reads an encoded file, strips off any leading and
+          trailing lines added by mailers, and recreates the original
+          file with the specified mode and name.
+
+          The intent is that all mail to the user ``decode'' should be
+          filtered through the uudecode program.  This way the file is
+          created automatically without human intervention.  This is
+          possible on the uucp network by either using sendmail or by
+          making rmail be a link to Mail instead of mail. In each
+          case, an alias must be created in a master file to get the
+          automatic invocation of uudecode.
+
+          If these facilities are not available, the file can be sent
+          to a user on the remote machine who can uudecode it
+          manually.
+
+          The encode file has an ordinary text form and can be edited
+          by any text editor to change the mode or remote name.
+
+     SEE ALSO
+          uuencode(5), uusend(1C), uucp(1C), uux(1C), mail(1)
+
+     AUTHOR
+          Mark Horton
+
+     BUGS
+          The file is expanded by 35% (3 bytes become 4 plus control
+          information) causing it to take longer to transmit.
+
+          The user on the remote system who is invoking uudecode
+          (often uucp) must have write permission on the specified
+          file.
+
+
+
+
+     Page 1                                         (printed 10/19/86)
+
+
+

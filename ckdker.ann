@@ -1,0 +1,52 @@
+The new Kermit for the Data General computers is ready for initial release. 
+This Kermit is the Unix Kermit version 4D(061) with DG-specific modules for
+file I/O (ckdfio.c), terminal I/O (ckdtio.c), and the connect command
+(ckdcon.c).  This version supports all the features that Unix Kermit provides,
+except for the DIAL command and the SCRIPT command.  The program was developed
+under AOS/VS rev 6 and rev 7.54, and with recompilation it may work on other
+Data General systems, such as AOS/RT32 and MV/UX.  Version 3.21 of the C
+compiler was used to develop the source. 
+
+
+In addition to the usual features of C-Kermit, some additional features are
+available for the DG Kermit. 
+
+    * Data General wild cards and special symbols are supported when
+      referencing files, including the following set: # + - * ^ = @
+      
+    * Fully qualified pathnames can be used to get or send files.  
+      Sub-directories are entered if the # character is used.
+
+    * DG and non-DG terminals are supported, so that character deletes occur
+      correctly on-screen for any terminal device.
+      
+    * Batch mode operation is supported.
+    
+    * I/O redirection of the "xeq" command is supported.
+    
+    * Baud rates up to 38400 are supported, and other additional baud rates
+      are supported (enter "help set baud" at the Kermit prompt).
+      
+    * Terminal emulation on a dial-out line from the DG is very fast, and has
+      been tested up to 19200.
+
+    * The initialization file, .kermrc, is executed even when Kermit is used
+      in command line mode.
+      
+    * The local space command accepts a directory parameter.
+    
+
+Documentation is also supplied (ckdker.doc), which is adapted to the Data
+General from the regular Unik Kermit document (ckuker.doc).  Installation
+guidelines are included (ckdker.bld), and cli macros assist in compiling and
+installing the source code.  A "beware" file lists all known bugs and quirks
+(ckdker.bwr). 
+
+
+                            Phil Julian
+                            SAS Institute, Inc.
+                            Box 8000
+                            Cary NC 27512-8000
+                             
+                            BITNET:     CCPHIL@TUCC
+                            Usenet:     rti!sas!julian

@@ -1,0 +1,71 @@
+                       Announcing C-Kermit for OS/2
+
+A version of C-Kermit for OS/2 is now available for beta testing.  Any bugs,
+suggestions or complaints should be sent to C.Adie@uk.ac.edinburgh.  This
+first version is 1.0b - the 'b' indicates it is a pre-release version.
+
+C-Kermit runs in OS/2 protected mode, so you can transfer files in the
+background while doing something else in the foreground.  If you do a
+lot of file transfer, it may be worthwhile upgrading to OS/2 for this
+reason alone. 
+
+A full VT100 emulator is incorporated, with an extended display buffer
+like MS-Kermit.
+
+I've used the letter 'O' as the system-specific identifier for OS/2, so
+the release files are named as follows:
+      CKOKER.EXE      The executable program
+      CKOKER.DOC      Documentation
+The sources for the program and the Scribe source for the documentation
+will be made available when beta testing is over.
+
+C-Kermit for OS/2 runs on OS/2 Standard edition 1.0 (or on 1.1 in a
+Presentation Manager window).  It makes use of the COM01.SYS (or perhaps
+COM.SYS in some versions of OS/2) device driver, which must be loaded in
+the CONFIG.SYS file.  There are believed to be no major bugs, but the
+following minor problems exist:
+
+*  Stop bits: There is currently no  mechanism for altering the number of  stop
+   bits, which is fixed at 1.
+*  Server breakout:  There is  no way  of stopping  server operation  from  the
+   keyboard, short of Control-Break.
+*  Dial: The DIAL command has not  been tested.  It is impossible to  terminate
+   the dialling process short of pressing Control-Break.
+*  Multiple copies: Multiple  copies of Kermit  accessing multiple comms  ports
+   simultaneously has not been tested.
+*  Multiple send from command line:  At present, a wildcard file  specification
+   cannot be given as the argument to the '-s' command line option.  Thus, only
+   a single file can be sent using a command line.
+*  Half-duplex terminal emulation does not work correctly.
+
+There are also some further minor bugs or areas for improvement which are
+detailed at the end of the documentation.
+
+Chris Adie
+5 Aug 88
+
+------------------------------
+
+Date: Wed, 15 Mar 89 13:34 CST
+From: C.J.Adie@edinburgh.ac.uk
+Via: LOWEY%SASK.USask.CA@cuvmb.cc.columbia.edu
+Subject: OS/2 kermit, here it is!!!
+
+This is to announce a new version of C-Kermit for OS/2.  Version 1.0p
+fixes a number of bugs in the VT100 terminal emulator, which is now
+upgraded to a VT102.  Many thanks to all those who commented on the
+previous releases, and particularly to Kevin Lowey at the University of
+Saskatchewan and to Peter White of the University of New Brunswick for
+their advice on the emulation.  The documentation is also updated, to
+explain better the interaction of Kermit with the OS/2 MODE utility.
+
+If no bugs are reported to me by Monday 1st May 1989, this version
+will become the first full (ie. non-beta-test) release of C-Kermit for
+OS/2, at which point the version number will be changed to 1.0 and the
+sources will be released.
+
+Please send bug reports to "C.J.Adie@edinburgh.ac.uk"
+
+Chris Adie
+
+------------------------------

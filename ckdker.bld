@@ -1,0 +1,232 @@
+THE DEVELOPMENT ENVIRONMENT:
+----------------------------
+
+My initial development environment forms a bias in the Kermit program, so I
+will describe that environment.  I started developmenmt with version 3.20 of
+C, under Rev 6 of AOS/VS.  I switched to version 3.21 of C under Rev 7.54 of
+AOS/VS, when I was midway during development.  I would expect that Kermit
+would compile and run under C 3.20 or 3.21, and run under Rev 6 or 7 of
+AOS/VS.  I do not have or even use any superuser or superprocess privelages. 
+The 'BE' command was disallowed, but I could create SON processes. 
+ 
+The external communications interface is an IAC, which can accept commands
+like CHAR (or ?SECHR) to configure itself. 
+
+I used both a Data General D460 terminal, and a Tektronics TEK 4105 terminal
+in ANSI mode.  The computer host is a DG MV/8000 with 8 meg or so of memory. 
+I made remote connections through an IAC line, which was connected to an
+Applitek NI/10T.  The Applitek let me connect to a VAX 8700 with VMS Kermit, a
+Prime 9950 with Kermit-R19, or a Micom port selector.  From the Micom, I
+connected to IBM hosts with CMS and TSO Kermits, Apollo hosts with C-Kermit,
+and an HP host with Unix C-Kermit.  I used Apollo C-Kermit and Commodore Amiga
+C-Kermit to verify the functionality and performance of the DG remote Kermit. 
+
+
+INSTALLATION OF KERMIT FROM THE C SOURCES:
+------------------------------------------
+
+C-Kermit can be installed from the C sources or from the binary encoded file. 
+See the next section for instructions on installing from the binary encoded
+file. 
+
+To install C-Kermit on the Data General computers, you will need the C
+compiler to compile the sources.  You may also need the minimum requirements
+listed above for compiler and OS versions. 
+
+The following CLI files should be either in your working directory or in your
+search path, namely:
+
+     ckdcc.cli           Compiles one Kermit source module
+     ckdlnk.cli          Links together the Kermit object modules
+     ckdmak.cli          Creates ckcpro.c; compiles and links Kermit
+     ckdsrc.lis          List of Kermit source module names
+     
+All object modules, error listings, and program files will be placed in the
+working directory.  The Kermit sources, as well as ckcpro.w, must be either in
+the working directory or in the search path.  The ckdcc.cli macro will create
+at least two files for each Kermit source file:
+
+     filename.er         List of errors and compilation statistics
+     filename.ob         Object module
+     
+The ckdmak.cli macro will create the following files, in addition to the
+various .OB and .ER files:
+
+     kermit.pr           The Kermit program
+     kermit.er           Link error messages and statistics
+     kermit.st           Kermit symbol table file
+
+A sample Kermit CLI is included to execute the program: ckdker.cli .  Or you
+may enter: xeq kermit . 
+
+You may add any other global compilation and link switchs after any of the CLI
+macros, in case you want to produce listings or debug the modules with SWAT. 
+
+
+INSTALLATION OF KERMIT FROM THE BINARY ENCODED FILES:
+-----------------------------------------------------
+
+Quick summary of what to do:
+
+    rename ckdecod.c uudecode.c
+    cc/link uudecode
+    x uudecode ckdker.enc
+
+creates the program file kermit.pr, which is the Kermit program for the DG.
+
+For cases where ckdker.enc must be transferred over a communication line, I
+would recommend used a squeezed version of ckdker.enc:
+
+    rename ckdcomp.c compress.c
+    cc/link compress
+    x compress/i=ckdker.enc.Z/o=ckdker.enc -d
+    rename ckdecod.c uudecode.c
+    cc/link uudecode 
+    x uudecode ckdker.enc
+
+The compress program is compatible with Unix versions, and I have used it to
+send files from my Amiga to be uncompressed on the DG.  At 1200 baud, it is
+certainly worth the effort.  The compress program will both squeeze and
+unsqueeze files, and it does run quickly.  Two CLI's on the DG, compress.cli
+and uncompress.cli, make this easy.  If you do send compressed files, make
+sure to tell Kermit on each end to "set file type binary".  See compress.man
+for more information and options.  The standard CP/M and Unix sq and usq
+programs are also available on the DG, in case you happen to use those hosts. 
+The file, ckdker.enc.SQ, was compress by using sq, and can be unsqueezed by
+entering: 
+
+    x usq ckdker.enc.SQ
+    
+See sq.man for more details.  (NOTE: the files are in a sub-directory sq.usq
+on my tape, and I hope these files can be distributed with the Kermit source. 
+I plan to return the squeeze and compress sources back to the Unix authors, as
+I have done with Kermit, as soon as I find out where to send them.)
+
+The program file, kermit.pr, has been encoded from a binary into an ASCII
+file, so that the program image could be faithfully transmitted over any
+communications link.  In order to decode the file into a program, you will
+need to compile the uudecode.c program, by the following command:
+
+    rename ckdecod.c uudecode.c
+    cc/link uudecode
+
+I have chosen to use uudecode, instead of the standard Kermit boo-file format
+for several reasons.  First, I had trouble adapting the msbmkb.c and msbpct.c
+programs -- my attempts are in ckdkmb.c and ckdpct.c and they do not work. 
+Second, the boo-file programs were complex and would be hard to translate into
+another language.  The uudecode.c program is very simple: two routines do all
+the decoding of the bytes, the file in input as a standard text file, and the
+program is output with record type $RTUN (undefined) and file type of $FUNX
+(Unix file or program with type = UNX). 
+
+Once the uudecode program is compiled, enter
+
+    x uudecode ckdker.enc
+
+where ckdker.enc is the encoded binary program file.  uudecode is not very
+swift, but I adapted the program as a seldom-used but effective utility.
+
+If you want to use uuencode to make an encoded file, then compile the program
+with this command:
+
+    rename ckdenco.c uuencode.c
+    cc/link uuencode
+
+and run it with this command:
+
+    x uuencode/o=encoded_file  input_file  name_of_remote_file
+
+The "encoded_file" will be overwritten by this command, and this is the name
+of the output encoded file.  "input_file" is the file to encode, and
+"name_of_remote_file" is the name that the binary file will have when it is
+decoded. 
+
+The uuencode and uudecode programs preserve Data General record type and file
+types.  Other systems will not preserve the correct record and file types, but
+you can edit the encoded file to force the kind of file you want.  The first
+line contains:
+
+begin 05 kermit.pr 0127
+
+The word "begin" has to be there.  "05" specified the $RTUN record-type. 
+"kermit.pr" is the output name for the decoded file.  "127" is the octal
+number for the $FUNX file type.  You may alter any of the variable parameters
+according to naming conventions and the symbols defined in any of the
+DG system include files for "paru", for example:
+
+    paru.32.sr          /* Assembler version */
+    paru.h              /* C version */
+    pl1paru.in          /* PL/1 version */
+
+
+SETTING UP AN EXTERNAL LINE FOR USE BY KERMIT:
+----------------------------------------------
+
+Any external line must be disabled, or else Kermit will not be able to open
+the line (you will get a "Device already in use" error).  PID 2 must disable
+the line, usually when UP.CLI runs at system startup.  The external line must
+be sysgenned for CHAR/MOD .  Since the line is disabled, it can only be used
+as an outgoing line from the DG.  The baud rate at sysgen is irrevelant, since
+the device can be configured by Kermit, once the line is disabled.  Note that
+a CHAR/MOD cannot be issued by a program to configure the line. 
+
+
+USING LOCAL LINES FOR KERMIT:
+-----------------------------
+
+IAC's or intelligent device interfaces should be used for local lines as well
+as external lines, since the device will be configured by Kermit.  The device
+is returned to its original configuration when Kermit ends.  I assume that the
+CHAR command is possible on any line. 
+
+If you are using a non-DG device, as I often do, then issue this command:
+
+     CHAR/ON/NAS
+     
+Then, Kermit will issue the proper on-screen delete characters.
+
+If you are going to use the Kermit terminal emulator at higher baud rates, you
+may need to set your interactive console for xon/xoff protocol.  Issue this
+command: CHAR/ON/XIFC/XOFC.  This may help prevent loss of characters.  On a
+TEK 4105, you could change your terminal setup to: FLAG IN/OUT.  The TEK
+handles its xon/xoff protocol inside its firmware, so there is no need to set
+CHAR/ON/XIFC/XOFC.   Handling the protocol by the terminal is preferable.
+
+
+OTHER NOTES AND DEPENDENCIES:
+-----------------------------
+
+Kermit always reads and writes from @OUTPUT as the local device, since it is
+available to interactive logins and batch logins. 
+
+
+INSTALLING ON SYSTEMS OTHER THAN AOS/VS:
+----------------------------------------
+
+Installing on AOS/DVS may require no changes, but I am only guessing. 
+AOS/RT32 may require no changes, or else just recompilation and relinking. 
+MV/UX may require some changes or may be inaccurate in some of the file names,
+I assumed that names should look like they do in AOS/VS.  But, MV/UX
+can run the sys_xxx() routines, and it should also need little, if any,
+change. 
+
+For DG/UX, the sys_xxx() routines are not available, and some changes will
+have to be entered.  I left all the UNIX stuff in the source as #ifdef's, so
+they could be added back in as needed for DG/UX. 
+
+I only have access to AOS/VS.  But I have attempted to include other hosts by
+choosing the broadest #ifdef symbol.  So, I have used "#ifdef datageneral"
+instead of "#ifdef aosvs".
+
+
+
+Phil Julian
+
+SAS Institute, Inc.
+Box 8000
+SAS Circle
+Cary NC 27512-8000
+
+BITNET:  CCPHIL@TUCC
+Usenet:  rti!sas!julian
+Phone:   919-467-8000

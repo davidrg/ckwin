@@ -1,0 +1,3 @@
+qb/m/notify%/%
+xeq kermit -b 9600 -l @con11 -g ckuker.doc %-%
+)

@@ -1,0 +1,34 @@
+This is to announce a new release of C-Kermit.  It is only a minor release,
+and incorporates no new functionality.  The only intention is to fix the
+more serious bugs.  Future releases will involve more serious reworking of
+the code to improve organization and performance, and to add missing features,
+like extended packets, sliding windows, and attribute packets.
+
+The new release is called 4C(058), for UNIX and VMS.  The fixes that
+apply to all (or most) systems supported by C-Kermit include:
+. Bug with set send/receive padding fixed.
+. Bugs that interfered with wildcard sends fixed.
+. Bug that mixed up send and receive packet terminators fixed.
+. Bug with single-file cancellation (^F or ^X) fixed.
+. NAK for next packet now handled correctly as equivalent to ACK for current.
+. NAK is no longer immediately sent after RECEIVE or SERVER command given.
+. Long bursts of incoming data no longer crash the program.
+. Longer sleep done at end of file transfer to prevent other side from hanging.
+. ^S removed from among CONNECT escape character arguments.
+. Dial pause of 0 no longer causes problems.
+
+The fixes specific to UNIX include:
+. Fixed support for 2.9 BSD (tested on DEC Pro 380).
+. New makefile entry for Masscomp (untested).
+. Some 0's in system calls changed to NULLs.
+. SET SEND/RECEIVE TIMEOUT 0 no longer prevents file transfer from working.
+
+VMS changes (untested):
+. '!' should now spawn an interactive DCL.
+. REMOTE commands to VMS C-Kermit server should now work.
+
+The new version of Macintosh Kermit that is based on C-Kermit is not
+ready yet because it's too big for our SUMACC cc68 cross-compiler to
+handle.  We're trying to dig up a version of cc68 with an expanded
+symbol table (anybody have one we can FTP?).
+

@@ -1,0 +1,49 @@
+24-Jan-88 20:15:27-EST,2210;000000000001
+Mail-From: SY.FDC created at 24-Jan-88 20:15:25
+Date: Sun 24 Jan 88 20:15:25-EST
+From: Frank da Cruz <SY.FDC@CU20B.COLUMBIA.EDU>
+Subject: Announcing C-Kermit 4E(068)
+To: Info-Kermit@CU20B.COLUMBIA.EDU, Info-Unix@BRL.ARPA
+Message-ID: <12369278369.17.SY.FDC@CU20B.COLUMBIA.EDU>
+
+This is to announce another minor release, but this time a "real" release,
+of C-Kermit for Unix, VAX/VMS, Data General AOS, the Commodore Amiga,
+the Apple Macintosh, etc.  The changes were minor, and only appear in the
+Unix versions.  They include:
+
+. Suspendibility via Ctrl-Z on systems with job control (Bob Brown).
+. Explicit support for SCO Xenix in the Makefile (from D.W. Bettinger).
+. Explicit support for the AT&T 7300, including the ability to dial its
+  internal modem (from R.E. Hill, untested).
+. Improved response of the C-Kermit server to 'remote cwd' commands.
+. Miscellaneous small fixes and cleanups.
+
+The major change is that since this is now considered a real release,
+the files have been named from XK*.* back to CK*.*, and the XK*.* files
+are gone, resulting in a savings of about 2 megabytes in our Kermit
+distribution area and on our tapes.
+
+All files' names changed, but the only files whose contents changed are:
+
+ ckuker.upd - Update history
+ ckuker.bwr - Beware file
+ ckcfns.c   - Functions (better reporting of current directory by server)
+ ckcmai.c   - Main program (new version number)
+ ckcpro.c   - Protocol module (wart output)
+ ckudia.c   - Dial module (ATT 7300 support added)
+ ckuusr.c   - New calls
+ ckutio.c   - Support for ATT 7300, job control fixes
+ ckufio.c   - New zgtdir() function to return current directory
+ ckdfio.c   - Ditto (but dummy)
+ ckifio.c   - Ditto (but dummy)
+ ckmfio.c   - Ditto (but dummy)
+ ckvfio.c   - Ditto (but dummy)
+ ckwart.c   - Syntax error fixed
+
+These files are in K2: on CU20B.COLUMBIA.EDU, e.g. K2:CKCFNS.C, available via
+anonymous FTP.  They are also available on BITNET from KERMSRV@CUVMA as
+CKCFNS C, etc.  For information about using KERMSRV to get Kermit files,
+send a message to KERMSRV@CUVMA with the message text saying "help".
+
+Please report any problems with this release to Info-Kermit@CU20B.
+-------

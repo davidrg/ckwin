@@ -1,0 +1,25 @@
+comment
+comment Compile and link the Wart program, and run it to create the ckcpro.c
+comment source file.
+comment
+
+ckdcc/link%/% ckwart %-%
+x ckwart ckcpro.w ckcpro.c
+
+
+comment
+comment Now compile all the Kermit source modules.
+comment A list of these modules is found in ckdsrc.lis
+comment A separate list of modules is kept to make it easier to make Kermit
+comment changes or additions by simply changing one list.
+comment
+
+ckdcc%/% ([ckdsrc.lis]) %-%
+
+
+comment
+comment Link the program file from this.
+comment
+
+ckdlnk%/%
+

@@ -1,0 +1,241 @@
+Date: Thu 6 Aug 87 12:19:49-EDT
+From: Frank da Cruz <SY.FDC@CU20B.COLUMBIA.EDU>
+Subject: Announcing C-Kermit 4E(066), a Test Release
+To: Info-Kermit@CU20B.COLUMBIA.EDU
+
+This is to announce an experimental new release of C-Kermit for Unix, VAX/VMS,
+the Apple Macintosh, Apollo Aegis, the Commodore Amiga, and Data General AOS,
+AOS/VS, and possibly other Data General operating systems like RDOS.
+
+I've tested this version on various Unix systems (Ultrix 1.2 & 2.0 on various
+VAXes, AT&T System V on a 3B20, and 2.9BSD on a Pro-380), but not on anything
+else.  Since I'm about to leave on vacation for several weeks, I'd appreciate
+it very much if during that time people could try it out on all the other
+systems it hasn't been tested on, including Macintosh, Apollo, Amiga, VMS, Data
+General, and many Unix variants (Xenix, Venix, Zeus, etc, especially in local
+or dialout mode), and report back to Info-Kermit@CU20B.COLUMBIA.EDU, especially
+if they have fixes to contribute.
+
+The new release is 4E(066).  The major changes from 4D(061) (September 86)
+include:
+
+  . Support for long packets (but not sliding windows).
+
+  . Performance improvements: less copying of received data, more efficient
+    i/o, especially when receiving files.
+
+  . C-Kermit now takes its init file always, even if invoked with command-line
+    action arguments.
+
+  . Easy escape from packet mode (^C^C at any time).
+
+  . A file bytesize mask to 'set file type {text, binary} {7, 8}' so that
+    Kermit can be used to strip 8th data bit during file transfer (e.g. of
+    Wordstar files), independent of parity setting.  Default 8.
+
+  . A new 'set terminal bytesize {7, 8}' command.  Default 7.
+
+  . A 'set retry' command to adjust packet retransmission limit.
+
+  . Support for the Macintosh with Megamax C, so that for the first time
+    Mac Kermit can be built directly on the Mac.
+
+  . New support Data General AOS, AOS/VS, MV/UX and possibly RDOS & other
+    DG operating systems.
+
+  . New support for Apollo Aegis.
+
+  . Continued support for the Commodore Amiga.
+
+  . New 'make' options for sys5r3, CIE Regulus, HP-UX, IBM IX/370, Zilog,
+    and some others.
+
+  . Better statistics reporting.
+
+  . Major bugs fixed:
+
+    - Loss of trailing control characters at end of file when sending.
+    - 2-character checksum now works with 8-bit binary files.
+    - Background/take-file interaction fixed (maybe?).
+    - Insertion of spurious CRLF at position 4096 when doing 'kermit -k'.
+    - Parsing of multine 'get' command (again).
+
+  . Many minor bugs fixed.
+
+Benchmarks show a slight improvement in efficience when sending files with
+regular length packets, and large improvement when receiving files, and a very
+dramatic improvement when receiving files when using parity.  The improvements
+are most noticable on systems where the CPU is the bottleneck.  For instance,
+transferring a 16K text file between a VAX-11/750 and a Rainbow at 9600 baud,
+using even parity and 94-character packets, the following effective baud rates
+were observed:
+
+	    C-Kermit  Version
+	    4D(061)   4E(066)
+
+  Send        3500      3920   (a  12% improvement)
+  Receive      800      4223   (a 428% improvement)
+
+Use of long packets improves efficiency even more, up to a point (a function of
+the packet length and the particular system) past which it degrades again.  A
+good length for VAXes seems to be 300-800, where we get effective baud rates in
+the 50-80% range (provided we have clean lines and no retransmissions) --
+higher efficiency at lower baud rates, and even higher in all cases when
+compression can be done.  For instance, the following efficiencies were
+observed when sending the typical Unix 8K program core image (which has lots of
+0's in a row) at 9600 baud from a Rainbow to each of two typically loaded
+VAXes:
+
+            ------ VAX 8700 -------    ------- VAX 750 -------
+  Packet    Effective                  Effective
+  Length    Baud Rate    Efficiency    Baud Rate    Efficiency
+    40        4481          47%          3414          36%
+    94        6518          68%          4217          44%
+   200        7170          75%          4780          50%
+   300        7966          83%          4780  (peak)  50%
+   500        7966          83%          3773          39%
+   800        8962  (peak)  93%          2757          29%
+  1000        7966          83%          2390          25%
+
+By the way, a caution to those who are running Ultrix 2.0 on VAX 8700's: Kermit
+(any version), and probably any program like Kermit, doesn't work very well at
+9600 baud on DMZ's with fast PC's like IBM ATs or PS/2s, but does OK at 4800
+and below, or at 9600 baud with slower PCs like Rainbows, PC-1's, etc.  But
+Kermit works fine with the same PCs on 750s, 8650s, and other non-BI VAXes.
+
+A plea for help with the non-Unix versions:
+
+. For all versions, there's been a change to CKxTIO.C (the system-dependent
+  terminal i/o and interrupt procedures for system x) that allow for much more
+  efficient operation with parity; the change is in ttinl(), and I tried to
+  apply it to the various modules, probably incorrectly (and in some, I hadn't
+  the slightest idea what to do).  All but the Unix version (ckutio.c) are
+  untested. 
+
+. The Data General, Apollo, and Amiga support comes from Phil Julian and Jack
+  Rouse at SAS Institute.  Their work applied to 4D(061), and I tried to
+  integrate it into the new version.  I'm sending them a tape with the new
+  files so they can test it out; meanwhile, if people with Data General
+  systems can try to build from the source and report on the results, that
+  would be great, especially if it still works.
+
+. The VMS support hasn't changed, except for the ttinl() business.  I have
+  a volunteer who's souping up the VMS support for C-Kermit (in light of
+  the "stable" status of Stevens Kermit-32), and will send him a tape, and
+  hope to get results back in a couple months.
+
+. The Macintosh support is a major new change.  It now compiles directly
+  on the Mac, under Megamax C, thanks to Jim Noble of Planning Research
+  Corp, who will also get a tape.  Again, this support was added to 4D(061),
+  and needs to be rebuilt for 4E(066).  If anybody can try this, please report
+  back.  And if it works, send in new CKMKER.HQX and CKMKEY.HQX files for 4E.
+  And if anybody wants to try converting it to Apple MPW C, or Lightspeed C,
+  etc, that would be good too. 
+
+The files are in KER:XK*.* on CU20B.COLUMBIA.EDU (available via anonymous FTP)
+and XK* * on CUVMA (available via BITNET KERMSRV), and will be on Kermit Tape
+B, and should also show up at Oklahoma State U for UUCP access within a couple
+weeks.  The new files don't replace the current C-Kermit files (CK*.*), and
+will not do so until all the systems demonstrably work.  In order to use these
+files, you have to rename them to CK*.* (or ck*.*) so that the various
+Makefiles and other build procedures work, and the include (.h) files have the
+right names.  There's a program to do this, XKTOCK.C, which should be fairly
+portable (if it doesn't work, the files can be renamed by hand).
+
+Since the collection of files is quite large, you might want to make a
+judicious selection if obtaining them over networks:
+
+  Group       Size  Description
+
+  KER:CKC*.*  111K  Required for all systems.
+  KER:CKW*.*   13K  Wart, required for all systems.
+  KER:CKU*.*  545K  For Unix, VMS, Data General, Apollo.  Includes Unix docs.
+  KER:CKM*.*  488K  Macintosh specifics.
+  KER:CKI*.*   96K  Amiga specifics.
+  KER:CKD*.*  892K  Data General specifics.
+  KER:CKV*.*   67K  VAX/VMS specifics.
+
+  Total size approximately 2.2MB
+
+  KER:CKP*.* (these files don't exist yet, but "P" is reserved for IBM PC)
+  KER:CKH*.* (not available yet, reserved for Harris, see below)
+
+(On BITNET/EARN, leave out the KER: and replace the period by a space.)
+
+A detailed list of changes is in the file XKUKER.UPD, and the documentation
+(CKUKER.MSS, .DOC, .BWR, .NR) has been revised to reflect the new features.
+
+Thanks in advance to anyone who is willing to take a shot at evaluating and/or
+fixing all of this, and apologies for releasing it and then disappearing.
+And thanks to the many people (listed in the XKUKER.UPD file) who contributed
+to this release.
+
+Finally, if you succeed in building and running this program for a any system
+at all besides VAXes with Ultrix, please report back the system, OS, OS
+version, and maybe some particulars like maximum baud rates, best packet size,
+problems, idiosyncracies, and tricks.
+
+- Frank
+
+P.S. I just got a tape from David Wilson of the Waisman Center in Madison,
+WI, with C-Kermit 4D(061) support for Harris computers with DMACPs or CNPs
+(whatever those are!), but according to his letter, major changes were required
+to the system-independent (CKC*.*, CKU*.*) modules.  It's too late to try to
+integrate this with the new stuff.  Maybe in September.
+
+------------------------------
+
+Date: Tue 15 Sep 87 18:24:28-EDT
+From: Frank da Cruz <SY.FDC@CU20B.COLUMBIA.EDU>
+Subject: Announcing C-Kermit 4E(067)
+To: Info-Kermit@CU20B.COLUMBIA.EDU
+
+Now that the beta test of version 4E(066) of C-Kermit has had some time to
+fester, and some good bug reports (and fixes!) have trickled in, it's time
+to announce a new release, 4E(067).  This one only includes fixes for the
+reported bugs, plus a couple of minor additions.  If it checks out OK, it
+will replace 4D(066) as the standard C-Kermit release.  Checking out OK
+means that it is not inferior to 4D(066) in any way, so that no harm would
+be done by replacing it.  The major changes include:
+
+- Fix to allow C-Kermit to run on Pyramid & similar systems.
+- The wild "set send packet-length" command was tamed.
+- Allow "set prompt" to work, even from init file.
+- Problems with packet retransmissions in response to CRLFs should be gone.
+- Added dial support for the Concord Condor CDS 220 2400b modem.
+- Changed Xenix compilation options a bit.
+- New make options for CDC VX/VE, "clean", and "lint".
+- Set effective group & user IDs on BSD systems for csh command execution.
+- Fix parsing of "show parameters".
+- Fix parsing of "remote cwd" from take-command file.
+- Breakup of source lines longer than 80 characters.
+- Supply missing functions & symbols for VAX/VMS.
+- Cosmetic & lint-suggested changes.
+
+See the file xkuker.upd for details.  The affected files are (just so you
+don't have to transfer the whole collection again):
+
+  xkcfns.c,   xkcfn2.c,   xkcmai.c,   xkudia.c,   xkufio.c,   xkutio.c,
+  xkuusr.h,   xkuusr.c,   xkuus2.c,   xkuus3.c,   xkvfio.c,   xkvtio.c,
+  xkuker.bwr, xkuker.mak, xkuker.upd
+
+There are no new binaries or hex files.  People with Unix (any flavor),
+VAX/VMS, Data General AOS, Macintosh, Apollo, or Amiga systems are urged to
+get these files and build the new version from source.  Anyone who is
+equipped to build this program from source for the Macintosh or Amiga is
+further exhorted to do so, then report any bugs (or better still, report if
+there aren't any!), and if the result is usable, send in the .HQX or .BOO
+file.
+
+If no significant problems are reported with the Unix, VMS, or Macintosh
+implementations within a few weeks, this will become the standard distributed
+version of C-Kermit, so that we don't have to carry the CK*.* and XK*.* files
+side by side, which will make room for some new additions to the "popular
+minis and mainframes" area (Tape B).
+
+Thanks to everyone who sent in bug reports, suggestions, and fixes -- Joe
+Doupnik, David Herron, Steve Walton, Paul Placeway, S.O.  Lidie, Jim Guyton,
+Markku Toijala, and many others.
+
+------------------------------
+

@@ -1,0 +1,1669 @@
+CK9KER.DIF
+
+This file consists of context diffs of the C-Kermit 4E(070) system-dependent
+files, showing the changes that were made for OS9 support.  These changes
+probably will be added to mainline C-Kermit in the next release.  A formfeed
+separates the diff listing for each file, with the filename shown in the
+listing.
+
+*** ckcdeb.h.orig
+--- ckcdeb.h
+**************
+*** 1,4
+  /*  C K C D E B . H  */
+  /*
+   For release 4E of C-Kermit, July 87.  Incorporates changes from Phil Julian 
+   and Jack Rouse of SAS Institute for DG, Apollo, and Amiga support, and from
+--- 1,6 -----
+  /*  C K C D E B . H  */
++ /* Bob Larson (blarson@ecla.usc.edu): add osk support.
++ */
+  /*
+   For release 4E of C-Kermit, July 87.  Incorporates changes from Phil Julian 
+   and Jack Rouse of SAS Institute for DG, Apollo, and Amiga support, and from
+**************
+*** 89,95
+  typedef int void;
+  #endif
+  
+! /* Line delimiter for text files */
+  
+  /*
+   If the system uses a single character for text file line delimitation,
+--- 91,99 -----
+  typedef int void;
+  #endif
+  
+! #ifdef OSK
+! typedef int void;
+! #endif
+  
+  /* Line delimiter for text files */
+  
+**************
+*** 91,96
+  
+  /* Line delimiter for text files */
+  
+  /*
+   If the system uses a single character for text file line delimitation,
+   define NLCHAR to the value of that character.  For text files, that
+--- 95,102 -----
+  typedef int void;
+  #endif
+  
++ /* Line delimiter for text files */
++ 
+  /*
+   If the system uses a single character for text file line delimitation,
+   define NLCHAR to the value of that character.  For text files, that
+**************
+*** 99,104
+  */
+  #ifdef MAC                              /* Macintosh */
+  #define NLCHAR 015
+  #else                                   /* All Unix-like systems */
+  #define NLCHAR 012
+  #endif
+--- 105,113 -----
+  */
+  #ifdef MAC                              /* Macintosh */
+  #define NLCHAR 015
++ #else
++ #ifdef OSK				/* os9/68k */
++ #define NLCHAR 015
+  #else                                   /* All Unix-like systems */
+  #define NLCHAR 012
+  #endif
+**************
+*** 102,107
+  #else                                   /* All Unix-like systems */
+  #define NLCHAR 012
+  #endif
+  /*
+   At this point, if there's a system that uses ordinary CRLF line
+   delimitation AND the C compiler actually returns both the CR and
+--- 111,117 -----
+  #else                                   /* All Unix-like systems */
+  #define NLCHAR 012
+  #endif
++ #endif
+  /*
+   At this point, if there's a system that uses ordinary CRLF line
+   delimitation AND the C compiler actually returns both the CR and
+**************
+*** 117,122
+  #ifdef datageneral
+  #define CTTNAM "@output"
+  #else
+  #define CTTNAM "/dev/tty"
+  #endif
+  #endif
+--- 127,136 -----
+  #ifdef datageneral
+  #define CTTNAM "@output"
+  #else
++ #ifdef OSK
++ extern char myttystr[];		/* initialized in sysinit */
++ #define CTTNAM myttystr
++ #else
+  #define CTTNAM "/dev/tty"
+  #endif
+  #endif
+**************
+*** 120,125
+  #define CTTNAM "/dev/tty"
+  #endif
+  #endif
+  
+  /* Some special includes for VAX/VMS */
+  
+--- 134,140 -----
+  #define CTTNAM "/dev/tty"
+  #endif
+  #endif
++ #endif
+  
+  /* Some special includes for VAX/VMS */
+  
+**************
+*** 157,159
+  #define FWRITE 0x10
+  #endif
+  
+--- 172,179 -----
+  #define FWRITE 0x10
+  #endif
+  
++ /* special hack for os9/68k */
++ #ifdef OSK
++ #define SIGARB	5342		/* arbitrary user signal */
++ #define SIGALRM 5343		/* and another */
++ #endif
+
+*** ckcmai.c.orig
+--- ckcmai.c
+**************
+*** 111,116
+  \n\0";
+  #endif
+  #endif
+  char *srvtxt = "\r\n\
+  C-Kermit server starting.  Return to your local machine by typing\r\n\
+  its escape sequence for closing the connection, and issue further\r\n\
+--- 111,124 -----
+  \n\0";
+  #endif
+  #endif
++ #ifdef OSK
++ char *srvtxt = "\r\l\
++ C-Kermit server starting.  Return to your local machine by typing\r\l\
++ its escape sequence for closing the connection, and issue further\r\l\
++ commands from there.  To shut down the C-Kermit server, issue the\r\l\
++ FINISH or BYE command and then reconnect.\r\l\
++ \l\0";
++ #else
+  char *srvtxt = "\r\n\
+  C-Kermit server starting.  Return to your local machine by typing\r\n\
+  its escape sequence for closing the connection, and issue further\r\n\
+**************
+*** 117,122
+  commands from there.  To shut down the C-Kermit server, issue the\r\n\
+  FINISH or BYE command and then reconnect.\n\
+  \r\n\0";
+  
+  /* Declarations for Send-Init Parameters */
+  
+--- 125,131 -----
+  commands from there.  To shut down the C-Kermit server, issue the\r\n\
+  FINISH or BYE command and then reconnect.\n\
+  \r\n\0";
++ #endif
+  
+  /* Declarations for Send-Init Parameters */
+  
+**************
+*** 236,243
+      fncnv  = 1,                         /* Flag for file name conversion */
+      binary = 0,                         /* Flag for binary file */
+      savmod = 0,                         /* Saved file mode */
+!     cmask  = 0177;			/* Connect byte mask */
+!     fmask  = 0377;			/* File byte mask */
+      warn   = 0,                         /* Flag for file warning */
+      quiet  = 0,                         /* Be quiet during file transfer */
+      local  = 0,                         /* Flag for external tty vs stdout */
+--- 245,252 -----
+      fncnv  = 1,                         /* Flag for file name conversion */
+      binary = 0,                         /* Flag for binary file */
+      savmod = 0,                         /* Saved file mode */
+!     cmask  = 0177,			/* Connect byte mask */
+!     fmask  = 0377,			/* File byte mask */
+      warn   = 0,                         /* Flag for file warning */
+      quiet  = 0,                         /* Be quiet during file transfer */
+      local  = 0,                         /* Flag for external tty vs stdout */
+
+*** ckucmd.c.orig
+--- ckucmd.c
+**************
+*** 1,4
+! char *cmdv = "Unix cmd package V2(022), 27 Jan 88";
+   
+  /*  C K U C M D  --  Interactive command package for Unix  */
+  
+--- 1,4 -----
+! char *cmdv = "Unix cmd package V2(022+blarson) 14 Feb 88";
+   
+  /*  C K U C M D  --  Interactive command package for Unix  */
+  
+**************
+*** 3,9
+  /*  C K U C M D  --  Interactive command package for Unix  */
+  
+  /*
+!  V2 adds support for Data General and Apollo Aegis.
+  */
+  /*
+   Modelled after the DECSYSTEM-20 command parser (the COMND JSYS)
+--- 3,9 -----
+  /*  C K U C M D  --  Interactive command package for Unix  */
+  
+  /*
+!  OSK os9/68k support added by blarson@ecla.usc.edu
+  */
+  /*
+   V2 adds support for Data General and Apollo Aegis.
+**************
+*** 6,11
+   V2 adds support for Data General and Apollo Aegis.
+  */
+  /*
+   Modelled after the DECSYSTEM-20 command parser (the COMND JSYS)
+   
+   Features:
+--- 6,14 -----
+   OSK os9/68k support added by blarson@ecla.usc.edu
+  */
+  /*
++  V2 adds support for Data General and Apollo Aegis.
++ */
++ /*
+   Modelled after the DECSYSTEM-20 command parser (the COMND JSYS)
+   
+   Features:
+**************
+*** 70,75
+  #include "ckucmd.h"                     /* Command parsing definitions */
+  #include "ckcdeb.h"                     /* Formats for debug() */
+   
+  /* Local variables */
+   
+  int psetf = 0,                          /* Flag that prompt has been set */
+--- 73,82 -----
+  #include "ckucmd.h"                     /* Command parsing definitions */
+  #include "ckcdeb.h"                     /* Formats for debug() */
+   
++ #ifdef OSK
++ #define cc ccount			/* osk compiler bug */
++ #endif
++ 
+  /* Local variables */
+   
+  int psetf = 0,                          /* Flag that prompt has been set */
+**************
+*** 127,132
+   
+  prompt() {
+      if (psetf == 0) cmsetp(dfprom);     /* If no prompt set, set default. */
+      printf("\r%s",cmprom);              /* Print the prompt. */
+  }
+   
+--- 134,142 -----
+   
+  prompt() {
+      if (psetf == 0) cmsetp(dfprom);     /* If no prompt set, set default. */
++ #ifdef OSK
++     fputs(cmprom, stdout);		/* Print the prompt. */
++ #else
+      printf("\r%s",cmprom);              /* Print the prompt. */
+  #endif
+  }
+**************
+*** 128,133
+  prompt() {
+      if (psetf == 0) cmsetp(dfprom);     /* If no prompt set, set default. */
+      printf("\r%s",cmprom);              /* Print the prompt. */
+  }
+   
+   
+--- 138,144 -----
+      fputs(cmprom, stdout);		/* Print the prompt. */
+  #else
+      printf("\r%s",cmprom);              /* Print the prompt. */
++ #endif
+  }
+   
+   
+**************
+*** 913,918
+  #ifdef datageneral
+                  putchar(FF);
+  #else
+                  system("clear");        /* and clear the screen. */
+  #endif
+  #endif
+--- 924,932 -----
+  #ifdef datageneral
+                  putchar(FF);
+  #else
++ #ifdef OSK
++ 		putchar(FF);
++ #else
+                  system("clear");        /* and clear the screen. */
+  #endif
+  #endif
+**************
+*** 917,922
+  #endif
+  #endif
+  #endif
+              }
+   
+              if (c == HT) c = SP;        /* Substitute space for tab. */
+--- 931,937 -----
+  #endif
+  #endif
+  #endif
++ #endif
+              }
+   
+              if (c == HT) c = SP;        /* Substitute space for tab. */
+**************
+*** 942,947
+              if (c == NL || c == CR) {   /* CR, LF */
+                  *bp = NUL;              /* End the string */
+                  if (echof) {            /* If echoing, */
+                      putchar(c);         /* echo the typein */
+  #ifdef apollo
+                      if (c == CR) putchar(NL);
+--- 957,965 -----
+              if (c == NL || c == CR) {   /* CR, LF */
+                  *bp = NUL;              /* End the string */
+                  if (echof) {            /* If echoing, */
++ #ifdef OSK
++ 		    if (c == NL) putchar(CR);
++ #endif
+                      putchar(c);         /* echo the typein */
+  #ifdef apollo
+                      if (c == CR) putchar(NL);
+
+*** ckudia.c.orig
+--- ckudia.c
+**************
+*** 1,4
+! char *dialv = "Dial Command, V2.0(009) 24 Jan 88";
+  
+  /*  C K U D I A  --  Dialing program for connection to remote system */
+  
+--- 1,4 -----
+! char *dialv = "Dial Command, V2.0(009)+blarson 21 Feb 88";
+  
+  /*  C K U D I A  --  Dialing program for connection to remote system */
+  
+**************
+*** 2,7
+  
+  /*  C K U D I A  --  Dialing program for connection to remote system */
+  
+  /*
+   Author: Herm Fischer (HFISCHER@USC-ECLB)
+   Contributed to Columbia University for inclusion in C-Kermit.
+--- 2,8 -----
+  
+  /*  C K U D I A  --  Dialing program for connection to remote system */
+  
++ /* Os9/68k support by Bob Larson (Blarson@ecla.usc.edu) */
+  /*
+   Author: Herm Fischer (HFISCHER@USC-ECLB)
+   Contributed to Columbia University for inclusion in C-Kermit.
+**************
+*** 73,78
+   *	16-Mar-87	Support for the ATT7300 UNIX PC internal modem was
+   *			added.
+   *							-- Richard E. Hill
+   */
+  
+  /*
+--- 74,81 -----
+   *	16-Mar-87	Support for the ATT7300 UNIX PC internal modem was
+   *			added.
+   *							-- Richard E. Hill
++  *	21-Feb-88	Os9/68k and microcom modem support.
++  *							-- Bob Larson
+   */
+  
+  /*
+**************
+*** 172,177
+  #define		n_VENTEL	11
+  #define         n_CONCORD       12
+  #define		n_ATT7300	13	/* added for PC7300 */
+  
+  /*
+   * Declare modem "variant" numbers for any of the above for which it is
+--- 175,181 -----
+  #define		n_VENTEL	11
+  #define         n_CONCORD       12
+  #define		n_ATT7300	13	/* added for PC7300 */
++ #define		n_MICROCOM	14
+  
+  /*
+   * Declare modem "variant" numbers for any of the above for which it is
+**************
+*** 201,207
+      200,		/* wake_rate */
+      "",			/* wake_prompt */
+      "",			/* dmode_str */
+!     "",			/* dmode_prompt */
+      "\016D '%s'\r",	/* dial_str */
+      200			/* dial_rate */
+      };
+--- 205,211 -----
+      200,		/* wake_rate */
+      "",			/* wake_prompt */
+      "",			/* dmode_str */
+!     NULL,		/* dmode_prompt */
+      "\016D '%s'\r",	/* dial_str */
+      200			/* dial_rate */
+      };
+**************
+*** 216,222
+      0,			/* wake_rate */
+      "",			/* wake_prompt */
+      "",			/* dmode_str */
+!     "",			/* dmode_prompt */
+      "%s",		/* dial_str */
+      0			/* dial_rate */
+      };
+--- 220,226 -----
+      0,			/* wake_rate */
+      "",			/* wake_prompt */
+      "",			/* dmode_str */
+!     NULL,		/* dmode_prompt */
+      "%s",		/* dial_str */
+      0			/* dial_rate */
+      };
+**************
+*** 241,247
+      0,			/* wake_rate */
+      "",			/* wake_prompt */
+      "",			/* dmode_str */
+!     "",			/* dmode_prompt */
+      "%s#",		/* dial_str */
+      0			/* dial_rate */
+      };
+--- 245,251 -----
+      0,			/* wake_rate */
+      "",			/* wake_prompt */
+      "",			/* dmode_str */
+!     NULL,		/* dmode_prompt */
+      "%s#",		/* dial_str */
+      0			/* dial_rate */
+      };
+**************
+*** 266,272
+      0,			/* wake_rate */
+      "",			/* wake_prompt */
+      "",			/* dmode_str */
+!     "",			/* dmode_prompt */
+      "%s!",		/* dial_str */
+      0			/* dial_rate */
+      };
+--- 270,276 -----
+      0,			/* wake_rate */
+      "",			/* wake_prompt */
+      "",			/* dmode_str */
+!     NULL,		/* dmode_prompt */
+      "%s!",		/* dial_str */
+      0			/* dial_rate */
+      };
+**************
+*** 296,302
+      0,			/* wake_rate */
+      "",			/* wake_prompt */
+      "",			/* dmode_str */
+!     "",			/* dmode_prompt */
+      "AT D %s\r",	/* dial_str */
+      0			/* dial_rate */
+      };
+--- 300,306 -----
+      0,			/* wake_rate */
+      "",			/* wake_prompt */
+      "",			/* dmode_str */
+!     NULL,		/* dmode_prompt */
+      "AT D %s\r",	/* dial_str */
+      0			/* dial_rate */
+      };
+**************
+*** 341,347
+      0,			/* wake_rate */
+      "",			/* wake_prompt */
+      "",			/* dmode_str */
+!     "",			/* dmode_prompt */
+      "%s\r",		/* dial_str */
+      0			/* dial_rate */
+      };
+--- 345,351 -----
+      0,			/* wake_rate */
+      "",			/* wake_prompt */
+      "",			/* dmode_str */
+!     NULL,		/* dmode_prompt */
+      "%s\r",		/* dial_str */
+      0			/* dial_rate */
+      };
+**************
+*** 356,362
+      0,			/* wake_rate */
+      "OK\r",		/* wake_prompt */
+      "",			/* dmode_str */
+!     "",			/* dmode_prompt */
+      "ATTD%s\r",		/* dial_str */
+      0			/* dial_rate */
+      };
+--- 360,366 -----
+      0,			/* wake_rate */
+      "OK\r",		/* wake_prompt */
+      "",			/* dmode_str */
+!     NULL,		/* dmode_prompt */
+      "ATTD%s\r",		/* dial_str */
+      0			/* dial_rate */
+      };
+**************
+*** 371,377
+      300,		/* wake_rate */
+      "$",		/* wake_prompt */
+      "",			/* dmode_str */
+!     "",			/* dmode_prompt */
+      "<K%s\r>",		/* dial_str */
+      0			/* dial_rate */
+      };
+--- 375,381 -----
+      300,		/* wake_rate */
+      "$",		/* wake_prompt */
+      "",			/* dmode_str */
+!     NULL,		/* dmode_prompt */
+      "<K%s\r>",		/* dial_str */
+      0			/* dial_rate */
+      };
+**************
+*** 386,392
+      20,			/* wake_rate */
+      "CDS >",		/* wake_prompt */
+      "",			/* dmode_str */
+!     "",			/* dmode_prompt */
+      "<D M%s\r>",	/* dial_str */
+      0			/* dial_rate */
+      };
+--- 390,396 -----
+      20,			/* wake_rate */
+      "CDS >",		/* wake_prompt */
+      "",			/* dmode_str */
+!     NULL,		/* dmode_prompt */
+      "<D M%s\r>",	/* dial_str */
+      0			/* dial_rate */
+      };
+**************
+*** 401,407
+      0,			/* wake_rate */
+      "",			/* wake_prompt */
+      "",			/* dmode_str */
+!     "",			/* dmode_prompt */
+      "%s\r",		/* dial_str */
+      0			/* dial_rate */
+      };
+--- 405,411 -----
+      0,			/* wake_rate */
+      "",			/* wake_prompt */
+      "",			/* dmode_str */
+!     NULL,		/* dmode_prompt */
+      "%s\r",		/* dial_str */
+      0			/* dial_rate */
+      };
+**************
+*** 405,410
+      "%s\r",		/* dial_str */
+      0			/* dial_rate */
+      };
+  
+  /*
+   * Declare table for converting modem numbers to information pointers.
+--- 409,430 -----
+      "%s\r",		/* dial_str */
+      0			/* dial_rate */
+      };
++ 
++ static
++ MDMINF MICROCOM =	/* information for "Microcom" modems in native mode */
++ 			/* (long answer only) */
++     {
++     35,			/* dial_time */
++     ",!@",		/* pause_chars (! and @ arn't pure pauses) */
++     3,			/* pause_time */
++     "\r",		/* wake_str */
++     100,		/* wake_rate */
++     "!",		/* wake_prompt */
++     "",			/* dmode_str */
++     NULL,		/* dmode_prompt */
++     "d%s\r",		/* dial_str */
++     0			/* dial_rate */
++     };
+  
+  /*
+   * Declare table for converting modem numbers to information pointers.
+**************
+*** 431,437
+      &USROBOT,
+      &VENTEL,
+      &CONCORD,
+!     &ATT7300
+      };
+  
+  /*
+--- 451,458 -----
+      &USROBOT,
+      &VENTEL,
+      &CONCORD,
+!     &ATT7300,
+!     &MICROCOM,
+      };
+  
+  /*
+**************
+*** 451,456
+      "direct",		0,		0,
+      "gendatacomm",	n_GDC,		0,
+      "hayes",		n_HAYES,	0,
+      "penril",		n_PENRIL,	0,
+      "racalvadic",	n_RACAL,	0,
+      "unknown",		n_UNKNOWN,	0,
+--- 472,478 -----
+      "direct",		0,		0,
+      "gendatacomm",	n_GDC,		0,
+      "hayes",		n_HAYES,	0,
++     "microcom",		n_MICROCOM,	0,
+      "penril",		n_PENRIL,	0,
+      "racalvadic",	n_RACAL,	0,
+      "unknown",		n_UNKNOWN,	0,
+**************
+*** 607,615
+  		    break;
+  		    }
+  
+!      printf("Dialing thru %s, speed %d, number %s.\r\n",ttname,speed,telnbr);
+!      printf("The timeout for completing the call is %d seconds.\r\n",waitct);
+!      printf("Type the interrupt character to cancel the dialing.\r\n");
+  
+  /* Hang up the modem (in case it wasn't "on hook") */
+  
+--- 629,637 -----
+  		    break;
+  		    }
+  
+!        printf("Dialing thru %s, speed %d, number %s.\n",ttname,speed,telnbr);
+!        printf("The timeout for completing the call is %d seconds.\n",waitct);
+!        printf("Type the interrupt character to cancel the dialing.\n");
+  
+  /* Hang up the modem (in case it wasn't "on hook") */
+  
+**************
+*** 616,622
+  	if ( tthang() < 0 ) {
+  	    printf("Sorry, Can't hang up tty line\n");
+  	    return(-2);
+! 	    }
+  
+  /* Condition console terminal and communication line */	    
+  				/* place line into "clocal" dialing state */
+--- 638,644 -----
+  	if ( tthang() < 0 ) {
+  	    printf("Sorry, Can't hang up tty line\n");
+  	    return(-2);
+! 	}
+  
+  /* Condition console terminal and communication line */	    
+  				/* place line into "clocal" dialing state */
+**************
+*** 634,640
+  	alarm ( 0 );			/* disable timeouts */
+  	if ( n1 = setjmp(sjbuf) )	/* failure while handling failure */
+  	    {
+! 	    printf ( "%s failure while handling failure.\r\n", F_reason[n1] );
+  	    }
+  	else				/* first (i.e., non-nested) failure */
+  	    {
+--- 656,662 -----
+  	alarm ( 0 );			/* disable timeouts */
+  	if ( n1 = setjmp(sjbuf) )	/* failure while handling failure */
+  	    {
+! 	    printf ( "%s failure while handling failure.\n", F_reason[n1] );
+  	    }
+  	else				/* first (i.e., non-nested) failure */
+  	    {
+**************
+*** 648,654
+  	    {
+  	    case F_time:		/* timed out */
+  		{
+! 		printf ( "No connection made within the allotted time.\r\n" );
+  		break;
+  		}
+  	    case F_int:			/* dialing interrupted */
+--- 670,676 -----
+  	    {
+  	    case F_time:		/* timed out */
+  		{
+! 		printf ( "No connection made within the allotted time.\n" );
+  		break;
+  		}
+  	    case F_int:			/* dialing interrupted */
+**************
+*** 653,659
+  		}
+  	    case F_int:			/* dialing interrupted */
+  		{
+! 		printf ( "Dialing interrupted.\r\n" );
+  		break;
+  		}
+  	    case F_modem:		/* modem detected a failure */
+--- 675,681 -----
+  		}
+  	    case F_int:			/* dialing interrupted */
+  		{
+! 		printf ( "Dialing interrupted.\n" );
+  		break;
+  		}
+  	    case F_modem:		/* modem detected a failure */
+**************
+*** 662,668
+  		for ( pc=lbuf; *pc; pc++ )
+  		    if ( isprint(*pc) )
+  			putchar(*pc);	/* display printable reason */ 
+! 		printf ( "\").\r\n" );
+  		break;
+  		}
+  	    case F_minit:		/* cannot initialize modem */
+--- 684,690 -----
+  		for ( pc=lbuf; *pc; pc++ )
+  		    if ( isprint(*pc) )
+  			putchar(*pc);	/* display printable reason */ 
+! 		printf ( "\").\n" );
+  		break;
+  		}
+  	    case F_minit:		/* cannot initialize modem */
+**************
+*** 667,673
+  		}
+  	    case F_minit:		/* cannot initialize modem */
+  		{
+! 		printf ( "Cannot initialize modem.\r\n" );
+  		break;
+  		}
+  	    }
+--- 689,695 -----
+  		}
+  	    case F_minit:		/* cannot initialize modem */
+  		{
+! 		printf ( "Cannot initialize modem.\n" );
+  		break;
+  		}
+  	    }
+**************
+*** 714,721
+  			}
+  			status = IGNORE;
+  			break;
+! 		    case '\n':
+! 		    case '\r':
+  			status = 0;
+  			break;
+  		    case '0':			/* numeric result code */
+--- 736,743 -----
+  			}
+  			status = IGNORE;
+  			break;
+! 		    case LF:
+! 		    case CR:
+  			status = 0;
+  			break;
+  		    case '0':			/* numeric result code */
+**************
+*** 748,753
+  					/* interdigit waits for tone dial */
+  /* ...dial, cont'd */
+  
+      default:			/* place modem into command mode */
+  	ttolSlow(pmdminf->wake_str, pmdminf->wake_rate);
+  	waitFor(pmdminf->wake_prompt);
+--- 770,796 -----
+  					/* interdigit waits for tone dial */
+  /* ...dial, cont'd */
+  
++     case n_MICROCOM:
++         {
++ 	    jmp_buf savejmp;
++ 	    alarm(0);
++ 	    memcpy((char *)savejmp, (char *)sjbuf, sizeof savejmp);
++ 	    if(setjmp(sjbuf)) {
++ 	    	/* try the autobaud sequence */
++ 		memcpy((char *)sjbuf, (char *)savejmp, sizeof savejmp);
++ 		alarm(5);
++ 	        ttolSlow("44445", MICROCOM.wake_rate);
++ 		waitFor(MICROCOM.wake_str);
++ 	    } else {
++ 		alarm(2);
++ 		ttolSlow(MICROCOM.wake_str, MICROCOM.wake_rate);
++ 	    	waitFor(MICROCOM.wake_str);
++ 		alarm(0);
++ 		memcpy((char *)sjbuf, (char *)savejmp, sizeof savejmp);
++ 	    }
++ 	}
++ 	break;
++ 	
+      default:			/* place modem into command mode */
+  	ttolSlow(pmdminf->wake_str, pmdminf->wake_rate);
+  	waitFor(pmdminf->wake_prompt);
+**************
+*** 800,806
+      while (status == 0) {
+        switch (augmdmtyp) {
+  	default:
+! 	    for (n=0; n < LBUFL; n++) {	/* accumulate response */
+  		lbuf[n] = (ttinc(0) & 0177); 
+  		if ( lbuf[n] == '\r' || lbuf[n] == '\n' ) break;
+  		}
+--- 843,849 -----
+      while (status == 0) {
+        switch (augmdmtyp) {
+  	default:
+! 	    for (n=0; n < LBUFL-1; n++) {	/* accumulate response */
+  		lbuf[n] = (ttinc(0) & 0177); 
+  		if ( lbuf[n] == CR || lbuf[n] == LF ) break;
+  		}
+**************
+*** 802,808
+  	default:
+  	    for (n=0; n < LBUFL; n++) {	/* accumulate response */
+  		lbuf[n] = (ttinc(0) & 0177); 
+! 		if ( lbuf[n] == '\r' || lbuf[n] == '\n' ) break;
+  		}
+  	    lbuf[n] = '\0';		/* terminate response from modem */
+  	    if (n) {			/* if one or more characters present */
+--- 845,851 -----
+  	default:
+  	    for (n=0; n < LBUFL-1; n++) {	/* accumulate response */
+  		lbuf[n] = (ttinc(0) & 0177); 
+! 		if ( lbuf[n] == CR || lbuf[n] == LF ) break;
+  		}
+  	    lbuf[n] = '\0';		/* terminate response from modem */
+  	    if (n) {			/* if one or more characters present */
+**************
+*** 867,872
+  		    if (didWeGet(lbuf,"BUSY")) status = FAILED;
+  		    if (didWeGet(lbuf,"CALL FAILED")) status = FAILED;
+  		    break;
+  		}
+  	    }
+  	    break;
+--- 910,924 -----
+  		    if (didWeGet(lbuf,"BUSY")) status = FAILED;
+  		    if (didWeGet(lbuf,"CALL FAILED")) status = FAILED;
+  		    break;
++ 		  case n_MICROCOM:
++ 		    /* "RINGBACK" means phone line ringing, continue */
++ 		    if (didWeGet(lbuf,"NO CONNECT")) status = FAILED;
++ 		    if (didWeGet(lbuf,"CONNECT")) status = CONNECTED;
++ 		    if (didWeGet(lbuf,"BUSY")) status = FAILED;
++ 		    if (didWeGet(lbuf,"NO DIALTONE")) status = FAILED;
++ 		    if (didWeGet(lbuf,"COMMAND ERROR")) status = FAILED;
++ 		    if (didWeGet(lbuf,"IN USE")) status = FAILED;
++ 		    break;
+  		}
+  	    }
+  	    break;
+**************
+*** 900,905
+      ttpkt(speed,CONNECT,parity);	/* cancel dialing state ioctl */
+      reset ();				/* reset alarms, etc. */
+      if ( ! quiet )
+! 	printf ( "Call completed.\07\r\n" );
+      return ( 0 );			/* return, and presumably connect */
+  }
+--- 952,957 -----
+      ttpkt(speed,CONNECT,parity);	/* cancel dialing state ioctl */
+      reset ();				/* reset alarms, etc. */
+      if ( ! quiet )
+! 	printf ( "Call completed.\07\n" );
+      return ( 0 );			/* return, and presumably connect */
+  }
+
+*** ckuscr.c.orig
+--- ckuscr.c
+**************
+*** 1,4
+! char *loginv = "Script Command, V2.0(007) 3 Aug 87";
+  
+  /*  C K U S C R  --  Login script for logging onto remote system */
+  
+--- 1,4 -----
+! char *loginv = "Script Command, V2.0(007)+blarson 15 Feb 88";
+  
+  /*  C K U S C R  --  Login script for logging onto remote system */
+  
+**************
+*** 2,7
+  
+  /*  C K U S C R  --  Login script for logging onto remote system */
+  
+  /*
+   This module should work under all versions of Unix.  It calls externally
+   defined system-depended functions for i/o.
+--- 2,8 -----
+  
+  /*  C K U S C R  --  Login script for logging onto remote system */
+  
++ /* os9/68k support by Bob Larson (Blarson@ecla.usc.edu) */
+  /*
+   This module should work under all versions of Unix.  It calls externally
+   defined system-depended functions for i/o.
+**************
+*** 80,87
+  
+  	if (*s == '~') {		/* escape character */
+  	    switch (c = *(++s) ) {
+! 		case 'n':	seq_buf[i++] = '\n'; break;
+! 		case 'r':	seq_buf[i++] = '\r'; break;
+  		case 't':	seq_buf[i++] = '\t'; break;
+  		case 'b':	seq_buf[i++] = '\b'; break;
+  		case 'q':	seq_buf[i++] = '?';  break;
+--- 81,88 -----
+  
+  	if (*s == '~') {		/* escape character */
+  	    switch (c = *(++s) ) {
+! 		case 'n':	seq_buf[i++] = LF; break;
+! 		case 'r':	seq_buf[i++] = CR; break;
+  		case 't':	seq_buf[i++] = '\t'; break;
+  		case 'b':	seq_buf[i++] = '\b'; break;
+  		case 'q':	seq_buf[i++] = '?';  break;
+**************
+*** 248,254
+  	    return(-2);
+      	}
+      	if (!quiet)
+! 	  printf("Executing script thru %s, speed %d.\r\n",ttname,speed);
+  	*seq_buf=0;
+  	for (e=s; *e; e++) strcat(seq_buf, chstr(*e) );
+  	if (!quiet) printf("Script string: %s\r\n",seq_buf);
+--- 249,255 -----
+  	    return(-2);
+      	}
+      	if (!quiet)
+! 	  printf("Executing script thru %s, speed %d.\n",ttname,speed);
+  	*seq_buf=0;
+  	for (e=s; *e; e++) strcat(seq_buf, chstr(*e) );
+  	if (!quiet) printf("Script string: %s\n",seq_buf);
+**************
+*** 251,257
+  	  printf("Executing script thru %s, speed %d.\r\n",ttname,speed);
+  	*seq_buf=0;
+  	for (e=s; *e; e++) strcat(seq_buf, chstr(*e) );
+! 	if (!quiet) printf("Script string: %s\r\n",seq_buf);
+  	tlog(F110,"Script string: ",seq_buf, 0l);
+  
+  /* Condition console terminal and communication line */	    
+--- 252,258 -----
+  	  printf("Executing script thru %s, speed %d.\n",ttname,speed);
+  	*seq_buf=0;
+  	for (e=s; *e; e++) strcat(seq_buf, chstr(*e) );
+! 	if (!quiet) printf("Script string: %s\n",seq_buf);
+  	tlog(F110,"Script string: ",seq_buf, 0l);
+  
+  /* Condition console terminal and communication line */	    
+**************
+*** 297,303
+  	if (*s) if (outSeq()) goto failRet; /* If any */
+      }
+      signal(SIGALRM,saveAlm);
+!     if (!quiet) printf("Script successful.\r\n");
+      tlog(F100,"Script successful.","",0l);
+      return(0);
+  
+--- 298,304 -----
+  	if (*s) if (outSeq()) goto failRet; /* If any */
+      }
+      signal(SIGALRM,saveAlm);
+!     if (!quiet) printf("Script successful.\n");
+      tlog(F100,"Script successful.","",0l);
+      return(0);
+  
+**************
+*** 303,309
+  
+  failRet:
+      signal(SIGALRM,saveAlm);
+!     printf("Sorry, script failed\r\n");
+      tlog(F100,"Script failed","",0l);
+      return(-2);
+  }
+--- 304,310 -----
+  
+  failRet:
+      signal(SIGALRM,saveAlm);
+!     printf("Sorry, script failed\n");
+      tlog(F100,"Script failed","",0l);
+      return(-2);
+  }
+
+*** ckuusr.h.orig
+--- ckuusr.h
+**************
+*** 19,24
+  #ifndef AMIGA
+  #ifndef vax11c
+  #ifndef datageneral
+  #include <pwd.h>
+  #endif
+  #endif
+--- 19,25 -----
+  #ifndef AMIGA
+  #ifndef vax11c
+  #ifndef datageneral
++ #ifndef OSK
+  #include <pwd.h>
+  #endif
+  #endif
+**************
+*** 20,25
+  #ifndef vax11c
+  #ifndef datageneral
+  #include <pwd.h>
+  #endif
+  #endif
+  #endif
+--- 21,27 -----
+  #ifndef datageneral
+  #ifndef OSK
+  #include <pwd.h>
++ #endif
+  #endif
+  #endif
+  #endif
+
+*** ckuusr.c.orig
+--- ckuusr.c
+**************
+*** 1,4
+! char *userv = "User Interface 4E(059), 29 Jan 88";
+   
+  /*  C K U U S R --  "User Interface" for Unix Kermit (Part 1)  */
+   
+--- 1,4 -----
+! char *userv = "User Interface 4E(059+blarson), 14 Feb 88";
+   
+  /*  C K U U S R --  "User Interface" for Unix Kermit (Part 1)  */
+   
+**************
+*** 3,9
+  /*  C K U U S R --  "User Interface" for Unix Kermit (Part 1)  */
+   
+  /*
+!  4E, support for Apollo Aegis, Data General added, July 87.
+  */
+  /*
+   Author: Frank da Cruz (SY.FDC@CU20B),
+--- 3,9 -----
+  /*  C K U U S R --  "User Interface" for Unix Kermit (Part 1)  */
+   
+  /*
+!  blarson, support for os9/68k (OSK) added
+  */
+  /*
+   4E, support for Apollo Aegis, Data General added, July 87.
+**************
+*** 6,11
+   4E, support for Apollo Aegis, Data General added, July 87.
+  */
+  /*
+   Author: Frank da Cruz (SY.FDC@CU20B),
+   Columbia University Center for Computing Activities, January 1985.
+   Copyright (C) 1985, Trustees of Columbia University in the City of New York.
+--- 6,14 -----
+   blarson, support for os9/68k (OSK) added
+  */
+  /*
++  4E, support for Apollo Aegis, Data General added, July 87.
++ */
++ /*
+   Author: Frank da Cruz (SY.FDC@CU20B),
+   Columbia University Center for Computing Activities, January 1985.
+   Copyright (C) 1985, Trustees of Columbia University in the City of New York.
+**************
+*** 237,243
+      z = nfils = 0;			/* Initialize file counter, flag */
+      cmlist = xargv+1;			/* Remember this pointer */
+      while (--xargc > 0) {		/* Traverse the list */	
+! 	*xargv++;
+  	if (**xargv == '-') {		/* Check for sending stdin */
+  	    if (strcmp(*xargv,"-") != 0) break;
+  	    z++;
+--- 240,246 -----
+      z = nfils = 0;			/* Initialize file counter, flag */
+      cmlist = xargv+1;			/* Remember this pointer */
+      while (--xargc > 0) {		/* Traverse the list */	
+! 	xargv++;
+  	if (**xargv == '-') {		/* Check for sending stdin */
+  	    if (strcmp(*xargv,"-") != 0) break;
+  	    z++;
+**************
+*** 244,250
+          }
+  	nfils++;			/* Bump file counter */
+      }
+!     xargc++, *xargv--;			/* Adjust argv/argc */
+      if (nfils < 1) fatal("missing filename for -s");
+      if (z > 1) fatal("-s: too many -'s");
+      if (z == 1) {
+--- 247,253 -----
+          }
+  	nfils++;			/* Bump file counter */
+      }
+!     xargc++, xargv--;			/* Adjust argv/argc */
+      if (nfils < 1) fatal("missing filename for -s");
+      if (z > 1) fatal("-s: too many -'s");
+      if (z == 1) {
+**************
+*** 265,271
+  case 'g':				/* get */
+      if (action) fatal("conflicting actions");
+      if (*(xp+1)) fatal("invalid argument bundling after -g");
+!     *xargv++, xargc--;
+      if ((xargc == 0) || (**xargv == '-'))
+      	fatal("missing filename for -g");
+      cmarg = *xargv;
+--- 268,274 -----
+  case 'g':				/* get */
+      if (action) fatal("conflicting actions");
+      if (*(xp+1)) fatal("invalid argument bundling after -g");
+!     xargv++, xargc--;
+      if ((xargc == 0) || (**xargv == '-'))
+      	fatal("missing filename for -g");
+      cmarg = *xargv;
+**************
+*** 286,292
+   
+  case 'a':				/* "as" */
+      if (*(xp+1)) fatal("invalid argument bundling after -a");
+!     *xargv++, xargc--;
+      if ((xargc < 1) || (**xargv == '-'))
+      	fatal("missing name in -a");
+      cmarg2 = *xargv;
+--- 289,295 -----
+   
+  case 'a':				/* "as" */
+      if (*(xp+1)) fatal("invalid argument bundling after -a");
+!     xargv++, xargc--;
+      if ((xargc < 1) || (**xargv == '-'))
+      	fatal("missing name in -a");
+      cmarg2 = *xargv;
+**************
+*** 294,300
+   
+  case 'l':				/* set line */
+      if (*(xp+1)) fatal("invalid argument bundling after -l");
+!     *xargv++, xargc--;
+      if ((xargc < 1) || (**xargv == '-'))
+      	fatal("communication line device name missing");
+      strcpy(ttname,*xargv);
+--- 297,303 -----
+   
+  case 'l':				/* set line */
+      if (*(xp+1)) fatal("invalid argument bundling after -l");
+!     xargv++, xargc--;
+      if ((xargc < 1) || (**xargv == '-'))
+      	fatal("communication line device name missing");
+      strcpy(ttname,*xargv);
+**************
+*** 306,312
+   
+  case 'b':   	    			/* set baud */
+      if (*(xp+1)) fatal("invalid argument bundling");
+!     *xargv++, xargc--;
+      if ((xargc < 1) || (**xargv == '-'))
+      	fatal("missing baud");
+      z = atoi(*xargv);			/* Convert to number */
+--- 309,315 -----
+   
+  case 'b':   	    			/* set baud */
+      if (*(xp+1)) fatal("invalid argument bundling");
+!     xargv++, xargc--;
+      if ((xargc < 1) || (**xargv == '-'))
+      	fatal("missing baud");
+      z = atoi(*xargv);			/* Convert to number */
+**************
+*** 316,322
+   
+  case 'e':				/* Extended packet length */
+      if (*(xp+1)) fatal("invalid argument bundling");
+!     *xargv++, xargc--;
+      if ((xargc < 1) || (**xargv == '-'))
+      	fatal("missing length");
+      z = atoi(*xargv);			/* Convert to number */
+--- 319,325 -----
+   
+  case 'e':				/* Extended packet length */
+      if (*(xp+1)) fatal("invalid argument bundling");
+!     xargv++, xargc--;
+      if ((xargc < 1) || (**xargv == '-'))
+      	fatal("missing length");
+      z = atoi(*xargv);			/* Convert to number */
+**************
+*** 349,355
+   
+  case 'p':				/* set parity */
+      if (*(xp+1)) fatal("invalid argument bundling");
+!     *xargv++, xargc--;
+      if ((xargc < 1) || (**xargv == '-'))
+      	fatal("missing parity");
+      switch(x = **xargv) {
+--- 352,358 -----
+   
+  case 'p':				/* set parity */
+      if (*(xp+1)) fatal("invalid argument bundling");
+!     xargv++, xargc--;
+      if ((xargc < 1) || (**xargv == '-'))
+      	fatal("missing parity");
+      switch(x = **xargv) {
+**************
+*** 381,386
+  /* Misc */
+   
+  fatal(msg) char *msg; {			/* Fatal error message */
+      fprintf(stderr,"\r\nFatal: %s\n",msg);
+      tlog(F110,"Fatal:",msg,0l);
+      doexit(BAD_EXIT);			/* Exit indicating failure */
+--- 384,392 -----
+  /* Misc */
+   
+  fatal(msg) char *msg; {			/* Fatal error message */
++ #ifdef OSK
++     fprintf(stderr,"\nFatal: %s\n",msg);
++ #else
+      fprintf(stderr,"\r\nFatal: %s\n",msg);
+  #endif
+      tlog(F110,"Fatal:",msg,0l);
+**************
+*** 382,387
+   
+  fatal(msg) char *msg; {			/* Fatal error message */
+      fprintf(stderr,"\r\nFatal: %s\n",msg);
+      tlog(F110,"Fatal:",msg,0l);
+      doexit(BAD_EXIT);			/* Exit indicating failure */
+  }
+--- 388,394 -----
+      fprintf(stderr,"\nFatal: %s\n",msg);
+  #else
+      fprintf(stderr,"\r\nFatal: %s\n",msg);
++ #endif
+      tlog(F110,"Fatal:",msg,0l);
+      doexit(BAD_EXIT);			/* Exit indicating failure */
+  }
+**************
+*** 388,393
+   
+   
+  ermsg(msg) char *msg; {			/* Print error message */
+      if (!quiet) fprintf(stderr,"\r\n%s - %s\n",cmerrp,msg);
+      tlog(F110,"Error -",msg,0l);
+  }
+--- 395,403 -----
+   
+   
+  ermsg(msg) char *msg; {			/* Print error message */
++ #ifdef OSK
++     if (!quiet) fprintf(stderr,"\n%s - %s\n",cmerrp,msg);
++ #else
+      if (!quiet) fprintf(stderr,"\r\n%s - %s\n",cmerrp,msg);
+  #endif
+      tlog(F110,"Error -",msg,0l);
+**************
+*** 389,394
+   
+  ermsg(msg) char *msg; {			/* Print error message */
+      if (!quiet) fprintf(stderr,"\r\n%s - %s\n",cmerrp,msg);
+      tlog(F110,"Error -",msg,0l);
+  }
+  
+--- 399,405 -----
+      if (!quiet) fprintf(stderr,"\n%s - %s\n",cmerrp,msg);
+  #else
+      if (!quiet) fprintf(stderr,"\r\n%s - %s\n",cmerrp,msg);
++ #endif
+      tlog(F110,"Error -",msg,0l);
+  }
+  
+**************
+*** 732,737
+      switch (cx) {
+   
+  case -4:				/* EOF */
+      if (!quiet && !backgrd) printf("\r\n");
+      doexit(GOOD_EXIT);
+  case -3:				/* Null command */
+--- 743,751 -----
+      switch (cx) {
+   
+  case -4:				/* EOF */
++ #ifdef OSK
++     if (!quiet && !backgrd) printf("\n");
++ #else
+      if (!quiet && !backgrd) printf("\r\n");
+  #endif
+      doexit(GOOD_EXIT);
+**************
+*** 733,738
+   
+  case -4:				/* EOF */
+      if (!quiet && !backgrd) printf("\r\n");
+      doexit(GOOD_EXIT);
+  case -3:				/* Null command */
+      return(0);
+--- 747,753 -----
+      if (!quiet && !backgrd) printf("\n");
+  #else
+      if (!quiet && !backgrd) printf("\r\n");
++ #endif
+      doexit(GOOD_EXIT);
+  case -3:				/* Null command */
+      return(0);
+**************
+*** 899,905
+  debug(F110,"take-get 2nd line",line,0);
+  	    stripq(line);
+  	    for (x = strlen(line);
+! 	     	 x > 0 && (line[x-1] == '\n' || line[x-1] == '\r');
+  		 x--)
+  		line[x-1] = '\0';
+  	    cmarg = line;
+--- 914,920 -----
+  debug(F110,"take-get 2nd line",line,0);
+  	    stripq(line);
+  	    for (x = strlen(line);
+! 	     	 x > 0 && (line[x-1] == LF || line[x-1] == CR);
+  		 x--)
+  		line[x-1] = '\0';
+  	    cmarg = line;
+**************
+*** 907,913
+  	    	fatal("take file ends prematurely in 'get'");
+  	    stripq(cmdbuf);
+  	    for (x = strlen(cmdbuf);
+! 	     	 x > 0 && (cmdbuf[x-1] == '\n' || cmdbuf[x-1] == '\r');
+  		 x--)
+  		cmdbuf[x-1] = '\0';
+  	    if (*cmdbuf == NUL) cmarg2 = line; else cmarg2 = cmdbuf;
+--- 922,928 -----
+  	    	fatal("take file ends prematurely in 'get'");
+  	    stripq(cmdbuf);
+  	    for (x = strlen(cmdbuf);
+! 	     	 x > 0 && (cmdbuf[x-1] == LF || cmdbuf[x-1] == CR);
+  		 x--)
+  		cmdbuf[x-1] = '\0';
+  	    if (*cmdbuf == NUL) cmarg2 = line; else cmarg2 = cmdbuf;
+**************
+*** 1077,1082
+      else				/* Otherwise, */
+          system(s);			/* Best for aos/vs?? */
+   
+  #else					/* All Unix systems... */
+  #ifdef apollo
+      if ((pid = vfork()) == 0) {		/* Make child quickly */
+--- 1092,1100 -----
+      else				/* Otherwise, */
+          system(s);			/* Best for aos/vs?? */
+   
++ #else
++ #ifdef OSK
++     system(s);				/* for now, do better later */
+  #else					/* All Unix systems... */
+  #ifdef apollo
+      if ((pid = vfork()) == 0) {		/* Make child quickly */
+**************
+*** 1084,1090
+  
+          if ((shpath = getenv("SHELL")) == NULL) shpath = "/com/sh";
+  #else
+!  
+      if ((pid = fork()) == 0) {		/* Make child */
+  	char *shpath, *shname, *shptr;	/* For finding desired shell */
+  	struct passwd *p;
+--- 1102,1108 -----
+  
+          if ((shpath = getenv("SHELL")) == NULL) shpath = "/com/sh";
+  #else
+! 
+      if ((pid = fork()) == 0) {		/* Make child */
+  	char *shpath, *shname, *shptr;	/* For finding desired shell */
+  	struct passwd *p;
+**************
+*** 1127,1132
+  	signal(SIGINT,istat);		/* Restore interrupts */
+  	signal(SIGQUIT,qstat);
+      }
+  #endif
+  #endif
+  #endif
+--- 1145,1151 -----
+  	signal(SIGINT,istat);		/* Restore interrupts */
+  	signal(SIGQUIT,qstat);
+      }
++ #endif
+  #endif
+  #endif
+  #endif
+
+*** ckuus2.c.orig
+--- ckuus2.c
+**************
+*** 1,5
+  /*  C K U U S 2  --  "User Interface" STRINGS module for Unix Kermit  */
+   
+  /*
+   Author: Frank da Cruz (SY.FDC@CU20B),
+   Columbia University Center for Computing Activities, January 1985.
+--- 1,6 -----
+  /*  C K U U S 2  --  "User Interface" STRINGS module for Unix Kermit  */
+   
++ /* os9/68k support by Bob Larson (blarson@ecla.usc.edu) */
+  /*
+   Author: Frank da Cruz (SY.FDC@CU20B),
+   Columbia University Center for Computing Activities, January 1985.
+**************
+*** 266,272
+  case XXREM:
+      if ((y = cmkey(remcmd,nrmt,"Remote command","")) == -2) return(y);
+      if (y == -1) return(y);
+!     if (x = (cmcfm()) < 0) return(x);
+      return(dohrmt(y));
+   
+  case XXSEN:
+--- 267,273 -----
+  case XXREM:
+      if ((y = cmkey(remcmd,nrmt,"Remote command","")) == -2) return(y);
+      if (y == -1) return(y);
+!     if ((x = cmcfm()) < 0) return(x);
+      return(dohrmt(y));
+   
+  case XXSEN:
+**************
+*** 278,284
+  case XXSET:
+      if ((y = cmkey(prmtab,nprm,"Parameter","")) == -2) return(y);
+      if (y == -2) return(y);
+!     if (x = (cmcfm()) < 0) return(x);
+      return(dohset(y));
+   
+  case XXSHE:
+--- 279,285 -----
+  case XXSET:
+      if ((y = cmkey(prmtab,nprm,"Parameter","")) == -2) return(y);
+      if (y == -2) return(y);
+!     if ((x = cmcfm()) < 0) return(x);
+      return(dohset(y));
+   
+  case XXSHE:
+**************
+*** 323,329
+  themselves contain 'take' commands, up to a reasonable depth of nesting."));
+   
+  default:
+!     if (x = (cmcfm()) < 0) return(x);
+      printf("Not available yet - %s\n",cmdbuf);
+      break;
+      }
+--- 324,330 -----
+  themselves contain 'take' commands, up to a reasonable depth of nesting."));
+   
+  default:
+!     if ((x = cmcfm()) < 0) return(x);
+      printf("Not available yet - %s\n",cmdbuf);
+      break;
+      }
+**************
+*** 342,348
+   
+  hmsga(s) char *s[]; {			/* Same function, but for arrays */
+      int x, i;
+!     if ( x = (cmcfm()) < 0) return(x);
+      for ( i = 0; *s[i] ; i++ ) fputs(s[i], stdout);
+      fputc( '\n', stdout);
+      return(0);
+--- 343,349 -----
+   
+  hmsga(s) char *s[]; {			/* Same function, but for arrays */
+      int x, i;
+!     if (( x = cmcfm()) < 0) return(x);
+      for ( i = 0; *s[i] ; i++ ) fputs(s[i], stdout);
+  #ifndef OSK
+      fputc( '\n', stdout);
+**************
+*** 344,349
+      int x, i;
+      if ( x = (cmcfm()) < 0) return(x);
+      for ( i = 0; *s[i] ; i++ ) fputs(s[i], stdout);
+      fputc( '\n', stdout);
+      return(0);
+  }
+--- 345,351 -----
+      int x, i;
+      if (( x = cmcfm()) < 0) return(x);
+      for ( i = 0; *s[i] ; i++ ) fputs(s[i], stdout);
++ #ifndef OSK
+      fputc( '\n', stdout);
+  #else
+      putc('\n', stdout);
+**************
+*** 345,350
+      if ( x = (cmcfm()) < 0) return(x);
+      for ( i = 0; *s[i] ; i++ ) fputs(s[i], stdout);
+      fputc( '\n', stdout);
+      return(0);
+  }
+  
+--- 347,355 -----
+      for ( i = 0; *s[i] ; i++ ) fputs(s[i], stdout);
+  #ifndef OSK
+      fputc( '\n', stdout);
++ #else
++     putc('\n', stdout);
++ #endif
+      return(0);
+  }
+  
+**************
+*** 537,543
+  about the specified user."));
+   
+  default:
+!     if (x = (cmcfm()) < 0) return(x);
+      printf("%s","not working yet - %s\n",cmdbuf);
+      return(-2);
+      }
+--- 542,548 -----
+  about the specified user."));
+   
+  default:
+!     if ((x = cmcfm()) < 0) return(x);
+      printf("%s","not working yet - %s\n",cmdbuf);
+      return(-2);
+      }
+
+*** ckuus3.c.orig
+--- ckuus3.c
+**************
+*** 1,5
+  /*  C K U U S 3 --  "User Interface" for Unix Kermit, part 3  */
+   
+  /*
+   Author: Frank da Cruz (SY.FDC@CU20B),
+   Columbia University Center for Computing Activities, January 1985.
+--- 1,6 -----
+  /*  C K U U S 3 --  "User Interface" for Unix Kermit, part 3  */
+   
++ /* Os9/68k support by Bob Larson (Blarson@ecla.usc.edu) */
+  /*
+   Author: Frank da Cruz (SY.FDC@CU20B),
+   Columbia University Center for Computing Activities, January 1985.
+**************
+*** 238,244
+  case XYFILE:
+      if ((y = cmkey(filtab,nfilp,"File parameter","")) < 0) return(y);
+      switch (y) {
+- 	int z;
+  	case XYFILD:			/* Display */
+  	    y = seton(&z);
+  	    if (y < 0) return(y);
+--- 239,244 -----
+  case XYFILE:
+      if ((y = cmkey(filtab,nfilp,"File parameter","")) < 0) return(y);
+      switch (y) {
+  	case XYFILD:			/* Display */
+  	    y = seton(&z);
+  	    if (y < 0) return(y);
+**************
+*** 409,415
+      lp = line;
+      sprintf(lp,"Baud rate for %s",ttname);
+      if ((y = cmnum(line,"",10,&x)) < 0) return(y);
+!     if (y = (cmcfm()) < 0) return(y);
+      y = chkspd(x);
+      if (y < 0) 
+      	printf("?Unsupported line speed - %d\n",x);
+--- 409,415 -----
+      lp = line;
+      sprintf(lp,"Baud rate for %s",ttname);
+      if ((y = cmnum(line,"",10,&x)) < 0) return(y);
+!     if ((y = cmcfm()) < 0) return(y);
+      y = chkspd(x);
+      if (y < 0) 
+      	printf("?Unsupported line speed - %d\n",x);
+**************
+*** 546,552
+  	    	fatal("take file ends prematurely in 'remote cwd'");
+  	    debug(F110," pswd from take file",s2,0);
+  	    for (x = strlen(sbuf);
+! 	     	 x > 0 && (sbuf[x-1] == '\n' || sbuf[x-1] == '\r');
+  		 x--)
+  		sbuf[x-1] = '\0';
+   
+--- 546,552 -----
+  	    	fatal("take file ends prematurely in 'remote cwd'");
+  	    debug(F110," pswd from take file",s2,0);
+  	    for (x = strlen(sbuf);
+! 	     	 x > 0 && (sbuf[x-1] == NL || sbuf[x-1] == CR);
+  		 x--)
+  		sbuf[x-1] = '\0';
+   
+**************
+*** 589,595
+      return(sstate = setgen('D',s,"",""));
+   
+  case XZHLP:				/* Help */
+!     if (x = (cmcfm()) < 0) return(x);
+      sstate = setgen('H',"","","");
+      return(0);
+   
+--- 589,595 -----
+      return(sstate = setgen('D',s,"",""));
+   
+  case XZHLP:				/* Help */
+!     if ((x = cmcfm()) < 0) return(x);
+      sstate = setgen('H',"","","");
+      return(0);
+   
+**************
+*** 616,622
+      return(sstate = setgen('W',s,"",""));
+   
+  default:
+!     if (x = (cmcfm()) < 0) return(x);
+      printf("not working yet - %s\n",cmdbuf);
+      return(-2);
+      }
+--- 616,622 -----
+      return(sstate = setgen('W',s,"",""));
+   
+  default:
+!     if ((x = cmcfm()) < 0) return(x);
+      printf("not working yet - %s\n",cmdbuf);
+      return(-2);
+      }
+
+(END OF CK9KER.DIF)

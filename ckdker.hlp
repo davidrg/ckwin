@@ -1,0 +1,84 @@
+For help on running Kermit, see also ckdker.bld and ckdker.doc .  Also, read
+the comments inside to the CLI files.  Some topics here are extracted from
+ckdker.bld. 
+
+ckdker.doc is a user document for C-Kermit on the DG, and it is specifically
+relevant to AOS/VS.  ckdker.doc was derived from ckuker.doc, the document for
+Unix Kermit in general.  The Kermit examples in the document are written so
+that they perform the same function as the Unix examples, but using CLI syntax
+and AOS/VS file naming and wildcards.
+
+
+If you are using a non-DG device, as I often do, then issue this command:
+
+     CHAR/ON/NAS
+     
+Then, Kermit will issue the proper on-screen delete characters.
+
+
+If you are going to use the Kermit terminal emulator at higher baud rates, you
+may need to set your interactive console for xon/xoff protocol.  Issue this
+command: CHAR/ON/XIFC/XOFC.  This may help prevent loss of characters.  On a
+TEK 4105, you could change your terminal setup to: FLAG IN/OUT.  The TEK
+handles its xon/xoff protocol inside its firmware, so there is no need to set
+CHAR/ON/XIFC/XOFC.   Handling the protocol by the terminal is preferable.
+
+
+To run kermit, the syntax is:
+
+     xeq kermit[/switches] [arguments]
+
+If your installation has a kermit.cli file, you would enter:
+
+     kermit[/switches] [arguments]
+
+The allowable switches are described in ckdker.doc, as are the allowable
+arguments.  But I would like to emphasize five key points, which are useful
+for novice and for veteran C-Kermit users, and for anyone else who does not
+like to read user manuals:
+
+     1.  Try out this command for learning command line operation:
+
+               xeq kermit -h
+
+     2.  At the C-Kermit prompt, enter ? for the interactive options:
+
+               C-Kermit>?
+
+     3.  At any time that a partial or complete command is entered, enter a
+         question mark:
+
+               C-Kermit>se?
+               C-Kermit>set ?
+
+     4.  Good online help is available at the C-Kermit prompt:
+
+               C-Kermit>help
+               C-Kermit>help set
+               C-Kermit>help set speed
+
+     5.  Some error checking will keep you out of trouble, so play around with
+         this program.  For example, at the C-Kermit prompt, if you enter:
+
+               C-Kermit>set line @con5
+               C-Kermit>send some_file_of_mine
+
+          You get an error that you must set your 'speed' first.
+
+
+The files in this distribution are described as follows (in alphabetical
+order): 
+
+     ckdbat.cli          A sample CLI to run a batch job
+     ckdbat.run          The output from Kermit run in batch mode
+     ckdcc.cli           Macro to compile a Kermit module
+     ckdker.ann          Announcement of this version of Kermit
+     ckdker.bld          Instructions on installing or adapting this Kermit
+     ckdker.bwr          Known bugs and quirks
+     ckdker.cli          Sample CLI for running Kermit on a DG
+     ckdker.doc          Data General C-Kermit user document
+     ckdker.hlp          This file
+     ckdker.utl          Description of de-boo and utility files and sources
+     ckdlnk.cli          Macro to link Kermit
+     ckdmak.cli          Macro to Make Kermit from scratch
+     ckdsrc.lis          List of all modules to compile, excepting ckwart.c

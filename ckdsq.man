@@ -1,0 +1,62 @@
+/* This program compresses a file without losing information.
+ * The "usq" program is required to unsqueeze the file
+ * before it can be used.
+ *
+ * Typical compression rates are between 30 and 50 percent for text files.
+ *
+ * Squeezing a really big file takes a few minutes.
+ *
+ * Useage:
+ *	sq [file1] [file2] ... [filen]
+ *
+ * where file1 through filen are the names of the files to be squeezed.
+ * The file type (under CP/M or MS-DOS) is changed to ".SQ"; under UN*X,
+ * ".SQ" is appended to the file name. The original file name is stored
+ * in the squeezed file.
+ *
+ * If no file name is given on the command line you will be
+ * prompted for commands (one at a time). An empty command
+ * terminates the program.
+ *
+ * The transformations compress strings of identical bytes and
+ * then encode each resulting byte value and EOF as bit strings
+ * having lengths in inverse proportion to their frequency of
+ * occurrance in the intermediate input stream. The latter uses
+ * the Huffman algorithm. Decoding information is included in
+ * the squeezed file, so squeezing short files or files with
+ * uniformly distributed byte values will actually increase size.
+ */
+
+/* Program to unsqueeze files formed by sq.com
+ *
+ * Useage:
+ *
+ *	usq [-count] [-fcount] [file1] [file2] ... [filen]
+ *
+ * where file1 through filen represent one or more files to be compressed,
+ * and the following options may be specified:
+ *
+ *	-count		Previewing feature: redirects output
+ * 			files to standard output with parity stripped
+ *			and unprintables except CR, LF, TAB and  FF
+ *			converted to periods. Limits each file
+ *			to first count lines.
+ *			Defaults to console, but see below how
+ *			to capture all in one file for further
+ *			processing, such as by PIP.
+ *			Count defaults to a very high value.
+ *			No CRC check is performed when previewing.
+ *			Use drive: to cancel this.
+ *
+ *	-fcount		Same as -count except formfeed
+ *			appended to preview of each file.
+ *			Example: -f10.
+ *
+ * If no such items are given on the command line you will be
+ * prompted for commands (one at a time). An empty command
+ * terminates the program.
+ *
+ * The unsqueezed file name is recorded in the squeezed file.
+ * 
+ */
+

@@ -1,11 +1,16 @@
-C-Kermit File Naming Conventions:
+C-Kermit Version 4E(070), Jan 88
 
-(Version 4C, 30 May 1985)
+C-Kermit is a family of Kermit programs for many different systems, which
+share a common set of system-independent file transfer protocol modules,
+written in the C language.  C-Kermit may be built for Unix (BSD, ATT, Ultrix,
+SUNOS, Xenix, many others), VAX/VMS, Data General AOS/VS, the Apple Macintosh,
+the Commodore Amiga, and OS/9.  Additional systems will be supported in the
+future.
 
-File names will be lowercase on Unix systems, and probably will be uppercase
-on other systems.  C-Kermit file names are of the form:
+File names are lowercase on Unix systems, and are uppercase on most other
+systems.  C-Kermit file names are of the form:
 
-ck<system><what>.<type>
+ck<system><what>.<type>  (for experimental releases, xk instead of ck)
 
 where:
 
@@ -22,19 +27,26 @@ where:
   bwr: A "beware" file - list of known bugs, restrictions
   ann: The text of an announcement of a particular version
   bld: Instructions for building
-  mak: A Unix Makefile (should be renamed to "makefile")
+  mak: A Makefile or other build procedure (rename to "makefile" for UNIX)
   com: (VMS only) a DCL command procedure
 
 <system> is a single character to tell what system the file applies to:
 
   a: Descriptive material, documentation
   c: All systems with C compilers
+  d: Data General
+  h: Harris computers (reserved)
+  i: Commodore Amiga (Intuition)
   m: Macintosh
+  o: IBM PC, PS/2 with OS/2
+  p: IBM PC, PS/2 with MS/PC-DOS (reserved)
+  s: Atari ST
   u: Unix or systems that simulate (some features of) Unix
   v: VAX/VMS
   w: Wart (really belongs in 'c' category, but...)
+  9: OS-9
 
-<what> is mnemonic (up to 3 characters) for what's in the file
+<what> is mnemonic (up to 3 characters) for what's in the file:
 
   aaa: A "read-me" file, like this one
   cmd: Command parsing
@@ -90,8 +102,23 @@ Macintosh Kermit adds a few additional items to this list:
 All the files necessary to build a particular implementation of C-Kermit
 are listed in the appropriate makefile or equivalent:
 
-     Unix: ckuker.mak
-Macintosh: ckmker.mak
-  VAX/VMS: ckvker.com
+       Unix: ckuker.mak
+  Macintosh: ckmker.mak
+    VAX/VMS: ckvker.com
+      Amiga: ckiker.mak
+         DG: Read ckdker.bld
+
+Minimal source files for building selected versions:
+
+  Unix: ckc*.[cwh], cku*.[ch], ckwart.c, ckuker.mak (= makefile)
+   VMS: ckc*.[cwh], cku*.[ch], ckwart.c, ckv*.c, ckv*.com
+   Mac: ckc*.[cwh], ckwart.c, ckm*.[ch], ckmker.mak, ckmk*.rc, ckmpro.sed
+
+To build the Unix version, collect the appropriate files together into
+their own directory, rename (mv) ckuker.mak to makefile (or Makefile),
+and then type "make bsd" (for Berkeley-based systems) or "make sys3" (for
+most AT&T System 3 for System 5 Unix implementations), or "make xxx", where
+xxx is one of the other options provided in the makefile (read the comments
+at the beginning of the makefile for further information).
 
 (end of ckaaaa.hlp)

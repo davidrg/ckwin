@@ -1,0 +1,42 @@
+comment This file links together the Kermit modules into an excuteable program.
+comment File extensions have the usual meaning for the Data General, except
+comment that all files have been renamed to kermit.something.
+comment If you want to use the SWAT debugger, enter:
+comment   ckdlnk/debug
+comment
+comment Files output from this CLI macro are:
+comment   kermit.pr      Kermit program
+comment   kermit.er      Link error message file
+comment   kermit.st      Symbol table
+comment   kermit.dl      Debugger file if /debug is requested
+comment   kermit.ds      Debugger file if /debug is requested
+comment   kermit.lm      Map file if /map is requested
+comment
+comment The list of object modules to compile is in ckdsrc.lis .
+
+
+comment
+comment Delete previous error file, and link a new program image
+comment
+
+delete/1=ig/2=ig ckdlnk.er
+
+wr; wr Now linking Kermit with options: {%/%}
+wr and 3 multitasking processes; wr
+ccl%/%/tasks=3/e==ckdlnk.er <[ckdsrc.lis]>
+
+
+comment
+comment Delete the old program image and associated files, and 
+comment rename the new program files for Kermit.
+comment
+
+DELETE/1=WARN/2=WARN kermit.<pr st>
+DELETE/1=IGNORE/2=IGNORE kermit.<dl ds er>
+[!neq [!path ckcmai.lm]x,x]
+   DELETE/1=IGNORE/2=IGNORE kermit.lm
+[!end]
+rename/1=IGNORE/2=IGNORE <ckcmai kermit>.(pr st dl ds lm)
+rename/1=IGNORE/2=IGNORE <ckdlnk kermit>.er
+
+wr All Done!

@@ -1,11 +1,7 @@
-30-May-85 19:29:36-EDT,5278;000000000000
-Mail-From: SY.FDC created at 30-May-85 19:29:10
 Date: Thu 30 May 85 19:29:10-EDT
 From: Frank da Cruz <SY.FDC@CU20B.ARPA>
 Subject: Info-Kermit Digest V2 #32
 To: Info-Kermit@CU20B.ARPA
-Reply-To: Info-Kermit@CU20B
-Queries-To: Info-Kermit-Request@CU20B
 
 Info-Kermit Digest         Thu, 30 May 1985       Volume 2 : Number 32
 
@@ -108,6 +104,31 @@ Please report any problems to Info-Kermit@CU20B.
 
 ------------------------------
 
-End of Info-Kermit Digest
-*************************
--------
+This is to announce a new release of C-Kermit.  It is only a minor release,
+and incorporates no new functionality.  The only intention is to fix the
+more serious bugs.  Future releases will involve more serious reworking of
+the code to improve organization and performance, and to add missing features,
+like extended packets, sliding windows, and attribute packets.
+
+The new release is called 4C(058), for UNIX and VMS.  The fixes that
+apply to all (or most) systems supported by C-Kermit include:
+. Bug with set send/receive padding fixed.
+. Bugs that interfered with wildcard sends fixed.
+. Bug that mixed up send and receive packet terminators fixed.
+. Bug with single-file cancellation (^F or ^X) fixed.
+. NAK for next packet now handled correctly as equivalent to ACK for current.
+. NAK is no longer immediately sent after RECEIVE or SERVER command given.
+. Long bursts of incoming data no longer crash the program.
+. Longer sleep done at end of file transfer to prevent other side from hanging.
+. ^S removed from among CONNECT escape character arguments.
+. Dial pause of 0 no longer causes problems.
+
+The fixes specific to UNIX include:
+. Fixed support for 2.9 BSD (tested on DEC Pro 380).
+. New makefile entry for Masscomp (untested).
+. Some 0's in system calls changed to NULLs.
+. SET SEND/RECEIVE TIMEOUT 0 no longer prevents file transfer from working.
+
+VMS changes (untested):
+. '!' should now spawn an interactive DCL.
+. REMOTE commands to VMS C-Kermit server should now work.

@@ -1,0 +1,51 @@
+
+**** AOS/VS Rev 7.54.00.00 / Batch Output File ****
+
+AOS/VS 7.54.00.00 / EXEC-32 7.54.00.00	15-May-87	13:34:06
+Qpri=129	Seq=414
+Jobname    -- ckdbat_kermit
+Maxtime    --  5:00:00
+Input file -- :UDD:DEVJULIAN:KERMIT:CKERM060:?42.CLI.00001.JOB (Will be deleted after processing)
+List file  -- :QUEUE:DEVJULIAN.LIST.414
+
+--------
+
+--------
+Last previous logon	15-May-87	13:16:30
+Searchlist is now :UDD:DEVJULIAN:CLI :DEVELOPMENT:UTIL :DEVELOPMENT:CLI :UDD:SASTESTS:UTIL :UTIL :
+
+AOS/VS CLI   Rev 07.54.00.00	15-MAY-87	13:34:20
+) SEARCHLIST :UDD:DEVJULIAN:CLI,:DEVELOPMENT:UTIL,:DEVELOPMENT:CLI,:UDD:SASTESTS:UTIL,:UTIL,:
+) DIRECTORY :UDD:DEVJULIAN:KERMIT:CKERM060
+) DEFACL DEV+,OWARE,DEVJULIAN,OWARE,+,RE
+) 
+) ckdbat; TIME
+IRSF
+CKUKER.DOC => ckuker.doc
+CTRL-F to cancel file,  CTRL-R to resend current packet
+CTRL-B to cancel batch, CTRL-A for status report: .............................
+................................................................................
+................................................................................
+........................................................................Z [OK]
+
+B
+
+13:41:38
+) 
+) 
+End of file
+AOS/VS CLI   Terminating	15-MAY-87	13:41:38
+
+
+
+Process 48 Terminated 
+Elapsed Time  0:07:30
+(Other jobs, same username:
+    Number of Console Jobs, 2
+    Number of Batch Jobs, 1)
+User 'DEVJULIAN' Logged Off 	15-May-87	13:41:40
+
+
+****
+*List file empty, will not be printed
+****

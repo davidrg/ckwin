@@ -1,0 +1,39 @@
+This is a directory of the files associated with C-Kermit on the Amiga
+
+Documentation:
+        CKIKER.DOC      Amiga C-Kermit documentation
+        CKUKER.DOC      Unix C-Kermit documentation
+        CKIAAA.HLP      the file you are reading
+        CKIKER.BWR      list of current problems
+        CKIKER.UPD      list of changes to Amiga Kermit
+
+Compilation support:
+        CKIKER.BLD      instructions for compiling C-Kermit
+        CKIKER.MAK      EXECUTE script for compiling C-Kermit
+        CKIMAK.MAK      sample makefile
+        CKIKER.LNK      Alink WITH file for linking C-Kermit
+
+C-Kermit Source Files:
+        System independent:
+                CKCDEB.H        debugging macros
+                CKCFNS.C        protocol support
+                CKCFN2.C        protocol support continued
+                CKCKER.H        C-Kermit macros
+                CKCMAI.C        C-Kermit main()
+                CKCPRO.C        table driven protocol handler
+                                (created by wart from CKCPRO.W)
+
+        Unix user interface (conditionally compiled for AMIGA)
+                CKUCMD.C        command processor functions
+                CKUCMD.H        command processor types
+                CKUUSR.C        user interface
+                CKUUS2.C        user interface continued
+                CKUUS3.C        user interface continued further
+                CKUUSR.H        user interface definitions
+
+        Amiga Only:
+                CKICON.C        connect mode
+                CKIFIO.C        file I/O
+                CKISTU.C        stubs for DIAL and SCRIPT
+                CKITIO.C        serial and console I/O
+                CKIUTL.C        AmigaDOS support functions

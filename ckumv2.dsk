@@ -1,0 +1,36 @@
+UNIX KERMIT, VERSION 4E(072), FEBRUARY 1989, RX50 DISKETTE FOR MICROVAX-II
+
+This RX50 diskette contains an executable copy of the UNIX version of C-Kermit
+for the DEC MicroVAX-II with Ultrix-32m, plus some documentation files, as
+follows:
+
+Permissions    Size    Filename       Description
+
+ -rw-rw-r--     70681   ckuker.bwr     "Beware File" (known bugs, etc)    
+ -rw-rw-r--     99038   ckuker.doc     User documentation
+ -rw-rw-r--     15055   ckuker.nr      NROFF-format man page
+ -rw-rw-r--     47586   ckuker.upd     Program update history
+ -rwxrwxr-x    130048   kermit*        Executable Kermit program
+
+The diskette is in UNIX "tar" format, created using the command like "tar cf
+/dev/ra2c ckuker.* kermit".  You should read the files from disk using a
+command like "tar xf /dev/ra2c" (the actual device name of your RX50 drive
+may differ).  The man page may be viewed by doing "nroff -man ckuker.nr | more"
+and you may install it as a regular man page by storing this file in the
+appropriate directory under the name kermit, e.g. /usr/man/man1/kermit.1.
+
+For a current list of available Kermit versions, documentation, ordering
+information, and a statement of commercial policy, write to:
+
+  Kermit Distribution
+  Columbia University Center for Computing Activities
+  612 West 115th Street
+  New York, NY  10025
+
+For further information about Kermit, consult the Kermit User Guide or the
+book "Kermit, A File Tranfer Protocol" by Frank da Cruz, Digital Press,
+Bedford, MA 01730 (1987), order number EY-6705E-DP (call 1-800-343-8321 to
+order).
+
+These diskettes may be freely reproduced and shared, so long as it is not done
+for commercial gain.  Please use Kermit only for peaceful and humane purposes.

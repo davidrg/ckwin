@@ -1,0 +1,32 @@
+comment
+comment This CLI macro compiles Kermit source.
+comment
+comment %1%.ob      is        the object module
+comment %1%.er      is        the error and status file
+comment %1%.ls      is        the compiler listing if /ls was used
+comment
+comment Note that UXIII, DEBUG, and TLOG are all defined.  Alter this to
+comment suit you taste, but keep the UXIII define.
+comment Note that /EXTL is used to force externals to be defined.
+comment
+
+comment
+comment Delete garbage from the last run.
+comment
+delete/1=warn/2=warn %1%.<er ob>
+[!neq %/ls%x,x]
+   delete/1=ignore/2=ignore %1%.ls
+[!end]
+
+comment
+comment Perform the compile.
+comment
+[!eq %/%x,x]
+wr Now doing %1%
+[!else]
+wr Now doing %1% with compiler options %/%
+[!end]
+[!neq %2%x,x]
+wr Symbols defined: %2-%
+[!end]
+CC/EXTL/E==%1%.ER%/% %1% UXIII/DEFINE DEBUG/DEFINE TLOG/DEFINE %2-%

@@ -1,0 +1,3 @@
+CKMKEY.HQX is the old key definition program that goes with 0.8(34) of
+MacKermit.  CKMKEY.C, on the other hand, is part of 0.9, and has nothing
+to do with the old CKMKEY program.

@@ -1,0 +1,64 @@
+C-KERMIT SOURCE DISKETTE, VERSION 4E(072), FEBRUARY 1989
+
+This set of IBM PC MS-DOS 360K diskettes contains the source files for the
+UNIX version of C-Kermit, which can be built for many different UNIX systems,
+including Berkeley, AT&T, Xenix, etc.  If you make fixes, changes, or
+additions to the code that would be of general interest, please send them
+back to Columbia University.
+
+This diskette contains the following files:
+
+Diskette No.      Name           Size       Description
+
+DISKETTE 1:       CKCKER.H       3949       Header file for Kermit
+                  CKCDEB.H       3587       Debug & system-dependent defs
+                  CKCSYM.H        703       Compiler-dependent symbols
+                  CKUCMD.H       1880       Command parser definitions
+                  CKUUSR.H       4791       User interface definitions
+                  CKCPRO.W       9365       Protocol module, "wart" language
+                  CKCMAI.C      13731       Main program
+                  CKUCMD.C      37985       Command parsing routines
+                  CKUUSR.C      35699       User interface, part 1/3
+                  CKUUS2.C      26668       User interface, part 2/3
+                  CKUUS3.C      26958       User interface, part 3/3
+                  CKCPRO.C      16977       Protocol module, wart output
+                  CKCFNS.C      33613       Common functions, part 1/2
+                  CKCFN2.C      15208       Common functions, part 2/2
+                  CKUTIO.C      79038       UNIX-specific terminal i/o
+                  CKUFIO.C      31201       UNIX-specific file i/o
+
+DISKETTE 2:       CKUDIA.C      29975       DIAL command
+                  CKWART.C      13776       Wart (compile & rename to "wart")
+                  CKUKER.MAK    14767       Rename this to "makefile"
+                  CKUKER.BWR    83958       "Beware File" (read this)
+                  CKUKER.UPD    48785       Program update history
+                  CKUKER.NR     15632       NROFF C-Kermit man page
+                  CKUKER.DOC   101130       User documentation
+                  CKUV7.HLP      3030       Info about the V7 implementation
+                  CKUCON.C       8287       CONNECT command
+                  CKUSCR.C       9668       SCRIPT command
+
+
+To build the program, collect all the files together into a single directory,
+preferably on a hard disk, and then give a "make" command for the desired
+system, e.g. "make bsd", "make sys3", "make xenix", etc.  Read the makefile
+for details.
+
+Be sure to read the CKUKER.BWR file before trying to use this version, or
+reporting any problems with it.
+
+For a current list of available Kermit versions, documentation, ordering
+information, and a statement of commercial policy, write to:
+
+  Kermit Distribution
+  Columbia University Center for Computing Activities
+  612 West 115th Street
+  New York, NY  10025
+
+For further information about Kermit, consult the Kermit User Guide or the
+book "Kermit, A File Tranfer Protocol" by Frank da Cruz, Digital Press,
+Bedford, MA 01730 (1987), order number EY-6705E-DP (call 1-800-343-8321 to
+order).
+
+These diskettes may be freely reproduced and shared, so long as it is not done
+for commercial gain.  Please use Kermit only for peaceful and humane purposes.

@@ -1,0 +1,3787 @@
+%!PS-Adobe-1.0
+%%Title: CKMHDR.MSS.10
+%%DocumentFonts: (atend)
+%%Creator: SY.FDC and Scribe 5(1500)
+%%CreationDate: 2 June 1988 20:11
+%%Pages: (atend)
+%%EndComments
+% PostScript Prelude for Scribe.
+/BS {/SV save def 0.0 792.0 translate .01 -.01 scale} bind def
+/ES {showpage SV restore} bind def
+/SC {setrgbcolor} bind def
+/FMTX matrix def
+/RDF {WFT SLT 0.0 eq 
+  {SSZ 0.0 0.0 SSZ neg 0.0 0.0 FMTX astore}
+  {SSZ 0.0 SLT sin SLT cos div SSZ mul SSZ neg 0.0 0.0 FMTX astore}
+  ifelse makefont setfont} bind def
+/SLT 0.0 def
+/SI { /SLT exch cvr def RDF} bind def
+/WFT /Courier findfont def
+/SF { /WFT exch findfont def RDF} bind def
+/SSZ 1000.0 def
+/SS { /SSZ exch 100.0 mul def RDF} bind def
+/AF { /WFT exch findfont def /SSZ exch 100.0 mul def RDF} bind def
+/MT /moveto load def
+/XM {currentpoint exch pop moveto} bind def
+/UL {gsave newpath moveto dup 2.0 div 0.0 exch rmoveto
+   setlinewidth 0.0 rlineto stroke grestore} bind def
+/LH {gsave newpath moveto setlinewidth
+   0.0 rlineto
+   gsave stroke grestore} bind def
+/LV {gsave newpath moveto setlinewidth
+   0.0 exch rlineto
+   gsave stroke grestore} bind def
+/BX {gsave newpath moveto setlinewidth
+   exch
+   dup 0.0 rlineto
+   exch 0.0 exch neg rlineto
+   neg 0.0 rlineto
+   closepath
+   gsave stroke grestore} bind def
+/BX1 {grestore} bind def
+/BX2 {setlinewidth 1 setgray stroke grestore} bind def
+/PB {/PV save def translate 100.0 -100.0 scale pop} bind def
+/PE {PV restore} bind def
+/SH /show load def
+/MX {exch show 0.0 rmoveto} bind def
+/W {0 32 4 -1 roll widthshow} bind def
+/WX {0 32 5 -1 roll widthshow 0.0 rmoveto} bind def
+%%EndProlog
+%%Page: 0 1 
+BS
+0 SI
+15 /Times-Bold AF
+18823 28325 MT
+(MACINTOSH KERMIT USER GUIDE)SH
+13 SS 
+18913 31684 MT
+(For the Apple Macintosh 512, Plus, II, and SE)SH
+10 /Times-Roman AF
+24917 36959 MT
+(Christine Gianone, Frank da Cruz)SH
+20860 39351 MT
+(Columbia University Center for Computing Activities)SH
+25862 40547 MT
+(New York, New York 10027)SH
+28750 44135 MT
+(Paul Placeway)SH
+21612 46527 MT
+(Department of Computer and Information Science)SH
+21221 47723 MT
+(Ohio State University, Columbus, Ohio 43210-1277)SH
+/Times-Italic SF
+28916 51311 MT
+(May 26, 1988)SH
+/Times-Roman SF
+26485 56095 MT
+(Copyright \050C\051 1985, 1988)SH
+20111 57291 MT
+(Trustees of Columbia University in the City of New York)SH
+/Times-Italic SF
+18429 59683 MT
+(Permission is granted to any individual or institution to use, copy,)SH
+18178 60879 MT
+(or redistribute this document so long as it is not sold for profit, and)SH
+23291 62075 MT
+(provided this copyright notice is retained.)SH
+ES
+%%Page: 1 2 
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(1. MACINTOSH KERMIT)SH
+10 /Times-Italic AF
+52275 XM
+(Page 1)SH
+46800 50 8280 6252 UL
+16 /Times-Bold AF
+8280 8272 MT
+(1. MACINTOSH KERMIT)SH
+10 /Times-Italic AF
+8280 10566 MT
+(Program:)SH
+/Times-Roman SF
+16280 XM
+(Bill Catchings, Bill Schilit, Frank da Cruz \050Columbia University\051,)SH
+16280 11671 MT
+(Davide Cervone \050University of Rochester\051,)SH
+16280 12776 MT
+(Matthias Aebi \050ECOFIN Research and Consulting, Ltd., Zuerich\051,)SH
+16280 13881 MT
+(Paul Placeway \050Ohio State University\051.)SH
+/Times-Italic SF
+8280 14986 MT
+(Language:)SH
+/Times-Roman SF
+16280 XM
+(C \050MPW\051)SH
+/Times-Italic SF
+8280 16091 MT
+(Documentation:)SH
+/Times-Roman SF
+16280 XM
+(Christine Gianone, Frank da Cruz, Paul Placeway)SH
+/Times-Italic SF
+8280 17196 MT
+(Version:)SH
+/Courier SF
+16280 XM
+(0.9\05040\051)SH
+/Times-Italic SF
+8280 18301 MT
+(Date:)SH
+/Times-Roman SF
+16280 XM
+(May 26, 1988)SH
+12 /Times-Bold AF
+8280 20889 MT
+(MacKermit Capabilities At A Glance:)SH
+10 /Times-Roman AF
+9280 22680 MT
+(Local operation:)SH
+34480 XM
+(Yes)SH
+9280 23785 MT
+(Remote operation:)SH
+34480 XM
+(Yes \050server mode only\051)SH
+9280 24890 MT
+(Login scripts:)SH
+34480 XM
+(No)SH
+9280 25995 MT
+(Transfer text files:)SH
+34480 XM
+(Yes)SH
+9280 27100 MT
+(Transfer binary files:)SH
+34480 XM
+(Yes)SH
+9280 28205 MT
+(MacBinary transfers:)SH
+34480 XM
+(No)SH
+9280 29310 MT
+(Wildcard send:)SH
+34480 XM
+(Yes \050whole HFS folders\051)SH
+9280 30415 MT
+(File transfer interruption:)SH
+34480 XM
+(Yes)SH
+9280 31520 MT
+(Filename collision avoidance:)SH
+34480 XM
+(Yes)SH
+9280 32625 MT
+(Can time out:)SH
+34480 XM
+(Yes)SH
+9280 33730 MT
+(8th-bit prefixing:)SH
+34480 XM
+(Yes)SH
+9280 34835 MT
+(Repeat count prefixing:)SH
+34480 XM
+(Yes)SH
+9280 35940 MT
+(Alternate block checks:)SH
+34480 XM
+(Yes)SH
+9280 37045 MT
+(Terminal emulation:)SH
+34480 XM
+(Yes \050VT100,VT102\051)SH
+9280 38150 MT
+(Communication settings:)SH
+34480 XM
+(Yes \050Speed, Parity, Echo\051)SH
+9280 39255 MT
+(XON/XOFF:)SH
+34480 XM
+(Yes)SH
+9280 40360 MT
+(Transmit BREAK:)SH
+34480 XM
+(Yes)SH
+9280 41465 MT
+(IBM mainframe communication:)SH
+34480 XM
+(Yes)SH
+9280 42570 MT
+(Transaction logging:)SH
+34480 XM
+(Yes)SH
+9280 43675 MT
+(Session logging:)SH
+34480 XM
+(Yes)SH
+9280 44780 MT
+(Debug logging:)SH
+34480 XM
+(No)SH
+9280 45885 MT
+(Packet logging:)SH
+34480 XM
+(No)SH
+9280 46990 MT
+(Act as server:)SH
+34480 XM
+(Yes)SH
+9280 48095 MT
+(Talk to server:)SH
+34480 XM
+(Yes)SH
+9280 49200 MT
+(Advanced server functions:)SH
+34480 XM
+(Yes)SH
+9280 50305 MT
+(Local file management:)SH
+34480 XM
+(Yes)SH
+9280 51410 MT
+(Command/Init files:)SH
+34480 XM
+(No)SH
+9280 52515 MT
+(Key redefinition/macros:)SH
+34480 XM
+(Yes)SH
+9280 53620 MT
+(File attributes packets:)SH
+34480 XM
+(No)SH
+9280 54725 MT
+(Command macros:)SH
+34480 XM
+(No)SH
+9280 55830 MT
+(Raw file transmit:)SH
+34480 XM
+(No)SH
+9280 56935 MT
+(Long packets:)SH
+34480 XM
+(Yes)SH
+9280 58040 MT
+(Sliding windows:)SH
+34480 XM
+(No)SH
+14 /Times-Bold AF
+8280 61642 MT
+(1.1. Introduction)SH
+10 /Times-Roman AF
+8280 63760 MT
+(Macintosh Kermit, or "MacKermit", is an implementation of)
+261 W( the Kermit file transfer protocol for the Apple)260 W
+8280 64956 MT
+(Macintosh family of computers. It was developed)
+15 W( at Columbia University, based on C-Kermit \050which also forms the)16 W
+8280 66152 MT
+(nucleus of Unix Kermit and many other Kermit programs\051.)
+50 W( Version)
+348 W( 0.9 of MacKermit runs on the Macintosh 512,)49 W
+8280 67348 MT
+(XL \050Apple Lisa running MacWorks\051, 512e, Plus, SE,)
+140 W( and II, under the regular Finder and the Multifinder, with)141 W
+8280 68544 MT
+(which it can transfer files in the background.  MacKermit 0.9 probably does not run on a 128k \050original, classic\051)101 W
+8280 69740 MT
+(Macintosh, due to lack of sufficient memory, but)
+67 W( should run OK on a "fat Mac" \050a 128K Mac upgraded to 512K\051.)68 W
+8280 70936 MT
+(Version 0.8 should be retained for 128K Macs.)SH
+ES
+%%Page: 2 3 
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 2)SH
+12 /Times-Bold AF
+26919 XM
+(Kermit User Guide: MACINTOSH KERMIT \0501.1\051)SH
+46800 50 6120 5709 UL
+10 /Times-Roman AF
+6120 7886 MT
+(This manual assumes you are acquainted with your)
+81 W( Macintosh, and that you are familiar with the general ideas of)80 W
+6120 9082 MT
+(data communication and Kermit file transfer.)
+58 W( A)
+367 W( very brief overview is given here, but for details consult the early)59 W
+6120 10278 MT
+(chapters of the)161 W
+/Times-Italic SF
+12740 XM
+(Kermit User Guide)161 W
+/Times-Roman SF
+21139 XM
+(\050of which this document is a chapter\051, or the book Kermit, A File)
+161 W( Transfer)160 W
+9980 50 42940 10478 UL
+6120 11474 MT
+(Protocol, by Frank da Cruz, Digital Press)
+116 W( \0501987\051.  For further information about Kermit documentation, updates,)117 W
+3389 50 6120 11674 UL
+6120 12670 MT
+(lists of current available versions, and ordering information, write to:)SH
+8120 14461 MT
+(Kermit Distribution)SH
+8120 15566 MT
+(Columbia University Center for Computing Activities)SH
+8120 16671 MT
+(612 West 115th Street)SH
+8120 17776 MT
+(New York, NY  10025  \050USA\051)SH
+14 /Times-Bold AF
+6120 21378 MT
+(1.2. Installation)SH
+10 /Times-Roman AF
+6120 23496 MT
+(Before you can use Macintosh)
+55 W( Kermit or any other communication program on your Mac, you must have a way to)54 W
+6120 24692 MT
+(connect it to the other computers)
+166 W( you wish to communicate with.  This means either a direct cable connection)167 W
+6120 25888 MT
+(\050usually using a "null modem" cable\051, or a modem connected to your Mac and to a telephone.  The Macintosh poses)19 W
+6120 27084 MT
+(two special problems at this level.  First, its connectors are not the standard 25-pin RS-232)
+33 W( style, but either 9-pin or)34 W
+6120 28280 MT
+(8-pin special connectors which you need special adapters for.  Second, the Macintosh)
+190 W( does not supply a Data)189 W
+6120 29476 MT
+(Terminal Ready \050DTR\051 signal, which)
+9 W( is required by most modems before they will operate.  To use your Mac with a)10 W
+6120 30672 MT
+(modem that is not designed specifically for the Mac, you have to either \050a\051)
+31 W( configure the modem to ignore the DTR)30 W
+6120 31868 MT
+(signal, or \050b\051 feed some other active signal into the modem's DTR input.)
+126 W( The)
+503 W( former is usually done with DIP)127 W
+6120 33064 MT
+(switches on the modem,)
+98 W( the latter can be done in the connector that plugs into the modem by installing a jumper)97 W
+6120 34260 MT
+(wire between DTR \050pin 20\051 and DSR \050pin 6\051, or by connecting the Mac's +12V)
+80 W( output \050pin 6 on the Mac's 9-pin)81 W
+6120 35456 MT
+(connector\051 to DTR \050pin 20\051 on the modem end.)SH
+6120 37848 MT
+(If you have received a Macintosh Kermit diskette from Columbia University, there's no)
+17 W( special software installation)16 W
+6120 39044 MT
+(procedure -- just insert the diskette, double-click on the appropriate start-up file, or on MacKermit)
+35 W( itself, and go.  If)36 W
+6120 40240 MT
+(all the communication and other settings agree with your requirements, there's nothing else you need to do.)
+85 W( This)418 W
+6120 41436 MT
+(process is illustrated in the next section, just below.)SH
+6120 43828 MT
+(MacKermit is not copy-protected, and nothing out of the ordinary is required to make copies onto other)
+20 W( diskettes, or)21 W
+6120 45024 MT
+(onto your hard disk if you have one.  Just use the ordinary Macintosh methods of copying files, folders, etc.)SH
+6120 47416 MT
+(Later, you may wish to create settings files tailored to your)
+5 W( communication environment, and you might also want to)4 W
+6120 48612 MT
+(customize the keyboard)
+35 W( configuration.  Use the various Settings options for this, and then select Save Settings from)36 W
+6120 49808 MT
+(the File menu.  Settings and settings files are explained in Sections 1.10 and 1.11.)SH
+14 /Times-Bold AF
+6120 53410 MT
+(1.3. Getting Started)SH
+10 /Times-Roman AF
+6120 55528 MT
+(Kermit programs perform two major functions, terminal)
+225 W( emulation and file transfer.  Before transferring files)224 W
+6120 56724 MT
+(between two systems you must establish a terminal connection from your system to)
+83 W( the other one, either direct or)84 W
+6120 57920 MT
+(else dialed up using a modem.  Then to transfer files, login to the remote system if)
+118 W( necessary, start up a Kermit)117 W
+6120 59116 MT
+(program there, and then tell the two Kermit programs which files to transfer, and in what direction.)SH
+6120 61508 MT
+(Most Kermit programs present you with a prompt, in response to)
+32 W( which you type a command, repeating the process)33 W
+6120 62704 MT
+(until you exit from the program.  If you want to establish a terminal connection to another system, you)
+8 W( must give the)7 W
+6120 63900 MT
+(CONNECT command.  Unlike)
+43 W( these programs, MacKermit is)44 W
+/Times-Italic SF
+31466 XM
+(always)SH
+/Times-Roman SF
+34538 XM
+(connected, and whatever keystrokes you type)44 W
+6120 65096 MT
+(are sent to the)
+51 W( other system.  To give commands to MacKermit itself, you must use the mouse to pull down menus)50 W
+6120 66292 MT
+(from the menu bar that overlays your terminal session, or type special Command-key equivalents.)SH
+6120 68684 MT
+(The following example shows how to transfer a file with MacKermit.  The)
+64 W( remote computer is a Unix system, but)65 W
+6120 69880 MT
+(the method is the same with most others.)SH
+/Symbol SF
+7910 71785 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(First insert the MacKermit diskette.  It should appear on the screen)
+136 W( as a diskette icon titled)135 W
+/Times-Bold SF
+47310 XM
+(Kermit)SH
+ES
+%%Page: 3 4 
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(1.3. Getting Started)SH
+10 /Times-Italic AF
+52275 XM
+(Page 3)SH
+46800 50 8280 5709 UL
+/Times-Bold SF
+10780 7886 MT
+(0.9\05040\051)SH
+/Times-Roman SF
+(. Click)
+250 W( on it twice to open if it did not open automatically when you inserted it in the drive.)SH
+/Symbol SF
+10070 9875 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Once the disk is opened, you will)
+23 W( see three MacKermit icons across the top of the screen.  For the Unix)24 W
+10780 10980 MT
+(system and most others you can)
+103 W( use the ")102 W
+/Times-Bold SF
+(Normal Settings)102 W
+/Times-Roman SF
+(" icon -- to start the Kermit program click)102 W
+10780 12085 MT
+(twice on it.  For linemode connections)
+222 W( to IBM mainframes, you would click twice on the ")223 W
+/Times-Bold SF
+(IBM)SH
+10780 13190 MT
+(Mainframe Linemode Settings)SH
+/Times-Roman SF
+(" icon.)SH
+/Symbol SF
+10070 15179 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(You will see a white backround with)
+108 W( menus stored under the headings)107 W
+/Times-Bold SF
+40399 XM
+(File)SH
+/Times-Roman SF
+(,)SH
+/Times-Bold SF
+42617 XM
+(Edit)SH
+/Times-Roman SF
+(,)SH
+/Times-Bold SF
+45058 XM
+(Settings)SH
+/Times-Roman SF
+(,)SH
+/Times-Bold SF
+49054 XM
+(Remote)SH
+/Times-Roman SF
+(,)SH
+10780 16284 MT
+(and)SH
+/Times-Bold SF
+12474 XM
+(Log)SH
+/Times-Roman SF
+(.)SH
+/Symbol SF
+10070 18273 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Move the mouse pointer to the)SH
+/Times-Bold SF
+23279 XM
+(Settings)SH
+/Times-Roman SF
+26918 XM
+(menu and select)SH
+/Times-Bold SF
+33611 XM
+(Communications...)SH
+/Times-Roman SF
+41889 XM
+(by clicking on it once.)SH
+/Symbol SF
+10070 20262 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(MacKermit normally sets the communication speed to)
+14 W( 9600 bits per second.  Click on the circle in front)15 W
+10780 21367 MT
+(of 1200 \050or whatever)
+117 W( speed you need to match the baud rate of your modem and/or remote system\051.)116 W
+10780 22472 MT
+(Check to see that the other communication settings like parity are as)
+45 W( required, and make any necessary)46 W
+10780 23577 MT
+(changes.)SH
+/Symbol SF
+10070 25566 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Click on the ")SH
+/Courier SF
+(OK)SH
+/Times-Roman SF
+(" box to accept the settings.)SH
+/Symbol SF
+10070 27555 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(If you have a Hayes-like dialout modem, follow the next two steps:)SH
+12780 29346 MT
+(1.)SH
+13780 XM
+(Type AT \050uppercase\051)
+75 W( and then press the Enter key.  The modem should respond with "OK" or)74 W
+13780 30451 MT
+(the digit "0" \050zero\051.)
+33 W( If)
+317 W( it doesn't, check the cable, the modem, etc \050consult your modem manual)34 W
+13780 31556 MT
+(for details\051.)SH
+12780 33766 MT
+(2.)SH
+13780 XM
+(Now type ATDT 7654321 followed by Enter \050replace 7654321 by the actual phone number\051.)
+28 W( If)305 W
+13780 34871 MT
+(the connection succeeds, you'll get a message like CONNECT)
+189 W( \050or the digit "1"\051, otherwise)190 W
+13780 35976 MT
+(you'll see an error message like NO CARRIER, ERROR, etc, or a digit like 3 or 4 \050see your)108 W
+13780 37081 MT
+(modem manual\051.)SH
+10780 38872 MT
+(For non-Hayes-compatible modems, follow the)
+307 W( instructions in your modem manual.  For direct)308 W
+10780 39977 MT
+(connections, skip this step altogether.)SH
+8280 41768 MT
+(Now you should)
+37 W( be talking to the Unix system.  Type a carriage return to get its attention, and it will issue its login)36 W
+8280 42964 MT
+(prompt. In)
+250 W( the examples below, underlining is used to show the parts that you would type.)SH
+/Courier SF
+10680 44679 MT
+(Login: christin)SH
+/Times-Italic SF
+28680 XM
+(Login to the host.)SH
+4800 50 14880 44879 UL
+/Courier SF
+10680 45710 MT
+(password:)SH
+/Times-Italic SF
+28680 XM
+(\050Passwords normally don't echo.\051)SH
+3600 50 16080 45910 UL
+/Courier SF
+10680 47425 MT
+(% kermit)SH
+/Times-Italic SF
+28680 XM
+(Run Kermit on the host.)SH
+3600 50 11880 47625 UL
+/Courier SF
+10680 49140 MT
+(C-Kermit>receive)SH
+/Times-Italic SF
+28680 XM
+(Tell it to receive a file.)SH
+4200 50 16080 49340 UL
+/Times-Roman SF
+8280 51532 MT
+(Now tell MacKermit what file to send:)SH
+/Symbol SF
+10070 53437 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Use the mouse to point to the)41 W
+/Times-Bold SF
+23039 XM
+(File)SH
+/Times-Roman SF
+24941 XM
+(menu and select)
+41 W( the)42 W
+/Times-Bold SF
+33272 XM
+(Send File...)42 W
+/Times-Roman SF
+38621 XM
+(option. You)
+334 W( can either type in the)42 W
+10780 54542 MT
+(name of the file \050if you know the name\051 or select the alternate drive to see what files are)
+81 W( on the disk.)80 W
+10780 55647 MT
+(Once you see the file you want to send, click on the filename and then click on the)
+86 W( SEND option \050or)87 W
+10780 56752 MT
+(you can just click twice on the filename\051.)SH
+/Symbol SF
+10070 58741 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(A "File Transfer Status" box will)
+50 W( appear to report the progress of the transer.)49 W
+/Times-Italic SF
+42719 XM
+(NOTE:)SH
+/Times-Roman SF
+45907 XM
+(If the number of)49 W
+10780 59846 MT
+(retries is increasing but not the number of)
+49 W( packets, you should check your)50 W
+/Times-Bold SF
+41196 XM
+(Communications...)SH
+/Times-Roman SF
+49524 XM
+(settings)SH
+10780 60951 MT
+(under the)SH
+/Times-Bold SF
+14779 XM
+(Settings)SH
+/Times-Roman SF
+18418 XM
+(menu.)SH
+/Symbol SF
+10070 62940 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(When the file transfer is completed, the "File Transfer Status" box should)
+70 W( disappear and the C-Kermit)69 W
+10780 64045 MT
+(prompt should reappear.)SH
+8280 66437 MT
+(You have just transferred a file from the Macintosh)
+26 W( to the Unix system.  To transfer a file in the other direction, use)27 W
+8280 67633 MT
+(the ")5 W
+/Courier SF
+(send)SH
+/Times-Italic SF
+13170 XM
+(filename)SH
+/Times-Roman SF
+(" command)
+5 W( on Unix instead of ")4 W
+/Courier SF
+(receive)SH
+/Times-Roman SF
+(", and click on ")4 W
+/Times-Bold SF
+(Receive File...)4 W
+/Times-Roman SF
+(" from)
+258 W( the Mac's)4 W
+/Times-Bold SF
+53469 XM
+(File)SH
+/Times-Roman SF
+8280 68829 MT
+(menu, instead of ")SH
+/Times-Bold SF
+(Send File...)SH
+/Times-Roman SF
+(".)SH
+8280 71221 MT
+(After the file is transferred, your terminal connection is automatically resumed.)
+255 W( Once)
+761 W( your Unix session is)256 W
+ES
+%%Page: 4 5 
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 4)SH
+12 /Times-Bold AF
+26919 XM
+(Kermit User Guide: MACINTOSH KERMIT \0501.3\051)SH
+46800 50 6120 5709 UL
+10 /Times-Roman AF
+6120 7886 MT
+(complete, you can log out, and then exit from MacKermit:)SH
+/Courier SF
+8520 9541 MT
+(C-Kermit>exit)SH
+2400 50 13920 9741 UL
+8520 11256 MT
+(% ^D)SH
+/Times-Italic SF
+26520 XM
+(Logout from Unix by typing Ctrl-D.)SH
+1200 50 9720 11456 UL
+/Times-Roman SF
+8120 13047 MT
+(1.)SH
+9120 XM
+(Select the)SH
+/Times-Bold SF
+13286 XM
+(Quit)SH
+/Times-Roman SF
+15481 XM
+(option in the)SH
+/Times-Bold SF
+20787 XM
+(File)SH
+/Times-Roman SF
+22648 XM
+(menu by clicking on it.)SH
+8120 14705 MT
+(2.)SH
+9120 XM
+(Select the)122 W
+/Times-Bold SF
+13530 XM
+(Close)SH
+/Times-Roman SF
+16235 XM
+(option in the)122 W
+/Times-Bold SF
+21907 XM
+(File)SH
+/Times-Roman SF
+23890 XM
+(menu by clicking on it \050assuming you want)
+122 W( to close the current)121 W
+9120 15810 MT
+(folder\051.)SH
+8120 17468 MT
+(3.)SH
+9120 XM
+(Select the)84 W
+/Times-Bold SF
+13454 XM
+(Eject)SH
+/Times-Roman SF
+16009 XM
+(option in)
+84 W( the)85 W
+/Times-Bold SF
+21569 XM
+(File)SH
+/Times-Roman SF
+23515 XM
+(menu by clicking on it \050assuming you ran Kermit from a diskette)85 W
+9120 18573 MT
+(that you want to eject\051.)SH
+6120 20965 MT
+(That's the easiest and quickest way to use Kermit.  If this simple scenario)
+138 W( does not work for you, look for any)137 W
+6120 22161 MT
+(obvious incorrect settings \050speed, parity\051, fix them, and try again.  Otherwise, read on.)SH
+14 /Times-Bold AF
+6120 25763 MT
+(1.4. The Macintosh File System)SH
+10 /Times-Roman AF
+6120 27881 MT
+(The Macintosh file system consists of one or more)
+214 W( disks, each disk containing files.  There are actually two)215 W
+6120 29077 MT
+(Macintosh file systems, which work slightly differently.)SH
+6120 31469 MT
+(Disks formatted for the older Macintosh File System \050MFS\051 are essentially "flat".  All files on one)
+96 W( of these disks)95 W
+6120 32665 MT
+(must have a unique)
+6 W( name.  Files may be collected together into "folders", but folders are not analogous to directories)7 W
+6120 33861 MT
+(on other file)
+11 W( systems, and no two folders on the same disk may contain files of the same name; the folders exist only)10 W
+6120 35057 MT
+(to make things look nicer in the Finder.  All Macintoshes have support for MFS.)SH
+6120 37449 MT
+(Disks formatted with the newer Hierarchical File System \050HFS\051 are not "flat"; each folder is a)
+17 W( directory.  There may)18 W
+6120 38645 MT
+(not be more than one file with the same name in a single folder, but there may)
+13 W( be identically named files in different)12 W
+6120 39841 MT
+(folders.)SH
+6120 42233 MT
+(Macintosh file names may contain practically any printable characters, including space and punctuation -- but colon)28 W
+6120 43429 MT
+(\050``)SH
+/Courier SF
+(:)SH
+/Times-Roman SF
+(''\051 may not be used; it is used in device names and as the HFS path element separator.)SH
+14 /Times-Bold AF
+6120 47031 MT
+(1.5. Menus)SH
+10 /Times-Roman AF
+6120 49149 MT
+(The major menus are)134 W
+/Times-Bold SF
+15376 XM
+(Apple)SH
+/Times-Roman SF
+(,)SH
+/Times-Bold SF
+18566 XM
+(File)SH
+/Times-Roman SF
+(,)SH
+/Times-Bold SF
+20811 XM
+(Edit)SH
+/Times-Roman SF
+(,)SH
+/Times-Bold SF
+23279 XM
+(Settings)SH
+/Times-Roman SF
+(,)SH
+/Times-Bold SF
+27302 XM
+(Remote)SH
+/Times-Roman SF
+(, and)134 W
+/Times-Bold SF
+33040 XM
+(Log)SH
+/Times-Roman SF
+(. The)518 W
+/Times-Bold SF
+37664 XM
+(Apple)SH
+/Times-Roman SF
+40604 XM
+(menu gives)
+134 W( some information)133 W
+6120 50345 MT
+(about the program, including the MacKermit version number and the C-Kermit protocol mudule version number)127 W
+6120 51541 MT
+(\050useful in reporting bugs\051.  It also shows statistics about the most recent file transfer.)SH
+6120 53933 MT
+(The)SH
+/Times-Bold SF
+7958 XM
+(File)SH
+/Times-Roman SF
+9852 XM
+(menu invokes Kermit's)
+33 W( file transfer functions,)32 W
+/Times-Bold SF
+28793 XM
+(Send)SH
+/Times-Roman SF
+(,)SH
+/Times-Bold SF
+31437 XM
+(Get)SH
+/Times-Roman SF
+(, and)32 W
+/Times-Bold SF
+35250 XM
+(Receive)SH
+/Times-Roman SF
+(. It)
+314 W( also allows settings to be saved)32 W
+6120 55129 MT
+(and restored,)
+29 W( and like most Macintosh applications, includes a "quit" entry for leaving the program, and a "transfer")30 W
+6120 56325 MT
+(entry for transferring to another program without going through the Finder.)SH
+6120 58717 MT
+(The)SH
+/Times-Bold SF
+8021 XM
+(Edit)SH
+/Times-Roman SF
+10200 XM
+(menu provides support for Macintosh desk accessories that need to have this menu to do cut and paste.)95 W
+6120 59913 MT
+(This menu does not currently do anything in MacKermit.)SH
+6120 62305 MT
+(The)SH
+/Times-Bold SF
+8024 XM
+(Settings)SH
+/Times-Roman SF
+11762 XM
+(menu provides dialog boxes for file, communications, and protocol settings; these will be discussed)100 W
+6120 63501 MT
+(below.)SH
+6120 65893 MT
+(The)SH
+/Times-Bold SF
+8037 XM
+(Remote)SH
+/Times-Roman SF
+11675 XM
+(menu has the)
+112 W( commands that can be sent to Kermit servers, as well as an option to turn Macintosh)111 W
+6120 67089 MT
+(Kermit itself into a server \050also discussed below\051.)SH
+6120 69481 MT
+(The)SH
+/Times-Bold SF
+7997 XM
+(Log)SH
+/Times-Roman SF
+9986 XM
+(menu contains commands to start and stop session and transaction logging.  It also has an entry)
+72 W( to dump)73 W
+6120 70677 MT
+(the current screen image to the session log, which is only enabled when the session log is open.)SH
+ES
+%%Page: 5 6 
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(1.6. Terminal Emulation)SH
+10 /Times-Italic AF
+52275 XM
+(Page 5)SH
+46800 50 8280 6071 UL
+14 /Times-Bold AF
+8280 8138 MT
+(1.6. Terminal Emulation)SH
+10 /Times-Roman AF
+8280 10256 MT
+(Before you can)
+42 W( transfer files, you have to establish a terminal connection with the other computer.  You don't have)41 W
+8280 11452 MT
+(to give MacKermit any special command to do this, just start the program.  Assuming you have)
+239 W( a physical)240 W
+8280 12648 MT
+(connection, then the software will)
+105 W( use it.  If you think you have a physical connection, but don't see any results,)104 W
+8280 13844 MT
+(click on the)72 W
+/Times-Bold SF
+13412 XM
+(Settings)SH
+/Times-Roman SF
+17123 XM
+(menu and select)72 W
+/Times-Bold SF
+24032 XM
+(Communications)SH
+/Times-Roman SF
+31632 XM
+(to make sure you have the right speed)
+72 W( and parity.  If you)73 W
+8280 15040 MT
+(have to dial out to make)
+8 W( the connection, you must do this yourself -- Mac Kermit won't do it for you.  Depending on)7 W
+8280 16236 MT
+(the type of modem, you)
+100 W( must either type dialing commands to it directly \050like the Hayes ATDT command in the)101 W
+8280 17432 MT
+(example in section 1.3\051, or else dial the phone manually, wait for an answer and a carrier tone, and then put)
+114 W( the)113 W
+8280 18628 MT
+(modem in data mode.)SH
+8280 21020 MT
+(Once you've made the connection, you can use MacKermit's terminal)
+48 W( emulator, which conforms to ANSI standard)49 W
+8280 22216 MT
+(X3.64, providing a subset of the)
+74 W( features of the DEC VT102 terminal \050a VT100 with line and character insert and)73 W
+8280 23412 MT
+(delete functions added\051.  The functions provided are)
+157 W( sufficient to allow MacKermit to act as a terminal for the)158 W
+8280 24608 MT
+(EMACS full-screen editor as it exists on most)
+163 W( timesharing systems, and for most host-resident display-oriented)162 W
+8280 25804 MT
+(applications that expect to do cursor positioning and editing on the VT100)
+103 W( or VT102 screen, such as VAX TPU.)104 W
+8280 27000 MT
+(MacKermit does not currently support the following VT100/102 functions:)SH
+/Symbol SF
+10070 28905 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Double height or double width lines)SH
+/Symbol SF
+10070 30010 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Blinking)SH
+/Symbol SF
+10070 31115 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(132 columns)SH
+/Symbol SF
+10070 32220 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(DEC-style line wrapping)SH
+/Symbol SF
+10070 33325 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Control characters embedded in escape sequences)SH
+/Symbol SF
+10070 34430 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(VT52 mode)SH
+8280 36221 MT
+(\050this is not an exhaustive list\051)SH
+8280 38613 MT
+(The keyboard is set up by default as follows: If)
+55 W( your Macintosh has a Control key \050ie. an SE or II\051, Kermit uses it,)54 W
+8280 39809 MT
+(and the Command \050Fan, Cloverleaf\051 key can be used for keyboard equivalents for menus.)
+111 W( If)
+474 W( your Mac does not)112 W
+8280 41005 MT
+(have a Control key, then the Command key is used as the Control key.)
+40 W( The)
+329 W( CAPS LOCK key forces all alphabetic)39 W
+8280 42201 MT
+(characters to upper case.  The terminal emulator sends ESC \050escape\051)
+84 W( when the ``)85 W
+/Courier SF
+(`)SH
+/Times-Roman SF
+('' \050accent grave\051 key is pressed)85 W
+8280 43397 MT
+(unshifted \050even if)
+10 W( your keyboard has an ESC key\051.  The character ``)9 W
+/Courier SF
+(`)SH
+/Times-Roman SF
+('' can be sent by typing Control \050or Command\051)9 W
+8280 44593 MT
+(and the same key.  The Backspace key sends a Delete \050Rubout\051 and Control-Backspace)
+38 W( sends a Backspace.  On the)39 W
+8280 45789 MT
+(original Mac keyboards, the main keypad Enter key sends a "short" \050250ms\051 BREAK signal.  The)
+64 W( Mac+, Mac SE,)63 W
+8280 46985 MT
+(and Mac II do not have a main keypad Enter key, so the BREAK function must be reassigned to another key.)SH
+8280 49377 MT
+(You can modify the keyboard layout any way you like, defining keyboard macros, defining or moving)
+62 W( the Control)63 W
+8280 50573 MT
+(and Escape keys, etc., using MacKermit's built-in key)
+73 W( configuration features.  Older MacKermits \050version 0.8 and)72 W
+8280 51769 MT
+(earlier\051 came with a separate key configuration program called CKMKEY.  This should not be)
+17 W( used, because it does)18 W
+8280 52965 MT
+(not understand the format of the 0.9 and later keyboard configuration software.)SH
+8280 55357 MT
+(MacKermit includes a mouse-controlled cursor positioning feature for use during terminal emulation.)
+12 W( If)
+273 W( the "Mouse)11 W
+8280 56553 MT
+(-> Arrow Keys" feature is turned on \050via the)40 W
+/Times-Bold SF
+26635 XM
+(Terminal)SH
+/Times-Roman SF
+30925 XM
+(entry of the)40 W
+/Times-Bold SF
+35905 XM
+(Settings)SH
+/Times-Roman SF
+39585 XM
+(menu\051, then when the mouse button is)41 W
+8280 57749 MT
+(pressed, the program acts as if you typed the VT100 keypad arrow keys to move the)
+81 W( terminal cursor to where the)80 W
+8280 58945 MT
+(mouse cursor is.  MacKermit does this by sending the absolute)
+20 W( strings for arrow keys, independant of what is bound)21 W
+8280 60141 MT
+(to the actual arrow keys of the keyboard.)SH
+8280 62533 MT
+(MacKermit sets the Mac hardware to do)
+44 W( 8-bit data communication with no parity, and then correctly sets the parity)43 W
+8280 63729 MT
+(bit of each character itself in software, as requested in)
+61 W( the)62 W
+/Times-Bold SF
+32224 XM
+(Communication)SH
+/Times-Roman SF
+39425 XM
+(settings menu.  This has the benefit of)62 W
+8280 64925 MT
+(avoiding the problem of a machine which requires a different)
+158 W( input parity than it sends back.  MacKermit will)157 W
+8280 66121 MT
+(correctly receive all of the characters sent to it, no matter which parity they are.)SH
+8280 68513 MT
+(To allow useful coexistence of desk accessories and Kermit, the terminal emulation window)
+52 W( may be dragged using)53 W
+8280 69709 MT
+(the drag bar.  If)
+115 W( a desk accessory overlays the emulation window, the emulation window can be clicked upon to)114 W
+8280 70905 MT
+(move it in)
+85 W( front of the DA, and later dragged to reveal the hidden desk accessory so that it can be restored to the)86 W
+ES
+%%Page: 6 7 
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 6)SH
+12 /Times-Bold AF
+26919 XM
+(Kermit User Guide: MACINTOSH KERMIT \0501.6\051)SH
+46800 50 6120 5709 UL
+10 /Times-Roman AF
+6120 7886 MT
+(foreground. The)
+362 W( same thing can be done with Kermit's own remote response window)
+56 W( as well.  Note that Kermit's)55 W
+6120 9082 MT
+(terminal emulation window does not accept input when any other window is in the foreground.)SH
+6120 11474 MT
+(MacKermit uses XON/XOFF \050control-Q and)
+42 W( control-S\051 flow control during terminal emulation and file transfer.  If)43 W
+6120 12670 MT
+(the other system does not understand XON/XOFF, problems may result at high speeds.  The terminal emulator can)49 W
+6120 13866 MT
+(normally keep up at 9600 baud, and has a very large input buffer, but)
+73 W( after several continuous scrolling screens at)74 W
+6120 15062 MT
+(this speed, some characters may be lost.  When running at high)
+113 W( baud rates on a system that does not understand)112 W
+6120 16258 MT
+(XON/XOFF flow control, either keep your terminal in page mode, use a text paging program such)
+41 W( as Unix "more",)42 W
+6120 17454 MT
+(or view text with a non-scrolling screen editor.  Also, don't drag the terminal)
+2 W( emulation window while characters are)1 W
+6120 18650 MT
+(arriving; if you do, the characters may be lost and the display may become confused.)SH
+6120 21042 MT
+(During terminal emulation, the characters displayed on the screen may also be saved on the disk.  This allows you to)7 W
+6120 22238 MT
+(record interactions with the remote system, or to "capture" files that you can't transfer with)
+119 W( Kermit protocol, for)118 W
+6120 23434 MT
+(example when the remote system does not have a Kermit program.  Use the)38 W
+/Times-Bold SF
+37174 XM
+(Log)SH
+/Times-Roman SF
+39129 XM
+(menu, and choose session)
+38 W( logging)39 W
+6120 24630 MT
+(to activate this feature.  The result goes)
+103 W( into a file called "Kermit Session" in the current folder, which is always)102 W
+6120 25826 MT
+(appended to, rather than overwritten.  To create a new session log, delete or rename the old one first.)SH
+6120 28218 MT
+(The following features are missing from the)
+231 W( MacKermit terminal emulator, and may be added in subsequent)232 W
+6120 29414 MT
+(releases:)SH
+/Symbol SF
+7910 31319 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Restoration of character attributes such as underlining or highlighting.)SH
+/Symbol SF
+7910 32424 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Cutting text from screen to clipboard.)SH
+/Symbol SF
+7910 33529 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Transmission of raw text to host \050e.g. pasting to screen\051.)SH
+/Symbol SF
+7910 34634 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Screen rollback.)SH
+/Symbol SF
+7910 35739 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Screen resizing.)SH
+/Symbol SF
+7910 36844 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Explicit modem or dialer control.)SH
+/Symbol SF
+7910 37949 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Login scripts.)SH
+/Symbol SF
+7910 39054 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Printer support.)SH
+/Symbol SF
+7910 40159 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Ability to use the printer port for terminal emulation.)SH
+/Symbol SF
+7910 41264 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(A way to disable XON/XOFF flow control, or select other flow controls.)SH
+14 /Times-Bold AF
+6120 44866 MT
+(1.7. File Transfer)SH
+10 /Times-Roman AF
+6120 46984 MT
+(Like most Kermit programs, MacKermit allows you to send and receive)
+63 W( text or binary files singly or in groups.  It)62 W
+6120 48180 MT
+(will interact with a remote Kermit server, and it can act as a server itself.  However, due)
+35 W( to the unique nature of the)36 W
+6120 49376 MT
+(Macintosh file system, there are some special considerations:)SH
+/Symbol SF
+7910 51281 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Mode - Text or Binary.  Binary means the data is sent or stored without modification.  Text means)
+38 W( that)37 W
+2333 50 8620 51481 UL
+8620 52386 MT
+(every carriage return character \050CR\051 in a Macintosh file)
+231 W( is translated to a carriage-return-linefeed)232 W
+8620 53491 MT
+(\050CRLF\051 sequence when sending, and every CRLF)
+61 W( in an incoming file is turned into a CR when stored)60 W
+8620 54596 MT
+(on the Mac disk.  A text file is produced)
+118 W( when you save a file from MacWrite or other applications)119 W
+8620 55701 MT
+(using the "text only")
+50 W( option; text files are not associated with any particular Macintosh application and)49 W
+8620 56806 MT
+(can be sent in a useful fashion to other kinds of computers.)SH
+8620 58795 MT
+(A word of caution about Macintosh text)
+79 W( files: The Macintosh supports an extended version of ASCII,)80 W
+8620 59900 MT
+(with characters like accented and umlauted vowels in the 128-255)
+215 W( range.  These characters allow)214 W
+8620 61005 MT
+(representation of Roman-based languages other than English, but they)
+131 W( do not follow any of the ISO)132 W
+8620 62110 MT
+(standards for extended character sets, and thus are only useful on a Mac.)
+61 W( When)
+371 W( transferring text files,)60 W
+8620 63215 MT
+(you should ensure that either there are no extended)
+83 W( characters in the file, or that the other system can)84 W
+8620 64320 MT
+(understand the Mac's 8-bit characters.)SH
+/Symbol SF
+7910 66309 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Fork - Data or Resource.  Macintosh files may)
+104 W( have two "forks".  The data fork contains data for an)103 W
+1889 50 8620 66509 UL
+8620 67414 MT
+(application; the resource fork contains icons, strings, dialog boxes,)
+231 W( and so forth.  For instance, a)232 W
+8620 68519 MT
+(MacWrite document contains text and formatting information in the data fork, and fonts in)
+28 W( the resource)27 W
+8620 69624 MT
+(fork. For)
+250 W( applications, the executable code is stored in the resource fork.)SH
+ES
+%%Page: 7 8 
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(1.7. File Transfer)SH
+10 /Times-Italic AF
+52275 XM
+(Page 7)SH
+46800 50 8280 5709 UL
+/Times-Roman SF
+8280 7886 MT
+(File transfer is initiated when you select)70 W
+/Times-Bold SF
+25018 XM
+(Send file...)70 W
+/Times-Roman SF
+(,)SH
+/Times-Bold SF
+30103 XM
+(Receive File...)71 W
+/Times-Roman SF
+(, or)71 W
+/Times-Bold SF
+37786 XM
+(Get file from server...)71 W
+/Times-Roman SF
+47483 XM
+(from MacKermit's)71 W
+/Times-Bold SF
+8280 9082 MT
+(File)SH
+/Times-Roman SF
+10141 XM
+(menu.)SH
+8280 11474 MT
+(File transfers can be canceled by clicking on the Cancel)
+122 W( File or Cancel Group buttons.  These will always work)121 W
+8280 12670 MT
+(when sending.  When)
+27 W( receiving, they will work if the opposite Kermit honors this \050optional\051 feature of the protocol.)28 W
+8280 13866 MT
+(There is also an "emergency exit" from any protocol operation, which can)
+270 W( be taken at any time by typing)269 W
+8280 15062 MT
+("Command-)SH
+/Courier SF
+(.)SH
+/Times-Roman SF
+(" -- that is, hold down the Command \050Fan, Cloverleaf\051 key and type period.)SH
+8280 17454 MT
+(The progress of file transfer operations can be logged into a Macintosh file called a)
+34 W( "transaction log".  This log will)35 W
+8280 18650 MT
+(show the names of the files transferred, the date)
+2 W( and time, and the completion status.  This feature is useful with long)1 W
+8280 19846 MT
+(unattended transfers)
+185 W( -- you can come back later and read the transaction log to find out what happened.  The)186 W
+8280 21042 MT
+(transaction log is called "Kermit Log".)SH
+8280 23434 MT
+(The current version of Mac Kermit can only send one fork of a file at a time.  When a file)
+25 W( has two forks, there is no)24 W
+8280 24630 MT
+(provision for sending both forks together.  This restriction may be lifted in future releases)
+196 W( of MacKermit, for)197 W
+8280 25826 MT
+(example by converting applications to MacBinary format during transmission.)SH
+12 /Times-Bold AF
+8280 28942 MT
+(1.7.1. Sending Files)SH
+10 /Times-Roman AF
+8280 30884 MT
+(To send files, first put the remote Kermit in server mode, or else give it the RECEIVE command.)
+110 W( Then)
+468 W( use the)109 W
+8280 32080 MT
+(mouse to select)36 W
+/Times-Bold SF
+14804 XM
+(Send file...)36 W
+/Times-Roman SF
+19571 XM
+(from the)36 W
+/Times-Bold SF
+23309 XM
+(File)SH
+/Times-Roman SF
+25206 XM
+(menu. This)
+322 W( will give you a MacKermit file-open box, which includes)
+36 W( the)37 W
+8280 33276 MT
+(standard Macintosh dialog items -- a file list, Disk and Eject buttons, etc.  You can either send one file at a time, by)29 W
+8280 34472 MT
+(clicking on its name in the file)
+104 W( list, or send the entire contents of the current HFS folder \050for HFS disks only, of)105 W
+8280 35668 MT
+(course\051. Clicking)
+528 W( the Disk button will switch the file list to another physical disk.  If desired,)
+139 W( you can type an)138 W
+8280 36864 MT
+(alternate name to send the file under.  When you select a file, MacKermit examines its type; if the type is)
+86 W( APPL,)87 W
+8280 38060 MT
+(then MacKermit expects to send the resource fork in binary mode, otherwise the data fork in text mode.)
+35 W( The)
+319 W( Mode)34 W
+8280 39256 MT
+(and Fork radio buttons will display these choices; you may change them before clicking the Send button.)SH
+12 /Times-Bold AF
+8280 42372 MT
+(1.7.2. Receiving Files)SH
+10 /Times-Roman AF
+8280 44314 MT
+(You can receive or get multiple files, providing the opposite Kermit is capable of sending multiple files in a)
+54 W( single)55 W
+8280 45510 MT
+(transaction \050most are\051.  To receive files, first give the remote Kermit a SEND command and)
+110 W( then select)109 W
+/Times-Bold SF
+51804 XM
+(Receive)SH
+8280 46706 MT
+(file...)SH
+/Times-Roman SF
+10677 XM
+(from the)64 W
+/Times-Bold SF
+14471 XM
+(File)SH
+/Times-Roman SF
+16396 XM
+(menu. To)
+378 W( get files from a server,)
+64 W( first put the remote Kermit into server mode, then select the)65 W
+/Times-Bold SF
+8280 47902 MT
+(Get file from server...)65 W
+/Times-Roman SF
+17952 XM
+(option from the)64 W
+/Times-Bold SF
+24616 XM
+(File menu)64 W
+/Times-Roman SF
+(, and type in the name of the file you want to get, or a wildcard)64 W
+8280 49098 MT
+(designator for multiple files, in the remote system's filename syntax.)SH
+8280 51490 MT
+(As each file arrives at the Mac, it will be decoded according to the current mode \050text or binary\051, and stored in)
+57 W( the)58 W
+8280 52686 MT
+(default fork \050data or resource\051.  The file names will be either)
+84 W( the names the files arrive with \050overwriting existing)83 W
+8280 53882 MT
+(files of the same names\051 or)
+120 W( new unique names \050when name conflicts occur\051, according to the current default for)121 W
+8280 55078 MT
+(name collisions.  You may also elect to perform an "attended" receive, in which you)
+13 W( have an opportunity to override)12 W
+8280 56274 MT
+(file defaults on a per-file basis \050do this in the)44 W
+/Times-Bold SF
+26884 XM
+(Protocol)SH
+/Times-Roman SF
+30788 XM
+(section of the)45 W
+/Times-Bold SF
+36561 XM
+(Settings)SH
+/Times-Roman SF
+40245 XM
+(menu\051. But)
+340 W( attended operation must)45 W
+8280 57470 MT
+(be used with caution --)
+16 W( if you take too long \050more than about a minute\051 to execute an incoming file's dialog box, the)15 W
+8280 58666 MT
+(opposite Kermit could time out and terminate the transaction.  If)
+17 W( this happens, tell the opposite Kermit to send again)18 W
+8280 59862 MT
+(and try again with the receive dialog.)SH
+8280 62254 MT
+(The folder for new files is the same as the location of the settings file, or if no settings file was used)
+65 W( then the new)64 W
+8280 63450 MT
+(files appear on the desktop.  If you are transferring a lot of files and want)
+6 W( to keep them together, create a folder, drag)7 W
+8280 64646 MT
+(the settings file into it, and double click on the settings file; all created files will appear in that folder.)SH
+ES
+%%Page: 8 9 
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 8)SH
+12 /Times-Bold AF
+26919 XM
+(Kermit User Guide: MACINTOSH KERMIT \0501.8\051)SH
+46800 50 6120 6071 UL
+14 SS 
+6120 8138 MT
+(1.8. Remote Commands)SH
+10 /Times-Roman AF
+6120 10256 MT
+(When connected to a Kermit server, MacKermit is capable of issuing special file management and other commands)35 W
+6120 11452 MT
+(to it.  The)14 W
+/Times-Bold SF
+10315 XM
+(Remote)SH
+/Times-Roman SF
+13855 XM
+(menu contains these commands.  You may request directory listings, you can delete files, change)15 W
+6120 12648 MT
+(directories, etc,)
+66 W( on server's machine.  The response from these commands \050if any\051 is displayed in a special pop-up)65 W
+6120 13844 MT
+(window. Responses)
+412 W( to multiple Remote commands are separated by a dashed line.  The response window can be)82 W
+6120 15040 MT
+(scrolled, sized, and positioned, and can be hidden by clicking the menu item ")127 W
+/Times-Bold SF
+(Hide Response)126 W
+/Times-Roman SF
+(" or the window's)126 W
+6120 16236 MT
+(go-away box; all text remains intact and will be appended to the next time you do)
+6 W( a Remote command; it can also be)7 W
+6120 17432 MT
+(brought to the foreground by)
+5 W( clicking the)4 W
+/Times-Bold SF
+22900 XM
+(Show Response)4 W
+/Times-Roman SF
+29742 XM
+(menu item.  Note that typein to the terminal emulator will)4 W
+6120 18628 MT
+(not take effect)
+44 W( when the response window -- or any other window \050such as a desk accessory\051 -- is up front.  This is)45 W
+6120 19824 MT
+(not a bug, but a feature of the Macintosh user interface guidelines.)SH
+6120 22216 MT
+(If the response buffer gets too)
+86 W( full \050greater than 30,000 characters\051, MacKermit will remove enough text from the)85 W
+6120 23412 MT
+(beginning of the buffer, in 512 byte chunks, to make it less than 30,000 characters again.)SH
+6120 25804 MT
+(A Remote command can be)
+54 W( canceled by taking the Emergency Exit \050Command-)55 W
+/Courier SF
+(.)SH
+/Times-Roman SF
+(\051. To)
+360 W( disengage from the remote)55 W
+6120 27000 MT
+(Kermit server, click on)SH
+/Times-Bold SF
+15590 XM
+(Bye)SH
+/Times-Roman SF
+17451 XM
+(or)SH
+/Times-Bold SF
+18534 XM
+(Finish)SH
+/Times-Roman SF
+21452 XM
+(in the)SH
+/Times-Bold SF
+23952 XM
+(Remote)SH
+/Times-Roman SF
+27478 XM
+(menu.)SH
+14 /Times-Bold AF
+6120 30602 MT
+(1.9. Server Operation)SH
+10 /Times-Roman AF
+6120 32720 MT
+(MacKermit may itself act as a Kermit)
+22 W( server.  Just set the desired parameters in the)21 W
+/Times-Bold SF
+39927 XM
+(Settings)SH
+/Times-Roman SF
+43587 XM
+(menu, then click on)21 W
+/Times-Bold SF
+51809 XM
+(Be)SH
+6120 33916 MT
+(a Server)165 W
+/Times-Roman SF
+10282 XM
+(in the)165 W
+/Times-Bold SF
+13112 XM
+(Remote)SH
+/Times-Roman SF
+16803 XM
+(menu. The)
+580 W( MacKermit server can respond to SEND, GET,)
+165 W( REMOTE DIRECTORY,)166 W
+6120 35112 MT
+(FINISH, and BYE commands.  You can send single or multiple files to a MacKermit server, and you)
+128 W( can get a)127 W
+6120 36308 MT
+(single file from it by name.  You can also get all the files in)
+79 W( the current folder by using a colon \050``)80 W
+/Courier SF
+(:)SH
+/Times-Roman SF
+(''\051 as the file)80 W
+6120 37504 MT
+(specification in the GET command:)SH
+/Courier SF
+8520 39159 MT
+(GET :)SH
+/Times-Roman SF
+6120 40876 MT
+(If you give the FINISH command, MacKermit will return to terminal mode.  If you give the BYE command,)
+98 W( the)97 W
+6120 42072 MT
+(Macintosh will reboot itself.)SH
+6120 44464 MT
+(You can)
+184 W( take MacKermit out of server mode from the Mac keyboard by typing the emergency exit sequence,)185 W
+6120 45660 MT
+(Command-dot.)SH
+14 /Times-Bold AF
+6120 49262 MT
+(1.10. Settings)SH
+10 /Times-Roman AF
+6120 51380 MT
+(You can change File, Communications, Protocol, Terminal, Keyboard macros, and Keyboard modifier settings)
+92 W( by)91 W
+6120 52576 MT
+(using the)61 W
+/Times-Bold SF
+10131 XM
+(Settings)SH
+/Times-Roman SF
+13831 XM
+(pull-down menu.  You)
+61 W( can save and load these settings by invoking the appropriate selection in)62 W
+6120 53772 MT
+(the)SH
+/Times-Bold SF
+7625 XM
+(File)SH
+/Times-Roman SF
+9519 XM
+(menu. If)
+316 W( the "bundle bit" has been correctly)
+33 W( set on your version of MacKermit \050it should be\051, then you can)32 W
+6120 54968 MT
+(double-click on the resulting document to start MacKermit with those settings.)SH
+6120 57360 MT
+(The)SH
+/Times-Bold SF
+7925 XM
+(File)SH
+/Times-Roman SF
+9786 XM
+(settings establish the defaults for file transfer:)SH
+/Symbol SF
+7910 59265 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Attended versus Unattended operation for incoming files.)SH
+3666 50 8620 59465 UL
+4610 50 15341 59465 UL
+/Symbol SF
+7910 61254 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Naming: When doing unattended file reception, whether incoming files should supersede)
+60 W( existing files)61 W
+3222 50 8620 61454 UL
+4388 50 17716 61454 UL
+8620 62359 MT
+(of the same name, or a new unique name should be assigned to)
+105 W( them.  If the latter, the new name is)104 W
+8620 63464 MT
+(formed by adding a dot and a number to the end.  For instance, if a file)
+97 W( called FOO exists and a file)98 W
+8620 64569 MT
+(called FOO arrives, MacKermit will store the arriving file as FOO.1; if FOO.1 exists, then FOO.2, etc.)SH
+/Symbol SF
+7910 66558 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Mode: text or binary.  Used for received files only.  When sending, MacKermit tries)
+96 W( to figure out an)95 W
+2333 50 8620 66758 UL
+8620 67663 MT
+(appropriate mode for the file being sent \050but then lets you override it the Send File dialog\051.)SH
+/Symbol SF
+7910 69652 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Fork: which fork -- data or resource -- to send, or to store an incoming file into.)SH
+1889 50 8620 69852 UL
+ES
+%%Page: 9 10 
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(1.10. Settings)SH
+10 /Times-Italic AF
+52275 XM
+(Page 9)SH
+46800 50 8280 5709 UL
+/Times-Roman SF
+8280 7886 MT
+(The)SH
+/Times-Bold SF
+10103 XM
+(Communications)SH
+/Times-Roman SF
+17649 XM
+(settings allow you)
+18 W( to set the baud rate \050anywhere between 300 baud and 57)19 W
+/Courier SF
+(.)SH
+/Times-Roman SF
+(6K baud, except)19 W
+8280 9082 MT
+(38)SH
+/Courier SF
+(.)SH
+/Times-Roman SF
+(4K baud\051, and)
+73 W( parity \050odd, even, mark, space, or none\051.  When the parity is set to none the Macintosh uses an)72 W
+1944 50 43738 9282 UL
+8280 10278 MT
+(8-bit-wide connection.  All)
+107 W( other parity settings tell the Macintosh to use a 7-bit-wide connection, and to request)108 W
+8280 11474 MT
+(8th-bit prefixing when transferring 8-bit data.  If the remote host)
+21 W( or the communication path uses any kind of parity,)20 W
+8280 12670 MT
+(then you won't be able to transfer files successfully unless you tell)
+1 W( MacKermit \050and in most cases also the Kermit on)2 W
+8280 13866 MT
+(the other end\051 about it.  Duplex is selected in the)SH
+/Times-Bold SF
+27944 XM
+(Terminal)SH
+/Times-Roman SF
+32194 XM
+(settings.)SH
+8280 16258 MT
+(The)SH
+/Times-Bold SF
+10156 XM
+(Protocol)SH
+/Times-Roman SF
+14087 XM
+(settings allow you to set)
+71 W( packet parameters for both incoming and outbound packets.  These include)70 W
+8280 17454 MT
+(the block check type \0501)
+208 W( or 2 character checksum, 3-character 16-bit CRC-CCITT\051, line turnaround handshake)209 W
+8280 18650 MT
+(character \050for file)
+3 W( transfer with half duplex systems\051, packet start and end characters, padding, packet length, timeout)2 W
+8280 19846 MT
+(interval, and packet length.  Characters are specified by)
+29 W( entering their ASCII value in decimal, e.g. 1 for Control-A,)30 W
+8280 21042 MT
+(13 for)
+187 W( Control-M \050Carriage Return\051, etc.  The RECEIVE parameters are conveyed by MacKermit to the other)186 W
+8280 22238 MT
+(Kermit. For)
+527 W( instance, if you set the receive-packet-length to 500, MacKermit will tell the other Kermit to send)139 W
+8280 23434 MT
+(500-character packets.  The SEND parameters are used to override negotiated values, and need rarely be used.)SH
+8280 25826 MT
+(Long packets are selected by setting the RECEIVING packet length)
+79 W( between 95 and 1000.  Normally, you should)78 W
+8280 27022 MT
+(not change the sending length because MacKermit, and most other Kermits, will configure)
+127 W( themselves correctly.)128 W
+8280 28218 MT
+(Note also that the fastest file transfers will happen with long packets in the range of 300-500.  Very long packets)89 W
+8280 29414 MT
+(actually end up being much slower, because the operating systems in both)
+8 W( the Mac and the other machine have to do)9 W
+8280 30610 MT
+(more work to cope with such long inputs, and, under)
+37 W( noisy conditions, the probability is higher that a longer packet)36 W
+8280 31806 MT
+(will be struck by noise, and will take longer to retransmit.)SH
+8280 34198 MT
+(The)SH
+/Times-Bold SF
+10168 XM
+(Terminal)SH
+/Times-Roman SF
+14501 XM
+(settings let you modify the characteristics of)
+83 W( the VT102 emulator, such as auto-linefeed, autowrap,)84 W
+8280 35394 MT
+(autorepeat keys, block vs underline cursor, blinking vs steady cursor, inverted screen \050reverse video\051,)
+93 W( and smooth)92 W
+8280 36590 MT
+(scrolling. There)
+640 W( is also a "visible bell" for those who can't)
+195 W( hear the audible bell produced upon receipt of a)196 W
+8280 37786 MT
+(Control-G, and an option to display control characters visibly by showing their numeric ASCII values \050in decimal\051)59 W
+8280 38982 MT
+(in a single character cell.  If local echo is needed, as in half-duplex connections, that must be specified here also.)SH
+14 /Times-Bold AF
+8280 42584 MT
+(1.11. Settings Files)SH
+10 /Times-Roman AF
+8280 44702 MT
+(You can start MacKermit with)
+31 W( all its "factory settings" by double clicking on the MacKermit icon.  Factory settings)32 W
+8280 45898 MT
+(are designed)
+25 W( for direct communication with most other microcomputers, DEC minis and mainframes, etc: 9600 bps,)24 W
+8280 47094 MT
+(no parity, XON/XOFF, remote echo, etc.  You can change the)
+5 W( communication, protocol, file, keyboard, and terminal)6 W
+8280 48290 MT
+(settings by going through the options in the)74 W
+/Times-Bold SF
+26484 XM
+(Settings)SH
+/Times-Roman SF
+30197 XM
+(menu. Once)
+398 W( you)
+74 W( have set all parameters as desired, you can)73 W
+8280 49486 MT
+(save your settings in a "MacKermit settings)
+42 W( file" by selected ")43 W
+/Times-Bold SF
+(Save Settings...)43 W
+/Times-Roman SF
+(" from the)43 W
+/Times-Bold SF
+44421 XM
+(File)SH
+/Times-Roman SF
+46325 XM
+(menu. A)
+336 W( settings file)43 W
+8280 50682 MT
+(is, in Macintosh terminology, a "MacKermit document".  You'll recognize it because)
+26 W( it looks like a dog-eared piece)25 W
+8280 51878 MT
+(of paper with the MacKermit icon superimposed.  You can have more than one settings file.)SH
+8280 54270 MT
+(There are two ways to use a settings file.  First, you can double-click on it, just as you)
+164 W( can double-click on a)165 W
+8280 55466 MT
+(MacWrite document to start up MacWrite to edit a particular file.  This method starts up MacKermit with all the)98 W
+8280 56662 MT
+(saved settings.  The other method)
+228 W( is to click on the ")229 W
+/Times-Bold SF
+(Load Settings...)229 W
+/Times-Roman SF
+(" option in the)229 W
+/Times-Bold SF
+45477 XM
+(File)SH
+/Times-Roman SF
+47567 XM
+(menu from inside)229 W
+8280 57858 MT
+(MacKermit. This)
+356 W( lets you change settings)
+53 W( without leaving and restarting the program.)52 W
+/Times-Bold SF
+44010 XM
+(Load Settings...)52 W
+/Times-Roman SF
+51278 XM
+(shows all)52 W
+8280 59054 MT
+(MacKermit settings files in the selected folder.  Opening one of them loads all its settings, removing all)
+128 W( current)129 W
+8280 60250 MT
+(settings.)SH
+8280 62642 MT
+(You can "edit" a MacKermit settings file by loading it, going through the)97 W
+/Courier SF
+39077 XM
+(Settings)SH
+/Times-Roman SF
+44224 XM
+(menu, and)
+97 W( then saving the)96 W
+8280 63838 MT
+(settings either in a new file, or overwriting the same file.)SH
+8280 66230 MT
+(As distributed)
+114 W( by Columbia, Mac Kermit comes with two settings files.  One is called "Normal Settings", and is)115 W
+8280 67426 MT
+(pretty much identical)
+162 W( to Mac Kermit's factory settings.  The other is "IBM Mainframe Linemode Settings".  It)161 W
+8280 68622 MT
+(selects mark parity, local echo, XON half-duplex line turnaround)
+248 W( handshake.  You can use these files as-is,)249 W
+8280 69818 MT
+(customize them for your)
+17 W( own environment, or create new settings files for all the different kinds of systems that you)16 W
+8280 71014 MT
+(use.)SH
+ES
+%%Page: 10 11 
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 10)SH
+12 /Times-Bold AF
+26319 XM
+(Kermit User Guide: MACINTOSH KERMIT \0501.12\051)SH
+46800 50 6120 6071 UL
+14 SS 
+6120 8138 MT
+(1.12. Reconfiguring the Keyboard)SH
+10 /Times-Roman AF
+6120 10256 MT
+(Beginning with version 0.9,)
+53 W( MacKermit has keyboard configuration functions built in.  These are accessed through)54 W
+6120 11452 MT
+(the)SH
+/Times-Bold SF
+7592 XM
+(Set Key Macros)SH
+/Times-Roman SF
+14618 XM
+(and the)SH
+/Times-Bold SF
+17784 XM
+(Set Modifiers)SH
+/Times-Roman SF
+23783 XM
+(entries in the)SH
+/Times-Bold SF
+29199 XM
+(Settings)SH
+/Times-Roman SF
+32838 XM
+(menu.)SH
+6120 13844 MT
+(The Macintosh keyboard is composed of normal keys)
+64 W( and modifier keys.  Modifier keys are those keys that, when)63 W
+6120 15040 MT
+(held down, change the meaning of other keys.  On the Mac these are: SHIFT, CAPS)
+40 W( LOCK, OPTION, CONTROL)41 W
+6120 16236 MT
+(\050only on the Mac II and SE\051, and COMMAND \050also known as)
+63 W( APPLE, CLOVER, or FAN\051.  Normal keys are the)62 W
+6120 17432 MT
+(letters, numbers, special symbols, arrow keys, space bar, and function keys.  Only one)
+29 W( normal key can be typed at a)30 W
+6120 18628 MT
+(time, but one or more modifier keys can be pressed down along with it.)SH
+6120 21020 MT
+(When you type a key, Kermit)
+109 W( reads both the ASCII value, and the keyboard-independent scan code for that key.)108 W
+6120 22216 MT
+(Kermit looks in)
+13 W( its table of key macros to see if there is a macro for this combination of key and modifiers, and if so)14 W
+6120 23412 MT
+(sends the)
+129 W( macro.  If there is no macro, Kermit then looks in its modifier table to see if any of the modifiers do)128 W
+6120 24608 MT
+(special things to the character; if so, it does these to the character.)
+140 W( Finally,)
+531 W( Kermit sends the character.  In the)141 W
+6120 25804 MT
+(normal case when there is no macro and no modifiers apply, the character sent is)
+81 W( simply the ASCII value for that)80 W
+6120 27000 MT
+(character.)SH
+6120 29392 MT
+(It is important to keep in mind that if the parity setting is something other than none, the high \0508th\051)
+136 W( bit will be)137 W
+1944 50 39907 29592 UL
+6120 30588 MT
+(stripped off of)
+106 W( the characters when they are transmitted.  Since most systems do not understand characters in the)105 W
+6120 31784 MT
+(range 128 -- 255 \050decimal\051, you should avoid)
+71 W( using the Apple extended characters \050accented vowels, for example\051)72 W
+6120 32980 MT
+(during terminal connection.)SH
+12 /Times-Bold AF
+6120 36096 MT
+(1.12.1. Defining Key Macros)SH
+10 /Times-Roman AF
+6120 38038 MT
+(To define a new key macro,)
+6 W( select the)5 W
+/Times-Bold SF
+21577 XM
+(Key Macros)5 W
+/Times-Roman SF
+27030 XM
+(entry. A)
+260 W( dialog window will appear, asking you to press the key)5 W
+6120 39234 MT
+(to define.  Type the key \050including any of the)
+26 W( modifiers\051.  A new dialog will appear, with an editable text field in it.)27 W
+6120 40430 MT
+(Enter the definition for the key here.  Your definition may be up)
+65 W( to 255 characters long, and can include all of the)64 W
+6120 41626 MT
+(control characters)
+10 W( \050including NUL\051.  Special characters can be included in the macro by entering a ``)11 W
+/Courier SF
+(\134)SH
+/Times-Roman SF
+('' \050backslash\051,)11 W
+6120 42822 MT
+(followed by up to 3)55 W
+/Times-Italic SF
+14478 XM
+(octal)SH
+/Times-Roman SF
+16783 XM
+(\050base 8\051 digits for the value \050just like in the C programming language\051.  For example, an)54 W
+6120 44018 MT
+(ASCII NUL)
+20 W( \050value 0\051 would be written as ``)21 W
+/Courier SF
+(\134000)SH
+/Times-Roman SF
+('', carriage return \050ASCII 13\051 would be written ``)21 W
+/Courier SF
+(\134015)SH
+/Times-Roman SF
+('' \0501 x 8 +)21 W
+6120 45214 MT
+(5 = 13\051.  Also, control characters may be entered with a backslash,)
+169 W( followed by a caret \050or circumflex, ``)168 W
+/Courier SF
+(^)SH
+/Times-Roman SF
+(''\051,)SH
+6120 46410 MT
+(followed by)
+4 W( the corresponding letter.  Thus a Control-G \050value 7\051 could be entered as ``)5 W
+/Courier SF
+(\134007)SH
+/Times-Roman SF
+('', ``)5 W
+/Courier SF
+(\134^G)SH
+/Times-Roman SF
+('', or ``)5 W
+/Courier SF
+(\134^g)SH
+/Times-Roman SF
+(''.)SH
+6120 47606 MT
+(To include a literal backslash in a definition, type in two of them: ``)SH
+/Courier SF
+(\134\134)SH
+/Times-Roman SF
+(''.)SH
+6120 49998 MT
+(BREAK conditions are)
+34 W( also programmable as macros.  If the entire macro the string is ``)33 W
+/Courier SF
+(\134break)SH
+/Times-Roman SF
+('', then typing the)33 W
+6120 51194 MT
+(defined key will send a short \0501/4 second\051 break.  A long \0503.5 second\051 BREAK is defined with ``)68 W
+/Courier SF
+(\134longbreak)SH
+/Times-Roman SF
+(''.)SH
+6120 52390 MT
+(Note that a macro can define either a BREAK, or a string of normal characters, but not both.)SH
+12 /Times-Bold AF
+6120 55506 MT
+(1.12.2. Defining Key Modifiers)SH
+10 /Times-Roman AF
+6120 57448 MT
+(Skip ahead to the next section if you already know about things like SHIFT, CAPS LOCK, CONTROL, and META.)SH
+6120 59840 MT
+(On a typewriter the only modifier key is SHIFT.  Typing a)
+157 W( character with no modifier key depressed selects a)156 W
+6120 61036 MT
+(lowercase letter or the character printed on the lower face of the keytop \050say, the digit "4"\051.  Typing a character)
+17 W( with)18 W
+6120 62232 MT
+(SHIFT depressed selects an uppercase letter or the character printed on the upper face of the keytop \050say,)
+78 W( a dollar)77 W
+6120 63428 MT
+(sign\051. Some)
+390 W( keyboards)
+70 W( also have a SHIFT LOCK key, which stays down once pressed and pops up the next time)71 W
+6120 64624 MT
+(it's pressed; its operation is)
+121 W( equivalent to holding down SHIFT.  And some keyboards have a CAPS LOCK key)120 W
+6120 65820 MT
+(which operates like SHIFT LOCK, but only upon letters.)SH
+6120 68212 MT
+(Computer terminals also have a modifier key called CONTROL \050or CTRL\051.  Its function is)
+19 W( a little less obvious: it is)20 W
+6120 69408 MT
+(intended to produce one)
+2 W( of the 33 characters in the "control range" of the ASCII alphabet.  Control characters are not)1 W
+6120 70604 MT
+(graphic -- they are intended)
+269 W( for use as format effectors \050like carriage return, formfeed, tab, backspace\051, for)270 W
+6120 71800 MT
+(transmission control, or)
+55 W( for device control.  The remaining 95 characters -- letters, digits, punctuation, and space --)54 W
+ES
+%%Page: 11 12 
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(1.12.2. Defining Key Modifiers)SH
+10 /Times-Italic AF
+51775 XM
+(Page 11)SH
+46800 50 8280 5709 UL
+/Times-Roman SF
+8280 7886 MT
+(are the graphic characters.  When a character is typed with)
+14 W( the CONTROL modifier pressed, its "control equivalent")15 W
+8280 9082 MT
+(\050if any\051 is transmitted.  By convention, the control equivalent of A is Control-A, B is Control-B, etc,)
+64 W( and there are)63 W
+8280 10278 MT
+(also seven special control characters generally associated with punctuation characters)
+187 W( or special keys.  For the)188 W
+8280 11474 MT
+("alphabetic" control)
+30 W( characters Control-A through Control-Z, SHIFT or CAPS LOCK modifiers are ignored; for the)29 W
+8280 12670 MT
+(others, operation varies from terminal to terminal.)SH
+8280 15062 MT
+(The SHIFT and CONTROL modifiers allow all 128)
+161 W( ASCII characters to be sent from a normal typewriter-like)162 W
+8280 16258 MT
+(keyboard that has)
+107 W( about 50 keys.  However, certain host-resident computer applications -- notably the full screen)106 W
+8280 17454 MT
+(text editor)
+149 W( EMACS and its descendents -- can be used to greater advantage with a 256 character 8-bit alphabet)150 W
+8280 18650 MT
+(\050EMACS responds to single-character commands, and the more characters)
+23 W( a terminal can send, the more commands)22 W
+8280 19846 MT
+(are directly available\051.)SH
+8280 22238 MT
+(For this purpose, some terminals also provide a META modifier key.  This key simply causes the high-order \050"8th"\051)21 W
+8280 23434 MT
+(bit of the selected 7-bit ASCII value to be set to 1 upon transmission.)
+66 W( This)
+380 W( can only work when the connection is)65 W
+8280 24630 MT
+(8-data-bits-no-parity. When)
+258 W( parity)
+4 W( is in use, EMACS allows a sequence of two 7-bit ASCII characters to represent a)5 W
+8280 25826 MT
+(single meta character.  The advantage of having a real META modifier key is that it can)
+97 W( be held down while the)96 W
+8280 27022 MT
+(actual key)
+1 W( is struck repeatedly or even autorepeats, whereas a use of a "meta prefix" such as <escape> requires much)2 W
+8280 28218 MT
+(more typing.  To illustrate, suppose META-F)
+47 W( is the command to go forward one word.  If you want to execute this)46 W
+8280 29414 MT
+(operation repeatedly, just hold down META and F and let)
+22 W( it autorepeat.  If you don't have a META key, then you'd)23 W
+8280 30610 MT
+(have to type <escape>F<escape>F<escape>F..., etc.)SH
+8280 33002 MT
+(A common problem faced by computer users who)
+16 W( switch from one terminal or PC to another is the placement of the)15 W
+8280 34198 MT
+(modifiers and other special keys.  DEC, IBM, Apple, and other manufacturers consistently move these keys)
+40 W( around)41 W
+8280 35394 MT
+(on new)
+76 W( models of their keyboards.  MacKermit allows you to assign any of various functions to any of the Mac's)75 W
+8280 36590 MT
+(modifier keys, and to assign any desired character or character)
+70 W( sequence to the regular keys, so that you can tailor)71 W
+8280 37786 MT
+(the layout of your Mac's keyboard to suit your taste.)SH
+12 /Times-Bold AF
+8280 40902 MT
+(1.12.3. Modifiers Dialog)SH
+10 /Times-Roman AF
+8280 42844 MT
+(To change the action of any of the modifier keys, select)71 W
+/Times-Bold SF
+31556 XM
+(Modifiers)SH
+/Times-Roman SF
+36043 XM
+(from the)71 W
+/Times-Bold SF
+39851 XM
+(Settings)SH
+/Times-Roman SF
+43561 XM
+(menu. A)
+392 W( dialog will)
+71 W( appear)70 W
+8280 44040 MT
+(that looks roughly like the one in Figure 1-1 \050the ``)SH
+/Courier SF
+(%)SH
+/Times-Roman SF
+('' represents the Apple or Clover key\051.)SH
+46800 50 8280 46031 UL
+/Courier SF
+13680 48810 MT
+(Modifier Pattern:  -->)
+SH( Modification:)1200 W
+11880 50872 MT
+(Ctrl Opt Lock Shift  %)
+SH( Unmodify)
+3000 W( Caps Ctrl Meta Prefix string:)SH
+43680 51903 MT
+(____________)SH
+11880 52934 MT
+([X] [)
+600 W( ] [ ]  [ ])
+SH( [)
+1200 W( ])
+SH( | [)
+1200 W( ])
+SH( [)
+1800 W( ]  [X]  [ ]  [____________])SH
+11880 53965 MT
+([ ]  [ ] [ ]  [ ])
+SH( [X] | [)
+1200 W( ])
+SH( [)
+1800 W( ]  [X]  [ ]  [____________])SH
+11880 54996 MT
+([ ]  [X] [ ]  [ ])
+SH( [)
+1200 W( ])
+SH( | [x])
+1200 W( [)
+1800 W( ]  [ ]  [ ]  [\134033)
+SH( ])4200 W
+7200 50 43680 55196 UL
+11880 56027 MT
+([ ]  [ ] [ ]  [ ])
+SH( [)
+1200 W( ])
+SH( | [)
+1200 W( ])
+SH( [)
+1800 W( ]  [ ]  [ ]  [____________])SH
+20280 58089 MT
+(\050Cancel\051 \050Help\051 \050)
+1200 W( OK \051)SH
+/Times-Bold SF
+22279 59806 MT
+(Figure 1-1:)SH
+/Times-Roman SF
+27778 XM
+(MacKermit Key Modifier Dialog)SH
+46800 50 8280 61616 UL
+8280 63808 MT
+(The check boxes are divided)
+37 W( into rows, each one describing a modification.  The left half of each row describes the)38 W
+8280 65004 MT
+(modifier combination)
+57 W( to look for; a checked box means that this key is down, and an unchecked box means "don't)56 W
+8280 66200 MT
+(care". Note)
+380 W( that there is no way to specify a key being up, and lines with nothing checked)
+65 W( on the left side will be)66 W
+8280 67396 MT
+(ignored; the character will be modified in the normal Macintosh way.)SH
+8280 69788 MT
+(The right half)
+40 W( describes what modification to do to the characters.  The Unmodify modification says "make this the)39 W
+8280 70984 MT
+(character that would be)
+10 W( sent from the same key with no modifer keys pressed".  In other words, un-Option, un-Caps,)11 W
+ES
+%%Page: 12 13 
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 12)SH
+12 /Times-Bold AF
+25419 XM
+(Kermit User Guide: MACINTOSH KERMIT \0501.12.3\051)SH
+46800 50 6120 5709 UL
+10 /Times-Roman AF
+6120 7886 MT
+(un-Control, and un-Shift this)
+94 W( character.  The Caps modification translates all letters to upper case, Ctrl makes the)93 W
+6120 9082 MT
+(letter a contol character, Meta sets the high \0508th\051 bit on the character, and if)
+1 W( a Prefix string is present, it is sent before)2 W
+6120 10278 MT
+(the character is.)SH
+/Times-Italic SF
+6120 12670 MT
+(Hints about modifiers:)SH
+/Symbol SF
+7910 14575 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(Beware of the Option key.  It changes the)
+10 W( value of any characters you use with it.  If you type Option-F,)9 W
+8620 15680 MT
+(the Mac will send a D, if you type Option-B, the Mac will send a ``)109 W
+/Courier SF
+(:)SH
+/Times-Roman SF
+('', etc.  If)
+109 W( you want to use the)110 W
+8620 16785 MT
+(option key as a modifier, be sure to check the "Unmodify" box.)SH
+/Symbol SF
+7910 18774 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(To use MacKermit with a version of EMACS that does not accept 8-bit Meta characters, define a key,)59 W
+8620 19879 MT
+(like Option, to be unmodified, with a prefix string of)5 W
+/Courier SF
+30002 XM
+(\134033)SH
+/Times-Roman SF
+32657 XM
+(\050ASCII Escape\051, as in Figure)
+5 W( 1-1.  Then you)6 W
+8620 20984 MT
+(can hold down Option and type F \050or any other key\051 repeatedly, or let it autorepeat,)
+8 W( and MacKermit will)7 W
+8620 22089 MT
+(send the correct prefix-Meta sequence.)SH
+/Symbol SF
+7910 24078 MT
+(\267)SH
+/Times-Roman SF
+8620 XM
+(When interpreting a keystoke, MacKermit checks the list of modifiers from top)
+33 W( to bottom, applying the)34 W
+8620 25183 MT
+(first one that matches.  This means that if you want a different modifier for Command-Option)
+54 W( and just)53 W
+8620 26288 MT
+(plain Command, you must put the definition for Command-Option first in the list.)SH
+14 /Times-Bold AF
+6120 29890 MT
+(1.13. Bootstrapping)SH
+10 /Times-Roman AF
+6120 32008 MT
+(This section applies if you)
+112 W( do not have a MacKermit diskette, but MacKermit is available for downloading from)113 W
+6120 33204 MT
+(some other computer.)SH
+6120 35596 MT
+(MacKermit is distributed in source form for building on a Macintosh,)
+151 W( running Apple's Macintosh Programmers)150 W
+6120 36792 MT
+(Workbench \050in MPW C\051, in)4 W
+/Courier SF
+17837 XM
+(.HQX)SH
+/Times-Roman SF
+20491 XM
+("BinHex 4" form, and sometimes also as a)
+4 W( binary resource file.  Those who want)5 W
+6120 37988 MT
+(to work from the source are referred to the file)SH
+/Courier SF
+24947 XM
+(CKMKER.BLD)SH
+/Times-Roman SF
+31197 XM
+(for instructions.)SH
+6120 40380 MT
+(If you're downloading, it's best to work)
+158 W( with)157 W
+/Courier SF
+25630 XM
+(CKMKER.HQX)SH
+/Times-Roman SF
+(, a textual encoding of the MacKermit application.)157 W
+6120 41576 MT
+(Download this using any technique available to you -- an old release)
+52 W( of Kermit, an Xmodem implementation, even)53 W
+6120 42772 MT
+(raw screen capture.)
+183 W( Then)
+614 W( run  BinHex \050version 4\051 to convert it into a working application \050select)182 W
+/Times-Bold SF
+48473 XM
+(Upload ->)182 W
+6120 43968 MT
+(Application)SH
+/Times-Roman SF
+11371 XM
+(from the)SH
+/Times-Bold SF
+15037 XM
+(File)SH
+/Times-Roman SF
+16898 XM
+(menu\051. Eveything)
+250 W( will be set up correctly -- icons, forks, etc.)SH
+6120 46360 MT
+(If you don't have the)149 W
+/Courier SF
+15502 XM
+(.HQX)SH
+/Times-Roman SF
+18301 XM
+(file available, but you do have access to the binary resource file \050its name)
+149 W( will be)150 W
+/Courier SF
+6120 47556 MT
+(CKMKER.RSRC)SH
+/Times-Roman SF
+(,)SH
+/Courier SF
+13703 XM
+(ckmker.rsrc)SH
+/Times-Roman SF
+(,)SH
+/Courier SF
+21286 XM
+(CKMKER.RSR)SH
+/Times-Roman SF
+(,)SH
+/Courier SF
+28269 XM
+(ckmker.rsr)SH
+/Times-Roman SF
+(,)SH
+/Courier SF
+35252 XM
+(%ckmker)SH
+/Times-Roman SF
+40185 XM
+(or some variation on)
+483 W( these,)482 W
+6120 48752 MT
+(depending on what system it's stored on and how it got there\051, AND if you have "MacPut" on your system)
+123 W( and)124 W
+6120 49948 MT
+(MacTerminal on your)
+174 W( Mac, AND if you have an 8-bit-wide \050no parity\051 data path between your Mac and your)173 W
+6120 51144 MT
+(system, then you can use MacPut)
+298 W( to download the binary resource file to your Mac using MacTerminal's)299 W
+6120 52340 MT
+("MacBinary" format \050a variant of XMODEM\051.  After doing this you must use a program such as)
+5 W( SetFile)
+259 W( or  ResEdit)4 W
+6120 53536 MT
+(on the Mac to set the author to KR09, the type to APPL, and turn on the bundle bit.)
+164 W( Do)
+579 W( not bother with the)165 W
+6120 54732 MT
+(CKMKEY program, as)
+102 W( it is not used with newer MacKermits.  If you have an earlier release of MacKermit, you)101 W
+6120 55928 MT
+(may use it in place of MacTerminal and MacPut.)SH
+14 /Times-Bold AF
+6120 59530 MT
+(1.14. Differences Between Versions 0.8 and 0.9)SH
+10 /Times-Roman AF
+6120 61648 MT
+(MacKermit 0.8\05034\051 runs on the 128K Mac, the 512K Mac,)
+96 W( and the Mac Plus, but not on the Macintosh II or SE.)97 W
+6120 62844 MT
+(MacKermit 0.9\05040\051)
+26 W( runs on all Macs except the 128K original.  You should use version 0.9 unless you have a 128K)25 W
+6120 64040 MT
+(Mac.)SH
+6120 66432 MT
+(The second major difference is that the)
+47 W( program is has been translated into Apple MPW C, so that it can be edited,)48 W
+6120 67628 MT
+(compiled, and built on the Macintosh itself.  This was)
+265 W( done originally by Jim Noble of Planning Research)264 W
+6120 68824 MT
+(Corporation, who converted MacKermit from SUMACC C \050which had to be)
+47 W( cross compiled on a UNIX system\051 to)48 W
+6120 70020 MT
+(Megamax C.)
+77 W( Jim's version was converted to MPW C by Matthias Aebi, who also added most of the new features)76 W
+6120 71216 MT
+(listed below.  Paul Placeway integrated the program with the current \050long packet\051 version of)
+67 W( C-Kermit and added)68 W
+ES
+%%Page: 13 14 
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(1.14. Differences Between Versions 0.8 and 0.9)SH
+10 /Times-Italic AF
+51775 XM
+(Page 13)SH
+46800 50 8280 5709 UL
+/Times-Roman SF
+8280 7886 MT
+(additional new features.)SH
+8280 10278 MT
+(Besides these important differences, there were many other changes from version 0.8 to version 0.9, including:)SH
+/Symbol SF
+10070 12183 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(The Cursor with open desk accessories now works correctly)SH
+/Symbol SF
+10070 13509 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Long packet support)SH
+/Symbol SF
+10070 14835 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(New program icon)SH
+/Symbol SF
+10070 16161 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(New settings files are no longer TEXT)SH
+/Symbol SF
+10070 17487 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Settings can now be written back to an already existing settings file)SH
+/Symbol SF
+10070 18813 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Key redefinition function built in to Kermit, no more CKMKEY)SH
+/Symbol SF
+10070 20139 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Server mode directory listing feature)SH
+/Symbol SF
+10070 21465 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Multifile \050folder\051 send)SH
+/Symbol SF
+10070 22791 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Server "Delete" file command)SH
+/Symbol SF
+10070 24117 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Server "Space" command)SH
+/Symbol SF
+10070 25443 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Get whole folder content from the server with filename ``)SH
+/Courier SF
+(:)SH
+/Times-Roman SF
+('')SH
+/Symbol SF
+10070 26769 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Recognition of all the different Mac keyboards)SH
+/Symbol SF
+10070 28095 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Support of menu command keys \050key macros\051)SH
+/Symbol SF
+10070 29421 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Terminal settings dialog separated from communication settings)SH
+/Symbol SF
+10070 30747 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Non-transparent terminal mode)SH
+/Symbol SF
+10070 32073 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Display of statistics and protocol version to "About Kermit" dialog.)SH
+/Symbol SF
+10070 33399 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Parity problems fixed)SH
+/Symbol SF
+10070 34725 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Session logging)SH
+/Symbol SF
+10070 36051 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Transaction logging)SH
+/Symbol SF
+10070 37377 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Multifinder support)SH
+/Symbol SF
+10070 38703 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Additions to the VT102 emulator \050smooth scrolling, etc\051)SH
+/Symbol SF
+10070 40029 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Rearrangement of menus and displays)SH
+/Symbol SF
+10070 41355 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Program no longer hangs if remote response window gets too full)SH
+/Symbol SF
+10070 42681 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(Program now works correctly on 64K ROM machines)SH
+/Symbol SF
+10070 44007 MT
+(\267)SH
+/Times-Roman SF
+10780 XM
+(A new manual)SH
+8280 45798 MT
+(This manual applies in large part to version 0.8\05034\051, except that the older version is)
+50 W( missing the new features listed)49 W
+8280 46994 MT
+(above, and it comes in two pieces: CKMKER and CKMKEY.  The CKMKEY program is used to)
+13 W( program the keys,)14 W
+8280 48190 MT
+(like the)113 W
+/Times-Bold SF
+11728 XM
+(Set Key Macros...)113 W
+/Times-Roman SF
+19843 XM
+(and)SH
+/Times-Bold SF
+21650 XM
+(Set Modifiers)113 W
+/Times-Roman SF
+27875 XM
+(described in this manual, and creates a)
+113 W( settings file which Kermit)112 W
+8280 49386 MT
+(itself uses.  The old version only works well with early Macintosh keyboards.)SH
+ES
+%%Page: 14 15 
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 14)SH
+12 /Times-Bold AF
+27687 XM
+(Kermit User Guide: The ASCII Character Set \050I\051)SH
+46800 50 6120 6252 UL
+ES
+%%Page: 15 16 
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(I. The ASCII Character Set)SH
+10 /Times-Italic AF
+51775 XM
+(Page 15)SH
+46800 50 8280 6252 UL
+16 /Times-Bold AF
+27834 8272 MT
+(Appendix I)SH
+22949 9680 MT
+(The ASCII Character Set)SH
+10 /Times-Roman AF
+8280 11974 MT
+(ASCII Code \050ANSI X3.4-1968\051)SH
+12776 50 8280 12174 UL
+8280 14366 MT
+(There are 128 characters in the ASCII \050American national Standard Code for)
+69 W( Information Interchange\051 "alphabet".)70 W
+8280 15562 MT
+(The characters are listed in order of ASCII value; the columns are labeled as follows:)SH
+8280 17353 MT
+(Bit)SH
+16280 XM
+(Even parity bit for ASCII character.)SH
+8280 18458 MT
+(ASCII Dec)SH
+16280 XM
+(Decimal \050base 10\051 representation.)SH
+8280 19563 MT
+(ASCII Oct)SH
+16280 XM
+(Octal \050base 8\051 representation.)SH
+8280 20668 MT
+(ASCII Hex)SH
+16280 XM
+(Hexadecimal \050base 16\051 representation.)SH
+8280 21773 MT
+(EBCDIC Hex)SH
+16280 XM
+(EBCDIC hexadecimal equivalent for Kermit translate tables.)SH
+8280 22878 MT
+(Char)SH
+16280 XM
+(Name or graphical representation of character.)SH
+8280 23983 MT
+(Remark)SH
+16280 XM
+(Description of character.)SH
+8280 25774 MT
+(The first group consists of nonprintable 'control' characters:)SH
+/Courier SF
+11280 27429 MT
+(.....ASCII.... EBCDIC)SH
+8280 28460 MT
+(Bit Dec)
+600 W( Oct)
+1200 W( Hex Hex  Char Remarks)600 W
+1800 50 8280 28660 UL
+1800 50 11280 28660 UL
+1800 50 14880 28660 UL
+1800 50 17880 28660 UL
+1800 50 20880 28660 UL
+2400 50 25080 28660 UL
+4200 50 28680 28660 UL
+8880 29491 MT
+(0 000 000 00 00)
+1200 W( NUL)
+1800 W( ^@,)
+1200 W( Null, Idle)SH
+8880 30522 MT
+(1 001 001 01 01)
+1200 W( SOH)
+1800 W( ^A,)
+1200 W( Start of heading)SH
+8880 31553 MT
+(1 002 002 02 02)
+1200 W( STX)
+1800 W( ^B,)
+1200 W( Start of text)SH
+8880 32584 MT
+(0 003 003 03 03)
+1200 W( ETX)
+1800 W( ^C,)
+1200 W( End of text)SH
+8880 33615 MT
+(1 004 004 04 37)
+1200 W( EOT)
+1800 W( ^D,)
+1200 W( End of transmission)SH
+8880 34646 MT
+(0 005 005 05 2D)
+1200 W( ENQ)
+1800 W( ^E,)
+1200 W( Enquiry)SH
+8880 35677 MT
+(0 006 006 06 2E)
+1200 W( ACK)
+1800 W( ^F,)
+1200 W( Acknowledge)SH
+8880 36708 MT
+(1 007 007 07 2F)
+1200 W( BEL)
+1800 W( ^G,)
+1200 W( Bell, beep, or fleep)SH
+8880 37739 MT
+(1 008 010 08 16)
+1200 W( BS ^H,)
+1800 W( Backspace)SH
+8880 38770 MT
+(0 009 011 09 05)
+1200 W( HT ^I,)
+1800 W( Horizontal tab)SH
+8880 39801 MT
+(0 010 012 0A 25)
+1200 W( LF ^J,)
+1800 W( Line feed)SH
+8880 40832 MT
+(1 011 013 0B 0B)
+1200 W( VT ^K,)
+1800 W( Vertical tab)SH
+8880 41863 MT
+(0 012 014 0C 0C)
+1200 W( FF ^L,)
+1800 W( Form feed \050top of page\051)SH
+8880 42894 MT
+(1 013 015 0D 0D)
+1200 W( CR ^M,)
+1800 W( Carriage return)SH
+8880 43925 MT
+(1 014 016 0E 0E)
+1200 W( SO ^N,)
+1800 W( Shift out)SH
+8880 44956 MT
+(0 015 017 0F 0F)
+1200 W( SI ^O,)
+1800 W( Shift in)SH
+8880 45987 MT
+(1 016 020 10 10)
+1200 W( DLE)
+1800 W( ^P,)
+1200 W( Data link escape)SH
+8880 47018 MT
+(0 017 021 11 11)
+1200 W( DC1)
+1800 W( ^Q,)
+1200 W( Device control 1, XON)SH
+8880 48049 MT
+(0 018 022 12 12)
+1200 W( DC2)
+1800 W( ^R,)
+1200 W( Device control 2)SH
+8880 49080 MT
+(1 019 023 13 13)
+1200 W( DC3)
+1800 W( ^S,)
+1200 W( Device control 3, XOFF)SH
+8880 50111 MT
+(0 020 024 14 3C)
+1200 W( DC4)
+1800 W( ^T,)
+1200 W( Device control 4)SH
+8880 51142 MT
+(1 021 025 15 3D)
+1200 W( NAK)
+1800 W( ^U,)
+1200 W( Negative acknowledge)SH
+8880 52173 MT
+(1 022 026 16 32)
+1200 W( SYN)
+1800 W( ^V,)
+1200 W( Synchronous idle)SH
+8880 53204 MT
+(0 023 027 17 26)
+1200 W( ETB)
+1800 W( ^W,)
+1200 W( End of transmission block)SH
+8880 54235 MT
+(0 024 030 18 18)
+1200 W( CAN)
+1800 W( ^X,)
+1200 W( Cancel)SH
+8880 55266 MT
+(1 025 031 19 19)
+1200 W( EM ^Y,)
+1800 W( End of medium)SH
+8880 56297 MT
+(1 026 032 1A 3F)
+1200 W( SUB)
+1800 W( ^Z,)
+1200 W( Substitute)SH
+8880 57328 MT
+(0 027 033 1B 27)
+1200 W( ESC)
+1800 W( ^[,)
+1200 W( Escape, prefix, altmode)SH
+8880 58359 MT
+(1 028 034 1C 1C)
+1200 W( FS ^\134,)
+1800 W( File separator)SH
+8880 59390 MT
+(0 029 035 1D 1D)
+1200 W( GS ^],)
+1800 W( Group separator)SH
+8880 60421 MT
+(0 030 036 1E 1E)
+1200 W( RS ^^,)
+1800 W( Record separator)SH
+8880 61452 MT
+(1 031 037 1F 1F)
+1200 W( US ^_,)
+1800 W( Unit separator)SH
+/Times-Roman SF
+8280 63169 MT
+(The last four are usually associated with the control version of backslash, right square bracket, uparrow \050or)252 W
+8280 64365 MT
+(circumflex\051, and underscore, respectively, but some terminals do not transmit these control characters.)SH
+ES
+%%Page: 16 17 
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 16)SH
+12 /Times-Bold AF
+27687 XM
+(Kermit User Guide: The ASCII Character Set \050I\051)SH
+46800 50 6120 5709 UL
+10 /Times-Roman AF
+6120 7886 MT
+(The following characters are printable:)SH
+6120 9603 MT
+(First, some punctuation characters.)SH
+/Courier SF
+9120 11665 MT
+(.....ASCII.... EBCDIC)SH
+6120 12696 MT
+(Bit Dec)
+600 W( Oct)
+1200 W( Hex Hex  Char Remarks)600 W
+1800 50 6120 12896 UL
+1800 50 9120 12896 UL
+1800 50 12720 12896 UL
+1800 50 15720 12896 UL
+1800 50 18720 12896 UL
+2400 50 22920 12896 UL
+4200 50 26520 12896 UL
+6720 13727 MT
+(1 032 040 20 40)
+1200 W( SP Space,)
+1800 W( blank)SH
+6720 14758 MT
+(0 033 041 21 5A)
+1200 W( !)
+1800 W( Exclamation)
+2400 W( mark)SH
+6720 15789 MT
+(0 034 042 22 7F)
+1200 W( ")
+1800 W( Doublequote)2400 W
+6720 16820 MT
+(1 035 043 23 7B)
+1200 W( #)
+1800 W( Number)
+2400 W( sign, pound sign)SH
+6720 17851 MT
+(0 036 044 24 5B)
+1200 W( $)
+1800 W( Dollar)
+2400 W( sign)SH
+6720 18882 MT
+(1 037 045 25 6C)
+1200 W( %)
+1800 W( Percent)
+2400 W( sign)SH
+6720 19913 MT
+(1 038 046 26 50)
+1200 W( &)
+1800 W( Ampersand)2400 W
+6720 20944 MT
+(0 039 047 27 7D)
+1200 W( ')
+1800 W( Apostrophe,)
+2400 W( accent acute)SH
+6720 21975 MT
+(0 040 050 28 4D)
+1200 W( \050)
+1800 W( Left)
+2400 W( parenthesis)SH
+6720 23006 MT
+(1 041 051 29 5D)
+1200 W( \051)
+1800 W( Right)
+2400 W( parenthesis)SH
+6720 24037 MT
+(1 042 052 2A 5C)
+1200 W( *)
+1800 W( Asterisk,)
+2400 W( star)SH
+6720 25068 MT
+(0 043 053 2B 4E)
+1200 W( +)
+1800 W( Plus)
+2400 W( sign)SH
+6720 26099 MT
+(1 044 054 2C 6B)
+1200 W( ,)
+1800 W( Comma)2400 W
+6720 27130 MT
+(0 045 055 2D 60)
+1200 W( -)
+1800 W( Dash,)
+2400 W( hyphen, minus sign)SH
+6720 28161 MT
+(0 046 056 2E 4B)
+1200 W( .)
+1800 W( Period,)
+2400 W( dot)SH
+6720 29192 MT
+(1 047 057 2F 61)
+1200 W( /)
+1800 W( Slash)2400 W
+/Times-Roman SF
+6120 30909 MT
+(Numeric characters:)SH
+/Courier SF
+9120 32971 MT
+(.....ASCII.... EBCDIC)SH
+6120 34002 MT
+(Bit Dec)
+600 W( Oct)
+1200 W( Hex Hex  Char Remarks)600 W
+1800 50 6120 34202 UL
+1800 50 9120 34202 UL
+1800 50 12720 34202 UL
+1800 50 15720 34202 UL
+1800 50 18720 34202 UL
+2400 50 22920 34202 UL
+4200 50 26520 34202 UL
+6720 35033 MT
+(0 048 060 30 F0)
+1200 W( 0)
+1800 W( Zero)2400 W
+6720 36064 MT
+(1 049 061 31 F1)
+1200 W( 1)
+1800 W( One)2400 W
+6720 37095 MT
+(1 050 062 32 F2)
+1200 W( 2)
+1800 W( Two)2400 W
+6720 38126 MT
+(0 051 063 33 F3)
+1200 W( 3)
+1800 W( Three)2400 W
+6720 39157 MT
+(1 052 064 34 F4)
+1200 W( 4)
+1800 W( Four)2400 W
+6720 40188 MT
+(0 053 065 35 F5)
+1200 W( 5)
+1800 W( Five)2400 W
+6720 41219 MT
+(0 054 066 36 F6)
+1200 W( 6)
+1800 W( Six)2400 W
+6720 42250 MT
+(1 055 067 37 F7)
+1200 W( 7)
+1800 W( Seven)2400 W
+6720 43281 MT
+(1 056 070 38 F8)
+1200 W( 8)
+1800 W( Eight)2400 W
+6720 44312 MT
+(0 057 071 39 F9)
+1200 W( 9)
+1800 W( Nine)2400 W
+/Times-Roman SF
+6120 46029 MT
+(More punctuation characters:)SH
+/Courier SF
+9120 48091 MT
+(.....ASCII.... EBCDIC)SH
+6120 49122 MT
+(Bit Dec)
+600 W( Oct)
+1200 W( Hex Hex  Char Remarks)600 W
+1800 50 6120 49322 UL
+1800 50 9120 49322 UL
+1800 50 12720 49322 UL
+1800 50 15720 49322 UL
+1800 50 18720 49322 UL
+2400 50 22920 49322 UL
+4200 50 26520 49322 UL
+6720 50153 MT
+(0 058 072 3A 7A)
+1200 W( :)
+1800 W( Colon)2400 W
+6720 51184 MT
+(1 059 073 3B 5E)
+1200 W( ;)
+1800 W( Semicolon)2400 W
+6720 52215 MT
+(0 060 074 3C 4C)
+1200 W( <)
+1800 W( Left)
+2400 W( angle bracket)SH
+6720 53246 MT
+(1 061 075 3D 7E)
+1200 W( =)
+1800 W( Equal)
+2400 W( sign)SH
+6720 54277 MT
+(1 062 076 3E 6E)
+1200 W( >)
+1800 W( Right)
+2400 W( angle bracket)SH
+6720 55308 MT
+(0 063 077 3F 6F)
+1200 W( ?)
+1800 W( Question)
+2400 W( mark)SH
+6720 56339 MT
+(1 064 100 40 7C)
+1200 W( @)
+1800 W( "At")
+2400 W( sign)SH
+ES
+%%Page: 17 18 
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(I. The ASCII Character Set)SH
+10 /Times-Italic AF
+51775 XM
+(Page 17)SH
+46800 50 8280 5709 UL
+/Times-Roman SF
+8280 7886 MT
+(Upper-case alphabetic characters \050letters\051:)SH
+/Courier SF
+11280 9948 MT
+(.....ASCII.... EBCDIC)SH
+8280 10979 MT
+(Bit Dec)
+600 W( Oct)
+1200 W( Hex Hex  Char Remarks)600 W
+1800 50 8280 11179 UL
+1800 50 11280 11179 UL
+1800 50 14880 11179 UL
+1800 50 17880 11179 UL
+1800 50 20880 11179 UL
+2400 50 25080 11179 UL
+4200 50 28680 11179 UL
+8880 12010 MT
+(0 065 101 41 C1)
+1200 W( A)1800 W
+8880 13041 MT
+(0 066 102 42 C2)
+1200 W( B)1800 W
+8880 14072 MT
+(1 067 103 43 C3)
+1200 W( C)1800 W
+8880 15103 MT
+(0 068 104 44 C4)
+1200 W( D)1800 W
+8880 16134 MT
+(1 069 105 45 C5)
+1200 W( E)1800 W
+8880 17165 MT
+(1 070 106 46 C6)
+1200 W( F)1800 W
+8880 18196 MT
+(0 071 107 47 C7)
+1200 W( G)1800 W
+8880 19227 MT
+(0 072 110 48 C8)
+1200 W( H)1800 W
+8880 20258 MT
+(1 073 111 49 C9)
+1200 W( I)1800 W
+8880 21289 MT
+(1 074 112 4A D1)
+1200 W( J)1800 W
+8880 22320 MT
+(0 075 113 4B D2)
+1200 W( K)1800 W
+8880 23351 MT
+(1 076 114 4C D3)
+1200 W( L)1800 W
+8880 24382 MT
+(0 077 115 4D D4)
+1200 W( M)1800 W
+8880 25413 MT
+(0 078 116 4E D5)
+1200 W( N)1800 W
+8880 26444 MT
+(1 079 117 4F D6)
+1200 W( O)1800 W
+8880 27475 MT
+(0 080 120 50 D7)
+1200 W( P)1800 W
+8880 28506 MT
+(1 081 121 51 D8)
+1200 W( Q)1800 W
+8880 29537 MT
+(1 082 122 52 D9)
+1200 W( R)1800 W
+8880 30568 MT
+(0 083 123 53 E2)
+1200 W( S)1800 W
+8880 31599 MT
+(1 084 124 54 E3)
+1200 W( T)1800 W
+8880 32630 MT
+(0 085 125 55 E4)
+1200 W( U)1800 W
+8880 33661 MT
+(0 086 126 56 E5)
+1200 W( V)1800 W
+8880 34692 MT
+(1 087 127 57 E6)
+1200 W( W)1800 W
+8880 35723 MT
+(1 088 130 58 E7)
+1200 W( X)1800 W
+8880 36754 MT
+(0 089 131 59 E8)
+1200 W( Y)1800 W
+8880 37785 MT
+(0 090 132 5A E9)
+1200 W( Z)1800 W
+/Times-Roman SF
+8280 39502 MT
+(More punctuation characters:)SH
+/Courier SF
+11280 41564 MT
+(.....ASCII.... EBCDIC)SH
+8280 42595 MT
+(Bit Dec)
+600 W( Oct)
+1200 W( Hex Hex  Char Remarks)600 W
+1800 50 8280 42795 UL
+1800 50 11280 42795 UL
+1800 50 14880 42795 UL
+1800 50 17880 42795 UL
+1800 50 20880 42795 UL
+2400 50 25080 42795 UL
+4200 50 28680 42795 UL
+8880 43626 MT
+(1 091 133 5B AD)
+1200 W( [)
+1800 W( Left)
+2400 W( square bracket)SH
+8880 44657 MT
+(0 092 134 5C E0)
+1200 W( \134)
+1800 W( Backslash)2400 W
+8880 45688 MT
+(1 093 135 5D BD)
+1200 W( ])
+1800 W( Right)
+2400 W( square bracket)SH
+8880 46719 MT
+(1 094 136 5E 5F)
+1200 W( ^)
+1800 W( Circumflex,)
+2400 W( up arrow)SH
+8880 47750 MT
+(0 095 137 5F 6D)
+1200 W( _)
+1800 W( Underscore,)
+2400 W( left arrow)SH
+8880 48781 MT
+(0 096 140 60 79)
+1200 W( `)
+1800 W( Accent)
+2400 W( grave)SH
+ES
+%%Page: 18 19 
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 18)SH
+12 /Times-Bold AF
+27687 XM
+(Kermit User Guide: The ASCII Character Set \050I\051)SH
+46800 50 6120 5709 UL
+10 /Times-Roman AF
+6120 7886 MT
+(Lower-case alphabetic characters \050letters\051:)SH
+/Courier SF
+9120 9948 MT
+(.....ASCII.... EBCDIC)SH
+6120 10979 MT
+(Bit Dec)
+600 W( Oct)
+1200 W( Hex Hex  Char Remarks)600 W
+1800 50 6120 11179 UL
+1800 50 9120 11179 UL
+1800 50 12720 11179 UL
+1800 50 15720 11179 UL
+1800 50 18720 11179 UL
+2400 50 22920 11179 UL
+4200 50 26520 11179 UL
+6720 12010 MT
+(1 097 141 61 81)
+1200 W( a)1800 W
+6720 13041 MT
+(1 098 142 62 82)
+1200 W( b)1800 W
+6720 14072 MT
+(0 099 143 63 83)
+1200 W( c)1800 W
+6720 15103 MT
+(1 100 144 64 84)
+1200 W( d)1800 W
+6720 16134 MT
+(0 101 145 65 85)
+1200 W( e)1800 W
+6720 17165 MT
+(0 102 146 66 86)
+1200 W( f)1800 W
+6720 18196 MT
+(1 103 147 67 87)
+1200 W( g)1800 W
+6720 19227 MT
+(1 104 150 68 88)
+1200 W( h)1800 W
+6720 20258 MT
+(0 105 151 69 89)
+1200 W( i)1800 W
+6720 21289 MT
+(0 106 152 6A 91)
+1200 W( j)1800 W
+6720 22320 MT
+(1 107 153 6B 92)
+1200 W( k)1800 W
+6720 23351 MT
+(0 108 154 6C 93)
+1200 W( l)1800 W
+6720 24382 MT
+(1 109 155 6D 94)
+1200 W( m)1800 W
+6720 25413 MT
+(1 110 156 6E 95)
+1200 W( n)1800 W
+6720 26444 MT
+(0 111 157 6F 96)
+1200 W( o)1800 W
+6720 27475 MT
+(1 112 160 70 97)
+1200 W( p)1800 W
+6720 28506 MT
+(0 113 161 71 98)
+1200 W( q)1800 W
+6720 29537 MT
+(0 114 162 72 99)
+1200 W( r)1800 W
+6720 30568 MT
+(1 115 163 73 A2)
+1200 W( s)1800 W
+6720 31599 MT
+(0 116 164 74 A3)
+1200 W( t)1800 W
+6720 32630 MT
+(1 117 165 75 A4)
+1200 W( u)1800 W
+6720 33661 MT
+(1 118 166 76 A5)
+1200 W( v)1800 W
+6720 34692 MT
+(0 119 167 77 A6)
+1200 W( w)1800 W
+6720 35723 MT
+(0 120 170 78 A7)
+1200 W( x)1800 W
+6720 36754 MT
+(1 121 171 79 A8)
+1200 W( y)1800 W
+6720 37785 MT
+(1 122 172 7A A9)
+1200 W( z)1800 W
+/Times-Roman SF
+6120 39502 MT
+(More punctuation characters:)SH
+/Courier SF
+9120 41564 MT
+(.....ASCII.... EBCDIC)SH
+6120 42595 MT
+(Bit Dec)
+600 W( Oct)
+1200 W( Hex Hex  Char Remarks)600 W
+1800 50 6120 42795 UL
+1800 50 9120 42795 UL
+1800 50 12720 42795 UL
+1800 50 15720 42795 UL
+1800 50 18720 42795 UL
+2400 50 22920 42795 UL
+4200 50 26520 42795 UL
+6720 43626 MT
+(0 123 173 7B C0)
+1200 W( {)
+2400 W( Left)
+1800 W( brace \050curly bracket\051)SH
+6720 44657 MT
+(1 124 174 7C 4F)
+1200 W( |)
+2400 W( Vertical)
+1800 W( bar)SH
+6720 45688 MT
+(0 125 175 7D D0)
+1200 W( })
+2400 W( Right)
+1800 W( brace \050curly bracket\051)SH
+6720 46719 MT
+(0 126 176 7E A1)
+1200 W( ~)
+2400 W( Tilde)1800 W
+/Times-Roman SF
+6120 49467 MT
+(Finally, one more nonprintable character:)SH
+/Courier SF
+6720 51529 MT
+(0 127)
+1800 W( 177)
+1200 W( 7F)
+600 W( 07)
+1200 W( DEL)
+1800 W( Delete,)
+1200 W( rubout)SH
+ES
+%%Page: 19 20 
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(Macintosh Kermit)SH
+10 /Times-Italic AF
+51775 XM
+(Page 19)SH
+46800 50 8280 6252 UL
+16 /Times-Bold AF
+8280 8272 MT
+(Index)SH
+8 /Times-Roman AF
+12280 10429 MT
+(8th-bit Prefixing)
+SH( 9)400 W
+12280 12277 MT
+(Apple Macintosh)
+SH( 1)400 W
+12280 13201 MT
+(ASCII 15)400 W
+12280 15049 MT
+(Background 1)400 W
+12280 15973 MT
+(Bell 9)400 W
+12280 16897 MT
+(Binary Files)
+SH( 6)400 W
+12280 17821 MT
+(Binhex 12)400 W
+12280 18745 MT
+(Bootstrapping MacKermit)
+SH( 12)400 W
+12280 19669 MT
+(BREAK 10)400 W
+12280 21517 MT
+(CKMKER 1)400 W
+12280 22441 MT
+(Control Characters)
+SH( 15)400 W
+12280 24289 MT
+(DTR 2)400 W
+12280 26137 MT
+(EBCDIC 15)400 W
+12280 27061 MT
+(Extended ASCII)
+SH( 6)400 W
+12280 28909 MT
+(Folder 4)400 W
+12280 29833 MT
+(Fork 6)400 W
+12280 31681 MT
+(HFS 4)400 W
+12280 33529 MT
+(Key Redefinition)
+SH( 5,)
+400 W( 10)SH
+12280 35377 MT
+(Long Packets)
+SH( 9)400 W
+12280 37225 MT
+(MacBinary 7)400 W
+12280 38149 MT
+(Macintosh Kermit)
+SH( 1)400 W
+12280 39073 MT
+(MacKermit Settings Files)
+SH( 9)400 W
+12280 39997 MT
+(META Key)
+SH( 11)400 W
+12280 40921 MT
+(MFS 4)400 W
+12280 41845 MT
+(Mouse 2,)
+400 W( 5)SH
+12280 43693 MT
+(Parity 5,)
+400 W( 15)SH
+12280 45541 MT
+(Raw Download)
+SH( 6)400 W
+12280 46465 MT
+(ResEdit 12)400 W
+12280 48313 MT
+(Session Log)
+SH( 6)400 W
+12280 49237 MT
+(Setfile 12)400 W
+12280 50161 MT
+(Settings Files)
+SH( 9)400 W
+12280 52009 MT
+(VT102 Emulation)
+SH( 5)400 W
+12280 53857 MT
+(XON/XOFF 15)400 W
+ES
+%%Page: 20 21 
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page 20)SH
+12 /Times-Bold AF
+43052 XM
+(Kermit User Guide)SH
+46800 50 6120 6252 UL
+ES
+%%Page: i 22 
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(Macintosh Kermit)SH
+10 /Times-Italic AF
+52497 XM
+(Page i)SH
+46800 50 8280 5709 UL
+16 /Times-Bold AF
+25591 8272 MT
+(Table of Contents)SH
+12 SS 
+8280 10684 MT
+(1. MACINTOSH KERMIT)SH
+54480 XM
+(1)SH
+10 SS 
+9780 12074 MT
+(1.1. Introduction)SH
+54580 XM
+(1)SH
+9780 13154 MT
+(1.2. Installation)SH
+54580 XM
+(2)SH
+9780 14234 MT
+(1.3. Getting Started)SH
+54580 XM
+(2)SH
+9780 15314 MT
+(1.4. The Macintosh File System)SH
+54580 XM
+(4)SH
+9780 16394 MT
+(1.5. Menus)SH
+54580 XM
+(4)SH
+9780 17474 MT
+(1.6. Terminal Emulation)SH
+54580 XM
+(5)SH
+9780 18554 MT
+(1.7. File Transfer)SH
+54580 XM
+(6)SH
+11780 19634 MT
+(1.7.1. Sending Files)SH
+54580 XM
+(7)SH
+11780 20714 MT
+(1.7.2. Receiving Files)SH
+54580 XM
+(7)SH
+9780 21794 MT
+(1.8. Remote Commands)SH
+54580 XM
+(8)SH
+9780 22874 MT
+(1.9. Server Operation)SH
+54580 XM
+(8)SH
+9780 23954 MT
+(1.10. Settings)SH
+54580 XM
+(8)SH
+9780 25034 MT
+(1.11. Settings Files)SH
+54580 XM
+(9)SH
+9780 26114 MT
+(1.12. Reconfiguring the Keyboard)SH
+54080 XM
+(10)SH
+11780 27194 MT
+(1.12.1. Defining Key Macros)SH
+54080 XM
+(10)SH
+11780 28274 MT
+(1.12.2. Defining Key Modifiers)SH
+54080 XM
+(10)SH
+11780 29354 MT
+(1.12.3. Modifiers Dialog)SH
+54080 XM
+(11)SH
+9780 30434 MT
+(1.13. Bootstrapping)SH
+54080 XM
+(12)SH
+9780 31514 MT
+(1.14. Differences Between Versions 0.8 and 0.9)SH
+54080 XM
+(12)SH
+12 SS 
+8280 33038 MT
+(Appendix I. The ASCII Character Set)SH
+53880 XM
+(15)SH
+8280 34562 MT
+(Index)SH
+53880 XM
+(19)SH
+ES
+%%Page: ii 23 
+BS
+0 SI
+10 /Times-Italic AF
+6120 4404 MT
+(Page ii)SH
+12 /Times-Bold AF
+43052 XM
+(Kermit User Guide)SH
+46800 50 6120 6252 UL
+ES
+%%Page: iii 24 
+BS
+0 SI
+12 /Times-Bold AF
+8280 4404 MT
+(Macintosh Kermit)SH
+10 /Times-Italic AF
+51941 XM
+(Page iii)SH
+46800 50 8280 6252 UL
+16 /Times-Bold AF
+26702 8272 MT
+(List of Figures)SH
+10 SS 
+9780 10550 MT
+(Figure 1-1:)
+SH( MacKermit)
+500 W( Key Modifier Dialog)SH
+54080 XM
+(11)SH
+ES
+%%Trailer
+%%Pages: 24 
+%%DocumentFonts: Times-Roman Times-Bold Times-Italic Courier Symbol

@@ -1,5 +1,4 @@
 /*  C K C D E B . H  */
-
 /*
  This file is included by all C-Kermit modules, including the modules
  that aren't specific to Kermit (like the command parser and the ck?tio and
@@ -8,8 +7,8 @@
  modules, and also includes some feature selection compile-time switches.
 */
 /*
- Copyright (C) 1985, Trustees of Columbia University in the City of New York.
- Permission is granted to any individual or institution to use, copy, or
+ Copyright (C) 1987, 1989, Trustees of Columbia University in the City of New 
+ York. Permission is granted to any individual or institution to use, copy, or
  redistribute this software so long as it is not sold for profit, provided this
  copyright notice is retained.
 */
@@ -17,7 +16,7 @@
 /*
  DEBUG and TLOG should be defined in the Makefile if you want debugging
  and transaction logs.  Don't define them if you want to save the space
- and overhead.
+ overhead.
 */
 #ifndef DEBUG
 #define debug(a,b,c,d) {}
@@ -39,23 +38,48 @@
 #define F110 6
 #define F111 7
 
-/* Compiler dependencies */
+/* Unix Version Dependencies */
+
+/* signal() type, void or int? */
+#ifdef SVR3
+typedef void SIGTYP;			/* System V R3 and later */
+#else
+#ifdef SUNOS4
+typedef void SIGTYP;			/* SUNOS V 4.0 and later */
+#else
+typedef int SIGTYP;
+#endif
+#endif
+
+/* C Compiler Dependencies */
+
+#ifdef ZILOG
+#define setjmp setret
+#define longjmp longret
+#define jmp_buf ret_buf
+typedef int ret_buf[10];
+#endif /* zilog */
 
 #ifdef PROVX1
 typedef char CHAR;
 typedef long LONG;
 typedef int void;
 #else
-#ifdef  V7
+#ifdef V7
 typedef char CHAR;
 typedef long LONG;
 #else
-#ifdef  C70
+#ifdef C70
+typedef char CHAR;
+typedef long LONG;
+#else
+#ifdef BSD29
 typedef char CHAR;
 typedef long LONG;
 #else
 typedef unsigned char CHAR;
 typedef long LONG;
+#endif
 #endif
 #endif
 #endif
@@ -70,7 +94,7 @@ typedef int void;
  If the system uses a single character for text file line delimitation,
  define NLCHAR to the value of that character.  For text files, that
  character will be converted to CRLF upon output, and CRLF will be converted
- to that character on input.
+ to that character on input during text-mode (default) packet operations.
 */
 #ifdef MAC                              /* Macintosh */
 #define NLCHAR 015
@@ -86,24 +110,33 @@ typedef int void;
 /* The device name of a job's controlling terminal */
 /* Special for VMS, same for all Unixes (?), not used by Macintosh */
 
-#ifdef vax11c
+#ifdef vms
 #define CTTNAM "TT:"
+#else
+#ifdef datageneral
+#define CTTNAM "@output"
 #else
 #define CTTNAM "/dev/tty"
 #endif
-
-
+#endif
 
 /* Some special includes for VAX/VMS */
 
-#ifdef vax11c
+#ifndef vms
+/* The following #includes cause problems for some preprocessors. */
+/*
+#endif
+#ifdef vms
 #include ssdef
 #include stsdef
+#endif
+#ifndef vms
+*/
 #endif
 
 /* Program return codes for VMS, DECUS C, and Unix */
 
-#ifdef vax11c
+#ifdef vms
 #define GOOD_EXIT   (SS$_NORMAL | STS$M_INHIB_MSG)
 #define BAD_EXIT    SS$_ABORT
 #else
@@ -115,3 +148,11 @@ typedef int void;
 #define BAD_EXIT    1
 #endif
 #endif
+
+/* Special hack for Fortune, which doesn't have <sys/file.h>... */
+
+#ifdef FT18
+#define FREAD 0x01
+#define FWRITE 0x10
+#endif
+

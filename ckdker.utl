@@ -1,0 +1,127 @@
+The PC Kermit boo and de-boo programs do not work, and I found them too
+cumbersome and complicated to install on the DG.  In their place, I have
+provided a few other tools:
+
+     uuencode and uudecode:  
+          Convert any binary file to a non-binary file, and preserve the
+          DG record and file types, if done on DG systems.
+     sq and usq:
+          CP/M (and others) squeeze and unsqueeze programs.  Should be
+          compatible with Unix and other hosts.
+     compress:
+          a more efficient compression than sq/usq.  Also compatible with
+          many hosts.
+
+If anyone can get these other files working, more power to you.  I have made
+an initial attempt in ckdmkb.c and ckdpct.c, but these files do not work.
+
+The uudecode program is slow, but the squeeze programs are very fast.  The
+uudecode could be faster, but I did not want to wasted alot of time on it. 
+Anyway, the uudecode source is very simple, and should be easy to convert to
+another language.  If you do convert the uudecode program, please let me know,
+so that it can be distributed to hosts that do not have the C compiler. 
+
+In order to unpack all the encoded and compressed files, you must first get
+the uudecode program running.  The C source can be compiled easily and
+directly by:
+
+     rename ckdecod.c uudecode.c
+     cc/link uudecode
+     
+But, if you don't have the C compiler, then uudecode.c could be translated
+easily into another language (see notes in ckdker.bld).  Assuming the program
+is now running, enter this command first to decode the unsqueeze program:
+
+     x uudecode ckdusq.enc
+     
+Now, you should have an executable usq.pr program.  Now, use the usq program
+to unsqueeze the encoded compress program, and then decode the compress
+program: 
+
+     x usq ckdcomp.enc.SQ
+     x uudecode ckdcomp.enc
+
+Now, you will have an excutable compress.pr program.  The ckdcomp.cli and
+ckdunco.cli can now be used, and expect an input argument in the /file
+switch, such as:
+
+     ckdcomp/file=ckdker.enc
+
+          -or-
+
+     x compress/i=ckdker.enc/o=ckdker.enc.Z
+     
+was used to compress the Kermit program encoded source, and produced the file
+ckdker.enc.Z.  To uncompress this file, you would enter:
+
+     ckdunco/file=ckdker.enc.Z
+
+          -or-
+
+     x compress/i=ckdker.enc.Z/o=ckdker.enc -d
+     
+     
+Now, we need to uncompress the rest of the utilities mentioned above, so do
+the following:        
+
+     ckdunco/file=ckdsq.enc.Z
+     x uudecode ckdsq.enc
+     ckdunco/file=ckdusq.enc.Z
+     x uudecode ckdusq.enc
+     ckdunco/file=ckdenc.enc.Z
+     x uudecode ckdenc.enc
+     
+The first pair of lines creates sq.pr, the next usq.pr, and the next
+uuencode.pr.  Now all the tools are decoded into program files.     
+
+If you have the C compiler, or you have a system other than AOS/VS, you can
+recompile the sources according to the instructions in the "man" files:  
+
+     ckdcomp.hlp         Documentation for installing compress
+     ckdsq.hlp           Documentation for installing sq and usq
+     
+Note that uuencode and uudecode do not have any installation instructions.    
+
+The acknowledment for the original Unix authors is in the program source and
+the documentation.  Additional thanks go the Fred Fish for compiling the Fish
+disks of public domain software for the Commodore Amiga, which is where I got
+the source for these programs.  The programs should be able to compile and run
+as is on Amigas, the Data General minis, Unix systems, IBM PC's, and VAXes. 
+
+These tools are also useful for porting larges files or sending over slow
+communication lines.  I have used the compress program to send up a file,
+using binary mode, of course, and then I decompressed it on the DG.  See the
+section in ckdker.bld, "INSTALLATION OF KERMIT FROM THE BINARY ENCODED FILES"
+for example usage and for additional features in the encode/decode programs. 
+The utility files are described below:
+
+
+     ckdker.enc          Encoded version of kermit.pr
+     ckdker.enc.SQ       Squeezed version of ckdker.enc
+     ckdker.enc.Z        Compressed version of ckdker.enc
+     ckdker.utl          This file
+     ckdmkb.c            Abortive attempt to convert msbmkb.c
+     ckdpct.c            Abortive attempt to convert msbpct.c
+     ckdcomp.c           Source to compression program (compress.c)
+     ckdcomp.cli         CLI macro to run compress program for compression
+     ckdcomp.man         compress manual 
+     compress.pr         compress program
+     ckdcomp.enc.SQ      Squeezed and compressed file for compress.pr
+     ckdcomp.man         Documentation for installing compress
+     ckdsq.man           squeeze and unsqueeze manual
+     sq.pr               squeeze program
+     ckdsq.enc.Z         Compressed and encoded file for sq.pr
+     ckdsq.man           Documentation for installing sq and usq
+     ckdunco.cli         uncompress CLI macro (uses compress program)
+     usq.pr              unsqueeze program
+     ckdusq.enc          Encoded file for usq.pr
+     ckdecod.c           Source for uudecode program (uudecode.c)
+     uudecode.pr         decode program
+     ckdenco.c           encode source (uuencode.c)
+     ckdenco.man         decode and encode manual
+     uuencode.pr         encode program
+     ckdenc.enc.Z        Compressed and encoded file for uuencode.pr
+
+
+Phil Julian, SAS Institute, Inc., Box 8000, Cary, NC 27512-8000
+

@@ -1,0 +1,6 @@
+xktoxk is really cktoxk, which has been renamed by itself.  The program
+copies the ck*.* files (in any given directory) into xk*.* files in the
+current directory.  This allows an experimental version of C-Kermit to
+coexist with the standard version.  The resulting xk*.* files must be moved
+to their own directory and renamed back to ck*.* using the xktock program,
+before they can be compiled.

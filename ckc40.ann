@@ -95,7 +95,7 @@ You need to set up "okstate" as a site in your "L.sys" UUCP dialing file
 using the information listed below.  You can then issue the following 
 command on your system:
 
-        uucp okstate\!/u/kermit/ck\* /usr/spool/uucppublic
+	uucp okstate\!/u/kermit/ck\* /usr/spool/uucppublic
 
    (this example will retrieve the new Unix version of Kermit)
 

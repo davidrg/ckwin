@@ -1,0 +1,61 @@
+Date: Tue 9 Sep 86 17:27:50-EDT
+From: Frank da Cruz <SY.FDC@CU20B.COLUMBIA.EDU>
+Subject: New (Minor) Release of C-Kermit for UNIX
+
+This is to announce a new, minor release of C-Kermit for UNIX.  Because of
+some mixups this past July, the new Amiga Kermit was installed in the Kermit
+distribution with an inconsistent set of sources; the major reason for this
+release is to remove this inconsistency.  Also, a few minor bugs are fixed.
+Significant performance improvements and additional features will come in
+future releases.  Here's a brief summary of what's in this new release:
+
+Changes from Jack Rouse and Phil Julian of SAS Institute:
+. Commodore Amiga support, replaces that from Davide Cervone of Rochester U.
+  All-new CKI*.* files (this was announced in Info-Kermit v5 #3).
+  This is the version written up in Jul/Aug 86 Amiga World.
+. Revert CKUCMD.[CH] and CKUUS?.[CH] to their old selves (no more printf2,
+  printf3, since these are no longer necessary for the Amiga), but add a
+  few new Amiga specifics under #ifdef AMIGA conditionals.
+. Fix multiline GET parsing to allow get back to top-level prompt if illegal
+  local filename given (in CKUUSR.C).
+. Supply a missing printf() parameter in CKWART.C.
+
+Other changes:
+
+Fix top-level parse loop in CKUUSR.C to reset any start state that might
+erroneously have been set when a parse error has occurred.  Eliminates (for
+instance) the spurious "?Sorry, you must set speed first" message if you
+specify "foo bar" as the local filespec in multiline GET.
+
+Make sysinit() return -1 if it fails, 0 if it succeeds, and have CKCMAI.C
+check the return code.  Corresponding changes to invocation of sysinit in
+CK[UVMI]IO.C.
+
+Change references in CKUFIO.C to _file member of FILE structure to more
+portable fileno() [suggested by Doug Orr, U of Mich].
+
+In CKUFIO.C, change zclosf() to kill the fork before waiting for it to
+terminate.
+
+Fix Sys-V speed setting code (change "," to ";" between tttvt.c_cflag
+statements) in CKUTIO.C.
+
+Fix errpkt() function in CKCFN2.C to close open files, so that further
+host commands can be done by the server after such a command is interrupted
+abnormally [problem pointed out by Gregg Wonderly, Oklahoma State U].
+
+Add Stan Barber's 4.3BSD acu control code to CKUTIO.C, under NEWUUCP
+conditional.  I'm not sure if NEWUUCP needs to be defined in the makefile,
+or what...
+
+Version 4D(061) has been compiled and tested under Ultrix 1.1 (= 4.2BSD),
+Ultrix 1.2 (whatever that may be a hybrid of), 2.9BSD on a DEC Pro/380, and
+true 4.3BSD on a VAX 11/750 (4.3BSD includes an earlier version of C-Kermit
+-- 4C(057) -- on its distribution tape).  The files that are new to this
+version are in KER: on CU20B.  They are:
+
+CKUCMD.C, CKUCMD.H, CKITIO.C
+CKUUSR.C, CKUUSR.H, CKMTIO.C
+CKUUS2.C, CKUUS3.C, CKVTIO.C
+CKUFIO.C, CKUTIO.C
+CKCMAI.C, CKUKER.UPD

@@ -1,0 +1,24 @@
+Date: Fri 29 Jan 88 21:25:40-EST
+From: Frank da Cruz <SY.FDC@CU20B.COLUMBIA.EDU>
+Subject: Announcing C-Kermit 4E(070) (Sorry!)
+Keywords: C-Kermit 4E(070), UNIX Kermit
+
+This is to announce, directly on the heels of C-Kermit 4E(068), another new
+version, 4E(070).  I apologize for this.  Edit 68 had two fatal flaws,
+which are described in messages below, but briefly:
+
+ . getcwd() not defined in BSD UNIX, breaking BSD versions.
+ . Unconditional reference to SIGSTOP, breaking non-BSD versions.
+
+A couple other small fixes were also applied.  One is for the error message
+C-Kermit returns when it times out (thanks to Paul Placeway).  The other
+finally allows Kermit to determine whether it is running in the background, so
+that the "disappearing prompt" problem is fixed...  But only for Berkeley and
+Ultrix versions.  See messages below.
+
+Sorry for the inconvenience.  If you want to replace the files that were
+"damaged" in the 068 release, they are ckutio.c, ckufio.c, ckuusr.c,
+ckcfn2.c, ckucmd.c, and ckcmai.c.
+
+------------------------------
+
