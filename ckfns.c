@@ -1,6 +1,9 @@
-char *fnsv = "C-Kermit functions, 4.0(023) 1 Feb 85";
+char *fnsv = "C-Kermit functions, 4.2(026) 5 Mar 85";
 
-/*  C K F N S  --  System-independent Kermit protocol support functions  */
+/*  C K F N S  --  System-independent Kermit protocol support functions...  */
+
+/*  ...Part 1 (others moved to ckfns2 to make this module small enough) */
+
 /*
  System-dependent primitives defined in:
 
@@ -15,13 +18,15 @@ char *fnsv = "C-Kermit functions, 4.0(023) 1 Feb 85";
 
 extern int spsiz, timint, npad, chklen, ebq, ebqflg, rpt, rptq, rptflg, capas;
 
-extern int pktnum, prvpkt, numtry, oldtry, sndtyp, fsize, bctr, bctu,
-  inpktl, size, osize, maxsize, spktl, nfils, stdouf, warn, timef;
+extern int pktnum, prvpkt, sndtyp, fsize, bctr, bctu,
+  size, osize, maxsize, spktl, nfils, stdouf, warn, timef;
 
-extern int parity, speed, turn, turnch, ffc, flci, flco, tfc, tlci, tlco, 
-    filcnt, delay, displa, pktlog, tralog, seslog, xflg, /* memstr, */ mypadn;
+extern int parity, speed, turn, turnch, 
+ delay, displa, pktlog, tralog, seslog, xflg, mypadn;
 
-extern int deblog, hcflg, image, binary, fncnv, local, server, cxseen, czseen;
+extern long filcnt, ffc, flci, flco, tlci, tlco, tfc;
+
+extern int deblog, hcflg, binary, fncnv, local, server, cxseen, czseen;
 
 extern char padch, mypadc, eol, ctlq, myctlq, sstate, *hlptxt;
 
@@ -46,424 +51,6 @@ static int  memstr,			/* Flag for input from memory string */
      t,					/* Current character */
      next;				/* Next character */
 
-
-/*  I N P U T  --  Attempt to read packet number 'pktnum'.  */
-
-/*
- This is the function that feeds input to Kermit's finite state machine.
-
- If a special start state is in effect, that state is returned as if it were
- the type of an incoming packet.  Otherwise:
-
- . If the desired packet arrives within MAXTRY tries, return its type,
-   with its data stored in the global 'data' array.
-
- . If the previous packet arrives again, resend the last packet and wait for
-   another to come in.
-
- . If the desired packet does not arrive within MAXTRY tries, return indicating
-   that an error packet should be sent.
-*/
-
-input() {
-    int len, num, type, numtry;
-
-    if (sstate != 0) {			/* If a start state is in effect, */
-	type = sstate;			/* return it like a packet type, */
-	sstate = 0;			/* and then nullify it. */
-	*data = '\0';
-	return(type);
-    } else type = rpack(&len,&num,data); /* Else, try to read a packet. */
-
-/* If it's the same packet we just sent, it's an echo.  Read another. */
-
-    if (type == sndtyp) type = rpack(&len,&num,data);
-
-    chkint();				/* Check for console interrupts. */
-/*
- If previous packet again, a timeout pseudopacket, or a bad packet, try again.
-*/
-    for (numtry = 0; num == prvpkt || type == 'T' || type == 'Q' ; numtry++)
-    {
-	if (numtry > MAXTRY) {		/* If too many tries, give up */
-	    strcpy(data,"Timed out.");	/* and send a timeout error packet. */
-	    return('E');
-	}
-	resend();			/* Else, send last packet again, */
-	type = rpack(&len,&num,data);	/* and try to read a new one. */
-	chkint();			/* Look again for interruptions. */
-    }
-    return(type);			/* Success, return packet type. */
-}
-
-
-/*  S P A C K  --  Construct and send a packet  */
-
-spack(type,num,len,dat) char type, *dat; int num, len; {
-    int i,j;
-    
-    j = dopar(padch);
-    for (i = 0; i < npad; sndpkt[i++] = j)  /* Do any requested padding */
-    	;
-    sndpkt[i++] = dopar(mystch);	/* Start packet with the start char */
-    sndpkt[i++] = dopar(tochar(len+bctu+2));	/* Put in the length */
-    sndpkt[i++] = dopar(tochar(num));		/* The packet number */
-    sndpkt[i++] = sndtyp = dopar(type);		/* Packet type */
-
-    for (j = len; j > 0; j-- ) sndpkt[i++] = dopar(*dat++); /* Data */
-
-    sndpkt[i] = '\0';			/* Mark end for block check */
-    switch(bctu) {
-	case 1: 			/* Type 1 - 6 bit checksum */
-	    sndpkt[i++] = dopar(tochar(chk1(sndpkt+1)));
-	    break;
-	case 2:				/* Type 2 - 12 bit checksum*/
-	    j = chk2(sndpkt+1);
-	    sndpkt[i++] = dopar(tochar((j & 07700) >> 6));
-	    sndpkt[i++] = dopar(tochar(j & 077));
-	    break;
-        case 3:				/* Type 3 - 16 bit CRC-CCITT */
-	    j = chk3(sndpkt+1);
-	    sndpkt[i++] = dopar(tochar((j & 0170000) >> 12));
-	    sndpkt[i++] = dopar(tochar((j & 07700) >> 6));
-	    sndpkt[i++] = dopar(tochar(j & 077));
-	    break;
-	}
-    for (j = npad; j > 0; j-- ) sndpkt[i++] = dopar(padch); /* Padding */
-
-    sndpkt[i++] = dopar(eol);		/* EOL character */
-    sndpkt[i] = '\0';			/* End of the packet */
-    ttol(sndpkt,spktl=i);		/* Send the packet just built */
-    flco += spktl;			/* Count the characters */
-    tlco += spktl;
-    if (pktlog) zsoutl(ZPFILE,sndpkt);	/* If logging packets, log it */
-    screen(type,num,sndpkt);		/* Update screen */
-}
-
-/*  D O P A R  --  Add an appropriate parity bit to a character  */
-
-dopar (ch) char ch; {
-    int a;
-    switch (parity) {
-	case 'm':  return(ch | 128);		/* Mark */
-	case 's':  return(ch & 127);		/* Space */
-	case 'o':  ch |= 128;			/* Odd (fall thru) */
-	case 'e':				/* Even */
-	    a = (ch & 15) ^ ((ch >> 4) & 15);
-	    a = (a & 3) ^ ((a >> 2) & 3);
-	    a = (a & 1) ^ ((a >> 1) & 1);
-	    return(ch | (a << 7));
-	default:   return(ch);
-    }
-}
-
-
-/*  C H K 1  --  Compute a type-1 Kermit 6-bit checksum.  */
-
-chk1(pkt) char *pkt; {
-    int chk;
-    chk = chk2(pkt);
-    return((((chk & 0300) >> 6) + chk) & 077);
-}
-
-
-/*  C H K 2  --  Compute the numeric sum of all the bytes in the packet.  */
-
-chk2(pkt) char *pkt; {
-    unsigned int chk;
-    int p;
-    for (chk = 0; *pkt != '\0'; *pkt++) {
-    	p = (parity) ? *pkt & 0177 : *pkt;
-	chk += p;
-    }
-    return(chk);
-}
-
-
-/*  C H K 3  --  Compute a type-3 Kermit block check.  */
-/*
- Calculate the 16-bit CRC of a null-terminated string using a byte-oriented
- tableless algorithm invented by Andy Lowry (Columbia University).  The
- magic number 010201 is derived from the CRC-CCITT polynomial x^16+x^12+x^5+1.
- Note - this function could adapted for strings containing imbedded 0's
- by including a length argument.
-*/
-chk3(s) char *s; {
-    int c, q;
-    int crc = 0;
-
-    while ((c = *s++) != '\0') {
-	if (parity) c &= 0177;
-	q = (crc ^ c) & 017;		/* Low-order nibble */
-	crc = (crc >> 4) ^ (q * 010201);
-	q = (crc ^ (c >> 4)) & 017;	/* High order nibble */
-	crc = (crc >> 4) ^ (q * 010201);
-    }
-    return(crc);
-}
-
-
-/* Functions for sending various kinds of packets */
-
-ack() {					/* Send an ordinary acknowledgment. */
-    spack('Y',pktnum,0,"");		/* No data. */
-    nxtpkt(&pktnum);			/* Increment the packet number. */
-}					/* Note, only call this once! */
-
-ack1(s) char *s; {			/* Send an ACK with data. */
-    spack('Y',pktnum,strlen(s),s);	/* Send the packet. */
-    nxtpkt(&pktnum);			/* Increment the packet number. */
-}					/* Only call this once! */
-
-nack() {				/* Negative acknowledgment. */
-    spack('N',pktnum,0,"");		/* NAK's never have data. */
-}
-
-resend() {				/* Send the old packet again. */
-    ttol(sndpkt,spktl);
-    screen('%',pktnum,sndpkt);
-    if (pktlog) zsoutl(ZPFILE,sndpkt);
-}
-
-errpkt(reason) char *reason; {		/* Send an error packet. */
-    encstr(reason);
-    spack('E',pktnum,size,data);
-}
-
-scmd(t,dat) char t, *dat; {		/* Send a packet of the given type */
-    encstr(dat);			/* Encode the command string */
-    ttflui();				/* Flush pending input. */
-    spack(t,pktnum,size,data);
-}
-
-srinit() {				/* Send R (GET) packet */
-    encstr(cmarg);			/* Encode the filename. */
-    ttflui();				/* Flush pending input. */
-    spack('R',pktnum,size,data);	/* Send the packet. */
-}
-
-nxtpkt(num) int *num; {
-    prvpkt = *num;			/* Save previous */
-    *num = (*num + 1) % 64;		/* Increment packet number mod 64 */
-}
-
-sigint() {				/* Terminal interrupt handler */
-    errpkt("User typed ^C");
-    doexit();
-}
-
-
-/* R P A C K  --  Read a Packet */
-
-rpack(l,n,dat) int *l, *n; char *dat; {
-    int i, j, x, done, pstart, pbl;
-    char chk[4], xchk[4], t, type;
-
-    chk[3] = xchk[3] = 0;
-    i = inlin();			/* Read a line */
-    if (i != 0) {
-	debug(F101,"rpack: inlin","",i);
-	screen('T',pktnum,"");
-	return('T');
-    }
-    debug(F110,"rpack: inlin ok, recpkt",recpkt,0);
-
-/* Look for start of packet */
-
-    for (i = 0; ((t = recpkt[i]) != stchr) && (i < RBUFL) ; i++)
-    	;
-    if (++i >= RBUFL) return('Q');	/* Skip rest if not found */
-
-/* now "parse" the packet */
-
-    debug(F101,"entering rpack with i","",i);
-    done = 0;
-    while (!done) {
-	debug(F101,"rpack starting at i","",i);
-        pstart = i;			/* remember where packet started */
-
-/* length */
-
-	if ((t = recpkt[i++]) == stchr) continue; /* Resynch if SOH */
-
-   /***	if (t == 2) doexit(); *** uncomment this to allow ^A^B cause exit ***/
-
-	if (t == MYEOL) return('Q');
-	*l = unchar(t);			/* Packet length */
-	debug(F101," pkt len","",*l);
-
-/* sequence number */
-
-	if ((t = recpkt[i++]) == stchr) continue;
-	if (t == MYEOL) return('Q');
-	*n = unchar(t);
-	debug(F101,"rpack: n","",*n);
-
-/* cont'd... */
-
-
-/* ...rpack(), cont'd */
-
-
-/* type */
-
-	if ((type = recpkt[i++]) == stchr) continue;
-	if (type == MYEOL) return('Q');
-	debug(F101,"rpack: type","",type);
-
-	if ((type == 'S') || (type == 'I')) pbl = 1;	/* Heuristics for  */
-	else if (type == 'N') pbl = *l - 2;    /* syncing block check type */
-	else pbl = bctu;
-
-	*l -= (pbl + 2);		/* Now compute data length */
-	debug(F101,"rpack: bctu","",bctu);
-	debug(F101," pbl","",pbl);
-	debug(F101," data length","",*l);
-
-/* data */
-
-	dat[0] = '\0';			/* Return null string if no data */
-	for (j=0; j<*l; i++,j++)
-	    if ((dat[j] = recpkt[i]) == stchr) continue;
-		else if (dat[j] == MYEOL) return('Q');
-	dat[j] = '\0';
-
-/* get the block check */
-
-    	debug(F110," packet chk",recpkt+i,0);
-    	for (j = 0; j < pbl; j++) {
-	    chk[j] = recpkt[i];
-	    debug(F101," chk[j]","",chk[j]);
-	    if (chk[j] == stchr) break;
-	    if (chk[j] == eol) return('Q');
-	    recpkt[i++] = '\0';
-	}
-	chk[j] = 0;
-	debug(F111," chk array, j",chk,j);
-	if (j != pbl) continue;		/* Block check right length? */
-	done = 1;			/* Yes, done. */
-    }
-
-/* cont'd... */
-
-
-/* ...rpack(), cont'd */
-
-
-/* Got packet, now check the block check */
-
-    switch (pbl) {
-	case 1:
-	    xchk[0] = tochar(chk1(&recpkt[pstart]));
-	    if (chk[0] != xchk[0]) {
-		if (deblog) {
-		    debug(F000,"rpack: chk","",chk[0]);
-		    debug(F000," should be ","",xchk[0]);
-		}
-		screen('Q',n,recpkt);
-		return('Q');
-	    }
-	    break;
-	case 2:
-	    x = chk2(&recpkt[pstart]);
-	    xchk[0] = tochar((x & 07700) >> 6);
-	    xchk[1] = tochar(x & 077);
-	    if (deblog) {
-		debug(F000," xchk[0]","=",xchk[0]);
-		debug(F000," xchk[1]","=",xchk[1]);
-	    }
-	    if ((xchk[0] != chk[0]) || (xchk[1] != chk[1])) {
-		debug(F100," bct2's don't compare","",0);
-		screen('Q',n,recpkt);
-		return('Q');
-            }
-	    break;
-	case 3:
-	    x = chk3(&recpkt[pstart]);
-	    xchk[0] = tochar((x & 0170000) >> 12);
-	    xchk[1] = tochar((x & 07700) >> 6);
-	    xchk[2] = tochar(x & 077);
-	    if (deblog) {
-		debug(F000," xchk[0]","=",xchk[0]);
-		debug(F000," xchk[1]","=",xchk[1]);
-		debug(F000," xchk[2]","=",xchk[2]);
-            }
-	    if ((xchk[0] != chk[0]) || 
-	    	(xchk[1] != chk[1]) || 
-		(xchk[2] != chk[2])) {
-		    debug(F100," bct3's don't compare","",0);
-		    screen('Q',n,recpkt);
-		    return('Q');
-	    }
-	    break;
-        }
-
-/* Good packet, return its type */
-
-    ttflui();				/* Done, flush any remaining. */
-    screen(type,*n,recpkt);		/* Update screen */
-    return(type);
-}
-
-
-/*  I N C H R  --  Input character from communication line, with timeout  */
-    	
-inchr(timo) int timo; {
-    int c;
-    c = ttinc(timo);
-    debug(F101,"inchr ttinc","",c);
-    if (c < 0) return(c); 		/* Get a character */
-    if (parity) c = c & 0177;		/* If parity on, discard parity bit. */
-    debug(F101," after parity","",c);
-    return(c);
-}
-
-
-/*  I N L I N  -- Input a line (up to break char) from communication line  */
-
-/*  Returns 0 on success, nonzero on failure  */
-
-inlin() {
-    int e, i, j, k;
-
-    e = (turn) ? turnch : MYEOL;
-    i = j = k = 0;
-    if (parity) {
-    	while ((j != e) && (i < RBUFL) && (k < MAXTRY)) {
-	    j = inchr(1);		/* Get char, 1 second timeout */
-	    debug(F101,"inlin inchr","",j);
-	    if (j < 0) k++;		/* Timed out. */
-	    else {
-		if (j) recpkt[i++] = j;	/* Save it */
-		k = 0;			/* Reset timeout counter. */
-	    }
-	}
-    } else {
-    	i = ttinl(recpkt,RBUFL,timint,e);	/* Get them all at once */
-	if (i < 0) k = 1;
-    }
-    debug(F111,"inlin",recpkt,i);
-    debug(F101," timeouts","",k);
-    if (i < 1) return(1);
-    if (pktlog) zsoutl(ZPFILE,recpkt);
-    if (k > MAXTRY) return(1);
-    tlci += i;				/* Count the characters. */
-    flci += i;
-    recpkt[i+1] = '\0';			/* Terminate the input string. */
-if (0) {    
-    if (turn) {				/* If doing line turnaround, */
-	debug(F101,"inlin: looking for turnaround","",turnch);
-	for (i = 0 ; i < MAXTRY ; i++) {
-	    j = inchr(1);
-	    if (pktlog) zchout(ZPFILE,j);
-	    if (j == turnch) break;     /* Wait for turnaround char */
-        }
-    }
-}
-    return(0);
-}
-
-
 /*  E N C S T R  --  Encode a string from memory. */
 
 /*  Call this instead of getpkt() if source is a string, rather than a file. */
@@ -483,7 +70,6 @@ encstr(s) char* s; {
     debug(F111,"encstr",data,size);
 }
 
-
 /* E N C O D E - Kermit packet encoding procedure */
 
 encode(a) int a; {			/* The current character */
@@ -536,7 +122,6 @@ encode(a) int a; {			/* The current character */
     data[size] = '\0';			/* itself, and mark the end. */
 }
 
-
 /* D E C O D E  --  Kermit packet decoding procedure */
 
 /* Call with string to be decoded and an output function. */
@@ -592,7 +177,6 @@ putfil(c) char c; {	/*  Output char to file. */
     zchout(ZOFILE,c);
 }
 
-
 /*  G E T P K T -- Fill a packet data field  */
 
 /*
@@ -647,7 +231,6 @@ getpkt(maxsize) int maxsize; {		/* Fill one packet buffer */
     return(size);			/* Return any partial final buffer. */
 }
 
-
 /*  G E T C H  -- Get the next character from file (or pipe). */
  
 /*  Convert newlines to CRLFs if newline/CRLF mapping is being done. */
@@ -688,7 +271,6 @@ canned(buf) char *buf; {
     return((czseen || cxseen) ? 1 : 0);
 }
 
-
 /*  T I N I T  --  Initialize a transaction  */
 
 tinit() {
@@ -712,14 +294,13 @@ tinit() {
 rinit(d) char *d; {
     char *tp;
     ztime(&tp);
-    tlog(F110,"Transaction begins",tp,0); /* Make transaction log entry */
+    tlog(F110,"Transaction begins",tp,0l); /* Make transaction log entry */
     tfc = tlci = tlco = 0;
     spar(d);
     rpar(d);
     ack1(d);
 }
 
-
 /*  S I N I T  --  Make sure file exists, then send Send-Init packet */
 
 sinit() {
@@ -727,12 +308,12 @@ sinit() {
 
     sndsrc = nfils;			/* Where to look for files to send */
     ztime(&tp);
-    tlog(F110,"Transaction begins",tp,0); /* Make transaction log entry */
+    tlog(F110,"Transaction begins",tp,0l); /* Make transaction log entry */
     debug(F101,"sinit: sndsrc","",sndsrc);
     if (sndsrc < 0) {			/* Must expand from 'send' command */
 	nfils = zxpand(cmarg);		/* Look up literal name. */
 	if (nfils < 0) {
-	    screen(2,0,"?Too many files");
+	    screen(2,0l,"?Too many files");
 	    return(0);
         } else if (nfils == 0) {	/* If none found, */
 	    char xname[100];		/* convert the name. */
@@ -743,13 +324,13 @@ sinit() {
 	    if (server) 
 	    	errpkt("File not found");
 	    else
-		screen(2,0,"?File not found");
+		screen(2,0l,"?File not found");
 	    return(0);
 	}
 	x = gnfile();			/* Position to first file. */
 	if (x < 1) {
 	    if (!server) 
-	    	screen(2,0,"?No readable file to send");
+	    	screen(2,0l,"?No readable file to send");
             else
 	    	errpkt("No readable file to send");
 	    return(0);
@@ -760,7 +341,7 @@ sinit() {
     } else if (sndsrc == 0) {		/* stdin or memory always exist... */
 	cmarg2 = "";			/* No alternate name */
 	strcpy(filnam,"stdin");		/* If F packet, filnam is used. */
-	tlog(F110,"Sending from",cmdstr,0); /* If X packet, cmdstr is used. */
+	tlog(F110,"Sending from",cmdstr,0l); /* If X packet, cmdstr is used. */
     }
 
     debug(F101,"sinit: nfils","",nfils);
@@ -772,31 +353,37 @@ sinit() {
     spack('S',pktnum,x,data);
     return(1);
 }
-
 
+sipkt() {
+    int x;
+    x = rpar(data);			/* Send an I-Packet. */
+    spack('I',pktnum,x,data);
+}
+
 /*  R C V F I L -- Receive a file  */
 
 rcvfil() {
     int x;
-
     ffc = flci = flco = 0;		/* Init per-file counters */
     srvptr = srvcmd;			/* Decode packet data. */
     decode(data,putsrv);
-    screen(0,0,srvcmd);			/* Update screen */
-    screen(1,0,"=> ");
-    tlog(F110,"Receiving",srvcmd,0);	/* Transaction log entry */
-    if (*cmarg2 != '\0') {		/* Check for alternate name */
-	strcpy(srvcmd,cmarg2);		/* Got one, use it. */
-	*cmarg2 = '\0';
+    screen(0,0l,srvcmd);			/* Update screen */
+    screen(1,0l,"=> ");
+    tlog(F110,"Receiving",srvcmd,0l);	/* Transaction log entry */
+    if (cmarg2 != NULL) {               /* Check for alternate name */
+        if (*cmarg2 != '\0') {
+            strcpy(srvcmd,cmarg2);	/* Got one, use it. */
+	    *cmarg2 = '\0';
+        }
     }
     x = openo(srvcmd,filnam);		/* Try to open it */
     if (x) {
-	tlog(F110," as",filnam,0);
-	screen(2,0,filnam);
+	tlog(F110," as",filnam,0l);
+	screen(2,0l,filnam);
 	intmsg(++filcnt);
     } else {
-        tlog(F110,"Failure to open",filnam,0);
-	screen(2,0,"*** error");
+        tlog(F110,"Failure to open",filnam,0l);
+	screen(2,0l,"*** error");
     }
     return(x);				/* Pass on return code from openo */
 }
@@ -807,11 +394,10 @@ reof() {
 
     if (cxseen == 0) cxseen = (*data == 'D');
     clsof();
-
     if (cxseen || czseen) {
-	tlog(F100," *** Discarding","",0);
+	tlog(F100," *** Discarding","",0l);
     } else {
-	tlog(F100," end of file","",0);
+	tlog(F100," end of file","",0l);
 	tlog(F101,"  file characters        ","",ffc);
 	tlog(F101,"  communication line in  ","",flci);
 	tlog(F101,"  communication line out ","",flco);
@@ -824,7 +410,7 @@ reot() {
     char *tp;
     cxseen = czseen = 0; 
     ztime(&tp);
-    tlog(F110,"End of transaction",tp,0);
+    tlog(F110,"End of transaction",tp,0l);
     if (filcnt > 1) {
 	tlog(F101," files","",filcnt);
 	tlog(F101," total file characters   ","",tfc);
@@ -833,7 +419,6 @@ reot() {
     }
 }
 
-
 /*  S F I L E -- Send File header packet for global "filnam" */
 
 sfile() {
@@ -860,14 +445,14 @@ sfile() {
     ttflui();				/* Clear pending input */
     spack('F',pktnum,size,data); 	/* Send the F packet */
     if (displa) {
-	screen(0,pktnum,filnam);	/* Update screen */
-	screen(1,0,"=> ");
-	screen(1,0,pktnam);
-	screen(3,fsize,", size");
+	screen(0,(long)pktnum,filnam);	/* Update screen */
+	screen(1,0l,"=> ");
+	screen(1,0l,pktnam);
+	screen(3,(long)fsize,", size");
 	intmsg(++filcnt);		/* Count file, give interrupt msg */
     }
-    tlog(F110,"Sending",filnam,0);	/* Transaction log entry */
-    tlog(F110," as",pktnam,0);
+    tlog(F110,"Sending",filnam,0l);	/* Transaction log entry */
+    tlog(F110," as",pktnam,0l);
     next = -1;				/* Init file character lookahead. */
     return(1);
 }
@@ -882,13 +467,12 @@ sxpack() {				/* Send an X packet */
     next = -1;				/* Init file character lookahead. */
     nxtpkt(&pktnum);			/* Increment the packet number */
     spack('X',pktnum,size,data);	/* No incrementing pktnum */
-    screen(0,pktnum,cmdstr);		/* Update screen. */
+    screen(0,(long)pktnum,cmdstr);		/* Update screen. */
     intmsg(++filcnt);
-    tlog(F110,"Sending from:",cmdstr,0);
+    tlog(F110,"Sending from:",cmdstr,0l);
     return(1);
 }
 
-
 /*  S D A T A -- Send a data packet */
 
 sdata() {
@@ -907,10 +491,10 @@ seof() {
     nxtpkt(&pktnum);			/* Increment the packet number */
     if (czseen || cxseen) {
 	spack('Z',pktnum,1,"D");
-	tlog(F100," *** interrupted, sending discard request","",0);
+	tlog(F100," *** interrupted, sending discard request","",0l);
     } else {
 	spack('Z',pktnum,0,"");
-	tlog(F100," end of file","",0);
+	tlog(F100," end of file","",0l);
 	tlog(F101,"  file characters        ","",ffc);
 	tlog(F101,"  communication line in  ","",flci);
 	tlog(F101,"  communication line out ","",flco);
@@ -926,7 +510,7 @@ seot() {
     spack('B',pktnum,0,"");
     cxseen = czseen = 0; 
     ztime(&tp);
-    tlog(F110,"End of transaction",tp,0);
+    tlog(F110,"End of transaction",tp,0l);
     if (filcnt > 1) {
 	tlog(F101," files","",filcnt);
 	tlog(F101," total file characters   ","",tfc);
@@ -935,11 +519,10 @@ seot() {
     }
 }
 
-
 /*   R P A R -- Fill the data array with my send-init parameters  */
 
 rpar(data) char data[]; {
-    data[0] = tochar(spsiz-1);		/* Biggest packet I can receive */
+    data[0] = tochar(spsiz);		/* Biggest packet I can receive */
     data[1] = tochar(URTIME);		/* When I want to be timed out */
     data[2] = tochar(mypadn);		/* How much padding I need (none) */
     data[3] = ctl(mypadc);		/* Padding character I want */
@@ -953,7 +536,6 @@ rpar(data) char data[]; {
     return(9);				/* Return the length. */
 }
 
-
 /*   S P A R -- Get the other system's Send-Init parameters.  */
 
 spar(data) char data[]; {
@@ -1008,7 +590,6 @@ spar(data) char data[]; {
     if (deblog) sdebu(len);
 }
 
-
 /*  S D E B U  -- Record spar results in debugging log  */
 
 sdebu(len) int len; {
@@ -1026,7 +607,6 @@ sdebu(len) int len; {
     debug(F101," rptflg","",rptflg);
 }
 
-
 /*  G N F I L E  --  Get the next file name from a file group.  */
 
 /*  Returns 1 if there's a next file, 0 otherwise  */
@@ -1039,7 +619,7 @@ gnfile() {
     debug(F101,"gnfile: czseen","",czseen);
 
     if (czseen) {
-	tlog(F100,"Transaction cancelled","",0);
+	tlog(F100,"Transaction cancelled","",0l);
 	return(0);
     }
 
@@ -1076,15 +656,14 @@ gnfile() {
 	y = zchki(filnam);		/* Check if file readable */
 	if (y < 0) {
 	    debug(F110,"gnfile skipping:",filnam,0);
-	    tlog(F111,filnam,"not sent, reason",y);
-	    screen(0,0,"Skipping");
-	    screen(2,0,filnam);
+	    tlog(F111,filnam,"not sent, reason",(long)y);
+	    screen(0,0l,"Skipping");
+	    screen(2,0l,filnam);
 	} else fsize = y;
     }    	
     return(1);
 }
 
-
 /*  O P E N I  --  Open an existing file for input  */
 
 openi(name) char *name; {
@@ -1111,15 +690,14 @@ openi(name) char *name; {
 	    debug(F110," ok",xname,0);
 	    return(1);			/* It worked. */
         } else {
-	    screen(2,0,"Can't open file");  /* It didn't work. */
-	    tlog(F110,xname,"could not be opened",0);
+	    screen(2,0l,"Can't open file");  /* It didn't work. */
+	    tlog(F110,xname,"could not be opened",0l);
 	    debug(F110," openi failed",xname,0);
 	    return(0);
         }
     }
 }
 
-
 /*  O P E N O  --  Open a new file for output.  */
 
 /*  Returns actual name under which the file was opened in string 'name2'. */
@@ -1149,7 +727,7 @@ openo(name,name2) char *name, *name2; {
     }
     if (zopeno(ZOFILE,xname) == 0) {	/* Try to open the file */
 	debug(F110,"openo failed",xname,0);
-	tlog(F110,"Failure to open",xname,0);
+	tlog(F110,"Failure to open",xname,0l);
 	return(0);
     } else {
 	strcpy(name2,xname);
@@ -1165,7 +743,6 @@ opent() {
     return(zopeno(ZCTERM,""));
 }
 
-
 /*  C L S I F  --  Close the current input file. */
 
 clsif() {
@@ -1175,7 +752,7 @@ clsif() {
 	zclosf();			/* If host cmd close fork, */
     } else zclose(ZIFILE);		/* else close input file. */
 
-    screen(1,0," [OK]");
+    screen(1,0l," [OK]");
     hcflg = cxseen = 0;			/* Reset flags. */
 }
 
@@ -1187,16 +764,15 @@ clsof() {
     if (czseen || cxseen) {
 	zdelet(filnam);   		/* Delete it if interrupted. */
 	debug(F100,"Discarded","",0);
-	tlog(F100,"Discarded","",0);
-	screen(1,0," [Discarded]");
+	tlog(F100,"Discarded","",0l);
+	screen(1,0l," [Discarded]");
     } else {
 	debug(F100,"Closed","",0);
-	screen(1,0," [OK]");
+	screen(1,0l," [OK]");
     }
     cxseen = 0;
 }
 
-
 /*  S N D H L P  --  Routine to send builtin help  */
 
 sndhlp() {
@@ -1222,10 +798,10 @@ cwd(vdir) char *vdir; {
     if (zchdir(vdir+1)) {
 	encstr(vdir+1);
 	ack1(data);
-	tlog(F110,"Changed directory to",vdir+1,0);
+	tlog(F110,"Changed directory to",vdir+1,0l);
 	return(1); 
     } else {
-	tlog(F110,"Failed to change directory to",vdir+1,0);
+	tlog(F110,"Failed to change directory to",vdir+1,0l);
 	return(0);
     }
 }

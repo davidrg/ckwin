@@ -1,15 +1,62 @@
-char *ckzv = "4.2BSD file support, 4.0(011) 30 Jan 85";
+char *ckzv = "Unix file support, 4.1(015) 28 Feb 85";
 
-/* C K Z B S D  --  Kermit file system support for 4.2BSD */
+/* C K Z B S D  --  Kermit file system support for Unix systems */
+
+/* F. da Cruz, Columbia University Center for Computing Activities */
+
+/* Berkeley Unix Version 4.x */
+#ifdef BSD4
+char *ckzsys = " 4.x BSD";
+#endif
+
+/* DEC Professional-300 series with Venturcom Venix 1.0 */
+#ifdef PROVX1
+char *ckzsys = " DEC Pro-3xx/Venix 1.0";
+#endif
+
+/* NCR Tower support contributed by Kevin O'Kane, U. of Tennessee */
+/* Tower OS is like Sys III but with BSD features -- mostly follows BSD */
+#ifdef TOWER1
+char *ckxsys = " NCR Tower 1632, OS 1.02";
+#endif
+
+/* Sys III/V, Xenix, PC/IX,... support by Herm Fischer, Litton Data Systems */
+#ifdef UXIII
+#ifdef XENIX
+char *ckzsys = " Xenix/286";
+#else
+#ifdef PCIX
+char *ckzsys = " PC/IX";
+#else
+#ifdef ISIII
+char *ckzsys = " Interactive Systems Corp, System III";
+#else
+char *ckzsys = " AT&T System III/System V";
+#endif
+#endif
+#endif
+#endif
 
 /* Definitions of some Unix system commands */
 
 char *DIRCMD = "ls -l ";		/* For directory listing */
 char *DELCMD = "rm -f ";		/* For file deletion */
 char *TYPCMD = "cat ";			/* For typing a file */
+
+#ifdef BSD4
 char *SPACMD = "pwd ; quota ; df .";	/* Space/quota of current directory */
+#else
+char *SPACMD = "df ";
+#endif
+
 char *SPACM2 = "df ";			/* For space in specified directory */
+
+#ifdef BSD4
 char *WHOCMD = "finger ";		/* For seeing who's logged in */
+#else
+char *WHOCMD = "who ";			/* For seeing who's logged in */
+#endif
+
 /*
   Functions (n is one of the predefined file numbers from ckermi.h):
 
@@ -34,19 +81,53 @@ char *WHOCMD = "finger ";		/* For seeing who's logged in */
    zchdir(dirnam)   -- Change working directory.
    zhome()          -- Return pointer to home directory name string.
  */
-#include <stdio.h>			/* Standard Unix i/o */
-#include <ctype.h>			/* Character types */
+
+/* Includes */
+
+#include "ckermi.h"			/* Kermit definitions, ctype, stdio */
 #include <sys/types.h>			/* Data types */
 #include <sys/dir.h>			/* Directory structure */
 #include <sys/stat.h>			/* File status */
+#include <pwd.h>			/* Password file for shell name */
+
+#ifndef PROVX1
 #include <sys/file.h>			/* File access */
-#include <sys/time.h>
-#include "ckermi.h"			/* Kermit definitions */
+#endif
+
+/* Some systems define these in include files, others don't... */
+
+#ifndef R_OK
+#define R_OK 4				/* For access */
+#endif
+
+#ifndef W_OK
+#define W_OK 2
+#endif
+
+#ifdef PROVX1
+#define MAXNAMLEN DIRSIZ		/* Max file name length */
+#endif
+
+#ifdef UXIII
+#include <fcntl.h>
+#define MAXNAMLEN DIRSIZ
+#endif
+
+#ifndef O_RDONLY
+#define O_RDONLY 000
+#endif
+
+#ifndef MAXNAMLEN
+#define MAXNAMLEN 14			/* If still not defined... */
+#endif
+
+#define MAXWLD 500			/* Maximum wildcard filenames */
+
+
+/* Declarations */
 
 FILE *fp[ZNFILS] = { 			/* File pointers */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-
-#define MAXWLD 500			/* Maximum wildcard filenames */
 
 static int pid;	    			/* pid of child fork */
 static int fcount;			/* Number of files in wild group */
@@ -56,7 +137,6 @@ extern errno;				/* System error code */
 static char *mtchs[MAXWLD],		/* Matches found for filename */
      **mtchptr;				/* Pointer to current match */
 
-
 /*  Z O P E N I  --  Open an existing file for input. */
 
 zopeni(n,name) int n; char *name; {
@@ -113,7 +193,6 @@ zchin(n) int n; {
     return((a == EOF) ? -1 : a & 0377);
 }
 
-
 /*  Z S O U T  --  Write a string to the given file, buffered.  */
 
 zsout(n,s) int n; char *s; {
@@ -150,7 +229,6 @@ zchout(n,c) int n; char c; {
     }
 }
 
-
 /*  C H K F N  --  Internal function to verify file number is ok  */
 
 /*
@@ -177,7 +255,6 @@ chkfn(n) int n; {
     return( (fp[n] == NULL) ? 0 : 1 );
 }
 
-
 /*  Z C H K I  --  Check if input file exists and is readable  */
 
 /*
@@ -217,7 +294,6 @@ zchki(name) char *name; {
     }
 }
 
-
 /*  Z C H K O  --  Check if output file can be created  */
 
 /*
@@ -253,7 +329,6 @@ zchko(name) char *name; {
     }
 }
 
-
 /*  Z D E L E T  --  Delete the named file.  */
 
 zdelet(name) char *name; {
@@ -309,30 +384,60 @@ zchdir(dirnam) char *dirnam; {
 
 char *
 zhome() {
-    char *getenv();
     return(getenv("HOME"));
 }
 
-
 /*  Z X C M D -- Run a system command so its output can be read like a file */
 
 zxcmd(comand) char *comand; {
     int pipes[2];
     if (pipe(pipes) != 0) return(0);	/* can't make pipe, fail */
     if ((pid = fork()) == 0) {		/* child */
+
+/*#if BSD4*/			/* Code from Dave Tweten@AMES-NASA */
+			/* readapted to use getpwuid to find login shell */
+			/*   -- H. Fischer */
+	char *shpath, *shname, *shptr;	/* to find desired shell */
+	struct passwd *p;
+	extern struct passwd * getpwuid();
+	extern int getuid();
+	char *defShel = "/bin/sh";	/* default shell */
+/*#endif*/
+
 	close(pipes[0]);		/* close input side of pipe */
 	close(0);			/* close stdin */
 	if (open("/dev/null",0) < 0) return(0);	/* replace input by null */
+
+#ifndef UXIII
 	dup2(pipes[1],1);		/* replace stdout & stderr */
 	dup2(pipes[1],2);		/* by the pipe */
+#else
+	close(1);			/* simulate dup2 */
+	if (dup(pipes[1]) != 1 )
+	    conol("trouble duping stdout in routine zxcmd\n");
+	close(2);			/* simulate dup2 */
+	if (dup(pipes[1]) != 2 )
+	    conol("trouble duping stderr in routine zxcmd\n");
+#endif
+
 	close(pipes[1]);		/* get rid of this copy of the pipe */
-	execl("/bin/sh","sh","-c",comand,0); /* use shell to do it */
+
+/**** 	shptr = shname = shpath = getenv("SHELL");  /* What shell? */
+	p = getpwuid( getuid() );	/* get login data */
+	if ( p == (struct passwd *) NULL || !*(p->pw_shell) ) shpath = defShel;
+	  else shpath = p->pw_shell;
+	shptr = shname = shpath;
+	while (*shptr != '\0') if (*shptr++ == '/') shname = shptr;
+	execl(shpath,shname,"-c",comand,0); /* Execute the command */
+
+/****	execl("/bin/sh","sh","-c",comand,0); /* Execute the command */
+
 	exit(0); }			/* just punt if it didn't work */
+
     close(pipes[1]);			/* don't need the output side */
     fp[ZIFILE] = fdopen(pipes[0],"r");	/* open a stream for it */
     return(1);
 }
-
 
 /*  Z C L O S F  - wait for the child fork to terminate and close the pipe. */
 
@@ -343,7 +448,6 @@ zclosf() {
     while ((wstat = wait(0)) != pid && wstat != -1) ;
 }
 
-
 /*  Z X P A N D  --  Expand a wildcard string into an array of strings  */
 /*
   Returns the number of files that match fn1, with data structures set up
@@ -401,9 +505,7 @@ znewn(fn,s) char *fn, **s; {
     *s = buf;
 }
 
-
-/* Directory Functions for 4.2BSD, written by Jeff Damens, CUCCA, 1984. */
-
+/* Directory Functions for Unix, written by Jeff Damens, CUCCA, 1984. */
 
 /*
  * The path structure is used to represent the name to match.
@@ -458,7 +560,6 @@ char *p;
  return(head);
 }
 
-
 /*
  * fgen:
  *  This is the actual name generator.  It is passed a string,
@@ -505,9 +606,7 @@ int len;
  return(numfnd);			/* and return the number of matches */
 }
 
-
-/*
- * traverse:
+/* traverse:
  *  Walks the directory tree looking for matches to its arguments.
  *  The algorithm is, briefly:
  *   If the current pattern segment contains no wildcards, that
@@ -515,16 +614,14 @@ int len;
  *   exists, we call ourselves recursively with the next segment
  *   in the pattern string; otherwise, we just return.
  *
- *   If the current pattern segment contains wildcards, we
- *   open the name we've accumulated so far (assuming it is
- *   really a directory), then read each filename in it, and, if
- *   it matches the wildcard pattern segment, add that filename
- *   to what we have so far and call ourselves recursively on the
+ *   If the current pattern segment contains wildcards, we open the name
+ *   we've accumulated so far (assuming it is really a directory), then read 
+ *   each filename in it, and, if it matches the wildcard pattern segment, add
+ *   that filename to what we have so far and call ourselves recursively on the
  *   next segment.
  *
- *   Finally, when no more pattern segments remain, we add what
- *   we've accumulated so far to the result array and increment
- *   the number of matches.
+ *   Finally, when no more pattern segments remain, we add what's accumulated
+ *   so far to the result array and increment the number of matches.
  *
  * Input: a pattern path list (as generated by splitpath), a string
  *	  pointer that points to what we've traversed so far (this
@@ -534,13 +631,18 @@ int len;
  *	  in the previous argument.
  * Returns: nothing.
  */
-
 traverse(pl,sofar,endcur)
 struct path *pl;
 char *sofar,*endcur;
 {
+#ifdef BSD4
  DIR *fd;
  struct direct *dirbuf;
+#else
+ int fd;
+ struct direct dir_entry;
+ struct direct *dirbuf = &dir_entry;
+#endif
  struct stat statbuf;
  if (pl == NULL)
  {
@@ -563,15 +665,19 @@ char *sofar,*endcur;
  }
 /* cont'd... */
 
-
 /*...traverse, cont'd */
 
 /* segment contains wildcards, have to search directory */
  *endcur = '\0';                        	/* end current string */
  if (stat(sofar,&statbuf) == -1) return;   	/* doesn't exist, forget it */
  if ((statbuf.st_mode & S_IFDIR) == 0) return;  /* not a directory, skip */
+#ifdef BSD4
  if ((fd = opendir(sofar)) == NULL) return;  	/* can't open, forget it */
  while (dirbuf = readdir(fd))
+#else
+ if ((fd = open(sofar,O_RDONLY)) < 0) return;  	/* can't open, forget it */
+ while ( read(fd,dirbuf,sizeof dir_entry) )
+#endif
   if (dirbuf->d_ino != 0 && match(pl -> npart,dirbuf->d_name)) {
     char *eos;
     strcpy(endcur,dirbuf->d_name);
@@ -579,9 +685,13 @@ char *sofar,*endcur;
     *eos = '/';                    /* end this segment */
     traverse(pl -> fwd,sofar,eos+1);
   }
+#ifdef BSD4
  closedir(fd);
+#else
+ close(fd);
+#endif
 }
-
+
 /*
  * addresult:
  *  Adds a result string to the result array.  Increments the number
@@ -622,7 +732,6 @@ char *str;
  return(0);
 }
 
-
 /*
  * match:
  *  pattern matcher.  Takes a string and a pattern possibly containing
@@ -653,4 +762,3 @@ match(pattern,string) char *pattern,*string; {
 	} else return(0);		/* otherwise just fail */
     }
 }
-                              

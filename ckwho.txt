@@ -1,0 +1,52 @@
+(8 Mar 85)
+
+The following people have tentatively volunteered to supply support in
+C-Kermit 4.0 for the following systems:
+
+Status: d = done, w = waiting to start, p = in progress, ? = don't know
+
+Status  What                             Who
+
+  d     DEC Pro-350/380, Venix 1.0       SY.FDC@CU20B (Frank da Cruz)
+
+  w	IBM 370-series, Ahmdah UTS       SY.FDC@CU20B (Frank da Cruz)
+
+  p	Apple Macintosh                  SY.WBC3@CU20B (Bill Catchings)
+
+  ?	Masscomp RTU 2.2                 sob@RICE (Stan Barber)
+
+  ?	Coherent                         vortex!lauren@RAND-UNIX
+					  (Lauren Weinstein) 
+  ?	Callan UniStar 300 with
+	 Unisoft 68000 System V Unix     EBM@MIT-XX (Eliot Moss)
+
+  ?	ATT 3Bx, System V                Chris@COLUMBIA-20 (Chris Maio)
+
+  d	IBM PC, etc, PC/IX               HFISCHER@USC-ECLB (Herm Fischer)
+
+  d	IBM PC, etc, Xenix               HFISCHER@USC-ECLB (Herm Fischer)
+
+  d	VAX,PDP-11 with IS3, Interactive
+	 Systems version of System III   HFISCHER@USC-ECLB (Herm Fischer)
+
+  p	Os9                              BLARSON@USC-ECL (Bob Larson)
+
+  p	Version 7                        vasoll%okstate.csnet@CSNET-RELAY
+					 (Mark Vasoll)
+
+  ?	HP9000 Series 200 (HP9836)
+	 with HP-UX System III           b-davis@utah-cs (Brad Davis)
+
+  ?	CP/M (Small C or BDS C)          bdale@cmu-cs-g (Bdale Garbee)
+
+  ?	Honeywell GCOS3/8                Carlin%HIS-PHOENIX-MULTICS@MIT-MULTICS
+
+  ?	68000 Xenix                      ED@MIT-MC (Ed Schwalenberg)
+
+  ?	VAX, 2.0 BSD                     nsc!jon@DECWRL (Jon Ryshpan)
+
+  ?	CP/M-86, De Smet C               nsc!jon@DECWRL (Jon Ryshpan)
+
+  ?	Apple II, Aztec C                Saline@MIT-MULTICS (Steven Saline)
+
+  ?	VAX/VMS				 stew%lhasa.UUCP@HARVARD

@@ -1,0 +1,660 @@
+
+
+
+KERMIT(1C)                    WEGA                     KERMIT(1C)
+
+
+
+NNNNAAAAMMMMEEEE
+     kermit - kermit file transfer
+
+SSSSYYYYNNNNOOOOPPPPSSSSIIIISSSS
+     kkkkeeeerrrrmmmmiiiitttt [ option ...] [file ...]
+
+DDDDEEEESSSSCCCCRRRRIIIIPPPPTTTTIIIIOOOONNNN
+     _K_e_r_m_i_t is a file transfer program that allows files to be
+     moved between many machine of different operating systems
+     and architectures.  This man page describes version 4.2 of
+     the program.
+
+     Arguments are optional. If _k_e_r_m_i_t is executed without argu-
+     ments, it will enter command mode. Otherwise, _k_e_r_m_i_t will
+     read the arguments off the command line and interpret them.
+
+     The following notation is used in command descriptions:
+
+     ffffnnnn      A  Unix  file specification, possibly containing the
+             "wildcard" characters '*' or '?' ('*' matches all
+             character strings, '?' matches  any single charac-
+             ter).
+
+     ffffnnnn1111     A Unix file specification which may not contain '*'
+             or '?'.
+
+     rrrrffffnnnn     A  remote  file  specification in the remote
+             system's own syntax, which may denote a single file
+             or a group of files.
+
+     rrrrffffnnnn1111    A remote file specification which should denote only
+             a single file.
+
+     nnnn       A decimal number between 0 and 94.
+
+     cccc       A decimal number between 0 and 127 representing the
+             value of  an  ASCII character.
+
+     cccccccc      A  decimal  number  between 0 and 31, or else
+             exactly 127, representing the value of an ASCII con-
+             trol character.
+
+     [[[[ ]]]]     Any field in square braces is optional.
+
+     {{{{xxxx,,,,yyyy,,,,zzzz}}}} Alternatives are listed in curly braces.
+     _K_e_r_m_i_t command line options may specify  either  actions  or
+     settings.    If _K_e_r_m_i_t is invoked with a command line that
+     specifies no actions, then it will issue a prompt and begin
+     interactive dialog.   Action  options  specify  either pro-
+     tocol transactions or terminal connection.
+
+
+
+
+
+1                             LOCAL                             1
+
+
+
+
+
+
+KERMIT(1C)                    WEGA                     KERMIT(1C)
+
+
+
+     CCCCoooommmmmmmmaaaannnndddd lllliiiinnnneeee ooooppppttttiiiioooonnnnssss
+
+
+     ----ssss ffffnnnn   Send the specified file or files. If fn contains
+             wildcard (meta) characters, the Unix shell expands
+             it into a list.  If fn is  '-'  then _k_e_r_m_i_t sends
+             from standard input, which must come from a file:
+
+                         kermit -s - < foo.bar
+
+             or a parallel process:
+
+                         ls -l | kermit -s -
+
+             You  cannot use this mechanism to send terminal
+             typein.  If you want to send a file whose name is
+             "-" you can precede it with a path  name,  as in
+
+                         kermit -s ./-
+
+     ----rrrr      Receive a file or files.  Wait passively for files
+             to arrive.
+
+     ----kkkk      Receive  (passively)  a file or files, sending them
+             to standard output.  This option can be used in
+             several ways:
+
+                     kermit -k
+
+             Displays  the  incoming  files  on  your screen; to
+             be used only in "local mode" (see below).
+
+                     kermit -k > fn1
+
+             Sends  the  incoming file or files to the named
+             file, fn1.  If more than one file arrives,  all  are
+             concatenated  together  into  the single file fn1.
+
+                     kermit -k | command
+
+             Pipes the incoming data (single or multiple files)
+             to the indicated command, as in
+
+                     kermit -k | sort > sorted.stuff
+
+
+     ----aaaa ffffnnnn1111  If you have specified a file transfer option, you
+             may specify an alternate name for a single file with
+             the -a option.  For example,
+
+                     kermit -s foo -a bar
+
+
+
+
+2                             LOCAL                             2
+
+
+
+
+
+
+KERMIT(1C)                    WEGA                     KERMIT(1C)
+
+
+
+             sends the file foo telling the receiver that its
+             name is bar.  If  more than  one  file  arrives or
+             is sent, only the first file is affected by the -_a
+             option:
+
+                     kermit -ra baz
+
+             stores the first incoming file under the name baz.
+
+     ----xxxx      Begin server operation.  May be used in either local
+             or remote mode.
+
+     Before proceeding, a few words about remote and local opera-
+     tion are  necessary.  _K_e_r_m_i_t is  "local"  if it is running
+     on a PC or workstation that you are using directly, or if it
+     is running on a multiuser system and transferring files over
+     an  external  communication line -- not your job's control-
+     ling terminal or console.  _K_e_r_m_i_t is remote if it is running
+     on a multiuser system and  transferring files over its own
+     controlling terminal's communication line, connected to your
+     PC or workstation.
+
+     If you are running _K_e_r_m_i_t on a PC, it is in local mode by
+     default,  with  the "back  port"  designated for file
+     transfer and terminal connection.  If you are running _K_e_r_m_i_t
+     on a multiuser (timesharing) system, it is in remote mode
+     unless you explicitly point it at an external line for file
+     transfer or terminal connection.  The following command sets
+     _K_e_r_m_i_t'_s "mode":
+
+     ----llll ddddeeeevvvv  Line -- Specify a terminal line to use for file
+             transfer  and  terminal connection, as in
+
+                         kermit -l /dev/ttyi5
+
+     When  an  external  line is being used, you might also need
+     some additional options for successful communication with
+     the remote system:
+
+     ----bbbb nnnn Baud -- Specify the baud rate for the line given in the
+          -_l option,  as in
+                      kermit -l /dev/ttyi5 -b 9600
+
+          This  option  should  always  be included with the -_l
+          option, since the speed of an external line is not
+          necessarily what you expect.
+
+     ----pppp xxxx Parity -- e,o,m,s,n (even, odd, mark, space, or none).
+          If  parity  is other  than none, then the 8th-bit pre-
+          fixing mechanism will be used for transferring 8-bit
+          binary data, provided the  opposite _K_e_r_m_i_t agrees. The
+          default parity is none.
+
+
+
+3                             LOCAL                             3
+
+
+
+
+
+
+KERMIT(1C)                    WEGA                     KERMIT(1C)
+
+
+
+     ----tttt   Specifies  half  duplex,  line  turnaround  with  XON
+          as the handshake character.
+
+     The following commands may be used only with a _K_e_r_m_i_t which
+     is local  -- either by default or else because the -_l option
+     has been specified.
+
+     ----gggg rrrrffffnnnn  Actively  request  a remote server to send the named
+             file or files; rfn is a file specification in the
+             remote host's own syntax.  If fn happens to  contain
+             any  special  shell  characters,  like  '*', these
+             must be quoted, as in
+
+                         kermit -g x\*.\?
+
+     ----ffff      Send a 'finish' command to a remote server.
+
+     ----cccc      Establish a terminal connection over  the  specified
+             or  default communication line, before any protocol
+             transaction takes place.  Get back to  the  local
+             system  by  typing  the  escape   character   (nor-
+             mally Control-Backslash) followed by the letter 'c'.
+
+     ----nnnn      Like -_c, but  after a protocol transaction takes
+             place; -_c and -_n may both be used in the same com-
+             mand.  The use of -_n and -_c is  illustrated below.
+     On  a  timesharing  system, the -_l and -_b options will also
+     have to be included with the -_r, -_k, or -_s options if the
+     other _K_e_r_m_i_t is on a remote system.  If kkkkeeeerrrrmmmmiiiitttt is in local
+     mode, the screen (stdout)  is  continously  updated  to show
+     the  progress  of the file transer.  A dot is printed for
+     every four data packets, other packets are shown by type
+     (e.g.  'S'  for  Send-Init),  'T'  is printed  when there's
+     a timeout, and '%' for each retransmission.  In addition,
+     you may type (to stdin) certain "interrupt" commands during
+     file transfer:
+
+
+     Control-F:  Interrupt the current File, and go on to the
+     next (if any).
+
+
+     Control-B:  Interrupt the entire Batch of files, terminate
+     the transaction.
+
+
+     Control-R:  Resend the current packet
+
+
+     Control-A:  Display a status report for the current transac-
+     tion.
+
+
+
+
+4                             LOCAL                             4
+
+
+
+
+
+
+KERMIT(1C)                    WEGA                     KERMIT(1C)
+
+
+
+
+     These interrupt characters differ from the ones used in
+     other Kermit implementations to  avoid  conflict with Unix
+     shell interrupt characters.  With System III and System V
+     implementations of Unix, interrupt commands must be  pre-
+     ceeded by the escape character (e.g. control-\).
+     Several other command-line options are provided:
+
+     ----iiii      Specifies that files should be sent or received
+             exactly "as is" with no conversions.  This option is
+             necessary for transmitting  binary  files.  It may
+             also be used to slightly boost efficiency in Unix-
+             to-Unix transfers of text files by eliminating
+             CRLF/newline conversion.
+
+     ----wwww      Write-Protect -- Avoid filename collisions for
+             incoming files.
+
+     ----qqqq      Quiet -- Suppress screen update during file
+             transfer, for  instance  to allow a file transfer to
+             proceed in the background.
+
+     ----dddd      Debug -- Record debugging information in the file
+             debug.log in the current directory.  Use this option
+             if you believe  the  program  is misbehaving, and
+             show the resulting log to your local _k_e_r_m_i_t main-
+             tainer.
+
+     ----hhhh      Help -- Display a brief synopsis of the command line
+             options.
+     The command line may contain no more than one protocol
+     action option.
+
+     IIIInnnntttteeeerrrraaaaccccttttiiiivvvveeee ooooppppeeeerrrraaaattttiiiioooonnnn
+     KKKKeeeerrrrmmmmiiiitttt''''ssss interactive command prompt is "C-Kermit>". In
+     response  to  this prompt, you may type any valid command.
+     KKKKeeeerrrrmmmmiiiitttt executes the command and then prompts you for another
+     command.  The process continues until you instruct  the pro-
+     gram to terminate.  Commands  begin  with a keyword, nor-
+     mally an English verb, such as "send".  You may omit trail-
+     ing characters from any keyword, so  long  as  you  specify
+     sufficient  characters  to  distinguish  it  from  any other
+     keyword valid in that field.  Certain commonly-used keywords
+     (such as "send",  "receive",  "connect") have  special
+     non-unique abbreviations ("s" for "send", "r" for "receive",
+     "c" for "connect").  Certain characters have special func-
+     tions in interactive commands:
+
+     ????       Question mark, typed at any point in a command, will
+             produce a  message explaining  what  is  possible or
+             expected at that point.  Depending on the context,
+             the message may be a brief phrase, a menu of
+
+
+
+5                             LOCAL                             5
+
+
+
+
+
+
+KERMIT(1C)                    WEGA                     KERMIT(1C)
+
+
+
+             keywords,  or a list of files.  EEEESSSSCCCC (The  Escape  or
+             Altmode  key)  --  Request  completion of the
+             current keyword or filename, or insertion of a
+             default value.  The result  will be a beep if the
+             requested operation fails.
+
+     DDDDEEEELLLL     (The  Delete  or  Rubout key) -- Delete the previous
+             character from the command.  You may also use BS
+             (Backspace, Control-H) for this function.
+
+     ^^^^WWWW      (Control-W) -- Erase the rightmost word from the
+             command line.
+
+     ^^^^UUUU      (Control-U) -- Erase the entire command.
+
+     ^^^^RRRR      (Control-R) -- Redisplay the current command.
+
+     SSSSPPPP      (Space) -- Delimits fields (keywords, filenames,
+             numbers) within a command.  HT (Horizontal Tab) may
+             also be used for this purpose.
+
+     CCCCRRRR      (Carriage  Return)  -- Enters the command for execu-
+             tion.  LLLLFFFF (Linefeed) or FFFFFFFF (formfeed) may also be
+             used for this purpose.
+
+     \\\\       (Backslash) -- Enter any of the  above  characters
+             into  the  command, literally.  To enter a
+             backslash, type two backslashes in a row (\\).
+
+     You  may  type  the editing characters (DEL, ^W, etc)
+     repeatedly, to delete all the way back to the prompt.  No
+     action will be performed until the  command  is entered by
+     typing carriage return, linefeed, or formfeed.  If you make
+     any mistakes, you will receive an informative error message
+     and a new prompt  -- make liberal  use  of '?' and ESC to
+     feel your way through the commands.  One important command
+     is "help" -- you should use it the first time you run _K_e_r_-
+     _m_i_t. Interactive _K_e_r_m_i_t accepts commands from files as well
+     as from the  keyboard.  When  you  enter  interactive mode,
+     _K_e_r_m_i_t looks for the file .kermrc in your home or current
+     directory (first it looks in the home directory,  then  in
+     the current  one) and executes any commands it finds there.
+     These commands must be in interactive format, not Unix
+     command-line format.  A "take" command is  also provided
+     for use at any time during an interactive session.  Command
+     files may be nested to any reasonable depth.  Here is a
+     brief list of _K_e_r_m_i_t interactive commands:
+
+     !!!!
+     Execute a Unix shell command.
+
+     bbbbyyyyeeee
+
+
+
+6                             LOCAL                             6
+
+
+
+
+
+
+KERMIT(1C)                    WEGA                     KERMIT(1C)
+
+
+
+     Terminate and log out a remote _K_e_r_m_i_t server.
+
+     cccclllloooosssseeee
+     Close a log file.
+
+     ccccoooonnnnnnnneeeecccctttt
+     Establish a terminal connection to a remote system.
+
+     ccccwwwwdddd
+     Change Working Directory.
+
+     ddddiiiiaaaallll
+     Dial a telephone number.
+
+     ddddiiiirrrreeeeccccttttoooorrrryyyy
+     Display a directory listing.
+
+     eeeecccchhhhoooo
+     Display arguments literally.
+
+     eeeexxxxiiiitttt
+     Exit from the program, closing any open logs.
+
+     ffffiiiinnnniiiisssshhhh
+     Instruct a remote _K_e_r_m_i_t server to exit, but not log out.
+
+     ggggeeeetttt
+     Get files from a remote _K_e_r_m_i_t server.
+
+     hhhheeeellllpppp
+     Display a help message for a given command.
+
+     lllloooogggg
+     Open a log file -- debugging, packet, session, transaction.
+
+     qqqquuuuiiiitttt
+     Same as 'exit'.
+
+     rrrreeeecccceeeeiiiivvvveeee
+     Passively wait for files to arrive.
+
+     rrrreeeemmmmooootttteeee
+     Issue file management commands to a remote _K_e_r_m_i_t server.
+
+     ssssccccrrrriiiipppptttt
+     Execute a login script with a remote system.
+
+     sssseeeennnndddd
+     Send files.
+
+     sssseeeerrrrvvvveeeerrrr
+     Begin server operation.
+
+
+
+7                             LOCAL                             7
+
+
+
+
+
+
+KERMIT(1C)                    WEGA                     KERMIT(1C)
+
+
+
+     sssseeeetttt
+     Set various parameters.
+
+     sssshhhhoooowwww
+     Display values of 'set' parameters.
+
+     ssssppppaaaacccceeee
+     Display current disk space usage.
+
+     ssssttttaaaattttiiiissssttttiiiiccccssss
+     Display statistics about most recent transaction.
+
+     ttttaaaakkkkeeee
+     Execute commands from a file.  The 'set' parameters are:
+
+     bbbblllloooocccckkkk----cccchhhheeeecccckkkk
+     Level of packet error detection.
+
+     ddddeeeellllaaaayyyy
+     How long to wait before sending first packet.
+
+     dddduuuupppplllleeeexxxx
+     Specify which side echoes during 'connect'.
+
+     eeeennnndddd----ooooffff----ppppaaaacccckkkkeeeetttt
+     Terminator for outbound packets.
+
+     eeeessssccccaaaappppeeee----cccchhhhaaaarrrraaaacccctttteeeerrrr
+     Character to prefix "escape commands" during 'connect'.
+
+     ffffiiiilllleeee
+     Set various file parameters.
+
+     fffflllloooowwww----ccccoooonnnnttttrrrroooollll
+     Communication line full-duplex flow control.
+
+     hhhhaaaannnnddddsssshhhhaaaakkkkeeee
+     Communication line half-duplex turnaround character.
+
+     lllliiiinnnneeee
+     Communication line device name.
+
+     mmmmooooddddeeeemmmm----ddddiiiiaaaalllleeeerrrr
+     Type of modem-dialer on communication line.
+
+     ppppaaaacccckkkkeeeetttt----lllleeeennnnggggtttthhhh
+     Maximum length for packets.
+
+     ppppaaaadddd----cccchhhhaaaarrrraaaacccctttteeeerrrr
+     Character to use for inter-packet padding.
+
+     ppppaaaaddddddddiiiinnnngggg
+
+
+
+8                             LOCAL                             8
+
+
+
+
+
+
+KERMIT(1C)                    WEGA                     KERMIT(1C)
+
+
+
+     How much inter-packet padding to use.
+
+     ppppaaaarrrriiiittttyyyy
+     Communication line character parity.
+
+     pppprrrroooommmmpppptttt
+     Change the _K_e_r_m_i_t program's prompt.
+
+     ssssppppeeeeeeeedddd
+     Communication line speed.
+
+     ssssttttaaaarrrrtttt----ooooffff----ppppaaaacccckkkkeeeetttt
+     Control character to mark beginning of packets.
+
+     ttttiiiimmmmeeeeoooouuuutttt
+     Timer interval to detect lost packets.  The 'remote' com-
+     mands are:
+
+     ccccwwwwdddd
+     Change remote working directory.
+
+     ddddeeeelllleeeetttteeee
+     Delete remote files.
+
+     ddddiiiirrrreeeeccccttttoooorrrryyyy
+     Display a listing of remote file names.
+
+     hhhheeeellllpppp
+     Request help from a remote server.
+
+     hhhhoooosssstttt
+     Issue a command to the remote host in its own command
+     language
+
+     ssssppppaaaacccceeee
+     Display current disk space usage on remote system.
+
+     ttttyyyyppppeeee
+     Display a remote file on your screen.
+
+     wwwwhhhhoooo
+     Display who's logged in, or get information about a user.
+
+FFFFIIIILLLLEEEESSSS
+     /usr/bin/kermit
+
+SSSSEEEEEEEE AAAALLLLSSSSOOOO
+     Frank da Cruz and Bill Catchings, _K_e_r_m_i_t _U_s_e_r'_s _G_u_i_d_e,
+     Columbia University _c_u(_1_C), _u_u_c_p(_1_C)
+
+DDDDIIIIAAAAGGGGNNNNOOOOSSSSTTTTIIIICCCCSSSS
+     The diagnostics produced by kermit itself are intended to be
+
+
+
+9                             LOCAL                             9
+
+
+
+
+
+
+KERMIT(1C)                    WEGA                     KERMIT(1C)
+
+
+
+     self-explanatory.
+
+BBBBUUUUGGGGSSSS
+     See recent issues of Info-Kermit for a list of bugs.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+10                            LOCAL                            10
+
+
+

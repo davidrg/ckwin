@@ -1,4 +1,4 @@
-char *cmdv = "Unix cmd package V1.0(014) 1 Feb 85";
+char *cmdv = "Unix cmd package V1.0(015) 27 Feb 85";
 
 /*  C K C M D  --  Interactive command package for Unix  */
 /*
@@ -29,6 +29,7 @@ char *cmdv = "Unix cmd package V1.0(014) 1 Feb 85";
   cmfld  - Parse an arbitrary field
   cmtxt  - Parse a text string
   cmcfm  - Parse command confirmation (end of line)
+  stripq - Strip out backslash quotes from a string.
 
  Return codes:
   -3: no input provided when required
@@ -58,7 +59,6 @@ char *cmdv = "Unix cmd package V1.0(014) 1 Feb 85";
  notice is retained.
 */
 
-
 /* Includes */
 
 #include <stdio.h>			/* Standard C I/O package */
@@ -95,7 +95,6 @@ static char *bp,			/* Current command buffer position */
     *pp,				/* Start of current field */
     *np;				/* Start of next field */
 
-
 /*  C M S E T P  --  Set the program prompt.  */
 
 cmsetp(s) char *s; {
@@ -138,15 +137,23 @@ The argument specifies who is to echo the user's typein --
   1 means the cmd package echoes
   0 somebody else (system, front end, terminal) echoes
 */
-
 cmini(d) int d; {
     for (bp = cmdbuf; bp < cmdbuf+CMDBL; bp++) *bp = NUL;
     *atmbuf = NUL;
     dpx = d;
     cmres();
 }
-
 
+stripq(s) char *s; {			/* Function to strip '\' quotes */
+    char *t;
+    while (*s) {
+	if (*s == '\\') {
+	    for (t = s; *t != '\0'; t++) *t = *(t+1);
+	}
+	s++;
+    }
+}
+
 /*  C M N U M  --  Parse a number in the indicated radix  */
 
 /*  For now, only works for positive numbers in base 10.  */
@@ -179,7 +186,6 @@ cmnum(xhlp,xdef,radix,n) char *xhlp, *xdef; int radix, *n; {
     }
 }
 
-
 /*  C M O F I  --  Parse the name of an output file  */
 
 /*
@@ -213,7 +219,6 @@ cmofi(xhlp,xdef,xp) char *xhlp, *xdef, **xp; {
     }
 }
 
-
 /*  C M I F I  --  Parse the name of an existing file  */
 
 /*
@@ -257,7 +262,6 @@ cmifi(xhlp,xdef,xp,wild) char *xhlp, *xdef, **xp; int *wild; {
 
 /* cont'd... */
 
-
 /* ...cmifi(), cont'd */
 
 
@@ -298,7 +302,6 @@ cmifi(xhlp,xdef,xp,wild) char *xhlp, *xdef, **xp; int *wild; {
 		return(x);
 /* cont'd... */
 
-
 /* ...cmifi(), cont'd */
 
 
@@ -308,9 +311,9 @@ cmifi(xhlp,xdef,xp,wild) char *xhlp, *xdef, **xp; int *wild; {
 			printf("%s ",xdef); /* If at beginning of field, */
 			addbuf(xdef);	/* supply default. */
 			cc = setatm(xdef);
-		    } else {		/* No default */
+		} else {		/*no default*/
 			putchar(BEL);
-		    }
+		}
 		    break;
 		} 
 		if (*wild = chkwld(*xp)) {  /* No completion if wild */
@@ -344,7 +347,6 @@ cmifi(xhlp,xdef,xp,wild) char *xhlp, *xdef, **xp; int *wild; {
 
 /* cont'd... */
 
-
 /* ...cmifi(), cont'd */
 
 
@@ -395,7 +397,6 @@ chkwld(s) char *s; {
     return(0);
 }
 
-
 /*  C M F L D  --  Parse an arbitrary field  */
 /*
  Returns
@@ -452,7 +453,6 @@ cmfld(xhlp,xdef,xp) char *xhlp, *xdef, **xp; {
     }
 }
 
-
 /*  C M T X T  --  Get a text string, including confirmation  */
 
 /*
@@ -512,7 +512,6 @@ cmtxt(xhlp,xdef,xp) char *xhlp; char *xdef; char **xp; {
     }
 }
 
-
 /*  C M K E Y  --  Parse a keyword  */
 
 /*
@@ -540,6 +539,8 @@ cmkey(table,n,xhlp,xdef) struct keytab table[]; int n; char *xhlp, *xdef; {
     else zz = getwd(); 
 
 debug(F101,"cmkey: table length","",n);
+debug(F101," cmflgs","",cmflgs);
+debug(F101," zz","",zz);
 while (1) {
     xc += cc;
     debug(F111,"cmkey: getwd",atmbuf,xc);
@@ -568,7 +569,6 @@ while (1) {
 
 /* cont'd... */
 
-
 /* ...cmkey(), cont'd */
 
 	case 2:				/* User terminated word with ESC */
@@ -601,7 +601,6 @@ while (1) {
 
 /* cont'd... */
 
-
 /* ...cmkey(), cont'd */
 
 	case 3:				/* User terminated word with "?" */
@@ -637,7 +636,6 @@ while (1) {
     }
 }
 
-
 /*  C M C F M  --  Parse command confirmation (end of line)  */
 
 /*
@@ -688,7 +686,6 @@ cmcfm() {
     }
 }
 
-
 /* Keyword help routines */
 
 
@@ -733,7 +730,6 @@ dmphlp() {				/* Print the help buffer */
     clrhlp();
 }
 
-
 /*  L O O K U P  --  Lookup the string in the given array of strings  */
 
 /*
@@ -787,7 +783,6 @@ lookup(table,cmd,n,x) char *cmd; struct keytab table[]; int n, *x; {
     } else return(-1);
 }
 
-
 /*  G E T W D  --  Gets a "word" from the command input stream  */
 
 /*
@@ -814,6 +809,7 @@ getwd() {
     static int inword = 0;		/* Flag for start of word found */
     int quote = 0;			/* Flag for quote character */
     int echof = 0;			/* Flag for whether to echo */
+    int ignore = 0;
 
     pp = np;				/* Start of current field */
     debug(F101,"getwd: cmdbuf","",(int) cmdbuf);
@@ -823,17 +819,17 @@ getwd() {
 
     while (bp < cmdbuf+CMDBL) {		/* Loop */
 
-	echof = 0;			/* Flag for whether to echo */
+	ignore = echof = 0;		/* Flag for whether to echo */
 
 	if ((c = *bp) == NUL) {		/* Get next character */
 	    if (dpx) echof = 1;		/* from reparse buffer */
 	    c = getchar();		/* or from tty. */
 	    if (c == EOF) return(-4);
-	}
+	} else ignore = 1;
 
 	if (quote == 0) {
 
-	    if (c == '\\') {		/* Quote character */
+	    if (!ignore && (c == '\\')) { /* Quote character */
 	       quote = 1;
 	       continue;
     	    }
@@ -846,7 +842,6 @@ getwd() {
 
 /* cont'd... */
 
-
 /* ...getwd(), cont'd */
 
     	    if (c == SP) {		/* If space */
@@ -870,7 +865,7 @@ getwd() {
 		inword = 0;
 		return(cmflgs = 1);
 	    }
-	    if (c == '?') { 		/* Question mark */
+	    if (!ignore && (c == '?')) { /* Question mark */
 		putchar(c);
 		*bp = NUL;
 		setatm(pp);
@@ -906,7 +901,6 @@ getwd() {
 
 /* cont'd... */
 
-
 /* ...getwd(), cont'd */
 
     	    if (c == WDEL) { 		/* ^W, word deletion */
@@ -944,8 +938,7 @@ getwd() {
     return(cmflgs = -2);
 }
 
-
-/* Utilility functions */
+/* Utility functions */
 
 /* A D D B U F  -- Add the string pointed to by cp to the command buffer  */
 
@@ -969,8 +962,7 @@ setatm(cp) char *cp; {
     ap = atmbuf;
     *ap = NUL;
     while (*cp == SP) cp++;
-    while ((*cp != SP) && (*cp != NL) && (*cp != NUL
-)) {
+    while ((*cp != SP) && (*cp != NL) && (*cp != NUL)) {
 	*ap++ = *cp++;
 	cc++;
     }

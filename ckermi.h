@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <ctype.h>
 #include "ckdebu.h"
-#include "ansi_c.h"
 
 /* Mnemonics for ASCII characters */
 

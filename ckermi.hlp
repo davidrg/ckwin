@@ -1,0 +1,21 @@
+The files ck*.* comprise C-Kermit.
+
+ck*.c are the C language source files.
+ck*.h are the header files.
+ckprot.w is the "wart" source for the protocol state table.
+
+ckermi.mss is the Scribe text formatter source for the Kermit User Guide
+chapter on C-Kermit for Unix.
+
+ckermi.doc is the plain-text documentation output from Scribe.
+
+ckermi.mak is the makefile.  It should be renamed to "makefile".  Use the
+makefile to build C-Kermit for your Unix system, giving the appropriate
+command line argument to "make", e.g.
+
+make bsd	(for Berkeley Unix)
+make pcix	(for PC/IX)
+make provx1	(for Pro-350 with Venix 1.0)
+
+etc.  The make file produces a runnable program called "wermit".  You should
+test it thoroughly before renaming it to "kermit".

@@ -1,4 +1,4 @@
-char *versio = "C-Kermit 4.0(025) PRERELEASE TEST VERSION, 5 Feb 85";
+char *versio = "C-Kermit 4.2(030) PRERELEASE # 2, 5 March 85";
 
 /* C K M A I N  --  C-Kermit Main program */
 
@@ -17,28 +17,38 @@ char *versio = "C-Kermit 4.0(025) PRERELEASE TEST VERSION, 5 Feb 85";
  "Kermit" is also Celtic for "free".
 */
 /*
- Thanks to the following people for their contributions to this program:
+ Thanks to Herm Fischer, Litton Data Systems, for extensive contributions to
+ version 4, and to the following people for their contributions over the years:
+
    Bob Cattani & Chris Maio, Columbia CS Dept
    Alan Crosswell, CUCCA
-   Herm Fischer, Litton Data Systems
    Carl Fongheiser, CWRU
    Jim Guyton, Rand Corp
    Stan Hanks, Rice U.
    Ken Harrenstein, SRI
+   Steve Hemminger, Tektronix
+   Tony Movshon, NYU
    Ken Poulton, HP Labs
+   Dave Tweten, NASA Ames
    Walter Underwood, Ford Aerospace
    Pieter Van Der Linden, Centre Mondial (Paris)
    Lauren Weinstein, Vortex
+
  and many others.
 */
 
 #include "ckermi.h"
-
+
 /* Text message definitions */
+
+#ifndef XENIX
 
 char *hlptxt = "C-Kermit Server\n\
 \n\
 Server Function    Customary Command to Invoke the Function\n\
+ Who's Logged In?   REMOTE WHO [user]\n\
+ Help               REMOTE HELP\n\
+ Finish Serving     FINISH\n\
  Send File(s)       GET filespec\n\
  Receive File(s)    SEND filespec\n\
  Directory Listing  REMOTE DIRECTORY [filespec]\n\
@@ -47,11 +57,19 @@ Server Function    Customary Command to Invoke the Function\n\
  Delete File(s)     REMOTE DELETE filespec\n\
  Disk Usage Query   REMOTE SPACE [directory]\n\
  Unix Shell Command REMOTE HOST command-string\n\
- Who's Logged In?   REMOTE WHO [user]\n\
- Help               REMOTE HELP\n\
- Finish Serving     FINISH\n\
 \n\0";
-
+
+#else
+
+char *hlptxt = "C-Kermit Server Commands Supported:\n\
+\n\
+GET filespec	REMOTE CWD [directory]		REMOTE SPACE [directory]\n\
+SEND filespec	REMOTE DIRECTORY [filespec]	REMOTE HOST command-string\n\
+FINISH		REMOTE DELETE filespec		REMOTE WHO [user]\n\
+REMOTE HELP	REMOTE TYPE filespec\n\
+\n\0";
+
+#endif
 
 char *srvtxt = "\r\n\
 C-Kermit server starting.  Return to your local machine by typing\r\n\
@@ -59,8 +77,7 @@ its escape sequence for closing the connection, and issue further\r\n\
 commands from there.  To shut down the C-Kermit server, issue the\r\n\
 FINISH command and then reconnect.\n\
 \r\n\0";
-
-
+
 /* Declarations for Send-Init Parameters */
 
 int spsiz =  DSPSIZ,			/* maximum packet size we can send */
@@ -103,7 +120,6 @@ char sndpkt[MAXPACK*2], 		/* Entire packet being sent */
     mystch = SOH,			/* Outbound packet-start character */
     stchr = SOH;			/* Incoming packet-start character */
 
-
 /* File-related variables */
 
 char filnam[50];			/* Name of current file. */
@@ -122,12 +138,13 @@ int parity,				/* Parity specified, 0,'e','o',etc */
     turnch = XON,			/* Line turnaround character */
     duplex = 0,				/* Duplex, full by default */
     escape = 034,			/* Escape character for connect */
-    delay = DDELAY;			/* Initial delay before sending */
+    delay = DDELAY,			/* Initial delay before sending */
+    mdmtyp = 0;				/* Type of modem 1=hayes 2=ventel */
 
 
 /* Statistics variables */
 
-int filcnt,			/* Number of files in transaction */
+long filcnt,			/* Number of files in transaction */
     flci,			/* Characters from line, current file */
     flco,			/* Chars to line, current file  */
     tlci,			/* Chars from line in transaction */
@@ -157,12 +174,11 @@ int deblog = 0,				/* Flag for debug logging */
 
 /* Variables passed from command parser to protocol module */
 
-char sstate = 0;			/* Starting state for automaton */
-char *cmarg;				/* Pointer to command data */
-char *cmarg2;				/* Pointer to second data field */
+char sstate  = 0;			/* Starting state for automaton */
+char *cmarg  = "";			/* Pointer to command data */
+char *cmarg2 = "";			/* Pointer to second data field */
 char **cmlist;				/* Pointer to file list in argv */
 
-
 /* Miscellaneous */
 
 char **xargv;				/* Global copies of argv */
@@ -186,19 +202,19 @@ main(argc,argv) int argc; char **argv; {
     xargv = argv;			/* ...and argv. */
     sstate = 0;				/* No default start state. */
     strcpy(ttname,dftty);		/* Set up default tty name. */
-    local = dfloc;			/* And whether it's local or remote */
-    parity = dfprty;			/* Set initial parity */
-    flow = dfflow;			/*  and flow control */
+    local = dfloc;			/* And whether it's local or remote. */
+    parity = dfprty;			/* Set initial parity, */
+    flow = dfflow;			/* and flow control. */
     
 /* Look for a UNIX-style command line... */
 
     if (argc > 1) {			/* Command line arguments? */
 	sstate = cmdlin();		/* Yes, parse. */
 	if (sstate) {
-	    proto();			/* Take any requested action, */
+	    proto();			/* Take any requested action, then */
 	    if (!quiet) conoll("");	/* put cursor back at left margin, */
 	    if (cnflg) conect();	/* connect if requested, */
-	    doexit();			/* and then exit. */
+	    doexit(0);			/* and then exit with status 0. */
     	}
     }	
     

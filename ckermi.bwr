@@ -1,0 +1,223 @@
+C-Kermit Version 4.2:
+Status, Bugs, and Problems
+As of: 4:32pm  Friday, 15 March 1985
+
+
+
+
+-- SUPPORT FOR ADDITIONAL SYSTEMS: --
+
+VAX/VMS: Added by stew%lhasa.uucp@harvard, not available yet (see below).
+
+4.1BSD: C-Kermit built with "make bsd" does not work under 4.1.  The date/
+  time stuff and line locking stuff are completely different from 4.2.
+  Also, the directory format is different, so traverse() doesn't work.
+  Specific support needs to be added for 4.1.  (John Zsarnay@CMUA)
+
+Regulus: Submitted by Joe Smiley, DuPont Co.  Extensive changes to 4.0
+  were too hard to fit into 4.2; hope Joe can add the Regulus support to 4.2.
+
+NCR Tower, OS 1.02: Submitted by John Bray, based on 4.0, fitted into 4.2,
+  but it doesn't work in 4.2; it will be fixed.
+
+NCR Tower, System V: Works ok -- "make sys3"
+
+HP9000 Series 500: (from YEKTA@MIT-MC):  Use "make sys3", but
+  1. Remove -i from CFLAGS & LI
+  2. In ckxunx.c, don't #include<sys/file.h> or ioctl.h.
+  3. In ckzunx.c, don't #include<sys/file.h>.
+
+Plexus P-60
+  Works ok with "make sys3", but doesn't always hangup even when hupcl
+  is on (Scott Weikart, Stanford).
+
+Masscomp/RTU 2.2:
+  Works ok with "make sys3" (Stan Barber, neuro1!sob@rice).
+
+Pro/Venix 2.0 (field test):
+  Works ok with "make sys3", except the "unsigned long" has to be changed
+  to "long" in ckdebu.h; may be a bug in the new compiler (Dan Schullman, DEC).
+
+SUN:
+  C-Kermit 4.0 with 4.2bsd support was reported to run OK on the SUN after
+  some bugs with long strings, char vs int, etc were fixed.  There is now
+  a report that version 4.2 doesn't even compile on the SUN because of the
+  ^L's in the source file (can this be true???), and that once compiled
+  (by removing ^L's) it doesn't transfer files at all, but just times out
+  after many retries of the first packet (this report from daver@cit-vax).
+  Has anyone had any luck with C-Kermit 4.2 on the SUN?
+
+
+-- BUG LIST --
+
+General problems:
+
+- Conditionalizations are not done clearly.  In some cases it might be
+  better to have compile-time flags for features, rather than systems, or
+  generic system names, rather than specific vendor/machine names, to
+  avoid excessive nesting or OR'ing of compile-time variables.
+
+- It might also be better to have a -D in the makefile for the system name,
+  rather than hard-coding it into the ck[xz]*.c modules.
+
+- Program's return code might be wrong in some cases (in 4.0, it was always
+  zero; in 4.2 some attempt is made to return correct codes for failure and
+  success).
+
+- "quiet" (-q) flag does not turn off all error messages.  Direct use of
+  fprintf(stderr,...) should be replaced by invocations of ermsg().
+
+- The error messages should use the current prompt (changed via 'set prompt')
+  rather than "C-Kermit" as a prefix, to make it easier to see which Kermit
+  a message is coming from, if you have a C-Kermit on both ends of the line.
+
+- Interrupt handling is not done particularly well, and if the program
+  crashes or is halted while it has the terminal in a not-normal mode
+  during command parsing or file transfer, the terminal mode is not restored.
+  Code should be added to trap quit or panic interrupts and restore the
+  terminal before quitting or panicking.
+
+- Many people have asked for a system-wide startup file similar to
+  the user's .kermrc file, perhaps with a conditional way to escape from
+  it if the user has her own .kermrc file.  This notion might be extended
+  to include the entire hierarchy system -- home -- current directory.
+
+- A deeper problem with the initialization files is that the file is only
+  taken when the program enters interactive command dialog.  To be consistent,
+  it should also be taken when the program is run via command line arguments.
+
+- Moving the program to VAX/VMS uncovered a few remaining Unixisms:
+  . VMS uses program return codes with opposite sense from Unix; return
+    code values must be conditionalized.
+  . ".kermrc" doesn't work as a file name on most non-Unix systems.
+  . There should be a more portable way of handling baud rates tables.
+
+ckzunx.c:
+
+- In zsout() & friends, "fprintf(fp[n], s);" should be "fputs(s, fp[n]);"
+  or 'fprintf(fp[n], "%s", s)', to prevent core dumps when s happens to
+  contain a '%'.
+
+ckxunx.c:
+
+- Many problems reported with "uucp line locking" --
+  . On some systems, uucp apparently ignores the lock and breaks in anyway.
+  . On some systems, the lock directory is write-protected.
+  . On some systems, the lock directory is read-protected.
+  . Reportedly on some systems (Sys III?), using dial commands and a login
+    script pointed at a line already in use by uucp will hang up the line
+    on uucp.
+
+  Unfortunately, a lot of code will have to be added to take care of the
+  many different ways that sites are set up to handle line contention and
+  assignment, probably selectable by makefile compiler switches (see below).
+
+ckdial.c:
+
+- Some systems do not allow users to manipulate dialers directly.
+- Not easy to add support for new dialers.
+- Some systems never return from the 100-character rawmode read (it is assumed
+  return is immediate, indicating how much was obtained from the input buffer).
+- Timed read for connect/no carrier message from modem within a general timer
+  on the whole operation does not work on some systems.
+- Some systems need to have the modem explicitly hung up; close() isn't enough;
+  e.g. ioctl(ttyfd,TIOCCDTR,0) on 4.2bsd.
+- On some systems, the entire output from the dialer (e.g. "CONNECT") cannot be
+  read in a single gulp, so the buffer should be appended to between successive
+  reads, not overwritten. 
+
+ckus*.c:
+
+- Some help messages still produce core dumps on some systems.  Diagnosis: the
+  strings in these messages ('help remote', 'help set' are mentioned most
+  frequently) are still too long for some systems.  Cure: shorten them some
+  more, and maybe replace
+
+	for (i=0; *s[i]; ++i) fputs(s[i], stdout);
+  with
+	while (*s[0]) fputs(*s++, stdout);
+
+  in hmsga() to prevent possible references to random memory.  Also, replace
+  all printf(msg) with printf("%s", msg);
+
+- The "directory" command produces a full recursive directory listing.  It
+  should only list the current directory.  On bsd systems at least, the listing
+  can be interrupted with a single ^C, which returns you to C-Kermit> command
+  level.  Diagnosis: ???  The program just does a system("ls -l").  Why doesn't
+  this behave the same as "ls -l" typed at the shell?
+
+- Parser for the 'get' command doesn't respond well to editing; can go into
+  infinite loops under some conditions.
+
+- The filename 'transaction.log' is too long for some systems, and gets
+  truncated (no harm is done, but the user is not informed and may not be
+  able to find the file).
+
+ckcmd.c:
+
+- Some systems (such as Venix/11) swallow the erase and kill characters
+  when the terminal is in cbreak mode.  If the erase and kill characters are
+  are ^U and DEL, then these can't be used to edit C-Kermit interactive
+  commands.  Ditto for ^R.  Diagnosis: sigh, let's hear for portability.
+  Cure (if you can call it that):  Add new SET commands to allow the
+  erase, kill, and redisplay characters to be redefined.
+
+- There's no way to break a command line and continue on the next line.
+  Cure: add code to allow "\" followed by CR (or LF, or FF) to accomplish
+  this.  Nobody really wants to put a real CR (LF, FF) in the middle of a
+  command anyway, right?  This will make take files and login scripts a
+  lot more readable.
+
+- No way to put comments in take files.  Cure: Add a ";" or "#" command?
+  Trailing comments will be harder.
+
+Protocol (ckprot.w, ckfns*.c):
+
+- No way to interrupt a protocol transaction until after it starts
+  successfully.  For instance, no way to interrupt the timeouts and
+  retransmissions of the initial packet when the other side is not
+  responding, except for killing the whole program.  Cure: check for
+  keyboard "interrupts" during the send-init process.
+
+- When receiving from a non-timed-out Kermit and missing the Send-Init
+  packet, no NAK is ever sent, and a deadlock occurs.  Diagnosis: resend()
+  is called to resend the previous packet; there was no previous packet,
+  so it sends an empty line.  Cure: Initialize the packet buffer with a
+  NAK for packet 0? 
+
+- When parity is in use and the other Kermit cannot do 8th bit prefixing,
+  the user is not warned that binary files will not be transferred correctly.
+
+- 'set file names literal' does not work at all.
+
+ckconu.c:
+
+- Doesn't do any particular kind of terminal emulation.  It wasn't meant to.
+  Filters can be used for this.
+- Performance is poor on systems that can't check the input buffer.
+- As structured, connect mode can't include commands to toggle logging on
+  and off or to change settings, because forks can't share variables.
+
+ckwart.c:
+
+- Has typedef for CHAR as "unsigned short" or "unsigned char".  Cure:
+  Have ckwart.c use the typedefs from ckdebu.h, like the regular Kermit 
+  modules do.
+
+makefile:
+
+- Replace "wart ckprot.w ckprot.c" with "./wart ckprot.w ckprot.c" because
+  "." might not be in the current path.
+
+- It was suggested that the compound entry for making ckprot.o should be
+  broken into two entries, one for ckprot.o, one for ckprot.c, to prevent
+  unecessary recompilations.
+
+- Some of the problems caused by access restrictions on the uucp lockfile
+  directory might be addressed by having the makefile check and then setting
+  an appropriate compile switch, e.g.
+
+	if [ -w /usr/spool/uucp ]
+	then make bsd "... -regular flags"
+	else make bsd "... -DNOLOCKING"
+	fi

@@ -1,47 +1,72 @@
-char *connv = "Connect Command for Unix, V4.0(002) 24 Jan 85";
+char *connv = "Connect Command for Unix, V4.2(006) 5 March 85";
 
-/*  C O N N E C T  --  Dumb terminal connection to remote system  */
-
+/*  C K C O N U  --  Dumb terminal connection to remote system, for Unix  */
 /*
  This module should work under all versions of Unix.  It calls externally
- defined system-depended functions for i/o, but depends upon the existence
+ defined system-dependent functions for i/o, but depends upon the existence
  of the fork() function.
+
+ Enhanced by H. Fischer to detect when child process (modem reader)
+ reports that the communications line has been broken and hang up.
+ Also enhanced to allow escaping from connect state to command
+ interpreter, to allow sending/receiving without breaking connection.
 */
 
 #include "ckermi.h"
+#include <signal.h>
+#include <setjmp.h>
 
-extern int local, speed, escape, handsh, duplex, parity, flow, seslog;
+#ifndef SIGUSR1
+#define SIGUSR1 16
+#endif
+
+extern int local, speed, escape, duplex, parity, flow, seslog, mdmtyp;
 extern char ttname[], sesfil[];
 
 int i, active;				/* Variables global to this module */
 char *chstr();
+
 #define LBUFL 100			/* Line buffer */
 char lbuf[LBUFL];
 
+/* Connect state parent/child communication signal handlers */
+
+static jmp_buf env_con;			/* Envir ptr for connect errors */
+
+static
+conn_int() {				/* Modem read failure handler, */
+    longjmp(env_con,1);			/* notifies parent process to stop */
+}
+
 /*  C O N E C T  --  Perform terminal connection  */
 
 conect() {
-    int pid, n;
-    char c;
+    int pid, 			/* process id of child (modem reader) */
+	parent_id,		/* process id of parent (keyboard reader) */
+	n;
+    int c;			/* c is a character, but must be signed 
+				   integer to pass thru -1, which is the
+				   modem disconnection signal, and is
+				   different from the character 0377 */
     char errmsg[50], *erp;
 
 	if (!local) {
 	    printf("Sorry, you must 'set line' first\n");
-	    return;
+	    return(-2);
 	}
 	if (speed < 0) {
 	    printf("Sorry, you must 'set speed' first\n");
-	    return;
+	    return(-2);
         }
 	if ((escape < 0) || (escape > 0177)) {
 	    printf("Your escape character is not ASCII - %d\n",escape);
-	    return;
+	    return(-2);
 	}
-	if (ttopen(ttname) < 0) {
+	if (ttopen(ttname,local,mdmtyp) < 0) {
 	    erp = errmsg;
 	    sprintf(erp,"Sorry, can't open %s",ttname);
 	    perror(errmsg);
-	    return;
+	    return(-2);
     	}
     	printf("Connecting thru %s, speed %d.\r\n",ttname,speed);
 	printf("The escape character is %s (%d).\r\n",chstr(escape),escape);
@@ -49,30 +74,33 @@ conect() {
 	printf("or followed by ? to see other options.\r\n");
 	if (seslog) printf("(Session logged to %s.)\r\n",sesfil);
 
-/* cont'd... */
-
-
-/* ...connect, cont'd */
-
-
 /* Condition console terminal and communication line */	    
 
-    	if (conbin() < 0) {
+    	if (conbin(escape) < 0) {
 	    printf("Sorry, can't condition console terminal\n");
-	    return;
+	    return(-2);
     	}
 	if (ttvt(speed,flow) < 0) {
 	    conres();
 	    printf("Sorry, Can't condition communication line\n");
-	    return;
+	    return(-2);
     	}
+
+/* cont'd... */
+
+/* ...connect, cont'd */
+
+
+	parent_id = getpid();		/* get parent id for signalling */
 	pid = fork();			/* All ok, make a fork */
 	if (pid) {			
-	    active = 1;			/* This fork reads, sends keystrokes */
+	  active = 1;			/* This fork reads, sends keystrokes */
+	  if (!setjmp(env_con)) {	/* comm error in child process */
+	    signal(SIGUSR1,conn_int);	/* routine for child process exit */
 	    while (active) {
-		c = coninc() & 0177;
+		c = coninc(0) & 0177;
 		if (c == escape) {   	/* Look for escape char */
-		    c = coninc() & 0177;
+		    c = coninc(0) & 0177;
 		    doesc(c);
 		} else {		/* Ordinary character */
 		    ttoc(dopar(c));	/* Send it out with desired parity */
@@ -81,18 +109,25 @@ conect() {
 			if (seslog) zchout(ZSFILE,c);	/* And maybe log it. */
     	    	    }			
 		}
-    	    }
+	      }
+    	    }				/* come here on death of child */
 	    kill(pid,9);		/* Done, kill inferior. */
 	    wait(0);			/* Wait till gone. */
 	    conres();			/* Reset the console. */
-	    ttclos();			/* Reset & close communication line. */
 	    printf("C-Kermit Disconnected\n");
-	    return;
+	    return(0);
+
 	} else {			/* Inferior reads, prints port input */
-	    while (1) {
-		c = ttinc(0) & 0177;	/* Wait for a character. */
-		conoc(c);
-		if (seslog) zchout(ZSFILE,c);
+
+	    while (1) {			/* Fresh read, wait for a character */
+		if ((c = ttinc(0)) < 0) { /* Comm line hangup detected*/
+		    printf("\r\nC-Kermit: Communications line failure\r\n");
+		    kill(parent_id,SIGUSR1);	/* notify parent. */
+		    pause();		/* Wait to be killed by parent. */
+                }
+		c &= 0177;		/* Got a char, strip parity. */
+		conoc(c);		/* Put it on the screen. */
+		if (seslog) zchout(ZSFILE,c);	/* If logging, log it. */
 		n = ttchk();		/* Any more left in buffer? */
 		if (n > 0) {
 		    if (n > LBUFL) n = LBUFL;  /* Get them all at once. */
@@ -106,22 +141,22 @@ conect() {
     	}
 }
 
-
 /*  H C O N N E  --  Give help message for connect.  */
 
 hconne() {
     int c;
-    char *hlpmsg = "\
-\r\nC to close the connection, or:\
-\r\n  S for status\
-\r\n  ? for help\
-\r\n  B to send a BREAK\
-\r\n  0 to send a null\
-\r\n escape character twice to send the escape character.\r\n\r\n";
+    static char *hlpmsg[] = {"\
+\r\nC to close the connection, or:",
+"\r\n  S for status",
+"\r\n  ? for help",
+"\r\n  B to send a BREAK",
+"\r\n  0 to send a null",
+"\r\n escape character twice to send the escape character.\r\n\r\n",
+"" };
 
-    conol(hlpmsg);			/* Print the help message. */
+    conola(hlpmsg);			/* Print the help message. */
     conol("Command>");			/* Prompt for command. */
-    c = coninc();
+    c = coninc(0);
     conoc(c);				/* Echo it. */
     conoll("");
     c &= 0177;				/* Strip any parity. */
@@ -143,7 +178,6 @@ chstr(c) int c; {
     return(cp);
 }
 
-
 /*  D O E S C  --  Process an escape character argument  */
 
 doesc(c) char c; {
@@ -200,4 +234,3 @@ doesc(c) char c; {
     	}	    
     }
 }    
-
