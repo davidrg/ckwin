@@ -2,12 +2,12 @@
 
 #ifndef NOICP
 #ifndef NOSCRIPT
-char *loginv = "Script Command, 8.0.031, 20 Apr 2000";
+char *loginv = "Script Command, 8.0.032, 20 Dec 2001";
 
 /*  C K U S C R  --  expect-send script implementation  */
 
 /*
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2002,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -30,7 +30,7 @@ char *loginv = "Script Command, 8.0.031, 20 Apr 2000";
   delay, and are useful for sending sequences requiring slight pauses.
 
   This module calls externally defined system-dependent functions for
-  communications i/o, as defined in CKCPLM.DOC, the C-Kermit Program Logic
+  communications i/o, as defined in ckcplm.txt, the C-Kermit Program Logic
   Manual, and thus should be portable to all systems that implement those
   functions, and where alarm() and signal() work as they do in UNIX.
 */
@@ -84,7 +84,7 @@ int valarm(int interval);
 
 extern int sessft;
 extern int local, flow, seslog, mdmtyp, msgflg, duplex, backgrd, secho, quiet;
-extern int network, ttnproto;
+extern int network, nettype, ttnproto;
 extern long speed;
 extern char ttname[];
 
@@ -567,7 +567,7 @@ dologin(cmdstr) char *cmdstr; {
     }
 #ifdef TNCODE
     /* TELNET input must be scanned for IAC */
-    is_tn = (local && network && (ttnproto == NP_TELNET)) ||
+    is_tn = (local && network && IS_TELNET()) ||
 	    (!local && sstelnet);
 #endif /* TNCODE */
 

@@ -6,7 +6,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2002,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -571,9 +571,7 @@ input() {
 		    "FAILED - Connection lost";
 
 		xxscreen(SCR_PT,'q',0L,s);
-#ifdef CKLOGDIAL
 		dologend();
-#endif /* CKLOGDIAL */
 		return('q');		/* Ctrl-C or connection lost */
 	    }
 	    if (type < 0) {		/* Receive window full */
@@ -683,9 +681,7 @@ input() {
 		if (x > 0)		/* Don't give up if there is still */
 		  continue;		/* something to read. */
 		else if (x < 0) {
-#ifdef CKLOGDIAL
 		    dologend();
-#endif /* CKLOGDIAL */
 		    fatalio = 1;
 		    return('q');	/* Connection Lost */
 		}
@@ -822,10 +818,8 @@ input() {
 			   "Interrupted" :
 			   "Connection lost"))
 			   );
-#ifdef CKLOGDIAL
 		    if (type != -2)
 		      dologend();
-#endif /* CKLOGDIAL */
 		    return('q');	/* Ctrl-C or connection lost */
 		}
 		if (type == -1) {
@@ -1504,9 +1498,7 @@ spack(pkttyp,n,len,d) char pkttyp; int n, len; CHAR *d;
 		/* We can't send an E packet because the connection is lost. */
 		epktsent = 1;		/* So pretend we sent one. */
 		fatalio = 1;		/* Remember we got a fatal i/o error */
-#ifdef CKLOGDIAL
 		dologend();
-#endif /* CKLOGDIAL */
 		ckstrncpy((char *)epktmsg,"Connection lost",PKTMSGLEN);
 	    }
 	    return(x);

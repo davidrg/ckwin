@@ -1,5 +1,5 @@
-.\" @(#) kermit.1 8.0.200 2001/06/30 Columbia University
-.TH KERMIT 1 "NOVEMBER 2001" "User Manuals"
+.\" @(#) kermit.1 8.0.201 2002/02/08 Columbia University
+.TH KERMIT 1 "FEBRUARY 2002" "User Manuals"
 .na
 .SH NAME
 kermit \-
@@ -673,7 +673,7 @@ Shows current date-time or interprets given date-time.
 RUN [ extern-command [ parameters... ]                 
 Runs the given external command. Synonym: !.
 .TP
-EXEC [ extern-command [params... ]
+EXEC [ extern-command [ params... ]
 Kermit overlays itself with the given command.
 .TP
 SUSPEND

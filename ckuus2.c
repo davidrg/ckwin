@@ -1,3 +1,7 @@
+#ifdef SSHTEST
+#define SSHBUILTIN
+#endif /* SSHTEST */
+
 /*  C K U U S 2  --  User interface strings & help text module for C-Kermit  */
 
 /*
@@ -8,7 +12,7 @@
     Columbia University
     New York City
 
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2002,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -36,7 +40,7 @@
 #endif /* OS2MOUSE */
 #define INCL_DOSMISC
 #define INCL_DOSDEVICES
-#include <os2.h>		/* This pulls in a whole load of stuff */
+#include <os2.h>                /* This pulls in a whole load of stuff */
 #undef COMMENT
 #endif /* NT */
 #include "ckocon.h"
@@ -161,7 +165,7 @@ static char *tophlp[] = {
 };
 
 #ifndef NOIKSD
-static char *tophlpi[] = {		/* Top-level help for IKSD */
+static char *tophlpi[] = {              /* Top-level help for IKSD */
 
 "Trustees of Columbia University in the City of New York.\n",
 
@@ -474,9 +478,9 @@ char *introtxt[] = {
 #ifdef RLOGCODE
 "  RLOGIN                 Select an Rlogin host and CONNECT to it",
 #endif /* RLOGCODE */
-#ifdef SSHCMD
+#ifdef ANYSSH
 "  SSH                    Select an SSH host and CONNECT to it",
-#endif /* SSHCMD */
+#endif /* ANYSSH */
 #endif /* NETCONN */
 
 #ifdef NT
@@ -529,6 +533,321 @@ Press the key or key-combination shown after \"Prompt:\" in the status line",
 ""
 };
 
+#ifdef ANYSSH
+static char * hmxxssh[] = {
+#ifdef SSHBUILTIN
+"Syntax: SSH { ADD, AGENT, CLEAR, KEY, [ OPEN ], V2 } operands...",
+"  Performs an SSH-related action, depending on the keyword that follows:",
+" ",
+"SSH ADD LOCAL-PORT-FORWARD local-port host port",
+"  Adds a port forwarding triplet to the local port forwarding list.",
+"  The triplet specifies a local port to be forwarded and the hostname /",
+"  ip-address and port number to which the port should be forwarded from",
+"  the remote host.  Port forwarding is activated at connection",
+"  establishment and continues until the connection is terminated.",
+" ",
+"SSH ADD REMOTE-PORT-FORWARD remote-port host port",
+"  Adds a port forwarding triplet to the remote port forwarding list.",
+"  The triplet specifies a remote port to be forwarded and the",
+"  hostname/ip-address and port number to which the port should be",
+"  forwarded from the local machine.  Port forwarding is activated at",
+"  connection establishment and continues until the connection is",
+"  terminated.",
+" ",
+"SSH AGENT ADD [ identity-file ]",
+"  Adds the contents of the identity-file (if any) to the SSH AGENT",
+"  private key cache.  If no identity-file is specified, all files",
+"  specified with SET SSH IDENTITY-FILE are added to the cache.",
+" ",
+"SSH AGENT DELETE [ identity-file ]",
+"  Deletes the contents of the identity-file (if any) from the SSH AGENT",
+"  private key cache.  If no identity-file is specified, all files",
+"  specified with SET SSH IDENTITY-FILE are deleted from the cache.",
+" ",
+"SSH AGENT LIST [ /FINGERPRINT ]",
+"  Lists the contents of the SSH AGENT private key cache.  If /FINGERPRINT",
+"  is specified, the fingerprint of the private keys are displayed instead",
+"  of the keys.",
+" ",
+"SSH CLEAR LOCAL-PORT-FORWARD",
+"  Clears the local port forwarding list.",
+" ",
+"SSH CLEAR REMOTE-PORT-FORWARD",
+"  Clears the remote port forwarding list.",
+" ",
+"SSH KEY commands:",
+"  The SSH KEY commands create and manage public and private key pairs",
+"  (identities).  There are three forms of SSH keys.  Each key pair is",
+"  stored in its own set of files:",
+" ",
+"   Key Type      Private Key File           Public Key File",
+"    v1 RSA keys   \\v(appdata)ssh/identity   \\v(appdata)ssh/identity.pub",
+"    v2 RSA keys   \\v(appdata)ssh/id_rsa     \\v(appdata)ssh/id_rsa.pub",
+"    v2 DSA keys   \\v(appdata)ssh/id_dsa     \\v(appdata)ssh/id_dsa.pub",
+" ",
+"  Keys are stored using the OpenSSH keyfile format.  The private key",
+"  files can be (optionally) protected by specifying a passphrase.  A",
+"  passphrase is a longer version of a password.  English text provides",
+"  no more than 2 bits of key data per character.  56-bit keys can be",
+"  broken by a brute force attack in approximately 24 hours.  When used,",
+"  private key files should therefore be protected by a passphrase of at",
+"  least 40 characters (about 80 bits).",
+" ",
+"  To install a public key file on the host, you must transfer the file",
+"  to the host and append it to your \"authorized_keys\" file.  The file",
+"  permissions must be 600 (or equivalent).",
+" ",
+"SSH KEY CHANGE-PASSPHRASE [ /NEW-PASSPHRASE:passphrase",
+"      /OLD-PASSPHRASE:passphrase ] filename",
+"  This re-encrypts the specified private key file with a new passphrase.",
+"  The old passphrase is required.  If the passphrases (and filename) are",
+"  not provided Kermit prompts your for them.",
+" ",
+"SSH KEY CREATE [ /BITS:bits /PASSPHRASE:passphrase",
+"    /TYPE:{ V1-RSA, V2-DSA, V2-RSA } /V1-RSA-COMMENT:comment ] filename",
+"  This command creates a new private/public key pair.  The defaults are:",
+"  BITS:1024 and TYPE:V2-RSA.  The filename is the name of the private",
+"  key file.  The public key is created with the same name with .pub",
+"  appended to it.  If a filename is not specified Kermit prompts you for",
+"  it.  V1 RSA key files may have an optional comment, which is ignored",
+"  for other key types.",
+" ",
+"SSH KEY DISPLAY [ /FORMAT:{FINGERPRINT,IETF,OPENSSH,SSH.COM} ] filename",
+"  This command displays the contents of a public or private key file.",
+"  The default format is OPENSSH.",
+" ",
+"SSH KEY V1 SET-COMMENT filename comment",
+"  This command replaces the comment associated with a V1 RSA key file.",
+" ",
+"SSH [ OPEN ] host [ port ] [ /COMMAND:command /USER:username",
+"      /PASSWORD:pwd /VERSION:{ 1, 2 } /X11-FORWARDING:{ ON, OFF } ]",
+"  This command establishes a new connection using SSH version 1 or",
+"  version 2 protocol.  The connection is made to the specified host on",
+"  the SSH port (you can override the port by including a port name or",
+"  number after the host name).  Once the connection is established the",
+"  authentication negotiations begin.  If the authentication is accepted,",
+"  the local and remote port forwarding lists are used to establish the",
+"  desired connections.  If X11 Forwarding is active, this results in a",
+"  remote port forwarding between the X11 clients on the remote host and",
+"  X11 Server on the local machine.  If a /COMMAND is provided, the",
+"  command is executed on the remote host in place of your default shell.",
+" ",
+"  An example of a /COMMAND to execute C-Kermit in SERVER mode is:",
+"     SSH OPEN hostname /COMMAND:{kermit -x -l 0}",
+" ",
+"SSH V2 REKEY",
+"  Requests that an existing SSH V2 connection generate new session keys.",
+#else  /* SSHBUILTIN */
+"Syntax: SSH [ options ] <hostname> [ command ]",
+"  Makes an SSH connection using the external ssh program via the SET SSH",
+"  COMMAND string, which is \"ssh -e none\" by default.  Options for the",
+"  external ssh program may be included.  If the hostname is followed by a",
+"  command, the command is executed on the host instead of an interactive",
+"  shell.",
+#endif /* SSHBUILTIN */
+""
+};
+
+static char *hmxyssh[] = {
+#ifdef SSHBUILTIN
+"SET SSH AGENT-FORWARDING { ON, OFF }",
+"  If an authentication agent is in use, setting this value to ON",
+"  results in the connection to the agent being forwarded to the remote",
+"  computer.  The default is OFF.",
+" ",
+"SET SSH CHECK-HOST-IP { ON, OFF }",
+"  Specifies whether the remote host's ip-address should be checked",
+"  against the matching host key in the known_hosts file.  This can be",
+"  used to determine if the host key changed as a result of DNS spoofing.",
+"  The default is ON.",
+" ",
+"SET SSH COMPRESSION { ON, OFF }",
+"  Specifies whether compression will be used.  The default is ON.",
+" ",
+"SET SSH DYNAMIC-FORWARDING { ON, OFF }",
+"  Specifies whether Kermit is to act as a SOCKS4 service on port 1080",
+"  when connected to a remote host via SSH.  When Kermit acts as a SOCKS4",
+"  service, it accepts connection requests and forwards the connections",
+"  through the remote host.  The default is OFF.",
+" ",
+"SET SSH GATEWAY-PORTS { ON, OFF }",
+"  Specifies whether Kermit should act as a gateway for forwarded",
+"  connections received from the remote host.  The default is OFF.",
+" ",
+"SET SSH GSSAPI DELEGATE-CREDENTIALS { ON, OFF }",
+"  Specifies whether Kermit should delegate GSSAPI credentials to ",
+"  the remote host after authentication.  Delegating credentials allows",
+"  the credentials to be used from the remote host.  The default is OFF.",
+" ",
+"SET SSH IDENTITY-FILE filename [ filename [ ... ] ]",
+"  Specifies one or more files from which the user's authorization",
+"  identities (private keys) are to be read when using public key",
+"  authorization.  These are files used in addition to the default files:",
+" ",
+"    \\v(appdata)ssh/identity      V1 RSA",
+"    \\v(appdata)ssh/id_rsa        V2 RSA",
+"    \\v(appdata)ssh/id_dsa        V2 DSA",
+" ",
+"SET SSH KERBEROS4 TGT-PASSING { ON, OFF }",
+"  Specifies whether Kermit should forward Kerberos 4 TGTs to the host.",
+"  The default is OFF.",
+" ",
+"SET SSH KERBEROS5 TGT-PASSING { ON, OFF }",
+"  Specifies whether Kermit should forward Kerberos 5 TGTs to to the",
+"  host.  The default is OFF.",
+" ",
+"SET SSH PRIVILEGED-PORT { ON, OFF }",
+"  Specifies whether a privileged port (less than 1024) should be used",
+"  when connecting to the host.  Privileged ports are not required except",
+"  when using SSH V1 with Rhosts or RhostsRSA authorization.  The default",
+"  is OFF.",
+" ",
+"SET SSH QUIET { ON, OFF }",
+"  Specifies whether all messages generated in conjunction with SSH",
+"  protocols should be suppressed.  The default is OFF.",
+" ",
+"SET SSH STRICT-HOST-KEY-CHECK { ASK, ON, OFF }",
+"  Specifies how Kermit should behave if the the host key check fails.",
+"  When strict host key checking is OFF, the new host key is added to the",
+"  protocol-version-specific user-known-hosts-file.  When strict host key",
+"  checking is ON, the new host key is refused and the connection is",
+"  dropped.  When set to ASK, Kermit prompt you to say whether the new",
+"  host key should be accepted.  The default is ASK.",
+" ",
+"  Strict host key checking protects you against Trojan horse attacks.",
+"  It depends on you to maintain the contents of the known-hosts-file",
+"  with current and trusted host keys.",
+" ",
+"SET SSH USE-OPENSSH-CONFIG { ON, OFF }",
+"  Specifies whether Kermit should parse an OpenSSH configuration file",
+"  after applying Kermit's SET SSH commands.  The configuration file",
+"  would be located at \\v(home)ssh/ssh_config.  The default is OFF.",
+" ",
+"SET SSH V1 CIPHER { 3DES, BLOWFISH, DES }",
+"  Specifies which cipher should be used to protect SSH version 1",
+"  connections.  The default is 3DES.",
+" ",
+"SET SSH V1 GLOBAL-KNOWN-HOSTS-FILE filename",
+"  Specifies the location of the system-wide known-hosts file.  The",
+"  default is:",
+" ",
+"    \v(common)ssh_known_hosts",
+" ",
+"SET SSH V1 USER-KNOWN-HOSTS-FILE filename",
+"  Specifies the location of the user-known-hosts-file.  The default",
+"  location is:",
+" ",
+"    \\v(appdata)ssh/known_hosts",
+" ",
+"SET SSH V2 AUTHENTICATION { EXTERNAL-KEYX, GSSAPI, HOSTBASED, ",
+"    KEYBOARD-INTERACTIVE, PASSWORD, PUBKEY, SRP-GEX-SHA1 } [ ... ]",
+"  Specifies an ordered list of SSH version 2 authentication methods to",
+"  be used when connecting to the remote host.  The default list is:",
+" ",
+"    external-keyx gssapi hostbased publickey srp-gex-sha1 publickey",
+"    keyboard-interactive password none",
+" ",
+#ifdef COMMENT
+"SET SSH V2 AUTO-REKEY { ON, OFF }",
+"  Specifies whether Kermit automatically issues rekeying requests",
+"  when SSH version 2 in in use.  The default is OFF.",
+" ",
+#endif /* COMMENT */
+"SET SSH V2 CIPHERS { 3DES-CBC, AES128-CBC AES192-CBC AES256-CBC",
+"     ARCFOUR BLOWFISH-CBC CAST128-CBC RIJNDAEL128-CBC RIJNDAEL192-CBC",
+"     RIJNDAEL256-CBC }",
+"  Specifies an ordered list of SSH version ciphers to be used to encrypt",
+"  the established connection.  The default list is:",
+" ",
+"    aes128-cbc 3des-cbc blowfish-cbc cast128-cbc arcfour aes192-cbc",
+"    aes256-cbc",
+" ",
+"  \"rijndael\" is an alias for \"aes\".",
+" ",
+"SET SSH V2 GLOBAL-KNOWN-HOSTS-FILE filename",
+"  Specifies the location of the system-wide known-hosts file.  The default",
+"  location is:",
+" ",
+"    \\v(common)ssh/known_hosts2",
+" ",
+"SET SSH V2 HOSTKEY-ALGORITHMS { SSH-DSS, SSH-RSA }",
+"  Specifies an ordered list of hostkey algorithms to be used to verify",
+"  the identity of the host.  The default list is",
+" ",
+"    ssh-rsa ssh-dss",
+" ",
+"SET SSH V2 MACS { HMAC-MD5 HMAC-MD5-96 HMAC-RIPEMD160 HMAC-SHA1",
+"     HMAC-SHA1-96 }",
+"  Specifies an ordered list of Message Authentication Code algorithms to",
+"  be used for integrity  protection of the established connection.  The",
+"  default list is:",
+" ",
+"    hmac-md5 hmac-sha1 hmac-ripemd160 hmac-sha1-96 hmac-md5-96",
+" ",
+"SET SSH V2 USER-KNOWN-HOSTS-FILE filename",
+"  Specifies the location of the user-known-hosts file.  The default",
+"  location is:",
+" ",
+"    \\v(appdata)ssh/known_hosts2",
+" ",
+"SET SSH VERBOSE level",
+"  Specifies how many messages should be generated by the OpenSSH engine.",
+"  The level can range from 0 to 7.  The default value is 2.",
+" ",
+"SET SSH VERSION { 1, 2, AUTOMATIC }",
+"  Specifies which SSH version should be negotiated.  The default is",
+"  AUTOMATIC which means use version 2 if supported; otherwise to fall",
+"  back to version 1.",
+" ",
+"SET SSH X11-FORWARDING { ON, OFF }",
+"  Specifies whether X Windows System Data is to be forwarded across the",
+"  established SSH connection.  The default is OFF.  When ON, the DISPLAY",
+"  value is either set using the SET TELNET ENV DISPLAY command or read",
+"  from the DISPLAY environment variable.",
+" ",
+"SET SSH XAUTH-LOCATION filename",
+"  Specifies the location of the xauth executable (if provided with the",
+"  X11 Server software.)",
+#else  /* SSHBUILTIN */
+"Syntax: SET SSH COMMAND command",
+"  Specifies the external command to be used to make an SSH connection.",
+"  By default it is \"ssh -e none\" (ssh with no escape character).",
+#endif /* SSHBUILTIN */
+""
+};
+#endif /* ANYSSH */
+
+#ifdef NEWFTP
+static char *hmxygpr[] = {
+"Syntax: SET GET-PUT-REMOTE { AUTO, FTP, KERMIT}",
+"  Tells Kermit whether GET, PUT, and REMOTE commands should be directed",
+"  at a Kermit server or an FTP server.  The default is AUTO, meaning that",
+"  if you have only one active connection, the appropriate action is taken",
+"  when you give a GET, PUT, or REMOTE command.  SET GET-PUT-REMOTE FTP forces"
+,
+"  Kermit to treat GET, PUT, and REMOTE as FTP client commands; setting this",
+"  to KERMIT forces these commands to be treated as Kermit client commands.",
+"  NOTE: PUT includes SEND, MPUT, MSEND, and all other similar commands.",
+"  Also see HELP REMOTE, HELP SET LOCUS, HELP FTP.",
+""
+};
+#endif /* NEWFTP */
+
+#ifdef LOCUS
+static char *hmxylocus[] = {
+"Syntax: SET LOCUS { AUTO, LOCAL, REMOTE }",
+"  Specifies whether file management commands should operate locally or",
+"  (when there is a connection to a remote FTP or Kermit server) sent to",
+"  the server.  The default is AUTO, meaning that if you have an FTP",
+"  connection, they are REMOTE, otherwise they are LOCAL.  The affected",
+"  commands are: CD (CWD), PWD, CDUP, DIRECTORY, DELETE, RENAME, MKDIR,",
+"  and RMDIR.  To force any of these commands to be executed locally, give",
+"  it an L prefix: LCD, LDIR, etc.  To force remote execution, use the R",
+"  prefix: RCD, RDIR, and so on.  SHOW COMMAND shows the current locus.",
+"",
+};
+#endif /* LOCUS */
+
 static char *hmxxtak[] = {
 "Syntax: TAKE filename [ arguments ]",
 "  Tells Kermit to execute commands from the named file.  Optional argument",
@@ -544,7 +863,7 @@ static char *hmxxfirew[] = {
 "Firewall Traversal in Kermit 95",
 #else
 "Firewall Traversal in C-Kermit",
-#endif 
+#endif
 " ",
 #ifndef NEWFTP
 #ifndef CKHTTP
@@ -570,7 +889,7 @@ static char *hmxxfirew[] = {
 
 " ",
 
-"Web servers that support the CONNECT command can be configured to allow", 
+"Web servers that support the CONNECT command can be configured to allow",
 "outbound connections for authenticated users to any TCP/IP hostname-port",
 "combination accessible to the Web server.  HTTP CONNECT can be used only",
 "with TCP-based protocols.  Protocols such as Kerberos authentication that",
@@ -578,8 +897,8 @@ static char *hmxxfirew[] = {
 
 " ",
 
-"SET TCP HTTP-PROXY [<hostname or ip-address>[:<port>]]", 
-"  If a hostname or ip-address is specified, Kermit uses the given", 
+"SET TCP HTTP-PROXY [<hostname or ip-address>[:<port>]]",
+"  If a hostname or ip-address is specified, Kermit uses the given",
 "  proxy server when attempting outgoing TCP connections.  If no hostnamer",
 "  or ip-address is specified, any previously specified Proxy server is",
 "  removed.  If no port number is specified, the \"http\" service is used.",
@@ -588,31 +907,31 @@ static char *hmxxfirew[] = {
 #endif /* CKHTTP */
 #ifdef CK_SOCKS
 
-"In the early 1990s as firewalls were becoming prevalent, David Koblas", 
-"developed the SOCKS protocol for TCP/IP firewall traversal.  Two versions", 
-"of SOCKS are currently in use: Version 4.2 lets TCP/IP client applications", 
-"traverse firewalls, similar to HTTP CONNECT, except that the SOCKS client", 
-"is aware of the public source IP address and port, which can be used within", 
+"In the early 1990s as firewalls were becoming prevalent, David Koblas",
+"developed the SOCKS protocol for TCP/IP firewall traversal.  Two versions",
+"of SOCKS are currently in use: Version 4.2 lets TCP/IP client applications",
+"traverse firewalls, similar to HTTP CONNECT, except that the SOCKS client",
+"is aware of the public source IP address and port, which can be used within",
 "the application protocol to assist in securing the connection (e.g. FTP",
-"sessions secured with GSSAPI Kerberos 5).", 
+"sessions secured with GSSAPI Kerberos 5).",
 
 " ",
 
-"In 1995 the IETF issued SOCKS Protocol Version 5 (RFC 1928), which is", 
-"significantly more general than version 4.  Besides supporting client-", 
+"In 1995 the IETF issued SOCKS Protocol Version 5 (RFC 1928), which is",
+"significantly more general than version 4.  Besides supporting client-",
 "to-server TCP/IP connections, it also includes:",
 
 " ",
-" . Authenticated firewall traversal of UDP/IP packets.", 
-" . Authenticated binding of incoming public ports on the firewall.", 
+" . Authenticated firewall traversal of UDP/IP packets.",
+" . Authenticated binding of incoming public ports on the firewall.",
 " ",
 
-"This lets a service on the private network offer public services.  It also", 
-"lets client applications like FTP establish a temporary public presence", 
-"that can be used by the FTP server to create a data channel.  By allowing", 
-"the client to bind to a public port on the firewall and be aware of the", 
-"public address, SOCKS 5 lets the application protocol communicate this", 
-"information to the server.", 
+"This lets a service on the private network offer public services.  It also",
+"lets client applications like FTP establish a temporary public presence",
+"that can be used by the FTP server to create a data channel.  By allowing",
+"the client to bind to a public port on the firewall and be aware of the",
+"public address, SOCKS 5 lets the application protocol communicate this",
+"information to the server.",
 
 " ",
 
@@ -622,61 +941,61 @@ static char *hmxxfirew[] = {
 " ",
 "  SET TCP SOCKS-SERVER hostname/ip-address",
 " ",
-"The SOCKS.CONF file is found by examining the ETC environment variable;", 
-"searching in \\WINDOWS on Windows 95/98/ME; or the", 
-"\\WINDOWS\\SYSTEM\\DRIVERS\\ETC directory on NT\\2000\\XP systems.", 
+"The SOCKS.CONF file is found by examining the ETC environment variable;",
+"searching in \\WINDOWS on Windows 95/98/ME; or the",
+"\\WINDOWS\\SYSTEM\\DRIVERS\\ETC directory on NT\\2000\\XP systems.",
 
 #else /* NT */
 
-"Kermit/2 provides support for SOCKS 4.2 servers when using IBM TCP/IP 2.0,", 
-"IBM OS/2 WARP, or a compatible protocol stack. SOCKS is one popular means", 
-"of implementing a firewall between a private network and the Internet.", 
+"Kermit/2 provides support for SOCKS 4.2 servers when using IBM TCP/IP 2.0,",
+"IBM OS/2 WARP, or a compatible protocol stack. SOCKS is one popular means",
+"of implementing a firewall between a private network and the Internet.",
 " ",
-"Kermit/2 shares the same SOCKS environment variables as IBM Gopher. It also", 
-"supports the use of local SOCKS configuration files.", 
+"Kermit/2 shares the same SOCKS environment variables as IBM Gopher. It also",
+"supports the use of local SOCKS configuration files.",
 " ",
-"To specify the default SOCKS Server, add SET SOCKS_SERVER= to your", 
-"CONFIG.SYS file.", 
+"To specify the default SOCKS Server, add SET SOCKS_SERVER= to your",
+"CONFIG.SYS file.",
 " ",
-"If you must use a SOCKS Distributed Name Server, add SET SOCKS_NS= to your", 
-"CONFIG.SYS file.", 
-" ",
-
-"If you must use a specific with your SOCKS server, be sure to add SET USER=", 
-"to your CONFIG.SYS file. Otherwise, \"os2user\" is used by default.", 
-
+"If you must use a SOCKS Distributed Name Server, add SET SOCKS_NS= to your",
+"CONFIG.SYS file.",
 " ",
 
-"The SOCKS configuration file must be placed in the directory pointed to by", 
-"the ETC environment variable as declared in your CONFIG.SYS file. The name", 
-"should be SOCKS.CONF. On a FAT file system, use SOCKS.CNF.", 
-
-" ",
-"The format of the lines in the SOCKS configuration file are as follows:", 
-" ",
-" . # comments", 
-" . deny [*=userlist] dst_addr dst_mask [op port]", 
-" . direct [*=userlist] dst_addr dst_mask [op port]", 
-" . sockd [@=serverlist] [*=userlist] dst_addr dst_mask [op port]", 
-" ",
-
-"op must be one of 'eq', 'neq', 'lt', 'gt', 'le', or 'ge'. dst_addr,", 
-"dst_mask, and port may be either numeric or name equivalents.", 
+"If you must use a specific with your SOCKS server, be sure to add SET USER=",
+"to your CONFIG.SYS file. Otherwise, \"os2user\" is used by default.",
 
 " ",
 
-"Kermit/2 ignores the [*=userlist] and [@=serverlist] fields. Matches are", 
-"determined on a first match not a best match basis. Addresses for which no", 
-"match is found default to \"sockd\".", 
+"The SOCKS configuration file must be placed in the directory pointed to by",
+"the ETC environment variable as declared in your CONFIG.SYS file. The name",
+"should be SOCKS.CONF. On a FAT file system, use SOCKS.CNF.",
+
+" ",
+"The format of the lines in the SOCKS configuration file are as follows:",
+" ",
+" . # comments",
+" . deny [*=userlist] dst_addr dst_mask [op port]",
+" . direct [*=userlist] dst_addr dst_mask [op port]",
+" . sockd [@=serverlist] [*=userlist] dst_addr dst_mask [op port]",
+" ",
+
+"op must be one of 'eq', 'neq', 'lt', 'gt', 'le', or 'ge'. dst_addr,",
+"dst_mask, and port may be either numeric or name equivalents.",
 
 " ",
 
-"For completeness: Fields in square brackets are optional. The optional", 
-"@=serverlist field with a 'sockd' line specifies the list of SOCKS servers", 
-"the client should try (in the given order) instead of the default SOCKS", 
-"server. If the @=serverlist part is omitted, then the default SOCKS server", 
-"is used.  Commas are used in the userlist and serverlist as separators, no", 
-"white spaces are allowed.", 
+"Kermit/2 ignores the [*=userlist] and [@=serverlist] fields. Matches are",
+"determined on a first match not a best match basis. Addresses for which no",
+"match is found default to \"sockd\".",
+
+" ",
+
+"For completeness: Fields in square brackets are optional. The optional",
+"@=serverlist field with a 'sockd' line specifies the list of SOCKS servers",
+"the client should try (in the given order) instead of the default SOCKS",
+"server. If the @=serverlist part is omitted, then the default SOCKS server",
+"is used.  Commas are used in the userlist and serverlist as separators, no",
+"white spaces are allowed.",
 
 #endif /* NT */
 
@@ -684,13 +1003,13 @@ static char *hmxxfirew[] = {
 
 #else /* OS2 */
 #ifdef CK_SOCKS5
-"This version of C-Kermit supports SOCKS version 5.", 
+"This version of C-Kermit supports SOCKS version 5.",
 #else /* CK_SOCKS5 */
-"This version of C-Kermit supports SOCKS version 4.", 
+"This version of C-Kermit supports SOCKS version 4.",
 #endif /* CK_SOCKS5 */
 
-"See the man page (or other system documentation) for information on", 
-"configuring the SOCKS library via the /etc/socks.conf file.", 
+"See the man page (or other system documentation) for information on",
+"configuring the SOCKS library via the /etc/socks.conf file.",
 
 #endif /* OS2 */
 " ",
@@ -698,11 +1017,11 @@ static char *hmxxfirew[] = {
 
 #ifdef NEWFTP
 
-"FTP is one of the few well-known Internet services that requires", 
-"multiple connections.  As described above, FTP originally required the", 
-"server to establish the data connection to the client using a destination", 
+"FTP is one of the few well-known Internet services that requires",
+"multiple connections.  As described above, FTP originally required the",
+"server to establish the data connection to the client using a destination",
 "address and port provided by the client.  This doesn't work with port",
-"filtering firewalls.", 
+"filtering firewalls.",
 
 " ",
 
@@ -719,11 +1038,11 @@ static char *hmxxfirew[] = {
 
 "In Kermit's FTP client, passive mode is controlled with the command:",
 
-" ",  
+" ",
 "  SET FTP PASSIVE-MODE { ON, OFF }",
 " ",
 
-"The default is ON, meaning to use passive mode.", 
+"The default is ON, meaning to use passive mode.",
 
 #endif /* NEWFTP */
 #endif /* NOFIREWALL */
@@ -920,6 +1239,9 @@ static char *hxyesc[] = {
 "You may also enter the escape character as ^X (circumflex followed by a",
 "letter or one of: @, ^, _, [, \\, or ], to indicate a control character;",
 "for example, SET ESC ^_ sets your escape character to Ctrl-Underscore.",
+" ",
+"You can also specify an 8-bit character (128-255) as your escape character,",
+"either by typing it literally or by entering its numeric code.",
 "" };
 #endif /* NOLOCAL */
 
@@ -1218,6 +1540,11 @@ static char *hmxxgrep[] = {
 static char *hmxxdir[] = {
 #ifdef DOMYDIR
 "Syntax: DIRECTORY [ switches ] [ filespec ]",
+#ifdef LOCUS
+"  If LOCUS is REMOTE or LOCUS is AUTO and you have an FTP connection,",
+"  this command is equivalent to REMOTE DIRECTORY (RDIR).  Otherwise:",
+" ",
+#endif /* LOCUS */
 "  Lists files.  The filespec may be a filename, possibly containing wildcard",
 "  characters, or a directory name.  If no filespec is given, all files in",
 "  the current directory are listed.  If a directory name is given, all the",
@@ -1273,8 +1600,51 @@ static char *hmxxdir[] = {
 #endif /* DOMYDIR */
 ""};
 
+
+static char *hmxxcwd[] = {
+#ifdef LOCUS
+"  If LOCUS is REMOTE or LOCUS is AUTO and you have an FTP connection,",
+"  this command is equivalent to REMOTE CD (RCD).  Otherwise:",
+" ",
+#endif /* LOCUS */
+#ifdef vms
+"Syntax: CD [ directory or device:directory ]",
+"  Change Working Directory.  Equivalent to VMS SET DEFAULT command.",
+#else
+#ifdef datageneral
+"Change Working Directory, equivalent to AOS/VS 'dir' command.",
+#else
+#ifdef OS2
+"Syntax: CD [ disk or directory name ]",
+"  Change Disk or Directory.  If a disk or directory name is not specified,",
+"  your current directory becomes the one specified by HOME environment",
+"  variable, if any.  A disk letter must be followed by a colon.",
+#else
+"Syntax: CD [ directory name ]",
+"  Change Directory.  Changes your current, working, default directory to the",
+"  one given, so that future non-absolute filename references are relative to",
+"  this directory.  If the directory name is omitted, your home (login)",
+"  directory is supplied.",
+#endif /* OS2 */
+#endif /* datageneral */
+#endif /* vms */
+"  C-Kermit's default prompt shows your current directory.",
+"  Synonyms: LCD, CWD.",
+#ifdef LOCUS
+"  Also see: SET LOCUS, PWD, CDUP, BACK, REMOTE CD (RCD), SET CD, SET PROMPT.",
+#else
+"  Also see: PWD, CDUP, BACK, REMOTE CD (RCD), SET CD, SET PROMPT.",
+#endif /* LOCUS */
+"  Relevant environment variables: CDPATH, HOME.",
+""};
+
 static char *hmxxdel[] = {
 "Syntax: DELETE [ switches... ] filespec",
+#ifdef LOCUS
+"  If LOCUS is REMOTE or LOCUS is AUTO and you have an FTP connection,",
+"  this command is equivalent to REMOTE DELETE (RDELETE).  Otherwise:",
+" ",
+#endif /* LOCUS */
 "  Deletes a file or files on the computer where C-Kermit is running.",
 "  The filespec may denote a single file or can include wildcard characters",
 "  to match multiple files.  RM is a synonym for DELETE.  Switches include:",
@@ -1409,7 +1779,11 @@ static char *hmxxdel[] = {
 "Use SET OPTIONS DELETE to make selected switches effective for every DELETE",
 "command \
 unless you override them; use SHOW OPTIONS to see selections currently",
+#ifdef LOCUS
+"in effect.  Also see HELP SET LOCUS, HELP PURGE, HELP WILDCARD.",
+#else
 "in effect.  Also see HELP PURGE, HELP WILDCARD.",
+#endif /* LOCUS */
 ""};
 
 #ifndef NOHTTP
@@ -3586,14 +3960,34 @@ static char *hsetsrv[] = {
 #endif /* NOSERVER */
 
 static char *hmhrmt[] = {
+#ifdef NEWFTP
+"The REMOTE command sends file management instructions or other commands",
+"to a Kermit or FTP server.  If you have a single connection, the command is",
+"directed to the server you are connected to; if you have multiple connections"
+,
+"the command is directed according to your GET-PUT-REMOTE setting.",
+#else
 "The REMOTE command sends file management instructions or other commands",
 "to a Kermit server.  There should already be a Kermit running in server",
-"mode on the other end of the currently selected line.  Type REMOTE ? to",
-"see a list of available remote commands.  Type HELP REMOTE x to get",
-"further information about a particular remote command 'x'.",
+"mode on the other end of the connection.",
+#endif /* NEWFTP */
+"Type REMOTE ? to see a list of available remote commands.  Type HELP REMOTE",
+"xxx to get further information about a particular remote command xxx.",
 " ",
 "All REMOTE commands except LOGIN and LOGOUT have R-command shortcuts;",
 "for example, RDIR for REMOTE DIR, RCD for REMOTE CD, etc.",
+" ",
+#ifdef NEWFTP
+#ifdef LOCUS
+"Also see: HELP SET LOCUS, HELP FTP, HELP SET GET-PUT-REMOTE.",
+#else
+"Also see: HELP FTP, HELP SET GET-PUT-REMOTE.",
+#endif /* LOCUS */
+#else
+#ifdef LOCUS
+"Also see: HELP SET LOCUS.",
+#endif /* LOCUS */
+#endif /* NEWFTP */
 "" };
 
 #ifndef NOSPL
@@ -4579,6 +4973,11 @@ static char * hmxxcpy[] = {
 
 #ifndef NOFRILLS
 static char * hmxxren[] = {
+#ifdef LOCUS
+"  If LOCUS is REMOTE or LOCUS is AUTO and you have an FTP connection,",
+"  this command is equivalent to REMOTE RENAME (RREN).  Otherwise:",
+" ",
+#endif /* LOCUS */
 "Syntax: RENAME [ switches ] name1 name2",
 "  Renames the source file (name1) to the target name2.  If name2 is a",
 "  directory, name1 is allowed to contain wildcards, and the file(s) matching",
@@ -5042,30 +5441,30 @@ dohfile(cx) int cx; {
     extern struct keytab fctab[];
     extern int nfctab;
     int x;
-    if (cx == XXFILE) {			/* FILE command was given */
-	/* Get subcommand */
-	if ((cx = cmkey(fctab,nfctab,"Operation","",xxstring)) < 0) {
-	    if (cx == -3) {
+    if (cx == XXFILE) {                 /* FILE command was given */
+        /* Get subcommand */
+        if ((cx = cmkey(fctab,nfctab,"Operation","",xxstring)) < 0) {
+            if (cx == -3) {
                 if ((x = cmcfm()) < 0)
                   return(x);
                 cx = XXFILE;
-	    } else
+            } else
               return(cx);
-	}
+        }
         if ((x = cmcfm()) < 0)
           return(x);
-	switch (cx) {
-	  case FIL_CLS: cx = XXF_CL; break;
-	  case FIL_FLU: cx = XXF_FL; break;
-	  case FIL_LIS: cx = XXF_LI; break;
-	  case FIL_OPN: cx = XXF_OP; break;
-	  case FIL_REA: cx = XXF_RE; break;
-	  case FIL_REW: cx = XXF_RW; break;
-	  case FIL_SEE: cx = XXF_SE; break;
-	  case FIL_STA: cx = XXF_ST; break;
-	  case FIL_WRI: cx = XXF_WR; break;
-	  case FIL_COU: cx = XXF_CO; break;
-	}
+        switch (cx) {
+          case FIL_CLS: cx = XXF_CL; break;
+          case FIL_FLU: cx = XXF_FL; break;
+          case FIL_LIS: cx = XXF_LI; break;
+          case FIL_OPN: cx = XXF_OP; break;
+          case FIL_REA: cx = XXF_RE; break;
+          case FIL_REW: cx = XXF_RW; break;
+          case FIL_SEE: cx = XXF_SE; break;
+          case FIL_STA: cx = XXF_ST; break;
+          case FIL_WRI: cx = XXF_WR; break;
+          case FIL_COU: cx = XXF_CO; break;
+        }
     }
     switch (cx) {
       case XXFILE: return(hmsga(hxxfile));
@@ -5095,7 +5494,7 @@ dohlp(xx) int xx; {
 #ifdef NOHELP
     if ((x = cmcfm()) < 0)
       return(x);
-    printf("\n%s, Copyright (C) 1985, 2001,",versio);
+    printf("\n%s, Copyright (C) 1985, 2002,",versio);
 #ifndef NOIKSD
     if (inserver)
       return(hmsga(tophlpi));
@@ -5112,8 +5511,8 @@ dohlp(xx) int xx; {
     if (xx == XXFILE)
       return(dohfile(xx));
     else if (xx == XXF_RE || xx == XXF_WR || xx == XXF_OP ||
-	     xx == XXF_CL || xx == XXF_SE || xx == XXF_RW ||
-	     xx == XXF_FL || xx == XXF_LI || xx == XXF_ST || xx == XXF_CO)
+             xx == XXF_CL || xx == XXF_SE || xx == XXF_RW ||
+             xx == XXF_FL || xx == XXF_LI || xx == XXF_ST || xx == XXF_CO)
       return(dohfile(xx));
 #endif /* CKCHANNELIO */
 
@@ -5124,7 +5523,7 @@ case XXASS:                             /* ASSIGN */
     return(hmsga(hxxass));
 
 case XXASK:                             /* ASK */
-case XXASKQ:				/* ASKQ */
+case XXASKQ:                            /* ASKQ */
     return(hmsga(hxxask));
 
 case XXAPC:
@@ -5197,40 +5596,48 @@ case XXCPY:
     return(hmsga(hmxxcpy));
 #endif /* ZCOPY */
 
+#ifdef NT
+case XXLINK:
+return(hmsg(
+"  LINK source destination\n\
+   creates a hard link to the file specified by source to the filename\n\
+   specified by destination.  Hard links are only supported on NTFS.\n\
+   destination can either be a filename or a directory.  source may\n\
+   contain wildcards if destination is a directory."));
+#endif /* NT */
+
 #ifndef NOFRILLS
+case XXLREN:                            /* LRENAME */
+    return(hmsg(
+"  LRENAME is an alias for the RENAME command forcing it to execute\n\
+  on the local computer.  Also see: RENAME, RRENAME, SET LOCUS."));
+
 case XXREN:
     return(hmsga(hmxxren));
 #endif /* NOFRILLS */
 
+case XXCDUP:                             /* CDUP */
+case XXLCDU:
+    return(hmsg(
+"Change working directory to the one just above the current one."));
+
+case XXLCWD:
+    return(hmsg(
+"  LCD (LCWD) is an alias for the CD (CWD) command forcing it to execute\n\
+  on the local computer.  Also see: CD, CDUP, RCD, SET LOCUS."));
+
 case XXCWD:                             /* CD / CWD */
-#ifdef vms
-    return(hmsg("Syntax: CD [ directory or device:directory ]\n\
-  Change Working Directory, equivalent to VMS SET DEFAULT command"));
-#else
-#ifdef datageneral
-    return(hmsg("Change Working Directory, equivalent to DG 'dir' command"));
-#else
-#ifdef OS2
-  return(hmsg("Syntax: CD [ directoryname ]\n\
-  Change Directory.  If directoryname is not specified, changes to directory\n\
-  specified by HOME environment variable, if any.  Also see HELP SET CD"));
-#else
-    return(hmsg("Syntax: CD [ directoryname ]\n\
-  Change Directory.  If directory name omitted, changes to your home\n\
-  directory.  Also see HELP SET CD."));
-#endif /* OS2 */
-#endif /* datageneral */
-#endif /* vms */
+    return(hmsga(hmxxcwd));
 
 #ifndef NOSPL
 case XXARRAY:
-case XXDCL:				/* DECLARE */
+case XXDCL:                             /* DECLARE */
 case XXSORT:
     return(hmsga(hxxdcl));
 
 case XXDEF:                             /* DEFINE */
 #ifndef NOSPL
-    if (hlptok)				/* What they actually typed... */
+    if (hlptok)                         /* What they actually typed... */
       if (hlptok[0] == '.')
         return(hmsga(hxxdot));
 #endif /* NOSPL */
@@ -5242,6 +5649,11 @@ case XXUNDEF:                           /* UNDEFINE */
 #endif /* NOSPL */
 
 #ifndef NOFRILLS
+case XXLDEL:
+    return(hmsg(
+"  LDELETE is an alias for the DELETE command forcing it to execute\n\
+  on the local computer.  Also see: DELETE, RDELETE, SET LOCUS."));
+
 case XXDEL:                             /* delete */
     return(hmsga(hmxxdel));
 #endif /* NOFRILLS */
@@ -5265,8 +5677,29 @@ case XXLOOK:                            /* LOOKUP number in directory */
     return(hmsga(hxxlook));
 #endif /* NODIAL */
 
+case XXLDIR:                            /* LDIRECTORY */
+    return(hmsg(
+"  LDIRIRECTORY is an alias for the DIRECTORY command forcing it to execute\n\
+  on the local computer.  Also see: DIRECTORY, SET LOCUS, RDIRECTORY."));
+
 case XXDIR:                             /* DIRECTORY */
     return(hmsga(hmxxdir));
+
+case XXLMKD:                            /* LMKDIR */
+    return(hmsg(
+"  LMKDIR is an alias for the MKDIR command forcing it to execute\n\
+  on the local computer.  Also see: MKDIR, RMKDIR, SET LOCUS."));
+
+case XXMKDIR:                           /* MKDIR */
+    return(hmsg("Creates a directory.  Also see LRMDIR, RRMDIR, SET LOCUS."));
+
+case XXLRMD:                            /* LRMDIR */
+    return(hmsg(
+"  LRMDIR is an alias for the RMDIR command forcing it to execute\n\
+  on the local computer.  Also see: RMDIR, RRMDIR, SET LOCUS."));
+
+case XXRMDIR:                           /* RMDIR */
+    return(hmsg("Removes a directory.  Also see LRMDIR, RRMDIR, SET LOCUS."));
 
 case XXLS:
 #ifdef UNIXOROSK
@@ -5390,11 +5823,11 @@ Hang up the phone or network connection."));
       return(x);
 
     if (helpfile) {
-        printf("\n%s, Copyright (C) 1985, 2001,\n\
+        printf("\n%s, Copyright (C) 1985, 2002,\n\
 Trustees of Columbia University in the City of New York.\n\n",versio);
         return(dotype(helpfile,xaskmore,3,0,NULL,0,NULL,0,0,NULL,0));
     } else {
-        printf("\n%s, Copyright (C) 1985, 2001,",versio);
+        printf("\n%s, Copyright (C) 1985, 2002,",versio);
         return(hmsga(tophlp));
     }
 
@@ -5533,6 +5966,7 @@ case XXPRI:
 #endif /* NOFRILLS */
 
 case XXPWD:
+case XXLPWD:
     return(hmsg("Syntax: PWD\n\
 Print the name of the current working directory."));
 
@@ -5813,42 +6247,42 @@ case XXFUNC:
   silently, and still allow for <no-name-given>, editing and reparse, etc.
 */
     y = cmkeyx(fnctab,nfuncs,"Name of function","",NULL);
-    if (y == -1) {			/* Reparse needed */
-	return(y);
+    if (y == -1) {                      /* Reparse needed */
+        return(y);
     } else if (y == -3) {
-	if ((x = cmcfm()) < 0)		/* For recall buffer... */
-	  return(x);
-        return(dohfunc(y));		/* -3 gives general message */
+        if ((x = cmcfm()) < 0)          /* For recall buffer... */
+          return(x);
+        return(dohfunc(y));             /* -3 gives general message */
     }
-    if (y < 0) {			/* Something given but didn't match */
+    if (y < 0) {                        /* Something given but didn't match */
         int dummy;
-	char * p;
-	for (p = atmbuf; *p; p++) {	/* Chop off trailing parens if any */
-	    if (*p == '(') {
-		*p = NUL;
-		break;
-	    }
-	}
-	/* Chop off leading "\\f" or "\f" or "f" */
-	p = atmbuf;
-	if (*p == CMDQ)			/* Allow for \\f... */
-	  p++;
-	if (*p == CMDQ && (*(p+1) == 'f' || *(p+1) == 'F')) { /* or \f */
-	    p += 2;
-	} else if (*p == 'f' || *p == 'F') { /* or just f */
-	    p++;
-	}
-	y = lookup(fnctab,p,nfuncs,&dummy); /* Look up the result */
+        char * p;
+        for (p = atmbuf; *p; p++) {     /* Chop off trailing parens if any */
+            if (*p == '(') {
+                *p = NUL;
+                break;
+            }
+        }
+        /* Chop off leading "\\f" or "\f" or "f" */
+        p = atmbuf;
+        if (*p == CMDQ)                 /* Allow for \\f... */
+          p++;
+        if (*p == CMDQ && (*(p+1) == 'f' || *(p+1) == 'F')) { /* or \f */
+            p += 2;
+        } else if (*p == 'f' || *p == 'F') { /* or just f */
+            p++;
+        }
+        y = lookup(fnctab,p,nfuncs,&dummy); /* Look up the result */
     }
     if (y < 0) {
-	printf("?No such function - \"%s\"\n",atmbuf);
-	return(-9);
+        printf("?No such function - \"%s\"\n",atmbuf);
+        return(-9);
     }
-    x = cmgbrk();			/* Find out how user terminated */
-    if (x == LF || x == CR)		/* if with CR or LF */
-      cmflgs = 1;			/* restore cmflgs to say so */
-    if ((x = cmcfm()) < 0)		/* And THEN confirm so command will */
-      return(x);			/* get into recall buffer. */
+    x = cmgbrk();                       /* Find out how user terminated */
+    if (x == LF || x == CR)             /* if with CR or LF */
+      cmflgs = 1;                       /* restore cmflgs to say so */
+    if ((x = cmcfm()) < 0)              /* And THEN confirm so command will */
+      return(x);                        /* get into recall buffer. */
     return(dohfunc(y));
 #endif /* NOSPL */
 
@@ -5864,42 +6298,42 @@ case XXXOPTS:                           /* Extended command-line options */
 #ifndef NOKVERBS
 case XXKVRB: {
     y = cmkeyx(kverbs,nkverbs,"Name of keyboard verb without \\k","",NULL);
-    if (y == -1) {			/* Reparse needed */
-	return(y);
+    if (y == -1) {                      /* Reparse needed */
+        return(y);
     } else if (y == -3) {
-	if ((x = cmcfm()) < 0)		/* For recall buffer... */
-	  return(x);
-        return(dohkverb(y));		/* -3 gives general message */
+        if ((x = cmcfm()) < 0)          /* For recall buffer... */
+          return(x);
+        return(dohkverb(y));            /* -3 gives general message */
     }
-    if (y < 0) {			/* Something given but didn't match */
+    if (y < 0) {                        /* Something given but didn't match */
         int dummy;
-	char * p;
-	for (p = atmbuf; *p; p++) {	/* Chop off trailing parens if any */
-	    if (*p == '(') {
-		*p = NUL;
-		break;
-	    }
-	}
-	/* Chop off leading "\\k" or "\k" or "k" */
-	p = atmbuf;
-	if (*p == CMDQ)			/* Allow for \\k... */
-	  p++;
-	if (*p == CMDQ && (*(p+1) == 'k' || *(p+1) == 'K')) { /* or \k */
-	    p += 2;
-	} else if (*p == 'k' || *p == 'K') { /* or just k */
-	    p++;
-	}
-	y = lookup(kverbs,p,nkverbs,&dummy); /* Look up the result */
+        char * p;
+        for (p = atmbuf; *p; p++) {     /* Chop off trailing parens if any */
+            if (*p == '(') {
+                *p = NUL;
+                break;
+            }
+        }
+        /* Chop off leading "\\k" or "\k" or "k" */
+        p = atmbuf;
+        if (*p == CMDQ)                 /* Allow for \\k... */
+          p++;
+        if (*p == CMDQ && (*(p+1) == 'k' || *(p+1) == 'K')) { /* or \k */
+            p += 2;
+        } else if (*p == 'k' || *p == 'K') { /* or just k */
+            p++;
+        }
+        y = lookup(kverbs,p,nkverbs,&dummy); /* Look up the result */
     }
     if (y < 0) {
-	printf("?No such function - \"%s\"\n",atmbuf);
-	return(-9);
+        printf("?No such function - \"%s\"\n",atmbuf);
+        return(-9);
     }
-    x = cmgbrk();			/* Find out how user terminated */
-    if (x == LF || x == CR)		/* if with CR or LF */
-      cmflgs = 1;			/* restore cmflgs to say so */
-    if ((x = cmcfm()) < 0)		/* And THEN confirm so command will */
-      return(x);			/* get into recall buffer. */
+    x = cmgbrk();                       /* Find out how user terminated */
+    if (x == LF || x == CR)             /* if with CR or LF */
+      cmflgs = 1;                       /* restore cmflgs to say so */
+    if ((x = cmcfm()) < 0)              /* And THEN confirm so command will */
+      return(x);                        /* get into recall buffer. */
     return(dohkverb(y));
 }
 #endif /* NOKVERBS */
@@ -6024,43 +6458,43 @@ case XXPURGE:
 
 #ifndef NOXFER
   case XXRASG:
-    return(hmsg("RASG and RASSIGN are short forms of REMOTE ASSIGN."));
+    return(hmsg("  RASG and RASSIGN are short forms of REMOTE ASSIGN."));
   case XXRCWD:
-    return(hmsg("RCD and RCWD are short forms of REMOTE CD."));
+    return(hmsg("  RCD and RCWD are short forms of REMOTE CD."));
   case XXRCPY:
-    return(hmsg("RCOPY is a short form of REMOTE COPY."));
+    return(hmsg("  RCOPY is a short form of REMOTE COPY."));
   case XXRDEL:
-    return(hmsg("RDELETE is a short form of REMOTE RELETE."));
+    return(hmsg("  RDELETE is a short form of REMOTE RELETE."));
   case XXRDIR:
-    return(hmsg("RDIRECTORY is a short form of REMOTE DIRECTORY."));
+    return(hmsg("  RDIRECTORY is a short form of REMOTE DIRECTORY."));
   case XXRXIT:
-    return(hmsg("REXIT is a short form of REMOTE EXIT."));
+    return(hmsg("  REXIT is a short form of REMOTE EXIT."));
   case XXRHLP:
-    return(hmsg("RHELP is a short form of REMOTE HELP."));
+    return(hmsg("  RHELP is a short form of REMOTE HELP."));
   case XXRHOS:
-    return(hmsg("RHOST is a short form of REMOTE HOST."));
+    return(hmsg("  RHOST is a short form of REMOTE HOST."));
   case XXRKER:
-    return(hmsg("RKERMIT is a short form of REMOTE KERMIT."));
+    return(hmsg("  RKERMIT is a short form of REMOTE KERMIT."));
   case XXRMKD:
-    return(hmsg("RMKDIR is a short form of REMOTE MKDIR."));
+    return(hmsg("  RMKDIR is a short form of REMOTE MKDIR."));
   case XXRPRI:
-    return(hmsg("RPRINT is a short form of REMOTE PRINT."));
+    return(hmsg("  RPRINT is a short form of REMOTE PRINT."));
   case XXRPWD:
-    return(hmsg("RPWD is a short form of REMOTE PWD."));
+    return(hmsg("  RPWD is a short form of REMOTE PWD."));
   case XXRQUE:
-    return(hmsg("QUERY and RQUERY are short forms of REMOTE QUERY."));
+    return(hmsg("  QUERY and RQUERY are short forms of REMOTE QUERY."));
   case XXRREN:
-    return(hmsg("RRENAME is a short form of REMOTE RENAME."));
+    return(hmsg("  RRENAME is a short form of REMOTE RENAME."));
   case XXRRMD:
-    return(hmsg("RRMDIR is a short form of REMOTE RMDIR."));
+    return(hmsg("  RRMDIR is a short form of REMOTE RMDIR."));
   case XXRSET:
-    return(hmsg("RSET is a short form of REMOTE SET."));
+    return(hmsg("  RSET is a short form of REMOTE SET."));
   case XXRSPA:
-    return(hmsg("RSPACE is a short form of REMOTE SPACE."));
+    return(hmsg("  RSPACE is a short form of REMOTE SPACE."));
   case XXRTYP:
-    return(hmsg("RTYPE is a short form of REMOTE TYPE."));
+    return(hmsg("  RTYPE is a short form of REMOTE TYPE."));
   case XXRWHO:
-    return(hmsg("RWHO is a short form of REMOTE WHO."));
+    return(hmsg("  RWHO is a short form of REMOTE WHO."));
 #endif /* NOXFER */
 
   case XXSCRN:
@@ -6112,23 +6546,22 @@ case XXPURGE:
     return(hmsga(hmxxlearn));
 #endif /* CKLEARN */
 
-#ifdef SSHCMD
+#ifdef ANYSSH
   case XXSSH:
-#ifndef SSH
-    return(hmsg("Syntax: SSH <hostname>\n\
-  Makes an SSH connection using the external ssh program via the SET SSH\n\
-  COMMAND string, which is \"ssh -e none\" by default.  SHOW NET displays it."
-		));
-#else
-    return(hmsg("Syntax: SSH <hostname>\n\
-  (Internal SSH client not documented yet.)"));
-#endif /* SSH */
-#endif /* SSHCMD */
+    return(hmsga(hmxxssh));
+#endif /* ANYSSH */
 
 #ifdef TCPSOCKET
   case XXFIREW:
     return(hmsga(hmxxfirew));
 #endif /* TCPSOCKET */
+
+#ifdef NEWFTP
+  case XXUSER:
+    return(hmsg(" Equivalent to FTP USER."));
+  case XXACCT:
+    return(hmsg(" Equivalent to FTP ACCOUNT."));
+#endif /* NEWFTP */
 
   case XXNOTAV:
     return(hmsg(" This command is not configured in this version of Kermit."));
@@ -6179,7 +6612,7 @@ hmsga(s) char *s[]; {                   /* cheap version. */
 
 int                                     /* Print an array of lines, */
 hmsga(s) char *s[]; {                   /* pausing at end of each screen. */
-    extern int hmtopline;		/* (This should be a parameter...) */
+    extern int hmtopline;               /* (This should be a parameter...) */
     int x, y, i, j, k, n;
     if ((x = cmcfm()) < 0) return(x);
 
@@ -6644,9 +7077,12 @@ static char *hxyterm[] = {
 
 #ifndef NOCSETS
 #ifdef OS2
-"SET TERMINAL CHARACTER-SET",
-"  (See SET TERMINAL { LOCAL-CHARACTER-SET, REMOTE-CHARACTER-SET })",
-" ",
+"SET TERMINAL CHARACTER-SET <remote-cs>",
+"  Specifies the character set used by the remote host, <remote-cs>.",
+"  Equivalent to SET TERM REMOTE-CHARACTER-SET <remote-cs> ALL.  For more",
+"  control over the details, use SET TERM REMOTE-CHARACTER-SET and (in",
+"  non-GUI K95 versions) SET TERM LOCAL-CHARACTER-SET; these are explained",
+"  below.  The default TERMINAL CHARACTER-SET is LATIN1 (ISO 8859-1).",
 #else  /* not OS2 */
 "SET TERMINAL CHARACTER-SET <remote-cs> [ <local-cs> ]",
 "  Specifies the character set used by the remote host, <remote-cs>, and the",
@@ -6655,8 +7091,8 @@ static char *hxyterm[] = {
 "  you specify two different character sets, C-Kermit translates between them",
 "  during CONNECT.  By default, both character sets are TRANSPARENT, and",
 "  no translation is done.",
-" ",
 #endif /* OS2 */
+" ",
 #endif /* NOCSETS */
 
 #ifdef OS2
@@ -6748,6 +7184,13 @@ static char *hxyterm[] = {
 " ",
 
 #ifdef OS2
+#ifdef KUI
+"SET TERMINAL FONT <facename> <height>",
+"  Specifies the font to be used in the Kermit 95 window.  The font is",
+"  determined by the choice of a facename and a height measured in Points.",
+"  The available facenames are those installed in the Font Control Panel.",
+" ",
+#else /* KUI */
 #ifdef OS2ONLY
 "SET TERMINAL FONT { CP437, CP850, CP852, CP862, CP866, DEFAULT }",
 "  CP437 - Original PC code page",
@@ -6762,6 +7205,7 @@ static char *hxyterm[] = {
 "  CODE-PAGE and SET TERMINAL REMOTE-CHARACTER-SET.",
 " ",
 #endif /* OS2ONLY */
+#endif /* KUI */
 
 #ifdef NT
 "SET TERMINAL HEIGHT <number>",
@@ -7209,6 +7653,9 @@ Enter CONNECT (terminal) mode automatically if the connection is successful.",
 "  SET HOST 128.59.39.2",
 "  SET HOST madlab.sprl.umich.edu 3000",
 "  SET HOST xyzcorp.com 2000 /RAW-SOCKET",
+#ifdef SSHBUILTIN
+"  SET HOST /NET:SSH kermit.columbia.edu /x11-forwarding:on", 
+#endif /* SSHBUILTIN */
 #ifdef NETCMD
 "  SET HOST /CONNECT /COMMAND rlogin xyzcorp.com",
 #endif /* NETCMD */
@@ -7229,8 +7676,6 @@ Enter CONNECT (terminal) mode automatically if the connection is successful.",
 "Also see SET NETWORK, TELNET, SET TELNET.",
 "" };
 
-#ifdef CK_AUTHENTICATION
-#ifdef TNCODE
 static char *hmxyauth[] = {
 "Synatx: SET AUTHENTICATION <auth_type> <parameter> <value>",
 "  Sets defaults for the AUTHENTICATE command:",
@@ -7561,8 +8006,6 @@ static char *hmxyauth[] = {
 #endif /* CK_SSL */
 ""
 };
-#endif /* TNCODE */
-#endif /* CK_AUTHENTICATION */
 
 static char *hxynet[] = {
 "Syntax: SET NETWORK { TYPE network-type, DIRECTORY [ file(s)... ] }",
@@ -8648,6 +9091,8 @@ dohset(xx) int xx; {
 #ifdef NEWFTP
     if (xx == XYFTPX)
       return(dosetftphlp());
+    if (xx == XYGPR)
+      return(hmsga(hmxygpr));
 #endif /* NEWFTP */
 
     if ((x = cmcfm()) < 0) return(x);
@@ -8884,7 +9329,7 @@ case XYLINE:
 #endif /* OS2 */
     );
     printf(
-"  then SET FLOW, SET SPEED, and CONNECT.\n"); 
+"  then SET FLOW, SET SPEED, and CONNECT.\n");
     printf(
 "\nOptional switches:\n\
   /CONNECT - Enter CONNECT mode automatically if SET LINE succeeds.\n");
@@ -9228,19 +9673,15 @@ case XYTIMER:
     return(hmsga(hmxxchroot));
 #endif /* XYROOT */
 
-#ifdef SSHCMD
+#ifdef ANYSSH
   case XYSSH:
-#ifndef SSH
-    return(hmsg("Syntax: SET SSH <parameter> <value>\n\
-  Sets SSH parameters:\n\n\
-  SET SSH COMMAND <string>\n\
-    Specifies the external command to be used to make an SSH connection.\n\
-    By default it is \"ssh -e none\" (ssh with no escape character)."));
-#else
-    return(hmsg("Syntax: SET SSH <parameter> <value>\n\
-  (Internal SSH client not documented yet.)"));
-#endif /* SSH */
-#endif /* SSHCMD */
+    return(hmsga(hmxyssh));
+#endif /* ANYCMD */
+
+#ifdef LOCUS
+  case XYLOCUS:
+    return(hmsga(hmxylocus));
+#endif /* LOCUS */
 
 default:
     printf("Not available - \"%s\"\n",cmdbuf);
@@ -9263,8 +9704,8 @@ dohfunc(xx) int xx; {
         " For function settings use HELP SET FUNCTION and SHOW SCRIPTS.\n\n");
         return(0);
     }
-    if (xx == FN_WORD)			/* Long help message */
-	return(hmsga(hmfword));
+    if (xx == FN_WORD)                  /* Long help message */
+        return(hmsga(hmfword));
 
     printf("\n");
     switch (xx) {
@@ -9283,8 +9724,8 @@ dohfunc(xx) int xx; {
                xx == FN_IND ? "left" : "right"
         );
         break;
-      case FN_SEARCH:			/* Search for pattern */
-      case FN_RSEARCH:			/* Search for pattern from right */
+      case FN_SEARCH:                   /* Search for pattern */
+      case FN_RSEARCH:                  /* Search for pattern from right */
         printf("\\f%ssearch(s1,s2,n1)\n\
   s1 = pattern to look for.\n\
   s2 = string to look in.\n\
@@ -9297,7 +9738,7 @@ dohfunc(xx) int xx; {
                xx == FN_SEARCH ? "left" : "right",
                xx == FN_SEARCH ? "left" : "right"
         );
-	printf("  See HELP WILDCARDS for info about patterns.\n");
+        printf("  See HELP WILDCARDS for info about patterns.\n");
         break;
       case FN_LEN:                      /* Length (of string) */
         printf("\\flength(s1)\n\
@@ -9430,12 +9871,12 @@ dohfunc(xx) int xx; {
   The rightmost n1 characters of string s1.\n");
         break;
       case FN_LEF:                      /* Left (like BASIC LEFT$()) */
-	printf("\\fleft(s1,n1)\n\
+        printf("\\fleft(s1,n1)\n\
   s1 = string.\n\
   n1 = integer, default = length(s1).\n");
-	printf("Returns string:\n\
+        printf("Returns string:\n\
   The leftmost n1 characters of string s1.\n");
-	break;
+        break;
       case FN_COD:                      /* Code value of character */
         printf("\\fcode(c1)\n\
   c1 = character.\n");
@@ -9604,20 +10045,20 @@ dohfunc(xx) int xx; {
         printf("\\fstripb(s1[,c1[,c2]])\n\
   s1 = original string.\n\
   c1 = optional first character\n");
-	printf("\
+        printf("\
   c2 = optional final character.\n");
         printf("Returns string:\n\
   s1 with the indicated enclosing characters removed.  If c1 and c2 not\n\
      specified, any matching brackets, braces, parentheses, or quotes are\n");
-	printf("\
+        printf("\
      assumed.  If c1 is given but not c2, the appropriate c2 is assumed.\n\
      if both c1 and c2 are given, they are used as-is.\n"
-	       );
-	printf(
+               );
+        printf(
 "Alternative format:\n\
   Include a grouping mask number in place of c1 and omit c2 to specify more\n\
   than one possibility at once; see \\fword() for details.\n"
-	       );
+               );
         break;
 
 #ifdef OS2
@@ -9703,8 +10144,8 @@ dohfunc(xx) int xx; {
 Assign string words to an array.\n\
   s1 = source string\n  &a = array designator\n  s2 = optional break set.\n");
         printf("  s3 = optional include set.\n");
-	printf("  n2 = optional grouping mask.\n");
-	printf("  n3 = optional separator flag.\n");
+        printf("  n2 = optional grouping mask.\n");
+        printf("  n3 = optional separator flag.\n");
         printf("  s2, s3, n2, n3 are as in \\fword().\n");
         printf(
 "  All arguments are optional; if \\&a[] already exists, it is recycled;\n\
@@ -9822,11 +10263,11 @@ Assign string words to an array.\n\
       case FN_ALOOK:
         printf("\\farraylook(pattern,&a) - Lookup pattern in array.\n\
   pattern = String or pattern\n");
-	printf("  &a = array designator, can include range specifier.\n");
+        printf("  &a = array designator, can include range specifier.\n");
         printf(
 "Returns number:\n\
   The index of the first matching array element or -1 if none.\n");
-	printf("More info:\n\
+        printf("More info:\n\
   HELP PATTERN for pattern syntax.\n  HELP ARRAY for arrays.\n");
         break;
 
@@ -9835,17 +10276,17 @@ Assign string words to an array.\n\
 "\\ftablelook(keyword,&a,[c]) - Lookup keyword in keyword table.\n\
   pattern = String\n");
         printf("  keyword = keyword to look up (can be abbreviated).\n");
-	printf("  &a      = array designator, can include range specifier.\n");
+        printf("  &a      = array designator, can include range specifier.\n");
         printf("            This array must be in alphabetical order.\n");
         printf("  c       = Optional field delimiter, colon(:) by default.\n");
         printf(
 "Returns number:\n\
   1 or greater, index of array element that uniquely matches given keyword;\n"
-	       );
+               );
         printf(
 "or -2 if keyword was ambiguous, or -1 if keyword empty or not found.\n"
-	       );
-	printf("Also see:\n\
+               );
+        printf("Also see:\n\
   HELP FUNC ARRAYLOOK for a similar function.\n  HELP ARRAY for arrays.\n");
         break;
 
@@ -10008,86 +10449,86 @@ Assign string words to an array.\n\
   n1 = channel number.\n");
         printf("Returns number:\n\
   1 if channel n1 at end of file, 0 otherwise.\n");
-	break;
+        break;
       case FN_FPOS:
         printf("\\f_pos(n1)\n\
   n1 = channel number.\n");
         printf("Returns number:\n\
   Read/write pointer of channel n1 as byte number.\n");
-	break;
+        break;
       case FN_NLINE:
         printf("\\f_line(n1)\n\
   n1 = channel number.\n");
         printf("Returns number:\n\
   Read/write pointer of channel n1 as line number.\n");
-	break;
+        break;
       case FN_FILNO:
         printf("\\f_handle(n1)\n\
   n1 = channel number.\n");
         printf("Returns number:\n\
   File %s of open file on channel n1.\n",
 #ifdef OS2
-	       "handle"
+               "handle"
 #else
-	       "descriptor"
+               "descriptor"
 #endif /* OS2 */
-	       );
-	break;
+               );
+        break;
       case FN_FSTAT:
         printf("\\f_status(n1)\n\
   n1 = channel number.\n");
         printf("Returns number:\n\
   Sum of open modes of channel n1: 1 = read; 2 = write; 4 = append, or:\n\
   0 if not open.\n");
-	break;
+        break;
       case FN_FGCHAR:
         printf("\\f_getchar(n1)\n\
   n1 = channel number.\n");
         printf("  Reads a character from channel n1 and returns it.\n");
-	break;
+        break;
       case FN_FGLINE:
         printf("\\f_getline(n1)\n\
   n1 = channel number.\n");
         printf("  Reads a line from channel n1 and returns it.\n");
-	break;
+        break;
       case FN_FGBLK:
         printf("\\f_getblock(n1,n2)\n\
   n1 = channel number, n2 = size\n");
         printf(
 "  Reads a block of n2 characters from channel n1 and returns it.\n");
-	break;
+        break;
       case FN_FPCHAR:
         printf("\\f_putchar(n1,c)\n\
   n1 = channel number, c = character\n");
         printf("  Writes a character to channel n1.\n\
 Returns number:\n\
   1 if successful, otherwise a negative error code.\n");
-	break;
+        break;
       case FN_FPLINE:
         printf("\\f_putline(n1,s1)\n\
   n1 = channel number, s1 = string\n");
         printf(
 "  Writes the string s1 to channel n1 and adds a line terminator.\n\
 Returns number:\n");
-	printf("  How many characters written if successful;\n\
+        printf("  How many characters written if successful;\n\
   Otherwise a negative error code.\n"
-	       );
-	break;
+               );
+        break;
       case FN_FPBLK:
         printf("\\f_putblock(n1,s1)\n\
   n1 = channel number, s1 = string\n");
         printf(
 "  Writes the string s1 to channel n1.\n\
   Returns number:\n");
-	printf("  How many characters written if successful;\n\
+        printf("  How many characters written if successful;\n\
   Otherwise a negative error code.\n"
-	       );
-	break;
+               );
+        break;
       case FN_FERMSG:
         printf("\\f_errmsg([n1])\n\
   n1 = numeric error code, \\v(f_error) by default.\n");
         printf("  Returns the associated error message string.\n");
-	break;
+        break;
 #endif /* CKCHANNELIO */
 
       case FN_AADUMP:
@@ -10098,235 +10539,235 @@ Returns number:\n");
   containing the indices and values, respectively:\n");
         printf("Returns number:\n\
   How many elements were converted.\n");
-	break;
+        break;
 
 #ifdef CK_KERBEROS
       case FN_KRB_TK:
-	printf("\\fkrbtickets(n)\n\
+        printf("\\fkrbtickets(n)\n\
   n = Kerberos version number (4 or 5).\n\
   Returns string:\n\
   The number of active Kerberos 4 or 5 tickets.\n\
   Resets the ticket list used by \\fkrbnextticket(n).\n");
-	break;
+        break;
 
       case FN_KRB_NX:
-	printf("\\fkrbnextticket(n)\n\
+        printf("\\fkrbnextticket(n)\n\
   n = Kerberos version number (4 or 5).\n\
   Returns string:\n\
     The next ticket in the Kerberos 4 or 5 ticket list that was set up by\n\
     the most recent invocation of \\fkrbtickets(n).\n");
-	break;
+        break;
 
       case FN_KRB_IV:
-	printf("\\fkrbisvalid(n,name)\n\
+        printf("\\fkrbisvalid(n,name)\n\
   n    = Kerberos version number (4 or 5).\n\
   name = a ticket name as returned by \\fkrbnextticket(n).\n\
   Returns number:\n\
     1 if the ticket is valid, 0 if not valid.\n\
     A ticket is valid if all the following conditions are true:\n\n");
-	printf("\n\
+        printf("\n\
     (i)   it exists in the current cache file;\n\
     (ii)  it is not expired;\n\
     (iii) it is not marked invalid (K5 only);\n\
     (iv)  it was issued from the current IP address\n");
-	printf("\n  This value can be used in an IF statement, e.g.:\n\n");
-	printf("    if \\fkrbisvalid(4,krbtgt.FOO.BAR.EDU@FOO.BAR.EDU) ...\n");
-	break;
+        printf("\n  This value can be used in an IF statement, e.g.:\n\n");
+        printf("    if \\fkrbisvalid(4,krbtgt.FOO.BAR.EDU@FOO.BAR.EDU) ...\n");
+        break;
 
       case FN_KRB_TT:
-	printf("\\fkrbtimeleft(n,name)\n\
+        printf("\\fkrbtimeleft(n,name)\n\
   n    = Kerberos version number (4 or 5).\n\
   name = a ticket name as returned by \\fkrbnextticket(n).\n\
   Returns string:\n\
     The number of seconds remaining in the ticket's lifetime.\n");
-	break;
+        break;
 
       case FN_KRB_FG:
-	printf("\\fkrbflags(n,name)\n\
+        printf("\\fkrbflags(n,name)\n\
   n    = Kerberos version number (4 or 5).\n\
   name = a ticket name as returned by \\fkrbnextticket(n).\n\
   Returns string:\n");
-	printf(
+        printf(
 "    The flags string as reported with AUTH K5 LIST /FLAGS.  This string can\n\
     be searched for a particular flag using the \\findex() function when\n\
     SET CASE is ON (for case sensitive searches).  Flag strings are only\n\
     available for K5 tickets.\n");
-	break;
+        break;
 #endif /* CK_KERBEROS */
 
       case FN_PATTERN:
-	printf("\\fpattern(s)\n\
+        printf("\\fpattern(s)\n\
   s = string\n\
   Returns string: s with any variables, etc, evaluated in the normal manner.\n"
-	       );
-	printf("\
+               );
+        printf("\
   For use with INPUT, MINPUT, and REINPUT to declare that a search target is\n\
   a pattern rather than a literal string.\n");
-	break;
+        break;
 
       case FN_HEX2N:
-	printf("\\fhex2n(s)\n\
+        printf("\\fhex2n(s)\n\
   s = hexadecimal number\n\
   Returns decimal equivalent.\n");
-	break;
+        break;
 
       case FN_HEX2IP:
-	printf("\\fhex2ip(s)\n\
+        printf("\\fhex2ip(s)\n\
   s = 8-digit hexadecimal number\n\
   Returns the equivalent decimal dotted IP address.\n");
-	break;
+        break;
 
       case FN_IP2HEX:
-	printf("\\fip2hex(s)\n\
+        printf("\\fip2hex(s)\n\
   s = decimal dotted IP address\n\
   Returns the equivalent 8-digit hexadecimal number.\n");
-	break;
+        break;
 
       case FN_OCT2N:
-	printf("\\foct2n(s)\n\
+        printf("\\foct2n(s)\n\
   s = octal number\n\
   Returns decimal equivalent.\n");
-	break;
+        break;
 
       case FN_RADIX:
-	printf("\\fradix(s,n1,n2)\n\
+        printf("\\fradix(s,n1,n2)\n\
   s = number in radix n1\n\
   Returns the number's representation in radix n2.\n");
-	break;
+        break;
 
       case FN_JOIN:
-	printf("\\fjoin(&a[,s[,n1[,n2]]])\n\
+        printf("\\fjoin(&a[,s[,n1[,n2]]])\n\
   &a = array designator, can include range specifier.\n\
   s  = optional separator.\n");
-	printf("\
+        printf("\
   n1 = nonzero to put grouping around elements that contain spaces;\n\
        see \\fword() grouping mask for values of n.\n");
-	printf("\
+        printf("\
   n2 = 0 or omitted to put spaces between elements; nonzero to omit them.\n");
-	printf("\
+        printf("\
   Returns the (selected) elements of the array joined to together,\n\
   separated by the separator.\n");
-	break;
+        break;
 
       case FN_SUBST:
-	printf("\\fsubstitute(s1,s2,s3)\n\
+        printf("\\fsubstitute(s1,s2,s3)\n\
   s1 = Source string.\n\
   s2 = List of characters to be translated.\n\
   s3 = List of characters to translate them to.\n");
-	printf(
+        printf(
 "  Returns: s1, with each character that is in s2 translated to the\n\
   corresponding character in s3.  s2 and s3 can contain ASCII ranges,\n\
   like [a-z].  Any characters in s2 that don't have corresponding\n\
   characters in s3 (after range expansion) are removed from the result.\n");
-	break;
+        break;
 
 #ifndef NOSEXP
       case FN_SEXP:
-	printf("\\fsexpression(s1)\n\
+        printf("\\fsexpression(s1)\n\
   s1 = S-Expression.\n");
-	printf("  Returns: The result of evaluating s1.\n");
-	break;
+        printf("  Returns: The result of evaluating s1.\n");
+        break;
 
 #endif /* NOSEXP */
 
       case FN_CMDSTK:
-	printf("\\fcmdstack(n1,n2)\n\
+        printf("\\fcmdstack(n1,n2)\n\
   n1 = Command-stack level, 0 to \\v(cmdlevel), default \\v(cmdlevel).\n\
   n2 = Function code, 0 or 1.\n");
-	printf("Returns:\n");
-	printf("  n2 = 0: name of object at stack level n1\n\
+        printf("Returns:\n");
+        printf("  n2 = 0: name of object at stack level n1\n\
   n2 = 1: type of object at stack level n1:\n\
      0 = interactive prompt\n\
      1 = command file\n\
      2 = macro\n"
-	       );
-	  break;
+               );
+          break;
 
 #ifdef CKFLOAT
       case FN_DIFDATE:
-	printf("\\fdiffdates(d1,d2)\n\
+        printf("\\fdiffdates(d1,d2)\n\
   d1 = free-format date and/or time (default = NOW).\n\
   d2 = ditto.\n");
-	printf("Returns:\n");
-	printf("  Difference expressed as delta time:\n");
-	printf("  Negative if d2 is later than d1, otherwise positive.\n");
+        printf("Returns:\n");
+        printf("  Difference expressed as delta time:\n");
+        printf("  Negative if d2 is later than d1, otherwise positive.\n");
         break;
 #endif /* CKFLOAT */
 
       case FN_CMPDATE:
-	printf("\\fcmpdates(d1,d2)\n\
+        printf("\\fcmpdates(d1,d2)\n\
   d1 = free-format date and/or time (default = NOW).\n\
   d2 = ditto.\n");
-	printf("Returns:\n");
-	printf("  0 if d1 is equal to d2;\n\
+        printf("Returns:\n");
+        printf("  0 if d1 is equal to d2;\n\
   1 if d1 is later than d2;\n\
  -1 if d1 is earlier than d2.\n");
         break;
 
       case FN_TOGMT:
-	printf("\\futcdate(d1)\n\
+        printf("\\futcdate(d1)\n\
   d1 = free-format date and/or time (default = NOW).\n");
-	printf("Returns:\n");
-	printf("  Date-time converted to UTC (GMT) yyyymmdd hh:mm:ss.\n");
+        printf("Returns:\n");
+        printf("  Date-time converted to UTC (GMT) yyyymmdd hh:mm:ss.\n");
         break;
 
 #ifdef TCPSOCKET
       case FN_HSTADD:
-	printf("\\faddr2name(s)\n\
+        printf("\\faddr2name(s)\n\
   s = numeric IP address.\n");
-	printf("Returns:\n");
-	printf("  Corresponding IP hostname if found, otherwise null.\n");
+        printf("Returns:\n");
+        printf("  Corresponding IP hostname if found, otherwise null.\n");
         break;
       case FN_HSTNAM:
-	printf("\\fname2addr(s)\n\
+        printf("\\fname2addr(s)\n\
   s = IP host name.\n");
-	printf("Returns:\n");
-	printf("  Corresponding numeric IP address if found, else null.\n");
+        printf("Returns:\n");
+        printf("  Corresponding numeric IP address if found, else null.\n");
         break;
 #endif /* TCPSOCKET */
 
       case FN_DELSEC:
-	printf("\\fdelta2secs(dt)\n\
+        printf("\\fdelta2secs(dt)\n\
   dt = Delta time, e.g. +3d14:27:52.\n");
-	printf("Returns:\n");
-	printf("  The corresponding number of seconds.\n");
-	break;
+        printf("Returns:\n");
+        printf("  The corresponding number of seconds.\n");
+        break;
 
       case FN_PC_DU:
-	printf("\\fdos2unixpath(p)\n\
+        printf("\\fdos2unixpath(p)\n\
   p = string, DOS pathname.\n");
-	printf("Returns:\n");
-	printf("  The argument converted to a Unix pathname.\n");
-	break;
+        printf("Returns:\n");
+        printf("  The argument converted to a Unix pathname.\n");
+        break;
 
       case FN_PC_UD:
-	printf("\\funix2dospath(p)\n\
+        printf("\\funix2dospath(p)\n\
   p = string, Unix pathname.\n");
-	printf("Returns:\n");
-	printf("  The argument converted to a DOS pathname.\n");
-	break;
+        printf("Returns:\n");
+        printf("  The argument converted to a DOS pathname.\n");
+        break;
 
 #ifdef FN_ERRMSG
       case FN_ERRMSG:
-	printf("\\ferrstring(n)\n\
+        printf("\\ferrstring(n)\n\
   n = platform-dependent numeric error code.\n");
-	printf("Returns:\n");
-	printf("  The corresponding error string.\n");
-	break;
+        printf("Returns:\n");
+        printf("  The corresponding error string.\n");
+        break;
 #endif /* FN_ERRMSG */
 
       case FN_KWVAL:
-	printf("\\fkeywordvalue(s1,c1)\n\
+        printf("\\fkeywordvalue(s1,c1)\n\
   s1 = string of the form \"name=value\"\n\
   c1 = separator character (default separator is \"=\")\n");
-	printf("    Assigns the value, if any, to the named macro.\n");
-	printf("    If s1 contains no separator, nothing happens.\n");
-	printf(
+        printf("    Assigns the value, if any, to the named macro.\n");
+        printf("    If s1 contains no separator, nothing happens.\n");
+        printf(
 "    If s1 contains a separator but no value, the macro is undefined.\n");
-	printf("Returns:\n");
-	printf("  0 on failure\n");
-	printf("  1 on success\n");
-	break;
+        printf("Returns:\n");
+        printf("  0 on failure\n");
+        printf("  1 on success\n");
+        break;
 
 #ifdef COMMENT
       case FN_SLEEP:
@@ -10376,6 +10817,9 @@ dohkverb(xx) int xx; {
 
     case  K_COMPOSE :                   /* Compose key */
         printf("\\Kcompose           Compose an accented character\n");
+        break;
+    case  K_C_UNI16 :                   /* UCS2 key */
+        printf("\\Kucs2              Enter a Unicode character\n");
         break;
 
 /* DEC arrow keys */
@@ -12597,48 +13041,94 @@ dohrmt(xx) int xx; {
 
 case XZCPY:
     return(hmsg("Syntax: REMOTE COPY source destination\n\
-  Asks the Kermit server to copy the source file to destination."));
+  Asks the Kermit server to copy the source file to destination.\n\
+  Synonym: RCOPY."));
 
 case XZCWD:
+#ifdef NEWFTP
+    return(hmsg("Syntax: REMOTE CD [ name ]\n\
+  Asks the Kermit or FTP server to change its working directory or device.\n\
+  If the device or directory name is omitted, restore the default.\n\
+  Synonym: RCD."));
+#else
     return(hmsg("Syntax: REMOTE CD [ name ]\n\
   Asks the Kermit server to change its working directory or device.\n\
-  If the device or directory name is omitted, restore the default."));
+  If the device or directory name is omitted, restore the default.\n\
+  Synonym: RCD."));
+#endif /* NEWFTP */
 
 case XZDEL:
+#ifdef NEWFTP
     return(hmsg("Syntax: REMOTE DELETE filespec\n\
-  Asks the Kermit server to delete the named file(s)."));
+  Asks the Kermit or FTP server to delete the named file(s).\n\
+  Synonym: RDEL."));
+#else
+    return(hmsg("Syntax: REMOTE DELETE filespec\n\
+  Asks the Kermit server to delete the named file(s).\n\
+  Synonym: RDEL."));
+#endif /* NEWFTP */
 
 case XZMKD:
+#ifdef NEWFTP
     return(hmsg("Syntax: REMOTE MKDIR directory-name\n\
-  Asks the Kermit server to create the named directory."));
+  Asks the Kermit or FTP server to create the named directory.\n\
+  Synonym: RMKDIR."));
+#else
+    return(hmsg("Syntax: REMOTE MKDIR directory-name\n\
+  Asks the Kermit server to create the named directory.\n\
+  Synonym: RMKDIR."));
+#endif /* NEWFTP */
 
 case XZRMD:
+#ifdef NEWFTP
     return(hmsg("Syntax: REMOTE RMDIR directory-name\n\
-  Asks the Kermit server to remove the named directory."));
+  Asks the Kermit or FTP server to remove the named directory.\n\
+  Synonym: RRMDIR."));
+#else
+    return(hmsg("Syntax: REMOTE RMDIR directory-name\n\
+  Asks the Kermit server to remove the named directory.\n\
+  Synonym: RRMDIR."));
+#endif /* NEWFTP */
 
 case XZDIR:
+#ifdef NEWFTP
+    return(hmsg("Syntax: REMOTE DIRECTORY [ filespec ]\n\
+  Asks the Kermit or FTP server to provide a directory listing of the named\n\
+  file(s) or if no file specification is given, of all files in its current\n\
+  directory.  Synonym: RDIR."));
+#else
     return(hmsg("Syntax: REMOTE DIRECTORY [ filespec ]\n\
   Asks the Kermit server to provide a directory listing of the named\n\
-  file(s) or if no file specification is given, of all files in the current\n\
-  directory."));
+  file(s) or if no file specification is given, of all files in its current\n\
+  directory.  Synonym: RDIR."));
+#endif /* NEWFTP */
 
 case XZHLP:
+#ifdef NEWFTP
     return(hmsg("Syntax: REMOTE HELP\n\
-  Asks the Kermit server to list the services it provides."));
+  Asks the Kermit or FTP server to list the services it provides.\n\
+  Synonym: RHELP."));
+#else
+    return(hmsg("Syntax: REMOTE HELP\n\
+  Asks the Kermit server to list the services it provides.\n\
+  Synonym: RHELP."));
+#endif /* NEWFTP */
 
 case XZHOS:
     return(hmsg("Syntax: REMOTE HOST command\n\
   Sends a command to the other computer in its own command language\n\
-  through the Kermit server that is running on that host."));
+  through the Kermit server that is running on that host.  Synonym: RHELP."));
 
 #ifndef NOFRILLS
 case XZKER:
     return(hmsg("Syntax: REMOTE KERMIT command\n\
-  Sends a command to the remote Kermit server in its own command language."));
+  Sends a command to the remote Kermit server in its own command language.\n\
+  Synonym: RKERMIT."));
 
 case XZLGI:
     return(hmsg("Syntax: REMOTE LOGIN user password [ account ]\n\
-  Logs in to a remote Kermit server that requires you login."));
+  Logs in to a remote Kermit server that requires you login.  Note: RLOGIN\n\
+  is NOT a synonym for REMOTE LOGIN."));
 
 case XZLGO:
     return(hmsg("Syntax: REMOTE LOGOUT\n\
@@ -12648,12 +13138,18 @@ case XZLGO:
 case XZPRI:
     return(hmsg("Syntax: REMOTE PRINT filespec [ options ]\n\
   Sends the specified file(s) to the remote Kermit and ask it to have the\n\
-  file printed on the remote system's printer, using any specified options."));
+  file printed on the remote system's printer, using any specified options.\n\
+  Synonym: RPRINT."));
 #endif /* NOFRILLS */
 
 case XZREN:
+#ifdef NEWFTP
     return(hmsg("Syntax: REMOTE RENAME filespec newname\n\
-  Asks the Kermit server to rename the file."));
+  Asks the Kermit or FTP server to rename the file.  Synonym: RRENAME."));
+#else
+    return(hmsg("Syntax: REMOTE RENAME filespec newname\n\
+  Asks the Kermit server to rename the file.  Synonym: RRENAME."));
+#endif /* NEWFTP */
 
 case XZSET:
     return(hmsga(hrset));
@@ -12661,23 +13157,31 @@ case XZSET:
 case XZSPA:
     return(hmsg("Syntax: REMOTE SPACE [ name ]\n\
   Asks the Kermit server to tell you about its disk space on the current\n\
-  disk or directory, or in the one that you name."));
+  disk or directory, or in the one that you name.  Synonym: RSPACE."));
 
 #ifndef NOFRILLS
 case XZTYP:
+#ifdef NEWFTP
     return(hmsg("Syntax: REMOTE TYPE file\n\
-  Asks the Kermit server to type the named file(s) on your screen."));
+  Asks the Kermit or FTP server to send the named file to your screen.\n\
+  Synonym: RTYPE."));
+#else
+    return(hmsg("Syntax: REMOTE TYPE file\n\
+  Asks the Kermit server to send the named file(s) to your screen.\n\
+  Synonym: RTYPE."));
+#endif /* NEWFTP */
+
 
 case XZWHO:
     return(hmsg("Syntax: REMOTE WHO [ name ]\n\
   Asks the Kermit server to list who's logged in, or to give information\n\
-  about the named user."));
+  about the named user.  Synonym: RWHO."));
 #endif /* NOFRILLS */
 
 #ifndef NOSPL
 case XZQUE:
     return(hmsg(
-"Syntax: REMOTE QUERY { KERMIT, SYSTEM, USER } variable-name\n\
+"Syntax: [ REMOTE ] QUERY { KERMIT, SYSTEM, USER } variable-name\n\
   Asks the Kermit server to send the value of the named variable of the\n\
   given type, and make it available in the \\v(query) variable.  When the\n\
   type is KERMIT functions may also be specified as if they were variables."));
@@ -12685,17 +13189,36 @@ case XZQUE:
 case XZASG:
     return(hmsg(
 "Syntax: REMOTE ASSIGN variable-name [ value ]\n\
-  Assigns the given value to the named global variable on the server."));
+  Assigns the given value to the named global variable on the server.\n\
+  Synonyms: RASG, RASSIGN."));
 #endif /* NOSPL */
 
+case XZPWD:
+    return(hmsg(
+#ifdef NEWFTP
+"Syntax: REMOTE PWD\n\
+  Asks the Kermit server to display its current working directory.\n\
+  Synonym: RPWD."));
+#else
+"Syntax: REMOTE PWD\n\
+  Asks the Kermit or FTP server to display its current working directory.\n\
+  Synonym: RPWD."));
+#endif /* NEWFTP */
+
 case XZXIT:
+#ifdef NEWFTP
     return(hmsg("Syntax: REMOTE EXIT\n\
-  Asks the Kermit server to exit."));
+   Asks the Kermit server to exit (without disconnecting), or closes an FTP\n\
+   connection.  Synonym: REXIT, and (for FTP only) BYE, FTP BYE."));
+#else
+    return(hmsg("Syntax: REMOTE EXIT\n\
+  Asks the Kermit server to exit.  Synonym: REXIT."));
+#endif /* NEWFTP */
 
 default:
     if ((x = cmcfm()) < 0) return(x);
-    printf("not working yet - %s\n",cmdbuf);
-    return(-2);
+    printf("?Sorry, no help available - \"%s\"\n",cmdbuf);
+    return(-9);
     }
 }
 #endif /* NOXFER */

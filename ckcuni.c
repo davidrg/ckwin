@@ -7,7 +7,7 @@ char * ckcuni = "Unicode support 8.0.114, 23 Jul 2000";
 /*  C K C U N I . C  --  Unicode/Terminal character-set translations  */
 
 /*
-  Copyright (C) 1999, 2001,
+  Copyright (C) 1999, 2002,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -37,6 +37,10 @@ char * ckcuni = "Unicode support 8.0.114, 23 Jul 2000";
   hypothetical) Kermit font that has all the VT/Heath/Wyse/TVI graphic
   characters in it.  IMPORTANT: all Kermitfont code points need updating to
   the values in the final proposal to the UTC.
+
+  LATER NOTE: The needed characters were approved for Unicode 3.1, and 
+  therefore nothing special should be required to use them, except that it
+  will take some time for them to show up in commercial fonts.
 
   TO DO: A lot of the functions can be tightened up -- use ranges when
   possible, sort switch statements in order of frequency, etc.

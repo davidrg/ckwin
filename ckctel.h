@@ -1249,6 +1249,6 @@ extern int sstelnet;                    /* Server side telnet? */
 extern int tn_deb;			/* Telnet option debugging flag */
 #endif /* CKCTEL_C */
 
-#define TN_MSG_LEN 8196
+#define TN_MSG_LEN 12292
 #endif /* TNCODE */
 #endif /* CKCTEL_H */

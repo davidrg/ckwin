@@ -1,6 +1,6 @@
-ckaaaa.txt                                                        12 Dec 2001
+ckaaaa.txt                                                         8 Feb 2002
 
-			   C-KERMIT VERSION 8.0.200
+			   C-KERMIT VERSION 8.0.201
 			      OVERVIEW OF FILES
 
 	       Communications software for UNIX and (Open)VMS.
@@ -11,7 +11,7 @@ ckaaaa.txt                                                        12 Dec 2001
 		      The Apple Macintosh, the Atari ST.
 
 
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2002,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -37,18 +37,18 @@ QUICK START FOR FTP USERS
 
 C-Kermit for UNIX computers that have a C compiler and 'make' program:
 
-  Directory kermit/archives, binary mode, file cku200.tar.Z or cku200.tar.gz
+  Directory kermit/archives, binary mode, file cku201.tar.Z or cku201.tar.gz
 
   This is a compressed tar archive of UNIX C-Kermit source code, makefile, and
   other files.  It unpacks into its current directory, so download it into a
   fresh directory.  Transfer in binary mode, uncompress (or gunzip), untar (tar
-  xvf cku200.tar), and then give the appropriate "make" command to build for
+  xvf cku201.tar), and then give the appropriate "make" command to build for
   your UNIX system; read the comments in the makefile and ckuins.txt for
   further info.
 
 C-Kermit for VMS:
 
-  If you have VMS UNZIP, get the file kermit/archives/ckv200.zip in binary
+  If you have VMS UNZIP, get the file kermit/archives/ckv201.zip in binary
   mode, unzip, and build with CKVKER.COM.
 
 Others:  In the kermit/f or kermit/test directories under the appropriate
@@ -113,11 +113,12 @@ letter indicating the subgroup.  When referring to these files in the UNIX,
 AOS/VS, or VOS environments, use lowercase letters, rather than the uppercase
 letters shown here.  Subgroups:
 
+  _: Security/Authentication/Encryption code, possibly regulated by law
   A: General descriptive material and documentation
   B: BOO file encoders and decoders (obsolete)
-  C: All systems with C compilers
+  C: All platforms with C compilers
   D: Data General AOS/VS
-  E: Reserved for "ckermit" files, like CKERMIT.INI, CKERMIT2.TXT
+  E: Reserved for "ckermit" files, like CKERMIT.INI, CKERMIT80.TXT
   F: (reserved)
   G: (reserved)
   H: (reserved)
@@ -127,7 +128,7 @@ letters shown here.  Subgroups:
   L: Stratus VOS
   M: Macintosh with Mac OS
   N: Microsoft Windows NT
-  O: OS/2 and/or Microsoft Windows 95/98/NT
+  O: OS/2 and/or Microsoft Windows 95/98/ME/NT/2000/XP/...
   P: Bell Labs Plan 9
   Q: (reserved)
   R: DEC PDP-11 with RSTS/E (reserved)
@@ -136,11 +137,11 @@ letters shown here.  Subgroups:
   U: UNIX or environments with UNIX-like C libraries
   V: VMS and OpenVMS
   W: Wart (Lex-like preprocessor, used with all systems)
-  X: Build lists (most recent build for each platform), e.g. ckx200.txt.
+  X: (reserved)
   Y: (reserved)
   Z: (reserved)
   0-3: (reserved)
-  4: IBM AS/400
+  4: IBM AS/400 (reserved)
   5-8: (reserved)
   9: Microware OS-9
 
@@ -199,6 +200,7 @@ The following files are of interest mainly to programmers and historians
   ckcker.ann - Release announcements.
   ckccfg.txt - Configuration information (feature selection), general.
   ckcplm.txt - Program logic manual (for programmers).
+  ckc201.txt - Program update history for edit 201.
   ckc200.txt - Program update history for edit 198-200 (big)
   ckc197.txt - Program update history for edit 195-197 (big)
   ckc190.txt - Program update history for edits 189-190 (big).
@@ -225,7 +227,7 @@ SOURCE FILES
 The source files for the UNIX version (all UNIX versions) are available in
 kermit/archives/ckuNNN.tar.Z, approximately 1MB in size.  Transfer this file
 in binary mode.  This is a compressed tar archive.  There is also a gzip'd
-version, cku200.tar.gz.  To get the binary tar archive:
+version, cku201.tar.gz.  To get the binary tar archive:
 
   mkdir kermit                   (at shell prompt, make a Kermit directory)
   cd kermit                      (make it your current directory)
@@ -235,11 +237,11 @@ version, cku200.tar.gz.  To get the binary tar archive:
   password:                      (use your email id as a password)
   cd kermit/archives             (go to the archives directory)
   type binary                    (specify binary file transfer)
-  get cku200.tar.Z               (get the tar archive) (or get cku192.tar.gz)
+  get cku201.tar.Z               (get the tar archive) (or get cku192.tar.gz)
   bye                            (disconnect and exit from ftp)
 
-  uncompress cku200.tar.Z        (at the shell prompt, uncompress the archive)
-  tar xvf cku200.tar             (extract the files from the tar archive)
+  uncompress cku201.tar.Z        (at the shell prompt, uncompress the archive)
+  tar xvf cku201.tar             (extract the files from the tar archive)
   make xxx                       (build C-Kermit for your system)
 
 (where "xxx" is the makefile entry appropriate for your system.)
@@ -273,7 +275,7 @@ the files you need, and in some cases maybe a few extra):
    OS-9:   ck[cuw9]*.[cwha]
 
 For a detailed, specific source file list for this C-Kermit release, see the
-file ckcxxx.txt, where xxx is the current C-Kermit edit number, such as 200.
+file ckcxxx.txt, where xxx is the current C-Kermit edit number, such as 201.
 
 Finally, here is a more detailed description of the C-Kermit file naming
 conventions.  A C-Kermit filename has the form:
@@ -315,8 +317,9 @@ where:
   uue: A uuencoded binary file, decode with uudecode or (DG only) CKDECO.
 
   def: An OS/2 linker definitions file.
+  sh:  A UNIX shell script.
   sed: A UNIX sed (editor) script.
-  str: A file of character strings extracted from C-Kermit (BSD 2.1x).
+  str: A file of character strings extracted from C-Kermit (BSD 2.1x only).
 
 <what> is mnemonic (up to 3 characters) for what's in the file:
 
@@ -327,9 +330,10 @@ otherwise mistake them for Microsoft Word or Windows Help documents.
   aaa: A "read-me" file, like this one
   ins: Installation instructions or procedures
   bwr: "Beware" file -- things to watch out for, hints and tips
+  plm: Program Logic Manual
   ker: General C-Kermit definitions, information, documentation
 
-  nnn: Digits: C-Kermit edit number (e.g. cku200.tar.gz)
+  nnn: Digits: C-Kermit edit number (e.g. cku201.tar.gz)
   cmd: Command parsing
   con: CONNECT command
   cns: CONNECT command (UNIX only - version that uses select(), not fork())

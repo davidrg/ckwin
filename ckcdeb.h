@@ -1,7 +1,7 @@
 /*  C K C D E B . H  */
 
 /*
-Sat Dec  8 11:29:28 2001
+Fri Feb  8 11:23:22 2002
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
   compatible with C preprocessors that support only #ifdef, #else, #endif,
@@ -26,7 +26,7 @@ Sat Dec  8 11:29:28 2001
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2002,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -2799,7 +2799,10 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #ifndef ANYSSH
 #ifdef SSHBUILTIN
 #define ANYSSH
-#else
+#ifdef SSHCMD
+#undef SSHCMD
+#endif /* SSHCMD */
+#else  /* SSHBUILTIN */
 #ifdef SSHCMD
 #define ANYSSH
 #endif /* SSHCMD */
@@ -2817,6 +2820,14 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #endif /* SSH */
 #endif /* SSHBUILTIN */
 #endif /* OS2 */
+
+#ifdef CK_AUTHENTICATION
+#define CK_SECURITY
+#else
+#ifdef CK_SSL
+#define CK_SECURITY
+#endif /* CK_SSL */
+#endif /* CK_AUTHENTICATION */
 
 /* Environment stuff */
 
@@ -4289,7 +4300,7 @@ _PROTOTYP( int ttsetflow, (int) );
 #define CTTNAM dftty
 #else
 #ifdef vms
-#define CTTNAM "TT:"
+#define CTTNAM "SYS$INPUT:"		/* (4 Jan 2002) Was TT: */
 #else
 #ifdef datageneral
 #define CTTNAM "@output"
@@ -4701,7 +4712,8 @@ SIGTYP (*signal())();
 #define CXT_NETBIOS 7			/* NETBIOS */
 #define CXT_NPIPE   8			/* Named Pipe */
 #define CXT_PIPE    9			/* Pipe, Command, PTY, DLL, etc */
-#define CXT_MAX     9			/* Highest connection type */
+#define CXT_SSH     10                  /* SSH */
+#define CXT_MAX     10			/* Highest connection type */
 
 /* Autodownload Detection Options */
 
@@ -5728,6 +5740,56 @@ _PROTOTYP( long atol, (char *) );
 #ifndef DEVNAMLEN
 #define DEVNAMLEN CKMAXPATH
 #endif /* DEVNAMLEN */
+
+/* Directory (path segment) separator */
+/* Not fully general - Tricky for VMS, Amiga, ... */
+
+#ifndef DIRSEP
+#ifdef UNIX
+#define DIRSEP '/'
+#define ISDIRSEP(c) ((c)=='/')
+#else
+#ifdef OS2
+#define DIRSEP '/'
+#define ISDIRSEP(c) ((c)=='/'||(c)=='\\')
+#else
+#ifdef datageneral
+#define DIRSEP ':'
+#define ISDIRSEP(c) (((c)==':')||((c)=='^')||((c)=='='))
+#else
+#ifdef STRATUS
+#define DIRSEP '>'
+#define ISDIRSEP(c) ((c)=='>')
+#else
+#ifdef VMS
+#define DIRSEP ']'			/* (not really) */
+#define ISDIRSEP(c) ((c)==']'||(c)==':')
+#else
+#ifdef MAC
+#define DIRSEP ':'
+#define ISDIRSEP(c) ((c)==':')
+#else
+#ifdef AMIGA
+#define DIRSEP '/'
+#define ISDIRSEP(c) ((c)=='/'||(c)==':')
+#else
+#ifdef GEMDOS
+#define DIRSEP '\\'
+#define ISDIRSEP(c) ((c)=='\\'||(c)==':')
+#else
+#define DIRSEP '/'
+#define ISDIRSEP(c) ((c)=='/')
+#endif /* GEMDOS */
+#endif /* AMIGA */
+#endif /* MAC */
+#endif /* VMS */
+#endif /* STRATUS */
+#endif /* datageneral */
+#endif /* OS2 */
+#endif /* UNIX */
+#endif /* DIRSEP */
+
+/* FILE package parameters */
 
 #ifdef pdp11
 #define NOCHANNELIO

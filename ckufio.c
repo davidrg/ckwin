@@ -3,12 +3,12 @@
 #define CK_NONBLOCK                     /* See zoutdump() */
 
 #ifdef aegis
-char *ckzv = "Aegis File support, 8.0.185, 8 Dec 2001";
+char *ckzv = "Aegis File support, 8.0.187, 9 Jan 2002";
 #else
 #ifdef Plan9
-char *ckzv = "Plan 9 File support, 8.0.185, 8 Dec 2001";
+char *ckzv = "Plan 9 File support, 8.0.187, 9 Jan 2002";
 #else
-char *ckzv = "UNIX File support, 8.0.185, 8 Dec 2001";
+char *ckzv = "UNIX File support, 8.0.187, 9 Jan 2002";
 #endif /* Plan9 */
 #endif /* aegis */
 /*
@@ -17,7 +17,7 @@ char *ckzv = "UNIX File support, 8.0.185, 8 Dec 2001";
   and others noted in the comments below.  Note: CUCCA = Previous name of
   Columbia University Academic Information Systems.
 
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2002,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -88,8 +88,12 @@ char *ckzv = "UNIX File support, 8.0.185, 8 Dec 2001";
   OS/2 kernel also accepts / as directory separator.  But this is subject to
   change in future versions to conform to the normal OS/2 style.
 */
+#ifndef DIRSEP
 #define DIRSEP       '/'
+#endif /* DIRSEP */
+#ifndef ISDIRSEP
 #define ISDIRSEP(c)  ((c)=='/')
+#endif /* ISDIRSEP */
 
 #ifdef SDIRENT
 #define DIRENT
@@ -3099,7 +3103,7 @@ zxcmd(filnum,comand) int filnum; char *comand; {
 #ifdef COMMENT
 /* I wonder what this is all about... */
 	close(pipes[0]);		/* Don't need the input side */
-	fp[filnum] = fdopen(pipes[1],"w"); /* Open a stream for output. */
+	fp[filnum] = fdopen(pipes[1],"w"); /* Open output stream. */
 	fp[ZSYSFN] = fp[filnum];           /* Remember. */
 #endif /* COMMENT */
 	ispipe[filnum] = 1;
@@ -3197,7 +3201,7 @@ zxcmd(filnum,comand) int filnum; char *comand; {
     debug(F101,"zxcmd pid","",pid);
     close(pipes[1]);                    /* Don't need the output side */
     ispipe[filnum] = 1;                 /* Remember it's a pipe */
-    fp[filnum] = fdopen(pipes[0],"r");  /* Open a stream for input. */
+    fp[filnum] = fdopen(pipes[0],"r");	/* Open a stream for input. */
 
 #ifdef DONDELAY
 #ifdef SELECT
@@ -6579,7 +6583,13 @@ tilde_expand(dirname) char *dirname; {
               user = getpwnam(uidbuf);  /* Get info on current user */
             else
 #endif /* IKSD */
-              user = getpwnam(whoami());
+            {
+                char * p = whoami();
+                if (p)
+		  user = getpwnam(p);
+                else
+		  user = NULL;
+            }
         } else {
             user = getpwnam(&temp[1]);  /* otherwise on the specified user */
         }
@@ -7108,13 +7118,8 @@ zfnqfp(fname, buflen, buf)  char * fname; int buflen; char * buf; {
     char zfntmp[CKMAXPATH+4];
 #endif /* MAXPATHLEN */
 
-#ifndef CKREALPATH
-    char sb[32];
-    char * tmp = zfntmp;
+    char sb[32], * tmp;
     int i = 0, j = 0, k = 0, x = 0, y = 0;
-#else
-    char * tmp = NULL;
-#endif /* CKREALPATH */
 
     s = fname;
     if (!s)
@@ -7150,8 +7155,14 @@ zfnqfp(fname, buflen, buf)  char * fname; int buflen; char * buf; {
 
     if (!realpath(s,zfntmp)) {
         debug(F111,"zfnqfp realpath fails",s,errno);
+#ifdef COMMENT
 	if (errno != ENOENT)
 	  return(NULL);
+#else
+	/* If realpath() fails use the do-it-yourself method */
+	/* 16 Jan 2002 */
+	goto norealpath;
+#endif /* COMMENT */
     }
     len = strlen(zfntmp);
     if (len > buflen) {
@@ -7180,8 +7191,11 @@ zfnqfp(fname, buflen, buf)  char * fname; int buflen; char * buf; {
     }
     return(&fnfp);
 
-#else  /* Do-It-Yourself Version... */
+#endif /* CKREALPATH */
 
+  norealpath:
+
+    tmp = zfntmp;
     while (*s) {                        /* Remove leading "./" (0 or more) */
         debug(F110,"zfnqfp while *s",s,0);
         if (*s == '.' && *(s+1) == '/') {
@@ -7285,7 +7299,6 @@ zfnqfp(fname, buflen, buf)  char * fname; int buflen; char * buf; {
         return(&fnfp);
     }
     return(NULL);
-#endif /* CKREALPATH */
 }
 
 /*  Z C M P F N  --  Compare two filenames  */

@@ -4,7 +4,7 @@
   Author: Jeffrey Altman <jaltman@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1999, 2000,
+  Copyright (C) 1999, 2002,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -55,25 +55,11 @@ typedef struct kstream_int {                    /* Object we pass around */
     int decrypt_type;
 } *kstream;
 
-
-
-struct kstream_crypt_ctl_block {
-  int (*encrypt)(struct kstream_data_block *, /* output */
-		 struct kstream_data_block *); /* input */
-  int (*decrypt)(struct kstream_data_block *, /* output */
-		 struct kstream_data_block *); /* input */
-  int (*init)(kstream);
-  void (*destroy)(void);
-};
-
-
 /* Prototypes */
 
 int  kstream_destroy();
 void kstream_set_buffer_mode(int);
-int  kstream_create_from_fd(int fd,
-			       const struct kstream_crypt_ctl_block *,
-			       kstream_ptr);
+int  kstream_create_from_fd(int fd, kstream_ptr);
 int kstream_write(void *, size_t);
 int kstream_read(void *, size_t);
 
@@ -112,6 +98,11 @@ _PROTOTYP(void ck_tn_encrypt, (char *, int));
 _PROTOTYP(void ck_tn_decrypt, (char *, int));
 _PROTOTYP(void ck_tn_encrypt_start, (VOID));
 _PROTOTYP(void ck_tn_encrypt_stop, (VOID));
+_PROTOTYP(int ck_tn_authenticated, (VOID));
+#ifdef CK_ENCRYPTION
+_PROTOTYP(int ck_tn_encrypting, (VOID));
+_PROTOTYP(int ck_tn_decrypting, (VOID));
+#endif /* CK_ENCRYPTION */
 #ifdef CK_SSL
 _PROTOTYP(int  ck_tn_tls_negotiate, (VOID));
 #endif /* CK_SSL */

@@ -4,8 +4,8 @@
      Frank da Cruz
      [1]The Kermit Project, [2]Columbia University
      
-   As of: C-Kermit 8.0.200, 12 Dec 2001
-   This page last updated: Wed Dec 12 09:45:21 2001 (New York USA Time)
+   As of: C-Kermit 8.0.201, 8 Feb 2002
+   This page last updated: Mon Feb 11 17:49:47 2002 (New York USA Time)
    
      IF YOU ARE READING A PLAIN-TEXT version of this document, note that
      this file is a plain-text dump of a Web page. You can visit the
@@ -189,16 +189,42 @@
   
    [ [26]Top ] [ [27]Contents ] [ [28]Next ] [ [29]Previous ]
    
-   When using the command-line processor ("kermit -l /dev/tty00 -b
-   19200", etc), note that in some cases the order of the command-line
-   options makes a difference, contrary to the expectation that order of
-   command-line options should not matter. For example, the -b option
-   must be given after the -l option if it is to affect the device
-   specified in the -l option.
+   Various command-related limits are shown in the following table, in
+   which the sample values are for a "large memory model" build of
+   C-Kermit, typical for modern platforms (Linux, Solaris, AIX, VMS,
+   etc). You can see the values for your version of Kermit by giving the
+   SHOW FEATURES command. The maximum length for a Kermit command (CMDBL)
+   also determines the maximum length for a macro definition, since
+   DEFINE is itself a command. The maximum length for a variable name is
+   between 256 and 4096 characters, depending on the platform; for array
+   declarations and references, that includes the subscript.
+       ______________________________________________________________
+     
+     Item Symbol Sample
+     Value Definition
+     Number of characters in a command CMDBL 32763 ckucmd.h
+     Number of chars in a field of a command    ATMBL 10238 ckucmd.h
+     Nesting level for command files MAXTAKE 54   ckuusr.h
+     Nesting level for macros MACLEVEL 128 ckuusr.h
+     Nesting level for FOR / WHILE loops FORDEPTH 32 ckuusr.h
+     Number of macros MAC_MAX 16384 ckuusr.h
+     Size of INPUT buffer INPBUFSIZ 4096 ckuusr.h
+     Maximum files to match a wildcard MAXWLD    102400 ckcdeb.h
+     Filespecs in MSEND command MSENDMAX 1024 ckuusr.h
+     Length for GOTO target label LBLSIZ 50 ckuusr.h
+     \fexecute() recursion depth limit CMDDEP 64 ckucmd.h
+       ______________________________________________________________
+     
+   If you need to define a macro that is longer than CMDBL, you can break
+   the macro up into sub-macros or rewrite the macro as a command file.
+   In a pinch you can also redefine CMDBL and recompile C-Kermit. All of
+   these numbers represent tradeoffs: the bigger the number, the more
+   "powerful" Kermit in the corresponding area, but also the bigger the
+   program image and possibly disk footprint, and the longer it takes to
+   load and initialize.
    
    In the interactive command parser:
    
-     * VMS-style command editing (arrow keys, etc) is not supported.
      * EMACS- or VI-style command line editing is not supported.
      * Editing keys are hardwired (Ctrl-U, Ctrl-W, etc).
        
@@ -247,35 +273,6 @@
    Question-mark help does not work during execution of an ASKQ command.
    The question marks are simply accepted as text.
    
-   The maximum length for a variable name is between 256 and 4096
-   characters, depending on the platform; for array declarations and
-   references, that includes the subscript. Some other maximums are
-   listed in the following table. The sample values are for a "large
-   memory model" build of C-Kermit, which is typical for modern platforms
-   (Linux, Solaris, AIX, VMS, etc):
-       ______________________________________________________________
-     
-     Item Symbol Sample
-     Value Definition
-     Nesting level for command files MAXTAKE 54   ckuusr.h
-     Nesting level for macros MACLEVEL 128 ckuusr.h
-     Nesting level for FOR / WHILE loops FORDEPTH 32 ckuusr.h
-     Number of macros MAC_MAX 16384 ckuusr.h
-     Size of INPUT buffer INPBUFSIZ 4096 ckuusr.h
-     Maximum files to match a wildcard MAXWLD    102400 ckcdeb.h
-     Filespecs in MSEND command MSENDMAX 1024 ckuusr.h
-     Length for GOTO target label LBLSIZ 50 ckuusr.h
-     Number of characters in a command CMDBL 32763 ckucmd.h
-     Number of chars in a field of a command    ATMBL 10238 ckucmd.h
-     \fexecute() recursion depth limit CMDDEP 64 ckucmd.h
-       ______________________________________________________________
-     
-   The actual values of most of these items can vary with version and
-   configuration, and are listed by SHOW FEATURES.
-   
-   The maximum length for a command also determines the maximum length
-   for a macro definition, since DEFINE is itself a command.
-   
    In OUTPUT commands only, \B sends a BREAK signal, \L sends a Long
    BREAK signal, and \N sends a NUL (ASCII 0). BREAK and Long BREAK are
    special signals, not characters, and NUL is a character that normally
@@ -285,6 +282,13 @@
    backslash, e.g. "output \\B". In C-Kermit 7.0 or later, you can disarm
    and re-arm the special OUTPUT-command escapes (\B, \L, and \N) with
    SET OUTPUT SPECIAL-ESCAPES { OFF, ON }.
+   
+   When using the command-line processor ("kermit -l /dev/tty00 -b
+   19200", etc), note that in some cases the order of the command-line
+   options makes a difference, contrary to the expectation that order of
+   command-line options should not matter. For example, the -b option
+   must be given after the -l option if it is to affect the device
+   specified in the -l option.
     ________________________________________________________________________
   
   3. MULTIPLE SESSIONS

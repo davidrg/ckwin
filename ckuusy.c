@@ -9,7 +9,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>
   Columbia University, New York City.
 
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2002,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -26,6 +26,7 @@ extern char * xferfile;
 #include "ckucmd.h"
 #include "ckcnet.h"
 #include "ckuusr.h"
+#include "ckcxla.h"
 #ifdef CK_SSL
 #include "ck_ssl.h"
 #endif /* CK_SSL */
@@ -33,6 +34,10 @@ extern char * xferfile;
 
 #ifdef OS2
 #include <io.h>
+#ifdef KUI
+#include "ikui.h"
+extern struct _kui_init kui_init;
+#endif /* KUI */
 #endif /* OS2 */
 
 extern int inserver, fncnv, f_save, xfermode;
@@ -133,7 +138,9 @@ extern unsigned char NetBiosAdapter;
 _PROTOTYP(static int dotnarg, (char x) );
 #endif /* TNCODE */
 
-int haveftpuid = 0;
+int haveftpuid = 0;			/* Have FTP user ID */
+static int have_cx = 0;			/* Have connection */
+
 #ifdef NEWFTP
 extern char * ftp_host;
 #endif /* NEWFTP */
@@ -553,11 +560,13 @@ usage() {
 #else
     conol("Usage: ");
     conol(xarg0);
-    if (howcalled == I_AM_KERMIT || howcalled == I_AM_IKSD)
+    if (howcalled == I_AM_KERMIT || howcalled == I_AM_IKSD ||
+        howcalled == I_AM_SSHSUB)
       conola(hlp1);
     else if (howcalled == I_AM_TELNET)
       conola(hlp2);
-    if (howcalled == I_AM_KERMIT || howcalled == I_AM_IKSD) {
+    if (howcalled == I_AM_KERMIT || howcalled == I_AM_IKSD ||
+        howcalled == I_AM_SSHSUB) {
 	int c;
 	conoll("");
 	conoll("Complete listing of command-line options:");
@@ -1104,11 +1113,14 @@ cmdlin() {
 #endif /* COMMENT */
 #endif /* TCPSOCKET */
 
+    if (howcalled == I_AM_SSHSUB)
+      return(0);
+
 /*
   From here down: We were called as "kermit" or "iksd".
 
-  If we were started directly from a Kermit application file, its name is
-  in argv[1], so skip past it.
+  If we were started directly from a Kermit script file,
+  the filename of the script is in argv[1], so skip past it.
 */
     if (xargc > 1) {
         int n = 1;
@@ -1288,10 +1300,28 @@ struct keytab xargtab[] = {
     { "cdfile",      XA_CDFI, CM_ARG },
     { "cdmessage",   XA_CDMS, CM_ARG },
     { "cdmsg",       XA_CDMS, CM_ARG|CM_INV },
+#ifndef NOCSETS
+    { "charset",     XA_CSET, CM_ARG|CM_PRE },
+#endif /* NOCSETS */
 #ifdef IKSDB
     { "database",    XA_DBAS, CM_ARG|CM_PRE },
     { "dbfile",      XA_DBFI, CM_ARG|CM_PRE },
 #endif /* IKSDB */
+#ifdef KUI
+    { "facename",    XA_FNAM, CM_ARG|CM_PRE|CM_INV },
+    { "fontname",    XA_FNAM, CM_ARG|CM_PRE },
+    { "fontsize",    XA_FSIZ, CM_ARG|CM_PRE },
+#endif /* KUI */
+#ifdef COMMENT
+#ifdef NEWFTP
+    { "ftp",         XA_FTP,  CM_ARG },
+#endif /* NEWFTP */
+#endif /* COMMENT */
+#ifndef NOLOCAL
+#ifdef OS2
+    { "height",      XA_ROWS, CM_ARG|CM_PRE },
+#endif /* OS2 */
+#endif /* NOLOCAL */
     { "help",        XA_HELP, 0 },
 #ifndef NOHELP
     { "helpfile",    XA_HEFI, CM_ARG },
@@ -1301,6 +1331,9 @@ struct keytab xargtab[] = {
 #endif /* CK_LOGIN */
     { "nointerrupts",XA_NOIN, CM_PRE },
     { "noperms",     XA_NPRM, 0 },
+#ifdef COMMENT
+    { "password",    XA_PASS, CM_ARG|CM_INV },
+#endif /* COMMENT */
 #ifdef CK_LOGIN
 #ifndef NOXFER
 #ifdef CK_PERM
@@ -1310,18 +1343,48 @@ struct keytab xargtab[] = {
 #endif /* NOXFER */
 #ifdef UNIX
     { "privid",      XA_PRIV, CM_ARG|CM_PRE },
+#endif /* UNIX */
+#ifndef NOLOCAL
+#ifndef NOCSETS
+    { "rcharset",    XA_CSET, CM_ARG|CM_PRE|CM_INV },
+#endif /* NOCSETS */
+#endif /* NOLOCAL */
+#ifdef UNIX
     { "root",        XA_ROOT, CM_ARG|CM_PRE },
 #else /* UNIX */
 #ifdef CKROOT
     { "root",        XA_ROOT, CM_ARG|CM_PRE },
 #endif /* CKROOT */
 #endif /* UNIX */
+#ifdef COMMENT
+#ifdef SSHBUILTIN
+    { "ssh",         XA_SSH,  CM_ARG },
+#endif /* SSHBUILTIN */
+#endif /* COMMENT */
 #ifdef CKSYSLOG
     { "syslog",      XA_SYSL, CM_ARG|CM_PRE },
 #endif /* CKSYSLOG */
+#ifndef NOLOCAL
+#ifdef COMMENT
+#ifdef TNCODE
+    { "telnet",      XA_TEL,  CM_ARG },
+#endif /* TNCODE */
+#endif /* COMMENT */
+    { "termtype",    XA_TERM, CM_ARG|CM_PRE },
+#endif /* NOLOCAL */
     { "timeout",     XA_TIMO, CM_ARG|CM_PRE },
+#ifndef NOLOCAL
+#ifndef NOSPL
+    { "user",        XA_USER, CM_ARG },
+#endif /* NOSPL */
+#endif /* NOLOCAL */
     { "userfile",    XA_USFI, CM_ARG|CM_PRE },
     { "version",     XA_VERS, 0 },
+#ifndef NOLOCAL
+#ifdef OS2
+    { "width",       XA_COLS, CM_ARG|CM_PRE },
+#endif /* OS2 */
+#endif /* NOLOCAL */
 #ifdef CKWTMP
     { "wtmpfile",    XA_WTFI, CM_ARG|CM_PRE },
     { "wtmplog",     XA_WTMP, CM_ARG|CM_PRE },
@@ -1329,6 +1392,12 @@ struct keytab xargtab[] = {
 #endif /* CK_LOGIN */
     { "xferfile",    XA_IKFI, CM_ARG|CM_PRE },
     { "xferlog",     XA_IKLG, CM_ARG|CM_PRE },
+#ifndef NOLOCAL
+#ifdef KUI
+    { "xpos",        XA_XPOS, CM_ARG|CM_PRE },
+    { "ypos",        XA_YPOS, CM_ARG|CM_PRE },
+#endif /* KUI */
+#endif /* NOLOCAL */
     {"", 0, 0 }
 };
 int nxargs = sizeof(xargtab)/sizeof(struct keytab) - 1;
@@ -1483,7 +1552,55 @@ inixopthlp() {
             xarghlp[j] = "Disable file-transfer Permissions attribute.";
             break;
 #endif /* CK_PERMS */
-        }
+#ifdef KUI
+	  case XA_XPOS:
+	    xopthlp[j] = "--xpos:n";
+	    xarghlp[j] = "X-coordinate of window position (number).";
+	    break;
+	  case XA_YPOS:
+	    xopthlp[j] = "--ypos:n";
+	    xarghlp[j] = "Y-coordinate of window position (number).";
+	    break;
+	  case XA_FNAM:
+	    xopthlp[j] = "--fontname:s (or --facename:s)";
+	    xarghlp[j] = "Font/typeface name: string with _ replacing blank.";
+	    break;
+	  case XA_FSIZ:
+	    xopthlp[j] = "--fontsize:n";
+	    xarghlp[j] = "Font point size (number).";
+	    break;
+#endif /* KUI */
+#ifdef OS2
+	  case XA_ROWS:
+	    xopthlp[j] = "--height:n";
+	    xarghlp[j] = "Screen height (number of rows).";
+	    break;
+	  case XA_COLS:
+	    xopthlp[j] = "--width:n";
+	    xarghlp[j] = "Screen width (number of columns).";
+	    break;
+#endif /* OS2 */
+	  case XA_CSET:
+	    xopthlp[j] = "--rcharset:name";
+	    xarghlp[j] = "Name of remote terminal character set.";
+	    break;
+	  case XA_TERM:
+	    xopthlp[j] = "--termtype:name";
+#ifdef OS2
+	    xarghlp[j] = "Choose terminal emulation.";
+#else
+	    xarghlp[j] = "Choose terminal type.";
+#endif /* OS2 */
+	    break;
+	  case XA_USER:
+	    xopthlp[j] = "--user:name";
+#ifndef NETCONN
+	    xarghlp[j] = "Username (for network login)";
+#else
+	    xarghlp[j] = "Username.";
+#endif /* NETCONN */
+	    break;
+       }
     }
 }
 
@@ -2075,6 +2192,144 @@ doxarg(s,pre) char ** s; int pre; {
       }
 #endif /* CK_PERMS */
 #endif /* NOXFER */
+
+#ifdef KUI
+      case XA_XPOS:
+        if (!rdigits(p))
+          return(-1);
+	kui_init.pos_init++;
+	kui_init.pos_x = atoi(p);
+        break;
+
+      case XA_YPOS:
+        if (!rdigits(p))
+          return(-1);
+	kui_init.pos_init++;
+	kui_init.pos_y = atoi(p);
+        break;
+
+      case XA_FNAM: {
+	  extern struct _kui_init kui_init;
+	  extern struct keytab * term_font;
+	  extern struct keytab * _term_font;
+	  extern int tt_font, ntermfont;
+	  int x, z;
+	  if (ntermfont == 0)
+	    BuildFontTable(&term_font, &_term_font, &ntermfont);
+	  if (!(term_font && _term_font && ntermfont > 0))
+	    return(-1);
+	  x = lookup(_term_font,p,ntermfont,&z);
+	  if (x < 0)
+	    return(-1);
+	  tt_font = x;
+	  kui_init.face_init++;
+	  makestr(&kui_init.facename,term_font[z].kwd);
+	  break;
+      }
+      case XA_FSIZ: {
+	  extern struct _kui_init kui_init;
+	  extern int tt_font_size;
+
+	  if (!rdigits(p))
+	    return(-1);
+	  kui_init.font_init++;
+	  tt_font_size = kui_init.font_size = atoi(p);
+	  break;
+      }
+#endif /* KUI */
+
+#ifndef NOLOCAL
+      case XA_TERM: {			/* Terminal type */
+          extern struct keytab ttyptab[];
+          extern int nttyp;
+#ifdef TNCODE
+	  extern char * tn_term;
+#endif /* TNCODE */
+#ifdef OS2
+	  int x, z;
+	  extern int tt_type, tt_type_mode;
+	  x = lookup(ttyptab,p,nttyp,&z);
+	  if (x < 0)
+	    return(-1);
+	  tt_type_mode = tt_type = x;
+#endif /* OS2 */
+#ifdef TNCODE
+	  makestr(&tn_term,p);
+#endif /* TNCODE */
+	  break;
+      }
+      case XA_CSET: {			/* Remote Character Set */
+#ifndef NOCSETS
+#ifdef CKOUNI
+          extern struct keytab txrtab[];
+          extern int ntxrtab;
+          x = lookup(txrtab,p,ntxrtab,&z);
+#else /* CKOUNI */
+          extern struct keytab ttcstab[];
+          extern int ntermc;
+          x = lookup(ttcstab,p,ntermc,&z);
+#endif /* CKOUNI */
+	  if (x < 0)
+	    return(-1);
+          setremcharset(z,4 /* TT_GR_ALL (in ckuus7.c) */);
+#else /* NOCSETS */
+          return(-1);
+#endif /* NOCSETS */
+	  break;
+      }
+      case XA_ROWS: {			/* Screen rows (height) */
+#ifdef OS2
+          extern int row_init;
+#else /* OS2 */
+	  extern int tt_rows;
+#endif /* OS2 */
+	  if (!rdigits(p))
+	    return(-1);
+#ifdef OS2
+	  if (!os2_settermheight(atoi(p)))
+	    return(-1);
+          row_init++;
+#else  /* Not OS/2 */
+	  tt_rows = atoi(p);
+#endif /* OS2 */
+	  break;
+      }
+      case XA_COLS: {			/* Screen columns (width) */
+#ifdef OS2
+          extern int col_init;
+#else /* OS2 */
+	  extern int tt_cols;
+#endif /* OS2 */
+	  if (!rdigits(p))
+	    return(-1);
+#ifdef OS2
+	  if (!os2_settermwidth(atoi(p)))
+	    return(-1);
+          col_init++;
+#else  /* Not OS/2 */
+	  tt_cols = atoi(p);
+#endif /* OS2 */
+	  break;
+      }
+
+#ifdef COMMENT				/* TO BE FILLED IN ... */
+      case XA_TEL:			/* Make a Telnet connection */
+      case XA_FTP:			/* Make an FTP connection */
+      case XA_SSH:			/* Make an SSH connection */
+#endif /* COMMENT */
+
+#ifndef NOSPL
+      case XA_USER:			/* Username for login */
+#ifdef IKSD
+	if (!inserver)
+#endif /* IKSD */
+	{
+	    ckstrncpy(uidbuf,*xargv,UIDBUFLEN);
+	    haveftpuid = 1;
+	}
+	break;
+#endif /* NOSPL */
+#endif /* NOLOCAL */
 
       default:
         return(-1);

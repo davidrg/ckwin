@@ -40,7 +40,9 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/bn.h>
+#ifdef COMMENT
 #include <openssl/des.h>
+#endif /* COMMENT */
 #include <openssl/blowfish.h>
 #include <openssl/dh.h>
 #include <openssl/rc4.h>

@@ -1,7 +1,7 @@
 /*
   C K U A T 2 . H  --  Kerberos headers for C-Kermit
 
-  Copyright (C) 1985, 2000,
+  Copyright (C) 1985, 2002,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -298,6 +298,10 @@ struct _crypt_dll_init {
 
     /* Version 3 variables */
     void (*p_install_funcs)(char *,void *);
+
+    /* Version 5 variables */
+    unsigned long (*p_reqtelmutex)(unsigned long);
+    unsigned long (*p_reltelmutex)(void);
 };
 #endif /* CRYPT_DLL */
 

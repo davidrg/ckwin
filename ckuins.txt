@@ -3,8 +3,8 @@
                                        
    [ [1]Contents ] [ [2]C-Kermit ] [ [3]Kermit Home ]
    
-      As of C-Kermit version: 8.0.200 12 Dec 2001
-      This file last updated: Tue Dec 18 14:42:16 2001 (New York City
+      As of C-Kermit version: 8.0.201 8 Feb 2002
+      This file last updated: Fri Feb 8 18:44:57 2002 (New York City
    time)
    
      IF YOU ARE READING A PLAIN-TEXT version of this document, note that
@@ -35,11 +35,12 @@ CONTENTS
 [19]14. CRASHES AND CORE DUMPS
 [20]15. SYSLOGGING
 [21]16. BUILDING SECURE VERSIONS OF C-KERMIT 8.0
+[22]17. INSTALLING C-KERMIT AS AN SSH SERVER SUBSYSTEM
   __________________________________________________________________________
 
 0. OVERVIEW
 
-   [ [22]Top ] [ [23]Contents ] [ [24]Next ]
+   [ [23]Top ] [ [24]Contents ] [ [25]Next ]
    
      WARNING: This document contains notes that have been accumulating
      since the early 1980s. Many of the products and Unix versions
@@ -49,7 +50,7 @@ CONTENTS
      which so far has been totally mechanical. If time permits, there
      will also be some editorial improvements before the final 8.0
      release. In the meantime, any corrections or suggestions will be
-     [25]gratefully accepted. 
+     [26]gratefully accepted. 
      
    This file contains Unix-specific information. A lot of it. Unlike most
    other packages, C-Kermit tries very hard to be portable to every Unix
@@ -64,24 +65,24 @@ CONTENTS
    certain things might have changed that C-Kermit depended upon.
    
    This file concentrates on installation. For a description of general
-   configuration options for C-Kermit, please read the [26]Configurations
+   configuration options for C-Kermit, please read the [27]Configurations
    Options document. For troubleshooting after installation, see the
-   [27]General Hints and Tips and [28]Unix-Specific Hints and Tips
+   [28]General Hints and Tips and [29]Unix-Specific Hints and Tips
    documents. The latter, in particular, contains lots of information on
    lots of specific Unix platforms. If you want to work on the source
-   code, see the [29]C-Kermit Program Logic Manual
+   code, see the [30]C-Kermit Program Logic Manual
    
    You may install C-Kermit:
    
-     * From an "[30]install package", if one is available.
-     * As a [31]prebuilt binary, if available, plus accompanying text
+     * From an "[31]install package", if one is available.
+     * As a [32]prebuilt binary, if available, plus accompanying text
        files.
-     * By building from [32]source code.
+     * By building from [33]source code.
   __________________________________________________________________________
 
 1. INTERNET QUICK START
 
-   [ [33]Top ] [ [34]Contents ] [ [35]Next ] [ [36]Previous ]
+   [ [34]Top ] [ [35]Contents ] [ [36]Next ] [ [37]Previous ]
    
    If your Unix computer is on the Internet and it has a C compiler,
    here's how to download, build, and install C-Kermit directly from the
@@ -89,21 +90,21 @@ CONTENTS
    
     1. Make a fresh directory and cd to it.
     2. Download the C-Kermit source code:
-       [37]ftp://kermit.columbia.edu/kermit/archives/cku200src.tar.Z
+       [38]ftp://kermit.columbia.edu/kermit/archives/cku200src.tar.Z
        (compress format) or
-       [38]ftp://kermit.columbia.edu/kermit/archives/cku200src.tar.gz
+       [39]ftp://kermit.columbia.edu/kermit/archives/cku200src.tar.gz
        (gunzip format).
     3. Uncompress the compressed tar file with "uncompress" or "gunzip",
        according to which type of compressed file you downloaded. (If you
        don't understand this, you could download a (much larger)
        uncompressed tar archive directly:
-       [39]ftp://kermit.columbia.edu/kermit/archives/cku200src.tar
+       [40]ftp://kermit.columbia.edu/kermit/archives/cku200src.tar
     4. Now type "tar xvf cku200src.tar" to unpack the individual files
        from the tar archive.
     5. Type "rm cku200src.tar" to get rid of the tar archive, which is no
        longer needed.
     6. If you also want to install the C-Kermit initialization and text
-       files ([40]Section 5), repeat the previous steps for cku200txt.tar
+       files ([41]Section 5), repeat the previous steps for cku200txt.tar
        (download and unpack this into the same directory).
     7. Read the comments at the top of the makefile to find out which
        target to use and then type the appropriate "make" command, such
@@ -111,18 +112,18 @@ CONTENTS
     8. Unless you are building a secure Kermit version (i.e. that
        includes Kerberos, SSL/TLS, and/or SRP security), this produces a
        binary in your current directory called "wermit". Start it by
-       typing "./wermit" and [41]try it out. Then read [42]Section 5 for
+       typing "./wermit" and [42]try it out. Then read [43]Section 5 for
        how to install it, or simply copy the wermit binary to the desired
        public directory, rename it to kermit, and give it the needed
        permissions (and, if it is going to be used to dial out, give it
        the same group and owner and permissions as the cu program).
        
-   For secure installations, see [43]Sections 5 and [44]16.
+   For secure installations, see [44]Sections 5 and [45]16.
   __________________________________________________________________________
 
 2. INSTALLING FROM PACKAGES
 
-   [ [45]Top ] [ [46]Contents ] [ [47]Next ] [ [48]Previous ]
+   [ [46]Top ] [ [47]Contents ] [ [48]Next ] [ [49]Previous ]
    
    Various Unix varieties -- Linux, Solaris, AIX, etc -- now incorporate
    the idea of "install packages", and many users expect to find all new
@@ -134,7 +135,7 @@ CONTENTS
     a. Since C-Kermit is portable to many non-Unix platforms (VMS, VOS,
        AOS/VS, etc), some of the files in the C-Kermit distribution do
        not fit into the Unix application model. In particular, C-Kermit
-       includes some plain text files (described in [49]Section 5) and
+       includes some plain text files (described in [50]Section 5) and
        Unix has no standard place to put such files. Typical Unix package
        managers do not allow for them. Where should they go, and how will
        the user know where to find them?
@@ -142,10 +143,10 @@ CONTENTS
        requires some important decisions from the installer regarding
        security and privilege.
        
-   Item (b) is discussed at length in [50]Sections 10 and [51]11 of this
+   Item (b) is discussed at length in [51]Sections 10 and [52]11 of this
    document, but the package-related aspects are also given here. The
    basic problem is that Unix dialout devices and the UUCP "lock files"
-   that regulate contention for them (described in [52]Section 10) are
+   that regulate contention for them (described in [53]Section 10) are
    usually protected against "world". Therefore, the install procedure
    must either run as root in order to give the Kermit binary the
    required permissions, group, and/or owner, or else the dialout devices
@@ -171,8 +172,8 @@ CONTENTS
    It should go without saying, of course, that any binaries that are to
    be included in an install package should be built fresh on the exact
    platform (e.g. Red Hat 7.1 on Intel) for which the package is
-   targeted; prebuilt binaries ([53]next section) from other sites are
-   likely to have library mismatches. [54]CLICK HERE for more about
+   targeted; prebuilt binaries ([54]next section) from other sites are
+   likely to have library mismatches. [55]CLICK HERE for more about
    building C-Kermit install packages.
    
    The Kermit Project does not have the resources or the expertise to
@@ -182,47 +183,47 @@ CONTENTS
    
    If you are an end user who has obtained a C-Kermit install package for
    a particular platform, you should be aware that some additional steps
-   might needed if you want to use Kermit to dial out. Read [55]Section
+   might needed if you want to use Kermit to dial out. Read [56]Section
    10 for details.
   __________________________________________________________________________
 
 3. INSTALLING PREBUILT BINARIES
 
-   [ [56]Top ] [ [57]Contents ] [ [58]Next ] [ [59]Previous ]
+   [ [57]Top ] [ [58]Contents ] [ [59]Next ] [ [60]Previous ]
    
    Hundreds of prebuilt C-Kermit binaries are available on the CDROM in
    the BINARY tree [NOTE: The C-Kermit CDROM is still for version 7.0],
-   and at our ftp site in the [60]kermit/bin area (with names starting
-   with "ck"), also accessible on the [61]C-Kermit website. To install a
+   and at our ftp site in the [61]kermit/bin area (with names starting
+   with "ck"), also accessible on the [62]C-Kermit website. To install a
    prebuilt binary:
    
     a. Rename the binary to "wermit".
-    b. Make sure it works; some tests are suggested in [62]Section 7.
-    c. Follow steps (b) through (e) in [63]Section 4.
-    d. Install related files as described in [64]Section 5.
+    b. Make sure it works; some tests are suggested in [63]Section 7.
+    c. Follow steps (b) through (e) in [64]Section 4.
+    d. Install related files as described in [65]Section 5.
        
    But first... Please heed the following cautions:
    
     a. If you pick the wrong binary, it won't work (or worse).
     b. Even when you pick the appropriate binary, it still might not work
-       due to shared-library mismatches, etc. (see [65]Section 4.0).
+       due to shared-library mismatches, etc. (see [66]Section 4.0).
     c. Don't expect a binary built on or for version n of your OS to work
        on version n - x (where x > 0). However, it is usually safe to run
        a binary built on (or for) an older OS release on a newer one.
        
    Therefore, it is better to build your own binary from source code
-   ([66]next section) if you can. But since it is increasingly for Unix
+   ([67]next section) if you can. But since it is increasingly for Unix
    systems (not to mention VMS and other OS's) to be delivered without C
    compilers, it is often impractical. In such cases, try the most
    appropriate prebuilt binary or binaries, and if none of them work,
-   [67]contact us and we'll see what we can do to help.
+   [68]contact us and we'll see what we can do to help.
   __________________________________________________________________________
 
 4. BUILDING FROM SOURCE CODE
 
-   [ [68]Top ] [ [69]Contents ] [ [70]Next ] [ [71]Previous ]
+   [ [69]Top ] [ [70]Contents ] [ [71]Next ] [ [72]Previous ]
    
-   Also see: [72]Section 8 and [73]Section 9.
+   Also see: [73]Section 8 and [74]Section 9.
    
    C-Kermit is designed to be built and used on as many platforms as
    possible: Unix and non-Unix, old and new (and ancient), ANSI C and
@@ -233,18 +234,18 @@ CONTENTS
    built by hand based on direct experience or reports or contributions
    from users of each platform.
    
-   The [74]C-Kermit makefile contains the rules for building the program
+   The [75]C-Kermit makefile contains the rules for building the program
    for each of the hundreds of different kinds of Unix systems that
    C-Kermit attempts to support. It covers all Unix variations since
    about 1980 -- pretty much everything after Unix V6. Separate makefiles
-   are used for [75]Plan 9 and [76]2.x BSD.
+   are used for [76]Plan 9 and [77]2.x BSD.
    
    Prerequisites:
    
      * The C compiler, linker, and make program must be installed.
      * The C libraries and header files must be installed (*).
      * The C-Kermit source code and makefile in your current directory.
-     * The C-Kermit text files ([77]Section 5) in your current directory.
+     * The C-Kermit text files ([78]Section 5) in your current directory.
        
      * This is becoming problematic in this new age of "selective
        installs" e.g. of Linux packages. C-Kermit builds will often fail
@@ -271,7 +272,7 @@ CONTENTS
        with every new release of your Unix product. If you discover that
        the C-Kermit build procedure fails because your curses and/or
        termxxx headers or libraries are not named or located as expected,
-       please [78]let us know. In the meantime, work around by installing
+       please [79]let us know. In the meantime, work around by installing
        symlinks.
      * IMPORTANT: Modern Linux distributions might give you the choice
        during installation of whether to install the "ncurses development
@@ -302,20 +303,20 @@ CONTENTS
    
     a. Type "make xxx" where xxx is the name of the makefile target most
        appropriate to your platform, e.g. "make linux", "make aix43",
-       etc. Read the [79]comments at the top of the makefile for a
+       etc. Read the [80]comments at the top of the makefile for a
        complete list of available targets (it's a long list).
-    b. Test the resulting 'wermit' file (see [80]Section 7 for
-       suggestions). If it's OK, proceed; otherwise [81]notify us.
+    b. Test the resulting 'wermit' file (see [81]Section 7 for
+       suggestions). If it's OK, proceed; otherwise [82]notify us.
        
      NOTE: steps (c) through (e) can be accomplished using the
-     [82]makefile 'install' target as described in [83]Section 5.4. 
+     [83]makefile 'install' target as described in [84]Section 5.4. 
     c. Rename the 'wermit' file to 'kermit', copy it to the desired
        binary directory (such as /usr/local/bin or /opt/something), and
        if it is to be used for dialing out, give it the same owner,
        group, and permissions as the 'cu' program (IMPORTANT: read
-       [84]Sections 10 and [85]11 for details).
+       [85]Sections 10 and [86]11 for details).
     d. Install the man page, ckuker.nr, with your other man pages.
-    e. Install the accompanying text files (see [86]Section 5).
+    e. Install the accompanying text files (see [87]Section 5).
     f. If you want C-Kermit to also offer a Telnet command-line
        personality, make a symbolic link as follows:
 
@@ -329,24 +330,24 @@ CONTENTS
     h. If you want C-Kermit to also offer an FTTP command-line
        personality, make a symlink called "http" as in (f).
     i. If you want to offer an Internet Kermit Service, follow the
-       directions in the [87]IKSD Administrator's Guide.
+       directions in the [88]IKSD Administrator's Guide.
     ________________________________________________________________________
   
   4.0. Special Considerations for C-Kermit 8.0
   
-   [ [88]Top ] [ [89]Contents ] [ [90]Next ]
+   [ [89]Top ] [ [90]Contents ] [ [91]Next ]
    
-   Also see: [91]C-Kermit Configuration Options
+   Also see: [92]C-Kermit Configuration Options
    
    SECTION CONTENTS
    
-  4.1. [92]The Unix Makefile
-  4.2. [93]The C-Kermit Initialization File
-  4.3. [94]The 2.x BSD Makefile
-  4.4. [95]The Plan 9 Makefile
-  4.5. [96]Makefile Failures
+  4.1. [93]The Unix Makefile
+  4.2. [94]The C-Kermit Initialization File
+  4.3. [95]The 2.x BSD Makefile
+  4.4. [96]The Plan 9 Makefile
+  4.5. [97]Makefile Failures
 
-   (Also see the [97]Configurations Options document, [98]Section 8).
+   (Also see the [98]Configurations Options document, [99]Section 8).
    
    Lots of new features have been added in versions 7.0 and 8.0 that
    require access to new symbols, APIs, libraries, etc, and this will no
@@ -355,7 +356,7 @@ CONTENTS
    what we know as of the date of this file.
    
    The first category concerns the new Kermit Service Daemon (IKSD; see
-   the [99]IKSD Administrator's Guide for details):
+   the [100]IKSD Administrator's Guide for details):
    
    The wtmp File
           When C-Kermit is started as an IKSD (under inetd), it makes
@@ -363,7 +364,7 @@ CONTENTS
           The code assumes the wtmp log is /var/log/wtmp on Linux and
           /usr/adm/wtmp elsewhere. No doubt this assumption will need
           adjustment. Use -DWTMPFILE=path to override at compile time
-          (there is also a runtime override). See [100]iksd.html for
+          (there is also a runtime override). See [101]iksd.html for
           details.
           
    UTMP, utsname(), etc
@@ -371,7 +372,7 @@ CONTENTS
           mainly for IKSD logging -- from utmp. But of course utmp
           formats and fields differ, and for that matter, there can be
           two different header files, <utmp.h> and <utmpx.h>. Look for
-          HAVEUTMPX and HAVEUTHOST in [101]ckufio.c and let me know of
+          HAVEUTMPX and HAVEUTHOST in [102]ckufio.c and let me know of
           any needed adjustments.
           
    Password lookup
@@ -404,7 +405,7 @@ CONTENTS
    setreuid(), setreuid(), setregid() not found or "deprecated"
           Find out what your Unix variety wants you to use instead, and
           make appropriate substitutions in routine zvpass(), module
-          [102]ckufio.c, and [103]let us know.
+          [103]ckufio.c, and [104]let us know.
           
    printf()
           IKSD installs a printf() substitute to allow redirection of
@@ -424,7 +425,7 @@ CONTENTS
    Some non-IKSD things to watch out for:
    
    Return type of main()
-          The main() routine is in [104]ckcmai.c. If you get complaints
+          The main() routine is in [105]ckcmai.c. If you get complaints
           about "main: return type is not blah", define MAINTYPE on the
           CC command line, e.g.:
           
@@ -459,7 +460,7 @@ CONTENTS
           C-Kermit can now write syslog records. Some older platforms
           might not have the syslog facility. In that case, add
           -DNOSYSLOG. Others might have it, but require addition of
-          -lsocket to LIBS (SCO OSR5 is an example). See [105]Section 15.
+          -lsocket to LIBS (SCO OSR5 is an example). See [106]Section 15.
           
    putenv()
           If "_putenv" comes up as an undefined symbol, add -DNOPUTENV to
@@ -467,7 +468,7 @@ CONTENTS
           
    "Passing arg1 of 'time' from incompatible pointer"
           This is a mess. See the mass of #ifdefs in the appropriate
-          module, [106]ckutio.c or [107]ckufio.c.
+          module, [107]ckutio.c or [108]ckufio.c.
           
    gettimeofday()
           Wrong number of arguments. On most platforms, gettimeofday()
@@ -477,7 +478,7 @@ CONTENTS
           but wants one, add -DGTODONEARG.
           
    "Assignment makes pointer from integer without a cast"
-          This warning might appear in [108]ckutio.c or [109]ckufio.c.
+          This warning might appear in [109]ckutio.c or [110]ckufio.c.
           (or elsewhere), and usually can be traced to the use of a
           system or library function that returns a pointer but that is
           not declared in the system header files even though it should
@@ -490,13 +491,13 @@ CONTENTS
    "Operands of = have incompatible types"
           
    "Incompatible types in assignment"
-          If this comes from [110]ckcnet.c and comes from a statement
+          If this comes from [111]ckcnet.c and comes from a statement
           involving inet_addr(), try adding -DINADDRX to CFLAGS. If that
           doesn't help, then try adding -DNOMHHOST.
           
    Complaints about args to get/setsockopt(), getpeername(),
           getsockname()
-          These are all in [111]ckcnet.c. Different platforms and OS's
+          These are all in [112]ckcnet.c. Different platforms and OS's
           and versions of the same OS change this all the time: int,
           size_t, unsigned long, etc. All the affected variables are
           declared according to #ifdefs within ckcnet.c, so find the
@@ -510,7 +511,7 @@ CONTENTS
           
    Use of undefined enum/struct/union 'timezone'
           Left of 'tv_sec' specifies undefined struct/union 'timeval' And
-          similar complaints in [112]ckutio.c: Add -DNOGFTIMER and/or
+          similar complaints in [113]ckutio.c: Add -DNOGFTIMER and/or
           -DNOTIMEVAL.
           
    Symlinks
@@ -597,7 +598,7 @@ CONTENTS
           (presumably either char or unsigned char; in the latter case
           use CHAR to avoid confusion caused by multiple words.
           
-   Switch Table Overflow (in [113]ckcuni.c)
+   Switch Table Overflow (in [114]ckcuni.c)
           Add -DNOUNICODE to CFLAGS.
           
    Compile-time warnings about ck_out() or tgetstr() or tputs():
@@ -639,13 +640,13 @@ CONTENTS
    make target (or you hit upon others not listed here), PLEASE SEND A
    REPORT TO:
    
-  [114]kermit-support@columbia.edu
+  [115]kermit-support@columbia.edu
     ________________________________________________________________________
   
   4.1. The Unix Makefile
   
-   [ [115]Top ] [ [116]Contents ] [ [117]Section Contents ] [ [118]Next ]
-   [ [119]Previous ]
+   [ [116]Top ] [ [117]Contents ] [ [118]Section Contents ] [ [119]Next ]
+   [ [120]Previous ]
    
    If your distribution does not contain a file with this name, then
    rename the file called ckuker.mak to makefile:
@@ -653,7 +654,7 @@ CONTENTS
   mv ckuker.mak makefile
 
    and then you type "make xxx", where xxx is the system you want to
-   build C-Kermit for. These are listed in the [120]comments at the top
+   build C-Kermit for. These are listed in the [121]comments at the top
    of the makefile. For example, to build C-Kermit for Linux, type:
    
   make linux
@@ -684,12 +685,12 @@ CONTENTS
    you really are building C-Kermit for Linux, do this now).
    
    Check to see if there are comments about your particular version in
-   the [121]ckubwr.txt file.
+   the [122]ckubwr.txt file.
    
-   If you have trouble with building [122]ckwart.c, or running the
-   resulting wart preprocessor program on [123]ckcpro.w:
+   If you have trouble with building [123]ckwart.c, or running the
+   resulting wart preprocessor program on [124]ckcpro.w:
    
-    1. Just "touch" the [124]ckcpro.c file that comes in the distribution
+    1. Just "touch" the [125]ckcpro.c file that comes in the distribution
        and then give the "make" command again, or:
     2. Compile ckwart.c "by hand": cc -o wart ckwart.c, or:
     3. Try various other tricks. E.g. one Linux user reported that that
@@ -742,17 +743,17 @@ CONTENTS
   
   4.2. The C-Kermit Initialization File
   
-   [ [125]Top ] [ [126]Contents ] [ [127]Section Contents ] [ [128]Next ]
-   [ [129]Previous ]
+   [ [126]Top ] [ [127]Contents ] [ [128]Section Contents ] [ [129]Next ]
+   [ [130]Previous ]
    
-   (This section is obsolete.) Read [130]Section 5 about the
+   (This section is obsolete.) Read [131]Section 5 about the
    initialization file.
     ________________________________________________________________________
   
   4.3. The 2.x BSD Makefile
   
-   [ [131]Top ] [ [132]Contents ] [ [133]Section Contents ] [ [134]Next ]
-   [ [135]Previous ]
+   [ [132]Top ] [ [133]Contents ] [ [134]Section Contents ] [ [135]Next ]
+   [ [136]Previous ]
    
      This section is obsolete. C-Kermit 6.0 was the last release that
      could be build on PDP-11 based BSD versions.
@@ -760,10 +761,10 @@ CONTENTS
   
   4.4. The Plan 9 Makefile
   
-   [ [136]Top ] [ [137]Contents ] [ [138]Section Contents ] [ [139]Next ]
-   [ [140]Previous ]
+   [ [137]Top ] [ [138]Contents ] [ [139]Section Contents ] [ [140]Next ]
+   [ [141]Previous ]
    
-   Use the separate makefile [141]ckpker.mk. NOTE: The Plan 9 version of
+   Use the separate makefile [142]ckpker.mk. NOTE: The Plan 9 version of
    C-Kermit 8.0 has not yet been built. There should be no impediment to
    building it. However, even when built successfully, certain key
    features are missing, notably TCP/IP networking.
@@ -771,8 +772,8 @@ CONTENTS
   
   4.5. Makefile Failures
   
-   [ [142]Top ] [ [143]Contents ] [ [144]Section Contents ] [
-   [145]Previous ]
+   [ [143]Top ] [ [144]Contents ] [ [145]Section Contents ] [
+   [146]Previous ]
    
    First, be sure the source files are stored on your current disk and
    directory with the right names (in lowercase). Second, make sure that
@@ -809,7 +810,7 @@ CONTENTS
    the command line.
    
    For SCO OpenServer, UNIX, ODT, and XENIX compilations, be sure to pick
-   the most appropriate [146]makefile target, and be sure you have
+   the most appropriate [147]makefile target, and be sure you have
    installed an SCO development system that is keyed to your exact SCO
    operating system release, down to the minor version (like 2.3.1).
    
@@ -939,7 +940,7 @@ FILE *popen(s,t) char *s,*t; {
    offending module(s) by hand, including all the switches from make
    entry except for -O, and then give the appropriate "make" command
    again; or (c) increase the value of the -Olimit option, if your
-   compiler supports this option; or (d) change the [147]makefile target
+   compiler supports this option; or (d) change the [148]makefile target
    to first compile each offending module explicitly without
    optimization, then compile the others normally (with optimization),
    for example:
@@ -972,7 +973,7 @@ ft21:
    Speaking of wart, it is unavoidable that some picky compilers might
    generate "statement unreachable" messages when compiling ckcpro.c.
    Unreachable statements can be generated by the wart program, which
-   generates ckcpro.c automatically from [148]ckcpro.w, which translates
+   generates ckcpro.c automatically from [149]ckcpro.w, which translates
    lex-like state/input constructions into a big switch/case
    construction.
    
@@ -993,14 +994,14 @@ ft21:
 
 5. INSTALLING THE KERMIT FILES
 
-   [ [149]Top ] [ [150]Contents ] [ [151]Next ] [ [152]Previous ]
+   [ [150]Top ] [ [151]Contents ] [ [152]Next ] [ [153]Previous ]
    
    SECTION CONTENTS
    
-  5.1. [153]The C-Kermit Initialization File
-  5.2. [154]Text Files
-  5.3. [155]Installing the Kermit Files
-  5.4. [156]The Makefile Install Target
+  5.1. [154]The C-Kermit Initialization File
+  5.2. [155]Text Files
+  5.3. [156]Installing the Kermit Files
+  5.4. [157]The Makefile Install Target
 
    The C-Kermit executable does not need any external files to run.
    Unlike, say, the cu program, which on most platforms is useless unless
@@ -1018,7 +1019,7 @@ ft21:
    people. However, all of this material is (a) optional, and (b)
    available on the Kermit website:
    
-  [157]http://www.columbia.edu/kermit/
+  [158]http://www.columbia.edu/kermit/
 
    and usually in a more pleasant form, perhaps also with updated
    content. So if your computer is on the Internet, there is no need to
@@ -1164,7 +1165,7 @@ ft21:
        standard initialization file (which must be named anything other
        than $HOME/.kermrc to avoid being executed automatically every
        time you start Kermit), or you can make it a kerbang script and
-       execute it "directly" (the [158]makefile install target does this
+       execute it "directly" (the [159]makefile install target does this
        for you by putting ckermit.ini in the same directory as the Kermit
        binary, adding the appropriate Kerbang line to the top, and giving
        it execute permission).
@@ -1182,60 +1183,60 @@ ft21:
    correspond to Web pages were simply "dumped" by Lynx from the website
    to plain ASCII text. The format is whatever Lynx uses for this
    purpose. If you wish, you can install them on your computer as
-   described in the [159]next section.
+   described in the [160]next section.
    
-   [160]COPYING.TXT
+   [161]COPYING.TXT
           Copyright notice, permissions, and disclaimer.
           
-   [161]ckermit.ini
+   [162]ckermit.ini
           The standard initialization file, intended more for reference
-          (in most cases) than actual use; see [162]Section 5.1.
+          (in most cases) than actual use; see [163]Section 5.1.
           
-   [163]ckermod.ini
+   [164]ckermod.ini
           A sample customization file.
           
-   [164]ckermit70.txt
-          Supplement to [165]Using C-Kermit for version 7.0. Available on
+   [165]ckermit70.txt
+          Supplement to [166]Using C-Kermit for version 7.0. Available on
           the Kermit website as:
-          [166]http://www.columbia.edu/kermit/ckermit70.html
+          [167]http://www.columbia.edu/kermit/ckermit70.html
           
-   [167]ckermit80.txt
-          Supplement to [168]Using C-Kermit for version 8.0. Available on
+   [168]ckermit80.txt
+          Supplement to [169]Using C-Kermit for version 8.0. Available on
           the Kermit website as:
-          [169]http://www.columbia.edu/kermit/ckermit80.html
+          [170]http://www.columbia.edu/kermit/ckermit80.html
           
-   [170]ckcbwr.txt
+   [171]ckcbwr.txt
           The general C-Kermit hints and tips ("beware") file. Available
           on the Kermit website as:
-          [171]http://www.columbia.edu/kermit/ckcbwr.html
+          [172]http://www.columbia.edu/kermit/ckcbwr.html
           
-   [172]ckubwr.txt
+   [173]ckubwr.txt
           The Unix-specific C-Kermit hints and tips file. Available on
           the Kermit website as:
-          [173]http://www.columbia.edu/kermit/ckubwr.html
+          [174]http://www.columbia.edu/kermit/ckubwr.html
           
-   [174]ckuins.txt
+   [175]ckuins.txt
           Unix C-Kermit Installation Instructions (this file). Available
           on the Kermit website as:
-          [175]http://www.columbia.edu/kermit/ckuins.html
+          [176]http://www.columbia.edu/kermit/ckuins.html
           
-   [176]ckccfg.txt
+   [177]ckccfg.txt
           C-Kermit compile-time configuration options. Available on the
           Kermit website as:
-          [177]http://www.columbia.edu/kermit/ckccfg.html
+          [178]http://www.columbia.edu/kermit/ckccfg.html
           
-   [178]ckcplm.txt
+   [179]ckcplm.txt
           The C-Kermit program logic manual. Available on the Kermit
           website as:
-          [179]http://www.columbia.edu/kermit/ckcplm.html
+          [180]http://www.columbia.edu/kermit/ckcplm.html
           
-   [180]ca_certs.pem
+   [181]ca_certs.pem
           Certificate Authority certificates for secure connections (see
-          [181]Section 16).
+          [182]Section 16).
           
   5.3. Installing the Kermit Files
   
-   There is an "install" target in the [182]makefile that you can use if
+   There is an "install" target in the [183]makefile that you can use if
    you wish. However, since every site has its own layout and
    requirements, it is often better to install the Kermit files by hand.
    You don't have to use the makefile install target to install C-Kermit.
@@ -1266,7 +1267,7 @@ ft21:
    directories. The 'install' target does not attempt to set Kermit's
    owner, group, and permissions to allow dialing out. This requires
    privileges, open eyes, and human decision-making. Please read
-   [183]Sections 10 and [184]11 below, make the necessary decisions, and
+   [184]Sections 10 and [185]11 below, make the necessary decisions, and
    then implement them by hand as described in those sections.
    
    You should also install the man page, which is called ckuker.nr, in
@@ -1274,7 +1275,7 @@ ft21:
    renamed appropriately, e.g. to kermit.1. This is also taken care of by
    "make install".
    
-   Optionally, the text files listed in the [185]previous section can be
+   Optionally, the text files listed in the [186]previous section can be
    placed in a publicly readable directory. Suggested directory names
    are:
    
@@ -1306,10 +1307,10 @@ ft21:
    give it the information it needs by setting the variables described
    below. You can use this target if:
    
-     * You downloaded the [186]complete C-Kermit archive and built
+     * You downloaded the [187]complete C-Kermit archive and built
        C-Kermit from source; or:
-     * You downloaded an [187]individual C-Kermit binary and the
-       [188]C-Kermit text-file archive, and your computer has a "make"
+     * You downloaded an [188]individual C-Kermit binary and the
+       [189]C-Kermit text-file archive, and your computer has a "make"
        command.
        
    Here are the parameters you need to know:
@@ -1402,10 +1403,10 @@ ft21:
 
 6. INSTALLING UNIX C-KERMIT FROM DOS-FORMAT DISKETTES
 
-   [ [189]Top ] [ [190]Contents ] [ [191]Next ] [ [192]Previous ]
+   [ [190]Top ] [ [191]Contents ] [ [192]Next ] [ [193]Previous ]
    
      This section is obsolete. We don't distribute C-Kermit on diskettes
-     any because (a) there is no demand, and (b) it won't fit. 
+     any more because (a) there is no demand, and (b) it won't fit. 
      
    If you received a DOS-format diskette containing a binary executable
    C-Kermit program plus supporting text files, be sure to chmod +x the
@@ -1463,7 +1464,7 @@ done
 
 7. CHECKING THE RESULTS
 
-   [ [193]Top ] [ [194]Contents ] [ [195]Next ] [ [196]Previous ]
+   [ [194]Top ] [ [195]Contents ] [ [196]Next ] [ [197]Previous ]
    
    First some quick checks for problems that can be easily corrected by
    recompiling with different options:
@@ -1504,14 +1505,14 @@ done
     a. Start C-Kermit (usually by typing "./wermit" in the directory
        where you ran the makefile). Do you see the C-Kermit> prompt? If
        not, C-Kermit incorrectly deduced that it was running in the
-       background. The test is in conbgt() in [197]ckutio.c. If you can
+       background. The test is in conbgt() in [198]ckutio.c. If you can
        fix it for your system, please send in the fix (Hint: read about
        "PID_T" below). Otherwise, you can force C-Kermit to foreground
        mode by starting it with the -z command line option, as in "kermit
        -z", or giving the interactive command SET BACKGROUND OFF.
     b. When you type characters at the C-Kermit prompt, do they echo
        immediately? If not, something is wrong with concb() and probably
-       the other terminal mode settings routines in [198]ckutio.c. Be
+       the other terminal mode settings routines in [199]ckutio.c. Be
        sure you have used the most appropriate make entry.
     c. At the C-Kermit> prompt, type "send *?". C-Kermit should list all
        the files in the current directory. If not, it was built for the
@@ -1520,7 +1521,7 @@ done
     d. CD to a directory that contains a variety of files, symlinks, and
        subdirectories and give a DIRECTORY command at the C-Kermit>
        prompt. Do the permissions, size, and date appear correct? If not
-       see [199]Section 4.0.
+       see [200]Section 4.0.
     e. Assuming your platform supports long file names, create a file
        with a long name in your current directory, e.g.:
 
@@ -1534,12 +1535,12 @@ done
     f. Make sure that Kermit has the maximum path length right. Just type
        SHOW FILE and see what it says about this. If it is too short,
        there could be some problems at runtime. To correct, look in
-       [200]ckcdeb.h to see how the symbol CKMAXPATH is set and make any
+       [201]ckcdeb.h to see how the symbol CKMAXPATH is set and make any
        needed adjustments.
     g. Send a file to your new Kermit program from a different Kermit
        program that is known to work. Is the date/timestamp of the new
        file identical to the original? If not, adjustments are needed in
-       zstrdt() in [201]ckufio.c.
+       zstrdt() in [202]ckufio.c.
     h. Go to another computer (Computer B) from which you can send files
        to C-Kermit. Connect Computer B to the computer (A) where you are
        testing C-Kermit. Then:
@@ -1549,7 +1550,7 @@ done
        very long (longer than the maximum name length on computer A).
        Check to make sure that the file was received OK and that its name
        was truncated to Computer A's maximum length. If not, check the
-       MAXNAMLEN definition in [202]ckufio.c.
+       MAXNAMLEN definition in [203]ckufio.c.
     k. Tell C-Kermit on Computer A to "set receive pathnames relative"
        and then send it a file from Computer B specifying an as-name that
        contains several directory segments:
@@ -1577,16 +1578,16 @@ done
        session became totally frozen, then you are probably running
        C-Kermit on a Unix version that supports job control, but under a
        shell that doesn't. If that's not the case, look in the congm()
-       and psuspend() routines in [203]ckutio.c and see if you can figure
+       and psuspend() routines in [204]ckutio.c and see if you can figure
        out what's wrong. If you can't, rebuild with -DNOJC.
     o. Give a SET LINE command for a dialout device, e.g. "set line
        /dev/tty00". If you got some kind of permission or access denied
-       message, go read [204]Section 10 and then come back here.
+       message, go read [205]Section 10 and then come back here.
     p. After giving a successful SET LINE command, type "show comm" to
        see the communication parameters. Do they make sense?
     q. Type "set speed ?" and observe the list of available speeds. Is it
-       what you expected? If not, see [205]Section 2) of the
-       [206]Configurations Options document.
+       what you expected? If not, see [206]Section 2) of the
+       [207]Configurations Options document.
     r. Give a SET SPEED command to change the device's speed. Did it
        work? (Type "show comm" again to check.)
     s. Try dialing out: SET MODEM TYPE , SET LINE , SET SPEED , DIAL . If
@@ -1603,16 +1604,16 @@ done
     w. If your version was built with fullscreen file transfer display
        support, check that it works during local-mode file transfer.
        Also, check C-Kermit's operation afterwards: is the echoing funny?
-       etc etc. If there are problems, see [207]Section 4.
+       etc etc. If there are problems, see [208]Section 4.
     x. If your version was built with script programming language
        support, TAKE the ckedemo.ksc file to give it a workout.
     y. Does C-Kermit interlock correctly with UUCP-family programs (cu,
-       tip, uucp, etc)? If not, read the section [208]DIALING OUT AND
+       tip, uucp, etc)? If not, read the section [209]DIALING OUT AND
        COORDINATING WITH UUCP below.
     z. Modem signals... Give a SET LINE command to a serial device and
        then type the SHOW MODEM command. If it says "Modem signals
        unavailable in this version of Kermit", then you might want to
-       look at the ttgmdm() routine in [209]ckutio.c and add the needed
+       look at the ttgmdm() routine in [210]ckutio.c and add the needed
        code -- if indeed your version of Unix provides a way to get modem
        signals (some don't; e.g. modem signals are a foreign concept to
        POSIX, requiring politically incorrect workarounds).
@@ -1623,7 +1624,7 @@ done
        To test, SET LINE , SET MODEM NONE, and HANGUP. The DTR light
        should go out momentarily. If it doesn't, see if you can add the
        needed code for your system to the tthang() routine in
-       [210]ckutio.c.
+       [211]ckutio.c.
    ac. If your version of Kermit has the SET FLOW RTS/CTS command, check
        to see if it works: give Kermit this command, set your modem for
        RTS/CTS, transfer some files (using big packet and window sizes)
@@ -1631,26 +1632,30 @@ done
        off (and Kermit does not get packet errors), then it works. If
        your version of Kermit does not have this command, but your
        version of Unix does support hardware flow control, take a look at
-       the tthflow() command in [211]ckutio.c and see if you can add the
-       needed code (see the section on [212]HARDWARE FLOW CONTROL below).
-       (And please [213]send back any added code, so that others can
+       the tthflow() command in [212]ckutio.c and see if you can add the
+       needed code (see the section on [213]HARDWARE FLOW CONTROL below).
+       (And please [214]send back any added code, so that others can
        benefit from it and it can be carried forward into future
        releases.)
    ad. If C-Kermit starts normally and issues its prompt, echoing is
        normal, etc, but then after returning from a CONNECT session, the
        prompt no longer appears, try rebuilding with -DCKCONINTB4CB.
+   ae. (8.0.201 or later) Type some commands at the C-Kermit prompt. Can
+       you use the Up-arrow and Down-arrow keys on your keyboard to
+       access Kermit's command history? If not, and you're a programmer,
+       take a look at the USE_ARROWKEYS sections of ckucmd.c.
   __________________________________________________________________________
 
 8. REDUCING THE SIZE OF THE EXECUTABLE PROGRAM IMAGE
 
-   [ [214]Top ] [ [215]Contents ] [ [216]Next ] [ [217]Previous ]
+   [ [215]Top ] [ [216]Contents ] [ [217]Next ] [ [218]Previous ]
    
-   Also see: [218]C-Kermit Configuration Options
+   Also see: [219]C-Kermit Configuration Options
    
     a. Many of C-Kermit's options and features can be deselected at
        compile time. The greatest savings at the least sacrifice in
        functionality is to disable the logging of debug information by
-       defining NODEBUG during compilation. See the [219]Configurations
+       defining NODEBUG during compilation. See the [220]Configurations
        Options document for further information.
     b. Use shared libraries rather than static linking. This is the
        default on many Unix systems anyway. However, executables built
@@ -1671,22 +1676,22 @@ done
 
 9. UNIX VERSIONS
 
-   [ [220]Top ] [ [221]Contents ] [ [222]Next ] [ [223]Previous ]
+   [ [221]Top ] [ [222]Contents ] [ [223]Next ] [ [224]Previous ]
    
    SECTION CONTENTS
    
-  [224]9.1. Standards
-       [225]9.1.1. POSIX
-       [226]9.1.2. ANSI C
-       [227]9.1.3. Other Standards
-  [228]9.2. Library Issues
-  [229]9.3. Unix File System Peculiarities
-  [230]9.4. Hardware Flow Control
-  [231]9.5. Terminal Speeds
-  [232]9.6. Millisecond Sleeps
-  [233]9.7. Nondestructive Input Buffer Peeking
-  [234]9.8. Other System-Dependent Features
-  [235]9.9. Terminal Interruption
+  [225]9.1. Standards
+       [226]9.1.1. POSIX
+       [227]9.1.2. ANSI C
+       [228]9.1.3. Other Standards
+  [229]9.2. Library Issues
+  [230]9.3. Unix File System Peculiarities
+  [231]9.4. Hardware Flow Control
+  [232]9.5. Terminal Speeds
+  [233]9.6. Millisecond Sleeps
+  [234]9.7. Nondestructive Input Buffer Peeking
+  [235]9.8. Other System-Dependent Features
+  [236]9.9. Terminal Interruption
 
    There are several major varieties of Unix: Bell Laboratories Seventh
    Edition, AT&T System V, Berkeley Standard Distribution (BSD), and
@@ -1741,7 +1746,7 @@ done
    APIs to get at serial speeds higher than 38400, but then doing so
    removes hardware flow control -- just when we need it most! In cases
    like this, dirty tricks are the only recourse (search for SCO_OSR504
-   in [236]ckutio.c for examples).
+   in [237]ckutio.c for examples).
    
    For reasons like this, Unix implementations tend to be neither pure
    AT&T nor pure BSD nor pure POSIX, but a mixture of two or more of
@@ -1759,13 +1764,13 @@ done
   
   9.1. Standards
   
-   [ [237]Top ] [ [238]Section Contents ] [ [239]Contents ] [ [240]Next ]
+   [ [238]Top ] [ [239]Section Contents ] [ [240]Contents ] [ [241]Next ]
    
    SUBSECTION CONTENTS
    
-  [241]9.1.1. POSIX
-  [242]9.1.2. ANSI C
-  [243]9.1.3. Other Standards
+  [242]9.1.1. POSIX
+  [243]9.1.2. ANSI C
+  [244]9.1.3. Other Standards
 
    In edits 166-167, C-Kermit was heavily modified to try to keep abreast
    of new standards while still remaining compatible with old versions of
@@ -1892,8 +1897,8 @@ done
     
     9.1.2. ANSI C
     
-   [ [244]Top ] [ [245]Contents ] [ [246]Section Contents ] [
-   [247]Subsection Contents ] [ [248]Next ] [ [249]Previous ]
+   [ [245]Top ] [ [246]Contents ] [ [247]Section Contents ] [
+   [248]Subsection Contents ] [ [249]Next ] [ [250]Previous ]
    
    The major difference between ANSI C and earlier C compilers is
    function prototyping. ANSI C allows function arguments to be checked
@@ -1927,8 +1932,8 @@ done
     
     9.1.3. Other Standards
     
-   [ [250]Top ] [ [251]Contents ] [ [252]Section Contents ] [
-   [253]Subsection Contents ] [ [254]Next ] [ [255]Previous ]
+   [ [251]Top ] [ [252]Contents ] [ [253]Section Contents ] [
+   [254]Subsection Contents ] [ [255]Next ] [ [256]Previous ]
    
    As the years go by, standards with-which-all-must-comply continue to
    pile up: AES, XPG2, XPG3, XPG4, FIPS 151-2, successive generations of
@@ -1944,13 +1949,13 @@ done
    C-Kermit -- each one is simply one more environment to support (or
    circumvent, as in many cases these standards do more harm than good by
    denying access to facilities we need, e.g. as noted in above in
-   [256]9.1.1).
+   [257]9.1.1).
     ________________________________________________________________________
   
   9.2. Library Issues
   
-   [ [257]Top ] [ [258]Contents ] [ [259]Section Contents ] [
-   [260]Subsection Contents ] [ [261]Next ] [ [262]Previous ]
+   [ [258]Top ] [ [259]Contents ] [ [260]Section Contents ] [
+   [261]Subsection Contents ] [ [262]Next ] [ [263]Previous ]
    
    On most modern platforms, applications are -- and often must be --
    dynamically linked. This has numerous advantages (smaller executables,
@@ -1977,8 +1982,8 @@ done
   
   9.3. Unix File System Peculiarities
   
-   [ [263]Top ] [ [264]Contents ] [ [265]Section Contents ] [ [266]Next ]
-   [ [267]Previous ]
+   [ [264]Top ] [ [265]Contents ] [ [266]Section Contents ] [ [267]Next ]
+   [ [268]Previous ]
    
    Normally, including a BSD, System-V, POSIX, or DIRENT flag in the make
    entry selects the right file system code. But some versions of Unix
@@ -2024,8 +2029,8 @@ done
    -DLONGFN to your makefile target.
    
    Another problem child is <sys/file.h>. Most Unix C-Kermit versions
-   need to #include this file from within [268]ckufio.c and
-   [269]ckutio.c, but some not only do not need to include it, but MUST
+   need to #include this file from within [269]ckufio.c and
+   [270]ckutio.c, but some not only do not need to include it, but MUST
    not include it because (a) it doesn't exist, or (b) it has already
    been included by some other header file and it doesn't protect itself
    against multiple inclusion, or (c) some other reason that prevents
@@ -2076,13 +2081,13 @@ done
    attribute packet, if any. If you find that the dates are set
    incorrectly, you might need to build Kermit with the -DSYSUTIMEH flag,
    to tell it to include <sys/utime.h>. If that doesn't help, look at the
-   code in zstrdt() in [270]ckufio.c.
+   code in zstrdt() in [271]ckufio.c.
     ________________________________________________________________________
   
   9.4. Hardware Flow Control
   
-   [ [271]Top ] [ [272]Contents ] [ [273]Section Contents ] [ [274]Next ]
-   [ [275]Previous ]
+   [ [272]Top ] [ [273]Contents ] [ [274]Section Contents ] [ [275]Next ]
+   [ [276]Previous ]
    
    Hardware flow control is a problematic concept in many popular Unix
    implementations. Often it is lacking altogether, and when available,
@@ -2115,7 +2120,7 @@ done
        these systems Kermit has no command to select it -- instead, a
        special device name must be used. (NeXTSTEP: /dev/cufa instead of
        /dev/cua; IRIX: /dev/ttyf00)
-       See the routine tthflow() in [276]ckutio.c for details. If you
+       See the routine tthflow() in [277]ckutio.c for details. If you
        find that your system offers hardware flow control selection under
        program control, you can add this capability to C-Kermit as
        follows:
@@ -2124,7 +2129,7 @@ done
        tthflow(). if not, add new code, appropriately #ifdef'd.
     b. Add -DCK_RTSCTS to the compiler CFLAGS in your makefile target or
        define this symbol within the appropriate #ifdefs in
-       [277]ckcdeb.h.
+       [278]ckcdeb.h.
        
    To illustrate the difficulties with RTS/CTS, here is a tale from Jamie
    Watson <jw@adasoft.ch>, who added the RTS/CTS code for the RS/6000,
@@ -2147,23 +2152,23 @@ done
   
   9.5. Terminal Speeds
   
-   [ [278]Top ] [ [279]Contents ] [ [280]Section Contents ] [ [281]Next ]
-   [ [282]Previous ]
+   [ [279]Top ] [ [280]Contents ] [ [281]Section Contents ] [ [282]Next ]
+   [ [283]Previous ]
    
    The allowable speeds for the SET SPEED command are defined in
-   [283]ckcdeb.h. If your system supports speeds that are not listed in
+   [284]ckcdeb.h. If your system supports speeds that are not listed in
    "set speed ?", you can add definitions for them to ckcdeb.h.
    
    Then if the speed you are adding is one that was never used before in
    Kermit, such as 921600, you'll also need to add the appropriate
-   keywords to spdtab[] in [284]ckuus3.c, and the corresponding case to
-   ttsspd() in [285]ckutio.c.
+   keywords to spdtab[] in [285]ckuus3.c, and the corresponding case to
+   ttsspd() in [286]ckutio.c.
     ________________________________________________________________________
   
   9.6. Millisecond Sleeps
   
-   [ [286]Top ] [ [287]Contents ] [ [288]Section Contents ] [ [289]Next ]
-   [ [290]Previous ]
+   [ [287]Top ] [ [288]Contents ] [ [289]Section Contents ] [ [290]Next ]
+   [ [291]Previous ]
    
    There is no standard for millisecond sleeps, but at least five
    different functions have appeared in various Unix versions that can be
@@ -2194,8 +2199,8 @@ done
   
   9.7. Nondestructive Input Buffer Peeking
   
-   [ [291]Top ] [ [292]Contents ] [ [293]Section Contents ] [ [294]Next ]
-   [ [295]Previous ]
+   [ [292]Top ] [ [293]Contents ] [ [294]Section Contents ] [ [295]Next ]
+   [ [296]Previous ]
    
    Some AT&T Unix versions have no way to check if input is waiting on a
    tty device, but this is a very important feature for Kermit. Without
@@ -2236,8 +2241,8 @@ done
   
   9.8. Other System-Dependent Features
   
-   [ [296]Top ] [ [297]Contents ] [ [298]Section Contents ] [ [299]Next ]
-   [ [300]Previous ]
+   [ [297]Top ] [ [298]Contents ] [ [299]Section Contents ] [ [300]Next ]
+   [ [301]Previous ]
    
    Systems with <termios.h> might have the symbol IEXTEN defined. This is
    used to turn "extended features" in the tty device driver on and off,
@@ -2245,7 +2250,7 @@ done
    characters, etc.
    
    In most Unix implementations, it should be turned off during Kermit
-   operation, so if [301]ckutio.c finds this symbol, it uses it. This is
+   operation, so if [302]ckutio.c finds this symbol, it uses it. This is
    necessary, at least, on BSDI. On some systems, however, IEXTEN is
    either misdefined or misimplemented. The symptom is that CR, when
    typed to the command processor, is echoed as LF, rather than CRLF.
@@ -2259,7 +2264,7 @@ done
    
    In edits 177 and earlier, workstation users noticed a "slow screen
    writing" phenomenon during interactive command parsing. This was
-   traced to a setbuf() call in [302]ckutio.c that made console (stdout)
+   traced to a setbuf() call in [303]ckutio.c that made console (stdout)
    writes unbuffered. This setbuf() call has been there forever, and
    could not be removed without some risk. Kermit's operation was tested
    on the NeXT in edit 178 with the setbuf() call removed, and the
@@ -2339,7 +2344,7 @@ done
   -DRENAME
 
    C-Kermit predefines the RENAME for several Unix versions in
-   [303]ckcdeb.h (SVR4, SUNOS41, BSD44, AIXRS, etc). You can tell if
+   [304]ckcdeb.h (SVR4, SUNOS41, BSD44, AIXRS, etc). You can tell if
    rename() is being used if the SHOW FEATURES command includes RENAME in
    the compiler options list. If the predefined RENAME symbol causes
    trouble, then add NORENAME to your CFLAGS. Trouble includes:
@@ -2355,7 +2360,7 @@ done
    
    Some Unix systems (Olivetti X/OS, Amdahl UTS/V, ICL SVR3, etc) define
    the S_ISREG and S_ISDIR macros incorrectly. This is compensated for
-   automatically in [304]ckufio.c. Other systems might have this same
+   automatically in [305]ckufio.c. Other systems might have this same
    problem. If you get a compile-time error message regarding S_ISREG
    and/or S_ISDIR, add the following to your CFLAGS:
    
@@ -2374,8 +2379,8 @@ done
   
   9.9. Terminal Interruption
   
-   [ [305]Top ] [ [306]Contents ] [ [307]Section Contents ] [ [308]Next ]
-   [ [309]Previous ]
+   [ [306]Top ] [ [307]Contents ] [ [308]Section Contents ] [ [309]Next ]
+   [ [310]Previous ]
    
    When C-Kermit enters interactive command mode, it sets a Control-C
    (terminal keyboard interrupt = SIGINT) trap to allow it to return to
@@ -2430,7 +2435,7 @@ done
 
 10. DIALING OUT AND COORDINATING WITH UUCP
 
-   [ [310]Top ] [ [311]Contents ] [ [312]Next ] [ [313]Previous ]
+   [ [311]Top ] [ [312]Contents ] [ [313]Next ] [ [314]Previous ]
    
    The short version:
    
@@ -2562,7 +2567,7 @@ done
    lockfile itself is called, and what its contents should be. In most
    cases, C-Kermit preprocessor flags create the appropriate
    configuration at compile time if the appropriate makefile target was
-   used (see [314]ckutio.c). The following CFLAGS options can be used to
+   used (see [315]ckutio.c). The following CFLAGS options can be used to
    override the built-in configuration:
    
    -DLCKDIR
@@ -2706,7 +2711,7 @@ done
        the appropropriate group (e.g. edit the /etc/group file).
     c. Have the superuser change Kermit to run setuid and/or setgid to
        the owner and/or group of the lockfile directory and the tty
-       devices if necessary), typically uucp (see [315]next section), but
+       devices if necessary), typically uucp (see [316]next section), but
        NOT root. Example:
 
   su% chown uucp kermit          - or -  chgrp uucp kermit
@@ -2768,7 +2773,7 @@ done
 
 11. RUNNING UNIX C-KERMIT SETUID OR SETGID
 
-   [ [316]Top ] [ [317]Contents ] [ [318]Next ] [ [319]Previous ]
+   [ [317]Top ] [ [318]Contents ] [ [319]Next ] [ [320]Previous ]
    
    Even if you don't intend to run C-Kermit setuid, somebody else might
    come along and chown and chmod it after it has been built. You should
@@ -2798,14 +2803,14 @@ done
      comments at the beginning.
      
    C-Kermit for 4.4BSD-based systems automatically use sete[ug]id(). See
-   [320]ckutio.c.
+   [321]ckutio.c.
    
    If you have a version of Unix that is not BSD-based, but which
    supplies the setreuid() and setregid() functions, and these are the
    only way to switch between real and effective uid, add -DSETREUID to
    your makefile target.
    
-     WARNING: There are two calls to access() in [321]ckufio.c, by which
+     WARNING: There are two calls to access() in [322]ckufio.c, by which
      Kermit checks to see if it can create an output file. These calls
      will not work correctly when (a) you have installed C-Kermit setuid
      or setgid on a BSD-based Unix system, and (b) the
@@ -2847,7 +2852,7 @@ done
 
 12. CONFIGURING UNIX WORKSTATIONS
 
-   [ [322]Top ] [ [323]Contents ] [ [324]Next ] [ [325]Previous ]
+   [ [323]Top ] [ [324]Contents ] [ [325]Next ] [ [326]Previous ]
    
    On desktop workstations that are used by only the user at the console
    keyboard, C-Kermit is always used in local mode. But as delivered,
@@ -2872,17 +2877,17 @@ done
 
 13. BIZARRE BEHAVIOR AT RUNTIME
 
-   [ [326]Top ] [ [327]Contents ] [ [328]Next ] [ [329]Previous ]
+   [ [327]Top ] [ [328]Contents ] [ [329]Next ] [ [330]Previous ]
    
    See the "beware file",
    
-   [330]ckubwr.txt, for hints about runtime misbehavior. This section
+   [331]ckubwr.txt, for hints about runtime misbehavior. This section
    lists some runtime problems that can be cured by rebuilding C-Kermit.
    
    The program starts, but there is no prompt, and certain operations
    don't work (you see error messages like "Kermit command error in
    background execution"). This is because Kermit thinks it is running in
-   the background. See conbgt() in [331]ckutio.c. Try rebuilding Kermit
+   the background. See conbgt() in [332]ckutio.c. Try rebuilding Kermit
    with:
    
  -DPID_T=pid_t
@@ -2910,7 +2915,7 @@ done
 
 14. CRASHES AND CORE DUMPS
 
-   [ [332]Top ] [ [333]Contents ] [ [334]Next ] [ [335]Previous ]
+   [ [333]Top ] [ [334]Contents ] [ [335]Next ] [ [336]Previous ]
    
    If C-Kermit constitently dumps core at the beginning of a file
    transfer, look in SHOW FEATURES for CKREALPATH. If found, rebuild with
@@ -2973,7 +2978,7 @@ done
 
 15. SYSLOGGING
 
-   [ [336]Top ] [ [337]Contents ] [ [338]Next ] [ [339]Previous ]
+   [ [337]Top ] [ [338]Contents ] [ [339]Next ] [ [340]Previous ]
    
    "Syslogging" means recording selected in the system log via the Unix
    syslog() facility, which is available in most Unix versions.
@@ -2982,7 +2987,7 @@ done
   --syslog:n
 
    on the command-line, where n is a number greater than 0 to indicate
-   the level of syslogging. See [340]Section 4.2 of the [341]IKSD
+   the level of syslogging. See [341]Section 4.2 of the [342]IKSD
    Administrator's Guide for details.
    
    Obviously you can't depend on users to include --syslog:3 (or
@@ -3000,19 +3005,19 @@ done
    connecting out from your system, and to where.
    
    Level 2 and 3 records are equivalent to those in the connection log;
-   see the [342]C-Kermit 7.0 Supplement) for a detailed description of
+   see the [343]C-Kermit 7.0 Supplement) for a detailed description of
    the connection log.
   __________________________________________________________________________
 
 16. BUILDING SECURE VERSIONS OF C-KERMIT 8.0
 
-   [ [343]Top ] [ [344]Contents ] [ [345]Previous ]
+   [ [344]Top ] [ [345]Contents ] [ [346]Next ] [ [347]Previous ]
    
    C-Kermit 7.0 and later may be built with Kerberos(TM) and/or SRP(TM)
    (Secure Remote Password) and/or SSL/TLS security for strong
    authentication and encryption of Internet connections. These security
    methods require external libraries that, in their binary forms, are
-   restricted from export by USA law. See the [346]Kermit Security
+   restricted from export by USA law. See the [348]Kermit Security
    Reference) for details. C-Kermit binaries themselves are likewise
    restricted; the C-Kermit binaries that are available for public
    download on the Internet are not allowed to contain the security
@@ -3022,25 +3027,63 @@ done
    operating systems. A list of secure makefile entries is included in
    the Makefile. Complete instructions on building C-Kermit 8.0 with MIT
    Kerberos; Secure Remote Password; and/or OpenSSL can be found in the
-   [347]Kermit Security Reference.
+   [349]Kermit Security Reference.
    
    C-Kermit 8.0 comes with a current list of Certificate Authority
    certificates, including one for the Kermit Project that can be used
-   for authentication to Columbia's [348]Internet Kermit Service (IKSD).
+   for authentication to Columbia's [350]Internet Kermit Service (IKSD).
    You can use C-Kermit 7.0 or later to access Columbia's IKSD securely
    by installing the Kermit Project certificate in
    /usr/local/ssl/cert.pem (or the appropriate location based upon the
    installation of OpenSSL on your system). You can find a copy of the
    certificates file at:
    
-   [349]ftp://kermit.columbia.edu/kermit/c-kermit/ca_certs.pem
+   [351]ftp://kermit.columbia.edu/kermit/c-kermit/ca_certs.pem
+  __________________________________________________________________________
 
-   [ [350]Top ] [ [351]Contents ] [ [352]C-Kermit Home ] [ [353]C-Kermit
-   8.0 Overview ] [ [354]Kermit Home ]
+17. INSTALLING C-KERMIT AS AN SSH SERVER SUBSYSTEM
+
+   [ [352]Top ] [ [353]Contents ] [ [354]Previous ]
+   
+   This requires C-Kermit 8.0.201 or later and an SSH v2 server. If you
+   list C-Kermit as a Subsystem in the SSH v2 server configuration file
+   (as, for example, SFTP is listed), users can make SSH connections
+   direct to a Kermit server as explained here:
+   
+  [355]http://www.columbia.edu/kermit/skermit.html
+
+   The name and location of the SSH server configuration file depends on
+   your platform, which SSH product(s) you have, etc. C-Kermit itself
+   must be referred to in this file as "kermit-sshsub". On the host,
+   install the C-Kermit 8.0.201 binary in the normal way. Then, in the
+   same directory as the C-Kermit binary, make a symbolic link:
+   
+     ln -s kermit kermit-sshsub
+
+   (Note: the "make install" makefile target does this for you.) Then in
+   the sshd configuration file, add a line:
+   
+     Subsystem  kermit   /some/path/kermit-sshsub
+
+   (where /some/path is the fully specified directory where the symlink
+   is.) This is similar to the line that sets up the SFTP susbsystem.
+   Example:
+   
+     Subsystem   sftp    /usr/local/libexec/sftp-server
+     Subsystem   kermit  /usr/local/bin/kermit-sshsub
+
+   The mechanics might vary for other SSH servers; "man sshd" for
+   details. The method shown here is used because the OpenSSH server does
+   not permit the subsystem invocation to include command-line options.
+   C-Kermit would have no way of knowing that it should enter Server mode
+   if it were not called by a special name.
+   
+   [ [356]Top ] [ [357]Contents ] [ [358]C-Kermit Home ] [ [359]C-Kermit
+   8.0 Overview ] [ [360]Kermit Home ]
      _________________________________________________________________
    
    C-Kermit 8.0 Unix Installation Instructions / The Kermit Project /
-   Columbia University / 18 Dec 2001
+   Columbia University / 8 Feb 2002
 
 References
 
@@ -3065,336 +3108,342 @@ References
   19. http://www.columbia.edu/kermit/ckuins.html#x14
   20. http://www.columbia.edu/kermit/ckuins.html#x15
   21. http://www.columbia.edu/kermit/ckuins.html#x16
-  22. http://www.columbia.edu/kermit/ckuins.html#top
-  23. http://www.columbia.edu/kermit/ckuins.html#contents
-  24. http://www.columbia.edu/kermit/ckuins.html#x1
-  25. mailto:kermit-support@columbia.edu
-  26. http://www.columbia.edu/kermit/ckccfg.html
-  27. http://www.columbia.edu/kermit/ckcbwr.html
-  28. http://www.columbia.edu/kermit/ckubwr.html
-  29. http://www.columbia.edu/kermit/ckcplm.html
-  30. http://www.columbia.edu/kermit/ckuins.html#x2
-  31. http://www.columbia.edu/kermit/x3
-  32. http://www.columbia.edu/kermit/ckuins.html#x4
-  33. http://www.columbia.edu/kermit/ckuins.html#top
-  34. http://www.columbia.edu/kermit/ckuins.html#contents
-  35. http://www.columbia.edu/kermit/ckuins.html#x2
-  36. http://www.columbia.edu/kermit/ckuins.html#x0
-  37. ftp://kermit.columbia.edu/kermit/archives/cku200src.tar.Z
-  38. ftp://kermit.columbia.edu/kermit/archives/cku200src.tar.gz
-  39. ftp://kermit.columbia.edu/kermit/archives/cku200src.tar
-  40. http://www.columbia.edu/kermit/ckuins.html#x5
-  41. http://www.columbia.edu/kermit/ckuins.html#x7
-  42. http://www.columbia.edu/kermit/ckuins.html#x5
+  22. http://www.columbia.edu/kermit/ckuins.html#x16
+  23. http://www.columbia.edu/kermit/ckuins.html#top
+  24. http://www.columbia.edu/kermit/ckuins.html#contents
+  25. http://www.columbia.edu/kermit/ckuins.html#x1
+  26. mailto:kermit-support@columbia.edu
+  27. http://www.columbia.edu/kermit/ckccfg.html
+  28. http://www.columbia.edu/kermit/ckcbwr.html
+  29. http://www.columbia.edu/kermit/ckubwr.html
+  30. http://www.columbia.edu/kermit/ckcplm.html
+  31. http://www.columbia.edu/kermit/ckuins.html#x2
+  32. http://www.columbia.edu/kermit/x3
+  33. http://www.columbia.edu/kermit/ckuins.html#x4
+  34. http://www.columbia.edu/kermit/ckuins.html#top
+  35. http://www.columbia.edu/kermit/ckuins.html#contents
+  36. http://www.columbia.edu/kermit/ckuins.html#x2
+  37. http://www.columbia.edu/kermit/ckuins.html#x0
+  38. ftp://kermit.columbia.edu/kermit/archives/cku200src.tar.Z
+  39. ftp://kermit.columbia.edu/kermit/archives/cku200src.tar.gz
+  40. ftp://kermit.columbia.edu/kermit/archives/cku200src.tar
+  41. http://www.columbia.edu/kermit/ckuins.html#x5
+  42. http://www.columbia.edu/kermit/ckuins.html#x7
   43. http://www.columbia.edu/kermit/ckuins.html#x5
-  44. http://www.columbia.edu/kermit/ckuins.html#x16
-  45. http://www.columbia.edu/kermit/ckuins.html#top
-  46. http://www.columbia.edu/kermit/ckuins.html#contents
-  47. http://www.columbia.edu/kermit/ckuins.html#x3
-  48. http://www.columbia.edu/kermit/ckuins.html#x1
-  49. http://www.columbia.edu/kermit/ckuins.html#x5
-  50. http://www.columbia.edu/kermit/ckuins.html#X10
-  51. http://www.columbia.edu/kermit/ckuins.html#x11
-  52. http://www.columbia.edu/kermit/ckuins.html#x10
-  53. http://www.columbia.edu/kermit/ckuins.html#x3
-  54. http://www.columbia.edu/kermit/ck80packages.html
-  55. http://www.columbia.edu/kermit/ckuins.html#x10
-  56. http://www.columbia.edu/kermit/ckuins.html#top
-  57. http://www.columbia.edu/kermit/ckuins.html#contents
-  58. http://www.columbia.edu/kermit/ckuins.html#x4
-  59. http://www.columbia.edu/kermit/ckuins.html#x2
-  60. ftp://kermit.columbia.edu/kermit/bin/
-  61. http://www.columbia.edu/kermit/ck80binaries.html
-  62. http://www.columbia.edu/kermit/ckuins.html#x7
-  63. http://www.columbia.edu/kermit/ckuins.html#build
-  64. http://www.columbia.edu/kermit/ckuins.html#x5
-  65. http://www.columbia.edu/kermit/ckuins.html#x4
+  44. http://www.columbia.edu/kermit/ckuins.html#x5
+  45. http://www.columbia.edu/kermit/ckuins.html#x16
+  46. http://www.columbia.edu/kermit/ckuins.html#top
+  47. http://www.columbia.edu/kermit/ckuins.html#contents
+  48. http://www.columbia.edu/kermit/ckuins.html#x3
+  49. http://www.columbia.edu/kermit/ckuins.html#x1
+  50. http://www.columbia.edu/kermit/ckuins.html#x5
+  51. http://www.columbia.edu/kermit/ckuins.html#X10
+  52. http://www.columbia.edu/kermit/ckuins.html#x11
+  53. http://www.columbia.edu/kermit/ckuins.html#x10
+  54. http://www.columbia.edu/kermit/ckuins.html#x3
+  55. http://www.columbia.edu/kermit/ck80packages.html
+  56. http://www.columbia.edu/kermit/ckuins.html#x10
+  57. http://www.columbia.edu/kermit/ckuins.html#top
+  58. http://www.columbia.edu/kermit/ckuins.html#contents
+  59. http://www.columbia.edu/kermit/ckuins.html#x4
+  60. http://www.columbia.edu/kermit/ckuins.html#x2
+  61. ftp://kermit.columbia.edu/kermit/bin/
+  62. http://www.columbia.edu/kermit/ck80binaries.html
+  63. http://www.columbia.edu/kermit/ckuins.html#x7
+  64. http://www.columbia.edu/kermit/ckuins.html#build
+  65. http://www.columbia.edu/kermit/ckuins.html#x5
   66. http://www.columbia.edu/kermit/ckuins.html#x4
-  67. mailto:kermit@columbia.edu
-  68. http://www.columbia.edu/kermit/ckuins.html#top
-  69. http://www.columbia.edu/kermit/ckuins.html#contents
-  70. http://www.columbia.edu/kermit/ckuins.html#x5
-  71. http://www.columbia.edu/kermit/ckuins.html#x3
-  72. http://www.columbia.edu/kermit/ckuins.html#x8
-  73. http://www.columbia.edu/kermit/ckuins.html#x9
-  74. ftp://kermit.columbia.edu/kermit/c-kermit/makefile
-  75. ftp://kermit.columbia.edu/kermit/c-kermit/ckpker.mk
-  76. ftp://kermit.columbia.edu/kermit/c-kermit/ckubsd.mak
-  77. http://www.columbia.edu/kermit/ckuins.html#x5
-  78. mailto:kermit-support@columbia.edu
-  79. ftp://kermit.columbia.edu/kermit/c-kermit/makefile
-  80. http://www.columbia.edu/kermit/ckuins.html#x7
-  81. mailto:kermit-support@columbia.edu
-  82. ftp://kermit.columbia.edu/kermit/c-kermit/makefile
-  83. http://www.columbia.edu/kermit/ckuins.html#x5.4
-  84. http://www.columbia.edu/kermit/ckuins.html#x10
-  85. http://www.columbia.edu/kermit/ckuins.html#x11
-  86. http://www.columbia.edu/kermit/ckuins.html#x5
-  87. http://www.columbia.edu/kermit/iksd.html
-  88. http://www.columbia.edu/kermit/ckuins.html#top
-  89. http://www.columbia.edu/kermit/ckuins.html#contents
-  90. http://www.columbia.edu/kermit/ckuins.html#x4.1
-  91. http://www.columbia.edu/kermit/ckccfg.html
-  92. http://www.columbia.edu/kermit/ckuins.html#x4.1
-  93. http://www.columbia.edu/kermit/ckuins.html#x4.2
-  94. http://www.columbia.edu/kermit/ckuins.html#x4.3
-  95. http://www.columbia.edu/kermit/ckuins.html#x4.4
-  96. http://www.columbia.edu/kermit/ckuins.html#x4.5
-  97. http://www.columbia.edu/kermit/ckccfg.html
-  98. http://www.columbia.edu/kermit/ckccfg.html#x8
-  99. http://www.columbia.edu/kermit/iksd.html
+  67. http://www.columbia.edu/kermit/ckuins.html#x4
+  68. mailto:kermit@columbia.edu
+  69. http://www.columbia.edu/kermit/ckuins.html#top
+  70. http://www.columbia.edu/kermit/ckuins.html#contents
+  71. http://www.columbia.edu/kermit/ckuins.html#x5
+  72. http://www.columbia.edu/kermit/ckuins.html#x3
+  73. http://www.columbia.edu/kermit/ckuins.html#x8
+  74. http://www.columbia.edu/kermit/ckuins.html#x9
+  75. ftp://kermit.columbia.edu/kermit/c-kermit/makefile
+  76. ftp://kermit.columbia.edu/kermit/c-kermit/ckpker.mk
+  77. ftp://kermit.columbia.edu/kermit/c-kermit/ckubsd.mak
+  78. http://www.columbia.edu/kermit/ckuins.html#x5
+  79. mailto:kermit-support@columbia.edu
+  80. ftp://kermit.columbia.edu/kermit/c-kermit/makefile
+  81. http://www.columbia.edu/kermit/ckuins.html#x7
+  82. mailto:kermit-support@columbia.edu
+  83. ftp://kermit.columbia.edu/kermit/c-kermit/makefile
+  84. http://www.columbia.edu/kermit/ckuins.html#x5.4
+  85. http://www.columbia.edu/kermit/ckuins.html#x10
+  86. http://www.columbia.edu/kermit/ckuins.html#x11
+  87. http://www.columbia.edu/kermit/ckuins.html#x5
+  88. http://www.columbia.edu/kermit/iksd.html
+  89. http://www.columbia.edu/kermit/ckuins.html#top
+  90. http://www.columbia.edu/kermit/ckuins.html#contents
+  91. http://www.columbia.edu/kermit/ckuins.html#x4.1
+  92. http://www.columbia.edu/kermit/ckccfg.html
+  93. http://www.columbia.edu/kermit/ckuins.html#x4.1
+  94. http://www.columbia.edu/kermit/ckuins.html#x4.2
+  95. http://www.columbia.edu/kermit/ckuins.html#x4.3
+  96. http://www.columbia.edu/kermit/ckuins.html#x4.4
+  97. http://www.columbia.edu/kermit/ckuins.html#x4.5
+  98. http://www.columbia.edu/kermit/ckccfg.html
+  99. http://www.columbia.edu/kermit/ckccfg.html#x8
  100. http://www.columbia.edu/kermit/iksd.html
- 101. ftp://kermit.columbia.edu/kermit/c-kermit/ckufio.c
+ 101. http://www.columbia.edu/kermit/iksd.html
  102. ftp://kermit.columbia.edu/kermit/c-kermit/ckufio.c
- 103. mailto:kermit-support@columbia.edu
- 104. ftp://kermit.columbia.edu/kermit/c-kermit/ckcmai.c
- 105. http://www.columbia.edu/kermit/ckuins.html#x15
- 106. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
- 107. ftp://kermit.columbia.edu/kermit/c-kermit/ckufio.c
- 108. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
- 109. ftp://kermit.columbia.edu/kermit/c-kermit/ckufio.c
- 110. ftp://kermit.columbia.edu/kermit/c-kermit/ckcnet.c
+ 103. ftp://kermit.columbia.edu/kermit/c-kermit/ckufio.c
+ 104. mailto:kermit-support@columbia.edu
+ 105. ftp://kermit.columbia.edu/kermit/c-kermit/ckcmai.c
+ 106. http://www.columbia.edu/kermit/ckuins.html#x15
+ 107. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
+ 108. ftp://kermit.columbia.edu/kermit/c-kermit/ckufio.c
+ 109. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
+ 110. ftp://kermit.columbia.edu/kermit/c-kermit/ckufio.c
  111. ftp://kermit.columbia.edu/kermit/c-kermit/ckcnet.c
- 112. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
- 113. ftp://kermit.columbia.edu/kermit/c-kermit/ckcuni.c
- 114. mailto:kermit-support@columbia.edu
- 115. http://www.columbia.edu/kermit/ckuins.html#top
- 116. http://www.columbia.edu/kermit/ckuins.html#contents
- 117. http://www.columbia.edu/kermit/ckuins.html#x4
- 118. http://www.columbia.edu/kermit/ckuins.html#x4.2
- 119. http://www.columbia.edu/kermit/ckuins.html#x4.0
- 120. ftp://kermit.columbia.edu/kermit/c-kermit/makefile
- 121. ftp://kermit.columbia.edu/kermit/c-kermit/ckubwr.txt
- 122. ftp://kermit.columbia.edu/kermit/c-kermit/ckwart.c
- 123. ftp://kermit.columbia.edu/kermit/c-kermit/ckcpro.w
- 124. ftp://kermit.columbia.edu/kermit/c-kermit/ckcpro.c
- 125. http://www.columbia.edu/kermit/ckuins.html#top
- 126. http://www.columbia.edu/kermit/ckuins.html#contents
- 127. http://www.columbia.edu/kermit/ckuins.html#x4
- 128. http://www.columbia.edu/kermit/ckuins.html#x4.3
- 129. http://www.columbia.edu/kermit/ckuins.html#x4.1
- 130. http://www.columbia.edu/kermit/ckuins.html#x5
- 131. http://www.columbia.edu/kermit/ckuins.html#top
- 132. http://www.columbia.edu/kermit/ckuins.html#contents
- 133. http://www.columbia.edu/kermit/ckuins.html#x4
- 134. http://www.columbia.edu/kermit/ckuins.html#x4.4
- 135. http://www.columbia.edu/kermit/ckuins.html#x4.2
- 136. http://www.columbia.edu/kermit/ckuins.html#top
- 137. http://www.columbia.edu/kermit/ckuins.html#contents
- 138. http://www.columbia.edu/kermit/ckuins.html#x4
- 139. http://www.columbia.edu/kermit/ckuins.html#x4.5
- 140. http://www.columbia.edu/kermit/ckuins.html#x4.3
- 141. ftp://kermit.columbia.edu/kermit/c-kermit/ckpker.mk
- 142. http://www.columbia.edu/kermit/ckuins.html#top
- 143. http://www.columbia.edu/kermit/ckuins.html#contents
- 144. http://www.columbia.edu/kermit/ckuins.html#x4
- 145. http://www.columbia.edu/kermit/ckuins.html#x4.4
- 146. ftp://kermit.columbia.edu/kermit/c-kermit/makefile
+ 112. ftp://kermit.columbia.edu/kermit/c-kermit/ckcnet.c
+ 113. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
+ 114. ftp://kermit.columbia.edu/kermit/c-kermit/ckcuni.c
+ 115. mailto:kermit-support@columbia.edu
+ 116. http://www.columbia.edu/kermit/ckuins.html#top
+ 117. http://www.columbia.edu/kermit/ckuins.html#contents
+ 118. http://www.columbia.edu/kermit/ckuins.html#x4
+ 119. http://www.columbia.edu/kermit/ckuins.html#x4.2
+ 120. http://www.columbia.edu/kermit/ckuins.html#x4.0
+ 121. ftp://kermit.columbia.edu/kermit/c-kermit/makefile
+ 122. ftp://kermit.columbia.edu/kermit/c-kermit/ckubwr.txt
+ 123. ftp://kermit.columbia.edu/kermit/c-kermit/ckwart.c
+ 124. ftp://kermit.columbia.edu/kermit/c-kermit/ckcpro.w
+ 125. ftp://kermit.columbia.edu/kermit/c-kermit/ckcpro.c
+ 126. http://www.columbia.edu/kermit/ckuins.html#top
+ 127. http://www.columbia.edu/kermit/ckuins.html#contents
+ 128. http://www.columbia.edu/kermit/ckuins.html#x4
+ 129. http://www.columbia.edu/kermit/ckuins.html#x4.3
+ 130. http://www.columbia.edu/kermit/ckuins.html#x4.1
+ 131. http://www.columbia.edu/kermit/ckuins.html#x5
+ 132. http://www.columbia.edu/kermit/ckuins.html#top
+ 133. http://www.columbia.edu/kermit/ckuins.html#contents
+ 134. http://www.columbia.edu/kermit/ckuins.html#x4
+ 135. http://www.columbia.edu/kermit/ckuins.html#x4.4
+ 136. http://www.columbia.edu/kermit/ckuins.html#x4.2
+ 137. http://www.columbia.edu/kermit/ckuins.html#top
+ 138. http://www.columbia.edu/kermit/ckuins.html#contents
+ 139. http://www.columbia.edu/kermit/ckuins.html#x4
+ 140. http://www.columbia.edu/kermit/ckuins.html#x4.5
+ 141. http://www.columbia.edu/kermit/ckuins.html#x4.3
+ 142. ftp://kermit.columbia.edu/kermit/c-kermit/ckpker.mk
+ 143. http://www.columbia.edu/kermit/ckuins.html#top
+ 144. http://www.columbia.edu/kermit/ckuins.html#contents
+ 145. http://www.columbia.edu/kermit/ckuins.html#x4
+ 146. http://www.columbia.edu/kermit/ckuins.html#x4.4
  147. ftp://kermit.columbia.edu/kermit/c-kermit/makefile
- 148. ftp://kermit.columbia.edu/kermit/c-kermit/ckcpro.w
- 149. http://www.columbia.edu/kermit/ckuins.html#top
- 150. http://www.columbia.edu/kermit/ckuins.html#contents
- 151. http://www.columbia.edu/kermit/ckuins.html#x6
- 152. http://www.columbia.edu/kermit/ckuins.html#x4
- 153. http://www.columbia.edu/kermit/ckuins.html#x5.1
- 154. http://www.columbia.edu/kermit/ckuins.html#x5.2
- 155. http://www.columbia.edu/kermit/ckuins.html#x5.3
+ 148. ftp://kermit.columbia.edu/kermit/c-kermit/makefile
+ 149. ftp://kermit.columbia.edu/kermit/c-kermit/ckcpro.w
+ 150. http://www.columbia.edu/kermit/ckuins.html#top
+ 151. http://www.columbia.edu/kermit/ckuins.html#contents
+ 152. http://www.columbia.edu/kermit/ckuins.html#x6
+ 153. http://www.columbia.edu/kermit/ckuins.html#x4
+ 154. http://www.columbia.edu/kermit/ckuins.html#x5.1
+ 155. http://www.columbia.edu/kermit/ckuins.html#x5.2
  156. http://www.columbia.edu/kermit/ckuins.html#x5.3
- 157. http://www.columbia.edu/kermit/
- 158. http://www.columbia.edu/kermit/ckuins.html#x5.4
- 159. http://www.columbia.edu/kermit/ckuins.html#x5.3
- 160. ftp://kermit.columbia.edu/kermit/c-kermit/COPYING.TXT
- 161. ftp://kermit.columbia.edu/kermit/c-kermit/ckermit.ini
- 162. http://www.columbia.edu/kermit/ckuins.html#x5.1
- 163. ftp://kermit.columbia.edu/kermit/c-kermit/ckermod.ini
- 164. ftp://kermit.columbia.edu/kermit/c-kermit/ckermit70.txt
- 165. http://www.columbia.edu/kermit/ck60manual
- 166. http://www.columbia.edu/kermit/ckermit70.html
- 167. ftp://kermit.columbia.edu/kermit/c-kermit/ckermit80.txt
- 168. http://www.columbia.edu/kermit/ck60manual
- 169. http://www.columbia.edu/kermit/ckermit80.html
- 170. ftp://kermit.columbia.edu/kermit/c-kermit/ckcbwr.txt
- 171. http://www.columbia.edu/kermit/ckcbwr.html
- 172. ftp://kermit.columbia.edu/kermit/c-kermit/ckubwr.txt
- 173. http://www.columbia.edu/kermit/ckubwr.html
- 174. ftp://kermit.columbia.edu/kermit/c-kermit/ckuins.txt
- 175. http://www.columbia.edu/kermit/ckuins.html
- 176. ftp://kermit.columbia.edu/kermit/c-kermit/ckccfg.txt
- 177. http://www.columbia.edu/kermit/ckccfg.html
- 178. ftp://kermit.columbia.edu/kermit/c-kermit/ckcplm.txt
- 179. http://www.columbia.edu/kermit/ckcplm.html
- 180. ftp://kermit.columbia.edu/kermit/c-kermit/ca_certs.pem
- 181. http://www.columbia.edu/kermit/ckuins.html#x16"
- 182. ftp://kermit.columbia.edu/kermit/c-kermit/makefile
- 183. http://www.columbia.edu/kermit/ckuins.html#x?
- 184. http://www.columbia.edu/kermit/ckuins.html#x11
- 185. http://www.columbia.edu/kermit/ckuins.html#x5.2
- 186. http://www.columbia.edu/kermit/ckermit.html#download
- 187. http://www.columbia.edu/kermit/ck80binaries.html
- 188. http://www.columbia.edu/kermit/ckermit.html#download
- 189. http://www.columbia.edu/kermit/ckuins.html#top
- 190. http://www.columbia.edu/kermit/ckuins.html#contents
- 191. http://www.columbia.edu/kermit/ckuins.html#x7
- 192. http://www.columbia.edu/kermit/ckuins.html#x5
- 193. http://www.columbia.edu/kermit/ckuins.html#top
- 194. http://www.columbia.edu/kermit/ckuins.html#contents
- 195. http://www.columbia.edu/kermit/ckuins.html#x8
- 196. http://www.columbia.edu/kermit/ckuins.html#x6
- 197. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
+ 157. http://www.columbia.edu/kermit/ckuins.html#x5.4
+ 158. http://www.columbia.edu/kermit/
+ 159. http://www.columbia.edu/kermit/ckuins.html#x5.4
+ 160. http://www.columbia.edu/kermit/ckuins.html#x5.3
+ 161. ftp://kermit.columbia.edu/kermit/c-kermit/COPYING.TXT
+ 162. ftp://kermit.columbia.edu/kermit/c-kermit/ckermit.ini
+ 163. http://www.columbia.edu/kermit/ckuins.html#x5.1
+ 164. ftp://kermit.columbia.edu/kermit/c-kermit/ckermod.ini
+ 165. ftp://kermit.columbia.edu/kermit/c-kermit/ckermit70.txt
+ 166. http://www.columbia.edu/kermit/ck60manual
+ 167. http://www.columbia.edu/kermit/ckermit70.html
+ 168. ftp://kermit.columbia.edu/kermit/c-kermit/ckermit80.txt
+ 169. http://www.columbia.edu/kermit/ck60manual
+ 170. http://www.columbia.edu/kermit/ckermit80.html
+ 171. ftp://kermit.columbia.edu/kermit/c-kermit/ckcbwr.txt
+ 172. http://www.columbia.edu/kermit/ckcbwr.html
+ 173. ftp://kermit.columbia.edu/kermit/c-kermit/ckubwr.txt
+ 174. http://www.columbia.edu/kermit/ckubwr.html
+ 175. ftp://kermit.columbia.edu/kermit/c-kermit/ckuins.txt
+ 176. http://www.columbia.edu/kermit/ckuins.html
+ 177. ftp://kermit.columbia.edu/kermit/c-kermit/ckccfg.txt
+ 178. http://www.columbia.edu/kermit/ckccfg.html
+ 179. ftp://kermit.columbia.edu/kermit/c-kermit/ckcplm.txt
+ 180. http://www.columbia.edu/kermit/ckcplm.html
+ 181. ftp://kermit.columbia.edu/kermit/c-kermit/ca_certs.pem
+ 182. http://www.columbia.edu/kermit/ckuins.html#x16"
+ 183. ftp://kermit.columbia.edu/kermit/c-kermit/makefile
+ 184. http://www.columbia.edu/kermit/ckuins.html#x?
+ 185. http://www.columbia.edu/kermit/ckuins.html#x11
+ 186. http://www.columbia.edu/kermit/ckuins.html#x5.2
+ 187. http://www.columbia.edu/kermit/ckermit.html#download
+ 188. http://www.columbia.edu/kermit/ck80binaries.html
+ 189. http://www.columbia.edu/kermit/ckermit.html#download
+ 190. http://www.columbia.edu/kermit/ckuins.html#top
+ 191. http://www.columbia.edu/kermit/ckuins.html#contents
+ 192. http://www.columbia.edu/kermit/ckuins.html#x7
+ 193. http://www.columbia.edu/kermit/ckuins.html#x5
+ 194. http://www.columbia.edu/kermit/ckuins.html#top
+ 195. http://www.columbia.edu/kermit/ckuins.html#contents
+ 196. http://www.columbia.edu/kermit/ckuins.html#x8
+ 197. http://www.columbia.edu/kermit/ckuins.html#x6
  198. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
- 199. http://www.columbia.edu/kermit/ckuins.html#x4.0
- 200. ftp://kermit.columbia.edu/kermit/c-kermit/ckcdeb.h
- 201. ftp://kermit.columbia.edu/kermit/c-kermit/ckufio.c
+ 199. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
+ 200. http://www.columbia.edu/kermit/ckuins.html#x4.0
+ 201. ftp://kermit.columbia.edu/kermit/c-kermit/ckcdeb.h
  202. ftp://kermit.columbia.edu/kermit/c-kermit/ckufio.c
- 203. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
- 204. http://www.columbia.edu/kermit/ckuins.html#x10
- 205. http://www.columbia.edu/kermit/ckccfg.html#x2
- 206. http://www.columbia.edu/kermit/ckccfg.html
- 207. http://www.columbia.edu/kermit/ckuins.html#x4
- 208. http://www.columbia.edu/kermit/ckuins.html#x10
- 209. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
+ 203. ftp://kermit.columbia.edu/kermit/c-kermit/ckufio.c
+ 204. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
+ 205. http://www.columbia.edu/kermit/ckuins.html#x10
+ 206. http://www.columbia.edu/kermit/ckccfg.html#x2
+ 207. http://www.columbia.edu/kermit/ckccfg.html
+ 208. http://www.columbia.edu/kermit/ckuins.html#x4
+ 209. http://www.columbia.edu/kermit/ckuins.html#x10
  210. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
  211. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
- 212. http://www.columbia.edu/kermit/ckuins.html#x9.4
- 213. mailto:kermit-support@columbia.edu
- 214. http://www.columbia.edu/kermit/ckuins.html#top
- 215. http://www.columbia.edu/kermit/ckuins.html#contents
- 216. http://www.columbia.edu/kermit/ckuins.html#x9
- 217. http://www.columbia.edu/kermit/ckuins.html#x7
- 218. http://www.columbia.edu/kermit/ckccfg.html
+ 212. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
+ 213. http://www.columbia.edu/kermit/ckuins.html#x9.4
+ 214. mailto:kermit-support@columbia.edu
+ 215. http://www.columbia.edu/kermit/ckuins.html#top
+ 216. http://www.columbia.edu/kermit/ckuins.html#contents
+ 217. http://www.columbia.edu/kermit/ckuins.html#x9
+ 218. http://www.columbia.edu/kermit/ckuins.html#x7
  219. http://www.columbia.edu/kermit/ckccfg.html
- 220. http://www.columbia.edu/kermit/ckuins.html#top
- 221. http://www.columbia.edu/kermit/ckuins.html#contents
- 222. http://www.columbia.edu/kermit/ckuins.html#x10
- 223. http://www.columbia.edu/kermit/ckuins.html#x8
- 224. http://www.columbia.edu/kermit/ckuins.html#x9.1
- 225. http://www.columbia.edu/kermit/ckuins.html#x9.1.1
- 226. http://www.columbia.edu/kermit/ckuins.html#x9.1.2
- 227. http://www.columbia.edu/kermit/ckuins.html#x9.1.3
- 228. http://www.columbia.edu/kermit/ckuins.html#x9.2
- 229. http://www.columbia.edu/kermit/ckuins.html#x9.3
- 230. http://www.columbia.edu/kermit/ckuins.html#x9.4
- 231. http://www.columbia.edu/kermit/ckuins.html#x9.5
- 232. http://www.columbia.edu/kermit/ckuins.html#x9.6
- 233. http://www.columbia.edu/kermit/ckuins.html#x9.7
- 234. http://www.columbia.edu/kermit/ckuins.html#x9.8
- 235. http://www.columbia.edu/kermit/ckuins.html#x9.9
- 236. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
- 237. http://www.columbia.edu/kermit/ckuins.html#top
- 238. http://www.columbia.edu/kermit/ckuins.html#x9
- 239. http://www.columbia.edu/kermit/ckuins.html#contents
- 240. http://www.columbia.edu/kermit/ckuins.html#x9.2
- 241. http://www.columbia.edu/kermit/ckuins.html#x9.1.1
- 242. http://www.columbia.edu/kermit/ckuins.html#x9.1.2
- 243. http://www.columbia.edu/kermit/ckuins.html#x9.1.3
- 244. http://www.columbia.edu/kermit/ckuins.html#top
- 245. http://www.columbia.edu/kermit/ckuins.html#contents
- 246. http://www.columbia.edu/kermit/ckuins.html#x9
- 247. http://www.columbia.edu/kermit/ckuins.html#x9.1
- 248. http://www.columbia.edu/kermit/ckuins.html#x9.1.3
- 249. http://www.columbia.edu/kermit/ckuins.html#x9.1.1
- 250. http://www.columbia.edu/kermit/ckuins.html#top
- 251. http://www.columbia.edu/kermit/ckuins.html#contents
- 252. http://www.columbia.edu/kermit/ckuins.html#x9
- 253. http://www.columbia.edu/kermit/ckuins.html#x9.1
- 254. http://www.columbia.edu/kermit/ckuins.html#x9.2
- 255. http://www.columbia.edu/kermit/ckuins.html#x9.1.2
- 256. http://www.columbia.edu/kermit/ckuins.html#x91.1.1
- 257. http://www.columbia.edu/kermit/ckuins.html#top
- 258. http://www.columbia.edu/kermit/ckuins.html#contents
- 259. http://www.columbia.edu/kermit/ckuins.html#x9
- 260. http://www.columbia.edu/kermit/ckuins.html#x9.1
- 261. http://www.columbia.edu/kermit/ckuins.html#x9.3
- 262. http://www.columbia.edu/kermit/ckuins.html#x9.1
- 263. http://www.columbia.edu/kermit/ckuins.html#top
- 264. http://www.columbia.edu/kermit/ckuins.html#contents
- 265. http://www.columbia.edu/kermit/ckuins.html#x9
- 266. http://www.columbia.edu/kermit/ckuins.html#x9.4
- 267. http://www.columbia.edu/kermit/ckuins.html#x9.2
- 268. ftp://kermit.columbia.edu/kermit/c-kermit/ckufio.c
- 269. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
- 270. ftp://kermit.columbia.edu/kermit/c-kermit/ckufio.c
- 271. http://www.columbia.edu/kermit/ckuins.html#top
- 272. http://www.columbia.edu/kermit/ckuins.html#contents
- 273. http://www.columbia.edu/kermit/ckuins.html#x9
- 274. http://www.columbia.edu/kermit/ckuins.html#x9.5
- 275. http://www.columbia.edu/kermit/ckuins.html#x9.3
- 276. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
- 277. ftp://kermit.columbia.edu/kermit/c-kermit/ckcdeb.h
- 278. http://www.columbia.edu/kermit/ckuins.html#top
- 279. http://www.columbia.edu/kermit/ckuins.html#contents
- 280. http://www.columbia.edu/kermit/ckuins.html#x9
- 281. http://www.columbia.edu/kermit/ckuins.html#x9.6
- 282. http://www.columbia.edu/kermit/ckuins.html#x9.4
- 283. ftp://kermit.columbia.edu/kermit/c-kermit/ckcdeb.h
- 284. ftp://kermit.columbia.edu/kermit/c-kermit/ckuus3.c
- 285. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
- 286. http://www.columbia.edu/kermit/ckuins.html#top
- 287. http://www.columbia.edu/kermit/ckuins.html#contents
- 288. http://www.columbia.edu/kermit/ckuins.html#x9
- 289. http://www.columbia.edu/kermit/ckuins.html#x9.7
- 290. http://www.columbia.edu/kermit/ckuins.html#x9.5
- 291. http://www.columbia.edu/kermit/ckuins.html#top
- 292. http://www.columbia.edu/kermit/ckuins.html#contents
- 293. http://www.columbia.edu/kermit/ckuins.html#x9
- 294. http://www.columbia.edu/kermit/ckuins.html#x9.8
- 295. http://www.columbia.edu/kermit/ckuins.html#x9.6
- 296. http://www.columbia.edu/kermit/ckuins.html#top
- 297. http://www.columbia.edu/kermit/ckuins.html#contents
- 298. http://www.columbia.edu/kermit/ckuins.html#x9
- 299. http://www.columbia.edu/kermit/ckuins.html#x9.9
- 300. http://www.columbia.edu/kermit/ckuins.html#x9.7
- 301. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
+ 220. http://www.columbia.edu/kermit/ckccfg.html
+ 221. http://www.columbia.edu/kermit/ckuins.html#top
+ 222. http://www.columbia.edu/kermit/ckuins.html#contents
+ 223. http://www.columbia.edu/kermit/ckuins.html#x10
+ 224. http://www.columbia.edu/kermit/ckuins.html#x8
+ 225. http://www.columbia.edu/kermit/ckuins.html#x9.1
+ 226. http://www.columbia.edu/kermit/ckuins.html#x9.1.1
+ 227. http://www.columbia.edu/kermit/ckuins.html#x9.1.2
+ 228. http://www.columbia.edu/kermit/ckuins.html#x9.1.3
+ 229. http://www.columbia.edu/kermit/ckuins.html#x9.2
+ 230. http://www.columbia.edu/kermit/ckuins.html#x9.3
+ 231. http://www.columbia.edu/kermit/ckuins.html#x9.4
+ 232. http://www.columbia.edu/kermit/ckuins.html#x9.5
+ 233. http://www.columbia.edu/kermit/ckuins.html#x9.6
+ 234. http://www.columbia.edu/kermit/ckuins.html#x9.7
+ 235. http://www.columbia.edu/kermit/ckuins.html#x9.8
+ 236. http://www.columbia.edu/kermit/ckuins.html#x9.9
+ 237. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
+ 238. http://www.columbia.edu/kermit/ckuins.html#top
+ 239. http://www.columbia.edu/kermit/ckuins.html#x9
+ 240. http://www.columbia.edu/kermit/ckuins.html#contents
+ 241. http://www.columbia.edu/kermit/ckuins.html#x9.2
+ 242. http://www.columbia.edu/kermit/ckuins.html#x9.1.1
+ 243. http://www.columbia.edu/kermit/ckuins.html#x9.1.2
+ 244. http://www.columbia.edu/kermit/ckuins.html#x9.1.3
+ 245. http://www.columbia.edu/kermit/ckuins.html#top
+ 246. http://www.columbia.edu/kermit/ckuins.html#contents
+ 247. http://www.columbia.edu/kermit/ckuins.html#x9
+ 248. http://www.columbia.edu/kermit/ckuins.html#x9.1
+ 249. http://www.columbia.edu/kermit/ckuins.html#x9.1.3
+ 250. http://www.columbia.edu/kermit/ckuins.html#x9.1.1
+ 251. http://www.columbia.edu/kermit/ckuins.html#top
+ 252. http://www.columbia.edu/kermit/ckuins.html#contents
+ 253. http://www.columbia.edu/kermit/ckuins.html#x9
+ 254. http://www.columbia.edu/kermit/ckuins.html#x9.1
+ 255. http://www.columbia.edu/kermit/ckuins.html#x9.2
+ 256. http://www.columbia.edu/kermit/ckuins.html#x9.1.2
+ 257. http://www.columbia.edu/kermit/ckuins.html#x91.1.1
+ 258. http://www.columbia.edu/kermit/ckuins.html#top
+ 259. http://www.columbia.edu/kermit/ckuins.html#contents
+ 260. http://www.columbia.edu/kermit/ckuins.html#x9
+ 261. http://www.columbia.edu/kermit/ckuins.html#x9.1
+ 262. http://www.columbia.edu/kermit/ckuins.html#x9.3
+ 263. http://www.columbia.edu/kermit/ckuins.html#x9.1
+ 264. http://www.columbia.edu/kermit/ckuins.html#top
+ 265. http://www.columbia.edu/kermit/ckuins.html#contents
+ 266. http://www.columbia.edu/kermit/ckuins.html#x9
+ 267. http://www.columbia.edu/kermit/ckuins.html#x9.4
+ 268. http://www.columbia.edu/kermit/ckuins.html#x9.2
+ 269. ftp://kermit.columbia.edu/kermit/c-kermit/ckufio.c
+ 270. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
+ 271. ftp://kermit.columbia.edu/kermit/c-kermit/ckufio.c
+ 272. http://www.columbia.edu/kermit/ckuins.html#top
+ 273. http://www.columbia.edu/kermit/ckuins.html#contents
+ 274. http://www.columbia.edu/kermit/ckuins.html#x9
+ 275. http://www.columbia.edu/kermit/ckuins.html#x9.5
+ 276. http://www.columbia.edu/kermit/ckuins.html#x9.3
+ 277. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
+ 278. ftp://kermit.columbia.edu/kermit/c-kermit/ckcdeb.h
+ 279. http://www.columbia.edu/kermit/ckuins.html#top
+ 280. http://www.columbia.edu/kermit/ckuins.html#contents
+ 281. http://www.columbia.edu/kermit/ckuins.html#x9
+ 282. http://www.columbia.edu/kermit/ckuins.html#x9.6
+ 283. http://www.columbia.edu/kermit/ckuins.html#x9.4
+ 284. ftp://kermit.columbia.edu/kermit/c-kermit/ckcdeb.h
+ 285. ftp://kermit.columbia.edu/kermit/c-kermit/ckuus3.c
+ 286. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
+ 287. http://www.columbia.edu/kermit/ckuins.html#top
+ 288. http://www.columbia.edu/kermit/ckuins.html#contents
+ 289. http://www.columbia.edu/kermit/ckuins.html#x9
+ 290. http://www.columbia.edu/kermit/ckuins.html#x9.7
+ 291. http://www.columbia.edu/kermit/ckuins.html#x9.5
+ 292. http://www.columbia.edu/kermit/ckuins.html#top
+ 293. http://www.columbia.edu/kermit/ckuins.html#contents
+ 294. http://www.columbia.edu/kermit/ckuins.html#x9
+ 295. http://www.columbia.edu/kermit/ckuins.html#x9.8
+ 296. http://www.columbia.edu/kermit/ckuins.html#x9.6
+ 297. http://www.columbia.edu/kermit/ckuins.html#top
+ 298. http://www.columbia.edu/kermit/ckuins.html#contents
+ 299. http://www.columbia.edu/kermit/ckuins.html#x9
+ 300. http://www.columbia.edu/kermit/ckuins.html#x9.9
+ 301. http://www.columbia.edu/kermit/ckuins.html#x9.7
  302. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
- 303. ftp://kermit.columbia.edu/kermit/c-kermit/ckcdeb.h
- 304. ftp://kermit.columbia.edu/kermit/c-kermit/ckufio.c
- 305. http://www.columbia.edu/kermit/ckuins.html#top
- 306. http://www.columbia.edu/kermit/ckuins.html#contents
- 307. http://www.columbia.edu/kermit/ckuins.html#x9
- 308. http://www.columbia.edu/kermit/ckuins.html#x10
- 309. http://www.columbia.edu/kermit/ckuins.html#x9.8
- 310. http://www.columbia.edu/kermit/ckuins.html#top
- 311. http://www.columbia.edu/kermit/ckuins.html#contents
- 312. http://www.columbia.edu/kermit/ckuins.html#x11
- 313. http://www.columbia.edu/kermit/ckuins.html#x9
- 314. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
- 315. http://www.columbia.edu/kermit/ckuins.html#x11
- 316. http://www.columbia.edu/kermit/ckuins.html#top
- 317. http://www.columbia.edu/kermit/ckuins.html#contents
- 318. http://www.columbia.edu/kermit/ckuins.html#x12
- 319. http://www.columbia.edu/kermit/ckuins.html#x10
- 320. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
- 321. ftp://kermit.columbia.edu/kermit/c-kermit/ckufio.c
- 322. http://www.columbia.edu/kermit/ckuins.html#top
- 323. http://www.columbia.edu/kermit/ckuins.html#contents
- 324. http://www.columbia.edu/kermit/ckuins.html#x13
- 325. http://www.columbia.edu/kermit/ckuins.html#x11
- 326. http://www.columbia.edu/kermit/ckuins.html#top
- 327. http://www.columbia.edu/kermit/ckuins.html#contents
- 328. http://www.columbia.edu/kermit/ckuins.html#x14
- 329. http://www.columbia.edu/kermit/ckuins.html#x12
- 330. ftp://kermit.columbia.edu/kermit/c-kermit/ckubwr.txt
- 331. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
- 332. http://www.columbia.edu/kermit/ckuins.html#top
- 333. http://www.columbia.edu/kermit/ckuins.html#contents
- 334. http://www.columbia.edu/kermit/ckuins.html#x15
- 335. http://www.columbia.edu/kermit/ckuins.html#x13
- 336. http://www.columbia.edu/kermit/ckuins.html#top
- 337. http://www.columbia.edu/kermit/ckuins.html#contents
- 338. http://www.columbia.edu/kermit/ckuins.html#x16
- 339. http://www.columbia.edu/kermit/ckuins.html#x14
- 340. http://www.columbia.edu/kermit/iksd.html#x4.2
- 341. http://www.columbia.edu/kermit/iksd.html
- 342. http://www.columbia.edu/kermit/ckermit2.html
- 343. http://www.columbia.edu/kermit/ckuins.html#top
- 344. http://www.columbia.edu/kermit/ckuins.html#contents
- 345. http://www.columbia.edu/kermit/ckuins.html#x15
- 346. http://www.columbia.edu/kermit/security80.html
- 347. http://www.columbia.edu/kermit/security80.html
- 348. http://www.columbia.edu/kermit/cuiksd.html
- 349. ftp://kermit.columbia.edu/kermit/c-kermit/ca_certs.pem
- 350. http://www.columbia.edu/kermit/ckuins.html#top
- 351. http://www.columbia.edu/kermit/ckuins.html#contents
- 352. http://www.columbia.edu/kermit/ckermit.html
- 353. http://www.columbia.edu/kermit/ck80.html
- 354. http://www.columbia.edu/kermit/index.html
+ 303. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
+ 304. ftp://kermit.columbia.edu/kermit/c-kermit/ckcdeb.h
+ 305. ftp://kermit.columbia.edu/kermit/c-kermit/ckufio.c
+ 306. http://www.columbia.edu/kermit/ckuins.html#top
+ 307. http://www.columbia.edu/kermit/ckuins.html#contents
+ 308. http://www.columbia.edu/kermit/ckuins.html#x9
+ 309. http://www.columbia.edu/kermit/ckuins.html#x10
+ 310. http://www.columbia.edu/kermit/ckuins.html#x9.8
+ 311. http://www.columbia.edu/kermit/ckuins.html#top
+ 312. http://www.columbia.edu/kermit/ckuins.html#contents
+ 313. http://www.columbia.edu/kermit/ckuins.html#x11
+ 314. http://www.columbia.edu/kermit/ckuins.html#x9
+ 315. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
+ 316. http://www.columbia.edu/kermit/ckuins.html#x11
+ 317. http://www.columbia.edu/kermit/ckuins.html#top
+ 318. http://www.columbia.edu/kermit/ckuins.html#contents
+ 319. http://www.columbia.edu/kermit/ckuins.html#x12
+ 320. http://www.columbia.edu/kermit/ckuins.html#x10
+ 321. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
+ 322. ftp://kermit.columbia.edu/kermit/c-kermit/ckufio.c
+ 323. http://www.columbia.edu/kermit/ckuins.html#top
+ 324. http://www.columbia.edu/kermit/ckuins.html#contents
+ 325. http://www.columbia.edu/kermit/ckuins.html#x13
+ 326. http://www.columbia.edu/kermit/ckuins.html#x11
+ 327. http://www.columbia.edu/kermit/ckuins.html#top
+ 328. http://www.columbia.edu/kermit/ckuins.html#contents
+ 329. http://www.columbia.edu/kermit/ckuins.html#x14
+ 330. http://www.columbia.edu/kermit/ckuins.html#x12
+ 331. ftp://kermit.columbia.edu/kermit/c-kermit/ckubwr.txt
+ 332. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
+ 333. http://www.columbia.edu/kermit/ckuins.html#top
+ 334. http://www.columbia.edu/kermit/ckuins.html#contents
+ 335. http://www.columbia.edu/kermit/ckuins.html#x15
+ 336. http://www.columbia.edu/kermit/ckuins.html#x13
+ 337. http://www.columbia.edu/kermit/ckuins.html#top
+ 338. http://www.columbia.edu/kermit/ckuins.html#contents
+ 339. http://www.columbia.edu/kermit/ckuins.html#x16
+ 340. http://www.columbia.edu/kermit/ckuins.html#x14
+ 341. http://www.columbia.edu/kermit/iksd.html#x4.2
+ 342. http://www.columbia.edu/kermit/iksd.html
+ 343. http://www.columbia.edu/kermit/ckermit2.html
+ 344. http://www.columbia.edu/kermit/ckuins.html#top
+ 345. http://www.columbia.edu/kermit/ckuins.html#contents
+ 346. http://www.columbia.edu/kermit/ckuins.html#x17
+ 347. http://www.columbia.edu/kermit/ckuins.html#x15
+ 348. http://www.columbia.edu/kermit/security80.html
+ 349. http://www.columbia.edu/kermit/security80.html
+ 350. http://www.columbia.edu/kermit/cuiksd.html
+ 351. ftp://kermit.columbia.edu/kermit/c-kermit/ca_certs.pem
+ 352. http://www.columbia.edu/kermit/ckuins.html#top
+ 353. http://www.columbia.edu/kermit/ckuins.html#contents
+ 354. http://www.columbia.edu/kermit/ckuins.html#x16
+ 355. http://www.columbia.edu/kermit/skermit.html
+ 356. http://www.columbia.edu/kermit/ckuins.html#top
+ 357. http://www.columbia.edu/kermit/ckuins.html#contents
+ 358. http://www.columbia.edu/kermit/ckermit.html
+ 359. http://www.columbia.edu/kermit/ck80.html
+ 360. http://www.columbia.edu/kermit/index.html

@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2002,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -19,6 +19,7 @@
 #define I_AM_IKSD    3
 #define I_AM_FTP     4
 #define I_AM_HTTP    5
+#define I_AM_SSHSUB  6
 
 #ifndef NOSTREAMING
 #ifndef STREAMING
@@ -67,11 +68,11 @@
 
 /* Bell values */
 
-#define   XYB_NONE  0			/* No bell */
-#define   XYB_AUD   1			/* Audible bell */
-#define   XYB_VIS   2			/* Visible bell */
-#define   XYB_BEEP  0			/* Audible Beep */
-#define   XYB_SYS   4			/* Audible System Sounds */
+#define XYB_NONE  0			/* No bell */
+#define XYB_AUD   1			/* Audible bell */
+#define XYB_VIS   2			/* Visible bell */
+#define XYB_BEEP  0			/* Audible Beep */
+#define XYB_SYS   4			/* Audible System Sounds */
 
 /* File status bits */
 
@@ -153,6 +154,12 @@ struct sysdata {
    2 = lf
    3 = crlf
 */
+};
+
+struct ssh_pf {				/* SSH port forwarding */
+    int    p1;				/* port to be forwarded */
+    char * host;			/* host */
+    int    p2;				/* port */
 };
 
 #define SET_ON   1	/* General values for settings that can be ON */
@@ -802,6 +809,7 @@ extern int tcp_incoming;		/* Used by ENABLE macro */
 #define CKD_SW  64			/* (Local) software flow control */
 #define CKD_KS 128			/* Kermit spoofing */
 #define CKD_TB 256			/* Made by Telebit */
+#define CKD_ID 512			/* Has Caller ID */
 
 /* DIAL command result codes */
 #define DIA_UNK   -1			/* No DIAL command given yet */
@@ -1335,11 +1343,10 @@ _PROTOTYP( VOID logchar, (char) );
 #endif /* OS2 */
 _PROTOTYP( VOID logstr, (char *, int) );
 
+_PROTOTYP( VOID dologend, (void) );
 #ifdef NOLOCAL
-#define dologend()
 #define dologshow()
 #else
-_PROTOTYP( VOID dologend, (void) );
 _PROTOTYP( long dologshow, (int) );
 #endif /* NOLOCAL */
 
@@ -1357,6 +1364,7 @@ _PROTOTYP( int fileselect, (char *,
 
 
 _PROTOTYP( char * whoami, (void) );
+_PROTOTYP( int shoesc, (int) );
 
 #ifdef CK_APC
 _PROTOTYP( int chkspkt, (char *) );

@@ -8,7 +8,7 @@
   Consolidated program version information (for UNIX also see ckuver.h).
   See makever() below for how they are used.
 */
-/* #ifdef COMMENT */			/* Uncomment this for test version */
+/* #ifdef COMMENT */                    /* Uncomment this for test version */
 #ifndef OS2
 #ifndef BETATEST
 #define BETATEST
@@ -30,8 +30,13 @@
   Use (*ck_s_test != '\0') to decide whether to print test-related messages.
 */
 #ifdef BETATEST
-char *ck_s_test = "";			/* "Alpha", "Beta", "RC", or "" */
+#ifndef OS2                             /* UNIX, VMS, etc... (i.e. C-Kermit) */
+char *ck_s_test = "";			/* "Dev","Alpha","Beta","RC", or "" */
 char *ck_s_tver = "";			/* Test version number or "" */
+#else  /* OS2 */
+char *ck_s_test = "Beta";               /* (i.e. K95) */
+char *ck_s_tver = "03";
+#endif /* OS2 */
 #else
 char *ck_s_test = "";                   /* Not a test */
 char *ck_s_tver = "";
@@ -44,16 +49,16 @@ char *ck_s_tver = "";
 #ifdef BETADATE                         /* Date of this version or edit */
 char *ck_s_date = __DATE__;             /* Compilation date */
 #else
-char *ck_s_date = "12 Dec 2001";	/* Hand-crafted date */
+char *ck_s_date = "8 Feb 2002";		/* Hand-crafted date */
 #endif /* BETADATE */
-char *buildid = "20011212";		/* Build ID, keep in sync with date */
+char *buildid = "20020208";             /* Build ID, keep in sync with date */
 
 #ifdef UNIX
-static char sccsid[] = "@(#)C-Kermit 8.0.200";
+static char sccsid[] = "@(#)C-Kermit 8.0.201";
 #endif /* UNIX */
 
-char *ck_s_ver = "8.0.200";             /* C-Kermit version string */
-long  ck_l_ver =  800200L;		/* C-Kermit version number */
+char *ck_s_ver = "8.0.201";             /* C-Kermit version string */
+long  ck_l_ver =  800201L;              /* C-Kermit version number */
 
 #ifdef OS2
 char *ck_s_xver = "1.1.21";             /* Product-specific version string */
@@ -101,7 +106,7 @@ long vernum, xvernum;                   /* runtime from above.    */
 
 char * myname = NULL;                   /* The name I am called by */
 #ifndef OS2
-char * exedir = NULL;			/* Directory I was executed from */
+char * exedir = NULL;                   /* Directory I was executed from */
 #endif /* OS2 */
 
 /*  C K C M A I  --  C-Kermit Main program  */
@@ -116,12 +121,12 @@ COPYRIGHT NOTICE:
 char *copyright[] = {
 
 #ifdef pdp11
-"Copyright (C) 1985, 2001, Trustees of Columbia University, NYC.",
+"Copyright (C) 1985, 2002, Trustees of Columbia University, NYC.",
 "All rights reserved.",
 " ",
 #else
 #ifdef OS2
-"Copyright (C) 1985, 2001, Trustees of Columbia University in the City of New",
+"Copyright (C) 1985, 2002, Trustees of Columbia University in the City of New",
 "York.  All rights reserved.  This software is furnished under license",
 "and may not be reproduced without license to do so.  This copyright notice",
 "must not be removed, altered, or obscured.",
@@ -143,7 +148,7 @@ char *copyright[] = {
 "  ATTORNEYS' FEES) ARISING OUT OF YOUR USE OF THIS SOFTWARE.",
 " ",
 #else
-"Copyright (C) 1985, 2001,",
+"Copyright (C) 1985, 2002,",
 "  The Trustees of Columbia University in the City of New York.",
 "  All rights reserved.",
 " ",
@@ -358,6 +363,7 @@ ACKNOWLEDGMENTS:
    Christian Hemsing, RWTH Aachen, Germany (OS-9)
    Randolph Herber, US DOE,
    Andrew Herbert, Monash Univ, Australia
+   Marcus Herbert, Germany
    Mike Hickey, ITI
    Dan Hildebrand, QNX Software Systems Inc, Kanata, ON (QNX)
    R E Hill
@@ -607,6 +613,7 @@ char *srvtxt = "";
 int initflg = 0;                        /* sysinit() has executed... */
 int howcalled = I_AM_KERMIT;            /* How I was called */
 int hmtopline = 0;
+int quitting = 0;			/* I'm in the act of quitting */
 
 #ifdef IKSDCONF
 char * iksdconf = IKSDCONF;             /* IKSD configuration file */
@@ -630,12 +637,12 @@ int frecfm = XYFF_S;            /* File record format (default = stream) */
 int forg = XYFO_S;              /* File organization (sequential) */
 int fcctrl = XYFP_N;            /* File carriage control (ctrl chars) */
 int filecase = FILECASE;        /* Case matters in filenames */
-int stathack = 1;		/* Fast directory lookups by default */
+int stathack = 1;               /* Fast directory lookups by default */
 
 char uidbuf[UIDBUFLEN] = { NUL, NUL };  /* User ID buffer */
 int cfilef = 0;                         /* Application ("kerbang") file flag */
 char cmdfil[CKMAXPATH + 1] = { NUL, NUL }; /* Application file name */
-int haveurl = 0;			/* URL given on command line */
+int haveurl = 0;                        /* URL given on command line */
 
 #ifndef NOXFER
 /* Multi-protocol support */
@@ -751,13 +758,13 @@ int spsiz = DSPSIZ,                     /* Current packet size to send */
     xfrchr = 3,                         /* Transfer cancel char = Ctrl-C */
     xfrnum = 3,                         /* Need three of them by default */
     g_xfrxla = -1;
-    char * xfrmsg = NULL;		/* Message for f.t. display screen */
+    char * xfrmsg = NULL;               /* Message for f.t. display screen */
 #endif /* NOXFER */
 
 #ifdef NOCSETS
-int xfrxla = 0;     		        /* Character-set translation */
+int xfrxla = 0;                         /* Character-set translation */
 #else
-int xfrxla = 1;				/* enabled or disabled */
+int xfrxla = 1;                         /* enabled or disabled */
 #endif /* NOCSETS */
 
 #ifndef NOXFER
@@ -799,7 +806,7 @@ int atenci = 1,                         /* Encoding in */
     atsysi = 1,                        /* System-dependent parameters in/out */
     atsyso = 1;
 
-int dispos = 0;				/* Disposition */
+int dispos = 0;                         /* Disposition */
 
 #ifdef CK_PERMS
 int atlpri = 1,
@@ -820,7 +827,7 @@ int atcrei = 1,                         /* Creator ID in/out */
 
 int sprmlen = -1;                       /* Send/Receive protocol parameter */
 int rprmlen = -1;                       /* string length limits */
-int sendipkts = 1;			/* Send I packets */
+int sendipkts = 1;                      /* Send I packets */
 
 CHAR padch = MYPADC,                    /* Padding character to send */
     mypadc = MYPADC,                    /* Padding character to ask for */
@@ -927,7 +934,7 @@ CHAR pktmsgbuf[PKTMSGLEN+1];
 CHAR *epktmsg = pktmsgbuf;
 
 #ifdef pdp11
-int srvcmdlen = MAXRP;			/* srvcmd buffer length */
+int srvcmdlen = MAXRP;                  /* srvcmd buffer length */
 #else
 #ifdef DYNAMIC
 int srvcmdlen = MAXRP;
@@ -966,11 +973,11 @@ int addlist = 0;
 #endif /* NOMSEND */
 
 char filnam[CKMAXPATH + 1];             /* Name of current file. */
-char ofilnam[CKMAXPATH + 1];		/* Original name. */
+char ofilnam[CKMAXPATH + 1];            /* Original name. */
 
-int pipesend = 0;			/* Nonzero if sending from pipe */
+int pipesend = 0;                       /* Nonzero if sending from pipe */
 #ifdef PIPESEND
-char * sndfilter = NULL;		/* Send and receive filters */
+char * sndfilter = NULL;                /* Send and receive filters */
 char * rcvfilter = NULL;
 #endif /* PIPESEND */
 
@@ -1163,7 +1170,7 @@ int isinterrupted = 0;                  /* Used in exception handling */
 int what = W_INIT;                      /* What I am doing */
 int lastxfer = 0;                       /* Last transfer (send or receive) */
 
-extern int mdmtyp;			/* Modem (/network) type */
+extern int mdmtyp;                      /* Modem (/network) type */
 
 #ifdef NT
 extern int StartedFromDialer;
@@ -1207,7 +1214,7 @@ int tt_escape = 1;                      /* Escaping back is enabled */
 int tn_exit = 0;                        /* Exit on disconnect */
 
 int exitonclose = 0;                    /* Exit on close */
-int exithangup = 1;			/* Hangup on exit */
+int exithangup = 1;                     /* Hangup on exit */
 int haveline = 0;                       /* SET LINE or SET HOST in effect */
 int tlevel = -1;                        /* Take-file command level */
 int hints = 1;                          /* Whether to give hints */
@@ -1218,7 +1225,7 @@ int nolocal = 1;                        /* Remote-only strictly enforced */
 #else
 int remonly = 0;
 int nolocal = 0;
-int cx_status = 0;			/* CONNECT return status */
+int cx_status = 0;                      /* CONNECT return status */
 #endif /* NOLOCAL */
 
 #ifndef NOSPL
@@ -1284,8 +1291,8 @@ CKFLOAT
 /* Flags */
 
 int deblog = 0,                         /* Debug log is open */
-    debok = 1,				/* Debug log is not disabled */
-    debxlen = 54,			/* Default length for debug strings */
+    debok = 1,                          /* Debug log is not disabled */
+    debxlen = 54,                       /* Default length for debug strings */
     debses = 0,                         /* Flag for DEBUG SESSION */
     debtim = 0,                         /* Include timestamp in debug log */
     pktlog = 0,                         /* Flag for packet logging */
@@ -1325,9 +1332,9 @@ int deblog = 0,                         /* Debug log is open */
 #endif /* OS2 */
 
     xfermode = XMODE_A,                 /* Transfer mode, manual or auto */
-    xfiletype = -1,			/* Transfer only text (or binary) */
+    xfiletype = -1,                     /* Transfer only text (or binary) */
     recursive = 0,                      /* Recursive directory traversal */
-    nolinks   = 2,			/* Don't follow symbolic links */
+    nolinks   = 2,                      /* Don't follow symbolic links */
     skipbup   = 0,                      /* Skip backup files when sending */
     sendmode = SM_SEND,                 /* Which type of SEND operation */
     slostart  = 1,                      /* Slow start (grow packet lengths) */
@@ -1343,7 +1350,7 @@ int deblog = 0,                         /* Debug log is open */
     urserver = 0,                       /* Flag for You Are Server */
     bye_active = 0,                     /* Flag for BYE command active */
     diractive = 0,                      /* Flag for DIRECTORY command active */
-    cdactive = 0,			/* Flag for CD command active */
+    cdactive = 0,                       /* Flag for CD command active */
     cflg   = 0,                         /* Connect before transaction */
     cnflg  = 0,                         /* Connect after transaction */
     cxseen = 0,                         /* Flag for cancelling a file */
@@ -1353,7 +1360,7 @@ int deblog = 0,                         /* Debug log is open */
     keep = SET_AUTO,                    /* Keep incomplete files = AUTO */
     unkcs = 1,                          /* Keep file w/unknown character set */
 #ifdef VMS
-    filepeek = 0,			/* Inspection of files */
+    filepeek = 0,                       /* Inspection of files */
 #else
 #ifdef datgeneral
     filepeek = 0,
@@ -1463,7 +1470,7 @@ int autodl = 1;                         /* Enabled by default */
 #else
 int autodl = 0;                         /* (or if not implemented). */
 #endif /* CK_AUTODL */
-int adl_err = 1;			/* 1 = stop on error */
+int adl_err = 1;                        /* 1 = stop on error */
 #ifdef OS2                              /* AUTODOWNLOAD parameters */
 int adl_kmode = ADL_PACK,               /* Match Packet to signal download */
     adl_zmode = ADL_PACK;
@@ -1526,7 +1533,7 @@ int en_xit = 0, en_cwd = 0, en_cpy = 0, en_del = 0, en_mkd = 0, en_rmd = 0,
 /* Miscellaneous */
 
 char **xargv;                           /* Global copies of argv */
-int xargc;				/* and argc  */
+int xargc;                              /* and argc  */
 int xargs;                              /* an immutable copy of argc */
 char *xarg0;                            /* and of argv[0] */
 char *pipedata;                         /* Pointer to -P (pipe) data */
@@ -1779,6 +1786,7 @@ initflow() {                            /* Default values for flow control */
     cxflow[CXT_TCPIP]   = FLO_NONE;
 #endif /* VMS */
 
+    cxflow[CXT_SSH]     = FLO_NONE;
     cxflow[CXT_X25]     = FLO_NONE;     /* Other kinds of networks... */
     cxflow[CXT_DECNET]  = FLO_XONX;
     cxflow[CXT_LAT]     = FLO_XONX;
@@ -1895,10 +1903,8 @@ docmdline(threadinfo) VOID * threadinfo;
     if (cnflg) {                        /* Re-connect if requested */
         cnflg = 0;
         doconect(0,0);
-#ifdef CKLOGDIAL
         if (ttchk() < 0)
           dologend();
-#endif /* CKLOGDIAL */
     }
 #endif /* NOLOCAL */
 
@@ -1982,10 +1988,10 @@ ikslogin() {
             if (x_logged == AUTH_VALID) {
 #ifdef CK_SSL
                 if ((ssl_active_flag || tls_active_flag) &&
-		    (!TELOPT_U(TELOPT_AUTHENTICATION) ||
-		     ck_tn_authenticated() == AUTHTYPE_NULL ||
-		     ck_tn_authenticated() == AUTHTYPE_AUTO)
-		    ) {
+                    (!TELOPT_U(TELOPT_AUTHENTICATION) ||
+                     ck_tn_authenticated() == AUTHTYPE_NULL ||
+                     ck_tn_authenticated() == AUTHTYPE_AUTO)
+                    ) {
 #ifdef SSL_KRB5
                     if (tls_is_krb5(0)) {
                         printf("Authenticated using Kerberos 5\r\n");
@@ -1993,43 +1999,43 @@ ikslogin() {
                         if (ckxsyslog >= SYSLG_LI && ckxlogging) {
                             extern char szUserNameAuthenticated[];
                             cksyslog(SYSLG_LI, 1, "AUTH_VALID",
-				     "Kerberos 5",
-				     szUserNameAuthenticated
-				     );
+                                     "Kerberos 5",
+                                     szUserNameAuthenticated
+                                     );
                         }
 #endif /* CKSYSLOG */
                     } else
 #endif /* SSL_KRB5 */
-		    {
-			printf("Authenticated using X.509 certificate\r\n");
+                    {
+                        printf("Authenticated using X.509 certificate\r\n");
 #ifdef CKSYSLOG
                         if (ckxsyslog >= SYSLG_LI && ckxlogging) {
                             extern char szUserNameAuthenticated[];
                             cksyslog(SYSLG_LI, 1, "AUTH_VALID",
-				     "X.509 certificate",
-				     szUserNameAuthenticated
-				     );
+                                     "X.509 certificate",
+                                     szUserNameAuthenticated
+                                     );
                         }
 #endif /* CKSYSLOG */
                     }
                 } else
 #endif /* CK_SSL */
-		  {
-		      printf("Authenticated using %s\r\n",
-			     AUTHTYPE_NAME(ck_tn_authenticated()));
+                  {
+                      printf("Authenticated using %s\r\n",
+                             AUTHTYPE_NAME(ck_tn_authenticated()));
 #ifdef CKSYSLOG
-		      if (ckxsyslog >= SYSLG_LI && ckxlogging) {
-			  extern char szUserNameAuthenticated[];
-			  cksyslog(SYSLG_LI, 1, "AUTH_VALID",
-				   AUTHTYPE_NAME(ck_tn_authenticated()),
-				   szUserNameAuthenticated
-				   );
-		      }
+                      if (ckxsyslog >= SYSLG_LI && ckxlogging) {
+                          extern char szUserNameAuthenticated[];
+                          cksyslog(SYSLG_LI, 1, "AUTH_VALID",
+                                   AUTHTYPE_NAME(ck_tn_authenticated()),
+                                   szUserNameAuthenticated
+                                   );
+                      }
 #endif /* CKSYSLOG */
-		  }
-		zvuser(uidbuf);
-		if (zvpass("") == 0)
-		  x_logged = 0;
+                  }
+                zvuser(uidbuf);
+                if (zvpass("") == 0)
+                  x_logged = 0;
             } else if (x_logged == AUTH_USER && !strcmp(uidbuf,"anonymous")) {
                 extern char szUserNameAuthenticated[];
                 zvuser(uidbuf);
@@ -2042,34 +2048,34 @@ ikslogin() {
                 } else {
 #ifdef CK_SSL
                     if ((ssl_active_flag || tls_active_flag) &&
-			(!TELOPT_U(TELOPT_AUTHENTICATION) ||
-			 ck_tn_authenticated() == AUTHTYPE_NULL ||
-			 ck_tn_authenticated() == AUTHTYPE_AUTO)) {
+                        (!TELOPT_U(TELOPT_AUTHENTICATION) ||
+                         ck_tn_authenticated() == AUTHTYPE_NULL ||
+                         ck_tn_authenticated() == AUTHTYPE_AUTO)) {
                         printf("Authenticated using X.509 certificate\r\n");
 #ifdef CKSYSLOG
                         if (ckxsyslog >= SYSLG_LI && ckxlogging) {
                             extern char szUserNameAuthenticated[];
                             cksyslog(SYSLG_LI, 1, "AUTH_USER",
-				     "X.509 certificate",
-				     szUserNameAuthenticated
+                                     "X.509 certificate",
+                                     szUserNameAuthenticated
                                      );
                         }
 #endif /* CKSYSLOG */
                     } else
 #endif /* CK_SSL */
-		      {
-			  printf("Authenticated using %s\r\n",
-				 AUTHTYPE_NAME(ck_tn_authenticated())
-				 );
+                      {
+                          printf("Authenticated using %s\r\n",
+                                 AUTHTYPE_NAME(ck_tn_authenticated())
+                                 );
 #ifdef CKSYSLOG
-			  if (ckxsyslog >= SYSLG_LI && ckxlogging) {
-			      cksyslog(SYSLG_LI, 1, "AUTH_USER",
-				       AUTHTYPE_NAME(ck_tn_authenticated()),
-				       szUserNameAuthenticated
-				       );
-			  }
+                          if (ckxsyslog >= SYSLG_LI && ckxlogging) {
+                              cksyslog(SYSLG_LI, 1, "AUTH_USER",
+                                       AUTHTYPE_NAME(ck_tn_authenticated()),
+                                       szUserNameAuthenticated
+                                       );
+                          }
 #endif /* CKSYSLOG */
-		      }
+                      }
                 }
             } else {
 #ifdef CKSYSLOG
@@ -2126,7 +2132,7 @@ ikslogin() {
 #endif /* NOSPL */
 
         debug(F110,"MAIN clienthost",clienthost,0);
-        srvidl = timelimit = logintimo;	/* For interactive login */
+        srvidl = timelimit = logintimo; /* For interactive login */
         rtimer();                       /* Reset timer */
         for (i = 0; i < iks_retry && !x_logged; i++) { /* Count retries */
             if (gtimer() > logintimo)
@@ -2200,23 +2206,23 @@ ikslogin() {
   macro table so the user cannot see what it does.  Execute it as part of the
   iksd.conf file.
 */
-	if (nmac) {			/* Any macros defined? */
-	    int k;			/* Yes */
-	    char * cmd = "on_login";	/* MSVC 2.x compiler error */
-	    k = mlook(mactab,cmd,nmac);	/* Look up "on_exit" */
-	    if (k >= 0) {		/* If found, */
+        if (nmac) {                     /* Any macros defined? */
+            int k;                      /* Yes */
+            char * cmd = "on_login";    /* MSVC 2.x compiler error */
+            k = mlook(mactab,cmd,nmac); /* Look up "on_exit" */
+            if (k >= 0) {               /* If found, */
 #ifdef IKSDCONF
                 int saved = iksdcf;
                 iksdcf = 0;
 #endif /* IKSDCONF */
-		if (dodo(k,"",0) > -1)	/* set it up, */
-		  parser(1);		/* execute it */
+                if (dodo(k,"",0) > -1)  /* set it up, */
+                  parser(1);            /* execute it */
 #ifdef IKSDCONF
                 iksdcf = saved;
 #endif /* IKSDCONF */
-		delmac(cmd,1);		/* and delete it */
-	    }
-	}
+                delmac(cmd,1);          /* and delete it */
+            }
+        }
 #endif /* NOSPL */
     } /* if (inserver) */
 #else /* CK_LOGIN */
@@ -2237,11 +2243,9 @@ failcmdline(foo) VOID * foo;
     cc_clean();
 #endif /* GEMDOS */
 #ifndef NOLOCAL
-    if (cnflg) doconect(0,0);		/* connect again if requested. */
-#ifdef CKLOGDIAL
+    if (cnflg) doconect(0,0);           /* connect again if requested. */
     if (ttchk() < 0)
       dologend();
-#endif /* CKLOGDIAL */
 #endif /* NOLOCAL */
 }
 #endif /* NOCMDL */
@@ -2516,16 +2520,16 @@ setprefix(z) int z; {                   /* Initial control-char prefixing */
         for (i = 127; i < 160; i++) ctlp[i] = val;
         ctlp[(unsigned)255] = val;
         if (z == PX_NON) {              /* These are never safe */
-	    if (network) {		/* Assume network = telnet or rlogin */
-		ctlp[CR] = 1;		/* Prefix CR because of NVT rules */
-		ctlp[XON] = ctlp[XOFF] = 1; /* Because of Telnet server */
-		ctlp[127] = ctlp[255] = 1;  /* Telnet IAC */
-		ctlp[mystch] = ctlp[mystch+128] = 1; /* Kermit packet start */
-	    } else {
-		ctlp[CR] = ctlp[255] = ctlp[mystch] = ctlp[mystch+128] = 1;
-		if (flow == FLO_XONX)       /* Xon/Xoff forces prefixing */
-		  ctlp[XON] = ctlp[XOFF] = ctlp[XON+128] = ctlp[XOFF+128] = 1;
-	    }
+            if (network) {              /* Assume network = telnet or rlogin */
+                ctlp[CR] = 1;           /* Prefix CR because of NVT rules */
+                ctlp[XON] = ctlp[XOFF] = 1; /* Because of Telnet server */
+                ctlp[127] = ctlp[255] = 1;  /* Telnet IAC */
+                ctlp[mystch] = ctlp[mystch+128] = 1; /* Kermit packet start */
+            } else {
+                ctlp[CR] = ctlp[255] = ctlp[mystch] = ctlp[mystch+128] = 1;
+                if (flow == FLO_XONX)       /* Xon/Xoff forces prefixing */
+                  ctlp[XON] = ctlp[XOFF] = ctlp[XON+128] = ctlp[XOFF+128] = 1;
+            }
         }
         break;
 
@@ -2553,8 +2557,8 @@ setprefix(z) int z; {                   /* Initial control-char prefixing */
         ctlp[21] = ctlp[21+128] = 1;    /* In case of RLOGIN */
 
         if (flow == FLO_XONX ||         /* Xon/Xoff forces prefixing these */
-            prefixing == PX_CAU ||	/* So does CAUTIOUS */
-	    network)			/* Networks too... */
+            prefixing == PX_CAU ||      /* So does CAUTIOUS */
+            network)                    /* Networks too... */
           ctlp[XON] = ctlp[XOFF] = ctlp[XON+128] = ctlp[XOFF+128] = 1;
         if (prefixing == PX_CAU) {      /* Cautious - add some more */
 #ifdef UNPREFIXZERO
@@ -2586,9 +2590,9 @@ makever() {                             /* Make version string from pieces */
     x = strlen(ck_s_name);
     y = strlen(ck_s_xver);
     if (y + x + 1 < CKVERLEN) {
-	ckmakmsg(versio,CKVERLEN,ck_s_name," ",ck_s_xver,NULL);
+        ckmakmsg(versio,CKVERLEN,ck_s_name," ",ck_s_xver,NULL);
     } else {
-	ckstrncpy(versio,"C-Kermit",CKVERLEN);
+        ckstrncpy(versio,"C-Kermit",CKVERLEN);
         return;
     }
     x += y + 1;
@@ -2656,10 +2660,10 @@ dourl() {
         extern int pwcrypt;
 #endif /* OS2 */
 
-	if (!g_url.hos) {
-	    printf("?Incomplete IKSD URL\n");
-	    doexit(BAD_EXIT,1);
-	}
+        if (!g_url.hos) {
+            printf("?Incomplete IKSD URL\n");
+            doexit(BAD_EXIT,1);
+        }
         if (!g_url.usr)
             makestr(&g_url.usr,"anonymous");
         if (!g_url.psw) {
@@ -2677,11 +2681,11 @@ dourl() {
 
             free(tmpbuf);
         }
-	port = "kermit";
-	ttnproto = NP_TELNET;
-	nettype = NET_TCPB;
-	mdmtyp = -nettype;
-	local = -1;
+        port = "kermit";
+        ttnproto = NP_TELNET;
+        nettype = NET_TCPB;
+        mdmtyp = -nettype;
+        local = -1;
         ckstrncpy(uidbuf,g_url.usr,UIDBUFLEN);
         if (g_url.psw) {
             ckstrncpy(pwbuf,g_url.psw,PWBUFL);
@@ -2690,71 +2694,71 @@ dourl() {
             pwcrypt = 0;
 #endif /* OS2 */
         }
-	ckmakmsg(ttname,
-		 TTNAMLEN,
-		 g_url.hos,
-		 ":",
-		 g_url.por ? g_url.por : port,
-		 NULL
-		 );
-	rc = ttopen(ttname,&local,mdmtyp,0);
-	if (rc > -1) {
-	    network = 1;
-	    exitonclose = 1;
+        ckmakmsg(ttname,
+                 TTNAMLEN,
+                 g_url.hos,
+                 ":",
+                 g_url.por ? g_url.por : port,
+                 NULL
+                 );
+        rc = ttopen(ttname,&local,mdmtyp,0);
+        if (rc > -1) {
+            network = 1;
+            exitonclose = 1;
 #ifdef CKLOGDIAL
-	    dolognet();
+            dolognet();
 #endif /* CKLOGDIAL */
-	} else {
-	    printf("?Connection failed: %s\n",g_url.sav);
-	    doexit(BAD_EXIT,1);
-	}
-	/* Also need to check here for secure authentication already done */
+        } else {
+            printf("?Connection failed: %s\n",g_url.sav);
+            doexit(BAD_EXIT,1);
+        }
+        /* Also need to check here for secure authentication already done */
 
 #ifdef NOSPL
-	cflg = 1;
+        cflg = 1;
 #else
-	if (!g_url.pth) {
-	    cflg = 1;
-	} else {
-	    char * line = NULL;
-	    if (!(line = (char *)malloc(10240)))
-	      fatal("dourl: out of memory");
-	    if (!g_url.pth) {		/* Write the appropriate script */
-		ckmakxmsg(line,10240,
-			  "remote login ", /* No path */
-			  g_url.usr,	   /* Just log in and CONNECT */
-			  " ",
-			  g_url.psw,
-			  ", if fail exit 1 IKSD login failed",
-			  ", connect",
-			  NULL,NULL,NULL,NULL,NULL,NULL);
-	    } else {
-		ckmakxmsg(line,10240,	/* Path given, try to GET */
-			  "remote login ",
-			  g_url.usr,
-			  " ",
-			  g_url.psw,
-			  ", if fail exit 1 IKSD login failed",
-			  ", set xfer displ brief",
-			  ", set xfer bell off",
-			  ", get ",
-			  g_url.pth,
-			  ", .rc := \\v(status)",
-			  ", bye",
-			  ", exit \\m(rc)"
-			  );
-	    }
-	    clcmds = line;		/* Make this our -C cmdline macro */
-	    debug(F110,"dourl clcmds",clcmds,0);
-	}
+        if (!g_url.pth) {
+            cflg = 1;
+        } else {
+            char * line = NULL;
+            if (!(line = (char *)malloc(10240)))
+              fatal("dourl: out of memory");
+            if (!g_url.pth) {           /* Write the appropriate script */
+                ckmakxmsg(line,10240,
+                          "remote login ", /* No path */
+                          g_url.usr,       /* Just log in and CONNECT */
+                          " ",
+                          g_url.psw,
+                          ", if fail exit 1 IKSD login failed",
+                          ", connect",
+                          NULL,NULL,NULL,NULL,NULL,NULL);
+            } else {
+                ckmakxmsg(line,10240,   /* Path given, try to GET */
+                          "remote login ",
+                          g_url.usr,
+                          " ",
+                          g_url.psw,
+                          ", if fail exit 1 IKSD login failed",
+                          ", set xfer displ brief",
+                          ", set xfer bell off",
+                          ", get ",
+                          g_url.pth,
+                          ", .rc := \\v(status)",
+                          ", bye",
+                          ", exit \\m(rc)"
+                          );
+            }
+            clcmds = line;              /* Make this our -C cmdline macro */
+            debug(F110,"dourl clcmds",clcmds,0);
+        }
 #endif /* NOSPL */
     } else {
-	if (ckstrcmp(g_url.svc,"telnet",-1,0) &&
-	    ckstrcmp(g_url.svc,"ftp",-1,0)) {
-	    printf("?Sorry, %s URLs not supported\n",
-		   g_url.svc ? g_url.svc : "");
-	    doexit(BAD_EXIT,1);
-	}
+        if (ckstrcmp(g_url.svc,"telnet",-1,0) &&
+            ckstrcmp(g_url.svc,"ftp",-1,0)) {
+            printf("?Sorry, %s URLs not supported\n",
+                   g_url.svc ? g_url.svc : "");
+            doexit(BAD_EXIT,1);
+        }
     }
 }
 #endif /* NOCMDL */
@@ -2884,23 +2888,13 @@ main(argc,argv) int argc; char **argv;
     else if (!ckstrcmp(myname,"http.exe",-1,0))    howcalled = I_AM_HTTP;
 #endif /* NOHTTP */
 #endif /* OS2 */
-
-    debug(F111,"howcalled",myname,howcalled);
-
-    shortbytes.x_short = 0xABCD;        /* Get Endianness */
-    if (shortbytes.x_char[0] == 0xCD) { /* 0 = Big Endian */
-        byteorder = 1;                  /* 1 = Little Endian */
-        bigendian = 0;                  /* (for clarity in programming) */
-    }
+    else if (!ckstrcmp(myname,"kermit-sshsub",-1,0)) howcalled = I_AM_SSHSUB;
 
 #ifndef NOICP
     cmdini();                           /* Must come before prescan */
     debug(F100,"main cmdini() done","",0);
 #endif /* NOICP */
     prescan(0);                         /* Pre-Check for debugging, etc */
-#ifdef UNIX
-    getexedir();                        /* Compute exedir variable */
-#endif /* UNIX */
 #endif /* MAC */
     debug(F101,"MAIN feol","",feol);
     makever();                          /* Put together version strings */
@@ -2916,11 +2910,24 @@ main(argc,argv) int argc; char **argv;
     }
 #endif /* NOSETKEY */
 
+    shortbytes.x_short = 0xABCD;        /* Get Endianness */
+    if (shortbytes.x_char[0] == 0xCD) { /* 0 = Big Endian */
+        byteorder = 1;                  /* 1 = Little Endian */
+        bigendian = 0;                  /* (for clarity in programming) */
+    } else {
+        byteorder = 0;                  /* Big Endian */
+        bigendian = 1;
+    }
+
     if (sysinit() < 0)                  /* System-dependent initialization. */
       fatal("Can't initialize!");
     else
       initflg = 1;                      /* Remember we did. */
     debug(F111,"ckcmai myname",myname,howcalled);
+
+#ifdef UNIX
+    getexedir();                        /* Compute exedir variable */
+#endif /* UNIX */
 
 #ifdef CKSYSLOG
 #ifdef SYSLOGLEVEL
@@ -2982,7 +2989,7 @@ main(argc,argv) int argc; char **argv;
 #ifdef XYZ_INTERNAL /* XYZMODEM are internal ... */
 
 #ifdef COMMENT
-/* Can't do this for XMODEM because if filename contains a "C" etc... */
+    /* Can't do this for XMODEM because if filename contains a "C" etc... */
     initproto(PROTO_X, "rx %s","rx %s", NULL, NULL, NULL, NULL, NULL);
     initproto(PROTO_XC,"rc %s","rc %s", NULL, NULL, NULL, NULL, NULL);
 #else /* COMMENT */
@@ -2997,14 +3004,14 @@ main(argc,argv) int argc; char **argv;
 
 #else /* XYZMODEM are external protocols ... */
 
-/*                  s1      s2     s3    s4      s5         s6      s7     */
-initproto(PROTO_X, "rx %s","rx %s",NULL,"sx %s","sx -a %s","rx %s", "rx %s");
-initproto(PROTO_XC,"rc %s","rc %s",NULL,"sx %s","sx -a %s","rc %s", "rc %s");
-initproto(PROTO_Y, "rb",   "rb",   NULL,"sb %s","sb -a %s","rb",    "rb"   );
-initproto(PROTO_G, "rb",   "rb",   NULL,"sb %s","sb -a %s","rb",    "rb"   );
-initproto(PROTO_Z, "rz",   "rz",   NULL,"sz %s","sz -a %s","rz",    "rz"   );
-initproto(PROTO_K, "kermit -ir","kermit -r","kermit -x",NULL,NULL,NULL,NULL);
-/* Kermit must be last */
+ /*                  s1      s2     s3    s4      s5         s6      s7     */
+ initproto(PROTO_X, "rx %s","rx %s",NULL,"sx %s","sx -a %s","rx %s", "rx %s");
+ initproto(PROTO_XC,"rc %s","rc %s",NULL,"sx %s","sx -a %s","rc %s", "rc %s");
+ initproto(PROTO_Y, "rb",   "rb",   NULL,"sb %s","sb -a %s","rb",    "rb"   );
+ initproto(PROTO_G, "rb",   "rb",   NULL,"sb %s","sb -a %s","rb",    "rb"   );
+ initproto(PROTO_Z, "rz",   "rz",   NULL,"sz %s","sz -a %s","rz",    "rz"   );
+ initproto(PROTO_K, "kermit -ir","kermit -r","kermit -x",NULL,NULL,NULL,NULL);
+ /* Kermit must be last */
 
 #endif /* XYZ_INTERNAL */
 
@@ -3124,7 +3131,7 @@ initproto(PROTO_K, "kermit -ir","kermit -r","kermit -x",NULL,NULL,NULL,NULL);
 
 #ifdef UNIX
         if (isatty(0))
-	  fatal("Internet Kermit Service cannot be started at a terminal.");
+          fatal("Internet Kermit Service cannot be started at a terminal.");
 #endif /* UNIX */
 
         reliable = xreliable = SET_ON;  /* IKSD has reliable connection */
@@ -3149,7 +3156,7 @@ initproto(PROTO_K, "kermit -ir","kermit -r","kermit -x",NULL,NULL,NULL,NULL);
 
 #ifdef UNIX
         setbuf(stdout,NULL);            /* Don't buffer the output */
-        ckstrncpy(ttname,"0",TTNAMLEN);	/* not "/dev/tty"... */
+        ckstrncpy(ttname,"0",TTNAMLEN); /* not "/dev/tty"... */
 #endif /* UNIX */
         local = 0;                      /* We are in remote mode */
         ckxech = 1;                     /* We will echo */
@@ -3163,8 +3170,10 @@ initproto(PROTO_K, "kermit -ir","kermit -r","kermit -x",NULL,NULL,NULL,NULL);
         }
 #ifdef OS2
         local = 0;
-#endif /* OS2 */
+        network = 1;                    /* Does use networking code */
+#else  /* OS2 */
         network = 0;                    /* Does not use networking code */
+#endif /* OS2 */
         ttmdm = -1;                     /* Does not use a modem */
         sstelnet = 1;                   /* Do server-side Telnet negotations */
         debug(F111,"MAIN","sstelnet",sstelnet);
@@ -3194,22 +3203,22 @@ initproto(PROTO_K, "kermit -ir","kermit -r","kermit -x",NULL,NULL,NULL,NULL);
 #ifndef datageneral
 #ifdef SOL_SOCKET
 #ifdef TCP_NODELAY
-        no_delay(tcp_nodelay);
+        no_delay(0,tcp_nodelay);
 #endif /* TCP_NODELAY */
 #ifdef SO_KEEPALIVE
-        keepalive(tcp_keepalive);
+        keepalive(0,tcp_keepalive);
 #endif /* SO_KEEPALIVE */
 #ifdef SO_LINGER
-        ck_linger(tcp_linger, tcp_linger_tmo);
+        ck_linger(0,tcp_linger, tcp_linger_tmo);
 #endif /* SO_LINGER */
 #ifdef SO_DONTROUTE
-        dontroute(tcp_dontroute);
+        dontroute(0,tcp_dontroute);
 #endif /* SO_DONTROUTE */
 #ifdef SO_SNDBUF
-        sendbuf(tcp_sendbuf);
+        sendbuf(0,tcp_sendbuf);
 #endif /* SO_SNDBUF */
 #ifdef SO_RCVBUF
-        recvbuf(tcp_recvbuf);
+        recvbuf(0,tcp_recvbuf);
 #endif /* SO_RCVBUF */
 #endif /* SOL_SOCKET */
 #endif /* datageneral */
@@ -3251,7 +3260,7 @@ initproto(PROTO_K, "kermit -ir","kermit -r","kermit -x",NULL,NULL,NULL,NULL);
     }
     debug(F101,"main argc after prescan()","",argc);
 
-/* Now process any relevant environment variables */
+    /* Now process any relevant environment variables */
 
 #ifndef NODIAL
     getdialenv();                       /* Dialing */
@@ -3270,6 +3279,21 @@ initproto(PROTO_K, "kermit -ir","kermit -r","kermit -x",NULL,NULL,NULL,NULL);
 #ifndef NOCMDL
     ikslogin();                          /* IKSD Login and other stuff */
 #endif /* NOCMDL */
+
+    if (howcalled == I_AM_SSHSUB) {
+        reliable = 1;			/* We say the connection is reliable */
+        xreliable = 1;			/* And that we said it was */
+        setreliable = 1;		/* And pretend the "user" did too */
+        xfinish = 1;			/* For REMOTE HELP response */
+        mdmtyp = 0;			/* For ttopen() */
+        ckstrncpy(ttname,"0",TTNAMLEN+1);  /* Use file descriptor 0 */
+        local = 0;                         /* And force remote mode */
+        ttopen(ttname,&local,mdmtyp,0); /* Open the "connection" */
+        sstate = 'x';			/* Initial state is Server */
+        proto();			/* Enter protocol */
+        doexit(GOOD_EXIT,xitsta);	/* Exit when done */
+    }
+    debug(F111,"howcalled",myname,howcalled);
 
 #ifdef NOCCTRAP
     dotakeini(0);
@@ -3310,9 +3334,9 @@ initproto(PROTO_K, "kermit -ir","kermit -r","kermit -x",NULL,NULL,NULL,NULL);
         sstate = (CHAR) cmdlin();       /* Yes, parse. */
 #ifdef NETCONN
 #ifndef NOURL
-	if (haveurl) {			/* Was a URL given? */
-	    dourl();			/* if so, do it. */
-	}
+        if (haveurl) {                  /* Was a URL given? */
+            dourl();                    /* if so, do it. */
+        }
 #endif /* NOURL */
 #endif /* NETCONN */
 #ifndef NOXFER
@@ -3323,10 +3347,8 @@ initproto(PROTO_K, "kermit -ir","kermit -r","kermit -x",NULL,NULL,NULL,NULL);
 #ifndef NOLOCAL
         if (cflg) {                     /* Connect first if requested */
             doconect(0,0);
-#ifdef CKLOGDIAL
             if (ttchk() < 0)
               dologend();
-#endif /* CKLOGDIAL */
             cflg = 0;
         }
 #endif /* NOLOCAL */

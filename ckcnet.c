@@ -1,9 +1,9 @@
-char *cknetv = "Network support, 8.0.255, 8 Dec 2001";
+char *cknetv = "Network support, 8.0.264, 5 Feb 2002";
 
 /*  C K C N E T  --  Network support  */
 
 /*
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2002,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -363,7 +363,7 @@ static ckjmpbuf njbuf;
 char namecopy[NAMECPYL];                /* Referenced by ckctel.c */
 #ifndef NOHTTP
 char http_host_port[NAMECPYL];          /* orig host/port necessary for http */
-char http_ip[20] = { '\0' };		/* ip address of host */
+char http_ip[20] = { '\0' };            /* ip address of host */
 char http_port = 0;
 int  http_ssl = 0;
 int  httpfd = -1;                       /* socket for http connections */
@@ -764,7 +764,7 @@ ini_kerb() {
         char * p = ck_krb5_getprincipal(krb5_d_cc);
         if (!p || !(*p))
           p = (char *)uidbuf;           /* Principal = user */
-		makestr(&krb5_d_principal,(p && p[0]) ? p : NULL);
+                makestr(&krb5_d_principal,(p && p[0]) ? p : NULL);
     }
     makestr(&krb5_init.principal,krb5_d_principal);
     for (i = 0; i <= KRB5_NUM_OF_ADDRS; i++) {
@@ -784,7 +784,7 @@ ini_kerb() {
     if (!krb4_d_realm || !krb4_d_realm[0]) {/* Set default realm */
         char * p;
         p = ck_krb4_getrealm();
-		makestr(&krb4_d_realm,(p && p[0]) ? p : NULL);
+                makestr(&krb4_d_realm,(p && p[0]) ? p : NULL);
     }
     makestr(&krb4_init.realm,krb4_d_realm);
     if (krb4_init.password) {
@@ -810,7 +810,7 @@ doauth(cx) int cx; {                    /* AUTHENTICATE action routine */
 
 #ifdef CK_AUTHENTICATION
 #ifdef OS2
-    if (!ck_security_loaddll())		/* Load various DLLs */
+    if (!ck_security_loaddll())         /* Load various DLLs */
       return(rc);
 #endif /* OS2 */
     if (krb_op.version == 4) {          /* Version = 4 */
@@ -1091,15 +1091,21 @@ ttbufr() {                              /* TT Buffer Read */
 #endif /* OS2 */
                   return(-2);
               } else {
+                  int rc = -1;
 #ifdef NT
                   int gle = GetLastError();
                   debug(F111,"ttbufr SSL_ERROR_SYSCALL",
                          "GetLastError()",gle);
+                  rc = os2socketerror(gle);
+                  if (rc == -1)
+                      rc = -2;
+                  else if ( rc == -2 )
+                      return -1;
 #endif /* NT */
 #ifdef OS2
                   ReleaseTCPIPMutex();
 #endif /* OS2 */
-                  return(-1);
+                  return(rc);
               }
           case SSL_ERROR_WANT_X509_LOOKUP:
             debug(F100,"ttbufr SSL_ERROR_WANT_X509_LOOKUP","",0);
@@ -1433,12 +1439,12 @@ ck_copyhostent(h) struct hostent * h;
     makestr(&hosts[next].h_name,h->h_name);
     if (h->h_aliases) {
         for ( cnt=0,pp=h->h_aliases; pp && *pp; pp++,cnt++) ;
-	/* The following can give warnings in non-ANSI builds */
+        /* The following can give warnings in non-ANSI builds */
         hosts[next].h_aliases = (char **) malloc(sizeof(char *) * (cnt+1));
         for ( i=0; i<cnt; i++) {
             hosts[next].h_aliases[i] = NULL;
             makestr(&hosts[next].h_aliases[i],h->h_aliases[i]);
-	}
+        }
         hosts[next].h_aliases[i] = NULL;
     } else
         hosts[next].h_aliases = NULL;
@@ -1450,7 +1456,7 @@ ck_copyhostent(h) struct hostent * h;
 #ifdef h_addr
     if (h->h_addr_list) {
         for ( cnt=0,pp=h->h_addr_list; pp && *pp; pp++,cnt++) ;
-	/* The following can give warnings non-ANSI builds */
+        /* The following can give warnings non-ANSI builds */
         hosts[next].h_addr_list = (char **) malloc(sizeof(char *) * (cnt+1));
         for ( i=0; i<cnt; i++) {
             hosts[next].h_addr_list[i] = malloc(h->h_length);
@@ -1614,7 +1620,7 @@ my_getservbyname (service, proto) char *service, *proto; {
 #ifndef NOTCPOPTS
 #ifndef datageneral
 int
-ck_linger(onoff, timo) int onoff; int timo; {
+ck_linger(sock, onoff, timo) int sock; int onoff; int timo; {
 /*
   The following, from William Bader, turns off the socket linger parameter,
   which makes a close() block until all data is sent.  "I don't think that
@@ -1633,14 +1639,15 @@ ck_linger(onoff, timo) int onoff; int timo; {
 #ifdef IKSD
     if (!inserver)
 #endif /* IKSD */
-      if (ttyfd == -1 ||
-	nettype != NET_TCPA && nettype != NET_TCPB || ttmdm >= 0) {
+      if (sock == -1 ||
+        nettype != NET_TCPA && nettype != NET_TCPB &&
+        nettype != NET_SSH || ttmdm >= 0) {
         tcp_linger = onoff;
         tcp_linger_tmo = timo;
         return(1);
     }
     x = sizeof(get_linger_opt);
-    if (getsockopt(ttyfd, SOL_SOCKET, SO_LINGER,
+    if (getsockopt(sock, SOL_SOCKET, SO_LINGER,
                     (char *)&get_linger_opt, &x)) {
         debug(F111,"TCP ck_linger can't get SO_LINGER",ck_errstr(),errno);
     } else if (x != sizeof(get_linger_opt)) {
@@ -1651,7 +1658,7 @@ ck_linger(onoff, timo) int onoff; int timo; {
         } get_linger_opt16, set_linger_opt16;
         if ( x == sizeof(get_linger_opt16) ) {
             debug(F111,"TCP setlinger warning: SO_LINGER","len is 16-bit",x);
-            if (getsockopt(ttyfd,
+            if (getsockopt(sock,
                            SOL_SOCKET, SO_LINGER,
                            (char *)&get_linger_opt16, &x)
                 ) {
@@ -1662,7 +1669,7 @@ ck_linger(onoff, timo) int onoff; int timo; {
             {
                 set_linger_opt16.s_onoff  = onoff;
                 set_linger_opt16.s_linger = timo;
-                if (setsockopt(ttyfd,
+                if (setsockopt(sock,
                                SOL_SOCKET,
                                SO_LINGER,
                                (char *)&set_linger_opt16,
@@ -1704,7 +1711,7 @@ ck_linger(onoff, timo) int onoff; int timo; {
                get_linger_opt.l_linger != timo) {
         set_linger_opt.l_onoff  = onoff;
         set_linger_opt.l_linger = timo;
-        if (setsockopt(ttyfd,
+        if (setsockopt(sock,
                        SOL_SOCKET,
                        SO_LINGER,
                        (char *)&set_linger_opt,
@@ -1739,7 +1746,7 @@ ck_linger(onoff, timo) int onoff; int timo; {
 }
 
 int
-sendbuf(size) int size; {
+sendbuf(sock,size) int sock; int size; {
 /*
   The following, from William Bader, allows changing of socket buffer sizes,
   in case that might affect performance.
@@ -1754,20 +1761,21 @@ sendbuf(size) int size; {
 #ifdef IKSD
     if (!inserver)
 #endif /* IKSD */
-      if (ttyfd == -1 ||
-        nettype != NET_TCPA && nettype != NET_TCPB || ttmdm >= 0) {
+      if (sock == -1 ||
+        nettype != NET_TCPA && nettype != NET_TCPB && nettype != NET_SSH
+                || ttmdm >= 0) {
         tcp_sendbuf = size;
         return 1;
     }
     x = sizeof(i);
-    if (getsockopt(ttyfd, SOL_SOCKET, SO_SNDBUF, (char *)&i, &x)) {
+    if (getsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *)&i, &x)) {
         debug(F111,"TCP sendbuf can't get SO_SNDBUF",ck_errstr(),errno);
     } else if (x != sizeof(i)) {
 #ifdef OS2
         short i16,j16;
         if (x == sizeof(i16)) {
             debug(F111,"TCP sendbuf warning: SO_SNDBUF","len is 16-bit",x);
-            if (getsockopt(ttyfd,
+            if (getsockopt(sock,
                            SOL_SOCKET, SO_SNDBUF,
                            (char *)&i16, &x)
                 ) {
@@ -1779,7 +1787,7 @@ sendbuf(size) int size; {
                 return 1;
             } else if (i16 != size) {
                 j16 = size;
-                if (setsockopt(ttyfd,
+                if (setsockopt(sock,
                                SOL_SOCKET,
                                SO_SNDBUF,
                                (char *)&j16,
@@ -1810,7 +1818,7 @@ sendbuf(size) int size; {
         return 1;
     } else if (i != size) {
         j = size;
-        if (setsockopt(ttyfd, SOL_SOCKET, SO_SNDBUF, (char *)&j, sizeof(j))) {
+        if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *)&j, sizeof(j))) {
             debug(F111,"TCP sendbuf can't set SO_SNDBUF",ck_errstr(),errno);
             tcp_sendbuf = i;
         } else {
@@ -1834,7 +1842,7 @@ sendbuf(size) int size; {
 }
 
 int
-recvbuf(size) int size; {
+recvbuf(sock,size) int sock; int size; {
 /*
   The following, from William Bader, allows changing of socket buffer sizes,
   in case that might affect performance.
@@ -1849,20 +1857,20 @@ recvbuf(size) int size; {
 #ifdef IKSD
     if (!inserver)
 #endif /* IKSD */
-      if (ttyfd == -1 ||
-        nettype != NET_TCPA && nettype != NET_TCPB || ttmdm >= 0) {
+      if (sock == -1 ||
+        nettype != NET_TCPA && nettype != NET_TCPB && nettype != NET_SSH || ttmdm >= 0) {
         tcp_recvbuf = size;
         return(1);
     }
     x = sizeof(i);
-    if (getsockopt(ttyfd, SOL_SOCKET, SO_RCVBUF, (char *)&i, &x)) {
+    if (getsockopt(sock, SOL_SOCKET, SO_RCVBUF, (char *)&i, &x)) {
         debug(F111,"TCP recvbuf can't get SO_RCVBUF",ck_errstr(),errno);
     } else if (x != sizeof(i)) {
 #ifdef OS2
         short i16,j16;
         if ( x == sizeof(i16) ) {
             debug(F111,"TCP recvbuf warning: SO_RCVBUF","len is 16-bit",x);
-            if (getsockopt(ttyfd,
+            if (getsockopt(sock,
                            SOL_SOCKET, SO_RCVBUF,
                            (char *)&i16, &x)
                 ) {
@@ -1874,7 +1882,7 @@ recvbuf(size) int size; {
                 return 1;
             } else if (i16 != size) {
                 j16 = size;
-                if (setsockopt(ttyfd, SOL_SOCKET, SO_RCVBUF, (char *)&j16,
+                if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (char *)&j16,
                                sizeof(j16))) {
                     debug(F111,"TCP recvbuf can' set SO_RCVBUF",
                           ck_errstr(),errno);
@@ -1901,7 +1909,7 @@ recvbuf(size) int size; {
         return 1;
     } else if (i != size) {
         j = size;
-        if (setsockopt(ttyfd, SOL_SOCKET, SO_RCVBUF, (char *)&j, sizeof(j))) {
+        if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (char *)&j, sizeof(j))) {
             debug(F111,"TCP recvbuf can't set SO_RCVBUF",ck_errstr(),errno);
             tcp_recvbuf = i;
         } else {
@@ -1925,27 +1933,28 @@ recvbuf(size) int size; {
 }
 
 int
-keepalive(onoff) int onoff; {
+keepalive(sock,onoff) int sock; int onoff; {
 #ifdef SOL_SOCKET
 #ifdef SO_KEEPALIVE
     int get_keepalive_opt;
     int set_keepalive_opt;
     SOCKOPT_T x;
 
-    debug(F111,"TCP keepalive","ttyfd",ttyfd);
+    debug(F111,"TCP keepalive","sock",sock);
     debug(F111,"TCP keepalive","nettype",nettype);
     debug(F111,"TCP keepalive","ttmdm",ttmdm);
 
 #ifdef IKSD
     if (!inserver)
 #endif /* IKSD */
-      if (ttyfd == -1 ||
-        nettype != NET_TCPA && nettype != NET_TCPB || ttmdm >= 0) {
+      if (sock == -1 ||
+        nettype != NET_TCPA && nettype != NET_TCPB && nettype != NET_SSH
+                || ttmdm >= 0) {
         tcp_keepalive = onoff;
         return 1;
     }
     x = sizeof(get_keepalive_opt);
-    if (getsockopt(ttyfd,
+    if (getsockopt(sock,
                    SOL_SOCKET, SO_KEEPALIVE, (char *)&get_keepalive_opt, &x)) {
         debug(F111,"TCP keepalive can't get SO_KEEPALIVE",ck_errstr(),errno);
     } else if (x != sizeof(get_keepalive_opt)) {
@@ -1955,7 +1964,7 @@ keepalive(onoff) int onoff; {
         if (x == sizeof(get_keepalive_opt16)) {
             debug(F111,"TCP keepalive warning: SO_KEEPALIVE",
                   "len is 16-bit",x);
-            if (getsockopt(ttyfd,
+            if (getsockopt(sock,
                            SOL_SOCKET, SO_KEEPALIVE,
                            (char *)&get_keepalive_opt16, &x)
                 ) {
@@ -1966,7 +1975,7 @@ keepalive(onoff) int onoff; {
                       );
             } else if (get_keepalive_opt16 != onoff) {
                 set_keepalive_opt16 = onoff;
-                if (setsockopt(ttyfd,
+                if (setsockopt(sock,
                                SOL_SOCKET,
                                SO_KEEPALIVE,
                                (char *)&set_keepalive_opt16,
@@ -2007,7 +2016,7 @@ keepalive(onoff) int onoff; {
               );
     } else if (get_keepalive_opt != onoff) {
             set_keepalive_opt = onoff;
-            if (setsockopt(ttyfd,
+            if (setsockopt(sock,
                             SOL_SOCKET,
                             SO_KEEPALIVE,
                             (char *)&set_keepalive_opt,
@@ -2046,7 +2055,7 @@ keepalive(onoff) int onoff; {
 }
 
 int
-dontroute(onoff) int onoff; {
+dontroute(sock,onoff) int sock; int onoff; {
 #ifdef SOL_SOCKET
 #ifdef SO_DONTROUTE
     int get_dontroute_opt;
@@ -2056,13 +2065,14 @@ dontroute(onoff) int onoff; {
 #ifdef IKSD
     if (!inserver)
 #endif /* IKSD */
-      if (ttyfd == -1 ||
-        nettype != NET_TCPA && nettype != NET_TCPB || ttmdm >= 0) {
+      if (sock == -1 ||
+        nettype != NET_TCPA && nettype != NET_TCPB && nettype != NET_SSH
+                || ttmdm >= 0) {
         tcp_dontroute = onoff;
         return 1;
     }
     x = sizeof(get_dontroute_opt);
-    if (getsockopt(ttyfd,
+    if (getsockopt(sock,
                    SOL_SOCKET, SO_DONTROUTE, (char *)&get_dontroute_opt, &x)) {
         debug(F111,"TCP dontroute can't get SO_DONTROUTE",ck_errstr(),errno);
     } else if (x != sizeof(get_dontroute_opt)) {
@@ -2072,7 +2082,7 @@ dontroute(onoff) int onoff; {
         if (x == sizeof(get_dontroute_opt16)) {
             debug(F111,"TCP dontroute warning: SO_DONTROUTE",
                   "len is 16-bit",x);
-            if (getsockopt(ttyfd,
+            if (getsockopt(sock,
                            SOL_SOCKET, SO_DONTROUTE,
                            (char *)&get_dontroute_opt16, &x)
                 ) {
@@ -2083,7 +2093,7 @@ dontroute(onoff) int onoff; {
                       );
             } else if (get_dontroute_opt16 != onoff) {
                 set_dontroute_opt16 = onoff;
-                if (setsockopt(ttyfd,
+                if (setsockopt(sock,
                                SOL_SOCKET,
                                SO_DONTROUTE,
                                (char *)&set_dontroute_opt16,
@@ -2124,7 +2134,7 @@ dontroute(onoff) int onoff; {
               );
     } else if (get_dontroute_opt != onoff) {
             set_dontroute_opt = onoff;
-            if (setsockopt(ttyfd,
+            if (setsockopt(sock,
                             SOL_SOCKET,
                             SO_DONTROUTE,
                             (char *)&set_dontroute_opt,
@@ -2163,7 +2173,7 @@ dontroute(onoff) int onoff; {
 }
 
 int
-no_delay(onoff)  int onoff; {
+no_delay(sock,onoff)  int sock; int onoff; {
 #ifdef SOL_SOCKET
 #ifdef TCP_NODELAY
     int get_nodelay_opt;
@@ -2173,13 +2183,14 @@ no_delay(onoff)  int onoff; {
 #ifdef IKSD
     if (!inserver)
 #endif /* IKSD */
-      if (ttyfd == -1 ||
-        nettype != NET_TCPA && nettype != NET_TCPB || ttmdm >= 0) {
+      if (sock == -1 ||
+        nettype != NET_TCPA && nettype != NET_TCPB && nettype != NET_SSH
+                || ttmdm >= 0) {
         tcp_nodelay = onoff;
         return(1);
     }
     x = sizeof(get_nodelay_opt);
-    if (getsockopt(ttyfd,IPPROTO_TCP,TCP_NODELAY,
+    if (getsockopt(sock,IPPROTO_TCP,TCP_NODELAY,
                    (char *)&get_nodelay_opt,&x)) {
         debug(F111,
               "TCP no_delay can't get TCP_NODELAY",
@@ -2191,7 +2202,7 @@ no_delay(onoff)  int onoff; {
         short set_nodelay_opt16;
         if (x == sizeof(get_nodelay_opt16)) {
             debug(F111,"TCP no_delay warning: TCP_NODELAY","len is 16-bit",x);
-            if (getsockopt(ttyfd,
+            if (getsockopt(sock,
                            IPPROTO_TCP, TCP_NODELAY,
                            (char *)&get_nodelay_opt16, &x)
                 ) {
@@ -2201,7 +2212,7 @@ no_delay(onoff)  int onoff; {
                       errno);
             } else if (get_nodelay_opt16 != onoff) {
                 set_nodelay_opt16 = onoff;
-                if (setsockopt(ttyfd,
+                if (setsockopt(sock,
                                IPPROTO_TCP,
                                TCP_NODELAY,
                                (char *)&set_nodelay_opt16,
@@ -2235,7 +2246,7 @@ no_delay(onoff)  int onoff; {
         debug(F111,"TCP no_delay TCP_NODELAY","nodelay_opt",get_nodelay_opt);
     } else if (get_nodelay_opt != onoff) {
         set_nodelay_opt = onoff;
-        if (setsockopt(ttyfd,
+        if (setsockopt(sock,
                        IPPROTO_TCP,
                        TCP_NODELAY,
                        (char *)&set_nodelay_opt,
@@ -2394,19 +2405,19 @@ tcpsocket_open(name,lcl,nett,timo) char * name; int * lcl; int nett; int timo {
 
 #ifndef datageneral
 #ifdef TCP_NODELAY
-    no_delay(tcp_nodelay);
+    no_delay(ttyfd,tcp_nodelay);
 #endif /* TCP_NODELAY */
 #ifdef SO_KEEPALIVE
-    keepalive(tcp_keepalive);
+    keepalive(ttyfd,tcp_keepalive);
 #endif /* SO_KEEPALIVE */
 #ifdef SO_LINGER
-    ck_linger(tcp_linger, tcp_linger_tmo);
+    ck_linger(ttyfd,tcp_linger, tcp_linger_tmo);
 #endif /* SO_LINGER */
 #ifdef SO_SNDBUF
-    sendbuf(tcp_sendbuf);
+    sendbuf(ttyfd,tcp_sendbuf);
 #endif /* SO_SNDBUF */
 #ifdef SO_RCVBUF
-    recvbuf(tcp_recvbuf);
+    recvbuf(ttyfd,tcp_recvbuf);
 #endif /* SO_RCVBUF */
 #endif /* datageneral */
 #endif /* SOL_SOCKET */
@@ -2489,7 +2500,7 @@ tcpsocket_open(name,lcl,nett,timo) char * name; int * lcl; int nett; int timo {
     /* Assume the service is TELNET. */
     if (ttnproto != NP_TCPRAW)
         ttnproto = NP_TELNET;           /* Yes, set global flag. */
-#ifdef CK_AUTHENTICATION
+#ifdef CK_SECURITY
     /* Before Initialization Telnet/Rlogin Negotiations Init Kerberos */
     ck_auth_init((host && host->h_name && host->h_name[0]) ?
                 host->h_name : ipaddr,
@@ -2497,7 +2508,7 @@ tcpsocket_open(name,lcl,nett,timo) char * name; int * lcl; int nett; int timo {
                 uidbuf,
                 ttyfd
                 );
-#endif /* CK_AUTHENTICATION */
+#endif /* CK_SECURITY */
     if (tn_ini() < 0)                   /* Start/Reset TELNET negotiations */
       if (ttchk() < 0)                  /* Did it fail due to connect loss? */
         return(-1);
@@ -2820,22 +2831,22 @@ tcpsrv_open(name,lcl,nett,timo) char * name; int * lcl; int nett; int timo; {
 #ifndef datageneral
 #ifdef SOL_SOCKET
 #ifdef TCP_NODELAY
-        no_delay(tcp_nodelay);
+        no_delay(ttyfd,tcp_nodelay);
         debug(F101,"tcpsrv_open no_delay","",tcp_nodelay);
 #endif /* TCP_NODELAY */
 #ifdef SO_KEEPALIVE
-        keepalive(tcp_keepalive);
+        keepalive(ttyfd,tcp_keepalive);
         debug(F101,"tcpsrv_open keepalive","",tcp_keepalive);
 #endif /* SO_KEEPALIVE */
 #ifdef SO_LINGER
-        ck_linger(tcp_linger, tcp_linger_tmo);
+        ck_linger(ttyfd,tcp_linger, tcp_linger_tmo);
         debug(F101,"tcpsrv_open linger","",tcp_linger_tmo);
 #endif /* SO_LINGER */
 #ifdef SO_SNDBUF
-        sendbuf(tcp_sendbuf);
+        sendbuf(ttyfd,tcp_sendbuf);
 #endif /* SO_SNDBUF */
 #ifdef SO_RCVBUF
-        recvbuf(tcp_recvbuf);
+        recvbuf(ttyfd,tcp_recvbuf);
 #endif /* SO_RCVBUF */
 #endif /* SOL_SOCKET */
 #endif /* datageneral */
@@ -2852,7 +2863,7 @@ tcpsrv_open(name,lcl,nett,timo) char * name; int * lcl; int nett; int timo; {
             if (ttnproto != NP_TCPRAW)  /* Yes and if raw port not requested */
               ttnproto = NP_TELNET;     /* Set protocol to TELNET. */
         }
-#ifdef CK_AUTHENTICATION
+#ifdef CK_SECURITY
         /* Before Initialization Telnet/Rlogin Negotiations Init Kerberos */
         ck_auth_init((host && host->h_name && host->h_name[0]) ?
                      (char *)host->h_name : ipaddr,
@@ -2860,7 +2871,7 @@ tcpsrv_open(name,lcl,nett,timo) char * name; int * lcl; int nett; int timo; {
                      uidbuf,
                      ttyfd
                      );
-#endif /* CK_AUTHENTICATION */
+#endif /* CK_SECURITY */
 
 #ifdef CK_SSL
         if (ck_ssleay_is_installed() && !ssl_failed) {
@@ -3000,7 +3011,7 @@ tcpsrv_open(name,lcl,nett,timo) char * name; int * lcl; int nett; int timo; {
 
 #ifdef TCPSOCKET
 char *
-ckname2addr(name) char * name; 
+ckname2addr(name) char * name;
 {
 #ifdef HPUX5
     return("");
@@ -3039,7 +3050,7 @@ ckaddr2name(addr) char * addr;
     }
     return("");
 #endif /* HPUX5 */
-}       
+}
 #endif /* TCPSOCKET */
 
 unsigned long peerxipaddr = 0L;
@@ -3283,7 +3294,7 @@ ckgetservice(hostname, servicename, ip, iplen)
     int dns_naddrs = 0;
 #endif /* CK_DNS_SRV */
 
-    if (isdigit(*servicename)) {	/* Use socket number without lookup */
+    if (isdigit(*servicename)) {        /* Use socket number without lookup */
         service = &servrec;
         service->s_port = htons((unsigned short)atoi(servicename));
     } else {                            /* Otherwise lookup the service name */
@@ -3294,12 +3305,12 @@ ckgetservice(hostname, servicename, ip, iplen)
         }
         if (tcp_dns_srv &&
             locate_srv_dns(hostname,
-			   servicename,
-			   "tcp",
-			   &dns_addrs,
-			   &dns_naddrs
-			   )
-	    ) {
+                           servicename,
+                           "tcp",
+                           &dns_addrs,
+                           &dns_naddrs
+                           )
+            ) {
             /* Use the first one.  Eventually we should cycle through all */
             /* the returned IP addresses and port numbers. */
             struct sockaddr_in *sin = NULL;
@@ -3568,7 +3579,7 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
         }
         ttnet = nett;                   /* Sunlink X.25 network */
         ttnproto = NP_X3;               /* PAD X.3, X.28, X.29 protocol */
-	if (lcl) if (*lcl < 0) *lcl = 1; /* Local mode */
+        if (lcl) if (*lcl < 0) *lcl = 1; /* Local mode */
         return(0);
     } else /* Note that SUNX25 support can coexist with TCP/IP support. */
 #endif /* SUNX25 */
@@ -3715,8 +3726,8 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
            telnet:telnet or telnet::host.
         */
 
-        /* 
-         * REPLACE THIS CODE WITH urlparse() but not on the day of the 
+        /*
+         * REPLACE THIS CODE WITH urlparse() but not on the day of the
          * C-Kermit 8.0 RELEASE.
          */
 
@@ -3737,7 +3748,7 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
             !ckstrcmp("telnets",namecopy,NAMECPYL,0) ||
 #endif /* CK_SSL */
             !ckstrcmp("iksd",namecopy,NAMECPYL,0)
-	    ) {
+            ) {
             char temphost[256], tempservice[80], temppath[256];
             char * q = p, *r = p, *w = p;
             int uidfound=0;
@@ -3745,7 +3756,7 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
             extern int pwflg, pwcrypt;
 
             if (ttnproto == NP_DEFAULT)
-	      setnproto(namecopy);
+              setnproto(namecopy);
 
             /* Check for userid and possibly password */
             while (*p != '\0' && *p != '@')
@@ -4088,7 +4099,7 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
             r_addr.sin_family = AF_INET;
         } else {
 #ifdef VMS
-            fprintf(stdout, "\r\n");	/* complete any previous message */
+            fprintf(stdout, "\r\n");    /* complete any previous message */
 #endif /* VMS */
             fprintf(stderr, "Can't get address for %s\n", namecopy);
 #ifdef TGVORWIN
@@ -4244,7 +4255,7 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
                        perror("rlogin bind");
 #else
 #ifdef VMS
-                       printf("\r\n");	/* complete any previous message */
+                       printf("\r\n");  /* complete any previous message */
 #endif /* VMS */
 #ifdef TGVORWIN
                        debug(F101,"rlogin bind socket_errno","",socket_errno);
@@ -4259,16 +4270,16 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
 #endif /* OS2 */
                        debug(F101,"rlogin local port","",lport);
 #endif /* COMMENT */
-		       netclos();
-		       return -1;
-		   }
-	       lport--;
-	       if (lport == 512 /* lowest reserved port to use */ ) {
-		   printf("\nNo reserved ports available.\n");
-		   netclos();
-		   return -1;
-	       }
-	   }
+                       netclos();
+                       return -1;
+                   }
+               lport--;
+               if (lport == 512 /* lowest reserved port to use */ ) {
+                   printf("\nNo reserved ports available.\n");
+                   netclos();
+                   return -1;
+               }
+           }
            debug(F101,"rlogin lport","",lport);
            ttnproto = NP_RLOGIN;
        } else
@@ -4393,24 +4404,24 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
 #ifdef OLD_TWG
               errno = socket_errno;
 #endif /* OLD_TWG */
-	      if (!quiet)
-		socket_perror("netopen connect");
+              if (!quiet)
+                socket_perror("netopen connect");
 #else /* TGVORWIN */
               debug(F101,"netopen connect errno","",errno);
 #ifdef VMS
-	      if (!quiet)
-		perror("\r\nFailed");
+              if (!quiet)
+                perror("\r\nFailed");
 #else
-	      if (!quiet)
-		perror("Failed");
+              if (!quiet)
+                perror("Failed");
 #endif /* VMS */
 #ifdef DEC_TCPIP
-	      if (!quiet)
-		perror("netopen connect");
+              if (!quiet)
+                perror("netopen connect");
 #endif /* DEC_TCPIP */
 #ifdef CMU_TCPIP
-	      if (!quiet)
-		perror("netopen connect");
+              if (!quiet)
+                perror("netopen connect");
 #endif /* CMU_TCPIP */
 #endif /* TGVORWIN */
 #endif /* EXCELAN */
@@ -4443,17 +4454,17 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
 
     if ( tcp_http_proxy ) {
 #ifdef OS2
-	char * agent = "Kermit 95";		/* Default user agent */
+        char * agent = "Kermit 95";             /* Default user agent */
 #else
-	char * agent = "C-Kermit";
+        char * agent = "C-Kermit";
 #endif /* OS2 */
 
         if (http_connect(ttyfd,agent,NULL,
-			 tcp_http_proxy_user,
-			 tcp_http_proxy_pwd,
-			 0,
-			 proxycopy
-			 ) < 0) {
+                         tcp_http_proxy_user,
+                         tcp_http_proxy_pwd,
+                         0,
+                         proxycopy
+                         ) < 0) {
             netclos();
             return(-1);
         }
@@ -4475,7 +4486,7 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
     svcnum = x;
     /* See if the service is TELNET. */
     if (x == TELNET_PORT) {
-	/* Yes, so if raw port not requested */
+        /* Yes, so if raw port not requested */
         if (ttnproto != NP_TCPRAW && ttnproto != NP_NONE)
           ttnproto = NP_TELNET;         /* Select TELNET protocol. */
     }
@@ -4632,19 +4643,19 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
 #ifndef datageneral
 #ifdef SOL_SOCKET
 #ifdef TCP_NODELAY
-    no_delay(tcp_nodelay);
+    no_delay(ttyfd,tcp_nodelay);
 #endif /* TCP_NODELAY */
 #ifdef SO_KEEPALIVE
-    keepalive(tcp_keepalive);
+    keepalive(ttyfd,tcp_keepalive);
 #endif /* SO_KEEPALIVE */
 #ifdef SO_LINGER
-    ck_linger(tcp_linger, tcp_linger_tmo);
+    ck_linger(ttyfd,tcp_linger, tcp_linger_tmo);
 #endif /* SO_LINGER */
 #ifdef SO_SNDBUF
-    sendbuf(tcp_sendbuf);
+    sendbuf(ttyfd,tcp_sendbuf);
 #endif /* SO_SNDBUF */
 #ifdef SO_RCVBUF
-    recvbuf(tcp_recvbuf);
+    recvbuf(ttyfd,tcp_recvbuf);
 #endif /* SO_RCVBUF */
 #endif /* SOL_SOCKET */
 #endif /* datageneral */
@@ -4771,7 +4782,7 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
     /* This should already have been done but just in case */
     ckstrncpy(ipaddr,(char *)inet_ntoa(r_addr.sin_addr),20);
 
-#ifdef CK_AUTHENTICATION
+#ifdef CK_SECURITY
 
     /* Before Initialization Telnet/Rlogin Negotiations Init Kerberos */
 #ifndef NOHTTP
@@ -4791,11 +4802,11 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
                  uidbuf,
                  ttyfd
                  );
-#endif /* CK_AUTHENTICATION */
+#endif /* CK_SECURITY */
 #ifdef CK_SSL
     if (ck_ssleay_is_installed()) {
         if (!ssl_tn_init(SSL_CLIENT)) {
-	    debug(F100,"netopen ssl_tn_init() failed","",0);
+            debug(F100,"netopen ssl_tn_init() failed","",0);
             if (bio_err!=NULL) {
                 BIO_printf(bio_err,"ssl_tn_init() failed\n");
                 ERR_print_errors(bio_err);
@@ -4805,7 +4816,7 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
                 ERR_print_errors_fp(stderr);
             }
             if (tls_only_flag || ssl_only_flag) {
-		debug(F100,"netopen ssl/tls required","",0);
+                debug(F100,"netopen ssl/tls required","",0);
                 netclos();
                 return(-1);
             }
@@ -4821,7 +4832,7 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
             if ( TELOPT_DEF_C_U_MODE(TELOPT_START_TLS) != TN_NG_MU )
                 TELOPT_DEF_C_U_MODE(TELOPT_START_TLS) = TN_NG_RF;
         } else if ( ck_ssl_outgoing(ttyfd) < 0 ) {
-	    debug(F100,"ck_ssl_outgoing() failed","",0);
+            debug(F100,"ck_ssl_outgoing() failed","",0);
             netclos();
             return(-1);
         }
@@ -4847,11 +4858,11 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
     } else
 #endif /* RLOGCODE */
     if (tn_ini() < 0) {                 /* Start Telnet negotiations. */
-	netclos();
+        netclos();
         return(-1);                     /* Gone, so open failed.  */
     }
     if (ttchk() < 0) {
-	netclos();
+        netclos();
         return(-1);
     }
 #ifdef CK_KERBEROS
@@ -4868,7 +4879,7 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
     debug(F101,"netopen service","",svcnum);
     debug(F110,"netopen name",name,0);
 
-    if (lcl) if (*lcl < 0)		/* Local mode. */
+    if (lcl) if (*lcl < 0)              /* Local mode. */
       *lcl = 1;
 #endif /* TCPSOCKET */
     return(0);                          /* Done. */
@@ -4917,11 +4928,11 @@ netclos() {
 #endif /* OS2 */
       {
 #ifdef TNCODE
-	  if (ttnproto == NP_TELNET) {
+          if (ttnproto == NP_TELNET) {
             tn_push();                    /* Place any waiting data into input*/
             tn_sopt(DO,TELOPT_LOGOUT);    /* Send LOGOUT option before close */
             TELOPT_UNANSWERED_DO(TELOPT_LOGOUT) = 1;
-	  }
+          }
 #endif /* TNCODE */
 #ifdef CK_SSL
           if (ssl_active_flag) {
@@ -5028,7 +5039,7 @@ int
 os2socketerror( int s_errno ) {
 #ifdef OS2ONLY
     if (s_errno > 0 && s_errno <= SOCBASEERR) {
-        /* in OS/2, there is a problem with threading in that 
+        /* in OS/2, there is a problem with threading in that
          * the value of errno is not thread safe.  It can be
          * set to a value from a previous library call and if
          * it was not cleared it will appear here.  Only treat
@@ -5041,7 +5052,7 @@ os2socketerror( int s_errno ) {
 #endif /* OS2ONLY */
 
     switch (s_errno) {
-      case 0:				/* NO ERROR */
+      case 0:                           /* NO ERROR */
         debug(F100,"os2socketerror NOERROR","",0);
         return(0);
 #ifdef NT
@@ -5082,14 +5093,14 @@ os2socketerror( int s_errno ) {
 #endif /* NT */
         debug(F100,"os2socketerror ENOTCONN","",0);
         tn_debug("ENOTCONN");
-        netclos();			/* *** *** */
-        return(-1);			/* Connection is broken. */
+        netclos();                      /* *** *** */
+        return(-1);                     /* Connection is broken. */
 #ifdef NT
       case WSAESHUTDOWN:
-	debug(F100,"os2socketerror ESHUTDOWN","",0);
-	tn_debug("ESHUTDOWN");
-	netclos();			/* *** *** */
-	return(-1);			/* Connection is broken. */
+        debug(F100,"os2socketerror ESHUTDOWN","",0);
+        tn_debug("ESHUTDOWN");
+        netclos();                      /* *** *** */
+        return(-1);                     /* Connection is broken. */
 #endif /* NT */
 #ifdef NT
       case WSAEWOULDBLOCK:
@@ -5173,19 +5184,35 @@ nettchk() {                             /* for reading from network */
 
 #ifdef CK_SSL
     if (ssl_active_flag) {
+#ifndef IKSDONLY
+        if ( IsConnectMode() ) {
+            debug(F101,"nettchk (ssl_active_flag) returns","",count);
+            return(0);
+        }
+#endif /* IKSDONLY */
         count = SSL_pending(ssl_con);
         if (count < 0) {
             debug(F111,"nettchk","SSL_pending error",count);
             netclos();
             return(-1);
         }
+        if ( count > 0 )
+            return(count);                  /* Don't perform a read */
     } else if (tls_active_flag) {
+#ifndef IKSDONLY
+        if ( IsConnectMode() ) {
+            debug(F101,"nettchk (tls_active_flag) returns","",count);
+            return(0);
+        }
+#endif /* IKSDONLY */
         count = SSL_pending(tls_con);
         if (count < 0) {
             debug(F111,"nettchk","TLS_pending error",count);
             netclos();
             return(-1);
         }
+        if ( count > 0 )
+            return(count);                  /* Don't perform a read */
     } else
 #endif /* CK_SSL */
 
@@ -5223,15 +5250,26 @@ nettchk() {                             /* for reading from network */
 /* still valid.  The handle is still good, so just return the count */
 /* of the bytes that we already have left to process.               */
 #ifdef OS2
-    if ( ttibn > 0 ) {
-        debug(F101,"nettchk (ttibn > 0) returns","",count+ttibn);
-        return(count + ttibn);
+    RequestTCPIPMutex(SEM_INDEFINITE_WAIT);
+    if ( count > 0 || ttibn > 0 ) {
+        count+=ttibn;
+        ReleaseTCPIPMutex();
+        debug(F101,"nettchk (count+ttibn > 0) returns","",count);
+        return(count);
     } else {
         if ( ttibn == 0 )
             ttibp = 0;      /* reset for next read */
+
+#ifndef IKSDONLY
+        if ( IsConnectMode() ) {
+            ReleaseTCPIPMutex();
+            debug(F101,"nettchk (count+ttibn == 0) returns","",count);
+            return(0);
+        }
+#endif /* IKSDONLY */
     }
 #else /* OS2 */
-    if ( ttibn ) {
+    if ( count > 0 || ttibn > 0 ) {
         debug(F101,"nettchk returns","",count+ttibn);
         return(count+ttibn);
     }
@@ -5272,10 +5310,6 @@ nettchk() {                             /* for reading from network */
      * that only one thread attempt to read/write from the socket at a
      * time.  Otherwise, it is possible for a buffer to be overwritten.
      */
-#ifdef OS2
-    RequestTCPIPMutex(SEM_INDEFINITE_WAIT);
-#endif /* OS2 */
-
     /* we know now that count >= 0 and that ttibn == 0 */
 
     if (count == 0
@@ -5297,9 +5331,19 @@ nettchk() {                             /* for reading from network */
   where it won't be lost.
 */
 #ifndef NON_BLOCK_IO
+#ifdef OS2
+#ifdef CK_SSL
+        RequestSSLMutex(SEM_INDEFINITE_WAIT);
+#endif /* CK_SSL */
+#endif /* OS2 */
         y = 1;                          /* Turn on nonblocking reads */
         x = socket_ioctl(ttyfd,FIONBIO,&y);
         debug(F101,"nettchk FIONBIO","",x);
+#ifdef OS2
+#ifdef CK_SSL
+        ReleaseSSLMutex();
+#endif /* CK_SSL */
+#endif /* OS2 */
 #endif /* NON_BLOCK_IO */
 #ifdef NT_TCP_OVERLAPPED
         ionoblock = 1;                  /* For Overlapped I/O */
@@ -5331,6 +5375,11 @@ nettchk() {                             /* for reading from network */
                   int gle = GetLastError();
                   debug(F111,"nettchk SSL_ERROR_SYSCALL",
                          "GetLastError()",gle);
+                  rc = os2socketerror(gle);
+                  if (rc == -1)
+                      rc = -2;
+                  else if ( rc == -2 )
+                      return -1;
 #endif /* NT */
                   break;
               }
@@ -5561,9 +5610,16 @@ netxin(n,buf) int n; CHAR * buf; {
 #endif /* CK_KERBEROS */
 
 #ifdef TCPIPLIB
-    if (!ttibn)
-      if ((rc = ttbufr()) <= 0)
+#ifdef OS2
+    RequestTCPIPMutex(SEM_INDEFINITE_WAIT);
+#endif /* OS2 */
+    if (ttibn == 0)
+      if ((rc = ttbufr()) <= 0) {
+#ifdef OS2
+        ReleaseTCPIPMutex();
+#endif /* OS2 */
         return(rc);
+      }
 
     if (ttibn <= n) {
         len = ttibn;
@@ -5576,6 +5632,9 @@ netxin(n,buf) int n; CHAR * buf; {
         ttibn -= n;
         len = n;
     }
+#ifdef OS2
+    ReleaseTCPIPMutex();
+#endif /* OS2 */
 #else /* TCPIPLIB */
     for (i = 0; i < n; i++) {
         if ((j = netinc(0)) < 0) {
@@ -5681,6 +5740,9 @@ netinc(timo) int timo; {
 #endif /* KRB5 */
 #endif /* CK_KERBEROS */
 
+#ifdef OS2
+    RequestTCPIPMutex(SEM_INDEFINITE_WAIT);
+#endif /* OS2 */
     if (ttibn > 0) {                    /* Something in internal buffer? */
 #ifdef COMMENT
         debug(F100,"netinc char in buf","",0); /* Yes. */
@@ -5690,8 +5752,6 @@ netinc(timo) int timo; {
         x = -1;                         /* Assume failure. */
 #ifdef DEBUG
         debug(F101,"netinc goes to net, timo","",timo);
-        ttibuf[ttibp+ttibn+1] = '\0';
-        debug(F111,"netinc ttibuf",ttibuf,ttibp);
 #endif /* DEBUG */
 #ifdef CK_SSL
         /*
@@ -5709,10 +5769,18 @@ netinc(timo) int timo; {
             if (x < 0) {
                 debug(F111,"netinc","SSL_pending error",x);
                 netclos();
+#ifdef OS2
+                ReleaseTCPIPMutex();
+#endif /* OS2 */
                 return(-1);
             } else if ( x > 0 ) {
-                if ( ttbufr() >= 0 )
-                    return(netinc(timo));
+                if ( ttbufr() >= 0 ) {
+                    x = netinc(timo);
+#ifdef OS2
+                    ReleaseTCPIPMutex();
+#endif /* OS2 */
+                    return(x);
+                }
             }
             x = -1;
         } else if (tls_active_flag) {
@@ -5720,10 +5788,18 @@ netinc(timo) int timo; {
             if (x < 0) {
                 debug(F111,"netinc","TLS_pending error",x);
                 netclos();
+#ifdef OS2
+                ReleaseTCPIPMutex();
+#endif /* OS2 */
                 return(-1);
             } else if ( x > 0 ) {
-                if ( ttbufr() >= 0 )
-                    return(netinc(timo));
+                if ( ttbufr() >= 0 ) {
+                    x = netinc(timo);
+#ifdef OS2
+                    ReleaseTCPIPMutex();
+#endif /* OS2 */
+                    return(x);
+                }
             }
             x = -1;
         }
@@ -5786,8 +5862,12 @@ netinc(timo) int timo; {
                     int s_errno = socket_errno;
                     debug(F111,"netinc","select",rc);
                     debug(F111,"netinc","socket_errno",s_errno);
-                    if (s_errno)
-                      return(-1);
+                    if (s_errno) {
+#ifdef OS2
+                        ReleaseTCPIPMutex();
+#endif /* OS2 */
+                        return(-1);
+                    }
                 }
                 debug(F111,"netinc","select",rc);
 #ifdef NT
@@ -5808,8 +5888,11 @@ netinc(timo) int timo; {
                             int s_errno = socket_errno;
                             debug(F101,"netinc socket_write error","",s_errno);
 #ifdef OS2
-                            if (os2socketerror(s_errno) < 0)
+                            if (os2socketerror(s_errno) < 0) {
+                              ReleaseTCPIPMutex();
                               return(-2);
+                            }
+                            ReleaseTCPIPMutex();
 #endif /* OS2 */
                             return(-1); /* Call it an i/o error */
                         }
@@ -5896,12 +5979,19 @@ netinc(timo) int timo; {
 
 #ifdef LEBUF
     if (le_inbuf() > 0) {               /* If data was inserted into the */
-        if (le_getchar((CHAR *)&c) > 0) /* Local Echo buffer while the   */
-          return(c);                    /* was taking place do not mix   */
-    }                                   /* the le data with the net data */
+        if (le_getchar((CHAR *)&c) > 0) {/* Local Echo buffer while the   */
+#ifdef OS2                               /* was taking place do not mix   */
+          ReleaseTCPIPMutex();           /* the le data with the net data */
+#endif /* OS2 */
+          return(c);
+        }
+    }
 #endif /* LEBUF */
     if (x < 0) {                        /* Return -1 if we failed. */
         debug(F100,"netinc timed out","",0);
+#ifdef OS2
+        ReleaseTCPIPMutex();
+#endif /* OS2 */
         return(-1);
     } else {                            /* Otherwise */
         c = ttibuf[ttibp];              /* Return the first char in ttibuf[] */
@@ -5925,7 +6015,9 @@ netinc(timo) int timo; {
         }
         ttibp++;
         ttibn--;
-
+#ifdef OS2
+        ReleaseTCPIPMutex();
+#endif /* OS2 */
 #ifdef CK_ENCRYPTION
         if (TELOPT_U(TELOPT_ENCRYPTION))
           ck_tn_decrypt(&c,1);
@@ -6015,12 +6107,18 @@ nettol(s,n) CHAR *s; int n; {
                   netclos();
                   return(-2);
               } else {
+                  int rc = -1;
 #ifdef NT
                   int gle = GetLastError();
                   debug(F111,"nettol SSL_ERROR_SYSCALL",
                          "GetLastError()",gle);
+                  rc = os2socketerror(gle);
+                  if (rc == -1)
+                      rc = -2;
+                  else if ( rc == -2 )
+                      return -1;
 #endif /* NT */
-                  return(-1);
+                  return(rc);
               }
           case SSL_ERROR_WANT_X509_LOOKUP:
             debug(F100,"nettol SSL_ERROR_WANT_X509_LOOKUP","",0);
@@ -6219,12 +6317,18 @@ nettoc(c) CHAR c;
                   netclos();
                   return(-2);
               } else {
+                  int rc = -1;
 #ifdef NT
                   int gle = GetLastError();
                   debug(F111,"nettoc SSL_ERROR_SYSCALL",
                          "GetLastError()",gle);
+                  rc = os2socketerror(gle);
+                  if (rc == -1)
+                      rc = -2;
+                  else if ( rc == -2 )
+                      return -1;
 #endif /* NT */
-                  return(-1);
+                  return(rc);
               }
           case SSL_ERROR_WANT_X509_LOOKUP:
           case SSL_ERROR_SSL:
@@ -6353,10 +6457,14 @@ netflui() {
 #endif /* NETLEBUF */
 
 #ifdef TCPIPLIB
+#ifdef OS2
+    RequestTCPIPMutex(SEM_INDEFINITE_WAIT);
+#endif /* OS2 */
 #ifdef TNCODE
     if (ttnproto == NP_TELNET) {
         /* Netflui must process Telnet negotiations or get out of sync */
-        if ((n = nettchk()) <= 0) return(0);
+        if ((n = nettchk()) <= 0)
+          goto exit_flui;
         while (n-- > 0) {
             ch = netinc(1);
             if (ch == IAC) {
@@ -6379,7 +6487,7 @@ netflui() {
 #endif /* CK_ENCRYPTION */
         ttibn = ttibp = 0;              /* Flush internal buffer *FIRST* */
         if (ttyfd < 1)
-            return(0);
+          goto exit_flui;
         if ((n = nettchk()) > 0) {      /* Now see what's waiting on the net */
             if (n > TTIBUFL) n = TTIBUFL;       /* and sponge it up */
             debug(F101,"netflui 2","",n);       /* ... */
@@ -6396,10 +6504,11 @@ netflui() {
     }
 #else  /* !TCPIPLIB */
     if (ttyfd < 1)
-      return(0);
+      goto exit_flui;
 #ifdef TNCODE
     if (ttnproto == NP_TELNET) {
-        if ((n = ttchk()) <= 0) return(0);
+        if ((n = ttchk()) <= 0)
+          goto exit_flui;
         while (n-- >= 0) {
             /* Netflui must process Telnet negotiations or get out of sync */
             ch = ttinc(1);
@@ -6419,6 +6528,10 @@ netflui() {
           ;                             /* and it handles the decryption... */
     }
 #endif /* TCPIPLIB */
+  exit_flui:
+#ifdef OS2
+    ReleaseTCPIPMutex();
+#endif /* OS2 */
     return(0);
 }
 
@@ -6438,11 +6551,11 @@ net_write(fd, buf, len)
     register int wrlen = len;
     do {
 #ifdef TCPIPLIB
-	cc = socket_write(fd, buf, wrlen);
+        cc = socket_write(fd, buf, wrlen);
 #else
         cc = write(fd,buf,wrlen);
 #endif /* TCPIPLIB */
-	if (cc < 0) {
+        if (cc < 0) {
             int s_errno = socket_errno;
             debug(F101,"net_write error","",s_errno);
 #ifdef OS2
@@ -6451,15 +6564,15 @@ net_write(fd, buf, len)
             else
                 continue;
 #else /* OS2 */
-	    if (errno == EINTR)
-		continue;
-	    return(-1);
+            if (errno == EINTR)
+                continue;
+            return(-1);
 #endif /* OS2 */
-	}
-	else {
-	    buf += cc;
-	    wrlen -= cc;
-	}
+        }
+        else {
+            buf += cc;
+            wrlen -= cc;
+        }
     } while (wrlen > 0);
     return(len);
 }
@@ -6473,27 +6586,27 @@ net_read(fd, buf, len)
 
     do {
 #ifdef TCPIPLIB
-	cc = socket_read(fd, buf, len);
+        cc = socket_read(fd, buf, len);
 #else
         cc = read(fd,buf,len);
 #endif
-	if (cc < 0) {
+        if (cc < 0) {
             int s_errno = socket_errno;
             debug(F101,"net_read error","",s_errno);
 #ifdef OS2
             if (os2socketerror(s_errno) < 0)
                 return(-1);
 #endif /* OS2 */
-	    return(cc);		 /* errno is already set */
-	}
-	else if (cc == 0) {
+            return(cc);          /* errno is already set */
+        }
+        else if (cc == 0) {
             netclos();
-	    return(len2);
-	} else {
-	    buf += cc;
-	    len2 += cc;
-	    len -= cc;
-	}
+            return(len2);
+        } else {
+            buf += cc;
+            len2 += cc;
+            len -= cc;
+        }
     } while (len > 0);
     return(len2);
 }
@@ -6776,10 +6889,10 @@ rlog_ini(hostname, port, l_addr, r_addr)
         ttgwsiz();                      /* Try to get screen dimensions */
     }
     debug(F101,
-	  "rlog_ini tt_rows 2",
-	  "",
-	  VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0)
-	  );
+          "rlog_ini tt_rows 2",
+          "",
+          VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0)
+          );
     debug(F101,"rlog_ini tt_cols 2","",VscrnGetWidth(VTERM));
 #else /* OS2 */
     debug(F101,"rlog_ini tt_rows 1","",tt_rows);
@@ -6802,14 +6915,7 @@ rlog_ini(hostname, port, l_addr, r_addr)
 #ifdef NT
     {
         char localuid[UIDBUFLEN+1];
-        unsigned long len = UIDBUFLEN;
-        localuid[0] = '\0';
-#ifdef COMMENT
-        WNetGetUser(NULL, localuid, &len);
-#else /* COMMENT */
-        GetUserName(localuid,&len);
-#endif /* COMMENT */
-        ckstrncpy((char *)localuser,localuid,UIDBUFLEN);
+        ckstrncpy((char *)localuser,(char *)GetLocalUser(),UIDBUFLEN);
     }
 
     if ( !localuser[0] )
@@ -6991,8 +7097,8 @@ rlog_oob(oobdata, count) CHAR * oobdata; int count; {
 
     for (i = 0; i<count; i++)   {
         debug(F101,"rlogin out_of_band","",oobdata[i]);
-		if (oobdata[i] & 0x01)
-			continue;
+                if (oobdata[i] & 0x01)
+                        continue;
 
         if (oobdata[i] & 0x02) { /* Flush Buffered Data not yet displayed */
             debug(F101,"rlogin Flush Buffered Data command","",oobdata[i]);
@@ -9500,12 +9606,12 @@ http_date(date) char * date;
     /* HTTP dates are of the form:  "Sun, 06 Oct 1997 20:11:47 GMT" */
     /* There are two older formats which we are required to parse
      * that we currently do not:
-     * 
+     *
      * RFC 850:   "Sunday, 06-Oct-97 20:11:47 GMT"
      * asctime(): "Sun Nov  6 20:11:47 1997"
      *
-     * However, it is required that all dates be sent in the form we 
-     * do accept.  The other two formats are for compatibility with 
+     * However, it is required that all dates be sent in the form we
+     * do accept.  The other two formats are for compatibility with
      * really old servers.
      */
     extern char cmdatebuf[18];
@@ -9517,26 +9623,26 @@ http_date(date) char * date;
     j = ckindex(",",date,0,0,0);
     ckstrncpy(ldate,&date[j+1],25);
 
-    {	/*
-	   cmcvtate() date changed to return a string pointer.
-	   fdc, 12 Aug 2001.
-	*/
-	char * dp;
-	dp = (char *)cmcvtdate(ldate,0); /* Convert to normal form */
-	if (!dp)
-	  return(0);
-	t_tm = *cmdate2tm(dp,1);
+    {   /*
+           cmcvtate() date changed to return a string pointer.
+           fdc, 12 Aug 2001.
+        */
+        char * dp;
+        dp = (char *)cmcvtdate(ldate,0); /* Convert to normal form */
+        if (!dp)
+          return(0);
+        t_tm = *cmdate2tm(dp,1);
     }
 /*
   From Lucas Hart, 5 Dec 2001:
-  "On the systems to which I have access (SunOS 4.1.1, Solaris 8, and Tru64), 
-  setting tm_isdst to -1 maintains the correct timezone offsets, i.e., writes 
-  the specified (GMT) time if the buffer size is 21, or the contemporaneous 
+  "On the systems to which I have access (SunOS 4.1.1, Solaris 8, and Tru64),
+  setting tm_isdst to -1 maintains the correct timezone offsets, i.e., writes
+  the specified (GMT) time if the buffer size is 21, or the contemporaneous
   localtime if the buffer size is 25.  Perhaps tm_isdst should be set in
   cmdate2tm(), rather than only in http_date."
 */
-#ifndef NOTM_ISDST			/* For platforms where */
-    t_tm.tm_isdst = -1;			/* tm_isdst doesn't exist. */
+#ifndef NOTM_ISDST                      /* For platforms where */
+    t_tm.tm_isdst = -1;                 /* tm_isdst doesn't exist. */
 #endif /* NOTM_ISDST */
 
     t = mktime(&t_tm);                  /* NOT PORTABLE */
@@ -9663,9 +9769,9 @@ http_mkarray(resp, n, array) char ** resp; int n; char array;
     }
     /* Note: argument array is 0-based but Kermit array is 1-based */
     ap = a_ptr[x];
-    ap[0] = NULL;			/* 0th element is empty */
+    ap[0] = NULL;                       /* 0th element is empty */
     for (i = 1; i <= n; i++) {
-        ap[i] = resp[i-1];		/* If resp elements were malloc'd */
+        ap[i] = resp[i-1];              /* If resp elements were malloc'd */
         resp[i-1] = NULL;
     }
     a_dim[x] = n;
@@ -9677,7 +9783,7 @@ http_mkarray(resp, n, array) char ** resp; int n; char array;
 
 #define HTTPHEADCNT 64
 int
-http_get_chunk_len() 
+http_get_chunk_len()
 {
     int len = 0;
     int i = 0, j = -1;
@@ -9686,17 +9792,17 @@ http_get_chunk_len()
 
     while ((ch = http_inc(0)) >= 0 && i < 24) {
         buf[i] = ch;
-        if ( buf[i] == ';' )		/* Find chunk-extension (if any) */
+        if ( buf[i] == ';' )            /* Find chunk-extension (if any) */
             j = i;
-        if ( buf[i] == 10 ) {		/* found end of line */
-    	    if (i > 0 && buf[i-1] == 13)
+        if ( buf[i] == 10 ) {           /* found end of line */
+            if (i > 0 && buf[i-1] == 13)
                 i--;
             buf[i] = '\0';
             break;
         }
         i++;
     }
-    if ( i < 24 ) {			/* buf now contains len in Hex */
+    if ( i < 24 ) {                     /* buf now contains len in Hex */
         len = hextoulong(buf, j == -1 ? i : j-1);
     }
 
@@ -9707,9 +9813,9 @@ int
 http_isconnected()
 {
     return(httpfd != -1);
-}       
+}
 
-char * 
+char *
 http_host()
 {
     return(httpfd != -1 ? http_host_port : "");
@@ -9725,7 +9831,7 @@ http_security()
         SSL_CIPHER * cipher;
         const char *cipher_list;
         static char buf[128];
-	buf[0] = NUL;
+        buf[0] = NUL;
         cipher = SSL_get_current_cipher(tls_http_con);
         cipher_list = SSL_CIPHER_get_name(cipher);
         SSL_CIPHER_description(cipher,buf,sizeof(buf));
@@ -9739,7 +9845,7 @@ int
 http_reopen()
 {
     int rc = 0;
-    char * s = NULL;			/* strdup is not portable */
+    char * s = NULL;                    /* strdup is not portable */
     makestr(&s,(char *)http_ip);
     rc = http_open(s,ckuitoa(http_port),http_ssl,NULL,0);
     free(s);
@@ -9749,7 +9855,7 @@ http_reopen()
 
 int
 #ifdef CK_ANSIC
-http_open(char * hostname, char * svcname, int use_ssl, char * rdns_name, 
+http_open(char * hostname, char * svcname, int use_ssl, char * rdns_name,
           int rdns_len)
 #else /* CK_ANSIC */
 http_open(hostname, svcname, use_ssl, rdns_name, rdns_len)
@@ -9796,14 +9902,14 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len)
 #endif /* INADDRX */
 
     if ( rdns_name == NULL || rdns_len < 0 )
-	rdns_len = 0;
+        rdns_len = 0;
 
     *http_ip = '\0';                     /* Initialize IP address string */
 
 #ifdef DEBUG
     if (deblog) {
-	debug(F110,"http_open hostname",hostname,0);
-	debug(F110,"http_open svcname",svcname,0);
+        debug(F110,"http_open hostname",hostname,0);
+        debug(F110,"http_open svcname",svcname,0);
     }
 #endif /* DEBUG */
     if (!hostname) hostname = "";
@@ -9813,7 +9919,7 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len)
     service = ckgetservice(hostname,svcname,http_ip,20);
 
     if (service == NULL) {
-        if ( !quiet ) 
+        if ( !quiet )
             printf("?Invalid service: %s\r\n",svcname);
         return(-1);
     }
@@ -9837,10 +9943,10 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len)
     /* with the port number of the proxy (default port 80).                 */
 
     if ( tcp_http_proxy ) {
-	char namecopy[NAMECPYL];
+        char namecopy[NAMECPYL];
 
-	ckmakmsg(proxycopy,sizeof(proxycopy),hostname,":",
-		 ckuitoa(ntohs(service->s_port)),NULL);
+        ckmakmsg(proxycopy,sizeof(proxycopy),hostname,":",
+                 ckuitoa(ntohs(service->s_port)),NULL);
         ckstrncpy(namecopy,tcp_http_proxy,NAMECPYL);
 
         p = namecopy;                       /* Was a service requested? */
@@ -9918,7 +10024,7 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len)
             if (host->h_name && host->h_name[0] && (rdns_len > 0)
                  && (tcp_http_proxy == NULL)
                  )
-		ckmakmsg(rdns_name,rdns_len,host->h_name,":",svcname,NULL);
+                ckmakmsg(rdns_name,rdns_len,host->h_name,":",svcname,NULL);
 
 #ifdef HADDRLIST
 #ifdef h_addr
@@ -9973,9 +10079,9 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len)
             r_addr.sin_family = AF_INET;
         } else {
 #ifdef VMS
-            fprintf(stdout, "\r\n");	/* complete any previous message */
+            fprintf(stdout, "\r\n");    /* complete any previous message */
 #endif /* VMS */
-            fprintf(stderr, "Can't get address for %s\n", 
+            fprintf(stderr, "Can't get address for %s\n",
                      http_ip[0]?http_ip:hostname);
 #ifdef TGVORWIN
             debug(F101,"http_open can't get address","",socket_errno);
@@ -10118,24 +10224,24 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len)
 #ifdef OLD_TWG
               errno = socket_errno;
 #endif /* OLD_TWG */
-	      if (!quiet)
-		socket_perror("http_open connect");
+              if (!quiet)
+                socket_perror("http_open connect");
 #else /* TGVORWIN */
               debug(F101,"http_open connect errno","",errno);
 #ifdef VMS
-	      if (!quiet)
-		perror("\r\nFailed");
+              if (!quiet)
+                perror("\r\nFailed");
 #else
-	      if (!quiet)
-		perror("Failed");
+              if (!quiet)
+                perror("Failed");
 #endif /* VMS */
 #ifdef DEC_TCPIP
-	      if (!quiet)
-		perror("http_open connect");
+              if (!quiet)
+                perror("http_open connect");
 #endif /* DEC_TCPIP */
 #ifdef CMU_TCPIP
-	      if (!quiet)
-		perror("http_open connect");
+              if (!quiet)
+                perror("http_open connect");
 #endif /* CMU_TCPIP */
 #endif /* TGVORWIN */
 #endif /* EXCELAN */
@@ -10160,17 +10266,17 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len)
 
     if ( tcp_http_proxy ) {
 #ifdef OS2
-	char * agent = "Kermit 95";		/* Default user agent */
+        char * agent = "Kermit 95";             /* Default user agent */
 #else
-	char * agent = "C-Kermit";
+        char * agent = "C-Kermit";
 #endif /* OS2 */
 
         if (http_connect(httpfd,agent,NULL,
-			 tcp_http_proxy_user,
-			 tcp_http_proxy_pwd,
-			 0,
-			 proxycopy
-			 ) < 0) {
+                         tcp_http_proxy_user,
+                         tcp_http_proxy_pwd,
+                         0,
+                         proxycopy
+                         ) < 0) {
             http_close();
             return(-1);
         }
@@ -10238,19 +10344,19 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len)
 #ifndef datageneral
 #ifdef SOL_SOCKET
 #ifdef TCP_NODELAY
-    no_delay(tcp_nodelay);
+    no_delay(ttyfd,tcp_nodelay);
 #endif /* TCP_NODELAY */
 #ifdef SO_KEEPALIVE
-    keepalive(tcp_keepalive);
+    keepalive(ttyfd,tcp_keepalive);
 #endif /* SO_KEEPALIVE */
 #ifdef SO_LINGER
-    ck_linger(tcp_linger, tcp_linger_tmo);
+    ck_linger(ttyfd,tcp_linger, tcp_linger_tmo);
 #endif /* SO_LINGER */
 #ifdef SO_SNDBUF
-    sendbuf(tcp_sendbuf);
+    sendbuf(ttyfd,tcp_sendbuf);
 #endif /* SO_SNDBUF */
 #ifdef SO_RCVBUF
-    recvbuf(tcp_recvbuf);
+    recvbuf(ttyfd,tcp_recvbuf);
 #endif /* SO_RCVBUF */
 #endif /* SOL_SOCKET */
 #endif /* datageneral */
@@ -10312,7 +10418,7 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len)
             }
             if (*s)                     /* return the rdns name */
                 ckmakmsg(rdns_name,rdns_len,s,":",svcname,NULL);
-            
+
             if (!quiet && *s
 #ifndef NOICP
                 && !doconx
@@ -10449,12 +10555,18 @@ http_tol(s,n) CHAR *s; int n; {
                   http_close();
                   return(-2);
               } else {
+                  int rc = -1;
 #ifdef NT
                   int gle = GetLastError();
                   debug(F111,"http_tol SSL_ERROR_SYSCALL",
                          "GetLastError()",gle);
+                  rc = os2socketerror(gle);
+                  if (rc == -1)
+                      rc = -2;
+                  else if ( rc == -2 )
+                      return -1;
 #endif /* NT */
-                  return(-1);
+                  return(rc);
               }
           case SSL_ERROR_WANT_X509_LOOKUP:
             debug(F100,"http_tol SSL_ERROR_WANT_X509_LOOKUP","",0);
@@ -10658,15 +10770,21 @@ http_inc(timo) int timo; {
 #endif /* OS2 */
                     return(-2);
                 } else {
+                    int rc = -1;
 #ifdef NT
                     int gle = GetLastError();
                     debug(F111,"http_inc SSL_ERROR_SYSCALL",
                            "GetLastError()",gle);
+                    rc = os2socketerror(gle);
+                    if (rc == -1)
+                        rc = -2;
+                    else if ( rc == -2 )
+                        return -1;
 #endif /* NT */
 #ifdef OS2
                     ReleaseTCPIPMutex();
 #endif /* OS2 */
-                    return(-1);
+                    return(rc);
                 }
             case SSL_ERROR_WANT_X509_LOOKUP:
                 debug(F100,"http_inc SSL_ERROR_WANT_X509_LOOKUP","",0);
@@ -10798,7 +10916,7 @@ http_inc(timo) int timo; {
         return(-1); /* Call it an i/o error */
     }
 
-#ifdef CK_SSL 
+#ifdef CK_SSL
         if ( tls_http_active_flag ) {
             int error;
 
@@ -10844,15 +10962,21 @@ http_inc(timo) int timo; {
 #endif /* OS2 */
                     return(-2);
                 } else {
+                    int rc = -1;
 #ifdef NT
                     int gle = GetLastError();
                     debug(F111,"http_inc SSL_ERROR_SYSCALL",
                            "GetLastError()",gle);
+                    rc = os2socketerror(gle);
+                    if (rc == -1)
+                        rc = -2;
+                    else if ( rc == -2 )
+                        return -1;
 #endif /* NT */
 #ifdef OS2
                     ReleaseTCPIPMutex();
 #endif /* OS2 */
-                    return(-1);
+                    return(rc);
                 }
             case SSL_ERROR_WANT_X509_LOOKUP:
                 debug(F100,"http_inc SSL_ERROR_WANT_X509_LOOKUP","",0);
@@ -10919,7 +11043,7 @@ http_set_code_reply(char * msg)
 #else
 http_set_code_reply(msg)
     char * msg;
-#endif /* CK_ANSIC */ 
+#endif /* CK_ANSIC */
 {
     char * p = msg;
     char buf[16];
@@ -10981,13 +11105,13 @@ http_get(agent, hdrlist, user, pwd, array, local, remote, stdio)
     int zfile = 0;
     int first = 1;
 
-#ifdef DEBUG    
+#ifdef DEBUG
     if (deblog) {
-	debug(F101,"http_get httpfd","",httpfd);
-	debug(F110,"http_agent",agent,0);
-	debug(F110,"http_user",user,0);
-	debug(F110,"http_local",local,0);
-	debug(F110,"http_remote",remote,0);
+        debug(F101,"http_get httpfd","",httpfd);
+        debug(F110,"http_agent",agent,0);
+        debug(F110,"http_user",user,0);
+        debug(F110,"http_local",local,0);
+        debug(F110,"http_remote",remote,0);
     }
 #endif /* DEBUG */
     if (!remote) remote = "";
@@ -11039,7 +11163,7 @@ http_get(agent, hdrlist, user, pwd, array, local, remote, stdio)
     ckstrncat(request,http_host_port, len);
     ckstrncat(request,"\r\n",len);
     if (agent) {
-	ckstrncat(request,"User-agent: ",len);
+        ckstrncat(request,"User-agent: ",len);
         ckstrncat(request,agent,len);
         ckstrncat(request,"\r\n",len);
     }
@@ -11080,30 +11204,30 @@ http_get(agent, hdrlist, user, pwd, array, local, remote, stdio)
     while (!nullline && (ch = http_inc(0)) >= 0 && i < HTTPBUFLEN) {
         buf[i] = ch;
         if ( buf[i] == 10 ) { /* found end of line */
-	    if (i > 0 && buf[i-1] == 13)
-	      i--;
+            if (i > 0 && buf[i-1] == 13)
+              i--;
             if (i < 1)
               nullline = 1;
             buf[i] = '\0';
             if (array && !nullline && hdcnt < HTTPHEADCNT)
               makestr(&headers[hdcnt++],buf);
             if (!ckstrcmp(buf,"HTTP",4,0)) {
-		http_fnd = 1;
+                http_fnd = 1;
                 j = ckindex(" ",buf,0,0,0);
                 p = &buf[j];
                 while ( isspace(*p) )
-		  p++;
+                  p++;
                 switch ( p[0] ) {
-		  case '1':		/* Informational message */
+                  case '1':             /* Informational message */
                     break;
-		  case '2':		/* Success */
+                  case '2':             /* Success */
                     break;
-		  case '3':		/* Redirection */
-		  case '4':		/* Client failure */
-		  case '5':		/* Server failure */
-		  default:		/* Unknown */
-		    if (!quiet)
-		      printf("Failure: Server reports %s\n",p);
+                  case '3':             /* Redirection */
+                  case '4':             /* Client failure */
+                  case '5':             /* Server failure */
+                  default:              /* Unknown */
+                    if (!quiet)
+                      printf("Failure: Server reports %s\n",p);
                     rc = -1;
                     local = NULL;
                 }
@@ -11135,14 +11259,14 @@ http_get(agent, hdrlist, user, pwd, array, local, remote, stdio)
         goto getreq;
     }
     if (http_fnd == 0) {
-	rc = -1;
+        rc = -1;
         closecon = 1;
         goto getexit;
     }
 
     /* Now we have the contents of the file */
     if ( local && local[0] ) {
-        if (zopeno(ZOFILE,local,NULL,NULL)) 
+        if (zopeno(ZOFILE,local,NULL,NULL))
             zfile = 1;
         else
             rc = -1;
@@ -11180,10 +11304,10 @@ http_get(agent, hdrlist, user, pwd, array, local, remote, stdio)
         while (!nullline && (ch = http_inc(0)) >= 0 && i < HTTPBUFLEN) {
             buf[i] = ch;
             if ( buf[i] == 10 ) { /* found end of line */
-		if (i > 0 && buf[i-1] == 13)
-		  i--;
+                if (i > 0 && buf[i-1] == 13)
+                  i--;
                 if (i < 1)
-		  nullline = 1;
+                  nullline = 1;
                 buf[i] = '\0';
                 if (array && !nullline && hdcnt < HTTPHEADCNT)
                     makestr(&headers[hdcnt++],buf);
@@ -11338,10 +11462,10 @@ http_head(agent, hdrlist, user, pwd, array, local, remote, stdio)
     ckstrncat(request,"\r\n",len);
 
     if ( local && local[0] ) {
-	if (!zopeno(ZOFILE,local,NULL,NULL)) {
-	    free(request);
-	    return(-1);
-	}
+        if (!zopeno(ZOFILE,local,NULL,NULL)) {
+            free(request);
+            return(-1);
+        }
     }
 
   headreq:
@@ -11365,30 +11489,30 @@ http_head(agent, hdrlist, user, pwd, array, local, remote, stdio)
     while (!nullline && (ch = http_inc(0)) >= 0 && i < HTTPBUFLEN) {
         buf[i] = ch;
         if (buf[i] == 10) {             /* found end of line */
-	    if (i > 0 && buf[i-1] == 13)
-	      i--;
+            if (i > 0 && buf[i-1] == 13)
+              i--;
             if (i < 1)
               nullline = 1;
             buf[i] = '\0';
             if (array && !nullline && hdcnt < HTTPHEADCNT)
               makestr(&headers[hdcnt++],buf);
             if (!ckstrcmp(buf,"HTTP",4,0)) {
-		http_fnd = 1;
+                http_fnd = 1;
                 j = ckindex(" ",buf,0,0,0);
                 p = &buf[j];
                 while (isspace(*p))
-		  p++;
+                  p++;
                 switch (p[0]) {
-		  case '1':		/* Informational message */
+                  case '1':             /* Informational message */
                     break;
-		  case '2':		/* Success */
+                  case '2':             /* Success */
                     break;
-		  case '3':		/* Redirection */
-		  case '4':		/* Client failure */
-		  case '5':		/* Server failure */
-		  default:		/* Unknown */
-		    if (!quiet)
-		      printf("Failure: Server reports %s\n",p);
+                  case '3':             /* Redirection */
+                  case '4':             /* Client failure */
+                  case '5':             /* Server failure */
+                  default:              /* Unknown */
+                    if (!quiet)
+                      printf("Failure: Server reports %s\n",p);
                     rc = -1;
                 }
                 http_set_code_reply(p);
@@ -11397,12 +11521,12 @@ http_head(agent, hdrlist, user, pwd, array, local, remote, stdio)
                     if ( ckindex("close",buf,11,0,0) != 0 )
                         closecon = 1;
                 }
-		if ( local && local[0] ) {
-		    zsout(ZOFILE,buf);
+                if ( local && local[0] ) {
+                    zsout(ZOFILE,buf);
                     zsout(ZOFILE,"\r\n");
-		}
+                }
                 if (stdio)
-		    printf("%s\r\n",buf);
+                    printf("%s\r\n",buf);
             }
             i = 0;
         } else {
@@ -11416,14 +11540,14 @@ http_head(agent, hdrlist, user, pwd, array, local, remote, stdio)
         goto headreq;
     }
     if ( http_fnd == 0 )
-	rc = -1;
+        rc = -1;
 
     if (array)
       http_mkarray(headers,hdcnt,array);
 
   headexit:
     if ( local && local[0] )
-	zclose(ZOFILE);
+        zclose(ZOFILE);
     if (closecon)
         http_close();
     free(request);
@@ -11549,30 +11673,30 @@ http_index(agent, hdrlist, user, pwd, array, local, remote, stdio)
     while (!nullline && (ch = http_inc(0)) >= 0 && i < HTTPBUFLEN) {
         buf[i] = ch;
         if (buf[i] == 10) {             /* found end of line */
-	    if (i > 0 && buf[i-1] == 13)
-	      i--;
+            if (i > 0 && buf[i-1] == 13)
+              i--;
             if (i < 1)
               nullline = 1;
             buf[i] = '\0';
             if (array && !nullline && hdcnt < HTTPHEADCNT)
               makestr(&headers[hdcnt++],buf);
             if (!ckstrcmp(buf,"HTTP",4,0)) {
-		http_fnd = 1;
+                http_fnd = 1;
                 j = ckindex(" ",buf,0,0,0);
                 p = &buf[j];
                 while (isspace(*p))
-		  p++;
+                  p++;
                 switch ( p[0] ) {
-		  case '1':		/* Informational message */
+                  case '1':             /* Informational message */
                     break;
-		  case '2':		/* Success */
+                  case '2':             /* Success */
                     break;
-		  case '3':		/* Redirection */
-		  case '4':		/* Client failure */
-		  case '5':		/* Server failure */
-		  default:		/* Unknown */
-		    if (!quiet)
-		      printf("Failure: Server reports %s\n",p);
+                  case '3':             /* Redirection */
+                  case '4':             /* Client failure */
+                  case '5':             /* Server failure */
+                  default:              /* Unknown */
+                    if (!quiet)
+                      printf("Failure: Server reports %s\n",p);
                     rc = -1;
                 }
                 http_set_code_reply(p);
@@ -11601,16 +11725,16 @@ http_index(agent, hdrlist, user, pwd, array, local, remote, stdio)
         goto indexreq;
     }
     if ( http_fnd == 0 ) {
-	rc = -1;
+        rc = -1;
         closecon = 1;
-	goto indexexit;
+        goto indexexit;
     }
-    
+
     /* Now we have the contents of the file */
     if ( local && local[0] ) {
         if (zopeno(ZOFILE,local,NULL,NULL))
             zfile = 1;
-        else 
+        else
             rc = -1;
     }
 
@@ -11646,10 +11770,10 @@ http_index(agent, hdrlist, user, pwd, array, local, remote, stdio)
         while (!nullline && (ch = http_inc(0)) >= 0 && i < HTTPBUFLEN) {
             buf[i] = ch;
             if ( buf[i] == 10 ) { /* found end of line */
-		if (i > 0 && buf[i-1] == 13)
-		  i--;
+                if (i > 0 && buf[i-1] == 13)
+                  i--;
                 if (i < 1)
-		  nullline = 1;
+                  nullline = 1;
                 buf[i] = '\0';
                 if (array && !nullline && hdcnt < HTTPHEADCNT)
                     makestr(&headers[hdcnt++],buf);
@@ -11853,33 +11977,33 @@ http_put(agent, hdrlist, mime, user, pwd, array, local, remote, dest, stdio)
         while (!nullline && (ch = http_inc(0)) >= 0 && i < HTTPBUFLEN) {
             buf[i] = ch;
             if (buf[i] == 10) {         /* found end of line */
-		if (i > 0 && buf[i-1] == 13)
-		  i--;
+                if (i > 0 && buf[i-1] == 13)
+                  i--;
                 if (i < 1)
                   nullline = 1;
                 buf[i] = '\0';
                 if (array && !nullline && hdcnt < HTTPHEADCNT)
                   makestr(&headers[hdcnt++],buf);
                 if (!ckstrcmp(buf,"HTTP",4,0)) {
-		    http_fnd = 1;
+                    http_fnd = 1;
                     j = ckindex(" ",buf,0,0,0);
                     p = &buf[j];
                     while (isspace(*p))
-		      p++;
+                      p++;
                     switch (p[0]) {
-		      case '1':		/* Informational message */
+                      case '1':         /* Informational message */
                         break;
-		      case '2':		/* Success */
+                      case '2':         /* Success */
                         break;
-		      case '3':		/* Redirection */
-		      case '4':		/* Client failure */
-		      case '5':		/* Server failure */
-		      default:		/* Unknown */
-			if (!quiet)
-			  printf("Failure: Server reports %s\n",p);
+                      case '3':         /* Redirection */
+                      case '4':         /* Client failure */
+                      case '5':         /* Server failure */
+                      default:          /* Unknown */
+                        if (!quiet)
+                          printf("Failure: Server reports %s\n",p);
                         rc = -1;
                     }
-		    http_set_code_reply(p);
+                    http_set_code_reply(p);
                 } else {
                     if (!ckstrcmp(buf,"Connection:",11,0)) {
                         if ( ckindex("close",buf,11,0,0) != 0 )
@@ -11904,9 +12028,9 @@ http_put(agent, hdrlist, mime, user, pwd, array, local, remote, dest, stdio)
             http_reopen();
             goto putreq;
         }
-	if ( http_fnd == 0 ) {
+        if ( http_fnd == 0 ) {
             closecon = 1;
-	    rc = -1;
+            rc = -1;
             goto putexit;
         }
 
@@ -11914,7 +12038,7 @@ http_put(agent, hdrlist, mime, user, pwd, array, local, remote, dest, stdio)
         if ( dest && dest[0] ) {
             if (zopeno(ZOFILE,dest,NULL,NULL))
                 zfile = 1;
-            else 
+            else
                 rc = -1;
         }
 
@@ -11950,10 +12074,10 @@ http_put(agent, hdrlist, mime, user, pwd, array, local, remote, dest, stdio)
             while (!nullline && (ch = http_inc(0)) >= 0 && i < HTTPBUFLEN) {
                 buf[i] = ch;
                 if ( buf[i] == 10 ) { /* found end of line */
-		    if (i > 0 && buf[i-1] == 13)
-		      i--;
+                    if (i > 0 && buf[i-1] == 13)
+                      i--;
                     if (i < 1)
-		      nullline = 1;
+                      nullline = 1;
                     buf[i] = '\0';
                     if (array && !nullline && hdcnt < HTTPHEADCNT)
                         makestr(&headers[hdcnt++],buf);
@@ -11968,7 +12092,7 @@ http_put(agent, hdrlist, mime, user, pwd, array, local, remote, dest, stdio)
             }
         }
     } else {
-	rc = -1;
+        rc = -1;
     }
 
   putexit:
@@ -12109,30 +12233,30 @@ http_delete(agent, hdrlist, user, pwd, array, remote)
     while (!nullline && (ch = http_inc(0)) >= 0 && i < HTTPBUFLEN) {
         buf[i] = ch;
         if (buf[i] == 10) {         /* found end of line */
-	    if (i > 0 && buf[i-1] == 13)
-	      i--;
+            if (i > 0 && buf[i-1] == 13)
+              i--;
             if (i < 1)
-	      nullline = 1;
+              nullline = 1;
             buf[i] = '\0';
             if (array && !nullline && hdcnt < HTTPHEADCNT)
                 makestr(&headers[hdcnt++],buf);
             if (!ckstrcmp(buf,"HTTP",4,0)) {
-		http_fnd = 1;
+                http_fnd = 1;
                 j = ckindex(" ",buf,0,0,0);
                 p = &buf[j];
                 while (isspace(*p))
-		  p++;
+                  p++;
                 switch (p[0]) {
-		  case '1':		/* Informational message */
+                  case '1':             /* Informational message */
                     break;
-		  case '2':		/* Success */
+                  case '2':             /* Success */
                     break;
-		  case '3':		/* Redirection */
-		  case '4':		/* Client failure */
-		  case '5':		/* Server failure */
-		  default:		/* Unknown */
-		    if (!quiet)
-		      printf("Failure: Server reports %s\n",p);
+                  case '3':             /* Redirection */
+                  case '4':             /* Client failure */
+                  case '5':             /* Server failure */
+                  default:              /* Unknown */
+                    if (!quiet)
+                      printf("Failure: Server reports %s\n",p);
                     rc = -1;
                 }
                 http_set_code_reply(p);
@@ -12150,7 +12274,7 @@ http_delete(agent, hdrlist, user, pwd, array, remote)
             }
             i = 0;
         } else {
-	    i++;
+            i++;
         }
     }
     if (ch < 0 && first) {
@@ -12160,7 +12284,7 @@ http_delete(agent, hdrlist, user, pwd, array, remote)
         goto delreq;
     }
     if ( http_fnd == 0 ) {
-	rc = -1;
+        rc = -1;
         closecon = 1;
         goto delexit;
     }
@@ -12189,10 +12313,10 @@ http_delete(agent, hdrlist, user, pwd, array, remote)
         while (!nullline && (ch = http_inc(0)) >= 0 && i < HTTPBUFLEN) {
             buf[i] = ch;
             if ( buf[i] == 10 ) { /* found end of line */
-		if (i > 0 && buf[i-1] == 13)
-		  i--;
+                if (i > 0 && buf[i-1] == 13)
+                  i--;
                 if (i < 1)
-		  nullline = 1;
+                  nullline = 1;
                 buf[i] = '\0';
                 if (array && !nullline && hdcnt < HTTPHEADCNT)
                     makestr(&headers[hdcnt++],buf);
@@ -12374,30 +12498,30 @@ http_post(agent, hdrlist, mime, user, pwd, array, local, remote, dest,
         while (!nullline && (ch = http_inc(0)) >= 0 && i < HTTPBUFLEN) {
             buf[i] = ch;
             if (buf[i] == 10) {         /* found end of line */
-		if (i > 0 && buf[i-1] == 13)
-		  i--;
+                if (i > 0 && buf[i-1] == 13)
+                  i--;
                 if (i < 1)
                   nullline = 1;
                 buf[i] = '\0';
                 if (array && !nullline && hdcnt < HTTPHEADCNT)
                   makestr(&headers[hdcnt++],buf);
                 if (!ckstrcmp(buf,"HTTP",4,0)) {
-		    http_fnd = 1;
+                    http_fnd = 1;
                     j = ckindex(" ",buf,0,0,0);
                     p = &buf[j];
-		    while (isspace(*p))
-		      p++;
+                    while (isspace(*p))
+                      p++;
                     switch (p[0]) {
-		      case '1':		/* Informational message */
+                      case '1':         /* Informational message */
                         break;
-		      case '2':		/* Success */
+                      case '2':         /* Success */
                         break;
-		      case '3':		/* Redirection */
-		      case '4':		/* Client failure */
-		      case '5':		/* Server failure */
-		      default:		/* Unknown */
-			if (!quiet)
-			  printf("Failure: Server reports %s\n",p);
+                      case '3':         /* Redirection */
+                      case '4':         /* Client failure */
+                      case '5':         /* Server failure */
+                      default:          /* Unknown */
+                        if (!quiet)
+                          printf("Failure: Server reports %s\n",p);
                         rc = -1;
                     }
                     http_set_code_reply(p);
@@ -12425,15 +12549,15 @@ http_post(agent, hdrlist, mime, user, pwd, array, local, remote, dest,
             http_reopen();
             goto postopen;
         }
-	if (http_fnd == 0) {
-	    rc = -1;
+        if (http_fnd == 0) {
+            rc = -1;
             closecon = 1;
             goto postexit;
         }
 
         /* Any response data? */
         if ( dest && dest[0] ) {
-            if (zopeno(ZOFILE,dest,NULL,NULL)) 
+            if (zopeno(ZOFILE,dest,NULL,NULL))
                 zfile = 1;
             else
                 rc = -1;
@@ -12471,10 +12595,10 @@ http_post(agent, hdrlist, mime, user, pwd, array, local, remote, dest,
             while (!nullline && (ch = http_inc(0)) >= 0 && i < HTTPBUFLEN) {
                 buf[i] = ch;
                 if ( buf[i] == 10 ) { /* found end of line */
-		    if (i > 0 && buf[i-1] == 13)
-		      i--;
+                    if (i > 0 && buf[i-1] == 13)
+                      i--;
                     if (i < 1)
-		      nullline = 1;
+                      nullline = 1;
                     buf[i] = '\0';
                     if (array && !nullline && hdcnt < HTTPHEADCNT)
                         makestr(&headers[hdcnt++],buf);
@@ -12489,7 +12613,7 @@ http_post(agent, hdrlist, mime, user, pwd, array, local, remote, dest,
             }
         }
     } else {
-	rc = -1;
+        rc = -1;
     }
 
   postexit:
@@ -12508,7 +12632,7 @@ http_post(agent, hdrlist, mime, user, pwd, array, local, remote, dest,
 int
 #ifdef CK_ANSIC
 http_connect(int socket, char * agent, char ** hdrlist, char * user,
-	     char * pwd, char array, char * host_port)
+             char * pwd, char array, char * host_port)
 #else
 http_connect(socket, agent, hdrlist, user, pwd, array, host_port)
     int socket;
@@ -12610,7 +12734,7 @@ http_connect(socket, agent, hdrlist, user, pwd, array, host_port)
     }
 #else
     if (write(socket,(CHAR *)request,strlen(request)) < 0) { /* Send request */
-	rc = -1;
+        rc = -1;
         goto connexit;
     }
 #endif /* TCPIPLIB */
@@ -12628,33 +12752,33 @@ http_connect(socket, agent, hdrlist, user, pwd, array, host_port)
            i < HTTPBUFLEN) {
         buf[i] = ch;
         if (buf[i] == 10) {         /* found end of line */
-	    if (i > 0 && buf[i-1] == 13)
-	      i--;
+            if (i > 0 && buf[i-1] == 13)
+              i--;
             if (i < 1)
-	      nullline = 1;
+              nullline = 1;
             buf[i] = '\0';
 
             if (array && !nullline && hdcnt < HTTPHEADCNT)
                 makestr(&headers[hdcnt++],buf);
             if (!ckstrcmp(buf,"HTTP",4,0)) {
-		http_fnd = 1;
+                http_fnd = 1;
                 j = ckindex(" ",buf,0,0,0);
                 p = &buf[j];
                 while (isspace(*p))
-		  p++;
+                  p++;
                 tcp_http_proxy_errno = atoi(p);
                 switch (p[0]) {
-		  case '1':		/* Informational message */
+                  case '1':             /* Informational message */
                     break;
-		  case '2':		/* Success */
+                  case '2':             /* Success */
                     connected = 1;
                     break;
-		  case '3':		/* Redirection */
-		  case '4':		/* Client failure */
-		  case '5':		/* Server failure */
-		  default:		/* Unknown */
-		    if (!quiet)
-		      printf("Failure: Server reports %s\n",p);
+                  case '3':             /* Redirection */
+                  case '4':             /* Client failure */
+                  case '5':             /* Server failure */
+                  default:              /* Unknown */
+                    if (!quiet)
+                      printf("Failure: Server reports %s\n",p);
                     rc = -1;
                 }
                 http_set_code_reply(p);
@@ -12663,11 +12787,11 @@ http_connect(socket, agent, hdrlist, user, pwd, array, host_port)
             }
             i = 0;
         } else {
-	    i++;
+            i++;
         }
     }
     if ( http_fnd == 0 )
-	rc = -1;
+        rc = -1;
 
     if (array)
         http_mkarray(headers,hdcnt,array);
@@ -13235,13 +13359,13 @@ fwdx_open_client_channel(channel) int channel; {
     saddr.sin_family = AF_INET;
 
     if (!fwdx_parse_displayname(buf,
-				&family,
-				&host,
-				&display,
-				&screen,
-				&rest
-				)
-	) {
+                                &family,
+                                &host,
+                                &display,
+                                &screen,
+                                &rest
+                                )
+        ) {
         if ( host ) free(host);
         if ( rest ) free(rest);
         return(0);
@@ -13255,13 +13379,13 @@ fwdx_open_client_channel(channel) int channel; {
    */
     if (family == FamilyLocal) {
         debug(F100,"fwdx_create_client_channel() FamilyLocal","",0);
-	family = FamilyInternet;
-	if (host) free(host);
-	if (host = malloc(strlen("localhost") + 1))
-	    strcpy(host, "localhost");
-	else {
+        family = FamilyInternet;
+        if (host) free(host);
+        if (host = malloc(strlen("localhost") + 1))
+            strcpy(host, "localhost");
+        else {
             return(-1);
-	}
+        }
     }
 #else /* FWDX_UNIX_SOCK */
     if (family == FamilyLocal) {
@@ -13270,10 +13394,10 @@ fwdx_open_client_channel(channel) int channel; {
         if (sock < 0)
             return(-1);
 
-	ckmakmsg(buf,sizeof(buf),"/tmp/.X11-unix/X",ckitoa(display),NULL,NULL);
-	strncpy(saddr_un.sun_path, buf, sizeof(saddr_un.sun_path));
-	if (connect(sock,(struct sockaddr *)&saddr_un, SUN_LEN(&saddr_un)) < 0)
-	  return(-1);
+        ckmakmsg(buf,sizeof(buf),"/tmp/.X11-unix/X",ckitoa(display),NULL,NULL);
+        strncpy(saddr_un.sun_path, buf, sizeof(saddr_un.sun_path));
+        if (connect(sock,(struct sockaddr *)&saddr_un, SUN_LEN(&saddr_un)) < 0)
+          return(-1);
     } else
 #endif  /* FWDX_UNIX_SOCK */
     {
@@ -13341,11 +13465,11 @@ fwdx_open_client_channel(channel) int channel; {
 
     for (i = 0; i < MAXFWDX; i++) {
      if (TELOPT_SB(TELOPT_FORWARD_X).forward_x.channel[i].id == -1) {
-	 TELOPT_SB(TELOPT_FORWARD_X).forward_x.channel[i].fd = sock;
-	 TELOPT_SB(TELOPT_FORWARD_X).forward_x.channel[i].id = channel;
+         TELOPT_SB(TELOPT_FORWARD_X).forward_x.channel[i].fd = sock;
+         TELOPT_SB(TELOPT_FORWARD_X).forward_x.channel[i].id = channel;
        TELOPT_SB(TELOPT_FORWARD_X).forward_x.channel[i].need_to_send_xauth = 1;
-	 debug(F111,"fwdx_create_client_channel()","socket",sock);
-	 return(0);
+         debug(F111,"fwdx_create_client_channel()","socket",sock);
+         return(0);
      }
     }
     return(-1);
@@ -13389,13 +13513,13 @@ fwdx_server_avail() {
    * and hope that it works.
    */
     if (family == FamilyLocal) {
-	family = FamilyInternet;
-	if (host) free(host);
-	if (host = malloc(strlen("localhost") + 1))
-	    strcpy(host, "localhost");
-	else {
+        family = FamilyInternet;
+        if (host) free(host);
+        if (host = malloc(strlen("localhost") + 1))
+            strcpy(host, "localhost");
+        else {
             return(-1);
-	}
+        }
     }
 #else /* FWDX_UNIX_SOCK */
     if (family == FamilyLocal) {
@@ -13405,9 +13529,9 @@ fwdx_server_avail() {
         if (sock < 0)
             return(0);
 
-	ckmakmsg(buf,sizeof(buf),"/tmp/.X11-unix/X",ckitoa(display),NULL,NULL);
-	strncpy(saddr_un.sun_path, buf, sizeof(saddr_un.sun_path));
-	if (connect(sock,(struct sockaddr *)&saddr_un,SUN_LEN(&saddr_un)) < 0)
+        ckmakmsg(buf,sizeof(buf),"/tmp/.X11-unix/X",ckitoa(display),NULL,NULL);
+        strncpy(saddr_un.sun_path, buf, sizeof(saddr_un.sun_path));
+        if (connect(sock,(struct sockaddr *)&saddr_un,SUN_LEN(&saddr_un)) < 0)
             return(0);
         close(sock);
         return(1);
@@ -13776,7 +13900,7 @@ fwdx_init_fd_set(fd_set *ibits)
 
     if (TELOPT_SB(TELOPT_FORWARD_X).forward_x.listen_socket != -1) {
         set++;
-    	FD_SET(TELOPT_SB(TELOPT_FORWARD_X).forward_x.listen_socket, ibits);
+        FD_SET(TELOPT_SB(TELOPT_FORWARD_X).forward_x.listen_socket, ibits);
     }
     for (x = 0; x < MAXFWDX; x++) {
         if (TELOPT_SB(TELOPT_FORWARD_X).forward_x.channel[x].fd != -1) {

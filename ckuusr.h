@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2002,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -22,9 +22,13 @@
 #endif /* NOSPL */
 #endif /* NOLUCACHE */
 
-#ifndef NODOUBLEQUOTING			/* New to 7.1 */
+#ifndef NODOUBLEQUOTING			/* New to 8.0 */
 #define DOUBLEQUOTING			/* Allow fields to be enclosed in */
 #endif /* NODOUBLEQUOTING */		/* doublequotes. */
+
+#ifndef NOLOCUS				/* SET LOCUS */
+#define LOCUS
+#endif /* NOLOCUS */
 
 /* Sizes of things */
 
@@ -195,37 +199,44 @@ struct stringlist {			/* General purpose string list */
 #endif /* CK_SYSINI */
 /*
   If neither CK_DSYSINI nor CK_SYSINI are defined, these are the
-  built-in defaults for each system:
+  built-in defaults for each platform.  USE_CUSTOM means to execute the
+  customization file automatically if the initialization file is not found.
 */
+#ifndef NOCUSTOM
+#ifndef USE_CUSTOM
+#define USE_CUSTOM
+#endif /* USE_CUSTOM */
+#endif /* NOCUSTOM */
+
+#ifndef  KERMRCL			/* Path length for init file */
+#define KERMRCL CKMAXPATH
+#endif /*  KERMRCL */
+
 #ifdef vms
-#define KERMRC "CKERMIT.INI"
-#define KERMRCL 256
+#define KERMRC "CKERMIT.INI"		/* Init file name */
+#define MYCUSTOM "CKERMOD.INI"		/* Customization file name */
 #else
 #ifdef OS2
 #ifdef NT
 #define KERMRC "k95.ini"
+#define MYCUSTOM "k95custom.ini"
 #else
 #define KERMRC "k2.ini"
+#define MYCUSTOM "k2custom.ini"
 #endif /* NT */
-#define KERMRCL 256
 #else
-#ifdef UNIX
+#ifdef UNIXOROSK
 #define KERMRC ".kermrc"
-#define KERMRCL 256
-#else
-#ifdef OSK
-#define KERMRC ".kermrc"
-#define KERMRCL 256
+#define MYCUSTOM ".mykermrc"
 #else
 #ifdef STRATUS
 #define KERMRC "ckermit.ini"
-#define KERMRCL 256
+#define MYCUSTOM "ckermod.ini"
 #else
 #define KERMRC "CKERMIT.INI"
-#define KERMRCL 256
+#define MYCUSTOM "ckermod.ini"
 #endif /* STRATUS */
-#endif /* OSK */
-#endif /* UNIX */
+#endif /* UNIXOROSK */
 #endif /* OS2 */
 #endif /* vms */
 
@@ -320,7 +331,21 @@ struct stringlist {			/* General purpose string list */
 #define XA_PRIV 19			/* --privid */
 #define XA_VERS 20			/* --version */
 #define XA_NPRM 21			/* --noperms */
-#define XA_MAX  21			/* Highest extended option number */
+#define XA_XPOS 22			/* Window position X coordinate */
+#define XA_YPOS 23			/* Window position Y coordinate */
+#define XA_FNAM 24			/* Font Facename */
+#define XA_FSIZ 25			/* Font Size */
+#define XA_TERM 26			/* Terminal type */
+#define XA_CSET 27			/* Remote Character Set */
+#define XA_ROWS 28			/* Screen rows (height) */
+#define XA_COLS 29			/* Screen columns (width) */
+#define XA_TEL  30			/* Make a Telnet connection */
+#define XA_FTP  31			/* Make an FTP connection */
+#define XA_SSH  32			/* Make an SSH connection */
+#define XA_USER 33			/* Username for login */
+#define XA_PASS 34			/* Password for login */
+#define XA_MAX  34			/* Highest extended option number */
+
 #endif /* NOCMDL */
 
 #ifndef NOICP
@@ -685,6 +710,18 @@ struct stringlist {			/* General purpose string list */
 #define XXRCDUP 241     /* REMOTE CDUP */
 #define XXCAT   242	/* CAT (= TYPE /NOPAGE) */
 #define XXFIREW 243     /* FIREWALL (help only) */
+
+#define XXLCWD  244	/* Local C(W)D */
+#define XXLCDU  245	/* Local CDUP */
+#define XXLPWD  246	/* Local PWD */
+#define XXLDEL  247	/* Local DELETE */
+#define XXLDIR  248	/* Local DIRECTORY */
+#define XXLREN  249	/* Local RENAME */
+#define XXLMKD  250	/* Local MKDIR */
+#define XXLRMD  251	/* Local RMDIR */
+#define XXUSER  252	/* (FTP) USER */
+#define XXACCT  253	/* (FTP) ACCOUNT */
+#define XXLINK  254     /* LINK source destination */
 
 /* End of Top-Level Commands */
 
@@ -1341,30 +1378,15 @@ struct stringlist {			/* General purpose string list */
 #define  XYDTOCC 54	/*   TONE-COUNTRIES */
 #define  XYDTEST 55	/*   TEST */
 
+#define XYA_CID   1	/* SET ANSWER CALLER-ID */
+#define XYA_RNG   2	/* SET ANSWER RINGS */
+
 #define XYSESS 49       /* SET SESSION options */
 #define XYBUF  50       /* Buffer length */
 #define XYBACK 51	/* Background */
 #define XYDFLT 52       /* Default */
 #define XYDBL  53	/* Double */
 #define XYCMD  54       /* COMMAND */
-
-/* SET COMMAND items... */
-
-#define SCMD_BSZ 0	/* BYTESIZE */
-#define SCMD_RCL 1	/* RECALL */
-#define SCMD_RTR 2	/* RETRY */
-#define SCMD_QUO 3	/* QUOTING */
-#define SCMD_COL 4	/* COLOR */
-#define SCMD_HIG 5	/* HEIGHT */
-#define SCMD_WID 6	/* WIDTH */
-#define SCMD_CUR 7	/* CURSOR-POSITION */
-#define SCMD_SCR 8	/* SCROLLBACK */
-#define SCMD_MOR 9	/* MORE-PROMPTING */
-#define SCMD_INT 10     /* INTERRUPTION */
-#define SCMD_ADL 11     /* AUTODOWNLOAD */
-#define SCMD_STA 12     /* STATUSLINE */
-#define SCMD_DBQ 13	/* DOUBLEQUOTING */
-
 #define XYCASE 55       /* Case */
 #define XYCOMP 56       /* Compression */
 #define XYX25  57       /* X.25 parameter (ANYX25) */
@@ -1646,6 +1668,9 @@ struct stringlist {			/* General purpose string list */
 #define XYFTPX   126    /* SET FTP */
 #define XYSEXP   127	/* SET SEXP */
 #define XYGPR    128    /* SET GET-PUT-REMOTE */
+#define XYLOCUS  129	/* SET LOCUS */
+#define XYGUI    130	/* SET GUI */
+#define XYANSWER 131    /* SET ANSWER */
 
 /* End of SET commands */
 
@@ -1892,6 +1917,7 @@ struct stringlist {			/* General purpose string list */
 #define SHSEXP    68			/* SHOW SEXPRESSIONS */
 #define SHOSSH    69			/* SHOW SSH */
 #define SHOIKS    70                    /* SHOW IKS */
+#define SHOGUI    71			/* SHOW RGB */
 
 /* REMOTE command symbols */
 
@@ -2254,6 +2280,16 @@ struct stringlist {			/* General purpose string list */
 
 #define VN_NOW    222			/* Timestamp yyyymmdd hh:mm:ss */
 #define VN_HOUR   223			/* Current hour of the day 0-23 */
+
+#define VN_CI_DA  224			/* Caller ID date */
+#define VN_CI_TI  225			/* Caller ID time */
+#define VN_CI_NA  226			/* Caller ID name */
+#define VN_CI_NU  227			/* Caller ID number */
+#define VN_CI_ME  228			/* Caller ID message */
+#define VN_PERSONAL 229                 /* Personal Directory on Windows */
+#define VN_APPDATA  230                 /* User AppData directory */
+#define VN_COMMON   231                 /* Common AppData directory */
+
 #endif /* NOSPL */
 
 /* INPUT status values */
@@ -2502,6 +2538,61 @@ struct stringlist {			/* General purpose string list */
 #define DN_LONG   4
 #define DN_INTL   5
 #endif /* NODIAL */
+
+#ifdef SSHBUILTIN
+#define XSSH_OPN 1
+#define XSSH_V2  2
+#define XSSH_FLP 3
+#define XSSH_FRP 4
+#define XSSH_ADD 5
+#define XSSH_KEY 6
+#define XSSH_CLR 7
+#define XSSH_AGT 8
+
+#define SSHKT_1R   0			/* SSH KEY TYPE symbols */
+#define SSHKT_2R   1                    /* must match ssh/key.h values */
+#define SSHKT_2D   2
+#define SSHKT_SRP  3
+
+#define SSHKD_IN   1			/* SSH KEY DISPLAY /IN-FORMAT */
+#define SSHKD_OUT  2			/* SSH KEY DISPLAY /OUT-FORMAT */
+
+#define SKDF_OSSH  1			/* Key display format OpenSSH */
+#define SKDF_SSHC  2			/* Key display format SSH.COM */
+#define SKDF_IETF  3			/* Key display format IETF */
+#define SKDF_FING  4			/* Key display format FINGERPRINT */
+
+#define SSHSW_USR 1
+#define SSHSW_VER 2
+#define SSHSW_CMD 3
+#define SSHSW_X11 4
+#define SSHSW_PWD 5
+#define SSHSW_SUB 6
+
+#define SSHC_LPF 1
+#define SSHC_RPF 2
+
+#define XSSH2_RKE 1
+
+#define SSHF_LCL   1
+#define SSHF_RMT   2
+
+#define SSHA_ADD   1
+#define SSHA_DEL   2
+#define SSHA_LST   3
+
+#define SSHASW_FP 1
+
+#define SSHK_PASS  1
+#define SSHK_CREA  2
+#define SSHK_DISP  3
+#define SSHK_V1    4
+
+#define SSHKC_BI  1
+#define SSHKC_PP  2
+#define SSHKC_TY  3
+#define SSHKC_1R  4
+#endif /* SSHBUILTIN */
 
 /* ANSI-C prototypes for user interface functions */
 

@@ -7,7 +7,7 @@
 char *wartv = "Wart Version 2.14, 10 Nov 1999";
 
 char *protv =                                                     /* -*-C-*- */
-"C-Kermit Protocol Module 8.0.156, 10 Nov 2001";
+"C-Kermit Protocol Module 8.0.157, 20 Dec 2001";
 
 int kactive = 0;			/* Kermit protocol is active */
 
@@ -18,7 +18,7 @@ int kactive = 0;			/* Kermit protocol is active */
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2002,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -3374,11 +3374,14 @@ _PROTOTYP( int pxyz, (int) );
 
     kactive = 1;
     if (sstate == 'x') {		/* If entering server mode, */
+	extern int howcalled;
 	server = 1;			/* set flag, */
 	debug(F101,"server backgrd","",backgrd);
 	debug(F101,"server quiet","",quiet);
 	debug(F100,"SHOULD NOT SEE THIS IF IN BACKGROUND!","",0);
-	if (!local) {			/* and issue appropriate message. */
+	if (howcalled == I_AM_SSHSUB) {	/* and issue appropriate message. */
+	    ttol((CHAR *)"KERMIT READY TO SERVE...\015\012",26);
+	} else if (!local) {
 	    if (!quiet && !backgrd
 #ifdef IKS_OPTION
                 && !TELOPT_ME(TELOPT_KERMIT) /* User was told by negotiation */
@@ -3500,6 +3503,7 @@ sgetinit(reget,xget) int reget, xget; {	/* Server end of GET command */
 #ifdef PIPESEND
     extern int usepipes, pipesend;
 #endif /* PIPESEND */
+    extern int nolinks;
 
     if (!ENABLED(en_get)) {		/* Only if not disabled!  */
 	errpkt((CHAR *)"GET disabled");
@@ -3508,6 +3512,7 @@ sgetinit(reget,xget) int reget, xget; {	/* Server end of GET command */
 
     /* OK to proceed */
 
+    nolinks = recursive;
     filcnt = 0;
 
 #ifdef WHATAMI
@@ -3570,6 +3575,7 @@ sgetinit(reget,xget) int reget, xget; {	/* Server end of GET command */
 		if (val & GOPT_RES) reget = 1;
 		if (val & GOPT_REC) {
 		    recursive = 1;
+		    nolinks = 2;
 		    if (fnspath == PATH_OFF)
 		      fnspath = PATH_REL;
 		}

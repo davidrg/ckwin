@@ -8,7 +8,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   The Kermit Project - Columbia University, New York City.
 
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2002,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -321,6 +321,8 @@ _PROTOTYP(int getj7, ( void ) );	/* Get next JIS-7 character */
 _PROTOTYP( int cs_size, (int) );
 _PROTOTYP( int cs_is_std, (int) );
 _PROTOTYP( int cs_is_nrc, (int) );
+_PROTOTYP( VOID setremcharset, (int, int) );
+_PROTOTYP( VOID setlclcharset, (int) );
 #endif /* NOLOCAL */
 #endif /* MAC */
 

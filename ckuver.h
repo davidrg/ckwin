@@ -172,6 +172,9 @@
 #endif /* NETBSD15 */
 #else
 #ifdef __FreeBSD__
+#ifdef FREEBSD45
+#define HERALD " FreeBSD 4.5"
+#else
 #ifdef FREEBSD44
 #define HERALD " FreeBSD 4.4"
 #else
@@ -201,6 +204,7 @@
 #endif /* FREEBSD42 */
 #endif /* FREEBSD43 */
 #endif /* FREEBSD44 */
+#endif /* FREEBSD45 */
 #else
 #ifdef __386BSD__
 #define HERALD " 386BSD"
@@ -655,14 +659,6 @@
 #define HERALD " 386BSD"
 #endif /* _386BSD */
 
-#ifdef NEUTRINO
-#define HERALD " QNX Neutrino 2"
-#else  /* NEUTRINO */
-#ifdef QNX6
-#define HERALD " QNX6"
-#endif /* QNX6 */
-#endif /* NEUTRINO */
-
 #ifdef POSIX
 #ifdef PTX
 #ifdef PTX4
@@ -670,7 +666,7 @@
 #else
 #define HERALD " DYNIX/ptx"
 #endif /* PTX4 */
-#else
+#else  /* PTX */
 #ifndef OSF		/* Let OSF -DPOSIX keep previously defined HERALD */
 #ifdef HERALD
 #undef HERALD
@@ -689,13 +685,23 @@
 #define HERALD " QNX 32-bit"
 #endif /* QNX16 */
 #else
+#ifdef NEUTRINO
+#define HERALD " QNX Neutrino 2"
+#else  /* NEUTRINO */
+#ifdef QNX6
+#define HERALD " QNX6"
+#else  /* QNX6 */
 #ifdef __linux__
+#ifdef ZSL5500
+#define HERALD " Sharp Zaurus SL-5500"
+#else
 #ifdef RH71
 #define HERALD " Red Hat Linux 7.1"
 #else
 #define HERALD " Linux"
 #endif /* RH71 */
-#else
+#endif /* ZSL5500 */
+#else  /* __linux__ */
 #ifdef _386BSD				/* 386BSD Jolix */
 #define HERALD " 386BSD"
 #else
@@ -732,9 +738,11 @@
 #endif /* LYNXOS */
 #endif /* _386BSD */
 #endif /* __linux__ */
+#endif /* QNX6 */
+#endif /* NEUTRINO */
 #endif /* QNX */
-#endif /* OU8 */
 #endif /* UW7 */
+#endif /* OU8 */
 #endif /* PTX */
 #endif /* POSIX */
 

@@ -5,8 +5,8 @@
      [1]The Kermit Project
      [2]Columbia University
      
-   As of: C-Kermit 8.0.200, 12 Dec 2001
-   This page last updated: Sun Dec 16 12:20:27 2001 (New York USA Time)
+   As of: C-Kermit 8.0.201, 8 Feb 2001
+   This page last updated: Mon Feb 11 17:50:55 2002 (New York USA Time)
    
      IF YOU ARE READING A PLAIN-TEXT version of this document, note that
      this file is a plain-text dump of a Web page. You can visit the
@@ -1306,6 +1306,7 @@
    CK_MKDIR This version has a zmkdir() command to create directories.
    CK_NAWS Include TELNET Negotiate About Window Size support.
    CK_NEWTERM Use newterm() rather than initscr() to initialize curses.
+   CK_PAM Include PAM authentication (might also require -lpam).
    CK_PCT_BAR Fullscreen file transfer display should include
    "thermometer".
    CK_POLL System-V or POSIX based UNIX has poll() function.
@@ -1315,6 +1316,8 @@
    CK_REDIR Enable the REDIRECT command.
    CK_RESEND Include the RESEND command (needs zfseek() + append).
    CK_RTSCTS RTS/CTS flow control is available.
+   CK_SHADOW Include support for shadow passwords (e.g. for IKSD
+   authentication).
    CK_SOCKBUF Enable TCP socket-buffer-size-increasing code.
    CK_SOCKS UNIX only: Build with socks library rather than regular
    sockets
@@ -1406,6 +1409,7 @@
    NEXT33 Build for NeXT Mach 3.3.
    NOANSI Disable ANSI C function prototyping.
    NOAPC Do not include CK_APC code.
+   NOARROWKEYS Exclude code to parse ANSI arrow-key sequences.
    NOB_xxxx Disable SET SPEED xxxx
    NOBIGBUF Override BIGBUFOK when it is the default
    NOBRKC Don't try to refer to t_brkc or t_eof tchars structure members.
@@ -1556,6 +1560,7 @@
    UID_T=xxx Type for uids is xxx (normally int or uid_t).
    UNIX Must be defined for all UNIX versions.
    UNIX351M AT&T UNIX 3.51m on the AT&T 7300 UNIX PC.
+   USE_ARROWKEYS Include code to parse ANSI arrow-key sequences.
    USE_LSTAT OK to use lstat().
    USE_MEMCPY Define this if memcpy()/memset()/memmove() available.
    USE_STRERROR Define this if strerror() is available.

@@ -17431,7 +17431,7 @@ References
    1. http://www.columbia.edu/kermit/ckermit70.html#contents
    2. http://www.columbia.edu/kermit/ckermit.html
    3. http://www.columbia.edu/kermit/index.html
-   4. http://www.columbia.edu/kermit/ckkermit70.html
+   4. http://www.columbia.edu/kermit/ckermit70.html
    5. mailto:kermit-support@columbia.edu
    6. http://www.columbia.edu/kermit/
    7. http://www.kermit-project.org/

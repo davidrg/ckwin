@@ -1,10 +1,10 @@
 #include "ckcsym.h"
-char *dialv = "Dial Command, 8.0.152, 10 Nov 2001";
+char *dialv = "Dial Command, 8.0.154, 8 Jan 2002";
 
 /*  C K U D I A	 --  Module for automatic modem dialing. */
 
 /*
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2002,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -294,6 +294,11 @@ long dialmax = 0L,			/* Modem's max interface speed */
 
 int dialsta = DIA_UNK;			/* Detailed return code (ckuusr.h) */
 
+#ifdef COMMENT
+int ans_cid = 0;			/* SET ANSWER parameters */
+int ans_rings = 0;			/* (not used yet...) */
+#endif /* COMMENT */
+
 int is_rockwell = 0;
 int is_motorola = 0;
 int is_supra = 0;
@@ -347,6 +352,13 @@ char *dialpxi = NULL;			/* DIAL PBX-INTERNAL-PREFIX */
 char *dialpxo = NULL;			/* DIAL PBX-OUTSIDE-PREFIX */
 char *dialsfx = NULL;			/* DIAL SUFFIX */
 char *dialtfp = NULL;			/* DIAL TOLL-FREE-PREFIX */
+
+char *callid_date = NULL;		/* Caller ID strings */
+char *callid_time = NULL;
+char *callid_name = NULL;
+char *callid_nmbr = NULL;
+char *callid_mesg = NULL;
+
 extern char * d_name;
 extern char * dialtfc[];		/* DIAL TOLL-FREE-AREA-CODE */
 extern char * dialpxx[];		/* DIAL PBX-EXCHANGE */
@@ -440,7 +452,7 @@ char *tb_name[] = {			/* Array of model names */
 
 extern int flow, local, mdmtyp, quiet, backgrd, parity, seslog, network;
 extern int carrier, duplex, mdmsav, reliable, setreliable;
-extern int ttnproto;
+extern int ttnproto, nettype;
 extern long speed;
 extern char ttname[], sesfil[];
 #ifndef NOXFER
@@ -4233,10 +4245,10 @@ struct keytab mdmtab[] = {
 
     "bestdata",         n_BESTDATA,     0,
     "boca",		n_BOCA,		0,
+    "cardinal",         n_CARDINAL,     0,
 #endif /* MINIDIAL */
     "ccitt-v25bis",	n_CCITT,	CM_INV, /* Name changed to ITU-T */
 #ifndef MINIDIAL
-    "cardinal",         n_CARDINAL,     0,
 #ifdef OLDMODEMS
     "cermetek",		n_CERMETEK,	M_OLD,
 #endif /* OLDMODEMS */
@@ -4591,7 +4603,7 @@ ddinc(n) int n; {
 	/* debug(F000,"ddinc","",c); */
 	if (c < 0) return(c);
 #ifndef OS2
-	if ((c == IAC) && network && (ttnproto == NP_TELNET)) {
+	if ((c == IAC) && network && IS_TELNET()) {
 	    switch (tn_doop((CHAR)(c & 0xff),duplex,ttinc)) {
 	      case 2: duplex = 0; continue;
 	      case 1: duplex = 1;
@@ -4599,7 +4611,7 @@ ddinc(n) int n; {
 	    }
 	} else done = 1;
 #else /* OS2 */
-	done = !(c == IAC && network && ttnproto == NP_TELNET);
+	done = !(c == IAC && network && IS_TELNET());
 	scriptwrtbuf(c);	/* TELNET negotiations handled by emulator */
 #endif /* OS2 */
     }
@@ -4631,7 +4643,7 @@ ttslow(s,millisec) char *s; int millisec; { /* Output s-l-o-w-l-y */
     for (; *s; s++) {
 	ttoc(*s);
 #ifdef TCPSOCKET
-	if (*s == CR && network && ttnproto == NP_TELNET) {
+	if (*s == CR && network && IS_TELNET()) {
 	    if (!TELOPT_ME(TELOPT_BINARY) && tn_nlm != TNL_CR)
 	      ttoc((char)((tn_nlm == TNL_CRLF) ? LF : NUL));
 	    else if (TELOPT_ME(TELOPT_BINARY) &&
@@ -5719,6 +5731,7 @@ _dodial(threadinfo) VOID * threadinfo;
 	s = dialaaon ? dialaaon : mp->aa_on_str;
 	if (!s) s = "";
 	if (*s) {
+	    /* Here we would handle caller ID */
 	    ttslow(s, (dialpace > -1) ? wr : mp->dial_rate);
 	    if (xx_ok)			/* Get modem's response */
 	      (*xx_ok)(5,1);		/* (but ignore it...) */
@@ -6408,6 +6421,15 @@ ckdial(nbr, x1, x2, fc, redial) char *nbr; int x1, x2, fc, redial;
     xredial = redial;
     debug(F111,"ckdial entry partial",ckitoa(fc),partial);
     debug(F111,"ckdial entry number",nbr,redial);
+
+    if (fc == 1) {			/* ANSWER command? */
+	/* Reset caller ID strings */
+	if (callid_date) makestr(&callid_date,NULL);
+	if (callid_time) makestr(&callid_time,NULL);
+	if (callid_name) makestr(&callid_name,NULL);
+	if (callid_nmbr) makestr(&callid_nmbr,NULL);
+	if (callid_mesg) makestr(&callid_mesg,NULL);
+    }
 
 #ifdef CK_TAPI_X
     if (tttapi && tapipass) {
@@ -7869,6 +7891,9 @@ gethrw() {
     } else if (didweget(lbuf,"VOICE")) {
 	mdmstat = D_FAILED;
 	dialsta = DIA_VOIC;
+    } else if (didweget(lbuf,"VCON")) {
+	mdmstat = D_FAILED;
+	dialsta = DIA_VOIC;
     } else if (didweget(lbuf,"NO PROMPT TONE")) {
 	mdmstat = D_FAILED;
 	dialsta = DIA_NODT;
@@ -7925,20 +7950,25 @@ gethrw() {
     } else if (didweget(lbuf,"DATE")) { /* Caller ID Date */
 	debug(F110,"CALLID DATE",lbuf,0);
 	/* Format is "DATE     =   MMDD"   */
+	makestr(&callid_date,lbuf);
     } else if (didweget(lbuf,"TIME")) { /* Caller ID Time */
 	/* Format is "TIME     =   HHMM"   */
 	debug(F110,"CALLID TIME",lbuf,0);
+	makestr(&callid_time,lbuf);
     } else if (didweget(lbuf,"NAME")) { /* Caller ID Name */
 	/* Format is "NAME     =   <listing name>"   */
 	debug(F110,"CALLID NAME",lbuf,0);
+	makestr(&callid_name,lbuf);
     } else if (didweget(lbuf,"NMBR")) { /* Caller ID Number */
 	/* Format is "NMBR     =   <number>, 'P' or 'O'"   */
 	/* 	'P' means Privacy Requested 		   */
 	/*      'O' means Out of Service or Not available  */
 	debug(F110,"CALLID NMBR",lbuf,0);
+	makestr(&callid_nmbr,lbuf);
     } else if (didweget(lbuf,"MESG")) { /* Caller ID Unrecognized Message */
 	/* Format is "MESG     =   <tag><length><data><checksum>"   */
 	debug(F110,"CALLID MESG",lbuf,0);
+	makestr(&callid_mesg,lbuf);
     }
 }
 

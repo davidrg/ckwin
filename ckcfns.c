@@ -1,4 +1,4 @@
-char *fnsv = "C-Kermit functions, 8.0.210, 10 Nov 2001";
+char *fnsv = "C-Kermit functions, 8.0.213, 7 Feb 2002";
 
 char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 
@@ -10,7 +10,7 @@ char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2002,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -70,6 +70,7 @@ _PROTOTYP( long zfsize, (char *) );
 
 #ifdef OS2
 #include <io.h>
+#include "ckocon.h"
 #endif /* OS2 */
 
 #ifdef VMS
@@ -658,12 +659,13 @@ pnbyte(c,fn) CHAR c; int (*fn)();
 #endif /* NOXFER */
 #endif /* OS2 */
     {
-	if (fn == putfil)		/* Execute output function */
-	  rc = zmchout(c);		/* to-file macro (fast) */
-	else if (!fn)
-	  rc = putchar(c);		/* to-screen macro (fast) */
-        else
-	  rc = (*fn)(c);		/* function call (not as fast) */
+	if (fn == putfil) {		/* Execute output function */
+	    rc = zmchout(c);		/* to-file macro (fast) */
+	} else if (!fn) {
+	    rc = putchar(c);		/* to-screen macro (fast) */
+        } else {
+	    rc = (*fn)(c);		/* function call (not as fast) */
+	}
 	if (rc < 0)
 	  return(rc);
     }
@@ -855,24 +857,95 @@ xpnbyte(a,tcs,fcs,fn) int a, tcs, fcs; int (*fn)();
 	if (fcs == FC_UCS2) {		/* And FCS is UCS-2 */
 	    /* Write out the bytes in the appropriate byte order */
 	    int count = 0;
+#ifndef IKSDONLY
+#ifdef OS2
+            extern int k95stdout,wherex[],wherey[];
+			extern unsigned char colorcmd;
+            union {
+                USHORT ucs2;
+                UCHAR  bytes[2];
+            } output;
+#endif /* OS2 */
+#endif /* IKSDONLY */
 	    if (offc == 0L && ucsbom) {	/* Beginning of file? */
-		if ((rc = pnbyte((ucsorder ? 0xff : 0xfe),fn)) < 0) /* BOM */
-		  return(rc);
-		if ((rc = pnbyte((ucsorder ? 0xfe : 0xff),fn)) < 0)
-		  return(rc);
+
+#ifndef IKSDONLY
+#ifdef OS2
+                if (fn == NULL && !k95stdout && !inserver) {
+		    offc++;
+#ifdef COMMENT
+		    /* Don't print the BOM to the display */
+                    output.bytes[0] = (!ucsorder ? 0xff : 0xfe);
+                    output.bytes[1] = (!ucsorder ? 0xfe : 0xff);
+
+                    VscrnWrtUCS2StrAtt(VCMD,
+                                       &output.ucs2,
+                                       1,
+                                       wherey[VCMD],
+                                       wherex[VCMD],
+                                       &colorcmd
+                                       );
+#endif /* COMMENT */
+                } else 
+#endif /* OS2 */
+#endif /* IKSDONLY */
+                {
+		    if ((rc = pnbyte((ucsorder ? 0xff : 0xfe),fn)) < 0)
+		      return(rc);	/* BOM */
+		    if ((rc = pnbyte((ucsorder ? 0xfe : 0xff),fn)) < 0)
+		      return(rc);
+		}
 		count += 2;
 	    }
 	    if (utferror) {
-		if ((rc = pnbyte((ucsorder ? 0xfd : 0xff),fn)) < 0)
-		  return(rc);
-		if ((rc = pnbyte((ucsorder ? 0xff : 0xfd),fn)) < 0)
-		  return(rc);
+#ifndef IKSDONLY
+#ifdef OS2
+                if (fn == NULL && !k95stdout && !inserver) {
+                    offc++;
+                    output.bytes[0] = (!ucsorder ? 0xfd : 0xff);
+                    output.bytes[1] = (!ucsorder ? 0xff : 0xfd);
+
+                    VscrnWrtUCS2StrAtt(VCMD,
+                                       &output.ucs2,
+                                       1,
+                                       wherey[VCMD],
+                                       wherex[VCMD],
+                                       &colorcmd
+                                       );
+                } else 
+#endif /* OS2 */
+#endif /* IKSDONLY */
+		{
+		    if ((rc = pnbyte((ucsorder ? 0xfd : 0xff),fn)) < 0)
+		      return(rc);
+		    if ((rc = pnbyte((ucsorder ? 0xff : 0xfd),fn)) < 0)
+		      return(rc);
+		}
 		count += 2;
 	    }
-	    if ((rc = pnbyte(uc.x_char[swapping],fn)) < 0)
-	      return(rc);
-	    if ((rc = pnbyte(uc.x_char[1-swapping],fn)) < 0)
-	      return(rc);
+#ifndef IKSDONLY
+#ifdef OS2
+            if (fn == NULL && !k95stdout && !inserver) {
+                offc++;
+                output.bytes[0] = uc.x_char[1-swapping];
+                output.bytes[1] = uc.x_char[swapping];
+
+                VscrnWrtUCS2StrAtt(VCMD,
+                                   &output.ucs2,
+                                   1,
+                                   wherey[VCMD],
+                                   wherex[VCMD],
+                                   &colorcmd
+                                   );
+            } else 
+#endif /* OS2 */
+#endif /* IKSDONLY */
+            {
+		if ((rc = pnbyte(uc.x_char[swapping],fn)) < 0)
+		  return(rc);
+		if ((rc = pnbyte(uc.x_char[1-swapping],fn)) < 0)
+		  return(rc);
+	    }
 	    count += 2;
 	    return(count);
 	} else if (fcs == FC_UTF8) {	/* Convert to UTF-8 */
@@ -2346,8 +2419,11 @@ xgnbyte(tcs,fcs,fn) int tcs, fcs, (*fn)();
     }
     /* NOTREACHED */
     /* Some compilers complain if this is not here, others if it is. */
+#ifdef COMMENT
+    /* Let's see if the complaints still happen... */
     debug(F100,"xgnbyte switch failure","",0);
     return(-2);
+#endif /* COMMENT */
 }
 #endif /* NOCSETS */
 
@@ -4762,12 +4838,15 @@ rpar() {
     if (clearrq == SET_ON)
       x |= WMI_CLEAR;
     else if (clearrq == SET_AUTO &&	/* SET CLEAR-CHANNEL AUTO */
-	     ((network && nettype == 1	/* We have a NET_TCPB connection */
+	     ((network && nettype == NET_TCPB /* TCP/IP */
 #ifdef RLOGCODE
                 && ttnproto != NP_RLOGIN/* Rlogin is not clear */
                 && !(ttnproto >= NP_K4LOGIN && ttnproto <= NP_EK5LOGIN)
 #endif /* RLOGCODE */
 	       )
+#ifdef SSHBUILTIN
+              || (network && nettype == NET_SSH)
+#endif /* SSHBUILTIN */
 #ifdef IKSD
 	      || inserver		/* We are IKSD */
 #endif /* IKSD */
@@ -5080,7 +5159,7 @@ spar(s) CHAR *s; {			/* Set parameters */
 	debug(F101,"spar clearrq","",clearrq);
 	if (clearrq == SET_ON ||
              (clearrq == SET_AUTO &&
-               ((network && nettype == 1
+               ((network && nettype == NET_TCPB
 #ifdef RLOGCODE
                 && ttnproto != NP_RLOGIN/* Rlogin is not clear */
                 && !(ttnproto >= NP_K4LOGIN && ttnproto <= NP_EK5LOGIN)
@@ -5089,6 +5168,9 @@ spar(s) CHAR *s; {			/* Set parameters */
                 && !istncomport()
 #endif /* TN_COMPORT */
                   )
+#ifdef SSHBUILTIN
+                 || (network && nettype == NET_SSH)
+#endif /* SSHBUILTIN */
 #ifdef IKSD
                  || inserver
 #endif /* IKSD */

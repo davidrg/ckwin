@@ -6,7 +6,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2002,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -1550,7 +1550,7 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 	      dtbuf[i] = *s++;		/* Copy it into a static string */
 	    if (i < aln) s += (aln - i);
 	    dtbuf[i] = '\0';
-	    if (atdati) {
+	    if (atdati && !xflg) {	/* Real file and dates enabled */
 		yy->date.val = dtbuf;	/* Pointer to string */
 		yy->date.len = i;	/* Length of string */
 		if (fncact == XYFX_U) {	/* Receiving in update mode? */

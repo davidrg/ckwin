@@ -6,7 +6,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2002,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -24,7 +24,6 @@
 #include "ckcker.h"
 #include "ckuusr.h"
 #include "ckcxla.h"
-
 
 #ifndef NOHTERMCAP
 #ifdef NOTERMCAP
@@ -162,6 +161,7 @@ extern ascreen commandscreen;
 #endif /* NT */
 #ifdef OS2
 #include "ckowin.h"
+#include "ckosyn.h"
 #endif /* OS2 */
 
 #ifdef CK_TAPI
@@ -190,6 +190,16 @@ extern int tapipass;
 #include <signal.h>
 #endif /* WINTCP */
 #endif /* VMS */
+
+#ifdef DCLFDOPEN
+/* fdopen() needs declaring because it's not declared in <stdio.h> */
+_PROTOTYP( FILE * fdopen, (int, char *) );
+#endif /* DCLFDOPEN */
+
+#ifdef DCLPOPEN
+/* popen() needs declaring because it's not declared in <stdio.h> */
+_PROTOTYP( FILE * popen, (char *, char *) );
+#endif /* DCLPOPEN */
 
 int tt_crd = 0;                         /* Carriage return display */
 int interrupted = 0;                    /* Interrupted from keyboard flag */
@@ -460,6 +470,26 @@ extern ckjmpbuf cmjbuf;
 #endif /* NOCCTRAP */
 
 extern int xfiletype, nscanfile;
+
+int
+shoesc(escape) int escape; {
+    extern char * ccntab[];		/* C0 control character name table */
+    extern int tt_escape;
+    if ((escape > 0 && escape < 32) || (escape == 127)) {
+	printf(" Escape character: Ctrl-%c (ASCII %d, %s): %s\r\n",
+	       ctl(escape),
+	       escape,
+	       (escape == 127 ? "DEL" : ccntab[escape]),
+	       tt_escape ? "enabled" : "disabled"
+	       );
+    } else {
+	printf(" Escape character: Code %d",escape);
+	if (escape > 160 && escape < 256)
+	  printf(" (%c)",escape);
+	printf(": %s\r\n", tt_escape ? "enabled" : "disabled");	
+    }
+    return(0);
+}
 
 #ifndef NOXFER
 /*  P R E S E T  --  Reset global protocol variables  */
@@ -2621,7 +2651,7 @@ askmore() {
 #endif /* NOSETBUF */
 #endif /* UNIX */
 #else
-        printf("more? (Y or space-bar for yes, N for no) ");
+        printf("more? ");
         fflush(stdout);
 #endif /* OS2 */
 
@@ -4222,7 +4252,6 @@ doclean(fc) int fc; {                   /* General cleanup */
     }
 #endif /* TLOG */
 
-#ifdef CKLOGDIAL
     debug(F100,"doclean calling dologend","",0);
     dologend();                         /* End current log record if any */
 #ifdef COMMENT
@@ -4232,7 +4261,6 @@ doclean(fc) int fc; {                   /* General cleanup */
         zclose(ZDIFIL);
     }
 #endif /* COMMENT */
-#endif /* CKLOGDIAL */
 
 #ifndef NOICP
 #ifndef NOSPL
@@ -4385,6 +4413,7 @@ doexit(exitstat,code) int exitstat, code; {
     extern int x_logged;
 #ifdef OS2
     extern int display_demo;
+    extern int SysInited;
 #endif /* OS2 */
 #ifdef CK_KERBEROS
 #ifdef KRB4
@@ -4410,6 +4439,11 @@ doexit(exitstat,code) int exitstat, code; {
 #ifndef NOSPL
     extern int cmdstats[];
 #endif /* NOSPL */
+
+#ifdef OS2
+    if ( !SysInited )
+        sysinit();
+#endif /* OS2 */
 
     if (deblog) {
 #ifdef USE_LUCACHE
@@ -4455,6 +4489,7 @@ doexit(exitstat,code) int exitstat, code; {
 
 #ifndef NOLOCAL
 #ifdef OS2
+    if (SysInited)
     {
 #ifdef DCMDBUF
         extern struct cmdptr *cmdstk;
@@ -4664,7 +4699,9 @@ dodebug(f,s1,s2,n) int f; char *s1, *s2; long n;
     char *sp;
     int len1, len2;
     extern int debtim;
-
+#ifdef OS2
+    extern int SysInited;
+#endif /* OS2 */
 
     if (!deblog || !debok)
       return(0);
@@ -4687,7 +4724,12 @@ dodebug(f,s1,s2,n) int f; char *s1, *s2; long n;
   From this point on, all returns from this return must be via goto xdebug,
   which sets deblog back to 1.
 */
-#ifndef OS2
+#ifdef OS2
+    if (SysInited) {
+	if (RequestDebugMutex(30000))
+	    goto xdebug;
+    }
+#else /* OS2 */
     deblog = 0;                         /* Prevent infinite recursion */
 #endif /* OS2 */
 
@@ -4989,7 +5031,10 @@ dodebug(f,s1,s2,n) int f; char *s1, *s2; long n;
         break;
     }
   xdebug:                               /* Common exit point */
-#ifndef OS2
+#ifdef OS2
+    if (SysInited)
+	ReleaseDebugMutex();
+#else /* OS2 */
     deblog = 1;                         /* Restore this */
 #endif /* OS2 */
     return(0);
@@ -5004,6 +5049,9 @@ dohexdump(msg,st,cnt) CHAR *msg; CHAR *st; int cnt;
 /* dohexdump */ {
     int i = 0, j = 0, k = 0;
     char tmp[8];
+#ifdef OS2
+    extern int SysInited;
+#endif /* OS2 */
 
     if (!deblog) return(0);		/* If no debug log, don't. */
     if (!dbptr) {                       /* Allocate memory buffer */
@@ -5014,6 +5062,16 @@ dohexdump(msg,st,cnt) CHAR *msg; CHAR *st; int cnt;
             return(0);
         }
     }
+
+#ifdef OS2
+    if (SysInited) {
+	if (RequestDebugMutex(30000))
+	    goto xdebug;
+    }
+#else /* OS2 */
+    deblog = 0;                         /* Prevent infinite recursion */
+#endif /* OS2 */
+
     if (msg != NULL) {
 	ckmakxmsg(dbptr,
 		  DBUFL,
@@ -5027,7 +5085,7 @@ dohexdump(msg,st,cnt) CHAR *msg; CHAR *st; int cnt;
         if (zsout(ZDFILE,dbptr) < 0) {
             deblog = 0;
             zclose(ZDFILE);
-            return(0);
+	    goto xdebug;
         }
     } else {
 	ckmakmsg(dbptr,
@@ -5041,7 +5099,7 @@ dohexdump(msg,st,cnt) CHAR *msg; CHAR *st; int cnt;
         if (zsout(ZDFILE,dbptr) < 0) {
             deblog = 0;
             zclose(ZDFILE);
-            return(0);
+	    goto xdebug;
         }
     }
     for (i = 0; i < cnt; i++) {
@@ -5074,9 +5132,18 @@ dohexdump(msg,st,cnt) CHAR *msg; CHAR *st; int cnt;
         if (zsout(ZDFILE,dbptr) < 0) {
             deblog = 0;
             zclose(ZDFILE);
-            return(0);
+	    goto xdebug;
         }
     } /* end for */
+
+
+  xdebug:
+#ifdef OS2
+    if (SysInited)
+      ReleaseDebugMutex();
+#else /* OS2 */
+    deblog = 1;
+#endif /* OS2 */
     return(0);
 }
 #endif /* DEBUG */
@@ -5308,6 +5375,9 @@ extern int isvt52;                      /* From CKVTIO.C */
 #define M_TERMINFO
 #endif /* M_TERMINFO */
 #endif /* M_XENIX */
+#ifdef RTAIX
+#undef NLS				/* Avoid 'redeclaration of free'. */
+#endif /* RTAIX */
 #include <curses.h>
 #ifdef CKXPRINTF
 #define printf ckxprintf
@@ -6619,7 +6689,7 @@ char *s;        /* a string */
         s = getenv("TERM");
         if (ck_fd < 0) {
             ck_fd = dup(fileno(stdout));
-            ck_stdout = (ck_fd >= 0) ? fdopen(ck_fd, "w") : NULL;
+            ck_stdout = (ck_fd >= 0) ? (FILE *)fdopen(ck_fd, "w") : NULL;
         }
         debug(F100,"screenc newterm...","",0);
 
@@ -6731,7 +6801,11 @@ char *s;        /* a string */
                  /* systems the call to getlocalipaddr() results in a  */
                  /* DNS Lookup which takes several minutes to time out */
                  && net &&
-                 (xnet == NET_TCPA || xnet == NET_TCPB)
+                 (xnet == NET_TCPA || xnet == NET_TCPB
+#ifdef SSHBUILTIN
+                  || xnet == NET_SSH
+#endif /* SSHBUILTIN */
+                  )
 #endif /* OS2 */
                  )
               getlocalipaddr();
@@ -6794,6 +6868,9 @@ char *s;        /* a string */
 	    } else
 #endif /* NEWFTP */
 	      if (0
+#ifdef SSHBUILTIN
+                || IS_SSH()
+#endif /* SSHBUILTIN */
 #ifdef CK_ENCRYPTION
                 || ck_tn_encrypting() && ck_tn_decrypting()
 #endif /* CK_ENCRYPTION */

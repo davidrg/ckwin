@@ -5,7 +5,7 @@
      [1]The Kermit Project
      [2]Columbia University
      
-   As of: C-Kermit 8.0.200, 12 Dec 2001
+   As of: C-Kermit 8.0.201, 8 Feb 2002
    This page last updated: Wed Dec 12 09:48:04 2001 (New York USA Time)
    
      IF YOU ARE READING A PLAIN-TEXT version of this document, note that
@@ -285,7 +285,7 @@ foo(x,y) int x, y; {
        etc). Some compilers generate bad code for these, or crash, etc
        (some version of DEC C as I recall).
      * Some compilers don't allow structure members to have the same
-       names as other identifiers. Try give structure members unique
+       names as other identifiers. Try to give structure members unique
        names.
      * Don't assume anything about order of evaluation in boolean
        expressions, or that they will stop early if a required condition
@@ -324,13 +324,14 @@ foo(x,y) int x, y; {
        and "1.0" is the first edition.
      * Don't use or depend on anything_t (size_t, pid_t, etc), except
        time_t, without #ifdef protection (time_t is the only one I've
-       found that accepted everywhere). This is a tough one because the
-       same function might require (say) a size_t arg on one platform,
-       whereas size_t is unheard of on another; or worse, it might
-       require a totally different data type, like int or long or some
-       other typedef'd thing. It has often proved necessary to define a
-       symbol to stand for the type of a particular argument to a
-       particular library or system function to get around this problem.
+       found that is accepted everywhere). This is a tough one because
+       the same function might require (say) a size_t arg on one
+       platform, whereas size_t is unheard of on another; or worse, it
+       might require a totally different data type, like int or long or
+       some other typedef'd thing. It has often proved necessary to
+       define a symbol to stand for the type of a particular argument to
+       a particular library or system function to get around this
+       problem.
      * Don't use or depend on internationalization ("i18n") features,
        wchar_t, locales, etc, in portable code; they are not portable.
        Anyway, locales are not the right model for Kermit's

@@ -1,10 +1,10 @@
 #ifdef aegis
-char *ckxv = "Aegis Communications support, 8.0.278, 8 Dec 2001";
+char *ckxv = "Aegis Communications support, 8.0.280, 9 Jan 2002";
 #else
 #ifdef Plan9
-char *ckxv = "Plan 9 Communications support, 8.0.278, 8 Dec 2001";
+char *ckxv = "Plan 9 Communications support, 8.0.280, 9 Jan 2002";
 #else
-char *ckxv = "UNIX Communications support, 8.0.278, 8 Dec 2001";
+char *ckxv = "UNIX Communications support, 8.0.280, 9 Jan 2002";
 #endif /* Plan9 */
 #endif /* aegis */
 
@@ -16,7 +16,7 @@ char *ckxv = "UNIX Communications support, 8.0.278, 8 Dec 2001";
   Author: Frank da Cruz (fdc@columbia.edu),
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2002,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -2033,8 +2033,11 @@ sysinit() {
 
 #ifdef CK_ENVIRONMENT
     {
+#ifdef TNCODE
 	extern char tn_env_acct[], tn_env_disp[], tn_env_job[],
-	tn_env_prnt[], tn_env_sys[], uidbuf[];
+	tn_env_prnt[], tn_env_sys[];
+#endif /* TNCODE */
+	extern char uidbuf[];
         extern char * whoami();
 	char *p;
 #ifdef CKSENDUID
@@ -2062,6 +2065,7 @@ sysinit() {
 	debug(F110,"sysinit final uidbuf",uidbuf,0);
 #endif /* CKSENDUID */
 
+#ifdef TNCODE
 	if ((p = getenv("JOB"))) ckstrncpy(tn_env_job,p,63);
 	if ((p = getenv("ACCT"))) ckstrncpy(tn_env_acct,p,63);
 	if ((p = getenv("PRINTER"))) ckstrncpy(tn_env_prnt,p,63);
@@ -2075,6 +2079,7 @@ sysinit() {
 	ckstrncpy(tn_env_sys,"UNIX",64);
 #endif /* Plan9 */
 #endif /* aegis */
+#endif /* TNCODE */
     }
 #endif /* CK_ENVIRONMENT */
 #ifdef CK_SNDLOC
@@ -4275,7 +4280,7 @@ ttres() {                               /* Restore the tty to normal. */
 	    extern int tcp_nodelay;	/* Just put this back if necessary */
 	    if (ttnet == NET_TCPB) {
 		if (nodelay_sav > -1) {
-		    no_delay(nodelay_sav);
+		    no_delay(ttyfd,nodelay_sav);
 		    nodelay_sav = -1;
 		}
 	    }
@@ -6059,7 +6064,7 @@ ttpkt(speed,xflow,parity) long speed; int xflow, parity;
         if (ttnet == NET_TCPB) {	/* But turn off Nagle */
             extern int tcp_nodelay;
             nodelay_sav = tcp_nodelay;
-            no_delay(1);
+            no_delay(ttyfd,1);
         }
 #endif /* TCP_NODELAY */
 #ifdef TN_COMPORT
@@ -6667,7 +6672,7 @@ ttvt(speed,flow) long speed; int flow;
 	    extern int tcp_nodelay;
 	    if (ttnet == NET_TCPB) {
 		if (nodelay_sav > -1) {
-		    no_delay(nodelay_sav);
+		    no_delay(ttyfd,nodelay_sav);
 		    nodelay_sav = -1;
 		}
 	    }
@@ -8569,7 +8574,7 @@ static int
 tt_tnopt(n) int n; {			/* Handle Telnet options */
     /* In case caller did not already check these conditions...  */
     if (n == IAC &&
-	((xlocal && netconn && (ttnproto == NP_TELNET)) ||
+	((xlocal && netconn && IS_TELNET()) ||
 	 (!xlocal && sstelnet))) {
 	extern int duplex;
 	extern int server;
@@ -8649,7 +8654,7 @@ ttflux() {				/* But first... */
 */
 #ifdef TCPSOCKET
     int dotnopts, x;
-    dotnopts = (((xlocal && netconn && (ttnproto == NP_TELNET)) ||
+    dotnopts = (((xlocal && netconn && IS_TELNET()) ||
 		 (!xlocal && sstelnet)));
 #endif /* TCPSOCKET */
     debug(F101,"ttflux my_count","",my_count);
@@ -8683,7 +8688,7 @@ ttflui() {
     int n, fd;
 #ifdef TCPSOCKET
     int dotnopts;
-    dotnopts = (((xlocal && netconn && (ttnproto == NP_TELNET)) ||
+    dotnopts = (((xlocal && netconn && IS_TELNET()) ||
 		 (!xlocal && sstelnet)));
 #endif /* TCPSOCKET */
 
@@ -10514,7 +10519,7 @@ ttinl(dest,max,timo,eol) int max,timo; CHAR *dest, eol;
 
 #ifdef TCPSOCKET
 	    if (n == IAC &&		/* Handle Telnet options */
-		((xlocal && netconn && (ttnproto == NP_TELNET)) ||
+		((xlocal && netconn && IS_TELNET()) ||
 		(!xlocal && sstelnet))) {
 		n = tt_tnopt(n);
 		if (n < 0)
@@ -10742,7 +10747,7 @@ ttinc(timo) int timo; {
 
     if (ttyfd < 0) return(-2);          /* Not open. */
 
-    is_tn = (xlocal && netconn && ttnproto == NP_TELNET) ||
+    is_tn = (xlocal && netconn && IS_TELNET()) ||
 	    (!xlocal && sstelnet);
 
 #ifdef TTLEBUF
@@ -12236,6 +12241,8 @@ conol(s) char *s; {
     int len;
     if (!s) s = "";			/* Always do this! */
     len = strlen(s);
+    if (len == 0)
+      return(0);
 
 #ifdef IKSD
     if (inserver && !local)
@@ -12309,12 +12316,12 @@ conoll(s) char *s; {
 
 #ifdef IKSD
     if (inserver && !local) {
-	ttol((CHAR *)s,(int)strlen(s));
+	if (*s) ttol((CHAR *)s,(int)strlen(s));
 	return(ttol(buf,2));
     }
 #endif /* IKSD */
 
-    conol(s);
+    if (*s) conol(s);
 #ifdef IKSD
 #ifdef CK_ENCRYPTION
     if (inserver && TELOPT_ME(TELOPT_ENCRYPTION))

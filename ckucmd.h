@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>
   Columbia University Kermit Project, New York City.
 
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2002,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -48,6 +48,12 @@
 #ifdef CK_RECALL
 #undef CK_RECALL
 #endif /* CK_RECALL */
+#endif /* NORECALL */
+
+#ifdef NORECALL
+#ifndef NOARROWKEYS
+#define NOARROWKEYS
+#endif /* NOARROWKEYS */
 #endif /* NORECALL */
 
 /* Special getchars */
@@ -271,6 +277,10 @@ _PROTOTYP( int cmdsquo, (int) );
 _PROTOTYP( int cmdgquo, (void) );
 _PROTOTYP( char * ckcvtdate, (char *, int) );
 _PROTOTYP( int cmdgetc, (int));
+#ifndef NOARROWKEYS
+_PROTOTYP( int cmdconchk, (void) );
+#endif /* NOARROWKEYS */
+
 #ifdef CK_RECALL
 _PROTOTYP( char * cmgetcmd, (char *) );
 _PROTOTYP( VOID addcmd, (char *) );

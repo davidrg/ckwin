@@ -1,6 +1,6 @@
 THE C-KERMIT 7.0 AND 8.0 LICENSE
 
-  Last update: Sun Nov 18 17:41:07 2001
+  Last update: Thu Feb  8 17:41:07 2002
 
 This is the new C-Kermit 7.0 and 8.0 license.  The intention is to allow
 C-Kermit to be distributed with "free" operating systems such as GNU/Linux,
@@ -41,7 +41,7 @@ update the most recent copyright date.
 
 (Begin)
 
-Copyright (C) 1985, 2001,
+Copyright (C) 1985, 2002,
   The Trustees of Columbia University in the City of New York.
   All rights reserved.
 

@@ -1,13 +1,13 @@
 #include "ckcsym.h"
 
-char *connv = "CONNECT Command for UNIX:fork(), 8.0.109, 10 Nov 2001";
+char *connv = "CONNECT Command for UNIX:fork(), 8.0.111, 31 Dec 2001";
 
 /*  C K U C O N  --  Terminal connection to remote system, for UNIX  */
 /*
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2002,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -783,7 +783,7 @@ ckcgetc(dummy) int dummy; {
 
 #ifdef CK_ENCRYPTION
     /* No buffering for possibly encrypted connections */
-    if (network && ttnproto == NP_TELNET && TELOPT_ME(TELOPT_AUTHENTICATION))
+    if (network && IS_TELNET() && TELOPT_ME(TELOPT_AUTHENTICATION))
       return(ttinc(0));
 #endif /* CK_ENCRYPTION */
 #ifdef CK_SSL
@@ -989,9 +989,7 @@ concld (
 #endif /* IBMX25 */
 		    if (!quiet)
 		      printf("\r\nCommunications disconnect ");
-#ifdef CKLOGDIAL
 		    dologend();
-#endif /* CKLOGDIAL */
 		    pipemsg(CEV_HUP);
 		    ck_sndmsg();		/* Wait to be killed */
 		    /* NOTREACHED */
@@ -1114,12 +1112,12 @@ concld (
 #ifdef TNCODE
 	    /* Handle TELNET negotiations... */
 
-	    if ((c == NUL) && network && (ttnproto == NP_TELNET)) {
+	    if ((c == NUL) && network && IS_TELNET()) {
 		if (prev == CR)		/* Discard <NUL> of <CR><NUL> */
 		  if (!TELOPT_U(TELOPT_BINARY))
 		    continue;
 	    }
-	    if ((c == IAC) && network && (ttnproto == NP_TELNET)) {
+	    if ((c == IAC) && network && IS_TELNET()) {
 		int me_bin = TELOPT_ME(TELOPT_BINARY);
 		int u_bin = TELOPT_U(TELOPT_BINARY);
 		debug(F100,"CONNECT got IAC","",0);
@@ -1157,9 +1155,7 @@ concld (
 #ifdef NOSETBUF
 		    fflush(stdout);
 #endif /* NOSETBUF */
-#ifdef CKLOGDIAL
 		    dologend();
-#endif /* CKLOGDIAL */
 		    debug(F111,"CONNECT concld i/o error 2",ck_errstr(),errno);
 		    pipemsg(CEV_HUP);
 		    ck_sndmsg();	/* Wait to be killed */
@@ -1170,9 +1166,7 @@ concld (
 #ifdef NOSETBUF
 		    fflush(stdout);
 #endif /* NOSETBUF */
-#ifdef CKLOGDIAL
 		    dologend();
-#endif /* CKLOGDIAL */
 		    debug(F111,"CONNECT concld i/o error 2",ck_errstr(),errno);
 		    pipemsg(CEV_HUP);
 		    ck_sndmsg();	/* Wait to be killed */
@@ -1183,9 +1177,7 @@ concld (
 #ifdef NOSETBUF
 		    fflush(stdout);
 #endif /* NOSETBUF */
-#ifdef CKLOGDIAL
 		    dologend();
-#endif /* CKLOGDIAL */
 		    debug(F111,"CONNECT concld i/o error 2",ck_errstr(),errno);
 		    pipemsg(CEV_HUP);
 		    ck_sndmsg();	/* Wait to be killed */
@@ -1706,9 +1698,8 @@ conect() {
 	}
 #endif /* NETCONN */
 	if (tt_escape) {
-	    printf(".\r\nThe escape character is Ctrl-%c (ASCII %d, %s)\r\n",
-		   ctl(escape), escape,
-		   (escape == 127 ? "DEL" : ccntab[escape]));
+	    printf("\r\n");
+	    shoesc(escape);
 	    printf("Type the escape character followed by C to get back,\r\n");
 	    printf("or followed by ? to see other options.\r\n");
 	} else {
@@ -1746,9 +1737,7 @@ conect() {
 	    debug(F101,"CONNECT ttvt","",n);
 	    tthang();			/* Hang up and close the device. */
 	    ttclos(0);
-#ifdef CKLOGDIAL
 	    dologend();
-#endif /* CKLOGDIAL */
 	    if (ttopen(ttname,		/* Open it again... */
 		       &local,
 		       network ? -nettype : mdmtyp,
@@ -2092,7 +2081,7 @@ conect() {
 #ifndef NOSETKEY
 		    !kmptr &&
 #endif /* NOSETKEY */
-		    (tt_escape && (c & 0x7f) == escape)) { /* Escape char? */
+		    (tt_escape && (c & 0xff) == escape)) { /* Escape char? */
 		    debug(F000,"CONNECT got escape","",c);
 		    c = CONGKS() & 0177; /* Got esc, get its arg */
 		    /* No key mapping here */
@@ -2230,7 +2219,7 @@ conect() {
 				    stuff = LF;	/* Stuff LF */
 #ifdef TNCODE
 				} else if (network && /* TELNET NEWLINE */
-					   (ttnproto == NP_TELNET)) {
+					   IS_TELNET()) {
 				    switch (!TELOPT_ME(TELOPT_BINARY) ?
 					    tn_nlm :
 					    tn_b_nlm
@@ -2255,7 +2244,7 @@ conect() {
 /* If user types the 0xff character (TELNET IAC), it must be doubled. */
 			    else	/* Not CR */
 			      if ((dopar((CHAR) c) == IAC) && /* IAC (0xff) */
-				  network && (ttnproto == NP_TELNET)) {
+				  network && IS_TELNET()) {
 				  /* Send one copy now */
 				  /* and the other one just below. */
 				  ttoc((char)IAC);
@@ -2331,9 +2320,7 @@ conect() {
 #ifdef NETCONN
 	    if (network) {		/* and/or close network connection */
 		ttclos(0);
-#ifdef CKLOGDIAL
 		dologend();
-#endif /* CKLOGDIAL */
 #ifdef SUNX25
 		if (nettype == NET_SX25) /* If X.25, restore the PAD params */
 		  initpad();
@@ -2511,7 +2498,7 @@ doesc(c) char c;
 #ifndef IP
 #define IP 244
 #endif /* IP */
-	    if (network && ttnproto == NP_TELNET) { /* TELNET */
+	    if (network && IS_TELNET()) { /* TELNET */
 		temp[0] = (CHAR) IAC;	/* I Am a Command */
 		temp[1] = (CHAR) IP;	/* Interrupt Process */
 		temp[2] = NUL;
@@ -2533,7 +2520,7 @@ doesc(c) char c;
 #ifndef AYT
 #define AYT 246
 #endif /* AYT */
-	    if (network && ttnproto == NP_TELNET) {
+	    if (network && IS_TELNET()) {
 		temp[0] = (CHAR) IAC;	/* I Am a Command */
 		temp[1] = (CHAR) AYT;	/* Are You There? */
 		temp[2] = NUL;

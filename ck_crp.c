@@ -1,14 +1,11 @@
-char *ckcrpv = "Encryption Engine, 8.0.109, 13 Sept 2000";
+char *ckcrpv = "Encryption Engine, 8.0.110, 4 Jan 2002";
 /*
   C K _ C R P . C  -  Cryptography for C-Kermit"
 
-  Copyright (C) 1998, 2001, Trustees of Columbia University in the City of New
-  York.  The C-Kermit software may not be, in whole or in part, licensed or
-  sold for profit as a software product itself, nor may it be included in or
-  distributed with commercial products or otherwise distributed by commercial
-  concerns to their clients or customers without written permission of the
-  Office of Kermit Development and Distribution, Columbia University.  This
-  copyright notice must not be removed, altered, or obscured.
+  Copyright (C) 1998, 2002,
+    Trustees of Columbia University in the City of New York.
+    All rights reserved.  See the C-Kermit COPYING.TXT file or the
+    copyright text in the ckcmai.c module for disclaimer and permissions.
 
   Author:
   Jeffrey E Altman (jaltman@columbia.edu).
@@ -71,6 +68,7 @@ char *ckcrpv = "Encryption Engine, 8.0.109, 13 Sept 2000";
 #include <string.h>
 #ifdef OS2
 #include <stdarg.h>
+#include "ckosyn.h"
 #else /* OS2 */
 static char * tmpstring = NULL;
 #endif /* OS2 */
@@ -120,6 +118,24 @@ static int (*p_dohexdump)(char *,char *,int)=NULL;
 static void (*p_tn_debug)(char *)=NULL;
 static int (*p_vscrnprintf)(char *, ...)=NULL;
 static void * p_k5_context=NULL;
+static unsigned long (*p_reqtelmutex)(unsigned long)=NULL;
+static unsigned long (*p_reltelmutex)(void)=NULL;
+
+unsigned long
+RequestTelnetMutex(unsigned long x)
+{
+    if ( p_reqtelmutex )
+        return p_reqtelmutex(x);
+    return 0;
+}
+
+unsigned long
+ReleaseTelnetMutex(void)
+{
+    if ( p_reltelmutex )
+        return p_reltelmutex();
+    return 0;
+}
 
 int
 ttol(char * s, int n)
@@ -998,7 +1014,13 @@ encrypt_send_support()
         debug(F100,tn_msg,"",0);
         if (tn_deb || debses) tn_debug(tn_msg);
     }
+#ifdef OS2
+    RequestTelnetMutex( SEM_INDEFINITE_WAIT );
+#endif
     ttol(str_send, str_suplen);
+#ifdef OS2
+    ReleaseTelnetMutex();
+#endif
 
     str_suplen = 0;
 }
@@ -1054,7 +1076,7 @@ encrypt_support(_typelist, _cnt) unsigned char * _typelist; int _cnt;
 #ifdef DEBUG
         if (encrypt_debug_mode) {
             sprintf(dbgbuf, ">>>(*ep->start)() %s returned %d (%s)\n",
-                     ENCTYPE_NAME(use_type), type, 
+                     ENCTYPE_NAME(use_type), type,
                      ENCRYPT_NAME(type));                       /* safe */
             debug(F110,"encrypt_support",dbgbuf,0);
         }
@@ -1459,7 +1481,13 @@ encrypt_send_keyid(dir, keyid, keylen, saveit)
         debug(F100,tn_msg,"",0);
         if (tn_deb || debses) tn_debug(tn_msg);
     }
+#ifdef OS2
+    RequestTelnetMutex( SEM_INDEFINITE_WAIT );
+#endif
     ttol(str_keyid, strp - str_keyid);
+#ifdef OS2
+    ReleaseTelnetMutex();
+#endif
     return(0);
 }
 
@@ -1554,7 +1582,13 @@ encrypt_start_output(type) int type;
             debug(F100,tn_msg,"",0);
             if (tn_deb || debses) tn_debug(tn_msg);
         }
+#ifdef OS2
+        RequestTelnetMutex( SEM_INDEFINITE_WAIT );
+#endif
         ttol(str_start, p - str_start);
+#ifdef OS2
+        ReleaseTelnetMutex();
+#endif
 
   /*
    * If we are already encrypting in some mode, then
@@ -1611,7 +1645,13 @@ encrypt_send_end()
         debug(F100,tn_msg,"",0);
         if (tn_deb || debses) tn_debug(tn_msg);
     }
+#ifdef OS2
+    RequestTelnetMutex( SEM_INDEFINITE_WAIT );
+#endif
     ttol(str_end, sizeof(str_end));
+#ifdef OS2
+    ReleaseTelnetMutex();
+#endif
 
     encrypt_output = 0;
     EncryptKSGlobalHack->encrypt = NULL;
@@ -1665,7 +1705,13 @@ encrypt_send_request_start()
         debug(F100,tn_msg,"",0);
         if (tn_deb || debses) tn_debug(tn_msg);
     }
+#ifdef OS2
+    RequestTelnetMutex( SEM_INDEFINITE_WAIT );
+#endif
     ttol(str_start, p - str_start);
+#ifdef OS2
+    ReleaseTelnetMutex();
+#endif
 
     if (encrypt_debug_mode) {
         sprintf(dbgbuf, ">>>Request input to be encrypted\n");  /* safe */
@@ -1699,7 +1745,13 @@ encrypt_send_request_end()
         debug(F100,tn_msg,"",0);
         if (tn_deb || debses) tn_debug(tn_msg);
     }
+#ifdef OS2
+    RequestTelnetMutex( SEM_INDEFINITE_WAIT );
+#endif
     ttol(str_end, sizeof(str_end));
+#ifdef OS2
+    ReleaseTelnetMutex();
+#endif
 
     if (encrypt_debug_mode) {
         sprintf(dbgbuf, ">>>Request input to be clear text\n"); /* safe */
@@ -2065,7 +2117,13 @@ fb64_start(fbp, dir, server)
             debug(F100,tn_msg,"",0);
             if (tn_deb || debses) tn_debug(tn_msg);
         }
+#ifdef OS2
+        RequestTelnetMutex( SEM_INDEFINITE_WAIT );
+#endif
         ttol(fbp->fb_feed, p - fbp->fb_feed);
+#ifdef OS2
+        ReleaseTelnetMutex();
+#endif
         break;
     default:
         return(xFAILED);
@@ -2147,7 +2205,13 @@ fb64_is(data, cnt, fbp)
             debug(F100,tn_msg,"",0);
             if (tn_deb || debses) tn_debug(tn_msg);
         }
+#ifdef OS2
+        RequestTelnetMutex( SEM_INDEFINITE_WAIT );
+#endif
         ttol(fbp->fb_feed, p - fbp->fb_feed);
+#ifdef OS2
+        ReleaseTelnetMutex();
+#endif
         state = IN_PROGRESS;
         break;
 
@@ -2183,7 +2247,13 @@ fb64_is(data, cnt, fbp)
             debug(F100,tn_msg,"",0);
             if (tn_deb || debses) tn_debug(tn_msg);
         }
+#ifdef OS2
+        RequestTelnetMutex( SEM_INDEFINITE_WAIT );
+#endif
         ttol(fbp->fb_feed, p - fbp->fb_feed);
+#ifdef OS2
+        ReleaseTelnetMutex();
+#endif
         break;
     }
     return(fbp->state[DIR_DECRYPT-1] = state);
@@ -2873,7 +2943,13 @@ des3_fb64_start(fbp, dir, server)
             debug(F100,tn_msg,"",0);
             if (tn_deb || debses) tn_debug(tn_msg);
         }
+#ifdef OS2
+        RequestTelnetMutex( SEM_INDEFINITE_WAIT );
+#endif
         ttol(fbp->fb_feed, p - fbp->fb_feed);
+#ifdef OS2
+        ReleaseTelnetMutex();
+#endif
         break;
     default:
         return(xFAILED);
@@ -2955,7 +3031,13 @@ des3_fb64_is(data, cnt, fbp)
             debug(F100,tn_msg,"",0);
             if (tn_deb || debses) tn_debug(tn_msg);
         }
+#ifdef OS2
+        RequestTelnetMutex( SEM_INDEFINITE_WAIT );
+#endif
         ttol(fbp->fb_feed, p - fbp->fb_feed);
+#ifdef OS2
+        ReleaseTelnetMutex();
+#endif
         state = IN_PROGRESS;
         break;
 
@@ -2991,7 +3073,13 @@ des3_fb64_is(data, cnt, fbp)
             debug(F100,tn_msg,"",0);
             if (tn_deb || debses) tn_debug(tn_msg);
         }
+#ifdef OS2
+        RequestTelnetMutex( SEM_INDEFINITE_WAIT );
+#endif
         ttol(fbp->fb_feed, p - fbp->fb_feed);
+#ifdef OS2
+        ReleaseTelnetMutex();
+#endif
         break;
     }
     return(fbp->state[DIR_DECRYPT-1] = state);
@@ -5381,10 +5469,19 @@ crypt_dll_init( struct _crypt_dll_init * init )
         libdes_dll_init(init);
         if (init->version == 3)
 	  return(1);
+    }
+    if ( init->version >= 4 ) {
         init->p_install_funcs("crypt_dll_version",ck_crypt_dll_version);
         if (init->version == 4)
 	  return(1);
-        init->version = 4;
+    }
+    
+    if ( init->version >= 5 ) {
+        p_reqtelmutex = init->p_reqtelmutex;
+        p_reltelmutex = init->p_reltelmutex;
+        if (init->version == 5)
+	  return(1);
+        init->version = 5;
         return(1);
     }
     return(0);

@@ -82,6 +82,47 @@
 #define NP_LAT         20		/* DEC LAT */
 /* others here... */
 
+#ifdef CK_SSL
+#define IS_TELNET()      (nettype == NET_TCPB && (ttnproto == NP_TELNET \
+                         || ttnproto == NP_SSL_TELNET \
+                         || ttnproto == NP_TLS_TELNET \
+                         || ttnproto == NP_KERMIT))
+#else /* CK_SSL */
+#define IS_TELNET()      (nettype == NET_TCPB && (ttnproto == NP_TELNET \
+                         || ttnproto == NP_KERMIT))
+#endif /* CK_SSL */
+
+#ifdef CK_KERBEROS
+#ifdef KRB5
+#ifdef KRB4
+#define IS_RLOGIN()      (nettype == NET_TCPB && (ttnproto == NP_RLOGIN \
+                         || ttnproto == NP_K5LOGIN \
+                         || ttnproto == NP_EK5LOGIN \
+                         || ttnproto == NP_K4LOGIN \
+                         || ttnproto == NP_EK4LOGIN \
+                         ))
+#else /* KRB4 */
+#define IS_RLOGIN()      (nettype == NET_TCPB && (ttnproto == NP_RLOGIN \
+                         || ttnproto == NP_K5LOGIN \
+                         || ttnproto == NP_EK5LOGIN \
+                         ))
+#endif /* KRB4 */
+#else /* KRB5 */
+#ifdef KRB4
+#define IS_RLOGIN()      (nettype == NET_TCPB && (ttnproto == NP_RLOGIN \
+                         || ttnproto == NP_K4LOGIN \
+                         || ttnproto == NP_EK4LOGIN \
+                         ))
+#else /* KRB4 */
+KERBEROS defined without either KRB4 or KRB5
+#endif /* KRB4 */
+#endif /* KRB5 */
+#else /* CK_KERBEROS */
+#define IS_RLOGIN()      (nettype == NET_TCPB && (ttnproto == NP_RLOGIN))
+#endif /* CK_KERBEROS */
+
+#define IS_SSH()         (nettype == NET_SSH)
+
 /* RLOGIN Modes */
 #define    RL_RAW     0			/*  Do Not Process XON/XOFF */
 #define    RL_COOKED  1			/*  Do Process XON/XOFF */
@@ -1200,22 +1241,22 @@ _PROTOTYP( char * ckgetpeer, (VOID));
 #ifdef TCPSOCKET
 #ifdef SOL_SOCKET
 #ifdef TCP_NODELAY
-_PROTOTYP( int no_delay, (int) );
+_PROTOTYP( int no_delay, (int, int) );
 #endif /* TCP_NODELAY */
 #ifdef SO_KEEPALIVE
-_PROTOTYP( int keepalive, (int) ) ;
+_PROTOTYP( int keepalive, (int, int) ) ;
 #endif /* SO_KEEPALIVE */
 #ifdef SO_LINGER
-_PROTOTYP( int ck_linger, (int, int) ) ;
+_PROTOTYP( int ck_linger, (int, int, int) ) ;
 #endif /* SO_LINGER */
 #ifdef SO_SNDBUF
-_PROTOTYP( int sendbuf,(int) ) ;
+_PROTOTYP( int sendbuf,(int, int) ) ;
 #endif /* SO_SNDBUF */
 #ifdef SO_RCVBUF
-_PROTOTYP( int recvbuf, (int) ) ;
+_PROTOTYP( int recvbuf, (int, int) ) ;
 #endif /* SO_RCVBUF */
 #ifdef SO_DONTROUTE
-_PROTOTYP(int dontroute, (int));
+_PROTOTYP(int dontroute, (int, int));
 #endif /* SO_DONTROUTE */
 #endif /* SOL_SOCKET */
 _PROTOTYP( int getlocalipaddr, (VOID));

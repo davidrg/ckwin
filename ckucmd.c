@@ -1,9 +1,6 @@
-#define TOKPRECHECK
-
 #include "ckcsym.h"
-#define DOCHKVAR
 
-char *cmdv = "Command package 8.0.150, 8 Dec 2001";
+char *cmdv = "Command package 8.0.151, 8 Feb 2002";
 
 /*  C K U C M D  --  Interactive command package for Unix  */
 
@@ -11,15 +8,21 @@ char *cmdv = "Command package 8.0.150, 8 Dec 2001";
   Author: Frank da Cruz (fdc@columbia.edu),
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2002,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 */
 
-#ifdef OS2                    /* Command-terminal-to-C-Kermit character mask */
-int cmdmsk = 255;
-#else
+#define TOKPRECHECK
+
+#define DOCHKVAR
+
+/* Command-terminal-to-C-Kermit character mask */
+
+#ifdef OS2				/* K95 */
+int cmdmsk = 255;			/* (always was 255) */
+#else					/* All others... */
 int cmdmsk = 255;			/* 31 Dec 2000 (was 127) */
 #endif /* OS2 */
 
@@ -36,8 +39,16 @@ int cmdmsk = 255;			/* 31 Dec 2000 (was 127) */
 #include "ckcdeb.h"                     /* Formats for debug(), etc. */
 #include "ckcker.h"			/* Needed for BIGBUFOK definition */
 #include "ckcnet.h"			/* Needed for server-side Telnet */
-#include "ckucmd.h"			/* Needed for xx_strp prototype */
+#include "ckucmd.h"			/* Needed for everything */
 #include "ckuusr.h"                     /* Needed for prompt length */
+
+#ifndef NOARROWKEYS
+#ifndef NOESCSEQ
+#ifdef VMSORUNIX
+#define USE_ARROWKEYS			/* Use arrow keys for command recall */
+#endif /* VMSORUNIX */
+#endif /* NOESCSEQ */
+#endif /* NOARROWKEYS */
 
 #undef CKUCMD_C
 
@@ -100,21 +111,21 @@ static int dirnamflg = 0;
 /*
 Modeled after the DECSYSTEM-20 command parser (the COMND JSYS), RIP. Features:
 
-. parses and verifies keywords, filenames, text strings, numbers, other data
-. displays appropriate menu or help message when user types "?"
-. does keyword and filename completion when user types ESC or TAB
-. does partial filename completion
-. accepts any unique abbreviation for a keyword
-. allows keywords to have attributes, like "invisible" and "abbreviation"
-. can supply defaults for fields omitted by user
-. provides command retry and recall
-. provides command line editing (character, word, and line deletion)
-. accepts input from keyboard, command files, macros, or redirected stdin
-. allows for full or half duplex operation, character or line input
-. allows \-escapes for hard-to-type characters
-. allows specification of a user exit to expand variables, etc.
-. settable prompt, protected from deletion, dynamically re-evaluated each time.
-. allows chained parse functions.
+ . parses and verifies keywords, filenames, text strings, numbers, other data
+ . displays appropriate menu or help message when user types "?"
+ . does keyword and filename completion when user types ESC or TAB
+ . does partial keyword and filename completion
+ . accepts any unique abbreviation for a keyword
+ . allows keywords to have attributes, like "invisible" and "abbreviation"
+ . can supply defaults for fields omitted by user
+ . provides command retry and recall
+ . provides character, word, and line deletion (but only from the end)
+ . accepts input from keyboard, command files, macros, or redirected stdin
+ . allows for full or half duplex operation, character or line input
+ . allows \-escapes for special characters
+ . allows specification of a user exit to expand variables, etc.
+ . settable prompt, protected from deletion, dynamically re-evaluated each time
+ . allows chained parse functions.
 
 Functions:
  cmsetp - Set prompt (cmprom is prompt string)
@@ -143,7 +154,7 @@ Return codes:
   0 or greater: success
 See individual functions for greater detail.
 
-Before using these routines, the caller should #include ckucmd.h, and set the
+Before using these routines, the caller should #include "ckucmd.h" and set the
 program's prompt by calling cmsetp().  If the file parsing functions cmifi,
 cmofi, or cmdir are to be used, this module must be linked with a ck?fio file
 system support module for the appropriate system, e.g. ckufio for Unix.  If
@@ -5809,6 +5820,7 @@ gtword(brk) int brk; {
     char lbrace, rbrace;
     int dq = 0;				/* Doublequote flag */
     int dqn = 0;			/* and count */
+    int isesc = 0;
 
 #ifdef RTU
     extern int rtu_bug;
@@ -6057,6 +6069,8 @@ CMDIRPARSE:
 
 /* Now we have the next character */
 
+	isesc = (c == ESC);		/* A real ESC? */
+
 	if (!firstnb && c > SP) {	/* First nonblank */
 	    firstnb = c;
 	    if (c == '"')		/* Starts with doublequote */
@@ -6247,8 +6261,12 @@ CMDIRPARSE:
 		    current = rlast;
 #endif /* CK_RECALL */
 		    cmflgs = 1;
-		    if (!xcmdsrc || force_add)
-		      addcmd(cmdbuf);
+		    if (!xcmdsrc
+#ifdef CK_RECALL
+			|| force_add
+#endif /* CK_RECALL */
+			)
+  		      addcmd(cmdbuf);
 		    return(cmflgs);
 		}
             }
@@ -6264,6 +6282,42 @@ CMDIRPARSE:
 		|| askflag		/* or user is typing ASK response */
 #endif /* NOSPL */
 		 ) && chsrc != 0 && realtty) { /* from the real keyboard */
+
+#ifdef USE_ARROWKEYS
+/* Use ANSI / VT100 up and down arrow keys for command recall.  */
+
+		if (isesc) {		/* A real ESC was typed */
+		    int x;
+		    msleep(200);	/* Wait 1/5 sec */
+		    x = cmdconchk();	/* Was it followed by anything? */
+		    debug(F101,"Arrowkey ESC cmdconchk","",x);
+
+		    if (x > 1) {	/* If followed by at least 2 chars */
+			int c2;
+			c2 = cmdgetc(0); /* Get the first one */
+			debug(F101,"Arrowkey ESC c2","",c2);
+
+			if (c2 != '[' && c2 != 'O') { /* If not [ or O */
+			    pushc = c2;	/* Push it and take the ESC solo */
+			} else {
+			    c2 = cmdgetc(0); /* Get the second one */
+			    debug(F101,"Arrowkey ESC c3","",c2);
+			    switch (c2) {
+			      case 'A':	/* Up */
+				c = C_UP;
+				break;
+			      case 'B':	/* Down */
+				c = C_DN;
+				break;
+			      case 'C':	/* Right */
+			      case 'D':	/* Left */
+				c = BEL; /* We don't use these yet */
+				break;
+			    }
+			}
+		    }
+		}
+#endif /* USE_ARROWKEYS */
 
 		switch (c) {
 		  case '?':		/* ?-Help */
@@ -6640,6 +6694,8 @@ setatm(cp,fcode) char *cp; int fcode; {
 
   No longer static.  Used by askmore().  Fri Aug 20 15:03:34 1999.
 */
+#define CMD_CONINC			/* How we get keyboard chars */
+
 int
 cmdgetc(timelimit) int timelimit; {	/* Get a character from the tty. */
     int c;
@@ -6831,17 +6887,25 @@ cmdgetc(timelimit) int timelimit; {	/* Get a character from the tty. */
 #ifdef OS2
 	c = coninc(0);
 #else /* OS2 */
+#ifdef CMD_CONINC
+#undef CMD_CONINC
+#endif /* CMD_CONINC */
 	c = getchar();
-	/* debug(F101,"cmdgetc getchar","",c); */
 #endif /* OS2 */
     }
 #else  /* MINIX2 */
 #undef getc
+#ifdef CMD_CONINC
+#undef CMD_CONINC
+#endif /* CMD_CONINC */
     c = getc(stdin);
     /* debug(F101,"cmdgetc getc","",c); */
 #endif /* MINIX2 */
 #ifdef RTU
     if (rtu_bug) {
+#ifdef CMD_CONINC
+#undef CMD_CONINC
+#endif /* CMD_CONINC */
 	c = getchar();			/* RTU doesn't discard the ^Z */
 	rtu_bug = 0;
     }
@@ -6849,6 +6913,111 @@ cmdgetc(timelimit) int timelimit; {	/* Get a character from the tty. */
 #endif /* datageneral */
     return(c);				/* Return what we got */
 }
+
+#ifdef USE_ARROWKEYS
+
+/* Mechanism to use for peeking into stdin buffer */
+
+#ifndef USE_FILE_CNT			/* stdin->__cnt */
+#ifndef USE_FILE__CNT			/* Note: two underscores */
+#ifdef HPUX				/* HPUX 7-11 */
+#ifndef HPUX5
+#ifndef HPUX6
+#define USE_FILE__CNT
+#endif /* HPUX6 */
+#endif /* HPUX5 */
+#else
+#ifdef ANYSCO				/* SCO UNIX, OSR5, Unixware, etc */
+#ifndef OLD_UNIXWARE			/* But not Unixware 1.x or 2.0 */
+#ifndef UNIXWARE2			/* or 2.1.0 */
+#define USE_FILE__CNT
+#endif /* UNIXWARE2 */
+#endif /* OLD_UNIXWARE */
+#endif /* ANYSCO */
+#endif /* HPUX */
+#endif /* USE_FILE__CNT */
+#endif /* USE_FILE_CNT */
+
+#ifndef USE_FILE_R			/* stdin->_r */
+#ifndef USE_FILE_CNT
+#ifndef USE_FILE__CNT
+#ifdef BSD44				/* {Free,Open,Net}BSD, BSDI */
+#define USE_FILE_R
+#endif /* BSD44 */
+#endif /* USE_FILE__CNT */
+#endif /* USE_FILE_CNT */
+#endif /* USE_FILE_R */
+
+#ifndef USE_FILE_R			/* stdin->_cnt */
+#ifndef USE_FILE_CNT
+#ifndef USE_FILE__CNT
+#define USE_FILE_CNT			/* Everybody else (but Linux) */
+#endif /* USE_FILE__CNT */
+#endif /* USE_FILE_CNT */
+#endif /* USE_FILE_R */
+
+
+/*
+  c m d c o n c h k
+
+  How many characters are waiting to be read at the console?  Normally
+  conchk() would tell us, but in Unix and VMS cmdgetc() uses stdio getchar(),
+  thus bypassing coninc()/conchk(), so we have to peek into the stdin buffer,
+  which is totally nonportable.  Which is why this routine is, at least for
+  now, used only for checking for arrow-key sequences from the keyboard after
+  an ESC was read.  Wouldn't it be nice if the stdio package had a function
+  that returned the number of bytes waiting to be read from its buffer?
+  Returns 0 or greater always.
+*/
+int
+cmdconchk() {
+    int x = 0, y;
+    y = pushc ? 1 : 0;			/* Have command character pushed? */
+#ifdef CMD_CONINC			/* See cmdgetc() */
+    x = conchk();			/* Check device-driver buffer */
+    if (x < 0) x = 0;
+#else  /* CMD_CONINC */
+
+/* Here we must look inside the stdin buffer - highly platform dependent */
+
+#ifdef _IO_file_flags			/* Linux */
+    x = (int) ((stdin->_IO_read_end) - (stdin->_IO_read_ptr));
+    debug(F101,"cmdconchk _IO_file_flags","",x);
+#else  /* _IO_file_flags */
+#ifdef USE_FILE_CNT			/* Traditional */
+#ifdef VMS
+    debug(F101,"cmdconchk (*stdin)->_cnt","",(*stdin)->_cnt);
+    x = (*stdin)->_cnt;
+#else
+    debug(F101,"cmdconchk stdin->_cnt","",stdin->_cnt);
+    x = stdin->_cnt;
+#endif /* VMS */
+    if (x == 0) x = conchk();
+    if (x < 0) x = 0;
+#else  /* USE_FILE_CNT */
+#ifdef USE_FILE__CNT			/* HP-UX */
+    debug(F101,"cmdconchk stdin->__cnt","",stdin->__cnt);
+    x = stdin->__cnt;
+    if (x == 0) x = conchk();
+    if (x < 0) x = 0;
+#else  /* USE_FILE_CNT */
+#ifdef USE_FILE_R			/* FreeBSD, OpenBSD, etc */
+    debug(F101,"cmdconchk stdin->_r","",stdin->_r);
+    x = stdin->_r;
+    if (x == 0) x = conchk();
+    if (x < 0) x = 0;
+
+    /* Fill in any others here... */
+
+#endif /* USE_FILE_R */
+#endif /* USE_FILE__CNT */
+#endif /* USE_FILE_CNT */
+#endif /* _IO_file_flags */
+#endif /* CMD_CONINC */
+    return(x + y);
+}
+#endif /* USE_ARROWKEYS */
+
 
 static VOID
 cmdclrscn() {				/* Clear the screen */
