@@ -1,31 +1,34 @@
+#include "ckcsym.h"
+#ifndef NOLOCAL
 #ifndef NODIAL
-char *dialv = "Dial Command, 5A(047) 1 Dec 92";
+char *dialv = "Dial Command, 5A(063) 4 Oct 94";
 
 /*  C K U D I A	 --  Module for automatic modem dialing. */
 
 /*
-  Copyright (C) 1985, 1992, Trustees of Columbia University in the City of New
-  York.  Permission is granted to any individual or institution to use this
-  software as long as it is not sold for profit.  This copyright notice must be
-  retained.  This software may not be included in commercial products without
-  written permission of Columbia University.
+  Copyright (C) 1985, 1994, Trustees of Columbia University in the City of New
+  York.  The C-Kermit software may not be, in whole or in part, licensed or
+  sold for profit as a software product itself, nor may it be included in or
+  distributed with commercial products or otherwise distributed by commercial
+  concerns to their clients or customers without written permission of the
+  Office of Kermit Development and Distribution, Columbia University.  This
+  copyright notice must not be removed, altered, or obscured.
 
   Original (version 1, 1985) author: Herm Fischer, Encino, CA.
   Contributed to Columbia University in 1985 for inclusion in C-Kermit 4.0.
   Author and maintainer since 1985: Frank da Cruz, Columbia University,
   fdc@columbia.edu.
 
-  Contributions by many others throughout the years, including: Fernando
-  Cabral, John Chmielewski, Joe Doupnik, Richard Hill, Larry Jacobs, Eric
-  Jones, Tom Kloos, Bob Larson, Peter Mauzey, Joe Orost, Kevin O'Gorman, Kai
-  Uwe Rommel, Dan Schullman, Warren Tucker, and others too numerous to list
-  here (but see acknowledgements in ckcmai.c).
+  Contributions by many others throughout the years, including: Mark Berryman,
+  Fernando Cabral, John Chmielewski, Joe Doupnik, Richard Hill, Larry Jacobs,
+  Eric Jones, Tom Kloos, Bob Larson, Peter Mauzey, Joe Orost, Kevin O'Gorman,
+  Kai Uwe Rommel, Dan Schullman, Warren Tucker, and others too numerous to
+  list here (but see acknowledgements in ckcmai.c).
 
   This module calls externally defined system-dependent functions for
   communications i/o, as defined in CKCPLM.DOC, the C-Kermit Program Logic
   Manual, and thus should be portable to all systems that implement those
-  functions, and where alarm() and signal() work as they do in UNIX.
-*/
+  functions, and where alarm() and signal() work as they do in UNIX. */
 
 /*
   To add support for another modem, do the following, all in this module:
@@ -75,23 +78,53 @@ char *dialv = "Dial Command, 5A(047) 1 Dec 92";
 SIGTYP (*msignal(int type, SIGTYP (*func)(int)))(int);
 #endif /* MAC */
 
+#ifdef AMIGA
+#define signal asignal
+#define alarm aalarm
+#define SIGALRM (_NUMSIG+1)
+#define SIGTYP void
+SIGTYP (*asignal(int type, SIGTYP (*func)(int)))(int);
+unsigned aalarm(unsigned);
+#endif /* AMIGA */
+
+#ifdef STRATUS
+/* VOS doesn't have alarm(), but it does have some things we can work with. */
+/* However, we have to catch all the signals in one place to do this, so    */
+/* we intercept the signal() routine and call it from our own replacement.  */
+#define signal vsignal
+#define alarm valarm
+SIGTYP (*vsignal(int type, SIGTYP (*func)(int)))(int);
+int valarm(int interval);
+#ifdef putchar
+#undef putchar
+#endif /* putchar */
+#define putchar(x) conoc(x)
+#ifdef getchar
+#undef getchar
+#endif /* getchar */
+#define getchar(x) coninc(0)
+#endif /* STRATUS */
+
 int					/* SET DIAL parameters */
   dialhng = 1,				/* DIAL HANGUP, default is ON */
   dialdpy = 0,				/* DIAL DISPLAY, default is OFF */
   mdmspd  = 1,				/* DIAL SPEED-MATCHING (1 = ON) */
   dialtmo = 0,				/* DIAL TIMEOUT */
-  dialksp = 0,				/* DIAL KERMIT-SPOOF */
-  dialmnp = 0,				/* DIAL MNP-ENABLE */
+  dialksp = 0,				/* DIAL KERMIT-SPOOF, 0 = OFF */
+  dialmnp = 0,				/* DIAL MNP-ENABLE, 0 = OFF */
 #ifdef NOMDMHUP
-  dialmhu = 0;				/* DIAL MODEM-HANGUP */
+  dialmhu = 0;				/* DIAL MODEM-HANGUP, 0 = OFF */
 #else
   dialmhu = 1;				/* DIAL MODEM-HANGUP */
 #endif /* NOMDMHUP */
+
+int dialsta = DIA_UNK;			/* Detailed return code (ckuusr.h) */
 
 char *dialdir = NULL;			/* DIAL DIRECTORY, default none */
 char *dialini = NULL;			/* DIAL INIT-STRING, default none */
 char *dialcmd = NULL;			/* DIAL DIAL-COMMAND, default none */
 char *dialnpr = NULL;			/* DIAL NUMBER-PREFIX, ditto */
+/* char *hupcmd  = NULL; */		/* Modem hangup command */
 FILE * dialfd = NULL;			/* File descriptor of dial directory */
 
 #ifndef MINIDIAL
@@ -111,6 +144,7 @@ FILE * dialfd = NULL;			/* File descriptor of dial directory */
   967  T2MC                    IBM PS/2 internal TB+
   968  T1000                   External T1000
   969  ?                       Qblazer
+  970                          Qblazer Plus
   971  T2500                   External T2500
   972  T2500                   Rackmount T2500
 */
@@ -155,29 +189,39 @@ extern CHAR stchr;
 extern long speed;
 extern char ttname[], sesfil[];
 
-/*
- * Failure reasons for use with the 'longjmp' exit.
- */
-#define F_time		1		/* timeout */
-#define F_int		2		/* interrupt */
-#define F_modem		3		/* modem-detected failure */
-#define F_minit		4		/* cannot initialize modem */
+/*  Failure codes  */
+
+#define F_TIME		1		/* timeout */
+#define F_INT		2		/* interrupt */
+#define F_MODEM		3		/* modem-detected failure */
+#define F_MINIT		4		/* cannot initialize modem */
+
+static int fail_code =  0;		/* Default failure reason. */
+
+#define DW_NOTHING      0		/* What we are doing */
+#define DW_INIT         1
+#define DW_DIAL         2
+
+static int dial_what = DW_NOTHING;	/* Nothing at first. */
 
 static int mymdmtyp;			/* Local copy of modem type. */
-static int n1 = F_time;
 
 _PROTOTYP (static int ddinc, (int) );
 _PROTOTYP (int dialhup, (void) );
-_PROTOTYP (int getok, (int,int) );
+_PROTOTYP (static int getok, (int,int) );
 _PROTOTYP (char * getdws, (int) );
-_PROTOTYP (static VOID ttslow, (char *s, int millisec) );
-_PROTOTYP (VOID xcpy, (char *to, char *from, unsigned len) );
-_PROTOTYP (static VOID waitfor, (char *s) );
-_PROTOTYP (static VOID dialoc, (char c) );
-_PROTOTYP (static int didweget, (char *s, char *r) );
-_PROTOTYP (static VOID spdchg, (long s) );
-_PROTOTYP (static VOID tbati3, (int n) );
-
+_PROTOTYP (char * ck_time, (void) );
+_PROTOTYP (static VOID ttslow, (char *, int) );
+#ifdef COMMENT
+_PROTOTYP (static VOID xcpy, (char *, char *, unsigned int) );
+#endif /* COMMENT */
+_PROTOTYP (static VOID waitfor, (char *) );
+_PROTOTYP (static VOID dialoc, (char) );
+_PROTOTYP (static int didweget, (char *, char *) );
+_PROTOTYP (static VOID spdchg, (long) );
+_PROTOTYP (static VOID tbati3, (int) );
+_PROTOTYP (static int dialfail, (int) );
+
 #define MDMINF	struct mdminf
 
 MDMINF		/* structure for modem-specific information */
@@ -519,7 +563,11 @@ MDMINF DF200 =		/* information for "DEC DF200-series" modem */
     "",			/* wake_prompt */
     "",			/* dmode_str */
     NULL,		/* dmode_prompt */
+#ifdef COMMENT
     "%s!",		/* dial_str */
+#else
+    "   d %s\015",
+#endif /* COMMENT */
     0,			/* dial_rate */
     0,			/* esc_time */
     "",			/* esc_str */
@@ -580,7 +628,7 @@ MDMINF HAYES =		/* Information for Hayes and Hayes-like modems */
     35,			/* dial_time */
     ",",		/* pause_chars */
     2,			/* pause_time */
-    "ATQ0\015",		/* wake_str */
+    "ATQ0S2=43\015",	/* wake_str */
 /*
   Note: Other wake_str's are possible here.  For a Hayes 2400 that is to
   be used for both in and out calls, AT&F&D3 might be best.  For out calls
@@ -674,17 +722,17 @@ MDMINF USROBOT =	/* information for "US Robotics 212A" modem */
     30,			/* dial_time */
     ",",		/* pause_chars */
     2,			/* pause_time */
-    "ATS2=01\015",	/* wake_str */
+    "ATQ0S2=43\015",	/* wake_str */
     0,			/* wake_rate */
     "OK\015",		/* wake_prompt */
     "",			/* dmode_str */
     NULL,		/* dmode_prompt */
     "ATTD%s\015",	/* dial_str */
     0,			/* dial_rate */
-    0,			/* esc_time */
-    "",			/* esc_str */
-    "",			/* hup_str */
-    NULL		/* ok_fn */
+    1100,		/* esc_time */
+    "+++",		/* esc_str */
+    "ATQ0H0\015",	/* hup_str */
+    getok		/* ok_fn */
     };
 
 #ifdef COMMENT
@@ -807,12 +855,12 @@ MDMINF MICROCOM =	/* information for "Microcom" modems in native mode */
     };
 
 static
-MDMINF HST =		/* information for Courier HST modem */
+MDMINF HST =		/* information for USR Courier and Sportster modems */
     {
     35,			/* dial_time */
     ",",		/* pause_chars */
     2,			/* pause_time */
-    "ATQ0S2=43X7&B1&M4\015", /* wake_str */
+    "ATQ0S2=43X4&M4\015", /* wake_str (X7 not supported on Sportster) */
     0,		        /* wake_rate */
     "OK\015",		/* wake_prompt */
     "",		        /* dmode_str */
@@ -839,7 +887,7 @@ MDMINF TELEBIT =	/* information for Telebits */
   sure the final character is not a digit (whose echo might be mistaken for a
   result code).  The Ctrl-Q and multiple A's are recommended by Telebit.
 */
-    "\021AAAATQ0X1S12=50 S2=43 I\015", /* wake_str. */
+    "\021AAAAATQ0X1S12=50 S2=43 I\015", /* wake_str. */
     100,		/* wake_rate = 100 msec */
     "OK\015",		/* wake_prompt */
     "",		        /* dmode_str */
@@ -852,7 +900,8 @@ MDMINF TELEBIT =	/* information for Telebits */
     getok		/* ok_fn */
     };
 #endif /* MINIDIAL */
-
+
+
 /*
  * Declare table for converting modem numbers to information pointers.
  *
@@ -910,6 +959,7 @@ struct keytab mdmtab[] = {
 #ifndef MINIDIAL
     "cermetek",		n_CERMETEK,	0,
     "concord",		n_CONCORD,	0,
+    "courier",          n_HST,          0,
     "df03-ac",		n_DF03,		0,
     "df100-series",	n_DF100,	0,
     "df200-series",	n_DF200,	0,
@@ -922,7 +972,7 @@ struct keytab mdmtab[] = {
 #endif /* MINIDIAL */
     "hayes",		n_HAYES,	0,
 #ifndef MINIDIAL
-    "hst-courier",      n_HST,          0,
+    "hst-courier",      n_HST,          CM_INV,	/* Synonym for COURIER */
     "microcom",		n_MICROCOM,	0,
 #endif /* MINIDIAL */
     "none",             0,              0,
@@ -932,6 +982,7 @@ struct keytab mdmtab[] = {
     "racalvadic",	n_RACAL,	0,
     "rolm",		n_ROLM,		0,
     "slow-telebit",     n_TBS,		0,
+    "sportster",        n_HST,          0,
     "telebit",          n_TELEBIT,      0,
 #endif /* MINIDIAL */
     "unknown",		n_UNKNOWN,	0,
@@ -947,27 +998,41 @@ int nmdm = (sizeof(mdmtab) / sizeof(struct keytab)); /* Number of modems */
 #define CONNECTED 1			/* For completion status */
 #define FAILED	  2
 
-static
-char *F_reason[5] = {			/* Failure reasons for message */
-    "Unknown",	"Timeout", "Interrupt", "Modem", "Initialize" };
-
 static int tries = 0;
 static int mdmecho = 0;	/* assume modem does not echo */
 static int augmdmtyp;	/* "augmented" modem type, to handle modem modes */
 
 static char *p;		/* For command strings & messages */
 
-#define LBUFL 100
 #ifdef DYNAMIC
+#define LBUFL 256
 static char *lbuf = NULL;
 #else
+#define LBUFL 100
 static char lbuf[LBUFL];
 #endif /* DYNAMIC */
 
+#ifdef DYNAMIC
+#define RBUFL 256
+static char *rbuf = NULL;
+#else
 #define RBUFL 63
-static char rbuf[RBUFL+1];	/* Modem response buffer */
+static char rbuf[RBUFL+1];
+#endif /* DYNAMIC */
 
+#ifdef DYNAMIC
+#define FULLNUML 256
+char *fbuf = NULL;			/* For full (prefixed) phone number */
+#else
+#define FULLNUML 100
+char fbuf[FULLNUML];
+#endif /* DYNAMIC */
+
+#ifdef CK_POSIX_SIG
+static sigjmp_buf sjbuf;
+#else
 static jmp_buf sjbuf;
+#endif /* CK_POSIX_SIG */
 
 static SIGTYP (*savalrm)();	/* For saving alarm handler */
 static SIGTYP (*savint)();	/* For saving interrupt handler */
@@ -981,18 +1046,20 @@ gtbmodel() {			/* Function to return name of Telebit model */
     return(tb_name[tbmodel]);
 }
 
-VOID
+#ifdef COMMENT
+static VOID
 xcpy(to,from,len)		/* Copy the given number of bytes */
     register char *to, *from;
-    register unsigned len; {
+    register unsigned int len; {
 	while (len--) *to++ = *from++;
 }
+#endif /* COMMENT */
 #endif /* MINIDIAL */
 
-SIGTYP
+static SIGTYP
 dialtime(foo) int foo; {		/* Timer interrupt handler */
-    n1 = F_time;			/* Failure reason = timeout */
-
+    fail_code = F_TIME;			/* Failure reason = timeout */
+    debug(F100,"dialtime caught SIGALRM","",0);
 #ifdef __EMX__
     signal(SIGALRM, SIG_ACK);		/* Needed for OS/2 */
 #endif /* __EMX__ */
@@ -1007,20 +1074,28 @@ dialtime(foo) int foo; {		/* Timer interrupt handler */
 */
     sigmask(-1);
 #endif /* OSK */
-
-    longjmp( sjbuf, F_time );
+#ifdef CK_POSIX_SIG
+    siglongjmp(sjbuf,1);
+#else
+    longjmp(sjbuf,1);
+#endif /* CK_POSIX_SIG */
 }
 
-SIGTYP
+static SIGTYP
 dialint(foo) int foo; {			/* Keyboard interrupt handler */
-    n1 = F_int;
+    fail_code = F_INT;
+    debug(F100,"dialint caught SIGINT","",0);
 #ifdef __EMX__
     signal(SIGINT, SIG_ACK);		/* Needed for OS/2 */
 #endif /* __EMX__ */
 #ifdef OSK				/* OS-9, see comment in dialtime() */
     sigmask(-1);
 #endif /* OSK */
-    longjmp( sjbuf, F_int );
+#ifdef CK_POSIX_SIG
+    siglongjmp(sjbuf,1);
+#else
+    longjmp(sjbuf,1);
+#endif /* CK_POSIX_SIG */
 }
 
 /*
@@ -1034,6 +1109,7 @@ ddinc(n) int n; {
 
 #ifdef TNCODE
     int done = 0;
+    debug(F101,"ddinc entry n","",n);
     while (!done) {
 	c = ttinc(n);
 	debug(F000,"ddinc","",c);
@@ -1048,14 +1124,24 @@ ddinc(n) int n; {
     }
     return(c & 0xff);
 #else
+    debug(F101,"ddinc entry n","",n);
     return(ttinc(n));
 #endif /* TNCODE */
 }
 
 static VOID
 ttslow(s,millisec) char *s; int millisec; { /* Output s-l-o-w-l-y */
+#ifdef TCPSOCKET
+    extern int tn_nlm;
+#endif /* TCPSOCKET */
+    if (dialdpy && duplex)		/* Echo the command in case modem */
+      printf("%s\n",s);			/* isn't echoing commands. */
     for (; *s; s++) {
 	ttoc(*s);
+#ifdef TCPSOCKET
+	if (*s == CR && network && ttnproto == NP_TELNET && tn_nlm != TNL_CR)
+	  ttoc((char)((tn_nlm == TNL_CRLF) ? LF : NUL));
+#endif /* TCPSOCKET */
 	msleep(millisec);
     }
 }
@@ -1141,7 +1227,7 @@ dialoc(char c)
 #else
 dialoc(c) char c;
 #endif /* CK_ANSIC */
-{ /* dialoc */			/* Dial Output Character */
+{ /* dialoc */				/* Dial Output Character */
     if (dialdpy) {
 	if (c != LF) conoc(c);		/* Don't echo LF */
 	if (c == CR) conoc(LF);		/* Echo CR as CRLF */
@@ -1192,6 +1278,80 @@ tbati3(n) int n; {
 }
 #endif /* MINIDIAL */
 
+static int
+dialfail(x) int x; {
+    char * s;
+
+    fail_code = x;
+    debug(F101,"ckudial dialfail","",x);
+    alarm(0);				/* Disable timeouts */
+    dreset();				/* Reset alarm signals */
+
+    printf("DIAL Failure: ");
+    if (dialdpy) {			/* If showing progress */
+	p = ck_time();			/* get current time; */
+	if (*p) printf("%s: ",p);
+    }
+    switch (fail_code) {		/* Type of failure */
+      case F_TIME: 			/* Timeout */
+	if (dial_what == DW_INIT)
+	  printf ("Timed out while trying to initialize modem.\n");
+	else if (dial_what == DW_DIAL)
+	  printf ("DIAL TIMEOUT interval expired.\n");
+	else printf("Timeout.\n");
+	if (mymdmtyp == n_HAYES
+#ifndef MINIDIAL
+	    || mymdmtyp == n_TELEBIT || mymdmtyp == n_HST
+#endif /* MINIDIAL */
+	    )
+	  ttoc('\015');		/* Send CR to interrupt dialing */
+	/* Some Hayes modems don't fail with BUSY on busy lines */
+	dialsta = DIA_TIMO;
+	debug(F110,"dial","timeout",0);
+	break;
+
+      case F_INT:			/* Dialing interrupted */
+	printf ("Interrupted.\n");
+	debug(F110,"dial","interrupted",0);
+	if (mymdmtyp == n_HAYES
+#ifndef MINIDIAL
+	    || mymdmtyp == n_TELEBIT || mymdmtyp == n_HST
+#endif /* MINIDIAL */
+	    )
+	  ttoc('\015');			/* Send CR to interrupt dialing */
+	dialsta = DIA_INTR;
+	break;
+
+      case F_MODEM:			/* Modem detected a failure */
+	printf ("Call not completed.");
+	if (*lbuf) {
+	    printf("  Modem message: \"");
+	    for (s = lbuf; *s; s++)
+	      if (isprint(*s))
+		putchar(*s);		/* Display printable reason */
+	    printf ("\"");
+	}
+	printf("\n");
+	debug(F110,"dial",lbuf,0);
+	if (dialsta < 0) dialsta = DIA_UNSP;
+	break;
+
+      case F_MINIT:			/* Failure to initialize modem */
+	printf ("Error initializing modem.\n");
+	debug(F110,"dial","modem init",0);
+	dialsta = DIA_NOIN;
+	break;
+    }
+
+#ifdef DYNAMIC
+    if (lbuf) free(lbuf); lbuf = NULL;
+    if (rbuf) free(rbuf); rbuf = NULL;
+    if (fbuf) free(fbuf); fbuf = NULL;
+#endif /* DYNAMIC */
+
+    if (dialsta < 0) dialsta = DIA_UERR; /* Set failure code */
+    return(0);				/* Return zero (important) */
+}
 
 /*  C K D I A L	 --  Dial up the remote system */
 
@@ -1203,16 +1363,20 @@ int
 ckdial(telnbr) char *telnbr; {
 
     char c, c2;
-    char errmsg[50], *erp;		/* for error messages */
-    char fullnum[100];			/* for full (prefixed) phone number */
+#define ERMSGL 50
+    char errmsg[ERMSGL], *erp;		/* for error messages */
     MDMINF *pmdminf;			/* pointer to modem-specific info */
-    int x, m, n = F_time;
-    char *s, *pc, *ws;
+    int x, m, n = F_TIME;
+    char *s, *ws;
+
+    char *mmsg = "Sorry, DIAL memory buffer can't be allocated\n";
 
     long conspd;
     char *cptr;
 
     mymdmtyp = mdmtyp;			/* Make local copy of modem type */
+    dialsta = DIA_UNK;			/* Start with return code = unknown */
+    dial_what = DW_NOTHING;		/* Doing nothing at first. */
 
 #ifndef MINIDIAL
     tbmodel = TB_UNK;			/* Initialize Telebit model */
@@ -1223,38 +1387,85 @@ ckdial(telnbr) char *telnbr; {
 	  printf("Please SET HOST first, and then SET MODEM\n");
 	else
 	  printf("Sorry, you must SET MODEM first\n");
+	dialsta = DIA_NOMO;
 	return(0);
     }
     if (!local) {
 	printf("Sorry, you must SET LINE or SET HOST first\n");
+	dialsta = DIA_NOLI;
 	return(0);
     }
-    if (!network && speed < 0L) {
+    if (!network &&
+	(speed < 0L)
+#ifdef UNIX
+	&& (strcmp(ttname,"/dev/null"))
+#endif /* UNIX */
+	) {
 	printf("Sorry, you must SET SPEED first\n");
+	dialsta = DIA_NOSP;
 	return(0);
     }
     debug(F110,"dial number",telnbr,0);
     debug(F110,"dial prefix",(dialnpr ? dialnpr : ""), 0);
 
+#ifdef DYNAMIC
+    if (!(lbuf = malloc(LBUFL+1))) {    /* Allocate input line buffer */
+	printf("%s", mmsg);
+	dialsta = DIA_IE;
+	return(0);
+    }
+    *lbuf = NUL;
+    debug(F101,"DIAL lbuf malloc ok","",LBUFL+1);
+
+    if (!rbuf) {    /* This one might already have been allocated by getok() */
+	if (!(rbuf = malloc(RBUFL+1))) {    /* Allocate input line buffer */
+	    printf("%s", mmsg);
+	    dialsta = DIA_IE;
+	    if (lbuf) free(lbuf); lbuf = NULL;
+	    return(0);
+	} else
+	  debug(F101,"DIAL rbuf malloc ok","",RBUFL+1);
+    }
+    if (!(fbuf = malloc(FULLNUML+1))) {    /* Allocate input line buffer */
+	printf("%s", mmsg);
+	dialsta = DIA_IE;
+	if (lbuf) free(lbuf); lbuf = NULL;
+	if (rbuf) free(rbuf); rbuf = NULL;
+	return(0);
+    }
+    debug(F101,"DIAL fbuf malloc ok","",FULLNUML+1);
+#endif /* DYNAMIC */
+
 /* Add prefix to phone number */
 
     if (dialnpr && *dialnpr) {
-	sprintf(fullnum,"%s%s",(dialnpr ? dialnpr : ""),telnbr);
-	telnbr = fullnum;
+	if (((int)strlen(dialnpr) + (int)strlen(dialnpr)) > FULLNUML) {
+	    printf("DIAL prefix + phone number too long!\n");
+#ifdef DYNAMIC
+	    if (lbuf) free(lbuf); lbuf = NULL;
+	    if (rbuf) free(rbuf); rbuf = NULL;
+	    if (fbuf) free(fbuf); fbuf = NULL;
+#endif /* DYNAMIC */
+	    return(0);
+	}
+	sprintf(fbuf,"%s%s",(dialnpr ? dialnpr : ""),telnbr);
+	telnbr = fbuf;
     }
     debug(F110,"prefixed number", telnbr, 0);
 
-#ifdef DYNAMIC
-    if (!(lbuf = malloc(LBUFL+1))) {    /* Allocate input line buffer */
-	printf("Sorry, DIAL memory buffer can't be allocated\n");
-	return(0);
-    }
-#endif /* DYNAMIC */
-
     if (ttopen(ttname,&local,mymdmtyp,0) < 0) { /* Open, no carrier wait */
 	erp = errmsg;
-	sprintf(erp,"Sorry, can't open %s",ttname);
+	if ((int)strlen(ttname) < (ERMSGL - 18))
+	  sprintf(erp,"Sorry, can't open %s",ttname);
+	else
+	  sprintf(erp,"Sorry, can't open device");
 	perror(errmsg);
+	dialsta = DIA_OPEN;
+#ifdef DYNAMIC
+	if (lbuf) free(lbuf); lbuf = NULL;
+	if (rbuf) free(rbuf); rbuf = NULL;
+	if (fbuf) free(fbuf); fbuf = NULL;
+#endif /* DYNAMIC */
 	return(0);
     }
 
@@ -1267,13 +1478,32 @@ ckdial(telnbr) char *telnbr; {
 	ttclos(0);			/* If ttpkt fails do all this... */
 	if (ttopen(ttname,&local,mymdmtyp,0) < 0) {
 	    erp = errmsg;
-	    sprintf(erp,"Sorry, can't reopen %s",ttname);
+	    if ((int)strlen(ttname) < (ERMSGL - 18))
+	      sprintf(erp,"Sorry, can't reopen %s",ttname);
+	    else
+	      sprintf(erp,"Sorry, can't reopen device");
 	    perror(errmsg);
+	    dialsta = DIA_OPEN;
+#ifdef DYNAMIC
+	    if (lbuf) free(lbuf); lbuf = NULL;
+	    if (rbuf) free(rbuf); rbuf = NULL;
+	    if (fbuf) free(fbuf); fbuf = NULL;
+#endif /* DYNAMIC */
 	    return(0);
 	}				/* And try again. */
-	if (ttpkt(speed,FLO_DIAL,parity) < 0) {
+	if ((ttpkt(speed,FLO_DIAL,parity) < 0)
+#ifdef UNIX
+	&& (strcmp(ttname,"/dev/null"))
+#endif /* UNIX */
+	    ) {
 	    printf("Sorry, Can't condition communication line\n");
 	    printf("Try 'set line %s' again\n",ttname);
+	    dialsta = DIA_OPEN;
+#ifdef DYNAMIC
+	    if (lbuf) free(lbuf); lbuf = NULL;
+	    if (rbuf) free(rbuf); rbuf = NULL;
+	    if (fbuf) free(fbuf); fbuf = NULL;
+#endif /* DYNAMIC */
 	    return(0);
 	}
     }
@@ -1318,7 +1548,7 @@ ckdial(telnbr) char *telnbr; {
 	}
     }
     if (!quiet && !backgrd) {		/* Print information messages. */
-	printf(" Dialing: %s\n", telnbr);
+	printf(" Number: %s\n", telnbr);
 	if (network) {
 	    printf(" Via modem server: %s, modem-dialer: %s\n",
 		   ttname, (m >= nmdm ? "(unknown)" : mdmtab[m].kwd) );
@@ -1346,8 +1576,34 @@ ckdial(telnbr) char *telnbr; {
     debug(F111,"ckdial",ttname,(int) (speed / 10L));
     debug(F101,"ckdial timeout","",waitct);
 
-/* Hang up the modem (in case it wasn't "on hook") */
-/* But only if SET DIAL HANGUP ON... */
+/* Set timer and interrupt handlers. */
+
+    if (
+#ifdef CK_POSIX_SIG
+	sigsetjmp(sjbuf,1)
+#else
+	setjmp(sjbuf)
+#endif /* CK_POSIX_SIG */
+	) {		/* Handle failures */
+	return(dialfail(fail_code));
+    } else {
+	alarm(0);			/* No alarms yet. */
+	savalrm = signal(SIGALRM,dialtime); /* Enable alarm() handler */
+#ifdef MAC
+	savint = signal(SIGINT, dialint); /* And terminal interrupt handler. */
+#else /* MAC */
+#ifdef OSK
+	if ((savint = signal(SIGINT,SIG_IGN)) != (SIGTYP (*)()) SIG_IGN)
+	  signal(SIGINT,dialint);
+#else
+	if ((savint = signal(SIGINT,SIG_IGN)) != SIG_IGN )
+	  signal(SIGINT,dialint);
+#endif /* OS-9 */
+#endif /* MAC */
+    }
+
+    /* Hang up the modem (in case it wasn't "on hook") */
+    /* But only if SET DIAL HANGUP ON... */
 
     if (dialhup() < 0) {
 	debug(F100,"ckdial dialhup failed","",0);
@@ -1357,9 +1613,16 @@ ckdial(telnbr) char *telnbr; {
 #endif /* MINIDIAL */
 	if (dialhng) {			/* If it failed, */
 	    ttclos(0);			/* close and reopen the device. */
-            if (ttopen(ttname,&local,mymdmtyp,0) < 0) {
+	    if (ttopen(ttname,&local,mymdmtyp,0) < 0) {
 		printf("Sorry, Can't hang up communication device\n");
 		printf("Try 'set line %s' again\n",ttname);
+		dialsta = DIA_HANG;
+#ifdef DYNAMIC
+		if (lbuf) free(lbuf); lbuf = NULL;
+		if (rbuf) free(rbuf); rbuf = NULL;
+		if (fbuf) free(fbuf); fbuf = NULL;
+#endif /* DYNAMIC */
+		dreset();
 		return(0);
 	    }
 	}
@@ -1369,149 +1632,108 @@ ckdial(telnbr) char *telnbr; {
       msleep(500);			/* too soon... */
 #endif /* MINIDIAL */
 
-/*
-  Establish jump vector, or handle "failure" jumps.
-  longjmp() sets global failure reason, n1.
-*/
-    if (setjmp(sjbuf)) {		/* if a "failure jump" was taken... */
-	n = n1;
-	alarm(0);			/* disable timeouts */
-	if (setjmp(sjbuf)) {		/* failure while handling failure */
-	    printf ("%s failure while handling failure.\n", F_reason[n1]);
-	} else {			/* first (i.e., non-nested) failure */
-	    signal(SIGALRM, dialtime);	/* be sure to catch signals */
-#ifdef MAC
-	    signal(SIGINT, dialint);
-#else /* MAC */
-#ifdef OSK
-	    if (signal(SIGINT, SIG_IGN) != (SIGTYP (*)()) SIG_IGN)
-		signal(SIGINT, dialint);
-#else
-	    if (signal(SIGINT, SIG_IGN) != SIG_IGN)
-		signal(SIGINT, dialint);
-#endif /* OS9 */
-#endif /* MAC */
-	    alarm(10);			/* Be sure to exit this section */
-	}
-	switch (n) {			/* Type of failure */
-	    case F_time: {		/* Timed out */
-		printf ("DIAL TIMEOUT interval expired.\n");
-		if (mymdmtyp == n_HAYES
-#ifndef MINIDIAL
-		    || mymdmtyp == n_TELEBIT || mymdmtyp == n_HST
-#endif /* MINIDIAL */
-		    )
-		  ttoc('\015');		/* Send CR to interrupt dialing */
-  		  /* some hayes modems don't fail with BUSY on busy lines */
-		debug(F110,"dial","timeout",0);
-		break;
-	    }
-	    case F_int: {		/* Dialing interrupted */
-		printf ("Dialing interrupted.\n");
-		debug(F110,"dial","interrupted",0);
-		if (mymdmtyp == n_HAYES
-#ifndef MINIDIAL
-		    || mymdmtyp == n_TELEBIT || mymdmtyp == n_HST
-#endif /* MINIDIAL */
-		    )
-		  ttoc('\015');		/* Send CR to interrupt dialing */
-		break;
-	    }
-	    case F_modem: {		/* Modem detected a failure */
-		printf ("Call failed (\"");
-		for (pc = lbuf; *pc; pc++)
-		  if (isprint(*pc))
-		    putchar(*pc);	/* Display printable reason */
-		printf ("\").\n");
-		debug(F110,"dial",lbuf,0);
-		break;
-	    }
-	    case F_minit: {		/* Cannot initialize modem */
-		printf ("Can't initialize modem.\n");
-		debug(F110,"dial","modem init",0);
-		break;
-	    }
-	}
-	dreset();			/* reset alarms, etc. */
-#ifdef DYNAMIC
-	if (lbuf) free(lbuf);
-#endif /* DYNAMIC */
-	return(0);			/* exit with failure code */
-    }
-
-/* Set timer and interrupt handlers. */
-
-    alarm(0);				/* No alarms yet. */
-#ifdef MAC
-    savint = signal(SIGINT, dialint);	/* And terminal interrupt handler. */
-#else /* MAC */
-#ifdef OSK
-    if ((savint = signal(SIGINT,SIG_IGN)) != (SIGTYP (*)()) SIG_IGN)
-      signal(SIGINT,dialint);
-#else
-    if ((savint = signal(SIGINT,SIG_IGN)) != SIG_IGN )
-      signal(SIGINT,dialint);
-#endif /* OS-9 */
-#endif /* MAC */
-
 /* Put modem in command mode. */
 
-switch (augmdmtyp) {			/* Send the wakeup string */
+    if (
+#ifdef MINIDIAL
+	1
+#else
+	augmdmtyp != n_ATTUPC
+#endif /* MINIDIAL */
+	) {
+	fail_code = F_MINIT;		/* Default failure code */
+	dial_what = DW_INIT;		/* What I'm Doing Now   */
+	if (dialdpy) {			/* If showing progress, */
+	    p = ck_time();		/* display timestamp.   */
+	    if (*p) printf(" Initializing: %s...\n",p);
+	}
+    }
+    switch (augmdmtyp) {		/* Send wakeup string, if any. */
 
+#ifndef MINIDIAL
 #ifdef ATT7300
-	case n_ATTUPC: {
+      case n_ATTUPC: {
 /*
-  For ATT7300/Unix PC's with their special internal modem.  Timeout
-  and user interrupts are enabled during dialing.  attdial() is in
+  For ATT7300/Unix PC's with their special internal modem.  Whole dialing
+  process is handled right here, an exception to the normal structure.
+  Timeout and user interrupts are enabled during dialing.  attdial() is in
   file ckutio.c.  - jrd
 */
-_PROTOTYP( int attdial, (char *, long, char *) );
-            savalrm = signal(SIGALRM,dialtime); /* Set alarm handler. */
-	    alarm(waitct);			/* do alarm properly */
-	    if (attdial(ttname,speed,telnbr)) { /* dial internal modem */
-		dreset();			/* reset alarms, etc. */
-		printf(" Call failed.\r\n");
-		dialhup();	        	/* Hangup the call */
-#ifdef DYNAMIC
-		if (lbuf) free(lbuf);
-#endif /* DYNAMIC */
-		return(0);			/* return failure */
-	    }
-	    dreset();				/* reset alarms, etc. */
-	    ttpkt(speed,FLO_DIAX,parity);	/* cancel dialing ioctl */
-	    if (!quiet && !backgrd) {
-		if (dialdpy) printf("\n");
-		printf(" Call complete.\07\r\n");
-	    }
-#ifdef DYNAMIC
-            if (lbuf) free(lbuf);
-#endif /* DYNAMIC */
-	    return(1);	 /* no conversation with modem to complete dialing */
+        _PROTOTYP( int attdial, (char *, long, char *) );
+	fail_code = F_MODEM;		/* Default failure code */
+	dial_what = DW_DIAL;
+	if (dialdpy) {			/* If showing progress */
+	    p = ck_time();		/* get current time; */
+	    if (*p) printf(" Dialing: %s...\n",p);
 	}
+	alarm(waitct);			/* do alarm properly */
+	if (attdial(ttname,speed,telnbr)) { /* dial internal modem */
+	    dreset();			/* reset alarms, etc. */
+	    printf(" Call failed.\r\n");
+	    dialhup();	        	/* Hangup the call */
+#ifdef DYNAMIC
+	    if (lbuf) free(lbuf); lbuf = NULL;
+	    if (rbuf) free(rbuf); rbuf = NULL;
+	    if (fbuf) free(fbuf); fbuf = NULL;
+#endif /* DYNAMIC */
+	    dialsta = DIA_UERR;
+	    return(0);			/* return failure */
+	}
+	dreset();			/* reset alarms, etc. */
+	ttpkt(speed,FLO_DIAX,parity);	/* cancel dialing ioctl */
+	if (!quiet && !backgrd) {
+	    if (dialdpy) printf("\n");
+	    printf(" Call complete.\07\r\n");
+	}
+	dialsta = DIA_OK;
+#ifdef DYNAMIC
+	if (lbuf) free(lbuf); lbuf = NULL;
+	if (rbuf) free(rbuf); rbuf = NULL;
+	if (fbuf) free(fbuf); fbuf = NULL;
+#endif /* DYNAMIC */
+	return(1);	 /* no conversation with modem to complete dialing */
+    }
 #endif /* ATT7300 */
+#endif /* MINIDIAL */
 
 /*
   For Hayes modem command language, figure out if modem is giving verbose
   or digit result codes.
 */
-    case n_HAYES:
-    case n_HAYESNV:
+      case n_HAYES:
+      case n_HAYESNV:
 #ifndef MINIDIAL
-    case n_HST:
+      case n_HST:
 	if (augmdmtyp == n_HST)
 	  m = 255;
 	else
 #endif /* MINIDIAL */
 	  m = 60;			/* Maximum value for S7 */
-	ws = dialini ? dialini : HAYES.wake_str;
+	  
+	if (dialini)			/* Get wakeup string */
+	  ws = dialini;
+	else
+          ws =
+#ifndef MINIDIAL
+	    (augmdmtyp == n_HST) ? HST.wake_str :
+#endif /* MINIDIAL */
+	      HAYES.wake_str;
+
 	for (tries = 4; tries > 0; tries--) {
 	    ttslow(ws,pmdminf->wake_rate);
 	    mdmstat = getok(4,1);
 	    if (mdmstat > 0) break;
-	    sleep(1);			/* Wait before retrying */
+	    if (dialdpy && tries > 1)
+	      printf(" No response from modem, retrying%s...\n",
+		     (tries < 4) ? " again" : "");
+	    /* sleep(1); */		/* Wait before retrying */
 	}
-	if (mdmstat > 0) { 		/* Initialized OK. */
-	    char hbuf[10];
+	debug(F101,"ckdial wake_str mdmstat","",mdmstat);
+
+	if (mdmstat < 1) { 		/* Initialized OK? */
+	    return(dialfail(F_MINIT));	/* No, fail. */
+	} else {			/* Yes. */
+	    char hbuf[16];
 /*
   Now tell the modem about our dial timeout.  For Hayes 1200, the maximum
   is 60 seconds.  For Hayes 2400 (the manual says) it is 30 seconds, but I'm
@@ -1537,19 +1759,14 @@ _PROTOTYP( int attdial, (char *, long, char *) );
 	    if (mdmwait > 255)		/* If larger than maximum, */
 	      mdmwait = 255;		/* make it maximum. */
 #endif /* COMMENT */
-
 	    sprintf(hbuf,"ATS7=%d%c",mdmwait,13); /* S7 = Carrier wait time */
 	    ttslow(hbuf,pmdminf->wake_rate); /* Set it. */
 	    mdmstat = getok(4,1);	/* Get response from modem */
-	    debug(F101,"S7 mdmstat","",mdmstat);
-	    break;			/* Errors here are not fatal */
+	    debug(F101,"ckdial S7 mdmstat","",mdmstat);
+	    break;			/* Errors here are not fatal. */
 	}
-	/* modem-initialization failure */
-	n1 = (mdmstat == 0) ? F_minit : F_modem;
-	longjmp( sjbuf, n1 );
 
 #ifndef MINIDIAL
-
 /*
   Telebit modems fall into two basic groups: old and new.  The functions and
   command sets are different between the two groups, and also vary by specific
@@ -1622,14 +1839,16 @@ For Kermit Spoof (same commands for all models that support it):
 	    ttslow(ws,pmdminf->wake_rate); /* Send wakeup string */
 	    mdmstat = getok(5,0);	/* Get modem's response */
 	    if (mdmstat) break;		/* If response OK, done */
+	    if (dialdpy && tries > 1)
+	      printf(" No response from modem, retrying%s...\n",
+		     (tries < 4) ? " again" : "");
 	    msleep(300);		/* Otherwise, sleep 1/3 second */
 	    dialhup();			/* Hang up */
 	    ttflui();			/* Flush input buffer and try again */
 	}
-	if (mdmstat < 1) {		/* If we didn't get a response */
-	    n1 = F_minit;		/* fail, reason = can't initialize */
-	    longjmp( sjbuf, F_minit );
-	}
+	if (mdmstat < 1)		/* If we didn't get a response, */
+	  return(dialfail(F_MINIT));	/* fail. */
+
 	if (!dialini) {			/* If using built-in init strings... */
 /*
   Try to get the model number.  It should be in the getok() response buffer,
@@ -1650,6 +1869,8 @@ For Kermit Spoof (same commands for all models that support it):
 		tbmodel = TB_PLUS;	/* Trailblazer-Plus */
 	    } else if (didweget(rbuf,"969")) {
 		tbmodel = TB_QBLA;	/* Qblazer */
+	    } else if (didweget(rbuf,"970")) {
+		tbmodel = TB_QBLA;	/* Qblazer Plus */
 	    } else if (didweget(rbuf,"965")) { /* Most new models */
 		tbati3(965);		/* Go find out */
 	    } else if (didweget(rbuf,"971")) { /* T1500 or T2500 */
@@ -1690,13 +1911,14 @@ For Kermit Spoof (same commands for all models that support it):
 		ttslow(s,pmdminf->wake_rate);
 		mdmstat = getok(5,1);
 		if (mdmstat) break;
+		if (dialdpy && tries > 1)
+		  printf(" No response from modem, retrying%s...\n",
+			 (tries < 4) ? " again" : "");
 		msleep(500);
 		ttflui();
 	    }
-	    if (mdmstat < 1) {
-		n1 = F_minit;
-		longjmp( sjbuf, F_minit ); /* Failed. */
-	    }
+	    if (mdmstat < 1)
+	      return(dialfail(F_MINIT));
 /*
   Model-dependent items, but constant per model.
 */
@@ -1746,13 +1968,14 @@ For Kermit Spoof (same commands for all models that support it):
 		    ttslow(s,pmdminf->wake_rate);
 		    mdmstat = getok(5,1);
 		    if (mdmstat) break;
+		    if (dialdpy && tries > 1)
+		      printf(" No response from modem, retrying%s...\n",
+			     (tries < 4) ? " again" : "");
 		    msleep(500);
 		    ttflui();
 		}
-		if (mdmstat < 1) {
-		    n1 = F_minit;
-		    longjmp( sjbuf, F_minit ); /* Failed. */
-		}
+		if (mdmstat < 1)
+		  dialfail(F_MINIT);
 	    } else debug(F100,"ckdial Telebit init step 3 skipped","",0);
 
 /* Error correction, MNP or V.42 */
@@ -1877,36 +2100,20 @@ For Kermit Spoof (same commands for all models that support it):
 		  default:  S111 = 10; break;
 
 		}
-#ifdef COMMENT
-/*
-  This code forced the use of PEP mode if DIAL KERMIT-SPOOF was ON, which
-  prevented successful connection if the other modem did not support PEP.
-*/
-		if (tbmodel == TB_BLAZ || /* Must force PEP on old models */
-		    tbmodel == TB_PLUS ||
-		    tbmodel == TB_1000 ||
-		    tbmodel == TB_2000 ||
-		    tbmodel == TB_2500)
-		  sprintf(tbcmdbuf,"AT%s %s S50=255 S111=%d S112=%d\015",
-			  mnpstr,dprstr,S111,stchr);
-		/* PEP is not required on T1500, T1600, T3000, and WB */
-		/* (but MNP is, but that is user's responsibility).   */
-		else
-#endif /* COMMENT */
-		  if (tbmodel != TB_QBLA)
+		if (tbmodel != TB_QBLA)
 		  sprintf(tbcmdbuf,"AT%s %s S111=%d S112=%d\015",
-			  mnpstr,dprstr,S111,stchr);
+			    mnpstr,dprstr,S111,stchr);
 		else {			/* Qblazer has no Kermit spoof */
 		    sprintf(tbcmdbuf,"AT%s %s\015", mnpstr,dprstr);
 		    p = "No Kermit Spoof";
 		    if (dialdpy)
 		      printf("Kermit Spoof not supported by Qblazer\n");
 		}
-	    } else {			/* No Kermit spoof */
+	    } else {			/* KERMIT-SPOOF OFF */
 		p = "No Kermit Spoof";
 		sprintf(tbcmdbuf,"AT%s %s %s\015",
 			mnpstr, dprstr,
-			(tbmodel == TB_QBLA) ? "" : "S111=0 S112=0");
+			(tbmodel == TB_QBLA) ? "" : "S111=0");
 	    }
 	    s = tbcmdbuf;
 	    debug(F111,"ckdial Telebit config",p,speed);
@@ -1916,14 +2123,15 @@ For Kermit Spoof (same commands for all models that support it):
 		    ttslow(s,pmdminf->wake_rate);
 		    mdmstat = getok(5,1);
 		    if (mdmstat) break;
+		    if (dialdpy && tries > 1)
+		      printf(" No response from modem, retrying%s...\n",
+			     (tries < 4) ? " again" : "");
 		    msleep(500);
 		    ttflui();
 		}
 		debug(F101,"ckdial telebit init mdmstat","",mdmstat);
-		if (mdmstat < 1) {
-		    n1 = F_minit;
-		    longjmp(sjbuf, F_minit);
-		}
+		if (mdmstat < 1)
+		  dialfail(F_MINIT);
 	    }
 	}
 	/* Done with Telebit protocols, remove bits from modem type */
@@ -1934,7 +2142,8 @@ For Kermit Spoof (same commands for all models that support it):
     }
 
     case n_MICROCOM:			/* Interdigit waits for tone dial */
-        {
+#ifdef COMMENT
+	  {
 	    jmp_buf savejmp;
 	    alarm(0);
 	    savalrm = signal(SIGALRM,dialtime); /* Set alarm handler. */
@@ -1950,7 +2159,6 @@ For Kermit Spoof (same commands for all models that support it):
 		ws = dialini ? dialini : MICROCOM.wake_str;
 		ttslow(ws, MICROCOM.wake_rate);
 	    	waitfor(ws);
-#ifdef COMMENT
 /*
   Kermit spoof for Microcom modems.  Untested.
   This is reportedly the way to do it for QX/3296c, QX/4232hs, QX/4232bis,
@@ -1959,12 +2167,31 @@ For Kermit Spoof (same commands for all models that support it):
 		ws = dialksp ? "APM1\015" : "APM0\015";	/* Kermit spoof */
 		ttslow(ws, MICROCOM.wake_rate);
 	    	waitfor(ws);
-#endif /* COMMENT */
 		alarm(0);
 		signal(SIGALRM,savalrm); /* Set alarm handler. */
 		xcpy((char *)sjbuf, (char *)savejmp, sizeof savejmp);
 	    }
 	}
+#else
+	ws = dialini ? dialini : MICROCOM.wake_str;
+	debug(F110,"ckdial microcom ttslow",ws,0);
+	ttslow(ws, MICROCOM.wake_rate);
+	alarm(3);
+	debug(F110,"ckdial microcom waitfor",MICROCOM.wake_prompt,0);
+	waitfor(MICROCOM.wake_prompt);
+	debug(F110,"ckdial microcom waitfor done","",0);
+	alarm(0);
+/*
+  Kermit spoof for Microcom modems.  Untested.
+  This is reportedly the way to do it for QX/3296c, QX/4232hs, QX/4232bis,
+  and QX/9624c.  The effect on other models is unknown.
+*/
+	ws = dialksp ? "APM1\015" : "APM0\015";	/* Kermit spoof */
+	ttslow(ws, MICROCOM.wake_rate);
+	alarm(3);
+	waitfor(ws);
+	alarm(0);
+#endif /* COMMENT */
 	break;
 
     case n_ATTDTDM:		/* DTDM requires BREAK to wake up */
@@ -1982,14 +2209,12 @@ For Kermit Spoof (same commands for all models that support it):
 	if (pmdminf->wake_prompt && (int)strlen(pmdminf->wake_prompt) > 0) {
 	    debug(F110,"ckdial default, waiting for wake_prompt",
 		  pmdminf->wake_prompt,0);
-	    savalrm = signal(SIGALRM,dialtime);
 	    alarm(10);
 	    waitfor(pmdminf->wake_prompt);
 	} else debug(F100,"ckdial no wake_prompt","",0);
 	break;
     }
     alarm(0);				/* Turn off alarm */
-    signal(SIGALRM,savalrm);		/* Restore alarm handler. */
     debug(F100,"ckdial got wake prompt","",0);
     msleep(500);			/* Allow settling time */
 
@@ -1999,10 +2224,10 @@ For Kermit Spoof (same commands for all models that support it):
 
     switch (augmdmtyp) {
       case n_HST:
-	if (dialmnp)
-	  ttslow("AT&K2\015",pmdminf->wake_rate);
-	else
-	  ttslow("AT&K0\015",pmdminf->wake_rate);
+	if (dialmnp)			/* EC & compression enabled */
+	  ttslow("AT&M4&K1\015",pmdminf->wake_rate);
+	else				/* EC & compression disabled */
+	  ttslow("AT&M0&K0\015",pmdminf->wake_rate);
 	getok(5,1);			/* Get response */
 	break;
 
@@ -2019,7 +2244,8 @@ For Kermit Spoof (same commands for all models that support it):
 	ttslow(pmdminf->dmode_str, pmdminf->dial_rate);
 	savalrm = signal(SIGALRM,dialtime);
 	alarm(10);
-	if (pmdminf->dmode_prompt) { /* Wait for prompt, if any expected */
+	/* Wait for prompt, if any expected */
+	if (pmdminf->dmode_prompt && *(pmdminf->dmode_prompt)) {
 	    waitfor(pmdminf->dmode_prompt);
 	    msleep(300);
 	}
@@ -2030,27 +2256,50 @@ For Kermit Spoof (same commands for all models that support it):
 
 /* Dial the number.  First form the dialing string. */
 
+#ifdef DYNAMIC
+    if (!lbuf) {			/* If, for some reason, this is NULL */
+	if (!(lbuf = malloc(LBUFL+1))) { /* allocate it... */
+	    dialsta = DIA_IE;
+	    return(0);
+	}
+    }
+#endif /* DYNAMIC */
     sprintf(lbuf, dialcmd ? dialcmd : pmdminf->dial_str, telnbr);
+    if ((int)strlen(lbuf) > LBUFL) {
+	printf("DIAL command + phone number too long!\n");
+	dreset();
+#ifdef DYNAMIC
+	if (lbuf) free(lbuf); lbuf = NULL;
+	if (rbuf) free(rbuf); rbuf = NULL;
+	if (fbuf) free(fbuf); fbuf = NULL;
+#endif /* DYNAMIC */
+	return(1);	 /* No conversation with modem to complete dialing */
+    }
     debug(F110,"dialing",lbuf,0);
     ttslow(lbuf,pmdminf->dial_rate);	/* Send the dialing string */
 
-    savalrm = signal(SIGALRM,dialtime);	/* Time to allow for connecting */
-    x = alarm(waitct);			/* This much time... */
+    fail_code = F_MODEM;		/* New default failure code changes */
+    dial_what = DW_DIAL;		/* and our state, too. */
+    if (dialdpy) {			/* If showing progress */
+	p = ck_time();			/* get current time; */
+	if (*p) printf(" Dialing: %s...\n",p);
+    }
+    x = alarm(waitct);			/* This much time allowed. */
     debug(F101,"ckdial old alarm","",x);
     debug(F101,"ckdial waitct","",waitct);
 
 #ifndef MINIDIAL
     switch (augmdmtyp) {
-    case n_RACAL: 	   /* Acknowledge printout of dialing string */
-      sleep(3);
-      ttflui();
-      ttoc('\015');
-      break;
-    case n_VENTEL:
-      waitfor("\012\012"); /* Ignore the first two strings */
-      break;
-    default:
-      break;
+      case n_RACAL:			/* Acknowledge dialing string */
+	sleep(3);
+	ttflui();
+	ttoc('\015');
+	break;
+      case n_VENTEL:
+	waitfor("\012\012");		/* Ignore the first two strings */
+	break;
+      default:
+	break;
     }
 #endif /* MINIDIAL */
 
@@ -2092,47 +2341,73 @@ For Kermit Spoof (same commands for all models that support it):
 		}
 	    }
 	    lbuf[++n] = '\0';		/* Terminate response from modem */
-	    debug(F111,"dial modem response",lbuf,n);
+	    debug(F111,"ckdial modem response",lbuf,n);
 	    if (n) {			/* If one or more characters present */
 		switch (augmdmtyp) {	/* check for modem response message. */
 #ifndef MINIDIAL
 		  case n_ATTMODEM:
 		    /* Careful - "Connected" / "Not Connected" */
-		    if (didweget(lbuf,"Busy") ||
-			didweget(lbuf,"Not connected") ||
-			didweget(lbuf,"Not Connected") ||
-			didweget(lbuf,"No dial tone") ||
-			didweget(lbuf,"No Dial Tone") ||
-			didweget(lbuf,"No answer") ||
-			didweget(lbuf,"No Answer"))
+		    if (didweget(lbuf,"Busy")) { 
 			mdmstat = FAILED;
-		    else if (didweget(lbuf,"Answered") ||
-			didweget(lbuf,"Connected"))
+			dialsta = DIA_BUSY;
+		    } else if (didweget(lbuf,"Not connected") ||
+			       didweget(lbuf,"Not Connected")) { 
+			mdmstat = FAILED;
+			dialsta = DIA_NOCA;
+		    } else if (didweget(lbuf,"No dial tone") ||
+			       didweget(lbuf,"No Dial Tone")) { 
+			mdmstat = FAILED;
+			dialsta = DIA_NODT;
+		    } else if (didweget(lbuf,"No answer") ||
+			       didweget(lbuf,"No Answer")) {
+			mdmstat = FAILED;
+			dialsta = DIA_NOAN;
+		    } else if (didweget(lbuf,"Answered") ||
+			       didweget(lbuf,"Connected")) {
 			mdmstat = CONNECTED;
+			dialsta = DIA_OK;
+		    }
 		    break;
 
 		  case n_ATTISN:
-		    if (didweget(lbuf,"ANSWERED"))
+		    if (didweget(lbuf,"ANSWERED")) {
 			mdmstat = CONNECTED;
-		    else if (didweget(lbuf,"BUSY") ||
-			didweget(lbuf,"DISCONNECT") ||
-			didweget(lbuf,"NO ANSWER") ||
-			didweget(lbuf,"WRONG ADDRESS"))
+			dialsta = DIA_OK;
+		    } else if (didweget(lbuf,"BUSY")) { 
 			mdmstat = FAILED;
+			dialsta = DIA_BUSY;
+		    } else if (didweget(lbuf,"DISCONNECT")) { 
+			mdmstat = FAILED;
+			dialsta = DIA_DISC;
+		    } else if (didweget(lbuf,"NO ANSWER")) { 
+			mdmstat = FAILED;
+			dialsta = DIA_NOAN;
+		    } else if (didweget(lbuf,"WRONG ADDRESS")) {
+			mdmstat = FAILED;
+			dialsta = DIA_NOAC;
+		    }
 		    break;
 
 		  case n_ATTDTDM:
-		    if (didweget(lbuf,"ANSWERED"))
+		    if (didweget(lbuf,"ANSWERED")) {
 			mdmstat = CONNECTED;
-		    else if (didweget(lbuf,"BUSY") ||
-			didweget(lbuf,"CHECK OPTIONS") ||
-			didweget(lbuf,"DISCONNECTED") ||
-			didweget(lbuf,"DENIED"))
+		    } else if (didweget(lbuf,"BUSY")) { 
 			mdmstat = FAILED;
+			dialsta = DIA_BUSY;
+		    } else if (didweget(lbuf,"CHECK OPTIONS")) { 
+			mdmstat = FAILED;
+			dialsta = DIA_ERR;
+		    } else if (didweget(lbuf,"DISCONNECTED")) { 
+			mdmstat = FAILED;
+			dialsta = DIA_DISC;
+		    } else if (didweget(lbuf,"DENIED")) {
+			mdmstat = FAILED;
+			dialsta = DIA_NOAC;
+		    }
 #ifdef DEBUG
 #ifdef ATT6300
 		    else if (deblog && didweget(lbuf,"~~"))
-			mdmstat = CONNECTED;
+		      mdmstat = CONNECTED;
 #endif /* ATT6300 */
 #endif /* DEBUG */
 		    break;
@@ -2162,7 +2437,7 @@ For Kermit Spoof (same commands for all models that support it):
 			    if (dialdpy && carrier != CAR_OFF) {
 				sleep(1); 	/* Wait a second */
 				n = ttgmdm();	/* Try to read modem signals */
-				if ((n > -1) && (n & BM_DCD == 0))
+				if ((n > -1) && ((n & BM_DCD) == 0))
 				  printf("Warning: No Carrier\n");
 			    }
 		      }
@@ -2171,6 +2446,7 @@ For Kermit Spoof (same commands for all models that support it):
 			mdmstat = CONNECTED;
                     } else if (didweget(lbuf, "INV")) {
 			mdmstat = FAILED;	/* Command error */
+			dialsta = DIA_ERR;
 			strcpy(lbuf,"INV");
 		    } else if (didweget(lbuf,"CFI")) { /* Call Failure */
 #ifdef COMMENT
@@ -2186,34 +2462,48 @@ For Kermit Spoof (same commands for all models that support it):
 			    if (lbuf[n] == CR || lbuf[n] == LF) break;
 			}
 #endif /* COMMENT */
-			if (didweget(lbuf,"AB")) /* Interpret reason code */
-			  strcpy(lbuf,"AB: Timed out");
-			else if (didweget(lbuf,"CB"))
-			  strcpy(lbuf,"CB: Local DCE Busy");
-			else if (didweget(lbuf,"ET"))
-			  strcpy(lbuf,"ET: Busy");
-			else if (didweget(lbuf, "NS"))
-			  strcpy(lbuf,"NS: Number not stored");
-			else if (didweget(lbuf,"NT"))
-			  strcpy(lbuf,"NT: No answer");
-			else if (didweget(lbuf,"RT"))
-			  strcpy(lbuf,"RT: Ring tone");
-			else if (didweget(lbuf,"PV"))
-			  strcpy(lbuf,"PV: Parameter value error");
-			else if (didweget(lbuf,"PS"))
-			  strcpy(lbuf,"PS: Parameter syntax error");
-			else if (didweget(lbuf,"MS"))
-			  strcpy(lbuf,"MS: Message syntax error");
-			else if (didweget(lbuf,"CU"))
-			  strcpy(lbuf,"CU: Command unknown");
-			else if (didweget(lbuf,"FC"))
-			  strcpy(lbuf,"FC: Forbidden call");
+			if (didweget(lbuf,"AB")) { /* Interpret reason code */
+			    strcpy(lbuf,"AB: Timed out");
+			    dialsta = DIA_TIMO;
+			} else if (didweget(lbuf,"CB")) {
+			    strcpy(lbuf,"CB: Local DCE Busy");
+			    dialsta = DIA_NRDY;
+			} else if (didweget(lbuf,"ET")) {
+			    strcpy(lbuf,"ET: Busy");
+			    dialsta = DIA_BUSY;
+			} else if (didweget(lbuf, "NS")) {
+			    strcpy(lbuf,"NS: Number not stored");
+			    dialsta = DIA_ERR;
+			} else if (didweget(lbuf,"NT")) {
+			    strcpy(lbuf,"NT: No answer");
+			    dialsta = DIA_NOAN;
+			} else if (didweget(lbuf,"RT")) {
+			    strcpy(lbuf,"RT: Ring tone");
+			    dialsta = DIA_RING;
+			} else if (didweget(lbuf,"PV")) {
+			    strcpy(lbuf,"PV: Parameter value error");
+			    dialsta = DIA_ERR;
+			} else if (didweget(lbuf,"PS")) {
+			    strcpy(lbuf,"PS: Parameter syntax error");
+			    dialsta = DIA_ERR;
+			} else if (didweget(lbuf,"MS")) {
+			    strcpy(lbuf,"MS: Message syntax error");
+			    dialsta = DIA_ERR;
+			} else if (didweget(lbuf,"CU")) {
+			    strcpy(lbuf,"CU: Command unknown");
+			    dialsta = DIA_ERR;
+			} else if (didweget(lbuf,"FC")) {
+			    strcpy(lbuf,"FC: Forbidden call");
+			    dialsta = DIA_NOAC;
+			}
 			mdmstat = FAILED;
 		    } else if (didweget(lbuf,"INC")) { /* Incoming Call */
 			strcpy(lbuf,"INC: Incoming call");
+			dialsta = DIA_RING;
 			mdmstat = FAILED;
 		    } else if (didweget(lbuf,"DLC")) { /* Delayed Call */
 			strcpy(lbuf,"DLC: Delayed call");
+			dialsta = DIA_NOAN;
 			mdmstat = FAILED;
 		    } else		/* Response was probably an echo. */
 #ifndef MINIDIAL
@@ -2230,36 +2520,52 @@ For Kermit Spoof (same commands for all models that support it):
 		  case n_CERMETEK:
 		    if (didweget(lbuf,"\016A")) {
 			mdmstat = CONNECTED;
-			ttslow("\016U 1\015",200); /* make transparent*/
+			ttslow("\016U 1\015",200); /* Make transparent*/
 		    }
 		    break;
 
 		  case n_DF100:	     /* DF100 has short response codes */
-		    if (strcmp(lbuf,"A") == 0)
+		    if (strcmp(lbuf,"A") == 0) {
 			mdmstat = CONNECTED; /* Attached */
-		    else if (strcmp(lbuf,"N") == 0 || /* No Ans or Dialtone */
-			     strcmp(lbuf,"E") == 0 || /* Error */
-			     strcmp(lbuf,"R") == 0) { /* Ready */
+			dialsta = DIA_OK;
+		    } else if (strcmp(lbuf,"N") == 0) {
 			mdmstat = FAILED;
-			break;
+			dialsta = DIA_NOAN; /* No answer or no dialtone */
+		    } else if (strcmp(lbuf,"E") == 0 ||	/* Error */
+			       strcmp(lbuf,"R") == 0) { /* "Ready" (?) */
+			mdmstat = FAILED;
+			dialsta = DIA_ERR; /* Command error */
 		    }
 		    /* otherwise fall thru... */
 
 		  case n_DF200:
-		    if (didweget(lbuf,"Attached"))
+		    if (didweget(lbuf,"Attached")) {
 			mdmstat = CONNECTED;
+			dialsta = DIA_OK;
 		    /*
 		     * The DF100 will respond with "Attached" even if DTR
 		     * and/or carrier are not present.	Another reason to
 		     * (also) wait for carrier?
 		     */
-		    else if (didweget(lbuf,"Busy") ||
-			didweget(lbuf,"Disconnected") ||
-			didweget(lbuf,"Error") ||
-			didweget(lbuf,"No answer") ||
-			didweget(lbuf,"No dial tone") ||
-			didweget(lbuf,"Speed:"))
+		    } else if (didweget(lbuf,"Busy")) {
 			mdmstat = FAILED;
+			dialsta = DIA_BUSY;
+		    } else if (didweget(lbuf,"Disconnected")) {
+			mdmstat = FAILED;
+			dialsta = DIA_DISC;
+		    } else if (didweget(lbuf,"Error")) {
+			mdmstat = FAILED;
+			dialsta = DIA_ERR;
+		    } else if (didweget(lbuf,"No answer")) {
+			mdmstat = FAILED;
+			dialsta = DIA_NOAN;
+		    } else if (didweget(lbuf,"No dial tone")) {
+			mdmstat = FAILED;
+			dialsta = DIA_NODT;
+		    } else if (didweget(lbuf,"Speed:)")) {
+			mdmstat = FAILED;
+			dialsta = DIA_ERR;
+		    }
 		    /*
 		     * It appears that the "Speed:..." response comes after an
 		     * "Attached" response, so this is never seen.  HOWEVER,
@@ -2291,10 +2597,10 @@ For Kermit Spoof (same commands for all models that support it):
 			cptr = (*s == 'C') ? s : NULL;
 			conspd = 0L;
 			if ((cptr != NULL) && !strncmp(cptr,"CONNECT ",8)) {
-			    if ((int)strlen(cptr) < 9) /* Just CONNECT, */
-			      conspd = 300L;      /* use 300 bps */
+			    if ((int)strlen(cptr) < 9)   /* Just CONNECT, */
+			      conspd = 300L;		 /* use 300 bps */
 			    else if (isdigit(*(cptr+8))) /* not CONNECT FAST */
-			      conspd = atol(cptr + 8); /* CONNECT nnnn */
+			      conspd = atol(cptr + 8);   /* CONNECT nnnn */
 			    if (conspd != speed) {
 				if ((conspd / 10L) > 0) {
 				    if (ttsspd((int) (conspd / 10L)) < 0) {
@@ -2326,30 +2632,49 @@ For Kermit Spoof (same commands for all models that support it):
 			mdmstat = 0;
 		    } else if (didweget(lbuf,"CONNECT")) {
 			mdmstat = CONNECTED;
-		    } else if (didweget(lbuf,"NO CARRIER") ||
-			didweget(lbuf,"NO DIALTONE") ||
-			didweget(lbuf,"NO DIAL TONE") ||
-			didweget(lbuf,"BUSY") ||
-			didweget(lbuf,"NO ANSWER") ||
-			didweget(lbuf,"VOICE") ||
-			didweget(lbuf,"RING") ||
-			didweget(lbuf,"ERROR")) {
+		    } else if (didweget(lbuf,"NO CARRIER")) {
 			mdmstat = FAILED;
+			dialsta = DIA_NOCA;
+		    } else if (didweget(lbuf,"NO DIALTONE")) {
+			mdmstat = FAILED;
+			dialsta = DIA_NODT;
+		    } else if (didweget(lbuf,"NO DIAL TONE")) {
+			mdmstat = FAILED;
+			dialsta = DIA_NODT;
+		    } else if (didweget(lbuf,"BUSY")) {
+			mdmstat = FAILED;
+			dialsta = DIA_BUSY;
+		    } else if (didweget(lbuf,"NO ANSWER")) {
+			mdmstat = FAILED;
+			dialsta = DIA_NOAN;
+		    } else if (didweget(lbuf,"VOICE")) {
+			mdmstat = FAILED;
+			dialsta = DIA_VOIC;
+		    } else if (didweget(lbuf,"RING")) {
+			mdmstat = FAILED;
+			dialsta = DIA_RING;			
+		    } else if (didweget(lbuf,"ERROR")) {
+			mdmstat = FAILED;
+			dialsta = DIA_ERR;
 		    }
 		    break;
 #ifndef MINIDIAL
 		  case n_PENRIL:
-		    if (didweget(lbuf,"OK"))
+		    if (didweget(lbuf,"OK")) {
 			mdmstat = CONNECTED;
-		    else if (didweget(lbuf,"BUSY") ||
-			didweget(lbuf,"NO RING"))
+		    } else if (didweget(lbuf,"BUSY")) { 
 			mdmstat = FAILED;
+			dialsta = DIA_BUSY;
+		    } else if (didweget(lbuf,"NO RING")) {
+			mdmstat = FAILED;
+			dialsta = DIA_NOCA;
+		    }
 		    break;
 		  case n_RACAL:
 		    if (didweget(lbuf,"ON LINE"))
-			mdmstat = CONNECTED;
+		      mdmstat = CONNECTED;
 		    else if (didweget(lbuf,"FAILED CALL"))
-			mdmstat = FAILED;
+		      mdmstat = FAILED;
 		    break;
 		  case n_ROLM:
 		    if (didweget(lbuf,"CALLING"))
@@ -2357,43 +2682,69 @@ For Kermit Spoof (same commands for all models that support it):
 		    else if (didweget(lbuf,"COMPLETE"))
 			mdmstat = CONNECTED;
 		    else if (didweget(lbuf,"FAILED") ||
-			didweget(lbuf,"NOT AVAILABLE") ||
-			didweget(lbuf,"LACKS PERMISSION") ||
-			didweget(lbuf,"NOT A DATALINE") ||
-			didweget(lbuf,"INVALID GROUP NAME") ||
-			didweget(lbuf,"BUSY") ||
-			didweget(lbuf,"ABANDONDED") ||
-			didweget(lbuf,"DOES NOT ANSWER") ||
-			didweget(lbuf,"INVALID DATA LINE NUMBER"))
+			     didweget(lbuf,"ABANDONDED")) {
 			mdmstat = FAILED;
+			dialsta = DIA_NOCA;
+		    } else if (didweget(lbuf,"NOT AVAILABLE") ||
+			       didweget(lbuf,"LACKS PERMISSION") ||
+			       didweget(lbuf,"NOT A DATALINE") ||
+			       didweget(lbuf,"INVALID DATA LINE NUMBER") ||
+			       didweget(lbuf,"INVALID GROUP NAME")) {
+			mdmstat = FAILED;
+			dialsta = DIA_NOAC;
+		    } else if (didweget(lbuf,"BUSY")) {
+			mdmstat = FAILED;
+			dialsta = DIA_BUSY;
+		    } else if (didweget(lbuf,"DOES NOT ANSWER")) { 
+			mdmstat = FAILED;
+			dialsta = DIA_NOAN;
+		    }
 		    break;
 		  case n_VENTEL:
 		    if (didweget(lbuf,"ONLINE!") ||
-			didweget(lbuf,"Online!"))
+			didweget(lbuf,"Online!")) {
 			mdmstat = CONNECTED;
-		    else if (didweget(lbuf,"BUSY") ||
-			didweget(lbuf,"DEAD PHONE") ||
-			didweget(lbuf,"Busy"))
+		    } else if (didweget(lbuf,"BUSY") ||
+			       didweget(lbuf,"Busy")) {
 			mdmstat = FAILED;
+			dialsta = DIA_BUSY;
+		    } else if (didweget(lbuf,"DEAD PHONE")) {
+			mdmstat = FAILED;
+			dialsta = DIA_DISC;
+		    }
 		    break;
 		  case n_CONCORD:
 		    if (didweget(lbuf,"INITIATING"))
 			mdmstat = CONNECTED;
-		    else if (didweget(lbuf,"BUSY") ||
-			didweget(lbuf,"CALL FAILED"))
+		    else if (didweget(lbuf,"BUSY")) { 
+			mdmstat = FAILED;			
+			dialsta = DIA_BUSY;
+		    } else if (didweget(lbuf,"CALL FAILED")) {
 			mdmstat = FAILED;
+			dialsta = DIA_NOCA;
+		    }
 		    break;
 		  case n_MICROCOM:
 		    /* "RINGBACK" means phone line ringing, continue */
-		    if (didweget(lbuf,"NO CONNECT") ||
-			didweget(lbuf,"BUSY") ||
-			didweget(lbuf,"NO DIALTONE") ||
-			didweget(lbuf,"COMMAND ERROR") ||
-			didweget(lbuf,"IN USE"))
+		    if (didweget(lbuf,"NO CONNECT")) { 
 			mdmstat = FAILED;
-		    else if (didweget(lbuf,"CONNECT"))
+			dialsta = DIA_NOCA;
+		    } else if (didweget(lbuf,"BUSY")) { 
+			mdmstat = FAILED;
+			dialsta = DIA_BUSY;
+		    } else if (didweget(lbuf,"NO DIALTONE")) { 
+			mdmstat = FAILED;
+			dialsta = DIA_NODT;
+		    } else if (didweget(lbuf,"COMMAND ERROR")) { 
+			mdmstat = FAILED;
+			dialsta = DIA_ERR;
+		    } else if (didweget(lbuf,"IN USE")) {
+			mdmstat = FAILED;
+			dialsta = DIA_NOAC;
+		    } else if (didweget(lbuf,"CONNECT")) {
 			mdmstat = CONNECTED;
 			/* trailing speed ignored */
+		    }
 		    break;
 #endif /* MINIDIAL */
 		}
@@ -2527,14 +2878,17 @@ For Kermit Spoof (same commands for all models that support it):
 		  case 2:		/* RING */
 		    if (dialdpy) printf("\r\n Local phone is ringing!\r\n");
 		    mdmstat = FAILED;
+		    dialsta = DIA_RING;
 		    break;
 		  case 3:		/* NO CARRIER */
 		    if (dialdpy) printf("\r\n No Carrier.\r\n");
 		    mdmstat = FAILED;
+		    dialsta = DIA_NOCA;
 		    break;
 		  case 4:		/* ERROR */
 		    if (dialdpy) printf("\r\n Modem Command Error.\r\n");
 		    mdmstat = FAILED;
+		    dialsta = DIA_ERR;
 		    break;
 		  case 5:		/* CONNECT 1200 */
 		    spdchg(1200L);	/* Change speed if necessary. */
@@ -2543,14 +2897,17 @@ For Kermit Spoof (same commands for all models that support it):
 		  case 6:		/* NO DIALTONE */
 		    if (dialdpy) printf("\r\n No Dialtone.\r\n");
 		    mdmstat = FAILED;
+		    dialsta = DIA_NODT;
 		    break;
 		  case 7:		/* BUSY */
 		    if (dialdpy) printf("\r\n Busy.\r\n");
 		    mdmstat = FAILED;
+		    dialsta = DIA_BUSY;
 		    break;
 		  case 8:		/* NO ANSWER */
 		    if (dialdpy) printf("\r\n No Answer.\r\n");
 		    mdmstat = FAILED;
+		    dialsta = DIA_NOAN;
 		    break;
 		  case 9:		/* CONNECT 2400 */
 		  case 10:
@@ -2626,6 +2983,7 @@ For Kermit Spoof (same commands for all models that support it):
 		    if (mymdmtyp == n_TELEBIT) {
 			if (dialdpy) printf("\r\n No Prompttone.\r\n");
 			mdmstat = FAILED;
+			dialsta = DIA_NODT;
 		    }
 		    break;
 		  case 61:		/* Various Telebit PEP modes */
@@ -2679,23 +3037,34 @@ For Kermit Spoof (same commands for all models that support it):
     }					/* while (mdmstat == 0) */
     x = alarm(0);			/* Turn off alarm. */
     debug(F101,"ckdial alarm off","",x);
-    if ( mdmstat != CONNECTED ) {	/* Modem-detected failure */
-	n1 = F_modem;
-	longjmp( sjbuf, F_modem );	/* Exit (with reason in lbuf) */
-    }
+    if ( mdmstat != CONNECTED )		/* Failure detected by modem  */
+      return(dialfail(F_MODEM));
+
     msleep(1000);			/* In case DTR blinks  */
-    alarm(3);				/* Precaution in case of trouble */
-    debug(F110,"dial","succeeded",0);
+    debug(F100,"dial succeeded","",0);
+    if (
 #ifndef MINIDIAL
-    if (augmdmtyp != n_ROLM)		/* Rolm has wierd modem signaling */
+	augmdmtyp != n_ROLM		/* Rolm has weird modem signaling */
+#else
+	1
 #endif /* MINIDIAL */
-      ttpkt(speed,FLO_DIAX,parity);	/* Cancel dialing state ioctl */
-    dreset();				/* Reset alarms, etc. */
+	) {
+	alarm(3);			/* In case ttpkt() gets stuck... */
+	ttpkt(speed,FLO_DIAX,parity);	/* Cancel dialing state ioctl */
+    }
+    dreset();				/* Reset alarms and signals. */
     if (!quiet && !backgrd)
+    if (dialdpy) {			/* If DIAL DISPLAY ON, */
+	p = ck_time();			/* include timestamp.  */
+	if (*p) printf(" Call complete: %s.\07\n",p);
+    } else
       printf (" Call complete.\07\n");
 #ifdef DYNAMIC
-    if (lbuf) free(lbuf);
+    if (lbuf) free(lbuf); lbuf = NULL;
+    if (rbuf) free(rbuf); rbuf = NULL;
+    if (fbuf) free(fbuf); fbuf = NULL;
 #endif /* DYNAMIC */
+    dialsta = DIA_OK;
     return(1);				/* Return successfully */
 }
 
@@ -2715,26 +3084,53 @@ For Kermit Spoof (same commands for all models that support it):
    1 if it succeeded,
   -1 on modem command, i/o, or other error.
 */
-static jmp_buf okbuf;			/* Jump-buf for getok(). */
+#ifdef CK_POSIX_SIG			/* Jump-buf for getok(). */
+static sigjmp_buf okbuf;
+#else
+static jmp_buf okbuf;
+#endif /* CK_POSIX_SIG */
 
-SIGTYP
+static SIGTYP
 oktimo(foo) int foo; {			/* Alarm handler for getok(). */
 #ifdef OSK				/* OS-9, see comment in dialtime(). */
     sigmask(-1);
 #endif /* OSK */
+#ifdef CK_POSIX_SIG
+    siglongjmp(okbuf,1);
+#else
     longjmp(okbuf,1);
+#endif /* CK_POSIX_SIG */
 }
 
-int
+static int
 getok(n, strict) int n, strict; {
     CHAR c;
     int i, x, status, oldalarm;
     SIGTYP (*saval)();			/* For saving alarm handler locally */
 
+    debug(F101,"getok entry n","",n);
+
+#ifdef DYNAMIC
+    if (!rbuf) {
+	if (!(rbuf = malloc(RBUFL+1))) { /* Allocate input line buffer */
+	    dialsta = DIA_IE;
+	    return(-1);
+	}
+	debug(F101,"GETOK rbuf malloc ok","",RBUFL+1);
+    }
+#endif /* DYNAMIC */
+
     mdmecho = 0;			/* Assume no echoing of commands */
     saval = signal(SIGALRM,oktimo);	/* Set response timer, */
     oldalarm = alarm(n);		/* saving old one. */
-    if (setjmp(okbuf)) {		/* Timed out. */
+    debug(F101,"getok alarm ok","",oldalarm);
+    if (
+#ifdef CK_POSIX_SIG
+	sigsetjmp(okbuf,1)
+#else
+	setjmp(okbuf)
+#endif /* CK_POSIX_SIG */
+	) {		/* Timed out. */
 	alarm(oldalarm);		/* Restore old alarm */
  	if (saval) signal(SIGALRM,saval); /* and alarm handler */
 	debug(F100,"getok timeout","",0);
@@ -2754,8 +3150,9 @@ getok(n, strict) int n, strict; {
 	for (x = 0; x < RBUFL; x++)	/* Initialize response buffer */
 	  rbuf[x] = SP;			/*  to all spaces */
 	rbuf[RBUFL] = NUL;		/* and terminate with NUL. */
+	debug(F100,"getok rbuf init ok","",0);
 	while (status == 0) {		/* While no status... */
-	    x = ddinc(0);		/* Read a character */
+	    x = ddinc(n);		/* Read a character */
 	    if (x < 0) {		/* I/O error */
 		alarm(oldalarm);	/* Turn off alarm */
 		if (saval) signal(SIGALRM,saval); /* and restore handler. */
@@ -2781,7 +3178,15 @@ getok(n, strict) int n, strict; {
 		    }
 		    break;
 		  case '4':		/* 4 = ERROR numeric response */
-		    if (!strict ||
+#ifndef MINIDIAL
+		    /* Or Telebit model number 964! */
+		    if (mymdmtyp == n_TELEBIT &&
+			isdigit(rbuf[RBUFL-3]) &&
+			isdigit(rbuf[RBUFL-4]))
+		      break;
+		    else
+#endif /* MINIDIAL */
+		      if (!strict ||
 			rbuf[RBUFL-3] == CR || rbuf[RBUFL-3] == SP) {
 			augmdmtyp |= DIAL_NV; /* OR in the nonverbal bit. */
 			status = -1;	/* Bad command */
@@ -2795,7 +3200,7 @@ getok(n, strict) int n, strict; {
 		/*
 		  Note use of explicit octal codes in the string for
 		  CR and LF.  We want real CR and LF here, not whatever
-		  the compiler happens to define \r and \n as...
+		  the compiler happens to replace \r and \n with...
 		*/
 		if (!strcmp(rbuf+RBUFL-4,"OK\015\012")) /* Good response */
 		  status = 1;
@@ -2877,6 +3282,7 @@ mdmhup() {
 #ifdef MDMHUP
     MDMINF *p;				/* Modem info structure pointer */
     int m, x = 0;
+    int xparity;
 
     if (dialmhu == 0 || local == 0)	/* If DIAL MODEM-HANGUP is OFF, */
       return(0);			/*  or not in local mode, fail. */
@@ -2906,44 +3312,48 @@ mdmhup() {
 	if (p->esc_str && *(p->esc_str)) { /* Have escape sequence? */
 	    debug(F110,"mdmhup esc_str",p->esc_str,0);
 	    debug(F101,"mdmhup esc_time","",p->esc_time);
-	    if (ttpkt(speed,FLO_DIAL,parity) < 0) /* Condition line */
-	      return(-1);		/*  for dialing. */
+	    xparity = parity;		/* Set PARITY to NONE temporarily */
+	    parity = 0;
+	    if (ttpkt(speed,FLO_DIAL,parity) < 0) { /* Condition line */
+		parity = xparity;
+		return(-1);		/*  for dialing. */
+	    }
 	    if (p->esc_time)		/* If we have a guard time */
 	      msleep(p->esc_time);	/* Pause for guard time */
+	    debug(F100,"mdmhup pause 1 OK","",0);
 #ifdef NETCONN
 	    /* Send modem's escape sequence */
 	    if (network) {		/* Must catch errors here. */
-		if (ttol((CHAR *)(p->esc_str),(int)strlen(p->esc_str)) < 0)
-		  return(-1);
+		if (ttol((CHAR *)(p->esc_str),(int)strlen(p->esc_str)) < 0) {
+		    parity = xparity;
+		    return(-1);
+		}
 	    } else {
 		ttslow(p->esc_str,p->wake_rate); /* Send escape sequence */
+		debug(F110,"mdmhup ttslow ok",p->esc_str,0);
 	    }
 #else
 	    ttslow(p->esc_str,p->wake_rate); /* Send escape sequence */
+	    debug(F110,"mdmhup ttslow ok",p->esc_str,0);
 #endif /* NETCONN */
 	    if (p->esc_time)		/* Pause for guard time again */
 	      msleep(p->esc_time);
 	    msleep(500);		/* Wait half a sec for echoes. */
+	    debug(F100,"mdmhup pause 1 OK","",0);
 	    ttflui();			/* Flush response or echo, if any */
+	    debug(F100,"mdmhup ttflui OK","",0);
 	}
-#ifdef NETCONN
-	    /* Send modem's hangup command */
-	    if (network) {		/* Must catch errors here. */
-		if (ttol((CHAR *)(p->hup_str),(int)strlen(p->hup_str)) < 0)
-		  return(-1);
-	    } else {
-		ttslow(p->hup_str,p->wake_rate);
-	    }
-#else
 	ttslow(p->hup_str,p->wake_rate); /* Now Send hangup string */
-#endif /* NETCONN */
+	debug(F110,"mdmhup ttslow ok",p->hup_str,0);
 	if (p->ok_fn) {			/* Look for OK response */
+	    debug(F100,"mdmhup calling response function","",0);
 	    x = (*(p->ok_fn))(3,1);	/* Give it 3 seconds, be strict. */
 	    debug(F101,"mdmhup hangup response","",x);
 	} else {			/* No OK function, */
 	    x = 1;			/* so assume it worked */
 	    debug(F101,"mdmhup no ok_fn","",x);
 	}
+	parity = xparity;		/* Restore prevailing parity */
 	return(x);			/* Return OK function's return code. */
     }
 #else					/* MDMHUP not defined. */
@@ -2954,19 +3364,21 @@ mdmhup() {
 char *					/* Let external routines ask */
 getdws(mdmtyp) int mdmtyp; {		/* about dial init-string. */
     MDMINF * p;
+    if (dialini) return(dialini);
     if ((mdmtyp & 0xff) < 1 || (mdmtyp & 0xff) > MAX_MDM)
       return("");
     p = ptrtab[(mdmtyp & 0xff) -1];
-    return(dialini ? dialini : p->wake_str);
+    return(p->wake_str);
 }
 
 char *
 getdcs(mdmtyp) int mdmtyp; {		/* Same deal for dial-command */
     MDMINF * p;
+    if (dialcmd) return(dialcmd);
     if ((mdmtyp & 0xff) < 1 || (mdmtyp & 0xff) > MAX_MDM)
       return("");
     p = ptrtab[(mdmtyp & 0xff) -1];
-    return(dialcmd ? dialcmd : p->dial_str);
+    return(p->dial_str);
 }
 
 #else /* NODIAL */
@@ -2979,3 +3391,4 @@ mdmhup() {				/* call mdmhup(), so calls to  */
 }					/* #ifndef NODIAL conditionals */
 
 #endif /* NODIAL */
+#endif /* NOLOCAL */

@@ -10,8 +10,14 @@
   retained.  This software may not be included in commercial products without
   written permission of Columbia University.
 */
+#include "ckcsym.h"
 #include <stdio.h>
 #include "ckcdeb.h"
+
+#ifdef COHERENT
+FILE * fdopen();
+#endif /* COHERENT */
+
 /*
   memdebug:
   variable to control memory debugging.

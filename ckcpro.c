@@ -6,24 +6,27 @@
 /* Wart Version Info: */
 char *wartv = "Wart Version 2A(009) 14 Jan 92";
 
-char *protv = "C-Kermit Protocol Module 5A(052), 17 Feb 93"; /* -*-C-*- */
+char *protv = "C-Kermit Protocol Module 5A(072), 18 Sep 94"; /* -*-C-*- */
 
 /* C K C P R O  -- C-Kermit Protocol Module, in Wart preprocessor notation. */
 /*
   Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
-  Columbia University Center for Computing Activities.
-  First released January 1985.
-  Copyright (C) 1985, 1992, Trustees of Columbia University in the City of New
-  York.  Permission is granted to any individual or institution to use this
-  software as long as it is not sold for profit.  This copyright notice must be
-  retained.  This software may not be included in commercial products without
-  written permission of Columbia University.
+  Columbia University Academic Information Systems, New York City.
+
+  Copyright (C) 1985, 1994, Trustees of Columbia University in the City of New
+  York.  The C-Kermit software may not be, in whole or in part, licensed or
+  sold for profit as a software product itself, nor may it be included in or
+  distributed with commercial products or otherwise distributed by commercial
+  concerns to their clients or customers without written permission of the
+  Office of Kermit Development and Distribution, Columbia University.  This
+  copyright notice must not be removed, altered, or obscured.
 */
+#include "ckcsym.h"
 #include "ckcdeb.h"
 #include "ckcasc.h"
 #include "ckcker.h"
 /*
- Note -- This file may also be preprocessed by the Unix Lex program, but 
+ Note -- This file may also be preprocessed by the UNIX Lex program, but 
  you must indent the above #include statements before using Lex, and then
  restore them to the left margin in the resulting C program before compilation.
  Also, the invocation of the "wart()" function below must be replaced by an
@@ -48,26 +51,46 @@ char *protv = "C-Kermit Protocol Module 5A(052), 17 Feb 93"; /* -*-C-*- */
 #define rgen 14
 
 /* External C-Kermit variable declarations */
-  extern char *versio, *srvtxt, *cmarg, *cmarg2, **cmlist;
+  extern char *versio, *srvtxt, *cmarg, *cmarg2, **cmlist, *rf_err;
   extern char filnam[], ttname[];
-  extern CHAR sstate, *rpar(), encbuf[], *srvptr, *data;
+  extern CHAR sstate, *rpar(), *srvptr, *data;
   extern int timint, rtimo, nfils, hcflg, xflg, flow, mdmtyp, network;
+  extern int rejection;
+#ifdef NETCONN
+#ifdef CK_SPEED
+  extern int ttnproto;			/* Network protocol */
+  extern short ctlp[];			/* Control-character prefix table */
+#endif /* CK_SPEED */
+#endif /* NETCONN */
   extern int cxseen, czseen, server, srvdis, local, displa, bctu, bctr, bctl;
   extern int quiet, tsecs, parity, backgrd, nakstate, atcapu, wslotn, winlo;
   extern int wslots, success, xitsta, rprintf, discard, cdtimo, keep, fdispla;
-  extern int timef;
+  extern int timef, stdinf, rscapu, sendmode, epktflg;
+  extern int binary, bsave, bsavef, savmod, fncnv;
   extern long speed, ffc;
   extern char *DIRCMD, *DIRCM2, *DELCMD, *TYPCMD, *SPACMD, *SPACM2, *WHOCMD;
   extern CHAR *rdatap;
   extern struct zattr iattr;
+
+#ifdef pdp11
+  extern CHAR srvcmd[];
+  extern CHAR *pktmsg;
+#else
 #ifdef DYNAMIC
   extern CHAR *srvcmd;
+  extern CHAR *pktmsg;
 #else
   extern CHAR srvcmd[];
+  extern CHAR pktmsg[];
 #endif /* DYNAMIC */
+#endif /* pdp11 */
 
 #ifndef NOSPL
   extern int cmdlvl;
+  char querybuf[QBUFL+1] = { NUL, NUL }; /* QUERY response buffer */
+  char *qbufp = querybuf;		/* Pointer to it */
+  int qbufn = 0;			/* Length of data in it */
+  extern int query;			/* Query-active flag */
 #else
   extern int tlevel;
 #endif /* NOSPL */
@@ -80,10 +103,14 @@ char *protv = "C-Kermit Protocol Module 5A(052), 17 Feb 93"; /* -*-C-*- */
 extern int
   en_cwd, en_del, en_dir, en_fin, en_get, en_bye,
   en_hos, en_sen, en_spa, en_set, en_typ, en_who;
+#ifndef NOSPL
+extern int en_asg, en_que;
+#endif /* NOSPL */
 
 /* Global variables declared here */
 
-  int what = W_NOTHING;			/* What we're doing */
+  int what = W_NOTHING;			/* What I am doing */
+  int whatru = 0;			/* What are you */
 
 /* Local variables */
 
@@ -97,7 +124,11 @@ extern int
 /* BEGIN is NOT a GOTO! */
 #define TINIT  if (tinit() < 0) return(-9)
 #define SERVE  TINIT; nakstate = 1; what = W_NOTHING; cmarg2 = ""; BEGIN serve
-#define RESUME if (server) { SERVE; } else { sleep(2); return(0); }
+#ifdef COMMENT
+#define RESUME if (server) {SERVE;} else { if(!local)msleep(100); return(0); }
+#else
+#define RESUME if (server) { SERVE; } else { return(0); }
+#endif /* COMMENT */
 #define QUIT x=quiet; quiet=1; clsif(); clsof(1); tsecs=gtimer(); quiet=x; \
  return(1)
 
@@ -118,32 +149,79 @@ wart()
 	    switch(actno) {
 case 1:
     { TINIT;				/* Do Send command */
-    if (sinit()) BEGIN ssinit;
+    if (sinit() >= 0) BEGIN ssinit;
        else RESUME; }
     break;
 case 2:
     { TINIT; nakstate = 1; BEGIN get; }
     break;
 case 3:
-    { TINIT; vstate = get;  vcmd = 0;   sipkt('I'); BEGIN ipkt; }
+    {					/* Get */
+    TINIT;
+    vstate = get;
+    vcmd = 0;
+    if (sipkt('I') >= 0)
+      BEGIN ipkt;
+    else
+      RESUME;
+}
     break;
 case 4:
-    { TINIT; vstate = rgen; vcmd = 'C'; sipkt('I'); BEGIN ipkt; }
+    {					/* Host */
+    TINIT;
+    vstate = rgen;
+    vcmd = 'C';
+    if (sipkt('I') >= 0)
+      BEGIN ipkt;
+    else
+      RESUME;
+}
     break;
 case 5:
-    { TINIT; vstate = rgen; vcmd = 'K'; sipkt('I'); BEGIN ipkt; }
+    { TINIT;				/* Kermit */
+    vstate = rgen;
+    vcmd = 'K';
+    if (sipkt('I') >= 0)
+      BEGIN ipkt;
+    else
+      RESUME;
+}
     break;
 case 6:
-    { TINIT; vstate = rgen; vcmd = 'G'; sipkt('I'); BEGIN ipkt; }
+    {					/* Generic */
+    TINIT;
+    vstate = rgen;
+    vcmd = 'G';
+    if (sipkt('I') >= 0)
+      BEGIN ipkt;
+    else
+      RESUME;
+}
     break;
 case 7:
-    { sleep(1); SERVE; }
+    { SERVE; }
     break;
 case 8:
-    { if (!data) TINIT;			/* "ABEND" -- Tell other side. */
-    errpkt((CHAR *)"User cancelled");
+    {
+    int b1, b2;
+    if (!data) TINIT;			/* "ABEND" -- Tell other side. */
+#ifndef pdp11
+    if (epktflg) {			/* If because of E-PACKET command */
+	b1 = bctl; b2 = bctu;		/* Save block check type */
+	bctl = bctu = 1;		/* set it to 1 */
+    }
+#endif /* pdp11 */
+    errpkt((CHAR *)"User cancelled");	/* Send the packet */
+#ifndef pdp11
+    if (epktflg) {			/* Restore the block check */
+	epktflg = 0;
+	bctl = b1; bctu = b2;
+    }
+    screen(SCR_EM,0,0L,"User cancelled");
+#endif /* pdp11 */
     success = 0;
-    return(0); }
+    return(0);				/* Return from protocol. */
+}
     break;
 case 9:
     {			/* Receive Send-Init packet. */
@@ -164,42 +242,51 @@ case 9:
     break;
 case 10:
     {				/* Get ack for I-packet */
+    int x = 0;
     spar(rdatap);			/* Set parameters */
-#ifdef COMMENT
-    getsbuf(winlo = 0);			/* Set window-low back to zero */
-#else
-    winlo = 0;
-#endif /* COMMENT */
+    winlo = 0;				/* Set window-low back to zero */
     if (vcmd) {				/* If sending a generic command */
-	scmd(vcmd,(CHAR *)cmarg);	/* Do that */
+	x = scmd(vcmd,(CHAR *)cmarg);	/* Do that */
 	vcmd = 0;			/* and then un-remember it. */
-    } else if (vstate == get) srinit();	/* If sending GET command, do that. */
-    rtimer();				/* Reset the elapsed seconds timer. */
-    winlo = 0;				/* Window back to 0, again. */
-    nakstate = 1;			/* Can send NAKs from here. */
-    BEGIN vstate;			/* Switch to desired state */
+    } else if (vstate == get)
+      x = srinit();			/* If sending GET command, do that. */
+    if (x < 0) {			/* If command was too long */
+	errpkt((CHAR *)"Command too long for server"); /* cancel both sides. */
+	ermsg("Command too long for server");
+	success = 0;
+	RESUME;
+    } else {
+	rtimer();			/* Reset the elapsed seconds timer. */
+	winlo = 0;			/* Window back to 0, again. */
+	nakstate = 1;			/* Can send NAKs from here. */
+	BEGIN vstate;			/* Switch to desired state */
+    }
 }
     break;
 case 11:
     {				/* Ignore Error reply to I packet */
-#ifdef COMMENT
-    getsbuf(winlo = 0);			/* Set window-low back to zero */
-#else
-    winlo = 0;
-#endif /* COMMENT */
+    int x = 0;
+    winlo = 0;				/* Set window-low back to zero */
     if (vcmd) {				/* In case other Kermit doesn't */
-	scmd(vcmd,(CHAR *)cmarg);	/* understand I-packets. */
+	x = scmd(vcmd,(CHAR *)cmarg);	/* understand I-packets. */
 	vcmd = 0;			/* Otherwise act as above... */
-    } else if (vstate == get) srinit();
-    winlo = 0;				/* Back to packet 0 again. */
-    freerpkt(winlo);			/* Discard the Error packet. */
-    nakstate = 1;			/* Can send NAKs from here. */
-    BEGIN vstate;
+    } else if (vstate == get) x = srinit();
+    if (x < 0) {			/* If command was too long */
+	errpkt((CHAR *)"Command too long for server"); /* cancel both sides. */
+	ermsg("Command too long for server");
+	success = 0;
+	RESUME;
+    } else {
+	winlo = 0;			/* Back to packet 0 again. */
+	freerpkt(winlo);		/* Discard the Error packet. */
+	nakstate = 1;			/* Can send NAKs from here. */
+	BEGIN vstate;
+    }
 }
     break;
 case 12:
     {		/* Resend of previous I-pkt ACK, same seq number! */
-    srinit();
+    srinit();				/* Send the GET packet again. */
 }
     break;
 case 13:
@@ -216,6 +303,21 @@ case 14:
 	errpkt((CHAR *)"GET disabled");
 	SERVE;
     } else {				/* OK to go ahead. */
+#ifdef WHATAMI
+	if (whatru & WM_FLAG) {		/* Did we get WHATAMI info? */
+#ifdef VMS
+	    if (binary != XYFT_I && binary != XYFT_L)
+#else
+#ifdef OS2
+	    if (binary != XYFT_L)
+#endif /* OS2 */
+#endif /* VMS */
+	    binary = (whatru & WM_FMODE) ?  /* Yes, set transfer mode */
+	      XYFT_B : XYFT_T;		    /* automatically */
+	    bsave = bsavef = savmod = 0;
+	    fncnv = (whatru & WM_FNAME) ? 1 : 0; /* And name conversion */
+	}
+#endif /* WHATAMI */
 	srvptr = srvcmd;		/* Point to server command buffer */
 	decode(rdatap,putsrv,0);	/* Decode the GET command into it */
 	/* Accept multiple filespecs */
@@ -227,7 +329,7 @@ case 14:
 	nfils = 0 - zxpand((char *)srvcmd);
 #endif /* NOMSEND */
 	nakstate = 0;			/* Now I'm the sender! */
-	if (sinit()) {			/* Send Send-Init */
+	if (sinit() >= 0) {		/* Send Send-Init */
 	    timint = chktimo(rtimo,timef); /* Switch to per-packet timer */
 	    BEGIN ssinit;		/* If successful, switch state */
 	} else { SERVE; }		/* Else back to server command wait */
@@ -293,8 +395,12 @@ case 18:
     break;
 case 19:
     {				/* Any other command in this state */
-    errpkt((CHAR *)"Unimplemented server function"); /* we don't know about */
-    SERVE;				/* back to server command wait */
+    if (c != ('E' - SP) && c != ('Y' - SP)) /* except E and Y packets. */
+      errpkt((CHAR *)"Unimplemented server function");
+    /* If we answer an E with an E, we get an infinite loop. */
+    /* A Y (ACK) can show up here if we sent back a short-form reply to */
+    /* a G packet and it was echoed.  ACKs can be safely ignored here. */
+    SERVE;				/* Go back to server command wait. */
 }
     break;
 case 20:
@@ -309,6 +415,18 @@ case 20:
 }
     break;
 case 21:
+    {				/* Got REMOTE PWD command */
+    if (!en_cwd) {
+	errpkt((CHAR *)"REMOTE CD disabled");
+	SERVE;
+    } else {
+	if (encstr((CHAR *)zgtdir()) > -1) /* Get & encode current directory */
+	  ack1(data);			/* If it fits, send it back in ACK */
+	SERVE;				/* Back to server command wait */
+    }
+}
+    break;
+case 22:
     {				/* REMOTE DIRECTORY command */
     char *n2;
     if (!en_dir) {			/* If DIR is disabled, */
@@ -334,7 +452,7 @@ case 21:
     }
 }
     break;
-case 22:
+case 23:
     {				/* REMOTE DELETE (Erase) command */
     char *n2;
     if (!en_del) {
@@ -359,19 +477,19 @@ case 22:
     }
 }
     break;
-case 23:
+case 24:
     {				/* FINISH */
     if (!en_fin) {
 	errpkt((CHAR *)"FINISH disabled");    
 	SERVE;
     } else {
 	ack();				/* Acknowledge */
-	screen(SCR_TC,0,0l,"");		/* Display */
+	screen(SCR_TC,0,0L,"");		/* Display */
 	return(0);			/* Done */
     }
 }
     break;
-case 24:
+case 25:
     {				/* BYE (LOGOUT) */
     if (!en_bye) {
 	errpkt((CHAR *)"BYE disabled");    
@@ -379,22 +497,27 @@ case 24:
     } else {
 	ack();				/* Acknowledge */
 	ttres();			/* Reset the terminal */
-	screen(SCR_TC,0,0l,"");		/* Display */
+	screen(SCR_TC,0,0L,"");		/* Display */
 	doclean();			/* Clean up files, etc */
+#ifdef DEBUG
+	debug(F100,"C-Kermit BYE","",0);
+	zclose(ZDFILE);
+#endif /* DEBUG */
 	return(zkself());		/* Try to log self out */
     }
 }
     break;
-case 25:
+case 26:
     {				/* REMOTE HELP */
-    if (sndhlp()) BEGIN ssinit;		/* Try to send it */
+    extern char * hlptxt;
+    if (sndhlp(hlptxt)) BEGIN ssinit;	/* Try to send it */
     else {				/* If not ok, */
 	errpkt((CHAR *)"Can't send help"); /* send error message instead */
 	SERVE;				/* and return to server command wait */
     }
 }
     break;
-case 26:
+case 27:
     {				/* REMOTE SET */
     if (!en_set) {
 	errpkt((CHAR *)"REMOTE SET disabled");
@@ -408,7 +531,7 @@ case 26:
     }
 }
     break;
-case 27:
+case 28:
     {				/* REMOTE TYPE */
     char *n2;
     if (!en_typ) {
@@ -433,16 +556,16 @@ case 27:
     }
 }
     break;
-case 28:
+case 29:
     {				/* REMOTE SPACE */
     if (!en_spa) {
 	errpkt((CHAR *)"REMOTE SPACE disabled");
 	SERVE;
     } else {
-	x = *(srvcmd+1);		/* Get area to check */
+	x = srvcmd[1];			/* Get area to check */
 	x = ((x == '\0') || (x == SP)
 #ifdef OS2
-	     || (x == '!')
+	     || (x == '!') || (srvcmd[3] == ':')
 #endif /* OS2 */
 	     );
 	if (!x && !en_cwd) {		/* If CWD disabled and they gave */
@@ -470,7 +593,7 @@ _PROTOTYP(int sndspace,(int));
     }
 }
     break;
-case 29:
+case 30:
     {				/* REMOTE WHO */
     if (!en_who) {
 	errpkt((CHAR *)"REMOTE WHO disabled");
@@ -485,7 +608,86 @@ case 29:
     }
 }
     break;
-case 30:
+case 31:
+    {				/* Variable query or set */
+#ifndef NOSPL
+_PROTOTYP( int addmac, (char *, char *) );
+_PROTOTYP( int zzstring, (char *, char **, int *) );
+    char c;
+    c = *(srvcmd+2);			/* Q = Query, S = Set */
+    if (c == 'Q') {			/* Query */
+	if (!en_que) {			/* Security */
+	    errpkt((CHAR *)"REMOTE QUERY disabled");
+	    SERVE;
+	} else {			/* Query allowed */
+	    int n; char *p, *q;
+	    qbufp = querybuf;		/* Wipe out old stuff */
+	    qbufn = 0;
+	    querybuf[0] = NUL;
+	    p = (char *) srvcmd + 3;	/* Pointer for making wrapper */
+	    n = strlen((char *)srvcmd);	/* Position of end */
+	    c = *(srvcmd+4);		/* Which type of variable */
+
+	    if (*(srvcmd+6) == CMDQ) {	/* Starts with command quote? */
+		p = (char *) srvcmd + 6; /* Take it literally */
+	    } else {			/* They played by the rules */
+		*(srvcmd+3) = CMDQ;	/* Stuff wrapping into buffer */
+		*(srvcmd+5) = '(';	/* around variable name */
+		*(srvcmd+n) = ')';
+		*(srvcmd+n+1) = NUL;
+		if (c == 'K') {		/* Kermit variable */
+		    *(srvcmd+4) = 'v';	/*  so make it \v(...) */
+		} else if (c == 'S') {	/* System variable */
+		    *(srvcmd+4) = '$';	/*  so it's \$(...) */
+		} else if (c == 'G') {	/* Non-\ Global variable */
+		    *(srvcmd+4) = 'm';	/*  so wrap it in \m(...) */
+		}
+	    }				/* Now evaluate it */
+	    n = QBUFL;			/* Max length */
+	    q = querybuf;		/* Where to put it */
+	    if (zzstring(p,&q,&n) < 0) {
+		errpkt((n > 0) ? (CHAR *)"Can't get value"
+		               : (CHAR *)"Value too long"
+		       );
+		SERVE;
+	    } else {
+		if (encstr((CHAR *)querybuf) > -1) { /* Encode it */
+		    ack1(data);		/* If it fits, send it back in ACK */
+		    SERVE;
+		} else if (sndhlp(querybuf)) { /* Long form response */
+		    BEGIN ssinit;
+		} else {		/* sndhlp() fails */
+		    errpkt((CHAR *)"Can't send value");
+		    SERVE;
+		}
+	    }
+	}
+    } else if (c == 'S') {		/* Set (assign) */
+	if (!en_asg) {			/* Security */
+	    errpkt((CHAR *)"REMOTE ASSIGN disabled");
+	    SERVE;
+	} else {			/* OK */
+	    int n;
+	    n = xunchar(*(srvcmd+3));	/* Length of name */
+	    n = 3 + n + 1;		/* Position of length of value */
+	    *(srvcmd+n) = NUL;		/* Don't need it */
+	    if (addmac((char *)(srvcmd+4),(char *)(srvcmd+n+1)) < 0)
+	      errpkt((CHAR *)"REMOTE ASSIGN failed");
+	    else
+	      ack();
+	    SERVE;
+	}
+    } else {
+	errpkt((CHAR *)"Badly formed server command");
+	SERVE;
+    }
+#else
+    errpkt((CHAR *)"Variable query/set not available");
+    SERVE;
+#endif /* NOSPL */
+}
+    break;
+case 32:
     {
     if (!en_fin) {			/* Ctrl-C typed */
 	errpkt((CHAR *)"QUIT disabled");
@@ -495,28 +697,38 @@ case 30:
     }
 }
     break;
-case 31:
+case 33:
     {				/* Anything else in this state... */
     errpkt((CHAR *)"Unimplemented REMOTE command"); /* Complain */
     SERVE;				/* and return to server command wait */
 }
     break;
-case 32:
+case 34:
     {				/* Short-Form reply */
-    decode(rdatap,puttrm,0);		/* in ACK Data field */
-    if (rdatap && *rdatap) conoll("");	/* Maybe add a CRLF */
+#ifndef NOSPL
+    if (query) {			/* If to query, */
+	qbufp = querybuf;		/*  initialize query response buffer */
+	qbufn = 0;
+	querybuf[0] = NUL;
+    }
+#endif /* NOSPL */
+    decode(rdatap,puttrm,0);		/* Text is in ACK Data field */
+    if (rdatap)				/* If we had data */
+      if (*rdatap)
+	 conoll("");			/* Then add a CRLF */
     RESUME;
 }
     break;
-case 33:
+case 35:
     {				/* File header */
     xflg = 0;				/* Not screen data */
     if (!rcvfil(filnam)) {		/* Figure out local filename */
-	errpkt((CHAR *)"Can't transform filename"); /* Trouble */
+	errpkt((CHAR *)rf_err);		/* Trouble */
+	screen(SCR_EM,0,0L,rf_err);
 	RESUME;
     } else {				/* OK to receive */
-	encstr((CHAR *)filnam);		/* Encode the name */
-	ack1((CHAR *)(encbuf+7));	/* Send it back in ACK */
+	encstr((CHAR *)filnam);		/* Encode the local filename */
+	ack1(data);			/* Send it back in ACK */
 	initattr(&iattr);		/* Clear file attribute structure */
 	if (window(wslotn) < 0) {	/* Allocate negotiated window slots */
 	    errpkt((CHAR *)"Can't open window");
@@ -526,7 +738,7 @@ case 33:
     }
 }
     break;
-case 34:
+case 36:
     {				/* X-packet instead of file header */
     xflg = 1;				/* Screen data */
     ack();				/* Acknowledge the X-packet */
@@ -535,48 +747,62 @@ case 34:
 	errpkt((CHAR *)"Can't open window");
 	RESUME;
     }
+#ifndef NOSPL
+    if (query) {			/* If this is the response to */
+	qbufp = querybuf;		/* a query that we sent, initialize */
+	qbufn = 0;			/* the response buffer */
+	querybuf[0] = NUL;
+    }
+#endif /* NOSPL */
     what = W_REMO;			/* we're doing a REMOTE command */
     BEGIN rattr;			/* Expect Attribute packets */
 }
     break;
-case 35:
+case 37:
     {				/* Attribute packet */
-    if (discard) {			/* If SET FILE COLLISION DISCARD */
-	ack1((CHAR *)"N");		/* refuse it */
-	screen(SCR_ST,ST_REFU,0L,"file collision setting");
-    } else if (gattr(rdatap,&iattr) == 0) { /* Read into attribute structure */
+    if (gattr(rdatap,&iattr) == 0) {	/* Read into attribute structure */
+#ifdef CK_RESEND
+	ack1((CHAR *)iattr.reply.val);	/* Reply with data */
+#else
 	ack();				/* If OK, acknowledge */
+#endif /* CK_RESEND */
     } else {				/* Otherwise */
 	ack1((CHAR *)iattr.reply.val);	/* refuse to accept the file */
 	screen(SCR_ST,ST_REFU,0L,getreason(iattr.reply.val)); /* give reason */
     }
 }
     break;
-case 36:
+case 38:
     {				/* First data packet */
     if (discard) {			/* if we're discarding the file */
 	ack1((CHAR *)"X");		/* just ack the data like this. */
 	BEGIN rdata;			/* and wait for more data packets. */
     } else {				/* Not discarding. */
-	if (xflg)			/* If screen data */
-	  x = opent(&iattr);		/* "open" the screen */
-	else				/* otherwise */
+	rf_err = "Can't open file";
+	if (xflg) {			/* If screen data */
+	    x = opent(&iattr);		/* "open" the screen */
+	} else				/* otherwise */
 	  x = opena(filnam,&iattr);	/* open the file, with attributes */
 	if (x) {			/* If file was opened ok */
-	    if (decode(rdatap,putfil,1) < 0) { /* decode first data packet */
+	    if (decode(rdatap, 
+#ifndef NOSPL
+		       query ? puttrm : 
+#endif /* NOSPL */
+		       putfil, 1) < 0) {
+
 		errpkt((CHAR *)"Error writing data");
 		RESUME;
 	    }
 	    ack();			/* acknowledge it */
 	    BEGIN rdata;		/* and switch to receive-data state */
 	} else {			/* otherwise */
-	    errpkt((CHAR *)"Can't open file");	/* send error message */
+	    errpkt((CHAR *) rf_err);	/* send error message */
 	    RESUME;			/* and quit. */
 	}
     }
 }
     break;
-case 37:
+case 39:
     {				/* EOT, no more files */
     ack();				/* Acknowledge */
     tsecs = gtimer();			/* Get timing for statistics */
@@ -584,27 +810,35 @@ case 37:
     RESUME;				/* and quit */
 }
     break;
-case 38:
+case 40:
     {				/* Data packet */
     if (cxseen || discard)		/* If file interrupt */
       ack1((CHAR *)"X");		/* put "X" in ACK */
     else if (czseen)			/* If file-group interrupt */
       ack1((CHAR *)"Z");		/* put "Z" in ACK */
-    else if (decode(rdatap,putfil,1) < 0) { /* Normal case, decode to file */
+    else if (decode(rdatap, 
+#ifndef NOSPL
+		       query ? puttrm : 
+#endif /* NOSPL */
+		       putfil, 1) < 0) {
 	errpkt((CHAR *)"Error writing data"); /* If failure, */
 	clsof(!keep);			/*   Close & keep/discard the file */
 	RESUME;				/* Send ACK only after data */
     } else ack();			/* written to file OK. */
 }
     break;
-case 39:
+case 41:
     {				/* EOF immediately after A-Packet. */
-    if (xflg)				/* Zero-length file. If screen data */
-      x = opent(&iattr);		/* "open" the screen */
-    else				/* otherwise */
-      x = opena(filnam,&iattr);		/* open the file, with attributes. */
+    rf_err = "Can't create file";
+    if (discard) {			/* Discarding a real file... */
+	x = 1;
+    } else if (xflg) {			/* Zero-length file. If screen data */
+	x = opent(&iattr);		/* "open" the screen */
+    } else {				/* otherwise */
+	x = opena(filnam,&iattr);	/* open the file, with attributes. */
+    }
     if (!x || reof(filnam, &iattr) < 0) { /* Now close & dispose of the file */
-	errpkt((CHAR *)"Can't create file"); /* If problem, send error msg */
+	errpkt((CHAR *) rf_err);	/* If problem, send error msg */
 	RESUME;				/* and quit */
     } else {				/* otherwise */
 	ack();				/* acknowledge the EOF packet */
@@ -612,7 +846,7 @@ case 39:
     }
 }
     break;
-case 40:
+case 42:
     {				/* End Of File (EOF) Packet */
 /*  wslots = 1;	*/			/* Window size back to 1 */
 #ifndef COHERENT
@@ -631,7 +865,7 @@ case 40:
 	break;
       case 2:
       case 3:
-	screen(SCR_EM,0,0l,"Can't delete temp file"); /* Not fatal */
+	screen(SCR_EM,0,0L,"Can't delete temp file"); /* Not fatal */
         RESUME;
 	break;
       default:
@@ -639,6 +873,10 @@ case 40:
 	    errpkt((CHAR *)"Can't close file");
 	    RESUME;
 	} else {			/* Success */
+#ifndef NOSPL
+	    if (query)			/* Query reponses generally */
+	      conoll("");		/* don't have line terminators */
+#endif /* NOSPL */
 	    ack();			/* Acknowledge the EOF packet */
 	    BEGIN rfile;		/* and await another file */
 	}
@@ -654,40 +892,50 @@ case 40:
 #endif /* COHERENT */
 }
     break;
-case 41:
+case 43:
     {				/* ACK for Send-Init */
     spar(rdatap);			/* set parameters from it */
     bctu = bctr;			/* switch to agreed-upon block check */
     bctl = (bctu == 4) ? 2 : bctu;	/* Set block-check length */
-    what = W_SEND;			/* Remember we're sending */
-    x = sfile(xflg);			/* Send X or F header packet */
-    if (x) {				/* If the packet was sent OK */
-	resetc();			/* reset per-transaction counters */
-	rtimer();			/* reset timers */
-	BEGIN ssfile;			/* and switch to receive-file state */
-    } else {				/* otherwise send error msg & quit */
-	s = xflg ? "Can't execute command" : "Can't open file";
-	errpkt((CHAR *)s);
+#ifdef CK_RESEND
+    if ((sendmode == SM_RESEND) && (!atcapu || !rscapu)) { /* RESEND */
+	errpkt((CHAR *) "RESEND capabilities not negotiated");
+	ermsg("RESEND capabilities not negotiated");
 	RESUME;
+    } else {
+#endif /* CK_RESEND */
+	what = W_SEND;			/* Remember we're sending */
+	x = sfile(xflg);		/* Send X or F header packet */
+	if (x) {			/* If the packet was sent OK */
+	    resetc();			/* reset per-transaction counters */
+	    rtimer();			/* reset timers */
+	    BEGIN ssfile;		/* and switch to receive-file state */
+	} else {			/* otherwise send error msg & quit */
+	    s = xflg ? "Can't execute command" : "Can't open file";
+	    errpkt((CHAR *)s);
+	    RESUME;
+	}
+#ifdef CK_RESEND
     }
+#endif /* CK_RESEND */
 }
     break;
-case 42:
+case 44:
     {				/* R packet was retransmitted. */
     xsinit();				/* Resend packet 0 */
 }
     break;
-case 43:
+case 45:
     {				/* Same deal if G packet comes again */
     xsinit();
 }
     break;
-case 44:
+case 46:
     {				/* Same deal if C packet comes again */
     xsinit();
 }
     break;
-case 45:
+case 47:
     {				/* ACK for F packet */
     srvptr = srvcmd;			/* Point to string buffer */
     decode(rdatap,putsrv,0);		/* Decode data field, if any */
@@ -695,10 +943,10 @@ case 45:
     ffc = 0L;				/* Reset file byte counter */
     if (*srvcmd) {			/* If remote name was recorded */
 	if (fdispla == XYFD_C) screen(SCR_AN,0,0L,(char *)srvcmd);
-	tlog(F110," stored as",(char *) srvcmd,0L); /* Transaction log. */
+	tlog(F110," remote name:",(char *) srvcmd,0L); /* Transaction log. */
     }
     if (atcapu) {			/* If attributes are to be used */
-	if (sattr(xflg) < 0) {		/* set and send them */
+	if (sattr(xflg | stdinf) < 0) {	/* set and send them */
 	    errpkt((CHAR *)"Can't send attributes"); /* if problem, say so */
 	    RESUME;			     /* and quit */
 	} else BEGIN ssattr;		/* if ok, switch to attribute state */
@@ -716,7 +964,7 @@ case 45:
     }
 }
     break;
-case 46:
+case 48:
     {				/* Got ACK to A packet */
     ffc = 0L;				/* Reset file byte counter */
     if (rsattr(rdatap) < 0) {		/* Was the file refused? */
@@ -740,7 +988,7 @@ case 46:
     }
 }
     break;
-case 47:
+case 49:
     {				/* Got ACK to Data packet */
     canned(rdatap);			/* Check if file transfer cancelled */
     if (sdata() < 0) {			/* Try to send next data */
@@ -753,9 +1001,13 @@ case 47:
     }
 }
     break;
-case 48:
+case 50:
     {				/* Got ACK to EOF */
-    success = (cxseen == 0 && czseen == 0); /* Set this for IF command */
+    success = (cxseen == 0 && czseen == 0); /* Transfer status... */
+    if (success && rejection > 0)	    /* If rejected, succeed if */
+      if (rejection != '#' &&		    /* reason was date */
+	  rejection != 1 && rejection != '?') /* or name; */
+	success = 0;			    /* fail otherwise. */
     cxseen = 0;				/* This goes back to zero. */
     if (gnfile() > 0) {			/* Any more files to send? */
 	if (sfile(xflg))		/* Yes, try to send next file header */
@@ -771,18 +1023,26 @@ case 48:
     }
 }
     break;
-case 49:
+case 51:
     {				/* Got ACK to EOT */
     RESUME;				/* All done, just quit */
 }
     break;
-case 50:
+case 52:
     {					/* Got Error packet, in any state */
-    ermsg((char *)rdatap);		/* Issue message. */
+    char *s = "";
+    if (pktmsg)				/* Or we sent one. */
+      if (*pktmsg)			/* If so, this was the message. */
+	s = (char *)pktmsg;
+    if (!*s)				/* We received an Error packet */
+      s = (char *)rdatap;		/* with this message. */
+    if (!*s)				/* Hopefully we'll never see this. */
+      s = "Unknown error";
+    ermsg(s);				/* Issue the message. */
     success = 0;			/* For IF SUCCESS/FAIL. */
-    debug(F101,"ckcpro.w sstate at E pkt","",sstate);
+    debug(F111,"ckcpro.w sstate at E pkt",s,sstate);
     x = quiet; quiet = 1;		/* Close files silently, */
-    clsif(); clsof(1);			/* discarding any output file. */
+    clsif(); clsof(1); 			/* discarding any output file. */
     tsecs = gtimer();			/* Get timers */
     quiet = x;				/* restore quiet state */
 /*
@@ -802,10 +1062,10 @@ case 50:
     RESUME;
 }
     break;
-case 51:
-    { QUIT; }
+case 53:
+    { success = 0; QUIT; }
     break;
-case 52:
+case 54:
     {					/* Anything not accounted for above */
     errpkt((CHAR *)"Unexpected packet type"); /* Give error message */
     xitsta |= what;			/* Save this for doexit(). */
@@ -818,98 +1078,98 @@ case 52:
 }
 
 char tbl[] = {
--1, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 50, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52,  8, 52,  4, 52, 52, 52,  6, 52, 52, 52,  5, 52, 52, 52, 52, 
-52, 51,  3,  1, 52, 52,  2, 52,  7, 52, 52, 52, 52, 52, 52, 52, 
--1, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 11, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 52, 52, 52, 52, 10, 52, 52, 52, 52, 52, 52, 
-52,  8, 52,  4, 52, 52, 52,  6, 52, 52, 52,  5, 52, 52, 52, 52, 
-52, 51,  3,  1, 52, 52,  2, 52,  7, 52, 52, 52, 52, 52, 52, 52, 
--1, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 37, 52, 52, 50, 33, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 52, 52, 52, 34, 52, 52, 52, 52, 52, 52, 52, 
-52,  8, 52,  4, 52, 52, 52,  6, 52, 52, 52,  5, 52, 52, 52, 52, 
-52, 51,  3,  1, 52, 52,  2, 52,  7, 52, 52, 52, 52, 52, 52, 52, 
--1, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 35, 52, 52, 36, 50, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 39, 52, 52, 52, 52, 52, 
-52,  8, 52,  4, 52, 52, 52,  6, 52, 52, 52,  5, 52, 52, 52, 52, 
-52, 51,  3,  1, 52, 52,  2, 52,  7, 52, 52, 52, 52, 52, 52, 52, 
--1, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 38, 50, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 40, 52, 52, 52, 52, 52, 
-52,  8, 52,  4, 52, 52, 52,  6, 52, 52, 52,  5, 52, 52, 52, 52, 
-52, 51,  3,  1, 52, 52,  2, 52,  7, 52, 52, 52, 52, 52, 52, 52, 
--1, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 44, 52, 50, 52, 43, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 42, 52, 52, 52, 52, 52, 52, 41, 52, 52, 52, 52, 52, 52, 
-52,  8, 52,  4, 52, 52, 52,  6, 52, 52, 52,  5, 52, 52, 52, 52, 
-52, 51,  3,  1, 52, 52,  2, 52,  7, 52, 52, 52, 52, 52, 52, 52, 
--1, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 50, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 52, 52, 52, 52, 45, 52, 52, 52, 52, 52, 52, 
-52,  8, 52,  4, 52, 52, 52,  6, 52, 52, 52,  5, 52, 52, 52, 52, 
-52, 51,  3,  1, 52, 52,  2, 52,  7, 52, 52, 52, 52, 52, 52, 52, 
--1, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 50, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 52, 52, 52, 52, 46, 52, 52, 52, 52, 52, 52, 
-52,  8, 52,  4, 52, 52, 52,  6, 52, 52, 52,  5, 52, 52, 52, 52, 
-52, 51,  3,  1, 52, 52,  2, 52,  7, 52, 52, 52, 52, 52, 52, 52, 
--1, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 50, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 52, 52, 52, 52, 47, 52, 52, 52, 52, 52, 52, 
-52,  8, 52,  4, 52, 52, 52,  6, 52, 52, 52,  5, 52, 52, 52, 52, 
-52, 51,  3,  1, 52, 52,  2, 52,  7, 52, 52, 52, 52, 52, 52, 52, 
--1, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 50, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 52, 52, 52, 52, 48, 52, 52, 52, 52, 52, 52, 
-52,  8, 52,  4, 52, 52, 52,  6, 52, 52, 52,  5, 52, 52, 52, 52, 
-52, 51,  3,  1, 52, 52,  2, 52,  7, 52, 52, 52, 52, 52, 52, 52, 
--1, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 50, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 52, 52, 52, 52, 49, 52, 52, 52, 52, 52, 52, 
-52,  8, 52,  4, 52, 52, 52,  6, 52, 52, 52,  5, 52, 52, 52, 52, 
-52, 51,  3,  1, 52, 52,  2, 52,  7, 52, 52, 52, 52, 52, 52, 52, 
+-1, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 52, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54,  8, 54,  4, 54, 54, 54,  6, 54, 54, 54,  5, 54, 54, 54, 54, 
+54, 53,  3,  1, 54, 54,  2, 54,  7, 54, 54, 54, 54, 54, 54, 54, 
+-1, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 11, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 54, 54, 54, 54, 10, 54, 54, 54, 54, 54, 54, 
+54,  8, 54,  4, 54, 54, 54,  6, 54, 54, 54,  5, 54, 54, 54, 54, 
+54, 53,  3,  1, 54, 54,  2, 54,  7, 54, 54, 54, 54, 54, 54, 54, 
+-1, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 39, 54, 54, 52, 35, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 54, 54, 54, 36, 54, 54, 54, 54, 54, 54, 54, 
+54,  8, 54,  4, 54, 54, 54,  6, 54, 54, 54,  5, 54, 54, 54, 54, 
+54, 53,  3,  1, 54, 54,  2, 54,  7, 54, 54, 54, 54, 54, 54, 54, 
+-1, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 37, 54, 54, 38, 52, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 41, 54, 54, 54, 54, 54, 
+54,  8, 54,  4, 54, 54, 54,  6, 54, 54, 54,  5, 54, 54, 54, 54, 
+54, 53,  3,  1, 54, 54,  2, 54,  7, 54, 54, 54, 54, 54, 54, 54, 
+-1, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 40, 52, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 42, 54, 54, 54, 54, 54, 
+54,  8, 54,  4, 54, 54, 54,  6, 54, 54, 54,  5, 54, 54, 54, 54, 
+54, 53,  3,  1, 54, 54,  2, 54,  7, 54, 54, 54, 54, 54, 54, 54, 
+-1, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 46, 54, 52, 54, 45, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 44, 54, 54, 54, 54, 54, 54, 43, 54, 54, 54, 54, 54, 54, 
+54,  8, 54,  4, 54, 54, 54,  6, 54, 54, 54,  5, 54, 54, 54, 54, 
+54, 53,  3,  1, 54, 54,  2, 54,  7, 54, 54, 54, 54, 54, 54, 54, 
+-1, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 52, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 54, 54, 54, 54, 47, 54, 54, 54, 54, 54, 54, 
+54,  8, 54,  4, 54, 54, 54,  6, 54, 54, 54,  5, 54, 54, 54, 54, 
+54, 53,  3,  1, 54, 54,  2, 54,  7, 54, 54, 54, 54, 54, 54, 54, 
+-1, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 52, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 54, 54, 54, 54, 48, 54, 54, 54, 54, 54, 54, 
+54,  8, 54,  4, 54, 54, 54,  6, 54, 54, 54,  5, 54, 54, 54, 54, 
+54, 53,  3,  1, 54, 54,  2, 54,  7, 54, 54, 54, 54, 54, 54, 54, 
+-1, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 52, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 54, 54, 54, 54, 49, 54, 54, 54, 54, 54, 54, 
+54,  8, 54,  4, 54, 54, 54,  6, 54, 54, 54,  5, 54, 54, 54, 54, 
+54, 53,  3,  1, 54, 54,  2, 54,  7, 54, 54, 54, 54, 54, 54, 54, 
+-1, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 52, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 54, 54, 54, 54, 50, 54, 54, 54, 54, 54, 54, 
+54,  8, 54,  4, 54, 54, 54,  6, 54, 54, 54,  5, 54, 54, 54, 54, 
+54, 53,  3,  1, 54, 54,  2, 54,  7, 54, 54, 54, 54, 54, 54, 54, 
+-1, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 52, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 54, 54, 54, 54, 51, 54, 54, 54, 54, 54, 54, 
+54,  8, 54,  4, 54, 54, 54,  6, 54, 54, 54,  5, 54, 54, 54, 54, 
+54, 53,  3,  1, 54, 54,  2, 54,  7, 54, 54, 54, 54, 54, 54, 54, 
 -1, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 
 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 
 19, 19, 19, 16, 19, 19, 19, 15, 19, 13, 19, 19, 19, 19, 18, 19, 
 19, 19, 14,  9, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 
 19,  8, 19,  4, 19, 19, 19,  6, 19, 19, 19,  5, 19, 19, 19, 19, 
 19, 17,  3,  1, 19, 19,  2, 19,  7, 19, 19, 19, 19, 19, 19, 19, 
--1, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 
-31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 
-31, 31, 31, 20, 21, 22, 23, 31, 25, 31, 31, 31, 24, 31, 31, 31, 
-31, 31, 31, 26, 27, 28, 31, 29, 31, 31, 31, 31, 31, 31, 31, 31, 
-31,  8, 31,  4, 31, 31, 31,  6, 31, 31, 31,  5, 31, 31, 31, 31, 
-31, 30,  3,  1, 31, 31,  2, 31,  7, 31, 31, 31, 31, 31, 31, 31, 
--1, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 50, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52,  9, 52, 52, 52, 52, 52, 12, 52, 52, 52, 52, 52, 52, 
-52,  8, 52,  4, 52, 52, 52,  6, 52, 52, 52,  5, 52, 52, 52, 52, 
-52, 51,  3,  1, 52, 52,  2, 52,  7, 52, 52, 52, 52, 52, 52, 52, 
- 0, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52, 52, 52, 50, 33, 52, 52, 52, 52, 52, 52, 52, 52, 52, 
-52, 52, 52,  9, 52, 52, 52, 52, 34, 32, 52, 52, 52, 52, 52, 52, 
-52,  8, 52,  4, 52, 52, 52,  6, 52, 52, 52,  5, 52, 52, 52, 52, 
-52, 51,  3,  1, 52, 52,  2, 52,  7, 52, 52, 52, 52, 52, 52, 52 };
+-1, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 
+33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 
+33, 21, 33, 20, 22, 23, 24, 33, 26, 33, 33, 33, 25, 33, 33, 33, 
+33, 33, 33, 27, 28, 29, 31, 30, 33, 33, 33, 33, 33, 33, 33, 33, 
+33,  8, 33,  4, 33, 33, 33,  6, 33, 33, 33,  5, 33, 33, 33, 33, 
+33, 32,  3,  1, 33, 33,  2, 33,  7, 33, 33, 33, 33, 33, 33, 33, 
+-1, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 52, 54, 54, 54, 13, 54, 54, 54, 54, 54, 54, 
+54, 54, 54,  9, 54, 54, 54, 54, 54, 12, 54, 54, 54, 54, 54, 54, 
+54,  8, 54,  4, 54, 54, 54,  6, 54, 54, 54,  5, 54, 54, 54, 54, 
+54, 53,  3,  1, 54, 54,  2, 54,  7, 54, 54, 54, 54, 54, 54, 54, 
+ 0, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54, 54, 54, 52, 35, 54, 54, 54, 54, 54, 54, 54, 54, 54, 
+54, 54, 54,  9, 54, 54, 54, 54, 36, 34, 54, 54, 54, 54, 54, 54, 
+54,  8, 54,  4, 54, 54, 54,  6, 54, 54, 54,  5, 54, 54, 54, 54, 
+54, 53,  3,  1, 54, 54,  2, 54,  7, 54, 54, 54, 54, 54, 54, 54 };
 
-
+
 /*  P R O T O  --  Protocol entry function  */
 
 VOID
@@ -921,21 +1181,34 @@ proto() {
 /* Set up the communication line for file transfer. */
 
     if (local && (speed < 0L) && (network == 0)) {
-	screen(SCR_EM,0,0l,"Sorry, you must 'set speed' first");
+	screen(SCR_EM,0,0L,"Sorry, you must 'set speed' first");
 	return;
     }
     x = -1;
     if (ttopen(ttname,&x,mdmtyp,cdtimo) < 0) {
 	debug(F111,"failed: proto ttopen local",ttname,local);
-	screen(SCR_EM,0,0l,"Can't open line");
+	screen(SCR_EM,0,0L,"Can't open line");
 	return;
     }
     if (x > -1) local = x;
     debug(F111,"proto ttopen local",ttname,local);
 
     lx = (local && !network) ? speed : -1;
+#ifdef NETCONN
+#ifdef CK_SPEED
+/*
+  If we are a TELNET client, force quoting of IAC.
+  Note hardwired "1" rather than NP_TELNET symbol, so we don't have
+  to schlurp in ckcnet.h.
+*/
+    if (network && ttnproto == 1) {
+	ctlp[255] = ctlp[CR] = 1;
+	if (parity == 'e' || parity == 'm') ctlp[127] = 1;
+    }
+#endif /* CK_SPEED */
+#endif /* NETCONN */
     if (ttpkt(lx,flow,parity) < 0) {	/* Put line in packet mode, */
-	screen(SCR_EM,0,0l,"Can't condition line");
+	screen(SCR_EM,0,0L,"Can't condition line");
 	return;
     }
     if (!local) connoi();		/* No console interrupts if remote */
@@ -966,13 +1239,7 @@ proto() {
   If in remote mode, not shushed, not in background, and at top command level,
   issue a helpful message telling what to do...
 */
-    if (!local && !quiet && !backgrd &&
-#ifndef NOSPL
-	cmdlvl == 0
-#else
-	tlevel < 0
-#endif /* NOSPL */
-	) {
+    if (!local && !quiet && !backgrd) {
 	if (sstate == 'v') {
 	    conoll("Return to your local Kermit and give a SEND command.");
 	    conoll("");
@@ -989,21 +1256,25 @@ proto() {
 		   "KERMIT READY TO SEND SERVER COMMAND...");
 	}
     }
-    sleep(1);
+#ifdef COMMENT
+    if (!local) sleep(1);
+#endif /* COMMENT */
 /*
- The 'wart()' function is generated by the wart program.  It gets a
- character from the input() routine and then based on that character and
- the current state, selects the appropriate action, according to the state
- table above, which is transformed by the wart program into a big case
- statement.  The function is active for one transaction.
+  The 'wart()' function is generated by the wart program.  It gets a
+  character from the input() routine and then based on that character and
+  the current state, selects the appropriate action, according to the state
+  table above, which is transformed by the wart program into a big case
+  statement.  The function is active for one transaction.
 */
+    rtimer();				/* Reset elapsed-time timer */
+    resetc();				/* & other per-transaction counters. */
     wart();				/* Enter the state table switcher. */
     
     if (server) {			/* Back from packet protocol. */
     	if (!quiet && !backgrd) {	/* Give appropriate message */
 	    conoll("");
 	    conoll("C-Kermit server done");
-	}
+        }
     }
 /*
   Note: the following is necessary in case we have just done a remote-mode
@@ -1016,6 +1287,6 @@ proto() {
     if (!local)
 #endif /* OS2 */
       ttres();				/* Reset the communication device */
-    screen(SCR_TC,0,0l,"");		/* Transaction complete */
+    screen(SCR_TC,0,0L,"");		/* Transaction complete */
     server = 0;				/* Not a server any more */
 }

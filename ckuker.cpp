@@ -1,5 +1,31 @@
 .\" @(#) kermit.1 5A(190) 94/10/04 Columbia University
+#ifdef COMMENT
+This man page must be run through the C-Kermit makefile before it can
+be used.  Or you can do the following:
+  cc -E ckuker.cpp | grep -v ^$ | grep -v ^\# > ckuker.nr
+to produce the nroff source file.  THIS FILE MUST NOT CONTAIN ANY BLANK LINES!
+Use .sp or similar commands to produce blank lines in the nroff output.
+#endif /* COMMENT */
+#ifdef SUNOS4
+#define SUNOS
+#else
+#ifdef SUNOS41
+#define SUNOS
+#else
+#ifdef SOLARIS
+#define SUNOS
+#endif
+#endif
+#endif
+#ifdef HPUX10
+.TH KERMIT 1 "4 Oct 94" "HP-UX C-Kermit"
+#define DIALOUT /dev/cul0p0
+#define HARDWIRE /dev/tty0p0
+#else
 .TH KERMIT 1C "4 Oct 94" "UNIX C-Kermit"
+#define DIALOUT /dev/cua
+#define HARDWIRE /dev/tty01
+#endif
 .SH NAME
 kermit \- C-Kermit 5A(190) communications software for serial and network
 connections: modem dialing, file transfer and management, terminal connection,
@@ -11,11 +37,29 @@ character-set translation, and script programming.
 .I Kermit
 is a family of file transfer, management, and communication software programs
 from Columbia University available for most computers and operating systems.
+#ifdef HPUX10
+The version of Kermit for Hewlett-Packard HP-UX, called
+#else
+#ifdef SUNOS
+The version of Kermit for SunOS and Solaris, called
+#else
 The UNIX version of Kermit, called
+#endif
+#endif
 .IR "C-Kermit",
+#ifdef HPUX10
+supports both serial connections (direct or dialed) and TCP/IP connections.
+#else
+#ifdef SUNOS
+supports serial connections (direct or dialed),
+TCP/IP connections, and on systems equipped with
+SunLink X.25, C-Kermit can also make X.25 connections.
+#else
 supports serial connections (direct or dialed) and, in most UNIX
 implementations, also TCP/IP connections.  On SunOS systems equipped with
 SunLink X.25, C-Kermit can also make X.25 connections.
+#endif
+#endif
 C-Kermit can be thought of as a user-friendly and powerful alternative to cu,
 tip, uucp, ftp, and telnet; a single package for both network and serial
 communications, offering automation, convenience, and language features not
@@ -36,6 +80,10 @@ written permission of the Office of Kermit Development and Distribution,
 Columbia University.  This copyright notice must not be removed, altered, or
 obscured.
 .PP
+#ifdef HPUX10
+C-Kermit 5A(190) is included with HP-UX 10.0 by Hewlett-Packard in partnership
+with the Office of Kermit Development and Distribution, Columbia University.
+#endif
 .PP
 C-Kermit is thoroughly documented in the book
 .IR "Using C-Kermit"
@@ -86,19 +134,28 @@ files or macros.
 .PP
 .SH "STARTING C-KERMIT"
 .PP
+#ifdef HPUX10
+You can start C-Kermit by typing "/usr/bin/kermit", or just "kermit" if your
+PATH includes "/usr/bin", possibly followed by command-line options.
+#else
 C-Kermit should be available as "kermit" somewhere in your PATH, perhaps as
 /usr/local/bin/kermit, in which case you can
 start C-Kermit just by typing "kermit", possibly followed by command-line
 options.
+#endif
 If there are no "action options" on the command line (explained
 below), C-Kermit starts in interactive command mode; you will see a greeting
 message and then the "C-Kermit>" prompt.  If you do include action options on
 the command line, C-Kermit takes the indicated actions and then exits directly
 back to UNIX.  Either way, C-Kermit executes the commands in its
 initialization file,
+#ifdef HPUX10
+.IR "/usr/share/lib/kermit/ckermit.ini" ,
+#else
 .IR ".kermrc" ,
 in your home directory (or a system-wide directory if C-Kermit was built to
 do this)
+#endif
 before it executes any other commands, unless you have
 included the `\|\c
 .B \-Y\c
@@ -358,7 +415,11 @@ Connection Establishment and Release:
 * SET DIAL	Parameters related to modem dialing.
 * SET FLOW	Communication line flow control: RTS/CTS, XON/XOFF, etc.
 * SET HOST	Specify remote network host name or address.
+#ifdef HPUX10
+* SET LINE	Specify serial communication device name, like /dev/cul0p0.
+#else
 * SET LINE	Specify serial communication device name, like /dev/cua.
+#endif
 * SET MODEM	Specify type of modem on SET LINE device, like HAYES.
 * SET NETWORK	Network type, TCP/IP or X.25.
   SET PAD	X.25 X.3 PAD parameters.
@@ -692,10 +753,10 @@ sends file oofa.bin in binary mode (-i) using a window size of 4 (-v 4).
 Local-mode example (C-Kermit makes the connection):
 .nf
 .sp
-  kermit -l /dev/tty01 -b 19200 -c -r -n
+  kermit -l HARDWIRE -b 19200 -c -r -n
 .sp
 .fi
-makes a 19200-bps direct connection out through /dev/tty01, CONNECTs (-c) so you
+makes a 19200-bps direct connection out through HARDWIRE, CONNECTs (-c) so you
 can log in and, presumably start a remote Kermit program and tell it to send a
 file, then it RECEIVEs the file (-r), then it CONNECTs back (-n) so you can
 finish up and log out.
@@ -704,17 +765,34 @@ For dialing out, you must specify a modem type, and you might have to use a
 different device name:
 .nf
 .sp
-  kermit -m hayes -l /dev/cua -b 2400 -c -r -n
+  kermit -m hayes -l DIALOUT -b 2400 -c -r -n
 .ll
 .in
 .fi
 .SH FILES
 .nf
 .ta 16
+#ifndef HPUX10
 $HOME/.kermrc	Standard C-Kermit initialization commands.
+#endif /* HPUX10 */
 $HOME/.mykermrc	Your personal C-Kermit customization file.
 $HOME/.kdd	Your personal dialing directory.
 $HOME/.ksd	Your personal services directory.
+#ifdef HPUX10
+.sp
+/usr/share/lib/kermit/READ.ME      Overview of HP-UX C-Kermit, please read
+/usr/share/lib/kermit/ckermit.ini  System-wide initialization file
+/usr/share/lib/kermit/ckermod.ini  Sample customization file
+/usr/share/lib/kermit/ckermit.kdd  Sample dialing directory
+/usr/share/lib/kermit/ckermit.ksd  Sample services directory
+/usr/share/lib/kermit/ckcker.upd   Supplement to "Using C-Kermit"
+/usr/share/lib/kermit/ckcker.bwr   C-Kermit "beware" file - hints & tips
+/usr/share/lib/kermit/ckuker.bwr   UNIX-specific beware file
+/usr/share/lib/kermit/ckedemo.ini  Macros from "Using C-Kermit"
+/usr/share/lib/kermit/ckevt.ini    Ditto
+/usr/share/lib/kermit/cketest.ini  Ditto
+/var/spool/locks/LCK..*            UUCP lockfiles
+#else
 .fi
 .PP
 The following should be in a publicly accessible plain-text documentation area,
@@ -734,8 +812,10 @@ ckuker.bwr	UNIX-specific beware file.
 ckedemo.ini     Demonstration macros from "Using C-Kermit".
 ckevt.ini       Ditto.
 cketest.ini     Ditto.
+#endif
 .fi
 .PP
+#ifndef HPUX10
 If C-Kermit has not been installed on your system with the system-wide
 initialization file feature, then the ckermit.ini file should be copied to
 your home (login) directory and renamed to 
@@ -743,17 +823,26 @@ your home (login) directory and renamed to
 You should not modify
 this file.
 .sp
+#endif
 To make
 .IR "personalized customizations" ,
 copy the file
+#ifdef HPUX10
+/usr/share/lib/kermit/ckermod.ini
+#else
 ckermod.ini
+#endif
 file to your home directory, make any desired changes, and rename it to
 .IR ".mykermrc" .
 .sp
 You may also create a personalized
 .IR "dialing directory"
 like the sample one in
+#ifdef HPUX10
+/usr/share/lib/kermit/ckermit.kdd.
+#else
 ckermit.kdd.
+#endif
 Your personalized dialing directory
 should be stored in your home directory as
 .IR ".kdd" .
@@ -764,7 +853,11 @@ for details.
 And you may also create a personalized
 .IR "services directory"
 like the sample one in
+#ifdef HPUX10
+/usr/share/lib/kermit/ckermit.ksd.
+#else
 ckermit.ksd.
+#endif
 Your personalized services directory should be stored in your home directory as
 .IR ".ksd" .
 See Chapter 13 of

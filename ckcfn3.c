@@ -4,21 +4,40 @@
 
 /*
   Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
-  Columbia University Center for Computing Activities.
-  First released January 1985.
-  Copyright (C) 1985, 1992, Trustees of Columbia University in the City of New
-  York.  Permission is granted to any individual or institution to use this
-  software as long as it is not sold for profit.  This copyright notice must be
-  retained.  This software may not be included in commercial products without
-  written permission of Columbia University.
+  Columbia University Academic Information Systems, New York City.
+
+  Copyright (C) 1985, 1994, Trustees of Columbia University in the City of New
+  York.  The C-Kermit software may not be, in whole or in part, licensed or
+  sold for profit as a software product itself, nor may it be included in or
+  distributed with commercial products or otherwise distributed by commercial
+  concerns to their clients or customers without written permission of the
+  Office of Kermit Development and Distribution, Columbia University.  This
+  copyright notice must not be removed, altered, or obscured.
 */
 
+#include "ckcsym.h"
 #include "ckcdeb.h"
 #include "ckcasc.h"
 #include "ckcker.h"
 #include "ckcxla.h"
 
-extern int unkcs, wmax, wcur, discard, bctu, bctl, local, fdispla;
+#ifndef NODISPO
+#ifdef pdp11
+#define NODISPO
+#endif /* pdpd11 */
+#endif /* NODISPO */
+
+extern int unkcs, wmax, wcur, discard, bctu, bctl, local, fdispla, what,
+  sendmode, opnerr;
+extern long sendstart;
+
+extern char * ofn2;
+extern char ofn1[];
+extern int ofn1x;
+
+#ifdef CK_LABELED
+extern int xflg;
+#endif /* CK_LABELED */
 extern CHAR *data;
 extern char filnam[];
 #ifndef NOFRILLS
@@ -26,12 +45,20 @@ extern int rprintf, rmailf;		/* REMOTE MAIL, PRINT */
 extern char optbuf[];			/* Options buffer for mail, print */
 #endif /* NOFRILLS */
 extern int wslots;
-extern int fblksiz, frecl, forg, frecfm, fncact, fcctrl, lf_opts;
+extern int fblksiz, frecl, forg, frecfm, fncact, fncsav, fcctrl, lf_opts;
+#ifdef pdp11
+  extern CHAR srvcmd[];
+  extern char tmpbuf[];
+  CHAR *pktmsg = (CHAR *) tmpbuf;
+#else
 #ifdef DYNAMIC
   extern CHAR *srvcmd;
+  extern CHAR *pktmsg;
 #else
   extern CHAR srvcmd[];
-#endif
+  extern CHAR pktmsg[];
+#endif /* DYNAMIC */
+#endif /* pdp11 */
 
 extern int binary, spsiz;
 extern int pktnum, cxseen, czseen, bsave, bsavef, nfils, stdinf;
@@ -41,6 +68,10 @@ extern int server, en_cwd;
 extern int
   atenci, atenco, atdati, atdato, atleni, atleno, atblki, atblko,
   attypi, attypo, atsidi, atsido, atsysi, atsyso, atdisi, atdiso; 
+
+#ifdef STRATUS
+extern int atfrmi, atfrmo, atcrei, atcreo, atacti, atacto;
+#endif /* STRATUS */
 
 #ifdef datageneral
 extern int quiet;
@@ -129,8 +160,16 @@ CHAR *bigbufp = NULL;
 int
 inibufs(s,r) int s, r; {
 #ifdef DYNAMIC
-    int size, x;
-    long z;
+    unsigned
+      int size;
+#ifdef OS2
+    unsigned		/* Don't you wish everybody had unsigned long... */
+#endif /* OS2 */  
+      long z;
+    int x;
+
+    debug(F101,"inibufs s","",s);
+    debug(F101,"inibufs r","",r);
 
     if (s < 80 || r < 80) return(-1);	/* Validate arguments. */
 
@@ -151,22 +190,37 @@ inibufs(s,r) int s, r; {
     if (!srvcmd) {			/* Allocate srvcmd buffer */
 	srvcmd = (CHAR *) malloc(r + 100);
 	if (!srvcmd) return(-1);
+	*srvcmd = NUL;
     }
+    if (!pktmsg) {			/* Allocate pktmsg buffer */
+	pktmsg = (CHAR *) malloc(81);
+	if (!pktmsg) return(-1);
+	*pktmsg = NUL;
+    }
+
     if (bigbufp) {			/* Free previous buffers, if any. */
 	free(bigbufp);
 	bigbufp = NULL;
     }
     size = s + r + 40;			/* Combined requested size + padding */
+    z  = (unsigned) s + (unsigned) r + 40;
+    debug(F101,"inibufs size 1","",size);
+    debug(F101,"inibufs size z","",z);
+    if ((long) size != z) {
+	debug(F100,"inibufs overflow","",0);
+	size = 65535;
+    }	
 
     /* Try to get the space.  If malloc fails, try to get a little less. */
     /* (Obviously, this algorithm can be refined.) */
 
     while (!(bigbufp = (CHAR *) malloc(size))) {
+	debug(F101,"inibufs bigbuf malloc failed","",size);
 	size = (size * 2) / 3;		/* Failed, cut size by 1/3. */
 	if (size < 200)			/* Try again until too small. */
 	  return(-1);
     }
-    debug(F101,"inibufs size","",size);	/* OK, we got some space. */
+    debug(F101,"inibufs size 2","",size); /* OK, we got some space. */
 
 /*
   Now divide the allocated space between the send and receive buffers in the
@@ -202,7 +256,7 @@ inibufs(s,r) int s, r; {
 /* M A K E B U F  --  Makes and clears a new buffers.  */
 
 /* Call with: */
-/*  slots:  number of buffer slots to make, 1 to 31 */
+/*  slots:  number of buffer slots to make, 1 to 32 */
 /*  bufsiz: size of the big buffer */
 /*  buf:    address of the big buffer */
 /*  xx:     pointer to array of pktinfo structures for these buffers */
@@ -265,6 +319,7 @@ mksbuf(slots) int slots; {
     for (i = 0; i < MAXWS; i++)
       sbufuse[i] = 0;			/* Mark each buffer as free */
     sbufnum = slots;
+    wcur = 0;
     return(x);
 }
 
@@ -285,6 +340,7 @@ mkrbuf(slots) int slots; {
     for (i = 0; i < MAXWS; i++)
       rbufuse[i] = 0;			/* Mark each buffer as free */
     rbufnum = slots;
+    wcur = 0;
     return(x);
 }
 
@@ -293,7 +349,7 @@ mkrbuf(slots) int slots; {
 int
 window(n) int n; {
     debug(F101,"window","",n);
-    if (n < 1 || n > 31) return(-1);
+    if (n < 1 || n > MAXWS) return(-1);
     if (mksbuf(n) < 0) return(-1);
     if (mkrbuf(n) < 0) return(-1);
     wslots = n;
@@ -338,8 +394,8 @@ getsbuf(n) int n; {			/* Allocate a send-buffer */
 	  s_pkt[i].pk_flg = 0;		/* Zero the flags */
 	  s_pkt[i].pk_rtr = 0;		/* Zero the retransmission count */
 	  data = s_pkt[i].bf_adr + 7;	/* Set global "data" address. */
-	  wcur = wslots - sbufnum;	/* Current number of window slots */
-	  if (i+1 > wmax) wmax = i+1;	/* For statistics. */
+	  if ((what & (W_SEND|W_REMO)) && (++wcur > wmax))
+	    wmax = wcur;		/* For statistics. */
 	  return(n);			/* Return its index. */
       }
     sbufnum = 0;			/* Didn't find one. */
@@ -361,10 +417,8 @@ getrbuf() {				/* Allocate a receive buffer */
 	  *r_pkt[i].bf_adr = '\0';	/* Zero the buffer data field */
 	  rbufnum--;			/* One less free buffer. */
 	  debug(F101,"getrbuf new rbufnum","",rbufnum);
-#ifdef COMMENT
-	  wcur = wslots - rbufnum;	/* Current number of window slots */
-#endif /* COMMENT */
-	  if (i+1 > wmax) wmax = i+1;	/* For statistics. */
+	  if ((what & W_RECV) && (++wcur > wmax))
+	    wmax = wcur;		/* For statistics. */
 	  return(i);			/* Return its index. */
       }
     debug(F101,"getrbuf foulup","",i);
@@ -390,6 +444,8 @@ freesbuf(n) int n; {			/* Release send-buffer for packet n. */
 	sseqtbl[n] = -1;		/* If valid, remove from seqtbl */
  	sbufnum++;			/* and count one more free buffer */
 	sbufuse[i] = 0;			/* and mark it as free, */
+	if (what & (W_SEND|W_REMO))	/* decrement active slots */
+	  wcur--;			/* for statistics and display. */
     } else {
 	debug(F101," sseqtbl[n]","",sseqtbl[n]);
 	return(-1);
@@ -428,6 +484,8 @@ freerbuf(i) int i; {			/* Release receive-buffer slot "i". */
     if (rbufuse[i] != 0) {		/* If really allocated, */
 	rbufuse[i] = 0;			/* mark it as free, */
 	rbufnum++;			/* and count one more free buffer. */
+	if (what & W_RECV)		/* Keep track of current slots */
+	  wcur--;			/*  for statistics and display */
 	debug(F101,"freerbuf, new rbufnum","",rbufnum);
     }
 
@@ -649,12 +707,32 @@ sattr(xp) int xp; {			/* Send Attributes */
 	for (j = 0; j < x.systemid.len; j++)
 	  data[i++] = x.systemid.val[j];
     }
+#ifdef STRATUS
+    if (atcreo) {			/* File creator */
+	data[i++] = '$';
+	data[i++] = tochar(x.creator.len); /*  Copy from attr structure */
+	for (j = 0; j < x.creator.len; j++)
+	  data[i++] = x.creator.val[j];
+    }
+    if (atacto) {			/* File account */
+	data[i++] = '%';
+	data[i++] = tochar(x.account.len); /*  Copy from attr structure */
+	for (j = 0; j < x.account.len; j++)
+   	  data[i++] = x.account.val[j];
+    }
+    if (atfrmo) {			/* Packet data format */
+	data[i++] = '/';
+	data[i++] = tochar(x.recfm.len); /*  Copy from attr structure */
+	for (j = 0; j < x.recfm.len; j++)
+	  data[i++] = x.recfm.val[j];
+    }
+#endif /* STRATUS */
     if (attypo) {			/* File type */
 	data[i++] = '"';
 	if (
 #ifdef VMS
 	binary == XYFT_I || binary == XYFT_L || /* IMAGE or LABELED */
-	!strncmp(x.recfm.val,"F",1)		/* or RECFM=Fxxxxxx */
+	!strncmp(x.recfm.val,"F",1)	/* or RECFM=Fxxxxxx */
 #else
 	binary				/* User said SET FILE TYPE BINARY  */
 #endif /* VMS */
@@ -662,9 +740,14 @@ sattr(xp) int xp; {			/* Send Attributes */
 	    data[i++] = tochar(2);	/*  Two characters */
 	    data[i++] = 'B';		/*  B for Binary */
 	    data[i++] = '8';		/*  8-bit bytes (note assumption...) */
+#ifdef CK_LABELED
+	    if (binary != XYFT_L
 #ifdef VMS
-	    if (binary != XYFT_I && binary != XYFT_L) binary = XYFT_B;
+		&& binary != XYFT_I
 #endif /* VMS */
+		)
+		binary = XYFT_B;
+#endif /* CK_LABELED */
 	} else {			/* Text */
 	    data[i++] = tochar(3);	/*  Three characters */
 	    data[i++] = 'A';		/*  A = (extended) ASCII with CRLFs */
@@ -737,6 +820,15 @@ sattr(xp) int xp; {			/* Send Attributes */
 	  data[i++] = optbuf[j];
     }
 #endif /* NOFRILLS */
+#ifdef CK_RESEND
+    if (sendmode == SM_RESEND) {
+	data[i++] = '+';		/* Disposition */
+        data[i++] = tochar(1);
+	data[i++] = 'R';		/* is RESEND */
+    }
+#endif /* CK_RESEND */
+    data[i++] = '@';			/* End of Attributes */
+    data[i++] = SP;			/* Length 0 */
     data[i] = '\0';			/* Make sure it's null-terminated */
     aln = (int)strlen((char *)data);	/* Get overall length of attributes */
 
@@ -760,15 +852,37 @@ static char *refused = "";
 static char *reason[] = {
     "size", "type", "date", "creator", "account", "area", "password",
     "blocksize", "access", "encoding", "disposition", "protection",
-    "protection", "origin", "format", "sys-dependent", "size" };
+    "protection", "origin", "format",
+    "sys-dependent",			/* 0 */
+    "size",				/* 1 */
+    "2",				/* 2 */
+    "3",				/* 3 */
+    "4",				/* 4 */
+    "5",				/* 5 */
+    "6",				/* 6 */
+    "7",				/* 7 */
+    "8",				/* 8 */
+    "9",				/* 9 */
+    ":",				/* : */
+    ";",				/* ; */
+    "<",				/* < */
+    "=",				/* = */
+    ">",				/* > */
+    "name",				/* ? */
+    "@"
+};
 static int nreason = sizeof(reason) / sizeof(char *);
+int rejection = -1;
 
 char *
 getreason(s) char *s; {			/* Decode attribute refusal reason */
     char c, *p;
+    if (rejection == 1)			/* Kludge for SET FIL COLL DISCARD */
+      return("name");			/* when other Kermit doesn't... */
     p = s;
     if (*p++ != 'N') return("");	/* Should start with N */
-    if ((c = *p) > SP) {		/* get reason, */
+    else if ((c = *p) > SP) {		/* get reason, */
+	rejection = c;			/* remember it, */
 	c -= '!';			/* get offset */
 	p = ((unsigned int) ((CHAR) c) <= nreason) ? reason[c] : "unknown";
     }
@@ -780,17 +894,43 @@ rsattr(s) CHAR *s; {			/* Read response to attribute packet */
     debug(F111,"rsattr: ",s,*s);
     if (*s == 'N') {			/* If it's 'N' followed by anything, */
 	refused = getreason((char *)s);	/* they are refusing, get reason. */
-	debug(F110,"refused",refused,0);
-	tlog(F110,"refused",refused,0L);
+	debug(F110," refused",refused,0);
+	tlog(F110," refused:",refused,0L);
 	return(-1);	
-    } else refused = "";
+    }
+#ifdef CK_RESEND
+    if (sendmode == SM_RESEND && *s == '1') { /* RESEND length */
+	int n; long z; CHAR *p;
+	p = s + 1;
+	n = xunchar(*p++);
+	debug(F101,"rsattr RESEND n","",n);
+	z = 0L;
+	while (n-- > 0)			/* We assume the format is good. */
+	  z = 10L * z + (long) (*p++ - '0');
+	debug(F101,"rsattr RESEND z","",z);
+	if (z > 0L) sendstart = z;
+	debug(F101,"rsattr RESEND sendstart","",sendstart);
+	if (sendstart > 0L)
+	  if (zfseek(sendstart) < 0)	/* Input file is already open. */
+	    return(0);
+#ifdef CK_CURSES
+	if (fdispla == XYFD_C)
+	  screen(SCR_FS,0,fsize,"");	/* Refresh file transfer display */
+#endif /* CK_CURSES */
+    }
+#endif /* CK_RESEND */
+    refused = "";
     return(0);
 }
 
+long rs_len = 0L;			/* Length of file being resent to */
+
 int
 gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
-    char c;
+    char c, d;
+    char *ff;
     int aln, i;
+
 #define ABUFL 40			/* Temporary buffer for conversions */
     char abuf[ABUFL];
 #define FTBUFL 10			/* File type buffer */
@@ -818,10 +958,16 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
     char *rp;				/* Pointer to reply buffer */
     int retcode;			/* Return code */
 
-/* fill in the attributes we have received */
+    d = SP;				/* Initialize disposition */
+    ff = filnam;			/* Filename returned by rcvfil */
+    if (fncact == XYFX_R && ofn1x && ofn1) /* But watch out for FC=RENAME */
+      ff = ofn1;			/* because we haven't renamed it yet */
+
+/* Fill in the attributes we have received */
 
     rp = rpbuf;				/* Initialize reply buffer */
     *rp++ = 'N';			/* for negative reply. */
+    *rp = NUL;
     retcode = 0;			/* Initialize return code. */
 
     while (c = *s++) {			/* Get attribute tag */
@@ -843,17 +989,18 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 	    if (attypi) {		/* TYPE attribute is enabled? */
 		yy->type.val = ftbuf;	/* Pointer to string */
 		yy->type.len = i;	/* Length of string */
-		debug(F101,"gattr file type",tsbuf,i);
-		if (
-		    *ftbuf != 'A' && *ftbuf != 'B' /* Unknown type? */
-#ifdef VMS
-/* or (VMS) our FILE TYPE is LABELED and the incoming file is text... */
-		    || binary == XYFT_L && *ftbuf == 'A'
-#endif /* VMS */		    
+		debug(F111,"gattr file type",ftbuf,i);
+		debug(F101,"gattr binary","",binary);
+		if (			/* Unknown type? */
+		    (*ftbuf != 'A' && *ftbuf != 'B' && *ftbuf != 'I')
+#ifdef CK_LABELED
+/* ... Or our FILE TYPE is LABELED and the incoming file is text... */
+		    || (binary == XYFT_L && *ftbuf == 'A' && !xflg)
+#endif /* CK_LABELED */		    
 		    ) {
-		    discard = 1;	/* Reject the file */
-		    retcode = -1;
+		    retcode = -1;	/* Reject the file */
 		    *rp++ = c;
+		    if (!opnerr) tlog(F100," refused: type","",0);
 		    break;
 		}
 /*
@@ -875,9 +1022,16 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 		} else if (yy->type.val[0] == 'B') {
 		    bsave = binary;	/* Binary.  Save global file type */
 		    bsavef = 1;
+#ifdef CK_LABELED
+		    if (binary != XYFT_L
 #ifdef VMS
-		    if (binary != XYFT_L && binary != XYFT_U) /* VMS cases */
+			&& binary != XYFT_U /* VMS special case */
 #endif /* VMS */
+			)
+#endif /* CK_LABELED */
+#ifdef MAC
+		    if (binary != XYFT_M) /* If not MacBinary... */
+#endif /* MAC */
 		      binary = XYFT_B;
 		    debug(F101,"gattr attribute B = binary","",binary);
 		}
@@ -893,9 +1047,9 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 		yy->date.val = dtbuf;	/* Pointer to string */
 		yy->date.len = i;	/* Length of string */
 		if (fncact == XYFX_U) {	/* Receiving in update mode? */
-		    if (zstime(filnam,yy,1) > 0) { /* Compare dates */
-			discard = 1;	/* If incoming file is older, */
-			*rp++ = c;	/* discard it, reason = date. */
+		    if (zstime(ff,yy,1) > 0) { /* Compare dates */
+			*rp++ = c;	/* Discard if older, reason = date. */
+			if (!opnerr) tlog(F100," refused: date","",0);
 			retcode = -1;	/* Rejection notice. */
 		    }
 		}				
@@ -935,6 +1089,8 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 			if (!unkcs) {	/* and SET UNKNOWN DISCARD, */
 			    retcode = -1; /* reject the file. */
 			    *rp++ = c;
+			    if (!opnerr)
+			      tlog(F100," refused: character set","",0);
 			}
 		    } else {
 			tcharset = tcsinfo[i].code; /* if known, use it */
@@ -946,43 +1102,79 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 	      default:			/* Something else. */
 		debug(F110,"gattr unk encoding attribute",tsbuf,0);
 		if (!unkcs) {		/* If SET UNK DISC */
-		    retcode = -1;	/* reject the file */
+		    retcode = -1;
 		    *rp++ = c;
+		    if (!opnerr) tlog(F100," refused: encoding","",0);
 		}
 		break;
 		}
 	    }
 	    break;
 
-	  case '+':			/* disposition */
+	  case '+':			/* Disposition */
 #ifdef DYNAMIC
 	    if (!dsbuf)
 		if ((dsbuf = malloc(DSBUFL+1)) == NULL)
 		    fatal("gtattr: no memory for dsbuf");
 #endif /* DYNAMIC */
 	    for (i = 0; (i < aln) && (i < DSBUFL); i++)
-	      dsbuf[i] = *s++;		/* Copy it into a static string */
+	      dsbuf[i] = *s++;		/* Copy it into a separate string */
 	    dsbuf[i] = '\0';
 	    if (i < aln) s += (aln - i);
+	    rs_len = 0;
 	    if (atdisi) {
 		yy->disp.val = dsbuf;	/* Pointer to string */
 		yy->disp.len = i;	/* Length of string */
+		d = *dsbuf;
+#ifndef NODISPO
+/*
+  Define NODISPO to disable receipt of mail or print files and of RESEND.
+*/
 		if (
 #ifndef datageneral			/* MAIL supported only for */
 #ifndef OS2				/* UNIX, VMS, and OS-9 */
 #ifndef MAC
 #ifndef GEMDOS
 #ifndef AMIGA
-		    *dsbuf != 'M' &&
+		    d != 'M' &&		/* MAIL */
 #endif /* AMIGA */
 #endif /* GEMDOS */
 #endif /* MAC */
 #endif /* OS/2 */
 #endif /* datageneral */
-		    *dsbuf != 'P') {
+#ifdef CK_RESEND
+		    d != 'R' &&		/* RESEND */
+#endif /* CK_RESEND */
+		    d != 'P') {		/* PRINT */
 		    retcode = -1;
 		    *rp++ = c;
+		    if (!opnerr) tlog(F100," refused: disposition","",0);
 		}
+		if (d == 'R') {		/* File is being resent */
+#ifdef CK_RESEND
+		    rs_len = zchki(ff); /* Get length of file */
+		    debug(F111,"gattr RESEND",ff,rs_len);
+#ifdef VMS
+		    rs_len &= (long) -512; /* Ensure block boundary if VMS */
+		    rs_len -= 512;	  /* In case last block not complete */
+		    debug(F111,"gattr rs_len",ff,rs_len);
+#endif /* VMS */
+		    if (rs_len < 0L) rs_len = 0L;
+		    if (rs_len > 0L) {
+			fncsav = fncact; /* Save collision action */
+			fncact = XYFX_A; /* Switch to APPEND */
+		    }
+#else
+		    retcode = -1;	/* This shouldn't happen */
+		    *rp++ = c;		/* 'cause it wasn't negotiated. */
+		    if (!opnerr) tlog(F100," refused: resend","",0);
+#endif /* CK_RESEND */
+		}
+#else  /* NODISPO */
+		retcode = -1;
+		*rp++ = c;
+		if (!opnerr) tlog(F100," refused: resend","",0);
+#endif /* NODISPO */
 	    }
 	    break;
 
@@ -1021,6 +1213,20 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 	    debug(F111,"gattr length",abuf,(int) yy->length);
 	    break;
 
+#ifdef STRATUS
+	  case '/':			/* Format of data in packets */
+	    /* We just copy it into the record and let the fio module */
+	    /* figure out what to do with it. */
+	    for (i = 0; (i < aln) && (i < ABUFL); i++) /* Copy it */
+	      abuf[i] = *s++;
+	    abuf[i] = '\0';		/* Terminate with null */
+	    if (atsysi) {		/* same switch as OS-DEPENDENT */
+		yy->recfm.val = spbuf;	/* Pointer to string */
+		yy->recfm.len = i;	/* Length of string */
+	    }
+	    break;
+#endif /* STRATUS */
+
 	  default:			/* Unknown attribute */
 	    s += aln;			/* Just skip past it */
 	    break;
@@ -1032,18 +1238,20 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 
     if (atleni) {			/* Length attribute enabled? */
 	if (yy->length > -1L) {		/* Length-in-bytes attribute rec'd? */
-	    if (!zchkspa(filnam,(yy->length))) { /* Check space */
-		retcode = -1;
+	    if (!zchkspa(ff,(yy->length))) { /* Check space */
+		retcode = -1;		     /* Not enuf */
 		*rp++ = '1';
+		if (!opnerr) tlog(F100," refused: length","",0);
 	    }
 	} else if (yy->lengthk > -1L) {	/* Length in K attribute rec'd? */
-	    if (!zchkspa(filnam,(yy->lengthk * 1024))) {
+	    if (!zchkspa(ff,(yy->lengthk * 1024))) {
 		retcode = -1;		/* Check space */
 		*rp++ = '!';
+		if (!opnerr) tlog(F100," refused: length","",0);
 	    }
 	}
     }
-    if (yy->length > -1L) {		/* Get the file size */
+    if (yy->length > -1L) {		/* Remember the file size */
 	fsize = yy->length;		
     } else if (yy->lengthk > -1L) {
 	fsize = yy->lengthk * 1024L;
@@ -1057,8 +1265,33 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 #endif /* DEBUG */
     if (retcode == 0) rp = rpbuf;	/* Null reply string if accepted */
     *rp = '\0';				/* End of reply string */
+#ifdef CK_RESEND
+    if (d == 'R') {			/* Receiving a RESEND? */
+	debug(F101,"gattr RESEND","",retcode);
+	/* We ignore retcodes because this overrides */
+	if (binary != XYFT_B) {		/* Reject if not binary */
+	    retcode = -1;		/* in case type field came */
+	    strcpy(rpbuf,"N+");		/* after the disposition field */
+	    debug(F111,"gattr RESEND not binary",rpbuf,binary);
+	} else {			/* Binary mode */
+	    retcode = 0;		/* Accept the file */
+	    sprintf(rpbuf+2,"%ld",rs_len); /* Reply with length of file */
+	    rpbuf[0] = '1';		/* '1' means Length in Bytes */
+	    rpbuf[1] = tochar((int)strlen(rpbuf+2)); /* Length of length */
+	    debug(F111,"gattr RESEND OK",rpbuf,retcode);
+	}
+    }
+#endif /* CK_RESEND */
+    if (retcode == 0 && discard != 0) {	/* Do we still have a discard flag? */
+	strcpy(rpbuf,"N?");		/* Yes, must be filename collision */
+	retcode = -1;			/* "?" = name (reply-only code) */
+    }
     yy->reply.val = rpbuf;		/* Add it to attribute structure */
     yy->reply.len = (int)strlen(rpbuf);
+    if (retcode < 0) {			/* If we are rejecting */
+	discard = 1;			/* remember to discard the file */
+	rejection = rpbuf[1];		/* and use the first reason given. */
+    }
     debug(F111,"gattr return",rpbuf,retcode);
     return(retcode);
 }
@@ -1086,8 +1319,8 @@ initattr(yy) struct zattr *yy; {
     yy->account.len = 0;
     yy->area.val = "";
     yy->area.len = 0;
-    yy->passwd.val = "";
-    yy->passwd.len = 0;
+    yy->password.val = "";
+    yy->password.len = 0;
     yy->blksize = -1L;
     yy->access.val = "";
     yy->access.len = 0;
@@ -1115,7 +1348,7 @@ adebu(f,zz) char *f; struct zattr *zz; {
     debug(F111," creator",zz->creator.val,zz->creator.len);
     debug(F111," account",zz->account.val,zz->account.len);
     debug(F111," area",zz->area.val,zz->area.len);
-    debug(F111," password",zz->passwd.val,zz->passwd.len);
+    debug(F111," password",zz->password.val,zz->password.len);
     debug(F101," blksize","",(int) zz->blksize);
     debug(F111," access",zz->access.val,zz->access.len);
     debug(F111," encoding",zz->encoding.val,zz->encoding.len);
@@ -1142,45 +1375,19 @@ adebu(f,zz) char *f; struct zattr *zz; {
 
   Returns 0 on failure, nonzero on success.
 */
+extern char *rf_err;
+
 int
 opena(f,zz) char *f; struct zattr *zz; {
-    int x;
+    int x, dispos = 0;
     static struct filinfo fcb;		/* Must be static! */
 
-    debug(F111,"opena discard",f,discard);
+    debug(F110,"opena f",f,0);
+    debug(F101,"opena discard","",discard);
 
     adebu(f,zz);			/* Write attributes to debug log */
 
-    ffc = 0L;				/* Init file character counter */
-
-#ifdef COMMENT
-/*
-  This code moved to sattr().
-*/
-    if (bsavef) {			/* If somehow file mode */
-	binary = bsave;			/* was saved but not restored, */
-	bsavef = 0;			/* restore it. */
-	debug(F101,"opena restoring binary","",binary);
-    }
-    if (zz->type.val[0] == 'A') {	/* Check received attributes */
-#ifdef VMS
-	if (binary == XYFT_L)		/* Refuse to receive a file in */
-	  return(0);			/* labeled mode if sent as text. */
-#endif /* VMS */
-	bsave = binary;			/* ASCII.  Save global file type */
-	bsavef = 1;			/* ( restore it in clsof() ) */
-	binary = XYFT_T;		/* Set current type to Text. */
-	debug(F100,"opena attribute A = text","",binary);
-    } else if (zz->type.val[0] == 'B') {
-	bsave = binary;			/* Binary.  Save global file type */
-	bsavef = 1;
-#ifdef VMS
-	if (binary != XYFT_L && binary != XYFT_U) /* Special VMS cases */
-#endif /* VMS */
-	  binary = XYFT_B;
-	debug(F101,"opena attribute B = binary","",binary);
-    }
-#endif /* COMMENT */
+    ffc = 0L;				/* Init file-character counter */
 
     /* Set up file control structure */
 
@@ -1196,25 +1403,47 @@ opena(f,zz) char *f; struct zattr *zz; {
     fcb.cc = fcctrl;			/* Carriage control */
     fcb.typ = binary;			/* Type */
     fcb.dsp = (fncact == XYFX_A) ? XYFZ_A : XYFZ_N; /* Disposition */
-    fcb.os_specific = '\0';		/* OS specific info */
-#ifdef VMS
-    fcb.lblopts = lf_opts;		/* VMS Labeled file options */
+    fcb.os_specific = '\0';		/* OS-specific info */
+#ifdef CK_LABELED
+    fcb.lblopts = lf_opts;		/* Labeled file options */
 #else
     fcb.lblopts = 0;
-#endif /* VMS */
+#endif /* CK_LABELED */
 
+    if (zz->disp.len > 0) {		/* Incoming file has a disposition? */
+	debug(F111,"open disposition",zz->disp.val,zz->disp.len);
+	dispos = (int) (*(zz->disp.val));
+    }
+    debug(F101,"opena dispos","",dispos);
+
+    if (!dispos) {			         /* No special disposition? */
+	if (fncact == XYFX_B && ofn1x && ofn2) { /* File collision = BACKUP? */
+	    if (zrename(ofn1,ofn2) < 0) {        /* Rename existing file. */
+		debug(F110,"opena rename fails",ofn1,0);
+		rf_err = "Can't create backup file";
+		return(0);
+	    } else debug(F110,"opena rename ok",ofn2,0);
+	}
+    } else if (dispos == 'R') {		/* Receiving a RESEND */
+#ifdef COMMENT
+        if (fncact == XYFX_R)		/* and file collision = RENAME */
+	  if (ofn1x)
+#endif
+	    f = ofn1;			/* use original name. */
+    }
+    debug(F111,"opena [file]=mode: ",f,fcb.dsp);
     if (x = openo(f,zz,&fcb)) {		/* Try to open the file. */
-	tlog(F110," as",f,0L);		/* OK, open, record name. */
+	tlog(F110," local name:",f,0L);	/* OK, open, record name. */
 	if (binary) {			/* Log file mode in transaction log */
 	    tlog(F101," mode: binary","",(long) binary);
 	} else {			/* If text mode, check character set */
 	    tlog(F100," mode: text","",0L);
 #ifndef NOCSETS
-	    tlog(F110," file character set",fcsinfo[fcharset].name,0L);
+	    tlog(F110," file character-set",fcsinfo[fcharset].name,0L);
 	    if (tcharset == TC_TRANSP)
-	      tlog(F110," xfer character set","transparent",0L);
+	      tlog(F110," xfer character-set","transparent",0L);
 	    else
-	      tlog(F110," xfer character set",tcsinfo[tcharset].name,0L);
+	      tlog(F110," xfer character-set",tcsinfo[tcharset].name,0L);
 #endif /* NOCSETS */
 	    debug(F111," opena charset",zz->encoding.val,zz->encoding.len);
 	}
@@ -1229,12 +1458,35 @@ opena(f,zz) char *f; struct zattr *zz; {
 
     } else {				/* Did not open file OK. */
 #ifdef ATTSV
-	extern char *sys_errlist[];
 	extern int errno;
-	screen(SCR_EM,0,0l,sys_errlist[errno]);
-#else
-#ifdef BSD4
+#ifdef BSD44
+#ifdef __386BSD__
+#ifndef NDSYSERRLIST
 	extern char *sys_errlist[];
+#endif /* NDSYSERRLIST */
+#else
+#ifndef __bsdi__
+#ifndef NDSYSERRLIST
+	extern const char *const sys_errlist[];
+#endif /* NDSYSERRLIST */
+#endif /* __bsdi__ */
+#endif /* __386BSD__ */
+	char *e;
+	e = (char *) sys_errlist[errno];
+	screen(SCR_EM,0,0l,e);
+#else /* !BSD44 */
+#ifndef NDSYSERRLIST
+	extern char *sys_errlist[];
+#endif /* NDSYSERRLIST */
+	screen(SCR_EM,0,0l,sys_errlist[errno]);
+#endif /* BSD44 */
+
+#else /* !ATTSV */
+
+#ifdef BSD4
+#ifndef NDSYSERRLIST
+	extern char *sys_errlist[];
+#endif /* NDSYSERRLIST */
 	extern int errno;
 	screen(SCR_EM,0,0l,sys_errlist[errno]);
 #else
@@ -1243,8 +1495,6 @@ opena(f,zz) char *f; struct zattr *zz; {
 #endif /* ATTSV */
 
         tlog(F110,"Failure to open",f,0L);
-
-
     }
     return(x);				/* Pass on return code from openo */
 }
@@ -1315,6 +1565,8 @@ openi(name) char *name; {
 
 /*  O P E N O  --  Open a new file for output.  */
 
+static int isopen = 0;
+
 int
 openo(name,zz,fcb) char *name; struct zattr *zz; struct filinfo *fcb; {
     char *name2;
@@ -1338,10 +1590,12 @@ openo(name,zz,fcb) char *name; struct zattr *zz; struct filinfo *fcb; {
     }
 
     if (zopeno(ZOFILE,name,zz,fcb) == 0) { /* Try to open the file */
+	isopen = 0;
 	debug(F110,"openo failed",name,0);
 	tlog(F110,"Failure to open",name,0L);
 	return(0);
     } else {
+	isopen = 1;
 	debug(F110,"openo ok, name",name,0);
 	return(1);
     }
@@ -1385,7 +1639,14 @@ clsif() {
 	screen(SCR_ST,ST_OK,0l,"");	/* and say transfer was OK */
     }
     hcflg = 0;				/* Reset flags */
+    sendstart = 0L;			/* Don't do this again! */
+#ifdef COMMENT
+/*
+  This prevents a subsequent call to clsof() from deleting the file
+  when given the discard flag.
+*/
     *filnam = '\0';			/* and current file name */
+#endif /* COMMENT */
     return(x);
 }
 
@@ -1405,33 +1666,41 @@ clsof(disp) int disp; {
 	binary = bsave;			/* restore it */
 	bsavef = 0;			/* only this once. */
     }
+    if (fncsav != -1) {			/* Saved file collision action... */
+	fncact = fncsav;		/* Restore it. */
+	fncsav = -1;			/* Unsave it. */
+    }
 #ifdef datageneral
     if ((local) && (!quiet))		/* Only do this if local & not quiet */
         connoi_mt();
 #endif /* datageneral */
-    cxseen = 0;				/* Reset per-file interruption flag */
     if ((x = zclose(ZOFILE)) < 0) {	/* Try to close the file */
 	tlog(F100,"Failure to close",filnam,0L);
 	screen(SCR_ST,ST_ERR,0l,"");
     } else if (disp) {			/* Interrupted or refused */
-	if (keep == 0) {		/* If not keep incomplete files */
-	    if (*filnam) zdelet(filnam); /* Delete it */
-	    debug(F100,"Discarded","",0);
-	    tlog(F100,"Discarded","",0L);
+	if (keep == 0) {		/* If not keeping incomplete files */
+	    if (isopen &&		/* AND the file is actually open */
+		*filnam && (what & W_RECV)) /* AND we're receiving!!!... */
+	      zdelet(filnam);		    /* ONLY THEN, delete it */
+	    debug(F100,"Incomplete: discarded","",0);
+	    tlog(F100," incomplete: discarded","",0L);
 	    screen(SCR_ST,ST_DISC,0l,"");
 	} else {			/* Keep incomplete copy */
-	    if (ffc) ffc++;		/* This is off by one (why?) */
 	    fstats();
-	    debug(F100,"Incomplete","",0);
-	    tlog(F100,"Incomplete","",0L);
+	    if (!discard) { /* Unless discarding for other reason... */
+		debug(F100,"Incomplete: Kept","",0);
+		tlog(F100," incomplete: kept","",0L);
+	    }
 	    screen(SCR_ST,ST_INC,0l,"");
 	}
     } else {				/* Nothing wrong, just keep it */
 	debug(F100,"Closed","",0);	/* and give comforting messages. */
-	if (ffc) ffc++;			/* Correct off-by-1 error */
 	fstats();
-	screen(SCR_ST,ST_OK,0l,"");
+	screen(SCR_ST,ST_OK,0L,"");
     }
+    rs_len = 0;
+    isopen = 0;				/* It's not open any more. */
+    cxseen = 0;				/* Reset per-file interruption flag */
     return(x);				/* Send back zclose() return code. */
 }
 

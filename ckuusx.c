@@ -1,14 +1,18 @@
+#include "ckcsym.h"
+
 /*  C K U U S X --  "User Interface" common functions. */
 
 /*
   Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
-  Columbia University Center for Computing Activities.
-  First released January 1985.
-  Copyright (C) 1985, 1992, Trustees of Columbia University in the City of New
-  York.  Permission is granted to any individual or institution to use this
-  software as long as it is not sold for profit.  This copyright notice must be
-  retained.  This software may not be included in commercial products without
-  written permission of Columbia University.
+  Columbia University Academic Information Systems, New York City.
+
+  Copyright (C) 1985, 1994, Trustees of Columbia University in the City of New
+  York.  The C-Kermit software may not be, in whole or in part, licensed or
+  sold for profit as a software product itself, nor may it be included in or
+  distributed with commercial products or otherwise distributed by commercial
+  concerns to their clients or customers without written permission of the
+  Office of Kermit Development and Distribution, Columbia University.  This
+  copyright notice must not be removed, altered, or obscured.
 */
 
 /*
@@ -22,6 +26,63 @@
 #include "ckcasc.h"
 #include "ckcker.h"
 #include "ckuusr.h"
+
+extern xx_strp xxstring;
+
+#ifndef NETCONN
+/*
+  We should just pull in ckcnet.h here, but it causes a conflict with curses.h.
+*/
+#ifdef TCPSOCKET
+#define NETCONN
+#else
+#ifdef SUNX25
+#define NETCONN
+#else
+#ifdef STRATUSX25
+#define NETCONN
+#else
+#ifdef DECNET
+#define NETCONN
+#else
+#ifdef NPIPE
+#define NETCONN
+#else
+#ifdef CK_NETBIOS
+#define NETCONN
+#endif /* TCPSOCKET */
+#endif /* SUNX25 */
+#endif /* STRATUSX25 */
+#endif /* DECNET */
+#endif /* NPIPE */
+#endif /* CK_NETBIOS */
+#endif /* NETCONN */
+
+#ifdef OS2
+#ifdef CK_NETBIOS
+#include "os2.h"
+#ifdef COMMENT				/* Would you believe */
+#undef COMMENT				/* <os2.h> defines this ? */
+#endif /* COMMENT */
+#include "ckonbi.h"
+extern PNCB pRecvNCB, pSendNCB[MAXWS], pWorkNCB ;
+extern UCHAR NetBiosAdapter ;
+extern BOOL NetbeuiAPI ;
+#endif /* CK_NETBIOS */
+
+typedef struct ascreen_rec {		/* Structure for saving screen info */
+    unsigned char   ox;
+    unsigned char   oy;
+    unsigned char   att;
+    char            *scrncpy;
+} ascreen;
+extern ascreen commandscreen;
+
+/* Functions from ckocon.c */
+void savescreen(ascreen *, int, int);
+int  restorescreen(ascreen *);
+#endif /* OS2 */
+
 #ifndef WINTCP
 #include <signal.h>
 #endif /* WINTCP */
@@ -40,7 +101,13 @@
 #endif /* VMS */
 
 /* Used internally */
+
 _PROTOTYP( VOID screenc, (int, char, long, char *) );
+#ifdef CK_CURSES
+_PROTOTYP( static long shocps, (int) );
+_PROTOTYP( static long shoetl, (long, long, long, long) );
+#endif /* CK_CURSES */
+
 static int ft_win = 0;  /* Fullscreen file transfer display window is active */
 
 /* Variables declared here */
@@ -62,7 +129,16 @@ char sesfil[50];			/* Session log file name */
 #ifndef NOFRILLS
 char optbuf[100];			/* Options for MAIL or REMOTE PRINT */
 #endif /* NOFRILLS */
-char cmdstr[256];			/* Place to build generic command */
+
+#ifdef DYNAMIC
+static char *cmdstr = NULL;		/* Place to build generic command */
+#else
+#ifdef pdp11
+static char cmdstr[256];
+#else
+static char cmdstr[4096];
+#endif /* pdp11 */
+#endif /* DYNAMIC */
 
 char fspec[FSPECL];			/* Filename string for \v(filespec) */
 
@@ -79,7 +155,7 @@ int success = 1,			/* Command success/failure flag */
 #ifndef NOSPL
     cmdlvl = 0,				/* Command level */
 #endif /* NOSPL */
-    action,				/* Action selected on command line*/
+    action,				/* Action selected on command line */
     sessft = 0,				/* Session log file type, 0 = text */
     pflag = 1,				/* Print prompt */
     msgflg = 1;				/* Print informational messages */
@@ -88,25 +164,38 @@ int success = 1,			/* Command success/failure flag */
 char *msfiles[MSENDMAX];
 #endif /* NOMSEND */
 
+#ifdef CK_RESEND
+extern int sendmode;
+extern long sendstart, rs_len;
+#endif /* CK_RESEND */
+
+#ifdef CK_APC
+extern int apcactive;
+#endif /* CK_APC */
 /* External variables */
 
 #ifndef NODIAL
 extern FILE * dialfd;			/* Dialing directory */
 #endif /* NODIAL */
 
+#ifdef CK_PCT_BAR			/* File transfer thermometer */
+int thermometer = 1;			/* ON by default */
+#endif /* CK_PCT_BAR */
+
 extern int local, quiet, binary, bctu, rptflg, ebqflg, network, server,
   what, spsiz, urpsiz, wmax, czseen, cxseen, winlo, displa, timint, parity,
   npad, ebq, ebqflg, bctr, rptq, atcapu, lpcapu, swcapu, wslotn, wslotr, rtimo,
   mypadn, sq, capas, rpsiz, tsecs, dfloc, tralog, pktlog, seslog, lscapu,
-  xitsta, escape, tlevel, bgset, backgrd, wslots, suspend, srvdis,
-  spackets, spktl, rpktl, retrans, wcur, numerrs, fsecs;
+  xitsta, escape, tlevel, bgset, backgrd, wslots, suspend, srvdis, nettype,
+  spackets, spktl, rpktl, retrans, wcur, numerrs, fsecs, sendmode, whatru;
 
 #ifdef datageneral			/* 2/12/92 ENH */
 #include <sysid.h>
 extern int con_reads_mt, conint_ch, conint_avl;
 #endif /* datageneral */
 
-extern long speed, filcnt, ffc, tfc, rptn, fsize;
+extern long speed, filcnt, ffc, tfc, rptn, fsize, sendstart, rs_len;
+long oldcps = 0L, cps = 0L;
 
 extern CHAR *rdatap, padch, seol, ctlq, mypadc, eol;
 
@@ -121,7 +210,11 @@ extern char cmdbuf[];			/* Command buffer */
 
 #ifndef NOCCTRAP
 #include <setjmp.h>			/* Control-C trap */
+#ifdef CK_POSIX_SIG			/* POSIX signal handling */
+sigjmp_buf cmjbuf;
+#else
 jmp_buf cmjbuf;
+#endif /* CK_POSIX_SIG */
 #endif /* NOCCTRAP */
 
 #ifndef NOCSETS
@@ -174,6 +267,7 @@ shomdm() {
 #endif /* MAC */
 	printf(
           " Clear To Send       (CTS): %s\r\n",(y & BM_CTS) ? "On": "Off");
+#ifndef STRATUS
 #ifndef MAC
         printf(
           " Ring Indicator      (RI):  %s\r\n",(y & BM_RNG) ? "On": "Off");
@@ -184,6 +278,7 @@ shomdm() {
         printf(
           " Request to Send     (RTS): %s\r\n",(y & BM_RTS) ? "On": "Off");
 #endif /* MAC */
+#endif /* STRATUS */
     }
 }
 
@@ -208,6 +303,7 @@ sdebu(len) int len; {
     debug(F101," lpcapu","",lpcapu);
     debug(F101," swcapu","",swcapu);
     debug(F101," wslotn","", wslotn);
+    debug(F101," whatru","", whatru);
 }
 /*  R D E B U -- Debugging display of rpar() values  */
 
@@ -248,16 +344,21 @@ chkerr() {
 /*  F A T A L  --  Fatal error message */
 
 VOID
+fatal2(msg1,msg2) char *msg1, *msg2; {
+    if (!msg1) msg1 = "";
+    if (!msg2) msg2 = "";
+    sprintf(fspec,"\"%s\" - %s",msg1,msg2);
+    fatal(fspec);
+}
+
+VOID
 fatal(msg) char *msg; {
+    if (!msg) msg = "";
 #ifdef VMS
-#ifndef NOICP
-    if (strncmp(msg,"%CKERMIT",8)) {
-	sprintf(cmdbuf,"%%CKERMIT-E-FATAL, %s",msg);
-	msg = cmdbuf;
-    }
-#endif /* NOICP */
+    if (strncmp(msg,"%CKERMIT",8))
+      conol("%CKERMIT-E-FATAL, ");
     conoll(msg);
-#else
+#else /* !VMS */
     screen(SCR_EM,0,0L,msg);
 #endif /* VMS */
     debug(F110,"fatal",msg,0);
@@ -271,26 +372,42 @@ char *
 bldlen(str,dest) char *str, *dest; {
     int len;
     len = (int)strlen(str);
-    *dest = tochar(len);
+    if (len > 94)
+      *dest = SP;
+    else
+      *dest = tochar(len);
     strcpy(dest+1,str);
     return(dest+len+1);
 }
 
 
 /*  S E T G E N  --  Construct a generic command  */
-
+/*
+  Call with Generic command character followed by three string arguments.  
+  Trailing strings are allowed to be empty ("").  Each string except the last
+  non-empty string must be less than 95 characters long.  The final nonempty
+  string is allowed to be longer.
+*/
 CHAR
 #ifdef CK_ANSIC
-setgen(char type,char * arg1, char * arg2, char * arg3)
+setgen(char type, char * arg1, char * arg2, char * arg3)
 #else
 setgen(type,arg1,arg2,arg3) char type, *arg1, *arg2, *arg3;
 #endif /* CK_ANSIC */
 /* setgen */ {
     char *upstr, *cp;
+#ifdef DYNAMIC
+    if (!cmdstr)
+      if (!(cmdstr = malloc(MAXSP + 1)))
+	fatal("setgen: can't allocate memory");
+#endif /* DYNAMIC */
 
     cp = cmdstr;
     *cp++ = type;
     *cp = NUL;
+    if (!arg1) arg1 = "";
+    if (!arg2) arg2 = "";
+    if (!arg3) arg3 = "";
     if (*arg1 != NUL) {
 	upstr = bldlen(arg1,cp);
 	if (*arg2 != NUL) {
@@ -413,30 +530,58 @@ dbchr(c) int c; {
 #undef ATTSV
 #endif /* BSD44 */
 
-#ifdef ATTSV
+#ifdef SVORPOSIX
+#ifndef BSD44
+#ifndef apollo
 #include <sys/utsname.h>
-#endif /* ATTSV */
+#endif /* apollo */
+#endif /* BSD44 */
+#endif /* SVORPOSIX*/
 
 VOID
 ckhost(vvbuf,vvlen) char * vvbuf; int vvlen; {
+#ifdef pdp11
+    *vvbuf = NUL;
+#else
     char *g;
 #ifdef VMS
     int x;
 #endif /* VMS */
-#ifdef ATTSV
+#ifdef SVORPOSIX
+#ifndef BSD44
+#ifndef _386BSD
     struct utsname hname;
-#endif /* ATTSV */
+#endif /* _386BSD */
+#endif /* BSD44 */
+#endif /* SVORPOSIX */
 #ifdef datageneral
     int ac0 = (char *) vvbuf, ac1 = -1, ac2 = 0;
 #endif /* datageneral */
 
     *vvbuf = NUL;
-#ifdef ATTSV
-    if (uname(&hname) > -1) strncpy(vvbuf,hname.nodename,vvlen);
-#else
-#ifdef BSD4
+#ifndef OXOS
+#ifdef SVORPOSIX
+#ifdef BSD44
     if (gethostname(vvbuf,vvlen) < 0) *vvbuf = NUL;
 #else
+#ifdef _386BSD
+    if (gethostname(vvbuf,vvlen) < 0) *vvbuf = NUL;
+#else
+#ifdef QNX
+#ifdef TCPSOCKET
+    if (gethostname(vvbuf,vvlen) < 0) *vvbuf = NUL;
+#else
+    if (uname(&hname) > -1) strncpy(vvbuf,hname.nodename,vvlen);
+#endif /* TCPSOCKET */
+#else /* SVORPOSIX but not _386BSD or BSD44 */
+    if (uname(&hname) > -1) strncpy(vvbuf,hname.nodename,vvlen);
+#endif /* QNX */
+#endif /* _386BSD */
+#endif /* BSD44 */
+#else /* !SVORPOSIX */
+#ifdef BSD4
+    if (gethostname(vvbuf,vvlen) < 0) *vvbuf = NUL;
+#else /* !BSD4 */
 #ifdef VMS
     g = getenv("SYS$NODE");
     if (g) strncpy(vvbuf,g,vvlen);
@@ -448,25 +593,34 @@ ckhost(vvbuf,vvlen) char * vvbuf; int vvlen; {
         vvlen = ac2 + 1;		/* enh - have to add one */
 #else
 #ifdef OS2				/* OS/2 */
-    g = getenv("SYSTEMNAME");
-    if (!g) g = getenv("HOSTNAME");
+    g = getenv("HOSTNAME");		/* (Created by TCP/IP install) */
+    if (!g) g = getenv("SYSTEMNAME");	/* (Created by PATHWORKS install?) */
     if (g) strncpy(vvbuf,g,vvlen);
 #endif /* OS2 */
 #endif /* datageneral */
 #endif /* VMS */
 #endif /* BSD4 */
-#endif /* ATTSV */
+#endif /* SVORPOSIX */
+#else /* OXOS */
+    /* If TCP/IP is not installed, gethostname() fails, use uname() */
+    if (gethostname(vvbuf,vvlen) < 0) {
+	if (uname(&hname) > -1)
+	    strncpy(vvbuf,hname.nodename,vvlen);
+	else
+	    *vvbuf = NUL;
+    }
+#endif /* OXOS */
     if (*vvbuf == NUL) {		/* If it's still empty */
         g = getenv("HOST");		/* try this */
         if (g) strncpy(vvbuf,g,vvlen);
     }
     vvbuf[vvlen-1] = NUL;		/* Make sure result is terminated. */
+#endif /* pdp11 */
 }
 #ifdef BSD44
 #undef BSD4
 #define ATTSV
 #endif /* BSD44 */
-
 
 #ifndef NOSPL
 #define ASKMORE
@@ -535,7 +689,7 @@ trap(sig) int sig; {
     int i; FILE *f;
 #endif /* VMS */
 #ifdef __EMX__
-  signal(SIGINT, SIG_ACK);
+    signal(SIGINT, SIG_ACK);
 #endif
 #ifdef GEMDOS
 /* GEM is not reentrant, no i/o from interrupt level */
@@ -544,11 +698,16 @@ trap(sig) int sig; {
     debug(F101,"^C trap() caught signal","",sig);
     zclose(ZIFILE);			/* If we were transferring a file, */
     zclose(ZOFILE);			/* close it. */
+#ifdef CK_APC
+    apcactive = 0;
+#endif /* CK_APC */
+
 #ifdef VMS
 /*
   Fix terminal.
 */
     if (ft_win) {			/* If curses window open */
+	debug(F100,"^C trap() curses","",0);
 	screen(SCR_CW,0,0L,"");		/* Close it */
 	conres();			/* Restore terminal */
 	i = printf("^C...");		/* Echo ^C to standard output */
@@ -557,13 +716,18 @@ trap(sig) int sig; {
 	i = printf("^C...\n");		/* Echo ^C to standard output */
     }
     if (i < 1 && ferror(stdout)) {	/* If there was an error */
+	debug(F100,"^C trap() error","",0);	
 	fclose(stdout);			/* close standard output */
 	f = fopen(dftty, "w");		/* open the controlling terminal */
 	if (f) stdout = f;		/* and make it standard output */
 	printf("^C...\n");		/* and echo the ^C again. */
     }
 #else					/* Not VMS */
+#ifdef STRATUS
+    conres();				/* Set console back to normal mode */
+#endif /* STRATUS */
     if (ft_win) {			/* If curses window open, */
+	debug(F100,"^C trap() curses","",0);
 	screen(SCR_CW,0,0L,"");		/* close it. */
 	printf("^C...");		/* Echo ^C to standard output */
     } else {
@@ -572,16 +736,57 @@ trap(sig) int sig; {
 #endif /* VMS */
 #ifdef datageneral
     connoi_mt(); 			/* Kill asynch task that listens to */
-    ttimoff();				/* the keyboard */
-    conres();
+    ttimoff();
+    conres();				/* the keyboard */
 #endif /* datageneral */
 
 #ifndef NOCCTRAP
+/*  This is stupid -- every version should have ttimoff()...  */
 #ifdef UNIX
     ttimoff();				/* Turn off any timer interrupts */
-#endif /* UNIX */
+#else
 #ifdef OSK
     ttimoff();				/* Turn off any timer interrupts */
+#else
+#ifdef STRATUS
+    ttimoff();				/* Turn off any timer interrupts */
+#else
+#ifdef OS2
+#ifdef CK_NETBIOS 
+   if ( netbiosAvail ) {
+       int i ;
+       NCB CancelNCB ;
+       /* Cancel all outstanding Netbios Send or Work requests */
+
+       for ( i = 0 ; i < MAXWS ; i++) {
+	   if ( pSendNCB[i]->basic_ncb.bncb.ncb_retcode ==
+	       NB_COMMAND_IN_PROCESS ) {
+	       NCBCancel( NetbeuiAPI,
+			 &CancelNCB,
+			 NetBiosAdapter,
+			 pSendNCB[i] ) ;
+	       Dos16SemWait( pSendNCB[i]->basic_ncb.ncb_semaphore,
+			    SEM_INDEFINITE_WAIT ) ;
+	   }
+       }
+       if ( pWorkNCB->basic_ncb.bncb.ncb_retcode == NB_COMMAND_IN_PROCESS ) {
+	   NCBCancel( NetbeuiAPI, &CancelNCB, NetBiosAdapter, pWorkNCB ) ;
+	   Dos16SemWait( pWorkNCB->basic_ncb.ncb_semaphore,
+                        SEM_INDEFINITE_WAIT ) ;
+       }
+   }
+#endif /* CK_NETBIOS */
+   ttimoff();				/* Turn off any timer interrupts */
+#else
+#ifdef VMS
+    ttimoff();				/* Turn off any timer interrupts */
+#endif /* VMS */
+#endif /* OS2 */
+#endif /* STRATUS */
+#endif /* OSK */
+#endif /* UNIX */
+
+#ifdef OSK
     sigmask(-1);
 /*
   We are in an intercept routine but do not perform a F$RTE (done implicitly
@@ -591,7 +796,11 @@ trap(sig) int sig; {
   variables.
 */
 #endif /* OSK */
-    longjmp(cmjbuf,1);			/* Jump back to parser */
+#ifdef CK_POSIX_SIG
+    siglongjmp(cmjbuf,1);			/* Jump back to parser */
+#else
+    longjmp(cmjbuf,1);
+#endif /* CK_POSIX_SIG */
 #else
 /* No Ctrl-C trap, just exit. */
 #ifdef CK_CURSES			/* Curses support? */
@@ -600,6 +809,25 @@ trap(sig) int sig; {
     doexit(BAD_EXIT,what);		/* Exit poorly */
 #endif /* NOCCTRAP */
     SIGRETURN;
+}
+
+/*  C K _ T I M E  -- Returns pointer to current time. */
+
+char *
+ck_time() {
+    static char tbuf[10];
+    char *p;
+    int x;
+
+    ztime(&p);				/* "Thu Feb  8 12:00:00 1990" */
+    if (!p)				/* like asctime()! */
+      return("");
+    if (*p) {
+	for (x = 11; x < 19; x++)	/* copy hh:mm:ss */
+	  tbuf[x - 11] = p[x];		/* to tbuf */
+	tbuf[8] = NUL;			/* terminate */
+    }
+    return(tbuf);			/* and return it */
 }
 
 /*  C C _ C L E A N  --  Cleanup after terminal interrupt handler */
@@ -669,6 +897,85 @@ stptrap(sig) int sig; {
     SIGRETURN;
 }
 
+#ifdef TLOG
+#define TBUFL 300
+/*  T L O G  --  Log a record in the transaction file  */
+/*
+ Call with a format and 3 arguments: two strings and a number:
+   f  - Format, a bit string in range 0-7, bit x is on, arg #x is printed.
+   s1,s2 - String arguments 1 and 2.
+   n  - Int, argument 3.
+*/
+VOID
+#ifdef CK_ANSIC
+tlog(int f, char *s1, char *s2, long n)
+#else
+tlog(f,s1,s2,n) int f; long n; char *s1, *s2;
+#endif /* CK_ANSIC */
+/* tlog */ {
+    static char s[TBUFL];
+    char *sp = s; int x;
+
+    if (!tralog) return;		/* If no transaction log, don't */
+    switch (f) {
+    	case F000:			/* 0 (special) "s1 n s2"  */
+	    if ((int)strlen(s1) + (int)strlen(s2) + 15 > TBUFL)
+	      sprintf(sp,"?T-Log string too long");
+	    else sprintf(sp,"%s %ld %s",s1,n,s2);
+	    if (zsoutl(ZTFILE,s) < 0) tralog = 0;
+	    break;
+    	case F001:			/* 1, " n" */
+	    sprintf(sp," %ld",n);
+	    if (zsoutl(ZTFILE,s) < 0) tralog = 0;
+	    break;
+    	case F010:			/* 2, "[s2]" */
+	    x = (int)strlen(s2);
+	    if (s2[x] == '\n') s2[x] = '\0';
+	    if (x + 6 > TBUFL)
+	      sprintf(sp,"?String too long");
+	    else sprintf(sp,"[%s]",s2);
+	    if (zsoutl(ZTFILE,"") < 0) tralog = 0;
+	    break;
+    	case F011:			/* 3, "[s2] n" */
+	    x = (int)strlen(s2);
+	    if (s2[x] == '\n') s2[x] = '\0';
+	    if (x + 6 > TBUFL)
+	      sprintf(sp,"?String too long");
+	    else sprintf(sp,"[%s] %ld",s2,n);
+	    if (zsoutl(ZTFILE,s) < 0) tralog = 0;
+	    break;
+    	case F100:			/* 4, "s1" */
+	    if (zsoutl(ZTFILE,s1) < 0) tralog = 0;
+	    break;
+    	case F101:			/* 5, "s1: n" */
+	    if ((int)strlen(s1) + 15 > TBUFL)
+	      sprintf(sp,"?String too long");
+	    else sprintf(sp,"%s: %ld",s1,n);
+	    if (zsoutl(ZTFILE,s) < 0) tralog = 0;
+	    break;
+    	case F110:			/* 6, "s1 s2" */
+	    x = (int)strlen(s2);
+	    if (s2[x] == '\n') s2[x] = '\0';
+	    if ((int)strlen(s1) + x + 4 > TBUFL)
+	      sprintf(sp,"?String too long");
+	    else sprintf(sp,"%s %s",s1,s2);
+	    if (zsoutl(ZTFILE,s) < 0) tralog = 0;
+	    break;
+    	case F111:			/* 7, "s1 s2: n" */
+	    x = (int)strlen(s2);
+	    if (s2[x] == '\n') s2[x] = '\0';
+	    if ((int)strlen(s1) + x + 15 > TBUFL)
+	      sprintf(sp,"?String too long");
+	    else sprintf(sp,"%s %s: %ld",s1,s2,n);
+	    if (zsoutl(ZTFILE,s) < 0) tralog = 0;
+	    break;
+	default:
+	    sprintf(sp,"?Invalid format for tlog() - %ld",n);
+	    if (zsoutl(ZTFILE,s) < 0) tralog = 0;
+    }
+}
+#endif /* TLOG */
+
 #ifndef MAC
 /*
   The rest of this file is for all implementations but the Macintosh.
@@ -676,9 +983,13 @@ stptrap(sig) int sig; {
 
 /*  C H K I N T  --  Check for console interrupts  */
 
+#ifdef CK_CURSES
+static int repaint = 0;			/* Transfer display needs repainting */
+#endif /* CK_CURSES */
+
 int
 chkint() {
-    int ch, cn; long zz;
+    int ch, cn, ofd; long zz;
 
     if ((!local) || (quiet)) return(0);	/* Only do this if local & not quiet */
 #ifdef datageneral
@@ -695,7 +1006,7 @@ chkint() {
         else                            /* if successful, set cn so we */
             cn = 1;                     /* know we got one */
     debug(F101,"chkint got keyboard character",ch,cn);
-#else
+#else /* !datageneral */
     cn = conchk();			/* Any input waiting? */
     debug(F101,"conchk","",cn);
     if (cn < 1) return(0);
@@ -704,20 +1015,27 @@ chkint() {
 
     switch (ch & 0177) {
       case 'A': case 'a': case 0001:		/* Status report */
+#ifdef COMMENT
 	if (fdispla != XYFD_R && fdispla != XYFD_S)
 	  return(0);	                        /* Only for serial or simple */
+#else
+	if (fdispla != XYFD_R && fdispla != XYFD_S && fdispla != XYFD_N)
+	  return(0);	                        /* Only for serial, simple */
+						/* or none */
+	ofd = fdispla; /* [MF] Save file display type */
+	if (fdispla == XYFD_N)
+	  fdispla = XYFD_R; /* [MF] Pretend serial if no file display */
+#endif /* COMMENT */
 	screen(SCR_TN,0,0l,"Status report:");
 	screen(SCR_TN,0,0l," file type: ");
 	if (binary) {
-#ifdef VMS
-	    if (binary == XYFT_I)		/* VMS-only file types */
-	      screen(SCR_TZ,0,0l,"image");
-	    else if (binary == XYFT_L)
-	      screen(SCR_TZ,0,0l,"labeled");
-	    else screen(SCR_TZ,0,0l,"binary");
-#else
-	    screen(SCR_TZ,0,0l,"binary");
-#endif /* VMS */
+	    switch(binary) {
+	      case XYFT_L: screen(SCR_TZ,0,0l,"labeled"); break;
+	      case XYFT_I: screen(SCR_TZ,0,0l,"image"); break;
+	      case XYFT_U: screen(SCR_TZ,0,0l,"binary undefined"); break;
+	      default: 
+	      case XYFT_B: screen(SCR_TZ,0,0l,"binary"); break;
+	    }
 	} else {
 #ifdef NOCSETS
 	    screen(SCR_TZ,0,0l,"text");
@@ -742,7 +1060,7 @@ chkint() {
 	if (fsize) screen(SCR_QE,0,fsize," size");
 	screen(SCR_QE,0,ffc,   " characters so far");
 	if (fsize > 0L) {
-	    zz = ( ffc * 100L ) / fsize;
+	    zz = ( (ffc + sendstart) * 100L ) / fsize;
 	    screen(SCR_QE,0,zz,      " percent done");
 	}
 	if (bctu == 4) {		/* Block check */
@@ -755,10 +1073,12 @@ chkint() {
 	if (!network)
 	  screen(SCR_QE,0, speed, " speed");
 	if (what == W_SEND)
+
 	  screen(SCR_QE,0,(long)spsiz, " packet length");
 	else if (what == W_RECV || what == W_REMO)
 	  screen(SCR_QE,0,(long)urpsiz," packet length");
 	screen(SCR_QE,0,(long)wslots,  " window slots");
+	fdispla = ofd; /* [MF] Restore file display type */
 	return(0);
 
       case 'B': case 'b': case 0002:	/* Cancel batch */
@@ -773,7 +1093,7 @@ chkint() {
 	cxseen = 1;
 	return(0);
 
-      case 'R': case 'r': case 0022:	/* Resend */
+      case 'R': case 'r': case 0022:	/* Resend packet */
       case 0015: case 0012:
 	screen(SCR_TN,0,0l,"Resending packet ");
 	numerrs++;
@@ -788,6 +1108,14 @@ chkint() {
       case '\03':                       /* We're not trapping ^C's with */
         trap(0);                        /* signals, so we check here    */
 #endif /* datageneral */
+
+#ifdef CK_CURSES
+      case 0014:			/* Ctrl-L to refresh screen */
+      case 'L': case 'l':		/* Also accept L (upper, lower) */
+      case 0027:			/* Ctrl-W synonym for VMS & Ingres */
+	repaint = 1;
+	return(0);
+#endif /* CK_CURSES */
 
       default:				/* Anything else, print message */
 	intmsg(1L);
@@ -811,22 +1139,20 @@ intmsg(n) long n;
     if (server && (!srvdis || n > -1L))	/* Special for server */
       return;
     buf[0] = NUL;			/* Keep compilers happy */
+#ifndef OXOS
 #ifdef SVORPOSIX
     conchk();				/* Clear out pending escape-signals */
 #endif /* SVORPOSIX */
+#endif /* ! OXOS */
 #ifdef VMS
     conres();				/* So Ctrl-C will work */
 #endif /* VMS */
     if ((!server && n == 1L) || (server && n < 0L)) {
 
-#ifdef SVORPOSIX			/* We need to signal before kb input */
-#ifndef aegis
-#ifndef datageneral
+#ifdef CK_NEED_SIG
 	sprintf(buf,"Type escape character (%s) followed by:",dbchr(escape));
 	screen(SCR_TN,0,0l,buf);
-#endif /* datageneral */
-#endif /* aegis */
-#endif /* SVORPOSIX */
+#endif /* CK_NEED_SIG */
 
  screen(SCR_TN,0,0l,"X to cancel file,  CR to resend current packet");
  screen(SCR_TN,0,0l,"Z to cancel group, A for status report");
@@ -848,6 +1174,8 @@ dpyinit() {
     newdpy = 0;				/*  Don't do this again */
     oldffc = 0L;			/*  Reset this */
     dots = 0L;				/*  and this.. */
+    oldcps = cps = 0L ;
+
     conoll("");						/* New line */
     if (what == W_SEND) conol("Sending: "); 		/* Action */
     else if (what == W_RECV) conol("Receiving: ");
@@ -859,14 +1187,13 @@ dpyinit() {
 	conol(fbuf); *fbuf = NUL;
     } else conol("Size: unknown, Type: ");
     if (binary) {					/* Type */
-#ifdef VMS
-	if (binary == XYFT_I)		/* VMS-only file types */
-	  conoll("image");
-	else if (binary == XYFT_L)
-	  conoll("labeled");
-	else
-#endif /* VMS */
-	  conoll("binary");
+	switch(binary) {
+	      case XYFT_L: conoll("labeled"); break;
+	      case XYFT_I: conoll("image"); break;
+	      case XYFT_U: conoll("binary undefined"); break;
+	      default: 
+	      case XYFT_B: conoll("binary"); break;
+	}
     } else {
 #ifdef NOCSETS
 	conoll("text");
@@ -911,7 +1238,7 @@ dpyinit() {
 /*
   showpkt(c)
   c = completion code: 0 means transfer in progress, nonzero means it's done.
-  show the file transfer progress counter and perhaps verbose packet type.
+  Show the file transfer progress counter and perhaps verbose packet type.
   Original by: Kai Uwe Rommel.
 */
 VOID
@@ -922,8 +1249,12 @@ showpkt(c) char c;
 #endif /* CK_ANSIC */
 /* showpkt */ {
 
+    long howfar;			/* How far into file */
+
     if (newdpy)				/* Put up filenames, etc, */
       dpyinit();			/* if they're not there already. */
+
+    howfar = ffc;			/* How far */
 
     if (fdispla == XYFD_S) {		/* CRT display */
 	char buffer[40];
@@ -931,14 +1262,20 @@ showpkt(c) char c;
 	long pd;			/* Percent done, this file     */
 	long tp;			/* Transfer rate, entire batch */
 	long ps;			/* Packet size, current packet */
-	long myffc, mytfc;		/* Local copies of byte counters */
+	long mytfc;			/* Local copy of byte counter  */
 
 	et = gtimer();			/* Elapsed time  */
 	ps = (what == W_RECV) ? rpktl+1 : spktl+1; /* Packet length */
+#ifdef CK_RESEND
+	if (what == W_SEND)		/* And if we didn't start at */
+	  howfar += sendstart;		/*  the beginning... */
+	else if (what == W_RECV)
+	  howfar += rs_len;
+#endif /* CK_RESEND */
 	pd = -1;			/* Percent done. */
 	if (c == NUL) {			/* Still going, figure % done */
 	    if (fsize == 0L) return;	/* Empty file, don't bother */
-	    pd = (fsize > 99L) ? (ffc / (fsize / 100L)) : 0L;
+	    pd = (fsize > 99L) ? (howfar / (fsize / 100L)) : 0L;
 	    if (pd > 100) pd = 100;	/* Expansion */
 	} else pd = 100;		/* File complete, so 100%. */
 
@@ -948,29 +1285,27 @@ showpkt(c) char c;
   Rate so far is ffc / (et - fsecs),  estimated time for remaining bytes
   is (fsize - ffc) / ( ffc / (et - fsecs )).
 */
-	tp = (ffc > 0L) ? (fsize - ffc) * (et - fsecs) / ffc : 0L;
+	tp = (howfar > 0L) ? (fsize - howfar) * (et - fsecs) / howfar : 0L;
 #endif /* CK_CPS */
 
-	myffc = (ffc > 0) ? ffc - 1L : ffc; /* No, I don't know why... */
-	if (myffc < 0L) myffc = 0L;
 #ifdef CK_CPS
-	mytfc = (pd < 100) ? tfc + myffc : tfc;
+	mytfc = (pd < 100) ? tfc + howfar : tfc;
 	tp = (et > 0) ? mytfc / et : 0; /* Transfer rate */
 	if (c && (tp == 0))		/* Watch out for subsecond times */
-	  tp = myffc;
+	  tp = howfar;
 #endif /* CK_CPS */
 	if (pd > -1L)
-	  sprintf(buffer, "%c%9ld%5ld%%%8ld%8ld ", CR, myffc, pd, tp, ps);
+	  sprintf(buffer, "%c%9ld%5ld%%%8ld%8ld ", CR, howfar, pd, tp, ps);
 	else
-	  sprintf(buffer, "%c%9ld      %8ld%8ld ", CR, myffc, tp, ps);
+	  sprintf(buffer, "%c%9ld      %8ld%8ld ", CR, howfar, tp, ps);
 	conol(buffer);
 	hpos = 31;
     } else {				/* SERIAL display */
 	long i, k;
-	if (ffc - oldffc < 1024)	/* Update display every 1K */
+	if (howfar - oldffc < 1024)	/* Update display every 1K */
 	  return;
-	oldffc = ffc;			/* Time for new display */
-	k = (ffc / 1024L) - dots;	/* How many K so far */
+	oldffc = howfar;		/* Time for new display */
+	k = (howfar / 1024L) - dots;	/* How many K so far */
 	for (i = 0L; i < k; i++) {
 	    if (hpos++ > 77) {		/* Time to wrap? */
 		conoll("");
@@ -1170,6 +1505,9 @@ case SCR_QE:				/* Quantity equals */
 case SCR_CW:				/* Close fullscreen window */
     return;				/* No window to close */
 
+case SCR_CD:
+    return;
+
 default:
     conoll("*** screen() called with bad object ***");
     hpos = 0;
@@ -1183,6 +1521,7 @@ default:
 
 VOID
 ermsg(msg) char *msg; {			/* Print error message */
+    debug(F110,"ermsg",msg,0);
     if (local)
       screen(SCR_EM,0,0L,msg);
     tlog(F110,"Protocol Error:",msg,0L);
@@ -1197,14 +1536,6 @@ doclean() {				/* General cleanup upon exit */
 #endif /* NOSPL */
 #endif /* NOICP */
 
-#ifdef DEBUG
-    if (deblog) {			/* Close any open logs. */
-	debug(F100,"Debug Log Closed","",0);
-	*debfil = '\0';
-	deblog = 0;
-	zclose(ZDFILE);
-    }
-#endif /* DEBUG */
     if (pktlog) {
 	*pktfil = '\0';
 	pktlog = 0;
@@ -1287,11 +1618,11 @@ doexit(exitstat,what) int exitstat, what; {
     debug(F101,"doexit exitstat","",exitstat);
     debug(F101,"doexit what","",what);
 
-    doclean();				/* First, clean up everything */
+    doclean();				/* First, clean up most things */
 
 #ifdef VMS
     if (what == -1)
-	what = 0;			/* Since we set two different items */
+      what = 0;				/* Since we set two different items */
     sprintf(envstr,"%d", exitstat | what);
     symval.dsc$w_length = (int)strlen(envstr);
     symval.dsc$a_pointer = envstr;
@@ -1300,16 +1631,26 @@ doexit(exitstat,what) int exitstat, what; {
     i = 2;				/* Store in global table */
     LIB$SET_SYMBOL(&symnam, &symval, &i);
     if (exitstat == BAD_EXIT)
-	exitstat = SS$_ABORT | STS$M_INHIB_MSG;
+      exitstat = SS$_ABORT | STS$M_INHIB_MSG;
     if (exitstat == GOOD_EXIT)
-	exitstat = SS$_NORMAL | STS$M_INHIB_MSG;
-    exit(exitstat);
+      exitstat = SS$_NORMAL | STS$M_INHIB_MSG;
 #else /* Not VMS */
-    if (what == -1)			/* Take 1st arg literally */
-      exit(exitstat);			/* e.g. user-supplied exit code */
-    else				/* otherwise */
-      exit(exitstat | what);		/* OR in the bits */
+    if (what != -1)			/* Take 1st arg literally */
+      exitstat |= what;
 #endif /* VMS */
+
+/* We have put this off till the very last moment... */
+
+#ifdef DEBUG
+    if (deblog) {			/* Close the debug log. */
+	debug(F101,"C-Kermit EXIT status","",exitstat);
+	*debfil = '\0';
+	deblog = 0;
+	zclose(ZDFILE);
+    }
+#endif /* DEBUG */
+
+      exit(exitstat);			/* Exit from C-Kermit */
 }
 
 /* Set up interrupts */
@@ -1349,161 +1690,137 @@ bgchk() {				/* Check background status */
         If bit x is on, then argument number x is printed.
    s1 - String, argument number 1.  If selected, printed as is.
    s2 - String, argument number 2.  If selected, printed in brackets.
-   n  - Int, argument 3.  If selected, printed preceded by equals sign.
+   n  - Long int, argument 3.  If selected, printed preceded by equals sign.
 
    f=0 is special: print s1,s2, and interpret n as a char.
 */
+
+/*
+  WARNING: Don't change DEBUFL without changing sprintf() formats below,
+  accordingly.
+*/
 #define DBUFL 2300
 static char *dbptr = (char *)0;
+static int dbufl = DBUFL;
 
 int
-dodebug(f,s1,s2,n) int f; char *s1, *s2; long n; {
+#ifdef CK_ANSIC
+dodebug(int f, char *s1, char *s2, long n)
+#else
+dodebug(f,s1,s2,n) int f; char *s1, *s2; long n;
+#endif /* CK_ANSIC */
+/* dodebug */ {
     char *sp;
+    int x;
 
-    if (!deblog) return(0);	/* If no debug log, don't. */
-    if (!dbptr) {
-	dbptr = malloc(DBUFL+1);
-	if (!dbptr)
-	  return(0);
+    if (!deblog) return(0);		/* If no debug log, don't. */
+    if (!dbptr) {			/* Allocate memory buffer */
+	dbptr = malloc(DBUFL+1);	/* This only happens once */
+	dbufl = DBUFL;			/* Unless ... */
+	if (!dbptr) {
+	    deblog = 0;
+	    return(0);
+	}
     }
-    sp = dbptr;
     if (!s1) s1="(NULL)";
     if (!s2) s2="(NULL)";
-    switch (f) {
-    	case F000:		/* 0, print both strings, and n as a char */
-	    if ((int)strlen(s1) + (int)strlen(s2) + 5 > DBUFL) {
-		sprintf(sp,"DEBUG string too long\n");
+
+#ifdef COMMENT
+/*
+  This should work, but it doesn't.
+  So instead we'll cope with overflow via sprintf formats.
+  N.B.: UNFORTUNATELY, this means we have to put constants in the
+  sprintf formats.
+*/
+    if (!f || (f & 6)) {		/* String argument(s) included? */
+	x = (int) strlen(s1) + (int) strlen(s2) + 18;
+	if (x > dbufl) {		/* Longer than buffer? */
+	    if (dbptr)			/* Yes, free previous buffer */
+	      free(dbptr);
+	    dbptr = (char *) malloc(x + 2); /* Allocate a new one */
+	    if (!dbptr) {
+		zsoutl(ZDFILE,"DEBUG: Memory allocation failure");
+		zclose(ZDFILE);
+		deblog = 0;
+		return(0);
 	    } else {
-		if (n > 31 && n < 127)
-		  sprintf(sp,"%s%s:%c\n",s1,s2,(CHAR) n);
-		else if (n < 32 || n == 127)
-		  sprintf(sp,"%s%s:^%c\n",s1,s2,(CHAR) ((n+64) & 0x7F));
-		else if (n > 127 && n < 160)
-		  sprintf(sp,"%s%s:~^%c\n",s1,s2,(CHAR)((n-64) & 0x7F));
-		else if (n > 159 && n < 256)
-		  sprintf(sp,"%s%s:~%c\n",s1,s2,(CHAR) (n & 0x7F));
-		else sprintf(sp,"%s%s:%ld\n",s1,s2,n);
+		dbufl = x;
+		sprintf(dbptr,"DEBUG: Buffer expanded to %d\n", x + 18);
+		zsoutl(ZDFILE,dbptr);
 	    }
-	    if (zsout(ZDFILE,dbptr) < 0) deblog = 0;
-	    break;
-    	case F001:			/* 1, "=n" */
-	    sprintf(sp,"=%ld\n",n);
-	    if (zsout(ZDFILE,dbptr) < 0) deblog = 0;
-	    break;
-    	case F010:			/* 2, "[s2]" */
-	    if ((int)strlen(s2) + 4 > DBUFL)
-	      sprintf(sp,"DEBUG string too long\n");
-	    else sprintf(sp,"[%s]\n",s2);
-	    if (zsout(ZDFILE,"") < 0) deblog = 0;
-	    break;
-    	case F011:			/* 3, "[s2]=n" */
-	    if ((int)strlen(s2) + 15 > DBUFL)
-	      sprintf(sp,"DEBUG string too long\n");
-	    else sprintf(sp,"[%s]=%ld\n",s2,n);
-	    if (zsout(ZDFILE,dbptr) < 0) deblog = 0;
-	    break;
-    	case F100:			/* 4, "s1" */
-	    if (zsoutl(ZDFILE,s1) < 0) deblog = 0;
-	    break;
-    	case F101:			/* 5, "s1=n" */
-	    if ((int)strlen(s1) + 15 > DBUFL)
-	      sprintf(sp,"DEBUG string too long\n");
-	    else sprintf(sp,"%s=%ld\n",s1,n);
-	    if (zsout(ZDFILE,dbptr) < 0) deblog = 0;
-	    break;
-    	case F110:			/* 6, "s1[s2]" */
-	    if ((int)strlen(s1) + (int)strlen(s2) + 4 > DBUFL)
-	      sprintf(sp,"DEBUG string too long\n");
-	    else sprintf(sp,"%s[%s]\n",s1,s2);
-	    if (zsout(ZDFILE,dbptr) < 0) deblog = 0;
-	    break;
-    	case F111:			/* 7, "s1[s2]=n" */
-	    if ((int)strlen(s1) + (int)strlen(s2) + 15 > DBUFL)
-	      sprintf(sp,"DEBUG string too long\n");
-	    else sprintf(sp,"%s[%s]=%ld\n",s1,s2,n);
-	    if (zsout(ZDFILE,dbptr) < 0) deblog = 0;
-	    break;
-	default:
-	    sprintf(sp,"\n?Invalid format for debug() - %d\n",f);
-	    if (zsout(ZDFILE,dbptr) < 0) deblog = 0;
+	}
+    }
+#endif /* COMMENT */
+
+#ifdef COMMENT
+/* The aforementioned sprintf() formats were like this: */
+	if (n > 31 && n < 127)
+	  sprintf(sp,"%.100s%.2000s:%c\n",s1,s2,(CHAR) n);
+	else if (n < 32 || n == 127)
+	  sprintf(sp,"%.100s%.2000s:^%c\n",s1,s2,(CHAR) ((n+64) & 0x7F));
+	else if (n > 127 && n < 160)
+	  sprintf(sp,"%.100s%.2000s:~^%c\n",s1,s2,(CHAR)((n-64) & 0x7F));
+	else if (n > 159 && n < 256)
+	  sprintf(sp,"%.100s%.2000s:~%c\n",s1,s2,(CHAR) (n & 0x7F));
+	else sprintf(sp,"%.100s%.2000s:%ld\n",s1,s2,n);
+/*
+  But, naturally, it turns out these are not portable either, so now
+  we do the stupidest possible thing.
+*/
+#endif /* COMMENT */
+
+    if ((x = (int) strlen(s1)) > 100) s1 = "(string too long)";
+    if ((int) strlen(s2) + 101 >= DBUFL) s2 = "(string too long)";
+
+    sp = dbptr;
+
+    switch (f) {		/* Write log record according to format. */
+      case F000:		/* 0 = print both strings, and n as a char. */
+	if (n > 31 && n < 127)
+	  sprintf(sp,"%s%s:%c\n",s1,s2,(CHAR) n);
+	else if (n < 32 || n == 127)
+	  sprintf(sp,"%s%s:^%c\n",s1,s2,(CHAR) ((n+64) & 0x7F));
+	else if (n > 127 && n < 160)
+	  sprintf(sp,"%s%s:~^%c\n",s1,s2,(CHAR)((n-64) & 0x7F));
+	else if (n > 159 && n < 256)
+	  sprintf(sp,"%s%s:~%c\n",s1,s2,(CHAR) (n & 0x7F));
+	else sprintf(sp,"%s%s:%ld\n",s1,s2,n);
+	if (zsout(ZDFILE,dbptr) < 0) deblog = 0;
+	break;
+      case F001:			/* 1, "=n" */
+	sprintf(sp,"=%ld\n",n);
+	if (zsout(ZDFILE,dbptr) < 0) deblog = 0;
+	break;
+      case F010:			/* 2, "[s2]" */
+	sprintf(sp,"[%s]\n",s2);
+	if (zsout(ZDFILE,"") < 0) deblog = 0;
+	break;
+      case F011:			/* 3, "[s2]=n" */
+	sprintf(sp,"[%s]=%ld\n",s2,n);
+	if (zsout(ZDFILE,dbptr) < 0) deblog = 0;
+	break;
+      case F100:			/* 4, "s1" */
+	if (zsoutl(ZDFILE,s1) < 0) deblog = 0;
+	break;
+      case F101:			/* 5, "s1=n" */
+	sprintf(sp,"%s=%ld\n",s1,n);
+	if (zsout(ZDFILE,dbptr) < 0) deblog = 0;
+	break;
+      case F110:			/* 6, "s1[s2]" */
+	sprintf(sp,"%s[%s]\n",s1,s2);
+	if (zsout(ZDFILE,dbptr) < 0) deblog = 0;
+	break;
+      case F111:			/* 7, "s1[s2]=n" */
+	sprintf(sp,"%s[%s]=%ld\n",s1,s2,n);
+	if (zsout(ZDFILE,dbptr) < 0) deblog = 0;
+	break;
+      default:
+	sprintf(sp,"\n?Invalid format for debug() - %d\n",f);
+	if (zsout(ZDFILE,dbptr) < 0) deblog = 0;
     }
     return(0);
 }
 #endif /* DEBUG */
-
-#ifdef TLOG
-#define TBUFL 300
-/*  T L O G  --  Log a record in the transaction file  */
-/*
- Call with a format and 3 arguments: two strings and a number:
-   f  - Format, a bit string in range 0-7, bit x is on, arg #x is printed.
-   s1,s2 - String arguments 1 and 2.
-   n  - Int, argument 3.
-*/
-VOID
-tlog(f,s1,s2,n) int f; long n; char *s1, *s2; {
-    static char s[TBUFL];
-    char *sp = s; int x;
-
-    if (!tralog) return;		/* If no transaction log, don't */
-    switch (f) {
-    	case F000:			/* 0 (special) "s1 n s2"  */
-	    if ((int)strlen(s1) + (int)strlen(s2) + 15 > TBUFL)
-	      sprintf(sp,"?T-Log string too long\n");
-	    else sprintf(sp,"%s %ld %s\n",s1,n,s2);
-	    if (zsout(ZTFILE,s) < 0) tralog = 0;
-	    break;
-    	case F001:			/* 1, " n" */
-	    sprintf(sp," %ld\n",n);
-	    if (zsout(ZTFILE,s) < 0) tralog = 0;
-	    break;
-    	case F010:			/* 2, "[s2]" */
-	    x = (int)strlen(s2);
-	    if (s2[x] == '\n') s2[x] = '\0';
-	    if (x + 6 > TBUFL)
-	      sprintf(sp,"?T-Log string too long\n");
-	    else sprintf(sp,"[%s]\n",s2);
-	    if (zsout(ZTFILE,"") < 0) tralog = 0;
-	    break;
-    	case F011:			/* 3, "[s2] n" */
-	    x = (int)strlen(s2);
-	    if (s2[x] == '\n') s2[x] = '\0';
-	    if (x + 6 > TBUFL)
-	      sprintf(sp,"?T-Log string too long\n");
-	    else sprintf(sp,"[%s] %ld\n",s2,n);
-	    if (zsout(ZTFILE,s) < 0) tralog = 0;
-	    break;
-    	case F100:			/* 4, "s1" */
-	    if (zsoutl(ZTFILE,s1) < 0) tralog = 0;
-	    break;
-    	case F101:			/* 5, "s1: n" */
-	    if ((int)strlen(s1) + 15 > TBUFL)
-	      sprintf(sp,"?T-Log string too long\n");
-	    else sprintf(sp,"%s: %ld\n",s1,n);
-	    if (zsout(ZTFILE,s) < 0) tralog = 0;
-	    break;
-    	case F110:			/* 6, "s1 s2" */
-	    x = (int)strlen(s2);
-	    if (s2[x] == '\n') s2[x] = '\0';
-	    if ((int)strlen(s1) + x + 4 > TBUFL)
-	      sprintf(sp,"?T-Log string too long\n");
-	    else sprintf(sp,"%s %s\n",s1,s2);
-	    if (zsout(ZTFILE,s) < 0) tralog = 0;
-	    break;
-    	case F111:			/* 7, "s1 s2: n" */
-	    x = (int)strlen(s2);
-	    if (s2[x] == '\n') s2[x] = '\0';
-	    if ((int)strlen(s1) + x + 15 > TBUFL)
-	      sprintf(sp,"?T-Log string too long\n");
-	    else sprintf(sp,"%s %s: %ld\n",s1,s2,n);
-	    if (zsout(ZTFILE,s) < 0) tralog = 0;
-	    break;
-	default:
-	    sprintf(sp,"\n?Invalid format for tlog() - %ld\n",n);
-	    if (zsout(ZTFILE,s) < 0) tralog = 0;
-    }
-}
-#endif /* TLOG */
 
 #ifdef CK_CURSES
 
@@ -1536,6 +1853,13 @@ tlog(f,s1,s2,n) int f; long n; char *s1, *s2; {
 /* Idea for curses display contributed by Chris Pratt of APV Baker, UK */
 
 /* Avoid conficts with curses.h */
+
+#ifdef QNX
+/* Same as ckcasc.h, but in a different radix... */
+#ifdef ESC
+#undef ESC
+#endif /* ESC */
+#endif /* QNX */
 
 #ifndef MYCURSES
 #undef VOID				/* This was defined in ckcdeb.h */
@@ -1586,6 +1910,10 @@ static int smg_open = 0;		/* flag if smg current open */
 #define clear()		SMG$ERASE_DISPLAY(&smg_display_id, 0, 0, 0, 0)
 
 #define	touchwin(scr)	SMG$REPAINT_SCREEN(&smg_pasteboard_id)
+
+#define clearok(curscr,ok)		/* Let wrefresh() do the work */
+
+#define wrefresh(cursrc) touchwin(scr)
 
 static void
 move(row, col) int row, col; {
@@ -1753,13 +2081,32 @@ clrtoeol() {
 #define CW_TYP  8			/* File type */
 #define CW_SIZ  9			/* File size */
 #define CW_PCD 10			/* Percent done */
+
+#ifndef CK_PCT_BAR
 #define CW_TR  11			/* Time remaining */
-#define CW_WS  12			/* Window slots */
-#define CW_PT  13			/* Packet type */
-#define CW_PC  14			/* Packet count */
-#define CW_PL  15			/* Packet length */
-#define CW_PR  16			/* Packet retry */
+#define CW_CP  12			/* Characters per second */
+#define CW_WS  13			/* Window slots */
+#define CW_PT  14			/* Packet type */
+#define CW_PC  15			/* Packet count */
+#define CW_PL  16			/* Packet length */
+#define CW_PR  17			/* Packet retry */
+#ifdef COMMENT
 #define CW_PB  17			/* Packet block check */
+#endif /* COMMENT */
+#else /* CK_PCT_BAR */
+#define CW_BAR 11       /* Percent Bar Scale */
+#define CW_TR  12			/* Time remaining */
+#define CW_CP  13			/* Chars per sec */
+#define CW_WS  14			/* Window slots */
+#define CW_PT  15			/* Packet type */
+#define CW_PC  16			/* Packet count */
+#define CW_PL  17			/* Packet length */
+#define CW_PR  18			/* Packet retry */
+#ifdef COMMENT
+#define CW_PB  18			/* Packet block check */
+#endif /* COMMENT */
+#endif /* CK_PCT_BAR */
+
 #define CW_ERR 19			/* Error message */
 #define CW_MSG 20			/* Info message */
 #define CW_INT 22			/* Instructions */
@@ -1777,23 +2124,200 @@ VOID
 int
 #endif /* MYCURSES */
 #endif /* CK_ANSIC */
+
+#ifdef CK_ANSIC				/* Update % transfered and % bar */
+updpct( long old, long new)
+#else /* CK_ANSIC */
+updpct(old, new) long old, new;
+#endif /* CK_ANSIC */
+/* updpct */ {
+#ifdef COMMENT
+    int m, n;
+    move(CW_PCD,22);
+    printw("%ld", new);
+#ifdef CK_PCT_BAR
+    if (thermometer) {
+#ifndef OS2
+	if (old > new) old = 0;
+	m = old/2;
+	move(CW_PCD, 26 + m);
+	n = new / 2 - m;
+	while (n > 0) {
+	    if (( m + 1) % 5 == 0)
+	      printw("*");
+	    else
+	      printw("=");
+	    m++;
+	    n--;
+	}
+	if (new % 2 != 0) printw("-");
+	/* move(CW_PCD, 22+53); */
+#else /* OS2 */
+	if (old > new) old = 0 ;
+	m = old / 2;
+	n = new/2-m;
+	move(CW_PCD, 26+m);
+	while (n > 0) {
+	    printw("%c", '\333');
+	    m++; n--;
+	}
+	if (new % 2 != 0)
+	  printw("%c", '\261');
+#endif /* OS2 */
+    }
+#endif /* CK_PCT_BAR */
+    /* clrtoeol(); */
+#else  /* !COMMENT */
+#ifdef OS2
+#define CHAR1	'\333'		/* OS2 */
+#define CHAR2	'\261'
+#else
+#define CHAR1	'/'		/* Default */
+#define CHAR2	'-'
+#endif /* OS2 */
+    move(CW_PCD,22);
+    printw("%ld", new);
+#ifdef CK_PCT_BAR
+    if (thermometer) {
+        int m, n;
+
+	if (old > new) old = 0 ;
+	if (new <= 100L) {
+	    m = old / 2;
+	    n = new / 2 - m;
+	    move(CW_PCD, 26+m);
+	    while (n-- > 0)
+	      printw("%c", CHAR1);
+	    if (new % 2 != 0)
+	      printw("%c", CHAR2);
+	}
+    }
+#endif /* CK_PCT_BAR */
+#endif /* COMMENT */
+}
+
+static long gtv = -1L, oldgtv;
+
+static long
+shocps(pct) int pct; {
+    static long oldffc = 0L;
+#ifndef CPS_WEIGHTED
+    long secs;
+#endif /* CPS_WEIGHTED */
+
+    /* gtv starts at -1 but we want to ignore it until it is at least 1 */ 
+
+    oldgtv = (gtv >= 0) ? gtv : 0;   
+    gtv = gtimer();
+
+#ifdef CPS_WEIGHTED
+    if (gtv != oldgtv) {		/* The first packet is ignored */
+	if (ffc < oldffc)
+	  oldffc = ffc;
+	oldcps = cps;
+	if (oldcps && oldgtv > 1) {	/* The first second is ignored */
+/*
+  This version of shocps() produces a weighted average that some
+  people like, but most people find it disconcerting and bombard us
+  with questions and complaints about why the CPS figure fluctuates so
+  wildly.  So now you only get the weighted average if you build the
+  program yourself with CPS_WEIGHTED defined.
+*/
+#ifndef CPS_VINCE
+/* Here is Jeff's weighting scheme, current = 25%, history = 75%.. */
+	    cps = ( (oldcps * 3) + (ffc - oldffc) / (gtv-oldgtv) ) / 4;
+#else
+/* And an alternate weighting scheme from Vincent Fatica... */
+	    cps = (3 *
+	     ((1+pct/300)*oldffc/oldgtv+(1-pct/100)*(ffc-oldffc)/(gtv-oldgtv)))
+	      / 4;
+#endif /* CPS_VINCE */
+	} else {
+	    /* No weighted average since there is nothing to weigh */
+	    cps = gtv ? (ffc - oldffc) / (gtv - oldgtv) : (ffc - oldffc) ;
+	}
+	if (deblog) {
+	    debug(F101,"SHOCPS: pct   ","",pct);
+	    debug(F101,"SHOCPS: gtv   ","",gtv);
+	    debug(F101,"SHOCPS: oldgtv","",oldgtv);
+	    debug(F101,"SHOCPS: dgtv  ","",gtv-oldgtv);
+	    debug(F101,"SHOCPS: ffc   ","",ffc);
+	    debug(F101,"SHOCPS: oldffc","",oldffc);
+	    debug(F101,"SHOCPS: dffc  ","",ffc-oldffc);
+	    debug(F101,"SHOCPS: cps   ","",cps);
+	}
+	move(CW_CP,22);
+	printw("%ld", cps);
+	clrtoeol();
+	oldffc = ffc;
+    }
+#else /* !CPS_WEIGHTED */
+    if (gtv != oldgtv) {		/* The first packet is ignored */
+	if ((secs = gtv - fsecs) > 0) {
+	    cps = (secs < 1L) ? ffc : ffc / secs;
+	    move(CW_CP,22);
+	    printw("%ld", cps);
+	    clrtoeol();
+	}
+    }
+#endif /* CPS_WEIGHTED */
+    return(cps);
+}
+
+static
+long
+#ifdef CK_ANSIC
+shoetl(long old_tr, long cps, long fsiz, long howfar )
+#else
+shoetl(old_tr, cps, fsiz, howfar) long old_tr, cps, fsiz, howfar;
+#endif /* CK_ANSIC */
+/* shoetl */ {
+    /* Show estimated time left in transfer */
+    long tr ;
+
+    tr = (fsiz > 0L && cps > 0L) ? ( ( fsiz - howfar ) / cps ) : -1L ;
+    if (tr > -1L && tr != old_tr) {
+	move(CW_TR,22);
+	printw("%s",hhmmss(tr));
+	clrtoeol();
+    }
+    return(tr);
+}
+
+static
+#ifdef CK_ANSIC				/* Because VOID used by curses.h */
+void
+#else
+#ifdef MYCURSES
+VOID
+#else
+int
+#endif /* MYCURSES */
+#endif /* CK_ANSIC */
 scrft() {				/* Display file type */
     move(CW_TYP,22);
     if (binary) {
-#ifdef VMS
-	if (binary == XYFT_I)
-	  printw("image");
-	else if (binary == XYFT_L)
-	  printw("labeled");
-	else printw("binary");
-#else /* Not VMS */
-	printw("binary");
-#endif /* VMS */
+	switch(binary) {
+	      case XYFT_L: printw("LABELED"); break;
+	      case XYFT_I: printw("IMAGE"); break;
+	      case XYFT_U: printw("BINARY UNDEFINED"); break;
+	      default: 
+	      case XYFT_B: printw("BINARY"); break;
+	}
+#ifdef CK_RESEND
+	if (what == W_SEND && sendstart > 0L) {
+	    if (sendmode == SM_PSEND)
+	      printw(" / partial");
+	    else if (sendmode == SM_RESEND)
+	      printw(" / resend");
+	} else if (what == W_RECV && rs_len > 0L)
+	  printw(" / resend");
+#endif /* CK_RESEND */
     } else {
-	printw("text");
+	printw("TEXT");
 #ifndef NOCSETS
 	if (tcharset == TC_TRANSP) {
-	    printw(" (transparent)");
+	    printw(" (no translation)");
 	} else {
 	    if (what == W_SEND)
 	      printw(" (%s => %s)",
@@ -1836,6 +2360,13 @@ static int ck_fd = -1;
 static long pct = 100, oldpct = 0;	/* Percent done */
 static int oldtyp = 0, oldwin = -1, oldtry = -1, oldlen = -1;
 
+#ifdef NETCONN
+static char *netname[] = {
+    "none", "TCP/IP", "TCP/IP", "X.25", "DECnet", "VAX PSI", "Named Pipes",
+    "X.25", "NetBIOS"
+};
+#endif /* NETCONN */
+
 #ifdef CK_ANSIC
 void
 screenc(int f, char c,long n,char *s)
@@ -1855,11 +2386,17 @@ char *s;	/* a string */
 
     static int q = 0;
     static long fsiz = -1L;		/* Copy of file size */
-    static long fcnt = 0L;		/* File count */
-    static long fbyt = 0L;		/* Total file bytes */
+    static long fcnt = 0L;		/* Number of files transferred */
+    static long fbyt = 0L;    /* Total file bytes of all files transferred */
+    static long old_tr = -1L; /* Time remaining */
+    static long howfar = 0L;  /* How much of current file has been transfer */
+    long cps = 0L;
 
     int len;				/* Length of string */
     int x;				/* Worker */
+
+    debug(F101,"screenc cinit","",cinit);
+    debug(F101,"screenc cendw","",cendw);
 
     if (cinit == 0 || cendw > 0) {	/* Handle borderline cases... */
 	if (f == SCR_CW) {		/* Close window, but it's not open */
@@ -1905,42 +2442,117 @@ char *s;	/* a string */
 	    ck_fd = dup(fileno(stdout));
 	    ck_stdout = (ck_fd >= 0) ? fdopen(ck_fd, "w") : NULL;
 	}
+	debug(F100,"screenc newterm...","",0);
 	if (ck_stdout == NULL || newterm(s, ck_stdout, stdin) == 0) {
 	    fprintf(stderr,
 	      "Fullscreen display not supported for terminal type: %s\r\n",s);
 	    fdispla = XYFD_R;		/* Go back to regular display */
 	    return;
 	}
+	debug(F100,"screenc newterm ok","",0);
 #else
+	debug(F100,"screen calling initscr","",0);
 	initscr();			/* Initialize curses. */
+	debug(F100,"screen initscr ok","",0);
 #endif /* CK_NEWTERM */
 	cinit++;			/* Remember curses was initialized. */
 #endif /* COMMENT */
     }
     ft_win = 1;				/* Window is open */
+    if (repaint) {
+#ifdef CK_WREFRESH 
+/*
+  This totally repaints the screen, just what we want, but we can only
+  do this with real curses, and then only if clearok() and wrefresh() are
+  provided in the curses library.
+*/
+#ifdef OS2
+ 	restorescreen(&commandscreen);
+#else
+#ifdef QNX
+	clearok(stdscr, 1);		/* QNX doesn't have curscr */
+	wrefresh(stdscr);
+#else
+	wrefresh(curscr);
+#endif /* QNX */
+#endif /* OS2 */
+#else  /* No CK_WREFRESH */
+/*
+  Kermit's do-it-yourself method, works with all types of fullscreen
+  support, but does not repaint all the fields.  For example, the filename
+  is lost, because it arrives at a certain time and never comes again, and
+  Kermit presently does not save it anywhere.  Making this method work for
+  all fields would be a rather major recoding task, and would add a lot of
+  complexity and storage space.
+*/
+	cendw = 1;
+#endif /* CK_WREFRESH */
+	repaint = 0;
+    }
     if (cendw) {			/* endwin() was called previously */
 #ifdef VMS
 	initscr();			/* (or should have been!) */
 	clear();
 	touchwin(stdscr);
 	refresh();
-#else /* All others... */
+#else
+#ifdef QNX
+/*
+  In QNX, if we don't call initscr() here we core dump.
+  I don't have any QNX curses documentation, but other curses manuals
+  say that initscr() should be called only once per application, and
+  experience shows that on other systems, calling initscr() here generally
+  results in a core dump.
+*/
+	debug(F100,"screenc re-calling initscr QNX","",0);
+	initscr();
 	clear();
-#endif /* VMS */
+	refresh();
+#ifdef COMMENT
+/*
+  But even so, second and subsequent curses displays are messed up.
+  Calling touchwin, refresh, etc, doesn't make any difference.
+*/
+	debug(F100,"screenc calling touchwin QNX","",0);
+	touchwin(stdscr);
+	debug(F100,"screenc calling refresh QNX","",0);
+	refresh();
+#endif /* COMMENT */
 
+#else /* All others... */
+	debug(F100,"screenc calling clear","",0);
+	clear();
+	debug(F100,"screenc clear ok","",0);
+#endif /* QNX */
+#endif /* VMS */
+	debug(F100,"screenc setup ok","",0);
+	debug(F100,"screenc doing first move","",0);
 	move(CW_BAN,0);			/* Display the banner */
+	if (*myhost) debug(F111,"screenc myhost",myhost,myhost);
+	else debug(F111,"screenc myhost","",myhost);
+	/* if (!myhost) myhost = ""; */
 	if (*myhost) printw("%s, %s",versio,(char *)myhost);
 	else printw("%s",versio);
 	move(CW_DIR,3);  printw("Current Directory: %s",zgtdir());
 	if (network) {
-	    move(CW_LIN,9); printw("Remote Host: %s",ttname);
+	    move(CW_LIN,8); printw("Network Host: %s",ttname);
 	} else {
 	    move(CW_LIN,0);  printw("Communication Device: %s",ttname);
 	}
-	move(CW_SPD,1);  printw("Communication Speed: ");
+	if (network) {
+	    move(CW_SPD,8);
+	    printw("Network Type: ");
+	} else {
+	    move(CW_SPD,1);
+	    printw("Communication Speed: ");
+	}
 	move(CW_SPD,22);		/* Speed */
 	if (network) {
+#ifdef NETCONN
+	    printw("%s",netname[nettype]);
+#else
 	    printw("(network)");
+#endif /* NETCONN */
 	} else {
 	    if (speed < 0L) speed = ttgspd();
 	    if (speed > 0L) {
@@ -1952,44 +2564,57 @@ char *s;	/* a string */
 	move(CW_TYP,11); printw("File Type:");
 	move(CW_SIZ,11); printw("File Size:");
 	move(CW_PCD, 8); printw("Percent Done:");
+#ifdef CK_PCT_BAR
+	if (thermometer) {
+	    oldpct = pct = 0 ;
+	    move(CW_BAR,22);
+	    printw("    ...10...20...30...40...50...60...70...80...90..100");
+	    move(CW_BAR,22+56);
+	}
+#endif /* CK_PCT_BAR */
 	move(CW_TR,  1); printw("Estimated Time Left:");
+	move(CW_CP,  2); printw("Transfer Rate, CPS:");
 	move(CW_WS,  8); printw("Window Slots:");
 	move(CW_PT,  9); printw("Packet Type:");
 	move(CW_PC,  8); printw("Packet Count:");
 	move(CW_PL,  7); printw("Packet Length:");
 	move(CW_PR,  2); printw("Packet Retry Count:");
+#ifdef COMMENT
 	move(CW_PB,  2); printw("Packet Block Check:");
+#endif /* COMMENT */
 	move(CW_ERR,10); printw("Last Error:");
 	move(CW_MSG, 8); printw("Last Message:");
-#ifdef ATTSV
-#ifndef aegis
-#ifndef datageneral
-#define CK_NEED_SIG
-#endif /* datageneral */
-#endif /* aegis */
-#endif /* ATTSV */
-#ifdef POSIX
-#ifndef CK_NEED_SIG
-#define CK_NEED_SIG
-#endif /* CK_NEED_SIG */
-#endif /* POSIX */
 
 #ifdef CK_NEED_SIG
-	move(CW_INT, 0); printw(
-"<%s>X to cancel file, <%s>Z to cancel group, <%s><CR> to resend packet",
-				dbchr(escape), dbchr(escape), dbchr(escape));
-	move(CW_INT + 1, 0); printw(
-"<%s>E to send Error packet, or Ctrl-C to quit immediately.", dbchr(escape));
-#else
+	move(CW_INT, 0);
+	printw(
+"<%s>X to cancel file, <%s>Z to cancel group, <%s><CR> to resend last packet",
+	       dbchr(escape), dbchr(escape), dbchr(escape)
+	       );
+	move(CW_INT + 1, 0);
+	printw(
+"<%s>E to send Error packet, ^C to quit immediately, <%s>L to refresh screen.",
+	       dbchr(escape), dbchr(escape)
+	       );
+#else /* !CK_NEED_SIG */
 	move(CW_INT, 0);
 #ifdef OS2
 	printw(
-	  "X to cancel file, Z to cancel group, <Enter> to resend packet,");
-#else
-	printw("X to cancel file, Z to cancel group, <CR> to resend packet,");
+"X to cancel file, Z to cancel group, <Enter> to resend last packet,"
+	       );
+#else /* !OS2 */
+	printw(
+"X to cancel file, Z to cancel group, <CR> to resend last packet,"
+	       );
 #endif /* OS2 */
 	move(CW_INT + 1, 0);
-	printw("E to send Error packet, or Ctrl-C to quit immediately.");
+	printw(
+#ifdef VMS
+"E to send Error packet, ^C to quit immediately, ^W to refresh screen."
+#else
+"E to send Error packet, ^C to quit immediately, ^L to refresh screen."
+#endif /* VMS */
+	       );
 #endif /* CK_NEED_SIG */
 	refresh();
 	cendw = 0;
@@ -2007,8 +2632,22 @@ char *s;	/* a string */
 	move(CW_ERR,22);		/* And last error message */
 	clrtoeol();
 	if (what == W_SEND) {		/* If we're sending... */
+#ifdef CK_RESEND
+	    switch (sendmode) {
+	      case SM_RESEND:
+		move(CW_NAM,11);
+		printw("Resending:");
+		break;
+	      default:
+		move(CW_NAM,13);
+		printw("Sending:");
+		break;
+	    }
+#else
 	    move(CW_NAM,13);
 	    printw("Sending:");
+#endif /* CK_RESEND */
+
 	} else if (what == W_RECV) {	/* If we're receiving... */
 	    move(CW_NAM,11);
 	    printw("Receiving:");
@@ -2018,26 +2657,37 @@ char *s;	/* a string */
 	}
 	move(CW_NAM,22);		/* Display the filename */
 	if (len > 57) {
-	    printw("%.54s..",s);
+	    printw("%.55s..",s);
 	    len = 57;
 	} else printw("%s",s);
 	q = len;			/* Remember name length for later */
 	clrtoeol();
-	scrft();			/* Display file type */
-	refresh(); return;
+	scrft();			/* Display file type (can change) */
+	refresh();
+#ifdef OS2
+	savescreen(&commandscreen, 0, 0);
+#endif /* OS2 */
+	return;
 
       case SCR_AN:    			/* File as-name */
-	if (q + len < 58) {		/* Will fit */
+	if (q + len + 4 < 58) {		/* Will fit */
 	    move(CW_NAM, 22 + q);
 	    printw(" => %s",s);
 	} else {			/* Too long */
 	    move(CW_NAM, 22);		/* Overwrite previous name */
 	    q = 0;
-	    len = 54;
-	    printw(" => %.51s..", s);	/* Truncate */
+	    if (len + 4 > 57) {					/* wg15 */
+		printw(" => %.51s..",s);			/* wg15 */
+		len = 53;					/* wg15 */
+	    } else printw(" => %s",s);				/* wg15 */
 	}
 	q += len + 4;			/* Remember horizontal position */
-	clrtoeol(); refresh(); return;
+	clrtoeol();
+	refresh();
+#ifdef OS2
+	savescreen(&commandscreen, 0, 0);
+#endif /* OS2 */
+	return;
 
       case SCR_FS: 			/* File size */
 	fsiz = n;
@@ -2045,21 +2695,27 @@ char *s;	/* a string */
 	if (fsiz > -1L) printw("%ld",n);
 	clrtoeol();
 	scrft();			/* File type */
-	refresh(); return;
+	refresh();
+#ifdef OS2
+	savescreen(&commandscreen, 0, 0);
+#endif /* OS2 */
+	return;
 
       case SCR_PT:    			/* Packet type or pseudotype */
 	if (spackets < 5) {
 	    /* Things that won't change after the 4th packet */
 	    move(CW_PAR,22); printw("%s",parnam((char)parity)); clrtoeol();
 	    clrtoeol();
+#ifdef COMMENT
 	    move(CW_PB, 22);		/* Block check on this packet */
 	    if (bctu == 4) printw("B"); else printw("%d",bctu);
 	    clrtoeol();
+#endif /* COMMENT */
 	}
 
 	x = (what == W_RECV) ?		/* Packet length */
 	  rpktl+1 :
-	    spktl+1;
+	    spktl ;
 	if (x != oldlen) {		/* But only if it changed. */
 	    move(CW_PL, 22);
 	    printw("%d",x);
@@ -2091,54 +2747,52 @@ char *s;	/* a string */
 	switch (c) {			/* Now handle specific packet types */
 	  case 'S':			/* Beginning of transfer */
 	    fcnt = fbyt = 0L;		/* Clear counters */
+	    gtv = -1L;			/* And old/new things... */
+	    oldpct = pct = 0L;
 	    break;
 	  case 'D':			/* Data packet */
 	    if (fsiz > 0L) {		/* Show percent done if known */
-		long s, x;
+		long rpct;
 		oldpct = pct;		/* Remember previous percent */
-		pct = (fsiz > 99L) ? (ffc / (fsiz / 100L)) : 0L; /* New one */
-		if (pct > 100L ||	/* Allow expansion */
+		howfar = ffc;
+#ifdef CK_RESEND
+		if (what == W_SEND)	/* Account for PSEND or RESEND */
+		  howfar += sendstart;
+		else if (what == W_RECV)
+		  howfar += rs_len;
+#endif /* CK_RESEND */
+		/* Percent done, to be displayed... */
+		pct = (fsiz > 99L) ? (howfar / (fsiz / 100L)) : 0L;
+		if (pct > 100L ||	/* Allow for expansion and */
 		   (oldpct == 99L && pct < 0L)) /* other boundary conditions */
 		  pct = 100L;
-		if (pct != oldpct) {	/* Only do this 100 times per file */
-		    move(CW_PCD,22);
-		    printw("%ld", pct);
-		    clrtoeol();
+		if (pct != oldpct)	/* Only do this 100 times per file */
+		  updpct(oldpct, pct);
+	    } /* Fall thru... */
 
-		    /* Time remaining for this file */
-
-		    s = (long) ((unsigned) gtimer() - fsecs); /* Secs so far */
-		    if (s > 0L) {
-			/*
-			  Time remaining must be calculated using the smallest
-			  possible quantities, to prevent overflow:
-			    (seconds_so_far * percent_left) / percent_done.
-			  And avoid divide_by_zero.
-			*/
-			x = (pct > 0L) ? ((s * (100 - pct)) / pct) : -1L;
-			if (x > -1L) {
-			    move(CW_TR,22);
-			    printw("%s",hhmmss(x));
-			    clrtoeol();
-			}
-		    }
-		}
-	    }
+	  case '%':			/* Timeouts, retransmissions */
+	    cps = shocps((int) pct);
+	    old_tr = shoetl( old_tr, cps, fsiz, howfar ) ;
 	    break;
+
 	  case 'E':			/* Error packet */
 #ifdef COMMENT
 	    move(CW_ERR,22);		/* Print its data field */
 	    if (*s) printw("%s",s);
 	    clrtoeol();
 #endif /* COMMENT */
-	    fcnt = fbyt = 0;		/* So no bytes for this file */
+	    fcnt = fbyt = 0L;		/* So no bytes for this file */
 	    break;
 	  case 'Q':			/* Crunched packet */
+	    cps = shocps((int) pct);
+	    old_tr = shoetl( old_tr, cps, fsiz, howfar ) ;
 	    move(CW_ERR,22);
 	    printw("Damaged Packet");
 	    clrtoeol();
 	    break;
 	  case 'T':			/* Timeout */
+	    cps = shocps((int) pct);
+	    old_tr = shoetl( old_tr, cps, fsiz, howfar ) ;
 	    move(CW_ERR,22);
 	    printw("Timeout");
 	    clrtoeol();
@@ -2146,16 +2800,37 @@ char *s;	/* a string */
 	  default:			/* Others, do nothing */
 	    break;
 	}
-	refresh(); return;
+	refresh();
+#ifdef OS2
+	savescreen( &commandscreen, 0, 0 ) ;
+#endif /* OS2 */
+	return;
 
       case SCR_ST:			/* File transfer status */
+#ifdef COMMENT
 	move(CW_PCD,22);		/* Update percent done */
 	if (c == ST_OK) {		/* OK, print 100 % */
+	    updpct(oldpct,100);
 	    pct = 100;
-	    printw("100");
+	    oldpct = 0;
 	} else if (fsiz > 0L)		/* Not OK, update final percent */
-	  printw("%ld",( ffc * 100L ) / fsiz);
+/*
+  The else part writes all over the screen -- howfar and/or fsiz have
+  been reset as a consequence of the not-OKness of the transfer.
+*/
+	  updpct(oldpct, (howfar * 100L) / fsiz);
+
 	clrtoeol();
+#else
+	if (c == ST_OK) {		/* OK, print 100 % */
+	    move(CW_PCD,22);		/* Update percent done */
+	    updpct(oldpct,100);
+	    pct = 100;
+	    oldpct = 0;
+	    clrtoeol();
+	}
+#endif /* COMMENT */
+
 	move(CW_MSG,22);		/* Remove any previous message */
 	clrtoeol(); refresh();
 	move(CW_TR, 22);
@@ -2164,8 +2839,7 @@ char *s;	/* a string */
 	switch (c) {			/* Print new status message */
 	  case ST_OK:			/* Transfer OK */
 	    fcnt++;			/* Count this file */
-	    if (ffc > 0L)		/* For some reason ffc is off by 1 */
-	      fbyt += ffc - 1L;		/* Count its bytes */
+	    fbyt += ffc;		/* Count its bytes */
 	    move(CW_MSG,22);
 	    printw("Transfer OK");	/* Say Transfer was OK */
 	    clrtoeol(); refresh();
@@ -2173,21 +2847,25 @@ char *s;	/* a string */
 
 	  case ST_DISC:			/* Discarded */
 	    move(CW_ERR,22); printw("File discarded");
+	    pct = oldpct = 0;
 	    clrtoeol(); refresh();
 	    return;
 
 	  case ST_INT:       		/* Interrupted */
 	    move(CW_ERR,22); printw("Transfer interrupted");
+	    pct = oldpct = 0;
 	    clrtoeol(); refresh();
 	    return;
 
 	  case ST_SKIP:			/* Skipped */
 	    move(CW_ERR,22); printw("File skipped");
+	    pct = oldpct = 0;
 	    clrtoeol(); refresh();
 	    return;
 
 	  case ST_ERR:			/* Error message */
 	    move(CW_ERR,22); printw("%s",s);
+	    pct = oldpct = 0;
 	    clrtoeol(); refresh();
 	    return;
 
@@ -2196,11 +2874,13 @@ char *s;	/* a string */
 	    if (*s)
 	      printw("Refused, %s",s);
 	    else printw("Refused");
+	    pct = oldpct = 0;
 	    clrtoeol(); refresh();
 	    return;
 
 	  case ST_INC:
 	    move(CW_ERR,22); printw("Incomplete");
+	    pct = oldpct = 0;
 	    clrtoeol(); refresh();
 	    return;
 
@@ -2209,32 +2889,42 @@ char *s;	/* a string */
 	    clrtoeol(); refresh(); return;
 	}
 
-      case SCR_TC:    			/* Transaction complete */	
-	move(CW_MSG,22);		/* Print statistics in message line */
-	if (tsecs > 0)
-	  printw("Files: %ld, Total Bytes: %ld, %ld cps",
-		 fcnt, fbyt, ((fbyt * 10L) / (long) tsecs) / 10L);
-	else printw("Files: %ld, Total Bytes: %ld",fcnt,fbyt);
-	clrtoeol();
-	move(CW_TR, 1);
-	printw("       Elapsed Time: %s",hhmmss((long)tsecs));
-	clrtoeol();
-	move(23,0); clrtoeol();		/* Clear instructions lines */
-	move(22,0); clrtoeol();		/* to make room for prompt. */
-	refresh();
+      case SCR_TC: {   			/* Transaction complete */	
+	  long ecps;
+	  int eff = -1;
+	  ecps = (tsecs > 0) ? ((fbyt * 10L) / (long) tsecs) / 10L : fbyt;
+	  move(CW_CP,22);			/* Overall transfer rate */
+	  printw("%ld", ecps);
+	  clrtoeol();
+	  move(CW_MSG,22);		/* Print statistics in message line */
+	  if (speed > 99L && speed != 8880L && network == 0)
+	    eff = (((ecps * 100L) / (speed / 100L)) + 5L) / 10L;
+	  printw("Files: %ld, Total Bytes: %ld",fcnt,fbyt);
+	  if (eff > -1) printw(", Efficiency: %d%%", eff);
+	  clrtoeol();
+	  move(CW_TR, 1);
+	  printw("       Elapsed Time: %s",hhmmss((long)tsecs));
+	  clrtoeol();
+	  move(23,0); clrtoeol();	/* Clear instructions lines */
+	  move(22,0); clrtoeol();	/* to make room for prompt. */
+	  refresh();
 #ifndef VMSCURSE
-	endwin();
+	  endwin();
+#ifdef SOLARIS
+	  conres();
+#endif /* SOLARIS */
 #endif /* VMSCURSE */
-	pct = 100; oldpct = 0;		/* Reset these for next time. */
-	oldtyp = 0; oldwin = -1; oldtry = -1; oldlen = -1;
-	cendw = 1; conoc(BEL);		/* Close window, then beep. */
-	ft_win = 0;			/* Window closed. */
-	return;
-
+	  pct = 100; oldpct = 0;	/* Reset these for next time. */
+	  oldtyp = 0; oldwin = -1; oldtry = -1; oldlen = -1;
+	  cendw = 1; conoc(BEL);	/* Close window, then beep. */
+	  ft_win = 0;			/* Window closed. */
+	  return;
+      }
       case SCR_EM:			/* Error packet (fatal) */
 	move (CW_ERR,22);
 	printw("? %s",s);
 	conoc(BEL);
+	pct = oldpct = 0;
 	clrtoeol(); refresh(); return;
 
       case SCR_QE:			/* Quantity equals */
@@ -2259,6 +2949,15 @@ char *s;	/* a string */
 #endif /* VMSCURSE */
 	ft_win = 0;			/* Flag that window is closed. */
 	cendw = 1; return;
+
+      case SCR_CD:			/* Display current directory */
+	move(CW_DIR,22); printw(s);
+	clrtoeol();
+	refresh();
+#ifdef OS2
+	savescreen(&commandscreen, 0, 0);
+#endif /* OS2 */
+	return;	
 
       default:				/* Bad call */
 	move (CW_ERR,22);

@@ -1,16 +1,19 @@
+#include "ckcsym.h"
 #ifndef NOICP
 
-/*  C K U U S 7 --  "User Interface" for Unix Kermit, part 7  */
+/*  C K U U S 7 --  "User Interface" for C-Kermit, part 7  */
  
 /*
   Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
-  Columbia University Center for Computing Activities.
-  First released January 1985.
-  Copyright (C) 1985, 1993, Trustees of Columbia University in the City of New
-  York.  Permission is granted to any individual or institution to use this
-  software as long as it is not sold for profit.  This copyright notice must be
-  retained.  This software may not be included in commercial products without
-  written permission of Columbia University.
+  Columbia University Academic Information Systems, New York City.
+
+  Copyright (C) 1985, 1994, Trustees of Columbia University in the City of New
+  York.  The C-Kermit software may not be, in whole or in part, licensed or
+  sold for profit as a software product itself, nor may it be included in or
+  distributed with commercial products or otherwise distributed by commercial
+  concerns to their clients or customers without written permission of the
+  Office of Kermit Development and Distribution, Columbia University.  This
+  copyright notice must not be removed, altered, or obscured.
 */
  
 /*
@@ -27,43 +30,117 @@
 #include "ckcxla.h"			/* Character set translation */
 #include "ckcnet.h"			/* Network symbols */
 #include "ckuusr.h"			/* User interface symbols */
-
+
+#ifdef STRATUS				/* Stratus Computer, Inc.  VOS */
+#ifdef putchar
+#undef putchar
+#endif /* putchar */
+#define putchar(x) conoc(x)
+#ifdef getchar
+#undef getchar
+#endif /* getchar */
+#define getchar(x) coninc(0)
+#endif /* STRATUS */
+
 static int x, y = 0, z;
 static char *s;
 
+#ifdef CK_SPEED
+extern short ctlp[];			/* Control-char prefixing table */
+#endif /* CK_SPEED */
+
+#ifdef NETCONN
 static int mdmsav = -1;			/* Save modem type around network */
 static int oldplex = -1;		/* Duplex holder around network */
+#endif /* NETCONN */
 
-extern int success, nfilp, fmask, fncnv, frecl, nfttyp, binary, warn, msgflg;
+extern xx_strp xxstring;
+
+extern int success, nfilp, fmask, fncnv, frecl, binary, warn, msgflg;
 extern int cmask, maxrps, wslotr, bigsbsiz, bigrbsiz, urpsiz, rpsiz, spsiz;
 extern int spsizr, spsizf, maxsps, spmax, pflag, bctr, npad, timef, timint;
 extern int pkttim, rtimo, local, nfils, displa, atcapr, nettype, escape;
 extern int mdmtyp, duplex, dfloc, network, cdtimo, fncact, mypadn;
 extern int tnlm, sosi, tlevel, lf_opts, backgrd, flow, fdispla;
+extern int fnrpath, fnspath, debses, parity, pktpaus;
 extern int
   atenci, atenco, atdati, atdato, atleni, atleno, atblki, atblko,
   attypi, attypo, atsidi, atsido, atsysi, atsyso, atdisi, atdiso; 
 
+#ifdef STRATUS
+extern int atfrmi, atfrmo, atcrei, atcreo, atacti, atacto;
+#endif /* STRATUS */
+
 extern long speed;
 
-extern CHAR sstate, eol, seol, stchr, mystch, mypadc, padch;
+extern CHAR sstate, eol, seol, stchr, mystch, mypadc, padch, ctlq, myctlq;
 
 extern char *cmarg, *cmarg2, *dftty;
 
-extern char tmpbuf[], *tp, *lp;		/* Temporary buffer & pointers */
+extern char *tp, *lp;			/* Temporary buffer & pointers */
 #ifndef NOFRILLS
 extern char optbuf[];			/* Buffer for MAIL or PRINT options */
 extern int rprintf;			/* REMOTE PRINT flag */
 #endif /* NOFRILLS */
 extern char ttname[];
+#ifdef NPIPE
+extern char pipename[];
+#endif /* NPIPE */
 
-extern struct keytab onoff[], filtab[], fttab[], rltab[];
+extern struct keytab onoff[], filtab[], rltab[];
 extern int nrlt;
+ 
+static struct keytab fttab[] = {	/* File types for SET FILE TYPE */
+    "ascii",     XYFT_B, CM_INV,
+#ifdef VMS
+    "b",         XYFT_B, CM_INV|CM_ABR,
+#endif /* VMS */
+    "binary",    XYFT_B, 0,
+#ifdef VMS
+    "block",     XYFT_I, CM_INV,
+    "image",     XYFT_I, 0,
+#endif /* VMS */
+#ifdef CK_LABELED
+    "labeled",   XYFT_L, 0,
+#endif /* CK_LABELED */
+#ifdef MAC
+    "macbinary", XYFT_M, 0,
+#endif /* MAC */
+    "text",      XYFT_T, 0
+};
+static int nfttyp = (sizeof(fttab) / sizeof(struct keytab));
+
+static struct keytab rfttab[] = {	/* File types for REMOTE SET FILE */
+    "ascii",     XYFT_B, CM_INV,
+    "binary",    XYFT_B, 0,
+#ifdef VMS
+    "labeled",   XYFT_L, 0,
+#else
+#ifdef OS2
+    "labeled",   XYFT_L, 0,
+#endif /* OS2 */
+#endif /* VMS */
+    "text",      XYFT_T, 0
+};
+static int nrfttyp = (sizeof(rfttab) / sizeof(struct keytab));
+
+#ifndef NOSPL
+int query = 0;				/* Global flag for QUERY active */
+
+static struct keytab vartyp[] = {	/* Variable types for REMOTE QUERY */
+"global", (int) 'G', CM_INV,
+"kermit", (int) 'K', 0,
+"system", (int) 'S', 0,
+"user",   (int) 'G', 0
+};
+static int nvartyp = (sizeof(vartyp) / sizeof(struct keytab));
+
+#endif /* NOSPL */
 
 #ifdef DCMDBUF
 extern char *atxbuf;			/* Atom buffer */
 extern char *cmdbuf;			/* Command buffer */
-extern char *line;			/* Character buffer for anything */
+extern char *line, *tmpbuf;		/* Character buffers for anything */
 extern int *intime;			/* INPUT TIMEOUT */
 #ifdef CK_CURSES
 /* This needs cleaning up... */
@@ -79,11 +156,14 @@ extern char *trmbuf;			/* Termcap buffer */
 #ifdef AMIGA
 extern char *trmbuf;			/* Termcap buffer */
 #endif /* AMIGA */
+#ifdef STRATUS
+extern char *trmbuf;			/* Termcap buffer */
+#endif /* STRATUS */
 #endif /* CK_CURSES */
 #else
 extern char atxbuf[];			/* Atom buffer */
 extern char cmdbuf[];			/* Command buffer */
-extern char line[];			/* Character buffer for anything */
+extern char line[], tmpbuf[];		/* Character buffer for anything */
 extern int intime[];
 #ifdef CK_CURSES
 #ifdef UNIX
@@ -93,17 +173,24 @@ extern char trmbuf[];			/* Termcap buffer */
 #endif /* DCMDBUF */
 
 #ifndef NOCSETS
-extern struct keytab fcstab[];		/* For 'set file character-set' */
+extern struct keytab fcstab[];		/* For SET FILE CHARACTER-SET */
 extern struct keytab ttcstab[];
 extern int nfilc, fcharset, ntermc, tcsr, tcsl;
+#ifdef OS2
+_PROTOTYP( int os2setcp, (int) );
+_PROTOTYP( int os2getcp, (void) );
+_PROTOTYP( void os2debugoff, (void) );
+_PROTOTYP( int os2settitle, (char *) );
+static int savtcsr = -1, savtcsl = -1, savfcs = -1, savcp = -1;
+#endif /* OS2 */
 #endif /* NOCSETS */
 
 #ifndef NOSPL
 extern int cmdlvl;			/* Overall command level */
 #ifdef DCMDBUF
-extern int *incase;			/* INPUT CASE setting on cmd stack */
+extern int *inpcas;			/* INPUT CASE setting on cmd stack */
 #else
-extern int incase[];
+extern int inpcas[];
 #endif /* DCMDBUF */
 #endif /* NOSPL */
 
@@ -111,16 +198,18 @@ extern int incase[];
 extern int tn_init;
 #endif /* TNCODE */
 
-#ifdef SUNX25
+#ifdef ANYX25
 extern int revcall, closgr, cudata, nx25, npadx3;
 extern char udata[MAXCUDATA];
 extern CHAR padparms[MAXPADPARMS+1];
 extern struct keytab x25tab[], padx3tab[];
-#endif /* SUNX25 */
+#endif /* ANYX25 */
 
 #ifdef CK_CURSES
 #ifndef VMS
+#ifndef COHERENT
 _PROTOTYP(int tgetent,(char *, char *));
+#endif /* COHERENT */
 #endif /* VMS */
 #endif /* CK_CURSES */
 
@@ -137,6 +226,9 @@ struct keytab dialtab[] = {
     "display", XYDDPY, 0,
     "hangup",  XYDHUP, 0,
     "init-string", XYDINI, 0,
+#ifdef COMMENT
+    "hup-string", XYDHCM, 0,
+#endif /* COMMENT */
     "kermit-spoof", XYDKSP, 0,
     "mnp-enable", XYDMNP, 0,
 #ifdef MDMHUP
@@ -159,11 +251,9 @@ int ndial = (sizeof(dialtab) / sizeof(struct keytab));
 #define XMITS 5
 #define XMITW 6
 
-#ifndef NOXMIT
 #define XMBUFL 50
 extern int xmitf, xmitl, xmitp, xmitx, xmits, xmitw;
 char xmitbuf[XMBUFL+1] = { NUL };	/* TRANSMIT eof string */
-#endif /* NOXMIT */
 
 struct keytab xmitab[] = {
     "echo",     XMITX, 0,
@@ -183,21 +273,30 @@ int nxmit = (sizeof(xmitab) / sizeof(struct keytab));
 /* should be ifdef'd out. */
 
 struct keytab colxtab[] = { /* SET FILE COLLISION options */
+#ifndef MAC
     "append",    XYFX_A, 0,  /* append to old file */
+#endif /* MAC */
 #ifdef COMMENT
     "ask",       XYFX_Q, 0,  /* ask what to do (not implemented) */
 #endif
     "backup",    XYFX_B, 0,  /* rename old file */
+#ifndef MAC
+    /* This crashes Mac Kermit. */
     "discard",   XYFX_D, 0,  /* don't accept new file */
     "no-supersede", XYFX_D, CM_INV, /* ditto (MSK compatibility) */
+#endif /* MAC */
     "overwrite", XYFX_X, 0,  /* overwrite the old file == file warning off */
     "rename",    XYFX_R, 0,  /* rename the incoming file == file warning on */
+#ifndef MAC
+    /* This crashes Mac Kermit. */
     "update",    XYFX_U, 0,  /* replace if newer */
+#endif /* MAC */
 };
 int ncolx = (sizeof(colxtab) / sizeof(struct keytab));
 
 static struct keytab rfiltab[] = {	/* for REMOTE SET FILE */
     "collision",     XYFILX, 0,
+    "names",         XYFILN, 0,
     "record-length", XYFILR, 0,
     "type",          XYFILT, 0
 };
@@ -208,31 +307,50 @@ struct keytab fntab[] = {   		/* File naming */
     "literal",   0, 0
 };
 
+#ifndef NOLOCAL
 /* Terminal parameters table */
 struct keytab trmtab[] = {
 #ifdef OS2
     "answerback",    XYTANS, 0,
+#endif /* OS2 */
+#ifdef CK_APC
+    "apc",           XYTAPC, 0,
+#endif /* CK_APC */
+#ifdef OS2
     "arrow-keys",    XYTARR, 0,
+#endif /* OS2 */
+#ifdef OS2
+    "bell",          XYTBEL, 0,
 #endif /* OS2 */
     "bytesize",      XYTBYT, 0,
 #ifndef NOCSETS
     "character-set", XYTCS,  0,
 #endif /* NOCSETS */
 #ifdef OS2
+    "code-page",     XYTCPG, 0,
     "color",         XYTCOL, 0,
 #endif /* OS2 */
     "cr-display",    XYTCRD, 0,
 #ifdef OS2
     "cursor",        XYTCUR, 0,
 #endif /* OS2 */
+    "debug",         XYTDEB, 0,
     "echo",          XYTEC,  0,
 #ifdef OS2
+    "hide-cursor",   XYTHCU, 0,
     "keypad-mode",   XYTKPD, 0,
 #endif /* OS2 */
     "locking-shift", XYTSO,  0,
+#ifdef OS2MOUSE
+    "mouse",         XYTMOU, 0,
+#endif /* OS2MOUSE */
     "newline-mode",  XYTNL,  0
 #ifdef OS2
-,   "type",          XYTTYP, 0,
+,   "output-pacing", XYTPAC, 0,
+    "roll",          XYTROL, 0,
+    "scrollback",    XYSCRS, 0,
+    "transmit-timeout", XYTCTS, 0,
+    "type",          XYTTYP, 0,
     "wrap",          XYTWRP, 0
 #endif /* OS2 */
 };
@@ -243,6 +361,16 @@ struct keytab crdtab[] = {		/* Carriage-return display */
     "normal",      0, 0
 };
 extern int tt_crd;			/* Carriage-return display variable */
+
+#ifdef CK_APC
+extern int apcstatus, apcactive;
+static struct keytab apctab[] = {	/* Terminal APC parameters */
+    "off",	 APC_OFF,  0,
+    "on",	 APC_ON,   0,
+    "unchecked", APC_UNCH, 0
+};
+#endif /* CK_APC */
+#endif /* NOLOCAL */
 
 #ifdef OS2
 /*
@@ -264,7 +392,7 @@ struct keytab os2devtab[] = {
     "com5", 5, 0,
     "com6", 6, 0,
     "com7", 7, 0,
-    "com8", 7, 0
+    "com8", 8, 0
 };
 int nos2dev = (sizeof(os2devtab) / sizeof(struct keytab));
 
@@ -273,32 +401,49 @@ int nos2dev = (sizeof(os2devtab) / sizeof(struct keytab));
   Used by the ck?con.c terminal emulator code.  
   For now, only use for OS/2.  Should add these for Macintosh.
 */
-int tt_arrow = 1;			/* Arrow key mode, 1 = Application */
-int tt_keypad = 0;			/* Keypad mode, 0 = Application */
-int tt_wrap = 1;			/* Autowrap, 1 = On */
-int tt_type = TT_VT102;			/* Terminal type, initially VT102 */
-int tt_cursor = 0;			/* Cursor type, 0 = Underline */
-int tt_answer = 0;			/* Answerback initially disabled */
-#endif /* OS2 */
+int tt_arrow = TTK_NORM;		/* Arrow key mode: normal (cursor) */
+int tt_keypad = TTK_NORM;		/* Keypad mode: normal (numeric) */
+int tt_wrap = 1;			/* Terminal wrap, 1 = On */
+int tt_type = TT_VT220;			/* Terminal type, initially VT220 */
+int tt_cursor = 0;			/* Terminal cursor, 0 = Underline */
+int tt_answer = 0;			/* Terminal answerback (disabled) */
+int tt_scrsize = 240;                   /* Terminal scrollback buffer size */
+int tt_bell = 1;			/* Terminal bell (audible) */
+int tt_roll = 0;			/* Terminal roll (off) */
+int tt_pacing = 0;			/* Terminal output-pacing (none) */
+int tt_hide = 1;			/* Terminal hide-cursor (on) */
+int tt_ctstmo = 15;			/* Terminal transmit-timeout */
+int tt_codepage = -1;			/* Terminal code-page */
+int tt_mouse = 0;			/* Terminal mouse */
+static int savcolor = 0;		/* Terminal color */
+static int savcmask = 0;		/* For saving terminal bytesize */
+extern int colornormal, colorreverse,
+ colorunderline, colorstatus, colorhelp, colorborder, scrninitialised;
 
-#ifdef OS2
+struct keytab beltab[] = {		/* Terminal bell mode */
+    "audible", 1, 0,
+    "none",    0, 0,
+    "visible", 2, 0
+};
 struct keytab akmtab[] = {		/* Arrow key mode */
-    "application", 1, 0,
-    "cursor",      0, 0
+    "application", TTK_APPL, 0,
+    "cursor",      TTK_NORM, 0
 };
 struct keytab kpmtab[] = {		/* Keypad mode */
-    "application", 0, 0,
-    "numeric",     1, 0
+    "application", TTK_APPL, 0,
+    "numeric",     TTK_NORM, 0
 };
 
-struct keytab ttycoltab[] = {		/* Items to be colored */
-    "help",        4, 0,		/* Help screen */
-    "normal",      0, 0,		/* Normal screen text */
-    "reverse",     1, 0,		/* Reverse video */
-    "status",      3, 0,		/* Status line */
-    "underlined",  2, 0			/* Underlined text */
+struct keytab ttycoltab[] = {		/* Screen coloring during CONNECT */
+    "border",             5, 0,		/* Screen border */
+    "help-text",          4, 0,		/* Help screens */
+    "normal",             0, CM_INV,	/* Normal screen text */
+    "reverse-video",      1, CM_INV,	/* Reverse video */
+    "status-line",        3, 0,		/* Status line */
+    "terminal-screen",    0, 0,		/* Better name than "normal" */
+    "underlined-text",    2, 0		/* Underlined text */
 };
-int ncolors = 5;
+int ncolors = (sizeof(ttycoltab) / sizeof(struct keytab));
 
 struct keytab ttyclrtab[] = {		/* Colors */
     "black",       0, 0,
@@ -326,24 +471,47 @@ struct keytab ttycurtab[] = {
     "underline",   0, 0
 };
 int ncursors = 3;
-#endif /* OS2 */
 
-#ifdef OS2
 struct keytab ttyptab[] = {
-#ifdef COMMENT
+    "ansi",    TT_ANSI,  0,		/* ANSI.SYS (BBS) */
 /*
-  Not supported yet...
-  The idea is to let the console driver handle the escape sequences.
+  The idea of NONE is to let the console driver handle the escape sequences,
+  which, in theory at least, would give not only ANSI emulation, but also any
+  other kind of emulation that might be provided by alternative console
+  drivers, if any existed.
+
+  For this to work, ckocon.c would need to be modified to make higher-level
+  calls, like VioWrtTTY(), DosWrite(), or (simply) write(), rather than
+  VioWrt*Cell() and similar, and it would also have to give up its rollback
+  feature, and its status line and help screens would also have to be
+  forgotten or else done in an ANSI way.
+
+  As matters stand, we already have perfectly good ANSI emulation built in,
+  and there are no alternative console drivers available, so there is no point
+  in having a terminal type of NONE, so it is commented out.  However, should
+  you uncomment it, it will work like a "glass tty" -- no escape sequence
+  interpretation at all; somewhat similar to debug mode, except without the
+  debugging (no highlighting of control chars or escape sequences); help
+  screens, status line, and rollback will still work.
 */
+#ifdef COMMENT
     "none",    TT_NONE,  0,
 #endif /* COMMENT */
 #ifdef OS2PM
+#ifdef COMMENT
     "tek4014", TT_TEK40, 0,
+#endif /* COMMENT */
 #endif /* OS2PM */
+    "vt100",   TT_VT100, 0,
     "vt102",   TT_VT102, 0,
+    "vt220",   TT_VT220, 0,
+#ifdef COMMENT
+    /* Let's not get carried away! */
+    "vt320",   TT_VT320, 0,
+#endif /* COMMENT */
     "vt52",    TT_VT52,  0
 };
-int nttyp = 2;
+int nttyp = (sizeof(ttyptab) / sizeof(struct keytab));
 #endif /* OS2 */
 
 /* #ifdef VMS */
@@ -363,9 +531,30 @@ struct keytab lbltab[] = {		/* Labeled File info */
     "path",        LBL_PTH, 0
 };
 int nlblp = (sizeof(lbltab) / sizeof(struct keytab));
+#else
+#ifdef OS2
+struct keytab lbltab[] = {		/* Labeled File info */
+    "archive",   LBL_ARC, 0,
+    "extended",  LBL_EXT, 0,
+    "hidden",    LBL_HID, 0,
+    "read-only", LBL_RO,  0,
+    "system",    LBL_SYS, 0
+};
+int nlblp = (sizeof(lbltab) / sizeof(struct keytab));
+#endif /* OS2 */
 #endif /* VMS */
 
-struct keytab fdtab[] = {		/* SET FILE DISPLAY options */
+#ifdef CK_CURSES
+#ifdef CK_PCT_BAR
+static struct keytab fdftab[] = {	/* SET FILE DISPLAY FULL options */
+    "thermometer", 1, 0,
+    "no-thermometer", 0, 0
+};
+extern int thermometer;
+#endif /* CK_PCT_BAR */
+#endif /* CK_CURSES */
+
+static struct keytab fdtab[] = {	/* SET FILE DISPLAY options */
 #ifdef MAC				/* Macintosh */
     "fullscreen", XYFD_R, 0,		/* Full-screen but not curses */
     "none",   XYFD_N, 0,
@@ -399,10 +588,14 @@ int nrsrtab = (sizeof(rsrtab) / sizeof(struct keytab));
 /* Send/Receive Parameters */
  
 struct keytab srtab[] = {
+    "control-prefix", XYQCTL, 0,
     "end-of-packet", XYEOL, 0,
     "packet-length", XYLEN, 0,
     "pad-character", XYPADC, 0,
     "padding", XYNPAD, 0,
+    "pathnames", XYFPATH, 0,
+    "pause", XYPAUS, 0,
+    "quote", XYQCTL, CM_INV,		/* = CONTROL-PREFIX */
     "start-of-packet", XYMARK, 0,
     "timeout", XYTIMO, 0
 };
@@ -424,14 +617,25 @@ struct keytab rmstab[] = {
 int nrms = (sizeof(rmstab) / sizeof(struct keytab));
 
 struct keytab attrtab[] = {
+#ifdef STRATUS
+    "account",	     AT_ACCT, 0,
+#endif /* STRATUS */
     "all",           AT_XALL, 0,
 #ifdef COMMENT
     "blocksize",     AT_BLKS, 0,	/* not used */
 #endif /* COMMENT */
+#ifndef NOCSETS
     "character-set", AT_ENCO, 0,
+#endif /* NOCSETS */
+#ifdef STRATUS
+    "creator",	     AT_CREA, 0,
+#endif /* STRATUS */
     "date",          AT_DATE, 0,
     "disposition",   AT_DISP, 0,
     "encoding",      AT_ENCO, CM_INV,
+#ifdef STRATUS
+    "format",	     AT_RECF, 0,
+#endif /* STRATUS */
     "length",        AT_LENK, 0,
     "off",           AT_ALLN, 0,
     "on",            AT_ALLY, 0,
@@ -535,13 +739,7 @@ dialstr(p,msg) char **p; char *msg; {
     int x;
     if ((x = cmtxt(msg, "", &s, xxstring)) < 0)
       return(x);
-    if (*s == '{') {			/* Strip enclosing braces, if any */
-	x = strlen(s);
-	if (s[x-1] == '}') {
-	    s[x-1] = NUL;
-	    s++;
-	}
-    }
+    s = brstrip(s);			/* Strip braces around. */
     if (*p) {				/* Free any previous string. */
 	free(*p);
 	*p = (char *) 0;
@@ -558,7 +756,7 @@ setdial() {
     if ((y = cmkey(dialtab,ndial,"","",xxstring)) < 0) return(y);
     switch (y) {
       case XYDHUP:			/* DIAL HANGUP */
-	return(success = seton(&dialhng));
+	return(seton(&dialhng));
       case XYDINI:			/* DIAL INIT-STRING */
 	return(dialstr(&dialini,"Modem dialer initialization string"));
       case XYDNPR:			/* DIAL NUMBER-PREFIX */
@@ -601,12 +799,12 @@ setdial() {
 	}
 	return(success = 1);
       case XYDKSP:			/* DIAL KERMIT-SPOOF */
-	return(success = seton(&dialksp));
+	return(seton(&dialksp));
       case XYDTMO:			/* DIAL TIMEOUT */
 	y = cmnum("Seconds to wait for call completion","0",10,&x,xxstring);
-	return(success = setnum(&dialtmo,x,y,10000));
+	return(setnum(&dialtmo,x,y,10000));
       case XYDDPY:			/* DIAL DISPLAY */
-	return(success = seton(&dialdpy));
+	return(seton(&dialdpy));
       case XYDSPD:			/* DIAL SPEED-MATCHING */
 					/* used to be speed-changing */
 	if ((y = seton(&mdmspd)) < 0) return(y);
@@ -615,13 +813,13 @@ setdial() {
 #endif /* COMMENT */
 	return(success = 1);
       case XYDMNP:			/* DIAL MNP-ENABLE */
-	return(success = seton(&dialmnp));
+	return(seton(&dialmnp));
 #ifdef MDMHUP
       case XYDMHU:			/* DIAL MODEM-HANGUP */
-	return(success = seton(&dialmhu));
+	return(seton(&dialmhu));
 #endif /* MDMHUP */
       case XYDDIR:			/* DIAL DIRECTORY */
-	if ((y = cmifi("Name of dialing directory file","",&s,&y,
+	if ((y = cmifi("Name of dialing directory file","",&s,&x,
 		       xxstring)) < 0) {
 	    if (y == -3) {
 		if (dialdir) free(dialdir);	/* Free any previous storage */
@@ -629,7 +827,7 @@ setdial() {
 		return(success = 1);
 	    } else return(y);
 	}
-	if (y) {
+	if (x) {
 	    printf("?Wildcards not allowed\n");
 	    return(-9);
 	}
@@ -655,6 +853,10 @@ setdial() {
 	    }
 	    return(success = 1);	/* Everything is OK */
 	}
+#ifdef COMMENT
+      case XYDHCM:			/* DIAL HUP-STRING */
+	return(dialstr(&hupcmd,"Modem dialer hangup command string"));
+#endif /* COMMENT */
 
       default:
 	printf("?Unexpected SET DIAL parameter\n");
@@ -719,6 +921,11 @@ setfil(rmsflg) int rmsflg; {
 	if ((x = cmkey(fdtab,nfdtab,"file transfer display style","",
 		       xxstring)) < 0)
 	  return(x);
+#ifdef CK_PCT_BAR
+	if ((y = cmkey(fdftab,2,"","thermometer",xxstring)) < 0)
+	  return(y);
+	thermometer = y;
+#endif /* CK_PCT_BAR */
 	if ((z = cmcfm()) < 0) return(z);
 #ifdef CK_CURSES
 	if (x == XYFD_C) {
@@ -729,6 +936,9 @@ setfil(rmsflg) int rmsflg; {
 #endif /* VMS */
 #ifndef MYCURSES
 	    s = getenv("TERM");
+	    if (!s) s = "unknown";
+	    else if ((int)strlen(s) < 1) s = "unknown";
+#ifndef COHERENT
 	    if (tgetent(lp,s) < 1) {
 #ifdef VMS
 		printf("Sorry, terminal type not supported: %s\n",s);
@@ -737,6 +947,7 @@ setfil(rmsflg) int rmsflg; {
 #endif /* VMS */
 		return(success = 0);
 	    }
+#endif /* COHERENT */
 #endif /* MYCURSES */
 	    line[0] = '\0';
 	}
@@ -749,8 +960,14 @@ setfil(rmsflg) int rmsflg; {
 		       xxstring)) < 0)
 	  return(x);
 	if ((z = cmcfm()) < 0) return(z);
-	fncnv = x;
-	return(success = 1);
+	if (rmsflg) {
+	    sprintf(tmpbuf,"%d",1 - x);
+	    sstate = setgen('S', "301", tmpbuf, "");
+	    return((int) sstate);
+	} else {
+	    fncnv = x;
+	    return(success = 1);
+	}
 
       case XYFILR:			/* Record length */
 	sprintf(tmpbuf,"%d",DLRECL);
@@ -815,16 +1032,10 @@ setfil(rmsflg) int rmsflg; {
 #endif /* COMMENT */
 
       case XYFILT:			/* Type */
-	if ((x = cmkey(fttab,nfttyp,"type of file","text",xxstring)) < 0)
+	if ((x = cmkey(rmsflg ? rfttab  : fttab,
+		       rmsflg ? nrfttyp : nfttyp,
+		       "type of file transfer","text",xxstring)) < 0)
 	  return(x);
-#ifdef COMMENT
-	if ((y = cmnum("file byte size (7 or 8)","8",10,&z,xxstring)) < 0)
-	  return(y);
-	if (z != 7 && z != 8) {
-	    printf("\n?The choices are 7 and 8\n");
-	    return(0);
-	}
-#endif /* COMMENT */
 
 #ifdef VMS
         /* Allow VMS users to choose record format for binary files */
@@ -835,15 +1046,16 @@ setfil(rmsflg) int rmsflg; {
 	}
 #endif /* VMS */
 	if ((y = cmcfm()) < 0) return(y);
+	binary = x;			/* Do it locally too (edit 190) */
+#ifdef MAC
+	(void) mac_setfildflg(binary);
+#endif /* MAC */
 	if (rmsflg) {
-	    sstate = setgen('S', "300", x ? "1" : "0", "");
+	    char buf[4];		/* Allow for LABELED in VMS & OS/2 */
+	    sprintf(buf,"%d",x);
+	    sstate = setgen('S', "300", buf, "");
 	    return((int) sstate);
 	} else {
-	    binary = x;
-#ifdef COMMENT
-	    if (z == 7) fmask = 0177;
-	    else if (z == 8) fmask = 0377;
-#endif /* COMMENT */
 	    return(success = 1);
 	}
 
@@ -864,16 +1076,16 @@ setfil(rmsflg) int rmsflg; {
 	}
 
       case XYFILW:			/* Warning/Write-Protect */
-	seton(&warn);
+	if ((x = seton(&warn)) < 0) return(x);
 	if (warn)
 	  fncact = XYFX_R;
 	else
 	  fncact = XYFX_X;
 	return(success = 1);
 
-#ifdef VMS
+#ifdef CK_LABELED
       case XYFILL:			/* LABELED FILE parameters */
-	if ((x = cmkey(lbltab,nlblp,"VMS labeled file feature","",
+	if ((x = cmkey(lbltab,nlblp,"Labeled file feature","",
 		       xxstring)) < 0)
 	  return(x);
 	if ((success = seton(&y)) < 0)
@@ -883,7 +1095,7 @@ setfil(rmsflg) int rmsflg; {
 	else
 	  lf_opts &= ~x;
 	return(success);
-#endif /* VMS */
+#endif /* CK_LABELED */
 
       case XYFILI:			/* INCOMPLETE */
 	return(doprm(XYIFD,rmsflg));
@@ -894,9 +1106,10 @@ setfil(rmsflg) int rmsflg; {
     }
 }
 
+#ifndef NOLOCAL
 int
 settrm() {
-    if ((y = cmkey(trmtab,ntrm,"","",xxstring)) < 0) return(y);
+    if ((y = cmkey(trmtab,ntrm,"", "",xxstring)) < 0) return(y);
 #ifdef MAC
     printf("\n?Sorry, not implemented yet.  Please use the Settings menu.\n");
     return(-9);
@@ -916,25 +1129,28 @@ settrm() {
         return(success = 1);
 
       case XYTSO:			/* SET TERMINAL LOCKING-SHIFT */
-	return(success = seton(&sosi));
+	return(seton(&sosi));
 
       case XYTNL:			/* SET TERMINAL NEWLINE-MODE */
-	return(success = seton(&tnlm)); 
+	return(seton(&tnlm)); 
 
 #ifdef OS2
       case XYTCOL:			/* SET TERMINAL COLOR */
-	if ((x = cmkey(ttycoltab,ncolors,"","normal",xxstring)) < 0) {
+	if ((x = cmkey(ttycoltab,ncolors,"","terminal",xxstring)) < 0) {
 	    return(x);
         } else {
-	    extern int colornormal, colorreverse, colorunderline,
-	      colorstatus, colorhelp, scrninitialised;
 	    int fg, bg;
-	    if ((fg = cmkey(ttyclrtab,nclrs,
-			    "foreground color","black",xxstring)) < 0)
-	      return(fg);
-	    if ((bg = cmkey(ttyclrtab,nclrs,
-			    "background color","cyan",xxstring)) < 0)
-	      return(bg);
+	    fg = cmkey(ttyclrtab,nclrs,
+		       (x == 5 ? "color for screen border" 
+		              : "foreground color and then background color"),
+
+		       "black",xxstring);
+	    if (fg < 0)return(fg);
+	    if (x != 5) {
+		if ((bg = cmkey(ttyclrtab,nclrs,
+				"background color","cyan",xxstring)) < 0)
+		  return(bg);
+	    }
 	    if ((y = cmcfm()) < 0)
 	      return(y);
 	    switch (x) {
@@ -942,7 +1158,21 @@ settrm() {
 		colornormal = fg | bg << 4;
 		break;
 	      case 1:
+#ifdef COMMENT
 		colorreverse = fg | bg << 4;
+#else
+		if (pflag &&
+#ifndef NOSPL
+		  cmdlvl == 0
+#else
+		    tlevel < 0
+#endif /* NOSPL */
+		      ) {
+		printf(" Sorry, this command has been retired.\n");
+		printf(" Reverse video is now accomplished simply by\n");
+		printf(" exchanging the fore- and background colors.\n");
+	    }
+#endif /* COMMENT */
 		break;
 	      case 2:
 		colorunderline = fg | bg << 4;
@@ -952,6 +1182,9 @@ settrm() {
 		break;
 	      case 4:
 		colorhelp = fg | bg << 4;
+		break;
+	      case 5:
+		colorborder = fg;
 		break;
 	      default:
 		printf("%s - invalid\n",cmdbuf);
@@ -970,26 +1203,93 @@ settrm() {
 	return(success = 1);
 
       case XYTTYP:			/* SET TERMINAL TYPE */
-	if ((x = cmkey(ttyptab,nttyp,"","vt102",xxstring)) < 0) return(x);
+	if ((x = cmkey(ttyptab,nttyp,"","vt220",xxstring)) < 0) return(x);
 	if ((y = cmcfm()) < 0) return(y);
 	tt_type = x;
+	if (tt_type == TT_ANSI) {
+	    if (parity)
+	      printf(
+"WARNING, ANSI terminal emulation works right only if PARITY is NONE.\n\
+HELP SET PARITY for further information.\n"
+		     );
+	    savcolor = colornormal;	/* Save coloration */
+	    colornormal = 0x07;		/* Light gray on black */
+	    scrninitialised = 0;	/* To make it take effect */
+	    savcmask = cmask;		/* Go to 8 bits */
+	    cmask = 0xFF;
+	    savtcsl = tcsl;		/* Save terminal charset */
+	    savtcsr = tcsr;	    
+	    savfcs  = fcharset;
+	    tcsr = tcsl = FC_CP437;	/* Go to transparent */
+	    y = os2getcp();		/* Get current code page */
+	    if (y != 437) {		/* If it's not 437 */
+		savcp = y;		/* Save current code page */
+		y = os2setcp(437);	/* Try to switch to CP437 */
+		if (pflag)
+		  printf(y ?
+			 "Switching to Code Page 437...\n" :
+			 "Warning: Code Page 437 not prepared\n"
+			 );
+	    }
+	} else {			/* Not ANSI, but a real type */
+	    if (savcolor) {		/* Restore this stuff if we */
+		colornormal = savcolor;	/* were ANSI before... */
+		savcolor = 0;
+		scrninitialised = 0;
+	    }
+	    if (savcmask) {		/* Restore terminal bytesize */
+		cmask = savcmask;
+		savcmask = 0;
+	    }
+	    if (savtcsl > -1) {		/* Restore character sets */
+		tcsl = savtcsl;
+		tcsr = savtcsr;	    
+		fcharset = savfcs;
+		savtcsl = -1;
+	    }
+	    if (savcp > 0) {		/* Restore code page */
+		os2setcp(savcp);
+		savcp = -1;
+	    }
+	}
 	return(success = 1);
 
       case XYTARR:			/* SET TERMINAL ARROW-KEYS */
 	if ((x = cmkey(akmtab,2,"","",xxstring)) < 0) return(x);
 	if ((y = cmcfm()) < 0) return(y);
-	tt_arrow = x;			/* 0 = application, 1 = cursor */
+	tt_arrow = x;			/* TTK_NORM / TTK_APPL; see ckuusr.h */
 	return(success = 1);
 
       case XYTKPD:			/* SET TERMINAL KEYPAD-MODE */
 	if ((x = cmkey(kpmtab,2,"","",xxstring)) < 0) return(x);
 	if ((y = cmcfm()) < 0) return(y);
-	tt_keypad = x;			/* 0 = application, 1 = numeric */
+	tt_keypad = x;			/* TTK_NORM / TTK_APPL; see ckuusr.h */
 	return(success = 1);
 
       case XYTWRP:			/* SET TERMINAL WRAP */
-	seton(&tt_wrap);
-	return(success = 1);	
+	return(seton(&tt_wrap)); 
+
+      case XYSCRS:
+	if ((y = cmnum("CONNECT scrollback buffer size, lines","240",10,&x,
+		       xxstring)) < 0)
+	  return(y);
+#ifdef __32BIT__
+	if (x < 1 || x > 2000000L) { /* The max number of lines is the RAM  */
+                                     /* we can actually dedicate to a       */
+				     /* scrollback buffer given the maximum */
+                                     /* process memory space of 512MB       */
+	    printf("\n?The size must be between 1 and 2,000,000\n"); 
+	    return(success = 0);
+ 	} 
+#else
+	if (x < 64 || x > 240) {
+	    printf("\n?The size must be between 64 and 240\n");
+	    return(success = 0);
+	}
+#endif /* __32BIT__ */
+	if ((y = cmcfm()) < 0) return(y);
+	tt_scrsize = x;
+	return(success = 1);
 #endif /* OS2 */
 
 #ifndef NOCSETS
@@ -1006,12 +1306,24 @@ settrm() {
 
 /* Not transparent, so get local set to translate it into */
 
-	s = "";				/* Make current file char set */
+	s = "";
+#ifdef OS2
+	y = os2getcp();			/* Default is current code page */
+	switch (y) {
+	  case 437: s = "cp437"; break;
+	  case 850: s = "cp850"; break;
+	  case 852: s = "cp852"; break;
+	  case 862: s = "cp862"; break;
+	  case 866: s = "cp866"; break;
+	}
+#else
+					/* Make current file char set */
 	for (y = 0; y <= nfilc; y++)	/* be the default... */
 	  if (fcstab[y].kwval == fcharset) {
 	      s = fcstab[y].kwd;
 	      break;
-	    }
+	  }
+#endif /* OS2 */
 	if ((y = cmkey(fcstab,nfilc,
 		       "local character-set",s,xxstring)) < 0)
 	  return(y);
@@ -1041,22 +1353,90 @@ settrm() {
   do NOT let them change it, and we definitely do not let the host set it.
   This is a security feature.
 */
-	seton(&tt_answer);
-	return(success = 1);	
+	return(seton(&tt_answer));
+#endif /* OS2 */
+
+#ifdef CK_APC
+      case XYTAPC:
+	if ((y = cmkey(apctab,3,"application program command execution","",
+		       xxstring)) < 0)
+	  return(y);
+	if ((x = cmcfm()) < 0) return(x);
+	if (apcactive && apcstatus != APC_UNCH) return(success = 0);
+	apcstatus = y;	
+	return(success = 1);
+#endif /* CK_APC */
+
+#ifdef OS2
+      case XYTBEL:
+	if ((y = cmkey(beltab,3,"how terminal emulator rings bells","audible",
+		       xxstring)) < 0)
+	  return(y);
+	if ((x = cmcfm()) < 0) return(x);
+	tt_bell = y;
+	return(success = 1);
+#endif /* OS2 */
+
+      case XYTDEB:			/* TERMINAL DEBUG */
+	x = debses;			/* What it was before */
+	y = seton(&debses);		/* Go parse ON or OFF */
+#ifdef OS2
+	if (y > 0)			/* Command succeeded? */
+	  if ((x != 0) && (debses == 0)) /* It was on and we turned it off? */
+	    os2debugoff();		/* Fix OS/2 coloration */
+#endif /* OS2 */
+	return(y);
+
+#ifdef OS2
+      case XYTROL:			/* SET TERMINAL ROLL */
+	return(seton(&tt_roll));
+
+      case XYTCTS:			/* SET TERMINAL TRANSMIT-TIMEOUT */
+	y = cmnum("Maximum seconds to allow CTS off during CONNECT",
+		  "5",10,&x,xxstring);
+	return(setnum(&tt_ctstmo,x,y,10000));
+
+      case XYTCPG: {			/* SET TERMINAL CODE-PAGE */
+	int cp = -1;
+	y = cmnum("PC code page to use during terminal emulation",
+		  "850",10,&x,xxstring);
+	if ((x = setnum(&cp,x,y,2000)) < 0) return(x);
+	if (os2setcp(cp) != 1) {
+	    printf("Sorry, %d is not a valid code page for this system\n");
+	    return(-9);
+	}
+	return(1);
+      }
+
+      case XYTHCU:			/* SET TERMINAL HIDE-CURSOR */
+	return(seton(&tt_hide));
+
+      case XYTPAC:			/* SET TERMINAL OUTPUT-PACING */
+	y = cmnum(
+	   "Pause between sending each character during CONNECT, milliseconds",
+		  "-1",10,&x,xxstring);
+	return(setnum(&tt_pacing,x,y,10000));
+
+#ifdef OS2MOUSE
+      case XYTMOU:			/* SET TERMINAL MOUSE */
+	return(seton(&tt_mouse));
+#endif /* OS2MOUSE */
+
 #endif /* OS2 */
 
       default:				/* Shouldn't get here. */
 	return(-2);
-    }    
+    } 
 #endif /* MAC */
 }
+#endif /* NOLOCAL */
 
 int					/* SET SEND/RECEIVE */
 setsr(xx, rmsflg) int xx; int rmsflg; {
     if (xx == XYRECV)
-    	strcpy(line,"Parameter for inbound packets");
+      strcpy(line,"Parameter for inbound packets");
     else
-    	strcpy(line,"Parameter for outbound packets");
+      strcpy(line,"Parameter for outbound packets");
  
     if (rmsflg) {
 	if ((y = cmkey(rsrtab,nrsrtab,line,"",xxstring)) < 0) {
@@ -1069,12 +1449,32 @@ setsr(xx, rmsflg) int xx; int rmsflg; {
 	if ((y = cmkey(srtab,nsrtab,line,"",xxstring)) < 0) return(y);
     }
     switch (y) {
- 
+      case XYQCTL:			/* CONTROL-PREFIX */
+	if ((x = cmnum("ASCII value of control prefix","",10,&y,xxstring)) < 0)
+	  return(x);
+	if ((x = cmcfm()) < 0) return(x);
+	if ((y > 32 && y < 63) || (y > 95 && y < 127)) {
+	    if (xx == XYRECV)
+	      ctlq = (CHAR) y;		/* RECEIVE prefix, use with caution! */
+	    else
+	      myctlq = (CHAR) y;	/* SEND prefix, OK to change */
+	    return(success = 1); 
+	} else {
+	    printf("?Illegal value for prefix character\n");
+	    return(-9);
+	}
+
       case XYEOL:
 	y = cmnum("Decimal ASCII code for packet terminator","13",10,&x,
 		  xxstring);
 	if ((y = setcc(&z,x,y)) < 0) return(y);
-	if (xx == XYRECV) eol = z; else seol = z;
+	if (z > 31) {
+	    printf("Sorry, the legal values are 0-31\n");
+	    return(-9);
+	}
+	if (xx == XYRECV) eol = z; else {
+	    seol = z;
+	}
 	return(success = y);
  
       case XYLEN:
@@ -1170,12 +1570,17 @@ Make sure your timeout interval is long enough for %d-byte packets.\n",z);
 #ifdef VMS
 	if ((y = setnum(&z,x,y,126)) < 0) return(y);
 #else
+#ifdef OS2
+	if ((y = setnum(&z,x,y,126)) < 0) return(y);
+#else
 	if ((y = setcc(&z,x,y)) < 0) return(y);
+#endif /* OS2 */
 #endif /* VMS */
 #endif /* UNIX */
-	if (xx == XYRECV) stchr = z; else mystch = z;
+	if (xx == XYRECV) stchr = z; else {
+	    mystch = z;
+	}
 	return(success = y);
-
 
       case XYNPAD:			/* PADDING */
 	y = cmnum("How many padding characters for inbound packets","0",10,&x,
@@ -1222,6 +1627,23 @@ Make sure your timeout interval is long enough for %d-byte packets.\n",z);
 	}
 	return(success = 1);
 
+      case XYFPATH:			/* PATHNAMES */
+	if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
+	if ((x = cmcfm()) < 0) return(x);
+	if (xx == XYRECV)		/* SET RECEIVE PATHNAMES */
+	  fnrpath = 1 - y;		/* OFF (with their heads!), ON */
+	else				/* SET SEND PATHNAMES */
+	  fnspath = 1 - y;		/* OFF, ON */
+	return(success = 1);		/* Note: 0 = ON, 1 = OFF */
+	/* In other words, ON = leave pathnames ON, OFF = take them off. */
+
+      case XYPAUS:			/* SET SEND/RECEIVE PAUSE */
+	y = cmnum("Milliseconds to pause between packets","0",10,&x,xxstring);
+	if ((y = setnum(&z,x,y,15000)) < 0)
+	  return(y);
+	pktpaus = z;
+	return(success = 1);
+
       default:
 	return(-2);
     }					/* End of SET SEND/RECEIVE... */
@@ -1250,9 +1672,9 @@ setxmit() {
 	xmitf = z;
 	return(success = 1);
       case XMITL:			/* Linefeed */
-        return(success = seton(&xmitl));
+        return(seton(&xmitl));
       case XMITS:			/* Locking-Shift */
-        return(success = seton(&xmits));
+        return(seton(&xmits));
       case XMITP:			/* Prompt */
 	y = cmnum("Numeric code for host's prompt character, 0 for none",
 		  "10",10,&x,xxstring);
@@ -1260,7 +1682,7 @@ setxmit() {
 	xmitp = z;
 	return(success = 1);
       case XMITX:			/* Echo */
-        return(success = seton(&xmitx));
+        return(seton(&xmitx));
       case XMITW:			/* Pause */
 	y = cmnum("Number of milliseconds to pause between binary characters\n\
 or text lines during transmission","0",10,&x,xxstring);
@@ -1275,32 +1697,22 @@ or text lines during transmission","0",10,&x,xxstring);
 
 /*  D O R M T  --  Do a remote command  */
  
-#ifdef ATTSV
-#ifndef aegis
-#ifndef datageneral
-#define CK_NEED_SIG
-#endif /* datageneral */
-#endif /* aegis */
-#endif /* ATTSV */
-
 VOID rmsg() {
     if (pflag)
       printf(
-#ifdef CK_NEEDSIG
-
+#ifdef CK_NEED_SIG
        " Type your escape character, %s, followed by X or E to cancel.\n",
        dbchr(escape)
 #else
        " Press the X or E key to cancel.\n"
-#endif /* CK_NEEDSIG */
+#endif /* CK_NEED_SIG */
       );
 }
 
 int
-dormt(xx) int xx; {
+dormt(xx) int xx; {			/* REMOTE commands */
     int x, y, retcode;
     char *s, sbuf[50], *s2;
-
  
     if (xx < 0) return(xx);
 
@@ -1523,6 +1935,58 @@ case XZWHO:
     break;
 #endif /* NOFRILLS */
  
+case XZPWD:				/* PWD */
+    if ((x = cmcfm()) < 0) return(x);
+    sstate = setgen('A',"","","");
+    retcode = 0;
+    break; 
+    
+#ifndef NOSPL
+case XZQUE: {				/* Query */
+    char buf[2];
+    extern char querybuf[], * qbufp;
+    extern int qbufn;
+    if ((y = cmkey(vartyp,nvartyp,"","",xxstring)) < 0)
+      return(y);
+    if ((x = cmtxt("Remote variable name","",&s,NULL)) < 0) /* No eval */
+      return(x);
+    query = 1;				/* QUERY is active */
+    qbufp = querybuf;			/* Initialize query response buffer */
+    qbufn = 0;
+    querybuf[0] = NUL;
+    buf[0] = (char) (y & 127);
+    buf[1] = NUL;
+    retcode = sstate = setgen('V',"Q",(char *)buf,s);
+    break;
+}
+
+case XZASG: {				/* Assign */
+    char buf[VNAML];
+    if ((y = cmfld("Remote variable name","",&s,NULL)) < 0) /* No eval */
+      return(y);
+    strcpy(buf,s);
+    if ((x = cmtxt("Assignment for remote variable",
+		   "",&s,xxstring)) < 0) /* Evaluate this one */
+      return(x);
+#ifdef COMMENT
+/*
+  Server commands can't be long packets.  In principle there's no reason
+  why they shouldn't be, except that we don't know at this point if the
+  server is capable of accepting long packets because we haven't started
+  the protocol yet.  In practice, allowing a long packet here breaks a lot
+  of assumptions, causes buffer overruns and crashes, etc.  To be fixed
+  later.
+*/
+    if ((int)strlen(s) > 85) {		/* Allow for encoding expansion */
+	printf("?Sorry, value is too long - 85 characters max\n");
+	return(-9);
+    }
+#endif /* COMMENT */
+    retcode = sstate = setgen('V',"S",(char *)buf,s);
+    break;
+}
+#endif /* NOSPL */
+
 default:
         if ((x = cmcfm()) < 0) return(x);
         printf("?Not implemented - %s\n",cmdbuf);
@@ -1550,7 +2014,7 @@ rfilop(s,t) char *s, t;
     return(setgen(t,s,"",""));
 }
 
-#ifdef SUNX25
+#ifdef ANYX25
 int
 setx25() {
     if ((y = cmkey(x25tab,nx25,"X.25 call options","",xxstring)) < 0)
@@ -1781,7 +2245,7 @@ setpadp() {
     padparms[x] = z;
     return(success = 1);
 }
-#endif /* SUNX25 */ 
+#endif /* ANYX25 */ 
 
 int
 setat(rmsflg) int rmsflg; {
@@ -1810,6 +2274,14 @@ setat(rmsflg) int rmsflg; {
 	    atsido = xx;
 	    atsysi = xx;		/* System-dependent params in/out */
 	    atsyso = xx;
+#ifdef STRATUS
+	    atfrmi = xx;		/* Format in/out */
+	    atfrmo = xx;
+	    atcrei = xx;		/* Creator id in/out */
+	    atcreo = xx;
+	    atacti = xx;		/* Account in/out */
+	    atacto = xx;
+#endif /* STRATUS */
 	}
 	return(z);
     } else if (y == AT_ALLY || y == AT_ALLN) { /* ATTRIBUTES ON or OFF */
@@ -1870,12 +2342,34 @@ setat(rmsflg) int rmsflg; {
 	    return((int) sstate);
 	}
 	attypi = attypo = z; break;
+#ifdef STRATUS
+      case AT_CREA:
+	if (rmsflg) {
+	    sstate = setgen('S', "136", z ? "1" : "0", "");
+	    return((int) sstate);
+	}
+	atcrei = atcreo = z; break;
+      case AT_ACCT:
+	if (rmsflg) {
+	    sstate = setgen('S', "137", z ? "1" : "0", "");
+	    return((int) sstate);
+	}
+	atacti = atacto = z; break;
+#endif /* STRATUS */
       case AT_SYSI:
 	if (rmsflg) {
 	    sstate = setgen('S', "145", z ? "1" : "0", "");
 	    return((int) sstate);
 	}
 	atsidi = atsido = z; break;
+#ifdef STRATUS
+      case AT_RECF:
+	if (rmsflg) {
+	    sstate = setgen('S', "146", z ? "1" : "0", "");
+	    return((int) sstate);
+	}
+        atfrmi = atfrmo = z; break;
+#endif /* STRATUS */
       case AT_SYSP:
 	if (rmsflg) {
 	    sstate = setgen('S', "147", z ? "1" : "0", "");
@@ -1896,7 +2390,7 @@ setinp() {
     switch (y) {
       case IN_DEF:			/* SET INPUT DEFAULT-TIMEOUT */
 	z = cmnum("Positive number","",10,&x,xxstring);
-	return(success = setnum(&indef,x,z,94));
+	return(setnum(&indef,x,z,94));
       case IN_TIM:			/* SET INPUT TIMEOUT-ACTION */
 	if ((z = cmkey(intimt,2,"","",xxstring)) < 0) return(z);
 	if ((x = cmcfm()) < 0) return(x);
@@ -1905,13 +2399,14 @@ setinp() {
       case IN_CAS:			/* SET INPUT CASE */
 	if ((z = cmkey(incast,2,"","",xxstring)) < 0) return(z);
 	if ((x = cmcfm()) < 0) return(x);
-	incase[cmdlvl] = z;
+	inpcas[cmdlvl] = z;
 	return(success = 1);
       case IN_ECH:			/* SET INPUT ECHO */
-	return(success = seton(&inecho));
+	return(seton(&inecho));
       case IN_SIL:			/* SET INPUT SILENCE */
-	z = cmnum("Positive number","",10,&x,xxstring);
-	return(success = setnum(&insilence,x,z,-1));
+	z = cmnum("Seconds of inactivity before INPUT fails","",10,&x,
+		  xxstring);
+	return(setnum(&insilence,x,z,-1));
     }
     return(0);
 }
@@ -1936,18 +2431,53 @@ setlin(xx, zz) int xx, zz; {
 	if (
 	    (nettype != NET_DEC) &&
 	    (nettype != NET_SX25) &&
-            (nettype != NET_TCPB)) {
+	    (nettype != NET_VX25) &&
+#ifdef NPIPE
+	    (nettype != NET_PIPE) &&
+#endif /* NPIPE */
+#ifdef CK_NETBIOS
+	    (nettype != NET_BIOS) &&
+#endif /* CK_NETBIOS */
+	    (nettype != NET_TCPB)) {
 	    printf("?Network type not supported\n");
 	    return(-9);
-	  }
-	if (nettype != NET_TCPB) {	/* Not a TCP/IP connection */
-					/* Just get a text string */
+	}
+#ifdef CK_NETBIOS
+	if ( nettype == NET_BIOS) {
 	    if ((x = cmtxt( zz ? 
-   "Network host name,\n or carriage return to close an open connection" :
-   "Network host name,\n or carriage return to resume an open connection",
+    "server name, *,\n or carriage return to close an open connection" :
+    "server name, *,\n or carriage return to resume an open connection",
 			   "",&s,xxstring)) < 0)
 	      return(x);
-
+	} else
+#endif /* CK_NETBIOS */
+#ifdef NPIPE
+	if (nettype == NET_PIPE ) {
+	    if ((x = cmtxt( zz ? 
+    "server name, *,\n or carriage return to close an open connection" :
+    "server name, *,\n or carriage return to resume an open connection",
+			   "",&s,xxstring)) < 0)
+	      return(x);
+	    if ( *s != '\0' ) {
+		if ( strcmp(s,"*")) {	/* If remote, */
+		    strcpy(line,"\\\\"); /* begin with server name */
+		    strcat(line,s);
+		} else {
+		    line[0]='\0' ;
+		}
+		strcat(line,"\\pipe\\"); /* Make this a pipe name */
+		strcat(line,pipename);   /* Add the name of the pipe */
+		s = line;
+	    }
+	} else
+#endif /* NPIPE */
+	  if (nettype != NET_TCPB) {	/* Not a TCP/IP connection */
+					/* Just get a text string */
+	    if ((x = cmtxt( zz ? 
+    "Network host name,\n or carriage return to close an open connection" :
+    "Network host name,\n or carriage return to resume an open connection",
+			   "",&s,xxstring)) < 0)
+	      return(x);
 	} else {			/* TCP/IP connection... */
 
 	    /* Parse for host and service separately. */
@@ -1958,7 +2488,10 @@ setlin(xx, zz) int xx, zz; {
 			   "",&s,xxstring)) < 0) {
 		if (x != -3)		/* Parse error */
 		  return(x);		/* return it */
-		else if (!zz)		/* No hostname given */
+		else if (!network) {
+		    printf("?Host name or address required\n");
+		    return(-9);
+		} else if (!zz)		/* No hostname given */
 		  return(1);		/* and none required, */
 	    }				/* continue current connection. */
 	    if (*s) {			/* If they gave a host name... */
@@ -1985,6 +2518,9 @@ setlin(xx, zz) int xx, zz; {
 
 	/* New connection wanted. */
 
+	if (!hupok(1))
+	  return(success = 0);
+
 	ttflui();			/* Clear away buffered up junk */
 	ttclos(0);			/* Close old connection, if any */
 	if (oldplex > -1)		/* Restore duplex setting. */
@@ -1996,14 +2532,16 @@ setlin(xx, zz) int xx, zz; {
 	    if (nettype == NET_TCPB) {	/* For TCP/IP telnet connections */
 		oldplex = duplex;	/* Remember previous duplex */
 		duplex = 0;		/* Set full duplex and let */
-	  }				/* negotiations change if necessary. */
+		                        /* negotiations change if necessary. */
+	    }
 	} else {			/* They just said "set host" */
 	    if (network && msgflg)
 	      printf(" Closing connection\n");
 	    s = dftty;			/* So go back to normal */
 	    x = dfloc;			/* default tty, location, */
 	    network = 0;		/* No more network connection. */
-	    duplex = oldplex;		/* Restore old duplex setting. */
+	    if (oldplex > -1)
+	      duplex = oldplex;		/* Restore old duplex setting. */
 	    if (mdmtyp < 0) {		/* Switching from net to async? */
 		if (mdmsav > -1)	/* Restore modem type from last */
 		  mdmtyp = mdmsav;	/* SET MODEM command, if any. */
@@ -2049,6 +2587,9 @@ setlin(xx, zz) int xx, zz; {
 	  return(x);
 #endif /* OS2 */
 
+	if (!hupok(1))
+	  return(success = 0);
+
 	if (local) ttflui();		/* Clear away buffered up junk */
 	ttclos(0);			/* Close old line, if any was open */
 	if (*s) {			/* They gave a device name */
@@ -2057,6 +2598,7 @@ setlin(xx, zz) int xx, zz; {
 	    s = dftty;			/* so go back to normal tty */
 	    x = dfloc;			/* and mode. */
 	}
+#ifdef NETCONN
 	if (mdmtyp < 0) {		/* Switching from net to async? */
 	    if (mdmsav > -1)		/* Restore modem type from last */
 	      mdmtyp = mdmsav;		/* SET MODEM command, if any. */
@@ -2068,7 +2610,16 @@ setlin(xx, zz) int xx, zz; {
 	    duplex = oldplex;
 	    oldplex = -1;
 	}
-	network = 0;			/* No more network. */
+
+	if (network) {
+#ifdef TNCODE
+/* This should be unnecessary, since ttclos() did it already? */
+/* But it can't hurt ... */
+	    tn_init = 0;		/* TELNET not init'd any more. */
+#endif /* TNCODE */
+	    network = 0;		/* No more network. */
+	}
+#endif /* NETCONN */
     }
 #ifdef COMMENT
 /*
@@ -2117,13 +2668,22 @@ setlin(xx, zz) int xx, zz; {
         } else {			/* Other error. */
 #ifndef VMS
 	    if (errno) {
-		tp = tmpbuf;
-		sprintf(tp,"Sorry, can't open connection: %s",s);
-		perror(tp);
+		int x;			/* Find a safe, long buffer */
+		x = strlen(line) + 2;	/* for the error message. */
+		if (LINBUFSIZ - x > 100) { /* Allow room for 100 chars */
+		    tp = line + x;
+		    sprintf(tp,"Sorry, can't open connection: %s",s);
+		    perror(tp);
+		} else printf("Sorry, can't open connection: %s\n",s);
 	    } else
 #endif /* VMS */
 	      printf("Sorry, can't open connection: %s\n",s);
 	}    
+/*
+  NOTE:
+  The following will fail if Kermit is running as a daemon with no
+  controlling tty.  Needs research.
+*/
 	local = dfloc;			/* Go back to normal */
 #ifndef MAC
 	strcpy(ttname,dftty);		/* Restore default tty name */
@@ -2134,16 +2694,33 @@ setlin(xx, zz) int xx, zz; {
     }
     if (x > -1) local = x;		/* Opened ok, set local/remote. */
     network = (mdmtyp < 0);		/* Remember connection type. */
-#ifdef TNCODE
-    if (network) tn_init = 0;		/* Say telnet not init'd yet. */
-#endif /* TNCODE */
     strcpy(ttname,s);			/* Copy name into real place. */
+#ifdef OS2
+    {					/* Set session title */
+	char * p, name[72];		/* in window list. */
+	strcpy(name,"C-Kermit ");
+	p = name + 9;
+	strncpy(p, ttname, 60);
+	while (*p) {			/* Uppercase it for emphasis. */
+	    if (islower(*p))
+	      *p = toupper(*p);
+	    p++;
+	}
+	os2settitle((char *) name);
+    }
+#endif /* OS2 */
     speed = ttgspd();			/* Get the current speed. */
     debug(F111,"set line ",ttname,local);
 #ifdef NETCONN
-#ifdef SUNX25
-    if (nettype == NET_SX25) duplex = 1; /* Duplex half */
-#endif /* SUNX25 */
+    if (network)
+#ifdef CK_SPEED
+      /* Force prefixing of 255 on TCP/IP connections... */
+      if (nettype == NET_TCPB) {
+	  ctlp[255] = 1;
+      } else
+#endif /* CK_SPEED */
+	if (nettype == NET_SX25 || nettype == NET_VX25)
+	  duplex = 1;			/* Local echo for X.25 */
 #endif /* NETCONN */
     return(success = 1);
 }

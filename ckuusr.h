@@ -2,13 +2,15 @@
  
 /*
   Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
-  Columbia University Center for Computing Activities.
-  First released January 1985.
-  Copyright (C) 1985, 1992, Trustees of Columbia University in the City of New
-  York.  Permission is granted to any individual or institution to use this
-  software as long as it is not sold for profit.  This copyright notice must be
-  retained.  This software may not be included in commercial products without
-  written permission of Columbia University.
+  Columbia University Academic Information Systems, New York City.
+
+  Copyright (C) 1985, 1994, Trustees of Columbia University in the City of New
+  York.  The C-Kermit software may not be, in whole or in part, licensed or
+  sold for profit as a software product itself, nor may it be included in or
+  distributed with commercial products or otherwise distributed by commercial
+  concerns to their clients or customers without written permission of the
+  Office of Kermit Development and Distribution, Columbia University.  This
+  copyright notice must not be removed, altered, or obscured.
 */
 #ifndef CKUUSR_H
 #define CKUUSR_H
@@ -24,11 +26,26 @@
 #define MAXTAKE 30			/* Maximum nesting of TAKE files */
 #define MACLEVEL 50			/* Maximum nesting for macros */
 #define NARGS 10			/* Max number of macro arguments */
-#define LINBUFSIZ CMDBL+10		/* Size of line[] buffer */
+#define LINBUFSIZ (CMDBL + 10)		/* Size of line[] buffer */
+#define TMPBUFSIZ 150			/* Size of temporary buffer */
+#define LBLSIZ 50			/* Maximum length for a GOTO label */
 #define INPBUFSIZ 257			/* Size of INPUT buffer */
 #define CMDSTKL ( MACLEVEL + MAXTAKE + 2) /* Command stack depth */
 #define MAC_MAX 256			/* Maximum number of macros */
 #define MSENDMAX 100			/* Number of filespecs for MSEND */
+#define PROMPTL 80			/* Max length for prompt */
+
+#ifndef NOMINPUT			/* MINPUT command */
+#ifndef NOSPL
+#define CK_MINPUT
+#define MINPMAX   16			/* Max number of MINPUT strings */
+#define MINPBUFL 256			/* Size of MINPUT temp buffer */
+#endif /* NOSPL */
+#endif /* NOMINPUT */
+
+#ifndef NORETRY				/* Command retry */
+#define CM_RETRY
+#endif /* NORETRY */
 
 struct cmdptr {				/* Command stack structure */
     int src;				/* Command Source */
@@ -41,25 +58,110 @@ struct mtab {				/* Macro table, like keyword table */
     short flgs;
 };
 
-/* Name of C-Kermit program initialization file. */
+/*
+  C-Kermit Initialization file...
 
+  System-dependent defaults are built into the program, see below.
+  These can be overridden in either of two ways:
+  1. CK_DSYSINI is defined at compile time, in which case a default
+     system-wide initialization file name is chosen from below, or:
+  2: CK_SYSINI is defined to be a string, which lets the program
+     builder choose the initialization filespec at compile time. 
+  These can be given on the CC command line, so the source code need not be
+  changed.
+*/
+
+#ifndef CK_SYSINI			/* If no initialization file given, */
+#ifdef CK_DSYSINI			/* but CK_DSYSINI is defined... */
+
+/* Supply system-dependent "default default" initialization file */
+
+#ifdef UNIX				/* For UNIX, system-wide */
+/* This allows one copy of the standard init file on the whole system, */
+/* rather than a separate copy in each user's home directory. */
+#ifdef HPUX10
+#define CK_SYSINI "/usr/share/lib/kermit/ckermit.ini"
+#else
+#ifdef CU_ACIS
+#define CK_SYSINI "/usr/share/lib/kermit/ckermit.ini"
+#else
+#define CK_SYSINI "/usr/local/bin/ckermit.ini"
+#endif /* CU_ACIS */
+#endif /* HPUX10 */
+/* Fill in #else..#ifdef's here for VMS, OS/2, etc. */
+/* Fill in matching #endif's here. */
+#endif /* UNIX */
+
+#endif /* CK_DSYSINI */
+#endif /* CK_SYSINI */
+
+#ifdef CK_SYSINI			/* Init-file precedence */
+#ifndef CK_INI_A			/* A means system-wide file first */
+#ifndef CK_INI_B			/* B means user's first */
+#define CK_INI_A			/* A is default */
+#endif /* CK_INI_B */
+#endif /* CK_INI_A */
+#else
+#ifdef CK_INI_A				/* Otherwise */
+#undef CK_INI_A				/* make sure these aren't defined */
+#endif /* CK_INI_A */
+#ifdef CK_INI_B
+#undef CK_INI_B
+#endif /* CK_INI_B */
+#endif /* CK_SYSINI */
+
+#ifdef CK_SYSINI			/* One more check... */
+#ifdef CK_INI_A				/* Make sure they're not both */
+#ifdef CK_INI_B				/* defined. */
+#undef CK_INI_B
+#endif /* CK_INI_B */
+#endif /* CK_INI_A */
+#endif /* CK_SYSINI */
+/*
+  If neither CK_DSYSINI nor CK_SYSINI are defined, these are the
+  built-in defaults for each system:
+*/
 #ifdef vms
 #define KERMRC "CKERMIT.INI"
+#define KERMRCL 256
 #else
 #ifdef OS2
 #define KERMRC "ckermit.ini"
+#define KERMRCL 256
 #else
 #ifdef UNIX
 #define KERMRC ".kermrc"
+#define KERMRCL 256
 #else
 #ifdef OSK
 #define KERMRC ".kermrc"
+#define KERMRCL 256
+#else
+#ifdef STRATUS
+#define KERMRC "ckermit.ini"
+#define KERMRCL 256
 #else
 #define KERMRC "CKERMIT.INI"
+#define KERMRCL 256
+#endif /* STRATUS */
 #endif /* OSK */
 #endif /* UNIX */
 #endif /* OS2 */
 #endif /* vms */
+
+#ifndef KERMRCL
+#define KERMRCL 256
+#endif /* KERMRCL */
+
+/* User interface features */
+
+#ifdef CK_CURSES			/* Thermometer */
+#ifndef NO_PCT_BAR
+#ifndef CK_PCT_BAR
+#define CK_PCT_BAR
+#endif /* NO_PCT_BAR */
+#endif /* CK_PCT_BAR */
+#endif /* OS2 */
 
 /* Includes */
 
@@ -74,6 +176,31 @@ struct mtab {				/* Macro table, like keyword table */
 #define CMD_TF 1			/* TAKE command File */
 #define CMD_MD 2			/* Macro Definition */
 
+/*
+  SET TRANSFER CANCELLATION command should be available in all versions.
+  But for now...
+*/
+#ifdef UNIX				/* UNIX has it */
+#ifndef XFRCAN
+#define XFRCAN
+#endif /* XFRCAN */
+#endif /* UNIX */
+#ifdef VMS				/* VMS has it */
+#ifndef XFRCAN
+#define XFRCAN
+#endif /* XFRCAN */
+#endif /* VMS */
+#ifdef datageneral			/* DG AOS/VS has it */
+#ifndef XFRCAN
+#define XFRCAN
+#endif /* XFRCAN */
+#endif /* datageneral */
+#ifdef STRATUS				/* Stratus VOS has it */
+#ifndef XFRCAN
+#define XFRCAN
+#endif /* XFRCAN */
+#endif /* STRATUS */
+
 /* Top Level Commands */
 /* Values associated with top-level commands must be 0 or greater. */
  
@@ -86,7 +213,7 @@ struct mtab {				/* Macro table, like keyword table */
 #define XXDEF	6	/* DEFINE (a command macro) */
 #define XXDEL   7	/* (Local) DELETE */
 #define XXDIR   8	/* (Local) DIRECTORY */
-#define XXDIS   9	/* DISABLE <-- changed from DISCONNECT! */
+#define XXDIS   9	/* DISABLE */
 #define XXECH  10	/* ECHO */
 #define XXEXI  11	/* EXIT */
 #define XXFIN  12	/* FINISH */
@@ -159,7 +286,7 @@ struct mtab {				/* Macro table, like keyword table */
 #define XXERR  79       /* ERROR */
 #define XXMSE  80       /* MSEND */
 #define XXBUG  81       /* BUG */
-#define XXPAD  82       /* PAD (as in X.25 PAD) SUNX25 */
+#define XXPAD  82       /* PAD (as in X.25 PAD) ANYX25 */
 #define XXRED  83       /* REDIAL */
 #define XXGTA  84	/* _getargs (invisible internal) */
 #define XXPTA  85	/* _putargs (invisible internal) */
@@ -171,6 +298,17 @@ struct mtab {				/* Macro table, like keyword table */
 #define XXINT  91       /* INTRODUCTION */
 #define XXCHK  92	/* CHECK (a feature) */
 #define XXMSL  93       /* MSLEEP, MPAUSE (millisecond sleep) */
+#define XXNEW  94       /* NEWS */
+#define XXAPC  95       /* APC */
+#define XXFUN  96       /* REDIRECT */
+#define XXWRL  97	/* WRITE-LINE */
+#define XXREXX 98	/* Rexx */
+#define XXMINP 100	/* MINPUT */
+#define XXRSEN 101	/* RESEND */
+#define XXPSEN 102	/* PSEND */
+#define XXGETC 103	/* GETC */
+#define XXEVAL 104	/* EVALUATE */
+#define XXFWD  105	/* FORWARD */
 
 /* IF conditions */
 
@@ -191,6 +329,9 @@ struct mtab {				/* Macro table, like keyword table */
 #define  XXIFBG 14      /* IF BACKGROUND */
 #define  XXIFNU 15	/* IF NUMERIC */
 #define  XXIFFG 16      /* IF FOREGROUND */
+#define  XXIFDI 17      /* IF DIRECTORY */
+#define  XXIFNE 18      /* IF NEWER */
+#define  XXIFRO 19      /* IF REMOTE-ONLY */
 
 /* SET parameters */
  
@@ -229,14 +370,20 @@ struct mtab {				/* Macro table, like keyword table */
 #define XYRECV 32   	/* RECEIVE parameters, ditto */
 #define XYTERM 33	/* Terminal parameters */
 #define   XYTBYT 0      /*  Terminal Bytesize (7 or 8) */
-#define   XYTTYP 1      /*  Terminal Type */
-#define     TT_NONE  0	/*    NONE */
+#define   XYTTYP 1      /*  Terminal emulation Type */
+#define     TT_NONE  0	/*    NONE, no emulation */
+/*
+  Note, the symbols for VT and VT-like terminals should be in ascending 
+  numerical order, so that higher ones can be treated as supersets of
+  lower ones with respect to capabilities.
+*/
 #define     TT_VT52  1	/*    DEC VT-52  */
-#define     TT_VT100 2	/*    DEC VT-100 */
-#define     TT_VT102 3	/*    DEC VT-102 */
-#define     TT_VT220 4	/*    DEC VT-220 */
-#define     TT_VT320 5	/*    DEC VT-320 */
-#define     TT_TEK40 6	/*    Tektronix 401x */
+#define     TT_ANSI  2	/*    IBM ANSI.SYS (BBS) */
+#define     TT_VT100 3	/*    DEC VT-100 */
+#define     TT_VT102 4	/*    DEC VT-102 */
+#define     TT_VT220 5	/*    DEC VT-220 */
+#define     TT_VT320 6	/*    DEC VT-320 */
+#define     TT_TEK40 99	/*    Tektronix 401x */
 #define   XYTCS  2      /*  Terminal Character Set */
 #define   XYTSO  3	/*  Terminal Shift-In/Shift-Out */
 #define   XYTNL  4      /*  Terminal newline mode */
@@ -245,9 +392,21 @@ struct mtab {				/* Macro table, like keyword table */
 #define   XYTCUR 7	/*  Terminal cursor */
 #define   XYTARR 8	/*  Terminal arrow-key mode */
 #define   XYTKPD 9      /*  Terminal keypad mode */
+#define    TTK_NORM 0   /*    Normal mode for arrow / keyad keys */
+#define    TTK_APPL 1   /*    Application mode for arrow / keyad keys */
 #define   XYTWRP 10     /*  Terminal wrap */
 #define   XYTCRD 11	/*  Terminal CR-display */
 #define   XYTANS 12	/*  Terminal answerback */
+#define   XYSCRS 13     /*  Terminal scrollback buffer size */
+#define   XYTAPC 14	/*  Terminal APC */
+#define   XYTBEL 15     /*  Terminal Bell */
+#define   XYTDEB 16	/*  Terminal Debug */
+#define   XYTROL 17     /*  Terminal Roll */
+#define   XYTCTS 18     /*  Terminal Transmit-Timeout */
+#define   XYTCPG 19     /*  Terminal Code Page */
+#define   XYTHCU 20     /*  Terminal Hide-Cursor */
+#define   XYTPAC 21	/*  Terminal Output-Pacing */
+#define   XYTMOU 22	/*  Terminal Mouse */
 #define XYATTR 34       /* Attribute packets */
 #define XYSERV 35	/* Server parameters */
 #define   XYSERT 0      /*  Server timeout   */
@@ -272,13 +431,14 @@ struct mtab {				/* Macro table, like keyword table */
 #define  XYDDPY  4      /*   Dial Display */
 #define  XYDSPD  5      /*   Dial Speed matching */
 #define  XYDMNP  6	/*   Dial MNP negotiation enabled */
-#define  XYDV32  7	/*   Dial V.32 mode enabled */
-#define  XYDV42  8	/*   Dial V.42 mode enabled */
-#define  XYDV42B 9	/*   Dial V.42bis mode enabled */
+#define  XYDEC   7	/*   Dial error correction (in general) enabled */
+#define  XYDDC   8      /*   Dial compression (in general) enabled */
+#define  XYDHCM  9      /*   Dial hangup-string (hup-string) */
 #define  XYDDIR 10	/*   Dial directory */
 #define  XYDDIA 11	/*   Dial dial-command */
 #define  XYDMHU 12	/*   Dial modem-hangup */
 #define  XYDNPR 13      /*   Dial number-prefix */
+
 #define XYSESS 49       /* SET SESSION options */
 #define XYBUF  50       /* Buffer length */
 #define XYBACK 51	/* Background */
@@ -287,8 +447,8 @@ struct mtab {				/* Macro table, like keyword table */
 #define XYCMD  54       /* Command */
 #define XYCASE 55       /* Case */
 #define XYCOMP 56       /* Compression */
-#define XYX25  57       /* X.25 parameter (SUNX25) */
-#define XYPAD  58       /* X.3 PAD parameter (SUNX25) */
+#define XYX25  57       /* X.25 parameter (ANYX25) */
+#define XYPAD  58       /* X.3 PAD parameter (ANYX25) */
 #define XYWILD 59       /* Wildcard expansion method */
 #define XYSUSP 60       /* Suspend */
 #define XYMAIL 61	/* Mail-Command */
@@ -301,8 +461,13 @@ struct mtab {				/* Macro table, like keyword table */
 #define  CK_TN_EC 0	/*  TELNET ECHO */
 #define  CK_TN_TT 1	/*  TELNET TERMINAL-TYPE */
 #define  CK_TN_NL 2     /*  TELNET NEWLINE-MODE */
+#define XYOUTP 68	/* OUTPUT command parameters */
+#define  OUT_PAC 0	/*  OUTPUT pacing */
+#define XYEXIT 69	/* SET EXIT */
+#define XYPRTR 70	/* SET PRINTER */
+#define XYFPATH 71	/* PATHNAME */
 
-/* #ifdef SUNX25 */
+/* #ifdef ANYX25 */
 /* PAD command parameters */
 
 #define XYPADL 0        /* clear virtual call */
@@ -314,7 +479,7 @@ struct mtab {				/* Macro table, like keyword table */
 #define XYUDAT 0       /* X.25 call user data */
 #define XYCLOS 1       /* X.25 closed user group call */
 #define XYREVC 2       /* X.25 reverse charge call */
-/* #endif */ /* SUNX25 */
+/* #endif */ /* ANYX25 */
 
 /* SHOW command symbols */
 
@@ -349,6 +514,11 @@ struct mtab {				/* Macro table, like keyword table */
 #define SHSTK 28			/* Show stack, MAC debugging */
 #define SHCSE 29			/* Show character sets */
 #define SHFEA 30			/* Show features */
+#define SHCTL 31			/* Show control-prefix table */
+#define SHEXI 32			/* Show EXIT items */
+#define SHPRT 33			/* Show printer */
+#define SHCMD 34			/* Show command parameters */
+#define SHKVB 35			/* Show \Kverbs */
 
 /* REMOTE command symbols */
  
@@ -371,6 +541,9 @@ struct mtab {				/* Macro table, like keyword table */
 #define XZSUB 16	/* Submit */
 #define XZTYP 17	/* Type */
 #define XZWHO 18	/* Who */
+#define XZPWD 19	/* Print Working Directory */
+#define XZQUE 20	/* Query */
+#define XZASG 21	/* Assign */
  
 /* SET INPUT command parameters */
 
@@ -382,21 +555,23 @@ struct mtab {				/* Macro table, like keyword table */
 
 /* ENABLE/DISABLE command parameters */
 
-#define EN_ALL  0			/* All */
+#define EN_ALL  0			/* ALL */
 #define EN_CWD  1			/* CD/CWD */
-#define EN_DIR  2			/* Directory */
+#define EN_DIR  2			/* DIRECTORY */
 #define EN_FIN  3			/* FINISH */
-#define EN_GET  4			/* Get */
-#define EN_HOS  5			/* Host command */
-#define EN_KER  6			/* Kermit command */
-#define EN_LOG  7			/* Login */
-#define EN_SEN  8			/* Send */
-#define EN_SET  9			/* Set */
-#define EN_SPA 10			/* Space */
-#define EN_TYP 11			/* Type */
-#define EN_WHO 12			/* Who/Finger */
+#define EN_GET  4			/* GET */
+#define EN_HOS  5			/* HOST command */
+#define EN_KER  6			/* KERMIT command */
+#define EN_LOG  7			/* LOGIN */
+#define EN_SEN  8			/* SEND */
+#define EN_SET  9			/* SET */
+#define EN_SPA 10			/* SPACE */
+#define EN_TYP 11			/* TYPE */
+#define EN_WHO 12			/* WHO, finger */
 #define EN_DEL 13			/* Delete */
 #define EN_BYE 14			/* BYE (as opposed to FINISH) */
+#define EN_QUE 15			/* QUERY */
+#define EN_ASG 16			/* ASSIGN */
 
 /* Symbols for logs */
  
@@ -446,6 +621,28 @@ struct mtab {				/* Macro table, like keyword table */
 #define VN_EXIT 32			/* Exit status */
 #define VN_ICHR 33			/* INPUT character */
 #define VN_ICNT 34			/* INPUT count */
+#define VN_PRTY 35			/* Current parity */
+#define VN_DIAL 36			/* DIAL status */
+#define VN_KEYB 37			/* Keyboard type */
+#define VN_CPS  38			/* Chars per second, last transfer */
+#define VN_RPL  39			/* Receive packet length */
+#define VN_SPL  40			/* Send packet length */
+#define VN_MODE 41			/* Transfer mode (text, binary) */
+#define VN_REXX 42			/* Rexx return value */
+#define VN_NEWL 43			/* Newline character or sequence */
+#define VN_COLS 44			/* Columns on console screen */
+#define VN_ROWS 45			/* Rows on console screen */
+#define VN_TTYP 46			/* Terminal type */
+#define VN_MINP 47			/* MINPUT result */
+#define VN_CONN 48			/* Connection type */
+#define VN_SYSI 49			/* System ID */
+#define VN_TZ   50			/* Timezone */
+#define VN_SPA  51			/* Space */
+#define VN_QUE  52			/* Query */
+#define VN_STAR 53			/* Startup directory */
+#define VN_CSET 54			/* Local character set */
+#define VN_MDM  55			/* Modem type */
+#define VN_EVAL 56			/* Most recent EVALUATE result */
 
 /* Symbols for builtin functions */
 
@@ -474,14 +671,17 @@ struct mtab {				/* Macro table, like keyword table */
 #define FN_CHR 20			/* Character (like BASIC CHR$()) */
 #define FN_RIG 21			/* Right (like BASIC RIGHT$()) */
 #define FN_COD 22			/* Code value of character */
+#define FN_RPL 23			/* Replace */
+#define FN_FD  24			/* File date */
+#define FN_FS  25			/* File size */
 
 /* ANSI-style prototypes for user interface functions */
 
+_PROTOTYP( char * brstrip, (char *) );
 _PROTOTYP( int parser, ( int ) );
-_PROTOTYP( int xxstring, (char *, char **, int *) );
+_PROTOTYP( int zzstring, (char *, char **, int *) );
 _PROTOTYP( int yystring, (char *, char **) );
 _PROTOTYP( int xxstrcmp, (char *, char *, int) );
-_PROTOTYP( int xxout, (char) );
 _PROTOTYP( int getncm, (char *, int) );
 _PROTOTYP( int getnct, (char *, int) );
 _PROTOTYP( VOID bgchk, (void) );
@@ -497,20 +697,22 @@ _PROTOTYP( int macini, (void) );
 _PROTOTYP( VOID initmac, (void) );
 _PROTOTYP( int delmac, (char *) );
 _PROTOTYP( int addmac, (char *, char *) );
+_PROTOTYP( int domac, (char *, char *) );
 _PROTOTYP( int addmmac, (char *, char *[]) );
 _PROTOTYP( int dobug, (void) );
 _PROTOTYP( int docd, (void) );
 _PROTOTYP( int doclslog, (int) );
 _PROTOTYP( int docmd, (int) );
-_PROTOTYP( int doconect, (void) );
+_PROTOTYP( int doconect, (int) );
 _PROTOTYP( int dodo, (int, char *) );
 _PROTOTYP( int doenable, (int, int) );
 _PROTOTYP( int doget, (void) );
-_PROTOTYP( int dogoto, (char *) );
+_PROTOTYP( int dogoto, (char *, int) );
+_PROTOTYP( int dogta, (int) );
 _PROTOTYP( int dohlp, (int) );
 _PROTOTYP( int dohrmt, (int) );
 _PROTOTYP( int doif, (int) );
-_PROTOTYP( int doinput, (int, char *) );
+_PROTOTYP( int doinput, (int, char *[]) );
 _PROTOTYP( int doreinp, (int, char *) );
 _PROTOTYP( int dolog, (int) );
 _PROTOTYP( int dologin, (char *) );
@@ -541,6 +743,7 @@ _PROTOTYP( int setcc, (int *, int, int) );
 _PROTOTYP( int setnum, (int *, int, int, int) );
 _PROTOTYP( int seton, (int *) );
 _PROTOTYP( VOID shmdmlin, (void) );
+_PROTOTYP( char * showoff, (int) );
 _PROTOTYP( int shoatt, (void) );
 _PROTOTYP( VOID shocharset, (void) );
 _PROTOTYP( int shomac, (char *, char *) );
@@ -577,7 +780,14 @@ _PROTOTYP( int dochk, (void) );
 _PROTOTYP( char *ludial, (char *, FILE *) );
 _PROTOTYP( VOID xwords, (char *, int, char *[]) );
 _PROTOTYP( VOID shotcs, (int, int) );
-_PROTOTYP( char *hhmmss, (long x) );
+_PROTOTYP( char *hhmmss, (long) );
+_PROTOTYP( VOID shoctl, (void) );
+_PROTOTYP( VOID kwdhelp, (struct keytab[], int, char *, char *, int) );
+_PROTOTYP( VOID keynaminit, (void) );
+_PROTOTYP( int xlookup, (struct keytab[], char *, int, int *) );	
+_PROTOTYP( VOID shokeycode, (int) );
+_PROTOTYP( int hupok, (int) );
+
 #endif /* CKUUSR_H */
 
 /* End of ckuusr.h */

@@ -1,17 +1,21 @@
+#include "ckcsym.h"
 #ifndef NOCMDL
+
 /*  C K U U S Y --  "User Interface" for Unix Kermit, part Y  */
 
 /*  Command-Line Argument Parser */
  
 /*
   Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
-  Columbia University Center for Computing Activities.
-  First released January 1985.
-  Copyright (C) 1985, 1992, Trustees of Columbia University in the City of New
-  York.  Permission is granted to any individual or institution to use this
-  software as long as it is not sold for profit.  This copyright notice must be
-  retained.  This software may not be included in commercial products without
-  written permission of Columbia University.
+  Columbia University Academic Information Systems, New York City.
+
+  Copyright (C) 1985, 1994, Trustees of Columbia University in the City of New
+  York.  The C-Kermit software may not be, in whole or in part, licensed or
+  sold for profit as a software product itself, nor may it be included in or
+  distributed with commercial products or otherwise distributed by commercial
+  concerns to their clients or customers without written permission of the
+  Office of Kermit Development and Distribution, Columbia University.  This
+  copyright notice must not be removed, altered, or obscured.
 */
 
 #include "ckcdeb.h"
@@ -21,14 +25,15 @@
 #include "ckcnet.h"
 
 #ifdef NETCONN
-#ifdef SUNX25
-#include "ckcnet.h"
+#ifdef ANYX25
 extern int revcall, closgr, cudata;
 extern char udata[MAXCUDATA];
 extern int x25fd;
-#endif /* SUNX25 */
+#endif /* ANYX25 */
 #ifndef VMS
+#ifndef OS2
 extern
+#endif /* OS2 */
 #endif /* VMS */
  int telnetfd;
 #endif /* NETCONN */
@@ -37,9 +42,16 @@ extern char *ckxsys, *ckzsys, *cmarg, *cmarg2, **xargv, **cmlist, *clcmds;
 extern int action, cflg, xargc, stdouf, stdinf, displa, cnflg, nfils,
   local, quiet, escape, network, mdmtyp, maxrps, rpsiz, bgset, xargs,
   urpsiz, wslotr, swcapr, binary, warn, parity, turn, turnch, duplex, flow,
-  fncact, clfils, noinit, stayflg, nettype;
+  fncact, clfils, noinit, stayflg, nettype, cfilef, delay, noherald;
 extern long speed, ttgspd(), zchki();
 extern char ttname[];
+#ifdef OS2PM
+extern int os2pm;
+#endif /* OS2PM */
+
+#ifdef CK_NETBIOS
+extern unsigned char NetBiosAdapter ;
+#endif /* CK_NETBIOS */
 
 #ifndef NODIAL
 extern int nmdm;
@@ -59,6 +71,8 @@ cmdlin() {
     cmarg2 = "";
     action = cflg = 0;
  
+    debug(F111,"cmdlin",*xargv,xargc);
+
 /* If we were started directly from a Kermit application file, its name is */
 /* in argv[1], so skip past it. */
 
@@ -67,7 +81,9 @@ cmdlin() {
 	    if (
 		/* some shells don't put full pathname... */
 		/* zchki(xargv[0]) > 0 && */ /* ...so skip this test */
-		zchki(xargv[1]) > 0) {	/* if it's an existing file */
+		cfilef ||		/* If it's our command file */
+		zchki(xargv[1]) > 0	/* or if it's an existing file */
+		) {			
 		xargc -= 1;		/* skip past it */
 		xargv += 1;		/* ... */
 	    }
@@ -85,19 +101,31 @@ cmdlin() {
 	    x = *(*xargv+1);		/* Get the option letter */
 	    if (doarg(x) < 0) doexit(BAD_EXIT,1); /* Go handle option */
     	} else {			/* No dash where expected */
-	    usage();
-	    doexit(BAD_EXIT,1);
+	    fatal2(*xargv,
+		   "invalid command-line option, type \"kermit -h\" for help");
 	}
     }
     debug(F101,"action","",action);
+#ifndef NOLOCAL
     if (!local) {
 	if ((action == 'c') || (cflg != 0))
-	    fatal("-l and -b required");
+	    fatal("-l or -j or -X required");
     }
+#endif /* NOLOCAL */
     if (*cmarg2 != 0) {
 	if ((action != 's') && (action != 'r') &&
 	    (action != 'v'))
 	    fatal("-a without -s, -r, or -g");
+	if (action == 'r' || action == 'v') {
+	    if (zchko(cmarg2) < 0)
+	      fatal("write access to -a file denied");
+#ifdef CK_TMPDIR
+	    if (isdir(cmarg2))		/* -a is a directory */
+	      if (!zchdir(cmarg2))	/* try to change to it */
+		fatal("can't change to -a directory");
+	      else cmarg2 = "";
+#endif /* CK_TMPDIR */
+	}
     }
     if ((action == 'v') && (stdouf) && (!local)) {
     	if (isatty(1))
@@ -108,7 +136,6 @@ cmdlin() {
 	if (local) displa = 1;
 	if (stdouf) { displa = 0; quiet = 1; }
     }
- 
     if (quiet) displa = 0;		/* No display if quiet requested */
     return(action);			/* Then do any requested protocol */
 }
@@ -125,7 +152,9 @@ doarg(x) char x;
     int i, y, z; long zz; char *xp;
  
     xp = *xargv+1;			/* Pointer for bundled args */
+    debug(F111,"doarg entry",xp,xargc);
     while (x) {
+	debug(F000,"doarg arg","",x);
 	switch (x) {
 
 #ifndef NOSPL
@@ -137,11 +166,27 @@ case 'C':				/* Commands for parser */
     break;
 #endif /* NOSPL */
 
+case 'D':				/* Delay */
+    if (*(xp+1)) fatal("invalid argument bundling");
+    xargv++, xargc--;
+    if ((xargc < 1) || (**xargv == '-'))
+      fatal("missing delay value");
+    z = atoi(*xargv);			/* Convert to number */
+    if (z > -1)				/* If in range */
+      delay = z;			/* set it */
+    else
+      fatal("bad delay value");
+    break;
+
+
 #ifndef NOICP
 case 'S':				/* "Stay" - enter interactive */
     stayflg = 1;			/* command parser after executing */
     break;				/* command-line actions. */
 #endif /* NOICP */
+
+case 'R':				/* Remote-Only */
+    break;				/* This is handled in prescan(). */
 
 #ifndef NOSERVER
 case 'x':				/* server */
@@ -233,6 +278,7 @@ case 'g':				/* get */
     action = 'r';
     break;
  
+#ifndef NOLOCAL
 case 'c':				/* connect before */
     cflg = 1;
     break;
@@ -240,11 +286,12 @@ case 'c':				/* connect before */
 case 'n':				/* connect after */
     cnflg = 1;
     break;
+#endif /* NOLOCAL */
  
 case 'h':				/* help */
     usage();
 #ifndef NOICP
-    if (stayflg)
+    if (stayflg)	
       break;
     else
 #endif /* NOICP */
@@ -266,16 +313,23 @@ case 'Y':				/* No initialization file */
 case 'y':				/* Alternate init-file name */
     if (*(xp+1)) fatal("invalid argument bundling after -y");
     xargv++, xargc--;
-    if (xargc < 1) fatal("missing name in -y");
+    if (xargc < 1) fatal("missing filename in -y");
     /* strcpy(kermrc,*xargv); ...this was already done in prescan()... */
     break;
 #endif /* NOICP */
 
-case 'l':				/* set line */
+#ifndef NOLOCAL
+case 'l':				/* SET LINE */
 #ifdef NETCONN
-case 'X':				/* set host to X.25 address */
-case 'Z':				/* set host to X.25 file descriptor */
-case 'j':				/* set host (TCP/IP socket) */
+#ifdef ANYX25
+case 'X':				/* SET HOST to X.25 address */
+#ifdef SUNX25
+case 'Z':				/* SET HOST to X.25 file descriptor */
+#endif /* SUNX25 */
+#endif /* ANYX25 */
+#ifdef TCPSOCKET
+case 'j':				/* SET HOST (TCP/IP socket) */
+#endif /* TCPSOCKET */
 #endif /* NETCONN */
     network = 0;
     if (*(xp+1)) fatal("invalid argument bundling after -l or -j");
@@ -284,6 +338,14 @@ case 'j':				/* set host (TCP/IP socket) */
     	fatal("communication line device name missing");
     strcpy(ttname,*xargv);
     local = (strcmp(ttname,CTTNAM) != 0);
+/*
+  NOTE: We really do not need to call ttopen here, since it should be called
+  again later, automatically, when we first try to condition the device via
+  ttpkt or ttvt.  Calling ttopen here has the bad side effect of making the
+  order of the -b and -l options significant, but order of command-line options
+  should not matter.  However, the network cases immediately below complicate
+  matters a bit, so we'll settle this in a future edit.
+*/
     if (x == 'l') {
 	if (ttopen(ttname,&local,mdmtyp,0) < 0)
 	  fatal("can't open device");
@@ -296,15 +358,23 @@ case 'j':				/* set host (TCP/IP socket) */
 #ifdef NETCONN
     } else {
 	if (x == 'j') {			/* IP network host name */
+	    nettype = NET_TCPB;
 	    mdmtyp = -nettype;          /* perhaps already set in init file */
 	    telnetfd = 1;		/* Or maybe an open file descriptor */
 #ifdef SUNX25
 	} else if (x == 'X') {		/* X.25 address */
-	    mdmtyp = 0 - NET_SX25;
+	    nettype = NET_SX25;
+	    mdmtyp = -nettype;
 	} else if (x == 'Z') {		/* Open X.25 file descriptor */
-	    mdmtyp = 0 - NET_SX25;
+	    nettype = NET_SX25;
+	    mdmtyp = -nettype;
 	    x25fd = 1;
 #endif /* SUNX25 */
+#ifdef STRATUSX25
+	} else if (x == 'X') {		/* X.25 address */
+	    nettype = NET_VX25;
+	    mdmtyp = -nettype;
+#endif /* STRATUSX25 */
 	}
 	if (ttopen(ttname,&local,mdmtyp,0) < 0)
 	  fatal("can't open host connection");
@@ -314,7 +384,7 @@ case 'j':				/* set host (TCP/IP socket) */
     /* add more here later - decnet, etc... */
     break;
  
-#ifdef SUNX25
+#ifdef ANYX25
 case 'U':                               /* X.25 call user data */
     if (*(xp+1)) fatal("invalid argument bundling");
     xargv++, xargc--;
@@ -338,19 +408,24 @@ case 'o':                               /* X.25 closed user group */
 case 'u':                               /* X.25 reverse charge call */
     revcall = 1;
     break;
-#endif /* SUNX25 */
+#endif /* ANYX25 */
+#endif /* NOLOCAL */
 
 case 'b':   	    			/* set bits-per-second for serial */
     if (*(xp+1)) fatal("invalid argument bundling"); /* communication device */
     xargv++, xargc--;
     if ((xargc < 1) || (**xargv == '-'))
-    	fatal("missing baud");
+    	fatal("missing bps");
     zz = atol(*xargv);			/* Convert to long int */
     i = zz / 10L;
+#ifndef NOLOCAL
     if (ttsspd(i) > -1)			/* Check and set it */
-      speed = zz;
+#endif /* NOLOCAL */
+      speed = ttgspd();			/* and read it back. */
+#ifndef NOLOCAL
     else
       fatal("unsupported transmission rate");
+#endif /* NOLOCAL */
     break;
  
 #ifndef NODIAL
@@ -364,7 +439,7 @@ case 'm':				/* Modem type */
       fatal("unknown modem type");
     mdmtyp = y;
     break;
-#endif
+#endif /* NODIAL */
 
 case 'e':				/* Extended packet length */
     if (*(xp+1)) fatal("invalid argument bundling after -e");
@@ -391,7 +466,7 @@ case 'v':				/* Vindow size */
     break;
 
 case 'i':				/* Treat files as binary */
-    binary = 1;
+    binary = XYFT_B;
     break;
  
 case 'w':				/* Writeover */
@@ -404,12 +479,11 @@ case 'q':				/* Quiet */
     break;
  
 #ifdef DEBUG
-case 'd':				/* debug */
-/** debopn("debug.log"); *** already did this in prescan() **/
-    break;
+case 'd':				/* DEBUG */
+    break;				/* Handled in prescan() */
 #endif /* DEBUG */ 
 
-case 'p':				/* set parity */
+case 'p':				/* SET PARITY */
     if (*(xp+1)) fatal("invalid argument bundling");
     xargv++, xargc--;
     if ((xargc < 1) || (**xargv == '-'))
@@ -435,8 +509,34 @@ case 'z':				/* Not background */
     bgset = 0;
     break;
 
+#ifdef CK_NETBIOS
+case 'N':               /* NetBios Adapter Number follows */
+    if (*(xp+1)) fatal("invalid argument bundling after -N");
+    xargv++, xargc--;
+    if ((xargc < 1) || (**xargv == '-'))
+      fatal("missing NetBios Adapter number");
+    if ( (strlen(*xargv) != 1) ||
+	(atoi(*xargv) < 0) ||
+	(atoi(*xargv) > 3) )
+      fatal("invalid NetBios Adapter specified\nadapters 0 to 3 are valid");
+    break;
+#endif /* CK_NETBIOS */
+
+#ifdef OS2PM
+case 'P':				/* OS/2 Presentation Manager */
+    os2pm = 1;
+    break;
+#endif /* OS2PM */
+
+#ifndef NOICP
+  case 'H':
+    noherald = 1;
+    break;
+#endif /* NOICP */
+
 default:
-    fatal("invalid argument, type 'kermit -h' for help");
+    fatal2(*xargv,
+	   "invalid command-line option, type \"kermit -h\" for help");
         }
  
     x = *++xp;				/* See if options are bundled */
@@ -448,7 +548,6 @@ default:
 extern int xargc;
 int
 cmdlin() {
-    if (xargc > 1) printf("Sorry, command-line options disabled.\n");
-    return(0);
+    if (xargc > 1) fatal("Sorry, command-line options disabled.");
 }
 #endif /* NOCMDL */

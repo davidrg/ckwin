@@ -1,0 +1,13 @@
+{Naval Observatory} 1-202-653-0351 2400 none
+sprintnet  7654321      2400   mark
+oofanet    6543210      1200   odd    This entry has a comment
+tymnet     93,876-5432  2400   even   Punctuation allowed
+decstore  1-800-2341998 2400   none   The DIGITAL Store
+hometone   T5551212     1200   none   T forces Hayes tone dialing
+homepulse  P5551212     1200   none   P forces Hayes pulse dialing
+home       5551212      1200   none   Default dialing method
+anyspeed   999-9999     =      none   Use current speed
+anyparity  888-8888     9600   =      Use current parity
+whocares   777-7777     =      =      Use current speed and parity
+{my sun}   {987 6543}   2400   none   With word grouping
+defaults   987-6543

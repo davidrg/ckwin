@@ -1,19 +1,23 @@
 /*
   File CKUXLA.H
-  Language and Character Set Support for UNIX and VAX/VMS.
+
+  C-Kermit language and character-set support for UNIX, VMS, OS/2,
+  AOS/VS, and other systems.
 
   This file should be used as a template for the language support files
-  for other C-Kermit implementations -- Macintosh, OS/2, Amiga, etc.
+  for other C-Kermit implementations -- Macintosh, etc.
 */
 /*
   Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
-  Columbia University Center for Computing Activities.
-  First released January 1985.
-  Copyright (C) 1985, 1992, Trustees of Columbia University in the City of New
-  York.  Permission is granted to any individual or institution to use this
-  software as long as it is not sold for profit.  This copyright notice must be
-  retained.  This software may not be included in commercial products without
-  written permission of Columbia University.
+  Columbia University Academic Information Systems, New York City.
+
+  Copyright (C) 1985, 1993, Trustees of Columbia University in the City of New
+  York.  The C-Kermit software may not be, in whole or in part, licensed or
+  sold for profit as a software product itself, nor may it be included in or
+  distributed with commercial products or otherwise distributed by commercial
+  concerns to their clients or customers without written permission of the
+  Office of Kermit Development and Distribution, Columbia University.  This
+  copyright notice must not be removed, altered, or obscured.
 */
 
 #ifndef CKUXLA_H
@@ -47,23 +51,30 @@
 #define FC_CP437   18  /* IBM PC Code Page 437 */
 #define FC_CP850   19  /* IBM PC Code Page 850 */
 #define FC_CP852   20  /* IBM PC Code Page 852 */
-#define FC_APPQD   22  /* Apple Quickdraw */
+#define FC_APPQD   21  /* Apple Quickdraw */
 #define FC_DGMCS   22  /* Data General International Character Set */
+#define FC_HPR8    23  /* HP Roman8 */
 
 /* Cyrillic sets */
 
-#define FC_CYRILL  23  /* ISO 8859-5 Latin/Cyrillic */
-#define FC_CP866   24  /* Microsoft CP866 Cyrillic */
-#define FC_KOI7    25  /* KOI-7 = Short KOI */
-#define FC_KOI8    26  /* KOI-8 */
+#define FC_CYRILL  24  /* ISO 8859-5 Latin/Cyrillic */
+#define FC_CP866   25  /* Microsoft CP866 Cyrillic */
+#define FC_KOI7    26  /* KOI-7 = Short KOI */
+#define FC_KOI8    27  /* KOI-8 */
 
 /* Japanese sets */
 
-#define FC_JIS7    27  /* JIS-7 */
-#define FC_SHJIS   28  /* Shifted JIS = CP932 */
-#define FC_JEUC    29  /* Japanese EUC (JAE) */
-#define FC_JDEC    30  /* Japanese DEC Kanji */
+#define FC_JIS7    28  /* JIS-7 */
+#define FC_SHJIS   29  /* Shifted JIS = CP932 */
+#define FC_JEUC    30  /* Japanese EUC (JAE) */
+#define FC_JDEC    31  /* Japanese DEC Kanji */
 
-#define MAXFCSETS  30  /* Highest file character set number */
+/* Hebrew sets */
+
+#define FC_HE7     32  /* 7-Bit DEC Hebrew */
+#define FC_HEBREW  33  /* 8-Bit ISO 8859-8 Latin/Hebrew */
+#define FC_CP862   34  /* Hebrew PC Code Page */
+
+#define MAXFCSETS  34  /* Highest file character set number */
 
 #endif /* CKUXLA_H */

@@ -1,18 +1,20 @@
-char *fnsv = "C-Kermit functions, 5A(081) 20 Feb 93";
+char *fnsv = "C-Kermit functions, 5A(120) 18 Sep 94";
 
 /*  C K C F N S  --  System-independent Kermit protocol support functions.  */
 
-/*  ...Part 1 (others moved to ckcfn2,3 to make this module small enough) */
+/*  ...Part 1 (others moved to ckcfn2,3 to make this module smaller) */
 
 /*
   Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
-  Columbia University Center for Computing Activities.
-  First released January 1985.
-  Copyright (C) 1985, 1992, Trustees of Columbia University in the City of New
-  York.  Permission is granted to any individual or institution to use this
-  software as long as it is not sold for profit.  This copyright notice must be
-  retained.  This software may not be included in commercial products without
-  written permission of Columbia University.
+  Columbia University Academic Information Systems, New York City.
+
+  Copyright (C) 1985, 1994, Trustees of Columbia University in the City of New
+  York.  The C-Kermit software may not be, in whole or in part, licensed or
+  sold for profit as a software product itself, nor may it be included in or
+  distributed with commercial products or otherwise distributed by commercial
+  concerns to their clients or customers without written permission of the
+  Office of Kermit Development and Distribution, Columbia University.  This
+  copyright notice must not be removed, altered, or obscured.
 */
 /*
  System-dependent primitives defined in:
@@ -20,7 +22,7 @@ char *fnsv = "C-Kermit functions, 5A(081) 20 Feb 93";
    ck?tio.c -- terminal i/o
    cx?fio.c -- file i/o, directory structure
 */
-#include "ckcsym.h"			/* Once needed this for Mac... */
+#include "ckcsym.h"			/* Needed for Stratus VOS */
 #include "ckcasc.h"			/* ASCII symbols */
 #include "ckcdeb.h"			/* Debug formats, typedefs, etc. */
 #include "ckcker.h"			/* Symbol definitions for Kermit */
@@ -28,26 +30,34 @@ char *fnsv = "C-Kermit functions, 5A(081) 20 Feb 93";
 
 /* Externals from ckcmai.c */
 extern int spsiz, spmax, rpsiz, timint, srvtim, rtimo, npad, ebq, ebqflg,
- rpt, rptq, rptflg, capas, keep, fncact, pkttim, autopar, spsizr;
+ rpt, rptq, rptflg, capas, keep, fncact, pkttim, autopar, spsizr, xitsta;
 extern int pktnum, bctr, bctu, bctl, fmask, clfils, sbufnum,
- size, osize, spktl, nfils, warn, timef, spsizf, sndtyp, success;
-extern int parity, turn, network, what, fsecs,
+ size, osize, spktl, nfils, warn, timef, spsizf, sndtyp, rcvtyp, success;
+extern int parity, turn, network, what, whatru, fsecs,
  delay, displa, xflg, mypadn;
-extern long filcnt, ffc, flci, flco, tlci, tlco, tfc, fsize, speed;
+extern long filcnt, ffc, flci, flco, tlci, tlco, tfc, fsize, sendstart, rs_len;
+extern long filrej, oldcps, cps ;
 extern int fblksiz, frecl, frecfm, forg, fcctrl;
-extern int spackets, rpackets, timeouts, retrans, crunched, wmax;
+extern int spackets, rpackets, timeouts, retrans, crunched, wmax, wcur;
 extern int hcflg, binary, savmod, fncnv, local, server, cxseen, czseen;
-extern int nakstate, discard;
+extern int nakstate, discard, rejection;
 extern int rq, rqf, sq, wslots, wslotn, wslotr, winlo, urpsiz, rln;
+extern int fnspath, fnrpath;
 extern int atcapr, atcapb, atcapu;
 extern int lpcapr, lpcapb, lpcapu;
 extern int swcapr, swcapb, swcapu;
 extern int lscapr, lscapb, lscapu;
-extern int bsave, bsavef;
+extern int rscapr, rscapb, rscapu;
+extern int bsave, bsavef, rptena, rptmin;
 extern int sseqtbl[];
 extern int numerrs;
 extern long rptn;
 extern int maxtry;
+extern int stdouf;
+extern int sendmode;
+#ifdef OS2
+extern struct zattr iattr ;
+#endif /* OS2 */
 
 #ifndef NOCSETS
 extern int tcharset, fcharset;
@@ -60,14 +70,15 @@ extern int
   attypi, attypo, atsidi, atsido, atsysi, atsyso, atdisi, atdiso; 
 
 extern int bigsbsiz, bigrbsiz;
+extern char *versio;
 
 #ifdef DYNAMIC
   extern CHAR *srvcmd;
 #else
   extern CHAR srvcmd[];
 #endif /* DYNAMIC */
-extern CHAR padch, mypadc, eol, seol, ctlq, myctlq, sstate;
-extern CHAR *recpkt, *data, padbuf[], stchr, mystch;
+extern CHAR padch, mypadc, eol, seol, ctlq, myctlq, sstate, myrptq;
+extern CHAR *data, padbuf[], stchr, mystch;
 extern CHAR *srvptr;
 extern CHAR *rdatap;
 extern char *cmarg, *cmarg2, *hlptxt, **cmlist, filnam[], fspec[];
@@ -106,8 +117,24 @@ extern char zinbuffer[], zoutbuffer[];
 extern char *zinptr, *zoutptr;
 extern int zincnt, zoutcnt;
 
-/* Variables defined in this module, but shared by ckcfn3, to which */
-/* several functions have been moved... */
+/*
+  Variables defined in this module but shared by other modules.
+*/
+
+char * rf_err = "Error receiving file";	/* rcvfil() error message */
+
+#ifdef CK_SPEED
+short ctlp[256] = {		/* Control-Prefix table */
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* C0  */
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* G0  */
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1, /* DEL */
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* C1  */
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* G1  */
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1  /* 255 */
+};
+#endif /* CK_SPEED */
 
 int sndsrc;		/* Flag for where to get names of files to send: */
 					/* -1: znext() function */
@@ -124,12 +151,18 @@ CHAR myinit[100];			/* Copy of my Send-Init data */
 
 /* Variables local to this module */
 
+#ifdef TLOG
+static char *fncnam[] = { 
+  "rename", "replace", "backup", "append", "discard", "ask", "update", ""
+};
+#endif /* TLOG */
+
 static char *memptr;			/* Pointer for memory strings */
 
 #ifdef pdp11
 static char cmdstr[50];			/* System command string. */
 #else
-static char cmdstr[100];
+static char cmdstr[256];
 #endif /* pdp11 */
 
 static int drain;			/* For draining stacked-up ACKs. */
@@ -138,13 +171,14 @@ static int first;			/* Flag for first char from input */
 static CHAR t,				/* Current character */
     next;				/* Next character */
 
+static int ebqsent = 0;			/* 8th-bit prefix bid that I sent */
 static int lsstate = 0;			/* Locking shift state */
 static int lsquote = 0;			/* Locking shift quote */
 
 #ifdef datageneral
 extern int quiet;
 #endif
-
+
 /*  E N C S T R  --  Encode a string from memory. */
 
 /*
@@ -152,18 +186,29 @@ extern int quiet;
   Note: Character set translation is never done in this case.
 */
 
-#ifdef pdp11
-#define ENCBUFL 100
-#else
+#ifdef COMMENT
 #define ENCBUFL 200
-#endif /* pdp11 */
+#ifndef pdp11
 CHAR encbuf[ENCBUFL];
+#else
+/* This is gross, but the pdp11 root segment is out of space */
+/* Will allocate it in ckuusr.c. */
+extern CHAR encbuf[];
+#endif /* pdp11 */
+#endif /* COMMENT */
 
+/*
+  Encode packet data from a string in memory rather than from a file.
+  Returns 0 on success, -1 if the string could not be completely encoded
+  into the currently negotiated data field length.
+*/
 int
 encstr(s) CHAR* s; {
+#ifdef COMMENT
     int m; char *p;
     CHAR *dsave;
 
+    if (!s) s = (CHAR *)"";
     if ((m = (int)strlen((char *)s)) > ENCBUFL) {
 	debug(F111,"encstr string too long for buffer",s,ENCBUFL);
 	s[ENCBUFL] = '\0';
@@ -179,18 +224,49 @@ encstr(s) CHAR* s; {
     first = 1;				/* Initialize character lookahead. */
     dsave = data;			/* Boy is this ugly... */
     data = encbuf + 7;			/* Why + 7?  See spack()... */
-#ifdef COMMENT
-    getpkt(spsiz-bctl-3,0);		/* Fill a packet from the string. */
-#else
-    getpkt(spsiz,0);
-#endif /* COMMENT */
+    *data = NUL;			/* In case s is empty */
+    getpkt(spsiz,0);		/* Fill a packet from the string. */
     data = dsave;			/* (sorry...) */
     memstr = m;				/* Restore memory string flag */
     memptr = p;				/* and pointer */
     first = 1;				/* Put this back as we found it. */
     return(0);
+#else
+/*
+  Recoded 30 Jul 94 to use the regular data buffer and the negotiated
+  maximum packet size.  Previously we were limited to the length of encbuf[].
+  Also, to return a failure code if the entire encoded string would not fit.
+*/
+    int m, rc, slen; char *p;
+    if (!s) s = (CHAR *)"";		/* Watch out for null pointers. */
+    slen = strlen((char *)s);		/* Length of source string. */
+    rc = 0;				/* Return code. */
+    m = memstr; p = memptr;		/* Save these. */
+    memptr = (char *)s;			/* Point to the string. */
+    memstr = 1;				/* Flag memory string as source. */
+    first = 1;				/* Initialize character lookahead. */
+    *data = NUL;			/* In case s is empty */
+    getpkt(spsiz,0);			/* Fill a packet from the string. */
+
+
+    if (
+#ifdef COMMENT
+	*memptr
+#else
+	memptr < (char *)(s + slen)
+#endif /* COMMENT */
+	) {				/* This means we didn't encode */
+	rc = -1;			/* the whole string. */
+	debug(F101,"encstr string too big","",size);
+    } else
+      debug(F101,"encstr fits OK, size","",size);
+    memstr = m;				/* Restore memory string flag */
+    memptr = p;				/* and pointer */
+    first = 1;				/* Put this back as we found it. */
+    return(rc);
+#endif /* COMMENT */
 }
-
+
 #ifdef COMMENT
 /*
   We don't use this routine any more -- the code has been incorporated
@@ -257,7 +333,7 @@ encode(a) CHAR a; {			/* The current character */
     data[size] = '\0';			/* itself, and mark the end. */
 }
 #endif /* COMMENT */
-
+
 /*  Output functions passed to 'decode':  */
 
 int			       /*  Put character in server command buffer  */
@@ -279,6 +355,14 @@ puttrm(char c)
 puttrm(c) register char c;
 #endif /* CK_ANSIC */
 /* puttrm */ {
+#ifndef NOSPL    
+    extern char * qbufp;		/* If REMOTE QUERY active, */
+    extern int query, qbufn;		/* also store response in */
+    if (query && qbufn++ < 1024) {	/* query buffer. */
+	*qbufp++ = c;
+	*qbufp = NUL;
+    } /* else */			/* else means don't display */
+#endif /* NOSPL */
     conoc(c);
     return(0);
 }
@@ -366,8 +450,13 @@ decode(buf,fn,xlate) register CHAR *buf; register int (*fn)(); int xlate;
 	if (a == ctlq) {		/* If control prefix, */
 	    a  = *xdbuf++ & 0xFF;	/* get its operand */
 	    a7 = a & 0x7F;		/* and its low 7 bits. */
-	    if ((a7 >= 0100 && a7 <= 0137) || a7 == '?') /* Controllify */
-	      a = ctl(a);		/* if in control range. */
+	    if ((a7 >= 0100 && a7 <= 0137) || a7 == '?') { /* Controllify */
+		a = ctl(a);		/* if in control range. */
+		a7 = a & 0x7F;
+	    }
+	} else a7 = a & 0x7f;		/* Not a control character */
+
+	if (a7 < 32 || a7 == 127) {	/* Control character? */
 	    if (lscapu) {		/* If doing locking shifts... */
 		if (lsstate)		/* If SHIFTED */
 		  a8 = (a & ~b8) & 0xFF; /* Invert meaning of 8th bit */
@@ -412,31 +501,40 @@ decode(buf,fn,xlate) register CHAR *buf; register int (*fn)(); int xlate;
 		    if (ffc == 0L) xkanjf();
 		    if (xkanji(a,fn) < 0)  /* to something else? */
 		      return(-1);
+		    else t = 1;
 		} else
 #endif /* KANJI */
 #endif /* NOCSETS */
-		if ((t = zmchout(a & fmask)) < 0) { /* zmchout is a macro */
-#ifdef COMMENT
-/* Too costly, uncomment these if you really need them. */
-		    debug(F101,"decode zmchout","",t);
-		    debug(F101,"decode zoutcnt","",zoutcnt);
-		    debug(F101,"decode a","",a);
-#endif /* COMMENT */
-		    return(-1);
-		}
+#ifdef OS2
+		  if (xflg) {		  /* For OS/2 only, use unbuffered */
+		      char _a;
+		      _a = a & fmask;
+		      t = write(0,&_a,1); /* writes to console screen, to */
+		      if (t < 1) t = -1;  /* reduce jerkiness. */
+		  } else
+#endif /* OS2 */
+		    t = zmchout(a & fmask); /* zmchout is a macro */
+		if (t < 0)
+		  return(-1);
 		ffc++;			/* Count the character */
 	    }
 	} else {			/* Output to something else. */
 	    a &= fmask;			/* Apply file mask */
 	    for (; rpt > 0; rpt--) {	/* Output the char RPT times */
 		if ((*fn)((char) a) < 0) return(-1); /* Send to output func. */
+#ifdef COMMENT
+/*
+  This was causing the server to count extra bytes that were part of
+  server command packets, like FINISH.
+*/
 		ffc++;
+#endif /* COMMENT */
 	    }
 	}
     }
     return(0);
 }
-
+
 /*  G E T P K T -- Fill a packet data field  */
 
 /*
@@ -508,7 +606,7 @@ lslook(b) unsigned int b; {		/* Locking Shift Lookahead */
 
 int
 getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
-    register CHAR rt = t, rnext = next; /* register shadows of the globals */
+    register CHAR rt = t, rnext;	  /* Register shadows of the globals */
     register CHAR *dp, *odp, *odp2, *p1, *p2; /* pointers... */
     register int x;			/* Loop index. */
     register int a7;			/* Low 7 bits of character */
@@ -530,7 +628,7 @@ getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
     if (n > 92) bufmax -= 3;		/* Long packet needs header chksum */
 
     if (first == 1) {		/* If first character of this file... */
-	ffc = 0L;		/* Reset file character counter */
+	if (!memstr) ffc = 0L;	/* Reset file character counter */
 	first = 0;		/* Next character won't be first */
 	*leftover = '\0';	/* Discard any interrupted leftovers, */
 
@@ -549,7 +647,7 @@ getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
 	        } else debug(F100,"getpkt(zkanji): empty string/file","",0);
 	        return (0);
 	    }
-	    ffc++;
+	    if (!memstr) ffc++;
 	    rt = x;
 	} else {
 #endif /* KANJI */
@@ -628,8 +726,7 @@ getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
 	    if ((x = zkanji( memstr ? kgetm : kgetf )) < 0) {
 	        first = -1;
 	        if (x == -2) cxseen = 1;
-	    }
-	    ffc++;
+	    } else if (!memstr) ffc++;
 	    rnext = x & fmask;
 	} else {
 #endif /* KANJI */
@@ -642,17 +739,14 @@ getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
 	    if ((x = zminchar()) < 0) { /* Real file, check for EOF */
 		first = -1;		/* Flag eof for next time. */
 		if (x == -2) cxseen = 1; /* If error, cancel this file. */
-	    }
+	    } else ffc++;		/* Count the character */
 	    rnext = x & fmask;		/* Apply file mask */
 	} 
-	ffc++;				/* Count the character */
 #ifndef NOCSETS
 #ifdef KANJI
 	}
 #endif /* KANJI */
 #endif /* not NOCSETS */
-
-	/*** debug(F101,"getpkt rnext","",rnext); ***/
 
 #ifndef NOCSETS
 #ifdef KANJI
@@ -669,6 +763,7 @@ getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
 
 /*
   Now encode the character according to the options that are in effect:
+    ctlp[]: whether this control character needs prefixing.
     binary: text or binary mode.
     rptflg: repeat counts enabled.
     ebqflg: 8th-bit prefixing enabled.
@@ -717,8 +812,15 @@ getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
 		    lsstate = 0;	/* Change shift state */
 		}
 	    }
+#ifdef CK_SPEED
+	    if (ctlp[CR]) {
+		*dp++ = myctlq;		/* Insert carriage return directly */
+		*dp++ = 'M';
+	    } else *dp++ = CR;		/* Perhaps literally */
+#else /* !CK_SPEED */
 	    *dp++ = myctlq;		/* Insert carriage return directly */
 	    *dp++ = 'M';
+#endif /* CK_SPEED */
 	    rt = LF;			/* Now make next char be linefeed. */
 	}
 #endif /* NLCHAR */
@@ -745,7 +847,12 @@ getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
 		xxss = ebq;		/* Insert single shift */
 		rt = a7;		/* Replace character by 7-bit value */
 	    }
-
+/*
+  In case we have a 7-bit connection and this is an 8-bit character, AND
+  neither locking shifts nor single shifts are enabled, then the character's
+  8th bit will be destroyed in transmission, and a block check error will
+  occur.
+*/
 	} else if (lscapu) {		/* 7-bit character */
 
 	    if (lsstate) {		/* Comes while shifted out? */
@@ -762,7 +869,13 @@ getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
 	if (lscapu && (a7 == SO || a7 == SI || a7 == DLE))
 	  xxdl = 'P';			/* Insert datalink escape */
 
-	if ((a7 < SP) || (a7 == DEL)) { /* Do control prefixing if necessary */
+	if (
+#ifdef CK_SPEED
+	    ctlp[rt]
+#else
+	    (a7 < SP) || (a7 == DEL)
+#endif /* CK_SPEED */
+	    ) {				/* Do control prefixing if necessary */
 	    xxcq = myctlq;		/* The prefix */
 	    rt = ctl(rt);		/* Uncontrollify the character */
 	}
@@ -780,7 +893,7 @@ getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
 	if (xxls) { *dp++ = myctlq; *dp++ = xxls; } /* Locking shift */
 	odp2 = dp;				    /* (Save this place) */
 	if (xxdl) { *dp++ = myctlq; *dp++ = xxdl; } /* Datalink escape */
-	if (xxrc) { *dp++ = rptq;   *dp++ = xxrc; } /* Repeat count */
+	if (xxrc) { *dp++ =   rptq; *dp++ = xxrc; } /* Repeat count */
 	if (xxss) { *dp++ = ebq; }		    /* Single shift */
 	if (xxcq) { *dp++ = myctlq; }	    	    /* Control prefix */
 	*dp++ = rt;			/* Finally, the character itself */
@@ -819,7 +932,7 @@ getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
     debug(F111,"getpkt eof/eot",data,size); /* Fell thru before packet full, */
     return(size);		     /* return partially filled last packet. */
 }
-
+
 /*  T I N I T  --  Initialize a transaction  */
 
 int
@@ -845,21 +958,23 @@ tinit() {
 #endif /* COMMENT */
 #endif /* NOCSETS */
     myinit[0] = '\0';			/* Haven't sent init string yet */
-    autopar = 0;			/* Automatic parity detection flag */
     retrans = 0;			/* Packet retransmission count */
     sndtyp = 0;				/* No previous packet */
     xflg = 0;				/* Reset x-packet flag */
-    rqf = -1;				/* Reset 8th-bit-quote request flag */
     memstr = 0;				/* Reset memory-string flag */
     memptr = NULL;			/*  and pointer */
     bctu = bctl = 1;			/* Reset block check type to 1 */
+    autopar = 0;			/* Automatic parity detection flag */
+    rqf = -1;				/* Reset 8th-bit-quote request flag */
     ebq = MYEBQ;			/* Reset 8th-bit quoting stuff */
-    ebqflg = 0;
+    ebqflg = 0;				/* 8th bit quoting not enabled */
+    ebqsent = 0;			/* No 8th-bit prefix bid sent yet */
+    sq = 'Y';				/* 8th-bit prefix bid I usually send */
     if (savmod) {			/* If global file mode was saved, */
     	binary = savmod;		/*  restore it, */
 	savmod = 0;			/*  unsave it. */
     }
-    pktnum = 0;				/* Initial packet number */
+    pktnum = 0;				/* Initial packet number to send */
     cxseen = czseen = discard = 0;	/* Reset interrupt flags */
     *filnam = '\0';			/* Clear file name */
     spktl = 0;				/* And its length */
@@ -883,6 +998,7 @@ tinit() {
     if (x < 0) return(x);
     what = W_NOTHING;			/* Doing nothing so far... */
     lsstate = 0;			/* Initialize locking shift state */
+    whatru = 0;
     return(0);
 }
 
@@ -899,11 +1015,10 @@ rinit(d) CHAR *d; {
     char *tp;
     ztime(&tp);
     tlog(F110,"Transaction begins",tp,0L); /* Make transaction log entry */
-    if (binary)
-      tlog(F100,"Global file mode = binary","",0L);
-    else
-      tlog(F100,"Global file mode = text","",0L);
-    filcnt = 0;				/* Init file counter */
+    tlog(F110,"Global file mode:", binary ? "binary" : "text", 0L);
+    tlog(F110,"Collision action:", fncnam[fncact],0);
+    tlog(F100,"","",0);
+    filcnt = filrej = 0;		/* Init file counters */
     spar(d);
     ack1(rpar());
 #ifdef datageneral
@@ -930,9 +1045,10 @@ resetc() {
     timeouts = retrans = 0;		/* Timeouts, retransmissions */
     spackets = rpackets = 0;		/* Packet counts out & in */
     crunched = 0;			/* Crunched packets */
-    wmax = 1;				/* Maximum window size used */
+    wcur = 0;				/* Current window size */
+    wmax = 0;				/* Maximum window size used */
 }
-
+
 /*  S I N I T  --  Get & verify first file name, then send Send-Init packet */
 /*
  Returns:
@@ -951,7 +1067,7 @@ sinit() {
     int x;				/* Worker int */
     char *tp, *xp, *m;			/* Worker string pointers */
 
-    filcnt = 0;				/* Initialize file counter */
+    filcnt = filrej = 0;		/* Initialize file counters */
     sndsrc = nfils;			/* Source for filenames */
 #ifdef DYNAMIC
     if (!cmargbuf && !(cmargbuf = malloc(256)))
@@ -1008,7 +1124,6 @@ sinit() {
     }
     debug(F101,"sinit nfils","",nfils);
     debug(F110,"sinit filnam",filnam,0);
-    debug(F110,"sinit cmdstr",cmdstr,0);
     if (x < 1) {			/* Didn't get a file. */
 	if (server)			/* Doing GET command */
 	  errpkt((CHAR *)m);		/* so send Error packet. */
@@ -1027,6 +1142,8 @@ sinit() {
     sipkt('S');				/* Send the Send-Init packet. */
     ztime(&tp);				/* Get current date/time */
     tlog(F110,"Transaction begins",tp,0L); /* Make transaction log entry */
+    tlog(F110,"Global file mode:", binary ? "binary" : "text", 0L);
+    tlog(F100,"","",0);
     debug(F111,"sinit ok",filnam,0);
     return(1);
 }
@@ -1056,19 +1173,18 @@ sipkt(c) char c;
   For use in the GET-SEND sequence, when we start to send, but receive another
   copy of the GET command because the receiver didn't get our S packet.
   This retransmits the S packet and frees the receive buffer for the ACK.
-  The only reason this special case is necessary is that packet number zero
-  is being re-used.
+  This special case is necessary because packet number zero is being re-used.
 */
 VOID
 xsinit() {
-    int k;	
+    int k;
     k = rseqtbl[0];
     debug(F101,"xsinit k","",k);
     if (k > -1)
       freerbuf(k);
     resend(0);
-}        
-
+}
+
 /*  R C V F I L -- Receive a file  */
 
 /*
@@ -1085,98 +1201,249 @@ xsinit() {
 #define XNAMLEN 256
 #endif /* pdp11 */
 
-int
+char ofn1[XNAMLEN];			/* Buffer for output file name */
+char * ofn2;				/* Pointer to backup file name */
+int ofn1x;				/* Flag output file already exists */
+int opnerr;				/* Flag for open error */
+
+int					/* Returns success ? 1 : 0 */
 rcvfil(n) char *n; {
-    char xname[XNAMLEN], *xp;		/* Buffer for constructing name */
+#ifdef OS2
+#ifdef __32BIT__
+    char *zs, *longname, *newlongname, *pn; /* OS/2 long name items */
+#endif /* __32BIT__ */
+#endif /* OS2 */
 #ifdef DTILDE
     char *dirp, *tilde_expand();
 #endif /* DTILDE */
+    int dirflg;
 
+    opnerr = 0;
+    ofn2 = NULL;			/* No new name (yet) */
     lsstate = 0;			/* Cancel locking-shift state */
     srvptr = srvcmd;			/* Decode file name from packet. */
     decode(rdatap,putsrv,0);		/* Don't xlate charsets. */
     if (*srvcmd == '\0')		/* Watch out for null F packet. */
       strcpy((char *)srvcmd,"NONAME");
 #ifdef DTILDE
-    dirp = tilde_expand((char *)srvcmd); /* Expand tilde, if any. */
-    if (*dirp != '\0') strcpy((char *)srvcmd,dirp);
+    if (*srvcmd == '~') {
+	dirp = tilde_expand((char *)srvcmd); /* Expand tilde, if any. */
+	if (*dirp != '\0') strcpy((char *)srvcmd,dirp);
+    }
+#else
+#ifdef OS2
+    if (isalpha(*srvcmd) && srvcmd[1] == ':' && srvcmd[2] == '\0')
+      strcat((char *)srvcmd,"NONAME");
+#endif /* OS2 */
 #endif /* DTILDE */
     screen(SCR_FN,0,0l,(char *)srvcmd);	/* Put it on screen if local */
     debug(F110,"rcvfil",(char *)srvcmd,0); /* Debug log entry */
-    debug(F101,"rcvfil cmarg2","",cmarg2);
+    debug(F110,"rcvfil cmarg2",cmarg2,0);
     tlog(F110,"Receiving",(char *)srvcmd,0L); /* Transaction log entry */
-    if (cmarg2 != NULL) {               /* Check for alternate name */
-        if (*cmarg2 != '\0') {
-            strcpy((char *)srvcmd,cmarg2); /* Got one, use it. */
-        }
-    } else cmarg2 = "";
-/*
-  NOTE: Much of this code should be moved to opena(), where the file is
-  actually opened, AFTER we have received the Attribute packet(s).  That
-  way, if the file is mail, or is being sent to the printer, we don't have
-  to fuss with collision options, etc, but instead we just pipe the data
-  straight into lpr or mail (in UNIX anyway), and then we can also have
-  nice subject lines for mail messages by using whatever is in the file
-  header packet data field, whether it's a legal filename or not.
-*/
+    if (cmarg2) {			/* Check for alternate name */
+        if (*cmarg2) {
+	    debug(F110,"rcvfil substituting cmarg2",cmarg2,0);
+	    strcpy((char *)srvcmd,cmarg2); /* Got one, use it. */
+	}
+    }
+    cmarg2 = "";			/* Done with alternate name */
+
     if ((int)strlen((char *)srvcmd) > XNAMLEN) /* Watch out for overflow */
       *(srvcmd + XNAMLEN - 1) = NUL;
 
-    xp = xname;				/* OK to proceed. */
-    if (fncnv && !*cmarg2)
-      zrtol((char *)srvcmd,xp);		/* convert name to local form */
-    else				/* otherwise, */
-      strcpy(xname,(char *)srvcmd);	/* use it literally */
-    cmarg2 = "";			/* Remove alternate name */
-    debug(F110,"rcvfil as",xname,0);
+    /* At this point, srvcmd[] contains the incoming filename or as-name */
 
-#ifdef COMMENT				/* Old code... */
-    if (warn) {				/* File collision avoidance? */
-	if (zchki(xname) != -1) {	/* Yes, file exists? */
-	    znewn(xname,&xp);		/* Yes, make new name. */
-	    strcpy(xname,xp);
-	    debug(F110," exists, new name ",xname,0);
-        }
+    if (fnrpath) {			/* RECEIVE PATHNAMES OFF? */
+	char *t;			/* Yes. */
+	zstrip((char *)srvcmd,&t);	/* Off with it. */
+	debug(F110,"rcvfil zstrip",t,0);
+	if (!t)				/* Be sure we didn't strip too much */
+	  strcpy(ofn1,"UNKNOWN");
+	else if (*t == '\0')
+	  strcpy(ofn1,"UNKNOWN");
+	else strcpy(ofn1,t);
+	strcpy((char *)srvcmd,ofn1);	/* Now copy it back. */
     }
-#endif /* COMMENT */
+
+    /* Now srvcmd contains incoming filename with path possibly stripped */
+
+    if (fncnv)				/* FILE NAMES CONVERTED? */
+      zrtol((char *)srvcmd,(char *)ofn1); /* Yes, convert to local form */
+    else
+      strcpy(ofn1,(char *)srvcmd);	/* No, copy literally. */
+
+    /* Now the incoming filename, possibly converted, is in ofn1[]. */
+
+#ifdef OS2
+    /* Don't refuse the file just because the name is illegal. */
+    if (!IsFileNameValid(ofn1)) {	/* Name is OK for OS/2? */
+#ifdef __32BIT__
+	char *zs = NULL;
+	zstrip(ofn1, &zs);		/* Not valid, strip unconditionally */
+	if (zs) {
+	    iattr.longname.len = strlen(zs); /* Store in attribute structure */
+	    if (iattr.longname.val)	/* Free previous longname, if any */
+	      free(iattr.longname.val);
+	    iattr.longname.val = (char *) malloc( iattr.longname.len + 1 ) ;
+	    if (iattr.longname.val)	/* Remember this (illegal) name */
+	      strcpy( iattr.longname.val, zs ) ;
+	}
+#endif /* __32BIT__ */
+	debug(F110,"rcvfil: invalid file name",ofn1,0);
+	ChangeNameForFAT(ofn1);	/* Change to an acceptable name */
+	debug(F110,"rcvfil: FAT file name",ofn1,0);
+
+    } else {				/* Name is OK. */
+
+	debug(F110,"rcvfil: valid file name",ofn1,0);
+#ifdef __32BIT__
+	iattr.longname.len = 0;
+	if (iattr.longname.val)		/* Free previous longname, if any */
+	  free(iattr.longname.val);
+	iattr.longname.val = NULL;	/* This file doesn't need a longname */
+#endif /* __32BIT__ */
+    }
+#endif /* OS2 */
+    debug(F110,"rcvfil as",ofn1,0);
 
 /* Filename collision action section. */
 
-    if (
+    dirflg =				/* Is it a directory name? */
+#ifdef CK_TMPDIR
+        isdir(ofn1)
+#else
+	0
+#endif /* CK_TMPDIR */
+	  ;
+    debug(F101,"rcvfil dirflg","",dirflg);
+    ofn1x = (zchki(ofn1) != -1);	/* File already exists? */
+    debug(F101,"rcvfil ofn1x",ofn1,ofn1x);
+
+    if ( (
 #ifdef UNIX
-	strcmp(xname,"/dev/null") &&	/* It's not the null device? */
+	strcmp(ofn1,"/dev/null") &&	/* It's not the null device? */
 #endif /* UNIX */
-	(zchki(xname) != -1)		/* File of same name exists? */
-	) {				
-	debug(F111,"rcvfil exists",xname,fncact);
+	!stdouf ) &&			/* Not copying to standard output? */
+	ofn1x ||			/* File of same name exists? */
+	dirflg ) {			/* Or file is a directory? */
+        debug(F111,"rcvfil exists",ofn1,fncact);
 	switch (fncact) {		/* Yes, do what user said. */
 	  case XYFX_A:			/* Append */
 	    debug(F100,"rcvfil append","",0);
-	    break;
-	  case XYFX_Q:			/* Query (Ask) */
-	    break;			/* not yet implemented */
-	  case XYFX_B:			/* Backup (rename old file) */
-	    znewn(xname,&xp);		/* Get new unique name */
-	    debug(F110,"rcvfil backup",xname,0);
-	    debug(F110,"rcvfil backup",xp,0);
-	    if (zrename(xname,xp) < 0) {
-		debug(F110,"rcvfil rename fails",xname,0);
+	    if (dirflg) {
+		rf_err = "Can't append to a directory";
+		tlog(F100," error - can't append to directory","",0);
+		discard = opnerr = 1;
 		return(0);
 	    }
+	    tlog(F110," appending to",ofn1,0);
 	    break;
+	  case XYFX_Q:			/* Query (Ask) */
+	    break;			/* not implemented */
+	  case XYFX_B:			/* Backup (rename old file) */
+	    if (dirflg) {
+		rf_err = "Can't rename existing directory";
+		tlog(F100," error - can't rename directory","",0);
+		discard = opnerr = 1;
+		return(0);
+	    }
+	    znewn(ofn1,&ofn2);		/* Get new unique name */
+	    tlog(F110," backup:",ofn2,0);
+	    debug(F110,"rcvfil backup ofn1",ofn1,0);
+	    debug(F110,"rcvfil backup ofn2",ofn2,0);
+#ifdef OS2
+#ifdef __32BIT__
+/*
+  In case this is a FAT file system, we can't change only the FAT name, we
+  also have to change the longname from the extended attributes block.
+  Otherwise, we'll have many files with the same longname and if we copy them
+  to an HPFS volume, only one will survive.
+*/
+	    if (os2getlongname(ofn1, &longname) > -1) {
+		if (strlen(longname)) {
+		    char tmp[10];
+		    extern int ck_znewn;
+		    sprintf(tmp,".~%d~",ck_znewn);
+		    newlongname =
+		      (char *) malloc(strlen(longname) + strlen(tmp) + 1 ) ;
+		    if ( newlongname ) {
+			strcpy( newlongname, longname ) ;
+			strcat( newlongname, tmp ) ;
+			os2setlongname(ofn1, newlongname);
+			free(newlongname) ;
+		    }
+		}
+	    } else debug(F100,"rcvfil os2getlongname failed","",0);
+#endif /* __32BIT__ */
+#endif /* OS2 */
+
+#ifdef COMMENT
+	    /* Do this later, in opena()... */
+	    if (zrename(ofn1,ofn2) < 0) {
+		rf_err = "Can't transform filename";
+		debug(F110,"rcvfil rename fails",ofn1,0);
+		discard = opnerr = 1;
+		return(0);
+	    }
+#endif /* COMMENT */
+	    break;
+
 	  case XYFX_D:			/* Discard (refuse new file) */
 	    discard = 1;
+	    rejection = 1;		/* Horrible hack: reason = name */
 	    debug(F101,"rcvfil discard","",discard);
-	    break;			/* not yet implemented */
-	  case XYFX_R:			/* Rename new file */
-	    znewn(xname,&xp);		/* Make new name. */
-	    strcpy(xname,xp);
-	    debug(F110,"rcvfil rename",xname,0);
+	    tlog(F100," refused: name","",0);
+	    break;
+
+	  case XYFX_R:			/* Rename incoming file */
+	    znewn(ofn1,&ofn2);		/* Make new name for it */
+#ifdef OS2
+#ifdef __32BIT__
+		if (iattr.longname.len) {
+		    char tmp[10];
+		    extern int ck_znewn;
+		    sprintf(tmp,".~%d~",ck_znewn);
+		    newlongname =
+		      (char *) malloc(iattr.longname.len + strlen(tmp) + 1);
+		    if (newlongname) {
+			strcpy( newlongname, iattr.longname.val);
+			strcat( newlongname, tmp);
+			debug(F110,
+			      "Rename Incoming: newlongname",newlongname,0);
+			iattr.longname.len = strlen(newlongname);
+			if (iattr.longname.val)
+			  free(iattr.longname.val);
+			iattr.longname.val = newlongname ;
+		    }
+		}
+#endif /* __32BIT__ */
+#endif /* OS2 */
+	    break;
 	  case XYFX_X:			/* Replace old file */
 	    debug(F100,"rcvfil overwrite","",0);
+	    if (dirflg) {
+		rf_err = "Can't overwrite existing directory";
+		tlog(F100," error - can't overwrite directory","",0);
+		discard = opnerr = 1;
+#ifdef COMMENT
+		return(0);
+#else
+		break;
+#endif /* COMMENT */
+	    }
+	    tlog(F110,"overwriting",ofn1,0);
 	    break;
 	  case XYFX_U:			/* Refuse if older */
 	    debug(F100,"rcvfil update","",0);
+	    if (dirflg) {
+		rf_err = "File has same name as existing directory";
+		tlog(F110," error - directory exists:",ofn1,0);
+		discard = opnerr = 1;
+#ifdef COMMENT
+		/* Don't send an error packet, just refuse the file */
+		return(0);
+#endif /* COMMENT */
+	    }
 	    break;			/* Not here, we don't have */
 					/* the attribute packet yet. */
 	  default:
@@ -1184,22 +1451,47 @@ rcvfil(n) char *n; {
 	    break;
 	}
     }
-    debug(F110,"rcvfil: xname",xname,0);
-    screen(SCR_AN,0,0l,xname);		/* Display it */
-    strcpy(n,xname);			/* Return pointer to actual name. */
+    debug(F110,"rcvfil ofn1",ofn1,0);
+    debug(F110,"rcvfil ofn2",ofn2,0);
+    if (fncact == XYFX_R && ofn1x && ofn2) { /* Renaming incoming file? */
+	screen(SCR_AN,0,0l,ofn2);	/* Display renamed name */
+	strcpy(n, ofn2);		/* Return it */
+    } else {				/* No */
+	screen(SCR_AN,0,0l,ofn1);	/* Display regular name */
+	strcpy(n, ofn1);		/* and return it. */
+    }
+
+#ifdef CK_MKDIR
+/*  Create directory(s) if necessary.  */
+    if (!discard && !fnrpath) {		/* RECEIVE PATHAMES ON? */
+	debug(F110,"rcvfil calling zmkdir",ofn1,0); /* Yes */
+	if (zmkdir(ofn1) < 0) {
+	    debug(F100,"zmkdir fails","",0);
+	    tlog(F110," error - directory creation failure:",ofn1,0);
+	    rf_err = "Directory creation failure.";
+	    discard = 1;
+	    return(0);
+	}
+    }
+#else
+    debug(F110,"sfile CK_MKDIR not defined",ofn1,0);
+#endif /* CK_MKDIR */
 
 #ifndef NOICP
-#ifndef MAC
+/* #ifndef MAC */
 /* Why not Mac? */
-    strcpy(fspec,xname);		/* Here too for \v(filespec) */
-#endif /* MAC */
+    strcpy(fspec,ofn1);			/* Here too for \v(filespec) */
+/* #endif */ 
 #endif /* NOICP */
     debug(F110,"rcvfil: n",n,0);
     ffc = 0L;				/* Init per-file counters */
+    cps = oldcps = 0L ;
+    rs_len = 0L;
+    rejection = -1;
     fsecs = gtimer();			/* Time this file started */
     filcnt++;
     intmsg(filcnt);
-    return(1);				/* Always succeeds */
+    return(1);				/* Successful return */
 }
 
 
@@ -1225,24 +1517,42 @@ reof(f,yy) char *f; struct zattr *yy; {
     debug(F101,"reof discard","",discard);
     success = 1;			/* Assume status is OK */
     lsstate = 0;			/* Cancel locking-shift state */
-    if (
-#ifdef COMMENT
-/*
-  If the discard flag is set, for whatever reason, we discard it, right?
-*/
-	(fncact == XYFX_D || fncact == XYFX_U) &&
-#endif /* COMMENT */
-	discard != 0) {	   /* SET FILE COLLISION DISCARD or UPDATE */
-
+    if (discard) {			/* Handle attribute refusals, etc. */
 	debug(F101,"reof discarding","",0);
-	discard = 0;			/* We never opened it, */
-	return(0);			/* so we won't close it. */
+	success = 0;			/* Status = failed. */
+	if (rejection == '#' ||		/* Unless rejection reason is */
+	    rejection ==  1  ||		/* date or name (SET FILE COLLISION */
+	    rejection == '?')		/* UPDATE or DISCARD) */
+	  success = 1;			    
+	debug(F101,"reof success","",success);
+	filrej++;			/* Count this rejection. */
+	discard = 0;			/* We never opened the file, */
+	return(0);			/* so we don't close it. */
     }
+#ifdef DEBUG
+    if (deblog) {
+	debug(F101,"reof cxseen","",cxseen);
+	debug(F101,"reof czseen","",czseen);
+	debug(F110,"reof rdatap",rdatap,0);
+    }
+#endif /* DEBUG */
     if (cxseen == 0) cxseen = (*rdatap == 'D');	/* Got cancel directive? */
     success = (cxseen || czseen) ? 0 : 1; /* Set SUCCESS flag appropriately */
+    if (!success) filrej++;		/* "Uncount" this file */
+    debug(F101,"reof success","",czseen);
     x = clsof(cxseen || czseen);	/* Close the file (resets cxseen) */
-    if (x < 0) success = 0;		/* If failure to close, FAIL */
-    if (atcapu) zstime(f,yy,0);		/* Set file creation date */
+    if (x < 0) {			/* If failure to close, FAIL */
+	if (success) filrej++;
+	success = 0;
+    }
+    if (success && atcapu) zstime(f,yy,0); /* Set file creation date */
+#ifdef OS2
+#ifdef __32BIT__
+    if (success && yy->longname.len)
+      os2setlongname( f, yy->longname.val ) ;
+#endif /* __32BIT__ */
+#endif /* OS2 */
+    if (success == 0) xitsta |= W_RECV;	/* And program return code */
 
 /* Handle dispositions from attribute packet... */
 
@@ -1262,7 +1572,10 @@ reof(f,yy) char *f; struct zattr *yy; {
 	    tlog(F110,"printed",filnam,0L);
 	    tlog(F110," with options",p,0L);
 #ifndef VMS
+#ifndef STRATUS
+	    /* spooler will delete file after print complete in VOS & VMS */
 	    if (zdelet(filnam) && x == 0) x = 3; /* Delete the file */
+#endif /* STRATUS */
 #endif /* VMS */
 	}
     }
@@ -1279,7 +1592,7 @@ reot() {
     cxseen = czseen = discard = 0;	/* Reset interruption flags */
     tstats();
 }
-
+
 /*  S F I L E -- Send File header or teXt header packet  */
 
 /*  Call with x nonzero for X packet, zero for F packet  */
@@ -1295,35 +1608,71 @@ sfile(x) int x; {
     char pktnam[PKTNL+1];		/* Local copy of name */
     char *s;
 
+    /* cmarg2 or filnam (with that precedence) have the file's name */
+
     lsstate = 0;			/* Cancel locking-shift state */
     if (nxtpkt() < 0) return(0);	/* Bump packet number, get buffer */
     if (x == 0) {			/* F-Packet setup */
-
-    	if (*cmarg2 != '\0') {		/* If we have a send-as name, */
+    	if (cmarg2 && *cmarg2) {	/* If we have a send-as name, */
+	    debug(F111,"sfile cmarg2",cmarg2,cmarg2);
 	    strncpy(pktnam,cmarg2,PKTNL); /* copy it literally, */
 	    cmarg2 = "";		/* and blank it out for next time. */
-    	} else {			/* Otherwise use actual file name: */
+    	} else {			/* Otherwise... */
+	    debug(F101,"sfile fnspath","",fnspath);
+	    if (fnspath) {		/* Stripping path names? */
+		char *t;		/* Yes. */
+		zstrip(filnam,&t);	/* Strip off the path. */
+		debug(F110,"sfile zstrip",t,0);
+		if (!t) t = "UNKNOWN";	/* Be cautious... */
+		else if (*t == '\0')
+		  t = "UNKNOWN";
+		strncpy(pktnam,t,PKTNL); /* Copy stripped name literally. */
+	    } else {			/* No stripping. */
+		strcpy(pktnam,filnam);	/* Copy whole name. */
+	    }
+	    /* pktnam[] has the packet name, filnam[] has the original name. */
+	    /* But we still need to convert pktnam if FILE NAMES CONVERTED.  */
+
 	    if (fncnv) {		/* If converting names, */
-	    	zltor(filnam,pktnam);	/* convert it to common form, */
-	    } else {			/* otherwise, */
-	    	strncpy(pktnam,filnam,PKTNL); /* copy it literally. */
-            }
+		zltor(pktnam,(char *)srvcmd); /* convert it to common form, */
+		strcpy(pktnam,(char *)srvcmd); /* with srvcmd as temp buffer */
+		*srvcmd = NUL;
+	    }
     	}
     	debug(F110,"sfile",filnam,0);	/* Log debugging info */
     	debug(F110," pktnam",pktnam,0);
-    	if (openi(filnam) == 0) 	/* Try to open the file */
+    	if (openi(filnam) == 0) 	/* Try to open the input file */
 	  return(0); 		
+#ifdef CK_RESEND
+	if (sendmode == SM_PSEND)	/* PSENDing? */
+	  if (sendstart > 0L)		/* Starting position */
+	    if (zfseek(sendstart) < 0)	/* seek to it... */
+	      return(0);
+#endif /* CK_RESEND */
     	s = pktnam;			/* Name for packet data field */
+#ifdef OS2
+	/* Never send a disk letter. */
+	if (isalpha(*s) && (*(s+1) == ':'))
+	  s += 2;
+#endif /* OS2 */
 
-    } else {				/* X-packet setup */
+    } else {				/* X-packet setup, not F-packet. */
 
     	debug(F110,"sxpack",cmdstr,0);	/* Log debugging info */
     	s = cmdstr;			/* Name for data field */
     }
 
-    encstr((CHAR *)s);			/* Encode the name into encbuf[]. */
+    /* Now s points to the string that goes in the packet data field. */
+
+    encstr((CHAR *)s);			/* Encode the name. */
 					/* Send the F or X packet */
+    /* If the encoded string did not fit into the packet, it was truncated. */
+   
+#ifdef COMMENT
     spack((char) (x ? 'X' : 'F'), pktnum, size, encbuf+7);
+#else
+    spack((char) (x ? 'X' : 'F'), pktnum, size, data);
+#endif
 
     if (x == 0) {			/* Display for F packet */
     	if (displa) {			/* Screen */
@@ -1353,6 +1702,8 @@ sfile(x) int x; {
     intmsg(++filcnt);			/* Count file, give interrupt msg */
     first = 1;				/* Init file character lookahead. */
     ffc = 0L;				/* Init file character counter. */
+    cps = oldcps = 0L ; /* Init cps statistics */
+    rejection = -1;
     fsecs = gtimer();			/* Time this file started */
     debug(F101,"SFILE fsecs","",fsecs);
     return(1);
@@ -1430,7 +1781,33 @@ sdata() {
 	spack('D',pktnum,len,data);	/* Send the data packet. */
 	x = ttchk();			/* Peek at input buffer. */
 	debug(F101,"sdata ttchk","",x);	/* ACKs waiting, maybe?  */
-	if (x) return(1);		/* Yes, stop sending data packets */
+/*
+  Here we check to see if any ACKs or NAKs have arrived, in which case we
+  break out of the D-packet-sending loop and return to the state switcher
+  to process them.  This is what makes our windows slide instead of lurch.
+*/
+	if (
+#ifdef GEMDOS
+/*
+  In the Atari ST version, ttchk() can only return 0 or 1.  But note: x will
+  probably always be > 0, since the as-yet-unread packet terminator from the
+  last packet is probably still in the buffer, so sliding windows will
+  probably never happen when the Atari ST is the file sender.  The alternative
+  is to say "if (0)", in which case the ST will always send a window full of
+  packets before reading any ACKs or NAKs.
+*/
+	    x > 0
+  
+#else /* !GEMDOS */
+/*
+  In other versions, ttchk() returns the actual count.
+  It can't be a Kermit packet if it's less than five bytes long.
+*/
+	    x > 4
+  
+#endif /* GEMDOS */
+	    )
+	  return(1);			/* Yes, stop sending data packets */
     }					/* and go try to read the ACKs. */
     return(1);
 }
@@ -1457,7 +1834,9 @@ szeof(s) CHAR *s; {
     lsstate = 0;			/* Cancel locking-shift state */
     if ((s != NULL) && (*s != '\0')) {
 	spack('Z',pktnum,1,s);
+	xitsta |= W_SEND;
 	tlog(F100," *** interrupted, sending discard request","",0L);
+	filrej++;
     } else {
 	spack('Z',pktnum,0,(CHAR *)"");
     }
@@ -1508,9 +1887,9 @@ seot() {
     tstats();				/* Log timing info */
     return(0);
 }
-
-/*   R P A R -- Fill the data array with my send-init parameters  */
 
+
+/*   R P A R -- Fill the data array with my send-init parameters  */
 
 CHAR dada[20];				/* Use this instead of data[]. */
 					/* To avoid some kind of wierd */
@@ -1527,34 +1906,59 @@ rpar() {
     dada[2] = tochar(mypadn);		/* How much padding I need (none) */
     dada[3] = ctl(mypadc);		/* Padding character I want */
     dada[4] = tochar(eol);		/* End-Of-Line character I want */
-    dada[5] = '#';			/* Control-Quote character I send */
-    switch (rqf) {			/* 8th-bit prefix */
-	case -1:
-	case  1: if (parity) ebq = sq = '&'; break;
-	case  0:
-	case  2: break;
+    dada[5] = myctlq;			/* Control-Quote character I send */
+
+    switch (rqf) {			/* 8th-bit prefix (single-shift) */
+      case -1:				/* I'm opening the bids */
+      case  1:				/* Other Kermit already bid 'Y' */
+	if (parity) ebq = sq = MYEBQ ;	/* So I reply with '&' if parity */
+	break;				/*  otherwise with 'Y'. */
+      case  0:				/* Other Kermit bid nothing */
+      case  2:				/* Other Kermit sent a valid prefix */
+	break;				/* So I reply with 'Y'. */
     }
     debug(F000,"rpar 8bq sq","",sq);
     debug(F000,"rpar 8bq ebq","",ebq);
     if (lscapu == 2)			/* LOCKING-SHIFT FORCED */
-      dada[6] = 'N';			/* means no single-shift */
-    else
+      dada[6] = 'N';			/* requires no single-shift */
+    else				/* otherwise send prefix or 'Y' */
       dada[6] = sq;
+    ebqsent = dada[6];			/* And remember what I really sent */
+
     dada[7] = (bctr == 4) ? 'B' : bctr + '0'; /* Block check type */
-    if (rptflg)				/* Run length encoding */
-    	dada[8] = rptq;			/* If receiving, agree. */
-    else
-    	dada[8] = '~'; 		
+    if (rptena) {
+	if (rptflg)			/* Run length encoding */
+	  dada[8] = rptq;		/* If receiving, agree */
+	else				/* by replying with same character. */
+	  dada[8] = rptq = myrptq;	/* When sending use this. */
+    } else dada[8] = SP;		/* Not enabled, put a space here. */
+
     /* CAPAS mask */
+
     dada[9] = tochar((lscapr ? lscapb : 0) | /* Locking shifts */
 		     (atcapr ? atcapb : 0) | /* Attribute packets */
 		     (lpcapr ? lpcapb : 0) | /* Long packets */
-		     (swcapr ? swcapb : 0)); /* Sliding windows */
-    dada[10] = tochar(swcapr ? wslotr : 1);  /* Window size */
-    rpsiz = urpsiz - 1;			/* Long packets ... */
+		     (swcapr ? swcapb : 0) | /* Sliding windows */
+		     (rscapr ? rscapb : 0)); /* RESEND */
+    dada[10] = tochar(swcapr ? wslotr : 1);  /* CAPAS+1 = Window size */
+    if (urpsiz > 94)
+      rpsiz = urpsiz - 1;		/* Long packets ... */
     dada[11] = tochar(rpsiz / 95);	/* Long packet size, big part */
     dada[12] = tochar(rpsiz % 95);	/* Long packet size, little part */
+#ifndef WHATAMI
     dada[13] = '\0';			/* Terminate the init string */
+#else
+    dada[13] = '0';			/* CAPAS+4 = WONT CHKPNT */
+    dada[14] = '_';			/* CAPAS+5 = CHKINT (reserved) */
+    dada[15] = '_';			/* CAPAS+6 = CHKINT (reserved) */
+    dada[16] = '_';			/* CAPAS+7 = CHKINT (reserved) */
+    dada[17] = tochar( WM_FLAG   |	/* CAPAS+8 = WHATAMI... */
+      (server ? WM_SERVE : 0)    |	/* I am (not) a server */
+	(binary ? WM_FMODE : 0)  |	/*  My file transfer mode is ... */
+	  (fncnv ? WM_FNAME : 0)); 	/*    My filename conversion is ... */
+    dada[18] = NUL;			/* Terminate the init string */
+#endif /* WHATAMI */
+
 #ifdef DEBUG
     if (deblog) {
 	debug(F110,"rpar",dada,0);
@@ -1564,7 +1968,7 @@ rpar() {
     strcpy((char *)myinit,(char *)dada);
     return(dada);			/* Return pointer to string. */
 }
-
+
 int
 spar(s) CHAR *s; {			/* Set parameters */
     int x, y, lpsiz;
@@ -1605,13 +2009,19 @@ spar(s) CHAR *s; {			/* Set parameters */
 
 /* Outbound Packet Terminator */
     seol = (rln >= 5) ? xunchar(s[5]) : CR;
-    if ((seol < 2) || (seol > 31)) seol = CR;
+    if ((seol < 1) || (seol > 31)) seol = CR;
 
-/* Control prefix */
+/* Control prefix that the other Kermit is sending */
     x = (rln >= 6) ? s[6] : '#';
-    myctlq = ((x > 32 && x < 63) || (x > 95 && x < 127)) ? x : '#';
+    ctlq = ((x > 32 && x < 63) || (x > 95 && x < 127)) ? x : '#';
 
 /* 8th-bit prefix */
+/*
+  NOTE: Maybe this could be simplified using rcvtyp.
+  If rcvtyp == 'Y' then we're reading the ACK,
+  otherwise we're reading the other Kermit's initial bid.
+  But his horrendous code works, so leave it alone for now.
+*/
     rq = (rln >= 7) ? s[7] : 0;
     if (rq == 'Y') rqf = 1;
       else if ((rq > 32 && rq < 63) || (rq > 95 && rq < 127)) rqf = 2;
@@ -1621,11 +2031,39 @@ spar(s) CHAR *s; {			/* Set parameters */
     debug(F000,"spar 8bq ebq","",ebq);
     debug(F101,"spar 8bq rqf","",rqf);
     switch (rqf) {
-	case 0: ebqflg = 0; break;
-	case 1: if (parity) { ebqflg = 1; ebq = '&'; } break;
-	case 2: if (ebqflg = (ebq == sq || sq == 'Y')) ebq = rq;
+      case 0:				/* Field is missing from packet. */
+	ebqflg = 0;			/* So no 8th-bit prefixing. */
+	break;
+      case 1:				/* Other Kermit sent 'Y' = Will Do. */
+	/*
+          When I am the file receiver, ebqsent is 0 because I didn't send a
+          negotiation yet.  If my parity is set to anything other than NONE,
+          either because my user SET PARITY or because I detected parity bits
+          on this packet, I reply with '&', otherwise 'Y'.
+
+	  When I am the file sender, ebqsent is what I just sent in rpar(),
+          which can be 'Y', 'N', or '&'.  If I sent '&', then this 'Y' means
+          the other Kermit agrees to do 8th-bit prefixing.
+
+          If I sent 'Y' or 'N', but then detected parity on the ACK packet
+          that came back, then it's too late: there is no longer any way for
+          me to tell the other Kermit that I want to do 8th-bit prefixing, so
+          I must not do it, and in that case, if there is any 8-bit data in 
+          the file to be transferred, the transfer will fail because of block
+          check errors.
+
+          The following clause covers all of these situations:
+	*/
+	if (parity && (ebqsent == 0 || ebqsent == '&')) {
+	    ebqflg = 1;
+	    ebq = MYEBQ;
+	}
+	break;
+      case 2:				/* Other Kermit send a valid prefix */
+	if (ebqflg = (ebq == sq || sq == 'Y'))
+	  ebq = rq;
     }
-    if (lscapu == 2) {     /* No single-shifts if LOCKING-SHIFT FORCED */
+    if (lscapu == 2) {     /* But no single-shifts if LOCKING-SHIFT FORCED */
 	ebqflg = 0;
 	ebq = 'N';
     }
@@ -1640,21 +2078,39 @@ spar(s) CHAR *s; {			/* Set parameters */
     bctr = x;
 
 /* Repeat prefix */
-    if (rln >= 9) {
-	rptq = s[9]; 
-	rptflg = ((rptq > 32 && rptq < 63) || (rptq > 95 && rptq < 127));
-    } else rptflg = 0;
+
+    rptflg = 0;				/* Assume no repeat-counts */
+    if (rln >= 9) {			/* Is there a repeat-count field? */
+	char t;				/* Yes. */
+	t = s[9];			/* Get its contents. */
+/*
+  If I'm sending files, then I'm reading these parameters from an ACK, and so
+  this character must agree with what I sent.
+*/
+	if (rptena) {			/* If enabled ... */
+	    if ((char) rcvtyp == 'Y') {	/* Sending files, reading ACK. */
+		if (t == myrptq) rptflg = 1;
+	    } else {			/* I'm receiving files */
+		if ((t > 32 && t < 63) || (t > 95 && t < 127)) {
+		    rptflg = 1;
+		    rptq = t;
+		}
+	    }
+	} else rptflg = 0;
+    }
 
 /* Capabilities */
-    atcapu = lpcapu = swcapu = 0;	/* Assume none of these */
+
+    atcapu = lpcapu = swcapu = rscapu = 0; /* Assume none of these. */
     if (lscapu != 2) lscapu = 0;	/* Assume no LS unless forced. */
     y = 11;				/* Position of next field, if any */
     if (rln >= 10) {
         x = xunchar(s[10]);
 	debug(F101,"spar capas","",x);
-        atcapu = (x & atcapb) && atcapr;
-	lpcapu = (x & lpcapb) && lpcapr;
-	swcapu = (x & swcapb) && swcapr;
+        atcapu = (x & atcapb) && atcapr; /* Attributes */
+	lpcapu = (x & lpcapb) && lpcapr; /* Long packets */
+	swcapu = (x & swcapb) && swcapr; /* Sliding windows */
+	rscapu = (x & rscapb) && rscapr; /* RESEND */
 	debug(F101,"spar lscapu","",lscapu);
 	debug(F101,"spar lscapr","",lscapr);
 	debug(F101,"spar ebqflg","",ebqflg);
@@ -1700,8 +2156,11 @@ spar(s) CHAR *s; {			/* Set parameters */
 	      wslotn = wslotr;
 	    if (wslotn < 1)		/* Watch out for bad negotiation */
 	      wslotn = 1;
-	    if (wslotn > 1)
-	      swcapu = 1; /* We do windows... */
+	    if (wslotn > 1) {
+		swcapu = 1;		/* We do windows... */
+		if (wslotn > maxtry)	/* Retry limit must be greater */
+		  maxtry = wslotn + 1;	/* than window size. */
+	    }
 	    debug(F101,"spar window after adjustment","",x);
 	} else {			/* No window size specified. */
 	    wslotn = 1;			/* We don't do windows... */
@@ -1723,6 +2182,10 @@ spar(s) CHAR *s; {			/* Set parameters */
 	    debug(F101,"spar sending, redefine spsiz","",spsiz);
 	}
     }
+#ifdef WHATAMI
+    if (rln > y+7)			/* Get WHATAMI info if any */
+      whatru = xunchar(s[y+8]);
+#endif /* WHATAMI */
 
 /* Record parameters in debug log */
 #ifdef DEBUG
@@ -1731,7 +2194,7 @@ spar(s) CHAR *s; {			/* Set parameters */
     numerrs = 0;			/* Start counting errors here. */
     return(0);
 }
-
+
 /*  G N F I L E  --  Get name of next file to send  */
 /*
   Expects global sndsrc to be:
@@ -1835,21 +2298,20 @@ gotnam:
     return(0);
 }
 
-
 /*  S N D H L P  --  Routine to send builtin help  */
 
 int
-sndhlp() {
+sndhlp(p) char *p; {
 #ifndef NOSERVER
     nfils = 0;				/* No files, no lists. */
     xflg = 1;				/* Flag we must send X packet. */
-    strcpy(cmdstr,"help text");		/* Data for X packet. */
+    strcpy(cmdstr,versio);		/* Data for X packet. */
     first = 1;				/* Init getchx lookahead */
     memstr = 1;				/* Just set the flag. */
-    memptr = hlptxt;			/* And the pointer. */
+    memptr = p;				/* And the pointer. */
     if (binary) {			/* If file mode is binary, */
 	savmod = binary;		/*  remember to restore it later. */
-	binary = 0;			/*  turn it back to text for this, */
+	binary = XYFT_T;			/*  turn it back to text for this, */
     }
     return(sinit());
 #else
@@ -1876,7 +2338,7 @@ sndspace(int drive) {
     memptr = spctext;		/* And the pointer. */
     if (binary) {		/* If file mode is binary, */
         savmod = binary;	/*  remember to restore it later. */
-        binary = 0;		/*  turn it back to text for this, */
+        binary = XYFT_T;		/*  turn it back to text for this, */
     }
     return(sinit());
 #else
@@ -1903,7 +2365,12 @@ cwd(vdir) char *vdir; {
 	cdd = zgtdir();		/* Get new working directory. */
 	debug(F110,"cwd",cdd,0);
 	encstr((CHAR *)cdd);
+#ifdef COMMENT
 	ack1((CHAR *)(encbuf+7));
+#else
+	ack1(data);
+#endif /* COMMENT */
+	screen(SCR_CD,0,0l,cdd);
 	tlog(F110,"Changed directory to",cdd,0L);
 	return(1); 
     } else {
@@ -1922,8 +2389,10 @@ int
 syscmd(prefix,suffix) char *prefix, *suffix; {
     char *cp;
 
-    if (prefix == NULL || *prefix == '\0') return(0);
-
+    if (!prefix)
+      return(0);
+    if (!*prefix)
+      return(0);
     for (cp = cmdstr; *prefix != '\0'; *cp++ = *prefix++) ;
     while (*cp++ = *suffix++) ;		/* copy suffix */
 
@@ -1934,7 +2403,7 @@ syscmd(prefix,suffix) char *prefix, *suffix; {
 	xflg = hcflg = 1;		/* And special flags for pipe */
 	if (binary) {			/* If file mode is binary, */
 	    savmod = binary;		/*  remember to restore it later. */
-	    binary = 0;			/*  turn it back to text for this, */
+	    binary = XYFT_T;			/*  turn it back to text for this, */
 	}
 	return (sinit());		/* Send S packet */
     } else {
@@ -2040,8 +2509,9 @@ remset(s) char *s; {
 	}
 	return(0);
       case 401:				/* Receive packet-length */
-	urpsiz = atoi(p);
-	if (urpsiz > MAXRP) urpsiz = MAXRP;
+	rpsiz = urpsiz = atoi(p);
+	if (urpsiz > MAXRP) urpsiz = MAXRP; /* Max long-packet length */
+	if (rpsiz > 94) rpsiz = 94;	    /* Max short-packet length */
 	urpsiz = adjpkl(urpsiz,wslots,bigrbsiz);
 	return(1);
       case 402:				/* Receive timeout */
@@ -2080,7 +2550,7 @@ remset(s) char *s; {
       case 406:				/* Window slots */
 	y = atoi(p);
 	if (y == 0) y = 1;
-	if (y < 1 && y > 31) return(0);
+	if (y < 1 && y > MAXWS) return(0);
 	wslotr = y;
 	swcapr = 1;
 	urpsiz = adjpkl(urpsiz,wslots,bigrbsiz);

@@ -4,16 +4,18 @@
 /* Modified by Dean Long, 5-28-90 */
 /* Modified ske, fdc, 6-10-90 */
 /* Modified to check access() and state conclusions, fdc, 12-29-92 */
+/* 4.4BSD semantics added by John Kohl <jtk@kolvir.blrc.ma.us> 20 Sep 94 */
 
 /*
 INSTRUCTIONS
 
 Compile and load the program in each of the following ways:
 
-   $ cc -DANYBSD -DSAVEDUID -o ckuuid1 ckuuid.c     (1)
-   $ cc -DANYBSD -o ckuuid2 ckuuid.c                (2)
-   $ cc -DANYBSD -DNOSETREU -o ckuuid3 ckuuid.c     (3)
-   $ cc -o ckuuid4 ckuuid.c                         (4)
+   $ cc -DANYBSD -DSAVEDUID -o ckuuid1 ckuuid.c            (1)
+   $ cc -DANYBSD -o ckuuid2 ckuuid.c                       (2)
+   $ cc -DANYBSD -DNOSETREU -o ckuuid3 ckuuid.c            (3)
+   $ cc -DANYBSD -DSETEUID -DNOSETREU -o ckuuid5 ckuuid.c  (4)
+   $ cc -o ckuuid4 ckuuid.c                                (5)
 
 (1) is for Berkeley-based systems that have setregid() and setreuid() and that
     have the saved-original-effective-uid feature, similar to AT&T System V.
@@ -23,7 +25,10 @@ Compile and load the program in each of the following ways:
 
 (3) is for Berkeley-based systems that don't have setregid() and setreuid().
 
-(4) is for all others, including all AT&T-based versions, Xenix, etc.
+(4) is for BSD4.4 and others that have seteuid()/setegid() and
+    saved-original-effective-uid feature.
+
+(5) is for all others, including all AT&T-based versions, Xenix, etc.
 
 After building the program, run it to make sure that the uid's don't change
 (they shouldn't if the program is not setuid'd).
@@ -53,7 +58,7 @@ have privs turned off.  If it doesn't, try recompiling with -DSW_ACC_ID
 (swap IDs for access()) and repeat the above procedure.
 
 Please report the results (mail the typescript file) back to me,
-fdc@watsun.cc.columbia.edu, letting me know exactly what kind of machine you
+fdc@columbia.edu, letting me know exactly what kind of machine you
 have, and which version of UNIX.
 */ 
 
@@ -181,7 +186,7 @@ main(argc, argv) int argc; char **argv; {
     x = priv_on();
     printf("   priv_on returns %d\n",x);
     chuid();
-#ifdef SAVEDUID
+#if defined(SAVEDUID) || defined(SETEUID)
     printf("   saved-original-effective-uid feature %s present\n",
 	   (uidb == euid) ? "IS" : "is NOT");
     printf("   saved-original-effective-gid feature %s present\n",
@@ -222,6 +227,23 @@ main(argc, argv) int argc; char **argv; {
     chuid();
     x = chkaccess(path);
     if (x < 0) acc_ok = x;
+#ifdef FORK
+    {
+	pid_t pid;
+	if (pid = fork()) {
+	    /* Try to change back to effective uid */
+	    priv_can();
+	    printf("\n6. IN FORK: trying to restore canceled privileges\n");
+	    x = priv_on();
+	    printf("   priv_on returns %d\n",x);
+	    chuid();
+
+	    printf("   privilege cancellation %s\n",
+		   (uidb == euid || gidb == egid) ? "FAILED" : "SUCCEEDED");
+	    _exit(0);
+	}	    
+    }
+#else
 
     /* Try to change back to effective uid */
     printf("\n6. trying to restore canceled privileges\n");
@@ -233,6 +255,8 @@ main(argc, argv) int argc; char **argv; {
 	   (uidb == euid || gidb == egid) ? "FAILED" : "SUCCEEDED");
     if (uidb == euid) oku = 0;
     if (gidb == egid) okg = 0;
+#endif /* FORK */
+
     
 conclude:
     printf("\nCONCLUSIONS:\n");
@@ -256,6 +280,11 @@ conclude:
     printf("   -DSW_ACC_ID included\n");
 #else
     printf("   -DSW_ACC_ID omitted\n");
+#endif
+#ifdef SETEUID
+    printf("   -DSETEUID included\n");
+#else
+    printf("   -DSETEUID omitted\n");
 #endif
 #else
     printf("...when built in the System V or POSIX environment\n");
@@ -470,6 +499,17 @@ priv_ini() {
 
 #else /* !SETREUID, !SAVEDUID */
 
+#ifdef SETEUID
+/*
+  BSD 4.4 works similarly to System V and POSIX (see below), but uses
+  seteXid() instead of setXid() to change effective IDs.  In addition, the
+  seteXid() functions work the same for "root" as for other users.
+*/
+#define switchuid(hidden,active)	seteuid(active)
+#define switchgid(hidden,active)	setegid(active)
+
+#else /* !SETEUID */
+
 /* On System V and POSIX, the only thing we can change is the effective UID
  * (unless the current effective UID is "root", but initsuid() avoids that for
  * us).  The kernel allows switching to the current real UID or to the saved
@@ -478,11 +518,12 @@ priv_ini() {
  * the current effective UID is "root", though, because for "root" setuid/gid
  * becomes more powerful, which is why initsuid() treats "root" specially.
  * Note: That special treatment maybe could be ignored for BSD?  Note: For
- * systems that don't fit any of these three cases, we simply can't support
+ * systems that don't fit any of these four cases, we simply can't support
  * set-UID.
  */
 #define switchuid(hidden,active)	setuid(active)
 #define switchgid(hidden,active)	setgid(active)
+#endif /* SETEUID */
 #endif /* SETREUID */
   
 
@@ -560,9 +601,20 @@ priv_can() {
     return(err);
 
 #else
+#ifdef SETEUID
+    int err = 0;
+    if (privuid != (UID_T) -1)
+       if (setuid(realuid))
+	  err |= 1;
+
+    if (privgid != (GID_T) -1)
+        if (setgid(realgid))
+ 	  err |= 2;
+    return(err);
+#else
     /* Easy way of using setuid()/setgid() instead of setreuid()/setregid().*/
     return(priv_off());
-
+#endif /* SETEUID */
 #endif /* SETREUID */
 }
 

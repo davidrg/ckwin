@@ -4,13 +4,15 @@
 */
 /*
   Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
-  Columbia University Center for Computing Activities.
-  First released January 1985.
-  Copyright (C) 1985, 1992, Trustees of Columbia University in the City of New
-  York.  Permission is granted to any individual or institution to use this
-  software as long as it is not sold for profit.  This copyright notice must be
-  retained.  This software may not be included in commercial products without
-  written permission of Columbia University.
+  Columbia University Academic Information Systems, New York City.
+
+  Copyright (C) 1985, 1993, Trustees of Columbia University in the City of New
+  York.  The C-Kermit software may not be, in whole or in part, licensed or
+  sold for profit as a software product itself, nor may it be included in or
+  distributed with commercial products or otherwise distributed by commercial
+  concerns to their clients or customers without written permission of the
+  Office of Kermit Development and Distribution, Columbia University.  This
+  copyright notice must not be removed, altered, or obscured.
 */
 #ifndef CKCASC_H
 #define CKCASC_H
@@ -52,7 +54,7 @@
 #define DCS  0220     /* 8-bit Device Control String Introducer */
 #define ST8  0234     /* 8-bit String Terminator */
 #define OSC  0235     /* 8-bit Operating System Command */
-#define PM8  0236     /* 8-bit Privace Message */
+#define PM8  0236     /* 8-bit Privacy Message */
 #define APC  0237     /* 8-bit Application Program Command */
 #endif /* COMMENT */
 #endif /* CKCASC_H */

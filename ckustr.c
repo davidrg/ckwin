@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <sysexits.h>
+#include <varargs.h>
 
 /* string extraction/restoration routines */
 
@@ -61,36 +62,48 @@ oops:
 
 /* extracted string front end for printf() */
 /*VARARGS1*/
-strprerror(fmt, a, b, c, d, e, f, g, h, i, j, k, l)
+strprerror(fmt, va_alist)
 	int fmt;
+	va_dcl
 {
+	va_list	ap;
 	char buf[BUFLEN];
 
 	errprep(fmt, buf);
-	printf(buf, a, b, c, d, e, f, g, h, i ,j, k, l);
+	va_start(ap);
+	vprintf(buf, ap);
+	va_end(ap);
 }
 
 /* extracted string front end for sprintf() */
 /*VARARGS1*/
-strsrerror(fmt, obuf, a, b, c, d, e, f, g, h, i, j, k, l)
+strsrerror(fmt, obuf, va_alist)
 	int fmt;
 	char *obuf;
+	va_dcl
 {
 	char buf[BUFLEN];
+	va_list	ap;
 
 	errprep(fmt, buf);
-	sprintf(obuf, buf, a, b, c, d, e, f, g, h, i, j, k, l);
+	va_start(ap);
+	vsprintf(obuf, buf, ap);
+	va_end(ap);
 }
 
 /* extracted string front end for fprintf() */
 /*VARARGS1*/
-strfrerror(fmt, fd, a, b, c, d, e, f, g, h, i, j, k, l)
+strfrerror(fmt, fd, va_alist)
 	int fmt, fd;
+	va_dcl
 {
+	va_list	ap;
 	char buf[BUFLEN];
 
 	errprep(fmt, buf);
-	fprintf(fd, buf, a, b, c, d, e, f, g, h, i, j, k, l);
+	va_start(ap);
+	vfprintf(fd, buf, ap);
+	va_end(ap);
 }
 
 /* extracted string front end for perror() */

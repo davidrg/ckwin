@@ -1,16 +1,40 @@
 /*
+  File CKCXLA.H
+
+  System-independent character-set translation header file for C-Kermit.
+*/
+
+/*
   Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
-  Columbia University Center for Computing Activities.
-  First released January 1985.
-  Copyright (C) 1985, 1992, Trustees of Columbia University in the City of New
-  York.  Permission is granted to any individual or institution to use this
-  software as long as it is not sold for profit.  This copyright notice must be
-  retained.  This software may not be included in commercial products without
-  written permission of Columbia University.
+  Columbia University Academic Information Systems, New York City.
+
+  Copyright (C) 1985, 1993, Trustees of Columbia University in the City of New
+  York.  The C-Kermit software may not be, in whole or in part, licensed or
+  sold for profit as a software product itself, nor may it be included in or
+  distributed with commercial products or otherwise distributed by commercial
+  concerns to their clients or customers without written permission of the
+  Office of Kermit Development and Distribution, Columbia University.  This
+  copyright notice must not be removed, altered, or obscured.
 */
 #ifndef CKCXLA_H			/* Guard against multiple inclusion */
 #define CKCXLA_H
 
+#ifndef KANJI		/* Systems including Kanji support by default */
+#ifdef OS2		/* OS/2... */
+#define KANJI
+#endif /* OS2 */
+#endif /* KANJI */
+
+#ifdef NOKANJI		/* Except if NOKANJI is defined. */
+#ifdef KANJI
+#undef KANJI
+#endif /* KANJI */
+#endif /* NOKANJI */
+
+/*
+   Disable all support for all classes of character sets
+   if NOCSETS is defined.
+*/
 #ifdef NOCSETS
 #ifdef KANJI
 #undef KANJI
@@ -21,6 +45,9 @@
 #ifdef LATIN2
 #undef LATIN2
 #endif /* LATIN2 */
+#ifdef HEBREW
+#undef HEBREW
+#endif /* HEBREW */
 
 #else /* Rest of this file... */
 
@@ -35,6 +62,12 @@
 #define CYRILLIC			/* defined, define it. */
 #endif /* CYRILLIC */
 #endif /* NOCYRIL */
+
+#ifndef NOHEBREW			/* If they didn't say "no Hebrew" */
+#ifndef HEBREW				/* Then if HEBREW isn't already */
+#define HEBREW				/* defined, define it. */
+#endif /* HEBREW */
+#endif /* NOHEBREW */
 
 /* File ckcxla.h -- Character-set-related definitions, system independent */
 
@@ -61,6 +94,7 @@
 #define AL_JAPAN   7			/* Japanese Katakana+Kanji ideograms */
 #define AL_HAN     8			/* Chinese/Japanese/Korean ideograms */
 #define AL_INDIA   9			/* Indian scripts (ISCII) */
+#define AL_VIET   10			/* Vietnamese (VISCII) */
 					/* Add more here... */
 #define AL_UNK   999			/* Unknown (transparent) */
 
@@ -84,44 +118,11 @@
 #define L_SWISS      11  /* RM Swiss (Rhaeto-Romance) */
 #define L_DANISH     12  /* DA Danish */
 #define L_ICELANDIC  13  /* IS Icelandic */
+#define L_RUSSIAN    14  /* RU Russian */
+#define L_JAPANESE   15  /* JA Japanese */
+#define L_HEBREW     16  /* IW Hebrew */
 
-#ifdef CYRILLIC		 /* RU Russian */
-#define L_RUSSIAN 14
-#ifndef KANJI
-#define MAXLANG 14
-#endif /* KANJI */
-#endif /* CYRILLIC */
-
-#ifdef KANJI		 /* JA Japanese */
-#ifndef CYRILLIC
-#define L_JAPANESE 14
-#define MAXLANG 14
-#else
-#define L_JAPANESE 15
-#define MAXLANG 15
-#endif /* CYRILLIC */
-#endif /* KANJI */
-
-#ifndef MAXLANG
-#define MAXLANG 14
-#endif /* MAXLANG */
-
-#ifdef COMMENT
-/*
-  The ones below are not used yet.  This list needs to be expanded and
-  organized, and something must be done about the hard coded numbers, because
-  they will be wrong if CYRILLIC and/or KANJI are deselected.  But we can't do
-  "#define L_CHINESE L_JAPANESE + 1" because that causes recursion in the
-  preprocessor.
-*/
-#define L_CHINESE    16			/* ZH */
-#define L_KOREAN     17			/* KO */
-#define L_ARABIC     18			/* AR */
-#define L_HEBREW     19			/* IW */
-#define L_GREEK      20			/* EL */
-#define L_TURKISH    21			/* TR */
-/* etc... */
-#endif /* COMMENT */
+#define MAXLANG      16  /* Number of languages */
 
 /*
   File character-sets are defined in the system-specific ck?xla.h file,
@@ -141,19 +142,19 @@
 #define TC_2LATIN  3   /* ISO 8859-2, Latin-2 */
 #define TC_CYRILL  4   /* ISO 8859-5, Latin/Cyrillic */
 #define TC_JEUC    5   /* Japanese EUC */
+#define TC_HEBREW  6   /* ISO 8859-8, Latin/Hebrew */
 
-#define MAXTCSETS  5   /* Highest Transfer Character Set Number */
+#define MAXTCSETS  6   /* Highest Transfer Character Set Number */
 
 #ifdef COMMENT
 /*
   Not used yet.
 */
-#define TC_3LATIN  6  /* ISO 8859-3, Latin-3 */
-#define TC_4LATIN  7  /* ISO 8859-4, Latin-4 */
-#define TC_5LATIN  8  /* ISO 8859-9, Latin-5 */
-#define TC_ARABIC  9  /* ISO-8859-6, Latin/Arabic */
-#define TC_GREEK  10  /* ISO-8859-7, Latin/Greek */
-#define TC_HEBREW 11  /* ISO-8859-8, Latin/Hebrew */
+#define TC_3LATIN  7  /* ISO 8859-3, Latin-3 */
+#define TC_4LATIN  8  /* ISO 8859-4, Latin-4 */
+#define TC_5LATIN  9  /* ISO 8859-9, Latin-5 */
+#define TC_ARABIC 10  /* ISO-8859-6, Latin/Arabic */
+#define TC_GREEK  11  /* ISO-8859-7, Latin/Greek */
 #define TC_JIS208 12  /* Japanese JIS X 0208 multibyte set */
 #define TC_CHINES 13  /* Chinese Standard GB 2312-80 */
 #define TC_KOREAN 14  /* Korean KS C 5601-1987 */
@@ -214,6 +215,9 @@ struct langinfo {
 #ifdef datageneral			/* Data General MV AOS/VS */
 #include "ckuxla.h"
 #endif /* datageneral */
+#ifdef STRATUS				/* Stratus Computer, Inc. VOS */
+#include "ckuxla.h"
+#endif /* STRATUS */
 
 #endif /* NOCSETS */
 

@@ -1,4 +1,7 @@
+#include "ckcsym.h"
 char *wartv = "Wart Version 2A(009) 14 Jan 92";
+
+#define CKWART_C
 
 #ifdef MDEBUG
 /* Use the real ones in this module only */
@@ -46,6 +49,20 @@ char *wartv = "Wart Version 2A(009) 14 Jan 92";
  */
 
 #include "ckcdeb.h"			/* Includes */
+
+#ifdef STRATUS
+/* Actually call printf, not our printf-catcher for Kermit */
+#ifdef printf
+#undef printf
+#endif /* printf */
+#endif /* STRATUS */
+
+#ifdef MAC
+/* Same deal for Macintosh */
+#ifdef printf
+#undef printf
+#endif /* printf */
+#endif /* MAC */
 
 /*
  The following "char" should be changed to "short", "int", or "long" if your
@@ -452,7 +469,19 @@ warray(fp,nam,cont,siz,typ) FILE *fp; char *nam; int cont[],siz; char *typ; {
     fprintf(fp,"};\n");
 }
 
+#ifdef __DECC
+#ifdef __ALPHA
+int
+#else
 VOID
+#endif /* __ALPHA */
+#else
+#ifdef STRATUS
+int
+#else
+VOID
+#endif /* STRATUS */
+#endif /* __DECC */
 main(argc,argv) int argc; char *argv[]; {
     trans head;
     int state,c;

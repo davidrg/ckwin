@@ -1,12 +1,19 @@
+/*
+  ckcsym.h is used for for defining symbols that normally would be defined
+  using -D or -d on the cc command line, for use with compilers that don't
+  support this feature.  Must be before any tests for preprocessor symbols.
+*/
+#include "ckcsym.h"
+
 #ifndef MAC
-char *versio = "C-Kermit 5A(188), 23 Nov 92"; /* Version herald. */
+char *versio = "C-Kermit 5A(190), 4 Oct 94"; /* Version herald. */
 #else
 /*
   For Macintosh, also remember to change the Mac-specific version in ckmkr2.r.
 */
-char *versio = "Mac Kermit 0.99(188) Pre-ALPHA, 23 Nov 92";
+char *versio = "Mac Kermit 0.991(190) Pre-ALPHA, 4 Oct 94";
 #endif /* MAC */
-long vernum = 501188L;
+long vernum = 501190L;
 /*
   String and numeric version numbers, keep these three in sync!
   First digit of vermum = major version, i.e. 5.
@@ -21,7 +28,7 @@ int verwho = VERWHO; /* Who produced this version, 0 = Columbia University */
 /*
   IMPORTANT: If you are working on your own private version of C-Kermit, please
   include some special notation, like your site name or your initials, in the
-  "versio" string, e.g. "5A(182)-XXX", and use a nonzero code for the "verwho"
+  "versio" string, e.g. "5A(190)-XXX", and use a nonzero code for the "verwho"
   variable (e.g. in the USA use your zip code).  Unless we stick to this
   discipline, divergent copies of C-Kermit will begin to appear that are
   intistinguishable from each other, which is a big support issue.  Also, if
@@ -34,25 +41,39 @@ int verwho = VERWHO; /* Who produced this version, 0 = Columbia University */
 
 /*
   Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
-  Columbia University Center for Computing Activities.
+  Columbia University Academic Information Systems, New York City.
 
-  COPYRIGHT NOTICE:
+COPYRIGHT NOTICE:
+*/
 
-  Copyright (C) 1985, 1992, Trustees of Columbia University in the City of New
-  York.  Permission is granted to any individual or institution to use this
-  software as long as it is not sold for profit.  This copyright notice must be
-  retained.  This software may not be included in commercial products without
-  written permission of Columbia University.
+char *copyright[] = {
 
-  DOCUMENTATION:
+"Copyright (C) 1985, 1994, Trustees of Columbia University in the City of New",
+"York.  The C-Kermit software may not be, in whole or in part, licensed or",
+"sold for profit as a software product itself, nor may it be included in or",
+"distributed with commercial products or otherwise distributed by commercial",
+"concerns to their clients or customers without written permission of the",
+"Office of Kermit Development and Distribution, Columbia University.  This",
+"copyright notice must not be removed, altered, or obscured.",
+" ",
+"For further information, contact the Office of Kermit Development and",
+"Distribution, Columbia University, 612 West 115th Street, New York, NY 10025",
+"USA; phone +1 212 854-3703, fax +1 212 663-8202, email kermit@columbia.edu.",
+""};
+
+/*
+
+DOCUMENTATION:
 
   "Using C-Kermit" by Frank da Cruz and Christine M. Gianone,
-  Digital Press, Burlington, MA, USA.  Publication date: Winter 1992.
+  Digital Press, Burlington, MA, USA.
   Order Number: EY-J896E-DP
   Digital Press ISBN: 1-55558-108-0
   Prentice Hall ISBN: 0-13-037490-3
+  Order from DECdirect: +1 800 344-4825 (USA only)
+  Or from Columbia University: +1 212 854-3703
 
-  DISCLAIMER:
+DISCLAIMER:
 
   The C-Kermit software is provided in source code form by Kermit Development
   and Distribution, Columbia University.  The software is provided "as is;" no
@@ -69,12 +90,13 @@ int verwho = VERWHO; /* Who produced this version, 0 = Columbia University */
   individuals acknowledge any liability resulting from program or
   documentation errors.
 
-  ACKNOWLEDGMENTS:
+ACKNOWLEDGMENTS:
 
   The Kermit file transfer protocol was developed at the Columbia University
-  Center for Computing Activities (CUCCA).  It is named after Kermit the Frog,
-  star of the television series THE MUPPET SHOW; the name is used by permission
-  of Henson Associates, Inc.
+  Center for Computing Activities (CUCCA), which was since renamed to Columbia
+  University Academic Information Systems (AcIS).  Kermit is named after
+  Kermit the Frog, star of the television series THE MUPPET SHOW; the name is
+  used by permission of Henson Associates, Inc.
 
   Thanks to at least the following people for their contributions to this
   program over the years, and apologies to anybody I missed:
@@ -82,17 +104,19 @@ int verwho = VERWHO; /* Who produced this version, 0 = Columbia University */
    Chris Adie, Edinburgh U, Scotland (OS/2 support)
    Robert Adsett, University of Waterloo, Canada
    Larry Afrin, Clemson U
+   Jeffrey Altman, Altmania Productions and Seer Technologies (OS/2)
    Greg Andrews, Telebit Corp
    Barry Archer, U of Missouri
    Robert Andersson, International Systems A/S, Oslo, Norway
    Chris Armstrong, Brookhaven National Lab (OS/2)
    William Bader, Software Consulting Services, Nazareth, PA
-   Fuat Baran, CUCCA
+   Fuat Baran, Columbia U AcIS
    Stan Barber, Rice U
    Jim Barbour, U of Colorado
    Donn Baumgartner, Dell
    Nelson Beebe, U of Utah
    Karl Berry, UMB
+   Mark Berryman, SAIC
    Dean W Bettinger, SUNY
    Gary Bilkus
    Marc Boucher, U of Montreal
@@ -103,23 +127,25 @@ int verwho = VERWHO; /* Who produced this version, 0 = Columbia University */
    Mark Buda, DEC (VAX/VMS)
    Fernando Cabral, Padrao IX, Brasilia, Brazil
    Bjorn Carlsson, Stockholm University Computer Centre QZ, Sweden
-   Bill Catchings, formerly of CUCCA
+   Bill Catchings, formerly of AcIS (then CUCCA)
    Bob Cattani, Columbia U CS Dept
    Davide Cervone, Rochester University
    Seth Chaiklin, Denmark
    John Chandler, Harvard U / Smithsonian Astronomical Observatory
+   Bernard Chen, UCLA
    John L Chmielewski, AT&T, Lisle, IL
    Howard Chu, U of Michigan
    Bill Coalson, McDonnell Douglas
    Bertie Coopersmith, London, UK
    Chet Creider, University of Western Ontario, Canada
-   Alan Crosswell, CUCCA
-   Jeff Damens, formerly of CUCCA
+   Alan Crosswell, Columbia U AcIS
+   Jeff Damens, formerly of AcIS
    Mark Davies, Bath U, UK
-   S. Dezawa, Fujifilm, Japan
+   Sin-itirou Dezawa, Fujifilm, Japan
    Joe R. Doupnik, Utah State U
    Frank Dreano (Honeywell)
    John Dunlap, University of Washington
+   Alex Dupuy, SMART.COM
    David Dyck, John Fluke Mfg Co.
    Stefaan A. Eeckels, Eurokom, Luxembourg
    Paul Eggert, Twin Sun, Inc., El Segundo, CA
@@ -134,9 +160,12 @@ int verwho = VERWHO; /* Who produced this version, 0 = Columbia University */
    Hirofumi Fujii, Japan Nat'l Lab for High Energy Physics, Tokyo (Kanji)
    Chuck Fuller, Westinghouse Corporate Computer Services
    Andy Fyfe, Caltech
-   Christine M. Gianone, CUCCA
+   Christine M. Gianone, Columbia U AcIS
    John Gilmore, UC Berkeley
+   Madhusudan Giyyarpuram, HP
+   William H. Glass
    German Goldszmidt, IBM
+   Chuck Goodhart, NASA
    Alistair Gorman, New Zealand
    Richard Gration, ADFA, Australia
    Chris Green, Essex U, UK
@@ -160,6 +189,7 @@ int verwho = VERWHO; /* Who produced this version, 0 = Columbia University */
    Christian Hemsing, RWTH Aachen, Germany (OS-9)
    Andrew Herbert, Monash Univ, Australia
    Mike Hickey, ITI
+   Dan Hildebrand, QNX Software Systems Inc, Kanata, ON (QNX)
    R E Hill
    Bill Homer, Cray Research
    Ray Hunter, The Wollongong Group
@@ -168,6 +198,7 @@ int verwho = VERWHO; /* Who produced this version, 0 = Columbia University */
    Steve Jenkins, Lancaster University, UK
    Dave Johnson, Gradient Technologies
    Mark B Johnson, Apple Computer
+   Jyke Jokinen, Tampere University of Technology, Finland (QNX)
    Eric F Jones, AT&T
    Luke Jones, AT&T
    Peter Jones, U of Quebec Montreal
@@ -175,33 +206,41 @@ int verwho = VERWHO; /* Who produced this version, 0 = Columbia University */
    Peter Kabal, U of Quebec
    Mic Kaczmarczik, U of Texas at Austin
    Sergey Kartashoff, Inst. of Precise Mechanics & Computer Equipment, Moscow
-   Howie Kaye, CUCCA
+   Howie Kaye, Columbia U AcIS
    Rob Kedoin, Linotype Co, Hauppauge, NY (OS/2)
    Mark Kennedy, IBM
-   Terry Kennedy, St Peter's College, Jersey City, NJ (VAX/VMS, 2.11 BSD)
+   Terry Kennedy, St Peter's College, Jersey City, NJ (VMS and more)
+   Carlo Kid, Technical University of Delft, Netherlands
    Douglas Kingston, morgan.com
+   Lawrence Kirby, Wiltshire, UK
    Tom Kloos, Sequent Computer Systems
    Jim Knutson, U of Texas at Austin
+   John T. Kohl <jtk@kolvir.blrc.ma.us> (BSDI)
    Scott Kramer, SRI International, Menlo Park, CA
    David Kricker, Encore Computer
    Thomas Krueger, UWM
-   Bo Kullmar, Central Bank of Sweden, Kista
+   Bo Kullmar, ABC Klubben, Stockholm, and Central Bank of Sweden, Kista
    R. Brad Kummer, AT&T Bell Labs, Atlanta, GA
    John Kunze, UC Berkeley
+   David Lane, BSSI / BellSouth (Stratus VOS, X.25)
    Bob Larson, USC (OS-9)
    Bert Laverman, Groningen U, Netherlands
    Steve Layton
    David Lawyer, UC Irvine
    David LeVine, National Semiconductor Corporation
+   Daniel S. Lewart, UIUC
    S.O. Lidie, Lehigh U
    Tor Lillqvist, Helsinki University, Finland
    Dean Long
+   Mike Long, Analog Devices, Norwood MA
    Kevin Lowey, U of Saskatchewan (OS/2)
    Andy Lowry, Columbia University
+   James Lummel, Caprica Telecomputing Resources (QNX)
    David MacKenzie, Environmental Defense Fund, University of Maryland
    John Mackin, University of Sidney, Australia
    Martin Maclaren, Bath U, UK
    Chris Maio, Columbia U CS Dept
+   Motserrat Mane, HP, Grenoble, France
    Fulvio Marino, Olivetti, Ivrea, Italy
    Peter Mauzey, AT&T
    Tye McQueen, Utah State U
@@ -254,8 +293,10 @@ int verwho = VERWHO; /* Who produced this version, 0 = Columbia University */
    Gisbert W. Selke, WIdO, Bonn, Germany
    David Sizeland, U of London Medical School
    Fridrik Skulason, Iceland
+   Rick Sladkey (Linux)
    Dave Slate
    Bradley Smith, UCLA
+   Fred Smith, Merk
    Richard S Smith, Cal State
    Ryan Stanisfer, UNT
    Bertil Stenstroem, Stockholm University Computer Centre (QZ), Sweden
@@ -264,6 +305,8 @@ int verwho = VERWHO; /* Who produced this version, 0 = Columbia University */
    James R. Swenson, Accu-Weather, Inc.
    Andy Tanenbaum, Vrije U, Amsterdam, Netherlands
    Markku Toijala, Helsinki U of Technology
+   Teemu Torma, Helsinki U of Technology
+   Linus Torvalds, Helsinki, Finland (Linux)
    Rick Troxel, NIH
    Warren Tucker, Tridom Corp, Mountain Park, GA
    Dave Tweten, AMES-NAS
@@ -276,6 +319,8 @@ int verwho = VERWHO; /* Who produced this version, 0 = Columbia University */
    Mark Vasoll, Oklahoma State U (V7 UNIX)
    Konstantin Vinogradov, ICSTI, Moscow
    Paul Vixie, DEC
+   Bernie Volz, Process Software
+   Eduard Vopicka, Prague University of Economics, Czech Republic
    Dimitri Vulis, CUNY
    Roger Wallace, Raytheon
    Stephen Walton, Calif State U, Northridge (Amiga)
@@ -295,15 +340,9 @@ int verwho = VERWHO; /* Who produced this version, 0 = Columbia University */
    Dave Woolley, CAP Communication Systems, London
    Jack Woolley, SCT Corp
    Frank Wortner
-   Ken Yap, U of Rochester
+   Ken Yap, formerly of U of Rochester
    John Zeeff, Ann Arbor, MI
 */
-/*
-  ckcsym.h is used for for defining symbols that normally would be defined
-  using -D or -d on the cc command line, for use with compilers that don't
-  support this feature.
-*/
-#include "ckcsym.h"
 #include "ckcasc.h"			/* ASCII character symbols */
 #include "ckcdeb.h"			/* Debug & other symbols */
 #include "ckcker.h"			/* Kermit symbols */
@@ -333,13 +372,15 @@ GET filespec, SEND filespec, FINISH, BYE, REMOTE HELP\n\
 \n\0";
 #else
 #ifdef OS2
-char *hlptxt = "C-Kermit Server REMOTE Commands:\n\
-\n\
-GET files  REMOTE CD [dir]     REMOTE DIRECTORY [files]\n\
-SEND files REMOTE SPACE [dir]  REMOTE HOST command\n\
-FINISH     REMOTE DELETE files REMOTE TYPE files\n\
-BYE        REMOTE HELP         REMOTE SET parameter value\n\
-\n\0";
+char *hlptxt = "C-Kermit Server REMOTE Commands:\r\n\
+\r\n\
+GET files  REMOTE CD [dir]     REMOTE DIRECTORY [files]\r\n\
+SEND files REMOTE SPACE [dir]  REMOTE HOST command\r\n\
+FINISH     REMOTE DELETE files REMOTE TYPE files\r\n\
+BYE        REMOTE HELP         REMOTE SET parameter value\r\n\
+                               REMOTE QUERY type variable\r\n\
+                               REMOTE ASSIGN variable value\r\n\
+\r\n\0";
 #else
 #ifdef MINIX
 char *hlptxt = "C-Kermit Server REMOTE Commands:\n\
@@ -353,6 +394,8 @@ SEND files REMOTE SPACE [dir]  REMOTE HOST command\r\n\
 MAIL files REMOTE DELETE files REMOTE WHO [user]\r\n\
 BYE        REMOTE PRINT files  REMOTE TYPE files\r\n\
 FINISH     REMOTE HELP         REMOTE SET parameter value\r\n\
+                               REMOTE QUERY type variable\r\n\
+                               REMOTE ASSIGN variable value\r\n\
 \0";
 #else
 #ifdef datageneral
@@ -362,8 +405,11 @@ GET files  REMOTE CD [dir]     REMOTE DIRECTORY [filespec]\n\
 SEND files REMOTE SPACE [dir]  REMOTE HOST command\n\
 BYE        REMOTE TYPE file    REMOTE DELETE files\n\
 FINISH     REMOTE WHO          REMOTE SET\n\
+                               REMOTE QUERY type variable\n\
+                               REMOTE ASSIGN variable value\n\
 \0";
 #else
+#ifdef NOSPL
 char *hlptxt = "C-Kermit Server REMOTE Commands:\n\
 \n\
 GET files  REMOTE CD [dir]     REMOTE DIRECTORY [files]\n\
@@ -372,16 +418,42 @@ MAIL files REMOTE DELETE files REMOTE WHO [user]\n\
 BYE        REMOTE PRINT files  REMOTE TYPE files\n\
 FINISH     REMOTE HELP         REMOTE SET parameter value\n\
 \n\0";
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
+#else
+char *hlptxt = "C-Kermit Server REMOTE Commands:\n\
+\n\
+GET files  REMOTE CD [dir]     REMOTE DIRECTORY [files]\n\
+SEND files REMOTE SPACE [dir]  REMOTE HOST command\n\
+MAIL files REMOTE DELETE files REMOTE WHO [user]\n\
+BYE        REMOTE PRINT files  REMOTE TYPE files\n\
+FINISH     REMOTE HELP         REMOTE SET parameter value\n\
+                               REMOTE QUERY type variable\n\
+                               REMOTE ASSIGN variable value\n\
+\n\0";
+#endif /* NOSPL */
+#endif /* datageneral */
+#endif /* VMS */
+#endif /* MINIX */
+#endif /* OS2 */
+#endif /* AMIGA */
+#endif /* MAC */
 
 #ifdef MINIX
 char *srvtxt = "\r\n\
 Entering server mode.\r\n\0";
+#else
+#ifdef OLDMSG
+/*
+  It seems there was a large installation that was using C-Kermit 5A(165)
+  or thereabouts, which had deployed thousands of MS-DOS Kermit scripts in
+  scattered locations that looked for strings in the old server message,
+  which changed in 5A(183), August 1992.
+*/
+char *srvtxt = "\r\n\
+C-Kermit server starting.  Return to your local machine by typing\r\n\
+its escape sequence for closing the connection, and issue further\r\n\
+commands from there.  To shut down the C-Kermit server, issue the\r\n\
+FINISH or BYE command and then reconnect.\n\
+\r\n\0";
 #else
 #ifdef OSK
 char *srvtxt = "\r\l\
@@ -398,8 +470,10 @@ sequence to return to your local Kermit prompt and issue commands from\r\n\
 there.  Use SEND and GET for file transfer.  Use REMOTE HELP for a list of\r\n\
 other available services.  Use BYE or FINISH to end server mode.\r\n\0";
 #endif /* OSK */
+#endif /* OLDMSG */
 #endif /* MINIX */
 #else  /* server mode disabled */
+char *hlptxt = "";
 char *srvtxt = "";
 #endif /* NOSERVER */
 
@@ -449,18 +523,27 @@ int spsiz = DSPSIZ,                     /* Current packet size to send */
     sq = 'Y',				/* Sent 8bq bid */
     rpt = 0,                            /* Repeat count */
     rptq = MYRPTQ,                      /* Repeat prefix */
-    rptflg = 0;                         /* Repeat processing flag */
+    rptflg = 0,                         /* Repeat processing flag */
+    rptena = 1,				/* Repeat processing enabled */
+    xfrcan = 1,				/* Transfer cancellation enabled */
+    xfrchr = 3,				/* Transfer cancel char = Ctrl-C */
+    xfrnum = 3;				/* Need three of them. */
+
+int epktflg = 0;			/* E-PACKET command active */
 
 int capas = 9,				/* Position of Capabilities */
-    atcapb = 8,				/* Attribute capability */
-    atcapr = 1,				/*  requested */
-    atcapu = 0,				/*  used */
-    swcapb = 4,				/* Sliding Window capability */
-    swcapr = 1,				/*  requested (allowed) */
-    swcapu = 0,				/*  used */
     lpcapb = 2,				/* Long Packet capability */
     lpcapr = 1,				/*  requested */
     lpcapu = 0,				/*  used */
+    swcapb = 4,				/* Sliding Window capability */
+    swcapr = 1,				/*  requested (allowed) */
+    swcapu = 0,				/*  used */
+    atcapb = 8,				/* Attribute capability */
+    atcapr = 1,				/*  requested */
+    atcapu = 0,				/*  used */
+    rscapb = 16,			/* RESEND capability */
+    rscapr = 1,				/*  requested by default */
+    rscapu = 0,				/*  used */
     lscapb = 32,			/* Locking Shift capability */
     lscapr = 1,				/*  requested by default */
     lscapu = 0;				/*  used */
@@ -484,16 +567,28 @@ int atenci = 1,				/* Encoding in */
     atsysi = 1,			       /* System-dependent parameters in/out */
     atsyso = 1;
 
+#ifdef STRATUS
+int atfrmi = 1,				/* Format in/out */
+    atfrmo = 1,
+    atcrei = 1,				/* Creator ID in/out */
+    atcreo = 1,
+    atacti = 1,				/* Account in/out */
+    atacto = 1;
+#endif /* STRATUS */
+
 CHAR padch = MYPADC,                    /* Padding character to send */
     mypadc = MYPADC,                    /* Padding character to ask for */
     seol = MYEOL,                       /* End-Of-Line character to send */
     eol = MYEOL,                        /* End-Of-Line character to look for */
     ctlq = CTLQ,                        /* Control prefix in incoming data */
-    myctlq = CTLQ;                      /* Outbound control character prefix */
+    myctlq = CTLQ,                      /* Outbound control character prefix */
+    myrptq = MYRPTQ;			/* Repeat prefix I want to use */
+
+int rptmin = 3;				/* Repeat-count minimum */
 
 struct zattr iattr;			/* Incoming file attributes */
 
-/* File related variables, mainly for the benefit of VAX/VMS */
+/* File related variables, mainly for the benefit of (Open)VMS */
 
 int fblksiz = DBLKSIZ;		/* File blocksize */
 int frecl = DLRECL;		/* File record length */
@@ -502,16 +597,22 @@ int forg = XYFO_S;		/* File organization (sequential) */
 int fcctrl = XYFP_N;		/* File carriage control (ctrl chars) */
 
 #ifdef VMS
-/* VMS labeled file options */
+/* VMS labeled file default options - name only. */
 int lf_opts = LBL_NAM;
 #else
+#ifdef OS2
+/* OS/2 labeled file default options, all attributes but archived. */
+unsigned long int lf_opts = LBL_EXT|LBL_HID|LBL_RO|LBL_SYS;
+#else
 int lf_opts = 0;
+#endif /* OS2 */
 #endif /* VMS */
 
 /* Packet-related variables */
 
 int pktnum = 0,                         /* Current packet number */
     sndtyp = 0,				/* Type of packet just sent */
+    rcvtyp = 0,				/* Type of packet just received */
     rsn,				/* Received packet sequence number */
     rln,				/* Received packet length */
     size,                               /* Current size of output pkt data */
@@ -519,21 +620,24 @@ int pktnum = 0,                         /* Current packet number */
     maxsize,                            /* Max size for building data field */
     spktl = 0,				/* Length packet being sent */
     rpktl = 0,				/* Length of packet just received */
+    pktpaus = 0,			/* Interpacket pause interval, msec */
     rprintf,				/* REMOTE PRINT flag */
     rmailf;				/* MAIL flag */
 
+
 CHAR
-#ifdef NO_MORE  /* Buffers used before sliding windows... */
-    sndpkt[MAXSP+100],			/* Entire packet being sent */
-    recpkt[MAXRP+200],			/* Packet most recently received */
-    data[MAXSP+4],			/* Packet data buffer */
-#endif
+#ifdef pdp11
+    srvcmd[MAXRP+4],
+#else
 #ifdef DYNAMIC
     *srvcmd = (CHAR *)0,		/* Where to decode server command */
+    *pktmsg = (CHAR *)0,		/* Packet error message */
 #else
-    srvcmd[MAXRP+4],                    /* Where to decode server command */
-#endif
-    padbuf[95],				/* Buffer for send-padding */
+    srvcmd[MAXRP+4],
+    pktmsg[81],
+#endif /* DYNAMIC */
+#endif /* pdp11 */
+    padbuf[96],				/* Buffer for send-padding */
     *recpkt,
     *rdatap,				/* Pointer to received packet data */
     *data = (CHAR *)0,			/* Pointer to send-packet data */
@@ -545,6 +649,7 @@ CHAR
 
 char filnam[257];                       /* Name of current file. */
 char cmdfil[80];			/* Application file name. */
+int cfilef = 0;				/* Application file flag. */
 
 int nfils = 0;				/* Number of files in file group */
 long fsize;                             /* Size of current file */
@@ -563,7 +668,7 @@ int startconnected;			/* initial state of connected */
 
 long speed = -1L;			/* Line speed */
 
-int parity,                             /* Parity specified, 0,'e','o',etc */
+int parity = DEFPAR,			/* Parity specified, 0,'e','o',etc */
     autopar = 0,			/* Automatic parity change flag */
     sosi = 0,				/* Shift-In/Out flag */
     flow,                               /* Flow control */
@@ -579,29 +684,59 @@ int parity,                             /* Parity specified, 0,'e','o',etc */
 
 #define MYHOSTL 100
     char myhost[MYHOSTL];		/* Local host name */
-    int network = 0;			/* Network vs tty connection */
-#ifdef OS2
-/* For now, DECnet is the only type supported by OS/2 */
+    int network = 0;			/* Network vs serial connection */
+
+#ifdef NETCONN
+#ifdef TCPSOCKET
+    int nettype = NET_TCPB;		/* Assume TCP/IP (BSD sockets) */
+#else
+#ifdef SUNX25
+    int nettype = NET_SX25;
+#else
+#ifdef STRATUSX25
+    int nettype = NET_VX25;
+#else
+#ifdef DECNET
     int nettype = NET_DEC;
 #else
-    int nettype = NET_TCPB;		/* Assume TCP/IP (BSD sockets) */
-#endif /* OS2 */
+    int nettype = NET_NONE;
+#endif /* DECNET */
+#endif /* STRATUSX25 */
+#endif /* SUNX25 */
+#endif /* TCPSOCKET */
+#else
+    int nettype = NET_NONE;
+#endif /* NETCONN */
 
-#ifdef SUNX25
-    extern initpad();
+#ifdef ANYX25
     int revcall = 0;            /* X.25 reverse call not selected */
     int closgr  = -1;		/* X.25 closed user group not selected */
     int cudata = 0;		/* X.25 call user data not specified */
     char udata[MAXCUDATA];	/* X.25 call user data */
-#endif /* SUNX25 */
+#endif /* ANYX25 */
 
-/* Other recent additions */
+/* Other items */
+
+#ifdef OS2PM
+    int os2pm = 0;			/* OS/2 Presentation Manager flag */
+#endif /* OS2PM */
+
+/* Terminal screen size, if known, -1 means unknown. */
+    int tt_rows = -1;			/* Rows (height) */
+    int tt_cols = -1;			/* Columns (width) */
 
     int tlevel = -1;			/* Take-file command level */
+#ifdef NOLOCAL
+    int remonly = 1;			/* Remote-mode-only advisory (-R) */
+#else
+    int remonly = 0;
+#endif /* NOLOCAL */
+
 #ifndef NOSPL
     extern int cmdlvl;			/* Command level */
     extern int maclvl;			/* Macro invocation level */
 #endif /* NOSPL */
+
     int carrier = CAR_AUT;		/* Pay attention to carrier signal */
     int cdtimo = 0;			/* Carrier wait timeout */
     int xitsta = GOOD_EXIT;		/* Program exit status */
@@ -610,6 +745,7 @@ int parity,                             /* Parity specified, 0,'e','o',etc */
 #else
     int fncact = XYFX_B;		/* BACKUP for everybody else */
 #endif /* VMS */
+    int fncsav = -1;			/* For saving & restoring the above */
     int bgset = -1;			/* BACKGROUND mode set explicitly */
 #ifdef UNIX
     int suspend = DFSUSP;		/* Whether SUSPEND command, etc, */
@@ -620,6 +756,7 @@ int parity,                             /* Parity specified, 0,'e','o',etc */
 /* Statistics variables */
 
 long filcnt,                    /* Number of files in transaction */
+    filrej,			/* Number of files rejected in transaction */
     flci,                       /* Characters from line, current file */
     flco,                       /* Chars to line, current file  */
     tlci,                       /* Chars from line in transaction */
@@ -644,7 +781,10 @@ int deblog = 0,                         /* Flag for debug logging */
     xflg   = 0,                         /* Flag for X instead of F packet */
     hcflg  = 0,                         /* Doing Host command */
     fncnv  = 1,                         /* Flag for file name conversion */
-    binary = 0,                         /* Flag for binary file */
+    fnspath = 0,			/* Send-file path stripping */
+    fnrpath = 0,			/* Receive-file path stripping */
+    binary = XYFT_T,			/* File transfer mode */
+    sendmode = SM_SEND,			/* Which type of SEND operation */
     savmod = 0,                         /* Saved file mode (whole session) */
     bsave  = 0,				/* Saved file mode (per file) */
     bsavef = 0,				/* Flag if bsave was used. */
@@ -652,24 +792,28 @@ int deblog = 0,                         /* Flag for debug logging */
     fmask  = 0377,			/* File byte mask */
     warn   = 0,                         /* Flag for file warning */
     quiet  = 0,                         /* Be quiet during file transfer */
-    local  = 0,                         /* Flag for external tty vs stdout */
+    local  = 0,                         /* 1 = local mode, 0 = remote mode */
     server = 0,                         /* Flag for being a server */
     cflg   = 0,				/* Connect before transaction */
     cnflg  = 0,                         /* Connect after transaction */
     cxseen = 0,                         /* Flag for cancelling a file */
     czseen = 0,                         /* Flag for cancelling file group */
     discard = 0,			/* Flag for file to be discarded */
-    keep = 0,                           /* Keep incomplete files */
+    keep = 1,                           /* Keep incomplete files */
     unkcs = 1,				/* Keep file w/unknown character set */
     nakstate = 0,			/* In a state where we can send NAKs */
     dblchar = -1;			/* Character to double when sending */
 
+long sendstart = 0L;			/* SEND start position */
+
 /* Variables passed from command parser to protocol module */
 
 #ifndef NOSPL
+#ifndef NOICP
 _PROTOTYP( int parser, (int) );         /* The parser itself */
-char *clcmds = NULL;			/* Pointer to command-line commands */
+#endif /* NOICP */
 #endif /* NOSPL */
+char *clcmds = NULL;			/* Pointer to command-line commands */
 
 CHAR sstate  = (CHAR) 0;                /* Starting state for automaton */
 CHAR zstate  = (CHAR) 0;		/* For remembering sstate */
@@ -700,6 +844,8 @@ int en_bye = 0;				/* BYE */
 #else
 int en_bye = 1;				/* BYE */
 #endif /* datageneral */
+int en_asg = 1;				/* ASSIGN */
+int en_que = 1;				/* QUERY */
 
 /* Miscellaneous */
 
@@ -730,7 +876,11 @@ _PROTOTYP( int getiobs, (void) );
 
 #ifndef NOCCTRAP
 #include <setjmp.h>
+#ifdef CK_POSIX_SIG			/* POSIX signal handling */
+extern sigjmp_buf cmjbuf;
+#else
 extern jmp_buf cmjbuf;
+#endif /* CK_POSIX_SIG */
 #ifdef GEMDOS				/* Special for Atari ST */
     cc_clean();
 #endif /* GEMDOS */
@@ -741,15 +891,36 @@ extern jmp_buf cmjbuf;
 int
 ckcmai(argc,argv) int argc; char **argv;
 #else
-#ifdef MAC
+#ifdef MAC				/* Macintosh */
 int
 main (void)
 #else
+#ifdef VMSGCC				/* (Open)VMS with GCC compiler */
+int
+main(argc,argv) int argc; char **argv;
+#else
+#ifdef __DECC				/* Alpha AXP with DEC C compiler */
+#ifdef __ALPHA
+int
+main(argc,argv) int argc; char **argv;
+#else					/* DEC C compiler, not Alpha AXP */
 VOID
 main(argc,argv) int argc; char **argv;
+#endif	/* __ALPHA */
+#else
+#ifdef STRATUS				/* Stratus VOS */
+/* ANSI main returns int, and VOS compiler complains if not so. */
+int
+main(argc,argv) int argc; char **argv;
+#else					/* All others */
+VOID
+main(argc,argv) int argc; char **argv;
+#endif /* STRATUS */
+#endif /* __DECC */
+#endif /* VMSGCC */
 #endif /* MAC */
 #endif /* aegis */
-{
+{ /* main */
 #ifdef datageneral
 short *pfha = 016000000036;             /* Get around LANG_RT problem -- */
 *pfha = (short) 0;                      /* No user protection fault handler */
@@ -757,17 +928,28 @@ short *pfha = 016000000036;             /* Get around LANG_RT problem -- */
   
 /* Do some initialization */
 
-    if (sysinit() < 0)			/* System-dependent initialization. */
-      fatal("Can't initialize!");
-    connoi();				/* Console interrupts off */
 #ifndef MAC
     xargc = xargs = argc;		/* Make global copies of argc */
     xargv = argv;                       /* ...and argv. */
     xarg0 = argv[0];
+#ifndef NOICP
+    prescan(0);				/* Check for debugging */
+#endif /* NOICP */
 #endif /* MAC */
+
+    if (sysinit() < 0)			/* System-dependent initialization. */
+      fatal("Can't initialize!");
+
+#ifdef TCPSOCKET
+#ifdef CK_SOCKS
+      SOCKSinit(argv[0]);		/* Internet relay package... */
+#endif /* CK_SOCKS */
+#endif /* TCPSOCKET */
+
+    connoi();				/* Console interrupts off */
     sstate = 0;                         /* No default start state. */
 #ifdef DYNAMIC
-    if (getiobs() < 0) 
+    if (getiobs() < 0)
       fatal("Can't allocate i/o buffers!");
 #endif /* DYNAMIC */
     ckhost(myhost,MYHOSTL);		/* Name of local host */
@@ -777,16 +959,17 @@ short *pfha = 016000000036;             /* Get around LANG_RT problem -- */
     flow = dfflow;                      /* and flow control. */
     if (local) if (ttopen(ttname,&local,0,0) < 0) { /* If default tty line */
 #ifndef OS2
-	printf("%s: Can't open device\n",ttname);   /* is external, open it */
+	conol("Can't open device: ");
+	conoll(ttname);
 #endif /* OS2 */
 	local = 0;			            /* now... */
 	strcpy(ttname,CTTNAM);
     }
     speed = ttgspd();			/* Get transmission speed. */
 
-#ifdef SUNX25
+#ifdef ANYX25
     initpad();                          /* Initialize X.25 PAD */
-#endif /* SUNX25 */
+#endif /* ANYX25 */
 
     if (inibufs(SBSIZ,RBSIZ) < 0)	/* Allocate packet buffers */
       fatal("Can't allocate packet buffers!");
@@ -795,24 +978,36 @@ short *pfha = 016000000036;             /* Get around LANG_RT problem -- */
 #ifdef MAC
     cmdini();
 #else /* Not MAC */
+
 /* Attempt to take ini file before doing command line */
 
     *cmdfil = '\0';			/* Assume no command file. */
-    prescan();				/* But first check for -y option */
+    prescan(1);				/* But first check for -y option */
+    debug(F101,"main argc after prescan()","",argc);
 
 #ifndef NOCCTRAP
     setint();				/* Set up interrupts */
-    if (setjmp(cmjbuf)) {		/* Control-C trap returns to here. */
+    if (
+#ifdef CK_POSIX_SIG
+	sigsetjmp(cmjbuf,1)
+#else
+	setjmp(cmjbuf)
+#endif /* CK_POSIX_SIG */
+	) {				/* Control-C trap returns to here. */
 #ifdef GEMDOS
 	cc_clean();			/* Atari: Clean up after ^C-trap. */
 #endif /* GEMDOS */
-	doexit(GOOD_EXIT,-1);		/* Exit with good status. */
+	conoll("Interrupt during initialization or command-line processing.");
+	conoll("C-Kermit quitting...");
+	doexit(BAD_EXIT,-1);		/* Exit with bad status. */
     } else {
 #endif /* NOCCTRAP */
 	cmdini();			/* Sets tlevel */
 	while (tlevel > -1) {		/* Execute init file. */
+	    debug(F101,"main executing init file","",tlevel);
 	    sstate = parser(0);		/* Loop getting commands. */
 	    if (sstate) proto();	/* Enter protocol if requested. */
+	    debug(F101,"main exits init file","",tlevel);
 	}
 #ifndef NOCCTRAP
     }
@@ -827,14 +1022,18 @@ short *pfha = 016000000036;             /* Get around LANG_RT problem -- */
       argv[0] = "/path/kermit" (sometimes just "kermit")
       argv[1] = "/path/cmdfile"
 */
+    debug(F101,"main cmdfil check","",argc);
     if (argc > 1) {
 	if (*argv[1] != '-') {
+	    debug(F110,"main argv[1]",argv[1],0);
 	    if (zchki(argv[1]) > 0) {
 		strcpy(cmdfil,argv[1]);
 	    }
 	}
     }
     if (*cmdfil) {			/* If we got one, */
+	debug(F110,"main cmdfil",cmdfil,0);
+	cfilef = 1;			/* remember we did this, */
 	dotake(cmdfil);			/* execute it */
 	while (tlevel > -1) {		/* until it runs out. */
 	    sstate = parser(1);		/* Loop getting commands. */
@@ -848,48 +1047,44 @@ short *pfha = 016000000036;             /* Get around LANG_RT problem -- */
 #ifndef NOCMDL
 /* Look for a UNIX-style command line... */
 
+    debug(F101,"main argc","",argc);
     if (argc > 1) {                     /* Command line arguments? */
         sstate = cmdlin();              /* Yes, parse. */
 	zstate = sstate;		/* Remember sstate around protocol */
+#ifndef NOLOCAL
 	if (cflg) conect();		/* Connect first if requested */
+#endif /* NOLOCAL */
         if (sstate) {
+#ifndef NOLOCAL
 	    if (displa) concb((char)escape); /* (for console "interrupts") */
+#endif /* NOLOCAL */
 #ifndef NOCCTRAP
 	    setint();			/* Set up interrupts */
-	    if (setjmp(cmjbuf)) {	/* Control-C trap returns to here. */
+	    if (
+#ifdef CK_POSIX_SIG
+		sigsetjmp(cmjbuf,1)
+#else
+		setjmp(cmjbuf)
+#endif /* CK_POSIX_SIG */
+		) {			/* Control-C trap returns to here. */
 #ifdef GEMDOS
 		cc_clean();
 #endif /* GEMDOS */
+#ifndef NOLOCAL
 		if (cnflg) conect();	/* connect again if requested, */
+#endif /* NOLOCAL */
 	    } else {
 #endif /* NOCCTRAP */
 		proto();		/* Take any requested action, then */
 		if (!quiet)		/* put cursor back at left margin, */
 		  conoll("");
+#ifndef NOLOCAL
 		if (cnflg) conect();	/* connect if requested, */
+#endif /* NOLOCAL */
 #ifndef NOCCTRAP
 	    }
 #endif /* NOCCTRAP */
 	}
-/*
-  If interactive commands were given on the command line (using the
-  -C "command, command, ..." option), assign them to a macro called
-  "cl_commands", then execute the macro and leave it defined for
-  subsequent re-execution if desired.
-*/
-#ifndef NOSPL
-	if (clcmds) {			/* Check for -C commands */
-	    int x;
-	    x = addmac("cl_commands",clcmds); /* Put macro in table */
-	    if (x > -1) {		/* If successful, */
-		dodo(x,NULL);		/* set up for macro execution */
-		while (maclvl > -1) {	/* Loop getting macro commands. */
-		    sstate = parser(1);
-		    if (sstate) proto(); /* Enter protocol if requested. */
-		}
-	    }
-	}
-#endif /* NOSPL */
 #ifndef NOICP
 /*
   If a command-line action argument was given and -S ("stay") was not given,
@@ -904,10 +1099,12 @@ short *pfha = 016000000036;             /* Get around LANG_RT problem -- */
 #ifdef NOICP				/* No interactive command parser */
     else {
 #ifndef NOCMDL
-	usage();			/* Command-line-only version */
-	doexit(BAD_EXIT,-1);
+	/* Command-line-only version */
+	fatal("invalid command-line option, type 'kermit -h' for help");
 #else					/* Neither one! */
-	doexit(BAD_EXIT,-1);
+        sstate = 'x';
+        proto();                        /* So go into server mode */
+        doexit(GOOD_EXIT,xitsta);       /* exit with good status */
 #endif /* NOCMDL */
     }
 #else /* not NOICP */
@@ -915,15 +1112,23 @@ short *pfha = 016000000036;             /* Get around LANG_RT problem -- */
   If no action requested on command line, or if -S ("stay") was included,
   enter the interactive command parser.
 */
-    herald();				/* Display program herald. */
+    if (!clcmds)
+      herald();				/* Display program herald. */
 
 #ifndef NOCCTRAP			/* If not no Control-C trap */
 ccagain:
-    if (setjmp(cmjbuf)) {		/* Control-C trap returns to here. */
+    if (
+#ifdef CK_POSIX_SIG
+	sigsetjmp(cmjbuf,1)
+#else
+	setjmp(cmjbuf)
+#endif /* CK_POSIX_SIG */
+	) {				/* Control-C trap returns to here. */
 #ifdef GEMDOS
 	cc_clean();
 #endif /* GEMDOS */
 	fixcmd();			/* Pop command stacks, etc. */
+	clcmds = NULL;
 	debug(F100,"ckcmai got interrupt","",0);
 	goto ccagain;			/* set up trap again. */
     } else {
@@ -936,7 +1141,7 @@ ccagain:
 
 #ifdef MAC
     while (1) {
-	extern char *lfiles;		/* fake pointer cast */
+	extern char *lfiles;		/* Fake pointer cast */
 
 	if (connected) {
 	    debug(F100, "main: calling macparser", "", 0);
@@ -966,11 +1171,34 @@ ccagain:
     }
 #else /* Not MAC */
 
+#ifndef NOSPL
+/*
+  If interactive commands were given on the command line (using the
+  -C "command, command, ..." option), assign them to a macro called
+  "cl_commands", then execute the macro and leave it defined for
+  subsequent re-execution if desired.
+*/
+    if (clcmds) {			/* Check for -C commands */
+	int x;
+	x = addmac("cl_commands",clcmds); /* Put macro in table */
+	if (x > -1) {			/* If successful, */
+	    dodo(x,NULL);		/* set up for macro execution */
+	    while (maclvl > -1) {	/* Loop getting macro commands. */
+		sstate = parser(1);
+		if (sstate) proto();	/* Enter protocol if requested. */
+	    }
+	}
+	herald();
+    }
+#endif /* NOSPL */
 /*
   Running from an application file, or a command filename was
   specified on the command line.
 */
-    if (*cmdfil) dotake(cmdfil);	/* Command file spec'd on cmd line */
+    if (*cmdfil) {
+	cfilef = 1;			/* remember we did this, */
+	dotake(cmdfil);			/* Command file spec'd on cmd line */
+    }
     while(1) {				/* Loop getting commands. */
 	sstate = parser(0);
         if (sstate) proto();            /* Enter protocol if requested. */
@@ -989,7 +1217,7 @@ getiobs() {
     zinbuffer = (char *)malloc(INBUFSIZE);
     if (!zinbuffer) return(-1);
     zoutbuffer = (char *)malloc(OBUFSIZE);
-    if (!zoutbuffer) return(-1);    
+    if (!zoutbuffer) return(-1);
     debug(F100,"getiobs ok","",0);
     return(0);
 }

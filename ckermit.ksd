@@ -1,0 +1,8 @@
+XXVMA      vmlinelogin olaf     serial /dev/ttyh8 9600
+XXVMB      vmfullogin  olaf     call hayes /dev/cua 2400 765-4321
+CUMIN      vmslogin    olaf     net  tcp/ip cumin
+WATSUN     unixlogin   olaf     net  tcp/ip watsun.cc.columbia.edu
+COMPUSERVE cislogin    000,0000 call hayes /dev/cua 2400 876-5432
+DJNR       djnrsprint  xxxx     call hayes /dev/cua 2400 741-8100
+GEOGRAPHY  nologin     xxxx     net  tcp/ip 141.212.99.9:3000
+CONGRESS   nologin     xxxx     net  tcp/ip dra.com

@@ -1,13 +1,15 @@
 /* ckuver.h -- C-Kermit UNIX Version heralds */
 /*
   Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
-  Columbia University Center for Computing Activities.
-  First released January 1985.
-  Copyright (C) 1985, 1992, Trustees of Columbia University in the City of New
-  York.  Permission is granted to any individual or institution to use this
-  software as long as it is not sold for profit.  This copyright notice must be
-  retained.  This software may not be included in commercial products without
-  written permission of Columbia University.
+  Columbia University Academic Information Systems, New York City.
+
+  Copyright (C) 1985, 1993, Trustees of Columbia University in the City of New
+  York.  The C-Kermit software may not be, in whole or in part, licensed or
+  sold for profit as a software product itself, nor may it be included in or
+  distributed with commercial products or otherwise distributed by commercial
+  concerns to their clients or customers without written permission of the
+  Office of Kermit Development and Distribution, Columbia University.  This
+  copyright notice must not be removed, altered, or obscured.
 */
 
 #ifndef CKUVER_H
@@ -37,7 +39,15 @@
 #endif /* aegis */
 
 #ifdef AIXRS
-#define HERALD " IBM RS/6000 (AIX 3.x)"
+#ifdef SVR4
+#ifdef AIX41
+#define HERALD " IBM RS/6000 AIX 4.1"
+#else
+#define HERALD " IBM RS/6000 AIX 3.2"
+#endif /* AIX41 */
+#else
+#define HERALD " IBM RS/6000 AIX 3.0/3.1"
+#endif /* SVR4 */
 #endif /* AIXRS */
 
 #ifdef PS2AIX10
@@ -73,7 +83,23 @@
 #endif /* AUX */
 
 #ifdef BSD44
-#define HERALD " 4.4 BSD"
+#ifdef __bsdi__
+#define HERALD " BSDI BSD/386"
+#else
+#ifdef __NetBSD__
+#define HERALD " NetBSD"
+#else
+#ifdef __FreeBSD__
+#define HERALD " FreeBSD"
+#else
+#ifdef __386BSD__
+#define HERALD " 386BSD"
+#else
+#define HERALD " 4.4BSD"
+#endif /* __386BSD__ */
+#endif /* __FreeBSD__ */
+#endif /* __NetBSD__ */
+#endif /* __bsdi__ */
 #endif /* BSD44 */
 
 #ifdef ENCORE
@@ -103,8 +129,14 @@
 #ifdef COHERENT
 #ifdef _I386
 #define HERALD " MWC Coherent 386 4.x"
+#ifndef i386
+#define i386
+#endif /* i386 */
 #else
 #define HERALD " PC/AT MWC Coherent 286 3.x"
+#ifndef i286
+#define i286
+#endif /* i286 */
 #endif /* _I386 */
 #endif /* COHERENT */
 
@@ -112,8 +144,16 @@
 #define HERALD " Convex/OS"
 #endif /* CONVEX9 */
 
+#ifdef CONVEX10
+#define HERALD " Convex/OS 10.1"
+#endif /* CONVEX10 */
+
 #ifdef _CRAY
+#ifdef _CRAYCOM
+#define HERALD " Cray CSOS"
+#else /* _CRAYCOM */
 #define HERALD " Cray UNICOS"
+#endif /* _CRAYCOM */
 #endif /* _CRAY */
 
 #ifdef DGUX430
@@ -121,7 +161,11 @@
 #endif /* DGUX430 */
 
 #ifdef DGUX540
+#ifdef DGUX543
+#define HERALD " Data General DG/UX 5.4R3.00"
+#else
 #define HERALD " Data General DG/UX 5.4"
+#endif /* DGUX543 */
 #endif /* DGUX540 */
 
 #ifdef datageneral
@@ -133,6 +177,10 @@
 #ifdef DELL_SVR4
 #define HERALD " Dell System V R4"
 #endif /* DELL_SVR4 */
+
+#ifdef UNIXWARE
+#define HERALD " UnixWare"
+#endif /* UNIXWARE */
 
 #ifdef ICL_SVR4
 #define HERALD " ICL System V R4 DRS N/X"
@@ -158,8 +206,12 @@
 #endif /* SVR3JC */
 #endif /* I386IX */
 
+#ifdef IRIX51
+#define HERALD " Silicon Graphics IRIX 5.1"
+#else
 #ifdef IRIX40
 #define HERALD " Silicon Graphics IRIX 4.0"
+#endif /* IRIX51 */
 #endif /* IRIX40 */
 
 #ifdef ISIII
@@ -171,8 +223,20 @@
 #endif /* IX370 */
 
 #ifdef HPUX
-#define HERALD " HP 9000 Series HP-UX"
-#endif /* HPUX */
+#ifdef HPUX8
+#define HERALD " HP-UX 8.0"
+#else
+#ifdef HPUX9
+#define HERALD " HP-UX 9.0"
+#else
+#ifdef HPUX10
+#define HERALD " HP-UX 10.0"
+#else
+#define HERALD " HP-UX"
+#endif /* HPUX8  */
+#endif /* HPUX9  */
+#endif /* HPUX10 */
+#endif /* HPUX   */
 
 #ifdef MINIX
 #define HERALD " Minix"
@@ -183,11 +247,22 @@
 #endif /* MIPS */
 
 #ifdef NEXT
-#define HERALD " NeXT"
+#define HERALD " NeXTSTEP"
 #endif /* NEXT */
 
 #ifdef OSF
-#define HERALD " DEC OSF/1 1.0"
+#ifdef i386
+#define HERALD " DECpc OSF/1"
+#ifdef __GNUC
+#define OSFPC
+#endif /* __GNUC */
+#else
+#ifdef __alpha
+#define HERALD " DEC OSF/1 AXP"
+#else
+#define HERALD " DEC OSF/1"
+#endif /* __alpha */
+#endif /* i386 */
 #endif /* OSF */
 
 #ifdef PTX
@@ -206,6 +281,14 @@
 #define HERALD " DEC Professional 300 (Venix 1.0)"
 #endif /* PROVX1 */
 
+#ifdef PYRAMID
+#ifdef SVR4
+#define HERALD " Pyramid DC/OSx"
+#else
+#define HERALD " Pyramid Dual Port OSx"
+#endif /* SVR4 */
+#endif /* PYRAMID */
+
 #ifdef RTAIX
 #define HERALD " IBM RT PC (AIX 2.2)"
 #endif /* RTAIX */
@@ -218,18 +301,8 @@
 #define HERALD " SONY NEWS"
 #endif /* sony_news */
 
-#ifdef SVR4
-#ifdef sun
-#define HERALD "SUN Solaris 2.1"
-#endif /* sun */
-#endif /* SVR4 */
-
 #ifdef SOLARIS
-#ifdef sun
-#define HERALD " SUN Solaris 2.0"
-#else
-#define HERALD " Solaris 2.0"
-#endif /* SUN */
+#define HERALD " Solaris 2.x"
 #endif /* SOLARIS */
 
 #ifdef SUNOS4
@@ -249,6 +322,10 @@
 #define HERALD " SunOS 4.0 (SVR3)"
 #endif /* HDBUUCP */
 #endif /* SUN4S5 */
+
+#ifdef STRATUS
+#define HERALD " Stratus VOS"
+#endif /* STRATUS */
 
 #ifdef TOWER1
 #define HERALD " NCR Tower 1632 (OS 1.02)"
@@ -295,7 +372,19 @@
 #ifdef QNX
 #define HERALD " QNX"
 #else
+#ifdef __linux__
+#define HERALD " Linux"
+#else
+#ifdef _386BSD				/* 386BSD (Jolix) */
+#define HERALD " 386BSD"
+#else
+#ifdef LYNXOS				/* Lynx OS 2.2 */
+#define HERALD " Lynx OS"
+#else
 #define HERALD " POSIX"
+#endif /* LYNXOS */
+#endif /* _386BSD */
+#endif /* __linux__ */
 #endif /* QNX */
 #endif /* POSIX */
 
@@ -315,6 +404,9 @@
 #ifdef HERALD
 #undef HERALD
 #endif /* HERALD */
+#ifdef ODT30
+#define HERALD " SCO ODT 3.0"
+#else
 #ifdef M_UNIX 
 #define HERALD " SCO UNIX/386"
 #else
@@ -328,6 +420,7 @@
 #endif /* M_I286 */
 #endif /* M_I386 */
 #endif /* M_UNIX */
+#endif /* ODT30 */
 #endif /* XENIX  */
 
 #ifdef ZILOG
@@ -386,12 +479,16 @@
 #endif /* SVR4 */
 #endif /* HERALD */
 
+#ifdef WINNT
+#define HERALD " Windows NT"
+#else
 #ifdef OS2
 #ifdef HERALD
 #undef HERALD
 #endif /* HERALD */
 #define HERALD " OS/2"
 #endif /* OS/2 */
+#endif /* WINNT */
 
 #ifndef HERALD
 #define HERALD " Unknown Version"
@@ -410,30 +507,56 @@
 #endif /* CKCPU */
 #endif /* pdp11 */
 
-#ifdef __ALPHA
+#ifdef __ALPHA				/* DEC Alpha AXP */
 #ifndef CKCPU
 #define CKCPU "Alpha"
 #endif /* CKCPU */
 #endif /* __ALPHA */
 
-#ifdef __hp9000s800			/* HP 9000 */
+#ifdef __alpha				/* OSF/1 uses lowercase... */
+#ifndef CKCPU
+#define CKCPU "Alpha"
+#endif /* CKCPU */
+#endif /* __alpha */
+
+/* HP 9000 */
+
+#ifdef __hp9000s700
+#ifndef CKCPU
+#define CKCPU "hp9000s700"
+#endif /* CKCPU */
+#endif /* __hp9000s700 */
+
+#ifdef __hp9000s800
+#ifndef CKCPU
 #define CKCPU "hp9000s800"
+#endif /* CKCPU */
 #endif /* __hp9000s800 */
+
 #ifdef __hp9000s500
 #ifndef CKCPU
 #define CKCPU "hp9000s500"
 #endif /* CKCPU */
 #endif /* __hp9000s500 */
+
+#ifdef __hp9000s400
+#ifndef CKCPU
+#define CKCPU "hp9000s400"
+#endif /* CKCPU */
+#endif /* __hp9000s400 */
+
 #ifdef __hp9000s300
 #ifndef CKCPU
 #define CKCPU "hp9000s300"
 #endif /* CKCPU */
 #endif /* __hp9000s300 */
+
 #ifdef __hp9000s200
 #ifndef CKCPU
 #define CKCPU "hp9000s200"
 #endif /* CKCPU */
 #endif /* __hp9000s200 */
+
 #ifdef m88000				/* Motorola 88000 */
 #ifndef CKCPU
 #define CKCPU "mc88000"
@@ -574,6 +697,20 @@
 #define CKCPU "mc68000"
 #endif /* CKCPU */
 #endif /* MAC */
+
+#ifdef STRATUS
+#ifndef CKCPU
+#ifdef __I860__
+#define CKCPU "I860 Family"
+#else
+#ifdef __MC68K__
+#define CKCPU "MC680x0 Family"
+#else
+#define CKCPU "Stratus unknown processor"
+#endif /* __MC68K__ */
+#endif /* __I860__ */
+#endif /* CKCPU */
+#endif /* STRATUS */
 
 #ifndef CKCPU				/* All others */
 #define CKCPU "unknown"

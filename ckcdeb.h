@@ -1,9 +1,20 @@
 /*  C K C D E B . H  */
 
 /*
+  Tue Aug  9 12:20:30 1994
+
+  NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
+  compatible with C preprocessors that support only #ifdef, #else, #endif,
+  #define, and #undef.  Please do not use #if, logical operators, or other
+  preprocessor features in any of the portable C-Kermit modules.  You can,
+  of course, use these constructions in system-specific modules when you they
+  are supported.
+*/
+
+/*
   This file is included by all C-Kermit modules, including the modules
   that aren't specific to Kermit (like the command parser and the ck?tio and
-  ck?fio modules.  It specifies format codes for debug(), tlog(), and similar
+  ck?fio modules).  It specifies format codes for debug(), tlog(), and similar
   functions, and includes any necessary definitions to be used by all C-Kermit
   modules, and also includes some feature selection compile-time switches, and
   also system- or compiler-dependent definitions, plus #includes and prototypes
@@ -12,13 +23,15 @@
 
 /*
   Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
-  Columbia University Center for Computing Activities.
-  First released January 1985.
-  Copyright (C) 1985, 1992, Trustees of Columbia University in the City of New
-  York.  Permission is granted to any individual or institution to use this
-  software as long as it is not sold for profit.  This copyright notice must be
-  retained.  This software may not be included in commercial products without
-  written permission of Columbia University.
+  Columbia University Academic Information Systems, New York City.
+
+  Copyright (C) 1985, 1994, Trustees of Columbia University in the City of New
+  York.  The C-Kermit software may not be, in whole or in part, licensed or
+  sold for profit as a software product itself, nor may it be included in or
+  distributed with commercial products or otherwise distributed by commercial
+  concerns to their clients or customers without written permission of the
+  Office of Kermit Development and Distribution, Columbia University.  This
+  copyright notice must not be removed, altered, or obscured.
 */
 
 /*
@@ -29,6 +42,37 @@
 
 #ifndef CKCDEB_H			/* Don't include me more than once. */
 #define CKCDEB_H
+
+#ifdef NOLOCAL               /* Things not needed for a remote-only version */
+#ifndef NODIAL
+#define NODIAL
+#endif /* NODIAL */
+#ifndef NOSCRIPT
+#define NOSCRIPT
+#endif /* NOSCRIPT */
+#ifndef NOAPC
+#define NOAPC
+#endif /* NOAPC */
+#ifndef NOSETKEY
+#define NOSETKEY
+#endif /* NOSETKEY */
+#ifndef NOXMIT
+#define NOXMIT
+#endif /* NOXMIT */
+#ifdef CK_CURSES
+#undef CK_CURSES
+#endif /* CK_CURSES */
+#ifdef NETCONN
+#undef NETCONN
+#endif /* NETCONN */
+#ifdef TCPSOCKET
+#undef TCPSOCKET
+#endif /* TCPSOCKET */
+#endif /* NOLOCAL */
+
+#ifndef DEFPAR				/* Default parity */
+#define DEFPAR 0			/* Must be here because it is used */
+#endif /* DEFPAR */			/* by all classes of modules */
 
 #ifdef OS2				/* For OS/2 debugging */
 #include "ckoker.h"
@@ -42,7 +86,16 @@
  * The MAC doesn't use standard stdio routines.
  */
 #undef getchar
+#define getchar()   mac_getchar()
 #undef putchar
+#define putchar(c)	mac_putchar(c)
+#define printf		mac_printf
+#define perror		mac_perror
+#define puts		mac_puts
+extern int mac_putchar (int c);
+extern int mac_puts (const char *string);
+extern int mac_printf(const char *, ...);
+extern int mac_getchar (void);
 #endif /* MAC */
 
 /* System-type compilation switches */
@@ -95,6 +148,37 @@
 #endif /* SVR3 */
 #endif /* MIPS */
 
+#ifdef HPUX9				/* HP-UX 9.x */
+#ifndef SVR3
+#define SVR3
+#endif /* SVR3 */
+#ifndef HPUX
+#define HPUX
+#endif /* HPUX */
+#endif /* HPUX9 */
+
+#ifdef HPUX10				/* HP-UX 10.x */
+#ifndef SVR4
+#define SVR4
+#endif /* SVR4 */
+#ifndef HPUX
+#define HPUX
+#endif /* HPUX */
+#endif /* HPUX10 */
+
+#ifdef QNX				/* QNX Software Systems Inc */
+#ifndef POSIX				/* QNX 4.0 or later is POSIX */
+#define POSIX
+#endif /* POSIX */
+#ifndef __386__				/* Comes in 16-bit and 32-bit */
+#define __16BIT__
+#define CK_QNX16
+#else
+#define __32BIT__
+#define CK_QNX32
+#endif /* __386__ */
+#endif /* QNX */
+
 /*
   4.4BSD is a mixture of System V R4, POSIX, and 4.3BSD.
 */
@@ -124,6 +208,17 @@
 #define SVR3
 #endif /* SVR3 */
 #endif /* SVR4 */
+
+#ifdef OXOS
+#ifndef ATTSV
+#define ATTSV				/* OXOS implies ATTSV */
+#endif /* ! ATTSV */
+#define SW_ACC_ID			/* access() wants privs on */
+#define kill priv_kill			/* kill() wants privs on */
+#ifndef NOSETBUF
+#define NOSETBUF			/* NOSETBUF is safe */
+#endif /* ! NOSETBUF */
+#endif /* OXOS */
 
 #ifdef UTSV				/* UTSV implies ATTSV */
 #ifndef ATTSV
@@ -297,6 +392,11 @@
 #endif /* BSD44ORPOSIX */
 #endif /* POSIX */
 
+#ifdef __DECC				/* For DEC Alpha AXP VMS or OSF/1 */
+#define CK_ANSIC			/* Even with /stand=vaxc, need ansi */
+#define SIG_V				/* and signal type is VOID */
+#endif	/* __DECC */
+
 #ifdef apollo				/* May be ANSI-C, check further */
 #ifdef __STDCPP__
 #define CK_ANSIC			/* Yes, this is real ANSI-C */
@@ -325,6 +425,12 @@
 #endif /* CK_ANSIC */
 #endif /* NOANSI */
 #endif /* MAC */
+
+#ifdef STRATUS				/* Stratus VOS */
+#ifndef CK_ANSIC
+#define CK_ANSIC
+#endif /* CK_ANSIC */
+#endif /* STRATUS */
 
 #ifndef NOANSI
 #ifdef __STDC__				/* __STDC__ means ANSI C */
@@ -357,6 +463,14 @@
 #define CHAR char
 #define SIG_I
 #endif /* A986 */
+
+/* Signal handling */
+
+#ifdef QNX
+#ifndef CK_POSIX_SIG
+#define CK_POSIX_SIG
+#endif /* CK_POSIX_SIG */
+#endif /* QNX */
 
 /* Void type */
 
@@ -396,7 +510,18 @@
 #define SIG_V
 #define SIGTYP __SIGVOID		/* AIX370 */
 #else
+#ifdef STRATUS				/* Stratus VOS */
+#define SIG_V
+#else
+#ifdef MAC
+#define SIGTYP long
+#define SIG_IGN 0
+#define SIGALRM 1
+#define SIGINT  2
+#else /* Everything else */
 #define SIG_I
+#endif /* MAC */
+#endif /* STRATUS */
 #endif /* AIX370 */
 #endif /* NEXT */
 #endif /* SUNOS4 */
@@ -450,12 +575,16 @@ typedef char CHAR;
 /* typedef long LONG; */
 #else
 #ifdef datageneral
-#define CHAR unsigned char			/* 3.22 compiler */	
+#define CHAR unsigned char			/* 3.22 compiler */ 
+#else
+#ifdef HPUX
+#define CHAR unsigned char
 #else
 #ifdef CHAR
 #undef CHAR
 #endif /* CHAR */
 typedef unsigned char CHAR;
+#endif /* HPUX */
 #endif /* datageneral */
 #endif /* BSD29 */
 #endif /* C70 */
@@ -463,6 +592,66 @@ typedef unsigned char CHAR;
 #endif /* MINIX */
 #endif /* PROVX1 */
 
+#ifdef MAC				/* Macintosh file routines */
+#ifndef CKWART_C			/* But not in "wart"... */
+#define feof mac_feof
+#define rewind mac_rewind
+#define fgets mac_fgets
+#define fopen mac_fopen
+#define fclose mac_fclose
+int mac_feof();
+void mac_rewind();
+char *mac_fgets();
+FILE *mac_fopen();
+int mac_fclose();
+#endif /* CKCPRO_W */
+#endif /* MAC */
+/*
+   Systems whose mainline modules have access to the communication-line
+   file descriptor, ttyfd.
+*/
+#ifndef CK_TTYFD
+#ifdef UNIX
+#define CK_TTYFD
+#else
+#ifdef OS2
+#define CK_TTYFD
+#endif /* OS2 */
+#endif /* UNIX */
+#endif /* CK_TTYFD */
+
+/* Temporary-directory-for-RECEIVE feature ... */
+/* This says whether we have the isdir() function defined. */
+
+#ifdef UNIX				/* UNIX has it */
+#ifndef CK_TMPDIR
+#ifndef pdp11
+#define CK_TMPDIR
+#define TMPDIRLEN 256
+#endif /* pdp11 */
+#endif /* CK_TMPDIR */
+#endif /* UNIX */
+
+#ifdef VMS				/* VMS too */
+#ifndef CK_TMPDIR
+#define CK_TMPDIR
+#define TMPDIRLEN 256
+#endif /* CK_TMPDIR */
+#endif /* VMS */
+
+#ifdef OS2				/* OS two too */
+#ifndef CK_TMPDIR
+#define CK_TMPDIR
+#define TMPDIRLEN 129
+#endif /* CK_TMPDIR */
+#endif /* OS2 */
+
+#ifdef STRATUS				/* Stratus VOS too. */
+#ifndef CK_TMPDIR
+#define CK_TMPDIR
+#define TMPDIRLEN 256
+#endif /* CK_TMPDIR */
+#endif /* STRATUS */
 /*
  Debug and transaction logging is included automatically unless you define
  NODEBUG or NOTLOG.  Do this if you want to save the space and overhead.
@@ -499,6 +688,12 @@ typedef unsigned char CHAR;
 #define IFDEBUG
 #endif /* IFDEBUG */
 #endif /* OS2 */
+
+#ifdef OXOS				/* tst is faster than jsr */
+#ifndef IFDEBUG
+#define IFDEBUG
+#endif /* IFDEBUG */
+#endif /* OXOS */
 
 #ifndef DEBUG
 /* Compile all the debug() statements away.  Saves a lot of space and time. */
@@ -538,20 +733,291 @@ _PROTOTYP(VOID tlog,(int, char *, char *, long));
 
 /* Kermit feature selection */
 
+#define CK_SPEED			/* Control-prefix removal */
+#ifdef NOCKSPEED
+#undef CK_SPEED
+#endif /* NOCKSPEED */
+
 #ifdef MAC				/* For Macintosh, no escape */
 #define NOPUSH				/* to operating system */
 #endif /* MAC */
 
+/* Systems where we can call zmkdir() to create directories. */
+
+#ifndef CK_MKDIR
+#ifndef NOMKDIR
+
 #ifdef UNIX
+#ifndef pdp11
+#define CK_MKDIR
+#endif /* pdp11 */
+#endif /* UNIX */
+
+#ifdef OS2
+#define CK_MKDIR
+#endif /* OS2 */
+
+#ifdef VMS
+#define CK_MKDIR
+#endif /* VMS */
+
+#ifdef STRATUS
+#define CK_MKDIR
+#endif /* STRATUS */
+
+#endif /* CK_MKDIR */
+#endif /* NOMKDIR */
+
+#ifdef NOMKDIR				/* Allow for command-line override */
+#ifdef CK_MKDIR
+#undef CK_MKDIR
+#endif /* CK_MKDIR */
+#endif /* NOMKDIR */
+
+/* Systems for which we can enable the REDIRECT command automatically */
+
+#ifndef CK_REDIR
+#ifdef __linux__			/* Linux */
+#define CK_REDIR
+#else
+#ifdef SUNOS41				/* SunOS 4.1 */
+#define CK_REDIR
+#else
+#ifdef __bsdi__				/* BSD/386 */
+#define CK_REDIR
+#else
+#ifdef SVR4				/* System V R4 */
+#define CK_REDIR
+#else
+#ifdef ultrix				/* DEC ULTRIX */
+#define CK_REDIR
+#else
+#ifdef AIXRS				/* RS/6000 AIX */
+#define CK_REDIR
+#else
+#ifdef OSF				/* OSF/1 */
+#define CK_REDIR
+#else
+#ifdef OS2				/* OS/2 */
+#define CK_REDIR
+#else
+#ifdef NEXT				/* NEXT */
+#define CK_REDIR
+#endif /* NEXT */
+#endif /* OS2 */
+#endif /* OSF */
+#endif /* AIXRS */
+#endif /* ultrix */
+#endif /* SVR4 */
+#endif /* __bsdi__ */
+#endif /* SUNOS41 */
+#endif /* __linux__ */
+#endif /* CK_REDIR */
+
+#ifdef NOPUSH				/* But... REDIRECT command is not */
+#ifdef CK_REDIR				/*  allowed if NOPUSH is defined. */
+#undef CK_REDIR
+#endif /* CK_REDIR */
+#endif /* NOPUSH */
+
+/* The following allows automatic enabling of REDIRECT to be overridden... */
+
+#ifdef NOREDIRECT
+#ifdef CK_REDIR
+#undef CK_REDIR
+#endif /* CK_REDIR */
+#endif /* NOREDIRECT */
+
+/* Versions where we support the RESEND command */
+
+#ifndef NORESEND
+#ifndef CK_RESEND
+#ifdef UNIX
+#ifndef pdp11
+#define CK_RESEND
+#endif /* pdp11 */
+#endif /* UNIX */
+
+#ifdef VMS
+#define CK_RESEND
+#endif /* VMS */
+
+#ifdef OS2
+#define CK_RESEND
+#endif /* OS2 */
+
+#ifdef AMIGA
+#define CK_RESEND
+#endif /* AMIGA */
+
+#ifdef datageneral
+#define CK_RESEND
+#endif /* datageneral */
+
+#ifdef STRATUS
+#define CK_RESEND
+#endif /* STRATUS */
+
+#endif /* CK_RESEND */
+#endif /* NORESEND */
+
+/* Systems where we want the Thermometer to be used for fullscreen */
+
+#ifdef OS2
+#ifndef CK_PCT_BAR
+#define CK_PCT_BAR
+#endif /* CK_PCT_BAR */
+#endif /* OS2 */
+
+/* Systems where we have a REXX command */
+
+#ifdef OS2
+#ifdef __32BIT__
+#ifndef NOREXX
+#define CK_REXX
+#endif /* NOREXX */
+#endif /* __32BIT__ */
+#endif /* OS2 */
+
+/* OS/2 C-Kermit features not available in 16-bit version... */
+
+#ifdef OS2
+#ifndef __32BIT__
+#ifdef NPIPE				/* Named Pipes communication */
+#undef NPIPE
+#endif /* NPIPE */
+#ifdef CK_NETBIOS			/* NETBIOS communication */
+#undef CK_NETBIOS
+#endif /* CK_NETBIOS */
+#ifdef OS2MOUSE				/* Mouse */
+#undef OS2MOUSE
+#endif /* OS2MOUSE */
+#ifdef OS2PM				/* Presentation Manager */
+#undef OS2PM
+#endif /* OS2PM */
+#ifdef CK_REXX				/* Rexx */
+#undef CK_REXX
+#endif /* CK_REXX */
+#endif /* __32BIT__ */
+#endif /* OS2 */
+
+/*
+  Systems that have select().
+  This is used for both msleep() and for read-buffer checking in in_chk().
+*/
+#ifndef SELECT
+#ifndef NOSELECT
+#ifdef __linux__
+#define SELECT
+#else
+#ifdef SUNOS4
+#define SELECT
+#else
+#ifdef NEXT
+#define SELECT
+#else
+#ifdef HPUX
+#define SELECT
+#else
+#ifdef AIXRS
+#define SELECT
+#else
+#ifdef BSD44
+#define SELECT
+#else
+#ifdef BSD4
+#define SELECT
+#else
+#ifdef OXOS
+#define SELECT
+#endif /* OXOS */
+#endif /* BSD4 */
+#endif /* BSD44 */
+#endif /* AIXRS */
+#endif /* HPUX */
+#endif /* NEXT */
+#endif /* __linux__ */
+#endif /* SUNOS4 */
+#endif /* NOSELECT */
+#endif /* SELECT */
+
+/*
+  CK_NEED_SIG is defined if the system cannot check the console to
+  to see if characters are waiting.  This is used during local-mode file
+  transfer to interrupt the transfer, refresh the screen display, etc.
+  If CK_NEED_SIG is defined, then file-transfer interruption characters
+  have to be preceded a special character, e.g. the SIGQUIT character.
+  CK_NEED_SIG should be defined if the conchk() function is not operational.
+*/
+#ifdef NOPOLL				/* For overriding CK_POLL definition */
+#ifdef CK_POLL
+#undef CK_POLL
+#endif /* CK_POLL */
+#endif /* NOPOLL */
+
+#ifndef CK_POLL				/* If we don't have poll() */
+#ifndef RDCHK				/* And we don't have rdchk() */
+#ifndef SELECT				/* And we don't have select() */
+#ifdef ATTSV
+#ifndef aegis
+#ifndef datageneral
+#ifndef OXOS
+#define CK_NEED_SIG
+#endif /* OXOS */
+#endif /* datageneral */
+#endif /* aegis */
+#endif /* ATTSV */
+#ifdef POSIX
+#ifndef CK_NEED_SIG
+#define CK_NEED_SIG
+#endif /* CK_NEED_SIG */
+#endif /* POSIX */
+#endif /* SELECT */
+#endif /* RDCHK */
+#endif /* CK_POLL */
+
+#ifdef HPUX				/* HP-UX has select() */
+#ifdef CK_NEED_SIG
+#undef CK_NEED_SIG
+#endif /* CK_NEED_SIG */
+#endif /* HPUX */
+
+#ifdef AIXRS				/* AIX has select() */
+#ifdef CK_NEED_SIG
+#undef CK_NEED_SIG
+#endif /* CK_NEED_SIG */
+#endif /* AIXRS */
+
+#ifdef BSD44				/* 4.4BSD has FIONREAD */
+#ifdef CK_NEED_SIG
+#undef CK_NEED_SIG
+#endif /* CK_NEED_SIG */
+#endif /* BSD44 */
+
+#ifdef QNX				/* QNX has FIONREAD and select() */
+#ifdef CK_NEED_SIG
+#undef CK_NEED_SIG
+#endif /* CK_NEED_SIG */
+#endif /* QNX */
+
+/*
+  Automatic parity detection.
+  This actually implies a lot more now: length-driven packet reading,
+  "Doomsday Kermit" IBM Mainframe file transfer through 3270 data streams, etc.
+*/
+#ifdef UNIX				/* For Unix */
 #ifndef NOPARSEN
-#define PARSENSE			/* Automatic parity detection */
+#define PARSENSE
 #endif /* NOPARSEN */
-#endif /* UNIX */			/* for Unix */
+#endif /* UNIX */
 
 #ifdef VMS				/* ... and VMS */
 #ifndef NOPARSEN
 #define PARSENSE
 #endif /* NOPARSEN */
+#ifdef __GNUC__
+#define VMSGCC
+#endif /* __GNUC__ */
 #endif /* VMS */
 
 #ifdef MAC				/* and Macintosh */
@@ -560,11 +1026,21 @@ _PROTOTYP(VOID tlog,(int, char *, char *, long));
 #endif /* NOPARSEN */
 #endif /* MAC */
 
-#ifdef VMS				/* Use dynamic memory allocation */
-#ifndef DYNAMIC
-#define DYNAMIC				/* in VMS version. */
+#ifdef STRATUS				/* and Stratus VOS */
+#ifndef NOPARSEN
+#define PARSENSE
+#endif /* NOPARSEN */
+#endif /* STRATUS */
+
+#ifdef OS2				/* and OS/2, finally */
+#ifndef NOPARSEN
+#define PARSENSE
+#endif /* NOPARSEN */
+#endif /* OS2 */
+
+#ifdef DYNAMIC				/* If DYNAMIC is defined */
+#define DCMDBUF				/* then also define this. */
 #endif /* DYNAMIC */
-#endif /* VMS */
 
 #ifndef CK_LBRK				/* Can send Long BREAK */
 
@@ -593,8 +1069,8 @@ _PROTOTYP(VOID tlog,(int, char *, char *, long));
 /* These are defined here because they are shared by the system dependent */
 /* and the system independent modules. */
 
-#define  CAR_OFF 0	/* On: heed carrier always, except during DIAL. */
-#define  CAR_ON  1      /* Off: ignore carrier always. */
+#define  CAR_OFF 0	/* Off: ignore carrier always. */
+#define  CAR_ON  1      /* On: heed carrier always, except during DIAL. */
 #define  CAR_AUT 2      /* Auto: heed carrier, but only if line is declared */
 			/* to be a modem line, and only during CONNECT. */
 
@@ -607,6 +1083,195 @@ _PROTOTYP(VOID tlog,(int, char *, char *, long));
 #endif /* MDMHUP */
 #endif /* NOMDMHUP */
 #endif /* NODIAL */
+
+/*
+  Serial interface speeds available.  We assume that everybody supports:
+  0, 110, 300, 600, 1200, 2400, 4800, and 9600 bps.  Symbols for other speeds
+  are defined here.  You can also add definitions on the CC command lines.
+  These definitions affect the SET SPEED keyword table, and are not necessarily
+  usable in the system-dependent speed-setting code in the ck?tio.c modules,
+  which depends on system-specific symbols like (in UNIX) B19200.  In other
+  words, just defining it doesn't mean it'll work -- you also have to supply
+  the supporting code in ttsspd() and ttgspd() in ck?tio.c.
+
+  The symbols have the form BPS_xxxx, where xxxx is the speed in bits per
+  second, or (for bps values larger than 9999) thousands of bps followed by K.
+  The total symbol length should be 8 characters or less.  Some values are
+  enabled automatically below.  You can disable a particular value by defining
+  NOB_xxxx on the CC command line.
+*/
+#ifndef NOB_50
+#define BPS_50				/* 50 bps */
+#endif
+
+#ifndef NOB_75
+#define BPS_75				/* 75 bps */
+#endif
+
+#ifndef NOB7512
+#ifdef ANYBSD
+#define BPS_7512			/* 75/1200 Split Speed */
+#endif /* ANYBSD */
+#endif /* NOB7512 */
+
+#undef BPS_134				/* 134.5 bps (IBM 2741) */
+
+#ifndef NOB_150
+#define BPS_150				/* 150 bps */
+#endif
+
+#ifndef NOB_200
+#define BPS_200				/* 200 bps */
+#endif
+
+#ifndef NOB_1800
+#ifdef MAC
+#define BPS_1800			/* 1800 bps */
+#endif
+#endif
+
+#ifndef NOB_3600
+#define BPS_3600			/* 3600 bps */
+#endif
+
+#ifndef NOB_7200
+#define BPS_7200			/* 7200 bps */
+#endif
+
+#ifndef NOB_14K
+#ifdef OS2
+#define BPS_14K				/* 14400 bps */
+#else
+#ifdef NEXT
+#define BPS_14K
+#else
+#ifdef MAC
+#define BPS_14K
+#else
+#ifdef AMIGA
+#define BPS_14K
+#endif /* AMIGA */
+#endif /* MAC */
+#endif /* NEXT */
+#endif /* OS2 */
+#endif /* NOB_14K */
+
+#ifndef NOB_19K
+#define BPS_19K				/* 19200 bps */
+#endif
+
+#ifndef NOB_28K
+#ifdef NEXT
+#define BPS_28K				/* 28800 bps */
+#else
+#ifdef MAC
+#define BPS_28K				/* 28800 bps */
+#endif /* MAC */
+#endif /* NEXT */
+#endif /* NOB_28K */
+
+#ifndef NOB_38K
+#define BPS_38K				/* 38400 bps */
+#endif
+
+/*
+  Speeds of 57600 and higher are supported in Linux 0.99.15 and later, but
+  it seems to do no harm to enable them for earlier releases too, in which
+  case commands like "set speed 57600" simply fail with an "Unsupported line
+  speed" message.
+*/
+#ifndef NOHISPEED
+#ifdef __linux__
+#define LINUXHISPEED
+#endif /* __linux__ */
+#endif /* NOHISPEED */
+
+#ifndef NOB_57K
+#ifdef OS2
+#define BPS_57K				/* 57600 bps */
+#else
+#ifdef __linux__
+#ifdef LINUXHISPEED
+#define BPS_57K
+#endif /* LINUXHISPEED */
+#else
+#ifdef HPUX
+#define BPS_57K
+#else
+#ifdef NEXT
+#define BPS_57K
+#else
+#ifdef __386BSD__
+#define BPS_57K
+#else
+#ifdef __FreeBSD__
+#define BPS_57K
+#else
+#ifdef __NetBSD__
+#define BPS_57K
+#else
+#ifdef MAC
+#define BPS_57K
+#else
+#ifdef QNX
+#define BPS_57K
+#endif /* QNX */
+#endif /* MAC */
+#endif /* __NetBSD__ */
+#endif /* __FreeBSD__ */
+#endif /* __386BSD__ */
+#endif /* NEXT */
+#endif /* HPUX */
+#endif /* __linux__ */
+#endif /* OS2 */
+#endif /* NOB_57K */
+
+#ifndef NOB_76K
+#ifdef OS2
+#ifdef __32BIT__
+#define BPS_76K				/* 76800 bps */
+#endif /* __32BIT__ */
+#endif /* OS2 */
+#ifdef QNX
+#define BPS_76K
+#endif /* QNX */
+#endif /* NOB_76K */
+
+#ifndef NOB_115K
+#ifdef QNX
+#define BPS_115K			/* 115200 bps */
+#else
+#ifdef HPUX
+#define BPS_115K
+#else
+#ifdef __linux__
+#ifdef LINUXHISPEED
+#define BPS_115K
+#endif /* LINUXHISPEED */
+#else
+#ifdef __386BSD__
+#define BPS_115K
+#else
+#ifdef __FreeBSD__
+#define BPS_115K
+#else
+#ifdef __NetBSD__
+#define BPS_115K
+#else
+#ifdef OS2
+#ifdef __32BIT__
+#define BPS_115K
+#endif /* __32BIT__ */
+#endif /* OS2 */
+#endif /* __NetBSD__ */
+#endif /* __FreeBSD__ */
+#endif /* __386BSD__ */
+#endif /* __linux__ */
+#endif /* HPUX */
+#endif /* QNX */
+#endif /* NOB_115K */
+
+#undef BPS_230K				/* 230400 bps, nobody does this yet */
 
 /* Types of flow control available */
 
@@ -632,7 +1297,7 @@ _PROTOTYP(VOID tlog,(int, char *, char *, long));
 #endif /* SUNOS4 */
 #endif /* SUN4S5 */
 
-#ifdef BSD44				/* And in 4.4 BSD */
+#ifdef BSD44				/* And in 4.4 BSD, including BSDI */
 #define CK_RTSCTS
 #endif /* BSD44 */
 
@@ -644,6 +1309,34 @@ _PROTOTYP(VOID tlog,(int, char *, char *, long));
 #define CK_RTSCTS			/* Ditto. */
 #define CK_DTRCD
 #endif /* STERMIOX */
+
+#ifdef OXOS				/* Olivetti X/OS R2 struct termios */
+#define CK_RTSCTS			/* Ditto. */
+#define CK_DTRCD
+#endif /* OXOS */
+
+#ifdef AIXRS				/* RS/6000 with AIX 3.x */
+#define CK_RTSCTS			/* Has its own peculiar method... */
+#endif /* AIXRS */
+
+#ifdef __linux__			/* Linux */
+#define CK_RTSCTS
+#endif /* __linux__ */
+/*
+  Hardware flow control is not defined in POSIX.1.  Nevertheless, a certain
+  style API for hardware flow control, using tcsetattr() and the CRTSCTS
+  bit(s), seems to be gaining currency on POSIX-based UNIX systems.  The
+  following code defines the symbol POSIX_CRTSCTS for such systems.
+*/
+#ifdef __bsdi__				/* BSDI, a.k.a. BSD/386 */
+#define POSIX_CRTSCTS
+#endif /* __bsdi__ */
+#ifdef __linux__			/* Linux */
+#define POSIX_CRTSCTS
+#endif /* __linux__ */
+#ifdef __NetBSD__			/* NetBSD */
+#define POSIX_CRTSCTS
+#endif /* __NetBSD__ */
 
 /*
  Systems where we can expand tilde at the beginning of file or directory names
@@ -673,6 +1366,59 @@ _PROTOTYP(VOID tlog,(int, char *, char *, long));
 #define DTILDE				/* automatically defines ATTSV */
 #endif /* DTILDE */			/* (see above) ... */
 #endif /* HPUX */
+
+/*
+  This is mainly for the benefit of ckufio.c (UNIX and OS/2 file support).
+  Systems that have an atomic rename() function, so we don't have to use
+  link() and unlink().
+*/
+#ifdef POSIX
+#ifndef RENAME
+#define RENAME
+#endif /* RENAME */
+#endif /* POSIX */
+
+#ifdef OS2
+#ifndef RENAME
+#define RENAME
+#endif /* RENAME */
+#endif /* OS2 */
+
+#ifdef SUNOS41
+#ifndef RENAME
+#define RENAME
+#endif /* RENAME */
+#endif /* SUNOS41 */
+
+#ifdef SVR4
+#ifndef RENAME
+#define RENAME
+#endif /* RENAME */
+#endif /* SVR4 */
+
+#ifdef AIXRS
+#ifndef RENAME
+#define RENAME
+#endif /* RENAME */
+#endif /* AIXRS */
+
+#ifdef BSD44
+#ifndef RENAME
+#define RENAME
+#endif /* RENAME */
+#endif /* BSD44 */
+
+#ifdef NORENAME				/* Allow for compile-time override */
+#ifdef RENAME
+#undef RENAME
+#endif /* RENAME */
+#endif /* NORENAME */
+
+#ifdef STRATUS				/* Stratus VOS */
+#ifndef RENAME
+#define RENAME
+#endif /* RENAME */
+#endif /* STRATUS */
 
 /* Line delimiter for text files */
 
@@ -736,14 +1482,49 @@ extern char myttystr[];
 #else
 #ifdef GEMDOS
 #define CTTNAM "aux:"
+#else
+#ifdef STRATUS
+extern char myttystr[];
+#define CTTNAM myttystr
 #else /* Anyone else... */
 #define CTTNAM "stdout"			/* This is a kludge used by Mac */
+#endif /* STRATUS */
 #endif /* GEMDOS */
 #endif /* UNIX */
 #endif /* OS2 */
 #endif /* OSK */
 #endif /* datageneral */
 #endif /* vms */
+
+#ifndef ZFCDAT				/* zfcdat() function available? */
+#ifdef UNIX
+#define  ZFCDAT
+#else
+#ifdef STRATUS
+#define  ZFCDAT
+#else
+#ifdef GEMDOS
+#define  ZFCDAT
+#else
+#ifdef AMIGA
+#define  ZFCDAT
+#else
+#ifdef OS2
+#define  ZFCDAT
+#else
+#ifdef datageneral
+#define  ZFCDAT
+#else
+#ifdef VMS
+#define  ZFCDAT
+#endif /* VMS */
+#endif /* datageneral */
+#endif /* OS2 */
+#endif /* AMIGA */
+#endif /* GEMDOS */
+#endif /* STRATUS */
+#endif /* UNIX */
+#endif /* ZFCDAT */
 
 #ifdef SUNS4S5
 #define tolower _tolower
@@ -752,9 +1533,17 @@ extern char myttystr[];
 
 /* Error number */
 
-#ifdef _CRAY				/* Cray UNICOS defines */
-#include <errno.h>			/* errno as a function. */
-#else					/* OK for UNICOS 6.1 and 7.0. */
+#ifdef _CRAY				
+#ifdef _CRAYCOM				/* Cray Computer Corp. */
+extern int errno;
+#else /* _CRAYCOM */
+#include <errno.h>			/* Cray Research UNICOS defines */
+					/* errno as a function. */
+#endif /* _CRAYCOM */			/* OK for UNICOS 6.1 and 7.0. */
+#else /* _CRAY */
+#ifdef STRATUS				/* Stratus VOS */
+#include <errno.h>
+#else /* not STRATUS */
 #ifndef VMS
 #ifndef OS2
 /*
@@ -764,6 +1553,7 @@ extern char myttystr[];
 extern int errno;			/* Needed by most modules. */
 #endif /* OS2 */
 #endif /* VMS */
+#endif /* STRATUS */
 #endif /* _CRAY */
 
 /* File System Defaults */
@@ -880,7 +1670,7 @@ struct zattr {            /* Kermit File Attribute structure */
     struct zstr creator;  /* ($) file creator id */
     struct zstr account;  /* (%) file account */
     struct zstr area;     /* (&) area (e.g. directory) for file */
-    struct zstr passwd;   /* (') password for area */
+    struct zstr password; /* (') password for area */
     long blksize;         /* (() file blocksize */
     struct zstr access;   /* ()) file access: new, supersede, append, warn */
     struct zstr encoding; /* (*) encoding (transfer syntax) */
@@ -892,6 +1682,9 @@ struct zattr {            /* Kermit File Attribute structure */
     struct zstr sysparam; /* (0) system-dependent parameter string */
     long length;          /* (1) exact length on system of origin */
     struct zstr charset;  /* (2) transfer syntax character set */
+#ifdef OS2
+    struct zstr longname; /* OS/2 longname if applicable */
+#endif /* OS2 */ 
     struct zstr reply;    /* This goes last, used for attribute reply */
 };
 
@@ -907,17 +1700,44 @@ struct filinfo {
   int typ;				/* Type (text/binary) */
   int dsp;				/* Disposition */
   char *os_specific;			/* OS-specific attributes */
-  unsigned int lblopts;			/* LABELED FILE options bitmask */
+#ifdef OS2
+  unsigned long int lblopts; /* LABELED FILE options bitmask */
+#else
+  int lblopts ; 
+#endif /* OS2 */
 };
 
-/* VMS values for LABELED FILE options bitmask */
+/* Systems that support FILE TYPE LABELED */
 
 #ifdef VMS
+#define CK_LABELED
+#else
+#ifdef OS2
+#ifdef __32BIT__
+#define CK_LABELED
+#endif /* __32BIT__ */
+#endif /* OS2 */
+#endif /* VMS */
+
+/* LABELED FILE options bitmask */
+
+#ifdef VMS				/* For VMS */
 #define LBL_NAM  1			/* Ignore incoming name if set */
 #define LBL_PTH  2			/* Use complete path if set */
 #define LBL_ACL  4			/* Preserve ACLs if set */
 #define LBL_BCK  8			/* Preserve backup date if set */
 #define LBL_OWN 16			/* Preserve ownership if set */
+
+#else
+
+#ifdef OS2				/* Ditto for OS/2 */
+#define LBL_NOR  0x0000			/* Normal file */
+#define LBL_ARC  0x0020			/* Archive */
+#define LBL_HID  0x0002			/* Hidden file */
+#define LBL_RO   0x0001			/* Read only file */
+#define LBL_SYS  0x0004			/* System file */
+#define LBL_EXT  0x0040			/* Extended */
+#endif /* OS2 */
 #endif /* VMS */
 
 /*
@@ -926,6 +1746,19 @@ struct filinfo {
   -DCKTYP_H=xxx on the command line to specify the header file where your
   system defines these types.
 */
+#ifndef STRATUS
+#ifdef __ALPHA
+#ifdef MULTINET
+#define CK_TGV_AXP
+#endif /* MULTINET */
+#endif /* __ALPHA */
+
+#ifdef CK_TGV_AXP			/* Alpha AXP, VMS, MultiNet */
+#ifndef __TYPES_LOADED
+#define __TYPES_LOADED			/* Work around bug in .h files */
+#endif /* __TYPES_LOADED */
+#include <sys/types.h>
+#else					/* !CK_TGV_AXP */
 #ifdef OSK				/* OS-9 */
 #include <types.h>
 #else					/* General case, not OS-9 */
@@ -953,15 +1786,27 @@ struct filinfo {
 #ifdef COHERENT				/* Except for COHERENT */
 #include <sys/types.h>
 #else
-#ifdef datageneral
-#include <sys/types.h>			/* Compiler didn't like other */
+#ifdef datageneral			/* AOS/VS */
+#include <sys/types.h>
 #else
+#ifdef __bsdi__				/* BSDI */
+#ifdef POSIX
+#undef _POSIX_SOURCE
+#endif /* POSIX */
+#endif /* __bsdi__ */
 #include CKTYP_H
+#ifdef __bsdi__
+#ifdef POSIX
+#define _POSIX_SOURCE
+#endif /* POSIX */
+#endif /* __bsdi__ */
 #endif /* datageneral */
 #endif /* COHERENT */
 #endif /* CKTYP_H */
 
-#endif /* OSK */			/* End of types.h section */
+#endif /* OSK */
+#endif /* CK_TGV_AXP */
+#endif /* STRATUS */			/* End of types.h section */
 
 /*
   Data type for pids.  If your system uses a different type, put something
@@ -1027,30 +1872,39 @@ struct filinfo {
 #define PWID_T UID_T
 #endif /* PWID_T */
 
-#ifdef NEXT				/* Argument for wait() */
+#ifdef NEXT
+#define MACHWAIT
+#else
+#ifdef MACH
+#define MACHWAIT
+#endif /* MACH */
+#endif /* NEXT */
+
+#ifdef MACHWAIT				/* WAIT_T argument for wait() */
 #include <sys/wait.h>
+#define CK_WAIT_H
 typedef union wait WAIT_T;
 #else
 #ifdef POSIX
 #include <sys/wait.h>
+#define CK_WAIT_H
 #ifndef WAIT_T
-#ifdef QNX
 typedef int WAIT_T;
-#else
-#define WAIT_T pid_t
-#endif /* QNX */
 #endif /* WAIT_T */
-#else
+#else /* !POSIX */
 typedef int WAIT_T;
 #endif /* POSIX */
-#endif /* NEXT */
+#endif /* MACHWAIT */
 
 /* Forward declarations of system-dependent functions callable from all */
 /* C-Kermit modules. */
 
 /* File-related functions from system-dependent file i/o module */
 
+#ifndef CKVFIO_C
+/* For some reason, this does not agree with DEC C */
 _PROTOTYP( int zkself, (void) );
+#endif /* CKVFIO_C */
 _PROTOTYP( int zopeni, (int, char *) );
 _PROTOTYP( int zopeno, (int, char *, struct zattr *, struct filinfo *) );
 _PROTOTYP( int zclose, (int) );
@@ -1069,6 +1923,7 @@ _PROTOTYP( int zshcmd, (char *) );
 _PROTOTYP( int chkfn, (int) );
 _PROTOTYP( long zchki, (char *) );
 _PROTOTYP( int iswild, (char *) );
+_PROTOTYP( int isdir, (char *) );
 _PROTOTYP( int zchko, (char *) );
 _PROTOTYP( int zdelet, (char *) );
 _PROTOTYP( VOID zrtol, (char *,char *) );
@@ -1093,6 +1948,29 @@ _PROTOTYP( int zstime, (char *, struct zattr *, int) );
 _PROTOTYP( int zmail, (char *, char *) ); 
 _PROTOTYP( int zprint, (char *, char *) ); 
 _PROTOTYP( char * tilde_expand, (char *) ); 
+_PROTOTYP( int zmkdir, (char *) ) ;
+_PROTOTYP( int zfseek, (long) ) ;
+#ifdef OS2
+_PROTOTYP( int os2setlongname, ( char * fn, char * ln ) ) ;
+_PROTOTYP( int os2getlongname, ( char * fn, char ** ln ) ) ;
+_PROTOTYP( int os2rexx, ( char *, char *, int ) ) ;
+_PROTOTYP( int os2rexxfile, ( char *, char *, char *, int) ) ;
+_PROTOTYP( int os2geteas, (char *) ) ;
+_PROTOTYP( int os2seteas, (char *) ) ;
+_PROTOTYP( char * get_os2_vers, (void) ) ;
+_PROTOTYP( int do_label_send, (char *) ) ;
+_PROTOTYP( int do_label_recv, (void) ) ;
+_PROTOTYP( int keyinbuf, (void ) ) ;
+_PROTOTYP( int putkey, (int) ) ;
+_PROTOTYP( int getkey, (int*) ) ;
+#ifdef OS2MOUSE
+_PROTOTYP( unsigned long os2_mouseon, (void) );
+_PROTOTYP( unsigned long os2_mousehide, (void) );
+_PROTOTYP( unsigned long os2_mouseshow, (void) );
+_PROTOTYP( unsigned long os2_mouseoff, (void) );
+_PROTOTYP( void os2_mouseevt, (void *) );
+#endif /* OS2MOUSE */
+#endif /* OS2 */
 
 /* Functions from system-dependent terminal i/o module */
 
@@ -1110,6 +1988,7 @@ _PROTOTYP( int ttsspd, (int) );
 _PROTOTYP( long ttgspd, (void) );
 _PROTOTYP( int ttflui, (void) );
 _PROTOTYP( int ttfluo, (void) );
+_PROTOTYP( int ttgwsiz, (void) );
 _PROTOTYP( int ttchk, (void) );
 _PROTOTYP( int ttxin, (int, CHAR *) );
 _PROTOTYP( int ttol, (CHAR *, int) );
@@ -1126,10 +2005,18 @@ _PROTOTYP( int ttinl, (CHAR *, int, int, CHAR, CHAR, int) );
 #ifdef VMS
 _PROTOTYP( int ttinl, (CHAR *, int, int, CHAR, CHAR, int) );
 #else
+#ifdef STRATUS
+_PROTOTYP( int ttinl, (CHAR *, int, int, CHAR, CHAR, int) );
+#else
+#ifdef OS2
+_PROTOTYP( int ttinl, (CHAR *, int, int, CHAR, CHAR, int) );
+#else
 _PROTOTYP( int ttinl, (CHAR *, int, int, CHAR, CHAR) );
+#endif /* OS2 */
+#endif /* STRATUS */
 #endif /* VMS */
 #endif /* UNIX */
-#else
+#else /* ! PARSENSE */
 _PROTOTYP( int ttinl, (CHAR *, int, int, CHAR) );
 #endif /* PARSENSE */
 
@@ -1152,6 +2039,7 @@ _PROTOTYP( int conola, (char *[]) );
 _PROTOTYP( int conoll, (char *) );
 _PROTOTYP( int conchk, (void) );
 _PROTOTYP( int coninc, (int) );
+_PROTOTYP( char * conkbg, (void) );
 _PROTOTYP( int psuspend, (int) );
 _PROTOTYP( int priv_ini, (void) );
 _PROTOTYP( int priv_on, (void) );
@@ -1171,6 +2059,7 @@ _PROTOTYP( int parchk, (CHAR *, CHAR, int) );
 _PROTOTYP( VOID doexit, (int, int) );
 _PROTOTYP( int askmore, (void) );
 _PROTOTYP( VOID fatal, (char *) );
+_PROTOTYP( VOID fatal2, (char *, char *) );
 
 /* Key mapping support */
 
@@ -1179,6 +2068,12 @@ _PROTOTYP( VOID fatal, (char *) );
 #define NOSETKEY
 #endif /* NOSETKEY */
 #endif /* NOICP */
+
+#ifdef MAC
+#ifndef NOSETKEY
+#define NOSETKEY
+#endif /* NOSETKEY */
+#endif /* MAC */
 
 _PROTOTYP( int congks, (int) );
 #ifndef NOSETKEY
@@ -1200,6 +2095,26 @@ typedef CHAR * MACRO;
 #endif /* OS2 */
 #endif /* NOSETKEY */
 
+#ifndef NOKVERBS			/* No \Kverbs unless... */
+#define NOKVERBS
+#endif /* NOKVERBS */
+
+#ifdef OS2				/* \Kverbs are supported in OS/2 */
+#undef NOKVERBS
+/*
+  Note: this value chosen to be bigger than PC BIOS key modifier bits,
+  but still fit in 16 bits without affecting sign.
+*/
+#define F_KVERB 0x4000			/* Bit indicating a keyboard verb */
+#define IS_KVERB(x) (x & F_KVERB)	/* Test this bit */
+#endif /* OS2 */
+
+#ifdef NOSPL				/* This might be overkill.. */
+#ifndef NOKVERBS			/* Not all \Kverbs require */
+#define NOKVERBS			/* the script programming language. */
+#endif /* NOKVERBS */
+#endif /* NOSPL */
+
 /*
   Function prototypes for system and library functions.
 */
@@ -1219,8 +2134,11 @@ typedef CHAR * MACRO;
 #define CK_ANSILIBS
 #endif /* SVR4 */
 
+#ifdef STRATUS				/* Stratus VOS uses ANSI libraries */
+#define CK_ANSILIBS
+#endif /* STRATUS */
+
 #ifdef OS2
-#define KANJI
 #define CK_ANSILIBS
 #define MYCURSES
 #define CK_RTSCTS
@@ -1249,11 +2167,83 @@ _PROTOTYP( void ChangeNameForFAT, (char *) );
 _PROTOTYP( char *GetLoadPath, (void) );
 #endif /* OS2 */
 
+/* Fullscreen file transfer display items... */
+
 #ifdef MYCURSES				/* MYCURSES implies CK_CURSES */
 #ifndef CK_CURSES
 #define CK_CURSES
 #endif /* CK_CURSES */
 #endif /* MYCURSES */
+
+/*
+  The CK_WREFRESH symbol is defined if the curses library provides
+  clearok() and wrefresh() functions, which are used in repainting
+  the screen.
+*/
+#ifdef NOWREFRESH			/* Override CK_WREFRESH */
+
+#ifdef CK_WREFRESH			/* If this is defined, */
+#undef CK_WREFRESH			/* undefine it. */
+#endif /* CK_WREFRESH */
+
+#else /* !NOWREFRESH */			/* No override... */
+
+#ifndef CK_WREFRESH			/* If CK_WREFRESH not defined */
+/*
+  Automatically define it for systems known to have it ...
+*/
+#ifdef VMS				/* DEC (Open)VMS has it */
+#define CK_WREFRESH
+#else
+#ifdef ultrix				/* DEC ULTRIX has it */
+#else
+#ifdef SVR3				/* System V has it */
+#define CK_WREFRESH
+#else
+#ifdef BSD44				/* 4.4 BSD has it */
+#define CK_WREFRESH
+#else
+#ifdef NEXT				/* Define it for NeXTSTEP */
+#define CK_WREFRESH
+#else
+#ifdef SUNOS4				/* SunOS 4.x... */
+#define CK_WREFRESH
+#else
+#ifdef AIXRS				/* RS/6000 AIX ... */
+#define CK_WREFRESH
+#else
+#ifdef RTAIX				/* RT PC AIX ... */
+#define CK_WREFRESH
+#else
+#ifdef OSF				/* DEC OSF/1 ... */
+#define CK_WREFRESH
+
+/* Add more here, or just define CK_WREFRESH on the CC command line... */
+
+#endif /* OSF */
+#endif /* RTAIX */
+#endif /* AIXRS */
+#endif /* SUNOS4 */
+#endif /* NEXT */
+#endif /* BSD44 */
+#endif /* SVR3 */
+#endif /* ultrix */
+#endif /* VMS */
+
+#else /* CK_WREFRESH is defined */
+
+#ifndef CK_CURSES			/* CK_WREFRESH implies CK_CURSES */
+#define CK_CURSES
+#endif /* CK_CURSES */
+
+#endif /* CK_WREFRESH */
+#endif /* NOWREFRESH */
+
+#ifdef CK_CURSES			/* Termcap buffer size for curses */
+#ifndef TRMBUFL
+#define TRMBUFL 1024
+#endif /* TRMBUFL */
+#endif /* CK_CURSES */
 
 #ifdef CK_ANSILIBS
 /*
@@ -1271,6 +2261,7 @@ _PROTOTYP( char *GetLoadPath, (void) );
 #ifdef DIAB /* DIAB DS90 */
 /* #include <commonC.h>  */
 #include <sys/wait.h>
+#define CK_WAIT_H
 #ifdef COMMENT
 extern void exit(int status);
 extern void _exit(int status);
@@ -1296,7 +2287,11 @@ extern int _flsbuf(char c,FILE *stream);
 #else
 #ifndef AMIGA
 #ifndef OS2
+#ifdef STRATUS
+#include <c_utilities.h>
+#else /* !STRATUS */
 #include <unistd.h>
+#endif /* STRATUS */
 #endif /* OS2 */
 #endif /* AMIGA */
 #endif /* NEXT */
@@ -1312,12 +2307,31 @@ extern int _flsbuf(char c,FILE *stream);
 #include <unistd.h>
 #include <stdlib.h>
 #else
+#ifndef MAC
 /*
   It is essential that these are declared correctly!
+  Which is not always easy.  Take malloc() for instance ...
 */
+#ifdef PYRAMID
+#ifdef SVR4
+#ifdef __STDC__
+#define SIZE_T_MALLOC
+#endif /* __STDC__ */
+#endif /* SVR4 */
+#endif /* PYRAMID */
+/*
+  Maybe some other environments need the same treatment for malloc.
+  If so, define SIZE_T_MALLOC for them here or in compiler CFLAGS.
+*/
+#ifdef SIZE_T_MALLOC
+_PROTOTYP( void * malloc, (size_t) );
+#else
 _PROTOTYP( char * malloc, (unsigned int) );
+#endif /* SIZE_T_MALLOC */
+
 _PROTOTYP( char * getenv, (char *) );
 _PROTOTYP( long atol, (char *) );
+#endif /* !MAC */
 #endif /* SUNOS4 */
 #endif /* CK_ANSILIBS */
 
@@ -1337,6 +2351,16 @@ _PROTOTYP( long atol, (char *) );
 #define getcwd curdir
 #endif /* ZILOG */
 
+#ifdef STRATUS
+/* The C-runtime conflicts with things we do in Stratus VOS ckltio.c ... */
+#define printf vosprtf
+_PROTOTYP( int vosprtf, (char *fmt, ...) );
+#define perror(txt) printf("%s\n", txt)
+/* char_varying is a string type from PL/I that VOS uses extensively */
+#define CV char_varying
+#endif /* STRATUS */
+
 #endif /* CKCDEB_H */
 
 /* End of ckcdeb.h */
+

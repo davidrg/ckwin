@@ -2,13 +2,15 @@
  
 /*
   Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
-  Columbia University Center for Computing Activities.
-  First released January 1985.
-  Copyright (C) 1985, 1992, Trustees of Columbia University in the City of New
-  York.  Permission is granted to any individual or institution to use this
-  software as long as it is not sold for profit.  This copyright notice must be
-  retained.  This software may not be included in commercial products without
-  written permission of Columbia University.
+  Columbia University Academic Information Systems, New York City.
+
+  Copyright (C) 1985, 1993, Trustees of Columbia University in the City of New
+  York.  The C-Kermit software may not be, in whole or in part, licensed or
+  sold for profit as a software product itself, nor may it be included in or
+  distributed with commercial products or otherwise distributed by commercial
+  concerns to their clients or customers without written permission of the
+  Office of Kermit Development and Distribution, Columbia University.  This
+  copyright notice must not be removed, altered, or obscured.
 */
  
 #ifndef CKUCMD_H
@@ -17,13 +19,26 @@
 /* Special getchars... */
  
 #ifdef DYNAMIC				/* Dynamic command buffers */
-#define DCMDBUF
 /*
   Use malloc() to allocate the many command-related buffers in ckucmd.c.
 */
+#ifdef pdp11				/* Not enough room */
+#define NORECALL
+#endif /* pdp11 */
+
+#ifndef NORECALL
+#define CK_RECALL
+#else
+#ifdef CK_RECALL
+#undef CK_RECALL
+#endif /* CK_RECALL */
+#endif /* NORECALL */
 #endif /* DYNAMIC */
 
 #ifdef VMS
+#ifdef getchar				/* This is for VMS GCC */
+#undef getchar
+#endif /* getchar */
 #define getchar()   vms_getchar()
 #endif /* VMS */
  
@@ -58,7 +73,11 @@
 #define RDIS 0022			/* Redisplay   (^R) */
 #define LDEL 0025			/* Delete line (^U) */
 #define WDEL 0027			/* Delete word (^W) */
- 
+#ifdef CK_RECALL
+#define C_UP 0020			/* Go Up in recall buffer (^P) */
+#define C_UP2 0002			/* Alternate Go Up (^B) for VMS */
+#define C_DN 0016			/* Go Down in recall buffer (^N) */
+#endif /* CK_RECALL */ 
 /* Keyword table flags */
  
 #define CM_INV 1			/* Invisible keyword */
@@ -92,6 +111,7 @@ typedef int (*xx_strp)();
 #endif /* CK_ANSIC */
 
 _PROTOTYP( int xxesc, (char **) );
+_PROTOTYP( int cmrini, (int) );
 _PROTOTYP( VOID cmsetp, (char *) );
 _PROTOTYP( VOID cmsavp, (char [], int) );
 _PROTOTYP( VOID prompt, (xx_strp) );
@@ -104,6 +124,7 @@ _PROTOTYP( VOID untab, (char *) );
 _PROTOTYP( int cmnum, (char *, char *, int, int *, xx_strp ) );
 _PROTOTYP( int cmofi, (char *, char *, char **, xx_strp ) );
 _PROTOTYP( int cmifi, (char *, char *, char **, int *, xx_strp ) );
+_PROTOTYP( int cmifi2,(char *, char *, char **, int *, int, xx_strp ) );
 _PROTOTYP( int cmdir, (char *, char *, char **, xx_strp ) );
 _PROTOTYP( int cmfld, (char *, char *, char **, xx_strp ) );
 _PROTOTYP( int cmtxt, (char *, char *, char **, xx_strp ) );
@@ -116,6 +137,8 @@ _PROTOTYP( int chknum, (char *) );
 _PROTOTYP( int lower, (char *) );
 _PROTOTYP( int lookup, (struct keytab [], char *, int, int *) );
 _PROTOTYP( int ungword, (void) );
+_PROTOTYP( int cmdsquo, (int) );
+_PROTOTYP( int cmdgquo, (void) );
 
 #ifdef DCMDBUF
 _PROTOTYP( int cmsetup, (void) );

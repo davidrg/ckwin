@@ -1,16 +1,19 @@
+#include "ckcsym.h"
 #ifndef NOICP
  
 /*  C K U U S 6 --  "User Interface" for Unix Kermit (Part 6)  */
 
 /*
   Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
-  Columbia University Center for Computing Activities.
-  First released January 1985.
-  Copyright (C) 1985, 1992, Trustees of Columbia University in the City of New
-  York.  Permission is granted to any individual or institution to use this
-  software as long as it is not sold for profit.  This copyright notice must be
-  retained.  This software may not be included in commercial products without
-  written permission of Columbia University.
+  Columbia University Academic Information Systems, New York City.
+
+  Copyright (C) 1985, 1994, Trustees of Columbia University in the City of New
+  York.  The C-Kermit software may not be, in whole or in part, licensed or
+  sold for profit as a software product itself, nor may it be included in or
+  distributed with commercial products or otherwise distributed by commercial
+  concerns to their clients or customers without written permission of the
+  Office of Kermit Development and Distribution, Columbia University.  This
+  copyright notice must not be removed, altered, or obscured.
 */
 
 /* Includes */
@@ -26,33 +29,25 @@
 #define fgets(stringbuf,max,fd) dg_fgets(stringbuf,max,fd)
 #endif /* datageneral */
 
-#ifdef MAC				/* internal MAC file routines */
-#define feof mac_feof
-#define rewind mac_rewind
-#define fgets mac_fgets
-#define fopen mac_fopen
-#define fclose mac_fclose
-
-int mac_feof();
-void mac_rewind();
-char *mac_fgets();
-FILE *mac_fopen();
-int mac_fclose();
-#endif /* MAC */
-
 /* External Kermit Variables, see ckmain.c for description. */
  
+extern xx_strp xxstring;
+
 extern int size, rpsiz, urpsiz, local, stdinf, sndsrc, xitsta,
-  displa, binary, parity, escape, xargc, flow,
+  displa, binary, parity, escape, flow,
   turn, duplex, nfils, ckxech, pktlog, seslog, tralog, stdouf,
   turnch, dfloc, keep, maxrps, warn, cnflg, tlevel, pflag, msgflg,
   mdmtyp, zincnt, fblksiz, frecl, frecfm, atcapr, atdiso, verwho, quiet;
 extern int repars, techo;
  
+#ifdef CK_IFRO
+extern int remonly;
+#endif /* CK_IFRO */
+
 extern long vernum, speed;
 extern char *versio, *protv, *ckxv, *ckzv, *fnsv, *connv, *dftty, *cmdv;
 extern char *dialv, *loginv, *for_def[], *whil_def[], *xif_def[];
-extern char *ckxsys, *ckzsys, *cmarg, *cmarg2, **xargv;
+extern char *ckxsys, *ckzsys, *cmarg, *cmarg2;
 extern char *DIRCMD, *PWDCMD, *DELCMD, *WHOCMD, ttname[], filnam[];
 extern CHAR sstate;
 extern char *zinptr;
@@ -61,6 +56,11 @@ extern char *zinptr;
 extern char *msfiles[];
 #endif /* NOMSEND */
 extern char fspec[];			/* Most recent filespec */
+
+#ifdef CK_TMPDIR
+extern int f_tmpdir;			/* Directory changed temporarily */
+extern char savdir[];			/* For saving current directory */
+#endif /* CK_TMPDIR */
 
 /* Declarations from cmd package */
  
@@ -90,7 +90,7 @@ extern char *vnp;			/* Pointer to same */
 #endif /* COMMENT */
 
 extern char psave[];			/* For saving & restoring prompt */
-extern char tmpbuf[], *tp;		/* Temporary buffer */
+extern char *tp;			/* Temporary buffer */
 
 /* Keyword tables specific to this module */
 
@@ -131,6 +131,9 @@ struct keytab iftab[] = {		/* IF commands */
     "background", XXIFBG, 0,
     "count",      XXIFCO, 0,
     "defined",    XXIFDE, 0,
+#ifdef CK_TMPDIR
+    "directory",  XXIFDI, 0,
+#endif /* CK_TMPDIR */
 #ifdef COMMENT
     "eof",        XXIFEO, 0,
 #endif /* COMMENT */
@@ -141,8 +144,13 @@ struct keytab iftab[] = {		/* IF commands */
     "foreground", XXIFFG, 0,
     "llt",        XXIFLL, 0,
     "lgt",        XXIFLG, 0,
+#ifdef ZFCDAT
+    "newer",      XXIFNE, 0,
+#endif /* ZFCDAT */
     "not",        XXIFNO, 0,
+    "ok",         XXIFSU, CM_INV,
     "numeric",    XXIFNU, 0,
+    "remote-only",XXIFRO, 0,
     "success",    XXIFSU, 0
 };
 int nif = (sizeof(iftab) / sizeof(struct keytab));
@@ -163,31 +171,35 @@ int ifc,				/* IF case */
 char ifcond[100];			/* IF condition text */
 char *ifcp;				/* Pointer to IF condition text */
 #ifdef DCMDBUF
-extern int *ifcmd, *count, *iftest, *intime, *incase, *terror, *merror;
+extern int *ifcmd, *count, *iftest, *intime, *inpcas, *takerr, *merror;
 #else
 extern int ifcmd[];			/* Last command was IF */
 extern int iftest[];			/* Last IF was true */
 extern int count[];			/* For IF COUNT, one for each cmdlvl */
 extern int intime[];
-extern int incase[];
-extern int terror[];
+extern int inpcas[];
+extern int takerr[];
 extern int merror[];
 #endif /* DCMDBUF */
 #else
-extern int terror[];
+extern int takerr[];
 #endif /* NOSPL */
 
 #ifdef DCMDBUF
 extern char *line;			/* Character buffer for anything */
+extern char *tmpbuf;
 #else
-extern char line[];
+extern char line[], tmpbuf[];
 #endif /* DCMDBUF */
 extern char *lp;			/* Pointer to line buffer */
 
 int cwdf = 0;				/* CWD has been done */
 
+#ifndef NOSERVER
 extern int en_cwd, en_del, en_dir, en_fin, /* Flags for ENABLE/DISABLE */
-   en_get, en_hos, en_sen, en_set, en_spa, en_typ, en_who, en_bye;
+   en_get, en_hos, en_sen, en_set, en_spa, en_typ, en_who, en_bye,
+   en_asg, en_que;
+#endif /* NOSERVER */
 
 extern FILE *tfile[];			/* File pointers for TAKE command */
 extern char *tfnam[];			/* Names of TAKE files */
@@ -253,7 +265,10 @@ xxstrcmp(s1,s2,n) char *s1, *s2; int n; { /* Caseless string comparison. */
 
 int
 doask(cx) int cx; {
-
+#ifdef CK_RECALL
+    int sv_recall;
+    extern int on_recall;
+#endif /* CK_RECALL */
     if (cx != XXGOK) {			/* Get variable name */
 	if ((y = cmfld("Variable name","",&s,NULL)) < 0) {
 	    if (y == -3) {
@@ -292,17 +307,21 @@ doask(cx) int cx; {
     if ((y = cmtxt("Prompt, enclose in { braces } to preserve\n\
 leading and trailing spaces, precede question mark with backslash (\\).",
 		   cx == XXGOK ? "{ Yes or no? }" : "",
-		   &p,xxstring)) < 0) return(y);
-
-    cmsavp(psave,80);			/* Save old prompt */
-    if (*p == '{') {			/* New prompt enclosed in braces? */
-	x = (int)strlen(p) - 1;		/* Yes, strip them. */
-	if (p[x] == '}') {
-	    p[x] = NUL;
-	    p++;
-	}
+		   &p,xxstring)) < 0) {
+	return(y);
     }
-    cmsetp(p);				/* Make new prompt */
+#ifdef VMS
+/*
+  In VMS, whenever a TAKE file or macro is active, we had to restore the 
+  original console modes or else Ctrl-C/Ctrl-Y would not work.  But here we
+  go interactive again, so we have to temporarily put them back.
+*/
+    if (cmdlvl > 0)
+      concb((char)escape);
+#endif /* VMS */
+      
+    cmsavp(psave,PROMPTL);		/* Save old prompt */
+    cmsetp(brstrip(p));			/* Make new prompt */
     if (cx == XXASKQ) {			/* For ASKQ, */
 	concb((char)escape);		/* put console in cbreak mode */
 	cmini(0);			/* and no-echo mode. */
@@ -325,30 +344,67 @@ reprompt:
 	if ((y = cmcfm()) < 0)		/* Get confirmation */
 	  goto reprompt;
 	cmsetp(psave);			/* Restore prompt */
+#ifdef VMS
+	if (cmdlvl > 0)			/* In VMS and not at top level, */
+	  conres();			/*  restore console again. */
+#endif /* VMS */
 	return(x);			/* Return success or failure */
-#else
+#else /* NOFRILLS */
 	;
 #endif /* NOFRILLS */
+    } else if (cx == XXGETC) {		/* GETC */
+	char tmp[2];
+	x = coninc(0);			/* Just read one character */
+	if (x > -1) {
+	    printf("\r\n");
+	    tmp[0] = (char) (x & 0xff);
+	    tmp[1] = NUL;
+	    y = addmac(lp,tmp);		/* Add it to the macro table. */
+	    debug(F111,"getc addmac",lp,y);
+	    cmsetp(psave);		/* Restore old prompt. */
+	} else y = -1;
+	return(success = y < 0 ? 0 : 1);
     } else {				/* ASK or ASKQ */
+#ifdef CK_RECALL
+	sv_recall = on_recall;
+	on_recall = 0;
+#endif /* CK_RECALL */
+	y = cmdgquo();			/* Get current quoting */
+	cmdsquo(0);			/* Turn off quoting */
 	while (x == -1) {		/* Prompt till they answer */
-	    x = cmtxt("Please respond.\n\
- Type \\? to include a question mark in your response.","",&s,NULL);
+	    x = cmtxt("Please respond.","",&s,NULL);
 	    debug(F111," cmtxt",s,x);
 	}
+	cmdsquo(y);			/* Restore previous quoting */
+#ifdef CK_RECALL
+	on_recall = sv_recall;
+#endif /* CK_RECALL */
 	if (cx == XXASKQ)		/* ASKQ must echo CRLF here */
 	  printf("\r\n");
 	if (x < 0) {			/* If cmtxt parse error, */
 	    cmsetp(psave);		/* restore original prompt */
+#ifdef VMS
+	    if (cmdlvl > 0)		/* In VMS and not at top level, */
+	      conres();			/*  restore console again. */
+#endif /* VMS */
 	    return(x);			/* and return cmtxt's error code. */
 	}
 	if (*s == NUL) {		/* If user typed a bare CR, */
 	    cmsetp(psave);		/* Restore old prompt, */
 	    delmac(lp);			/* delete variable if it exists, */
+#ifdef VMS
+	    if (cmdlvl > 0)		/* In VMS and not at top level, */
+	      conres();			/*  restore console again. */
+#endif /* VMS */
 	    return(success = 1);	/* and return. */
 	}
 	y = addmac(lp,s);		/* Add it to the macro table. */
 	debug(F111,"ask addmac",lp,y);
 	cmsetp(psave);			/* Restore old prompt. */
+#ifdef VMS
+	if (cmdlvl > 0)			/* In VMS and not at top level, */
+	  conres();			/*  restore console again. */
+#endif /* VMS */
 	return(success = y < 0 ? 0 : 1);
     }
 }
@@ -404,7 +460,7 @@ dodef(cx) int cx; {
 	    return(-9);
 	} else return(y);
     }
-    debug(F110,"dodef",s,0);
+    debug(F111,"dodef success",s,success);
     strcpy(vnambuf,s);
     vnp = vnambuf;
     if (vnambuf[0] == CMDQ && (vnambuf[1] == '%' || vnambuf[1] == '&')) vnp++;
@@ -414,6 +470,7 @@ dodef(cx) int cx; {
 	if (y == 1) {			/* Simple variable */
 	    if ((y = cmtxt("Definition of variable","",&s,NULL)) < 0)
 	      return(y);
+	    s = brstrip(s);
 	    debug(F110,"xxdef var name",vnp,0);
 	    debug(F110,"xxdef var def",s,0);
 	} else if (y == 2) {		/* Array element */
@@ -449,7 +506,7 @@ dodef(cx) int cx; {
 	int t;
 	t = LINBUFSIZ-1;
 	lp = line;			/* If so, expand its value now */
-	xxstring(s,&lp,&t);
+	zzstring(s,&lp,&t);
 	s = line;
     }
     debug(F111,"calling addmac",s,(int)strlen(s));
@@ -459,14 +516,16 @@ dodef(cx) int cx; {
 	printf("?%s failed\n",(cx == XXASS || cx == XXASX) ?
 	       "ASSIGN" : "DEFINE");
 	return(success = 0);
-    }
-    return(success = 1);
+    } else if (cx == XXASX || cx == XXDFX) /* For _ASG or _DEF, */
+      return(1);			   /* don't change success variable */
+    else
+      return(success = 1);
 }
 #endif /* NOSPL */
 
 
 #ifndef NODIAL
-extern struct keytab partab[];
+extern struct keytab partbl[];
 /*
    L U D I A L  --  Lookup up dialing directory entry.
   
@@ -525,7 +584,9 @@ ludial(s,f) char *s; FILE *f; {
 		  continue;		/* up to length of search name */
 		if (!backgrd && !quiet)
 		  printf(" From dialing directory %s: %s=%s\n",
-			 dialdir,info[1],info[2]);
+		    dialdir,info[1],info[2] ? info[2] : "(number missing)");
+		if (!info[2])
+		  return("");
 		if (info[3]) {		/* Third word = speed */
 		    if (*info[3] != '=') { /* "=" means don't change it */
 			xspeed = atol(info[3]);
@@ -534,13 +595,13 @@ ludial(s,f) char *s; FILE *f; {
 			    if (ttsspd((int) x2) < 0)
 			      printf("\n Can't set speed to %s\n",info[3]);
 			    else 
-			      speed = xspeed;
+			      speed = ttgspd();
 			}
 		    }
 		}
 		if (info[4]) {		/* 4th word = parity */
 		    if (*info[4] != '=') { /* "=" means don't change it */
-			if ((xparity = lookup(partab,info[4],5,&t)) > -1)
+			if ((xparity = lookup(partbl,info[4],5,&t)) > -1)
 			  parity = xparity;
 		    }
 		}
@@ -553,6 +614,7 @@ ludial(s,f) char *s; FILE *f; {
 
 int
 dodial(cx) int cx; {			/* DIAL or REDIAL */
+    int sparity;			/* For saving global parity value */
     if (cx == XXRED) {			/* REDIAL or... */
 	if ((y = cmcfm()) < 0) return(y);
 	if (dialnum) {
@@ -574,8 +636,15 @@ dodial(cx) int cx; {			/* DIAL or REDIAL */
 	    return(-9);
 	}
 	if (dialfd) {			/* Have dialing directory? */
-	    if (s2 = ludial(s,dialfd))	/* Look up in dialing directory */
-	      s = s2;			/* Make substitution if found */
+	    s2 = ludial(s,dialfd);	/* Look up in dialing directory */
+	    if (s2) {
+		if ((int)strlen(s2) < 1) {
+		    printf(
+		     "?Dialing directory \"%s\" entry lacks phone number\n",s);
+		    return(-9);
+		} else
+		  s = s2;		/* Make substitution if found */
+	    }
 	}
 	if (dialnum) free(dialnum);	/* Make copy for REDIAL */
 	dialnum = malloc((int)strlen(s) + 1);
@@ -584,7 +653,24 @@ dodial(cx) int cx; {			/* DIAL or REDIAL */
 #ifdef VMS
     conres();				/* So Ctrl-C/Y will work */
 #endif /* VMS */
+/*
+  A rather radical change for edit 190...
+
+  Some modems do not react well to parity.  Also, if we are dialing through a
+  TCP/IP TELNET modem server, parity can be fatally misinterpreted as TELNET
+  negotiations.  Note that at this point it is very likely that we picked up a
+  parity setting from the dialing directory (in the call to ludial() above).
+  So now we save the current parity, set it to NONE during the dialing
+  process, and then restore it afterwards.  This should work even if the user
+  interrupts the DIAL command, because the DIAL module has its own interrupt
+  handler.  BUT... if, for some reason, a dialing device actually *requires*
+  parity (e.g. CCITT V.25bis says that even parity should be used), this
+  might prevent successful dialing.
+*/
+    sparity = parity;			/* Save current parity */
+    parity = 0;				/* Set parity to NONE */
     success = ckdial(s);		/* Try to dial */
+    parity = sparity;			/* Restore parity */
 #ifdef OS2
     ttres();
 #endif /* OS2 */
@@ -595,21 +681,60 @@ dodial(cx) int cx; {			/* DIAL or REDIAL */
 }
 #endif /* NODIAL */
 
-#ifndef MAC
 int					/* Do the DIRECTORY command */
 dodir() {
+#ifndef MAC
     char *dc;
+#endif /* MAC */
+#ifdef MAC
+/*
+  This is a crude, do-it-yourself directory command.  It shows all the
+  files in the current directory: size and name of each file.  Only regular
+  files are shown.  With a little more work, it could also show directories,
+  and mark files as regular or directories, and it could also show dates.
+  See sample code in zldir() routine in ckmfio.c.
+*/
+    char mac_name[65];
+    long mac_len, nfiles, nbytes;
+    extern long mac_znextlen;		/* See ckmfio.c for this. */
+
+    if ((y = cmcfm()) < 0)
+      return(y);
+
+    nfiles = nbytes = 0L;
+    printf("\nDirectory of %s\n\n",zgtdir());
+    x = zxpand(":");
+    while (x-- > 0) {
+	if (!znext(mac_name))
+	  break;
+	mac_len = zchki(mac_name);
+	if (mac_len > -1L) {
+	    nfiles++;
+	    nbytes += mac_znextlen;
+	    printf("%10ld %s\n", mac_znextlen, mac_name);
+	}
+    }
+    printf("\n%ld file%s, %ld byte%s\n\n",
+	   nfiles,
+	   (nfiles == 1) ? "" : "s",
+	   nbytes,
+	   (nbytes == 1) ? "" : "s"
+	   );
+    return(success = 1);
+#else
 #ifdef VMS
     if ((x = cmtxt("Directory/file specification","",&s,xxstring)) < 0)
       return(x);
     /* now do this the same as a shell command - helps with LAT  */
-    conres();				/* make console normal */
+    conres();				/* Make console normal */
     lp = line;
     if (!(dc = getenv("CK_DIR"))) dc = DIRCMD;
     sprintf(lp,"%s %s",dc,s);
-    debug(F110,"Directory string: ", line, 0);
-    xsystem(lp);
-    return(success = 0);
+    debug(F110,"DIR string", line, 0);
+    x = zshcmd(lp);
+    debug(F101,"DIR return code", "", x);
+    concb((char)escape);
+    return(success = (x > 0) ? 1 : 0);
 #else
 #ifdef AMIGA
     if ((x = cmtxt("Directory/file specification","",&s,xxstring)) < 0)
@@ -618,24 +743,75 @@ dodir() {
 #ifdef datageneral
     if ((x = cmtxt("Directory/file specification","+",&s,xxstring)) < 0)
       return(x);
+#else
+#ifdef OS2
+    tmpbuf[0] = NUL;
+    if ((x = cmifi2(
+"Device, directory, and/or file specification,\n\
+ or switch(es), or '> file'","",
+		    &s,&y,1,xxstring)) < 0) {
+	debug(F101,"DIR cmifi2","",x);
+	if (x == -3) {			/* Done. */
+	    goto sw_skip;
+	} else if (x == -2 && (*s == '/' || *s == '>')) {
+	    strncpy(tmpbuf,s,TMPBUFSIZ); /* Switch or redirect */
+	    if ((y = cmcfm()) < 0)
+	      return(y);
+	    else
+	      goto sw_skip;
+	} else if (x == -2 && !strchr(s,'.')) {	/* Maybe ".*" is missing */
+	    goto fs_copy;
+	} else if (x == -2) {
+	    printf("%s not found\n",s);
+	    return(-9);
+	} else
+	  return(x);
+    }
 #else /* General Case */
     if ((x = cmdir("Directory/file specification","",&s,xxstring)) < 0)
       if (x != -3) return(x);
-    strcpy(tmpbuf,s);
-    if ((y = cmcfm()) < 0) return(y);
-    s = tmpbuf;
+#endif /* OS2 */
 #endif /* datageneral */
 #endif /* AMIGA */
-    /* General case again */
+
+#ifdef OS2
+fs_copy:
+#endif /* OS2 */
+    debug(F110,"DIR fs_copy",s,0);
+    strncpy(tmpbuf,s,TMPBUFSIZ);	/* Copy the filespec */
+
+#ifdef OS2
+    {   /* Lower level functions change / to \, not good for CMD.EXE. */
+	/* Only do this to filenames, not switches! */
+	char *p = tmpbuf;
+	while (*p) {			/* Change them back to \ */
+	    if (*p == '/') *p = '\\';
+	    p++;
+	}
+    }
+    debug(F110,"DIR tmpbuf 1",tmpbuf,0);
+    /* Now parse trailing switches like /P/O-D... */
+    if ((x = cmtxt("Optional switches and/or redirect for OS/2 DIR command",
+		   "",&s,xxstring)) < 0)
+      return(x);
+    strcat(tmpbuf,s);			/* Append them to the filespec */
+    debug(F110,"DIR tmpbuf 2",tmpbuf,0);
+sw_skip:
+#else
+    if ((y = cmcfm()) < 0) return(y);
+#endif /* OS2 */
+    s = tmpbuf;
     lp = line;
     if (!(dc = getenv("CK_DIR"))) dc = DIRCMD;
     sprintf(lp,"%s %s",dc,s);
+    debug(F110,"DIR",line,0);
     xsystem(line);
     return(success = 1);		/* who cares... */
 #endif /* VMS */
-}
 #endif /* MAC */
+}
 
+#ifndef NOSERVER
 #ifndef NOFRILLS
 /* Do the ENABLE and DISABLE commands */
 
@@ -649,10 +825,12 @@ doenable(cx,x) int cx, x; {
 #ifndef datageneral
         en_bye = y;
 #endif /* datageneral */
-
 #ifndef NOPUSH
 	en_hos = y;
 #endif /* NOPUSH */
+#ifndef NOSPL
+	en_asg = en_que = y;
+#endif /* NOSPL */
 	break;
       case EN_BYE:
 #ifndef datageneral
@@ -697,17 +875,28 @@ doenable(cx,x) int cx, x; {
       case EN_WHO:
 	en_who = y;
 	break;
+#ifndef NOSPL
+      case EN_ASG:
+	en_asg = y;
+	break;
+      case EN_QUE:
+	en_que = y;
+	break;
+#endif /* NOSPL */
       default:
 	return(-2);
     }
     return(1);
 }
 #endif /* NOFRILLS */
+#endif /* NOSERVER */
 
 #ifndef NOFRILLS
 int
 dodel() {				/* DELETE */
+#ifndef MAC
     long zl;
+#endif /* MAC */
     if ((x = cmifi("File(s) to delete","",&s,&y,xxstring)) < 0) {
 	if (x == -3) {
 	    printf("?A file specification is required\n");
@@ -717,9 +906,18 @@ dodel() {				/* DELETE */
 #ifdef MAC
     strcpy(line,s);
 #else
-    strncpy(tmpbuf,s,50);		/* Make a safe copy of the name. */
-    debug(F110,"xxdel tmpbuf",s,0);
-    sprintf(line,"%s %s",DELCMD,s);	/* Construct the system command. */
+    strncpy(tmpbuf,s,TMPBUFSIZ);	/* Make a safe copy of the name. */
+#ifdef OS2
+    {   /* Lower level functions change / to \, not good for CMD.EXE. */
+	char *p = tmpbuf;
+	while (*p) {			/* Change them back to \ */
+	    if (*p == '/') *p = '\\';
+	    p++;
+	}
+    }
+#endif /* OS2 */
+    debug(F110,"xxdel tmpbuf",tmpbuf,0);
+    sprintf(line,"%s %s",DELCMD,tmpbuf); /* Construct the system command. */
 #endif /* MAC */
     debug(F110,"xxdel line",line,0);
     if ((y = cmcfm()) < 0) return(y);	/* Confirm the user's command. */
@@ -737,6 +935,9 @@ dodel() {				/* DELETE */
 #endif /* MAC */
     if (msgflg)
       printf("%s - %sdeleted\n",s, success ? "" : "not ");
+#ifdef VMS
+    concb((char)escape);
+#endif /* VMS */
     return(success);
 }
 #endif /* NOFRILLS */
@@ -866,13 +1067,57 @@ int
 dobug() {
     printf("\n%s,%s\n Numeric: %ld",versio,ckxsys,vernum);
     if (verwho) printf("-%d",verwho);
+    printf("\n\n\
+Before deciding you have found a bug, please consult the documentation:\n");
+    printf(" . \"Using C-Kermit\"\n");
+#ifndef OS2
+   printf(" . The CKCKER.BWR file\n");
+#endif /* OS2 */
+#ifdef UNIX
+    printf(" . The CKUKER.BWR file\n");
+#else
+#ifdef VMS
+    printf(" . The CKVKER.BWR file\n");
+#else
+#ifdef OS2
+    printf(" . The CKERMIT.INF file\n");
+#else
+#ifdef datageneral
+    printf(" . The CKDKER.BWR file\n");
+#else
+#ifdef STRATUS
+    printf(" . The CKLKER.BWR file\n");
+#else
+#ifdef AMIGA
+    printf(" . The CKIKER.BWR file\n");
+#else
+#ifdef GEMDOS
+    printf(" . The CKSKER.BWR file\n");
+#else
+#ifdef MAC
+    printf(" . The CKMKER.BWR file\n");
+#else
+#ifdef OSK
+    printf(" . The CK9KER.BWR file\n");
+#else
+    printf(" . The appropriate system-dependent CK?KER.BWR file\n");
+#endif
+#endif
+#endif
+#endif
+#endif
+#endif
+#endif
+#endif
+#endif
+
     printf("\nTo report C-Kermit bugs, send e-mail to:\n");
-    printf(" Info-Kermit@columbia.edu (Internet)\n");
-    printf(" KERMIT@CUVMA (EARN/BITNET)\n");
-    printf(" ...!uunet!columbia.edu!info-kermit (Usenet)\n");
+    printf(" kermit@columbia.edu (Internet)\n");
+    printf(" KERMIT@CUVMA (EARN/CREN/BITNET)\n");
+    printf(" ...!uunet!columbia.edu!kermit (Usenet)\n");
     printf("Or write to:\n Kermit Development\n Columbia University\n");
-    printf(" Center for Computing Activities\n 612 W 115 Street\n");
-    printf(" New York, NY 10025 USA\nOr call:\n (212) 854-5126 (USA)\n\n");
+    printf(" 612 W 115 Street\n");
+    printf(" New York, NY  10025  USA\nOr call:\n +1 212 854-5126 (USA)\n\n");
 #ifndef NOSHOW
 #ifndef NOFRILLS
     printf(
@@ -925,7 +1170,9 @@ dopaus(cx) int cx; {
     while (x--) {			/* Sleep loop */
 	int mdmsig;
 	if (y = conchk()) {		/* Did they type something? */
+#ifdef COMMENT
 	    while (y--) coninc(0);	/* Yes, gobble it up */
+#endif
 	    break;			/* And quit PAUSing or WAITing */
 	}
 	if (cx == XXWAI && z != 0) {
@@ -968,7 +1215,20 @@ dorenam() {
 #ifdef VMS
     conres();				/* Let Ctrl-C work. */
 #endif /* VMS */
-    return(zrename(line,p));
+    debug(F110,"dorename line",line,0);
+    debug(F110,"dorename p",p,0);
+    if (zrename(line,p) < 0) {
+	printf("?Can't rename %s to %s\n",line,p);
+#ifdef VMS
+	concb((char)escape);
+#endif /* VMS */
+	return(-9);
+    } else {
+#ifdef VMS
+	concb((char)escape);
+#endif /* VMS */
+	return(success = 1);
+    }
 }
 #endif /* NOFRILLS */
 
@@ -986,41 +1246,41 @@ doreturn(s) char *s; {
     }
     lp = line;				/* Expand return value now */
     x = LINBUFSIZ-1;
-    if (xxstring(s,&lp,&x) > -1) {
+    if (zzstring(s,&lp,&x) > -1) {
 	s = line;
+	debug(F110,"RETURN parse",s,0);
     }
-    x = (int)strlen(s);			/* Is there a return value? */
-    if (x) {				/* Yes */
+    debug(F101,"RETURN maclvl 1","",maclvl);
+    /* Pop from all FOR/WHILE/XIFs */
+    while ((maclvl > 0) &&
+	   (m_arg[maclvl-1][0]) &&
+	   (cmdstk[cmdlvl].src == CMD_MD) &&
+	   (!strncmp(m_arg[maclvl-1][0],"_xif",4) ||
+	    !strncmp(m_arg[maclvl-1][0],"_for",4) ||
+	    !strncmp(m_arg[maclvl-1][0],"_whi",4))) {
+	debug(F110,"RETURN popping",m_arg[maclvl-1][0],0);
+	dogta(XXPTA);		/* Put args back */
+	popclvl();		/* Pop up two levels */
+	popclvl();
+	debug(F101,"RETURN maclvl 2","",maclvl);
+    }
+    popclvl();				/* Pop from enclosing TAKE or macro */
+    debug(F101,"RETURN maclvl 3","",maclvl);
+
+    x = (int)strlen(s);			/* Length of return value */
+    if (x > 0) {			/* Have return value? */
 	p = malloc(x+2);		/* Allocate a place to keep it */
+	if (mrval[maclvl+1])		/* Free old one, if any */
+	  free(mrval[maclvl+1]);
 	if (p) {			/* Did we get a place? */
 	    strcpy(p, s);		/* Yes, copy the string into it. */
-	    mrval[maclvl] = p;		/* Make return value point to it. */
+	    mrval[maclvl+1] = p;	/* Make return value point to it. */
+	    debug(F110,"RETURN copy",mrval[maclvl],0);
 	} else {			/* No, could not get space. */
-	    mrval[maclvl] = NULL;	/* Return null pointer. */
+	    mrval[maclvl+1] = NULL;	/* Return null pointer. */
 	    x = 0;			/* Set failure return code. */
 	}
-    } else mrval[maclvl] = NULL;	/* Blank return code */
-#undef FORRET
-/*
-  If we are in a FOR, WHILE, or XIF command list, also copy the return value
-  two levels up.  (But this doesn't work, so forget it.)
-*/
-#ifdef FORRET
-    if (maclvl > 1) {
-	if (!strncmp(m_arg[maclvl][0],"_for",4) ||
-	    !strncmp(m_arg[maclvl][0],"_whi",4) ||
-	    !strncmp(m_arg[maclvl][0],"_xif",4)) {
-	    mrval[maclvl-2] = p;
-	}
-    }
-#endif /* FORRET */
-    popclvl();				/* Pop command level */
-
-#ifdef DEBUG
-    if (mrval[maclvl+1])
-      debug(F111,"&return",mrval[maclvl+1],maclvl);
-    else debug(F111,"&return","NULL",maclvl);
-#endif /* DEBUG */
+    } else mrval[maclvl+1] = NULL;	/* Blank return code */
     return(success = x ? 1 : 0);	/* Return status code */	
 }
 #endif /* NOSPL */
@@ -1106,6 +1366,10 @@ doopen()  {				/* OPEN { append, read, write } */
 		return(-9);
 	    } else return(z);
 	}
+	if (z == 2) {
+	    printf("?Sorry, %s is a directory name\n",s);
+	    return(-9);
+	}
 	if (chkfn(ZWFILE) > 0) {
 	    printf("?Write/Append file already open\n");
 	    return(-2);
@@ -1129,7 +1393,7 @@ doopen()  {				/* OPEN { append, read, write } */
 
 int
 doget() {
-    int x;
+    int x, y;
     char *cbp;
 
     cmarg2 = "";			/* Initialize as-name to nothing */
@@ -1164,14 +1428,7 @@ doget() {
 	    cmres();			/* Parse it */
 	    if ((x = cmtxt("Oofa","",&s,xxstring)) < 0)
 	      return(x);
-	    if (*s == '{') {		/* Strip enclosing braces */
-		x = (int)strlen(s);
-		if (s[x-1] == '}') {
-		    s[x-1] = NUL;
-		    s++;
-		}
-	    }
-	    strcpy(line,s);		/* Make a safe copy */
+	    strcpy(line,brstrip(s));	/* Make a safe copy */
 	    cmarg = line;		/* Point to remote filename */
 	    if (*cmarg == NUL) {	/* Make sure there is one */
 		printf("Remote filename missing in multiline GET\n");
@@ -1213,14 +1470,7 @@ doget() {
 		printf("Remote filename missing in multiline GET\n");
 		return(-9);
 	    }
-	    if (*s == '{') {		/* Strip enclosing braces */
-		x = (int)strlen(s);
-		if (s[x-1] == '}') {
-		    s[x-1] = NUL;
-		    s++;
-		}
-	    }
-	    strcpy(line,s);		/* Copy filename to safe place */
+	    strcpy(line,brstrip(s));	/* Copy filename to safe place */
 	    cmarg = line;		/* Point to it */
 	    x = strlen(line);		/* Get its length */
 	    lp = line + x + 1;		/* Where to put the next bit */
@@ -1235,7 +1485,7 @@ doget() {
 		cbp = cmdbuf;		/* Interpret the line */
 		*cbp = NUL;		/* ... */
 		y = CMDBL;		/* into the command buffer */
-		xxstring(lp,&cbp,&y);
+		zzstring(lp,&cbp,&y);
 		if (*cmdbuf) {		/* If we have something */
 		    cmres();		/* parse it as an output filename */
 		    strcat(cmdbuf," ");
@@ -1249,7 +1499,7 @@ doget() {
 #endif /* NOSPL */
         } else {			/* Input is from terminal */
  
-	    cmsavp(psave,80);
+	    cmsavp(psave,PROMPTL);
 	    cmsetp(" Remote file specification: "); /* Make new one */
 	    cmini(ckxech);
 	    x = -1;
@@ -1267,14 +1517,7 @@ doget() {
 	    	cmsetp(psave);		/* Restore old prompt, */
 		return(0);		/* and return. */
 	    }
-	    if (*cmarg == '{') {	/* Strip enclosing braces */
-		x = (int)strlen(cmarg);
-		if (cmarg[x-1] == '}') {
-		    cmarg[x-1] = NUL;
-		    cmarg++;
-		}
-	    }
-	    strcpy(line,cmarg);		/* Make a safe copy */
+	    strcpy(line,brstrip(cmarg)); /* Make a safe copy */
 	    cmarg = line;
 	    cmsetp(" Local name to store it under: "); /* New prompt */
 	    cmini(ckxech);
@@ -1297,6 +1540,7 @@ doget() {
         }
     }
 #endif /* NOFRILLS */
+
     if (x == 0) {			/* Good return from cmtxt or cmcfm, */
 	debug(F110,"xxget cmarg",cmarg,0);
 	strncpy(fspec,cmarg,FSPECL);
@@ -1307,11 +1551,71 @@ doget() {
 	    ttflui();
 	}
     }
+#ifndef NOFRILLS
+#ifdef CK_TMPDIR
+/* cmarg2 is also allowed to be a device or directory name */
+
+	y = strlen(cmarg2);
+	if (
+#ifdef OS2
+	    (isalpha(cmarg2[0]) &&
+	     cmarg2[1] == ':' &&
+	     cmarg2[2] == '\0') ||
+	    isdir(cmarg2)
+#else
+#ifdef UNIX
+	    (y > 0 && cmarg2[y-1] == '/') || isdir(cmarg2)
+#else
+#ifdef VMS
+	    (y > 0) && isdir(cmarg2)
+#else
+#ifdef STRATUS
+	    (y > 0) && isdir(cmarg2)
+#endif /* STRATUS */
+#endif /* VMS */
+#endif /* UNIX */
+
+#endif /* OS2 */
+	    ) {
+	    debug(F110,"RECEIVE arg disk or dir",cmarg2,0);
+	    if (s = zgtdir()) {		/* Get current directory, */
+		if (zchdir(cmarg2)) {	/* change to given disk/directory, */
+		    strncpy(savdir,s,TMPDIRLEN); /* remember old disk/dir */
+		    debug(F110,"tmpdir saving",savdir,0);
+		    debug(F110,"tmpdir changing",cmarg2,0);
+		    f_tmpdir = 1;	/* and that we did this */
+		    cmarg2 = "";	/* and we don't have an as-name. */
+		} else {
+		    printf("?Can't access %s\n",cmarg2);
+		    f_tmpdir = 0;
+		    cmarg2 = "";
+		    return(-9);
+		}
+	    } else {
+		printf("?Can't get current directory\n");
+		cmarg2 = "";
+		f_tmpdir = 0;
+		return(-9);
+	    }
+	}
+#endif /* CK_TMPDIR */
+#endif /* NOFRILLS */
+
     return(x);
 }
 
 #ifndef NOSPL
 
+/*
+  _ G E T A R G S
+
+  Used by XIF, FOR, and WHILE, each of which are implemented as 2-level
+  macros; the first level defines the macro, the second runs it.
+  This routine hides the fact that they are macros by importing the
+  macro arguments (if any) from two levels up, to make them available
+  in the XIF, FOR, and WHILE commands themselves; for example as loop
+  indices, etc.
+*/
 int
 dogta(cx) int cx; {
     int i; char c; char mbuf[4]; char *p;
@@ -1327,16 +1631,7 @@ dogta(cx) int cx; {
     if (maclvl < 1)
       return(success = 0);
 
-#ifdef COMMENT
-#ifdef NEXT
-/* 
-  For some reason, this routine makes Kermit core dump on the next after
-  it returns to docmd().  It works fine, as the debug log shows, but when
-  docmd returns, it gets a memory fault.
-*/
-    else return(1);
-#endif /* NEXT */
-#endif /* COMMENT */
+    debug(F101,"success","",success);
 
     mbuf[0] = '%'; mbuf[1] = '0'; mbuf[2] = '\0'; /* Argument name buf */
     for (i = 0; i < 10; i++) {		/* For all args */
@@ -1368,19 +1663,29 @@ dogta(cx) int cx; {
     }
     debug(F101,"_get/putarg exit","",i);
     debug(F101,"_get/putarg exit maclvl","",maclvl);
+#ifdef COMMENT
+/*
+  Internal commands don't change success variable if they succeed.
+*/
     return(success = 1);
+#else
+    return(1);
+#endif /* COMMENT */
+
 }
 #endif /* NOSPL */
 
-
 #ifndef NOSPL
-/* Do the GOTO command */
-
+/*
+  Do the GOTO and FORWARD commands.
+  s = Label to search for, cx = function code, XXGOTO or XXFWD.
+*/
 int
-dogoto(s) char *s; {
+dogoto(s, cx) char *s; int cx; {
     int i, j, x, y;
     char tmplbl[50], *lp;
 
+    debug(F101,"goto cx","",cx);
     debug(F101,"goto cmdlvl","",cmdlvl);
     debug(F101,"goto maclvl","",maclvl);
     debug(F101,"goto tlevel","",tlevel);
@@ -1407,7 +1712,9 @@ dogoto(s) char *s; {
 	    int i, m, flag;
 	    char *xp, *tp;
 
-	    lp = macx[maclvl];
+	    /* GOTO: rewind the macro; FORWARD: start at current position */
+
+	    lp = (cx == XXGOTO) ? macx[maclvl] : macp[maclvl];
 	    m = (int)strlen(lp) - y + 1;
 	    debug(F111,"goto in macro",lp,m);
 
@@ -1455,7 +1762,8 @@ dogoto(s) char *s; {
 	    return(1);
 	} else if (cmdstk[cmdlvl].src == CMD_TF) {
 	    x = 0;			/* GOTO issued in take file */
-	    rewind(tfile[tlevel]);	/* Search file from beginning */
+	    if (cx == XXGOTO)		/* If GOTO, but not FORWARD, */
+	      rewind(tfile[tlevel]);	/* search file from beginning */
 	    while (! feof(tfile[tlevel])) {
 		if (fgets(line,LINBUFSIZ,tfile[tlevel]) == NULL) /* Get line */
 		  break;		/* If no more, done, label not found */
@@ -1491,9 +1799,23 @@ dogoto(s) char *s; {
 }
 #endif /* NOSPL */
 
-#ifndef NOSPL
 /* Finish parsing and do the IF, XIF, and WHILE commands */
 
+char *
+brstrip(p) char *p; {
+    if (!p) return("");
+    if (*p == '{') {
+	int x;
+	x = (int)strlen(p) - 1;
+	if (p[x] == '}') {
+	    p[x] = NUL;
+	    p++;
+	}
+    }
+    return(p);
+}
+
+#ifndef NOSPL
 int
 doif(cx) int cx; {
     int x, y, z; char *s, *p;
@@ -1563,16 +1885,16 @@ ifagain:
 		    c == 'V' ||		/* Builtin named variable */
 		    c == 'M' ||		/* Macro name */
 		    c == 'F') {		/* Builtin function */
-		    int t;		/* Let xxstring() evaluate it */
+		    int t;		/* Let zzstring() evaluate it */
 		    t = LINBUFSIZ-1;	/* This lets us test \v(xxx) */
 		    lp = line;		/* and even \f...(xxx) */
-		    xxstring(s,&lp,&t);
-		    t = strlen(line);
+		    zzstring(s,&lp,&t);	/* Evaluate it, whatever it is. */
+		    t = strlen(line);	/* Get its length. */
 		    debug(F111,"IF DEF",line,t);
-		    z = t > 0;
+		    z = t > 0;		/* If length > 0, it's defined */
 		}
-	    } 
-	} 
+	    }
+	}
 #endif /* COMMENT */
 	else {			/* Otherwise it's a macro name */
 	    z = ( mxlook(mactab,s,nmac) > -1 ); /* Look for exact match */
@@ -1598,14 +1920,65 @@ ifagain:
 	break;
 
       case XXIFEX:			/* IF EXIST */
-	if ((x = cmfld("File","",&s,xxstring)) < 0) {
+#ifdef CK_TMPDIR
+      case XXIFDI:			/* IF DIRECTORY */
+#endif /* CK_TMPDIR */
+	if ((x = cmfld(
+		       ((ifc == XXIFEX) ? "File" : "Directory name"),
+		       "",&s,
+#ifdef OS2
+		       NULL		/* This allows \'s in filenames */
+#else
+		       xxstring
+#endif /* OS2 */
+		       )) < 0) {
 	    if (x == -3) {
-		printf("?Filename required\n");
+		printf("?File or directory name required\n");
 		return(-9);
 	    } else return(x);
 	}
-	z = ( zchki(s) > -1L );
-	debug(F101,"if exist","",z);
+	if (ifc == XXIFEX) {
+	    z = ( zchki(s) > -1L );
+	    debug(F101,"if exist 1","",z);
+#ifdef OS2	    
+	    if (!z) {			/* File not found. */
+		int t;			/* Try expanding variables */
+		t = LINBUFSIZ-1;	/* and looking again. */
+		lp = line;
+		zzstring(s,&lp,&t);
+		s = line;
+		z = ( zchki(s) > -1L );
+		debug(F101,"if exist 2","",z);
+	    }
+#endif /* OS2 */
+#ifdef CK_TMPDIR
+	} else {
+	    z = isdir(s)
+#ifdef OS2
+	      || (isalpha(cmarg2[0]) &&
+		  cmarg2[1] == ':' &&
+		  cmarg2[2] == '\0')
+#endif /* OS2 */
+	      ;
+	    debug(F101,"if directory 1","",z);
+
+	    if (!z) {			/* File not found. */
+		int t;			/* Try expanding variables */
+		t = LINBUFSIZ-1;	/* and looking again. */
+		lp = line;
+		zzstring(s,&lp,&t);
+		s = line;
+		z = isdir(s)
+#ifdef OS2
+		  || (isalpha(cmarg2[0]) &&
+		      cmarg2[1] == ':' &&
+		      cmarg2[2] == '\0')
+#endif /* OS2 */
+		    ;
+		debug(F101,"if directory 2","",z);
+	    }
+#endif /* CK_TMPDIR */
+	}
 	ifargs += 2;
 	break;
 
@@ -1618,6 +1991,7 @@ ifagain:
 		return(-9);
 	    } else return(x);
 	}
+	s = brstrip(s);			/* Strip braces */
 	x = (int)strlen(s);
 	if (x > LINBUFSIZ-1) {
 	    printf("?IF: strings too long\n");
@@ -1631,6 +2005,7 @@ ifagain:
 		return(-9);
 	    } else return(y);
 	}
+	s = brstrip(s);
 	y = (int)strlen(s);
 	if (x + y + 2 > LINBUFSIZ) {
 	    printf("?IF: strings too long\n");
@@ -1638,11 +2013,15 @@ ifagain:
 	}
 	tp = lp + y + 2;		/* tp points to second string */
 	strcpy(tp,s);
-	if (incase[cmdlvl])		/* INPUT CASE OBSERVE */
-	  x = strcmp(lp,tp);
-	else				/* INPUT CASE IGNORE */
-	  x = xxstrcmp(lp,tp,(y > x) ? y : x); /* Use longest length */
-	debug(F101,"IF comparison","",x);
+	debug(F111,"IF EQ string 1, x",lp,x);
+	debug(F111,"IF EQ string 2, y",tp,y);
+	if (inpcas[cmdlvl]) {		/* INPUT CASE OBSERVE */
+	    x = strcmp(lp,tp);
+	    debug(F101,"IF EQ strcmp","",x);
+	} else {				/* INPUT CASE IGNORE */
+	    x = xxstrcmp(lp,tp,(y > x) ? y : x); /* Use longest length */
+	    debug(F101,"IF EQ xxstrcmp","",x);
+	}
 	switch (ifc) {
 	  case XXIFEQ: 			/* IF EQUAL (string comparison) */
 	    z = (x == 0);
@@ -1730,15 +2109,45 @@ ifagain:
 	ifargs += 2;
 	break;
 
+#ifdef ZFCDAT
+      case XXIFNE: {			/* IF NEWER */
+	char d1[20], * d2;		/* Buffers for 2 dates */
+	if ((z = cmifi("First file","",&s,&y,xxstring)) < 0)
+	  return(z);
+	strcpy(d1,zfcdat(s));
+	if ((z = cmifi("Second file","",&s,&y,xxstring)) < 0)
+	  return(z);
+	d2 = zfcdat(s);
+	if ((int)strlen(d1) != 17 || (int)strlen(d2) != 17) {
+	    printf("?Failure to get file date\n");
+	    return(-9);
+	}
+	debug(F110,"xxifnewer d1",d1,0);
+	debug(F110,"xxifnewer d2",d2,0);
+	z = (strcmp(d1,d2) > 0) ? 1 : 0;
+        debug(F101,"xxifnewer","",z);
+	ifargs += 2;
+	break;
+      }
+#endif /* ZFCDAT */
+
+#ifdef CK_IFRO
+      case XXIFRO:			/* REMOTE-ONLY advisory */
+	ifargs++;
+	z = remonly;
+	break;
+#endif /* CK_IFRO */
+
       default:				/* Shouldn't happen */
 	return(-2);
     }
+    if (not) z = !z;			/* Handle NOT here for both IF & XIF */
 
     switch (cx) {			/* Separate handling for IF and XIF */
 
       case XXIF:			/* This is IF... */
 	ifcmd[cmdlvl] = 1;		/* We just completed an IF command */
-	if (not) z = !z;		/* Handle NOT here */
+        debug(F101,"IF condition","",z);
 	if (z) {			/* Condition is true */
 	    iftest[cmdlvl] = 1;		/* Remember that IF succeeded */
 	    if (maclvl > -1) {		/* In macro, */
@@ -1805,7 +2214,7 @@ ifagain:
 	  strcpy(ifcp,"{ \\flit(if not ");
 	  ifcp += (int)strlen(ifcp);
 	  while (*p != '{' && *p != NUL) *ifcp++ = *p++;
-	  p = " goto wbot) } ";
+	  p = " goto bot) } ";
 	  while (*ifcp++ = *p++) ;
 	  debug(F110,"WHILE cmd",ifcond,0);
 
@@ -1874,13 +2283,13 @@ dotake(s) char *s; {
 	iftest[cmdlvl] = 0;
 	count[cmdlvl]  = count[cmdlvl-1];  /* Inherit this */
 	intime[cmdlvl] = intime[cmdlvl-1]; /* Inherit this */
-	incase[cmdlvl] = incase[cmdlvl-1]; /* Inherit this */
-	terror[cmdlvl] = terror[cmdlvl-1]; /* Inherit this */
+	inpcas[cmdlvl] = inpcas[cmdlvl-1]; /* Inherit this */
+	takerr[cmdlvl] = takerr[cmdlvl-1]; /* Inherit this */
 	merror[cmdlvl] = merror[cmdlvl-1]; /* Inherit this */
 	cmdstk[cmdlvl].src = CMD_TF;	/* Say we're in a TAKE file */
 	cmdstk[cmdlvl].lvl = tlevel;	/* nested at this level */
 #else
-	terror[tlevel] = terror[tlevel-1]; /* Inherit this */
+	takerr[tlevel] = takerr[tlevel-1]; /* Inherit this */
 #endif /* NOSPL */
     }
     return(1);
