@@ -1,41 +1,54 @@
-char *userv = "User Interface 4F(065), 20 Jul 89";
+char *userv = "User Interface 5A(095), 19 Jan 93";
 
 /*  C K U U S R --  "User Interface" for Unix Kermit (Part 1)  */
 
 /*
- Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
- Columbia University Center for Computing Activities.
- First released January 1985.
- Copyright (C) 1985, 1989, Trustees of Columbia University in the City of New
- York.  Permission is granted to any individual or institution to use, copy, or
- redistribute this software so long as it is not sold for profit, provided this
- copyright notice is retained.
+  Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
+  Columbia University Center for Computing Activities.
+  First released January 1985.
+  Copyright (C) 1985, 1993, Trustees of Columbia University in the City of New
+  York.  Permission is granted to any individual or institution to use this
+  software as long as it is not sold for profit.  This copyright notice must be
+  retained.  This software may not be included in commercial products without
+  written permission of Columbia University.
 */
-
+
 /*
- The ckuusr module contains the terminal input and output functions for Unix
- Kermit.  It includes a simple Unix-style command line parser as well as
- an interactive prompting keyword command parser.  It depends on the existence
- of Unix facilities like fopen, fgets, feof, (f)printf, argv/argc, etc.  Other
- functions that are likely to vary among Unix implementations -- like setting
- terminal modes or interrupts -- are invoked via calls to functions that are
- defined in the system-dependent modules, ck?[ft]io.c.
+  NOTE: Because of the massive additions in functionality, and therefore
+  the increase in the number of commands, much code was moved from here to
+  the two new modules, ckuus4.c and ckuus5.c.  This module now contains only
+  the top-level command keyword table, the SET command keyword table, and
+  the top-level interactive command parser/dispatcher.  ckuus3.c contains the
+  rest of the SET and REMOTE command parsers; ckuus2.c contains the help
+  command parser and help text strings, and ckuus4.c and ckuus5.c contain
+  miscellaneous pieces that logically belong in the ckuusr.c file but had to
+  be moved because of size problems with some C compilers / linkers.
+  Later...  as the other modules became too large, a ckuus6.c was created.
+  Still later...  ckuus7.c.
+  Also: ckuusy.c contains the UNIX-style command-line interface;
+  ckuusx.c contains routines needed by both the command-line interface and
+  the interactive command parser.
+*/
 
- The command line parser processes any arguments found on the command line,
- as passed to main() via argv/argc.  The interactive parser uses the facilities
- of the cmd package (developed for this program, but usable by any program).
+/*
+ The ckuus*.c modules depend on the existence of C library features like fopen,
+ fgets, feof, (f)printf, argv/argc, etc.  Other functions that are likely to
+ vary among Unix implementations -- like setting terminal modes or interrupts
+ -- are invoked via calls to functions that are defined in the system-
+ dependent modules, ck?[ft]io.c.  The command line parser processes any
+ arguments found on the command line, as passed to main() via argv/argc.  The
+ interactive parser uses the facilities of the cmd package (developed for this
+ program, but usable by any program).  Any command parser may be substituted
+ for this one.  The only requirements for the Kermit command parser are these:
 
- Any command parser may be substituted for this one.  The only requirements
- for the Kermit command parser are these:
+1. Set parameters via global variables like duplex, speed, ttname, etc.  See
+   ckmain.c for the declarations and descriptions of these variables.
 
- 1. Set parameters via global variables like duplex, speed, ttname, etc.
-    See ckmain.c for the declarations and descriptions of these variables.
+2. If a command can be executed without the use of Kermit protocol, then
+   execute the command directly and set the variable sstate to 0. Examples
+   include 'set' commands, local directory listings, the 'connect' command.
 
- 2. If a command can be executed without the use of Kermit protocol, then
-    execute the command directly and set the variable sstate to 0. Examples
-    include 'set' commands, local directory listings, the 'connect' command.
-
- 3. If a command requires the Kermit protocol, set the following variables:
+3. If a command requires the Kermit protocol, set the following variables:
 
     sstate                             string data
       'x' (enter server mode)            (none)
@@ -54,1442 +67,1966 @@ char *userv = "User Interface 4F(065), 20 Jul 89";
        a pointer to a host command string.
     cmarg2 is the name to send a single file under, or
        the name under which to store an incoming file; must not be wild.
+       If it's the name for receiving, a null value means to store the
+       file under the name it arrives with.
     cmlist is a list of nonwild filenames, such as passed via argv.
     nfils is an integer, interpreted as follows:
-      -1: argument string is in cmarg, and should be expanded internally.
-       0: stdin.
+      -1: filespec (possibly wild) in cmarg, must be expanded internally.
+       0: send from stdin (standard input).
       >0: number of files to send, from cmlist.
 
  The screen() function is used to update the screen during file transfer.
- The tlog() function maintains a transaction log.
- The debug() function maintains a debugging log.
+ The tlog() function writes to a transaction log.
+ The debug() function writes to a debugging log.
  The intmsg() and chkint() functions provide the user i/o for interrupting
    file transfers.
 */
-
+
+#ifndef NOICP
 /* Includes */
-
+ 
 #include "ckcdeb.h"
-#include <stdio.h>
-#include <ctype.h>
-#ifndef AMIGA
-/* Apparently these should be included for OS/2 C-Kermit after all... */
-/* #ifndef OS2 */
-#include <signal.h>
-#include <setjmp.h>
-/* #endif */
-#endif
-
+#include "ckcasc.h"
 #include "ckcker.h"
-#include "ckucmd.h"
 #include "ckuusr.h"
-
+#include "ckcxla.h"
+#include "ckcnet.h"			/* Network symbols */
+ 
 #ifdef datageneral
+#include <packets:common.h>
 #define fgets(stringbuf,max,fd) dg_fgets(stringbuf,max,fd)
-#define fork() vfork()
-/* DG version 3.21 of C has bugs in the following routines, since they
- * depend on /etc/passwd.  In the context where the routines are used,
- * we don't need them anyway.
- */
-#define getgid() -1
-#define getuid() -1
-#define geteuid() -1
-#endif
+#endif /* datageneral */
 
 /* External Kermit Variables, see ckmain.c for description. */
+ 
+extern int size, local, sndsrc, xitsta, server, displa, binary, msgflg, 
+  escape, duplex, nfils, quiet, tlevel, pflag, zincnt, atcapr, atdiso, verwho;
+ 
+extern long vernum;
+extern char *versio;
+extern char *ckxsys, *cmarg, *cmarg2, **cmlist;
+#ifndef NOHELP
+extern char *introtxt[];
+#endif /* NOHELP */
+extern char *PWDCMD, *WHOCMD, *TYPCMD;
+extern char ttname[];
+#ifndef NOFRILLS
+extern int rmailf;			/* MAIL command items */
+extern char optbuf[];
+#endif /* NOFRILLS */
+extern CHAR sstate;
 
-extern int size, rpsiz, urpsiz, speed, local,
-  server, displa, binary, parity, deblog, escape, xargc, flow,
-  turn, duplex, nfils, ckxech, pktlog, seslog, tralog, stdouf,
-  turnch, dfloc, keep, maxrps, warn, quiet, cnflg, tlevel,
-  mdmtyp, zincnt;
+#ifdef NETCONN
+extern int network;			/* Have active network connection */
+#endif /* NETCONN */
 
-extern char *versio, *protv, *ckxv, *ckzv, *fnsv, *connv, *dftty, *cmdv;
-extern char *dialv, *loginv;
-extern char *ckxsys, *ckzsys, *cmarg, *cmarg2, **xargv, **cmlist;
-extern char *DIRCMD, *PWDCMD, cmerrp[];
-extern CHAR sstate, ttname[];
-extern CHAR *zinptr;
-char *strcpy(), *getenv();
-#ifdef AMIGA
-char *getcwd();
-#endif
-#ifdef OS2
-char *getcwd();
-#endif
+#ifndef NOMSEND				/* Multiple SEND */
+extern char *msfiles[];
+#endif /* NOMSEND */
+extern char fspec[];			/* Most recent filespec */
 
-/* Declarations from cmd package */
+#ifndef NOCSETS
+extern int nfilc;
+extern struct keytab fcstab[];
+#endif /* NOCSETS */
 
-extern char cmdbuf[];			/* Command buffer */
+int rcflag = 0;				/* Pointer to home directory string */
+int repars,				/* Reparse needed */
+    techo = 0;				/* Take echo */
+#ifndef NOSCRIPT
+int secho = 1;
+#endif /* NOSCRIPT */
+
+#ifndef NOXMIT
+/* Variables for TRANSMIT command */
+
+int xmitx = 1;			/* Whether to echo during TRANSMIT */
+int xmitf = 0;			/* Character to fill empty lines */
+int xmitl = 0;			/* 0 = Don't send linefeed too */
+int xmitp = LF;			/* Host line prompt */
+int xmits = 0;			/* Use shift-in/shift-out, 0 = no */
+int xmitw = 0;			/* Milliseconds to pause during TRANSMIT */
+#endif /* NOXMIT */
 
 /* Declarations from ck?fio.c module */
+ 
+extern char *SPACMD, *SPACM2;		/* SPACE commands */
+ 
+/* Command-oriented items */
 
-extern char *SPACMD, *zhome();		/* Space command, home directory. */
-extern int backgrd;			/* Kermit executing in background */
-#ifdef OS2
-extern char *zfindfile();
-#endif
-
-/* The background flag is set by ckutio.c (via conint() ) to note whether */
-/* this kermit is executing in background ('&' on shell command line).    */
-
-
-/* Variables and symbols local to this module */
-
-char line[CMDBL+10], *lp;		/* Character buffer for anything */
-char debfil[50];			/* Debugging log file name */
-char pktfil[50];			/* Packet log file name */
-char sesfil[50];			/* Session log file name */
-char trafil[50];			/* Transaction log file name */
-
-int n,					/* General purpose int */
-    cflg,				/* Command-line connect cmd given */
-    action,				/* Action selected on command line*/
-    repars,				/* Reparse needed */
-    cwdf = 0;				/* CWD has been done */
-
-#define MAXTAKE 20			/* Maximum nesting of TAKE files */
-FILE *tfile[MAXTAKE];			/* File pointers for TAKE command */
-
-char *homdir;				/* Pointer to home directory string */
-char cmdstr[100];			/* Place to build generic command */
-
-/*  C M D L I N  --  Get arguments from command line  */
-/*
- Simple Unix-style command line parser, conforming with 'A Proposed Command
- Syntax Standard for Unix Systems', Hemenway & Armitage, Unix/World, Vol.1,
- No.3, 1984.
-*/
-cmdlin() {
-    char x;				/* Local general-purpose int */
-    cmarg = "";				/* Initialize globals */
-    cmarg2 = "";
-    action = cflg = 0;
-
-    while (--xargc > 0) {		/* Go through command line words */
-	xargv++;
-	debug(F111,"xargv",*xargv,xargc);
-    	if (**xargv == '-') {		/* Got an option (begins with dash) */
-	    x = *(*xargv+1);		/* Get the option letter */
-	    if (doarg(x) < 0) doexit(BAD_EXIT);	/* Go handle the option */
-    	} else {			/* No dash where expected */
-	    usage();
-	    doexit(BAD_EXIT);
-	}
-    }
-    debug(F101,"action","",action);
-    if (!local) {
-	if ((action == 'g') || (action == 'r') ||
-	    (action == 'c') || (cflg != 0))
-	    fatal("-l and -b required");
-    }
-    if (*cmarg2 != 0) {
-	if ((action != 's') && (action != 'r') &&
-	    (action != 'v'))
-	    fatal("-a without -s, -r, or -g");
-    }
-    if ((action == 'v') && (stdouf) && (!local)) {
-    	if (isatty(1))
-	    fatal("unredirected -k can only be used in local mode");
-    }
-    if ((action == 's') || (action == 'v') ||
-    	(action == 'r') || (action == 'x')) {
-	if (local) displa = 1;
-	if (stdouf) { displa = 0; quiet = 1; }
-    }
-
-    if (quiet) displa = 0;		/* No display if quiet requested */
-
-    if (cflg) {
-	conect();			/* Connect if requested */
-	if (action == 0) {
-	    if (cnflg) conect();	/* And again if requested */
-	    doexit(GOOD_EXIT);		/* Then exit indicating success */
-	}
-    }
-    if (displa) concb(escape);		/* (for console "interrupts") */
-    return(action);			/* Then do any requested protocol */
-}
-
-/*  D O A R G  --  Do a command-line argument.  */
-
-doarg(x) char x; {
-    int z; char *xp;
-
-    xp = *xargv+1;			/* Pointer for bundled args */
-    while (x) {
-	switch (x) {
-
-case 'x':				/* server */
-    if (action) fatal("conflicting actions");
-    action = 'x';
-    break;
-
-case 'f':
-    if (action) fatal("conflicting actions");
-    action = setgen('F',"","","");
-    break;
-
-case 'r':				/* receive */
-    if (action) fatal("conflicting actions");
-    action = 'v';
-    break;
-
-case 'k':				/* receive to stdout */
-    if (action) fatal("conflicting actions");
-    stdouf = 1;
-    action = 'v';
-    break;
-
-case 's': 				/* send */
-    if (action) fatal("conflicting actions");
-    if (*(xp+1)) fatal("invalid argument bundling after -s");
-    z = nfils = 0;			/* Initialize file counter, flag */
-    cmlist = xargv+1;			/* Remember this pointer */
-    while (--xargc > 0) {		/* Traverse the list */
-	xargv++;
-	if (**xargv == '-') {		/* Check for sending stdin */
-	    if (strcmp(*xargv,"-") != 0) break;
-	    z++;
-        }
-	nfils++;			/* Bump file counter */
-    }
-    xargc++, xargv--;			/* Adjust argv/argc */
-    if (nfils < 1) fatal("missing filename for -s");
-    if (z > 1) fatal("-s: too many -'s");
-    if (z == 1) {
-	if (nfils == 1) nfils = 0;
-	else fatal("invalid mixture of filenames and '-' in -s");
-    }
-    if (nfils == 0) {
-	if (isatty(0)) fatal("sending from terminal not allowed");
-    }
-    debug(F101,*xargv,"",nfils);
-    action = 's';
-    break;
-
-/* cont'd... */
-
-/* ...doarg(), cont'd */
-
-case 'g':				/* get */
-    if (action) fatal("conflicting actions");
-    if (*(xp+1)) fatal("invalid argument bundling after -g");
-    xargv++, xargc--;
-    if ((xargc == 0) || (**xargv == '-'))
-    	fatal("missing filename for -g");
-    cmarg = *xargv;
-    action = 'r';
-    break;
-
-case 'c':				/* connect before */
-    cflg = 1;
-    break;
-
-case 'n':				/* connect after */
-    cnflg = 1;
-    break;
-
-case 'h':				/* help */
-    usage();
-    doexit(GOOD_EXIT);
-
-case 'a':				/* "as" */
-    if (*(xp+1)) fatal("invalid argument bundling after -a");
-    xargv++, xargc--;
-    if ((xargc < 1) || (**xargv == '-'))
-    	fatal("missing name in -a");
-    cmarg2 = *xargv;
-    break;
-
-case 'l':				/* set line */
-    if (*(xp+1)) fatal("invalid argument bundling after -l");
-    xargv++, xargc--;
-    if ((xargc < 1) || (**xargv == '-'))
-    	fatal("communication line device name missing");
-    strcpy(ttname,*xargv);
-/*  if (strcmp(ttname,dftty) == 0) local = dfloc; else local = 1;  */
-    local = (strcmp(ttname,CTTNAM) != 0); /* (better than old way) */
-    debug(F101,"local","",local);
-    ttopen(ttname,&local,0);
-    break;
-
-case 'b':   	    			/* set baud */
-    if (*(xp+1)) fatal("invalid argument bundling");
-    xargv++, xargc--;
-    if ((xargc < 1) || (**xargv == '-'))
-    	fatal("missing baud");
-    z = atoi(*xargv);			/* Convert to number */
-    if (chkspd(z) > -1) speed = z;	/* Check it */
-    	else fatal("unsupported baud rate");
-    break;
-
-case 'e':				/* Extended packet length */
-    if (*(xp+1)) fatal("invalid argument bundling");
-    xargv++, xargc--;
-    if ((xargc < 1) || (**xargv == '-'))
-    	fatal("missing length");
-    z = atoi(*xargv);			/* Convert to number */
-    if (z > 10 && z < maxrps) {
-        rpsiz = urpsiz = z;
-	if (z > 94) rpsiz = 94;		/* Fallback if other Kermit can't */
-    } else fatal("Unsupported packet length");
-    break;
-
-case 'i':				/* Treat files as binary */
-    binary = 1;
-    break;
-
-/* cont'd... */
-
-/* ...doarg(), cont'd */
-
-
-case 'w':				/* File warning */
-    warn = 1;
-    break;
-
-case 'q':				/* Quiet */
-    quiet = 1;
-    break;
-
-case 'd':				/* debug */
-    debopn("debug.log");
-    break;
-
-case 'p':				/* set parity */
-    if (*(xp+1)) fatal("invalid argument bundling");
-    xargv++, xargc--;
-    if ((xargc < 1) || (**xargv == '-'))
-    	fatal("missing parity");
-    switch(x = **xargv) {
-	case 'e':
-	case 'o':
-	case 'm':
-	case 's': parity = x; break;
-	case 'n': parity = 0; break;
-	default:  fatal("invalid parity");
-        }
-    break;
-
-case 't':
-    turn = 1;				/* Line turnaround handshake */
-    turnch = XON;			/* XON is turnaround character */
-    duplex = 1;				/* Half duplex */
-    flow = 0;				/* No flow control */
-    break;
-
-#ifdef OS2
-case 'u':
-    /* get numeric argument */
-    if (*(xp+1)) fatal("invalid argument bundling");
-    *xargv++, xargc--;
-    if ((xargc < 1) || (**xargv == '-'))
-    	fatal("missing handle");
-    z = atoi(*xargv);			/* Convert to number */
-    ttclos();
-    if (!ttiscom(z)) fatal("invalid handle");
-    speed = ttspeed();
-    break;
-#endif /* OS2 */
-
-default:
-    fatal("invalid argument, type 'kermit -h' for help");
-        }
-
-    x = *++xp;				/* See if options are bundled */
-    }
-    return(0);
-}
-
-/* Misc */
-
-fatal(msg) char *msg; {			/* Fatal error message */
-#ifdef OSK
-    fprintf(stderr,"\nFatal: %s\n",msg);
+#ifdef DCMDBUF
+extern char *cmdbuf;			/* Command buffers */
+extern char *atmbuf;
+extern char *line;			/* Character buffer for anything */
+extern int *ifcmd;
+extern int *intime, *terror, *merror;
 #else
-    fprintf(stderr,"\r\nFatal: %s\n",msg);
-#endif /* OSK */
-    tlog(F110,"Fatal:",msg,0l);
-    doexit(BAD_EXIT);			/* Exit indicating failure */
-}
+extern char cmdbuf[];			/* Command buffers */
+extern char atmbuf[];
+extern char line[];			/* Character buffer for anything */
+extern int ifcmd[];
+extern int intime[], terror[], merror[];
+#endif /* DCMDBUF */
 
+char *lp;				/* Pointer to line buffer */
 
-ermsg(msg) char *msg; {			/* Print error message */
-#ifdef OSK
-    if (!quiet) fprintf(stderr,"\n%s - %s\n",cmerrp,msg);
+#ifndef NOSPL
+extern char inpbuf[];			/* Buffer for INPUT and REINPUT */
+char *inpbp = inpbuf;			/* And pointer to same */
+extern char lblbuf[];			/* Buffer for labels */
+#endif /* NOSPL */
+
+char psave[80] = { NUL };		/* For saving & restoring prompt */
+
+extern char tmpbuf[];			/* Temporary buffer */
+ 
+extern int success;			/* Command success/failure flag */
+
+#ifndef NOSPL
+int					/* SET INPUT parameters. */
+/* Note, INPUT TIMEOUT, intime[], is on the command-level stack. */
+  indef = 1,				/* default timeout, seconds */
+  inecho = 1,				/* 1 = echo on */
+  insilence = 0;			/* 0 = no silence constraint */
+ 
+int maclvl = -1;			/* Macro nesting level */
+int mecho = 0;				/* Macro echo, 0 = don't */
+char varnam[6];				/* For variable names */
+extern int macargc[];			/* ARGC from macro invocation */
+
+extern char *m_arg[MACLEVEL][NARGS];	/* Stack of macro arguments */
+ 
+extern char **a_ptr[];			/* Array pointers */
+extern int a_dim[];			/* Array dimensions */
+
+#ifdef DCMDBUF
+extern struct cmdptr *cmdstk;		/* The command stack itself */
 #else
-    if (!quiet) fprintf(stderr,"\r\n%s - %s\n",cmerrp,msg);
-#endif /* OSK */
-    tlog(F110,"Error -",msg,0l);
-}
-
-/* Interactive command parser */
+extern struct cmdptr cmdstk[];		/* The command stack itself */
+#endif /* DCMDBUF */
+extern int cmdlvl;			/* Current position in command stack */
+#endif /* NOSPL */
 
+static int x, y, z = 0;			/* Local workers */
+static char *s;
 
-/* Top-Level Keyword Table */
+#define xsystem(s) zsyscmd(s)
 
+/* Top-Level Interactive Command Keyword Table */
+ 
 struct keytab cmdtab[] = {
-    "!",	   XXSHE, 0,
-    "%",    	   XXCOM, CM_INV,
-    "bye",         XXBYE, 0,
-    "c",           XXCON, CM_INV,
-    "cd",          XXCWD, 0,
-    "close",	   XXCLO, 0,
-    "connect",     XXCON, 0,
-    "cwd",	   XXCWD, 0,
-    "dial",	   XXDIAL, 0,
-    "directory",   XXDIR, 0,
-    "echo",        XXECH, 0,
-    "exit",	   XXEXI, 0,
-    "finish",	   XXFIN, 0,
-    "get",	   XXGET, 0,
-    "hangup",      XXHAN, 0,
-    "help",	   XXHLP, 0,
-    "log",  	   XXLOG, 0,
-    "quit",	   XXQUI, 0,
-    "r",           XXREC, CM_INV,
-    "receive",	   XXREC, 0,
-    "remote",	   XXREM, 0,
-    "s",           XXSEN, CM_INV,
-    "script",	   XXLOGI, 0,
-    "send",	   XXSEN, 0,
-    "server",	   XXSER, 0,
-    "set",	   XXSET, 0,
-    "show", 	   XXSHO, 0,
-    "space",       XXSPA, 0,
-    "statistics",  XXSTA, 0,
-    "take",	   XXTAK, 0,
-    "transmit",    XXTRA, 0
+#ifndef NOPUSH
+    "!",	   XXSHE, CM_INV,	/* shell escape */
+#endif /* NOPUSH */
+    "#",    	   XXCOM, CM_INV,	/* comment */
+#ifndef NOSPL
+    ":",           XXLBL, CM_INV,	/* label */
+#endif /* NOSPL */
+#ifndef NOPUSH
+    "@",           XXSHE, CM_INV,	/* DCL escape */
+#endif /* NOPUSH */
+#ifndef NOSPL
+    "asg",         XXASS, CM_INV,       /* invisible synonym for assign */
+    "ask",         XXASK, 0,		/* ask */
+    "askq",        XXASKQ,0,            /* ask quietly */
+    "assign",      XXASS, 0,            /* assign */
+#endif /* NOSPL */
+#ifndef NOFRILLS
+    "bug",         XXBUG, 0,		/* bug report instructions */
+#endif /* NOFRILLS */
+    "bye",         XXBYE, 0,		/* bye to remote server */
+    "c",           XXCON, CM_INV|CM_ABR, /* invisible synonym for connect */
+#ifndef NOFRILLS
+    "cat",         XXTYP, CM_INV,	/* display a local file */
+#endif /* NOFRILLS */
+    "cd",          XXCWD, 0,		/* change directory */
+    "check",       XXCHK, 0,		/* check for a feature */
+#ifndef NOFRILLS
+    "clear",       XXCLE, 0,		/* clear input buffer */
+#endif /* NOFRILLS */
+    "close",	   XXCLO, 0,		/* close a log file */
+#ifdef NOFRILLS
+    "comment",     XXCOM, CM_INV,	/* comment */
+#else
+    "comment",     XXCOM, 0,		/* comment */
+#endif /* NOFRILLS */
+    "connect",     XXCON, 0,		/* connect to remote system */
+    "cwd",	   XXCWD, CM_INV,	/* invisisble synonym for cd */
+#ifndef NOSPL
+    "dcl",         XXDCL, CM_INV,	/* declare an array */
+    "declare",     XXDCL, 0,		/* declare an array */
+    "decrement",   XXDEC, 0,		/* decrement a numeric variable */
+    "define",      XXDEF, 0,		/* define a macro */
+#endif /* NOSPL */
+#ifndef NOFRILLS
+    "delete",      XXDEL, 0,		/* delete a file */
+#endif /* NOFRILLS */
+#ifndef NODIAL
+    "dial",	   XXDIAL,0,		/* dial a phone number */
+#endif /* NODIAL */
+#ifndef MAC
+    "directory",   XXDIR, 0,		/* directory of files */
+#endif /* MAC */
+#ifndef NOFRILLS
+    "disable",     XXDIS, 0,		/* disable server function */
+#endif /* NOFRILLS */
+#ifndef NOSPL
+    "do",          XXDO,  0,		/* execute a macro */
+#endif /* NOSPL */
+#ifndef NOFRILLS
+    "e-packet",    XXERR, CM_INV,	/* Send an Error packet */
+#endif /* NOFRILLS */
+    "echo",        XXECH, 0,		/* echo argument */
+#ifndef NOSPL
+    "else",        XXELS, CM_INV,	/* ELSE part of IF statement */
+#endif /* NOSPL */
+#ifndef NOFRILLS
+    "enable",      XXENA, 0,		/* ENABLE a server function */
+#endif /* NOFRILLS */
+#ifndef NOSPL
+    "end",         XXEND, 0,		/* END command file or macro */
+#endif /* NOSPL */
+    "ex",          XXEXI, CM_INV|CM_ABR, /* Let "ex" still be EXIT */
+    "exit",	   XXEXI, 0,		/* exit the program */
+    "extproc",     XXCOM, CM_INV,       /* dummy command */
+    "finish",      XXFIN, 0,		/* FINISH */
+#ifndef NOSPL
+    "for",         XXFOR, 0,		/* FOR loop */
+#endif /* NOSPL */
+#ifndef NOFRILLS
+#ifndef MAC
+    "fot",	   XXDIR, CM_INV,	/* "fot" = "dir" (for Chris) */
+#endif /* MAC */
+#endif /* NOFRILLS */
+    "g",           XXGET, CM_INV|CM_ABR, /* Invisible abbreviation for GET */
+#ifndef NOSPL
+    "ge",          XXGET, CM_INV|CM_ABR, /* Ditto */
+#endif /* NOSPL */
+    "get",         XXGET, 0,		/* GET */
+#ifndef NOSPL
+#ifndef NOFRILLS
+    "getok",       XXGOK, 0,		/* GETOK (ask for Yes/No) */
+#endif /* NOFRILLS */
+#endif /* NOSPL */
+#ifndef NOSPL
+    "goto",        XXGOTO,0,		/* goto label in take file or macro */
+#endif /* NOSPL */
+    "hangup",      XXHAN, 0,		/* hangup dialed phone connection */
+    "help",	   XXHLP, 0,		/* display help text */
+#ifndef NOSPL
+    "i",           XXINP, CM_INV|CM_ABR, /* invisible synonym for INPUT */
+    "if",          XXIF,  0,		/* if (condition) command */
+    "in",          XXINP, CM_INV|CM_ABR, /* invisible synonym for INPUT */
+    "increment",   XXINC, 0,		/* increment a numeric variable */
+    "input",       XXINP, 0,		/* input string from comm line */
+#endif /* NOSPL */
+#ifndef NOHELP
+     "introduction", XXINT, 0,		/* Print introductory text */
+#endif /* NOHELP */
+#ifndef NOFRILLS
+    "l",           XXLOG, CM_INV|CM_ABR,/* invisible synonym for log */
+#endif /* NOFRILLS */
+    "log",  	   XXLOG, 0,		/* open a log file */
+#ifndef NOFRILLS
+#ifndef MAC
+    "ls",          XXDIR, CM_INV,	/* invisible synonym for directory */
+#endif /* MAC */
+    "mail",        XXMAI, 0,		/* mail file to user */
+    "man",         XXHLP, CM_INV,       /* Synonym for help */
+#endif /* NOFRILLS */
+#ifndef NOMSEND
+    "mget",        XXGET, CM_INV,	/* MGET = GET */
+#endif /* NOMSEND */
+#ifndef NOSPL
+    "mpause",      XXMSL, CM_INV,	/* Millisecond sleep */
+#endif /* NOSPL */
+#ifndef NOMSEND
+    "ms",          XXMSE, CM_INV|CM_ABR,
+    "msend",       XXMSE, 0,		/* Multiple SEND */
+#endif /* NOMSEND */
+#ifndef NOSPL
+    "msleep",      XXMSL, 0,		/* Millisecond sleep */
+#endif /* NOSPL */
+#ifndef NOMSEND
+    "mput",        XXMSE, CM_INV,	/* MPUT = MSEND */
+#endif /* NOMSEND */
+#ifndef NOFRILLS
+    "mv",          XXREN, CM_INV,	/* rename a local file */
+#endif /* NOFRILLS */
+#ifndef NOSPL
+    "o",           XXOUT, CM_INV|CM_ABR,/* invisible synonym for OUTPUT */
+    "open",        XXOPE, 0,		/* open file for reading or writing */
+    "output",      XXOUT, 0,		/* output string to comm line */
+#endif /* NOSPL */
+#ifdef SUNX25
+    "pad",         XXPAD, 0,            /* PAD commands */
+#endif /* SUNX25 */
+#ifndef NOSPL
+    "pause",       XXPAU, 0,		/* sleep for specified interval */
+#ifdef TCPSOCKET
+    "ping",        XXPNG, 0,		/* PING (for TCP/IP) */
+#endif /* TCPSOCKET */
+    "pop",         XXEND, CM_INV,	/* allow POP as synonym for END */
+#endif /* NOSPL */
+#ifndef NOFRILLS
+    "print",       XXPRI, 0,		/* PRINT */
+#ifndef NOPUSH
+    "pu",          XXSHE, CM_INV,	/* PU = PUSH */
+    "push",        XXSHE, 0,		/* PUSH command (like RUN, !) */
+#endif /* NOPUSH */
+    "put",	   XXSEN, CM_INV,	/* PUT = SEND */
+#ifndef MAC
+    "pwd",         XXPWD, 0,            /* print working directory */
+#endif /* MAC */
+#endif /* NOFRILLS */
+    "quit",	   XXQUI, 0,		/* quit from program = exit */
+    "r",           XXREC, CM_INV,	/* invisible synonym for receive */
+#ifndef NOSPL
+    "read",        XXREA, 0,            /* read */
+#endif /* NOSPL */
+    "receive",	   XXREC, 0,		/* receive files */
+#ifndef NODIAL
+    "redial",      XXRED, 0,		/* redial */
+#endif /* NODIAL */
+#ifndef NOSPL
+    "reinput",     XXREI, 0,            /* reinput */
+#endif /* NOSPL */
+    "remote",	   XXREM, 0,		/* send generic command to server */
+#ifndef NOFRILLS
+    "rename",      XXREN, 0,		/* rename a local file */
+    "replay",      XXTYP, CM_INV,	/* replay (for now, just type) */
+#endif /* NOFRILLS */
+#ifndef NOSPL
+    "return",      XXRET, 0,		/* return from function */
+#endif /* NOSPL */
+#ifndef NOFRILLS
+    "rm",          XXDEL, CM_INV,	/* invisible synonym for delete */
+#endif /* NOFRILLS */
+#ifndef NOPUSH
+    "run",         XXSHE, 0,		/* run a program or command */
+#endif /* NOPUSH */
+    "s",           XXSEN, CM_INV|CM_ABR, /* invisible synonym for send */
+#ifndef NOSCRIPT
+    "script",	   XXLOGI,0,		/* execute a uucp-style script */
+#endif /* NOSCRIPT */
+    "send",	   XXSEN, 0,		/* send files */
+#ifndef NOSERVER
+    "server",	   XXSER, 0,		/* be a server */
+#endif /* NOSERVER */
+    "set",	   XXSET, 0,		/* set parameters */
+#ifndef NOSHOW
+    "show", 	   XXSHO, 0,		/* show parameters */
+#endif /* NOSHOW */
+#ifndef NOSPL
+#ifndef NOFRILLS
+    "sleep",       XXPAU, CM_INV,	/* sleep for specified interval */
+#endif /* NOFRILLS */
+#endif /* NOSPL */
+#ifndef MAC
+#ifndef NOFRILLS
+    "sp",          XXSPA, CM_INV|CM_ABR,
+    "spa",         XXSPA, CM_INV|CM_ABR,
+#endif /* NOFRILLS */
+    "space",       XXSPA, 0,		/* show available disk space */
+#endif /* MAC */
+#ifndef NOFRILLS
+#ifndef NOPUSH
+    "spawn",       XXSHE, CM_INV,	/* synonym for PUSH, RUN */
+#endif /* NOPUSH */
+#endif /* NOFRILLS */
+    "statistics",  XXSTA, 0,		/* display file transfer stats */
+#ifndef NOSPL
+    "stop",        XXSTO, 0,		/* stop all take files */
+#endif /* NOSPL */
+#ifndef NOJC
+    "suspend",     XXSUS, 0,		/* Suspend */
+#endif /* NOJC */
+    "take",	   XXTAK, 0,		/* take commands from file */
+#ifndef NOFRILLS
+#ifdef NETCONN
+    "telnet",      XXTEL, 0,		/* telnet */
+#endif /* NETCONN */
+    "test",        XXTES, CM_INV,	/* (for testing) */
+#endif /* NOFRILLS */
+#ifndef NOCSETS
+    "translate",   XXXLA, 0,		/* translate local file char sets */
+#endif
+#ifndef NOXMIT
+    "transmit",    XXTRA, 0,		/* raw upload file */
+#endif /* NOXMIT */
+#ifndef NOFRILLS
+    "type",        XXTYP, 0,		/* display a local file */
+#endif /* NOFRILLS */
+    "version",     XXVER, 0		/* version number display */
+#ifndef NOSPL
+,   "wait",        XXWAI, 0		/* wait (like pause) */
+,   "while",       XXWHI, 0		/* while */
+#endif /* NOSPL */
+#ifndef MAC
+#ifndef NOFRILLS
+,   "who",         XXWHO, 0		/* who */
+#endif /* NOFRILLS */
+#endif /* MAC */
+#ifndef NOSPL
+,   "write",       XXWRI, 0		/* write */
+,   "xif",         XXIFX, 0		/* Extended IF */
+#endif /* NOSPL */
+#ifndef NOCSETS
+,   "xlate",       XXXLA, CM_INV	/* translate local file char sets */
+#endif
+#ifndef NOXMIT
+,   "xmit",        XXTRA, CM_INV	/* raw upload file */
+#endif /* NOXMIT */
+,   "z",           XXSUS, CM_INV	/* Suspend */
+#ifndef NOSPL
+,   "_assign",     XXASX, CM_INV	/* used internally by FOR, etc */
+,   "_define",     XXDFX, CM_INV	/* used internally by FOR, etc */
+,   "_getargs",    XXGTA, CM_INV        /* used internally by FOR, etc */
+,   "_putargs",    XXPTA, CM_INV        /* used internally by FOR, etc */
+#endif /* NOSPL */
 };
 int ncmd = (sizeof(cmdtab) / sizeof(struct keytab));
-
-/* Parameter keyword table */
 
+char toktab[] = {
+#ifndef NOPUSH
+    '!',				/* Shell escape */
+#endif /* NOPUSH */
+    '#',				/* Comment */
+    ';',				/* Comment */
+#ifndef NOSPL
+    ':',				/* Label */
+#endif /* NOSPL */
+#ifndef NOPUSH
+    '@',				/* DCL escape */
+#endif /* NOPUSH */
+    '\0'				/* End of this string */
+};
+
+#ifndef NOSPL
+#ifndef NOFRILLS
+struct keytab yesno[] = {
+    "no",    0, 0,
+    "ok",    1, 0,
+    "yes",   1, 0
+};
+int nyesno = (sizeof(yesno) / sizeof(struct keytab));
+#endif /* NOFRILLS */
+#endif /* NOSPL */
+
+/* Parameter keyword table */
+ 
 struct keytab prmtab[] = {
     "attributes",       XYATTR,  0,
+    "b",		XYBACK,  CM_INV|CM_ABR,
+    "ba",		XYBACK,  CM_INV|CM_ABR,
+    "background",       XYBACK,  0,
     "baud",	        XYSPEE,  CM_INV,
     "block-check",  	XYCHKT,  0,
+#ifdef DYNAMIC
+    "buffers",          XYBUF,   0,
+#endif /* DYNAMIC */
+#ifndef MAC
+    "carrier",          XYCARR,  0,
+#endif /* MAC */
+#ifndef NOSPL
+    "case",             XYCASE,  0,
+#endif /* NOSPL */
+    "command",          XYCMD,   0,
+#ifndef NOSPL
+    "count",            XYCOUN,  0,
+#endif /* NOSPL */
+    "d",		XYDELA,  CM_INV|CM_ABR,
+    "de",		XYDELA,  CM_INV|CM_ABR,
+    "debug",            XYDEBU,  CM_INV,
+#ifdef VMS
+    "default",          XYDFLT,  0,
+#else
+#ifndef MAC
+    "default",          XYDFLT,  CM_INV,
+#endif /* MAC */
+#endif /* VMS */
     "delay",	    	XYDELA,  0,
+#ifndef NODIAL
+    "dial",             XYDIAL,  0,
+#endif /* NODIAL */
     "duplex",	    	XYDUPL,  0,
-    "end-of-packet",    XYEOL,   CM_INV,    /* moved to send/receive */
     "escape-character", XYESC,   0,
     "file", 	  	XYFILE,  0,
     "flow-control", 	XYFLOW,  0,
     "handshake",    	XYHAND,  0,
-    "incomplete",   	XYIFD,   0,
+#ifdef NETCONN
+    "host",             XYHOST,  0,
+#endif /* NETCONN */
+    "incomplete",   	XYIFD,   CM_INV,
+#ifndef NOSPL
+    "i",		XYINPU,  CM_INV|CM_ABR,
+    "in",		XYINPU,  CM_INV|CM_ABR,
+    "input",            XYINPU,  0,
+#ifndef MAC
+#ifndef NOSETKEY
+    "key",		XYKEY,   0,
+#endif /* NOSETKEY */
+#endif /* MAC */
+#endif /* NOSPL */
+    "l",                XYLINE,  CM_INV|CM_ABR,
+#ifndef NOCSETS
+    "language",         XYLANG,  0,
+#endif /* NOCSETS */
     "line",             XYLINE,  0,
+    "local-echo",	XYLCLE,  CM_INV,
+#ifndef NOSPL
+    "macro",            XYMACR,  0,
+#endif /* NOSPL */
+#ifdef COMMENT
+#ifdef VMS
+    "messages",         XYMSGS,  0,
+#endif /* VMS */
+#endif /* COMMENT */
+#ifndef NODIAL
     "modem-dialer",	XYMODM,	 0,
-    "packet-length",    XYLEN,   CM_INV,    /* moved to send/receive */
-    "pad-character",    XYPADC,  CM_INV,    /* moved to send/receive */
-    "padding",          XYNPAD,  CM_INV,    /* moved to send/receive */
+#endif
+#ifdef NETCONN
+    "network",          XYNET,   0,
+#endif /* NETCONN */
+#ifdef SUNX25
+    "pad",              XYPAD,   0,
+#endif /* SUNX25 */
     "parity",	    	XYPARI,  0,
+    "port",             XYLINE,  CM_INV,
+#ifndef NOFRILLS
     "prompt",	    	XYPROM,  0,
+#endif /* NOFRILLS */
+    "quiet",		XYQUIE,  0,
     "receive",          XYRECV,  0,
-    "retry",            XYRETR,  0,
+    "retry-limit",      XYRETR,  0,
+#ifndef NOSCRIPT
+    "script",		XYSCRI,  0,
+#endif /* NOSCRIPT */
     "send",             XYSEND,  0,
+#ifndef NOSERVER
     "server",           XYSERV,  0,
+#endif /* NOSERVER */
+#ifdef UNIX
+    "session-log",      XYSESS,  0,
+#endif /* UNIX */
     "speed",	        XYSPEE,  0,
-    "start-of-packet",  XYMARK,  CM_INV,    /* moved to send/receive */
+#ifndef NOJC
+    "suspend",          XYSUSP,  0,
+#endif /* NOJC */
+    "take",             XYTAKE,  0,
+#ifdef TNCODE
+    "telnet",           XYTEL,   0,
+#endif /* TNCODE */
     "terminal",         XYTERM,  0,
-    "timeout",	        XYTIMO,  CM_INV     /* moved to send/receive */
+    "transfer",         XYXFER,  0,
+#ifndef NOXMIT
+    "transmit",         XYXMIT,  0,
+#endif /* NOXMIT */
+#ifndef NOCSETS
+    "unknown-char-set", XYUNCS,  0,
+#endif /* NOCSETS */
+    "window-size",      XYWIND,  0
+#ifdef UNIX
+,   "wildcard-expansion", XYWILD, 0
+#endif /* UNIX */
+#ifdef SUNX25
+,   "x.25",             XYX25,   0,
+    "x25",              XYX25,   CM_INV
+#endif /* SUNX25 */
+#ifndef NOCSETS
+,   "xfer",             XYXFER,  CM_INV
+#endif /* NOCSETS */
+#ifndef NOXMIT
+,   "xmit",             XYXMIT,  CM_INV
+#endif /* NOXMIT */
 };
 int nprm = (sizeof(prmtab) / sizeof(struct keytab)); /* How many parameters */
-
+ 
+/* Table of networks */
+#ifdef NETCONN
+struct keytab netcmd[] = {
+#ifdef DECNET
+    "decnet",        NET_DEC,  0,
+#endif /* DECNET */
+#ifdef NPIPE
+    "named-pipe",    NET_PIPE, 0,
+#endif /* NPIPE */
+#ifdef TCPSOCKET
+    "tcp/ip",        NET_TCPB, 0
+#endif /* TCPSOCKET */
+#ifdef SUNX25
+,   "x",            NET_SX25, CM_INV|CM_ABR,
+    "x.25",         NET_SX25, 0,
+    "x25",          NET_SX25, CM_INV
+#endif /* SUNX25 */
+};
+int nnets = (sizeof(netcmd) / sizeof(struct keytab)); /* How many networks */
+#endif /* NETCONN */
 
 /* Remote Command Table */
-
+ 
 struct keytab remcmd[] = {
-    "cd",        XZCWD, CM_INV,
-    "cwd",       XZCWD, 0,
+    "cd",        XZCWD, 0,
+    "cwd",       XZCWD, CM_INV,
     "delete",    XZDEL, 0,
     "directory", XZDIR, 0,
     "help",      XZHLP, 0,
+#ifndef NOPUSH
     "host",      XZHOS, 0,
-    "space",	 XZSPA, 0,
-    "type", 	 XZTYP, 0,
+#endif /* NOPUSH */
+#ifndef NOFRILLS
+    "kermit",    XZKER, 0,
+    "login",     XZLGI, 0,
+    "logout",    XZLGO, 0,
+    "print",     XZPRI, 0,
+#endif /* NOFRILLS */
+    "set",       XZSET, 0,
+    "space",	 XZSPA, 0
+#ifndef NOFRILLS
+,   "type", 	 XZTYP, 0,
     "who",  	 XZWHO, 0
+#endif /* NOFRILLS */
 };
 int nrmt = (sizeof(remcmd) / sizeof(struct keytab));
-
+ 
 struct keytab logtab[] = {
+#ifdef DEBUG
     "debugging",    LOGD, 0,
+#endif /* DEBUG */
     "packets",	    LOGP, 0,
-    "session",      LOGS, 0,
-    "transactions", LOGT, 0
+    "session",      LOGS, 0
+#ifdef TLOG
+,   "transactions", LOGT, 0
+#endif /* TLOG */
 };
 int nlog = (sizeof(logtab) / sizeof(struct keytab));
-
-/* Show command arguments */
-
-#define SHPAR 0				/* Parameters */
-#define SHVER 1				/* Versions */
-
-struct keytab shotab[] = {
-    "parameters", SHPAR, 0,
-    "versions",   SHVER, 0
+ 
+struct keytab writab[] = {
+#ifndef NOSPL
+    "append-file",     LOGW, CM_INV,
+#endif /* NOSPL */
+    "debug-log",       LOGD, 0,
+    "error",           LOGE, 0,
+#ifndef NOSPL
+    "file",            LOGW, 0,
+#endif /* NOSPL */
+    "packet-log",      LOGP, 0,
+    "screen",          LOGX, 0,
+    "session-log",     LOGS, 0,
+    "sys$output",      LOGX, CM_INV,
+    "transaction-log", LOGT, 0
 };
-
-/*  C M D I N I  --  Initialize the interactive command parser  */
+int nwri = (sizeof(writab) / sizeof(struct keytab));
 
-cmdini() {
+#define CLR_DEV  1
+#define CLR_INP  2
 
-#ifdef AMIGA
-    congm();
-    concb(escape);
-#endif
-    tlevel = -1;			/* Take file level */
-    cmsetp("C-Kermit>");		/* Set default prompt */
+static struct keytab clrtab[] = {	/* Keywords for CLEAR command */
+#ifndef NOSPL
+    "both",          CLR_DEV|CLR_INP, 0,
+#endif /* NOSPL */
+    "device-buffer", CLR_DEV,         0,
+#ifndef NOSPL
+    "input-buffer",  CLR_INP,         0
+#endif /* NOSPL */
+};
+int nclear = (sizeof(clrtab) / sizeof(struct keytab));
 
-/* Look for init file in home or current directory. */
-#ifdef OS2
-    lp = zfindfile(KERMRC);
-    strcpy(line,lp);
-    if ((tfile[0] = fopen(line,"r")) != NULL) {
-        tlevel = 0;
-        debug(F110,"init file",line,0);
-    } else {
-        debug(F100,"no init file","",0);
-    }
+struct keytab clstab[] = {		/* Keywords for CLOSE command */
+#ifndef NOSPL
+    "append-file",     LOGW, CM_INV,
+#endif /* NOSPL */
+#ifdef DEBUG
+    "debug-log",       LOGD, 0,
+#endif /* DEBUG */
+    "packet-log",      LOGP, 0,
+#ifndef NOSPL
+    "read-file",       LOGR, 0,
+#endif /* NOSPL */
+    "session-log",     LOGS, 0
+#ifdef TLOG
+,   "transaction-log", LOGT, 0
+#endif /* TLOG */
+#ifndef NOSPL
+,   "write-file",      LOGW, 0
+#endif /* NOSPL */
+};
+int ncls = (sizeof(clstab) / sizeof(struct keytab));
+
+/* SHOW command arguments */
+ 
+struct keytab shotab[] = {
+#ifndef NOSPL
+    "arguments", SHARG, 0,
+    "arrays", SHARR, 0,
+#endif /* NOSPL */
+    "attributes", SHATT, 0,
+    "character-sets", SHCSE, 0,
+    "communications", SHCOM, 0,
+#ifndef NOSPL
+    "count", SHCOU, 0,
+#endif /* NOSPL */
+#ifdef VMS
+    "default", SHDFLT, 0,
 #else
-    homdir = zhome();
-    lp = line;
-    lp[0] = '\0';
-#ifdef vms
-    zkermini(line,sizeof(line),KERMRC);
+    "default", SHDFLT, CM_INV,
+#endif /* VMS */
+#ifndef NODIAL
+    "dial", SHDIA, 0,
+#endif /* NODIAL */
+    "escape", SHESC, 0,
+    "features", SHFEA, 0,
+    "file", SHFIL, 0,
+#ifndef NOSPL
+    "functions", SHFUN, 0,
+    "globals", SHVAR, 0,
+#endif /* NOSPL */
+#ifndef NOSETKEY
+    "key", SHKEY, 0,
+#endif /* NOSETKEY */
+#ifdef VMS
+    "labeled-file-info", SHLBL, 0,
+#endif /* VMS */
+#ifndef NOCSETS
+    "languages", SHLNG, 0,
+#endif /* NOCSETS */
+#ifndef NOSPL
+    "macros", SHMAC, 0,
+#endif /* NOSPL */
+    "modem-signals", SHMOD, 0,
+    "network", SHNET, 0,
+#ifdef SUNX25
+    "pad", SHPAD, 0,
+#endif /* SUNX25 */
+    "parameters", SHPAR, CM_INV,
+    "protocol", SHPRO, 0,
+#ifndef NOSPL
+    "scripts", SHSCR, 0,
+#endif /* NOSPL */
+#ifndef NOSERVER
+    "server", SHSER, 0,
+#endif /* NOSERVER */
+    "status", SHSTA, 0,
+#ifdef MAC
+    "stack", SHSTK, 0,			/* debugging */
+#endif /* MAC */
+    "terminal", SHTER, 0
+#ifndef NOXMIT
+,   "transmit", SHXMI, 0
+#endif /* NOXMIT */
+#ifndef NOSPL
+,   "variables", SHBUI, 0
+#endif /* NOSPL */
+#ifndef NOFRILLS
+,   "versions", SHVER, 0
+#endif /* NOFRILLS */
+#ifndef NOXMIT
+,   "xmit", SHXMI, CM_INV
+#endif /* NOXMIT */
+};
+int nsho = (sizeof(shotab) / sizeof(struct keytab));
+
+#ifdef SUNX25
+struct keytab padtab[] = {              /* PAD commands */
+    "clear",      XYPADL, 0,
+    "interrupt",  XYPADI, 0,
+    "reset",      XYPADR, 0,
+    "status",     XYPADS, 0
+};
+int npadc = (sizeof(padtab) / sizeof(struct keytab));
+#endif /* SUNX25 */
+
+struct keytab enatab[] = {		/* ENABLE commands */
+    "all",        EN_ALL,  0,
+#ifndef datageneral
+    "bye",        EN_BYE,  0,
+#endif /* datageneral */
+    "cd",         EN_CWD,  0,
+    "cwd",        EN_CWD,  CM_INV,
+    "delete",     EN_DEL,  0,
+    "directory",  EN_DIR,  0,
+    "finish",     EN_FIN,  0,
+    "get",        EN_GET,  0,
+    "host",       EN_HOS,  0,
+    "send",       EN_SEN,  0,
+    "set",        EN_SET,  0,
+    "space",      EN_SPA,  0,
+    "type",       EN_TYP,  0,
+    "who",        EN_WHO,  0
+};
+int nena = (sizeof(enatab) / sizeof(struct keytab));
+
+#ifndef NOSPL
+#ifdef COMMENT
+struct mtab mactab[MAC_MAX] = {		/* Preinitialized macro table */
+    NULL, NULL, 0
+};
 #else
-    if (homdir) {
-	strcpy(lp,homdir);
-	if (lp[0] == '/') strcat(lp,"/");
-    }
-    strcat(lp,KERMRC);
-#endif
-#ifdef AMIGA
-    reqoff();			/* disable requestors */
-#endif
-    if ((tfile[0] = fopen(line,"r")) != NULL) {
-	tlevel = 0;
-	debug(F110,"init file",line,0);
-    }
-    if (homdir && (tlevel < 0)) {
-    	strcpy(lp,KERMRC);
-	if ((tfile[0] = fopen(line,"r")) != NULL) tlevel = 0;
-    }
-#endif
-#ifdef AMIGA
-    reqpop();				/* restore requestors */
+struct mtab *mactab;			/* Dynamically allocated macro table */
+#endif /* COMMENT */
+int nmac = 0;
+
+struct keytab mackey[MAC_MAX];		/* Macro names as command keywords */
+#endif /* NOSPL */
+
+/* Forward declarations of functions */
+
+_PROTOTYP (int doask,   ( int  ) );
+_PROTOTYP (int dodef,   ( int  ) );
+_PROTOTYP (int dodel,   ( void ) );
+_PROTOTYP (int dodial,  ( int  ) );
+_PROTOTYP (int dodir,   ( void ) );
+_PROTOTYP (int doelse,  ( void ) );
+_PROTOTYP (int dofor,   ( void ) );
+_PROTOTYP (int dogta,   ( int  ) );
+_PROTOTYP (int doincr,  ( int  ) );
+_PROTOTYP (int dopaus,  ( int  ) );
+_PROTOTYP (int doping,  ( void ) );
+_PROTOTYP (int dorenam, ( void ) );
+
+#ifdef TCPSOCKET
+int
+doping() {
+    char *p;
+    int x;
+
+    if (network)			/* If we have a current connection */
+      strcpy(line,ttname);		/* get the host name */
+    else *line = '\0';			/* as default host to be pinged. */
+    for (p = line; *p; p++)		/* Remove ":service" from end. */
+      if (*p == ':') { *p = '\0'; break; }
+    if ((x = cmtxt("IP host name or number", line, &s, xxstring)) < 0)
+      return(x);
+/* Construct PING command */
+#ifdef VMS
+#ifdef MULTINET				/* TGV MultiNet */
+    sprintf(line,"multinet ping %s /num=1",s);
 #else
-    congm();				/* Get console tty modes */
-#endif
+    sprintf(line,"ping %s 56 1",s);	/* Other VMS TCP/IP's */
+#endif /* MULTINET */
+#else					/* Not VMS */
+    sprintf(line,"ping %s",s);
+#endif /* VMS */
+    conres();				/* Make console normal  */
+#ifdef DEC_TCPIP
+    printf("\n");			/* Prevent prompt-stomping */
+#endif /* DEC_TCPIP */
+    x = zshcmd(line);
+    concb((char)escape);
+    return(success = 1);		/* We don't know the status */
 }
+#endif /* TCPSOCKET */
 
-/* Display version herald and initial prompt */
-
-herald() {
-    if (!backgrd) printf("%s,%s\nType ? for help\n",versio,ckxsys);
-}
-
-
-/*  T R A P  --  Terminal interrupt handler */
-
-trap(sig,code) int sig, code; {
-    fprintf(stderr,"^C...\n");
-    debug(F101,"trap() caught signal","",sig);
-    debug(F101," code","",code);
-    doexit(GOOD_EXIT);			/* Exit indicating success */
-}
-
-/*  S T P T R A P -- Handle SIGTSTP signals */
-
-#ifdef RTU
-    extern int rtu_bug;
-#endif
-
-stptrap(sig,code) int sig, code; {
-    debug(F101,"stptrap() caught signal","",sig);
-    debug(F101," code","",code);
-    conres();				/* Reset the console */
-#ifdef SIGTSTP
-#ifdef RTU
-    rtu_bug = 1;
-#endif
-    kill(0, SIGSTOP);			/* If job control, suspend the job */
-#else
-    doexit(GOOD_EXIT);			/* Probably won't happen otherwise */
-#endif
-    concb(escape);			/* Put console back in Kermit mode */
-    if (!backgrd) prompt();		/* Reissue prompt when fg'd */
-}
-
-/*  P A R S E R  --  Top-level interactive command parser.  */
-
-parser() {
-    int xx, cbn;
-    char *cbp;
-
-#ifdef AMIGA
-    reqres();			/* restore AmigaDOS requestors */
-#endif
-    concb(escape);		/* Put console in cbreak mode. */
-    conint(trap);		/* Turn on console terminal interrupts. */
-/*
- sstate becomes nonzero when a command has been parsed that requires some
- action from the protocol module.  Any non-protocol actions, such as local
- directory listing or terminal emulation, are invoked directly from below.
-*/
-    if (local && !backgrd) printf("\n"); /*** Temporary kludge ***/
-    sstate = 0;				/* Start with no start state. */
-    while (sstate == 0) {		/* Parse cmds until action requested */
-	while ((tlevel > -1) && feof(tfile[tlevel])) { /* If end of take */
-		fclose(tfile[tlevel--]); /* file, close it. */
-		cmini(ckxech);		/* and clear the cmd buffer. */
-		if (tlevel < 0) {	/* Just popped out of cmd files? */
-		    conint(trap);	/* Check background stuff again. */
-		    return(0);		/* End of init file or whatever. */
-		}
- 	}
-debug(F101,"tlevel","",tlevel);
-	if (tlevel > -1) {		/* If in take file */
-	    cbp = cmdbuf;		/* Get the next line. */
-	    cbn = CMDBL;
-
-/* Loop to get next command line and all continuation lines from take file. */
-
-again:	    if (fgets(line,cbn,tfile[tlevel]) == NULL) continue;
-	    lp = line;			/* Got one, copy it. */
-	    while (*cbp++ = *lp++)
-	    	if (--cbn < 1) fatal("Command too long for internal buffer");
-	    if (*(cbp - 3) == '\\') {	/* Continued on next line? */
-		cbp -= 3;		/* If so, back up pointer, */
-		goto again;		/* go back, get next line. */
-	    }
-	    stripq(cmdbuf);		/* Strip any quotes from cmd buffer. */
-
-	} else {			/* No take file, get typein. */
-
-	    if (!backgrd) prompt();	/* Issue interactive prompt. */
-	    cmini(ckxech);
-    	}
-	repars = 1;
-	displa = 0;
-	while (repars) {
-	    cmres();			/* Reset buffer pointers. */
-	    xx = cmkey(cmdtab,ncmd,"Command","");
-	    debug(F101,"top-level cmkey","",xx);
-	    switch (docmd(xx)) {
-		case -4:		/* EOF */
-		    doexit(GOOD_EXIT);	/* ...exit successfully */
-	        case -1:		/* Reparse needed */
-		    repars = 1;
-		    continue;
-	    	case -2:		/* Invalid command given */
-		    if (backgrd) 	/* if in background, terminate */
-			fatal("Kermit command error in background execution");
-		    if (tlevel > -1) {	/* If in take file, quit */
-			ermsg("Kermit command error: take file terminated.");
-			fclose(tfile[tlevel]);
-			tlevel--;
-		    }
-		    cmini(ckxech);	/* (fall thru) */
- 	    	case -3:		/* Empty command OK at top level */
-		default:		/* Anything else (fall thru) */
-		    repars = 0;		/* No reparse, get new command. */
-		    continue;
-            }
-        }
-    }
-/* Got an action command; disable terminal interrupts and return start state */
-
-    if (!local) connoi();		/* Interrupts off only if remote */
-    return(sstate);
-}
-
-/*  D O E X I T  --  Exit from the program.  */
-
-doexit(exitstat) int exitstat; {
-
-    ttclos();				/* Close external line, if any */
-    if (local) {
-	strcpy(ttname,dftty);		/* Restore default tty */
-	local = dfloc;			/* And default remote/local status */
-    }
-    if (!quiet) conres();		/* Restore console terminal. */
-    if (!quiet) connoi();		/* Turn off console interrupt traps. */
-
-    if (deblog) {			/* Close any open logs. */
-	debug(F100,"Debug Log Closed","",0);
-	*debfil = '\0';
-	deblog = 0;
-	zclose(ZDFILE);
-    }
-    if (pktlog) {
-	*pktfil = '\0';
-	pktlog = 0;
-	zclose(ZPFILE);
-    }
-    if (seslog) {
-    	*sesfil = '\0';
-	seslog = 0;
-	zclose(ZSFILE);
-    }
-    if (tralog) {
-	tlog(F100,"Transaction Log Closed","",0l);
-	*trafil = '\0';
-	tralog = 0;
-	zclose(ZTFILE);
-    }
-    syscleanup();
-    exit(exitstat);				/* Exit from the program. */
-}
-
-/*  B L D L E N  --  Make length-encoded copy of string  */
-
-char *
-bldlen(str,dest) char *str, *dest; {
-    int len;
-    len = strlen(str);
-    *dest = tochar(len);
-    strcpy(dest+1,str);
-    return(dest+len+1);
-}
-
-
-/*  S E T G E N  --  Construct a generic command  */
-
-setgen(type,arg1,arg2,arg3) char type, *arg1, *arg2, *arg3; {
-    char *upstr, *cp;
-
-    cp = cmdstr;
-    *cp++ = type;
-    *cp = NUL;
-    if (*arg1 != NUL) {
-	upstr = bldlen(arg1,cp);
-	if (*arg2 != NUL) {
-	    upstr = bldlen(arg2,upstr);
-	    if (*arg3 != NUL) bldlen(arg3,upstr);
-	}
-    }
-    cmarg = cmdstr;
-    debug(F110,"setgen",cmarg,0);
-
-    return('g');
-}
-
 /*  D O C M D  --  Do a command  */
-
+ 
 /*
  Returns:
    -2: user typed an illegal command
    -1: reparse needed
     0: parse was successful (even tho command may have failed).
-*/
-
+*/ 
+int
 docmd(cx) int cx; {
-    int x, y;
-    char *s;
 
-    switch (cx) {
+    debug(F101,"docmd entry, cx","",cx);
 
-case -4:				/* EOF */
-#ifdef OSK
-    if (!quiet && !backgrd) printf("\n");
-#else
-    if (!quiet && !backgrd) printf("\r\n");
-#endif /* OSK */
-    doexit(GOOD_EXIT);
-case -3:				/* Null command */
-    return(0);
-case -2:				/* Error */
-case -1:				/* Reparse needed */
-    return(cx);
-
-case XXBYE:				/* bye */
-    if ((x = cmcfm()) < 0) return(x);
-    if (!local) {
-	printf("You have to 'set line' first\n");
-	return(0);
-    }
-    sstate = setgen('L',"","","");
-    return(0);
-
-case XXCOM:				/* comment */
-    if ((x = cmtxt("Text of comment line","",&s)) < 0) return(x);
-    return(0);
-
-case XXCON:                     	/* connect */
-    if ((x = cmcfm()) < 0) return(x);
-    return(doconect());
-
-case XXCWD:
-#ifdef AMIGA
-    if (cmtxt("Name of local directory, or carriage return","",&s) < 0)
-    	return(-1);
-    /* if no name, just print directory name */
-    if (*s) {
-	if (chdir(s)) perror(s);
-	cwdf = 1;
-    }
-    if (getcwd(line, sizeof(line)) == NULL)
-	printf("Current directory name not available.\n");
-    else
-	if (!backgrd) printf("%s\n", line);
-#else
-/*    if (cmtxt("Name of local directory, or carriage return",homdir,&s) < 0)
-/*    	return(-1);     <-- this replaced by new cmdir() function, below.
+/*
+  Massive switch() broken up into many smaller ones, for the benefit of
+  compilers that run out of space when trying to handle large switch
+  statements.
 */
-    if ((x = cmdir("Name of local directory, or carriage return",homdir,&s))
-	 < 0 ) return(x);
-    if (x == 2) {
-	printf("\n?Wildcards not allowed in directory name\n");
-	return(-2);
-    }
-#ifdef OS2
-    if ( s!=NUL ) {
-	if (strlen(s)>=2 && s[1]==':') {	/* Disk specifier */
-	    if (zchdsk(*s)) {			/* Change disk successful */
-	    	if ( strlen(s)>=3 & ( s[2]=='\\' || isalnum(s[2]) ) ) {
-	    	    if (chdir(s)) perror(s);
-	    	}
-	    } else perror(s);
-	} else if (chdir(s)) perror(s);
-    }
-    cwdf = 1;
-    concooked();
-    system(PWDCMD);
-    conraw();
+    switch (cx) {
+      case -4:			/* EOF */
+#ifdef OSK
+	if (msgflg)  printf("\n");
 #else
-    if (! zchdir(s)) perror(s);
-    cwdf = 1;
-    system(PWDCMD);
-#endif
-#endif
-    return(0);
-
-case XXCLO:
-    x = cmkey(logtab,nlog,"Which log to close","");
-    if (x == -3) {
-	printf("?You must tell which log\n");
-	return(-2);
-    }
-    if (x < 0) return(x);
-    if ((y = cmcfm()) < 0) return(y);
-    switch (x) {
-
-	case LOGD:
-	    if (deblog == 0) {
-		printf("?Debugging log wasn't open\n");
-		return(0);
-	    }
-	    *debfil = '\0';
-	    deblog = 0;
-	    return(zclose(ZDFILE));
-
-	case LOGP:
-	    if (pktlog == 0) {
-		printf("?Packet log wasn't open\n");
-		return(0);
-	    }
-	    *pktfil = '\0';
-	    pktlog = 0;
-	    return(zclose(ZPFILE));
-
-	case LOGS:
-	    if (seslog == 0) {
-		printf("?Session log wasn't open\n");
-		return(0);
-	    }
-	    *sesfil = '\0';
-	    seslog = 0;
-	    return(zclose(ZSFILE));
-
-    	case LOGT:
-	    if (tralog == 0) {
-		printf("?Transaction log wasn't open\n");
-		return(0);
-	    }
-	    *trafil = '\0';
-	    tralog = 0;
-	    return(zclose(ZTFILE));
-
-	default:
-	    printf("\n?Unexpected log designator - %ld\n", x);
-	    return(0);
-    }
-
-case XXDIAL:				/* dial number */
-    if ((x = cmtxt("Number to be dialed","",&s)) < 0) return(x);
-/***/ debug(F110,"ckuusr calling ckdial",s,0);
-    return(ckdial(s));
-
-case XXDIR:				/* directory */
-#ifdef vms
-    if ((x = cmtxt("Directory/file specification","",&s)) < 0) return(x);
-    /* now do this the same as a shell command - helps with LAT  */
-    conres();           /* make console normal */
-    lp = line;
-    sprintf(lp,"%s %s",DIRCMD,s);
-    debug(F110,"Directory string: ", line, 0);
-    concb(escape);
-    return(0);
+	if (msgflg)  printf("\r\n");
+#endif /* OSK */
+	  doexit(GOOD_EXIT,xitsta);
+      case -3:				/* Null command */
+	return(0);
+      case -9:				/* Like -2, but errmsg already done */
+      case -1:				/* Reparse needed */
+	return(cx);
+      case -6:				/* Special */
+      case -2:				/* Error, maybe */
+#ifndef NOSPL
+/*
+  Maybe they typed a macro name.  Let's look it up and see.
+*/
+	if (cx == -6)			/* If they typed CR */
+	  strcat(cmdbuf,"\015");	/*  add it back to command buffer. */
+	if (ifcmd[cmdlvl] == 2)		/* Watch out for IF commands. */
+	  ifcmd[cmdlvl]--;
+	repars = 1;			/* Force reparse */
+	cmres();
+	cx = XXDO;			/* Try DO command */
 #else
-#ifdef AMIGA
-    if ((x = cmtxt("Directory/file specification","",&s)) < 0) return(x);
+	return(cx);
+#endif /* NOSPL */
+      default:
+	break;
+    }
+ 
+#ifndef NOSPL
+/* Copy macro args from/to two levels up, used internally by _floop et al. */
+    if (cx == XXGTA || cx == XXPTA) {	/* _GETARGS, _PUTARGS */
+	int x;
+	debug(F101,"docmd XXGTA","",XXGTA);
+	debug(F101,"docmd cx","",cx);
+	debug(F101,"docmd XXGTA maclvl","",maclvl);
+	x = dogta(cx);
+	debug(F101,"docmd dogta returns","",x);
+	debug(F101,"docmd dogta maclvl","",maclvl);
+	return(x);
+    }
+#endif /* NOSPL */
+
+#ifndef NOSPL
+/* ASK, ASKQ, READ */
+    if (cx == XXASK || cx == XXASKQ || cx == XXREA) {
+	return(doask(cx));
+    }
+#endif /* NOSPL */
+
+#ifndef NOFRILLS
+    if (cx == XXBUG) {			/* BUG */
+	if ((x = cmcfm()) < 0) return(x);
+	return(dobug());
+    }
+#endif /* NOFRILLS */
+
+    if (cx == XXBYE) {			/* BYE */
+	if ((x = cmcfm()) < 0) return(x);
+	sstate = setgen('L',"","","");
+	if (local) ttflui();		/* If local, flush tty input buffer */
+	return(0);
+    } 
+
+#ifndef NOFRILLS
+    if (cx == XXCLE) {			/* CLEAR */
+	if ((x = cmkey(clrtab,nclear,"buffer(s) to clear",
+#ifdef NOSPL
+		  "device-buffer"
+#else
+		  "both"
+#endif /* NOSPL */
+		  ,xxstring)) < 0) return(x);
+	if ((y = cmcfm()) < 0) return(y);
+
+	/* Clear device input buffer if requested */
+	y = (x & CLR_DEV) ? ttflui() : 0;
+#ifndef NOSPL
+	/* Clear INPUT command buffer if requested */
+	if (x & CLR_INP) {
+	    for (x = 0; x < INPBUFSIZ; x++)
+	      inpbuf[x] = 0;
+	    inpbp = inpbuf;
+	}
+#endif /* NOSPL */
+	return(success = (y == 0));
+    }
+#endif /* NOFRILLS */
+
+    if (cx == XXCOM) {			/* COMMENT */
+	if ((x = cmtxt("Text of comment line","",&s,NULL)) < 0)
+	  return(x);
+	/* Don't change SUCCESS flag for this one */
+	return(0);
+    } 
+
+    if (cx == XXCON) {			/* CONNECT */
+	if ((x = cmcfm()) < 0)
+	  return(x);
+	return(success = doconect());
+    }
+
+    if (cx == XXCWD)			/* CWD */
+      return(success = docd());
+
+    if (cx == XXCHK)			/* CHECK */
+      return(success = dochk());
+
+    if (cx == XXCLO) {			/* CLOSE */
+	x = cmkey(clstab,ncls,"Which log or file to close","",xxstring);
+	if (x == -3) {
+	    printf("?You must say which file or log\n");
+	    return(-9);
+	}
+	if (x < 0) return(x);
+	if ((y = cmcfm()) < 0) return(y);
+	y = doclslog(x);
+	success = (y == 1);
+	return(success);
+    }
+
+#ifndef NOSPL
+    if (cx == XXDEC || cx == XXINC)	/* DECREMENT, INCREMENT */
+      return(doincr(cx));
+#endif /* NOSPL */
+
+#ifndef NOSPL
+    if (cx == XXDEF || cx == XXASS || cx == XXASX || cx == XXDFX)
+      return(dodef(cx));		/* DEFINE, ASSIGN */
+#endif /* NOSPL */
+
+#ifndef NOSPL    
+    if (cx == XXDCL) {			/* DECLARE an array */
+	if ((y = cmfld("Array name","",&s,NULL)) < 0) {
+	    if (y == -3) {
+		printf("?Array name required\n");
+		return(-9);
+	    } else return(y);
+	}
+	if ((y = arraynam(s,&x,&z)) < 0) return(y);
+	if ((y = cmcfm()) < 0) return(y);
+	if (dclarray((char)x,z) < 0) {
+	    printf("?Declare failed\n");
+	    return(success = 0);
+	}
+	return(success = 1);
+    }
+#endif /* NOSPL */
+
+
+#ifndef NODIAL
+    if (cx == XXRED || cx == XXDIAL)	/* DIAL or REDIAL */
+      return(dodial(cx));
+#endif /* NODIAL */
+ 
+#ifndef NOFRILLS
+    if (cx == XXDEL)			/* DELETE */
+      return(dodel());
+#endif /* NOFRILLS */
+
+#ifndef MAC
+    if (cx == XXDIR)			/* DIRECTORY */
+      return(dodir());
+#endif /* MAC */
+ 
+#ifndef NOSPL
+    if (cx == XXELS)			/* ELSE */
+      return(doelse());
+#endif /* NOSPL */
+
+#ifndef NOFRILLS
+    if (cx == XXENA || cx == XXDIS) {	/* ENABLE, DISABLE */
+	s = (cx == XXENA) ?
+	  "Server function to enable" :
+	    "Server function to disable";
+
+	if ((x = cmkey(enatab,nena,s,"",xxstring)) < 0) {
+	    if (x == -3) {
+		printf("?Name of server function required\n");
+		return(-9);
+	    } else return(x);
+	}
+	if ((y = cmcfm()) < 0) return(y);
+	return(doenable(cx,x));
+    }
+#endif /* NOFRILLS */
+
+#ifndef NOSPL
+    if (cx == XXRET) {			/* RETURN */
+	if (cmdlvl == 0) {		/* At top level, nothing happens... */
+	    if ((x = cmcfm()) < 0)
+	      return(x);
+	    return(success = 1);
+	} else if (cmdstk[cmdlvl].src == CMD_TF) { /* In TAKE file, like POP */
+	    if ((x = cmtxt("optional return value","",&s,NULL)) < 0)
+	      return(x);		/* Allow trailing text, but ignore. */
+	    if ((x = cmcfm()) < 0)
+	      return(x);
+	    popclvl();			/* pop command level */
+	    return(success = 1);	/* always succeeds */
+	} else if (cmdstk[cmdlvl].src == CMD_MD) { /* Within macro */  
+	    if ((x = cmtxt("optional return value","",&s,NULL)) < 0)
+	      return(x);
+	    return(doreturn(s));	/* Trailing text is return value. */
+	} else return(-2);
+    }
+#endif /* NOSPL */
+
+#ifndef NOSPL
+    if (cx == XXDO) {			/* DO (a macro) */
+	if (nmac == 0) {
+	    printf("\n?No macros defined\n");
+	    return(-2);
+	}
+	for (y = 0; y < nmac; y++) {	/* copy the macro table */
+	    mackey[y].kwd = mactab[y].kwd; /* into a regular keyword table */
+	    mackey[y].kwval = y;	/* with value = pointer to macro tbl */
+	    mackey[y].flgs = mactab[y].flgs;
+	}
+	/* parse name as keyword */
+	if ((x = cmkey(mackey,nmac,"macro","",xxstring)) < 0) {
+	    if (x == -3) {
+		printf("?Macro name required\n");
+		return(-9);
+	    } else return(x);
+	}
+	if ((y = cmtxt("optional arguments","",&s,xxstring)) < 0)
+	  return(y);			/* get args */
+	return(dodo(x,s) < 1 ? (success = 0) : 1);
+    }
+#endif /* NOSPL */
+
+    if (cx == XXECH) {			/* ECHO */
+	if ((x = cmtxt("Material to be echoed","",&s,xxstring)) < 0)
+	  return(x);
+	if (*s == '{') {		/* Strip enclosing braces */
+	    x = (int)strlen(s);
+	    if (s[x-1] == '}') {
+		s[x-1] = NUL;
+		s++;
+	    }
+	}
+	printf("%s\n",s);
+	return(1);			/* Always succeeds */
+    }
+
+#ifndef NOSPL
+    if (cx == XXOPE)			/* OPEN */
+      return(doopen());
+#endif /* NOSPL */
+
+#ifndef NOSPL
+    if (cx == XXOUT) {			/* OUTPUT */
+	if ((x = cmtxt("Text to be output","",&s,NULL)) < 0)
+	  return(x);
+	debug(F110,"OUTPUT 1",s,0);
+	if (*s == '{') {		/* Strip enclosing braces, */
+	    x = (int)strlen(s);		/* if any. */
+	    if (s[x-1] == '}') {
+		s[x-1] = NUL;
+		s++;
+	    }
+	}
+	debug(F110,"OUTPUT 2",s,0);
+	for (x = 0, y = 0; s[x]; x++, y++) { /* Convert \B, \L to \\B, \\L */
+	    if (x > 0 &&
+		(s[x] == 'B' || s[x] == 'b' || s[x] == 'L' || s[x] == 'l'))
+	      if ((x == 1 && s[x-1] == CMDQ) ||
+		  (x > 1 && s[x-1] == CMDQ && s[x-2] != CMDQ))
+		line[y++] = CMDQ;
+	    line[y] = s[x];
+	}
+	line[y++] = '\0';		/* Now expand variables, etc. */
+	debug(F110,"OUTPUT 3",line,0);
+	s = line+y+1;
+	x = LINBUFSIZ - strlen(line) - 1;
+	debug(F101,"OUTPUT size","",x);
+	if (xxstring(line,&s,&x) < 0)
+	  return(success = 0);
+	s = line+y+1;
+	debug(F110,"OUTPUT 4",s,0);
+	return(success = dooutput(s));
+    }
+#endif /* NOSPL */
+
+#ifdef SUNX25
+    if (cx == XXPAD) {			/* PAD commands */
+	x = cmkey(padtab,npadc,"PAD command","",xxstring);
+	if (x == -3) {
+	    printf("?You must specify a PAD command to execute\n");
+	    return(-2);
+	}
+	if (x < 0) return(x);
+    
+	switch (x) {
+	  case XYPADL: 
+	    if (x25stat() < 0)
+	      printf("Sorry, you must 'set network' & 'set host' first\r\n");
+	    else {
+		x25clear();
+		initpad();
+	    }
+	    break;
+	  case XYPADS:
+	    if (x25stat() < 0)
+	      printf("Not connected\r\n");
+	    else {
+		extern int linkid, lcn;
+		conol("Connected thru ");
+		conol(ttname);
+		printf(", Link id %d, Logical channel number %d\r\n",
+		       linkid,lcn);
+	    }
+	    break;
+	  case XYPADR:
+	    if (x25stat() < 0)
+	      printf("Sorry, you must 'set network' & 'set host' first\r\n");
+	    else
+	      x25reset(0,0);
+	    break;
+	  case XYPADI:
+	    if (x25stat() < 0)
+	      printf("Sorry, you must 'set network' & 'set host' first\r\n");
+	    else 
+	      x25intr(0);
+	}
+	return(0);
+}
+#endif /* SUNX25 */
+
+#ifndef NOSPL
+    if (cx == XXPAU || cx == XXWAI || cx == XXMSL) /* PAUSE, WAIT, etc */
+      return(dopaus(cx));
+#endif /* NOSPL */
+
+#ifndef NOFRILLS
+    if (cx == XXPRI) {
+	if ((x = cmifi("File to print","",&s,&y,xxstring)) < 0) {
+	    if (x == -3) {
+		printf("?A file specification is required\n");
+		return(-9);
+	    } else return(x);
+	}
+	if (y != 0) {
+	    printf("?Wildcards not allowed\n");
+	    return(-9);
+	}
+	strcpy(line,s);
+	if ((x = cmtxt("Local print command options, or carriage return","",&s,
+		       xxstring)) < 0) return(x);
+	return(success = (zprint(s,line) == 0) ? 1 : 0);
+    }
+
+#ifdef TCPSOCKET
+    if (cx == XXPNG) 			/* PING an IP host */
+      return(doping());
+#endif /* TCPSOCKET */
+
+#ifndef MAC
+    if (cx == XXPWD) {			/* PWD */
+	if ((x = cmcfm()) < 0) return(x);
+	xsystem(PWDCMD);
+	return(success = 1);		/* blind faith */
+    }
+#endif /* MAC */
+#endif /* NOFRILLS */
+
+    if (cx == XXQUI || cx == XXEXI) {	/* EXIT, QUIT */
+	if ((y = cmnum("exit status code","",10,&x,xxstring)) < 0) {
+	    if (y == -3)
+	      x = xitsta;
+	    else return(y);
+	}
+	if ((y = cmcfm()) < 0) return(y);
+#ifdef VMS
+	doexit(GOOD_EXIT,x);
+#else
+#ifdef OSK
+/* Returning any codes here makes the OS-9 shell print an error message. */
+	doexit(GOOD_EXIT,-1);
 #else
 #ifdef datageneral
-    if ((x = cmtxt("Directory/file specification","+",&s)) < 0) return(x);
+        doexit(GOOD_EXIT,x);
 #else
-    if ((x = cmdir("Directory/file specification","*",&s)) < 0) return(x);
-#endif
-#endif
-    lp = line;
-    sprintf(lp,"%s %s",DIRCMD,s);
-#ifdef OS2
-    concooked();
-    system(line);
-    conraw();
-#else
-    system(line);
-#endif
-    return(0);
-#endif
-
-case XXECH: 				/* echo */
-    if ((x = cmtxt("Material to be echoed","",&s)) < 0) return(x);
-    for ( ; *s; s++) {
-	if ((x = *s) == 0134) {		/* Convert octal escapes */
-	    s++;			/* up to 3 digits */
-	    for (x = y = 0; *s >= '0' && *s <= '7' && y < 3; s++,y++) {
-	    	x = x * 8 + (int) *s - 48;
-	    }
-	    s--;
-        }
-	putchar(x);
+	doexit(x,-1);
+#endif /* datageneral */
+#endif /* OSK */
+#endif /* VMS */
     }
-    printf("\n");
-    return(0);
 
-case XXQUI:				/* quit, exit */
-case XXEXI:
-    if ((x = cmcfm()) > -1) doexit(GOOD_EXIT);
-    else return(x);
-
-case XXFIN:				/* finish */
-    if ((x = cmcfm()) < 0) return(x);
-    if (!local) {
-	printf("You have to 'set line' first\n");
+#ifndef NOFRILLS
+    if (cx == XXERR) {			/* ERROR */
+	if ((x = cmcfm()) < 0) return(x);
+	ttflui();
+	sstate = 'a';
 	return(0);
     }
-    sstate = setgen('F',"","","");
-    return(0);
-
-case XXGET:				/* get */
-    if (!local) {
-	printf("\nYou have to 'set line' first\n");
+#endif /* NOFRILLS */
+
+    if (cx == XXFIN) {			/* FINISH */
+	if ((x = cmcfm()) < 0) return(x);
+	sstate = setgen('F',"","","");
+	if (local) ttflui();		/* If local, flush tty input buffer */
 	return(0);
     }
-    x = cmtxt("Name of remote file(s), or carriage return","",&cmarg);
-    if ((x == -2) || (x == -1)) return(x);
 
-/* If foreign file name omitted, get foreign and local names separately */
+#ifndef NOSPL
+    if (cx == XXFOR)			/* FOR loop */
+      return(dofor());
+#endif /* NOSPL */
 
-    x = 0;				/* For some reason cmtxt returns 1 */
-    if (*cmarg == NUL) {
-
-	if (tlevel > -1) {		/* Input is from take file */
-
-	    if (fgets(line,100,tfile[tlevel]) == NULL)
-	    	fatal("take file ends prematurely in 'get'");
-	    debug(F110,"take-get 2nd line",line,0);
-	    stripq(line);
-	    for (x = strlen(line);
-	     	 x > 0 && (line[x-1] == LF || line[x-1] == CR);
-		 x--)
-		line[x-1] = '\0';
-	    cmarg = line;
-	    if (fgets(cmdbuf,CMDBL,tfile[tlevel]) == NULL)
-	    	fatal("take file ends prematurely in 'get'");
-	    stripq(cmdbuf);
-	    for (x = strlen(cmdbuf);
-	     	 x > 0 && (cmdbuf[x-1] == LF || cmdbuf[x-1] == CR);
-		 x--)
-		cmdbuf[x-1] = '\0';
-	    if (*cmdbuf == NUL) cmarg2 = line; else cmarg2 = cmdbuf;
-            x = 0;			/* Return code */
-
-        } else {			/* Input is from terminal */
-
-	    char psave[40];		/* Save old prompt */
-	    cmsavp(psave,40);
-	    cmsetp(" Remote file specification: "); /* Make new one */
-	    cmini(ckxech);
-	    x = -1;
-	    if (!backgrd) prompt();
-	    while (x == -1) {		/* Prompt till they answer */
-	    	x = cmtxt("Name of remote file(s)","",&cmarg);
-		debug(F111," cmtxt",cmarg,x);
+    if (cx == XXGET) {			/* GET */
+	x = cmtxt("Name of remote file(s), or carriage return","",&cmarg,
+		  xxstring);
+#ifndef NOFRILLS
+	if ((x == -2) || (x == -1)) return(x);
+#else
+	if (x < 0) return(x);
+#endif /* NOFRILLS */
+	if (*cmarg == '{') {		/* Strip any enclosing braces */
+	    x = (int)strlen(cmarg);	/* This allows preservation of */
+	    if (cmarg[x-1] == '}') {	/* leading and/or trailing */
+		cmarg[x-1] = NUL;	/* spaces. */
+		cmarg++;
 	    }
-	    if (x < 0) {
-		cmsetp(psave);
+	}
+	x = doget();
+#ifdef MAC
+	if (sstate == 'r')
+	    scrcreate();
+#endif /* MAC */
+	return(x);
+    }
+
+#ifndef NOSPL
+#ifndef NOFRILLS
+    if (cx == XXGOK) {			/* GETOK */
+	return(success = doask(cx));
+    }
+#endif /* NOFRILLS */
+#endif /* NOSPL */
+
+    if (cx == XXHLP) {			/* HELP */
+#ifdef NOHELP
+	return(dohlp(XXHLP));        
+#else
+	x = cmkey2(cmdtab,ncmd,"C-Kermit command","help",toktab,xxstring);
+	debug(F101,"HELP command x","",x);
+	if (x == -5) {
+	    y = chktok(toktab);
+	    debug(F101,"top-level cmkey token","",y);
+	    ungword();
+	    switch (y) {
+#ifndef NOPUSH
+	      case '!': x = XXSHE; break;
+#endif /* NOPUSH */
+	      case '#': x = XXCOM; break;
+	      case ';': x = XXCOM; break;
+#ifndef NOSPL
+	      case ':': x = XXLBL; break;
+#endif /* NOSPL */
+	      case '&': x = XXECH; break;
+	      default:
+		printf("\n?Invalid - %s\n",cmdbuf);
+		x = -2;
+	    }
+	}
+	return(dohlp(x));
+#endif /* NOHELP */
+    }
+ 
+#ifndef NOHELP
+    if (cx == XXINT)			/* INTRO */
+      return(hmsga(introtxt));
+#endif /* NOHELP */
+
+    if (cx == XXHAN) {			/* HANGUP */
+	if ((x = cmcfm()) < 0) return(x);
+#ifndef NODIAL
+	if ((x = mdmhup()) < 1)
+#endif /* NODIAL */
+	  x = (tthang() > -1);
+	return(success = x);
+    }
+
+#ifndef NOSPL
+    if (cx == XXGOTO) {			/* GOTO */
+/* Note, here we don't set SUCCESS/FAILURE flag */
+	if ((y = cmfld("label","",&s,xxstring)) < 0) {
+	    if (y == -3) {
+		printf("?Label name required\n");
+		return(-9);
+	    } else return(y);
+	}
+	strcpy(lblbuf,s);
+	if ((x = cmcfm()) < 0) return(x);
+	s = lblbuf;
+	return(dogoto(s));
+    }
+#endif /* NOSPL */
+
+#ifndef NOSPL
+/* IF, Extended IF, WHILE */
+    if (cx == XXIF || cx == XXIFX || cx == XXWHI) {
+	return(doif(cx));
+    }
+#endif /* NOSPL */
+
+#ifndef NOSPL
+    if (cx == XXINP || cx == XXREI) {	/* INPUT and REINPUT */
+	sprintf(tmpbuf,"%d",indef);
+	y = cmnum("seconds to wait for input",(char *)tmpbuf,10,&x,xxstring);
+	if (y < 0) {
+	    return(y);
+	}
+	if (x <= 0) x = 1;
+	if ((y = cmtxt("Material to be input","",&s,xxstring)) < 0)
+	  return(y);
+#ifdef COMMENT
+/*
+  Now it's ok -- null argument means wait for any character.
+*/
+	if (*s == '\0') {
+	    printf("?Text required\n");
+	    return(-9);
+	}
+#endif /* COMMENT */
+	if (*s == '{') {
+	    y = (int)strlen(s);
+	    if (s[y-1] == '}') {
+		s[y-1] = NUL;
+		s++;
+	    }
+	}
+	if (cx == XXINP) {		/* INPUT */
+	    debug(F110,"calling doinput",s,0);
+	    success = doinput(x,s);	/* Go try to input the search string */
+	} else {			/* REINPUT */
+	    debug(F110,"xxrei line",s,0);
+	    success = doreinp(x,s);
+	}
+	if (intime[cmdlvl] && !success) { /* TIMEOUT-ACTION = QUIT? */
+	    popclvl();			/* If so, pop command level. */
+	    if (pflag && cmdlvl == 0) {
+		if (cx == XXINP) printf("?Input timed out\n");
+		if (cx == XXREI) printf("?Reinput failed\n");
+	    }
+	}
+	return(success);		/* Return do(re)input's return code */
+    }
+#endif /* NOSPL */
+
+#ifndef NOSPL
+    if (cx == XXLBL) {			/* LABEL */
+	if ((x = cmfld("label","",&s,xxstring)) < 0) {
+	    if (x == -3) {
+		printf("?Label name required\n");
+		return(-9);
+	    } else return(x);
+	}
+	if ((x = cmcfm()) < 0) return(x);
+	return(0);
+    }
+#endif /* NOSPL */
+
+    if (cx == XXLOG) {			/* LOG */
+	x = cmkey(logtab,nlog,"What to log","",xxstring);
+	if (x == -3) {
+	    printf("?Type of log required\n");
+	    return(-9);
+	}
+	if (x < 0) return(x);
+	x = dolog(x);
+	if (x < 0)
+	  return(x);
+	else
+	  return(success = x);
+    }
+ 
+#ifndef NOSCRIPT
+    if (cx == XXLOGI) {			/* UUCP-style script */
+	if ((x = cmtxt("expect-send expect-send ...","",&s,xxstring)) < 0)
+	  return(x);
+#ifdef VMS
+	conres();			/* For Ctrl-C to work... */
+#endif /* VMS */
+	return(success = dologin(s));	/* Return 1=completed, 0=failed */
+    }
+#endif /* NOSCRIPT */
+ 
+    if (cx == XXREC) {			/* RECEIVE */
+	cmarg2 = "";
+	x = cmofi("Name under which to store the file, or CR","",&s,
+		  xxstring);
+	if ((x == -1) || (x == -2)) return(x);
+	if ((x = cmcfm()) < 0) return(x);
+	strcpy(line,s);
+	cmarg2 = line;
+	debug(F111,"cmofi cmarg2",cmarg2,x);
+	sstate = 'v';
+#ifdef MAC
+	scrcreate();
+#endif /* MAC */
+	if (local) displa = 1;
+	return(0);
+    }
+ 
+    if (cx == XXREM) {			/* REMOTE */
+	x = cmkey(remcmd,nrmt,"Remote Kermit server command","",xxstring);
+	if (x == -3) {
+	    printf("?You must specify a command for the remote server\n");
+	    return(-9);
+	}
+	return(dormt(x));
+    }
+
+#ifndef NOFRILLS
+    if (cx == XXREN)			/* RENAME */
+      return(dorenam());
+#endif /* NOFRILLS */
+
+    if (cx == XXSEN || cx == XXMAI) {	/* SEND, MAIL */
+	cmarg = cmarg2 = "";
+	if ((x = cmifi("File(s) to send","",&s,&y,xxstring)) < 0) {
+	    if (x == -3) {
+		printf("?A file specification is required\n");
+		return(-9);
+	    } else return(x);
+	}
+	nfils = -1;			/* Files come from internal list. */
+	strcpy(line,s);			/* Save copy of string just parsed. */
+	strncpy(fspec,s,FSPECL);	/* and here for \v(filespec) */
+	if (cx == XXSEN) {		/* SEND command */
+	    debug(F101,"Send: wild","",y);
+	    if (y == 0) {
+		if ((x = cmtxt("Name to send it with","",&cmarg2,
+			       xxstring)) < 0)
+		  return(x);
+	    } else {
+		if ((x = cmcfm()) < 0) return(x);
+	    }
+	    cmarg = line;		/* File to send */
+	    debug(F110,"Sending:",cmarg,0);
+	    if (*cmarg2 != '\0') debug(F110," as:",cmarg2,0);
+	} else {			/* MAIL */
+#ifndef NOFRILLS
+	    if (!atdiso || !atcapr) {	/* Disposition attribute off? */
+		printf("?Disposition Attribute is Off\n");
+		return(-2);
+	    }
+	    debug(F101,"Mail: wild","",y);
+	    *optbuf = NUL;		/* Wipe out any old options */
+	    if ((x = cmtxt("Address to mail to","",&s,xxstring)) < 0)
+	      return(x);
+	    if ((int)strlen(s) == 0) {
+		printf("?Address required\n");
+		return(-9);
+	    }
+	    strcpy(optbuf,s);
+	    if ((int)strlen(optbuf) > 94) { /* Ensure legal size */
+		printf("?Option string too long\n");
+		return(-2);
+	    }
+	    cmarg = line;		/* File to send */
+	    debug(F110,"Mailing:",cmarg,0);
+	    debug(F110,"To:",optbuf,0);
+	    rmailf = 1;			/* MAIL modifier flag for SEND */
+#else
+	    printf("?Sorry, MAIL feature not configured.\n");
+	    return(-2);
+#endif /* NOFRILLS */
+	}
+	sstate = 's';			/* Set start state to SEND */
+#ifdef MAC
+	scrcreate();
+#endif /* MAC */
+	if (local) {			/* If in local mode, */
+	    displa = 1;			/* turn on file transfer display */
+#ifdef COMMENT
+/* Redundant -- this is done later in sipkt() */
+	    ttflui();			/* and flush tty input buffer. */
+#endif /* COMMENT */
+	}
+	return(0);
+    }
+ 
+#ifndef NOMSEND
+    if (cx == XXMSE) {			/* MSEND command */
+	nfils = 0;			/* Like getting a list of */
+	lp = line;			/* files on the command line */
+	while (1) {
+	    char *p;
+	    if ((x = cmifi("Names of files to send, separated by spaces","",
+			   &s,&y,xxstring)) < 0) {
+		if (x == -3) {
+		    if (nfils <= 0) {
+			printf("?A file specification is required\n");
+			return(-9);
+		    } else break;
+		}
 		return(x);
 	    }
-	    if (*cmarg == NUL) { 	/* If user types a bare CR, */
-		printf("(cancelled)\n"); /* Forget about this. */
-	    	cmsetp(psave);		/* Restore old prompt, */
-		return(0);		/* and return. */
+	    msfiles[nfils++] = lp;	/* Got one, count it, point to it, */
+	    p = lp;			/* remember pointer, */
+	    while (*lp++ = *s++) ;	/* and copy it into buffer */
+	    debug(F111,"msfiles",msfiles[nfils-1],nfils-1);
+	    if (nfils == 1) *fspec = NUL; /* Take care of \v(filespec) */
+	    if (((int)strlen(fspec) + (int)strlen(p) + 1) < FSPECL) {
+		strcat(fspec,p);
+		strcat(fspec," ");
 	    }
-	    strcpy(line,cmarg);		/* Make a safe copy */
-	    cmarg = line;
-	    cmsetp(" Local name to store it under: ");	/* New prompt */
-	    cmini(ckxech);
-	    x = -1;
-	    if (!backgrd) prompt();
-	    while (x == -1) {		/* Again, parse till answered */
-	    	x = cmofi("Local file name","",&cmarg2);
-	    }
-	    if (x == -3) {	    	    	/* If bare CR, */
-		printf("(cancelled)\n");	/* escape from this... */
-	    	cmsetp(psave);		        /* Restore old prompt, */
-		return(0);		    	/* and return. */
-	    } else if (x < 0) return(x);        /* Handle parse errors. */
-
-	    x = -1;			/* Get confirmation. */
-	    while (x == -1) x = cmcfm();
-	    cmsetp(psave);		/* Restore old prompt. */
-        }
-    }
-    if (x == 0) {			/* Good return from cmtxt or cmcfm, */
-	sstate = 'r';			/* set start state. */
-	if (local) displa = 1;
-    }
-    return(x);
-
-case XXHLP:				/* Help */
-    x = cmkey(cmdtab,ncmd,"C-Kermit command","help");
-    return(dohlp(x));
-
-case XXHAN:				/* Hangup */
-    if ((x = cmcfm()) > -1) return(tthang());
-
-case XXLOG:				/* Log */
-    x = cmkey(logtab,nlog,"What to log","");
-    if (x == -3) {
-	printf("?You must specify what is to be logged\n");
-	return(-2);
-    }
-    if (x < 0) return(x);
-    return(dolog(x));
-
-case XXLOGI:				/* Send script remote system */
-    if ((x = cmtxt("Text of login script","",&s)) < 0) return(x);
-    return( login(s) );			/* Return 0=completed, -2=failed */
-
-case XXREC:				/* Receive */
-    cmarg2 = "";
-    x = cmofi("Name under which to store the file, or CR","",&cmarg2);
-    if ((x == -1) || (x == -2)) return(x);
-    debug(F111,"cmofi cmarg2",cmarg2,x);
-    if ((x = cmcfm()) < 0) return(x);
-    sstate = 'v';
-    if (local) displa = 1;
-    return(0);
-
-case XXREM:				/* Remote */
-    if (!local) {
-	printf("\nYou have to 'set line' first\n");
-	return(-2);
-    }
-    x = cmkey(remcmd,nrmt,"Remote Kermit server command","");
-    if (x == -3) {
-	printf("?You must specify a command for the remote server\n");
-	return(-2);
-    }
-    return(dormt(x));
-
-case XXSEN:				/* Send */
-    cmarg = cmarg2 = "";
-    if ((x = cmifi("File(s) to send","",&s,&y)) < 0) {
-	if (x == -3) {
-	    printf("?A file specification is required\n");
-	    return(-2);
 	}
-	return(x);
+	cmlist = msfiles;		/* Point cmlist to pointer array */
+	cmarg2 = "";			/* No internal expansion list (yet) */
+	sndsrc = nfils;			/* Filenames come from cmlist */
+	sstate = 's';			/* Set start state to SEND */
+#ifdef MAC
+	scrcreate();
+#endif /* MAC */
+	if (local) {			/* If in local mode, */
+	    displa = 1;			/* turn on file transfer display */
+	    ttflui();			/* and flush tty input buffer. */
+	}
+	return(0);
     }
-    nfils = -1;				/* Files come from internal list. */
-    strcpy(line,s);			/* Save copy of string just parsed. */
-    debug(F101,"Send: wild","",y);
-    if (y == 0) {
-	if ((x = cmtxt("Name to send it with","",&cmarg2)) < 0) return(x);
-    } else {
+#endif /* NOMSEND */
+
+#ifndef NOSERVER
+    if (cx == XXSER) {			/* SERVER */
 	if ((x = cmcfm()) < 0) return(x);
-    }
-    cmarg = line;			/* File to send */
-    debug(F110,"Sending:",cmarg,0);
-    if (*cmarg2 != '\0') debug(F110," as:",cmarg2,0);
-    sstate = 's';			/* Set start state */
-    if (local) displa = 1;
-    return(0);
-
-case XXSER:				/* Server */
-    if ((x = cmcfm()) < 0) return(x);
-    sstate = 'x';
-    if (local) displa = 1;
+	sstate = 'x';
+#ifdef MAC
+	scrcreate();
+#endif /* MAC */
+	if (local) displa = 1;
 #ifdef AMIGA
-    reqoff();				/* no DOS requestors while server */
-#endif
+	reqoff();			/* No DOS requestors while server */
+#endif /* AMIGA */
     return(0);
-
-case XXSET:				/* Set */
-    x = cmkey(prmtab,nprm,"Parameter","");
-    if (x == -3) {
-	printf("?You must specify a parameter to set\n");
-	return(-2);
     }
-    if (x < 0) return(x);
-    return(doprm(x));
-
-/* XXSHE code by H. Fischer; copyright rights assigned to Columbia Univ */
-/*
- Adapted to use getpwuid to find login shell because many systems do not
- have SHELL in environment, and to use direct calling of shell rather
- than intermediate system() call. -- H. Fischer
-*/
-case XXSHE:				/* Local shell command */
-    {
-    int pid;
-#ifdef AMIGA
-    if (cmtxt("Command to execute","",&s) < 0) return(-1);
-#else
-#ifdef OS2
-    if (cmtxt("OS2 command to execute","",&s) < 0) return(-1);
-#else
-    if (cmtxt("Unix shell command to execute","",&s) < 0) return(-1);
-#endif /* Amiga */
-#endif /* OS2 */
+#endif /* NOSERVER */
 
-    conres();				/* Make console normal  */
-
-#ifdef OS2
-    if (*s == '\0') sprintf(s,"%s","CMD"); /* Command processor */
-    concooked();
-    system(s);
-    conraw();
-#else
-#ifdef OSK
-    system(s);
-#else
-#ifdef AMIGA
-    system(s);
-#else
-#ifdef MSDOS
-    zxcmd(s);
-#else
-#ifdef vms
-    system(s);				/* Best we can do for VMS? */
-#else
-#ifdef datageneral
-    if (*s == NUL)			/* Interactive shell requested? */
-#ifdef mvux
-	system("/bin/sh ");
-#else
-        system("x :cli prefix Kermit_Baby:");
-#endif
-    else				/* Otherwise, */
-        system(s);			/* Best for aos/vs?? */
-
-#else
-#ifdef aegis
-    if ((pid = vfork()) == 0) {		/* Make child quickly */
-	char *shpath, *shname, *shptr;	/* For finding desired shell */
-
-        if ((shpath = getenv("SHELL")) == NULL) shpath = "/com/sh";
-
-#else					/* All Unix systems */
-    if ((pid = fork()) == 0) {		/* Make child */
-	char *shpath, *shname, *shptr;	/* For finding desired shell */
-	struct passwd *p;
-	extern struct passwd * getpwuid();
-	extern int getuid();
-	char *defShel = "/bin/sh";	/* Default */
-
-	p = getpwuid( getuid() );	/* Get login data */
-	if ( p == (struct passwd *) NULL || !*(p->pw_shell) )
-	    shpath = defShel;
-	else
-	    shpath = p->pw_shell;
-#endif
-	shptr = shname = shpath;
-	while (*shptr != '\0')
-	    if (*shptr++ == '/') shname = shptr;
-
-/* Remove following uid calls if they cause trouble */
-#ifdef BSD4
-#ifndef BSD41
-	setegid(getgid());		/* Override 4.3BSD csh security */
-	seteuid(getuid());		/*  checks. */
-#endif
-#endif
-	if (*s == NUL)			/* Interactive shell requested? */
-	    execl(shpath,shname,"-i",NULL);    /* Yes, do that */
-	else				/* Otherwise, */
-	    execl(shpath,shname,"-c",s,NULL); /* exec the given command */
-	exit(BAD_EXIT); }		/* Just punt if it didn't work */
-
-    else {				/* Parent */
-
-    	int wstat;			/* Kermit must wait for child */
-	SIGTYP (*istat)(), (*qstat)();
-
-	istat = signal(SIGINT,SIG_IGN);	/* Let the fork handle keyboard */
-	qstat = signal(SIGQUIT,SIG_IGN); /* interrupts itself... */
-
-    	while (((wstat = wait((int *)0)) != pid) && (wstat != -1)) ;
-	                                /* Wait for fork */
-	signal(SIGINT,istat);		/* Restore interrupts */
-	signal(SIGQUIT,qstat);
-    }
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
-    concb(escape);			/* Console back in cbreak mode */
-    return(0);
-}
-
-case XXSHO:				/* Show */
-    x = cmkey(shotab,2,"","parameters");
-    if (x < 0) return(x);
-    if ((y = cmcfm()) < 0) return(y);
-    switch (x) {
-
-	case SHPAR:
-	    shopar();
-	    break;
-
-	case SHVER:
-	    printf("\nVersions:\n %s\n %s\n",versio,protv);
-	    printf(" %s\n",fnsv);
-	    printf(" %s\n %s\n",cmdv,userv);
-	    printf(" %s for%s\n",ckxv,ckxsys);
-	    printf(" %s for%s\n",ckzv,ckzsys);
-	    printf(" %s\n",connv);
-	    printf(" %s\n %s\n\n",dialv,loginv);
-	    break;
-
-	default:
-	    printf("\nNothing to show...\n");
-	    break;
-    }
-    return(0);
-
-case XXSPA:				/* space */
-#ifdef datageneral
-    /* The DG can take an argument after its "space" command. */
-    if ((x = cmtxt("Confirm, or local directory name","",&s)) < 0) return(x);
-    if (*s == NULL) system(SPACMD);
-    else {
-    	char *cp;
-    	cp = alloc(strlen(s) + 7);      /* For "space *s" */
-    	strcpy(cp,"space "), strcat(cp,s);
-    	system(cp);
-    	free(cp);
-    }
-#else
-    if ((x = cmcfm()) < 0) return(x);
-#ifdef OS2
-    concooked();
-    system(SPACMD);
-    conraw();
-#else
-    system(SPACMD);
-#endif
-#endif
-    return(0);
-
-case XXSTA:				/* statistics */
-    if ((x = cmcfm()) < 0) return(x);
-    return(dostat());
-
-case XXTAK:				/* take */
-    if (tlevel > MAXTAKE-1) {
-	printf("?Take files nested too deeply\n");
-	return(-2);
-    }
-    if ((y = cmifi("C-Kermit command file","",&s,&x)) < 0) {
+    if (cx == XXSET) {			/* SET command */
+	x = cmkey(prmtab,nprm,"Parameter","",xxstring);
+	if (x == -3) {
+	    printf("?You must specify a parameter to set\n");
+	    return(-9);
+	}
+	if (x < 0) return(x);
+	/* have to set success separately for each item in doprm()... */
+	/* actually not really, could have just had doprm return 0 or 1 */
+	/* and set success here... */
+	y = doprm(x,0);
 	if (y == -3) {
-	    printf("?A file specification is required\n");
-	    return(-2);
+	    printf("?More fields required\n");
+	    return(-9);
 	} else return(y);
     }
-    if (x != 0) {
-	printf("?Wildcards not allowed in command file name\n");
-	return(-2);
-    }
-    strcpy(line,s);			/* Make a safe copy of the string */
-    if ((y = cmcfm()) < 0) return(y);
-    if ((tfile[++tlevel] = fopen(line,"r")) == NULL) {
-	perror(line);
-	debug(F110,"Failure to open",line,0);
-	tlevel--;
-    }
-    return(0);
 
-case XXTRA:				/* transmit */
-    if ((x = cmifi("File to transmit","",&s,&y)) < 0) {
-	if (x == -3) {
-	    printf("?Name of an existing file\n");
+#ifndef NOPUSH
+    if (cx == XXSHE) {			/* SHELL (system) command */
+	if (cmtxt("System command to execute","",&s,xxstring) < 0)
+	  return(-1);
+	conres();			/* Make console normal  */
+	x = zshcmd(s);
+	concb((char)escape);
+	return(success = x);
+    }
+#endif /* NOPUSH */
+
+#ifndef NOSHOW
+    if (cx == XXSHO) {			/* SHOW */
+	x = cmkey(shotab,nsho,"","parameters",xxstring);
+	if (x < 0) return(x);
+	return(doshow(x));
+    }
+#endif /* NOSHOW */
+ 
+#ifndef MAC
+    if (cx == XXSPA) {			/* SPACE */
+#ifdef datageneral
+	/* AOS/VS can take an argument after its "space" command. */
+	if ((x = cmtxt("Confirm, or local directory name","",&s,xxstring)) < 0)
+	  return(x);
+	if (*s == NUL) xsystem(SPACMD);
+	else {
+	    sprintf(line,"space %s",s);
+	    xsystem(line);
+	}
+#else
+#ifdef OS2
+	if ((x = cmtxt("Press Enter for current disk,\n\
+ or specify a disk letter like A:","",&s,xxstring)) < 0)
+	  return(x);
+	if (*s == NUL) {		/* Current disk */
+	    printf(" Free space: %ldK\n", zdskspace(0)/1024L);
+	} else {
+	    int drive = toupper(*s);
+	    printf(" Drive %c: %ldK free\n", drive, 
+		   zdskspace(drive - 'A' + 1) / 1024L);
+	}
+#else
+#ifdef UNIX
+#ifdef COMMENT
+	if ((x = cmtxt("Confirm for current disk,\n\
+ or specify a disk device or directory","",&s,xxstring)) < 0)
+	  return(x);
+#else
+	x = cmdir("Confirm for current disk,\n\
+ or specify a disk device or directory","",&s,xxstring);
+	if (x == -3)
+	  s = "";
+	else if (x < 0)
+	  return(x);
+	if ((x = cmcfm()) < 0) return(x);
+#endif /* COMMENT */
+	if (*s == NUL) {		/* Current disk */
+	    xsystem(SPACMD);
+	} else {			/* Specified disk */
+	    sprintf(line,"%s %s",SPACM2,s);
+	    xsystem(line);
+	}
+#else
+	if ((x = cmcfm()) < 0) return(x);
+	xsystem(SPACMD);
+#endif /* UNIX */
+#endif /* OS2 */
+#endif /* datageneral */
+	return(success = 1);		/* Pretend it worked */
+    }
+#endif /* MAC */
+ 
+    if (cx == XXSTA) {			/* STATISTICS */
+	if ((x = cmcfm()) < 0) return(x);
+	return(success = dostat());
+    }
+
+    if (cx == XXSTO || cx == XXEND) {	/* STOP, END, or POP */
+	if ((y = cmnum("exit status code","0",10,&x,xxstring)) < 0)
+	  return(y);
+	if ((y = cmtxt("Message to print","",&s,xxstring)) < 0)
+	  return(y);
+	if (*s == '{') {		/* Strip any enclosing braces */
+	    x = (int)strlen(s);
+	    if (s[x-1] == '}') {
+		s[x-1] = NUL;
+		s++;
+	    }
+	}
+	if (*s) printf("%s\n",s);
+	if (cx == XXSTO) dostop(); else popclvl(); 
+	return(success = (x == 0));
+    }
+
+    if (cx == XXSUS) {			/* SUSPEND */
+	if ((y = cmcfm()) < 0) return(y);
+#ifdef NOJC
+	printf("Sorry, this version of Kermit cannot be suspended\n");
+#else
+	stptrap(0);
+#endif /* NOJC */
+	return(0);
+    }
+
+    if (cx == XXTAK) {			/* TAKE */
+	if (tlevel > MAXTAKE-1) {
+	    printf("?Take files nested too deeply\n");
 	    return(-2);
 	}
-	return(x);
-    }
-    if (y != 0) {
-	printf("?Only a single file may be transmitted\n");
-	return(-2);
-    }
-    strcpy(line,s);			/* Save copy of string just parsed. */
-    y = cmnum("Decimal ASCII value of line turnaround character","10",10,&x);
-    debug(F101,"transmit parse turnaround","",x);
-    if (y < 0) return(y);
-    if (x < 0 || x > 127) {
-	printf("?Decimal number between 0 and 127\n");
-	return(-2);
-    }
-    if ((y = cmcfm()) < 0) return(y);	/* Confirm the command */
-/*
-    if (!local) {
-	printf("?Transmit requires prior SET LINE\n");
-	return(-2);
-    }
-*/
-    debug(F110,"calling transmit",line,0);
-    return(transmit(line,x));		/* Do the command */
-
-default:
-    printf("Not available - %s\n",cmdbuf);
-    return(-2);
-    }
-}
-
-/*  D O C O N E C T  --  Do the connect command  */
-
-/*  Note, we don't call this directly from dial, because we need to give */
-/*  the user a chance to change parameters (e.g. parity) after the */
-/*  connection is made. */
-
-doconect() {
-    int x;
-    conres();				/* Put console back to normal */
-    x = conect();			/* Connect */
-    concb(escape);			/* Put console into cbreak mode, */
-    return(x);				/* for more command parsing. */
-}
-
-/*  T R A N S M I T  --  Raw upload  */
-
-/*  Obey current line, duplex, parity, flow, text/binary settings. */
-/*  Returns 0 upon apparent success, 1 on obvious failure.  */
-
-/***
- Things to add:
- . Make both text and binary mode obey set file bytesize.
- . Maybe allow user to specify terminators other than CR?
- . Maybe allow user to specify prompts other than single characters?
-***/
-
-int tr_int;				/* Flag if TRANSMIT interrupted */
-
-trtrap() {				/* TRANSMIT interrupt trap */
-    tr_int = 1;
-    return(0);
-}
-
-transmit(s,t) char *s; char t; {
-#define LINBUFSIZ 150
-    char linbuf[LINBUFSIZ+2];		/* Line buffer */
-
-#ifndef OS2
-    SIGTYP (* oldsig)();		/* For saving old interrupt trap. */
-#endif
-    int z = 0;				/* Return code. */
-    int x, c, i, n;			/* Workers... */
-    CHAR tt;
-
-    tt = dopar(t);			/* Turnaround char, with parity */
-    debug(F101,"transmit turnaround","",t);
-
-    if (zopeni(ZIFILE,s) == 0) {	/* Open the file to be transmitted */
-	printf("?Can't open %s\n",s);
-	return(1);
-    }
-    x = -1;				/* Open the communication line */
-    if (ttopen(ttname,&x,mdmtyp) < 0) {	/* (does no harm if already open) */
-	printf("Can't open %s\n",ttname);
-	return(1);
-    }
-    x = x ? speed : -1;			/* Put the line in "packet mode" */
-    if (ttpkt(x,flow,parity) < 0) {
-	printf("Can't condition line\n");
-	return(1);
-    }
-    i = 0;				/* Beginning of buffer. */
-#ifndef OS2
-    oldsig = signal(SIGINT, trtrap);	/* Save current interrupt trap. */
-#endif
-    tr_int = 0;				/* Have not been interrupted (yet). */
-    z = 0;				/* Return code presumed good. */
-
-    while ((c = zminchar()) != -1) {	/* Loop for all characters in file */
-	if (tr_int) {			/* Interrupted? */
-	    fprintf(stderr,"^C...\n");	/* Print message */
-	    z = 1;
-	    break;
+	if ((y = cmifi("C-Kermit command file","",&s,&x,xxstring)) < 0) { 
+	    if (y == -3) {
+		printf("?A file name is required\n");
+		return(-9);
+	    } else return(y);
 	}
-	if (duplex) conoc(c);		/* Echo character on screen */
-	if (binary) {			/* If binary file */
-	    if (ttoc(dopar(c)) < 0) {	/* just try to send the character */
-		printf("?Can't transmit character\n");
-		z = 1;
-		break;
-	    }
-	    if (! duplex) {
-		x = ttinc(1);		/* Try to read back echo */
-		if (x > -1) conoc(x);
-	    }
-	} else {			/* Line at a time for text files... */
-	    if (c == '\n') {		/* Got a line */
-		if (linbuf[i-1] != dopar('\r'))
-		  linbuf[i++] = dopar('\r'); /* Terminate it with CR */
-		if (ttol(linbuf,i) < 0) { /* try to send it */
-		    printf("?Can't transmit line\n");
-		    z = 1;
-		    break;
-		}
-		i = 0;			/* Reset the buffer pointer */
-		if (t) {		/* If we want a turnaround character */
-		    x = 0;		/* wait for it */
-		    while ((x != -1) && (x != t)) {
-			x = ttinc(1);
-			if (! duplex) conoc(x);	/* also echo any echoes */
-		    }
-		}
-	    } else {			/* Not a newline, regular character */
-		linbuf[i++] = dopar(c); /* Put it in line buffer. */
-		if (i == LINBUFSIZ) {	/* If buffer full, */
-		    if (ttol(linbuf,i) < 0) { /* try to send it. */
-			printf("Can't send buffer\n");
-			z = 1;
-			break;
-		    }			/* Don't wait for turnaround */
-		    i = 0;		/* Reset buffer pointer */
-		}
+	if (x != 0) {
+	    printf("?Wildcards not allowed in command file name\n");
+	    return(-9);
+	}
+	strcpy(line,s);
+	if ((y = cmcfm()) < 0) return(y);
+	return(success = dotake(line));
+    }
+ 
+#ifdef NETCONN
+    if (cx == XXTEL) {			/* TELNET */
+	if ((y = setlin(XYHOST,0)) < 0) return(y);
+	return (success = (y == 0) ? 0 : doconect());
+    }
+#endif /* NETCONN */
+
+#ifndef NOXMIT
+    if (cx == XXTRA) {			/* TRANSMIT */
+	if ((x = cmifi("File to transmit","",&s,&y,xxstring)) < 0) {
+	    if (x == -3) {
+		printf("?Name of an existing file\n");
+		return(-9);
+	    } else return(x);
+	}
+	if (y != 0) {
+	    printf("?Only a single file may be transmitted\n");
+	    return(-2);
+	}
+	strcpy(line,s);			/* Save copy of string just parsed. */
+	if ((y = cmcfm()) < 0) return(y); /* Confirm the command */
+	debug(F111,"calling transmit",line,xmitp);
+	return(success = transmit(line,(char)xmitp)); /* Do the command */
+    }
+#endif /* NOXMIT */
+
+#ifndef NOFRILLS
+    if (cx == XXTYP) {			/* TYPE */
+#ifndef MAC
+	char *tc;
+#endif /* MAC */
+	if ((x = cmifi("File to type","",&s,&y,xxstring)) < 0) {
+	    if (x == -3) {
+		printf("?Name of an existing file\n");
+		return(-9);
+	    } else return(x);
+	}
+	if (y != 0) {
+	    printf("?A single file please\n");
+	    return(-2);
+	}
+#ifndef MAC
+	if (!(tc = getenv("CK_TYPE"))) tc = TYPCMD;
+	sprintf(line,"%s %s",tc,s);
+	if ((y = cmcfm()) < 0) return(y); /* Confirm the command */
+	xsystem(line);
+	return(success = 1);
+#else
+	strcpy(line,s);
+	if ((y = cmcfm()) < 0) return(y); /* Confirm the command */
+	return(success = dotype(line));
+#endif /* MAC */
+    }
+#endif /* NOFRILLS */
+
+#ifndef NOFRILLS
+    if (cx == XXTES) {			/* TEST */
+	/* Fill this in with whatever is being tested... */
+	if ((y = cmcfm()) < 0) return(y); /* Confirm the command */
+
+#ifndef NOSPL
+#ifdef COMMENT
+	{ int d, i, j;			/* Dump all arrays */
+	  char c, **p;
+	  for (i = 0; i < 27; i++) {
+	      p = a_ptr[i];
+	      d = a_dim[i];
+	      c = (i == 0) ? 64 : i + 96;
+	      if (d && p) {
+		  fprintf(stderr,"&%c[%d]\n",c,d);
+		  for (j = 0; j <= d; j++) {
+		      if (p[j]) {
+			  fprintf(stderr,"  &%c[%2d] = [%s]\n",c,j,p[j]);
+		      }
+		  }	  
+	      }
+	  }
+      }
+#else /* Not COMMENT */
+	printf("cmdlvl = %d, tlevel = %d, maclvl = %d\n",cmdlvl,tlevel,maclvl);
+	if (maclvl < 0) {
+	    printf("%s\n",
+	     "Call me from inside a macro and I'll dump the argument stack");
+	    return(0);
+	}
+	printf("Macro level: %d, ARGC = %d\n     ",maclvl,macargc[maclvl]);
+	for (y = 0; y < 10; y++) printf("%7d",y);
+	for (x = 0; x <= maclvl; x++) {
+	    printf("\n%2d:  ",x);
+	    for (y = 0; y < 10; y++) {
+		s = m_arg[x][y];
+		printf("%7s",s ? s : "(none)");
 	    }
 	}
+	printf("\n");
+#endif /* COMMENT */
+#endif /* NOSPL */
+	return(0);
     }
-#ifndef OS2
-    signal(SIGINT,oldsig);		/* put old signal action back. */
-#endif /* OS2 */
-    ttres();				/* Done, restore tty, */
-    zclose(ZIFILE);			/* close file, */
-    return(z);				/* and return successfully. */
-}
+#endif /* NOFRILLS */
+
+#ifndef NOCSETS
+    if (cx == XXXLA) {	   /* TRANSLATE <ifn> from-cs to-cs <ofn> */
+	int incs, outcs;
+	if ((x = cmifi("File to translate","",&s,&y,xxstring)) < 0) {
+	    if (x == -3) {
+		printf("?Name of an existing file\n");
+		return(-9);
+	    } else return(x);
+	}
+	if (y != 0) {
+	    printf("?A single file please\n");
+	    return(-2);
+	}
+	strcpy(line,s);			/* Save copy of string just parsed. */
+
+	if ((incs = cmkey(fcstab,nfilc,"from character-set","",xxstring)) < 0)
+	  return(incs);
+	if ((outcs = cmkey(fcstab,nfilc,"to character-set","",xxstring)) < 0)
+	  return(outcs);
+	if ((x = cmofi("output file",CTTNAM,&s,xxstring)) < 0) return(x);
+	strncpy(tmpbuf,s,50);
+	if ((y = cmcfm()) < 0) return(y); /* Confirm the command */
+	return(success = xlate(line,tmpbuf,incs,outcs)); /* Execute it */
+    }
+#endif /* NOCSETS */
+
+    if (cx == XXVER) {			/* VERSION */
+	if ((y = cmcfm()) < 0) return(y);
+	printf("%s,%s\n Numeric: %ld",versio,ckxsys,vernum);
+	if (verwho) printf("-%d\n",verwho); else printf("\n");
+	return(success = 1);
+    }
+
+#ifndef MAC
+#ifndef NOFRILLS
+    if (cx == XXWHO) {			/* WHO */
+	char *wc;
+#ifdef datageneral
+        xsystem(WHOCMD);
+#else
+	if ((y = cmtxt("user name","",&s,xxstring)) < 0) return(y);
+	if (!(wc = getenv("CK_WHO"))) wc = WHOCMD;
+	sprintf(line,"%s %s",wc,s);
+	xsystem(line);
+#endif /* datageneral */
+	return(success = 1);
+    }
+#endif /* NOFRILLS */
+#endif /* MAC */
+
+#ifndef NOFRILLS
+    if (cx == XXWRI) {			/* WRITE */
+	if ((x = cmkey(writab,nwri,"to file or log","",xxstring)) < 0) {
+	    if (x == -3) printf("?Write to what?\n");
+	    return(x);
+	}
+	if ((y = cmtxt("text","",&s,xxstring)) < 0) return(y);
+	if (*s == '{') {		/* Strip enclosing braces */
+	    y = (int)strlen(s);
+	    if (s[y-1] == '}') {
+		s[y-1] = NUL;
+		s++;
+	    }
+	}
+	switch (x) {
+	  case LOGD: y = ZDFILE; break;
+	  case LOGP: y = ZPFILE; break;
+	  case LOGS: y = ZSFILE; break;
+	  case LOGT: y = ZTFILE; break;
+#ifndef NOSPL
+	  case LOGW: y = ZWFILE; break;
+#endif /* NOSPL */
+	  case LOGX:
+	  case LOGE:
+
+#ifndef MAC
+	    if (x == LOGE) fprintf(stderr,"%s",s);
+	    else
+#endif /* MAC */
+	      printf("%s",s);
+	    if (
+#ifndef NOSPL
+		cmdlvl == 0
+#else
+		tlevel == -1
+#endif /* NOSPL */
+		)
+#ifndef MAC
+	      if (x == LOGE) fprintf(stderr,"\n");
+	      else
+#endif /* MAC */
+		printf("\n");
+	    return(success = 1);
+	  default: return(-2);
+	}
+	if ((x = zsout(y,s)) < 0)
+	  printf("?File or log not open\n");
+	return(success = (x == 0) ? 1 : 0);
+    }
+#endif /* NOFRILLS */
+
+    debug(F101,"docmd unk arg","",cx);
+    return(-2);				/* None of the above. */
+} /* end of docmnd() */
+
+#endif /* NOICP */

@@ -1,595 +1,570 @@
-.TH KERMIT 1C LOCAL 
+.TH KERMIT 1C LOCAL
 .SH NAME
-kermit \- kermit file transfer
+kermit \- file transfer, terminal connection, character-set translation,
+and script programming
 .SH SYNOPSIS
 .B kermit
-[ option ...] [file ...]
+[ options ...] [files ...]
 .SH DESCRIPTION
 .I Kermit
-is a file transfer program that allows files to be moved
-between machines of many different operating systems and architectures.
-This man page describes version 4F(082) of the program.  See the C-Kermit
-documentation (ckuker.doc) or the Kermit book for further information.
+is a family of file transfer, management, and communication software programs
+available for most computers and operating systems.  The UNIX version of
+Kermit, called C-Kermit, supports serial connections (direct or dialed) and,
+in most UNIX implementations, also TCP/IP connections.  On SunOS systems
+equipped with SunLink X.25, C-Kermit also supports X.25 connections.
 .PP
-Arguments are optional. If
-.I Kermit
-is executed without arguments, it will enter command mode. Otherwise,
-.I kermit
-will read the arguments off the command line and interpret them.
-.RE 1
+C-Kermit's major functions are file transfer using the Kermit protocol,
+automatic dialing, terminal connection, translation of national and
+international character sets, and script programming for automated
+communications.  This manual gives a brief overview of C-Kermit version
+5A(188).  C-Kermit is fully documented in the book
+.IR "Using C-Kermit"
+by Frank da Cruz and Christine M. Gianone, Digital Press, Burlington, MA,
+USA.  Digital Press ISBN: 1-55558-108-0; Prentice-Hall ISBN: 0-13-037490-3.
+Price: US $34.95.  In USA, call DECdirect at 1-800-344-4825, refer to order
+number EY-J896E-DP.  Available: January 1993.
 .PP
-The following notation is used in command descriptions:
-.RE 1
-.TP 8
-.I fn
-A Unix file specification, possibly containing either of the "wildcard"
-characters '~', '*', or '?' ('~' matches a user's home directory name,
-'*' matches all character strings, '?' matches any single character).
-.TP
-.I fn1
-A Unix file specification which may not contain '*' or '?'.
-.TP
-.I rfn
-A remote file specification in the remote system's own syntax, which may
-denote a single file or a group of files.
-.TP
-.I rfn1
-A remote file specification which should denote only a single file.
-.TP
-.I n
-A decimal number, in most cases between 0 and 94.
-.TP
-.I c
-A decimal number between 0 and 127 representing the value of an ASCII
-character.
-.TP
-.I cc
-A decimal number between 0 and 31, or else exactly 127, representing the
-value of an ASCII control character.
-.TP
-.B [ ]
-Any field in square braces is optional.
-.TP
-{\fIx,y,z\fR}
-Alternatives are listed in curly braces.
-.RE 1
+C-Kermit can be used in two "modes" -- remote and local.  In remote mode,
+you connect to the UNIX system from a desktop PC, Macintosh, or workstation
+and transfer files between your desktop computer and UNIX C-Kermit.  In that
+case, connection establishment (dialing, TELNET connection, etc) is handled
+by the Kermit program on your desktop computer.
 .PP
-.I Kermit
-command line options may specify either actions or settings.  If
-.I Kermit
-is invoked with a command line that specifies no actions, then it will
-issue a prompt and begin interactive dialog.  Action options specify
-either protocol transactions or terminal connection.
-.RE
-.SS COMMAND LINE OPTIONS
-.TP 8
-.BI \-s " fn"
-Send the specified file or files. If
-.I fn
-contains wildcard (meta) characters, the Unix shell expands it into a
-list.  If
-.I fn
-is '-' then
-.I Kermit
-sends from standard input, which may come from a file:  
-.sp 0.6v
-            kermit -s - < foo.bar
-.sp 0.6v
-or a parallel process:  
-.sp 0.6v
-            ls -l | kermit -s -
-.IP
-You cannot use this mechanism to send terminal typein.  If you want to
-send a file whose name is "-" you can precede it with a path name, as in
-.sp 0.6v
-            kermit -s ./-
-.TP
-.B \-r
-Receive a file or files.  Wait passively for files to arrive.
-.TP
-.B \-k
-Receive (passively) a file or files, sending them to standard output.
-This option can be used in several ways:
-.sp 0.6v
-        kermit -k
-.IP
-Displays the incoming files on your screen; to be used only in "local
-mode" (see below).
-.sp 0.6v
-        kermit -k > fn1
-.IP
-Sends the incoming file or files to the named file,
-.I fn1.
-If more than
-one file arrives, all are concatenated together into the single file
-.I fn1.
-.sp 0.6v
-        kermit -k | command
-.IP
-Pipes the incoming data (single or multiple files) to the indicated
-command, as in
-.sp 0.6v
-        kermit -k | sort > sorted.stuff
-.TP
-.BI \-a " fn1"
-If you have specified a file transfer option, you may specify an
-alternate name for a single file with the
-.B -a
-option.  For example,
-.sp 0.6v
-        kermit -s foo -a bar
-.IP
-sends the file foo telling the receiver that its name is bar.  If more
-than one file arrives or is sent, only the first file is affected by the
-.B \-a
-option:  
-.sp 0.6v
-        kermit -ra baz
-.IP
-stores the first incoming file under the name baz.
-.TP
-.B \-x
-Begin server operation.  May be used in either local or remote mode.
-.RE 1
+In local mode, C-Kermit establishes a connection to another computer
+by direct serial connection, by dialing a modem, or by making a network
+connection.  When used in local mode, C-Kermit gives you a terminal connection
+to the remote computer, using your actual terminal, emulator, or UNIX
+workstation window or console driver for specific terminal emulation.
 .PP
-Before proceeding, a few words about remote and local operation are  necessary.
-.I Kermit
-is "local" if it is running on a PC or workstation that you are using
-directly, or if it is running on a multiuser system and transferring
-files over an external communication line \(em not your job's controlling
-terminal or console.
-.I Kermit
-is remote if it is running on a multiuser system and transferring files
-over its own controlling terminal's communication line, connected to
-your PC or workstation.
+C-Kermit also has two types of commands: the familiar UNIX-style command-line
+arguments, and an interactive dialog with prompt.  Command-line arguments give
+you access to a small but useful subset of C-Kermit's features for terminal
+connection and file transfer, plus the ability to pipe files into or out of
+Kermit for transfer.
 .PP
-If you are running 
-.I Kermit
-On most systems,
-.I Kermit
-runs in remote mode by default, so on a PC or workstation, you will have
-to put it into local mode.  The following command sets
-.IR Kermit 's
-"mode":
-.RE 1
-.TP 8
-.BI \-l " dev"
-Line \(em Specify a terminal line to use for file transfer and terminal
-connection, as in
-.sp 0.6v
-            kermit -l /dev/ttyi5
-.RE 1
+Interactive commands give you access to dialing, script programming, 
+character-set translation, and in general, detailed control and display of all
+C-Kermit's features.  Interactive commands can also be collected into command
+files or collected into macros.
 .PP
-When an external line is being used, you might also need some additional
-options for successful communication with the remote system:
-.TP
-.BI \-b " n"
-Baud \(em Specify the baud rate for the line given in the
-.B \-l 
-option, as in
-.sp 0.6v
-            kermit -l /dev/ttyi5 -b 9600
-.IP
-This option should always be included with the
-.B  \-l
-option, since the speed of an external line is not necessarily what you
-might expect.
-.TP
-.BI \-p " x"
-Parity \(em
-.BR e ,
-.BR o ,
-.BR m ,
-.BR s ,
-.B  n
-(even, odd, mark, space, or none).  If parity is other than none, then
-the 8th-bit prefixing mechanism will be used for transferring 8-bit
-binary data, provided the opposite
-.I Kermit
-agrees. The default parity is none.
-.TP
-.B \-t
-Specifies half duplex, line turnaround with XON as the handshake
-character.
-.RE 1
+.SH "STARTING C-KERMIT"
 .PP
-The following commands may be used only with a 
-.I Kermit
-which is local \(em either by default or else because the
-.B  \-l
-option has been specified.
-.TP 8
-.BI \-g " rfn"
-Actively request a remote server to send the named file or files;
-.I rfn
-is a file specification in the remote host's own syntax.  If
-.I fn
-happens to contain any special shell characters, like '*', these must be
-quoted, as in
-.sp 0.6v
-            kermit -g x\\*.\\?
-.TP
-.B \-f
-Send a 'finish' command to a remote server.
-.TP
-.B \-c
-Establish a terminal connection over the specified or default
-communication line, before any protocol transaction takes place.  Get
-back to the local system by typing the escape character (normally
-Control-Backslash) followed by the letter 'c'.
-.TP
-.B \-n
-Like
-.B \-c,
-but after a protocol transaction takes place;
-.B \-c
-and
-.B \-n
-may both be used in the same command.  The use of
-.B \-n
-and
-.B \-c
-is illustrated below.
-.RE 1
+C-Kermit should be available as "kermit" somewhere in your PATH.  To start
+C-Kermit simply type "kermit", possibly followed by command-line options.  If
+there are no "action options" on the command line, C-Kermit starts in
+interactive mode; you will see a greeting message and then the "C-Kermit>"
+prompt.  If you include action options on the command line, C-Kermit takes the
+indicated actions and then exits back to UNIX.  Either way, C-Kermit 
+executes the commands in its initialization file, 
+.IR ".kermrc" ,
+in your home directory before it executes any other commands, unless you have
+included the -Y (uppercase) command-line option, which means to skip the
+initialization file.
 .PP
-On a timesharing system, the
-.B \-l
-and 
-.B \-b
-options will also have to be included with the
-.BR \-r ,
-.BR \-k ,
-or
-.B \-s
-options if the other 
-.I Kermit
-is on a remote system.
+.SH "USING C-KERMIT TO TRANSFER FILES"
 .PP
-If 
-.I kermit
-is in local mode, the screen (stdout) is continously updated to show the
-progress of the file transer.  A dot is printed for every four data
-packets, other packets are shown by type (e.g. 'S' for Send-Init), 'T'
-is printed when there's a timeout, and '%' for each retransmission.  In
-addition, you may type (to stdin) certain "interrupt" commands during
-file transfer:
-.IP
-Control-F:  Interrupt the current File, and go on to the next (if any).
-.IP
-Control-B:  Interrupt the entire Batch of files, terminate the transaction.
-.IP
-Control-R:  Resend the current packet
-.IP
-Control-A:  Display a status report for the current transaction.
-.RE
-.IP
-These interrupt characters differ from the ones used in other
-.I Kermit
-implementations to avoid conflict with Unix shell interrupt characters.
-With System III and System V implementations of Unix, interrupt commands
-must be preceeded by the escape character (e.g. control-\\).
-.RE
+Here is a common scenario for Kermit file transfer:
 .PP
-Several other command-line options are provided:
-.TP 8
-.B \-i
-Specifies that files should be sent or received exactly "as is" with no
-conversions.  This option is necessary for transmitting binary files.
-It may also be used to slightly boost efficiency in Unix-to-Unix
-transfers of text files by eliminating CRLF/newline conversion.
-.TP
-.B \-e " n"
-Specifies the (extended) receive-packet length, a number between 10
-and about 1000 (depending on the system).  Lengths of 95 or greater require
-that the opposite Kermit support the long packet protocol extension.
-.TP
-.B \-w
-Write-Protect \(em Avoid filename collisions for incoming files.
-.TP
-.B \-q
-Quiet \(em Suppress screen update during file transfer, for instance to
-allow a file transfer to proceed in the background.
-.TP
-.B \-d
-Debug \(em Record debugging information in the file debug.log in the
-current directory.  Use this option if you believe the program is
-misbehaving, and show the resulting log to your local
-.I Kermit
-maintainer.
-.TP
-.B \-h
-Help \(em Display a brief synopsis of the command line options.
-.RE 1
-.PP
-The command line may contain no more than one protocol action option.
-.SS INTERACTIVE OPERATION
-.RE 1
-.PP
-.IR Kermit 's
-interactive command prompt is "C-Kermit>". In response to this prompt,
-you may type any valid command.
-.I Kermit
-executes the command and then prompts you for another command.  The
-process continues until you instruct the program to terminate.
-.PP
-Commands begin with a keyword, normally an English verb, such as "send".
-You may omit trailing characters from any keyword, so long as you
-specify sufficient characters to distinguish it from any other keyword
-valid in that field.  Certain commonly-used keywords (such as "send",
-"receive", "connect") have special non-unique abbreviations ("s" for
-"send", "r" for "receive", "c" for "connect").
-.PP
-Certain characters have special functions in interactive commands:
-.PP
-.TP 8
-.B ?
-Question mark, typed at any point in a command, will produce a message
-explaining what is possible or expected at that point.  Depending on the
-context, the message may be a brief phrase, a menu of keywords, or a
-list of files.
-.TP 8
-.B ESC
-(The Escape or Altmode key) \(em Request completion of the current keyword
-or filename, or insertion of a default value.  The result will be a beep
-if the requested operation fails.
-.TP 8
-.B DEL
-(The Delete or Rubout key) \(em Delete the previous character from the
-command.  You may also use BS (Backspace, Control-H) for this function.
-.TP
-.B ^W
-(Control-W) \(em Erase the rightmost word from the command line.
-.TP
-.B ^U
-(Control-U) \(em Erase the entire command.
-.TP
-.B ^R
-(Control-R) \(em Redisplay the current command.
-.TP
-.B SP
-(Space) \(em Delimits fields (keywords, filenames, numbers) within a
-command.  HT (Horizontal Tab) may also be used for this purpose.
-.TP
-.B CR
-(Carriage Return) \(em Enters the command for execution.
-.B LF
-(Linefeed) or
-.B FF
-(formfeed) may also be used for this purpose.
-.TP
-.B \e
-(Backslash) \(em Enter any of the above characters into the command,
-literally.  To enter a backslash, type two backslashes in a row (\\\\).
-A single backslash immediately preceding a carriage return allows you
-to continue the command on the next line.
+.in +0.5i
+.ll -0.5i
+.ta +0.2i
+.ti -0.2i
+\(bu	Start Kermit on local computer and establish a connection to the
+remote computer.  If C-Kermit is on your local
+computer, use the sequence SET MODEM <modem-name>, SET LINE, SET SPEED, and
+DIAL <number> if you are dialing; SET LINE and SPEED for direct connections,
+SET NETWORK and SET HOST (or, for TCP/IP, simply TELNET) for network
+connections.
 
-.RE 1
-.PP
-You may type the editing characters (DEL, ^W, etc) repeatedly, to delete
-all the way back to the prompt.  No action will be performed until the
-command is entered by typing carriage return, linefeed, or formfeed.  If
-you make any mistakes, you will receive an informative error message and
-a new prompt \(em make liberal use of '?' and ESC to feel your way through
-the commands.  One important command is "help" \(em you should use it the
-first time you run
-.I Kermit.
-.PP
-Interactive 
-.I Kermit
-accepts commands from files as well as from the keyboard.  Upon
-startup,
-.I Kermit
-looks for the file .kermrc in your home or current directory (first it
-looks in the home directory, then in the current one) and executes any
-commands it finds there.  These commands must be in interactive format,
-not Unix command-line format.  A "take" command is also provided for use
-at any time during an interactive session.  Command files may be nested
-to any reasonable depth.
-.PP
-Here is a brief list of 
-.I Kermit
-interactive commands:
-.PD 0.6v
-.TP 12
-.B ! command
-Execute a Unix shell command.  A space is required after after the !.
-.TP
-.B % text
-A comment.  Useful in take-command files.
-.TP
-.B bye
-Terminate and log out a remote
-.I Kermit
-server.
-.TP
-.B close
-Close a log file.
-.TP
-.B connect
-Establish a terminal connection to a remote system.
-.TP
-.B  cwd
-Change Working Directory.
-.TP
-.B dial
-Dial a telephone number.
-.TP
-.B directory
-Display a directory listing.
-.TP
-.B echo
-Display arguments literally.  Useful in take-command files.
-.TP
-.B exit
-Exit from the program, closing any open logs.
-.TP
-.B finish
-Instruct a remote 
-.I Kermit
-server to exit, but not log out.
-.TP
-.B get
-Get files from a remote 
-.I Kermit
-server.
-.TP
-.B hangup
-Hang up the phone.
-.TP
-.B help
-Display a help message for a given command.
-.TP
-.B log
-Open a log file \(em debugging, packet, session, transaction.
-.TP
-.B quit
-Same as 'exit'.
-.TP
-.B receive
-Passively wait for files to arrive.
-.TP
-.B remote
-Issue file management commands to a remote
-.I Kermit
-server.
-.TP
-.B script
-Execute a login script with a remote system.
-.TP
-.B send
-Send files.
-.TP
-.B server
-Begin server operation.
-.TP
-.B set
-Set various parameters.
-.TP
-.B show
-Display values of 'set' parameters, program version, etc.
-.TP
-.B space
-Display current disk space usage.
-.TP
-.B statistics
-Display statistics about most recent transaction.
-.TP
-.B take 
-Execute commands from a file.
-.TP
-.B transmit
-Send a file without error checking.
-.sp 1
-.PP
-The 'set' parameters are:
-.TP 21
-.B attributes
-Turn attribute packet exchange on or off (default is on).
-.TP
-.B block-check
-Level of packet error detection.
-.TP
-.B delay
-How long to wait before sending first packet.
-.TP
-.B duplex
-Specify which side echoes during 'connect'.
-.TP
-.B escape-character
-Character to prefix "escape commands" during 'connect'.
-.TP
-.B file
-Set various file parameters.
-.TP
-.B
-flow-control  
-Communication line full-duplex flow control.
-.TP
-.B handshake
-Communication line half-duplex turnaround character.
-.TP
-.B line
-Communication line device name.
-.TP
-.B  modem-dialer
-Type of modem-dialer on communication line.
-.TP
-.B parity
-Communication line character parity.
-.TP
-.B prompt
-Change the 
-.I Kermit
+.ti -0.2i
+\(bu	SET any other necessary communication parameters, such as PARITY,
+DUPLEX, and FLOW-CONTROL.  If you will be communicating with an IBM mainframe
+in line-mode (not full-screen mode), give the command DO IBM.
+
+.ti -0.2i
+\(bu	Give the CONNECT command.
+
+.ti -0.2i
+\(bu	Log in to the remote computer.
+
+.ti -0.2i
+\(bu	Start Kermit on the remote computer, give it any desired SET commands
+for file, communication, or protocol-related parameters.  If you will be
+transferring binary files, give the command SET FILE TYPE BINARY to the remote
+Kermit.
+
+.ti -0.2i
+\(bu	Give the remote Kermit the SERVER command.
+
+.ti -0.2i
+\(bu	Escape back to the Kermit program on your local (desktop) computer.
+If your local computer is running C-Kermit, type Ctrl-\\ c (Control-backslash
+followed by the letter 'c') (on NeXT workstations, use Ctrl-] c).  If MS-DOS
+or OS/2 Kermit, use Alt-X or Ctrl-] c.  Now you should see your local Kermit
 program's prompt.
-.TP
-.B receive
-Set various parameters for inbound packets.
-.TP
-.B retry
-Set the packet retransmission limit.
-.TP
-.B send
-Set various parameters for outbound packets.
-.TP
-.B server
-Set server-related parameters (like timeout).
-.TP
-.B speed
-Communication line speed.
-.sp 1
+
+.ti -0.2i
+\(bu	If you will be transferring binary files, give the command SET FILE
+TYPE BINARY to your local Kermit program.
+
+.ti -0.2i
+\(bu	To get files from the remote computer to your local computer, use GET
+followed by the filename.   Use SEND followed by the filename to put files
+from your local computer to the remote system.  You may use "wildcard"
+characters such as * and ? in the filenames to specify groups of files.
+
+.ti -0.2i
+\(bu	When you finish transferring files, and you need to continue your work
+on the remote remote computer, type FINISH and then CONNECT.  You're now
+talking Kermit on the remote computer again.  Type EXIT to get back to the
+command prompt on the remote system.  At the end, logout normally from the
+remote computer.  Then escape back to Kermit on your local computer, and then
+EXIT from the local Kermit program.
+
+.ti -0.2i
+\(bu	If you don't need to go back to the remote computer again, type the
+BYE command to the local Kermit program.  This will shut down the remote
+Kermit server and terminate (log out) your remote session.
+.ll +0.5i
+.in -0.5i
+.fi
 .PP
-The 'remote' commands are:
-.TP 12
-.B cwd  
-Change remote working directory.
-.TP
-.B delete  
-Delete remote files.
-.TP
-.B directory  
-Display a listing of remote file names.
-.TP
-.B help  
-Request help from a remote server.
-.TP
-.B host  
-Issue a command to the remote host in its own command language.
-.TP
-.B  space  
-Display current disk space usage on remote system.
-.TP
-.B type  
-Display a remote file on your screen.
-.TP
-.B who
-Display who's logged in, or get information about a user.
-.SH AUTHORS
-Frank da Cruz, Columbia University Center for Computing Activities,
-with contributions from many others.
+.SH HELP
+.PP
+Kermit has extensive built-in help.  You can find out what commands exist by
+typing ? at the beginning of a line.  You can type HELP followed by the name
+of a command for information on it.  For commands that take multiple
+arguments, you can type ? in the middle of the command for more information,
+and you can also use help with several arguments.  E.g. SET has many different
+things you can set, like SET RECEIVE PACKET-LENGTH 1000.  You can type 'SET
+?', or 'SET RECEIVE ?', etc.  'HELP SET' talks about the 'SET' command in
+general, 'HELP SET RECEIVE talks about the SET RECEIVE options.
+.SH BACKSLASH NOTATION
+Within an interactive command, \\ is a special character to help you enter
+special quantities, or ordinary characters that would otherwise be illegal or
+hard to type.  At the end of a line, \\ (backslash) (or - dash) makes the next
+line a continuation of the current line.  Other than that, the character
+following the \\ identifies what the thing is:
+.nf
+
+  % A user-defined simple (scalar) variable such as \\%a or \\%1
+  & an array reference such as \\&a[3]
+  $ an environment variable such as \\$(TERM)
+  v (or V) a built-in variable such as \\v(time)
+  f (or F) a function such as \\fSubstring(\\%a,3,2)
+  d (or D) a decimal (base 10) number (1 to 3 digits, 0..255) such as \\d27
+  o (or O) an octal (base 8) number (1 to 3 digits, 0..377) such as \\o33
+  x (or X) a hexadecimal (base 16) number (2 digits, 00..ff) like \\x1b
+  \\ the backslash character itself
+  b (or B) the BREAK signal (OUTPUT command only)
+  l (or L) a Long BREAK signal (OUTPUT only)
+  a decimal digit (a 1-3 digit decimal number) such as \\27
+  anything else: following character taken literally.
+
+.fi
+Note that numbers turn into the character with that binary code, so
+you can use \\7 for a bell, \\13 for carriage return, \\10 for linefeed.
+
+.SH COMMANDS
+.PP
+You can use upper- or lower case for commands.  Either one will work (but
+remember that UNIX filenames are case-sensitive).  Also, you can abbreviate
+commands as long as the abbreviation matches only one possibility.  This is a
+summary of C-Kermit's commands.  For more information on each, see
+.IR "Using C-Kermit" ,
+or type HELP and then the command name.
+.nf
+.in 0
+.ll 80
+.ta 15
+
+;	Introduce a full-line or trailing comment (also #).
+!	Run a system command or enter system command interpreter.
+ASK	Prompt the user, store user's reply in a variable.
+ASKQ	Like ASK, but, but doesn't echo (useful for passwords).
+ASSIGN	Assign an evaluated string to a variable or macro.
+BYE	Terminate and log out a remote Kermit server.
+C	Special abbreviation for CONNECT.
+CD	Change Working Directory (also, CWD).
+CHECK	See if a particular feature is built in.
+CLEAR	Clear communication device input buffer.
+CLOSE	Close a log or other local file.
+COMMENT	Introduce a full-line comment.
+CONNECT	Establish a terminal connection to a remote computer.
+DECLARE	Declare an array.
+DECREMENT	Subtract one (or other number) from a variable.
+DEFINE	Define a variable or macro.
+DELETE	Delete a file or files.
+DIAL	Dial a telephone number.
+DIRECTORY	Display a directory listing.
+DISABLE	Disallow access to selected features during server operation.
+DO	Execute a macro ("DO" can be omitted).
+E-PACKET	Send an Error packet.
+ECHO	Display text on the screen.
+ELSE	Used with IF.
+ENABLE	Allow access to selected features during server operation.
+END	A command file or macro.
+EXIT	Exit from the program, closing all open files and devices.
+FINISH	Instruct a remote Kermit server to exit, but not log out.
+FOR	Execute commands repeatedly in a counted loop.
+G	Special abbreviation for GET.
+GET	Get files from a remote Kermit server.
+GETOK	Ask question, get Yes or No answer, set SUCCESS or FAILURE.
+GOTO	Go to a labeled command in a command file or macro.
+HANGUP	Hang up the phone or network connection.
+HELP	Display a help message for a given command.
+IF	Conditionally execute the following command.
+INCREMENT	Add one (or other number) to a variable.
+INPUT	Match characters from another computer against a given text.
+INTRO	Print a brief introduction to C-Kermit.
+LOG	Open a log file -- debugging, packet, session, transaction.
+MAIL	Send a file to other Kermit, to be delivered as e-mail.
+MSEND	Send a list of files to the other Kermit.
+MSLEEP	Sleep for given number of milliseconds.
+OPEN	Open a local file for reading or writing.
+O	Special abbreviation for OUTPUT.
+OUTPUT	Send text to another computer.
+PAD	Command for X.25 PAD (SunLink X.25 only)
+PAUSE	Do nothing for a given number of seconds.
+PING	Check status of remote TCP/IP host.
+PRINT	Print a file on a printer.
+PUSH	Invoke host system interactive command interpreter.
+PWD	Display current working directory.
+QUIT	Same as EXIT.
+R	Special abbreviation for RECEIVE.
+READ	Read a line from a local file.
+RECEIVE	Passively wait for files to arrive.
+REDIAL	The the most recently DIALed number again.
+REINPUT	Reexamine text previously received from another computer.
+REMOTE	Issue file management commands to a remote Kermit server.
+RENAME	Change the name of a file.
+RETURN	Return from a user-defined function.
+RUN	Run a program or system command.
+S	Special abbreviation for SEND.
+SCRIPT	Execute a UUCP-style login script.
+SEND	Send files.
+SERVER	Begin server operation.
+SET	Set various parameters.
+SHOW	Display values of SET parameters.
+SLEEP	Sleep for given number of seconds.
+SPACE	Display current disk space usage.
+STATISTICS	Display statistics about most recent file transfer.
+STOP	Stop executing macro or command file, return to prompt.
+SUSPEND	Suspend Kermit (use only if shell supports job control!).
+TAKE	Execute commands from a file.
+TELNET	Make a TCP/IP TELNET connection to a remote network host.
+TRANLATE	Translate a file's character set.
+TRANSMIT	Upload a file with no error checking.
+TYPE	Display a file on the screen.
+VERSION	Display the program version number on the screen.
+WAIT	Wait for the specified modem signals.
+WHILE	Execute commands repeatedly while a condition is true.
+WRITE	Write text to a local file.
+XIF	Extended IF command.
+XLATE	Synonym for TRANSLATE.
+XMIT	Synonym for TRANSMIT.
+.ll
+.in
+.fi
+.SH PARAMETERS YOU CAN SET
+Here are some of the parameters you can change with the SET command.  Note
+that many of them require further specification, e.g. there are several
+RECEIVE parameters.  So commands using SET RECEIVE
+look like "SET RECEIVE PACKET-LENGTH 1000".  For parameters like that,
+the possible second words are listed below them. 
+.nf
+.in 0
+.ll 80
+.ta 15 
+
+ATTRIBUTES	Turn Attribute packet processing on or off.
+     BLOCKSIZE, CHARACTER-SET, DATE, DISPOSITION,
+     LENGTH, OS-SPECIFIC, SYSTEM-ID, ALL 
+BLOCK-CHECK	Level of file transfer error detection. 
+BUFFERS	Size of send and receive packet buffers.
+CARRIER	Treatment of carrier on terminal connections.
+CASE	Treatment of alphabetic case in string comparisons.
+COMMAND	BYTESIZE used between C-Kermit and your keyboard and screen.
+COUNT	For counted loops.
+DEBUG	Log or display debugging information.
+DELAY	How long to wait before sending first packet.
+DIAL	Parameters related to dialing.
+     DIAL-COMMAND, DIRECTORY, DISPLAY, HANGUP, INIT-STRING,
+     KERMIT-SPOOF, MNP-ENABLE, SPEED-MATCHING, TIMEOUT	
+DUPLEX	Specify which side echoes during CONNECT.
+ESCAPE	Prefix for "escape commands" during CONNECT.
+FILE	Set transfer file parameters:
+     BYTESIZE, CHARACTER-SET, COLLISION, DISPLAY, 
+     INCOMPLETE, NAMES, TYPE
+FLOW-CONTROL	Communication line full-duplex flow control.
+HANDSHAKE	Communication line half-duplex turnaround character.
+HOST	Specify network host name.
+INPUT	Control behavior of INPUT command.  
+KEY	Key mapping and macros for use in CONNECT mode.
+LANGUAGE	Enable language-specific character-set translations.
+LINE	Serial communication device name.
+MACRO	Control aspects of macro execution.
+MODEM-DIALER	Type of modem-dialer on communication line.
+NETWORK	Network type, e.g. TCP/IP, X.25.
+PAD	X.25 X.3 PAD parameters (SunLink X.25 only).
+PARITY	Communication line character parity.  
+PROMPT	The C-Kermit program's interactive command prompt.
+RECEIVE	Parameters for inbound packets.
+     END-OF-PACKET, PACKET-LENGTH, PAD-CHARACTER, PADDING
+     START-OF-PACKET, TIMEOUT 
+RETRY	Packet retransmission limit.
+SEND	Parameters for outbound packets.
+	See RECEIVE for subparameters.  Normally you set only
+	RECEIVE parameters.  SEND parameters come automatically
+	from the Kermit on the other end.  
+SERVER	Parameters for server operation.
+     TIMEOUT 
+SESSION-LOG	File type for session log, text or binary.
+SPEED	Communication line speed, e.g. 2400, 9600.
+TAKE	Control aspects of TAKE file execution.
+TERMINAL	Terminal parameters:
+     BYTESIZE, CHARACTER-SET, CR-DISPLAY, ECHO,
+     LOCKING-SHIFT, NEWLINE-MODE
+TRANSFER	File transfer parameters:
+     CHARACTER-SET, LOCKING-SHIFT
+TRANSMIT	Control aspects of TRANSMIT command execution:
+     ECHO, EOF, FILL, LINEFEED, LOCKING-SHIFT, PAUSE, PROMPT
+UNKNOWN	Specify handling of unknown character sets.
+WINDOW	File transfer packet window size. 
+X.25	Specify X.25 connection parameters (SunLink X.25 only).
+.in
+.ll
+.SH "MACROS AND VARIABLES"
+C-Kermit allows macros and variables.  A macro is a command
+that you define, composed of one or more other C-Kermit commands.
+A typical macro is a list of Kermit commands, separated
+by commas.  For example:
+.nf
+
+  define sun set speed 9600, set parity none, set duplex full,-
+  set flow xon/xoff
+
+.fi
+You call a macro by using its name, just like normal commands.  You can also
+call them using the DO command.  If you have given the DEFINE command above
+(or have it in your .kermrc file), then you can type SUN or DO SUN to execute
+all the commands in the definition.
+.PP
+C-Kermit also lets you define variables.  Normal variables look like \\%i,
+where i is a single letter.  The alphabetic case doesn't matter.  \\%a and
+\\%A are the same.  Like macros, they are defined by DEFINE or ASSIGN.  All
+values are strings.  DEFINE gives a variable a fixed value.  ASSIGN computes a
+value and assigns it to the variable.  To see the difference, look at
+.nf
+
+  def \\%a Monday
+  def \\%b Today is \\%a
+  assign \\%c Today is \\%a
+  def \\%a Tuesday
+  echo \\%b
+  echo \\%c
+
+.fi
+This will print "Today is Tuesday" then "Today is Monday".  The difference is
+that when defining \\%c, the \\%a is evaluated at the time of the definition,
+whereas when defining \\%b, the variable name \\%a itself is put in the
+definition.  It isn't evaluated until the echo \\%b.
+.PP
+There are also arrays, which use \\& instead of \\%.  They are declared by
+DECLARE, e.g. DECLARE \\&A[100].  Elements are referenced with subscripts,
+which may themselves be variables, and act like simple variables, e.g.
+.nf
+
+  DEFINE \\&A[3] Tuesday
+
+.fi
+You can destroy the array by making it zero size, DECLARE \\&A[0].
+The first element of an array is [1].
+.PP
+Macros have normal names.  No \\.  You call them by using the name like a
+command.  If you put additional words on the same line as the macro
+invocation, they become arguments.  Inside the macro, you can refer to the
+arguments as \\%1, \\%2, etc.  For example:
+.nf
+
+  C-Kermit>define bsend set file type binary, send \\%1
+  C-Kermit>define tsend set file type text, send \\%1
+  C-Kermit>bsend kermit
+  C-Kermit>tsend kermit.doc
+
+.fi
+The number of arguments supplied can be referred to as \\v(argc).  If you call
+another macro from a macro, the new one gets its own set of arguments, which
+do not interfere with the previous set.
+.PP
+There are a number of built-in variables, which are referred to by \\v(name).
+They cannot be changed.  Type SHOW VARIABLES for a complete list.
+.nf
+
+  \\v(argc)      number of arguments in current macro
+  \\v(args)      number of program command-line arguments
+  \\v(cmdfile)   name of current command file, if any
+  \\v(cmdlevel)  current command level
+  \\v(cmdsource) where command are currently coming from, macro, file, etc.
+  \\v(count)     current COUNT value
+  \\v(cpu)       CPU type C-Kermit was built for
+  \\v(date)      date as 8 Feb 1992
+  \\v(day)       day of week
+  \\v(directory) current/default directory
+  \\v(exitstatus)current EXIT status (0 = good, nonzero = something failed)
+  \\v(filespec)  filespec given in most recent SEND/RECEIVE/GET command
+  \\v(fsize)     size of file most recently transferred
+  \\v(home)      home directory
+  \\v(host)      computer host name
+  \\v(input)     current INPUT buffer contents
+  \\v(inchar)    character most recently INPUT
+  \\v(incount)   how many characters arrived during last INPUT
+  \\v(line)      current communications device, set by LINE or HOST
+  \\v(local)     0 if in remote mode, 1 if in local mode
+  \\v(macro)     name of currently executing macro, if any
+  \\v(ndate)     Current date as 19920208 (yyyymmdd)
+  \\v(ntime)     Current local time in seconds since midnight
+  \\v(platform)  Specific machine and/or operating system
+  \\v(program)   Name of this program ("C-Kermit")
+  \\v(return)    Most recent RETURN value
+  \\v(speed)     Current speed, if known, or "unknown"
+  \\v(status)    0 or 1 (SUCCESS or FAILURE of previous command)
+  \\v(system)    UNIX
+  \\v(time)      time as 13:45:23 (hh:mm:ss)
+  \\v(ttyfd)     file descriptor of current communication device
+  \\v(version)   numeric version of Kermit
+.fi
+.PP
+There are builtin functions, invoked as \\Fname(args).  Type SHOW FUNCTIONS for
+a complete list.
+.nf
+
+   \\Fcharacter(arg)   convert numeric arg to character
+   \\Fcode(char)       numeric code for character
+   \\Fcontents(v)      return current definition of variable
+   \\Fdefinition(m)    return current definition of macro    
+   \\Feval(expr)       evaluate arithmetic expression
+   \\Fexecute(m a)     execute macro "m" with parameters "a"
+   \\Ffiles(f)         number of files matching file spec
+   \\Findex(a1,a2,a3)  position of string a2 in a1, starting at pos a3
+   \\Flength(arg)      length of the string "arg"
+   \\Fliteral(arg)     copy argument literally, no evaluation
+   \\Flower(arg)       convert to lower case
+   \\Flpad(text,n,c)   left pad text to length n with char c
+   \\Fmax(a1,a2)       max of two numbers
+   \\Fmin(a1,a2)       min of two numbers
+   \\Fnextfile()       next file name from list in last \\Ffiles
+   \\Frepeat(a1,a2)    repeat a1 a2 times
+   \\Freverse(arg)     reverse character in arg
+   \\Fright(a1,a2)     rightmost a2 characters of string a1
+   \\Frpad(text,n,c)   right pad text to length n with char c
+   \\Fsubstr(a1,a2,a3) substring of a1, starts at a2, length a3
+   \\Fupper(arg)       convert to upper case
+
+.fi
+Eval allows the following operators in the expression.  The expression
+can contain variables.  Precedences are shown as numbers, 1 is highest
+precedence, 6 is lowest.
+.in +.2i
+.nf
+.ta \w'n @ n  'u +\w'5   'u
+
+( )	1	parentheses
+n !	2	factorial       
+~ n	3	logical NOT
+- n	4	negative
+n ^ n	4	power
+n * n	5	times
+n / n	5	division
+n % n	5	modulus
+n & n	5	logical AND
+n + n	6	plus
+n - n	6	minus
+n | n	6	logical OR
+n # n	6	exclusive OR
+n @ n	6	greatest common divisor
+
+.fi
+.SH "OPTIONS AND COMMAND LINE ARGUMENTS"
+.PP
+Typically you run Kermit without any arguments, and use a combination
+of .kermrc and interactive commands.  However it is possible to put options on
+the command line.  This is normally used for scripts.  In this case, Kermit is
+invoked as follows:
+.nf
+.ll 80
+
+  kermit [-x arg [-x arg]...[-yyy]..]]
+
+  -x is an option requiring an argument, 
+  -y an option with no argument.
+.ta 15
+
+Actions:
+  -s files	send files
+  -s -	send files from stdin
+  -r	receive files
+  -k	receive files to stdout
+  -x	enter server mode
+  -f	finish remote server
+  -g files	get remote files from server (quote wildcards)
+  -a name	alternate file name, used with -s, -r, -g
+  -c	connect (before file transfer), used with -l and -b
+  -n	connect (after file transfer), used with -l and -b
+
+Settings:
+  -l line	communication line device
+  -j host	network host name
+  -q	quiet during file transfer
+  -i	binary file transfer
+  -b bps	line speed, e.g. 1200
+  -m name	modem type
+  -p x	parity, x = e,o,m,s, or n
+  -t	half duplex, xon handshake
+  -e n	receive packet length
+  -v n  window size
+  -w	write over files
+
+Other:
+  -y name	alternate init file name
+  -Y	Skip init file
+  -d	log debug info to debug.log
+  -S	Stay, don't exit, after action
+  -C "cmds"	Interactive-mode commands
+
+If no action command is included, enter interactive dialog.
+.ll
+.in
+.fi
 .SH FILES
-.ta \w"$HOME/.kermrc  "u
 $HOME/.kermrc	\fIKermit\fR initialization commands
-.br
-\&./.kermrc	more \fIKermit\fR initialization commands
 .PD
+.SH AUTHORS
+Frank da Cruz, Columbia University, with contributions from hundreds of
+other volunteer programmers all over the world; "man page" mostly courtesy of
+Charles Hedrick, Rutgers University.
 .SH SEE ALSO
-cu(1C), uucp(1C)
-.br
-Christine Gianone,
-.IR "Kermit User's Guide" ,
-Columbia University, 8th Edition
+.TP
+Frank da Cruz and Christine Gianone
+.IR "Using C-Kermit" ,
+Digital Press, Burlington, MA, USA (1993)
 .TP
 Frank da Cruz,
 .IR "Kermit, A File Transfer Protocol" ,
-Digital Press (1987)
-.TP
-The file ckuker.doc.
+Digital Press, Bedford, MA, USA (1987)
 .SH DIAGNOSTICS
 The diagnostics produced by
 .I Kermit
-itself are intended to be self-explanatory.
+itself are intended to be self-explanatory.  In addition, every command
+returns a SUCCESS or FAILURE status that can be tested by IF FAILURE or
+IF SUCCESS.  In addition, the program itself returns an exit status code of
+0 upon successful operation or nonzero if any of various operations failed.
 .SH BUGS
-See recent issues of the Info-Kermit digest (on the Internetwork, BITNET,
-USENET, etc), or the file ckuker.bwr, for a list of bugs.  See the file
-ckuker.upd for descriptions of bugs that were fixed in each release.
-
+See recent issues of the Info-Kermit digest (on BITNET/EARN, the Internet, or
+the comp.protocols.kermit newsgroup on Usenet) for discussion, or the files
+ckcker.bwr and ckuker.bwr, for a list of bugs.  Report
+bugs via e-mail to Info-Kermit-Request@columbia.edu or KERMIT@CUVMA.BITNET.
+Subscribe to Info-Kermit by sending e-mail to I$KERMIT@CUVMA.BITNET or
+I$KERMIT@CUVMA.CC.COLUMBIA.EDU containing the text "subscribe i$kermit"
+followed by your name.
+.br

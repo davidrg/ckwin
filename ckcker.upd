@@ -1,0 +1,727 @@
+File CKCKER.UPD, Update history for C-Kermit.                      -*- text -*-
+
+Author:  Frank da Cruz
+Address: Watson Laboratory, Columbia University Center for Computing Activities
+         612 West 115th Street, New York, NY 10025, USA, Earth
+Phone:   (212) 854-5126
+Fax:     (212) 662-6442
+E-Mail:  fdc@watsun.cc.columbia.edu (Internet), FDCCU@CUVMA (BITNET/EARN)
+
+  Copyright (C) 1985, 1992, Trustees of Columbia University in the City of New
+  York.  Permission is granted to any individual or institution to use this
+  software as long as it is not sold for profit.  This copyright notice must be
+  retained.  This software may not be included in commercial products without
+  written permission of Columbia University.
+
+Most recent update: Sat Feb 20 15:02:08 1993
+
+This file lists changes made to C-Kermit since the 5A(188) release.
+
+The edit history prior to the final version 5A release, 5A(188), can be
+found in the following files:
+
+  CKCV4E.UPD -- Version 4E and earlier (through January 1989)
+  CKCV4F.UPD -- Version 4F (which was never formally released)
+  CKC178.UPD -- Version 5A prior to the first Beta release, edit 179 (huge).
+  CKC188.UPD -- Version 5A from edit 179 until final release, edit 188.
+  CKCKER.UPD -- Version 5A, changes since edit 188.  This file.
+
+------------------------------
+C-KERMIT 5A(188) TEST RESULTS
+
+Systems where C-Kermit 5A(188) was successfully compiled, linked, and
+executed:
+
+Notes:
+ ISC = Interactive Systems Corporation (a division of SunSoft)
+ JLE = Japanese Language Environment (for SunOS, by Nihon Sun)
+ ODT = SCO Open Desk Top
+ ODT 1.1 = SCO UNIX/386 3.2v2 plus SCO TCP/IP
+ ODT 2.0 = ?
+ Solaris 1.01 = SunOS 4.1.2
+ Solaris 1.1  = SunOS 4.1.3
+ Solaris 2.0  = SunOS 5.0
+ Solaris 2.1  = SunOS 5.1
+ UCX = DEC TCP/IP Services for VMS
+
+Non-UNIX versions:
+
+MACHINE                   OS NAME    OS VERSION  MAKE ENTRY    SIZE  STRIPPED
+Apple Macintosh II        Mac OS            6.0  ckmker.mak    388xxx       -
+Atari ST                  GEMDOS            1.0  cksker.mak    277937       -
+Commodore Amiga           AmigaOS             ?  ckiker.mak    283520       -
+Data General MV60000      AOS/VS II     2.20.73  ckdker.mak    612352       -
+Data General MV7800XP     AOS/VS           7.67  ckdker.mak    612352       -
+DEC MicroVAX-II           VMS / MultiNet    5.3  ckvker.mak    551424       -
+DEC MicroVAX-II           VMS / UCX 1.0   5.4-3  ?                  ?       -
+DEC MicroVAX-3400         VMS               5.5  ckvker.com    531456       -
+DEC Alpha AXP             OpenVMS / nonet   FT4  ckvker.com    724992       -
+DEC 3000 Model 500 AXP    OpenVMS / nonet   1.0  ckvker.com    723456       -
+DEC VAX, model unknown    VMS / nonet       4.5  ckvold.com         ?       -
+DEC VAX, model unknown    OpenVMS / nonet 5.5-1  ckvker.com    528896       -
+DEC VAX, model unknown    VMS / TCPware       ?  ckvker.com         ?       -
+DEC VAX 4000-300/211      VMS / Multinet      ?  ckvker.mms    482304       -
+DEC VAX 4000-500/286      VMS / Multinet      ?  ckvker.mms    482304       -
+DEC VAX 4300              VMS             5.4-3  ?             529408       -
+DEC VAX 6000-430          OpenVMS         5.5-2  ckvker.com         ?       -
+DEC VAX 6000-510          VMS             5.4-1  ckvker.com    529920       -
+DEC VAX 6510              VMS / WINTCP    5.4-3  ckvker.mak    580096       -
+DEC VAX 6610              VMS / ?         5.5-1  ckvker.com    542720       -
+DEC VAX 8350              VMS / ?         5.4-1  ckvker.com    581632       -
+DEC VAX 8530              VMS / MultiNet  5.4-3  ?             529408       -
+DEC VAX 8650              VMS / nonet     5.5-2  ckvker.mak    530432       -
+DEC VAX 8650              VMS / nonet/sl  5.4-1  ckvker.mms    390127       -
+DEC VAX 8650              VMS / UCX 2.0   5.5-2  ckvker.mak    554496       -
+DEC VAXstation 3100/38    VMS / no_net    5.5-1  ckvker.mak    530944       -
+DEC VAXstation 3100/38    VMS / UCX 2.0   5.5-1  ckvker.mak    551424       -
+DEC VAXstation 3100/GPX59 VMS / MultiNet    5.5  ckvker.mms    482304       -
+IBM PS/2                  OS/2 (16-bit)     1.3  ckoker.mak    377237       -
+IBM PS/2-70               OS/2 (16-bit)    2.00  ckoker.mak    377237       -
+IBM PS/2-70               OS/2 (32-bit)    2.00  ckoker.mak    458485       -
+Motorola 680x0            OS-9            2.2.2  ck9ker.mak    294542       -
+
+UNIX versions:
+
+MACHINE                   OS NAME    OS VERSION  MAKE ENTRY      SIZE  STRIPPED
+AGI (Everex) 386/20       ESIX       3.2 Rev. D  sys5r3             ?  423018
+Altos ACS68000            UNIX System III    R2  altos3        281317  252102
+Amdahl mainframe          UTS            5.2.6b  sys3          508055  456044
+Amdahl 5880               UNIX        SVR5.2.6b  sys3          508111  467760
+Apollo 425e               DomainOS 4.3BSD  10.4  sr10-bsd      549677       ?
+Apple Macintosh IIfx      A/UX              3.0  aux3gcc       448238  382272
+Ardent Titan              ?                   ?  sys5r3             ?       ?
+AST Power Premium 3/25    ISC SV/386   3.2-3.01  isr3          633373       ?
+AST Premium 386/25        SCO UNIX      3.2v4.0  sco32v4       408226       ?
+AST Premium 386/25        SCO Xenix       2.3.4  sco3r2x       364081       ?
+AT&T 3B2/300              UNIX         SVR2.1.0  att3bxc       536112  442288
+AT&T 3B2/622              UNIX         SVR3.2.3  att3bxc       509254  439220
+AT&T 6300 PLUS            UNIX           SVR2.0  att6300c      481094  339644
+AT&T 6386E WGS            UNIX        V/386 3.2  sys5r3c       500562  423030
+AT&T PC 7300 UNIXPC (3B1) System V        3.51m  sys3upcshcc        ?  397156
+AT&T PC 7300 UNIXPC (3B1) System V        3.51m  sys3upcgc     467478  405312
+AT&T PC 7300 UNIXPC (3B1) System V        3.51m  sys3upcx           ?  371340
+Atari ST                  MINIX          1.6.23  minix68k      217766  168310
+BEST Compact 386/25       SCO UNIX      3.2v2.0  sco3r22       387313  336716
+Commodore Amiga 2500/030  Amiga SVR4.0   2.1p2a  svr4amiganet  370584       ?
+Concurrent 3280           Xelos System V    R02  ccop1         624158  566553
+Concurrent/Masscomp 6000  RTU               4.1  rtubsd        524722  478348
+Concurrent/Masscomp 6400  RTU                 5  rtusvr3       533717  488864
+Concurrent/Masscomp 6400  RTU               6.0  rtusvr3       533717  488864
+Convergent MiniFrame      CTIX System V R3 3.20  sys5               ?  396438
+Convergent, model unknown CTIX            6.4.1  ctix               ?  434456
+Convex 3240               ConvexOS         10.1  convex9       688128       ?
+Convex C1                 ConvexOS         V9.0  convex9       676317       ?
+Convex C220               ConvexOS      V10.0.3  convex9       703958  651264
+Convex C240               ConvexOS      V10.0.2  convex9       703860  651264
+Cray XMP                  UNICOS            6.1  cray               ?       ?
+Cray XMP-EL               UNICOS            6.1  cray               ?       ?
+Cray YMP 2E, 4E, 8I       UNICOS            6.1  cray         1271867       ?
+Cray YMP 2E, 4E, 8I       UNICOS            7.C  cray         1473640       ?
+Cray YMP16 (C90)          UNICOS            7.C  cray         1204616       ?
+Cray-2                    UNICOS      8.0-Alpha  cray8        1607480       ?
+DEC 3000 Model 500 AXP    OSF/1          T1.2-1  dec-osf            ?       ?
+DEC PDP-11/44             BSD              2.11  bsd211        168568  131644
+DEC PDP-11/73             BSD              2.11  bsd211        168568  131644
+DEC MicroVAX-II           BSD               4.3  bsd43         392192       ?
+DEC MicroVAX-II           BSD          4.3-Reno  bsd43         253952       ?
+DEC MicroVAX-II           ULTRIX            4.2  du42          444416  403456
+DEC MicroVAX-II           ULTRIX            4.2  du42c         462848  418816
+DECstation 3000/500       OSF/1        T1.2-R12  dec-osf            ?       ?
+DECstation 2100           ULTRIX            4.2  du42               ?  532480
+DECstation 2100           ULTRIX            4.3  du42          727412  532480
+DECstation 2100           ULTRIX            4.3  du42c         764784  557056
+DECstation 3100           ULTRIX            4.2  du42               ?  532480
+DECstation 5000/200       ULTRIX            4.2  du42               ?  532480
+DECstation 5000/200       ULTRIX/UWS        4.3  du42               ?  532480
+DECstation 5000/25        ULTRIX            4.3  du42               ?  532480
+DECstation 5000/25        ULTRIX/UWS    4.3-R10  du42c              ?  532480
+DECstation 5500           ULTRIX            4.3  du42c         557056       ?
+DECstation 5800           ULTRIX        4.2-R96  du42c              ?  557056
+DECstation 5800           ULTRIX        4.2-R96  du42s5r4           ?  540672
+DECstation 5800           ULTRIX        4.2-R96  posix         688708  499712
+DEC VAX-11/750            BSD               4.3  bsd43         253952       ?
+DEC VAX-11/785            BSD         4.3-Net/2  bsd44c        418816  379904
+DEC VAX 8350              DEC UNIX SVR3     3.1  sys3          383404       ?
+DEC VAX 8650              DEC UNIX SVR3     3.1  sys3          383404       ?
+DEC VAX 8800              ULTRIX            4.2  du42               ?       ?
+DEC VAXstation 3100       ULTRIX/UWS        4.2  du42               ?       ?
+Dell 433 DE               SCO UNIX      3.2v2.0  sco3r22       387313  336716
+Dell 433 DE               SCO UNIX      3.2v2.0  sco3r22gcc    406070  344692
+Dell 433 DE               SCO UNIX      3.2v2.0  sco3r22net    424959  363872
+Dell 433 DE               SCO UNIX      3.2v2.0  sco3r22netc   483948  419396
+DG Aviion                 DG/UX             5.4  dgux540c      543440       ?
+DG Aviion                 DG/UX           5.4.1  dgux540c      540964       ?
+DG Aviion                 DG/UX           5.4.2  dgux540c      540876       ?
+DIAB DS90-00              DNIX 5.2         2.2c  dnix          414599  368496
+DIAB DS90-00              DNIX 5.2         2.2c  dnixnetc      485683  424704
+DIAB DS90-10              DNIX 5.3        1.4.3  dnix5r3       485808       ?
+DIAB DS90-20              DNIX 5.3          2.2  dnix5r3ansi   480055       ?
+Dolphin Triton 88/17      UNIX SV/88 R3.2   3.6  sv88r32       670370  604336
+DTK Keen 2000             Microport SVR3.0U3.0e  sys5r3        467927  405668
+Encore Multimax           UMAX              4.3  encorec       534214  465424
+Everex 386DX/25           BSDI            0.9.1  bsdiposix     396561  360448
+Fortune 32:16             For:Pro          2.1c  ft21               ?  336368
+Gateway 2000 386/25DX     ISC UNIX     SVR3 2.2  is5r3n3t           ?  399836
+Gateway 2000 486DX/33     MWC Coherent 4.0.1r65  coherentmi         ?  111664
+Gateway 2000 486DX/33     MWC Coherent 4.0.1r65  coherentmax        ?  324976
+Harris Night Hawk         CX/UX             6.1  cx_ux        1157826  626560
+Hewitt/Rand 483/33EISA    SCO ODT        2.1.0b  sco32v4netc        ?  424688
+HP mc680x0                BSD         4.4-Alpha  bsd44c        478260  425984
+HP 9000/375               HP-UX            7.05  hpux70lfnc         ?  495616
+HP 9000/350               HP-UX            7.05  hpux70lfnc         ?  495616
+HP 9000/370               HP-UX            7.05  hpux70lfnc         ?  495616
+HP 9000/380               HP-UX            7.05  hpux70lfnc         ?  495616
+HP 9000/385               HP-UX             8.0  hpux80c            ?  376832
+HP 9000/400dl             HP-UX         A.08.00  hpux80c       398899  376832
+HP 9000/400dl             HP-UX         A.08.00  hpux80        390496  368640
+HP 9000/425s              HP-UX         A.08.00  hpux80c       398899  376832
+HP 9000/425s              HP-UX         A.08.00  hpux80        390496  368640
+HP 9000/550               HP-UK            5.21  hpux500wintcp      ?       ?
+HP 9000/700               HP-UX             8.0  hpux80pagcc   623224       ?
+HP 9000/710               HP-UX         A.08.07  hpux80pac          ?  421888
+HP 9000/750               HP-UX         A.08.07  hpux80pac          ?  421888
+HP 9000/825               HP-UX             8.0  hpux80pac          ?  430080
+HP 9000/834               HP-UX             7.0  hpux80pac     589824       ?
+HP 9000/835SE             HP-UX             8.0  hpux80pac     430080  430080
+HP 9000/847               HP-UX            8.02  hpux80pac          ?  430080
+HP 9000/855               HP-UX         A.B7.00  hpux70lfnc         ?  587776
+HP 9836CU                 HP-UX           5.5-P  hpuxpre65     404427       ?
+IBM 370-Series mainframe  AIX             1.2.1  aix370        617457  527784
+IBM 370-Series mainframe  AIX/ESA           2.1  aixesa             ?  959166
+IBM PS/2                  AIX               1.2  ps2aix        492026  417772
+IBM PS/2-70               AIX             1.2.1  ps2aix        527667  448936
+IBM RS/6000               AIX               3.1  rs6000c            ?  487297
+IBM RS/6000               AIX             3.1.5  rs6000        689182  480226
+IBM RS/6000               AIX             3.1.5  rs6000c       701902  487797
+IBM RS/6000 220           AIX               3.2  rs6000        689182  480226
+IBM RS/6000 320H          AIX               3.2  rs6aix32           ?  483665
+IBM RS/6000 550           AIX               3.2  rs6aix32           ?  492333
+IBM RS/6000 950           AIX               3.2  rs6aix32           ?  483665
+IBM RS/6000               AIX             3.2.2  ?                  ?  484750
+IBM RT PC                 AIX             2.2.1  rtaix         530043  485617
+IBM RT PC                 AIX             2.2.1  rtaixc        581678  528760
+IBM RT PC                 BSD          4.3/Reno  bsd44c        495616  438272
+ICL DRS3000 486           DRS/NX SVR4         ?  iclsys5r4_486      ?       ?
+ICL DRS6000 SPARC         DRS/NX SVR4     5.1.4  iclsys5r4     488756  452840
+Integrated Solutions V8S  ISI 4.2BSD      3.07D  isi                ?       ?
+Intel 303 383-33          SCO Xenix      2.3.1b  sco3r2        385669  364720
+Intergraph Clipper x000   CLIX       3.1 R7.0.9  clix          620251       ?
+Intergraph Clipper x000   CLIX              6.x  clix          620251       ?
+Luxor ABC-9000            DNIX 5.2         2.2c  ?                  ?       ?
+MIPS System               RISC/OS UMIPS    4.52  mips          774744  557056
+MIPS System               RISC/OS UMIPS    4.52  mipstcpc           ?       ?
+Modcomp Realstar 1000     REAL/IX           D.1  sv88r              ?  639312
+Motorola MVME 147/68030   UNIX SV/68R3    3v5.1  sv68r3v51          ?  308772
+Motorola VME Delta 3000   UNIX SV/68R3    3v6.2  sv68r3        464036  441256
+Motorola VME Delta 4000   UNIX SV/68R3    3v6.2  sv68r3        464036  441256
+Motorola VME Delta 4000   UNIX SV/68R3    3v7.1  sv68r3        464036  441256
+Motorola VME Delta 8000   UNIX SV/88R3.2 32v3.0  sv88r32       578496  567296
+Motorola VME Delta 8000   UNIX SV/88R3.2 32v3.1  sv88r32       578496  567296
+Motorola VME Delta 8000   UNIX SV/88R4.0 40v3.0  sv88r4        490984  478752
+NCR Tower 32-450          Tower 32 OS  02.01.00  tower32-2     383973  345864
+NeXTcube                  NeXT OS Mach      2.1  next          495025  344064
+NeXTcube                  NeXT OS Mach      3.0  next          495508  352256
+NeXTstation               NeXT OS Mach      2.1  next          495025  344064
+NeXTstation               NeXT OS Mach      3.0  next          495508  352256
+Nixdorf Targon/31 M15     TOS            4.0.13  t31tos40x     455596  384044
+Norsk Data Uniline 88/17  UNIX SV/88 3.2    3.6  sv88r32       670370  604336
+Olivetti CP 486           UNIX SVR4       2.1.1  sys5r4nx           ?  356724
+Olivetti CP 486           UNIX SVR4       2.1.1  sys5r4sx           ?  356988
+Olivetti LSX 3005..3045   X/OS UNIX    2.3..3.0  xos23         485940  438944
+Olivetti LSX 3005..3045   X/OS UNIX    2.3..3.0  xos23c        528498  475416
+Olivetti LSX 5020         SCO UNIX        3.2.2  sco3r22       396781  354848
+PC 386 and above
+PC 386 and above          386BSD         0.1.24  386bsd             ?  401408
+PC 386 and above          386BSD            0.1  bsd44              ?  401408
+PC 386 and above          AT&T SYSV/386 3.2.2.3  sys5r3        444971  380806
+PC 386 and above          BSDI                ?  bsd44         439124  397312
+PC 386 and above          Coherent/386    4.0.1  coherentmax        ?  324996
+PC 386 and above          Dell SVR4.04      2.2  dellsys5r4c        ?  418216
+PC 386 and above          Dell SVR4         2.2  dellsys5r4mi       ?  126276
+PC 386 and above          Dell SVR4         2.2  dellsys5r4m        ?   90372
+PC 386 and above          ESIX        3.2 Rev.D  sys5r3             ?  423018
+PC 386 and above          ISC SV/386 R3     3.0  is3gcc        365074  308528
+PC 386 and above          ISC SV/386 3.0      ?  is5r3netjc         ?       ?
+PC 386 and above          ISC SV/386 3.1   1.06  is5r3net           ?  351104
+PC 386 and above          ISC SV/386 3.1  2.2.1  is5r3gcc      679127  366286
+PC 386 and above          Linux          .98pl5  linuxgcc2net  369533  332804
+PC 386 and above          Linux          .98pl5  linuxgcc2     356114  320516
+PC 386 and above          Microport SVR4.0 V4.1  sys5r4sx           ?  310636
+PC 286 & above            QNX               4.1  qnx                ?  252759
+PC 386 and above          SCO ODT           1.1  sco3r22net    424959  363872
+PC 386 and above          SCO ODT           2.0  ?                  ?       ?
+PC 386 and above          SCO UNIX        3.2.0  sco3r2netnd   387891  364908
+PC 386 and above          SCO UNIX      3.2v4.0  sco32v4netnd  379144  368304
+PC 386 and above          SCO UNIX      3.2v4.0  sco32v4netc        ?  402960
+PC 386 and above          SCO UNIX      3.2v4.0  sco32v4netgcc 450151  370609
+PC 286 and above          SCO Xenix/286   2.3.3  sco286             ?  312076
+PC 386 and above          SCO Xenix/386   2.3.2  sco286             ?  363463
+PC 386 and above          SCO Xenix/386   2.2.3  sco386        363359  342504
+PC 386 and above          SCO Xenix/386   2.3.3  ?                  ?       ?
+PC 386 and above          Solaris 1.0   ISC 2.2  is5r3net           ?  399836
+PC 386 and above          UnixWare SVR4.2  V1.0  sys5r3        298872  298872
+Perkin-Elmer 3200         Xelos System V    R02  ccop1         624158  566553
+Pyramid MIS-T Series      OSx              5.1a  pyramid            ?  532480
+Sequent S27               DYNIX/ptx       1.3.1  dynix13            ?  544080
+Sequent S2000/700         DYNIX/ptx      V1.4.0  dynix13            ?  544080
+Sequent S81               DYNIX/ptx         1.4  dynix13       631342  409600
+Sequent S81               DYNIX       V3.2.0NFS  dynix31            ?  409600
+Sequent S81               DYNIX            V3.2  dynix31c      409388  364548
+Silicon Graphics Iris     IRIX              3.3  sys5r3        450560       ?
+Silicon Graphics 4D/35    IRIX            4.0.1  irix40             ?  331776
+Silicon Graphics 4D       IRIX SVR3       4.0.5  irix40        499712       ?
+Silicon Graphics Indigo   IRIX           4.0.5F  irix40             ?       ?
+Solbourne 5E/900          OS/MP          4.1A.3  sunos41            ?       ?
+Solbourne 5E/905          OS/MP          4.1A.1  sunos41       507904  475136
+Sony NEWS                 NEWS-OS        4.0.1C  sonynews           ?       ?
+Sony NEWS                 NEWS-OS        4.1.2C  sonynews           ?       ?
+Stardent 1520             Stardent UNIX     2.2  sys5r3             ?       ?
+Sun (model unknown)       Solaris           2.0  sunsol20gcc        ?       ?
+Sun-3/160                 Sun UNIX 4.2      3.2  bsd           475136  434176
+Sun-3/60                  Sun UNIX 4.2      3.5  sunos3gcc          ?       ?
+Sun-3/60                  SunOS           4.1.1  sunos41       434176  401408
+Sun-3/60                  SunOS           4.1.1  sunos41c      450560  417792
+Sun-3/280                 SunOS           4.1.1  sunos41       425984  393216
+Sun-3/280                 SunOS           4.1.1  sunos41c      450560  417792
+Sun-4/280                 SunOS           4.1.1  sunos41c      532480  499712
+Sun-4/280                 SunOS           4.1.1  sunos41s5r3   483328  450560
+Sun-4/280                 SunOS           4.1.1  sunposix      475136  442368
+Sun-4/470                 SunOS           4.1.2  sunos41            ?  475136
+Sun-4/470                 SunOS           4.1.2  sunos41c      532480  499712
+Sun-4/690                 SunOS           4.1.2  sunos41c      532480       ?
+Sun SPARCserver           SunOS           4.1.2  sunos41x25c   557056  516096
+Sun SPARCserver           SunOS           4.1.2  sunos41s5r3   483328  450560
+Sun SPARCserver           SunOS           4.1.2  sunposix      475136  442368
+Sun SPARCserver           SunOS           4.1.2  sunos41mi          ?  180244
+Sun SPARCserver           SunOS           4.1.2  sunos41m           ?  131072
+Sun SPARCstation 1        SunOS           4.1.2  sunos41c      532480  499712
+Sun SPARCstation 2        SunOS          4.1.1b  sunos41c           ?  507904
+Sun SPARCstation 2        SunOS           4.1.3  sunos41gcc         ?  475136
+Sun SPARCstation 2        SunOS           4.1.3  sunos41c      532480  499712
+Sun SPARCstation 2        SunOS 4.1.3/JLE 1.1.3  sunos41c           ?  524288
+Sun SPARCstation 2        SunOS 5.0/Solaris 2.0  sunsol20           ?  541744
+Sun SPARCstation 2        SunOS 5.1/Solaris 2.1  sunos51            ?       ?
+Sun SPARCstation 2        SunOS 5.1/Solaris 2.1  sunos51c           ?       ?
+Sun SPARCstation 2        SunOS 5.1/Solaris 2.1  sunos51tcp         ?       ?
+Sun SPARCstation 10       SunOS           4.1.3  sunos41gcc    516096  475136
+Sun SPARCstation 10       SunOS 5.1/Solaris 2.1  sunos51            ?       ?
+Sun SPARCstation 10       SunOS 5.1/Solaris 2.1  sunos51c           ?       ?
+Sun SPARCstation 10       SunOS 5.1/Solaris 2.1  sunos51tcp         ?       ?
+Sun model unknown         SunOS 5.1/Solaris 2.1  sunos51cgcc        ?  438908
+Sun SPARCstation ELC      SunOS           4.1.1  sunos41c           ?       ?
+Sun SPARCstation ELC      SunOS           4.1.2  sunos41gcc    516096       ?
+Sun SPARCstation IPC      SunOS          4.1.1b  sunos41c           ?  507904
+Sun SPARCstation IPC      SunOS 5.1/Solaris 2.1  sunsol20      547444       ?
+Sun SPARCstation IPX      SunOS 5.0/Solaris 2.0  sunsol20           ?  481264
+Sun SPARCstation IPX      SunOS           4.1.1  sunos41c      532480  499712
+Tandy Model 6000          XENIX             3.2  trs16         459693  435842
+Tektronix 6130            Utek            2.3.1  utek          415744  363520
+Tektronix 6130            Utek              3.0  utek          415744  363520
+Tektronix XD88            Utek Sys V         Re  utekvr3       916085  648368
+Torch XXX 68010           Unisoft UniPlus+  5.2  sys3          426701       -
+UNISYS U6000/65 MP 486/50 UNIX SVR4       1.0.2  sys5r4nx      366828  366828
+UNISYS S/4040 68040/25    CTIX SVR3.2     6.4.1  sys5r3        441141  373600
+
+------------------------------
+POST-RELEASE UPDATES:
+
+rcvfil() had name lengths the #ifdef pdp11 reversed, and so was truncating
+long "as-names" on non-PDP-11 systems.  Reported by Raan Young
+<raan@hpcvry.cv.hp.com>.  ckcfns.c 5A(080) 24 Nov 92 (this change slipped in
+several hours after 5A(188) was announced).
+
+The OS-9 version of C-Kermit did not include the directory separator (/) at
+the end of the string returned by \v(home), which broke the dialing directory
+and similar definitions in the standard initialization file.  Fixed in
+nvlook(), case VN_HOME, ckuus4.c, 26 Nov 92.  Affects OS-9 only; no version
+number update.
+
+Removed calls to dbchr() as arguments to debug() in ckucon.c, in two places.
+Even when debugging was not turned on, dbchr() was still executed for every
+character, quite expensive!  Suggested by Andy Fyfe, who says that this speeds
+up CONNECT mode considerably on slow systems.  ckucon.c 5A(048), 26 Nov 92.
+Affects only the UNIX version.
+
+HELP SET PROMPT message had Mac Kermit and non-Mac Kermit messages reversed.
+Noticed by Fulvio Marino, Olivetti, Ivrea, Italy.  Fixed in ckuus2.c, 27 Nov
+92.  Version number not changed.
+
+At Tom Kloos's <tk@sequent.com> suggestion, added a couple fflush()'s within
+#ifdef NOSETBUF in ckucon.c, to prevent messages like "Communication
+disconnect" from being lost before the lower CONNECT-fork exits.  Affects only
+UNIX versions built with -DNOSETBUF, and needed, according to Tom, for certain
+Tektronix UTEK implementations.  ckucon.c 5A(049) 28 Nov 92.
+
+Very minor cosmetic changes to three messages in ckudia.c.  30 Nov 92.
+
+Replacement file i/o module for OS-9 C-Kermit from Christian Hemsing.  The
+zgtdir() function was not closing the top-level directory, so after being
+called 32 times, the open file limit was exceeded.  The problem showed up when
+the new init file included a call to \v(directory) in the prompt string.
+ck9fio.c, 5A(08) 01 Dec 92.
+
+Some minor changes the UNIX man page.  ckuker.nr, 1 Dec 92.
+
+Added the man page, ckuker.nr, and this file, ckcker.upd, to the compressed
+tar archive, cku188.tar.Z.  1 Dec 92.
+
+Removed an extraneous argument from a printf() in ckudia.c, reported by
+ado@elsie.nci.nih.gov (Arthur David Olson).  ckudia.c 5A(047) 1 Dec 92.
+
+Added makefile entry "isi" for Integrated Solutions Inc VS8 from
+Don Altman <dona@zelda.nwra.com>.  8 Dec 92.
+
+Added #ifdefs in ckutio.c to allow msleep() to work for AIX 1.2 on the PS/2.
+ckutio.c 5A(103), 8 Dec 92.  (Does not work.)
+
+Added UNIX makefile entry for ICL DRS3000 (486), "make iclsys5r4_486".
+9 Dec 92.
+
+In inibufs(), the routine that allocates dynamic packet buffers, and which
+is used by the SET BUFFERS command, when the malloc() fails, it is supposed to
+try again using a smaller size:
+
+  size = (size * 3) / 2;
+
+Eduard Vopicka <Eduard.Vopicka@vse.cs> in Prague pointed out that this is
+wrong (it makes the new size bigger instead of smaller and therefore will
+always fail) and should be:
+
+  size = (size * 2) / 3;
+
+Fixed in ckcfn3.c 10 Dec 92.
+
+Finally fixed ckutio.c for IBM PS/2 AIX 1.2, to include <sys/time.h>.  Tested
+successfully by James Ward <jew@sunquest.com>.  ckutio.c 5A(104), 10 Dec 92.
+
+Altos3 makefile entry modified, and new sys3upcx entry (for AT&T 7300) added,
+from Robert Weiner.  12 Dec 92.
+
+John Dunlap <dunlap@faraday.apl.washington.edu> discovered a TCP host that
+C-Kermit's (and MS-DOS Kermit's) telnet did not work with:
+callsign.cs.buffalo.edu [128.205.32.2] port 2000.  Problem: Because it is on a
+non-telnet port, Kermit does not send initial option negotiations.  Remote
+TELNET server sends WILL SGA.  Kermit did not respond with DO SGA because it
+forgot that it did not send DO SGA already, when initializing the connection.
+Solution: added a flag to remember about this, and respond if necessary.
+Tested with a variety of other TELNET (and non-TELNET) servers, and all still
+work OK.  ckcnet.c, 5A(016) 12 Dec 92.
+
+Fixes for OS/2 C-Kermit from Kai Uwe Rommel <rommel@jonas.gold.sub.org>.
+In Kai Uwe's words:
+
+- I did finally get a pointer how to disable the popup box when
+  accessing empty floppy drives etc. - it's quite simple, one 
+  just has to know it :-)
+
+- made minor changes for the next IBM C compiler version (I have a
+  beta of the upcoming IBM C/C++ compiler)
+
+- added a few lines to save/restore the state of ANY tty used, not
+  just hot handles
+
+- I think the error message should be removed, when opening the
+  default tty fails, it's hard to avoid that for binary distributions
+
+- fixed a bug in the 32-bit speed detection for >57600 baud
+
+- the added support for NumLock and keypad keys, I already sent you
+  this, I just include it again to send you complete diffs against 188
+
+All changes affect OS/2 version only:
+
+ckcdeb.h: OS/2 only, needs to include <sys/types.h>
+ckcmai.c: OS/2 only, skip spurious message upon failure to open default device
+ckoker.mak: several minor corrections
+ckotio.c: hot-handle-saving changes, new Num Lock and keypad support
+ckufio.c: IBM C compiler / library changes
+
+Installed prototypes for os2setdtr(), os2setcarr(), os2setflow(), and
+ttsettings() in ckotio.c, and also made them static.
+
+ckotio.c, 5A(100), 13 Dec 92.  Other module numbers and dates unchanged.
+
+Changed SET INPUT TIMEOUT-ACTION { PROCEED, QUIT } to be on the command stack.
+Whenever you make this setting, it applies to the current command level and
+its descendents.  If a command file or macro changes the INPUT TIMEOUT
+setting, it is restored to its previous value when the command file or macro
+exits.  This change was necessary because previously there was no way for a
+macro or take file to save and restore the INPUT TIMEOUT setting if it needed
+to be set to some particular value.  The code change was minor: the scalar
+integer variable, intime, was changed to an array and allocated, saved, and
+restored together with the count[], ifcmd[], and iftest[] arrays.  Then the
+same was done with SET INPUT CASE, SET CASE, SET TAKE ERROR, and SET MACRO
+ERROR.  Also, changed SET INPUT DEFAULT-TIMEOUT to actually do something,
+namely to set the timeout value used by INPUT if you type INPUT <ESC> or INPUT
+<CR>.  Modules affected: ckuusr.c, ckuus5.c, ckuus7.c.  ckuusr 5A(093),
+13 Dec 92.
+
+Fixed compilation for Harris Night Hawk: an #ifdef related to WAIT_T was
+added to ckcdeb.h, and the cx_ux makefile entry was changed slightly.  From
+Tom Horsley <tahorsley@csd.harris.com>.
+
+New SCO UNIX 3.2V4.0 makefile entries from Warren Tucker, with assistance
+from Eduard Vopica and Piet Plomp.  makefile.  15 Dec 92.
+
+SCO Xenix/286 makefile entry updated and successfully tested by William
+Bader <wbader@scarecrow.csee.lehigh.edu>, and a minor correction to ckuusx.c,
+where a reference to intmsg(1) had to be changed to intmsg(1L).  17 Dec 92.
+
+Minor change to ckcdeb.h for IBM AIX/370, to force correct definition of
+signal() and friends, within #ifdef AIX370 conditionals, affects only AIX/370.
+Tested successfully on AIX/370 1.2.  18 Dec 92.
+
+New makefile entry t31tos40x for Nixdorf Targon/31 M15 with TOS 4.0.13 from
+Dick Bruijn <dick@ahwau.ahold.nl>.  22 Dec 92.
+
+Minor change to ckcdeb.h to support Cray UNICOS 7.0 (6.1 was already ok);
+#include <errno.h> within #ifdef _CRAY..#endif conditionals.  Also added
+-DTCPSOCKET and removed -i from cray makefile entry.  Checked by Charlie Finan
+<chf@grumpy.cray.com> on both 6.1 and 7.0 of UNICOS.  22 Dec 92.
+
+Added a new entry, cray8, to the makefile for Cray UNICOS 8.0 Alpha, from
+Charlie Finan.  Also added new version herald for Cray UNICOS, ckuver.h.  Also
+added display of _CRAY symbol in SHOW FEATURES, ckuus5.c.  23 Dec 92.
+
+Added new makefile entry, clix, for Intergraph Clipper, from Mark Jones
+<mark@mjones.b30,ingr.com> at Intergraph.
+
+Modified Fortune For:Pro 2.1 makefile entry, ft21, to compile several modules
+separately without optimization because they break the optimizer.  Problem
+reported, and fix verified, by Thomas Krueger <tjk@kelvin.cae.uwm.edu>.
+
+Modified ckucon.c to not complain that the speed is not set if C-Kermit
+has been given an already-open file descriptor for the communication device,
+and to allow the connection to proceed.  ckucon.c 5A(050) 26 Dec 92.
+
+Added dnixnetc entry to makefile for DNIX 5.2 with curses and TCP/IP, from
+Paul Pries <5322@msg.abc.se>.
+
+New UNIX makefile entry plus minor changes to ckcdeb.h and ckuver.h for IBM
+AIX/ESA 2.1 on IBM 370-Series mainframes from Andy Mondore <mondore@rpi.edu>.
+
+Reported by Michal Jaegermann <NTOMCZAK@VM.UCS.UALBERTA.CA>: C-Kermit did not
+work correctly on NeXT Mach 3.0 when installed setuid or setgid.  Diagnosis:
+the operation of access() changed from NeXTSTEP 2.1 to 3.0.  Cure: Treat NeXT
+Mach 3.0 like Olivetti X/OS with respect to access() calls in ckufio; create a
+new next3 makefile entry for NeXTSTEP 3.0 to differentiate it from earlier
+releases.  ckufio.c 5A(068) 29 Dec 92.
+
+New makefile entry, utekvr3, for Tektronix XD88 with Sys V R3 from
+Gary Hornbuckle <garyho@crg1.sequent.com>.
+
+After further testing, discovered that there is no difference among NeXT
+versions -- all behave the same as 3.0.  Removed the next3 entry, and changed
+ckufio.c to do the id-swapping trick around access() calls for all NeXT
+versions, not just 3.0.  Tested thoroughly on NeXTSTEP 2.1 and 3.0.  ckufio.c
+5A(069) 31 Dec 92.
+
+Several instances of -DYNAMIC in the makefile were corrected to say -DDYNAMIC,
+including AIX/370, AIX PS/2, SunOS System V R3, and one of the HP-UX entries.
+4 Jan 93.
+
+Fixed linuxgcc2net makefile entry to include the curses option correctly, from
+Mark W. Eichen <eichen@cygnus.com>.
+
+Added sunsol20gcc entry for Solaris 2.0 on Sun platforms, to be built with
+the gcc compiler from the CD-ROM, from Mark W. Eichen <eichen@cygnus.com>.
+
+Minor fix to ttinc() in ckotio.c for OS/2, from Kai Uwe Rommel.  ckotio.c
+5A(101), 10 Jan 93.
+
+New makefile entries for SunOS 5.1 (Solaris 2.1) from Patrick Wolfe
+<pwolfe@eyeball.kai.com>: sunos51, sunos51tcp, sunos51tcpc.
+
+Added QNX 4.1 support via #ifdef QNX..#endif changes to ckcdeb.h, ckcmai.c,
+ckufio.c, ckutio.c, and ckuver.h for QNX 4.1, plus a new qnx makefile entry,
+from Jyke Jokinen, Tampere University of Technology, Finland <jyke@cs.tut.fi>.
+13 Jan 93.  Further minor updates to ckcmai.c, ckcfn3.c, and ckutio.c from
+Jyke on 14 Jan 93.
+
+Changed OS/2 C-Kermit to allow SET LINE / SET PORT to:
+ 1. Correctly accept 1 .. 8 as synonyms for COM1 .. COM8.
+ 2. Accept _n (n is a number) as an open file descriptor.
+ 3. Accept anything else literally as a device name.
+ckuus7.c.  ckuusr.c 5A(094), 14 Jan 93.
+
+From Kai Uwe Rommel, a change to OS/2 C-Kermit to allow it to work with
+the new public domain serial port driver, SIO.SYS (available from CompuServe).
+This works on both 32-bit and 16-bit OS/2 C-Kermit versions (OS/2 2.00 only).
+ckotio.c 5A(102) 14 Jan 93.
+
+New makefile entries: sunos3gcc (Sun UNIX 3.5, compiled with gcc) and
+is5r3gcc (Interactive UNIX SVR3 2.2.1, compiled with gcc).  From Karl Berry
+<karl@claude.cs.umb.edu>.
+
+Changed the COUNT variable so it is inherited by inferior command levels.
+This allows WHILE COUNT { commands } to work, as well as letting macros access
+(but not change!) the superior COUNT value.  ckuus5.c, ckuus6.c,
+ckuusr.c 5A(095) 18 Jan 93.
+
+Discovered that command-mode output from the AOS/VS version of C-Kermit was
+horribly slow, even though CONNECT mode and file transfer were reasonably
+fast.  Diagnosis: concb() in ckdtio.c was making stdout unbuffered, affecting
+all printf's, putchar's, etc.  Cure: put #ifndef NOSETBUF..#endif around the
+setbuf() call in concb() in ckdtio.c, add /DEFINE NOSETBUF to CKDCC.CLI, and
+redefine putchar(c) to be conoc(c) in ckcdeb.h (for datageneral only).
+New ckdtio.c version/date: 5A(097) 20 Jan 93.
+
+New hpux80pagcc entry for UNIX makefile from Karl Berry
+<karl@starlight.HQ.Ileaf.COM>, 21 Jan 93.
+
+New dynix31c entry for Sequent Dynix 3.1.2, TCP/IP, curses, from Jason
+Merrill <jason@jarthur.claremont.edu>.
+
+Kai Uwe Rommel <rommel@jonas.gold.sub.org> discovered and fixed a small error
+in the OS/2 C-Kermit ttinc() routine in ckotio.c.  The fix makes OS/2 C-Kermit
+*much* faster for both terminal emulation and file transfer.  ckotio.c 5A(103)
+24 Jan 93.  New 16-bit and 32-bit versions installed 24 Jan 93.
+
+Minor fix to dynix3 UNIX makefile entry.  Jason Merrill
+<jason@jarthur.Claremont.EDU>.  25 Jan 93.
+
+Removed ^H as a synonym for H as a CONNECT-mode escape-character argument.
+Too dangerous (hangs up the connection).  ck[doc]con.c.  Also ^Q for Q
+in ckoker.con.  25 Jan 93.
+
+Added character-set info to file transfer displays.  Internally, a new member,
+"keyword", was added to the csinfo structure.  ckuusx.c, ckcxla.h, ckuxla.c,
+ckmxla.c, 2 Feb 93.  Took advantage of the new csinfo structure to simplify
+the SHOW TERMINAL character-set display, replacing 16 lines of code with a
+single printf().  ckuus5.c.  This changed is identified by the new version
+herald and date, 5A(019) 2 Feb 93, on ckuxla.c (and 5A(012) 2 Feb 93 for
+ckmxla.c on the Macintosh, but this change has no effect on the Mac, which
+does not use the regular file transfer display).
+
+Added Interactive UNIX System V R3.0 makefile entry (for gcc compilation) from
+Dieter Woerz, Zahnaerztliches Rechenzentrum Dr. Gueldener GmbH, Marienstr. 10,
+D-7000 Stuttgart-1, <woerz@gueldener.de>.  makefile.
+
+Reported by Peter Mossel <peter@cuccfa.ccc.columbia.edu>: C-Kermit would not
+link when built under OpenVMS AXP with Multinet, because of the "extern int
+telnetfd" in ckuusy.c.  Fixed via #ifndef VMS..#endif in ckuusy.c.
+
+The TRANSLATE command did not work in VMS; it caused C-Kermit to crash.
+This was because zopeno() was calling zstime() to set the output file date
+and time, even though the attribute structure pointer was null.  Changed
+zopeno() not to do this, and also changed zstime() to fail (rather than
+crash) if called with a null attribute structure pointer.  This cured the
+crash, but TRANSLATE still did not work: zchout() got an error when trying
+to write the first byte to the output file.  This happened because C-Kermit
+treats the TRANSLATE output file like a file-transfer incoming file (ZOFILE).
+This is fine for UNIX and other OS's, but VMS C-Kermit zopeno() treats ZOFILE
+specially, presuming all sorts of information to be available, and in this
+case it isn't.  Therefore, the TRANSLATE command output file should be treated
+like an OPEN WRITE file, or a packet log, etc.  But I couldn't recycle one of
+these files, because any one of them might be open at the time the TRANSLATE
+command is given.  So I added a new file number, ZMFILE (miscellaneous output
+file) to ckcker.h, and had the VMS version of the TRANSLATE command use it
+(or ZCTERM if no filename given) rather than ZOFILE.  CKVFIO.C, 2.0(096),
+17 Feb 93; CKUUS4.C, CKCKER.H.
+
+Fixed a problem noted by Ismo Suihko <isuihko@cs.joensuu.fi> in Finland,
+in which under certain bizarre circumstances, a file can be erroneously
+renamed.  Fix: initialize cmarg2 to point to the empty string whenever
+entering server mode.  ckcpro.w 5A(053), 17 Feb 93.
+
+Added a new command for OS/2 only: SET TERMINAL ANSWERBACK { OFF, ON }
+to disable/enable the ENQ/Answerback feature, which one user (William
+Unruh of the University of British Columbia) complained was being invoked
+frequently on a noisy connection.  The answerback feature is now disabled
+by default.  ckocon.c 5A(101), 19 Feb 93; ckuus2.c, ckuus7.c, ckuusr.h.
+
+Discovered that C-Kermit, when sending a file in text mode with TRANSFER
+CHARACTER-SET TRANSPARENT, did not put an encoding attribute in the A-packet.
+This is wrong, because then the receiver's TRANSFER CHARACTER-SET will take
+precedence and cause unwanted translation.  Also discovered that the receiver
+erroneously interpreted "*!A" to indicate an xfer character-set of ASCII,
+rather than TRANSPARENT.  Fixed in sattr() and gattr(), ckcfn3.c.
+ckcfns.c ID updated to show this change: 5A(081) 20 Feb 93.
+
+
+------------------------------
+5A(188) Mon Nov 23 11:59:55 1992
+
+Removed BETA from program herald and released version 5A.  These are the
+components of the final 5A(188) release:
+
+FILE      LAST EDIT    VERSION    COMMENTS
+
+ckcasc.h  19 May 92               ASCII character symbol definitions
+ckcdeb.h   6 Nov 92               Definitions used by all modules
+ckcker.h  23 Nov 92               Kermit-specific definitions
+ckcsym.h  19 May 92               C preprocessor symbol definitions
+ckcxla.h   4 Aug 92               Common character-set translation definitions
+ckuver.h  18 Nov 92               Version header definitions
+
+ckcmai.c  23 Nov 92    5A(188)    Main program
+ckcpro.w  23 Nov 92    5A(052)    Protocol state switcher, "wart" language
+ckwart.c  14 Jan 92    2A(009)    wart preprocessor for ckcpro.w
+ckcpro.c  23 Nov 92    5A(052)    C-language protocol state switcher
+ckcfns.c  24 Nov 92    5A(080)    System-independent protocol functions
+ckcfn2.c  23 Nov 92                ...continued
+ckcfn3.c  12 Oct 92                ...continued
+ckcnet.h  13 Oct 92               Common network support definitions
+ckcnet.c  23 Nov 92    5A(015)    Network support
+
+ckcmdb.c  10 Nov 92       -       malloc()-debugging package
+
+ckucmd.h  21 Nov 92               Interactive command parser symbols
+ckucmd.c  22 Nov 92    5A(053)    Interactive command parser functions
+ckuusr.h  26 Oct 92               User interface symbols
+ckuusr.c  23 Nov 92    5A(092)    Interactive command parser
+ckuus2.c  23 Nov 92                 ...continued
+ckuus3.c  21 Nov 92                 ...continued
+ckuus4.c  22 Nov 92                 ...continued
+ckuus5.c  23 Nov 92                 ...continued
+ckuus6.c  23 Nov 92                 ...continued
+ckuus7.c  23 Nov 92                 ...continued
+ckuusx.c  23 Nov 92               User interface common routines
+ckuusy.c  18 Nov 92               Command-line option parser
+
+ckudia.c   2 Nov 92    5A(046)    DIAL command
+ckuscr.c   2 Nov 92    5A(015)    SCRIPT command
+
+ck9con.c  12 Oct 92    5A(06)     OS-9 CONNECT command
+ck9fio.c  10 Jul 92    5A(07)     OS-9 file system interface
+ck9tio.c  12 Oct 92    5A(08)     OS-9 communications i/o
+
+ckdcon.c  10 Oct 92    5A(44)     AOS/VS CONNECT command
+ckdfio.c  10 Oct 92    5A(064)    AOS/VS file system support
+ckdtio.c  10 Oct 92    5A(096)    AOS/VS communications i/o
+
+ckicon.c   1 Sep 92    1.3        Amiga CONNECT command
+ckifio.c   1 Sep 92    1.6        Amiga file system support
+ckistu.c   1 Sep 92    1.5        Amiga stub routines
+ckitio.c   1 Sep 92    1.7        Amiga communications i/o
+ckiutl.c   1 Sep 92    1.7        Amiga utility functions
+
+ckocon.c  25 Oct 92     -         OS/2 CONNECT command
+ckodir.h  20 Jan 92               OS/2 file system definitions
+ckoker.h   6 Nov 92               OS/2 compilation definitions
+ckolat.h  11 Jul 92               OS/2 LAT support definitions
+ckonet.c   8 Aug 92    5A(008)    OS/2 network support
+ckotio.c  16 Nov 92     -         OS/2 communications i/o
+
+ckscon.c  20 Jul 92    5A(031)    Atari ST CONNECT command
+cksfio.c  20 Jul 92    5A(059)    Atari ST file system interface
+ckstio.c  20 Jul 92    5A(086)    Atari ST file communications i/o
+
+ckucon.c  23 Nov 92    5A(047)    CONNECT command for UNIX
+ckufio.c  23 Nov 92    5A(067)    File system interface for UNIX and OS/2
+ckutio.c  23 Nov 92    5A(102)    Communications i/o for UNIX
+ckuxla.h  27 Jun 92               Character-set symbols for UNIX & others
+ckuxla.c  21 Nov 92    5A(018)    Character-set translation for UNIX & others
+ckustr.c  11 Sep 92      -        String extraction module for 2.xBSD
+cku2tm.c  11 Sep 92      -        ctimed support for 2.10 BSD
+
+ckvvms.h   7 Oct 92               VMS- and OpenVMS-specific definitions
+ckvcon.c  26 Oct 92    5.0-028    CONNECT command for VMS and OpenVMS
+ckvfio.c   5 Nov 92    2.0-095    File system support for VMS and OpenVMS
+ckvtio.c  23 Nov 92    2.0-050    Communications i/o for VMS and OpenVMS
+ckvioc.h  19 Oct 92      -        VMS ioctl() simulation symbol definitions
+ckvioc.c  19 Oct 92      -        VMS ioctl() simulation
+ckvcvt.c   6 Sep 92    T1.0-05    VMS labeled-file decoder
+
+------------------------------
+END OF CKCKER.UPD
