@@ -30,10 +30,10 @@
 #include "ckuat2.h"
 #ifdef NT
 #ifdef _M_ALPHA
-#include <d:\srp\des\des.h>
+#include <c:\srp\des\des.h>
 #else
-#include <f:\srp\des\des.h>
-#endif 
+#include <c:\src\srp\des\des.h>
+#endif
 #else
 #include <c:\srp\des\des.h>
 #endif

@@ -1,5 +1,5 @@
 #include "ckcsym.h"
-char *connv = "CONNECT Command for UNIX:select(), 8.0.130, 8 Feb 2002";
+char *connv = "CONNECT Command for UNIX:select(), 8.0.134, 11 Sep 2002";
 
 /*  C K U C N S  --  Terminal connection to remote system, for UNIX  */
 /*
@@ -136,7 +136,7 @@ extern struct ck_p ptab[];
 extern int local, escape, duplex, parity, flow, seslog, sessft, debses,
  mdmtyp, ttnproto, cmask, cmdmsk, network, nettype, sosi, tnlm,
  xitsta, what, ttyfd, ttpipe, quiet, backgrd, pflag, tt_crd, tn_nlm, ttfdflg,
- tt_escape, justone, carrier, ttpty;
+ tt_escape, justone, carrier, ttpty, hwparity;
 
 #ifndef NODIAL
 extern int dialmhu, dialsta;
@@ -189,6 +189,8 @@ extern int autodl;			/* Auto download */
 
 #ifdef CK_AUTODL
 extern CHAR ksbuf[];
+extern CHAR stchr;
+extern int kstartactive;
 #endif /* CK_AUTODL */
 
 #ifdef CK_ENCRYPTION
@@ -1379,12 +1381,13 @@ conect() {
     tcs = 0;				/* "Transfer" or "Other" charset */
     sxo = rxo = NULL;			/* Initialize byte-to-byte functions */
     sxi = rxi = NULL;
+
     if (tcsr != tcsl) {			/* Remote and local sets differ... */
 #ifdef UNICODE
 	if (tcsr == FC_UTF8 ||		/* Remote charset is UTF-8 */
 	    tcsl == FC_UTF8) {		/* or local one is. */
 	    xuf = xl_ufc[tcsl];		/* Incoming Unicode to local */
-	    if (xuf) {
+	    if (xuf || tcsl == FC_UTF8) {
 		tcs = (tcsr == FC_UTF8) ? tcsl : tcsr; /* The "other" set */
 		xfu = xl_fcu[tcs];	/* Local byte to remote Unicode */
 		if (xfu)
@@ -1752,6 +1755,7 @@ conect() {
 		    outxcount = b_to_u((CHAR)c,outxbuf,OUTXBUFSIZ,tcssize);
 		    outxbuf[outxcount] = NUL;
 		} else if (unicode == 2) { /* Local is UTF-8 */
+		    
 		    x = u_to_b((CHAR)c);
 		    if (x < 0)
 		      continue;
@@ -2062,8 +2066,14 @@ conect() {
 		    || TELOPT_SB(TELOPT_KERMIT).kermit.me_start
 #endif /* IKS_OPTION */
 		    ) {
-		    int k;
-		    k = kstart((CHAR)c); /* Kermit S or I packet? */
+		    int k = 0;
+
+		    if (kstartactive || c == stchr /* Kermit S or I packet? */
+#ifdef COMMENT
+			|| adl_kmode == ADLSTR /* Not used in C-Kermit */
+#endif /* COMMENT */
+			)
+		      k = kstart((CHAR)c);
 #ifdef CK_XYZ
 		    if (!k && zmdlok)	/* Or an "sz" start? */
 		      k = zstart((CHAR)c);
@@ -2295,7 +2305,11 @@ conect() {
     conres();
     if (dohangup > 0) {
 #ifdef NETCONN
-	if (network)
+	if (network
+#ifdef TNCODE
+	    && !TELOPT_ME(TELOPT_COMPORT)
+#endif /* TNCODE */
+	    )
 	  ttclos(0);
 #endif /* NETCONN */
 
@@ -2558,11 +2572,14 @@ doesc(c) char c;
 	    }
 	    sprintf(temp," Terminal echo: %s", duplex ? "local" : "remote");
 	    conoll(temp);
-	    sprintf(temp," Terminal bytesize: %d", (cmask  == 0177) ? 7 : 8);
+	    sprintf(temp," Terminal bytesize: %d", (cmask == 0177) ? 7 : 8);
 	    conoll(temp);
-	    sprintf(temp," Command bytesize: %d", (cmdmsk == 0177) ? 7 : 8 );
+	    sprintf(temp," Command bytesize: %d", (cmdmsk == 0177) ? 7 : 8);
 	    conoll(temp);
-	    sprintf(temp," Parity: %s", parnam(parity));
+            if (hwparity)
+              sprintf(temp," Parity[hardware]: %s",parnam(hwparity));
+            else	    
+              sprintf(temp," Parity: %s", parnam(parity));
 	    conoll(temp);
 #ifndef NOXFER
 	    sprintf(temp," Autodownload: %s", autodl ? "on" : "off");

@@ -1,7 +1,7 @@
 /*  C K C D E B . H  */
 
 /*
-Fri Feb  8 11:23:22 2002
+Thu Oct 24 16:08:26 2002
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
   compatible with C preprocessors that support only #ifdef, #else, #endif,
@@ -189,6 +189,12 @@ struct filinfo {
 #endif /* NOICP */
 
 /* Built-in makefile entries */
+
+#ifdef SOLARIS9				/* Solaris 9 implies 8 */
+#ifndef SOLARIS8
+#define SOLARIS8
+#endif /* SOLARIS8 */
+#endif /* SOLARIS9 */
 
 #ifdef SOLARIS8				/* Solaris 8 implies 7 */
 #ifndef SOLARIS7
@@ -2646,6 +2652,33 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #endif /* NOHTTP */
 #endif /* TCPSOCKET */
 #endif /* NONET */
+
+#ifdef TCPSOCKET
+#ifndef NOCKGETFQHOST
+#ifdef __ia64__
+#define NOCKGETFQHOST
+#else  /* __ia64__ */
+#ifdef SV68
+#define NOCKGETFQHOST
+#else
+#ifdef HPUXPRE65
+#define NOCKGETFQHOST
+#endif /* HPUXPRE65 */
+#endif /* SV68 */
+#endif /* __ia64 */
+#endif /* NOCKGETFQHOST */
+/*
+  Regarding System V/68 (SV68) (from Gerry Belanger, Oct 2002):
+
+    1) The gethostbyname() appears to return the actual host IP
+       address in the hostent struct, instead of the expected pointer
+       to the address. Hence the bogus address in the bcopy/memcopy.
+       This is despite the header agreeing with our expectations.
+
+    2) the expected argument swap between bcopy and memcopy
+       did not happen.  What grief this might cause, I know not.
+*/
+#endif /* TCPSOCKET */
 
 #ifdef TCPSOCKET
 #ifdef OS2ONLY
@@ -6258,6 +6291,11 @@ _PROTOTYP( int readtext, (char *, char *, int));
 _PROTOTYP(int ck_auth_loaddll, (VOID));
 _PROTOTYP(int ck_auth_unloaddll, (VOID));
 #endif /* OS2 */
+
+#ifdef NT
+_PROTOTYP(DWORD ckGetLongPathname,(LPCSTR lpFileName, 
+                                   LPSTR lpBuffer, DWORD cchBuffer));
+#endif /* NT */
 
 #include "ckclib.h"
 

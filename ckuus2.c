@@ -103,6 +103,7 @@ static char *tophlp[] = {
 "Trustees of Columbia University in the City of New York.\n",
 
 #ifndef NOHELP
+"  Type EXIT    to exit.",
 #ifdef OS2
 "  Type INTRO   for a brief introduction to the Kermit Command screen.",
 "  Type LICENSE to see the Kermit 95 license.",
@@ -197,6 +198,9 @@ char *newstxt[] = {
 #else
 "Welcome to C-Kermit 8.0.200.  Major new features include:",
 #endif /* OS2 */
+#ifdef SSHBUILTIN
+" . New built-in SSH v1 and v2 clients",
+#endif /* SSHBUILTIN */
 #ifdef NEWFTP
 " . A new built-in FTP client",
 #endif /* NEWFTP */
@@ -297,6 +301,13 @@ char *introtxt[] = {
 #ifdef TNCODE
 "   - Telnet sessions",
 #endif /* TNCODE */
+#ifdef SSHBUILTIN
+"   - SSH v1 and v2 connections",
+#else
+#ifdef ANYSSH
+"   - SSH connections via external agent",
+#endif /* ANYSSH */
+#endif /* SSHBUILTIN */
 #ifdef RLOGCODE
 "   - Rlogin sessions",
 #endif /* RLOGCODE */
@@ -376,6 +387,7 @@ char *introtxt[] = {
 "  HELP command  Request help about the given command",
 "  TAKE          Execute commands from a file",
 "  TYPE          Display a file on your screen",
+"  ORIENTATION   Explains directory structure",
 " ",
 
 #ifndef NOXFER
@@ -479,8 +491,14 @@ char *introtxt[] = {
 "  RLOGIN                 Select an Rlogin host and CONNECT to it",
 #endif /* RLOGCODE */
 #ifdef ANYSSH
-"  SSH                    Select an SSH host and CONNECT to it",
+"  SSH [ OPEN ]           Select an SSH host and CONNECT to it",
 #endif /* ANYSSH */
+#ifdef NEWFTP
+"  FTP [ OPEN ]           Make an FTP connection",
+#endif /* NEWFTP */
+#ifdef CKHTTP
+"  HTTP OPEN              Make an HTTP connection",
+#endif /* CKHTTP */
 #endif /* NETCONN */
 
 #ifdef NT
@@ -532,6 +550,45 @@ Press the key or key-combination shown after \"Prompt:\" in the status line",
 "  USA",
 ""
 };
+
+static char * hmxymatch[] = {
+"SET MATCH { DOTFILE, FIFO } { ON, OFF }",
+"  Tells whether wildcards should match dotfiles (files whose names begin",
+"  with period) or UNIX FIFO special files.  MATCH FIFO default is OFF.",
+"  MATCH DOTFILE default is OFF in UNIX, ON elsewhere.",
+""
+};
+
+#ifdef OS2
+#ifdef KUI
+static char * hmxygui[] = {
+"SET GUI DIALOGS { ON, OFF }",
+"  ON means that popups, alerts, use GUI dialogs; OFF means to use",
+"  text-mode popups or prompts.  ON by default.",
+" ",
+"SET GUI FONT name size",
+"  Chooses the font and size.  Type \"set gui font ?\" to see the list of",
+"  choices.  The size can be a whole number or can contain a decimal point",
+"  and a fraction (which is rounded to the nearest half point).",
+" ",
+"SET GUI RGBCOLOR colorname redvalue greenvalue bluevalue",
+"  Specifies the red-green-blue mixture to be used to render the given",
+"  color name.  Type \"set gui rgbcolor\" to see a list of colornames.",
+"  the RGB values are whole numbers from 0 to 255.",
+" ",
+"SET GUI WINDOW POSITION x y",
+"  Moves the K95 window to the given X,Y coordinates, pixels from top left.",
+"  (Not yet implemented -- use command-line options to do this.)",
+" ",
+"SET GUI WINDOW RESIZE-MODE { CHANGE-DIMENSIONS, SCALE-FONT }",
+"  Default is CHANGE-DIMENSIONS.",
+"",
+"SET GUI WINDOW RUN-MODE { MAXIMIZE, MINIMIZE, RESTORE }",
+"  Changes the run mode state of the GUI window.",
+""
+};
+#endif /* KUI */
+#endif /* OS2 */
 
 #ifdef ANYSSH
 static char * hmxxssh[] = {
@@ -835,15 +892,37 @@ static char *hmxygpr[] = {
 
 #ifdef LOCUS
 static char *hmxylocus[] = {
+#ifdef KUI
+"Syntax: SET LOCUS { ASK, AUTO, LOCAL, REMOTE }",
+#else
 "Syntax: SET LOCUS { AUTO, LOCAL, REMOTE }",
-"  Specifies whether file management commands should operate locally or",
-"  (when there is a connection to a remote FTP or Kermit server) sent to",
-"  the server.  The default is AUTO, meaning that if you have an FTP",
-"  connection, they are REMOTE, otherwise they are LOCAL.  The affected",
-"  commands are: CD (CWD), PWD, CDUP, DIRECTORY, DELETE, RENAME, MKDIR,",
-"  and RMDIR.  To force any of these commands to be executed locally, give",
-"  it an L prefix: LCD, LDIR, etc.  To force remote execution, use the R",
-"  prefix: RCD, RDIR, and so on.  SHOW COMMAND shows the current locus.",
+#endif /* KUI */
+"  Specifies whether unprefixed file management commands should operate",
+"  locally or (when there is a connection to a remote FTP or Kermit",
+"  server) sent to the server.  The affected commands are: CD (CWD), PWD,",
+"  CDUP, DIRECTORY, DELETE, RENAME, MKDIR, and RMDIR.  To force any of",
+"  these commands to be executed locally, give it an L-prefix: LCD, LDIR,",
+"  etc.  To force remote execution, use the R-prefix: RCD, RDIR, and so",
+"  on.  SHOW COMMAND shows the current Locus.",
+" ",
+"  By default, the Locus for file management commands is switched",
+"  automatically whenever you make or close a connection: if you make an",
+"  FTP connection, the Locus becomes REMOTE; if you close an FTP connection",
+"  or make any other kind of connection, the Locus becomes LOCAL.",
+#ifdef KUI
+" ",
+"  There are two kinds of automatic switching: ASK (the default) which",
+"  asks you if it's OK to switch, and AUTO, which switches without asking.",
+#endif /* KUI */
+" ",
+"  If you give a SET LOCUS LOCAL or SET LOCUS REMOTE command, this sets",
+"  the locus as indicated and disables automatic switching.",
+#ifdef KUI
+"  SET LOCUS AUTO or SET LOCUS ASK restores automatic switching.",
+"  You can also change Locus switching and behavior in the Actions menu.",
+#else
+"  SET LOCUS AUTO restores automatic switching.",
+#endif /* KUI */
 "",
 };
 #endif /* LOCUS */
@@ -1177,9 +1256,11 @@ static char *hxxinp[] = {
 "  INPUT waits for any character.  For use in script programs with IF FAILURE",
 "  and IF SUCCESS.  Also see MINPUT, REINPUT, SET INPUT.  See HELP PAUSE for",
 "  details on time-of-day format.  The text, if given, can be a \\pattern()",
-"  invocation, in which case it is treated as a pattern rather than"
-,
-"  a literal string (HELP PATTERNS for details).",
+"  invocation, in which case it is treated as a pattern rather than a",
+"  literal string (HELP PATTERNS for details).  If the timeout interval is 0,",
+"  the INPUT command does not wait; i.e. the given text must already be",
+"  available for reading for the INPUT command to succeed.  If the interval",
+"  is negative, the INPUT command waits forever.",
 ""};
 
 static char *hxxout[] = {
@@ -1539,16 +1620,17 @@ static char *hmxxgrep[] = {
 
 static char *hmxxdir[] = {
 #ifdef DOMYDIR
-"Syntax: DIRECTORY [ switches ] [ filespec ]",
+"Syntax: DIRECTORY [ switches ] [ filespec [ filespec [ ... ] ] ]",
 #ifdef LOCUS
 "  If LOCUS is REMOTE or LOCUS is AUTO and you have an FTP connection,",
 "  this command is equivalent to REMOTE DIRECTORY (RDIR).  Otherwise:",
 " ",
 #endif /* LOCUS */
-"  Lists files.  The filespec may be a filename, possibly containing wildcard",
-"  characters, or a directory name.  If no filespec is given, all files in",
-"  the current directory are listed.  If a directory name is given, all the",
-"  files in it are listed.  Optional switches:",
+"  Lists local files.  The filespec may be a filename, possibly containing",
+"  wildcard characters, or a directory name.  If no filespec is given, all",
+"  files in the current directory are listed.  If a directory name is given,",
+"  all the  files in it are listed.  Multiple filespecs can be given.",
+"  Optional switches:",
 " ",
 "   /BRIEF           List filenames only.",
 #ifdef CK_PERMS
@@ -1601,6 +1683,41 @@ static char *hmxxdir[] = {
 ""};
 
 
+#ifndef NOSPL
+static char *hmxxkcd[] = {
+"Syntax: KCD symbolic-directory-name",
+"  Kermit Change Directory: Like CD (q.v.) but (a) always acts locally, and",
+"  (b) takes a symbolic directory name rather than an actual directory name.",
+"  The symbolic names correspond to Kermit's directory-valued built-in",
+"  variables, such as \\v(download), \\v(exedir), and so on.  Here's the list:"
+,
+" ",
+#ifdef NT
+"    appdata       Your personal Kermit 95 application data directory",
+"    common        Kermit 95's application data directory for all users",
+"    desktop       Your Windows desktop",
+#endif /* NT */
+"    download      Your download directory (if any)",
+#ifdef OS2ORUNIX
+"    exedir        The directory where the Kermit executable resides",
+#endif /* OS2ORUNIX */
+"    home          Your home, login, or default directory",
+"    inidir        The directory where Kermit's initialization was found",
+#ifdef UNIX
+"    lockdir       The UNIX UUCP lockfile directory on this computer",
+#endif /* UNIX */
+#ifdef NT
+"    personal      Your \"My Documents\" directory",
+#endif /* NT */
+"    startup       Your current directory at the time Kermit started",
+"    textdir       The directory where Kermit text files reside, if any",
+"    tmpdir        Your temporary directory",
+" ",
+"  Also see CD, SET FILE DOWNLOAD, SET TEMP-DIRECTORY.",
+""
+};
+#endif /* NOSPL */
+
 static char *hmxxcwd[] = {
 #ifdef LOCUS
 "  If LOCUS is REMOTE or LOCUS is AUTO and you have an FTP connection,",
@@ -1635,6 +1752,9 @@ static char *hmxxcwd[] = {
 #else
 "  Also see: PWD, CDUP, BACK, REMOTE CD (RCD), SET CD, SET PROMPT.",
 #endif /* LOCUS */
+#ifndef NOSPL
+"  And see: HELP KCD.",
+#endif /* NOSPL */
 "  Relevant environment variables: CDPATH, HOME.",
 ""};
 
@@ -2237,7 +2357,7 @@ static char *hmxxwild[] = {
 " ",
 #ifndef NOSPL
 "Similar notation can be used in general-purpose string matching.  Type HELP",
-"PATTERNS for details.",
+"PATTERNS for details.  Also see HELP SET MATCH.",
 #endif /* NOSPL */
 "" };
 
@@ -2426,7 +2546,10 @@ static char *hmxxminp[] = {
 "  is encountered within the timeout interval, the command succeeds and the",
 "  \\v(minput) variable is set to the number of the string that was matched:",
 "  1, 2, 3, etc.  If none of the strings arrives, the command times out,",
-"  fails, and \\v(minput) is set to 0.",
+"  fails, and \\v(minput) is set to 0.  If the timeout interval is 0 the",
+"  MINPUT command does not wait; i.e. the given text must already be",
+"  available for reading for the MINPUT command to succeed.  If the interval",
+"  is negative, the MINPUT command waits forever.",
 " ",
 "Also see: INPUT, REINPUT, SET INPUT.",
 "" };
@@ -3785,7 +3908,7 @@ static char *hmxyf[] = {
 
 #ifndef NOXFER
 "SET FILE INCOMPLETE { AUTO, KEEP, DISCARD }",
-"  What to do with an incompletely received file: KEEP (default), or DISCARD.",
+"  What to do with an incompletely received file: KEEP, DISCARD, or AUTO.",
 "  AUTO (the default) means DISCARD if transfer is in text mode, KEEP if it",
 "  is in binary mode.",
 " ",
@@ -4172,15 +4295,23 @@ static char *hxxask[] = {
 "  Like ASK except the response does not echo on the screen.",
 " ",
 "Switches:",
-#ifdef OS2
 " /POPUP",
-"  The prompt and response dialog takes place in a popup.",
+"  The prompt and response dialog takes place in a text-mode popup.",
+"  K95 only; in C-Kermit this switch is ignored.",
 " ",
-#endif /* OS2 */
+" /GUI",
+"  The prompt and response dialog takes place in a GUI popup.",
+"  K95 GUI version only; in C-Kermit and the K95 console version,", 
+"  this switch is ignored.",
+" ",
 " /TIMEOUT:number",
 "  If the response is not entered within the given number of seconds, the",
 "  command fails.  This is equivalent to setting ASK-TIMER to a positive",
 "  number, except it applies only to this command.  Also see SET ASK-TIMER.",
+" ",
+" /QUIET",
+"  Suppresses \"?Timed out\" message when /TIMEOUT is given and user doesn't",
+"  respond within the time limit.",
 ""};
 static char *hxxgetc[] = {
 "Syntax:  GETC variablename [ prompt ]",
@@ -4318,10 +4449,13 @@ static char *hxyprtr[] = {
 "  PRN, LPT1, etc.",
 " ",
 #ifdef NT
-"/WINDOWS-QUEUE[:queue-name]",
+"/WINDOWS-QUEUE[:[queue-name]]",
 "  Include this to declare a Windows printer and specify its queue name.",
 "  Type question mark (?) after the colon (:) to see a list of known queue",
-"  names.",
+"  names.  If the colon is absent, the switch indicates the currently",
+"  selected printer is a Windows Print Queue.  If the colon is provided",
+"  and the name is absent, the Windows Print Queue chosen as the Default",
+"  Printer is selected.",
 " ",
 #endif /* NT */
 "/FILE[:name]",
@@ -4400,7 +4534,7 @@ in which case it",
 "  control characters (even in backslash notation, as above), enclose it in",
 "  braces.",
 " ",
-"The final group is for use with printers that print only PostScript:",
+"The next group is for use with printers that print only PostScript:",
 " ",
 "/POSTSCRIPT or /PS",
 "  Indicates that K95 should convert all text to PostScript before sending",
@@ -4417,6 +4551,13 @@ in which case it",
 "/NOPOSTSCRIPT or /NOPS",
 "  Indicates that K95 should not convert all text to PostScript before",
 "  sending it to the printer.",
+" ",
+"The final switch is for use with AutoPrint mode and Screen Dumps",
+" ",
+"/CHARACTER-SET:<character-set>",
+"  Specifies the character set used by the printer which may be different",
+"  from both the character set used by the host and by the local computer.",
+"  The default value is CP437.",
 " ",
 "SHOW PRINTER displays your current printer settings.",
 #else
@@ -4634,23 +4775,26 @@ static char *hxxdial[] = { "Syntax:  DIAL phonenumber",
 "  \
 Dials a number using an autodial modem.  First you must SET MODEM TYPE, then",
 #ifdef OS2
-"  SET PORT, then SET SPEED.  Then give the DIAL command, including the phone",
+"  SET PORT (or in Windows only, SET PORT TAPI instead of SET MODEM TYPE and",
+"  SET LINE), then SET SPEED. Then give the DIAL command, including the phone",
 #else
 "  SET LINE, then SET SPEED.  Then give the DIAL command, including the phone",
 #endif /* OS2 */
 "  number, for example:",
 " ",
 "   DIAL 7654321",
-" ",
 #ifdef NETCONN
-"  If the modem is on a network modem server, SET HOST first, then SET MODEM,",
-"  then DIAL.  See also SET DIAL, SET MODEM, SET LINE, SET HOST, SET SPEED,",
-"  REDIAL, and PDIAL.",
 " ",
-#else
-"  See also SET DIAL, SET MODEM, SET LINE, SET SPEED, PDIAL, and REDIAL.",
-" ",
+"  If the modem is on a network modem server, SET HOST first, then SET MODEM",
+"  TYPE, then DIAL.",
 #endif /* NETCONN */
+" ",
+"If you give the DIAL command interactively at the Kermit prompt, and the",
+"call is placed successfully, Kermit automatically enters CONNECT mode.",
+"If the DIAL command is given from a macro or command file, Kermit remains",
+"in command mode after the call is placed, successfully or not.  You can",
+"change this behavior with the SET DIAL CONNECT command.",
+" ",
 "If the phonenumber starts with a letter, and if you have used the SET DIAL",
 "DIRECTORY command to specify one or more dialing-directory files, Kermit",
 "looks it up in the given file(s); if it is found, the name is replaced by",
@@ -4687,11 +4831,18 @@ Dials a number using an autodial modem.  First you must SET MODEM TYPE, then",
 " ",
 "If more than one entry is found with the same name, Kermit dials all of",
 "them until the call is completed; if the entries are in portable format,",
-"Kermit dials then in cheap-to-expensive order: internal, then local, then",
+"Kermit dials them in cheap-to-expensive order: internal, then local, then",
 "long-distance, then international, based on its knowledge of your local",
 "country code and area code (see HELP SET DIAL).",
 " ",
 "Specify your dialing directory file(s) with the SET DIAL DIRECTORY command.",
+" ",
+#ifdef NETCONN
+"See also SET DIAL, SET MODEM, SET LINE, SET HOST, SET SPEED, REDIAL, and",
+"PDIAL.",
+#else
+"See also SET DIAL, SET MODEM, SET LINE, SET SPEED, PDIAL, and REDIAL.",
+#endif /* NETCONN */
 "" };
 
 #ifdef CK_TAPI
@@ -5630,6 +5781,9 @@ case XXCWD:                             /* CD / CWD */
     return(hmsga(hmxxcwd));
 
 #ifndef NOSPL
+case XXKCD:
+    return(hmsga(hmxxkcd));
+
 case XXARRAY:
 case XXDCL:                             /* DECLARE */
 case XXSORT:
@@ -5792,9 +5946,9 @@ case XXFIN:
 #ifndef NOSPL
 #ifndef NOFRILLS
   case XXGOK:
-    return(hmsg("Syntax: GETOK prompt\n\
+    return(hmsg("Syntax: GETOK [ switches ] prompt\n\
   Prints the prompt, makes user type 'yes', 'no', or 'ok', and sets SUCCESS\n\
-  or FAILURE accordingly.  Also see SET ASK-TIMER."));
+  or FAILURE accordingly.  The optional switches are the same as for ASK."));
 #endif /* NOFRILLS */
 #endif /* NOSPL */
 
@@ -6563,6 +6717,13 @@ case XXPURGE:
     return(hmsg(" Equivalent to FTP ACCOUNT."));
 #endif /* NEWFTP */
 
+  case XXORIE:
+    return(hmsg(" Shows the directories important to Kermit."));
+
+  case XXCONT:
+    return(hmsg(" In a FOR or WHILE loop: continue the loop.\n\
+ At the prompt: continue a script that has \"shelled out\" to the prompt."));
+
   case XXNOTAV:
     return(hmsg(" This command is not configured in this version of Kermit."));
 
@@ -6842,7 +7003,7 @@ static char *hsetat[] = {
 "   DATE:           The file's creation date",
 "   DISPOSITION:    Unusual things to do with the file, like MAIL or PRINT",
 "   LENGTH:         The file's length",
-"   PROTECTION:     The files protection (permissions)",
+"   PROTECTION:     The file's protection (permissions)",
 "   SYSTEM-ID:      Machine/Operating system of origin",
 "   TYPE:           The file's type (text or binary)",
 " ",
@@ -6851,6 +7012,8 @@ static char *hsetat[] = {
 "   SET ATTR DATE OFF",
 "   SET ATTR LENGTH ON",
 "   SET ATTR ALL OFF",
+" ",
+"Also see HELP SET SEND and HELP SET RECEIVE.",
 ""
 };
 
@@ -6962,13 +7125,14 @@ static char *hxyterm[] = {
 "SET TERMINAL ARROW-KEYS { APPLICATION, CURSOR }",
 "  Sets the mode for the arrow keys during VT terminal emulation.",
 " ",
-"SET TERMINAL ATTRIBUTE { BLINK, PROTECTED, REVERSE, UNDERLINE }",
+"SET TERMINAL ATTRIBUTE { BLINK, DIM, PROTECTED, REVERSE, UNDERLINE }",
 "  Determines how attributes are displayed by Kermit-95.",
 " ",
-"SET TERMINAL ATTRIBUTE { BLINK, REVERSE, UNDERLINE } { ON, OFF }",
-"  Determines whether real Blinking, Reverse, and Underline are used in the",
-"  terminal display.  When BLINK is turned OFF, reverse background intensity",
-"  is used.  When REVERSE and UNDERLINE are OFF, the colors selected with SET",
+"SET TERMINAL ATTRIBUTE { BLINK, DIM, REVERSE, UNDERLINE } { ON, OFF }",
+"  Determines whether real Blinking, Dim, Reverse, and Underline are used in",
+"  the terminal display.  When BLINK is turned OFF, reverse background",
+"  intensity is used.  When DIM is turned OFF, dim characters appear BOLD.",
+"  When REVERSE and UNDERLINE are OFF, the colors selected with SET",
 "  TERMINAL COLOR { REVERSE,UNDERLINE } are used instead.  This command",
 "  affects the entire current screen and terminal scrollback buffer.",
 " ",
@@ -7392,11 +7556,14 @@ static char *hxyterm[] = {
 #endif /* OS2 */
 
 #ifdef OS2
-"SET TERMINAL ROLL-MODE { INSERT, OVERWRITE }",
+"SET TERMINAL ROLL-MODE { INSERT, OVERWRITE, KEYSTROKES [ option ] }",
 "  Tells whether new data when received from the host is entered into the",
 "  scrollback buffer at the current rollback position (OVERWRITE) or at the",
 "  end of the buffer (INSERT).  The default is INSERT.  Typing is allowed",
-"  during rollbacks in either mode.",
+"  during rollbacks in either mode, according to SET TERM ROLL KEYSTROKES:",
+"  SEND (the default) means to process keystrokes normally; IGNORE means to",
+"  ignore them when the screen is scrolled back; RESTORE-AND-SEND is like",
+"  SEND but restores the screen to its active position first.",
 " ",
 
 "SET TERMINAL SCREEN-MODE { NORMAL, REVERSE }",
@@ -7920,9 +8087,14 @@ static char *hmxyauth[] = {
 "the private key is not appended to the certificate in the file specified by",
 "DSA-CERT-FILE.",
 " ",
-"Note: When Kermit is running as an IKSD it cannot support encrypted private",
-"keys.  If your private key file is encrypted you can use the following",
-"command to unencrypt it (provided you know that pass phrase):",
+"  Note: When executing a script in the background or when it is",
+"  running as an Internet Kermit Service Daemon, Kermit cannot support ",
+"  encrypted private keys.  When attempting to load a private key that is",
+"  encrypted, a prompt will be generated requesting the passphrase necessary",
+"  to decrypt the keyfile.  To automate access to the private key you must",
+"  decrypt the encrypted keyfile and create an unencrypted keyfile for use",
+"  by Kermit.  This can be accomplished by using the following command and",
+"  the passphrase:",
 " ",
 "  openssl dsa -in <encrypted-key-file> -out <unencrypted-key-file>",
 " ",
@@ -7949,9 +8121,14 @@ static char *hmxyauth[] = {
 ,
 "  by RSA-CERT-FILE.  ",
 " ",
-"Note: When Kermit is running as an IKSD it cannot support encrypted private",
-"keys.  If your private key file is encrypted you can use the following",
-"command to unencrypted (provided you know that pass phrase):",
+"  Note: When executing a script in the background or when it is",
+"  running as an Internet Kermit Service Daemon, Kermit cannot support ",
+"  encrypted private keys.  When attempting to load a private key that is",
+"  encrypted, a prompt will be generated requesting the passphrase necessary",
+"  to decrypt the keyfile.  To automate access to the private key you must",
+"  decrypt the encrypted keyfile and create an unencrypted keyfile for use",
+"  by Kermit.  This can be accomplished by using the following command and",
+"  the passphrase:",
 " ",
 "  openssl rsa -in <encrypted-key-file> -out <unencrypted-key-file>",
 " ",
@@ -8541,6 +8718,13 @@ static char *hxyrcv[] = {
 "SET RECEIVE PAUSE number",
 "  Milliseconds to pause between packets, normally 0.",
 " ",
+
+#ifdef CK_PERMS
+"SET RECEIVE PERMISSIONS { ON, OFF }",
+"  Whether to copy file permissions from inbound Attribute packets.",
+" ",
+#endif /* CK_PERMS */
+
 "SET RECEIVE RENAME-TO [ template ]",
 "  If a template is specified, then every file that is received successfully",
 "  \
@@ -8628,6 +8812,13 @@ If a directory name is specified, then every file that is sent successfully",
 "SET SEND PAUSE number",
 "  Milliseconds to pause between packets, normally 0.",
 " ",
+
+#ifdef CK_PERMS
+"SET SEND PERMISSIONS { ON, OFF }",
+"  Whether to include file permissions in outbound Attribute packets.",
+" ",
+#endif /* CK_PERMS */
+
 "SET SEND RENAME-TO [ template ]",
 "  If a template is specified, then every file that is sent successfully",
 "  is renamed according to the given template immediately after it is sent.",
@@ -8769,6 +8960,10 @@ static char *hxyxfer[] = {
 "  Synonym for SET PROTOCOL (q.v.).",
 " ",
 #endif /* CK_XYZ */
+"SET TRANSFER REPORT { ON, OFF }",
+"  Enables/Disables the automatic post-transfer message telling what files",
+"  went where from C-Kermit when it is in remote mode.  ON by default.",
+" ",
 "SET TRANSFER SLOW-START { OFF, ON }",
 "  ON (the default) tells Kermit, when sending files, to gradually build up",
 "  the packet length to the maximum negotiated length.  OFF means start",
@@ -8796,8 +8991,8 @@ static char *hxywin95[] = {
 "SET WIN95 OVERLAPPED-IO { ON <requests>, OFF }",
 "  Determines whether or not K-95 uses Overlapped-I/O methods for reading",
 "  from and writing to serial and TAPI communication devices.  <requests>",
-"  specifies the number of simultaneous write requests that may be",
-"  overlapped, from 1 to 5.  Default is ON 3.",
+"  specifies the maximum number of simultaneous write requests that may be",
+"  overlapped, from 1 to 30.  Default is ON.",
 " ",
 "SET WIN95 POPUPS { ON, OFF }",
 "  Determines whether or not Kermit 95 uses Popups to query the user for",
@@ -8827,7 +9022,13 @@ static char *hmxybel[] = {
 ""};
 
 static char *hmxycd[] = {
-"Syntax: SET CD { PATH <path>, MESSAGE { ON, OFF, FILE <list> } }",
+"Syntax: SET CD { HOME <path>, PATH <path>, MESSAGE { ON, OFF, FILE <list> } }"
+,
+" ",
+"SET CD HOME <path>",
+"  Specified which directory to change to if CD or KCD is given without a",
+"  pathname.  If this command is not given, your login or HOME directory is",
+"  used.",
 " ",
 "SET CD PATH <path>",
 "  Overrides normal CDPATH environment variable, which tells the CD command",
@@ -9682,6 +9883,16 @@ case XYTIMER:
   case XYLOCUS:
     return(hmsga(hmxylocus));
 #endif /* LOCUS */
+
+#ifdef OS2
+#ifdef KUI
+  case XYGUI:
+    return(hmsga(hmxygui));
+#endif /* KUI */
+#endif /* OS2 */
+
+  case XYMATCH:
+    return(hmsga(hmxymatch));
 
 default:
     printf("Not available - \"%s\"\n",cmdbuf);
@@ -10784,6 +10995,30 @@ Returns number:\n");
         printf("Returns: the empty string.\n");
         break;
 #endif /* COMMENT */
+
+#ifdef NT
+      case FN_SNAME:
+        printf("\\fshortpathname(s)\n\
+  s = file or directory name string\n");
+        printf("    Returns the short path form of the given input.\n");
+        break;
+
+      case FN_LNAME:
+        printf("\\flongpathname(s)\n\
+  s = file or directory name string\n");
+        printf("    Returns the long path form of the given input.\n");
+        break;
+#else
+      case FN_SNAME:
+        printf("\\fshortpathname(s)\n\
+    Synonym for \fpathname()\n");
+        break;
+
+      case FN_LNAME:
+        printf("\\flongpathname(s)\n\
+    Synonym for \fpathname()\n");
+        break;
+#endif /* NT */
 
       default:
         printf("Sorry, help not available for \"%s\"\n",cmdbuf);
@@ -13117,7 +13352,7 @@ case XZHLP:
 case XZHOS:
     return(hmsg("Syntax: REMOTE HOST command\n\
   Sends a command to the other computer in its own command language\n\
-  through the Kermit server that is running on that host.  Synonym: RHELP."));
+  through the Kermit server that is running on that host.  Synonym: RHOST."));
 
 #ifndef NOFRILLS
 case XZKER:

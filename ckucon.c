@@ -1,6 +1,6 @@
 #include "ckcsym.h"
 
-char *connv = "CONNECT Command for UNIX:fork(), 8.0.111, 31 Dec 2001";
+char *connv = "CONNECT Command for UNIX:fork(), 8.0.113, 11 Sep 2002";
 
 /*  C K U C O N  --  Terminal connection to remote system, for UNIX  */
 /*
@@ -107,7 +107,7 @@ extern struct ck_p ptab[];
 extern int local, escape, duplex, parity, flow, seslog, sessft, debses,
  mdmtyp, ttnproto, cmask, cmdmsk, network, nettype, deblog, sosi, tnlm,
  xitsta, what, ttyfd, ttpipe, quiet, backgrd, pflag, tt_crd, tn_nlm, ttfdflg,
- tt_escape, justone, carrier;
+ tt_escape, justone, carrier, hwparity;
 
 extern long speed;
 extern char ttname[], sesfil[], myhost[], *ccntab[];
@@ -1798,7 +1798,7 @@ conect() {
 	if (tcsr == FC_UTF8 ||		/* Remote charset is UTF-8 */
 	    tcsl == FC_UTF8) {		/* or local one is. */
 	    xuf = xl_ufc[tcsl];		/* Incoming Unicode to local */
-	    if (xuf) {
+	    if (xuf || tcsl == FC_UTF8) {
 		tcs = (tcsr == FC_UTF8) ? tcsl : tcsr; /* The "other" set */
 		xfu = xl_fcu[tcs];	/* Local byte to remote Unicode */
 		if (xfu)
@@ -2582,7 +2582,10 @@ doesc(c) char c;
 	    conoll(temp);
 	    sprintf(temp," Command bytesize: %d", (cmdmsk == 0177) ? 7 : 8 );
 	    conoll(temp);
-	    sprintf(temp," Parity: %s", parnam((char)parity));
+            if (hwparity)
+              sprintf(temp," Parity[hardware]: %s",parnam((char)hwparity));
+            else	    
+  	      sprintf(temp," Parity: %s", parnam((char)parity));
 	    conoll(temp);
 	    sprintf(temp," Autodownload: %s", autodl ? "on" : "off");
 	    conoll(temp);

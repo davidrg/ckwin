@@ -1,10 +1,10 @@
 #ifdef aegis
-char *ckxv = "Aegis Communications support, 8.0.280, 9 Jan 2002";
+char *ckxv = "Aegis Communications support, 8.0.301, 20 Aug 2002";
 #else
 #ifdef Plan9
-char *ckxv = "Plan 9 Communications support, 8.0.280, 9 Jan 2002";
+char *ckxv = "Plan 9 Communications support, 8.0.301, 20 Aug 2002";
 #else
-char *ckxv = "UNIX Communications support, 8.0.280, 9 Jan 2002";
+char *ckxv = "UNIX Communications support, 8.0.301, 20 Aug 2002";
 #endif /* Plan9 */
 #endif /* aegis */
 
@@ -1730,6 +1730,8 @@ le_getchar(pch) CHAR * pch;
 #endif /* TIOCGWINSZ */
 #endif /* COMMENT */
 
+static int tt_xpixel = 0, tt_ypixel = 0;
+
 int
 ttgwsiz() {
     int x = 0;
@@ -1766,6 +1768,9 @@ ttgwsiz() {
 /* Note, the above might be needed for some other older SVR3 Intel makes... */
 
     struct winsize w;
+    tt_xpixel = 0;
+    tt_ypixel = 0;
+
 #ifdef IKSD
     if (inserver)
       return(xttgwsiz());
@@ -1777,6 +1782,8 @@ ttgwsiz() {
     } else if (w.ws_row > 0 && w.ws_col > 0) {
 	tt_rows = w.ws_row;
 	tt_cols = w.ws_col;
+	tt_xpixel = w.ws_xpixel;
+	tt_ypixel = w.ws_ypixel;
 	debug(F101,"ttgwsiz tt_rows","",tt_rows);
 	debug(F101,"ttgwsiz tt_cols","",tt_cols);
 	return(1);
@@ -1790,6 +1797,94 @@ ttgwsiz() {
 #endif /* QNX */
 #endif /* NONAWS */
 }
+
+
+#ifndef NOSIGWINCH
+#ifdef SIGWINCH
+SIGTYP
+winchh(foo) int foo; {			/* SIGWINCH handler */
+    int x = 0;
+#ifdef NETPTY
+    extern int pty_fork_pid;
+#endif /* NETPTY */
+#ifdef CK_TTYFD
+#ifndef VMS
+    extern int ttyfd;
+#endif /* VMS */
+#endif /* CK_TTYFD */
+    extern int tt_rows, tt_cols, cmd_rows, cmd_cols;
+#ifdef DEBUG
+    if (deblog) {
+	debug(F100,"***************","",0);
+	debug(F100,"SIGWINCH caught","",0);
+	debug(F100,"***************","",0);
+#ifdef NETPTY
+	debug(F101,"SIGWINCH pty_fork_pid","",pty_fork_pid);
+#endif /* NETPTY */
+    }
+#endif /* DEUB */
+    signal(SIGWINCH,winchh);            /* Re-arm the signal */
+    x = ttgwsiz();                      /* Get new window size */
+    cmd_rows = tt_rows;			/* Adjust command screen too */
+    cmd_cols = tt_cols;
+
+#ifdef CK_TTYFD
+    if					/* If we don't have a connection */
+#ifdef VMS				/* we're done. */
+      (vmsttyfd() == -1)
+#else
+      (ttyfd == -1)
+#endif /* VMS */
+#else
+      (!local)
+#endif /* CK_TTYFD */
+        return;
+
+#ifdef NETPTY
+    if (pty_fork_pid > -1) {		/* "set host" to a PTY? */
+	int x;
+
+#ifdef TIOCSWINSZ
+	struct winsize w;		/* Resize the PTY */
+	errno = 0;
+	w.ws_col = tt_cols;
+	w.ws_row = tt_rows;
+	w.ws_xpixel = tt_xpixel;
+	w.ws_ypixel = tt_ypixel;
+	x = ioctl(ttyfd,TIOCSWINSZ,&w);
+	debug(F101,"winchh TIOCSWINSZ","",x);
+	debug(F101,"winchh TIOCSWINSZ errno","",errno);
+#endif /* TIOCSWINSZ */
+
+	errno = 0;
+	x = kill(pty_fork_pid,SIGWINCH);
+	debug(F101,"winchh kill","",x);
+	debug(F101,"winchh kill errno","",errno);
+    }
+#endif /* NETPTY */
+
+/*
+  This should be OK.  It might seem that sending this from
+  interrupt level could interfere with another TELNET IAC string
+  that was in the process of being sent.  But we always send
+  TELNET strings with a single write(), which should prevent mixups.
+  blah_snaws() should protect themselves from being called on the
+  wrong kind of connection.
+*/
+#ifdef TCPSOCKET
+#ifndef NOTTGWSIZ
+    if (x > 0 && tt_rows > 0 && tt_cols > 0) {
+        tn_snaws();
+#ifdef RLOGCODE
+        rlog_naws();
+#endif /* RLOGCODE */
+    }
+#endif /* NOTTGWSIZ */
+#endif /* TCPSOCKET */
+    SIGRETURN;
+}
+#endif /* SIGWINCH */
+#endif /* NOSIGWINCH */
 
 SIGTYP
 sighup(foo) int foo; {			/* SIGHUP handler */
@@ -1911,6 +2006,11 @@ sysinit() {
     signal(SIGINT,SIG_IGN);		/* Ignore interrupts at first */
     signal(SIGFPE,SIG_IGN);		/* Ignore floating-point exceptions */
     signal(SIGHUP,sighup);		/* Catch SIGHUP */
+#ifndef NOSIGWINCH
+#ifdef SIGWINCH
+    signal(SIGWINCH,winchh);		/* Catch window-size change */
+#endif /* SIGWINCH */
+#endif /* NOSIGWINCH */
 
 #ifndef NOJC
 /*
@@ -1986,9 +2086,11 @@ sysinit() {
 
     ttgwsiz();				/* Get window (screen) dimensions. */
 
+#ifndef NOSYSCONF
 #ifdef _SC_OPEN_MAX
     ckmaxfiles = sysconf(_SC_OPEN_MAX);
 #endif /* _SC_OPEN_MAX */
+#endif /* NOSYSCONF */
 
 #ifdef Plan9
     if (!backgrd) {
@@ -3453,8 +3555,10 @@ ttclos(foo) int foo; {			/* Arg req'd for signal() prototype */
 	    printf("ttclos() timeout: %s\n", ttc_nam[ttc_state]);
 #endif /* DEBUG */
 	}
+	/* Hang up the device (drop DTR) */
+
 	errno = 0;
-	debug(F101,"ttclos A","",ttc_state);
+	debug(F111,"ttclos A",ckitoa(x),ttc_state);
 	if (ttc_state < 1) {
 	    ttc_state = 1;
 	    debug(F101,"ttclos exithangup","",exithangup);
@@ -3465,24 +3569,37 @@ ttclos(foo) int foo; {			/* Arg req'd for signal() prototype */
 		debug(F101,"ttclos tthang()","",x);
 	    }
 	}
-	debug(F101,"ttclos B","",ttc_state);
+	/* Put back device modes as we found them */
+
+	errno = 0;
+	debug(F111,"ttclos B",ckitoa(x),ttc_state);
 	if (ttc_state < 2) {
 	    ttc_state = 2;
-	    debug(F101,"ttclos calling ttres()","",x);
-	    alarm(8);			/* Re-arm the timer */
-	    x = ttres();		/* Reset device modes. */
-	    debug(F101,"ttclos ttres()","",x);
+	    /* Don't try to mess with tty modes if tthang failed() */
+	    /* since it probably won't work. */
+	    if (x > -1) {
+		debug(F101,"ttclos calling ttres()","",x);
+		signal(SIGALRM,xtimerh); /* Re-enable the alarm. */
+		alarm(8);		/* Re-arm the timer */
+		x = ttres();		/* Reset device modes. */
+		debug(F101,"ttclos ttres()","",x);
+		alarm(0);
+	    }
 	}
+	/* Close the device */
+
+	errno = 0;
 	debug(F101,"ttclos C","",ttc_state);
 	if (ttc_state < 3) {
 	    ttc_state = 3;
 	    errno = 0;
 	    debug(F101,"ttclos calling close","",x);
+	    signal(SIGALRM,xtimerh);	/* Re-enable alarm. */
 	    alarm(8);			/* Re-arm the timer */
 	    x = close(ttyfd);		/* Close the device. */
 	    debug(F101,"ttclos close()","",x);
 	    if (x > -1)
-	      ttc_state = 4;
+	      ttc_state = 3;
 	}
 	debug(F101,"ttclos D","",ttc_state);
 	ttimoff();			/* Turn off timer. */
@@ -3637,7 +3754,7 @@ tthang() {
                 msleep(HUPTIME);
                 rc = tnc_set_dtr_state(1);
             }
-            return(rc >= 0 ? 0 : -1);
+            return(rc >= 0 ? 1 : -1);
         } else
 #endif /* TN_COMPORT */
 	  return((netclos() < 0) ? -1 : 1); /* Just close it. */
@@ -4321,7 +4438,7 @@ ttres() {                               /* Restore the tty to normal. */
             } else
 #endif /* HWPARITY */
 	    {
-                tnc_set_parity(0);              /* None */
+                tnc_set_parity(1);              /* None */
             }
             tvtflg = 0;
             return(0);
@@ -6113,7 +6230,7 @@ ttpkt(speed,xflow,parity) long speed; int xflow, parity;
             } else 
 #endif /* HWPARITY */
 	    {
-                tnc_set_parity(0);              /* None */
+                tnc_set_parity(1);              /* None */
             }
             tvtflg = 0;
             return(0);
@@ -6444,8 +6561,13 @@ ttpkt(speed,xflow,parity) long speed; int xflow, parity;
 #ifdef HWPARITY
     if (hwparity && xlocal) {		/* Hardware parity */
 	ttraw.c_cflag |= PARENB;	/* Enable parity */
+#ifdef COMMENT
+/* Uncomment this only if needed -- I don't think it is */
+	ttraw.c_cflag &= ~(CSIZE);	/* Clear out character-size mask */
+	ttraw.c_cflag |= CS8;		/* And set it to 8 */
+#endif /* COMMENT */
 #ifdef IGNPAR
-	ttraw.c_cflag &= ~(IGNPAR);	/* Don't discard incoming bytes */
+	ttraw.c_iflag |= IGNPAR;	/* Don't discard incoming bytes */
 	debug(F100,"ttpkt IGNPAR","",0); /* that have parity errors */
 #endif /* IGNPAR */
 	switch (hwparity) {
@@ -6724,7 +6846,7 @@ ttvt(speed,flow) long speed; int flow;
             } else
 #endif /* HWPARITY */
             {
-                tnc_set_parity(0);	/* None */
+                tnc_set_parity(1);	/* None */
             }
             tvtflg = 1;
             return(0);
@@ -6866,11 +6988,17 @@ ttvt(speed,flow) long speed; int flow;
 
 #ifdef HWPARITY
     if (hwparity && xlocal) {		/* Hardware parity */
+#ifdef COMMENT
+/* Uncomment this only if needed -- I don't think it is */
+	ttraw.c_cflag &= ~(CSIZE);	/* Clear out character-size mask */
+	ttraw.c_cflag |= CS8;		/* And set it to 8 */
+#endif /* COMMENT */
 #ifdef IGNPAR
-	tttvt.c_cflag &= ~(IGNPAR);	/* Don't discard incoming bytes */
-	debug(F100,"ttvt IGNPAR","",0); /* that have parity errors */
+	debug(F101,"ttvt hwparity IGNPAR","",IGNPAR);
+	tttvt.c_iflag |= IGNPAR;	/* Don't discard incoming bytes */
 #endif /* IGNPAR */
 	tttvt.c_cflag |= PARENB;	/* Enable parity */
+
 	switch (hwparity) {
 	  case 'e':			/* Even */
 	    tttvt.c_cflag &= ~(PARODD);
@@ -6939,6 +7067,7 @@ ttvt(speed,flow) long speed; int flow;
 #ifdef BEOSORBEBOX
     tttvt.c_cc[VMIN] = 0;		/* DR7 can only poll. */
 #endif /* BEOSORBEBOX */
+
     x = tcsetattr(ttyfd,TCSADRAIN,&tttvt);
     debug(F101,"ttvt BSD44ORPOSIX tcsetattr","",x);
     if (x < 0) {
@@ -8259,7 +8388,7 @@ myfillbuf() {
 #ifdef KRB5
 #ifdef RLOGCODE
     if (ttnproto == NP_EK5LOGIN) {
-        if ((n = krb5_des_read(ttyfd,mybuf,sizeof(mybuf))) < 0)
+        if ((n = krb5_des_read(ttyfd,mybuf,sizeof(mybuf),0)) < 0)
 	  return(-3);
         else
 	  return(n);
@@ -8419,7 +8548,7 @@ myfillbuf() {
 #ifdef KRB5
 #ifdef RLOGCODE
     if (ttnproto == NP_EK5LOGIN) {
-        if ((x = krb5_des_read(ttyfd,mybuf,sizeof(mybuf))) < 0)
+        if ((x = krb5_des_read(ttyfd,mybuf,sizeof(mybuf),0)) < 0)
 	  return(-1);
         else
 	  return(x);
@@ -8521,7 +8650,7 @@ myfillbuf() {
 #ifdef KRB5
 #ifdef RLOGCODE
     if (ttnproto == NP_EK5LOGIN) {
-        if ((len = krb5_des_read(ttyfd,mybuf,sizeof(mybuf))) < 0)
+        if ((len = krb5_des_read(ttyfd,mybuf,sizeof(mybuf),0)) < 0)
 	  return(-1);
         else
 	  return(len);
@@ -8721,10 +8850,12 @@ ttflui() {
 /* Network flush is done specially, in the network support module. */
     if ((netconn || sstelnet) && !ttpipe && !ttpty) {
 	debug(F100,"ttflui netflui","",0);
+#ifdef COMMENT
 #ifdef TN_COMPORT
 	if (istncomport())
-	  tnc_send_purge_data(TNC_PURGE_RECEIVE);
+            tnc_send_purge_data(TNC_PURGE_RECEIVE);
 #endif /* TN_COMPORT */
+#endif /* COMMENT */
 	return(netflui());
     }
 #endif /* NETCONN */
@@ -9512,8 +9643,11 @@ in_chk(channel, fd) int channel, fd; {
 	if (ttyfd < 0) {		/* No connection */
 	  return(-2);			/* That's what this means */
 	} else if (xlocal &&		/* In local mode */
-		   !netconn &&		/* Serial connection */
-		   ttcarr != CAR_OFF	/* with CARRIER WATCH ON (or AUTO) */
+		   (!netconn		/* Serial connection or */
+#ifdef TN_COMPORT
+		    || istncomport()    /* Telnet Com Port */
+#endif /* TN_COMPORT */
+		   ) && ttcarr != CAR_OFF /* with CARRIER WATCH ON (or AUTO) */
 #ifdef COMMENT
 #ifdef MYREAD
 /*
@@ -10106,7 +10240,7 @@ ttol(s,n) int n; CHAR *s; {
 #ifdef KRB5
 #ifdef RLOGCODE
             if (ttnproto == NP_EK5LOGIN) {
-                return(krb5_des_write(ttyfd,s,n));
+                return(krb5_des_write(ttyfd,s,n,0));
             } else
 #endif /* RLOGCODE */
 #ifdef KRB5_U2U
@@ -10287,7 +10421,7 @@ ttoc(c) char c;
 #ifdef KRB5
 #ifdef RLOGCODE
           if (ttnproto == NP_EK5LOGIN) {
-              rc = (krb5_des_write(ttyfd,&c,1) == 1);
+              rc = (krb5_des_write(ttyfd,&c,1,0) == 1);
           } else
 #endif /* RLOGCODE */
 #ifdef KRB5_U2U
@@ -11477,6 +11611,8 @@ gftimer() {
   that use gettimeofday().  When these variables are not filled in, they are
   left with a value of -1L.
 */
+static char asctmbuf[64];
+
 VOID
 ztime(s) char **s; {
 
@@ -11545,7 +11681,11 @@ ztime(s) char **s; {
 #endif /* HPUX1000 */
 #endif /* HPUX9 */
 	if (s) {
-	    *s = asctime(tp);		/* Convert result to ASCII string */
+	    char * s2;
+	    s2 = asctime(tp);		/* Convert result to ASCII string */
+	    asctmbuf[0] = '\0';
+	    if (s2) ckstrncpy(asctmbuf,s2,64);
+	    *s = asctmbuf;
 	    debug(F111,"ztime GFTIMER gettimeofday",*s,ztusec);
 	}
     }
@@ -12898,6 +13038,18 @@ ttgmdm() {
     if (xlocal && ttyfd < 0)
       return(-1);
 
+#ifdef NETCONN
+    if (netconn) {			/* Network connection */
+#ifdef TN_COMPORT
+        if (istncomport()) {
+	    gotsigs = 1;
+	    return(tngmdm());
+	} else
+#endif /* TN_COMPORT */
+	  return(-2);			/* No modem signals */
+    }
+#endif /* NETCONN */
+
 #ifdef NETCMD
     if (ttpipe) return(-2);
 #endif /* NETCMD */
@@ -12939,7 +13091,7 @@ ttgmdm() {
 	gotsigs = 1;
 	return(z);
     } else return(-1);
-#else
+#else /* QNX */
 #ifdef HPUX				/* HPUX has its own way */
     int x, z;
 
@@ -13039,8 +13191,17 @@ ttgmdm() {
 
     debug(F100,"ttgmdm K_MDMCTL defined","",0);
 
-    if (netconn)			/* Network connection */
-      return(-2);			/* No modem signals */
+#ifdef NETCONN
+    if (netconn) {			/* Network connection */
+#ifdef TN_COMPORT
+        if (istncomport()) {
+	    gotsigs = 1;
+	    return(tngmdm());
+	} else
+#endif /* TN_COMPORT */
+	  return(-2);			/* No modem signals */
+    }
+#endif /* NETCONN */
 
 #ifdef NETCMD
     if (ttpipe) return(-2);
@@ -13123,8 +13284,17 @@ ttgmdm() {
     debug(F100,"ttgmdm _SVID3 not defined","",0);
 #endif /* _SVID3 */
 
-    if (netconn)			/* Network connection */
-      return(-2);			/* No modem signals */
+#ifdef NETCONN
+    if (netconn) {			/* Network connection */
+#ifdef TN_COMPORT
+        if (istncomport()) {
+	    gotsigs = 1;
+	    return(tngmdm());
+	} else
+#endif /* TN_COMPORT */
+	  return(-2);			/* No modem signals */
+    }
+#endif /* NETCONN */
 
 #ifdef NETCMD
     if (ttpipe) return(-2);

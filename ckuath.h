@@ -113,39 +113,39 @@ _PROTOTYP(int  ck_tn_tls_negotiate, (VOID));
     /* successfully in Kermit 95 due to the segmentation of crypto     */
     /* into a separate DLL.                                            */
 
-#define KRB_DEFTIM 600			/* Default lifetime (minutes) */
+#define KRB_DEFTIM 600                  /* Default lifetime (minutes) */
 
 /* Kerberos structure definitions */
 
-struct krb_op_data {			/* Operational data for all actions */
-    int version;			/* Kerberos version    */
-    char * cache;			/* Kerberos cache file */
+struct krb_op_data {                    /* Operational data for all actions */
+    int version;                        /* Kerberos version    */
+    char * cache;                       /* Kerberos cache file */
 };
 
-struct krb4_init_data {			/* INITIALIZE data structure */
+struct krb4_init_data {                 /* INITIALIZE data structure */
     int lifetime;
-    char * principal;			/* Principal string */
+    char * principal;                   /* Principal string */
     char * instance;
     char * realm;                       /* Realm string */
-    char * password;			/* Kerberos password */
+    char * password;                    /* Kerberos password */
     int    preauth;                     /* Use preauth mode? */
     int    verbose;                     /* Verbose output? */
 };
 
 #define KRB5_NUM_OF_ADDRS 16
-struct krb5_init_data {			/* INITIALIZE data structure */
-    int forwardable;			/* Switch values */
-    int proxiable;			/* Correspond to switch names... */
+struct krb5_init_data {                 /* INITIALIZE data structure */
+    int forwardable;                    /* Switch values */
+    int proxiable;                      /* Correspond to switch names... */
     int lifetime;
     int renew;
     int renewable;
     int validate;
     char * postdate;
     char * service;
-    char * principal;			/* Principal string */
+    char * principal;                   /* Principal string */
     char * instance;
     char * realm;                       /* Realm string */
-    char * password;			/* Kerberos password */
+    char * password;                    /* Kerberos password */
     int    preauth;                     /* Use preauth mode? */
     int    verbose;                     /* Verbose output? */
     int    getk4;                       /* Get K4 TGT? */
@@ -153,7 +153,7 @@ struct krb5_init_data {			/* INITIALIZE data structure */
     int  no_addresses;                  /* Do not include IP Addresses */
 };
 
-struct krb5_list_cred_data {		/* List Credentials data */
+struct krb5_list_cred_data {            /* List Credentials data */
     int encryption;
     int flags;
     int addr;
@@ -193,8 +193,8 @@ _PROTOTYP(int krb4_des_avail,(int));
 _PROTOTYP(int krb4_des_write,(int,char *,int));
 _PROTOTYP(int krb4_des_read, (int,char *,int));
 _PROTOTYP(int krb5_des_avail,(int));
-_PROTOTYP(int krb5_des_write,(int,char *,int));
-_PROTOTYP(int krb5_des_read, (int,char *,int));
+_PROTOTYP(int krb5_des_write,(int,char *,int,int));
+_PROTOTYP(int krb5_des_read, (int,char *,int,int));
 _PROTOTYP(int krb5_u2u_avail,(int));
 _PROTOTYP(int krb5_u2u_write,(int,char *,int));
 _PROTOTYP(int krb5_u2u_read, (int,char *,int));

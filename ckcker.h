@@ -20,6 +20,7 @@
 #define I_AM_FTP     4
 #define I_AM_HTTP    5
 #define I_AM_SSHSUB  6
+#define I_AM_SSH     7
 
 #ifndef NOSTREAMING
 #ifndef STREAMING
@@ -309,6 +310,7 @@ struct ssh_pf {				/* SSH port forwarding */
 #define W_FTP      128			/* FTP */
 #define W_FT_DELE   64			/* FTP MDELETE */
 #define W_KERMIT (W_INIT|W_SEND|W_RECV|W_REMO) /* Kermit protocol */
+#define W_XFER (W_INIT|W_SEND|W_RECV|W_REMO|W_FTP) /* File xfer any protocol */
 
 #ifndef NOWHATAMI
 #ifndef WHATAMI
@@ -541,6 +543,8 @@ struct ssh_pf {				/* SSH port forwarding */
 #endif /* UNIXOROSK */
 #endif /* DFCDMSG */
 
+#define NSNDEXCEPT 64		/* Max patterns for /EXCEPT: list */
+
 /* Files */
 
 #define ZCTERM      0	    	/* Console terminal */
@@ -672,11 +676,12 @@ extern char ** sndarray;
 
 /* Screen functions */
 
-#define XYFD_N 0			/* None, Off */
+#define XYFD_N 0			/* File transfer display: None, Off */
 #define XYFD_R 1			/* Regular, Dots */
 #define XYFD_C 2			/* Cursor-positioning (e.g. curses) */
 #define XYFD_S 3			/* CRT Screen */
 #define XYFD_B 4			/* Brief */
+#define XYFD_G 5                        /* GUI */
 
 #ifdef NODISPLAY
 #define xxscreen(a,b,c,d)
@@ -983,6 +988,7 @@ struct pktinfo {			/* Packet information structure */
 #define     XYFX_R 0    /*    Rename */
 #define     XYFX_X 1    /*    Replace */
 #define     XYFX_U 6    /*    Update */
+#define     XYFX_M 7    /*    Modtimes differ */
 #define   XYFILB 10     /*  Blocksize */
 #define   XYFILZ 11     /*  Disposition */
 #define     XYFZ_N 0    /*    New, Create */
@@ -1377,6 +1383,21 @@ _PROTOTYP( int zstart, (CHAR) );
 _PROTOTYP(void apc_command, (int, char*));
 #endif /* OS2 */
 #endif /* CK_APC */
+
+/* User Query data structures and functions */
+
+struct txtbox {
+    char * t_buf;			/* Destination buffer address */
+    int    t_len;			/* Destination buffer length */
+    char * t_lbl;			/* Label for this field */
+    char * t_dflt;			/* Default response for this field */
+    int    t_echo;			/* 0 = no, 1 = yes, 2 = asterisks */
+};
+
+_PROTOTYP(int uq_ok, (char *,char *,int,char **,int) );
+_PROTOTYP(int uq_txt, (char *,char *,int,char **,char *,int,char *));
+_PROTOTYP(int uq_mtxt, (char *,char **,int,struct txtbox[]) );
+_PROTOTYP(int uq_file, (char *,char *,int,char **,char *,char *,int));
 
 #ifdef CK_URL
 struct urldata {

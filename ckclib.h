@@ -26,8 +26,8 @@ _PROTOTYP( int ckstrncat, (char *, char *, int) );
 
 _PROTOTYP( int ckmakmsg,  (char *, int, char *, char *, char *, char *) );
 _PROTOTYP( int ckmakxmsg, (char *, int,
-			   char *, char *, char *, char *, char *, char *,
-			   char *, char *, char *, char *, char *, char *) );
+                           char *, char *, char *, char *, char *, char *,
+                           char *, char *, char *, char *, char *, char *) );
 
 _PROTOTYP( char * ckstrpbrk, (char *, char *) );
 _PROTOTYP( char * ckstrstr, (char *, char *) );
@@ -94,6 +94,6 @@ _PROTOTYP( VOID rset, (char *, char *, int, int) );
 _PROTOTYP( char * ulongtohex, (unsigned long, int) );
 _PROTOTYP( long hextoulong, (char *, int) );
 _PROTOTYP( struct stringarray * cksplit, (int,int,
-					  char *,char *,char *,int,int,int) );
+                                          char *,char *,char *,int,int,int) );
 
 #endif /* CKCLIB_H */

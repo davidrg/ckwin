@@ -1,4 +1,4 @@
-char * cklibv = "C-Kermit library, 8.0.031, 29 Jul 2001";
+char * cklibv = "C-Kermit library, 8.0.032, 11 Sep 2002";
 
 #define CKCLIB_C
 
@@ -979,6 +979,12 @@ makelist(s,list,len) char * s; char *list[]; int len; {
 	    debug(F111,"makelist last element",p,i);
 	}
     }
+    i++;				/* Clear out the rest of the list */
+    for ( ; i < len; i++) {
+	if (list[i])
+	  free (list[i]);
+	list[i] = NULL;
+    }
     if (s2) free(s2);
 }
 
@@ -1271,7 +1277,11 @@ ckmatch(pattern, string, icase, opts) char *pattern,*string; int icase, opts; {
 	matchend = 0;
 	ostring = string;
 	lastpat = pattern;
-	dot = opts & 1;
+
+	dot = (opts & 1) ||		/* Match leading dot (if file) */
+	    (opts & 2 == 0) ||		/* always if not file */
+	    (pattern[0] == '.');	/* or if pattern starts with '.' */
+
 	plen = strlen(pattern);		/* Length of pattern */
 /* This would be used in calculating length of matching segment */
 	if (plen > 0)			/* User's pattern ends with '*' */
@@ -1507,12 +1517,17 @@ ckmatch(pattern, string, icase, opts) char *pattern,*string; int icase, opts; {
 			    if (!*s2) {	/* Empty segment, no advancement */
 				k = 0;
 			    } else if ((tp = (char *)malloc(tplen))) {
-				int savpos;
-				debug(F111,"CKMATCH {} ostring sofar",
-				      &ostring[matchpos-1],
-				      sofar);
+				int savpos, opts2;
+				char * pp;
+				pp = matchpos > 0 ?
+				    &ostring[matchpos-1] :
+				    ostring;
 				tp[0] = '*';
-				ckstrncpy(&tp[1],&ostring[matchpos-1],sofar+1);
+				tp[1] = NUL;
+				if (matchpos > 0)
+				  ckstrncpy(&tp[1],pp,sofar+1);
+				else
+				  ckstrncpy(&tp[1],pp,sofar);
 				ckstrncat(tp,s2,tplen); /* Current segment */
 				ckstrncat(tp,p+1,tplen); /* rest of pattern */
 
@@ -1528,10 +1543,15 @@ ckmatch(pattern, string, icase, opts) char *pattern,*string; int icase, opts; {
 					  ostring,savpos);
 				}
 #endif /* DEBUG */
+				/* If segment starts with dot */
+				/* then set matchdot option.. */
+				opts2 = opts;
+				if (*s2 == '.') opts2 |= 1;
+				debug(F111,"CKMATCH {} recursing",s2,opts2);
 				k = ckmatch(tp,
 					    (string > ostring) ?
 					    &ostring[savpos-1] : string,
-					    icase,opts);
+					    icase,opts2);
 #ifdef DEBUG
 				if (deblog) {
 				    debug(F101,"CKMATCH {} k","",k);

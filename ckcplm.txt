@@ -5,8 +5,8 @@
      [1]The Kermit Project
      [2]Columbia University
      
-   As of: C-Kermit 8.0.201, 8 Feb 2002
-   This page last updated: Wed Dec 12 09:48:04 2001 (New York USA Time)
+   As of: C-Kermit 8.0.206, 24 Oct 2002
+   This page last updated: Thu Oct 24 09:58:08 2002 (New York USA Time)
    
      IF YOU ARE READING A PLAIN-TEXT version of this document, note that
      this file is a plain-text dump of a Web page. You can visit the
@@ -2936,7 +2936,7 @@ foo(x,y) int x, y; {
    
    
     C-Kermit Program Logic Manual / [143]The Kermit Project /
-    [144]Columbia University / [145]kermit@columbia.edu / 12 Dec 2001
+    [144]Columbia University / [145]kermit@columbia.edu / 24 Oct 2002
 
 References
 

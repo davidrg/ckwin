@@ -56,7 +56,7 @@ char * ptyver = "No PTY support";
 
 #else  /* (rest of this module...) */
 
-char * ptyver = "PTY support 8.0.013, 5 Jun 2001";
+char * ptyver = "PTY support 8.0.014, 20 Aug 2002";
 
 /* These will no doubt need adjustment... */
 
@@ -1414,7 +1414,7 @@ ptyint_update_wtmp(ent,host,user) struct utmp *ent; char *host; char *user; {
 #endif /* WANT_UTMP */
 
 static char Xline[17] = { 0, 0 };
-static int slavepid = -1;
+int pty_fork_pid = -1;
 
 /*
   getptyslave()
@@ -1670,7 +1670,8 @@ do_pty(cmd) char * cmd; {
             close(syncpipe[0]);
             return(-1);
         }
-        slavepid = i;			/* So we can clean it up later */
+        pty_fork_pid = i;		/* So we can clean it up later */
+	debug(F101,"do_pty pty_fork_pid","",pty_fork_pid);
 #ifdef HAVE_PTYTRAP
         /* HPUX does not allow the master to read end of file.  */
         /* Therefore, we must determine that the slave has been */
@@ -1679,7 +1680,7 @@ do_pty(cmd) char * cmd; {
 	x = ioctl(ttyfd, TIOCTRAP, (char *)&on);
 	debug(F111,"do_pty ioctl(TIOCTRAP)",ckitoa(x),errno);
 #endif /* HAVE_PTYTRAP */
-        debug(F111,"do_pty()","synchronized - slavepid",slavepid);
+        debug(F111,"do_pty()","synchronized - pty_fork_pid",pty_fork_pid);
         close(syncpipe[0]);
     } else {
         debug(F110,"do_pty()","Slave starts",0);
@@ -1712,10 +1713,10 @@ do_pty(cmd) char * cmd; {
 VOID
 end_pty() {
     msg = 0;				/* Message counter */
-    if (Xline[0] && slavepid >= 0) {
-        pty_cleanup(Xline,slavepid,1);
+    if (Xline[0] && pty_fork_pid >= 0) {
+        pty_cleanup(Xline,pty_fork_pid,1);
         Xline[0] = '\0';
-        slavepid = -1;
+        pty_fork_pid = -1;
     }
 }
 #endif /* NETPTY */

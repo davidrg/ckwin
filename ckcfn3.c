@@ -133,7 +133,7 @@ ckmkdir(fc,s,r,m,cvt) int fc; char * s; char ** r; int m; int cvt; {
     ckstrncpy(tmpbuf,s,CKMAXPATH+1);
     s = tmpbuf;
     x = strlen(s);
-    if (x > 0 && s[x-1] != '/') {	/* Must end in "/" for zmkdir() */
+    if (fc == 0 && x > 0 && s[x-1] != '/') { /* Must end in "/" for zmkdir() */
 	s[x] = '/';
 	s[x+1] = NUL;
 	debug(F110,"ckmkdir 2+OS2",s,0);
@@ -218,7 +218,8 @@ extern int unkcs, wmax, wcur, discard, bctu, bctl, local, fdispla, what,
   sendmode, opnerr, dest, epktrcvd, epktsent, filestatus, eofmethod, dispos;
 extern long sendstart, calibrate, fncnv, fnrpath;
 
-extern char * ofn2, * rfspec, * sfspec;
+extern char * ofn2;
+extern char * rfspec, * sfspec, * prfspec, * psfspec, * rrfspec, * prrfspec;
 extern char ofn1[];
 extern int ofn1x;
 extern char * ofperms;
@@ -1527,7 +1528,7 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 		    if (binary != XYFT_I) /* VMS IMAGE overrides this */
 #endif /* VMS */
 		      binary = XYFT_T;	/* Set current type to Text. */
-		    debug(F101,"gattr attribute A=text","",binary);
+		    debug(F101,"gattr binary 2","",binary);
 		} else if (yy->type.val[0] == 'B') {
 #ifdef CK_LABELED
 		    if (binary != XYFT_L
@@ -1540,7 +1541,7 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 		    if (binary != XYFT_M) /* If not MacBinary... */
 #endif /* MAC */
 		      binary = XYFT_B;
-		    debug(F101,"gattr binary 2","",binary);
+		    debug(F101,"gattr binary 3","",binary);
 		}
 	    }
 	    break;
@@ -1590,10 +1591,12 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 #ifndef NOCSETS
 		  case 'A':		  /* Normal, nothing special */
 		    tcharset = TC_TRANSP; /* Transparent chars untranslated */
+		    debug(F110,"gattr sets tcharset TC_TRANSP","A",0);
 		    break;
 		  case 'C':		  /* Specified character set */
 		    if (!xfrxla) {	  /* But translation disabled */
 			tcharset = TC_TRANSP;
+			debug(F110,"gattr sets tcharset TC_TRANSP","C",0);
 			break;
 		    }
 #ifdef UNICODE
@@ -1796,7 +1799,8 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 	    if (atlpri) {
 		yy->lprotect.val = (char *)lprmbuf;
 		yy->lprotect.len = i;
-	    }
+	    } else
+	      lprmbuf[0] = NUL;
 	    break;
 
 	  case '-':			/* Generic "world" protection code */
@@ -1807,7 +1811,8 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 	    if (atgpri) {
 		yy->gprotect.val = (char *)gprmbuf;
 		yy->gprotect.len = gprmbuf[0] ? 1 : 0;
-	    }
+	    } else
+	      gprmbuf[0] = NUL;
 	    break;
 #endif /* CK_PERMS */
 
@@ -2065,11 +2070,11 @@ opena(f,zz) char *f; struct zattr *zz; {
     if (x = openo(f,zz,&fcb)) {		/* Try to open the file. */
 #ifdef pdp11
 	tlog(F110," local name:",f,0L);	/* OK, open, record local name. */
-	makestr(&rfspec,f);
+	makestr(&prfspec,f);		/* New preliminary name */
 #else
 #ifndef ZFNQFP
 	tlog(F110," local name:",f,0L);
-	makestr(&rfspec,f);
+	makestr(&prfspec,f);
 #else
 	{				/* Log full local pathname */
 	    char *p = NULL, *q = f;
@@ -2077,7 +2082,7 @@ opena(f,zz) char *f; struct zattr *zz; {
 	      if (zfnqfp(filnam, CKMAXPATH, p))
 		q = p;
 	    tlog(F110," local name:",q,0L);
-	    makestr(&rfspec,q);
+	    makestr(&prfspec,q);
 	    if (p) free(p);
 	}
 #endif /* ZFNQFP */
@@ -2097,9 +2102,14 @@ opena(f,zz) char *f; struct zattr *zz; {
 		  tlog(F110," character-set:","transparent",0L);
 	    }
 #endif /* NOCSETS */
-	    debug(F111," opena charset",zz->encoding.val,zz->encoding.len);
+	    debug(F111,"opena charset",zz->encoding.val,zz->encoding.len);
 	}
-	if (fsize > -1L) xxscreen(SCR_FS,0,fsize,"");
+	debug(F101,"opena binary","",binary);
+
+#ifdef COMMENT
+	if (fsize > -1L)
+#endif /* COMMENT */
+	  xxscreen(SCR_FS,0,fsize,"");
 
 #ifdef datageneral
 /*
@@ -2387,7 +2397,7 @@ clsif() {
 	    xxscreen(SCR_ST,ST_INT,0l,""); /* say so */
 #ifdef TLOG
 	    if (tralog && !tlogfmt)
-	      doxlog(what,sfspec,fsize,binary,1,"Interrupted");
+	      doxlog(what,psfspec,fsize,binary,1,"Interrupted");
 #endif /* TLOG */
 	} else if (discard && !epktsent) { /* If I'm refusing */
 	    xxscreen(SCR_ST,ST_REFU,0l,refused); /* say why */
@@ -2395,7 +2405,7 @@ clsif() {
 	    if (tralog && !tlogfmt) {
 		char buf[128];
 		ckmakmsg(buf,128,"Refused: ",refused,NULL,NULL);
-		doxlog(what,sfspec,fsize,binary,1,buf);
+		doxlog(what,psfspec,fsize,binary,1,buf);
 	    }
 #endif /* TLOG */
 	} else if (!epktrcvd && !epktsent && !cxseen && !czseen) {
@@ -2424,7 +2434,7 @@ clsif() {
 		xxscreen(SCR_ST,ST_INT,0l,"");
 #ifdef TLOG
 		if (tralog && !tlogfmt)
-		  doxlog(what,sfspec,fsize,binary,1,"Incomplete");
+		  doxlog(what,psfspec,fsize,binary,1,"Incomplete");
 #endif /* TLOG */
 	    } else {
 #ifdef COMMENT
@@ -2433,7 +2443,7 @@ clsif() {
 #endif /* COMMENT */
 #ifdef TLOG
 		if (tralog && !tlogfmt)
-		  doxlog(what,sfspec,fsize,binary,0,"");
+		  doxlog(what,psfspec,fsize,binary,0,"");
 #endif /* TLOG */
 	    }
 	}
@@ -2483,7 +2493,7 @@ clsof(disp) int disp; {
 	    xxscreen(SCR_ST,ST_ERR,0l,"Can't close file");
 #ifdef TLOG
 	    if (tralog && !tlogfmt)
-	      doxlog(what,rfspec,fsize,binary,1,"Can't close file");
+	      doxlog(what,prfspec,fsize,binary,1,"Can't close file");
 #endif /* TLOG */
 	} else if (disp) {		/* Interrupted or refused */
 	    if (keep == 0 ||		/* If not keeping incomplete files */
@@ -2498,7 +2508,7 @@ clsof(disp) int disp; {
 			xxscreen(SCR_ST,ST_DISC,0l,"");
 #ifdef TLOG
 			if (tralog && !tlogfmt)
-			  doxlog(what,rfspec,fsize,binary,1,"Discarded");
+			  doxlog(what,prfspec,fsize,binary,1,"Discarded");
 #endif /* TLOG */
 		    }
 		}
@@ -2516,7 +2526,7 @@ clsof(disp) int disp; {
 			xxscreen(SCR_ST,ST_INC,0l,"");
 #ifdef TLOG
 			if (tralog && !tlogfmt)
-			  doxlog(what,rfspec,fsize,binary,1,"Incomplete");
+			  doxlog(what,prfspec,fsize,binary,1,"Incomplete");
 #endif /* TLOG */
 		    }
 		}
@@ -2524,7 +2534,9 @@ clsof(disp) int disp; {
 	}
     }
     if (o_isopen && x > -1 && !disp) {
-	debug(F100,"clsof fstats 2","",0);
+	debug(F110,"clsof OK",rfspec,0);
+	makestr(&rfspec,prfspec);
+	makestr(&rrfspec,prrfspec);
 	fstats();
 	if (!epktrcvd && !epktsent && !cxseen && !czseen) {
 	    xxscreen(SCR_ST,ST_OK,0L,"");

@@ -42,6 +42,7 @@ int pwcrypt = 0;
 #endif /* CK_SSL */
 #include "ckuusr.h"                     /* User interface symbols */
 #ifdef OS2
+#include "ckcuni.h"
 #ifdef SSHBUILTIN
 #include "ckossh.h"
 #endif /* SSHBUILTIN */
@@ -81,6 +82,10 @@ extern int cm_retry;
 
 extern int cmdint;
 extern int srvidl;
+
+#ifdef CKFLOAT
+extern CKFLOAT floatval;		/* (see isfloat()) */
+#endif /* CKFLOAT */
 
 #ifndef NOPUSH
 #ifndef NOFRILLS
@@ -127,7 +132,7 @@ extern int
   outesc, cmd_cols, cmd_rows, ckxech, xaskmore, haveline, didsetlin, isguest,
   mdmsav, clearrq, saveask;
 
-extern int reliable, setreliable;
+extern int reliable, setreliable, matchdot, matchfifo, dir_dots;
 
 #ifndef NOSERVER
   extern int en_pri;
@@ -302,7 +307,7 @@ static struct keytab pfxtab[] = {
     "all",         PX_ALL, 0,
     "cautious",    PX_CAU, 0,
     "minimal",     PX_WIL, 0,
-    "none",        PX_NON, CM_INV
+    "none",        PX_NON, 0
 };
 #endif /* CK_SPEED */
 #endif /* NOXFER */
@@ -350,6 +355,14 @@ static struct keytab oldnew[] = {
     "new", 0, 0,
     "old", 1, 0
 };
+
+#define MCH_FIFO 1
+#define MCH_DOTF 2
+struct keytab matchtab[] = {
+    { "dotfile", MCH_DOTF, 0 },
+    { "fifo",    MCH_FIFO, 0 }
+};
+int nmatchtab = (sizeof(matchtab) / sizeof(struct keytab));
 
 #ifndef NOSPL
 static struct keytab functab[] = {
@@ -399,7 +412,7 @@ struct keytab ooatab[] = {              /* On/Off/Auto table */
 };
 
 struct keytab ooktab[] = {              /* On/Off/Ask table */
-    "ask",       3,        0,           /* 3 */
+    "ask",       2,        0,           /* 2 */
     "off",       SET_OFF,  0,           /* 0 */
     "on",        SET_ON,   0            /* 1 */
 };
@@ -1062,7 +1075,12 @@ struct keytab onoff[] = {
     "on",        1, 0
 };
 
+#define XYCD_M    0			/* CD MESSAGE */
+#define XYCD_P    1			/* CD PATH */
+#define XYCD_H    2			/* CD HOME */
+
 struct keytab cdtab[] = {
+    "home",      XYCD_H, 0,
     "message",   XYCD_M, 0,
     "path",      XYCD_P, 0
 };
@@ -1251,6 +1269,7 @@ static struct keytab tstab[] = {        /* SET TRANSFER/XFER table */
 #ifdef CK_XYZ
     "protocol",        XYX_PRO, 0,
 #endif /* CK_XYZ */
+    "report",          XYX_RPT, 0,
     "slow-start",      XYX_SLO, 0,
 #ifndef NOCSETS
     "translation",     XYX_XLA, 0,
@@ -1279,11 +1298,15 @@ struct keytab xfrmtab[] = {             /* TRANSFER MODE table */
 extern int locus, autolocus;
 
 static struct keytab locustab[] = {
+#ifdef KUI
+    { "ask",     3, 0 },		/* Presently implemented in GUI only */
+#endif /* KUI */
     { "auto",    2, 0 },
     { "local",   1, 0 },
     { "remote",  0, 0 }
 };
-static int nlocustab = 3;
+static int nlocustab = (sizeof(locustab) / sizeof(struct keytab));
+
 #endif /* LOCUS */
 
 #ifndef NOCSETS
@@ -1487,16 +1510,28 @@ extern int sl_cx_type;
 #endif /* CK_ENCRYPTION */
 extern char *tcp_address;
 #ifndef NOHTTP
-extern char *tcp_http_proxy;
+extern char * tcp_http_proxy;
+extern char * tcp_http_proxy_user;
+extern char * tcp_http_proxy_pwd;
 #endif /* NOHTTP */
 #ifdef NT
 #ifdef CK_SOCKS
 extern char *tcp_socks_svr;
+extern char *tcp_socks_user;
 #ifdef CK_SOCKS_NS
 extern char *tcp_socks_ns;
 #endif /* CK_SOCKS_NS */
 #endif /* CK_SOCKS */
 #endif /* NT */
+
+#define UPW_USER 1
+#define UPW_PASS 2
+
+static struct keytab userpass[] = {
+    { "/password", UPW_PASS, CM_ARG },
+    { "/user",     UPW_USER, CM_ARG },
+};
+static int nuserpass = sizeof(userpass)/sizeof(struct keytab);
 
 static struct keytab tnnegtab[] = {     /* TELNET NEGOTIATION table */
     "accepted",  TN_NG_AC, 0,
@@ -2408,7 +2443,7 @@ getyesno(msg, flags) char * msg; int flags; {
 
 #ifndef NOLOCAL
 #ifdef OS2
-    extern int vmode, win95_popup;
+    extern int vmode, win95_popup, startflags;
     int vmode_sav = vmode;
 #endif /* OS2 */
 #endif /* NOLOCAL */
@@ -2420,14 +2455,14 @@ getyesno(msg, flags) char * msg; int flags; {
 #endif /* CK_APC */
 
 #ifndef NOLOCAL
-#ifdef COMMENT
 #ifdef OS2
-    if (win95_popup
+#ifdef COMMENT
+    if (win95_popup && !(startflags & 96)
 #ifdef IKSD
         && !inserver
 #endif /* IKSD */
         )
-      return(popup_readyesno(vmode,msg,flags));
+      return(popup_readyesno(vmode,NULL,msg,flags));
 #endif /* COMMENT */
     if (vmode == VTERM) {
         vmode = VCMD;
@@ -2490,6 +2525,419 @@ getyesno(msg, flags) char * msg; int flags; {
     return(z);
 }
 
+#ifdef KUI
+extern HWND hwndConsole;
+_PROTOTYP(int gui_txt_dialog,(char *,char *,int,char *,int,char *,int));
+_PROTOTYP(int gui_mtxt_dialog,(char *,int,struct txtbox []));
+_PROTOTYP(int gui_position,(int, int));
+_PROTOTYP(int gui_resize_scale_font,(int));
+_PROTOTYP(int gui_win_run_mode,(int));
+_PROTOTYP(int gui_saveas_dialog,(char *,char *, int, char *, char *, int));
+extern int gui_dialog;
+#endif /* KUI */
+
+/* u q _ o k  --  User Query, get Yes/No or OK Cancel  */
+/*
+  Call with:  
+    preface: Explanatory text to print, or NULL.
+    prompt:  Prompt.
+    mask:    Bitmask for legal responses: 1 = OK or Yes; 2 = No or Cancel.
+    help:    Help text (array of strings or NULL) [not used by parser].
+    dflt:    Default response (1 or 2) [not used by parser].
+  Returns:
+   -1:       Invalid argument(s).
+    0:       User said No or Cancel.
+    1        User said Yes or OK.    
+  Notes:
+    preface and prompt should not include final line terminator but may
+    include embedded ones.  Help text is in case GUI dialog needs a Help
+    button; final element of help-string array is "".  dflt is used by GUI
+    to highlight the default response button.
+*/
+int
+#ifdef CK_ANSIC
+uq_ok(char * preface, char * prompt, int mask,char ** help, int dflt)
+#else /* CK_ANSIC */
+uq_ok(preface,prompt,mask,help,dflt)
+    char * preface, * prompt, ** help;
+    int mask, dflt;
+#endif /* CK_ANSIC */
+/* uq_ok */ {
+    int rc, len;
+    char * text=NULL;
+
+    if (!prompt)
+      return(-1);
+
+    if ((mask & 3) == 1) {		/* OK (GUI only) */
+#ifdef KUI
+      if ( gui_dialog ) {
+	/* This one is for popup help, alerts, etc */
+        if (preface) {
+            len = strlen(preface) + strlen(prompt) + 4;
+            text = (char *)malloc(len);
+            ckmakmsg(text,len,preface,"\n",prompt,NULL);
+        }
+        rc = MessageBox(hwndConsole,
+                         text ? text : prompt,
+                         prompt,
+                         MB_OK | MB_ICONINFORMATION | MB_TASKMODAL);
+        ShowWindowAsync(hwndConsole,SW_SHOWNORMAL);
+        SetForegroundWindow(hwndConsole);
+        if (text)
+	  free(text);
+        if (!rc)
+	  return(-1);
+        else 
+	  return(1);
+      } else
+#endif  /* KUI */
+      {
+	if (preface)			/* Just display the text, if any */
+	  printf("%s\n",preface);
+	if (prompt)
+	  printf("%s\n",prompt);
+        return(1);
+      }
+    } else if ((mask & 3) == 3) {	/* Yes/No or OK/Cancel */
+#ifdef KUI
+      if ( gui_dialog ) {
+        if (preface) {
+            len = strlen(preface) + strlen(prompt) + 4;
+            text = (char *)malloc(len);
+            ckmakmsg(text,len,preface,"\n",prompt,NULL);
+        }
+        rc = MessageBox(hwndConsole,
+                         text ? text : prompt,
+                         prompt,
+                         MB_YESNO | MB_ICONINFORMATION | MB_TASKMODAL | 
+                         (dflt == 2 ? MB_DEFBUTTON2 : MB_DEFBUTTON1));
+        ShowWindowAsync(hwndConsole,SW_SHOWNORMAL);
+        SetForegroundWindow(hwndConsole);
+        if (text)
+	  free(text);
+        if (!rc)
+	  return(-1);
+        else if (rc == IDNO || rc == IDCANCEL)
+	  return(0);
+        else
+	  return(1);
+      } else
+#endif  /* KUI */
+      {
+	if (preface)
+	  printf("%s\n",preface);
+	return(getyesno(prompt,0));
+      }
+    } else {
+	printf("?Internal error: uq_ok()\n");
+	return(-1);
+    }
+}
+
+/* u q _ t x t  --  User Query, get single text response  */
+/*
+  Call with:  
+    preface: Explanatory text to print, or NULL.
+    prompt:  Prompt. 
+    echo:    0 = don't echo; 1 = echo; 2 = echo with asterisks.
+    help:    Help text (array of strings or NULL) [not used by parser].
+    buf:     Pointer to result buffer.
+    buflen:  Length of result buffer.
+    dflt:    Default response text or NULL [not used by parser].
+    timer:   Optional Timeout
+  Returns:
+    0:       User said No or Cancel.
+    1        User said Yes or OK.    
+  Notes:
+    preface, prompt, and help as for uq_ok().
+*/
+int
+#ifdef CK_ANSIC
+uq_txt(char * preface, char * prompt, int echo, char ** help, char * buf, 
+       int buflen, char *dflt)
+#else /* CK_ANSIC */
+uq_txt(preface,prompt,echo,help,buf,buflen,dflt,timer)
+    char * preface, * prompt, ** help, * buf, * dflt; 
+    int buflen, echo, timer;
+#endif /* CK_ANSIC */
+{
+#ifndef NOLOCAL
+#ifdef OS2
+    extern int vmode;
+    extern int startflags;
+    extern int win95_popup;
+#endif /* OS2 */
+#endif /* NOLOCAL */
+    int rc; 
+
+    if (buflen < 1 || !buf)
+      return(0);
+#ifdef KUI
+    if ( gui_dialog ) {
+        rc = gui_txt_dialog(preface,prompt,echo,buf,buflen,dflt,0);
+        if ( rc > -1 )
+            return(rc);
+    /* Otherwise, the dialog could not be created.  Fallback to text mode */
+    } 
+#endif /* KUI */
+#ifndef NOLOCAL
+#ifdef OS2
+    if (win95_popup && !(startflags & 96)
+#ifdef IKSD
+         && !inserver
+#endif /* IKSD */
+         ) {
+        debok = 0;                          /* Don't log */
+        if (echo == 1)
+                popup_readtext(vmode,preface,prompt,buf,buflen,0);
+            else
+                popup_readpass(vmode,preface,prompt,buf,buflen,0);
+        debok = 1;
+        return(1);
+    }
+#endif /* OS2 */
+#endif /* NOLOCAL */
+
+    if (preface)
+      printf("%s\n",preface);
+    if (echo == 1)
+      readtext(prompt,buf,buflen);
+    else
+      readpass(prompt,buf,buflen);
+    return(1);				/* (no buttons in parser) */
+}
+
+/* u q _ m t x t  --  User Query, get multiple text responses */
+/*
+  Call with:  
+    preface: Explanatory text to print, or NULL.
+    help:    Help text (array of strings or NULL) [not used by parser].
+    n:       Number of responses wanted.
+    field:   Array of struct txtbox, one element per field, see ckuusr.h.
+  Returns:
+    0:       User said No or Cancel.
+    1        User said Yes or OK.    
+  Notes:
+    preface and help as for uq_ok().
+*/
+int
+#ifdef CK_ANSIC
+uq_mtxt(char * preface,char **help, int n, struct txtbox field[])
+#else /* CK_ANSIC */
+uq_mtxt(preface,help,n,field)
+    char * preface; char ** help; int n; struct txtbox field[]; 
+#endif /* CK_ANSIC */
+{
+#ifndef NOLOCAL
+#ifdef OS2
+    extern int vmode;
+    extern int startflags;
+    extern int win95_popup;
+#endif /* OS2 */
+#endif /* NOLOCAL */
+    int i, rc;
+
+    if (n < 1 || !field)
+      return(0);
+#ifdef KUI
+    if ( gui_dialog ) {
+        rc = gui_mtxt_dialog(preface, n, field);
+        if ( rc > -1 )
+            return(rc);
+    /* Otherwise, the dialog could not be created.  Fallback to text mode */
+    }
+#endif /* KUI */
+#ifndef NOLOCAL
+#ifdef OS2
+    if (win95_popup && !(startflags & 96)
+#ifdef IKSD
+         && !inserver
+#endif /* IKSD */
+         ) {
+        debok = 0;                          /* Don't log */
+        for (i = 0; i < n; i++) {
+            if (field[i].t_echo == 1)
+                popup_readtext(vmode,preface,field[i].t_lbl,field[i].t_buf,field[i].t_len,0);
+            else
+                popup_readpass(vmode,preface,field[i].t_lbl,field[i].t_buf,field[i].t_len,0);
+        }
+        debok = 1;
+        return(1);
+    }
+#endif /* OS2 */
+#endif /* NOLOCAL */
+
+    if (preface)
+      printf("%s\n",preface);
+    for (i = 0; i < n; i++) {
+	if (field[i].t_echo == 1)
+	  readtext(field[i].t_lbl,field[i].t_buf,field[i].t_len);
+	else
+	  readpass(field[i].t_lbl,field[i].t_buf,field[i].t_len);
+    }
+    return(1);
+}
+
+/* u q _ f i l e  --  User Query, get file or directory name  */
+/*
+  Call with:  
+    preface: Explanatory text to print, or NULL.
+    prompt:  Prompt string.
+    fc:      Function code:
+	       1 = input (existing) file
+	       2 = existing directory 
+	       3 = create new output file
+	       4 = output file allowing append access
+    help:    Help text (array of strings or NULL) [not used by parser].
+    dflt:    Default response.
+    result:  Pointer to result buffer.
+    rlength: Length of result buffer.
+
+  Returns:
+   -1:       Invalid argument, result too long, or other error.
+    0:       User Canceled.
+    1:       OK, with file/pathname copied to result buffer.
+    2:       Like 1, but for output file that is to be appended to.
+
+  Notes:
+    1. preface and prompt should not include final line terminator but may
+       include embedded ones.  Help text is in case GUI dialog needs a Help
+       button; final element of help-string array is "".
+
+    2. The default might be a filename, a directory name, a relative
+       pathname, or an absolute pathname.  This routine must convert it into
+       into a fully qualified (absolute) pathname so the user knows exactly
+       where the file is to be found or stored.  In addition, the Windows
+       version of this routine must separate the directory part from the
+       name part, so it can display the given directory in the file dialog,
+       and put name in the filename box to be edited, replaced, or
+       accepted.
+
+    3. When called with FC 4, the Windows version should include "New" and
+       "Append" buttons in the dialog. so the user can say whether the file
+       should overwrite any file of the same name, or be appended to it.
+*/
+
+int
+#ifdef CK_ANSIC
+uq_file(char * preface, char * fprompt, int fc, char ** help,
+	char * dflt, char * result, int rlength)
+#else /* CK_ANSIC */
+uq_file(preface,fprompt,fc,help,dflt,result,rlength)
+    char * preface, * fprompt, ** help, * dflt, * result;
+    int fc, rlength;
+#endif /* CK_ANSIC */
+/* uq_file */ {
+
+    int rc = -1, x, y, z;
+    char * s, * p, * fullpath;
+    char filebuf[CKMAXPATH+1];
+
+#ifdef CK_RECALL
+    extern int on_recall;
+#endif /* CK_RECALL */
+
+#ifdef KUI
+    if ( gui_dialog ) {
+        rc = gui_saveas_dialog(preface,fprompt,fc,dflt,result,rlength);
+        return rc;
+    }
+#endif /* KUI */
+
+#ifdef CK_RECALL
+    on_recall = 0;
+#endif /* CK_RECALL */
+
+    if (preface)			/* If prefatory text given... */
+      printf("%s\n",preface);		/* display it. */
+
+    cmsavp(psave,PROMPTL);              /* Save old prompt */
+
+    /* We get the full pathname of the proposed output file just so */
+    /* we can show it to the user but we don't use it ourselves. */
+
+    p = NULL;				/* Build new prompt */
+    if (!dflt) dflt = "";
+    if (*dflt)				/* Have default filename */
+      zfnqfp(dflt,CKMAXPATH+1,filebuf);	/* Get full path */
+    else
+      ckmakmsg(filebuf,CKMAXPATH+1,zgtdir(),"newfile",NULL,NULL);
+    fullpath = filebuf;
+    x = strlen(fullpath);
+
+    /* If no prompt given, build one that shows the proposed full pathname. */
+
+    if (!fprompt) fprompt = "";
+    if (!*fprompt) fprompt = x ? " Filename" : " Filename: ";
+    y = strlen(fprompt);
+    if (x > 0) {			/* Have default pathname? */
+	p = (char *)malloc(x + y + 7);	/* Get temp storage */
+	if (p) {			/* Build prompt */
+	    ckmakmsg(p,x+y+7,fprompt," [",fullpath,"]: ");
+	    fprompt = p;
+	}
+    }
+    cmsetp(fprompt);			/* Make new prompt */
+    if (p) free(p);			/* Free temp storage */
+    cmini(ckxech);                      /* Initialize parser. */
+    x = -1;
+    do {
+        prompt(NULL);                   /* Issue prompt. */
+        switch (fc) {			/* Parse depends on function code */
+          case 1:			/* Input file */
+	    x = cmifi("Name of existing file",dflt,&s,&y,xxstring);
+	    rc = 1;
+	    break;
+	  case 2:			/* Directory */
+	    x = cmdir("Directory name",dflt,&s,xxstring);
+	    rc = 1;
+	    break;
+          case 3:			/* New output file */
+	    /* Fall thru... */
+	  case 4:			/* Output file - Append allowed */
+	    x = cmofi("Output file specification",dflt,&s,xxstring);
+	    rc = (fc == 4) ? 1 : 2;
+	    break;
+          default:			/* Bad function code */
+	    goto x_uq_file;
+        }
+        if (x < 0) {			/* Parse error */
+	    filebuf[0] = NUL;
+            if (x == -4) {              /* EOF */
+                break;
+            } else if (x == -3)         /* No answer? */
+              printf(fc == 2 ?
+		     " Please enter a directory name.\n" :
+		     " Please enter a filename.\n"
+		     );
+            cmini(ckxech);
+        } else {
+	    z = strlen(s);
+	    if (z > rlength || ckstrncpy(filebuf,brstrip(s),CKMAXPATH+1) < z) {
+		printf("?Name too long\n");
+		x = -9;
+	    } else
+	      x = cmcfm();		/* Get confirmation */
+        }
+	if (fc == 1 && x > -1 && y > 0) {
+	    printf("?Wildcards not allowed\n");
+	    x = -9;
+	}
+    } while (x < 0);                    /* Continue till done */
+
+  x_uq_file:
+    if (x < 0)
+      rc = -1;
+
+    cmsetp(psave);                      /* Restore real prompt */
+
+    if (rc > 0)
+      ckstrncpy(result,filebuf,rlength);
+    return(rc);
+}
+
+
 #ifdef CK_PERMS
 #ifdef UNIX
 
@@ -2528,7 +2976,7 @@ static int nchmodsw = (sizeof(uchmodsw) / sizeof(struct keytab));
 
 int
 douchmod() {
-    extern int matchdot, recursive, nscanfile, diractive;
+    extern int recursive, nscanfile, diractive;
 #ifdef CK_TTGWSIZ
     extern int tt_rows, tt_cols;
     int n = 0;
@@ -2972,7 +3420,6 @@ dosexp(s) char *s; {                    /* s = S-Expression */
     int i, j, k, n = 0, x = 0, kw, kwflags, mx = 0;
     int result = 0, not = 0, truncate = 0, builtin = 0;
     int fpflag = 0, quit = 0, macro = 0;
-    extern CKFLOAT floatval;            /* (see isfloat()) */
     CKFLOAT fpj, fpresult = 0.0;        /* Floating-point results */
     int pflag = 0;                      /* Have predicate */
     int presult = 0;                    /* Predicate result */
@@ -4142,15 +4589,10 @@ dologend() {                            /* Write record to connection log */
         int x = locus;
 #ifdef NEWFTP
         extern int ftpisconnected();
-        locus = ftpisconnected() ? 0 : 1;
+        setlocus(ftpisconnected() ? 0 : 1, 1);
 #else
-        locus = 1;
+        setlocus(1,1);
 #endif /* NEWFTP */
-        if (msgflg && (x != locus)) {
-            printf("Switching LOCUS for file-management commands to %s.\n",
-                   locus ? "LOCAL" : "REMOTE"
-                   );
-        }
     }
 #endif /* LOCUS */
 
@@ -6270,6 +6712,9 @@ int ndnet =  (sizeof(dnettab) / sizeof(struct keytab));
 #ifdef PRINTSWI
 static struct keytab prntab[] = {       /* SET PRINTER switches */
     "/bidirectional",    PRN_BID, 0,
+#ifdef OS2
+    "/character-set",    PRN_CS,  CM_ARG,
+#endif /* OS2 */
     "/command",          PRN_PIP, CM_ARG,
     "/dos-device",       PRN_DOS, CM_ARG,
     "/end-of-job-string",PRN_TRM, CM_ARG,
@@ -6321,6 +6766,9 @@ setprinter(xx) int xx; {
     int x, y;
     char * s;
     char * defname = NULL;
+#ifdef OS2
+    extern int prncs;
+#endif /* OS2 */
 
 #ifdef BPRINT
     char portbuf[64];
@@ -6694,6 +7142,21 @@ setprinter(xx) int xx; {
               goto xsetprn;
             pv[n].ival = y;
             break;
+
+          case PRN_CS:
+              pv[n].ival = 0;
+              if (!getval) break;
+              if ((y = cmkey(
+#ifdef CKOUNI
+                       txrtab,ntxrtab,
+#else /* CKOUNI */
+                       ttcstab,ntermc,
+#endif /* CKOUNI */
+                       "auto-print/printscreen character-set",
+                       "cp437",xxstring)) < 0)
+                  goto xsetprn;
+              pv[n].ival = x;
+              break;
 #endif /* OS2 */
 
           default:
@@ -6821,6 +7284,9 @@ setprinter(xx) int xx; {
 #endif /* OS2ORUNIX */
 
 #ifdef OS2
+    if ( pv[PRN_CS].ival > 0 ) 
+        prncs = pv[PRN_CS].ival;
+
     if ( pv[PRN_PS].ival > 0 ) {
         txt2ps = 1;
         ps_width = pv[PRN_WID].ival <= 0 ? 80 : pv[PRN_WID].ival;
@@ -6875,7 +7341,8 @@ setprinter(xx) int xx; {
         printertype = printpipe ? PRT_PIP : PRT_DOS;
 #ifdef NT
         /* was the command SET PRINTER windows-queue ? */
-        if (lookup(_printtab,line,nprint,&x) >= 0) {
+        y = lookup(_printtab,line,nprint,&x);
+        if (y >= 0) {
             printertype = PRT_WIN;
             if (pv[PRN_WIN].sval) free(pv[PRN_WIN].sval);
             if (printername) {          /* Had a print file before? */
@@ -6894,6 +7361,10 @@ setprinter(xx) int xx; {
                 }
                 debug(F110,"printername",printername,0);
             }
+        } else if ( y == -2 ) {
+            /* Ambiguous Print Queue Name */
+            printf("?Ambiguous printer name provided.\n");
+            return(-9);
         }
 #endif /* NT */
     }
@@ -7252,15 +7723,21 @@ shossh() {
     printf(" ssh check-host-ip:               %s\n",showoff(ssh_chkip));
     printf(" ssh compression:                 %s\n",showoff(ssh_cmp));
     printf(" ssh dynamic-forwarding:          %s\n",showoff(ssh_dyf));
-    if (ssh_pf_lcl[0].p1 && ssh_pf_lcl[0].host && ssh_pf_lcl[0].p2)
+    if (ssh_pf_lcl[0].p1 && ssh_pf_lcl[0].host && ssh_pf_lcl[0].p2) {
       printf(" ssh forward-local-port:          %d %s %d\n",
              ssh_pf_lcl[0].p1, ssh_pf_lcl[0].host, ssh_pf_lcl[0].p2);
-    else
+      for ( n=1;n<ssh_pf_lcl_n;n++ )
+        printf("                       :          %d %s %d\n",
+               ssh_pf_lcl[n].p1, ssh_pf_lcl[n].host, ssh_pf_lcl[n].p2);
+    } else
       printf(" ssh forward-local-port:         (none)\n");
-    if (ssh_pf_rmt[0].p1 && ssh_pf_rmt[0].host && ssh_pf_rmt[0].p2)
+    if (ssh_pf_rmt[0].p1 && ssh_pf_rmt[0].host && ssh_pf_rmt[0].p2) {
       printf(" ssh forward-remote-port:         %d %s %d\n",
              ssh_pf_rmt[0].p1, ssh_pf_rmt[0].host, ssh_pf_rmt[0].p2);
-    else
+      for ( n=1;n<ssh_pf_rmt_n;n++ )
+        printf("                        :         %d %s %d\n",
+               ssh_pf_rmt[n].p1, ssh_pf_rmt[n].host, ssh_pf_rmt[n].p2);
+    } else
       printf(" ssh forward-remote-port:        (none)\n");
     printf(" ssh gateway-ports:               %s\n",showoff(ssh_gwp));
     printf(" ssh gssapi delegate-credentials: %s\n",showoff(ssh_gsd));
@@ -7748,28 +8225,60 @@ extern ULONG RGBTable[16];
 #define GUI_RGB  1
 #define GUI_WIN  2
 #define GUI_FON  3
+#define GUI_DIA  4
+#define GUI_TLB  5
+#define GUI_MNB  6
+
 #define GUIW_POS 1
+#define GUIW_RES 2
+#define GUIW_RUN 3
+#define GUIWR_DIM 1
+#define GUIWR_FON 2
+#define GUIWN_RES 1
+#define GUIWN_MIN 2
+#define GUIWN_MAX 3
 
 static struct keytab guitab[] = {
-    { "rgbcolor",    GUI_RGB,  0 },
-    { "window",      GUI_WIN,  0 },
+    { "dialogs",     GUI_DIA,  0 },
     { "font",        GUI_FON,  0 },
+    { "menubar",     GUI_MNB,  0 },
+    { "rgbcolor",    GUI_RGB,  0 },
+    { "toolbar",     GUI_TLB,  0 },
+    { "window",      GUI_WIN,  0 },
     { "", 0, 0}
 };
 static int nguitab = (sizeof(guitab) / sizeof(struct keytab));
 
 static struct keytab guiwtab[] = {
     { "position",    GUIW_POS, 0 },
+    { "resize-mode", GUIW_RES, 0 },
+    { "run-mode",    GUIW_RUN, 0 },
     { "", 0, 0}
 };
 static int nguiwtab = (sizeof(guiwtab) / sizeof(struct keytab));
+
+static struct keytab guiwrtab[] = {
+    { "change-dimensions",  GUIWR_DIM, 0 },
+    { "scale-font",         GUIWR_FON, 0 },
+    { "", 0, 0}
+};
+static int nguiwrtab = (sizeof(guiwrtab) / sizeof(struct keytab));
+
+static struct keytab guiwntab[] = {
+    { "maximize",  GUIWN_MAX, 0 },
+    { "minimize",  GUIWN_MIN, 0 },
+    { "restore",   GUIWN_RES, 0 },
+    { "", 0, 0}
+};
+static int nguiwntab = (sizeof(guiwntab) / sizeof(struct keytab));
 
 static struct keytab rgbtab[] = {
     { "black",         0, 0 },
     { "blue",          1, 0 },
     { "brown",         6, 0 },
     { "cyan",          3, 0 },
-    { "dgray",         8, 0 },
+    { "darkgray",      8, 0 },
+    { "dgray",         8, CM_INV },
     { "green",         2, 0 },
     { "lblue",         9, CM_INV },
     { "lcyan",        11, CM_INV },
@@ -7793,18 +8302,23 @@ int nrgb = (sizeof(rgbtab) / sizeof(struct keytab));
 
 VOID
 shogui() {
+    unsigned char cmdsav = colorcmd;
     int i, red, green, blue;
     char * s;
 
     printf("RGB Color Table\n\n");
     printf("  Color              Red Green Blue\n");
-    printf("  ------------------------------------\n");
+    printf("  ------------------------------------------\n");
     for (i = 0; i < nrgb; i++) {
         if (!rgbtab[i].flgs) {
             blue = (RGBTable[rgbtab[i].kwval] & 0x00FF0000)>>16;
             green = (RGBTable[rgbtab[i].kwval] & 0x0000FF00)>>8;
             red = (RGBTable[rgbtab[i].kwval] & 0x000000FF);
-            printf("  %-18s %3d  %3d  %3d\n",rgbtab[i].kwd,red,green,blue);
+            printf("  %-18s %3d  %3d  %3d  ",rgbtab[i].kwd,red,green,blue);
+            colorcmd = rgbtab[i].kwval << 4;
+            printf("********");
+            colorcmd = cmdsav;
+            printf("\n");
         }
     }
     printf("\n");
@@ -7818,9 +8332,9 @@ setrgb() {
       return(cx);
     if ((z = cmnum("Red value, 0-255","",10,&red,xxstring)) < 0)
       return(z);
-    if ((z = cmnum("Blue value, 0-255","",10,&green,xxstring)) < 0)
+    if ((z = cmnum("Green value, 0-255","",10,&green,xxstring)) < 0)
       return(z);
-    if ((z = cmnum("Green value, 0-255","",10,&blue,xxstring)) < 0)
+    if ((z = cmnum("Blue value, 0-255","",10,&blue,xxstring)) < 0)
       return(z);
     if ((x = cmcfm()) < 0) return(x);
     if (cx > 15 || red > 255 || blue > 255 || green > 255)
@@ -7855,57 +8369,137 @@ setguiwin() {
             printf("?Coordinates must be 0 or greater\n");
             return(-9);
         }
-#ifdef COMMENT
-        gui_xpos = x;
-        gui_ypos = y;
-        /* ACTION HERE */
-#endif /* COMMENT */
+        gui_position(x,y);
         return(success = 1);
-
+      case GUIW_RES:
+        if ((x = cmkey(guiwrtab,nguiwrtab,"","",xxstring)) < 0)
+          return(x);
+        if ((z = cmcfm()) < 0)
+          return(z);
+        gui_resize_scale_font(x == GUIWR_FON);
+        return(success = 1);
+      case GUIW_RUN:
+	if ((x = cmkey(guiwntab,nguiwntab,"","",xxstring)) < 0)
+	  return(x);
+	if ((z = cmcfm()) < 0)
+	  return(z);
+	gui_win_run_mode(x);
+	return(success = 1);
       default:
         return(-2);
     }
 }
 
 int
-setguifont() {
+setguifont() {				/* Assumes that CKFLOAT is defined! */
+
     extern struct keytab * term_font;
     extern struct keytab * _term_font;
     extern int tt_font, tt_font_size, ntermfont;
     int x, y, z;
+    char *s;
+
     if (ntermfont == 0)
       BuildFontTable(&term_font, &_term_font, &ntermfont);
     if (!(term_font && _term_font && ntermfont > 0)) {
-        printf("\nUnable to enumerate fonts.\n");
+        printf("?Internal error: Failure to enumerate fonts\n");
         return(-9);
     }
-    if ((x = cmkey(_term_font,ntermfont,"","",xxstring)) < 0) {
-        return(x);
-    }
-    if ((z = cmnum("Height of Font","12",10,&y,xxstring)) < 0)
+    if ((x = cmkey(_term_font,ntermfont,"","",xxstring)) < 0)
+      return(x);
+    if ((z = cmfld("Height of font in points","12",&s,xxstring)) < 0)
       return(z);
-    if ((z = cmcfm()) < 0) return(z);
-    tt_font = x;
-    tt_font_size = y;
+    if (isfloat(s,0) < 1) {		/* (sets floatval) */
+	printf("?Integer or floating-point number required\n");
+	return(-9);
+    }
+    if (floatval < 0.5) {
+	printf("?Positive number required\n");
+	return(-9);
+    }
+    if ((z = cmcfm()) < 0)
+      return(z);
+    tt_font = x;			/* Font index */
+    tt_font_size = (int)(floatval * 2);	/* Font size in half points */
     KuiSetProperty(KUI_TERM_FONT, (long)tt_font, (long)tt_font_size);
     return(success = 1);
 }
 
+VOID
+setguidialog(x) int x;
+{
+    extern int gui_dialog;
+    gui_dialog = x;
+    KuiSetProperty(KUI_GUI_DIALOGS, (long)x, 0L);
+}
+
+VOID
+setguimenubar(x) int x;
+{
+    KuiSetProperty(KUI_GUI_MENUBAR, (long)x, 0L);
+}
+
+VOID
+setguitoolbar(x) int x;
+{
+    KuiSetProperty(KUI_GUI_TOOLBAR, (long)x, 0L);
+}
+
 int
 setgui() {
-    int cx;
+    int cx, x, rc;
     if ((cx = cmkey(guitab,nguitab,"","",xxstring)) < 0)
       return(cx);
     switch (cx) {
+      case GUI_DIA:
+        rc = seton(&x);
+        if (rc >= 0)
+          setguidialog(x);
+        return(rc);
+      case GUI_FON:
+        return(setguifont());
       case GUI_RGB:
         return(setrgb());
       case GUI_WIN:
         return(setguiwin());
+      case GUI_TLB:
+        rc = seton(&x);
+        if (rc >= 0)
+          setguitoolbar(x);
+        return(rc);
+      case GUI_MNB:
+        rc = seton(&x);
+        if (rc >= 0)
+          setguimenubar(x);
+        return(rc);
       default:
         return(-2);
     }
 }
 #endif /* KUI */
+
+VOID
+setexitwarn(x) int x; 
+{
+    xitwarn = x;
+#ifdef KUI
+    KuiSetProperty(KUI_EXIT_WARNING, (long)x, 0L);
+#endif /* KUI */
+}
+
+#ifndef NOLOCAL
+VOID
+setdebses(x) int x; {
+#ifdef OS2
+    if ((debses != 0) && (x == 0))	/* It was on and we turned it off? */
+      os2debugoff();			/* Fix OS/2 coloration */
+#endif /* OS2 */
+    debses = x;
+#ifdef KUI
+    KuiSetProperty(KUI_TERM_DEBUG,x,0);
+#endif /* KUI */
+}
+#endif /* NOLOCAL */
 
 /*  D O P R M  --  Set a parameter.  */
 /*
@@ -7985,6 +8579,35 @@ case XYPAD:                             /* SET PAD ... */
             return(success = 1);
         }
 #endif /* NOXFER */
+
+      case XYMATCH:			/* [ REMOTE ] SET MATCH...  */
+#ifndef NOXFER
+	if ((z = cmkey(matchtab,nmatchtab,"","",xxstring)) < 0)
+	  return(z);
+	if (rmsflg) {
+            if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
+	    if ((x = cmcfm()) < 0) return(x);
+	    switch (z) {
+	      case MCH_DOTF:
+		return(sstate = setgen('S',"330", y == 0 ? "0" : "1", ""));
+	      case MCH_FIFO:
+		return(sstate = setgen('S',"331", y == 0 ? "0" : "1", ""));
+	      default:
+		return(-2);
+	      }
+	  }
+#endif /* NOXFER */
+	  switch (z) {
+	    case MCH_FIFO:
+	      return(success = seton(&matchfifo));
+	    case MCH_DOTF:
+	      x = seton(&matchdot); 
+	      if (x < 0) return(x);
+	      dir_dots = -1;
+	      return(success = x);
+	    default:
+	      return(-2);
+	  }
 
 #ifndef NOSPL
       case XYINPU:                      /* SET INPUT */
@@ -8286,51 +8909,144 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 
         switch (z) {
 #ifndef NOHTTP
-          case XYTCP_HTTP_PROXY:
-            if ((y = cmtxt("hostname[:port] of HTTP proxy server",p,
-                           &s,xxstring)) < 0)
-              return(y);
+          case XYTCP_HTTP_PROXY: {
+	      struct FDB sw, tx;
+	      int n, x;
+	      char ubuf[LOGINLEN+1], pbuf[LOGINLEN+1];
+
+	      cmfdbi(&sw,		/* First FDB - switches */
+		     _CMKEY,		/* fcode */
+		     "HTTP proxy server host[:port] or switch",
+		     "",		/* default */
+		     "",		/* addtl string data */
+		     nuserpass,		/* addtl numeric data 1: tbl size */
+		     4,			/* addtl numeric data 2: 4 = cmswi */
+		     xxstring,		/* Processing function */
+		     userpass,		/* Keyword table */
+		     &tx		/* Pointer to next FDB */
+		     );
+	      cmfdbi(&tx,
+		     _CMTXT,		/* fcode */
+		     "HTTP proxy server host[:port]",
+		     "",		/* default */
+		     "",		/* addtl string data */
+		     0,			/* addtl numeric data 1 */
+		     0,			/* addtl numeric data 2 */
+		     xxstring,
+		     NULL,
+		     NULL
+		     );
+	      while (1) {
+		  if ((x = cmfdb(&sw)) < 0) {
+		      if (x == -3) {
+			  x = -9;
+			  printf("?Hostname required\n");
+		      }
+		      return(x);
+		  }
+		  if (cmresult.fcode != _CMKEY)
+		    break;
+		  n = cmresult.nresult;
+		  switch (n) {
+		    case UPW_USER:
+		    case UPW_PASS:
+		      if ((x = cmfld((n == UPW_USER) ? "Username" : "Password",
+				     "", &s, xxstring)) < 0) {
+			  if (x != -3)
+			    return(x);
+		      }
+		      ckstrncpy((n == UPW_USER) ? ubuf : pbuf, s, LOGINLEN+1);
+		  }
+	      }
+	      if (cmresult.fcode != _CMTXT)
+		return(-2);
+	      s = cmresult.sresult;
+	      if (s) if (!*s) s = NULL;
+
 #ifdef IKSDCONF
-            if (iksdcf)
-              return(success = 0);
+	      if (iksdcf)
+		return(success = 0);
 #endif /* IKSDCONF */
-            if (tcp_http_proxy) {
-                free(tcp_http_proxy);   /* Free any previous storage */
-                tcp_http_proxy = NULL;
-            }
-            if (s == NULL || *s == NUL) { /* If none given */
-                tcp_http_proxy = NULL;  /* remove the override string */
-                return(success = 1);
-            } else if ((tcp_http_proxy = malloc(strlen(s)+1))) {
-                strcpy(tcp_http_proxy,s); /* (safe) Copy to new storage */
-                return(success = 1);
-            } else
-              return(success = 0);
+	      makestr(&tcp_http_proxy_user,ubuf);
+              makestr(&tcp_http_proxy_pwd,pbuf);
+	      makestr(&tcp_http_proxy,s);
+              memset(pbuf,0,sizeof(pbuf));
+	      return(success = 1);
+	  }
 #endif /* NOHTTP */
+/*
+  It would have been easy to combine XYTCP_SOCKS_SVR with the previous
+  one except for the #ifdefs...
+*/
 #ifdef NT
 #ifdef CK_SOCKS
           case XYTCP_SOCKS_SVR: {
-              char * p = getenv("SOCKS_SERVER");
-              if (!p) p = "";
-              if ((y = cmtxt("hostname or IP of SOCKS server",p,
-                             &s,xxstring)) < 0)
-                return(y);
+	      char ubuf[LOGINLEN+1], pbuf[LOGINLEN+1];
+	      char * p = getenv("SOCKS_SERVER");
+	      struct FDB sw, tx;
+	      int n, x;
+
+	      if (!p) p = "";
+
+	      cmfdbi(&sw,		/* First FDB - switches */
+		     _CMKEY,		/* fcode */
+		     "SOCKS server host[:port] or switch",
+		     "",		/* default */
+		     "",		/* addtl string data */
+		     nuserpass,		/* addtl numeric data 1: tbl size */
+		     4,			/* addtl numeric data 2: 4 = cmswi */
+		     xxstring,		/* Processing function */
+		     userpass,		/* Keyword table */
+		     &tx		/* Pointer to next FDB */
+		     );
+	      cmfdbi(&tx,
+		     _CMTXT,		/* fcode */
+		     "SOCKS server host[:port]",
+		     p,			/* default */
+		     "",		/* addtl string data */
+		     0,			/* addtl numeric data 1 */
+		     0,			/* addtl numeric data 2 */
+		     xxstring,
+		     NULL,
+		     NULL
+		     );
+	      while (1) {
+		  if ((x = cmfdb(&sw)) < 0) {
+		      if (x == -3) {
+			  x = -9;
+			  printf("?Hostname required\n");
+		      }
+		      return(x);
+		  }
+		  if (cmresult.fcode != _CMKEY)
+		    break;
+		  n = cmresult.nresult;
+		  switch (n) {
+		    case UPW_USER:
+		    case UPW_PASS:
+		      if ((x = cmfld((n == UPW_USER) ? "Username" : "Password",
+				     "", &s, xxstring)) < 0) {
+			  if (x != -3)
+			    return(x);
+		      }
+		      ckstrncpy((n == UPW_USER) ? ubuf : pbuf, s, LOGINLEN+1);
+		  }
+	      }
+	      if (cmresult.fcode != _CMTXT)
+		return(-2);
+	      s = cmresult.sresult;
+	      if (s) if (!*s) s = NULL;
+
 #ifdef IKSDCONF
-              if (iksdcf) return(success = 0);
+	      if (iksdcf)
+		return(success = 0);
 #endif /* IKSDCONF */
-              if (tcp_socks_svr) {
-                  free(tcp_socks_svr);  /* Free any previous storage */
-                  tcp_socks_svr = NULL;
-              }
-              if (s == NULL || *s == NUL) { /* If none given */
-                  tcp_socks_svr = NULL; /* remove the override string */
-                  return(success = 1);
-              } else if ((tcp_socks_svr = malloc(strlen(s)+1))) {
-                  strcpy(tcp_socks_svr,s);
-                  return(success = 1);
-              } else
-                return(success = 0);
-          }
+	      makestr(&tcp_socks_user,ubuf);
+              memset(pbuf,0,sizeof(pbuf));
+	      makestr(&tcp_socks_svr,s);
+	      return(success = 1);
+	  }
+
 #ifdef CK_SOCKS_NS
           case XYTCP_SOCKS_NS: {
             char * p = getenv("SOCKS_NS");
@@ -8506,7 +9222,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
           if (nettype != NET_DEC)
 #endif /* DECNET */
             ttnproto = NP_NONE;
-          if ((y = setlin(XYHOST,1,0)) < 0) {
+          if ((y = setlin(XYHOST,1,0)) <= 0) { /* Sets success to 1 */
               debug(F101,"SET HOST fail mdmtyp","",mdmtyp);
               ttnproto = z;             /* Failed, restore protocol */
               success = 0;
@@ -9537,110 +10253,19 @@ case XYCARR:                            /* CARRIER-WATCH */
             return(success = 1);
 
           case SCMD_WID: {
-              if ((y = cmnum(
-                         "Number of columns in display window during CONNECT",
+              if ((y = cmnum("Number of columns in display window",
                          "80",10,&x,xxstring)) < 0)
                 return(y);
               if ((y = cmcfm()) < 0) return(y);
 
-              if (IsOS2FullScreen()) {
-                  if (x != 40 && x != 80 && x != 132) {
-                      printf("\n?The width must be 40, 80,");
-#ifdef NT
-                      printf(" or 132 under Windows 95.\n.");
-#else /* NT */
-                      printf(" or 132 in a Full Screen session.\n.");
-#endif /* NT */
-                      return(success = 0);
-                  }
-              } else {
-                  if (!IsWARPed() && x != 80) {
-                      printf("\n?OS/2 version is pre-WARP: the width must");
-                      printf("equal 80 in a Windowed Session\n.");
-                      return(success = 0);
-                  }
-                  if (x < 20 || x > MAXTERMCOL) {
-                      printf(
-                      "\n?The width must be between 20 and %d\n.",MAXTERMCOL);
-                      return(success = 0);
-                  }
-              }
-              if (x > 8192/(tt_rows[VCMD]+1)) {
-                  printf(
-"\n?The max screen area is 8192 cells: %d(rows) x %d(cols) = %d cells.\n",
-                         tt_rows[VCMD]+1,x,x*(tt_rows[VCMD]+1));
-                  return(success = 0);
-              }
               os2_setcmdwidth(x);
               return(success = 1);
           }
           case SCMD_HIG:
-            if ((y = cmnum("Number of rows in display window during CONNECT",
-                           "25",10,&x,xxstring)) < 0)
+            if ((y = cmnum("Number of rows in display window",
+                           "24",10,&x,xxstring)) < 0)
               return(y);
             if ((y = cmcfm()) < 0) return(y);
-
-            if (tt_modechg == TVC_DIS) {
-                printf("\n?SET TERMINAL VIDEO-CHANGE DISABLED\n");
-                return(success = 0);
-            }
-            if (IsOS2FullScreen()) {
-                if ( tt_status[VCMD] ) {
-                    if (x != 24 && x != 42 && x != 49 && x != 59) {
-                        printf("\n?The height must be 24, 42, 49");
-#ifdef NT
-                        printf(" or 59 under Windows 95.\n.");
-#else /* NT */
-                        printf(" or 59 in a Full Screen session.\n.");
-#endif /* NT */
-                        return(success = 0);
-                    }
-                } else {
-                    if (x != 25 && x != 43 && x != 50 && x != 60) {
-                        printf("\n?The height must be 25, 43, 50");
-#ifdef NT
-                        printf(" or 60 under Windows 95.\n.");
-#else /* NT */
-                        printf(" or 60 in a Full Screen session.\n.");
-#endif /* NT */
-                        return(success = 0);
-                    }
-                }
-            } else if (tt_modechg == TVC_W95) {
-                if (tt_status[VCMD]) {
-                    if (x != 24 && x != 42 && x != 59) {
-                        printf("\n?The height must be 24, 42, 49");
-#ifdef NT
-                        printf(" under Windows 95.\n.");
-#else /* NT */
-                        printf(" in a Full Screen session.\n.");
-#endif /* NT */
-                        return(success = 0);
-                    }
-                } else {
-                    if (x != 25 && x != 43 && x != 50) {
-                        printf("\n?The height must be 25, 43, 50");
-#ifdef NT
-                        printf(" under Windows 95.\n.");
-#else /* NT */
-                        printf(" in a Full Screen session.\n.");
-#endif /* NT */
-                        return(success = 0);
-                    }
-                }
-            } else {
-                if (x < 8 || x > MAXTERMROW ) {
-                    printf("\n?The height must be between 8 and %d\n.",
-                           MAXTERMROW);
-                    return(success = 0);
-                }
-            }
-            if (x > 8192/tt_cols[VCMD]) {
-                printf(
-"\n?The max screen area is 8192 cells: %d(rows) x %d(cols) = %d cells.\n",
-                       x,tt_cols[VCMD],x*tt_cols[VCMD]);
-                return(success = 0);
-            }
             os2_setcmdheight(x);
             return(success = 1);
 
@@ -9684,7 +10309,7 @@ case XYCARR:                            /* CARRIER-WATCH */
                 return(y);
               if ((x = cmcfm()) < 0) return(x);
 
-              VscrnSetCurPos( VCMD, (short) (col-1), (short) (row-1) ) ;
+              lgotoxy( VCMD, col, row ) ;
               VscrnIsDirty( VCMD );
               return(success=1);
           }
@@ -9754,7 +10379,9 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
           case DEB_OFF:
             if ((x = cmcfm()) < 0)
               return(x);
-            debses = 0;
+#ifndef NOLOCAL
+            setdebses(0);
+#endif /* NOLOCAL */
 #ifdef DEBUG
             if (deblog) doclslog(LOGD);
 #endif /* DEBUG */
@@ -9773,7 +10400,10 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
           case DEB_SES:
             if ((x = cmcfm()) < 0)
               return(x);
-            return(success = debses = 1);
+#ifndef NOLOCAL
+            setdebses(1);
+#endif /* NOLOCAL */
+            return(success = 1);
         }
         break;
 
@@ -9831,7 +10461,7 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
             if ((z = cmkey(xitwtab,nexitw,"","",xxstring)) < 0)
               return(z);
             if ((y = cmcfm()) < 0) return(y);
-            xitwarn = z;
+            setexitwarn(z);
             return(success = 1);
           case 2:
             success = seton(&exitonclose);
@@ -10425,8 +11055,9 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
                 sstate = setgen('S', "405", tcsinfo[y].designator, "");
                 return((int) sstate);
             } else {
-                extern int s_cset, fcharset, axcset[];
+                extern int s_cset, fcharset, axcset[], tcs_save;
                 tslevel = (y == TC_TRANSP) ? 0 : 1; /* transfer syntax level */
+		xfrxla = tslevel;
                 tcharset = y;           /* transfer character set */
                 /* SEND CHARACTER-SET AUTO */
                 if (tslevel > 0 && s_cset == XMODE_A)
@@ -10434,6 +11065,7 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
                     if (axcset[y] > -1 && axcset[y] > MAXFCSETS)
                       fcharset = axcset[y]; /* Auto-pick file charset */
                 setxlatype(tcharset,fcharset); /* Translation type */
+		tcs_save = -1;
                 return(success = 1);
             }
 #endif /* NOCSETS */
@@ -10471,7 +11103,7 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
 
 #ifndef NOLOCAL
           case XYX_DIS:                 /* Display */
-            return(doxdis());
+            return(doxdis(1));		/* 1 == Kermit */
 #endif /* NOLOCAL */
 
           case XYX_SLO:                 /* Slow-start */
@@ -10511,6 +11143,11 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
               if (!*s) s = NULL;
               makestr(&xfrmsg,s);
               return(success = 1);
+
+	  }
+	  case XYX_RPT: {
+	      extern int whereflg;
+	      return(seton(&whereflg));
           }
           default:
             return(-2);
@@ -10699,61 +11336,15 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
                       if (x == -2) {
                           if (p) { free((char *)p); p = NULL; }
                           debug(F110,"SET CONTROL atmbuf",atmbuf,0);
-                          if (!ckstrcmp(atmbuf,"all",3,0) ||
+                          if (!ckstrcmp(atmbuf,"all",3,0) || /* "ALL" */
                               !ckstrcmp(atmbuf,"al",2,0) ||
                               !ckstrcmp(atmbuf,"a",1,0)) {
                               if ((x = cmcfm()) < 0) /* Get confirmation */
                                 return(x);
-                              if (z)
-                                prefixing = PX_ALL;
-#ifndef UNPREFIXZERO
-                              /* Set all values, but don't touch 0 */
-                              for (y = 1; y < 32; y++) ctlp[y] = (short) z;
-#else
-                              /* Zero too */
-                              for (y = 0; y < 32; y++) ctlp[y] = (short) z;
-#endif /* UNPREFIXZERO */
-                              for (y = 127; y < 160; y++) ctlp[y] = (short) z;
-                              ctlp[255] = (short) z;
-                              /* Watch out for XON and XOFF */
-                              if (flow == FLO_XONX && z == 0) {
-                                  if (msgflg) {
-                                      printf(
-" XON/XOFF characters 17, 19, 145, 147 not affected.\n");
-                                      printf(
-#ifdef CK_RTSCTS
-" SET FLOW NONE or RTS/CTS to transmit these characters unprefixed.\n"
-#else
-" SET FLOW NONE to transmit these characters unprefixed.\n"
-#endif /* CK_RTSCTS */
-                                             );
-                                  }
-                                  ctlp[XON] =
-                                    ctlp[XOFF] =
-                                      ctlp[XON+128] =
-                                        ctlp[XOFF+128] = 1;
-                              }
-#ifdef TNCODE
-                              /* Watch out for TELNET IAC */
-                              if (network &&
-                                  (IS_TELNET()) && z == 0) {
-                                  ctlp[255] = 1;
-                                  if (parity == 'e' || parity == 'm')
-                                    ctlp[127] = 1;
-                                  ctlp[13] = 1;
-                                  if (msgflg)
-                                    printf(
-                               " TELNET IAC = 255, CR = 13, not affected.\n");
-                              }
-#endif /* TNCODE */
-#ifndef UNPREFIXZERO
-#ifdef OS2
-                              if (z == 0 && protocol != PROTO_K)
-                                ctlp[0] = 0;
-#endif /* OS2 */
-#endif /* UNPREFIXZERO */
-                              return(success = 1);
-                          } else {
+			      prefixing = z ? PX_ALL : PX_NON;
+			      setprefix(prefixing);
+			      return(success = 1);
+                          } else {	/* Not number, not ALL */
                               printf(
                                  "?Please specify a number or the word ALL\n");
                               return(-9);
@@ -10930,9 +11521,9 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
   DEC-20, even when you TELNET to it, is sensitive to Ctrl-O and Ctrl-T.
   If you tell C-Kermit to SET CONTROL PREFIX 15 and/or 20, it doesn't help
   because CLEAR-CHANNEL is still in effect.  If the user goes to the trouble
-  to set up some prefixing, then Kermit do what the user said.  In C-Kermit
-  7.1 Alpha.03 we change the code to set clearrq to 0 if the user gives a
-  SET PREFIXING or SET CONTROL PREFIX command.
+  to set up some prefixing, then Kermit should do what the user said.  In
+  C-Kermit 7.1 Alpha.03 we change the code to set clearrq to 0 if the user
+  gives a SET PREFIXING or SET CONTROL PREFIX command.
 */
 
 #ifdef CK_SPEED
@@ -11215,22 +11806,25 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
 #ifdef SESLIMIT
       case XYLIMIT: {  /* Session-Limit (length of session in seconds) */
           extern int seslimit;
+#ifdef OS2
+          extern int downloaded;
+#endif /* OS2 */
           y = cmnum("Maximum length of session, seconds","0",10,&x,xxstring);
-#ifdef IKSD
           if (inserver &&
 #ifdef IKSDCONF
               iksdcf
 #else
               1
 #endif /* IKSDCONF */
+#ifdef OS2
+               || downloaded
+#endif /* OS2 */
               ) {
               if ((z = cmcfm()) < 0)
                 return(z);
               printf("?Sorry, command disabled.\r\n");
               return(success = 0);
           }
-#endif /* IKSD */
-
           return(setnum(&seslimit,x,y,86400));
       }
 #endif /* SESLIMIT */
@@ -11601,7 +12195,7 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
                       krb5_d_renewable = z;
                     break;
                   case XYKRBPR:         /* Principal */
-                    s = brstrip(s);             /* Strip braces around. */
+                    s = brstrip(s);	/* Strip braces around. */
                     if (kv == 4)
                       makestr(&krb4_d_principal,s);
                     else
@@ -11892,11 +12486,8 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
                     if (d == NULL)
                         d = "";
                     if ((y = cmdir("Directory",d,&s,xxstring)) < 0)
-                      return(y);
-                    if (y != -3) {
-                        if (y < 0)
-                          return(y);
-                    }
+		      if (y != -3)
+			return(y);
                     ckstrncpy(line,s,LINBUFSIZ);
                     s = line;
                     s = brstrip(s);
@@ -11988,7 +12579,7 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
                       if (!p)
                         p = "ALL";
                       if ((y = cmtxt(
-                    "Colon-delimited list of ciphers or ALL (case sensitive)",
+                    "Colon-delimited list of ciphers or ALL (case-sensitive)",
                                      p,
                                      &s,
                                      xxstring
@@ -12039,6 +12630,13 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
         if ((x = cmkey(cdtab,ncdtab,"","",xxstring)) < 0)
           return(x);
         switch (x) {
+	  case XYCD_H: {		/* SET CD HOME */
+	      extern char * myhome;
+	      if ((y = cmdir("Directory name",zhome(),&s,xxstring)) < 0)
+		return(y);
+	      makestr(&myhome,s);
+	      return(success = 1);
+	  }
           case XYCD_M:                  /* SET CD MESSAGE */
             if ((x = cmkey(cdmsg,ncdmsg,"","",xxstring)) < 0)
               return(x);
@@ -12130,11 +12728,11 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
           if (z == 8) {                 /* 8 bits + parity (or not) */
               parity = 0;               /* Set parity */
               hwparity = (s[1] == 'n') ? 0 : s[1];
-              cmask = 0xff;             /* Also set TERM BYTESIZE to 8 */
+              setcmask(8);              /* Also set TERM BYTESIZE to 8 */
           } else {                      /* 7 bits plus parity */
               parity = (s[1] == 'n') ? 0 : s[1];
               hwparity = 0;
-              cmask = 0x7f;             /* Also set TERM BYTESIZE to 7 */
+              setcmask(7);              /* Also set TERM BYTESIZE to 7 */
           }
 #ifdef TN_COMPORT
           if (network && !istncomport())
@@ -12289,16 +12887,22 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
 
 #ifdef LOCUS
       case XYLOCUS:
-          if ((x = cmkey(locustab,nlocustab,"","auto", xxstring)) < 0)
+          if ((x = cmkey(locustab,nlocustab,"",
+#ifdef KUI
+			 "ask"
+#else
+			 "auto"
+#endif /* KUI */
+			 ,xxstring)) < 0)
             return(x);
           if ((y = cmcfm()) < 0)
             return(y);
-          if (x == 2) {
-              autolocus = 1;
-              locus = 1;
-          } else {
-              autolocus = 0;
-              locus = x;
+          if (x == 2 || x == 3) {	/* AUTO or ASK */
+              setautolocus(x - 1);	/* Two forms of automatic locusing */
+	      /* setlocus(1,0); */      /* we're not changing the locus here */
+          } else {			/* LOCAL or REMOTE */
+              setautolocus(0);		/* No automatic Locus changing */
+              setlocus(x,0);		/* Set Locus as requested */
           }
           return(success = 1);
 #endif /* LOCUS */
@@ -12356,6 +12960,7 @@ hupok(x) int x; {                       /* Returns 1 if OK, 0 if not OK */
     if ((local && xitwarn) ||           /* Is a connection open? */
         (!x && xitwarn == 2)) {         /* Or Always give warning on EXIT */
         int needwarn = 0;
+        char warning[256];
 
         if (network) {
             if (ttchk() >= 0)
@@ -12365,14 +12970,13 @@ hupok(x) int x; {                       /* Returns 1 if OK, 0 if not OK */
               needwarn = 0;
             if (needwarn) {
                 if (strcmp(ttname,"*"))
-                  printf(
-" A network connection to %s might still be active.\n",
-                         ttname
-                         );
+                    ckmakmsg(warning,256,
+                              " A network connection to ",ttname,
+                              " might still be active.\n",NULL);
                 else
-                  printf(
-                   " An incoming network connection might still be active.\n"
-                         );
+                  ckstrncpy(warning,
+                   " An incoming network connection might still be active.\n",
+                             256);
             }
         } else {                        /* Serial connection */
             if (carrier == CAR_OFF)     /* SET CARRIER OFF */
@@ -12385,18 +12989,29 @@ hupok(x) int x; {                       /* Returns 1 if OK, 0 if not OK */
             if (!haveline || !exithangup)
               needwarn = 0;
             if (needwarn)
-              printf(
-                     " A serial connection might still be active on %s.\n",
-                     ttname
-                     );
+                ckmakmsg(warning,256,
+                     " A serial connection might still be active on ",
+                     ttname,".\n",NULL);
         }
 
 /* If a warning was issued, get user's permission to EXIT. */
 
         if (needwarn || (!x && xitwarn == 2 && local)) {
+#ifdef COMMENT
+	    printf("%s",warning);
             z = getyesno(x ? "OK to close? " : "OK to exit? ",0);
             debug(F101,"hupok getyesno","",z);
             if (z < -3) z = 0;
+#else
+	    z = uq_ok(warning,
+		      x ? "OK to close? " : "OK to exit? ",
+		      3,
+		      NULL,
+		      0
+		      );
+            debug(F101,"hupok uq_ok","",z);
+	    if (z < 0) z = 0;
+#endif /* COMMENT */
         }
     }
     return(z);

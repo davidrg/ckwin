@@ -1,4 +1,4 @@
-char *fnsv = "C-Kermit functions, 8.0.213, 7 Feb 2002";
+char *fnsv = "C-Kermit functions, 8.0.222, 22 Oct 2002";
 
 char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 
@@ -27,6 +27,12 @@ char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 #include "ckcker.h"			/* Symbol definitions for Kermit */
 #include "ckcxla.h"			/* Character set symbols */
 #include "ckcnet.h"                     /* VMS definition of TCPSOCKET */
+#ifdef OS2
+#ifdef OS2ONLY
+#include <os2.h>
+#endif /* OS2ONLY */
+#include "ckocon.h"
+#endif /* OS2 */
 
 int docrc  = 0;				/* Accumulate CRC for \v(crc16) */
 long crc16 = 0L;			/* File CRC = \v(crc16) */
@@ -34,8 +40,9 @@ int gnferror = 0;			/* gnfile() failure reason */
 
 extern CHAR feol;
 extern int byteorder, xflg, what, fmask, cxseen, czseen, nscanfile, sysindex;
-extern int xcmdsrc, dispos;
+extern int xcmdsrc, dispos, matchfifo;
 extern long ffc;
+extern int inserver;
 
 extern int nolinks;
 #ifdef VMSORUNIX
@@ -46,6 +53,17 @@ extern int zgfs_link;
 #endif /* VMSORUNIX */
 
 #ifndef NOXFER
+
+#ifndef NOICP
+#ifndef NOSPL
+extern char * clcmds;
+extern int haveurl;
+#ifdef CK_APC
+extern int apcactive, adl_ask;
+#endif /* CK_APC */
+#endif /* NOSPL */
+#endif /* NOICP */
+
 extern int remfile;
 
 /* (move these prototypes to the appropriate .h files...) */
@@ -70,7 +88,9 @@ _PROTOTYP( long zfsize, (char *) );
 
 #ifdef OS2
 #include <io.h>
-#include "ckocon.h"
+#ifdef OS2ONLY
+#include <os2.h>
+#endif /* OS2ONLY */
 #endif /* OS2 */
 
 #ifdef VMS
@@ -108,6 +128,7 @@ extern int maxtry;
 extern int stdouf;
 extern int sendmode;
 extern int carrier, ttprty;
+extern int g_fnrpath;
 #ifdef TCPSOCKET
 extern int ttnproto;
 #endif /* TCPSOCKET */
@@ -151,7 +172,6 @@ extern char * getpath[];
 extern int fromgetpath;
 #endif /* NOSERVER */
 
-extern int inserver;
 #ifdef CK_LOGIN
 extern int isguest;
 #endif /* CK_LOGIN */
@@ -163,7 +183,8 @@ extern CHAR *data, padbuf[], stchr, mystch;
 extern CHAR *srvptr;
 extern CHAR *rdatap;
 extern char *cmarg, *cmarg2, **cmlist, filnam[], ofilnam[];
-extern char fspec[], *sfspec, *rfspec;
+extern char *rfspec, *prfspec, *rrfspec, *prrfspec, *sfspec, *psfspec, *rfspec;
+extern char fspec[];
 extern int fspeclen;
 
 #ifndef NOMSEND
@@ -233,6 +254,17 @@ extern long crcta[], crctb[];		/* CRC-16 generation tables */
 extern int rseqtbl[];			/* Rec'd-packet sequence # table */
 
 #ifndef NOXFER
+
+/* Criteria used by gnfile()... */
+
+char sndafter[19]   = { NUL, NUL };
+char sndbefore[19]  = { NUL, NUL };
+char sndnafter[19]  = { NUL, NUL };
+char sndnbefore[19] = { NUL, NUL };
+char *sndexcept[NSNDEXCEPT]  = { NULL, NULL };
+char *rcvexcept[NSNDEXCEPT]  = { NULL, NULL };
+long sndsmaller = -1L;
+long sndlarger  = -1L;
 
 /* Variables defined in this module but shared by other modules. */
 
@@ -309,7 +341,8 @@ CHAR myinit[MYINITLEN];			/* Copy of my Send-Init data */
 static
 #endif /* XYZ_INTERNAL */
 char *fncnam[] = {
-  "rename", "replace", "backup", "append", "discard", "ask", "update", ""
+  "rename", "replace", "backup", "append", "discard", "ask",
+  "update", "dates-differ", ""
 };
 #endif /* TLOG */
 
@@ -355,9 +388,7 @@ static int ebqsent = 0;			/* 8th-bit prefix bid that I sent */
 static int lsstate = 0;			/* Locking shift state */
 static int lsquote = 0;			/* Locking shift quote */
 
-#ifdef datageneral
 extern int quiet;
-#endif /* datageneral */
 
 /*  E N C S T R  --  Encode a string from memory. */
 
@@ -446,6 +477,7 @@ puttrm(char c)
 puttrm(c) register char c;
 #endif /* CK_ANSIC */
 /* puttrm */ {
+    extern int rcdactive;
 #ifndef NOSPL
     extern char * qbufp;		/* If REMOTE QUERY active, */
     extern int query, qbufn;		/* also store response in */
@@ -455,7 +487,18 @@ puttrm(c) register char c;
     }
     if (!query || !xcmdsrc)
 #endif /* NOSPL */
-      conoc(c);
+/*
+  This routine is used (among other things) for printing the server's answer
+  to a REMOTE command.  But REMOTE CD is special because it isn't really 
+  asking for an answer from the server.  Thus some people want to suppress
+  the confirmation message (e.g. when the server sends back the actual path
+  of the directory CD'd to), and expect to be able to do this with SET QUIET
+  ON.  But they would not want SET QUIET ON to suppress the other server
+  replies, which are pointless without their answers.  Thus the "rcdactive"
+  flag (REMOTE CD command is active).  Thu Oct 10 16:38:21 2002
+*/
+      if (!(quiet && rcdactive))	/* gross, yuk */
+	conoc(c);
     return(0);
 }
 #endif /* NOXFER */
@@ -475,6 +518,17 @@ putmfil(c) register char c;
     }
     return(0);
 }
+
+int					/*  Output char to nowhere. */
+#ifdef CK_ANSIC
+putnowhere(char c)
+#else
+putnowhere(c) register char c;
+#endif /* CK_ANSIC */
+/* putnowhere */ {
+    return(0);
+}
+
 
 int					/*  Output char to file. */
 #ifdef CK_ANSIC
@@ -739,10 +793,18 @@ xpnbyte(a,tcs,fcs,fn) int a, tcs, fcs; int (*fn)();
     debug(F001,"xpnbyte a","",a);
 
 #ifdef UNICODE
+
+/*
+  byteorder = hardware byte order of this machine.
+  ucsorder  = override by SET FILE UCS BYTE-ORDER command.
+  fileorder = byte order of UCS-2 input file detected from BOM.
+  swapping applies only when output charset is UCS-2.
+*/
     if (ucsorder != 1 && ucsorder != 0)	/* Also just in case... */
       ucsorder = byteorder;
     if ((byteorder && !ucsorder) || (!byteorder && fileorder))
       swapping = 1;			/* Swapping bytes to output */
+
 #ifdef COMMENT
     debug(F101,"xpnbyte ucsorder","",ucsorder);
     debug(F101,"xpnbyte swapping","",swapping);
@@ -846,8 +908,8 @@ xpnbyte(a,tcs,fcs,fn) int a, tcs, fcs; int (*fn)();
     if (haveuc) {			/* If we have a Unicode... */
 	debug(F001,"xpnbyte uc.x_short","[A]",uc.x_short);
 	debug(F101,"xpnbyte feol","",feol);
-	if (what & W_KERMIT) {		/* If transferring a file */
-	    if (feol && uc.x_short == CR) {  /* handle eol conversion. */
+	if (what & W_XFER) {		/* If transferring a file */
+	    if (feol && uc.x_short == CR) { /* handle eol conversion. */
 		return(0);
 	    } else if (feol && uc.x_short == LF) {
 		uc.x_short = feol;
@@ -1913,12 +1975,10 @@ static int xlaptr = 0;
   Returns:
     >= 0: A translated byte suitable for writing.
     <  0: Fatal error (such as EOF on input source).
-
-  NOTE WELL:
-    When the output character-set is UCS-2, bytes are returned in Big Endian
-    order if we are sending a file (what & W_SEND); otherwise they are
-    returned in the NATIVE byte order, as specified in the byteorder variable
-    (0 = Big Endian, 1 = Little Endian) (I think).
+  As of Sat Sep  7 18:37:41 2002:  
+    When the output character-set is UCS-2, bytes are ALWAYS returned in
+    big-endian order (previously they could also be returned in LE order
+    under certain conditions, which was just way too confusing).
 */
 int
 #ifdef CK_ANSIC
@@ -2354,18 +2414,26 @@ xgnbyte(tcs,fcs,fn) int tcs, fcs, (*fn)();
 		  }
 	      }
 	      /* In which order should we return the bytes? */
-
-	      if ((what & W_SEND) || fileorder == 0) {
+#ifdef COMMENT
+	      if ( (what & W_SEND) || (what & W_FTP) || (fileorder == 0)) {
+#endif /* COMMENT */
+		  /* ALWAYS RETURN IN BIG ENDIAN ORDER... 7 Sep 2002   */
+		  /* xgnbyte() is almost always used to feed xpnbyte() */
+		  /* which requires bytes in BE order. In cases where  */
+		  /* xgnbyte is used in isolation, the caller can swap */
+		  /* bytes itself afterwards. */
 		  xlabuf[k++] = (xc >> 8) & 0xff; /* Big Endian */
 		  xlabuf[k++] = xc & 0xff;
 		  debug(F001,"xgnbyte->UCS2BE",
 			ckitox((int)xlabuf[0]),xlabuf[1]);
+#ifdef COMMENT
 	      } else {			/* Little Endian */
 		  xlabuf[k++] = xc & 0xff;
 		  xlabuf[k++] = (xc >> 8) & 0xff;
 		  debug(F001,"xgnbyte->UCS2LE",
 			ckitox((int)xlabuf[0]),xlabuf[1]);
 	      }
+#endif /* COMMENT */
 	      c = xlabuf[0];
 	      xlaptr = 1;
 	      xlacount = k-1;
@@ -2417,10 +2485,8 @@ xgnbyte(tcs,fcs,fn) int tcs, fcs, (*fn)();
 	debug(F101,"xgnbyte bad xlatype","",xlatype);
 	return(-2);
     }
-    /* NOTREACHED */
-    /* Some compilers complain if this is not here, others if it is. */
 #ifdef COMMENT
-    /* Let's see if the complaints still happen... */
+    /* Now let's see who complains... */
     debug(F100,"xgnbyte switch failure","",0);
     return(-2);
 #endif /* COMMENT */
@@ -3276,7 +3342,6 @@ int opnerr;				/* Flag for open error */
 int					/* Returns success ? 1 : 0 */
 rcvfil(n) char *n; {
     extern int en_cwd;
-    extern char * rcvexcept[];
     int i, skipthis;
     char * n2;
     char * dispo;
@@ -3290,7 +3355,6 @@ rcvfil(n) char *n; {
 #ifdef PIPESEND
     extern char * rcvfilter;
 #endif /* PIPESEND */
-    extern char * rrfspec;
 #ifdef CALIBRATE
     extern int dest;
     int csave;
@@ -3319,7 +3383,7 @@ rcvfil(n) char *n; {
 #endif /* CALIBRATE */
     if (*srvcmd == '\0')		/* Watch out for null F packet. */
       ckstrncpy((char *)srvcmd,"NONAME",srvcmdlen);
-    makestr(&rrfspec,(char *)srvcmd);
+    makestr(&prrfspec,(char *)srvcmd);	/* New preliminary filename */
 #ifdef DTILDE
     if (*srvcmd == '~') {
 	dirp = tilde_expand((char *)srvcmd); /* Expand tilde, if any. */
@@ -3332,6 +3396,47 @@ rcvfil(n) char *n; {
       ckstrncat((char *)srvcmd,"NONAME",srvcmdlen);
 #endif /* OS2 */
 #endif /* DTILDE */
+
+#ifndef NOICP
+#ifndef NOSPL
+/* File dialog when downloading...  */
+    if (
+#ifdef CK_APC
+	(apcactive == APC_LOCAL && adl_ask) || /* Autodownload with ASK */
+#endif /* CK_APC */
+	(clcmds && haveurl)		/* Or "kermit:" or "iksd:" URL */
+	) {
+	int x;
+	char fnbuf[CKMAXPATH+1];	/* Result buffer */
+	char * preface;
+
+	if (clcmds && haveurl)
+	  preface = "\r\nIncoming file from Kermit server...\r\n\
+Please confirm output file specification or supply an alternative:";
+	else
+	  preface = "\r\nIncoming file from remote Kermit...\r\n\
+Please confirm output file specification or supply an alternative:";
+
+	x = uq_file(preface,		/* Preface */
+		    NULL,		/* Prompt (let uq_file() built it) */
+		    3,			/* Output file */
+		    NULL,		/* Help text */
+		    (char *)srvcmd,	/* Default */
+		    fnbuf,		/* Result buffer */
+		    CKMAXPATH+1		/* Size of result buffer */
+		    );
+	if (x < 1) {			/* Refused */
+	    rf_err = "Refused by user";
+	    return(0);
+	}
+	ckstrncpy((char *)srvcmd,fnbuf,CKMAXPATH+1);
+	if (isabsolute((char *)srvcmd)) { /* User gave an absolute path */
+	    g_fnrpath = fnrpath;	/* Save current RECEIVE PATHNAMES */
+	    fnrpath = PATH_ABS;		/* switch to ABSOLUTE */
+	}
+    }
+#endif /* NOSPL */
+#endif /* NOICP */
 
     if (!ENABLED(en_cwd)) {		/* CD is disabled */
 	zstrip((char *)(srvcmd+2),&n2); /* and they included a pathname, */
@@ -3355,7 +3460,7 @@ rcvfil(n) char *n; {
 #endif /* COMMENT */
 
     skipthis = 0;			/* This file in our exception list? */
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < NSNDEXCEPT; i++) {
 	if (!rcvexcept[i]) {
 	    break;
 	}
@@ -3467,7 +3572,7 @@ rcvfil(n) char *n; {
 	ckstrncpy(&ofn1[1],(char *)srvcmd,CKMAXPATH+1);
 	ckstrncpy(n,ofn1,CKMAXPATH+1);
 	ckstrncpy(fspec,ofn1,CKMAXPATH+1);
-	makestr(&rfspec,fspec);
+	makestr(&prfspec,fspec);	/* New preliminary filename */
 	debug(F110,"rcvfil pipesend",ofn1,0);
 	goto rcvfilx;
     }
@@ -3830,7 +3935,7 @@ rcvfil(n) char *n; {
 #endif /* VMS */
 #endif /* COMMENT */
     fspec[fspeclen] = NUL;
-    makestr(&rfspec,fspec);
+    makestr(&prfspec,fspec);		/* New preliminary filename */
 
 #ifdef PIPESEND
   rcvfilx:
@@ -3936,7 +4041,12 @@ reof(f,yy) char *f; struct zattr *yy; {
 #endif /* CK_LABELED */
 #endif /* OS2ONLY */
 	}
-	if (success == 0) xitsta |= W_RECV; /* And program return code */
+	if (success == 0) {		/* And program return code */
+	    xitsta |= W_RECV;
+	} else if (success == 1) {	/* File rec'd successfully */
+	    makestr(&rrfspec,prrfspec);	/* Record it for wheremsg */
+	    makestr(&rfspec,prfspec);
+	}
 
 /* Handle dispositions from attribute packet... */
 
@@ -4409,11 +4519,11 @@ sfile(x) int x; {
     	}
 #ifdef pdp11
     	tlog(F110,"Sending",filnam,0L); /* Transaction log entry */
-	makestr(&sfspec,filnam);
+	makestr(&psfspec,filnam);	/* New filename */
 #else
 #ifndef ZFNQFP
     	tlog(F110,"Sending",filnam,0L);
-	makestr(&sfspec,filnam);
+	makestr(&psfspec,filnam);	/* New filename */
 #else
 	if (notafile) {			/* If not a file log simple name */
 	    tlog(F110,"Sending", filnam, 0L);
@@ -4437,7 +4547,7 @@ sfile(x) int x; {
 #endif /* COMMENT */
 	    debug(F111,"sfile q",q,strlen(q));
 	    tlog(F110,"Sending",q,0L);
-	    makestr(&sfspec,q);
+	    makestr(&psfspec,q);	/* New preliminary filename */
 #ifdef COMMENT
 	    if (p) free(p);
 #endif /* COMMENT */
@@ -4526,6 +4636,8 @@ sdata() {
 #endif /* STREAMING */
 	 ;
 	 i--) {
+	if (i < 0)
+	  break;
         debug(F101,"sdata countdown","",i);
 #ifdef STREAMING
 	if (streaming) {
@@ -4584,8 +4696,11 @@ sdata() {
 	debug(F011,"sdata data",data,52);
 
 	x = spack('D',pktnum,len,(CHAR *)s); /* Send the data packet. */
-	if (x < 0)
-	  return(x);
+	debug(F101,"sdata spack","",x);
+	if (x < 0) {			/* Error */
+	    ttchk();			/* See if connection is still there */
+	    return(-2);
+	}
 #ifdef STREAMING
 	if (streaming)			/* What an ACK would do. */
 	  winlo = pktnum;
@@ -4593,7 +4708,7 @@ sdata() {
 	x = ttchk();			/* Peek at input buffer. */
 	debug(F101,"sdata ttchk","",x);	/* ACKs waiting, maybe?  */
 	if (x < 0)			/* Or connection broken? */
-	  return(x);
+	  return(-2);
 /*
   Here we check to see if any ACKs or NAKs have arrived, in which case we
   break out of the D-packet-sending loop and return to the state switcher
@@ -4661,7 +4776,12 @@ szeof(s) CHAR *s; {
     }
     if (x < 0)
       return(x);
+
+#ifdef COMMENT
+    /* No, too soon */
     discard = 0;			/* Turn off per-file discard flag */
+#endif /* COMMENT */
+
 /* If we were sending from a pipe, we're not any more... */
     pipesend = 0;
     return(0);
@@ -5257,17 +5377,6 @@ spar(s) CHAR *s; {			/* Set parameters */
     return(0);
 }
 
-/* Criteria used by gnfile()... */
-
-char sndafter[19]   = { NUL, NUL };
-char sndbefore[19]  = { NUL, NUL };
-char sndnafter[19]  = { NUL, NUL };
-char sndnbefore[19] = { NUL, NUL };
-char *sndexcept[8]  = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-char *rcvexcept[8]  = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-long sndsmaller = -1L;
-long sndlarger  = -1L;
-
 /*  G N F I L E  --  Get name of next file to send  */
 /*
   Expects global sndsrc to be:
@@ -5314,11 +5423,13 @@ gnfile() {
 	&& !addlist
 #endif /* NOMSEND */
 	) {
+	extern int stdinf;
+	if (!stdinf)			/* Not if sending from stdin */
 #ifdef WHATAMI
-	/* We don't do this in server mode because it undoes WHATAMI */
-	if (!server || (server && ((whatru & WMI_FLAG) == 0)))
+	  /* We don't do this in server mode because it undoes WHATAMI */
+	  if (!server || (server && ((whatru & WMI_FLAG) == 0)))
 #endif /* WHATAMI */
-	  binary = gnf_binary;		/* Restore prevailing transfer mode */
+	    binary = gnf_binary;	/* Restore prevailing transfer mode */
 	debug(F101,"gnfile binary = gnf_binary","",gnf_binary);
     }
 #ifdef PIPESEND
@@ -5578,7 +5689,7 @@ gotnam:
 				sndnafter,sndnbefore,
 				sndsmaller,sndlarger,
 				skipbup,
-				8,sndexcept);
+				NSNDEXCEPT,sndexcept);
 		debug(F111,"gnfile fileselect",fullname,xx);
 		if (!xx) {
 		    y = -1L;
@@ -5597,7 +5708,7 @@ gotnam:
 			    sndnafter,sndnbefore,
 			    sndsmaller,sndlarger,
 			    skipbup,
-			    8,sndexcept)) {
+			    NSNDEXCEPT,sndexcept)) {
 		gnferror = -6;
 		debug(F111,"gnfile fileselect",fullname,gnferror);
 		y = -1L;
@@ -6232,18 +6343,24 @@ snddir(spec) char * spec; {
     int t = 0, rc = 0;
     char fnbuf[CKMAXPATH+1];
 
+    debug(F111,"snddir matchdot",spec,matchdot);
+
 #ifndef NOICP
+    debug(F111,"snddir dir_dots",spec,dir_dots);
     sd_hdg = dir_head > 0;		/* Import listing parameters if any */
     sd_bkp = dir_back > 0;
-    sd_dot = dir_dots > 0;
+    if (dir_dots > -1)
+      sd_dot = dir_dots;
+    else
+      sd_dot = matchdot;
 #else
     sd_hdg = 1;				/* Or use hardwired defaults */
     sd_bkp = 1;
-    sd_dot = 0;
+    sd_dot = matchdot;
 #endif /* NOICP */
 
     if (!spec) spec = "";
-    debug(F110,"snddir",spec,0);
+    debug(F111,"snddir sd_dot",spec,sd_dot);
     if (*spec) {
 #ifdef COMMENT
 	zfnqfp(spec,CKMAXPATH,name);
@@ -6339,8 +6456,12 @@ snddir(spec) char * spec; {
 #ifdef UNIX
     {
 	extern char ** mtchs;
-	if (sd_dot) nzxopts |= ZX_MATCHDOT;
-	if (recursive) nzxopts |= ZX_RECURSE;
+	debug(F111,"snddir sd_dot",spec,sd_dot);
+	if (sd_dot > 0)
+	  nzxopts |= ZX_MATCHDOT;
+	if (recursive)
+	  nzxopts |= ZX_RECURSE;
+	debug(F111,"snddir nzxopts",spec,nzxopts);
 	nxpnd = nzxpand(name,nzxopts);	/* Get the array of names */
 	sh_sort(mtchs,NULL,nxpnd,0,0,1); /* Sort the array */
     }
@@ -6751,6 +6872,15 @@ remset(s) char *s; {
       case 315:				/* File carriage control */
 	fcctrl = atoi(p);
 	return(1);
+      case 330:				/* Match dotfiles */
+#ifndef NOICP
+	dir_dots = -1;			/* This undoes DIR /DOT option */
+#endif /* NOICP */
+	matchdot = atoi(p);
+	return(1);
+      case 331:				/* Match FIFOs */
+	matchfifo = atoi(p);
+	return(1);
       case 400:				/* Block check */
 	y = atoi(p);
 	if (y < 5 && y > 0) {
@@ -6788,19 +6918,26 @@ remset(s) char *s; {
 	return(1);
 
 #ifndef NOCSETS
-      case 405:				/* Transfer character set */
-	for (i = 0; i < ntcsets; i++) {
-	    if (!strcmp(tcsinfo[i].designator,p)) break;
-	}
-	debug(F101,"remset xfer charset lookup","",i);
-	if (i == ntcsets) return(0);
-	tcharset = tcsinfo[i].code;	/* if known, use it */
-	if (tcharset == TC_TRANSP)
-	  rx = NULL;
-	else
-	  rx = xlr[tcharset][fcharset];	/* translation function */
-	return(1);
-
+      case 405: {				/* Transfer character set */
+	  extern int s_cset, axcset[];
+	  int i;
+	  for (i = 0; i < ntcsets; i++) {
+	      if (!strcmp(tcsinfo[i].designator,p)) break;
+	  }
+	  debug(F101,"remset tcharset lookup","",i);
+	  if (i == ntcsets) return(0);
+	  tcharset = tcsinfo[i].code;	/* If known, use it */
+	  debug(F101,"remset tcharset","",tcharset);
+	  if (s_cset == XMODE_A)
+	    if (axcset[tcharset] > -1 && axcset[tcharset] > MAXFCSETS)
+	      fcharset = axcset[tcharset]; /* Auto-pick file charset */
+	  debug(F101,"remset tcharset fcharset","",fcharset);
+	  setxlatype(tcharset,fcharset); /* Set up charset translations */
+	  debug(F101,"remset xlatype","",xlatype);
+	  debug(F101,"remset tcharset after setxlatype","",tcharset);
+	  tcs_save = -1;
+	  return(1);
+      }
       case 320: {			/* File character set */
 	  extern struct keytab fcstab[];
 	  extern int nfilc, s_cset, r_cset;
@@ -6810,8 +6947,9 @@ remset(s) char *s; {
 	    return(0);
 	  s_cset = XMODE_M;		/* No automatic charset switching */
 	  r_cset = XMODE_M;
-	  fcharset = x;			/* Set file charset  */
-	  rx = xlr[tcharset][fcharset];	/* translation function */
+	  fcharset = x;			/* Set file charset */
+	  setxlatype(tcharset,fcharset); /* and translation type */
+	  fcs_save = -1;
 	  return(1);
       }
 #endif /* NOCSETS */

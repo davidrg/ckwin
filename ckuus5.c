@@ -65,6 +65,9 @@ extern int StartedFromDialer;
 #endif /* NT */
 #include "ckocon.h"
 #include "ckokey.h"
+#ifdef KUI
+#include "ikui.h"
+#endif /* KUI */
 #ifdef putchar
 #undef putchar
 #endif /* putchar */
@@ -96,7 +99,12 @@ extern int carrier, cdtimo, local, quiet, backgrd, bgset, sosi, suspend,
   binary, escape, xargs, flow, cmdmsk, duplex, ckxech, seslog, what,
   inserver, diractive, tlevel, cwdf, nfuncs, msgflg, remappd, hints, mdmtyp,
   zincnt, cmask, rcflag, success, xitsta, pflag, tnlm, tn_nlm, xitwarn,
-  debses, xaskmore, parity, saveask, wasclosed, whyclosed, cdactive;
+  debses, xaskmore, parity, saveask, wasclosed, whyclosed, cdactive,
+  rcdactive;
+
+#ifdef LOCUS
+extern int locus, autolocus;
+#endif /* LOCUS */
 
 #ifndef NOMSEND
 extern int addlist;
@@ -211,9 +219,14 @@ char * ikprompt = "IKSD>";
 #else  /* NOSPL */
 #ifdef OS2
 /* Default prompt for OS/2 and Win32 */
+#ifdef NT
+char * ckprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] K-95> ";
+char * ikprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] IKSD> ";
+#else  /* NT */
 char * ckprompt = "[\\freplace(\\v(dir),/,\\\\)] K-95> ";
 char * ikprompt = "[\\freplace(\\v(dir),/,\\\\)] IKSD> ";
-#else
+#endif /* NT */
+#else  /* OS2 */
 #ifdef VMS
 char * ckprompt = "\\v(dir) C-Kermit>"; /* Default prompt VMS */
 char * ikprompt = "\\v(dir) IKSD>";
@@ -278,7 +291,7 @@ extern struct keytab * term_font;
 extern int ntermfont, tt_font, tt_font_size;
 extern unsigned char colornormal, colorunderline, colorstatus,
     colorhelp, colorselect, colorborder, colorgraphic, colordebug,
-    colorreverse, colorcmd;
+    colorreverse, colorcmd, coloritalic;
 extern int priority;
 extern struct keytab prtytab[];
 extern int nprty;
@@ -293,6 +306,9 @@ extern long vernum;
 extern int inecho, insilence, inbufsize, nvars, inintr;
 extern char *protv, *fnsv, *cmdv, *userv, *ckxv, *ckzv, *ckzsys, *xlav,
  *cknetv, *clcmds;
+#ifdef OS2
+extern char *ckyv;
+#endif /* OS2 */
 #ifdef CK_AUTHENTICATION
 extern char * ckathv;
 #endif /* CK_AUTHENTICATION */
@@ -592,7 +608,7 @@ char *whil_def[] = { "_assign _whi\\v(cmdlevel) {_getargs,",
 
 /* SWITCH macro */
 char *sw_def[] = { "_assign _sw_\\v(cmdlevel) {_getargs,",
-"_forward \\%1,\\%2,:default,:_..bot,_putargs},_def break goto _..bot,",
+"_forward \"\\%1\",\\%2,:default,:_..bot,_putargs},_def break goto _..bot,",
 "do _sw_\\v(cmdlevel),_assign _sw_\\v(cmdlevel)",
 ""};
 
@@ -706,7 +722,33 @@ extern int rmailf, rprintf;             /* REMOTE MAIL & PRINT items */
 extern char optbuf[];
 #endif /* NOFRILLS */
 
-extern int noinit;
+extern int noinit;			/* Flat to skip init file */
+
+#ifndef NOSPL
+static struct keytab kcdtab[] = {	/* Symbolic directory names */
+#ifdef NT
+    { "appdata",  VN_APPDATA,   0 },
+    { "common",   VN_COMMON,    0 },
+    { "desktop",  VN_DESKTOP,   0 },
+#endif /* NT */
+    { "download", VN_DLDIR,     0 },
+#ifdef OS2ORUNIX
+    { "exedir",   VN_EXEDIR,    0 },
+#endif /* OS2ORUNIX */
+    { "home",     VN_HOME,      0 },
+    { "inidir",   VN_INI,       0 },
+#ifdef UNIX
+    { "lockdir",  VN_LCKDIR,    0 },
+#endif /* UNIX */
+#ifdef NT
+    { "personal", VN_PERSONAL,  0 },
+#endif /* NT */
+    { "startup",  VN_STAR,      0 },
+    { "textdir",  VN_TXTDIR,    0 },
+    { "tmpdir",   VN_TEMP,      0 }
+};
+static int nkcdtab = (sizeof(kcdtab) / sizeof(struct keytab));
+#endif /* NOSPL */
 
 #ifndef NOSPL
 _PROTOTYP( VOID freelocal, (int) );
@@ -1289,6 +1331,7 @@ cmdini() {
         }
         a_dim[0] = topargc - 1;
         a_ptr[0] = topxarg;
+	debug(F111,"a_dim[0]","A",a_dim[0]);
     }
     *vnambuf = NUL;
 #endif /* NOSPL */
@@ -1817,15 +1860,32 @@ getncm(s,n) char *s; int n; {
   COMMENT!  (Otherwise you'll wind up adding the same code again and breaking
   everything again.)  <-- The preceding warning should be obsolete since the
   statements below have been fixed, but in case of fire, remove the "n" from
-  the <#>ifndef above.
+  the <#>ifndef above.  NEW WARNING: code added 12 Apr 2002 to exempt the
+  opening brace in \{nnn} from being treated as a quoted brace.
 */
         if (!quote && *s == CMDQ) {
             quote = 1;
             continue;
         }
         if (quote) {
+	    int notquote = 0;
             quote = 0;
-            continue;
+	    if (*s == '{') {		/* Check for \{nnn} (8.0.203) */
+		char c, * p;
+		p = macp[maclvl] + 1;
+		while ((c = *p++)) {
+		    if (isdigit(c))
+		      continue;
+		    else if (c == '}') {
+			notquote++;
+			break;
+		    } else {
+			break;
+		    }
+		}
+	    }
+	    if (notquote == 0)
+	      continue;
         }
 #endif /* COMMENT */
 
@@ -2567,10 +2627,11 @@ parser(m) int m; {
     interrupted = 0;
 #endif /* NOXFER */
 
-    what = W_COMMAND;                   /* Now we're parsing commands. */
-
     while (sstate == 0) {               /* Parse cmds until action requested */
         debug(F100,"parse top","",0);
+	what = W_COMMAND;		/* Now we're parsing commands. */
+	rcdactive = 0;			/* REMOTE CD not active */
+
 #ifdef OS2
         if (apcactive == APC_INACTIVE)
           WaitCommandModeSem(-1);
@@ -4377,6 +4438,7 @@ delmac(nam,exact) char *nam; int exact; { /* Delete the named macro */
 
     z = isaa(nam);
     debug(F111,"delmac isaa",nam,z);
+    debug(F111,"delmac exact",nam,exact);
     x = z ? mxxlook(mactab,nam,nmac) :
       exact ? mxlook(mactab,nam,nmac) :
         mlook(mactab,nam,nmac);
@@ -4437,7 +4499,7 @@ popclvl() {                             /* Pop command level, return cmdlvl */
                 if (v->lv_value)        /* Copy old ones back */
                   addmac(v->lv_name,v->lv_value);
                 else
-                  delmac(v->lv_name,0);
+                  delmac(v->lv_name,1);
                 v = v->lv_next;
             }
             freelocal(cmdlvl);          /* Free local storage */
@@ -4520,9 +4582,11 @@ popclvl() {                             /* Pop command level, return cmdlvl */
             if (maclvl > -1) {
                 a_ptr[0] = m_xarg[maclvl];
                 a_dim[0] = n_xarg[maclvl] - 1;
+		debug(F111,"a_dim[0]","B",a_dim[0]);
             } else {
                 a_ptr[0] = topxarg;
                 a_dim[0] = topargc - 1;
+		debug(F111,"a_dim[0]","C",a_dim[0]);
             }
         } else {
             maclvl = -1;
@@ -4606,7 +4670,7 @@ prepop() {
                /* Or command source is macro... */
                || ((cmdstk[cmdlvl].src == CMD_MD) &&
                 (maclvl > -1) &&
-                !iseom(macp[maclvl])))  /* and at end of macro, then... */
+                iseom(macp[maclvl])))  /* and at end of macro, then... */
 #endif /* NOSPL */
         {
               popclvl();                /* pop command level. */
@@ -4665,7 +4729,7 @@ doclslog(x) int x; {
             return(0);
         }
         *sesfil = '\0';
-        seslog = 0;
+        setseslog(0);
         return(zclose(ZSFILE));
 #endif /* NOLOCAL */
 
@@ -4765,8 +4829,10 @@ static int nshokey = (sizeof(shokeytab) / sizeof(struct keytab));
 
 #define SHKEYDEF TT_MAX+5
 struct keytab shokeymtab[] = {
+    "aaa",       TT_AAA,     CM_INV,    /* AnnArbor */
     "adm3a",     TT_ADM3A,   0,         /* LSI ADM-3A */
     "aixterm",   TT_AIXTERM, 0,         /* IBM AIXterm */
+    "annarbor",  TT_AAA,     0,         /* AnnArbor */
     "ansi-bbs",  TT_ANSI,    0,         /* ANSI.SYS (BBS) */
     "at386",     TT_AT386,   0,         /* Unixware ANSI */
     "avatar/0+", TT_ANSI,    0,         /* AVATAR/0+ */
@@ -4796,6 +4862,7 @@ struct keytab shokeymtab[] = {
     "russian",   TT_KBM_RUSSIAN, 0,     /* Russian mode */
     "scoansi",   TT_SCOANSI, 0,         /* SCO ANSI */
     "sni-97801", TT_97801,   0,         /* Sinix 97801 */
+    "sun",       TT_SUN,     0,         /* Sun Console */
 #ifdef OS2PM
 #ifdef COMMENT
     "tek4014", TT_TEK40, 0,
@@ -5117,6 +5184,9 @@ shover() {
 #ifndef MAC
 #ifndef NOLOCAL
     printf(" %s\n",connv);
+#ifdef OS2
+    printf(" %s\n",ckyv);
+#endif /* OS2 */
 #endif /* NOLOCAL */
 #endif /* MAC */
 #ifndef NODIAL
@@ -5202,6 +5272,7 @@ shotcs(csl,csr) int csl, csr; {         /* Show terminal character set */
     extern struct _vtG G[4], *GL, *GR;
     extern int decnrcm, sni_chcode;
     extern int tt_utf8, dec_nrc, dec_kbd, dec_lang;
+    extern prncs;
 
     printf(" Terminal character-sets:\n");
     if (IS97801(tt_type_mode)) {
@@ -5257,6 +5328,8 @@ shotcs(csl,csr) int csl, csr; {         /* Show terminal character set */
     printf(" Keyboard character-sets:\n");
     printf("   Multinational: %s\n",txrinfo[dec_kbd]->keywd);
     printf("        National: %s\n",txrinfo[dec_nrc]->keywd);
+    printf("\n");
+    printf(" Printer character-set: %s\n",txrinfo[prncs]->keywd);
 #endif /* NOTERM */
 #else /* OS2 */
 #ifndef MAC
@@ -5403,10 +5476,20 @@ shotrm() {
     }
 #endif /* PCFONTS */
 #ifdef KUI
-    char * font = "(unknown)";
-    char * fontsize = ckitoa(tt_font_size);
-    if ( ntermfont > 0 )
-        font = term_font[tt_font].kwd;
+    char font[64] = "(unknown)";
+    if ( ntermfont > 0 ) {
+        int i;
+        for (i = 0; i < ntermfont; i++) {
+            if (tt_font == term_font[i].kwval) {
+                ckstrncpy(font,term_font[i].kwd,59);
+                ckstrncat(font," ",64);
+                ckstrncat(font,ckitoa(tt_font_size/2),64);
+                if ( tt_font_size % 2 )
+                    ckstrncat(font,".5",64);
+                break;
+            }
+        }
+    }
 #endif /* KUI */
 
     printf("Terminal parameters:\n");
@@ -5532,7 +5615,7 @@ shotrm() {
 #ifdef KUI
            "Font",font
 #else
-           "Font (VGA)","(not supported)"
+           "Font","(not supported)"
 #endif /* KUI */
 #endif /* PCFONTS */
 
@@ -5593,7 +5676,7 @@ shotrm() {
         WrtCharStrAtt("select",    6, row, 42, &colorselect );
         WrtCharStrAtt("status",    6, row, 50, &colorstatus );
         WrtCharStrAtt("terminal",  8, row, 58, &colornormal );
-        WrtCharStrAtt("underline",  9, row, 67, &colorunderline );
+        WrtCharStrAtt("underline", 9, row, 67, &colorunderline );
 #endif /* ONETERMUPD */
         row = VscrnGetCurPos(VCMD)->y+1;
         VscrnWrtCharStrAtt(VCMD, "border",    6, row, 9, &colorborder );
@@ -5616,7 +5699,7 @@ shotrm() {
                 colors[colorselect&0x0F],
                 colors[colorstatus&0x0F],
                 colors[colornormal&0x0F],
-                colors[colorunderline&0x0F] );
+                colors[colorunderline&0x0F]);
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
         /* Background color names */
@@ -5637,38 +5720,44 @@ shotrm() {
         GetCurPos(&row, &col);
         WrtCharStrAtt("graphic",   7, row, 9, &colorgraphic );
         WrtCharStrAtt("command",   7, row, 17, &colorcmd );
+        WrtCharStrAtt("italic",    6, row, 26, &coloritalic );
 #endif /* ONETERMUPD */
         row = VscrnGetCurPos(VCMD)->y+1;
         VscrnWrtCharStrAtt(VCMD, "graphic",   7, row, 9,  &colorgraphic );
         VscrnWrtCharStrAtt(VCMD, "command",   7, row, 17, &colorcmd );
+        VscrnWrtCharStrAtt(VCMD, "italic",    6, row, 26, &coloritalic );
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
         /* Foreground color names */
-        printf("%6s: %-8s%-8s\n","fore",
+        printf("%6s: %-8s%-8s%-8s\n","fore",
                 colors[colorgraphic&0x0F],
-                colors[colorcmd&0x0F] );
+                colors[colorcmd&0x0F],
+                colors[coloritalic&0x0F]);
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
         /* Background color names */
-        printf("%6s: %-8s%-8s\n","back",
+        printf("%6s: %-8s%-8s%-8s\n","back",
                 colors[colorgraphic>>4],
-                colors[colorcmd>>4] );
+                colors[colorcmd>>4],
+                colors[coloritalic>>4]);
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     }
     printf("\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     {
-        extern int trueblink, truereverse, trueunderline;
-        printf(" Attribute:  blink: %-3s  reverse: %-3s  underline: %-3s\n",
+        extern int trueblink, truereverse, trueunderline, trueitalic;
+        printf(
+    " Attribute:  blink: %-3s  reverse: %-3s  underline: %-3s italic: %-3s\n",
                 trueblink?"on":"off", truereverse?"on":"off",
-                trueunderline?"on":"off");
+                trueunderline?"on":"off", trueitalic?"on":"off");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     }
     {
         extern vtattrib WPattrib;
-        printf(" ASCII Protected chars: %s%s%s%s%s%s\n",
+        printf(" ASCII Protected chars: %s%s%s%s%s%s%s\n",
                 WPattrib.blinking?"blink ":"",
+                WPattrib.italic?"italic ":"",
                 WPattrib.reversed?"reverse ":"",
                 WPattrib.underlined?"underline ":"",
                 WPattrib.bold?"bold ":"",
@@ -7126,9 +7215,6 @@ doshow(x) int x; {
 #ifdef DOUBLEQUOTING
           extern int dblquo;
 #endif /* DOUBLEQUOTING */
-#ifdef LOCUS
-          extern int locus, autolocus;
-#endif /* LOCUS */
 #ifdef CK_AUTODL
           printf(" Command autodownload: %s\n",showoff(cmdadl));
 #else
@@ -7160,7 +7246,8 @@ doshow(x) int x; {
 #endif /* IKSDONLY */
 #ifdef LOCUS
           printf(" Locus:          %s",
-                 autolocus ? "auto" : (locus ? "local" : "remote"));
+                 autolocus ? (autolocus == 2 ? "ask" : "auto") :
+		 (locus ? "local" : "remote"));
           if (autolocus)
             printf(" (%s)", locus ? "local" : "remote");
           printf("\n");
@@ -7555,17 +7642,19 @@ doshow(x) int x; {
       }
 #endif /* NOCMDL */
 
-      case SHCD:
-        s = getenv("CDPATH");
-        if (!s) s = "(none)";
-        printf("\n current directory:  %s\n", zgtdir());
-        printf(" previous directory: %s\n", prevdir ? prevdir : "(none)");
-        printf(" cd path:            %s\n", ckcdpath ? ckcdpath : s);
-        printf(" cd message:         %s\n", showoff(srvcdmsg & 2));
-        printf(" server cd-message:  %s\n", showoff(srvcdmsg & 1));
-        printf(" cd message file:    %s\n\n", cdmsgstr ? cdmsgstr : "(none)");
-        break;
-
+      case SHCD: {
+	  extern char * myhome;
+	  s = getenv("CDPATH");
+	  if (!s) s = "(none)";
+	  printf("\n current directory:  %s\n", zgtdir());
+	  printf(" previous directory: %s\n", prevdir ? prevdir : "(none)");
+	  printf(" cd home:            %s\n", homepath());
+	  printf(" cd path:            %s\n", ckcdpath ? ckcdpath : s);
+	  printf(" cd message:         %s\n", showoff(srvcdmsg & 2));
+	  printf(" server cd-message:  %s\n", showoff(srvcdmsg & 1));
+	  printf(" cd message file:    %s\n\n",cdmsgstr ? cdmsgstr : "(none)");
+	  break;
+      }
 #ifndef NOCSETS
       case SHASSOC:
         (VOID) showassoc();
@@ -7662,7 +7751,8 @@ shoatt() {
     printf(" System ID: %s\n", showoff(atsidi));
     printf(" System Info: %s\n", showoff(atsysi));
 #ifdef CK_PERMS
-    printf(" Protection: %s\n", showoff(atlpri));
+    printf(" Permissions In:  %s\n", showoff(atlpri));
+    printf(" Permissions Out: %s\n", showoff(atlpro));
 #endif /* CK_PERMS */
 #ifdef STRATUS
     printf(" Format: %s\n", showoff(atfrmi));
@@ -9076,11 +9166,13 @@ xwords(s,max,list,flag) char *s; int max; char *list[]; int flag; {
         if (maclvl < 0) {
             a_dim[0] = z;               /* Array dimension is one less */
             topargc = z + 1;            /* than \v(argc) */
+	    debug(F111,"a_dim[0]","D",a_dim[0]);
         } else {
             macargc[maclvl] = z + 1;    /* Set \v(argc) variable */
             n_xarg[maclvl] = z + 1;     /* This is the actual number */
             a_ptr[0] = m_xarg[maclvl];  /* Point \&_[] at the args */
             a_dim[0] = z;               /* And give it this dimension */
+	    debug(F111,"a_dim[0]","E",a_dim[0]);
         }
     }
 #endif /* NOSPL */
@@ -9184,6 +9276,7 @@ doshift(n) int n; {                     /* n = shift count */
         macargc[level] -= n;            /* Adjust count */
         n_xarg[maclvl] = macargc[level]; /* Here too */
         a_dim[0] = macargc[level] - 1;  /* Adjust array dimension */
+	debug(F111,"a_dim[0]","F",a_dim[0]);
         zzstring("\\fjoin(&_[],{ },1)",&sx,&nx); /* Handle \%* */
 #ifdef COMMENT
         makestr(&(m_line[level]),tmpbuf);
@@ -9191,6 +9284,7 @@ doshift(n) int n; {                     /* n = shift count */
     } else {                            /* Ditto for top level */
         topargc -= n;
         a_dim[0] = topargc - 1;
+	debug(F111,"a_dim[0]","G",a_dim[0]);
         zzstring("\\fjoin(&_[],{ },1)",&sx,&nx);
 #ifdef COMMENT
         makestr(&topline,tmpbuf);
@@ -9243,11 +9337,42 @@ extern int iksdcf;
         ckstrncpy(line,s,LINBUFSIZ);
         goto gocd;
     }
+#ifndef NOSPL
+    if (cx == XXKCD) {			/* Symbolic (Kermit) CD */
+	char * p;
+	int n, k;
+	x = cmkey(kcdtab,nkcdtab,"Symbolic directory name","home",xxstring);
+	if (x < 0)
+	  return(x);
+	x = lookup(kcdtab,atmbuf,nkcdtab,&k); /* Get complete keyword */
+	if (x < 0) {
+	    printf("?Lookup error\n");	/* shouldn't happen */
+	    return(-9);
+	}
+        if ((x = cmcfm()) < 0)
+	  return(x);
+	if (k == VN_HOME) {		/* HOME: allow SET HOME to override */
+	    ckstrncpy(line,homepath(),LINBUFSIZ);
+	} else {			/* Other symbolic name */
+	    /* Convert to variable syntax */
+	    ckmakmsg(tmpbuf,TMPBUFSIZ,"\\v(",kcdtab[k].kwd,")",NULL);
+	    p = line;			/* Expand the variable */
+	    n = LINBUFSIZ;
+	    zzstring(tmpbuf,&p,&n);
+	    if (!line[0]) {		/* Fail if variable not defined */
+		printf("?%s - not defined\n",tmpbuf);
+		return(success = 0);
+	    }
+	}
+	s = line;			/* All OK, go try to CD... */
+	goto gocd;
+    }
+#endif /* NOSPL */
 
     cdactive = 1;
 #ifdef GEMDOS
     if ((x = cmdir("Name of local directory, or carriage return",
-                   zhome(),
+                   homepath(),
                    &s,
                    NULL
                    )
@@ -9257,7 +9382,7 @@ extern int iksdcf;
 #ifdef OS2
     if ((x = cmdirp("Name of PC disk and/or directory,\n\
        or press the Enter key for the default",
-                    zhome(),
+                    homepath(),
                     &s,
                     ckcdpath ? ckcdpath : getenv("CDPATH"),
                     xxstring
@@ -9266,7 +9391,7 @@ extern int iksdcf;
       return(x);
 #else
 #ifdef MAC
-    x = ckstrncpy(temp,zhome(),32);
+    x = ckstrncpy(temp,homepath(),32);
     if (x > 0) if (temp[x-1] != ':') { temp[x] = ':'; temp[x+1] = NUL; }
     if ((x = cmtxt("Name of Macintosh volume and/or folder,\n\
  or press the Return key for the desktop on the boot disk",
@@ -9278,7 +9403,7 @@ or name of directory on this computer",
 #ifdef VMS
                     "SYS$LOGIN",        /* With no colon */
 #else
-                    zhome(),            /* In VMS this is "SYS$LOGIN:" */
+                    homepath(),		/* In VMS this is "SYS$LOGIN:" */
 #endif /* VMS */
                     &s,
                     ckcdpath ? ckcdpath : getenv("CDPATH"),

@@ -33,6 +33,12 @@
 #ifdef ZLIB
 #include <openssl/comp.h>
 #endif /* ZLIB */
+/* We place the following to avoid loading openssl/mdc2.h since it 
+ * relies on the OpenSSL des.h.  Since we do not need the MDC2 
+ * definitions there is no reason to have it included by openssl/evp.h
+ */
+#define OPENSSL_NO_MDC2
+#include <openssl/des.h>
 #include <openssl/ssl.h>
 #include <openssl/x509v3.h>
 #include <openssl/rand.h>
@@ -40,9 +46,6 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/bn.h>
-#ifdef COMMENT
-#include <openssl/des.h>
-#endif /* COMMENT */
 #include <openssl/blowfish.h>
 #include <openssl/dh.h>
 #include <openssl/rc4.h>
@@ -116,7 +119,7 @@ _PROTOTYP(char * ssl_get_subject_name,(SSL *));
 _PROTOTYP(int ssl_get_client_finished,(char *, int));
 _PROTOTYP(int ssl_get_server_finished,(char *, int));
 _PROTOTYP(int ssl_passwd_callback,(char *, int, int, VOID *));
-_PROTOTYP(VOID ssl_client_info_callback,(SSL *,int, int));
+_PROTOTYP(VOID ssl_client_info_callback,(const SSL *,int, int));
 _PROTOTYP(int ssl_anonymous_cipher,(SSL * ssl));
 _PROTOTYP(int tls_load_certs,(SSL_CTX * ctx, SSL * con, int server));
 
@@ -128,4 +131,6 @@ _PROTOTYP(int tls_load_certs,(SSL_CTX * ctx, SSL * con, int server));
 #define SSL_CLIENT 0
 #define SSL_SERVER 1
 #define SSL_HTTP   2
+
+#define SSL_ERR_BFSZ 4096
 #endif /* CK_SSL */

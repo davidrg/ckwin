@@ -67,6 +67,12 @@
 
 #ifdef AIXRS
 
+#ifdef AIX53
+#define HERALD " IBM AIX 5.3"
+#else
+#ifdef AIX52
+#define HERALD " IBM AIX 5.2"
+#else
 #ifdef AIX51
 #define HERALD " IBM AIX 5.1"
 #else
@@ -100,6 +106,8 @@
 #endif /* AIX45 */
 #endif /* AIX50 */
 #endif /* AIX51 */
+#endif /* AIX52 */
+#endif /* AIX53 */
 #endif /* AIXRS */
 
 #ifdef PS2AIX10
@@ -165,13 +173,26 @@
 #endif /* BSDI4 */
 #else  /* __bsdi__ */
 #ifdef __NetBSD__
+#ifdef NETBSD16
+#define HERALD " NetBSD 1.6"
+#else
 #ifdef NETBSD15
 #define HERALD " NetBSD 1.5"
 #else
 #define HERALD " NetBSD"
 #endif /* NETBSD15 */
-#else
+#endif /* NETBSD16 */
+#else  /* __NetBSD__ */
 #ifdef __FreeBSD__
+#ifdef FREEBSD50
+#define HERALD " FreeBSD 5.0"
+#else
+#ifdef FREEBSD47
+#define HERALD " FreeBSD 4.7"
+#else
+#ifdef FREEBSD46
+#define HERALD " FreeBSD 4.6"
+#else
 #ifdef FREEBSD45
 #define HERALD " FreeBSD 4.5"
 #else
@@ -205,6 +226,9 @@
 #endif /* FREEBSD43 */
 #endif /* FREEBSD44 */
 #endif /* FREEBSD45 */
+#endif /* FREEBSD46 */
+#endif /* FREEBSD47 */
+#endif /* FREEBSD50 */
 #else
 #ifdef __386BSD__
 #define HERALD " 386BSD"
@@ -325,6 +349,10 @@
 #endif /* SNI543 */
 #endif /* SNI544 */
 #endif /* SINIX */
+
+#ifdef POWERMAX
+#define HERALD " Concurrent PowerMAX OS"
+#endif /* POWERMAX */
 
 #ifdef DELL_SVR4
 #define HERALD " Dell System V R4"
@@ -695,11 +723,23 @@
 #ifdef ZSL5500
 #define HERALD " Sharp Zaurus SL-5500"
 #else
+#ifdef RH80
+#define HERALD " Red Hat Linux 8.0"
+#else
+#ifdef RH73
+#define HERALD " Red Hat Linux 7.3"
+#else
+#ifdef RH72
+#define HERALD " Red Hat Linux 7.2"
+#else
 #ifdef RH71
 #define HERALD " Red Hat Linux 7.1"
 #else
 #define HERALD " Linux"
 #endif /* RH71 */
+#endif /* RH72 */
+#endif /* RH73 */
+#endif /* RH80 */
 #endif /* ZSL5500 */
 #else  /* __linux__ */
 #ifdef _386BSD				/* 386BSD Jolix */
@@ -710,6 +750,9 @@
 #else
 #ifdef Plan9
 #define HERALD " Plan 9 from Bell Labs"
+#else
+#ifdef SOLARIS9
+#define HERALD " Solaris 9"
 #else
 #ifdef SOLARIS8
 #define HERALD " Solaris 8"
@@ -734,6 +777,7 @@
 #endif /* SOLARIS26 */
 #endif /* SOLARIS7 */
 #endif /* SOLARIS8 */
+#endif /* SOLARIS9 */
 #endif /* Plan9 */
 #endif /* LYNXOS */
 #endif /* _386BSD */

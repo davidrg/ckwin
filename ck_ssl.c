@@ -1,4 +1,4 @@
-char *cksslv = "SSL/TLS support, 8.0.190,  29 Jan 2002";
+char *cksslv = "SSL/TLS support, 8.0.203,  9 Jul 2002";
 /*
   C K _ S S L . C --  OpenSSL Interface for C-Kermit
 
@@ -105,8 +105,7 @@ int ssl_finished_messages = (OPENSSL_VERSION_NUMBER >= 0x0090581fL);
 
 static int auth_ssl_valid = 0;
 static char *auth_ssl_name = 0;    /* this holds the oneline name */
-#define SSL_ERR_BFSZ 4096
-static char ssl_err[SSL_ERR_BFSZ]="";
+char ssl_err[SSL_ERR_BFSZ]="";
 
 BIO *bio_err=NULL;
 X509_STORE *crl_store = NULL;
@@ -310,9 +309,6 @@ X509_STORE_CTX *ctx;
     int depth, error;
     X509 *xs;
 
-    if ( ssl_certsok_flag )
-        return(1);
-
     xs=X509_STORE_CTX_get_current_cert(ctx);
     error=X509_STORE_CTX_get_error(ctx);
     depth=X509_STORE_CTX_get_error_depth(ctx);
@@ -320,6 +316,10 @@ X509_STORE_CTX *ctx;
     if ( ssl_debug_flag )
         printf("ssl:client_verify_callback:depth=%d ok=%d err=%d-%s\r\n",
                 depth,ok,error,X509_verify_cert_error_string(error));
+
+    if ( ssl_certsok_flag ) {
+        ok = 1;
+    }
 
     /* first thing is to have a meaningful name for the current
      * certificate that is being verified ... and if we cannot
@@ -331,7 +331,7 @@ X509_STORE_CTX *ctx;
         ERR_print_errors(bio_err);
         len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
         ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
-        printf(ssl_err);
+        uq_ok("X.509 Subject Name unavailable\n", ssl_err, 1, NULL, 0);
         ok=0;
         goto return_time;
     }
@@ -342,7 +342,7 @@ X509_STORE_CTX *ctx;
         ERR_print_errors(bio_err);
         len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
         ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
-        printf(ssl_err);
+        uq_ok("X.509 Issuer Name unavailable\n", ssl_err, 1, NULL, 0);
         ok=0;
         goto return_time;
     }
@@ -356,11 +356,12 @@ X509_STORE_CTX *ctx;
     ok = ssl_verify_crl(ok, ctx);
 
     if ( !ok ) {
-        char prmpt[1024];
+        char prefix[1024];
         /* if the server is using a self signed certificate then
          * we need to decide if that is good enough for us to
          * accept ...
          */
+
         switch ( error ) {
         case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT: {
             if (ssl_verify_flag & SSL_VERIFY_FAIL_IF_NO_PEER_CERT) {
@@ -368,8 +369,13 @@ X509_STORE_CTX *ctx;
                  * connection if the server does not have a
                  * real certificate!
                  */
-                printf(
- "SSL: rejecting connection - server has a self-signed certificate\r\n");
+                ckmakxmsg(prefix,1024,
+                           "Error: Server has a self-signed certificate\n",
+                           "[",ckitoa(depth),"] subject=",subject,
+                           "[",ckitoa(depth),"] issuer=",issuer,
+                           "\n",NULL,NULL);
+
+                uq_ok(prefix, "Rejecting Connection", 1, NULL, 0);
 
                 /* sometimes it is really handy to be able to debug things
                 * and still get a connection!
@@ -382,9 +388,17 @@ X509_STORE_CTX *ctx;
                 }
                 goto return_time;
             } else if (ssl_verify_flag != SSL_VERIFY_NONE) {
-                ok = getyesno(
-  "Warning:\r\n  server has a self-signed certificate\r\n  continue? (Y/N) ",
-                              0);
+                ckmakxmsg(prefix,1024,
+                           "Warning: Server has a self-signed certificate\n",
+                           "[",ckitoa(depth),"] subject=",subject,
+                           "[",ckitoa(depth),"] issuer=",issuer,
+                           "\n",NULL,NULL);
+
+                ok = uq_ok(prefix,
+                           "Continue? (Y/N) ",
+                           3, NULL, 0);
+                if ( ok < 0 )
+                    ok = 0;
                 goto return_time;
             }
         }
@@ -394,9 +408,13 @@ X509_STORE_CTX *ctx;
                  * connection if the server does not have a
                  * real certificate!
                  */
-                printf("SSL: rejecting connection - ");
-                printf("%s\r\n",X509_verify_cert_error_string(error));
-                printf("issuer= %s\r\n",issuer);
+                ckmakxmsg(prefix,1024,
+                           "Error: ",
+                           (char *)X509_verify_cert_error_string(error),
+                           "\r\n",
+                           "issuer=",issuer,
+                           "\n",NULL,NULL,NULL,NULL,NULL,NULL);
+                uq_ok(prefix, "Rejecting Connection", 1, NULL, 0);
 
                 /* sometimes it is really handy to be able to debug things
                 * and still get a connection!
@@ -409,12 +427,13 @@ X509_STORE_CTX *ctx;
                 }
                 goto return_time;
             } else if (ssl_verify_flag != SSL_VERIFY_NONE) {
-              sprintf(prmpt,
-                      "Warning:\r\n  %s\r\n  issuer=%s\r\n  continue? (Y/N) ",
-                       X509_verify_cert_error_string(error),
-                       issuer
-                       );
-                ok = getyesno(prmpt,0);
+                ckmakxmsg(prefix,1024,
+                           "Warning: ",
+                           (char *)X509_verify_cert_error_string(error),
+                           "\r\n",
+                           "issuer=",issuer,
+                           "\n",NULL,NULL,NULL,NULL,NULL,NULL);
+                ok = uq_ok(prefix, "Continue (Y/N)", 3, NULL, 0);
                 goto return_time;
             }
             break;
@@ -426,13 +445,17 @@ X509_STORE_CTX *ctx;
                  * connection if the server does not have a
                  * real certificate!
                  */
-                printf("SSL: rejecting connection - ");
-                printf("%s\r\n",X509_verify_cert_error_string(error));
                 ASN1_TIME_print(bio_err,X509_get_notBefore(xs));
                 len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
                 ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
-                printf("notBefore= %s\r\n",ssl_err);
-
+                ckmakxmsg(prefix,1024,
+                           "Error: ",
+                           (char *)X509_verify_cert_error_string(error),
+                           "\r\n",
+                           "subject=",subject,
+                           "\r\nnotBefore=",ssl_err,
+                           "\r\n",NULL,NULL,NULL,NULL);
+                uq_ok(prefix, "Rejecting Connection", 1, NULL, 0);
                 /* sometimes it is really handy to be able to debug things
                 * and still get a connection!
                 */
@@ -448,13 +471,14 @@ X509_STORE_CTX *ctx;
                 ASN1_TIME_print(bio_err,X509_get_notBefore(xs));
                 len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
                 ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
-                sprintf(prmpt,
-            "Warning:\r\n  %s\r\n  %s\r\n  notBefore=%s\r\n  continue? (Y/N) ",
-                     X509_verify_cert_error_string(error),
-                     subject,
-                     ssl_err
-                     );
-            ok = getyesno(prmpt,0);
+                ckmakxmsg(prefix,1024,
+                           "Warning: ",
+                           (char *)X509_verify_cert_error_string(error),
+                           "\r\n",
+                           "subject=",subject,
+                           "\r\nnotBefore=",ssl_err,
+                           "\r\n",NULL,NULL,NULL,NULL);
+                ok = uq_ok(prefix, "Continue (Y/N)", 3, NULL, 0);
             }
             break;
         case X509_V_ERR_CERT_HAS_EXPIRED:
@@ -465,13 +489,19 @@ X509_STORE_CTX *ctx;
                  * connection if the server does not have a
                  * real certificate!
                  */
-                printf("SSL: rejecting connection - ");
-                printf("%s\r\n",X509_verify_cert_error_string(error));
                 ASN1_TIME_print(bio_err,X509_get_notAfter(xs));
                 len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
                 ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
-                printf("notAfter= %s\r\n",ssl_err);
 
+                ckmakxmsg(prefix,1024,
+                           "Error: ",
+                           (char *)X509_verify_cert_error_string(error),
+                           "\r\n",
+                           "subject=",subject,
+                           "\r\nnotAfter=",ssl_err,
+                           "\r\n",NULL,NULL,NULL,NULL);
+                uq_ok(prefix, "Rejecting Connection", 1, NULL, 0);
+   
                 /* sometimes it is really handy to be able to debug things
                 * and still get a connection!
                 */
@@ -487,13 +517,14 @@ X509_STORE_CTX *ctx;
                 ASN1_TIME_print(bio_err,X509_get_notAfter(xs));
                 len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
                 ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
-            sprintf(prmpt,
-            "Warning:\r\n  %s\r\n  %s\r\n  notAfter=%s\r\n  continue? (Y/N) ",
-                     X509_verify_cert_error_string(error),
-                     subject,
-                     ssl_err
-                     );
-            ok = getyesno(prmpt,0);
+                ckmakxmsg(prefix,1024,
+                           "Warning: ",
+                           (char *)X509_verify_cert_error_string(error),
+                           "\r\n",
+                           "subject=",subject,
+                           "\r\nnotAfter=",ssl_err,
+                           "\r\n",NULL,NULL,NULL,NULL);
+                ok = uq_ok(prefix, "Continue (Y/N)", 3, NULL, 0);
             }
             break;
         case X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN:
@@ -516,10 +547,13 @@ X509_STORE_CTX *ctx;
                  * connection if the server does not have a
                  * real certificate!
                  */
-                printf("SSL: rejecting connection - ");
-                printf("%s\r\n",X509_verify_cert_error_string(error));
-                printf("issuer= %s\r\n",issuer);
-
+                ckmakxmsg(prefix,1024,
+                           "Error: ",
+                           (char *)X509_verify_cert_error_string(error),
+                           "\r\n",
+                           "issuer=",issuer,
+                           "\r\n",NULL,NULL,NULL,NULL,NULL,NULL);
+                uq_ok(prefix, "Rejecting Connection", 1, NULL, 0);
                 /* sometimes it is really handy to be able to debug things
                 * and still get a connection!
                 */
@@ -531,43 +565,16 @@ X509_STORE_CTX *ctx;
                 }
                 goto return_time;
             } else if (ssl_verify_flag != SSL_VERIFY_NONE) {
-            sprintf(prmpt,
-                    "Warning:\r\n  %s\r\n  issuer=%s\r\n  continue? (Y/N) ",
-                     X509_verify_cert_error_string(error),
-                     issuer
-                     );
-            ok = getyesno(prmpt,0);
+                ckmakxmsg(prefix,1024,
+                           "Warning: ",
+                           (char *)X509_verify_cert_error_string(error),
+                           "\r\n",
+                           "issuer=",issuer,
+                           "\r\n",NULL,NULL,NULL,NULL,NULL,NULL);
+                ok = uq_ok(prefix, "Continue (Y/N)", 3, NULL, 0);
             }
             break;
         case X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE:
-            if (ssl_verify_flag & SSL_VERIFY_FAIL_IF_NO_PEER_CERT) {
-                /* make 100% sure that in secure more we drop the
-                 * connection if the server does not have a
-                 * real certificate!
-                 */
-                printf("SSL: rejecting connection - ");
-                printf("%s\r\n",X509_verify_cert_error_string(error));
-                printf("subject= %s\r\n",subject);
-
-                /* sometimes it is really handy to be able to debug things
-                * and still get a connection!
-                */
-                if (ssl_debug_flag) {
-                    printf("SSL: debug -> ignoring cert required!\r\n");
-                    ok=1;
-                } else {
-                    ok=0;
-                }
-                goto return_time;
-            } else if (ssl_verify_flag != SSL_VERIFY_NONE) {
-            sprintf(prmpt,
-                    "Warning:\r\n  %s\r\n  subject=%s\r\n  continue? (Y/N) ",
-                     X509_verify_cert_error_string(error),
-                     subject
-                     );
-            ok = getyesno(prmpt,0);
-            }
-            break;
         case X509_V_ERR_UNABLE_TO_GET_CRL:
         case X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE:
         case X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE:
@@ -584,13 +591,17 @@ X509_STORE_CTX *ctx;
         case X509_V_ERR_APPLICATION_VERIFICATION:
         default:
             if (ssl_verify_flag & SSL_VERIFY_FAIL_IF_NO_PEER_CERT) {
-                /* make 100% sure that in secure more we drop the
+                /* make 100% sure that in secure mode we drop the
                  * connection if the server does not have a
                  * real certificate!
                  */
-                printf("SSL: rejecting connection - ");
-                printf("%s\r\n",X509_verify_cert_error_string(error));
-                printf("subject= %s\r\n",subject);
+                ckmakxmsg(prefix,1024,
+                           "Error: ",
+                           (char *)X509_verify_cert_error_string(error),
+                           "\r\n",
+                           "subject=",subject,
+                           "\r\n",NULL,NULL,NULL,NULL,NULL,NULL);
+                uq_ok(prefix, "Rejecting Connection", 1, NULL, 0);
 
                 /* sometimes it is really handy to be able to debug things
                 * and still get a connection!
@@ -603,27 +614,30 @@ X509_STORE_CTX *ctx;
                 }
                 goto return_time;
             } else if (ssl_verify_flag != SSL_VERIFY_NONE) {
-            sprintf(prmpt,
-                    "Warning:\r\n  %s\r\n  %s\r\n  continue? (Y/N) ",
-                     X509_verify_cert_error_string(error),
-                     subject
-                     );
-            ok = getyesno(prmpt,0);
+                ckmakxmsg(prefix,1024,
+                           "Warning: ",
+                           (char *)X509_verify_cert_error_string(error),
+                           "\r\n",
+                           "subject=",subject,
+                           "\r\n",NULL,NULL,NULL,NULL,NULL,NULL);
+                ok = uq_ok(prefix, "Continue (Y/N)", 3, NULL, 0);
             }
             break;
         }
     }
 
   return_time:
+    if ( ssl_debug_flag )
+        printf("ssl:client_verify_callback => ok: %d\r\n",ok);
     return ok;
 }
 
 VOID
 #ifdef CK_ANSIC
-ssl_client_info_callback(SSL *s, int where, int ret)
+ssl_client_info_callback(const SSL *s, int where, int ret)
 #else
 ssl_client_info_callback(s,where,ret)
-SSL *s;
+const SSL *s;
 int where;
 int ret;
 #endif /* CK_ANSIC */
@@ -634,28 +648,28 @@ int ret;
     switch ( where ) {
     case SSL_CB_CONNECT_LOOP:
         printf("SSL_connect:%s %s\r\n",
-                SSL_state_string(s),SSL_state_string_long(s));
+                SSL_state_string((SSL *)s),SSL_state_string_long((SSL *)s));
         break;
     case SSL_CB_CONNECT_EXIT:
         if (ret == 0) {
             printf("SSL_connect:failed in %s %s\r\n",
-                    SSL_state_string(s),SSL_state_string_long(s));
+                    SSL_state_string((SSL *)s),SSL_state_string_long((SSL *)s));
         } else if (ret < 0) {
             printf("SSL_connect:error in %s %s\r\n",
-                    SSL_state_string(s),SSL_state_string_long(s));
+                    SSL_state_string((SSL *)s),SSL_state_string_long((SSL *)s));
         }
         break;
     case SSL_CB_ACCEPT_LOOP:
         printf("SSL_accept:%s %s\r\n",
-                SSL_state_string(s),SSL_state_string_long(s));
+                SSL_state_string((SSL *)s),SSL_state_string_long((SSL *)s));
         break;
     case SSL_CB_ACCEPT_EXIT:
         if (ret == 0) {
             printf("SSL_accept:failed in %s %s\r\n",
-                    SSL_state_string(s),SSL_state_string_long(s));
+                    SSL_state_string((SSL *)s),SSL_state_string_long((SSL *)s));
         } else if (ret < 0) {
             printf("SSL_accept:error in %s %s\r\n",
-                    SSL_state_string(s),SSL_state_string_long(s));
+                    SSL_state_string((SSL *)s),SSL_state_string_long((SSL *)s));
         }
         break;
     case SSL_CB_READ_ALERT:
@@ -666,11 +680,11 @@ int ret;
         break;
     case SSL_CB_HANDSHAKE_START:
         printf("SSL_handshake:%s %s\r\n",
-                SSL_state_string(s),SSL_state_string_long(s));
+                SSL_state_string((SSL *)s),SSL_state_string_long((SSL *)s));
         break;
     case SSL_CB_HANDSHAKE_DONE:
         printf("SSL_handshake:%s %s\r\n",
-                SSL_state_string(s),SSL_state_string_long(s));
+                SSL_state_string((SSL *)s),SSL_state_string_long((SSL *)s));
         break;
     }
 }
@@ -996,71 +1010,35 @@ int verbose;
     if ( inserver && !tn_deb )
         return(0);
 
-    if (ssl_active_flag) {
-        /* the cipher list *can* be NULL ... useless but it happens! */
-        cipher = SSL_get_current_cipher(ssl_con);
-        cipher_list = SSL_CIPHER_get_name(cipher);
-        SSL_CIPHER_description(cipher,buf,sizeof(buf));
+    /* the cipher list *can* be NULL ... useless but it happens! */
+    cipher = SSL_get_current_cipher(ssl_con);
+    cipher_list = SSL_CIPHER_get_name(cipher);
+    SSL_CIPHER_description(cipher,buf,sizeof(buf));
+    if (cipher_list==NULL)
+        cipher_list="<NULL>";
+    printf("[TLS - %s",buf);
+    ssl_display_comp(ssl_con);
+
+    if ( server ) {
+        cipher_list=SSL_get_shared_ciphers(ssl_con,buf,512);
         if (cipher_list==NULL)
             cipher_list="<NULL>";
-        printf("[SSL - %s",buf);
-        ssl_display_comp(ssl_con);
-
-        if ( server ) {
-            cipher_list=SSL_get_shared_ciphers(ssl_con,buf,512);
-            if (cipher_list==NULL)
-                cipher_list="<NULL>";
-            printf("[SSL - shared ciphers=%s]\r\n",
-                     cipher_list);
-        }
-        if ( server || tn_deb ) {
-            peer=SSL_get_peer_certificate(ssl_con);
-            if (peer != NULL) {
-                X509_NAME_oneline(X509_get_subject_name(peer),buf,512);
-                printf("[SSL - subject=%s]\r\n",buf);
-                X509_NAME_oneline(X509_get_issuer_name(peer),buf,512);
-                printf("[SSL - issuer=%s]\r\n",buf);
-                /* X509_free(peer); */
-            } else if (!tls_is_krb5(0)) {
-                if ( !sstelnet && !tcp_incoming ) {
-                    printf("[SSL - No certificate provided.]\r\n");
-                    printf(
-            "[SSL - The identity of the host could not be verified.]\r\n");
-                }
-            }
-        }
-    }
-    if (tls_active_flag) {
-        /* the cipher list *can* be NULL ... useless but it happens! */
-        cipher = SSL_get_current_cipher(tls_con);
-        cipher_list = SSL_CIPHER_get_name(cipher);
-        SSL_CIPHER_description(cipher,buf,sizeof(buf));
-        if (cipher_list==NULL)
-            cipher_list="<NULL>";
-        printf("[TLS - %s",buf);
-        ssl_display_comp(tls_con);
-
-        if ( server ) {
-            cipher_list=SSL_get_shared_ciphers(tls_con,buf,512);
-            if (cipher_list==NULL)
-                cipher_list="<NULL>";
-            printf("[TLS - shared ciphers=%s]\r\n",
-                     cipher_list);
-        }
-        if ( server || tn_deb ) {
-            peer=SSL_get_peer_certificate(tls_con);
-            if (peer != NULL) {
-                X509_NAME_oneline(X509_get_subject_name(peer),buf,512);
-                printf("[TLS - subject=%s]\r\n",buf);
-                X509_NAME_oneline(X509_get_issuer_name(peer),buf,512);
-                printf("[TLS - issuer=%s]\r\n",buf);
-                /* X509_free(peer); */
-            } else if (!tls_is_krb5(0)) {
-                if ( !sstelnet && !tcp_incoming ) {
-                    printf("[TLS - No certificate provided.]\r\n");
-                    printf(
-            "[TLS - The identity of the host could not be verified.]\r\n");
-                }
+        printf("[TLS - shared ciphers=%s]\r\n",
+                cipher_list);
+        }       
+    if ( server || tn_deb ) {
+        peer=SSL_get_peer_certificate(ssl_con);
+        if (peer != NULL) {
+            X509_NAME_oneline(X509_get_subject_name(peer),buf,512);
+            printf("[TLS - subject=%s]\r\n",buf);
+            X509_NAME_oneline(X509_get_issuer_name(peer),buf,512);
+            printf("[TLS - issuer=%s]\r\n",buf);
+            /* X509_free(peer); */
+        } else if (!tls_is_krb5(0)) {
+            if ( !sstelnet && !tcp_incoming ) {
+                printf("[TLS - No certificate provided.]\r\n");
+                printf(
+     "[TLS - The identity of the host could not be verified.]\r\n");
             }
         }
     }
@@ -1083,6 +1061,7 @@ ssl_passwd_callback(buf,len,w)
 {
     extern char pwbuf[];
     extern int  pwflg, pwcrypt;
+    int   ok;
     char *prompt=NULL;
 
     if ( pwbuf[0] && pwflg ) {
@@ -1099,8 +1078,8 @@ ssl_passwd_callback(buf,len,w)
         prompt="Enter pass phrase: ";
     else
         prompt=(char*)userdata;
-    readpass(prompt,buf,len);
-    return(strlen(buf));
+    ok = uq_txt(NULL,prompt,1,NULL,buf,len,NULL);
+    return(ok > 0 ? strlen(buf) : 0);
 }
 
 
@@ -1110,6 +1089,7 @@ int
 tls_load_certs(SSL_CTX * ctx, SSL * con, int server)
 {
     int rc = 1;
+    extern int quiet;
 
     if ( !ck_ssleay_is_installed() )
         return(0);
@@ -1127,7 +1107,7 @@ tls_load_certs(SSL_CTX * ctx, SSL * con, int server)
                                                X509_FILETYPE_PEM);
             if (!rc)
             {
-                if ( ssl_debug_flag )
+                if ( !quiet || ssl_debug_flag )
                     printf("Error loading certificate from %s\r\n",
                             ssl_rsa_cert_file);
             } else {
@@ -1141,7 +1121,7 @@ tls_load_certs(SSL_CTX * ctx, SSL * con, int server)
                                                       X509_FILETYPE_PEM);
                 if (!rc)
                 {
-                    if ( ssl_debug_flag )
+                    if ( !quiet || ssl_debug_flag )
                         printf("Error loading key from %s\r\n",
                                 ssl_rsa_key_file);
                 } else {
@@ -1178,7 +1158,7 @@ tls_load_certs(SSL_CTX * ctx, SSL * con, int server)
                                                       X509_FILETYPE_PEM);
                 if (!rc)
                 {
-                    if ( ssl_debug_flag ) {
+                    if ( !quiet || ssl_debug_flag ) {
                         printf("Error loading key from %s\r\n",
                                 ssl_dh_key_file);
                     }
@@ -1202,7 +1182,7 @@ tls_load_certs(SSL_CTX * ctx, SSL * con, int server)
                                        X509_FILETYPE_PEM);
             if (!rc)
             {
-                if ( ssl_debug_flag )
+                if ( !quiet || ssl_debug_flag )
                     printf("Error loading certificate from %s\r\n",
                             ssl_rsa_cert_file);
             } else {
@@ -1274,8 +1254,8 @@ tls_load_certs(SSL_CTX * ctx, SSL * con, int server)
                        ))
             skip1st = 1;
         rc = SSL_CTX_use_certificate_chain_file(ctx,ssl_rsa_cert_chain_file);
-        if (rc && ssl_debug_flag)
-            printf("Error loading RSA Certificate Chain into SSL\r\n");
+        if (!rc && ssl_debug_flag)
+                printf("Error loading RSA Certificate Chain into SSL\r\n");
     }
     if (ssl_dsa_cert_chain_file && server) {
         int skip1st = 0;
@@ -1290,8 +1270,8 @@ tls_load_certs(SSL_CTX * ctx, SSL * con, int server)
                        ))
             skip1st = 1;
         rc = SSL_CTX_use_certificate_chain_file(ctx,ssl_dsa_cert_chain_file);
-        if (rc && ssl_debug_flag)
-            printf("Error loading DSA Certificate Chain into SSL\r\n");
+        if (!rc && ssl_debug_flag)
+                printf("Error loading DSA Certificate Chain into SSL\r\n");
     }
     return(rc);
 }
@@ -1308,6 +1288,7 @@ ssl_once_init()
     if ( !ck_ssleay_is_installed() )
         return;
 
+    debug(F111,"Kermit built for OpenSSL",OPENSSL_VERSION_TEXT,SSLEAY_VERSION_NUMBER);
     debug(F111,"OpenSSL Library",SSLeay_version(SSLEAY_VERSION),
            SSLeay());
     debug(F110,"OpenSSL Library",SSLeay_version(SSLEAY_BUILT_ON),0);
@@ -1315,15 +1296,20 @@ ssl_once_init()
     debug(F110,"OpenSSL Library",SSLeay_version(SSLEAY_PLATFORM),0);
 
     /* The following test is suggested by Richard Levitte */
-    if (((OPENSSL_VERSION_NUMBER ^ SSLeay()) & 0xffffff0f)) {
+    if (((OPENSSL_VERSION_NUMBER ^ SSLeay()) & 0xffffff0f) 
+#ifdef OS2
+         || ckstrcmp(OPENSSL_VERSION_TEXT,(char *)SSLeay_version(SSLEAY_VERSION),-1,1)
+#endif /* OS2 */
+         ) {
         ssl_installed = 0;
-        debug(F111,"OpenSSL Version Number does not match",
-               "built with",SSLEAY_VERSION_NUMBER);
+        debug(F111,"OpenSSL Version does not match.  Built with",
+               SSLeay_version(SSLEAY_VERSION),SSLEAY_VERSION_NUMBER);
         printf("?OpenSSL libraries do not match required version.");
         printf("  SSL\\TLS support disabled\r\n\r\n");
         bleep(BP_FAIL);
 #ifdef SSLDLL
         ck_ssl_unloaddll();
+        ck_crypto_unloaddll();
 #endif /* SSLDLL */
         return;
     }
@@ -1333,14 +1319,15 @@ ssl_once_init()
     */
     SSL_load_error_strings();
 
+    /* SSL_library_init() only loads those ciphers needs for SSL  */
+    /* These happen to be a similar set to those requires for SSH */
+    /* but they are not a complete set of ciphers provided by the */
+    /* crypto library.                                            */
     SSL_library_init();
 
 #ifdef ZLIB
     cm = COMP_zlib();
     if (cm != NULL && cm->type != NID_undef) {
-#ifdef BETATEST_X
-        SSL_COMP_add_compression_method(cm->type, cm); /* remove */
-#endif /* BETATEST */
         SSL_COMP_add_compression_method(0xe0, cm); /* EAY's ZLIB ID */
     }
 #endif /* ZLIB */
@@ -1687,6 +1674,7 @@ ssl_tn_init(mode) int mode;
         /* The defaults in the SSL crypto library are not appropriate for OS/2 */
         char path[CKMAXPATH];
         extern char exedir[];
+        char * GetAppData(int);
 
         ckmakmsg(path,CKMAXPATH,exedir,"certs",NULL,NULL);
         if (SSL_CTX_load_verify_locations(tls_ctx,NULL,path) == 0)  {
@@ -1806,44 +1794,44 @@ ssl_tn_init(mode) int mode;
         extern char exedir[];
 
         ckmakmsg(path,CKMAXPATH,exedir,"crls",NULL,NULL);
-        if (X509_STORE_load_locations(crl_store,path,NULL) == 0) {
-            debug(F110,"tn_ssl_init unable to load ssl_crl_file",path,0);
+        if (X509_STORE_load_locations(crl_store,NULL,path) == 0) {
+            debug(F110,"ssl_tn_init unable to load dir",path,0);
             if (ssl_debug_flag)
-                printf("?Unable to load crl-file: %s\r\n",path);
+                printf("?Unable to load crl-dir: %s\r\n",path);
         }
 #ifdef NT
         ckmakmsg(path,CKMAXPATH,GetAppData(1),"kermit 95/crls",NULL,NULL);
-        if (X509_STORE_load_locations(crl_store,path,NULL) == 0) {
-            debug(F110,"tn_ssl_init unable to load path",path,0);
+        if (X509_STORE_load_locations(crl_store,NULL,path) == 0) {
+            debug(F110,"ssl_tn_init unable to load dir",path,0);
             if (ssl_debug_flag)
-                printf("?Unable to load crl-file: %s\r\n",path);
+                printf("?Unable to load crl-dir: %s\r\n",path);
         }
         ckmakmsg(path,CKMAXPATH,GetAppData(0),"kermit 95/crls",NULL,NULL);
-        if (X509_STORE_load_locations(crl_store,path,NULL) == 0) {
-            debug(F110,"tn_ssl_init unable to load path",path,0);
+        if (X509_STORE_load_locations(crl_store,NULL,path) == 0) {
+            debug(F110,"ssl_tn_init unable to load dir",path,0);
             if (ssl_debug_flag)
-                printf("?Unable to load crl-file: %s\r\n",path);
+                printf("?Unable to load crl-dir: %s\r\n",path);
         }
 #endif /* NT */
         
         ckmakmsg(path,CKMAXPATH,exedir,"ca_crls.pem",NULL,NULL);
-        if (X509_STORE_load_locations(crl_store,NULL,path) == 0) {
-            debug(F110,"tn_ssl_init unable to load path",path,0);
+        if (X509_STORE_load_locations(crl_store,path,NULL) == 0) {
+            debug(F110,"ssl_tn_init unable to load dir",path,0);
             if (ssl_debug_flag)
-                printf("?Unable to load crl-dir: %s\r\n",path);
+                printf("?Unable to load crl-file: %s\r\n",path);
         }
 #ifdef NT
         ckmakmsg(path,CKMAXPATH,GetAppData(1),"kermit 95/ca_crls.pem",NULL,NULL);
-        if (X509_STORE_load_locations(crl_store,NULL,path) == 0) {
-            debug(F110,"tn_ssl_init unable to load path",path,0);
+        if (X509_STORE_load_locations(crl_store,path,NULL) == 0) {
+            debug(F110,"ssl_tn_init unable to load dir",path,0);
             if (ssl_debug_flag)
-                printf("?Unable to load crl-dir: %s\r\n",path);
+                printf("?Unable to load crl-file: %s\r\n",path);
         }
         ckmakmsg(path,CKMAXPATH,GetAppData(0),"kermit 95/ca_crls.pem",NULL,NULL);
-        if (X509_STORE_load_locations(crl_store,NULL,path) == 0) {
-            debug(F110,"tn_ssl_init unable to load path",path,0);
+        if (X509_STORE_load_locations(crl_store,path,NULL) == 0) {
+            debug(F110,"ssl_tn_init unable to load dir",path,0);
             if (ssl_debug_flag)
-                printf("?Unable to load crl-dir: %s\r\n",path);
+                printf("?Unable to load crl-file: %s\r\n",path);
         }
 #endif /* NT */
 #endif /* OS2 */
@@ -1851,13 +1839,13 @@ ssl_tn_init(mode) int mode;
         if (ssl_crl_file || ssl_crl_dir) {
             if (ssl_crl_file &&
                 X509_STORE_load_locations(crl_store,ssl_crl_file,NULL) == 0) {
-                debug(F110,"tn_ssl_init unable to load ssl_crl_file",ssl_crl_file,0);
+                debug(F110,"ssl_tn_init unable to load ssl_crl_file",ssl_crl_file,0);
                 if (ssl_debug_flag)
                     printf("?Unable to load crl-file: %s\r\n",ssl_crl_file);
             }
             if (ssl_crl_dir &&
                 X509_STORE_load_locations(crl_store,NULL,ssl_crl_dir) == 0) {
-                debug(F110,"tn_ssl_init unable to load ssl_crl_dir",ssl_crl_dir,0);
+                debug(F110,"ssl_tn_init unable to load ssl_crl_dir",ssl_crl_dir,0);
                 if (ssl_debug_flag)
                     printf("?Unable to load crl-dir: %s\r\n",ssl_crl_dir);
             }
@@ -2070,7 +2058,78 @@ ssl_http_init(hostname) char * hostname;
      * exchange rather useless :-)
      */
 
+#ifdef OS2
+#ifdef NT
+    {
+        /* The defaults in the SSL crypto library are not appropriate for OS/2 */
+        char path[CKMAXPATH];
+        extern char exedir[];
+
+        ckmakmsg(path,CKMAXPATH,exedir,"certs",NULL,NULL);
+        if (SSL_CTX_load_verify_locations(tls_http_ctx,NULL,path) == 0)  {
+            debug(F110,"ssl_http_init unable to load path",path,0);
+            if (ssl_debug_flag)
+                printf("?Unable to load verify-dir: %s\r\n",path);
+        }
+
+        ckmakmsg(path,CKMAXPATH,GetAppData(1),"kermit 95/certs",NULL,NULL);
+        if (SSL_CTX_load_verify_locations(tls_http_ctx,NULL,path) == 0)  {
+            debug(F110,"ssl_http_init unable to load path",path,0);
+            if (ssl_debug_flag)
+                printf("?Unable to load verify-dir: %s\r\n",path);
+        }
+
+        ckmakmsg(path,CKMAXPATH,GetAppData(0),"kermit 95/certs",NULL,NULL);
+        if (SSL_CTX_load_verify_locations(tls_http_ctx,NULL,path) == 0)  {
+            debug(F110,"ssl_http_init unable to load path",path,0);
+            if (ssl_debug_flag)
+                printf("?Unable to load verify-dir: %s\r\n",path);
+        }
+
+        ckmakmsg(path,CKMAXPATH,exedir,"ca_certs.pem",NULL,NULL);
+        if (SSL_CTX_load_verify_locations(tls_http_ctx,path,NULL) == 0) {
+            debug(F110,"ssl_http_init unable to load path",path,0);
+            if (ssl_debug_flag)
+                printf("?Unable to load verify-file: %s\r\n",path);
+        }
+
+        ckmakmsg(path,CKMAXPATH,GetAppData(1),"kermit 95/ca_certs.pem",NULL,NULL);
+        if (SSL_CTX_load_verify_locations(tls_http_ctx,path,NULL) == 0) {
+            debug(F110,"ssl_http_init unable to load path",path,0);
+            if (ssl_debug_flag)
+                printf("?Unable to load verify-file: %s\r\n",path);
+        }
+
+        ckmakmsg(path,CKMAXPATH,GetAppData(0),"kermit 95/ca_certs.pem",NULL,NULL);
+        if (SSL_CTX_load_verify_locations(tls_http_ctx,path,NULL) == 0) {
+            debug(F110,"ssl_http_init unable to load path",path,0);
+            if (ssl_debug_flag)
+                printf("?Unable to load verify-file: %s\r\n",path);
+        }
+    }
+#else /* NT */
+    {
+        /* The defaults in the SSL crypto library are not appropriate for OS/2 */
+        char path[CKMAXPATH];
+        extern char exedir[];
+
+        ckmakmsg(path,CKMAXPATH,exedir,"certs",NULL,NULL);
+        if (SSL_CTX_load_verify_locations(tls_http_ctx,NULL,path) == 0)  {
+            debug(F110,"ssl_http_init unable to load path",path,0);
+            if (ssl_debug_flag)
+                printf("?Unable to load verify-dir: %s\r\n",path);
+        }
+        ckmakmsg(path,CKMAXPATH,exedir,"ca_certs.pem",NULL,NULL);
+        if (SSL_CTX_load_verify_locations(tls_http_ctx,path,NULL) == 0) {
+            debug(F110,"ssl_http_init unable to load path",path,0);
+            if (ssl_debug_flag)
+                printf("?Unable to load verify-file: %s\r\n",path);
+        }
+    }
+#endif /* NT */
+#else /* OS2 */
     SSL_CTX_set_default_verify_paths(tls_http_ctx);
+#endif /* OS2 */
 
     if (ssl_verify_file &&
         SSL_CTX_load_verify_locations(tls_http_ctx,ssl_verify_file,NULL) == 0)  {
@@ -2097,6 +2156,53 @@ ssl_http_init(hostname) char * hostname;
     /* set up the new CRL Store */
     crl_store = X509_STORE_new();
     if (crl_store) {
+#ifdef OS2
+        char path[CKMAXPATH];
+        extern char exedir[];
+
+        ckmakmsg(path,CKMAXPATH,exedir,"crls",NULL,NULL);
+        if (X509_STORE_load_locations(crl_store,NULL,path) == 0) {
+            debug(F110,"ssl_http_init unable to load dir",path,0);
+            if (ssl_debug_flag)
+                printf("?Unable to load crl-dir: %s\r\n",path);
+        }
+#ifdef NT
+        ckmakmsg(path,CKMAXPATH,GetAppData(1),"kermit 95/crls",NULL,NULL);
+        if (X509_STORE_load_locations(crl_store,NULL,path) == 0) {
+            debug(F110,"ssl_http_init unable to load dir",path,0);
+            if (ssl_debug_flag)
+                printf("?Unable to load crl-dir: %s\r\n",path);
+        }
+        ckmakmsg(path,CKMAXPATH,GetAppData(0),"kermit 95/crls",NULL,NULL);
+        if (X509_STORE_load_locations(crl_store,NULL,path) == 0) {
+            debug(F110,"ssl_http_init unable to load dir",path,0);
+            if (ssl_debug_flag)
+                printf("?Unable to load crl-dir: %s\r\n",path);
+        }
+#endif /* NT */
+        
+        ckmakmsg(path,CKMAXPATH,exedir,"ca_crls.pem",NULL,NULL);
+        if (X509_STORE_load_locations(crl_store,path,NULL) == 0) {
+            debug(F110,"ssl_http_init unable to load file",path,0);
+            if (ssl_debug_flag)
+                printf("?Unable to load crl-file: %s\r\n",path);
+        }
+#ifdef NT
+        ckmakmsg(path,CKMAXPATH,GetAppData(1),"kermit 95/ca_crls.pem",NULL,NULL);
+        if (X509_STORE_load_locations(crl_store,path,NULL) == 0) {
+            debug(F110,"ssl_http_init unable to load file",path,0);
+            if (ssl_debug_flag)
+                printf("?Unable to load crl-file: %s\r\n",path);
+        }
+        ckmakmsg(path,CKMAXPATH,GetAppData(0),"kermit 95/ca_crls.pem",NULL,NULL);
+        if (X509_STORE_load_locations(crl_store,path,NULL) == 0) {
+            debug(F110,"ssl_http_init unable to load file",path,0);
+            if (ssl_debug_flag)
+                printf("?Unable to load crl-file: %s\r\n",path);
+        }
+#endif /* NT */
+#endif /* OS2 */
+
         if (ssl_crl_file || ssl_crl_dir) {
             if (ssl_crl_file &&
                 X509_STORE_load_locations(crl_store,ssl_crl_file,NULL) == 0) {
@@ -2263,7 +2369,9 @@ ssl_get_issuer_name(ssl) SSL * ssl;
         return name;
     }
     else {
-//      fprintf(stderr, "Warning: No certificate from server!\r\n");
+#ifdef COMMENT
+      fprintf(stderr, "Warning: No certificate from server!\r\n");
+#endif /* COMMENT */
         return NULL;
     }
 }
@@ -2595,20 +2703,31 @@ dNSName_cmp(const char *host, const char *dNSName)
 static int
 show_hostname_warning(char *s1, char *s2)
 {
-    char prmpt[1024];
-    sprintf(prmpt,
-             "Warning:\r\n  Hostname (\"%s\")\r\n\
-             does not match server's certificate (\"%s\")\r\n  continue? (Y/N) ",
-             s1,
-             s2
-             );
-    return(getyesno(prmpt,0));
+    char prefix[1024];
+    int ok = 1;
+    ckmakxmsg(prefix,1024,
+              "Warning: Hostname (\"", s1, 
+              "\") does not match server's certificate (\"", s2, "\")\r\n",
+              NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+    if (ssl_verify_flag)
+        ok = uq_ok(prefix,
+                    "Continue? (Y/N) ",
+                    3, NULL, 0);
+    else if (ssl_verbose_flag)
+        printf(prefix);
+    return(ok);
 }
 
+#ifndef HPUX1100
+#ifndef SCO_OSR505
+#ifndef OpenBSD
+#ifndef FREEBSD4
 #ifndef LINUX
 #ifndef AIX41
 #ifndef UW7
+#ifndef SOLARIS9
 #ifndef SOLARIS8
+#ifndef SOLARIS7
 static int
 inet_aton(char * ipaddress, struct in_addr * ia) {
     struct stringarray * q;
@@ -2619,26 +2738,25 @@ inet_aton(char * ipaddress, struct in_addr * ia) {
 
     q = cksplit(1,0,ipaddress,".","0123456789abcdefACDEF",8,0,0);
     if (q->a_size == 4) {
-#ifndef COMMENT
         dummy.b[0] = atoi(q->a_head[1]);
         dummy.b[1] = atoi(q->a_head[2]);
         dummy.b[2] = atoi(q->a_head[3]);
         dummy.b[3] = atoi(q->a_head[4]);
         ia->s_addr = dummy.l;
-#else /* COMMENT */
-        ia->S_un.S_un_b.s_b1 = atoi(q->a_head[1]);
-        ia->S_un.S_un_b.s_b2 = atoi(q->a_head[2]);
-        ia->S_un.S_un_b.s_b3 = atoi(q->a_head[3]);
-        ia->S_un.S_un_b.s_b4 = atoi(q->a_head[4]);
-#endif /* COMMENT */
         return(ia->s_addr != 0);
     }
     return(0);
 }
+#endif /* SOLARIS7 */
 #endif /* SOLARIS8 */
+#endif /* SOLARIS9 */
 #endif /* UW7 */
 #endif /* AIX41 */
 #endif /* LINUX */
+#endif /* FREEBSD4 */
+#endif /* OpenBSD */
+#endif /* SCO_OSR505 */
+#endif /* HPUX1100 */
 
 int
 ssl_check_server_name(SSL * ssl, char * hostname)
@@ -3227,7 +3345,12 @@ ck_tn_tls_negotiate(VOID)
                     printf("[TLS - commonName=%s]\r\n",str);
 
                 X509_NAME_get_text_by_NID(X509_get_subject_name(peer),
-                                           NID_uniqueIdentifier,str,
+#ifndef NID_x500UniqueIdentifier
+                                           NID_uniqueIdentifier,
+#else
+                                           NID_x500UniqueIdentifier,
+#endif
+                                           str,
                                            256
                                            );
                 if ( ssl_verbose_flag )
@@ -3326,10 +3449,10 @@ ck_tn_tls_negotiate(VOID)
                         auth_finished(AUTH_REJECT);
                         return -1;
                     } else {
-                        sprintf(prmpt,
-                             "Warning: Server didn't provide a certificate, continue? (Y/N) "
-                             );
-                        if (!getyesno(prmpt,0)) {
+                        int ok;
+                        ok = uq_ok("Warning: Server didn't provide a certificate\r\n",
+                                   "Continue? (Y/N)", 3, NULL, 0);
+                        if (!ok) {
                             if (tn_deb || debses)
                                 tn_debug("[TLS - FAILED]");
                             else if ( ssl_verbose_flag )
@@ -3524,8 +3647,12 @@ ck_ssl_incoming(fd) int fd;
             printf("[TLS - commonName=%s]\r\n",str);
 
             X509_NAME_get_text_by_NID(X509_get_subject_name(peer),
-                                       NID_uniqueIdentifier,str,
-                                       256
+#ifndef NID_x500UniqueIdentifier
+                                       NID_uniqueIdentifier,
+#else   
+                                       NID_x500UniqueIdentifier,
+#endif
+                                       str,256
                                        );
             printf("[TLS - uniqueIdentifier=%s]\r\n",str);
 
@@ -3603,7 +3730,8 @@ ck_ssl_outgoing(fd) int fd;
             return(-1);
         } else {
             tls_active_flag = 1;
-            if ( !ssl_certsok_flag && !tls_is_krb5(0) ) {
+            if ( !ssl_certsok_flag && (ssl_verify_flag & SSL_VERIFY_PEER) && 
+                 !tls_is_krb5(0) ) {
                 char *subject = ssl_get_subject_name(tls_con);
 
                 if (!subject) {
@@ -3619,10 +3747,10 @@ ck_ssl_outgoing(fd) int fd;
                         return -1;
                     } else {
                         char prmpt[1024];
-                        sprintf(prmpt,
-                             "Warning: Server didn't provide a certificate, continue? (Y/N) "
-                             );
-                        if (!getyesno(prmpt,0)) {
+                        int ok;
+                        ok = uq_ok("Warning: Server didn't provide a certificate\r\n",
+                                   "Continue? (Y/N)", 3, NULL, 0);
+                        if (!ok) {
                             if (tn_deb || debses)
                                 tn_debug("[TLS - FAILED]");
                             else if ( ssl_verbose_flag )
@@ -3680,7 +3808,8 @@ ck_ssl_outgoing(fd) int fd;
         } else {
             ssl_active_flag = 1;
 
-            if ( !ssl_certsok_flag && !tls_is_krb5(0)) {
+            if ( !ssl_certsok_flag && (ssl_verify_flag & SSL_VERIFY_PEER) &&
+                 !tls_is_krb5(0)) {
                 char *subject = ssl_get_subject_name(ssl_con);
 
                 if (!subject) {
@@ -3696,10 +3825,10 @@ ck_ssl_outgoing(fd) int fd;
                         return -1;
                     } else {
                         char prmpt[1024];
-                        sprintf(prmpt,
-                             "Warning: Server didn't provide a certificate, continue? (Y/N) "
-                             );
-                        if (!getyesno(prmpt,0)) {
+                        int ok;
+                        ok = uq_ok("Warning: Server didn't provide a certificate\r\n",
+                                   "Continue? (Y/N)", 3, NULL, 0);
+                        if (!ok) {
                             if (tn_deb || debses)
                                 tn_debug("[SSL - FAILED]");
                             else if ( ssl_verbose_flag )
@@ -3776,7 +3905,8 @@ ck_ssl_http_client(fd, hostname) int fd; char * hostname;
             return(-1);
         } else {
             tls_http_active_flag = 1;
-            if ( !ssl_certsok_flag && !tls_is_krb5(3) ) {
+            if ( !ssl_certsok_flag && (ssl_verify_flag & SSL_VERIFY_PEER) &&
+                 !tls_is_krb5(3) ) {
                 char *subject = ssl_get_subject_name(tls_http_con);
 
                 if (!subject) {
@@ -3790,10 +3920,10 @@ ck_ssl_http_client(fd, hostname) int fd; char * hostname;
                         return -1;
                     } else {
                         char prmpt[1024];
-                        sprintf(prmpt,
-                             "Warning: Server didn't provide a certificate, continue? (Y/N) "
-                             );
-                        if (!getyesno(prmpt,0)) {
+                        int ok;
+                        ok = uq_ok("Warning: Server didn't provide a certificate\r\n",
+                                   "Continue? (Y/N)", 3, NULL, 0);
+                        if (!ok) {
                             if (tn_deb || debses)
                                 tn_debug("[TLS - FAILED]");
                             else if ( ssl_verbose_flag )
@@ -3864,7 +3994,12 @@ X509_to_user(X509 *peer_cert, char *userid, int len)
 
     /* userid is in cert subject /UID */
     err = X509_NAME_get_text_by_NID(X509_get_subject_name(peer_cert),
-                                     NID_uniqueIdentifier, userid, len);
+#ifndef NID_x500UniqueIdentifier
+                                     NID_uniqueIdentifier,
+#else
+                                     NID_x500UniqueIdentifier,
+#endif
+                                     userid, len);
 
     debug(F111,"X509_to_user() userid",userid,err);
     if (err > 0)

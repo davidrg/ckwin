@@ -13,9 +13,9 @@
 */
 #ifdef OS2
 #ifndef NT
-#ifndef __HEV__			/* INCL_SEMAPHORE may also define HEV */
+#ifndef __HEV__                 /* INCL_SEMAPHORE may also define HEV */
 #define __HEV__
-typedef  ULONG    HEV;			/* hev */
+typedef  ULONG    HEV;                  /* hev */
 typedef  HEV      *PHEV;
 #endif /* __HEV__ */
 #endif /* NT */
@@ -97,10 +97,10 @@ ck_ih(void) {
     struct _threadinfo * threadinfo;
     threadinfo = (struct _threadinfo *) TlsGetValue(TlsIndex);
     if (threadinfo) {
-	if (WaitAndResetSem(threadinfo->DieSem,0)) {
-	    ckThreadDie(threadinfo);
-	    return 1;			/* This should never execute */
-	}
+        if (WaitAndResetSem(threadinfo->DieSem,0)) {
+            ckThreadDie(threadinfo);
+            return 1;                   /* This should never execute */
+        }
     }
 #ifdef COMMENT
     else debug( F100, "ck_ih() threadinfo is NULL","",0);
@@ -139,15 +139,15 @@ cklongjmp( ckjptr jmp, int retval ) {
     debug(F101,"about to SetThreadContext for thread","", CommandID);
     debug(F101,"from Thread","",GetCurrentThreadId());
     if ( mdmtyp >= 0 ) {
-	PurgeComm( (HANDLE) ttyfd, PURGE_TXABORT | PURGE_RXABORT );
+        PurgeComm( (HANDLE) ttyfd, PURGE_TXABORT | PURGE_RXABORT );
     }
     if (SetThreadContext( tidCommand, &jmp->context ))
       debug(F100,"cklongjmp SetThreadContext success","",0);
     else
       debug(F101,"cklongjmp SetThreadContext failed","",GetLastError());
     msleep(50);
-    cmini(1);				/* Reset command parser */
-    putkey(13);				/* Stuff a carriage return */
+    cmini(1);                           /* Reset command parser */
+    putkey(13);                         /* Stuff a carriage return */
    /* PostEventAvailSem(); */
 }
 #else /* NTASM */
@@ -161,7 +161,7 @@ cklongjmp( ckjptr jmp, int retval ) {
     CONTEXT context;
 
     if ( mdmtyp >= 0 ) {
-	PurgeComm( (HANDLE) ttyfd, PURGE_TXABORT | PURGE_RXABORT ) ;
+        PurgeComm( (HANDLE) ttyfd, PURGE_TXABORT | PURGE_RXABORT ) ;
     }
     memset( &context, 0, sizeof(CONTEXT) );
     context.ContextFlags = CONTEXT_FULL;
@@ -200,15 +200,15 @@ typedef ckjmpbuf ckjptr;
 
 _PROTOTYP( int cc_execute, (ckjptr, ck_sigfunc, ck_sigfunc) );
 _PROTOTYP( int alrm_execute,
-	  (ckjptr,
-	   int /* timo */,
-	   ck_sighand /* handler */,
-	   ck_sigfunc, ck_sigfunc) );
+          (ckjptr,
+           int /* timo */,
+           ck_sighand /* handler */,
+           ck_sigfunc, ck_sigfunc) );
 _PROTOTYP( int cc_alrm_execute,
-	  (ckjptr,
-	   int /* timo */,
-	   ck_sighand /* handler */,
-	   ck_sigfunc,
-	   ck_sigfunc) );
+          (ckjptr,
+           int /* timo */,
+           ck_sighand /* handler */,
+           ck_sigfunc,
+           ck_sigfunc) );
 
 /* End of ckusig.h */

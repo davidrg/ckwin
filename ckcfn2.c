@@ -1218,24 +1218,26 @@ chktimo(timo,flag) int timo, flag; {
     debug(F101,"chktimo spmax","",spmax);
     debug(F101,"chktimo urpsiz","",urpsiz);
 
-    speed = ttgspd();			/* Get current speed. */
-    if (speed > 0L && !network) {
-	cps = speed / 10L;		/* Convert to chars per second */
-	if (cps > 0L) {
-	    long plen;			/* Maximum of send and rcv pkt size */
-	    z = cps * (long) timo;	/* Chars per timeout interval */
-	    z -= z / 10L;		/* Less 10 percent */
-	    plen = spmax;
-	    if (urpsiz > spmax) plen = urpsiz;
-	    debug(F101,"chktimo plen","",plen);
-	    if (z < plen) {		/* Compare with packet size */
-		x = (int) ((long) plen / cps); /* Adjust if necessary */
-		y = x / 10;		/* Add 10 percent for safety */
-		if (y < 2) y = 2;	/* Or 2 seconds, whichever is more */
-		x += y;
-		if (x > timo)		/* If this is greater than current */
-		  timo = x;		/* timeout, change the timeout */
-		debug(F101,"chktimo new timo","",timo);
+    if (!network) {			/* On serial connections... */
+	speed = ttgspd();		/* Get current speed. */
+	if (speed > 0L) {
+	    cps = speed / 10L;		/* Convert to chars per second */
+	    if (cps > 0L) {
+		long plen;		/* Maximum of send and rcv pkt size */
+		z = cps * (long) timo;	/* Chars per timeout interval */
+		z -= z / 10L;		/* Less 10 percent */
+		plen = spmax;
+		if (urpsiz > spmax) plen = urpsiz;
+		debug(F101,"chktimo plen","",plen);
+		if (z < plen) {		/* Compare with packet size */
+		    x = (int) ((long) plen / cps); /* Adjust if necessary */
+		    y = x / 10;		/* Add 10 percent for safety */
+		    if (y < 2) y = 2;	/* Or 2 seconds, whichever is more */
+		    x += y;
+		    if (x > timo)	/* If this is greater than current */
+		      timo = x;		/* timeout, change the timeout */
+		    debug(F101,"chktimo new timo","",timo);
+		}
 	    }
 	}
     }
@@ -2419,8 +2421,7 @@ kstart(ch) CHAR ch;
 #endif /* OS2 */
 
     if (ch == stchr) {			/* Start of packet */
-        if (what == W_COMMAND)
-	  kstartactive = 1;
+	kstartactive = 1;
 	p = ksbuf;
 	*p = ch;
 	debug(F101,"kstart SOP","",ch);

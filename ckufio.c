@@ -3,12 +3,12 @@
 #define CK_NONBLOCK                     /* See zoutdump() */
 
 #ifdef aegis
-char *ckzv = "Aegis File support, 8.0.187, 9 Jan 2002";
+char *ckzv = "Aegis File support, 8.0.194, 24 Oct 2002";
 #else
 #ifdef Plan9
-char *ckzv = "Plan 9 File support, 8.0.187, 9 Jan 2002";
+char *ckzv = "Plan 9 File support, 8.0.194, 24 Oct 2002";
 #else
-char *ckzv = "UNIX File support, 8.0.187, 9 Jan 2002";
+char *ckzv = "UNIX File support, 8.0.194, 24 Oct 2002";
 #endif /* Plan9 */
 #endif /* aegis */
 /*
@@ -560,19 +560,25 @@ _PROTOTYP( struct passwd * getpwent, (void) );
 #define PAM_SERVICE_TYPE "kermit"
 #endif /* PAM_SERVICE_TYPE */
 
+#ifdef SOLARIS
+#define PAM_CONST 
+#else /* SOLARIS */
+#define PAM_CONST CONST
+#endif 
+
 static char * pam_pw = NULL;
 
 int
 #ifdef CK_ANSIC
 pam_cb(int num_msg,
-       const struct pam_message **msg,
+       PAM_CONST struct pam_message **msg,
        struct pam_response **resp,
        void *appdata_ptr
        )
 #else /* CK_ANSIC */
 pam_cb(num_msg, msg, resp, appdata_ptr)
     int num_msg;
-    const struct pam_message **msg;
+    PAM_CONST struct pam_message **msg;
     struct pam_response **resp;
     void *appdata_ptr;
 #endif /* CK_ANSIC */
@@ -603,10 +609,10 @@ pam_cb(num_msg, msg, resp, appdata_ptr)
             if (pam_pw) {
                 ckstrncpy(message,pam_pw,PAM_MAX_MSG_SIZE);
             } else
-                readpass(msg[i]->msg,message,PAM_MAX_MSG_SIZE);
+                readpass((char *)msg[i]->msg,message,PAM_MAX_MSG_SIZE);
         } else if (msg[i]->msg_style == PAM_PROMPT_ECHO_ON) {
             debug(F111,"pam_cb","Reading response, with echo",0);
-            readtext(msg[i]->msg,message,PAM_MAX_MSG_SIZE);
+            readtext((char *)msg[i]->msg,message,PAM_MAX_MSG_SIZE);
         } else {
             debug(F111,"pam_cb","unknown style",0);
             return(0);
@@ -2169,6 +2175,9 @@ zgetfs(name) char *name; {
     int needrlink = 0;
     char * s;
 
+    if (!name) name = "";
+    if (!*name) return(-1);
+
 #ifdef UNIX
     x = strlen(name);
     if (x == 9 && !strcmp(name,"/dev/null"))
@@ -2308,7 +2317,7 @@ zchki(name) char *name; {
     struct stat buf;
     char * s;
     int x, itsadir = 0;
-    extern int zchkid, diractive;
+    extern int zchkid, diractive, matchfifo;
 
     if (!name)
       return(-1);
@@ -2350,10 +2359,10 @@ zchki(name) char *name; {
     if (!(itsadir && zchkid)) {         /* Unless this... */
         if (!S_ISREG (buf.st_mode)      /* Must be regular file */
 #ifdef S_ISFIFO
-            && !S_ISFIFO (buf.st_mode)  /* or FIFO */
+            && (!matchfifo || !S_ISFIFO (buf.st_mode))  /* or FIFO */
 #endif /* S_ISFIFO */
             ) {
-            debug(F111,"zchki not regular file",s,x);
+            debug(F111,"zchki not regular file (or fifo)",s,matchfifo);
             return(-2);
         }
     }
@@ -2398,9 +2407,14 @@ int
 zchko(name) char *name; {
     int i, x, itsadir = 0;
     char *s;
+    char * oname;
     extern int zchkod;                  /* Used by IF WRITEABLE */
 
+    debug(F110,"zchko entry",name,0);
+
     if (!name) return(-1);              /* Watch out for null pointer. */
+
+    oname = name;
 
 #ifdef CKROOT
     debug(F111,"zchko setroot",ckroot,ckrootset);
@@ -2412,7 +2426,8 @@ zchko(name) char *name; {
 #endif /* CKROOT */
 
     x = (int)strlen(name);              /* Get length of filename */
-    debug(F111,"zchko",name,zchkod);
+    debug(F111,"zchko len",name,x);
+    debug(F111,"zchko zchkod",name,zchkod);
 
 #ifdef UNIX
 /*
@@ -2517,6 +2532,7 @@ zchko(name) char *name; {
     else
       debug(F111,"zchko access ok:",s,x);
     free(s);                            /* Free temporary storage */
+
     return((x < 0) ? -1 : 0);           /* and return. */
 }
 
@@ -3580,6 +3596,7 @@ zxpand(fnarg) char *fnarg; {
 */
 int
 nzxpand(s,flags) char * s; int flags; {
+    char * p;
     int x;
 
     debug(F111,"nzxpand",s,flags);
@@ -3591,6 +3608,17 @@ nzxpand(s,flags) char * s; int flags; {
         xfilonly = 0;
     }
     xmatchdot  = (flags & ZX_MATCHDOT);
+    debug(F111,"nzxpand xmatchdot 1",s,xmatchdot);
+    /* If xmatchdot not set by caller but pattern implies it, set it anyway */
+    if (!xmatchdot && ((p = ckstrchr(s,'.')))) {
+	if (p == s && p[1] != '/') {
+	    xmatchdot = 1;
+	    debug(F111,"nzxpand xmatchdot 2",s,xmatchdot);
+	} else if (p > s) {
+	    xmatchdot = (*(p-1) == ',') || (*(p-1) == '{') || (*(p-1) == '/');
+	    debug(F111,"nzxpand xmatchdot 3",s,xmatchdot);
+	}
+    }
     xrecursive = (flags & ZX_RECURSE);
     xnobackup  = (flags & ZX_NOBACKUP);
     xnolinks   = (flags & ZX_NOLINKS);
@@ -3736,9 +3764,11 @@ isbackup(fn) char * fn; {		/* Get backup suffix number */
 
 #define MAXBUDIGITS 5
 
+static char znewbuf[ZNEWNBL+12];
+
 VOID
 znewn(fn,s) char *fn, **s; {
-    static char buf[ZNEWNBL+12];        /* Buffer for new name */
+    char * buf;				/* Pointer to buffer for new name */
     char * xp, * namepart = NULL;       /* Pointer to filename part */
     struct zfnfp * fnfp;                /* znfqfp() result struct pointer */
     int d = 0, t, fnlen, buflen;
@@ -3746,6 +3776,7 @@ znewn(fn,s) char *fn, **s; {
     int max = MAXNAMLEN;                /* Maximum name length */
     char * dname = NULL;
 
+    buf = znewbuf;
     *s = NULL;                          /* Initialize return value */
     if (!fn) fn = "";                   /* Check filename argument */
     i = strlen(fn);
@@ -3805,6 +3836,7 @@ znewn(fn,s) char *fn, **s; {
     }
     buflen = fnfp->len;                 /* Length of fully qualified name */
     debug(F111,"znewn len",buf,buflen);
+
     if (k + MAXBUDIGITS + 3 < max) {    /* Backup name fits - no overflow */
 	/* Make pattern for backup names */
         ckstrncpy(buf+buflen,".~*~",ZNEWNBL+12-buflen);
@@ -3817,7 +3849,6 @@ znewn(fn,s) char *fn, **s; {
         }
         sprintf(buf+buflen,".~%d~",d+1); /* Yes, make "name.~<d+1>~" */
         debug(F110,"znewn A newname",buf,0);
-
     } else {                            /* Backup name would be too long */
         int xlen;                       /* So we have to eat back into it */
         int delta;
@@ -4086,7 +4117,12 @@ zcopy(source,destination) char *source, *destination; {
     in = open(src, O_RDONLY, 0);        /* Open source file */
     debug(F111,"zcopy open source",src,in);
     if (in > -1) {                      /* If open... */
-        out = open(dst, O_WRONLY|O_CREAT, perms); /* Open destination file */
+	/* Open destination file */
+#ifdef O_TRUNC
+        out = open(dst, O_WRONLY|O_CREAT|O_TRUNC, perms);
+#else
+        out = open(dst, O_WRONLY|O_CREAT, perms);
+#endif /* O_TRUNC */
         debug(F111,"zcopy open dest",dst,out);
         if (out > -1) {                 /* If open... */
             while ((x = read(in,buf,1024)) > 0) { /* Copy in 1K blocks */
@@ -6009,7 +6045,7 @@ traverse(pl,sofar,endcur) struct path *pl; char *sofar, *endcur; {
 	/* This speeds things up a bit. */
 	/* If it causes trouble define NOSKIPMATCH and rebuild. */
 	if (xpat[0] == '*' && !xpat[1])
-	  x = matchdot ? 1 : (s[0] != '.');
+	  x = xmatchdot ? 1 : (s[0] != '.');
 	else
 #endif /* NOSKIPMATCH */
 	  x = ckmatch(xpat, s, 1, mopts); /* Match with original pattern */
@@ -6283,7 +6319,7 @@ traverse(pl,sofar,endcur) struct path *pl; char *sofar, *endcur; {
 	      /* This speeds things up a bit. */
 	      /* If it causes trouble define NOSKIPMATCH and rebuild. */
 	      if (depth == 0 && (s1[0] == '*') && !s1[1])
-		mresult = matchdot ? 1 : (s2[0] != '.');
+		mresult = xmatchdot ? 1 : (s2[0] != '.');
 	      else
 #endif /* NOSKIPMATCH */
 		mresult = ckmatch(s1,s2,1,opts); /* Match */
@@ -6812,15 +6848,19 @@ zshcmd(s) char *s; {
 /*  I S W I L D  --  Check if filespec is "wild"  */
 
 /*
-  Returns 0 if it is a single file, 1 if it contains wildcard characters.
+  Returns:
+    0 if argument is empty or is the name of a single file;
+    1 if it contains wildcard characters.
   Note: must match the algorithm used by match(), hence no [a-z], etc.
 */
 int
 iswild(filespec) char *filespec; {
     char c, *p, *f; int x;
     int quo = 0;
+    if (!filespec)
+      return(0);
     f = filespec;
-    if (wildxpand) {
+    if (wildxpand) {			/* Shell handles wildcarding */
         if ((x = nzxpand(filespec,0)) > 1)
           return(1);
         if (x == 0) return(0);          /* File does not exist */
@@ -6830,7 +6870,7 @@ iswild(filespec) char *filespec; {
         free(p);
         p = NULL;
         return(x);
-    } else {
+    } else {				/* We do it ourselves */
         while ((c = *filespec++) != '\0') {
             if (c == '\\' && quo == 0) {
                 quo = 1;
@@ -6838,7 +6878,10 @@ iswild(filespec) char *filespec; {
             }
             if (!quo && (c == '*' || c == '?'
 #ifdef CKREGEX
-                         || c == '[' || c == '{'
+#ifndef VMS
+                         || c == '['
+#endif /* VMS */
+			 || c == '{'
 #endif /* CKREGEX */
                          )) {
 		debug(F111,"iswild",f,1);

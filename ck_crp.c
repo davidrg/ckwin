@@ -1,4 +1,4 @@
-char *ckcrpv = "Encryption Engine, 8.0.110, 4 Jan 2002";
+char *ckcrpv = "Encryption Engine, 8.0.111, 22 Jun 2002";
 /*
   C K _ C R P . C  -  Cryptography for C-Kermit"
 
@@ -68,6 +68,9 @@ char *ckcrpv = "Encryption Engine, 8.0.110, 4 Jan 2002";
 #include <string.h>
 #ifdef OS2
 #include <stdarg.h>
+#ifdef OS2ONLY
+#include <os2.h>
+#endif /* OS2ONLY */
 #include "ckosyn.h"
 #else /* OS2 */
 static char * tmpstring = NULL;
@@ -227,16 +230,16 @@ tn_hex(buf, buflen, data, datalen)
         ckstrncat(buf,"\r\n  ",buflen);
         for (j = 0 ; (j < 16); j++) {
             if ((i + j) < datalen)
-	      sprintf(tmp,
-		      "%s%02x ",
-		      (j == 8 ? "| " : ""),
-		      (CHAR) data[i + j]
-		      );
+              sprintf(tmp,
+                      "%s%02x ",
+                      (j == 8 ? "| " : ""),
+                      (CHAR) data[i + j]
+                      );
             else
-	      sprintf(tmp,
-		      "%s   ",
-		      (j == 8 ? "| " : "")
-		      );
+              sprintf(tmp,
+                      "%s   ",
+                      (j == 8 ? "| " : "")
+                      );
             ckstrncat(buf,tmp,buflen);
         }
         ckstrncat(buf," ",buflen);
@@ -279,6 +282,10 @@ extern krb5_context k5_context;
 #define des_set_random_generator_seed des_random_seed
 #endif /* UNIX */
 #define des_fixup_key_parity          des_set_odd_parity
+#ifdef OPENSSL_097
+#define OPENSSL_ENABLE_OLD_DES_SUPPORT
+#include <openssl/des.h>
+#endif /* OPENSSL_097 */
 #else /* LIBDES */
 #ifdef UNIX
 #define des_set_random_generator_seed(x) des_init_random_number_generator(x)
@@ -5468,19 +5475,19 @@ crypt_dll_init( struct _crypt_dll_init * init )
         init->p_install_funcs("des_is_weak_key",ck_des_is_weak_key);
         libdes_dll_init(init);
         if (init->version == 3)
-	  return(1);
+          return(1);
     }
     if ( init->version >= 4 ) {
         init->p_install_funcs("crypt_dll_version",ck_crypt_dll_version);
         if (init->version == 4)
-	  return(1);
+          return(1);
     }
-    
+
     if ( init->version >= 5 ) {
         p_reqtelmutex = init->p_reqtelmutex;
         p_reltelmutex = init->p_reltelmutex;
         if (init->version == 5)
-	  return(1);
+          return(1);
         init->version = 5;
         return(1);
     }

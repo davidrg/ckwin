@@ -68,6 +68,11 @@ LONG KermitDialerID = 0;
 #endif /* CK_PID */
 #endif /* OS2 */
 
+#ifdef KUI
+extern struct keytab * term_font;
+extern int ntermfont, tt_font, tt_font_size;
+#endif /* KUI */
+
 extern xx_strp xxstring;
 
 #ifdef DEC_TCPIP
@@ -125,7 +130,7 @@ char *months[] = {
 
 char *
 zzndate() {                             /* Returns today's date as yyyymmdd */
-    char * p;
+    char * p = NULL;
     int x;
 
 /* WARNING - This will fail if asctime() returns non-English month names */
@@ -146,6 +151,7 @@ zzndate() {                             /* Returns today's date as yyyymmdd */
         ndatbuf[5] = (char) ((x % 10) + 48);
     }
     ndatbuf[8] = NUL;
+    debug(F110,"zzndate return",ndatbuf,0);
     return((char *)ndatbuf);
 }
 
@@ -166,6 +172,9 @@ extern char * exedir;
 extern int nettype;
 
 #ifndef NOICP                           /* Most of this file... */
+#ifdef CKLOGDIAL
+extern char diafil[];
+#endif /* CKLOGDIAL */
 
 #ifndef AMIGA
 #ifndef MAC
@@ -593,6 +602,9 @@ struct keytab vartab[] = {
 #endif /* NODIAL */
     { "date",      VN_DATE,  0},
     { "day",       VN_DAY,   0},
+#ifdef NT
+    { "desktop",   VN_DESKTOP, 0},     /* 201 */
+#endif /* NT */
 #ifndef NODIAL
     { "dialcount", VN_DRTR,  0},        /* 195 */
     { "dialnumber",VN_DNUM,  0},        /* 192 */
@@ -659,10 +671,19 @@ struct keytab vartab[] = {
 #endif /* SYSFTP */
 #endif /* NOFTP */
     { "ftype",     VN_MODE,  0},        /* 190 */
-    { "herald",    VN_HERALD,0},
-    { "home",      VN_HOME,  0},
-    { "host",      VN_HOST,  0},
-    { "hour",      VN_HOUR,  0},        /* 200 */
+#ifdef KUI
+    { "gui_fontname", VN_GUI_FNM, 0},	/* 205 */
+    { "gui_fontsize", VN_GUI_FSZ, 0},	/* 205 */
+    { "gui_runmode", VN_GUI_RUN, 0},    /* 205 */
+    { "gui_xpos",    VN_GUI_XP,  0},    /* 205 */
+    { "gui_xres",    VN_GUI_XR,  0},    /* 205 */
+    { "gui_ypos",    VN_GUI_YP,  0},    /* 205 */
+    { "gui_yres",    VN_GUI_YR,  0},    /* 205 */
+#endif /* KUI */
+    { "herald",    VN_HERALD, 0},
+    { "home",      VN_HOME,   0},
+    { "host",      VN_HOST,   0},
+    { "hour",      VN_HOUR,   0},       /* 200 */
 #ifndef NOHTTP
     { "http_code",      VN_HTTP_C, 0},  /* 199 */
     { "http_connected", VN_HTTP_N, 0},  /* 199 */
@@ -707,6 +728,11 @@ struct keytab vartab[] = {
     { "lockdir",   VN_LCKDIR,0},        /* 195 */
     { "lockpid",   VN_LCKPID,0},        /* 195 */
 #endif /* UNIX */
+    { "log_connection", VN_LOG_CON, 0}, /* 206 */
+    { "log_debug", VN_LOG_DEB, 0},      /* 206 */
+    { "log_packet", VN_LOG_PKT, 0},     /* 206 */
+    { "log_session", VN_LOG_SES, 0},    /* 206 */
+    { "log_transaction", VN_LOG_TRA, 0},/* 206 */
     { "maclevel",  VN_MACLVL,0},        /* 195 */
     { "macro",     VN_MAC,   0},
 #ifdef FNFLOAT
@@ -783,6 +809,10 @@ struct keytab vartab[] = {
 #ifdef CK_REXX
     { "rexx",      VN_REXX,  0},        /* 190 */
 #endif /* CK_REXX */
+#ifdef TN_COMPORT
+    { "rfc2217_signature", VN_TNC_SIG, 0}, /* 201 */
+    { "rfc2717_signature", VN_TNC_SIG, CM_INV}, /* 202 */
+#endif /* TN_COMPORT */
     { "rows",      VN_ROWS,  0},        /* 190 */
 #ifndef NOSEXP
     { "sdepth",    VN_LSEXP,0},         /* 199 */
@@ -990,6 +1020,11 @@ struct keytab fnctab[] = {              /* Function names */
     { "left",       FN_LEF,  0},        /* Leftmost n characters of string */
     { "length",     FN_LEN,  0},        /* Return length of argument */
     { "literal",    FN_LIT,  0},        /* Return argument literally */
+#ifdef NT
+    { "longpathname",FN_LNAME,0},	/* GetLongPathName() */
+#else
+    { "longpathname",FN_FFN,CM_INV},
+#endif /* NT */
     { "lop",        FN_STL,  0},        /* Lop */
     { "lower",      FN_LOW,  0},        /* Return lowercased argument */
     { "lpad",       FN_LPA,  0},        /* Return left-padded argument */
@@ -1052,6 +1087,11 @@ struct keytab fnctab[] = {              /* Function names */
 #ifndef NOSEXP
     { "sexpression",FN_SEXP, 0},        /* S-Expression */
 #endif /* NOSEXP */
+#ifdef NT
+    { "shortpathname",FN_SNAME,0},	/* GetShortPathName() */
+#else
+    { "shortpathname",FN_FFN,CM_INV},
+#endif /* NT */
     { "size",       FN_FS,   0},        /* File size */
 #ifdef COMMENT
     { "sleep",      FN_SLEEP,0},        /* Sleep for n seconds */
@@ -1256,6 +1296,7 @@ findinpath(arg) char * arg; {
               exedir, "SCRIPTS/",
               exedir, "KEYMAPS/"
               );
+    debug(F110,"findinpath takepath",takepath,0);
 #ifdef NT
     makestr(&appdata0,NULL);
     makestr(&appdata1,NULL);
@@ -1281,7 +1322,7 @@ findinpath(arg) char * arg; {
     cmini(0);                           /* Initialize them */
     /* Stuff filename into command buf with braces in case of spaces */
     ckmakmsg(cmdbuf,CMDBL,"{",arg,"}",NULL);
-    debug(F110,"prescan cmdbuf",cmdbuf,0);
+    debug(F110,"findinpath cmdbuf",cmdbuf,0);
     ckstrncat(cmdbuf,"\r\r",CMDBL);     /* And some carriage returns */
     if (cmifip("","",&s,&x,0,takepath,xxstring) < 0)
       return(NULL);
@@ -1462,6 +1503,9 @@ prescan(dummy) int dummy; {             /* Arg is ignored. */
                        !ckstrcmp(g_url.svc,"telnets",-1,0)) {
                 haveurl = 1;
                 howcalled = I_AM_TELNET;
+            } else if (!ckstrcmp(g_url.svc,"ssh",-1,0)) {
+                haveurl = 1;
+                howcalled = I_AM_SSH;
             } else if (!ckstrcmp(g_url.svc,"iksd",-1,0) ||
                        !ckstrcmp(g_url.svc,"kermit",-1,0)) {
                 haveurl = 1;
@@ -3256,6 +3300,7 @@ xlate(fin, fout, csin, csout) char *fin, *fout; int csin, csout; {
 
       /* General case: Get next byte translated from fcs to UCS-2 */
 
+#ifdef COMMENT
       while ((c = xgnbyte(FC_UCS2,csin,NULL)) > -1 &&
               (c2 = xgnbyte(FC_UCS2,csin,NULL)) > -1) {
           extern int fileorder;
@@ -3279,6 +3324,20 @@ xlate(fin, fout, csin, csout) char *fin, *fout; int csin, csout; {
               break;
           }
       }
+#else
+    while ((c = xgnbyte(FC_UCS2,csin,NULL)) > -1) {
+          if (tr_int) {                 /* Interrupted? */
+              printf("^C...\n");        /* Print message */
+              z = 0;
+              break;
+          }
+          if ((x = xpnbyte(c,TC_UCS2,csout,fn)) < 0) {
+              z = -1;
+              break;
+          }
+      }
+#endif /* COMMENT */
+
 #endif /* UNICODE */
 
   xxlate:                               /* Common exit point */
@@ -3450,9 +3509,13 @@ static char hompthbuf[CKMAXPATH+1];
 char *
 homepath() {
     int x;
+    extern char * myhome;
+    char * h;
+
+    h = myhome ? myhome : zhome();
     hompthbuf[0] = NUL;
 #ifdef UNIXOROSK
-    x = ckstrncpy(hompthbuf,zhome(),CKMAXPATH+1);
+    x = ckstrncpy(hompthbuf,h,CKMAXPATH+1);
     if (x <= 0) {
         hompthbuf[0] = '/';
         hompthbuf[1] = NUL;
@@ -3463,11 +3526,11 @@ homepath() {
     return(hompthbuf);
 #else
 #ifdef STRATUS
-    if (strlen(zhome()) < CKMAXPATH)    /* SAFE */
-      sprintf(hompthbuf,"%s>",zhome());
+    if (strlen(h) < CKMAXPATH)
+      sprintf(hompthbuf,"%s>",h);	/* SAFE */
     return(hompthbuf);
 #else
-    return(zhome());
+    return(h);
 #endif /* STRATUS */
 #endif /* UNIXOROSK */
 }
@@ -3590,7 +3653,8 @@ dolog(x) int x; {
 
 #ifndef NOLOCAL
       case LOGS:
-        return(seslog = sesopn(s,disp));
+        setseslog(sesopn(s,disp));
+        return(seslog);
 #endif /* NOLOCAL */
 
 #ifdef TLOG
@@ -3752,7 +3816,7 @@ sesopn(s,disp) char * s; int disp; {
               p++;
         }
         debug(F110,"sesopn pipe",p,0);
-        seslog = zxcmd(ZSFILE,p);
+        setseslog(zxcmd(ZSFILE,p));
         debug(F101,"sesopn seslog","",seslog);
     } else {                            /* File */
 #endif /* OS2ORUNIX */
@@ -3760,9 +3824,9 @@ sesopn(s,disp) char * s; int disp; {
             xx.bs = 0; xx.cs = 0; xx.rl = 0; xx.org = 0; xx.cc = 0;
             xx.typ = 0; xx.dsp = XYFZ_A; xx.os_specific = "";
             xx.lblopts = 0;
-            seslog = zopeno(ZSFILE,s,NULL,&xx);
+            setseslog(zopeno(ZSFILE,s,NULL,&xx));
         } else
-          seslog = zopeno(ZSFILE,s,NULL,NULL);
+          setseslog(zopeno(ZSFILE,s,NULL,NULL));
         if (!seslog)
           printf("?%s - %s\n",s,ck_errstr());
 #ifdef OS2ORUNIX
@@ -3939,7 +4003,6 @@ ckdate() {
 */
 int
 diaopn(s,disp,fc) char *s; int disp, fc; {
-    extern char diafil[];
     static struct filinfo xx;
 
     if (!s)
@@ -4024,7 +4087,7 @@ shoxm() {
 #ifndef NOXFER
 VOID                                    /* SHOW TRANSFER */
 shoxfer() {
-    extern int docrc, usepipes, xfrxla;
+    extern int docrc, usepipes, xfrxla, whereflg;
     extern char * xfrmsg;
     printf("\n");
     printf(" Transfer Bell: %s\n",showoff(xfrbel));
@@ -4046,6 +4109,7 @@ shoxfer() {
       case XYFD_C: printf("%s\n","fullscreen"); break;
       case XYFD_S: printf("%s\n","crt"); break;
       case XYFD_B: printf("%s\n","brief"); break;
+      case XYFD_G: printf("%s\n","gui"); break;
     }
     printf(" Transfer Message: %s\n", xfrmsg ? xfrmsg : "(none)");
     printf(" Transfer Locking-shift: ");
@@ -4062,6 +4126,7 @@ shoxfer() {
            );
     printf(" Transfer Pipes: %s\n", showoff(usepipes));
     printf(" Transfer Protocol: %s\n",ptab[protocol].p_name);
+    printf(" Transfer Report: %s\n",showoff(whereflg));
     printf(" Transfer Slow-start: %s\n",showoff(slostart));
     printf("\n");
 }
@@ -5447,23 +5512,19 @@ doshodial() {
     if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
 
     printf(
-" Dial toll-free-prefix:        %s\n",
-           dialtfp ? dialtfp :
-          (dialldp ? dialldp : "(none)")
-          );
+	" Dial toll-free-prefix:        %s\n",
+	dialtfp ? dialtfp :
+	(dialldp ? dialldp : "(none)")
+	);
     if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
-    printf(
-#ifdef COMMENT
-" Dial pbx-exchange:            %s\n", dialpxx ? dialpxx : "(none)");
-#else
-" Dial pbx-exchange:            ");
+    printf(" Dial pbx-exchange:            ");
     if (ndialpxx == 0)
       printf("(none)");
     else
       for (i = 0; i < ndialpxx; i++)
         printf("%s ", dialpxx[i]);
     printf("\n");
-#endif /* COMMENT */
+
     if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
     printf(
 " Dial pbx-inside-prefix:       %s\n", dialpxi ? dialpxi : "(none)");
@@ -6334,6 +6395,7 @@ doinput(timo,ms,mp) int timo; char *ms[]; int mp[]; {
 #endif /* GFTIMER */
     int lastchar = 0;
     int waiting = 0;
+    int imask = 0;
     char ch, *xp, *s;
     CHAR c;
 #ifndef NOLOCAL
@@ -6358,6 +6420,8 @@ doinput(timo,ms,mp) int timo; char *ms[]; int mp[]; {
     int burst = 0;                      /* Chars remaining in input burst */
 #endif /* CK_BURST */
 
+    imask = cmask;
+    if (parity) imask = 0x7f;
     inwait = timo;                      /* For \v(inwait) */
     makestr(&inpmatch,NULL);
 
@@ -6692,7 +6756,7 @@ doinput(timo,ms,mp) int timo; char *ms[]; int mp[]; {
             burst--;                    /* One less character waiting */
             debug(F101,"doinput burst","",burst);
 #endif /* CK_BURST */
-            c = (CHAR) (cmask & (CHAR) y); /* Mask off parity */
+            c = (CHAR) (imask & (CHAR) y); /* Mask off any parity */
             inchar[0] = c;              /* Remember character for \v(inchar) */
 #ifdef COMMENT
 #ifdef CK_BURST
@@ -7705,6 +7769,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
                     p = fnval;
                     if (fndiags)
                       sprintf(fnval,"<ERROR:OVERFLOW:\\fcontents()>");
+		    debug(F110,"zzstring fcontents(\\%*)",p,0);
                 }
 #endif /* COMMENT */
             } else {
@@ -7884,8 +7949,14 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 #endif /* TCPSOCKET */
           case FN_DELSEC:
           case FN_KWVAL:
+#ifdef COMMENT
           case FN_SLEEP:
           case FN_MSLEEP:
+#endif /* COMMENT */
+#ifdef NT
+          case FN_SNAME:
+          case FN_LNAME:
+#endif /* NT */
             failed = 1;
             p = fnval;
             if (fndiags)
@@ -9230,7 +9301,10 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 
 #ifndef NORANDOM
       case FN_RAND:                     /* Random number */
-        k = rand();
+#ifdef CK_SSL
+        if (RAND_bytes((unsigned char *)&k,sizeof(k)) < 0)
+#endif /* CK_SSL */
+          k = rand();
         x = 0;
         if (argn > 0) {
             if (!chknum(bp[0])) {
@@ -9243,7 +9317,8 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
             x = atoi(bp[0]);
         }
 #ifdef COMMENT
-        sprintf(fnval,"%d", x > 0 ? k % x : (x == 0 ? 0 : (0 - (k % (-x)))));
+        sprintf(fnval,"%d", (x > 0 && k > 0) || (x < 0 && k < 0) ? k % x : 
+                (x == 0 ? 0 : (0 - (k % (-x)))));
 #else
         debug(F111,"rand",ckitoa(x),k);
 #ifdef SUNOS4
@@ -9253,7 +9328,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
         if (x < 5)
           k = k >> 5;
 #endif /* SUNOS4 */
-        if (x > 0)
+        if ((x > 0 && k > 0) || (x < 0 && k < 0))
           x = k % x;
         else if (x == 0)
           x = 0;
@@ -9747,8 +9822,12 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
         failed = 0;
         z = mjd(p);                     /* Convert to modified Julian date */
         z = z % 7L;
-        if (z < 0) z = 0 - z;
-        k = ((int)z + 3) % 7;           /* Day of week */
+        if (z < 0) {
+            z = 0 - z;
+            k = 6 - ((int)z + 3) % 7;
+        } else {
+            k = ((int)z + 3) % 7;	/* Day of week */
+        }
         p = fnval;                      /* Point to result */
         if (cx == FN_NDAY)
           sprintf(fnval,"%d",k);        /* SAFE */
@@ -10642,7 +10721,25 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
         max = a_dim[x];                 /* Size of array */
         if (lo < 0) lo = 1;             /* Use given range if any */
         if (lo > max) lo = max;
-        if (hi < 0) hi = max;
+#ifdef COMMENT
+	hi = max;
+#else
+/*
+  This is a workaround for the problem in which the dimension of the \&_[]
+  array (but not its contents) grows upon entry to a SWITCH block.  But this
+  code prevents the dimension from growing.  Go figure.
+*/
+        if (hi < 0) {			/* Bounds not given */
+            if (x)			/* Regular array */
+	      hi = max;
+	    else			/* Argument vector array */
+	      for (hi = max; hi >= lo; hi--) { /* ignore any trailing */
+		  if (!a_ptr[x][hi]) continue; /* empty elements */
+		  if (!*(a_ptr[x][hi])) continue;
+		  break;
+	      }
+	}
+#endif /* COMMENT */
         if (hi > max) hi = max;
         failed = 0;                     /* Unset failure flag */
         if (max < 1)
@@ -11063,6 +11160,17 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
         goto fnend;
     }
 #endif /* COMMENT */
+
+#ifdef NT
+    if (cx == FN_SNAME) {
+        GetShortPathName(bp[0],fnval,FNVALL);
+        goto fnend;
+    }
+    if (cx == FN_LNAME) {
+        ckGetLongPathName(bp[0],fnval,FNVALL);
+        goto fnend;
+    }
+#endif /* NT */
 
 /* Note: when adding new functions remember to update dohfunc in ckuus2.c. */
 
@@ -13033,6 +13141,37 @@ nvlook(s) char *s; {
         vvbuf[1] = p[12];
         vvbuf[2] = NUL;
         return(vvbuf);                  /* and return it */
+
+      case VN_LOG_CON:			/* \v(...) for log files */
+#ifdef CKLOGDIAL
+        return(diafil);
+#else 
+        return("");
+#endif
+      case VN_LOG_PKT:
+#ifndef NOXFER
+        return(pktfil);
+#else
+        return("");
+#endif
+      case VN_LOG_SES:
+#ifndef NOLOCAL
+        return(sesfil);
+#else
+        return("");
+#endif
+      case VN_LOG_TRA:
+#ifdef TLOG
+        return(trafil);
+#else
+        return("");
+#endif
+      case VN_LOG_DEB:
+#ifdef DEBUG
+        return(debfil);
+#else
+        return("");
+#endif
     }
 
 #ifndef NODIAL
@@ -13061,14 +13200,21 @@ nvlook(s) char *s; {
 
 #ifdef NT
     switch (y) {
-    case VN_PERSONAL:
+      case VN_PERSONAL:
         p = (char *)GetPersonal();
         if (p) {
             GetShortPathName(p,vvbuf,VVBUFL);
             return(vvbuf);
         }
         return("");
-    case VN_COMMON:
+      case VN_DESKTOP:
+          p = (char *)GetDesktop();
+          if (p) {
+              GetShortPathName(p,vvbuf,VVBUFL);
+              return(vvbuf);
+          }
+          return("");
+      case VN_COMMON:
         p = (char *)GetAppData(1);
         if (p) {
             ckmakmsg(vvbuf,VVBUFL,p,"Kermit 95/",NULL,NULL);
@@ -13076,7 +13222,7 @@ nvlook(s) char *s; {
             return(vvbuf);
         }
         return("");
-    case VN_APPDATA:
+      case VN_APPDATA:
         p = (char *)GetAppData(0);
         if (p) {
             ckmakmsg(vvbuf,VVBUFL,p,"Kermit 95/",NULL,NULL);
@@ -13086,6 +13232,57 @@ nvlook(s) char *s; {
         return("");
     }
 #endif /* NT */
+
+#ifdef TN_COMPORT
+    switch (y) {
+      case VN_TNC_SIG: {
+        p = (char *) tnc_get_signature();
+        ckstrncpy(vvbuf,p ? p : "",VVBUFL);
+        return(vvbuf);
+      }
+    }
+#endif /* TN_COMPORT */
+
+#ifdef KUI
+    switch (y) {
+      case VN_GUI_RUN: {
+	  extern HWND getHwndKUI();
+	  if ( IsIconic(getHwndKUI()) )
+            return("minimized");
+	  if ( IsZoomed(getHwndKUI()) )
+            return("maximized");
+	  return("restored");
+      }
+      case VN_GUI_XP:
+        sprintf(vvbuf,"%d",get_gui_window_pos_x());  /* SAFE */
+        return(vvbuf);
+      case VN_GUI_YP:
+        sprintf(vvbuf,"%d",get_gui_window_pos_y());  /* SAFE */
+        return(vvbuf);
+      case VN_GUI_XR:
+        sprintf(vvbuf,"%d",GetSystemMetrics(SM_CXSCREEN));  /* SAFE */
+        return(vvbuf);
+      case VN_GUI_YR:
+        sprintf(vvbuf,"%d",GetSystemMetrics(SM_CYSCREEN));  /* SAFE */
+        return(vvbuf);
+      case VN_GUI_FNM:
+          if ( ntermfont > 0 ) {
+              int i;
+              for (i = 0; i < ntermfont; i++) {
+                  if (tt_font == term_font[i].kwval) {
+                      ckstrncpy(vvbuf,term_font[i].kwd,VVBUFL);
+                      return(vvbuf);
+                  }
+              }
+          }
+          return("(unknown)");
+      case VN_GUI_FSZ:
+          ckstrncpy(vvbuf,ckitoa(tt_font_size/2),VVBUFL);
+          if ( tt_font_size % 2 )
+              ckstrncat(vvbuf,".5",VVBUFL);
+          return(vvbuf);
+    }
+#endif /* KUI */
 
     fnsuccess = 0;
     if (fnerror) {
@@ -13259,8 +13456,10 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
                 vp = (maclvl >= 0) ? m_line[maclvl] : topline;
                 if (!vp) vp = "";
 #else
+		char * ss = new;
                 if (zzstring("\\fjoin(&_[],,1)",&new,&n2) < 0)
                   return(-1);
+		debug(F110,"zzstring \\%*",ss,0);
                 break;
 #endif /* COMMENT */
             } else {

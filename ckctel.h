@@ -17,13 +17,13 @@
 */
 
 #ifndef CKCTEL_H
-#define	CKCTEL_H
+#define CKCTEL_H
 #ifdef TNCODE
 /*
   Definitions for the TELNET protocol.
   can't rely on library header files for any of them.
 */
-#ifndef IAC				/* First the telnet commands */
+#ifndef IAC                             /* First the telnet commands */
 #define IAC 255
 #endif /* IAC */
 #ifndef DONT
@@ -89,24 +89,24 @@
 #define TN_SAK 200              /* IBM Secure Attention Key */
 #endif /* LAST_TN_CMD */
 
-#define SYNCH	242		/* for telfunc calls */
+#define SYNCH   242             /* for telfunc calls */
 
 #ifdef TELCMDS
 char *telcmds[] = {
-	"EOF", "SUSP", "ABORT", "EOR",
-	"SE", "NOP", "DMARK", "BRK", "IP", "AO", "AYT", "EC",
-	"EL", "GA", "SB", "WILL", "WONT", "DO", "DONT", "IAC", 0
+        "EOF", "SUSP", "ABORT", "EOR",
+        "SE", "NOP", "DMARK", "BRK", "IP", "AO", "AYT", "EC",
+        "EL", "GA", "SB", "WILL", "WONT", "DO", "DONT", "IAC", 0
 };
 #else /* TELCMDS */
 extern char *telcmds[];
 #endif /* TELCMDS */
 
-#define	TELCMD_FIRST	TN_EOF
-#define	TELCMD_LAST	IAC
-#define	TELCMD_OK(x)	((unsigned int)(x) <= TELCMD_LAST && \
-			 (unsigned int)(x) >= TELCMD_FIRST || \
+#define TELCMD_FIRST    TN_EOF
+#define TELCMD_LAST     IAC
+#define TELCMD_OK(x)    ((unsigned int)(x) <= TELCMD_LAST && \
+                         (unsigned int)(x) >= TELCMD_FIRST || \
                           (unsigned int)(x) == TN_SAK)
-#define	TELCMD(x)	(TELCMD_OK(x)? ((x) == TN_SAK?"SAK": \
+#define TELCMD(x)       (TELCMD_OK(x)? ((x) == TN_SAK?"SAK": \
                          telcmds[(x)-TELCMD_FIRST]):"UNKNOWN")
 
 /* Then the options */
@@ -126,121 +126,121 @@ extern char *telcmds[];
 
 /* telnet options */
 #ifndef TELOPT_BINARY
-#define TELOPT_BINARY	0	/* 8-bit data path (RFC 856)*/
+#define TELOPT_BINARY   0       /* 8-bit data path (RFC 856)*/
 #endif
 #ifndef TELOPT_ECHO
-#define TELOPT_ECHO	1	/* echo (RFC 857)*/
+#define TELOPT_ECHO     1       /* echo (RFC 857)*/
 #endif
 #ifndef TELOPT_RCP
-#define	TELOPT_RCP	2	/* prepare to reconnect (NIC 50005)*/
+#define TELOPT_RCP      2       /* prepare to reconnect (NIC 50005)*/
 #endif
-#ifndef	TELOPT_SGA
-#define	TELOPT_SGA	3	/* suppress go ahead (RFC 858) */
+#ifndef TELOPT_SGA
+#define TELOPT_SGA      3       /* suppress go ahead (RFC 858) */
 #endif
-#ifndef	TELOPT_NAMS
-#define	TELOPT_NAMS	4	/* approximate message size (ETHERNET) */
+#ifndef TELOPT_NAMS
+#define TELOPT_NAMS     4       /* approximate message size (ETHERNET) */
 #endif
-#ifndef	TELOPT_STATUS
-#define	TELOPT_STATUS	5	/* give status (RFC 859) */
+#ifndef TELOPT_STATUS
+#define TELOPT_STATUS   5       /* give status (RFC 859) */
 #endif
-#ifndef	TELOPT_TM
-#define	TELOPT_TM	6	/* timing mark (RFC 860) */
+#ifndef TELOPT_TM
+#define TELOPT_TM       6       /* timing mark (RFC 860) */
 #endif
-#ifndef	TELOPT_RCTE
-#define	TELOPT_RCTE	7	/* remote controlled transmission and echo */
+#ifndef TELOPT_RCTE
+#define TELOPT_RCTE     7       /* remote controlled transmission and echo */
 #endif                          /* (RFC 726) */
 #ifndef TELOPT_NAOL
-#define TELOPT_NAOL 	8	/* negotiate about output line width */
+#define TELOPT_NAOL     8       /* negotiate about output line width */
 #endif                          /* (NIC 50005) */
 #ifndef TELOPT_NAOP
-#define TELOPT_NAOP 	9	/* negotiate about output page size */
+#define TELOPT_NAOP     9       /* negotiate about output page size */
 #endif                          /* (NIC 50005) */
 #ifndef TELOPT_NAOCRD
-#define TELOPT_NAOCRD	10	/* negotiate about CR disposition (RFC 652) */
+#define TELOPT_NAOCRD   10      /* negotiate about CR disposition (RFC 652) */
 #endif                          /* [Historic] */
 #ifndef TELOPT_NAOHTS
-#define TELOPT_NAOHTS	11	/* negotiate about horizontal tabstops */
+#define TELOPT_NAOHTS   11      /* negotiate about horizontal tabstops */
 #endif                          /* (RFC 653) [Historic] */
 #ifndef TELOPT_NAOHTD
-#define TELOPT_NAOHTD	12	/* negotiate about horiz tab disposition */
+#define TELOPT_NAOHTD   12      /* negotiate about horiz tab disposition */
 #endif                          /* (RFC 654) [Historic] */
 #ifndef TELOPT_NAOFFD
-#define TELOPT_NAOFFD	13	/* negotiate about formfeed disposition */
+#define TELOPT_NAOFFD   13      /* negotiate about formfeed disposition */
 #endif                          /* (RFC 655) [Historic] */
 #ifndef TELOPT_NAOVTS
-#define TELOPT_NAOVTS	14	/* negotiate about vertical tab stops */
+#define TELOPT_NAOVTS   14      /* negotiate about vertical tab stops */
 #endif                          /* (RFC 656) [Historic] */
 #ifndef TELOPT_NAOVTD
-#define TELOPT_NAOVTD	15	/* negotiate about vertical tab disposition */
+#define TELOPT_NAOVTD   15      /* negotiate about vertical tab disposition */
 #endif                          /* (RFC 657) [Historic] */
 #ifndef TELOPT_NAOLFD
-#define TELOPT_NAOLFD	16	/* negotiate about output LF disposition */
+#define TELOPT_NAOLFD   16      /* negotiate about output LF disposition */
 #endif                          /* (RFC 658) [Historic] */
 #ifndef TELOPT_XASCII
-#define TELOPT_XASCII	17	/* extended ascii character set */
+#define TELOPT_XASCII   17      /* extended ascii character set */
 #endif                          /* (RFC 698) */
-#ifndef	TELOPT_LOGOUT
-#define	TELOPT_LOGOUT	18	/* force logout (RFC 727) */
+#ifndef TELOPT_LOGOUT
+#define TELOPT_LOGOUT   18      /* force logout (RFC 727) */
 #endif
-#ifndef	TELOPT_BM
-#define	TELOPT_BM	19	/* byte macro (RFC 735) */
+#ifndef TELOPT_BM
+#define TELOPT_BM       19      /* byte macro (RFC 735) */
 #endif
-#ifndef	TELOPT_DET
-#define	TELOPT_DET	20	/* data entry terminal (RFC 1043, 732) */
+#ifndef TELOPT_DET
+#define TELOPT_DET      20      /* data entry terminal (RFC 1043, 732) */
 #endif
-#ifndef	TELOPT_SUPDUP
-#define	TELOPT_SUPDUP	21	/* supdup protocol (RFC 736, 734) */
+#ifndef TELOPT_SUPDUP
+#define TELOPT_SUPDUP   21      /* supdup protocol (RFC 736, 734) */
 #endif
-#ifndef	TELOPT_SUPDUPOUTPUT
-#define	TELOPT_SUPDUPOUTPUT 22	/* supdup output (RFC 749) */
+#ifndef TELOPT_SUPDUPOUTPUT
+#define TELOPT_SUPDUPOUTPUT 22  /* supdup output (RFC 749) */
 #endif
-#ifndef	TELOPT_SNDLOC
-#define	TELOPT_SNDLOC	23	/* send location (RFC 779) */
+#ifndef TELOPT_SNDLOC
+#define TELOPT_SNDLOC   23      /* send location (RFC 779) */
 #endif
-#ifndef	TELOPT_TTYPE
-#define	TELOPT_TTYPE	24	/* terminal type (RFC 1091) */
+#ifndef TELOPT_TTYPE
+#define TELOPT_TTYPE    24      /* terminal type (RFC 1091) */
 #endif
-#ifndef	TELOPT_EOR
-#define	TELOPT_EOR	25	/* end of record (RFC 885) */
+#ifndef TELOPT_EOR
+#define TELOPT_EOR      25      /* end of record (RFC 885) */
 #endif
-#ifndef	TELOPT_TUID
-#define	TELOPT_TUID	26	/* TACACS user identification (RFC 927) */
+#ifndef TELOPT_TUID
+#define TELOPT_TUID     26      /* TACACS user identification (RFC 927) */
 #endif
-#ifndef	TELOPT_OUTMRK
-#define	TELOPT_OUTMRK	27	/* output marking (RFC 933) */
+#ifndef TELOPT_OUTMRK
+#define TELOPT_OUTMRK   27      /* output marking (RFC 933) */
 #endif
-#ifndef	TELOPT_TTYLOC
-#define	TELOPT_TTYLOC	28	/* terminal location number (RFC 946) */
+#ifndef TELOPT_TTYLOC
+#define TELOPT_TTYLOC   28      /* terminal location number (RFC 946) */
 #endif
-#ifndef	TELOPT_3270REGIME
-#define	TELOPT_3270REGIME 29	/* 3270 regime (RFC 1041) */
+#ifndef TELOPT_3270REGIME
+#define TELOPT_3270REGIME 29    /* 3270 regime (RFC 1041) */
 #endif
-#ifndef	TELOPT_X3PAD
-#define	TELOPT_X3PAD	30	/* X.3 PAD (RFC 1053) */
+#ifndef TELOPT_X3PAD
+#define TELOPT_X3PAD    30      /* X.3 PAD (RFC 1053) */
 #endif
-#ifndef	TELOPT_NAWS
-#define	TELOPT_NAWS	31	/* window size (RFC 1073) */
+#ifndef TELOPT_NAWS
+#define TELOPT_NAWS     31      /* window size (RFC 1073) */
 #endif
-#ifndef	TELOPT_TSPEED
-#define	TELOPT_TSPEED	32	/* terminal speed (RFC 1079) */
+#ifndef TELOPT_TSPEED
+#define TELOPT_TSPEED   32      /* terminal speed (RFC 1079) */
 #endif
-#ifndef	TELOPT_LFLOW
-#define	TELOPT_LFLOW	33	/* remote flow control (RFC 1372) */
+#ifndef TELOPT_LFLOW
+#define TELOPT_LFLOW    33      /* remote flow control (RFC 1372) */
 #endif
 #ifndef TELOPT_LINEMODE
-#define TELOPT_LINEMODE	34	/* Linemode option (RFC 1184) */
+#define TELOPT_LINEMODE 34      /* Linemode option (RFC 1184) */
 #endif
 #ifndef TELOPT_XDISPLOC
-#define TELOPT_XDISPLOC	35	/* X Display Location (RFC 1096) */
+#define TELOPT_XDISPLOC 35      /* X Display Location (RFC 1096) */
 #endif
 #ifndef TELOPT_OLD_ENVIRON
-#define TELOPT_OLD_ENVIRON 36	/* Old - Environment variables (RFC 1408) */
+#define TELOPT_OLD_ENVIRON 36   /* Old - Environment variables (RFC 1408) */
 #endif
-#ifndef	TELOPT_AUTHENTICATION
-#define	TELOPT_AUTHENTICATION 37/* Authenticate (RFC 2941) */
+#ifndef TELOPT_AUTHENTICATION
+#define TELOPT_AUTHENTICATION 37/* Authenticate (RFC 2941) */
 #endif
-#ifndef	TELOPT_ENCRYPTION
-#define	TELOPT_ENCRYPTION 38    /* Encryption option (RFC 2946) */
+#ifndef TELOPT_ENCRYPTION
+#define TELOPT_ENCRYPTION 38    /* Encryption option (RFC 2946) */
 #endif
 #ifndef TELOPT_NEWENVIRON
 #define TELOPT_NEWENVIRON 39    /* New - Environment variables (RFC 1572) */
@@ -288,7 +288,7 @@ extern char *telcmds[];
 #define TELOPT_SSPI_LOGON 139   /* MS SSPI Logon option (PragmaSys) */
 #endif
 #ifndef TELOPT_PRAGMA_HEARTBEAT
-				/* Server Send Heartbeat option (PragmaSys) */
+                                /* Server Send Heartbeat option (PragmaSys) */
 #define TELOPT_PRAGMA_HEARTBEAT 140
 #endif
 
@@ -316,8 +316,8 @@ extern char *telcmds[];
     Remote side does not support SAK.
 */
 
-#ifndef	TELOPT_EXOPL
-#define	TELOPT_EXOPL	255	/* Extended-options-list (RFC 861) */
+#ifndef TELOPT_EXOPL
+#define TELOPT_EXOPL    255     /* Extended-options-list (RFC 861) */
 #endif
 
 #ifdef NTELOPTS
@@ -329,7 +329,7 @@ extern char *telcmds[];
 /* structs which will never be used.  Therefore, the NTELOPTS define  */
 /* can no longer be equal to TELOPT_LAST+1.  In fact, the notion of   */
 /* TELOPT_FIRST and TELOPT_LAST no longer make sense.                 */
-#define	NTELOPTS        55
+#define NTELOPTS        55
 
 #define TELOPT_FIRST     TELOPT_BINARY
 #define TELOPT_LAST      TELOPT_IBM_SAK
@@ -350,10 +350,10 @@ extern char *telcmds[];
         ((x)>=TELOPT_PRAGMA_LOGON && (x)<=TELOPT_PRAGMA_HEARTBEAT)?(x)-87: \
         ((x) == TELOPT_IBM_SAK)?(x)-146: NTELOPTS)
 
-#define	TELOPT_OK(x)	(((x) >= TELOPT_BINARY && (x) <= TELOPT_STDERR) ||\
+#define TELOPT_OK(x)    (((x) >= TELOPT_BINARY && (x) <= TELOPT_STDERR) ||\
              ((x) >= TELOPT_PRAGMA_LOGON && (x) <= TELOPT_PRAGMA_HEARTBEAT) ||\
              ((x) == TELOPT_IBM_SAK))
-#define	TELOPT(x)	(TELOPT_OK(x)?telopts[TELOPT_INDEX(x)]:"UNKNOWN")
+#define TELOPT(x)       (TELOPT_OK(x)?telopts[TELOPT_INDEX(x)]:"UNKNOWN")
 #else /* TELOPT_MACRO */
 _PROTOTYP(int telopt_index,(int));
 _PROTOTYP(int telopt_ok,(int));
@@ -382,7 +382,7 @@ char *telopts[NTELOPTS+2] = {
 /* 138 */ "pragma-logon", "sspi-logon", "pragma-heartbeat",
 /* 200 */ "ibm-sak",
           "unknown",
-	0
+        0
 };
 #else /*TELOPTS */
 extern char * telopts[];
@@ -390,24 +390,24 @@ extern char * telopts[];
 
 /* TELNET Newline Mode */
 
-#define TNL_CR     0			/* CR sends bare carriage return */
-#define TNL_CRNUL  1			/* CR and NUL */
-#define TNL_CRLF   2			/* CR and LF */
-#define TNL_LF     3			/* LF instead of CR */
+#define TNL_CR     0                    /* CR sends bare carriage return */
+#define TNL_CRNUL  1                    /* CR and NUL */
+#define TNL_CRLF   2                    /* CR and LF */
+#define TNL_LF     3                    /* LF instead of CR */
 
 /* TELNET Negotiation Mode */
 
-#define    TN_NG_RF  0			/*  Negotiation REFUSED */
-#define    TN_NG_AC  1			/*  Negotiation ACCEPTED */
-#define    TN_NG_RQ  2			/*  Negotiation REQUESTED */
-#define    TN_NG_MU  3			/*  Negotiation REQUIRED (must) */
+#define    TN_NG_RF  0                  /*  Negotiation REFUSED */
+#define    TN_NG_AC  1                  /*  Negotiation ACCEPTED */
+#define    TN_NG_RQ  2                  /*  Negotiation REQUESTED */
+#define    TN_NG_MU  3                  /*  Negotiation REQUIRED (must) */
 
 
 /* Systems where we know we can define TELNET NAWS automatically. */
 
-#ifndef CK_NAWS				/* In other words, if both */
-#ifdef CK_TTGWSIZ			/* TNCODE and TTGWSIZ are defined */
-#define CK_NAWS				/* then we can do NAWS. */
+#ifndef CK_NAWS                         /* In other words, if both */
+#ifdef CK_TTGWSIZ                       /* TNCODE and TTGWSIZ are defined */
+#define CK_NAWS                         /* then we can do NAWS. */
 #endif /* CK_TTGWSIZ */
 #endif /* CK_NAWS */
 
@@ -501,6 +501,7 @@ struct _telopt_state {
       struct _telopt_comport {
           unsigned char need_to_send;
           unsigned char wait_for_sb;
+          unsigned char wait_for_ms;
       } comport;
 #endif /* TN_COMPORT */
     /* additional options such as New Environment or Send Location */
@@ -556,8 +557,8 @@ extern char * telopt_modes[];
 #endif /* TELOPT_MODES */
 
 #ifdef TELOPT_MACRO
-#define	TELOPT_MODE_OK(x) ((unsigned int)(x) <= TN_NG_MU)
-#define	TELOPT_MODE(x) (TELOPT_MODE_OK(x)?telopt_modes[(x)-TN_NG_RF]:"UNKNOWN")
+#define TELOPT_MODE_OK(x) ((unsigned int)(x) <= TN_NG_MU)
+#define TELOPT_MODE(x) (TELOPT_MODE_OK(x)?telopt_modes[(x)-TN_NG_RF]:"UNKNOWN")
 #else /* TELOPT_MACRO */
 _PROTOTYP(int telopt_mode_ok,(int));
 _PROTOTYP(CHAR * telopt_mode,(int));
@@ -567,63 +568,63 @@ _PROTOTYP(CHAR * telopt_mode,(int));
 #endif /* TELOPT_MACRO */
 
 /* Sub-option qualifiers */
-#define	TELQUAL_IS	0	/* option is... */
-#define	TELQUAL_SEND	1	/* send option */
-#define	TELQUAL_INFO	2	/* ENVIRON: informational version of IS */
-#define	TELQUAL_REPLY	2	/* AUTHENTICATION: client version of IS */
-#define	TELQUAL_NAME	3	/* AUTHENTICATION: client version of IS */
+#define TELQUAL_IS      0       /* option is... */
+#define TELQUAL_SEND    1       /* send option */
+#define TELQUAL_INFO    2       /* ENVIRON: informational version of IS */
+#define TELQUAL_REPLY   2       /* AUTHENTICATION: client version of IS */
+#define TELQUAL_NAME    3       /* AUTHENTICATION: client version of IS */
 
 #define TEL_ENV_VAR     0
 #define TEL_ENV_VALUE   1
 #define TEL_ENV_ESC     2
 #define TEL_ENV_USERVAR 3
 
-#define	LFLOW_OFF		0	/* Disable remote flow control */
-#define	LFLOW_ON		1	/* Enable remote flow control */
-#define	LFLOW_RESTART_ANY	2	/* Restart output on any char */
-#define	LFLOW_RESTART_XON	3	/* Restart output only on XON */
+#define LFLOW_OFF               0       /* Disable remote flow control */
+#define LFLOW_ON                1       /* Enable remote flow control */
+#define LFLOW_RESTART_ANY       2       /* Restart output on any char */
+#define LFLOW_RESTART_XON       3       /* Restart output only on XON */
 
 /*
  * LINEMODE suboptions
  */
 
-#define	LM_MODE		1
-#define	LM_FORWARDMASK	2
-#define	LM_SLC		3
+#define LM_MODE         1
+#define LM_FORWARDMASK  2
+#define LM_SLC          3
 
-#define	MODE_EDIT	0x01
-#define	MODE_TRAPSIG	0x02
-#define	MODE_ACK	0x04
-#define MODE_SOFT_TAB	0x08
-#define MODE_LIT_ECHO	0x10
+#define MODE_EDIT       0x01
+#define MODE_TRAPSIG    0x02
+#define MODE_ACK        0x04
+#define MODE_SOFT_TAB   0x08
+#define MODE_LIT_ECHO   0x10
 
-#define	MODE_MASK	0x1f
+#define MODE_MASK       0x1f
 
 /* Not part of protocol, but needed to simplify things... */
-#define MODE_FLOW		0x0100
-#define MODE_ECHO		0x0200
-#define MODE_INBIN		0x0400
-#define MODE_OUTBIN		0x0800
-#define MODE_FORCE		0x1000
+#define MODE_FLOW               0x0100
+#define MODE_ECHO               0x0200
+#define MODE_INBIN              0x0400
+#define MODE_OUTBIN             0x0800
+#define MODE_FORCE              0x1000
 
-#define	SLC_SYNCH	1
-#define	SLC_BRK		2
-#define	SLC_IP		3
-#define	SLC_AO		4
-#define	SLC_AYT		5
-#define	SLC_EOR		6
-#define	SLC_ABORT	7
-#define	SLC_EOF		8
-#define	SLC_SUSP	9
-#define	SLC_EC		10
-#define	SLC_EL		11
-#define	SLC_EW		12
-#define	SLC_RP		13
-#define	SLC_LNEXT	14
-#define	SLC_XON		15
-#define	SLC_XOFF	16
-#define	SLC_FORW1	17
-#define	SLC_FORW2	18
+#define SLC_SYNCH       1
+#define SLC_BRK         2
+#define SLC_IP          3
+#define SLC_AO          4
+#define SLC_AYT         5
+#define SLC_EOR         6
+#define SLC_ABORT       7
+#define SLC_EOF         8
+#define SLC_SUSP        9
+#define SLC_EC          10
+#define SLC_EL          11
+#define SLC_EW          12
+#define SLC_RP          13
+#define SLC_LNEXT       14
+#define SLC_XON         15
+#define SLC_XOFF        16
+#define SLC_FORW1       17
+#define SLC_FORW2       18
 #define SLC_MCL         19
 #define SLC_MCR         20
 #define SLC_MCWL        21
@@ -637,48 +638,48 @@ _PROTOTYP(CHAR * telopt_mode,(int));
 #define SLC_EBOL        29
 #define SLC_EEOL        30
 
-#define	NSLC		30
+#define NSLC            30
 
 /*
  * For backwards compatability, we define SLC_NAMES to be the
  * list of names if SLC_NAMES is not defined.
  */
-#define	SLC_NAMELIST	"0", "SYNCH", "BRK", "IP", "AO", "AYT", "EOR", \
-			"ABORT", "EOF", "SUSP", "EC", "EL", "EW", "RP", \
-			"LNEXT", "XON", "XOFF", "FORW1", "FORW2", \
+#define SLC_NAMELIST    "0", "SYNCH", "BRK", "IP", "AO", "AYT", "EOR", \
+                        "ABORT", "EOF", "SUSP", "EC", "EL", "EW", "RP", \
+                        "LNEXT", "XON", "XOFF", "FORW1", "FORW2", \
                         "MCL", "MCR", "MCWL", "MCWR", "MCBOL", "MCEOL", \
                         "INSRT", "OVER", "ECR", "EWR", "EBOL", "EEOL", 0
-#ifdef	SLC_NAMES
+#ifdef  SLC_NAMES
 char *slc_names[] = {
-	SLC_NAMELIST
+        SLC_NAMELIST
 };
 #else
 extern char *slc_names[];
-#define	SLC_NAMES SLC_NAMELIST
+#define SLC_NAMES SLC_NAMELIST
 #endif
 
-#define	SLC_NAME_OK(x)	((unsigned int)(x) <= NSLC)
-#define SLC_NAME(x)	(SLC_NAME_OK(x)?slc_names[x]:"UNKNOWN")
+#define SLC_NAME_OK(x)  ((unsigned int)(x) <= NSLC)
+#define SLC_NAME(x)     (SLC_NAME_OK(x)?slc_names[x]:"UNKNOWN")
 
-#define	SLC_NOSUPPORT       0
-#define	SLC_CANTCHANGE      1
-#define	SLC_VARIABLE        2
-#define	SLC_DEFAULT         3
-#define	SLC_LEVELBITS       0x03
+#define SLC_NOSUPPORT       0
+#define SLC_CANTCHANGE      1
+#define SLC_VARIABLE        2
+#define SLC_DEFAULT         3
+#define SLC_LEVELBITS       0x03
 
-#define	SLC_FUNC            0
-#define	SLC_FLAGS           1
-#define	SLC_VALUE           2
+#define SLC_FUNC            0
+#define SLC_FLAGS           1
+#define SLC_VALUE           2
 
-#define	SLC_ACK	            0x80
-#define	SLC_FLUSHIN         0x40
-#define	SLC_FLUSHOUT        0x20
+#define SLC_ACK             0x80
+#define SLC_FLUSHIN         0x40
+#define SLC_FLUSHOUT        0x20
 
-#define	OLD_ENV_VAR         1
-#define	OLD_ENV_VALUE       0
-#define	NEW_ENV_VAR         0
-#define	NEW_ENV_VALUE       1
-#define	ENV_ESC	            2
+#define OLD_ENV_VAR         1
+#define OLD_ENV_VALUE       0
+#define NEW_ENV_VAR         0
+#define NEW_ENV_VALUE       1
+#define ENV_ESC             2
 #define ENV_USERVAR         3
 
 #define FWDX_SCREEN         0
@@ -700,41 +701,41 @@ extern char *slc_names[];
 /*
  * Who is authenticating who ...
  */
-#define	AUTH_CLIENT_TO_SERVER	0	/* Client authenticating server */
-#define	AUTH_SERVER_TO_CLIENT	1	/* Server authenticating client */
-#define	AUTH_WHO_MASK		1
+#define AUTH_CLIENT_TO_SERVER   0       /* Client authenticating server */
+#define AUTH_SERVER_TO_CLIENT   1       /* Server authenticating client */
+#define AUTH_WHO_MASK           1
 
 /*
  * amount of authentication done
  */
-#define	AUTH_HOW_ONE_WAY	0
-#define	AUTH_HOW_MUTUAL		2
-#define	AUTH_HOW_MASK		2
+#define AUTH_HOW_ONE_WAY        0
+#define AUTH_HOW_MUTUAL         2
+#define AUTH_HOW_MASK           2
 
 /*
  * should we be encrypting?
  */
-#define AUTH_ENCRYPT_OFF	     0
+#define AUTH_ENCRYPT_OFF             0
 #define AUTH_ENCRYPT_USING_TELOPT    4
 #define AUTH_ENCRYPT_AFTER_EXCHANGE 16
 #define AUTH_ENCRYPT_START_TLS      20
-#define AUTH_ENCRYPT_MASK	    20
+#define AUTH_ENCRYPT_MASK           20
 
 /*
  * will we be forwarding?
  * if we want to activate the use of this flag then
  *   #define USE_INI_CRED_FWD
  */
-#define INI_CRED_FWD_OFF	0
-#define INI_CRED_FWD_ON		8
-#define INI_CRED_FWD_MASK	8
+#define INI_CRED_FWD_OFF        0
+#define INI_CRED_FWD_ON         8
+#define INI_CRED_FWD_MASK       8
 #define USE_INI_CRED_FWD
 
-#define	AUTHTYPE_NULL		0
-#define	AUTHTYPE_KERBEROS_V4	1
-#define	AUTHTYPE_KERBEROS_V5	2
-#define	AUTHTYPE_SPX		3
-#define	AUTHTYPE_MINK		4
+#define AUTHTYPE_NULL           0
+#define AUTHTYPE_KERBEROS_V4    1
+#define AUTHTYPE_KERBEROS_V5    2
+#define AUTHTYPE_SPX            3
+#define AUTHTYPE_MINK           4
 #define AUTHTYPE_SRP            5
 #define AUTHTYPE_RSA            6
 #define AUTHTYPE_SSL            7
@@ -748,16 +749,16 @@ extern char *slc_names[];
 #ifdef AUTHTYPE_CNT
 #undef AUTHTYPE_CNT
 #endif /* AUTHTYPE_CNT */
-#define	AUTHTYPE_CNT	       17
+#define AUTHTYPE_CNT           17
 
 /*
  * AUTHTYPEs Last updated 21 March 1999
  * from http://www.isi.edu/in-notes/iana/assignments/telnet-options
  */
 
-#define	AUTHTYPE_AUTO		99
+#define AUTHTYPE_AUTO           99
 
-#ifdef	AUTH_NAMES
+#ifdef  AUTH_NAMES
 char *authtype_names[] = {
     "NULL",                     /* RFC 2941 */
     "KERBEROS_V4",              /* RFC 2941 / 1411 */
@@ -819,36 +820,36 @@ extern char *authmode_names[];
 #endif
 #define AUTHMODE_CNT  32
 
-#define	AUTHTYPE_NAME_OK(x)	((unsigned int)(x) < AUTHTYPE_CNT)
-#define	AUTHTYPE_NAME(x)      (AUTHTYPE_NAME_OK(x)?authtype_names[x]:"UNKNOWN")
+#define AUTHTYPE_NAME_OK(x)     ((unsigned int)(x) < AUTHTYPE_CNT)
+#define AUTHTYPE_NAME(x)      (AUTHTYPE_NAME_OK(x)?authtype_names[x]:"UNKNOWN")
 
-#define	AUTHMODE_NAME_OK(x)	((unsigned int)(x) < AUTHMODE_CNT)
-#define	AUTHMODE_NAME(x)      (AUTHMODE_NAME_OK(x)?authmode_names[x]:"UNKNOWN")
+#define AUTHMODE_NAME_OK(x)     ((unsigned int)(x) < AUTHMODE_CNT)
+#define AUTHMODE_NAME(x)      (AUTHMODE_NAME_OK(x)?authmode_names[x]:"UNKNOWN")
 
 /* Kerberos Authentication Message Identifiers */
-#define	KRB_AUTH		0	/* Authentication data follows */
-#define	KRB_REJECT		1	/* Rejected (reason might follow) */
-#define	KRB_ACCEPT		2	/* Accepted */
-#define KRB4_CHALLENGE		3
-#define KRB4_RESPONSE		4
-#define	KRB5_RESPONSE		3	/* Response for mutual auth. */
+#define KRB_AUTH                0       /* Authentication data follows */
+#define KRB_REJECT              1       /* Rejected (reason might follow) */
+#define KRB_ACCEPT              2       /* Accepted */
+#define KRB4_CHALLENGE          3
+#define KRB4_RESPONSE           4
+#define KRB5_RESPONSE           3       /* Response for mutual auth. */
 #define KRB5_FORWARD            4       /* Forwarded credentials follow */
 #define KRB5_FORWARD_ACCEPT     5       /* Forwarded credentials accepted */
 #define KRB5_FORWARD_REJECT     6       /* Forwarded credentials rejected */
 #define KRB5_TLS_VERIFY         7       /* TLS Finished Msg verifier */
 
 /* GSSAPI-KRB5 Authentication Message Identifiers */
-#define	GSS_AUTH_DATA		0	/* Authentication data follows */
-#define	GSS_REJECT		1	/* Rejected (reason might follow) */
-#define	GSS_ACCEPT		2	/* Accepted (username might follow) */
-#define GSS_CONTINUE		3
+#define GSS_AUTH_DATA           0       /* Authentication data follows */
+#define GSS_REJECT              1       /* Rejected (reason might follow) */
+#define GSS_ACCEPT              2       /* Accepted (username might follow) */
+#define GSS_CONTINUE            3
 
 /* Secure Remote Password Authentication Message Identifiers */
-#define	SRP_AUTH		0	/* Authentication data follows */
-#define	SRP_REJECT		1	/* Rejected (reason might follow) */
-#define	SRP_ACCEPT		2	/* Accepted */
-#define SRP_CHALLENGE		3
-#define SRP_RESPONSE		4
+#define SRP_AUTH                0       /* Authentication data follows */
+#define SRP_REJECT              1       /* Rejected (reason might follow) */
+#define SRP_ACCEPT              2       /* Accepted */
+#define SRP_CHALLENGE           3
+#define SRP_RESPONSE            4
 #define SRP_EXP                 8       /* */
 #define SRP_PARAMS              9       /* */
 
@@ -878,20 +879,20 @@ extern char *authmode_names[];
 /*
  * ENCRYPTion suboptions
  */
-#define	ENCRYPT_IS		0	/* I pick encryption type ... */
-#define	ENCRYPT_SUPPORT		1	/* I support encryption types ... */
-#define	ENCRYPT_REPLY		2	/* Initial setup response */
-#define	ENCRYPT_START		3	/* Am starting to send encrypted */
-#define	ENCRYPT_END		4	/* Am ending encrypted */
-#define	ENCRYPT_REQSTART	5	/* Request you start encrypting */
-#define	ENCRYPT_REQEND		6	/* Request you send encrypting */
-#define	ENCRYPT_ENC_KEYID	7
-#define	ENCRYPT_DEC_KEYID	8
-#define	ENCRYPT_CNT		9
+#define ENCRYPT_IS              0       /* I pick encryption type ... */
+#define ENCRYPT_SUPPORT         1       /* I support encryption types ... */
+#define ENCRYPT_REPLY           2       /* Initial setup response */
+#define ENCRYPT_START           3       /* Am starting to send encrypted */
+#define ENCRYPT_END             4       /* Am ending encrypted */
+#define ENCRYPT_REQSTART        5       /* Request you start encrypting */
+#define ENCRYPT_REQEND          6       /* Request you send encrypting */
+#define ENCRYPT_ENC_KEYID       7
+#define ENCRYPT_DEC_KEYID       8
+#define ENCRYPT_CNT             9
 
-#define	ENCTYPE_ANY		0
-#define	ENCTYPE_DES_CFB64	1
-#define	ENCTYPE_DES_OFB64	2
+#define ENCTYPE_ANY             0
+#define ENCTYPE_DES_CFB64       1
+#define ENCTYPE_DES_OFB64       2
 #define ENCTYPE_DES3_CFB64      3
 #define ENCTYPE_DES3_OFB64      4
 #define ENCTYPE_CAST5_40_CFB64  8
@@ -903,11 +904,11 @@ extern char *authmode_names[];
 #endif
 #define ENCTYPE_CNT             12
 
-#ifdef	ENCRYPT_NAMES
+#ifdef  ENCRYPT_NAMES
 char *encrypt_names[] = {
-	"IS", "SUPPORT", "REPLY", "START", "END",
-	"REQUEST-START", "REQUEST-END", "ENC-KEYID", "DEC-KEYID",
-	0
+        "IS", "SUPPORT", "REPLY", "START", "END",
+        "REQUEST-START", "REQUEST-END", "ENC-KEYID", "DEC-KEYID",
+        0
 };
 char *enctype_names[] = {
     "ANY",
@@ -929,11 +930,11 @@ extern char *encrypt_names[];
 extern char *enctype_names[];
 #endif
 
-#define	ENCRYPT_NAME_OK(x)	((unsigned int)(x) < ENCRYPT_CNT)
-#define	ENCRYPT_NAME(x)      (ENCRYPT_NAME_OK(x)?encrypt_names[x]:"UNKNOWN")
+#define ENCRYPT_NAME_OK(x)      ((unsigned int)(x) < ENCRYPT_CNT)
+#define ENCRYPT_NAME(x)      (ENCRYPT_NAME_OK(x)?encrypt_names[x]:"UNKNOWN")
 
-#define	ENCTYPE_NAME_OK(x)	((unsigned int)(x) < ENCTYPE_CNT)
-#define	ENCTYPE_NAME(x)      (ENCTYPE_NAME_OK(x)?enctype_names[x]:"UNKNOWN")
+#define ENCTYPE_NAME_OK(x)      ((unsigned int)(x) < ENCTYPE_CNT)
+#define ENCTYPE_NAME(x)      (ENCTYPE_NAME_OK(x)?enctype_names[x]:"UNKNOWN")
 
 /* For setting the state of validUser */
 
@@ -967,7 +968,7 @@ extern char *enctype_names[];
 
 /* Telnet protocol functions defined in C-Kermit */
 
-_PROTOTYP( int tn_ini, (void) );	/* Telnet protocol support */
+_PROTOTYP( int tn_ini, (void) );        /* Telnet protocol support */
 _PROTOTYP( int tn_reset, (void));
 _PROTOTYP( int tn_set_modes, (void));
 _PROTOTYP( int tn_sopt, (int, int) );
@@ -999,54 +1000,54 @@ _PROTOTYP( int tn_sndloc, (void) );
 typedef struct xauth {
     unsigned short   family;
     unsigned short   address_length;
-    char    	    *address;
+    char            *address;
     unsigned short   number_length;
-    char    	    *number;
+    char            *number;
     unsigned short   name_length;
-    char    	    *name;
+    char            *name;
     unsigned short   data_length;
-    char   	    *data;
+    char            *data;
 } Xauth;
 
 #include   <stdio.h>
 
 /* from X.h */
-#define FamilyInternet		0
-#define FamilyDECnet		1
-#define FamilyChaos		2
+#define FamilyInternet          0
+#define FamilyDECnet            1
+#define FamilyChaos             2
 
-# define FamilyLocal (256)	/* not part of X standard (i.e. X.h) */
+# define FamilyLocal (256)      /* not part of X standard (i.e. X.h) */
 # define FamilyWild  (65535)
 # define FamilyNetname    (254)   /* not part of X standard */
 # define FamilyKrb5Principal (253) /* Kerberos 5 principal name */
-# define FamilyLocalHost (252)	/* for local non-net authentication */
+# define FamilyLocalHost (252)  /* for local non-net authentication */
 char *XauFileName();
 
 Xauth *XauReadAuth(
-FILE*	/* auth_file */
+FILE*   /* auth_file */
 );
 
 int XauWriteAuth(
-FILE*		/* auth_file */,
-Xauth*		/* auth */
+FILE*           /* auth_file */,
+Xauth*          /* auth */
 );
 
 Xauth *XauGetAuthByName(
-const char*	/* display_name */
+const char*     /* display_name */
 );
 
 Xauth *XauGetAuthByAddr(
-unsigned int	/* family */,
-unsigned int	/* address_length */,
-const char*	/* address */,
-unsigned int	/* number_length */,
-const char*	/* number */,
-unsigned int	/* name_length */,
-const char*	/* name */
+unsigned int    /* family */,
+unsigned int    /* address_length */,
+const char*     /* address */,
+unsigned int    /* number_length */,
+const char*     /* number */,
+unsigned int    /* name_length */,
+const char*     /* name */
 );
 
 void XauDisposeAuth(
-Xauth*		/* auth */
+Xauth*          /* auth */
 );
 
 
@@ -1184,7 +1185,7 @@ _PROTOTYP( VOID fwdx_thread,(VOID *));
 #define TNC_PURGE_TRANSMIT               2
 #define TNC_PURGE_BOTH                   3
 
-#ifdef	TNC_NAMES
+#ifdef  TNC_NAMES
 char *tnc_names[] = {
     "SIGNATURE", "SET-BAUDRATE", "SET-DATARATE", "SET-PARITY", "SET-STOPSIZE",
     "SET-CONTROL", "NOTIFY-LINESTATE", "NOTIFY-MODEMSTATE",
@@ -1196,11 +1197,12 @@ char *tnc_names[] = {
 extern char *tnc_names[];
 #endif
 
-#define	TNC_NAME_OK(x)  ((x) >= 0 && (x) <= 12 || (x) >= 100 && (x) <= 112)
-#define	TNC_NAME(x) \
+#define TNC_NAME_OK(x)  ((x) >= 0 && (x) <= 12 || (x) >= 100 && (x) <= 112)
+#define TNC_NAME(x) \
              (TNC_NAME_OK(x)?tnc_names[(x)>=100?(x)-100:(x)]:"UNKNOWN")
 
 _PROTOTYP(int tnc_init,(void));
+_PROTOTYP(int tnc_wait,(CHAR *, int));
 _PROTOTYP(int tnc_tn_sb,(CHAR *,int));
 _PROTOTYP(CONST char * tnc_get_signature, (void));
 _PROTOTYP(int tnc_send_signature, (char *));
@@ -1242,11 +1244,11 @@ _PROTOTYP(int istncomport,(void));
 _PROTOTYP(int tn_sndcomport,(void));
 #endif /* TN_COMPORT */
 
-#ifndef CKCTEL_C			/* These are declared in ckctel.c */
+#ifndef CKCTEL_C                        /* These are declared in ckctel.c */
 extern int tn_init;                     /* Telnet protocol initialized flag */
-extern char *tn_term;			/* Terminal type override */
+extern char *tn_term;                   /* Terminal type override */
 extern int sstelnet;                    /* Server side telnet? */
-extern int tn_deb;			/* Telnet option debugging flag */
+extern int tn_deb;                      /* Telnet option debugging flag */
 #endif /* CKCTEL_C */
 
 #define TN_MSG_LEN 12292

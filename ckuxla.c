@@ -92,11 +92,13 @@ int fcharset = FC_1LATIN;
 int dcset8   = FC_1LATIN;
 int dcset7   = FC_USASCII;
 int tcsl     = TX_8859_1;
+int prncs    = TX_CP437;
 #else					/* All others */
 int fcharset = FC_USASCII;		/* use ASCII by default */
 int dcset8   = FC_1LATIN;		/* But default 8-bit set is Latin-1 */
 int dcset7   = FC_USASCII;
 int tcsl     = FC_USASCII;
+int prncs    = FC_CP437;
 #endif /* CKOUNI */
 #endif /* AMIGA */
 #endif /* AUX */

@@ -1,0 +1,2481 @@
+C-KERMIT CHANGE LOG (Changes since 8.0.200 of 12 Dec 2001)
+
+Chronological order: Go to the bottom to find the newest edits.
+
+---8.0.200---
+
+Known bugs (+ = fixed after release):
+
+ + 1. tilde_expand() can call getcwd() with NULL arg.
+ + 2. getexedir() called too early (fatal in combination with (1)).
+ + 3. Kermit "get blah" where blah is a symlink; server refuses to send it.
+      Should not do this if GET not recursive.
+ ? 4. Dave Sneddon's report about VMS fore/background confusion.
+ + 5. FTP GET path/file doesn't work - path not stripped - but MGET works.
+ + 6. IRIX 5.3 compilation problems (have patches from Marcus Herbert)
+ X 7. Filename completion bug (see below) (deferred).
+ + 8. QNX6 herald and other problems.
+
+-------------
+
+Merged Jeff's changes, 20 Dec 2001:
+
+ . Changed all occurrences of "ttnproto == NP_TELNET" to "IS_TELNET()" to
+   account for the difference between SSH and Telnet.  ckuscr.c,
+   ckuus[3457].c, ckcnet.h, ckcfns.c, ckudia.c, ckutio.c, ckucon.c, ckucns.c.
+
+ . Moved SSH pty failure warnings.  ckuusr.c.
+
+ . Security adjustments to FTP module, plus fix an error message.  ckcftp.c.
+
+ . Adjustment of some security-related #ifdefs. ckcdeb.h, ckuus2.c, ckctel.c.
+
+ . Guard against calling getpwnam() with a NULL arg in tilde_expand() ckufio.c.
+ 
+ . Moved getexedir() call to later, where it's safe.  ckcmai.c.
+
+Added SSH ADD and many SSH SET commands from Jeff's spec.  Fixed SHOW SSH
+to not dump core if variables weren't set.  ckcker.h, ckuus[r3].c, 20 Dec 2001.
+
+C-Kermit in server mode, client says "get foo" where foo is a symlink.
+Server says "no files meet selection criteria" instead of sending the file.
+It should only refuse to follow symlinks if it's a recursive get.  Fixed
+in sgetinit(): ckcpro.w, 21 Dec 2001.
+
+More work on SSH and SET/SHOW SSH commands.  ckuus[r3].c, 21 Dec 2001.
+
+Undid Jeff's replacement of the SSH pseudoterminal allocation failure
+message, because now it comes out any time an SSH command has to be
+reparsed (in the non-SSHBUILTIN case).  ckuusr.c, 21 Dec 2001.
+
+More SSH and SET SSH command work back & forth with Jeff, plus Jeff added
+SET HOST /NET:SSH.  ckcmai.c, ckuus[r37].c, ckcdeb.h, ckuusr.h, 22 Dec 2001.
+
+Added SSH OPEN switches.  ckuusr.c, 22 Dec 2001.
+
+Added SSH CLEAR, HELP SSH, and HELP SET SSH.  ckuus[r2].c, 23 Dec 2001.
+
+From Jeff:
+ . SET TCP commands now apply to SSH
+ . SSH V2 REKEY and FORWRD-{LOCAL,REMOTE}-PORT  commands now implemented
+ . Missing DLLs automatically disable appropriate authentication mechanisms.
+ckuusr.c ckcnet.c ckuus3.c ckcmai.c ckcnet.h ckuus4.c, 26 Dec 2001.
+
+From Jeff:
+ . Remove SET SSH KEEPALIVES.
+ . Add help text for SSH AGENT { ADD, DELETE, LIST }.
+ckuus[23].c, 28 Dec 2001.
+
+Added parsing for SSH AGENT { ADD, DELETE, LIST }.  ckuusr.c, 28 Dec 2001.
+
+From Jeff:
+ . Fixed a crash that can happen when making an SSH connection.
+ . Filled in SSH AGENT actions.
+ . Changed default for strict host key check (to ASK) and help text.
+ . uploaded new binaries include ~kermit/os2test/beta/ssh-agent.exe
+ . Read man ssh-agent on ftp.kermit.columbia.edu for details on what it does.
+ckuus[r23].c, 28 Dec 2001.
+
+"ftp get path/filename" didn't work; the FTP client did not strip the path
+from the local copy of the filename when doing a GET, even though it did
+for MGET.  Diagnosis: in doftpget(), the "if (!getone && !skipthis)" statement
+lacked an "else" part for the getone case.  ckcftp.c, 28 Dec 2001.
+
+A while back Jeff reported that in FTP MGET, if you cancel a file with 'x',
+all the rest of the files arrive truncated to 0 bytes.  I tried this on both
+Unix and Windows and couldn't reproduce it.
+
+In the last-minute flurry to release C-Kermit 8.0, I thought I noticed the FTP
+client failing to update the fullscreen file-transfer display.  But it seems
+to work right, at least in Unix.  When downloading a big file with FTP, all
+the display fields are updated as expected.  But smaller files might go by too
+fast for the display to do anything.  HOWEVER, in K95 the file transfer
+display does not update itself until the end of the file, even if the file
+takes a long time to transfer.  This happens in both the Console and GUI
+versions.  A thread thing?  (Jeff says no.)  Yet the same display works fine
+on Telnet connections.
+
+In IRIX 5.3, the select()-based CONNECT module had to include <sys/time.h>
+or else it blew up with "struct timeval" unknown.  Since there already was
+a SYSTIMEH CFLAG, I added the #include within #ifdef SYSTIMEH..#endif and
+rebuilt with KFLAGS=-DSYSTIMEH, only to discover that the irix5* targets
+didn't bother to propogate KFLAGS.  Fixed in ckucns.c, makefile, 30 Dec 2001.
+
+Increased IRIX5x Olimit from 2400 to 3000 because of ckuus[34].c.  Added
+-ansi, since (Marcus Herbert reported) we were not actually getting ANSI-C
+compilation even though CK_ANSIC was defined.  But now that we are, we get
+warnings in <netinet/tcp.h>, which is included by ckcnet.h:
+
+  bit-field 'th_off' type required to be int, unsigned int, or signed int.
+  (3.5.2.1(30))
+	  u_char  th_off:4,
+	  ------  ^
+Tough.  makefile, 30 Dec 2001.
+
+But adding -ansi to the IRIX 5x targets also make compilation bomb whenever we
+referenced fdopen() or popen(), which evidently don't have prototypes in any
+of the header files.  Luckily we already have CFLAGS for this occasion too:
+DCLFDOPEN and DCLPOPEN.  Added these to the irix51 target.  Also had to copy
+the fdopen()-popen() prototype section to ckuusx.c, which has a new reference
+to fdopen() in a workaround for the curses console buffering bug.  makefile,
+ckuusx.c, 30 Dec 2001.
+
+The QNX6 version did not receive a proper herald (it announced itself as
+"unknown version".  Reshuffled #ifdefs in ckuver.h, added display of QNX6
+and NEUTRINO symbols to ckuus5.c, 30 Dec 2001.
+
+Lucas Hart sent in a patch for the VMS problem.  Apparently it was even worse
+than Dave Sneddon had reported: 8.0 couldn't run at all under Batch.  ckvtio.c,
+31 Dec 2001.
+
+A major obstacle to the usability of the FTP client is that certain commands
+don't behave as FTP users expect: CD, DIR, DELETE, MKDIR, etc, which are local
+rather remote, and there are no LCD (etc), USER, or ACCOUNT commands.  We
+could fix this by adding an FTP command-language personality, but file
+management commands can also be remote or local on connections to Kermit
+servers too.  So:
+
+SET LOCUS { LOCAL, REMOTE, AUTO }
+  Sets the locus for unprefixed file management commands.
+  When LOCAL, a REMOTE (or R) prefix is required for
+  to send file management commands to a remote server (e.g. RCD, RDIR).
+  When REMOTE, an L prefix is required to issue local file management
+  commands (e.g. LCD, LDIR).  The word LOCAL can't be used as a prefix
+  since it is used for declaring local variables.
+
+This applies to all types of connections, and thus is orthogonal to SET
+GET-PUT-REMOTE, which selects between Kermit and FTP for remote file-transfer
+and management commands.
+
+The default LOCUS is AUTO, which means we switch to REMOTE whenever an FTP
+connection is made, and to LOCAL whenever a non-FTP connection is made,
+and switch back accordingly whenever a connnection is closed.
+
+Implementation (31 Dec 2001):
+ . None of this is compiled if LOCUS is not defined.
+ . Added XYLOCUS (SET LOCUS) and LOCUS definitions: ckuusr.h.
+ . Override by defining NOLOCUS (which inhibits definition of LOCUS).
+ . Added LOCUS to SET keyword table: ckuusr.c.
+ . Added locus & autolocus variables: ckuusr.c.
+ . Added SET LOCUS parsing and variable setting: ckuus3.c.
+ . Added display of LOCUS setting to SHOW COMMAND: ckuus5.c.
+ . Added automatic locus setting to setlin(): ckuus7.c.
+ . Added automatic locus setting to ftpopen() and ftpclose(): ckcftp.c.
+
+How to catch all the places where a Kermit connection is closed?  Turns out
+we've done this before, when we added the connection log.  So I made
+dologend() take care of locus switching.  But dologend() was not compiled in
+if certain symbols were defined, such as NOLOCAL, or not defined, such as
+CKLOGDIAL.  So I (a) rearranged the #ifdefs so that even if these would
+otherwise have obliviated dologend(), now they leave a piece of it for
+locus-setting; (b) moved the prototype out of #ifdefs; and (c) took all calls
+to it out of #ifdefs.  ckcker.h, ckcfn2.c, ckcmai.c, ckucns.c, ckucon.c,
+ckuus[r347x].c, 31 Dec 2001.
+
+Added locus checking to the following commands: DIRECTORY, CD/CWD, CDUP,
+DELETE, PWD, MKDIR, RMDIR, RENAME.  ckuusr.c, 31 Dec 2001.
+
+Added LDIRECTORY, LCD/LCWD, LCDUP, LDELETE, LPWD, LMKDIR, LRMDIR,
+LRENAME.  ckuusr.[ch], 31 Dec 2001.
+
+Added USER and ACCOUNT commands, which are the same as FTP USER and FTP
+ACCOUNT.  ckuusr.[ch], ckcftp.c, 31 Dec 2001.
+
+Since automatic locus switching could be a big surprise for most people, I
+printed message any time it changed.  ckcftp.c, ckuus[37].c, 31 Dec 2001.
+
+Added help text for the new L commands and filled in missing HELP text for
+SET GET-PUT-REMOTE, CDUP, MKDIR, and RMDIR.  ckuus2.c, 31 Dec 2001.
+
+Changed help text of CD, DIR, etc, for LOCUS.  Changed the help text for
+RCD, RPWD, RDEL, RDIR, etc, to mention that they also work with FTP servers.
+Updated HELP REMOTE for this too.  ckuus2.c, 31 Dec 2001.
+
+Made sure code builds with NOLOCAL, NOLOGDIAL, and NOLOCUS (it does).
+
+The IKSD command, when given with a /USER: switch, sends the user ID to the
+IKSD.  But the SET HOST /USER: command does not, when making a connection to a
+Kermit service.  This makes it impossible to script IKSD interactions using
+only client commands.  Furthermore, even if you include a /PASSWORD switch
+with the IKSD command, it does not send the password.  I added code near the
+bottom of setlin() to do this.  If we have a connection to a Kermit service
+and a /USER: switch was given, then we attempt a REMOTE LOGIN.  If a
+/PASSWORD: switch was not given then if the username is "ftp" or "anonymous",
+we automatically supply a password of user@host; otherwise we prompt for a
+password.  If a /USER: switch was not given, it acts like before.  It all
+works, but it might not be the best way (or place) to do it.  setlin():
+ckuus7.c, 31 Dec 2001.
+
+  NOTE: The above change doesn't help with IKSD /USER:anonymous,
+  the server prompts for password anyway, not sure why.
+
+  NOTE 2: What about secure authentication?  We have to test to see
+  if user was already authenticated before sending the login packet.
+
+Added /opt/kermit and /opt/kermit/doc to info_dir[] list (for Solaris).
+ckuus5.c, 31 Dec 2001.
+
+From Jeff: new Help text for SET TERM FONT (K95 GUI).  ckuus2.c, 1 Jan 2002.
+
+More work on help text for file management commands -- e.g. we can't lump
+the L-commands together with the unprefixed ones; they need separate entries.
+Also: added missing HELP REMOTE PWD, improved the default case (in which
+help text had been omitted for a valid command).  ckuus2.c, 1 Jan 2002.
+
+It seems VMS C-Kermit was pretty much ignoring the -B (force background) and
+-z (force foreground) command-line options.  Fixed in congm(): ckvtio.c,
+1 Jan 2002.
+
+Tested the SET LOCUS business with VMS C-Kermit, which does not have a
+built-in FTP client.  Of course in this case there is no automatic locus
+switching, but SET LOCUS REMOTE works nicely on IKSD connections.
+
+From Jeff:
+ . #ifdef adjustments for LOCUS changes.
+ . SSH KEY CREATE /TYPE:SRP.
+ . Fix \v(serial) to not be 8N2 by default if speed is 0.
+ . Don't let doexit() run if sysinit() hasn't been called first.
+ckuus[r247x].c, 2 Jan 2002.
+
+Made SET BACKGROUND { ON, OFF } do exactly the same as -B and -z options.
+ckuus3.c, 2 Jan 2002.
+
+Updated user-visible copyright dates to 2002 (but still need to do all the
+source-module comments).  ckcmai.c, ckuus[25].c, 2 Jan 2002.
+
+Rearranged #include <sys/time.h> in ckucns.c that was done for IRIX 5.3,
+to avoid conflicts in SV/68 R3v6.  3 Jan 2002.
+
+From Dave Sneddon: Code changes in VMS sysinit() and congm() to work around
+problems in batch, SPAWN'd, etc, and change CTTNAM from TT: to SYS$INPUT:.
+ckcdeb.h, ckvtio.c, 3 Jan 2002.
+
+From Jeff:
+ . Fixed typo in definition of CTTNAM for VMS.  ckcdeb.h
+ . Moved macro definitions for SSHBUILTIN from ckuus3.c to ckuusr.h
+   so they can be referenced in ckuus7.c
+ . Added SSH functionality to SET HOST:
+     SET HOST /NET:SSH /CONNECT hostname [port] /switches
+ . Fixed SET NET TYPE so it won't reject SSH if SSH is installed.
+ . Changes to allow IKSD to continue functioning.  Somehow this minor change
+   to ckcmai.c got lost in one of the back and forth exchanges.
+ . HELP TEXT for UCS2 kverb
+ . Fix a problem in K95 where multiple threads could be attempting to
+   send a telnet negotiation simultaneously.
+ckcmai.c ckcdeb.h ckuus2.c ckuus3.c ckuusr.c ckuusr.h ckuus7.c ckctel.c
+ck_crp.c ckuat2.h ckuath.c, 4 Jan 2002.
+
+From Jeff:
+
+  Peter Runestig complaining that the Telnet Forward X code was corrupting
+  data.  This resulted in a very thorough examination of the telnet module
+  code and a discovery of some rather significant problems.  The root of the
+  problems is the lack of thread safety.  To correct this problem the
+  following was done.
+
+  All code (regardless of module) which outputs telnet commands is placed
+  into a mutex region to ensure that competing output threads do not result
+  in interleaving their output.  This could happen for instance when the
+  forward-x thread is forwarding data and the user changes the window size
+  or sends an AYT or BREAK.  Next the buffer used for input and output
+  processing were identical.  This means that output data could be treated
+  as input or vice versa.  Ugh....
+
+  I also spent some more time cleaning up setlin().  Mostly reorganizing the
+  code into single if (...) blocks so that breaking it up will be easier.
+
+ckctel.c ckuus7.c, 4 Jan 2002.
+
+Updated internal copyright notices.  All modules, 5 Jan 2002.
+
+From Jeff:
+  More of same, plus new makefile target and changes from Spike Gronim
+  for freebsd44+srp+openssl.
+ckcdeb.h ckcnet.c ckctel.c ckuus7.c ck_ssl.c makefile, 5 Jan 2002.
+
+Some minor updates and fixes to SSH and SET SSH help text.
+ckuus2.c, 6 Jan 2002.
+
+Added SET RGB-COLORS for GUI.  ckuusr.[ch], ckuus3.c, 6 Jan 2002.
+
+From Jeff: More Telnet changes, Debug semaphores for K95, etc: ckcdeb.h,
+ckuusr.h, ckuus[r35x].c, ckctel.[ch], ckuath.c, 7 Jan 2002.
+
+Added --xpos:n --ypos:n, SET GUI WINDOW POSITION x y, and changed SET
+RGB-COLORS to SET GUI RGBCOLOR.  Action needs to be filled in (in setguiwin()
+in ckuus3.c), and gui_xpos and gui_ypos need to be defined in cko???.c.
+ckuusr.h, ckuus[r3y].c, 7 Jan 2002.
+
+Added --fontname:name --fontsize:name (and facename as synonym for fontname).
+ckuusr.h, ckuus[7y].c, 7 Jan 2002.
+
+Moved GUI (not OS/2) SET TERM FONT code in ckuus7.c to its own routine,
+setguifont(), in ckuus3.c, and made GUI SET TERM FONT call this routine,
+and also made SET GUI FONT call the same routine.  ckuus[37].c, 7 Jan 2002.
+
+Added --termtype:, --height:, --width:, --user:.  Also added symbols for
+--telnet:, --ssh:, --ftp:, --[remote-]charset, and --password:, but didn't
+fill them in.  --password: is probably not a good idea (but we allow it for
+FTP); the others involve a lot of code-shuffling and reconciliation, which
+I'll try to do when I get a chance (especially the connection ones, which
+can be done as part of the setlin() restructuring).  ckuusr.h, ckuusy.c,
+8 Jan 2002.
+
+Also I tried commenting out the #ifndef KUI..#endif's around SET TERMINAL
+CHARACTER-SET (easier said than done because a crucial #endif was mislabeled).
+Let's see if it compiles & works...  ckuus7.c, 8 Jan 2002
+
+Added FTP [ OPEN ] /NOINIT, meaning don't send REST, STRU, and MODE commands
+upon making an FTP connection.  This allows connection to servers that close
+the connection (or worse) when given these commands (e.g. Linux 2.4 TUX 2.0
+FTP server).  ckcftp.c, 8 Jan 2002.
+
+Looked at adding caller ID support for the ANSWER command:
+
+ . SET ANSWER CALLER-ID { ON, OFF }
+ . SET ANSWER RINGS <number>
+ . \v(callid_xxx) xxx = { date, time, name, nmbr, mesg }
+ . CKD_CID modem capability
+ . Set CKD_CID for modems that have it.
+ . A quick survey shows:
+   - USR V.90:      No (but Jeff says some USRs have it).
+   - V.250:         No
+   - Lucent Venus:  No
+   - USR:           #CID=1 (the ones that have it -- X2?)
+   - Diamond Supra: #CID=1
+   - Rockwell 56K:  #CID=1
+   - PCTEL:         #CID=1
+   - Zoltrix:       +VCID=1
+   - Conexant:      +VCID=1
+ . Since there are different commands to enable caller ID reporting,
+   we need a new field in struct MDMINF.
+ . SHOW MODEM and SHOW DIAL would need updating.
+ . etc etc...
+
+This is all way too much for now so I just did the setting of the \v(callid_*)
+variables.  These are reset at the beginning of an ANSWER command, and then
+set by the ANSWER command if they come in; thus they persist from the time
+they are collected until another ANSWER command is given.  To take advantage
+of autoanswer, the user has to enable it in the modem (all the modems I found
+that support it have it disabled by default), and also has to set the number
+of rings to at least 2.  This can be done with (depending on the modem):
+
+  set modem command autoanswer on ATS0=2#CID=1\{13}
+  set modem command autoanswer on ATS0=2+VCID=1\{13}
+
+and undone with:
+
+  set modem command autoanswer on ATS0=1#CID=0\{13}
+  set modem command autoanswer on ATS0=1+VCID=0\{13}
+
+The variables can be accessed only after the call is answered.  Therefore the
+only way to refuse a call is to answer it, inspect the variables, and then
+hang it up if desired.  Future Kermit releases can do this more nicely (as
+sketched out above.)  Also while I was in the dialing code, I added result
+code VCON (= VOICE), used by several of the newer modems.  These changes are
+untested.  The SET ANSWER command is written but commented out.  ckuusr.h,
+ckcker.h, ckuus[r3].c, ckudia.c, 8 Jan 2002.
+
+From Jeff: fixes to --termtype:, --height:, --width:, --user:, and filling in
+of --rcharset:, which required extracting code from settrm() into a separate
+parse-method-independent remote character-set setting routine.  ckuus[7y].c,
+8 Jan 2002.
+
+From Jeff: More work on TERMINAL CHARACTER-SET code reorganization, and
+reinstatement of SET TERMINAL CHARACTER-SET in K95G.  Also, fix char/CHAR
+warnings in Telnet module.  ckuus7.c, ckctel.c, 9 Jan 2002.
+
+Made SET TERM CHARACTER-SET visible for all builds, including K95G, and filled
+in HELP text for it.  ckuus[27].c, 9 Jan 2002.
+
+Added help text for new extended options.  ckuusy.c, 9 Jan 2002.
+
+Commented out the return(-2) statement at the end of xgnbyte() to make the
+"Statement not reached" errors go away, after checking to make sure that there
+was no path that could fall through to the end.  I'm 99.99% sure there isn't,
+but that doesn't mean that some compilers might not still complain.  ckcfns.c,
+9 Jan 2002.
+
+From Jeff: fix typo in the K95 extended-option help text; add more
+semaphores to network i/o.  ckuusy.c, ckcnet.c, 10 Jan 2002.
+
+Undid ansiisms in set{lcl,rem}charset() declarations.  ckuus7.c, 10 Jan 2002.
+
+Removed a duplicated clause from the install target.  makefile, 10 Jan 2002.
+
+From Jeff: more semaphores.  ckcnet.c, 11 Jan 2002.
+
+Moved references to tmpusrid and tmpstring out of NOSPL #ifdefs -- they can
+be used with NOSPL.  setlin(): ckuus7.c, 13 Jan 2002.
+
+Made a dummy dologend() routine outside of #ifndef NOICP, so we don't have
+to enclose every reference to dologend in #ifdefs.  (I had added a bunch of
+calls to dologend() throughout the code to handle automatic LOCUS switching.)
+ckuus3.c, 13 Jan 2002.
+
+Moved "extern int nettype" outside of NOICP #ifdefs in ckuus4.c for NOICP
+builds.  13 Jan 2002.
+
+Moved a misplaced #ifdef in the VERSION command.  ckuusr.c, 13 Jan 2002.
+
+Did 81 different feature-selection builds on Linux (RH 7.0), all OK after the
+changes listed above for today.  13 Jan 2002.
+
+Added prototypes for set{rem,lcl}charset().  ckcxla.h, 13 Jan 2002.
+
+Added ckcxla.h to dependencies for ckuusy.c.  ckvker.com, 13 Jan 2002.
+
+Made a correction to the HELP SET LOCUS text and supplied a missing comma
+for HELP REMOTE.  ckuus2.c, 13 Jan 2002.
+
+Built OK on HP-UX 11.11 (K&R and ANSI), Solaris 8 (cc), Solaris 2.5.1 (gcc),
+SunOS 4.1.3 (cc and gcc), VMS 7.1 (DEC C, net and nonet), Unixware 7.1.1,
+Tru64 4.0G, HP-UX 10.20 (K&R), AIX 4.3.3, FreeBSD 2.2.8, Slackware 8.0, IRIX
+6.5.13f, IRIX 5.3 (??? Can't tell -- the computer ran out of swap space -- but
+it was OK a few days ago), VMS 5.5-2 (VAX C, UCX + nonet)...  HP-UX 9.05, ...
+
+Some corrections to comments in HP targets from PeterE.  makefile, 14 Jan 2002.
+
+Corrections to prototypes for set{rem,lcl}charset() (VOID, not void) from Jeff.
+ckcxla.h, 14 Jan 2002.
+
+Builds, cont'd...  SINIX 5.42, Red Hat Linux 5.2 on i386, SuSE 7.0 on S/390, 
+Red Hat 7.1 on IA64, QNX 4.25, HP-UX 5.21/WinTCP, ..., 
+
+Dell Coleman <dell@aleph.tum.com> noticed that in AIX, the COPY command always
+says "Source and destination are the same file" when the destination file
+doesn't exist.  This is because in AIX, realpath() fails with ENOENT (errno
+2).  The zfnqfp() code already accounts for this, but evidently not well
+enough.  So I did what I should have done long ago.  zfnqfp() was originally
+accomplished with do-it-yourself code.  Later I added support for realpath(),
+and partitioned the routine into mutually exclusive compile-time sections:
+#ifdef CKREALPATH realpath()... #else do-it-yourself... #endif.  But if
+realpath() failed, there was no recourse to the do-it-yourself code.  Today I
+replaced the #else with the #endif, so the do-it-yourself part is always
+included and is executed if the realpath() call fails.  Built and tested on
+AIX 4.3.3 and Solaris 2.5.1, as well as on Linux with and without the
+realpath() code included.  zfnqfp(): ckufio.c, 16 Jan 2002.
+
+Separated K95 and C-Kermit test version numbers, so C-Kermit can be RC.02
+while K95 is Beta.01.  ckcmai.c, 16 Jan 2002.
+
+Inhibited 0-length writes by conol() and conoll(), since they cause big
+trouble with the AIX 4.3.3 pty driver, e.g. when you have an SSH connection
+into AIX and run C-Kermit there.  ckutio.c, 16 Jan 2002.
+
+Suppressed "Switching LOCUS..." messages from FTP client when it was invoked
+from the command line.  ckcfns.c, 17 Jan 2002.
+
+Dave Sneddon noticed that FOPEN /APPEND gets "?Write access denied" in VMS
+if the file exists.  This is apparently because VMS zchko() does the wrong
+thing.  Commenting out the call zchko() in the VMS case gets past this but
+then the appended part of the file has different attributes than the orignal
+part, e.g.:
+
+  abc  <- original line (horizontal, normal)
+  d    <- appended line (vertical)
+  e
+  f
+
+VMS fopen() takes an optional 4th argument: a series of RMS keyword=value
+pairs.  Kermit doesn't give any.  Experimentation shows that appending to
+a Stream_LF works fine.  That'll be a restriction for now, until somebody
+sends in code to get the RMS attributes of the original file and feed them
+to fopen().  Also need code to fix VMS zhcko() to say whether it's OK to
+append to a file.  ckuus7.c, 17 Jan 2002.
+
+Somebody suggested I could get a working Kermit for Neutrino 2+ by doing the
+QNX6 build on Neutrino itself.  I verified that this can't be done -- at least
+not by me -- since Netutrino 2+ doesn't have a compiler, and we already know
+the version cross-built for it on QNX4 doesn't work.  17 Jan 2002.
+
+From Jeff: SET SSH GSSAPI KEY-EXCHANGE { ON, OFF } parsing, SHOW SSH.
+ckuus3.c, 18 Jan 2002.
+
+PeterE suggested that SET ESCAPE allow 8-bit escape characters because of the
+difficulty in entering Ctrl-\ on European keyboards and the hardship (e.g. to
+EMACS and VI users) of sacrificing another C0 control character.  Like
+everything these days, this turns out to be rather a bigger deal than it would
+seem.  The SET ESCAPE parser calls setcc(), which accepts control characters
+in various formats (literal, ^X notation, or numbers), and gives an error
+return if the value is not 0-31 or 127.  This is changed easily enough to also
+allow numbers between 128 and 255.  But who else calls setcc()?  The commands
+for setting Kermit packet start and end characters.  No big deal, this gives
+people a bit more flexibility in case they need it, but it won't be
+documented.  setcc(): ckuus7.c, 18 Jan 2002.
+
+Since code to display the escape character is scattered all over the place,
+and some of it indexes into an array based on the character value (which would
+now dump core if the escape character was > 128), I put the code in one place,
+a new shoesc() routine in ckuusx.c (which needs to be outside #ifndef NOICP,
+since the CONNECT modules use it even in command-line only builds).  Also
+discovered that this code was indexing into the nm[] array with tt_escape to
+get "enabled" or "disabled", which is no longer appropriate, so fixed this
+too.  ckuusr.h, ckuus[5x].c, 18 Jan 2002.
+
+Made SHOW ESCAPE, SHOW TERM, and the various CONNECT modules call shoesc(),
+and updated HELP SET ESC.  ckuus[25].c, ckucns.c, ck[cuvd9]con.c, 18 Jan 2002.
+
+After all that, it occurred to me that this is a really bad idea for K95,
+with all the confusion about Console code pages, OEM code pages, Windows
+code pages, and Unicode.  But I tried "echo \161" at the K95 prompt and got
+the expected 8-bit character in both the Console version and the GUI, so
+maybe it's OK after all.
+
+Removed the automatic IKSD login code from setlin() since it complicates
+interactive anonymous login.  ckuus7.c, 20 Jan 2002.
+
+An #ifdef clause from Matthew Clarke to avoid "redeclaration of free" error
+when building a curses version of C-Kermit for AIX 2.2.1 on RT PC.  ckuusx.c,
+22 Jan 2002.
+
+Took care of one detail I omitted when adding the 8-bit escape character:
+not stripping the 8th bit before comparing the keyboard char with the escape
+char.  ck[uv]con.c, ckucns.c, 24 Jan 2002.
+
+Started to go through Jeff's changes of the last week but he had run trim -t
+on them, which untabifies, so the diffs were huge.  Retabifying Jeff's files
+only makes matters worse.  So instead of comparing each old and new source
+file in EMACS windows with M-X Compare-Windows like I usually do (which can't
+be told to ignore whitespace), I had to work from the diff -c -b listings.
+In ascending order of size of diffs:
+
+ckcker.h: Add I_AM_SSHSUB definition.
+ckuusr.h: XXLINK and VN_PERSONAL, etc, definitions.
+ckuusy.c: Support for "I Am SSHSUB" invocation.
+ckuus5.c: Support for new K95 directory structure.
+ckcmai.c: Init endianness earlier (K95 TYPE was broken), "I Am SSHSUB" support.
+ckuus7.c: Security #ifdefs, SSH OPEN /PASSWORD, SSHSUB support
+ckcftp.c: <-- SAVE TIL LAST
+ckuus6.c: Add LINK command for K95 on NT.
+ckuus4.c: Support for new K95 directory structure; SSHSUB support
+ckuus3.c: Support for new K95 directory structure; some SSH changes
+ckuus2.c: Changes to SSH related help text, add HELP LINK text
+ckuusr.c: LINK command, SSH OPEN /PASSWORD: /SUBSYSTEM: switches,
+  Pattern-management fixes.
+ckctel.c, ck_ssl.c, ckuath.c, ckcnet.c:
+ Took Jeff's without looking.
+ckuusx.c, ckucns.c, ckucon.c, ckwart.c:
+  My changes from weeks ago that were never picked up.
+
+Built OK on Solaris with gcc and on SunOS with (K&R non-ANSI) cc.
+31 Jan 2002.
+
+Meanwhile, Jeff had made various changes in response to Jaya Natarajan at IBM,
+whose basic complaint was that numerous failure conditions were not being
+detected if the fullscreen file-transfer display was active.  Jeff found that
+this was because big blocks of code were skipped in that case and changed the
+code not to do that, which fixed the reported problems.  But later Jaya said
+that "ftp mget file1 file2" acted like "ftp mget *", so it seemed that Jeff's
+fixes broke file selection.  After taking Jeff's fixes for ckcftp.c, however,
+I still could not reproduce the problem.  ckcftp.c, 31 Jan 2002.  <-- Later,
+it turned out the problem was with IBM's custom FTP server.
+
+Fixed updates that I missed yesterday in ckcftp.c, ckuusr.c.  Moved misplaced
+#ifdef in ckuusy.c breaking nonet builds.  Added #ifdefs to sysinit() for
+nonet builds in ckutio.c.  Ran through build-in-many-configurations script
+in Linux, all builds OK.  1 Feb 2002.
+
+Moved shoesc() definition outside of NOXFER to fix NOXFER builds.
+ckuusx.c, 1 Feb 2002.
+
+Added MYCUSTOM definition alongside KERMRC and changed KERMCL to be the
+same as CKMAXPATH, instead of some random hardwired number.  ckuusr.h,
+1 Feb 2002.
+
+Changed ckcdeb.h to define DIRSEP and ISDIRSEP(), and put #ifndef
+[IS]DIRSEP..#endif around all [IS]DIRSEP definitions in ck[udso]fio.c, so we
+can finally put away the many repeated #ifdef chains when we get around to it.
+1 Feb 2002.
+
+Make VMS zkermini() return 1 on success, 0 on failure, rather than 0 always.
+ckvfio.c, 1 Feb 2002.
+
+Added code to doinit(), just before it goes to execute the init file.  If the
+init file name we are about to open is empty or fails zchki(), substitute the
+customization filename.  For now this code is in #ifdef USE_CUSTOM..#endif,
+which is not defined by default.  It does the trick in Unix and VMS.  Also
+included code from Jeff for K95, but this needs verification and testing.
+Also used DIRSEP and ISDIRSEP() throughout doinit() instead of the long #ifdef
+chains.  ckuus5.c, 1 Feb 2002.
+
+Moved shoesc() prototype from ckuusr.h to ckcker.h so modules that need it
+don't have to include ckuusr.h just for this one thing (example: ckvcon.c).
+1 Feb 2002.
+
+Defined USE_CUSTOM by default, except if NOCUSTOM is defined.  ckuusr.h,
+1 Feb 2002.
+
+Fixed kermit-sshsub code to really enter server mode, and to print
+"KERMIT READY TO SERVE..." so scripts can wait for it.  Also bumped the
+C-Kermit test ID to RC.03 and the K95 one to Beta.02.  ckcpro.w, ckcmai.c,
+2 Feb 2002.
+
+I was thinking about adding SET COMMAND BUFFER-SIZE to let people allocate
+as big a buffer as they wanted at runtime, mainly for defining huge macros.
+Moved the SCMD_blah definitions from ckuusr.h to ckuus3.c, since they aren't
+used anywhere else.  But stopped there since the rest turns out to be a rather
+big deal.  ckuusr.h, ckuus3.c, 2 Feb 2002.
+
+From Jeff, 3 Feb 2002:
+ . Fix an out-of-order modem name in the SET MODEM TYPE table: ckudia.c.
+ . Use SET LOGIN USER and PASSWORD if present. ckcftp.c.
+
+Cody Gould noticed that array declarations had become case sensitive, and
+upper case didn't work.  Diagnosis: misplaced case conversion in xarray().
+Fixed in ckuus5.c, 4 Feb 2002.
+
+SHOW VAR dumps core on \v(sexpression) or \v(svalue) -- failure to check for
+NULL pointer.  I wonder why this didn't happen before (answer: because I was
+doing it on SunOS; now I'm doing it on Solaris).  ckuus4.c, 6 Feb 2002.
+
+I've had several requests for "show var name name name...".  I added this to
+doshow(), such that SHOW VAR works exactly as it did before (if you don't give
+it an arg, it lists all variables; if you give it an arg, it appends "*" to it
+and lists all matching variables) but now you can also give more than one arg
+and it works the same way with each one as it did before if you gave it a
+single item (i.e., "*" is appended, so "show var os cmd" shows all variables
+whose names begin with "os" or "cmd".  You can also freely use pattern
+notation, including anchors.  Hmmm, no, actually it's different in that now
+each includes an implied * before AND after, so "show var version" shows all
+variables whose name contain "version" rather than all variables whose names
+start with it.  ckuus5.c, 6 Feb 2002.
+
+Cody Gould reported that WRITE FILE blah blah \fexec(anything) ... got a
+spurious "File or Log not open" error.  This turns out to be a rather
+pervasive problem -- whenever you use \fexec() it calls the parser recursively
+and this can run roughshod over global variables, such as our innocent little
+x, y, and s.  The fix in this case was to put x and y on the stack.  The same
+thing probably needs doing in about 10,000 other places.  Too bad C isn't
+Algol.  ckuusr.c, 6 Feb 2002.
+
+Minor fix to SHO VAR -- the "^" anchor wasn't working (e.g. "show var ^os").
+ckuus5.c, 6 Feb 2002.
+
+Fixes from Jeff for FTP file-transfer character-set translation in K95 and
+in WIKSD, plus updated K95 SSH help text.  ckcftp.c, ckcfns.c, ckuus2.c,
+7 Feb 2002.
+
+Server has its date set in the past.  Client says "remote dir".  Server sends
+A packet containing old date.  If client has FILE COLLISION UPDATE, it
+rejects the directory listing.  Changed gattr() to only reject real files
+(introduced by F packet), not X-packet material like directory listings.
+ckcfn3.c, 7 Feb 2002.
+
+Up-down arrow keys for command recall.  People have been asking for it for
+years but now it's actually important because of PDAs that don't have Ctrl
+keys.  Would have been trivial except that we use getchar() rather than
+coninc() for reading from the keyboard in Unix so conchk() doesn't help.  In
+fact there are lots of other places where conchk() is used this way and works
+only by accident.  The only reason we never noticed a problem before is that
+characters don't usually arrive from the keyboard that fast.  But when an
+arrow key sends "ESC [ A" all once, the stdin buffer gets some extra stuff in
+it, which getchar() will return next time, but which coninc()/conchk() will
+never see.  So I added a new cmdconchk() routine which, if the keyboard is
+being read with getchar() rather than coninc(), looks at the stdin buffer.
+Unfortunately, however, there is no API for this, nor is there any standard
+way to access the stdin buffer directly.  So first I did it for Solaris.  Then
+to make it portable requires a survey of the headers for every platform.  I
+found four major variations:
+
+  stdin->_r:
+    {Free,Open,Net}BSD, BSDI
+  stdin->_cnt:
+    SunOS, Solaris, HP-UX 5-6, AIX, VMS, SINIX, IRIX 5.3-6.5, DGUX
+    4.2BSD, 4.3BSD, OSF/1..Tru64, QNX4, Unixware 1.0-2.1.0
+  stdin->__cnt:
+    HP-UX 7-11, SCO: OSR5.0.6a, Unixware 2.1.3-7.x, OU8, UNIX 3.2v4.x
+  Subtract read from end pointer (_IO_file_flags defined):
+    Linux (tested on RH 5.2 thru 7.1)
+
+The Linux method is new and different to account for multibyte characters.
+All the others assume character == byte.
+
+For docs: ANSI only, 7-bit only; both application and cursor modes are
+accepted.  Only up and down arrow are handled; left and right arrows cause
+a beep.  ckucmd.c, 8 Feb 2002.
+
+Build-all: Discovered that changing CTTNAM from TT: to SYS$INPUT: in VMS
+(which was done on 3 Jan 2002 to work around problems starting Kermit in
+batch, spawn'd, etc) breaks Kermit on VMS 5.5/VAX (concb() fails with "lacks
+sufficient privilege"; if you enable all privs Kermit starts but then spews
+out a constant stream of BEL characters).  If you put dftty back to "TT:",
+everything is fine -- I have no idea why, so I used #ifdef VMSV70 to decide,
+which is totally crude.  Next I had to find where the boundary really is: VAX
+vs Alpha?  VAX C vs DEC C?  Or between VMS releases?  Built on:
+ . VMS 6.2 Alpha (DEC C) - OK with TT:
+ . VMS 6.2 Alpha (DEC C) - OK with SYS$INPUT: <-- keep this one
+ . VMS 7.1 VAX   (DEC C)
+So the final condition is #ifdef VMSV60.  ckvker.com, ckvtio.c, ckuus5.c.
+
+QNX 6 needed some attention too:
+ . Whoever did the makefile target made the default port "/dev/ser1".
+ . Arrow keys...
+But I gave up on getting arrow keys to work -- it should be just like *BSD,
+but for some reason gcc complains that struct FILE has no _r member, even
+though it does (getchar uses it).
+
+Checked stdio.h on Mac OS X and it looks like the *BSDs.
+
+--- C-Kermit 8.0.201 ---
+
+Removed -g from solaris2xg+krb5+krb4+openssl+shadow makefile target -- it
+was producing a 15MB binary!  makefile, 14 Feb 2002.
+
+Fixed a couple thinkos in "make install": $(DESTDIR) should not have been
+included in the tests for whether INFODIR or SRCDIR were desired.  makefile,
+14 Feb 2002.
+
+(tarball refreshed 16 Feb 2002)
+
+--- C-Kermit 8.0.201 ---
+
+From Jeff: Better seeding of \frandom(): ckcmai.c, ckuus4.c, 18 Feb 2002.
+
+From Jeff: Make arrow keys work in WIKSD, but now also unconditionally
+compile arrow-key code in all versions.  ckucmd.c, 18 Feb 2002.
+
+From Jeff: ckuath.c, ck_ssl.c, ckcnet.c (didn't look).  18 Feb 2002.
+
+Added ORIENTATION command, that lists the various important directories, and
+\flongpathname() and \fshortpathname(), which do path format conversions in
+Windows, and are just synonynyms for \fpathname() elsewhere.  The new functions
+need building and testing in Windows.  ckuusr.h, ckuus[r24].c, 18 Feb 2002.
+
+Changed PWD for Windows only to show both short and long paths (but only if
+they are different; otherwise it behaves as before).  ckuusr.c, 18 Feb 2002.
+
+Changed default Windows prompt to show long pathname. ckuus5.c, 18 Feb 2002.
+
+Updated INTRO command to mention FTP, HTTP, and SSH.  ckuus2.c, 18 Feb 2002.
+
+From Jeff: fixes for typos in GetLongPathName() code: ckuus[r4].c, 22 Feb 2002.
+
+From Jeff: net/auth updates: ckcnet.c, ckuath.c, 22 Feb 2002.
+
+Added -DUSE_FILE__CNT to NCR MPRAS targets, George Gilmer: makefile,
+24 Feb 2002.
+
+From Jeff: Add support for GetLongPathName() in Win95 and NT: ckcdeb.h,
+ckuus[r4].c, 24 Feb 2002.
+
+From Jeff: More fixes for FTP SIGINT, plus fix [M]PUT /MOVE.  ckcftp.c,
+24 Feb 2002.
+
+Fixed an unguarded reference to inserver, gtword(): ckucmd.c, 24 Feb 2002.
+
+Adapted RETRIEVE for use with FTP connections; this one was missed when
+adapting GET, REGET, MOVE, etc.  ckuus6.c, ckcftp.c, 24 Feb 2002.
+
+Added special COPYRIGHT command text for the free version of WIKSD.
+ckcmai.c, ckuusr.c, 24 Feb 2002.
+
+C-Kermit, when in CONNECT mode and given the <Esc-Char>U sequence, would
+unconditionally close the connection if it was a network connection.  This
+is bad when Telnetting to a modem server.  I added to code to prevent this
+in the RFC2117 TELNET COMPORT case but I'm not sure how to exend this to the
+general case (or whether it would be a good idea).  ckucns.c, 24 Feb 2002.
+
+During file transfer, chktimo() calls ttgspd() for every packet, which clearly
+doesn't make sense on network connections, especially since on Telnet COMPORT
+connections it results in a network speed query for every packet.  Rearranged
+the code so this happens only on true serial-port connections.  ckcfn2.c,
+24 Feb 2002.
+
+From Jeff: Fix reversed ANSI/non-ANSI function declarations clauses in
+ckcftp.c, 26 Feb 2002.
+
+Changed Unix CONNECT module to call kstart() only when it has a chance of
+doing anything (i.e. a Kermit packet has been partially detected, or the
+packet start character just came in), rather than unconditionally on every
+incoming character.  ckucns.c, 8 Mar 2002.
+
+FTP PUT /SERVER-RENAME:, /RENAME-TO:, /MOVE-TO: were sticky.  Patch: In
+ckcftp.c, near the top of doftpput(), add the lines marked with "+":
+
+    makestr(&filefile,NULL);            /* No filename list file yet. */
++   makestr(&srv_renam,NULL);		/* Clear /SERVER-RENAME: */
++   makestr(&snd_rename,NULL);		/*  PUT /RENAME */
++   makestr(&snd_move,NULL);		/*  PUT /MOVE */
+    putpath[0] = NUL;                   /* Initialize for syncdir(). */
+
+ckcftp.c, 26 Mar 2002.
+
+\fday() and \fnday() were broken for dates prior to 17 Nov 1858.  Fixed in
+fneval(): ckuus4.c, 28 Mar 2002.
+
+From Jeff:
+ . New calling convenion for demoscrn(): ckucmd.c, ckuusx.c
+ . Fix for host-initiated 80/132 col screen mode change.  ckuus7.c.
+ . New \v(desktop) variable: K95 user desktop directory, ckuusr.h, ckuus4.c
+ . New \v(rfc2717_signature) var: Telnet Com Port, ckuusr.h, ckuus4.c
+ . Uncomment "not-reached" return(-2) in xgnbyte(): ckcfns.c
+ . New dates: ckcmai.c.
+ . Telnet Com Port fixes: ckutio.c
+ . SET PRINTER fixes for K95: ckuus3.c
+ . Session limit adjustments: ckuus3.c
+ . New directory layout for K95 (TAKE, ORIENT): ckuusr.c
+ . Fixes for Telnet Com Port, recycling SSH connections: ckuusr.c
+
+From me, not picked up by Jeff previously:
+ . kstart() speedup: ckucns.c.
+
+1 Apr 2002.
+
+---K95 1.1.21---
+
+From Jeff, 4 Apr 2002:
+ . More fixes for Telnet Com Port: ckuus4.c, ckudia.c, ckutio.c, ckcnet.c:
+   . network connections will check for carrier detect if SET
+     CARRIER-WATCH is ON.   This could have a potential conflict if
+     the option is negotiated and the carrier is off, but the site
+     requires login.
+   . modem hangup message generated since the dial module did not
+     believe that network modems could be reset with a DTR drop.
+ . Version number adjustments: 8.0.203, 1.1.99: ckcmai.c.
+ . Security: ck_ssl.[ch], ckuath.c.
+
+---C-Kermit 8.0.203---
+
+From Jeff, 6 Apr 2002:
+ . Fix typo in HELP REMOTE HOST: ckuus2.c.
+ . More Telnet Com Port fixes: ckctel.c, ckcnet.c, ckudia.c, ckutio.c
+
+From Jeff, 9 Apr 2002:
+ . Fix autodownload problem: ckcfn[2s].c.
+
+Chiaki Ishikawa reported that in Linux (two different kinds), if you choose
+hardware parity, CONNECT, then escape back, the speed can change.  I tracked
+this down to the following statement in ttvt():
+
+	tttvt.c_cflag &= ~(IGNPAR);	/* Don't discard incoming bytes */
+
+Somehow execution of this statement corrupted the speed words of the termios
+struct, which are entirely separate words that are nowhere near the c_cflag
+member.  Anyway, the statement is wrong; it should be:
+
+	tttvt.c_cflag |= IGNPAR;	/* Don't discard incoming bytes */
+
+Fixing it cured the problem; don't ask me why.  ckutio.c, 9 Apr 2002.
+
+From Jeff:
+  fixes the problem reported by robi@hastdeer.com.au.  The request to
+  enter server mode was received while we were entering server mode.
+  But the server was waiting for the response to REQ_STOP sent to the
+  client.  Therefore, we weren't quite in server mode yet and the
+  request to enter server mode was rejected.  A check for the sstate
+  value solves the problem.  ckctel.c, 10 Apr 2002.
+
+Chiaki Ishikawa (CI) discovered the real cause for the speed changing problem.
+I was setting the IGNPAR bit in the wrong flag word: it should have been
+c_iflag instead of c_oflag, silly me.  Fixed in ttvt() and ttpkt(): ckutio.c.
+I also did a thorough census of all the termio[s] flags to ensure each was
+applied to the right flag word -- they were, IGNPAR in the HWPARITY case was
+the only mistake.  CI also discovered that the speed words in the Linux
+termios struct are not used at all -- the speeds are encoded in an
+undocumented field of c_cflag, which explains the problem.  10 Apr 2002.
+
+Any use of \{nnn} character notation in a macro definition, loop, or other
+braced block caused an "unbalanced braces" parse error.  The backslash in this
+case is not quoting the open brace; it's introducing a balanced braced
+quantity.  Special-cased in getncm(): ckuus5.c, 12 Apr 2002.
+
+The semantics of "if defined \v(xxx)" were changed in 8.0 to avoid obnoxious
+error messages when xxx was not a built-in variable (see notes of 19 Nov
+2000), such that "if defined \v(xxx)" would always succeed if there were such
+a variable, even if it had no value.  The behavior that is documented in the
+book (and also in ckermit70.html) and that we had in versions 6 and 7, was
+that IF DEFINED \v(xxx) would fail if \v(xxx) was defined but had an empty
+value OR if it was not defined, and would succeed only if it was defined and
+had a value.  Fixed in boolexp(): ckuus6.c, 12 Apr 2002.
+
+What about \function()s?  IF DEF \fblah() presently succeeds if the function
+exists; you don't even have to give arguments.  I think this behavior is more
+useful than if I required valid arguments and then evaluated the function --
+you can do that anyway with 'if not eq "\fxxx(a,b)" "" ...'  Of course this
+argument applies to "if def \v(xxx)" too, except that the current behavior is
+consistent with the 7.0 behavior, so there is no need for a change.
+
+Kent Martin discovered that if a macro contains a LOCAL statement for a
+variable whose name is the same as, or a unique left substring of, the macro's
+name, then undefining the local variable makes the macro disappear:
+
+  define DateDiff {
+    echo {DateDiff(\%1) executing...}
+  }
+  define Kent {
+    do DateDiff {2}
+    local date
+    assign date {}
+    do DateDiff {3}  <-- This fails (A)
+  }
+  do DateDiff {1}
+  do Kent
+  do DateDiff {4}    <-- So does this (B)
+
+The first part of the problem is that "assign date {}" called delmac with
+exact=0, so delmac evidently deleted first macro whose name started with
+"date" -- and since the only one was DateDiff, that's the one that was
+deleted.  Fixing this (change "delmac(vnp,0)" to "delmac(vnp,1)" in dodef())
+got us past A.  The second part was making the same fix to the delmac()
+call in popclvl().  ckuus[56].c, 13 Apr 2002.
+
+The INPUT command ignored the parity setting, thus SET PARITY EVEN,
+INPUT 10 "login:" didn't work.  Fixed in doinput(): ckuus4.c.  Also fixed a
+bogus #ifdef COMMENT section that messed up the block structure of the module
+and therefore EMACS's indenting.  18 Apr 2002.
+
+Added sco32v500net+ssl and Added sco32v505net+ssl targets, from Scott Rochford
+at Dell (not sure yet if they work).  Makefile, 19 Apr 2002.
+
+From Jeff, 22 Apr 2002:
+ . Added "darkgray" color and made "dgray" an invisible synonym: ckuus3.c.
+ . Fix carrier sense on Telnet Com Port immediately after dial: ckudia.c.
+ . Change krb5_des_blah() arg list: ckutio.c.
+ . Fix ttgmdm() for Telnet Com Port: ckutio.c.
+ . Fix tthang() return code: ckutio.c.
+ . Add aix43gcc+openssl target: makefile.
+
+From Jeff, 25 Apr 2002:
+ . Fix SET GUI keyword table: ckuus[37].c.
+ . A final fix to Telnet Com Port: ckctel.c, ckcnet.c.
+
+From Jeff, 26 Apr 2002:
+ . Another final fix to Telnet Com Port: ckctel.c, ckudia.c.
+
+From Jeff, 27 Apr 2002:
+ . separate the wait mechanism for TELNET SB COMPORT synchronous messages
+   from the asynchronous TELNET SB COMPORT MODEMSTATUS messages: ckctel.[ch]
+ . fix debug messages in Certificate verify functions: ck_ssl.c, ckcftp.c.a
+
+Frank, 27 Apr 2002:
+ . Fixed VMS zgetfs() to fail when file doesn't exist: ckvfio.c.
+ . Fixed UNIX zgetfs() to check for null or empty arg: ckufio.c.
+ . Added #include <time.h> for time() call: ckcmai.c.
+ . Add casts to args in tn_wait() calls: ckctel.c.
+
+SINIX-P 5.42 (Pyramid architecture) makefile target from Igor Sobrado.
+makefile (no source-code changes), 1 May 2002.
+
+From Jeff, 5 May 2002,
+ . Fix some "unknown host" messages: ckcftp.c.
+ . Add more casts to tnc_wait() calls: ckudia.c.
+ . Improvements to SHOW SSH, SHOW GUI: ckuus3.c.
+ . Fixes to SET COMMAND { WIDTH, HEIGHT }: ckuus3.c.
+ . Updates to ck_ssl.[ch], ckctel.c, ckcnet.c.
+
+Fixed the erroneous setting of ssh_cas during switch parsing rather than
+after cmcfm() in setlin(): ckuus7.c, 5 May 2002.
+
+setlin() decomposition (2300 lines), Part One: 
+
+ . Copied a big chunk from the end of setlin(), beginning with net directory
+   lookup, but only the network-specific and common parts, to a new routine,
+   cx_net(), 900 lines.
+
+ . Extracted many repetitious lines of error-message code from cx_net()
+   to a new routine, cx_fail().  Error messages are stored in slmsg, and
+   also printed but only if we were not called from a GUI dialog (and
+   QUIET wasn't set, etc etc).  Any adjutments in this policy can now be
+   made in one place.
+
+ . I put a call to cx_net() in setlin() just before all the code it replaced.
+   It works for TELNET and SET HOST /TELNET.
+
+ . Built with mkwatsol-k5k4ssl; after a couple fixes it builds OK and makes
+   Kerberized connections OK.
+
+ . Copied the serial-port and common parts of the setlin() post-cmcfm()
+   code to another new routine, cx_serial(), about 275 lines.  Fixed
+   messages not to come out when called from GUI dialog, etc.  Inserted
+   a call to cx_serial() at the appropriate spot in setlin().  Tested
+   serial connections on watsun with "set line /dev/ttyh6", works OK.
+
+ . Removed all the code from setlin() that was copied to cx_*().  This slims
+   setlin() down to 1120 lines.  Tested regular Telnet, Kerberized Telnet, and
+   serial connections again, all OK.  The Unix version of the SSH command is
+   OK too.
+
+setlin() deconstruction, Part Two:
+
+Now that we have the common network and serial connection pieces moved out of
+setlin(), we still need to move out the little code snippets for each network
+type that take place between command confirmation and the common code we just
+replaced.   As far as I can tell, this needs doing only for SSH.  The code
+labeled "Stash everything" copied to cx_ssh() but I didn't remove the original
+code since I can't test this.  I think I'm done -- maybe I'm overlooking
+something but I don't know what...  First we need to test the heck out of it
+in all command-line versions (K95 and C-Kermit).  Then to use this from
+the GUI, see the calling sequences for cx_serial(), cx_net(), and cx_ssh():
+
+ . For serial or TAPI connections, the GUI should call cx_serial().
+ . For SSH connections, it should call cx_ssh() and then cx_net().
+ . For all other network connections, just calls cx_net().
+
+ckuus7.c, Cinco de Mayo de 2002.
+
+New ckuus7.c from Jeff, 8 May 2002.  Merge cx_ssh() into cx_net().  Also: I
+had made line[] an automatic variable, since the global line[] buffer is used
+by almost every parsing routine in C-Kermit to hold string fields between
+parsing and execution but Jeff says he found that some code somewhere depended
+on line[] containing the hostname after setlin() was finished.
+
+From Jeff, 10 May 2002:
+ . Fix SET SSH STRICT-HOST-CHECKING parse: ckuus3.c.
+ . Add prototypes for cx_net() and cx_serial(): ckuusr.h.
+ . Add ANSI versions of cx_net() and cx_serial() declarations and supply a
+   missing parameter in the cx_serial() invocation, change SSHCMD cx_net()
+   invocation to new form.
+
+From Jeff, 16 May 2002:
+ . ANSI strictness changes: ck_ssl.[ch]
+ . New DIALER command: ckuusr.[ch]
+ . Correction to how -0 turns off autodownload: ckuusy.c
+ . Prototypes for GUI menu action functions: ckuusr.h.
+ . Replace setting of GUI-action variables by function calls: ckuus[3457x].c
+ . Fix FTP -z switch parsing: ckcftp.c.
+ . Fix SET HOST testing of setlin() return code: ckuus3.c
+
+From Jeff, 18 May 2002:
+ . Allow half-size GUI fonts: ckuus[35y].c.
+
+Fixed setguifont() to parse fractional font sizes and round to nearest half
+point.  ckuus3.c, 18 May 2002.
+
+For GUI, wrote front ends for getyesno(), readtext(), and readpass():
+
+ . uq_ok() prints text and gets Yes/No, OK/Cancel, or just OK response.
+   This replaces getyesno() and can also be used for alert or help boxes.
+
+ . uq_txt() prints text and gets a single text response.  Replaces
+   readtext() and readpass().
+
+ . uq_mtxt() is like uq_txt() but allows multiple text fields.  Replaces
+   any combination of readtext() and readpass().
+
+Obviously the #ifdef KUI portions of the uq_blah() routines need filling in.
+ckuusr.h, ckuus3.c, 18 May 2002.
+
+Converted selected getyesno() calls to uq_ok(): ckcftp.c, ckuus3.c, ckuus6.c.
+Some were not converted because it was inappropriate, e.g. DELETE /ASK; others
+because they're in Jeff's code.  The most interesting conversions are in the
+DIAL command when DIAL CONFIRMATION is ON.  Here there is a dialog for each
+phone number asking if it's OK (ug_ok()) and if not, asking for a replacement
+(uq_txt()); seems to work fine in C-Kermit.  All the candidates for uq_mtxt()
+are in Jeff's code.  18 May 2002.
+
+From Jeff: Convert remaining getyesno/readtext/readpass calls to uq_blah()
+so they can be GUI dialogs.  ckuus[37].c, ckcftp.c, ckuath.c, ck_ssl.c,
+21 May 2002.
+
+Added KCD command = CD to symbolic directory name (EXEDIR, COMMON, APPDATA,
+TMPDIR, etc etc).  ckuusr.h, ckuus[r25].c, 21 May 2002.
+
+From Jeff, 28 May 2002:
+ . --title: commandline option: ckuusr.h, ckuusy.c
+ . Fix some #includes, move some declarations: ckcfns.c
+ . Change K95 version from Dev.00 to Beta.01
+ . ASK[Q] /GUI: ckuus6.c.
+ . Various GUI screen updates and #ifdefs: ckuus7.c
+ . Add missing cx_net() calls to new setlin() for file SuperLAT..: ckuus7.c
+ . Updated uq_*() routines for GUI dialogs: ckuus3.c.
+
+Added GETOK switches (/TIMEOUT for all; /POPUP and /GUI for K95G):
+ckuus6.c, 29 May 2002.
+
+Added HELP SET GUI text.  ckuus2.c, 29 May 2002.
+
+From Jeff:
+ . Another K95-specific #include for ckcfns.c.
+ . More items for K95G Actions menu.
+ . Change K95G Locus switching to call setlocus() rather than set variable.
+ . Ditto for several other variables now settable from Actions menu.
+ . Fix SET HOST /NET:SSH status code so IF SUCCESS works.
+ . Fix SHOW SSH port-forwarding.
+ckcfns.c, ckuus[r367].c, ckcftp.c, ckcmai.c, 30 May 2002.
+
+Changed SET LOCUS to have a new value, ASK, corresponding to new autolocus
+value of 2, K95G only.  Changed setlocus() to not do anything if the new and
+old loci are the same, otherwise to invoke a GUI dialog in K95G if autolocus
+is 2, and also to handle any text messages.  Changed SHOW COMMAND to show ASK
+value for SET LOCUS.  Rewrote HELP SET LOCUS.  ckuusr.[ch], ckuus[23].c,
+ckcftp.c, 30 May 2002.
+
+Add a missing space to Locus popup, and fix Jeff's version of the code to
+compile in C-Kermit.  ckuusr.c, 31 May 2002.
+
+From Jeff, for K95 GUI, 6 June 2002:
+ . Force some GUI popups to be in foreground: ckuus3.c.
+ . Fix SHOW TERM font display: ckuus5.c.
+ . Update K95 version numbers and date (4 June 2002): ckcmai.c.
+ . Add note about encrypted private keys vs scripts to HELP SET AUTH: ckuus2.c.
+ . Fix SET HOST for DECnet: ckuus7.c.
+
+--- K95 2.0 ---
+
+From Jeff, 7 June 2002:
+ . Fix some #ifdefs for Unix builds (locus, dial, etc): ckuus7.c
+ . Add gui_resize_scale_font() prototype: ckuus3.c
+ . Add some missing SET GUI commands: ckuus3.c
+ . Update version numbers: ckcmai.c
+
+--- K95 2.0.1 ---
+
+From Jeff, 11 June 2002:
+ . Conditionalize Locus-switching popup text for GUI/Console: ckuusr.c.
+ . Fix the SRP_installed_as_server() function.  The new API returns TRUE even
+   if the SRP config and password files cannot be found.  Went back to the old
+   API.  This bug affects C-Kermit 8 when built with SRP as well as 1.1.21
+   through 2.0.1.  Since iksdnt.exe has not been shipped yet I fixed it and
+   uploaded a new non-beta build of it.  ckuath.c.
+
+From Jeff, 12 June 2002:
+ . Fix SSH AGENT ADD: ckuusr.c.
+ . Fix --facename: option to not fail if name unknown: ckuusy.c.
+ . Fixes for OpenSSL 0.9.7 and OpenBSD 3.1: ck_ssl.c.
+ . Fix SET AUTH TLS VERIFY NO to prevent a dialog but still a warning if
+   SET AUTH TLS VERBOSE ON is set: ck_ssl.c.
+ . Fix FTP code to verify the hostname as specified by the user and not
+   the hostname discovered by the reverse DNS lookup.  For example,
+     FTP OPEN kermit.columbia.edu
+   should produce a dialog because that name is not in the certificate
+   even though ftp.kermit.columbia.edu (the reverse DNS name) is:  ckcftp.c.
+
+Add support for Solaris 9 and NetBSD 1.6.  makefile, ckuver.h, ckcdeb.h,
+13 Jun 2002.
+
+Discovered that Solaris 9 wants to hide the members of struct FILE, and
+enforces this for 64-bit builds.  They offer some functions like __fbufsize()
+to get the info, but not the info we need for reading escape sequences (the
+_cnt member).  Let's hear it for political correctness.  Created new solaris9g
+(32-bit) and solaris9g64 (64-bit) targets.  Sorry, no arrow keys in 64-bit
+mode.  Also no more direct access to sys_errlist[]; must use strerror().
+makefile, ckucmd.c, 13 Jun 2002.
+
+Added solaris9g+openssl+zlib+pam+shadow, which in turn required adding
+solaris2xg32+openssl+zlib+pam+shadow, needed for gcc 3.1 in which you have
+to specify 32-bit.  Fails for some mysterious reason in link step
+(can't find libssl.so.0.9.6 even though it's there).  makefile, 13 Jun 2002.
+
+Solaris 8 empty socket problems again -- tthang() times out, subsequent
+tcsetattr() calls do horrible things.  Added a bandaid to ttclos(): don't
+call tcsetattr() any more if hangup timed out.  ckutio.c, 14 June 2002.
+
+Gerry B reported the bandaid got us bit farther but Kermit still disappears.
+Added code to reassert the alarm signal handler, since it is likely that
+Solaris has become stricter about this since last time I looked.  (Later
+Gerry reported back that this did the trick -- C-Kermit now exits normally
+and releases the lockfile).  ttclos(): ckutio.c, 17 Jun 2002.
+
+If you use Kermit to copy a file to a destination file that already exists and
+is longer than the source file, the destination file is not truncated.  I had
+mistakenly assumed that setting O_CREAT in the open() call in zcopy() would
+create a new copy of the file.  Fixed by also setting O_TRUNC.  ckufio.c,
+17 Jun 2002.
+
+Updated HELP INPUT and MINPUT text to explain 0 and -1 timeout values, and
+HELP DIAL to explain about entering CONNECT mode automatically.  ckuus2.c,
+17 Jun 2002.
+
+Got rid of client-side "Press the X or E key to cancel" message when giving
+a REMOTE command if QUIET is set or if XFER DISPLAY is NONE.  ckuus7.c,
+17 Jun 2002.
+
+From Jeff 25 Jun 2002:
+ . Add SUN terminal type: ckuusr.h, ckuus[57].c.
+ . Add GUI file transfer display: ckcker.h, ckuus[47x].c.
+ . Changes to allow C-Kermit to build with OpenSSL 0.9.7.  Current
+   C-Kermit code is designed to compile with 0.9.6 and earlier.  To
+   compile with 0.9.7 you must specify -DOPENSSL_097.  This avoids
+   missing symbols in the DES library.  The functions in OpenSSL were
+   renamed in 0.9.7 to avoid link time conflicts with Kerberos 4.
+   ckufio.c ck_crp.c ckuath.c ck_ssl.h ck_ssl.c, makefile.
+
+From Jeff 26 Jun 2002:
+ . apparently the SSL Passphrase Callback function was not converted
+   from readpass() to uq_txt()
+ . FTP Authentication failure errors were not being reported to the
+   user.  So a failure would appear to be a successful completion
+   unless FTP DEBUG was ON.  Now the message is reported unless
+   the QUIET flag is set.
+ck_ssl.c, ckcftp.c.
+
+SET TRANSFER MODE MANUAL didn't work for FTP; fixed in putfile() and getfile():
+ckcftp.c, 1 Jul 2002.
+
+Changed debug log for FTP to log "FTP SENT" and "FTP RECD" for protocol
+messages, just like we do for Telnet, to make it easy to grep them out of
+the log.  ckcftp.c, 1 Jul 2002.
+
+In FTP MGET /UPDATE, equal times spuriously caused download.  doftpget() was
+misinterpreting chkmodtime()'s return code.  ckcftp.c, 3 Jul 2002.
+
+In FTP MGET /RECOVER, recovery is skipped if the local file is newer than
+the remote.  This would seem to make sense, but when a download is
+interrupted, the partial file never gets the date of the remote file, so
+the partial file is always newer, and recovery never works.  Fixed in
+recvrequest() by commenting out the date check.  ckcftp.c, 3 Jul 2002.
+
+A better way to fix the previous problem is to always set the file date from
+the server and then only allow /RECOVER to work when the dates are equal.
+But that's not possible because MDTM is not implemented universally, and it
+conflicts with how Kermit currently works, namely that FTP DATES are OFF by
+default.  Also, checking dates prevents [M]GET /RECOVER from working with
+files that were incompletely downloaded by some other FTP client.
+
+In FTP MGET /RECOVER <wildcard> <wildcard> ..., the first file in each group
+is always downloaded.  Diagnosis: Kermit sends "TYPE A" prior to NLST (as it
+must).  Then when it sends its first SIZE command, it's still in ASCII mode,
+so the server sends the "ASCII size" rather than the binary size, which does
+not agree with the size of the local file (which was downloaded in binary
+mode), so recovery is always attempted even when the files are identical.  The
+TYPE A command is sent by initconn().  After the remote_files() call, we have
+to change the type back to the prevailing type before sending the first SIZE
+command.  Fixed in cmdlinget() and doftpget(): ckcftp.c, 3 Jul 2002.
+
+In FTP MGET /EXCEPT:<pattern> used with SET XFER DISPLAY brief, files that
+are skipped just say ERROR instead of saying why they were skipped.  Fixed
+in doftpget(): ckcftp.c, 3 Jul 2002.
+
+Added EXIT to top-level HELP text.  ckuus2.c, 13 Jul 2002.
+
+Strip braces in REINPUT n {string}.  ckuusr.c, 13 Jul 2002.
+
+Added /QUIET switch to ASK-class commands.  This means not to print any error
+messages when an ASK-class command times out waiting for a response.  Made
+sure that when a timeout occurs, the command fails.  Also made sure the
+c-Kermit prompt doesn't write over the ASK prompt if ASK times out.  Also
+fixed ASK, when it times out, not to return -9, which it did in one case,
+which causes a command-stack dump.  ckuus[267].c, ckucmd.c, 13 Jul 2002.
+
+Fixed SET FILE INCOMPLETE help text, which said that both KEEP and AUTO were
+the default.  ckuus2.c, 13 Jul 2002.
+
+If you SET FTP DEB ON and then turn it OFF, the MGET temp file is still kept.
+Fixed by getting rid of ftp_knf variable and using ftp_deb to control whether
+temp file is deleted (ftp_knf was being set from ftp_deb anyway, but then
+wasn't being reset by SET FTP DEB OFF).  ckcftp.c, 13 Jul 2002.
+
+If an FTP transfer was in progress but the FTP connection drops and automatic
+locus switching is enabled, the locus does not change; thus (for example) a
+subsequent DELETE command makes Kermit send a REMOTE DELETE packet on stdout.
+Fixed in lostpeer(): ckcftp.c, 13 Jul 2002.
+
+For docs: FTP CD with no arg might not be accepted by the server; e.g. the
+Kermit FTP server says "501 Invalid number of arguments".
+
+The FTP module never handled SET INCOMPLETE.  Fixed in doftprecv2().  ckcftp.c,
+13 Jul 2002.
+
+When FTP DATES is ON, we set an incoming file's date only if the file was
+received successfully.  Changed the code to set the file's date even if it was
+received only partially (assuming we can get the date from server).  ckcftp.c,
+13 Jul 2002.
+
+Suppose we were doing FTP MGET /UPDATE from a server directory of 100,000
+files.  Kermit would send a SIZE command for every file unconditionally.  On
+some connections, e.g. to the Red Hat Rawhide server, each one could take up
+to 30 seconds.  That would be 3 million seconds = 34 days.  Don't send a SIZE
+command during the selection phase unless a /SMALLER or /LARGER selector was
+given.  Once the file is selected, send a SIZE command only if one hadn't been
+sent for that file already.  ckcftp.c, 13 Jul 2002.
+
+Made [M]GET and [M]PUT /UPDATE switch imply FTP DATES ON, since they didn't
+work unless it was.  ckcftp.c, 13 Jul 2002.
+
+Added FTP [M]GET /DATES-DIFFER, which is like /UPDATE except it selects files
+that are newer or older, rather than only newer.  This allows updates from
+sources where files might be rolled back to earlier versions.  It's a bit
+dangerous if you use it without knowing what it's for, since it allows older
+files to overwrite newer ones.  (Code is also in place for [M]PUT
+/DATES-DIFFER, and it works, but I commented it out because it's either
+useless or dangerous since when uploading, you can't set the the file dates
+when they are arrive on the server.)  ckcftp.c, 13 Jul 2002.
+
+Changed chkmodtime() to remember if MDTM fails on a particular connection
+because it's an unknown command (500, 502, or 202), and if so, not to ask
+again.  ckcftp.c, 13 Jul 2002.
+
+With this last change, I think it's safe to change the default for FTP DATES
+from OFF to ON.  ckcftp.c, 13 Jul 2002. 
+
+Increased max number of /EXCEPT: patterns from 8 to 64 for file transfer (not
+necessarily for other things).  This is now a compile-time symbol NSNDEXCEPT.
+ckcker.h, ckcmai.c, ckclib.c, ckcfns.c, ckcftp.c, ckuus[rx].c.  13 Jul 2002.
+
+Fixed FTP MGET to not send SIZE command when there is a name collision and
+FILE COLLISION is DISCARD, even if /SMALLER or /LARGER were also specified.
+ckcftp.c, 15 Jul 2002.
+
+MGET fails if no files were transferred, even if the reason is that no files
+met the selection critieria: /COLLISION:DISCARD, /UPDATE, /SMALLER, etc.
+Changed MGET to succeed in that case.  domget(): ckcftp.c, 16 Jul 2002.
+
+Big problems with canceling MGET; Ctrl-C cancels the current file, but we
+don't break out of the file loop, we just go on to the next file.  Worse, if
+we're executing a command file that has a series of MGETs, Ctrl-C doesn't
+break us out of the command file.  Fixed by making failftprecv() and
+failftprecv2() "chain" to the main SIGINT handler, trap().  This is fine in
+Unix, but I'd be really surprised if it works in K95 so I put it in #ifndef
+OS2.  Ditto for MPUT: Added the same treatment to failftpsend() and
+failftpsend2().  Ditto for cmdcancel().  To adapt to K95, search for "TEST ME
+IN K95" (5 places).  ckcftp.c, 16 Jul 2002.
+ 
+Fixed previous fix to account for the fact that failftpblah() can be called
+not only upon Ctrl-C, but also if transfer interrupted with X or Z.
+ckcftp.c, 16 Jul 2002.
+
+Yesterday's fixes revealed another problem: Interrupt MGET with Ctrl-C, start
+another MGET, and the file list is total garbage.  Diagnosis: secure_getc()
+and secure_getbyte() use internal static buffer pointers.  The only way they
+ever get reset is when the data connection is closed by the server, so if you
+interrupt a GET, the pointers are not reset and the next network read (e.g. of
+an NLST response) returns whatever junk was lying around in the old buffer.
+ckcftp.c, 17 Jul 2002.
+
+FTP MGET temp file is kept only if FTP DEBUG is ON.  Changed FTP module to
+also keep it if the regular debug log is active.  ckcftp.c, 17 Jul 2002.
+
+Fixed version test in ckermit.ini: should be 6 digits, not 5.  17 Jul 2002.
+
+Changed C-Kermit version number to 8.0.205 so scripts can test for the
+recent changes.  ckcmai.c, 18 Jul 2002.
+
+---8.0.205---
+
+SET FILE COLLISION UPDATE would unset FTP DATES due to a typo in the recent
+changes.  ckcftp.c, 21 Jul 2002.
+
+FTP [M]GET /DATES-DIFFER really should have been a collision option.  Added
+this option (implemented for FTP only) to both SET FTP COLLISION and the
+FTP [M]GET /COLLISION: table, so this way if you have lots of [M]GETs, you
+don't have to put /DATES-DIFFER on each one.  ckcker.h, ckcftp.c, 21 Jul 2002.
+
+"FTP MGET a* b* c*" would fail to get any c*'s if no b*'s existed.
+ckcftp.c, 21 Jul 2002.
+
+From Jeff, 22 Jul 2002:
+ . Beginnings of Ann Arbor Ambassador terminal emulation for K95;
+   ckuus[57].c, ckuusr.h.
+ . Bump K95 version number to 2.0.2: ckcmai.c
+
+Added -DCK_PAM -DCK_SHADOW to all Solaris targets, 2.6 and above.  makefile,
+23 Jul 2002.
+
+Discovered that CK_SCRIPTS path search for TAKE files was #ifdef'd out
+except for K95.  Fixed in ckuusr.c, 25 Jul 2002.
+
+From Jeff: changes to support K95 italics: ckuus[57].c,  25 Jul 2002.
+
+Fixed path search for TAKE to not search the CK_SCRIPTS path if the filespec
+contains any directory or path parts.  Added a new function to check for
+this:  int hasnopath(filespec) in ckucmd.c: 26 Jul 2002.
+
+Update HP-UX build instructions from PeterE: makefile, 26 Jul 2002.
+
+Commented out "const" from struct pam_message declarations because it
+causes "initialization type mismatch" warnings.  ckufio.c, 26 Jul 2002.
+
+Suppose you have a network directory containing a listing for host "foo":
+
+  foo tcp/ip foo.bar.com
+
+Then in K95 you give a command "set host /network-type:ssh foo".  This
+results in the directory lookup replacing the "ssh" network type with TCP/IP,
+and making a Telnet connection.  Fix attempted at about line 8625 of ckuus7.c
+in cx_net(); needs testing in K95.  26 Jul 2002.
+
+FTP Password: prompt in Unix was not allowing editing.  The code looked right;
+I put in some debugging and suddenly it worked.  Took out the debugging and
+it still worked.  Maybe I dreamed it.  Anyway, I fixed the "FTP SENT" debug
+log entry to not record the password, and removed a redundant section above
+to log the same thing, but prior to any charset conversion.  ckcftp.c,
+27 Jul 2002.
+
+From Jeff, 28 Jul 2002:
+ . Fix typo in initxlist(): ckcmai.c.
+ . Fix typo in Friday's set-host fix: ckuus7.c.
+ . Move parsing of --height/width command-line args after prescan(): ckuusy.c.
+
+Added invisible top-level SITE and PASSIVE commands for FTP as a convenience
+for habituated FTP client users.  ckuusr.[ch], ckcftp.c, 28 Jul 2002.
+
+A while back a user asked if it was possible to MGET a bunch of files from
+an FTP server and have them all appended to each other upon arrival.  The
+obvious way to do this would have been:
+
+  mget /collision:append /as-name:bigfile *.*
+
+But to make this work, I had to get rid of the "as-name must contain
+variables" check in the MGET parser.  doftpget(): ckcftp.c, 28 Jul 2002.  
+
+Verified that it was possible to do the same thing (GET a bunch of files
+and append them all into one result file) with Kermit protocol.  It works
+fine but in this case there is no /COLLISION switch; you have to SET FILE
+COLLISION APPEND first.  30 Jul 2002.
+
+Changed COPY /APPEND to allow wild source to single destination file, e.g.
+"copy /append *.* bigfile".  ckuus6.c, 30 Jul 2002.
+
+From Mark Berryman: a replacement for zchkpath(), the VMS routine that checks
+whether a file is in the current directory; the old one (that I wrote) was
+a hack that only worked sometimes.  Martin Vorlaender verified Mark's code in
+the situation where mine was breaking (server running in captive account).
+ckvfio.c, 30 Jul 2002.
+
+PeterE reported a problem with SWITCH case labels that start with '#':
+The problem is that the SWITCH variable contents in this case happens to be
+a comment, e.g.:
+
+  CMD(M)[_forward # Stand: 24.07.2002<CR>]
+
+so the GOTO target is null.  The solution would be for SWITCH to put the GOTO
+(_FORWARD) target in quotes.  But GOTO does not strip quotes or braces from
+around its target.  Fixed in ckuusr.c, 30 Jul 2002.
+
+Fixed the SWITCH macro definition to put the _FORWARD target in quotes.
+ckuus5.c, 30 Jul 2002.
+
+PeterE also reported that an empty SWITCH case label did not work.  There's no
+particular reason why it should, but after a brief look, it wasn't that hard
+so I did it.  It required commenting out the check for empty labels and fixing
+the comparison in dogoto().  Now it's possible to read lines from a file and
+use each line as a SWITCH variable, with patterns as case labels, including an
+empty label to match empty lines, #* labels to match comment lines, etc.
+ckuus[r6].c, 30 Jul 2002.
+
+PeterE also reported the value of \%* acquiring a trailing blank when
+referenced inside a SWITCH statment.  This happens because \%* is formed using
+\fjoin() on the \&_[] array based on its dimension, and at some point the
+dimension is spuriously increased by one.  As a workaround, I made \fjoin()
+ignore trailing empty \&_[] array elements and oddly enough this also fixed
+the growing dimensions problem.  The many script torture tests reveal no ill
+effects, so it seems like a keeper.  ckuus4.c, 30 Jul 2002.
+
+Some of Peter's sample scripts made C-Kermit 8.0.201 dump core, but no more.
+
+Fixed "delete xxx" to print an error message and fail if if xxx does not exist.
+Ditto for when xxx is a directory.  ckuus6.c, 30 Jul 2002.
+
+Patches to SSL modules from Jeff based on yesterday's advisory.  ck_ssl.[ch],
+31 Jul 2002.
+
+Fixed some typos affecting the filename collision action during command-line
+FTP [M]GET.  ckcftp.c, 31 Jul 2002.
+
+Fixed SHOW FTP to handle FTP COLLISION DATES-DIFFER.  ckcftp.c, 31 Jul 2002.
+
+A while back someone pointed out that SET CONTROL UNPREFIX ALL and SET
+PREFIXING NONE gave different results.  Fixed them to use the same code.
+Also made "set prefixing none" visible.  ckuus3.c, 4 Aug 2002.
+
+Added SET CD HOME <path>, to let the user specify which directory is intended
+when "CD" or "KCD" is given by itself.  This is because in Windows, some
+applications set up their own HOME environment variable that isn't necessarily
+where the user wants "cd" to go, but redefining HOME can interfere with the
+application (example: Windows EMACS).  SET CD HOME was done by adding a myhome
+variable, initially a NULL pointer, and then changing homepath() to use it if
+it is set.  zhome() is not affected.  Also the homepath() prototype had been
+missing from header files.  ckcmai.c, ckuusr.h, ckuus[2345].c, 4 Aug 2002.
+
+PeterE got another core dump with his SWITCH statement.  Found a place where
+an out-of-bounds array reference could occur if the switch variable was
+empty.  ckuus6.c, 5 Aug 2002.
+
+PeterE noticed that if the switch variable contained a comma, spurious matches
+could occur with the label pattern.  The real problem turns out to be what
+happens when the SWITCH variable doesn't match any of the case labels and
+there is no DEFAULT label.  Fixed by having dogoto() in the SWITCH (_FORWARD)
+case pop the command stack before returning failure, i.e. by moving the
+"if (stopflg) return(0);" statement down a few lines.  ckuus6.c, 5 Aug 2002.
+
+PeterE noticed that a SWITCH case label of :* did not match an empty SWITCH
+variable.  Fixed in doswitch(): ckuus6.c, 6 Aug 2002.
+
+In testing the previous fix, I found it only worked sometimes.  Inspection
+of the debug log showed that a statement like:
+
+  if (y == -3) s = "{}";
+
+was assigning "{" rather than "{}" to s.  Replacing the string constant by a
+buffer containing the same string fixed it.  The reason (guessed correctly by
+PeterE) was the following sequence:
+
+  y = cmfld("Variable name","",&s,xxstring);
+  if (y == -3) s = "{}";
+  len = ckstrncpy(tmpbuf,brstrip(s),TMPBUFSIZ);
+
+brstrip() (by design and as documented) affects the string in place.  But in
+this case the string is a constant, not data in a buffer, so all further uses
+of "{}" get the wrong string (at least in optimized builds).  The only real
+cure is to change brstrip() to make a copy of its argument if it has to do
+anything to it.  This will slow down some scripts, but it's too risky to
+leave it as it was.  ckclib.c, 6 Aug 2002.
+
+The previous change required an audit of the C-Kermit code to make sure that
+no references to brstrip() depended the result buffer being persistent, or the
+result pointer indicating a position in the source buffer.  Oops, it turns out
+that thousands of places rely on brstrip() working in place.  Therefore the
+change had to be undone.  There's no good way to write a dummy-proof brstrip();
+programmers either have be sure they're not calling it with a pointer to a
+string constant, or else they have to copy the result back to the right place
+each time.  Better to leave it as it was and audit the code to fix any calls
+that refer to string constants (turns out there were only two).  Restored the
+original fix to doswitch() (replacing the string constant by a buffer holding
+the same string), plus minor fixes to ckcftp.c, ckuus[r36].c, 6 Aug 2002.
+
+We need file dialogs in several situations in the K95 GUI.  I added a "user
+query" routine for this, uq_file(), in ckuus3.c, filling it in only for Unix.
+Then I added code to call it from rcvfil() when (a) it's an autodownload, and
+(b) SET TERM AUTODOWNLOAD is ASK (I just added this option; it needs to be set
+to see it in action -- maybe it should be the default for KUI, in which case
+initialize "int autodl = ?" to TAD_ASK in ckcmai.c).  Works fine, except of
+course it interferes with the file-transfer display, but that won't be a
+problem in K95G.  ckuusr.h, ckuus[37].c, ckcfns.c, ckucns.c, 6 Aug 2002.
+
+Another place we need a file dialog is when Kermit is a URL interpreter.  The
+problem is: how can we let the user decide whether Kermit should ask?  There
+really isn't any way.  Either it always asks or it never does.  In this case I
+think it makes sense to always ask if it's KUI, otherwise never.  I added the
+code for ftp: URLs to to doftprecv2(), which I tested successfully in Unix
+before putting it into #ifdef KUI..#endif.  Also added code for http[s] to
+ckuusy.c in #ifdef KUI..#endif, not tested.
+
+Still need this added for K95G Actions->Capture.  The clearest example is the
+FTP one.  Just search for KUI in the FTP module.
+
+Some minor adjustments to yesterday's work, mainly just comments, plus
+generate the full pathname for the default file.  ckuus3.c, ckcftp.c,
+7 Aug 2002.
+
+Note: for some reason cmofi() is not supplying the default value if user
+enters an empty name... (but that won't affect the Windows version).
+
+Added /USER: and /PASSWORD: switches to SET TCP { HTTP-PROXY, SOCKS-SERVER }.
+ckuus3.c, 7 Aug 2002.
+
+New 'uninstall' target from PeterE, works by having the 'install' target
+write an UNINSTALL shell script.  makefile, 8 Aug 2002.
+
+Added some debugging statements to the VMS communications i/o module to try
+to track down a problem that occurs when the controlling terminal is a LAT
+device.  ckvtio.c, 10 Aug 2002.
+
+Fixed the non-K95 uq_file() to respect the given default name, but still show
+the fully qualified absolute pathname for the default in the dialog.  The
+reason to not use the fully qualifed name as the default in the cmxxx() calls
+is that this can easily result in a whole directory tree being created due to
+directory aliases, symlinks, etc.  So when you get a file by referring to its
+URL (e.g. ftp://kermit.columbia.edu/kermit/READ.ME), uq_file() converts the
+READ.ME part to (e.g.) /home/fdc/tmp/READ.ME but gives just "READ.ME" as the
+default when parsing the name.  This way the user knows where it will go and
+gets an opportunity to change it, and if the default is accepted, it goes into
+the current directory.  uq_file(): ckuus3.c, 10 Aug 2002.
+
+Found the spot for calling uq_file() for kermit:// URL downloads.  Added
+prefatory text to filename prompts for Kermit and FTP downloads.  ckcfns.c,
+ckcftp.c, 10 Aug 2002.
+
+Now with kermit:// or ftp:// URL downloads there's no way to disable the
+prompting.  I could easily make SET TERMINAL AUTODOWNLOAD ASK cover these
+cases too (even though "terminal" has nothing to do with FTP or URL
+downloads).  OK, I did this, but now prompting is disabled by default.
+ckcftp.c, ckcfns.c.  10 Aug 2002.
+
+Enabled file prompting (adl_ask) by default in K95G, disabled it by default
+everywhere else.  So now FTP and Kermit URL downloads as well as terminal-mode
+Kermit (but not Zmodem) downloads are prompted for if TERMINAL AUTODOWNLOAD is
+ASK, which is it by default only in K95G.  But this will happen only if
+uq_file() is filled in for K95G; otherwise everything should work as before.
+ckcmai.c, 10 Aug 2002.
+
+Notes:
+ . Need a better command to control this.
+ . FTP URL downloads are almost instantaneous, whereas Kermit URL downloads
+   take a really long time to set up (logging in takes at least 10 seconds).
+
+From Jeff, 13 Aug 2002:
+ . Increase K95 version to 2.1.0: ckcmai.c.
+ . SET TCP { HTTP-PROXY, SOCKS-SERVER } /USER: /PASSWORD: actions: ckuus3.c.
+
+From PeterE: a new install target that's only about half as a big as the
+previous one, yet still generates an UNINSTALL script.  makefile, 13 Aug 2002.
+
+Vace wanted to be able to give the FTP client an offset for the server time,
+in case the server's time (or timezone) is set incorrectly.  I added this by
+building on all the date/time parsing/arithmetic code -- notably delta times
+-- that was done for C-Kermit 8.0.  The new command is SET FTP
+SERVER-TIME-OFFSET delta-time; shows up in SHOW FTP and HELP SET FTP.
+ckcftp.c, 13 Aug 2002.
+
+Fixed HELP ASK and HELP GETOK text.  ckuus2.c, 14 Aug 2002.
+
+Fixed GETOK to accept /GUI switch even in K95.EXE and C-Kermit, just like ASK
+does (in which case, it just ignores it).  ckuus6.c, 14 Aug 2002.
+
+SET XFER CHAR TRANSPARENT no longer disables character-set translation because
+file-scanning turns it back on.  The "new way" to disable character-set
+translation is SET XFER TRANSLATION OFF.  This needlessly confuses users who
+expect the old way to still work.  So I fixed SET XFER CHAR TRANSPARENT to set
+XFER TRANSLATION OFF, and SET XFER CHAR anything-else to set it back ON.
+ckuus3.c, 15 Aug 2002.
+
+Fixed SET TERM AUTODOWNLOAD { ON, OFF } to turn off the ASK flag (adl_ask).
+ckuus7.c, 16 Aug 2002.
+
+Added FEAT query to FTP client from draft-ietf-ftpext-mlst-13.txt.  FEAT is
+sent along with REST 0, MODE S, and STRU F if /NOINIT is not included in the
+FTP OPEN command.  Parsing the FEAT result is handled by turning the "auth"
+argument to getreply() into a function code: GRF_AUTH to parse AUTH reply;
+GRF_FEAT to parse FEAT reply.  For GRF_FEAT, getreply() fills in a flag array,
+sfttab[] (server feature table); sfttab[0] > 0 means server responded to the
+FEAT query, in which case individual elements are set > 0 for each supported
+feature.  ckcftp.c, 18 Aug 2002.
+
+If server sends a feature list, display it if FTP DEBUG is on, then set mdtmok
+and sizeok (the flags that say whether it's OK to send MDTM and SIZE commands)
+accordingly.  If user gives an [M]PUT /RECOVER command and server has
+announced it doesn't support REST, print a warning but try anyway (maybe
+change this later).  Responses about other features that we use such as AUTH
+and PBSZ are ignored for now -- i.e. we try them anyway.  And of course
+responses for features we don't care about (LANG, TVFS, PROT) are ignored.
+ckcftp.c, 18 Aug 2002.
+
+If the server says it supports MLST, use MLSD instead of NLST to get the file
+list.  This is done in remote_files() with some simple string-twiddling.  Then
+replace the relevant (but not all) SIZE commands with code to first check if
+we already got the size from the MLSD response and use that instead rather
+than asking again.  Same deal for MDTM.  ckcftp.c, 18 Aug 2002.
+
+Checked that this works when giving pathnames in the MGET filespec.  Checked
+to make sure everything works as before with servers that don't support FEAT
+or MLSD.  Checked to make sure FTP OPEN blah /NOINIT worked with servers that
+do support FEAT and MLSD.  Checked that FTP CHECK works.  It's all OK.
+
+Tested only with Ipswitch server; need to find and test with others.
+
+The stack of temp files needed for MGET /RECURSIVE is annoying because what
+if we run out of file descriptors...  But the spec doesn't provide a way to
+request a recursive listing.
+
+Supplied a missing comma in HELP SET CD text.  ckuus2.c, 19 Aug 2002.
+
+Generalized parsing of MLST/MLSD file facts and values.  Got file type from
+server and had MGET skip non-regular files.  ckcftp.c, 19 Aug 2002.
+
+Kirk Turner-Rustin <ktrustin@owu.edu> reported that if Unix C-Kermit has a SET
+HOST PTY connection (e.g. SSH) open, local window size changes are not
+propogated through the connection to the host.  I imagine that must be because
+the SIGWINCH signal is caught by Kermit and its children don't see it; maybe
+if I pass it along to the child fork, all will be OK.  Began by exporting
+"slavepid" from the pty module and changing its name to pty_fork_pid.  Moved
+the SIGWINCH handler, winchh(), from ckctel.c to ckutio.c.  Armed it from Unix
+sysinit() so it's always armed.  This way window changes affect Unix C-Kermit
+no matter what mode it's in: tt_rows, tt_cols, cmd_rows, and cmd_cols are all
+kept in sync.  Then if we're not in remote mode (i.e. we have a ttyfd), we
+call tn_snaws() and rlog_snaws() (which should be ok since they return right
+away if the appropriate kind of connection is not open) and then if
+(pty_fork_pid > -1), a SIGWINCH signal is sent to it.  ckupty.c, ckctel.c,
+ckutio.c, 20 Aug 2002.
+
+All this works fine except the PTY part; in other words, the original problem
+is not fixed.  The "kill(pty_fork_pid,SIGWINCH)" call executes without error
+but has no effect because the size of the PTY never changed.  To make this
+work I had to add an ioctl() to change the size of the PTY before sending it
+the SIGWINCH.  Compiles and works ok on Linux and Solaris; Kirk also confirmed
+it for AIX 4.3.3.  ckutio.c, 20 Aug 2002.
+
+Fixed xlookup() to work for uppercase keywords.  ckucmd.c, 20 Aug 2002.
+
+Fixed FTP parsefeat() and parsefacts() to use xlookup() instead of lookup(),
+since abbreviated keywords are not allowed.  ckcftp.c, 20 Aug 2002.
+
+Adjusted some lines from yesterday's window-size code for platforms I hadn't
+tried yet.  ckutio.c, 21 Aug 2002.
+
+EXIT from K95 when it has an FTP connection open and it pops up the
+Locus dialog.  Made it not do this if it knows it's in the act of EXITing.
+ckuus[rx].c, 22 Aug 2002.
+
+In K95, FTP GET in ASCII mode results in a file with Unix line terminators
+even though the protocol is correct:
+
+  RETR smjulie.txt
+  150 Opening ASCII mode data connection for smjulie.txt (1878 bytes).
+
+The source file is a regular Unix text file with LF at the end of each line.
+It's incredible that nobody noticed this before.  It only came to light when
+somebody tried to open a downloaded text file with Notepad, which doesn't
+handle Unix-format files (Wordpad and Emacs have no problems with them).  The
+problem was in doftprecv2() in the FTT_ASC section.  There was no conditional
+code for Unix vs Windows.  In all cases, the code discarded incoming CR's in
+ASCII mode.  I put the CR-discarding code in #ifdef UNIX..#endif.  ckcftp.c,
+22 Aug 2002.
+
+Removed super-verbose debugging from gtword(): ckucmd.c, 23 Aug 2002.
+
+Gregory Bond reported a problem with "if defined \$(BLAH) ..." inside of a
+SWITCH statement.  It wasn't really the SWITCH that was doing it, it was the
+fact that he had enclosed the SWITCH case in braces, which made it an
+"immediate macro" (XXMACRO).  The XXMACRO code parsed the macro definition
+(the part inside the braces) with cmtxt(...,xxstring), which should have been
+cmtxt(...,NULL) to defer the evaluation of the interior of the macro until it
+was executed.  This is better illustrated with the following example:
+
+  { echo START, for \%i 1 3 1 { echo \%i }, echo STOP }
+
+which totally fell on its face prior to the fix.  Also fixed ?-help for
+immediate macros, which was broken too.  ckuusr.c, 23 Aug 2002.
+
+RFC959 says STOU does not take an argument.  But every FTP server I've
+encountered but one accepts the arg and constructs the unique name from it,
+which is better than making up a totally random name for the file, which is
+what RFC959 calls for.  Especially because there is no way for the client to
+find out the name chosen by the server (because RFC 959 and 1123 are
+contradictory, plus no servers follow either one of them for this anyway).  So
+we try STOU with the argument first, which works with most servers, and if it
+fails, we retry it without the arg, for the benefit of the one picky server
+that is not "liberal in what it accepts" UNLESS the first STOU got a 502 code
+("not implemented") which means STOU is not accepted, period (which happens
+with ProFTPD).  ckcftp.c, 25 Aug 2002.
+
+Added SET FTP ANONYMOUS-PASSWORD (plus help text and show value).  ckcftp.c,
+25 Aug 2002.
+
+Made FTP command "not available" if NOFTP is defined.  ckuusr.c, 25 Aug 2002.
+
+Forced client to send a TYPE command upon initial connection, since given
+the variable quality of FTP servers, it's not safe to assume the server is
+in ASCII or any other particular mode.  ckcftp.c, 25 Aug 2002.
+
+SET FTP CHARACTER-SET-TRANSLATION ON is completely broken in K95, although it
+works fine in C-Kermit.  Furthermore it is broken in both the GUI and Console
+versions, so it's not a Unicode vs OEM console-character-set issue.
+
+Added Concurrent PowerMAX OS target from Tom Horsley.  makefile, ckuver.h,
+27 Aug 2002.
+
+Minor fixes to FTP module from Jeff.  ckcftp.c, 27 Aug 2002.
+
+New Makefile target for Mac OS X 10.2, needs -DNDSYSERRLIST added, from
+William Bader.  2 Sep 2002.
+
+SET OPT DIR /DOTFILES didn't work for server listings.  A few years ago when
+I front-ended zxpand() with nzxpand(), I missed a couple places where
+traverse() needed to refer to xmatchdot (nzxpand's argument flag) rather than
+global matchdot.  Fixed in traverse(): ckufio.c, 2 Sep 2002.
+
+From Jeff, 4 Sep 2002:
+ . setautodl(x) -> setautodl(x,y): ckuusr.h, ckuus[7y].c
+ . Add another parameter to popup_readblah(): ckuus6.c
+ . Sort out some confusion in scanfile() where a parameter was also used as a
+   local flag.  ckuusx.c.
+ . Protect restoring of saved terminal idle parameters with a flag that says
+   they were actually saved.  ckuusr.c.
+ . Rework uq_text() and uq_mtxt().  ckuus3.c.
+ . Fix FTP charset translation for little-endian hardware: ckcftp.c.
+
+The latter still doesn't work in Linux:
+
+  (/home/fdc/kermit/) C-Kermit>set ftp server-character-set latin1-iso
+  (/home/fdc/kermit/) C-Kermit>set file character-set utf8
+  (/home/fdc/kermit/) C-Kermit>get latin1.txt
+
+Results in "????????: file not found".  But it works fine on the Sun.
+
+Jeff's patch removed a little-endian byte-swap (LEBS) from doftpsend2().  But
+the real problem was that LEBS was not being done consistently throughout the
+module.  There were similar xgnbyte()/xpnbyte() loops elsewhere in the code,
+and all of them needed to work the same way.  Undoing Jeff's fix and then
+adding the LEBS to the loop in getreply() makes downloads work right, but the
+messages are still messed up (they come out in Chinese :-)  Begin by moving all
+byte-swapping operations that occur in ckcftp.c itself into a new function,
+bytswap().  It's either right to do it all the time, or to do it never; this
+way we can turn it on and off in one place.
+
+xp/gnbyte() include behavior that depends on what Kermit is doing: W_SEND,
+etc.  xpnbyte() tests W_KERMIT, which is a combination of W_SEND, W_RECV, etc.
+Defined a new symbol W_XFER, which is like W_KERMIT but includes W_FTP.  These
+are all the "whats" in which character sets might need to be converted.
+Changed the W_KERMIT reference in xpnbyte() to W_XFER.  Fixed the inderminate
+"what" state after an FTP command by moving "what = W_COMMAND;" from before
+the main parse loop to inside it (this didn't matter before the addition of
+FTP but now it does).  ckcker.h, ckcftp.c, ckuus5.c, 6 Sep 2002.
+
+Finally I changed xlatec() to be consistent with all the other xgnbyte() /
+xpnbyte() usage throughout the FTP module and, poof, everything worked in
+Linux (and still works on the Sun).  We still need some work in Windows (where
+the file character-set is not necessarily the console character set for
+messages) but we can tackle that next.  ckcftp.c, 6 Sep 2002.
+
+Checking yesterday's work:
+
+Kermit file transfers with charset translation work fine in both directions.
+
+FTP GET with charset translation works fine on both BE and LE
+
+Fixed a typo in yesterday's changes that made FTP PUT with charset translation
+always upload 0-length files.  ckcftp.c, 7 Sep 2002.
+
+FTP PUT (after the typo was fixed) with charset translation works fine on BE,
+but on LE the message comes out in Chinese and the resulting file gets ? or
+nothing for all for the accented letters:
+
+      FTP...  Kermit 
+      Up  Dn  Up  Dn  Term
+  BE  OK  OK  OK  OK   xx
+  LE  no  OK  OK  OK   xx
+
+xx = C-Kermit CONNECT mode with translation doesn't seem to do anything, not
+only in today's code, but also in the 8.0 release version: "set term char
+latin1 utf8" -- SHOW CHAR shows the right stuff, but no translation is done.
+Ditto for the 7.0 release.  That can't be right...
+
+But one problem at a time -- what's wrong with LE FTP uploads?  Note that
+XLATE works on the same machine, so it's obviously confusion in xgnbyte()
+about "what".  Suppose we make xgnbyte() ALWAYS return bytes in BE order.
+This makes sense because xgnbyte() is almost always used to feed xpnbyte(),
+and xpnbyte() requires its bytes to come in BE order.  This means that all
+code that uses xgnbyte()/xpnbyte() loops can be simplifed, which I did for
+the FTP module.  ckcfns.c, ckcftp.c, 7 Sep 2002.
+
+Of course Kermit protocol uses xgnbyte() too, but only for filling
+packets, and packets never contain UCS2 and even if they did, it would have
+to be big-endian, so no changes needed for getpkt().  Now we have:
+
+      FTP...  Kermit 
+      Up  Dn  Up  Dn
+  BE  OK  OK  OK  OK
+  LE  OK  OK  OK  OK
+
+Now let's look at the remaining xgnbyte() calls in the rest of the code:
+
+ckuus4.c:
+  xlate() uses it of course.  I simplified the general-case loop.
+  Works OK on both Sun and Linux.
+
+ckuus6.c:
+  typegetline() uses it.  I commented out the byte swap.  Seems OK.
+
+Built and tested on Linux, Solaris, and SunOS.  I'm sure I must have broken
+something, but the main things are better than they were.  Kermit and FTP
+transfers need testing in K95, as well as the TYPE command (there's a bunch of
+special K95 code in there).  C-Kermit charset translation during CONNECT is
+still broken, or else I forgot how to use it, but that's a separate issue
+since xgnbyte()/xpnbyte() are not involved.  And we still need to do something
+in FTP getreply() for K95 to convert messages to the console character set for
+display, rather than the file character set (should be trivial).  Also there's
+still a lot of extra debugging and commented-out junk in ckcftp.c to be
+cleaned up after more testing.
+
+During yesterday's testing, I noticed that REMOTE SET { FILE, XFER }
+CHARACTER-SET didn't work.  The server accepted these commands but they didn't
+seem to do anything.  In fact, they did work, but they were undone later by
+code in sfile() that restored the global settings in case they had been
+temporarily overridden by autoswitching or whatever.  The solution is to
+"unsave" the saved values whenever a global setting is performed explicitly.
+Tested successfully against Sun and Linux servers.  Also the server end of
+REMOTE SET needed updating for Unicode.  ckcfn[s3].c, ckuus3.c, 8 Sep 2002.
+
+Cleaned commented-out cruft and extra debugging from ckcftp.c.  8 Sep 2002.
+
+Kermit autodownload with ASK file dialog: if user supplied an absolute
+pathname, it was treated like a relative one.  Fixed the invocation of
+uq_file() in rcvfil() to temporarily override the RECEIVE PATHNAMES setting.
+ckcfns.c, 10 Sep 2002.
+
+Added SET TERMINAL ROLL KEYSTROKES { SEND, RESTORE-AND-SEND, IGNORE }, parse
+only.  Needs implementation (search for tt_rkeys and rollkeytab in ckuus7.c).
+ckuusr.h, ckuus[27].c, 10 Sep 2002.
+
+If FILE INCOMPLETE is DISCARD and a file is being received by IKSD but IKSD
+gets a Telnet LOGOUT command, the partial file is not deleted.  In fact this
+happens any time doexit() is called for any reason during file reception,
+e.g. because of SIGHUP.  Added code to doclean() to check if a download
+output file was open, and if so, to delete it after closing it if keep==0.
+ckuusx.c, 10 Sep 2002.
+
+Added a brief one-line message after remote-mode file transfer saying
+what (or how many) file(s) were transferred, where they went, and whether
+the transfer was successful -- kind of an automatic WHERE command, useful
+with autodownloads so you know what happened.  ckcpro.w, 11 Sep 2002.
+
+The Unix and VMS C-Kermit CONNECT modules have botched remote-charset to
+local-UTF8 translation ever since the Unicode was first added in v7.0.  Fixed
+in ckucns.c, ckucon.c, ckvcon.c, 11 Sep 2002.
+
+On to pattern-matching...  The matchdot business should apply only for (Unix)
+filename matching, not for general string matching.  Fixed in ckmatch():
+ckclib.c, 11 Sep 2002.
+
+A bigger problem occurs in filename matching.  Somehow the dirsep == fence
+business interferes with matching {foo,bar,baz} segments.  For example, I have
+a filename "foo" and I want to match it with the pattern "{foo,bar}".  Somehow
+the segment pattern becomes "*/foo" and doesn't match the string.  Where does
+the '/' get tacked on?  I don't even know how to explain this, but the short
+story was that ckmatch(), under certain circumstances, would back up to before
+the beginning of the filename string, which just happened to contain a "/"
+(and before that a ".") because of who was calling it.  Obviously this is not
+how to write a pattern matching function...  Ensuring that it never backs up
+beyond the beginning of a string fixed the immediate problem and does not seem
+to have broken any other matching scenarios (I have 150 of them in my test
+script).  ckclib.c, 11 Sep 2002.
+
+There's still a problem though.  Suppose the a client sends "dir {{.*,*}}" to
+a server.  This asks for a directory listing of all files that begin with
+dot as well as all files.  Still doesn't work because we don't normally show
+dot-files, but in this case it SHOULD work because ".*" was explicitly
+requested.  Staring at the ckmatch() code revealed how to fix this, and I did,
+but that was only half the problem.  The other half was that the list of
+files being fed to ckmatch() did not include the dotfiles in the first place.
+The cure here is to change nzxpand() to prescan the pattern to see if it
+includes a leading dot, and if so to set the "xmatchdot" flag itself, even
+if it wasn't set by the caller.  ckclib.c, ckufio.c, 11 Sep 2002.
+
+Now that {foo,bar,...} patterns work better, I added a quick hack to the
+DIRECTORY command to allow multiple filespecs to be given, in which case we
+combine them into a {file1,file2,...} pattern before calling nzxpand().  Works
+fine but it's a hack because you don't get file lists upon "?" in the second
+and subsequent filespec fields, but I doubt anyone will notice.  So now,
+finally, people can do "dir .* *" like they do in Unix (except with ls) to get
+a listing of all files in a directory without having to know about or use the
+/DOTFILES switch.  This was NOT done for the server end of RDIR because of
+ambiguity of spaces as separators versus filename characters.)  domydir():
+ckuus6.c, ckuus[r2].c, 11 Sep 2002.
+
+Added a CONTINUE command.  In a script, this does whatever CONTINUE did before
+(e.g. in a FOR or WHILE loop).  At the prompt, it calls popclvl(), which gives
+a more natural way to continue a script that has "shelled out" to the prompt.
+ckuusr.[ch], 11 Sep 2002.
+
+Added help text for CONTINUE.  ckuus2.c, 12 Sep 2002.
+
+From Jeff, 16 Sep 2002:
+ . SET TERM ROLL KEYSTROKES for K95: ckuusr.h, ckuus7.c
+ . Remove the doexit() call from the Telnet TELOPT_LOGOUT handler: ckctel.c
+
+Fixed an FTP debug message to be consistent with Kermit ones.
+ckcftp.c, 16 Sep 2002.
+
+Added SET/SHOW TRANSFER REPORT to turn the post-transfer report off and on.
+ckuusr.h, ckuus[234].c, 16 Sep 2002.
+
+Fixed Solaris (and maybe some other SVORPOSIX builds) to find out their full
+hostname rather than just short form (e.g. watsol.cc.columbia.edu rather than
+just watsol).  ckhost(): ckuusx.c, 16 Sep 2002.
+
+"cat somefile | kermit -Ts -" is supposed to send stdin in text mode, but
+K95's file transfer display reports BINARY.  Looked at C-Kermit code; it seems
+fine.  Looked at packet and debug logs; C-Kermit was indeed sending in text
+mode and announcing it correctly.  K95 gattr() is doing the right thing:
+
+  gattr file type[AMJ]=3
+  gattr attribute A=text=0
+  gattr sets tcharset TC_TRANSP[A]
+
+Same thing happens when C-Kermit is receiving.  Yet when I send an actual
+file, rather than stdin, it's received in text mode.  The only difference is
+that stdin does not have a Length attribute in its A-packet, so in this case
+the receiver skips any calls to screen() that show the length or percent done.
+Aha, so maybe it's just a display problem -- scrft() is not being called to
+repaint the file type if the size was not known.  Fixed in opena() by
+removing the IF clause from "if (fsize > -1L) xxscreen(SCR_FS,0,fsize,"");".
+ckcfn3.c, 18 Sep 2002.
+
+K95 user has a listfile containing some regular filenames and then some
+filenames that include paths and has all kinds of problems with MGET /LISTFILE
+(pieces of different names concatenated to each other, etc).  Setting up the
+same scenario here, I don't see the same problems but I do see "Refused: Name"
+when we go to get a path/name file.  This happens because (a) we had already
+got a top-level file with a certain name, (b) a file in a subdirectory has the
+same name, (c) we are stripping the path before calling zchki(), and (d)
+FTP COLLISION is set to DISCARD.  How do we make FTP not strip the path?
+
+This is an interesting question...  The answer depends on where the user
+wants the file to go.  Normally if you tell an FTP client to "get foo/bar",
+you want the file "bar" to be downloaded to the current directory.
+
+Anyway, it turns out the FTP module uses paths locally during MGET only if
+/RECURSIVE was specified.  So:
+
+  mget /listfile:blah /recursive
+
+should have made this work, but it didn't because in the /LISTFILE case,
+we have effectively turned an MGET into a series of GETs, where the code to
+check whether to strip the path didn't check the recursive flag because how
+could a GET (as opposed to an MGET) be recursive?  Adding this exception to
+the if-condition got us a bit farther but now when we try to open the output
+file in doftprecv2(), zopeno() fails because the name contains a dirsep.
+We have to call zmkdir() first but that wasn't happening because some other
+flag wasn't set right in this case.  Finally zmkdir was called, but with
+the wrong string.  After fixing that, it works.  Now we should be able
+to use /RECURSIVE to force the pathname to be used on the local end.
+ckcftp.c, 19 Sep 2002.
+
+Checked FTP filename conversion issues.  FTP FILENAMES AUTO is supposed to
+mean LITERAL if "wearealike" OR server is UNIX or Windows, otherwise
+CONVERTED, but there were places where this rule was not applied consistently,
+fixed now.  ckcftp.c, 21 Sep 2002.
+
+Added SET FTP DISPLAY, which is like SET TRANSFER DISPLAY but applies only to
+FTP, mainly because I tended to type it all the time.  Now if you have dual
+sessions, each session can have its own transfer display style.  ckcftp.c,
+ckuusr.h, ckuus[347].c, 21 Sep 2002.
+
+Back to FTP MLSD.  We're supposed to match the pattern locally, not rely on
+the server to filter its list according to the client's pattern.  Thus we must
+also allow an empty argument to MGET and must not send a filespec with MLSD.
+Actually this is tricky -- how is the client supposed to know whether to send
+a filespec.  For example, if the user's command is "mget foo*bar", and the
+server supports MLSD, then what should the client do?  The client does not
+know the wildcard syntax on the server, so for all the client knows, this
+might be a valid directory name, in which case it should be sent.  On the
+other hand, the user might intend it as a wildcard, in which case it should
+NOT be sent.  But the FTP client can't read the user's mind.  This is another
+serious flaw in the Elz/Hethmon draft.  Anyway, I got the local matching
+business working for MLSD as long as the user's MGET arg is really a pattern
+and not a directory name.  To be continued...  ckcftp.c, 21 Sep 2002.
+
+Added FTP { ENABLE, DISABLE } { FEAT, MLST }.  If we always send FEAT, we
+usually get a complaint.  If we send FEAT and MLST is negotiated, there is a
+good chance it is misimplemented or will have undesirable side effects, such
+as sending huge file lists.  NOTE: /NOINIT on the FTP OPEN command also
+disables both of these.  ckcftp.c, 22 Sep 2002.
+
+Fixed mkstemp() code in FTP remote_files().  mktemp() does not open the file,
+mkstemp() does open it; previously we had been opening it again and never
+closing the first instance so every MGET would create another open file
+descriptor.  ckcftp.c, 22 Sep 2002.
+
+Added debug messages for temp-file creation and lines read from the temp file.
+ckcftp.c, 22 Sep 2002.
+
+Eliminated sending of some extraneous TYPE commands, but there's still room
+for improvement.  ckcftp.c, 22 Sep 2002.
+
+Moved definition of build date to top of ckcmai.c.  22 Sep 2002.
+
+Added recursion to MGET with MLSD...  It's all done in remote_files().
+Temp-file pointers are on a stack (max size 128).  When parsing MLSD lines
+from the temp file and we see "type=dir", we create the local directory by
+calling zmkdir(), change to the remote by sending CWD, increment the depth,
+and call ourselves.  When reading from a temp file, upon EOF we close and
+dispose of the temp file, return -3 if currently at top level, otherwise we
+free the tmpfile name, decrement the depth, send CDUP to the server, "cd .."
+locally, and go back and read the next line from the previous but now current
+temp file.  Conceptually simple but needed hours of debugging -- what must
+be static, what must be on the stack...  Seems OK now but still needs some
+heavy testing.  ckcftp.c, 22 Sep 2002.
+
+Added FTP { ENABLE, DISABLE } { SIZE, MDTM } and add help text for FTP
+ENABLE and DISABLE.  ckcftp.c, 23 Sep 2002.
+
+Don't allow restart if SIZE disabled.  ckcftp.c, 23 Sep 2002.
+
+Make sure all implicit SIZE commands are surpressed if SIZE disabled.
+ckcftp.c, 23 Sep 2002.
+
+If an explicit FTP MODTIME command is sent when MDTM is DISABLED, and it
+succeeds, re-ENABLE MDTM.  Ditto for SIZE.  ckcftp.c, 23 Sep 2002.
+
+If an explicit FTP FEATURES command is sent during an FTP session, redo the
+features database from it.  ckcftp.c, 23 Sep 2002.
+
+After further discussion with Robert Elz, I realized I had to expose the
+underlying MGET mechanisms to the user; the draft isn't going to change, and
+the new spec will result in undesirable effects if the client tries to "do the
+right thing" by magic in all situations; thus the user must have some new
+controls:
+
+  MGET [ /MLST, /NLST, /MATCH:xxx ] [ filespec [ filespec [ ... ] ] ]
+
+These switches let the user force the use of MLSD or NLST when there's a
+choice, and to force local use of a pattern rather than sending it to the
+server, and even to send a directory name to the server at the same time as
+specifying a pattern for local matching, and of course by default we try to do
+the right thing in all scenarios.  Symbols only; not coded yet.  ckuusr.h,
+23 Sep 2002.
+
+Added the three new switches to MGET, plus /MLST is an invisible synonym for
+/MLSD.  If /NLST or /MLSD is given it, it forces the corresponding FTP protocol
+directive.  ckcftp.c, 25 Sep 2002.
+
+Now for the tricky part: now we have two separate concepts for what to send to
+the server: a filename or wildcard to be interpreted by the server (NLST only)
+or a directory from which to get a list of all the files (NLST or MLSD),
+possibly together with a pattern to be used by the client to match filenames
+returned by the server.  This required giving remote_files() an additional
+argument.  Now it uses "pattern" (if any) strictly for local pattern matching
+(because now it is the /MATCH: switch argument, not the MGET filespec), and
+"arg" (the MGET filespec) is what it sends to the server, maybe (see the
+comments in the code for the actual details); either or both these can be
+null.  ckcftp.c, 25 Sep 2002.
+
+Discovered that "mget foo", where foo is a directory name, never worked.
+Fixed in remote_files(): ckcftp.c, 25 Sep 2002.
+
+Going through every combination of NLST, MLSD, /MATCH:, and MGET arg and
+debugging each case until OK...  Then also with the panix.com NetBSD server
+(lukemftpd 1.0) which also supports MLSD....  11 test cases all debugged and
+tested OK.  ckcftp.c, 26 Sep 2002.
+
+Added /NODOTFILES switch to FTP MGET, to control what happens with dot-files
+if the server includes their names in the list (as lukemftpd does).  There's
+no point in adding a /DOTFILES switch because what could it possibly do?
+ckcftp.c, 26 Sep 2002.
+
+Changed a bunch of "skipthis++" to "continue" in doftpget(), to avoid
+error messages when skipping files that user said she wanted to skip.
+ckcftp.c, 26 Sep 2002.
+
+Added help text for the new MGET switches.  ckcftp.c, 26 Sep 2002.
+
+Don't switch LOCUS when making an FTP connection until logged in.
+ckcftp.c, 26 Sep 2002.
+
+Fixed LDIR to run Kermit's built-in DIRECTORY code rather than the external
+directory program.  ckuusr.c, 26 Sep 2002.
+
+Protect iswild() against NULL args.  ckufio.c, 26 Sep 2002.
+
+From Jeff: SET GUI WINDOW RUN-MODE { MAXIMIZE, MINIMIZE, RESTORE },
+plus variables for GUI Window X position, GUI Window Y position, GUI
+Window X resolution, GUI Window Y resolution, GUI Window Run mode.
+ckuusr.h, ckuus[24].c, 27 Sep 2002.
+
+From Ronan Flood: updated FreeBSD 1.0 makefile entry, plus an #ifdef to protect
+sysconf() calls.  makefile, ckutio.c, 28 Sep 2002.
+
+Change ftp_auth() to return(0) if an AUTH command gets a 500 response, so it
+doesn't keep sending other kinds of AUTH commands.  ckcftp.c, 29 Sep 2002.
+
+Changes from Jeff to yesterday's changes.  ckcftp.c, 30 Sep 2002.
+
+From Jeff: SSH command-line personality.  Uses same command line as the Telnet
+personality.  ckcker.h, ckcmai.c, ckuus[4y].c, 3 Oct 2002.
+
+From Jeff, 7 Oct 2002:
+ . SET PRINTER CHARACTER-SET.  ckuxla.c, ckuusr.h, ckuus[25].c
+ . Promotion of K95 to Beta.01.  ckcmai.c
+ . Promotion of SET GUI { MENUBAR, TOOLBAR } to visible.  ckuus3.c
+
+Changed the URL parser as follows: if the username and/or password fields are
+present but empty, as in:
+
+           ftp://@ftp.xyzcorp.com/somepath
+  or:      ftp://:@ftp.xyzcorp.com/somepath
+  but not: ftp://:ftp.xyzcorp.com/somepath
+
+the pointer for these items becomes a pointer to an empty string, rather than
+a NULL pointer.  Then when we go to open the connection, if the username
+string pointer points to an empty string, we prompt for the username (and/or
+password).  ckuusy.c 9 Oct 2002.
+
+Jason Heskett reported an interesting bug involving a core dump when an
+ON_EXIT macro is defined that executes another macro.  Sometimes.  He was able
+to send a short command file that always crashed.  Diagnosis: ON_EXIT, when it
+is called, pokes itself out of the macro table by setting its own entry in the
+macro name list to an empty string.  But this interferes with any macro
+lookups that are done while executing ON_EXIT's body and also evidently some
+code is not happy with empty macro names...  To fix: replace "on_exit" with
+"on_exxx", so the replacement keyword is (a) nonempty, and (b) doesn't wreck
+the alphabetical sorting of the table.  ckuusx.c, 9 Oct 2002.
+
+Added makefile targets for FreeBSD 4.6 and 5.0.  Built and tested on 4.6;
+don't know about 5.0.  ckuver.h, makefile, 9 Oct 2002.
+
+Added targets for AIX 5.2 and 5.3; totally untested.  ckuver.h, makefile,
+9 Oct 2002.
+
+Built current source on Unixware 7.1.3 (make uw7); it's fine.  9 Oct 2002.
+
+Promoted C-Kermit to 8.0.206 Beta.01 in hopes of a simultaneous release
+with K95 2.1.  ckcmai.c, 9 Oct 2002.
+
+From Jeff: Change KERMITFONT definitions to use the new (Unicode 3.1) code
+points for the terminal graphics characters (such as VT100 horizontal scan
+lines), rather than private-use codes.  ckcuni.c, 10 Oct 2002.
+
+Jason Heskett also complained that REMOTE CD would print the name of the new
+directory returned by the server even if he SET QUIET ON.  This is a tricky
+one.  Which server replies should the QUIET settings apply to?  If I give a
+REMOTE DIRECTORY command, it means I want to see the directory listing,
+period.  But if I give a REMOTE CD command, I get an "unsolicited" response
+message that SET QUIET ON should suppress.  Adding message suppression to 
+rcv_shortreply() is close, but not totally right; for example, it also
+suppresses the response to REMOTE PWD, which is not helpful.  The only right
+way to do this is to suppress for REMOTE CD only, which can be done only by
+setting a (new) global flag, rcdactive.  ckuus[r57].c, ckcpro.w, 10 Oct 2002.
+
+Ditto for REMOTE LOGIN response message ("Logged in").  ckuus7.c, 11 Oct 2002.
+
+From Jeff: SET GUI WINDOW FONT { NAME, SIZE }. ckuusr.h, ckuus4.c, 11 Oct 2002.
+
+Quick preliminary 8.0.206 build-all:
+
+ OK SunOS 4.1.3
+ OK Solaris 2.5.1
+ OK Solaris 9
+ OK AIX 4.3.3
+ OK HP-UX 10.20
+ OK VMS 7.1 Alpha + TCP/IP
+ OK VMS 7.1 Alpha nonet
+ OK VMS 5.5 VAX + TCP/IP
+ OK VMS 5.5 VAX nonet
+ OK Unixware 7.1.3
+ OK FreeBSD 3.1
+ OK FreeBSD 4.6
+ OK NetBSD 1.5.2 MVME (Gerry B)
+ OK Sinix 5.42
+
+Sinix build got stuck on ckuusr.c even though we're not optimizing on Sinix
+any more.  Rebooting the machine fixed it.
+
+Fixed some #ifdefs for VMS in new incomplete-file deletion code in doclean().
+ckuusx.c, 11 Oct 2002.
+
+Moved uq_blah() prototypes from ckuusr.h to ckcker.h because these routines
+are called in modules that don't (and shouldn't have to) include ckuusr.h.
+11 Oct 2002.
+
+Jeff verified secure builds on Linux and Solaris.
+
+Custom-build workout: 80 different feature-selection combinations:
+ . Fixed yesterday's change for NOSPL: ckcfns.c.
+ . Fixed conflict between NORECALL and USE_ARROWKEYS: ckucmd.c.
+ . Moved setseslog() from ckuus5.c to ckuusx.c to avoid link-time foulups.
+ . Fixed an unguarded reference to zmkdir() in ckcftp.c.
+ . Protected rmsg() by #ifndef NOXFER: ckuus7.c.
+ . Protected initxlist() by #ifndef NOXFER: ckcmai.c.
+ . Fixed unguarded references to g_url struct in xx_ftp(): ckuusy.c.
+ . Fixed unguarded references to tt_snaws() in winchh(): ckutio.c.
+
+--- 8.0.206 Beta.01 11 Oct 2002 ---
+
+From Jeff, 16 Oct 2002:
+ . Fix K95 RMDIR: ckcfn3.c.
+ . Makefile targets for Red Hat 7.2, 7.3, 8.0: ckuver.h, makefile.
+ . Added \v(log_xxx) for each kind of log for PeterE: ckuusr.h, ckuus4.c.
+ . Added SET TERM ATTRIBUTE DIM { ON, OFF }: ckuus[27].c.
+ . Change "const" to "CONST" in some PAM declarations.  ckufio.c.
+
+Added SET MATCH { DOTFILE, FIFO } { ON, OFF }.  A FIFO special file is a named
+pipe, used for interprocess communication.  It must be opened at both ends, so
+it's silly to match them by default; opening a FIFO and attempting to read
+will block forever unless somebody is writing into the other end.  Made the
+MATCH FIFO default OFF in all cases.  The dotfile default is the same as
+always (OFF for UNIX, ON elsewhere); SET MATCH DOTFILE is simply a more
+untuitive and findable command than SET WILD KERMIT /MATCH-DOT-FILES.  Note
+that SET MATCH DOTFILE undoes SET OPTIONS DIRECTORY /[NO]DOTFILES, and vice
+versa.  ckcmai.c, ckuusr.h, ckuus[23].c, ckufio.c. 17 Oct 2002.
+
+Added client and server end of REMOTE SET MATCH { DOTFILE, FIFO } { ON, OFF }.
+The new protocol codes are 330 and 331, respectively.  ckuus[367].c, ckcfns.c,
+17 Oct 2002.
+
+Adjusted the "match dot if pattern starts with dot" heuristic in nzxpand()
+to not kick in if the filespec is "./foo".  This probably needs more work.
+ckufio.c, 17 Oct 2002.
+
+Fixed typo in transcribing Jeff's ckcfn3.c code from yesterday.  18 Oct 2002.
+
+Moved some help text out of #ifdef ANYSSH that had nothing to do with SSH.
+(Idea for a new EMACS feature: M-X list-ifdef-environment.)
+ckuus2.c, 18 Oct 2002.
+
+Removed "set file { permission, protection }" keywords, which led nowhere.
+ckuus7.c, 18 Oct 2002.
+
+Added -DSV68 to all SV/68 targets.  Make ckgetfqhostname() just return its
+argument in SV/68; it dumps core otherwise.  In case this happens anywhere
+else, add -DNOCKGETFQHOST to CFLAGS.  makefile, ckcnet.c, 18 Oct 2002.
+
+For PeterE, added SET { SEND, RECEIVE } PERMISSIONS { ON, OFF } so incoming and
+outbound permission attributes can be set separately. ckuus[27].c, 18 Oct 2002.
+
+Changed SHOW ATTRIBUTES to show In and Out permissions separately.
+ckuus5.c, 18 Oct 2002.
+
+Fixed REDO to display the command it's redoing and to add it to the bottom
+of the recall buffer.  ckuusr.c, 18 Oct 2002.
+
+Discovered that DATE SATURDAY dumps core...  Apparently it always did; this
+case was not included in the date-time torture test script.  The crash happens
+because the DATE parsing code doesn't check for a NULL date-converion
+error-message pointer.  Fixed in ckuusr.c, 18 Oct 2002.
+
+The reason DATE SATURDAY got a date-conversion error was that this path thru
+the code left a result pointer unset.  Fixed in cmcvtdate(): ckucmd.c,
+19 Oct 2002.
+
+DATE SUNDAY +1DAY returned incorrect results (for any day-of-week name, any
+delta time), even though DATE TODAY +1DAY worked fine.  Fixed in cmcvtdate():
+ckucmd.c, 19 Oct 2002.
+
+SET TAKE ECHO ON counted each line twice when GOTO was active.  Fixed in
+dogoto(): ckuus6.c, 19 Oct 2002.
+
+Jeff noticed:
+"KERMIT READY TO GET...
+ RCVD: (2 files) Last: [/amd/prost/p/kd/jaltman/.src/ckonet.c] (OK)
+the last file attempted may have been ckonet.c but it certainly was
+not the last file received" (similarly for sending).  Fixed by having two
+pointers for each name; a preliminary pointer, which is set for each file at
+the beginning of the transfer (when we have all the needed info), and a final
+one that is set from the preliminary one only after the file was transferred
+successfully.  This corrects not only the automatic "wheremessage" at the end
+of a remote-mode transfer, but also the WHERE and SHOW FILE command results.
+ckuusx.c, ckcfn[s3].c, ckcpro.w, 19 Oct 2002.
+
+From Jeff: Improve ORIENTATION message for K95 to say which directories are
+for which INI files.  ckuusr.c, 23 Oct 2002.
+
+Removed Beta designation from herald.  ckcmai.c, 23 Oct 2002.
+
+Put final dates and ID strings in Unix and VMS build procedures.
+Makefile, ckvker.com, 23 Oct 2002.
+
+Build-all...  #ifdef adjustments: ckcfns.c...  83 different feature-set
+combinations build OK on Linux.  23 Oct 2002.
+
+From Jeff: SET WIN95 HORIZONTAL-SCAN-LINE-SUBSTITUTIONS.  ckuusr.h, ckuus7.c,
+24 Oct 2002.
+
+Fixed Heath-19 graphic character-set table to use new Unicode 3.1 values
+if WIN95 HORIZ OFF.  ckcuni.c, 24 Oct 2002.
+
+Changed tx_usub() to return Unicode 3.1 values if WIN95 HORIZ OFF.
+ckcuni.c, 24 Oct 2002. <-- No backed off on this.
+
+Some problems during build-all:
+
+ . VMS 7.1 TGV 4.2: If I make a Telnet connection with it, then try to send
+   a file (itself. wermit.exe) over the connection, the connection drops
+   after about 20%, the thermometer zooms out to 100% and SUCCESS is reported.
+   This doesn't happen with UCX.
+
+ . VMS 7.3 TGV 4.3: ckcmai.c won't compile because of a complaint about the
+   declaration of select() (which ckcmai.c doesn't use) in
+   SYS$COMMON:[SYSLIB]DECC$RTLDEF.TLB.  Ditto in VMS 7.2 TGV 4.3.
+   Adding NOSELECT to CFLAGS doesn't help.  I don't think the VMS version
+   even uses select().  But the TGV 4.3 builds were OK in 8.0.201, so what
+   changed?  I don't see anything in ckcnet.h that would have done it.
+
+It builds OK with VMS 7.1 / TGV 4.2 but sending files on Telnet connections
+fails in a strange way: the connection drops, but the thermomoter goes to 100%
+and success is reported.  I don't know why the connection is dropping (s_errno
+is 32 == "broken pipe"), but the spurious success indication is because of
+a double failure in sdata(): (1) The packet-sending loop index could go
+negative without breaking the loop when streaming; (2) if spack() fails,
+sdata() should return -2, not -1 (which means EOF).  Also if any ttchk() in
+sdata() returns < 0, sdata should return -2.  I fixed this code (which has
+been this way for YEARS) and now VMS C-Kermit properly fails when it gets
+the spack() error, but ttchk() in this case still doesn't think the connection
+is lost, but that must be our new problem with MultiNet.  ckcfns.c,
+27 Oct 2002.
+
+The compilation failure in ckcmai.c is a clue...  The problem was that I added
+#ifdef VMS / #include <time.h> / #endif to shut up complaints about the time()
+call.  Evidently something in VMS <time.h> gives MultiNet a bad case of
+indigestion; removing it fixes the compilation and the result works fine.  The
+transmission failures in the other case seem to be a coincidence -- something
+to do with the U of Arizona (probably some obscure VMS quota on my IDs there,
+or some kind of network connection throttling), since it doesn't happen
+anywhere else.  ckcmai.c, 27 Oct 2002.
+
+Changed four occurrences of "void" to "VOID" in ckcftp.c, 27 Oct 2002.
+
+Defined NOCKFQHOSTNAME for HPUXPRE65.  Might also need this for HP-UX 7
+and maybe 8.  ckcnet.c, 27 Oct 2002.
+
+From Jeff: PAM_CONST definition to clear up warnings caused by different
+vendors' definitions of PAM structs.  ckufio.c, 28 Oct 2002.
+
+Unixware 2.1.0 build bombs immediately with "UX:make: ERROR: line too long"
+(which line?)  Not worth chopping up the makefile to fix but in a pinch it
+could be done.  2.1.3 builds OK.
+
+Did another 20-some platform builds, bringing the total to 83, plus a final
+runthrough of the build-with-84-different-feature-set-combinations script on
+Linux.  Should be good to go!
+
+--- 8.0.206 24 Oct 2002 ---
+
+Finally got access to Linux on IA64 again.  Builds OK but dumps core
+immediately on startup.  Adding -DNOCKGETFQHOST was necessary but not
+sufficient.  In this case, the very call to ckgetfqhostname() from ckhost()
+(which is in ckuusx.c) was dumping core; thus I had to move the definition of
+NOCKGETFQHOST from ckcnet.c to ckcdeb.h, add an #ifdef __ia64__ clause to it,
+and protect the call to ckgetfqhostname() with it.  Obviously there has to be
+a better fix but this will have to for now.  ckcnet.c, ckuusx.c, ckcdeb.h,
+31 Oct 2002.
+
+Link step fails in Mandrake 9.0 with undefined references to res_search,
+dn_expand, and crypt.  Turns out the linux makefile target tests for the
+existence of libcrypt.a and libresolv.a, but in Mandrake 9.0 they exist
+only as *.so.  Changed linux target to look for both.  makefile, 1 Nov 2002.
+
+Vace reported that "ftp mget a b c" would get ALL files from the server's
+directory if c did not exist.  Diagnosis: off-by-one error in counting MGET
+args processed.  Naturally fixing this bug revealed another (this time
+cosmetic) one, which resulted in spurious error messages when hitting MGET
+args that have no match on the server.  Fixed in ckcftp.c, 1 Nov 2002.
+
+Rebuilt about 60 of the most important Unix binaries to pick up the fixes
+31 Oct - 1 Nov 2002, and refreshed the FTP site with new sources, tarballs,
+ZIP files, etc.  Sat Nov  2 19:11:30 2002
+
+From Martin Vorlaender and Jeff, SSL/TLS support for VMS:
+ckuusr.h, ckuath.h, ckcnet.c, ckctel.c, ckuath.c, 10 Nov 2002.
+
+Add PASV as invisible synonym for PASSIVE.  ckcftp.c, 10 Nov 2002.
+
+--- 8.0.206 24 Oct 2002 ---
+
+More work on SSL in VMS: Jeff + Martin Vorlaender: ck_ssl.c ckcmai.c ckcnet.c
+ckctel.c ckuath.h ckvcon.c ckvtio.c ckvker.com 10-15 Nov 2002.
+
+Discovered that ckvfio.c would not compile on VMS 6.1 with UCX 4.1 because 
+<conv$routines.h> was missing, which is explicitly included.  Enclosed the
+#include in #ifdef NOCONVROUTINES..#endif and rebuilt with
+@[users.fdc.src]ckvker.com "" "" "NOCONVROUTINES".  16 Nov 2002.
+
+Fixed the "ftp mget */data/*" problem with two small changes to doftpget():
+ckcftp.c, 16 Nov 2002.  Placed a copy of ckcftp.patch in ~kermit/f.
+
+From Lucas Hart: Fixes for VAX C 2.x and CMU TCP/IP.  "Can't guarantee that
+the revised CKVOLD will work for all combinations of more recent
+VMS/compiler/TCPIP releases, but I've tested it for compatibility on our AXP
+VMS 6.2, UCX 4.0, DECC 5.6, your AXP VMS 7.1, DEC TCPIP 5.1, DECC 6.0 as well
+as with VAX VMS 5.4, VAX C 3.2, CMU12 and VAX VMS 4.7, VAX C 2.4."  ckvfio.c,
+ckvtio.c, ckuus5.c, ckvker.com, ckvold.com, 17 Nov 2002.
+
+From Jeff: More work on VMS SSL.  Now it actually works, even in CONNECT mode,
+except it hangs when it gets an error alert or the remote closes the
+connection.  ckcnet.c. ckvtio.c, 17 Nov 2002.
+
+NOTE: Lucas's changes should go into the 8.0.206 source code but it's too
+late since ckvtio.c (upon which he based his changes) is already full of
+SSL code.
+
+MGET in K95 in totally broken FOR SOME PEOPLE (mainly me) if the TMP (or TEMP)
+value is too long.  It works fine if you set these to C:\TMP.  Diagnosis: (1)
+we were malloc'ing only 16 bytes for the temp file name (I think this was my
+fault -- I was only looking at the "ckXXXXXX" part and forgetting that this
+was appended to the TMP path); (2) the Windows version of mktemp() wants you
+to use the value pointed to by the pointer it returns, rather than assuming
+the mktemp() arg will be modified in place.  The code was changed to malloc a
+longer string and to use the return value from mktemp() (if any) rather than
+assuming that mktemp() modified its argument string (in K95 only -- not sure
+about Unix platforms; the man pages differ on this, but at least this way if
+some mktemp() version does NOT alter its argument, we still have a usable
+filename (like /tmp/ckXXXXXX)).  Of course this won't be good for recursive
+MLSD downloads, but we can always issue patches for the Unix version later if
+needed.  The Linux and BSD versions use mkstemp() anyway.  There is, however,
+a danger of a memory leak in the Unix version if the user has defined a TMPDIR
+or CK_TMP environment variable whose value is longer than 9 bytes.  All this
+is highly unlikely so we should be OK.  ckcftp.c, 17 Nov 2002.
+
+--- K95 2.1.1 and updated ck[uv]206.{tar,zip} but not C-Kermit binaries ---
+
+***********************

@@ -1,5 +1,5 @@
 char *protv =                                                     /* -*-C-*- */
-"C-Kermit Protocol Module 8.0.157, 20 Dec 2001";
+"C-Kermit Protocol Module 8.0.158, 11 Sep 2002";
 
 int kactive = 0;			/* Kermit protocol is active */
 
@@ -44,18 +44,21 @@ int kactive = 0;			/* Kermit protocol is active */
 %states serve generic get rgen ssopkt ropkt
 
 _PROTOTYP(static VOID xxproto,(void));
+_PROTOTYP(static VOID wheremsg,(void));
 _PROTOTYP(int wart,(void));
 _PROTOTYP(static int sgetinit,(int,int));
 _PROTOTYP(int sndspace,(int));
 
 /* External C-Kermit variable declarations */
   extern char *versio, *srvtxt, *cmarg, *cmarg2, **cmlist, *rf_err;
+  extern char * rfspec, * sfspec, * srfspec, * rrfspec;
+  extern char * prfspec, * psfspec, * psrfspec, * prrfspec;
   extern char *cdmsgfile[];
   extern char * snd_move, * snd_rename, * srimsg;
   extern char filnam[], ofilnam[], fspec[], ttname[], ofn1[];
   extern CHAR sstate, *srvptr, *data;
   extern int timint, rtimo, nfils, hcflg, xflg, flow, mdmtyp, network;
-  extern int oopts, omode, oname, opath, nopush, isguest, xcmdsrc;
+  extern int oopts, omode, oname, opath, nopush, isguest, xcmdsrc, rcdactive;
   extern int rejection, moving, fncact, bye_active, urserver, fatalio;
   extern int protocol, prefixing, filcnt, carrier, fnspath, interrupted;
   extern int recursive, inserver, nzxopts, idletmo, srvidl, xfrint;
@@ -71,6 +74,7 @@ static int ipktlen = 0;
 #endif /* PKTZEROHACK */
 
 static int s_timint = -1;		/* For saving timeout value */
+static int myjob = 0;
 static int havefs = 0;
 #ifdef CK_LOGIN
 static int logtries = 0;
@@ -196,6 +200,75 @@ extern int justone;
 static int r_save = -1;
 static int p_save = -1;
 
+/* Function to let remote-mode user know where their file(s) went */
+
+int whereflg = 1;			/* Unset with SET XFER REPORT */
+
+static VOID
+wheremsg() {
+    extern int quiet, filrej;
+    int n;
+    n = filcnt - filrej;
+    debug(F101,"wheremsg n","",n);
+
+    debug(F110,"wheremsg prfspec",prfspec,0);
+    debug(F110,"wheremsg rfspec",rfspec,0);
+    debug(F110,"wheremsg psfspec",psfspec,0);
+    debug(F110,"wheremsg sfspec",sfspec,0);
+
+    debug(F110,"wheremsg prrfspec",prrfspec,0);
+    debug(F110,"wheremsg rrfspec",rrfspec,0);
+    debug(F110,"wheremsg psrfspec",psrfspec,0);
+    debug(F110,"wheremsg srfspec",srfspec,0);
+
+    if (!quiet && !local) {
+	if (n == 1) {
+	    switch (myjob) {
+	      case 's':
+		if (sfspec) {
+		    printf(" SENT: [%s]",sfspec);
+		    if (srfspec)
+		      printf(" To: [%s]",srfspec);
+		    printf(" (%s)\n", success ? "OK" : "FAILED");
+		}
+		break;
+	      case 'r':
+	      case 'v':
+		if (rrfspec) {
+		    printf(" RCVD: [%s]",rrfspec);
+		    if (rfspec)
+		      printf(" To: [%s]",rfspec);
+		    printf(" (%s)\n", success ? "OK" : "FAILED");
+		}
+	    }
+	} else if (n > 1) {
+	    switch (myjob) {
+	      case 's':
+		if (sfspec) {
+		    printf(" SENT: (%d files)",n);
+		    if (srfspec)
+		      printf(" Last: [%s]",srfspec);
+		    printf(" (%s)\n", success ? "OK" : "FAILED");
+		}
+		break;
+	      case 'r':
+	      case 'v':
+		if (rrfspec) {
+		    printf(" RCVD: (%d files)",n);
+		    if (rfspec)
+		      printf(" Last: [%s]",rfspec);
+		    printf(" (%s)\n", success ? "OK" : "FAILED");
+		}
+	    }
+	} else if (n == 0) {
+	    if (myjob == 's')
+	      printf(" SENT: (0 files)          \n");
+	    else if (myjob == 'r' || myjob == 'v')
+	      printf(" RCVD: (0 files)          \n");
+	}
+    }
+}
+
 static VOID
 rdebug() {
     if (server)
@@ -235,8 +308,8 @@ extern int what, lastxfer;
 #define TINIT if (tinit(1) < 0) return(-9)
 #define SERVE { TINIT; resetc(); nakstate=1; what=W_NOTHING; cmarg2=""; \
 sendmode=SM_SEND; havefs=0; recursive=r_save; fnspath=p_save; BEGIN serve; }
-#define RESUME { rdebug(); if (!server) { return(0); } else \
-if (justone) { justone=0; return(0); } else { SERVE; } }
+#define RESUME { rdebug(); if (!server) { wheremsg(); return(0); } else \
+if (justone) { justone=0; wheremsg(); return(0); } else { SERVE; } }
 
 #ifdef GFTIMER
 #define QUIT x=quiet; quiet=1; clsif(); clsof(1); tsecs=gtimer(); \
@@ -1673,11 +1746,10 @@ _PROTOTYP(int sndwho,(char *));
     debug(F101,"<ssfile>Y cxseen","",cxseen);
     if (*srvcmd) {			/* If remote name was recorded */
         if (sendmode != SM_RESEND) {
-	    extern char * srfspec;
 	    if (fdispla == XYFD_C || fdispla == XYFD_S)
 	      xxscreen(SCR_AN,0,0L,(char *)srvcmd);
 	    tlog(F110," remote name:",(char *) srvcmd,0L);
-	    makestr(&srfspec,(char *)srvcmd);
+	    makestr(&psrfspec,(char *)srvcmd);
         }
     }
     if (cxseen||czseen) {		/* Interrupted? */
@@ -1793,10 +1865,13 @@ _PROTOTYP(int sndwho,(char *));
 }
 
 <sseof>Y {				/* Got ACK to EOF */
-    int g;
+    int g, xdiscard;
     canned(rdatap);			/* Check if file transfer cancelled */
     debug(F111,"<sseof>Y cxseen",rdatap,cxseen);
     debug(F111,"<sseof>Y czseen",rdatap,czseen);
+    debug(F111,"<sseof>Y discard",rdatap,discard);
+    xdiscard = discard;
+    discard = 0;
     success = (cxseen == 0 && czseen == 0); /* Transfer status... */
     debug(F101,"<sseof>Y success","",success);
     if (success && rejection > 0)	    /* If rejected, succeed if */
@@ -1806,6 +1881,10 @@ _PROTOTYP(int sndwho,(char *));
     cxseen = 0;				/* This goes back to zero. */
     if (success) {			/* Only if transfer succeeded... */
 	xxscreen(SCR_ST,ST_OK,0L,"");
+	if (!xdiscard) {
+	    makestr(&sfspec,psfspec);	/* Record filenames for WHERE */
+	    makestr(&srfspec,psrfspec);
+	}
 	if (moving) {			/* If MOVE'ing */
 	    x = zdelet(filnam);		/* Try to delete the source file */
 #ifdef TLOG
@@ -2167,7 +2246,8 @@ rcv_shortreply() {
 #ifndef NOICP
 			if (!query || !xcmdsrc)
 #endif /* NOICP */
-			  conoll("");
+			  if (!(quiet && rcdactive))
+			    conoll("");
 		    }
 		if (bye_active && network) { /* I sent BYE or REMOTE LOGOUT */
 		    msleep(500);	/* command and got the ACK... */
@@ -2653,6 +2733,7 @@ rcv_s_pkt() {
     return(-1);
 }
 
+
 /* END OF ROUTINES MOVED OUT OF STATE MACHINE */
 
 
@@ -2706,6 +2787,8 @@ proto() {
     pa_save = patterns;
 #endif /* PATTERNS */
     scan_save = filepeek;
+
+    myjob = sstate;
 
 #ifdef CK_LOGIN
     if (isguest) {			/* If user is anonymous */

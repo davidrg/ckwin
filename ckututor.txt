@@ -17,7 +17,7 @@ C-KERMIT 8.0 UNIX MANUAL PAGE AND TUTORIAL
      helpful to beginners and veterans alike, as well as to those
      upgrading to the new release. 
      
-   Most recent update: 3 Feb 2002
+   Most recent update: 24 October 2002
     ________________________________________________________________________
   
   CONTENTS
@@ -1398,21 +1398,28 @@ C-KERMIT 8.0 UNIX MANUAL PAGE AND TUTORIAL
    used to, but with some differences:
    
      * It has lots more commands and features.
-     * Each FTP command must be prefixed with "ftp", for example "ftp
-       open", "ftp get", "ftp bye", etc (this is not strictly true, but
-       until you're more familiar with it, it's best to follow this
-       rule).
-     * Commands like "cd", "directory", etc, execute locally, not on the
-       server. Use "ftp cd", "ftp dir", etc, to have them act on the
-       server.
      * You can have an FTP session and a regular Kermit serial or Telnet
        session open at the same time.
      * FTP sessions can be fully automated.
        
+   By default Kermit's FTP client tries its best to present the same user
+   interface as a regular FTP client: PUT, GET, DIR, CD, BYE, etc, should
+   work the same, even though some of these commands have different
+   meaning in Kermit-to-Kermit connections; for example, CD, DIR, RENAME,
+   etc, in Kermit act locally, whereas in FTP they are commands for the
+   server. This might cause some confusion, but as in all things Kermit,
+   you have total control:
+   
+     * The [136]SET LOCUS command lets you specify where file management
+       commands should be executed -- locally or remotely -- for any kind
+       of connection.
+     * Any FTP command can be prefixed with the word "FTP" to remove any
+       ambiguity.
+       
    Pending publication of the next edition of the manual, the Kermit FTP
    client is thoroughly documented at the Kermit Project website:
    
-  [136]http://www.columbia.edu/kermit/ftpclient.html
+  [137]http://www.columbia.edu/kermit/ftpclient.html
 
    You also can use HELP FTP and HELP SET FTP to get descriptions of
    Kermit's FTP-related commands.
@@ -1420,16 +1427,16 @@ C-KERMIT 8.0 UNIX MANUAL PAGE AND TUTORIAL
    The HTTP client is similar to the FTP one, except you prefix each
    command with HTTP instead of FTP: HTTP OPEN, HTTP GET, HTTP PUT, HTTP
    CLOSE, etc. Type HELP HTTP for details, or visit the to view the
-   [137]manual supplements. HTTP connections can be open at the same time
+   [138]manual supplements. HTTP connections can be open at the same time
    as regular serial or Telnet connections and FTP connections. So Kermit
    can manage up to three types connections simultaneously.
    
-   [ [138]Kermit Home ] [ [139]C-Kermit Home ] [ [140]C-Kermit FAQ ] [
-   [141]FTP Client ] [ [142]HTTP Client ]
+   [ [139]Kermit Home ] [ [140]C-Kermit Home ] [ [141]C-Kermit FAQ ] [
+   [142]FTP Client ] [ [143]HTTP Client ]
     ________________________________________________________________________
   
-  INTERNET KERMIT SERVICE [ [143]Top ] [ [144]Contents ] [ [145]Next ] [
-  [146]Previous ]
+  INTERNET KERMIT SERVICE [ [144]Top ] [ [145]Contents ] [ [146]Next ] [
+  [147]Previous ]
   
    C-Kermit can be configured and run as an Internet service (called
    IKSD), similar to an FTP server (FTPD) except you can (but need not)
@@ -1447,17 +1454,17 @@ C-KERMIT 8.0 UNIX MANUAL PAGE AND TUTORIAL
    1649. For more information about making and using connections to an
    IKSD, see:
    
-  [147]http://www.columbia.edu/kermit/cuiksd.html
+  [148]http://www.columbia.edu/kermit/cuiksd.html
 
    You can run an Internet Kermit Service on your own computer too (if
    you are the system administrator). For instructions, see:
    
-  [148]http://www.columbia.edu/kermit/iksd.html
+  [149]http://www.columbia.edu/kermit/iksd.html
 
-   [ [149]Kermit Home ] [ [150]C-Kermit Home ] [ [151]C-Kermit FAQ ]
+   [ [150]Kermit Home ] [ [151]C-Kermit Home ] [ [152]C-Kermit FAQ ]
     ________________________________________________________________________
   
-  SECURITY [ [152]Top ] [ [153]Contents ] [ [154]Next ] [ [155]Previous ]
+  SECURITY [ [153]Top ] [ [154]Contents ] [ [155]Next ] [ [156]Previous ]
   
    All of C-Kermit's built-in TCP/IP networking methods (Telnet, Rlogin,
    IKSD, FTP, and HTTP) can be secured by one or more of the following
@@ -1470,20 +1477,20 @@ C-KERMIT 8.0 UNIX MANUAL PAGE AND TUTORIAL
        
    For complete instructions see:
    
-  [156]http://www.columbia.edu/kermit/security.html
+  [157]http://www.columbia.edu/kermit/security.html
 
    And as noted previously, you can also make SSH connections with
    C-Kermit if you already have an SSH client installed.
    
-   [ [157]Kermit Home ] [ [158]C-Kermit Home ] [ [159]C-Kermit FAQ ]
+   [ [158]Kermit Home ] [ [159]C-Kermit Home ] [ [160]C-Kermit FAQ ]
     ________________________________________________________________________
   
-  ALTERNATIVE COMMAND-LINE PERSONALITIES [ [160]Top ] [ [161]Contents ] [
-  [162]Next ] [ [163]Previous ]
+  ALTERNATIVE COMMAND-LINE PERSONALITIES [ [161]Top ] [ [162]Contents ] [
+  [163]Next ] [ [164]Previous ]
   
    When invoked as "kermit" or any other name besides any of the special
    ones, C-Kermit has the command-line options described above in the
-   [164]OPTIONS section. However, if you invoke C-Kermit using any of the
+   [165]OPTIONS section. However, if you invoke C-Kermit using any of the
    following names:
    
      telnet  Telnet client
@@ -1520,7 +1527,7 @@ C-KERMIT 8.0 UNIX MANUAL PAGE AND TUTORIAL
   ftp -n xyzcorp.com
 
    but with additional options allowing an entire session to be specified
-   on the command line, as explained in the C-Kermit [165]FTP client
+   on the command line, as explained in the C-Kermit [166]FTP client
    documentation.
    
    And similarly for HTTP:
@@ -1542,10 +1549,10 @@ C-KERMIT 8.0 UNIX MANUAL PAGE AND TUTORIAL
   kermit https://wwws.xyzcorp.com/secret/plan.html     ; Grabs a secure web pag
 e
 
-   [ [166]Kermit Home ] [ [167]C-Kermit Home ] [ [168]C-Kermit FAQ ]
+   [ [167]Kermit Home ] [ [168]C-Kermit Home ] [ [169]C-Kermit FAQ ]
     ________________________________________________________________________
   
-  LICENSE [ [169]Top ] [ [170]Contents ] [ [171]Next ] [ [172]Previous ]
+  LICENSE [ [170]Top ] [ [171]Contents ] [ [172]Next ] [ [173]Previous ]
   
    C-Kermit has an unusual license, but a fair and sensible one given
    that the Kermit Project must support itself out of revenue: it's not a
@@ -1559,13 +1566,13 @@ e
    license it. To see the complete license, give the LICENSE command at
    the prompt, or see the COPYING.TXT file distributed with C-Kermit 7.0
    or later, or download it from
-   [173]ftp://kermit.columbia.edu/kermit/c-kermit/COPYING.TXT. Send
-   licensing inquiries to [174]kermit@columbia.edu.
+   [174]ftp://kermit.columbia.edu/kermit/c-kermit/COPYING.TXT. Send
+   licensing inquiries to [175]kermit@columbia.edu.
    
-   [ [175]Kermit Home ] [ [176]C-Kermit Home ] [ [177]C-Kermit FAQ ]
+   [ [176]Kermit Home ] [ [177]C-Kermit Home ] [ [178]C-Kermit FAQ ]
     ________________________________________________________________________
   
-  OTHER TOPICS [ [178]Top ] [ [179]Contents ] [ [180]Next ] [ [181]Previous ]
+  OTHER TOPICS [ [179]Top ] [ [180]Contents ] [ [181]Next ] [ [182]Previous ]
   
    There's way more to C-Kermit than we've touched on here --
    troubleshooting, customization, character sets, dialing directories,
@@ -1574,92 +1581,92 @@ e
    information on documentation (or updated documentation itself) visit
    the Kermit Project website:
    
-  [182]http://www.columbia.edu/kermit/
+  [183]http://www.columbia.edu/kermit/
 
-   There you will also find [183]Kermit software packages for other
+   There you will also find [184]Kermit software packages for other
    platforms: different Unix varieties, Windows, DOS, VMS, IBM
    mainframes, and many others: 20+ years' worth.
    
-   [ [184]Kermit Home ] [ [185]C-Kermit Home ] [ [186]C-Kermit FAQ ]
+   [ [185]Kermit Home ] [ [186]C-Kermit Home ] [ [187]C-Kermit FAQ ]
     ________________________________________________________________________
   
-  DOCUMENTATION AND UPDATES [ [187]Top ] [ [188]Contents ] [ [189]Next ] [
-  [190]Previous ]
+  DOCUMENTATION AND UPDATES [ [188]Top ] [ [189]Contents ] [ [190]Next ] [
+  [191]Previous ]
   
    The manual for C-Kermit is:
    
-    1. Frank da Cruz and Christine M. Gianone, [191]Using C-Kermit,
+    1. Frank da Cruz and Christine M. Gianone, [192]Using C-Kermit,
        Second Edition, Digital Press / Butterworth-Heinemann, Woburn, MA,
        1997, 622 pages, ISBN 1-55558-164-1. This is a printed book. It
        covers C-Kermit 6.0.
     2. The C-Kermit 7.0 Supplement:
-       [192]http://www.columbia.edu/kermit/ckermit70.html
+       [193]http://www.columbia.edu/kermit/ckermit70.html
     3. The C-Kermit 8.0 Supplement:
-       [193]http://www.columbia.edu/kermit/ckermit80.html
+       [194]http://www.columbia.edu/kermit/ckermit80.html
        
    The C-Kermit home page is here:
    
-  [194]http://www.columbia.edu/kermit/ckermit.html
+  [195]http://www.columbia.edu/kermit/ckermit.html
 
    Visit this page to learn about new versions, Beta tests, and other
    news; to read case studies and tutorials; to download source code,
-   install packages, and [195]prebuilt binaries for many platforms. Also
+   install packages, and [196]prebuilt binaries for many platforms. Also
    visit:
    
-   [196]http://www.columbia.edu/kermit/scriptlib.html
+   [197]http://www.columbia.edu/kermit/scriptlib.html
           The Kermit script library and tutorial
           
-   [197]http://www.columbia.edu/kermit/newfaq.html
+   [198]http://www.columbia.edu/kermit/newfaq.html
           The Kermit FAQ (Frequently Asked Questions about Kermit)
           
-   [198]http://www.columbia.edu/kermit/ckfaq.html
+   [199]http://www.columbia.edu/kermit/ckfaq.html
           The C-Kermit FAQ (Frequently Asked Questions about C-Kermit)
           
-   [199]http://www.columbia.edu/kermit/security.html
+   [200]http://www.columbia.edu/kermit/security.html
           The Kermit security reference.
           
-   [200]http://www.columbia.edu/kermit/telnet.html
+   [201]http://www.columbia.edu/kermit/telnet.html
           C-Kermit Telnet client documentation.
           
-   [201]http://www.columbia.edu/kermit/studies.html
+   [202]http://www.columbia.edu/kermit/studies.html
           Case studies.
           
-   [202]http://www.columbia.edu/kermit/ckcbwr.html
+   [203]http://www.columbia.edu/kermit/ckcbwr.html
           General C-Kermit Hints and Tips.
           
-   [203]http://www.columbia.edu/kermit/ckubwr.html
+   [204]http://www.columbia.edu/kermit/ckubwr.html
           Unix C-Kermit Hints and Tips.
           
-   [204]http://www.columbia.edu/kermit/ckvbwr.html
+   [205]http://www.columbia.edu/kermit/ckvbwr.html
           VMS C-Kermit Hints and Tips.
           
-   [205]http://www.columbia.edu/kermit/ckuins.html
+   [206]http://www.columbia.edu/kermit/ckuins.html
           Unix C-Kermit Installation Instructions
           
-   [206]http://www.columbia.edu/kermit/ckvins.html
+   [207]http://www.columbia.edu/kermit/ckvins.html
           VMS C-Kermit Installation Instructions
           
-   [207]http://www.columbia.edu/kermit/support.html
+   [208]http://www.columbia.edu/kermit/support.html
           Technical support.
           
-   [208]http://www.columbia.edu/kermit/k95tutorial.html
+   [209]http://www.columbia.edu/kermit/k95tutorial.html
           Kermit 95 tutorial (this document).
           
-   [209]comp.protocols.kermit.misc
+   [210]comp.protocols.kermit.misc
           The Kermit newsgroup (unmoderated).
           
-   [ [210]Kermit Home ] [ [211]C-Kermit Home ] [ [212]C-Kermit FAQ ]
+   [ [211]Kermit Home ] [ [212]C-Kermit Home ] [ [213]C-Kermit FAQ ]
     ________________________________________________________________________
   
-  FILES [ [213]Top ] [ [214]Contents ] [ [215]Next ] [ [216]Previous ]
+  FILES [ [214]Top ] [ [215]Contents ] [ [216]Next ] [ [217]Previous ]
   
-   [217]COPYING.TXT
+   [218]COPYING.TXT
           C-Kermit license.
           
-   [218]~/.kermrc
+   [219]~/.kermrc
           Initialization file.
           
-   [219]~/.mykermrc
+   [220]~/.mykermrc
           Customization file.
           
    ~/.kdd
@@ -1671,19 +1678,19 @@ e
    ~/.ksd
           Kermit services directory (see manual).
           
-   [220]ckuins.html
+   [221]ckuins.html
           Installation instructions for Unix.
           
-   [221]ckcbwr.html
+   [222]ckcbwr.html
           General C-Kermit bugs, hints, tips.
           
-   [222]ckubwr.html
+   [223]ckubwr.html
           Unix-specific C-Kermit bugs, hints, tips.
           
-   [223]ckcplm.html
+   [224]ckcplm.html
           C-Kermit program logic manual.
           
-   [224]ckccfg.html
+   [225]ckccfg.html
           C-Kermit compile-time configuration options.
           
    ssh
@@ -1693,13 +1700,13 @@ e
           (in your PATH) external protocols for XYZmodem.
           
    /var/spool/locks (or whatever)
-          UUCP lockfile for dialing out (see [225]installation
+          UUCP lockfile for dialing out (see [226]installation
           instructions).
           
-   [ [226]Kermit Home ] [ [227]C-Kermit Home ] [ [228]C-Kermit FAQ ]
+   [ [227]Kermit Home ] [ [228]C-Kermit Home ] [ [229]C-Kermit FAQ ]
     ________________________________________________________________________
   
-  AUTHORS [ [229]Top ] [ [230]Contents ] [ [231]Previous ]
+  AUTHORS [ [230]Top ] [ [231]Contents ] [ [232]Previous ]
   
      Frank da Cruz and Jeffrey E Altman
      The Kermit Project - Columbia Univerity
@@ -1713,7 +1720,7 @@ e
    
    
     C-Kermit 8.0 Unix Manual Page and Tutorial /
-    [232]kermit@columbia.edu / 3 February 2002
+    [233]kermit@columbia.edu / 24 October 2002
 
 References
 
@@ -1852,100 +1859,101 @@ References
  133. http://www.columbia.edu/kermit/ckututor.html#contents
  134. http://www.columbia.edu/kermit/ckututor.html#iksd
  135. http://www.columbia.edu/kermit/ckututor.html#transfer
- 136. http://www.columbia.edu/kermit/ftpclient.html
- 137. http://www.columbia.edu/kermit/ckututor.html#documentation
- 138. http://www.columbia.edu/kermit/
- 139. http://www.columbia.edu/kermit/ckermit.html
- 140. http://www.columbia.edu/kermit/ckfaq.html
- 141. http://www.columbia.edu/kermit/ckermit3.html#x3
- 142. http://www.columbia.edu/kermit/ckermit3.html#x2.2
- 143. http://www.columbia.edu/kermit/ckututor.html#top
- 144. http://www.columbia.edu/kermit/ckututor.html#contents
- 145. http://www.columbia.edu/kermit/ckututor.html#security
- 146. http://www.columbia.edu/kermit/ckututor.html#ftp
- 147. http://www.columbia.edu/kermit/cuiksd.html
- 148. http://www.columbia.edu/kermit/iksd.html
- 149. http://www.columbia.edu/kermit/
- 150. http://www.columbia.edu/kermit/ckermit.html
- 151. http://www.columbia.edu/kermit/ckfaq.html
- 152. http://www.columbia.edu/kermit/ckututor.html#top
- 153. http://www.columbia.edu/kermit/ckututor.html#contents
- 154. http://www.columbia.edu/kermit/ckututor.html#personae
- 155. http://www.columbia.edu/kermit/ckututor.html#iksd
- 156. http://www.columbia.edu/kermit/security.html
- 157. http://www.columbia.edu/kermit/
- 158. http://www.columbia.edu/kermit/ckermit.html
- 159. http://www.columbia.edu/kermit/ckfaq.html
- 160. http://www.columbia.edu/kermit/ckututor.html#top
- 161. http://www.columbia.edu/kermit/ckututor.html#contents
- 162. http://www.columbia.edu/kermit/ckututor.html#license
- 163. http://www.columbia.edu/kermit/ckututor.html#iksd
- 164. http://www.columbia.edu/kermit/ckututor.html#options
- 165. http://www.columbia.edu/kermit/ckermit3.html#x3.1.2
- 166. http://www.columbia.edu/kermit/
- 167. http://www.columbia.edu/kermit/ckermit.html
- 168. http://www.columbia.edu/kermit/ckfaq.html
- 169. http://www.columbia.edu/kermit/ckututor.html#top
- 170. http://www.columbia.edu/kermit/ckututor.html#contents
- 171. http://www.columbia.edu/kermit/ckututor.html#other
- 172. http://www.columbia.edu/kermit/ckututor.html#personae
- 173. ftp://kermit.columbia.edu/kermit/c-kermit/COPYING.TXT
- 174. mailto:kermit@columbia.edu
- 175. http://www.columbia.edu/kermit/
- 176. http://www.columbia.edu/kermit/ckermit.html
- 177. http://www.columbia.edu/kermit/ckfaq.html
- 178. http://www.columbia.edu/kermit/ckututor.html#top
- 179. http://www.columbia.edu/kermit/ckututor.html#contents
- 180. http://www.columbia.edu/kermit/ckututor.html#documentation
- 181. http://www.columbia.edu/kermit/ckututor.html#license
- 182. http://www.columbia.edu/kermit/
- 183. http://www.columbia.edu/kermit/howtoget.html
- 184. http://www.columbia.edu/kermit/
- 185. http://www.columbia.edu/kermit/ckermit.html
- 186. http://www.columbia.edu/kermit/ckfaq.html
- 187. http://www.columbia.edu/kermit/ckututor.html#top
- 188. http://www.columbia.edu/kermit/ckututor.html#contents
- 189. http://www.columbia.edu/kermit/ckututor.html#files
- 190. http://www.columbia.edu/kermit/ckututor.html#other
- 191. http://www.columbia.edu/kermit/ckmanual.html
- 192. http://www.columbia.edu/kermit/ckermit70.html
- 193. http://www.columbia.edu/kermit/ckermit80.html
- 194. http://www.columbia.edu/kermit/ckermit.html
- 195. http://www.columbia.edu/kermit/ck80binaries.html
- 196. http://www.columbia.edu/kermit/scriptlib.html
- 197. http://www.columbia.edu/kermit/newfaq.html
- 198. http://www.columbia.edu/kermit/ckfaq.html
- 199. http://www.columbia.edu/kermit/security.html
- 200. http://www.columbia.edu/kermit/telnet.html
- 201. http://www.columbia.edu/kermit/studies.html
- 202. http://www.columbia.edu/kermit/ckcbwr.html
- 203. http://www.columbia.edu/kermit/ckubwr.html
- 204. http://www.columbia.edu/kermit/ckvbwr.html
- 205. http://www.columbia.edu/kermit/ckuins.html
- 206. http://www.columbia.edu/kermit/ckvins.html
- 207. http://www.columbia.edu/kermit/support.html
- 208. http://www.columbia.edu/kermit/k95tutorial.html
- 209. news:comp.protocols.kermit.misc
- 210. http://www.columbia.edu/kermit/
- 211. http://www.columbia.edu/kermit/ckermit.html
- 212. http://www.columbia.edu/kermit/ckfaq.html
- 213. http://www.columbia.edu/kermit/ckututor.html#top
- 214. http://www.columbia.edu/kermit/ckututor.html#contents
- 215. http://www.columbia.edu/kermit/ckututor.html#authors
- 216. http://www.columbia.edu/kermit/ckututor.html#documentation
- 217. ftp://kermit.columbia.edu/kermit/c-kermit/COPYING.TXT
- 218. ftp://kermit.columbia.edu/kermit/c-kermit/ckermit.ini
- 219. ftp://kermit.columbia.edu/kermit/c-kermit/ckermod.ini
- 220. http://www.columbia.edu/kermit/ckuins.html
- 221. http://www.columbia.edu/kermit/ckcbwr.html
- 222. http://www.columbia.edu/kermit/ckubwr.html
- 223. http://www.columbia.edu/kermit/ckcplm.html
- 224. http://www.columbia.edu/kermit/ckccfg.html
- 225. http://www.columbia.edu/kermit/ckuins.html
- 226. http://www.columbia.edu/kermit/
- 227. http://www.columbia.edu/kermit/ckermit.html
- 228. http://www.columbia.edu/kermit/ckfaq.html
- 229. http://www.columbia.edu/kermit/ckututor.html#top
- 230. http://www.columbia.edu/kermit/ckututor.html#contents
- 231. http://www.columbia.edu/kermit/ckututor.html#files
- 232. mailto:kermit@columbia.edu
+ 136. http://www.columbia.edu/kermit/ckututor.html#server
+ 137. http://www.columbia.edu/kermit/ftpclient.html
+ 138. http://www.columbia.edu/kermit/ckututor.html#documentation
+ 139. http://www.columbia.edu/kermit/
+ 140. http://www.columbia.edu/kermit/ckermit.html
+ 141. http://www.columbia.edu/kermit/ckfaq.html
+ 142. http://www.columbia.edu/kermit/ckermit3.html#x3
+ 143. http://www.columbia.edu/kermit/ckermit3.html#x2.2
+ 144. http://www.columbia.edu/kermit/ckututor.html#top
+ 145. http://www.columbia.edu/kermit/ckututor.html#contents
+ 146. http://www.columbia.edu/kermit/ckututor.html#security
+ 147. http://www.columbia.edu/kermit/ckututor.html#ftp
+ 148. http://www.columbia.edu/kermit/cuiksd.html
+ 149. http://www.columbia.edu/kermit/iksd.html
+ 150. http://www.columbia.edu/kermit/
+ 151. http://www.columbia.edu/kermit/ckermit.html
+ 152. http://www.columbia.edu/kermit/ckfaq.html
+ 153. http://www.columbia.edu/kermit/ckututor.html#top
+ 154. http://www.columbia.edu/kermit/ckututor.html#contents
+ 155. http://www.columbia.edu/kermit/ckututor.html#personae
+ 156. http://www.columbia.edu/kermit/ckututor.html#iksd
+ 157. http://www.columbia.edu/kermit/security.html
+ 158. http://www.columbia.edu/kermit/
+ 159. http://www.columbia.edu/kermit/ckermit.html
+ 160. http://www.columbia.edu/kermit/ckfaq.html
+ 161. http://www.columbia.edu/kermit/ckututor.html#top
+ 162. http://www.columbia.edu/kermit/ckututor.html#contents
+ 163. http://www.columbia.edu/kermit/ckututor.html#license
+ 164. http://www.columbia.edu/kermit/ckututor.html#iksd
+ 165. http://www.columbia.edu/kermit/ckututor.html#options
+ 166. http://www.columbia.edu/kermit/ckermit3.html#x3.1.2
+ 167. http://www.columbia.edu/kermit/
+ 168. http://www.columbia.edu/kermit/ckermit.html
+ 169. http://www.columbia.edu/kermit/ckfaq.html
+ 170. http://www.columbia.edu/kermit/ckututor.html#top
+ 171. http://www.columbia.edu/kermit/ckututor.html#contents
+ 172. http://www.columbia.edu/kermit/ckututor.html#other
+ 173. http://www.columbia.edu/kermit/ckututor.html#personae
+ 174. ftp://kermit.columbia.edu/kermit/c-kermit/COPYING.TXT
+ 175. mailto:kermit@columbia.edu
+ 176. http://www.columbia.edu/kermit/
+ 177. http://www.columbia.edu/kermit/ckermit.html
+ 178. http://www.columbia.edu/kermit/ckfaq.html
+ 179. http://www.columbia.edu/kermit/ckututor.html#top
+ 180. http://www.columbia.edu/kermit/ckututor.html#contents
+ 181. http://www.columbia.edu/kermit/ckututor.html#documentation
+ 182. http://www.columbia.edu/kermit/ckututor.html#license
+ 183. http://www.columbia.edu/kermit/
+ 184. http://www.columbia.edu/kermit/howtoget.html
+ 185. http://www.columbia.edu/kermit/
+ 186. http://www.columbia.edu/kermit/ckermit.html
+ 187. http://www.columbia.edu/kermit/ckfaq.html
+ 188. http://www.columbia.edu/kermit/ckututor.html#top
+ 189. http://www.columbia.edu/kermit/ckututor.html#contents
+ 190. http://www.columbia.edu/kermit/ckututor.html#files
+ 191. http://www.columbia.edu/kermit/ckututor.html#other
+ 192. http://www.columbia.edu/kermit/ckmanual.html
+ 193. http://www.columbia.edu/kermit/ckermit70.html
+ 194. http://www.columbia.edu/kermit/ckermit80.html
+ 195. http://www.columbia.edu/kermit/ckermit.html
+ 196. http://www.columbia.edu/kermit/ck80binaries.html
+ 197. http://www.columbia.edu/kermit/scriptlib.html
+ 198. http://www.columbia.edu/kermit/newfaq.html
+ 199. http://www.columbia.edu/kermit/ckfaq.html
+ 200. http://www.columbia.edu/kermit/security.html
+ 201. http://www.columbia.edu/kermit/telnet.html
+ 202. http://www.columbia.edu/kermit/studies.html
+ 203. http://www.columbia.edu/kermit/ckcbwr.html
+ 204. http://www.columbia.edu/kermit/ckubwr.html
+ 205. http://www.columbia.edu/kermit/ckvbwr.html
+ 206. http://www.columbia.edu/kermit/ckuins.html
+ 207. http://www.columbia.edu/kermit/ckvins.html
+ 208. http://www.columbia.edu/kermit/support.html
+ 209. http://www.columbia.edu/kermit/k95tutorial.html
+ 210. news:comp.protocols.kermit.misc
+ 211. http://www.columbia.edu/kermit/
+ 212. http://www.columbia.edu/kermit/ckermit.html
+ 213. http://www.columbia.edu/kermit/ckfaq.html
+ 214. http://www.columbia.edu/kermit/ckututor.html#top
+ 215. http://www.columbia.edu/kermit/ckututor.html#contents
+ 216. http://www.columbia.edu/kermit/ckututor.html#authors
+ 217. http://www.columbia.edu/kermit/ckututor.html#documentation
+ 218. ftp://kermit.columbia.edu/kermit/c-kermit/COPYING.TXT
+ 219. ftp://kermit.columbia.edu/kermit/c-kermit/ckermit.ini
+ 220. ftp://kermit.columbia.edu/kermit/c-kermit/ckermod.ini
+ 221. http://www.columbia.edu/kermit/ckuins.html
+ 222. http://www.columbia.edu/kermit/ckcbwr.html
+ 223. http://www.columbia.edu/kermit/ckubwr.html
+ 224. http://www.columbia.edu/kermit/ckcplm.html
+ 225. http://www.columbia.edu/kermit/ckccfg.html
+ 226. http://www.columbia.edu/kermit/ckuins.html
+ 227. http://www.columbia.edu/kermit/
+ 228. http://www.columbia.edu/kermit/ckermit.html
+ 229. http://www.columbia.edu/kermit/ckfaq.html
+ 230. http://www.columbia.edu/kermit/ckututor.html#top
+ 231. http://www.columbia.edu/kermit/ckututor.html#contents
+ 232. http://www.columbia.edu/kermit/ckututor.html#files
+ 233. mailto:kermit@columbia.edu

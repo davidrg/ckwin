@@ -4,54 +4,53 @@
      Frank da Cruz
      [1]The Kermit Project, [2]Columbia University
      
-   As of: C-Kermit 8.0.201 8 Feb 2002
-   This page last updated: Mon Feb 11 17:49:14 2002 (New York USA Time)
+   As of: C-Kermit 8.0.206 24 Oct 2002
+   This page last updated: Sun Nov 10 12:19:09 2002 (New York USA Time)
    
-     IF YOU ARE READING A PLAIN-TEXT version of this document, note that
-     this file is a plain-text dump of a Web page. You can visit the
-     original (and possibly more up-to-date) Web page here:
+     IF YOU ARE READING A PLAIN-TEXT version of this document, note it
+     is a plain-text dump of a Web page. You can visit the original (and
+     possibly more up-to-date) Web page here:
      
   [3]http://www.columbia.edu/kermit/ckubwr.html
 
      Since the material in this file has been accumulating since 1985,
      some (much) of it might be dated. [4]Feedback from experts on
-     particular OS's and platforms is welcome. 
+     particular OS's and platforms is always welcome. 
      
-   [ [5]C-Kermit ] [ [6]C-Kermit 8.0 Beta Test ] [ [7]Installation
-   Instructions ] [ [8]TUTORIAL ]
+   [ [5]C-Kermit ] [ [6]Installation Instructions ] [ [7]TUTORIAL ]
     ________________________________________________________________________
   
   CONTENTS
   
-   1. [9]INTRODUCTION
-   2. [10]PREBUILT C-KERMIT BINARIES
-   3. [11]NOTES ON SPECIFIC UNIX VERSIONS
-   4. [12]GENERAL UNIX-SPECIFIC LIMITATIONS AND BUGS
-   5. [13]INITIALIZATION AND COMMAND FILES
-   6. [14]COMMUNICATION SPEED SELECTION
-   7. [15]COMMUNICATIONS AND DIALING
-   8. [16]HARDWARE FLOW CONTROL
-   9. [17]TERMINAL CONNECTION AND KEY MAPPING
-  10. [18]FILE TRANSFER
-  11. [19]EXTERNAL FILE TRANSFER PROTOCOLS
-  12. [20]SECURITY
-  13. [21]MISCELLANEOUS USER REPORTS
-  14. [22]THIRD-PARTY DRIVERS
-
-   Quick Links:   [ [23]Linux ] [ [24]*BSD ] [ [25]AIX ] [ [26]HP-UX ] [
-   [27]Solaris ] [ [28]SCO ] [ [29]DEC/Compaq ]
+    1. [8]INTRODUCTION
+    2. [9]PREBUILT C-KERMIT BINARIES
+    3. [10]NOTES ON SPECIFIC UNIX VERSIONS
+    4. [11]GENERAL UNIX-SPECIFIC LIMITATIONS AND BUGS
+    5. [12]INITIALIZATION AND COMMAND FILES
+    6. [13]COMMUNICATION SPEED SELECTION
+    7. [14]COMMUNICATIONS AND DIALING
+    8. [15]HARDWARE FLOW CONTROL
+    9. [16]TERMINAL CONNECTION AND KEY MAPPING
+   10. [17]FILE TRANSFER
+   11. [18]EXTERNAL FILE TRANSFER PROTOCOLS
+   12. [19]SECURITY
+   13. [20]MISCELLANEOUS USER REPORTS
+   14. [21]THIRD-PARTY DRIVERS
+       
+   Quick Links:   [ [22]Linux ] [ [23]*BSD ] [ [24]AIX ] [ [25]HP-UX ] [
+   [26]Solaris ] [ [27]SCO ] [ [28]DEC/Compaq ]
     ________________________________________________________________________
   
   1. INTRODUCTION
   
-   [ [30]Top ] [ [31]Contents ] [ [32]Next ]
+   [ [29]Top ] [ [30]Contents ] [ [31]Next ]
    
    SECTION CONTENTS
    
-  1.1. [33]Documentation
-  1.2. [34]Technical Support
-  1.3. [35]The Year 2000
-  1.4. [36]The Euro
+  1.1. [32]Documentation
+  1.2. [33]Technical Support
+  1.3. [34]The Year 2000
+  1.4. [35]The Euro
 
    THIS IS WHAT USED TO BE CALLED the "beware file" for the Unix version
    of C-Kermit, previously distributed as ckubwr.txt and, before that, as
@@ -66,9 +65,9 @@
    links, internal cross references, and so on, to make it easier to use.
    
    This document applies to Unix C-Kermit in general, as well as to
-   specific Unix variations like [37]Linux, [38]AIX, [39]HP-UX,
-   [40]Solaris, and so on, and should be read in conjunction with the
-   [41]platform-independent C-Kermit beware file, which contains similar
+   specific Unix variations like [36]Linux, [37]AIX, [38]HP-UX,
+   [39]Solaris, and so on, and should be read in conjunction with the
+   [40]platform-independent C-Kermit beware file, which contains similar
    information, but applying to all versions of C-Kermit (VMS, Windows,
    OS/2, AOS/VS, VOS, etc, as well as to Unix).
    
@@ -77,39 +76,39 @@
    that are relevant to you. Numerous offsite Web links are supposed to
    lead to further information but, as you know, Web links go stale
    frequently and without warning. If you can supply additional,
-   corrected, updated, or better Web links, please feel free to [42]let
+   corrected, updated, or better Web links, please feel free to [41]let
    us know.
    
   1.1. Documentation
   
-   [ [43]Top ] [ [44]Contents ] [ [45]Next ]
+   [ [42]Top ] [ [43]Contents ] [ [44]Next ]
    
-   C-Kermit 6.0 is documented in the book [46]Using C-Kermit, Second
+   C-Kermit 6.0 is documented in the book [45]Using C-Kermit, Second
    Edition, by Frank da Cruz and Christine M. Gianone, Digital Press,
    Burlington, MA, USA, ISBN 1-55558-164-1 (1997), 622 pages. This
    remains the definitive C-Kermit documentation. Until the third edition
    is published (sorry, there is no firm timeframe for this), please also
    refer to:
    
-   [47]Supplement to Using C-Kermit, Second Edition, For C-Kermit 7.0
+   [46]Supplement to Using C-Kermit, Second Edition, For C-Kermit 7.0
           Thorough documentation of features new to version 7.0.
           
-   [48]Supplement to Using C-Kermit, Second Edition, For C-Kermit 8.0
+   [47]Supplement to Using C-Kermit, Second Edition, For C-Kermit 8.0
           Thorough documentation of features new to version 8.0.
           
   1.2. Technical Support
   
-   [ [49]Top ] [ [50]Contents ] [ [51]Section Contents ] [ [52]Next ] [
-   [53]Previous ]
+   [ [48]Top ] [ [49]Contents ] [ [50]Section Contents ] [ [51]Next ] [
+   [52]Previous ]
    
    For information on how to get technical support, please visit:
    
-    [54]http://www.columbia.edu/kermit/support.html
+    [53]http://www.columbia.edu/kermit/support.html
 
   1.3. The Year 2000
   
-   [ [55]Top ] [ [56]Contents ] [ [57]Section Contents ] [ [58]Next ] [
-   [59]Previous ]
+   [ [54]Top ] [ [55]Contents ] [ [56]Section Contents ] [ [57]Next ] [
+   [58]Previous ]
    
    The Unix version of C-Kermit, release 6.0 and later, is "Year 2000
    compliant", but only if the underlying operating system is too.
@@ -156,7 +155,7 @@
    
   1.4. The Euro
   
-   [ [60]Top ] [ [61]Contents ] [ [62]Section Contents ] [ [63]Previous ]
+   [ [59]Top ] [ [60]Contents ] [ [61]Section Contents ] [ [62]Previous ]
    
    C-Kermit 7.0 and later support Unicode (ISO 10646), ISO 8859-15 Latin
    Alphabet 9, PC Code Page 858, Windows Code Pages 1250 and 1251, and
@@ -167,7 +166,7 @@
   
   2. PREBUILT C-KERMIT BINARIES
   
-   [ [64]Top ] [ [65]Contents ] [ [66]Next ] [ [67]Previous ]
+   [ [63]Top ] [ [64]Contents ] [ [65]Next ] [ [66]Previous ]
    
    It is often dangerous to run a binary C-Kermit (or any other) program
    built on a different computer. Particularly if that computer had a
@@ -205,39 +204,37 @@
   
   3. NOTES ON SPECIFIC UNIX VERSIONS
   
-   [ [68]Top ] [ [69]Contents ] [ [70]Next ] [ [71]Previous ]
+   [ [67]Top ] [ [68]Contents ] [ [69]Next ] [ [70]Previous ]
    
    SECTION CONTENTS
    
-  3.0.  [72]C-KERMIT ON PC-BASED UNIXES
-  3.1.  [73]C-KERMIT AND AIX
-  3.2.  [74]C-KERMIT AND HP-UX
-  3.3.  [75]C-KERMIT AND LINUX
-  3.4.  [76]C-KERMIT AND NEXTSTEP
-  3.5.  [77]C-KERMIT AND QNX
-  3.6.  [78]C-KERMIT AND SCO
-  3.7.  [79]C-KERMIT AND SOLARIS
-  3.8.  [80]C-KERMIT AND SUNOS
-  3.9.  [81]C-KERMIT AND ULTRIX
-  3.10. [82]C-KERMIT AND UNIXWARE
-  3.11. [83]C-KERMIT AND APOLLO SR10
-  3.12. [84]C-KERMIT AND TANDY XENIX 3.0
-  3.13. [85]C-KERMIT AND OSF/1 (DIGITAL UNIX) (TRU64 UNIX)
-  3.14. [86]C-KERMIT AND SGI IRIX
-  3.15. [87]C-KERMIT AND THE BEBOX
-  3.16. [88]C-KERMIT AND DG/UX
-  3.17. [89]C-KERMIT AND SEQUENT DYNIX
-  3.18. [90]C-KERMIT AND {FREE,OPEN,NET}BSD
-  3.19. [91]C-KERMIT AND MAC OS X (Rhapsody, Darwin)
-  3.20. [92]C-KERMIT AND COHERENT
+  3.0.  [71]C-KERMIT ON PC-BASED UNIXES
+  3.1.  [72]C-KERMIT AND AIX
+  3.2.  [73]C-KERMIT AND HP-UX
+  3.3.  [74]C-KERMIT AND LINUX
+  3.4.  [75]C-KERMIT AND NEXTSTEP
+  3.5.  [76]C-KERMIT AND QNX
+  3.6.  [77]C-KERMIT AND SCO
+  3.7.  [78]C-KERMIT AND SOLARIS
+  3.8.  [79]C-KERMIT AND SUNOS
+  3.9.  [80]C-KERMIT AND ULTRIX
+  3.10. [81]C-KERMIT AND UNIXWARE
+  3.11. [82]C-KERMIT AND APOLLO SR10
+  3.12. [83]C-KERMIT AND TANDY XENIX 3.0
+  3.13. [84]C-KERMIT AND OSF/1 (DIGITAL UNIX) (TRU64 UNIX)
+  3.14. [85]C-KERMIT AND SGI IRIX
+  3.15. [86]C-KERMIT AND THE BEBOX
+  3.16. [87]C-KERMIT AND DG/UX
+  3.17. [88]C-KERMIT AND SEQUENT DYNIX
+  3.18. [89]C-KERMIT AND {FREE,OPEN,NET}BSD
+  3.19. [90]C-KERMIT AND MAC OS X (Rhapsody, Darwin)
+  3.20. [91]C-KERMIT AND COHERENT
 
-   REFERENCES
-   
    The following sections apply to specific Unix versions. Most of them
    contain references to FAQs (Frequently Asked Questions), but these
    tend to be ephemeral. For possibly more current information see:
    
-  [93]http://www.faqs.org
+  [92]http://www.faqs.org
 
    One thread that runs through many of them, and implicitly perhaps
    through all, concerns the problems that occur when trying to dial out
@@ -247,7 +244,7 @@
    done in a highly OS-dependent and often obscure manner, and the
    effects (good or evil) are also highly dependent on the particular OS
    (and getty variety, etc). Many examples are given in the
-   [94]OS-specific sections below.
+   [93]OS-specific sections below.
    
    An important point to keep in mind is that C-Kermit is a
    cross-platform, portable software program. It was not designed
@@ -260,27 +257,27 @@
    something on your particular Unix version, you might be right -- we
    can't claim to be expert in hundreds of different OS / version /
    hardware / library combinations. If you're a programmer, take a look
-   at the source code and [95]send us your suggested fixes or changes. Or
-   else just [96]send us a report about what seems to be wrong and we'll
+   at the source code and [94]send us your suggested fixes or changes. Or
+   else just [95]send us a report about what seems to be wrong and we'll
    see what we can do.
     ________________________________________________________________________
   
   3.0. C-KERMIT ON PC-BASED UNIXES
   
-   [ [97]Top ] [ [98]Contents ] [ [99]Section Contents ] [ [100]Next ]
+   [ [96]Top ] [ [97]Contents ] [ [98]Section Contents ] [ [99]Next ]
    
    SECTION CONTENTS
    
-  3.0.1. [101]Interrupt Conflicts
-  3.0.2. [102]Windows-Specific Hardware
-  3.0.3. [103]Modems
-  3.0.4. [104]Character Sets
-  3.0.5. [105]Keyboard, Screen, and Mouse Access
-  3.0.6. [106]Laptops
+  3.0.1. [100]Interrupt Conflicts
+  3.0.2. [101]Windows-Specific Hardware
+  3.0.3. [102]Modems
+  3.0.4. [103]Character Sets
+  3.0.5. [104]Keyboard, Screen, and Mouse Access
+  3.0.6. [105]Laptops
 
   3.0.1. Interrupt Conflicts
   
-   [ [107]Top ] [ [108]Contents ] [ [109]Section Contents ] [ [110]Next ]
+   [ [106]Top ] [ [107]Contents ] [ [108]Section Contents ] [ [109]Next ]
    
    PCs are not the best platform for real operating systems like Unix.
    The architecture suffers from numerous deficiencies, not the least of
@@ -342,8 +339,8 @@
   
   3.0.2. Windows-Specific Hardware
   
-   [ [111]Top ] [ [112]Contents ] [ [113]Section Contents ] [ [114]Next ]
-   [ [115]Previous ]
+   [ [110]Top ] [ [111]Contents ] [ [112]Section Contents ] [ [113]Next ]
+   [ [114]Previous ]
    
    To complicate matters, the PC platform is becoming increasingly and
    inexorably Windows-oriented. More and more add-on devices are "Windows
@@ -352,7 +349,7 @@
    the device itself to do. PCMCIA, PCI, or "Plug-n-Play" devices are
    rarely supported on PC-based Unix versions such as SCO; Winmodems,
    Winprinters, and the like are not supported on any Unix variety (with
-   [116]a few exceptions). The self-proclaimed Microsoft PC 97 (or later)
+   [115]a few exceptions). The self-proclaimed Microsoft PC 97 (or later)
    standard only makes matters worse since its only purpose to ensure
    that PCs are "optimized to run Windows 95 and Windows NT 4.0 and
    future versions of these operating systems".
@@ -381,7 +378,7 @@
    "Legacy Free". One can only speculate what that could mean. Most
    likely it means it will ONLY run the very latest versions of Windows,
    and is made exclusively of Winmodems, Winprinters, Winmemory, and
-   Win-CPU-fans (Legacy Free is a concept [117]pioneered by Microsoft.
+   Win-CPU-fans (Legacy Free is a concept [116]pioneered by Microsoft).
    
    Before you buy a new PC or add-on equipment, especially serial ports,
    internal modems, or printers, make sure they are compatible with your
@@ -402,8 +399,8 @@
   
   3.0.3. Modems
   
-   [ [118]Top ] [ [119]Contents ] [ [120]Section Contents ] [ [121]Next ]
-   [ [122]Previous ]
+   [ [117]Top ] [ [118]Contents ] [ [119]Section Contents ] [ [120]Next ]
+   [ [121]Previous ]
    
    External modems are recommended:
    
@@ -426,7 +423,7 @@
    software will know how to control it.) For more about Unix compatible
    modems, see:
    
-  [123]http://www.o2.net/~gromitkc/winmodem.html
+  [122]http://www.o2.net/~gromitkc/winmodem.html
 
    Remember that PCs, even now -- more than two decades after they were
    first introduced -- are not (in general) capable of supporting more
@@ -437,15 +434,15 @@
    disable PnP in my computer bios. I was having IRQ conflicts between my
    serial mouse and 'com 3'. Both modems work fine for me. My first modem
    is ttyS0 and my second is ttyS1." Special third-party multiport boards
-   such as [124]DigiBoard are available for certain Unix platforms
+   such as [123]DigiBoard are available for certain Unix platforms
    (typically SCO, maybe Linux) that come with special platform-specific
    drivers.
     ________________________________________________________________________
   
   3.0.4. Character Sets
   
-   [ [125]Top ] [ [126]Contents ] [ [127]Section Contents ] [ [128]Next ]
-   [ [129]Previous ]
+   [ [124]Top ] [ [125]Contents ] [ [126]Section Contents ] [ [127]Next ]
+   [ [128]Previous ]
    
    PCs generally have PC code pages such as CP437 or CP850, and these are
    often used by PC-based Unix operating systems, particularly on the
@@ -474,8 +471,8 @@
   
   3.0.5. Keyboard, Screen, and Mouse Access
   
-   [ [130]Top ] [ [131]Contents ] [ [132]Section Contents ] [ [133]Next ]
-   [ [134]Previous ]
+   [ [129]Top ] [ [130]Contents ] [ [131]Section Contents ] [ [132]Next ]
+   [ [133]Previous ]
    
    Finally, note that as a real operating system, Unix (unlike Windows)
    does not provide the intimate connection to the PC keyboard, screen,
@@ -494,42 +491,42 @@
   
   3.0.6. Laptops
   
-   [ [135]Top ] [ [136]Contents ] [ [137]Section Contents ] [
-   [138]Previous ]
+   [ [134]Top ] [ [135]Contents ] [ [136]Section Contents ] [
+   [137]Previous ]
    
    (To be filled in . . .)
     ________________________________________________________________________
   
   3.1. C-KERMIT AND AIX
   
-   [ [139]Top ] [ [140]Contents ] [ [141]Section Contents ] [ [142]Next ]
-   [ [143]Previous ]
+   [ [138]Top ] [ [139]Contents ] [ [140]Section Contents ] [ [141]Next ]
+   [ [142]Previous ]
    
    SECTION CONTENTS
    
-  3.1.1. [144]AIX: General
-  3.1.2. [145]AIX: Network Connections
-  3.1.3. [146]AIX: Serial Connections
-  3.1.4. [147]AIX: File Transfer
-  3.1.5. [148]AIX: Xterm Key Map
+  3.1.1. [143]AIX: General
+  3.1.2. [144]AIX: Network Connections
+  3.1.3. [145]AIX: Serial Connections
+  3.1.4. [146]AIX: File Transfer
+  3.1.5. [147]AIX: Xterm Key Map
 
    For additional information see:
-     * [149]http://www.emerson.emory.edu/services/aix-faq/
-     * [150]http://www.faqs.org/faqs/by-newsgroup/comp/comp.unix.aix.html
-     * [151]http://www.cis.ohio-state.edu/hypertext/faq/usenet/aix-faq/to
+     * [148]http://www.emerson.emory.edu/services/aix-faq/
+     * [149]http://www.faqs.org/faqs/by-newsgroup/comp/comp.unix.aix.html
+     * [150]http://www.cis.ohio-state.edu/hypertext/faq/usenet/aix-faq/to
        p.html
-     * [152]http://aixpdslib.seas.ucla.edu/
-     * [153]http://www.rootvg.net (AIX history)
-     * [154]ftp://rtfm.mit.edu/pub/usenet/news.answers/aix-faq/part1
-     * [155]ftp://mirrors.aol.com/pub/rtfm/usenet-by-hierarchy/comp/unix/
+     * [151]http://aixpdslib.seas.ucla.edu/
+     * [152]http://www.rootvg.net (AIX history)
+     * [153]ftp://rtfm.mit.edu/pub/usenet/news.answers/aix-faq/part1
+     * [154]ftp://mirrors.aol.com/pub/rtfm/usenet-by-hierarchy/comp/unix/
        aix
        
-   and/or read the [156]comp.unix.aix newsgroup.
+   and/or read the [155]comp.unix.aix newsgroup.
       ______________________________________________________________________
     
     3.1.1. AIX: General
     
-   [ [157]Top ] [ [158]Contents ] [ [159]Section Contents ] [ [160]Next ]
+   [ [156]Top ] [ [157]Contents ] [ [158]Section Contents ] [ [159]Next ]
    
    About AIX version numbers: "uname -a" tells the two-digit version
    number, such as 3.2 or 4.1. The three-digit form can be seen with the
@@ -548,8 +545,8 @@
     
     3.1.2. AIX: Network Connections
     
-   [ [161]Top ] [ [162]Contents ] [ [163]Section Contents ] [ [164]Next ]
-   [ [165]Previous ]
+   [ [160]Top ] [ [161]Contents ] [ [162]Section Contents ] [ [163]Next ]
+   [ [164]Previous ]
    
    File transfers into AIX 4.2 or 4.3 through the AIX Telnet or Rlogin
    server have been observed to fail (or accumulate huge numbers of
@@ -563,7 +560,7 @@
    removed from the picture; e.g, by using "set host * 3000" on AIX.
    
    The problem can be completely cured by replacing the IBM Telnet server
-   with [166]MIT's Kerberos Telnet server -- even if you don't actually
+   with [165]MIT's Kerberos Telnet server -- even if you don't actually
    the Kerberos part. Diagnosis: AIX pseudoterminals (which are
    controlled by the Telnet server to give you a login terminal for your
    session) have quirks that not even IBM knows about. The situation with
@@ -627,8 +624,8 @@
     
     3.1.3. AIX: Serial Connections
     
-   [ [167]Top ] [ [168]Contents ] [ [169]Section Contents ] [ [170]Next ]
-   [ [171]Previous ]
+   [ [166]Top ] [ [167]Contents ] [ [168]Section Contents ] [ [169]Next ]
+   [ [170]Previous ]
    
    In AIX 3, 4, or 5, C-Kermit won't be able to "set line /dev/tty0" (or
    any other dialout device) if you haven't installed "cu" or "uucp" on
@@ -723,7 +720,7 @@
     3. Fixes for bugs in the original AIX 4.2 tty (serial i/o) support
        and other AIX bugs are available from IBM at:
 
-  [172]http://service.software.ibm.com/rs6000/
+  [171]http://service.software.ibm.com/rs6000/
        Downloads -> Software Fixes -> Download FixDist gets an
        application for looking up known problems.
        
@@ -738,8 +735,8 @@
     
     3.1.4. AIX: File Transfer
     
-   [ [173]Top ] [ [174]Contents ] [ [175]Section Contents ] [ [176]Next ]
-   [ [177]Previous ]
+   [ [172]Top ] [ [173]Contents ] [ [174]Section Contents ] [ [175]Next ]
+   [ [176]Previous ]
    
    Evidently AIX 4.3 (I don't know about earlier versions) does not allow
    open files to be overwritten. This can cause Kermit transfers to fail
@@ -806,8 +803,8 @@
     
     3.1.5. AIX: Xterm Key Map
     
-   [ [178]Top ] [ [179]Contents ] [ [180]Section Contents ] [
-   [181]Previous ]
+   [ [177]Top ] [ [178]Contents ] [ [179]Section Contents ] [
+   [180]Previous ]
    
    Here is a sample configuration for setting up an xterm keyboard for
    VT220 or higher terminal emulation on AIX, courtesy of Bruce Momjian,
@@ -875,21 +872,21 @@
   
   3.2. C-KERMIT AND HP-UX
   
-   [ [182]Top ] [ [183]Contents ] [ [184]Section Contents ] [ [185]Next ]
-   [ [186]Previous ]
+   [ [181]Top ] [ [182]Contents ] [ [183]Section Contents ] [ [184]Next ]
+   [ [185]Previous ]
    
    SECTION CONTENTS
    
-  3.2.0. [187]Common Problems
-  3.2.1. [188]Building C-Kermit on HP-UX
-  3.2.2. [189]File Transfer
-  3.2.3. [190]Dialing Out and UUCP Lockfiles in HP-UX
-  3.2.4. [191]Notes on Specific HP-UX Releases
-  3.2.5. [192]HP-UX and X.25
+  3.2.0. [186]Common Problems
+  3.2.1. [187]Building C-Kermit on HP-UX
+  3.2.2. [188]File Transfer
+  3.2.3. [189]Dialing Out and UUCP Lockfiles in HP-UX
+  3.2.4. [190]Notes on Specific HP-UX Releases
+  3.2.5. [191]HP-UX and X.25
 
    REFERENCES
    
-   For further information, read the [193]comp.sys.hp.hpux newsgroup.
+   For further information, read the [192]comp.sys.hp.hpux newsgroup.
    
    C-Kermit is included as part of the HP-UX operating system by contract
    between Hewlett Packard and Columbia University for HP-UX 10.00 and
@@ -898,7 +895,7 @@
    
   3.2.0. Common Problems
   
-   [ [194]Top ] [ [195]Contents ] [ [196]Section Contents ] [ [197]Next ]
+   [ [193]Top ] [ [194]Contents ] [ [195]Section Contents ] [ [196]Next ]
    
    Some HP workstations have a BREAK/RESET key. If you hit this key while
    C-Kermit is running, it might kill or suspend the C-Kermit process.
@@ -930,8 +927,8 @@
   
   3.2.1. Building C-Kermit on HP-UX
   
-   [ [198]Top ] [ [199]Contents ] [ [200]Section Contents ] [ [201]Next ]
-   [ [202]Previous ]
+   [ [197]Top ] [ [198]Contents ] [ [199]Section Contents ] [ [200]Next ]
+   [ [201]Previous ]
    
      This section applies mainly to old (pre-10.20) HP-UX version on
      old, slow, and/or memory-constrained hardware.
@@ -960,7 +957,7 @@
    The optimizing compiler might complain about "some optimizations
    skipped" on certain modules, due to lack of space available to the
    optimizer. You can increase the space (the incantation depends on the
-   particular compiler version -- see the [203]makefile), but doing so
+   particular compiler version -- see the [202]makefile), but doing so
    tends to make the compilations take a much longer time. For example,
    the "hpux0100o+" makefile target adds the "+Onolimit" compiler flag,
    and about an hour to the compile time on an HP-9000/730. But it *does*
@@ -972,8 +969,8 @@
   
   3.2.2. File Transfer
   
-   [ [204]Top ] [ [205]Contents ] [ [206]Section Contents ] [ [207]Next ]
-   [ [208]Previous ]
+   [ [203]Top ] [ [204]Contents ] [ [205]Section Contents ] [ [206]Next ]
+   [ [207]Previous ]
    
    Telnet connections into HP-UX versions up to and including 11.11 (and
    possibly 11.20) tend not to lend themselves to file transfer due to
@@ -1093,8 +1090,8 @@
   
   3.2.3. Dialing Out and UUCP Lockfiles in HP-UX
   
-   [ [209]Top ] [ [210]Contents ] [ [211]Section Contents ] [ [212]Next ]
-   [ [213]Previous ]
+   [ [208]Top ] [ [209]Contents ] [ [210]Section Contents ] [ [211]Next ]
+   [ [212]Previous ]
    
    HP workstations do not come with dialout devices configured; you have
    to do it yourself (as root). First look in /dev to see what's there;
@@ -1300,17 +1297,17 @@
   
    SECTION CONTENTS
    
-  3.2.4.1. [214]HP-UX 11
-  3.2.4.2. [215]HP-UX 10
-  3.2.4.3. [216]HP-UX 9
-  3.2.4.4. [217]HP-UX 8
-  3.2.4.5. [218]HP-UX 7 and Earlier
+  3.2.4.1. [213]HP-UX 11
+  3.2.4.2. [214]HP-UX 10
+  3.2.4.3. [215]HP-UX 9
+  3.2.4.4. [216]HP-UX 8
+  3.2.4.5. [217]HP-UX 7 and Earlier
 
   3.2.4.1. HP-UX 11
   
-   [ [219]Top ] [ [220]Contents ] [ [221]Section Contents ] [ [222]Next ]
+   [ [218]Top ] [ [219]Contents ] [ [220]Section Contents ] [ [221]Next ]
    
-   As noted in [223]Section 3.2.2, the HP-UX 11 Telnet server and/or
+   As noted in [222]Section 3.2.2, the HP-UX 11 Telnet server and/or
    pseudoterminal driver are a serious impediment to file transfer over
    Telnet connections into HP-UX. If you have a Telnet connection into
    HP-UX 11, tell your desktop Kermit program to:
@@ -1345,8 +1342,8 @@
   
   3.2.4.2. HP-UX 10
   
-   [ [224]Top ] [ [225]Contents ] [ [226]Section Contents ] [ [227]Next ]
-   [ [228]Previous ]
+   [ [223]Top ] [ [224]Contents ] [ [225]Section Contents ] [ [226]Next ]
+   [ [227]Previous ]
    
    Beginning in HP-UX 10.10, libcurses is linked to libxcurses, the new
    UNIX95 (X/Open) version of curses, which has some serious bugs; some
@@ -1372,8 +1369,8 @@
   
   3.2.4.3. HP-UX 9
   
-   [ [229]Top ] [ [230]Contents ] [ [231]Section Contents ] [ [232]Next ]
-   [ [233]Previous ]
+   [ [228]Top ] [ [229]Contents ] [ [230]Section Contents ] [ [231]Next ]
+   [ [232]Previous ]
    
    HP-UX 9.00 and 9.01 need patch PHNE_10572 (note: this replaces
    PHNE_3641) for hptt0.o, asio0.o, and ttycomn.o in libhp-ux.a. Contact
@@ -1399,8 +1396,8 @@
   
   3.2.4.4. HP-UX 8
   
-   [ [234]Top ] [ [235]Contents ] [ [236]Section Contents ] [ [237]Next ]
-   [ [238]Previous ]
+   [ [233]Top ] [ [234]Contents ] [ [235]Section Contents ] [ [236]Next ]
+   [ [237]Previous ]
    
    To make C-Kermit work on HP-UX 8.05 on a model 720, obtain and install
    HP-UX patch PHNE_0899. This patch deals with a lot of driver issues,
@@ -1422,8 +1419,8 @@
   
   3.2.4.5. HP-UX 7 and Earlier
   
-   [ [239]Top ] [ [240]Contents ] [ [241]Section Contents ] [
-   [242]Previous ]
+   [ [238]Top ] [ [239]Contents ] [ [240]Section Contents ] [
+   [241]Previous ]
    
    When transferring files into HP-UX 5 or 6 over a Telnet connection,
    you must not use streaming, and you must not use a packet length
@@ -1455,8 +1452,8 @@
   
   3.2.5. HP-UX and X.25
   
-   [ [243]Top ] [ [244]Contents ] [ [245]Section Contents ] [
-   [246]Previous ]
+   [ [242]Top ] [ [243]Contents ] [ [244]Section Contents ] [
+   [245]Previous ]
    
    Although C-Kermit presently does not include built-in support for
    HP-UX X.25 (as it does for the Sun and IBM X.25 products), it can
@@ -1473,68 +1470,68 @@
   
   3.3. C-KERMIT AND LINUX
   
-   [ [247]Top ] [ [248]Contents ] [ [249]Section Contents ] [ [250]Next ]
-   [ [251]Previous ]
+   [ [246]Top ] [ [247]Contents ] [ [248]Section Contents ] [ [249]Next ]
+   [ [250]Previous ]
    
    SECTION CONTENTS
    
-  3.3.1. [252]Problems Building C-Kermit for Linux
-  3.3.2. [253]Problems with Serial Devices in Linux
-  3.3.3. [254]Terminal Emulation in Linux
-  3.3.4. [255]Dates and Times
-  3.3.5. [256]Startup Errors
-  3.3.6. [257]The Fullscreen File Transfer Display
+  3.3.1. [251]Problems Building C-Kermit for Linux
+  3.3.2. [252]Problems with Serial Devices in Linux
+  3.3.3. [253]Terminal Emulation in Linux
+  3.3.4. [254]Dates and Times
+  3.3.5. [255]Startup Errors
+  3.3.6. [256]The Fullscreen File Transfer Display
 
    REFERENCES
    
-   For further information, read the [258]comp.os.linux.misc,
-   [259]comp.os.linux.answers, and other Linux-oriented newsgroups, and
+   For further information, read the [257]comp.os.linux.misc,
+   [258]comp.os.linux.answers, and other Linux-oriented newsgroups, and
    see:
    
    The Linux Document Project (LDP)
-          [260]http://sunsite.unc.edu/LDP/
+          [259]http://www.tldp.org/
           
    The Linux FAQ
-          [261]http://sunsite.unc.edu/LDP/FAQ/Linux-FAQ.html
+          [260]http://www.tldp.org/FAQ/Linux-FAQ.html
           
    The Linux HOWTOs (especially the Serial HOWTO)
           
-     [262]http://sunsite.unc.edu/LDP/HOWTO/Serial-HOWTO.html
+     [261]http://www.tldp.org/HOWTO/Serial-HOWTO.html
           
-     [263]http://linuxdoc.org/HOWTO/Modem-HOWTO.html
+     [262]http://tldp.org/HOWTO/Modem-HOWTO.html
           
-     [264]ftp://sunsite.unc.edu/pub/Linux/docs/HOWTO
+     [263]ftp://sunsite.unc.edu/pub/Linux/docs/HOWTO
           
-     [265]ftp://tsx-11.mit.edu/pub/linux/docs/HOWTO
+     [264]ftp://tsx-11.mit.edu/pub/linux/docs/HOWTO
           
-     [266]http://sunsite.unc.edu/LDP/HOWTO/
+     [265]http://www.tldp.org/HOWTO/
           
-     [267]http://sunsite.unc.edu/LDP/hmirrors.html
+     [266]http://www.tldp.org/hmirrors.html
           
    Linux Vendor Tech Support Pages:
           
-     [268]http://www.redhat.com/apps/support/
+     [267]http://www.redhat.com/apps/support/
           
-     [269]http://www.debian.org/support
+     [268]http://www.debian.org/support
           
-     [270]http://www.slackware.com/support/
+     [269]http://www.slackware.com/support/
           
-     [271]http://www.caldera.com/support/
+     [270]http://www.caldera.com/support/
           
-     [272]http://www.suse.com/support/
+     [271]http://www.suse.com/support/
           
-     [273]http://www.mandrake.com/support/
+     [272]http://www.mandrake.com/support/
           
-     [274]http://www.turbolinux.com/support/
+     [273]http://www.turbolinux.com/support/
           
    Linux Winmodem Support
-          [275]http://www.linmodems.org/
+          [274]http://www.linmodems.org/
           
-   Also see general comments on PC-based Unixes in [276]Section 3.0.
+   Also see general comments on PC-based Unixes in [275]Section 3.0.
    
    What Linux version is it? -- "uname -a" supplies only kernel
    information, but these days it's the distribution that matters: Red
-   Hat 7.2, Debian 2.2, Slackware 8.0, etc. Unfortunately there's no
+   Hat 7.3, Debian 2.2, Slackware 8.0, etc. Unfortunately there's no
    consistent way to get the distribution version. Usually it's in a
    distribution-specific file:
    
@@ -1544,17 +1541,17 @@
    
    Did you know: DECnet is available for Linux? See:
    
-  [277]http://linux.dreamtime.org/decnet/
+  [276]http://linux.dreamtime.org/decnet/
 
    (But there is no support for it in C-Kermit -- anybody interested in
-   adding it, please [278]let us know).
+   adding it, please [277]let us know).
    
    Before proceeding, let's handle the two most frequently asked question
    in the Linux newsgroups:
    
     1. Neither C-Kermit nor any other Linux application can use
-       Winmodems, except in the [279]rare cases where Linux drivers have
-       been written for them. See [280]Section 3.0.2 for details.
+       Winmodems, except in the [278]rare cases where Linux drivers have
+       been written for them. See [279]Section 3.0.2 for details.
     2. "Why does it take such a long time to make a telnet connection to
        (or from) my Linux PC?" (this applies to C-Kermit and to regular
        Telnet). Most telnet servers these days perform reverse DNS
@@ -1573,7 +1570,7 @@
   
   3.3.1. Problems Building C-Kermit for Linux
   
-   [ [281]Top ] [ [282]Contents ] [ [283]Section Contents ] [ [284]Next ]
+   [ [280]Top ] [ [281]Contents ] [ [282]Section Contents ] [ [283]Next ]
    
    Modern Linux distributions like Red Hat give you a choice at
    installation whether to include "developer tools". Obviously, you
@@ -1691,7 +1688,7 @@
    2) module installed, you can also run SCO Xenix and Unix binaries
    under Linux, including the SCO C-Kermit binaries, shareable libraries
    and all. (iCBS2 is available via anonymous ftp from
-   [285]tsx-11.mit.edu, along with an SCO libc_s compatibility module for
+   [284]tsx-11.mit.edu, along with an SCO libc_s compatibility module for
    Linux).
    
    There is evidently a minor problem with GCC (version unknown) on
@@ -1709,12 +1706,19 @@
   
   3.3.2. Problems with Serial Devices in Linux
   
-   [ [286]Top ] [ [287]Contents ] [ [288]Section Contents ] [ [289]Next ]
-   [ [290]Previous ]
+   [ [285]Top ] [ [286]Contents ] [ [287]Section Contents ] [ [288]Next ]
+   [ [289]Previous ]
    
      Also see: "man setserial", "man irqtune".
-     And: [291]Sections 3.0, [292]6, [293]7, and [294]8 of this
+     And: [290]Sections 3.0, [291]6, [292]7, and [293]8 of this
      document.
+     
+     NOTE: Red Hat Linux 7.2 and later include a new API that allows
+     serial-port arbitration by non-setuid/gid programs. This API has
+     not yet been added to C-Kermit. If C-Kermit is to be used for
+     dialing out on Red Hat 7.2 or later, it must still be installed as
+     described in in Sections [294]10 and [295]11 of the
+     [296]Installation Instructions. 
      
    Don't expect it to be easy. Queries like the following are posted to
    the Linux newsgroups almost daily:
@@ -1757,8 +1761,43 @@
      configure COM2 or any "modem". I ended up not saving any BIOS
      changes in the course of my investigations.
      
+   You can also find out a fair amount about your PC's hardware
+   configuration in the text files in /proc, e.g.:
+   
+  -r--r--r--    1 root            0 Sep  4 14:00 /proc/devices
+  -r--r--r--    1 root            0 Sep  4 14:00 /proc/interrupts
+  -r--r--r--    1 root            0 Sep  4 14:00 /proc/ioports
+  -r--r--r--    1 root            0 Sep  4 14:00 /proc/pci
+
+   From the directory listing they look like empty files, but in fact
+   they are text files that you "cat":
+   
+$ cat /proc/pci
+   Bus  0, device  14, function  0:
+     Serial controller: US Robotics/3Com 56K FaxModem Model 5610 (rev 1).
+       IRQ 10.
+       I/O at 0x1050 [0x1057].
+
+$ setserial -g /dev/ttyS4
+/dev/ttyS4, UART: 16550A, Port: 0x1050, IRQ: 10
+
+$ cat /proc/ioports
+1050-1057 : US Robotics/3Com 56K FaxModem Model 5610
+   1050-1057 : serial(auto)
+
+$ cat /proc/interrupts
+            CPU0
+   0:    7037515          XT-PIC  timer
+   1:          2          XT-PIC  keyboard
+   2:          0          XT-PIC  cascade
+   4:          0          XT-PIC  serial
+   8:          1          XT-PIC  rtc
+   9:     209811          XT-PIC  usb-uhci, eth0
+  14:     282015          XT-PIC  ide0
+  15:          6          XT-PIC  ide1
+
    Watch out for PCI, PCMCIA and Plug-n-Play devices, Winmodems, and the
-   like (see cautions in [295]Section 3.0 Linux supports Plug-n-Play
+   like (see cautions in [297]Section 3.0 Linux supports Plug-n-Play
    devices to some degree via the isapnp and pnpdump programs; read the
    man pages for them. (If you don't have them, look on your installation
    CD for isapnptool or download it from sunsite or a sunsite mirror or
@@ -1833,7 +1872,7 @@
    Linux will phase (have phased) it out in favor of the ttyS device. See
    (if it's still there):
    
-  [296]http://linuxwww.db.erau.edu/mail_archives/linux-kernel/Mar_98/1441.html
+  [298]http://linuxwww.db.erau.edu/mail_archives/linux-kernel/Mar_98/1441.html
 
    (no, of course it isn't; you'll have to use your imagination). One
    user reported that C-Kermit 7.0, when built with egcs 1.1.2 and run on
@@ -1855,11 +1894,11 @@
   
   3.3.3. Terminal Emulation in Linux
   
-   [ [297]Top ] [ [298]Contents ] [ [299]Section Contents ] [ [300]Next ]
-   [ [301]Previous ]
+   [ [299]Top ] [ [300]Contents ] [ [301]Section Contents ] [ [302]Next ]
+   [ [303]Previous ]
    
    C-Kermit is not a terminal emulator. For a brief explanation of why
-   not, see [302]Section 3.0.5. For a fuller explanation, [303]ClICK
+   not, see [304]Section 3.0.5. For a fuller explanation, [305]ClICK
    HERE.
    
    In Unix, terminal emulation is supplied by the Window in which you run
@@ -1868,7 +1907,7 @@
    xterm window, which gives VTxxx emulation. An xterm that includes
    color ANSI and VT220 emulation is available with Xfree86:
    
-  [304]http://www.clark.net/pub/dickey/xterm/xterm.faq.html
+  [306]http://dickey.his.com/xterm/xterm.html
 
    Before starting C-Kermit in an xterm window, you might need to tell
    the xterm window's shell to "stty sane".
@@ -1892,7 +1931,7 @@
   keycode 103 = Page_Up     ! End          => DEC Prev Screen
   keycode 22  = Delete      ! Backspace sends Delete (127)
 
-   Then put "xmodmap <filename>" in your .xinitrc file (in your login
+   Then put "xmodmap filename" in your .xinitrc file (in your login
    directory), e.g.
    
   xmodmap /root/.xmodmaprc
@@ -1902,12 +1941,15 @@
    
    Console-mode keys are mapped separately using loadkeys, and different
    keycodes are used. Find out what they are with showkey.
+   
+   For a much more complete VT220/320 key mapping for [307]Xfree86 xterm,
+   [308]CLICK HERE.
     ________________________________________________________________________
   
   3.3.4. Dates and Times
   
-   [ [305]Top ] [ [306]Contents ] [ [307]Section Contents ] [ [308]Next ]
-   [ [309]Previous ]
+   [ [309]Top ] [ [310]Contents ] [ [311]Section Contents ] [ [312]Next ]
+   [ [313]Previous ]
    
    If C-Kermit's date-time (e.g. as shown by its DATE command) differs
    from the system's date and time:
@@ -1921,8 +1963,8 @@
   
   3.3.5. Startup Errors
   
-   [ [310]Top ] [ [311]Contents ] [ [312]Section Contents ] [ [313]Next ]
-   [ [314]Previous ]
+   [ [314]Top ] [ [315]Contents ] [ [316]Section Contents ] [ [317]Next ]
+   [ [318]Previous ]
    
    C-Kermit should work on all versions of Linux current through December
    2001, provided it was built on the same version you have, with the
@@ -1932,7 +1974,7 @@
    particular C-Kermit binary will not stop working at a later date,
    since Linux tends to change out from under its applications. If that
    happens, rebuild C-Kermit from source. If something goes wrong with
-   the build process, [315]let us know.
+   the build process, [319]let us know.
    
    Inability to transfer files in Red Hat 7.2: the typical symptom would
    be if you start Kermit and tell it to RECEIVE, it fails right away
@@ -1950,7 +1992,7 @@
    assigning a controlling TTY for the session, which would make most use
    of "/dev/tty" somewhat less than useful.
    
-  [316]http://www.redhat.com/support/errata/RHBA-2001-153.html
+  [320]http://www.redhat.com/support/errata/RHBA-2001-153.html
 
    Quoting: "Due to terminal handling problems in /bin/login, tcsh would
    not find the controlling terminal correctly, and a shell in single
@@ -1962,7 +2004,7 @@
    Kermit RPM for Red Hat Linux, not working; either it won't start at
    all, or it gives error messages about "terminal type unknown" and
    refuses to initialize its curses support. The following is from the
-   [317]Kermit newsgroup:
+   [321]Kermit newsgroup:
    
      From: rchandra@hal9000.buf.servtech.com
      Newsgroups: comp.protocols.kermit.misc
@@ -2017,8 +2059,8 @@
   
   3.3.6. The Fullscreen File Transfer Display
   
-   [ [318]Top ] [ [319]Contents ] [ [320]Section Contents ] [
-   [321]Previous ]
+   [ [322]Top ] [ [323]Contents ] [ [324]Section Contents ] [
+   [325]Previous ]
    
    Starting with ncurses versions dated 1998-12-12 (about a year before
    ncurses 5.0), ncurses sets the terminal for buffered i/o, but
@@ -2031,7 +2073,7 @@
    
      * Use SET XFER DISPLAY BRIEF, CRT, SERIAL, or NONE instead of
        FULLSCREEN; or:
-     * Rebuild with KFLAGS=-DNCURSESNOSETBUF (C-Kermit 8.0)
+     * Rebuild with KFLAGS=-DNONOSETBUF (C-Kermit 8.0)
        
    In Red Hat 7.1, when using C-Kermit in a Gnome terminal window, it was
    noticed that when the fullscreen file transfer display exits (via
@@ -2040,13 +2082,15 @@
    happened. This is a evidently a new feature of xterm. I can only
    speculate that initscreen() and endwin() must send some kind of
    special escape sequences that command xterm to save and restore the
-   screen. At this writing, I don't know how to defeat it.
+   screen. To defeat this effect, tell Linux you have a vt100 or other
+   xterm-compatible terminal that is not actually an xterm, or else tell
+   Kermit to SET TRANSFER DISPLAY to something besides FULLSCREEN.
     ________________________________________________________________________
   
   3.4. C-KERMIT AND NEXTSTEP
   
-   [ [322]Top ] [ [323]Contents ] [ [324]Section Contents ] [ [325]Next ]
-   [ [326]Previous ]
+   [ [326]Top ] [ [327]Contents ] [ [328]Section Contents ] [ [329]Next ]
+   [ [330]Previous ]
    
    Run C-Kermit in a Terminal, Stuart, or xterm window, or when logged in
    remotely through a serial port or TELNET connection. C-Kermit does not
@@ -2104,10 +2148,10 @@
   
   3.5. C-KERMIT AND QNX
   
-   [ [327]Top ] [ [328]Contents ] [ [329]Section Contents ] [ [330]Next ]
-   [ [331]Previous ]
+   [ [331]Top ] [ [332]Contents ] [ [333]Section Contents ] [ [334]Next ]
+   [ [335]Previous ]
    
-   See also: The [332]comp.os.qnx newsgroup.
+   See also: The [336]comp.os.qnx newsgroup.
    
    Support for QNX 4.x was added in C-Kermit 5A(190). This is a
    full-function implementation, thoroughly tested on QNX 4.21 and later,
@@ -2116,7 +2160,7 @@
    successfully (after stripping most most features, I succeeded in
    getting it to compile and link without complaint, but the executable
    just beeps when you run it); for 16-bit QNX 4.2x, use C-Kermit 6.0 or
-   earlier, or else [333]G-Kermit.
+   earlier, or else [337]G-Kermit.
    
    The 32-bit version (and the 16-bit version prior to C-Kermit 7.0)
    support most of C-Kermit's advanced features including TCP/IP, high
@@ -2145,8 +2189,8 @@
    UUCP line locking. If you have a UUCP product installed on your QNX
    system, remove the -DNOUUCP switch from the makefile entry and
    rebuild. Then check to see that Kermit's UUCP lockfile conventions are
-   the same as those of your UUCP package; if not, read the [334]UUCP
-   lockfile section of the [335]Installation Instructions and make the
+   the same as those of your UUCP package; if not, read the [338]UUCP
+   lockfile section of the [339]Installation Instructions and make the
    necessary changes to the makefile entry (e.g. add -DHDBUUCP).
    
    QNX does, however, allow a program to get the device open count. This
@@ -2173,46 +2217,49 @@
   
   3.6. C-KERMIT AND SCO
   
-   [ [336]Top ] [ [337]Contents ] [ [338]Section Contents ] [ [339]Next ]
-   [ [340]Previous ]
+   [ [340]Top ] [ [341]Contents ] [ [342]Section Contents ] [ [343]Next ]
+   [ [344]Previous ]
    
    SECTION CONTENTS
    
-3.6.1. [341]SCO XENIX
-3.6.2. [342]SCO UNIX and OSR5
-3.6.3. [343]Unixware
-3.6.4. [344]Open UNIX 8
+3.6.1. [345]SCO XENIX
+3.6.2. [346]SCO UNIX and OSR5
+3.6.3. [347]Unixware
+3.6.4. [348]Open UNIX 8
 
    REFERENCES
    
      * The comp.unix.sco.* newsgroups.
-     * [345]Section 3.10 below for Unixware.
+     * [349]Section 3.10 below for Unixware.
      * The following FAQs:
        
         The comp.sco.misc FAQ:
-                [346]http://aplawrence.com/SCOFAQ/
+                [350]http://aplawrence.com/SCOFAQ/
                 
         Caldera (SCO) comp.unix.sco.programmer FAQ:
-                [347]http://www.zenez.com/cgi-bin/scoprogfaq/faq.pl
+                [351]http://www.zenez.com/cgi-bin/scoprogfaq/faq.pl
                 
         The UnixWare 7/OpenUNIX 8 FAQ:
-                [348]http://www.zenez.com/cgi-bin/scouw7faq/faq.pl
-                [349]http://zenez.pcunix.com/cgi-bin/scouw7faq/faq.pl
+                [352]http://www.zenez.com/cgi-bin/scouw7faq/faq.pl
+                [353]http://zenez.pcunix.com/cgi-bin/scouw7faq/faq.pl
+                
+        High Speed Modems for SCO Unix:
+                [354]http://pcunix.com/Unixart/modems.html
                 
         The UnixWare FAQ
-                [350]http://www.freebird.org/faq/
+                [355]http://www.freebird.org/faq/
                 
         The UnixWare 1.x and 2.0 Programmer FAQ
-                [351]http://www.freebird.org/faq/developer.html
+                [356]http://www.freebird.org/faq/developer.html
                 
         Caldera Support Knowledge Base
-                [352]http://support.caldera.com/caldera
+                [357]http://support.caldera.com/caldera
                 
-   Also see general comments on PC-based Unixes in [353]Section 3.0.
+   Also see general comments on PC-based Unixes in [358]Section 3.0.
    
   3.6.1. SCO XENIX
   
-   [ [354]Top ] [ [355]Contents ] [ [356]Section Contents ] [ [357]Next ]
+   [ [359]Top ] [ [360]Contents ] [ [361]Section Contents ] [ [362]Next ]
    
    Old Xenix versions... Did you know: Xenix 3.0 is *older* than Xenix
    2.0?
@@ -2221,7 +2268,7 @@
    DTR to hang up a modem does not work. DTR goes down but does not come
    up again. Workaround: Use SET MODEM HANGUP-METHOD MODEM-COMMAND.
    Anybody who would like to fix this is welcome to take a look at
-   tthang() in [358]ckutio.c. Also: modem signals can not be read in
+   tthang() in [363]ckutio.c. Also: modem signals can not be read in
    Xenix, and the maximum serial speed is 38400.
    
    There is all sorts of confusion among SCO versions, particularly when
@@ -2242,8 +2289,8 @@
   
   3.6.2. SCO UNIX AND OSR5
   
-   [ [359]Top ] [ [360]Contents ] [ [361]Section Contents ] [ [362]Next ]
-   [ [363]Previous ]
+   [ [364]Top ] [ [365]Contents ] [ [366]Section Contents ] [ [367]Next ]
+   [ [368]Previous ]
    
    SCO systems tend to use different names (i.e. drivers) for the same
    device. Typically /dev/tty1a refers to a terminal device that has no
@@ -2254,11 +2301,13 @@
    carrier appears, read/write operations fail if there is no carrier,
    etc).
    
-   SCO OpenServer 5.0.x does not support the reading of modem signals.
-   Thus "show comm" does not list modem signals, and C-Kermit does not
-   automatically pop back to its prompt when the modem hangs up the
-   connection (drops CD). The ioctl() call for this is simply not
-   implmented, at least not in the standard drivers.
+   SCO OpenServer 5.0.5 and earlier do not support the reading of modem
+   signals. Thus "show comm" does not list modem signals, and C-Kermit
+   does not automatically pop back to its prompt when the modem hangs up
+   the connection (drops CD). The ioctl() call for this is simply not
+   implmented, at least not in the standard drivers. OSR5.0.6 attempts to
+   deal with modem signals but fails; however OSR5.0.6a appears to
+   function properly.
    
    Dialing is likely not to work well in SCO OpenServer 5.0.x because
    many of the serial-port APIs simply do not operate when using the
@@ -2273,7 +2322,7 @@
    right when using third-party drivers. (Example: hardware flow control
    works, reportedly, only on uppercase device like tty1A -- not tty1a --
    and only when CLOCAL is clear when using the SCO sio driver, but there
-   are no such restrictions in, e.g., [364]Digiboard drivers).
+   are no such restrictions in, e.g., [369]Digiboard drivers).
    
    One user reports that he can't transfer large files with C-Kermit
    under SCO OSR5.0.0 and 5.0.4 -- after the first 5K, everything falls
@@ -2281,7 +2330,7 @@
    connection. Later, he said that replacing SCO's SIO driver with FAS,
    an alternative communications driver, made the problem go away:
    
-  [365]ftp://ftp.fu-berlin.de/pub/unix/driver/fas
+  [370]ftp://ftp.fu-berlin.de/pub/unix/driver/fas
 
    With regard to bidirectional serial ports on OpenServer 5.0.4, the
    following advice appeared on an SCO-related newsgroup:
@@ -2316,14 +2365,14 @@
    
    One SCO user of C-Kermit 5A(190) reported that only one copy of Kermit
    can run at a time when a Stallion Technologies multiport boards are
-   installed. Cause, cure, and present status unknown (see [366]Section
+   installed. Cause, cure, and present status unknown (see [371]Section
    14 for more info regarding Stallion).
    
    Prior to SCO OpenServer 5.0.4, the highest serial port speed supported
    by SCO was 38400. However, in some SCO versions (e.g. OSR5) it is
    possible to map rarely-used lower speeds (like 600 and 1800) to higher
    ones like 57600 and 115200. To find out how, go to
-   [367]http://www.sco.com/ and search for "115200". In OSR5.0.4, serial
+   [372]http://www.sco.com/ and search for "115200". In OSR5.0.4, serial
    speeds up to 921600 are supported through the POSIX interface;
    C-Kermit 6.1.193 or later, when built for OSR5.0.4 using /bin/cc (NOT
    the UDK, which hides the high-speed definitions from CPP), supports
@@ -2346,7 +2395,7 @@
     SCO OpenServer Release 5.0.4 or later
     SCO Internet FastStart Release 1.0.0 or later
 
-   SCO supplements are at [368]ftp://ftp.sco.com/; the "rs40" series are
+   SCO supplements are at [373]ftp://ftp.sco.com/; the "rs40" series are
    under directory /Supplements/internet
    
    Kermit includes the high serial speeds in all OSR5 builds, but that
@@ -2401,11 +2450,11 @@
   
   3.6.3. Unixware
   
-   [ [369]Top ] [ [370]Contents ] [ [371]Section Contents ] [ [372]Next ]
-   [ [373]Previous ]
+   [ [374]Top ] [ [375]Contents ] [ [376]Section Contents ] [ [377]Next ]
+   [ [378]Previous ]
    
    Unixware changed hands several times before landing at SCO, and so has
-   its [374]own section in this document. (Briefly: AT&T UNIX Systems
+   its [379]own section in this document. (Briefly: AT&T UNIX Systems
    Laboratories sold the rights to the UNIX name and to System V R4 (or
    R5?) to Novell; later Novell spun its UNIX division off into a new
    company called Univel, which eventually was bought by SCO.)
@@ -2413,8 +2462,8 @@
   
   3.6.4. Open UNIX 8
   
-   [ [375]Top ] [ [376]Contents ] [ [377]Section Contents ] [
-   [378]Previous ]
+   [ [380]Top ] [ [381]Contents ] [ [382]Section Contents ] [
+   [383]Previous ]
    
    SCO was bought by Caldera in 2000 or 2001 and evolved Unixware 7.1
    into Caldera Open UNIX 8.00. It's just like Unixware 7.1 as far as
@@ -2426,39 +2475,39 @@
   
   3.7. C-KERMIT AND SOLARIS
   
-   [ [379]Top ] [ [380]Contents ] [ [381]Section Contents ] [ [382]Next ]
-   [ [383]Previous ]
+   [ [384]Top ] [ [385]Contents ] [ [386]Section Contents ] [ [387]Next ]
+   [ [388]Previous ]
    
    SECTION CONTENTS
    
-3.7.1. [384]Serial Port Configuration
-3.7.2. [385]Serial Port Problems
-3.7.3. [386]SunLink X.25
-3.7.4. [387]Sun Workstation Keyboard Mapping
-3.7.5. [388]Solaris 2.4 and Earlier
+3.7.1. [389]Serial Port Configuration
+3.7.2. [390]Serial Port Problems
+3.7.3. [391]SunLink X.25
+3.7.4. [392]Sun Workstation Keyboard Mapping
+3.7.5. [393]Solaris 2.4 and Earlier
 
    REFERENCES
    
-     * The [389]comp.unix.solaris newsgroup
-     * [390]http://access1.sun.com/
-     * [391]http://docs.sun.com/
-     * [392]http://www.sunhelp.com/
-     * [393]http://www.wins.uva.nl/pub/solaris/solaris2/
-     * [394]http://www.wins.uva.nl/cgi-bin/sfaq.cgi
-     * [395]ftp://ftp.wins.uva.nl/pub/solaris
-     * [396]http://www.science.uva.nl/pub/solaris/solaris2.html
+     * The [394]comp.unix.solaris newsgroup
+     * [395]http://access1.sun.com/
+     * [396]http://docs.sun.com/
+     * [397]http://www.sunhelp.com/
+     * [398]http://www.wins.uva.nl/pub/solaris/solaris2/
+     * [399]http://www.wins.uva.nl/cgi-bin/sfaq.cgi
+     * [400]ftp://ftp.wins.uva.nl/pub/solaris
+     * [401]http://www.science.uva.nl/pub/solaris/solaris2.html
        
    And about serial communications in particular, see "Celeste's Tutorial
    on Solaris 2.x Modems and Terminals":
    
-  [397]http://www.stokely.com/
+  [402]http://www.stokely.com/
 
    In particular:
    
-  [398]http://www.stokely.com/unix.sysadm.resources/faqs.sun.html
+  [403]http://www.stokely.com/unix.sysadm.resources/faqs.sun.html
 
    For PC-based Solaris, also see general comments on PC-based Unixes in
-   [399]Section 3.0. Don't expect Solaris or any other kind of Unix to
+   [404]Section 3.0. Don't expect Solaris or any other kind of Unix to
    work right on a PC until you resolve all interrupt conflicts. Don't
    expect to be able to use COM3 or COM4 (or even COM2) until you have
    configured their addresses and interrupts.
@@ -2466,19 +2515,19 @@
   
   3.7.1. Serial Port Configuration
   
-   [ [400]Top ] [ [401]Contents ] [ [402]Section Contents ] [
-   [403]Section Contents ] [ [404]Next ]
+   [ [405]Top ] [ [406]Contents ] [ [407]Section Contents ] [
+   [408]Section Contents ] [ [409]Next ]
    
-   Even then your serial port can't be used -- or at least won't work
-   right -- until it is enabled in Solaris. For example, you get a
-   message like "SERIAL: Operation would block" when attempting to dial.
-   This probably indicates that the serial port has not been enabled for
-   use with modems. You'll need to follow the instructions in your system
-   setup or management manual, such as (e.g.) the Desktop SPARC Sun
-   System & Network Manager's Guide, which should contain a section
-   "Setting up Modem Software"; read it and follow the instructions.
-   These might (or might not) include running a program called "eeprom",
-   editing some system configuration file (such as, for example:
+   Your serial port can't be used -- or at least won't work right --
+   until it is enabled in Solaris. For example, you get a message like
+   "SERIAL: Operation would block" when attempting to dial. This probably
+   indicates that the serial port has not been enabled for use with
+   modems. You'll need to follow the instructions in your system setup or
+   management manual, such as (e.g.) the Desktop SPARC Sun System &
+   Network Manager's Guide, which should contain a section "Setting up
+   Modem Software"; read it and follow the instructions. These might (or
+   might not) include running a program called "eeprom", editing some
+   system configuration file (such as, for example:
    
   /platform/i86pc/kernel/drv/asy.conf
 
@@ -2507,30 +2556,32 @@
    still possible that a zombie process has hold of the port EVEN IF
    there is no lock file and the fuser command comes up empty. In that
    case, the only way to resolve the problem is by rebooting."
+   
+   If you can't establish communication through a serial port to a device
+   that is not asserting CD (Carrier Detect), try setting the environment
+   variable "ttya-ignore-cd" to "true" (replace "ttya" with the port
+   name).
     ________________________________________________________________________
   
   3.7.2. Serial Port Problems
   
-   [ [405]Top ] [ [406]Contents ] [ [407]Section Contents ] [ [408]Next ]
-   [ [409]Previous ]
+   [ [410]Top ] [ [411]Contents ] [ [412]Section Contents ] [ [413]Next ]
+   [ [414]Previous ]
    
-   Some users report difficulties dialing out with C-Kermit on serial
-   port when using the /dev/cua/a name -- session seems to become stuck,
-   can't escape back, etc -- but when using the /dev/term/a name for the
-   same device, everything works fine. Explanation: unknown, but probably
-   due to driver differences or improper configuration of the port;
-   again, see the [410]materials referenced above.
+   Current advice from Sun is to always the /dev/cua/x devices for
+   dialing out, rather than the /dev/term/x. Nevertheless, if you have
+   trouble dialing out with one, try the other.
    
    Reportedly, if you start C-Kermit and "set line" to a port that has a
    modem connected to it that is not turned on, and then "set flow
    rts/cts", there might be some (unspecified) difficulties closing the
-   device (Solaris version not specified).
+   device because the CTS signal is not coming in from the modem.
     ________________________________________________________________________
   
   3.7.3. SunLink X.25
   
-   [ [411]Top ] [ [412]Contents ] [ [413]Section Contents ] [ [414]Next ]
-   [ [415]Previous ]
+   [ [415]Top ] [ [416]Contents ] [ [417]Section Contents ] [ [418]Next ]
+   [ [419]Previous ]
    
    The built-in SunLink X.25 support for Solaris 2.3/2.4./25 and SunLink
    8.01 or 9.00 works OK provided the X.25 system has been installed and
@@ -2572,11 +2623,11 @@
   
   3.7.4. Sun Workstation Keyboard Mapping
   
-   [ [416]Top ] [ [417]Contents ] [ [418]Section Contents ] [ [419]Next ]
-   [ [420]Previous ]
+   [ [420]Top ] [ [421]Contents ] [ [422]Section Contents ] [ [423]Next ]
+   [ [424]Previous ]
    
    Hints for using a Sun workstation keyboard for VT emulation when
-   accessing VMS, from the [421]comp.os.vms newsgroup:
+   accessing VMS, from the [425]comp.os.vms newsgroup:
    
      From: Jerry Leichter <leichter@smarts.com>
      Newsgroups: comp.os.vms
@@ -2651,10 +2702,58 @@
      that stuff up for you.
     ________________________________________________________________________
   
-  3.7.5. Solaris 2.4 and Earlier
+  3.7.5. Solaris PPP Connections
   
-   [ [422]Top ] [ [423]Contents ] [ [424]Section Contents ] [
-   [425]Previous ]
+   [ [426]Top ] [ [427]Contents ] [ [428]Section Contents ] [ [429]Next ]
+   [ [430]Previous ]
+   
+   The following is a report from a user of C-Kermit 8.0 on Solaris 8 and
+   9, who had complained that while Kermit file transfers worked
+   perfectly on direct (non-PPP) dialout connections, they failed
+   miserably on PPP connections. We suggested that the PPP dialer
+   probably was not setting the port and/or modem up in the same way that
+   Kermit did:
+   
+     I want to get back on this and tell you what the resolution was.
+     You pointed me in the direction of flow control, which turned out
+     to be the key.
+     
+     Some discussion on the comp.unix.solaris newsgroup led to some
+     comments from Greg Andrews about the need to use the uucp driver to
+     talk to the modem (/dev/cua/a). I had to remind Greg that no matter
+     what the manpages for the zs and se drivers say, the ppp that Sun
+     released with Solaris 8 7/01, and has in Solaris 9, is a setuid
+     root program, and simply trying to make a pppd call from user space
+     specifying /dev/cua/a would fail because of permissions. Greg
+     finally put the question to the ppp people, who came back with
+     information that is not laid out anywhere in the docs available for
+     Solaris users. Namely, put /dev/cua/a in one of the priviledged
+     options files in the /etc/ppp directory. That, plus resetting the
+     OBP ttya-ignore-cd flag (this is Sun hardware) to false, seems to
+     have solved the problems.
+     
+     While I note that I had installed Kermit suid to uucp to use
+     /dev/cua/a on this particular box, it seems to run fine through
+     /dev/term/a. Not so with pppd.
+     
+     With this change in place, I seem to be able to upload and download
+     through telnet run on Kermit with the maximum length packets. I
+     note that the window allocation display does show STREAMING, using
+     telnet. Running ssh on Kermit, I see the standard 1 of 30 windows
+     display, and note that there appears to be a buffer length limit
+     between 1000 and 2000 bytes. Run with 1000, and it's tick-tock,
+     solid as a rock. With 2000 I see timeout errors and RTS/CTS action
+     on the modem.
+     
+   Kermit's packet-length and other controls let you make adjustments
+   like this to get around whatever obstacles might be thrown up -- in
+   this case (running Kermit over ssh), the underling Solaris PTY driver.
+    ________________________________________________________________________
+  
+  3.7.6. Solaris 2.4 and Earlier
+  
+   [ [431]Top ] [ [432]Contents ] [ [433]Section Contents ] [
+   [434]Previous ]
    
    C-Kermit can't be compiled successfully under Solaris 2.3 using
    SUNWspro cc 2.0.1 unless at least some of the following patches are
@@ -2790,22 +2889,22 @@
   
   3.8. C-KERMIT AND SUNOS
   
-   [ [426]Top ] [ [427]Contents ] [ [428]Section Contents ] [ [429]Next ]
-   [ [430]Previous ]
+   [ [435]Top ] [ [436]Contents ] [ [437]Section Contents ] [ [438]Next ]
+   [ [439]Previous ]
    
    For additional information, see "Celeste's Tutorial on SunOS 4.1.3+
    Modems and Terminals":
    
-  [431]http://www.stokely.com/
+  [440]http://www.stokely.com/
 
    For FAQs, etc, from Sun, see:
-     * [432]http://access1.sun.com/
+     * [441]http://access1.sun.com/
        
    For history of Sun models and SunOS versions, see (should be all the
    same):
-     * [433]http://www.ludd.luth.se/~bear/project/sun/sun.hardware.txt
-     * [434]ftp://ftp.netcom.com/pub/ru/rubicon/sun.hdwr.ref
-     * [435]ftp://ftp.intnet.net/pub/SUN/Sun-Hardware-Ref
+     * [442]http://www.ludd.luth.se/~bear/project/sun/sun.hardware.txt
+     * [443]ftp://ftp.netcom.com/pub/ru/rubicon/sun.hdwr.ref
+     * [444]ftp://ftp.intnet.net/pub/SUN/Sun-Hardware-Ref
        
    Sun SPARCstation users should read the section "Setting up Modem
    Software" in the Desktop SPARC Sun System & Network Manager's Guide.
@@ -2882,10 +2981,10 @@
   
   3.9. C-KERMIT AND ULTRIX
   
-   [ [436]Top ] [ [437]Contents ] [ [438]Section Contents ] [ [439]Next ]
-   [ [440]Previous ]
+   [ [445]Top ] [ [446]Contents ] [ [447]Section Contents ] [ [448]Next ]
+   [ [449]Previous ]
    
-   See also: The [441]comp.unix.ultrix and [442]comp.sys.dec newsgroups.
+   See also: The [450]comp.unix.ultrix and [451]comp.sys.dec newsgroups.
    
    There is no hardware flow control in Ultrix. That's not a Kermit
    deficiency, but an Ultrix one.
@@ -2927,18 +3026,18 @@
   
   3.10. C-KERMIT AND UNIXWARE
   
-   [ [443]Top ] [ [444]Contents ] [ [445]Section Contents ] [ [446]Next ]
-   [ [447]Previous ]
+   [ [452]Top ] [ [453]Contents ] [ [454]Section Contents ] [ [455]Next ]
+   [ [456]Previous ]
    
    See also:
      * The Freebird Project (Unixware software repository)
-       [448]http://www.freebird.org/
-     * The UnixWare FAQ: [449]http://www.freebird.org/faq/
+       [457]http://www.freebird.org/
+     * The UnixWare FAQ: [458]http://www.freebird.org/faq/
      * The following newsgroups:
-          + [450]comp.unix.unixware.misc
-          + [451]comp.unix.sco.misc.
+          + [459]comp.unix.unixware.misc
+          + [460]comp.unix.sco.misc.
        
-   Also see general comments on PC-based Unixes in [452]Section 3.0. By
+   Also see general comments on PC-based Unixes in [461]Section 3.0. By
    the way, this section is separate from the SCO (Caldera) section
    because at the time this section was started, Unixware was owned by a
    company called Univel. Later it was sold to Novell, and then to SCO.
@@ -2982,7 +3081,7 @@
    the irony. And so C-Kermit must be shamelessly butchered -- as it has
    been so many times before -- to allow us to have the needed features
    from the POSIX and non-POSIX worlds. See the UNIXWAREPOSIX sections of
-   [453]ckutio.c.
+   [462]ckutio.c.
    
    After the butchery, we wind up with Unixware 2.x having full
    modem-signal capability, but politically-correct Unixware 7.x lacking
@@ -3041,8 +3140,8 @@
   
   3.11. C-KERMIT AND APOLLO SR10
   
-   [ [454]Top ] [ [455]Contents ] [ [456]Section Contents ] [ [457]Next ]
-   [ [458]Previous ]
+   [ [463]Top ] [ [464]Contents ] [ [465]Section Contents ] [ [466]Next ]
+   [ [467]Previous ]
    
    Reportedly, version 5A(190), when built under Apollo SR10 using "make
    sr10-bsd", compiles, links, and executes OK, but leaves the terminal
@@ -3057,8 +3156,8 @@
   
   3.12. C-KERMIT AND TANDY XENIX 3.0
   
-   [ [459]Top ] [ [460]Contents ] [ [461]Section Contents ] [ [462]Next ]
-   [ [463]Previous ]
+   [ [468]Top ] [ [469]Contents ] [ [470]Section Contents ] [ [471]Next ]
+   [ [472]Previous ]
    
    C-Kermit 7.0 was too big to be built on Tandy Xenix, even in a minimum
    configuration; version 6.0 is the last one that fits.
@@ -3075,8 +3174,8 @@
   
   3.13. C-KERMIT AND OSF/1 (DIGITAL UNIX) (TRU64 UNIX)
   
-   [ [464]Top ] [ [465]Contents ] [ [466]Section Contents ] [ [467]Next ]
-   [ [468]Previous ]
+   [ [473]Top ] [ [474]Contents ] [ [475]Section Contents ] [ [476]Next ]
+   [ [477]Previous ]
    
    While putting together and testing C-Kermit 8.0, it was discovered
    that binaries built for one version of Tru64 Unix (e.g. 4.0G) might
@@ -3143,15 +3242,15 @@
   
   3.14. C-KERMIT AND SGI IRIX
   
-   [ [469]Top ] [ [470]Contents ] [ [471]Section Contents ] [ [472]Next ]
-   [ [473]Previous ]
+   [ [478]Top ] [ [479]Contents ] [ [480]Section Contents ] [ [481]Next ]
+   [ [482]Previous ]
    
    See also:
-     * The [474]comp.sys.sgi.misc and [475]comp.sys.sgi.admin newsgroups.
-       [476]The SGI website
+     * The [483]comp.sys.sgi.misc and [484]comp.sys.sgi.admin newsgroups.
+       [485]The SGI website
      * The SGI FAQ:
-          + [477]http://www-viz.tamu.edu/~sgi-faq/
-          + [478]ftp://viz.tamu.edu/pub/sgi/faq/
+          + [486]http://www-viz.tamu.edu/~sgi-faq/
+          + [487]ftp://viz.tamu.edu/pub/sgi/faq/
        
    About IRIX version numbers: "uname -a" tells the "two-digit" version
    number, such as "5.3" or "6.5". The three-digit form can be seen with
@@ -3229,27 +3328,27 @@
    probably that they do not trap SIGTSTP themselves, so the shell is
    doing the suspending rather than the application.
    
-   Also see notes about IRIX 3.x in the [479]C-Kermit for Unix
+   Also see notes about IRIX 3.x in the [488]C-Kermit for Unix
    Installation Instructions.
    
    If you have problems making TCP/IP connections in versions of IRIX
    built with GCC 2.95.2, see the bugs section of:
    
-  [480]http://freeware.sgi.com/Installable/gcc-2.95.2.html.
+  [489]http://freeware.sgi.com/Installable/gcc-2.95.2.html.
 
    Reportedly, if you allow gcc to compile C-Kermit on Irix you should be
    aware that there might be problems with some of the network code. The
    specifics are at
-   [481]http://freeware.sgi.com/Installable/gcc-2.95.2.html; scroll down
+   [490]http://freeware.sgi.com/Installable/gcc-2.95.2.html; scroll down
    to the "known bugs" section at the end of the document.
     ________________________________________________________________________
   
   3.15. C-KERMIT AND THE BEBOX
   
-   [ [482]Top ] [ [483]Contents ] [ [484]Section Contents ] [ [485]Next ]
-   [ [486]Previous ]
+   [ [491]Top ] [ [492]Contents ] [ [493]Section Contents ] [ [494]Next ]
+   [ [495]Previous ]
    
-   See also: The [487]comp.sys.be newsgroup.
+   See also: The [496]comp.sys.be newsgroup.
    
    The BeBox has been discontinued and BeOS repositioned for PC
    platforms. The POSIX parts of BeOS are not finished, nor is the
@@ -3293,8 +3392,8 @@
   
   3.16. C-KERMIT AND DG/UX
   
-   [ [488]Top ] [ [489]Contents ] [ [490]Section Contents ] [ [491]Next ]
-   [ [492]Previous ]
+   [ [497]Top ] [ [498]Contents ] [ [499]Section Contents ] [ [500]Next ]
+   [ [501]Previous ]
    
    Somebody downloaded the C-Kermit 6.0 binary built under DG/UX 5.40 and
    ran it under DG/UX 5.4R3.10 -- it worked OK except that file dates for
@@ -3305,8 +3404,8 @@
   
   3.17. C-KERMIT AND SEQUENT DYNIX
   
-   [ [493]Top ] [ [494]Contents ] [ [495]Section Contents ] [ [496]Next ]
-   [ [497]Previous ]
+   [ [502]Top ] [ [503]Contents ] [ [504]Section Contents ] [ [505]Next ]
+   [ [506]Previous ]
    
    Reportedly, when coming into a Sequent Unix (DYNIX) system through an
    X.25 connection, Kermit doesn't work right because the Sequent's
@@ -3319,8 +3418,8 @@
   
   3.18. C-KERMIT AND {FREE,OPEN,NET}BSD
   
-   [ [498]Top ] [ [499]Contents ] [ [500]Section Contents ] [ [501]Next ]
-   [ [502]Previous ]
+   [ [507]Top ] [ [508]Contents ] [ [509]Section Contents ] [ [510]Next ]
+   [ [511]Previous ]
    
    Some NebBSD users have reported difficulty escaping back from CONNECT
    mode, usually when running NetBSD on non-PC hardware. Probably a
@@ -3335,8 +3434,8 @@
   
   3.19. C-KERMIT AND MAC OS X (Rhapsody, Darwin)
   
-   [ [503]Top ] [ [504]Contents ] [ [505]Section Contents ] [ [506]Next ]
-   [ [507]Previous ]
+   [ [512]Top ] [ [513]Contents ] [ [514]Section Contents ] [ [515]Next ]
+   [ [516]Previous ]
    
    Nomenclature:
 
@@ -3356,12 +3455,12 @@
   
   3.20. C-KERMIT AND COHERENT
   
-   [ [508]Top ] [ [509]Contents ] [ [510]Section Contents ] [
-   [511]Previous ]
+   [ [517]Top ] [ [518]Contents ] [ [519]Section Contents ] [
+   [520]Previous ]
    
    Also see:
    
-     [512]http://www.uni-giessen.de/faq/archiv/coherent-faq.general/msg00
+     [521]http://www.uni-giessen.de/faq/archiv/coherent-faq.general/msg00
    000.html
    
    Mark Williams COHERENT was perhaps the first commercial Unix-based
@@ -3386,7 +3485,7 @@
   
   4. GENERAL UNIX-SPECIFIC HINTS, LIMITATIONS, AND BUGS
   
-   [ [513]Top ] [ [514]Contents ] [ [515]Next ] [ [516]Previous ]
+   [ [522]Top ] [ [523]Contents ] [ [524]Next ] [ [525]Previous ]
    
   4.1. Modem Signals
   
@@ -3439,7 +3538,7 @@
    switches, such as -x to put it in server mode) into the shell field of
    the /etc/passwd file. This works pretty well. In some cases, for
    "ultimate security", you might want to use a version built with
-   -DNOPUSH (see the [517]Configurations Options document for this, but
+   -DNOPUSH (see the [526]Configurations Options document for this, but
    even if you don't, then PUSHing or shelling out from C-Kermit just
    brings up a new copy of C-Kermit (but warning: this does not prevent
    the user from explicitly running a shell; e.g. "run /bin/sh"; use
@@ -3562,11 +3661,11 @@
   
   5. INITIALIZATION AND COMMAND FILES
   
-   [ [518]Top ] [ [519]Contents ] [ [520]Next ] [ [521]Previous ]
+   [ [527]Top ] [ [528]Contents ] [ [529]Next ] [ [530]Previous ]
    
    C-Kermit's initialization file for Unix is .kermrc (lowercase, starts
    with period) in your home directory, unless Kermit was built with the
-   system-wide initialization-file option (see the [522]C-Kermit for Unix
+   system-wide initialization-file option (see the [531]C-Kermit for Unix
    Installation Instructions).
    
    C-Kermit identifies your home directory based on the environment
@@ -3631,7 +3730,7 @@
   
   6. COMMUNICATION SPEED SELECTION
   
-   [ [523]Top ] [ [524]Contents ] [ [525]Next ] [ [526]Previous ]
+   [ [532]Top ] [ [533]Contents ] [ [534]Next ] [ [535]Previous ]
    
    Version-7 based Unix implementations, including 4.3 BSD and earlier
    and Unix systems based upon BSD, use a 4-bit field to record a serial
@@ -3717,14 +3816,14 @@
    higher speed, and then the software must also be told to change to the
    new, higher speed.
    
-   For additional information, read [527]Section 9.5 of the Installation
-   Instructions, plus any platform-specific notes in [528]Section 3
+   For additional information, read [536]Section 9.5 of the Installation
+   Instructions, plus any platform-specific notes in [537]Section 3
    above.
     ________________________________________________________________________
   
   7. COMMUNICATIONS AND DIALING
   
-   [ [529]Top ] [ [530]Contents ] [ [531]Next ] [ [532]Previous ]
+   [ [538]Top ] [ [539]Contents ] [ [540]Next ] [ [541]Previous ]
    
   7.1. Serial Ports and Modems
   
@@ -3808,9 +3907,9 @@
     5. If MODEM HANGUP-METHOD is set to RS232-SIGNAL, change it to
        MODEM-COMMAND. Or vice-versa.
     6. Try SET DIAL HANGUP OFF before the DIAL command. Also, SET DIAL
-       DISPLAY ON to watch what's happening. See [533]Section 8 of the
-       [534]Installation Instructions.
-    7. Read pages 50-67 of [535]Using C-Kermit.
+       DISPLAY ON to watch what's happening. See [542]Section 8 of the
+       [543]Installation Instructions.
+    7. Read pages 50-67 of [544]Using C-Kermit.
     8. As a last resort, don't use the DIAL command at all; SET CARRIER
        OFF and CONNECT to the modem and dial interactively, or write a
        script program to dial the modem.
@@ -3966,7 +4065,7 @@
   
   8. HARDWARE FLOW CONTROL
   
-   [ [536]Top ] [ [537]Contents ] [ [538]Next ] [ [539]Previous ]
+   [ [545]Top ] [ [546]Contents ] [ [547]Next ] [ [548]Previous ]
    
    SET FLOW RTS/CTS is available in Unix C-Kermit only when the
    underlying operating system provides an Application Program Interface
@@ -4010,13 +4109,19 @@
    other hardware flow-control related commands. BUT... That does not
    necessarily mean that they will work. In some cases, the underlying
    functions are simply not coded into the operating system.
+   
+   WARNING: When hardware flow control is available, and you enable in
+   Kermit on a device that is not receiving the CTS signal, Kermit can
+   hang waiting for CTS to come up. This is most easily seen when the
+   local serial port has nothing plugged in to it, or is connected to an
+   external modem that is powered off.
     ________________________________________________________________________
   
   9. TERMINAL CONNECTION AND KEY MAPPING
   
-   [ [540]Top ] [ [541]Contents ] [ [542]Next ] [ [543]Previous ]
+   [ [549]Top ] [ [550]Contents ] [ [551]Next ] [ [552]Previous ]
    
-   C-Kermit is not a terminal emulator. Refer to page 147 of [544]Using
+   C-Kermit is not a terminal emulator. Refer to page 147 of [553]Using
    C-Kermit, 2nd Edition: "Most versions of C-Kermit -- Unix, VMS,
    AOS/VS, VOS, etc -- provide terminal connection without emulation.
    These versions act as a 'semitransparent pipe' between the remote
@@ -4027,7 +4132,7 @@
    If you are an X Windows user, you should be aware of an alternative to
    xterm that supports VT220 emulation, from Thomas E. Dickey:
    
-  [545]http://www.clark.net/pub/dickey/xterm/xterm.faq.html
+  [554]http://dickey.his.com/xterm/xterm.html
 
    Unix C-Kermit's SET KEY command currently can not be used with keys
    that generate "wide" scan codes or multibyte sequences, such as
@@ -4074,7 +4179,7 @@
   
   10. FILE TRANSFER
   
-   [ [546]Top ] [ [547]Contents ] [ [548]Next ] [ [549]Previous ]
+   [ [555]Top ] [ [556]Contents ] [ [557]Next ] [ [558]Previous ]
    
    If uploads (or downloads) fail immediately, give the CAUTIOUS command
    to Kermit and try again. If they still fail, then try SET PREFIXING
@@ -4089,6 +4194,9 @@
      * The amount of available space on the target disk ("df ." or "df -k
        .")
      * Your personal disk quota (platform- and site-dependent)
+     * The maximum file size on the receiver's file system (e.g. 2GB in
+       old verions the Linux VFS file system, and/or in applications that
+       have not been recoded to use new "large file" APIs).
      * If it's an NFS-mounted disk (if so, try uploading to a local disk)
      * Is there an "idle limit" on the receiving end?
        
@@ -4195,12 +4303,12 @@
   
   11. EXTERNAL FILE TRANSFER PROTOCOLS
   
-   [ [550]Top ] [ [551]Contents ] [ [552]Next ] [ [553]Previous ]
+   [ [559]Top ] [ [560]Contents ] [ [561]Next ] [ [562]Previous ]
    
    SECTION CONTENTS
    
-  11.1. [554]C-Kermit as an External Protocol
-  11.2. [555]Invoking External Protocols from C-Kermit
+  11.1. [563]C-Kermit as an External Protocol
+  11.2. [564]Invoking External Protocols from C-Kermit
 
    Unix C-Kermit can be used in conjunction with other communications
    software in various ways. C-Kermit can be invoked from another
@@ -4221,9 +4329,9 @@
    
   11.1. C-KERMIT AS AN EXTERNAL PROTOCOL
   
-   [ [556]Top ] [ [557]Contents ] [ [558]Section Contents ] [ [559]Next ]
+   [ [565]Top ] [ [566]Contents ] [ [567]Section Contents ] [ [568]Next ]
    
-   (This section deleted; see [560]Using C-Kermit, 2nd Ed, Chapter 14.)
+   (This section deleted; see [569]Using C-Kermit, 2nd Ed, Chapter 14.)
    
    "pcomm" is a general-purpose terminal program that provides file
    transfer capabilities itself (X- and YMODEM variations) and the
@@ -4288,11 +4396,11 @@
 
   11.2. INVOKING EXTERNAL PROTOCOLS FROM C-KERMIT
   
-   [ [561]Top ] [ [562]Contents ] [ [563]Section Contents ] [
-   [564]Previous ]
+   [ [570]Top ] [ [571]Contents ] [ [572]Section Contents ] [
+   [573]Previous ]
    
      (This section is obsolete, but not totally useless. See Chapter 14
-     of [565]Using C-Kermit, 2nd Edition). 
+     of [574]Using C-Kermit, 2nd Edition). 
      
    After you have opened a communication link with C-Kermit's SET LINE
    (SET PORT) or SET HOST (TELNET) command, C-Kermit makes its file
@@ -4352,16 +4460,16 @@
   
   12. SECURITY
   
-   [ [566]Top ] [ [567]Contents ] [ [568]Next ] [ [569]Previous ]
+   [ [575]Top ] [ [576]Contents ] [ [577]Next ] [ [578]Previous ]
    
    As of version 7.0, C-Kermit supports a wide range of security options
    for authentication and encryption: Kerberos 4, Kerberos 5 / GSSAPI,
-   SSL/TLS, and SRP. See the separate [570]security document for details.
+   SSL/TLS, and SRP. See the separate [579]security document for details.
     ________________________________________________________________________
   
   13. MISCELLANEOUS USER REPORTS
   
-   [ [571]Top ] [ [572]Contents ] [ [573]Next ] [ [574]Previous ]
+   [ [580]Top ] [ [581]Contents ] [ [582]Next ] [ [583]Previous ]
    
 Date: Thu, 12 Mar 92 1:59:25 MEZ
 From: Walter Mecky <walter@rent-a-guru.de>
@@ -4516,7 +4624,7 @@ int argc; char *argv[]; {
   
   14. THIRD-PARTY DRIVERS
   
-   [ [575]Top ] [ [576]Contents ] [ [577]Next ] [ [578]Previous ]
+   [ [584]Top ] [ [585]Contents ] [ [586]Next ] [ [587]Previous ]
    
    Unix versions, especially those for PCs (SCO, Unixware, etc) might be
    augmented by third-party communication-board drivers from Digiboard,
@@ -4542,7 +4650,7 @@ int argc; char *argv[]; {
        the rest are supported. This will, as I mentioned earlier, be
        fixed in the next release of our ATA software."
        - World Wide Escalation Support, Stallion Technologies, Toowong
-       QLD, [579]support@stallion.oz.au.
+       QLD, [588]support@stallion.oz.au.
        
    Later (December 1997, from the same source):
    
@@ -4554,15 +4662,15 @@ int argc; char *argv[]; {
        such as the early revision of the EasyIO card and the
        EasyConnection 8D4 panel, and as always asserted on those cards
        that do not support the DSR signal in the hardware. The new driver
-       is available from our Web site, [580]www.stallion.com, in the
+       is available from our Web site, [589]www.stallion.com, in the
        /drivers/ata5/UnixWare directory.
        
-   [ [581]Top ] [ [582]Contents ] [ [583]C-Kermit Home ] [ [584]C-Kermit
-   8.0 Overview ] [ [585]Kermit Home ]
+   [ [590]Top ] [ [591]Contents ] [ [592]C-Kermit Home ] [ [593]C-Kermit
+   8.0 Overview ] [ [594]Kermit Home ]
      _________________________________________________________________
    
-   C-Kermit 8.0 Unix Hints and Tips / [586]The Kermit Project /
-   [587]Columbia University / [588]kermit@columbia.edu / 22 January 2002
+   C-Kermit 8.0 Unix Hints and Tips / [595]The Kermit Project /
+   [596]Columbia University / [597]kermit@columbia.edu / 10 Nov 2002
 
 References
 
@@ -4571,586 +4679,595 @@ References
    3. http://www.columbia.edu/kermit/ckubwr.html
    4. mailto:kermit-support@columbia.edu
    5. http://www.columbia.edu/kermit/ckermit.html
-   6. http://www.columbia.edu/kermit/ck80.html
-   7. http://www.columbia.edu/kermit/ckuins.html
-   8. http://www.columbia.edu/kermit/ckututor.html
-   9. http://www.columbia.edu/kermit/ckubwr.html#x1
-  10. http://www.columbia.edu/kermit/ckubwr.html#x2
-  11. http://www.columbia.edu/kermit/ckubwr.html#x3
-  12. http://www.columbia.edu/kermit/ckubwr.html#x4
-  13. http://www.columbia.edu/kermit/ckubwr.html#x5
-  14. http://www.columbia.edu/kermit/ckubwr.html#x6
-  15. http://www.columbia.edu/kermit/ckubwr.html#x7
-  16. http://www.columbia.edu/kermit/ckubwr.html#x8
-  17. http://www.columbia.edu/kermit/ckubwr.html#x9
-  18. http://www.columbia.edu/kermit/ckubwr.html#x10
-  19. http://www.columbia.edu/kermit/ckubwr.html#x11
-  20. http://www.columbia.edu/kermit/ckubwr.html#x12
-  21. http://www.columbia.edu/kermit/ckubwr.html#x13
-  22. http://www.columbia.edu/kermit/ckubwr.html#x14
-  23. http://www.columbia.edu/kermit/ckubwr.html#x3.3
-  24. http://www.columbia.edu/kermit/ckubwr.html#x3.18
-  25. http://www.columbia.edu/kermit/ckubwr.html#x3.1
-  26. http://www.columbia.edu/kermit/ckubwr.html#x3.2
-  27. http://www.columbia.edu/kermit/ckubwr.html#x3.7
-  28. http://www.columbia.edu/kermit/ckubwr.html#x3.6
-  29. http://www.columbia.edu/kermit/ckubwr.html#x3.13
-  30. http://www.columbia.edu/kermit/ckubwr.html#top
-  31. http://www.columbia.edu/kermit/ckubwr.html#contents
-  32. http://www.columbia.edu/kermit/ckubwr.html#x2
-  33. http://www.columbia.edu/kermit/ckubwr.html#x1.1
-  34. http://www.columbia.edu/kermit/ckubwr.html#x1.2
-  35. http://www.columbia.edu/kermit/ckubwr.html#x1.3
-  36. http://www.columbia.edu/kermit/ckubwr.html#x1.4
-  37. http://www.columbia.edu/kermit/ckubwr.html#x3.3
-  38. http://www.columbia.edu/kermit/ckubwr.html#x3.1
-  39. http://www.columbia.edu/kermit/ckubwr.html#x3.2
-  40. http://www.columbia.edu/kermit/ckubwr.html#x3.7
-  41. http://www.columbia.edu/kermit/ckcbwr.html
-  42. mailto:kermit-support@columbia.edu
-  43. http://www.columbia.edu/kermit/ckubwr.html#top
-  44. http://www.columbia.edu/kermit/ckubwr.html#contents
-  45. http://www.columbia.edu/kermit/ckubwr.html#x1.2
-  46. http://www.columbia.edu/kermit/ck60manual.html
-  47. http://www.columbia.edu/kermit/ckermit2.html
-  48. http://www.columbia.edu/kermit/ckermit2.html
-  49. http://www.columbia.edu/kermit/ckubwr.html#top
-  50. http://www.columbia.edu/kermit/ckubwr.html#contents
-  51. http://www.columbia.edu/kermit/ckubwr.html#x1
-  52. http://www.columbia.edu/kermit/ckubwr.html#x1.3
-  53. http://www.columbia.edu/kermit/ckubwr.html#x1.1
-  54. http://www.columbia.edu/kermit/support.html
-  55. http://www.columbia.edu/kermit/ckubwr.html#top
-  56. http://www.columbia.edu/kermit/ckubwr.html#contents
-  57. http://www.columbia.edu/kermit/ckubwr.html#x1
-  58. http://www.columbia.edu/kermit/ckubwr.html#x1.4
-  59. http://www.columbia.edu/kermit/ckubwr.html#x1.2
-  60. http://www.columbia.edu/kermit/ckubwr.html#top
-  61. http://www.columbia.edu/kermit/ckubwr.html#contents
-  62. http://www.columbia.edu/kermit/ckubwr.html#x1
-  63. http://www.columbia.edu/kermit/ckubwr.html#x1.3
-  64. http://www.columbia.edu/kermit/ckubwr.html#top
-  65. http://www.columbia.edu/kermit/ckubwr.html#contents
-  66. http://www.columbia.edu/kermit/ckubwr.html#x3
-  67. http://www.columbia.edu/kermit/ckubwr.html#x1
-  68. http://www.columbia.edu/kermit/ckubwr.html#top
-  69. http://www.columbia.edu/kermit/ckubwr.html#contents
-  70. http://www.columbia.edu/kermit/ckubwr.html#x4
-  71. http://www.columbia.edu/kermit/ckubwr.html#x2
-  72. http://www.columbia.edu/kermit/ckubwr.html#x3.0
-  73. http://www.columbia.edu/kermit/ckubwr.html#x3.1
-  74. http://www.columbia.edu/kermit/ckubwr.html#x3.2
-  75. http://www.columbia.edu/kermit/ckubwr.html#x3.3
-  76. http://www.columbia.edu/kermit/ckubwr.html#x3.4
-  77. http://www.columbia.edu/kermit/ckubwr.html#x3.5
-  78. http://www.columbia.edu/kermit/ckubwr.html#x3.6
-  79. http://www.columbia.edu/kermit/ckubwr.html#x3.7
-  80. http://www.columbia.edu/kermit/ckubwr.html#x3.8
-  81. http://www.columbia.edu/kermit/ckubwr.html#x3.9
-  82. http://www.columbia.edu/kermit/ckubwr.html#x3.10
-  83. http://www.columbia.edu/kermit/ckubwr.html#x3.11
-  84. http://www.columbia.edu/kermit/ckubwr.html#x3.12
-  85. http://www.columbia.edu/kermit/ckubwr.html#x3.13
-  86. http://www.columbia.edu/kermit/ckubwr.html#x3.14
-  87. http://www.columbia.edu/kermit/ckubwr.html#x3.15
-  88. http://www.columbia.edu/kermit/ckubwr.html#x3.16
-  89. http://www.columbia.edu/kermit/ckubwr.html#x3.17
-  90. http://www.columbia.edu/kermit/ckubwr.html#x3.18
-  91. http://www.columbia.edu/kermit/ckubwr.html#x3.19
-  92. http://www.columbia.edu/kermit/ckubwr.html#x3.20
-  93. http://www.faqs.org/
-  94. http://www.columbia.edu/kermit/x3
-  95. mailto:kermit-support@columbia.edu
-  96. http://www.columbia.edu/kermit/support.html
-  97. http://www.columbia.edu/kermit/ckubwr.html#top
-  98. http://www.columbia.edu/kermit/ckubwr.html#contents
-  99. http://www.columbia.edu/kermit/ckubwr.html#x3
- 100. http://www.columbia.edu/kermit/ckubwr.html#x3.1
- 101. http://www.columbia.edu/kermit/ckubwr.html#x3.0.1
- 102. http://www.columbia.edu/kermit/ckubwr.html#x3.0.2
- 103. http://www.columbia.edu/kermit/ckubwr.html#x3.0.3
- 104. http://www.columbia.edu/kermit/ckubwr.html#x3.0.4
- 105. http://www.columbia.edu/kermit/ckubwr.html#x3.0.5
- 106. http://www.columbia.edu/kermit/ckubwr.html#x3.0.6
- 107. http://www.columbia.edu/kermit/ckubwr.html#top
- 108. http://www.columbia.edu/kermit/ckubwr.html#contents
- 109. http://www.columbia.edu/kermit/ckubwr.html#x3.0
- 110. http://www.columbia.edu/kermit/ckubwr.html#x3.0.2
- 111. http://www.columbia.edu/kermit/ckubwr.html#top
- 112. http://www.columbia.edu/kermit/ckubwr.html#contents
- 113. http://www.columbia.edu/kermit/ckubwr.html#x3.0
- 114. http://www.columbia.edu/kermit/ckubwr.html#x3.0.3
- 115. http://www.columbia.edu/kermit/ckubwr.html#x3.0.1
- 116. http://www.linmodems.org/
- 117. http://www.microsoft.com/hwdev/newpc/
- 118. http://www.columbia.edu/kermit/ckubwr.html#top
- 119. http://www.columbia.edu/kermit/ckubwr.html#contents
- 120. http://www.columbia.edu/kermit/ckubwr.html#x3.0
- 121. http://www.columbia.edu/kermit/ckubwr.html#x3.0.4
- 122. http://www.columbia.edu/kermit/ckubwr.html#x3.0.2
- 123. http://www.o2.net/~gromitkc/winmodem.html
- 124. http://www.digi.com/
- 125. http://www.columbia.edu/kermit/ckubwr.html#top
- 126. http://www.columbia.edu/kermit/ckubwr.html#contents
- 127. http://www.columbia.edu/kermit/ckubwr.html#x3.0
- 128. http://www.columbia.edu/kermit/ckubwr.html#x3.0.5
- 129. http://www.columbia.edu/kermit/ckubwr.html#x3.0.3
- 130. http://www.columbia.edu/kermit/ckubwr.html#top
- 131. http://www.columbia.edu/kermit/ckubwr.html#contents
- 132. http://www.columbia.edu/kermit/ckubwr.html#x3.0
- 133. http://www.columbia.edu/kermit/ckubwr.html#x3.0.6
- 134. http://www.columbia.edu/kermit/ckubwr.html#x3.0.4
- 135. http://www.columbia.edu/kermit/ckubwr.html#top
- 136. http://www.columbia.edu/kermit/ckubwr.html#contents
- 137. http://www.columbia.edu/kermit/ckubwr.html#x3.0
- 138. http://www.columbia.edu/kermit/ckubwr.html#x3.0.5
- 139. http://www.columbia.edu/kermit/ckubwr.html#top
- 140. http://www.columbia.edu/kermit/ckubwr.html#contents
- 141. http://www.columbia.edu/kermit/ckubwr.html#x3
- 142. http://www.columbia.edu/kermit/ckubwr.html#x3.2
- 143. http://www.columbia.edu/kermit/ckubwr.html#x3.0
- 144. http://www.columbia.edu/kermit/ckubwr.html#x3.1.1
- 145. http://www.columbia.edu/kermit/ckubwr.html#x3.1.2
- 146. http://www.columbia.edu/kermit/ckubwr.html#x3.1.3
- 147. http://www.columbia.edu/kermit/ckubwr.html#x3.1.4
- 148. http://www.columbia.edu/kermit/ckubwr.html#x3.1.5
- 149. http://www.emerson.emory.edu/services/aix-faq/
- 150. http://www.faqs.org/faqs/by-newsgroup/comp/comp.unix.aix.html
- 151. http://www.cis.ohio-state.edu/hypertext/faq/usenet/aix-faq/top.html
- 152. http://aixpdslib.seas.ucla.edu/
- 153. http://www.rootvg.net(AIXhistory)/
- 154. ftp://rtfm.mit.edu/pub/usenet/news.answers/aix-faq/part1
- 155. ftp://mirrors.aol.com/pub/rtfm/usenet-by-hierarchy/comp/unix/aix
- 156. news:comp.unix.aix
- 157. http://www.columbia.edu/kermit/ckubwr.html#top
- 158. http://www.columbia.edu/kermit/ckubwr.html#contents
- 159. http://www.columbia.edu/kermit/ckubwr.html#x3.1
- 160. http://www.columbia.edu/kermit/ckubwr.html#x3.1.2
- 161. http://www.columbia.edu/kermit/ckubwr.html#top
- 162. http://www.columbia.edu/kermit/ckubwr.html#contents
- 163. http://www.columbia.edu/kermit/ckubwr.html#x3.1
- 164. http://www.columbia.edu/kermit/ckubwr.html#x3.1.3
- 165. http://www.columbia.edu/kermit/ckubwr.html#x3.1.1
- 166. http://www.columbia.edu/kermit/security.html#servers
- 167. http://www.columbia.edu/kermit/ckubwr.html#top
- 168. http://www.columbia.edu/kermit/ckubwr.html#contents
- 169. http://www.columbia.edu/kermit/ckubwr.html#x3.1
- 170. http://www.columbia.edu/kermit/ckubwr.html#x3.1.4
- 171. http://www.columbia.edu/kermit/ckubwr.html#x3.1.2
- 172. http://service.software.ibm.com/rs6000/
- 173. http://www.columbia.edu/kermit/ckubwr.html#top
- 174. http://www.columbia.edu/kermit/ckubwr.html#contents
- 175. http://www.columbia.edu/kermit/ckubwr.html#x3.1
- 176. http://www.columbia.edu/kermit/ckubwr.html#x3.1.5
- 177. http://www.columbia.edu/kermit/ckubwr.html#x3.1.3
- 178. http://www.columbia.edu/kermit/ckubwr.html#top
- 179. http://www.columbia.edu/kermit/ckubwr.html#contents
- 180. http://www.columbia.edu/kermit/ckubwr.html#x3.1
- 181. http://www.columbia.edu/kermit/ckubwr.html#x3.1.4
- 182. http://www.columbia.edu/kermit/ckubwr.html#top
- 183. http://www.columbia.edu/kermit/ckubwr.html#contents
- 184. http://www.columbia.edu/kermit/ckubwr.html#x3
- 185. http://www.columbia.edu/kermit/ckubwr.html#x3.3
- 186. http://www.columbia.edu/kermit/ckubwr.html#x3.1
- 187. http://www.columbia.edu/kermit/ckubwr.html#x3.2.0
- 188. http://www.columbia.edu/kermit/ckubwr.html#x3.2.1
- 189. http://www.columbia.edu/kermit/ckubwr.html#x3.2.2
- 190. http://www.columbia.edu/kermit/ckubwr.html#x3.2.3
- 191. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4
- 192. http://www.columbia.edu/kermit/ckubwr.html#x3.2.5
- 193. news:comp.sys.hp.hpux
- 194. http://www.columbia.edu/kermit/ckubwr.html#top
- 195. http://www.columbia.edu/kermit/ckubwr.html#contents
- 196. http://www.columbia.edu/kermit/ckubwr.html#x3.2
- 197. http://www.columbia.edu/kermit/ckubwr.html#x3.2.1
- 198. http://www.columbia.edu/kermit/ckubwr.html#top
- 199. http://www.columbia.edu/kermit/ckubwr.html#contents
- 200. http://www.columbia.edu/kermit/ckubwr.html#x3.2
- 201. http://www.columbia.edu/kermit/ckubwr.html#x3.2.2
- 202. http://www.columbia.edu/kermit/ckubwr.html#x3.2.0
- 203. ftp://kermit.columbia.edu/kermit/f/makefile
- 204. http://www.columbia.edu/kermit/ckubwr.html#top
- 205. http://www.columbia.edu/kermit/ckubwr.html#contents
- 206. http://www.columbia.edu/kermit/ckubwr.html#x3.2
- 207. http://www.columbia.edu/kermit/ckubwr.html#x3.2.3
- 208. http://www.columbia.edu/kermit/ckubwr.html#x3.2.1
- 209. http://www.columbia.edu/kermit/ckubwr.html#top
- 210. http://www.columbia.edu/kermit/ckubwr.html#contents
- 211. http://www.columbia.edu/kermit/ckubwr.html#x3.2
- 212. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4
- 213. http://www.columbia.edu/kermit/ckubwr.html#x3.2.2
- 214. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.1
- 215. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.2
- 216. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.3
- 217. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.4
- 218. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.5
- 219. http://www.columbia.edu/kermit/ckubwr.html#top
- 220. http://www.columbia.edu/kermit/ckubwr.html#contents
- 221. http://www.columbia.edu/kermit/ckubwr.html#x3.2
- 222. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.2
- 223. http://www.columbia.edu/kermit/ckubwr.html#x3.2.2
- 224. http://www.columbia.edu/kermit/ckubwr.html#top
- 225. http://www.columbia.edu/kermit/ckubwr.html#contents
- 226. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4
- 227. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.3
- 228. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.1
- 229. http://www.columbia.edu/kermit/ckubwr.html#top
- 230. http://www.columbia.edu/kermit/ckubwr.html#contents
- 231. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4
- 232. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.4
- 233. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.2
- 234. http://www.columbia.edu/kermit/ckubwr.html#top
- 235. http://www.columbia.edu/kermit/ckubwr.html#contents
- 236. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4
- 237. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.5
- 238. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.3
- 239. http://www.columbia.edu/kermit/ckubwr.html#top
- 240. http://www.columbia.edu/kermit/ckubwr.html#contents
- 241. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4
- 242. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.4
- 243. http://www.columbia.edu/kermit/ckubwr.html#top
- 244. http://www.columbia.edu/kermit/ckubwr.html#contents
- 245. http://www.columbia.edu/kermit/ckubwr.html#x3.2
- 246. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4
- 247. http://www.columbia.edu/kermit/ckubwr.html#top
- 248. http://www.columbia.edu/kermit/ckubwr.html#contents
- 249. http://www.columbia.edu/kermit/ckubwr.html#x3
- 250. http://www.columbia.edu/kermit/ckubwr.html#x3.4
- 251. http://www.columbia.edu/kermit/ckubwr.html#x3.2
- 252. http://www.columbia.edu/kermit/ckubwr.html#x3.3.1
- 253. http://www.columbia.edu/kermit/ckubwr.html#x3.3.2
- 254. http://www.columbia.edu/kermit/ckubwr.html#x3.3.3
- 255. http://www.columbia.edu/kermit/ckubwr.html#x3.3.4
- 256. http://www.columbia.edu/kermit/ckubwr.html#x3.3.5
- 257. http://www.columbia.edu/kermit/ckubwr.html#x3.3.6
- 258. news:comp.os.linux.misc
- 259. news:comp.os.linux.answers
- 260. http://sunsite.unc.edu/LDP/
- 261. http://sunsite.unc.edu/LDP/FAQ/Linux-FAQ.html
- 262. http://sunsite.unc.edu/LDP/HOWTO/Serial-HOWTO.html
- 263. http://linuxdoc.org/HOWTO/Modem-HOWTO.html
- 264. ftp://sunsite.unc.edu/pub/Linux/docs/HOWTO
- 265. ftp://tsx-11.mit.edu/pub/linux/docs/HOWTO
- 266. http://sunsite.unc.edu/LDP/HOWTO/
- 267. http://sunsite.unc.edu/LDP/hmirrors.html
- 268. http://www.redhat.com/apps/support/
- 269. http://www.debian.org/support
- 270. http://www.slackware.com/support/
- 271. http://www.caldera.com/support/
- 272. http://www.suse.com/support/
- 273. http://www.mandrake.com/support/
- 274. http://www.turbolinux.com/support/
- 275. http://www.linmodems.org/
- 276. http://www.columbia.edu/kermit/ckubwr.html#x3.0
- 277. http://linux.dreamtime.org/decnet/
- 278. mailto:kermit-support@columbia.edu
- 279. http://www.linmodems.org/
- 280. http://www.columbia.edu/kermit/ckubwr.html#x3.0.2
- 281. http://www.columbia.edu/kermit/ckubwr.html#top
- 282. http://www.columbia.edu/kermit/ckubwr.html#contents
- 283. http://www.columbia.edu/kermit/ckubwr.html#x3
- 284. http://www.columbia.edu/kermit/ckubwr.html#x3.3.2
- 285. ftp://tsx-11.mit.edu/
- 286. http://www.columbia.edu/kermit/ckubwr.html#top
- 287. http://www.columbia.edu/kermit/ckubwr.html#contents
- 288. http://www.columbia.edu/kermit/ckubwr.html#x3.3
- 289. http://www.columbia.edu/kermit/ckubwr.html#x3.3.3
- 290. http://www.columbia.edu/kermit/ckubwr.html#x3.3.1
- 291. http://www.columbia.edu/kermit/ckubwr.html#x3.0
- 292. http://www.columbia.edu/kermit/ckubwr.html#x6
- 293. http://www.columbia.edu/kermit/ckubwr.html#x7
- 294. http://www.columbia.edu/kermit/ckubwr.html#x8
- 295. http://www.columbia.edu/kermit/ckubwr.html#x3.0
- 296. http://linuxwww.db.erau.edu/mail_archives/linux-kernel/Mar_98/1441.html
- 297. http://www.columbia.edu/kermit/ckubwr.html#top
- 298. http://www.columbia.edu/kermit/ckubwr.html#contents
- 299. http://www.columbia.edu/kermit/ckubwr.html#x3.3
- 300. http://www.columbia.edu/kermit/ckubwr.html#x3.3.4
- 301. http://www.columbia.edu/kermit/ckubwr.html#x3.3.2
- 302. http://www.columbia.edu/kermit/ckubwr.html#x3.0.5
- 303. http://www.columbia.edu/kermit/ckfaq.html#term
- 304. http://www.clark.net/pub/dickey/xterm/xterm.faq.html
- 305. http://www.columbia.edu/kermit/ckubwr.html#top
- 306. http://www.columbia.edu/kermit/ckubwr.html#contents
- 307. http://www.columbia.edu/kermit/ckubwr.html#x3.3
- 308. http://www.columbia.edu/kermit/ckubwr.html#x3.3.5
- 309. http://www.columbia.edu/kermit/ckubwr.html#x3.3.3
- 310. http://www.columbia.edu/kermit/ckubwr.html#top
- 311. http://www.columbia.edu/kermit/ckubwr.html#contents
- 312. http://www.columbia.edu/kermit/ckubwr.html#x3.3
- 313. http://www.columbia.edu/kermit/ckubwr.html#x3.3.6
- 314. http://www.columbia.edu/kermit/ckubwr.html#x3.3.4
- 315. mailto:kermit-support@columbia.edu
- 316. http://www.redhat.com/support/errata/RHBA-2001-153.html
- 317. news:comp.protocols.kermit.misc
- 318. http://www.columbia.edu/kermit/ckubwr.html#top
- 319. http://www.columbia.edu/kermit/ckubwr.html#contents
- 320. http://www.columbia.edu/kermit/ckubwr.html#x3.3
- 321. http://www.columbia.edu/kermit/ckubwr.html#x3.3.5
+   6. http://www.columbia.edu/kermit/ckuins.html
+   7. http://www.columbia.edu/kermit/ckututor.html
+   8. http://www.columbia.edu/kermit/ckubwr.html#x1
+   9. http://www.columbia.edu/kermit/ckubwr.html#x2
+  10. http://www.columbia.edu/kermit/ckubwr.html#x3
+  11. http://www.columbia.edu/kermit/ckubwr.html#x4
+  12. http://www.columbia.edu/kermit/ckubwr.html#x5
+  13. http://www.columbia.edu/kermit/ckubwr.html#x6
+  14. http://www.columbia.edu/kermit/ckubwr.html#x7
+  15. http://www.columbia.edu/kermit/ckubwr.html#x8
+  16. http://www.columbia.edu/kermit/ckubwr.html#x9
+  17. http://www.columbia.edu/kermit/ckubwr.html#x10
+  18. http://www.columbia.edu/kermit/ckubwr.html#x11
+  19. http://www.columbia.edu/kermit/ckubwr.html#x12
+  20. http://www.columbia.edu/kermit/ckubwr.html#x13
+  21. http://www.columbia.edu/kermit/ckubwr.html#x14
+  22. http://www.columbia.edu/kermit/ckubwr.html#x3.3
+  23. http://www.columbia.edu/kermit/ckubwr.html#x3.18
+  24. http://www.columbia.edu/kermit/ckubwr.html#x3.1
+  25. http://www.columbia.edu/kermit/ckubwr.html#x3.2
+  26. http://www.columbia.edu/kermit/ckubwr.html#x3.7
+  27. http://www.columbia.edu/kermit/ckubwr.html#x3.6
+  28. http://www.columbia.edu/kermit/ckubwr.html#x3.13
+  29. http://www.columbia.edu/kermit/ckubwr.html#top
+  30. http://www.columbia.edu/kermit/ckubwr.html#contents
+  31. http://www.columbia.edu/kermit/ckubwr.html#x2
+  32. http://www.columbia.edu/kermit/ckubwr.html#x1.1
+  33. http://www.columbia.edu/kermit/ckubwr.html#x1.2
+  34. http://www.columbia.edu/kermit/ckubwr.html#x1.3
+  35. http://www.columbia.edu/kermit/ckubwr.html#x1.4
+  36. http://www.columbia.edu/kermit/ckubwr.html#x3.3
+  37. http://www.columbia.edu/kermit/ckubwr.html#x3.1
+  38. http://www.columbia.edu/kermit/ckubwr.html#x3.2
+  39. http://www.columbia.edu/kermit/ckubwr.html#x3.7
+  40. http://www.columbia.edu/kermit/ckcbwr.html
+  41. mailto:kermit-support@columbia.edu
+  42. http://www.columbia.edu/kermit/ckubwr.html#top
+  43. http://www.columbia.edu/kermit/ckubwr.html#contents
+  44. http://www.columbia.edu/kermit/ckubwr.html#x1.2
+  45. http://www.columbia.edu/kermit/ck60manual.html
+  46. http://www.columbia.edu/kermit/ckermit70.html
+  47. http://www.columbia.edu/kermit/ckermit80.html
+  48. http://www.columbia.edu/kermit/ckubwr.html#top
+  49. http://www.columbia.edu/kermit/ckubwr.html#contents
+  50. http://www.columbia.edu/kermit/ckubwr.html#x1
+  51. http://www.columbia.edu/kermit/ckubwr.html#x1.3
+  52. http://www.columbia.edu/kermit/ckubwr.html#x1.1
+  53. http://www.columbia.edu/kermit/support.html
+  54. http://www.columbia.edu/kermit/ckubwr.html#top
+  55. http://www.columbia.edu/kermit/ckubwr.html#contents
+  56. http://www.columbia.edu/kermit/ckubwr.html#x1
+  57. http://www.columbia.edu/kermit/ckubwr.html#x1.4
+  58. http://www.columbia.edu/kermit/ckubwr.html#x1.2
+  59. http://www.columbia.edu/kermit/ckubwr.html#top
+  60. http://www.columbia.edu/kermit/ckubwr.html#contents
+  61. http://www.columbia.edu/kermit/ckubwr.html#x1
+  62. http://www.columbia.edu/kermit/ckubwr.html#x1.3
+  63. http://www.columbia.edu/kermit/ckubwr.html#top
+  64. http://www.columbia.edu/kermit/ckubwr.html#contents
+  65. http://www.columbia.edu/kermit/ckubwr.html#x3
+  66. http://www.columbia.edu/kermit/ckubwr.html#x1
+  67. http://www.columbia.edu/kermit/ckubwr.html#top
+  68. http://www.columbia.edu/kermit/ckubwr.html#contents
+  69. http://www.columbia.edu/kermit/ckubwr.html#x4
+  70. http://www.columbia.edu/kermit/ckubwr.html#x2
+  71. http://www.columbia.edu/kermit/ckubwr.html#x3.0
+  72. http://www.columbia.edu/kermit/ckubwr.html#x3.1
+  73. http://www.columbia.edu/kermit/ckubwr.html#x3.2
+  74. http://www.columbia.edu/kermit/ckubwr.html#x3.3
+  75. http://www.columbia.edu/kermit/ckubwr.html#x3.4
+  76. http://www.columbia.edu/kermit/ckubwr.html#x3.5
+  77. http://www.columbia.edu/kermit/ckubwr.html#x3.6
+  78. http://www.columbia.edu/kermit/ckubwr.html#x3.7
+  79. http://www.columbia.edu/kermit/ckubwr.html#x3.8
+  80. http://www.columbia.edu/kermit/ckubwr.html#x3.9
+  81. http://www.columbia.edu/kermit/ckubwr.html#x3.10
+  82. http://www.columbia.edu/kermit/ckubwr.html#x3.11
+  83. http://www.columbia.edu/kermit/ckubwr.html#x3.12
+  84. http://www.columbia.edu/kermit/ckubwr.html#x3.13
+  85. http://www.columbia.edu/kermit/ckubwr.html#x3.14
+  86. http://www.columbia.edu/kermit/ckubwr.html#x3.15
+  87. http://www.columbia.edu/kermit/ckubwr.html#x3.16
+  88. http://www.columbia.edu/kermit/ckubwr.html#x3.17
+  89. http://www.columbia.edu/kermit/ckubwr.html#x3.18
+  90. http://www.columbia.edu/kermit/ckubwr.html#x3.19
+  91. http://www.columbia.edu/kermit/ckubwr.html#x3.20
+  92. http://www.faqs.org/
+  93. http://www.columbia.edu/kermit/x3
+  94. mailto:kermit-support@columbia.edu
+  95. http://www.columbia.edu/kermit/support.html
+  96. http://www.columbia.edu/kermit/ckubwr.html#top
+  97. http://www.columbia.edu/kermit/ckubwr.html#contents
+  98. http://www.columbia.edu/kermit/ckubwr.html#x3
+  99. http://www.columbia.edu/kermit/ckubwr.html#x3.1
+ 100. http://www.columbia.edu/kermit/ckubwr.html#x3.0.1
+ 101. http://www.columbia.edu/kermit/ckubwr.html#x3.0.2
+ 102. http://www.columbia.edu/kermit/ckubwr.html#x3.0.3
+ 103. http://www.columbia.edu/kermit/ckubwr.html#x3.0.4
+ 104. http://www.columbia.edu/kermit/ckubwr.html#x3.0.5
+ 105. http://www.columbia.edu/kermit/ckubwr.html#x3.0.6
+ 106. http://www.columbia.edu/kermit/ckubwr.html#top
+ 107. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 108. http://www.columbia.edu/kermit/ckubwr.html#x3.0
+ 109. http://www.columbia.edu/kermit/ckubwr.html#x3.0.2
+ 110. http://www.columbia.edu/kermit/ckubwr.html#top
+ 111. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 112. http://www.columbia.edu/kermit/ckubwr.html#x3.0
+ 113. http://www.columbia.edu/kermit/ckubwr.html#x3.0.3
+ 114. http://www.columbia.edu/kermit/ckubwr.html#x3.0.1
+ 115. http://www.linmodems.org/
+ 116. http://www.microsoft.com/hwdev/newpc/
+ 117. http://www.columbia.edu/kermit/ckubwr.html#top
+ 118. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 119. http://www.columbia.edu/kermit/ckubwr.html#x3.0
+ 120. http://www.columbia.edu/kermit/ckubwr.html#x3.0.4
+ 121. http://www.columbia.edu/kermit/ckubwr.html#x3.0.2
+ 122. http://www.o2.net/~gromitkc/winmodem.html
+ 123. http://www.digi.com/
+ 124. http://www.columbia.edu/kermit/ckubwr.html#top
+ 125. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 126. http://www.columbia.edu/kermit/ckubwr.html#x3.0
+ 127. http://www.columbia.edu/kermit/ckubwr.html#x3.0.5
+ 128. http://www.columbia.edu/kermit/ckubwr.html#x3.0.3
+ 129. http://www.columbia.edu/kermit/ckubwr.html#top
+ 130. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 131. http://www.columbia.edu/kermit/ckubwr.html#x3.0
+ 132. http://www.columbia.edu/kermit/ckubwr.html#x3.0.6
+ 133. http://www.columbia.edu/kermit/ckubwr.html#x3.0.4
+ 134. http://www.columbia.edu/kermit/ckubwr.html#top
+ 135. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 136. http://www.columbia.edu/kermit/ckubwr.html#x3.0
+ 137. http://www.columbia.edu/kermit/ckubwr.html#x3.0.5
+ 138. http://www.columbia.edu/kermit/ckubwr.html#top
+ 139. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 140. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 141. http://www.columbia.edu/kermit/ckubwr.html#x3.2
+ 142. http://www.columbia.edu/kermit/ckubwr.html#x3.0
+ 143. http://www.columbia.edu/kermit/ckubwr.html#x3.1.1
+ 144. http://www.columbia.edu/kermit/ckubwr.html#x3.1.2
+ 145. http://www.columbia.edu/kermit/ckubwr.html#x3.1.3
+ 146. http://www.columbia.edu/kermit/ckubwr.html#x3.1.4
+ 147. http://www.columbia.edu/kermit/ckubwr.html#x3.1.5
+ 148. http://www.emerson.emory.edu/services/aix-faq/
+ 149. http://www.faqs.org/faqs/by-newsgroup/comp/comp.unix.aix.html
+ 150. http://www.cis.ohio-state.edu/hypertext/faq/usenet/aix-faq/top.html
+ 151. http://aixpdslib.seas.ucla.edu/
+ 152. http://www.rootvg.net(AIXhistory)/
+ 153. ftp://rtfm.mit.edu/pub/usenet/news.answers/aix-faq/part1
+ 154. ftp://mirrors.aol.com/pub/rtfm/usenet-by-hierarchy/comp/unix/aix
+ 155. news:comp.unix.aix
+ 156. http://www.columbia.edu/kermit/ckubwr.html#top
+ 157. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 158. http://www.columbia.edu/kermit/ckubwr.html#x3.1
+ 159. http://www.columbia.edu/kermit/ckubwr.html#x3.1.2
+ 160. http://www.columbia.edu/kermit/ckubwr.html#top
+ 161. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 162. http://www.columbia.edu/kermit/ckubwr.html#x3.1
+ 163. http://www.columbia.edu/kermit/ckubwr.html#x3.1.3
+ 164. http://www.columbia.edu/kermit/ckubwr.html#x3.1.1
+ 165. http://www.columbia.edu/kermit/security.html#servers
+ 166. http://www.columbia.edu/kermit/ckubwr.html#top
+ 167. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 168. http://www.columbia.edu/kermit/ckubwr.html#x3.1
+ 169. http://www.columbia.edu/kermit/ckubwr.html#x3.1.4
+ 170. http://www.columbia.edu/kermit/ckubwr.html#x3.1.2
+ 171. http://service.software.ibm.com/rs6000/
+ 172. http://www.columbia.edu/kermit/ckubwr.html#top
+ 173. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 174. http://www.columbia.edu/kermit/ckubwr.html#x3.1
+ 175. http://www.columbia.edu/kermit/ckubwr.html#x3.1.5
+ 176. http://www.columbia.edu/kermit/ckubwr.html#x3.1.3
+ 177. http://www.columbia.edu/kermit/ckubwr.html#top
+ 178. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 179. http://www.columbia.edu/kermit/ckubwr.html#x3.1
+ 180. http://www.columbia.edu/kermit/ckubwr.html#x3.1.4
+ 181. http://www.columbia.edu/kermit/ckubwr.html#top
+ 182. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 183. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 184. http://www.columbia.edu/kermit/ckubwr.html#x3.3
+ 185. http://www.columbia.edu/kermit/ckubwr.html#x3.1
+ 186. http://www.columbia.edu/kermit/ckubwr.html#x3.2.0
+ 187. http://www.columbia.edu/kermit/ckubwr.html#x3.2.1
+ 188. http://www.columbia.edu/kermit/ckubwr.html#x3.2.2
+ 189. http://www.columbia.edu/kermit/ckubwr.html#x3.2.3
+ 190. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4
+ 191. http://www.columbia.edu/kermit/ckubwr.html#x3.2.5
+ 192. news:comp.sys.hp.hpux
+ 193. http://www.columbia.edu/kermit/ckubwr.html#top
+ 194. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 195. http://www.columbia.edu/kermit/ckubwr.html#x3.2
+ 196. http://www.columbia.edu/kermit/ckubwr.html#x3.2.1
+ 197. http://www.columbia.edu/kermit/ckubwr.html#top
+ 198. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 199. http://www.columbia.edu/kermit/ckubwr.html#x3.2
+ 200. http://www.columbia.edu/kermit/ckubwr.html#x3.2.2
+ 201. http://www.columbia.edu/kermit/ckubwr.html#x3.2.0
+ 202. ftp://kermit.columbia.edu/kermit/f/makefile
+ 203. http://www.columbia.edu/kermit/ckubwr.html#top
+ 204. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 205. http://www.columbia.edu/kermit/ckubwr.html#x3.2
+ 206. http://www.columbia.edu/kermit/ckubwr.html#x3.2.3
+ 207. http://www.columbia.edu/kermit/ckubwr.html#x3.2.1
+ 208. http://www.columbia.edu/kermit/ckubwr.html#top
+ 209. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 210. http://www.columbia.edu/kermit/ckubwr.html#x3.2
+ 211. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4
+ 212. http://www.columbia.edu/kermit/ckubwr.html#x3.2.2
+ 213. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.1
+ 214. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.2
+ 215. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.3
+ 216. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.4
+ 217. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.5
+ 218. http://www.columbia.edu/kermit/ckubwr.html#top
+ 219. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 220. http://www.columbia.edu/kermit/ckubwr.html#x3.2
+ 221. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.2
+ 222. http://www.columbia.edu/kermit/ckubwr.html#x3.2.2
+ 223. http://www.columbia.edu/kermit/ckubwr.html#top
+ 224. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 225. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4
+ 226. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.3
+ 227. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.1
+ 228. http://www.columbia.edu/kermit/ckubwr.html#top
+ 229. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 230. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4
+ 231. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.4
+ 232. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.2
+ 233. http://www.columbia.edu/kermit/ckubwr.html#top
+ 234. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 235. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4
+ 236. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.5
+ 237. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.3
+ 238. http://www.columbia.edu/kermit/ckubwr.html#top
+ 239. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 240. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4
+ 241. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4.4
+ 242. http://www.columbia.edu/kermit/ckubwr.html#top
+ 243. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 244. http://www.columbia.edu/kermit/ckubwr.html#x3.2
+ 245. http://www.columbia.edu/kermit/ckubwr.html#x3.2.4
+ 246. http://www.columbia.edu/kermit/ckubwr.html#top
+ 247. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 248. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 249. http://www.columbia.edu/kermit/ckubwr.html#x3.4
+ 250. http://www.columbia.edu/kermit/ckubwr.html#x3.2
+ 251. http://www.columbia.edu/kermit/ckubwr.html#x3.3.1
+ 252. http://www.columbia.edu/kermit/ckubwr.html#x3.3.2
+ 253. http://www.columbia.edu/kermit/ckubwr.html#x3.3.3
+ 254. http://www.columbia.edu/kermit/ckubwr.html#x3.3.4
+ 255. http://www.columbia.edu/kermit/ckubwr.html#x3.3.5
+ 256. http://www.columbia.edu/kermit/ckubwr.html#x3.3.6
+ 257. news:comp.os.linux.misc
+ 258. news:comp.os.linux.answers
+ 259. http://www.tldp.org/
+ 260. http://www.tldp.org/FAQ/Linux-FAQ.html
+ 261. http://www.tldp.org/HOWTO/Serial-HOWTO.html
+ 262. http://tldp.org/HOWTO/Modem-HOWTO.html
+ 263. ftp://sunsite.unc.edu/pub/Linux/docs/HOWTO
+ 264. ftp://tsx-11.mit.edu/pub/linux/docs/HOWTO
+ 265. http://www.tldp.org/HOWTO/
+ 266. http://www.tldp.org/hmirrors.html
+ 267. http://www.redhat.com/apps/support/
+ 268. http://www.debian.org/support
+ 269. http://www.slackware.com/support/
+ 270. http://www.caldera.com/support/
+ 271. http://www.suse.com/support/
+ 272. http://www.mandrake.com/support/
+ 273. http://www.turbolinux.com/support/
+ 274. http://www.linmodems.org/
+ 275. http://www.columbia.edu/kermit/ckubwr.html#x3.0
+ 276. http://linux.dreamtime.org/decnet/
+ 277. mailto:kermit-support@columbia.edu
+ 278. http://www.linmodems.org/
+ 279. http://www.columbia.edu/kermit/ckubwr.html#x3.0.2
+ 280. http://www.columbia.edu/kermit/ckubwr.html#top
+ 281. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 282. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 283. http://www.columbia.edu/kermit/ckubwr.html#x3.3.2
+ 284. ftp://tsx-11.mit.edu/
+ 285. http://www.columbia.edu/kermit/ckubwr.html#top
+ 286. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 287. http://www.columbia.edu/kermit/ckubwr.html#x3.3
+ 288. http://www.columbia.edu/kermit/ckubwr.html#x3.3.3
+ 289. http://www.columbia.edu/kermit/ckubwr.html#x3.3.1
+ 290. http://www.columbia.edu/kermit/ckubwr.html#x3.0
+ 291. http://www.columbia.edu/kermit/ckubwr.html#x6
+ 292. http://www.columbia.edu/kermit/ckubwr.html#x7
+ 293. http://www.columbia.edu/kermit/ckubwr.html#x8
+ 294. http://www.columbia.edu/kermit/ckuins.html#x10
+ 295. http://www.columbia.edu/kermit/ckuins.html#x11
+ 296. http://www.columbia.edu/kermit/ckuins.html
+ 297. http://www.columbia.edu/kermit/ckubwr.html#x3.0
+ 298. http://linuxwww.db.erau.edu/mail_archives/linux-kernel/Mar_98/1441.html
+ 299. http://www.columbia.edu/kermit/ckubwr.html#top
+ 300. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 301. http://www.columbia.edu/kermit/ckubwr.html#x3.3
+ 302. http://www.columbia.edu/kermit/ckubwr.html#x3.3.4
+ 303. http://www.columbia.edu/kermit/ckubwr.html#x3.3.2
+ 304. http://www.columbia.edu/kermit/ckubwr.html#x3.0.5
+ 305. http://www.columbia.edu/kermit/ckfaq.html#term
+ 306. http://dickey.his.com/xterm/xterm.html
+ 307. http://dickey.his.com/xterm/xterm.html
+ 308. ftp://kermit.columbia.edu/kermit/f/xmodmap.txt
+ 309. http://www.columbia.edu/kermit/ckubwr.html#top
+ 310. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 311. http://www.columbia.edu/kermit/ckubwr.html#x3.3
+ 312. http://www.columbia.edu/kermit/ckubwr.html#x3.3.5
+ 313. http://www.columbia.edu/kermit/ckubwr.html#x3.3.3
+ 314. http://www.columbia.edu/kermit/ckubwr.html#top
+ 315. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 316. http://www.columbia.edu/kermit/ckubwr.html#x3.3
+ 317. http://www.columbia.edu/kermit/ckubwr.html#x3.3.6
+ 318. http://www.columbia.edu/kermit/ckubwr.html#x3.3.4
+ 319. mailto:kermit-support@columbia.edu
+ 320. http://www.redhat.com/support/errata/RHBA-2001-153.html
+ 321. news:comp.protocols.kermit.misc
  322. http://www.columbia.edu/kermit/ckubwr.html#top
  323. http://www.columbia.edu/kermit/ckubwr.html#contents
- 324. http://www.columbia.edu/kermit/ckubwr.html#x3
- 325. http://www.columbia.edu/kermit/ckubwr.html#x3.5
- 326. http://www.columbia.edu/kermit/ckubwr.html#x3.3
- 327. http://www.columbia.edu/kermit/ckubwr.html#top
- 328. http://www.columbia.edu/kermit/ckubwr.html#contents
- 329. http://www.columbia.edu/kermit/ckubwr.html#x3
- 330. http://www.columbia.edu/kermit/ckubwr.html#x3.6
- 331. http://www.columbia.edu/kermit/ckubwr.html#x3.4
- 332. news:comp.os.qnx
- 333. http://www.columbia.edu/kermit/gkermit.html
- 334. http://www.columbia.edu/kermit/ckuins.html#x10
- 335. http://www.columbia.edu/kermit/ckuins.html
- 336. http://www.columbia.edu/kermit/ckubwr.html#top
- 337. http://www.columbia.edu/kermit/ckubwr.html#contents
- 338. http://www.columbia.edu/kermit/ckubwr.html#x3
- 339. http://www.columbia.edu/kermit/ckubwr.html#x3.7
- 340. http://www.columbia.edu/kermit/ckubwr.html#x3.5
- 341. http://www.columbia.edu/kermit/ckubwr.html#x3.6.1
- 342. http://www.columbia.edu/kermit/ckubwr.html#x3.6.2
- 343. http://www.columbia.edu/kermit/ckubwr.html#x3.6.3
- 344. http://www.columbia.edu/kermit/ckubwr.html#x3.6.4
- 345. http://www.columbia.edu/kermit/ckubwr.html#x3.10
- 346. http://aplawrence.com/SCOFAQ/
- 347. http://www.zenez.com/cgi-bin/scoprogfaq/faq.pl
- 348. http://www.zenez.com/cgi-bin/scouw7faq/faq.pl
- 349. http://zenez.pcunix.com/cgi-bin/scouw7faq/faq.pl
- 350. http://www.freebird.org/faq/
- 351. http://www.freebird.org/faq/developer.html
- 352. http://support.caldera.com/caldera
- 353. http://www.columbia.edu/kermit/ckubwr.html#x3.0
- 354. http://www.columbia.edu/kermit/ckubwr.html#top
- 355. http://www.columbia.edu/kermit/ckubwr.html#contents
- 356. http://www.columbia.edu/kermit/ckubwr.html#x3.6
- 357. http://www.columbia.edu/kermit/ckubwr.html#x3.6.1
- 358. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
+ 324. http://www.columbia.edu/kermit/ckubwr.html#x3.3
+ 325. http://www.columbia.edu/kermit/ckubwr.html#x3.3.5
+ 326. http://www.columbia.edu/kermit/ckubwr.html#top
+ 327. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 328. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 329. http://www.columbia.edu/kermit/ckubwr.html#x3.5
+ 330. http://www.columbia.edu/kermit/ckubwr.html#x3.3
+ 331. http://www.columbia.edu/kermit/ckubwr.html#top
+ 332. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 333. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 334. http://www.columbia.edu/kermit/ckubwr.html#x3.6
+ 335. http://www.columbia.edu/kermit/ckubwr.html#x3.4
+ 336. news:comp.os.qnx
+ 337. http://www.columbia.edu/kermit/gkermit.html
+ 338. http://www.columbia.edu/kermit/ckuins.html#x10
+ 339. http://www.columbia.edu/kermit/ckuins.html
+ 340. http://www.columbia.edu/kermit/ckubwr.html#top
+ 341. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 342. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 343. http://www.columbia.edu/kermit/ckubwr.html#x3.7
+ 344. http://www.columbia.edu/kermit/ckubwr.html#x3.5
+ 345. http://www.columbia.edu/kermit/ckubwr.html#x3.6.1
+ 346. http://www.columbia.edu/kermit/ckubwr.html#x3.6.2
+ 347. http://www.columbia.edu/kermit/ckubwr.html#x3.6.3
+ 348. http://www.columbia.edu/kermit/ckubwr.html#x3.6.4
+ 349. http://www.columbia.edu/kermit/ckubwr.html#x3.10
+ 350. http://aplawrence.com/SCOFAQ/
+ 351. http://www.zenez.com/cgi-bin/scoprogfaq/faq.pl
+ 352. http://www.zenez.com/cgi-bin/scouw7faq/faq.pl
+ 353. http://zenez.pcunix.com/cgi-bin/scouw7faq/faq.pl
+ 354. http://pcunix.com/Unixart/modems.html
+ 355. http://www.freebird.org/faq/
+ 356. http://www.freebird.org/faq/developer.html
+ 357. http://support.caldera.com/caldera
+ 358. http://www.columbia.edu/kermit/ckubwr.html#x3.0
  359. http://www.columbia.edu/kermit/ckubwr.html#top
  360. http://www.columbia.edu/kermit/ckubwr.html#contents
  361. http://www.columbia.edu/kermit/ckubwr.html#x3.6
- 362. http://www.columbia.edu/kermit/ckubwr.html#x3.6.3
- 363. http://www.columbia.edu/kermit/ckubwr.html#x3.6.1
- 364. http://www.digi.com/
- 365. ftp://ftp.fu-berlin.de/pub/unix/driver/fas
- 366. http://www.columbia.edu/kermit/ckubwr.html#x14
- 367. http://www.sco.com/
- 368. ftp://ftp.sco.com/
- 369. http://www.columbia.edu/kermit/ckubwr.html#top
- 370. http://www.columbia.edu/kermit/ckubwr.html#contents
- 371. http://www.columbia.edu/kermit/ckubwr.html#x3.6
- 372. http://www.columbia.edu/kermit/ckubwr.html#x3.6.4
- 373. http://www.columbia.edu/kermit/ckubwr.html#x3.6.2
- 374. http://www.columbia.edu/kermit/ckubwr.html#x3.10
- 375. http://www.columbia.edu/kermit/ckubwr.html#top
- 376. http://www.columbia.edu/kermit/ckubwr.html#contents
- 377. http://www.columbia.edu/kermit/ckubwr.html#x3.6
- 378. http://www.columbia.edu/kermit/ckubwr.html#x3.6.3
- 379. http://www.columbia.edu/kermit/ckubwr.html#top
- 380. http://www.columbia.edu/kermit/ckubwr.html#contents
- 381. http://www.columbia.edu/kermit/ckubwr.html#x3
- 382. http://www.columbia.edu/kermit/ckubwr.html#x3.8
- 383. http://www.columbia.edu/kermit/ckubwr.html#x3.6
- 384. http://www.columbia.edu/kermit/ckubwr.html#x3.7.1
- 385. http://www.columbia.edu/kermit/ckubwr.html#x3.7.2
- 386. http://www.columbia.edu/kermit/ckubwr.html#x3.7.3
- 387. http://www.columbia.edu/kermit/ckubwr.html#x3.7.4
- 388. http://www.columbia.edu/kermit/ckubwr.html#x3.7.5
- 389. news:comp.unix.solaris
- 390. http://access1.sun.com/
- 391. http://docs.sun.com/
- 392. http://www.sunhelp.com/
- 393. http://www.wins.uva.nl/pub/solaris/solaris2/
- 394. http://www.wins.uva.nl/cgi-bin/sfaq.cgi
- 395. ftp://ftp.wins.uva.nl/pub/solaris
- 396. http://www.science.uva.nl/pub/solaris/solaris2.html
- 397. http://www.stokely.com/
- 398. http://www.stokely.com/unix.sysadm.resources/faqs.sun.html
- 399. http://www.columbia.edu/kermit/ckubwr.html#x3.0
- 400. http://www.columbia.edu/kermit/ckubwr.html#top
- 401. http://www.columbia.edu/kermit/ckubwr.html#contents
- 402. http://www.columbia.edu/kermit/ckubwr.html#x3
- 403. http://www.columbia.edu/kermit/ckubwr.html#x3.7
- 404. http://www.columbia.edu/kermit/ckubwr.html#x3.7.2
+ 362. http://www.columbia.edu/kermit/ckubwr.html#x3.6.1
+ 363. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
+ 364. http://www.columbia.edu/kermit/ckubwr.html#top
+ 365. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 366. http://www.columbia.edu/kermit/ckubwr.html#x3.6
+ 367. http://www.columbia.edu/kermit/ckubwr.html#x3.6.3
+ 368. http://www.columbia.edu/kermit/ckubwr.html#x3.6.1
+ 369. http://www.digi.com/
+ 370. ftp://ftp.fu-berlin.de/pub/unix/driver/fas
+ 371. http://www.columbia.edu/kermit/ckubwr.html#x14
+ 372. http://www.sco.com/
+ 373. ftp://ftp.sco.com/
+ 374. http://www.columbia.edu/kermit/ckubwr.html#top
+ 375. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 376. http://www.columbia.edu/kermit/ckubwr.html#x3.6
+ 377. http://www.columbia.edu/kermit/ckubwr.html#x3.6.4
+ 378. http://www.columbia.edu/kermit/ckubwr.html#x3.6.2
+ 379. http://www.columbia.edu/kermit/ckubwr.html#x3.10
+ 380. http://www.columbia.edu/kermit/ckubwr.html#top
+ 381. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 382. http://www.columbia.edu/kermit/ckubwr.html#x3.6
+ 383. http://www.columbia.edu/kermit/ckubwr.html#x3.6.3
+ 384. http://www.columbia.edu/kermit/ckubwr.html#top
+ 385. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 386. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 387. http://www.columbia.edu/kermit/ckubwr.html#x3.8
+ 388. http://www.columbia.edu/kermit/ckubwr.html#x3.6
+ 389. http://www.columbia.edu/kermit/ckubwr.html#x3.7.1
+ 390. http://www.columbia.edu/kermit/ckubwr.html#x3.7.2
+ 391. http://www.columbia.edu/kermit/ckubwr.html#x3.7.3
+ 392. http://www.columbia.edu/kermit/ckubwr.html#x3.7.4
+ 393. http://www.columbia.edu/kermit/ckubwr.html#x3.7.5
+ 394. news:comp.unix.solaris
+ 395. http://access1.sun.com/
+ 396. http://docs.sun.com/
+ 397. http://www.sunhelp.com/
+ 398. http://www.wins.uva.nl/pub/solaris/solaris2/
+ 399. http://www.wins.uva.nl/cgi-bin/sfaq.cgi
+ 400. ftp://ftp.wins.uva.nl/pub/solaris
+ 401. http://www.science.uva.nl/pub/solaris/solaris2.html
+ 402. http://www.stokely.com/
+ 403. http://www.stokely.com/unix.sysadm.resources/faqs.sun.html
+ 404. http://www.columbia.edu/kermit/ckubwr.html#x3.0
  405. http://www.columbia.edu/kermit/ckubwr.html#top
  406. http://www.columbia.edu/kermit/ckubwr.html#contents
- 407. http://www.columbia.edu/kermit/ckubwr.html#x3.7
- 408. http://www.columbia.edu/kermit/ckubwr.html#x3.7.3
- 409. http://www.columbia.edu/kermit/ckubwr.html#x3.7.1
- 410. http://www.columbia.edu/kermit/ckubwr.html#x3.7
- 411. http://www.columbia.edu/kermit/ckubwr.html#top
- 412. http://www.columbia.edu/kermit/ckubwr.html#contents
- 413. http://www.columbia.edu/kermit/ckubwr.html#x3.7
- 414. http://www.columbia.edu/kermit/ckubwr.html#x3.7.4
- 415. http://www.columbia.edu/kermit/ckubwr.html#x3.7.2
- 416. http://www.columbia.edu/kermit/ckubwr.html#top
- 417. http://www.columbia.edu/kermit/ckubwr.html#contents
- 418. http://www.columbia.edu/kermit/ckubwr.html#x3.7
- 419. http://www.columbia.edu/kermit/ckubwr.html#x3.7.5
- 420. http://www.columbia.edu/kermit/ckubwr.html#x3.7.3
- 421. news:comp.os.vms
- 422. http://www.columbia.edu/kermit/ckubwr.html#top
- 423. http://www.columbia.edu/kermit/ckubwr.html#contents
- 424. http://www.columbia.edu/kermit/ckubwr.html#x3.7
- 425. http://www.columbia.edu/kermit/ckubwr.html#x3.7.4
+ 407. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 408. http://www.columbia.edu/kermit/ckubwr.html#x3.7
+ 409. http://www.columbia.edu/kermit/ckubwr.html#x3.7.2
+ 410. http://www.columbia.edu/kermit/ckubwr.html#top
+ 411. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 412. http://www.columbia.edu/kermit/ckubwr.html#x3.7
+ 413. http://www.columbia.edu/kermit/ckubwr.html#x3.7.3
+ 414. http://www.columbia.edu/kermit/ckubwr.html#x3.7.1
+ 415. http://www.columbia.edu/kermit/ckubwr.html#top
+ 416. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 417. http://www.columbia.edu/kermit/ckubwr.html#x3.7
+ 418. http://www.columbia.edu/kermit/ckubwr.html#x3.7.4
+ 419. http://www.columbia.edu/kermit/ckubwr.html#x3.7.2
+ 420. http://www.columbia.edu/kermit/ckubwr.html#top
+ 421. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 422. http://www.columbia.edu/kermit/ckubwr.html#x3.7
+ 423. http://www.columbia.edu/kermit/ckubwr.html#x3.7.5
+ 424. http://www.columbia.edu/kermit/ckubwr.html#x3.7.3
+ 425. news:comp.os.vms
  426. http://www.columbia.edu/kermit/ckubwr.html#top
  427. http://www.columbia.edu/kermit/ckubwr.html#contents
- 428. http://www.columbia.edu/kermit/ckubwr.html#x3
- 429. http://www.columbia.edu/kermit/ckubwr.html#x3.9
- 430. http://www.columbia.edu/kermit/ckubwr.html#x3.7
- 431. http://www.stokely.com/
- 432. http://access1.sun.com/
- 433. http://www.ludd.luth.se/~bear/project/sun/sun.hardware.txt
- 434. ftp://ftp.netcom.com/pub/ru/rubicon/sun.hdwr.ref
- 435. ftp://ftp.intnet.net/pub/SUN/Sun-Hardware-Ref
- 436. http://www.columbia.edu/kermit/ckubwr.html#top
- 437. http://www.columbia.edu/kermit/ckubwr.html#contents
- 438. http://www.columbia.edu/kermit/ckubwr.html#x3
- 439. http://www.columbia.edu/kermit/ckubwr.html#x3.10
- 440. http://www.columbia.edu/kermit/ckubwr.html#x3.8
- 441. news:comp.unix.ultrix
- 442. news:comp.sys.dec
- 443. http://www.columbia.edu/kermit/ckubwr.html#top
- 444. http://www.columbia.edu/kermit/ckubwr.html#contents
- 445. http://www.columbia.edu/kermit/ckubwr.html#x3
- 446. http://www.columbia.edu/kermit/ckubwr.html#x3.11
- 447. http://www.columbia.edu/kermit/ckubwr.html#x3.9
- 448. http://www.freebird.org/
- 449. http://www.freebird.org/faq/
- 450. news:comp.unix.unixware.misc
- 451. news:comp.unix.sco.misc
- 452. http://www.columbia.edu/kermit/ckubwr.html#x3.0
- 453. ftp://kermit.columbia.edu/kermit/f/ckutio.c
- 454. http://www.columbia.edu/kermit/ckubwr.html#top
- 455. http://www.columbia.edu/kermit/ckubwr.html#contents
- 456. http://www.columbia.edu/kermit/ckubwr.html#x3
- 457. http://www.columbia.edu/kermit/ckubwr.html#x3.12
- 458. http://www.columbia.edu/kermit/ckubwr.html#x3.10
- 459. http://www.columbia.edu/kermit/ckubwr.html#top
- 460. http://www.columbia.edu/kermit/ckubwr.html#contents
- 461. http://www.columbia.edu/kermit/ckubwr.html#x3
- 462. http://www.columbia.edu/kermit/ckubwr.html#x3.13
- 463. http://www.columbia.edu/kermit/ckubwr.html#x3.11
- 464. http://www.columbia.edu/kermit/ckubwr.html#top
- 465. http://www.columbia.edu/kermit/ckubwr.html#contents
- 466. http://www.columbia.edu/kermit/ckubwr.html#x3
- 467. http://www.columbia.edu/kermit/ckubwr.html#x3.14
- 468. http://www.columbia.edu/kermit/ckubwr.html#x3.12
- 469. http://www.columbia.edu/kermit/ckubwr.html#top
- 470. http://www.columbia.edu/kermit/ckubwr.html#contents
- 471. http://www.columbia.edu/kermit/ckubwr.html#x3
- 472. http://www.columbia.edu/kermit/ckubwr.html#x3.15
- 473. http://www.columbia.edu/kermit/ckubwr.html#x3.13
- 474. news:comp.sys.sgi.misc
- 475. news:comp.sys.sgi.admin
- 476. http://www.sgi.com/
- 477. http://www-viz.tamu.edu/~sgi-faq/
- 478. ftp://viz.tamu.edu/pub/sgi/faq/
- 479. http://www.columbia.edu/kermit/ckuins.html
- 480. http://freeware.sgi.com/Installable/gcc-2.95.2.html
- 481. http://freeware.sgi.com/Installable/gcc-2.95.2.html
- 482. http://www.columbia.edu/kermit/ckubwr.html#top
- 483. http://www.columbia.edu/kermit/ckubwr.html#contents
- 484. http://www.columbia.edu/kermit/ckubwr.html#x3
- 485. http://www.columbia.edu/kermit/ckubwr.html#x3.16
- 486. http://www.columbia.edu/kermit/ckubwr.html#x3.14
- 487. news:comp.sys.be
- 488. http://www.columbia.edu/kermit/ckubwr.html#top
- 489. http://www.columbia.edu/kermit/ckubwr.html#contents
- 490. http://www.columbia.edu/kermit/ckubwr.html#x3
- 491. http://www.columbia.edu/kermit/ckubwr.html#x3.17
- 492. http://www.columbia.edu/kermit/ckubwr.html#x3.15
- 493. http://www.columbia.edu/kermit/ckubwr.html#top
- 494. http://www.columbia.edu/kermit/ckubwr.html#contents
- 495. http://www.columbia.edu/kermit/ckubwr.html#x3
- 496. http://www.columbia.edu/kermit/ckubwr.html#x3.18
- 497. http://www.columbia.edu/kermit/ckubwr.html#x3.16
- 498. http://www.columbia.edu/kermit/ckubwr.html#top
- 499. http://www.columbia.edu/kermit/ckubwr.html#contents
- 500. http://www.columbia.edu/kermit/ckubwr.html#x3
- 501. http://www.columbia.edu/kermit/ckubwr.html#x3.19
- 502. http://www.columbia.edu/kermit/ckubwr.html#x3.17
- 503. http://www.columbia.edu/kermit/ckubwr.html#top
- 504. http://www.columbia.edu/kermit/ckubwr.html#contents
- 505. http://www.columbia.edu/kermit/ckubwr.html#x3
- 506. http://www.columbia.edu/kermit/ckubwr.html#x3.20
- 507. http://www.columbia.edu/kermit/ckubwr.html#x3.18
- 508. http://www.columbia.edu/kermit/ckubwr.html#top
- 509. http://www.columbia.edu/kermit/ckubwr.html#contents
- 510. http://www.columbia.edu/kermit/ckubwr.html#x3
- 511. http://www.columbia.edu/kermit/ckubwr.html#x3.19
- 512. http://www.uni-giessen.de/faq/archiv/coherent-faq.general/msg00000.html
- 513. http://www.columbia.edu/kermit/ckubwr.html#top
- 514. http://www.columbia.edu/kermit/ckubwr.html#contents
- 515. http://www.columbia.edu/kermit/ckubwr.html#x5
- 516. http://www.columbia.edu/kermit/ckubwr.html#x3
- 517. http://www.columbia.edu/kermit/ckccfg.html
- 518. http://www.columbia.edu/kermit/ckubwr.html#top
- 519. http://www.columbia.edu/kermit/ckubwr.html#contents
- 520. http://www.columbia.edu/kermit/ckubwr.html#x6
- 521. http://www.columbia.edu/kermit/ckubwr.html#x4
- 522. http://www.columbia.edu/kermit/ckuins.html
- 523. http://www.columbia.edu/kermit/ckubwr.html#top
- 524. http://www.columbia.edu/kermit/ckubwr.html#contents
- 525. http://www.columbia.edu/kermit/ckubwr.html#x7
- 526. http://www.columbia.edu/kermit/ckubwr.html#x5
- 527. http://www.columbia.edu/kermit/ckuins.html#9.5
- 528. http://www.columbia.edu/kermit/ckubwr.html#x3
- 529. http://www.columbia.edu/kermit/ckubwr.html#top
- 530. http://www.columbia.edu/kermit/ckubwr.html#contents
- 531. http://www.columbia.edu/kermit/ckubwr.html#x8
- 532. http://www.columbia.edu/kermit/ckubwr.html#x6
- 533. http://www.columbia.edu/kermit/ckuins.html#x8
- 534. http://www.columbia.edu/kermit/ckuins.html
- 535. http://www.columbia.edu/kermit/ck60manual.html
- 536. http://www.columbia.edu/kermit/ckubwr.html#top
- 537. http://www.columbia.edu/kermit/ckubwr.html#contents
- 538. http://www.columbia.edu/kermit/ckubwr.html#x9
- 539. http://www.columbia.edu/kermit/ckubwr.html#x7
- 540. http://www.columbia.edu/kermit/ckubwr.html#top
- 541. http://www.columbia.edu/kermit/ckubwr.html#contents
- 542. http://www.columbia.edu/kermit/ckubwr.html#x10
- 543. http://www.columbia.edu/kermit/ckubwr.html#x8
+ 428. http://www.columbia.edu/kermit/ckubwr.html#x3.7
+ 429. http://www.columbia.edu/kermit/ckubwr.html#x3.7.6
+ 430. http://www.columbia.edu/kermit/ckubwr.html#x3.7.4
+ 431. http://www.columbia.edu/kermit/ckubwr.html#top
+ 432. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 433. http://www.columbia.edu/kermit/ckubwr.html#x3.7
+ 434. http://www.columbia.edu/kermit/ckubwr.html#x3.7.5
+ 435. http://www.columbia.edu/kermit/ckubwr.html#top
+ 436. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 437. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 438. http://www.columbia.edu/kermit/ckubwr.html#x3.9
+ 439. http://www.columbia.edu/kermit/ckubwr.html#x3.7
+ 440. http://www.stokely.com/
+ 441. http://access1.sun.com/
+ 442. http://www.ludd.luth.se/~bear/project/sun/sun.hardware.txt
+ 443. ftp://ftp.netcom.com/pub/ru/rubicon/sun.hdwr.ref
+ 444. ftp://ftp.intnet.net/pub/SUN/Sun-Hardware-Ref
+ 445. http://www.columbia.edu/kermit/ckubwr.html#top
+ 446. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 447. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 448. http://www.columbia.edu/kermit/ckubwr.html#x3.10
+ 449. http://www.columbia.edu/kermit/ckubwr.html#x3.8
+ 450. news:comp.unix.ultrix
+ 451. news:comp.sys.dec
+ 452. http://www.columbia.edu/kermit/ckubwr.html#top
+ 453. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 454. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 455. http://www.columbia.edu/kermit/ckubwr.html#x3.11
+ 456. http://www.columbia.edu/kermit/ckubwr.html#x3.9
+ 457. http://www.freebird.org/
+ 458. http://www.freebird.org/faq/
+ 459. news:comp.unix.unixware.misc
+ 460. news:comp.unix.sco.misc
+ 461. http://www.columbia.edu/kermit/ckubwr.html#x3.0
+ 462. ftp://kermit.columbia.edu/kermit/f/ckutio.c
+ 463. http://www.columbia.edu/kermit/ckubwr.html#top
+ 464. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 465. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 466. http://www.columbia.edu/kermit/ckubwr.html#x3.12
+ 467. http://www.columbia.edu/kermit/ckubwr.html#x3.10
+ 468. http://www.columbia.edu/kermit/ckubwr.html#top
+ 469. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 470. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 471. http://www.columbia.edu/kermit/ckubwr.html#x3.13
+ 472. http://www.columbia.edu/kermit/ckubwr.html#x3.11
+ 473. http://www.columbia.edu/kermit/ckubwr.html#top
+ 474. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 475. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 476. http://www.columbia.edu/kermit/ckubwr.html#x3.14
+ 477. http://www.columbia.edu/kermit/ckubwr.html#x3.12
+ 478. http://www.columbia.edu/kermit/ckubwr.html#top
+ 479. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 480. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 481. http://www.columbia.edu/kermit/ckubwr.html#x3.15
+ 482. http://www.columbia.edu/kermit/ckubwr.html#x3.13
+ 483. news:comp.sys.sgi.misc
+ 484. news:comp.sys.sgi.admin
+ 485. http://www.sgi.com/
+ 486. http://www-viz.tamu.edu/~sgi-faq/
+ 487. ftp://viz.tamu.edu/pub/sgi/faq/
+ 488. http://www.columbia.edu/kermit/ckuins.html
+ 489. http://freeware.sgi.com/Installable/gcc-2.95.2.html
+ 490. http://freeware.sgi.com/Installable/gcc-2.95.2.html
+ 491. http://www.columbia.edu/kermit/ckubwr.html#top
+ 492. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 493. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 494. http://www.columbia.edu/kermit/ckubwr.html#x3.16
+ 495. http://www.columbia.edu/kermit/ckubwr.html#x3.14
+ 496. news:comp.sys.be
+ 497. http://www.columbia.edu/kermit/ckubwr.html#top
+ 498. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 499. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 500. http://www.columbia.edu/kermit/ckubwr.html#x3.17
+ 501. http://www.columbia.edu/kermit/ckubwr.html#x3.15
+ 502. http://www.columbia.edu/kermit/ckubwr.html#top
+ 503. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 504. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 505. http://www.columbia.edu/kermit/ckubwr.html#x3.18
+ 506. http://www.columbia.edu/kermit/ckubwr.html#x3.16
+ 507. http://www.columbia.edu/kermit/ckubwr.html#top
+ 508. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 509. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 510. http://www.columbia.edu/kermit/ckubwr.html#x3.19
+ 511. http://www.columbia.edu/kermit/ckubwr.html#x3.17
+ 512. http://www.columbia.edu/kermit/ckubwr.html#top
+ 513. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 514. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 515. http://www.columbia.edu/kermit/ckubwr.html#x3.20
+ 516. http://www.columbia.edu/kermit/ckubwr.html#x3.18
+ 517. http://www.columbia.edu/kermit/ckubwr.html#top
+ 518. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 519. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 520. http://www.columbia.edu/kermit/ckubwr.html#x3.19
+ 521. http://www.uni-giessen.de/faq/archiv/coherent-faq.general/msg00000.html
+ 522. http://www.columbia.edu/kermit/ckubwr.html#top
+ 523. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 524. http://www.columbia.edu/kermit/ckubwr.html#x5
+ 525. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 526. http://www.columbia.edu/kermit/ckccfg.html
+ 527. http://www.columbia.edu/kermit/ckubwr.html#top
+ 528. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 529. http://www.columbia.edu/kermit/ckubwr.html#x6
+ 530. http://www.columbia.edu/kermit/ckubwr.html#x4
+ 531. http://www.columbia.edu/kermit/ckuins.html
+ 532. http://www.columbia.edu/kermit/ckubwr.html#top
+ 533. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 534. http://www.columbia.edu/kermit/ckubwr.html#x7
+ 535. http://www.columbia.edu/kermit/ckubwr.html#x5
+ 536. http://www.columbia.edu/kermit/ckuins.html#9.5
+ 537. http://www.columbia.edu/kermit/ckubwr.html#x3
+ 538. http://www.columbia.edu/kermit/ckubwr.html#top
+ 539. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 540. http://www.columbia.edu/kermit/ckubwr.html#x8
+ 541. http://www.columbia.edu/kermit/ckubwr.html#x6
+ 542. http://www.columbia.edu/kermit/ckuins.html#x8
+ 543. http://www.columbia.edu/kermit/ckuins.html
  544. http://www.columbia.edu/kermit/ck60manual.html
- 545. http://www.clark.net/pub/dickey/xterm/xterm.faq.html
- 546. http://www.columbia.edu/kermit/ckubwr.html#top
- 547. http://www.columbia.edu/kermit/ckubwr.html#contents
- 548. http://www.columbia.edu/kermit/ckubwr.html#x11
- 549. http://www.columbia.edu/kermit/ckubwr.html#x9
- 550. http://www.columbia.edu/kermit/ckubwr.html#top
- 551. http://www.columbia.edu/kermit/ckubwr.html#contents
- 552. http://www.columbia.edu/kermit/ckubwr.html#x12
- 553. http://www.columbia.edu/kermit/ckubwr.html#x10
- 554. http://www.columbia.edu/kermit/ckubwr.html#x11.1
- 555. http://www.columbia.edu/kermit/ckubwr.html#x11.2
- 556. http://www.columbia.edu/kermit/ckubwr.html#top
- 557. http://www.columbia.edu/kermit/ckubwr.html#contents
- 558. http://www.columbia.edu/kermit/ckubwr.html#x11
- 559. http://www.columbia.edu/kermit/ckubwr.html#x11.2
- 560. http://www.columbia.edu/kermit/ck60manual.html
- 561. http://www.columbia.edu/kermit/ckubwr.html#top
- 562. http://www.columbia.edu/kermit/ckubwr.html#contents
- 563. http://www.columbia.edu/kermit/ckubwr.html#x11
- 564. http://www.columbia.edu/kermit/ckubwr.html#x11.1
- 565. http://www.columbia.edu/kermit/ck60manual.html
- 566. http://www.columbia.edu/kermit/ckubwr.html#top
- 567. http://www.columbia.edu/kermit/ckubwr.html#contents
- 568. http://www.columbia.edu/kermit/ckubwr.html#x13
- 569. http://www.columbia.edu/kermit/ckubwr.html#x11
- 570. http://www.columbia.edu/kermit/security.html
- 571. http://www.columbia.edu/kermit/ckubwr.html#top
- 572. http://www.columbia.edu/kermit/ckubwr.html#contents
- 573. http://www.columbia.edu/kermit/ckubwr.html#x14
- 574. http://www.columbia.edu/kermit/ckubwr.html#x12
+ 545. http://www.columbia.edu/kermit/ckubwr.html#top
+ 546. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 547. http://www.columbia.edu/kermit/ckubwr.html#x9
+ 548. http://www.columbia.edu/kermit/ckubwr.html#x7
+ 549. http://www.columbia.edu/kermit/ckubwr.html#top
+ 550. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 551. http://www.columbia.edu/kermit/ckubwr.html#x10
+ 552. http://www.columbia.edu/kermit/ckubwr.html#x8
+ 553. http://www.columbia.edu/kermit/ck60manual.html
+ 554. http://dickey.his.com/xterm/xterm.html
+ 555. http://www.columbia.edu/kermit/ckubwr.html#top
+ 556. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 557. http://www.columbia.edu/kermit/ckubwr.html#x11
+ 558. http://www.columbia.edu/kermit/ckubwr.html#x9
+ 559. http://www.columbia.edu/kermit/ckubwr.html#top
+ 560. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 561. http://www.columbia.edu/kermit/ckubwr.html#x12
+ 562. http://www.columbia.edu/kermit/ckubwr.html#x10
+ 563. http://www.columbia.edu/kermit/ckubwr.html#x11.1
+ 564. http://www.columbia.edu/kermit/ckubwr.html#x11.2
+ 565. http://www.columbia.edu/kermit/ckubwr.html#top
+ 566. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 567. http://www.columbia.edu/kermit/ckubwr.html#x11
+ 568. http://www.columbia.edu/kermit/ckubwr.html#x11.2
+ 569. http://www.columbia.edu/kermit/ck60manual.html
+ 570. http://www.columbia.edu/kermit/ckubwr.html#top
+ 571. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 572. http://www.columbia.edu/kermit/ckubwr.html#x11
+ 573. http://www.columbia.edu/kermit/ckubwr.html#x11.1
+ 574. http://www.columbia.edu/kermit/ck60manual.html
  575. http://www.columbia.edu/kermit/ckubwr.html#top
  576. http://www.columbia.edu/kermit/ckubwr.html#contents
- 577. http://www.columbia.edu/kermit/ckubwr.html#x15
- 578. http://www.columbia.edu/kermit/ckubwr.html#x14
- 579. mailto:support@stallion.oz.au
- 580. http://www.stallion.com/
- 581. http://www.columbia.edu/kermit/ckubwr.html#top
- 582. http://www.columbia.edu/kermit/ckubwr.html#contents
- 583. http://www.columbia.edu/kermit/ckermit.html
- 584. http://www.columbia.edu/kermit/ck80.html
- 585. http://www.columbia.edu/kermit/index.html
- 586. http://www.columbia.edu/kermit/index.html
- 587. http://www.columbia.edu/
- 588. mailto:kermit@columbia.edu
+ 577. http://www.columbia.edu/kermit/ckubwr.html#x13
+ 578. http://www.columbia.edu/kermit/ckubwr.html#x11
+ 579. http://www.columbia.edu/kermit/security.html
+ 580. http://www.columbia.edu/kermit/ckubwr.html#top
+ 581. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 582. http://www.columbia.edu/kermit/ckubwr.html#x14
+ 583. http://www.columbia.edu/kermit/ckubwr.html#x12
+ 584. http://www.columbia.edu/kermit/ckubwr.html#top
+ 585. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 586. http://www.columbia.edu/kermit/ckubwr.html#x15
+ 587. http://www.columbia.edu/kermit/ckubwr.html#x14
+ 588. mailto:support@stallion.oz.au
+ 589. http://www.stallion.com/
+ 590. http://www.columbia.edu/kermit/ckubwr.html#top
+ 591. http://www.columbia.edu/kermit/ckubwr.html#contents
+ 592. http://www.columbia.edu/kermit/ckermit.html
+ 593. http://www.columbia.edu/kermit/ck80.html
+ 594. http://www.columbia.edu/kermit/index.html
+ 595. http://www.columbia.edu/kermit/index.html
+ 596. http://www.columbia.edu/
+ 597. mailto:kermit@columbia.edu

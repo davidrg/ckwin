@@ -5,8 +5,8 @@
      [1]The Kermit Project
      [2]Columbia University
      
-   As of: C-Kermit 8.0.201, 8 Feb 2001
-   This page last updated: Mon Feb 11 17:50:55 2002 (New York USA Time)
+   As of: C-Kermit 8.0.206, 24 Oct 2001
+   This page last updated: Thu Oct 24 09:58:39 2002 (New York USA Time)
    
      IF YOU ARE READING A PLAIN-TEXT version of this document, note that
      this file is a plain-text dump of a Web page. You can visit the
@@ -1413,6 +1413,8 @@
    NOB_xxxx Disable SET SPEED xxxx
    NOBIGBUF Override BIGBUFOK when it is the default
    NOBRKC Don't try to refer to t_brkc or t_eof tchars structure members.
+   NOCKFQHOSTNAME Exclude code to get fully qualified hostname in case it
+   causes core dumps.
    NOCCTRAP Disable Control-C (SIGINT) trapping.
    NOCKSPEED Disable control-prefix removal feature (SET CONTROL).
    NOCKTIMERS Build without support for dynamic timers.
@@ -1589,7 +1591,7 @@
    
    
     C-Kermit Configuration Options / [169]The Kermit Project /
-    [170]Columbia University / [171]kermit@columbia.edu / 16 Dec 2001
+    [170]Columbia University / [171]kermit@columbia.edu / 24 Oct 2002
 
 References
 

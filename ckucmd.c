@@ -1,6 +1,6 @@
 #include "ckcsym.h"
 
-char *cmdv = "Command package 8.0.151, 8 Feb 2002";
+char *cmdv = "Command package 8.0.153, 26 Jul 2002";
 
 /*  C K U C M D  --  Interactive command package for Unix  */
 
@@ -371,6 +371,19 @@ static char dirsep = '/';		/* UNIX, OS/2, OS-9, Amiga, etc. */
 #endif /* MAC */
 #endif /* datageneral */
 #endif /* GEMDOS */
+
+/*  H A S N O P A T H  */
+
+/*  Returns 0 if filespec s includes any path segments; 1 if it doesn't. */
+
+int
+hasnopath(s) char * s; {
+    char * p = NULL;
+    if (!s) return(0);
+    if (!*s) return(0);
+    zstrip(s,&p);
+    return(ckstrcmp(s,p,CKMAXPATH,filecase) == 0 ? 1 : 0);
+}
 
 /*  C K S P R E A D  --  Print string double-spaced  */
 
@@ -786,7 +799,7 @@ prompt(f) xx_strp f; {
 
     /* If there is a demo screen to be displayed, display it */
     if (display_demo && xcmdsrc == 0) {
-        demoscrn();
+        demoscrn(VCMD);
         display_demo = 0;
     }
 #endif /* OS2 */
@@ -1342,6 +1355,7 @@ cmofi(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; {
     if (*xhlp == NUL) xhlp = "Output file";
     *xp = "";
 
+    debug(F110,"cmofi xdef",xdef,0);
     x = cmfld(xhlp,xdef,&s,(xx_strp)0);
     debug(F111,"cmofi cmfld returns",s,x);
     if (x < 0)
@@ -1712,7 +1726,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
                     doexit(GOOD_EXIT,0);
                 }
 #endif /* IKSD */
-		if (!quiet) printf("?Timed out\n");
+		/* if (!quiet) printf("?Timed out\n"); */
 		return(-10);
 	    } else {
 		x = gtword(0);
@@ -1742,7 +1756,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 		int x;
 		while (*s) {		/* the string and if so, expand them */
 		    x = chkvar(s);
-		    debug(F111,"cmifi chkvar",*xp,x);
+		    /* debug(F111,"cmifi chkvar",*xp,x); */
 		    if (x) {
 #endif /* DOCHKVAR */
 			zq = atxbuf;
@@ -2017,8 +2031,14 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 		if (np) free(np);
 		return(x);
 	    }
-	    if (y == 0) {
-		if (path && !isabsolute(sv)) {
+	    if (y == 0) {		/* File was not found */
+		int dosearch = 0;
+		dosearch = (path != NULL); /* A search path was given */
+		if (dosearch) {
+		    dosearch = hasnopath(sv); /* Filename includes no path */
+		    debug(F111,"cmifip hasnopath",sv,dosearch);
+		}
+		if (dosearch) {		/* Search the path... */
 		    char * ptr = path;
 		    char c;
 		    while (1) {
@@ -2882,7 +2902,7 @@ cmtxt(xhlp,xdef,xp,f) char *xhlp; char *xdef; char **xp; xx_strp f; {
 	    /* debug(F111,"cmtxt:",*xp,cc); */
 	    if (x == -10) {
 		if (gtimer() > timelimit) {
-		    if (!quiet) printf("?Timed out\n");
+		    /* if (!quiet) printf("?Timed out\n"); */
 		    return(x);
 		}
 	    } else
@@ -2903,7 +2923,7 @@ cmtxt(xhlp,xdef,xp,f) char *xhlp; char *xdef; char **xp; xx_strp f; {
                     doexit(GOOD_EXIT,0);
                 }
 #endif /* IKSD */
-		if (!quiet) printf("?Timed out\n");
+		/* if (!quiet) printf("?Timed out\n"); */
 		return(-10);
 	    } else {
 		x = gtword(0);
@@ -3446,6 +3466,12 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 	    }
 	    y = lookup(table,atmbuf,n,&z); /* Look up what we have so far. */
 	    if (y == -1) {
+		/*
+		  Strictly speaking if the main keyword table search fails,
+		  then we should look in the token table if one is given.
+		  But in practice, tokens are also included in the main
+		  keyword table.
+		*/
 		cmflgs = -2;
 		if ((pmsg & 1) && !quiet) {
 		    bleep(BP_FAIL);
@@ -3949,7 +3975,6 @@ cmcvtdate(s,t) char * s; int t; {
     month = monbuf;
     day = daybuf;
     nday = atoi(daybuf);
-
     ckstrncpy(xbuf,s,DATEBUFLEN);	/* Make a local copy we can poke */
     s = xbuf;				/* Point to it */
     s[len] = NUL;
@@ -4061,12 +4086,18 @@ cmcvtdate(s,t) char * s; int t; {
 	}
     }
     len = strlen(s);		/* Update length */
+    debug(F111,"cmcvtdate s",s,len);
 
-    debug(F111,"cmcvtdate dow",p,dow);
-    if (dow > -1) {			/* Have a day number */
+    debug(F111,"cmcvtdate dow",s,dow);
+    if (dow > -1) {			/* Have a day-of-week number */
 	long zz; int n, j;
 	zz = mjd(zzndate());		/* Get today's MJD */
+	debug(F111,"cmcvtdate zz","",zz);
 	j = (((int)(zz % 7L)) + 3) % 7; /* Today's day-of-week number */
+	debug(F111,"cmcvtdate j","",j);
+	hh = 0;				/* Init time to midnight */
+	mm = 0;
+	ss = 0;
 	if (j == dow) {
 	    ckstrncpy(yyyymmdd,zzndate(),YYYYMMDD);
 	    year = NULL;
@@ -4079,25 +4110,35 @@ cmcvtdate(s,t) char * s; int t; {
 	    ckstrncpy(yyyymmdd,mjd2date(zz),YYYYMMDD); /* New date */
 	    year = NULL;
 	}
-	if (len == 0) {
+	debug(F111,"cmcvtdate A",yyyymmdd,len);
+	if (len == 0) {			/* No more fields after this */
 	    ckmakmsg(zbuf,18,yyyymmdd," 00:00:00",NULL,NULL);
+	    dp = zbuf;
 	    goto xcvtdate;
 	}
 	isletter = 0;
 	if (rdigits(p) && len < 8)	/* Next field is time? */
 	  goto dotime;			/* If so go straight to time section */
-	else if (isdigit(*p)) {
+	if (isdigit(*p)) {
 	    if (*(p+1) == ':')
 	      goto dotime;
 	    else if (isdigit(*(p+1)) && (*(p+2) == ':'))
 	      goto dotime;
 	}
-	debug(F110,"cmcvtdate A not time",p,0);
-	goto normal;			/* Skip past symbolic date section */
     }
+    debug(F111,"cmcvtdate B s",s,dow);
+    debug(F111,"cmcvtdate B p",p,dow);
+
     if (*s == '+' || *s == '-') {	/* Delta time only - skip ahead. */
 	p = s;
 	goto delta;
+    }
+    if (dow > -1) {
+	/* Day of week given followed by something that is not a time */
+	/* or a delta so it can't be valid */
+	makestr(&cmdatemsg,"Invalid tokens after day of week");
+	debug(F111,"cmcvtdate fail",cmdatemsg,-1);
+	return(NULL);
     }
 
     /* Handle "today", "yesterday", "tomorrow", and +/- n units */
@@ -4169,6 +4210,7 @@ cmcvtdate(s,t) char * s; int t; {
   normal:
 
     debug(F111,"cmcvtdate NORMAL",s,len);
+    debug(F111,"cmcvtdate dow",s,dow);
     if (yyyymmdd[0] && !year) {
 	ckstrncpy(yearbuf,yyyymmdd,5);
 	ckstrncpy(monbuf,&yyyymmdd[4],3);
@@ -4280,7 +4322,7 @@ cmcvtdate(s,t) char * s; int t; {
 	goto dotime;			/* Use, use that, go do time. */
 
     } else if (nodate) {		/* No date and no implied date */
-	char *tmp;			/* Substitute today's date */
+	char *tmp = NULL;		/* Substitute today's date */
 	ztime(&tmp);
 	if (!tmp)
 	  tmp  = "";
@@ -4726,6 +4768,10 @@ cmcvtdate(s,t) char * s; int t; {
 	p = p2;
 
       delta:
+	debug(F110,"cmcvtdate delta yyyymmdd",yyyymmdd,0);
+	debug(F110,"cmcvtdate delta year",year,0);
+	debug(F110,"cmcvtdate delta p",p,0);
+
 	if (*p == '+' || *p == '-') {	/* Delta time */
 	    int state = NEED_DAYS;	/* Start off looking for days */
 	    char c = 0;
@@ -4966,6 +5012,15 @@ cmcvtdate(s,t) char * s; int t; {
     }
 #endif /* ZLOCALTIME */
 
+    if (yyyymmdd[0] && !year) {
+	ckstrncpy(yearbuf,yyyymmdd,5);
+	ckstrncpy(monbuf,&yyyymmdd[4],3);
+	ckstrncpy(daybuf,&yyyymmdd[6],3);
+	year = yearbuf;
+	month = monbuf;
+	day = daybuf;
+	nday = atoi(daybuf);
+    }
     sprintf(zbuf,"%04d%02d%02d %02d:%02d:%02d", /* SAFE */
 	    atoi(year),atoi(month),nday,hh,mm,ss
 	    );
@@ -5041,6 +5096,7 @@ cmcvtdate(s,t) char * s; int t; {
     {
 	int len, k, n;
 	char * p;
+	debug(F110,"cmcvtdate xcvtdate dp",dp,0);
 	if (!dp) dp = "";		/* Shouldn't happen */
 	if (!*dp) return(NULL);		/* ... */
 	len = strlen(dp);
@@ -5327,6 +5383,7 @@ VOID
 cmaddnext() {
     if (on_recall && in_recall) {	/* Even if it doesn't come */
 	force_add = 1;			/* from the keyboard */
+	newcmd = 1;
 	no_recall = 0;
     }
 }
@@ -5838,6 +5895,7 @@ gtword(brk) int brk; {
 #endif /* datageneral */
 
 
+#ifdef COMMENT
 #ifdef DEBUG
     if (deblog) {
 	debug(F101,"gtword brk","",brk);
@@ -5858,6 +5916,7 @@ gtword(brk) int brk; {
 #endif /* NOSPL */
     }
 #endif /* DEBUG */
+#endif /* COMMENT */
 
     realtty = is_a_tty(0);		/* Stdin is really a tty? */
 
@@ -6283,10 +6342,19 @@ CMDIRPARSE:
 #endif /* NOSPL */
 		 ) && chsrc != 0 && realtty) { /* from the real keyboard */
 
-#ifdef USE_ARROWKEYS
 /* Use ANSI / VT100 up and down arrow keys for command recall.  */
 
-		if (isesc) {		/* A real ESC was typed */
+		if (isesc && (
+#ifdef IKSD
+		    inserver
+#else
+		    0
+#endif /* IKSD */
+#ifdef USE_ARROWKEYS
+                              || 1
+#endif /* USE_ARROWKEYS */
+                             )
+                     ) {		/* A real ESC was typed */
 		    int x;
 		    msleep(200);	/* Wait 1/5 sec */
 		    x = cmdconchk();	/* Was it followed by anything? */
@@ -6303,21 +6371,26 @@ CMDIRPARSE:
 			    c2 = cmdgetc(0); /* Get the second one */
 			    debug(F101,"Arrowkey ESC c3","",c2);
 			    switch (c2) {
+#ifndef NORECALL
 			      case 'A':	/* Up */
+				c = BEL;
 				c = C_UP;
 				break;
 			      case 'B':	/* Down */
+				c = BEL;
 				c = C_DN;
 				break;
 			      case 'C':	/* Right */
 			      case 'D':	/* Left */
+#else
+			      default:
+#endif /* NORECALL */
 				c = BEL; /* We don't use these yet */
 				break;
 			    }
 			}
 		    }
 		}
-#endif /* USE_ARROWKEYS */
 
 		switch (c) {
 		  case '?':		/* ?-Help */
@@ -6914,7 +6987,7 @@ cmdgetc(timelimit) int timelimit; {	/* Get a character from the tty. */
     return(c);				/* Return what we got */
 }
 
-#ifdef USE_ARROWKEYS
+/* #ifdef USE_ARROWKEYS */
 
 /* Mechanism to use for peeking into stdin buffer */
 
@@ -6973,6 +7046,10 @@ int
 cmdconchk() {
     int x = 0, y;
     y = pushc ? 1 : 0;			/* Have command character pushed? */
+#ifdef OS2
+    x = conchk();			/* Check device-driver buffer */
+    if (x < 0) x = 0;
+#else /* OS2 */
 #ifdef CMD_CONINC			/* See cmdgetc() */
     x = conchk();			/* Check device-driver buffer */
     if (x < 0) x = 0;
@@ -6989,8 +7066,12 @@ cmdconchk() {
     debug(F101,"cmdconchk (*stdin)->_cnt","",(*stdin)->_cnt);
     x = (*stdin)->_cnt;
 #else
+#ifdef NOARROWKEYS
+    debug(F101,"cmdconchk NOARROWKEYS x","",0);
+#else
     debug(F101,"cmdconchk stdin->_cnt","",stdin->_cnt);
     x = stdin->_cnt;
+#endif /* NOARROWKEYS */
 #endif /* VMS */
     if (x == 0) x = conchk();
     if (x < 0) x = 0;
@@ -7014,9 +7095,10 @@ cmdconchk() {
 #endif /* USE_FILE_CNT */
 #endif /* _IO_file_flags */
 #endif /* CMD_CONINC */
+#endif /* OS2 */
     return(x + y);
 }
-#endif /* USE_ARROWKEYS */
+/* #endif */ /* USE_ARROWKEYS */
 
 
 static VOID
@@ -7433,7 +7515,7 @@ int
 xlookup(table,cmd,n,x) struct keytab table[]; char *cmd; int n, *x; {
     register int i;
     int len, cmdlen, one = 0;
-    register char c, * s, * s2;
+    register char c, c2, * s, * s2;
 
     if (!cmd) cmd = "";			/* Check args */
     if (!*cmd || n < 1) return(-3);
@@ -7458,7 +7540,9 @@ xlookup(table,cmd,n,x) struct keytab table[]; char *cmd; int n, *x; {
 	s = table[i].kwd;		/* This entry */
 	if (!s) s = "";
 	if (!*s) continue;		/* Empty table entry */
-	if (c != *s) continue;		/* First char doesn't match */
+	c2 = *s;
+	if (isupper(c2)) c2 = tolower(c2);
+	if (c != c2) continue;		/* First char doesn't match */
 	if (one) {			/* Name is one char long */
 	    if (!*(s+1)) {
 		if (x) *x = i;

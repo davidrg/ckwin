@@ -4,12 +4,12 @@
      Frank da Cruz
      [1]The Kermit Project, [2]Columbia University
      
-   As of: C-Kermit 8.0.201, 8 Feb 2002
-   This page last updated: Mon Feb 11 17:49:47 2002 (New York USA Time)
+   As of: C-Kermit 8.0.206, 24 October 2002
+   This page last updated: Fri Nov 22 12:32:03 2002 (New York USA Time)
    
-     IF YOU ARE READING A PLAIN-TEXT version of this document, note that
-     this file is a plain-text dump of a Web page. You can visit the
-     original (and possibly more up-to-date) Web page here:
+     IF YOU ARE READING A PLAIN-TEXT version of this document, it is a
+     plain-text dump of a Web page. You can visit the original (and
+     possibly more up-to-date) Web page here:
      
   [3]http://www.columbia.edu/kermit/ckcbwr.html
 
@@ -22,11 +22,12 @@
    for Unix. This document also applies to [5]Kermit 95 for Windows,
    which is based on C-Kermit.
    
-   [ [6]C-Kermit ] [ [7]C-Kermit 8.0 Beta Test ] [ [8]TUTORIAL ]
+   [ [6]C-Kermit ] [ [7]TUTORIAL ]
     ________________________________________________________________________
   
   CONTENTS
   
+   0. [8]PATCHES
    1. [9]INCOMPATIBLE CHANGES
    2. [10]THE C-KERMIT COMMAND PARSER
    3. [11]MULTIPLE SESSIONS
@@ -40,16 +41,25 @@
   11. [19]SCRIPT PROGRAMMING
     ________________________________________________________________________
   
-  1. INCOMPATIBLE CHANGES
+  0. PATCHES
   
    [ [20]Top ] [ [21]Contents ] [ [22]Next ]
+   
+   Source-level patches for C-Kermit 8.0.201:
+   
+     (None)
+    ________________________________________________________________________
+  
+  1. INCOMPATIBLE CHANGES
+  
+   [ [23]Top ] [ [24]Contents ] [ [25]Next ]
    
    These are not necessarily exhaustive lists.
    
   1.1. C-Kermit 6.0
   
    C-Kermit 6.0 was released 6 September 1996 and is completely
-   documented in [23]Using C-Kermit, 2nd Edition. The following
+   documented in [26]Using C-Kermit, 2nd Edition. The following
    incompatible changes were made in C-Kermit 6.0:
    
      * Unless you tell C-Kermit otherwise, if a serial or network
@@ -78,7 +88,7 @@
   
    C-Kermit 7.0 was released 1 January 2000. Its new features are
    documented in the C-Kermit 7.0 Supplement,
-   [24]http://www.columbia.edu/kermit/ckermit2.html. The following
+   [27]http://www.columbia.edu/kermit/ckermit2.html. The following
    incompatible changes were made in C-Kermit 7.0:
      * The "multiline GET" command is gone. Now use either of the
        following forms instead:
@@ -91,26 +101,20 @@
        you must now use MGET rather than GET:
 
   mget file1 file2 file3 ...
-     * C-Kermit 7.0 uses FAST Kermit protocol settings by default. This
-       includes "unprefixing" of certain control characters. Because of
-       this, file transfers that worked with previous releases might not
-       work in the new release (but it is more likely that they will
-       work, and much faster). If a transfer fails, you'll get a
-       context-sensitive hint suggesting possible causes and cures.
-       Usually SET PREFIXING ALL does the trick.
-     * C-Kermit 7.0 transfers files in BINARY mode by default. To restore
-       the previous behavior, put SET FILE TYPE TEXT in your C-Kermit
+     * C-Kermit 7.0 and later use FAST Kermit protocol settings by
+       default. This includes "unprefixing" of certain control
+       characters. Because of this, file transfers that worked with
+       previous releases might not work in the new release especially
+       against a non-Kermit-Project Kermit protocol implementation (but
+       it is more likely that they will work, and much faster). If a
+       transfer fails, you'll get a context-sensitive hint suggesting
+       possible causes and cures. Usually SET PREFIXING ALL does the
+       trick.
+     * Bye default C-Kermit 7.0 and later send files in text or binary
+       mode by looking at each file to see which is the appropriate mode.
+       To restore the previous behavior, put SET TRANSFER MODE MANUAL and
+       the desired SET FILE TYPE (TEXT or BINARY) in your C-Kermit
        initialization file.
-     * No matter whether FILE TYPE is BINARY or TEXT by default, C-Kermit
-       7.0 now switches between text and binary mode automatically on a
-       per-file basis according to various criteria, including (a) which
-       kind of platform is on the other end of the connection (if known),
-       (b) the version of Kermit on the other end, and (c) the file's
-       name. To disable this automatic switching and restore the earlier
-       behavior, put SET TRANSFER MODE MANUAL in your C-Kermit
-       initialization file. To disable automatic switching for a
-       particular transfer, include a /TEXT or /BINARY switch with your
-       SEND or GET command.
      * The RESEND and REGET commands automatically switch to binary mode;
        previously if RESEND or REGET were attempted when FILE TYPE was
        TEXT, these commands would fail immediately, with a message
@@ -143,7 +147,7 @@
        backslash (\).
      * SET QUIET { ON, OFF } is now on the command stack, just like SET
        INPUT CASE, SET COUNT, SET MACRO ERROR, etc, as described on p.458
-       of [25]Using C-Kermit, 2nd Edition. This allows any macro or
+       of [28]Using C-Kermit, 2nd Edition. This allows any macro or
        command file to SET QUIET ON or OFF without worrying about saving
        and restoring the global QUIET value. For example, this lets you
        write a script that tries SET LINE on lots of devices until it
@@ -187,7 +191,7 @@
   
   2. THE C-KERMIT COMMAND PARSER
   
-   [ [26]Top ] [ [27]Contents ] [ [28]Next ] [ [29]Previous ]
+   [ [29]Top ] [ [30]Contents ] [ [31]Next ] [ [32]Previous ]
    
    Various command-related limits are shown in the following table, in
    which the sample values are for a "large memory model" build of
@@ -293,7 +297,7 @@
   
   3. MULTIPLE SESSIONS
   
-   [ [30]Top ] [ [31]Contents ] [ [32]Next ] [ [33]Previous ]
+   [ [33]Top ] [ [34]Contents ] [ [35]Next ] [ [36]Previous ]
    
    C-Kermit 7.0 and earlier do not support multiple sessions. When you
    SET LINE (or SET PORT, same thing) to a new device, or SET HOST to a
@@ -317,14 +321,39 @@
   
   4. NETWORK CONNECTIONS
   
-   [ [34]Top ] [ [35]Contents ] [ [36]Next ] [ [37]Previous ]
+   [ [37]Top ] [ [38]Contents ] [ [39]Next ] [ [40]Previous ]
    
+  FTP Client Bugs
+  
+   The Unix C-Kermit 8.0.206 FTP client had the following bugs at the
+   time most of the 8.0.206 binaries were built for the C-Kermit 8.0
+   CDROM:
+   
+    1. FTP MGET fails when directory segments contain wildcards, as in
+       "ftp mget */data/*.dat". Work around by doing a separate MGET for
+       each source directory.
+    2. FTP MGET can fail or produce random side effects if you have a
+       TMPDIR or CK_TMP environment variable definition in effect, or a
+       SET TEMP-DIRECTORY value, longer than 7 characters. Work around by
+       giving a SET TEMP-DIRECTORY command with a short value, such as
+       "/tmp".
+       
+   These two bugs are fixed in the source code that is included on the
+   CDROM, and also in Kermit 95 2.1.1. You can tell if a C-Kermit 8.0.206
+   binary has these fixes by typing SHOW VERSION; if it says "FTP Client,
+   8.0.200, 24 Oct 2002" it has the fixes; if the edit number is less
+   that 200, it doesn't, in which case can build a new binary from the
+   source code (or contact us and we'll try to get get one for you).
+   
+  Making TCP/IP Connections Can Take a Long Time
+  
    The most frequently asked question in many newsgroups is "Why does it
    take such a long time to make a Telnet connection to (or from) my
-   (e.g.) Linux PC?" (this applies to C-Kermit or to regular Telnet):
+   (e.g.) Linux PC?" (this applies to Kermit as well as to regular Telnet
+   clients):
    
-    1. Most Telnet servers perform reverse DNS lookups on the client (for
-       security and/or logging reasons). If the Telnet client's host
+    1. Most Telnet servers perform reverse DNS lookups on the client for
+       security and/or logging reasons. If the Telnet client's host
        cannot be found by the server's local DNS server, the DNS request
        goes out to the Internet at large, and this can take quite some
        time. The solution to this problem is to make sure that both
@@ -344,6 +373,8 @@
        C-Kermit to SET TELNET WAIT OFF (or include the /NOWAIT switch
        with the TELNET command).
        
+  The Rlogin Client
+  
    In multiuser operating systems such as UNIX and VMS, TCP/IP Rlogin
    connections are available only to privileged users, since "login" is a
    privileged socket. Assuming you are allowed to use it in the first
@@ -354,13 +385,15 @@
    points to the byte after the urgent data byte, and an RFC-compliant
    TCP urgent pointer points to the urgent data byte. As a result, if an
    application sends urgent data from a BSD-compatible implementation to
-   an [38]RFC-1122 compatible implementation then the receiver will read
+   an [41]RFC-1122 compatible implementation then the receiver will read
    the wrong urgent data byte (it will read the byte located after the
    correct byte in the data stream as the urgent data byte)." Rlogin
    requires the use of OOB data while Telnet does not. Therefore, it is
    possible for Telnet to work between all systems while BSD and System V
    TCP/IP implementations are almost always a bad mix.
    
+  The Telnet Client
+  
    On a TCP/IP TELNET connection, you should normally have PARITY set to
    NONE and (except in VMS C-Kermit) FLOW-CONTROL also set to NONE. If
    file transfer does not work with these settings (for example, because
@@ -392,7 +425,7 @@
   
   5. MODEMS AND DIALING
   
-   [ [39]Top ] [ [40]Contents ] [ [41]Next ] [ [42]Previous ]
+   [ [42]Top ] [ [43]Contents ] [ [44]Next ] [ [45]Previous ]
    
    External modems are recommended because:
    
@@ -473,7 +506,7 @@
   
   6. DIALING HINTS AND TIPS
   
-   [ [43]Top ] [ [44]Contents ] [ [45]Next ] [ [46]Previous ]
+   [ [46]Top ] [ [47]Contents ] [ [48]Next ] [ [49]Previous ]
    
    If you have a high-speed, error-correcting, data-compressing,
    speed-buffering modem, you should fix the modem's interface speed as
@@ -490,7 +523,7 @@
    
    If you are having trouble dialing your modem, SET DIAL DISPLAY ON to
    watch the dialing interactions between C-Kermit and your modem.
-   Consult Chapters 3-4 of [47]Using C-Kermit (2nd Ed) for modem-dialing
+   Consult Chapters 3-4 of [50]Using C-Kermit (2nd Ed) for modem-dialing
    troubleshooting instructions. The following sections offer some
    addtional hints and tips.
    
@@ -594,7 +627,7 @@
    use TIES.
    
    Although the probability of "+++" appearing in a Kermit packet is
-   markedly lower than with most other protocols (see the [48]File
+   markedly lower than with most other protocols (see the [51]File
    Transfer section below), it can still happen under certain
    circumstances. It can also happen when using C-Kermit's TRANSMIT
    command. If you are using a Telebit TIES modem, you can change the
@@ -671,7 +704,7 @@
   
   7. TERMINAL SERVERS
   
-   [ [49]Top ] [ [50]Contents ] [ [51]Next ] [ [52]Previous ]
+   [ [52]Top ] [ [53]Contents ] [ [54]Next ] [ [55]Previous ]
    
    Watch out for terminal server's escape character -- usually a control
    character such as Ctrl-Circumflex (Ctrl-^). Don't unprefix it in
@@ -727,13 +760,13 @@
    a Telnet connection, serial-port related commands such as SET SPEED,
    SET STOP-BITS, HANGUP (when MODEM HANGUP-METHOD is RS232), etc, have
    no effect. However, in C-Kermit 8.0, if the modem server supports
-   [53]RFC-2217 Telnet Com-Port Control protocol, these commands do
+   [56]RFC-2217 Telnet Com-Port Control protocol, these commands do
    indeed take effect at the server's serial port.
     ________________________________________________________________________
   
   8. TERMINAL EMULATION
   
-   [ [54]Top ] [ [55]Contents ] [ [56]Next ] [ [57]Previous ]
+   [ [57]Top ] [ [58]Contents ] [ [59]Next ] [ [60]Previous ]
    
    Except for the Windows, OS/2, and Macintosh versions, C-Kermit does
    not emulate any kind of terminal. Rather, it acts as a
@@ -793,7 +826,7 @@
   
   9. KEY MAPPING
   
-   [ [58]Top ] [ [59]Contents ] [ [60]Next ] [ [61]Previous ]
+   [ [61]Top ] [ [62]Contents ] [ [63]Next ] [ [64]Previous ]
    
    Except in the terminal-emulating versions, C-Kermit's key mapping
    facilities are limited to normal "ASCII" keys, and cannot be used with
@@ -825,7 +858,7 @@
    might or might not be true of DECterm windows, Sun "vttool" or
    "crttool" windows, etc. Consult the technical documentation for your
    workstation or emulator. See sample Xterm (Xmodmap) mappings in the
-   [62]Unix C-Kermit Hints and Tips document.
+   [65]Unix C-Kermit Hints and Tips document.
    
    The SET KEY command (except in Kermit 95) does not allow a key
    definition to be (or contain) the NUL (\0) character.
@@ -833,7 +866,7 @@
   
   10. FILE TRANSFER
   
-   [ [63]Top ] [ [64]Contents ] [ [65]Next ] [ [66]Previous ]
+   [ [66]Top ] [ [67]Contents ] [ [68]Next ] [ [69]Previous ]
    
    C-Kermit 7.0 is the first release of C-Kermit to use fast (rather than
    robust and therefore slow) protocol defaults: long packets, sliding
@@ -856,13 +889,15 @@
    file before any of the file-transfer commands.
    
    File transfer failures can occur for all sorts of reasons, most of
-   them listed in Chapter 10 of [67]Using C-Kermit. The following
+   them listed in Chapter 10 of [70]Using C-Kermit. The following
    sections touch on some that aren't.
    
-   The [68]C-Kermit 7.0 Release Notes document SEND /COMMAND as taking an
+   The [71]C-Kermit 7.0 Release Notes document SEND /COMMAND as taking an
    argument, but it doesn't. Instead of SEND /COMMAND:{some command},
-   use: SEND /COMMAND [ other switches ] some command.
+   use:
    
+SEND /COMMAND [ other switches such as /AS-NAME: ] command [ arguments... ]
+
   10.1. Laptops
   
    Watch out for laptops and their assorted power-saver features; for
@@ -1024,7 +1059,7 @@
    also need to use SET SEND PAUSE 100 (or other number). For greater
    detail about transferring files the the HP-48, see:
    
-  [69]http://www.columbia.edu/kermit/hp48.html
+  [72]http://www.columbia.edu/kermit/hp48.html
 
    Some communication programs have errors in their implementation of
    Kermit attribute packets. If you get an error message from your
@@ -1036,6 +1071,13 @@
    set C-Kermit's window size to the smallest one that works, for
    example, SET WINDOW 1.
    
+   For lots more detail about how to cope with defective Kermit partners,
+   see:
+   
+     * [73]Coping with Faulty Kermit Implementations (C-Kermit 7.0 and
+       later).
+     * [74]Coping with Broken Kermit Partners (C-Kermit 8.0 and later).
+       
    The UNIX version of C-Kermit discards carriage returns when receiving
    files in text mode. Thus, "bare" carriage returns (sometimes used to
    achieve overstriking) are lost.
@@ -1043,7 +1085,7 @@
   
   11. SCRIPT PROGRAMMING
   
-   [ [70]Top ] [ [71]Contents ] [ [72]Previous ]
+   [ [75]Top ] [ [76]Contents ] [ [77]Previous ]
    
   11.1. Comments Versus the SCRIPT Command
   
@@ -1275,12 +1317,12 @@
    Escape sequences (or any strings that contain control characters)
    can't be used as labels, GOTO targets, or SWITCH cases.
    
-   [ [73]Top ] [ [74]Contents ] [ [75]C-Kermit Home ] [ [76]C-Kermit 8.0
-   Overview ] [ [77]Kermit Home ]
+   [ [78]Top ] [ [79]Contents ] [ [80]C-Kermit Home ] [ [81]C-Kermit 8.0
+   Overview ] [ [82]Kermit Home ]
      _________________________________________________________________
    
-   C-Kermit 8.0 Unix Hints and Tips / [78]The Kermit Project /
-   [79]Columbia University / [80]kermit@columbia.edu / 12 Dec 2001
+   C-Kermit 8.0 Unix Hints and Tips / [83]The Kermit Project /
+   [84]Columbia University / [85]kermit@columbia.edu / 24 October 2002
 
 References
 
@@ -1290,8 +1332,8 @@ References
    4. http://www.columbia.edu/kermit/ckubwr.html
    5. http://www.columbia.edu/kermit/k95.html
    6. http://www.columbia.edu/kermit/ckermit.html
-   7. http://www.columbia.edu/kermit/ck80.html
-   8. http://www.columbia.edu/kermit/ckututor.html
+   7. http://www.columbia.edu/kermit/ckututor.html
+   8. http://www.columbia.edu/kermit/ckcbwr.html#x0
    9. http://www.columbia.edu/kermit/ckcbwr.html#x1
   10. http://www.columbia.edu/kermit/ckcbwr.html#x2
   11. http://www.columbia.edu/kermit/ckcbwr.html#x3
@@ -1306,61 +1348,66 @@ References
   20. http://www.columbia.edu/kermit/ckcbwr.html#top
   21. http://www.columbia.edu/kermit/ckcbwr.html#contents
   22. http://www.columbia.edu/kermit/ckcbwr.html#x2
-  23. http://www.columbia.edu/kermit/ck60manual.html
-  24. http://www.columbia.edu/kermit/ckermit2.html
-  25. http://www.columbia.edu/kermit/ck60manual.html
-  26. http://www.columbia.edu/kermit/ckcbwr.html#top
-  27. http://www.columbia.edu/kermit/ckcbwr.html#contents
-  28. http://www.columbia.edu/kermit/ckcbwr.html#x3
-  29. http://www.columbia.edu/kermit/ckcbwr.html#x1
-  30. http://www.columbia.edu/kermit/ckcbwr.html#top
-  31. http://www.columbia.edu/kermit/ckcbwr.html#contents
-  32. http://www.columbia.edu/kermit/ckcbwr.html#x4
-  33. http://www.columbia.edu/kermit/ckcbwr.html#x2
-  34. http://www.columbia.edu/kermit/ckcbwr.html#top
-  35. http://www.columbia.edu/kermit/ckcbwr.html#contents
-  36. http://www.columbia.edu/kermit/ckcbwr.html#x5
-  37. http://www.columbia.edu/kermit/ckcbwr.html#x3
-  38. ftp://ftp.isi.edu/in-notes/rfc1122.txt
-  39. http://www.columbia.edu/kermit/ckcbwr.html#top
-  40. http://www.columbia.edu/kermit/ckcbwr.html#contents
-  41. http://www.columbia.edu/kermit/ckcbwr.html#x6
-  42. http://www.columbia.edu/kermit/ckcbwr.html#x4
-  43. http://www.columbia.edu/kermit/ckcbwr.html#top
-  44. http://www.columbia.edu/kermit/ckcbwr.html#contents
-  45. http://www.columbia.edu/kermit/ckcbwr.html#x7
-  46. http://www.columbia.edu/kermit/ckcbwr.html#x5
-  47. http://www.columbia.edu/kermit/ck60manual.html
-  48. http://www.columbia.edu/kermit/ckcbwr.html#x10
-  49. http://www.columbia.edu/kermit/ckcbwr.html#top
-  50. http://www.columbia.edu/kermit/ckcbwr.html#contents
-  51. http://www.columbia.edu/kermit/ckcbwr.html#x8
-  52. http://www.columbia.edu/kermit/ckcbwr.html#x6
-  53. ftp://ftp.isi.edu/in-notes/rfc2217.txt
-  54. http://www.columbia.edu/kermit/ckcbwr.html#top
-  55. http://www.columbia.edu/kermit/ckcbwr.html#contents
-  56. http://www.columbia.edu/kermit/ckcbwr.html#x9
-  57. http://www.columbia.edu/kermit/ckcbwr.html#x7
-  58. http://www.columbia.edu/kermit/ckcbwr.html#top
-  59. http://www.columbia.edu/kermit/ckcbwr.html#contents
-  60. http://www.columbia.edu/kermit/ckcbwr.html#x10
-  61. http://www.columbia.edu/kermit/ckcbwr.html#x8
-  62. http://www.columbia.edu/kermit/ckubwr.html
-  63. http://www.columbia.edu/kermit/ckcbwr.html#top
-  64. http://www.columbia.edu/kermit/ckcbwr.html#contents
-  65. http://www.columbia.edu/kermit/ckcbwr.html#x11
-  66. http://www.columbia.edu/kermit/ckcbwr.html#x9
-  67. http://www.columbia.edu/kermit/ck60manual.html
-  68. http://www.columbia.edu/kermit/ckermit70.html
-  69. http://www.columbia.edu/kermit/hp48.html
-  70. http://www.columbia.edu/kermit/ckcbwr.html#top
-  71. http://www.columbia.edu/kermit/ckcbwr.html#contents
-  72. http://www.columbia.edu/kermit/ckcbwr.html#x10
-  73. http://www.columbia.edu/kermit/ckcbwr.html#top
-  74. http://www.columbia.edu/kermit/ckcbwr.html#contents
-  75. http://www.columbia.edu/kermit/ckermit.html
-  76. http://www.columbia.edu/kermit/ck80.html
-  77. http://www.columbia.edu/kermit/index.html
-  78. http://www.columbia.edu/kermit/index.html
-  79. http://www.columbia.edu/
-  80. mailto:kermit@columbia.edu
+  23. http://www.columbia.edu/kermit/ckcbwr.html#top
+  24. http://www.columbia.edu/kermit/ckcbwr.html#contents
+  25. http://www.columbia.edu/kermit/ckcbwr.html#x2
+  26. http://www.columbia.edu/kermit/ck60manual.html
+  27. http://www.columbia.edu/kermit/ckermit2.html
+  28. http://www.columbia.edu/kermit/ck60manual.html
+  29. http://www.columbia.edu/kermit/ckcbwr.html#top
+  30. http://www.columbia.edu/kermit/ckcbwr.html#contents
+  31. http://www.columbia.edu/kermit/ckcbwr.html#x3
+  32. http://www.columbia.edu/kermit/ckcbwr.html#x1
+  33. http://www.columbia.edu/kermit/ckcbwr.html#top
+  34. http://www.columbia.edu/kermit/ckcbwr.html#contents
+  35. http://www.columbia.edu/kermit/ckcbwr.html#x4
+  36. http://www.columbia.edu/kermit/ckcbwr.html#x2
+  37. http://www.columbia.edu/kermit/ckcbwr.html#top
+  38. http://www.columbia.edu/kermit/ckcbwr.html#contents
+  39. http://www.columbia.edu/kermit/ckcbwr.html#x5
+  40. http://www.columbia.edu/kermit/ckcbwr.html#x3
+  41. ftp://ftp.isi.edu/in-notes/rfc1122.txt
+  42. http://www.columbia.edu/kermit/ckcbwr.html#top
+  43. http://www.columbia.edu/kermit/ckcbwr.html#contents
+  44. http://www.columbia.edu/kermit/ckcbwr.html#x6
+  45. http://www.columbia.edu/kermit/ckcbwr.html#x4
+  46. http://www.columbia.edu/kermit/ckcbwr.html#top
+  47. http://www.columbia.edu/kermit/ckcbwr.html#contents
+  48. http://www.columbia.edu/kermit/ckcbwr.html#x7
+  49. http://www.columbia.edu/kermit/ckcbwr.html#x5
+  50. http://www.columbia.edu/kermit/ck60manual.html
+  51. http://www.columbia.edu/kermit/ckcbwr.html#x10
+  52. http://www.columbia.edu/kermit/ckcbwr.html#top
+  53. http://www.columbia.edu/kermit/ckcbwr.html#contents
+  54. http://www.columbia.edu/kermit/ckcbwr.html#x8
+  55. http://www.columbia.edu/kermit/ckcbwr.html#x6
+  56. ftp://ftp.isi.edu/in-notes/rfc2217.txt
+  57. http://www.columbia.edu/kermit/ckcbwr.html#top
+  58. http://www.columbia.edu/kermit/ckcbwr.html#contents
+  59. http://www.columbia.edu/kermit/ckcbwr.html#x9
+  60. http://www.columbia.edu/kermit/ckcbwr.html#x7
+  61. http://www.columbia.edu/kermit/ckcbwr.html#top
+  62. http://www.columbia.edu/kermit/ckcbwr.html#contents
+  63. http://www.columbia.edu/kermit/ckcbwr.html#x10
+  64. http://www.columbia.edu/kermit/ckcbwr.html#x8
+  65. http://www.columbia.edu/kermit/ckubwr.html
+  66. http://www.columbia.edu/kermit/ckcbwr.html#top
+  67. http://www.columbia.edu/kermit/ckcbwr.html#contents
+  68. http://www.columbia.edu/kermit/ckcbwr.html#x11
+  69. http://www.columbia.edu/kermit/ckcbwr.html#x9
+  70. http://www.columbia.edu/kermit/ck60manual.html
+  71. http://www.columbia.edu/kermit/ckermi70.htm
+  72. http://www.columbia.edu/kermit/hp48.html
+  73. http://www.columbia.edu/kermit/ckermit70.html#x4.22
+  74. http://www.columbia.edu/kermit/ckermit80.html#x15
+  75. http://www.columbia.edu/kermit/ckcbwr.html#top
+  76. http://www.columbia.edu/kermit/ckcbwr.html#contents
+  77. http://www.columbia.edu/kermit/ckcbwr.html#x10
+  78. http://www.columbia.edu/kermit/ckcbwr.html#top
+  79. http://www.columbia.edu/kermit/ckcbwr.html#contents
+  80. http://www.columbia.edu/kermit/ckermit.html
+  81. http://www.columbia.edu/kermit/ck80.html
+  82. http://www.columbia.edu/kermit/index.html
+  83. http://www.columbia.edu/kermit/index.html
+  84. http://www.columbia.edu/
+  85. mailto:kermit@columbia.edu

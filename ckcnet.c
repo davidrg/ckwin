@@ -1,4 +1,4 @@
-char *cknetv = "Network support, 8.0.264, 5 Feb 2002";
+char *cknetv = "Network support, 8.0.271, 24 Oct 2002";
 
 /*  C K C N E T  --  Network support  */
 
@@ -285,9 +285,9 @@ int tcp_dns_srv = SET_OFF;
 _PROTOTYP( char * cmcvtdate, (char *, int) );
 
 #ifdef RLOGCODE
-#ifdef TCPIPLIB
-_PROTOTYP( static VOID rlog_oob, (CHAR *, int) );
-#else
+_PROTOTYP( int rlog_ctrl, (CHAR *, int) );
+_PROTOTYP( static int rlog_oob, (CHAR *, int) );
+#ifndef TCPIPLIB
 _PROTOTYP( static SIGTYP rlogoobh, ( int ) );
 #endif /* TCPIPLIB */
 _PROTOTYP( static int rlog_ini, (CHAR *, int,
@@ -295,6 +295,7 @@ _PROTOTYP( static int rlog_ini, (CHAR *, int,
                                  struct sockaddr_in *) );
 int rlog_mode = RL_COOKED;
 int rlog_stopped = 0;
+int rlog_inband = 0;
 #endif /* RLOGCODE */
 
 #ifndef NOICP
@@ -361,6 +362,7 @@ static ckjmpbuf njbuf;
 
 #define NAMECPYL 1024                   /* Local copy of hostname */
 char namecopy[NAMECPYL];                /* Referenced by ckctel.c */
+char namecopy2[NAMECPYL];		/* Referenced by ckctel.c */
 #ifndef NOHTTP
 char http_host_port[NAMECPYL];          /* orig host/port necessary for http */
 char http_ip[20] = { '\0' };            /* ip address of host */
@@ -1115,7 +1117,22 @@ ttbufr() {                              /* TT Buffer Read */
 #endif /* OS2 */
             return(-2);
           case SSL_ERROR_SSL:
-            debug(F100,"ttbufr SSL_ERROR_SSL","",0);
+              if (bio_err!=NULL) {
+                  int len;
+                  extern char ssl_err[];
+                  BIO_printf(bio_err,"ttbufr SSL_ERROR_SSL\n");
+                  ERR_print_errors(bio_err);
+                  len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
+                  ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
+                  debug(F110,"ttbufr SSL_ERROR_SSL",ssl_err,0);
+                  if (ssl_debug_flag)                  
+                      printf(ssl_err);
+              } else if (ssl_debug_flag) {
+                  debug(F100,"ttbufr SSL_ERROR_SSL","",0);
+                  fflush(stderr);
+                  fprintf(stderr,"ttbufr SSL_ERROR_SSL\n");
+                  ERR_print_errors_fp(stderr);
+              }
 #ifdef COMMENT
             netclos();
 #endif /* COMMENT */
@@ -1262,7 +1279,8 @@ ttbufr() {                              /* TT Buffer Read */
 #ifdef RLOGCODE                         /* blah */
               if (ttnproto == NP_RLOGIN  ||
                   ttnproto == NP_K4LOGIN || ttnproto == NP_EK4LOGIN ||
-                  ttnproto == NP_K5LOGIN || ttnproto == NP_EK5LOGIN
+                  ((ttnproto == NP_K5LOGIN || ttnproto == NP_EK5LOGIN) && 
+                  !rlog_inband)
                    )
               {
                   /*
@@ -1342,6 +1360,7 @@ ttbufr() {                              /* TT Buffer Read */
           ttibuf[ttibp+ttibn] = '\0';
         debug(F111,"ttbufr ttibuf",&ttibuf[ttibp],ttibn);
 #endif /* DEBUG */
+
 #ifdef OS2
         ReleaseTCPIPMutex();
 #endif /* OS2 */
@@ -3100,8 +3119,9 @@ ckgetpeer() {
 #endif /* TCPSOCKET */
 }
 
-#ifndef NONET
+/* Get fully qualified IP hostname */
 
+#ifndef NONET
 char *
 #ifdef CK_ANSIC
 ckgetfqhostname(char * name)
@@ -3109,6 +3129,12 @@ ckgetfqhostname(char * name)
 ckgetfqhostname(name) char * name;
 #endif /* CK_ANSIC */
 {
+#ifdef NOCKGETFQHOST
+
+    return(name);
+
+#else /* If the following code dumps core, define NOCKGETFQHOST and rebuild. */
+
     static char namebuf[256];
     struct hostent *host=NULL;
     struct sockaddr_in r_addr;
@@ -3176,6 +3202,7 @@ ckgetfqhostname(name) char * name;
       strncat(namebuf,&name[i-1],256-strlen(namebuf)-strlen(&name[i-1]));
     debug(F110,"ckgetfqhn()",namebuf,0);
     return(namebuf);
+#endif /* NOCKGETFQHOST */
 }
 
 VOID
@@ -3904,6 +3931,7 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
     if (ttnproto == NP_DEFAULT)
        setnproto(p);
 
+    ckstrncpy(namecopy2,namecopy,NAMECPYL);
     service = ckgetservice(namecopy,p,namecopy,NAMECPYL);
     if (!service) {
         fprintf(stderr, "Can't find port for service %s\n", p);
@@ -3915,6 +3943,8 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
         errno = 0;                  /* (rather than mislead) */
         return(-1);
     } else {
+        if (!ckstrcmp(namecopy,namecopy2,-1,0))
+	  namecopy2[0] = '\0';
         ckstrncpy(svcbuf,ckuitoa(ntohs(service->s_port)),sizeof(svcbuf));
         debug(F110,"netopen service ok",svcbuf,0);
     }
@@ -3935,9 +3965,7 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
    /* service requested so we can include them in the Host header.    */
     ckmakmsg(http_host_port,sizeof(http_host_port),namecopy,":",
               ckitoa(ntohs(service->s_port)),NULL);
-#endif /* NOHTTP */
 
-#ifndef NOHTTP
     /* 'namecopy' contains the name of the host to which we want to connect */
     /* 'svcbuf'   contains the service name                                 */
     /* 'service->s_port' contains the port number in network byte order     */
@@ -4797,7 +4825,8 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
                  tcp_http_proxy ? proxycopy :
 #endif /* NOHTTP */
                  (host && host->h_name && host->h_name[0]) ?
-                 (char *)host->h_name : (namecopy[0] ? namecopy : ipaddr),
+                 (char *)host->h_name : (namecopy2[0] ? namecopy2 : 
+                                        (namecopy[0] ? namecopy : ipaddr)),
                  ipaddr,
                  uidbuf,
                  ttyfd
@@ -5245,28 +5274,28 @@ nettchk() {                             /* for reading from network */
     debug(F101,"nettchk count w/overlapped","",count);
 #endif /* NT_TCP_OVERLAPPED */
 
+#ifdef OS2
+#ifndef IKSDONLY
+    if ( IsConnectMode() ) {
+        debug(F101,"nettchk (FIONREAD) returns","",count);
+        return(count);
+    }
+#endif /* IKSDONLY */
+#endif /* OS2 */
+
 /* For the sake of efficiency, if there is still data in the ttibuf */
 /* do not go to the bother of checking to see of the connection is  */
 /* still valid.  The handle is still good, so just return the count */
 /* of the bytes that we already have left to process.               */
 #ifdef OS2
-    RequestTCPIPMutex(SEM_INDEFINITE_WAIT);
     if ( count > 0 || ttibn > 0 ) {
         count+=ttibn;
-        ReleaseTCPIPMutex();
         debug(F101,"nettchk (count+ttibn > 0) returns","",count);
         return(count);
     } else {
+        RequestTCPIPMutex(SEM_INDEFINITE_WAIT);
         if ( ttibn == 0 )
             ttibp = 0;      /* reset for next read */
-
-#ifndef IKSDONLY
-        if ( IsConnectMode() ) {
-            ReleaseTCPIPMutex();
-            debug(F101,"nettchk (count+ttibn == 0) returns","",count);
-            return(0);
-        }
-#endif /* IKSDONLY */
     }
 #else /* OS2 */
     if ( count > 0 || ttibn > 0 ) {
@@ -5386,10 +5415,29 @@ nettchk() {                             /* for reading from network */
           case SSL_ERROR_WANT_X509_LOOKUP:
                 debug(F100,"nettchk SSL_ERROR_WANT_X509_LOOKUP","",0);
                 break;
-          case SSL_ERROR_SSL:
-                debug(F100,"nettchk SSL_ERROR_SSL","",0);
+            case SSL_ERROR_SSL:
+                if (bio_err!=NULL) {
+                    int len;
+                    extern char ssl_err[];
+                    BIO_printf(bio_err,"nettchk() SSL_ERROR_SSL\n");
+                    ERR_print_errors(bio_err);
+                    len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
+                    ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
+                    debug(F110,"nettchk SSL_ERROR_SSL",ssl_err,0);
+                    if (ssl_debug_flag)
+                        printf(ssl_err);
+                } else if (ssl_debug_flag) {
+                    debug(F100,"nettchk SSL_ERROR_SSL","",0);
+                    fflush(stderr);
+                    fprintf(stderr,"nettchk() SSL_ERROR_SSL\n");
+                    ERR_print_errors_fp(stderr);
+                }
+#ifdef COMMENT
                 netclos();
                 rc = -1;
+#else
+                x = -1;
+#endif
                 goto nettchk_return;
           case SSL_ERROR_ZERO_RETURN:
                 debug(F100,"nettchk SSL_ERROR_ZERO_RETURN","",0);
@@ -5506,7 +5554,7 @@ nettchk() {                             /* for reading from network */
   UNIX just uses ttchk(), in which the ioctl() calls on the file descriptor
   seem to work OK.
 */
-    return(0);
+    return(ttchk());
 #endif /* TCPIPLIB */
 /*
   But what about X.25?
@@ -5575,7 +5623,7 @@ netxin(n,buf) int n; CHAR * buf; {
 #endif /* TCPIPLIB */
 
     if (ttyfd == -1) {
-        debug(F100,"netinc socket is closed","",0);
+        debug(F100,"netxin socket is closed","",0);
         return(-2);
     }
 #ifdef CK_KERBEROS
@@ -5592,7 +5640,7 @@ netxin(n,buf) int n; CHAR * buf; {
 #ifdef KRB5
 #ifdef RLOGCODE
     if (ttnproto == NP_EK5LOGIN) {
-        if ((len = krb5_des_read(ttyfd,buf,n)) < 0)
+        if ((len = krb5_des_read(ttyfd,buf,n,0)) < 0)
           return(-1);
         else
           return(len);
@@ -5719,7 +5767,7 @@ netinc(timo) int timo; {
 #ifdef KRB5
 #ifdef RLOGCODE
     if (ttnproto == NP_EK5LOGIN) {
-        if ((x = krb5_des_read(ttyfd,&c,1)) == 0)
+        if ((x = krb5_des_read(ttyfd,&c,1,0)) == 0)
           return(-1);
         else if (x < 0)
           return(-2);
@@ -6063,7 +6111,7 @@ nettol(s,n) CHAR *s; int n; {
 #ifdef KRB5
 #ifdef RLOGCODE
     if (ttnproto == NP_EK5LOGIN) {
-        return(krb5_des_write(ttyfd,s,n));
+        return(krb5_des_write(ttyfd,s,n,0));
     }
 #endif /* RLOGCODE */
 #ifdef KRB5_U2U
@@ -6126,8 +6174,28 @@ nettol(s,n) CHAR *s; int n; {
             return(-2);
           case SSL_ERROR_SSL:
             debug(F100,"nettol SSL_ERROR_SSL","",0);
-            netclos();
-            return(-2);
+              if (bio_err!=NULL) {
+                  int len;
+                  extern char ssl_err[];
+                  BIO_printf(bio_err,"nettol() SSL_ERROR_SSL\n");
+                  ERR_print_errors(bio_err);
+                  len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
+                  ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
+                  debug(F110,"nettol SSL_ERROR_SSL",ssl_err,0);
+                  if (ssl_debug_flag)
+                      printf(ssl_err);
+              } else if (ssl_debug_flag) {
+                  debug(F100,"nettol SSL_ERROR_SSL","",0);
+                  fflush(stderr);
+                  fprintf(stderr,"nettol() SSL_ERROR_SSL\n");
+                  ERR_print_errors_fp(stderr);
+              }
+#ifdef COMMENT
+              netclos();
+              return(-2);
+#else
+              return(-1);
+#endif
           case SSL_ERROR_ZERO_RETURN:
             debug(F100,"nettol SSL_ERROR_ZERO_RETURN","",0);
             netclos();
@@ -6282,7 +6350,7 @@ nettoc(c) CHAR c;
 #ifdef KRB5
 #ifdef RLOGCODE
     if (ttnproto == NP_EK5LOGIN) {
-        return(krb5_des_write(ttyfd,&cc,1)==1?0:-1);
+        return(krb5_des_write(ttyfd,&cc,1,0)==1?0:-1);
     }
 #endif /* RLOGCODE */
 #ifdef KRB5_U2U
@@ -6330,8 +6398,26 @@ nettoc(c) CHAR c;
 #endif /* NT */
                   return(rc);
               }
+        case SSL_ERROR_SSL:
+              if (bio_err!=NULL) {
+                  int len;
+                  extern char ssl_err[];
+                  BIO_printf(bio_err,"nettoc() SSL_ERROR_SSL\n");
+                  ERR_print_errors(bio_err);
+                  len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
+                  ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
+                  debug(F110,"nettoc SSL_ERROR_SSL",ssl_err,0);
+                  if (ssl_debug_flag)
+                      printf(ssl_err);
+              } else if (ssl_debug_flag) {
+                  debug(F100,"nettoc SSL_ERROR_SSL","",0);
+                  fflush(stderr);
+                  fprintf(stderr,"nettoc() SSL_ERROR_SSL\n");
+                  ERR_print_errors_fp(stderr);
+              }
+              return(-1);
+              break;
           case SSL_ERROR_WANT_X509_LOOKUP:
-          case SSL_ERROR_SSL:
           case SSL_ERROR_ZERO_RETURN:
           default:
             netclos();
@@ -6872,6 +6958,7 @@ rlog_ini(hostname, port, l_addr, r_addr)
                                 /* this since we use the Telnet options   */
                                 /* to hold various state information      */
     duplex = 0;                 /* Rlogin is always remote echo */
+    rlog_inband = 0;
 
 #ifdef CK_TTGWSIZ
 /*
@@ -7088,10 +7175,38 @@ rlog_ini(hostname, port, l_addr, r_addr)
     return(0);
 }
 
-#ifdef TCPIPLIB
-static VOID
+/* two control messages are defined:
+
+   a double flag byte of 'o' indicates a one-byte message which is
+   identical to what was once carried out of band.
+
+   a double flag byte of 'q' indicates a zero-byte message.  This
+   message is interpreted as two \377 data bytes.  This is just a
+   quote rule so that binary data from the server does not confuse the
+   client.  */
+
+int 
+rlog_ctrl(cp, n)
+     unsigned char *cp;
+     int n;
+{
+    if ((n >= 5) && (cp[2] == 'o') && (cp[3] == 'o')) {
+        if (rlog_oob(&cp[4],1))
+            return(-5);
+        return(5);
+    } else if ((n >= 4) && (cp[2] == 'q') && (cp[3] == 'q')) {
+        /* this is somewhat of a hack */
+        cp[2] = '\377';
+        cp[3] = '\377';
+        return(2);
+    }
+    return(0);
+}
+
+static int
 rlog_oob(oobdata, count) CHAR * oobdata; int count; {
     int i;
+    int flush = 0;
 
     debug(F111,"rlogin out_of_band","count",count);
 
@@ -7109,7 +7224,10 @@ rlog_oob(oobdata, count) CHAR * oobdata; int count; {
             case W_NOTHING:
             case W_CONNECT:
             case W_COMMAND:
-                ttflui();
+                if ( rlog_inband )
+                    flush = 1;
+                else
+                    ttflui();
                 break;
             }
         }
@@ -7132,8 +7250,9 @@ rlog_oob(oobdata, count) CHAR * oobdata; int count; {
             }
         }
     }
+    return(flush);
 }
-#else /* TCPIPLIB */
+#ifndef TCPIPLIB
 static SIGTYP
 rlogoobh(sig) int sig; {
 #ifdef SOLARIS
@@ -12669,6 +12788,7 @@ http_connect(socket, agent, hdrlist, user, pwd, array, host_port)
     len = 12;                            /* CONNECT */
     len += strlen(HTTP_VERSION);
     len += strlen(host_port);
+    len += (int) strlen(http_host_port) + 8;
     len += 16;
     len += strlen("Proxy-Connection: Keep-Alive\r\n");
     if ( hdrlist ) {
@@ -12704,6 +12824,9 @@ http_connect(socket, agent, hdrlist, user, pwd, array, host_port)
 #else
     strcat(request,...);
 #endif /* CMDATE2TM */
+    ckstrncat(request,"\r\n",len);
+    ckstrncat(request,"Host: ", len);
+    ckstrncat(request,http_host_port, len);
     ckstrncat(request,"\r\n",len);
     if (agent) {
         ckstrncat(request,"User-agent: ",len);

@@ -187,6 +187,7 @@ struct keytab urltab[] = {
     "https",  URL_HTTPS,  0,
 #endif /* NOHTTP */
     "iksd",   URL_IKSD,   0,
+    "kermit", URL_IKSD,   0,
     "telnet", URL_TELNET, 0,
     "", 0, 0
 };
@@ -300,6 +301,10 @@ urlparse(s,url) char *s; struct urldata * url; {
                 p = q;
 		url->hos = p;
             }
+	    debug(F111,"urlparse url->usr",url->usr,url->usr);
+	    debug(F111,"urlparse url->psw",url->usr,url->psw);
+	    debug(F111,"urlparse url->hos",url->usr,url->hos);
+
             while (*p != NUL && *p != ':' && *p != '/')	/* Port? */
               p++;
             if (*p == ':') {		/* TCP port */
@@ -337,17 +342,23 @@ urlparse(s,url) char *s; struct urldata * url; {
             url->por = NULL;
             makestr(&url->por,p);
         }
-	if (url->usr) if (*url->usr) {
+/*
+  WARNING (Wed Oct  9 16:09:03 2002): We now allow the username and
+  password to be empty strings.  These are treated differently from null
+  pointers: an empty string means the URL included username and/or password
+  fields that were empty, e.g. ftp://:@ftp.xyzcorp.com/somepath/somefile,
+  which causes the client to prompt for the username and/or password.
+*/
+	if (url->usr) /* if (*url->usr) */ {
             p = url->usr;
             url->usr = NULL;
             makestr(&url->usr,p);
         }
-	if (url->psw) if (*url->psw) {
+	if (url->psw) /* if (*url->psw) */ {
             p = url->psw;
             url->psw = NULL;
             makestr(&url->psw,p);
         }
-
         /* Save a copy of the full url if one was found. */
 	if (url->svc) 
 	  makestr(&url->sav,s);
@@ -457,11 +468,23 @@ xx_ftp(host, port) char * host, * port; {
     if (!*host)
       return(0);
     debug(F111,"ftp xx_ftp host",ftp_host,haveftpuid);
-    debug(F111,"ftp xx_ftp uidbuf",uidbuf,haveftpuid);
+    debug(F111,"ftp xx_ftp uidbuf 1",uidbuf,haveftpuid);
     ftp_cmdlin = 1;			/* 1 = FTP started from command line */
     if (nfils > 0)
       ftp_cmdlin++;			/* 2 = same plus file transfer */
 
+#ifndef NOURL
+    debug(F111,"ftp xx_ftp g_url.usr",g_url.usr,g_url.usr);
+    if (haveurl && g_url.usr) {		/* Wed Oct  9 15:15:22 2002 */
+	if (!*(g_url.usr)) {		/* Force username prompt if */
+	    haveftpuid = 0;		/* "ftp://:@host" given. */
+	    uidbuf[0] = NUL;
+	    makestr(&ftp_logname,NULL);
+	}	  
+	debug(F111,"ftp xx_ftp uidbuf 2",uidbuf,haveftpuid);
+    }
+#endif /* NOURL */
+    debug(F111,"ftp xx_ftp uidbuf 3",uidbuf,haveftpuid);
     if (haveftpuid) {
 	makestr(&ftp_logname,uidbuf);
 	debug(F111,"ftp_logname",ftp_logname,haveftpuid);
@@ -561,7 +584,7 @@ usage() {
     conol("Usage: ");
     conol(xarg0);
     if (howcalled == I_AM_KERMIT || howcalled == I_AM_IKSD ||
-        howcalled == I_AM_SSHSUB)
+        howcalled == I_AM_SSHSUB || howcalled == I_AM_SSH)
       conola(hlp1);
     else if (howcalled == I_AM_TELNET)
       conola(hlp2);
@@ -649,6 +672,9 @@ cmdlin() {
             x = (http_open(g_url.hos,g_url.por ? g_url.por : g_url.svc, 
                            type == URL_HTTPS, rdns,128) == 0);
             if (x) {
+#ifdef KUI
+		char asname[CKMAXPATH+1];
+#endif /* KUI */
                 if (!quiet) {
                     if (rdns[0])
 		      printf("Connected to %s [%s]\r\n",g_url.hos,rdns);
@@ -663,12 +689,24 @@ cmdlin() {
                 if (!*lfile)
                   lfile = "index.html";
 
+#ifdef KUI
+		if (uq_file(NULL,	/* K95 GUI: Put up file box. */
+			    NULL,	/* (not tested...) */
+			    4,
+			    NULL,
+			    lfile,
+			    asname,
+			    CKMAXPATH+1
+			    ) > 0)
+		  lfile = asname;
+#endif /* KUI */
+
                 x = http_get(agent,
 			     NULL,	/* hdrlist */
 			     g_url.usr,
 			     g_url.psw,
 			     0,
-			     lfile ,
+			     lfile,
 			     g_url.pth,
 			     0		/* stdio */
 			     );
@@ -1113,6 +1151,149 @@ cmdlin() {
 #endif /* COMMENT */
 #endif /* TCPSOCKET */
 
+#ifdef SSHBUILTIN
+      if (howcalled == I_AM_SSH) {	/* If I was called as SSH... */
+          extern char * ssh_hst, * ssh_cmd, * ssh_prt;
+	  debug(F100,"ssh personality","",0);
+#ifdef CK_URL
+	  if (haveurl) {
+              makestr(&ssh_hst,g_url.hos);
+              makestr(&ssh_prt,g_url.svc);
+          }
+	  else 
+#endif /* CK_URL */
+	  {
+              while (--xargc > 0) {	/* Go through command line words */
+                  xargv++;
+                  debug(F111,"cmdlin xargv",*xargv,xargc);
+                  if (**xargv == '=')
+                      return(0);
+                  if (!strcmp(*xargv,"--")) /* getopt() conformance */
+                      return(0);
+#ifdef VMS
+                  else if (**xargv == '/')
+                      continue;
+#endif /* VMS */
+		  /* Got an option (begins with dash) */
+                  else if (**xargv == '-') {
+                      int xx;
+                      x = *(*xargv+1);	/* Get the option letter */
+                      debug(F111,"cmdlin args 1",*xargv,xargc);
+                      xx = dotnarg(x);
+                      debug(F101,"cmdlin doarg","",xx);
+                      debug(F111,"cmdlin args 2",*xargv,xargc);
+                      if (xx < 0) {
+#ifndef NOICP
+                          if (what == W_COMMAND)
+			    return(0);
+                          else
+#endif /* NOICP */
+                          {
+#ifdef OS2
+                              sleep(1);	/* Give it a chance... */
+#endif /* OS2 */
+                              doexit(BAD_EXIT,1); /* Go handle option */
+                          }
+                      }
+                  } else {			/* No dash must be hostname */
+                      ckstrncpy(ttname,*xargv,TTNAMLEN+1);
+                      makestr(&ssh_hst,ttname);
+                      debug(F110,"cmdlin ssh host",ttname,0);
+#ifndef NOICP
+#ifndef NODIAL
+                      nhcount = 0;		/* Check network directory */
+                      debug(F101,"cmdlin nnetdir","",nnetdir);
+                      if (nnetdir > 0)	/* If there is a directory... */
+			lunet(*xargv);	/* Look up the name */
+                      else		/* If no directory */
+			nhcount = 0;	/* we didn't find anything there */
+#ifdef DEBUG
+                      if (deblog) {
+                          debug(F101,"cmdlin lunet nhcount","",nhcount);
+                          if (nhcount > 0) {
+                              debug(F110,"cmdlin lunet nh_p[0]",nh_p[0],0);
+                              debug(F110,"cmdlin lunet nh_p2[0]",nh_p2[0],0);
+                              debug(F110,
+				    "cmdlin lunet nh_px[0][0]",nh_px[0][0],0);
+                          }
+                      }
+#endif /* DEBUG */
+		      /* If network type specified */
+		      /* it must be TCP/IP */
+                      if (nhcount > 0 && nh_p2[0])
+			if (ckstrcmp(nh_p2[0],"tcp/ip",6,0))
+			  nhcount = 0;
+                      if (nhcount == 1) { /* Still OK, so make substitution */
+                          ckstrncpy(ttname,nh_p[0],TTNAMLEN+1);
+                          makestr(&ssh_hst,ttname);
+                          debug(F110,"cmdlin lunet substitution",ttname,0);
+                      }
+#endif /* NODIAL */
+#endif /* NOICP */
+		      /* Service from command line? */
+                      if (--xargc > 0 && !haveurl) {
+                          xargv++;
+                          ckstrncat(ttname,":",TTNAMLEN+1);
+                          ckstrncat(ttname,*xargv,TTNAMLEN+1);
+                          makestr(&ssh_prt,*xargv);
+                          debug(F110,"cmdlin telnet host2",ttname,0);
+                      }
+#ifdef COMMENT
+                      /* Do not substitute net dir service for ssh port */
+#ifndef NOICP
+#ifndef NODIAL
+		      /* No - how about in net directory? */
+                      else if (nhcount) {
+                          if (nh_px[0][0]) {
+                              ckstrncat(ttname,":",TTNAMLEN+1);
+                              ckstrncat(ttname,nh_px[0][0],TTNAMLEN+1);
+                              makestr(&ssh_prt,nh_px[0][0]);
+                          }
+                      }
+
+#endif /* NODIAL */
+#endif /* NOICP */
+#endif /* COMMENT */
+                      break;
+                  }
+              }
+          }
+          local = 1;			/* Try to open the connection */
+          nettype = NET_SSH;
+          mdmtyp = -nettype;
+          if (ttopen(ttname,&local,mdmtyp,0) < 0) {
+              XFATAL("can't open host connection");
+          }
+          network = 1;			/* It's open */
+#ifdef CKLOGDIAL
+          dolognet();
+#endif /* CKLOGDIAL */
+#ifndef NOXFER
+          reliable = 1;			/* It's reliable */
+          xreliable = 1;		/* ... */
+          setreliable = 1;
+#endif /* NOXFER */
+          cflg = 1;			/* Connect */
+          stayflg = 1;			/* Stay */
+          tn_exit = 1;			/* Telnet-like exit condition */
+          quiet = 1;
+          exitonclose = 1;		/* Exit when connection closes */
+#ifndef NOSPL
+          if (local) {
+              if (nmac) {		/* Any macros defined? */
+                  int k;		/* Yes */
+                  k = mlook(mactab,"on_open",nmac); /* Look this up */
+                  if (k >= 0) {                     /* If found, */
+                      if (dodo(k,ttname,0) > -1)    /* set it up, */
+                          parser(1);                /* and execute it */
+                  } 
+              }     
+          }
+#endif /* NOSPL */
+	  return(0);
+      }
+#endif /* SSHBUILTIN */
+
     if (howcalled == I_AM_SSHSUB)
       return(0);
 
@@ -1319,7 +1500,7 @@ struct keytab xargtab[] = {
 #endif /* COMMENT */
 #ifndef NOLOCAL
 #ifdef OS2
-    { "height",      XA_ROWS, CM_ARG|CM_PRE },
+    { "height",      XA_ROWS, CM_ARG },
 #endif /* OS2 */
 #endif /* NOLOCAL */
     { "help",        XA_HELP, 0 },
@@ -1374,6 +1555,9 @@ struct keytab xargtab[] = {
 #endif /* NOLOCAL */
     { "timeout",     XA_TIMO, CM_ARG|CM_PRE },
 #ifndef NOLOCAL
+#ifdef OS2
+    { "title",       XA_TITL, CM_ARG },
+#endif /* OS2 */
 #ifndef NOSPL
     { "user",        XA_USER, CM_ARG },
 #endif /* NOSPL */
@@ -1382,7 +1566,7 @@ struct keytab xargtab[] = {
     { "version",     XA_VERS, 0 },
 #ifndef NOLOCAL
 #ifdef OS2
-    { "width",       XA_COLS, CM_ARG|CM_PRE },
+    { "width",       XA_COLS, CM_ARG },
 #endif /* OS2 */
 #endif /* NOLOCAL */
 #ifdef CKWTMP
@@ -1579,6 +1763,10 @@ inixopthlp() {
 	    xopthlp[j] = "--width:n";
 	    xarghlp[j] = "Screen width (number of columns).";
 	    break;
+          case XA_TITL:
+            xopthlp[j] = "--title:string";
+            xarghlp[j] = "Window Title.";
+            break;
 #endif /* OS2 */
 	  case XA_CSET:
 	    xopthlp[j] = "--rcharset:name";
@@ -2216,11 +2404,15 @@ doxarg(s,pre) char ** s; int pre; {
 	  int x, z;
 	  if (ntermfont == 0)
 	    BuildFontTable(&term_font, &_term_font, &ntermfont);
-	  if (!(term_font && _term_font && ntermfont > 0))
-	    return(-1);
-	  x = lookup(_term_font,p,ntermfont,&z);
-	  if (x < 0)
-	    return(-1);
+	  if (!(term_font && _term_font && ntermfont > 0)) {
+            printf("?Unable to construct Font Facename Table\n");
+	    return(0);
+          }
+	  x = lookup(term_font,p,ntermfont,&z);
+	  if (x < 0) {
+            printf("?Invalid Font Facename: %s\n",p);
+            return(0);
+          }
 	  tt_font = x;
 	  kui_init.face_init++;
 	  makestr(&kui_init.facename,term_font[z].kwd);
@@ -2229,11 +2421,26 @@ doxarg(s,pre) char ** s; int pre; {
       case XA_FSIZ: {
 	  extern struct _kui_init kui_init;
 	  extern int tt_font_size;
+          char * q;
+          int halfpoint = 0;
 
+	  kui_init.font_init++;
+          for ( q=p ; *q ; q++ ) {
+              if ( *q == '.') {
+                  *q++ = '\0';
+                  if (!rdigits(q))
+                      return(-1);
+                  if (!*q || atoi(q) == 0)
+                      break;    /* no halfpoint */
+                  halfpoint = 1;
+                  if (atoi(q) != 5)
+                printf("? Font sizes are treated in half-point increments\n");
+                  break;
+              }
+          }
 	  if (!rdigits(p))
 	    return(-1);
-	  kui_init.font_init++;
-	  tt_font_size = kui_init.font_size = atoi(p);
+	  tt_font_size = kui_init.font_size = 2 * atoi(p) + halfpoint;
 	  break;
       }
 #endif /* KUI */
@@ -2311,6 +2518,11 @@ doxarg(s,pre) char ** s; int pre; {
 #endif /* OS2 */
 	  break;
       }
+#ifdef OS2
+    case XA_TITL:
+        os2settitle(p,1);
+        break;
+#endif /* OS2 */
 
 #ifdef COMMENT				/* TO BE FILLED IN ... */
       case XA_TEL:			/* Make a Telnet connection */
@@ -3191,9 +3403,9 @@ doarg(x) char x;
   NOTE: We really do not need to call ttopen here, since it should be called
   again later, automatically, when we first try to condition the device via
   ttpkt or ttvt.  Calling ttopen here has the bad side effect of making the
-  order of the -b and -l options significant, but order of command-line options
-  should not matter.  However, the network cases immediately below complicate
-  matters a bit, so we'll settle this in a future edit.
+  order of the -b and -l options significant when the order of command-line
+  options should not matter.  However, the network cases immediately below
+  complicate matters a bit, so we'll settle this in a future edit.
 */
 	    if (x == 'l') {
 		if (ttopen(ttname,&local,mdmtyp,0) < 0) {
@@ -3544,12 +3756,11 @@ doarg(x) char x;
 		  apcstatus = APC_OFF;
 	      }
 #endif /* CK_APC */
+#ifndef NOLOCAL
 #ifdef CK_AUTODL
-	      {				/* No autodownload */
-		  extern int autodl;
-		  autodl = 0;
-	      }
+              setautodl(0,0);		/* No autodownload */
 #endif /* CK_AUTODL */
+#endif /* NOLOCAL */
 #ifndef NOCSETS
 	      {
 		  extern int tcsr, tcsl; /* No character-set translation */

@@ -1,5 +1,5 @@
 #include "ckcsym.h"
-char *dialv = "Dial Command, 8.0.154, 8 Jan 2002";
+char *dialv = "Dial Command, 8.0.160, 29 Apr 2002";
 
 /*  C K U D I A	 --  Module for automatic modem dialing. */
 
@@ -5343,6 +5343,7 @@ _dodial(threadinfo) VOID * threadinfo;
 		  } else {
 		      if (tries == 2) {
 			  tthang();
+			  ttflui();
 		      } else {
 			  mdmhup();
 		      }
@@ -5867,7 +5868,11 @@ _dodial(threadinfo) VOID * threadinfo;
 		    if (x > LBUFL) x = LBUFL;
 		    x = ttxin(x,(CHAR *)lbuf);
 		    if ((x > 0) && dialdpy) conol(lbuf);
-		} else if (network && x < 0) { /* Connection dropped */
+		} else if (network 
+#ifdef TN_COMPORT
+                           && !istncomport()
+#endif /* TN_COMPORT */
+                           && x < 0) { /* Connection dropped */
 		    inited = 0;
 #ifdef NTSIG
 		    ckThreadEnd(threadinfo);
@@ -5964,7 +5969,22 @@ _dodial(threadinfo) VOID * threadinfo;
 		    }
 		    mdmstat = CONNECTED; /* Assume we're connected */
 		    if (dialdpy && carrier != CAR_OFF) {
-			sleep(1); 	/* Wait a second */
+#ifdef TN_COMPORT
+                        if (istncomport()) {
+                            int i;
+                            for (i = 0; i < 5; i++) {
+                                debug(F100,"TN Com Port DCD wait...","",0);
+                                if ((n = ttgmdm()) >= 0) {
+                                    if ((n & BM_DCD))
+                                        break;
+                                    msleep(500);
+                                    tnc_wait(
+					(CHAR *)"_dodial waiting for DCD",1);
+                                }
+                            }
+                        } else
+#endif /* TN_COMPORT */
+			  sleep(1); 	/* Wait a second */
 			n = ttgmdm();	/* Try to read modem signals */
 			if ((n > -1) && ((n & BM_DCD) == 0))
 			  printf("WARNING - no carrier\n");
@@ -6318,15 +6338,31 @@ _dodial(threadinfo) VOID * threadinfo;
 	    ) {
 	    alarm(3);			/* In case ttpkt() gets stuck... */
 	    ttpkt(speed,FLO_DIAX,parity); /* Cancel dialing state ioctl */
+            alarm(0);
 	}
 /*
   In case CD went off in the interval between call completion and return
   from ttpkt()...
 */
-	if (carrier == CAR_AUT || carrier == CAR_ON)
-	  if ((x = ttgmdm()) >= 0)
-	    if (!(x & BM_DCD))
-	      printf("WARNING: Carrier seems to have dropped...\n");
+	if (carrier != CAR_OFF) {
+            if ((x = ttgmdm()) >= 0) {
+#ifdef TN_COMPORT
+                if (istncomport() && !(x & BM_DCD)) {
+                    int i;
+                    for (i = 0; i < 5; i++) {
+                        msleep(500);
+                        tnc_wait((CHAR *)"_dodial waiting for DCD",1);
+                        if ((x = ttgmdm()) >= 0) {
+                            if ((x & BM_DCD))
+                                break;
+                        }
+                    }
+                }
+#endif /* TN_COMPORT */
+                if (!(x & BM_DCD))
+		  printf("WARNING: Carrier seems to have dropped...\n");
+            }
+        }
     }
     dreset();				/* Reset alarms and signals. */
     if (!quiet && !backgrd) {
@@ -7984,7 +8020,11 @@ dialhup() {
 	    dialsta = DIA_HUP;
 	    if (dialdpy)
 	      printf(" Modem hangup OK\r\n"); /* fine. */
-	} else if (network) {		/* If we're telnetted to */
+	} else if (network		/* If we're telnetted to */
+#ifdef TN_COMPORT
+                   && !istncomport()    /* (without RFC 2217)    */
+#endif /* TN_COMPORT */
+                   ) {		
 	    dialsta = DIA_HANG;
 	    if (dialdpy)		/* a modem server, just print a msg */
 	      printf(" WARNING - modem hangup failed\r\n"); /* don't hangup! */
@@ -8000,6 +8040,7 @@ dialhup() {
 		dialsta = DIA_HANG;
 		if (dialdpy) perror(" Hangup error");
 	    }
+	    ttflui();
 	}
     } else if (dialdpy) printf(" Hangup skipped\r\n"); /* DIAL HANGUP OFF */
     return(x);
@@ -8070,7 +8111,11 @@ mdmhup() {
   attempt to do i/o at this point can hang the program.  This might be true
   for other operating systems too.
 */
-    if (!network) {			/* Not a network connection */
+    if (!network			/* Not a network connection */
+#ifdef TN_COMPORT
+        || istncomport()
+#endif /* TN_COMPORT */
+	) {
 	m = ttgmdm();			/* Get modem signals */
 	if ((m > -1) && (m & BM_DCD == 0)) /* Check for carrier */
 	  return(0);			/* No carrier, skip the rest */

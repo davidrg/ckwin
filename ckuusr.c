@@ -3,7 +3,7 @@
 #endif /* SSHTEST */
 
 #include "ckcsym.h"
-char *userv = "User Interface 8.0.254, 8 Feb 2002";
+char *userv = "User Interface 8.0.261, 11 Sep 2002";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 
@@ -95,8 +95,14 @@ int g_fncact = -1;			/* Needed for NOICP builds */
 int noinit = 0;				/* Flag for skipping init file */
 int nscanfile = SCANFILEBUF;
 
+int rcdactive = 0;
+
 int locus = 1;				/* Current LOCUS is LOCAL */
+#ifdef OS2
+int autolocus = 2;			/* Automatic LOCUS switching: ASK */
+#else /* OS2 */
 int autolocus = 1;			/* Automatic LOCUS switching enabled */
+#endif /* OS2 */
 
 #ifndef NOICP
 #ifdef CKLEARN
@@ -127,6 +133,9 @@ extern tt_status[VNUM];
 #endif /* NOTERM */
 int display_demo = 1;
 #include "ckossh.h"
+#ifdef KUI
+#include "ikui.h"
+#endif /* KUI */
 #endif /* OS2 */
 
 int optlines = 0;
@@ -701,6 +710,7 @@ struct keytab cmdtab[] = {
 #else
     { "connect",     XXNOTAV, CM_LOC },
 #endif /* NOLOCAL */
+    { "continue",    XXCONT,  CM_INV },	/* CONTINUE */
 #ifndef NOFRILLS
 #ifdef ZCOPY
     { "co",          XXCPY, CM_INV|CM_ABR },
@@ -757,6 +767,10 @@ struct keytab cmdtab[] = {
 #else
     { "dial",        XXNOTAV, CM_INV|CM_LOC },
 #endif /* NODIAL */
+
+#ifdef NT
+    { "dialer",      XXDIALER, CM_INV }, /* K95 Dialer */
+#endif /* NT */
 
     { "directory",   XXDIR, 0 },	/* DIRECTORY of files */
 
@@ -913,6 +927,8 @@ struct keytab cmdtab[] = {
 #else  /* SYSFTP */
     { "ftp",	   XXFTP,   0 },	/* Built-in FTP */
 #endif /* SYSFTP */
+#else  /* NOFTP */
+    { "ftp",	   XXNOTAV, CM_INV },	/* No FTP */
 #endif /* NOFTP */
 #endif /* TCPSOCKET */
 
@@ -987,10 +1003,13 @@ struct keytab cmdtab[] = {
 
 #ifdef OS2
     { "k95",         XXKERMI, CM_INV },	/* Hmmm what's this... */
-    { "kermit",      XXKERMI, CM_INV },
-#else
-    { "kermit",      XXKERMI, CM_INV },
 #endif /* OS2 */
+
+#ifndef NOSPL
+    { "kcd",         XXKCD,   0      },
+#endif /* NOSPL */
+
+    { "kermit",      XXKERMI, CM_INV },
 
 #ifdef OS2
 #ifndef NOKVERBS
@@ -1142,6 +1161,7 @@ struct keytab cmdtab[] = {
 #ifndef NOHELP
     { "options",     XXOPTS,CM_INV|CM_HLP }, /* Options */
 #endif /* NOHELP */
+    { "orientation", XXORIE, 0 },
 #ifndef NOSPL
     { "output",      XXOUT, 0 },	/* OUTPUT text to comm device */
 #else
@@ -1152,6 +1172,10 @@ struct keytab cmdtab[] = {
     { "pad",         XXPAD, CM_LOC },	/* X.3 PAD commands */
 #endif /* IBMX25 */
 #endif /* ANYX25 */
+
+#ifdef NEWFTP
+    { "passive",     XXPASV, CM_INV },	/* (FTP) PASSIVE */
+#endif /* NEWFTP */
 
 #ifndef NOHELP
     { "patterns",    XXPAT,CM_INV|CM_HLP }, /* Pattern syntax */
@@ -1487,6 +1511,13 @@ struct keytab cmdtab[] = {
 #ifndef NOFRILLS
     { "sleep",       XXPAU, CM_INV },	/* SLEEP for specified interval */
 #endif /* NOFRILLS */
+#endif /* NOSPL */
+
+#ifdef NEWFTP
+    { "site",        XXSITE, CM_INV },	/* (FTP) SITE */
+#endif /* NEWFTP */
+
+#ifndef NOSPL
     { "sort",        XXSORT, CM_INV },	/* (see ARRAY) */
 #else
     { "sort",        XXNOTAV, CM_INV },
@@ -1702,6 +1733,9 @@ struct keytab cmdtab[] = {
 #endif /* NOJC */
 #endif /* OS2 */
 
+#ifndef NOSPL
+    { "{",           XXMACRO, CM_INV },	/* Immediate macro */
+#endif /* NOSPL */
     { "", 0, 0 }
 };
 int ncmd = (sizeof(cmdtab) / sizeof(struct keytab)) - 1;
@@ -1960,6 +1994,7 @@ struct keytab prmtab[] = {
 #ifndef NOSPL
     { "macro",            XYMACR,  0 },
 #endif /* NOSPL */
+    { "match",            XYMATCH, 0 },
 #ifdef COMMENT
 #ifdef VMS
     { "messages",         XYMSGS,  0 },
@@ -2189,7 +2224,8 @@ struct ssh_pf ssh_pf_lcl[32] = { 0, NULL, 0 }; /* SSH Port Forwarding */
 struct ssh_pf ssh_pf_rmt[32] = { 0, NULL, 0 }; /* structs... */
 extern char * ssh_hst, * ssh_cmd, * ssh_prt;
 extern int    ssh_ver,   ssh_xfw;
-char * ssh_tmpuid = NULL, *ssh_tmpcmd = NULL, *ssh_tmpport = NULL;
+char * ssh_tmpuid = NULL, *ssh_tmpcmd = NULL, *ssh_tmpport = NULL,
+     * ssh_tmpstr = NULL;
 
 int
  sshk_type = SSHKT_2D,			/* SSH KEY CREATE /TYPE:x */
@@ -3330,6 +3366,66 @@ showtypopts() {
 }
 #endif /* NOSHOW */
 
+#ifdef LOCUS
+/* isauto == 1 if locus is being switched automatically */
+
+VOID
+setlocus(x, isauto) int x, isauto; {
+    extern int quitting;
+    if (x) x = 1;
+    if (x && locus) return;
+    if (!x && !locus) return;
+    /* Get here if it actually needs to be changed */
+#ifdef OS2
+    if (isauto &&			/* Automatically switching */
+	!quitting &&			/* not exiting */
+	autolocus == 2) {		/* and AUTOLOCUS is set to ASK */
+	char locmsg[300];
+	ckmakmsg(locmsg,300,
+		 "Switching Locus to ",
+		 x ? "LOCAL" : "REMOTE",
+		 " for file management commands\n"
+                 "such as CD, DIRECTORY, DELETE, RENAME.  Type HELP SET\n"
+                 "LOCUS at the K-95> prompt for further info.  Use the\n"
+#ifdef KUI
+                  "Actions menu or SET LOCUS command to disable automatic\n"
+                  "Locus switching or to disable these queries.",
+#else /* KUI */
+                  "SET LOCUS command to disable automatic locus switching\n"
+                  "or to disable these queries.",
+#endif /* KUI */
+                  NULL);
+	if (uq_ok(locmsg,"OK to switch Locus?",3,NULL,1)) {
+	    locus = x;
+#ifdef KUI
+	    KuiSetProperty(KUI_LOCUS,x,0);
+#endif /* KUI */
+	    return;
+	}
+    } else {
+#endif /* OS2 */
+        if (isauto && msgflg && !quitting)
+          printf("Switching LOCUS for file-management commands to %s.\n",
+		 x ? "LOCAL" : "REMOTE"
+		 );
+	locus = x;
+#ifdef OS2
+#ifdef KUI
+	KuiSetProperty(KUI_LOCUS,x,0);
+#endif /* KUI */
+    }
+#endif /* OS2 */
+}
+
+VOID
+setautolocus(x) int x; {
+    autolocus = x;
+#ifdef KUI
+    KuiSetProperty(KUI_AUTO_LOCUS,x,0);
+#endif /* KUI */
+}
+#endif /* LOCUS */
+
 int
 settypopts() {				/* Set TYPE option defaults */
     int xp = -1;
@@ -4113,7 +4209,7 @@ doxsend(cx) int cx; {
 		else
 		  goto xsendx;
 	    }
-	    s = brstrip(s);
+	    if (*s) s = brstrip(s);
 	    y = strlen(s);
 	    for (x = 0; x < y; x++) {	/* Make sure they included "\v(...)" */
 		if (s[x] != '\\') continue;
@@ -4965,7 +5061,7 @@ sendend:				/* Common successful exit */
 	if (pv[SND_NBE].ival > 0)
 	  ckstrncpy(sndnbefore,pv[SND_NBE].sval,19);
 	if (pv[SND_EXC].ival > 0)
-	  makelist(pv[SND_EXC].sval,sndexcept,8);
+	  makelist(pv[SND_EXC].sval,sndexcept,NSNDEXCEPT);
 	if (pv[SND_SMA].ival > -1)
 	  sndsmaller = pv[SND_SMA].ival;
 	if (pv[SND_LAR].ival > -1)
@@ -5088,7 +5184,7 @@ static char *g_tt_trigger[TRIGGERS];
 
 #ifdef OS2
 static int g_tt_idlesnd_tmo, g_tt_timelimit; /* For saving and restoring */
-static int g_tt_idlelimit;
+static int g_tt_idlelimit, g_tt_saved = 0;
 static char * g_tt_idlesnd_str;		/* global settings */
 #endif /* OS2 */
 
@@ -5102,10 +5198,13 @@ resconn() {
     int i;
 
 #ifdef OS2
-    tt_idlelimit   = g_tt_idlelimit;
-    tt_idlesnd_tmo = g_tt_idlesnd_tmo;
-    tt_timelimit   = g_tt_timelimit;
-    tt_idlesnd_str = g_tt_idlesnd_str;
+    if ( g_tt_saved ) {
+        tt_idlelimit   = g_tt_idlelimit;
+        tt_idlesnd_tmo = g_tt_idlesnd_tmo;
+        tt_timelimit   = g_tt_timelimit;
+        tt_idlesnd_str = g_tt_idlesnd_str;
+        g_tt_saved = 0;
+    }
 #endif /* OS2 */
 
 #ifdef CK_TRIGGER
@@ -5135,6 +5234,7 @@ doxconn(cx) int cx; {
     g_tt_timelimit   = tt_timelimit;
     g_tt_idlelimit   = tt_idlelimit;
     g_tt_idlesnd_str = tt_idlesnd_str;
+    g_tt_saved = 1;
 #endif /* OS2 */
 
 #ifdef CK_TRIGGER
@@ -6757,6 +6857,8 @@ doredo() {			/* Find a previous cmd and redo it */
     }
     if ((p = cmgetcmd(s))) {		/* Look for it history buffer */
 	ckmakmsg(cmdbuf,CMDBL,p,"\r",NULL,NULL); /* Copy to command buffer */
+	if (!quiet)			/* Echo it */
+	  printf("%s\n",cmdbuf);
 	cmaddnext();			/* Force re-add to history buffer */
 	return(cmflgs = -1);		/* Force reparse */
     } else {
@@ -7503,8 +7605,9 @@ doprompt() {
       printf("[%d] +P: \"(prompt)\"\n",cmdlvl);
     concb((char)escape);
     if (!quiet)
-      printf("(Recursive command prompt; use END or RETURN to return...)\n");
-
+      printf(
+"(Recursive command prompt: Resume script with CONTINUE, STOP to stop...)\n"
+            );
     if (*s) {				/* If prompt given */
 	makestr(&(prstring[cmdlvl-1]),cmgetp()); /* Save current prompt */
 	cmsetp(s);			/* Set new one */
@@ -7705,7 +7808,7 @@ docmd(cx) int cx; {
 	    } else
 	      return(y);
 	}
-	ckstrncpy(lblbuf,s,LBLSIZ);
+	ckstrncpy(lblbuf,brstrip(s),LBLSIZ);
 #endif /* COMMENT */
 	s = lblbuf;
 	return(dogoto(s,cx));
@@ -7715,6 +7818,7 @@ docmd(cx) int cx; {
 	struct FDB kw, fl;
 	int mx;				/* Macro index (on stack!) */
 
+	debug(F101,"XXMACRO 0",line,cx);
 	if (cx == XXDO) {
 	    if (nmac == 0) {
 		printf("\n?No macros defined\n");
@@ -7782,13 +7886,17 @@ docmd(cx) int cx; {
 		if ((y = cmcfm()) < 0)
 		  return(y);
 	    }
-	} else {			/* XXMACRO */
+	} else {			/* XXMACRO ("immediate macro") */
 	    int k = 0;
 	    line[k++] = '{';
 	    line[k++] = SP;
-	    if ((y = cmtxt("braced list of commands","",&s,xxstring)) < 0)
+	    line[k] = NUL;
+	    debug(F111,"XXMACRO A",line,k);
+	    /* Defer evaluation of variables until the commands are exec'd */
+	    if ((y = cmtxt("Braced list of commands","",&s,NULL)) < 0)
 	      return(y);
-	    ckstrncpy(line+k,s,LINBUFSIZ-k);
+	    k = ckstrncpy(line+k,s,LINBUFSIZ-k);
+	    debug(F111,"XXMACRO B",line,k);
 	}
 	x = strlen(line);
 	if ((line[0] == '{' && line[x-1] != '}') || line[0] == '}')
@@ -7834,9 +7942,14 @@ docmd(cx) int cx; {
     if (cx == XXLBL) {			/* LABEL */
 	if ((x = cmfld("label","",&s,xxstring)) < 0) {
 	    if (x == -3) {
+#ifdef COMMENT
 		printf("?LABEL: Label name required: \"%s\"\n", cmdbuf);
 		return(-9);
+#else
+		s = "";
+#endif /* COMMENT */
 	    } else return(x);
+
 	}
 	debug(F111,"LABEL",s,x);
 	if ((x = cmcfm()) < 0) return(x);
@@ -8167,9 +8280,9 @@ docmd(cx) int cx; {
 #endif /* NT */
 #endif /* NOFRILLS */
 
-    /* CD[UP] or BACK */
+    /* CD and friends */
     if (cx == XXCWD  || cx == XXCDUP || cx == XXBACK ||
-	cx == XXLCWD || cx == XXLCDU) {
+	cx == XXLCWD || cx == XXLCDU || cx == XXKCD) {
 #ifdef LOCUS
 	if (!locus) {
 	    if (cx == XXCWD) {
@@ -8583,7 +8696,25 @@ docmd(cx) int cx; {
 	return(success = 1);		/* Blind faith */
 #else  /* OS2 */
 	if (pwp = zgtdir()) {
-	    printf("%s\n",pwp);
+	    if (*pwp) {
+#ifdef NT
+		line[0] = NUL;
+		ckGetLongPathName(pwp,line,LINBUFSIZ);
+		line[LINBUFSIZ-1] = NUL;
+		tmpbuf[0] = NUL;
+		GetShortPathName(pwp,tmpbuf,TMPBUFSIZ);
+		tmpbuf[TMPBUFSIZ-1] = NUL;
+		pwp = line;
+		if (!strcmp(line,tmpbuf)) {
+#endif /* NT */
+		    printf("%s\n",pwp);
+#ifdef NT
+		} else {
+		    printf("  Long name:  %s\n",line);
+		    printf("  Short name: %s\n",tmpbuf);
+		}            
+#endif /* NT */
+	    }
 	    return(success = ((int)strlen(pwp) > 0));
 	} else return(success = 0);
 #endif /* OS2 */
@@ -8907,7 +9038,7 @@ docmd(cx) int cx; {
 	    success = doinput(x,ms,mp);	/* Go try to input the search string */
 	    i_active = 0;
 	} else {			/* REINPUT */
-	    success = doreinp(x,s,ispattern);
+	    success = doreinp(x,ms[0],ispattern);
 	}
 	if (intime[cmdlvl] && !success) { /* TIMEOUT-ACTION = QUIT? */
 	    popclvl();			/* If so, pop command level. */
@@ -9656,9 +9787,12 @@ docmd(cx) int cx; {
     }
 
     if (cx == XXTAK) {			/* TAKE */
+	char * scriptenv = NULL;	
 #ifdef OS2
+        char * GetAppData(int);
 	extern char startupdir[],exedir[],inidir[];
-	char * scriptenv, * keymapenv;
+	char * keymapenv = NULL;
+        char * appdata0 = NULL, *appdata1 = NULL;
 	int xx;
 #define TAKEPATHLEN 4096
 #else /* OS2 */
@@ -9674,39 +9808,31 @@ docmd(cx) int cx; {
 #ifdef NT
 	scriptenv = getenv("K95SCRIPTS");
 	keymapenv = getenv("K95KEYMAPS");
+        makestr(&appdata0,(char *)GetAppData(0));
+        makestr(&appdata1,(char *)GetAppData(1));
 #else /* NT */
 	scriptenv = getenv("K2SCRIPTS");
 	keymapenv = getenv("K2KEYMAPS");
 #endif /* NT */
+#endif /* OS2 */
+
+	if (!scriptenv)			/* Let this work for Unix etc too */
+	  scriptenv = getenv("CK_SCRIPTS"); /* Use this if defined */
+#ifndef OS2
+	if (!scriptenv)			/* Otherwise use home directory */
+	  scriptenv = homepath();
+#endif /* OS2 */
 	if (!scriptenv)
-	  scriptenv = getenv("CK_SCRIPTS");
+	  scriptenv = "";
+	ckstrncpy(takepath,scriptenv,TAKEPATHLEN);
+	debug(F110,"TAKE initial takepath",takepath,0);
+
+#ifdef OS2
 	if (!keymapenv)
 	  keymapenv = getenv("CK_KEYMAPS");
-#ifdef COMMENT
-	/* This is not only unsafe but it's wrong */
-	/* There are 19 %s's but 24 strings to print */
-	sprintf(takepath,		/* UNSAFE */
-                /* semicolon-separated path list */
-                "%s%s%s%s%s;%s%s;%s%s;%s;%s%s;%s%s;%s;%s%s;%s%s",
-                scriptenv?scriptenv:"",
-                (scriptenv && scriptenv[strlen(scriptenv)-1]==';')?"":";",
-                keymapenv?keymapenv:"",
-                (keymapenv && keymapenv[strlen(keymapenv)-1]==';')?"":";",
-                startupdir,
-                startupdir, "SCRIPTS/",
-                startupdir, "KEYMAPS/",
-                inidir,
-                inidir, "SCRIPTS/",
-                inidir, "KEYMAPS/",
-                zhome(),
-                zhome(), "SCRIPTS/",
-                zhome(), "KEYMAPS/",
-                exedir,
-                exedir, "SCRIPTS/",
-                exedir, "KEYMAPS/"
-                );
-#else
-	ckstrncpy(takepath,scriptenv?scriptenv:"",TAKEPATHLEN); /* SAFE */
+	if (!keymapenv)
+	  keymapenv = "";
+
 	ckstrncat(takepath,
 		  (scriptenv && scriptenv[strlen(scriptenv)-1]==';')?"":";",
 		  TAKEPATHLEN
@@ -9719,45 +9845,46 @@ docmd(cx) int cx; {
 	ckstrncat(takepath,startupdir,TAKEPATHLEN);
 	ckstrncat(takepath,";",TAKEPATHLEN);
 	ckstrncat(takepath,startupdir,TAKEPATHLEN);
-	ckstrncat(takepath,"SCRIPTS/",TAKEPATHLEN);
-	ckstrncat(takepath,";",TAKEPATHLEN);
+	ckstrncat(takepath,"SCRIPTS/;",TAKEPATHLEN);
 	ckstrncat(takepath,startupdir,TAKEPATHLEN);
-	ckstrncat(takepath,"KEYMAPS/",TAKEPATHLEN);
-	ckstrncat(takepath,";",TAKEPATHLEN);
+	ckstrncat(takepath,"KEYMAPS/;",TAKEPATHLEN);
+
+	ckstrncat(takepath,appdata1,TAKEPATHLEN);
+	ckstrncat(takepath,"Kermit 95/;",TAKEPATHLEN);
+	ckstrncat(takepath,appdata1,TAKEPATHLEN);
+	ckstrncat(takepath,"Kermit 95/SCRIPTS/;",TAKEPATHLEN);
+	ckstrncat(takepath,appdata1,TAKEPATHLEN);
+	ckstrncat(takepath,"Kermit 95/KEYMAPS/;",TAKEPATHLEN);
+
+	ckstrncat(takepath,appdata0,TAKEPATHLEN);
+	ckstrncat(takepath,"Kermit 95/;",TAKEPATHLEN);
+	ckstrncat(takepath,appdata0,TAKEPATHLEN);
+	ckstrncat(takepath,"Kermit 95/SCRIPTS/;",TAKEPATHLEN);
+	ckstrncat(takepath,appdata0,TAKEPATHLEN);
+	ckstrncat(takepath,"Kermit 95/KEYMAPS/;",TAKEPATHLEN);
 
 	ckstrncat(takepath,inidir,TAKEPATHLEN);
 	ckstrncat(takepath,";",TAKEPATHLEN);
 	ckstrncat(takepath,inidir,TAKEPATHLEN);
-	ckstrncat(takepath,"SCRIPTS/",TAKEPATHLEN);
-	ckstrncat(takepath,";",TAKEPATHLEN);
+	ckstrncat(takepath,"SCRIPTS/;",TAKEPATHLEN);
 	ckstrncat(takepath,inidir,TAKEPATHLEN);
-	ckstrncat(takepath,"KEYMAPS/",TAKEPATHLEN);
-	ckstrncat(takepath,";",TAKEPATHLEN);
+	ckstrncat(takepath,"KEYMAPS/;",TAKEPATHLEN);
 
 	ckstrncat(takepath,zhome(),TAKEPATHLEN);
 	ckstrncat(takepath,";",TAKEPATHLEN);
 	ckstrncat(takepath,zhome(),TAKEPATHLEN);
-	ckstrncat(takepath,"SCRIPTS/",TAKEPATHLEN);
-	ckstrncat(takepath,";",TAKEPATHLEN);
+	ckstrncat(takepath,"SCRIPTS/;",TAKEPATHLEN);
 	ckstrncat(takepath,zhome(),TAKEPATHLEN);
-	ckstrncat(takepath,"KEYMAPS/",TAKEPATHLEN);
-	ckstrncat(takepath,";",TAKEPATHLEN);
+	ckstrncat(takepath,"KEYMAPS/;",TAKEPATHLEN);
 
 	ckstrncat(takepath,exedir,TAKEPATHLEN);
 	ckstrncat(takepath,";",TAKEPATHLEN);
 	ckstrncat(takepath,exedir,TAKEPATHLEN);
-	ckstrncat(takepath,"SCRIPTS/",TAKEPATHLEN);
-	ckstrncat(takepath,";",TAKEPATHLEN);
+	ckstrncat(takepath,"SCRIPTS/;",TAKEPATHLEN);
 	ckstrncat(takepath,exedir,TAKEPATHLEN);
-	ckstrncat(takepath,"KEYMAPS/",TAKEPATHLEN);
-	ckstrncat(takepath,";",TAKEPATHLEN);
-#endif /* COMMENT */
-
-#else /* not OS2 */
-	y = TAKEPATHLEN;
-	s = takepath;
-	zzstring("\\v(home)",&s,&y);
+	ckstrncat(takepath,"KEYMAPS/;",TAKEPATHLEN);
 #endif /* OS2 */
+	debug(F110,"TAKE final takepath",takepath,0);
 
 	if ((y = cmifip("Commands from file",
 			"",&s,&x,0,takepath,xxstring)) < 0) {
@@ -9927,7 +10054,6 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 #ifdef SSHBUILTIN
 	int k, x, havehost = 0, trips = 0;
         int    tmpver = -1, tmpxfw = -1;
-        char * tmpstring = NULL;
 #ifndef SSHTEST
         extern int sl_ssh_xfw, sl_ssh_xfw_saved;
         extern int sl_ssh_ver, sl_ssh_ver_saved;
@@ -9939,6 +10065,9 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
         extern int pwflg, pwcrypt, g_pflg, g_pcpt, nolocal;
 	struct FDB sw, kw, fl;
 
+        if (ssh_tmpstr)
+            memset(ssh_tmpstr,0,strlen(ssh_tmpstr));
+        makestr(&ssh_tmpstr,NULL);
         makestr(&ssh_tmpuid,NULL);
         makestr(&ssh_tmpcmd,NULL);
         makestr(&ssh_tmpport,NULL);
@@ -10040,7 +10169,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 			debok = 0;
 			if ((x = cmfld("Password","",&s,xxstring)) < 0) {
 			    if (x == -3) {
-				makestr(&tmpstring,"");
+				makestr(&ssh_tmpstr,"");
 			    } else {
 				return(x);
 			    }
@@ -10051,7 +10180,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 				printf("?Sorry, too long - max = %d\n",PWBUFL);
 				return(-9);
 			    }
-			    makestr(&tmpstring,s);
+			    makestr(&ssh_tmpstr,s);
 			}
 			break;
 
@@ -10096,6 +10225,13 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	    }
 	    if ((x = cmcfm()) < 0)	/* Get confirmation */
 	      return(x);
+            if (clskconnx(1) < 0) {	/* Close current Kermit connection */
+              if ( ssh_tmpstr ) {
+                  memset(ssh_tmpstr,0,strlen(ssh_tmpstr));
+                  makestr(&ssh_tmpstr,NULL);
+              }
+              return(success = 0);
+            }
 	    makestr(&ssh_hst,line);	/* Stash everything */
 	    if (ssh_tmpuid) {
                 if (!sl_uid_saved) {
@@ -10135,14 +10271,14 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 #endif /* SSHTEST */
                 ssh_xfw = tmpxfw;
             }
-	    if (tmpstring) {
-		if (tmpstring[0]) {
-		    ckstrncpy(pwbuf,tmpstring,PWBUFL+1);
+	    if (ssh_tmpstr) {
+		if (ssh_tmpstr[0]) {
+		    ckstrncpy(pwbuf,ssh_tmpstr,PWBUFL+1);
 		    pwflg = 1;
 		    pwcrypt = 0;
 		} else
 		  pwflg = 0;
-		makestr(&tmpstring,NULL);
+		makestr(&ssh_tmpstr,NULL);
 	    }
 	    nettype = NET_SSH;
 	    if (mdmsav < 0)
@@ -10202,13 +10338,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	    }
 #endif /* NOSPL */
 #ifdef LOCUS		
-	    if (autolocus) {
-		if (!locus && msgflg)
-		  printf(
-		    "Switching LOCUS for file-management commands to LOCAL.\n"
-		         );
-		locus = 1;
-	    }
+	    if (autolocus)
+		setlocus(1,1);
 #endif /* LOCUS */
 
 	/* Command was confirmed so we can pre-pop command level. */
@@ -10299,9 +10430,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 		case SSHA_LST: {
 		    int fingerprint = 0;
 		    if ((y = cmswi(sshagtsw,nsshagtsw,"","",xxstring)) < 0) {
-			if (y == -3)
-			  break;
-			else
+			if (y != -3)
 			  return(y);
 		    } else if (cmgbrk() > SP) {
 			printf("?This switch does not take an argument\n");
@@ -11279,7 +11408,13 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
     if (cx == XXCPR) {			/* COPYRIGHT or LICENSE */
 	if ((y = cmcfm()) < 0)
           return(y);
-	hmsga(copyright);
+#ifdef OS2
+	if (inserver) {			/* Free WIKSD */
+	    extern char * wiksdcpr[];
+	    hmsga(wiksdcpr);
+	} else
+#endif /* OS2 */
+	  hmsga(copyright);
 	return(success = 1);
     }
 
@@ -11514,7 +11649,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	s = brstrip(s);
 	dp = cmcvtdate(s,1);
 	if (!dp) {
-	    printf("?%s\n",cmdatemsg);
+	    printf("?%s\n",cmdatemsg ? cmdatemsg : "Date conversion error");
 	    success = 0;
 	} else {
 	    printf("%s\n",dp);
@@ -11983,7 +12118,116 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	}
 	return(success = (cx == XXUSER) ? doftpusr() : doftpacct());
     }
+    if (cx == XXSITE || cx == XXPASV) {
+	if (!ftpisopen()) {
+	    printf("?FTP connection is not open\n");
+	    return(-9);
+	}
+	return(success = (cx == XXSITE) ? doftpsite() : dosetftppsv());
+    }
 #endif /* NEWFTP */
+
+    if (cx == XXORIE) {			/* ORIENTATION */
+	extern char * myname;
+	int i, y, n = 0;
+        char * s, *p, vbuf[32];
+	char * vars[16];       char * legend[16];
+
+	if ((y = cmcfm()) < 0)
+	  return(y);
+
+	printf("\nProgram name:\n  %s\n\n",myname);
+	n += 4;
+
+#ifdef NT
+	vars[0] = "home";      legend[0] = "Your home directory";
+	vars[1] = "directory"; legend[1] = "K95's current directory";
+	vars[2] = "exedir";    legend[2] = "K95 Program directory";
+	vars[3] = "inidir";    legend[3] = "K95 Initialization file directory";
+	vars[4] = "startup";   legend[4] = "Current directory when started";
+	
+        vars[5] = "common";
+        legend[5] = "K95 data for all users and K95SITE.INI file";
+	
+        vars[6] = "personal";  legend[6] = "Your personal data directory tree";
+        vars[7] = "desktop";   legend[7] = "Your deskop directory tree";
+	
+        vars[8] = "appdata";
+        legend[8] = "Your personal K95 data tree and K95CUSTOM.INI file";
+	
+        vars[9] = "download";  legend[9] = "Your K95 download directory";
+        vars[10] = "tmpdir";   legend[10] = "Your TEMP directory";
+	vars[11] = NULL;       legend[11] = NULL;
+
+	for (i = 0; i < 16 && vars[i]; i++) {
+	    printf("%s:\n",legend[i]);
+	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	    ckmakmsg(vbuf,32,"\\v(",vars[i],")",NULL);
+	    printf("  Variable:   %s\n",vbuf);
+	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	    y = TMPBUFSIZ;
+	    s = tmpbuf;
+	    zzstring(vbuf,&s,&y);
+	    line[0] = NUL;
+	    ckGetLongPathName(tmpbuf,line,LINBUFSIZ);
+	    printf("  Long name:  %s\n",line);
+	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	    line[0] = NUL;
+	    GetShortPathName(tmpbuf,line,LINBUFSIZ);
+	    printf("  Short name: %s\n",line);
+	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            printf("\n");
+	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	}
+#else  /* NT */
+
+	vars[0] = "home";      legend[0] = "Your home directory";
+	vars[1] = "directory"; legend[1] = "Kermit's current directory";
+	vars[2] = "exedir";    legend[2] = "Kermit's program directory";
+	vars[3] = "inidir";    legend[3] = "Initialization file directory";
+	vars[4] = "startup";   legend[4] = "Current directory when started";
+	vars[5] = "download";  legend[5] = "Kermit download directory";
+	vars[6] = NULL;	       legend[6] = NULL;
+
+	for (i = 0; i < 16 && vars[i]; i++) {
+	    printf("%s:\n",legend[i]);
+	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	    ckmakmsg(vbuf,32,"\\v(",vars[i],")",NULL);
+	    printf("  Variable: %s\n",vbuf);
+	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	    y = TMPBUFSIZ;
+	    s = tmpbuf;
+	    zzstring(vbuf,&s,&y);
+            printf("  Value:    %s\n",tmpbuf);
+	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            printf("\n");
+	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	}
+#endif /* NT */
+	return(success = 1);
+    }
+
+#ifdef NT
+    if (cx == XXDIALER) {
+        StartDialer();
+        return(success = 1);
+    }
+#endif /* NT */
+
+    if (cx == XXCONT) {			/* CONTINUE */
+	if ((x = cmcfm()) < 0)
+	  return(x);
+	if (!xcmdsrc) {			/* At prompt: continue script */
+	    if (cmdlvl > 0)
+	      popclvl();		/* Pop command level */
+	    return(success = 1);	/* always succeeds */
+#ifndef NOSPL
+	} else {			/* In script: whatever... */
+	    x = mlook(mactab,"continue",nmac);
+	    return(success = dodo(x,NULL,cmdstk[cmdlvl].ccflgs));
+#endif /* NOSPL */
+	}
+    }
 
     if (cx == XXNOTAV) {		/* Command in table not available */
 	ckstrncpy(tmpbuf,atmbuf,TMPBUFSIZ);

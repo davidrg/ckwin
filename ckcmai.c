@@ -1,3 +1,5 @@
+#define EDITDATE  "24 Oct 2002"		/* Update these with each edit */
+#define EDITNDATE "20021024"		/* Keep them in sync */
 /*
   ckcsym.h is used for for defining symbols that normally would be defined
   using -D or -d on the cc command line, for use with compilers that don't
@@ -34,11 +36,11 @@
 char *ck_s_test = "";			/* "Dev","Alpha","Beta","RC", or "" */
 char *ck_s_tver = "";			/* Test version number or "" */
 #else  /* OS2 */
-char *ck_s_test = "Beta";               /* (i.e. K95) */
-char *ck_s_tver = "03";
+char *ck_s_test = "";			/* (i.e. K95) */
+char *ck_s_tver = "";
 #endif /* OS2 */
 #else
-char *ck_s_test = "";                   /* Not a test */
+char *ck_s_test = "";			/* Development */
 char *ck_s_tver = "";
 #endif /* BETATEST */
 #else /* MAC */
@@ -49,27 +51,28 @@ char *ck_s_tver = "";
 #ifdef BETADATE                         /* Date of this version or edit */
 char *ck_s_date = __DATE__;             /* Compilation date */
 #else
-char *ck_s_date = "8 Feb 2002";		/* Hand-crafted date */
+char *ck_s_date = EDITDATE;		/* See top */
+
 #endif /* BETADATE */
-char *buildid = "20020208";             /* Build ID, keep in sync with date */
+char *buildid = EDITNDATE;		/* See top */
 
 #ifdef UNIX
-static char sccsid[] = "@(#)C-Kermit 8.0.201";
+static char sccsid[] = "@(#)C-Kermit 8.0.206";
 #endif /* UNIX */
 
-char *ck_s_ver = "8.0.201";             /* C-Kermit version string */
-long  ck_l_ver =  800201L;              /* C-Kermit version number */
+char *ck_s_ver = "8.0.206";             /* C-Kermit version string */
+long  ck_l_ver =  800206L;              /* C-Kermit version number */
 
 #ifdef OS2
-char *ck_s_xver = "1.1.21";             /* Product-specific version string */
-long  ck_l_xver = 1121L;                /* Product-specific version number */
+char *ck_s_xver = "2.1.0";		/* Product-specific version string */
+long  ck_l_xver = 2100L;                /* Product-specific version number */
 #else
 #ifdef MAC
 char *ck_s_xver = "0.995";              /* Product-specific version string */
 long  ck_l_xver = 995L;                 /* Product-specific version number */
 #else
 char *ck_s_xver = "";                   /* Don't touch these... */
-long  ck_l_xver = 0L;                   /* they are filled in at runtime */
+long  ck_l_xver = 0L;                   /* they are computed at runtime */
 #endif /* MAC */
 #endif /* OS2 */
 
@@ -108,6 +111,7 @@ char * myname = NULL;                   /* The name I am called by */
 #ifndef OS2
 char * exedir = NULL;                   /* Directory I was executed from */
 #endif /* OS2 */
+char * myhome = NULL;			/* Home directory override */
 
 /*  C K C M A I  --  C-Kermit Main program  */
 
@@ -117,6 +121,54 @@ char * exedir = NULL;                   /* Directory I was executed from */
 
 COPYRIGHT NOTICE:
 */
+
+#ifdef OS2
+char *wiksdcpr[] = {
+"Windows Internet Kermit Service Daemon (WIKSD):",
+"Copyright (C) 1985, 2002, Trustees of Columbia University in the City of New",
+"York.  All rights reserved.",
+" ",
+"PERMISSIONS:",
+" ",
+"  The WIKSD software may be obtained directly, in binary form only, from",
+"  the Kermit Project at Columbia University by any individual for his or",
+"  her OWN USE, and by any company or other organization for its own",
+"  INTERNAL DISTRIBUTION and use, including installation on servers that",
+"  are accessed by customers or clients, WITHOUT EXPLICIT LICENSE.  All",
+"  other forms of redistribution must be licensed from the Kermit Project",
+"  at Columbia University.  These permissions apply only to the nonsecure",
+"  version of WIKSD.",
+" ",
+"DISCLAIMER:",
+" ",
+"  THIS SOFTWARE IS PROVIDED AS IS, WITHOUT REPRESENTATION FROM THE",
+"  TRUSTEES OF COLUMBIA UNIVERSITY IN THE CITY OF NEW YORK AS TO ITS",
+"  FITNESS FOR ANY PURPOSE, AND WITHOUT WARRANTY BY THE TRUSTEES OF",
+"  COLUMBIA UNIVERSITY IN THE CITY OF NEW YORK OF ANY KIND, EITHER",
+"  EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION THE IMPLIED",
+"  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.",
+"  THE TRUSTEES OF COLUMBIA UNIVERSITY IN THE CITY OF NEW YORK SHALL NOT",
+"  BE LIABLE FOR ANY DAMAGES, INCLUDING SPECIAL, INDIRECT, INCIDENTAL,",
+"  OR CONSEQUENTIAL DAMAGES, WITH RESPECT TO ANY CLAIM ARISING OUT OR IN",
+"  CONNECTION WITH THE USE OF THE SOFTWARE, EVEN IF IT HAS BEEN OR IS",
+"  HEREAFTER ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.  YOU SHALL",
+"  INDEMNIFY AND HOLD HARMLESS THE TRUSTEES OF COLUMBIA UNIVERSITY IN",
+"  THE CITY OF NEW YORK, ITS EMPLOYEES AND AGENTS FROM AND AGAINST ANY",
+"  AND ALL CLAIMS, DEMANDS, LOSS, DAMAGE OR EXPENSE (INCLUDING",
+"  ATTORNEYS' FEES) ARISING OUT OF YOUR USE OF THIS SOFTWARE.",
+" ",
+"The above copyright notice, permissions notice, and disclaimer may not be",
+"removed, altered, or obscured and shall be included in all copies of the",
+"WIKSD software.  The Trustees of Columbia University in the City of",
+"New York reserve the right to revoke this permission if any of the terms",
+"of use set forth above are breached.",
+" ",
+"For further information, contact the Kermit Project, Columbia University,",
+"612 West 115th Street, New York NY 10025-7799, USA; Phone +1 (212) 854 3703,",
+"Fax +1 (212) 662 6442, kermit@columbia.edu, http://www.columbia.edu/kermit/",
+""
+};
+#endif /* OS2 */
 
 char *copyright[] = {
 
@@ -368,7 +420,7 @@ ACKNOWLEDGMENTS:
    Dan Hildebrand, QNX Software Systems Inc, Kanata, ON (QNX)
    R E Hill
    Stephan Hoffman-Emden
-   Sven Holmström, ABB Utilities AB, Sweden
+   Sven Holmstrom, ABB Utilities AB, Sweden
    Bill Homer, Cray Research
    Ray Hunter, The Wollongong Group
    Randy Huntziger, National Library of Medicine
@@ -1032,6 +1084,7 @@ int matchdot = 0;                       /* Whether to match dot files */
 #else
 int matchdot = 1;
 #endif /* UNIXOROSK */
+int matchfifo = 0;			/* Whether to match FIFO "files" */
 int clfils = 0;                         /* Flag for command-line files */
 int stayflg = 0;                        /* Flag for "stay", i.e. "-S" */
 int xfinish = 0;                        /* Flag for FINISH = EXIT */
@@ -1421,6 +1474,7 @@ _PROTOTYP( VOID iniopthlp, (void) );    /* Command-line help initializer */
 #endif /* NOHELP */
 
 _PROTOTYP( VOID getexedir, (void) );
+_PROTOTYP( int putnothing, (char) );
 
 #ifdef IKSD
 _PROTOTYP( VOID doiksdinit, (void) );
@@ -1471,6 +1525,11 @@ int autodl = 1;                         /* Enabled by default */
 int autodl = 0;                         /* (or if not implemented). */
 #endif /* CK_AUTODL */
 int adl_err = 1;                        /* 1 = stop on error */
+#ifdef KUI
+int adl_ask = 1;			/* 1 = file dialog on autodownload */
+#else
+int adl_ask = 0;			/* 0 = no file dialog */
+#endif /* KUI */
 #ifdef OS2                              /* AUTODOWNLOAD parameters */
 int adl_kmode = ADL_PACK,               /* Match Packet to signal download */
     adl_zmode = ADL_PACK;
@@ -1744,6 +1803,18 @@ is_a_tty(n) int n; {
 #endif /* NT */
 #endif /* KUI */
 }
+
+#ifndef NOXFER
+VOID
+initxlist() {
+    extern char * sndexcept[], * rcvexcept[];
+    int i;
+    for (i = 0; i < NSNDEXCEPT; i++) {
+	sndexcept[i] = NULL;
+	rcvexcept[i] = NULL;
+    }
+}
+#endif /* NOXFER */
 
 /* Initialize flow control table */
 
@@ -2750,10 +2821,14 @@ dourl() {
             }
             clcmds = line;              /* Make this our -C cmdline macro */
             debug(F110,"dourl clcmds",clcmds,0);
+	    debug(F101,"dourl haveurl","",haveurl);
         }
 #endif /* NOSPL */
     } else {
         if (ckstrcmp(g_url.svc,"telnet",-1,0) &&
+#ifdef SSHBUILTIN
+            ckstrcmp(g_url.svc,"ssh",-1,0) &&
+#endif /* SSHBUILTIN */
             ckstrcmp(g_url.svc,"ftp",-1,0)) {
             printf("?Sorry, %s URLs not supported\n",
                    g_url.svc ? g_url.svc : "");
@@ -2874,6 +2949,9 @@ main(argc,argv) int argc; char **argv;
 #endif /* NOHTTP */
 #ifdef OS2
     else if (!ckstrcmp(myname,"telnet.exe",-1,0))  howcalled = I_AM_TELNET;
+#ifdef SSHBUILTIN
+    else if (!ckstrcmp(myname,"ssh.exe",-1,0))  howcalled = I_AM_SSH;
+#endif /* SSHBUILTIN */
 #ifdef CK_KERBEROS
     else if (!ckstrcmp(myname,"ktelnet.exe",-1,0)) howcalled = I_AM_TELNET;
 #endif /* CK_KERBEROS */
@@ -2918,7 +2996,6 @@ main(argc,argv) int argc; char **argv;
         byteorder = 0;                  /* Big Endian */
         bigendian = 1;
     }
-
     if (sysinit() < 0)                  /* System-dependent initialization. */
       fatal("Can't initialize!");
     else
@@ -2984,6 +3061,8 @@ main(argc,argv) int argc; char **argv;
 #endif /* NOICP */
 
 #ifndef NOXFER
+    initxlist();			/* Init exception lists */
+
 #ifdef CK_XYZ                           /* Initialize protocols...  */
 
 #ifdef XYZ_INTERNAL /* XYZMODEM are internal ... */
@@ -3055,7 +3134,20 @@ main(argc,argv) int argc; char **argv;
 
 #ifndef NOSPL
 #ifndef NORANDOM
-    srand((unsigned int)gtimer());
+    {
+        char stackdata[256];
+        unsigned int c = 1234, n;
+        /* try to make a random unsigned int to feed srand() */
+#ifndef VMS
+	/* time.h and MultiNet do not get along */
+        c = time(NULL);
+#endif /* VMS */
+        c *= getpid();
+	/* Referenced before set... DELIBERATELY */
+        for (n = 0; n < sizeof(stackdata); n++) /* IGNORE WARNING */
+	  c += stackdata[n];
+        srand((unsigned int)c);
+    }
 #endif /* NORANDOM */
 #endif /* NOSPL */
 
@@ -3235,7 +3327,14 @@ main(argc,argv) int argc; char **argv;
                     fprintf(stderr,"do_ssleay_init() failed\r\n");
                     ERR_print_errors_fp(stderr);
                 }
-                /* we will continue to accept the connection   */
+                switch (ttnproto) {
+		  case NP_SSL:
+		  case NP_TLS:
+		  case NP_SSL_TELNET:
+		  case NP_TLS_TELNET:
+                    doexit(BAD_EXIT,1);
+                }
+                /* otherwise we will continue to accept the connection   */
                 /* without SSL or TLS support unless required. */
                 if ( TELOPT_DEF_S_ME_MODE(TELOPT_START_TLS) != TN_NG_MU )
                     TELOPT_DEF_S_ME_MODE(TELOPT_START_TLS) = TN_NG_RF;

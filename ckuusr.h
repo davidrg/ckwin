@@ -344,7 +344,8 @@ struct stringlist {			/* General purpose string list */
 #define XA_SSH  32			/* Make an SSH connection */
 #define XA_USER 33			/* Username for login */
 #define XA_PASS 34			/* Password for login */
-#define XA_MAX  34			/* Highest extended option number */
+#define XA_TITL 35                      /* Window Title */
+#define XA_MAX  35			/* Highest extended option number */
 
 #endif /* NOCMDL */
 
@@ -476,7 +477,12 @@ struct stringlist {			/* General purpose string list */
 #define SND_LNK 42	/* Follow links */
 #define SND_NLK 43	/* Don't follow links */
 #define SND_SIM 44	/* Simulate */
-#define SND_MAX 44	/* Highest SEND switch */
+#define SND_DIF 45	/* If dates Differ */
+#define SND_PAT 46	/* Pattern to use locally when GET'ing */
+#define SND_NLS 47	/* (FTP only) MGET forces NLST */
+#define SND_MLS 48	/* (FTP only) MGET forces MLSD */
+
+#define SND_MAX 48	/* Highest SEND switch */
 
 #define XXSER  29   	/* SERVER */
 #define XXSET  30	/* SET */
@@ -722,6 +728,12 @@ struct stringlist {			/* General purpose string list */
 #define XXUSER  252	/* (FTP) USER */
 #define XXACCT  253	/* (FTP) ACCOUNT */
 #define XXLINK  254     /* LINK source destination */
+#define XXORIE  255	/* ORIENT(ATION) */
+#define XXDIALER 256    /* DIALER */
+#define XXKCD   257     /* KCD */
+#define XXSITE  258     /* (FTP) SITE */
+#define XXPASV  259     /* (FTP) PASSIVE */
+#define XXCONT  260	/* CONTINUE */
 
 /* End of Top-Level Commands */
 
@@ -977,21 +989,23 @@ struct stringlist {			/* General purpose string list */
 #define     TT_LINUX   21       /*    Linux Console */
 #define     TT_HFT     22       /*    IBM High Function Terminal */
 #define     TT_AIXTERM 23       /*    IBM AIXterm */
-#define     TT_BA80    24       /*    Nixdorf BA80 */
-#define     TT_BEOS    25       /*    BeOS Ansi */
-#define     TT_VT100   26	/*    DEC VT-100 */
-#define     TT_VT102   27	/*    DEC VT-102 */
-#define     TT_VT220   28	/*    DEC VT-220 */
-#define     TT_VT220PC 29       /*    DEC VT-220 with PC keyboard */
-#define     TT_VT320   30	/*    DEC VT-320 */
-#define     TT_VT320PC 31	/*    DEC VT-320 with PC keyboard */
-#define     TT_WY370   32	/*    WYSE 370 ANSI Terminal */
-#define     TT_97801   33       /*    Sinix 97801-5xx terminal */
-#define     TT_TVI910  34	/*    TVI 910+ */
-#define     TT_TVI925  35       /*    TVI 925  */
-#define     TT_TVI950  36       /*    TVI950   */
-#define     TT_ADM3A   37       /*    LSI ADM 3A */
-#define     TT_VTNT    38       /*    Microsoft NT Virtual Terminal */
+#define     TT_SUN     24       /*    SUN Console */
+#define     TT_BA80    25       /*    Nixdorf BA80 */
+#define     TT_BEOS    26       /*    BeOS Ansi */
+#define     TT_VT100   27	/*    DEC VT-100 */
+#define     TT_VT102   28	/*    DEC VT-102 */
+#define     TT_VT220   29	/*    DEC VT-220 */
+#define     TT_VT220PC 30       /*    DEC VT-220 with PC keyboard */
+#define     TT_VT320   31	/*    DEC VT-320 */
+#define     TT_VT320PC 32	/*    DEC VT-320 with PC keyboard */
+#define     TT_WY370   33	/*    WYSE 370 ANSI Terminal */
+#define     TT_97801   34       /*    Sinix 97801-5xx terminal */
+#define     TT_AAA     35       /*    Ann Arbor Ambassador */
+#define     TT_TVI910  36	/*    TVI 910+ */
+#define     TT_TVI925  37       /*    TVI 925  */
+#define     TT_TVI950  38       /*    TVI950   */
+#define     TT_ADM3A   39       /*    LSI ADM 3A */
+#define     TT_VTNT    40       /*    Microsoft NT Virtual Terminal */
 #define     TT_MAX   TT_VTNT
 #define     TT_VT420   96	/*    DEC VT-420 */
 #define     TT_VT520   97	/*    DEC VT-520/525 */
@@ -1001,6 +1015,7 @@ struct stringlist {			/* General purpose string list */
 #define     TT_KBM_RUSSIAN TT_MAX+3
 #define     TT_KBM_WP      TT_MAX+4
 
+#define ISAAA(x)   (x == TT_AAA)
 #define ISANSI(x)  (x >= TT_SCOANSI && x <= TT_ANSI)
 #define ISBA80(x)  (x == TT_BA80)
 #define ISBEOS(x)  (x == TT_BEOS)
@@ -1010,7 +1025,9 @@ struct stringlist {			/* General purpose string list */
 #define ISSCO(x)   (x == TT_SCOANSI)
 #define ISAT386(x) (x == TT_AT386)
 #define ISAVATAR(x) (x == TT_ANSI)
-#define ISUNIXCON(x) (x == TT_SCOANSI || x == TT_AT386 || x == TT_LINUX)
+#define ISSUN(x)    (x == TT_SUN)
+#define ISUNIXCON(x) (x == TT_SCOANSI || x == TT_AT386 || \
+                      x == TT_LINUX   || x == TT_SUN)
 #define ISDG200(x) (x >= TT_DG200 && x <= TT_DG217)
 #define ISHZL(x)   (x == TT_HZL1500)
 #define ISH19(x)   (x == TT_H19)
@@ -1028,10 +1045,10 @@ struct stringlist {			/* General purpose string list */
 #define ISVT520(x) (ISVT320(x))
 #define ISVT420(x) (ISVT320(x))
 #endif /* COMMENT */
-#define ISVT320(x) (x >= TT_VT320 && x <= TT_97801)
-#define ISVT220(x) (x == TT_VT220 || x == TT_VT220PC || \
+#define ISVT320(x) (x >= TT_VT320 && x <= TT_AAA)
+#define ISVT220(x) (x >= TT_VT220 && x <= TT_AAA || \
                     ISBEOS(x) || ISQANSI(x) || \
-                    ISVT320(x) || ISLINUX(x))
+                    ISLINUX(x) || ISSUN(x))
 #define ISVT102(x) (x >= TT_VIP7809 && x <= TT_BA80 || \
 		    x == TT_VT102 || ISVT220(x))
 #define ISVT100(x) (x == TT_VT100 || ISVT102(x))
@@ -1085,6 +1102,10 @@ struct stringlist {			/* General purpose string list */
 #define   XYTROL 17     /*  Terminal Rollback */
 #define     TTR_OVER   0  /*  Rollback Overwrite */
 #define     TTR_INSERT 1  /*  Rollback Insert */
+#define     TTR_KEYS   2  /*  Keystrokes */
+#define       TTRK_IGN 0  /*    Ignore */
+#define       TTRK_RST 2  /*    Restore and Send */
+#define       TTRK_SND 1  /*    Send */
 #define   XYTCTS 18     /*  Terminal Transmit-Timeout */
 #define   XYTCPG 19     /*  Terminal Code Page */
 #ifdef COMMENT
@@ -1139,6 +1160,7 @@ struct stringlist {			/* General purpose string list */
 #define    TAD_X_DETECT  1 /*    DETECTION ( PACKET, STRING ) */
 #define    TAD_X_C0      2 /*    C0 CONFLICTS */
 #define    TAD_ERR     4 /*    ERROR { STOP, CONTINUE } */
+#define    TAD_ASK     5 /*    ASK (dialog) */
 #define   XYTAUTOUL 29  /* SET TERMINAL AUTOUPLOAD   */
 #ifdef OS2
 #define   XYTATTBUG 30  /* SET TERM ATTR-BUG */
@@ -1240,6 +1262,7 @@ struct stringlist {			/* General purpose string list */
 #define   XYX_INT 10    /*   Interruption */
 #define   XYX_XLA 11    /*   (character-set) Translation On/Off */
 #define   XYX_MSG 12	/*   Message */
+#define   XYX_RPT 13	/*   Report */
 #define XYLANG 38       /* Language */
 #define XYCOUN 39       /* Count */
 #define XYTAKE 40       /* Take */
@@ -1558,6 +1581,7 @@ struct stringlist {			/* General purpose string list */
 #define   XYWSELECT 4   /*    Select on Write Bug */
 #define   XYW8_3 5      /*    Use 8.3 filenames? */
 #define   XYWPOPUP 6    /*    Use Popups?  */
+#define   XYWHSL 7      /*    Horz Scan Line substitutions */
 #define XYDLR   86 	/* SET K95 DIALER work arounds */
 #define XYTITLE 87	/* SET TITLE of window */
 #endif /* OS2 */
@@ -1633,20 +1657,16 @@ struct stringlist {			/* General purpose string list */
 #define  XYKLCAD  4     /* Kerberos List Credentials: Addresses */
 #endif /* TNCODE */
 
-#define XYFUNC  102	/* SET FUNCTION */
+#define XYFUNC   102	/* SET FUNCTION */
 
-#define  FUNC_DI  0	/* FUNCTION DIAGNOSTICS */
-#define  FUNC_ER  1     /* FUNCTION ERROR */
+#define  FUNC_DI   0	/* FUNCTION DIAGNOSTICS */
+#define  FUNC_ER   1    /* FUNCTION ERROR */
 
-#define XYFTP   103	/* FTP application */
-#define XYSLEEP 104	/* SLEEP / PAUSE options */
-#define XYSSH   105	/* SSH options */
-#define XYTELOP 106     /* TELNET OPTIONS (TELOPT) */
-#define XYCD    107     /* SET CD */
-
-#define XYCD_M    0	/* CD MESSAGE */
-#define XYCD_P    1     /* CD PATH */
-
+#define XYFTP    103	/* FTP application */
+#define XYSLEEP  104	/* SLEEP / PAUSE options */
+#define XYSSH    105	/* SSH options */
+#define XYTELOP  106    /* TELNET OPTIONS (TELOPT) */
+#define XYCD     107    /* SET CD */
 #define XYCSET   108	/* CHARACTER-SET */
 #define XYSTOP   109    /* STOP-BITS */
 #define XYSERIAL 110	/* SERIAL */
@@ -1671,6 +1691,7 @@ struct stringlist {			/* General purpose string list */
 #define XYLOCUS  129	/* SET LOCUS */
 #define XYGUI    130	/* SET GUI */
 #define XYANSWER 131    /* SET ANSWER */
+#define XYMATCH  132    /* SET MATCHDOT */
 
 /* End of SET commands */
 
@@ -1728,7 +1749,8 @@ struct stringlist {			/* General purpose string list */
 #define PRN_WID 14                      /* PS Width */
 #define PRN_LEN 15                      /* PS Length */
 #define PRN_RAW 16                      /* Non-PS */
-#define PRN_MAX 16			/* Number of switches defined */
+#define PRN_CS  17                      /* Character Set */
+#define PRN_MAX 17			/* Number of switches defined */
 
 /* Printer types */
 
@@ -2289,7 +2311,24 @@ struct stringlist {			/* General purpose string list */
 #define VN_PERSONAL 229                 /* Personal Directory on Windows */
 #define VN_APPDATA  230                 /* User AppData directory */
 #define VN_COMMON   231                 /* Common AppData directory */
+#define VN_DESKTOP  232                 /* User Desktop directory */
+#define VN_TNC_SIG  233                 /* RFC 2717 Signature */
 
+#ifdef KUI
+#define VN_GUI_XP   234                 /* GUI Window X position */
+#define VN_GUI_YP   235                 /* GUI Window Y position */
+#define VN_GUI_XR   236                 /* GUI Window X resolution */
+#define VN_GUI_YR   237                 /* GUI Window Y resolution */
+#define VN_GUI_RUN  238                 /* GUI Window Run mode */
+#define VN_GUI_FNM  239                 /* GUI Window Font Name */
+#define VN_GUI_FSZ  240                 /* GUI Window Font Size */
+#endif /* KUI */
+
+#define VN_LOG_PKT  241                 /* Packet Log Filename */
+#define VN_LOG_TRA  242                 /* Transaction Log Filename */
+#define VN_LOG_SES  243                 /* Session Log Filename */
+#define VN_LOG_DEB  244                 /* Debug Log Filename */
+#define VN_LOG_CON  245                 /* Connection Log Filename */
 #endif /* NOSPL */
 
 /* INPUT status values */
@@ -2467,6 +2506,8 @@ struct stringlist {			/* General purpose string list */
 #define FN_KWVAL   151			/* \fkeywordvalue() */
 #define FN_SLEEP   152			/* \fsleep() */
 #define FN_MSLEEP  153			/* \fmsleep() */
+#define FN_LNAME   154			/* \fLongPathName() (Windows) */
+#define FN_SNAME   155			/* \fShortPathName() (Windows) */
 
 #endif /* NOSPL */
 
@@ -2691,13 +2732,23 @@ _PROTOTYP( VOID dologline, (void) );
 _PROTOTYP( int setlin, (int, int, int) );
 _PROTOTYP( int setmodem, (void) );
 _PROTOTYP( int setfil, (int) );
+_PROTOTYP( char * homepath, (void) );
 #ifdef OS2
 _PROTOTYP( int settapi, (void) ) ;
 #ifdef OS2MOUSE
 _PROTOTYP( int setmou, (void) );
 #endif /* OS2MOUSE */
 #endif /* OS2 */
+#ifdef LOCUS
+_PROTOTYP( VOID setlocus, (int,int) );
+_PROTOTYP( VOID setautolocus, (int) );
+#endif /* LOCUS */
 _PROTOTYP( int setbell, (void) );
+_PROTOTYP( VOID setcmask, (int));
+_PROTOTYP( VOID setautodl, (int,int));
+_PROTOTYP( VOID setdebses, (int));
+_PROTOTYP( VOID setseslog, (int));
+_PROTOTYP( VOID setaprint, (int));
 _PROTOTYP( int settrm, (void) );
 _PROTOTYP( int settrmtyp, (void) );
 _PROTOTYP( int setsr, (int, int) );
@@ -2728,7 +2779,7 @@ _PROTOTYP( int doswitch, (void) );
 _PROTOTYP( int dolocal, (void) );
 _PROTOTYP( long tod2sec, (char *) );
 _PROTOTYP( int lunet, (char *) );
-_PROTOTYP( int doxdis, (void) );
+_PROTOTYP( int doxdis, (int) );
 _PROTOTYP( int dosave, (int) );
 _PROTOTYP( int doxsend, (int) );
 _PROTOTYP( int doxget, (int) );
@@ -2855,6 +2906,14 @@ _PROTOTYP( char * arrayval, (int, int) );
 _PROTOTYP(int BuildFontTable,
           (struct keytab ** pTable, struct keytab ** pTable2, int * pN));
 #endif /* KUI */
+
+_PROTOTYP(int cx_net, (int net, int protocol, char * xhost, char * svc, 
+        char * username, char * password, char * command,
+        int param1, int param2, int param3, 
+        int cx, int sx, int flag, int gui));
+_PROTOTYP(int cx_serial, (char *device, 
+        int cx, int sx, int shr, int flag, int gui, int special));
+
 #endif /* CKUUSR_H */
 
 /* End of ckuusr.h */

@@ -1,4 +1,4 @@
-char * ckcuni = "Unicode support 8.0.114, 23 Jul 2000";
+char * ckcuni = "Unicode support 8.0.115, 9 Oct 2002";
 
 #ifdef OS2
 #define KERMITFONT
@@ -38,14 +38,14 @@ char * ckcuni = "Unicode support 8.0.114, 23 Jul 2000";
   characters in it.  IMPORTANT: all Kermitfont code points need updating to
   the values in the final proposal to the UTC.
 
-  LATER NOTE: The needed characters were approved for Unicode 3.1, and 
+  LATER NOTE: The needed characters were approved for Unicode 3.1, and
   therefore nothing special should be required to use them, except that it
   will take some time for them to show up in commercial fonts.
 
   TO DO: A lot of the functions can be tightened up -- use ranges when
   possible, sort switch statements in order of frequency, etc.
 */
-#include "ckcsym.h"			/* Includes... */
+#include "ckcsym.h"                     /* Includes... */
 #include "ckcdeb.h"
 #include "ckcker.h"
 #include "ckucmd.h"
@@ -176,7 +176,7 @@ fc2tx(int c) int fc;
     int i;
     for (i = 0; i < nTXFC ; i++)
       if (TXFC[i].fc == fc && TXFC[i].tx >= 0)
-	return(TXFC[i].tx);
+        return(TXFC[i].tx);
     return(TX_ASCII);
 }
 
@@ -190,7 +190,7 @@ tx2fc(int x) int tx;
     int i;
     for (i = 0; i < nTXFC ; i++)
       if (TXFC[i].tx == tx && TXFC[i].fc >= 0)
-	return(TXFC[i].fc);
+        return(TXFC[i].fc);
     return(FC_USASCII);
 }
 
@@ -255,7 +255,7 @@ struct keytab txrtab[] = {
     "dec-m",            TX_DECMCS,     CM_ABR|CM_INV,
     "dec-mcs",          TX_DECMCS,     CM_INV,
     "dec-multinational",TX_DECMCS,     0,
-#ifdef COMMENT				/* Not implemented yet */
+#ifdef COMMENT                          /* Not implemented yet */
     "dec-kanji",        TX_JDEC,       0,
 #endif /* COMMENT */
     "dec-special",      TX_DECSPEC,    0,
@@ -279,7 +279,7 @@ struct keytab txrtab[] = {
     "hungarian",        TX_HUNGARIAN,  0,
     "italian",          TX_ITALIAN,    0,
     "japanese-roman",   TX_J201R,      0,
-#ifdef COMMENT				/* Not implemented yet */
+#ifdef COMMENT                          /* Not implemented yet */
     "japanese-euc",     TX_JEUC,       0,
     "jis7-kanji",       TX_JIS7,       0,
 #endif /* COMMENT */
@@ -308,7 +308,7 @@ struct keytab txrtab[] = {
     "norwegian",        TX_NORWEGIAN,  0,
     "portuguese",       TX_PORTUGUESE, 0,
     "qnx-console",      TX_QNXGRPH,    0,
-#ifdef COMMENT				/* Not implemented yet */
+#ifdef COMMENT                          /* Not implemented yet */
     "shift-jis",        TX_SHJIS,      0,
 #endif /* COMMENT */
     "short-koi",        TX_KOI7,       0,
@@ -339,8 +339,8 @@ int ntxrtab = sizeof(txrtab)/sizeof(struct keytab) - 1;
   tables add about 120K to the program, and we don't want to do this
   for each Kanji character set.
 */
-static USHORT				/* Shift-JIS to Unicode */
-sju_8140[] = {				/* 0x8140 thru 0x9ffc */
+static USHORT                           /* Shift-JIS to Unicode */
+sju_8140[] = {                          /* 0x8140 thru 0x9ffc */
     0x3000, 0x3001, 0x3002, 0xff0c, 0xff0e, 0x30fb, 0xff1a, 0xff1b,
     0xff1f, 0xff01, 0x309b, 0x309c, 0x00b4, 0xff40, 0x00a8, 0xff3e,
     0xffe3, 0xff3f, 0x30fd, 0x30fe, 0x309d, 0x309e, 0x3003, 0x4edd,
@@ -1327,8 +1327,8 @@ sju_8140[] = {				/* 0x8140 thru 0x9ffc */
     0x6ef2, 0x6f31, 0x6eef, 0x6f32, 0x6ecc
 };
 
-static USHORT				/* Shift-JIS to Unicode */
-sju_e040[] = {				/* 0xe040 thru 0xeaa4 */
+static USHORT                           /* Shift-JIS to Unicode */
+sju_e040[] = {                          /* 0xe040 thru 0xeaa4 */
     0x6f3e, 0x6f13, 0x6ef7, 0x6f86, 0x6f7a, 0x6f78, 0x6f81, 0x6f80,
     0x6f6f, 0x6f5b, 0x6ff3, 0x6f6d, 0x6f82, 0x6f7c, 0x6f58, 0x6f8e,
     0x6f91, 0x6fc2, 0x6f66, 0x6fb3, 0x6fa3, 0x6fa1, 0x6fa4, 0x6fb9,
@@ -1666,8 +1666,8 @@ sju_e040[] = {				/* 0xe040 thru 0xeaa4 */
 
 /* Unicode-to-Kanji tables... */
 
-static USHORT				/* Unicode to Shift-JIS */
-usj_0391[] = {				/* 0x0391 thru 0x039c */
+static USHORT                           /* Unicode to Shift-JIS */
+usj_0391[] = {                          /* 0x0391 thru 0x039c */
     0x839f, 0x83a0, 0x83a1, 0x83a2, 0x83a3, 0x83a4, 0x83a5, 0x83a6,
     0x83a7, 0x83a8, 0x83a9, 0x83aa, 0x83ab, 0x83ac, 0x83ad, 0x83ae,
     0x83af, 0xfffd, 0x83b0, 0x83b1, 0x83b2, 0x83b3, 0x83b4, 0x83b5,
@@ -1677,8 +1677,8 @@ usj_0391[] = {				/* 0x0391 thru 0x039c */
     0x83cf, 0xfffd, 0x83d0, 0x83d1, 0x83d2, 0x83d3, 0x83d4, 0x83d5, 0x83d6
 };
 
-static USHORT				/* Unicode to Shift-JIS */
-usj_0401[] = {				/* 0x0401 thru 0x0451 */
+static USHORT                           /* Unicode to Shift-JIS */
+usj_0401[] = {                          /* 0x0401 thru 0x0451 */
     0x8446, 0xfffd, 0xfffd, 0xfffd, 0xfffd, 0xfffd, 0xfffd, 0xfffd,
     0xfffd, 0xfffd, 0xfffd, 0xfffd, 0xfffd, 0xfffd, 0xfffd, 0x8440,
     0x8441, 0x8442, 0x8443, 0x8444, 0x8445, 0x8447, 0x8448, 0x8449,
@@ -1691,8 +1691,8 @@ usj_0401[] = {				/* 0x0401 thru 0x0451 */
     0x848b, 0x848c, 0x848d, 0x848e, 0x848f, 0x8490, 0x8491, 0xfffd, 0x8476
 };
 
-static USHORT				/* Unicode to Shift-JIS */
-usj_3000[] = {				/* 0x3000 thru 0x30ff */
+static USHORT                           /* Unicode to Shift-JIS */
+usj_3000[] = {                          /* 0x3000 thru 0x30ff */
     0x8140, 0x8141, 0x8142, 0x8156, 0xfffd, 0x8158, 0x8159, 0x815a,
     0x8171, 0x8172, 0x8173, 0x8174, 0x8175, 0x8176, 0x8177, 0x8178,
     0x8179, 0x817a, 0x81a7, 0x81ac, 0x816b, 0x816c, 0xfffd, 0xfffd,
@@ -1727,8 +1727,8 @@ usj_3000[] = {				/* 0x3000 thru 0x30ff */
     0xfffd, 0xfffd, 0xfffd, 0x8145, 0x815b, 0x8152, 0x8153, 0xfffd
 };
 
-static USHORT				/* Unicode to Shift-JIS */
-usj_ff00[] = {				/* 0xff00 thru 0x0ff9f */
+static USHORT                           /* Unicode to Shift-JIS */
+usj_ff00[] = {                          /* 0xff00 thru 0x0ff9f */
     0xfffd, 0x8149, 0xfffd, 0x8194, 0x8190, 0x8193, 0x8195, 0xfffd,
     0x8169, 0x816a, 0x8196, 0x817b, 0x8143, 0xfffd, 0x8144, 0x815e,
     0x824f, 0x8250, 0x8251, 0x8252, 0x8253, 0x8254, 0x8255, 0x8256,
@@ -1753,8 +1753,8 @@ usj_ff00[] = {				/* 0xff00 thru 0x0ff9f */
 
 /* Now one humongous table for Kanji */
 
-static USHORT				/* Unicode to Shift-JIS */
-usj_4e00[] = {				/* 0x4e00 thru 0x9fa0 */
+static USHORT                           /* Unicode to Shift-JIS */
+usj_4e00[] = {                          /* 0x4e00 thru 0x9fa0 */
     0x88ea, 0x929a, 0xfffd, 0x8eb5, 0xfffd, 0xfffd, 0xfffd, 0x969c,
     0x8fe4, 0x8e4f, 0x8fe3, 0x89ba, 0xfffd, 0x9573, 0x975e, 0xfffd,
     0x98a0, 0x894e, 0xfffd, 0xfffd, 0x8a8e, 0x98a1, 0x90a2, 0x99c0,
@@ -4414,7 +4414,7 @@ struct x_to_unicode u_transparent = {
 
 struct x_to_unicode u_ascii = {
     94, 33, X2U_ISO|X2U_STD, AL_ROMAN, "US ASCII", "ascii", 6, "B",
-	    0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
+            0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
     0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
     0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
     0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x003f,
@@ -4430,7 +4430,7 @@ struct x_to_unicode u_ascii = {
 
 struct x_to_unicode u_british = {
     94, 33, X2U_ISO|X2U_STD, AL_ROMAN, "British ISO 646", "british", 1, "A",
-	    0x0021, 0x0022, 0x00a3, 0x0024, 0x0025, 0x0026, 0x0027,
+            0x0021, 0x0022, 0x00a3, 0x0024, 0x0025, 0x0026, 0x0027,
     0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
     0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
     0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x003f,
@@ -4446,7 +4446,7 @@ struct x_to_unicode u_british = {
 
 struct x_to_unicode u_dutch = {
     94, 33, X2U_DEC|X2U_STD, AL_ROMAN, "Dutch NRC", "dutch", 0, "4",
-	    0x0021, 0x0022, 0x00a3, 0x0024, 0x0025, 0x0026, 0x0027,
+            0x0021, 0x0022, 0x00a3, 0x0024, 0x0025, 0x0026, 0x0027,
     0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
     0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
     0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x003f,
@@ -4462,7 +4462,7 @@ struct x_to_unicode u_dutch = {
 
 struct x_to_unicode u_finnish = {
     94, 33, X2U_DEC|X2U_STD, AL_ROMAN, "Finnish NRC", "finnish", 0, "5C",
-	    0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
+            0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
     0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
     0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
     0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x003f,
@@ -4478,7 +4478,7 @@ struct x_to_unicode u_finnish = {
 
 struct x_to_unicode u_french = {
     94, 33, X2U_ISO|X2U_STD, AL_ROMAN, "French ISO 646", "french", 0, "fR",
-	    0x0021, 0x0022, 0x00a3, 0x0024, 0x0025, 0x0026, 0x0027,
+            0x0021, 0x0022, 0x00a3, 0x0024, 0x0025, 0x0026, 0x0027,
     0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
     0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
     0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x003f,
@@ -4494,7 +4494,7 @@ struct x_to_unicode u_french = {
 
 struct x_to_unicode u_fr_canadian = {
  94,33,X2U_DEC|X2U_STD,AL_ROMAN,"French Canadian NRC","canadian-french",0,"9Q",
-	    0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
+            0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
     0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
     0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
     0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x003f,
@@ -4510,7 +4510,7 @@ struct x_to_unicode u_fr_canadian = {
 
 struct x_to_unicode u_german = {
     94, 33, X2U_ISO|X2U_STD, AL_ROMAN, "German ISO 646", "german", 21, "K",
-	    0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
+            0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
     0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
     0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
     0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x003f,
@@ -4526,7 +4526,7 @@ struct x_to_unicode u_german = {
 
 struct x_to_unicode u_hungarian = {
     94, 33, X2U_ISO|X2U_STD, AL_ROMAN, "Hungarian ISO 646","hungarian",86,"i",
-	    0x0021, 0x0022, 0x0023, 0x00a4, 0x0025, 0x0026, 0x0027,
+            0x0021, 0x0022, 0x0023, 0x00a4, 0x0025, 0x0026, 0x0027,
     0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
     0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
     0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x003f,
@@ -4542,7 +4542,7 @@ struct x_to_unicode u_hungarian = {
 
 struct x_to_unicode u_italian = {
     94, 33, X2U_ISO|X2U_STD, AL_ROMAN, "Italian ISO 646", "italian", 15, "Y",
-	    0x0021, 0x0022, 0x00a3, 0x0024, 0x0025, 0x0026, 0x0027,
+            0x0021, 0x0022, 0x00a3, 0x0024, 0x0025, 0x0026, 0x0027,
     0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
     0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
     0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x003f,
@@ -4558,7 +4558,7 @@ struct x_to_unicode u_italian = {
 
 struct x_to_unicode u_icelandic = {
     94, 33, X2U_DEC|X2U_STD, AL_ROMAN, "Icelandic NRC", "icelandic", 0, NULL,
-	    0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
+            0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
     0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
     0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
     0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x003f,
@@ -4574,7 +4574,7 @@ struct x_to_unicode u_icelandic = {
 
 struct x_to_unicode u_jis0201r = {
     94, 33, X2U_ISO|X2U_STD,AL_ROMAN,"Japanese Roman","japanese-roman",14,"J",
-	    0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
+            0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
     0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
     0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
     0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x003f,
@@ -4590,7 +4590,7 @@ struct x_to_unicode u_jis0201r = {
 
 struct x_to_unicode u_jis0201k = {
     94, 33, X2U_ISO|X2U_STD,AL_KANA,"Japanese Katakana", "katakana", 13, "I",
-	    0xff61, 0xff62, 0xff63, 0xff64, 0xff65, 0xff66, 0xff67,
+            0xff61, 0xff62, 0xff63, 0xff64, 0xff65, 0xff66, 0xff67,
     0xff68, 0xff69, 0xff6a, 0xff6b, 0xff6c, 0xff6d, 0xff6e, 0xff6f,
     0xff70, 0xff71, 0xff72, 0xff73, 0xff74, 0xff75, 0xff76, 0xff77,
     0xff78, 0xff79, 0xff7a, 0xff7b, 0xff7c, 0xff7d, 0xff7e, 0xff7f,
@@ -4604,9 +4604,9 @@ struct x_to_unicode u_jis0201k = {
     0xfffd, 0xfffd, 0xfffd, 0xfffd, 0xfffd, 0xfffd, 0xfffd
 };
 
-struct x_to_unicode u_norwegian = {	/* Same as Danish */
+struct x_to_unicode u_norwegian = {     /* Same as Danish */
     94,33,X2U_ISO|X2U_STD,AL_ROMAN,"Norwegian ISO 646", "norwegian", 60, "`E6",
-	    0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
+            0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
     0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
     0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
     0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x003f,
@@ -4620,9 +4620,9 @@ struct x_to_unicode u_norwegian = {	/* Same as Danish */
     0x0078, 0x0079, 0x007a, 0x00e6, 0x00f8, 0x00e5, 0x007e
 };
 
-struct x_to_unicode u_danish = {	/* Same as Norwegian */
+struct x_to_unicode u_danish = {        /* Same as Norwegian */
     94, 33, X2U_ISO|X2U_STD, AL_ROMAN, "Danish ISO 646", "danish", 60, "`E6",
-	    0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
+            0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
     0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
     0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
     0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x003f,
@@ -4638,7 +4638,7 @@ struct x_to_unicode u_danish = {	/* Same as Norwegian */
 
 struct x_to_unicode u_portuguese = {
     94,33,X2U_ISO|X2U_STD,AL_ROMAN,"Portuguese ISO 646","portuguese",16,"L%6",
-	    0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
+            0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
     0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
     0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
     0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x003f,
@@ -4654,7 +4654,7 @@ struct x_to_unicode u_portuguese = {
 
 struct x_to_unicode u_spanish = {
     94, 33, X2U_ISO|X2U_STD, AL_ROMAN, "Spanish ISO 646", "spanish", 17, "Z",
-	    0x0021, 0x0022, 0x00a3, 0x0024, 0x0025, 0x0026, 0x0027,
+            0x0021, 0x0022, 0x00a3, 0x0024, 0x0025, 0x0026, 0x0027,
     0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
     0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
     0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x003f,
@@ -4670,7 +4670,7 @@ struct x_to_unicode u_spanish = {
 
 struct x_to_unicode u_swedish = {
     94, 33, X2U_ISO|X2U_STD, AL_ROMAN, "Swedish ISO 646", "swedish", 11, "HG",
-	    0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
+            0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
     0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
     0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
     0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x003f,
@@ -4686,7 +4686,7 @@ struct x_to_unicode u_swedish = {
 
 struct x_to_unicode u_swiss = {
     94, 33, X2U_DEC|X2U_STD, AL_ROMAN, "Swiss NRC", "swiss", 0, "=",
-	    0x0021, 0x0022, 0x00f9, 0x0024, 0x0025, 0x0026, 0x0027,
+            0x0021, 0x0022, 0x00f9, 0x0024, 0x0025, 0x0026, 0x0027,
     0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
     0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
     0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x003f,
@@ -4702,7 +4702,7 @@ struct x_to_unicode u_swiss = {
 
 struct x_to_unicode u_koi7 = {
     94, 33, X2U_STD, AL_CYRIL, "Short KOI", "short-koi", 0, NULL,
-	    0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
+            0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
     0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
     0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
     0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x003f,
@@ -4718,7 +4718,7 @@ struct x_to_unicode u_koi7 = {
 
 struct x_to_unicode u_elot927 = {
     94, 33, X2U_STD, AL_GREEK, "ELOT 927", "elot927-greek", 0, NULL,
-	    0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
+            0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
     0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
     0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
     0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x003f,
@@ -4735,7 +4735,7 @@ struct x_to_unicode u_elot927 = {
 
 struct x_to_unicode u_hebrew7 = {
     94, 33, X2U_STD, AL_HEBREW, "Hebrew-7", "hebrew-7", 0, NULL,
-	    0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
+            0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
     0x0028, 0x0029, 0x002a, 0x002b, 0x002c, 0x002d, 0x002e, 0x002f,
     0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
     0x0038, 0x0039, 0x003a, 0x003b, 0x003c, 0x003d, 0x003e, 0x003f,
@@ -4957,7 +4957,7 @@ struct x_to_unicode u_8859_15 = {
 /* Dyadic Systems Dyalog/X APL, corresponds to APLTERMI.TTF. */
 /* Unicode mappings according to ISO-IEC / JTC 1 / SC 22 N 3067, 1999-12-28. */
 
-struct x_to_unicode u_apl2 = {		/* Dyadic Systems APL + box drawings */
+struct x_to_unicode u_apl2 = {          /* Dyadic Systems APL + box drawings */
     96, 32, X2U_STD, AL_ROMAN, "Dyadic Systems APL", "apl-dyadic", 0, NULL,
     0x00a0, 0x00d7, 0x2502, 0x2524, 0x00a2, 0x2510, 0x2514, 0x2534,
     0x252c, 0x251c, 0x2500, 0x253c, 0x2518, 0x250c, 0x2206, 0x00f7,
@@ -4973,7 +4973,7 @@ struct x_to_unicode u_apl2 = {		/* Dyadic Systems APL + box drawings */
     0x0056, 0x0057, 0x0058, 0x0059, 0x005a, 0x2207, 0x2191, 0x2193
 };
 
-struct x_to_unicode u_apl3 = {		/* APL-Plus = APL-2000 */
+struct x_to_unicode u_apl3 = {          /* APL-Plus = APL-2000 */
     128, 0, X2U_CXG, AL_ROMAN, "APL-2000", "apl-2000", 0, NULL,
     0x20ac, 0x22a3, 0x22a4, 0x22a5, 0x2190, 0x2192, 0x2191, 0x2193,
     0x2264, 0x2265, 0x2372, 0x2371, 0x25af, 0x235e, 0x2339, 0x2359,
@@ -4993,7 +4993,7 @@ struct x_to_unicode u_apl3 = {		/* APL-Plus = APL-2000 */
     0x2205, 0x00f9, 0x00fa, 0x00fb, 0x00fc, 0x00fd, 0x2368, 0x00ff
 };
 
-struct x_to_unicode u_apl4 = {		/* IBM APL2 */
+struct x_to_unicode u_apl4 = {          /* IBM APL2 */
     128, 0, X2U_CXG, AL_ROMAN, "IBM APL2", "apl2-ibm", 0, NULL,
     0x00c7, 0x00fc, 0x00e9, 0x00e2, 0x00e4, 0x00e0, 0x00e5, 0x00e7,
     0x00ea, 0x00eb, 0x00e8, 0x00ef, 0x00ee, 0x00ec, 0x00c4, 0x00c5,
@@ -5013,7 +5013,7 @@ struct x_to_unicode u_apl4 = {		/* IBM APL2 */
     0x2218, 0x2375, 0x236b, 0x234b, 0x2352, 0x00af, 0x00a8, 0x00a0
 };
 
-struct x_to_unicode u_apl5 = {		/* APL-2741 */
+struct x_to_unicode u_apl5 = {          /* APL-2741 */
     128, 0, X2U_CXG, AL_ROMAN, "APL-2741", "apl-2741", 0, NULL,
     0x20ac, 0x22a3, 0x22a4, 0x22a5, 0x2190, 0x2192, 0x2191, 0x2193,
     0x2264, 0x2265, 0x2372, 0x2371, 0x25af, 0x235e, 0x2339, 0x2359,
@@ -5053,7 +5053,7 @@ struct x_to_unicode u_koi8 = {
 
 /* Other KOI-8 based sets */
 
-struct x_to_unicode u_koi8r = {		/* (Russia) Table from RFC1489 */
+struct x_to_unicode u_koi8r = {         /* (Russia) Table from RFC1489 */
     128, 0, X2U_CP, AL_CYRIL, "KOI8-R", "koi8r", 0, NULL,
     0x2500, 0x2502, 0x250C, 0x2510, 0x2514, 0x2518, 0x251C, 0x2524,
     0x252C, 0x2534, 0x253C, 0x2580, 0x2584, 0x2588, 0x258C, 0x2590,
@@ -5073,7 +5073,7 @@ struct x_to_unicode u_koi8r = {		/* (Russia) Table from RFC1489 */
     0x042C, 0x042B, 0x0417, 0x0428, 0x042D, 0x0429, 0x0427, 0x042A
 };
 
-struct x_to_unicode u_koi8u = {		/* (Ukraine) From RFC2319 */
+struct x_to_unicode u_koi8u = {         /* (Ukraine) From RFC2319 */
    128, 0, X2U_CP, AL_CYRIL, "KOI8-U", "koi8u", 0, NULL,
     0x2500, 0x2502, 0x250C, 0x2510, 0x2514, 0x2518, 0x251C, 0x2524,
     0x252C, 0x2534, 0x253C, 0x2580, 0x2584, 0x2588, 0x258C, 0x2590,
@@ -5175,7 +5175,7 @@ struct x_to_unicode u_cp852 = {
     0x00b0, 0x00a8, 0x02d9, 0x0171, 0x0158, 0x0159, 0x25a0, 0x00a0
 };
 
-struct x_to_unicode u_cp855 = {		/* CP855 Cyrillic to Unicode */
+struct x_to_unicode u_cp855 = {         /* CP855 Cyrillic to Unicode */
     128, 0, X2U_CP, AL_CYRIL,"PC Code Page 855","cp855", 0, NULL,
     0x0452, 0x0402, 0x0453, 0x0403, 0x0451, 0x0401, 0x0454, 0x0404,
     0x0455, 0x0405, 0x0456, 0x0406, 0x0457, 0x0407, 0x0458, 0x0408,
@@ -5195,7 +5195,7 @@ struct x_to_unicode u_cp855 = {		/* CP855 Cyrillic to Unicode */
     0x042d, 0x0449, 0x0429, 0x0447, 0x0427, 0x00a7, 0x25a0, 0x0020
 };
 
-struct x_to_unicode u_cp856 = {		/* CP856 (Bulgaria) to Unicode */
+struct x_to_unicode u_cp856 = {         /* CP856 (Bulgaria) to Unicode */
     128, 0, X2U_CP, AL_CYRIL,"PC Code Page 856","cp856", 0, NULL,
     0x0410, 0x0411, 0x0412, 0x0413, 0x0414, 0x0415, 0x0416, 0x0417,
     0x0418, 0x0419, 0x041a, 0x041b, 0x041c, 0x041d, 0x041e, 0x041f,
@@ -5337,7 +5337,7 @@ struct x_to_unicode u_cp869 = {
 
 /* Windows code pages */
 
-struct x_to_unicode u_cp1250 = {	/* Windows Latin-2 */
+struct x_to_unicode u_cp1250 = {        /* Windows Latin-2 */
     128, 0, X2U_CP, AL_ROMAN,"Windows Code Page 1250","cp1250", 0, NULL,
     0x20ac, 0xfffd, 0x201a, 0x0192, 0x201e, 0x2026, 0x2020, 0x2021, /* 80 */
     0x005e, 0x2031, 0x0160, 0x003c, 0x015a, 0x0164, 0x017d, 0x0179, /* 88 */
@@ -5357,7 +5357,7 @@ struct x_to_unicode u_cp1250 = {	/* Windows Latin-2 */
     0x0159, 0x016F, 0x00FA, 0x0171, 0x00FC, 0x00FD, 0x0163, 0x02D9
 };
 
-struct x_to_unicode u_cp1251 = {	/* Windows Cyrillic */
+struct x_to_unicode u_cp1251 = {        /* Windows Cyrillic */
     128, 0, X2U_CP, AL_CYRIL,"Windows Code Page 1251","cp1251", 0, NULL,
     0x0402, 0x0403, 0x201a, 0x0453, 0x201e, 0x2026, 0x2020, 0x2021, /* 80 */
     0x20ac, 0x2031, 0x0409, 0x003c, 0x040a, 0x040c, 0x040b, 0x040f, /* 88 */
@@ -5377,7 +5377,7 @@ struct x_to_unicode u_cp1251 = {	/* Windows Cyrillic */
     0x0448, 0x0449, 0x044a, 0x044b, 0x044c, 0x044d, 0x044e, 0x044f  /* f8 */
 };
 
-struct x_to_unicode u_cp1252 = {	/* Windows Latin-1 */
+struct x_to_unicode u_cp1252 = {        /* Windows Latin-1 */
 /*
   The following code points added September 1998:
   0x80: Euro
@@ -5407,7 +5407,7 @@ struct x_to_unicode u_cp1252 = {	/* Windows Latin-1 */
     0x00F8, 0x00F9, 0x00FA, 0x00FB, 0x00FC, 0x00FD, 0x00FE, 0x00FF
 };
 
-struct x_to_unicode u_cp1253 = {	/* Windows Greece */
+struct x_to_unicode u_cp1253 = {        /* Windows Greece */
     128, 0, X2U_CP, AL_GREEK,"Windows Code Page 1253","cp1253", 0, NULL,
     0x20ac, 0xfffd, 0x201a, 0x0192, 0x201e, 0x2026, 0x2020, 0x2021, /* 80 */
     0xfffd, 0x2031, 0xfffd, 0x003c, 0xfffd, 0xfffd, 0xfffd, 0xfffd, /* 88 */
@@ -5427,7 +5427,7 @@ struct x_to_unicode u_cp1253 = {	/* Windows Greece */
     0x03c8, 0x03c9, 0x03cA, 0x03cB, 0x03cC, 0x03cD, 0x03cE, 0xfffd  /* f8 */
 };
 
-struct x_to_unicode u_cp1254 = {	/* Windows Turkey */
+struct x_to_unicode u_cp1254 = {        /* Windows Turkey */
     128, 0, X2U_CP, AL_ROMAN,"Windows Code Page 1254","cp1254", 0, NULL,
     0x20ac, 0xfffd, 0x201a, 0x0192, 0x201e, 0x2026, 0x2020, 0x2021, /* 80 */
     0x005e, 0x2031, 0x0160, 0x003c, 0x0152, 0xfffd, 0xfffd, 0xfffd, /* 88 */
@@ -5447,7 +5447,7 @@ struct x_to_unicode u_cp1254 = {	/* Windows Turkey */
     0x00F8, 0x00F9, 0x00FA, 0x00FB, 0x00FC, 0x0131, 0x015f, 0x00FF
 };
 
-struct x_to_unicode u_cp1255 = {	/* Windows Hebrew */
+struct x_to_unicode u_cp1255 = {        /* Windows Hebrew */
     128, 0, X2U_CP, AL_ROMAN,"Windows Code Page 1255 (Hebrew)","cp1255",
     0, NULL,
     0x20AC, 0xFFFD, 0x201a, 0x0192, 0x201e, 0x2026, 0x2020, 0x2021,
@@ -5468,7 +5468,7 @@ struct x_to_unicode u_cp1255 = {	/* Windows Hebrew */
     0x05e8, 0x05e9, 0x05ea, 0xfffd, 0xfffd, 0x200e, 0x200f, 0xfffd
 };
 
-struct x_to_unicode u_cp1256 = {	/* Windows Arabic */
+struct x_to_unicode u_cp1256 = {        /* Windows Arabic */
     128, 0, X2U_CP, AL_ROMAN,"Windows Code Page 1256 (Arabic)","cp1256",
     0, NULL,
     0x20ac, 0x067e, 0x201a, 0x0192, 0x201e, 0x2026, 0x2020, 0x2021,
@@ -5489,7 +5489,7 @@ struct x_to_unicode u_cp1256 = {	/* Windows Arabic */
     0x0651, 0x00f9, 0x0652, 0x00fb, 0x00fc, 0x200e, 0x200f, 0xfffd  /* f8 */
 };
 
-struct x_to_unicode u_cp1257 = {	/* Windows Latin-4 */
+struct x_to_unicode u_cp1257 = {        /* Windows Latin-4 */
     128, 0, X2U_CP, AL_ROMAN,"Windows Code Page 1257","cp1257", 0, NULL,
     0x20ac, 0xfffd, 0x201a, 0xfffd, 0x201e, 0x2026, 0x2020, 0x2021, /* 80 */
     0xfffd, 0x2031, 0xfffd, 0x003c, 0xfffd, 0xfffd, 0xfffd, 0xfffd, /* 88 */
@@ -5509,7 +5509,7 @@ struct x_to_unicode u_cp1257 = {	/* Windows Latin-4 */
     0x0173, 0x0142, 0x015b, 0x016b, 0x00fc, 0x017c, 0x017e, 0xfffd  /* f8 */
 };
 
-struct x_to_unicode u_cp1258 = {	/* Windows Viet Nam */
+struct x_to_unicode u_cp1258 = {        /* Windows Viet Nam */
     128, 0, X2U_CP, AL_ROMAN,"Windows Code Page 1258 (Viet Nam)","cp1258",
     0, NULL,
     0x20ac, 0xfffd, 0x201a, 0x0192, 0x201e, 0x2026, 0x2020, 0x2021, /* 80 */
@@ -5530,7 +5530,7 @@ struct x_to_unicode u_cp1258 = {	/* Windows Viet Nam */
     0x00f8, 0x00f9, 0x00fa, 0x00fb, 0x00fc, 0x01b0, 0x20ab, 0x00ff  /* f8 */
 };
 
-struct x_to_unicode u_cp37 = {	/* EBCDIC U.S. */
+struct x_to_unicode u_cp37 = {  /* EBCDIC U.S. */
     256, 0, X2U_CP, AL_ROMAN,"Code Page 037 EBCDIC (U.S.)","cp037", 0, NULL,
     0x0000, 0x0001, 0x0002, 0x0003, 0x009C, 0x0009, 0x0086, 0x007F,
     0x0097, 0x008D, 0x008E, 0x000B, 0x000C, 0x000D, 0x000E, 0x000F,
@@ -5724,8 +5724,8 @@ struct x_to_unicode u_decspec = {
     0x0050, 0x0051, 0x0052, 0x0053, 0x0054, 0x0055, 0x0056, 0x0057,
     0x0058, 0x0059, 0x005a, 0x005b, 0x005c, 0x005d, 0x005e, 0x005f,
     0x2666, 0x2591, 0x2409, 0x240c, 0x240d, 0x240a, 0x00b0, 0x00b1,
-    0x2424, 0x240b, 0x2518, 0x2510, 0x250c, 0x2514, 0x253c, 0xE311,
-    0xE313, 0xE315, 0xE317, 0xE319, 0x251c, 0x2524, 0x2534, 0x252c,
+    0x2424, 0x240b, 0x2518, 0x2510, 0x250c, 0x2514, 0x253c, 0x23BA,
+    0x23BB, 0x2500, 0x23BC, 0x23BD, 0x251c, 0x2524, 0x2534, 0x252c,
     0x2502, 0x2264, 0x2265, 0x03c0, 0x2260, 0x00a3, 0x00B7
 };
 #else
@@ -5769,7 +5769,7 @@ struct x_to_unicode u_hz1500 = {
     0x2500, 0x2502, 0x253c, 0x2534, 0x252c, 0x2514, 0x250c, 0x00b1, /* 8 */
     0x21e8, 0x0050, 0x00f7, 0x21e9, 0x2510, 0x2518, 0x251c, 0x2524, /* 9 */
     0x0070, 0x0071, 0x0072, 0x250c, 0x0074, 0x0075, 0x0076, 0x0077, /* a */
-    0x0078, 0x0079, 0x007a, 0x007b, 0x007c, 0x007d, 0x007e	    /* b */
+    0x0078, 0x0079, 0x007a, 0x007b, 0x007c, 0x007d, 0x007e          /* b */
 
 };
 
@@ -5814,7 +5814,7 @@ struct x_to_unicode u_heath19g = {
    "DT" control pic
    horizontal scan lines
 */
-struct x_to_unicode u_dgspec = {	/* Needs to be checked */
+struct x_to_unicode u_dgspec = {        /* Needs to be checked */
     94, 33, X2U_STD,AL_ROMAN,"DG Special Graphics","dg-specialgraphics",0,NULL,
             0xfffd, 0xfffd, 0x2424, 0x2594, 0x2594, 0x2581, 0x2581,
     0x25a1, 0x263a, 0x263b, 0x2665, 0x2663, 0x2660, 0x25cf, 0x25d8,
@@ -5871,7 +5871,7 @@ struct x_to_unicode u_dgword = {
   Single-to-triple-line box-drawing characters.
   Double/double cross & some others.
 */
-struct x_to_unicode u_hpline = {	/* Needs to be checked */
+struct x_to_unicode u_hpline = {        /* Needs to be checked */
     94, 33, X2U_STD,AL_ROMAN,"HP Line Drawing Graphics",
     "hp-line-drawing",0,NULL,
             0x2520, 0x2528, 0x252f, 0x2537, 0x255f, 0x2562, 0x2564,
@@ -5906,7 +5906,7 @@ struct x_to_unicode u_hpmath = {
 
 struct x_to_unicode u_tvig = {
     15,65,0,0,"Televideo Special Graphics","tvi-special",0,NULL,
-	    0x2570, 0x256D, 0x256E, 0x256F, 0x2514, 0x250C, 0x2510,
+            0x2570, 0x256D, 0x256E, 0x256F, 0x2514, 0x250C, 0x2510,
     0x2518, 0x253C, 0x2502, 0x2500, 0x2524, 0x251C, 0x252C, 0x2534
 };
 
@@ -5957,15 +5957,15 @@ struct x_to_unicode u_wyse_g2 = {
 #ifdef KERMITFONT
 struct x_to_unicode u_wyse_g3 = {
     31,65,0,0,"Wyse Graphics 3","wy-graphics-3",0,NULL,
-	    0x2570, 0x256D, 0x256E, 0x256F, 0x2514, 0x250C, 0x2510,
+            0x2570, 0x256D, 0x256E, 0x256F, 0x2514, 0x250C, 0x2510,
     0x2518, 0x253C, 0x2502, 0x2500, 0x2524, 0x251C, 0x252C, 0x2534,
-    0xE311, 0xE319, 0x2666, 0xE328, 0xE321, 0xE320, 0xE322, 0x2590,
+    0x23BA, 0x23BD, 0x2666, 0xE328, 0xE321, 0xE320, 0xE322, 0x2590,
     0x2584, 0x258C, 0x2580, 0xE323, 0xE326, 0xE327, 0xE329, 0x258C
 };
 #else
 struct x_to_unicode u_wyse_g3 = {
     31,65,0,0,"Wyse Graphics 3","wy-graphics-3",0,NULL,
-	    0x2570, 0x256D, 0x256E, 0x256F, 0x2514, 0x250C, 0x2510,
+            0x2570, 0x256D, 0x256E, 0x256F, 0x2514, 0x250C, 0x2510,
     0x2518, 0x253C, 0x2502, 0x2500, 0x2524, 0x251C, 0x252C, 0x2534,
     0x2500, 0x2500, 0x2666, 0x2590, 0x2590, 0x258c, 0x258c, 0x2590,
     0x2584, 0x258C, 0x2580, 0x2588, 0x2588, 0x2588, 0x2588, 0x258C
@@ -6575,7 +6575,7 @@ koi8_u(c) CHAR c;
 
 USHORT
 #ifdef CK_ANSIC
-koi8r_u(CHAR c)				/* KOI8-R to Unicode */
+koi8r_u(CHAR c)                         /* KOI8-R to Unicode */
 #else
 koi8r_u(c) CHAR c;
 #endif /* CK_ANSIC */
@@ -7030,7 +7030,7 @@ cp852_u(c) CHAR c;
     return(u_cp852.map[c & 0x7f]);
 }
 
-USHORT					/* Cyrillic */
+USHORT                                  /* Cyrillic */
 #ifdef CK_ANSIC
 cp855_u(CHAR c)
 #else
@@ -7040,7 +7040,7 @@ cp855_u(c) CHAR c;
     return(u_cp855.map[c & 0x7f]);
 }
 
-USHORT					/* Bulgaria */
+USHORT                                  /* Bulgaria */
 #ifdef CK_ANSIC
 cp856_u(CHAR c)
 #else
@@ -7133,7 +7133,7 @@ decspec_u(c) CHAR c;
     else if (c >= u_decspec.offset + u_decspec.size)
       return(c);
     else
-      return(u_decspec.map[c - u_decspec.offset]);
+      return (u_decspec.map[c - u_decspec.offset]);
 }
 
 USHORT
@@ -7488,10 +7488,10 @@ c1pics_u(c) CHAR c;
       return(u_c1pics.map[c - u_c1pics.offset]);
 }
 
-#ifdef KANJI				/* Kanji/Unicode functions */
+#ifdef KANJI                            /* Kanji/Unicode functions */
 
-static long				/* Statistics counters */
-  bad = 0,				/* REMOVE THESE LATER... */
+static long                             /* Statistics counters */
+  bad = 0,                              /* REMOVE THESE LATER... */
   kanji = 0,
   kana = 0,
   greek = 0,
@@ -7501,7 +7501,7 @@ static long				/* Statistics counters */
 
 USHORT
 #ifdef CK_ANSIC
-sj_to_un(USHORT sj)			/* Shift-JIS to Unicode */
+sj_to_un(USHORT sj)                     /* Shift-JIS to Unicode */
 #else
 sj_to_un(sj) USHORT sj;
 #endif /* CK_ANSIC */
@@ -7509,56 +7509,56 @@ sj_to_un(sj) USHORT sj;
 
 /* Kanji blocks */
 
-    if (sj >= 0x8140) {			/* All possible Kanjis */
-	kanji++;			/* Optimistically count a Kanji */
-	if (sj <= 0x9ffc) {		/* 7869-element table */
-	    return(sju_8140[sj - 0x8140]);
-	} else if (sj >= 0xe040 && sj <= 0xeaa4) { /* 2660-element table */
-	    return(sju_e040[sj - 0xe040]);
-	} else if (sj >= 0xf040) {	/* User-defined areas */
-	    if (sj <= 0xf0fc) {		/* ten 189-char chunks */
-		return(0xe000 + (sj - 0xf040));
-	    } else if (sj >= 0xf140 && sj <= 0xf1fc) {
-		return(0xe0bc + (sj - 0xf140));
-	    } else if (sj >= 0xf240 && sj <= 0xf2fc) {
-		return(0xe178 + (sj - 0xf240));
-	    } else if (sj >= 0xf340 && sj <= 0xf3fc) {
-		return(0xe234 + (sj - 0xf340));
-	    } else if (sj >= 0xf440 && sj <= 0xf4fc) {
-		return(0xe2f0 + (sj - 0xf440));
-	    } else if (sj >= 0xf540 && sj <= 0xf5fc) {
-		return(0xe3ac + (sj - 0xf540));
-	    } else if (sj >= 0xf640 && sj <= 0xf6fc) {
-		return(0xe468 + (sj - 0xf640));
-	    } else if (sj >= 0xf740 && sj <= 0xf7fc) {
-		return(0xe524 + (sj - 0xf740));
-	    } else if (sj >= 0xf840 && sj <= 0xf8fc) {
-		return(0xe5e0 + (sj - 0xf840));
-	    } else if (sj >= 0xf940 && sj <= 0xf9fc) {
-		return(0xe69c + (sj - 0xf940));
-	    }
-	}
-	kanji--;			/* None of the above, uncount */
+    if (sj >= 0x8140) {                 /* All possible Kanjis */
+        kanji++;                        /* Optimistically count a Kanji */
+        if (sj <= 0x9ffc) {             /* 7869-element table */
+            return(sju_8140[sj - 0x8140]);
+        } else if (sj >= 0xe040 && sj <= 0xeaa4) { /* 2660-element table */
+            return(sju_e040[sj - 0xe040]);
+        } else if (sj >= 0xf040) {      /* User-defined areas */
+            if (sj <= 0xf0fc) {         /* ten 189-char chunks */
+                return(0xe000 + (sj - 0xf040));
+            } else if (sj >= 0xf140 && sj <= 0xf1fc) {
+                return(0xe0bc + (sj - 0xf140));
+            } else if (sj >= 0xf240 && sj <= 0xf2fc) {
+                return(0xe178 + (sj - 0xf240));
+            } else if (sj >= 0xf340 && sj <= 0xf3fc) {
+                return(0xe234 + (sj - 0xf340));
+            } else if (sj >= 0xf440 && sj <= 0xf4fc) {
+                return(0xe2f0 + (sj - 0xf440));
+            } else if (sj >= 0xf540 && sj <= 0xf5fc) {
+                return(0xe3ac + (sj - 0xf540));
+            } else if (sj >= 0xf640 && sj <= 0xf6fc) {
+                return(0xe468 + (sj - 0xf640));
+            } else if (sj >= 0xf740 && sj <= 0xf7fc) {
+                return(0xe524 + (sj - 0xf740));
+            } else if (sj >= 0xf840 && sj <= 0xf8fc) {
+                return(0xe5e0 + (sj - 0xf840));
+            } else if (sj >= 0xf940 && sj <= 0xf9fc) {
+                return(0xe69c + (sj - 0xf940));
+            }
+        }
+        kanji--;                        /* None of the above, uncount */
     }
 
 /* C0 / Halfwidth-Roman / C1 block (0x00-0x9f, no holes) */
 
     else if (sj < 0x00a0) {
-	roman++;			/* Count a Roman */
-	if (sj == 0x5c) {		/* Yen sign */
-	    return(0x00a5);
-	} else if (sj == 0x7e) {	/* Overline (macron) */
-	    return(0x203e);
-	} else {			/* Control or Halfwidth Roman */
-	    return(sj);
-	}
+        roman++;                        /* Count a Roman */
+        if (sj == 0x5c) {               /* Yen sign */
+            return(0x00a5);
+        } else if (sj == 0x7e) {        /* Overline (macron) */
+            return(0x203e);
+        } else {                        /* Control or Halfwidth Roman */
+            return(sj);
+        }
     }
 
 /* Halfwidth Katakana block (0xa0-0xdf, no holes) */
 
     else if (sj >= 0xa1 && sj <= 0xdf) {
-	kana++;
-	return(sj + 0xfec0);
+        kana++;
+        return(sj + 0xfec0);
     }
 
 /* Catch-all must be final */
@@ -7569,234 +7569,234 @@ sj_to_un(sj) USHORT sj;
 
 USHORT
 #ifdef CK_ANSIC
-un_to_sj(USHORT un)			/* Unicode to Shift-JIS */
+un_to_sj(USHORT un)                     /* Unicode to Shift-JIS */
 #else
 un_to_sj(un) USHORT un;
 #endif /* CK_ANSIC */
 {
 
     if (un < 0x00a0) {
-	switch (un) {
-	  case 0x005c: roman++; return(0x815f);	/* Backslash */
-	  case 0x007e: bad++;	return(0xfffd);	/* No tilde in Shift-JIS */
-	  default:				/* ASCII or C0/C1 control */
-	    roman++;
-	    return(un);
-	}
+        switch (un) {
+          case 0x005c: roman++; return(0x815f); /* Backslash */
+          case 0x007e: bad++;   return(0xfffd); /* No tilde in Shift-JIS */
+          default:                              /* ASCII or C0/C1 control */
+            roman++;
+            return(un);
+        }
     }
     if (un >= 0x00a0 && un < 0x0391) { /* Latin-1 symbols */
-	roman++;
-	switch(un) {
-	  case 0x00A2: return(0x8191);
-	  case 0x00A3: return(0x8192);
-	  case 0x00A5: return(0x005C);	/* Yen */
-	  case 0x00A7: return(0x8198);
-	  case 0x00A8: return(0x814E);
-	  case 0x00AC: return(0x81CA);
-	  case 0x00B0: return(0x818B);
-	  case 0x00B1: return(0x817D);
-	  case 0x00B4: return(0x814C);
-	  case 0x00B6: return(0x81F7);
-	  case 0x00D7: return(0x817E);
-	  case 0x00F7: return(0x8180);
-	  default:
-	    roman--;
-	    bad++;
-	    return(0xfffd);
-	}
+        roman++;
+        switch(un) {
+          case 0x00A2: return(0x8191);
+          case 0x00A3: return(0x8192);
+          case 0x00A5: return(0x005C);  /* Yen */
+          case 0x00A7: return(0x8198);
+          case 0x00A8: return(0x814E);
+          case 0x00AC: return(0x81CA);
+          case 0x00B0: return(0x818B);
+          case 0x00B1: return(0x817D);
+          case 0x00B4: return(0x814C);
+          case 0x00B6: return(0x81F7);
+          case 0x00D7: return(0x817E);
+          case 0x00F7: return(0x8180);
+          default:
+            roman--;
+            bad++;
+            return(0xfffd);
+        }
     }
-    if (un >= 0x0391 && un < 0x0401) {	/* Greek */
-	greek++;
-	if (un <= 0x039c)
-	  return(usj_0391[un-0x0391]);
-	greek--;
-	bad++;
-	return(0xfffd);
+    if (un >= 0x0391 && un < 0x0401) {  /* Greek */
+        greek++;
+        if (un <= 0x039c)
+          return(usj_0391[un-0x0391]);
+        greek--;
+        bad++;
+        return(0xfffd);
     }
-    if (un >= 0x0401 && un < 0x2010) {	/* Cyrillic */
-	cyrillic++;
-	if (un <= 0x0451)
-	  return(usj_0401[un-0x0401]);
-	cyrillic--;
-	bad++;
-	return(0xfffd);
+    if (un >= 0x0401 && un < 0x2010) {  /* Cyrillic */
+        cyrillic++;
+        if (un <= 0x0451)
+          return(usj_0401[un-0x0401]);
+        cyrillic--;
+        bad++;
+        return(0xfffd);
     }
-    if (un >= 0x2010 && un < 0x2500) {	/* General punctuation */
-	special++;
-	switch(un) {
-	  case 0x2010: return(0x815D);
-	  case 0x2015: return(0x815C);
-	  case 0x2016: return(0x8161);
-	  case 0x2018: return(0x8165);
-	  case 0x2019: return(0x8166);
-	  case 0x201C: return(0x8167);
-	  case 0x201D: return(0x8168);
-	  case 0x2020: return(0x81F5);
-	  case 0x2021: return(0x81F6);
-	  case 0x2025: return(0x8164);
-	  case 0x2026: return(0x8163);
-	  case 0x2030: return(0x81F1);
-	  case 0x2032: return(0x818C);
-	  case 0x2033: return(0x818D);
-	  case 0x203B: return(0x81A6);
-	  case 0x203E: return(0x007E);
-	  case 0x2103: return(0x818E);	/* Letterlike symbols */
-	  case 0x212B: return(0x81F0);
-	  case 0x2190: return(0x81A9);	/* Arrows */
-	  case 0x2191: return(0x81AA);
-	  case 0x2192: return(0x81A8);
-	  case 0x2193: return(0x81AB);
-	  case 0x21D2: return(0x81CB);
-	  case 0x21D4: return(0x81CC);
-	  case 0x2200: return(0x81CD);	/* Math */
-	  case 0x2202: return(0x81DD);
-	  case 0x2203: return(0x81CE);
-	  case 0x2207: return(0x81DE);
-	  case 0x2208: return(0x81B8);
-	  case 0x220B: return(0x81B9);
-	  case 0x2212: return(0x817C);
-	  case 0x221A: return(0x81E3);
-	  case 0x221D: return(0x81E5);
-	  case 0x221E: return(0x8187);
-	  case 0x2220: return(0x81DA);
-	  case 0x2227: return(0x81C8);
-	  case 0x2228: return(0x81C9);
-	  case 0x2229: return(0x81BF);
-	  case 0x222A: return(0x81BE);
-	  case 0x222B: return(0x81E7);
-	  case 0x222C: return(0x81E8);
-	  case 0x2234: return(0x8188);
-	  case 0x2235: return(0x81E6);
-	  case 0x223D: return(0x81E4);
-	  case 0x2252: return(0x81E0);
-	  case 0x2260: return(0x8182);
-	  case 0x2261: return(0x81DF);
-	  case 0x2266: return(0x8185);
-	  case 0x2267: return(0x8186);
-	  case 0x226A: return(0x81E1);
-	  case 0x226B: return(0x81E2);
-	  case 0x2282: return(0x81BC);
-	  case 0x2283: return(0x81BD);
-	  case 0x2286: return(0x81BA);
-	  case 0x2287: return(0x81BB);
-	  case 0x22A5: return(0x81DB);
-	  case 0x2312: return(0x81DC);	/* Arc */
-	  default:
-	    special--;
-	    bad++;
-	    return(0xfffd);
-	}
+    if (un >= 0x2010 && un < 0x2500) {  /* General punctuation */
+        special++;
+        switch(un) {
+          case 0x2010: return(0x815D);
+          case 0x2015: return(0x815C);
+          case 0x2016: return(0x8161);
+          case 0x2018: return(0x8165);
+          case 0x2019: return(0x8166);
+          case 0x201C: return(0x8167);
+          case 0x201D: return(0x8168);
+          case 0x2020: return(0x81F5);
+          case 0x2021: return(0x81F6);
+          case 0x2025: return(0x8164);
+          case 0x2026: return(0x8163);
+          case 0x2030: return(0x81F1);
+          case 0x2032: return(0x818C);
+          case 0x2033: return(0x818D);
+          case 0x203B: return(0x81A6);
+          case 0x203E: return(0x007E);
+          case 0x2103: return(0x818E);  /* Letterlike symbols */
+          case 0x212B: return(0x81F0);
+          case 0x2190: return(0x81A9);  /* Arrows */
+          case 0x2191: return(0x81AA);
+          case 0x2192: return(0x81A8);
+          case 0x2193: return(0x81AB);
+          case 0x21D2: return(0x81CB);
+          case 0x21D4: return(0x81CC);
+          case 0x2200: return(0x81CD);  /* Math */
+          case 0x2202: return(0x81DD);
+          case 0x2203: return(0x81CE);
+          case 0x2207: return(0x81DE);
+          case 0x2208: return(0x81B8);
+          case 0x220B: return(0x81B9);
+          case 0x2212: return(0x817C);
+          case 0x221A: return(0x81E3);
+          case 0x221D: return(0x81E5);
+          case 0x221E: return(0x8187);
+          case 0x2220: return(0x81DA);
+          case 0x2227: return(0x81C8);
+          case 0x2228: return(0x81C9);
+          case 0x2229: return(0x81BF);
+          case 0x222A: return(0x81BE);
+          case 0x222B: return(0x81E7);
+          case 0x222C: return(0x81E8);
+          case 0x2234: return(0x8188);
+          case 0x2235: return(0x81E6);
+          case 0x223D: return(0x81E4);
+          case 0x2252: return(0x81E0);
+          case 0x2260: return(0x8182);
+          case 0x2261: return(0x81DF);
+          case 0x2266: return(0x8185);
+          case 0x2267: return(0x8186);
+          case 0x226A: return(0x81E1);
+          case 0x226B: return(0x81E2);
+          case 0x2282: return(0x81BC);
+          case 0x2283: return(0x81BD);
+          case 0x2286: return(0x81BA);
+          case 0x2287: return(0x81BB);
+          case 0x22A5: return(0x81DB);
+          case 0x2312: return(0x81DC);  /* Arc */
+          default:
+            special--;
+            bad++;
+            return(0xfffd);
+        }
     }
-    if (un >= 0x2500 && un < 0x3000) {	/* Box drawing */
-	special++;
-	switch(un) {
-	  case 0x2500: return(0x849F);
-	  case 0x2501: return(0x84AA);
-	  case 0x2502: return(0x84A0);
-	  case 0x2503: return(0x84AB);
-	  case 0x250C: return(0x84A1);
-	  case 0x250F: return(0x84AC);
-	  case 0x2510: return(0x84A2);
-	  case 0x2513: return(0x84AD);
-	  case 0x2514: return(0x84A4);
-	  case 0x2517: return(0x84AF);
-	  case 0x2518: return(0x84A3);
-	  case 0x251B: return(0x84AE);
-	  case 0x251C: return(0x84A5);
-	  case 0x251D: return(0x84BA);
-	  case 0x2520: return(0x84B5);
-	  case 0x2523: return(0x84B0);
-	  case 0x2524: return(0x84A7);
-	  case 0x2525: return(0x84BC);
-	  case 0x2528: return(0x84B7);
-	  case 0x252B: return(0x84B2);
-	  case 0x252C: return(0x84A6);
-	  case 0x252F: return(0x84B6);
-	  case 0x2530: return(0x84BB);
-	  case 0x2533: return(0x84B1);
-	  case 0x2534: return(0x84A8);
-	  case 0x2537: return(0x84B8);
-	  case 0x2538: return(0x84BD);
-	  case 0x253B: return(0x84B3);
-	  case 0x253C: return(0x84A9);
-	  case 0x253F: return(0x84B9);
-	  case 0x2542: return(0x84BE);
-	  case 0x254B: return(0x84B4);
-	  case 0x25A0: return(0x81A1);	/* Geometric shapes */
-	  case 0x25A1: return(0x81A0);
-	  case 0x25B2: return(0x81A3);
-	  case 0x25B3: return(0x81A2);
-	  case 0x25BC: return(0x81A5);
-	  case 0x25BD: return(0x81A4);
-	  case 0x25C6: return(0x819F);
-	  case 0x25C7: return(0x819E);
-	  case 0x25CB: return(0x819B);
-	  case 0x25CE: return(0x819D);
-	  case 0x25CF: return(0x819C);
-	  case 0x25EF: return(0x81FC);
-	  case 0x2605: return(0x819A);	/* Misc symbols */
-	  case 0x2606: return(0x8199);
-	  case 0x2640: return(0x818A);
-	  case 0x2642: return(0x8189);
-	  case 0x266A: return(0x81F4);
-	  case 0x266D: return(0x81F3);
-	  case 0x266F: return(0x81F2);
-	  default:
-	    special--;
-	    bad++;
-	    return(0xfffd);
-	}
+    if (un >= 0x2500 && un < 0x3000) {  /* Box drawing */
+        special++;
+        switch(un) {
+          case 0x2500: return(0x849F);
+          case 0x2501: return(0x84AA);
+          case 0x2502: return(0x84A0);
+          case 0x2503: return(0x84AB);
+          case 0x250C: return(0x84A1);
+          case 0x250F: return(0x84AC);
+          case 0x2510: return(0x84A2);
+          case 0x2513: return(0x84AD);
+          case 0x2514: return(0x84A4);
+          case 0x2517: return(0x84AF);
+          case 0x2518: return(0x84A3);
+          case 0x251B: return(0x84AE);
+          case 0x251C: return(0x84A5);
+          case 0x251D: return(0x84BA);
+          case 0x2520: return(0x84B5);
+          case 0x2523: return(0x84B0);
+          case 0x2524: return(0x84A7);
+          case 0x2525: return(0x84BC);
+          case 0x2528: return(0x84B7);
+          case 0x252B: return(0x84B2);
+          case 0x252C: return(0x84A6);
+          case 0x252F: return(0x84B6);
+          case 0x2530: return(0x84BB);
+          case 0x2533: return(0x84B1);
+          case 0x2534: return(0x84A8);
+          case 0x2537: return(0x84B8);
+          case 0x2538: return(0x84BD);
+          case 0x253B: return(0x84B3);
+          case 0x253C: return(0x84A9);
+          case 0x253F: return(0x84B9);
+          case 0x2542: return(0x84BE);
+          case 0x254B: return(0x84B4);
+          case 0x25A0: return(0x81A1);  /* Geometric shapes */
+          case 0x25A1: return(0x81A0);
+          case 0x25B2: return(0x81A3);
+          case 0x25B3: return(0x81A2);
+          case 0x25BC: return(0x81A5);
+          case 0x25BD: return(0x81A4);
+          case 0x25C6: return(0x819F);
+          case 0x25C7: return(0x819E);
+          case 0x25CB: return(0x819B);
+          case 0x25CE: return(0x819D);
+          case 0x25CF: return(0x819C);
+          case 0x25EF: return(0x81FC);
+          case 0x2605: return(0x819A);  /* Misc symbols */
+          case 0x2606: return(0x8199);
+          case 0x2640: return(0x818A);
+          case 0x2642: return(0x8189);
+          case 0x266A: return(0x81F4);
+          case 0x266D: return(0x81F3);
+          case 0x266F: return(0x81F2);
+          default:
+            special--;
+            bad++;
+            return(0xfffd);
+        }
     }
-    if (un >= 0x3000 && un < 0x4e00) {	/* CJK symbols & punc */
-	kanji++;
-	if (un <= 0x30ff)
-	  return(usj_3000[un-0x3000]);
-	kanji--;
-	bad++;
-	return(0xfffd);
+    if (un >= 0x3000 && un < 0x4e00) {  /* CJK symbols & punc */
+        kanji++;
+        if (un <= 0x30ff)
+          return(usj_3000[un-0x3000]);
+        kanji--;
+        bad++;
+        return(0xfffd);
     }
-    if (un >= 0xff00 && un < 0xffff) {	/* Half/full-width Roman & Katakana */
-	if (un <= 0xff9f) {
-	    if (un > 0xff60)
-	      kana++;
-	    return(usj_ff00[un-0xff00]);
-	}
-	bad++;
-	return(0xfffd);
+    if (un >= 0xff00 && un < 0xffff) {  /* Half/full-width Roman & Katakana */
+        if (un <= 0xff9f) {
+            if (un > 0xff60)
+              kana++;
+            return(usj_ff00[un-0xff00]);
+        }
+        bad++;
+        return(0xfffd);
     }
-    if (un >= 0x4e00 && un < 0xe000) {	/* Kanji */
-	kanji++;
-	if (un <= 0x9fa0)
-	  return(usj_4e00[un-0x4e00]);
-	kanji--;
-	bad++;
-	return(0xfffd);
+    if (un >= 0x4e00 && un < 0xe000) {  /* Kanji */
+        kanji++;
+        if (un <= 0x9fa0)
+          return(usj_4e00[un-0x4e00]);
+        kanji--;
+        bad++;
+        return(0xfffd);
     }
-    if (un >= 0xe000 && un < 0xff00) {	/* User-defined (Gaiji) */
-	kanji++;
-	if (un <= 0xe0bb) {		/* ten 189-char chunks */
-	    return(0xf040 + (un - 0xe000));
-	} else if (un >= 0xe0bc && un <= 0xe177) {
-	    return(0xf140 + (un - 0xe0bc));
-	} else if (un >= 0xe178 && un <= 0xe233) {
-	    return(0xf240 + (un - 0xe178));
-	} else if (un >= 0xe234 && un <= 0xe2ef) {
-	    return(0xf340 + (un - 0xe234));
-	} else if (un >= 0xe2f0 && un <= 0xe3ab) {
-	    return(0xf440 + (un - 0xe2f0));
-	} else if (un >= 0xe3ac && un <= 0xe467) {
-	    return(0xf540 + (un - 0xe3ac));
-	} else if (un >= 0xe468 && un <= 0xe523) {
-	    return(0xf640 + (un - 0xe468));
-	} else if (un >= 0xe524 && un <= 0xe5df) {
-	    return(0xf740 + (un - 0xe524));
-	} else if (un >= 0xe5e0 && un <= 0xe69b) {
-	    return(0xf840 + (un - 0xe5e0));
-	} else if (un >= 0xe69c && un <= 0xe757) {
-	    return(0xf940 + (un - 0xe69c));
-	}
-	bad++;
-	return(0xfffd);
+    if (un >= 0xe000 && un < 0xff00) {  /* User-defined (Gaiji) */
+        kanji++;
+        if (un <= 0xe0bb) {             /* ten 189-char chunks */
+            return(0xf040 + (un - 0xe000));
+        } else if (un >= 0xe0bc && un <= 0xe177) {
+            return(0xf140 + (un - 0xe0bc));
+        } else if (un >= 0xe178 && un <= 0xe233) {
+            return(0xf240 + (un - 0xe178));
+        } else if (un >= 0xe234 && un <= 0xe2ef) {
+            return(0xf340 + (un - 0xe234));
+        } else if (un >= 0xe2f0 && un <= 0xe3ab) {
+            return(0xf440 + (un - 0xe2f0));
+        } else if (un >= 0xe3ac && un <= 0xe467) {
+            return(0xf540 + (un - 0xe3ac));
+        } else if (un >= 0xe468 && un <= 0xe523) {
+            return(0xf640 + (un - 0xe468));
+        } else if (un >= 0xe524 && un <= 0xe5df) {
+            return(0xf740 + (un - 0xe524));
+        } else if (un >= 0xe5e0 && un <= 0xe69b) {
+            return(0xf840 + (un - 0xe5e0));
+        } else if (un >= 0xe69c && un <= 0xe757) {
+            return(0xf940 + (un - 0xe69c));
+        }
+        bad++;
+        return(0xfffd);
     }
     /* NOTREACHED */
     /* Some compilers (correctly) warn of "statement not reached" here. */
@@ -7816,7 +7816,7 @@ tx_punc(USHORT c)
 tx_punc(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c >= 0x2000 && c <= 0x200a)	/* Various-width spaces */
+    if (c >= 0x2000 && c <= 0x200a)     /* Various-width spaces */
       return((CHAR)(0x20));
     else if (c >= 0x2010 && c <= 0x2015) /* Various-width dashes */
       return((CHAR)'-');
@@ -7827,30 +7827,30 @@ tx_punc(c) USHORT c;
     else if ((c >= 0x2022 && c <= 0x2024) || c == 0x2043) /* Bullets */
       return((CHAR)0xb7);
     switch (c) {
-      case 0x2039:			/* Less-than sign */
-	return((CHAR)0x3c);
-      case 0x203a:			/* Greater-than sign */
-	return((CHAR)0x3e);
-      case 0x2044:			/* Solidus -> Slash */
-	return((CHAR)0x2f);
+      case 0x2039:                      /* Less-than sign */
+        return((CHAR)0x3c);
+      case 0x203a:                      /* Greater-than sign */
+        return((CHAR)0x3e);
+      case 0x2044:                      /* Solidus -> Slash */
+        return((CHAR)0x2f);
       default:
-	return(-1);
+        return(-1);
     }
 }
 
 
-int					/* For Latin-1 */
+int                                     /* For Latin-1 */
 #ifdef CK_ANSIC
 tx_ident(USHORT c)
 #else
 tx_ident(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c == 0x203e)			/* Overline -> Macron */
+    if (c == 0x203e)                    /* Overline -> Macron */
       return((CHAR)0xaf);
-    else if (c < 0x100)			/* Latin-1 range */
+    else if (c < 0x100)                 /* Latin-1 range */
       return((CHAR)(c & 0xff));
-    else				/* Or maybe from punctuation block */
+    else                                /* Or maybe from punctuation block */
       return(tx_punc(c));
 }
 
@@ -7858,7 +7858,7 @@ int
 #ifdef CK_ANSIC
 tx_usascii(USHORT c)
 #else
-tx_usascii(c) USHORT c;			/* US ASCII */
+tx_usascii(c) USHORT c;                 /* US ASCII */
 #endif /* CK_ANSIC */
 {
     if (c < 0x80)
@@ -7874,12 +7874,12 @@ tx_usascii(c) USHORT c;			/* US ASCII */
     else if ((c >= 0x2022 && c <= 0x2024) || c == 0x2043) /* Bullets */
       return((CHAR)0xb7);
     switch (c) {
-      case 0x2039:			/* Less-than sign */
-	return((CHAR)0x3c);
-      case 0x203a:			/* Greater-than sign */
-	return((CHAR)0x3e);
-      case 0x2044:			/* Solidus -> Slash */
-	return((CHAR)0x2f);
+      case 0x2039:                      /* Less-than sign */
+        return((CHAR)0x3c);
+      case 0x203a:                      /* Greater-than sign */
+        return((CHAR)0x3e);
+      case 0x2044:                      /* Solidus -> Slash */
+        return((CHAR)0x2f);
     }
     /*
       Here we might also (a) map accented Roman letters to unaccented ones;
@@ -7892,12 +7892,12 @@ int
 #ifdef CK_ANSIC
 tx_british(USHORT c)
 #else
-tx_british(c) USHORT c;			/* British */
+tx_british(c) USHORT c;                 /* British */
 #endif /* CK_ANSIC */
 {
     if (c & 0xff00)
       return(-1);
-    else if (c == (USHORT) 0x00a3)	/* Pound sign */
+    else if (c == (USHORT) 0x00a3)      /* Pound sign */
       return(0x2b);
     else
       return(tx_usascii(c));
@@ -7907,12 +7907,12 @@ int
 #ifdef CK_ANSIC
 tx_apl1(USHORT c)
 #else
-tx_apl1(c) USHORT c;			/* Apl1 */
+tx_apl1(c) USHORT c;                    /* Apl1 */
 #endif /* CK_ANSIC */
 {
-    if (c >= 0x0041 && c <= 0x005a)	/* Letters */
+    if (c >= 0x0041 && c <= 0x005a)     /* Letters */
       return(c + 0x20);
-    switch (c) {			/* Others */
+    switch (c) {                        /* Others */
       case 0x0024: return((CHAR)0x7e);
       case 0x0027: return((CHAR)0x4b);
       case 0x0028: return((CHAR)0x3a);
@@ -7985,168 +7985,168 @@ tx_apl1(c) USHORT c;			/* Apl1 */
     }
 }
 
-int					/* Canadian French */
+int                                     /* Canadian French */
 #ifdef CK_ANSIC
 tx_fr_canadian(USHORT c)
 #else
 tx_fr_canadian(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c & 0xff00)			/* Out of range */
+    if (c & 0xff00)                     /* Out of range */
       return(-1);
     switch(c) {
-      case 0xe0: return(0x40);		/* a grave */
-      case 0xe2: return(0x5b);		/* a circumflex */
-      case 0xe7: return(0x5c);		/* c cedilla */
-      case 0xe8: return(0x7d);		/* e grave */
-      case 0xe9: return(0x7b);		/* e acute */
-      case 0xea: return(0x5d);		/* e circumflex */
-      case 0xee: return(0x5e);		/* i circumflex */
-      case 0xf4: return(0x60);		/* o circumflex */
-      case 0xf9: return(0x7c);		/* u grave */
-      case 0xfb: return(0x6e);		/* u circumflex */
+      case 0xe0: return(0x40);          /* a grave */
+      case 0xe2: return(0x5b);          /* a circumflex */
+      case 0xe7: return(0x5c);          /* c cedilla */
+      case 0xe8: return(0x7d);          /* e grave */
+      case 0xe9: return(0x7b);          /* e acute */
+      case 0xea: return(0x5d);          /* e circumflex */
+      case 0xee: return(0x5e);          /* i circumflex */
+      case 0xf4: return(0x60);          /* o circumflex */
+      case 0xf9: return(0x7c);          /* u grave */
+      case 0xfb: return(0x6e);          /* u circumflex */
       default:   return(tx_usascii(c));
     }
 }
 
-int					/* Danish/Norwegian */
+int                                     /* Danish/Norwegian */
 #ifdef CK_ANSIC
 tx_danish(USHORT c)
 #else
 tx_danish(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c & 0xff00)			/* Out of range */
+    if (c & 0xff00)                     /* Out of range */
       return(-1);
     switch(c) {
-      case 0xc6: return(0x5b);		/* AE */
-      case 0xd8: return(0x5c);		/* O stroke */
-      case 0xe6: return(0x7b);		/* ae */
-      case 0xf8: return(0x7c);		/* o stroke */
-      case 0xe5: return(0x7d);		/* a ring */
-      case 0xaf: return(0x7e);		/* macron */
+      case 0xc6: return(0x5b);          /* AE */
+      case 0xd8: return(0x5c);          /* O stroke */
+      case 0xe6: return(0x7b);          /* ae */
+      case 0xf8: return(0x7c);          /* o stroke */
+      case 0xe5: return(0x7d);          /* a ring */
+      case 0xaf: return(0x7e);          /* macron */
       default:   return(tx_usascii(c));
     }
 }
 
-int					/* Dutch */
+int                                     /* Dutch */
 #ifdef CK_ANSIC
 tx_dutch(USHORT c)
 #else
 tx_dutch(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c & 0xfe00)			/* Out of range */
+    if (c & 0xfe00)                     /* Out of range */
       return(-1);
     switch(c) {
-      case 0x007c: return(0x5d);	/* vertical bar */
-      case 0x00a3: return(0x23);	/* pound sign */
-      case 0x00ab: return(0x7b);	/* diaeresis */
-      case 0x00b4: return(0x7e);	/* acute accent */
-      case 0x00bc: return(0x7d);	/* 1/4 */
-      case 0x00be: return(0x40);	/* 3/4 */
-      case 0x00bd: return(0x5c);	/* 1/2 */
-      case 0x00ff: return(0x5b);	/* y diaeresis (ij) */
-      case 0x0192: return(0x7c);	/* Florin */
+      case 0x007c: return(0x5d);        /* vertical bar */
+      case 0x00a3: return(0x23);        /* pound sign */
+      case 0x00ab: return(0x7b);        /* diaeresis */
+      case 0x00b4: return(0x7e);        /* acute accent */
+      case 0x00bc: return(0x7d);        /* 1/4 */
+      case 0x00be: return(0x40);        /* 3/4 */
+      case 0x00bd: return(0x5c);        /* 1/2 */
+      case 0x00ff: return(0x5b);        /* y diaeresis (ij) */
+      case 0x0192: return(0x7c);        /* Florin */
       default:   return((c & 0x80) ? -1 : (CHAR)(c & 0x7f));
     }
 }
 
-int					/* Finnish */
+int                                     /* Finnish */
 #ifdef CK_ANSIC
 tx_finnish(USHORT c)
 #else
 tx_finnish(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c & 0xff00)			/* Out of range */
+    if (c & 0xff00)                     /* Out of range */
       return(-1);
     switch(c) {
-      case 0xc4: return(0x5b);		/* A diaeresis */
-      case 0xd6: return(0x5c);		/* O diaeresis */
-      case 0xc5: return(0x5d);		/* A ring */
-      case 0xdc: return(0x5e);		/* U diaeresis */
-      case 0xe9: return(0x60);		/* e acute */
-      case 0xe4: return(0x7b);		/* a diaeresis */
-      case 0xf6: return(0x7c);		/* o diaeresis */
-      case 0xe5: return(0x7d);		/* a ring */
-      case 0xfc: return(0x7e);		/* u diaeresis */
+      case 0xc4: return(0x5b);          /* A diaeresis */
+      case 0xd6: return(0x5c);          /* O diaeresis */
+      case 0xc5: return(0x5d);          /* A ring */
+      case 0xdc: return(0x5e);          /* U diaeresis */
+      case 0xe9: return(0x60);          /* e acute */
+      case 0xe4: return(0x7b);          /* a diaeresis */
+      case 0xf6: return(0x7c);          /* o diaeresis */
+      case 0xe5: return(0x7d);          /* a ring */
+      case 0xfc: return(0x7e);          /* u diaeresis */
       default:   return(tx_usascii(c));
     }
 }
 
-int					/* French */
+int                                     /* French */
 #ifdef CK_ANSIC
 tx_french(USHORT c)
 #else
 tx_french(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c & 0xff00)			/* Out of range */
+    if (c & 0xff00)                     /* Out of range */
       return(-1);
     switch(c) {
-      case 0xa3: return(0x23);		/* pound sign */
-      case 0xa7: return(0x5d);		/* section sign */
-      case 0xa8: return(0x7e);		/* diaeresis */
-      case 0xb0: return(0x5b);		/* ring */
-      case 0xb5: return(0x60);		/* micron sign (mu) */
-      case 0xe0: return(0x40);		/* a grave */
-      case 0xe7: return(0x5c);		/* c cedilla */
-      case 0xe8: return(0x7d);		/* e grave */
-      case 0xe9: return(0x7b);		/* e acute */
-      case 0xf9: return(0x7c);		/* u grave */
+      case 0xa3: return(0x23);          /* pound sign */
+      case 0xa7: return(0x5d);          /* section sign */
+      case 0xa8: return(0x7e);          /* diaeresis */
+      case 0xb0: return(0x5b);          /* ring */
+      case 0xb5: return(0x60);          /* micron sign (mu) */
+      case 0xe0: return(0x40);          /* a grave */
+      case 0xe7: return(0x5c);          /* c cedilla */
+      case 0xe8: return(0x7d);          /* e grave */
+      case 0xe9: return(0x7b);          /* e acute */
+      case 0xf9: return(0x7c);          /* u grave */
       default:   return(tx_usascii(c));
     }
 }
 
-int					/* German */
+int                                     /* German */
 #ifdef CK_ANSIC
 tx_german(USHORT c)
 #else
 tx_german(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c & 0xff00)			/* Out of range */
+    if (c & 0xff00)                     /* Out of range */
       return(-1);
     switch(c) {
-      case 0xa7: return(0x40);		/* section sign */
-      case 0xc4: return(0x5b);		/* A umlaut */
-      case 0xd6: return(0x5c);		/* O umlaut */
-      case 0xdc: return(0x5d);		/* U umlaut */
-      case 0xdf: return(0x7e);		/* ess-zet */
-      case 0xe4: return(0x7b);		/* a umlaut */
-      case 0xf6: return(0x7c);		/* o umlaut */
-      case 0xfc: return(0x7d);		/* u umlaut*/
+      case 0xa7: return(0x40);          /* section sign */
+      case 0xc4: return(0x5b);          /* A umlaut */
+      case 0xd6: return(0x5c);          /* O umlaut */
+      case 0xdc: return(0x5d);          /* U umlaut */
+      case 0xdf: return(0x7e);          /* ess-zet */
+      case 0xe4: return(0x7b);          /* a umlaut */
+      case 0xf6: return(0x7c);          /* o umlaut */
+      case 0xfc: return(0x7d);          /* u umlaut*/
       default:   return(tx_usascii(c));
     }
 }
 
-int					/* Hebrew-7 */
+int                                     /* Hebrew-7 */
 #ifdef CK_ANSIC
 tx_hebrew7(USHORT c)
 #else
 tx_hebrew7(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0x60)			/* ASCII */
+    if (c < 0x60)                       /* ASCII */
       return((CHAR)(c & 0x7f));
-    else if (c >= 123 && c < 128)	/* ASCII */
+    else if (c >= 123 && c < 128)       /* ASCII */
       return((CHAR)(c & 0x7f));
     else if (c >= 0x05d0 && c <= 0x05ea) /* Hebrew 27 contiguous characters */
       return((CHAR)((int)c - 0x5d0 + 96));
     else return(-1);
 }
 
-int					/* Greek ELOT 927 */
+int                                     /* Greek ELOT 927 */
 #ifdef CK_ANSIC
 tx_elot927(USHORT c)
 #else
 tx_elot927(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c <= 0x80) {			/* ASCII */
-	if (islower(c)) c = toupper(c);	/* Send all letters in uppercase */
-	return((CHAR)(c & 0x7f));
+    if (c <= 0x80) {                    /* ASCII */
+        if (islower(c)) c = toupper(c); /* Send all letters in uppercase */
+        return((CHAR)(c & 0x7f));
     }
 
 /* Greek -- map all Greek characters to unaccented uppercase */
@@ -8160,38 +8160,38 @@ tx_elot927(c) USHORT c;
     else if (c >= 0x03c3 && c <= 0x03c9) /* Sigma thru Omega - uppercase */
       return((CHAR)((int)c - 0x0391 + 96));
     switch (c) {
-      case 0x03c2: return((CHAR)114);	/* Terminal sigma */
-      case 0x0386: return((CHAR)97);	/* Alpha Tonos */
-      case 0x03ac: return((CHAR)97);	/* alpha Tonos */
-      case 0x0388: return((CHAR)101);	/* Epsilon Tonos */
-      case 0x03ad: return((CHAR)101);	/* epsilon Tonos */
-      case 0x0389: return((CHAR)103);	/* Eta Tonos */
-      case 0x03ae: return((CHAR)103);	/* eta Tonos */
-      case 0x038a: return((CHAR)105);	/* Iota Tonos */
-      case 0x03af: return((CHAR)105);	/* iota Tonos */
-      case 0x03ca: return((CHAR)105);	/* iota Dialytika */
-      case 0x038c: return((CHAR)111);	/* Omicron Tonos */
-      case 0x03cc: return((CHAR)111);	/* omicron Tonos */
-      case 0x038e: return((CHAR)116);	/* Upsilon Tonos */
-      case 0x03d3: return((CHAR)116);	/* Upsilon Tonos */
-      case 0x03cd: return((CHAR)116);	/* upsilon Tonos */
-      case 0x03cb: return((CHAR)116);	/* upsilon Dialytika */
-      case 0x03b0: return((CHAR)116);	/* upsilon Dialytika+Tonos */
-      case 0x038f: return((CHAR)120);	/* Omega Tonos */
-      case 0x03ce: return((CHAR)120);	/* omega Tonos */
-      case 0x0390: return((CHAR)105);	/* iota Dialytika+Tonos */
-      case 0x03aa: return((CHAR)105);	/* Iota Dialytika */
-      case 0x03ab: return((CHAR)116);	/* Upsilon Dialytika */
-      case 0x03d4: return((CHAR)116);	/* Upsilon Dialytika */
-      case 0x03d0: return((CHAR)98);	/* Alternative beta */
-      case 0x03d1: return((CHAR)104);	/* Open theta */
-      case 0x03d5: return((CHAR)117);	/* Open phi */
-      case 0x03d6: return((CHAR)112);	/* Alternative Pi */
+      case 0x03c2: return((CHAR)114);   /* Terminal sigma */
+      case 0x0386: return((CHAR)97);    /* Alpha Tonos */
+      case 0x03ac: return((CHAR)97);    /* alpha Tonos */
+      case 0x0388: return((CHAR)101);   /* Epsilon Tonos */
+      case 0x03ad: return((CHAR)101);   /* epsilon Tonos */
+      case 0x0389: return((CHAR)103);   /* Eta Tonos */
+      case 0x03ae: return((CHAR)103);   /* eta Tonos */
+      case 0x038a: return((CHAR)105);   /* Iota Tonos */
+      case 0x03af: return((CHAR)105);   /* iota Tonos */
+      case 0x03ca: return((CHAR)105);   /* iota Dialytika */
+      case 0x038c: return((CHAR)111);   /* Omicron Tonos */
+      case 0x03cc: return((CHAR)111);   /* omicron Tonos */
+      case 0x038e: return((CHAR)116);   /* Upsilon Tonos */
+      case 0x03d3: return((CHAR)116);   /* Upsilon Tonos */
+      case 0x03cd: return((CHAR)116);   /* upsilon Tonos */
+      case 0x03cb: return((CHAR)116);   /* upsilon Dialytika */
+      case 0x03b0: return((CHAR)116);   /* upsilon Dialytika+Tonos */
+      case 0x038f: return((CHAR)120);   /* Omega Tonos */
+      case 0x03ce: return((CHAR)120);   /* omega Tonos */
+      case 0x0390: return((CHAR)105);   /* iota Dialytika+Tonos */
+      case 0x03aa: return((CHAR)105);   /* Iota Dialytika */
+      case 0x03ab: return((CHAR)116);   /* Upsilon Dialytika */
+      case 0x03d4: return((CHAR)116);   /* Upsilon Dialytika */
+      case 0x03d0: return((CHAR)98);    /* Alternative beta */
+      case 0x03d1: return((CHAR)104);   /* Open theta */
+      case 0x03d5: return((CHAR)117);   /* Open phi */
+      case 0x03d6: return((CHAR)112);   /* Alternative Pi */
       default: return(-1);
     }
 }
 
-int					/* Hungarian */
+int                                     /* Hungarian */
 #ifdef CK_ANSIC
 tx_hungarian(USHORT c)
 #else
@@ -8199,86 +8199,86 @@ tx_hungarian(c) USHORT c;
 #endif /* CK_ANSIC */
 {
     if (c == 0x02dd || c == 0x2033)
-      return(0x7e);			/* double acute accent */
-    else if (c & 0xff00)		/* Out of range */
+      return(0x7e);                     /* double acute accent */
+    else if (c & 0xff00)                /* Out of range */
       return(-1);
     switch(c) {
-      case 0xc1: return(0x40);		/* A acute */
-      case 0xc9: return(0x5b);		/* E acute */
-      case 0xd6: return(0x5c);		/* O umlaut */
-      case 0xdc: return(0x5d);		/* U umlaut */
-      case 0xe9: return(0x7b);		/* e acute */
-      case 0xf6: return(0x7c);		/* o umlaut */
-      case 0xfa: return(0x60);		/* u acute */
-      case 0xfc: return(0x7d);		/* u umlaut */
+      case 0xc1: return(0x40);          /* A acute */
+      case 0xc9: return(0x5b);          /* E acute */
+      case 0xd6: return(0x5c);          /* O umlaut */
+      case 0xdc: return(0x5d);          /* U umlaut */
+      case 0xe9: return(0x7b);          /* e acute */
+      case 0xf6: return(0x7c);          /* o umlaut */
+      case 0xfa: return(0x60);          /* u acute */
+      case 0xfc: return(0x7d);          /* u umlaut */
       default:   return(tx_usascii(c));
     }
 }
 
-int					/* Icelandic */
+int                                     /* Icelandic */
 #ifdef CK_ANSIC
 tx_icelandic(USHORT c)
 #else
 tx_icelandic(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c & 0xff00)			/* Out of range */
+    if (c & 0xff00)                     /* Out of range */
       return(-1);
     switch(c) {
-      case 0xde: return(0x40);		/* Thorn */
-      case 0xd0: return(0x5b);		/* Eth */
-      case 0xc6: return(0x5d);		/* AE */
-      case 0xd6: return(0x5e);		/* O umlaut */
-      case 0xfe: return(0x60);		/* thorn */
-      case 0xf0: return(0x7b);		/* eth */
-      case 0xe6: return(0x7d);		/* ae */
-      case 0xf6: return(0x7e);		/* o umlaut */
+      case 0xde: return(0x40);          /* Thorn */
+      case 0xd0: return(0x5b);          /* Eth */
+      case 0xc6: return(0x5d);          /* AE */
+      case 0xd6: return(0x5e);          /* O umlaut */
+      case 0xfe: return(0x60);          /* thorn */
+      case 0xf0: return(0x7b);          /* eth */
+      case 0xe6: return(0x7d);          /* ae */
+      case 0xf6: return(0x7e);          /* o umlaut */
       default:   return(tx_usascii(c));
     }
 }
 
-int					/* Italian */
+int                                     /* Italian */
 #ifdef CK_ANSIC
 tx_italian(USHORT c)
 #else
 tx_italian(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c & 0xff00)			/* Out of range */
+    if (c & 0xff00)                     /* Out of range */
       return(-1);
     switch(c) {
-      case 0xa3: return(0x23);		/* pound sign */
-      case 0xa7: return(0x40);		/* section sign */
-      case 0xb0: return(0x5b);		/* ring */
-      case 0xe7: return(0x5c);		/* c cedilla */
-      case 0xe9: return(0x5d);		/* e acute */
-      case 0xf9: return(0x60);		/* u grave */
-      case 0xe0: return(0x7b);		/* a grave */
-      case 0xf2: return(0x7c);		/* o grave */
-      case 0xe8: return(0x7d);		/* e grave */
-      case 0xec: return(0x7e);		/* i grave */
+      case 0xa3: return(0x23);          /* pound sign */
+      case 0xa7: return(0x40);          /* section sign */
+      case 0xb0: return(0x5b);          /* ring */
+      case 0xe7: return(0x5c);          /* c cedilla */
+      case 0xe9: return(0x5d);          /* e acute */
+      case 0xf9: return(0x60);          /* u grave */
+      case 0xe0: return(0x7b);          /* a grave */
+      case 0xf2: return(0x7c);          /* o grave */
+      case 0xe8: return(0x7d);          /* e grave */
+      case 0xec: return(0x7e);          /* i grave */
       default:   return(tx_usascii(c));
     }
 }
 
-int					/* JIS 0201 Roman */
+int                                     /* JIS 0201 Roman */
 #ifdef CK_ANSIC
 tx_jis0201r(USHORT c)
 #else
 tx_jis0201r(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c && 0xff80)			/* 7 bits */
+    if (c && 0xff80)                    /* 7 bits */
       return(-1);
-    switch (c) {			/* Like ASCII with */
-      case 0x00a5: return(92);		/* two exceptions */
+    switch (c) {                        /* Like ASCII with */
+      case 0x00a5: return(92);          /* two exceptions */
       case 0x00af: return(126);
       case 0x203e: return(126);
       default:   return(tx_usascii(c));
     }
 }
 
-int					/* JIS 0201 Katakana */
+int                                     /* JIS 0201 Katakana */
 #ifdef CK_ANSIC
 tx_jis0201k(USHORT c)
 #else
@@ -8286,12 +8286,12 @@ tx_jis0201k(c) USHORT c;
 #endif /* CK_ANSIC */
 {
     if (c < 0xff61 || c > 0xff9f)
-      return(-1);			/* Out of range */
+      return(-1);                       /* Out of range */
     else
-      return((int)c - 0xfec0);		/* 0xff61 - a0 = 0xfec0 */
+      return((int)c - 0xfec0);          /* 0xff61 - a0 = 0xfec0 */
 }
 
-int					/* Short KOI */
+int                                     /* Short KOI */
 #ifdef CK_ANSIC
 tx_koi7(USHORT c)
 #else
@@ -8301,7 +8301,7 @@ tx_koi7(c) USHORT c;
     if (c < 0x50)
       return((CHAR)(c & 0x7f));
     else if (c > 0x7f)
-      return(-1);			/* Out of range */
+      return(-1);                       /* Out of range */
     switch(c) {
       case 0x0410: return((CHAR)97);
       case 0x0411: return((CHAR)98);
@@ -8338,109 +8338,109 @@ tx_koi7(c) USHORT c;
     }
 }
 
-int					/* Portuguese */
+int                                     /* Portuguese */
 #ifdef CK_ANSIC
 tx_portuguese(USHORT c)
 #else
 tx_portuguese(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c & 0xff00)			/* Out of range */
+    if (c & 0xff00)                     /* Out of range */
       return(-1);
     switch(c) {
-      case 0xe0: return(0xa7);		/* section sign */
-      case 0xb0: return(0xc3);		/* A tilde */
-      case 0xe7: return(0xc7);		/* C cedilla */
-      case 0xa7: return(0xd5);		/* O tilde */
-      case 0xe9: return(0xe3);		/* a tilde */
-      case 0xf9: return(0xe7);		/* c cedilla */
-      case 0xe8: return(0xf5);		/* o tilde */
-      case 0xa8: return(0xb0);		/* ring */
+      case 0xe0: return(0xa7);          /* section sign */
+      case 0xb0: return(0xc3);          /* A tilde */
+      case 0xe7: return(0xc7);          /* C cedilla */
+      case 0xa7: return(0xd5);          /* O tilde */
+      case 0xe9: return(0xe3);          /* a tilde */
+      case 0xf9: return(0xe7);          /* c cedilla */
+      case 0xe8: return(0xf5);          /* o tilde */
+      case 0xa8: return(0xb0);          /* ring */
       default:   return(tx_usascii(c));
     }
 }
 
-int					/* Spanish */
+int                                     /* Spanish */
 #ifdef CK_ANSIC
 tx_spanish(USHORT c)
 #else
 tx_spanish(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c & 0xff00)			/* Out of range */
+    if (c & 0xff00)                     /* Out of range */
       return(-1);
     switch(c) {
-      case 0xa3: return(0x23);		/* pound sign */
-      case 0xa7: return(0x40);		/* section */
-      case 0xa1: return(0x5b);		/* inverted exclamation */
-      case 0xd1: return(0x5c);		/* N tilde */
-      case 0xbf: return(0x5d);		/* inverted question mark */
-      case 0xb0: return(0x7b);		/* ring */
-      case 0xf1: return(0x7c);		/* n tilde */
-      case 0xe7: return(0x7d);		/* c cedilla */
+      case 0xa3: return(0x23);          /* pound sign */
+      case 0xa7: return(0x40);          /* section */
+      case 0xa1: return(0x5b);          /* inverted exclamation */
+      case 0xd1: return(0x5c);          /* N tilde */
+      case 0xbf: return(0x5d);          /* inverted question mark */
+      case 0xb0: return(0x7b);          /* ring */
+      case 0xf1: return(0x7c);          /* n tilde */
+      case 0xe7: return(0x7d);          /* c cedilla */
       default:   return(tx_usascii(c));
     }
 }
 
-int					/* Swedish */
+int                                     /* Swedish */
 #ifdef CK_ANSIC
 tx_swedish(USHORT c)
 #else
 tx_swedish(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c & 0xff00)			/* Out of range */
+    if (c & 0xff00)                     /* Out of range */
       return(-1);
     switch(c) {
-      case 0xc9: return(0x40);		/* E acute */
-      case 0xc4: return(0x5b);		/* A umlaut*/
-      case 0xd6: return(0x5c);		/* O umlaut */
-      case 0xc5: return(0x5d);		/* A ring */
-      case 0xdc: return(0x5e);		/* U umlaut */
-      case 0xe9: return(0x60);		/* e acute */
-      case 0xe4: return(0x7b);		/* a umlaut */
-      case 0xf6: return(0x7c);		/* o umlaut */
-      case 0xe5: return(0x7d);		/* a ring */
-      case 0xfc: return(0x7e);		/* u umlaut */
+      case 0xc9: return(0x40);          /* E acute */
+      case 0xc4: return(0x5b);          /* A umlaut*/
+      case 0xd6: return(0x5c);          /* O umlaut */
+      case 0xc5: return(0x5d);          /* A ring */
+      case 0xdc: return(0x5e);          /* U umlaut */
+      case 0xe9: return(0x60);          /* e acute */
+      case 0xe4: return(0x7b);          /* a umlaut */
+      case 0xf6: return(0x7c);          /* o umlaut */
+      case 0xe5: return(0x7d);          /* a ring */
+      case 0xfc: return(0x7e);          /* u umlaut */
       default:   return(tx_usascii(c));
     }
 }
 
 
-int					/* Swiss NRC */
+int                                     /* Swiss NRC */
 #ifdef CK_ANSIC
 tx_swiss(USHORT c)
 #else
 tx_swiss(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c & 0xff00)			/* Out of range */
+    if (c & 0xff00)                     /* Out of range */
       return(-1);
     switch(c) {
-      case 0xf9: return(0x23);		/* u grave */
-      case 0xe0: return(0x40);		/* a grave */
-      case 0xe9: return(0x5b);		/* e acute */
-      case 0xe7: return(0x5c);		/* c cedilla */
-      case 0xea: return(0x5d);		/* e circumflex */
-      case 0xee: return(0x5e);		/* i circumflex */
-      case 0xe8: return(0x5f);		/* e grave */
-      case 0xf4: return(0x60);		/* o circumflex */
-      case 0xe4: return(0x7b);		/* a umlaut */
-      case 0xf6: return(0x7c);		/* o umlaut */
-      case 0xfc: return(0x7d);		/* u umlaut */
-      case 0xfb: return(0x7e);		/* u circumflex */
+      case 0xf9: return(0x23);          /* u grave */
+      case 0xe0: return(0x40);          /* a grave */
+      case 0xe9: return(0x5b);          /* e acute */
+      case 0xe7: return(0x5c);          /* c cedilla */
+      case 0xea: return(0x5d);          /* e circumflex */
+      case 0xee: return(0x5e);          /* i circumflex */
+      case 0xe8: return(0x5f);          /* e grave */
+      case 0xf4: return(0x60);          /* o circumflex */
+      case 0xe4: return(0x7b);          /* a umlaut */
+      case 0xf6: return(0x7c);          /* o umlaut */
+      case 0xfc: return(0x7d);          /* u umlaut */
+      case 0xfb: return(0x7e);          /* u circumflex */
       default:   return(tx_usascii(c));
     }
 }
 
-int					/* Dyadic APL */
+int                                     /* Dyadic APL */
 #ifdef CK_ANSIC
 tx_apl2(USHORT c)
 #else
 tx_apl2(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c >= 0x0041 && c <= 0x005a)	/* Letters */
+    if (c >= 0x0041 && c <= 0x005a)     /* Letters */
       return(c - 0xa2);
     switch (c) {
       case 0x00a0: return((CHAR)0xa0);
@@ -8514,13 +8514,13 @@ tx_apl2(c) USHORT c;
       case 0x25af: return((CHAR)0xc8);
       case 0x25cb: return((CHAR)0xdd);
       default:
-	if (c < 0xa0)
-	  return((CHAR)(c & 0xff));
-	return(tx_punc(c));
+        if (c < 0xa0)
+          return((CHAR)(c & 0xff));
+        return(tx_punc(c));
     }
 }
 
-int					/* APL-Plus */
+int                                     /* APL-Plus */
 #ifdef CK_ANSIC
 tx_apl3(USHORT c)
 #else
@@ -8657,11 +8657,11 @@ tx_apl3(c) USHORT c;
       case 0x25af: return((CHAR)0x8c);
       case 0x25cb: return((CHAR)0xb1);
       default:
-	return(tx_punc(c));
+        return(tx_punc(c));
     }
 }
 
-int					/* IBM APL2 */
+int                                     /* IBM APL2 */
 #ifdef CK_ANSIC
 tx_apl4(USHORT c)
 #else
@@ -8680,7 +8680,7 @@ tx_apl4(c) USHORT c;
       case 0x00ba: return((CHAR)0xa7);
       case 0x00bf: return((CHAR)0xa8);
       case 0x00c4: return((CHAR)0x8e);
-      case 0x00c5: return((CHAR)0xee);	/* and 0x8f */
+      case 0x00c5: return((CHAR)0xee);  /* and 0x8f */
       case 0x00c7: return((CHAR)0x80);
       case 0x00cc: return((CHAR)0xde);
       case 0x00d1: return((CHAR)0xa5);
@@ -8795,11 +8795,11 @@ tx_apl4(c) USHORT c;
       case 0x25af: return((CHAR)0x90);
       case 0x25cb: return((CHAR)0xea);
       default:
-	return(tx_punc(c));
+        return(tx_punc(c));
     }
 }
 
-int					/* APL-2741 */
+int                                     /* APL-2741 */
 #ifdef CK_ANSIC
 tx_apl5(USHORT c)
 #else
@@ -8934,13 +8934,13 @@ tx_apl5(c) USHORT c;
       case 0x25af: return((CHAR)0x8c);
       case 0x25cb: return((CHAR)0xb1);
       default:
-	return(tx_punc(c));
+        return(tx_punc(c));
     }
 }
 
 /* For Latin-1, use tx_ident() */
 
-int					/* Latin-2 */
+int                                     /* Latin-2 */
 #ifdef CK_ANSIC
 tx_8859_2(USHORT c)
 #else
@@ -9050,7 +9050,7 @@ tx_8859_2(c) USHORT c;
     }
 }
 
-int					/* Latin-3 */
+int                                     /* Latin-3 */
 #ifdef CK_ANSIC
 tx_8859_3(USHORT c)
 #else
@@ -9153,7 +9153,7 @@ tx_8859_3(c) USHORT c;
     }
 }
 
-int					/* Latin-4 */
+int                                     /* Latin-4 */
 #ifdef CK_ANSIC
 tx_8859_4(USHORT c)
 #else
@@ -9263,14 +9263,14 @@ tx_8859_4(c) USHORT c;
     }
 }
 
-int					/* ISO 8859-5 (Latin/Cyrillic) */
+int                                     /* ISO 8859-5 (Latin/Cyrillic) */
 #ifdef CK_ANSIC
 tx_8859_5(USHORT c)
 #else
 tx_8859_5(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0xa0)			/* (8859-5 is not Latin-5!) */
+    if (c < 0xa0)                       /* (8859-5 is not Latin-5!) */
       return((CHAR)(c & 0xff));
     switch(c) {
       case 0x00A0: return((CHAR)160);
@@ -9373,14 +9373,14 @@ tx_8859_5(c) USHORT c;
     }
 }
 
-int					/* ISO 8859-6 (Latin/Arabic) */
+int                                     /* ISO 8859-6 (Latin/Arabic) */
 #ifdef CK_ANSIC
 tx_8859_6(USHORT c)
 #else
 tx_8859_6(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0xa0)			/* (8859-6 != Latin-6) */
+    if (c < 0xa0)                       /* (8859-6 != Latin-6) */
       return((CHAR)(c & 0xff));
     switch(c) {
       case 0x00A0: return((CHAR)160);
@@ -9438,7 +9438,7 @@ tx_8859_6(c) USHORT c;
     }
 }
 
-int					/* ISO 8859-7 (Latin/Greek) */
+int                                     /* ISO 8859-7 (Latin/Greek) */
 #ifdef CK_ANSIC
 tx_8859_7(USHORT c)
 #else
@@ -9448,103 +9448,103 @@ tx_8859_7(c) USHORT c;
     if (c < 0xa0)
       return((CHAR)(c & 0xff));
     switch(c) {
-	case 0x00a0: return((CHAR)160);
-	case 0x00a3: return((CHAR)163);
-	case 0x00a6: return((CHAR)166);
-	case 0x00a7: return((CHAR)167);
-	case 0x00a8: return((CHAR)168);
-	case 0x00a9: return((CHAR)169);
-	case 0x00ab: return((CHAR)171);
-	case 0x00ac: return((CHAR)172);
-	case 0x00ad: return((CHAR)173);
-	case 0x00b0: return((CHAR)176);
-	case 0x00b1: return((CHAR)177);
-	case 0x00b2: return((CHAR)178);
-	case 0x00b3: return((CHAR)179);
-	case 0x00b7: return((CHAR)183);
-	case 0x00bb: return((CHAR)187);
-	case 0x00bd: return((CHAR)189);
-	case 0x02bc: return((CHAR)162);
-	case 0x02bd: return((CHAR)161);
-	case 0x0384: return((CHAR)180);
-	case 0x0385: return((CHAR)181);
-	case 0x0386: return((CHAR)182);
-	case 0x0388: return((CHAR)184);
-	case 0x0389: return((CHAR)185);
-	case 0x038a: return((CHAR)186);
-	case 0x038c: return((CHAR)188);
-	case 0x038e: return((CHAR)190);
-	case 0x038f: return((CHAR)191);
-	case 0x0390: return((CHAR)192);
-	case 0x0391: return((CHAR)193);
-	case 0x0392: return((CHAR)194);
-	case 0x0393: return((CHAR)195);
-	case 0x0394: return((CHAR)196);
-	case 0x0395: return((CHAR)197);
-	case 0x0396: return((CHAR)198);
-	case 0x0397: return((CHAR)199);
-	case 0x0398: return((CHAR)200);
-	case 0x0399: return((CHAR)201);
-	case 0x039a: return((CHAR)202);
-	case 0x039b: return((CHAR)203);
-	case 0x039c: return((CHAR)204);
-	case 0x039d: return((CHAR)205);
-	case 0x039e: return((CHAR)206);
-	case 0x039f: return((CHAR)207);
-	case 0x03a0: return((CHAR)208);
-	case 0x03a1: return((CHAR)209);
-	case 0x03a3: return((CHAR)211);
-	case 0x03a4: return((CHAR)212);
-	case 0x03a5: return((CHAR)213);
-	case 0x03a6: return((CHAR)214);
-	case 0x03a7: return((CHAR)215);
-	case 0x03a8: return((CHAR)216);
-	case 0x03a9: return((CHAR)217);
-	case 0x03aa: return((CHAR)218);
-	case 0x03ab: return((CHAR)219);
-	case 0x03ac: return((CHAR)220);
-	case 0x03ad: return((CHAR)221);
-	case 0x03ae: return((CHAR)222);
-	case 0x03af: return((CHAR)223);
-	case 0x03b0: return((CHAR)224);
-	case 0x03b1: return((CHAR)225);
-	case 0x03b2: return((CHAR)226);
-	case 0x03b3: return((CHAR)227);
-	case 0x03b4: return((CHAR)228);
-	case 0x03b5: return((CHAR)229);
-	case 0x03b6: return((CHAR)230);
-	case 0x03b7: return((CHAR)231);
-	case 0x03b8: return((CHAR)232);
-	case 0x03b9: return((CHAR)233);
-	case 0x03ba: return((CHAR)234);
-	case 0x03bb: return((CHAR)235);
-	case 0x03bc: return((CHAR)236);
-	case 0x03bd: return((CHAR)237);
-	case 0x03be: return((CHAR)238);
-	case 0x03bf: return((CHAR)239);
-	case 0x03c0: return((CHAR)240);
-	case 0x03c1: return((CHAR)241);
-	case 0x03c2: return((CHAR)242);
-	case 0x03c3: return((CHAR)243);
-	case 0x03c4: return((CHAR)244);
-	case 0x03c5: return((CHAR)245);
-	case 0x03c6: return((CHAR)246);
-	case 0x03c7: return((CHAR)247);
-	case 0x03c8: return((CHAR)248);
-	case 0x03c9: return((CHAR)249);
-	case 0x03ca: return((CHAR)250);
-	case 0x03cb: return((CHAR)251);
-	case 0x03cc: return((CHAR)252);
-	case 0x03cd: return((CHAR)253);
-	case 0x03ce: return((CHAR)254);
-	case 0x2015: return((CHAR)175);
-	case 0x2018: return((CHAR)161);
-	case 0x2019: return((CHAR)162);
-	default: return(tx_punc(c));
+        case 0x00a0: return((CHAR)160);
+        case 0x00a3: return((CHAR)163);
+        case 0x00a6: return((CHAR)166);
+        case 0x00a7: return((CHAR)167);
+        case 0x00a8: return((CHAR)168);
+        case 0x00a9: return((CHAR)169);
+        case 0x00ab: return((CHAR)171);
+        case 0x00ac: return((CHAR)172);
+        case 0x00ad: return((CHAR)173);
+        case 0x00b0: return((CHAR)176);
+        case 0x00b1: return((CHAR)177);
+        case 0x00b2: return((CHAR)178);
+        case 0x00b3: return((CHAR)179);
+        case 0x00b7: return((CHAR)183);
+        case 0x00bb: return((CHAR)187);
+        case 0x00bd: return((CHAR)189);
+        case 0x02bc: return((CHAR)162);
+        case 0x02bd: return((CHAR)161);
+        case 0x0384: return((CHAR)180);
+        case 0x0385: return((CHAR)181);
+        case 0x0386: return((CHAR)182);
+        case 0x0388: return((CHAR)184);
+        case 0x0389: return((CHAR)185);
+        case 0x038a: return((CHAR)186);
+        case 0x038c: return((CHAR)188);
+        case 0x038e: return((CHAR)190);
+        case 0x038f: return((CHAR)191);
+        case 0x0390: return((CHAR)192);
+        case 0x0391: return((CHAR)193);
+        case 0x0392: return((CHAR)194);
+        case 0x0393: return((CHAR)195);
+        case 0x0394: return((CHAR)196);
+        case 0x0395: return((CHAR)197);
+        case 0x0396: return((CHAR)198);
+        case 0x0397: return((CHAR)199);
+        case 0x0398: return((CHAR)200);
+        case 0x0399: return((CHAR)201);
+        case 0x039a: return((CHAR)202);
+        case 0x039b: return((CHAR)203);
+        case 0x039c: return((CHAR)204);
+        case 0x039d: return((CHAR)205);
+        case 0x039e: return((CHAR)206);
+        case 0x039f: return((CHAR)207);
+        case 0x03a0: return((CHAR)208);
+        case 0x03a1: return((CHAR)209);
+        case 0x03a3: return((CHAR)211);
+        case 0x03a4: return((CHAR)212);
+        case 0x03a5: return((CHAR)213);
+        case 0x03a6: return((CHAR)214);
+        case 0x03a7: return((CHAR)215);
+        case 0x03a8: return((CHAR)216);
+        case 0x03a9: return((CHAR)217);
+        case 0x03aa: return((CHAR)218);
+        case 0x03ab: return((CHAR)219);
+        case 0x03ac: return((CHAR)220);
+        case 0x03ad: return((CHAR)221);
+        case 0x03ae: return((CHAR)222);
+        case 0x03af: return((CHAR)223);
+        case 0x03b0: return((CHAR)224);
+        case 0x03b1: return((CHAR)225);
+        case 0x03b2: return((CHAR)226);
+        case 0x03b3: return((CHAR)227);
+        case 0x03b4: return((CHAR)228);
+        case 0x03b5: return((CHAR)229);
+        case 0x03b6: return((CHAR)230);
+        case 0x03b7: return((CHAR)231);
+        case 0x03b8: return((CHAR)232);
+        case 0x03b9: return((CHAR)233);
+        case 0x03ba: return((CHAR)234);
+        case 0x03bb: return((CHAR)235);
+        case 0x03bc: return((CHAR)236);
+        case 0x03bd: return((CHAR)237);
+        case 0x03be: return((CHAR)238);
+        case 0x03bf: return((CHAR)239);
+        case 0x03c0: return((CHAR)240);
+        case 0x03c1: return((CHAR)241);
+        case 0x03c2: return((CHAR)242);
+        case 0x03c3: return((CHAR)243);
+        case 0x03c4: return((CHAR)244);
+        case 0x03c5: return((CHAR)245);
+        case 0x03c6: return((CHAR)246);
+        case 0x03c7: return((CHAR)247);
+        case 0x03c8: return((CHAR)248);
+        case 0x03c9: return((CHAR)249);
+        case 0x03ca: return((CHAR)250);
+        case 0x03cb: return((CHAR)251);
+        case 0x03cc: return((CHAR)252);
+        case 0x03cd: return((CHAR)253);
+        case 0x03ce: return((CHAR)254);
+        case 0x2015: return((CHAR)175);
+        case 0x2018: return((CHAR)161);
+        case 0x2019: return((CHAR)162);
+        default: return(tx_punc(c));
     }
 }
 
-int					/* ISO 8859-8 (Latin/Hebrew) */
+int                                     /* ISO 8859-8 (Latin/Hebrew) */
 #ifdef CK_ANSIC
 tx_8859_8(USHORT c)
 #else
@@ -9616,7 +9616,7 @@ tx_8859_8(c) USHORT c;
     }
 }
 
-int					/* ISO 8859-9 (Latin-4) */
+int                                     /* ISO 8859-9 (Latin-4) */
 #ifdef CK_ANSIC
 tx_8859_9(USHORT c)
 #else
@@ -9626,8 +9626,8 @@ tx_8859_9(c) USHORT c;
     if (c < 0xa0)
       return((CHAR)(c & 0xff));
     switch(c) {
-      case 0x011E: return((CHAR)208);	/* Differs from Latin-1 in */
-      case 0x011F: return((CHAR)240);	/* only six places */
+      case 0x011E: return((CHAR)208);   /* Differs from Latin-1 in */
+      case 0x011F: return((CHAR)240);   /* only six places */
       case 0x0130: return((CHAR)221);
       case 0x0131: return((CHAR)253);
       case 0x015E: return((CHAR)222);
@@ -9636,7 +9636,7 @@ tx_8859_9(c) USHORT c;
     }
 }
 
-int					/* Latin-6 */
+int                                     /* Latin-6 */
 #ifdef CK_ANSIC
 tx_8859_10(USHORT c)
 #else
@@ -9747,7 +9747,7 @@ tx_8859_10(c) USHORT c;
 }
 
 
-int					/* ISO 8859-15 Latin-9 */
+int                                     /* ISO 8859-15 Latin-9 */
 #ifdef CK_ANSIC
 tx_8859_15(USHORT c)
 #else
@@ -9757,8 +9757,8 @@ tx_8859_15(c) USHORT c;
     if (c < 0xa0)
       return((CHAR)(c & 0xff));
     switch(c) {
-      case 0x20AC: return((CHAR)0xA4);	/* Differs from Latin-1 in */
-      case 0x0160: return((CHAR)0xAC);	/* only eight places */
+      case 0x20AC: return((CHAR)0xA4);  /* Differs from Latin-1 in */
+      case 0x0160: return((CHAR)0xAC);  /* only eight places */
       case 0x0161: return((CHAR)0xA8);
       case 0x017D: return((CHAR)0xB4);
       case 0x017E: return((CHAR)0xB8);
@@ -9769,7 +9769,7 @@ tx_8859_15(c) USHORT c;
     }
 }
 
-int					/* Old KOI-8 (ECMA 113 First Ed.) */
+int                                     /* Old KOI-8 (ECMA 113 First Ed.) */
 #ifdef CK_ANSIC
 tx_koi8(USHORT c)
 #else
@@ -9846,7 +9846,7 @@ tx_koi8(c) USHORT c;
     }
 }
 
-int					/* UCS-2 to KOI8-R (Russia) */
+int                                     /* UCS-2 to KOI8-R (Russia) */
 #ifdef CK_ANSIC
 tx_koi8r(USHORT c)
 #else
@@ -9988,7 +9988,7 @@ tx_koi8r(c) USHORT c;
     }
 }
 
-int					/* KOI8-U (Ukraine) */
+int                                     /* KOI8-U (Ukraine) */
 #ifdef CK_ANSIC
 tx_koi8u(USHORT c)
 #else
@@ -10131,7 +10131,7 @@ tx_koi8u(c) USHORT c;
 }
 
 
-int					/* DEC MCS */
+int                                     /* DEC MCS */
 #ifdef CK_ANSIC
 tx_decmcs(USHORT c)
 #else
@@ -10154,25 +10154,25 @@ tx_decmcs(c) USHORT c;
       case 0x00f0:
       case 0x00fe:
       case 0x00ff:
-        return(-1);			/* These are all undefined in DECMCS */
-      case 0x00a4:			/* Currency sign */
-	return((CHAR)0xa8);
-      case 0x0152:			/* OE */
-	return((CHAR)0xd7);
-      case 0x0153:			/* oe */
-	return((CHAR)0xf7);
+        return(-1);                     /* These are all undefined in DECMCS */
+      case 0x00a4:                      /* Currency sign */
+        return((CHAR)0xa8);
+      case 0x0152:                      /* OE */
+        return((CHAR)0xd7);
+      case 0x0153:                      /* oe */
+        return((CHAR)0xf7);
       default: return(tx_ident(c));
     }
 }
 
-int					/* NeXTSTEP */
+int                                     /* NeXTSTEP */
 #ifdef CK_ANSIC
 tx_nextstep(USHORT c)
 #else
 tx_nextstep(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0x80)			/* Has C1 graphics */
+    if (c < 0x80)                       /* Has C1 graphics */
       return((CHAR)(c & 0xff));
     switch (c) {
       case 0x00a0: return((CHAR)(128 & 0xff));
@@ -10305,7 +10305,7 @@ tx_nextstep(c) USHORT c;
     }
 }
 
-int					/* DG International */
+int                                     /* DG International */
 #ifdef CK_ANSIC
 tx_dgi(USHORT c)
 #else
@@ -10411,14 +10411,14 @@ tx_dgi(c) USHORT c;
     }
 }
 
-int					/* Macintosh Latin */
+int                                     /* Macintosh Latin */
 #ifdef CK_ANSIC
 tx_maclatin(USHORT c)
 #else
 tx_maclatin(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0x80)			/* Has C1 graphics */
+    if (c < 0x80)                       /* Has C1 graphics */
       return((CHAR)(c & 0xff));
     switch (c) {
       case 0x00a0: return((CHAR)(202 & 0xff));
@@ -10553,14 +10553,14 @@ tx_maclatin(c) USHORT c;
     }
 }
 
-int					/* Apple QuickDraw / CP10000 */
+int                                     /* Apple QuickDraw / CP10000 */
 #ifdef CK_ANSIC
 tx_quickdraw(USHORT c)
 #else
 tx_quickdraw(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0x80)			/* Has C1 graphics */
+    if (c < 0x80)                       /* Has C1 graphics */
       return((CHAR)(c & 0xff));
     switch (c) {
       case 0x00a0: return((CHAR)(202 & 0xff));
@@ -10695,7 +10695,7 @@ tx_quickdraw(c) USHORT c;
     }
 }
 
-int					/* HP Roman-8 */
+int                                     /* HP Roman-8 */
 #ifdef CK_ANSIC
 tx_hproman8(USHORT c)
 #else
@@ -10801,14 +10801,14 @@ tx_hproman8(c) USHORT c;
     }
 }
 
-int					/* PC Code Page 437 */
+int                                     /* PC Code Page 437 */
 #ifdef CK_ANSIC
 tx_cp437(USHORT c)
 #else
 tx_cp437(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0x80)			/* Has C1 graphics */
+    if (c < 0x80)                       /* Has C1 graphics */
       return((CHAR)(c & 0xff));
     switch (c) {
       case 0x00a0: return((CHAR)(255 & 0xff));
@@ -10982,50 +10982,50 @@ tx_cp437(c) USHORT c;
       case 0x2592: return((CHAR)(177 & 0xff));
       case 0x2593: return((CHAR)(178 & 0xff));
       case 0x25a0: return((CHAR)(254 & 0xff)); /* Black square */
-      default: return(tx_cpsub(c));	/* For box characters etc */
+      default: return(tx_cpsub(c));     /* For box characters etc */
     }
 }
 
-int					/* Mazovia */
+int                                     /* Mazovia */
 #ifdef CK_ANSIC
 tx_mazovia(USHORT c)
 #else
 tx_mazovia(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0x80)			/* Has C1 graphics */
+    if (c < 0x80)                       /* Has C1 graphics */
       return((CHAR)(c & 0xff));
     switch (c) {
-      case 0x00d3: return((CHAR)0xa3 & 0xff);	/* O acute */
-      case 0x00f3: return((CHAR)0xa2 & 0xff);	/* O acute */
-      case 0x0104: return((CHAR)0x8f & 0xff);	/* A Ogonek */
-      case 0x0105: return((CHAR)0x86 & 0xff);	/* a Ogonek */
-      case 0x0106: return((CHAR)0x95 & 0xff);	/* C acute */
-      case 0x0107: return((CHAR)0x8d & 0xff);	/* c acute */
-      case 0x0118: return((CHAR)0x90 & 0xff);	/* E Ogonek */
-      case 0x0119: return((CHAR)0x91 & 0xff);	/* E Ogonek */
-      case 0x0141: return((CHAR)0x9c & 0xff);	/* L stroke */
-      case 0x0142: return((CHAR)0x92 & 0xff);	/* L stroke */
-      case 0x0143: return((CHAR)0xa5 & 0xff);	/* N acute */
-      case 0x0144: return((CHAR)0xa4 & 0xff);	/* N acute */
-      case 0x015a: return((CHAR)0x98 & 0xff);	/* S acute */
-      case 0x015b: return((CHAR)0x9e & 0xff);	/* S acute */
-      case 0x0179: return((CHAR)0xa0 & 0xff);	/* Z acute */
-      case 0x017a: return((CHAR)0xa6 & 0xff);	/* Z acute */
-      case 0x017b: return((CHAR)0xa1 & 0xff);	/* Z dot above */
-      case 0x017c: return((CHAR)0xa7 & 0xff);	/* Z dot above */
+      case 0x00d3: return((CHAR)0xa3 & 0xff);   /* O acute */
+      case 0x00f3: return((CHAR)0xa2 & 0xff);   /* O acute */
+      case 0x0104: return((CHAR)0x8f & 0xff);   /* A Ogonek */
+      case 0x0105: return((CHAR)0x86 & 0xff);   /* a Ogonek */
+      case 0x0106: return((CHAR)0x95 & 0xff);   /* C acute */
+      case 0x0107: return((CHAR)0x8d & 0xff);   /* c acute */
+      case 0x0118: return((CHAR)0x90 & 0xff);   /* E Ogonek */
+      case 0x0119: return((CHAR)0x91 & 0xff);   /* E Ogonek */
+      case 0x0141: return((CHAR)0x9c & 0xff);   /* L stroke */
+      case 0x0142: return((CHAR)0x92 & 0xff);   /* L stroke */
+      case 0x0143: return((CHAR)0xa5 & 0xff);   /* N acute */
+      case 0x0144: return((CHAR)0xa4 & 0xff);   /* N acute */
+      case 0x015a: return((CHAR)0x98 & 0xff);   /* S acute */
+      case 0x015b: return((CHAR)0x9e & 0xff);   /* S acute */
+      case 0x0179: return((CHAR)0xa0 & 0xff);   /* Z acute */
+      case 0x017a: return((CHAR)0xa6 & 0xff);   /* Z acute */
+      case 0x017b: return((CHAR)0xa1 & 0xff);   /* Z dot above */
+      case 0x017c: return((CHAR)0xa7 & 0xff);   /* Z dot above */
       default: return(tx_cp437(c));
     }
 }
 
-int					/* PC Code Page 850 */
+int                                     /* PC Code Page 850 */
 #ifdef CK_ANSIC
 tx_cp850(USHORT c)
 #else
 tx_cp850(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0x80)			/* Has C1 graphics */
+    if (c < 0x80)                       /* Has C1 graphics */
       return((CHAR)(c & 0xff));
     switch (c) {
       case 0x00a0: return((CHAR)(255 & 0xff));
@@ -11156,18 +11156,18 @@ tx_cp850(c) USHORT c;
       case 0x2592: return((CHAR)(177 & 0xff));
       case 0x2593: return((CHAR)(178 & 0xff));
       case 0x25a0: return((CHAR)(254 & 0xff));
-      default: return(tx_cpsub(c));	/* For box characters etc */
+      default: return(tx_cpsub(c));     /* For box characters etc */
     }
 }
 
-int					/* PC Code Page 858 */
+int                                     /* PC Code Page 858 */
 #ifdef CK_ANSIC
 tx_cp858(USHORT c)
 #else
 tx_cp858(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0x80)			/* Has C1 graphics */
+    if (c < 0x80)                       /* Has C1 graphics */
       return((CHAR)(c & 0xff));
     switch (c) {
       case 0x00a0: return((CHAR)(255 & 0xff));
@@ -11298,11 +11298,11 @@ tx_cp858(c) USHORT c;
       case 0x2592: return((CHAR)(177 & 0xff));
       case 0x2593: return((CHAR)(178 & 0xff));
       case 0x25a0: return((CHAR)(254 & 0xff));
-      default: return(tx_cpsub(c));	/* For box characters etc */
+      default: return(tx_cpsub(c));     /* For box characters etc */
     }
 }
 
-int					/* Windows Code Page 1250 (Latin-2) */
+int                                     /* Windows Code Page 1250 (Latin-2) */
 #ifdef CK_ANSIC
 tx_cp1250(USHORT c)
 #else
@@ -11336,64 +11336,64 @@ tx_cp1250(c) USHORT c;
       case 0x013E: return((CHAR)(0xbe & 0xff));
       case 0x0141: return((CHAR)(0xa3 & 0xff));
       case 0x0142: return((CHAR)(0xb3 & 0xff));
-      case 0x015A: return((CHAR)(0x8c & 0xff));	/* S acute */
+      case 0x015A: return((CHAR)(0x8c & 0xff)); /* S acute */
       case 0x015E: return((CHAR)(0xaa & 0xff));
       case 0x015F: return((CHAR)(0xba & 0xff));
       case 0x015b: return((CHAR)(0x9c & 0xff)); /* s acute */
-      case 0x0164: return((CHAR)(0x8d & 0xff));	/* T caron */
-      case 0x0165: return((CHAR)(0x9d & 0xff));	/* t caron */
-      case 0x0173: return((CHAR)(0x9e & 0xff));	/* z caron */
-      case 0x0179: return((CHAR)(0x8f & 0xff));	/* Z acute */
-      case 0x017A: return((CHAR)(0x9f & 0xff));	/* z acute */
+      case 0x0164: return((CHAR)(0x8d & 0xff)); /* T caron */
+      case 0x0165: return((CHAR)(0x9d & 0xff)); /* t caron */
+      case 0x0173: return((CHAR)(0x9e & 0xff)); /* z caron */
+      case 0x0179: return((CHAR)(0x8f & 0xff)); /* Z acute */
+      case 0x017A: return((CHAR)(0x9f & 0xff)); /* z acute */
       case 0x017B: return((CHAR)(0xaf & 0xff));
       case 0x017C: return((CHAR)(0xbf & 0xff));
-      case 0x017D: return((CHAR)(0x8e & 0xff));	/* Z caron */
+      case 0x017D: return((CHAR)(0x8e & 0xff)); /* Z caron */
       case 0x02C7: return((CHAR)(0xa1 & 0xff));
       case 0x02D8: return((CHAR)(0xa2 & 0xff));
       case 0x02DB: return((CHAR)(0xb2 & 0xff));
       case 0x02DD: return((CHAR)(0xbd & 0xff));
-      case 0x2010: case 0x2011:		/* Hyphens */
-	return((CHAR)(0x2d & 0xff));
-      case 0x2012: case 0x2013:		/* en-dashes */
-	return((CHAR)(0x96 & 0xff));
-      case 0x2014: case 0x2015:		/* em-dashes */
-	return((CHAR)(0x97 & 0xff));
-      case 0x2018:			/* Various quotation marks... */
-	return((CHAR)(0x91 & 0xff));
+      case 0x2010: case 0x2011:         /* Hyphens */
+        return((CHAR)(0x2d & 0xff));
+      case 0x2012: case 0x2013:         /* en-dashes */
+        return((CHAR)(0x96 & 0xff));
+      case 0x2014: case 0x2015:         /* em-dashes */
+        return((CHAR)(0x97 & 0xff));
+      case 0x2018:                      /* Various quotation marks... */
+        return((CHAR)(0x91 & 0xff));
       case 0x2019:
-	return((CHAR)(0x92 & 0xff));
+        return((CHAR)(0x92 & 0xff));
       case 0x201c:
-	return((CHAR)(0x93 & 0xff));
+        return((CHAR)(0x93 & 0xff));
       case 0x201d:
-	return((CHAR)(0x94 & 0xff));
+        return((CHAR)(0x94 & 0xff));
       case 0x201e:
-	return((CHAR)(0x84 & 0xff));
-      case 0x2020:			/* Dagger */
-	return((CHAR)(0x86 & 0xff));
-      case 0x2021:			/* Double Dagger */
-	return((CHAR)(0x87 & 0xff));
-      case 0x2022:			/* Bullet */
-	return((CHAR)(0x95 & 0xff));
-      case 0x2026:			/* Ellipsis */
-	return((CHAR)(0x85 & 0xff));
-      case 0x2030:			/* Per mil */
-	return((CHAR)(0x89 & 0xff));
-      case 0x20AC:			/* Euro */
+        return((CHAR)(0x84 & 0xff));
+      case 0x2020:                      /* Dagger */
+        return((CHAR)(0x86 & 0xff));
+      case 0x2021:                      /* Double Dagger */
+        return((CHAR)(0x87 & 0xff));
+      case 0x2022:                      /* Bullet */
+        return((CHAR)(0x95 & 0xff));
+      case 0x2026:                      /* Ellipsis */
+        return((CHAR)(0x85 & 0xff));
+      case 0x2030:                      /* Per mil */
+        return((CHAR)(0x89 & 0xff));
+      case 0x20AC:                      /* Euro */
           return((CHAR)(0x80 & 0xff));
-      case 0x2122:			/* Trade Mark */
-	return((CHAR)(0x99 & 0xff));
+      case 0x2122:                      /* Trade Mark */
+        return((CHAR)(0x99 & 0xff));
       default: return(0x003f);
     }
 }
 
-int					/* Windows Code Page 1251 (Cyrillic) */
+int                                     /* Windows Code Page 1251 (Cyrillic) */
 #ifdef CK_ANSIC
 tx_cp1251(USHORT c)
 #else
 tx_cp1251(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0x80)			/* Has C1 graphics */
+    if (c < 0x80)                       /* Has C1 graphics */
       return((CHAR)(c & 0xff));
     /* This is simply the inverse of u_cp1251.map */
     switch (c) {
@@ -11522,7 +11522,7 @@ tx_cp1251(c) USHORT c;
       case 0x2022: return((CHAR)(0x95 & 0xff));
       case 0x2026: return((CHAR)(0x85 & 0xff));
       case 0x2031: return((CHAR)(0x89 & 0xff));
-      case 0x20AC:			/* Euro */
+      case 0x20AC:                      /* Euro */
           return((CHAR)(0x88 & 0xff));
       case 0x2116: return((CHAR)(0xb9 & 0xff));
       case 0x2122: return((CHAR)(0x99 & 0xff));
@@ -11540,64 +11540,64 @@ tx_cp1252(c) USHORT c;
     if (c < 0x80 || (c > 0x9f && c <= 0xff)) /* Has C1 graphics */
       return((CHAR)(c & 0xff));
     switch (c) {
-      case 0x0152:			/* OE */
-	return((CHAR)(0x8c & 0xff));
-      case 0x0153:			/* oe */
-	return((CHAR)(0x9c & 0xff));
-      case 0x0160:			/* S caron */
-	return((CHAR)(0x8a & 0xff));
-      case 0x0161:			/* s caron */
-	return((CHAR)(0x9a & 0xff));
-      case 0x0178:			/* Y diaeresis */
-	return((CHAR)(0x9f & 0xff));
-      case 0x017D:			/* Z caron */
-	return((CHAR)(0x8e & 0xff));
-      case 0x017E:			/* z caron */
-	return((CHAR)(0x9e & 0xff));
-      case 0x0192:			/* Florin */
-	return((CHAR)(0x83 & 0xff));
-      case 0x2010: case 0x2011:		/* Hyphens */
-	return((CHAR)(0x2d & 0xff));
-      case 0x2012: case 0x2013:		/* en-dashes */
-	return((CHAR)(0x96 & 0xff));
-      case 0x2014: case 0x2015:		/* em-dashes */
-	return((CHAR)(0x97 & 0xff));
-      case 0x2018:			/* Various quotation marks... */
-	return((CHAR)(0x91 & 0xff));
+      case 0x0152:                      /* OE */
+        return((CHAR)(0x8c & 0xff));
+      case 0x0153:                      /* oe */
+        return((CHAR)(0x9c & 0xff));
+      case 0x0160:                      /* S caron */
+        return((CHAR)(0x8a & 0xff));
+      case 0x0161:                      /* s caron */
+        return((CHAR)(0x9a & 0xff));
+      case 0x0178:                      /* Y diaeresis */
+        return((CHAR)(0x9f & 0xff));
+      case 0x017D:                      /* Z caron */
+        return((CHAR)(0x8e & 0xff));
+      case 0x017E:                      /* z caron */
+        return((CHAR)(0x9e & 0xff));
+      case 0x0192:                      /* Florin */
+        return((CHAR)(0x83 & 0xff));
+      case 0x2010: case 0x2011:         /* Hyphens */
+        return((CHAR)(0x2d & 0xff));
+      case 0x2012: case 0x2013:         /* en-dashes */
+        return((CHAR)(0x96 & 0xff));
+      case 0x2014: case 0x2015:         /* em-dashes */
+        return((CHAR)(0x97 & 0xff));
+      case 0x2018:                      /* Various quotation marks... */
+        return((CHAR)(0x91 & 0xff));
       case 0x2019:
- 	return((CHAR)(0x92 & 0xff));
+        return((CHAR)(0x92 & 0xff));
       case 0x201c:
- 	return((CHAR)(0x93 & 0xff));
+        return((CHAR)(0x93 & 0xff));
       case 0x201d:
- 	return((CHAR)(0x94 & 0xff));
+        return((CHAR)(0x94 & 0xff));
       case 0x201e:
- 	return((CHAR)(0x84 & 0xff));
-      case 0x2020:			/* Dagger */
-	return((CHAR)(0x86 & 0xff));
-      case 0x2021:			/* Double Dagger */
-	return((CHAR)(0x87 & 0xff));
-      case 0x2022:			/* Bullet */
-	return((CHAR)(0x95 & 0xff));
-      case 0x2026:			/* Ellipsis */
-	return((CHAR)(0x85 & 0xff));
-      case 0x2030:			/* Per mil */
-	return((CHAR)(0x89 & 0xff));
-      case 0x20AC:			/* Euro */
+        return((CHAR)(0x84 & 0xff));
+      case 0x2020:                      /* Dagger */
+        return((CHAR)(0x86 & 0xff));
+      case 0x2021:                      /* Double Dagger */
+        return((CHAR)(0x87 & 0xff));
+      case 0x2022:                      /* Bullet */
+        return((CHAR)(0x95 & 0xff));
+      case 0x2026:                      /* Ellipsis */
+        return((CHAR)(0x85 & 0xff));
+      case 0x2030:                      /* Per mil */
+        return((CHAR)(0x89 & 0xff));
+      case 0x20AC:                      /* Euro */
           return((CHAR)(0x80 & 0xff));
-      case 0x2122:			/* Trade Mark */
-	return((CHAR)(0x99 & 0xff));
+      case 0x2122:                      /* Trade Mark */
+        return((CHAR)(0x99 & 0xff));
       default: return(0x003f);
     }
 }
 
-int					/* PC Code Page 852 */
+int                                     /* PC Code Page 852 */
 #ifdef CK_ANSIC
 tx_cp852(USHORT c)
 #else
 tx_cp852(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0x80)			/* Has C1 graphics */
+    if (c < 0x80)                       /* Has C1 graphics */
       return((CHAR)(c & 0xff));
     switch (c) {
       case 0x00a0: return((CHAR)(255 & 0xff));
@@ -11728,18 +11728,18 @@ tx_cp852(c) USHORT c;
       case 0x2592: return((CHAR)(177 & 0xff));
       case 0x2593: return((CHAR)(178 & 0xff));
       case 0x25a0: return((CHAR)(254 & 0xff));
-      default: return(tx_cpsub(c));	/* For box characters etc */
+      default: return(tx_cpsub(c));     /* For box characters etc */
     }
 }
 
-int					/* Windows Code Page 1253 (Greek) */
+int                                     /* Windows Code Page 1253 (Greek) */
 #ifdef CK_ANSIC
 tx_cp1253(USHORT c)
 #else
 tx_cp1253(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0x80)			/* Has C1 graphics */
+    if (c < 0x80)                       /* Has C1 graphics */
       return((CHAR)(c & 0xff));
     switch (c) {
       case 0x003c: return((CHAR)(0x8b & 0xff));
@@ -11850,14 +11850,14 @@ tx_cp1253(c) USHORT c;
       case 0x2022: return((CHAR)(0x95 & 0xff));
       case 0x2026: return((CHAR)(0x85 & 0xff));
       case 0x2031: return((CHAR)(0x89 & 0xff));
-      case 0x20AC:			/* Euro */
+      case 0x20AC:                      /* Euro */
           return((CHAR)(0x80 & 0xff));
       case 0x2122: return((CHAR)(0x99 & 0xff));
       default: return(0x003f);
     }
 }
 
-int					/* Windows Code Page 1254 (Turkish) */
+int                                     /* Windows Code Page 1254 (Turkish) */
 #ifdef CK_ANSIC
 tx_cp1254(USHORT c)
 #else
@@ -11867,13 +11867,13 @@ tx_cp1254(c) USHORT c;
     if (c < 0x80)
       return((CHAR)(c & 0xff));
     switch (c) {
-      case 0x011e: return((CHAR)(0xd0 & 0xff));	/* G breve    */
-      case 0x0130: return((CHAR)(0xdd & 0xff));	/* I with dot */
-      case 0x015e: return((CHAR)(0xde & 0xff));	/* S cedilla  */
-      case 0x011f: return((CHAR)(0xf0 & 0xff));	/* g breve    */
-      case 0x0131: return((CHAR)(0xfd & 0xff));	/* i dotless */
-      case 0x015f: return((CHAR)(0xfe & 0xff));	/* s cedilla */
-      default: return(tx_cp1252(c));	/* The rest is like Windows Latin-1 */
+      case 0x011e: return((CHAR)(0xd0 & 0xff)); /* G breve    */
+      case 0x0130: return((CHAR)(0xdd & 0xff)); /* I with dot */
+      case 0x015e: return((CHAR)(0xde & 0xff)); /* S cedilla  */
+      case 0x011f: return((CHAR)(0xf0 & 0xff)); /* g breve    */
+      case 0x0131: return((CHAR)(0xfd & 0xff)); /* i dotless */
+      case 0x015f: return((CHAR)(0xfe & 0xff)); /* s cedilla */
+      default: return(tx_cp1252(c));    /* The rest is like Windows Latin-1 */
     }
 }
 
@@ -11888,220 +11888,220 @@ tx_cp1255(c) USHORT c;
         return((CHAR)(c & 0xff));
     switch (c) {
       case 0x20AC:
-	return((CHAR)(0x80 & 0xff));	/* EURO SIGN */
+        return((CHAR)(0x80 & 0xff));    /* EURO SIGN */
       case 0x201A:
-	return((CHAR)(0x82 & 0xff));	/* SINGLE LOW-9 QUOTATION MARK */
+        return((CHAR)(0x82 & 0xff));    /* SINGLE LOW-9 QUOTATION MARK */
       case 0x0192:
-	return((CHAR)(0x83 & 0xff));	/* LATIN SMALL LETTER F WITH HOOK */
+        return((CHAR)(0x83 & 0xff));    /* LATIN SMALL LETTER F WITH HOOK */
       case 0x201E:
-	return((CHAR)(0x84 & 0xff));	/* DOUBLE LOW-9 QUOTATION MARK */
+        return((CHAR)(0x84 & 0xff));    /* DOUBLE LOW-9 QUOTATION MARK */
       case 0x2026:
-	return((CHAR)(0x85 & 0xff));	/* HORIZONTAL ELLIPSIS */
+        return((CHAR)(0x85 & 0xff));    /* HORIZONTAL ELLIPSIS */
       case 0x2020:
-	return((CHAR)(0x86 & 0xff));	/* DAGGER */
+        return((CHAR)(0x86 & 0xff));    /* DAGGER */
       case 0x2021:
-	return((CHAR)(0x87 & 0xff));	/* DOUBLE DAGGER */
+        return((CHAR)(0x87 & 0xff));    /* DOUBLE DAGGER */
       case 0x02C6:
-	return((CHAR)(0x88 & 0xff));	/* MODIFIER LETTER CIRCUMFLEX ACCENT */
+        return((CHAR)(0x88 & 0xff));    /* MODIFIER LETTER CIRCUMFLEX ACCENT */
       case 0x2030:
-	return((CHAR)(0x89 & 0xff));	/* PER MILLE SIGN */
+        return((CHAR)(0x89 & 0xff));    /* PER MILLE SIGN */
       case 0x2039:
-	return((CHAR)(0x8B & 0xff));	/* SINGLE LEFT-POINTING ANGLE QUOTE */
+        return((CHAR)(0x8B & 0xff));    /* SINGLE LEFT-POINTING ANGLE QUOTE */
       case 0x2018:
-	return((CHAR)(0x91 & 0xff));	/* LEFT SINGLE QUOTATION MARK */
+        return((CHAR)(0x91 & 0xff));    /* LEFT SINGLE QUOTATION MARK */
       case 0x2019:
-	return((CHAR)(0x92 & 0xff));	/* RIGHT SINGLE QUOTATION MARK */
+        return((CHAR)(0x92 & 0xff));    /* RIGHT SINGLE QUOTATION MARK */
       case 0x201C:
-	return((CHAR)(0x93 & 0xff));	/* LEFT DOUBLE QUOTATION MARK */
+        return((CHAR)(0x93 & 0xff));    /* LEFT DOUBLE QUOTATION MARK */
       case 0x201D:
-	return((CHAR)(0x94 & 0xff));	/* RIGHT DOUBLE QUOTATION MARK */
+        return((CHAR)(0x94 & 0xff));    /* RIGHT DOUBLE QUOTATION MARK */
       case 0x2022:
-	return((CHAR)(0x95 & 0xff));	/* BULLET */
+        return((CHAR)(0x95 & 0xff));    /* BULLET */
       case 0x2013:
-	return((CHAR)(0x96 & 0xff));	/* EN DASH */
+        return((CHAR)(0x96 & 0xff));    /* EN DASH */
       case 0x2014:
-        return((CHAR)(0x97 & 0xff));	/* EM DASH */
+        return((CHAR)(0x97 & 0xff));    /* EM DASH */
       case 0x02DC:
-        return((CHAR)(0x98 & 0xff));	/* SMALL TILDE */
+        return((CHAR)(0x98 & 0xff));    /* SMALL TILDE */
       case 0x2122:
-        return((CHAR)(0x99 & 0xff));	/* TRADE MARK SIGN */
+        return((CHAR)(0x99 & 0xff));    /* TRADE MARK SIGN */
       case 0x203A:
-        return((CHAR)(0x9B & 0xff));	/* SINGLE RIGHT-POINTING ANGLE QUOTE */
+        return((CHAR)(0x9B & 0xff));    /* SINGLE RIGHT-POINTING ANGLE QUOTE */
       case 0x00A0:
-        return((CHAR)(0xA0 & 0xff));	/* NO-BREAK SPACE */
+        return((CHAR)(0xA0 & 0xff));    /* NO-BREAK SPACE */
       case 0x00A1:
-        return((CHAR)(0xA1 & 0xff));	/* INVERTED EXCLAMATION MARK */
+        return((CHAR)(0xA1 & 0xff));    /* INVERTED EXCLAMATION MARK */
       case 0x00A2:
-        return((CHAR)(0xA2 & 0xff));	/* CENT SIGN */
+        return((CHAR)(0xA2 & 0xff));    /* CENT SIGN */
       case 0x00A3:
-        return((CHAR)(0xA3 & 0xff));	/* POUND SIGN */
+        return((CHAR)(0xA3 & 0xff));    /* POUND SIGN */
       case 0x20AA:
-        return((CHAR)(0xA4 & 0xff));	/* NEW SHEQEL SIGN */
+        return((CHAR)(0xA4 & 0xff));    /* NEW SHEQEL SIGN */
       case 0x00A5:
-        return((CHAR)(0xA5 & 0xff));	/* YEN SIGN */
+        return((CHAR)(0xA5 & 0xff));    /* YEN SIGN */
       case 0x00A6:
-        return((CHAR)(0xA6 & 0xff));	/* BROKEN BAR */
+        return((CHAR)(0xA6 & 0xff));    /* BROKEN BAR */
       case 0x00A7:
-        return((CHAR)(0xA7 & 0xff));	/* SECTION SIGN */
+        return((CHAR)(0xA7 & 0xff));    /* SECTION SIGN */
       case 0x00A8:
-        return((CHAR)(0xA8 & 0xff));	/* DIAERESIS */
+        return((CHAR)(0xA8 & 0xff));    /* DIAERESIS */
       case 0x00A9:
-        return((CHAR)(0xA9 & 0xff));	/* COPYRIGHT SIGN */
+        return((CHAR)(0xA9 & 0xff));    /* COPYRIGHT SIGN */
       case 0x00D7:
-        return((CHAR)(0xAA & 0xff));	/* MULTIPLICATION SIGN */
+        return((CHAR)(0xAA & 0xff));    /* MULTIPLICATION SIGN */
       case 0x00AB:
-        return((CHAR)(0xAB & 0xff));	/* LEFT-POINTING DOUBLE ANGLE QUOTE */
+        return((CHAR)(0xAB & 0xff));    /* LEFT-POINTING DOUBLE ANGLE QUOTE */
       case 0x00AC:
-        return((CHAR)(0xAC & 0xff));	/* NOT SIGN */
+        return((CHAR)(0xAC & 0xff));    /* NOT SIGN */
       case 0x00AD:
-        return((CHAR)(0xAD & 0xff));	/* SOFT HYPHEN */
+        return((CHAR)(0xAD & 0xff));    /* SOFT HYPHEN */
       case 0x00AE:
-        return((CHAR)(0xAE & 0xff));	/* REGISTERED SIGN */
+        return((CHAR)(0xAE & 0xff));    /* REGISTERED SIGN */
       case 0x00AF:
-        return((CHAR)(0xAF & 0xff));	/* MACRON */
+        return((CHAR)(0xAF & 0xff));    /* MACRON */
       case 0x00B0:
-        return((CHAR)(0xB0 & 0xff));	/* DEGREE SIGN */
+        return((CHAR)(0xB0 & 0xff));    /* DEGREE SIGN */
       case 0x00B1:
-        return((CHAR)(0xB1 & 0xff));	/* PLUS-MINUS SIGN */
+        return((CHAR)(0xB1 & 0xff));    /* PLUS-MINUS SIGN */
       case 0x00B2:
-        return((CHAR)(0xB2 & 0xff));	/* SUPERSCRIPT TWO */
+        return((CHAR)(0xB2 & 0xff));    /* SUPERSCRIPT TWO */
       case 0x00B3:
-        return((CHAR)(0xB3 & 0xff));	/* SUPERSCRIPT THREE */
+        return((CHAR)(0xB3 & 0xff));    /* SUPERSCRIPT THREE */
       case 0x00B4:
-        return((CHAR)(0xB4 & 0xff));	/* ACUTE ACCENT */
+        return((CHAR)(0xB4 & 0xff));    /* ACUTE ACCENT */
       case 0x00B5:
-        return((CHAR)(0xB5 & 0xff));	/* MICRO SIGN */
+        return((CHAR)(0xB5 & 0xff));    /* MICRO SIGN */
       case 0x00B6:
-        return((CHAR)(0xB6 & 0xff));	/* PILCROW SIGN */
+        return((CHAR)(0xB6 & 0xff));    /* PILCROW SIGN */
       case 0x00B7:
-        return((CHAR)(0xB7 & 0xff));	/* MIDDLE DOT */
+        return((CHAR)(0xB7 & 0xff));    /* MIDDLE DOT */
       case 0x00B8:
-        return((CHAR)(0xB8 & 0xff));	/* CEDILLA */
+        return((CHAR)(0xB8 & 0xff));    /* CEDILLA */
       case 0x00B9:
-        return((CHAR)(0xB9 & 0xff));	/* SUPERSCRIPT ONE */
+        return((CHAR)(0xB9 & 0xff));    /* SUPERSCRIPT ONE */
       case 0x00F7:
-        return((CHAR)(0xBA & 0xff));	/* DIVISION SIGN */
+        return((CHAR)(0xBA & 0xff));    /* DIVISION SIGN */
       case 0x00BB:
-        return((CHAR)(0xBB & 0xff));	/* RIGHT-POINTING DOUBLE ANGLE QUOTE */
+        return((CHAR)(0xBB & 0xff));    /* RIGHT-POINTING DOUBLE ANGLE QUOTE */
       case 0x00BC:
-        return((CHAR)(0xBC & 0xff));	/* VULGAR FRACTION ONE QUARTER */
+        return((CHAR)(0xBC & 0xff));    /* VULGAR FRACTION ONE QUARTER */
       case 0x00BD:
-        return((CHAR)(0xBD & 0xff));	/* VULGAR FRACTION ONE HALF */
+        return((CHAR)(0xBD & 0xff));    /* VULGAR FRACTION ONE HALF */
       case 0x00BE:
-        return((CHAR)(0xBE & 0xff));	/* VULGAR FRACTION THREE QUARTERS */
+        return((CHAR)(0xBE & 0xff));    /* VULGAR FRACTION THREE QUARTERS */
       case 0x00BF:
-        return((CHAR)(0xBF & 0xff));	/* INVERTED QUESTION MARK */
+        return((CHAR)(0xBF & 0xff));    /* INVERTED QUESTION MARK */
       case 0x05B0:
-        return((CHAR)(0xC0 & 0xff));	/* HEBREW POINT SHEVA */
+        return((CHAR)(0xC0 & 0xff));    /* HEBREW POINT SHEVA */
       case 0x05B1:
-        return((CHAR)(0xC1 & 0xff));	/* HEBREW POINT HATAF SEGOL */
+        return((CHAR)(0xC1 & 0xff));    /* HEBREW POINT HATAF SEGOL */
       case 0x05B2:
-        return((CHAR)(0xC2 & 0xff));	/* HEBREW POINT HATAF PATAH */
+        return((CHAR)(0xC2 & 0xff));    /* HEBREW POINT HATAF PATAH */
       case 0x05B3:
-        return((CHAR)(0xC3 & 0xff));	/* HEBREW POINT HATAF QAMATS */
+        return((CHAR)(0xC3 & 0xff));    /* HEBREW POINT HATAF QAMATS */
       case 0x05B4:
-        return((CHAR)(0xC4 & 0xff));	/* HEBREW POINT HIRIQ */
+        return((CHAR)(0xC4 & 0xff));    /* HEBREW POINT HIRIQ */
       case 0x05B5:
-        return((CHAR)(0xC5 & 0xff));	/* HEBREW POINT TSERE */
+        return((CHAR)(0xC5 & 0xff));    /* HEBREW POINT TSERE */
       case 0x05B6:
-        return((CHAR)(0xC6 & 0xff));	/* HEBREW POINT SEGOL */
+        return((CHAR)(0xC6 & 0xff));    /* HEBREW POINT SEGOL */
       case 0x05B7:
-        return((CHAR)(0xC7 & 0xff));	/* HEBREW POINT PATAH */
+        return((CHAR)(0xC7 & 0xff));    /* HEBREW POINT PATAH */
       case 0x05B8:
-        return((CHAR)(0xC8 & 0xff));	/* HEBREW POINT QAMATS */
+        return((CHAR)(0xC8 & 0xff));    /* HEBREW POINT QAMATS */
       case 0x05B9:
-        return((CHAR)(0xC9 & 0xff));	/* HEBREW POINT HOLAM */
+        return((CHAR)(0xC9 & 0xff));    /* HEBREW POINT HOLAM */
       case 0x05BB:
-        return((CHAR)(0xCB & 0xff));	/* HEBREW POINT QUBUTS */
+        return((CHAR)(0xCB & 0xff));    /* HEBREW POINT QUBUTS */
       case 0x05BC:
-        return((CHAR)(0xCC & 0xff));	/* HEBREW POINT DAGESH OR MAPIQ */
+        return((CHAR)(0xCC & 0xff));    /* HEBREW POINT DAGESH OR MAPIQ */
       case 0x05BD:
-        return((CHAR)(0xCD & 0xff));	/* HEBREW POINT METEG */
+        return((CHAR)(0xCD & 0xff));    /* HEBREW POINT METEG */
       case 0x05BE:
-        return((CHAR)(0xCE & 0xff));	/* HEBREW PUNCTUATION MAQAF */
+        return((CHAR)(0xCE & 0xff));    /* HEBREW PUNCTUATION MAQAF */
       case 0x05BF:
-        return((CHAR)(0xCF & 0xff));	/* HEBREW POINT RAFE */
+        return((CHAR)(0xCF & 0xff));    /* HEBREW POINT RAFE */
       case 0x05C0:
-        return((CHAR)(0xD0 & 0xff));	/* HEBREW PUNCTUATION PASEQ */
+        return((CHAR)(0xD0 & 0xff));    /* HEBREW PUNCTUATION PASEQ */
       case 0x05C1:
-        return((CHAR)(0xD1 & 0xff));	/* HEBREW POINT SHIN DOT */
+        return((CHAR)(0xD1 & 0xff));    /* HEBREW POINT SHIN DOT */
       case 0x05C2:
-        return((CHAR)(0xD2 & 0xff));	/* HEBREW POINT SIN DOT */
+        return((CHAR)(0xD2 & 0xff));    /* HEBREW POINT SIN DOT */
       case 0x05C3:
-        return((CHAR)(0xD3 & 0xff));	/* HEBREW PUNCTUATION SOF PASUQ */
+        return((CHAR)(0xD3 & 0xff));    /* HEBREW PUNCTUATION SOF PASUQ */
       case 0x05F0:
-        return((CHAR)(0xD4 & 0xff));	/* HEBREW LIG. YIDDISH DOUBLE VAV */
+        return((CHAR)(0xD4 & 0xff));    /* HEBREW LIG. YIDDISH DOUBLE VAV */
       case 0x05F1:
-        return((CHAR)(0xD5 & 0xff));	/* HEBREW LIGATURE YIDDISH VAV YOD */
+        return((CHAR)(0xD5 & 0xff));    /* HEBREW LIGATURE YIDDISH VAV YOD */
       case 0x05F2:
-        return((CHAR)(0xD6 & 0xff));	/* HEBREW LIG. YIDDISH DOUBLE YOD */
+        return((CHAR)(0xD6 & 0xff));    /* HEBREW LIG. YIDDISH DOUBLE YOD */
       case 0x05F3:
-        return((CHAR)(0xD7 & 0xff));	/* HEBREW PUNCTUATION GERESH */
+        return((CHAR)(0xD7 & 0xff));    /* HEBREW PUNCTUATION GERESH */
       case 0x05F4:
-        return((CHAR)(0xD8 & 0xff));	/* HEBREW PUNCTUATION GERSHAYIM */
+        return((CHAR)(0xD8 & 0xff));    /* HEBREW PUNCTUATION GERSHAYIM */
       case 0x05D0:
-        return((CHAR)(0xE0 & 0xff));	/* HEBREW LETTER ALEF */
+        return((CHAR)(0xE0 & 0xff));    /* HEBREW LETTER ALEF */
       case 0x05D1:
-        return((CHAR)(0xE1 & 0xff));	/* HEBREW LETTER BET */
+        return((CHAR)(0xE1 & 0xff));    /* HEBREW LETTER BET */
       case 0x05D2:
-        return((CHAR)(0xE2 & 0xff));	/* HEBREW LETTER GIMEL */
+        return((CHAR)(0xE2 & 0xff));    /* HEBREW LETTER GIMEL */
       case 0x05D3:
-        return((CHAR)(0xE3 & 0xff));	/* HEBREW LETTER DALET */
+        return((CHAR)(0xE3 & 0xff));    /* HEBREW LETTER DALET */
       case 0x05D4:
-        return((CHAR)(0xE4 & 0xff));	/* HEBREW LETTER HE */
+        return((CHAR)(0xE4 & 0xff));    /* HEBREW LETTER HE */
       case 0x05D5:
-        return((CHAR)(0xE5 & 0xff));	/* HEBREW LETTER VAV */
+        return((CHAR)(0xE5 & 0xff));    /* HEBREW LETTER VAV */
       case 0x05D6:
-        return((CHAR)(0xE6 & 0xff));	/* HEBREW LETTER ZAYIN */
+        return((CHAR)(0xE6 & 0xff));    /* HEBREW LETTER ZAYIN */
       case 0x05D7:
-        return((CHAR)(0xE7 & 0xff));	/* HEBREW LETTER HET */
+        return((CHAR)(0xE7 & 0xff));    /* HEBREW LETTER HET */
       case 0x05D8:
-        return((CHAR)(0xE8 & 0xff));	/* HEBREW LETTER TET */
+        return((CHAR)(0xE8 & 0xff));    /* HEBREW LETTER TET */
       case 0x05D9:
-        return((CHAR)(0xE9 & 0xff));	/* HEBREW LETTER YOD */
+        return((CHAR)(0xE9 & 0xff));    /* HEBREW LETTER YOD */
       case 0x05DA:
-        return((CHAR)(0xEA & 0xff));	/* HEBREW LETTER FINAL KAF */
+        return((CHAR)(0xEA & 0xff));    /* HEBREW LETTER FINAL KAF */
       case 0x05DB:
-        return((CHAR)(0xEB & 0xff));	/* HEBREW LETTER KAF */
+        return((CHAR)(0xEB & 0xff));    /* HEBREW LETTER KAF */
       case 0x05DC:
-        return((CHAR)(0xEC & 0xff));	/* HEBREW LETTER LAMED */
+        return((CHAR)(0xEC & 0xff));    /* HEBREW LETTER LAMED */
       case 0x05DD:
-        return((CHAR)(0xED & 0xff));	/* HEBREW LETTER FINAL MEM */
+        return((CHAR)(0xED & 0xff));    /* HEBREW LETTER FINAL MEM */
       case 0x05DE:
-        return((CHAR)(0xEE & 0xff));	/* HEBREW LETTER MEM */
+        return((CHAR)(0xEE & 0xff));    /* HEBREW LETTER MEM */
       case 0x05DF:
-        return((CHAR)(0xEF & 0xff));	/* HEBREW LETTER FINAL NUN */
+        return((CHAR)(0xEF & 0xff));    /* HEBREW LETTER FINAL NUN */
       case 0x05E0:
-        return((CHAR)(0xF0 & 0xff));	/* HEBREW LETTER NUN */
+        return((CHAR)(0xF0 & 0xff));    /* HEBREW LETTER NUN */
       case 0x05E1:
-        return((CHAR)(0xF1 & 0xff));	/* HEBREW LETTER SAMEKH */
+        return((CHAR)(0xF1 & 0xff));    /* HEBREW LETTER SAMEKH */
       case 0x05E2:
-        return((CHAR)(0xF2 & 0xff));	/* HEBREW LETTER AYIN */
+        return((CHAR)(0xF2 & 0xff));    /* HEBREW LETTER AYIN */
       case 0x05E3:
-        return((CHAR)(0xF3 & 0xff));	/* HEBREW LETTER FINAL PE */
+        return((CHAR)(0xF3 & 0xff));    /* HEBREW LETTER FINAL PE */
       case 0x05E4:
-        return((CHAR)(0xF4 & 0xff));	/* HEBREW LETTER PE */
+        return((CHAR)(0xF4 & 0xff));    /* HEBREW LETTER PE */
       case 0x05E5:
-        return((CHAR)(0xF5 & 0xff));	/* HEBREW LETTER FINAL TSADI */
+        return((CHAR)(0xF5 & 0xff));    /* HEBREW LETTER FINAL TSADI */
       case 0x05E6:
-        return((CHAR)(0xF6 & 0xff));	/* HEBREW LETTER TSADI */
+        return((CHAR)(0xF6 & 0xff));    /* HEBREW LETTER TSADI */
       case 0x05E7:
-        return((CHAR)(0xF7 & 0xff));	/* HEBREW LETTER QOF */
+        return((CHAR)(0xF7 & 0xff));    /* HEBREW LETTER QOF */
       case 0x05E8:
-        return((CHAR)(0xF8 & 0xff));	/* HEBREW LETTER RESH */
+        return((CHAR)(0xF8 & 0xff));    /* HEBREW LETTER RESH */
       case 0x05E9:
-        return((CHAR)(0xF9 & 0xff));	/* HEBREW LETTER SHIN */
+        return((CHAR)(0xF9 & 0xff));    /* HEBREW LETTER SHIN */
       case 0x05EA:
-        return((CHAR)(0xFA & 0xff));	/* HEBREW LETTER TAV */
+        return((CHAR)(0xFA & 0xff));    /* HEBREW LETTER TAV */
       case 0x200E:
-        return((CHAR)(0xFD & 0xff));	/* LEFT-TO-RIGHT MARK */
+        return((CHAR)(0xFD & 0xff));    /* LEFT-TO-RIGHT MARK */
       case 0x200F:
-        return((CHAR)(0xFE & 0xff));	/* RIGHT-TO-LEFT MARK */
+        return((CHAR)(0xFE & 0xff));    /* RIGHT-TO-LEFT MARK */
       default: return(0x003f);
     }
 }
 
-int					/* Windows Arabic */
+int                                     /* Windows Arabic */
 #ifdef CK_ANSIC
 tx_cp1256(USHORT c)
 #else
@@ -12112,250 +12112,250 @@ tx_cp1256(c) USHORT c;
       return((CHAR)(c & 0xff));
     switch (c) {
       case 0x20AC:
-        return((CHAR)(0x80 & 0xff));	/* EURO SIGN */
+        return((CHAR)(0x80 & 0xff));    /* EURO SIGN */
       case 0x067E:
-        return((CHAR)(0x81 & 0xff));	/* ARABIC LETTER PEH */
+        return((CHAR)(0x81 & 0xff));    /* ARABIC LETTER PEH */
       case 0x201A:
-        return((CHAR)(0x82 & 0xff));	/* SINGLE LOW-9 QUOTATION MARK */
+        return((CHAR)(0x82 & 0xff));    /* SINGLE LOW-9 QUOTATION MARK */
       case 0x0192:
-        return((CHAR)(0x83 & 0xff));	/* LATIN SMALL LETTER F WITH HOOK */
+        return((CHAR)(0x83 & 0xff));    /* LATIN SMALL LETTER F WITH HOOK */
       case 0x201E:
-        return((CHAR)(0x84 & 0xff));	/* DOUBLE LOW-9 QUOTATION MARK */
+        return((CHAR)(0x84 & 0xff));    /* DOUBLE LOW-9 QUOTATION MARK */
       case 0x2026:
-        return((CHAR)(0x85 & 0xff));	/* HORIZONTAL ELLIPSIS */
+        return((CHAR)(0x85 & 0xff));    /* HORIZONTAL ELLIPSIS */
       case 0x2020:
-        return((CHAR)(0x86 & 0xff));	/* DAGGER */
+        return((CHAR)(0x86 & 0xff));    /* DAGGER */
       case 0x2021:
-        return((CHAR)(0x87 & 0xff));	/* DOUBLE DAGGER */
+        return((CHAR)(0x87 & 0xff));    /* DOUBLE DAGGER */
       case 0x02C6:
-        return((CHAR)(0x88 & 0xff));	/* MODIFIER LETTER CIRCUMFLEX ACCENT */
+        return((CHAR)(0x88 & 0xff));    /* MODIFIER LETTER CIRCUMFLEX ACCENT */
       case 0x2030:
-        return((CHAR)(0x89 & 0xff));	/* PER MILLE SIGN */
+        return((CHAR)(0x89 & 0xff));    /* PER MILLE SIGN */
       case 0x2039:
-        return((CHAR)(0x8B & 0xff));	/* SINGLE LEFT-POINTING ANGLE QUOTE */
+        return((CHAR)(0x8B & 0xff));    /* SINGLE LEFT-POINTING ANGLE QUOTE */
       case 0x0152:
-        return((CHAR)(0x8C & 0xff));	/* LATIN CAPITAL LIGATURE OE */
+        return((CHAR)(0x8C & 0xff));    /* LATIN CAPITAL LIGATURE OE */
       case 0x0686:
-        return((CHAR)(0x8D & 0xff));	/* ARABIC LETTER TCHEH */
+        return((CHAR)(0x8D & 0xff));    /* ARABIC LETTER TCHEH */
       case 0x0698:
-        return((CHAR)(0x8E & 0xff));	/* ARABIC LETTER JEH */
+        return((CHAR)(0x8E & 0xff));    /* ARABIC LETTER JEH */
       case 0x06AF:
-        return((CHAR)(0x90 & 0xff));	/* ARABIC LETTER GAF */
+        return((CHAR)(0x90 & 0xff));    /* ARABIC LETTER GAF */
       case 0x2018:
-        return((CHAR)(0x91 & 0xff));	/* LEFT SINGLE QUOTATION MARK */
+        return((CHAR)(0x91 & 0xff));    /* LEFT SINGLE QUOTATION MARK */
       case 0x2019:
-        return((CHAR)(0x92 & 0xff));	/* RIGHT SINGLE QUOTATION MARK */
+        return((CHAR)(0x92 & 0xff));    /* RIGHT SINGLE QUOTATION MARK */
       case 0x201C:
-        return((CHAR)(0x93 & 0xff));	/* LEFT DOUBLE QUOTATION MARK */
+        return((CHAR)(0x93 & 0xff));    /* LEFT DOUBLE QUOTATION MARK */
       case 0x201D:
-        return((CHAR)(0x94 & 0xff));	/* RIGHT DOUBLE QUOTATION MARK */
+        return((CHAR)(0x94 & 0xff));    /* RIGHT DOUBLE QUOTATION MARK */
       case 0x2022:
-        return((CHAR)(0x95 & 0xff));	/* BULLET */
+        return((CHAR)(0x95 & 0xff));    /* BULLET */
       case 0x2013:
-        return((CHAR)(0x96 & 0xff));	/* EN DASH */
+        return((CHAR)(0x96 & 0xff));    /* EN DASH */
       case 0x2014:
-        return((CHAR)(0x97 & 0xff));	/* EM DASH */
+        return((CHAR)(0x97 & 0xff));    /* EM DASH */
       case 0x2122:
-        return((CHAR)(0x99 & 0xff));	/* TRADE MARK SIGN */
+        return((CHAR)(0x99 & 0xff));    /* TRADE MARK SIGN */
       case 0x203A:
-        return((CHAR)(0x9B & 0xff));	/* SINGLE RIGHT-POINTING ANGLE QUOTE */
+        return((CHAR)(0x9B & 0xff));    /* SINGLE RIGHT-POINTING ANGLE QUOTE */
       case 0x0153:
-        return((CHAR)(0x9C & 0xff));	/* LATIN SMALL LIGATURE OE */
+        return((CHAR)(0x9C & 0xff));    /* LATIN SMALL LIGATURE OE */
       case 0x200C:
-        return((CHAR)(0x9D & 0xff));	/* ZERO WIDTH NON-JOINER */
+        return((CHAR)(0x9D & 0xff));    /* ZERO WIDTH NON-JOINER */
       case 0x200D:
-        return((CHAR)(0x9E & 0xff));	/* ZERO WIDTH JOINER */
+        return((CHAR)(0x9E & 0xff));    /* ZERO WIDTH JOINER */
       case 0x00A0:
-        return((CHAR)(0xA0 & 0xff));	/* NO-BREAK SPACE */
+        return((CHAR)(0xA0 & 0xff));    /* NO-BREAK SPACE */
       case 0x060C:
-        return((CHAR)(0xA1 & 0xff));	/* ARABIC COMMA */
+        return((CHAR)(0xA1 & 0xff));    /* ARABIC COMMA */
       case 0x00A2:
-        return((CHAR)(0xA2 & 0xff));	/* CENT SIGN */
+        return((CHAR)(0xA2 & 0xff));    /* CENT SIGN */
       case 0x00A3:
-        return((CHAR)(0xA3 & 0xff));	/* POUND SIGN */
+        return((CHAR)(0xA3 & 0xff));    /* POUND SIGN */
       case 0x00A4:
-        return((CHAR)(0xA4 & 0xff));	/* CURRENCY SIGN */
+        return((CHAR)(0xA4 & 0xff));    /* CURRENCY SIGN */
       case 0x00A5:
-        return((CHAR)(0xA5 & 0xff));	/* YEN SIGN */
+        return((CHAR)(0xA5 & 0xff));    /* YEN SIGN */
       case 0x00A6:
-        return((CHAR)(0xA6 & 0xff));	/* BROKEN BAR */
+        return((CHAR)(0xA6 & 0xff));    /* BROKEN BAR */
       case 0x00A7:
-        return((CHAR)(0xA7 & 0xff));	/* SECTION SIGN */
+        return((CHAR)(0xA7 & 0xff));    /* SECTION SIGN */
       case 0x00A8:
-        return((CHAR)(0xA8 & 0xff));	/* DIAERESIS */
+        return((CHAR)(0xA8 & 0xff));    /* DIAERESIS */
       case 0x00A9:
-        return((CHAR)(0xA9 & 0xff));	/* COPYRIGHT SIGN */
+        return((CHAR)(0xA9 & 0xff));    /* COPYRIGHT SIGN */
       case 0x00AB:
-        return((CHAR)(0xAB & 0xff));	/* LEFT-POINTING DOUBLE ANGLE QUOTE */
+        return((CHAR)(0xAB & 0xff));    /* LEFT-POINTING DOUBLE ANGLE QUOTE */
       case 0x00AC:
-        return((CHAR)(0xAC & 0xff));	/* NOT SIGN */
+        return((CHAR)(0xAC & 0xff));    /* NOT SIGN */
       case 0x00AD:
-        return((CHAR)(0xAD & 0xff));	/* SOFT HYPHEN */
+        return((CHAR)(0xAD & 0xff));    /* SOFT HYPHEN */
       case 0x00AE:
-        return((CHAR)(0xAE & 0xff));	/* REGISTERED SIGN */
+        return((CHAR)(0xAE & 0xff));    /* REGISTERED SIGN */
       case 0x00AF:
-        return((CHAR)(0xAF & 0xff));	/* MACRON */
+        return((CHAR)(0xAF & 0xff));    /* MACRON */
       case 0x00B0:
-        return((CHAR)(0xB0 & 0xff));	/* DEGREE SIGN */
+        return((CHAR)(0xB0 & 0xff));    /* DEGREE SIGN */
       case 0x00B1:
-        return((CHAR)(0xB1 & 0xff));	/* PLUS-MINUS SIGN */
+        return((CHAR)(0xB1 & 0xff));    /* PLUS-MINUS SIGN */
       case 0x00B2:
-        return((CHAR)(0xB2 & 0xff));	/* SUPERSCRIPT TWO */
+        return((CHAR)(0xB2 & 0xff));    /* SUPERSCRIPT TWO */
       case 0x00B3:
-        return((CHAR)(0xB3 & 0xff));	/* SUPERSCRIPT THREE */
+        return((CHAR)(0xB3 & 0xff));    /* SUPERSCRIPT THREE */
       case 0x00B4:
-        return((CHAR)(0xB4 & 0xff));	/* ACUTE ACCENT */
+        return((CHAR)(0xB4 & 0xff));    /* ACUTE ACCENT */
       case 0x00B5:
-        return((CHAR)(0xB5 & 0xff));	/* MICRO SIGN */
+        return((CHAR)(0xB5 & 0xff));    /* MICRO SIGN */
       case 0x00B6:
-        return((CHAR)(0xB6 & 0xff));	/* PILCROW SIGN */
+        return((CHAR)(0xB6 & 0xff));    /* PILCROW SIGN */
       case 0x00B7:
-        return((CHAR)(0xB7 & 0xff));	/* MIDDLE DOT */
+        return((CHAR)(0xB7 & 0xff));    /* MIDDLE DOT */
       case 0x00B8:
-        return((CHAR)(0xB8 & 0xff));	/* CEDILLA */
+        return((CHAR)(0xB8 & 0xff));    /* CEDILLA */
       case 0x00B9:
-        return((CHAR)(0xB9 & 0xff));	/* SUPERSCRIPT ONE */
+        return((CHAR)(0xB9 & 0xff));    /* SUPERSCRIPT ONE */
       case 0x061B:
-        return((CHAR)(0xBA & 0xff));	/* ARABIC SEMICOLON */
+        return((CHAR)(0xBA & 0xff));    /* ARABIC SEMICOLON */
       case 0x00BB:
-        return((CHAR)(0xBB & 0xff));	/* RIGHT-POINTING DOUBLE ANGLE QUOTE */
+        return((CHAR)(0xBB & 0xff));    /* RIGHT-POINTING DOUBLE ANGLE QUOTE */
       case 0x00BC:
-        return((CHAR)(0xBC & 0xff));	/* VULGAR FRACTION ONE QUARTER */
+        return((CHAR)(0xBC & 0xff));    /* VULGAR FRACTION ONE QUARTER */
       case 0x00BD:
-        return((CHAR)(0xBD & 0xff));	/* VULGAR FRACTION ONE HALF */
+        return((CHAR)(0xBD & 0xff));    /* VULGAR FRACTION ONE HALF */
       case 0x00BE:
-        return((CHAR)(0xBE & 0xff));	/* VULGAR FRACTION THREE QUARTERS */
+        return((CHAR)(0xBE & 0xff));    /* VULGAR FRACTION THREE QUARTERS */
       case 0x061F:
-        return((CHAR)(0xBF & 0xff));	/* ARABIC QUESTION MARK */
+        return((CHAR)(0xBF & 0xff));    /* ARABIC QUESTION MARK */
       case 0x0621:
-        return((CHAR)(0xC1 & 0xff));	/* ARABIC LETTER HAMZA */
+        return((CHAR)(0xC1 & 0xff));    /* ARABIC LETTER HAMZA */
       case 0x0622:
-        return((CHAR)(0xC2 & 0xff));	/* ARABIC LTR. ALEF WITH MADDA ABOVE */
+        return((CHAR)(0xC2 & 0xff));    /* ARABIC LTR. ALEF WITH MADDA ABOVE */
       case 0x0623:
-        return((CHAR)(0xC3 & 0xff));	/* ARABIC LTR. ALEF WITH HAMZA ABOVE */
+        return((CHAR)(0xC3 & 0xff));    /* ARABIC LTR. ALEF WITH HAMZA ABOVE */
       case 0x0624:
-        return((CHAR)(0xC4 & 0xff));	/* ARABIC LTR. WAW WITH HAMZA ABOVE */
+        return((CHAR)(0xC4 & 0xff));    /* ARABIC LTR. WAW WITH HAMZA ABOVE */
       case 0x0625:
-        return((CHAR)(0xC5 & 0xff));	/* ARABIC LTR. ALEF WITH HAMZA BELOW */
+        return((CHAR)(0xC5 & 0xff));    /* ARABIC LTR. ALEF WITH HAMZA BELOW */
       case 0x0626:
-        return((CHAR)(0xC6 & 0xff));	/* ARABIC LTR. YEH WITH HAMZA ABOVE */
+        return((CHAR)(0xC6 & 0xff));    /* ARABIC LTR. YEH WITH HAMZA ABOVE */
       case 0x0627:
-        return((CHAR)(0xC7 & 0xff));	/* ARABIC LTR. ALEF */
+        return((CHAR)(0xC7 & 0xff));    /* ARABIC LTR. ALEF */
       case 0x0628:
-        return((CHAR)(0xC8 & 0xff));	/* ARABIC LTR. BEH */
+        return((CHAR)(0xC8 & 0xff));    /* ARABIC LTR. BEH */
       case 0x0629:
-        return((CHAR)(0xC9 & 0xff));	/* ARABIC LETTER TEH MARBUTA */
+        return((CHAR)(0xC9 & 0xff));    /* ARABIC LETTER TEH MARBUTA */
       case 0x062A:
-        return((CHAR)(0xCA & 0xff));	/* ARABIC LETTER TEH */
+        return((CHAR)(0xCA & 0xff));    /* ARABIC LETTER TEH */
       case 0x062B:
-        return((CHAR)(0xCB & 0xff));	/* ARABIC LETTER THEH */
+        return((CHAR)(0xCB & 0xff));    /* ARABIC LETTER THEH */
       case 0x062C:
-        return((CHAR)(0xCC & 0xff));	/* ARABIC LETTER JEEM */
+        return((CHAR)(0xCC & 0xff));    /* ARABIC LETTER JEEM */
       case 0x062D:
-        return((CHAR)(0xCD & 0xff));	/* ARABIC LETTER HAH */
+        return((CHAR)(0xCD & 0xff));    /* ARABIC LETTER HAH */
       case 0x062E:
-        return((CHAR)(0xCE & 0xff));	/* ARABIC LETTER KHAH */
+        return((CHAR)(0xCE & 0xff));    /* ARABIC LETTER KHAH */
       case 0x062F:
-        return((CHAR)(0xCF & 0xff));	/* ARABIC LETTER DAL */
+        return((CHAR)(0xCF & 0xff));    /* ARABIC LETTER DAL */
       case 0x0630:
-        return((CHAR)(0xD0 & 0xff));	/* ARABIC LETTER THAL */
+        return((CHAR)(0xD0 & 0xff));    /* ARABIC LETTER THAL */
       case 0x0631:
-        return((CHAR)(0xD1 & 0xff));	/* ARABIC LETTER REH */
+        return((CHAR)(0xD1 & 0xff));    /* ARABIC LETTER REH */
       case 0x0632:
-        return((CHAR)(0xD2 & 0xff));	/* ARABIC LETTER ZAIN */
+        return((CHAR)(0xD2 & 0xff));    /* ARABIC LETTER ZAIN */
       case 0x0633:
-        return((CHAR)(0xD3 & 0xff));	/* ARABIC LETTER SEEN */
+        return((CHAR)(0xD3 & 0xff));    /* ARABIC LETTER SEEN */
       case 0x0634:
-        return((CHAR)(0xD4 & 0xff));	/* ARABIC LETTER SHEEN */
+        return((CHAR)(0xD4 & 0xff));    /* ARABIC LETTER SHEEN */
       case 0x0635:
-        return((CHAR)(0xD5 & 0xff));	/* ARABIC LETTER SAD */
+        return((CHAR)(0xD5 & 0xff));    /* ARABIC LETTER SAD */
       case 0x0636:
-        return((CHAR)(0xD6 & 0xff));	/* ARABIC LETTER DAD */
+        return((CHAR)(0xD6 & 0xff));    /* ARABIC LETTER DAD */
       case 0x00D7:
-        return((CHAR)(0xD7 & 0xff));	/* MULTIPLICATION SIGN */
+        return((CHAR)(0xD7 & 0xff));    /* MULTIPLICATION SIGN */
       case 0x0637:
-        return((CHAR)(0xD8 & 0xff));	/* ARABIC LETTER TAH */
+        return((CHAR)(0xD8 & 0xff));    /* ARABIC LETTER TAH */
       case 0x0638:
-        return((CHAR)(0xD9 & 0xff));	/* ARABIC LETTER ZAH */
+        return((CHAR)(0xD9 & 0xff));    /* ARABIC LETTER ZAH */
       case 0x0639:
-        return((CHAR)(0xDA & 0xff));	/* ARABIC LETTER AIN */
+        return((CHAR)(0xDA & 0xff));    /* ARABIC LETTER AIN */
       case 0x063A:
-        return((CHAR)(0xDB & 0xff));	/* ARABIC LETTER GHAIN */
+        return((CHAR)(0xDB & 0xff));    /* ARABIC LETTER GHAIN */
       case 0x0640:
-        return((CHAR)(0xDC & 0xff));	/* ARABIC TATWEEL */
+        return((CHAR)(0xDC & 0xff));    /* ARABIC TATWEEL */
       case 0x0641:
-        return((CHAR)(0xDD & 0xff));	/* ARABIC LETTER FEH */
+        return((CHAR)(0xDD & 0xff));    /* ARABIC LETTER FEH */
       case 0x0642:
-        return((CHAR)(0xDE & 0xff));	/* ARABIC LETTER QAF */
+        return((CHAR)(0xDE & 0xff));    /* ARABIC LETTER QAF */
       case 0x0643:
-        return((CHAR)(0xDF & 0xff));	/* ARABIC LETTER KAF */
+        return((CHAR)(0xDF & 0xff));    /* ARABIC LETTER KAF */
       case 0x00E0:
-        return((CHAR)(0xE0 & 0xff));	/* LATIN SMALL LETTER A WITH GRAVE */
+        return((CHAR)(0xE0 & 0xff));    /* LATIN SMALL LETTER A WITH GRAVE */
       case 0x0644:
-        return((CHAR)(0xE1 & 0xff));	/* ARABIC LETTER LAM */
+        return((CHAR)(0xE1 & 0xff));    /* ARABIC LETTER LAM */
       case 0x00E2:
-        return((CHAR)(0xE2 & 0xff));	/* SMALL LETTER A WITH CIRCUMFLEX */
+        return((CHAR)(0xE2 & 0xff));    /* SMALL LETTER A WITH CIRCUMFLEX */
       case 0x0645:
-        return((CHAR)(0xE3 & 0xff));	/* ARABIC LETTER MEEM */
+        return((CHAR)(0xE3 & 0xff));    /* ARABIC LETTER MEEM */
       case 0x0646:
-        return((CHAR)(0xE4 & 0xff));	/* ARABIC LETTER NOON */
+        return((CHAR)(0xE4 & 0xff));    /* ARABIC LETTER NOON */
       case 0x0647:
-        return((CHAR)(0xE5 & 0xff));	/* ARABIC LETTER HEH */
+        return((CHAR)(0xE5 & 0xff));    /* ARABIC LETTER HEH */
       case 0x0648:
-        return((CHAR)(0xE6 & 0xff));	/* ARABIC LETTER WAW */
+        return((CHAR)(0xE6 & 0xff));    /* ARABIC LETTER WAW */
       case 0x00E7:
-        return((CHAR)(0xE7 & 0xff));	/* LATIN SMALL LETTER C WITH CEDILLA */
+        return((CHAR)(0xE7 & 0xff));    /* LATIN SMALL LETTER C WITH CEDILLA */
       case 0x00E8:
-        return((CHAR)(0xE8 & 0xff));	/* LATIN SMALL LETTER E WITH GRAVE */
+        return((CHAR)(0xE8 & 0xff));    /* LATIN SMALL LETTER E WITH GRAVE */
       case 0x00E9:
-        return((CHAR)(0xE9 & 0xff));	/* LATIN SMALL LETTER E WITH ACUTE */
+        return((CHAR)(0xE9 & 0xff));    /* LATIN SMALL LETTER E WITH ACUTE */
       case 0x00EA:
-        return((CHAR)(0xEA & 0xff));	/* SMALL LETTER E WITH CIRCUMFLEX */
+        return((CHAR)(0xEA & 0xff));    /* SMALL LETTER E WITH CIRCUMFLEX */
       case 0x00EB:
-        return((CHAR)(0xEB & 0xff));	/* SMALL LETTER E WITH DIAERESIS */
+        return((CHAR)(0xEB & 0xff));    /* SMALL LETTER E WITH DIAERESIS */
       case 0x0649:
-        return((CHAR)(0xEC & 0xff));	/* ARABIC LETTER ALEF MAKSURA */
+        return((CHAR)(0xEC & 0xff));    /* ARABIC LETTER ALEF MAKSURA */
       case 0x064A:
-        return((CHAR)(0xED & 0xff));	/* ARABIC LETTER YEH */
+        return((CHAR)(0xED & 0xff));    /* ARABIC LETTER YEH */
       case 0x00EE:
-        return((CHAR)(0xEE & 0xff));	/* SMALL LETTER I WITH CIRCUMFLEX */
+        return((CHAR)(0xEE & 0xff));    /* SMALL LETTER I WITH CIRCUMFLEX */
       case 0x00EF:
-        return((CHAR)(0xEF & 0xff));	/* SMALL LETTER I WITH DIAERESIS */
+        return((CHAR)(0xEF & 0xff));    /* SMALL LETTER I WITH DIAERESIS */
       case 0x064B:
-        return((CHAR)(0xF0 & 0xff));	/* ARABIC FATHATAN */
+        return((CHAR)(0xF0 & 0xff));    /* ARABIC FATHATAN */
       case 0x064C:
-        return((CHAR)(0xF1 & 0xff));	/* ARABIC DAMMATAN */
+        return((CHAR)(0xF1 & 0xff));    /* ARABIC DAMMATAN */
       case 0x064D:
-        return((CHAR)(0xF2 & 0xff));	/* ARABIC KASRATAN */
+        return((CHAR)(0xF2 & 0xff));    /* ARABIC KASRATAN */
       case 0x064E:
-        return((CHAR)(0xF3 & 0xff));	/* ARABIC FATHA */
+        return((CHAR)(0xF3 & 0xff));    /* ARABIC FATHA */
       case 0x00F4:
-        return((CHAR)(0xF4 & 0xff));	/* SMALL LETTER O WITH CIRCUMFLEX */
+        return((CHAR)(0xF4 & 0xff));    /* SMALL LETTER O WITH CIRCUMFLEX */
       case 0x064F:
-        return((CHAR)(0xF5 & 0xff));	/* ARABIC DAMMA */
+        return((CHAR)(0xF5 & 0xff));    /* ARABIC DAMMA */
       case 0x0650:
-        return((CHAR)(0xF6 & 0xff));	/* ARABIC KASRA */
+        return((CHAR)(0xF6 & 0xff));    /* ARABIC KASRA */
       case 0x00F7:
-        return((CHAR)(0xF7 & 0xff));	/* DIVISION SIGN */
+        return((CHAR)(0xF7 & 0xff));    /* DIVISION SIGN */
       case 0x0651:
-        return((CHAR)(0xF8 & 0xff));	/* ARABIC SHADDA */
+        return((CHAR)(0xF8 & 0xff));    /* ARABIC SHADDA */
       case 0x00F9:
-        return((CHAR)(0xF9 & 0xff));	/* LATIN SMALL LETTER U WITH GRAVE */
+        return((CHAR)(0xF9 & 0xff));    /* LATIN SMALL LETTER U WITH GRAVE */
       case 0x0652:
-        return((CHAR)(0xFA & 0xff));	/* ARABIC SUKUN */
+        return((CHAR)(0xFA & 0xff));    /* ARABIC SUKUN */
       case 0x00FB:
-        return((CHAR)(0xFB & 0xff));	/* SMALL LETTER U WITH CIRCUMFLEX */
+        return((CHAR)(0xFB & 0xff));    /* SMALL LETTER U WITH CIRCUMFLEX */
       case 0x00FC:
-        return((CHAR)(0xFC & 0xff));	/* SMALL LETTER U WITH DIAERESIS */
+        return((CHAR)(0xFC & 0xff));    /* SMALL LETTER U WITH DIAERESIS */
       case 0x200E:
-        return((CHAR)(0xFD & 0xff));	/* LEFT-TO-RIGHT MARK */
+        return((CHAR)(0xFD & 0xff));    /* LEFT-TO-RIGHT MARK */
       case 0x200F:
-        return((CHAR)(0xFE & 0xff));	/* RIGHT-TO-LEFT MARK */
+        return((CHAR)(0xFE & 0xff));    /* RIGHT-TO-LEFT MARK */
       default: return(0x003f);
     }
 }
 
-int					/* Windows Code Page 1257 (Latin-4) */
+int                                     /* Windows Code Page 1257 (Latin-4) */
 #ifdef CK_ANSIC
 tx_cp1257(USHORT c)
 #else
@@ -12471,265 +12471,265 @@ tx_cp1257(c) USHORT c;
       case 0x2022: return((CHAR)(0x95 & 0xff));
       case 0x2026: return((CHAR)(0x85 & 0xff));
       case 0x2031: return((CHAR)(0x89 & 0xff));
-      case 0x20AC:			/* Euro */
+      case 0x20AC:                      /* Euro */
           return((CHAR)(0x80 & 0xff));
       case 0x2122: return((CHAR)(0x99 & 0xff));
       default: return(0x003f);
     }
 }
 
-int					/* Windows Code Page 1258 (Viet Nam) */
+int                                     /* Windows Code Page 1258 (Viet Nam) */
 #ifdef CK_ANSIC
 tx_cp1258(USHORT c)
 #else
 tx_cp1258(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0x80)			/* Has C1 graphics */
+    if (c < 0x80)                       /* Has C1 graphics */
       return((CHAR)(c & 0xff));
     switch (c) {
       case 0x20AC:
-	return((CHAR)(0x80 & 0xff));	/* EURO SIGN */
+        return((CHAR)(0x80 & 0xff));    /* EURO SIGN */
       case 0x201A:
-	return((CHAR)(0x82 & 0xff));	/* SINGLE LOW-9 QUOTATION MARK */
+        return((CHAR)(0x82 & 0xff));    /* SINGLE LOW-9 QUOTATION MARK */
       case 0x0192:
-	return((CHAR)(0x83 & 0xff));	/* LATIN SMALL LETTER F WITH HOOK */
+        return((CHAR)(0x83 & 0xff));    /* LATIN SMALL LETTER F WITH HOOK */
       case 0x201E:
-	return((CHAR)(0x84 & 0xff));	/* DOUBLE LOW-9 QUOTATION MARK */
+        return((CHAR)(0x84 & 0xff));    /* DOUBLE LOW-9 QUOTATION MARK */
       case 0x2026: return((CHAR)(0x85 & 0xff)); /* HORIZONTAL ELLIPSIS */
       case 0x2020: return((CHAR)(0x86 & 0xff)); /* DAGGER */
       case 0x2021: return((CHAR)(0x87 & 0xff)); /* DOUBLE DAGGER */
       case 0x02C6:
-	return((CHAR)(0x88 & 0xff));	/* MODIFIER LETTER CIRCUMFLEX ACCENT */
-      case 0x2030: return((CHAR)(0x89 & 0xff));	/* PER MILLE SIGN */
+        return((CHAR)(0x88 & 0xff));    /* MODIFIER LETTER CIRCUMFLEX ACCENT */
+      case 0x2030: return((CHAR)(0x89 & 0xff)); /* PER MILLE SIGN */
       case 0x2039:
-	return((CHAR)(0x8B & 0xff));	/* SINGLE LEFT ANGLE QUOTATION MARK */
-      case 0x0152: return((CHAR)(0x8C & 0xff));	/* LATIN CAPITAL LIGATURE OE */
+        return((CHAR)(0x8B & 0xff));    /* SINGLE LEFT ANGLE QUOTATION MARK */
+      case 0x0152: return((CHAR)(0x8C & 0xff)); /* LATIN CAPITAL LIGATURE OE */
       case 0x2018:
-	return((CHAR)(0x91 & 0xff));	/* LEFT SINGLE QUOTATION MARK */
+        return((CHAR)(0x91 & 0xff));    /* LEFT SINGLE QUOTATION MARK */
       case 0x2019:
-	return((CHAR)(0x92 & 0xff));	/* RIGHT SINGLE QUOTATION MARK */
+        return((CHAR)(0x92 & 0xff));    /* RIGHT SINGLE QUOTATION MARK */
       case 0x201C:
-	return((CHAR)(0x93 & 0xff));	/* LEFT DOUBLE QUOTATION MARK */
+        return((CHAR)(0x93 & 0xff));    /* LEFT DOUBLE QUOTATION MARK */
       case 0x201D:
-	return((CHAR)(0x94 & 0xff));	/* RIGHT DOUBLE QUOTATION MARK */
+        return((CHAR)(0x94 & 0xff));    /* RIGHT DOUBLE QUOTATION MARK */
       case 0x2022:
-	return((CHAR)(0x95 & 0xff));	/* BULLET */
+        return((CHAR)(0x95 & 0xff));    /* BULLET */
       case 0x2013:
-	return((CHAR)(0x96 & 0xff));	/* EN DASH */
+        return((CHAR)(0x96 & 0xff));    /* EN DASH */
       case 0x2014:
-	return((CHAR)(0x97 & 0xff));	/* EM DASH */
+        return((CHAR)(0x97 & 0xff));    /* EM DASH */
       case 0x02DC:
-	return((CHAR)(0x98 & 0xff));	/* SMALL TILDE */
+        return((CHAR)(0x98 & 0xff));    /* SMALL TILDE */
       case 0x2122:
-	return((CHAR)(0x99 & 0xff));	/* TRADE MARK SIGN */
+        return((CHAR)(0x99 & 0xff));    /* TRADE MARK SIGN */
       case 0x203A:
-	/* SINGLE RIGHT-POINTING ANGLE QUOTATION MAR K*/
-	return((CHAR)(0x9B & 0xff));
+        /* SINGLE RIGHT-POINTING ANGLE QUOTATION MAR K*/
+        return((CHAR)(0x9B & 0xff));
       case 0x0153:
-	return((CHAR)(0x9C & 0xff));	/* LATIN SMALL LIGATURE OE */
+        return((CHAR)(0x9C & 0xff));    /* LATIN SMALL LIGATURE OE */
       case 0x0178:
-	/* LATIN CAPITAL LETTER Y WITH DIAERESIS */
-	return((CHAR)(0x9F & 0xff));
+        /* LATIN CAPITAL LETTER Y WITH DIAERESIS */
+        return((CHAR)(0x9F & 0xff));
       case 0x00A0:
-	return((CHAR)(0xA0 & 0xff));	/* NO-BREAK SPACE */
+        return((CHAR)(0xA0 & 0xff));    /* NO-BREAK SPACE */
       case 0x00A1:
-	return((CHAR)(0xA1 & 0xff));	/* INVERTED EXCLAMATION MARK */
+        return((CHAR)(0xA1 & 0xff));    /* INVERTED EXCLAMATION MARK */
       case 0x00A2:
-	return((CHAR)(0xA2 & 0xff));	/* CENT SIGN */
+        return((CHAR)(0xA2 & 0xff));    /* CENT SIGN */
       case 0x00A3:
-	return((CHAR)(0xA3 & 0xff));	/* POUND SIGN */
+        return((CHAR)(0xA3 & 0xff));    /* POUND SIGN */
       case 0x00A4:
-	return((CHAR)(0xA4 & 0xff));	/* CURRENCY SIGN */
+        return((CHAR)(0xA4 & 0xff));    /* CURRENCY SIGN */
       case 0x00A5:
-	return((CHAR)(0xA5 & 0xff));	/* YEN SIGN */
+        return((CHAR)(0xA5 & 0xff));    /* YEN SIGN */
       case 0x00A6:
-	return((CHAR)(0xA6 & 0xff));	/* BROKEN BAR */
+        return((CHAR)(0xA6 & 0xff));    /* BROKEN BAR */
       case 0x00A7:
-	return((CHAR)(0xA7 & 0xff));	/* SECTION SIGN */
+        return((CHAR)(0xA7 & 0xff));    /* SECTION SIGN */
       case 0x00A8:
-	return((CHAR)(0xA8 & 0xff));	/* DIAERESIS */
+        return((CHAR)(0xA8 & 0xff));    /* DIAERESIS */
       case 0x00A9:
-	return((CHAR)(0xA9 & 0xff));	/* COPYRIGHT SIGN */
+        return((CHAR)(0xA9 & 0xff));    /* COPYRIGHT SIGN */
       case 0x00AA:
-	return((CHAR)(0xAA & 0xff));	/* FEMININE ORDINAL INDICATOR */
+        return((CHAR)(0xAA & 0xff));    /* FEMININE ORDINAL INDICATOR */
       case 0x00AB:
-	/* LEFT-POINTING DOUBLE ANGLE QUOTATION MARK */
-	return((CHAR)(0xAB & 0xff));
+        /* LEFT-POINTING DOUBLE ANGLE QUOTATION MARK */
+        return((CHAR)(0xAB & 0xff));
       case 0x00AC:
-	return((CHAR)(0xAC & 0xff));	/* NOT SIGN */
+        return((CHAR)(0xAC & 0xff));    /* NOT SIGN */
       case 0x00AD:
-	return((CHAR)(0xAD & 0xff));	/* SOFT HYPHEN */
+        return((CHAR)(0xAD & 0xff));    /* SOFT HYPHEN */
       case 0x00AE:
-	return((CHAR)(0xAE & 0xff));	/* REGISTERED SIGN */
+        return((CHAR)(0xAE & 0xff));    /* REGISTERED SIGN */
       case 0x00AF:
-	return((CHAR)(0xAF & 0xff));	/* MACRON */
+        return((CHAR)(0xAF & 0xff));    /* MACRON */
       case 0x00B0:
-	return((CHAR)(0xB0 & 0xff));	/* DEGREE SIGN */
+        return((CHAR)(0xB0 & 0xff));    /* DEGREE SIGN */
       case 0x00B1:
-	return((CHAR)(0xB1 & 0xff));	/* PLUS-MINUS SIGN */
+        return((CHAR)(0xB1 & 0xff));    /* PLUS-MINUS SIGN */
       case 0x00B2:
-	return((CHAR)(0xB2 & 0xff));	/* SUPERSCRIPT TWO */
+        return((CHAR)(0xB2 & 0xff));    /* SUPERSCRIPT TWO */
       case 0x00B3:
-	return((CHAR)(0xB3 & 0xff));	/* SUPERSCRIPT THREE */
+        return((CHAR)(0xB3 & 0xff));    /* SUPERSCRIPT THREE */
       case 0x00B4:
-	return((CHAR)(0xB4 & 0xff));	/* ACUTE ACCENT */
+        return((CHAR)(0xB4 & 0xff));    /* ACUTE ACCENT */
       case 0x00B5:
-	return((CHAR)(0xB5 & 0xff));	/* MICRO SIGN */
+        return((CHAR)(0xB5 & 0xff));    /* MICRO SIGN */
       case 0x00B6:
-	return((CHAR)(0xB6 & 0xff));	/* PILCROW SIGN */
+        return((CHAR)(0xB6 & 0xff));    /* PILCROW SIGN */
       case 0x00B7:
-	return((CHAR)(0xB7 & 0xff));	/* MIDDLE DOT */
+        return((CHAR)(0xB7 & 0xff));    /* MIDDLE DOT */
       case 0x00B8:
-	return((CHAR)(0xB8 & 0xff));	/* CEDILLA */
+        return((CHAR)(0xB8 & 0xff));    /* CEDILLA */
       case 0x00B9:
-	return((CHAR)(0xB9 & 0xff));	/* SUPERSCRIPT ONE */
+        return((CHAR)(0xB9 & 0xff));    /* SUPERSCRIPT ONE */
       case 0x00BA:
-	return((CHAR)(0xBA & 0xff));	/* MASCULINE ORDINAL INDICATOR */
+        return((CHAR)(0xBA & 0xff));    /* MASCULINE ORDINAL INDICATOR */
       case 0x00BB:
-	/* RIGHT-POINTING DOUBLE ANGLE QUOTATION MAR K*/
-	return((CHAR)(0xBB & 0xff));
+        /* RIGHT-POINTING DOUBLE ANGLE QUOTATION MAR K*/
+        return((CHAR)(0xBB & 0xff));
       case 0x00BC:
-	return((CHAR)(0xBC & 0xff));	/* VULGAR FRACTION ONE QUARTER */
+        return((CHAR)(0xBC & 0xff));    /* VULGAR FRACTION ONE QUARTER */
       case 0x00BD:
-	return((CHAR)(0xBD & 0xff));	/* VULGAR FRACTION ONE HALF */
+        return((CHAR)(0xBD & 0xff));    /* VULGAR FRACTION ONE HALF */
       case 0x00BE:
-	return((CHAR)(0xBE & 0xff));	/* VULGAR FRACTION THREE QUARTERS */
+        return((CHAR)(0xBE & 0xff));    /* VULGAR FRACTION THREE QUARTERS */
       case 0x00BF:
-	return((CHAR)(0xBF & 0xff));	/* INVERTED QUESTION MARK */
+        return((CHAR)(0xBF & 0xff));    /* INVERTED QUESTION MARK */
       case 0x00C0:
-	return((CHAR)(0xC0 & 0xff));	/* LATIN CAPITAL LETTER A WITH GRAVE */
+        return((CHAR)(0xC0 & 0xff));    /* LATIN CAPITAL LETTER A WITH GRAVE */
       case 0x00C1:
-	return((CHAR)(0xC1 & 0xff));	/* LATIN CAPITAL LETTER A WITH ACUTE */
+        return((CHAR)(0xC1 & 0xff));    /* LATIN CAPITAL LETTER A WITH ACUTE */
       case 0x00C2:
-	return((CHAR)(0xC2 & 0xff));	/* A CIRCUMFLEX */
+        return((CHAR)(0xC2 & 0xff));    /* A CIRCUMFLEX */
       case 0x0102:
-	return((CHAR)(0xC3 & 0xff));	/* LATIN CAPITAL LETTER A WITH BREVE */
+        return((CHAR)(0xC3 & 0xff));    /* LATIN CAPITAL LETTER A WITH BREVE */
       case 0x00C4:
-	return((CHAR)(0xC4 & 0xff));	/* A DIAERESIS */
+        return((CHAR)(0xC4 & 0xff));    /* A DIAERESIS */
       case 0x00C5:
-	return((CHAR)(0xC5 & 0xff));	/* A RING */
+        return((CHAR)(0xC5 & 0xff));    /* A RING */
       case 0x00C6:
-	return((CHAR)(0xC6 & 0xff));	/* LATIN CAPITAL LETTER AE */
+        return((CHAR)(0xC6 & 0xff));    /* LATIN CAPITAL LETTER AE */
       case 0x00C7:
-	return((CHAR)(0xC7 & 0xff));	/* C CEDILLA */
+        return((CHAR)(0xC7 & 0xff));    /* C CEDILLA */
       case 0x00C8:
-	return((CHAR)(0xC8 & 0xff));	/* E GRAVE */
+        return((CHAR)(0xC8 & 0xff));    /* E GRAVE */
       case 0x00C9:
-	return((CHAR)(0xC9 & 0xff));	/* LATIN CAPITAL LETTER E WITH ACUTE */
+        return((CHAR)(0xC9 & 0xff));    /* LATIN CAPITAL LETTER E WITH ACUTE */
       case 0x00CA:
-	return((CHAR)(0xCA & 0xff));	/* E WITH CIRCUMFLEX */
+        return((CHAR)(0xCA & 0xff));    /* E WITH CIRCUMFLEX */
       case 0x00CB:
-	return((CHAR)(0xCB & 0xff));	/* E WITH DIAERESIS */
+        return((CHAR)(0xCB & 0xff));    /* E WITH DIAERESIS */
       case 0x0300:
-	return((CHAR)(0xCC & 0xff));	/* COMBINING GRAVE ACCENT */
+        return((CHAR)(0xCC & 0xff));    /* COMBINING GRAVE ACCENT */
       case 0x00CD:
-	return((CHAR)(0xCD & 0xff));	/* I WITH ACUTE */
+        return((CHAR)(0xCD & 0xff));    /* I WITH ACUTE */
       case 0x00CE:
-	return((CHAR)(0xCE & 0xff));	/* I WITH CIRCUMFLEX */
+        return((CHAR)(0xCE & 0xff));    /* I WITH CIRCUMFLEX */
       case 0x00CF:
-	return((CHAR)(0xCF & 0xff));	/* I WITH DIAERESIS */
+        return((CHAR)(0xCF & 0xff));    /* I WITH DIAERESIS */
       case 0x0110:
-	return((CHAR)(0xD0 & 0xff));	/* D WITH STROKE */
+        return((CHAR)(0xD0 & 0xff));    /* D WITH STROKE */
       case 0x00D1:
-	return((CHAR)(0xD1 & 0xff));	/* LATIN CAPITAL LETTER N WITH TILDE */
+        return((CHAR)(0xD1 & 0xff));    /* LATIN CAPITAL LETTER N WITH TILDE */
       case 0x0309:
-	return((CHAR)(0xD2 & 0xff));	/* COMBINING HOOK ABOVE */
+        return((CHAR)(0xD2 & 0xff));    /* COMBINING HOOK ABOVE */
       case 0x00D3:
-	return((CHAR)(0xD3 & 0xff));	/* LATIN CAPITAL LETTER O WITH ACUTE */
+        return((CHAR)(0xD3 & 0xff));    /* LATIN CAPITAL LETTER O WITH ACUTE */
       case 0x00D4:
-	return((CHAR)(0xD4 & 0xff));	/* O WITH CIRCUMFLEX */
+        return((CHAR)(0xD4 & 0xff));    /* O WITH CIRCUMFLEX */
       case 0x01A0:
-	return((CHAR)(0xD5 & 0xff));	/* LATIN CAPITAL LETTER O WITH HORN */
+        return((CHAR)(0xD5 & 0xff));    /* LATIN CAPITAL LETTER O WITH HORN */
       case 0x00D6:
-	return((CHAR)(0xD6 & 0xff));	/* O WITH DIAERESIS */
+        return((CHAR)(0xD6 & 0xff));    /* O WITH DIAERESIS */
       case 0x00D7:
-	return((CHAR)(0xD7 & 0xff));	/* MULTIPLICATION SIGN */
+        return((CHAR)(0xD7 & 0xff));    /* MULTIPLICATION SIGN */
       case 0x00D8:
-	return((CHAR)(0xD8 & 0xff));	/* O WITH STROKE */
+        return((CHAR)(0xD8 & 0xff));    /* O WITH STROKE */
       case 0x00D9:
-	return((CHAR)(0xD9 & 0xff));	/* LATIN CAPITAL LETTER U WITH GRAVE */
+        return((CHAR)(0xD9 & 0xff));    /* LATIN CAPITAL LETTER U WITH GRAVE */
       case 0x00DA:
-	return((CHAR)(0xDA & 0xff));	/* LATIN CAPITAL LETTER U WITH ACUTE */
+        return((CHAR)(0xDA & 0xff));    /* LATIN CAPITAL LETTER U WITH ACUTE */
       case 0x00DB:
-	return((CHAR)(0xDB & 0xff));	/* U WITH CIRCUMFLEX */
+        return((CHAR)(0xDB & 0xff));    /* U WITH CIRCUMFLEX */
       case 0x00DC:
-	return((CHAR)(0xDC & 0xff));	/* U WITH DIAERESIS */
+        return((CHAR)(0xDC & 0xff));    /* U WITH DIAERESIS */
       case 0x01AF:
-	return((CHAR)(0xDD & 0xff));	/* LATIN CAPITAL LETTER U WITH HORN */
+        return((CHAR)(0xDD & 0xff));    /* LATIN CAPITAL LETTER U WITH HORN */
       case 0x0303:
-	return((CHAR)(0xDE & 0xff));	/* COMBINING TILDE */
+        return((CHAR)(0xDE & 0xff));    /* COMBINING TILDE */
       case 0x00DF:
-	return((CHAR)(0xDF & 0xff));	/* LATIN SMALL LETTER SHARP S */
+        return((CHAR)(0xDF & 0xff));    /* LATIN SMALL LETTER SHARP S */
       case 0x00E0:
-	return((CHAR)(0xE0 & 0xff));	/* LATIN SMALL LETTER A WITH GRAVE */
+        return((CHAR)(0xE0 & 0xff));    /* LATIN SMALL LETTER A WITH GRAVE */
       case 0x00E1:
-	return((CHAR)(0xE1 & 0xff));	/* LATIN SMALL LETTER A WITH ACUTE */
+        return((CHAR)(0xE1 & 0xff));    /* LATIN SMALL LETTER A WITH ACUTE */
       case 0x00E2:
-	return((CHAR)(0xE2 & 0xff));	/* SMALL A WITH CIRCUMFLEX */
+        return((CHAR)(0xE2 & 0xff));    /* SMALL A WITH CIRCUMFLEX */
       case 0x0103:
-	return((CHAR)(0xE3 & 0xff));	/* LATIN SMALL LETTER A WITH BREVE */
+        return((CHAR)(0xE3 & 0xff));    /* LATIN SMALL LETTER A WITH BREVE */
       case 0x00E4:
-	return((CHAR)(0xE4 & 0xff));	/* SMALL A WITH DIAERESIS */
+        return((CHAR)(0xE4 & 0xff));    /* SMALL A WITH DIAERESIS */
       case 0x00E5:
-	return((CHAR)(0xE5 & 0xff));	/* SMALL A WITH RING ABOVE */
+        return((CHAR)(0xE5 & 0xff));    /* SMALL A WITH RING ABOVE */
       case 0x00E6:
-	return((CHAR)(0xE6 & 0xff));	/* LATIN SMALL LETTER AE */
+        return((CHAR)(0xE6 & 0xff));    /* LATIN SMALL LETTER AE */
       case 0x00E7:
-	return((CHAR)(0xE7 & 0xff));	/* LATIN SMALL LETTER C WITH CEDILLA */
+        return((CHAR)(0xE7 & 0xff));    /* LATIN SMALL LETTER C WITH CEDILLA */
       case 0x00E8:
-	return((CHAR)(0xE8 & 0xff));	/* LATIN SMALL LETTER E WITH GRAVE */
+        return((CHAR)(0xE8 & 0xff));    /* LATIN SMALL LETTER E WITH GRAVE */
       case 0x00E9:
-	return((CHAR)(0xE9 & 0xff));	/* LATIN SMALL LETTER E WITH ACUTE */
+        return((CHAR)(0xE9 & 0xff));    /* LATIN SMALL LETTER E WITH ACUTE */
       case 0x00EA:
-	return((CHAR)(0xEA & 0xff));	/* SMALL E WITH CIRCUMFLEX */
+        return((CHAR)(0xEA & 0xff));    /* SMALL E WITH CIRCUMFLEX */
       case 0x00EB:
-	return((CHAR)(0xEB & 0xff));	/* SMALL E WITH DIAERESIS */
+        return((CHAR)(0xEB & 0xff));    /* SMALL E WITH DIAERESIS */
       case 0x0301:
-	return((CHAR)(0xEC & 0xff));	/* COMBINING ACUTE ACCENT */
+        return((CHAR)(0xEC & 0xff));    /* COMBINING ACUTE ACCENT */
       case 0x00ED:
-	return((CHAR)(0xED & 0xff));	/* LATIN SMALL LETTER I WITH ACUTE */
+        return((CHAR)(0xED & 0xff));    /* LATIN SMALL LETTER I WITH ACUTE */
       case 0x00EE:
-	return((CHAR)(0xEE & 0xff));	/* SMALL I WITH CIRCUMFLEX */
+        return((CHAR)(0xEE & 0xff));    /* SMALL I WITH CIRCUMFLEX */
       case 0x00EF:
-	return((CHAR)(0xEF & 0xff));	/* SMALL I WITH DIAERESIS */
+        return((CHAR)(0xEF & 0xff));    /* SMALL I WITH DIAERESIS */
       case 0x0111:
-	return((CHAR)(0xF0 & 0xff));	/* LATIN SMALL LETTER D WITH STROKE */
+        return((CHAR)(0xF0 & 0xff));    /* LATIN SMALL LETTER D WITH STROKE */
       case 0x00F1:
-	return((CHAR)(0xF1 & 0xff));	/* LATIN SMALL LETTER N WITH TILDE */
+        return((CHAR)(0xF1 & 0xff));    /* LATIN SMALL LETTER N WITH TILDE */
       case 0x0323:
-	return((CHAR)(0xF2 & 0xff));	/* COMBINING DOT BELOW */
+        return((CHAR)(0xF2 & 0xff));    /* COMBINING DOT BELOW */
       case 0x00F3:
-	return((CHAR)(0xF3 & 0xff));	/* LATIN SMALL LETTER O WITH ACUTE */
+        return((CHAR)(0xF3 & 0xff));    /* LATIN SMALL LETTER O WITH ACUTE */
       case 0x00F4:
-	return((CHAR)(0xF4 & 0xff));	/* SMALL O WITH CIRCUMFLEX */
+        return((CHAR)(0xF4 & 0xff));    /* SMALL O WITH CIRCUMFLEX */
       case 0x01A1:
-	return((CHAR)(0xF5 & 0xff));	/* LATIN SMALL LETTER O WITH HORN */
+        return((CHAR)(0xF5 & 0xff));    /* LATIN SMALL LETTER O WITH HORN */
       case 0x00F6:
-	return((CHAR)(0xF6 & 0xff));	/* SMALL O WITH DIAERESIS */
+        return((CHAR)(0xF6 & 0xff));    /* SMALL O WITH DIAERESIS */
       case 0x00F7:
-	return((CHAR)(0xF7 & 0xff));	/* DIVISION SIGN */
+        return((CHAR)(0xF7 & 0xff));    /* DIVISION SIGN */
       case 0x00F8:
-	return((CHAR)(0xF8 & 0xff));	/* LATIN SMALL LETTER O WITH STROKE */
+        return((CHAR)(0xF8 & 0xff));    /* LATIN SMALL LETTER O WITH STROKE */
       case 0x00F9:
-	return((CHAR)(0xF9 & 0xff));	/* LATIN SMALL LETTER U WITH GRAVE */
+        return((CHAR)(0xF9 & 0xff));    /* LATIN SMALL LETTER U WITH GRAVE */
       case 0x00FA:
-	return((CHAR)(0xFA & 0xff));	/* LATIN SMALL LETTER U WITH ACUTE */
+        return((CHAR)(0xFA & 0xff));    /* LATIN SMALL LETTER U WITH ACUTE */
       case 0x00FB:
-	return((CHAR)(0xFB & 0xff));	/* SMALL U WITH CIRCUMFLEX */
+        return((CHAR)(0xFB & 0xff));    /* SMALL U WITH CIRCUMFLEX */
       case 0x00FC:
-	return((CHAR)(0xFC & 0xff));	/* SMALL U WITH DIAERESIS */
+        return((CHAR)(0xFC & 0xff));    /* SMALL U WITH DIAERESIS */
       case 0x01B0:
-	return((CHAR)(0xFD & 0xff));	/* LATIN SMALL LETTER U WITH HORN */
+        return((CHAR)(0xFD & 0xff));    /* LATIN SMALL LETTER U WITH HORN */
       case 0x20AB:
-	return((CHAR)(0xFE & 0xff));	/* DONG SIGN */
+        return((CHAR)(0xFE & 0xff));    /* DONG SIGN */
       case 0x00FF:
-	return((CHAR)(0xFF & 0xff));	/* SMALL Y WITH DIAERESIS */
+        return((CHAR)(0xFF & 0xff));    /* SMALL Y WITH DIAERESIS */
     default: return(0x003f);
   }
 }
 
-int					/* Code Page 037 - EBCDIC (U.S.) */
+int                                     /* Code Page 037 - EBCDIC (U.S.) */
 #ifdef CK_ANSIC
 tx_cp37(USHORT c)
 #else
@@ -12738,541 +12738,541 @@ tx_cp37(c) USHORT c;
 {
     switch (c) {
       case 0x0000:
-	return((CHAR)(0x00 & 0xff));	/* NULL */
+        return((CHAR)(0x00 & 0xff));    /* NULL */
       case 0x0001:
-	return((CHAR)(0x01 & 0xff));	/* START OF HEADING */
+        return((CHAR)(0x01 & 0xff));    /* START OF HEADING */
       case 0x0002:
-	return((CHAR)(0x02 & 0xff));	/* START OF TEXT */
+        return((CHAR)(0x02 & 0xff));    /* START OF TEXT */
       case 0x0003:
-	return((CHAR)(0x03 & 0xff));	/* END OF TEXT */
+        return((CHAR)(0x03 & 0xff));    /* END OF TEXT */
       case 0x009C:
-	return((CHAR)(0x04 & 0xff));	/* CONTROL */
+        return((CHAR)(0x04 & 0xff));    /* CONTROL */
       case 0x0009:
-	return((CHAR)(0x05 & 0xff));	/* HORIZONTAL TABULATION */
+        return((CHAR)(0x05 & 0xff));    /* HORIZONTAL TABULATION */
       case 0x0086:
-	return((CHAR)(0x06 & 0xff));	/* CONTROL */
+        return((CHAR)(0x06 & 0xff));    /* CONTROL */
       case 0x007F:
-	return((CHAR)(0x07 & 0xff));	/* DELETE */
+        return((CHAR)(0x07 & 0xff));    /* DELETE */
       case 0x0097:
-	return((CHAR)(0x08 & 0xff));	/* CONTROL */
+        return((CHAR)(0x08 & 0xff));    /* CONTROL */
       case 0x008D:
-	return((CHAR)(0x09 & 0xff));	/* CONTROL */
+        return((CHAR)(0x09 & 0xff));    /* CONTROL */
       case 0x008E:
-	return((CHAR)(0x0A & 0xff));	/* CONTROL */
+        return((CHAR)(0x0A & 0xff));    /* CONTROL */
       case 0x000B:
-	return((CHAR)(0x0B & 0xff));	/* VERTICAL TABULATION */
+        return((CHAR)(0x0B & 0xff));    /* VERTICAL TABULATION */
       case 0x000C:
-	return((CHAR)(0x0C & 0xff));	/* FORM FEED */
+        return((CHAR)(0x0C & 0xff));    /* FORM FEED */
       case 0x000D:
-	return((CHAR)(0x0D & 0xff));	/* CARRIAGE RETURN */
+        return((CHAR)(0x0D & 0xff));    /* CARRIAGE RETURN */
       case 0x000E:
-	return((CHAR)(0x0E & 0xff));	/* SHIFT OUT */
+        return((CHAR)(0x0E & 0xff));    /* SHIFT OUT */
       case 0x000F:
-	return((CHAR)(0x0F & 0xff));	/* SHIFT IN */
+        return((CHAR)(0x0F & 0xff));    /* SHIFT IN */
       case 0x0010:
-	return((CHAR)(0x10 & 0xff));	/* DATA LINK ESCAPE */
+        return((CHAR)(0x10 & 0xff));    /* DATA LINK ESCAPE */
       case 0x0011:
-	return((CHAR)(0x11 & 0xff));	/* DEVICE CONTROL ONE */
+        return((CHAR)(0x11 & 0xff));    /* DEVICE CONTROL ONE */
       case 0x0012:
-	return((CHAR)(0x12 & 0xff));	/* DEVICE CONTROL TWO */
+        return((CHAR)(0x12 & 0xff));    /* DEVICE CONTROL TWO */
       case 0x0013:
-	return((CHAR)(0x13 & 0xff));	/* DEVICE CONTROL THREE */
+        return((CHAR)(0x13 & 0xff));    /* DEVICE CONTROL THREE */
       case 0x009D:
-	return((CHAR)(0x14 & 0xff));	/* CONTROL */
+        return((CHAR)(0x14 & 0xff));    /* CONTROL */
       case 0x0085:
-	return((CHAR)(0x15 & 0xff));	/* CONTROL */
+        return((CHAR)(0x15 & 0xff));    /* CONTROL */
       case 0x0008:
-	return((CHAR)(0x16 & 0xff));	/* BACKSPACE */
+        return((CHAR)(0x16 & 0xff));    /* BACKSPACE */
       case 0x0087:
-	return((CHAR)(0x17 & 0xff));	/* CONTROL */
+        return((CHAR)(0x17 & 0xff));    /* CONTROL */
       case 0x0018:
-	return((CHAR)(0x18 & 0xff));	/* CANCEL */
+        return((CHAR)(0x18 & 0xff));    /* CANCEL */
       case 0x0019:
-	return((CHAR)(0x19 & 0xff));	/* END OF MEDIUM */
+        return((CHAR)(0x19 & 0xff));    /* END OF MEDIUM */
       case 0x0092:
-	return((CHAR)(0x1A & 0xff));	/* CONTROL */
+        return((CHAR)(0x1A & 0xff));    /* CONTROL */
       case 0x008F:
-	return((CHAR)(0x1B & 0xff));	/* CONTROL */
+        return((CHAR)(0x1B & 0xff));    /* CONTROL */
       case 0x001C:
-	return((CHAR)(0x1C & 0xff));	/* FILE SEPARATOR */
+        return((CHAR)(0x1C & 0xff));    /* FILE SEPARATOR */
       case 0x001D:
-	return((CHAR)(0x1D & 0xff));	/* GROUP SEPARATOR */
+        return((CHAR)(0x1D & 0xff));    /* GROUP SEPARATOR */
       case 0x001E:
-	return((CHAR)(0x1E & 0xff));	/* RECORD SEPARATOR */
+        return((CHAR)(0x1E & 0xff));    /* RECORD SEPARATOR */
       case 0x001F:
-	return((CHAR)(0x1F & 0xff));	/* UNIT SEPARATOR */
+        return((CHAR)(0x1F & 0xff));    /* UNIT SEPARATOR */
       case 0x0080:
-	return((CHAR)(0x20 & 0xff));	/* CONTROL */
+        return((CHAR)(0x20 & 0xff));    /* CONTROL */
       case 0x0081:
-	return((CHAR)(0x21 & 0xff));	/* CONTROL */
+        return((CHAR)(0x21 & 0xff));    /* CONTROL */
       case 0x0082:
-	return((CHAR)(0x22 & 0xff));	/* CONTROL */
+        return((CHAR)(0x22 & 0xff));    /* CONTROL */
       case 0x0083:
-	return((CHAR)(0x23 & 0xff));	/* CONTROL */
+        return((CHAR)(0x23 & 0xff));    /* CONTROL */
       case 0x0084:
-	return((CHAR)(0x24 & 0xff));	/* CONTROL */
+        return((CHAR)(0x24 & 0xff));    /* CONTROL */
       case 0x000A:
-	return((CHAR)(0x25 & 0xff));	/* LINE FEED */
+        return((CHAR)(0x25 & 0xff));    /* LINE FEED */
       case 0x0017:
-	return((CHAR)(0x26 & 0xff));	/* END OF TRANSMISSION BLOCK */
+        return((CHAR)(0x26 & 0xff));    /* END OF TRANSMISSION BLOCK */
       case 0x001B:
-	return((CHAR)(0x27 & 0xff));	/* ESCAPE */
+        return((CHAR)(0x27 & 0xff));    /* ESCAPE */
       case 0x0088:
-	return((CHAR)(0x28 & 0xff));	/* CONTROL */
+        return((CHAR)(0x28 & 0xff));    /* CONTROL */
       case 0x0089:
-	return((CHAR)(0x29 & 0xff));	/* CONTROL */
+        return((CHAR)(0x29 & 0xff));    /* CONTROL */
       case 0x008A:
-	return((CHAR)(0x2A & 0xff));	/* CONTROL */
+        return((CHAR)(0x2A & 0xff));    /* CONTROL */
       case 0x008B:
-	return((CHAR)(0x2B & 0xff));	/* CONTROL */
+        return((CHAR)(0x2B & 0xff));    /* CONTROL */
       case 0x008C:
-	return((CHAR)(0x2C & 0xff));	/* CONTROL */
+        return((CHAR)(0x2C & 0xff));    /* CONTROL */
       case 0x0005:
-	return((CHAR)(0x2D & 0xff));	/* ENQUIRY */
+        return((CHAR)(0x2D & 0xff));    /* ENQUIRY */
       case 0x0006:
-	return((CHAR)(0x2E & 0xff));	/* ACKNOWLEDGE */
+        return((CHAR)(0x2E & 0xff));    /* ACKNOWLEDGE */
       case 0x0007:
-	return((CHAR)(0x2F & 0xff));	/* BELL */
+        return((CHAR)(0x2F & 0xff));    /* BELL */
       case 0x0090:
-	return((CHAR)(0x30 & 0xff));	/* CONTROL */
+        return((CHAR)(0x30 & 0xff));    /* CONTROL */
       case 0x0091:
-	return((CHAR)(0x31 & 0xff));	/* CONTROL */
+        return((CHAR)(0x31 & 0xff));    /* CONTROL */
       case 0x0016:
-	return((CHAR)(0x32 & 0xff));	/* SYNCHRONOUS IDLE */
+        return((CHAR)(0x32 & 0xff));    /* SYNCHRONOUS IDLE */
       case 0x0093:
-	return((CHAR)(0x33 & 0xff));	/* CONTROL */
+        return((CHAR)(0x33 & 0xff));    /* CONTROL */
       case 0x0094:
-	return((CHAR)(0x34 & 0xff));	/* CONTROL */
+        return((CHAR)(0x34 & 0xff));    /* CONTROL */
       case 0x0095:
-	return((CHAR)(0x35 & 0xff));	/* CONTROL */
+        return((CHAR)(0x35 & 0xff));    /* CONTROL */
       case 0x0096:
-	return((CHAR)(0x36 & 0xff));	/* CONTROL */
+        return((CHAR)(0x36 & 0xff));    /* CONTROL */
       case 0x0004:
-	return((CHAR)(0x37 & 0xff));	/* END OF TRANSMISSION */
+        return((CHAR)(0x37 & 0xff));    /* END OF TRANSMISSION */
       case 0x0098:
-	return((CHAR)(0x38 & 0xff));	/* CONTROL */
+        return((CHAR)(0x38 & 0xff));    /* CONTROL */
       case 0x0099:
-	return((CHAR)(0x39 & 0xff));	/* CONTROL */
+        return((CHAR)(0x39 & 0xff));    /* CONTROL */
       case 0x009A:
-	return((CHAR)(0x3A & 0xff));	/* CONTROL */
+        return((CHAR)(0x3A & 0xff));    /* CONTROL */
       case 0x009B:
-	return((CHAR)(0x3B & 0xff));	/* CONTROL */
+        return((CHAR)(0x3B & 0xff));    /* CONTROL */
       case 0x0014:
-	return((CHAR)(0x3C & 0xff));	/* DEVICE CONTROL FOUR */
+        return((CHAR)(0x3C & 0xff));    /* DEVICE CONTROL FOUR */
       case 0x0015:
-	return((CHAR)(0x3D & 0xff));	/* NEGATIVE ACKNOWLEDGE */
+        return((CHAR)(0x3D & 0xff));    /* NEGATIVE ACKNOWLEDGE */
       case 0x009E:
-	return((CHAR)(0x3E & 0xff));	/* CONTROL */
+        return((CHAR)(0x3E & 0xff));    /* CONTROL */
       case 0x001A:
-	return((CHAR)(0x3F & 0xff));	/* SUBSTITUTE */
+        return((CHAR)(0x3F & 0xff));    /* SUBSTITUTE */
       case 0x0020:
-	return((CHAR)(0x40 & 0xff));	/* SPACE */
+        return((CHAR)(0x40 & 0xff));    /* SPACE */
       case 0x00A0:
-	return((CHAR)(0x41 & 0xff));	/* NO-BREAK SPACE */
+        return((CHAR)(0x41 & 0xff));    /* NO-BREAK SPACE */
       case 0x00E2:
-	return((CHAR)(0x42 & 0xff));	/* SMALL LETTER A WITH CIRCUMFLEX */
+        return((CHAR)(0x42 & 0xff));    /* SMALL LETTER A WITH CIRCUMFLEX */
       case 0x00E4:
-	return((CHAR)(0x43 & 0xff));	/* SMALL LETTER A WITH DIAERESIS */
+        return((CHAR)(0x43 & 0xff));    /* SMALL LETTER A WITH DIAERESIS */
       case 0x00E0:
-	return((CHAR)(0x44 & 0xff));	/* LATIN SMALL LETTER A WITH GRAVE */
+        return((CHAR)(0x44 & 0xff));    /* LATIN SMALL LETTER A WITH GRAVE */
       case 0x00E1:
-	return((CHAR)(0x45 & 0xff));	/* LATIN SMALL LETTER A WITH ACUTE */
+        return((CHAR)(0x45 & 0xff));    /* LATIN SMALL LETTER A WITH ACUTE */
       case 0x00E3:
-	return((CHAR)(0x46 & 0xff));	/* LATIN SMALL LETTER A WITH TILDE */
+        return((CHAR)(0x46 & 0xff));    /* LATIN SMALL LETTER A WITH TILDE */
       case 0x00E5:
-	return((CHAR)(0x47 & 0xff));	/* SMALL LETTER A WITH RING ABOVE */
+        return((CHAR)(0x47 & 0xff));    /* SMALL LETTER A WITH RING ABOVE */
       case 0x00E7:
-	return((CHAR)(0x48 & 0xff));	/* LATIN SMALL LETTER C WITH CEDILLA */
+        return((CHAR)(0x48 & 0xff));    /* LATIN SMALL LETTER C WITH CEDILLA */
       case 0x00F1:
-	return((CHAR)(0x49 & 0xff));	/* LATIN SMALL LETTER N WITH TILDE */
+        return((CHAR)(0x49 & 0xff));    /* LATIN SMALL LETTER N WITH TILDE */
       case 0x00A2:
-	return((CHAR)(0x4A & 0xff));	/* CENT SIGN */
+        return((CHAR)(0x4A & 0xff));    /* CENT SIGN */
       case 0x002E:
-	return((CHAR)(0x4B & 0xff));	/* FULL STOP */
+        return((CHAR)(0x4B & 0xff));    /* FULL STOP */
       case 0x003C:
-	return((CHAR)(0x4C & 0xff));	/* LESS-THAN SIGN */
+        return((CHAR)(0x4C & 0xff));    /* LESS-THAN SIGN */
       case 0x0028:
-	return((CHAR)(0x4D & 0xff));	/* LEFT PARENTHESIS */
+        return((CHAR)(0x4D & 0xff));    /* LEFT PARENTHESIS */
       case 0x002B:
-	return((CHAR)(0x4E & 0xff));	/* PLUS SIGN */
+        return((CHAR)(0x4E & 0xff));    /* PLUS SIGN */
       case 0x007C:
-	return((CHAR)(0x4F & 0xff));	/* VERTICAL LINE */
+        return((CHAR)(0x4F & 0xff));    /* VERTICAL LINE */
       case 0x0026:
-	return((CHAR)(0x50 & 0xff));	/* AMPERSAND */
+        return((CHAR)(0x50 & 0xff));    /* AMPERSAND */
       case 0x00E9:
-	return((CHAR)(0x51 & 0xff));	/* SMALL LETTER E WITH ACUTE */
+        return((CHAR)(0x51 & 0xff));    /* SMALL LETTER E WITH ACUTE */
       case 0x00EA:
-	return((CHAR)(0x52 & 0xff));	/* SMALL LETTER E WITH CIRCUMFLEX */
+        return((CHAR)(0x52 & 0xff));    /* SMALL LETTER E WITH CIRCUMFLEX */
       case 0x00EB:
-	return((CHAR)(0x53 & 0xff));	/* SMALL LETTER E WITH DIAERESIS */
+        return((CHAR)(0x53 & 0xff));    /* SMALL LETTER E WITH DIAERESIS */
       case 0x00E8:
-	return((CHAR)(0x54 & 0xff));	/* LATIN SMALL LETTER E WITH GRAVE */
+        return((CHAR)(0x54 & 0xff));    /* LATIN SMALL LETTER E WITH GRAVE */
       case 0x00ED:
-	return((CHAR)(0x55 & 0xff));	/* LATIN SMALL LETTER I WITH ACUTE */
+        return((CHAR)(0x55 & 0xff));    /* LATIN SMALL LETTER I WITH ACUTE */
       case 0x00EE:
-	return((CHAR)(0x56 & 0xff));	/* SMALL LETTER I WITH CIRCUMFLEX */
+        return((CHAR)(0x56 & 0xff));    /* SMALL LETTER I WITH CIRCUMFLEX */
       case 0x00EF:
-	return((CHAR)(0x57 & 0xff));	/* SMALL LETTER I WITH DIAERESIS */
+        return((CHAR)(0x57 & 0xff));    /* SMALL LETTER I WITH DIAERESIS */
       case 0x00EC:
-	return((CHAR)(0x58 & 0xff));	/* LATIN SMALL LETTER I WITH GRAVE */
+        return((CHAR)(0x58 & 0xff));    /* LATIN SMALL LETTER I WITH GRAVE */
       case 0x00DF:
-	return((CHAR)(0x59 & 0xff));	/* SMALL LETTER SHARP S (GERMAN) */
+        return((CHAR)(0x59 & 0xff));    /* SMALL LETTER SHARP S (GERMAN) */
       case 0x0021:
-	return((CHAR)(0x5A & 0xff));	/* EXCLAMATION MARK */
+        return((CHAR)(0x5A & 0xff));    /* EXCLAMATION MARK */
       case 0x0024:
-	return((CHAR)(0x5B & 0xff));	/* DOLLAR SIGN */
+        return((CHAR)(0x5B & 0xff));    /* DOLLAR SIGN */
       case 0x002A:
-	return((CHAR)(0x5C & 0xff));	/* ASTERISK */
+        return((CHAR)(0x5C & 0xff));    /* ASTERISK */
       case 0x0029:
-	return((CHAR)(0x5D & 0xff));	/* RIGHT PARENTHESIS */
+        return((CHAR)(0x5D & 0xff));    /* RIGHT PARENTHESIS */
       case 0x003B:
-	return((CHAR)(0x5E & 0xff));	/* SEMICOLON */
+        return((CHAR)(0x5E & 0xff));    /* SEMICOLON */
       case 0x00AC:
-	return((CHAR)(0x5F & 0xff));	/* NOT SIGN */
+        return((CHAR)(0x5F & 0xff));    /* NOT SIGN */
       case 0x002D:
-	return((CHAR)(0x60 & 0xff));	/* HYPHEN-MINUS */
+        return((CHAR)(0x60 & 0xff));    /* HYPHEN-MINUS */
       case 0x002F:
-	return((CHAR)(0x61 & 0xff));	/* SOLIDUS */
+        return((CHAR)(0x61 & 0xff));    /* SOLIDUS */
       case 0x00C2:
-	return((CHAR)(0x62 & 0xff));	/* CAPITAL LETTER A WITH CIRCUMFLEX */
+        return((CHAR)(0x62 & 0xff));    /* CAPITAL LETTER A WITH CIRCUMFLEX */
       case 0x00C4:
-	return((CHAR)(0x63 & 0xff));	/* CAPITAL LETTER A WITH DIAERESIS */
+        return((CHAR)(0x63 & 0xff));    /* CAPITAL LETTER A WITH DIAERESIS */
       case 0x00C0:
-	return((CHAR)(0x64 & 0xff));	/* LATIN CAPITAL LETTER A WITH GRAVE */
+        return((CHAR)(0x64 & 0xff));    /* LATIN CAPITAL LETTER A WITH GRAVE */
       case 0x00C1:
-	return((CHAR)(0x65 & 0xff));	/* LATIN CAPITAL LETTER A WITH ACUTE */
+        return((CHAR)(0x65 & 0xff));    /* LATIN CAPITAL LETTER A WITH ACUTE */
       case 0x00C3:
-	return((CHAR)(0x66 & 0xff));	/* LATIN CAPITAL LETTER A WITH TILDE */
+        return((CHAR)(0x66 & 0xff));    /* LATIN CAPITAL LETTER A WITH TILDE */
       case 0x00C5:
-	return((CHAR)(0x67 & 0xff));	/* CAPITAL LETTER A WITH RING ABOVE */
+        return((CHAR)(0x67 & 0xff));    /* CAPITAL LETTER A WITH RING ABOVE */
       case 0x00C7:
-	return((CHAR)(0x68 & 0xff));	/* CAPITAL LETTER C WITH CEDILLA */
+        return((CHAR)(0x68 & 0xff));    /* CAPITAL LETTER C WITH CEDILLA */
       case 0x00D1:
-	return((CHAR)(0x69 & 0xff));	/* LATIN CAPITAL LETTER N WITH TILDE */
+        return((CHAR)(0x69 & 0xff));    /* LATIN CAPITAL LETTER N WITH TILDE */
       case 0x00A6:
-	return((CHAR)(0x6A & 0xff));	/* BROKEN BAR */
+        return((CHAR)(0x6A & 0xff));    /* BROKEN BAR */
       case 0x002C:
-	return((CHAR)(0x6B & 0xff));	/* COMMA */
+        return((CHAR)(0x6B & 0xff));    /* COMMA */
       case 0x0025:
-	return((CHAR)(0x6C & 0xff));	/* PERCENT SIGN */
+        return((CHAR)(0x6C & 0xff));    /* PERCENT SIGN */
       case 0x005F:
-	return((CHAR)(0x6D & 0xff));	/* LOW LINE */
+        return((CHAR)(0x6D & 0xff));    /* LOW LINE */
       case 0x003E:
-	return((CHAR)(0x6E & 0xff));	/* GREATER-THAN SIGN */
+        return((CHAR)(0x6E & 0xff));    /* GREATER-THAN SIGN */
       case 0x003F:
-	return((CHAR)(0x6F & 0xff));	/* QUESTION MARK */
+        return((CHAR)(0x6F & 0xff));    /* QUESTION MARK */
       case 0x00F8:
-	return((CHAR)(0x70 & 0xff));	/* LATIN SMALL LETTER O WITH STROKE */
+        return((CHAR)(0x70 & 0xff));    /* LATIN SMALL LETTER O WITH STROKE */
       case 0x00C9:
-	return((CHAR)(0x71 & 0xff));	/* LATIN CAPITAL LETTER E WITH ACUTE */
+        return((CHAR)(0x71 & 0xff));    /* LATIN CAPITAL LETTER E WITH ACUTE */
       case 0x00CA:
-	/* LATIN CAPITAL LETTER E WITH CIRCUMFLEX */
-	return((CHAR)(0x72 & 0xff));
+        /* LATIN CAPITAL LETTER E WITH CIRCUMFLEX */
+        return((CHAR)(0x72 & 0xff));
       case 0x00CB:
-	/* LATIN CAPITAL LETTER E WITH DIAERESIS */
-	return((CHAR)(0x73 & 0xff));
+        /* LATIN CAPITAL LETTER E WITH DIAERESIS */
+        return((CHAR)(0x73 & 0xff));
       case 0x00C8:
-	return((CHAR)(0x74 & 0xff));	/* LATIN CAPITAL LETTER E WITH GRAVE */
+        return((CHAR)(0x74 & 0xff));    /* LATIN CAPITAL LETTER E WITH GRAVE */
       case 0x00CD:
-	return((CHAR)(0x75 & 0xff));	/* LATIN CAPITAL LETTER I WITH ACUTE */
+        return((CHAR)(0x75 & 0xff));    /* LATIN CAPITAL LETTER I WITH ACUTE */
       case 0x00CE:
-	/* LATIN CAPITAL LETTER I WITH CIRCUMFLEX */
-	return((CHAR)(0x76 & 0xff));
+        /* LATIN CAPITAL LETTER I WITH CIRCUMFLEX */
+        return((CHAR)(0x76 & 0xff));
       case 0x00CF:
-	/* LATIN CAPITAL LETTER I WITH DIAERESIS */
-	return((CHAR)(0x77 & 0xff));
+        /* LATIN CAPITAL LETTER I WITH DIAERESIS */
+        return((CHAR)(0x77 & 0xff));
       case 0x00CC:
-	return((CHAR)(0x78 & 0xff));	/* LATIN CAPITAL LETTER I WITH GRAVE */
+        return((CHAR)(0x78 & 0xff));    /* LATIN CAPITAL LETTER I WITH GRAVE */
       case 0x0060:
-	return((CHAR)(0x79 & 0xff));	/* GRAVE ACCENT */
+        return((CHAR)(0x79 & 0xff));    /* GRAVE ACCENT */
       case 0x003A:
-	return((CHAR)(0x7A & 0xff));	/* COLON */
+        return((CHAR)(0x7A & 0xff));    /* COLON */
       case 0x0023:
-	return((CHAR)(0x7B & 0xff));	/* NUMBER SIGN */
+        return((CHAR)(0x7B & 0xff));    /* NUMBER SIGN */
       case 0x0040:
-	return((CHAR)(0x7C & 0xff));	/* COMMERCIAL AT */
+        return((CHAR)(0x7C & 0xff));    /* COMMERCIAL AT */
       case 0x0027:
-	return((CHAR)(0x7D & 0xff));	/* APOSTROPHE */
+        return((CHAR)(0x7D & 0xff));    /* APOSTROPHE */
       case 0x003D:
-	return((CHAR)(0x7E & 0xff));	/* EQUALS SIGN */
+        return((CHAR)(0x7E & 0xff));    /* EQUALS SIGN */
       case 0x0022:
-	return((CHAR)(0x7F & 0xff));	/* QUOTATION MARK */
+        return((CHAR)(0x7F & 0xff));    /* QUOTATION MARK */
       case 0x00D8:
-	/* LATIN CAPITAL LETTER O WITH STROKE */
-	return((CHAR)(0x80 & 0xff));
+        /* LATIN CAPITAL LETTER O WITH STROKE */
+        return((CHAR)(0x80 & 0xff));
       case 0x0061:
-	return((CHAR)(0x81 & 0xff));	/* LATIN SMALL LETTER A */
+        return((CHAR)(0x81 & 0xff));    /* LATIN SMALL LETTER A */
       case 0x0062:
-	return((CHAR)(0x82 & 0xff));	/* LATIN SMALL LETTER B */
+        return((CHAR)(0x82 & 0xff));    /* LATIN SMALL LETTER B */
       case 0x0063:
-	return((CHAR)(0x83 & 0xff));	/* LATIN SMALL LETTER C */
+        return((CHAR)(0x83 & 0xff));    /* LATIN SMALL LETTER C */
       case 0x0064:
-	return((CHAR)(0x84 & 0xff));	/* LATIN SMALL LETTER D */
+        return((CHAR)(0x84 & 0xff));    /* LATIN SMALL LETTER D */
       case 0x0065:
-	return((CHAR)(0x85 & 0xff));	/* LATIN SMALL LETTER E */
+        return((CHAR)(0x85 & 0xff));    /* LATIN SMALL LETTER E */
       case 0x0066:
-	return((CHAR)(0x86 & 0xff));	/* LATIN SMALL LETTER F */
+        return((CHAR)(0x86 & 0xff));    /* LATIN SMALL LETTER F */
       case 0x0067:
-	return((CHAR)(0x87 & 0xff));	/* LATIN SMALL LETTER G */
+        return((CHAR)(0x87 & 0xff));    /* LATIN SMALL LETTER G */
       case 0x0068:
-	return((CHAR)(0x88 & 0xff));	/* LATIN SMALL LETTER H */
+        return((CHAR)(0x88 & 0xff));    /* LATIN SMALL LETTER H */
       case 0x0069:
-	return((CHAR)(0x89 & 0xff));	/* LATIN SMALL LETTER I */
+        return((CHAR)(0x89 & 0xff));    /* LATIN SMALL LETTER I */
       case 0x00AB:
-	/* LEFT-POINTING DOUBLE ANGLE QUOTATION MARK */
-	return((CHAR)(0x8A & 0xff));
+        /* LEFT-POINTING DOUBLE ANGLE QUOTATION MARK */
+        return((CHAR)(0x8A & 0xff));
       case 0x00BB:
-	/* RIGHT-POINTING DOUBLE ANGLE QUOTATION MAR K*/
-	return((CHAR)(0x8B & 0xff));
+        /* RIGHT-POINTING DOUBLE ANGLE QUOTATION MAR K*/
+        return((CHAR)(0x8B & 0xff));
       case 0x00F0:
-	/* LATIN SMALL LETTER ETH (ICELANDIC) */
-	return((CHAR)(0x8C & 0xff));
+        /* LATIN SMALL LETTER ETH (ICELANDIC) */
+        return((CHAR)(0x8C & 0xff));
       case 0x00FD:
-	return((CHAR)(0x8D & 0xff));	/* LATIN SMALL LETTER Y WITH ACUTE */
+        return((CHAR)(0x8D & 0xff));    /* LATIN SMALL LETTER Y WITH ACUTE */
       case 0x00FE:
-	/* LATIN SMALL LETTER THORN (ICELANDIC) */
-	return((CHAR)(0x8E & 0xff));
+        /* LATIN SMALL LETTER THORN (ICELANDIC) */
+        return((CHAR)(0x8E & 0xff));
       case 0x00B1:
-	return((CHAR)(0x8F & 0xff));	/* PLUS-MINUS SIGN */
+        return((CHAR)(0x8F & 0xff));    /* PLUS-MINUS SIGN */
       case 0x00B0:
-	return((CHAR)(0x90 & 0xff));	/* DEGREE SIGN */
+        return((CHAR)(0x90 & 0xff));    /* DEGREE SIGN */
       case 0x006A:
-	return((CHAR)(0x91 & 0xff));	/* LATIN SMALL LETTER J */
+        return((CHAR)(0x91 & 0xff));    /* LATIN SMALL LETTER J */
       case 0x006B:
-	return((CHAR)(0x92 & 0xff));	/* LATIN SMALL LETTER K */
+        return((CHAR)(0x92 & 0xff));    /* LATIN SMALL LETTER K */
       case 0x006C:
-	return((CHAR)(0x93 & 0xff));	/* LATIN SMALL LETTER L */
+        return((CHAR)(0x93 & 0xff));    /* LATIN SMALL LETTER L */
       case 0x006D:
-	return((CHAR)(0x94 & 0xff));	/* LATIN SMALL LETTER M */
+        return((CHAR)(0x94 & 0xff));    /* LATIN SMALL LETTER M */
       case 0x006E:
-	return((CHAR)(0x95 & 0xff));	/* LATIN SMALL LETTER N */
+        return((CHAR)(0x95 & 0xff));    /* LATIN SMALL LETTER N */
       case 0x006F:
-	return((CHAR)(0x96 & 0xff));	/* LATIN SMALL LETTER O */
+        return((CHAR)(0x96 & 0xff));    /* LATIN SMALL LETTER O */
       case 0x0070:
-	return((CHAR)(0x97 & 0xff));	/* LATIN SMALL LETTER P */
+        return((CHAR)(0x97 & 0xff));    /* LATIN SMALL LETTER P */
       case 0x0071:
-	return((CHAR)(0x98 & 0xff));	/* LATIN SMALL LETTER Q */
+        return((CHAR)(0x98 & 0xff));    /* LATIN SMALL LETTER Q */
       case 0x0072:
-	return((CHAR)(0x99 & 0xff));	/* LATIN SMALL LETTER R */
+        return((CHAR)(0x99 & 0xff));    /* LATIN SMALL LETTER R */
       case 0x00AA:
-	return((CHAR)(0x9A & 0xff));	/* FEMININE ORDINAL INDICATOR */
+        return((CHAR)(0x9A & 0xff));    /* FEMININE ORDINAL INDICATOR */
       case 0x00BA:
-	return((CHAR)(0x9B & 0xff));	/* MASCULINE ORDINAL INDICATOR */
+        return((CHAR)(0x9B & 0xff));    /* MASCULINE ORDINAL INDICATOR */
       case 0x00E6:
-	return((CHAR)(0x9C & 0xff));	/* LATIN SMALL LIGATURE AE */
+        return((CHAR)(0x9C & 0xff));    /* LATIN SMALL LIGATURE AE */
       case 0x00B8:
-	return((CHAR)(0x9D & 0xff));	/* CEDILLA */
+        return((CHAR)(0x9D & 0xff));    /* CEDILLA */
       case 0x00C6:
-	return((CHAR)(0x9E & 0xff));	/* LATIN CAPITAL LIGATURE AE */
+        return((CHAR)(0x9E & 0xff));    /* LATIN CAPITAL LIGATURE AE */
       case 0x00A4:
-	return((CHAR)(0x9F & 0xff));	/* CURRENCY SIGN */
+        return((CHAR)(0x9F & 0xff));    /* CURRENCY SIGN */
       case 0x00B5:
-	return((CHAR)(0xA0 & 0xff));	/* MICRO SIGN */
+        return((CHAR)(0xA0 & 0xff));    /* MICRO SIGN */
       case 0x007E:
-	return((CHAR)(0xA1 & 0xff));	/* TILDE */
+        return((CHAR)(0xA1 & 0xff));    /* TILDE */
       case 0x0073:
-	return((CHAR)(0xA2 & 0xff));	/* LATIN SMALL LETTER S */
+        return((CHAR)(0xA2 & 0xff));    /* LATIN SMALL LETTER S */
       case 0x0074:
-	return((CHAR)(0xA3 & 0xff));	/* LATIN SMALL LETTER T */
+        return((CHAR)(0xA3 & 0xff));    /* LATIN SMALL LETTER T */
       case 0x0075:
-	return((CHAR)(0xA4 & 0xff));	/* LATIN SMALL LETTER U */
+        return((CHAR)(0xA4 & 0xff));    /* LATIN SMALL LETTER U */
       case 0x0076:
-	return((CHAR)(0xA5 & 0xff));	/* LATIN SMALL LETTER V */
+        return((CHAR)(0xA5 & 0xff));    /* LATIN SMALL LETTER V */
       case 0x0077:
-	return((CHAR)(0xA6 & 0xff));	/* LATIN SMALL LETTER W */
+        return((CHAR)(0xA6 & 0xff));    /* LATIN SMALL LETTER W */
       case 0x0078:
-	return((CHAR)(0xA7 & 0xff));	/* LATIN SMALL LETTER X */
+        return((CHAR)(0xA7 & 0xff));    /* LATIN SMALL LETTER X */
       case 0x0079:
-	return((CHAR)(0xA8 & 0xff));	/* LATIN SMALL LETTER Y */
+        return((CHAR)(0xA8 & 0xff));    /* LATIN SMALL LETTER Y */
       case 0x007A:
-	return((CHAR)(0xA9 & 0xff));	/* LATIN SMALL LETTER Z */
+        return((CHAR)(0xA9 & 0xff));    /* LATIN SMALL LETTER Z */
       case 0x00A1:
-	return((CHAR)(0xAA & 0xff));	/* INVERTED EXCLAMATION MARK */
+        return((CHAR)(0xAA & 0xff));    /* INVERTED EXCLAMATION MARK */
       case 0x00BF:
-	return((CHAR)(0xAB & 0xff));	/* INVERTED QUESTION MARK */
+        return((CHAR)(0xAB & 0xff));    /* INVERTED QUESTION MARK */
       case 0x00D0:
-	/* LATIN CAPITAL LETTER ETH (ICELANDIC) */
-	return((CHAR)(0xAC & 0xff));
+        /* LATIN CAPITAL LETTER ETH (ICELANDIC) */
+        return((CHAR)(0xAC & 0xff));
       case 0x00DD:
-	return((CHAR)(0xAD & 0xff));	/* LATIN CAPITAL LETTER Y WITH ACUTE */
+        return((CHAR)(0xAD & 0xff));    /* LATIN CAPITAL LETTER Y WITH ACUTE */
       case 0x00DE:
-	/* LATIN CAPITAL LETTER THORN (ICELANDIC) */
-	return((CHAR)(0xAE & 0xff));
+        /* LATIN CAPITAL LETTER THORN (ICELANDIC) */
+        return((CHAR)(0xAE & 0xff));
       case 0x00AE:
-	return((CHAR)(0xAF & 0xff));	/* REGISTERED SIGN */
+        return((CHAR)(0xAF & 0xff));    /* REGISTERED SIGN */
       case 0x005E:
-	return((CHAR)(0xB0 & 0xff));	/* CIRCUMFLEX ACCENT */
+        return((CHAR)(0xB0 & 0xff));    /* CIRCUMFLEX ACCENT */
       case 0x00A3:
-	return((CHAR)(0xB1 & 0xff));	/* POUND SIGN */
+        return((CHAR)(0xB1 & 0xff));    /* POUND SIGN */
       case 0x00A5:
-	return((CHAR)(0xB2 & 0xff));	/* YEN SIGN */
+        return((CHAR)(0xB2 & 0xff));    /* YEN SIGN */
       case 0x00B7:
-	return((CHAR)(0xB3 & 0xff));	/* MIDDLE DOT */
+        return((CHAR)(0xB3 & 0xff));    /* MIDDLE DOT */
       case 0x00A9:
-	return((CHAR)(0xB4 & 0xff));	/* COPYRIGHT SIGN */
+        return((CHAR)(0xB4 & 0xff));    /* COPYRIGHT SIGN */
       case 0x00A7:
-	return((CHAR)(0xB5 & 0xff));	/* SECTION SIGN */
+        return((CHAR)(0xB5 & 0xff));    /* SECTION SIGN */
       case 0x00B6:
-	return((CHAR)(0xB6 & 0xff));	/* PILCROW SIGN */
+        return((CHAR)(0xB6 & 0xff));    /* PILCROW SIGN */
       case 0x00BC:
-	return((CHAR)(0xB7 & 0xff));	/* VULGAR FRACTION ONE QUARTER */
+        return((CHAR)(0xB7 & 0xff));    /* VULGAR FRACTION ONE QUARTER */
       case 0x00BD:
-	return((CHAR)(0xB8 & 0xff));	/* VULGAR FRACTION ONE HALF */
+        return((CHAR)(0xB8 & 0xff));    /* VULGAR FRACTION ONE HALF */
       case 0x00BE:
-	return((CHAR)(0xB9 & 0xff));	/* VULGAR FRACTION THREE QUARTERS */
+        return((CHAR)(0xB9 & 0xff));    /* VULGAR FRACTION THREE QUARTERS */
       case 0x005B:
-	return((CHAR)(0xBA & 0xff));	/* LEFT SQUARE BRACKET */
+        return((CHAR)(0xBA & 0xff));    /* LEFT SQUARE BRACKET */
       case 0x005D:
-	return((CHAR)(0xBB & 0xff));	/* RIGHT SQUARE BRACKET */
+        return((CHAR)(0xBB & 0xff));    /* RIGHT SQUARE BRACKET */
       case 0x00AF:
-	return((CHAR)(0xBC & 0xff));	/* MACRON */
+        return((CHAR)(0xBC & 0xff));    /* MACRON */
       case 0x00A8:
-	return((CHAR)(0xBD & 0xff));	/* DIAERESIS */
+        return((CHAR)(0xBD & 0xff));    /* DIAERESIS */
       case 0x00B4:
-	return((CHAR)(0xBE & 0xff));	/* ACUTE ACCENT */
+        return((CHAR)(0xBE & 0xff));    /* ACUTE ACCENT */
       case 0x00D7:
-	return((CHAR)(0xBF & 0xff));	/* MULTIPLICATION SIGN */
+        return((CHAR)(0xBF & 0xff));    /* MULTIPLICATION SIGN */
       case 0x007B:
-	return((CHAR)(0xC0 & 0xff));	/* LEFT CURLY BRACKET */
+        return((CHAR)(0xC0 & 0xff));    /* LEFT CURLY BRACKET */
       case 0x0041:
-	return((CHAR)(0xC1 & 0xff));	/* LATIN CAPITAL LETTER A */
+        return((CHAR)(0xC1 & 0xff));    /* LATIN CAPITAL LETTER A */
       case 0x0042:
-	return((CHAR)(0xC2 & 0xff));	/* LATIN CAPITAL LETTER B */
+        return((CHAR)(0xC2 & 0xff));    /* LATIN CAPITAL LETTER B */
       case 0x0043:
-	return((CHAR)(0xC3 & 0xff));	/* LATIN CAPITAL LETTER C */
+        return((CHAR)(0xC3 & 0xff));    /* LATIN CAPITAL LETTER C */
       case 0x0044:
-	return((CHAR)(0xC4 & 0xff));	/* LATIN CAPITAL LETTER D */
+        return((CHAR)(0xC4 & 0xff));    /* LATIN CAPITAL LETTER D */
       case 0x0045:
-	return((CHAR)(0xC5 & 0xff));	/* LATIN CAPITAL LETTER E */
+        return((CHAR)(0xC5 & 0xff));    /* LATIN CAPITAL LETTER E */
       case 0x0046:
-	return((CHAR)(0xC6 & 0xff));	/* LATIN CAPITAL LETTER F */
+        return((CHAR)(0xC6 & 0xff));    /* LATIN CAPITAL LETTER F */
       case 0x0047:
-	return((CHAR)(0xC7 & 0xff));	/* LATIN CAPITAL LETTER G */
+        return((CHAR)(0xC7 & 0xff));    /* LATIN CAPITAL LETTER G */
       case 0x0048:
-	return((CHAR)(0xC8 & 0xff));	/* LATIN CAPITAL LETTER H */
+        return((CHAR)(0xC8 & 0xff));    /* LATIN CAPITAL LETTER H */
       case 0x0049:
-	return((CHAR)(0xC9 & 0xff));	/* LATIN CAPITAL LETTER I */
+        return((CHAR)(0xC9 & 0xff));    /* LATIN CAPITAL LETTER I */
       case 0x00AD:
-	return((CHAR)(0xCA & 0xff));	/* SOFT HYPHEN */
+        return((CHAR)(0xCA & 0xff));    /* SOFT HYPHEN */
       case 0x00F4:
-	return((CHAR)(0xCB & 0xff));	/* SMALL LETTER O WITH CIRCUMFLEX */
+        return((CHAR)(0xCB & 0xff));    /* SMALL LETTER O WITH CIRCUMFLEX */
       case 0x00F6:
-	return((CHAR)(0xCC & 0xff));	/* SMALL LETTER O WITH DIAERESIS */
+        return((CHAR)(0xCC & 0xff));    /* SMALL LETTER O WITH DIAERESIS */
       case 0x00F2:
-	return((CHAR)(0xCD & 0xff));	/* LATIN SMALL LETTER O WITH GRAVE */
+        return((CHAR)(0xCD & 0xff));    /* LATIN SMALL LETTER O WITH GRAVE */
       case 0x00F3:
-	return((CHAR)(0xCE & 0xff));	/* LATIN SMALL LETTER O WITH ACUTE */
+        return((CHAR)(0xCE & 0xff));    /* LATIN SMALL LETTER O WITH ACUTE */
       case 0x00F5:
-	return((CHAR)(0xCF & 0xff));	/* LATIN SMALL LETTER O WITH TILDE */
+        return((CHAR)(0xCF & 0xff));    /* LATIN SMALL LETTER O WITH TILDE */
       case 0x007D:
-	return((CHAR)(0xD0 & 0xff));	/* RIGHT CURLY BRACKET */
+        return((CHAR)(0xD0 & 0xff));    /* RIGHT CURLY BRACKET */
       case 0x004A:
-	return((CHAR)(0xD1 & 0xff));	/* LATIN CAPITAL LETTER J */
+        return((CHAR)(0xD1 & 0xff));    /* LATIN CAPITAL LETTER J */
       case 0x004B:
-	return((CHAR)(0xD2 & 0xff));	/* LATIN CAPITAL LETTER K */
+        return((CHAR)(0xD2 & 0xff));    /* LATIN CAPITAL LETTER K */
       case 0x004C:
-	return((CHAR)(0xD3 & 0xff));	/* LATIN CAPITAL LETTER L */
+        return((CHAR)(0xD3 & 0xff));    /* LATIN CAPITAL LETTER L */
       case 0x004D:
-	return((CHAR)(0xD4 & 0xff));	/* LATIN CAPITAL LETTER M */
+        return((CHAR)(0xD4 & 0xff));    /* LATIN CAPITAL LETTER M */
       case 0x004E:
-	return((CHAR)(0xD5 & 0xff));	/* LATIN CAPITAL LETTER N */
+        return((CHAR)(0xD5 & 0xff));    /* LATIN CAPITAL LETTER N */
       case 0x004F:
-	return((CHAR)(0xD6 & 0xff));	/* LATIN CAPITAL LETTER O */
+        return((CHAR)(0xD6 & 0xff));    /* LATIN CAPITAL LETTER O */
       case 0x0050:
-	return((CHAR)(0xD7 & 0xff));	/* LATIN CAPITAL LETTER P */
+        return((CHAR)(0xD7 & 0xff));    /* LATIN CAPITAL LETTER P */
       case 0x0051:
-	return((CHAR)(0xD8 & 0xff));	/* LATIN CAPITAL LETTER Q */
+        return((CHAR)(0xD8 & 0xff));    /* LATIN CAPITAL LETTER Q */
       case 0x0052:
-	return((CHAR)(0xD9 & 0xff));	/* LATIN CAPITAL LETTER R */
+        return((CHAR)(0xD9 & 0xff));    /* LATIN CAPITAL LETTER R */
       case 0x00B9:
-	return((CHAR)(0xDA & 0xff));	/* SUPERSCRIPT ONE */
+        return((CHAR)(0xDA & 0xff));    /* SUPERSCRIPT ONE */
       case 0x00FB:
-	return((CHAR)(0xDB & 0xff));	/* SMALL LETTER U WITH CIRCUMFLEX */
+        return((CHAR)(0xDB & 0xff));    /* SMALL LETTER U WITH CIRCUMFLEX */
       case 0x00FC:
-	return((CHAR)(0xDC & 0xff));	/* SMALL LETTER U WITH DIAERESIS */
+        return((CHAR)(0xDC & 0xff));    /* SMALL LETTER U WITH DIAERESIS */
       case 0x00F9:
-	return((CHAR)(0xDD & 0xff));	/* SMALL LETTER U WITH GRAVE */
+        return((CHAR)(0xDD & 0xff));    /* SMALL LETTER U WITH GRAVE */
       case 0x00FA:
-	return((CHAR)(0xDE & 0xff));	/* SMALL LETTER U WITH ACUTE */
+        return((CHAR)(0xDE & 0xff));    /* SMALL LETTER U WITH ACUTE */
       case 0x00FF:
-	return((CHAR)(0xDF & 0xff));	/* SMALL LETTER Y WITH DIAERESIS */
+        return((CHAR)(0xDF & 0xff));    /* SMALL LETTER Y WITH DIAERESIS */
       case 0x005C:
-	return((CHAR)(0xE0 & 0xff));	/* REVERSE SOLIDUS */
+        return((CHAR)(0xE0 & 0xff));    /* REVERSE SOLIDUS */
       case 0x00F7:
-	return((CHAR)(0xE1 & 0xff));	/* DIVISION SIGN */
+        return((CHAR)(0xE1 & 0xff));    /* DIVISION SIGN */
       case 0x0053:
-	return((CHAR)(0xE2 & 0xff));	/* LATIN CAPITAL LETTER S */
+        return((CHAR)(0xE2 & 0xff));    /* LATIN CAPITAL LETTER S */
       case 0x0054:
-	return((CHAR)(0xE3 & 0xff));	/* LATIN CAPITAL LETTER T */
+        return((CHAR)(0xE3 & 0xff));    /* LATIN CAPITAL LETTER T */
       case 0x0055:
-	return((CHAR)(0xE4 & 0xff));	/* LATIN CAPITAL LETTER U */
+        return((CHAR)(0xE4 & 0xff));    /* LATIN CAPITAL LETTER U */
       case 0x0056:
-	return((CHAR)(0xE5 & 0xff));	/* LATIN CAPITAL LETTER V */
+        return((CHAR)(0xE5 & 0xff));    /* LATIN CAPITAL LETTER V */
       case 0x0057:
-	return((CHAR)(0xE6 & 0xff));	/* LATIN CAPITAL LETTER W */
+        return((CHAR)(0xE6 & 0xff));    /* LATIN CAPITAL LETTER W */
       case 0x0058:
-	return((CHAR)(0xE7 & 0xff));	/* LATIN CAPITAL LETTER X */
+        return((CHAR)(0xE7 & 0xff));    /* LATIN CAPITAL LETTER X */
       case 0x0059:
-	return((CHAR)(0xE8 & 0xff));	/* LATIN CAPITAL LETTER Y */
+        return((CHAR)(0xE8 & 0xff));    /* LATIN CAPITAL LETTER Y */
       case 0x005A:
-	return((CHAR)(0xE9 & 0xff));	/* LATIN CAPITAL LETTER Z */
+        return((CHAR)(0xE9 & 0xff));    /* LATIN CAPITAL LETTER Z */
       case 0x00B2:
-	return((CHAR)(0xEA & 0xff));	/* SUPERSCRIPT TWO */
+        return((CHAR)(0xEA & 0xff));    /* SUPERSCRIPT TWO */
       case 0x00D4:
-	return((CHAR)(0xEB & 0xff));	/* CAPITAL LETTER O WITH CIRCUMFLEX */
+        return((CHAR)(0xEB & 0xff));    /* CAPITAL LETTER O WITH CIRCUMFLEX */
       case 0x00D6:
-	return((CHAR)(0xEC & 0xff));	/* CAPITAL LETTER O WITH DIAERESIS */
+        return((CHAR)(0xEC & 0xff));    /* CAPITAL LETTER O WITH DIAERESIS */
       case 0x00D2:
-	return((CHAR)(0xED & 0xff));	/* CAPITAL LETTER O WITH GRAVE */
+        return((CHAR)(0xED & 0xff));    /* CAPITAL LETTER O WITH GRAVE */
       case 0x00D3:
-	return((CHAR)(0xEE & 0xff));	/* CAPITAL LETTER O WITH ACUTE */
+        return((CHAR)(0xEE & 0xff));    /* CAPITAL LETTER O WITH ACUTE */
       case 0x00D5:
-	return((CHAR)(0xEF & 0xff));	/* CAPITAL LETTER O WITH TILDE */
+        return((CHAR)(0xEF & 0xff));    /* CAPITAL LETTER O WITH TILDE */
       case 0x0030:
-	return((CHAR)(0xF0 & 0xff));	/* DIGIT ZERO */
+        return((CHAR)(0xF0 & 0xff));    /* DIGIT ZERO */
       case 0x0031:
-	return((CHAR)(0xF1 & 0xff));	/* DIGIT ONE */
+        return((CHAR)(0xF1 & 0xff));    /* DIGIT ONE */
       case 0x0032:
-	return((CHAR)(0xF2 & 0xff));	/* DIGIT TWO */
+        return((CHAR)(0xF2 & 0xff));    /* DIGIT TWO */
       case 0x0033:
-	return((CHAR)(0xF3 & 0xff));	/* DIGIT THREE */
+        return((CHAR)(0xF3 & 0xff));    /* DIGIT THREE */
       case 0x0034:
-	return((CHAR)(0xF4 & 0xff));	/* DIGIT FOUR */
+        return((CHAR)(0xF4 & 0xff));    /* DIGIT FOUR */
       case 0x0035:
-	return((CHAR)(0xF5 & 0xff));	/* DIGIT FIVE */
+        return((CHAR)(0xF5 & 0xff));    /* DIGIT FIVE */
       case 0x0036:
-	return((CHAR)(0xF6 & 0xff));	/* DIGIT SIX */
+        return((CHAR)(0xF6 & 0xff));    /* DIGIT SIX */
       case 0x0037:
-	return((CHAR)(0xF7 & 0xff));	/* DIGIT SEVEN */
+        return((CHAR)(0xF7 & 0xff));    /* DIGIT SEVEN */
       case 0x0038:
-	return((CHAR)(0xF8 & 0xff));	/* DIGIT EIGHT */
+        return((CHAR)(0xF8 & 0xff));    /* DIGIT EIGHT */
       case 0x0039:
-	return((CHAR)(0xF9 & 0xff));	/* DIGIT NINE */
+        return((CHAR)(0xF9 & 0xff));    /* DIGIT NINE */
       case 0x00B3:
-	return((CHAR)(0xFA & 0xff));	/* SUPERSCRIPT THREE */
+        return((CHAR)(0xFA & 0xff));    /* SUPERSCRIPT THREE */
       case 0x00DB:
-	return((CHAR)(0xFB & 0xff));	/* CAPITAL LETTER U WITH CIRCUMFLEX */
+        return((CHAR)(0xFB & 0xff));    /* CAPITAL LETTER U WITH CIRCUMFLEX */
       case 0x00DC:
-	return((CHAR)(0xFC & 0xff));	/* CAPITAL LETTER U WITH DIAERESIS */
+        return((CHAR)(0xFC & 0xff));    /* CAPITAL LETTER U WITH DIAERESIS */
       case 0x00D9:
-	return((CHAR)(0xFD & 0xff));	/* LATIN CAPITAL LETTER U WITH GRAVE */
+        return((CHAR)(0xFD & 0xff));    /* LATIN CAPITAL LETTER U WITH GRAVE */
       case 0x00DA:
-	return((CHAR)(0xFE & 0xff));	/* LATIN CAPITAL LETTER U WITH ACUTE */
+        return((CHAR)(0xFE & 0xff));    /* LATIN CAPITAL LETTER U WITH ACUTE */
       case 0x009F:
-	return((CHAR)(0xFF & 0xff));	/* CONTROL */
+        return((CHAR)(0xFF & 0xff));    /* CONTROL */
     default: return(0x003f);
     }
 }
 
 
-int					/* PC Code Page 855 */
+int                                     /* PC Code Page 855 */
 #ifdef CK_ANSIC
 tx_cp855(USHORT c)
 #else
 tx_cp855(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0x80)			/* Has C1 graphics */
+    if (c < 0x80)                       /* Has C1 graphics */
       return((CHAR)(c & 0xff));
     switch (c) {
       case 0x00a4: return((CHAR)(207 & 0xff));
@@ -13401,18 +13401,18 @@ tx_cp855(c) USHORT c;
       case 0x2592: return((CHAR)(177 & 0xff));
       case 0x2593: return((CHAR)(178 & 0xff));
       case 0x25a0: return((CHAR)(254 & 0xff));
-      default: return(tx_cpsub(c));	/* For box characters etc */
+      default: return(tx_cpsub(c));     /* For box characters etc */
     }
 }
 
-int					/* PC Code Page 856 */
+int                                     /* PC Code Page 856 */
 #ifdef CK_ANSIC
 tx_cp856(USHORT c)
 #else
 tx_cp856(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0x80)			/* Has C1 graphics */
+    if (c < 0x80)                       /* Has C1 graphics */
       return((CHAR)(c & 0xff));
     switch (c) {
       case 0x00a0: return((CHAR)(0xff & 0xff));
@@ -13543,18 +13543,18 @@ tx_cp856(c) USHORT c;
       case 0x2592: return((CHAR)(0xd1 & 0xff));
       case 0x2593: return((CHAR)(0xd2 & 0xff));
       case 0x25a0: return((CHAR)(0xfe & 0xff));
-      default: return(tx_cpsub(c));	/* For box characters etc */
+      default: return(tx_cpsub(c));     /* For box characters etc */
     }
 }
 
-int					/* PC Code Page 857 */
+int                                     /* PC Code Page 857 */
 #ifdef CK_ANSIC
 tx_cp857(USHORT c)
 #else
 tx_cp857(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0x80)			/* Has C1 graphics */
+    if (c < 0x80)                       /* Has C1 graphics */
       return((CHAR)(c & 0xff));
     switch (c) {
       case 0x00c7: return((CHAR)(128 & 0xff));
@@ -13683,18 +13683,18 @@ tx_cp857(c) USHORT c;
       case 0x00b2: return((CHAR)(253 & 0xff));
       case 0x25a0: return((CHAR)(254 & 0xff));
       case 0x00a0: return((CHAR)(255 & 0xff));
-      default: return(tx_cpsub(c));	/* For box characters etc */
+      default: return(tx_cpsub(c));     /* For box characters etc */
     }
 }
 
-int					/* PC Code Page 862 */
+int                                     /* PC Code Page 862 */
 #ifdef CK_ANSIC
 tx_cp862(USHORT c)
 #else
 tx_cp862(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0x80)			/* Has C1 graphics */
+    if (c < 0x80)                       /* Has C1 graphics */
       return((CHAR)(c & 0xff));
     switch (c) {
       case 0x05d0: return((CHAR)(128 & 0xff));
@@ -13825,18 +13825,18 @@ tx_cp862(c) USHORT c;
       case 0x00b2: return((CHAR)(253 & 0xff));
       case 0x25a0: return((CHAR)(254 & 0xff));
       case 0x00a0: return((CHAR)(255 & 0xff));
-      default: return(tx_cpsub(c));	/* For box characters etc */
+      default: return(tx_cpsub(c));     /* For box characters etc */
     }
 }
 
-int					/* PC Code Page 864 */
+int                                     /* PC Code Page 864 */
 #ifdef CK_ANSIC
 tx_cp864(USHORT c)
 #else
 tx_cp864(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0x80)			/* Has C1 graphics */
+    if (c < 0x80)                       /* Has C1 graphics */
       return((CHAR)(c & 0xff));
     switch (c) {
       case 0x00b0: return((CHAR)0x80 & 0xff);
@@ -13961,18 +13961,18 @@ tx_cp864(c) USHORT c;
       case 0xfed9: return((CHAR)0xfc & 0xff);
       case 0xfef1: return((CHAR)0xfd & 0xff);
       case 0x25a0: return((CHAR)0xfe & 0xff);
-      default: return(tx_cpsub(c));	/* For box characters etc */
+      default: return(tx_cpsub(c));     /* For box characters etc */
     }
 }
 
-int					/* PC Code Page 866 */
+int                                     /* PC Code Page 866 */
 #ifdef CK_ANSIC
 tx_cp866(USHORT c)
 #else
 tx_cp866(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0x80)			/* Has C1 graphics */
+    if (c < 0x80)                       /* Has C1 graphics */
       return((CHAR)(c & 0xff));
     switch (c) {
       case 0x00a0: return((CHAR)(255 & 0xff));
@@ -14103,18 +14103,18 @@ tx_cp866(c) USHORT c;
       case 0x2592: return((CHAR)(177 & 0xff));
       case 0x2593: return((CHAR)(178 & 0xff));
       case 0x25a0: return((CHAR)(254 & 0xff));
-      default: return(tx_cpsub(c));	/* For box characters etc */
+      default: return(tx_cpsub(c));     /* For box characters etc */
     }
 }
 
-int					/* PC Code Page 869 */
+int                                     /* PC Code Page 869 */
 #ifdef CK_ANSIC
 tx_cp869(USHORT c)
 #else
 tx_cp869(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0x80)			/* Has C1 graphics */
+    if (c < 0x80)                       /* Has C1 graphics */
       return((CHAR)(c & 0xff));
     switch (c) {
       case 0x00a0: return((CHAR)(255 & 0xff));
@@ -14236,11 +14236,11 @@ tx_cp869(c) USHORT c;
       case 0x2592: return((CHAR)(177 & 0xff));
       case 0x2593: return((CHAR)(178 & 0xff));
       case 0x25a0: return((CHAR)(254 & 0xff));
-      default: return(tx_cpsub(c));	/* For box characters etc */
+      default: return(tx_cpsub(c));     /* For box characters etc */
     }
 }
 
-int					/* PC Code Page C0 graphics */
+int                                     /* PC Code Page C0 graphics */
 #ifdef CK_ANSIC
 tx_smiley(USHORT c)
 #else
@@ -14286,7 +14286,24 @@ tx_smiley(c) USHORT c;
     }
 }
 
-USHORT  /* Kermit font 0xE??? to Unicode substitutions */
+USHORT  /* Horizontal Scan Lines Unicode substitutions */
+#ifdef CK_ANSIC
+tx_hslsub(USHORT c)
+#else
+tx_hslsub(c) USHORT c;
+#endif /* CK_ANSIC */
+{
+    if (c >= 0x23BA && c <= 0x23BD )
+    switch (c) {
+      case 0x23BA: return(0x2500);      /* H line - Scan 1 */
+      case 0x23BB: return(0x2500);      /* H line - Scan 3 */
+      case 0x23BC: return(0x2500);      /* H line - Scan 7 */
+      case 0x23BD: return(0x2500);      /* H line - Scan 9 */
+    }
+    return(c);
+}
+
+USHORT  /* Kermit font 0xE??? Unicode substitutions */
 #ifdef CK_ANSIC
 tx_usub(USHORT c)
 #else
@@ -14296,46 +14313,41 @@ tx_usub(c) USHORT c;
     if (c < 0xE000 || c > 0xEFFF)
       return(c);
     switch (c) {
-      case 0xE200: return(0x2524);	/* Extensible Left Brace Middle */
-      case 0xE201: return(0x2570);	/* Extensible Left Parenthesis bot */
-      case 0xE202: return(0x256d);	/* Extensible left parenthesis top */
-      case 0xE203: return(0x2514);	/* Extensible left SB bot */
-      case 0xE204: return(0x250c);	/* Extensible left SB top */
-      case 0xE205: return(0x251c);	/* Extensible right brace middle */
-      case 0xE206: return(0x256f);	/* Extensible right parenthesis bot */
-      case 0xE207: return(0x256e);	/* Extensible right parenthesis top */
-      case 0xE208: return(0x2518);	/* Extensible right SB bot */
-      case 0xE209: return(0x2510);	/* Extensible right SB top */
-      case 0xE20C: return(0x03a3);	/* Summation symbol bot */
-      case 0xE20D: return(0x03a3);	/* Summation symbol top */
-      case 0xE20E: return(0x2510);	/* Right ceiling corner */
-      case 0xE20F: return(0x2518);	/* Right floor corner */
-      case 0xE300: return(0x2502);	/* V box line, extensible, left */
-      case 0xE309: return(0x2502);	/* V box line, extensible, right */
-      case 0xE30A: return(0x258c);	/* Diagonal fill, dark, UL */
-      case 0xE30B: return(0x2590);	/* Diagonal fill, dark, UR */
-      case 0xE311: return(0x2500);	/* H line - Scan 1 */
-      case 0xE313: return(0x2500);	/* H line - Scan 3 */
-      case 0xE315: return(0x2500);	/* H line - Scan 5 */
-      case 0xE317: return(0x2500);	/* H line - Scan 7 */
-      case 0xE319: return(0x2500);	/* H line - Scan 9 */
-      case 0xE320: return(0x2583);	/* Quadrant LL */
-      case 0xE321: return(0x2490);	/* Quadrant LR */
-      case 0xE322: return(0x258c);	/* Quadrant UL */
-      case 0xE323: return(0x2588);	/* Quadrant UL and LL and LR */
-      case 0xE324: return(0x2588);	/* Quadrant UL and LR */
-      case 0xE325: return(0x2588);	/* Quadrant UL and LR */
-      case 0xE326: return(0x2588);	/* Quadrant UL and UR and LL */
-      case 0xE327: return(0x2588);	/* Quadrant UL and UR and LR */
-      case 0xE328: return(0x2590);	/* Quadrant UR */
-      case 0xE329: return(0x2588);	/* Quadrant UR and LL and LR */
-      case 0xE400: return(0x221a);	/* Radical symbol, small */
-      case 0xE401: return(0x00bf);	/* Reverse question mark */
+      case 0xE200: return(0x2524);      /* Extensible Left Brace Middle */
+      case 0xE201: return(0x2570);      /* Extensible Left Parenthesis bot */
+      case 0xE202: return(0x256d);      /* Extensible left parenthesis top */
+      case 0xE203: return(0x2514);      /* Extensible left SB bot */
+      case 0xE204: return(0x250c);      /* Extensible left SB top */
+      case 0xE205: return(0x251c);      /* Extensible right brace middle */
+      case 0xE206: return(0x256f);      /* Extensible right parenthesis bot */
+      case 0xE207: return(0x256e);      /* Extensible right parenthesis top */
+      case 0xE208: return(0x2518);      /* Extensible right SB bot */
+      case 0xE209: return(0x2510);      /* Extensible right SB top */
+      case 0xE20C: return(0x03a3);      /* Summation symbol bot */
+      case 0xE20D: return(0x03a3);      /* Summation symbol top */
+      case 0xE20E: return(0x2510);      /* Right ceiling corner */
+      case 0xE20F: return(0x2518);      /* Right floor corner */
+      case 0xE300: return(0x2502);      /* V box line, extensible, left */
+      case 0xE309: return(0x2502);      /* V box line, extensible, right */
+      case 0xE30A: return(0x258c);      /* Diagonal fill, dark, UL */
+      case 0xE30B: return(0x2590);      /* Diagonal fill, dark, UR */
+      case 0xE320: return(0x2583);      /* Quadrant LL */
+      case 0xE321: return(0x2490);      /* Quadrant LR */
+      case 0xE322: return(0x258c);      /* Quadrant UL */
+      case 0xE323: return(0x2588);      /* Quadrant UL and LL and LR */
+      case 0xE324: return(0x2588);      /* Quadrant UL and LR */
+      case 0xE325: return(0x2588);      /* Quadrant UL and LR */
+      case 0xE326: return(0x2588);      /* Quadrant UL and UR and LL */
+      case 0xE327: return(0x2588);      /* Quadrant UL and UR and LR */
+      case 0xE328: return(0x2590);      /* Quadrant UR */
+      case 0xE329: return(0x2588);      /* Quadrant UR and LL and LR */
+      case 0xE400: return(0x221a);      /* Radical symbol, small */
+      case 0xE401: return(0x00bf);      /* Reverse question mark */
       default: return((unsigned)0xfffd);
     }
 }
 
-int					/* Unicode to CP437 substitutions */
+int                                     /* Unicode to CP437 substitutions */
 #ifdef CK_ANSIC
 tx_cpsub(USHORT c)
 #else
@@ -14343,371 +14355,374 @@ tx_cpsub(c) USHORT c;
 #endif /* CK_ANSIC */
 {
     int x;
-    if (c < 0x0080)			/* ASCII */
+    if (c < 0x0080)                     /* ASCII */
       return((CHAR)(c & 0xff));
+
     if (c >= 0x0080 && c <= 0x0100) {
-	switch (c) {			/* Latin-1 */
-	  case 0x00A2: return(0x9b);	/* Cent sign */
-	  case 0x00A3: return(156);	/* Pound sign */
-	  case 0x00AC: return(170);	/* Not symbol */
-	  case 0x00B0: return(248);	/* Degree symbol */
-	  case 0x00B1: return(241);	/* Plus or minus symbol */
-	  case 0x00B2: return(253);	/* Superscript 2 */
-	  case 0x00B3: return(51);	/* Superscript 3 */
-	  case 0x00B6: return(14);	/* Pilcrow symbol */
-	  case 0x00B7: return(250);	/* Center dot, small */
-	  case 0x00B9: return(49);	/* Superscript 1 */
-	  case 0x00D0: return(68);	/* Eth -> D */
-	  case 0x00D7: return(120);	/* Multiplication symbol */
-	  case 0x00DE: return(84);	/* Thorn -> T */
-	  case 0x00F0: return(100);	/* eth -> eth */
-	  case 0x00F7: return(246);	/* Division symbol */
-	  case 0x00FE: return(116);	/* thorn -> t */
-	  default: return(0x13);
-	}
+        switch (c) {                    /* Latin-1 */
+          case 0x00A2: return(0x9b);    /* Cent sign */
+          case 0x00A3: return(156);     /* Pound sign */
+          case 0x00AC: return(170);     /* Not symbol */
+          case 0x00B0: return(248);     /* Degree symbol */
+          case 0x00B1: return(241);     /* Plus or minus symbol */
+          case 0x00B2: return(253);     /* Superscript 2 */
+          case 0x00B3: return(51);      /* Superscript 3 */
+          case 0x00B6: return(14);      /* Pilcrow symbol */
+          case 0x00B7: return(250);     /* Center dot, small */
+          case 0x00B9: return(49);      /* Superscript 1 */
+          case 0x00D0: return(68);      /* Eth -> D */
+          case 0x00D7: return(120);     /* Multiplication symbol */
+          case 0x00DE: return(84);      /* Thorn -> T */
+          case 0x00F0: return(100);     /* eth -> eth */
+          case 0x00F7: return(246);     /* Division symbol */
+          case 0x00FE: return(116);     /* thorn -> t */
+          default: return(0x13);
+        }
     } else if (c >= 0x0100 && c <= 0x02ff) { /* Latin-2 etc */
-	switch (c) {
-	  case 0x0103: return(97);	/* a breve */
-	  case 0x0105: return(97);	/* a ogonek */
-	  case 0x0107:			/* c acute */
-	  case 0x010d: return(99);	/* c caron */
-	  case 0x010f:			/* d caron */
-	  case 0x0111: return(100);	/* d with stroke */
-	  case 0x0119:			/* e ogonek */
-	  case 0x011b: return(101);	/* e caron */
-	  case 0x011f: return(103);	/* g breve */
-	  case 0x0130: return(73);	/* Capital I with Dot */
-	  case 0x0131: return(105);	/* Dotless i */
-	  case 0x0132: return(89);	/* IJ => Y */
-	  case 0x0133: return(152);	/* ij -> y diaeresis */
-	  case 0x013a:			/* l acute */
-	  case 0x013e:			/* l caron */
-	  case 0x0142: return(108);	/* l with stroke */
-	  case 0x0144:			/* n acute */
-	  case 0x0148: return(110);	/* n caron */
-	  case 0x0151: return(111);	/* o double acute */
-	  case 0x0152: return(79);	/* OE */
-	  case 0x0153: return(111);	/* oe */
-	  case 0x0155:			/* r acute */
-	  case 0x0159: return(114);	/* r caron */
-	  case 0x015b:			/* s acute */
-	  case 0x015f:			/* s ogonek */
-	  case 0x0161: return(115);	/* s caron */
-	  case 0x0163:			/* t ogonek */
-	  case 0x0165:			/* t caron */
-	  case 0x0167: return(116);	/* t with stroke */
-	  case 0x016f:			/* u ring */
-	  case 0x0171: return(117);	/* u double acute */
-	  case 0x017a:			/* z acute */
-	  case 0x017c:			/* z dot above */
-	  case 0x017e: return(122);	/* z caron */
-	  case 0x0192: return(159);	/* Function-of symbol, Script f */
-	  case 0x01d0: return(105);	/* i caron */
-	  case 0x02c7:			/* caron -> UNK */
-	  case 0x02d8: return(0x13);	/* breve -> UNK */
-	  case 0x02dd: return(34);	/* Double acute -> Doublequote */
-	  default: return(0x13);
-	}
+        switch (c) {
+          case 0x0103: return(97);      /* a breve */
+          case 0x0105: return(97);      /* a ogonek */
+          case 0x0107:                  /* c acute */
+          case 0x010d: return(99);      /* c caron */
+          case 0x010f:                  /* d caron */
+          case 0x0111: return(100);     /* d with stroke */
+          case 0x0119:                  /* e ogonek */
+          case 0x011b: return(101);     /* e caron */
+          case 0x011f: return(103);     /* g breve */
+          case 0x0130: return(73);      /* Capital I with Dot */
+          case 0x0131: return(105);     /* Dotless i */
+          case 0x0132: return(89);      /* IJ => Y */
+          case 0x0133: return(152);     /* ij -> y diaeresis */
+          case 0x013a:                  /* l acute */
+          case 0x013e:                  /* l caron */
+          case 0x0142: return(108);     /* l with stroke */
+          case 0x0144:                  /* n acute */
+          case 0x0148: return(110);     /* n caron */
+          case 0x0151: return(111);     /* o double acute */
+          case 0x0152: return(79);      /* OE */
+          case 0x0153: return(111);     /* oe */
+          case 0x0155:                  /* r acute */
+          case 0x0159: return(114);     /* r caron */
+          case 0x015b:                  /* s acute */
+          case 0x015f:                  /* s ogonek */
+          case 0x0161: return(115);     /* s caron */
+          case 0x0163:                  /* t ogonek */
+          case 0x0165:                  /* t caron */
+          case 0x0167: return(116);     /* t with stroke */
+          case 0x016f:                  /* u ring */
+          case 0x0171: return(117);     /* u double acute */
+          case 0x017a:                  /* z acute */
+          case 0x017c:                  /* z dot above */
+          case 0x017e: return(122);     /* z caron */
+          case 0x0192: return(159);     /* Function-of symbol, Script f */
+          case 0x01d0: return(105);     /* i caron */
+          case 0x02c7:                  /* caron -> UNK */
+          case 0x02d8: return(0x13);    /* breve -> UNK */
+          case 0x02dd: return(34);      /* Double acute -> Doublequote */
+          default: return(0x13);
+        }
     } else if (c >= 0x0300 && c <= 0x03ff) { /* Greek */
-	switch (c) {
-	  case 0x0393: return(226);	/* Uppercase Greek Gamma */
-	  case 0x0398: return(233);	/* Uppercase Greek Theta */
-	  case 0x039B: return(235);	/* Uppercase Greek Lambda */
-	  case 0x03A0: return(227);	/* Uppercase Greek Pi */
-	  case 0x03A3: return(228);	/* Uppercase Greek Sigma */
-	  case 0x03A4: return(0xEA);	/* Omega */
-	  case 0x03A6: return(232);	/* Uppercase Greek Phi */
-	  case 0x03A9: return(234);	/* Uppercase Greek Omega */
-	  case 0x03B1: return(0xE0);	/* alpha */
-	  case 0x03B2: return(0xE1);	/* beta */
-	  case 0x03B3: return(226);	/* Lowercase Greek gamma */
-	  case 0x03B4: return(0xEB);	/* delta */
-	  case 0x03B5: return(238);	/* Lowercase Greek epsilon */
-	  case 0x03B7: return(238);	/* Lowercase Greek eta */
-	  case 0x03B8: return(233);	/* Lowercase Greek theta */
-	  case 0x03B9: return(105);	/* Lowercase Greek iota */
-	  case 0x03BA: return(107);	/* Lowercase Greek kappa */
-	  case 0x03BB: return(235);	/* Lowercase Greek lambda */
-	  case 0x03BC: return(230);	/* Lowercase Greek mu */
-	  case 0x03C0: return(227);	/* Lowercase Greek pi */
-	  case 0x03C3: return(229);	/* Lowercase Greek sigma */
-	  case 0x03C4: return(231);	/* Lowercase Greek tau */
-	  case 0x03C6: return(237);	/* Lowercase Greek phi */
-	  case 0x03C7: return(120);	/* Lowercase Greek chi */
-	  case 0x03C9: return(234);	/* Lowercase Greek omega */
-	  default: return(0x13);
-	}
+        switch (c) {
+          case 0x0393: return(226);     /* Uppercase Greek Gamma */
+          case 0x0398: return(233);     /* Uppercase Greek Theta */
+          case 0x039B: return(235);     /* Uppercase Greek Lambda */
+          case 0x03A0: return(227);     /* Uppercase Greek Pi */
+          case 0x03A3: return(228);     /* Uppercase Greek Sigma */
+          case 0x03A4: return(0xEA);    /* Omega */
+          case 0x03A6: return(232);     /* Uppercase Greek Phi */
+          case 0x03A9: return(234);     /* Uppercase Greek Omega */
+          case 0x03B1: return(0xE0);    /* alpha */
+          case 0x03B2: return(0xE1);    /* beta */
+          case 0x03B3: return(226);     /* Lowercase Greek gamma */
+          case 0x03B4: return(0xEB);    /* delta */
+          case 0x03B5: return(238);     /* Lowercase Greek epsilon */
+          case 0x03B7: return(238);     /* Lowercase Greek eta */
+          case 0x03B8: return(233);     /* Lowercase Greek theta */
+          case 0x03B9: return(105);     /* Lowercase Greek iota */
+          case 0x03BA: return(107);     /* Lowercase Greek kappa */
+          case 0x03BB: return(235);     /* Lowercase Greek lambda */
+          case 0x03BC: return(230);     /* Lowercase Greek mu */
+          case 0x03C0: return(227);     /* Lowercase Greek pi */
+          case 0x03C3: return(229);     /* Lowercase Greek sigma */
+          case 0x03C4: return(231);     /* Lowercase Greek tau */
+          case 0x03C6: return(237);     /* Lowercase Greek phi */
+          case 0x03C7: return(120);     /* Lowercase Greek chi */
+          case 0x03C9: return(234);     /* Lowercase Greek omega */
+          default: return(0x13);
+        }
     } else if (c >= 0x2000 && c <= 0x20ff) { /* Sub+Superscripts & Currency */
-	switch (c) {
-	  case 0x203C: return(0x13);	/* !! */
-	  case 0x2070: return(48);	/* Superscript 0 */
-	  case 0x2074: return(52);	/* Superscript 4 */
-	  case 0x2075: return(53);	/* Superscript 5 */
-	  case 0x2076: return(54);	/* Superscript 6 */
-	  case 0x2077: return(55);	/* Superscript 7 */
-	  case 0x2078: return(56);	/* Superscript 8 */
-	  case 0x2079: return(57);	/* Superscript 9 */
-	  case 0x207a: return(43);	/* Superscript + */
-	  case 0x207b: return(45);	/* Superscript - */
-	  case 0x207F: return(252);	/* Superscript n */
-	  case 0x2080: return(48);	/* Subscript 0 */
-	  case 0x2081: return(49);	/* Subscript 1 */
-	  case 0x2082: return(50);	/* Subscript 2 */
-	  case 0x2083: return(51);	/* Subscript 3 */
-	  case 0x2084: return(52);	/* Subscript 4 */
-	  case 0x2085: return(53);	/* Subscript 5 */
-	  case 0x2086: return(54);	/* Subscript 6 */
-	  case 0x2087: return(55);	/* Subscript 7 */
-	  case 0x2088: return(56);	/* Subscript 8 */
-	  case 0x2089: return(57);	/* Subscript 9 */
-	  case 0x208a: return(43);	/* Subscript + */
-	  case 0x208b: return(45);	/* Subscript - */
-	  case 0x20a7: return(0x93);	/* Peseta */
-	  default:
-	    x = tx_punc(c);		/* Various spaces, dashes, etc */
-	    return((x < 0) ? 0x13 : x);
-	}
+        switch (c) {
+          case 0x203C: return(0x13);    /* !! */
+          case 0x2070: return(48);      /* Superscript 0 */
+          case 0x2074: return(52);      /* Superscript 4 */
+          case 0x2075: return(53);      /* Superscript 5 */
+          case 0x2076: return(54);      /* Superscript 6 */
+          case 0x2077: return(55);      /* Superscript 7 */
+          case 0x2078: return(56);      /* Superscript 8 */
+          case 0x2079: return(57);      /* Superscript 9 */
+          case 0x207a: return(43);      /* Superscript + */
+          case 0x207b: return(45);      /* Superscript - */
+          case 0x207F: return(252);     /* Superscript n */
+          case 0x2080: return(48);      /* Subscript 0 */
+          case 0x2081: return(49);      /* Subscript 1 */
+          case 0x2082: return(50);      /* Subscript 2 */
+          case 0x2083: return(51);      /* Subscript 3 */
+          case 0x2084: return(52);      /* Subscript 4 */
+          case 0x2085: return(53);      /* Subscript 5 */
+          case 0x2086: return(54);      /* Subscript 6 */
+          case 0x2087: return(55);      /* Subscript 7 */
+          case 0x2088: return(56);      /* Subscript 8 */
+          case 0x2089: return(57);      /* Subscript 9 */
+          case 0x208a: return(43);      /* Subscript + */
+          case 0x208b: return(45);      /* Subscript - */
+          case 0x20a7: return(0x93);    /* Peseta */
+          default:
+            x = tx_punc(c);             /* Various spaces, dashes, etc */
+            return((x < 0) ? 0x13 : x);
+        }
     } else if (c >= 0x2100 && c <= 0x21ff) { /* Arrows */
-	switch (c) {
-	  case 0x2190: return(27);	/* Arrow, left-pointing */
-	  case 0x2191: return(24);	/* Arrow, up-pointing */
-	  case 0x2192: return(26);	/* Arrow, right-pointing */
-	  case 0x2193: return(25);	/* Arrow, down-pointing */
-	  case 0x2194: return(0x1d);	/* Arrow, left-right */
-	  case 0x2195: return(0x12);	/* Arrow, up-down */
-	  case 0x219F: return(0x18);	/* Arrow, up, doublehead */
-	  case 0x21A1: return(0x19);	/* Arrow, down, doublehead */
-	  case 0x21A8: return(0x17);	/* Arrow, up-down with base */
-	  case 0x21D2: return(26);	/* Implies symbol */
-	  case 0x21D4: return(29);	/* If and only if symbol */
-	  case 0x21E4: return(0x1B);	/* Arrow, left, to bar */
-	  case 0x21E5: return(0x1A);	/* Arrow, right, to bar */
-	  case 0x21E8: return(0x10);	/* Outline white right arrow */
-	  case 0x21E9: return(0x0f);	/* Outline white down arrow */
-	  default: return(0x13);
-	}
+        switch (c) {
+          case 0x2190: return(27);      /* Arrow, left-pointing */
+          case 0x2191: return(24);      /* Arrow, up-pointing */
+          case 0x2192: return(26);      /* Arrow, right-pointing */
+          case 0x2193: return(25);      /* Arrow, down-pointing */
+          case 0x2194: return(0x1d);    /* Arrow, left-right */
+          case 0x2195: return(0x12);    /* Arrow, up-down */
+          case 0x219F: return(0x18);    /* Arrow, up, doublehead */
+          case 0x21A1: return(0x19);    /* Arrow, down, doublehead */
+          case 0x21A8: return(0x17);    /* Arrow, up-down with base */
+          case 0x21D2: return(26);      /* Implies symbol */
+          case 0x21D4: return(29);      /* If and only if symbol */
+          case 0x21E4: return(0x1B);    /* Arrow, left, to bar */
+          case 0x21E5: return(0x1A);    /* Arrow, right, to bar */
+          case 0x21E8: return(0x10);    /* Outline white right arrow */
+          case 0x21E9: return(0x0f);    /* Outline white down arrow */
+          default: return(0x13);
+        }
     } else if (c >= 0x2200 && c <= 0x22ff) { /* Math */
-	switch (c) {
-	  case 0x2202: return(235);	/* Partial differential symbol */
-	  case 0x2207: return(31);	/* Nabla, Laplace operator */
-	  case 0x2208: return(0x33);	/* (because of QNX misunderstanding) */
-	  case 0x221A: return(251);	/* Radical symbol */
-	  case 0x221D: return(236);	/* Proportional-to */
-	  case 0x221E: return(236);	/* Infinity symbol */
-	  case 0x2227: return(30);	/* Logical AND */
-	  case 0x2228: return(31);	/* Logical OR */
-	  case 0x2229: return(239);	/* Intersection symbol */
-	  case 0x222A: return(85);	/* Union symbol */
-	  case 0x222B: return(244);	/* Integral symbol */
-	  case 0x2234: return(254);	/* Therefore symbol */
-	  case 0x223C: return(126);	/* Centered tilde operator */
-	  case 0x2243: return(247);	/* Asymptotically equals */
-	  case 0x2248: return(247);	/* Almost equal to symbol */
-	  case 0x2260: return(88);	/* Not equal symbol */
-	  case 0x2261: return(240);	/* Identity symbol */
-	  case 0x2264: return(243);	/* Less than or equal symbol */
-	  case 0x2265: return(242);	/* Greater than or equal symbol */
-	  case 0x2282: return(40);	/* Subset symbol */
-	  case 0x2283: return(41);	/* Superset symbol */
-	  case 0x22A6: return(0xC3);	/* Assertion symbol */
-	  default: return(0x13);
-	}
+        switch (c) {
+          case 0x2202: return(235);     /* Partial differential symbol */
+          case 0x2207: return(31);      /* Nabla, Laplace operator */
+          case 0x2208: return(0x33);    /* (because of QNX misunderstanding) */
+          case 0x221A: return(251);     /* Radical symbol */
+          case 0x221D: return(236);     /* Proportional-to */
+          case 0x221E: return(236);     /* Infinity symbol */
+          case 0x2227: return(30);      /* Logical AND */
+          case 0x2228: return(31);      /* Logical OR */
+          case 0x2229: return(239);     /* Intersection symbol */
+          case 0x222A: return(85);      /* Union symbol */
+          case 0x222B: return(244);     /* Integral symbol */
+          case 0x2234: return(254);     /* Therefore symbol */
+          case 0x223C: return(126);     /* Centered tilde operator */
+          case 0x2243: return(247);     /* Asymptotically equals */
+          case 0x2248: return(247);     /* Almost equal to symbol */
+          case 0x2260: return(88);      /* Not equal symbol */
+          case 0x2261: return(240);     /* Identity symbol */
+          case 0x2264: return(243);     /* Less than or equal symbol */
+          case 0x2265: return(242);     /* Greater than or equal symbol */
+          case 0x2282: return(40);      /* Subset symbol */
+          case 0x2283: return(41);      /* Superset symbol */
+          case 0x22A6: return(0xC3);    /* Assertion symbol */
+          default: return(0x13);
+        }
+    } else if (c >= 0x23BA && c <= 0x23BD ) {
+        switch (c) {
+        case 0x23BA: return(0x2500);      /* H line - Scan 1 */
+        case 0x23BB: return(0x2500);      /* H line - Scan 3 */
+        case 0x23BC: return(0x2500);      /* H line - Scan 7 */
+        case 0x23BD: return(0x2500);      /* H line - Scan 9 */
+        }
     } else if (c >= 0x2300 && c <= 0x24ff) { /* Tech */
-	switch (c) {
-	  case 0x2308: return(0xDA);	/* Left ceiling */
-	  case 0x2309: return(0xBF);	/* Right ceiling */
-	  case 0x230A: return(0xC0);	/* Left floor */
-	  case 0x230B: return(0xD9);	/* Right floor */
-	  case 0x2319: return(0x1C);	/* Turned Not sign */
-	  case 0x2320: return(244);	/* Integral symbol top */
-	  case 0x2321: return(245);	/* Integral symbol bot */
-	  case 0x2329: return(60);	/* BRA, large left angle bracket */
-	  case 0x232A: return(62);	/* KET, large right angle bracket */
-	  case 0x2409: return(26);	/* "HT" becomes right arrow */
-	  case 0x240A: return(25);	/* "LF" becomes down arrow */
-	  case 0x240B: return(23);	/* "VT" becomes up-down arrow */
-	  case 0x240C: return(24);	/* "FF" becomes up arrow */
-	  case 0x240D: return(27);	/* "CR" becomes left arrow */
-	  case 0x2424: return(31);	/* "NL" becomes down triangle */
-	  default: return(0x13);
-	}
+        switch (c) {
+          case 0x2308: return(0xDA);    /* Left ceiling */
+          case 0x2309: return(0xBF);    /* Right ceiling */
+          case 0x230A: return(0xC0);    /* Left floor */
+          case 0x230B: return(0xD9);    /* Right floor */
+          case 0x2319: return(0x1C);    /* Turned Not sign */
+          case 0x2320: return(244);     /* Integral symbol top */
+          case 0x2321: return(245);     /* Integral symbol bot */
+          case 0x2329: return(60);      /* BRA, large left angle bracket */
+          case 0x232A: return(62);      /* KET, large right angle bracket */
+          case 0x2409: return(26);      /* "HT" becomes right arrow */
+          case 0x240A: return(25);      /* "LF" becomes down arrow */
+          case 0x240B: return(23);      /* "VT" becomes up-down arrow */
+          case 0x240C: return(24);      /* "FF" becomes up arrow */
+          case 0x240D: return(27);      /* "CR" becomes left arrow */
+          case 0x2424: return(31);      /* "NL" becomes down triangle */
+          default: return(0x13);
+        }
     } else if (c >= 0x2500 && c <= 0x2552) { /* Box drawing */
-	switch (c) {
-	  case 0x2500: return(196);	/* Center box bar horizontal */
-	  case 0x2501: return(0xCD);	/* Bold -> Double */
-	  case 0x2502: return(179);	/* Center box bar vertical */
-	  case 0x2503: return(0xBA);	/* Bold */
-	  case 0x2504: return(45);	/* Dashed line */
-	  case 0x2506: return(124);	/* Broken vertical bar */
-	  case 0x250C: return(218);	/* UL box corner */
-	  case 0x250F: return(0xC9);	/* Bold */
-	  case 0x2510: return(191);	/* UR Box Corner */
-	  case 0x2513: return(0xBB);	/* Bold */
-	  case 0x2514: return(192);	/* LL box corner */
-	  case 0x2517: return(0xC8);	/* Bold */
-	  case 0x2518: return(217);	/* LR box corner */
-	  case 0x251B: return(0xBC);	/* Bold */
-	  case 0x251C: return(195);	/* Left middle box side */
-	  case 0x2520: return(0xC3);
-	  case 0x2523: return(0xCC);	/* Bold */
-	  case 0x2524: return(180);	/* Right middle box side */
-	  case 0x2528: return(180);
-	  case 0x252B: return(0xB9);	/* Bold */
-	  case 0x252C: return(194);	/* Middle box top */
-	  case 0x252F: return(194);
-	  case 0x2533: return(0xCB);	/* Bold */
-	  case 0x2534: return(193);	/* Middle box bot */
-	  case 0x2537: return(193);
-	  case 0x253B: return(0xCA);	/* Bold */
-	  case 0x253C: return(197);	/* Box intersection */
-	  case 0x253F: return(197);
-	  case 0x2542: return(197);
-	  case 0x2547: return(197);
-	  case 0x2548: return(197);
-	  case 0x2549: return(197);
-	  case 0x254A: return(197);
-	  case 0x254B: return(0xCE);	/* Bold */
-	  case 0x2550: return(205);	/* Center box bar horizontal double */
-	  case 0x2551: return(186);	/* Center box bar vertical double */
-	  case 0x2552: return(213);	/* UL box corner single to double */
-	  default: return(0x13);
-	}
+        switch (c) {
+          case 0x2500: return(196);     /* Center box bar horizontal */
+          case 0x2501: return(0xCD);    /* Bold -> Double */
+          case 0x2502: return(179);     /* Center box bar vertical */
+          case 0x2503: return(0xBA);    /* Bold */
+          case 0x2504: return(45);      /* Dashed line */
+          case 0x2506: return(124);     /* Broken vertical bar */
+          case 0x250C: return(218);     /* UL box corner */
+          case 0x250F: return(0xC9);    /* Bold */
+          case 0x2510: return(191);     /* UR Box Corner */
+          case 0x2513: return(0xBB);    /* Bold */
+          case 0x2514: return(192);     /* LL box corner */
+          case 0x2517: return(0xC8);    /* Bold */
+          case 0x2518: return(217);     /* LR box corner */
+          case 0x251B: return(0xBC);    /* Bold */
+          case 0x251C: return(195);     /* Left middle box side */
+          case 0x2520: return(0xC3);
+          case 0x2523: return(0xCC);    /* Bold */
+          case 0x2524: return(180);     /* Right middle box side */
+          case 0x2528: return(180);
+          case 0x252B: return(0xB9);    /* Bold */
+          case 0x252C: return(194);     /* Middle box top */
+          case 0x252F: return(194);
+          case 0x2533: return(0xCB);    /* Bold */
+          case 0x2534: return(193);     /* Middle box bot */
+          case 0x2537: return(193);
+          case 0x253B: return(0xCA);    /* Bold */
+          case 0x253C: return(197);     /* Box intersection */
+          case 0x253F: return(197);
+          case 0x2542: return(197);
+          case 0x2547: return(197);
+          case 0x2548: return(197);
+          case 0x2549: return(197);
+          case 0x254A: return(197);
+          case 0x254B: return(0xCE);    /* Bold */
+          case 0x2550: return(205);     /* Center box bar horizontal double */
+          case 0x2551: return(186);     /* Center box bar vertical double */
+          case 0x2552: return(213);     /* UL box corner single to double */
+          default: return(0x13);
+        }
     } else if (c >= 0x2553 && c <= 0x2579) { /* More box drawing */
-	switch (c) {
-	  case 0x2553: return(214);	/* UL box corner double to single */
-	  case 0x2554: return(201);	/* UL box corner double */
-	  case 0x2555: return(184);	/* UR box corner double to single */
-	  case 0x2556: return(183);	/* UR box corner single to double */
-	  case 0x2557: return(187);	/* UR box corner double */
-	  case 0x2558: return(212);	/* LL box corner single to double */
-	  case 0x2559: return(211);	/* LL box corner double to single */
-	  case 0x255A: return(200);	/* LL box corner double */
-	  case 0x255B: return(190);	/* LR box corner double to single */
-	  case 0x255C: return(189);	/* LR box corner single to double */
-	  case 0x255D: return(188);	/* LR box corner double */
-	  case 0x255E: return(198);	/* Left mid box side single to doubl */
-	  case 0x255F: return(199);	/* Left mid box side double to singl */
-	  case 0x2560: return(204);	/* Left middle box side double */
-	  case 0x2561: return(181);	/* Right box side double to single */
-	  case 0x2562: return(182);	/* Right box side single to double */
-	  case 0x2563: return(185);	/* Right middle box side double */
-	  case 0x2564: return(209);	/* Middle box top double to single */
-	  case 0x2565: return(210);	/* Middle box top single to double */
-	  case 0x2566: return(203);	/* Middle box top double */
-	  case 0x2567: return(207);	/* Middle box bot single to double */
-	  case 0x2568: return(208);	/* Middle box bot double to single */
-	  case 0x2569: return(202);	/* Middle box bot double */
-	  case 0x256A: return(216);	/* Box intersection double to single */
-	  case 0x256B: return(215);	/* Box intersection single to double */
-	  case 0x256C: return(206);	/* Box intersection double */
-	  case 0x256D: return(218);	/* UL arc */
-	  case 0x256E: return(191);	/* UR arc */
-	  case 0x256F: return(217);	/* LR arc */
-	  case 0x2570: return(192);	/* LL arc */
-	  case 0x2571: return(179);	/* Diagonal line LL to UR */
-	  case 0x2572: return(196);	/* Diagonal line UL to LR */
-	  case 0x2573: return(88);	/* Diagonal lines crossed */
-	  case 0x2575: return(0xb3);	/* High vertical line */
-	  case 0x2576: return(45);	/* Short horizontal line */
-	  case 0x2577: return(0xb3);	/* Low vertical line */
-	  case 0x2579: return(0xb3);	/* High vertical line bold */
-	  default: return(0x13);
-	}
+        switch (c) {
+          case 0x2553: return(214);     /* UL box corner double to single */
+          case 0x2554: return(201);     /* UL box corner double */
+          case 0x2555: return(184);     /* UR box corner double to single */
+          case 0x2556: return(183);     /* UR box corner single to double */
+          case 0x2557: return(187);     /* UR box corner double */
+          case 0x2558: return(212);     /* LL box corner single to double */
+          case 0x2559: return(211);     /* LL box corner double to single */
+          case 0x255A: return(200);     /* LL box corner double */
+          case 0x255B: return(190);     /* LR box corner double to single */
+          case 0x255C: return(189);     /* LR box corner single to double */
+          case 0x255D: return(188);     /* LR box corner double */
+          case 0x255E: return(198);     /* Left mid box side single to doubl */
+          case 0x255F: return(199);     /* Left mid box side double to singl */
+          case 0x2560: return(204);     /* Left middle box side double */
+          case 0x2561: return(181);     /* Right box side double to single */
+          case 0x2562: return(182);     /* Right box side single to double */
+          case 0x2563: return(185);     /* Right middle box side double */
+          case 0x2564: return(209);     /* Middle box top double to single */
+          case 0x2565: return(210);     /* Middle box top single to double */
+          case 0x2566: return(203);     /* Middle box top double */
+          case 0x2567: return(207);     /* Middle box bot single to double */
+          case 0x2568: return(208);     /* Middle box bot double to single */
+          case 0x2569: return(202);     /* Middle box bot double */
+          case 0x256A: return(216);     /* Box intersection double to single */
+          case 0x256B: return(215);     /* Box intersection single to double */
+          case 0x256C: return(206);     /* Box intersection double */
+          case 0x256D: return(218);     /* UL arc */
+          case 0x256E: return(191);     /* UR arc */
+          case 0x256F: return(217);     /* LR arc */
+          case 0x2570: return(192);     /* LL arc */
+          case 0x2571: return(179);     /* Diagonal line LL to UR */
+          case 0x2572: return(196);     /* Diagonal line UL to LR */
+          case 0x2573: return(88);      /* Diagonal lines crossed */
+          case 0x2575: return(0xb3);    /* High vertical line */
+          case 0x2576: return(45);      /* Short horizontal line */
+          case 0x2577: return(0xb3);    /* Low vertical line */
+          case 0x2579: return(0xb3);    /* High vertical line bold */
+          default: return(0x13);
+        }
     } else if (c >= 0x257a && c <= 0x25ff) { /* Still more box drawing */
-	switch (c) {
-	  case 0x257b: return(0xb3);	/* Low vertical line bold */
-	  case 0x2580: return(223);	/* Quadrant UL and UR (top half) */
-	  case 0x2581: return(0xc4);	/* Scan line 9 */
-	  case 0x2582: return(0xDC);	/* Black blob lower half */
-	  case 0x2584: return(220);	/* Quadrant LL and LR (lower half) */
-	  case 0x2588: return(219);	/* Fill character dark */
-	  case 0x258C: return(221);	/* Quadrant UL and LL (left half) */
-	  case 0x258E: return(0xDD);
-	  case 0x2590: return(222);	/* Quadrant UR and LR (right half) */
-	  case 0x2591: return(176);	/* Fill character light */
-	  case 0x2592: return(177);	/* Fill character medium */
-	  case 0x2593: return(178);	/* Fill character heavy */
-	  case 0x2594: return(0xc4);	/* Scan line 1 */
-	  case 0x25A0: return(254);	/* Solid square, center */
-	  case 0x25A6: return(177);	/* Blotch */
-	  case 0x25AC:			/* Black rectangle */
-	  case 0x25AF: return(0x16);	/* White rectangle */
-	  case 0x25B2:			/* Triangle, up-pointing */
-	  case 0x25B4: return(0x1e);	/* Triangle, up-pointing */
-	  case 0x25B6:			/* Triangle, right-pointing, dark */
-	  case 0x25B7:			/* Triangle, right-pointing, light */
-	  case 0x25B9:			/* Triangle, right-pointing, light */
-	  case 0x25BA: return(0x10);	/* Triangle, right-pointing, narrow */
-	  case 0x25BC:			/* Triangle, down-pointing */
-	  case 0x25BE: return(0x1f);	/* Triangle, down-pointing */
-	  case 0x25C0:			/* Triangle, left-pointing, dark */
-	  case 0x25C1:			/* Triangle, left-pointing, dark */
-	  case 0x25C4: return(0x11);	/* Triangle, left-pointing, narrow */
-	  case 0x25C6: return(4);	/* Diamond, center, solid */
-	  case 0x25CB: return(0x09);	/* Circle */
-	  case 0x25CF: return(249);	/* Center dot, large */
-	  case 0x25d8: return(0x08);	/* Inverse bullet */
-	  case 0x25d9: return(0x0a);	/* Inverse white circle */
-	  case 0x25E2: return(0xD9);	/* Lower right triangle */
-	  case 0x25E3: return(0xC0);	/* Lower left triangle */
-	  case 0x25E4: return(0xDA);	/* Upper left triangle */
-	  case 0x25E5: return(0xBf);	/* Upper right triangle */
-	  default: return(0x13);
-	}
-    } else if (c >= 0x2600) {		/* All the rest */
-	switch (c) {
-	  case 0x263a: return(0x01);	/* Smiley */
-	  case 0x263b: return(0x02);	/* Inverse Smiley */
-	  case 0x263c: return(0x0f);	/* White Sun with Rays */
-	  case 0x2640: return(0x0c);	/* Male sign */
-	  case 0x2642: return(0x0b);	/* Female sign */
-	  case 0x2660: return(0x06);	/* Spade */
-	  case 0x2663: return(0x05);	/* Club */
-	  case 0x2665: return(0x03);	/* Heart */
-	  case 0x2666: return(0x04);	/* Diamond, center, solid */
-	  case 0x266a: return(0x0d);	/* Quarter note */
-	  case 0x266b:			/* Beamed quarter notes */
-	  case 0x266c: return(0x0e);	/* Beamed 8th notes */
-	  case 0x279e: return(0x1a);	/* Bold right arrow */
-	  case 0x27a1: return(0x1a);	/* Heavy black right arrow. */
-	  case 0xE200: return(180);	/* Extensible left brace middle */
-	  case 0xE201: return(192);	/* Extensible Left parenthesis bot */
-	  case 0xE202: return(218);	/* Extensible left parenthesis top */
-	  case 0xE203: return(192);	/* Extensible left SB bot */
-	  case 0xE204: return(218);	/* Extensible left SB top */
-	  case 0xE205: return(195);	/* Extensible right brace middle */
-	  case 0xE206: return(217);	/* Extensible right parenthesis bot */
-	  case 0xE207: return(191);	/* Extensible right parenthesis top */
-	  case 0xE208: return(217);	/* Extensible right SB bot */
-	  case 0xE209: return(191);	/* Extensible right SB top */
-	  case 0xE20C: return(228);	/* Summation symbol bot */
-	  case 0xE20D: return(228);	/* Summation symbol top */
-	  case 0xE20E: return(191);	/* Right ceiling corner */
-	  case 0xE20F: return(217);	/* Right floor corner */
-	  case 0xE300: return(179);	/* V box line, extensible, left */
-	  case 0xE309: return(179);	/* V box line, extensible, right */
-	  case 0xE30A: return(221);	/* Diagonal fill, dark, UL */
-	  case 0xE30B: return(222);	/* Diagonal fill, dark, UR */
-	  case 0xE311: return(196);	/* H line - Scan 1 */
-	  case 0xE313: return(196);	/* H line - Scan 3 */
-	  case 0xE315: return(196);	/* H line - Scan 5 */
-	  case 0xE317: return(196);	/* H line - Scan 7 */
-	  case 0xE319: return(196);	/* H line - Scan 9 */
-	  case 0xE320: return(221);	/* Quadrant LL */
-	  case 0xE321: return(222);	/* Quadrant LR */
-	  case 0xE322: return(221);	/* Quadrant UL */
-	  case 0xE323: return(219);	/* Quadrant UL and LL and LR */
-	  case 0xE324: return(219);	/* Quadrant UL and LR */
-	  case 0xE325: return(219);	/* Quadrant UL and LR */
-	  case 0xE326: return(219);	/* Quadrant UL and UR and LL */
-	  case 0xE327: return(219);	/* Quadrant UL and UR and LR */
-	  case 0xE328: return(222);	/* Quadrant UR */
-	  case 0xE329: return(219);	/* Quadrant UR and LL and LR */
-	  case 0xE400: return(251);	/* Radical symbol, small */
-	  case 0xE401: return(168);	/* Reverse question mark */
-	  case 0xFFFD: return(0x13);	/* !! for unknown */
-	  default: return(0x13);
-	}
+        switch (c) {
+          case 0x257b: return(0xb3);    /* Low vertical line bold */
+          case 0x2580: return(223);     /* Quadrant UL and UR (top half) */
+          case 0x2581: return(0xc4);    /* Scan line 9 */
+          case 0x2582: return(0xDC);    /* Black blob lower half */
+          case 0x2584: return(220);     /* Quadrant LL and LR (lower half) */
+          case 0x2588: return(219);     /* Fill character dark */
+          case 0x258C: return(221);     /* Quadrant UL and LL (left half) */
+          case 0x258E: return(0xDD);
+          case 0x2590: return(222);     /* Quadrant UR and LR (right half) */
+          case 0x2591: return(176);     /* Fill character light */
+          case 0x2592: return(177);     /* Fill character medium */
+          case 0x2593: return(178);     /* Fill character heavy */
+          case 0x2594: return(0xc4);    /* Scan line 1 */
+          case 0x25A0: return(254);     /* Solid square, center */
+          case 0x25A6: return(177);     /* Blotch */
+          case 0x25AC:                  /* Black rectangle */
+          case 0x25AF: return(0x16);    /* White rectangle */
+          case 0x25B2:                  /* Triangle, up-pointing */
+          case 0x25B4: return(0x1e);    /* Triangle, up-pointing */
+          case 0x25B6:                  /* Triangle, right-pointing, dark */
+          case 0x25B7:                  /* Triangle, right-pointing, light */
+          case 0x25B9:                  /* Triangle, right-pointing, light */
+          case 0x25BA: return(0x10);    /* Triangle, right-pointing, narrow */
+          case 0x25BC:                  /* Triangle, down-pointing */
+          case 0x25BE: return(0x1f);    /* Triangle, down-pointing */
+          case 0x25C0:                  /* Triangle, left-pointing, dark */
+          case 0x25C1:                  /* Triangle, left-pointing, dark */
+          case 0x25C4: return(0x11);    /* Triangle, left-pointing, narrow */
+          case 0x25C6: return(4);       /* Diamond, center, solid */
+          case 0x25CB: return(0x09);    /* Circle */
+          case 0x25CF: return(249);     /* Center dot, large */
+          case 0x25d8: return(0x08);    /* Inverse bullet */
+          case 0x25d9: return(0x0a);    /* Inverse white circle */
+          case 0x25E2: return(0xD9);    /* Lower right triangle */
+          case 0x25E3: return(0xC0);    /* Lower left triangle */
+          case 0x25E4: return(0xDA);    /* Upper left triangle */
+          case 0x25E5: return(0xBf);    /* Upper right triangle */
+          default: return(0x13);
+        }
+    } else if (c >= 0x2600) {           /* All the rest */
+        switch (c) {
+          case 0x263a: return(0x01);    /* Smiley */
+          case 0x263b: return(0x02);    /* Inverse Smiley */
+          case 0x263c: return(0x0f);    /* White Sun with Rays */
+          case 0x2640: return(0x0c);    /* Male sign */
+          case 0x2642: return(0x0b);    /* Female sign */
+          case 0x2660: return(0x06);    /* Spade */
+          case 0x2663: return(0x05);    /* Club */
+          case 0x2665: return(0x03);    /* Heart */
+          case 0x2666: return(0x04);    /* Diamond, center, solid */
+          case 0x266a: return(0x0d);    /* Quarter note */
+          case 0x266b:                  /* Beamed quarter notes */
+          case 0x266c: return(0x0e);    /* Beamed 8th notes */
+          case 0x279e: return(0x1a);    /* Bold right arrow */
+          case 0x27a1: return(0x1a);    /* Heavy black right arrow. */
+          case 0xE200: return(180);     /* Extensible left brace middle */
+          case 0xE201: return(192);     /* Extensible Left parenthesis bot */
+          case 0xE202: return(218);     /* Extensible left parenthesis top */
+          case 0xE203: return(192);     /* Extensible left SB bot */
+          case 0xE204: return(218);     /* Extensible left SB top */
+          case 0xE205: return(195);     /* Extensible right brace middle */
+          case 0xE206: return(217);     /* Extensible right parenthesis bot */
+          case 0xE207: return(191);     /* Extensible right parenthesis top */
+          case 0xE208: return(217);     /* Extensible right SB bot */
+          case 0xE209: return(191);     /* Extensible right SB top */
+          case 0xE20C: return(228);     /* Summation symbol bot */
+          case 0xE20D: return(228);     /* Summation symbol top */
+          case 0xE20E: return(191);     /* Right ceiling corner */
+          case 0xE20F: return(217);     /* Right floor corner */
+          case 0xE300: return(179);     /* V box line, extensible, left */
+          case 0xE309: return(179);     /* V box line, extensible, right */
+          case 0xE30A: return(221);     /* Diagonal fill, dark, UL */
+          case 0xE30B: return(222);     /* Diagonal fill, dark, UR */
+          case 0xE320: return(221);     /* Quadrant LL */
+          case 0xE321: return(222);     /* Quadrant LR */
+          case 0xE322: return(221);     /* Quadrant UL */
+          case 0xE323: return(219);     /* Quadrant UL and LL and LR */
+          case 0xE324: return(219);     /* Quadrant UL and LR */
+          case 0xE325: return(219);     /* Quadrant UL and LR */
+          case 0xE326: return(219);     /* Quadrant UL and UR and LL */
+          case 0xE327: return(219);     /* Quadrant UL and UR and LR */
+          case 0xE328: return(222);     /* Quadrant UR */
+          case 0xE329: return(219);     /* Quadrant UR and LL and LR */
+          case 0xE400: return(251);     /* Radical symbol, small */
+          case 0xE401: return(168);     /* Reverse question mark */
+          case 0xFFFD: return(0x13);    /* !! for unknown */
+          default: return(0x13);
+        }
     }
     return(0x13);
 }
@@ -14719,23 +14734,31 @@ tx_cpsub(c) USHORT c;
   to make reasonable substitutions or else 3/4 of the glyphs will show
   up as blobs on the screen.
 */
-USHORT					/* Unicode to Lucida Console */
+USHORT                                  /* Unicode to Lucida Console */
 #ifdef CK_ANSIC
 tx_lucidasub(USHORT c)
 #else
 tx_lucidasub(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0x0180)			/* Latin-1 and Extended A */
+    if (c < 0x0180)                     /* Latin-1 and Extended A */
       return(c);
 
 /* For efficiency we try to arrange the sections by frequency of use. */
-
-    if (c >= 0x2500 && c <= 0x257f) {	/* Box drawing */
-	if (c >= 0x2550 && c <= 0x256c)
-	  return(c);
-	switch (c) {
-	  /* Themselves */
+    if (c >= 0x23BA && c <= 0x23BD) {
+        switch(c) {
+          case 0x23BA:                    /* H line - Scan 1 */
+          case 0x23BB:                    /* H line - Scan 3 */
+          case 0x23BC:                    /* H line - Scan 7 */
+          case 0x23BD:                    /* H line - Scan 9 */
+            return(0x2500);
+        }
+    }
+    if (c >= 0x2500 && c <= 0x257f) {   /* Box drawing */
+        if (c >= 0x2550 && c <= 0x256c)
+          return(c);
+        switch (c) {
+          /* Themselves */
         case 0x2500:
         case 0x2502:
         case 0x250c:
@@ -14748,9 +14771,9 @@ tx_lucidasub(c) USHORT c;
         case 0x2534:
         case 0x253c:
             return(c);
-	  /* Horizontal lines */
-        case 0x2501:			/* Bold */
-	    return(0x2550);		/* Use double */
+          /* Horizontal lines */
+        case 0x2501:                    /* Bold */
+            return(0x2550);             /* Use double */
         case 0x2504:
         case 0x2505:
         case 0x2508:
@@ -14760,9 +14783,9 @@ tx_lucidasub(c) USHORT c;
         case 0x257c:
         case 0x257e:
             return(0x2500);
-	  /* Vertical lines */
-        case 0x2503:			/* Bold */
-	    return(0x2551);		/* Use double */
+          /* Vertical lines */
+        case 0x2503:                    /* Bold */
+            return(0x2551);             /* Use double */
         case 0x2506:
         case 0x2507:
         case 0x250a:
@@ -14777,31 +14800,31 @@ tx_lucidasub(c) USHORT c;
         case 0x257b:
             return(0x2502);
             /* Upper left box corner */
-        case 0x250f:			/* Bold */
-	    return(0x2554);		/* Use double */
-        case 0x250d: case 0x250e:	/* Other */
-	    return(0x250c);
-	  /* Upper right box corner */
-        case 0x2513:			/* Bold */
-	    return(0x2557);
+        case 0x250f:                    /* Bold */
+            return(0x2554);             /* Use double */
+        case 0x250d: case 0x250e:       /* Other */
+            return(0x250c);
+          /* Upper right box corner */
+        case 0x2513:                    /* Bold */
+            return(0x2557);
         case 0x2511:
-        case 0x2512:	/* Other */
-	    return(0x2510);
-	  /* Lower left box corner */
-        case 0x2517:			/* Bold */
-	    return(0x255a);
+        case 0x2512:    /* Other */
+            return(0x2510);
+          /* Lower left box corner */
+        case 0x2517:                    /* Bold */
+            return(0x255a);
         case 0x2515:
-        case 0x2516:	/* Other */
-	    return(0x2514);
-	  /* Lower right box corner */
-        case 0x251b:			/* Bold */
-	    return(0x255d);
+        case 0x2516:    /* Other */
+            return(0x2514);
+          /* Lower right box corner */
+        case 0x251b:                    /* Bold */
+            return(0x255d);
         case 0x2519:
-        case 0x251a:	/* Other */
-	    return(0x2518);
-	  /* Vertical and right */
-        case 0x2523:			/* Bold */
-	    return(0x2560);
+        case 0x251a:    /* Other */
+            return(0x2518);
+          /* Vertical and right */
+        case 0x2523:                    /* Bold */
+            return(0x2560);
         case 0x251d:
         case 0x251e:
         case 0x251f:
@@ -14809,9 +14832,9 @@ tx_lucidasub(c) USHORT c;
         case 0x2521:
         case 0x2522:
             return(0x251c);
-	  /* Vertical and left */
-        case 0x252b:			/* Bold */
-	    return(0x2563);
+          /* Vertical and left */
+        case 0x252b:                    /* Bold */
+            return(0x2563);
         case 0x2525:
         case 0x2526:
         case 0x2527:
@@ -14819,9 +14842,9 @@ tx_lucidasub(c) USHORT c;
         case 0x2529:
         case 0x252a:
             return(0x2524);
-	  /* Horizontal and down */
-	  case 0x2533:			/* Bold */
-	    return(0x2566);
+          /* Horizontal and down */
+          case 0x2533:                  /* Bold */
+            return(0x2566);
         case 0x252d:
         case 0x252e:
         case 0x252f:
@@ -14830,75 +14853,75 @@ tx_lucidasub(c) USHORT c;
         case 0x2532:
             return(0x252c);
             /* Horizontal and up */
-        case 0x253b:			/* Bold */
-	    return(0x2569);
+        case 0x253b:                    /* Bold */
+            return(0x2569);
         case 0x2535: case 0x2536: case 0x2537:
         case 0x2538: case 0x2539: case 0x253a:
             return(0x2534);
-	  /* Horizontal and Vertical */
-	  case 0x254b:			/* Bold */
-	    return(0x256c);
-	  case 0x253d: case 0x253e: case 0x253f:
+          /* Horizontal and Vertical */
+          case 0x254b:                  /* Bold */
+            return(0x256c);
+          case 0x253d: case 0x253e: case 0x253f:
         case 0x2540: case 0x2541: case 0x2542: case 0x2543:
         case 0x2544: case 0x2545: case 0x2546: case 0x2547:
         case 0x2548: case 0x2549: case 0x254a:
             return(0x253c);
-	  /* Curved corners */
-	  case 0x256d:			/* UL */
-	    return(0x250c);
-	  case 0x256e:			/* UR */
-	    return(0x2510);
-	  case 0x256f:			/* LL */
-	    return(0x2518);
-	  case 0x2570:			/* LR */
-	    return(0x2514);
-	  case 0x2571:			/* Diagonal */
-	    return(0x002f);
-	  case 0x2572:			/* Other diagonal */
-	    return(0x005c);
-	  case 0x2573:			/* Diagonal cross */
-	    return(0x00d7);
-	  /* Partial horizontal lines */
+          /* Curved corners */
+          case 0x256d:                  /* UL */
+            return(0x250c);
+          case 0x256e:                  /* UR */
+            return(0x2510);
+          case 0x256f:                  /* LL */
+            return(0x2518);
+          case 0x2570:                  /* LR */
+            return(0x2514);
+          case 0x2571:                  /* Diagonal */
+            return(0x002f);
+          case 0x2572:                  /* Other diagonal */
+            return(0x005c);
+          case 0x2573:                  /* Diagonal cross */
+            return(0x00d7);
+          /* Partial horizontal lines */
         case 0x2574: case 0x2576: case 0x2578: case 0x257a:
             return(0x002d);
         default:
             return(0xfffd);
-	}
+        }
     }
-    if (c >= 0x2190 && c <= 0x21ff) {	/* Arrows */
-	if (c >= 0x2190 && c <= 0x2195 || c == 0x21a8)
-	  return(c);
-	switch (c) {
-	  /* Left-arrow forms */
+    if (c >= 0x2190 && c <= 0x21ff) {   /* Arrows */
+        if (c >= 0x2190 && c <= 0x2195 || c == 0x21a8)
+          return(c);
+        switch (c) {
+          /* Left-arrow forms */
         case 0x219e: case 0x21a2: case 0x21a4: case 0x21a9:
         case 0x21bc: case 0x21d0: case 0x21da: case 0x21dc:
         case 0x21e0: case 0x21e4: case 0x21e6: case 0x21c7:
             return(0x2190);
-	  /* Right-arrow forms */
+          /* Right-arrow forms */
         case 0x21a0: case 0x21a3: case 0x21a6: case 0x21aa:
         case 0x21c0: case 0x21c1: case 0x21c9: case 0x21d2:
         case 0x21db: case 0x21dd: case 0x21e2: case 0x21e5:
         case 0x21e8:
             return(0x2192);
-	  /* Up-arrow forms */
+          /* Up-arrow forms */
         case 0x219f: case 0x21a5: case 0x21be: case 0x21bf:
         case 0x21c8: case 0x21d1: case 0x21de: case 0x21e1:
         case 0x21e7: case 0x21ea:
             return(0x2191);
-	  /* Down-arrow forms */
+          /* Down-arrow forms */
         case 0x21a1: case 0x21a7: case 0x21af: case 0x21c2:
         case 0x21ce: case 0x21ca: case 0x21d3: case 0x21df:
         case 0x21e3: case 0x21e9:
             return(0x2193);
-	  /* Up-down-arrow forms */
+          /* Up-down-arrow forms */
         case 0x21c5: case 0x21d5:
             return(0x2195);
         default:
             return(0xfffd);
-	}
+        }
     }
-    if (c >= 0x2580 && c <= 0x259f) {	/* Block elements */
-	switch (c) {
+    if (c >= 0x2580 && c <= 0x259f) {   /* Block elements */
+        switch (c) {
         case 0x2580: case 0x2584: case 0x2588: case 0x258c:
         case 0x2590: case 0x2591: case 0x2592: case 0x2593:
             return(c);
@@ -14907,15 +14930,15 @@ tx_lucidasub(c) USHORT c;
             return(0x2584);
         case 0x2589: case 0x258a: case 0x258b:
         case 0x258d: case 0x258e: case 0x258f:
-	    return(0x258c);
+            return(0x258c);
         case 0x2595:
             return(0x2502);
         default:
             return(0xfffd);
-	}
+        }
     }
-    if (c >= 0x2200 && c <= 0x22ff) {	/* Mathematical operators */
-	switch (c) {
+    if (c >= 0x2200 && c <= 0x22ff) {   /* Mathematical operators */
+        switch (c) {
         case 0x2202: case 0x2206: case 0x220f: case 0x2211: case 0x2212:
         case 0x2219: case 0x2220: case 0x221e: case 0x221f: case 0x2229:
         case 0x222b: case 0x2248: case 0x2260: case 0x2261: case 0x2264:
@@ -14923,88 +14946,88 @@ tx_lucidasub(c) USHORT c;
             return(c);
         default:
             return(0xfffd);
-	}
+        }
     }
-    if (c >= 0x2300 && c <= 0x237f) {	/* Miscellaneous Technical */
-	if (c == 0x2302 || c == 0x2310 || c == 0x2320 || c == 0x2321)
-	  return(c);
-	switch (c) {
-	  case 0x2329:			/* BRA */
-	    return(0x003c);
-	  case 0x232a:			/* KET */
-	    return(0x003e);
+    if (c >= 0x2300 && c <= 0x237f) {   /* Miscellaneous Technical */
+        if (c == 0x2302 || c == 0x2310 || c == 0x2320 || c == 0x2321)
+          return(c);
+        switch (c) {
+          case 0x2329:                  /* BRA */
+            return(0x003c);
+          case 0x232a:                  /* KET */
+            return(0x003e);
         default:
               return(0xfffd);
-	}
+        }
     }
-    if (c >= 0x25a0 && c <= 0x25ff) {	/* Geometric shapes */
-	switch (c) {
-	  /* Themselves */
+    if (c >= 0x25a0 && c <= 0x25ff) {   /* Geometric shapes */
+        switch (c) {
+          /* Themselves */
         case 0x25a0: case 0x25ac: case 0x25b2: case 0x25ba:
         case 0x25bc: case 0x25c4: case 0x25ca: case 0x25cb:
         case 0x25d8: case 0x25d9:
             return(c);
-	  /* Squares */
-	  case 0x25a1: case 0x25a2: case 0x25a3: case 0x25a4:
-	  case 0x25a5: case 0x25a6: case 0x25a7: case 0x25a8:
+          /* Squares */
+          case 0x25a1: case 0x25a2: case 0x25a3: case 0x25a4:
+          case 0x25a5: case 0x25a6: case 0x25a7: case 0x25a8:
         case 0x25a9: case 0x25aa: case 0x25ab:
         case 0x25e7: case 0x25e8: case 0x25e9: case 0x25ea: case 0x25eb:
             return(0x25a0);
-	  case 0x25ad: case 0x25ae: case 0x25af: /* Rectangles */
+          case 0x25ad: case 0x25ae: case 0x25af: /* Rectangles */
         case 0x25b0: case 0x25b1:
             return(0x25ac);
-	  case 0x25b3: case 0x25b4: case 0x25b5: /* Upright triangles */
+          case 0x25b3: case 0x25b4: case 0x25b5: /* Upright triangles */
         case 0x25ec: case 0x25ed: case 0x25ee:
             return(0x25b2);
         case 0x25b6: case 0x25b7: case 0x25b8: case 0x25b9: case 0x25bb:
-            return(0x25ba);		         /* Right-pointing triangles */
-	  case 0x25bd: case 0x25be: case 0x25bf: /* Down-pointing triangles */
-	    return(0x25bc);
+            return(0x25ba);                      /* Right-pointing triangles */
+          case 0x25bd: case 0x25be: case 0x25bf: /* Down-pointing triangles */
+            return(0x25bc);
         case 0x25c0: case 0x25c1: case 0x25c2: case 0x25c3: case 0x25c5:
-            return(0x25c4);		         /* Left-pointing triangles */
-	  case 0x25c6: case 0x25c7: case 0x25c8: /* Diamonds */
-	    return(0x2666);
-	  /* Circles */
+            return(0x25c4);                      /* Left-pointing triangles */
+          case 0x25c6: case 0x25c7: case 0x25c8: /* Diamonds */
+            return(0x2666);
+          /* Circles */
         case 0x25c9: case 0x25cc: case 0x25cd: case 0x25ce: case 0x25cf:
         case 0x25d0: case 0x25d1: case 0x25d2: case 0x25d3: case 0x25d4:
         case 0x25d5: case 0x25e6: case 0x25ef:
             return(0x25cb);
-	  /* Curves and corner triangles */
-	  case 0x25dc: case 0x25e4:	/* UL */
-	    return(0x250c);
-	  case 0x25dd: case 0x25e5:	/* UR */
-	    return(0x2510);
-	  case 0x25df: case 0x25e3:	/* LL */
-	    return(0x2514);
-	  case 0x25de: case 0x25e2:	/* LR */
-	    return(0x2518);
+          /* Curves and corner triangles */
+          case 0x25dc: case 0x25e4:     /* UL */
+            return(0x250c);
+          case 0x25dd: case 0x25e5:     /* UR */
+            return(0x2510);
+          case 0x25df: case 0x25e3:     /* LL */
+            return(0x2514);
+          case 0x25de: case 0x25e2:     /* LR */
+            return(0x2518);
         default:
             return(0xfffd);
-	}
+        }
     }
-    if (c >= 0x2600 && c <= 0x26ff) {	/* Misc symbols */
-	switch (c) {
-	  /* Themselves */
+    if (c >= 0x2600 && c <= 0x26ff) {   /* Misc symbols */
+        switch (c) {
+          /* Themselves */
         case 0x263a: case 0x263b: case 0x263c: case 0x2640:
         case 0x2642: case 0x2660: case 0x2663: case 0x2665:
         case 0x2666: case 0x266a: case 0x266b:
             return(c);
         default:
             return(0xfffd);
-	}
+        }
     }
-    if (c >= 0x2794 && c <= 0x27be)	/* Right-arrow Dingbats */
+    if (c >= 0x2794 && c <= 0x27be)     /* Right-arrow Dingbats */
       return(0x2192);
-    if (c >= 0x2070 && c <= 0x209f) {	/* Super & subscripts */
-	if (c == 0x207f)		/* n */
-	  return(c);
-	else if (c == 0x2070)		/* 0 */
-	  return(0x0030);
-	else if (c >= 0x2074 && c <= 0x2079)
-	  return(c - 0x2040);
-	else if (c >= 0x2080 && c <= 0x2089)
-	  return(c - 0x2050);
-	switch (c) {
+    if (c >= 0x2070 && c <= 0x209f) {   /* Super & subscripts */
+        if (c == 0x207f)                /* n */
+          return(c);
+        else if (c == 0x2070)           /* 0 */
+          return(0x0030);
+        else if (c >= 0x2074 && c <= 0x2079)
+          return(c - 0x2040);
+        else if (c >= 0x2080 && c <= 0x2089)
+          return(c - 0x2050);
+        switch (c) {
         case 0x207a: case 0x208a:
             return(0x002b);
         case 0x207b: case 0x208b:
@@ -15017,171 +15040,171 @@ tx_lucidasub(c) USHORT c;
             return(0x0029);
         default:
             return(0xfffd);
-	}
+        }
     }
-    if (c >= 0x0180 && c <= 0x024f) {	/* Latin Extended B, Part I */
-	if (c == 0x0192 || c >= 0x01fa && c <= 0x01ff)
-	  return(c);			/* Latin Extended B */
-	switch (c) {
+    if (c >= 0x0180 && c <= 0x024f) {   /* Latin Extended B, Part I */
+        if (c == 0x0192 || c >= 0x01fa && c <= 0x01ff)
+          return(c);                    /* Latin Extended B */
+        switch (c) {
         case 0x0180: case 0x0183: case 0x0184: case 0x0185:
-            return(0x0062);		/* Lowercase b variants */
+            return(0x0062);             /* Lowercase b variants */
         case 0x0181: case 0x0182:
-            return(0x0042);		/* Uppercase B variants */
+            return(0x0042);             /* Uppercase B variants */
         case 0x0186: case 0x0187:
-            return(0x0043);		/* Uppercase C variants */
-	  case 0x0189:			/* D with stroke */
-	    return(0x00D0);		/* Looks just like Eth */
-	  case 0x018a:			/* D with hook */
-	    return(0x0044);
-	  case 0x018e: case 0x0190:	/* E-like letters */
-	    return(0x0045);
-	  case 0x018f:			/* e-like letters */
-	    return(0x0065);
-	  case 0x0191:			/* F-like */
-	    return(0x0046);
-	  case 0x0193:			/* G-like */
-	    return(0x0047);
-	  case 0x0194:			/* Latin Capital Gamma */
-	    return(0x0393);		/* Use Greek */
-	  case 0x0195:			/* Gothic hv */
-	    return(0x0068);		/* Use h */
-	  case 0x0196:			/* Latin Capital Iota */
-	    return(0x0399);		/* Use Greek */
-	  case 0x0197:			/* I with bar */
-	    return(0x0069);
-	  case 0x0198:			/* K with hook */
-	    return(0x004B);
-	  case 0x0199:			/* k with hook */
-	    return(0x006B);
-	  case 0x019A:			/* l with bar */
-	    return(0x006C);
-	  case 0x019B:			/* lambda with bar */
-	    return(0x03bb);		/* Use Greek */
-	  case 0x019C:			/* Upside down m */
-	    return(0x006d);
-	  case 0x019D:			/* N with left hook */
-	    return(0x004e);
-	  case 0x019E:			/* n with long right leg */
-	    return(0x006e);
-	  case 0x019F: case 0x01a0: case 0x01a2: /* O-like letters */
-	    return(0x004f);
-	  case 0x01a1: case 0x01a3:	/* o-like */
-	    return(0x006f);
-	  case 0x01A4:			/* P with hook */
-	    return(0x0050);
-	  case 0x01A5:			/* p with hook */
-	    return(0x0070);
-	  case 0x01A6:			/* Old Norse YR */
-	    return(0x0052);
-	  case 0x01A7:			/* Backwards S */
-	    return(0x0053);
-	  case 0x01A8: case 0x01AA:	/* s-like letters */
-	    return(0x0073);
-	  case 0x01A9:			/* Esh */
-	    return(0x03a3);		/* Looks just like Sigma */
-	  case 0x01AB: case 0x01AD:	/* t-like */
-	    return(0x0074);
-	  case 0x01AC: case 0x01AE:	/* T-like */
-	    return(0x0054);
-	  case 0x01AF: case 0x01B1:	/* U-like */
-	    return(0x0055);
-	  case 0x01B0:			/* u-like */
-	    return(0x0075);
-	  case 0x01B2:			/* V-like */
-	    return(0x0056);
-	  case 0x01B3:			/* Y-like */
-	    return(0x0059);
-	  case 0x01B4:			/* y-like */
-	    return(0x0079);
-	  case 0x01B5:			/* Z-like */
-	    return(0x005a);
-	  case 0x01B6:			/* z-like */
-	    return(0x007a);
-	  case 0x01B7:			/* Yogh */
-	    return(0x0033);		/* Use "3" */
-	  case 0x01BF:			/* Wynn */
-	    return(0x0077);		/* Use "w" */
-	  case 0x01CD:			/* A caron */
-	    return(0x0041);
-	  case 0x01CE:			/* a caron */
-	    return(0x0061);
-	  case 0x01CF:			/* I caron */
-	    return(0x0049);
-	  case 0x01D0:			/* i caron */
-	    return(0x0069);
-	  case 0x01D1:			/* O caron */
-	    return(0x004f);
-	  case 0x01D2:			/* o caron */
-	    return(0x006f);
-	  case 0x01D3:			/* U caron */
-	    return(0x0055);
-	  case 0x01D4:			/* u caron */
-	    return(0x0075);
-	  /* U diaeresis + other things */
+            return(0x0043);             /* Uppercase C variants */
+          case 0x0189:                  /* D with stroke */
+            return(0x00D0);             /* Looks just like Eth */
+          case 0x018a:                  /* D with hook */
+            return(0x0044);
+          case 0x018e: case 0x0190:     /* E-like letters */
+            return(0x0045);
+          case 0x018f:                  /* e-like letters */
+            return(0x0065);
+          case 0x0191:                  /* F-like */
+            return(0x0046);
+          case 0x0193:                  /* G-like */
+            return(0x0047);
+          case 0x0194:                  /* Latin Capital Gamma */
+            return(0x0393);             /* Use Greek */
+          case 0x0195:                  /* Gothic hv */
+            return(0x0068);             /* Use h */
+          case 0x0196:                  /* Latin Capital Iota */
+            return(0x0399);             /* Use Greek */
+          case 0x0197:                  /* I with bar */
+            return(0x0069);
+          case 0x0198:                  /* K with hook */
+            return(0x004B);
+          case 0x0199:                  /* k with hook */
+            return(0x006B);
+          case 0x019A:                  /* l with bar */
+            return(0x006C);
+          case 0x019B:                  /* lambda with bar */
+            return(0x03bb);             /* Use Greek */
+          case 0x019C:                  /* Upside down m */
+            return(0x006d);
+          case 0x019D:                  /* N with left hook */
+            return(0x004e);
+          case 0x019E:                  /* n with long right leg */
+            return(0x006e);
+          case 0x019F: case 0x01a0: case 0x01a2: /* O-like letters */
+            return(0x004f);
+          case 0x01a1: case 0x01a3:     /* o-like */
+            return(0x006f);
+          case 0x01A4:                  /* P with hook */
+            return(0x0050);
+          case 0x01A5:                  /* p with hook */
+            return(0x0070);
+          case 0x01A6:                  /* Old Norse YR */
+            return(0x0052);
+          case 0x01A7:                  /* Backwards S */
+            return(0x0053);
+          case 0x01A8: case 0x01AA:     /* s-like letters */
+            return(0x0073);
+          case 0x01A9:                  /* Esh */
+            return(0x03a3);             /* Looks just like Sigma */
+          case 0x01AB: case 0x01AD:     /* t-like */
+            return(0x0074);
+          case 0x01AC: case 0x01AE:     /* T-like */
+            return(0x0054);
+          case 0x01AF: case 0x01B1:     /* U-like */
+            return(0x0055);
+          case 0x01B0:                  /* u-like */
+            return(0x0075);
+          case 0x01B2:                  /* V-like */
+            return(0x0056);
+          case 0x01B3:                  /* Y-like */
+            return(0x0059);
+          case 0x01B4:                  /* y-like */
+            return(0x0079);
+          case 0x01B5:                  /* Z-like */
+            return(0x005a);
+          case 0x01B6:                  /* z-like */
+            return(0x007a);
+          case 0x01B7:                  /* Yogh */
+            return(0x0033);             /* Use "3" */
+          case 0x01BF:                  /* Wynn */
+            return(0x0077);             /* Use "w" */
+          case 0x01CD:                  /* A caron */
+            return(0x0041);
+          case 0x01CE:                  /* a caron */
+            return(0x0061);
+          case 0x01CF:                  /* I caron */
+            return(0x0049);
+          case 0x01D0:                  /* i caron */
+            return(0x0069);
+          case 0x01D1:                  /* O caron */
+            return(0x004f);
+          case 0x01D2:                  /* o caron */
+            return(0x006f);
+          case 0x01D3:                  /* U caron */
+            return(0x0055);
+          case 0x01D4:                  /* u caron */
+            return(0x0075);
+          /* U diaeresis + other things */
         case 0x01D5: case 0x01D7: case 0x01D9: case 0x01DB:
             return(0x00dc);
-	  /* u diaeresis + other things */
+          /* u diaeresis + other things */
         case 0x01D6: case 0x01Da: case 0x01Dc:
             return(0x00fc);
 
-	  /* Fill in more here if anybody asks */
+          /* Fill in more here if anybody asks */
 
         default:
             return(0xfffd);
-	}
+        }
     }
-    if (c >= 0x1e00 && c <= 0x1eff) {	/* Latin Extended Additional */
-	if (c >= 0x1e80 && c <= 0x1e85)
-	  return(c);
-	else
-	  return(0xfffd);
+    if (c >= 0x1e00 && c <= 0x1eff) {   /* Latin Extended Additional */
+        if (c >= 0x1e80 && c <= 0x1e85)
+          return(c);
+        else
+          return(0xfffd);
     }
-    if (c >= 0x0400 && c <= 0x04ff) {	/* Cyrillic */
-	if (c >= 0x0400 && c <= 0x045f || c == 0x0490  || c == 0x0491)
-	  return(c);
-	else
-	  return(0xfffd);
+    if (c >= 0x0400 && c <= 0x04ff) {   /* Cyrillic */
+        if (c >= 0x0400 && c <= 0x045f || c == 0x0490  || c == 0x0491)
+          return(c);
+        else
+          return(0xfffd);
     }
-    if (c >= 0x0370 && c <= 0x03ff) {	/* Greek */
-	if (c == 0x037e || c >= 0x0384 && c <= 0x03ce)
-	  return(c);
-	switch (c) {
+    if (c >= 0x0370 && c <= 0x03ff) {   /* Greek */
+        if (c == 0x037e || c >= 0x0384 && c <= 0x03ce)
+          return(c);
+        switch (c) {
         case 0x0374: case 0x0375:
             return(0x0027);
         case 0x037a:
             return(0x002c);
-	  /* Fill in more here if needed */
+          /* Fill in more here if needed */
         default:
             return(0xfffd);
-	}
+        }
     }
-    if (c >= 0x1f00 && c <= 0x1fff) {	/* Greek Extended */
-	/* Fill in if asked */
-	return(0xfffd);
+    if (c >= 0x1f00 && c <= 0x1fff) {   /* Greek Extended */
+        /* Fill in if asked */
+        return(0xfffd);
     }
-    if (c >= 0x20a0 && c <= 0x20cf) {	/* Currency symbols */
-	if (c == 0x20a3 || c == 0x20a4 || c == 0x20a7 || c == 0x20ac)
-	  return(c);
-	else
-	  return(0xfffd);
+    if (c >= 0x20a0 && c <= 0x20cf) {   /* Currency symbols */
+        if (c == 0x20a3 || c == 0x20a4 || c == 0x20a7 || c == 0x20ac)
+          return(c);
+        else
+          return(0xfffd);
     }
-    if (c >= 0x2100 && c <= 0x214f) {	/* Letterlike symbols */
-	if (c == 0x2116 || c == 0x2122 || c == 0x2126)
-	  return(c);
-	else
-	  return(0xfffd);
+    if (c >= 0x2100 && c <= 0x214f) {   /* Letterlike symbols */
+        if (c == 0x2116 || c == 0x2122 || c == 0x2126)
+          return(c);
+        else
+          return(0xfffd);
     }
-    if (c >= 0x2150 && c <= 0x218f) {	/* Number forms */
-	if (c >= 0x215b && c <= 0x215e)	/* Roman numerals etc */
-	  return(c);
-	else
-	  return(0xfffd);
+    if (c >= 0x2150 && c <= 0x218f) {   /* Number forms */
+        if (c >= 0x215b && c <= 0x215e) /* Roman numerals etc */
+          return(c);
+        else
+          return(0xfffd);
     }
-    if (c >= 0x02b0 && c <= 0x02ff) {	/* Spacing modifier letters */
-	if (c == 0x02c6 || c == 0x02c7 || c == 0x02c9 ||
-	    c >= 0x02d8 && c <= 0x02dd)
-	  return(c);
-	switch (c) {
+    if (c >= 0x02b0 && c <= 0x02ff) {   /* Spacing modifier letters */
+        if (c == 0x02c6 || c == 0x02c7 || c == 0x02c9 ||
+            c >= 0x02d8 && c <= 0x02dd)
+          return(c);
+        switch (c) {
         case 0x02b0: case 0x02b1:
             return(0x0068);
         case 0x02b2:
@@ -15198,33 +15221,33 @@ tx_lucidasub(c) USHORT c;
             return(0x0022);
         case 0x02bb: case 0x02bc: case 0x02bd: case 0x02be: case 0x02bf:
             return(0x0027);
-	  case 0x02c2: 	    return(0x003c);
-	  case 0x02c3: 	    return(0x003e);
-	  case 0x02da: 	    return(0x00b0);
-	  case 0x02dc: 	    return(0x007e);
-	  default: 	    return(0xfffd);
-	}
+          case 0x02c2:      return(0x003c);
+          case 0x02c3:      return(0x003e);
+          case 0x02da:      return(0x00b0);
+          case 0x02dc:      return(0x007e);
+          default:          return(0xfffd);
+        }
     }
-    if (c >= 0x2000 && c <= 0x206f) {	/* General Punctuation */
-	if (c >= 0x2013 && c <= 0x2015 ||
-	    c >= 0x2017 && c <= 0x201a ||
-	    c >= 0x201c && c <= 0x201e ||
-	    c >= 0x2020 && c <= 0x2022 || c == 0x2026 || c == 0x2030 ||
-	    c >= 0x2039 && c <= 0x203a || c == 0x203c || c == 0x203e ||
-	    c == 0x2044)
-	  return(c);
-	else if (c == 0x2016)
-	  return(0x2551);
-	else if (c == 0x2017)
-	  return(0x2550);
-	else if (c == 0x2044)
-	  return(0x002f);
-	else
-	  return(0xfffd);
+    if (c >= 0x2000 && c <= 0x206f) {   /* General Punctuation */
+        if (c >= 0x2013 && c <= 0x2015 ||
+            c >= 0x2017 && c <= 0x201a ||
+            c >= 0x201c && c <= 0x201e ||
+            c >= 0x2020 && c <= 0x2022 || c == 0x2026 || c == 0x2030 ||
+            c >= 0x2039 && c <= 0x203a || c == 0x203c || c == 0x203e ||
+            c == 0x2044)
+          return(c);
+        else if (c == 0x2016)
+          return(0x2551);
+        else if (c == 0x2017)
+          return(0x2550);
+        else if (c == 0x2044)
+          return(0x002f);
+        else
+          return(0xfffd);
     }
-    if (c == 0xfb01 || c == 0xfb02)	/* Alphabetic Presentation Forms */
+    if (c == 0xfb01 || c == 0xfb02)     /* Alphabetic Presentation Forms */
       return(c);
-    return(0xfffd);			/* Catch-all */
+    return(0xfffd);                     /* Catch-all */
 }
 #endif /* OS2 */
 
@@ -15235,88 +15258,88 @@ tx_lucidasub(c) USHORT c;
 */
 struct x_to_unicode *
 txrinfo[MAXTXSETS+1] = {
-    &u_ascii,				/*  0 US ISO 646 (ASCII) */
-    &u_british,				/*  1 UK ISO 646 */
-    &u_fr_canadian,			/*  2 Canadian French NRC */
-    NULL,				/*  3 Cuba */
-    NULL,				/*  4 Czecho */
-    &u_danish,				/*  5 Danish/Norwegian ISO 646 */
-    &u_dutch,				/*  6 Dutch NRC */
-    &u_finnish,				/*  7 Finnish NRC  */
-    &u_french,				/*  8 French ISO 646 */
-    &u_german,				/*  9 German ISO 646 */
-    &u_hebrew7,				/* 10 Hebrew-7 (DEC) */
-    &u_hungarian,			/* 11 Hungarian ISO 646 */
-    &u_icelandic,			/* 12 Icelandic NRC */
-    &u_italian,				/* 13 Italian ISO 646 */
-    &u_jis0201r,			/* 14 Japanese Roman ISO 646 */
-    &u_jis0201k,			/* 15 Japanese Katakana */
-    &u_koi7,				/* 16 Short KOI */
-    &u_danish,				/* 17 Norwegian/Danish ISO 646 */
-    &u_portuguese,			/* 18 Portuguese ISO 646 */
-    &u_spanish,				/* 19 spanish ISO 646 */
-    &u_swedish,				/* 20 Swedish ISO 646 */
-    NULL,				/* 21 Swedish ISO 646 for names */
-    &u_swiss,				/* 22 Swiss NRC   */
-    &u_8859_1,				/* 23 ISO 8859-1  */
-    &u_8859_2,				/* 24 ISO 8859-2  */
-    &u_8859_3,				/* 25 ISO 8859-3  */
-    &u_8859_4,				/* 26 ISO 8859-4  */
-    &u_8859_5,				/* 27 ISO 8859-5  */ /* Cyrillic */
-    &u_8859_6,				/* 28 ISO 8859-6  */ /* Arabic */
-    &u_8859_7,				/* 29 ISO 8859-7  */ /* Greek */
-    &u_8859_8,				/* 30 ISO 8859-8  */ /* Hebrew */
-    &u_8859_9,				/* 31 ISO 8859-9  */
-    &u_8859_10,				/* 32 ISO 8859-10 */
-    &u_koi8,				/* 33 KOI-8       */
-    NULL,				/* 34 JIS-7       */
-    NULL,				/* 35 Shift JIS   */
-    NULL,				/* 36 Japanese EUC (JAE) */
-    NULL,				/* 37 Japanese DEC Kanji */
-    &u_decmcs,				/* 38 DEC MCS */
-    &u_nextstep,			/* 39 NeXT    */
-    &u_dgi,				/* 40 DGI     */
-    &u_maclatin,			/* 41 Macintosh Latin  */
-    &u_hproman8,			/* 42 HP Roman 8       */
-    &u_cp437,				/* 43 CP437 - Original */
-    &u_cp850,				/* 44 CP850 - W Europe */
-    &u_cp852,				/* 45 CP852 - E Europe */
-    &u_cp857,				/* 46 CP857 - Turkish  */
-    &u_cp862,				/* 47 CP862 - Hebrew   */
-    &u_cp864,				/* 48 CP864 - Arabic   */
-    &u_cp866,				/* 49 CP866 - Cyrillic */
-    &u_cp869,				/* 50 CP869 - Greek    */
-    &u_decspec,				/* 51 DEC Special Graphics */
-    &u_dectech,				/* 52 DEC Technical */
+    &u_ascii,                           /*  0 US ISO 646 (ASCII) */
+    &u_british,                         /*  1 UK ISO 646 */
+    &u_fr_canadian,                     /*  2 Canadian French NRC */
+    NULL,                               /*  3 Cuba */
+    NULL,                               /*  4 Czecho */
+    &u_danish,                          /*  5 Danish/Norwegian ISO 646 */
+    &u_dutch,                           /*  6 Dutch NRC */
+    &u_finnish,                         /*  7 Finnish NRC  */
+    &u_french,                          /*  8 French ISO 646 */
+    &u_german,                          /*  9 German ISO 646 */
+    &u_hebrew7,                         /* 10 Hebrew-7 (DEC) */
+    &u_hungarian,                       /* 11 Hungarian ISO 646 */
+    &u_icelandic,                       /* 12 Icelandic NRC */
+    &u_italian,                         /* 13 Italian ISO 646 */
+    &u_jis0201r,                        /* 14 Japanese Roman ISO 646 */
+    &u_jis0201k,                        /* 15 Japanese Katakana */
+    &u_koi7,                            /* 16 Short KOI */
+    &u_danish,                          /* 17 Norwegian/Danish ISO 646 */
+    &u_portuguese,                      /* 18 Portuguese ISO 646 */
+    &u_spanish,                         /* 19 spanish ISO 646 */
+    &u_swedish,                         /* 20 Swedish ISO 646 */
+    NULL,                               /* 21 Swedish ISO 646 for names */
+    &u_swiss,                           /* 22 Swiss NRC   */
+    &u_8859_1,                          /* 23 ISO 8859-1  */
+    &u_8859_2,                          /* 24 ISO 8859-2  */
+    &u_8859_3,                          /* 25 ISO 8859-3  */
+    &u_8859_4,                          /* 26 ISO 8859-4  */
+    &u_8859_5,                          /* 27 ISO 8859-5  */ /* Cyrillic */
+    &u_8859_6,                          /* 28 ISO 8859-6  */ /* Arabic */
+    &u_8859_7,                          /* 29 ISO 8859-7  */ /* Greek */
+    &u_8859_8,                          /* 30 ISO 8859-8  */ /* Hebrew */
+    &u_8859_9,                          /* 31 ISO 8859-9  */
+    &u_8859_10,                         /* 32 ISO 8859-10 */
+    &u_koi8,                            /* 33 KOI-8       */
+    NULL,                               /* 34 JIS-7       */
+    NULL,                               /* 35 Shift JIS   */
+    NULL,                               /* 36 Japanese EUC (JAE) */
+    NULL,                               /* 37 Japanese DEC Kanji */
+    &u_decmcs,                          /* 38 DEC MCS */
+    &u_nextstep,                        /* 39 NeXT    */
+    &u_dgi,                             /* 40 DGI     */
+    &u_maclatin,                        /* 41 Macintosh Latin  */
+    &u_hproman8,                        /* 42 HP Roman 8       */
+    &u_cp437,                           /* 43 CP437 - Original */
+    &u_cp850,                           /* 44 CP850 - W Europe */
+    &u_cp852,                           /* 45 CP852 - E Europe */
+    &u_cp857,                           /* 46 CP857 - Turkish  */
+    &u_cp862,                           /* 47 CP862 - Hebrew   */
+    &u_cp864,                           /* 48 CP864 - Arabic   */
+    &u_cp866,                           /* 49 CP866 - Cyrillic */
+    &u_cp869,                           /* 50 CP869 - Greek    */
+    &u_decspec,                         /* 51 DEC Special Graphics */
+    &u_dectech,                         /* 52 DEC Technical */
     &u_c0pics,                          /* 53 C0 Pictures */
     &u_c1pics,                          /* 54 C1 Pictures */
     &u_smiley,                          /* 55 IBM C0 Graphics */
-    &u_heath19g,			/* 56 Heath 19 Graphics */
-    &u_tvig,				/* 57 TVI Graphics */
-    &u_wyse_gn,				/* 58 Wyse 60 Graphics Normal */
-    &u_wyse_g1,				/* 59 Wyse 60 Graphics 1 */
-    &u_wyse_g2,				/* 60 Wyse 60 Graphics 2 */
-    &u_wyse_g3,				/* 61 Wyse 60 Graphics 3 */
-    &u_elot927,				/* 62 Greek ELOT 927 */
-    &u_dgspec,				/* 63 DG Special graphics */
-    &u_dgline,				/* 64 DG Line drawing */
-    &u_dgword,				/* 65 DG Word processing */
-    &u_hpline,				/* 66 HP Line drawing */
-    &u_hpmath,				/* 67 HP Math/Technical */
-    &u_qnxgrph,				/* 68 QNX Graphics */
-    &u_snibrack,			/* 69 SNI Brackets */
-    &u_snieuro,				/* 70 SNI Euro */
-    &u_snifacet,			/* 71 SNI Facet */
-    &u_sniibm,				/* 72 SNI IBM */
+    &u_heath19g,                        /* 56 Heath 19 Graphics */
+    &u_tvig,                            /* 57 TVI Graphics */
+    &u_wyse_gn,                         /* 58 Wyse 60 Graphics Normal */
+    &u_wyse_g1,                         /* 59 Wyse 60 Graphics 1 */
+    &u_wyse_g2,                         /* 60 Wyse 60 Graphics 2 */
+    &u_wyse_g3,                         /* 61 Wyse 60 Graphics 3 */
+    &u_elot927,                         /* 62 Greek ELOT 927 */
+    &u_dgspec,                          /* 63 DG Special graphics */
+    &u_dgline,                          /* 64 DG Line drawing */
+    &u_dgword,                          /* 65 DG Word processing */
+    &u_hpline,                          /* 66 HP Line drawing */
+    &u_hpmath,                          /* 67 HP Math/Technical */
+    &u_qnxgrph,                         /* 68 QNX Graphics */
+    &u_snibrack,                        /* 69 SNI Brackets */
+    &u_snieuro,                         /* 70 SNI Euro */
+    &u_snifacet,                        /* 71 SNI Facet */
+    &u_sniibm,                          /* 72 SNI IBM */
     &u_sniblanks,                       /* 73 SNI Blanks */
-    &u_cp1252,				/* 74 Windows Latin-1 */
-    &u_cp1250,				/* 75 Windows Latin-2 */
-    &u_cp1251,				/* 76 Windows Cyrillic */
-    &u_cp1253,				/* 77 Windows Greek */
-    &u_cp1254,				/* 78 Windows Turkish */
-    &u_cp1257,				/* 79 Windows Latin-4 */
-    &u_cp856,				/* 80 Cyrillic PC Code Page 856 */
-    &u_cp855,			        /* 81 Cyrillic PC Code Page 855 */
+    &u_cp1252,                          /* 74 Windows Latin-1 */
+    &u_cp1250,                          /* 75 Windows Latin-2 */
+    &u_cp1251,                          /* 76 Windows Cyrillic */
+    &u_cp1253,                          /* 77 Windows Greek */
+    &u_cp1254,                          /* 78 Windows Turkish */
+    &u_cp1257,                          /* 79 Windows Latin-4 */
+    &u_cp856,                           /* 80 Cyrillic PC Code Page 856 */
+    &u_cp855,                           /* 81 Cyrillic PC Code Page 855 */
     &u_8859_1,                          /* 82 CP819 - Same as 8859-1 */
     &u_8859_2,                          /* 83 CP912 - Same as 8859-2 */
     &u_8859_3,                          /* 84 CP913 - Same as 8859-3 */
@@ -15327,7 +15350,7 @@ txrinfo[MAXTXSETS+1] = {
     &u_8859_8,                          /* 89 CP916 - Same as 8859-8 */
     &u_8859_9,                          /* 90 CP920 - Same as 8859-9 */
     &u_hproman8,                        /* 91 CP1051 - Same as HP Roman 8 */
-    &u_cp858,				/* 92 CP858 - W Europe w/Euro */
+    &u_cp858,                           /* 92 CP858 - W Europe w/Euro */
     &u_8859_15,                         /* 93 ISO 8859-15 Latin-15 */
     &u_8859_15,                         /* 94 CP923 - Same as 8859-15  */
     &u_8859_7,                          /* 95 ELOT928 - Same as 8859-7 */
@@ -15336,16 +15359,16 @@ txrinfo[MAXTXSETS+1] = {
     &u_cp1255,                          /* 98 CP1255 - Windows Hebrew */
     &u_cp1256,                          /* 99 CP1256 - Windows Arabic */
     &u_cp1258,                          /* 100 CP1258 - Windows Viet Nam */
-    &u_mazovia,				/* 101 Mazovia Polish code page */
+    &u_mazovia,                         /* 101 Mazovia Polish code page */
     &u_transparent,                     /* 102 Transparent */
-    &u_hz1500,				/* 103 Hazeltine 1500/1520 graphics */
-    &u_koi8r,				/* 104 KOI8-R */
-    &u_koi8u,				/* 105 KOI8-U */
-    &u_apl1,				/* 106 APL 1 (ISO) */
-    &u_apl2,				/* 107 APL 2 (Dyadic) */
-    &u_apl3,				/* 108 APL 3 (Plus) */
-    &u_apl4,				/* 108 APL 4 (IBM) */
-    &u_apl5				/* 110 APL 5 (2741) */
+    &u_hz1500,                          /* 103 Hazeltine 1500/1520 graphics */
+    &u_koi8r,                           /* 104 KOI8-R */
+    &u_koi8u,                           /* 105 KOI8-U */
+    &u_apl1,                            /* 106 APL 1 (ISO) */
+    &u_apl2,                            /* 107 APL 2 (Dyadic) */
+    &u_apl3,                            /* 108 APL 3 (Plus) */
+    &u_apl4,                            /* 108 APL 4 (IBM) */
+    &u_apl5                             /* 110 APL 5 (2741) */
 };
 
 /*
@@ -15359,88 +15382,88 @@ USHORT
 (*xl_u[MAXTXSETS+1])()
 #endif /* CK_ANSIC */
 = {
-    ascii_u,				/*  0 US ISO 646 (ASCII) */
-    british_u,				/*  1 UK ISO 646 */
-    fr_canadian_u,			/*  2 Canadian French NRC */
-    NULL,				/*  3 Cuba */
-    NULL,				/*  4 Czecho */
-    danish_u,				/*  5 Danish/Norwegian ISO 646 */
-    dutch_u,				/*  6 Dutch NRC */
-    finnish_u,				/*  7 Finnish NRC  */
-    french_u,				/*  8 French ISO 646 */
-    german_u,				/*  9 German ISO 646 */
-    hebrew7_u,				/* 10 Hebrew-7 (DEC) */
-    hungarian_u,			/* 11 Hungarian ISO 646 */
-    icelandic_u,			/* 12 Icelandic */
-    italian_u,				/* 13 Italian ISO 646 */
-    jis0201r_u,				/* 14 Japanese Roman ISO 646 */
-    jis0201k_u,				/* 15 Japanese Katakana */
-    koi7_u,				/* 16 Short KOI */
-    danish_u,				/* 17 Norwegian/Danish ISO 646 */
-    portuguese_u,			/* 18 Portuguese ISO 646 */
-    spanish_u,				/* 19 spanish ISO 646 */
-    swedish_u,				/* 20 Swedish ISO 646 */
-    NULL,				/* 21 Swedish ISO 646 for names */
-    swiss_u,				/* 22 Swiss NRC   */
-    iso_8859_1_u,			/* 23 ISO 8859-1  */
-    iso_8859_2_u,			/* 24 ISO 8859-2  */
-    iso_8859_3_u,			/* 25 ISO 8859-3  */
-    iso_8859_4_u,			/* 26 ISO 8859-4  */
-    iso_8859_5_u,			/* 27 ISO 8859-5  */ /* Cyrillic */
-    iso_8859_6_u,			/* 28 ISO 8859-6  */ /* Arabic */
-    iso_8859_7_u,			/* 29 ISO 8859-7  */ /* Greek */
-    iso_8859_8_u,			/* 30 ISO 8859-8  */ /* Hebrew */
-    iso_8859_9_u,			/* 31 ISO 8859-9  */ /* Latin-5 */
-    iso_8859_10_u,			/* 32 ISO 8859-10 */
-    koi8_u,				/* 33 KOI-8       */
-    NULL,				/* 34 JIS-7       */
-    NULL,				/* 35 Shift JIS   */
-    NULL,				/* 36 Japanese EUC (JAE) */
-    NULL,				/* 37 Japanese DEC Kanji */
-    decmcs_u,				/* 38 DEC MCS */
-    nextstep_u,				/* 39 NeXT    */
-    dgi_u,				/* 40 DGI     */
-    maclatin_u,				/* 41 Macintosh Latin  */
-    hproman8_u,				/* 42 HP Roman 8       */
-    cp437_u,				/* 43 CP437 - Original */
-    cp850_u,				/* 44 CP850 - W Europe */
-    cp852_u,				/* 45 CP852 - E Europe */
-    cp857_u,				/* 46 CP857 - Turkish  */
-    cp862_u,				/* 47 CP862 - Hebrew   */
-    cp864_u,				/* 48 CP864 - Arabic   */
-    cp866_u,				/* 49 CP866 - Cyrillic */
-    cp869_u,				/* 50 CP869 - Greek    */
-    decspec_u,				/* 51 DEC Special Graphics */
-    dectech_u,				/* 52 DEC Technical */
-    c0pics_u,				/* 53 C0 Pictures */
-    c1pics_u,				/* 54 C1 Pictures */
-    smiley_u,				/* 55 IBM C0 Graphics */
-    heath19g_u,				/* 56 Heath 19 graphics */
-    tvig_u,				/* 57 TVI graphics */
-    wyse_gn_u,				/* 58 Wyse 60 normal-mode graphics */
-    wyse_g1_u,				/* 59 Wyse 60 graphics 1 */
-    wyse_g2_u,				/* 60 Wyse 60 graphics 2 */
-    wyse_g3_u,				/* 61 Wyse 60 graphics 3 */
-    elot927_u,				/* 62 Greek ELOT 927 */
-    dgspec_u,				/* 63 DG Special graphics */
-    dgline_u,				/* 64 DG Line drawing */
-    dgword_u,				/* 65 DG Word processing */
-    hpline_u,				/* 66 HP Line drawing */
-    hpmath_u,				/* 67 HP Math/Technical */
-    qnxgrph_u,				/* 68 QNX Graphics */
-    snibrack_u,				/* 69 SNI Brackets */
-    snieuro_u,				/* 70 SNI Euro */
-    snifacet_u,				/* 71 SNI Facet */
-    sniibm_u,				/* 72 SNI IBM */
+    ascii_u,                            /*  0 US ISO 646 (ASCII) */
+    british_u,                          /*  1 UK ISO 646 */
+    fr_canadian_u,                      /*  2 Canadian French NRC */
+    NULL,                               /*  3 Cuba */
+    NULL,                               /*  4 Czecho */
+    danish_u,                           /*  5 Danish/Norwegian ISO 646 */
+    dutch_u,                            /*  6 Dutch NRC */
+    finnish_u,                          /*  7 Finnish NRC  */
+    french_u,                           /*  8 French ISO 646 */
+    german_u,                           /*  9 German ISO 646 */
+    hebrew7_u,                          /* 10 Hebrew-7 (DEC) */
+    hungarian_u,                        /* 11 Hungarian ISO 646 */
+    icelandic_u,                        /* 12 Icelandic */
+    italian_u,                          /* 13 Italian ISO 646 */
+    jis0201r_u,                         /* 14 Japanese Roman ISO 646 */
+    jis0201k_u,                         /* 15 Japanese Katakana */
+    koi7_u,                             /* 16 Short KOI */
+    danish_u,                           /* 17 Norwegian/Danish ISO 646 */
+    portuguese_u,                       /* 18 Portuguese ISO 646 */
+    spanish_u,                          /* 19 spanish ISO 646 */
+    swedish_u,                          /* 20 Swedish ISO 646 */
+    NULL,                               /* 21 Swedish ISO 646 for names */
+    swiss_u,                            /* 22 Swiss NRC   */
+    iso_8859_1_u,                       /* 23 ISO 8859-1  */
+    iso_8859_2_u,                       /* 24 ISO 8859-2  */
+    iso_8859_3_u,                       /* 25 ISO 8859-3  */
+    iso_8859_4_u,                       /* 26 ISO 8859-4  */
+    iso_8859_5_u,                       /* 27 ISO 8859-5  */ /* Cyrillic */
+    iso_8859_6_u,                       /* 28 ISO 8859-6  */ /* Arabic */
+    iso_8859_7_u,                       /* 29 ISO 8859-7  */ /* Greek */
+    iso_8859_8_u,                       /* 30 ISO 8859-8  */ /* Hebrew */
+    iso_8859_9_u,                       /* 31 ISO 8859-9  */ /* Latin-5 */
+    iso_8859_10_u,                      /* 32 ISO 8859-10 */
+    koi8_u,                             /* 33 KOI-8       */
+    NULL,                               /* 34 JIS-7       */
+    NULL,                               /* 35 Shift JIS   */
+    NULL,                               /* 36 Japanese EUC (JAE) */
+    NULL,                               /* 37 Japanese DEC Kanji */
+    decmcs_u,                           /* 38 DEC MCS */
+    nextstep_u,                         /* 39 NeXT    */
+    dgi_u,                              /* 40 DGI     */
+    maclatin_u,                         /* 41 Macintosh Latin  */
+    hproman8_u,                         /* 42 HP Roman 8       */
+    cp437_u,                            /* 43 CP437 - Original */
+    cp850_u,                            /* 44 CP850 - W Europe */
+    cp852_u,                            /* 45 CP852 - E Europe */
+    cp857_u,                            /* 46 CP857 - Turkish  */
+    cp862_u,                            /* 47 CP862 - Hebrew   */
+    cp864_u,                            /* 48 CP864 - Arabic   */
+    cp866_u,                            /* 49 CP866 - Cyrillic */
+    cp869_u,                            /* 50 CP869 - Greek    */
+    decspec_u,                          /* 51 DEC Special Graphics */
+    dectech_u,                          /* 52 DEC Technical */
+    c0pics_u,                           /* 53 C0 Pictures */
+    c1pics_u,                           /* 54 C1 Pictures */
+    smiley_u,                           /* 55 IBM C0 Graphics */
+    heath19g_u,                         /* 56 Heath 19 graphics */
+    tvig_u,                             /* 57 TVI graphics */
+    wyse_gn_u,                          /* 58 Wyse 60 normal-mode graphics */
+    wyse_g1_u,                          /* 59 Wyse 60 graphics 1 */
+    wyse_g2_u,                          /* 60 Wyse 60 graphics 2 */
+    wyse_g3_u,                          /* 61 Wyse 60 graphics 3 */
+    elot927_u,                          /* 62 Greek ELOT 927 */
+    dgspec_u,                           /* 63 DG Special graphics */
+    dgline_u,                           /* 64 DG Line drawing */
+    dgword_u,                           /* 65 DG Word processing */
+    hpline_u,                           /* 66 HP Line drawing */
+    hpmath_u,                           /* 67 HP Math/Technical */
+    qnxgrph_u,                          /* 68 QNX Graphics */
+    snibrack_u,                         /* 69 SNI Brackets */
+    snieuro_u,                          /* 70 SNI Euro */
+    snifacet_u,                         /* 71 SNI Facet */
+    sniibm_u,                           /* 72 SNI IBM */
     sniblanks_u,                        /* 73 SNI Blanks */
-    cp1252_u,				/* 74 Windows Latin-1 */
-    cp1250_u,				/* 75 Windows Latin-2 */
-    cp1251_u,				/* 76 Windows Cyrillic */
-    cp1253_u,				/* 77 Windows Greek */
-    cp1254_u,				/* 78 Windows Turkish */
-    cp1257_u,				/* 79 Windows Latin-4 */
-    cp856_u,				/* 80 Cyrillic PC Code Page 856 */
-    cp855_u, 			        /* 81 Cyrillic PC Code Page 856 */
+    cp1252_u,                           /* 74 Windows Latin-1 */
+    cp1250_u,                           /* 75 Windows Latin-2 */
+    cp1251_u,                           /* 76 Windows Cyrillic */
+    cp1253_u,                           /* 77 Windows Greek */
+    cp1254_u,                           /* 78 Windows Turkish */
+    cp1257_u,                           /* 79 Windows Latin-4 */
+    cp856_u,                            /* 80 Cyrillic PC Code Page 856 */
+    cp855_u,                            /* 81 Cyrillic PC Code Page 856 */
     iso_8859_1_u,                       /* 82 CP819 - Same as 8859-1 */
     iso_8859_2_u,                       /* 83 CP912 - Same as 8859-2 */
     iso_8859_3_u,                       /* 84 CP913 - Same as 8859-3 */
@@ -15450,8 +15473,8 @@ USHORT
     iso_8859_7_u,                       /* 88 CP813 - Same as 8859-7 */
     iso_8859_8_u,                       /* 89 CP916 - Same as 8859-8 */
     iso_8859_9_u,                       /* 90 CP920 - Same as 8859-9 */
-    hproman8_u,			        /* 91 CP1051 -Same as HP Roman 8 */
-    cp858_u,				/* 92 CP858 - W Europe w/Euro */
+    hproman8_u,                         /* 91 CP1051 -Same as HP Roman 8 */
+    cp858_u,                            /* 92 CP858 - W Europe w/Euro */
     iso_8859_15_u,                      /* 93 ISO 8859-15 Latin 15 */
     iso_8859_15_u,                      /* 94 CP923 - Same as 8859-15 */
     iso_8859_7_u,                       /* 95 ELOT928 - Same as 8859-7 */
@@ -15460,16 +15483,16 @@ USHORT
     cp1255_u,                           /* 98 CP1255 - Windows Hebrew */
     cp1256_u,                           /* 99 CP1256 - Windows Arabic */
     cp1258_u,                           /* 100 CP1258 - Windows Viet Nam */
-    mazovia_u,				/* 101 Mazovia PC code page */
-    ident_u,    			/* 102 Transparent - no translation  */
-    hz1500_u,				/* 103 Hazeltine 1500/1520 graphics */
-    koi8r_u,				/* 104 KOI8-R */
-    koi8u_u,				/* 105 KOI8-U */
-    apl1_u,				/* 106 APL 1 (ISO) */
-    apl2_u,				/* 107 APL 2 (AIX) */
-    apl3_u,				/* 108 APL 3 (Plus) */
-    apl4_u,				/* 109 APL 4 (IBM) */
-    apl5_u				/* 110 APL 5 (2741) */
+    mazovia_u,                          /* 101 Mazovia PC code page */
+    ident_u,                            /* 102 Transparent - no translation  */
+    hz1500_u,                           /* 103 Hazeltine 1500/1520 graphics */
+    koi8r_u,                            /* 104 KOI8-R */
+    koi8u_u,                            /* 105 KOI8-U */
+    apl1_u,                             /* 106 APL 1 (ISO) */
+    apl2_u,                             /* 107 APL 2 (AIX) */
+    apl3_u,                             /* 108 APL 3 (Plus) */
+    apl4_u,                             /* 109 APL 4 (IBM) */
+    apl5_u                              /* 110 APL 5 (2741) */
 };
 /*
   Table of Unicode-to-Blah translation functions.
@@ -15483,59 +15506,59 @@ int
 (*xl_tx[MAXTXSETS+1])()
 #endif /* CK_ANSIC */
  = {
-    tx_usascii,				/*  0 US ISO 646 (ASCII) */
-    tx_british,				/*  1 UK ISO 646 */
-    tx_fr_canadian,			/*  2 Canadian French NRC */
-    NULL,				/*  3 Cuba */
-    NULL,				/*  4 Czecho */
-    tx_danish,				/*  5 Danish/Norwegian ISO 646 */
-    tx_dutch,				/*  6 Dutch NRC */
-    tx_finnish,				/*  7 Finnish NRC  */
-    tx_french,				/*  8 French ISO 646 */
-    tx_german,				/*  9 German ISO 646 */
-    tx_hebrew7,				/* 10 Hebrew-7 (DEC) */
-    tx_hungarian,			/* 11 Hungarian ISO 646 */
-    tx_icelandic,			/* 12 Icelandic */
-    tx_italian,				/* 13 Italian ISO 646 */
-    tx_jis0201r,			/* 14 Japanese Roman ISO 646 */
-    tx_jis0201k,			/* 15 Japanese Katakana */
-    tx_koi7,				/* 16 Short KOI */
-    tx_danish,				/* 17 Norwegian/Danish ISO 646 */
-    tx_portuguese,			/* 18 Portuguese ISO 646 */
-    tx_spanish,				/* 19 spanish ISO 646 */
-    tx_swedish,				/* 20 Swedish ISO 646 */
-    NULL,				/* 21 Swedish ISO 646 for names */
-    tx_swiss,				/* 22 Swiss NRC   */
-    tx_ident,				/* 23 ISO 8859-1  */
-    tx_8859_2,				/* 24 ISO 8859-2  */
-    tx_8859_3,				/* 25 ISO 8859-3  */
-    tx_8859_4,				/* 26 ISO 8859-4  */
-    tx_8859_5,				/* 27 ISO 8859-5  */ /* Cyrillic */
-    tx_8859_6,				/* 28 ISO 8859-6  */ /* Arabic */
-    tx_8859_7,				/* 29 ISO 8859-7  */ /* Greek */
-    tx_8859_8,				/* 30 ISO 8859-8  */ /* Hebrew */
-    tx_8859_9,				/* 31 ISO 8859-9  */ /* Latin-5 */
-    tx_8859_10,				/* 32 ISO 8859-10 */ /* Latin-6 */
-    tx_koi8,				/* 33 KOI-8       */
-    NULL,				/* 34 JIS-7       */
-    NULL,				/* 35 Shift JIS   */
-    NULL,				/* 36 Japanese EUC (JAE) */
-    NULL,				/* 37 Japanese DEC Kanji */
-    tx_decmcs,				/* 38 DEC MCS */
-    tx_nextstep,			/* 39 NeXT    */
-    tx_dgi,				/* 40 DGI     */
-    tx_maclatin,			/* 41 Macintosh Latin  */
-    tx_hproman8,			/* 42 HP Roman 8       */
-    tx_cp437,				/* 43 CP437 - Original */
-    tx_cp850,				/* 44 CP850 - W Europe */
-    tx_cp852,				/* 45 CP852 - E Europe */
-    tx_cp857,				/* 46 CP857 - Turkish  */
-    tx_cp862,				/* 47 CP862 - Hebrew   */
-    tx_cp866,				/* 48 CP864 - Arabic   */
-    tx_cp866,				/* 49 CP866 - Cyrillic */
-    tx_cp869,				/* 50 CP869 - Greek    */
-    NULL,	/* Display only */	/* 51 DEC Special Graphics */
-    NULL,	/* Display only */	/* 52 DEC Technical */
+    tx_usascii,                         /*  0 US ISO 646 (ASCII) */
+    tx_british,                         /*  1 UK ISO 646 */
+    tx_fr_canadian,                     /*  2 Canadian French NRC */
+    NULL,                               /*  3 Cuba */
+    NULL,                               /*  4 Czecho */
+    tx_danish,                          /*  5 Danish/Norwegian ISO 646 */
+    tx_dutch,                           /*  6 Dutch NRC */
+    tx_finnish,                         /*  7 Finnish NRC  */
+    tx_french,                          /*  8 French ISO 646 */
+    tx_german,                          /*  9 German ISO 646 */
+    tx_hebrew7,                         /* 10 Hebrew-7 (DEC) */
+    tx_hungarian,                       /* 11 Hungarian ISO 646 */
+    tx_icelandic,                       /* 12 Icelandic */
+    tx_italian,                         /* 13 Italian ISO 646 */
+    tx_jis0201r,                        /* 14 Japanese Roman ISO 646 */
+    tx_jis0201k,                        /* 15 Japanese Katakana */
+    tx_koi7,                            /* 16 Short KOI */
+    tx_danish,                          /* 17 Norwegian/Danish ISO 646 */
+    tx_portuguese,                      /* 18 Portuguese ISO 646 */
+    tx_spanish,                         /* 19 spanish ISO 646 */
+    tx_swedish,                         /* 20 Swedish ISO 646 */
+    NULL,                               /* 21 Swedish ISO 646 for names */
+    tx_swiss,                           /* 22 Swiss NRC   */
+    tx_ident,                           /* 23 ISO 8859-1  */
+    tx_8859_2,                          /* 24 ISO 8859-2  */
+    tx_8859_3,                          /* 25 ISO 8859-3  */
+    tx_8859_4,                          /* 26 ISO 8859-4  */
+    tx_8859_5,                          /* 27 ISO 8859-5  */ /* Cyrillic */
+    tx_8859_6,                          /* 28 ISO 8859-6  */ /* Arabic */
+    tx_8859_7,                          /* 29 ISO 8859-7  */ /* Greek */
+    tx_8859_8,                          /* 30 ISO 8859-8  */ /* Hebrew */
+    tx_8859_9,                          /* 31 ISO 8859-9  */ /* Latin-5 */
+    tx_8859_10,                         /* 32 ISO 8859-10 */ /* Latin-6 */
+    tx_koi8,                            /* 33 KOI-8       */
+    NULL,                               /* 34 JIS-7       */
+    NULL,                               /* 35 Shift JIS   */
+    NULL,                               /* 36 Japanese EUC (JAE) */
+    NULL,                               /* 37 Japanese DEC Kanji */
+    tx_decmcs,                          /* 38 DEC MCS */
+    tx_nextstep,                        /* 39 NeXT    */
+    tx_dgi,                             /* 40 DGI     */
+    tx_maclatin,                        /* 41 Macintosh Latin  */
+    tx_hproman8,                        /* 42 HP Roman 8       */
+    tx_cp437,                           /* 43 CP437 - Original */
+    tx_cp850,                           /* 44 CP850 - W Europe */
+    tx_cp852,                           /* 45 CP852 - E Europe */
+    tx_cp857,                           /* 46 CP857 - Turkish  */
+    tx_cp862,                           /* 47 CP862 - Hebrew   */
+    tx_cp866,                           /* 48 CP864 - Arabic   */
+    tx_cp866,                           /* 49 CP866 - Cyrillic */
+    tx_cp869,                           /* 50 CP869 - Greek    */
+    NULL,       /* Display only */      /* 51 DEC Special Graphics */
+    NULL,       /* Display only */      /* 52 DEC Technical */
     NULL,       /* Display only */      /* 53 C0 Pictures */
     NULL,       /* Display only */      /* 54 C1 Pictures */
     NULL,       /* Display only */      /* 55 IBM C0 Graphics */
@@ -15545,7 +15568,7 @@ int
     NULL,       /* Display only */      /* 59 Wyse 60 graphics 1 */
     NULL,       /* Display only */      /* 60 Wyse 60 graphics 2 */
     NULL,       /* Display only */      /* 61 Wyse 60 graphics 3 */
-    tx_elot927,				/* 62 Greek ELOT 927 */
+    tx_elot927,                         /* 62 Greek ELOT 927 */
     NULL,       /* Display only */      /* 63 DG special graphics */
     NULL,       /* Display only */      /* 64 DG line-drawing */
     NULL,       /* Display only */      /* 65 DG word-processing */
@@ -15557,14 +15580,14 @@ int
     NULL,       /* Display only */      /* 71 SNI Facet */
     NULL,       /* Display only */      /* 72 SNI IBM */
     NULL,       /* Display only */      /* 73 SNI Blanks */
-    tx_cp1252,				/* 74 Windows Latin-1 */
-    tx_cp1250,				/* 75 Windows Latin-2 */
-    tx_cp1251,				/* 76 Windows Cyrillic */
-    tx_cp1253,				/* 77 Windows Greek */
-    tx_cp1254,				/* 78 Windows Turkish */
-    tx_cp1257,				/* 79 Windows Latin-4 */
-    tx_cp856,				/* 80 Cyrillic PC Code Page 856 */
-    tx_cp855,				/* 81 Cyrillic PC Code Page 855 */
+    tx_cp1252,                          /* 74 Windows Latin-1 */
+    tx_cp1250,                          /* 75 Windows Latin-2 */
+    tx_cp1251,                          /* 76 Windows Cyrillic */
+    tx_cp1253,                          /* 77 Windows Greek */
+    tx_cp1254,                          /* 78 Windows Turkish */
+    tx_cp1257,                          /* 79 Windows Latin-4 */
+    tx_cp856,                           /* 80 Cyrillic PC Code Page 856 */
+    tx_cp855,                           /* 81 Cyrillic PC Code Page 855 */
     tx_ident,                           /* 82 CP819 - Same as 8859-1 */
     tx_8859_2,                          /* 83 CP912 - Same as 8859-2 */
     tx_8859_3,                          /* 84 CP913 - Same as 8859-3 */
@@ -15574,8 +15597,8 @@ int
     tx_8859_7,                          /* 88 CP813 - Same as 8859-7 */
     tx_8859_8,                          /* 89 CP916 - Same as 8859-8 */
     tx_8859_9,                          /* 90 CP920 - Same as 8859-9 */
-    tx_hproman8,			/* 91 CP1051 -Same as HP Roman 8 */
-    tx_cp858,				/* 92 CP858 - W Europe w/Euro */
+    tx_hproman8,                        /* 91 CP1051 -Same as HP Roman 8 */
+    tx_cp858,                           /* 92 CP858 - W Europe w/Euro */
     tx_8859_15,                         /* 93 ISO 8859-15 Latin 15 */
     tx_8859_15,                         /* 94 CP923 - Same as Latin 15 */
     tx_8859_7,                          /* 95 ELOT928 - Same as 8859-7 */
@@ -15584,16 +15607,16 @@ int
     tx_cp1255,                          /* 98 CP1255 - Windows Hebrew */
     tx_cp1256,                          /* 99 CP1256 - Windows Arabic */
     tx_cp1258,                          /* 100 CP1258 - Windows Viet Nam */
-    tx_mazovia,				/* 101 Mazovia  PC code page */
+    tx_mazovia,                         /* 101 Mazovia  PC code page */
     tx_ident,                           /* 102 Transparent - no translation */
-    NULL,	/* Display only */	/* 103 Hazeltine 1500/1520 graphics */
-    tx_koi8r,				/* 104 KOI8-R */
-    tx_koi8u,				/* 105 KOI8-U */
-    tx_apl1,				/* 106 APL 1 (ISO) */
-    tx_apl2,				/* 107 APL 2 (AIX) */
-    tx_apl3,				/* 108 APL 3 (Plus) */
-    tx_apl4,				/* 108 APL 4 (IBM) */
-    tx_apl5				/* 110 APL 5 (2741) */
+    NULL,       /* Display only */      /* 103 Hazeltine 1500/1520 graphics */
+    tx_koi8r,                           /* 104 KOI8-R */
+    tx_koi8u,                           /* 105 KOI8-U */
+    tx_apl1,                            /* 106 APL 1 (ISO) */
+    tx_apl2,                            /* 107 APL 2 (AIX) */
+    tx_apl3,                            /* 108 APL 3 (Plus) */
+    tx_apl4,                            /* 108 APL 4 (IBM) */
+    tx_apl5                             /* 110 APL 5 (2741) */
 };
 
 /*
@@ -15607,56 +15630,56 @@ USHORT
 (*xl_fcu[MAXFCSETS+1])()
 #endif /* CK_ANSIC */
 = {
-    ascii_u,				/*  0 US ISO 646 (ASCII) */
-    british_u,				/*  1 UK ISO 646 */
-    dutch_u,				/*  2 Dutch NRC */
-    finnish_u,				/*  3 Finnish NRC  */
-    french_u,				/*  4 French ISO 646 */
-    fr_canadian_u,			/*  5 Canadian French NRC */
-    german_u,				/*  6 German ISO 646 */
-    hungarian_u,			/*  7 Hungarian ISO 646 */
-    italian_u,				/*  8 Italian ISO 646 */
-    danish_u,				/*  9 Danish/Norwegian ISO 646 */
-    portuguese_u,			/* 10 Portuguese ISO 646 */
-    spanish_u,				/* 11 spanish ISO 646 */
-    swedish_u,				/* 12 Swedish ISO 646 */
-    swiss_u,				/* 13 Swiss NRC   */
-    iso_8859_1_u,			/* 14 ISO 8859-1 Latin-1 */
-    iso_8859_2_u,			/* 15 ISO 8859-2 Latin-2 */
-    decmcs_u,				/* 16 DEC MCS */
-    nextstep_u,				/* 17 NeXT */
-    cp437_u,				/* 18 CP437 - Original */
-    cp850_u,				/* 19 CP850 - W Europe */
-    cp852_u,				/* 20 CP852 - E Europe */
+    ascii_u,                            /*  0 US ISO 646 (ASCII) */
+    british_u,                          /*  1 UK ISO 646 */
+    dutch_u,                            /*  2 Dutch NRC */
+    finnish_u,                          /*  3 Finnish NRC  */
+    french_u,                           /*  4 French ISO 646 */
+    fr_canadian_u,                      /*  5 Canadian French NRC */
+    german_u,                           /*  6 German ISO 646 */
+    hungarian_u,                        /*  7 Hungarian ISO 646 */
+    italian_u,                          /*  8 Italian ISO 646 */
+    danish_u,                           /*  9 Danish/Norwegian ISO 646 */
+    portuguese_u,                       /* 10 Portuguese ISO 646 */
+    spanish_u,                          /* 11 spanish ISO 646 */
+    swedish_u,                          /* 12 Swedish ISO 646 */
+    swiss_u,                            /* 13 Swiss NRC   */
+    iso_8859_1_u,                       /* 14 ISO 8859-1 Latin-1 */
+    iso_8859_2_u,                       /* 15 ISO 8859-2 Latin-2 */
+    decmcs_u,                           /* 16 DEC MCS */
+    nextstep_u,                         /* 17 NeXT */
+    cp437_u,                            /* 18 CP437 - Original */
+    cp850_u,                            /* 19 CP850 - W Europe */
+    cp852_u,                            /* 20 CP852 - E Europe */
     quickdraw_u,                        /* 21 CP10000 - Apple Quickdraw */
-    dgi_u,				/* 22 DGI */
-    hproman8_u,				/* 23 HP Roman 8 */
-    iso_8859_5_u,			/* 24 ISO 8859-5 Cyrillic */
-    cp866_u,				/* 25 CP866 - Cyrillic */
-    koi7_u,				/* 26 Short KOI */
-    koi8_u,				/* 27 KOI-8       */
-    NULL,				/* 28 JIS-7 */
-    NULL,				/* 29 Shift-JIS */
-    NULL,				/* 30 Japanese EUC */
-    NULL,				/* 31 DEC Kanji */
-    hebrew7_u,				/* 32 Hebrew-7 (DEC) */
-    iso_8859_8_u,			/* 33 ISO 8859-8 Hebrew */
-    cp862_u,				/* 34 CP862 Hebrew */
-    elot927_u,				/* 35 Greek ELOT 927 */
-    iso_8859_7_u,			/* 36 ISO 8859-7 Greek */
-    cp869_u,				/* 37 CP869 Greek */
+    dgi_u,                              /* 22 DGI */
+    hproman8_u,                         /* 23 HP Roman 8 */
+    iso_8859_5_u,                       /* 24 ISO 8859-5 Cyrillic */
+    cp866_u,                            /* 25 CP866 - Cyrillic */
+    koi7_u,                             /* 26 Short KOI */
+    koi8_u,                             /* 27 KOI-8       */
+    NULL,                               /* 28 JIS-7 */
+    NULL,                               /* 29 Shift-JIS */
+    NULL,                               /* 30 Japanese EUC */
+    NULL,                               /* 31 DEC Kanji */
+    hebrew7_u,                          /* 32 Hebrew-7 (DEC) */
+    iso_8859_8_u,                       /* 33 ISO 8859-8 Hebrew */
+    cp862_u,                            /* 34 CP862 Hebrew */
+    elot927_u,                          /* 35 Greek ELOT 927 */
+    iso_8859_7_u,                       /* 36 ISO 8859-7 Greek */
+    cp869_u,                            /* 37 CP869 Greek */
     iso_8859_15_u,                      /* 38 ISO 8859-15 Latin-9 */
-    cp858_u,				/* 39 CP858 - W Europe w/Euro */
-    cp855_u, 			        /* 40 Cyrillic PC Code Page 856 */
-    cp1251_u,				/* 41 Windows Cyrillic */
-    cp856_u,				/* 42 Bulgarian PC Code Page 856 */
-    cp1250_u,				/* 43 Windows Latin-2 */
-    mazovia_u,				/* 44 Mazovia PC code page */
-    NULL,				/* 45 UCS-2 */
-    NULL,				/* 46 UTF-8 */
-    koi8r_u,				/* 47 KOI8-R */
-    koi8u_u,				/* 48 KOI8-U */
-    cp1252_u				/* 49 CP1252 */
+    cp858_u,                            /* 39 CP858 - W Europe w/Euro */
+    cp855_u,                            /* 40 Cyrillic PC Code Page 856 */
+    cp1251_u,                           /* 41 Windows Cyrillic */
+    cp856_u,                            /* 42 Bulgarian PC Code Page 856 */
+    cp1250_u,                           /* 43 Windows Latin-2 */
+    mazovia_u,                          /* 44 Mazovia PC code page */
+    NULL,                               /* 45 UCS-2 */
+    NULL,                               /* 46 UTF-8 */
+    koi8r_u,                            /* 47 KOI8-R */
+    koi8u_u,                            /* 48 KOI8-U */
+    cp1252_u                            /* 49 CP1252 */
 };
 
 /*
@@ -15670,56 +15693,56 @@ int
 (*xl_ufc[MAXFCSETS+1])()
 #endif /* CK_ANSIC */
 = {
-    tx_usascii,				/*  0 US ISO 646 (ASCII) */
-    tx_british,				/*  1 UK ISO 646 */
-    tx_dutch,				/*  2 Dutch NRC */
-    tx_finnish,				/*  3 Finnish NRC  */
-    tx_french,				/*  4 French ISO 646 */
-    tx_fr_canadian,			/*  5 Canadian French NRC */
-    tx_german,				/*  6 German ISO 646 */
-    tx_hungarian,			/*  7 Hungarian ISO 646 */
-    tx_italian,				/*  8 Italian ISO 646 */
-    tx_danish,				/*  9 Danish/Norwegian ISO 646 */
-    tx_portuguese,			/* 10 Portuguese ISO 646 */
-    tx_spanish,				/* 11 spanish ISO 646 */
-    tx_swedish,				/* 12 Swedish ISO 646 */
-    tx_swiss,				/* 13 Swiss NRC   */
-    tx_ident,				/* 14 ISO 8859-1 Latin-1 */
-    tx_8859_2,				/* 15 ISO 8859-2 Latin-2 */
-    tx_decmcs,				/* 16 DEC MCS */
-    tx_nextstep,			/* 17 NeXT */
-    tx_cp437,				/* 18 CP437 - Original */
-    tx_cp850,				/* 19 CP850 - W Europe */
-    tx_cp852,				/* 20 CP852 - E Europe */
-    tx_quickdraw,			/* 21 CP10000 - Apple Quickdraw */
-    tx_dgi,				/* 22 DGI */
-    tx_hproman8,			/* 23 HP Roman 8 */
-    tx_8859_5,				/* 24 ISO 8859-5 Cyrillic */
-    tx_cp866,				/* 25 CP866 - Cyrillic */
-    tx_koi7,				/* 26 Short KOI */
-    tx_koi8,				/* 27 KOI-8       */
-    NULL,				/* 28 JIS-7 */
-    NULL,				/* 29 Shift-JIS */
-    NULL,				/* 30 Japanese EUC */
-    NULL,				/* 31 DEC Kanji */
-    tx_hebrew7,				/* 32 Hebrew-7 (DEC) */
-    tx_8859_8,				/* 33 ISO 8859-8 Hebrew */
-    tx_cp862,				/* 34 CP862 Hebrew */
-    tx_elot927,				/* 35 Greek ELOT 927 */
-    tx_8859_7,				/* 36 ISO 8859-7 Greek */
-    tx_cp869,				/* 37 CP869 Greek */
-    tx_8859_15,				/* 38 ISO 8859-15 Latin-9 */
-    tx_cp858,				/* 39 CP858 - W Europe w/Euro */
-    tx_cp855, 			        /* 40 Cyrillic PC Code Page 856 */
-    tx_cp1251,				/* 41 Windows Cyrillic */
-    tx_cp856,				/* 42 Bulgarian PC Code Page 856 */
-    tx_cp1250,				/* 43 Windows Latin-2 */
-    tx_mazovia,				/* 44 Mazovia PC code page */
-    NULL,				/* 45 UCS-2 */
-    NULL,				/* 46 UTF-8 */
-    tx_koi8r,				/* 47 KOI8-R */
-    tx_koi8u,				/* 48 KOI8-U */
-    tx_cp1252				/* 49 CP1252 */
+    tx_usascii,                         /*  0 US ISO 646 (ASCII) */
+    tx_british,                         /*  1 UK ISO 646 */
+    tx_dutch,                           /*  2 Dutch NRC */
+    tx_finnish,                         /*  3 Finnish NRC  */
+    tx_french,                          /*  4 French ISO 646 */
+    tx_fr_canadian,                     /*  5 Canadian French NRC */
+    tx_german,                          /*  6 German ISO 646 */
+    tx_hungarian,                       /*  7 Hungarian ISO 646 */
+    tx_italian,                         /*  8 Italian ISO 646 */
+    tx_danish,                          /*  9 Danish/Norwegian ISO 646 */
+    tx_portuguese,                      /* 10 Portuguese ISO 646 */
+    tx_spanish,                         /* 11 spanish ISO 646 */
+    tx_swedish,                         /* 12 Swedish ISO 646 */
+    tx_swiss,                           /* 13 Swiss NRC   */
+    tx_ident,                           /* 14 ISO 8859-1 Latin-1 */
+    tx_8859_2,                          /* 15 ISO 8859-2 Latin-2 */
+    tx_decmcs,                          /* 16 DEC MCS */
+    tx_nextstep,                        /* 17 NeXT */
+    tx_cp437,                           /* 18 CP437 - Original */
+    tx_cp850,                           /* 19 CP850 - W Europe */
+    tx_cp852,                           /* 20 CP852 - E Europe */
+    tx_quickdraw,                       /* 21 CP10000 - Apple Quickdraw */
+    tx_dgi,                             /* 22 DGI */
+    tx_hproman8,                        /* 23 HP Roman 8 */
+    tx_8859_5,                          /* 24 ISO 8859-5 Cyrillic */
+    tx_cp866,                           /* 25 CP866 - Cyrillic */
+    tx_koi7,                            /* 26 Short KOI */
+    tx_koi8,                            /* 27 KOI-8       */
+    NULL,                               /* 28 JIS-7 */
+    NULL,                               /* 29 Shift-JIS */
+    NULL,                               /* 30 Japanese EUC */
+    NULL,                               /* 31 DEC Kanji */
+    tx_hebrew7,                         /* 32 Hebrew-7 (DEC) */
+    tx_8859_8,                          /* 33 ISO 8859-8 Hebrew */
+    tx_cp862,                           /* 34 CP862 Hebrew */
+    tx_elot927,                         /* 35 Greek ELOT 927 */
+    tx_8859_7,                          /* 36 ISO 8859-7 Greek */
+    tx_cp869,                           /* 37 CP869 Greek */
+    tx_8859_15,                         /* 38 ISO 8859-15 Latin-9 */
+    tx_cp858,                           /* 39 CP858 - W Europe w/Euro */
+    tx_cp855,                           /* 40 Cyrillic PC Code Page 856 */
+    tx_cp1251,                          /* 41 Windows Cyrillic */
+    tx_cp856,                           /* 42 Bulgarian PC Code Page 856 */
+    tx_cp1250,                          /* 43 Windows Latin-2 */
+    tx_mazovia,                         /* 44 Mazovia PC code page */
+    NULL,                               /* 45 UCS-2 */
+    NULL,                               /* 46 UTF-8 */
+    tx_koi8r,                           /* 47 KOI8-R */
+    tx_koi8u,                           /* 48 KOI8-U */
+    tx_cp1252                           /* 49 CP1252 */
 };
 
 /*
@@ -15733,17 +15756,17 @@ USHORT
 (*xl_tcu[MAXTCSETS+1])()
 #endif /* CK_ANSIC */
 = {
-    NULL,				/*  0 = Transparent */
-    ascii_u,				/*  1 = ASCII */
-    iso_8859_1_u,			/*  2 ISO 8859-1 Latin-1 */
-    iso_8859_2_u,			/*  3 ISO 8859-2 Latin-2 */
-    iso_8859_5_u,			/*  4 ISO 8859-5 Cyrillic */
-    NULL,				/*  5 Japanese EUC */
-    iso_8859_8_u,			/*  6 ISO 8859-8 Hebrew */
-    iso_8859_7_u,			/*  7 ISO 8859-7 Greek */
+    NULL,                               /*  0 = Transparent */
+    ascii_u,                            /*  1 = ASCII */
+    iso_8859_1_u,                       /*  2 ISO 8859-1 Latin-1 */
+    iso_8859_2_u,                       /*  3 ISO 8859-2 Latin-2 */
+    iso_8859_5_u,                       /*  4 ISO 8859-5 Cyrillic */
+    NULL,                               /*  5 Japanese EUC */
+    iso_8859_8_u,                       /*  6 ISO 8859-8 Hebrew */
+    iso_8859_7_u,                       /*  7 ISO 8859-7 Greek */
     iso_8859_15_u,                      /*  8 ISO 8859-15 Latin-9 */
-    NULL,				/*  9 UCS-2 */
-    NULL				/* 10 UTF-8 */
+    NULL,                               /*  9 UCS-2 */
+    NULL                                /* 10 UTF-8 */
 };
 
 
@@ -15758,17 +15781,17 @@ int
 (*xl_utc[MAXTCSETS+1])()
 #endif /* CK_ANSIC */
 = {
-    NULL,				/*  0 = Transparent */
-    tx_usascii,				/*  1 = ASCII */
-    tx_ident,				/*  2 ISO 8859-1 Latin-1 */
-    tx_8859_2,				/*  3 ISO 8859-2 Latin-2 */
-    tx_8859_5,				/*  4 ISO 8859-5 Cyrillic */
-    NULL,				/*  5 Japanese EUC */
-    tx_8859_8,				/*  6 ISO 8859-8 Hebrew */
-    tx_8859_7,				/*  7 ISO 8859-7 Greek */
-    tx_8859_15,				/*  8 ISO 8859-15 Latin-9 */
-    NULL,				/*  9 UCS-2 */
-    NULL				/* 10 UTF-8 */
+    NULL,                               /*  0 = Transparent */
+    tx_usascii,                         /*  1 = ASCII */
+    tx_ident,                           /*  2 ISO 8859-1 Latin-1 */
+    tx_8859_2,                          /*  3 ISO 8859-2 Latin-2 */
+    tx_8859_5,                          /*  4 ISO 8859-5 Cyrillic */
+    NULL,                               /*  5 Japanese EUC */
+    tx_8859_8,                          /*  6 ISO 8859-8 Hebrew */
+    tx_8859_7,                          /*  7 ISO 8859-7 Greek */
+    tx_8859_15,                         /*  8 ISO 8859-15 Latin-9 */
+    NULL,                               /*  9 UCS-2 */
+    NULL                                /* 10 UTF-8 */
 };
 
 #ifdef COMMENT
@@ -15841,12 +15864,12 @@ utf8_to_ucs2(ch, ucs2) CHAR ch; USHORT ** ucs2;
     static CHAR utf8[UTFBUFSIZ] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
     ULONG ucs4 = 0;
 
-    utf8[len++] = ch;			/* Add char to string to process */
+    utf8[len++] = ch;                   /* Add char to string to process */
 
-    if (len < bytesInUTF8[utf8[0]])	/* Need more bytes */
+    if (len < bytesInUTF8[utf8[0]])     /* Need more bytes */
       return(bytesInUTF8[utf8[0]] - len);
 
-    switch (len) {			/* Have complete sequence... */
+    switch (len) {                      /* Have complete sequence... */
       case 6: ucs4 += utf8[i++]; ucs4 <<= 6; /* (fall-thru is intentional) */
       case 5: ucs4 += utf8[i++]; ucs4 <<= 6;
       case 4: ucs4 += utf8[i++]; ucs4 <<= 6;
@@ -15860,13 +15883,13 @@ utf8_to_ucs2(ch, ucs2) CHAR ch; USHORT ** ucs2;
     /* This shows that our return value is in the prevailing byte order: */
     /* e.g. LE on PC, BE on Sparc. */
     if (deblog) {
-	char buf[16];
-	union ck_short xx;
-	xx.x_short = ucs2return;
-	sprintf(buf,"%04X",ucs2return);
-	debug(F111,"utf8_to_ucs2 short",buf,ucs2return);
-	debug(F101,"utf8_to_ucs2 char[0]","",xx.x_char[0]);
-	debug(F101,"utf8_to_ucs2 char[1]","",xx.x_char[1]);
+        char buf[16];
+        union ck_short xx;
+        xx.x_short = ucs2return;
+        sprintf(buf,"%04X",ucs2return);
+        debug(F111,"utf8_to_ucs2 short",buf,ucs2return);
+        debug(F101,"utf8_to_ucs2 char[0]","",xx.x_char[0]);
+        debug(F101,"utf8_to_ucs2 char[1]","",xx.x_char[1]);
     }
 #endif /* DEBUG */
     *ucs2 = &ucs2return;
@@ -15877,72 +15900,72 @@ utf8_to_ucs2(ch, ucs2) CHAR ch; USHORT ** ucs2;
        Robuster code adapted from Thomas Dickey, Xfree86,
        recommended by Markus Kuhn.
     */
-    static int utfcount = 0;		/* Position in UTF sequence */
-    int utferror = 0;			/* Flag for malformed UTF */
-    unsigned c = ch;			/* Input byte */
+    static int utfcount = 0;            /* Position in UTF sequence */
+    int utferror = 0;                   /* Flag for malformed UTF */
+    unsigned c = ch;                    /* Input byte */
     int haveucs2 = 0;
 
-    if (ch < 0x80) {			/* ASCII char... */
-	if (utfcount > 0)		/* Not legal in UTF-8 sequence */
-	  utferror = 1;			/* so flag */
-	haveucs2 = 1;
-	ucs2return = ch;		/* but also return it */
-	utfcount = 0;			/* reset UTF-8 count */
-    } else if (ch < 0xc0) {		/* 0x80 <= c < 0xc0... */
-	if (utfcount < 1) {		/* Not valid in first position... */
-	    utferror = 1;
-	} else {			/* Maybe valid */
-	    if (ucs2return > 0x03ff) {	/* Value would be > 0xffff */
-		utferror = 1;		/* so not valid */
-	    } else {			/* OK... */
-		ucs2return <<= 6;	/* Shift result */
-		ucs2return |= (ch & 0x3f); /* and OR in this byte */
-	    }
-	    if (--utfcount == 0)
-	      haveucs2 = 1;
-	}
-    } else {				/* c >= 0xc0... */
-	if (utfcount > 0)
-	  utferror = 1;
-	if (c < 0xe0) {
-	    utfcount = 1;
-	    ucs2return = (c & 0x1f);
-	    haveucs2 = 1;
-	} else if (c < 0xf0) {
-	    utfcount = 2;
-	    ucs2return = (c & 0x0f);
-	    haveucs2 = 1;
-	} else if (c < 0xf8) {
-	    utfcount = 3;
-	    ucs2return = (c & 0x07);
-	    haveucs2 = 1;
-	} else if (c < 0xfc) {
-	    utfcount = 4;
-	    ucs2return = (c & 0x03);
-	    haveucs2 = 1;
-	} else if (c < 0xfe) {
-	    utfcount = 5;
-	    ucs2return = (c & 0x01);
-	    haveucs2 = 1;
-	} else {
-	    utferror = 1;
-	    utfcount = 0;
-	}
+    if (ch < 0x80) {                    /* ASCII char... */
+        if (utfcount > 0)               /* Not legal in UTF-8 sequence */
+          utferror = 1;                 /* so flag */
+        haveucs2 = 1;
+        ucs2return = ch;                /* but also return it */
+        utfcount = 0;                   /* reset UTF-8 count */
+    } else if (ch < 0xc0) {             /* 0x80 <= c < 0xc0... */
+        if (utfcount < 1) {             /* Not valid in first position... */
+            utferror = 1;
+        } else {                        /* Maybe valid */
+            if (ucs2return > 0x03ff) {  /* Value would be > 0xffff */
+                utferror = 1;           /* so not valid */
+            } else {                    /* OK... */
+                ucs2return <<= 6;       /* Shift result */
+                ucs2return |= (ch & 0x3f); /* and OR in this byte */
+            }
+            if (--utfcount == 0)
+              haveucs2 = 1;
+        }
+    } else {                            /* c >= 0xc0... */
+        if (utfcount > 0)
+          utferror = 1;
+        if (c < 0xe0) {
+            utfcount = 1;
+            ucs2return = (c & 0x1f);
+            haveucs2 = 1;
+        } else if (c < 0xf0) {
+            utfcount = 2;
+            ucs2return = (c & 0x0f);
+            haveucs2 = 1;
+        } else if (c < 0xf8) {
+            utfcount = 3;
+            ucs2return = (c & 0x07);
+            haveucs2 = 1;
+        } else if (c < 0xfc) {
+            utfcount = 4;
+            ucs2return = (c & 0x03);
+            haveucs2 = 1;
+        } else if (c < 0xfe) {
+            utfcount = 5;
+            ucs2return = (c & 0x01);
+            haveucs2 = 1;
+        } else {
+            utferror = 1;
+            utfcount = 0;
+        }
     }
     if (haveucs2 == 0 && utferror != 0) {
-	haveucs2 = 1;
-	ucs2return = 0xfffd;
-	utferror = 0;
+        haveucs2 = 1;
+        ucs2return = 0xfffd;
+        utferror = 0;
     }
     if (haveucs2) {
-	*ucs2 = &ucs2return;
-	if (utferror)
-	  utfcount = 0 - utfcount;
-	return(utfcount);
+        *ucs2 = &ucs2return;
+        if (utferror)
+          utfcount = 0 - utfcount;
+        return(utfcount);
     } else {
-	if (utfcount == 0)
-	  utfcount++;
-	return(utfcount);
+        if (utfcount == 0)
+          utfcount++;
+        return(utfcount);
     }
 #endif /* COMMENT */
 }
@@ -15971,10 +15994,10 @@ ucs2_to_utf8(ucs2, utf8) USHORT ucs2; CHAR ** utf8;
 
     if (ucs2 < 0x80) {
         utf8len = 1;
-	debug(F101,"ucs2_to_utf8 X1","",utf8len);
+        debug(F101,"ucs2_to_utf8 X1","",utf8len);
     } else if (ucs2 < 0x800) {
         utf8len = 2;
-	debug(F101,"ucs2_to_utf8 X2","",utf8len);
+        debug(F101,"ucs2_to_utf8 X2","",utf8len);
     } else
 #ifdef DO_UCS4
       /* This is always true for UCS-2 but would be needed for UCS-4*/
@@ -15983,7 +16006,7 @@ ucs2_to_utf8(ucs2, utf8) USHORT ucs2; CHAR ** utf8;
 #endif /* DO_UCS4 */
     {
         utf8len = 3;
-	debug(F101,"ucs2_to_utf8 X3","",utf8len);
+        debug(F101,"ucs2_to_utf8 X3","",utf8len);
     }
 #ifdef DO_UCS4
 /* The following would be for UCS-4 */
@@ -15993,11 +16016,11 @@ ucs2_to_utf8(ucs2, utf8) USHORT ucs2; CHAR ** utf8;
         utf8len = 5;
     } else if (ucs2 <=
 #ifdef CK_ANSIC
-	       0x7FFFFFFFUL		/* (doesn't really need the "U") */
+               0x7FFFFFFFUL             /* (doesn't really need the "U") */
 #else
-	       0x7FFFFFFFL
+               0x7FFFFFFFL
 #endif /* CK_ANSIC */
-	       ) {			/* 31 bits = max for UCS4 */
+               ) {                      /* 31 bits = max for UCS4 */
         utf8len = 6;
     } else {
         utf8len = 2;
@@ -16007,7 +16030,7 @@ ucs2_to_utf8(ucs2, utf8) USHORT ucs2; CHAR ** utf8;
     i = utf8len;                        /* index into utf8return */
     utf8return[i--] = 0;                /* Null terminate the string */
 
-    switch (utf8len) {	                /* code falls through cases! */
+    switch (utf8len) {                  /* code falls through cases! */
       case 6: utf8return[i--] = (ucs2 | byteMark) & byteMask; ucs2 >>= 6;
       case 5: utf8return[i--] = (ucs2 | byteMark) & byteMask; ucs2 >>= 6;
       case 4: utf8return[i--] = (ucs2 | byteMark) & byteMask; ucs2 >>= 6;
@@ -16023,8 +16046,8 @@ ucs2_to_utf8(ucs2, utf8) USHORT ucs2; CHAR ** utf8;
 /*  UTF-8 functions...  */
 
 #ifdef CK_ANSIC
-extern int (*xuf)(USHORT);		/* Translation function UCS to FCS */
-extern USHORT (*xfu)(CHAR);		/* Translation function FCS to UCS */
+extern int (*xuf)(USHORT);              /* Translation function UCS to FCS */
+extern USHORT (*xfu)(CHAR);             /* Translation function FCS to UCS */
 #else
 extern int (*xuf)();
 extern USHORT (*xfu)();
@@ -16046,12 +16069,12 @@ extern USHORT (*xfu)();
 */
 static int savedbyte = 0;
 
-int					/* Call if u_to_b() returns -9 */
+int                                     /* Call if u_to_b() returns -9 */
 u_to_b2() {
     return((unsigned)(savedbyte & 0xff));
 }
 
-int					/* UTF-8 to byte */
+int                                     /* UTF-8 to byte */
 #ifdef CK_ANSIC
 u_to_b(CHAR c)
 #else
@@ -16060,13 +16083,13 @@ u_to_b(c) CHAR c;
 {
     int x;
     USHORT * ucs2, uc;
-    if (!xuf)				/* If no conversion function */
-      return(c);			/* don't convert (shouldn't happen). */
-    x = utf8_to_ucs2(c,&ucs2);		/* Send for conversion to UCS-2 */
-    if (x > 0)				/* Not done yet... */
+    if (!xuf)                           /* If no conversion function */
+      return(c);                        /* don't convert (shouldn't happen). */
+    x = utf8_to_ucs2(c,&ucs2);          /* Send for conversion to UCS-2 */
+    if (x > 0)                          /* Not done yet... */
       return(-1);
-    uc = (x < 0) ? 0xfffd : *ucs2;	/* Done, check result */
-    if (uc == 0x2028 || uc == 0x2029)	/* LS or PS */
+    uc = (x < 0) ? 0xfffd : *ucs2;      /* Done, check result */
+    if (uc == 0x2028 || uc == 0x2029)   /* LS or PS */
       return(-2);
     return((unsigned)(((*xuf)(uc)) & 0xff)); /* Convert UCS-2 to byte */
 }
@@ -16087,7 +16110,7 @@ u_to_b(c) CHAR c;
   If the translation fails, the Unicode "Replacement Character" is returned
   (0xFFFD translated to UTF-8 == 0xFFBD).
 */
-int					/* Byte to UTF-8 */
+int                                     /* Byte to UTF-8 */
 #ifdef CK_ANSIC
 b_to_u(CHAR c, CHAR * buf, int buflen, int setsize)
 #else
@@ -16098,27 +16121,27 @@ b_to_u(c, buf, buflen, setsize) CHAR c, * buf; int buflen, setsize;
     int i, count = 0;
     USHORT uc;
     if (!xfu) {
-	debug(F100,"b_to_u no xfu","",0);
-	return(-1);
+        debug(F100,"b_to_u no xfu","",0);
+        return(-1);
     }
     uc = c;
     if (((setsize > 128) && (c & 0x80)) || setsize <= 128) {
-	if (xfu)			/* FCS-to-UCS function */
-	  uc = (*xfu)(c);
+        if (xfu)                        /* FCS-to-UCS function */
+          uc = (*xfu)(c);
     }
     count = ucs2_to_utf8(uc,&tmp);
     if (count < 0) {
-	buf[0] = 0xef;			/* == 0xFFFD in UTF-8 */
-	buf[1] = 0xbf;
-	buf[2] = 0xbd;
-	buf[3] = '\0';
-	return(2);
+        buf[0] = 0xef;                  /* == 0xFFFD in UTF-8 */
+        buf[1] = 0xbf;
+        buf[2] = 0xbd;
+        buf[3] = '\0';
+        return(2);
     }
     if (count >= buflen) {
-	debug(F101,"WARNING: UTF8 buffer overflow","",count);
-	count = buflen - 1;
+        debug(F101,"WARNING: UTF8 buffer overflow","",count);
+        count = buflen - 1;
     }
-    for (i = 0; i < count; i++)		/* Copy to result buffer */
+    for (i = 0; i < count; i++)         /* Copy to result buffer */
       buf[i] = tmp[i];
     buf[i] = '\0';
     return(count);
@@ -16126,11 +16149,11 @@ b_to_u(c, buf, buflen, setsize) CHAR c, * buf; int buflen, setsize;
 
 #ifndef OS2
 int
-isunicode(				/* Tells whether the host we are */
-#ifdef CK_ANSIC				/* running on supports Unicode */
-	  void				/* display */
+isunicode(                              /* Tells whether the host we are */
+#ifdef CK_ANSIC                         /* running on supports Unicode */
+          void                          /* display */
 #endif /* CK_ANSIC */
-	  ) {
+          ) {
 #ifdef NT
     extern int tt_unicode;
 #ifdef KUI

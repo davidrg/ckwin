@@ -240,10 +240,14 @@ char fspec[CKMAXPATH+4];
 int fspeclen = CKMAXPATH;
 #endif /* NOMSEND */
 
-char * rfspec = NULL;
-char * sfspec = NULL;
-char * srfspec = NULL;
-char * rrfspec = NULL;
+char * rfspec = NULL;			/* Received filespec: local */
+char * prfspec = NULL;			/* Preliminary rfspec */
+char * sfspec = NULL;			/* Sent filespec: local */
+char * psfspec = NULL;			/* Preliminary sfspec */
+char * srfspec = NULL;			/* Received filespec: remote */
+char * psrfspec = NULL;			/* Preliminary srfspec */
+char * rrfspec = NULL;			/* Sent filespec: remote */
+char * prrfspec = NULL;			/* Preliminary rrfspec */
 
 int success = 1,                        /* Command success/failure flag */
     cmdlvl = 0,                         /* Command level */
@@ -319,6 +323,7 @@ extern int streaming, streamok;
 /* Used internally */
 
 _PROTOTYP( VOID screenc, (int, char, long, char *) );
+_PROTOTYP( VOID screeng, (int, char, long, char *) );
 
 #ifdef CK_CURSES
 #ifndef DYNAMIC
@@ -402,6 +407,7 @@ extern long filcnt, filrej, ffc, tfc, rptn, fsize, filcps, tfcps, cps, peakcps;
 long oldcps = 0L;
 
 extern CHAR *rdatap, padch, seol, ctlq, mypadc, eol, *epktmsg;
+extern char *xfrmsg;
 
 #ifdef IKSDB
 FILE * dbfp = NULL;                     /* File pointer to database file */
@@ -780,7 +786,7 @@ ftreset() {
     sndafter[0]  = NUL;                 /* Reset SEND selection switches */
     sndbefore[0] = NUL;
 
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < NSNDEXCEPT; i++) {
         if (sndexcept[i])
           free(sndexcept[i]);
         sndexcept[i] = NULL;
@@ -1041,7 +1047,7 @@ _PROTOTYP( char * strerror, (int) );
   Filename pattern recognition lists for automatic text/binary switching.
   These are somewhat passe after the addition of scanfile()  (7.0).
   But with the addition of FTP [M]GET, they're back in style (7.1).
-  
+
   Although, with FTP the lists need to be used in the reverse.  With
   Kermit the list is used to imply the types of the local system.  Whereas
   with FTP, the list must be used to imply the type of the remote system.
@@ -1109,11 +1115,11 @@ static char *txtp[SYS_MAX][FTPATTERNS] = {
     "*.hqx","*.c",  "*.h",  "*.w",   "*.java","*.bwr","*.upd","*.ttp","*.cm",
     "*.pl1","*.emacs", "read.me", "*.pl", "makefile", NULL
     },
-    {					/* DG AOS/VS */ 
+    {					/* DG AOS/VS */
     "*.txt", "*.c", "*.h", "*.w", "*.er", "*.bwr", "*.upd", "read.me",
     "*.cli", "*.ksc", NULL
     },
-    {					/* OSK */ 
+    {					/* OSK */
     "*.c","*.cpp","*.h","*.a","*akefile", /* program sources */
     "*.for","*.f77","*.f","*.F","*.s","*.pas","*.java","*.el","*.lisp",
     "*.sh","*.perl","*.awk","*.sno","*.spt","*.sed",
@@ -1128,10 +1134,10 @@ static char *txtp[SYS_MAX][FTPATTERNS] = {
 /* Note: .DOC added to (some) binary patterns June 1998... Microsoft wins. */
 
 static char *binp[SYS_MAX][FTPATTERNS] = {
-    {					/* UNKNOWN */ 
+    {					/* UNKNOWN */
     NULL, NULL
     },
-    {					/* UNIX */ 
+    {					/* UNIX */
     "*.gz","*.Z","*.tgz","*.gif", "*.tar","*.zip","*.o","*.so","*.a","*.out",
     "*.exe", "*.jpg", "*.jpeg", "*.tif","*.tiff", "*.pdf", "*.so.*", "*.class",
     "*.rpm", "*.bmp", "*.bz2", "*.BMP", "*.dll", "*.doc", "*.vxd", "*.dcx",
@@ -1145,40 +1151,40 @@ static char *binp[SYS_MAX][FTPATTERNS] = {
     "*.pdf", "*.lzh", "*.vxd", "*.snd", "*.au", "* .voc", "*.mpg", "*.mpeg",
     NULL
     },
-    {					/* VMS */ 
+    {					/* VMS */
     "*.exe","*.obj","*.bak","*.bin","*.adf","*.stb","*.mai","*.sys","*.dmp",
     "*.dat","*.par", NULL
     },
-    {					/* OS2 */ 
+    {					/* OS2 */
     "*.exe", "*.zip", "*.obj", "*.com", "*.gif", "*.jpg", "*.wav", "*.ram",
     "*.class", "*.cla", "*.dll", "*.drv", "*.ocx", "*.vbx", "*.lib", "*.ico",
     "*.bmp", "*.tif", "*.tar", "*.gz", "*.tgz", "*.xl*", "*.doc", "*.vxd",
     "*.pdf", "*.lzh", NULL
     },
-    {					/* DOS */ 
+    {					/* DOS */
     "*.exe", "*.zip", "*.obj", "*.com", "*.gif", "*.jpg", "*.wav", "*.ram",
     "*.cla", "*.dll", "*.drv", "*.ocx", "*.vbx", "*.lib", "*.ico",
     "*.bmp", "*.tif", "*.tar", "*.gz", "*.tgz", "*.xl*", "*.doc", "*.vxd",
     "*.pdf", "*.lzh", NULL
     },
-    {					/* TOPS10 */ 
-    "*.exe","*.sav","*.bin","*.rim","*.rel","*.unv","*.lib","*.tap","*.dvi", 
+    {					/* TOPS10 */
+    "*.exe","*.sav","*.bin","*.rim","*.rel","*.unv","*.lib","*.tap","*.dvi",
     NULL
     },
-    {					/* TOPS20 */ 
-    "*.exe","*.sav","*.bin","*.rim","*.rel","*.unv","*.lib","*.tap","*.dvi", 
+    {					/* TOPS20 */
+    "*.exe","*.sav","*.bin","*.rim","*.rel","*.unv","*.lib","*.tap","*.dvi",
     NULL
     },
-    {					/* STRATUS VOS */ 
+    {					/* STRATUS VOS */
     "*.exe", "*.zip", "*.obj", "*.com", "*.gif", "*.jpg", "*.wav", "*.ram",
     "*.class", "*.cla", "*.dll", "*.drv", "*.ocx", "*.vbx", "*.lib", "*.ico",
     "*.bmp", "*.tif", "*.tar", "*.gz", "*.tgz", "*.xl*", "*.doc", "*.vxd",
     "*.pdf", "*.lzh", "*.pm", NULL
     },
-    {					/* DG */ 
+    {					/* DG */
     "*.ob", "*.pr", "*.dmp", NULL
     },
-    { /* OSK */ 
+    { /* OSK */
     "*.gz","*.Z","*.z","*.tgz","*.lhz","*.tar",	/* archivers */
     "*.zip","*.ar","*.zoo","*.rpm","*.lzh",
     /* object files, libraries, executables */
@@ -1533,7 +1539,7 @@ scanfile(name,flag,nscanfile) char * name; int * flag, nscanfile; {
 
 #ifdef UNICODE
 	if (bytes == 0 && count > 1) {
-	    int flag = 0;
+	    int incl_cnt = 0;
 
 	    /* First look for BOM */
 
@@ -1544,19 +1550,19 @@ scanfile(name,flag,nscanfile) char * name; int * flag, nscanfile; {
 		rc = FT_UCS2;
 		val = 0;
 		debug(F111,"scanfile UCS2 BOM BE",ckitoa(val),rc);
-		flag++;
+		incl_cnt++;
 	    } else if (c0 == 0xFF && c1 == 0xFE) { /* UCS-2 LE */
 		rc = FT_UCS2;
 		val = 1;
 		debug(F111,"scanfile UCS2 BOM LE",ckitoa(val),rc);
-		flag++;
+		incl_cnt++;
 	    } else if (count > 2) if (c0 == 0xEF && c1 == 0xBB &&
 		       (unsigned)((unsigned)buf[2]&0xFF) == 0xBF) {
 		rc = FT_UTF8;
 		debug(F111,"scanfile UTF8 BOM",ckitoa(val),rc);
-		flag++;
+		incl_cnt++;
 	    }
-	    if (flag) {			/* Have BOM */
+	    if (incl_cnt) {		/* Have BOM */
 		bytes += count;
 		goto xscanfile;
 	    }
@@ -1892,9 +1898,9 @@ scanfile(name,flag,nscanfile) char * name; int * flag, nscanfile; {
 int
 #ifdef CK_ANSIC
 fileselect(
-    char *f, char *sa, char *sb, char *sna, char *snb, 
-    long minsiz, long maxsiz, 
-    int nbu, int nxlist, 
+    char *f, char *sa, char *sb, char *sna, char *snb,
+    long minsiz, long maxsiz,
+    int nbu, int nxlist,
     char ** xlist
 )
 #else
@@ -2492,6 +2498,7 @@ ckhost(vvbuf,vvlen) char * vvbuf; int vvlen; {
 #else  /* Everything else - rest of this routine */
 
     char *g;
+    int havefull = 0;
 #ifdef VMS
     int x;
 #endif /* VMS */
@@ -2540,7 +2547,23 @@ ckhost(vvbuf,vvlen) char * vvbuf; int vvlen; {
     if (uname(&hname) > -1) ckstrncpy(vvbuf,hname.nodename,vvlen);
 #endif /* TCPSOCKET */
 #else /* SVORPOSIX but not _386BSD or BSD44 */
+#ifdef __ia64__
     if (uname(&hname) > -1) ckstrncpy(vvbuf,hname.nodename,vvlen);
+#else
+    if (uname(&hname) > -1) {
+	char * p;
+	p = hname.nodename;
+#ifdef TCPSOCKET
+#ifndef NOCKGETFQHOST
+	if (!ckstrchr(p,'.'))
+	  p = (char *)ckgetfqhostname(p);
+#endif /* NOCKGETFQHOST */
+#endif /* TCPSOCKET */
+	if (!p) p = "";
+	if (!*p) p = "(unknown)";
+	ckstrncpy(vvbuf,p,vvlen);
+    }
+#endif /* __ia64__ */
 #endif /* QNX */
 #endif /* _386BSD */
 #endif /* BSD44 */
@@ -2623,7 +2646,7 @@ askmore() {
       return(1);
 #endif /* IKSDCONF */
 #ifdef CK_APC
-    if (apcactive == APC_LOCAL || 
+    if (apcactive == APC_LOCAL ||
         (apcactive == APC_REMOTE && (apcstatus & APC_NOINP)))
         return(1);
 #endif /* CK_APC */
@@ -2930,10 +2953,9 @@ trap(sig) int sig;
     sigmask(-1);
 /*
   We are in an intercept routine but do not perform a F$RTE (done implicitly
-  but rts).  We have to decrement the sigmask as F$RTE does.  Warning:
-  longjump only restores the cpu registers, NOT the fpu registers.  So don't
-  use fpu at all or at least don't use common fpu (double or float) register
-  variables.
+  by rts).  We have to decrement the sigmask as F$RTE does.  Warning: longjump
+  only restores the cpu registers, NOT the fpu registers.  So don't use fpu at
+  all or at least don't use common fpu (double or float) register variables.
 */
 #endif /* OSK */
 
@@ -2956,6 +2978,7 @@ trap(sig) int sig;
 #endif /* NOCCTRAP */
     SIGRETURN;
 }
+
 
 /*  C K _ T I M E  -- Returns pointer to current time. */
 
@@ -3804,6 +3827,7 @@ showpkt(c) char c;
     XYFD_S = CRT:        Works on any CRT, writes over current line.
     XYFD_C = FULLSCREEN: Requires terminal-dependent screen control.
     XYFD_B = BRIEF:      Like SERIAL but only filename & completion status.
+    XYFD_G = GUI;        Windows GUI, same behavior as FULLSCREEN
 */
 VOID
 #ifdef CK_ANSIC
@@ -3859,6 +3883,12 @@ _PROTOTYP( VOID conbgt, (int) );
     if (dest == DEST_S)                 /* SET DESTINATION SCREEN */
       return;                           /*  would interfere... */
 
+#ifdef KUI
+    if (fdispla == XYFD_G) {            /* If gui display selected */
+        screeng(f,c,n,s);               /* call the gui version */
+        return;
+    }
+#endif /* KUI */
 #ifdef CK_CURSES
     if (fdispla == XYFD_C) {            /* If fullscreen display selected */
         screenc(f,c,n,s);               /* call the fullscreen version */
@@ -4052,7 +4082,7 @@ _PROTOTYP( VOID conbgt, (int) );
 
           case ST_MSG:                  /* Message */
 #ifdef NEWFTP
-            if (fdispla == XYFD_B) { 
+            if (fdispla == XYFD_B) {
                 if (ftp && ftp_deb)
 		  printf(": MESSAGE: %s\n",s);
                 return;
@@ -4221,12 +4251,26 @@ ermsg(msg) char *msg; {                 /* Print error message */
 #endif /* NOXFER */
 
 VOID
+setseslog(x) int x; {
+    seslog = x;
+#ifdef KUI
+    KuiSetProperty(KUI_TERM_CAPTURE,x,0);
+#endif /* KUI */
+}
+
+VOID
 doclean(fc) int fc; {                   /* General cleanup */
 #ifdef OS2ORUNIX
     extern int ttyfd;
 #endif /* OS2ORUNIX */
+    extern int  keep;
     extern int exithangup;
+#ifndef NOXFER
+    extern char filnam[];
+#endif /* NOXFER */
 #ifndef NOICP
+    int x;
+
     if (fc > 0)
       dostop();                 /* Stop all command files and end macros */
 #endif /* NOICP */
@@ -4240,7 +4284,7 @@ doclean(fc) int fc; {                   /* General cleanup */
 #endif /* NOXFER */
     if (seslog) {
         *sesfil = '\0';
-        seslog = 0;
+        setseslog(0);
         zclose(ZSFILE);
     }
 #ifdef TLOG
@@ -4266,8 +4310,18 @@ doclean(fc) int fc; {                   /* General cleanup */
 #ifndef NOSPL
     zclose(ZRFILE);                     /* READ and WRITE files, if any. */
     zclose(ZWFILE);
+#ifndef NOXFER
     zclose(ZIFILE);                     /* And other files too */
-    zclose(ZOFILE);
+    x = chkfn(ZOFILE);			/* Download in progress? */
+    debug(F111,"doclean chkfn ZOFILE",filnam,x);
+    debug(F111,"doclean keep","",keep);
+    zclose(ZOFILE);			/* Close output file */
+    if (x > 0 && !keep) {		/* If it was being downloaded */
+	if (filnam[0])
+	  x = zdelet(filnam);		/* Delete if INCOMPLETE = DISCARD */
+	debug(F111,"doclean download filename",filnam,x);
+    }
+#endif /* NOXFER */
     zclose(ZSYSFN);
     zclose(ZMFILE);
 
@@ -4370,7 +4424,14 @@ doclean(fc) int fc; {                   /* General cleanup */
         char * cmd = "on_exit";         /* MSVC 2.x compiler error */
         k = mlook(mactab,cmd,nmac);     /* Look up "on_exit" */
         if (k >= 0) {                   /* If found, */
+#ifdef COMMENT
+	    /* This makes a mess if ON_EXIT itself executes macros */
             *(mactab[k].kwd) = NUL;     /* poke its name from the table, */
+#else
+	    /* Replace the keyword with something that doesn't wreck the */
+	    /* order of the keyword table */
+	    ckstrncpy(mactab[k].kwd,"on_exxx",8);
+#endif /* COMMENT */
             if (dodo(k,"",0) > -1)      /* set it up, */
               parser(1);                /* and execute it */
         }
@@ -4410,7 +4471,7 @@ doclean(fc) int fc; {                   /* General cleanup */
 */
 VOID
 doexit(exitstat,code) int exitstat, code; {
-    extern int x_logged;
+    extern int x_logged, quitting;
 #ifdef OS2
     extern int display_demo;
     extern int SysInited;
@@ -4439,6 +4500,8 @@ doexit(exitstat,code) int exitstat, code; {
 #ifndef NOSPL
     extern int cmdstats[];
 #endif /* NOSPL */
+
+    quitting++;
 
 #ifdef OS2
     if ( !SysInited )
@@ -4501,7 +4564,7 @@ doexit(exitstat,code) int exitstat, code; {
 
         /* If there is a demo screen to be displayed, display it */
         if (display_demo) {
-            demoscrn();
+            demoscrn(VCMD);
             display_demo = 0;
         }
 #ifndef KUI
@@ -5230,7 +5293,7 @@ logchar(c) char c;
   xlogchar:
     conoll("");
     conoll("ERROR WRITING SESSION LOG, LOG CLOSED!");
-    seslog = 0;
+    setseslog(0);
     zclose(ZSFILE);
 #endif /* NOLOCAL */
 }
@@ -5442,7 +5505,6 @@ fxdinit(xdispla) int xdispla; {
 #endif /* IKSD */
 
     if (xdispla == XYFD_R || xdispla == XYFD_S || xdispla == XYFD_B) {
-	extern char * xfrmsg;
 	if (xfrmsg) {
 	    printf("%s\n",xfrmsg);
 	    makestr(&xfrmsg,NULL);
@@ -6603,8 +6665,6 @@ char *s;        /* a string */
 #ifdef RLOGCODE
     extern int ttnproto;
 #endif /* RLOGCODE */
-    extern char * xfrmsg;
-
     static int q = 0;
     static long fsiz = -1L;   /* Copy of file size */
     static long fcnt = 0L;    /* Number of files transferred */
@@ -7969,6 +8029,677 @@ char *s;        /* a string */
     }
 }
 #endif /* CK_CURSES */
+
+#ifdef KUI
+#ifdef CK_ANSIC
+void
+screeng(int f, char c,long n,char *s)
+#else
+VOID
+screeng(f,c,n,s)
+int f;          /* argument descriptor */
+char c;         /* a character or small integer */
+long n;         /* a long integer */
+char *s;        /* a string */
+#endif /* CK_ANSIC */
+/* screeng() */ {
+#ifdef CK_SSL
+    extern int tls_active_flag, ssl_active_flag;
+#endif /* CK_SSL */
+#ifdef RLOGCODE
+    extern int ttnproto;
+#endif /* RLOGCODE */
+    static int q = 0;
+    static long fsiz = -1L;   /* Copy of file size */
+    static long fcnt = 0L;    /* Number of files transferred */
+    static long fbyt = 0L;    /* Total file bytes of all files transferred */
+    static long howfar = 0L;  /* How much of current file has been xfer'd. */
+    static int  pctlbl = 0L;  /* Percent done vs Bytes so far */
+    long cps = 0L;
+
+    int net = 0;
+    int xnet = 0;
+    int ftp = 0;
+    int len;                            /* Length of string */
+    int errors = 0;                     /* Error counter */
+    int x;                              /* Worker */
+
+    debug(F101,"screeng cinit","",cinit);
+    debug(F101,"screeng cendw","",cendw);
+
+    if (!s) s = "";                     /* Always do this. */
+
+    ftp = (what & W_FTP) ? 1 : 0;	/* FTP or Kermit */
+    net = network || ftp;
+    xnet = ftp ? 1 : nettype;		/* NET_TCPB == 1 */
+
+    if (cinit == 0 || cendw > 0) {      /* Handle borderline cases... */
+        if (f == SCR_CW) {              /* Close window, but it's not open */
+            ft_win = 0;
+            return;
+        }
+        debug(F111,"screeng A",s,f);
+        if (f == SCR_EM ||
+           (f == SCR_PT && c == 'E')) { /* Fatal error before window open */
+            conoll(""); conoc('?'); conoll(s); return; /* Regular display */
+        }
+    }
+    if (cinit == 0) {                   /* Only call initscr() once */
+	/* Check these now -- if they are defined but not numeric */
+	/* they can crash curses */
+        cendw = 1;                      /* New window needs repainting */
+        debug(F100,"screeng calling initscr","",0);
+        initscr();                      /* Initialize curses. */
+        debug(F100,"screeng initscr ok","",0);
+        cinit++;                        /* Remember curses was initialized. */
+    }
+    ft_win = 1;                         /* Window is open */
+    if (repaint) {
+#ifdef CK_WREFRESH
+/*
+  This totally repaints the screen, just what we want, but we can only
+  do this with real curses, and then only if clearok() and wrefresh() are
+  provided in the curses library.
+*/
+        RestoreCmdMode();
+#else  /* No CK_WREFRESH */
+/*
+  Kermit's do-it-yourself method, works with all types of fullscreen
+  support, but does not repaint all the fields.  For example, the filename
+  is lost, because it arrives at a certain time and never comes again, and
+  Kermit presently does not save it anywhere.  Making this method work for
+  all fields would be a rather major recoding task, duplicating what curses
+  already does, and would add a lot of complexity and storage space.
+*/
+        cendw = 1;
+#endif /* CK_WREFRESH */
+        repaint = 0;
+    }
+    if (cendw) {                        /* endwin() was called previously */
+        debug(F100,"screeng setup ok","",0);
+        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_DIR, (long) zgtdir() );
+        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_LIN,
+                        (long) (
+#ifdef NEWFTP
+                                ftp ? (ftp_host ? ftp_host : "(unknown)") :
+#endif /* NEWFTP */
+                                ttname) );
+
+        if (net) {
+#ifdef NETCONN
+	    int secure = 0;
+	    char * xname;
+	    if (xnet > nnetname)
+	      xname = "[ERROR]";
+	    else
+	      xname = netname[xnet];
+#ifdef NEWFTP
+            if (ftp) {
+		if (ftpissecure())
+		  secure = 1;
+	    } else
+#endif /* NEWFTP */
+	      if (0
+#ifdef SSHBUILTIN
+                || IS_SSH()
+#endif /* SSHBUILTIN */
+#ifdef CK_ENCRYPTION
+                || ck_tn_encrypting() && ck_tn_decrypting()
+#endif /* CK_ENCRYPTION */
+#ifdef CK_SSL
+                || tls_active_flag || ssl_active_flag
+#endif /* CK_SSL */
+#ifdef RLOGCODE
+#ifdef CK_KERBEROS
+#ifdef CK_ENCRYPTION
+                || ttnproto == NP_EK4LOGIN || ttnproto == NP_EK5LOGIN
+#endif /* CK_ENCRYPTION */
+#endif /* CK_KERBEROS */
+#endif /* RLOGCODE */
+                 ) {
+		secure = 1;
+	    }
+	    if (secure) {
+                char buf[30];
+                sprintf(buf,"%s (SECURE)",xname);
+                KuiSetProperty(KUI_FILE_TRANSFER,
+                               (long) CW_SPD,
+                               (long) buf
+                               );
+            } else {
+                KuiSetProperty(KUI_FILE_TRANSFER,
+                               (long) CW_SPD,
+                               (long) xname
+                               );
+            }
+#else
+            KuiSetProperty(KUI_FILE_TRANSFER,
+                           (long) CW_SPD,
+                           (long) "(network)"
+                           );
+#endif /* NETCONN */
+        } else {
+            if (speed < 0L)
+              speed = ttgspd();
+            if (speed > 0L) {
+                if (speed == 8880) {
+                    KuiSetProperty(KUI_FILE_TRANSFER,
+                                   (long) CW_SPD,
+                                   (long) "75/1200"
+                                   );
+                } else {
+                    char speedbuf[64] ;
+                    sprintf(speedbuf, "%ld", speed);
+                    KuiSetProperty(KUI_FILE_TRANSFER,
+                                   (long) CW_SPD,
+                                   (long) speedbuf
+                                   );
+                }
+            } else {
+                KuiSetProperty(KUI_FILE_TRANSFER,
+                               (long) CW_SPD,
+                               (long) "(unknown)"
+                               );
+            }
+        }
+        KuiSetProperty(KUI_FILE_TRANSFER,
+                       (long) CW_PAR,
+                       (long) parnam((char)parity)
+                       );
+        pctlbl = (what & W_SEND);
+        cendw = 0;
+    }
+    debug(F101,"SCREENC switch","",f);
+    debug(F000,"SCREENC c","",c);
+    debug(F101,"SCREENC n","",n);
+
+    len = strlen(s);                    /* Length of argument string */
+    switch (f) {                        /* Handle our function code */
+      case SCR_FN:                      /* Filename */
+        oldpct = pct = 0L;              /* Reset percents */
+#ifdef GFTIMER
+        gtv = (CKFLOAT) -1.0;
+        /* oldgtv = (CKFLOAT) -1.0; */
+#else
+        gtv = -1L;
+        /* oldgtv = -1L; */
+#endif /* GFTIMER */
+        oldwin = -1;
+        fsiz = -1L;                     /* Invalidate previous file size */
+        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_PCD, (long) 0 );
+        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_FFC, (long) 0 );
+        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_SIZ, (long) 0 );
+        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_ERR, (long) "" );
+
+        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_NAM, (long) s );
+        q = len;                        /* Remember name length for later */
+        scrft();                        /* Display file type (can change) */
+#ifdef OS2
+        SaveCmdMode(0, 0);
+#endif /* OS2 */
+        return;
+
+      case SCR_AN:                      /* File as-name */
+        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_NAM, (long) s );
+#ifdef OS2
+        SaveCmdMode(0, 0);
+#endif /* OS2 */
+        return;
+
+      case SCR_FS:                      /* File size */
+        fsiz = n;
+        if (fsiz > -1L) {
+            KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_SIZ, (long) n );
+        }
+        if (fsiz > -1L) {               /* Put up percent label */
+            pctlbl = 1;
+        } else {
+            pctlbl = 0;
+	}
+        scrft();                        /* File type */
+#ifdef OS2
+        SaveCmdMode(0, 0);
+#endif /* OS2 */
+        return;
+
+      case SCR_PT:                      /* Packet type or pseudotype */
+        if (spackets < 5) {
+            extern int sysindex;
+            extern struct sysdata sysidlist[];
+            /* Things that won't change after the 4th packet */
+            KuiSetProperty( KUI_FILE_TRANSFER,
+                           (long) CW_PAR,
+                           (long) parnam((char)parity)
+                           );
+            if (
+#ifdef NEWFTP
+		(ftp && (spackets == 1 || rpackets == 1)) ||
+#endif /* NEWFTP */
+		spackets == 4
+		) {
+                if (
+#ifdef NEWFTP
+		    ftp ||
+#endif /* NEWFTP */
+		    ((protocol == PROTO_K) && (sysindex > -1))
+		    ) {
+                    char msgbuf[128];
+                    if (net) {
+                        sprintf(msgbuf,"Network Host: %s (%s)",
+#ifdef NEWFTP
+			       ftp ? (ftp_host ? ftp_host : "") :
+#endif /* NEWFTP */
+			       ttname,
+#ifdef NEWFTP
+			       ftp ? ftp_srvtyp :
+#endif /* NEWFTP */
+			       sysidlist[sysindex].sid_name
+			       );
+                    } else {
+                        sprintf(msgbuf,
+				"Communication Device: %s (remote host is %s)",
+				ttname,
+				sysidlist[sysindex].sid_name
+				);
+                    }
+                    KuiSetProperty( KUI_FILE_TRANSFER,
+				    (long) CW_LIN,
+				    (long) msgbuf
+				    );
+                }
+            }
+        }
+#ifdef CK_TIMERS
+        if (/* rttflg && */ protocol == PROTO_K) {
+            long xx;
+            if (
+#ifdef STREAMING
+                streaming && oldwin != -2
+#else
+                0
+#endif /* STREAMING */
+                ) {
+                char msgbuf[64];
+                sprintf(msgbuf,"00 / 00");
+                KuiSetProperty( KUI_FILE_TRANSFER,
+				(long) CW_TMO,
+				(long) msgbuf
+				);
+            } else {
+                xx = (rttdelay + 500) / 1000;
+                if (xx != oldrtt || rcvtimo != oldtim) {
+                    char msgbuf[64];
+                    sprintf(msgbuf,"%02ld / %02d", xx, rcvtimo);
+                    KuiSetProperty( KUI_FILE_TRANSFER,
+				    (long) CW_TMO,
+				    (long) msgbuf
+				    );
+                    oldrtt = xx;
+                    oldtim = rcvtimo;
+                    clrtoeol();
+                }
+            }
+        }
+#endif /* CK_TIMERS */
+
+        x = (what & W_RECV) ?          /* Packet length */
+          rpktl+(protocol==PROTO_K?1:0) :
+            spktl;
+        if (x != oldlen) {              /* But only if it changed. */
+            KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_PL, (long) x );
+            oldlen = x;
+        }
+        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_PC, (long) spackets );
+
+        if (protocol == PROTO_K && !ftp) { /* Window slots */
+            char ws[16];
+            int flag;
+            flag = 0;
+#ifdef STREAMING
+            if (streaming) {
+                if (oldwin != -2) {
+                    sprintf(ws,"STREAMING");
+                    flag = 1;
+                    oldwin = -2;
+                }
+            } else
+#endif /* STREAMING */
+              if (wcur != oldwin) {
+                  sprintf(ws, "%d of %d", wcur < 1 ? 1 : wcur, wslotn);
+                  flag = 1;
+                  oldwin = wcur;
+              }
+            if (flag) {
+                KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_WS, (long) ws );
+            }
+        }
+        errors = retrans + crunched + timeouts;
+        if (errors != oldtry) {         /* Retry count, if changed */
+            KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_PR, (long) errors );
+            oldtry = errors;
+        }
+	/* Sender's packet type */
+        if (!ftp && (c != oldtyp && c != 'Y' && c != 'N')) {
+            char type[2];
+            sprintf(type, "%c",c);
+            KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_PT, (long) type );
+            oldtyp = c;
+        }
+        switch (c) {                    /* Now handle specific packet types */
+          case 'S':                     /* Beginning of transfer */
+            fcnt = fbyt = 0L;           /* Clear counters */
+#ifdef GFTIMER
+            gtv = -1.0;
+#else /* GFTIMER */
+            gtv = -1L;                  /* And old/new things... */
+#endif /* GFTIMER */
+            oldpct = pct = 0L;
+            break;
+
+          case 'Z':                     /* or EOF */
+            debug(F101,"screeng SCR_PT Z pktnum","",n);
+            debug(F101,"screeng SCR_PT Z oldpct","",oldpct);
+            debug(F101,"screeng SCR_PT Z pct","",pct);
+          case 'D':                     /* Data packet */
+            if (fsiz > 0L) {            /* Show percent done if known */
+                oldpct = pct;           /* Remember previous percent */
+                howfar = ffc;
+#ifdef CK_RESEND
+                if (what & W_SEND)	/* Account for PSEND or RESEND */
+                  howfar += sendstart;
+                else if (what & W_RECV)
+                  howfar += rs_len;
+#endif /* CK_RESEND */
+                /* Percent done, to be displayed... */
+                if (c == 'Z') {
+                    if (!discard && !cxseen && !czseen) pct = 100L;
+                } else
+                  pct = (fsiz > 99L) ? (howfar / (fsiz / 100L)) : 0L;
+                if (pct > 100L ||       /* Allow for expansion and */
+                   (oldpct == 99L && pct < 0L)) /* other boundary conditions */
+                  pct = 100L;
+                if (pct != oldpct)      /* Only do this 100 times per file */
+                  updpct(oldpct, pct);
+            } else {
+                KuiSetProperty(KUI_FILE_TRANSFER, (long) CW_FFC, (long) ffc);
+            }
+            KuiSetProperty(KUI_FILE_TRANSFER, (long) CW_FFC, (long) howfar);
+            cps = shocps((int) pct, fsiz, howfar);
+            /* old_tr = shoetl(old_tr, cps, fsiz, howfar); */
+            break;
+
+          case '%':                     /* Timeouts, retransmissions */
+            cps = shocps((int) pct, fsiz, howfar);
+            /* old_tr = shoetl(old_tr, cps, fsiz, howfar); */
+
+            errors = retrans + crunched + timeouts;
+            if (errors != oldtry) {     /* Error count, if changed */
+                KuiSetProperty(KUI_FILE_TRANSFER,
+                               (long) CW_PR,
+			       (long) errors
+                               );
+                }
+                oldtry = errors;
+                if (s) if (*s) {
+                    KuiSetProperty(KUI_FILE_TRANSFER, (long) CW_ERR, (long) s);
+            }
+            break;
+
+          case 'E':                     /* Error packet */
+            if (*s) {
+                KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_ERR, (long) s );
+            }
+            fcnt = fbyt = 0L;           /* So no bytes for this file */
+            break;
+          case 'Q':                     /* Crunched packet */
+            cps = shocps((int) pct, fsiz, howfar);
+            /* old_tr = shoetl(old_tr, cps, fsiz, howfar); */
+            KuiSetProperty(KUI_FILE_TRANSFER,
+                           (long) CW_ERR,
+                           (long) "Damaged Packet"
+                           );
+            break;
+          case 'q':                     /* Ctrl-C or connection lost */
+            if (!s) s = "";
+            if (!*s) s = "User interruption or connection lost";
+            KuiSetProperty(KUI_FILE_TRANSFER,
+                           (long) CW_MSG,
+                           (long) s
+                           );
+            break;
+          case 'T':                     /* Timeout */
+            cps = shocps((int) pct, fsiz, howfar);
+            /* old_tr = shoetl(old_tr, cps, fsiz, howfar); */
+            KuiSetProperty(KUI_FILE_TRANSFER,
+                           (long) CW_ERR,
+                           (long) "Timeout"
+                           );
+            errors = retrans + crunched + timeouts;
+            if (errors != oldtry) {     /* Error count, if changed */
+                KuiSetProperty(KUI_FILE_TRANSFER,
+                               (long) CW_PR, (long) errors
+                               );
+                oldtry = errors;
+            }
+            break;
+          default:                      /* Others, do nothing */
+            break;
+        }
+#ifdef OS2
+        SaveCmdMode(0, 0);
+#endif /* OS2 */
+        return;
+
+      case SCR_ST:                      /* File transfer status */
+        debug(F101,"screeng SCR_ST c","",c);
+        debug(F101,"screeng SCR_ST success","",success);
+        debug(F101,"screeng SCR_ST cxseen","",cxseen);
+#ifdef COMMENT
+        if (c == ST_OK) {               /* OK, print 100 % */
+            if (pctlbl)
+              updpct(oldpct,100);
+            else
+                KuiSetProperty(KUI_FILE_TRANSFER, (long) CW_FFC, (long) ffc);
+            pct = 100;
+            oldpct = 0;
+        } else if (fsiz > 0L)           /* Not OK, update final percent */
+/*
+  The else part writes all over the screen -- howfar and/or fsiz have
+  been reset as a consequence of the not-OKness of the transfer.
+*/
+          if (pctlbl)
+            updpct(oldpct, (howfar * 100L) / fsiz);
+#else
+        if (c == ST_OK) {               /* OK, print 100 % */
+            if (pctlbl) {
+		updpct(oldpct,100);
+	    } else
+                KuiSetProperty(KUI_FILE_TRANSFER, (long) CW_FFC, (long) ffc);
+#ifdef COMMENT
+            pct = 100;
+            oldpct = 0;
+#endif /* COMMENT */
+        }
+#endif /* COMMENT */
+
+        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_TR, (long) "" );
+
+        switch (c) {                    /* Print new status message */
+          case ST_OK:                   /* Transfer OK */
+            fcnt++;                     /* Count this file */
+	    if (what == (W_FTP|W_FT_DELE)) {
+                KuiSetProperty(KUI_FILE_TRANSFER,
+                                (long) CW_MSG,
+                                (long) "Delete OK"
+                                );
+	    } else {
+		fbyt += ffc;
+                KuiSetProperty(KUI_FILE_TRANSFER,
+                                (long) CW_MSG,
+                                (long) "Transfer OK"
+                                );
+	    }
+            return;
+
+          case ST_DISC:                 /* Discarded */
+            KuiSetProperty(KUI_FILE_TRANSFER,
+                           (long) CW_ERR,
+                           (long) "File discarded"
+                           );
+#ifdef COMMENT
+            pct = oldpct = 0;
+#endif /* COMMENT */
+            return;
+
+          case ST_INT:                  /* Interrupted */
+            KuiSetProperty(KUI_FILE_TRANSFER,
+                           (long) CW_ERR,
+                           (long) "Transfer interrupted"
+                           );
+#ifdef COMMENT
+            pct = oldpct = 0;
+#endif /* COMMENT */
+            return;
+
+        case ST_SKIP: {                /* Skipped */
+            char errbuf[64] ;
+	    if (n > 0 && n < nskreason)
+                sprintf( errbuf, "File skipped, (%s)", skreason[n] ) ;
+	    else
+                sprintf( errbuf, "File skipped" ) ;
+            KuiSetProperty(KUI_FILE_TRANSFER,
+                           (long) CW_ERR,
+                           (long) errbuf
+                           );
+#ifdef COMMENT
+            pct = oldpct = 0;
+#endif /* COMMENT */
+            return;
+        }
+          case ST_ERR:                  /* Error message */
+            if (!s) s = (char *)epktmsg;
+            KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_ERR, (long) s );
+#ifdef COMMENT
+            pct = oldpct = 0;
+#endif /* COMMENT */
+            return;
+
+          case ST_REFU:                 /* Refused */
+            if (*s) {
+                char errbuf[64] ;
+                sprintf( errbuf, "Refused, %s", s ) ;
+                KuiSetProperty(KUI_FILE_TRANSFER,(long) CW_ERR,(long) errbuf);
+            } else {
+                KuiSetProperty(KUI_FILE_TRANSFER,(long)CW_ERR,(long)"Refused");
+            }
+#ifdef COMMENT
+            pct = oldpct = 0;
+#endif /* COMMENT */
+            return;
+
+          case ST_INC:
+            KuiSetProperty(KUI_FILE_TRANSFER,(long)CW_ERR,(long)"Incomplete");
+#ifdef COMMENT
+            pct = oldpct = 0;
+#endif /* COMMENT */
+            return;
+
+          case ST_MSG:
+            KuiSetProperty(KUI_FILE_TRANSFER,(long)CW_MSG,(long)s);
+            return;
+
+          default:                      /* Bad call */
+            KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_ERR,
+                       (long) "*** screen() called with bad status ***" );
+            return;
+        }
+
+      case SCR_TC: {                    /* Transaction complete */
+          char msgbuf[128];
+          KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_CP, tfcps);
+          if (success) {
+              sprintf(msgbuf,
+                      "SUCCESS.  Files: %ld, Bytes: %ld, %ld CPS",
+                      filcnt - filrej,
+                      fbyt,
+                      tfcps
+                      );
+              KuiSetProperty(KUI_FILE_TRANSFER,
+                             (long) CW_MSG,
+                             (long) msgbuf
+                             );
+          }
+          KuiSetProperty(KUI_FILE_TRANSFER,
+                         (long) CW_TR,
+                         (long) hhmmss((long)
+#ifdef GFTIMER
+                                       (fptsecs + 0.5)
+#else
+                                       tsecs
+#endif /* GFTIMER */
+                                       ));
+
+#ifdef GFTIMER
+          oldgtv = (CKFLOAT) -1.0;
+#else
+          oldgtv = -1L;
+#endif /* GFTIMER */
+
+#ifdef COMMENT
+          pct = 100; oldpct = 0;        /* Reset these for next time. */
+#endif /* COMMENT */
+          oldtyp = 0; oldrtt = -1L; oldtry = -1; oldlen = -1;
+          oldtim = -1;
+          cendw = 1;
+          if (xfrbel) bleep(BP_NOTE);   /* Close window, then beep. */
+          ft_win = 0;                   /* Window closed. */
+          return;
+      }
+      case SCR_EM:                      /* Error packet (fatal) */
+        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_ERR, (long) s );
+        if (xfrbel) bleep(BP_FAIL);
+#ifdef COMMENT
+        pct = oldpct = 0;
+#endif /* COMMENT */
+        return;
+
+      case SCR_QE:                      /* Quantity equals */
+      case SCR_TU:                      /* Undelimited text */
+      case SCR_TN:                      /* Text delimited at start */
+      case SCR_TZ:                      /* Text delimited at end */
+        return;                         /* (ignored in fullscreen display) */
+
+      case SCR_XD:                      /* X-packet data */
+        pct = oldpct = 0;
+        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_NAM, (long) s );
+        return;
+
+      case SCR_CW:                      /* Close Window */
+#ifdef COMMENT
+        pct = 100; oldpct = 0;          /* Reset these for next time. */
+#endif /* COMMENT */
+        oldtyp = 0; oldrtt = -1L; oldtry = -1; oldlen = -1;
+        oldtim = -1;
+
+        ft_win = 0;                     /* Flag that window is closed. */
+        cendw = 1; return;
+
+      case SCR_CD:                      /* Display current directory */
+        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_DIR, (long) s );
+#ifdef OS2
+        SaveCmdMode(0, 0);
+#endif /* OS2 */
+        return;
+
+      default:                          /* Bad call */
+        KuiSetProperty(KUI_FILE_TRANSFER,
+                       (long) CW_ERR,
+                       (long) "*** screen() called with bad function code ***"
+                       );
+        return;
+    }
+}
+#endif /* KUI */
 #endif /* MAC */
 
 #endif /* NOXFER */
