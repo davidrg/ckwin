@@ -1,5 +1,7 @@
-#define EDITDATE  "24 Oct 2002"		/* Update these with each edit */
-#define EDITNDATE "20021024"		/* Keep them in sync */
+#define EDITDATE  "10 Apr 2004"		/* Update these with each edit */
+#define EDITNDATE "20040410"		/* Keep them in sync */
+/* Sat Apr 10 12:05:49 2004 */
+
 /*
   ckcsym.h is used for for defining symbols that normally would be defined
   using -D or -d on the cc command line, for use with compilers that don't
@@ -31,7 +33,7 @@
   Note: initialize ck_s_test to "" if this is not a test version.
   Use (*ck_s_test != '\0') to decide whether to print test-related messages.
 */
-#ifdef BETATEST
+#ifndef BETATEST
 #ifndef OS2                             /* UNIX, VMS, etc... (i.e. C-Kermit) */
 char *ck_s_test = "";			/* "Dev","Alpha","Beta","RC", or "" */
 char *ck_s_tver = "";			/* Test version number or "" */
@@ -57,15 +59,15 @@ char *ck_s_date = EDITDATE;		/* See top */
 char *buildid = EDITNDATE;		/* See top */
 
 #ifdef UNIX
-static char sccsid[] = "@(#)C-Kermit 8.0.206";
+static char sccsid[] = "@(#)C-Kermit 8.0.211";
 #endif /* UNIX */
 
-char *ck_s_ver = "8.0.206";             /* C-Kermit version string */
-long  ck_l_ver =  800206L;              /* C-Kermit version number */
+char *ck_s_ver = "8.0.211";             /* C-Kermit version string */
+long  ck_l_ver =  800211L;              /* C-Kermit version number */
 
 #ifdef OS2
-char *ck_s_xver = "2.1.0";		/* Product-specific version string */
-long  ck_l_xver = 2100L;                /* Product-specific version number */
+char *ck_s_xver = "2.2.0";		/* Product-specific version string */
+long  ck_l_xver = 2200L;                /* Product-specific version number */
 #else
 #ifdef MAC
 char *ck_s_xver = "0.995";              /* Product-specific version string */
@@ -125,7 +127,7 @@ COPYRIGHT NOTICE:
 #ifdef OS2
 char *wiksdcpr[] = {
 "Windows Internet Kermit Service Daemon (WIKSD):",
-"Copyright (C) 1985, 2002, Trustees of Columbia University in the City of New",
+"Copyright (C) 1985, 2004, Trustees of Columbia University in the City of New",
 "York.  All rights reserved.",
 " ",
 "PERMISSIONS:",
@@ -173,12 +175,12 @@ char *wiksdcpr[] = {
 char *copyright[] = {
 
 #ifdef pdp11
-"Copyright (C) 1985, 2002, Trustees of Columbia University, NYC.",
+"Copyright (C) 1985, 2004, Trustees of Columbia University, NYC.",
 "All rights reserved.",
 " ",
 #else
 #ifdef OS2
-"Copyright (C) 1985, 2002, Trustees of Columbia University in the City of New",
+"Copyright (C) 1985, 2004, Trustees of Columbia University in the City of New",
 "York.  All rights reserved.  This software is furnished under license",
 "and may not be reproduced without license to do so.  This copyright notice",
 "must not be removed, altered, or obscured.",
@@ -200,7 +202,7 @@ char *copyright[] = {
 "  ATTORNEYS' FEES) ARISING OUT OF YOUR USE OF THIS SOFTWARE.",
 " ",
 #else
-"Copyright (C) 1985, 2002,",
+"Copyright (C) 1985, 2004,",
 "  The Trustees of Columbia University in the City of New York.",
 "  All rights reserved.",
 " ",
@@ -1263,6 +1265,7 @@ int tt_bell = XYB_AUD;                  /* BELL ON */
 
 int tt_print = 0;                       /* Transparent print disabled */
 int tt_escape = 1;                      /* Escaping back is enabled */
+int tt_scroll = 1;                      /* Scrolling operations are enabled */
 
 int tn_exit = 0;                        /* Exit on disconnect */
 
@@ -1311,9 +1314,9 @@ int bgset = -1;                         /* BACKGROUND mode set explicitly */
 
 int cmdint = 1;                         /* Interrupts are allowed */
 #ifdef UNIX
-int suspend = DFSUSP;                   /* Whether SUSPEND command, etc, */
+int xsuspend = DFSUSP;			/* Whether SUSPEND command, etc, */
 #else                                   /* is to be allowed. */
-int suspend = 0;
+int xsuspend = 0;
 #endif /* UNIX */
 
 /* Statistics variables */
@@ -1785,8 +1788,13 @@ isabsolute(path) char * path; {
 
 int
 is_a_tty(n) int n; {
+#ifdef UNIX
+    extern int ttfdflg;
+    if (ttfdflg > 0)
+      return(1);
+#endif /* UNIX */
 #ifdef KUI
-   return 1;
+    return 1;
 #else /* KUI */
 #ifdef NT
     if (isWin95())
@@ -2469,6 +2477,7 @@ doicp(threadinfo) VOID * threadinfo;
 #endif /* NTSIG */
             }
         }
+        debug(F100,"doicp calling herald","",0);
         herald();
     }
 #endif /* NOSPL */
@@ -2702,6 +2711,10 @@ int byteorder = 0;                      /* 0 = Big Endian; 1 = Little Endian */
 int bigendian = 1;
 /* NOTE: MUST BE 0 or 1 - nothing else */
 
+#ifndef NOSPL
+#define SCRIPTLEN 10240
+#endif	/* NOSPL */
+
 #ifdef NETCONN
 #ifndef NOCMDL
 #ifndef NOURL
@@ -2713,13 +2726,13 @@ dourl() {
     extern struct urldata g_url;
 
 #ifdef COMMENT
-    extern char *g_url.por;
+    /* NOTE: debug() doesn't work yet - must use printf's */
     printf("URL:  %s\n",g_url.sav ? g_url.sav : "(none)");
     printf("Type: %s\n",g_url.svc ? g_url.svc : "(none)");
     printf("User: %s\n",g_url.usr ? g_url.usr : "(none)");
     printf("Pass: %s\n",g_url.psw ? g_url.psw : "(none)");
     printf("Host: %s\n",g_url.hos ? g_url.hos : "(none)");
-    printf("Port: %s\n",g_url.por ? g_url.por : "(none)");
+/*  printf("Port: %s\n",g_url.por ? g_url.por : "(none)"); */
     printf("Path: %s\n",g_url.pth ? g_url.pth : "(none)");
 #endif /* COMMENT */
 
@@ -2741,7 +2754,6 @@ dourl() {
             char * tmpbuf = NULL;
             if (!(tmpbuf = (char *)malloc(1024)))
                 fatal("dourl: out of memory");
-
             if (!ckstrcmp(g_url.usr,"anonymous",-1,0)) {
                 ckmakmsg(tmpbuf,1024,uidbuf,"@",myhost,NULL);
                 makestr(&g_url.psw,tmpbuf);
@@ -2749,7 +2761,6 @@ dourl() {
                 readpass(" Password:",tmpbuf,1024);
                 makestr(&g_url.psw,tmpbuf);
             }
-
             free(tmpbuf);
         }
         port = "kermit";
@@ -2788,40 +2799,64 @@ dourl() {
 #ifdef NOSPL
         cflg = 1;
 #else
-        if (!g_url.pth) {
-            cflg = 1;
-        } else {
-            char * line = NULL;
-            if (!(line = (char *)malloc(10240)))
+	{
+            char * script = NULL;
+            if (!(script = (char *)malloc(SCRIPTLEN)))
               fatal("dourl: out of memory");
             if (!g_url.pth) {           /* Write the appropriate script */
-                ckmakxmsg(line,10240,
+		cflg = 1;
+                ckmakxmsg(script,SCRIPTLEN,
+			  "if not eq {\\v(authstate)} {user} ",
+			  "if not eq {\\v(authstate)} {valid} { ",
                           "remote login ", /* No path */
                           g_url.usr,       /* Just log in and CONNECT */
                           " ",
                           g_url.psw,
-                          ", if fail exit 1 IKSD login failed",
+                          ", if fail exit 1 {IKSD login failed} }",
                           ", connect",
-                          NULL,NULL,NULL,NULL,NULL,NULL);
+                          NULL,NULL,NULL,NULL);
+		/* printf("CLCMDS 1: %s\n",script); */
             } else {
-                ckmakxmsg(line,10240,   /* Path given, try to GET */
-                          "remote login ",
-                          g_url.usr,
-                          " ",
-                          g_url.psw,
-                          ", if fail exit 1 IKSD login failed",
-                          ", set xfer displ brief",
-                          ", set xfer bell off",
-                          ", get ",
-                          g_url.pth,
-                          ", .rc := \\v(status)",
-                          ", bye",
-                          ", exit \\m(rc)"
-                          );
+                /* does the path specify a file or a directory? */
+                int len = strlen(g_url.pth);
+                if (ISDIRSEP(g_url.pth[len-1])) {
+		    ckmakxmsg(script,SCRIPTLEN, /* Directory name given */
+			      "if not eq {\\v(authstate)} {user} \
+if not eq {\\v(authstate)} {valid} { remote login ",
+			      g_url.usr,
+			      " ",
+			      g_url.psw,
+			      ", if fail exit 1 {IKSD login failed} }",
+			      ", set macro error on",
+			      ", set xfer displ brief",
+			      ", set xfer bell off",
+			      ", remote cd ",
+			      g_url.pth,
+			      ", lineout directory",
+			      ", connect"
+			      );
+		    /* printf("CLCMDS 2: %s\n",script); */
+		} else {
+		    ckmakxmsg(script,SCRIPTLEN, /* Path given, try to GET */
+			      "if not eq {\\v(authstate)} {user} \
+if not eq {\\v(authstate)} {valid} { remote login ",
+			      g_url.usr,
+			      " ",
+			      g_url.psw,
+			      ", if fail exit 1 {IKSD login failed} }",
+			      ", set xfer displ brief",
+			      ", set xfer bell off",
+			      ", get ",
+			      g_url.pth,
+			      ", .rc := \\v(status)",
+			      ", if open connection bye",
+			      ", exit \\m(rc)"
+			      );
+		    /* printf("CLCMDS 2: %s\n",script); */
+		}
             }
-            clcmds = line;              /* Make this our -C cmdline macro */
-            debug(F110,"dourl clcmds",clcmds,0);
-	    debug(F101,"dourl haveurl","",haveurl);
+            clcmds = script;		/* Make this our -C cmdline macro */
+	    /* printf("HAVEURL=%d\n",haveurl); */
         }
 #endif /* NOSPL */
     } else {
@@ -2937,9 +2972,7 @@ main(argc,argv) int argc; char **argv;
 #ifdef CK_KERBEROS
     else if (!ckstrcmp(myname,"ktelnet",-1,0)) howcalled = I_AM_TELNET;
 #endif /* CK_KERBEROS */
-#ifdef COMMENT
     else if (!ckstrcmp(myname,"rlogin",-1,0))  howcalled = I_AM_RLOGIN;
-#endif /* COMMENT */
     else if (!ckstrcmp(myname,"iksd",-1,0))    howcalled = I_AM_IKSD;
 #ifdef NEWFTP
     else if (!ckstrcmp(myname,"ftp",-1,0))     howcalled = I_AM_FTP;
@@ -2950,15 +2983,17 @@ main(argc,argv) int argc; char **argv;
 #ifdef OS2
     else if (!ckstrcmp(myname,"telnet.exe",-1,0))  howcalled = I_AM_TELNET;
 #ifdef SSHBUILTIN
+    else if (!ckstrcmp(myname,"ssh",-1,0))  howcalled = I_AM_SSH;
     else if (!ckstrcmp(myname,"ssh.exe",-1,0))  howcalled = I_AM_SSH;
 #endif /* SSHBUILTIN */
 #ifdef CK_KERBEROS
     else if (!ckstrcmp(myname,"ktelnet.exe",-1,0)) howcalled = I_AM_TELNET;
 #endif /* CK_KERBEROS */
-#ifdef COMMENT
     else if (!ckstrcmp(myname,"rlogin.exe",-1,0))  howcalled = I_AM_RLOGIN;
-#endif /* COMMENT */
-    else if (!ckstrcmp(myname,"iksd.exe",-1,0))    howcalled = I_AM_IKSD;
+#ifdef NT
+    else if (!ckstrcmp(myname,"iksdnt",-1,0))    howcalled = I_AM_IKSD;
+    else if (!ckstrcmp(myname,"iksdnt.exe",-1,0))    howcalled = I_AM_IKSD;
+#endif /* NT */
 #ifdef NEWFTP
     else if (!ckstrcmp(myname,"ftp.exe",-1,0))     howcalled = I_AM_FTP;
 #endif /* NEWFTP */
@@ -3145,7 +3180,7 @@ main(argc,argv) int argc; char **argv;
         c *= getpid();
 	/* Referenced before set... DELIBERATELY */
         for (n = 0; n < sizeof(stackdata); n++) /* IGNORE WARNING */
-	  c += stackdata[n];
+	  c += stackdata[n];		/* DELIBERATELY USED BEFORE SET */
         srand((unsigned int)c);
     }
 #endif /* NORANDOM */
@@ -3377,6 +3412,12 @@ main(argc,argv) int argc; char **argv;
 
 #ifndef NOCMDL
     ikslogin();                          /* IKSD Login and other stuff */
+#ifdef IKSD
+#ifdef NT
+    if ( inserver )
+      setntcreds();
+#endif /* NT */
+#endif /* IKSD */
 #endif /* NOCMDL */
 
     if (howcalled == I_AM_SSHSUB) {

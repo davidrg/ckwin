@@ -1,13 +1,13 @@
 #include "ckcsym.h"
 
-char *connv = "CONNECT Command for UNIX:fork(), 8.0.113, 11 Sep 2002";
+char *connv = "CONNECT Command for UNIX:fork(), 8.0.114, 29 Nov 2002";
 
 /*  C K U C O N  --  Terminal connection to remote system, for UNIX  */
 /*
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2002,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -1761,7 +1761,11 @@ conect() {
     debug(F101,"CONNECT ttvt ok, escape","",escape);
 
     debug(F101,"CONNECT carrier-watch","",carrier);
-    if (!network && (carrier != CAR_OFF)) {
+    if ((!network 
+#ifdef TN_COMPORT
+	  || istncomport()
+#endif /* TN_COMPORT */
+	 ) && (carrier != CAR_OFF)) {
 	int x;
 	x = ttgmdm();
 	debug(F100,"CONNECT ttgmdm","",x);

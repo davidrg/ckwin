@@ -3,15 +3,18 @@
 #endif /* SSHTEST */
 
 #include "ckcsym.h"
-char *userv = "User Interface 8.0.261, 11 Sep 2002";
+char *userv = "User Interface 8.0.278, 12 Mar 2004";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 
 /*
-  Author: Frank da Cruz <fdc@columbia.edu>
-  Columbia University Academic Information Systems, New York City.
+  Authors:
+    Frank da Cruz <fdc@columbia.edu>,
+      The Kermit Project, Columbia University, New York City
+    Jeffrey E Altman <jaltman@secure-endpoints.com>
+      Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2002,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -95,7 +98,8 @@ int g_fncact = -1;			/* Needed for NOICP builds */
 int noinit = 0;				/* Flag for skipping init file */
 int nscanfile = SCANFILEBUF;
 
-int rcdactive = 0;
+int rcdactive = 0;			/* RCD active */
+int keepallchars = 0;			/* See cmfld() */
 
 int locus = 1;				/* Current LOCUS is LOCAL */
 #ifdef OS2
@@ -128,6 +132,7 @@ int autolocus = 1;			/* Automatic LOCUS switching enabled */
 extern int tcp_avail;
 extern bool viewonly;
 extern int k95stdout;
+extern int tt_scroll;
 #ifndef NOTERM
 extern tt_status[VNUM];
 #endif /* NOTERM */
@@ -142,7 +147,7 @@ int optlines = 0;
 int didsetlin = 0;
 
 #ifdef NEWFTP
-extern int ftpget, ftpisopen(), ftpbye(), doftpres();
+extern int ftpget, ftpisopen(), doftpres();
 _PROTOTYP(int doftptyp,(int));
 #endif /* NEWFTP */
 
@@ -517,7 +522,13 @@ int					/* SET INPUT parameters. */
   inecho = 1,				/* 1 = echo on */
   inautodl = 0,				/* INPUT autodownload */
   inintr = 1,				/* INPUT interrupion allowed */
+  innomatch = 0,			/* INPUT /NOMATCH */
   insilence = 0;			/* 0 = no silence constraint */
+
+#ifdef CKFLOAT
+CKFLOAT inscale = 1.0;			/* Timeout scale factor */
+#endif	/* CKFLOAT */
+
 #ifdef OS2
 int interm = 1;				/* Terminal emulator displays input */
 #endif /* OS2 */
@@ -543,10 +554,23 @@ long ck_alarm = 0;			/* SET ALARM value */
 char alrm_date[24] = { ' ',' ',' ',' ',' ',' ',' ',' ',' ' };
 char alrm_time[24] = { ' ',' ',' ',' ',' ',' ',' ' };
 
+#define INPSW_NOM 1
+struct keytab inputsw[] = {
+    { "/nomatch", INPSW_NOM, 0 }
+};
+static int ninputsw = sizeof(inputsw)/sizeof(struct keytab);
+
 #endif /* NOSPL */
 
 static int x, y, z = 0;			/* Local workers */
 static char *s;
+
+#ifdef CK_MINPUT
+static char c1chars[] = {		/* C1 control chars escept NUL */
+    001,002,003,004,005,006,007,010,011,012,013,014,015,016,017,020,
+    021,022,023,024,025,026,027,030,031,032,033,034,035,036,037
+};
+#endif /* CK_MINPUT */
 
 #define xsystem(s) zsyscmd(s)
 
@@ -1152,11 +1176,14 @@ struct keytab cmdtab[] = {
 #endif /* NOHELP */
     { "nolocal",     XXNLCL, CM_INV },	/* Disable SET LINE / SET HOST */
     { "nopush",      XXNPSH, CM_INV },	/* Disable PUSH command/features */
+#ifdef OS2
+    { "noscroll",    XXNSCR, CM_INV },  /* Disable scroll operations */
+#endif /* OS2 */
 #ifndef NOSPL
     { "o",           XXOUT, CM_INV|CM_ABR }, /* Invisible synonym for OUTPUT */
     { "open",        XXOPE, 0 },	/* OPEN file for reading or writing */
 #else
-    { "open",        XXNPSH, CM_INV },	/* Disable PUSH command/features */
+    { "open",        XXOPE, CM_INV },	/* OPEN */
 #endif /* NOSPL */
 #ifndef NOHELP
     { "options",     XXOPTS,CM_INV|CM_HLP }, /* Options */
@@ -1493,6 +1520,11 @@ struct keytab cmdtab[] = {
 #ifndef NOSEXP
     { "sexpression", XXSEXP, CM_INV|CM_HLP }, /* SEXPR */
 #endif /* NOSEXP */
+
+#ifdef SFTP_BUILTIN
+    { "sftp",        XXSFTP, 0 },   /* SFTP */
+#endif /* SFTP_BUILTIN */
+
 #ifndef NOSHOW
     { "sh",          XXSHO, CM_INV|CM_ABR }, /* SHOW parameters */
 #endif /* NOSHOW */
@@ -1507,15 +1539,19 @@ struct keytab cmdtab[] = {
     { "show", 	   XXNOTAV, CM_INV },
 #endif /* NOSHOW */
 
+#ifdef NEWFTP
+    { "site",        XXSITE, CM_INV },	/* (FTP) SITE */
+#endif /* NEWFTP */
+
+#ifdef SSHBUILTIN
+    { "skermit",   XXSKRM, 0 },     /* SKERMIT */
+#endif /* SSHBUILTIN */
+
 #ifndef NOSPL
 #ifndef NOFRILLS
     { "sleep",       XXPAU, CM_INV },	/* SLEEP for specified interval */
 #endif /* NOFRILLS */
 #endif /* NOSPL */
-
-#ifdef NEWFTP
-    { "site",        XXSITE, CM_INV },	/* (FTP) SITE */
-#endif /* NEWFTP */
 
 #ifndef NOSPL
     { "sort",        XXSORT, CM_INV },	/* (see ARRAY) */
@@ -2354,7 +2390,42 @@ static struct keytab sshdofmt[] = {	/* SSH KEY DISPLAY /IN-FORMAT: */
     { "ssh.com",     SKDF_SSHC, 0 }
 };
 static int nsshdofmt = (sizeof(sshdofmt) / sizeof(struct keytab));
+
+static struct keytab sshkermit[] = { /* SKERMIT */
+    { "open",       SKRM_OPN, 0 }
+};
+static int nsshkermit = (sizeof(sshkermit) / sizeof(struct keytab));
+
+struct keytab sshkrmopnsw[] = {
+    { "/password",       SSHSW_PWD, CM_ARG },
+    { "/user",           SSHSW_USR, CM_ARG },
+    { "/version",        SSHSW_VER, CM_ARG },
+    { "", 0, 0 }
+};
+int nsshkrmopnsw = (sizeof(sshkrmopnsw) / sizeof(struct keytab)) - 1;
 #endif /* SSHBUILTIN */
+
+#ifdef SFTP_BUILTIN
+static struct keytab sftpkwtab[] = {    /* SFTP */
+    {  "cd",        SFTP_CD,    0 },
+    {  "chgrp",     SFTP_CHGRP, 0 },
+    {  "chmod",     SFTP_CHMOD, 0 },
+    {  "chown",     SFTP_CHOWN, 0 },
+    {  "delete",    SFTP_RM,    0 },
+    {  "dir",       SFTP_DIR,   0 },
+    {  "get",       SFTP_GET,   0 },
+    {  "mkdir",     SFTP_MKDIR, 0 },
+    {  "open",      SFTP_OPN,   0 },
+    {  "put",       SFTP_PUT,   0 },
+    {  "pwd",       SFTP_PWD,   0 },
+    {  "rename",    SFTP_REN,   0 },
+    {  "rm",        SFTP_RM,    CM_INV },
+    {  "rmdir",     SFTP_RMDIR, 0 },
+    {  "symlink",   SFTP_LINK,  0 },
+    {  "version",   SFTP_VER,   0 }
+};
+static int nsftpkwtab = (sizeof(sftpkwtab) / sizeof(struct keytab));
+#endif /* SFTP_BUILTIN */
 #endif /* ANYSSH */
 
 #ifdef NETCONN
@@ -3012,10 +3083,10 @@ static struct keytab enatab[] = {	/* ENABLE commands */
     { "host",       EN_HOS,  0 },
     { "mail",       EN_MAI,  0 },
     { "mkdir",      EN_MKD,  0 },
+    { "print",      EN_PRI,  0 },
 #ifndef NOSPL
     { "query",      EN_QUE,  0 },
 #endif /* NOSPL */
-    { "print",      EN_PRI,  0 },
     { "rename",     EN_REN,  0 },
     { "retrieve",   EN_RET,  CM_INV },
     { "rmdir",      EN_RMD,  0 },
@@ -3301,14 +3372,24 @@ int npagetab = sizeof(pagetab)/sizeof(struct keytab);
 #define TYP_XUT 10			/* /TRANSLATE-TO:charset */
 #define TYP_XPA 11			/* /TRANSPARENT */
 #endif /* UNICODE */
-#define TYP_NUM 12			/* /NUMBER */
+#ifdef KUI
+#define TYP_GUI 12			/* /GUI:title */
+#define TYP_HIG 13			/* /HEIGHT:rows */
+#endif /* KUI */
+#define TYP_NUM 14			/* /NUMBER */
 
 static struct keytab typetab[] = {	/* TYPE command switches */
     { "/count",          TYP_COU, 0 },
 #ifdef UNICODE
     { "/character-set",  TYP_XIN, CM_ARG },
 #endif /* UNICODE */
+#ifdef KUI
+    { "/gui",            TYP_GUI, CM_ARG },
+#endif /* KUI */
     { "/head",           TYP_HEA, CM_ARG },
+#ifdef KUI
+    { "/height",         TYP_HIG, CM_ARG },
+#endif /* KUI */
     { "/match",          TYP_PAT, CM_ARG },
 #ifdef CK_TTGWSIZ
     { "/more",           TYP_PAG, CM_INV },
@@ -4567,7 +4648,8 @@ doxsend(cx) int cx; {
 	    goto xsendx;
 #endif /* CK_MKDIR */
 	}
-	makestr(&snd_move,p);
+        zfnqfp(p,LINBUFSIZ,tmpbuf);
+	makestr(&snd_move,tmpbuf);
     }
 #endif /* CK_TMPDIR */
 
@@ -5872,7 +5954,7 @@ dodcl(cx) int cx; {
     ckstrncpy(line,s,LINBUFSIZ);
     s = line;
     x = arraybounds(s,&lo,&hi);		/* Check syntax and get bounds */
-    debug(F111,"XXX dodcl arraybounds",s,x);
+    debug(F111,"dodcl arraybounds",s,x);
     if (x < 0) {			/* Error - Maybe it's a variable */
 	char * p;			/* whose value is an array name */
 	int n;
@@ -5884,22 +5966,27 @@ dodcl(cx) int cx; {
 	if (zzstring(s,&p,&n) > -1) {
 	    s = tmpbuf;
 	    x = arraybounds(s,&lo,&hi);
-	    debug(F111,"XXX dodcl arraybounds 2",s,x);
+	    debug(F111,"dodcl arraybounds 2",s,x);
 	}
 	if (x < 0) {
 	    printf("?Bad array name - \"%s\"\n",s);
 	    return(-9);
 	}
     }
-    debug(F101,"XXX dodcl lo","",lo);
-    debug(F101,"XXX dodcl hi","",hi);
+    debug(F101,"dodcl hi","",hi);
+    debug(F101,"dodcl lo","",lo);
+    debug(F101,"dodcl lo+1","",lo+1);
 
-    if (lo < 0 && hi < 0) {		/* Have good array name and bounds */
+    if (lo == -1 && hi == -1) {		/* Have good array name and bounds */
 	isdynamic = 1;
 	n = CMDBL / 5;
     } else if (hi > -1) {
 	printf("?Segment notation not allowed in array declarations\n");
 	return(-9);
+    } else if ((lo+1) < 0) {
+	debug(F101,"dodcl underflow","",lo+1);
+        printf("?Dimension underflow\n");
+        return(-9);
     } else
       n = lo;
     x = arrayitoa(x);
@@ -5916,6 +6003,7 @@ dodcl(cx) int cx; {
 	}
 	v = 0;				/* Highest initialized member */
 	p[0] = NULL;			/* Element 0 */
+	keepallchars = 1;
 	while (n > 0 && v < n) {	/* Parse initializers */
 	    p[v+1] = NULL;
 	    ckmakxmsg(tmp,
@@ -5939,6 +6027,7 @@ dodcl(cx) int cx; {
 	    s = brstrip(s);		/* Strip any braces */
 	    makestr(&(p[++v]),s);
 	}
+	keepallchars = 0;
 	if ((y = cmtxt("Carriage return to confirm","",&s,NULL)) < 0)
 	  return(y);
 	if (isdynamic)
@@ -7351,7 +7440,7 @@ dohttp() {				/* HTTP */
 	      makestr(&http_host,s);
 	      if ((x =
 		   cmfld("Service name or port number",
-			 "http",&s,xxstring)) < 0)
+			 sslswitch ? "https" : "http",&s,xxstring)) < 0)
 		goto xhttp;
 	      else
 		makestr(&http_srv,s);
@@ -7388,7 +7477,7 @@ dohttp() {				/* HTTP */
       goto xhttp;
 
     if (http_action == HTTP_OPN) {
-        x = (http_open(http_host,http_srv,http_ssl,rdns,128) == 0);
+        x = (http_open(http_host,http_srv,http_ssl,rdns,128,http_agent) == 0);
         if (x) {
             if (!quiet) {
               if (rdns[0])
@@ -7469,7 +7558,8 @@ dohttp() {				/* HTTP */
 	      http_close();
 	    if (http_pass == NULL && http_d_pass != NULL)
 	      makestr(&http_pass,http_d_pass);
-	    x = (http_open(http_host,http_srv,http_ssl,rdns,128) == 0);
+	    x = (http_open(http_host,
+			   http_srv,http_ssl,rdns,128,http_d_agent) == 0);
 	    if (x < 0) {
 		x = 0;
 		goto xhttp;
@@ -7811,6 +7901,7 @@ docmd(cx) int cx; {
 	ckstrncpy(lblbuf,brstrip(s),LBLSIZ);
 #endif /* COMMENT */
 	s = lblbuf;
+	debug(F111,"GOTO target",s,cx);
 	return(dogoto(s,cx));
     }
     if (cx == XXDO || cx == XXMACRO) {	/* DO (a macro) */
@@ -8950,15 +9041,83 @@ docmd(cx) int cx; {
 
     if (cx == XXINP || cx == XXREI || cx == XXMINP) {
 	long zz;
-	extern int x_ifnum, ispattern;
-	zz = -1L;
-	x_ifnum = 1;			/* Turn off internal complaints */
-	y = cmnum("Seconds to wait for input,\n or time of day hh:mm:ss",
-		  ckitoa(indef), 10, &x, xxstring
-		  );
-	x_ifnum = 0;
-	if (y < 0) {
-	    if (y == -2) {		/* Invalid number or expression */
+	extern int ispattern, isjoin;
+
+	struct FDB sw, nu, fl;
+	int fc, havetime = 0;
+	char * m;
+
+	if (cx == XXREI) {
+	    m = "Timeout in seconds (ignored)";
+	} else {
+	    m = "Seconds to wait for input,\n or time of day hh:mm:ss, \
+ or switch";
+	}
+	innomatch = 0;			/* Initialize switch value(s) */
+
+	cmfdbi(&sw,			/* First FDB - command switches */
+	       _CMKEY,			/* fcode */
+	       m,			/* helpmsg */
+	       ckitoa(indef),		/* default */
+	       "",			/* addtl string data */
+	       ninputsw,		/* addtl numeric data 1: tbl size */
+	       4,			/* addtl numeric data 2: 4 = cmswi */
+	       xxstring,		/* Processing function */
+	       inputsw,			/* Keyword table */
+	       &nu			/* Pointer to next FDB */
+	       );
+	cmfdbi(&nu,
+	       _CMNUM,			/* Number */
+	       m,			/* Help message */
+	       ckitoa(indef),		/* default */
+	       "",			/* N/A */
+	       10,			/* Radix = 10 */
+	       0,			/* N/A */
+	       xxstring,		/* Processing function */
+	       NULL,			/* N/A */
+	       &fl			/* Next */
+	       );
+	cmfdbi(&fl,			/* Time of day hh:mm:ss */
+	       _CMFLD,			/* fcode */
+	       "",			/* hlpmsg */
+	       "",
+	       "",			/* addtl string data */
+	       0,			/* addtl numeric data 1 */
+	       0,			/* addtl numeric data 2 */
+	       xxstring,
+	       NULL,
+	       NULL
+	       );
+	fc = (cx == XXREI) ? cmfdb(&nu) : cmfdb(&sw); /* Parse something */
+
+	while (!havetime) {
+	    if (fc < 0) {		/* Error */
+		if (fc == -3) {
+		    printf("?Syntax error in INPUT-class command\n");
+		    return(-9);
+		} else
+		  return(fc);
+	    }
+	    switch (cmresult.fcode) {
+	      case _CMKEY:		/* Switch */
+		if (cmresult.nresult == INPSW_NOM) /* /NOMATCH */
+		  innomatch = 1;
+		m = "Seconds to wait for input,\n or time of day hh:mm:ss";
+		cmfdbi(&nu,_CMNUM,m,"","",10,0,xxstring,NULL,&fl);
+		cmfdbi(&fl,_CMFLD,"","","",0,0,xxstring,NULL,NULL);
+		fc = cmfdb(&nu);	/* Parse something */
+		continue;
+
+	      case _CMNUM:		/* Seconds to time out */
+		x = cmresult.nresult;
+#ifdef CKFLOAT
+		if (inscale != 1.0)	/* Scale */
+		  x *= inscale;		
+#endif	/* CKFLOAT */
+		havetime++;
+		break;
+
+	      case _CMFLD:
 		zz = tod2sec(atmbuf);	/* Convert to secs since midnight */
 		if (zz < 0L) {
 		    printf("?Number, expression, or time of day required\n");
@@ -8973,19 +9132,24 @@ docmd(cx) int cx; {
 		    if (zz < tnow)	/* User's time before now */
 		      zz += 86400L;	/* So make it tomorrow */
 		    zz -= tnow;		/* Seconds from now. */
-		}
-	    } else
-	      return(y);
-	}
-	if (zz > -1L) {
-	    x = zz;
-	    if (zz != (long) x) {
-		printf(
+		    if (zz > -1L) {
+			x = zz;
+			if (zz != (long) x) {
+			    printf(
 "Sorry, arithmetic overflow - hh:mm:ss not usable on this platform.\n"
-		       );
+);
+			    return(-9);
+			}
+		    }
+		    havetime++;
+		}
+		break;
+	      default:		
+		printf("?Internal error\n");
 		return(-9);
 	    }
 	}
+	/* Now parse the search text */
 
 #ifdef CK_MINPUT
 	for (y = 0; y < MINPMAX; y++) {	/* Initialize strings */
@@ -8996,28 +9160,45 @@ docmd(cx) int cx; {
 	    }
 	}
 	if (cx == XXMINP) {		/* MINPUT */
-	    int i, k, n = 0, rc = 0;
+	    int i, k = 0, n = 0;
 	    struct stringarray * q;
-	    if ((y = cmtxt("List of targets","",&s,xxstring)) < 0)
-	      return(y);
-	    if ((q = cksplit(1,0,s," ",NULL,3,0,0))) {
-		char ** ap = q->a_head;
-
-		n = q->a_size;
-		debug(F101,"minput cksplit size","",n);
-
-		for (i = 1, k = 0; i <= n; i++) { /* Array is 1-based */
-		    if (!ap[i])		          /* Add non-empty elements */
-		      continue;
-		    if (!*(ap[i]))
-		      continue;
-		    makestr(&(ms[k++]),ap[i]);    /* Not empty - add it */
-		    debug(F111,"MINPUT",ms[k-1],k-1);
-		    if (k > MINPMAX)	          /* Check for too many */
-		      break;
+	    keepallchars = 1;
+	    while (k < MINPMAX) {
+		if ((y = cmfld("String or pattern","",&s,xxstring)) < 0) {
+		    if (y == -3) {
+			if ((y = cmcfm()) < 0)
+			  return(y);
+			break;
+		    } else {
+			return(y);
+		    }
 		}
-		rc = (k > 0) ? 1 : 0;
+		debug(F111,"MINPUT field",s,k);
+		if (isjoin) {
+		    if ((q = cksplit(1,0,s," ",(char *)c1chars,3,0,0))) {
+			char ** ap = q->a_head;
+			n = q->a_size;
+			debug(F101,"minput cksplit size","",n);
+			for (i = 1; i <= n && k < MINPMAX; i++) {
+			    if (!ap[i]) /* Add non-empty elements */
+			      continue;
+			    if (!*(ap[i]))
+			      continue;
+			    makestr(&(ms[k]),ap[i]);
+			    debug(F111,"MINPUT JOIN",ms[k],k);
+			    k++;
+			}
+		    }
+		} else {
+		    if (s) if (*s) {
+			makestr(&(ms[k]),brstrip(s));
+			if (ispattern) mp[k] = 1;
+			debug(F111,"MINPUT",ms[k],ispattern);
+			k++;
+		    }
+		}
 	    }
+	    keepallchars = 0;
 	} else {
 #endif /* CK_MINPUT */
 
@@ -9033,9 +9214,16 @@ docmd(cx) int cx; {
 	}
 #endif /* CK_MINPUT */
 
+#ifdef COMMENT
+	printf("/NOMATCH=%d\n",innomatch);
+	printf("Timeout=%d\n",x);
+	return(1);
+#endif	/* COMMENT */
+
 	if (cx == XXINP || cx == XXMINP) { /* Not REINPUT... */
 	    i_active = 1;
-	    success = doinput(x,ms,mp);	/* Go try to input the search string */
+	    /* Go try to input the search string */
+	    success = doinput(x,ms,mp,innomatch);
 	    i_active = 0;
 	} else {			/* REINPUT */
 	    success = doreinp(x,ms[0],ispattern);
@@ -10066,7 +10254,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	struct FDB sw, kw, fl;
 
         if (ssh_tmpstr)
-            memset(ssh_tmpstr,0,strlen(ssh_tmpstr));
+	  memset(ssh_tmpstr,0,strlen(ssh_tmpstr));
         makestr(&ssh_tmpstr,NULL);
         makestr(&ssh_tmpuid,NULL);
         makestr(&ssh_tmpcmd,NULL);
@@ -10860,6 +11048,614 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
     }
 #endif /* ANYSSH */
 
+#ifdef SSHBUILTIN
+    if (cx == XXSKRM) {			/* SKERMIT (Secure Shell Kermit) */
+	extern int netsave;
+	int k, x, havehost = 0, trips = 0;
+        int    tmpver = -1, tmpxfw = -1;
+#ifndef SSHTEST
+        extern int sl_ssh_xfw, sl_ssh_xfw_saved;
+        extern int sl_ssh_ver, sl_ssh_ver_saved;
+#endif /* SSHTEST */
+        extern int mdmtyp, mdmsav, cxtype, sl_uid_saved;
+        extern char * slmsg;
+	extern char uidbuf[], sl_uidbuf[];
+        extern char pwbuf[], * g_pswd;
+        extern int pwflg, pwcrypt, g_pflg, g_pcpt, nolocal;
+	struct FDB sw, kw, fl;
+
+        if (ssh_tmpstr)
+	  memset(ssh_tmpstr,0,strlen(ssh_tmpstr));
+        makestr(&ssh_tmpstr,NULL);
+        makestr(&ssh_tmpuid,NULL);
+        makestr(&ssh_tmpcmd,NULL);
+        makestr(&ssh_tmpport,NULL);
+
+	cmfdbi(&kw,			/* 1st FDB - commands */
+	       _CMKEY,			/* fcode */
+	       "host [ port ],\n or action", /* hlpmsg */
+	       "",			/* default */
+	       "",			/* addtl string data */
+	       nsshkermit,		/* addtl numeric data 1: tbl size */
+	       0,			/* addtl numeric data 2: 0 = keyword */
+	       xxstring,		/* Processing function */
+	       sshkermit,		/* Keyword table */
+	       &fl			/* Pointer to next FDB */
+	       );
+	cmfdbi(&fl,			/* Host */
+	       _CMFLD,			/* fcode */
+	       "",			/* hlpmsg */
+	       "",			/* default */
+	       "",			/* addtl string data */
+	       0,			/* addtl numeric data 1 */
+	       0,			/* addtl numeric data 2 */
+	       xxstring,
+	       NULL,
+	       NULL
+	       );
+
+	x = cmfdb(&kw);
+	if (x == -3) {
+	    printf("?skermit what?\n");
+	    return(-9);
+	}
+	if (x < 0)
+	  return(x);
+	havehost = 0;
+	if (cmresult.fcode == _CMFLD) {
+	    havehost = 1;
+	    ckstrncpy(line,cmresult.sresult,LINBUFSIZ); /* Hostname */
+	    cmresult.nresult = SKRM_OPN;
+	}
+	switch (cmresult.nresult) {	/* SSH keyword */
+	  case SKRM_OPN:		/* SSH OPEN */
+	    if (!havehost) {
+		if ((x = cmfld("Host","",&s,xxstring)) < 0)
+		  return(x);
+		ckstrncpy(line,s,LINBUFSIZ);
+	    }
+	    /* Parse [ port ] [ switches ] */
+	    cmfdbi(&kw,			/* Switches */
+		   _CMKEY,
+		   "Port number or service name,\nor switch",
+		   "",
+		   "",
+		   nsshkrmopnsw,
+		   4,
+		   xxstring,
+		   sshkrmopnsw,
+		   &fl
+		   );
+	    cmfdbi(&fl,			/* Port number or service name */
+		   _CMFLD,
+		   "",
+		   "",
+		   "",
+		   0,
+		   0,
+		   xxstring,
+		   NULL,
+		   NULL
+		   );
+	    trips = 0;			/* Explained below */
+	    while (1) {			/* Parse port and switches */
+		x = cmfdb(&kw);		/* Get a field */
+		if (x == -3)		/* User typed CR so quit from loop */
+		  break;
+		if (x < 0)		/* Other parse error, pass it back */
+		  return(x);
+		switch (cmresult.fcode) { /* Field or Keyword? */
+                  case _CMFLD:		  /* Field */
+                    makestr(&ssh_tmpport,cmresult.sresult);
+		    break;
+		  case _CMKEY:		/* Keyword */
+		    switch (cmresult.nresult) {	/* Which one? */
+		      case SSHSW_USR:	        /* /USER: */
+			if (!cmgbrk()) {
+			    printf("?This switch requires an argument\n");
+			    return(-9);
+			}
+			if ((y = cmfld("Username","",&s,xxstring)) < 0)
+			  return(y);
+			s = brstrip(s);
+			makestr(&ssh_tmpuid,s);
+			break;
+                      case SSHSW_PWD:
+			if (!cmgbrk()) {
+			    printf("?This switch requires an argument\n");
+			    return(-9);
+			}
+			debok = 0;
+			if ((x = cmfld("Password","",&s,xxstring)) < 0) {
+			    if (x == -3) {
+				makestr(&ssh_tmpstr,"");
+			    } else {
+				return(x);
+			    }
+			} else {
+			    s = brstrip(s);
+			    if ((x = (int)strlen(s)) > PWBUFL) {
+				makestr(&slmsg,"Internal error");
+				printf("?Sorry, too long - max = %d\n",PWBUFL);
+				return(-9);
+			    }
+			    makestr(&ssh_tmpstr,s);
+			}
+			break;
+
+                    case SSHSW_VER:
+			if ((x = cmnum("Number","",10,&z,xxstring)) < 0)
+			  return(x);
+			if (z < 1 || z > 2) {
+			    printf("?Out of range: %d\n",z);
+			    return(-9);
+			}
+                        tmpver = z;
+			break;
+                    default:
+                        return(-2);
+		    }
+                  }
+		if (trips++ == 0) {	/* After first time through */
+		    cmfdbi(&kw,		/* only parse switches, not port. */
+			   _CMKEY,
+			   "Switch",
+			   "",
+			   "",
+			   nsshkrmopnsw,
+			   4,
+			   xxstring,
+			   sshkrmopnsw,
+			   NULL
+			   );
+		}
+	    }
+	    if ((x = cmcfm()) < 0)	/* Get confirmation */
+	      return(x);
+              if (clskconnx(1) < 0) {	/* Close current Kermit connection */
+                  if ( ssh_tmpstr ) {
+                      memset(ssh_tmpstr,0,strlen(ssh_tmpstr));
+                      makestr(&ssh_tmpstr,NULL);
+                  }
+                  return(success = 0);
+              }
+              makestr(&ssh_hst,line);	/* Stash everything */
+              if (ssh_tmpuid) {
+                  if (!sl_uid_saved) {
+                      ckstrncpy(sl_uidbuf,uidbuf,UIDBUFLEN);
+                      sl_uid_saved = 1;
+                  }
+                  ckstrncpy(uidbuf,ssh_tmpuid,UIDBUFLEN);
+                  makestr(&ssh_tmpuid,NULL);
+              }
+              if (ssh_tmpport) {
+                  makestr(&ssh_prt,ssh_tmpport);
+                  makestr(&ssh_tmpport,NULL);
+              } else
+                  makestr(&ssh_prt,NULL);
+
+              /* Set the Subsystem to Kermit */
+              ssh_cas = 1;
+              makestr(&ssh_cmd,"kermit");
+
+              if (tmpver > -1) {
+#ifndef SSHTEST
+                  if (!sl_ssh_ver_saved) {
+                      sl_ssh_ver = ssh_ver;
+                      sl_ssh_ver_saved = 1;
+                  }
+#endif /* SSHTEST */
+                  ssh_ver = tmpver;
+              }
+              /* Disable X11 Forwarding */
+#ifndef SSHTEST
+              if (!sl_ssh_xfw_saved) {
+                  sl_ssh_xfw = ssh_xfw;
+                  sl_ssh_xfw_saved = 1;
+              }
+#endif /* SSHTEST */
+              ssh_xfw = 0;
+
+              if (ssh_tmpstr) {
+                  if (ssh_tmpstr[0]) {
+                      ckstrncpy(pwbuf,ssh_tmpstr,PWBUFL+1);
+                      pwflg = 1;
+                      pwcrypt = 0;
+                  } else
+                      pwflg = 0;
+                  makestr(&ssh_tmpstr,NULL);
+              }
+              nettype = NET_SSH;
+              if (mdmsav < 0)
+                  mdmsav = mdmtyp;
+              mdmtyp = -nettype;
+              x = 1;
+
+#ifndef NOSPL
+            makestr(&g_pswd,pwbuf);	/* Save global pwbuf */
+            g_pflg = pwflg;		/* and flag */
+            g_pcpt = pwcrypt;
+#endif /* NOSPL */
+
+	    /* Line parameter to ttopen() is ignored */
+	    k = ttopen(line,&x,mdmtyp, 0);
+	    if (k < 0) {
+		printf("?Unable to connect to %s\n",ssh_hst);
+		mdmtyp = mdmsav;
+                slrestor();
+		return(success = 0);
+	    }
+	    duplex = 0;             /* Remote echo */
+	    ckstrncpy(ttname,line,TTNAMLEN); /* Record the command */
+	    debug(F110,"ssh ttname",ttname,0);
+	    makestr(&slmsg,NULL);	/* No SET LINE error message */
+	    cxtype = CXT_SSH;
+#ifndef NODIAL
+	    dialsta = DIA_UNK;
+#endif /* NODIAL */
+	    success = 1;		/* SET LINE succeeded */
+	    network = 1;		/* Network connection (not serial) */
+	    local = 1;			/* Local mode (not remote) */
+	    if ((reliable != SET_OFF || !setreliable))
+	      reliable = SET_ON;	/* Transport is reliable end to end */
+#ifdef OS2
+            DialerSend(OPT_KERMIT_CONNECT, 0);
+#endif /* OS2 */
+	    setflow();			/* Set appropriate flow control */
+
+	    haveline = 1;
+#ifdef CKLOGDIAL
+#ifdef NETCONN
+	    dolognet();
+#endif /* NETCONN */
+#endif /* CKLOGDIAL */
+
+#ifndef NOSPL
+	    if (local) {
+		if (nmac) {		/* Any macros defined? */
+		    int k;		/* Yes */
+		    k = mlook(mactab,"on_open",nmac); /* Look this up */
+		    if (k >= 0) {	              /* If found, */
+			if (dodo(k,ssh_hst,0) > -1)   /* set it up, */
+			  parser(1);		      /* and execute it */
+		    }
+		}
+	    }
+#endif /* NOSPL */
+#ifdef LOCUS		
+	    if (autolocus)
+		setlocus(1,1);
+#endif /* LOCUS */
+
+	/* Command was confirmed so we can pre-pop command level. */
+	/* This is so CONNECT module won't think we're executing a */
+	/* script if CONNECT was the final command in the script. */
+	    if (cmdlvl > 0)
+	      prepop();
+	    return(success = 1);
+
+	  default:
+	    return(-2);
+	}
+    }
+#endif /* SSHBUILTIN */
+
+#ifdef SFTP_BUILTIN
+    if (cx == XXSFTP) {			/* SFTP (Secure Shell File Transfer) */
+	extern int netsave;
+	int k, x, havehost = 0, trips = 0;
+        int    tmpver = -1, tmpxfw = -1;
+#ifndef SSHTEST
+        extern int sl_ssh_xfw, sl_ssh_xfw_saved;
+        extern int sl_ssh_ver, sl_ssh_ver_saved;
+#endif /* SSHTEST */
+        extern int mdmtyp, mdmsav, cxtype, sl_uid_saved;
+        extern char * slmsg;
+	extern char uidbuf[], sl_uidbuf[];
+        extern char pwbuf[], * g_pswd;
+        extern int pwflg, pwcrypt, g_pflg, g_pcpt, nolocal;
+	struct FDB sw, kw, fl;
+
+        if (ssh_tmpstr)
+	  memset(ssh_tmpstr,0,strlen(ssh_tmpstr));
+        makestr(&ssh_tmpstr,NULL);
+        makestr(&ssh_tmpuid,NULL);
+        makestr(&ssh_tmpcmd,NULL);
+        makestr(&ssh_tmpport,NULL);
+
+	cmfdbi(&kw,			/* 1st FDB - commands */
+	       _CMKEY,			/* fcode */
+	       "host [ port ],\n or action", /* hlpmsg */
+	       "",			/* default */
+	       "",			/* addtl string data */
+	       nsftpkwtab,		/* addtl numeric data 1: tbl size */
+	       0,			/* addtl numeric data 2: 0 = keyword */
+	       xxstring,		/* Processing function */
+	       sftpkwtab,		/* Keyword table */
+	       &fl			/* Pointer to next FDB */
+	       );
+	cmfdbi(&fl,			/* Host */
+	       _CMFLD,			/* fcode */
+	       "",			/* hlpmsg */
+	       "",			/* default */
+	       "",			/* addtl string data */
+	       0,			/* addtl numeric data 1 */
+	       0,			/* addtl numeric data 2 */
+	       xxstring,
+	       NULL,
+	       NULL
+	       );
+
+	x = cmfdb(&kw);
+	if (x == -3) {
+	    printf("?sftp what?\n");
+	    return(-9);
+	}
+	if (x < 0)
+	  return(x);
+	havehost = 0;
+	if (cmresult.fcode == _CMFLD) {
+	    havehost = 1;
+	    ckstrncpy(line,cmresult.sresult,LINBUFSIZ); /* Hostname */
+	    cmresult.nresult = SFTP_OPN;
+	}
+	switch (cmresult.nresult) {	/* SFTP keyword */
+	  case SFTP_OPN:		/* SFTP OPEN */
+	    if (!havehost) {
+		if ((x = cmfld("Host","",&s,xxstring)) < 0)
+		  return(x);
+		ckstrncpy(line,s,LINBUFSIZ);
+	    }
+	    /* Parse [ port ] [ switches ] */
+	    cmfdbi(&kw,			/* Switches */
+		   _CMKEY,
+		   "Port number or service name,\nor switch",
+		   "",
+		   "",
+		   nsshkrmopnsw,
+		   4,
+		   xxstring,
+		   sshkrmopnsw,
+		   &fl
+		   );
+	    cmfdbi(&fl,			/* Port number or service name */
+		   _CMFLD,
+		   "",
+		   "",
+		   "",
+		   0,
+		   0,
+		   xxstring,
+		   NULL,
+		   NULL
+		   );
+	    trips = 0;			/* Explained below */
+	    while (1) {			/* Parse port and switches */
+		x = cmfdb(&kw);		/* Get a field */
+		if (x == -3)		/* User typed CR so quit from loop */
+		  break;
+		if (x < 0)		/* Other parse error, pass it back */
+		  return(x);
+		switch (cmresult.fcode) { /* Field or Keyword? */
+                  case _CMFLD:		  /* Field */
+                    makestr(&ssh_tmpport,cmresult.sresult);
+		    break;
+		  case _CMKEY:		/* Keyword */
+		    switch (cmresult.nresult) {	/* Which one? */
+		      case SSHSW_USR:	        /* /USER: */
+			if (!cmgbrk()) {
+			    printf("?This switch requires an argument\n");
+			    return(-9);
+			}
+			if ((y = cmfld("Username","",&s,xxstring)) < 0)
+			  return(y);
+			s = brstrip(s);
+			makestr(&ssh_tmpuid,s);
+			break;
+                      case SSHSW_PWD:
+			if (!cmgbrk()) {
+			    printf("?This switch requires an argument\n");
+			    return(-9);
+			}
+			debok = 0;
+			if ((x = cmfld("Password","",&s,xxstring)) < 0) {
+			    if (x == -3) {
+				makestr(&ssh_tmpstr,"");
+			    } else {
+				return(x);
+			    }
+			} else {
+			    s = brstrip(s);
+			    if ((x = (int)strlen(s)) > PWBUFL) {
+				makestr(&slmsg,"Internal error");
+				printf("?Sorry, too long - max = %d\n",PWBUFL);
+				return(-9);
+			    }
+			    makestr(&ssh_tmpstr,s);
+			}
+			break;
+
+                    case SSHSW_VER:
+			if ((x = cmnum("Number","",10,&z,xxstring)) < 0)
+			  return(x);
+			if (z < 1 || z > 2) {
+			    printf("?Out of range: %d\n",z);
+			    return(-9);
+			}
+                        tmpver = z;
+			break;
+                    default:
+                        return(-2);
+		    }
+		}
+		if (trips++ == 0) {	/* After first time through */
+		    cmfdbi(&kw,		/* only parse switches, not port. */
+			   _CMKEY,
+			   "Switch",
+			   "",
+			   "",
+			   nsshkrmopnsw,
+			   4,
+			   xxstring,
+			   sshkrmopnsw,
+			   NULL
+			   );
+		}
+	    }
+	    if ((x = cmcfm()) < 0)	/* Get confirmation */
+	      return(x);
+              if (clskconnx(1) < 0) {	/* Close current Kermit connection */
+                  if ( ssh_tmpstr ) {
+                      memset(ssh_tmpstr,0,strlen(ssh_tmpstr));
+                      makestr(&ssh_tmpstr,NULL);
+                  }
+                  return(success = 0);
+              }
+              makestr(&ssh_hst,line);	/* Stash everything */
+              if (ssh_tmpuid) {
+                  if (!sl_uid_saved) {
+                      ckstrncpy(sl_uidbuf,uidbuf,UIDBUFLEN);
+                      sl_uid_saved = 1;
+                  }
+                  ckstrncpy(uidbuf,ssh_tmpuid,UIDBUFLEN);
+                  makestr(&ssh_tmpuid,NULL);
+              }
+              if (ssh_tmpport) {
+                  makestr(&ssh_prt,ssh_tmpport);
+                  makestr(&ssh_tmpport,NULL);
+              } else
+                  makestr(&ssh_prt,NULL);
+
+              /* Set the Subsystem to Kermit */
+              ssh_cas = 1;
+              makestr(&ssh_cmd,"sftp");
+
+              if (tmpver > -1) {
+#ifndef SSHTEST
+                  if (!sl_ssh_ver_saved) {
+                      sl_ssh_ver = ssh_ver;
+                      sl_ssh_ver_saved = 1;
+                  }
+#endif /* SSHTEST */
+                  ssh_ver = tmpver;
+              }
+              /* Disable X11 Forwarding */
+#ifndef SSHTEST
+              if (!sl_ssh_xfw_saved) {
+                  sl_ssh_xfw = ssh_xfw;
+                  sl_ssh_xfw_saved = 1;
+              }
+#endif /* SSHTEST */
+              ssh_xfw = 0;
+
+              if (ssh_tmpstr) {
+                  if (ssh_tmpstr[0]) {
+                      ckstrncpy(pwbuf,ssh_tmpstr,PWBUFL+1);
+                      pwflg = 1;
+                      pwcrypt = 0;
+                  } else
+                      pwflg = 0;
+                  makestr(&ssh_tmpstr,NULL);
+              }
+              nettype = NET_SSH;
+              if (mdmsav < 0)
+                  mdmsav = mdmtyp;
+              mdmtyp = -nettype;
+              x = 1;
+
+#ifndef NOSPL
+            makestr(&g_pswd,pwbuf);             /* Save global pwbuf */
+            g_pflg = pwflg;                     /* and flag */
+            g_pcpt = pwcrypt;
+#endif /* NOSPL */
+
+	    /* Line parameter to ttopen() is ignored */
+	    k = ttopen(line,&x,mdmtyp, 0);
+	    if (k < 0) {
+		printf("?Unable to connect to %s\n",ssh_hst);
+		mdmtyp = mdmsav;
+                slrestor();
+		return(success = 0);
+	    }
+	    duplex = 0;             /* Remote echo */
+	    ckstrncpy(ttname,line,TTNAMLEN); /* Record the command */
+	    debug(F110,"ssh ttname",ttname,0);
+	    makestr(&slmsg,NULL);	/* No SET LINE error message */
+	    cxtype = CXT_SSH;
+#ifndef NODIAL
+	    dialsta = DIA_UNK;
+#endif /* NODIAL */
+	    success = 1;		/* SET LINE succeeded */
+	    network = 1;		/* Network connection (not serial) */
+	    local = 1;			/* Local mode (not remote) */
+	    if ((reliable != SET_OFF || !setreliable))
+	      reliable = SET_ON;	/* Transport is reliable end to end */
+#ifdef OS2
+            DialerSend(OPT_KERMIT_CONNECT, 0);
+#endif /* OS2 */
+	    setflow();			/* Set appropriate flow control */
+
+	    haveline = 1;
+#ifdef CKLOGDIAL
+#ifdef NETCONN
+	    dolognet();
+#endif /* NETCONN */
+#endif /* CKLOGDIAL */
+
+#ifndef NOSPL
+	    if (local) {
+		if (nmac) {		/* Any macros defined? */
+		    int k;		/* Yes */
+		    k = mlook(mactab,"on_open",nmac); /* Look this up */
+		    if (k >= 0) {	              /* If found, */
+			if (dodo(k,ssh_hst,0) > -1)   /* set it up, */
+			  parser(1);		      /* and execute it */
+		    }
+		}
+	    }
+#endif /* NOSPL */
+#ifdef LOCUS		
+	    if (autolocus)
+		setlocus(1,1);
+#endif /* LOCUS */
+
+	/* Command was confirmed so we can pre-pop command level. */
+	/* This is so CONNECT module won't think we're executing a */
+	/* script if CONNECT was the final command in the script. */
+	    if (cmdlvl > 0)
+	      prepop();
+
+            success = sftp_do_init();
+	    return(success = 1);
+
+	  case SFTP_CD:
+	  case SFTP_CHGRP:
+	  case SFTP_CHMOD:
+	  case SFTP_CHOWN:
+	  case SFTP_RM:
+	  case SFTP_DIR:
+	  case SFTP_GET:
+	  case SFTP_MKDIR:
+	  case SFTP_PUT:
+	  case SFTP_PWD:
+	  case SFTP_REN:
+	  case SFTP_RMDIR:
+	  case SFTP_LINK:
+	  case SFTP_VER:
+	    if ((y = cmtxt("command parameters","",&s,xxstring)) < 0) 
+	      return(y);
+	    if (ssh_tchk() < 0 || !ssh_cas || strcmp(ssh_cmd,"sftp")) {
+		printf("?Not connected to SFTP Service\n");
+		return(success = 0);
+	    }
+	    success = sftp_do_cmd(cmresult.nresult,s);
+	    return(success);
+	  default:
+	    return(-2);
+	}
+    }
+#endif /* SFTP_BUILTIN */
+
     if (cx == XXRLOG) {			/* RLOGIN */
 #ifdef RLOGCODE
 	int x,z;
@@ -11072,7 +11868,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 #ifndef NOFRILLS
     if (cx == XXTYP  || cx == XXCAT || cx == XXMORE ||
 	cx == XXHEAD || cx == XXTAIL) {
-	int paging = 0, havename = 0, head = 0, width = 0, count = 0;
+	int paging = 0, havename = 0, head = 0, width = 0;
+	int height = 0, count = 0;
 	char pfxbuf[64], * prefix = NULL;
 	char outfile[CKMAXPATH+1];
 	struct FDB sf, sw;
@@ -11082,6 +11879,10 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
         char * tocs = "";
 	extern int fileorder;
 #ifdef OS2
+#ifdef NT
+	char guibuf[128], * gui_title = NULL;
+	int  gui = 0;
+#endif /* NT */
 #ifndef NOCSETS
 	extern int tcsr, tcsl;
 #endif /* NOCSETS */
@@ -11198,6 +11999,16 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 		    width = y;
 		    break;
 
+#ifdef KUI
+		  case TYP_HIG:
+		    if (getval)
+		      if ((x = cmnum("Height of GUI dialog",
+				     ckitoa(y),10,&y,xxstring)) < 0)
+			return(x);
+		    height = y;
+		    break;
+#endif /* KUI */
+
 		  case TYP_PAT:
 		    if (!getval && (cmgkwflgs() & CM_ARG)) {
 			printf("?This switch requires an argument\n");
@@ -11224,6 +12035,27 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 		    prefix = brstrip(pfxbuf);
 		    number = 0;
 		    break;
+
+#ifdef KUI
+		  case TYP_GUI:
+		    if (!getval && (cmgkwflgs() & CM_ARG)) {
+			printf("?This switch requires an argument\n");
+			return(-9);
+		    }
+		    if ((x = cmfld("Dialog box title","",&s,xxstring)) < 0) {
+			if (x != -3)
+			  return(x);
+		    } else {
+			if ((int)strlen(s) > 127) {
+			    printf("?Too long - 127 max\n");
+			    return(-9);
+			}
+			ckstrncpy(guibuf,s,128);
+			gui_title = brstrip(guibuf);
+		    }
+		    gui = 1;
+		    break;
+#endif /* KUI */
 
 		  case TYP_NUM:		/* /NUMBER */
 		    number = 1;
@@ -11306,6 +12138,13 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	    printf("?A single file please\n");
 	    return(-9);
 	}
+#ifdef KUI
+	if ( outfile[0] && gui ) {
+	    printf("?/GUI and /OUTPUT are incompatible\n");
+	    return(-9);
+	}
+#endif /* KUI */
+
 	if ((y = cmcfm()) < 0)		/* Confirm the command */
 	  return(y);
 
@@ -11356,9 +12195,32 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	if (outfile[0] && paging)	/* This combination makes no sense */
 	  paging = 0;			/* so turn off paging */
 
+#ifdef KUI
+	/* No paging when dialog is used */
+	if ( gui && paging )
+	  paging = 0;
+
+	if ( !gui && height ) {
+	    printf("?The /HEIGHT switch is not supported without /GUI\n");
+	    return(-9);
+	}
+#endif /* KUI */
+
 	if (count) paging = -1;
 	debug(F111,"type",line,paging);
-	s = outfile;
+#ifdef KUI
+	if ( gui ) {
+	    s = (char *)1;    /* ok, its an ugly hack */
+	    if (gui_text_popup_create(gui_title ?
+				      gui_title : line, height,width) < 0) {
+		printf("?/GUI not supported on this system\n");
+		gui = 0;
+		return(-9);
+	    }
+	    width = 0;
+	} else
+#endif /* KUI */
+	  s = outfile;
 	success =
 	  dotype(line,paging,0,head,pat,width,prefix,incs,outcs,s,number);
 	return(success);
@@ -11382,17 +12244,23 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
           return(y);
 
 	printf("\n%s, for%s\n Numeric: %ld",versio,ckxsys,vernum);
-	printf("\n");
-	n = 3;
+	printf("\n\n");
+        printf("Authors:\n");
+	printf(" Frank da Cruz, Columbia University\n");
+        printf(" Jeffrey Eric Altman, Secure Endpoints, Inc. %s\n",
+	       "<jaltman@secure-endpoints.com>"
+	       );
+	printf(" Contributions from many others.\n");
+	n = 7;
 	if (*ck_s_test) {
-	    printf("\n THIS IS A TEST VERSION, NOT FOR PRODUCTION USE.\n");
+	    printf("\nTHIS IS A TEST VERSION, NOT FOR PRODUCTION USE.\n");
 	    n += 2;
 	}
 	if (*ck_patch) {
 	    printf(" Patches: %s\n", ck_patch);
 	    n++;
 	}
-	printf(" Type COPYRIGHT for copyright information.\n\n");
+	printf(" Type COPYRIGHT for copyright and license.\n\n");
 #ifdef OS2
 	shoreg();
 #else
@@ -11601,6 +12469,14 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
         return(success = 1);
     }
 #endif /* NOPUSH */
+
+#ifdef OS2
+    if (cx == XXNSCR) {
+	if ((z = cmcfm()) < 0) return(z);
+        tt_scroll = 0;
+        return(success = 1);
+    }
+#endif /* OS2 */
 
 #ifndef NOSPL
     if (cx == XXLOCAL)			/* LOCAL variable declarations */
@@ -12224,11 +13100,11 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 #ifndef NOSPL
 	} else {			/* In script: whatever... */
 	    x = mlook(mactab,"continue",nmac);
-	    return(success = dodo(x,NULL,cmdstk[cmdlvl].ccflgs));
+	    /* Don't set success */
+	    return(dodo(x,NULL,cmdstk[cmdlvl].ccflgs));
 #endif /* NOSPL */
 	}
     }
-
     if (cx == XXNOTAV) {		/* Command in table not available */
 	ckstrncpy(tmpbuf,atmbuf,TMPBUFSIZ);
 	if ((x = cmtxt("Rest of command","",&s,NULL)) < 0)

@@ -1,13 +1,14 @@
-char *ckathv = "Authentication, 8.0.214, 21 June 2002";
+char *ckathv = "Authentication, 8.0.232, 7 Feb 2004";
 /*
   C K U A T H . C  --  Authentication for C-Kermit
 
-  Copyright (C) 1999, 2002,
+  Copyright (C) 1999, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
-  Author:  Jeffrey E Altman (jaltman@columbia.edu)
+    Author:  Jeffrey E Altman (jaltman@secure-endpoints.com)
+               Secure Endpoints Inc., New York City
 */
 /*
  * Additional copyrights included with affected code.
@@ -39,6 +40,8 @@ char *ckathv = "Authentication, 8.0.214, 21 June 2002";
 #include "ckcsym.h"
 #include "ckcdeb.h"
 
+#ifdef CK_SECURITY
+
 #define CKUATH_C
 #include "ckcker.h"
 #include "ckuusr.h"
@@ -46,7 +49,6 @@ char *ckathv = "Authentication, 8.0.214, 21 June 2002";
 #include "ckcnet.h"
 #include "ckctel.h"
 
-#ifdef CK_SECURITY
 char szUserNameRequested[UIDBUFLEN+1];    /* for incoming connections */
 char szUserNameAuthenticated[UIDBUFLEN+1];/* for incoming connections */
 char szHostName[UIDBUFLEN+1];
@@ -55,7 +57,6 @@ static char szIP[16];
 static int  validUser = AUTH_REJECT;    /* User starts out invalid */
 int authentication_version = AUTHTYPE_NULL;
 int accept_complete = 0;
-#endif /* CK_SECURITY */
 
 #ifdef CK_AUTHENTICATION
 #ifdef CK_SSL
@@ -115,11 +116,16 @@ int accept_complete = 0;
 #include <stdio.h>
 #include <time.h>
 #include <fcntl.h>
+#include <errno.h>
+#ifndef malloc
+#ifndef VMS
 #ifndef FREEBSD4
 #ifndef OpenBSD
 #include <malloc.h>
 #endif /* OpenBSD */
 #endif /* FREEBSD4 */
+#endif /* VMS */
+#endif /* malloc */
 #ifdef OS2
 #include <io.h>
 #endif /* OS2 */
@@ -163,6 +169,9 @@ int accept_complete = 0;
 #endif /* NT */
 #include "kerberosIV/krb.h"
 #ifndef OS2
+#ifdef KRB524_CONV
+#include "krb524.h"
+#endif /* KRB524_CONV */
 _PROTOTYP(const char * krb_get_err_text_entry, (int));
 #endif /* OS2 */
 #else /* KRB524 */
@@ -222,7 +231,9 @@ extern int ssl_finished_messages;
 #endif /* LIBDES */
 
 #ifdef OS2
+#ifdef CK_ENCRYPTION
 #define MAP_DES
+#endif /* CK_ENCRYPTION */
 #ifdef KRB4
 #define MAP_KRB4
 #endif /* KRB4 */
@@ -321,8 +332,6 @@ _PROTOTYP(static int new_srp_reply,(int, unsigned char *, int));
 _PROTOTYP(static int new_srp_is,(int, unsigned char *, int));
 #endif /* PRE_SRP_1_7_3 */
 #endif /* SRP */
-
-_PROTOTYP(void auth_finished, (int));
 
 #ifdef CK_ENCRYPTION
 int encrypt_flag = 1;
@@ -452,7 +461,7 @@ extern char * krb4_errmsg;
 #endif /* CK_KERBEROS */
 
 extern char tn_msg[], hexbuf[];         /* from ckcnet.c */
-extern char pwbuf[];
+extern CHAR pwbuf[];
 extern int  pwflg, pwcrypt;
 extern int deblog, debses, tn_deb;
 extern int sstelnet, inserver;
@@ -799,17 +808,22 @@ ck_tn_auth_in_progress()
 #ifdef GSSAPI_K5
     case AUTHTYPE_GSSAPI_KRB5:
         if (!accept_complete) {
-            debug(F100,"ck_auth_in_progress() GSSAPI Kerberos 5 !accept_complete",
-                   "",0);
+            debug(F100,
+		  "ck_auth_in_progress() GSSAPI Kerberos 5 !accept_complete",
+		  "",
+		  0
+		  );
             return(1);
         }
         else if ((auth_how & AUTH_HOW_MASK) && !mutual_complete) {
-            debug(F100,"ck_auth_in_progress() GSSAPI Kerberos 5 !mutual_complete",
-                   "",0);
+            debug(F100,
+		  "ck_auth_in_progress() GSSAPI Kerberos 5 !mutual_complete",
+		  "",
+		  0
+		  );
             return(1);
-        }
-        else
-            return(0);
+        } else
+	  return(0);
         break;
 #endif /* GSSAPI_K5 */
 #endif /* KRB5 */
@@ -1392,8 +1406,8 @@ ck_tn_sb_auth(sb,len) char * sb; int len;
 #endif /* CK_ANSIC */
 {
     /* auth_parse() assumes that sb starts at pos 1 not 0 as in ckcnet.c */
-    /* and it wants the length to exclude the IAC SE bytes                  */
-    char * buf;
+    /* and it wants the length to exclude the IAC SE bytes               */
+    CHAR * buf;
     int rc = -1;
 
     buf = malloc(len-1);
@@ -1709,7 +1723,7 @@ SendK5AuthSB(type,data,len) int type; void *data; int len;
                  AUTHTYPE_NAME(authentication_version)," ",
                  AUTHMODE_NAME(mode)," ",
                  s," ",NULL);
-        tn_hex(tn_msg,TN_MSG_LEN,&str_data[7],deblen-7);
+        tn_hex((CHAR *)tn_msg,TN_MSG_LEN,&str_data[7],deblen-7);
         ckstrncat(tn_msg,"IAC SE",TN_MSG_LEN);
         debug(F100,tn_msg,"",0);
         if (tn_deb || debses) tn_debug(tn_msg);
@@ -1818,7 +1832,7 @@ SendK4AuthSB(type,data,len) int type; void *data; int len;
                  AUTHTYPE_NAME(authentication_version)," ",
                  AUTHMODE_NAME(mode)," ",
                  s," ",NULL);
-        tn_hex(tn_msg,TN_MSG_LEN,&str_data[7],deblen-7);
+        tn_hex((CHAR *)tn_msg,TN_MSG_LEN,&str_data[7],deblen-7);
         ckstrncat(tn_msg,"IAC SE",TN_MSG_LEN);
         debug(F100,tn_msg,"",0);
         if (tn_deb || debses) tn_debug(tn_msg);
@@ -1935,7 +1949,7 @@ SendSRPAuthSB(type,data,len) int type; void *data; int len;
                  AUTHTYPE_NAME(authentication_version)," ",
                  AUTHMODE_NAME(mode)," ",
                  s," ",NULL);
-        tn_hex(tn_msg,TN_MSG_LEN,&str_data[7],deblen-7);
+        tn_hex((CHAR *)tn_msg,TN_MSG_LEN,&str_data[7],deblen-7);
         ckstrncat(tn_msg,"IAC SE",TN_MSG_LEN);
         debug(F100,tn_msg,"",0);
         if (tn_deb || debses) tn_debug(tn_msg);
@@ -2162,7 +2176,7 @@ SendSSLAuthSB(type,data,len) int type; void *data; int len;
                  AUTHTYPE_NAME(authentication_version)," ",
                  AUTHMODE_NAME(mode)," ",
                  s," ",NULL);
-        tn_hex(tn_msg,TN_MSG_LEN,&str_data[7],deblen-7);
+        tn_hex((CHAR *)tn_msg,TN_MSG_LEN,&str_data[7],deblen-7);
         ckstrncat(tn_msg,"IAC SE",TN_MSG_LEN);
         debug(F100,tn_msg,"",0);
         if (tn_deb || debses) tn_debug(tn_msg);
@@ -2201,7 +2215,7 @@ tn_enc_ok(int enc)
     switch ( tn_auth_enc ) {
     case TN_AUTH_ENC_ANY:
         if ((enc & AUTH_ENCRYPT_MASK) == AUTH_ENCRYPT_START_TLS &&
-            (!ck_ssleay_is_installed
+            (!ck_ssleay_is_installed()
 #ifdef CK_SSL
              || !ssl_finished_messages ||
              !(tls_active_flag || ssl_active_flag)
@@ -2904,7 +2918,7 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
             extern char * tn_pr_uid;
             int ok = uq_txt(NULL,
                      tn_pr_uid && tn_pr_uid[0] ? tn_pr_uid : "Host Userid: ",
-                            1, NULL, szUserName, 63, NULL);
+                            1, NULL, szUserName, 63, NULL,DEFAULT_UQ_TIMEOUT);
             if ( !ok )
                 return AUTH_FAILURE;
         }
@@ -2915,7 +2929,7 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
         if (deblog || tn_deb || debses) {
             ckmakxmsg(tn_msg,TN_MSG_LEN,
                        "TELNET SENT SB ",TELOPT(TELOPT_AUTHENTICATION),
-                       " NAME ",pname," IAC SE",NULL,
+                       " NAME ",(char *)pname," IAC SE",NULL,
                        NULL,NULL,NULL,NULL,NULL,NULL
                      );
             debug(F100,tn_msg,"",0);
@@ -2924,10 +2938,11 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
 
         /* Construct and send Authentication Name subnegotiation */
         if ( plen < sizeof(buf) - 6 ) {
-            sprintf(buf, "%c%c%c%c", IAC, SB, TELOPT_AUTHENTICATION,
+            sprintf((char *)buf, "%c%c%c%c", IAC, SB, 
+                     TELOPT_AUTHENTICATION,
                      TELQUAL_NAME);
             memcpy(&buf[4], pname, plen);               /* safe */
-            sprintf(&buf[plen + 4], "%c%c", IAC, SE);   /* safe */
+            sprintf((char *)&buf[plen + 4], "%c%c", IAC, SE);   /* safe */
 #ifdef OS2
             RequestTelnetMutex( SEM_INDEFINITE_WAIT );
 #endif
@@ -2936,7 +2951,8 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
             ReleaseTelnetMutex();
 #endif
         } else {
-            sprintf(buf, "%c%c%c%c%c%c", IAC, SB, TELOPT_AUTHENTICATION,
+            sprintf((char *)buf, "%c%c%c%c%c%c", IAC, SB, 
+                     TELOPT_AUTHENTICATION,
                      TELQUAL_NAME, IAC, SE);    /* safe */
 #ifdef OS2
             RequestTelnetMutex( SEM_INDEFINITE_WAIT );
@@ -2961,7 +2977,7 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
                   auth_fwd)?INI_CRED_FWD_ON:INI_CRED_FWD_OFF)
 #endif /* USE_INI_CRED_FWD */
                ;
-        sprintf(buf, "%c%c%c%c%c%c%c",
+        sprintf((char *)buf, "%c%c%c%c%c%c%c",
                  IAC, SB, TELOPT_AUTHENTICATION,
                  TELQUAL_IS,
                  authentication_version,
@@ -3025,7 +3041,7 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
                       AUTHMODE_NAME(mode)," NTLM_AUTH ",
                        NULL,NULL,NULL,NULL,NULL
                       );
-            tn_hex(tn_msg,TN_MSG_LEN,&buf[7],length);
+            tn_hex((char *)tn_msg,TN_MSG_LEN,&buf[7],length);
             ckstrncat(tn_msg,"IAC SE",TN_MSG_LEN);
             debug(F100,tn_msg,"",0);
             if (tn_deb || debses) tn_debug(tn_msg);
@@ -3061,7 +3077,7 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
                       AUTHMODE_NAME(mode)," AUTH ",
                       NULL,NULL,NULL,NULL,NULL
                      );
-            tn_hex(tn_msg,TN_MSG_LEN,&buf[7],k4_auth.length);
+            tn_hex((char *)tn_msg,TN_MSG_LEN,&buf[7],k4_auth.length);
             ckstrncat(tn_msg,"IAC SE",TN_MSG_LEN);
             debug(F100,tn_msg,"",0);
             if (tn_deb || debses) tn_debug(tn_msg);
@@ -3247,7 +3263,7 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
                       AUTHMODE_NAME(mode)," AUTH ",
                       NULL,NULL,NULL,NULL,NULL
                      );
-            tn_hex(tn_msg,TN_MSG_LEN,&buf[7],gss_send_tok.length);
+            tn_hex((char *)tn_msg,TN_MSG_LEN,&buf[7],gss_send_tok.length);
             ckstrncat(tn_msg,"IAC SE",TN_MSG_LEN);
             debug(F100,tn_msg,"",0);
             if (tn_deb || debses) tn_debug(tn_msg);
@@ -3285,7 +3301,7 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
                       AUTHMODE_NAME(mode)," AUTH ",
                       NULL,NULL,NULL,NULL,NULL
                      );
-            tn_hex(tn_msg,TN_MSG_LEN,&buf[7],k5_auth.length);
+            tn_hex((char *)tn_msg,TN_MSG_LEN,&buf[7],k5_auth.length);
             ckstrncat(tn_msg,"IAC SE",TN_MSG_LEN);
             debug(F100,tn_msg,"",0);
             if (tn_deb || debses) tn_debug(tn_msg);
@@ -3683,7 +3699,7 @@ ck_krb4_autoget_TGT(char * realm)
                  k4prprompt && k4prprompt[0] ?
                  k4prprompt :
                  "Kerberos 4 Principal: ",
-                 2, NULL, passwd,PWD_SZ-1, NULL);
+                 2, NULL, passwd,PWD_SZ-1, NULL, DEFAULT_UQ_TIMEOUT);
         if ( ok && passwd[0] )
             makestr(&krb4_init.principal,passwd);
         else
@@ -3707,7 +3723,8 @@ ck_krb4_autoget_TGT(char * realm)
                   "Kerberos 4 Password for ",krb4_init.principal,"@",
                   krb4_init.realm,": ",
                   NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-        ok = uq_txt(NULL,prompt,2,NULL,passwd,PWD_SZ-1,NULL);
+        ok = uq_txt(NULL,prompt,2,NULL,passwd,PWD_SZ-1,NULL,
+		    DEFAULT_UQ_TIMEOUT);
         if ( !ok )
             passwd[0] = '\0';
     } else {
@@ -3806,7 +3823,7 @@ k4_auth_send()
     if (r == 0) {
         debug(F110,"k4_auth_send","krb_get_cred",0);
         r = krb_get_cred(krb4_d_srv ? krb4_d_srv : KRB4_SERVICE_NAME,
-                          instance, realm, (CREDENTIALS *)&cred);
+                          instance, realm, &cred);
         if (r)
             debug(F111,"k4_auth_send","krb_get_cred() failed",r);
     }
@@ -4348,7 +4365,8 @@ ck_krb5_autoget_TGT(char * realm)
     if ( krb5_init.principal == NULL ||
          krb5_init.principal[0] == '\0') {
         int ok = uq_txt(NULL,k5prprompt && k5prprompt[0] ? k5prprompt :
-                  "Kerberos 5 Principal: ",2,NULL,passwd,PWD_SZ-1,NULL);
+                  "Kerberos 5 Principal: ",2,NULL,passwd,PWD_SZ-1,NULL,
+			DEFAULT_UQ_TIMEOUT);
         if ( ok && passwd[0] )
             makestr(&krb5_init.principal,passwd);
         else
@@ -4374,7 +4392,8 @@ ck_krb5_autoget_TGT(char * realm)
                   krb5_init.principal,"@",krb5_init.realm,": ",
                   NULL,NULL,NULL,NULL,NULL,NULL,NULL
                  );
-        ok = uq_txt(NULL,prompt,2,NULL,passwd,PWD_SZ-1,NULL);
+        ok = uq_txt(NULL,prompt,2,NULL,passwd,PWD_SZ-1,NULL,
+		    DEFAULT_UQ_TIMEOUT);
         if ( !ok )
             passwd[0] = '\0';
     } else {
@@ -4441,8 +4460,13 @@ k5_get_ccache(k5_context, p_ccache, cc_name)
         if ( strncmp("FILE:",cc_name,5) &&
              strncmp("MEMORY:",cc_name,7) &&
              strncmp("API:",cc_name,4) &&
-             strncmp("STDIO:",cc_name,6))
+             strncmp("STDIO:",cc_name,6) &&
+	     strncmp("MSLSA:",cc_name,6))
+#ifdef NT
+            ckmakmsg(cc_tmp,CKMAXPATH,"API:",cc_name,NULL,NULL);
+#else /* NT */
             ckmakmsg(cc_tmp,CKMAXPATH,"FILE:",cc_name,NULL,NULL);
+#endif /* NT */
         else {
             ckstrncpy(cc_tmp,cc_name,CKMAXPATH);
         }
@@ -4450,13 +4474,23 @@ k5_get_ccache(k5_context, p_ccache, cc_name)
         if (r != 0) {
             com_err("k5_get_ccache resolving ccache",r,
                      cc_tmp);
+        } else {
+            /* Make sure GSSAPI sees the same cache we are using */
+            char buf[128];
+            ckmakmsg((char *)buf,128,"KRB5CCNAME=",cc_tmp,NULL,NULL);
+            putenv(buf);
         }
     } else if ( krb5_d_cc ) {
         if ( strncmp("FILE:",krb5_d_cc,5) &&
              strncmp("MEMORY:",krb5_d_cc,7) &&
              strncmp("API:",krb5_d_cc,4) &&
-             strncmp("STDIO:",krb5_d_cc,6))
+             strncmp("STDIO:",krb5_d_cc,6) &&
+	     strncmp("MSLSA:", krb5_d_cc,6))
+#ifdef NT
+            ckmakmsg(cc_tmp,CKMAXPATH,"API:",krb5_d_cc,NULL,NULL);
+#else /* NT */
             ckmakmsg(cc_tmp,CKMAXPATH,"FILE:",krb5_d_cc,NULL,NULL);
+#endif /* NT */
         else {
             ckstrncpy(cc_tmp,krb5_d_cc,CKMAXPATH);
         }
@@ -4464,6 +4498,11 @@ k5_get_ccache(k5_context, p_ccache, cc_name)
         if (r != 0) {
             com_err("k5_get_ccache resolving ccache",r,
                      krb5_d_cc);
+        } else {
+            /* Make sure GSSAPI sees the same cache we are using */
+            char buf[128];
+            ckmakmsg((char *)buf,128,"KRB5CCNAME=",cc_tmp,NULL,NULL);
+            putenv(buf);
         }
     } else
 #endif /* HEIMDAL */
@@ -4472,8 +4511,8 @@ k5_get_ccache(k5_context, p_ccache, cc_name)
             com_err("k5_get_ccache",r,"while getting default ccache");
         }
     }
-        /* do not set krb5_errno/krb5_errmsg here since the value returned */
-        /* is being passed internally within the krb5 functions.           */
+    /* do not set krb5_errno/krb5_errmsg here since the value returned */
+    /* is being passed internally within the krb5 functions.           */
     return(r);
 }
 
@@ -4609,7 +4648,8 @@ k5_auth_send(how,encrypt,forward) int how; int encrypt; int forward;
         krb5_copy_principal(k5_context,creds.server,&fwd_server);
     }
 
-    if (r = krb5_cc_get_principal(k5_context, ccache, &creds.client)) {
+    r = krb5_cc_get_principal(k5_context, ccache, &creds.client);
+    if (r) {
         com_err(NULL, r, "while authorizing (2).");
         krb5_free_cred_contents(k5_context, &creds);
         krb5_errno = r;
@@ -4637,13 +4677,15 @@ k5_auth_send(how,encrypt,forward) int how; int encrypt; int forward;
 #endif /* OS2 */
         }
     }
+    if ( tn_auth_krb5_des_bug ) {   /* !ALLOW_KRB_3DES_ENCRYPT */
+        /* Not sure if this is necessary anymore.  What impact does it have
+         * on Win2000 TGTs that use DES_CBC_MD5 or RC4_HMAC?
+         *
+         * This prevents using 3DES Service Tickets.
+         */
+        creds.keyblock.enctype=ENCTYPE_DES_CBC_CRC;
+    }
 
-    /* Not sure if this is necessary anymore.  What impact does it have
-     * on Win2000 TGTs that use DES_CBC_MD5 or RC4_HMAC?
-     *
-     * This prevents using 3DES Service Tickets.
-     */
-    creds.keyblock.enctype=ENCTYPE_DES_CBC_CRC;
     if (r = krb5_get_credentials(k5_context, 0,
                                   ccache, &creds, &new_creds)) {
         com_err(NULL, r, "while authorizing (3).");
@@ -4858,16 +4900,46 @@ k5_auth_reply(how,data,cnt) int how; unsigned char *data; int cnt;
 
 #ifdef CK_ENCRYPTION
             if (k5_session_key) {
-                /* Even if the session key is 3DES, we must lie because otherwise */
-                /* we can't negotiate the proper keys for DES encryption if the   */
-                /* since the host may be requiring SK_DES key choice.             */
-                skey.type = SK_DES;
-                skey.length = 8;
+                if ( tn_auth_krb5_des_bug ) {   /* !ALLOW_KRB_3DES_ENCRYPT */
+                    skey.type = SK_DES;
+                    skey.length = 8;
 #ifdef HEIMDAL
-                skey.data = k5_session_key->keyvalue.data;
+                    skey.data = k5_session_key->keyvalue.data;
 #else /* HEIMDAL */
-                skey.data = k5_session_key->contents;
+                    skey.data = k5_session_key->contents;
 #endif /* HEIMDAL */
+                } else {
+#ifdef HEIMDAL
+                    switch ( k5_session_key->keytype ) {
+                    case ETYPE_DES_CBC_CRC:
+                    case ETYPE_DES_CBC_MD5:
+                    case ETYPE_DES_CBC_MD4:
+                        skey.type = SK_DES;
+                        skey.length = 8;
+                        break;
+                    default:
+                        skey.type = SK_GENERIC;
+                        skey.length = k5_session_key->length;
+                        encrypt_dont_support(ENCTYPE_DES_CFB64);
+                        encrypt_dont_support(ENCTYPE_DES_OFB64);
+                    }
+                    skey.data = k5_session_key->keyvalue.data;
+#else /* HEIMDAL */
+                    switch ( k5_session_key->enctype ) {
+                    case ENCTYPE_DES_CBC_CRC:
+                    case ENCTYPE_DES_CBC_MD5:
+                    case ENCTYPE_DES_CBC_MD4:
+                        skey.type = SK_DES;
+                        skey.length = 8;
+                    default:
+                        skey.type = SK_GENERIC;
+                        skey.length = k5_session_key->length;
+                        encrypt_dont_support(ENCTYPE_DES_CFB64);
+                        encrypt_dont_support(ENCTYPE_DES_OFB64);
+                    }
+                    skey.data = k5_session_key->contents;
+#endif /* HEIMDAL */
+                }
                 encrypt_session_key(&skey, AUTH_CLIENT_TO_SERVER);
             }
 #endif /* CK_ENCRYPTION */
@@ -4942,16 +5014,42 @@ k5_auth_reply(how,data,cnt) int how; unsigned char *data; int cnt;
 
 #ifdef CK_ENCRYPTION
             if (encrypt_flag && k5_session_key) {
-                /* Even if the session key is 3DES, we must lie because otherwise */
-                /* we can't negotiate the proper keys for DES encryption if the   */
-                /* since the host may be requiring SK_DES key choice.             */
-                skey.type = SK_DES;
-                skey.length = 8;
+                if ( tn_auth_krb5_des_bug ) {   /* !ALLOW_KRB_3DES_ENCRYPT */
+                    skey.type = SK_DES;
+                    skey.length = 8;
 #ifdef HEIMDAL
-                skey.data = k5_session_key->keyvalue.data;
+                    skey.data = k5_session_key->keyvalue.data;
 #else /* HEIMDAL */
-                skey.data = k5_session_key->contents;
+                    skey.data = k5_session_key->contents;
 #endif /* HEIMDAL */
+                } else {
+#ifdef HEIMDAL
+                    switch ( k5_session_key->keytype ) {
+                    case ETYPE_DES_CBC_CRC:
+                    case ETYPE_DES_CBC_MD5:
+                    case ETYPE_DES_CBC_MD4:
+                        skey.type = SK_DES;
+                        skey.length = 8;
+                    default:
+                        skey.type = SK_GENERIC;
+                        skey.length = k5_session_key->length;
+                    }
+                    skey.data = k5_session_key->keyvalue.data;
+#else /* HEIMDAL */
+                    switch ( k5_session_key->enctype ) {
+                    case ENCTYPE_DES_CBC_CRC:
+                    case ENCTYPE_DES_CBC_MD5:
+                    case ENCTYPE_DES_CBC_MD4:
+                        skey.type = SK_DES;
+                        skey.length = 8;
+                        break;
+                    default:
+                        skey.type = SK_GENERIC;
+                        skey.length = k5_session_key->length;
+                    }
+                    skey.data = k5_session_key->contents;
+#endif /* HEIMDAL */
+                }
                 encrypt_session_key(&skey, AUTH_CLIENT_TO_SERVER);
             }
 #endif /* ENCRYPTION */
@@ -5012,9 +5110,8 @@ k5_auth_reply(how,data,cnt) int how; unsigned char *data; int cnt;
             reply.data = data;
             reply.length = cnt;
 
-            if (!krb5_d_no_addresses)
-                krb5_auth_con_genaddrs(k5_context, auth_context, ttyfd,
-                                  KRB5_AUTH_CONTEXT_GENERATE_REMOTE_FULL_ADDR);
+			krb5_auth_con_genaddrs(k5_context, auth_context, ttyfd,
+								   KRB5_AUTH_CONTEXT_GENERATE_REMOTE_FULL_ADDR);
 
             if (r = krb5_rd_safe(k5_context,auth_context,&reply,&msg,&repdata))
               {
@@ -5349,9 +5446,8 @@ k5_auth_is(how,data,cnt) int how; unsigned char *data; int cnt;
             in.data = tls_verify;
             in.length = 24;
 
-            if (!krb5_d_no_addresses)
-                krb5_auth_con_genaddrs(k5_context, auth_context, ttyfd,
-                                   KRB5_AUTH_CONTEXT_GENERATE_LOCAL_FULL_ADDR);
+            krb5_auth_con_genaddrs(k5_context, auth_context, ttyfd,
+								   KRB5_AUTH_CONTEXT_GENERATE_LOCAL_FULL_ADDR);
             if (r = krb5_mk_safe(k5_context,auth_context,&in,&msg,&repdata)) {
                 com_err("", r, "encoding tls verifier");
                 (void) ckstrncat(errbuf, error_message(r),sizeof(errbuf));
@@ -6013,7 +6109,8 @@ k5_auth_is(how,data,cnt) int how; unsigned char *data; int cnt;
                                             /* verifier_cred_handle */
                                             server_creds,
                                             &tok, /* input_token */
-                                             (krb5_d_no_addresses ? /* channel bindings */
+					    (krb5_d_no_addresses ?
+					     /* channel bindings */
                                                GSS_C_NO_CHANNEL_BINDINGS :
                                                &gss_chan),
                                              &client, /* src_name */
@@ -6197,7 +6294,6 @@ srp_reply(how,data,cnt) int how; unsigned char *data; int cnt;
     struct t_num s;
     struct t_num B;
     struct t_num * A;
-    char hexbuf[MAXHEXPARAMLEN];
     char type_check[26];
     int pflag;
 
@@ -6345,17 +6441,18 @@ srp_reply(how,data,cnt) int how; unsigned char *data; int cnt;
             int ok;
 
             if (srppwprompt && srppwprompt[0] &&
-               (strlen(srppwprompt) + strlen(szUserName) - 2) < sizeof(preface))
-            {
+		(strlen(srppwprompt) + strlen(szUserName) - 2) <
+		sizeof(preface)) {
                 sprintf(preface,srppwprompt,szUserName);
             } else {
                 ckmakxmsg( preface,sizeof(preface),
                           "SRP using ",ckitoa(8*n.len),"-bit modulus for '",
-                          szUserName, "'\r\n", NULL, NULL, NULL, NULL, NULL,
+                          szUserName, "'", NULL, NULL, NULL, NULL, NULL,
                           NULL, NULL);
             }
             ok = uq_txt( preface,"Password: ",2,NULL,
-                         srp_passwd,sizeof(srp_passwd)-1,NULL);
+                         srp_passwd,sizeof(srp_passwd)-1,NULL,
+			 DEFAULT_UQ_TIMEOUT);
             if ( !ok )
                 srp_passwd[0] = '\0';
         }
@@ -6415,9 +6512,8 @@ srp_is(int how, unsigned char *data, int cnt)
 srp_is(how,data,cnt) int how; unsigned char *data; int cnt;
 #endif
 {
-    char pbuf[2 * MAXPARAMLEN + 5];
+    char * pbuf = NULL;
     char * ptr;
-    char hexbuf[MAXHEXPARAMLEN];
 #ifdef CK_ENCRYPTION
     Session_Key skey;
 #endif
@@ -6498,43 +6594,44 @@ srp_is(how,data,cnt) int how; unsigned char *data; int cnt;
         /* ETC directory.  So we look for either an SRP_ETC or ETC    */
         /* environment variable in that order.  If we find one we     */
         /* attempt to open the files manually.                        */
-        /* We will reuse the pbuf[] for the file names. */
+        /* We will reuse the strTmp[] for the file names. */
         ptr = getenv("SRP_ETC");
         if ( !ptr )
             ptr = getenv("ETC");
 #ifdef NT
         if ( !ptr ) {
             DWORD len;
-            len = (2 * MAXPARAMLEN + 5);
+            len = AUTHTMPBL;
 
-            len = GetWindowsDirectory(pbuf,len);
-            if ( len > 0 && len < (2 * MAXPARAMLEN + 5)) {
+            len = GetWindowsDirectory(strTmp,len);
+            if ( len > 0 && len < AUTHTMPBL) {
                 if ( !isWin95() ) {
                     if ( len == 1 )
-                        ckstrncat(pbuf,"SYSTEM32/DRIVERS/ETC",sizeof(pbuf));
+		      ckstrncat(strTmp,"SYSTEM32/DRIVERS/ETC",sizeof(strTmp));
                     else
-                        ckstrncat(pbuf,"/SYSTEM32/DRIVERS/ETC",sizeof(pbuf));
+		      ckstrncat(strTmp,"/SYSTEM32/DRIVERS/ETC",sizeof(strTmp));
                 }
             }
-            ptr = pbuf;
+            ptr = strTmp;
         }
 #endif /* NT */
         if ( ptr ) {
             int len = strlen(ptr);
             int i;
-            strcpy(pbuf,ptr);
+	    if (ptr != strTmp)
+		strcpy(strTmp,ptr);
             for ( i=0;i<len;i++ ) {
-                if ( pbuf[i] == '\\' )
-                    pbuf[i] = '/';
+                if ( strTmp[i] == '\\' )
+                    strTmp[i] = '/';
             }
-            if ( pbuf[len-1] != '/' )
-                ckstrncat(pbuf,"/tpasswd",sizeof(pbuf));
+            if ( strTmp[len-1] != '/' )
+                ckstrncat(strTmp,"/tpasswd",sizeof(strTmp));
             else
-                ckstrncat(pbuf,"tpasswd",sizeof(pbuf));
-            tpw = t_openpwbyname(pbuf);
+                ckstrncat(strTmp,"tpasswd",sizeof(strTmp));
+            tpw = t_openpwbyname(strTmp);
 
-            ckstrncat(pbuf,".conf",sizeof(pbuf));
-            tconf = t_openconfbyname(pbuf);
+            ckstrncat(strTmp,".conf",sizeof(strTmp));
+            tconf = t_openconfbyname(strTmp);
         }
 
         if ( tpw && tconf )
@@ -6560,12 +6657,8 @@ srp_is(how,data,cnt) int how; unsigned char *data; int cnt;
             return(AUTH_FAILURE);
         }
 
-        if ( ts->n.len + ts->g.len + ts->s.len + 6 > sizeof(pbuf) ) {
-            printf("message length error\r\n");
-            SendSRPAuthSB(SRP_REJECT, (void *) "message length error", -1);
-            return(AUTH_FAILURE);
-        }
-        ptr = pbuf;
+	pbuf = (char *)malloc(ts->n.len + ts->g.len + ts->s.len + 7);
+	ptr = pbuf;
 
         srp_encode_length(ptr, ts->n.len);
         ptr += 2;
@@ -6583,6 +6676,7 @@ srp_is(how,data,cnt) int how; unsigned char *data; int cnt;
         ptr += ts->s.len;
 
         SendSRPAuthSB(SRP_PARAMS, pbuf, ptr - pbuf);
+	free(pbuf); pbuf = NULL;
 
         B = t_servergenexp(ts);
         ckstrncpy(szUserNameAuthenticated,szUserNameRequested,UIDBUFLEN);
@@ -6770,10 +6864,10 @@ new_srp_reply(how,data,cnt) int how; unsigned char *data; int cnt;
          * validated the following function will fail.
          */
         c_srp = SRP_new(SRP_RFC2945_client_method());
-        if(c_srp == NULL ||
-            SRP_set_username(c_srp, szUserName) != SRP_SUCCESS ||
-            SRP_set_params(c_srp, n.data, n.len, g.data, g.len, s.data, s.len) !=
-            SRP_SUCCESS) {
+        if (c_srp == NULL ||
+	    SRP_set_username(c_srp, szUserName) != SRP_SUCCESS ||
+	    SRP_set_params(c_srp,n.data,n.len,g.data,g.len,s.data,s.len) !=
+	    SRP_SUCCESS) {
             printf("SRP Parameter initialization error\r\n");
             return(auth_resend(AUTHTYPE_SRP));
         }
@@ -6803,17 +6897,18 @@ new_srp_reply(how,data,cnt) int how; unsigned char *data; int cnt;
             int ok;
 
             if (srppwprompt && srppwprompt[0] &&
-               (strlen(srppwprompt) + strlen(szUserName) - 2) < sizeof(preface))
-            {
+		(strlen(srppwprompt) + strlen(szUserName) - 2) <
+		sizeof(preface)) {
                 sprintf(preface,srppwprompt,szUserName);
             } else {
                 ckmakxmsg( preface,sizeof(preface),
                           "SRP using ",ckitoa(8*n.len),"-bit modulus for '",
-                          szUserName, "'\r\n", NULL, NULL, NULL, NULL, NULL,
+                          szUserName, "'", NULL, NULL, NULL, NULL, NULL,
                           NULL, NULL);
             }
             ok = uq_txt(preface,"Password: ",2,NULL,
-                        srp_passwd,sizeof(srp_passwd)-1,NULL);
+                        srp_passwd,sizeof(srp_passwd)-1,NULL,
+			DEFAULT_UQ_TIMEOUT);
             if ( !ok )
                 srp_passwd[0] = '\0';
         }
@@ -6945,7 +7040,7 @@ new_srp_is(int how, unsigned char *data, int cnt)
 new_srp_is(how,data,cnt) int how; unsigned char *data; int cnt;
 #endif
 {
-    char pbuf[2 * MAXPARAMLEN + 5];
+    char * pbuf = NULL;
     char * ptr;
 #ifdef CK_ENCRYPTION
     Session_Key skey;
@@ -7008,16 +7103,22 @@ new_srp_is(how,data,cnt) int how; unsigned char *data; int cnt;
             return(AUTH_FAILURE);
         }
         if(SRP_set_username(s_srp, szUserNameRequested) != SRP_SUCCESS ||
-            SRP_set_params(s_srp, pass->tc.modulus.data, pass->tc.modulus.len,
-                            pass->tc.generator.data, pass->tc.generator.len,
-                            pass->tp.salt.data, pass->tp.salt.len) != SRP_SUCCESS ||
-            SRP_set_authenticator(s_srp, pass->tp.password.data,
-                                   pass->tp.password.len) != SRP_SUCCESS) {
+	   SRP_set_params(s_srp, pass->tc.modulus.data,
+			  pass->tc.modulus.len,
+			  pass->tc.generator.data,
+			  pass->tc.generator.len,
+			  pass->tp.salt.data,
+			  pass->tp.salt.len) != SRP_SUCCESS ||
+	   SRP_set_authenticator(s_srp,
+				 pass->tp.password.data,
+				 pass->tp.password.len) != SRP_SUCCESS) {
             printf("Error initializing SRP parameters\r\n");
-            SendSRPAuthSB(SRP_REJECT, (void *) "SRP parameter init failed", -1);
+            SendSRPAuthSB(SRP_REJECT,(void *)"SRP parameter init failed", -1);
             return(AUTH_FAILURE);
         }
 
+	pbuf = (char *)malloc(pass->tc.modulus.len + pass->tc.generator.len +
+			       pass->tp.salt.len + 7);
         ptr = pbuf;
 
         srp_encode_length(ptr, pass->tc.modulus.len);
@@ -7036,6 +7137,8 @@ new_srp_is(how,data,cnt) int how; unsigned char *data; int cnt;
         ptr += pass->tp.salt.len;
 
         SendSRPAuthSB(SRP_PARAMS, pbuf, ptr - pbuf);
+	free(pbuf);
+	pbuf = NULL;
 
         if(SRP_gen_pub(s_srp, &B) != SRP_SUCCESS) {
             printf("Error generating SRP public value\r\n");
@@ -7046,13 +7149,13 @@ new_srp_is(how,data,cnt) int how; unsigned char *data; int cnt;
         return AUTH_SUCCESS;
 
     case SRP_EXP:
-        /* Client is sending A to us.  Compute challenge and expected response. */
-        if(s_srp == NULL || B == NULL) {
-            printf("Protocol error: SRP_EXP unexpected\r\n");
-            SendSRPAuthSB(SRP_REJECT, (void *) "Protocol error: unexpected EXP", -1);
-            return(AUTH_FAILURE);
-        }
-
+      /* Client is sending A to us, compute challenge and expected response. */
+        if (s_srp == NULL || B == NULL) {
+	    printf("Protocol error: SRP_EXP unexpected\r\n");
+	    SendSRPAuthSB(SRP_REJECT,
+		  	(void *)"Protocol error: unexpected EXP", -1);
+	    return(AUTH_FAILURE);
+	}
         /* Wait until now to send B, since it contains the key to "u" */
         SendSRPAuthSB(SRP_CHALLENGE, B->data, B->length);
         cstr_free(B);
@@ -7082,7 +7185,8 @@ new_srp_is(how,data,cnt) int how; unsigned char *data; int cnt;
 
         if(SRP_compute_key(s_srp, &s_key, data, cnt) != SRP_SUCCESS) {
             printf("Security alert: Trivial session key attempted\r\n");
-            SendSRPAuthSB(SRP_REJECT, (void *) "Trivial session key detected", -1);
+            SendSRPAuthSB(SRP_REJECT,
+			  (void *) "Trivial session key detected", -1);
             return(AUTH_FAILURE);
         }
         srp_waitresp = 1;
@@ -7249,7 +7353,7 @@ ck_krb5_prompter( krb5_context context,
             for ( i=0; i < num_prompts; i++ )
                 prompts[i].reply->length = strlen(prompts[i].reply->data);
         } else
-            errcode = -1;
+            errcode = -2;
     }
 #else /* KUI */
     for (i = 0; i < num_prompts; i++) {
@@ -7317,6 +7421,97 @@ ck_NRL_krb5_prompter( krb5_context context,
     return(ck_krb5_prompter(context,NULL,name,banner,num_prompts,prompts));
 }
 #endif /* KRB5_HAVE_GET_INIT_CREDS */
+
+#ifdef KRB524_CONV
+long
+try_convert524(krb5_context ctx, krb5_principal me, krb5_ccache cc)
+{
+    char * progname = "convert524";
+    krb5_error_code code = 0;
+    int icode = 0;
+    krb5_principal kpcserver = 0;
+    krb5_creds *v5creds = 0;
+    krb5_creds increds;
+#ifdef OS2
+    LEASH_CREDENTIALS v4creds;
+#else /* OS2 */
+    CREDENTIALS v4creds;
+#endif /* OS2 */
+
+    memset((char *) &increds, 0, sizeof(increds));
+    /*
+      From this point on, we can goto cleanup because increds is
+      initialized.
+    */
+
+    if ((code = krb5_build_principal(ctx,
+                                     &kpcserver,
+                                     krb5_princ_realm(ctx, me)->length,
+                                     krb5_princ_realm(ctx, me)->data,
+                                     "krbtgt",
+                                     krb5_princ_realm(ctx, me)->data,
+                                     NULL))) {
+        com_err(progname, code,
+                "while creating service principal name");
+        goto cleanup;
+    }
+
+    memset((char*) &increds, 0, sizeof(increds));
+    increds.client = me;
+    increds.server = kpcserver;
+    /* Prevent duplicate free calls.  */
+    kpcserver = 0;
+
+    increds.times.endtime = 0;
+    increds.keyblock.enctype = ENCTYPE_DES_CBC_CRC;
+    if ((code = krb5_get_credentials(ctx, 0,
+                                     cc,
+                                     &increds,
+                                     &v5creds))) {
+        com_err(progname, code,
+                "getting V5 credentials");
+        goto cleanup;
+    }
+    if ((icode = krb524_convert_creds_kdc(ctx,
+                                          v5creds,
+                                          &v4creds))) {
+        com_err(progname, icode,
+                "converting to V4 credentials");
+        goto cleanup;
+    }
+    /* this is stolen from the v4 kinit */
+    /* initialize ticket cache */
+    if ((icode = krb_in_tkt(v4creds.pname, v4creds.pinst, v4creds.realm)
+         != KSUCCESS)) {
+        com_err(progname, icode,
+                "trying to create the V4 ticket file");
+        goto cleanup;
+    }
+    /* stash ticket, session key, etc. for future use */
+    if ((icode = krb_save_credentials(v4creds.service,
+                                      v4creds.instance,
+                                      v4creds.realm,
+                                      v4creds.session,
+                                      v4creds.lifetime,
+                                      v4creds.kvno,
+                                      &(v4creds.ticket_st),
+                                      v4creds.issue_date))) {
+        com_err(progname, icode,
+                "trying to save the V4 ticket");
+        goto cleanup;
+    }
+
+ cleanup:
+    memset(&v4creds, 0, sizeof(v4creds));
+    if (v5creds)
+        krb5_free_creds(ctx, v5creds);
+    increds.client = 0;
+    krb5_free_cred_contents(ctx, &increds);
+    if (kpcserver)
+        krb5_free_principal(ctx, kpcserver);
+    return !(code || icode);
+}
+#endif /* KRB524_CONV */
 
 #define NO_KEYTAB
 
@@ -7750,7 +7945,7 @@ ck_krb5_initTGT(op,init,k4_init)
             goto exit_k5_init;
         }
         /* should be done... */
-        goto exit_k5_init;
+        goto store_cred;
     }
 
 #ifndef HEIMDAL
@@ -7773,7 +7968,7 @@ ck_krb5_initTGT(op,init,k4_init)
             addr_count += i;
 
             addrs = (krb5_address **)
-              malloc((addr_count+1) * sizeof(krb5_address));
+              malloc((addr_count+1) * sizeof(krb5_address *));
             if ( !addrs ) {
                 krb5_free_addresses(kcontext, local_addrs);
                 goto exit_k5_init;
@@ -7856,7 +8051,7 @@ ck_krb5_initTGT(op,init,k4_init)
                            principal,"@",realm,": ",
                            NULL,NULL,NULL,NULL,NULL,NULL,NULL
                            );
-            ok = uq_txt(NULL,prmpt,2,NULL,passwd,80,NULL);
+            ok = uq_txt(NULL,prmpt,2,NULL,passwd,80,NULL,DEFAULT_UQ_TIMEOUT);
             if ( ok )
                 password = passwd;
 
@@ -7891,16 +8086,18 @@ ck_krb5_initTGT(op,init,k4_init)
 
                 ckmakmsg(prmpt,sizeof(prmpt),"Kerberos 5 Password for ",
                           client_name,": ",NULL);
-                ok = uq_txt(NULL,prmpt,2,NULL,passwd,80,NULL);
+                ok = uq_txt(NULL,prmpt,2,NULL,passwd,80,NULL,
+			    DEFAULT_UQ_TIMEOUT);
                 if ( ok )
                     password = passwd;
+                else {
+                    code = -2;
+                    goto exit_k5_init;
+                }
             }
 
-            if ( !password[0] ) {
-                debug(F111,"krb5_init","no password specified",0);
-                printf("A password must be specified for %s.\r\n",client_name);
-                goto exit_k5_init;
-            }
+            if ( !password ) 
+                password = "";
             code = krb5_get_in_tkt_with_password(kcontext, options,
 #ifdef HEIMDAL
                                                   NULL,
@@ -7920,16 +8117,16 @@ ck_krb5_initTGT(op,init,k4_init)
 
             ckmakmsg(prmpt,sizeof(prmpt),"Kerberos 5 Password for ",
                       client_name,": ",NULL);
-            ok = uq_txt(NULL,prmpt,2,NULL,passwd,80,NULL);
+            ok = uq_txt(NULL,prmpt,2,NULL,passwd,80,NULL,DEFAULT_UQ_TIMEOUT);
             if ( ok )
                 password = passwd;
+            else {
+                code = -2;
+                goto exit_k5_init;
+            }
         }
-
-        if ( !password[0] ) {
-            debug(F111,"krb5_init","no password specified",0);
-            printf("A password must be specified for %s.\r\n",client_name);
-            goto exit_k5_init;
-        }
+        if ( !password ) 
+            password = "";
         code = krb5_get_in_tkt_with_password(kcontext, options,
 #ifdef HEIMDAL
                                               NULL,
@@ -7989,6 +8186,7 @@ ck_krb5_initTGT(op,init,k4_init)
         }
     }
 
+  store_cred:
     debug(F100,"krb5_init calling krb5_cc_initialize()","",0);
 
     code = krb5_cc_initialize (kcontext, ccache, me);
@@ -8026,6 +8224,16 @@ ck_krb5_initTGT(op,init,k4_init)
         goto exit_k5_init;
     }
 
+    if ( init->getk4 && 
+#ifdef KRB524_CONV
+         !try_convert524(kcontext,me,ccache) && 
+#endif /* KRB524_CONV */
+         k4_init ) {
+        int k4rc = ck_krb4_initTGT(op,k4_init);
+        if (k4rc < 0)
+            code = -3;
+    }
+
 exit_k5_init:
     debug(F100,"krb5_init exit_k5_init","",0);
 
@@ -8042,6 +8250,13 @@ exit_k5_init:
     }
 #endif /* HEIMDAL */
 
+
+    krb5_errno = code;
+    makestr(&krb5_errmsg,krb5_errno ? error_message(krb5_errno) : "OK");
+
+    if (client_name)
+        krb5_free_unparsed_name(kcontext, client_name);
+
     /* my_creds is pointing at server */
     debug(F100,"krb5_init calling krb5_free_principal()","",0);
     krb5_free_principal(kcontext, server);
@@ -8050,16 +8265,10 @@ exit_k5_init:
     debug(F100,"krb5_init calling krb5_free_context()","",0);
     krb5_free_context(kcontext);
 
-    krb5_errno = code;
-    makestr(&krb5_errmsg,krb5_errno ? error_message(krb5_errno) : "OK");
-
-    if ( init->getk4 && k4_init ) {
-        int k4rc = ck_krb4_initTGT(op,k4_init);
-        return (k4rc < 0 ? -1 : 0);
-    }
-
-    printf("Result from realm %s: %s\r\n",realm,
-            code?error_message(code):"OK");
+    if (code != -2)
+        printf("Result from realm %s: %s\r\n",realm,
+                code==-3?"Unable to retrieve Kerberos IV credentials":
+                code?error_message(code):"OK");
     return(code?-1:0);
 }
 
@@ -8618,10 +8827,20 @@ etype_string(enctype) krb5_enctype enctype;
         return "DES-HMAC-SHA1";
     case ENCTYPE_DES3_CBC_SHA1:
         return "DES3-CBC-SHA1";
+    case ENCTYPE_AES128_CTS_HMAC_SHA1_96:
+        return "AES128_CTS-HMAC-SHA1_96";
+    case ENCTYPE_AES256_CTS_HMAC_SHA1_96:
+        return "AES256_CTS-HMAC-SHA1_96";
+    case ENCTYPE_ARCFOUR_HMAC:
+        return "RC4-HMAC-NT";
+    case ENCTYPE_ARCFOUR_HMAC_EXP:
+        return "RC4-HMAC-NT-EXP";
     case ENCTYPE_UNKNOWN:
         return "UNKNOWN";
     case ENCTYPE_LOCAL_DES3_HMAC_SHA1:
         return "LOCAL-DES3-HMAC-SHA1";
+    case ENCTYPE_LOCAL_RC4_MD4:
+        return "LOCAL-RC4-MD4";
     default:
         ckmakmsg(buf, sizeof(buf),"etype ", ckitoa(enctype),NULL,NULL);
         return buf;
@@ -9046,7 +9265,7 @@ ck_krb4_initTGT(op,init)
         ckmakxmsg(prmpt,sizeof(prmpt),
                   "Kerberos 4 Password for ",username,"@",realm,": ",
                    NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-        ok = uq_txt(NULL,prmpt,2,NULL,passwd,80,NULL);
+        ok = uq_txt(NULL,prmpt,2,NULL,passwd,80,NULL,DEFAULT_UQ_TIMEOUT);
         if ( ok )
             password = passwd;
     }
@@ -9279,7 +9498,7 @@ display_tktfile(file,tgt_test,long_form,show_kvnos)
                (pinst[0] ? "." : ""), pinst,
                (prealm[0] ? "@" : ""), prealm);
 
-    while ((k_errno = tf_get_cred((CREDENTIALS *)&creds)) == AUTH_SUCCESS) {
+    while ((k_errno = tf_get_cred(&creds)) == AUTH_SUCCESS) {
         if (!tgt_test && long_form && header) {
             printf("%-17s  %-17s  %s\r\n",
                    "Valid starting", "Expires", "Service principal");
@@ -9573,7 +9792,7 @@ ck_krb4_get_tkts()
      * it was done before tf_init.
      */
 
-    while ((k_errno = tf_get_cred((CREDENTIALS *)&creds)) == AUTH_SUCCESS) {
+    while ((k_errno = tf_get_cred(&creds)) == AUTH_SUCCESS) {
         char tkt_buf[256];
         ckmakxmsg(tkt_buf,sizeof(tkt_buf),
                  creds.service, (creds.instance[0] ? "." : ""), creds.instance,
@@ -9705,7 +9924,7 @@ ck_krb4_tkt_isvalid(tktname) char * tktname;
      */
 
     debug(F110,"ck_krb4_tkt_isvalid","tf_get_cred",0);
-    while ((k_errno = tf_get_cred((CREDENTIALS *)&creds)) == AUTH_SUCCESS) {
+    while ((k_errno = tf_get_cred(&creds)) == AUTH_SUCCESS) {
         char tkt_buf[256];
         ckmakxmsg(tkt_buf,sizeof(tkt_buf),
                  creds.service, (creds.instance[0] ? "." : ""), creds.instance,
@@ -9887,7 +10106,7 @@ ck_krb4_tkt_time(tktname) char * tktname;
      * it was done before tf_init.
      */
 
-    while ((k_errno = tf_get_cred((CREDENTIALS *)&creds)) == AUTH_SUCCESS) {
+    while ((k_errno = tf_get_cred(&creds)) == AUTH_SUCCESS) {
         char tkt_buf[256];
         ckmakxmsg(tkt_buf,sizeof(tkt_buf),
                  creds.service, (creds.instance[0] ? "." : ""),
@@ -10097,6 +10316,7 @@ ck_krb5_get_tkts(cc_name) char * cc_name;
         (*list)->next = NULL;
         list = &((*list)->next);
 
+        krb5_free_unparsed_name(kcontext,sname);
         krb5_free_cred_contents(kcontext, &creds);
         tkt_count++;
     }
@@ -10261,10 +10481,12 @@ ck_krb5_tkt_flags(cc_name,tktname) char * cc_name; char * tktname;
 
             flag_str = flags_string(&creds);
 
+            krb5_free_unparsed_name(kcontext,sname);
             krb5_free_cred_contents(kcontext, &creds);
             code = KRB5_CC_END;
             break;
         }
+        krb5_free_unparsed_name(kcontext,sname);
         krb5_free_cred_contents(kcontext, &creds);
     }
 
@@ -10412,6 +10634,7 @@ ck_krb5_tkt_isvalid(cc_name,tktname) char * cc_name; char * tktname;
                 retval = krb5_os_localaddr(kcontext, &myAddrs);
                 if (retval) {
                     com_err(NULL, retval, "retrieving my IP address");
+                    krb5_free_unparsed_name(kcontext,sname);
                     krb5_free_cred_contents(kcontext, &creds);
                     code = KRB5_CC_END;
                     retval = -1;
@@ -10431,11 +10654,13 @@ ck_krb5_tkt_isvalid(cc_name,tktname) char * cc_name; char * tktname;
                 krb5_free_addresses(k5_context, myAddrs);
 
                 if (Addrfound) {
+                    krb5_free_unparsed_name(kcontext,sname);
                     krb5_free_cred_contents(kcontext, &creds);
                     code = KRB5_CC_END;
                     retval = 1;
                     break;
                 } else {
+                    krb5_free_unparsed_name(kcontext,sname);
                     krb5_free_cred_contents(kcontext, &creds);
                     code = KRB5_CC_END;
                     retval = 0;
@@ -10444,10 +10669,12 @@ ck_krb5_tkt_isvalid(cc_name,tktname) char * cc_name; char * tktname;
             }
 #endif /* CHECKADDRS */
 
+            krb5_free_unparsed_name(kcontext,sname);
             krb5_free_cred_contents(kcontext, &creds);
             code = KRB5_CC_END;
             break;
         }
+        krb5_free_unparsed_name(kcontext,sname);
         krb5_free_cred_contents(kcontext, &creds);
     }
 
@@ -10498,7 +10725,7 @@ ck_krb5_is_tgt_valid()
     char * s;
     int rc = 0;
 
-    s = krb5_d_realm ? krb5_d_realm : ck_krb5_getrealm(krb5_d_cc);
+    s = ck_krb5_getrealm(krb5_d_cc);
     ckmakmsg(tgt,sizeof(tgt),"krbtgt/",s,"@",s);
     rc = ck_krb5_tkt_isvalid(krb5_d_cc,tgt);
     debug(F111,"ck_krb5_is_tgt_valid",tgt,rc);
@@ -10595,6 +10822,7 @@ ck_krb5_tkt_time(cc_name, tktname) char * cc_name; char * tktname;
             debug(F101,
                   "ck_krb5_list_creds while unparsing server name","",retval);
             retval = -1;
+            krb5_free_unparsed_name(kcontext,sname);
             krb5_free_cred_contents(kcontext, &creds);
             goto exit_k5_get_tkt;
         }
@@ -10610,10 +10838,12 @@ ck_krb5_tkt_time(cc_name, tktname) char * cc_name; char * tktname;
             }
             else
                 retval = 0;
+            krb5_free_unparsed_name(kcontext,sname);
             krb5_free_cred_contents(kcontext, &creds);
             code = KRB5_CC_END;
             break;
         }
+        krb5_free_unparsed_name(kcontext,sname);
         krb5_free_cred_contents(kcontext, &creds);
     }
 
@@ -10722,7 +10952,7 @@ ck_krb5_getrealm(cc_name) char * cc_name;
     krb5_context kcontext;
     krb5_ccache ccache = NULL;
     krb5_error_code code;
-    krb5_principal me;
+    krb5_principal me=NULL;
 
     realm[0] = '\0';
 
@@ -10739,7 +10969,10 @@ ck_krb5_getrealm(cc_name) char * cc_name;
         goto exit_k5_getrealm;
     }
 
-    if ((code = krb5_parse_name(kcontext, "foo", &me))) {
+	code = krb5_cc_get_principal(kcontext, ccache, &me);
+	if (code)
+		code = krb5_parse_name(kcontext, "foo", &me);
+    if (code) {
         goto exit_k5_getrealm;
     }
     if ( krb5_princ_realm(kcontext, me)->length < sizeof(realm) ) {
@@ -10748,6 +10981,8 @@ ck_krb5_getrealm(cc_name) char * cc_name;
        realm[krb5_princ_realm(kcontext, me)->length]='\0';
     }
   exit_k5_getrealm:
+    if ( me )
+        krb5_free_principal(kcontext,me);
     if ( ccache )
         krb5_cc_close(kcontext,ccache);
     if (kcontext)
@@ -11387,7 +11622,7 @@ ck_krb_rlogin(hostname, port,
                                realm,
                                (unsigned long) getpid(),
                                &k4_msg_data,
-                               (CREDENTIALS *)&cred,
+                               &cred,
 #ifdef CK_ENCRYPTION
                                &k4_sched,
 #else /* ENCRYPTION */
@@ -12445,7 +12680,6 @@ in this Software without prior written authorization from the X Consortium.
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include <errno.h>
 #include <time.h>
 #define Time_t time_t
 
@@ -12881,7 +13115,6 @@ XauKrb5Decode(inbuf, princ)
 #endif /* CK_FORWARD_X */
 #endif /* CK_AUTHENTICATION */
 
-#ifdef CK_SECURITY
 /* C K _ A U T H _ I N I T
  * Initialize the Kerberos system for a pending connection
  *   hostname - a reverse DNS lookup of the hostname when possible
@@ -12981,6 +13214,9 @@ ck_auth_init( hostname, ipaddr, username, socket )
     if (k5_context)
         krb5_init_ets(k5_context);
 #endif /* MIT_CURRENT */
+#ifdef KRB524_CONV
+    krb524_init_ets(k5_context);
+#endif /* KRB524_CONV */
     memset(&k5_auth,0,sizeof(k5_auth));
     if (auth_context) {
         krb5_auth_con_free(k5_context, auth_context);
@@ -13002,21 +13238,22 @@ ck_auth_init( hostname, ipaddr, username, socket )
     /* Initialize buffers used for authentication */
     memset(&k4_session_key, 0, sizeof(k4_session_key));
     memset(&k4_challenge, 0, sizeof(k4_challenge));
-#endif /* ENCRYPTION */
+#endif /* CK_ENCRYPTION */
 #endif /* KRB4 */
 
-    kstream_destroy();
 #ifdef RLOGCODE
     rlog_encrypt = 0;
 #endif /* RLOGCODE */
     nstored = 0;
     store_ptr = storage;
     memset(storage,0,sizeof(storage));
-
-    if (!kstream_create_from_fd(socket, NULL))
-        return(0);
 #endif /* CK_KERBEROS */
 
+#ifdef CK_ENCRYPTION
+    kstream_destroy();
+    if (!kstream_create_from_fd(socket, NULL))
+        return(0);
+#endif /* CK_ENCRYPTION */
     return(1);
 }
 

@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2002,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -345,8 +345,19 @@ struct stringlist {			/* General purpose string list */
 #define XA_USER 33			/* Username for login */
 #define XA_PASS 34			/* Password for login */
 #define XA_TITL 35                      /* Window Title */
-#define XA_MAX  35			/* Highest extended option number */
-
+#define XA_NOMN 36			/* No GUI Menu Bar */
+#define XA_NOTB 37			/* No GUI Tool Bar */
+#define XA_NOSB 38                      /* No GUI Status Bar */
+#define XA_NOPUSH 39                    /* Disable external commands */
+#define XA_NOSCROLL 40                  /* Disable scrollback operations */
+#define XA_NOESCAPE 41                  /* Disable escape from connect mode */
+#define XA_LOCK 42                      /* All lockdown options */
+#define XA_NOBAR 43                     /* No GUI Bars */
+#define XA_WMAX  44
+#define XA_WMIN  45
+#define XA_SCALE 46                     /* GUI Scale Font */
+#define XA_CHGD  47                     /* GUI Change Dimensions */
+#define XA_MAX  47			/* Highest extended option number */
 #endif /* NOCMDL */
 
 #ifndef NOICP
@@ -734,6 +745,9 @@ struct stringlist {			/* General purpose string list */
 #define XXSITE  258     /* (FTP) SITE */
 #define XXPASV  259     /* (FTP) PASSIVE */
 #define XXCONT  260	/* CONTINUE */
+#define XXNSCR  261	/* NOSCROLL */
+#define XXSFTP  262	/* SFTP */
+#define XXSKRM  263	/* SKERMIT */
 
 /* End of Top-Level Commands */
 
@@ -1005,7 +1019,8 @@ struct stringlist {			/* General purpose string list */
 #define     TT_TVI925  37       /*    TVI 925  */
 #define     TT_TVI950  38       /*    TVI950   */
 #define     TT_ADM3A   39       /*    LSI ADM 3A */
-#define     TT_VTNT    40       /*    Microsoft NT Virtual Terminal */
+#define     TT_ADM5    40		/*    LSI ADM 5 */
+#define     TT_VTNT    41       /*    Microsoft NT Virtual Terminal */
 #define     TT_MAX   TT_VTNT
 #define     TT_VT420   96	/*    DEC VT-420 */
 #define     TT_VT520   97	/*    DEC VT-520/525 */
@@ -1068,6 +1083,7 @@ struct stringlist {			/* General purpose string list */
 #define ISTEK(x)   (x == TT_TEK40)
 #define ISVTNT(x)  (x == TT_VTNT)
 #define ISADM3A(x) (x == TT_ADM3A)
+#define ISADM5(x)  (x == TT_ADM5)
 #endif /* OS2 */
 
 #define   XYTCS  2      /*  Terminal Character Set */
@@ -1237,6 +1253,7 @@ struct stringlist {			/* General purpose string list */
 #endif /* OS2 */
 #define   XYTITMO   62  /* SET TERM IDLE-TIMEOUT */
 #define   XYTIACT   63  /* SET TERM IDLE-ACTION  */
+#define   XYTLSP    64  /* SET TERM LINE-SPACING */
 
 #define XYATTR 34       /* Attribute packets  */
 #define XYSERV 35	/* Server parameters  */
@@ -1692,6 +1709,7 @@ struct stringlist {			/* General purpose string list */
 #define XYGUI    130	/* SET GUI */
 #define XYANSWER 131    /* SET ANSWER */
 #define XYMATCH  132    /* SET MATCHDOT */
+#define XYSFTP   133    /* SET SFTP */
 
 /* End of SET commands */
 
@@ -1984,6 +2002,7 @@ struct stringlist {			/* General purpose string list */
 #define IN_PAT  9			/* Pattern to match */
 #define IN_ASG 10 			/* Assign matching text to variable */
 #define IN_CAN 11			/* Keyboard cancellation of INPUT */
+#define IN_SCA 12			/* Timeout scaling */
 
 /* ENABLE/DISABLE command parameters */
 
@@ -2329,6 +2348,8 @@ struct stringlist {			/* General purpose string list */
 #define VN_LOG_SES  243                 /* Session Log Filename */
 #define VN_LOG_DEB  244                 /* Debug Log Filename */
 #define VN_LOG_CON  245                 /* Connection Log Filename */
+
+#define VN_ISCALE   246			/* INPUT scale factor */
 #endif /* NOSPL */
 
 /* INPUT status values */
@@ -2363,7 +2384,7 @@ struct stringlist {			/* General purpose string list */
 #define FN_RPA      15			/* RPAD (right pad) */
 #define FN_DEF      16			/* Definition of a macro, unexpanded */
 #define FN_CON      17			/* Contents of a variable, ditto */
-#define FN_FIL      18                       /* File list */
+#define FN_FIL      18			/* File list */
 #define FN_FC       19			/* File count */
 #define FN_CHR      20			/* Character (like BASIC CHR$()) */
 #define FN_RIG      21			/* Right (like BASIC RIGHT$()) */
@@ -2508,6 +2529,7 @@ struct stringlist {			/* General purpose string list */
 #define FN_MSLEEP  153			/* \fmsleep() */
 #define FN_LNAME   154			/* \fLongPathName() (Windows) */
 #define FN_SNAME   155			/* \fShortPathName() (Windows) */
+#define FN_UNTAB   156			/* \funtabify() */
 
 #endif /* NOSPL */
 
@@ -2633,7 +2655,30 @@ struct stringlist {			/* General purpose string list */
 #define SSHKC_PP  2
 #define SSHKC_TY  3
 #define SSHKC_1R  4
+
+#define SKRM_OPN  1
 #endif /* SSHBUILTIN */
+
+#ifdef SFTP_BUILTIN
+#define SFTP_OPN    1
+#define SFTP_CD     2
+#define SFTP_CHGRP  3
+#define SFTP_CHMOD  4
+#define SFTP_CHOWN  5
+#define SFTP_DIR    6
+#define SFTP_GET    7
+#define SFTP_MKDIR  8
+#define SFTP_PWD    9
+#define SFTP_PUT    10
+#define SFTP_REN    11
+#define SFTP_RM     12
+#define SFTP_RMDIR  13
+#define SFTP_LINK   14
+#define SFTP_VER    15
+
+#define XY_SFTP_RCS 1
+#define XY_SFTP_EOL 2
+#endif /* SFTP_BUILTIN */
 
 /* ANSI-C prototypes for user interface functions */
 
@@ -2682,7 +2727,7 @@ _PROTOTYP( int dogta, (int) );
 _PROTOTYP( int dohlp, (int) );
 _PROTOTYP( int dohrmt, (int) );
 _PROTOTYP( int doif, (int) );
-_PROTOTYP( int doinput, (int, char *[], int[]) );
+_PROTOTYP( int doinput, (int, char *[], int[], int) );
 _PROTOTYP( int doreinp, (int, char *, int) );
 _PROTOTYP( int dolog, (int) );
 _PROTOTYP( int dologin, (char *) );
@@ -2704,6 +2749,7 @@ _PROTOTYP( int hmsg, (char *) );
 _PROTOTYP( int hmsga, (char * []) );
 _PROTOTYP( int mlook, (struct mtab [], char *, int) );
 _PROTOTYP( int mxlook, (struct mtab [], char *, int) );
+_PROTOTYP( int mxxlook, (struct mtab [], char *, int) );
 _PROTOTYP( int prtopt, (int *, char *) );
 _PROTOTYP( CHAR rfilop, (char *, char) );
 _PROTOTYP( int setcc, (char *, int *) );
@@ -2714,6 +2760,7 @@ _PROTOTYP( VOID shmdmlin, (void) );
 _PROTOTYP( VOID initmdm, (int) );
 _PROTOTYP( char * showoff, (int) );
 _PROTOTYP( char * showooa, (int) );
+_PROTOTYP( char * showstring, (char *) );
 _PROTOTYP( int pktopn, (char *,int) );
 _PROTOTYP( int traopn, (char *,int) );
 _PROTOTYP( int sesopn, (char *,int) );
@@ -2840,9 +2887,9 @@ _PROTOTYP( int doshodial, (void) );
 _PROTOTYP( int shonet, (void) );
 _PROTOTYP( int shotopt, (int) );
 _PROTOTYP( int shotel, (int) );
-#ifdef CK_KERBEROS
+#ifdef CK_AUTHENTICATION
 _PROTOTYP (int sho_auth,( int  ) );
-#endif /* CK_KERBEROS */
+#endif /* CK_AUTHENTICATION */
 #endif /* NONET */
 _PROTOTYP( VOID shomdm, (void) );
 #endif /* NOLOCAL */
@@ -2855,8 +2902,12 @@ _PROTOTYP( VOID showassoc, (void) );
 _PROTOTYP( VOID showdiropts, (void) );
 _PROTOTYP( VOID showdelopts, (void) );
 _PROTOTYP( VOID showtypopts, (void) );
+_PROTOTYP( VOID showpurgopts, (void) );
 _PROTOTYP( VOID shoflow, (void) );
 _PROTOTYP( VOID shoxfer, (void) );
+#ifdef ANYSSH
+_PROTOTYP( VOID shossh, (void) );
+#endif	/* ANYSSH */
 #endif /* NOSHOW */
 
 _PROTOTYP( VOID shostrdef, (CHAR *) );
@@ -2884,14 +2935,18 @@ _PROTOTYP( int dochroot, (void) );
 #endif /* CKROOT */
 
 #ifdef NEWFTP
-_PROTOTYP( int doftpusr, () );
-_PROTOTYP( int doftpput, (int,int) );
-_PROTOTYP( int doftpget, (int,int) );
-_PROTOTYP( int doftprmt, (int,int) );
-_PROTOTYP( int ftpopen,  (char *, char *, int) );
-_PROTOTYP( int cmdlinget,(int) );
-_PROTOTYP( int cmdlinput,(int) );
-_PROTOTYP( int doftparg, (char) );
+_PROTOTYP( int doftpusr,    (void) );
+_PROTOTYP( int doftpput,    (int,int) );
+_PROTOTYP( int doftpget,    (int,int) );
+_PROTOTYP( int doftprmt,    (int,int) );
+_PROTOTYP( int ftpopen,     (char *, char *, int) );
+_PROTOTYP( int cmdlinget,   (int) );
+_PROTOTYP( int cmdlinput,   (int) );
+_PROTOTYP( int doftparg,    (char) );
+_PROTOTYP( int doftpacct,   (void) );
+_PROTOTYP( int doftpsite,   (void) );
+_PROTOTYP( int dosetftppsv, (void) );
+_PROTOTYP( int ftpbye,      (void) );
 #endif /* NEWFTP */
 
 #ifdef COMMENT

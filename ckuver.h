@@ -3,7 +3,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -148,11 +148,11 @@
 
 #ifdef BSD44
 #ifdef MACOSX
-#ifdef MACOSX10
-#define HERALD " Mac OS X 1.0"
+#ifdef MACOSX103
+#define HERALD " Mac OS X 10.3"
 #else
 #define HERALD " Mac OS X"
-#endif /* MACOSX10 */
+#endif /* MACOSX103 */
 #else
 #ifdef __OpenBSD__
 #define HERALD " OpenBSD"
@@ -184,8 +184,17 @@
 #endif /* NETBSD16 */
 #else  /* __NetBSD__ */
 #ifdef __FreeBSD__
+#ifdef FREEBSD51
+#define HERALD " FreeBSD 5.1"
+#else
 #ifdef FREEBSD50
 #define HERALD " FreeBSD 5.0"
+#else
+#ifdef FREEBSD49
+#define HERALD " FreeBSD 4.9"
+#else
+#ifdef FREEBSD48
+#define HERALD " FreeBSD 4.8"
 #else
 #ifdef FREEBSD47
 #define HERALD " FreeBSD 4.7"
@@ -228,7 +237,10 @@
 #endif /* FREEBSD45 */
 #endif /* FREEBSD46 */
 #endif /* FREEBSD47 */
+#endif /* FREEBSD48 */
+#endif /* FREEBSD49 */
 #endif /* FREEBSD50 */
+#endif /* FREEBSD51 */
 #else
 #ifdef __386BSD__
 #define HERALD " 386BSD"
@@ -528,6 +540,9 @@
 
 #ifdef TRU64
 
+#ifdef OSF51B
+#define HERALD " Compaq Tru64 UNIX 5.1B"
+#else
 #ifdef OSF51A
 #define HERALD " Compaq Tru64 UNIX 5.1A"
 #else
@@ -546,7 +561,8 @@
 #endif /* OSF40F */
 #endif /* OSF40G */
 #endif /* OSF50 */
-#endif /* OSF51 */
+#endif /* OSF51A */
+#endif /* OSF51B */
 
 #else  /* Not TRU64 */
 
@@ -723,6 +739,9 @@
 #ifdef ZSL5500
 #define HERALD " Sharp Zaurus SL-5500"
 #else
+#ifdef RH90
+#define HERALD " Red Hat Linux 9.0"
+#else
 #ifdef RH80
 #define HERALD " Red Hat Linux 8.0"
 #else
@@ -740,6 +759,7 @@
 #endif /* RH72 */
 #endif /* RH73 */
 #endif /* RH80 */
+#endif /* RH90 */
 #endif /* ZSL5500 */
 #else  /* __linux__ */
 #ifdef _386BSD				/* 386BSD Jolix */
@@ -822,6 +842,9 @@
 #ifdef HERALD
 #undef HERALD
 #endif /* HERALD */
+#ifdef SCO_OSR507
+#define HERALD " SCO OpenServer R5.0.7"
+#else
 #ifdef SCO_OSR506A
 #define HERALD " SCO OpenServer R5.0.6a"
 #else
@@ -843,6 +866,7 @@
 #endif /* SCO_OSR505 */
 #endif /* SCO_OSR506 */
 #endif /* SCO_OSR506A */
+#endif /* SCO_OSR507 */
 #else
 #ifdef XENIX
 #ifdef HERALD

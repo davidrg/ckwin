@@ -1,9 +1,9 @@
-char *cknetv = "Network support, 8.0.271, 24 Oct 2002";
+char *cknetv = "Network support, 8.0.283, 7 Feb 2004";
 
 /*  C K C N E T  --  Network support  */
 
 /*
-  Copyright (C) 1985, 2002,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -24,17 +24,17 @@ char *cknetv = "Network support, 8.0.271, 24 Oct 2002";
 
   Frank da Cruz (fdc@columbia.edu),
     Columbia University Academic Information Systems, New York City.
-  Jeffrey E Altman (jaltman@columbia.edu) -- Primary maintainer/developer
-    since about 1996.
+  Jeffrey E Altman (jaltman@secure-endpoints.com) -- Primary 
+    maintainer/developer since about 1996.
   netopen() routine for TCP/IP originally by Ken Yap, Rochester University
     (ken@cs.rochester.edu) (no longer at that address).
   Missing pieces for Excelan sockets library from William Bader.
   Telnet protocol by Frank da Cruz and Jeffrey Altman.
-  Rlogin protocol by Jeffrey Altman.
-  SSL support adapted by Jeffrey Altman from work done by
+  Rlogin protocol by Jeffrey E Altman.
+  SSL support adapted by Jeffrey E Altman from work done by
     Tim Hudson <tjh@cryptosoft.com> +61 7 32781581
-  TLS support by Jeffrey Altman.
-  HTTP support by Jeffrey Altman.
+  TLS support by Jeffrey E Altman.
+  HTTP support by Jeffrey E Altman.
   TGV MultiNet code by Frank da Cruz.
   MultiNet code adapted to WIN/TCP by Ray Hunter of TWG.
   MultiNet code adapted to DEC TCP/IP by Lee Tibbert of DEC and Frank da Cruz.
@@ -43,7 +43,7 @@ char *cknetv = "Network support, 8.0.271, 24 Oct 2002";
   X.25 support by Marcello Frutig, Catholic University,
     Rio de Janeiro, Brazil (frutig@rnp.impa.br) with fixes from
     Stefaan Eeckels, Eurokom, Luxembourg.
-    David Lane added support for Stratus X.25 1996.
+    David Lane added support for Stratus VOS X.25 1996.
     Stephen Riehm added support for IBM AIX X.25 in April 1998.
   Other contributions as indicated in the code.
 */
@@ -69,6 +69,9 @@ char *cknetv = "Network support, 8.0.271, 24 Oct 2002";
 #endif /* NT */
 #else /* OS2 */
 #include <arpa/inet.h>
+#ifdef USE_NAMESER_COMPAT
+#include <arpa/nameser_compat.h>
+#endif	/* USE_NAMESER_COMPAT */
 #include <arpa/nameser.h>
 #include <resolv.h>
 #ifndef PS2AIX10
@@ -368,6 +371,7 @@ char http_host_port[NAMECPYL];          /* orig host/port necessary for http */
 char http_ip[20] = { '\0' };            /* ip address of host */
 char http_port = 0;
 int  http_ssl = 0;
+char * http_agent = 0;
 int  httpfd = -1;                       /* socket for http connections */
 int  http_code = 0;
 #define HTTPBUFLEN  1024
@@ -387,6 +391,7 @@ char * tcp_http_proxy = NULL;           /* Name[:port] of http proxy server */
 int    tcp_http_proxy_errno = 0;
 char * tcp_http_proxy_user = NULL;
 char * tcp_http_proxy_pwd  = NULL;
+char * tcp_http_proxy_agent = NULL;
 #define HTTPCPYL 1024
 static char proxycopy[HTTPCPYL];
 #endif /* NOHTTP */
@@ -736,6 +741,7 @@ ini_kerb() {
     krb5_init.renewable   = krb5_d_renewable;
     krb5_init.validate    = 0;
     krb5_init.no_addresses = krb5_d_no_addresses;
+    krb5_init.getk4       = krb5_d_getk4;
     if (krb5_init.postdate) {
         free(krb5_init.postdate);
         krb5_init.postdate = NULL;
@@ -1046,6 +1052,7 @@ ttbufr() {                              /* TT Buffer Read */
 #ifdef CK_SSL
     if (ssl_active_flag || tls_active_flag) {
         int error;
+      ssl_read:
         if (ssl_active_flag)
           count = SSL_read(ssl_con, ttibuf, count);
         else
@@ -1082,7 +1089,7 @@ ttbufr() {                              /* TT Buffer Read */
           case SSL_ERROR_WANT_READ:
             debug(F100,"ttbufr SSL_ERROR_WANT_READ","",0);
 #ifdef OS2
-              ReleaseTCPIPMutex();
+            ReleaseTCPIPMutex();
 #endif /* OS2 */
             return(-1);
           case SSL_ERROR_SYSCALL:
@@ -1102,7 +1109,7 @@ ttbufr() {                              /* TT Buffer Read */
                   if (rc == -1)
                       rc = -2;
                   else if ( rc == -2 )
-                      return -1;
+                      rc = -1;
 #endif /* NT */
 #ifdef OS2
                   ReleaseTCPIPMutex();
@@ -1134,7 +1141,7 @@ ttbufr() {                              /* TT Buffer Read */
                   ERR_print_errors_fp(stderr);
               }
 #ifdef COMMENT
-            netclos();
+	      netclos();
 #endif /* COMMENT */
 #ifdef OS2
               ReleaseTCPIPMutex();
@@ -1877,7 +1884,8 @@ recvbuf(sock,size) int sock; int size; {
     if (!inserver)
 #endif /* IKSD */
       if (sock == -1 ||
-        nettype != NET_TCPA && nettype != NET_TCPB && nettype != NET_SSH || ttmdm >= 0) {
+	  nettype != NET_TCPA && nettype != NET_TCPB &&
+	  nettype != NET_SSH || ttmdm >= 0) {
         tcp_recvbuf = size;
         return(1);
     }
@@ -2521,7 +2529,7 @@ tcpsocket_open(name,lcl,nett,timo) char * name; int * lcl; int nett; int timo {
         ttnproto = NP_TELNET;           /* Yes, set global flag. */
 #ifdef CK_SECURITY
     /* Before Initialization Telnet/Rlogin Negotiations Init Kerberos */
-    ck_auth_init((host && host->h_name && host->h_name[0]) ?
+    ck_auth_init((tcp_rdns && host && host->h_name && host->h_name[0]) ?
                 host->h_name : ipaddr,
                 ipaddr,
                 uidbuf,
@@ -2882,9 +2890,51 @@ tcpsrv_open(name,lcl,nett,timo) char * name; int * lcl; int nett; int timo; {
             if (ttnproto != NP_TCPRAW)  /* Yes and if raw port not requested */
               ttnproto = NP_TELNET;     /* Set protocol to TELNET. */
         }
+
+        ckstrncpy(ipaddr,(char *)inet_ntoa(saddr.sin_addr),20);
+        if (tcp_rdns) {
+            if (!quiet) {
+                printf(" Reverse DNS Lookup... ");
+                fflush(stdout);
+            }
+            if (host = gethostbyaddr((char *)&saddr.sin_addr,4,PF_INET)) {
+                host = ck_copyhostent(host);
+                debug(F100,"tcpsrv_open gethostbyaddr != NULL","",0);
+                if (!quiet) {
+                    printf("(OK)\n");
+                    fflush(stdout);
+                }
+                name[0] = '*';
+                ckstrncpy(&name[1],host->h_name,78);
+                strncat(name,":",80-strlen(name));
+                strncat(name,p,80-strlen(name));
+                if (!quiet
+#ifndef NOICP
+                    && !doconx
+#endif /* NOICP */
+                    )
+                  printf("%s connected on port %s\n",host->h_name,p);
+            } else {
+                if (!quiet) printf("Failed.\n");
+            }
+        } else if (!quiet) printf("(OK)\n");
+
+        if (!tcp_rdns || !host) {
+            ckstrncpy(name,ipaddr,80);
+            ckstrncat(name,":",80);
+            ckstrncat(name,ckuitoa(ntohs(saddr.sin_port)),80);
+            if (!quiet
+#ifndef NOICP
+                && !doconx
+#endif /* NOICP */
+                )
+              printf("%s connected on port %d\n",ipaddr,ntohs(saddr.sin_port));
+        }
+        if (!quiet) fflush(stdout);
+
 #ifdef CK_SECURITY
         /* Before Initialization Telnet/Rlogin Negotiations Init Kerberos */
-        ck_auth_init((host && host->h_name && host->h_name[0]) ?
+        ck_auth_init((tcp_rdns && host && host->h_name && host->h_name[0]) ?
                      (char *)host->h_name : ipaddr,
                      ipaddr,
                      uidbuf,
@@ -2965,47 +3015,6 @@ tcpsrv_open(name,lcl,nett,timo) char * name; int * lcl; int nett; int timo; {
         }
 #endif /* KRB5_U2U */
 #endif /* CK_KERBEROS */
-
-        ckstrncpy(ipaddr,(char *)inet_ntoa(saddr.sin_addr),20);
-        if (tcp_rdns) {
-            if (!quiet) {
-                printf(" Reverse DNS Lookup... ");
-                fflush(stdout);
-            }
-            if (host = gethostbyaddr((char *)&saddr.sin_addr,4,PF_INET)) {
-                host = ck_copyhostent(host);
-                debug(F100,"tcpsrv_open gethostbyaddr != NULL","",0);
-                if (!quiet) {
-                    printf("(OK)\n");
-                    fflush(stdout);
-                }
-                name[0] = '*';
-                ckstrncpy(&name[1],host->h_name,78);
-                strncat(name,":",80-strlen(name));
-                strncat(name,p,80-strlen(name));
-                if (!quiet
-#ifndef NOICP
-                    && !doconx
-#endif /* NOICP */
-                    )
-                  printf("%s connected on port %s\n",host->h_name,p);
-            } else {
-                if (!quiet) printf("Failed.\n");
-            }
-        } else if (!quiet) printf("(OK)\n");
-
-        if (!tcp_rdns || !host) {
-            ckstrncpy(name,ipaddr,80);
-            ckstrncat(name,":",80);
-            ckstrncat(name,ckuitoa(ntohs(saddr.sin_port)),80);
-            if (!quiet
-#ifndef NOICP
-                && !doconx
-#endif /* NOICP */
-                )
-              printf("%s connected on port %d\n",ipaddr,ntohs(saddr.sin_port));
-        }
-        if (!quiet) fflush(stdout);
         return(0);                      /* Done. */
     } else {
         i = errno;                      /* save error code */
@@ -4048,6 +4057,10 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
     dns = 0;
     if (
 #ifdef INADDR_NONE
+/* This might give warnings on 64-bit platforms but they should be harmless */
+/* because INADDR_NONE should be all 1's anyway, thus the OR part is */
+/* probably superfluous -- not sure why it's even there, maybe it should be */
+/* removed. */
         iax.s_addr == INADDR_NONE || iax.s_addr == (unsigned long) -1L
 #else /* INADDR_NONE */
         iax < 0
@@ -4062,7 +4075,7 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
             host = ck_copyhostent(host);
             dns = 1;                    /* Remember we performed dns lookup */
             r_addr.sin_family = host->h_addrtype;
-            if (host->h_name && host->h_name[0]
+            if (tcp_rdns && host->h_name && host->h_name[0]
 #ifndef NOHTTP
                  && (tcp_http_proxy == NULL)
 #endif /* NOHTTP */
@@ -4487,7 +4500,9 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
         char * agent = "C-Kermit";
 #endif /* OS2 */
 
-        if (http_connect(ttyfd,agent,NULL,
+        if (http_connect(ttyfd,
+			 tcp_http_proxy_agent ? tcp_http_proxy_agent : agent,
+			 NULL,
                          tcp_http_proxy_user,
                          tcp_http_proxy_pwd,
                          0,
@@ -4824,7 +4839,7 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
 #ifndef NOHTTP
                  tcp_http_proxy ? proxycopy :
 #endif /* NOHTTP */
-                 (host && host->h_name && host->h_name[0]) ?
+                 (tcp_rdns && host && host->h_name && host->h_name[0]) ?
                  (char *)host->h_name : (namecopy2[0] ? namecopy2 : 
                                         (namecopy[0] ? namecopy : ipaddr)),
                  ipaddr,
@@ -4875,7 +4890,7 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
         || ttnproto == NP_K5LOGIN || ttnproto == NP_EK5LOGIN
 #endif /* CK_KERBEROS */
         ) {                             /* Similar deal for rlogin */
-        if (rlog_ini(((host && host->h_name && host->h_name[0]) ?
+        if (rlog_ini(((tcp_rdns && host && host->h_name && host->h_name[0]) ?
                       (CHAR *)host->h_name : (CHAR *)ipaddr),
                      service->s_port,
                      &l_addr,&r_addr
@@ -4926,7 +4941,7 @@ int tls_norestore = 0;
 int
 netclos() {
     static int close_in_progress = 0;
-    int x = 0;
+    int x = 0, y, z;
     debug(F101,"netclos","",ttyfd);
 
 #ifdef NETLEBUF
@@ -4952,15 +4967,27 @@ netclos() {
 #endif /* CK_SSL */
       slrestor();
 #endif /* NOLOCAL */
-#ifndef OS2
+#ifdef OS2
+    RequestTCPIPMutex(SEM_INDEFINITE_WAIT);
+#else /* OS2 */
     if (ttyfd > -1)                     /* Was. */
 #endif /* OS2 */
       {
+#ifdef VMS
+	  y = 1;                          /* Turn on nonblocking reads */
+	  z = socket_ioctl(ttyfd,FIONBIO,&y);
+	  debug(F111,"netclos FIONBIO","on",z);
+#endif /* VMS */
 #ifdef TNCODE
           if (ttnproto == NP_TELNET) {
-            tn_push();                    /* Place any waiting data into input*/
-            tn_sopt(DO,TELOPT_LOGOUT);    /* Send LOGOUT option before close */
-            TELOPT_UNANSWERED_DO(TELOPT_LOGOUT) = 1;
+            if ( !TELOPT_ME(TELOPT_LOGOUT) ) {
+		/* Send LOGOUT option before close */
+		if (tn_sopt(DO,TELOPT_LOGOUT) >= 0) {
+		    TELOPT_UNANSWERED_DO(TELOPT_LOGOUT) = 1;
+		    /* It would be nice to call tn_wait but we can't */
+		}
+	    }
+            tn_push();			/* Place any waiting data into input*/
           }
 #endif /* TNCODE */
 #ifdef CK_SSL
@@ -5017,6 +5044,9 @@ netclos() {
       }
     ttyfd = -1;                         /* Mark it as closed. */
     wasclosed = 1;
+#ifdef OS2
+    ReleaseTCPIPMutex();
+#endif /* OS2 */
 #ifdef TNCODE
 #ifdef CK_FORWARD_X
     fwdx_close_all();                   /* Shut down any Forward X sockets */
@@ -5160,7 +5190,7 @@ int                                     /* Check how many bytes are ready */
 nettchk() {                             /* for reading from network */
 #ifdef TCPIPLIB
     long count = 0;
-    int x = 0;
+    int x = 0, z;
     long y;
     char c;
     int rc;
@@ -5214,10 +5244,12 @@ nettchk() {                             /* for reading from network */
 #ifdef CK_SSL
     if (ssl_active_flag) {
 #ifndef IKSDONLY
+#ifdef OS2
         if ( IsConnectMode() ) {
             debug(F101,"nettchk (ssl_active_flag) returns","",count);
             return(0);
         }
+#endif /* OS2 */
 #endif /* IKSDONLY */
         count = SSL_pending(ssl_con);
         if (count < 0) {
@@ -5229,10 +5261,12 @@ nettchk() {                             /* for reading from network */
             return(count);                  /* Don't perform a read */
     } else if (tls_active_flag) {
 #ifndef IKSDONLY
+#ifdef OS2
         if ( IsConnectMode() ) {
             debug(F101,"nettchk (tls_active_flag) returns","",count);
             return(0);
         }
+#endif /* OS2 */
 #endif /* IKSDONLY */
         count = SSL_pending(tls_con);
         if (count < 0) {
@@ -5302,6 +5336,7 @@ nettchk() {                             /* for reading from network */
         debug(F101,"nettchk returns","",count+ttibn);
         return(count+ttibn);
     }
+    ttibn = ttibp = 0;
 #endif /* OS2 */
 
 /*
@@ -5366,8 +5401,8 @@ nettchk() {                             /* for reading from network */
 #endif /* CK_SSL */
 #endif /* OS2 */
         y = 1;                          /* Turn on nonblocking reads */
-        x = socket_ioctl(ttyfd,FIONBIO,&y);
-        debug(F101,"nettchk FIONBIO","",x);
+        z = socket_ioctl(ttyfd,FIONBIO,&y);
+        debug(F111,"nettchk FIONBIO","on",z);
 #ifdef OS2
 #ifdef CK_SSL
         ReleaseSSLMutex();
@@ -5379,12 +5414,14 @@ nettchk() {                             /* for reading from network */
 #endif /* NT_TCP_OVERLAPPED */
 #ifdef CK_SSL
         if ( ssl_active_flag || tls_active_flag ) {
+#ifdef OS2
+	  ssl_read:
             x = SSL_read( ssl_active_flag?ssl_con:tls_con,
                           &ttibuf[ttibp+ttibn],
                           TTIBUFL-ttibp-ttibn );
             switch (SSL_get_error(ssl_active_flag?ssl_con:tls_con,x)) {
             case SSL_ERROR_NONE:
-                debug(F111,"nettchk SSL_ERROR_NONE","count",count);
+                debug(F111,"nettchk SSL_ERROR_NONE","x",x);
                 break;
             case SSL_ERROR_WANT_WRITE:
                 debug(F100,"nettchk SSL_ERROR_WANT_WRITE","",0);
@@ -5402,13 +5439,34 @@ nettchk() {                             /* for reading from network */
               } else {
 #ifdef NT
                   int gle = GetLastError();
+#endif /* NT */
+#ifndef NON_BLOCK_IO
+#ifdef OS2
+#ifdef CK_SSL
+		  RequestSSLMutex(SEM_INDEFINITE_WAIT);
+#endif /* CK_SSL */
+#endif /* OS2 */
+		  y = 0;                          /* Turn off nonblocking reads */
+		  z = socket_ioctl(ttyfd,FIONBIO,&y);
+		  debug(F111,"nettchk FIONBIO","off",z);
+#ifdef OS2
+#ifdef CK_SSL
+		  ReleaseSSLMutex();
+#endif /* CK_SSL */
+#endif /* OS2 */
+#endif /* NON_BLOCK_IO */
+#ifdef NT_TCP_OVERLAPPED
+		  ionoblock = 0;                  /* For Overlapped I/O */
+#endif /* NT_TCP_OVERLAPPED */
+#ifdef NT
                   debug(F111,"nettchk SSL_ERROR_SYSCALL",
                          "GetLastError()",gle);
                   rc = os2socketerror(gle);
                   if (rc == -1)
                       rc = -2;
                   else if ( rc == -2 )
-                      return -1;
+                      rc = -1;
+		  goto nettchk_return;
 #endif /* NT */
                   break;
               }
@@ -5435,10 +5493,11 @@ nettchk() {                             /* for reading from network */
 #ifdef COMMENT
                 netclos();
                 rc = -1;
+		goto nettchk_return;
 #else
                 x = -1;
+		break;
 #endif
-                goto nettchk_return;
           case SSL_ERROR_ZERO_RETURN:
                 debug(F100,"nettchk SSL_ERROR_ZERO_RETURN","",0);
                 netclos();
@@ -5450,6 +5509,10 @@ nettchk() {                             /* for reading from network */
                 rc = -1;
                 goto nettchk_return;
             }
+#else /* OS2 */
+	    /* Do not block */
+	    x = -1;
+#endif /* OS2 */
         } else
 #endif /* CK_SSL */
         {
@@ -5464,8 +5527,19 @@ nettchk() {                             /* for reading from network */
         debug(F101,"nettchk socket_read","",x);
 
 #ifndef NON_BLOCK_IO
-        y = 0;                          /* Turn them back off */
-        socket_ioctl(ttyfd,FIONBIO,&y);
+#ifdef OS2
+#ifdef CK_SSL
+        RequestSSLMutex(SEM_INDEFINITE_WAIT);
+#endif /* CK_SSL */
+#endif /* OS2 */
+        y = 0;                          /* Turn off nonblocking reads */
+        z = socket_ioctl(ttyfd,FIONBIO,&y);
+        debug(F111,"nettchk FIONBIO","off",z);
+#ifdef OS2
+#ifdef CK_SSL
+        ReleaseSSLMutex();
+#endif /* CK_SSL */
+#endif /* OS2 */
 #endif /* NON_BLOCK_IO */
 #ifdef NT_TCP_OVERLAPPED
         ionoblock = 0;                  /* For Overlapped I/O */
@@ -5491,21 +5565,29 @@ nettchk() {                             /* for reading from network */
             hexdump("nettchk got real data",&ttibuf[ttibp+ttibn],x);
             ttibn += x;
 #else /* OS2 */
-            debug(F101,"nettchk socket_read char","",c);
-            debug(F101,"nettchk ttibp","",ttibp);
-            debug(F101,"nettchk ttibn","",ttibn);
+#ifdef CK_SSL
+	    if ( ssl_active_flag || tls_active_flag ) {
+		hexdump("nettchk got real data",&ttibuf[ttibp+ttibn],x);
+		ttibn += x;
+	    } else 
+#endif /* CK_SSL */
+	    {
+		debug(F101,"nettchk socket_read char","",c);
+		debug(F101,"nettchk ttibp","",ttibp);
+		debug(F101,"nettchk ttibn","",ttibn);
 /*
   In the case of Overlapped I/O the character would have come from
   the beginning of the buffer, so put it back.
 */
-            if (ttibp > 0) {
-                ttibp--;
-                ttibuf[ttibp] = c;
-                ttibn++;
-            } else {
-                ttibuf[ttibp+ttibn] = c;
-                ttibn++;
-            }
+		if (ttibp > 0) {
+		    ttibp--;
+		    ttibuf[ttibp] = c;
+		    ttibn++;
+		} else {
+		    ttibuf[ttibp+ttibn] = c;
+		    ttibn++;
+		}
+	    }
 #endif /* OS2 */
         }
 #else /* NOCOUNT */
@@ -6164,7 +6246,7 @@ nettol(s,n) CHAR *s; int n; {
                   if (rc == -1)
                       rc = -2;
                   else if ( rc == -2 )
-                      return -1;
+                      rc = -1;
 #endif /* NT */
                   return(rc);
               }
@@ -6369,6 +6451,7 @@ nettoc(c) CHAR c;
     if (ssl_active_flag || tls_active_flag) {
         int len, error;
         /* Write using SSL */
+      ssl_retry:
         if (ssl_active_flag)
           len = SSL_write(ssl_con, &cc, 1);
         else
@@ -6378,7 +6461,7 @@ nettoc(c) CHAR c;
             debug(F111,"nettoc","SSL_write",len);
             return(len == 1 ? 0 : -1);
           case SSL_ERROR_WANT_WRITE:
-          case SSL_ERROR_WANT_READ:
+  	  case SSL_ERROR_WANT_READ:
             return(-1);
           case SSL_ERROR_SYSCALL:
               if ( len == 0 ) { /* EOF */
@@ -6394,7 +6477,7 @@ nettoc(c) CHAR c;
                   if (rc == -1)
                       rc = -2;
                   else if ( rc == -2 )
-                      return -1;
+                      rc = -1;
 #endif /* NT */
                   return(rc);
               }
@@ -9965,8 +10048,21 @@ http_reopen()
 {
     int rc = 0;
     char * s = NULL;                    /* strdup is not portable */
-    makestr(&s,(char *)http_ip);
-    rc = http_open(s,ckuitoa(http_port),http_ssl,NULL,0);
+    if ( tcp_http_proxy ) {
+        char * p;
+        makestr(&s,(char *)http_host_port);
+        p = s;
+        while (*p != '\0' && *p != ':') p++; /* Look for colon */
+        if (*p == ':') {                     /* Have a colon */
+            *p++ = '\0';                     /* Get service name or number */
+        } else {
+            p="http";
+        }
+        rc = http_open(s,p,http_ssl,NULL,0,http_agent);
+    } else {
+        makestr(&s,(char *)http_ip);
+        rc = http_open(s,ckuitoa(http_port),http_ssl,NULL,0,http_agent);
+    }
     free(s);
     return(rc);
 }
@@ -9975,16 +10071,18 @@ http_reopen()
 int
 #ifdef CK_ANSIC
 http_open(char * hostname, char * svcname, int use_ssl, char * rdns_name,
-          int rdns_len)
+          int rdns_len, char * agent)
 #else /* CK_ANSIC */
-http_open(hostname, svcname, use_ssl, rdns_name, rdns_len)
+http_open(hostname, svcname, use_ssl, rdns_name, rdns_len, agent)
     char * hostname;
     char * svcname;
     int    use_ssl;
     char * rdns_name;
     int    rdns_len;
+    char * agent;
 #endif /* CK_ANSIC */
 {
+    char namecopy[NAMECPYL];
     char *p;
     int i, x, dns = 0;
 #ifdef TCPSOCKET
@@ -10024,6 +10122,7 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len)
         rdns_len = 0;
 
     *http_ip = '\0';                     /* Initialize IP address string */
+    namecopy[0] = '\0';
 
 #ifdef DEBUG
     if (deblog) {
@@ -10035,6 +10134,7 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len)
     if (!svcname) svcname = "";
     if (!*hostname || !*svcname) return(-1);
 
+    
     service = ckgetservice(hostname,svcname,http_ip,20);
 
     if (service == NULL) {
@@ -10062,7 +10162,6 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len)
     /* with the port number of the proxy (default port 80).                 */
 
     if ( tcp_http_proxy ) {
-        char namecopy[NAMECPYL];
 
         ckmakmsg(proxycopy,sizeof(proxycopy),hostname,":",
                  ckuitoa(ntohs(service->s_port)),NULL);
@@ -10071,7 +10170,7 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len)
         p = namecopy;                       /* Was a service requested? */
         while (*p != '\0' && *p != ':') p++; /* Look for colon */
         if (*p == ':') {                    /* Have a colon */
-            debug(F110,"netopen name has colon",namecopy,0);
+            debug(F110,"http_open name has colon",namecopy,0);
             *p++ = '\0';                    /* Get service name or number */
         } else {
             strcpy(++p,"http");
@@ -10081,13 +10180,24 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len)
         if (!service) {
             fprintf(stderr, "Can't find port for service %s\n", p);
 #ifdef TGVORWIN
-            debug(F101,"netopen can't get service for proxy","",socket_errno);
+            debug(F101,"http_open can't get service for proxy","",socket_errno);
 #else
-            debug(F101,"netopen can't get service for proxy","",errno);
+            debug(F101,"http_open can't get service for proxy","",errno);
 #endif /* TGVORWIN */
             errno = 0;                  /* (rather than mislead) */
             return(-1);
         }
+
+        /* copy the proxyname and remove the service if any so we can use 
+         * it as the hostname 
+         */
+        ckstrncpy(namecopy,tcp_http_proxy,NAMECPYL);
+        p = namecopy;                       /* Was a service requested? */
+        while (*p != '\0' && *p != ':') p++; /* Look for colon */
+        if (*p == ':') {                    /* Have a colon */
+            *p = '\0';                      /* terminate string */
+        }        
+        hostname = namecopy;                /* use proxy as hostname */
     }
 
     /* Set up socket structure and get host address */
@@ -10126,6 +10236,10 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len)
     dns = 0;
     if (
 #ifdef INADDR_NONE
+/* This might give warnings on 64-bit platforms but they should be harmless */
+/* because INADDR_NONE should be all 1's anyway, thus the OR part is */
+/* probably superfluous -- not sure why it's even there, maybe it should be */
+/* removed. */
         iax.s_addr == INADDR_NONE || iax.s_addr == (unsigned long) -1L
 #else /* INADDR_NONE */
         iax < 0
@@ -10140,7 +10254,7 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len)
             host = ck_copyhostent(host);
             dns = 1;                    /* Remember we performed dns lookup */
             r_addr.sin_family = host->h_addrtype;
-            if (host->h_name && host->h_name[0] && (rdns_len > 0)
+            if (tcp_rdns && host->h_name && host->h_name[0] && (rdns_len > 0)
                  && (tcp_http_proxy == NULL)
                  )
                 ckmakmsg(rdns_name,rdns_len,host->h_name,":",svcname,NULL);
@@ -10385,12 +10499,16 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len)
 
     if ( tcp_http_proxy ) {
 #ifdef OS2
-        char * agent = "Kermit 95";             /* Default user agent */
+        if (!agent) 
+	  agent = "Kermit 95";	/* Default user agent */
 #else
-        char * agent = "C-Kermit";
+        if (!agent) 
+	  agent = "C-Kermit";
 #endif /* OS2 */
 
-        if (http_connect(httpfd,agent,NULL,
+        if (http_connect(httpfd,
+                         tcp_http_proxy_agent ? tcp_http_proxy_agent : agent,
+                         NULL,
                          tcp_http_proxy_user,
                          tcp_http_proxy_pwd,
                          0,
@@ -10562,8 +10680,15 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len)
     } else if (!quiet) printf("(OK)\n");
     if (!quiet) fflush(stdout);
 
-    /* This should already have been done but just in case */
-    ckstrncpy(http_ip,(char *)inet_ntoa(r_addr.sin_addr),20);
+
+    if ( tcp_http_proxy ) {
+        /* Erase the IP address since we cannot reuse it */
+        http_ip[0] = '\0';
+    } else {
+        /* This should already have been done but just in case */
+        ckstrncpy(http_ip,(char *)inet_ntoa(r_addr.sin_addr),20);
+    }
+    makestr(&http_agent,agent);
 
 #ifdef CK_SSL
     if (use_ssl && ck_ssleay_is_installed()) {
@@ -10585,6 +10710,7 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len)
     }
 #endif /* CK_SSL */
 #endif /* TCPSOCKET */
+
     return(0);                          /* Done. */
 }
 
@@ -10665,7 +10791,7 @@ http_tol(s,n) CHAR *s; int n; {
              goto ssl_retry;
           case SSL_ERROR_WANT_WRITE:
             debug(F100,"http_tol SSL_ERROR_WANT_WRITE","",0);
-            return(-1);
+	      return(-1);
           case SSL_ERROR_WANT_READ:
             debug(F100,"http_tol SSL_ERROR_WANT_READ","",0);
             return(-1);
@@ -10847,6 +10973,7 @@ http_inc(timo) int timo; {
             http_close();
             return(-1);
         } else if ( x > 0 ) {
+	  ssl_read:
             x = SSL_read(tls_http_con, &c, 1);
             error = SSL_get_error(tls_http_con,x);
             switch (error) {
@@ -10898,7 +11025,7 @@ http_inc(timo) int timo; {
                     if (rc == -1)
                         rc = -2;
                     else if ( rc == -2 )
-                        return -1;
+                        rc = -1;
 #endif /* NT */
 #ifdef OS2
                     ReleaseTCPIPMutex();
@@ -11038,7 +11165,7 @@ http_inc(timo) int timo; {
 #ifdef CK_SSL
         if ( tls_http_active_flag ) {
             int error;
-
+	  ssl_read2:
             x = SSL_read(tls_http_con, &c, 1);
             error = SSL_get_error(tls_http_con,x);
             switch (error) {
@@ -11090,7 +11217,7 @@ http_inc(timo) int timo; {
                     if (rc == -1)
                         rc = -2;
                     else if ( rc == -2 )
-                        return -1;
+                        rc = -1;
 #endif /* NT */
 #ifdef OS2
                     ReleaseTCPIPMutex();
@@ -11449,7 +11576,7 @@ http_get(agent, hdrlist, user, pwd, array, local, remote, stdio)
     }
 
     if ( zfile ) {              /* Set timestamp */
-#ifdef CMDATE2TM
+#ifndef NOSETTIME
 #ifdef OS2
         u_t.actime = srv_t ? srv_t : local_t;
         u_t.modtime = mod_t ? mod_t : local_t;
@@ -11468,7 +11595,7 @@ http_get(agent, hdrlist, user, pwd, array, local, remote, stdio)
 #endif /* SYSUTIMEH */
 #endif /* OS2 */
             utime(local,&u_t);
-#endif /* CMDATE2TM */
+#endif /* NOSETTIME */
     }
 
   getexit:
@@ -12037,7 +12164,7 @@ http_put(agent, hdrlist, mime, user, pwd, array, local, remote, dest, stdio)
     ckstrncat(request,"Content-type: ",len);
     ckstrncat(request,mime,len);
     ckstrncat(request,"\r\n",len);
-    sprintf(buf,"Content-length: %d\r\n",filelen,len);
+    sprintf(buf,"Content-length: %d\r\n",filelen); /* safe */
     ckstrncat(request,buf,len);
 #ifdef HTTP_CLOSE
     ckstrncat(request,"Connection: close\r\n",len);
@@ -12047,8 +12174,8 @@ http_put(agent, hdrlist, mime, user, pwd, array, local, remote, dest, stdio)
     /* Now we have the contents of the file */
     if (zopeni(ZIFILE,local)) {
 
-      putreq:
-        if (http_tol((CHAR *)request,strlen(request)) <= 0) { /* Send request */
+      putreq:				/* Send request */
+        if (http_tol((CHAR *)request,strlen(request)) <= 0) {
             http_close();
             if ( first ) {
                 first--;
@@ -12575,7 +12702,7 @@ http_post(agent, hdrlist, mime, user, pwd, array, local, remote, dest,
 #ifdef HTTP_CLOSE
     ckstrncat(request,"Connection: close\r\n",len);
 #endif
-    sprintf(buf,"Content-length: %d\r\n",filelen,len);
+    sprintf(buf,"Content-length: %d\r\n",filelen); /* safe */
     ckstrncat(request,buf,len);
     ckstrncat(request,"\r\n",len);
     ckstrncat(request,"\r\n",len);
@@ -12795,9 +12922,9 @@ http_connect(socket, agent, hdrlist, user, pwd, array, host_port)
         for (i = 0; hdrlist[i]; i++)
             len += strlen(hdrlist[i]) + 2;
     }
-    if (agent)
+    if (agent && agent[0])
       len += 13 + strlen(agent);
-    if (user) {
+    if (user && user[0]) {
         if (!pwd) {
             readpass("Password: ",passwd,64);
             pwd = passwd;
@@ -12828,12 +12955,12 @@ http_connect(socket, agent, hdrlist, user, pwd, array, host_port)
     ckstrncat(request,"Host: ", len);
     ckstrncat(request,http_host_port, len);
     ckstrncat(request,"\r\n",len);
-    if (agent) {
+    if (agent && agent[0]) {
         ckstrncat(request,"User-agent: ",len);
         ckstrncat(request,agent,len);
         ckstrncat(request,"\r\n",len);
     }
-    if (user) {
+    if (user && user[0]) {
         ckstrncat(request,"Proxy-authorization: Basic ",len);
         ckstrncat(request,b64out,len);
         ckstrncat(request,"\r\n",len);

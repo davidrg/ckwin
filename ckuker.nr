@@ -1,5 +1,5 @@
-.\" @(#) kermit.1 8.0.206 2002/02/08 Columbia University
-.TH KERMIT 1 "OCTOBER 2002" "User Manuals"
+.\" @(#) kermit.1 8.0.211 2004/04/10 Columbia University
+.TH KERMIT 1 "APRIL 2004" "User Manuals"
 .na
 .SH NAME
 kermit \-

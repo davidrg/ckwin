@@ -1,13 +1,15 @@
 /*
   C K U A T 2 . H  --  Kerberos headers for C-Kermit
 
-  Copyright (C) 1985, 2002,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
   Author:
-  Jeffrey E Altman (jaltman@columbia.edu) -- Kerberos IV and V intergration.
+    Kerberos IV and V intergration.
+    Jeffrey E Altman (jaltman@secure-endpoints.com)
+    Secure Endpoints Inc., New York City
 */
 /*
  * Based on a concatenation of all necessary include files distributed with
@@ -18,7 +20,7 @@
 #define KRB5_TELNET_H
 /*-
  * Copyright (c) 1991, 1993
- *	The Regents of the University of California.  All rights reserved.
+ *      The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +32,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *      This product includes software developed by the University of
+ *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -48,7 +50,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)encrypt.h	8.1 (Berkeley) 6/4/93
+ *      @(#)encrypt.h   8.1 (Berkeley) 6/4/93
  */
 
 /*
@@ -71,17 +73,17 @@
  * or implied warranty.
  */
 
-#ifdef	CK_ENCRYPTION
+#ifdef  CK_ENCRYPTION
 
 #ifndef __ENCRYPTION__
 #define __ENCRYPTION__
 
-#define	DIR_DECRYPT		1
-#define	DIR_ENCRYPT		2
+#define DIR_DECRYPT             1
+#define DIR_ENCRYPT             2
 
 #ifndef CK_DES_C
 #ifndef NOBLOCKDEF
-typedef	unsigned char Block[8];
+typedef unsigned char Block[8];
 #endif /* NOBLOCKDEF */
 typedef unsigned char *BlockT;
 #ifndef KRB4    /* already defined in kerberosiv/des.h */
@@ -94,47 +96,47 @@ typedef struct des_ks_struct { Block _; } Schedule[16];
 #endif /* OS2 */
 #endif /* KRB4 */
 
-#define	VALIDKEY(key) (key[0]|key[1]|key[2]|key[3]|key[4]|key[5]|key[6]|key[7])
+#define VALIDKEY(key) (key[0]|key[1]|key[2]|key[3]|key[4]|key[5]|key[6]|key[7])
 
-#define	SAMEKEY(k1, k2)	(!memcmp((void *)k1, (void *)k2, sizeof(Block)))
+#define SAMEKEY(k1, k2) (!memcmp((void *)k1, (void *)k2, sizeof(Block)))
 #endif /* CK_DES_C */
 
-typedef	struct _session_key {
-  short		type;
-  int		length;
-  unsigned char	*data;
+typedef struct _session_key {
+  short         type;
+  int           length;
+  unsigned char *data;
 } Session_Key;
 
 #ifdef __STDC__
 typedef struct {
-  char	*name;
-  int	type;
-  void	(*output)(unsigned char *, int);
-  int	(*input)(int);
-  void	(*init)(int);
-  int	(*start)(int, int);
-  int	(*is)(unsigned char *, int);
-  int	(*reply)(unsigned char *, int);
-  int	(*session)(Session_Key *, int);
-  int	(*keyid)(int, unsigned char *, int *);
-  void	(*printsub)(unsigned char *, int, unsigned char *, int);
+  char  *name;
+  int   type;
+  void  (*output)(unsigned char *, int);
+  int   (*input)(int);
+  void  (*init)(int);
+  int   (*start)(int, int);
+  int   (*is)(unsigned char *, int);
+  int   (*reply)(unsigned char *, int);
+  int   (*session)(Session_Key *, int);
+  int   (*keyid)(int, unsigned char *, int *);
+  void  (*printsub)(unsigned char *, int, unsigned char *, int);
 } Encryptions;
 #if !defined(P)
 #define P(x) x
 #endif
 #else
 typedef struct {
-  char	*name;
-  int	type;
-  void	(*output)();
-  int	(*input)();
-  void	(*init)();
-  int	(*start)();
-  int	(*is)();
-  int	(*reply)();
-  int	(*session)();
-  int	(*keyid)();
-  void	(*printsub)();
+  char  *name;
+  int   type;
+  void  (*output)();
+  int   (*input)();
+  void  (*init)();
+  int   (*start)();
+  int   (*is)();
+  int   (*reply)();
+  int   (*session)();
+  int   (*keyid)();
+  void  (*printsub)();
 } Encryptions;
 #if !defined(P)
 #define P(x) ()
@@ -148,7 +150,7 @@ int printsub(char, unsigned char *, size_t);
 #endif
 
 #define SK_GENERIC      0       /* Just a string of bits */
-#define	SK_DES		1	/* Matched Kerberos v5 ENCTYPE_DES */
+#define SK_DES          1       /* Matched Kerberos v5 ENCTYPE_DES */
 
 void encrypt_init P((kstream,int));
 Encryptions *findencryption P((int));
@@ -159,6 +161,7 @@ int  encrypt_is P((unsigned char *, int));
 int  encrypt_reply P((unsigned char *, int));
 void encrypt_start_input P((int));
 int  encrypt_session_key P((Session_Key *, int));
+int  encrypt_dont_support P((int));
 void encrypt_end_input P((void));
 void encrypt_start_output P((int));
 void encrypt_end_output P((void));
@@ -266,7 +269,7 @@ int  castexp_ofb64_keyid P((int, unsigned char *, int *));
 void castexp_ofb64_printsub P((unsigned char *, int, unsigned char *, int));
 #endif /* CAST_ENCRYPTION */
 
-/* int	des_string_to_key P((char *, Block)); */
+/* int  des_string_to_key P((char *, Block)); */
 
 #ifdef DEBUG
 extern int encrypt_debug_mode;
@@ -333,6 +336,21 @@ struct _crypt_dll_init {
 #endif
 #ifndef  ENCTYPE_DES3_CBC_SHA1
 #define ENCTYPE_DES3_CBC_SHA1  0x0010
+#endif
+#ifndef ENCTYPE_AES128_CTS_HMAC_SHA1_96
+#define ENCTYPE_AES128_CTS_HMAC_SHA1_96  0x0011
+#endif
+#ifndef ENCTYPE_AES256_CTS_HMAC_SHA1_96
+#define ENCTYPE_AES256_CTS_HMAC_SHA1_96  0x0012
+#endif
+#ifndef ENCTYPE_ARCFOUR_HMAC
+#define ENCTYPE_ARCFOUR_HMAC     0x0017
+#endif
+#ifndef ENCTYPE_ARCFOUR_HMAC_EXP
+#define ENCTYPE_ARCFOUR_HMAC_EXP 0x0018
+#endif
+#ifndef ENCTYPE_LOCAL_RC4_MD4
+#define ENCTYPE_LOCAL_RC4_MD4    0xFFFFFF80
 #endif
 #ifndef  ENCTYPE_UNKNOWN
 #define ENCTYPE_UNKNOWN         0x01ff

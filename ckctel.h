@@ -1,11 +1,12 @@
 /* ckctel.h -- Symbol and macro definitions for C-Kermit telnet support */
 
 /*
-  Authors: Jeffrey Altman <jaltman@columbia.edu>,
+  Authors: Jeffrey E Altman <jaltman@secure-endpoints.com>,
+              Secure Endpoints Inc., New York City
            Frank da Cruz <fdc@columbia.edu>
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -459,6 +460,7 @@ struct _telopt_state {
     struct _telopt_start_tls {      /* Start TLS Option             */
        unsigned char u_follows;     /* u ready for TLS negotiation  */
        unsigned char me_follows;    /* me ready for TLS negotiation */
+       unsigned char auth_request;  /* Rcvd WILL AUTH before WONT START_TLS */
     } start_tls;
 #endif /* CK_SSL */
     struct _telopt_term {          /* Terminal Type            */
@@ -1249,6 +1251,7 @@ extern int tn_init;                     /* Telnet protocol initialized flag */
 extern char *tn_term;                   /* Terminal type override */
 extern int sstelnet;                    /* Server side telnet? */
 extern int tn_deb;                      /* Telnet option debugging flag */
+extern int tn_auth_krb5_des_bug;        /* Telnet BUG */
 #endif /* CKCTEL_C */
 
 #define TN_MSG_LEN 12292

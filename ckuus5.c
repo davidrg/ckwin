@@ -9,10 +9,13 @@ int cmdsrc() { return(0); }
 /*  C K U U S 5 --  "User Interface" for C-Kermit, part 5  */
 
 /*
-  Author: Frank da Cruz <fdc@columbia.edu>,
-  Columbia University Academic Information Systems, New York City.
+  Authors:
+    Frank da Cruz <fdc@columbia.edu>,
+      The Kermit Project, Columbia University, New York City
+    Jeffrey E Altman <jaltman@secure-endpoints.com>
+      Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2002,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -95,12 +98,12 @@ extern bool cursorena[] ;
 
 /* External variables */
 
-extern int carrier, cdtimo, local, quiet, backgrd, bgset, sosi, suspend,
+extern int carrier, cdtimo, local, quiet, backgrd, bgset, sosi, xsuspend,
   binary, escape, xargs, flow, cmdmsk, duplex, ckxech, seslog, what,
   inserver, diractive, tlevel, cwdf, nfuncs, msgflg, remappd, hints, mdmtyp,
   zincnt, cmask, rcflag, success, xitsta, pflag, tnlm, tn_nlm, xitwarn,
   debses, xaskmore, parity, saveask, wasclosed, whyclosed, cdactive,
-  rcdactive;
+  rcdactive, keepallchars;
 
 #ifdef LOCUS
 extern int locus, autolocus;
@@ -277,7 +280,7 @@ _PROTOTYP (int os2getcplist, (int *, int) );
 #ifdef OS2MOUSE
 extern int tt_mouse;
 #endif /* OS2MOUSE */
-extern int tt_update, tt_updmode, updmode;
+extern int tt_update, tt_updmode, updmode, tt_utf8;
 #ifndef IKSDONLY
 extern int tt_status[];
 #endif /* IKSDONLY */
@@ -320,6 +323,13 @@ extern char * cksslv;
 extern char * ckcrpv;
 #endif /* CRYPT_DLL */
 #endif /* CK_ENCRYPTION */
+
+#ifdef SSHBUILTIN
+extern char *cksshv;
+#ifdef SFTP_BUILTIN
+extern char *cksftpv;
+#endif /* SFTP_BUILTIN */
+#endif /* SSHBUILTIN */
 
 #ifdef TNCODE
 extern char *cktelv;
@@ -608,7 +618,7 @@ char *whil_def[] = { "_assign _whi\\v(cmdlevel) {_getargs,",
 
 /* SWITCH macro */
 char *sw_def[] = { "_assign _sw_\\v(cmdlevel) {_getargs,",
-"_forward \"\\%1\",\\%2,:default,:_..bot,_putargs},_def break goto _..bot,",
+"_forward {\\%1},\\%2,:default,:_..bot,_putargs},_def break goto _..bot,",
 "do _sw_\\v(cmdlevel),_assign _sw_\\v(cmdlevel)",
 ""};
 
@@ -1040,6 +1050,14 @@ cmdini() {
                 ckmakmsg(xbuf,CKMAXPATH+32,txtdir[i],"kermit/",NULL,NULL);
                 makestr(&k_info_dir,xbuf);
                 debug(F110,"k_info_dir 2",k_info_dir,0);
+                break;
+            }
+            ckmakmsg(xbuf,CKMAXPATH+32,
+                     txtdir[i],"ckermit/","ckubwr.txt",NULL);
+            if (zchki(xbuf) > 0) {
+                ckmakmsg(xbuf,CKMAXPATH+32,txtdir[i],"ckermit/",NULL,NULL);
+                makestr(&k_info_dir,xbuf);
+                debug(F110,"k_info_dir 3",k_info_dir,0);
                 break;
             }
         }
@@ -1833,12 +1851,12 @@ doiksdinit() {
 */
 int
 getncm(s,n) char *s; int n; {
-    int y,                              /* Character counter */
-    quote = 0,
-    kp = 0,                             /* Brace up-down counter */
-    pp = 0,                             /* Parenthesis up-down counter */
+    int y = 0;				/* Character counter */
+    int quote = 0;
+    int kp = 0;				/* Brace up-down counter */
+    int pp = 0;				/* Parenthesis up-down counter */
 #ifndef NODQMACRO
-    dq = 0;                             /* Doublequote counter */
+    int dq = 0;				/* Doublequote counter */
 #endif /* NODQMACRO */
     char *s2;                           /* Copy of destination pointer */
 
@@ -1905,7 +1923,35 @@ getncm(s,n) char *s; int n; {
         if (*s == '(') pp++;            /* Count parentheses. */
         if (*s == ')' && pp > 0) pp--;
 #ifndef NODQMACRO
-        if (*s == '"') dq = 1 - dq;     /* Account for doublequotes */
+#ifndef COMMENT
+	/* Too many false positives */
+	/* No, not really -- this is indeed the best we can do */
+	/* Reverted to this method Sun May 11 18:43:45 2003 */
+	if (*s == '"') dq = 1 - dq;     /* Account for doublequotes */
+#else  /* Fri Apr  4 13:21:29 2003 */
+	/* The code below breaks the SWITCH statement */
+	/* There is no way to make this work -- it would require */
+	/* building in all the knowledge of command parser. */
+        if (dblquo && (*s == '"')) {    /* Have doublequote */
+            if (dq == 1) {		/* Close quote only if... */
+                if ((*(macp[maclvl]+1) == SP) || /* followed by space or... */
+		    (!*(macp[maclvl]+1)) ||      /* at end or ... */
+		    /* Next char is command separator... */
+		    /* Sun May 11 17:24:12 2003 */
+		    (kp < 1 && pp < 1 && (*(macp[maclvl]+1) == ','))
+		    )		     
+                  dq = 0;		/* Close the quote */
+            } else if (dq == 0) {
+                /* Open quote only if at beginning or preceded by space */
+                if (s > s2) {
+                    if (*(s-1) == SP)
+                      dq = 1;
+                } else if (s == s2) {
+                      dq = 1;
+                }
+            }
+        }
+#endif /* COMMENT */
 #endif /* NODQMACRO */
         if (*s == ',' && pp <= 0 && kp <= 0
 #ifndef NODQMACRO
@@ -1923,12 +1969,13 @@ getncm(s,n) char *s; int n; {
     *s = NUL;
 #endif /* COMMENT */
     if (*s2 == NUL) {                   /* If nothing was copied, */
-        /* debug(F100,"getncm eom","",0); */
+        /* debug(F100,"XXX getncm eom","",0); */
         popclvl();                      /* pop command level. */
         return(-1);
     } else {                            /* otherwise, tack CR onto end */
         *s++ = CR;
         *s = '\0';
+        /* debug(F110,"XXX getncm OK",s,0); */
         if (mecho && pflag)             /* If MACRO ECHO ON, echo the cmd */
           printf("%s\n",s2);
     }
@@ -2631,6 +2678,7 @@ parser(m) int m; {
         debug(F100,"parse top","",0);
 	what = W_COMMAND;		/* Now we're parsing commands. */
 	rcdactive = 0;			/* REMOTE CD not active */
+	keepallchars = 0;		/* MINPUT not active */
 
 #ifdef OS2
         if (apcactive == APC_INACTIVE)
@@ -3415,7 +3463,10 @@ int outesc = 1;                         /* Process special OUTPUT escapes */
 
 int
 dooutput(s, cx) char *s; int cx; {
-
+#ifdef SSHBUILTIN
+    extern int ssh_cas;
+    extern char * ssh_cmd;
+#endif /* SSHBUILTIN */
     int x, xx, y, quote;                /* Workers */
     int is_tn = 0;
 
@@ -3441,6 +3492,15 @@ dooutput(s, cx) char *s; int cx; {
         }
 #endif /* NOLOCAL */
     }
+#ifdef SSHBUILTIN
+    if ( network && nettype == NET_SSH && ssh_cas && ssh_cmd && 
+         !(strcmp(ssh_cmd,"kermit") && strcmp(ssh_cmd,"sftp"))) {
+        if (!quiet)
+            printf("?SSH Subsystem active: %s\n", ssh_cmd);
+        return(0);
+    }
+#endif /* SSHBUILTIN */
+
     if (!cmdgquo()) {                   /* COMMAND QUOTING OFF */
         x = strlen(s);                  /* Just send the string literally */
         xx = local ? ttol((CHAR *)s,x) : conxo(x,s);
@@ -3677,11 +3737,14 @@ herald() {
     extern char * cdmsgfile[];
 #ifndef NOCMDL
     extern char * bannerfile;
+    debug(F110,"herald bannerfile",bannerfile,0);
     if (bannerfile) {
         concb((char)escape);
         if (dotype(bannerfile,1,0,0,NULL,0,NULL,0,0,NULL,0) > 0) {
+            debug(F111,"herald","srvcdmsg",srvcdmsg);
             if (srvcdmsg) {
                 for (i = 0; i < 8; i++) {
+                    debug(F111,"herald cdmsgfile[i]",cdmsgfile[i],i);
                     if (zchki(cdmsgfile[i]) > -1) {
                         printf("\n");
                         dotype(cdmsgfile[i],
@@ -3720,9 +3783,8 @@ herald() {
         printf("%s, for%s\n\r",versio,ckxsys);
 #endif /* OSK */
 #endif /* datageneral */
-        printf(" Copyright (C) 1985, 2002,\n");
+        printf(" Copyright (C) 1985, 2004,\n");
         printf("  Trustees of Columbia University in the City of New York.\n");
-
 #ifdef OS2
        shoreg();
 #endif /* OS2 */
@@ -3746,8 +3808,10 @@ herald() {
               printf("Default file-transfer mode is %s\n", s);
 #endif /* COMMENT */
 
+            debug(F111,"herald","srvcdmsg",srvcdmsg);
             if (srvcdmsg) {
                 for (i = 0; i < 8; i++) {
+                    debug(F111,"herald cdmsgfile[i]",cdmsgfile[i],i);
                     if (zchki(cdmsgfile[i]) > -1) {
                         printf("\n");
                         dotype(cdmsgfile[i],
@@ -4518,6 +4582,7 @@ popclvl() {                             /* Pop command level, return cmdlvl */
                 aa_ptr[cmdlvl][i] = (char **)NULL;
                 aa_dim[cmdlvl][i] = 0;
             }
+
             /* Otherwise do nothing - it is a local array that was declared */
             /* at a level above this one so leave it alone. */
         }
@@ -4831,6 +4896,7 @@ static int nshokey = (sizeof(shokeytab) / sizeof(struct keytab));
 struct keytab shokeymtab[] = {
     "aaa",       TT_AAA,     CM_INV,    /* AnnArbor */
     "adm3a",     TT_ADM3A,   0,         /* LSI ADM-3A */
+    "adm5",      TT_ADM5,    0,         /* LSI ADM-5 */
     "aixterm",   TT_AIXTERM, 0,         /* IBM AIXterm */
     "annarbor",  TT_AAA,     0,         /* AnnArbor */
     "ansi-bbs",  TT_ANSI,    0,         /* ANSI.SYS (BBS) */
@@ -5207,6 +5273,12 @@ shover() {
 #ifdef TNCODE
     printf(" %s\n",cktelv);
 #endif /* TNCODE */
+#ifdef SSHBUILTIN
+    printf(" %s\n",cksshv);
+#ifdef SFTP_BUILTIN
+    printf(" %s\n",cksftpv);
+#endif /* SFTP_BUILTIN */
+#endif /* SSHBUILTIN */
 #ifdef OS2
 #ifdef OS2MOUSE
     printf(" %s\n",ckomouv);
@@ -5370,9 +5442,51 @@ shotcs(csl,csr) int csl, csr; {         /* Show terminal character set */
 extern char htab[];
 VOID
 shotabs() {
-    int i;
+    int i,j,k,n;
 
     printf("Tab Stops:\n\n");
+    for (i = 0, j = 1, k = VscrnGetWidth(VCMD); i < MAXTERMCOL; ) {
+        do {
+            printf("%c",htab[++i]=='T'?'T':'-');
+        } while (i % k && i < MAXTERMCOL);
+        printf("\n");
+        for ( ; j <= i; j++) {
+            switch ( j%10 ) {
+	      case 1:
+                printf("%c",j == 1 ? '1' : '.');
+                break;
+	      case 2:
+	      case 3:
+	      case 4:
+	      case 5:
+	      case 6:
+	      case 7:
+                printf("%c",'.');
+                break;
+	      case 8:
+                n = (j+2)/100;
+                if (n)
+		  printf("%d",n);
+                else 
+		  printf("%c",'.');
+                break;
+	      case 9:
+                n = (j+1)%100/10;
+                if (n)
+		  printf("%d",n);
+                else if (j>90)
+		  printf("0");
+                else 
+		  printf("%c",'.');
+                break;
+	      case 0:
+                printf("0");
+                break;
+            }
+        }
+        printf("\n");
+    }
+#ifdef COMMENT
     for (i = 1; i <= 70; i++)
       printf("%c",htab[i]=='T'?'T':'-');
     printf("\n1.......10........20........30........40........50........60\
@@ -5388,6 +5502,8 @@ shotabs() {
     for (; i <= 255; i++)
       printf("%c",htab[i]=='T'?'T':'-');
     printf("\n.......220.......230.......240.......250..255\n");
+#endif
+
 }
 #endif /* OS2 */
 #endif /* NOLOCAL */
@@ -5455,7 +5571,9 @@ shotrm() {
       decscnm, decscnm_usr, tt_diff_upd, tt_senddata,
       wy_blockend, marginbell, marginbellcol, tt_modechg, dgunix;
     int lines = 0;
-
+#ifdef KUI
+    extern CKFLOAT tt_linespacing[];
+#endif /* KUI */
 #ifdef PCFONTS
     int i;
     char *font;
@@ -5519,8 +5637,11 @@ shotrm() {
            (tt_cursor == 2) ? "full" :
            (tt_cursor == 1) ? "half" : "underline",
 #ifdef CK_AUTODL
-           "autodownload",autodl ?
-           (adl_err ? "on, error stop" : "on, error continue") : "off"
+           "autodownload",autodl == TAD_ON ?
+           (adl_err ? "on, error stop" : "on, error continue") : 
+           autodl == TAD_ASK ? 
+           (adl_err ? "ask, error stop" : "ask, error continue") :
+           "off"
 #else /* CK_AUTODL */
            "", ""
 #endif /* CK_AUTODL */
@@ -5630,6 +5751,11 @@ shotrm() {
     printf(" %19s: %-13d  %13s: %-15d\n","Height",tt_rows[VTERM],
            "Width",tt_cols[VTERM]);
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+#ifdef KUI
+    printf(" %19s: %-13f  %13s: %-15d\n","Line spacing",tt_linespacing[VTERM],
+           "Display Height",VscrnGetDisplayHeight(VTERM));
+    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+#endif /* KUI */
     printf(" %19s: %-13s  %13s: %d lines\n","Roll-mode",
           tt_roll[VTERM]?"insert":"overwrite","Scrollback", tt_scrsize[VTERM]);
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
@@ -5834,7 +5960,7 @@ shotrm() {
 #endif /* NOTRIGGER */
 #ifdef UNIX
 #ifndef NOJC
-    printf(" %19s: %-13s\n\n","Suspend", showoff(suspend));
+    printf(" %19s: %-13s\n\n","Suspend", showoff(xsuspend));
 #endif /* NOJC */
 #endif /* UNIX */
 
@@ -6106,6 +6232,10 @@ shooutput() {
 
 static VOID
 shoinput() {
+#ifdef CKFLOAT
+    extern char * inpscale;
+#endif	/* CKFLOAT */
+
 #ifdef CK_AUTODL
     printf(" Input autodownload:     %s\n", showoff(inautodl));
 #endif /* CK_AUTODL */
@@ -6120,6 +6250,10 @@ shoinput() {
 #endif /* OS2 */
     printf(" Input timeout:          %s\n", intime[cmdlvl] ?
            "quit" : "proceed");
+#ifdef CKFLOAT
+    printf(" Input scale-factor:     %s\n", inpscale ? inpscale : "1.0");
+#endif	/* CKFLOAT */
+
     if (instatus < 0)
       printf(" Last INPUT:             -1 (INPUT command not yet given)\n");
     else
@@ -6946,10 +7080,28 @@ doshow(x) int x; {
 #ifndef NOCSETS
         printf(" File character-set:              %s\n",
                fcsinfo[fcharset].keyword);
+#ifdef OS2
+        if ( isunicode() ) {
+        printf(" Terminal Character (remote):     %s\n",
+              tt_utf8 ? "utf-8" : tcsr == TX_TRANSP ? "transparent" :
+              tcsr == TX_UNDEF ? "undefined" : txrinfo[tcsr]->keywd);
+        printf(" Terminal Character (local):      %s\n",
+              tcsl == TX_TRANSP ? "transparent" :
+              tcsl == TX_UNDEF ? "undefined" : txrinfo[tcsl]->keywd);
+        } else {
+        printf(" Terminal Character (remote):     %s\n",
+              tt_utf8 ? "utf-8" : tcsr == TX_TRANSP ? "transparent" :
+              tcsr == TX_UNDEF ? "undefined" : txrinfo[tcsr]->keywd);
+        printf(" Terminal Character (local):      %s\n",
+              tcsl == TX_TRANSP ? "transparent" :
+              tcsl == TX_UNDEF ? "undefined" : txrinfo[tcsl]->keywd);
+        }
+#else /* OS2 */
         printf(" Terminal character-set (remote): %s\n",
                fcsinfo[tcsr].keyword);
         printf(" Terminal character-set (local):  %s\n",
                fcsinfo[tcsl].keyword);
+#endif /* OS2 */
 #endif /* NOCSETS */
         printf(" Terminal bytesize:               %d\n",
                (cmask == 0xff) ? 8 : 7);
@@ -7271,7 +7423,7 @@ doshow(x) int x; {
 #endif /* NOSPL */
 #ifdef UNIX
 #ifndef NOJC
-          printf(" Suspend: %s\n", showoff(suspend));
+          printf(" Suspend: %s\n", showoff(xsuspend));
 #endif /* NOJC */
 #endif /* UNIX */
           printf(" Access to external commands and programs%s allowed\n",
@@ -8298,6 +8450,12 @@ dclarray(a,n) char a; int n;
     if (a > 63 && a < 91) a += 32;      /* Convert letters to lowercase */
     if (a < ARRAYBASE || a > 122)       /* Verify name */
       return(-1);
+
+    if (n < 0)                          /* Check arg */
+      return(-1);
+    if (n+1 < 0)                        /* MAXINT+1 wraps around */
+      return(-1);
+
     c = a;
     a -= ARRAYBASE;                     /* Convert name to number */
     rc = a;
@@ -9470,6 +9628,7 @@ or name of directory on this computer",
     x = 0;
     if (cwdf) {
         makestr(&prevdir,p);
+        debug(F111,"docd","srvcdmsg",srvcdmsg);
         if (srvcdmsg
 #ifdef IKSDCONF
             && !(inserver && !iksdcf)
@@ -9477,6 +9636,7 @@ or name of directory on this computer",
             ) {
             int i;
             for (i = 0; i < 8; i++) {
+                debug(F111,"docd cdmsgfile[i]",cdmsgfile[i],i);
                 if (zchki(cdmsgfile[i]) > -1) {
                     x = 1;
                     dotype(cdmsgfile[i],xaskmore,0,0,NULL,0,NULL,0,0,NULL,0);
@@ -9860,9 +10020,9 @@ initoptlist() {
 #ifdef VMSV60
     makestr(&(optlist[noptlist++]),"VMSV60");
 #endif /* VMSV60 */
-#ifdef VMSV70
-    makestr(&(optlist[noptlist++]),"VMSV70");
-#endif /* VMSV70 */
+#ifdef VMSV80
+    makestr(&(optlist[noptlist++]),"VMSV80");
+#endif /* VMSV80 */
 #ifdef VMSSHARE
     makestr(&(optlist[noptlist++]),"VMSSHARE");
 #endif /* VMSSHARE */
@@ -10070,6 +10230,9 @@ initoptlist() {
 #ifdef UCX50
     makestr(&(optlist[noptlist++]),"UCX50");
 #endif /* UCX50 */
+#ifdef CMU_TCPIP
+    makestr(&(optlist[noptlist++]),"CMU_TCPIP");
+#endif /* CMU_TCPIP */
 #ifdef TTLEBUF
     makestr(&(optlist[noptlist++]),"TTLEBUF");
 #endif /* TTLEBUF */
@@ -10130,6 +10293,12 @@ initoptlist() {
 #ifdef USETTYLOCK
     makestr(&(optlist[noptlist++]),"USETTYLOCK");
 #endif /* USETTYLOCK */
+#ifdef USE_UU_LOCK
+    makestr(&(optlist[noptlist++]),"USE_UU_LOCK");
+#endif /* USE_UU_LOCK */
+#ifdef HAVE_BAUDBOY
+    makestr(&(optlist[noptlist++]),"HAVE_BAUDBOY");
+#endif /* HAVE_BAUDBOY */
 #ifdef NOUUCP
     makestr(&(optlist[noptlist++]),"NOUUCP");
 #endif /* NOUUCP */
@@ -10411,6 +10580,12 @@ initoptlist() {
 #ifdef VMSORUNIX
     makestr(&(optlist[noptlist++]),"VMSORUNIX");
 #endif /* VMSORUNIX */
+#ifdef VMS64BIT
+    makestr(&(optlist[noptlist++]),"VMS64BIT");	/* VMS on Alpha or IA64 */
+#endif /* VMS64BIT */
+#ifdef VMSI64
+    makestr(&(optlist[noptlist++]),"VMSI64"); /* VMS on IA64 */
+#endif /* VMSI64 */
 #ifdef _POSIX_SOURCE
     makestr(&(optlist[noptlist++]),"_POSIX_SOURCE");
 #endif /* _POSIX_SOURCE */
@@ -10535,6 +10710,17 @@ initoptlist() {
 #ifdef MACH
     makestr(&(optlist[noptlist++]),"MACH");
 #endif
+
+#ifdef MACOSX
+    makestr(&(optlist[noptlist++]),"MACOSX");
+#endif
+#ifdef MACOSX10
+    makestr(&(optlist[noptlist++]),"MACOSX10");
+#endif
+#ifdef MACOSX103
+    makestr(&(optlist[noptlist++]),"MACOSX103");
+#endif
+
 #ifdef sgi
     makestr(&(optlist[noptlist++]),"sgi");
 #endif
@@ -10576,6 +10762,9 @@ initoptlist() {
 #endif
 #ifdef _ia64_
     makestr(&(optlist[noptlist++]),"_ia64_");
+#endif
+#ifdef __ia64
+    makestr(&(optlist[noptlist++]),"__ia64");
 #endif
 #ifdef M_I686
     makestr(&(optlist[noptlist++]),"M_I686");
@@ -11124,13 +11313,21 @@ shofea() {
     printf(" Telnet Encryption Option\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
 #ifdef CK_DES
-    printf(" DES Encryption\n");
+    printf(" Telnet DES Encryption\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
 #endif /* CK_DES */
 #ifdef CK_CAST
-    printf(" CAST Encryption\n");
+    printf(" Telnet CAST Encryption\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
 #endif /* CK_CAST */
+#ifdef CK_KERBEROS
+#ifdef KRB5
+#ifdef ALLOW_KRB_3DES_ENCRYPT
+    printf(" Kerberos 3DES/AES Telnet Encryption\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+#endif /* ALLOW_KRB_3DES_ENCRYPT */
+#endif /* KRB5 */
+#endif /* CK_KERBEROS */
 #endif /* CK_ENCRYPTION */
 #endif /* CK_AUTHENTICATION */
 #ifdef CK_FORWARD_X
@@ -11396,21 +11593,29 @@ shofea() {
     flag = 1;
 #endif /* CK_SSL */
 #ifndef CK_ENCRYPTION
-    printf(" No encryption\n");
+    printf(" No Telnet Encryption Option\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
     flag = 1;
 #else /* CK_ENCRYPTION */
 #ifndef OS2
 #ifndef CK_DES
-    printf(" No DES encryption\n");
+    printf(" No Telnet DES encryption\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
     flag = 1;
 #endif /* CK_DES */
 #ifndef CK_CAST
-    printf(" No CAST encryption\n");
+    printf(" No Telnet CAST encryption\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
     flag = 1;
 #endif /* CK_CAST */
+#ifdef CK_KERBEROS
+#ifdef KRB5
+#ifndef ALLOW_KRB_3DES_ENCRYPT
+    printf(" No Kerberos 3DES/AES Telnet Encryption\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+#endif /* ALLOW_KRB_3DES_ENCRYPT */
+#endif /* KRB5 */
+#endif /* CK_KERBEROS */
 #endif /* OS2 */
 #endif /* CK_ENCRYPTION */
 #endif /* CK_AUTHENTICATION */

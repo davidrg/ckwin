@@ -3,12 +3,12 @@
 #define CK_NONBLOCK                     /* See zoutdump() */
 
 #ifdef aegis
-char *ckzv = "Aegis File support, 8.0.194, 24 Oct 2002";
+char *ckzv = "Aegis File support, 8.0.200, 4 Mar 2004";
 #else
 #ifdef Plan9
-char *ckzv = "Plan 9 File support, 8.0.194, 24 Oct 2002";
+char *ckzv = "Plan 9 File support, 8.0.200, 4 Mar 2004";
 #else
-char *ckzv = "UNIX File support, 8.0.194, 24 Oct 2002";
+char *ckzv = "UNIX File support, 8.0.200, 4 Mar 2004";
 #endif /* Plan9 */
 #endif /* aegis */
 /*
@@ -17,7 +17,7 @@ char *ckzv = "UNIX File support, 8.0.194, 24 Oct 2002";
   and others noted in the comments below.  Note: CUCCA = Previous name of
   Columbia University Academic Information Systems.
 
-  Copyright (C) 1985, 2002,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -2329,6 +2329,8 @@ zchki(name) char *name; {
 #ifdef UNIX
     if (x == 9 && !strcmp(s,"/dev/null"))
       return(0);
+    if (x == 8 && !strcmp(s,"/dev/tty"))
+      return(0);
 #endif /* UNIX */
 
 #ifdef DTILDE
@@ -2434,6 +2436,8 @@ zchko(name) char *name; {
   Writing to null device is OK.
 */
     if (x == 9 && !strcmp(name,"/dev/null"))
+      return(0);
+    if (x == 8 && !strcmp(name,"/dev/tty"))
       return(0);
 #endif /* UNIX */
 
@@ -2883,6 +2887,10 @@ zchdir(dirnam) char *dirnam; {
 #ifdef IKSDB
     _PROTOTYP (int slotdir,(char *,char *));
 #endif /* IKSDB */
+#ifndef NOSPL
+    extern struct mtab *mactab;             /* Main macro table */
+    extern int nmac;                        /* Number of macros */
+#endif /* NOSPL */
 
     debug(F110,"zchdir",dirnam,0);
     if (!dirnam) dirnam = "";
@@ -2919,6 +2927,22 @@ zchdir(dirnam) char *dirnam; {
           slotdir(isguest ? anonroot : "", zgtdir());
 #endif /* CK_LOGIN */
 #endif /* IKSDB */
+
+#ifndef NOSPL
+        if (nmac) {			/* Any macros defined? */
+            int k;			/* Yes */
+            static int on_cd = 0;
+            if (!on_cd) {
+                on_cd = 1;
+                k = mlook(mactab,"on_cd",nmac);   /* Look this up */
+                if (k >= 0) {                     /* If found, */
+                    if (dodo(k,zgtdir(),0) > -1)  /* set it up, */
+		      parser(1);                  /* and execute it */
+                }
+                on_cd = 0;
+            }
+        }
+#endif /* NOSPL */
         return(1);
     }
     return(0);
@@ -3988,9 +4012,9 @@ zrename(old,new) char *old, *new; {
         tmp2[0] = '\0';
         zfnqfp(s,CKMAXPATH,tmp2);
         if (x > -1)
-          syslog(LOG_INFO,"file[] %s: rename to %s failed (%m)",fullname,tmp2);
-        else
           syslog(LOG_INFO,"file[] %s: renamed to %s ok", fullname, tmp2);
+        else
+          syslog(LOG_INFO,"file[] %s: rename to %s failed (%m)",fullname,tmp2);
     }
 #endif /* CKSYSLOG */
 
@@ -4109,6 +4133,7 @@ zcopy(source,destination) char *source, *destination; {
 #endif /* IKSD */
 
     perms = umask(0);                   /* Get user's umask */
+    umask(perms);			/* Put it back! */
     perms ^= 0777;                      /* Flip the bits */
     perms &= 0666;                      /* Zero execute bits from umask */
     perms |= (srcbuf.st_mode & 0111);   /* OR in source file's execute bits */
@@ -6909,8 +6934,19 @@ iswild(filespec) char *filespec; {
   recursive traversal from visiting the same directory twice.
 */
 
+#ifdef ISDIRCACHE
+/* This turns out to be unsafe and gives little benefit anyway. */
+/* See notes 28 Sep 2003.  Thus ISDIRCACHE is not defined. */
+
 static char prevpath[CKMAXPATH+4] = { '\0', '\0' };
 static int prevstat = -1;
+int
+clrdircache() {
+    debug(F100,"CLEAR ISDIR CACHE","",0);
+    prevstat = -1;
+    prevpath[0] = NUL;
+}
+#endif /* ISDIRCACHE */
 
 int
 isdir(s) char *s; {
@@ -6921,6 +6957,7 @@ isdir(s) char *s; {
     if (!s) return(0);
     if (!*s) return(0);
 
+#ifdef ISDIRCACHE
     if (prevstat > -1) {
 	if (s[0] == prevpath[0]) {
 	    if (!strcmp(s,prevpath)) {
@@ -6929,6 +6966,8 @@ isdir(s) char *s; {
 	    }
 	}
     }
+#endif /* ISDIRCACHE */
+
 #ifdef CKSYMLINK
 #ifdef COMMENT
 /*
@@ -6987,8 +7026,10 @@ isdir(s) char *s; {
     debug(F101,"isdir islink","",islink);
     debug(F101,"isdir statbuf.st_mode","",statbuf.st_mode);
     x = islink ? 0 : (S_ISDIR (statbuf.st_mode) ? 1 : 0);
+#ifdef ISDIRCACHE
     prevstat = x;
     ckstrncpy(prevpath,s,CKMAXPATH+1);
+#endif /* ISDIRCACHE */
     return(x);
 }
 
@@ -7163,6 +7204,7 @@ zfnqfp(fname, buflen, buf)  char * fname; int buflen; char * buf; {
 
     char sb[32], * tmp;
     int i = 0, j = 0, k = 0, x = 0, y = 0;
+    int itsadir = 0;
 
     s = fname;
     if (!s)
@@ -7215,7 +7257,7 @@ zfnqfp(fname, buflen, buf)  char * fname; int buflen; char * buf; {
 	ckstrncpy(buf,zfntmp,buflen);
     }
     if (buf[len-1] != '/') {
-	if (isdir(buf) && len < (buflen - 1)) {
+	if ((itsadir = isdir(buf)) && len < (buflen - 1)) {
 	    buf[len++] = '/';
 	    buf[len] = NUL;
 	}
@@ -7224,13 +7266,15 @@ zfnqfp(fname, buflen, buf)  char * fname; int buflen; char * buf; {
     fnfp.fpath = buf;
     debug(F110,"zfnqfp realpath path",fnfp.fpath,0);
     tmp = buf + fnfp.len - 1;
-    while (tmp >= buf) {
-        if (*tmp == '/') {
-            fnfp.fname = tmp + 1;
-            debug(F110,"zfnqfp realpath name",fnfp.fname,0);
-            break;
-        }
-        tmp--;
+    if (!itsadir) {
+	while (tmp >= buf) {
+	    if (*tmp == '/') {
+		fnfp.fname = tmp + 1;
+		debug(F110,"zfnqfp realpath name",fnfp.fname,0);
+		break;
+	    }
+	    tmp--;
+	}
     }
     return(&fnfp);
 
@@ -7329,11 +7373,13 @@ zfnqfp(fname, buflen, buf)  char * fname; int buflen; char * buf; {
         j = 0;
         i = 1;
     }
-    if (buf[i-1] != '/' && isdir(buf) && i < (buflen - 1)) {
-        buf[i++] = '/';
-        buf[i] = NUL;
+    if ((itsadir = isdir(buf))) {
+	if (buf[i-1] != '/' && i < (buflen - 1)) {
+	    buf[i++] = '/';
+	    buf[i] = NUL;
+	}
     }
-    if (j > -1) {                       /* Set pointer to basename */
+    if (!itsadir && (j > -1)) {		/* Set pointer to basename */
         fnfp.fname = (char *)(buf + j);
         fnfp.fpath = (char *)buf;
         fnfp.len = i;
@@ -8033,6 +8079,11 @@ zvpass(p) char *p; {
 #ifdef HPUX10_TRUSTED
         xpasswd = bigcrypt(p, salt);
 #else
+/*
+  On 64-bit platforms this can give "cast to pointer from integer of
+  different size" warning, but I'm not sure what the effect is at runtime,
+  or what to do about it.
+ */
         xpasswd = (char *)crypt(p, salt);
 #endif /* HPUX10_TRUSTED */
 

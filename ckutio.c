@@ -1,10 +1,10 @@
 #ifdef aegis
-char *ckxv = "Aegis Communications support, 8.0.301, 20 Aug 2002";
+char *ckxv = "Aegis Communications support, 8.0.303, 17 Apr 2004";
 #else
 #ifdef Plan9
-char *ckxv = "Plan 9 Communications support, 8.0.301, 20 Aug 2002";
+char *ckxv = "Plan 9 Communications support, 8.0.303, 17 Apr 2004";
 #else
-char *ckxv = "UNIX Communications support, 8.0.301, 20 Aug 2002";
+char *ckxv = "UNIX Communications support, 8.0.303, 17 Apr 2004";
 #endif /* Plan9 */
 #endif /* aegis */
 
@@ -16,7 +16,7 @@ char *ckxv = "UNIX Communications support, 8.0.301, 20 Aug 2002";
   Author: Frank da Cruz (fdc@columbia.edu),
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2002,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -305,11 +305,15 @@ char unm_ver[CK_SYSNMLN+1] = { '\0', '\0' };
 
 #ifndef NOUUCP
 #ifdef USETTYLOCK
+#ifdef HAVE_BAUDBOY			/* Red Hat baudboy/lockdev */
+#include <baudboy.h>
+#else
 #ifdef USE_UU_LOCK
 #ifdef __FreeBSD__
 #include <libutil.h>			/* FreeBSD */
 #else
 #include <util.h>			/* OpenBSD */
+#endif /* HAVE_BAUDBOY */
 #endif /* __FreeBSD */
 #endif /* USE_UU_LOCK */
 #else  /* USETTYLOCK */
@@ -375,6 +379,12 @@ char unm_ver[CK_SYSNMLN+1] = { '\0', '\0' };
   LOCK_DIR is the name of the lockfile directory.
   If LOCK_DIR is already defined (e.g. on command line), we don't change it.
 */
+
+#ifndef LOCK_DIR
+#ifdef MACOSX
+#define LOCK_DIR "/var/spool/lock"
+#endif /* MACOSX */
+#endif/* LOCK_DIR */
 
 #ifndef LOCK_DIR
 #ifdef BSD44
@@ -1117,7 +1127,7 @@ static int sigint_ign = 0;		/* SIGINT is ignored */
 extern int ttnproto;			/* Defined in ckcnet.c */
 extern int ttnet;			/* Defined in ckcnet.c */
 extern int nopush, xfrcan, xfrchr, xfrnum; /* Defined in ckcmai.c */
-extern int suspend, wasclosed;
+extern int xsuspend, wasclosed;
 extern int inserver, local;
 
 int ckxech = 0; /* 0 if system normally echoes console characters, else 1 */
@@ -2392,7 +2402,8 @@ ttopen(ttname,lcl,modem,timo) char *ttname; int *lcl, modem, timo; {
  	if (*p == '\0' && (telnetfd || x25fd)) { /* Avoid X.121 addresses */
 	    ttyfd = atoi(ttname);	/* Is there a way to test it's open? */
 	    ttfdflg = 1;		/* We got an open file descriptor */
-	    debug(F111,"ttopen got open network fd",ttname,ttyfd);
+	    debug(F111,"ttopen net ttfdflg",ttname,ttfdflg);
+	    debug(F101,"ttopen net ttyfd","",ttyfd);
 	    ckstrncpy(ttnmsv,ttname,DEVNAMLEN); /* Remember the "name". */
 	    x = 1;			/* Return code is "good". */
 	    if (telnetfd) {
@@ -2521,12 +2532,12 @@ ttopen(ttname,lcl,modem,timo) char *ttname; int *lcl, modem, timo; {
   communication device, rather than a device name.  Kermit assumes that the
   line is already open, locked, conditioned with the right parameters, etc.
 */
-	for (p = ttname; isdigit(*p); p++) ; /* Check for all digits */
+	for (p = ttname; isdigit(*p); p++) ; /* Check for all-digits */
 	if (*p == '\0') {
 	    ttyfd = atoi(ttname);	/* Is there a way to test it's open? */
 	    debug(F111,"ttopen got open fd",ttname,ttyfd);
 	    ckstrncpy(ttnmsv,ttname,DEVNAMLEN); /* Remember the "name". */
-	    if (ttyfd == 0)		/* If it's stdio... */
+	    if (ttyfd >= 0 && ttyfd < 3) /* If it's stdio... */
 	      xlocal = *lcl = 0;	/* we're in remote mode */
 	    else			/* otherwise */
 	      xlocal = *lcl = 1;	/* local mode. */
@@ -2535,6 +2546,8 @@ ttopen(ttname,lcl,modem,timo) char *ttname; int *lcl, modem, timo; {
 	    ttmdm = modem;		/* Remember modem type. */
 	    fdflag = 0;			/* Stdio not redirected. */
 	    ttfdflg = 1;		/* Flag we were opened this way. */
+	    debug(F111,"ttopen non-net ttfdflg",ttname,ttfdflg);
+	    debug(F101,"ttopen non-net ttyfd","",ttyfd);
 
 #ifdef sony_news			/* Sony NEWS */
 	    /* Get device Kanji mode */
@@ -2687,7 +2700,7 @@ ttopen(ttname,lcl,modem,timo) char *ttname; int *lcl, modem, timo; {
     if (p9openttyctl(ttname) < 0)
 #else
     /* Make sure it's a real tty. */
-    if (!isatty(ttyfd) && strcmp(ttname,"/dev/null"))
+    if (!ttfdflg && !isatty(ttyfd) && strcmp(ttname,"/dev/null"))
 #endif /* Plan9 */
       {
 	fprintf(stderr,"%s is not a terminal device\n",ttname);
@@ -2952,7 +2965,7 @@ ttopen(ttname,lcl,modem,timo) char *ttname; int *lcl, modem, timo; {
     /* take this opportunity to open the control channel */
     if (p9openttyctl(fnam) < 0)       
 #else
-      if (!isatty(ttyfd) && strcmp(fnam,"/dev/null"))
+      if (!ttfdflg && !isatty(ttyfd) && strcmp(fnam,"/dev/null"))
 #endif /* Plan9 */
 	{
 	    fprintf(stderr,"%s is not a terminal device\n",fnam);
@@ -4719,6 +4732,7 @@ ttrpid(name) char *name; {
   Open UNIX...  It also makes much more sense than device-name-based lockfiles
   since there can be multiple names for the same device, symlinks, etc.
 */
+#ifndef NOLFDEVNO
 #ifndef LFDEVNO				/* Define this for SVR4 */
 #ifndef AIXRS				/* But not for RS/6000 AIX 3.2, etc. */
 #ifndef BSD44				/* If anybody else needs it... */
@@ -4736,6 +4750,7 @@ ttrpid(name) char *name; {
 #endif /* BSD44 */
 #endif /* AIXRS */
 #endif /* LFDEVNO */			/* ... define it here or on CC */
+#endif /* NOLFDEVNO */
 #endif /* SVR4 */			/* command line. */
 
 #ifdef COHERENT
@@ -11565,7 +11580,7 @@ static struct timeval tzero;
 
 VOID
 rftimer() {
-#ifdef GTODONEARG	/* Account for Mot's definition */
+#ifdef GTODONEARG			/* Account for Mot's definition */
     (VOID) gettimeofday(&tzero);
 #else
     (VOID) gettimeofday(&tzero, (struct timezone *)0);
@@ -11579,13 +11594,15 @@ gftimer() {
 #ifdef DEBUG
     char fpbuf[64];
 #endif /* DEBUG */
-#ifdef GTODONEARG	/* Acount for Mot's definition */
+#ifdef GTODONEARG			/* Account for Mot's definition */
     (VOID) gettimeofday(&tnow);
 #else
     (VOID) gettimeofday(&tnow, (struct timezone *)0);
 #endif /* GTODONEARG */
+
     tdelta.tv_sec = tnow.tv_sec - tzero.tv_sec;
     tdelta.tv_usec = tnow.tv_usec - tzero.tv_usec;
+
     if (tdelta.tv_usec < 0) {
 	tdelta.tv_sec--;
 	tdelta.tv_usec += 1000000;
@@ -11934,7 +11951,7 @@ concb(esc) char esc;
     x = isatty(0);
     debug(F101,"concb isatty","",x);
     if (!x) return(0);			/* Only when running on real ttys */
-    debug(F101,"concb suspend","",suspend);
+    debug(F101,"concb xsuspend","",xsuspend);
     if (backgrd)			/* Do nothing if in background. */
       return(0);
     escchr = esc;                       /* Make this available to other fns */
@@ -13492,6 +13509,8 @@ int
 priv_ini() {
     int err = 0;
 
+#ifndef HAVE_BAUDBOY
+
     /* Save real ID:s. */
     realuid = getuid();
     realgid = getgid();
@@ -13571,6 +13590,7 @@ priv_ini() {
 	err &= ~1;			/* System V R0 does not save UID */
 #endif /* ATT7300 */
     }
+#endif /* HAVE_BAUDBOY */
     return(err);
 }
 
@@ -13648,6 +13668,7 @@ priv_ini() {
  */
 int
 priv_on() {
+#ifndef HAVE_BAUDBOY
     if (privgid != (GID_T) -1)
       if (switchgid(realgid,privgid))
         return(2);
@@ -13658,6 +13679,7 @@ priv_on() {
 	    switchgid(privgid,realgid);
 	  return(1);
       }
+#endif /* HAVE_BAUDBOY */
     return(0);
 }
 
@@ -13673,7 +13695,7 @@ priv_on() {
 int
 priv_off() {
     int err = 0;
-
+#ifndef HAVE_BAUDBOY
     if (privuid != (UID_T) -1)
        if (switchuid(privuid,realuid))
 	  err |= 1;
@@ -13681,7 +13703,7 @@ priv_off() {
     if (privgid != (GID_T) -1)
        if (switchgid(privgid,realgid))
 	err |= 2;
-
+#endif /* HAVE_BAUDBOY */
     return(err);
 }
 
@@ -13697,7 +13719,7 @@ priv_off() {
  */
 int
 priv_can() {
-
+#ifndef HAVE_BAUDBOY
 #ifdef SETREUID
     int err = 0;
     if (privuid != (UID_T) -1)
@@ -13735,6 +13757,9 @@ priv_can() {
     return(priv_off());
 #endif /* SETEUID */
 #endif /* SETREUID */
+#else
+    return(0);
+#endif /* HAVE_BAUDBOY */
 }
 
 /* P R I V _ O P N  --  For opening protected files or devices. */

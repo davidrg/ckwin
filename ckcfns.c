@@ -1,4 +1,4 @@
-char *fnsv = "C-Kermit functions, 8.0.222, 22 Oct 2002";
+char *fnsv = "C-Kermit functions, 8.0.223, 1 May 2003";
 
 char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 
@@ -10,7 +10,7 @@ char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2002,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -2486,7 +2486,12 @@ xgnbyte(tcs,fcs,fn) int tcs, fcs, (*fn)();
 	return(-2);
     }
 #ifdef COMMENT
-    /* Now let's see who complains... */
+/*    
+  If there is a return() statement here, some compilers complain
+  about "statement not reached".  If there is no return() statement,
+  other compilers complain that "Non-void function should return a value".
+  There is no path through this function that falls through to here.
+*/
     debug(F100,"xgnbyte switch failure","",0);
     return(-2);
 #endif /* COMMENT */
@@ -4086,8 +4091,25 @@ reof(f,yy) char *f; struct zattr *yy; {
 	    !pipesend &&
 	    !calibrate && c != 'M' && c != 'P') {
 	    if (rcv_move) {		/* If /MOVE-TO was given... */
-
-		rc = zrename(filnam,rcv_move);
+		char * p = rcv_move;
+#ifdef COMMENT
+/* No need for this - it's a directory name */
+		char tmpbuf[CKMAXPATH+1];
+		extern int cmd_quoting;	/* for \v(filename) */
+		if (cmd_quoting) {	/* But only if cmd_quoting is on */
+		    int n;
+		    n = CKMAXPATH;
+		    p = tmpbuf;
+		    debug(F111,"reof /move-to",rcv_move,0);
+		    zzstring(rcv_move,&p,&n);
+		    p = tmpbuf;
+		}
+#endif /* COMMENT */
+/*
+  Here we could create the directory if it didn't exist (and it was relative)
+  but there would have to be a user-settable option to say whether to do this.
+*/
+		rc = zrename(filnam,p);
 		debug(F111,"reof MOVE zrename",rcv_move,rc);
 		if (rc > -1) {
 		    tlog(F110," moving received file to",rcv_move,0);
@@ -4099,12 +4121,12 @@ reof(f,yy) char *f; struct zattr *yy; {
 		char *s = rcv_rename;	/* This is the renaming string */
 #ifndef NOSPL
 		char tmpnam[CKMAXPATH+16];
-		int y;			/* Pass it thru the evaluator */
 		extern int cmd_quoting;	/* for \v(filename) */
 		if (cmd_quoting) {	/* But only if cmd_quoting is on */
-		    y = MAXRP;
+		    int n;		/* Pass it thru the evaluator */
+		    n = CKMAXPATH;
 		    s = (char *)tmpnam;
-		    zzstring(rcv_rename,&s,&y);
+		    zzstring(rcv_rename,&s,&n);
 		    s = (char *)tmpnam;
 		}
 #endif /* NOSPL */

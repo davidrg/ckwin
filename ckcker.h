@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2002,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -1394,8 +1394,9 @@ struct txtbox {
     int    t_echo;			/* 0 = no, 1 = yes, 2 = asterisks */
 };
 
+#define DEFAULT_UQ_TIMEOUT  0
 _PROTOTYP(int uq_ok, (char *,char *,int,char **,int) );
-_PROTOTYP(int uq_txt, (char *,char *,int,char **,char *,int,char *));
+_PROTOTYP(int uq_txt, (char *,char *,int,char **,char *,int,char *,int));
 _PROTOTYP(int uq_mtxt, (char *,char **,int,struct txtbox[]) );
 _PROTOTYP(int uq_file, (char *,char *,int,char **,char *,char *,int));
 

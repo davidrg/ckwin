@@ -5,8 +5,8 @@
 
   Modified for use in C-Kermit by:
 
-  Jeffrey Altman <jaltman@columbia.edu>
-  The Kermit Project, Columbia University, New York City
+  Jeffrey E Altman <jaltman@secure-endpoints.com>
+    Secure Endpoints Inc., New York City
   November 1999
 */
 #ifndef __PTY_INT_H__

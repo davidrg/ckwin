@@ -1,10 +1,10 @@
 /* C K U S I G  --  Kermit signal handling for Unix and OS/2 systems */
 
 /*
-  Author: Jeffrey Altman (jaltman@columbia.edu),
-  Columbia University Academic Information Systems, New York City.
+  Author: Jeffrey Altman (jaltman@secure-endpoints.com),
+            Secure Endpoints Inc., New York City.
 
-  Copyright (C) 1985, 2002,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.

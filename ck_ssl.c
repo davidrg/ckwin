@@ -1,13 +1,14 @@
-char *cksslv = "SSL/TLS support, 8.0.203,  9 Jul 2002";
+char *cksslv = "SSL/TLS support, 8.0.221, 26 Feb 2004";
 /*
   C K _ S S L . C --  OpenSSL Interface for C-Kermit
 
-  Copyright (C) 1985, 2002,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
-  Author:  Jeffrey E Altman (jaltman@columbia.edu)
+    Author:  Jeffrey E Altman (jaltman@secure-endpoints.com)
+               Secure Endpoints Inc., New York City
 
   Provides:
 
@@ -17,14 +18,19 @@ char *cksslv = "SSL/TLS support, 8.0.203,  9 Jul 2002";
   . Certificate verification and revocation list checks
   . Client certificate to user id routine
 
-  Note: This code is written to be compatible with OpenSSL 0.9.6[abc].
+  Note: This code is written to be compatible with OpenSSL 0.9.6[abcdefgh]
+  and 0.9.7 beta 5.
   It will also compile with version 0.9.5 although that is discouraged
-  due to security weaknesses in that release.   This code may not
-  compile with 0.9.7 development releases.
+  due to security weaknesses in that release.
 */
 
 #include "ckcsym.h"
 #include "ckcdeb.h"
+
+#ifdef CK_SSL
+#include "ckcnet.h"
+#include "ckuath.h"
+
 #include <stdlib.h>
 #include <string.h>
 #ifdef UNIX
@@ -34,7 +40,18 @@ char *cksslv = "SSL/TLS support, 8.0.203,  9 Jul 2002";
 #endif /* FREEBSD4 */
 #endif /* UNIX */
 
-#ifdef CK_SSL
+#ifdef DEC_TCPIP
+#include <time.h>
+#include <inet.h>
+#endif /* DEC_TCPIP */
+
+#ifdef OS2
+extern char exedir[];
+#ifdef NT
+char * GetAppData(int);
+#endif
+#endif /* OS2 */
+
 static int ssl_installed = 1;
 #endif /* CK_SSL */
 int
@@ -58,7 +75,11 @@ ck_ssh_is_installed()
 }
 
 int
+#ifdef CK_ANSIC
+ck_ssleay_is_installed(void)
+#else
 ck_ssleay_is_installed()
+#endif
 {
 #ifdef CK_SSL
 #ifdef SSLDLL
@@ -220,8 +241,8 @@ X509_STORE_CTX *ctx;
     }
 
     if (ssl_verbose_flag && !inserver && depth != ssl_verify_depth) {
-        printf("Certificate[%d] subject=%s\r\n",depth,subject);
-        printf("Certificate[%d] issuer =%s\r\n",depth,issuer);
+        printf("[%d] Certificate Subject:\r\n%s\r\n",depth,subject);
+        printf("[%d] Certificate Issuer:\r\n%s\r\n",depth,issuer);
         ssl_verify_depth = depth;
     }
 
@@ -306,7 +327,7 @@ X509_STORE_CTX *ctx;
 #endif
 {
     char subject[256]="", issuer[256]="";
-    int depth, error;
+    int depth, error, len;
     X509 *xs;
 
     xs=X509_STORE_CTX_get_current_cert(ctx);
@@ -325,13 +346,40 @@ X509_STORE_CTX *ctx;
      * certificate that is being verified ... and if we cannot
      * determine that then something is seriously wrong!
      */
+#ifdef XN_FLAG_SEP_MULTILINE
+    X509_NAME_print_ex(bio_err,X509_get_subject_name(xs),4,
+                        XN_FLAG_SEP_MULTILINE);
+    len = BIO_read(bio_err,subject,256);
+    subject[len < 256 ? len : 255] = '\0';
+    if (!subject[0]) {
+        ERR_print_errors(bio_err);
+        len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
+        ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
+        uq_ok("X.509 Subject Name unavailable", ssl_err, 1, NULL, 0);
+        ok=0;
+        goto return_time;
+    }
+
+    X509_NAME_print_ex(bio_err,X509_get_issuer_name(xs),4,
+                        XN_FLAG_SEP_MULTILINE);
+    len = BIO_read(bio_err,issuer,256);
+    issuer[len < 256 ? len : 255] = '\0';
+    if (!issuer[0]) {
+        ERR_print_errors(bio_err);
+        len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
+        ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
+        uq_ok("X.509 Issuer Name unavailable", ssl_err, 1, NULL, 0);
+        ok=0;
+        goto return_time;
+    }
+#else /* XN_FLAG_SEP_MULTILINE */
     X509_NAME_oneline(X509_get_subject_name(xs),subject,256);
     if (!subject[0]) {
         int len;
         ERR_print_errors(bio_err);
         len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
         ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
-        uq_ok("X.509 Subject Name unavailable\n", ssl_err, 1, NULL, 0);
+        uq_ok("X.509 Subject Name unavailable", ssl_err, 1, NULL, 0);
         ok=0;
         goto return_time;
     }
@@ -342,14 +390,15 @@ X509_STORE_CTX *ctx;
         ERR_print_errors(bio_err);
         len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
         ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
-        uq_ok("X.509 Issuer Name unavailable\n", ssl_err, 1, NULL, 0);
+        uq_ok("X.509 Issuer Name unavailable", ssl_err, 1, NULL, 0);
         ok=0;
         goto return_time;
     }
+#endif /* XN_FLAG_SEP_MULTILINE */
 
     if (ssl_verbose_flag && depth != ssl_verify_depth) {
-        printf("Certificate[%d] subject=%s\r\n",depth,subject);
-        printf("Certificate[%d] issuer =%s\r\n",depth,issuer);
+        printf("[%d] Certificate Subject:\r\n%s\r\n",depth,subject);
+        printf("[%d] Certificate Issuer:\r\n%s\r\n",depth,issuer);
         ssl_verify_depth = depth;
     }
 
@@ -371,9 +420,9 @@ X509_STORE_CTX *ctx;
                  */
                 ckmakxmsg(prefix,1024,
                            "Error: Server has a self-signed certificate\n",
-                           "[",ckitoa(depth),"] subject=",subject,
-                           "[",ckitoa(depth),"] issuer=",issuer,
-                           "\n",NULL,NULL);
+                           "[",ckitoa(depth),"] Certificate Subject=\n",subject,
+                           "\n[",ckitoa(depth),"] Certificate Issuer=\n",issuer,
+                           NULL,NULL,NULL);
 
                 uq_ok(prefix, "Rejecting Connection", 1, NULL, 0);
 
@@ -390,9 +439,9 @@ X509_STORE_CTX *ctx;
             } else if (ssl_verify_flag != SSL_VERIFY_NONE) {
                 ckmakxmsg(prefix,1024,
                            "Warning: Server has a self-signed certificate\n",
-                           "[",ckitoa(depth),"] subject=",subject,
-                           "[",ckitoa(depth),"] issuer=",issuer,
-                           "\n",NULL,NULL);
+                           "[",ckitoa(depth),"] Certificate Subject=\n",subject,
+                           "\n[",ckitoa(depth),"] Certificate Issuer=\n",issuer,
+                           NULL,NULL,NULL);
 
                 ok = uq_ok(prefix,
                            "Continue? (Y/N) ",
@@ -411,9 +460,8 @@ X509_STORE_CTX *ctx;
                 ckmakxmsg(prefix,1024,
                            "Error: ",
                            (char *)X509_verify_cert_error_string(error),
-                           "\r\n",
-                           "issuer=",issuer,
-                           "\n",NULL,NULL,NULL,NULL,NULL,NULL);
+                           "\nCertificate Issuer=\n",issuer,
+                           NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
                 uq_ok(prefix, "Rejecting Connection", 1, NULL, 0);
 
                 /* sometimes it is really handy to be able to debug things
@@ -430,9 +478,8 @@ X509_STORE_CTX *ctx;
                 ckmakxmsg(prefix,1024,
                            "Warning: ",
                            (char *)X509_verify_cert_error_string(error),
-                           "\r\n",
-                           "issuer=",issuer,
-                           "\n",NULL,NULL,NULL,NULL,NULL,NULL);
+                           "\nCertificate Issuer=\n",issuer,
+                           NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
                 ok = uq_ok(prefix, "Continue (Y/N)", 3, NULL, 0);
                 goto return_time;
             }
@@ -451,10 +498,9 @@ X509_STORE_CTX *ctx;
                 ckmakxmsg(prefix,1024,
                            "Error: ",
                            (char *)X509_verify_cert_error_string(error),
-                           "\r\n",
-                           "subject=",subject,
-                           "\r\nnotBefore=",ssl_err,
-                           "\r\n",NULL,NULL,NULL,NULL);
+                           "\nCertificate Subject=\n",subject,
+                           "\nnotBefore=",ssl_err,
+                           NULL,NULL,NULL,NULL,NULL,NULL);
                 uq_ok(prefix, "Rejecting Connection", 1, NULL, 0);
                 /* sometimes it is really handy to be able to debug things
                 * and still get a connection!
@@ -474,10 +520,9 @@ X509_STORE_CTX *ctx;
                 ckmakxmsg(prefix,1024,
                            "Warning: ",
                            (char *)X509_verify_cert_error_string(error),
-                           "\r\n",
-                           "subject=",subject,
-                           "\r\nnotBefore=",ssl_err,
-                           "\r\n",NULL,NULL,NULL,NULL);
+                           "\nCertificate Subject=\n",subject,
+                           "\n    notBefore=",ssl_err,
+                           NULL,NULL,NULL,NULL,NULL,NULL);
                 ok = uq_ok(prefix, "Continue (Y/N)", 3, NULL, 0);
             }
             break;
@@ -496,10 +541,9 @@ X509_STORE_CTX *ctx;
                 ckmakxmsg(prefix,1024,
                            "Error: ",
                            (char *)X509_verify_cert_error_string(error),
-                           "\r\n",
-                           "subject=",subject,
-                           "\r\nnotAfter=",ssl_err,
-                           "\r\n",NULL,NULL,NULL,NULL);
+                           "\nCertificate Subject=\n",subject,
+                           "\n    notAfter=",ssl_err,
+                           NULL,NULL,NULL,NULL,NULL,NULL);
                 uq_ok(prefix, "Rejecting Connection", 1, NULL, 0);
    
                 /* sometimes it is really handy to be able to debug things
@@ -520,10 +564,9 @@ X509_STORE_CTX *ctx;
                 ckmakxmsg(prefix,1024,
                            "Warning: ",
                            (char *)X509_verify_cert_error_string(error),
-                           "\r\n",
-                           "subject=",subject,
-                           "\r\nnotAfter=",ssl_err,
-                           "\r\n",NULL,NULL,NULL,NULL);
+                           "\nCertificate Subject=\n",subject,
+                           "\n    notAfter=",ssl_err,
+                           NULL,NULL,NULL,NULL,NULL,NULL);
                 ok = uq_ok(prefix, "Continue (Y/N)", 3, NULL, 0);
             }
             break;
@@ -550,9 +593,8 @@ X509_STORE_CTX *ctx;
                 ckmakxmsg(prefix,1024,
                            "Error: ",
                            (char *)X509_verify_cert_error_string(error),
-                           "\r\n",
-                           "issuer=",issuer,
-                           "\r\n",NULL,NULL,NULL,NULL,NULL,NULL);
+                           "\nCertificate Issuer=\n",issuer,
+                           NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
                 uq_ok(prefix, "Rejecting Connection", 1, NULL, 0);
                 /* sometimes it is really handy to be able to debug things
                 * and still get a connection!
@@ -568,10 +610,22 @@ X509_STORE_CTX *ctx;
                 ckmakxmsg(prefix,1024,
                            "Warning: ",
                            (char *)X509_verify_cert_error_string(error),
-                           "\r\n",
-                           "issuer=",issuer,
-                           "\r\n",NULL,NULL,NULL,NULL,NULL,NULL);
+                           "\nCertificate Issuer=\n",issuer,
+                           NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
                 ok = uq_ok(prefix, "Continue (Y/N)", 3, NULL, 0);
+#ifdef NT
+                if (ok) {
+                    /* if the user decides to accept the certificate
+                     * offer to store it for future connections in 
+                     * the user's private store
+                     */
+                    ok = uq_ok(
+  "Do you wish to store the certificate to verify future connections?",
+                               "Continue (Y/N)", 3, NULL, 0);
+                    if (ok)
+                        ck_X509_save_cert_to_user_store(xs);
+                }
+#endif /* NT */
             }
             break;
         case X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE:
@@ -598,9 +652,8 @@ X509_STORE_CTX *ctx;
                 ckmakxmsg(prefix,1024,
                            "Error: ",
                            (char *)X509_verify_cert_error_string(error),
-                           "\r\n",
-                           "subject=",subject,
-                           "\r\n",NULL,NULL,NULL,NULL,NULL,NULL);
+                           "\nCertificate Subject=\n",subject,
+                           NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
                 uq_ok(prefix, "Rejecting Connection", 1, NULL, 0);
 
                 /* sometimes it is really handy to be able to debug things
@@ -617,9 +670,8 @@ X509_STORE_CTX *ctx;
                 ckmakxmsg(prefix,1024,
                            "Warning: ",
                            (char *)X509_verify_cert_error_string(error),
-                           "\r\n",
-                           "subject=",subject,
-                           "\r\n",NULL,NULL,NULL,NULL,NULL,NULL);
+                           "\nCertificate Subject=\n",subject,
+                           NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
                 ok = uq_ok(prefix, "Continue (Y/N)", 3, NULL, 0);
             }
             break;
@@ -1055,7 +1107,7 @@ int
 #ifdef CK_ANSIC
 ssl_passwd_callback(char *buf, int len, int rwflag, VOID * userdata)
 #else /* CK_ANSIC */
-ssl_passwd_callback(buf,len,w)
+ssl_passwd_callback(buf,len,rwflag,userdata)
     char * buf; int len; int rwflag; VOID *userdata;
 #endif /* CK_ANSIC */
 {
@@ -1075,10 +1127,10 @@ ssl_passwd_callback(buf,len,w)
     }
 
     if ( userdata == NULL )
-        prompt="Enter pass phrase: ";
+        prompt="Enter certificate passphrase: ";
     else
         prompt=(char*)userdata;
-    ok = uq_txt(NULL,prompt,1,NULL,buf,len,NULL);
+    ok = uq_txt(NULL,prompt,2,NULL,buf,len,NULL,DEFAULT_UQ_TIMEOUT);
     return(ok > 0 ? strlen(buf) : 0);
 }
 
@@ -1278,7 +1330,7 @@ tls_load_certs(SSL_CTX * ctx, SSL * con, int server)
 
 VOID
 #ifdef CK_ANSIC
-ssl_once_init()
+ssl_once_init(void)
 #else
 ssl_once_init()
 #endif /* CK_ANSIC */
@@ -1289,6 +1341,7 @@ ssl_once_init()
         return;
 
     debug(F111,"Kermit built for OpenSSL",OPENSSL_VERSION_TEXT,SSLEAY_VERSION_NUMBER);
+#ifndef OS2ONLY
     debug(F111,"OpenSSL Library",SSLeay_version(SSLEAY_VERSION),
            SSLeay());
     debug(F110,"OpenSSL Library",SSLeay_version(SSLEAY_BUILT_ON),0);
@@ -1313,17 +1366,22 @@ ssl_once_init()
 #endif /* SSLDLL */
         return;
     }
+#endif /* OS2ONLY */
 
     /* init things so we will get meaningful error messages
     * rather than numbers
     */
     SSL_load_error_strings();
 
+#ifdef SSHBUILTIN
+    OPENSSL_add_all_algorithms_noconf();
+#else
     /* SSL_library_init() only loads those ciphers needs for SSL  */
-    /* These happen to be a similar set to those requires for SSH */
+    /* These happen to be a similar set to those required for SSH */
     /* but they are not a complete set of ciphers provided by the */
     /* crypto library.                                            */
     SSL_library_init();
+#endif /* SSHBUILTIN */
 
 #ifdef ZLIB
     cm = COMP_zlib();
@@ -1396,6 +1454,15 @@ ssl_once_init()
             debug(F111,"ssl_once_init","RAND_write_file()",rc);
         }
     }
+
+#ifdef NT
+    // Initialize additional OID types for use when saving certs to a file
+    OBJ_create("2.99999.3","SET.ex3","SET x509v3 extension 3");
+#endif /* NT */
+
+    /* make sure we have somewhere we can log errors to */
+    bio_err=BIO_new(BIO_s_mem());
+
     debug(F100,"ssl_once_init() complete","",0);
 }
 
@@ -1419,10 +1486,6 @@ ssl_tn_init(mode) int mode;
         return(0);
 
     debug(F111,"ssl_tn_init","mode",mode);
-
-    /* make sure we have somewhere we can log errors to */
-    if (bio_err == NULL)
-        bio_err=BIO_new(BIO_s_mem());
 
     if (ssl_debug_flag)
         printf("SSL_DEBUG_FLAG on\r\n");
@@ -1529,8 +1592,8 @@ ssl_tn_init(mode) int mode;
             SSL_CTX_set_session_cache_mode(ssl_ctx,SSL_SESS_CACHE_CLIENT);
             SSL_CTX_set_session_cache_mode(tls_ctx,SSL_SESS_CACHE_CLIENT);
         }
-        SSL_CTX_set_session_id_context(ssl_ctx,"1",1);
-        SSL_CTX_set_session_id_context(tls_ctx,"2",1);
+        SSL_CTX_set_session_id_context(ssl_ctx,(CHAR *)"1",1);
+        SSL_CTX_set_session_id_context(tls_ctx,(CHAR *)"2",1);
 #else /* COMMENT */
         SSL_CTX_set_session_cache_mode(ssl_ctx,SSL_SESS_CACHE_OFF);
         SSL_CTX_set_session_cache_mode(tls_ctx,SSL_SESS_CACHE_OFF);
@@ -1545,8 +1608,14 @@ ssl_tn_init(mode) int mode;
         DH * dh = NULL;
 
         defdir = getenv("SSL_CERT_DIR");
-        if ( !defdir )
+        if ( !defdir ) {
+#ifdef OS2
+            defdir = exedir;
+#else /* OS2 */
             defdir = X509_get_default_cert_dir();
+#endif /* OS2 */
+            debug(F110,"ssl_tn_init - setting default directory to",defdir,0);
+        }
         if ( !defdir )
             defdir = "";
 
@@ -1673,75 +1742,77 @@ ssl_tn_init(mode) int mode;
     {
         /* The defaults in the SSL crypto library are not appropriate for OS/2 */
         char path[CKMAXPATH];
-        extern char exedir[];
-        char * GetAppData(int);
 
         ckmakmsg(path,CKMAXPATH,exedir,"certs",NULL,NULL);
-        if (SSL_CTX_load_verify_locations(tls_ctx,NULL,path) == 0)  {
-            debug(F110,"ssl_tn_init unable to load path",path,0);
+        if (isdir(path) && 
+            SSL_CTX_load_verify_locations(tls_ctx,NULL,path) == 1)  {
+            debug(F110,"ssl_tn_init certificate verify dir",path,0);
             if (ssl_debug_flag)
-                printf("?Unable to load verify-dir: %s\r\n",path);
-        } else
+                printf("  Certificate Verification Directory: %s\r\n",path);
             SSL_CTX_load_verify_locations(ssl_ctx,NULL,path);
+        }
         ckmakmsg(path,CKMAXPATH,GetAppData(1),"kermit 95/certs",NULL,NULL);
-        if (SSL_CTX_load_verify_locations(tls_ctx,NULL,path) == 0)  {
-            debug(F110,"ssl_tn_init unable to load path",path,0);
+        if (isdir(path) &&
+            SSL_CTX_load_verify_locations(tls_ctx,NULL,path) == 1)  {
+            debug(F110,"ssl_tn_init certificate verify dir",path,0);
             if (ssl_debug_flag)
-                printf("?Unable to load verify-dir: %s\r\n",path);
-        } else
+                printf("  Certificate Verification Directory: %s\r\n",path);
             SSL_CTX_load_verify_locations(ssl_ctx,NULL,path);
+        }
         ckmakmsg(path,CKMAXPATH,GetAppData(0),"kermit 95/certs",NULL,NULL);
-        if (SSL_CTX_load_verify_locations(tls_ctx,NULL,path) == 0)  {
-            debug(F110,"ssl_tn_init unable to load path",path,0);
+        if (isdir(path) &&
+            SSL_CTX_load_verify_locations(tls_ctx,NULL,path) == 1)  {
+            debug(F110,"ssl_tn_init certificate verify dir",path,0);
             if (ssl_debug_flag)
-                printf("?Unable to load verify-dir: %s\r\n",path);
-        } else
+                printf("  Certificate Verification Directory: %s\r\n",path);
             SSL_CTX_load_verify_locations(ssl_ctx,NULL,path);
-
+        }
         ckmakmsg(path,CKMAXPATH,exedir,"ca_certs.pem",NULL,NULL);
-        if (SSL_CTX_load_verify_locations(tls_ctx,path,NULL) == 0) {
-            debug(F110,"ssl_tn_init unable to load path",path,0);
+        if (zchki(path) > 0 && 
+            SSL_CTX_load_verify_locations(tls_ctx,path,NULL) == 1) {
+            debug(F110,"ssl_tn_init certificate verify file",path,0);
             if (ssl_debug_flag)
-                printf("?Unable to load verify-file: %s\r\n",path);
-        } else
+                printf("  Certificate Verification File: %s\r\n",path);
             SSL_CTX_load_verify_locations(ssl_ctx,path,NULL);
-
+        }
         ckmakmsg(path,CKMAXPATH,GetAppData(1),"kermit 95/ca_certs.pem",NULL,NULL);
-        if (SSL_CTX_load_verify_locations(tls_ctx,path,NULL) == 0) {
-            debug(F110,"ssl_tn_init unable to load path",path,0);
+        if (zchki(path) > 0 && 
+            SSL_CTX_load_verify_locations(tls_ctx,path,NULL) == 1) {
+            debug(F110,"ssl_tn_init certificate verify file",path,0);
             if (ssl_debug_flag)
-                printf("?Unable to load verify-file: %s\r\n",path);
-        } else
+                printf("  Certificate Verification File: %s\r\n",path);
             SSL_CTX_load_verify_locations(ssl_ctx,path,NULL);
-
+        }
         ckmakmsg(path,CKMAXPATH,GetAppData(0),"kermit 95/ca_certs.pem",NULL,NULL);
-        if (SSL_CTX_load_verify_locations(tls_ctx,path,NULL) == 0) {
-            debug(F110,"ssl_tn_init unable to load path",path,0);
+        if (zchki(path) > 0 && 
+            SSL_CTX_load_verify_locations(tls_ctx,path,NULL) == 1) {
+            debug(F110,"ssl_tn_init certificate verify file",path,0);
             if (ssl_debug_flag)
-                printf("?Unable to load verify-file: %s\r\n",path);
-        } else
+                printf("  Certificate Verification File: %s\r\n",path);
             SSL_CTX_load_verify_locations(ssl_ctx,path,NULL);
+        }
     }
 #else /* NT */
     {
         /* The defaults in the SSL crypto library are not appropriate for OS/2 */
         char path[CKMAXPATH];
-        extern char exedir[];
 
         ckmakmsg(path,CKMAXPATH,exedir,"certs",NULL,NULL);
-        if (SSL_CTX_load_verify_locations(tls_ctx,NULL,path) == 0)  {
-            debug(F110,"ssl_tn_init unable to load path",path,0);
+        if (isdir(path) && 
+            SSL_CTX_load_verify_locations(tls_ctx,NULL,path) == 1)  {
+            debug(F110,"ssl_tn_init certificate verify dir",path,0);
             if (ssl_debug_flag)
-                printf("?Unable to load verify-dir: %s\r\n",path);
-        } else
+                printf("  Certificate Verification Directory: %s\r\n",path);
             SSL_CTX_load_verify_locations(ssl_ctx,NULL,path);
+        }
         ckmakmsg(path,CKMAXPATH,exedir,"ca_certs.pem",NULL,NULL);
-        if (SSL_CTX_load_verify_locations(tls_ctx,path,NULL) == 0) {
-            debug(F110,"ssl_tn_init unable to load path",path,0);
+        if (zchki(path) > 0 && 
+            SSL_CTX_load_verify_locations(tls_ctx,path,NULL) == 1) {
+            debug(F110,"ssl_tn_init certificate verify file",path,0);
             if (ssl_debug_flag)
-                printf("?Unable to load verify-file: %s\r\n",path);
-        } else
+                printf("  Certificate Verification File: %s\r\n",path);
             SSL_CTX_load_verify_locations(ssl_ctx,path,NULL);
+        }
     }
 #endif /* NT */
 #else /* OS2 */
@@ -1750,22 +1821,22 @@ ssl_tn_init(mode) int mode;
 #endif /* OS2 */
 
     if (ssl_verify_file) {
-        if (SSL_CTX_load_verify_locations(tls_ctx,ssl_verify_file,NULL) == 0) {
-            debug(F110,"ssl_tn_init unable to load ssl_verify_file",ssl_verify_file,0);
+        if (zchki(ssl_verify_file) > 0 && 
+            SSL_CTX_load_verify_locations(tls_ctx,ssl_verify_file,NULL) == 1) {
+            debug(F110,"ssl_tn_init certificate verify file",ssl_verify_file,0);
             if (ssl_debug_flag)
-                printf("?Unable to load verify-file: %s\r\n",ssl_verify_file);
-        } else
+                printf("  Certificate Verification File: %s\r\n",ssl_verify_file);
             SSL_CTX_load_verify_locations(ssl_ctx,ssl_verify_file,NULL);
+        }
     }
-    if (ssl_verify_dir) {
-        if (SSL_CTX_load_verify_locations(tls_ctx,NULL,ssl_verify_dir) == 0)  {
-            debug(F110,"ssl_tn_init unable to load ssl_verify_dir",ssl_verify_dir,0);
+    if (ssl_verify_dir && isdir(ssl_verify_dir)) {
+        if (SSL_CTX_load_verify_locations(tls_ctx,NULL,ssl_verify_dir) == 1)  {
+            debug(F110,"ssl_tn_init certificate verify dir",ssl_verify_dir,0);
             if (ssl_debug_flag)
-                printf("?Unable to load verify-dir: %s\r\n",ssl_verify_dir);
-        } else
+                printf("  Certificate Verification Directory: %s\r\n",ssl_verify_dir);
             SSL_CTX_load_verify_locations(ssl_ctx,NULL,ssl_verify_dir);
+        }
     }
-
     if (mode == SSL_SERVER) {
         SSL_CTX_set_verify(ssl_ctx,
                      ssl_verify_flag?ssl_verify_flag|SSL_VERIFY_CLIENT_ONCE:0,
@@ -1791,63 +1862,68 @@ ssl_tn_init(mode) int mode;
     if (crl_store) {
 #ifdef OS2
         char path[CKMAXPATH];
-        extern char exedir[];
 
         ckmakmsg(path,CKMAXPATH,exedir,"crls",NULL,NULL);
-        if (X509_STORE_load_locations(crl_store,NULL,path) == 0) {
-            debug(F110,"ssl_tn_init unable to load dir",path,0);
+        if (isdir(path) &&
+            X509_STORE_load_locations(crl_store,NULL,path) == 1) {
+            debug(F110,"ssl_tn_init crl dir",path,0);
             if (ssl_debug_flag)
-                printf("?Unable to load crl-dir: %s\r\n",path);
+                printf("  CRL Directory: %s\r\n",path);
         }
 #ifdef NT
         ckmakmsg(path,CKMAXPATH,GetAppData(1),"kermit 95/crls",NULL,NULL);
-        if (X509_STORE_load_locations(crl_store,NULL,path) == 0) {
-            debug(F110,"ssl_tn_init unable to load dir",path,0);
+        if (isdir(path) && 
+            X509_STORE_load_locations(crl_store,NULL,path) == 1) {
+            debug(F110,"ssl_tn_init crl dir",path,0);
             if (ssl_debug_flag)
-                printf("?Unable to load crl-dir: %s\r\n",path);
+                printf("  CRL Directory: %s\r\n",path);
         }
         ckmakmsg(path,CKMAXPATH,GetAppData(0),"kermit 95/crls",NULL,NULL);
-        if (X509_STORE_load_locations(crl_store,NULL,path) == 0) {
-            debug(F110,"ssl_tn_init unable to load dir",path,0);
+        if (isdir(path) && 
+            X509_STORE_load_locations(crl_store,NULL,path) == 1) {
+            debug(F110,"ssl_tn_init crl dir",path,0);
             if (ssl_debug_flag)
-                printf("?Unable to load crl-dir: %s\r\n",path);
+                printf("  CRL Directory: %s\r\n",path);
         }
 #endif /* NT */
         
         ckmakmsg(path,CKMAXPATH,exedir,"ca_crls.pem",NULL,NULL);
-        if (X509_STORE_load_locations(crl_store,path,NULL) == 0) {
-            debug(F110,"ssl_tn_init unable to load dir",path,0);
+        if (zchki(path) > 0 && 
+            X509_STORE_load_locations(crl_store,path,NULL) == 1) {
+            debug(F110,"ssl_tn_init crl file",path,0);
             if (ssl_debug_flag)
-                printf("?Unable to load crl-file: %s\r\n",path);
+                printf("  CRL File: %s\r\n",path);
         }
 #ifdef NT
         ckmakmsg(path,CKMAXPATH,GetAppData(1),"kermit 95/ca_crls.pem",NULL,NULL);
-        if (X509_STORE_load_locations(crl_store,path,NULL) == 0) {
-            debug(F110,"ssl_tn_init unable to load dir",path,0);
+        if (zchki(path) > 0 && 
+            X509_STORE_load_locations(crl_store,path,NULL) == 1) {
+            debug(F110,"ssl_tn_init crl file",path,0);
             if (ssl_debug_flag)
-                printf("?Unable to load crl-file: %s\r\n",path);
+                printf("  CRL File: %s\r\n",path);
         }
         ckmakmsg(path,CKMAXPATH,GetAppData(0),"kermit 95/ca_crls.pem",NULL,NULL);
-        if (X509_STORE_load_locations(crl_store,path,NULL) == 0) {
-            debug(F110,"ssl_tn_init unable to load dir",path,0);
+        if (zchki(path) > 0 && 
+            X509_STORE_load_locations(crl_store,path,NULL) == 1) {
+            debug(F110,"ssl_tn_init crl file",path,0);
             if (ssl_debug_flag)
-                printf("?Unable to load crl-file: %s\r\n",path);
+                printf("  CRL File: %s\r\n",path);
         }
 #endif /* NT */
 #endif /* OS2 */
 
         if (ssl_crl_file || ssl_crl_dir) {
-            if (ssl_crl_file &&
-                X509_STORE_load_locations(crl_store,ssl_crl_file,NULL) == 0) {
-                debug(F110,"ssl_tn_init unable to load ssl_crl_file",ssl_crl_file,0);
+            if (ssl_crl_file && zchki(ssl_crl_file) > 0 && 
+                X509_STORE_load_locations(crl_store,ssl_crl_file,NULL) == 1) {
+                debug(F110,"ssl_tn_init crl file",ssl_crl_file,0);
                 if (ssl_debug_flag)
-                    printf("?Unable to load crl-file: %s\r\n",ssl_crl_file);
+                    printf("  CRL File: %s\r\n",ssl_crl_file);
             }
-            if (ssl_crl_dir &&
-                X509_STORE_load_locations(crl_store,NULL,ssl_crl_dir) == 0) {
-                debug(F110,"ssl_tn_init unable to load ssl_crl_dir",ssl_crl_dir,0);
+            if (ssl_crl_dir && isdir(ssl_crl_dir) &&
+                X509_STORE_load_locations(crl_store,NULL,ssl_crl_dir) == 1) {
+                debug(F110,"ssl_tn_init crl dir",ssl_crl_dir,0);
                 if (ssl_debug_flag)
-                    printf("?Unable to load crl-dir: %s\r\n",ssl_crl_dir);
+                    printf("  CRL Directory: %s\r\n",ssl_crl_dir);
             }
         } 
 #ifndef OS2
@@ -1871,7 +1947,10 @@ ssl_tn_init(mode) int mode;
             SSL_set_session(ssl_con, SSL_get_session(ssl_conx));
         }
 #ifdef SSL_KRB5
-        kssl_ctx_free(ssl_conx->kssl_ctx);
+		if (ssl_conx->kssl_ctx) {
+			kssl_ctx_free(ssl_conx->kssl_ctx);
+			ssl_conx->kssl_ctx = NULL;
+		}
 #endif /* SSL_KRB5 */
         SSL_free(ssl_conx);
         ssl_conx = NULL;
@@ -1888,7 +1967,10 @@ ssl_tn_init(mode) int mode;
         if ( mode == SSL_CLIENT )
             SSL_set_session(tls_con, SSL_get_session(tls_conx));
 #ifdef SSL_KRB5
-        kssl_ctx_free(tls_conx->kssl_ctx);
+		if (tls_conx->kssl_ctx) {
+			kssl_ctx_free(tls_conx->kssl_ctx);
+			tls_conx->kssl_ctx = NULL;
+		}
 #endif /* SSL_KRB5 */
         SSL_free(tls_conx);
         tls_conx = NULL;
@@ -1959,17 +2041,8 @@ ssl_tn_init(mode) int mode;
             SSL_set_cipher_list(ssl_con,p);
             SSL_set_cipher_list(tls_con,p);
         } else {
-#ifdef SSL_KRB5
-            SSL_set_cipher_list(ssl_con,
-                            "HIGH:MEDIUM:LOW:ADH+3DES:ADH+RC4:ADH+DES:+EXP:KRB5");
-            SSL_set_cipher_list(tls_con,
-                            "HIGH:MEDIUM:LOW:ADH+3DES:ADH+RC4:ADH+DES:+EXP:KRB5");
-#else /* KRB5 */
-            SSL_set_cipher_list(ssl_con,
-                            "HIGH:MEDIUM:LOW:ADH+3DES:ADH+RC4:ADH+DES:+EXP");
-            SSL_set_cipher_list(tls_con,
-                            "HIGH:MEDIUM:LOW:ADH+3DES:ADH+RC4:ADH+DES:+EXP");
-#endif /* KRB5 */
+            SSL_set_cipher_list(ssl_con,DEFAULT_CIPHER_LIST);
+            SSL_set_cipher_list(tls_con,DEFAULT_CIPHER_LIST);
         }
     }
 
@@ -2003,10 +2076,6 @@ ssl_http_init(hostname) char * hostname;
     if ( !ck_ssleay_is_installed() )
         return(0);
     debug(F110,"ssl_http_init",hostname,0);
-
-    /* make sure we have somewhere we can log errors to */
-    if (bio_err == NULL)
-        bio_err=BIO_new(BIO_s_mem());
 
     if (ssl_debug_flag)
         printf("SSL_DEBUG_FLAG on\r\n");
@@ -2047,7 +2116,7 @@ ssl_http_init(hostname) char * hostname;
 
 #ifndef COMMENT
     SSL_CTX_set_session_cache_mode(tls_http_ctx,SSL_SESS_CACHE_CLIENT);
-    SSL_CTX_set_session_id_context(tls_http_ctx,"3",1);
+    SSL_CTX_set_session_id_context(tls_http_ctx,(CHAR *)"3",1);
 #else /* COMMENT */
     SSL_CTX_set_session_cache_mode(tls_http_ctx,SSL_SESS_CACHE_OFF);
 #endif /* COMMENT */
@@ -2063,7 +2132,6 @@ ssl_http_init(hostname) char * hostname;
     {
         /* The defaults in the SSL crypto library are not appropriate for OS/2 */
         char path[CKMAXPATH];
-        extern char exedir[];
 
         ckmakmsg(path,CKMAXPATH,exedir,"certs",NULL,NULL);
         if (SSL_CTX_load_verify_locations(tls_http_ctx,NULL,path) == 0)  {
@@ -2111,7 +2179,6 @@ ssl_http_init(hostname) char * hostname;
     {
         /* The defaults in the SSL crypto library are not appropriate for OS/2 */
         char path[CKMAXPATH];
-        extern char exedir[];
 
         ckmakmsg(path,CKMAXPATH,exedir,"certs",NULL,NULL);
         if (SSL_CTX_load_verify_locations(tls_http_ctx,NULL,path) == 0)  {
@@ -2158,7 +2225,6 @@ ssl_http_init(hostname) char * hostname;
     if (crl_store) {
 #ifdef OS2
         char path[CKMAXPATH];
-        extern char exedir[];
 
         ckmakmsg(path,CKMAXPATH,exedir,"crls",NULL,NULL);
         if (X509_STORE_load_locations(crl_store,NULL,path) == 0) {
@@ -2232,7 +2298,10 @@ ssl_http_init(hostname) char * hostname;
     if (tls_conx) {
         SSL_set_session(tls_http_con, SSL_get_session(tls_conx));
 #ifdef SSL_KRB5
-        kssl_ctx_free(tls_conx->kssl_ctx);
+		if (tls_conx->kssl_ctx) {
+			kssl_ctx_free(tls_conx->kssl_ctx);
+			tls_conx->kssl_ctx = NULL;
+		}
 #endif /* SSL_KRB5 */
         SSL_free(tls_conx);
         tls_conx = NULL;
@@ -2274,13 +2343,7 @@ ssl_http_init(hostname) char * hostname;
         if (p = getenv("SSL_CIPHER")) {
             SSL_set_cipher_list(tls_http_con,p);
         } else {
-#ifdef SSL_KRB5
-            SSL_set_cipher_list(tls_http_con,
-                            "HIGH:MEDIUM:LOW:ADH+3DES:ADH+RC4:ADH+DES:+EXP:KRB5");
-#else /* KRB5 */
-            SSL_set_cipher_list(tls_http_con,
-                            "HIGH:MEDIUM:LOW:ADH+3DES:ADH+RC4:ADH+DES:+EXP");
-#endif /* KRB5 */
+            SSL_set_cipher_list(tls_http_con,DEFAULT_CIPHER_LIST);
         }
     }
 
@@ -2539,7 +2602,7 @@ ssl_verify_crl(int ok, X509_STORE_CTX *ctx)
     memset((char *)&obj, 0, sizeof(obj));
     X509_STORE_CTX_init(store_ctx, crl_store, NULL, NULL);
     rc = X509_STORE_get_by_subject(store_ctx, X509_LU_CRL, issuer, &obj);
-    X509_STORE_CTX_cleanup(store_ctx);
+    X509_STORE_CTX_free(store_ctx);		/* calls X509_STORE_CTX_cleanup() */
     crl = obj.data.crl;
     if (rc > 0 && crl != NULL) {
         /*
@@ -2557,14 +2620,11 @@ ssl_verify_crl(int ok, X509_STORE_CTX *ctx)
 
                 X509_STORE_CTX_set_error(ctx, X509_V_ERR_CERT_REVOKED);
                 X509_OBJECT_free_contents(&obj);
-                X509_STORE_CTX_free(store_ctx);
                 return 0;
             }
         }
         X509_OBJECT_free_contents(&obj);
     }
-
-    X509_STORE_CTX_free(store_ctx);
     return ok;
 }
 
@@ -2644,7 +2704,7 @@ static int
 dNSName_cmp(const char *host, const char *dNSName)
 {
     int c1 = 0, c2 = 0, num_comp, rv = -1;
-    char *p, *p1, *p2, *host_copy, *dNSName_copy;
+    char *p, *p1, *p2, *host_copy=NULL, *dNSName_copy=NULL;
 
     /* first we count the number of domain name components in both parameters.
      * they should be equal many, or it's not a match
@@ -2663,8 +2723,8 @@ dNSName_cmp(const char *host, const char *dNSName)
         return -1;
     num_comp = c1;
 
-    host_copy = strdup(host);
-    dNSName_copy = strdup(dNSName);
+    makestr(&host_copy,host);
+    makestr(&dNSName_copy,dNSName);
     if (host_copy == NULL || dNSName_copy == NULL)
         goto eject;
     /* make substrings by replacing '.' with '\0' */
@@ -2707,7 +2767,7 @@ show_hostname_warning(char *s1, char *s2)
     int ok = 1;
     ckmakxmsg(prefix,1024,
               "Warning: Hostname (\"", s1, 
-              "\") does not match server's certificate (\"", s2, "\")\r\n",
+              "\") does not match server's certificate (\"", s2, "\")",
               NULL,NULL,NULL,NULL,NULL,NULL,NULL);
     if (ssl_verify_flag)
         ok = uq_ok(prefix,
@@ -2718,6 +2778,7 @@ show_hostname_warning(char *s1, char *s2)
     return(ok);
 }
 
+#ifndef HPUX10
 #ifndef HPUX1100
 #ifndef SCO_OSR505
 #ifndef OpenBSD
@@ -2728,6 +2789,9 @@ show_hostname_warning(char *s1, char *s2)
 #ifndef SOLARIS9
 #ifndef SOLARIS8
 #ifndef SOLARIS7
+#ifdef DEC_TCPIP
+#define inet_aton INET_ATON
+#endif /* DEC_TCPIP */
 static int
 inet_aton(char * ipaddress, struct in_addr * ia) {
     struct stringarray * q;
@@ -2757,6 +2821,7 @@ inet_aton(char * ipaddress, struct in_addr * ia) {
 #endif /* OpenBSD */
 #endif /* SCO_OSR505 */
 #endif /* HPUX1100 */
+#endif /* HPUX10 */
 
 int
 ssl_check_server_name(SSL * ssl, char * hostname)
@@ -2843,11 +2908,13 @@ ssl_check_server_name(SSL * ssl, char * hostname)
     if (dNSName) {
         int i = 0;
         for (i = 0; dNSName[i]; i++) {
-            if (!dNSName_cmp(hostname, dNSName[i]))
+            if (!dNSName_cmp(hostname,(char *)dNSName[i]))
                 return 0;
         }
         rv = show_hostname_warning(hostname,
-        dNSName[i - 1] ? dNSName[i - 1] : (unsigned char *)"UNKNOWN") ? 0 : -1;
+				   (char *)((dNSName[i - 1] == NULL) ? 
+			           (char *)"UNKNOWN" : (char *)dNSName[i - 1]))
+	     ? 0 : -1;
         for (i = 0; dNSName[i]; i++)
             free(dNSName[i]);
         return rv;
@@ -3450,7 +3517,7 @@ ck_tn_tls_negotiate(VOID)
                         return -1;
                     } else {
                         int ok;
-                        ok = uq_ok("Warning: Server didn't provide a certificate\r\n",
+                        ok = uq_ok("Warning: Server didn't provide a certificate",
                                    "Continue? (Y/N)", 3, NULL, 0);
                         if (!ok) {
                             if (tn_deb || debses)
@@ -3748,7 +3815,7 @@ ck_ssl_outgoing(fd) int fd;
                     } else {
                         char prmpt[1024];
                         int ok;
-                        ok = uq_ok("Warning: Server didn't provide a certificate\r\n",
+                        ok = uq_ok("Warning: Server didn't provide a certificate",
                                    "Continue? (Y/N)", 3, NULL, 0);
                         if (!ok) {
                             if (tn_deb || debses)
@@ -3826,7 +3893,7 @@ ck_ssl_outgoing(fd) int fd;
                     } else {
                         char prmpt[1024];
                         int ok;
-                        ok = uq_ok("Warning: Server didn't provide a certificate\r\n",
+                        ok = uq_ok("Warning: Server didn't provide a certificate",
                                    "Continue? (Y/N)", 3, NULL, 0);
                         if (!ok) {
                             if (tn_deb || debses)
@@ -3921,7 +3988,7 @@ ck_ssl_http_client(fd, hostname) int fd; char * hostname;
                     } else {
                         char prmpt[1024];
                         int ok;
-                        ok = uq_ok("Warning: Server didn't provide a certificate\r\n",
+                        ok = uq_ok("Warning: Server didn't provide a certificate",
                                    "Continue? (Y/N)", 3, NULL, 0);
                         if (!ok) {
                             if (tn_deb || debses)
@@ -3970,6 +4037,50 @@ ck_ssl_renegotiate_ciphers()
         return SSL_renegotiate(tls_con);
     return(0);
 }
+
+#ifdef NT
+int 
+ck_X509_save_cert_to_user_store(X509 *cert)
+{
+#ifdef X509V3_EXT_DUMP_UNKNOWN
+    char path[CKMAXPATH];
+    char hash[16];
+    char * GetAppData(int);
+    BIO * out=NULL;
+
+    if ( cert == NULL )
+        return(0);
+
+    sprintf(hash,"%08lx",X509_subject_name_hash(cert));
+    ckmakmsg(path,CKMAXPATH,GetAppData(0),"kermit 95/certs/",
+             hash,".0");
+
+    
+    out=BIO_new(BIO_s_file());
+    if (out == NULL)
+    {
+        ERR_print_errors(bio_err);
+        return(0);
+    }
+    if (BIO_write_filename(out,path) <= 0) {
+        perror(path);
+        return(0);
+    }
+
+    X509_print_ex(out, cert, XN_FLAG_SEP_MULTILINE, X509V3_EXT_DUMP_UNKNOWN);
+    if (!PEM_write_bio_X509(out,cert)) {
+        BIO_printf(bio_err,"unable to write certificate\n");
+        ERR_print_errors(bio_err);
+        BIO_free_all(out);
+        return(0);
+    }
+    BIO_free_all(out);
+    return(1);
+#else /* X509V3_EXT_DUMP_UNKNOWN */
+    return(0);
+#endif /* X509V3_EXT_DUMP_UNKNOWN */
+}
+#endif /* NT */
 
 #ifndef OS2
 /* The following function should be replaced by institution specific */
@@ -4023,9 +4134,9 @@ X509_to_user(X509 *peer_cert, char *userid, int len)
     debug(F110,"X509_to_user() subject",
            X509_NAME_oneline(X509_get_subject_name(peer_cert),NULL,0),0);
 
-    if ((i = X509_get_ext_by_NID(server_cert, NID_subject_alt_name, -1))<0)
+    if ((i = X509_get_ext_by_NID(peer_cert, NID_subject_alt_name, -1))<0)
         return -1;
-    if (!(ext = X509_get_ext(server_cert, i)))
+    if (!(ext = X509_get_ext(peer_cert, i)))
         return -1;
     X509V3_add_standard_extensions();
     if (!(ialt = X509V3_EXT_d2i(ext)))
@@ -4096,6 +4207,7 @@ X509_to_user(X509 *peer_cert, char *userid, int len)
 int
 X509_userok(X509 * peer_cert, const char * userid)
 {
+#ifndef VMS
     /* check if clients cert is in "user"'s ~/.tlslogin file */
     char buf[512];
     int r = 0;
@@ -4121,7 +4233,10 @@ X509_userok(X509 * peer_cert, const char * userid)
     }
     fclose(fp);
     return(r);
+#else /* VMS */
+    /* Need to implement an appropriate function for VMS */
+    return(0);
+#endif /* VMS */
 }
-
 #endif /* OS2 */
 #endif /* CK_SSL */

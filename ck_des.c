@@ -10,7 +10,7 @@
   copyright notice must not be removed, altered, or obscured.
 
   Author:
-  Jeffrey E Altman (jaltman@columbia.edu).
+  Jeffrey E Altman (jaltman@secure-endpoints.com)
 */
 
 /*
@@ -96,4 +96,3 @@ libdes_dll_init(struct _crypt_dll_init * init)
 
 }
 #endif /* LIBDES */
-

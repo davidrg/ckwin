@@ -7,15 +7,16 @@ char * ckcuni = "Unicode support 8.0.115, 9 Oct 2002";
 /*  C K C U N I . C  --  Unicode/Terminal character-set translations  */
 
 /*
-  Copyright (C) 1999, 2002,
+  Copyright (C) 1999, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
   Authors:
     Frank da Cruz <fdc@columbia.edu>
-    Jeffrey Altman <jaltman@columbia.edu>
-    The Kermit Project, Columbia University, New York City.
+      The Kermit Project, Columbia University, New York City.
+    Jeffrey E Altman <jaltman@secure-endpoints.com>
+      Secure Endpoints Inc., New York City
 
   Functions u_blah() translate from blah to Unicode (incoming material).
   Functions tx_blah() translate from Unicode to blah (keystrokes).

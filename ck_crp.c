@@ -1,14 +1,15 @@
-char *ckcrpv = "Encryption Engine, 8.0.111, 22 Jun 2002";
+char *ckcrpv = "Encryption Engine, 8.0.114,  9 Oct 2003";
 /*
   C K _ C R P . C  -  Cryptography for C-Kermit"
 
-  Copyright (C) 1998, 2002,
+  Copyright (C) 1998, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
   Author:
-  Jeffrey E Altman (jaltman@columbia.edu).
+  Jeffrey E Altman (jaltman@secure-endpoints.com)
+  Secure Endpoints Inc., New York City
 */
 
 #define CK_CRP_C
@@ -57,6 +58,8 @@ char *ckcrpv = "Encryption Engine, 8.0.111, 22 Jun 2002";
 #endif /* CK_ENCRYPTION */
 #endif /* CK_AUTHENTICATION */
 
+#ifdef CK_ENCRYPTION
+
 #include "ckucmd.h"                     /* For struct keytab definition */
 #include "ckuath.h"
 #include "ckuat2.h"
@@ -85,7 +88,6 @@ static char * tmpstring = NULL;
 #endif /* CAST_EXPORT_ENCRYPTION */
 #endif /* CAST_OR_EXPORT */
 
-#ifdef CK_ENCRYPTION
 #ifdef CRYPT_DLL
 int cmd_quoting = 0;
 
@@ -1252,7 +1254,7 @@ encrypt_start(data, cnt) unsigned char *data; int cnt;
         * attempt to clear the channel...
         */
         encrypt_send_request_end();
-        printf("Kerberos authentication error!\n%s\n",
+        printf("Authentication error!\n%s\n",
                 "Warning, Cannot decrypt input stream!!!");
         return(-1);
     }
@@ -1283,10 +1285,22 @@ encrypt_start(data, cnt) unsigned char *data; int cnt;
                   ENCTYPE_NAME_OK(decrypt_mode)
                   ? ENCTYPE_NAME(decrypt_mode) : "(unknown)",
                   decrypt_mode);                                /* safe */
-        printf("Kerberos authentication error!\n%s\n",buf);
+        printf("Authentication error!\n%s\n",buf);
         encrypt_send_request_end();
         return(-1);
     }
+    return(0);
+}
+
+int
+#ifdef CK_ANSIC
+encrypt_dont_support(int type)
+#else
+encrypt_dont_support(type) int type;
+#endif
+{
+    i_wont_support_encrypt |= typemask(type);
+    i_wont_support_decrypt |= typemask(type);
     return(0);
 }
 
@@ -2622,15 +2636,15 @@ fb64_stream_key(key, stp)
     rc = des_key_sched(key, stp->str_sched);
     if ( rc == -1 ) {
         printf("?Invalid DES key specified for encryption\r\n");
-        debug(F110,"fb64_stream_iv",
+        debug(F110,"fb64_stream_key",
                "invalid DES Key specified for encryption",0);
     } else if ( rc == -2 ) {
         printf("?Weak DES key specified for encryption\r\n");
-        debug(F110,"fb64_stream_iv",
+        debug(F110,"fb64_stream_key",
                "weak DES Key specified for encryption",0);
     } else if ( rc != 0 ) {
         printf("?Key Schedule not created by encryption\r\n");
-        debug(F110,"fb64_stream_iv",
+        debug(F110,"fb64_stream_key",
                "Key Schedule not created by encryption",0);
     }
     hexdump("fb64_stream_key schedule",stp->str_sched,8*16);
@@ -3478,15 +3492,15 @@ des3_fb64_stream_key(key, stp)
         rc = des_key_sched(key[i], stp->str_sched[i]);
         if ( rc == -1 ) {
             printf("?Invalid DES key specified for encryption [DES3 key]\r\n");
-            debug(F110,"des3_fb64_stream_iv",
+            debug(F110,"des3_fb64_stream_key",
                    "invalid DES Key specified for encryption",0);
         } else if ( rc == -2 ) {
             printf("?Weak DES key specified for encryption\r\n");
-            debug(F110,"des3_fb64_stream_iv",
+            debug(F110,"des3_fb64_stream_key",
                    "weak DES Key specified for encryption",0);
         } else if ( rc != 0 ) {
             printf("?Key Schedule not created by encryption\r\n");
-            debug(F110,"des3_fb64_stream_iv",
+            debug(F110,"des3_fb64_stream_key",
                    "Key Schedule not created by encryption",0);
         }
         hexdump("des3_fb64_stream_key schedule",stp->str_sched[i],8*16);
@@ -5488,10 +5502,89 @@ crypt_dll_init( struct _crypt_dll_init * init )
         p_reltelmutex = init->p_reltelmutex;
         if (init->version == 5)
           return(1);
-        init->version = 5;
+    }
+
+    if ( init->version >= 6 ) {
+        init->p_install_funcs("encrypt_dont_support",encrypt_dont_support);
+        if ( init->version == 6 )
+            return(1);
+        /* when adding new versions; migrate the next two lines */
+        init->version = 6;
         return(1);
     }
     return(0);
+}
+
+#undef malloc
+#undef realloc
+#undef free
+#undef strdup
+
+static void
+fatal(char *msg) {
+    if (!msg) msg = "";
+
+    printf(msg);
+    exit(1);        /* Exit indicating failure */
+}
+
+void *
+kmalloc(size_t size)
+{
+    void *ptr;
+
+    if (size == 0) {
+        fatal("kmalloc: zero size");
+    }
+    ptr = malloc(size);
+    if (ptr == NULL) {
+        fatal("kmalloc: out of memory");
+    }
+    return ptr;
+}
+
+void *
+krealloc(void *ptr, size_t new_size)
+{
+    void *new_ptr;
+
+    if (new_size == 0) {
+        fatal("krealloc: zero size");
+    }
+    if (ptr == NULL)
+        new_ptr = malloc(new_size);
+    else
+        new_ptr = realloc(ptr, new_size);
+    if (new_ptr == NULL) {
+        fatal("krealloc: out of memory");
+    }
+    return new_ptr;
+}
+
+void
+kfree(void *ptr)
+{
+    if (ptr == NULL) {
+        printf("kfree: NULL pointer given as argument");
+        return;
+    }
+    free(ptr);
+}
+
+char *
+kstrdup(const char *str)
+{
+    size_t len;
+    char *cp;
+
+    if (str == NULL) {
+        fatal("kstrdup: NULL pointer given as argument");
+    }
+    len = strlen(str) + 1;
+    cp = kmalloc(len);
+    if (cp)
+        memcpy(cp, str, len);
+    return cp;
 }
 #endif /* CRYPT_DLL */
 #endif /* CK_ENCRYPTION */

@@ -1,15 +1,17 @@
 /*  C K C U N I . H  --  Unicode/Terminal character-set translations  */
 
 /*
-  Copyright (C) 1999, 2002,
+  Copyright (C) 1999, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
   Authors:
     Frank da Cruz <fdc@columbia.edu>
-    Jeffrey Altman <jaltman@columbia.edu>
-    The Kermit Project, Columbia University, New York City.
+      The Kermit Project, Columbia University, New York City.
+    Jeffrey E Altman <jaltman@secure-endpoints.com>
+      Secure Endpoints Inc., New York City
+
 */
 
 /* Terminal character sets */

@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -1338,7 +1338,7 @@ _PROTOTYP(int locate_srv_dns,(char *host, char *service,
 #endif /* CK_DNS_SRV */
 
 #ifndef NOHTTP
-_PROTOTYP(int http_open, (char *, char *, int, char *, int));
+_PROTOTYP(int http_open, (char *, char *, int, char *, int, char *));
 _PROTOTYP(int http_reopen, (VOID));
 _PROTOTYP(int http_close, (VOID));
 _PROTOTYP(int http_get, (char *,char **,char *,char *,char,char *,char *,
@@ -1353,6 +1353,8 @@ _PROTOTYP(int http_post, (char *,char **,char *,char *,char *,char,char *,
                   char *,char *, int));
 _PROTOTYP(int http_index, (char *,char **,char *,char *,char,char *,char *,
                            int));
+_PROTOTYP(int http_inc, (int));
+_PROTOTYP(int http_isconnected, (void));
 
 extern char * tcp_http_proxy;           /* Name[:port] of http proxy server */
 extern int    tcp_http_proxy_errno;     /* Return value from server */

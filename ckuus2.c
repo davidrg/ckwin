@@ -7,12 +7,11 @@
 /*
   Authors:
     Frank da Cruz <fdc@columbia.edu>,
-    Jeffrey Altman <jaltman@columbia.edu>,
-    The Kermit Project
-    Columbia University
-    New York City
+      The Kermit Project, Columbia University, New York City
+    Jeffrey E Altman <jaltman@secure-endpoints.com>
+      Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2002,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -194,10 +193,17 @@ static char *tophlpi[] = {              /* Top-level help for IKSD */
 #ifndef NOHELP
 char *newstxt[] = {
 #ifdef OS2
-"Welcome to Kermit 95 1.1.21.  Major new features include:",
+"Welcome to Kermit 95 2.1.3.  Major new features include:",
 #else
-"Welcome to C-Kermit 8.0.200.  Major new features include:",
+"Welcome to C-Kermit 8.0.206.  Major new features include:",
 #endif /* OS2 */
+#ifdef NT
+#ifdef KUI
+" . Runs in GUI window",
+#else
+" . GUI version available",
+#endif /* KUI */
+#endif /* NT */
 #ifdef SSHBUILTIN
 " . New built-in SSH v1 and v2 clients",
 #endif /* SSHBUILTIN */
@@ -212,7 +218,9 @@ char *newstxt[] = {
 #endif /* TN_COMPORT */
 " . File scanning for automatic text/binary determination",
 #ifdef CKLEARN
+#ifndef OS2
 " . Learned scripts",
+#endif /* OS2 */
 #endif /* CKLEARN */
 #ifndef NOSPL
 #ifndef NOSEXP
@@ -229,7 +237,6 @@ char *newstxt[] = {
 " 3. http://www.columbia.edu/kermit/ckermit80.html",
 "    which documents the new features of C-Kermit 8.0.",
 " ",
-"All of these will be combined into a Third Edition of \"Using C-Kermit\".",
 "If the release date shown by the VERSION command is long past, be sure to",
 "check with the Kermit Project to see if there have been updates.",
 ""
@@ -375,7 +382,7 @@ char *introtxt[] = {
 "you must enter DOS, Windows, or OS/2 pathnames using either forward slash (/)"
 ,
 "or double backslash (\\\\) as the directory separator in most contexts.",
-"Examples: C:/K95/README.TXT, C:\\\\K95\\\\README.TXT.",
+"Examples: C:/TMP/README.TXT, C:\\\\TMP\\\\README.TXT.",
 " ",
 
 "Command words other than filenames can be abbreviated in most contexts.",
@@ -414,23 +421,13 @@ char *introtxt[] = {
 "  SET PREFIXING              Amount of control-character prefixing",
 #endif /* NOXFER */
 
-" ",
-"Important settings:",
-"  SET PARITY    Communications parity",
-#ifdef CK_RTSCTS
-"  SET FLOW      Communications flow control, such as RTS/CTS",
-#else
-"  SET FLOW      Communications flow control, such as XON/XOFF",
-#endif /* CK_RTSCTS */
-"  SET FILE      File settings, for example TYPE TEXT or TYPE BINARY",
-
 #ifndef NOLOCAL
 " ",
 "To make a direct serial connection:",
 #ifdef OS2
 #ifdef NT
 #ifdef CK_TAPI
-"  SET TAPI LINE Select TAPI communication device",
+"  SET PORT TAPI Select TAPI communication device",
 #endif /* CK_TAPI */
 "  SET PORT      Select serial communication device",
 #else
@@ -440,6 +437,12 @@ char *introtxt[] = {
 "  SET LINE      Select serial communication device",
 #endif /* OS2 */
 "  SET SPEED     Select communication speed",
+"  SET PARITY    Communications parity (if necessary)",
+#ifdef CK_RTSCTS
+"  SET FLOW      Communications flow control, such as RTS/CTS",
+#else
+"  SET FLOW      Communications flow control, such as XON/XOFF",
+#endif /* CK_RTSCTS */
 "  CONNECT       Begin terminal connection",
 
 #ifndef NODIAL
@@ -453,7 +456,7 @@ char *introtxt[] = {
 #ifdef OS2
 #ifdef NT
 #ifdef CK_TAPI
-"  SET TAPI LINE          Select TAPI communication device",
+"  SET PORT TAPI          Select TAPI communication device",
 #endif /* CK_TAPI */
 "  SET PORT               Select serial communication device",
 #else
@@ -463,6 +466,7 @@ char *introtxt[] = {
 "  SET LINE               Select serial communication device",
 #endif /* OS2 */
 "  SET SPEED              Select communication speed",
+"  SET PARITY             Communications parity (if necessary)",
 "  DIAL                   Dial the phone number",
 "  CONNECT                Begin terminal connection",
 " ",
@@ -515,7 +519,7 @@ char *introtxt[] = {
 #endif /* NT */
 #ifdef OS2
 "  \
-Press the key or key-combination shown after \"Prompt:\" in the status line",
+Press the key or key-combination shown after \"Command:\" in the status line",
 "  (such as Alt-x) or type your escape character followed by the letter C.",
 #else
 "  Type your escape character followed by the letter C.",
@@ -532,7 +536,12 @@ Press the key or key-combination shown after \"Prompt:\" in the status line",
 "  SHOW COMMUNICATIONS, SHOW FILE, SHOW PROTOCOL, etc.",
 #endif /* NOLOCAL */
 " ",
-"For a more thorough C-Kermit tutorial, visit:",
+#ifdef OS2
+"For a Kermit 95 tutorial, visit:",
+"  http://www.columbia.edu/kermit/k95tutor.html",
+" ",
+#endif /* OS2 */
+"For a C-Kermit tutorial, visit:",
 "  http://www.columbia.edu/kermit/ckututor.html",
 " ",
 "To learn about script programming and automation:",
@@ -546,7 +555,7 @@ Press the key or key-combination shown after \"Prompt:\" in the status line",
 "  The Kermit Project         E-mail: kermit@columbia.edu",
 "  Columbia University        Web:    http://www.columbia.edu/kermit/",
 "  612 West 115th Street      Voice:  +1 (212) 854-3703",
-"  New York NY  10025-7799    Fax:    +1 (212) 663-8202",
+"  New York NY  10025-7799    Fax:    +1 (212) 662-6442",
 "  USA",
 ""
 };
@@ -736,6 +745,12 @@ static char *hmxyssh[] = {
 "  the remote host after authentication.  Delegating credentials allows",
 "  the credentials to be used from the remote host.  The default is OFF.",
 " ",
+"SET SSH HEARTBEAT-INTERVAL <seconds>",
+"  Specifies a number of seconds of idle time after which an IGNORE",
+"  message will be sent to the server.  This pulse is useful for",
+"  maintaining connections through HTTP Proxy servers and Network",
+"  Address Translators.  The default is OFF (0 seconds).",
+" ",
 "SET SSH IDENTITY-FILE filename [ filename [ ... ] ]",
 "  Specifies one or more files from which the user's authorization",
 "  identities (private keys) are to be read when using public key",
@@ -804,12 +819,10 @@ static char *hmxyssh[] = {
 "    external-keyx gssapi hostbased publickey srp-gex-sha1 publickey",
 "    keyboard-interactive password none",
 " ",
-#ifdef COMMENT
 "SET SSH V2 AUTO-REKEY { ON, OFF }",
 "  Specifies whether Kermit automatically issues rekeying requests",
-"  when SSH version 2 in in use.  The default is OFF.",
+"  once an hour when SSH version 2 in in use.  The default is ON.",
 " ",
-#endif /* COMMENT */
 "SET SSH V2 CIPHERS { 3DES-CBC, AES128-CBC AES192-CBC AES256-CBC",
 "     ARCFOUR BLOWFISH-CBC CAST128-CBC RIJNDAEL128-CBC RIJNDAEL192-CBC",
 "     RIJNDAEL256-CBC }",
@@ -976,11 +989,15 @@ static char *hmxxfirew[] = {
 
 " ",
 
-"SET TCP HTTP-PROXY [<hostname or ip-address>[:<port>]]",
+"SET TCP HTTP-PROXY [switches] [<hostname or ip-address>[:<port>]]",
 "  If a hostname or ip-address is specified, Kermit uses the given",
 "  proxy server when attempting outgoing TCP connections.  If no hostnamer",
 "  or ip-address is specified, any previously specified Proxy server is",
 "  removed.  If no port number is specified, the \"http\" service is used.",
+"  [switches] can be one or more of:",
+"     /AGENT:<agent> /USER:<user> /PASSWORD:<password>",
+"  Switch parameters are used when connecting to the proxy server and",
+"  override any other values associated with the connection.",
 " ",
 
 #endif /* CKHTTP */
@@ -1249,18 +1266,21 @@ static char *hmxxprompt[] = {
 };
 
 static char *hxxinp[] = {
-"Syntax:  INPUT { number-of-seconds, time-of-day } [ text ]",
+"Syntax:  INPUT [ /NOMATCH ] { number-of-seconds, time-of-day } [ text ]",
 "Example: INPUT 5 Login:  or  INPUT 23:59:59 RING",
-"  Waits up to the given number of seconds, or until the given time of day",
+"  Waits up to the given number of seconds, or until the given time of day,",
 "  for the given text to arrive on the connection.  If no text is given,",
-"  INPUT waits for any character.  For use in script programs with IF FAILURE",
-"  and IF SUCCESS.  Also see MINPUT, REINPUT, SET INPUT.  See HELP PAUSE for",
-"  details on time-of-day format.  The text, if given, can be a \\pattern()",
-"  invocation, in which case it is treated as a pattern rather than a",
-"  literal string (HELP PATTERNS for details).  If the timeout interval is 0,",
-"  the INPUT command does not wait; i.e. the given text must already be",
-"  available for reading for the INPUT command to succeed.  If the interval",
-"  is negative, the INPUT command waits forever.",
+"  INPUT waits for any character.  If the /NOMATCH switch is included, INPUT",
+"  does not attempt to match any characters, but continues reading from the",
+"  communication connection until the timeout interval expires.  If the",
+"  timeout interval is 0, the INPUT command does not wait; i.e. the given",
+"  text must already be available for reading for the INPUT command to",
+"  succeed.  If the interval is negative, the INPUT command waits forever.",
+"  For use in script programs with IF FAILURE and IF SUCCESS.  Also see",
+"  MINPUT, REINPUT, SET INPUT.  See HELP PAUSE for details on time-of-day",
+"  format.  The text, if given, can be a \\pattern() invocation, in which",
+"  case it is treated as a pattern rather than a literal string (HELP",
+"  PATTERNS for details).",
 ""};
 
 static char *hxxout[] = {
@@ -1349,7 +1369,7 @@ static char *hxyinp[] = {
 "  Removes the old INPUT buffer and creates a new one with the given length.",
 " ",
 "SET INPUT CANCELLATION { ON, OFF }",
-"Whether an INPUT in progress can be can interrupted from the keyboard.",
+"  Whether an INPUT in progress can be can interrupted from the keyboard.",
 " ",
 "SET INPUT CASE { IGNORE, OBSERVE }",
 "  Tells whether alphabetic case is to be significant in string comparisons.",
@@ -1359,6 +1379,17 @@ static char *hxyinp[] = {
 "SET INPUT ECHO { ON, OFF }",
 "  Tells whether to display arriving characters read by INPUT on the screen.",
 " ",
+#ifdef CKFLOAT
+"SET INPUT SCALE-FACTOR <number>",
+"  A number to multiply all INPUT timeouts by, which may include a fractional",
+"  part, e.g. 2.5.  All INPUT commands that specify a timeout in seconds",
+"  (as opposed to a specific time of day) have their time limit adjusted",
+"  automatically by this factor, which is also available in the built-in",
+"  read-only variable \\v(inscale).  The default value is 1.0.",
+" ",
+
+#endif	/* CKFLOAT */
+
 "SET INPUT SILENCE <number>",
 "  The maximum number to seconds of silence (no input at all) before the",
 "  INPUT command times out, 0 for no maximum.",
@@ -2273,24 +2304,22 @@ static char *hmxxpat[] = {
 "^ (First character of pattern) Anchors the pattern at the beginning.",
 "$ (Last character of pattern) Anchors the pattern at the end.",
 " ",
-"If the pattern does not start with \"^\", the pattern can match anywhere in",
-"the string instead of only at the beginning; in other words, a leading \"*\"",
-"is assumed.  Similarly, if the pattern doesn't end with \"$\", a trailing",
-"\"*\" is assumed.",
+"If a floating pattern does not start with \"^\", the pattern can match",
+"anywhere in the string instead of only at the beginning; in other words, a",
+"leading \"*\" is assumed.  Similarly, if the pattern doesn't end with \"$\",",
+"a trailing \"*\" is assumed.",
 " ",
-"The following commands use floating patterns:",
-"  IF MATCH <string> <pattern> <command>",
+"The following commands and functions use floating patterns:",
 "  GREP [ <switches> ] <pattern> <filespec>",
 "  TYPE /MATCH:<pattern> <file>",
-" ",
-"The following functions use floating patterns:",
 "  \\farraylook(<pattern>,<arrayname>)",
 "  \\fsearch(<pattern>,<string>[,<offset>])",
 "  \\frsearch(<pattern>,<string>[,<offset>])",
+"  The /EXCEPT: clause in SEND, GET, DELETE, etc.",
 " ",
 "Example:",
-"  IF MATCH xxabcxx abc ... succeeds because xxabcxx contains abc.",
-"  IF MATCH xxabcxx ^abc ... fails because xxabcxx does not start with abc.",
+"  \\fsearch(abc,xxabcxxx) succeeds because xxabcxx contains abc.",
+"  \\fsearch(^abc,xxabcxx) fails because xxabcxx does not start with abc.",
 " ",
 "All other commands and functions that use patterns use anchored patterns,",
 "meaning that ^ and $ are not treated specially, and * is not assumed at the",
@@ -2300,7 +2329,7 @@ static char *hmxxpat[] = {
 " ",
 "You can use anchored patterns not only in filenames, but also in SWITCH",
 "case labels, in the INPUT and MINPUT commands, and in file binary- and",
-"text-patterns for filenames.",
+"text-patterns for filenames.  The IF MATCH pattern is also anchored.",
 #endif /* NOSPL */
 "" };
 
@@ -2822,6 +2851,13 @@ static char * hmxxtyp[] = {
 "     Add line numbers (conflicts with /PREFIX)",
 "  /WIDTH:number",
 "     Truncate each line at the given column number before printing.",
+#ifdef KUI
+"     Or when combined with /GUI specifies the width of the dialog box.",
+"  /HEIGHT:number",
+"     When combined with /GUI specifies the height of the dialog box.",
+"  /GUI:string",
+"     Specifies the title to use for the dialog box.",
+#endif /* KUI */
 "  /COUNT",
 "     Count lines (and matches) and print the count(s) but not the lines.",
 #ifdef UNICODE
@@ -4295,19 +4331,30 @@ static char *hxxask[] = {
 "  Like ASK except the response does not echo on the screen.",
 " ",
 "Switches:",
+" /DEFAULT:text",
+"  Text to supply if the user enters a blank response or the /TIMEOUT",
+"  limit expired with no response.",
+" ",
+#ifdef OS2
 " /POPUP",
 "  The prompt and response dialog takes place in a text-mode popup.",
 "  K95 only; in C-Kermit this switch is ignored.",
 " ",
+#ifdef KUI
 " /GUI",
 "  The prompt and response dialog takes place in a GUI popup.",
 "  K95 GUI version only; in C-Kermit and the K95 console version,", 
 "  this switch is ignored.",
 " ",
+#endif /* KUI */
+#endif /* OS2 */
 " /TIMEOUT:number",
 "  If the response is not entered within the given number of seconds, the",
 "  command fails.  This is equivalent to setting ASK-TIMER to a positive",
 "  number, except it applies only to this command.  Also see SET ASK-TIMER.",
+"  NOTE: If a /DEFAULT: value was also given, it is supplied automatically",
+"  upon timeout and the command does NOT fail.",
+
 " ",
 " /QUIET",
 "  Suppresses \"?Timed out\" message when /TIMEOUT is given and user doesn't",
@@ -4376,7 +4423,7 @@ static char *hxxass[] = {
 "Example: ASSIGN \\%a My name is \\%b.",
 "  Assigns the current value of the string to the variable (or macro).",
 "  The definition string is fully evaluated before it is assigned, so that",
-"  the values of any variables are contained are used, rather than their",
+"  the values of any variables that are contained are used, rather than their",
 "  names.  Compare with DEFINE.  To illustrate the difference, try this:",
 " ",
 "    DEFINE \\%a hello",
@@ -4920,6 +4967,49 @@ static char *hxytapi[] = {
 #endif /* NODIAL */
 
 #ifdef TNCODE
+static char *hmxxiks[] = {
+"Syntax: IKS [ switches ] [ host [ service ] ]",
+"  Establishes a new connection to an Internet Kermit Service daemon.",
+"  Equivalent to SET NETWORK TYPE TCP/IP, SET HOST host KERMIT /TELNET,",
+"  IF SUCCESS CONNECT.  If host is omitted, the previous connection (if any)",
+"  is resumed.  Depending on how Kermit has been built switches may be",
+"  available to require a secure authentication method and bidirectional",
+"  encryption.  See HELP SET TELNET for more info.",
+" ",
+#ifdef CK_AUTHENTICATION
+" /AUTH:<type> is equivalent to SET TELNET AUTH TYPE <type> and",
+"   SET TELOPT AUTH REQUIRED with the following exceptions.  If the type",
+"   is AUTO, then SET TELOPT AUTH REQUESTED is executed and if the type",
+"   is NONE, then SET TELOPT AUTH REFUSED is executed.",
+" ",
+#endif /* CK_AUTHENTICATION */
+#ifdef CK_ENCRYPTION
+" /ENCRYPT:<type> is equivalent to SET TELNET ENCRYPT TYPE <type>",
+"   and SET TELOPT ENCRYPT REQUIRED REQUIRED with the following exceptions.",
+"   If the type is AUTO then SET TELOPT AUTH REQUESTED REQUESTED is executed",
+"   and if the type is NONE then SET TELOPT ENCRYPT REFUSED REFUSED is",
+"   executed.",
+" ",
+#endif /* CK_ENCRYPTION */
+" /USERID:[<name>]",
+"   This switch is equivalent to SET LOGIN USERID <name> or SET TELNET",
+"   ENVIRONMENT USER <name>.  If a string is given, it sent to host during",
+"   Telnet negotiations; if this switch is given but the string is omitted,",
+"   no user ID is sent to the host.  If this switch is not given, your",
+"   current USERID value, \\v(userid), is sent.  When a userid is sent to the",
+"   host it is a request to login as the specified user.",
+" ",
+#ifdef CK_AUTHENTICATION
+" /PASSWORD:[<string>]",
+"   This switch is equivalent to SET LOGIN PASSWORD.  If a string is given,",
+"   it is treated as the password to be used (if required) by any Telnet",
+"   Authentication protocol (Kerberos Ticket retrieval, Secure Remote",
+"   Password, or X.509 certificate private key decryption.)  If no password",
+"   switch is specified a prompt is issued to request the password if one",
+"   is required for the negotiated authentication method.",
+#endif /* CK_AUTHENTICATION */
+""};
+
 static char *hmxxtel[] = {
 "Syntax: TELNET [ switches ] [ host [ service ] ]",
 "  Equivalent to SET NETWORK TYPE TCP/IP, SET HOST host [ service ] /TELNET,",
@@ -5222,12 +5312,13 @@ An option that does not require an argument can be bundled with other options:"
 "extended options, type \"help extended-options\".  To get help about a",
 "particular extended option, type \"help extended-option xxx\", where \"xxx\"",
 "is the option keyword.",
+#ifdef COMMENT
 #ifndef NOIKSD
 " ",
 "At present, most of the extended options apply only to the Internet Kermit",
 "Service Daemon (IKSD).  Type \"help iksd\" for details.",
 #endif /* NOIKSD */
-" ",
+#endif /* COMMENT */
 ""
 };
 
@@ -5259,7 +5350,9 @@ doxopts() {
               xxstring
               );
     if (y == -3) {
-        printf("\n");
+	printf("\n");
+        if ((x = cmcfm()) < 0)
+	  return(x);
         for (i = 0; i <= XA_MAX; i++) {
             if (xopthlp[i]) {
                 printf("%s\n",xopthlp[i]);
@@ -5289,6 +5382,7 @@ dohopts() {
     int i, n, x, y, z, all = 0, msg = 0;
     char *s;
     extern char *opthlp[], *arghlp[];
+    extern char * xopthlp[], * xarghlp[];
     extern int optact[];
     if ((x = cmtxt("A command-line option character,\n\
 or the word ALL, or carriage return for an overview",
@@ -5364,7 +5458,44 @@ or the word ALL, or carriage return for an overview",
               n = 0;
         }
     }
-    return(0);
+    if (all) {				/* Jeff, Jan 2003 */
+        printf("\n");
+        if (++n >= cmd_rows) {
+            if (!askmore())
+              return(0);
+	    else
+              n = 0;
+        }
+        printf("The following extended options are available:\n");
+        if (++n >= cmd_rows) {
+            if (!askmore())
+              return(0);
+	    else
+              n = 0;
+        }
+        printf("\n");
+        if (++n >= cmd_rows) {
+            if (!askmore())
+              return(0);
+	    else
+              n = 0;
+        }
+        for (i = 0; i <= XA_MAX; i++) {
+            if (xopthlp[i]) {
+                printf("%s\n",xopthlp[i]);
+                printf("   %s\n",xarghlp[i]);
+                printf("\n");
+                n += 3;
+                if (n > (cmd_rows - 4)) {
+                    if (!askmore())
+		      return(0);
+                    else
+		      n = 0;
+                }
+            }
+        }
+    }
+    return(1);
 }
 #endif /* NOCMDL */
 #endif /* NOHELP */
@@ -5503,6 +5634,14 @@ static char * hxxf_re[] = {
 "/CHARACTER",
 "  Equivalent to /SIZE:1.  If FILE READ /CHAR succeeds but the <variable> is",
 "  empty, this indicates a NUL byte was read.",
+" ",
+"/TRIM",
+"  Tells Kermit to trim trailing whitespace when used with /LINE.  Ignored",
+"  if used with /CHAR or /SIZE.",
+" ",
+"/UNTABIFY",
+"  Tells Kermit to convert tabs to spaces (assuming tabs set every 8 spaces)",
+"  when used with /LINE.  Ignored if used with /CHAR or /SIZE.",
 " ",
 "Synonym: FREAD.",
 "Also available as \\F_getchar(), \\F_getline(), \\F_getblock().",
@@ -5645,7 +5784,7 @@ dohlp(xx) int xx; {
 #ifdef NOHELP
     if ((x = cmcfm()) < 0)
       return(x);
-    printf("\n%s, Copyright (C) 1985, 2002,",versio);
+    printf("\n%s, Copyright (C) 1985, 2004,",versio);
 #ifndef NOIKSD
     if (inserver)
       return(hmsga(tophlpi));
@@ -5977,11 +6116,11 @@ Hang up the phone or network connection."));
       return(x);
 
     if (helpfile) {
-        printf("\n%s, Copyright (C) 1985, 2002,\n\
+        printf("\n%s, Copyright (C) 1985, 2004,\n\
 Trustees of Columbia University in the City of New York.\n\n",versio);
         return(dotype(helpfile,xaskmore,3,0,NULL,0,NULL,0,0,NULL,0));
     } else {
-        printf("\n%s, Copyright (C) 1985, 2002,",versio);
+        printf("\n%s, Copyright (C) 1985, 2004,",versio);
         return(hmsga(tophlp));
     }
 
@@ -6240,6 +6379,9 @@ case XXTAK:
 
 #ifdef TCPSOCKET
 #ifdef TNCODE
+case XXIKSD:
+    return(hmsga(hmxxiks));
+
 case XXTEL:
     return(hmsga(hmxxtel));
 
@@ -6549,13 +6691,6 @@ case XXLOGOUT:
 "If you haved logged in to Kermit as an Internet Kermit server, the LOGOUT\n\
 command, given at the prompt, logs you out and closes your session."));
 #endif /* CK_LOGIN */
-
-#ifndef NOIKSD
-case XXIKSD:
-    return(hmsg(
-"The Internet Kermit Service Daemon can be started only by the system\n\
-administrator.  The IKSD is documented separately."));
-#endif /* NOIKSD */
 
 case XXRESET:
     return(hmsg("Closes all open files and logs."));
@@ -7071,10 +7206,17 @@ static char *hxymouse[] = {
 " ",
 "Syntax: SET MOUSE CLEAR",
 " Restores all mouse events to their default definitions",
-"  Button 1 Double-Click = Kverb: \\Kmousecurpos",
-"  Button 1 Drag         = Kverb: \\Kmarkcopyclip",
-"  Button 1 Ctrl Drag    = Kverb: \\Kmarkcopyhost",
-"  Button 2 Double-Click = Kverb: \\Kpaste",
+"   Button 1 Ctrl-Click = Kverb: \\Kmouseurl",
+"   Button 1 Double-Click = Kverb: \\Kmousecurpos",
+"   Button 1 Drag = Kverb: \\Kmarkcopyclip",
+"   Button 1 Alt-Drag = Kverb: \\Kmarkcopyclip_noeol",
+"   Button 1 Ctrl-Drag = Kverb: \\Kmarkcopyhost",
+"   Button 1 Ctrl-Alt-Drag = Kverb: \\Kmarkcopyhost_noeol",
+"   Button 1 Ctrl-Shift-Drag = Kverb: \\Kdump",
+"   Button 2 Double-Click = Kverb: \\Kpaste",
+"   Button 2 Drag = Kverb: \\Kmarkcopyhost",
+"   Button 2 Alt-Drag = Kverb: \\Kmarkcopyhost_noeol     ",    
+"   Button 3 Double-Click = Kverb: \\Kpaste",
 ""};
 #endif /* OS2MOUSE */
 
@@ -7311,8 +7453,13 @@ static char *hxyterm[] = {
 " ",
 
 #ifdef OS2
-"SET TERMINAL CURSOR { FULL, HALF, UNDERLINE }",
-"  Selects cursor style for the terminal screen.",
+#ifdef KUI
+"SET TERMINAL CURSOR { FULL, HALF, UNDERLINE } {ON, OFF, NOBLINK}",
+"  Selects the cursor style and visibility for the terminal screen.",
+#else
+"SET TERMINAL CURSOR { FULL, HALF, UNDERLINE } {ON, OFF}",
+"  Selects the cursor style and visibility for the terminal screen.",
+#endif /* KUI */
 " ",
 "SET TERMINAL DG-UNIX-MODE { ON, OFF }",
 "  Specifies whether the Data General emulations should accept control",
@@ -7456,6 +7603,12 @@ static char *hxyterm[] = {
 "  in a different mode than it's in, but did not send the escape sequence",
 "  to put it in the needed mode.",
 " ",
+#ifdef KUI
+"SET TERMINAL LINE-SPACING <float>",
+"  Specifies the line spacing used when displaying text.  The default is 1.0.",
+"  Valid values range from 1.0 to 3.0 inclusive.",
+" ",
+#endif /* KUI */
 #endif /* OS2 */
 
 #ifndef NOCSETS
@@ -8442,6 +8595,11 @@ static char *hxytel[] = {
 "  Set this command to ON if you want to force Kermit to negotiate",
 "  Telnet Binary in both directions when performing file transfers.",
 "  Default is OFF.  Alias SET TELNET BINARY-XFER-MODE.",
+" ",
+"SET TELNET BUG AUTH-KRB5-DES { ON, OFF }",
+"  Default is ON.  Disable this bug to enable the use of encryption types",
+"  other than DES such as 3DES or CAST-128 when the Kerberos 5 session key",
+"  is longer than 8 bytes.",
 " ",
 "SET TELNET BUG BINARY-ME-MEANS-U-TOO { ON, OFF }",
 "  Set this to ON to try to overcome TELNET binary-mode misnegotiations by",
@@ -9490,7 +9648,7 @@ case XYLINE:
 "  (e.g. SET PORT COM1) or by the Microsoft Telephony modem name from the\n");
     printf(
 "  Modems folder of the Control Panel (e.g. SET PORT TAPI). If one method\n");
-    printf("doesn't work, try the other.\n\n");
+    printf("  doesn't work, try the other.\n\n");
 #endif /* NT */
 #else  /* OS2 */
     printf("  Typical device name for this platform: %s.\n",ttgtpn());
@@ -10089,10 +10247,10 @@ dohfunc(xx) int xx; {
   The leftmost n1 characters of string s1.\n");
         break;
       case FN_COD:                      /* Code value of character */
-        printf("\\fcode(c1)\n\
+        printf("\\fcode(s1)\n\
   c1 = character.\n");
         printf("Returns integer:\n\
-  The numeric code of character c1.\n");
+  The numeric code of the first character in string s1, or 0 if s1 empty.\n");
         break;
       case FN_RPL:                      /* Replace */
         printf("\\freplace(s1,s2,s3[,n1])\n\
@@ -10130,7 +10288,7 @@ dohfunc(xx) int xx; {
   n1 = starting position in s2.\n");
         printf("Returns integer:\n\
   1-based position of first character in s2 that is not also in s1,\n\
-  or 0 if all characters in s2 are also in s1.\n");
+  or -1 if s1 is empty, or 0 if all characters in s2 are also in s1.\n");
         break;
       case FN_IPA:                      /* Find and return IP address */
         printf("\\fipaddress(s1,n1)\n\
@@ -10150,6 +10308,13 @@ dohfunc(xx) int xx; {
   h1 = Hexadecimal string.\n");
         printf("Returns string:\n\
   The result of unhexifying s1, or nothing if s1 is not a hex string.\n");
+        break;
+      case FN_UNTAB:			/* Untabify */
+        printf("\\funtabify(s1)\n\
+  s1 = string.\n");
+        printf("Returns string:\n\
+  The result of converting tabs in s1 to spaces assuming tab stops every\n\
+  8 spaces.\n");
         break;
       case FN_BRK:                      /* Break */
       case FN_SPN:                      /* Span */
@@ -10375,7 +10540,8 @@ Assign string words to an array.\n\
   Standard-format date and time: yyyymmdd hh:mm:ss (numeric)\n");
         printf("  If n1 is given:\n\
   n1 = 1: yyyy-mmm-dd hh:mm:ss (mmm = English 3-letter month abbreviation)\n\
-  n1 = 2: dd-mmm-yyyy hh:mm:ss (ditto)\n");
+  n1 = 2: dd-mmm-yyyy hh:mm:ss (ditto)\n\
+  n1 = 3: yyyymmddhhmmss (all numeric)\n");
         break;
 
       case FN_JDATE:                    /* DOY */
@@ -13217,8 +13383,219 @@ dohkverb(xx) int xx; {
         printf("\\Kba80_undo       Transmit BA80: Undo\n");
         break;
 
-    default:
-      printf("No additional help available for this kverb\n");
+        case  K_I31_F01:
+        printf("\\Ki31_f01         Transmit IBM 31xx: F1\n");
+        break;
+       case  K_I31_F02:         
+        printf("\\Ki31_f02         Transmit IBM 31xx: F2\n");
+        break;
+       case  K_I31_F03:         
+        printf("\\Ki31_f03         Transmit IBM 31xx: F3\n");
+        break;
+       case  K_I31_F04:         
+        printf("\\Ki31_f04         Transmit IBM 31xx: F4\n");
+        break;
+       case  K_I31_F05:         
+        printf("\\Ki31_f05         Transmit IBM 31xx: F5\n");
+        break;
+       case  K_I31_F06:         
+        printf("\\Ki31_f06         Transmit IBM 31xx: F6\n");
+        break;
+       case  K_I31_F07:         
+        printf("\\Ki31_f07         Transmit IBM 31xx: F7\n");
+        break;
+       case  K_I31_F08:         
+        printf("\\Ki31_f08         Transmit IBM 31xx: F8\n");
+        break;
+       case  K_I31_F09:         
+        printf("\\Ki31_f09         Transmit IBM 31xx: F9\n");
+        break;
+       case  K_I31_F10:         
+        printf("\\Ki31_f10         Transmit IBM 31xx: F10\n");
+        break;
+       case  K_I31_F11:         
+        printf("\\Ki31_f11         Transmit IBM 31xx: F11\n");
+        break;
+       case  K_I31_F12:         
+        printf("\\Ki31_f12         Transmit IBM 31xx: F12\n");
+        break;
+       case  K_I31_F13:         
+        printf("\\Ki31_f13         Transmit IBM 31xx: F13\n");
+        break;
+       case  K_I31_F14:         
+        printf("\\Ki31_f14         Transmit IBM 31xx: F14\n");
+        break;
+       case  K_I31_F15:         
+        printf("\\Ki31_f15         Transmit IBM 31xx: F15\n");
+        break;
+       case  K_I31_F16:         
+        printf("\\Ki31_f16         Transmit IBM 31xx: F16\n");
+        break;
+       case  K_I31_F17:         
+        printf("\\Ki31_f17         Transmit IBM 31xx: F17\n");
+        break;
+       case  K_I31_F18:         
+        printf("\\Ki31_f18         Transmit IBM 31xx: F18\n");
+        break;
+       case  K_I31_F19:         
+        printf("\\Ki31_f19         Transmit IBM 31xx: F19\n");
+        break;
+       case  K_I31_F20:         
+        printf("\\Ki31_f20         Transmit IBM 31xx: F20\n");
+        break;
+       case  K_I31_F21:         
+        printf("\\Ki31_f21         Transmit IBM 31xx: F21\n");
+        break;
+       case  K_I31_F22:         
+        printf("\\Ki31_f22         Transmit IBM 31xx: F22\n");
+        break;
+       case  K_I31_F23:         
+        printf("\\Ki31_f23         Transmit IBM 31xx: F23\n");
+        break;
+       case  K_I31_F24:         
+        printf("\\Ki31_f24         Transmit IBM 31xx: F24\n");
+        break;
+       case  K_I31_F25:         
+        printf("\\Ki31_f25         Transmit IBM 31xx: F25\n");
+        break;
+       case  K_I31_F26:         
+        printf("\\Ki31_f26         Transmit IBM 31xx: F26\n");
+        break;
+       case  K_I31_F27:         
+        printf("\\Ki31_f27         Transmit IBM 31xx: F27\n");
+        break;
+       case  K_I31_F28:         
+        printf("\\Ki31_f28         Transmit IBM 31xx: F28\n");
+        break;
+       case  K_I31_F29:         
+        printf("\\Ki31_f29         Transmit IBM 31xx: F29\n");
+        break;
+       case  K_I31_F30:         
+        printf("\\Ki31_f30         Transmit IBM 31xx: F30\n");
+        break;
+       case  K_I31_F31:         
+        printf("\\Ki31_f31         Transmit IBM 31xx: F31\n");
+        break;
+       case  K_I31_F32:         
+        printf("\\Ki31_f32         Transmit IBM 31xx: F32\n");
+        break;
+       case  K_I31_F33:         
+        printf("\\Ki31_f33         Transmit IBM 31xx: F33\n");
+        break;
+       case  K_I31_F34:         
+        printf("\\Ki31_f34         Transmit IBM 31xx: F34\n");
+        break;
+       case  K_I31_F35:         
+        printf("\\Ki31_f35         Transmit IBM 31xx: F35\n");
+        break;
+       case  K_I31_F36:         
+        printf("\\Ki31_f36         Transmit IBM 31xx: F36\n");
+        break;
+       case  K_I31_PA1:         
+        printf("\\Ki31_pa1         Transmit IBM 31xx: PA1\n");
+        break;
+       case  K_I31_PA2:         
+        printf("\\Ki31_pa2         Transmit IBM 31xx: PA2\n");
+        break;
+       case  K_I31_PA3:         
+        printf("\\Ki31_pa3         Transmit IBM 31xx: PA3\n");
+        break;
+       case  K_I31_RESET:
+        printf("\\Ki31_reset       Transmit IBM 31xx: Reset\n");
+        break;            
+       case  K_I31_JUMP:        
+        printf("\\Ki31_jump        Transmit IBM 31xx: Jump\n");
+        break;
+       case  K_I31_CLEAR:       
+        printf("\\Ki31_clear       Transmit IBM 31xx: Clear\n");
+        break;
+       case  K_I31_ERASE_EOF:   
+        printf("\\Ki31_erase_eof   Transmit IBM 31xx: Erase to End of Field\n");
+        break;
+       case  K_I31_ERASE_EOP:   
+        printf("\\Ki31_eop         Transmit IBM 31xx: Erase to End of Page\n");
+        break;
+       case  K_I31_ERASE_INP:   
+        printf("\\Ki31_inp         Transmit IBM 31xx: Erase Input Operation\n");
+        break;
+       case  K_I31_INSERT_CHAR: 
+        printf("\\Ki31_ins_char    Transmit IBM 31xx: Insert Character\n");
+        break;
+       case  K_I31_INSERT_SPACE:
+        printf("\\Ki31_ins_space   Transmit IBM 31xx: Insert Space\n");
+        break;
+       case  K_I31_DELETE:      
+        printf("\\Ki31_delete      Transmit IBM 31xx: Delete Character\n");
+        break;
+       case  K_I31_INS_LN:      
+        printf("\\Ki31_ins_line    Transmit IBM 31xx: Insert Line\n");
+        break;
+       case  K_I31_DEL_LN:      
+        printf("\\Ki31_del_ln      Transmit IBM 31xx: Delete Line\n");
+        break;
+       case  K_I31_PRINT_LINE:  
+        printf("\\Ki31_prt_line    Transmit IBM 31xx: Print Line\n");
+        break;
+       case  K_I31_PRINT_MSG:   
+        printf("\\Ki31_prt_msg     Transmit IBM 31xx: Print Message\n");
+        break;
+       case  K_I31_PRINT_SHIFT: 
+        printf("\\Ki31_prt_shift   Transmit IBM 31xx: Print Shift\n");
+        break;
+       case  K_I31_CANCEL:      
+        printf("\\Ki31_cancel      Transmit IBM 31xx: Cancel\n");
+        break;
+       case  K_I31_SEND_LINE:   
+        printf("\\Ki31_send_line   Transmit IBM 31xx: Send Line\n");
+        break;
+       case  K_I31_SEND_MSG:    
+        printf("\\Ki31_send_msg    Transmit IBM 31xx: Send Message\n");
+        break;
+       case  K_I31_SEND_PAGE:   
+        printf("\\Ki31_send_page   Transmit IBM 31xx: Send Page\n");
+        break;
+       case  K_I31_HOME:        
+        printf("\\Ki31_home        Transmit IBM 31xx: Home\n");
+        break;
+       case  K_I31_BACK_TAB:    
+        printf("\\Ki31_back_tab    Transmit IBM 31xx: Back Tab\n");
+        break;
+       case  K_SUN_STOP: 
+        printf("\\Ksunstop         Transmit SUN Console: Stop\n");
+        break;
+       case  K_SUN_AGAIN:
+        printf("\\Ksunagain        Transmit SUN Console: Again\n");
+        break;
+       case  K_SUN_PROPS:
+        printf("\\Ksunprops        Transmit SUN Console: Props\n");
+        break;
+       case  K_SUN_UNDO: 
+        printf("\\Ksunundo         Transmit SUN Console: Undo\n");
+        break;
+       case  K_SUN_FRONT:
+        printf("\\Ksunfront        Transmit SUN Console: Front\n");
+        break;
+       case  K_SUN_COPY: 
+        printf("\\Ksuncopy         Transmit SUN Console: Copy\n");
+        break;
+       case  K_SUN_OPEN: 
+        printf("\\Ksunopen         Transmit SUN Console: Open\n");
+        break;
+       case  K_SUN_PASTE:
+        printf("\\Ksunpaste        Transmit SUN Console: Paste\n");
+        break;
+       case  K_SUN_FIND: 
+        printf("\\Ksunfind         Transmit SUN Console: Find\n");
+        break;
+       case  K_SUN_CUT:  
+        printf("\\Ksuncut          Transmit SUN Console: Cut\n");
+        break;
+       case  K_SUN_HELP: 
+        printf("\\Ksunhelp         Transmit SUN Console: Help\n");
+        break;
+
+       default:
+        printf("No additional help available for this kverb\n");
   }
     printf("\n");
 

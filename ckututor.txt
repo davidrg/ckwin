@@ -626,8 +626,8 @@ C-KERMIT 8.0 UNIX MANUAL PAGE AND TUTORIAL
           subsequent SET HOST commands.
           SET HOST [ options ] host [ port ] Opens a network connection
           to the given host and port.
-          SET HOST * port Waits for an incoming TCP/IP connection on the
-          given port.
+          SET HOST [ options ] * port Waits for an incoming TCP/IP
+          connection on the given port.
           TELNET [ options ] host Opens a Telnet connection to the host
           and enters Connect state.
           RLOGIN [ options ] host Opens an Rlogin connection to the host

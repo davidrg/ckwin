@@ -1,10 +1,10 @@
 /*  C K U A T H . H --  "C-Kermit to Authentication" interface  */
 
 /*
-  Author: Jeffrey Altman <jaltman@columbia.edu>,
-  Columbia University Academic Information Systems, New York City.
+  Author: Jeffrey E Altman <jaltman@secure-endpoints.com>,
+            Secure Endpoints Inc., New York City.
 
-  Copyright (C) 1999, 2002,
+  Copyright (C) 1999, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -89,7 +89,9 @@ extern BOOL forwarded_tickets;
 
 
 /* C-Kermit specific functions */
+_PROTOTYP(void auth_finished,(int));
 _PROTOTYP(int ck_auth_init, (char *, char *, char *, int));
+_PROTOTYP(int ck_tn_auth_valid, (VOID));
 _PROTOTYP(int ck_tn_auth_in_progress,(VOID));
 _PROTOTYP(int ck_tn_sb_auth, (char *, int));
 _PROTOTYP(int ck_tn_sb_encrypt, (char *, int));
@@ -104,7 +106,8 @@ _PROTOTYP(int ck_tn_encrypting, (VOID));
 _PROTOTYP(int ck_tn_decrypting, (VOID));
 #endif /* CK_ENCRYPTION */
 #ifdef CK_SSL
-_PROTOTYP(int  ck_tn_tls_negotiate, (VOID));
+_PROTOTYP(int ck_tn_tls_negotiate, (VOID));
+_PROTOTYP(int SendSSLAuthSB, (int, void *, int));
 #endif /* CK_SSL */
 
 #ifdef CK_KERBEROS
@@ -208,6 +211,8 @@ _PROTOTYP(int ck_srp_is_installed,(void));
 _PROTOTYP(int ck_ntlm_is_installed,(void));
 _PROTOTYP(int ck_crypt_is_installed,(void));
 _PROTOTYP(int ck_ssleay_is_installed,(void));
+_PROTOTYP(int ck_gssapi_is_installed,(void));
+_PROTOTYP(int ck_krypto_is_installed,(void));
 
 _PROTOTYP(VOID ck_encrypt_send_support,(VOID));
 _PROTOTYP(int ck_get_crypt_table,(struct keytab **, int *));

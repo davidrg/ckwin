@@ -1,4 +1,4 @@
-char * cklibv = "C-Kermit library, 8.0.032, 11 Sep 2002";
+char * cklibv = "C-Kermit library, 8.0.033, 16 Mar 2003";
 
 #define CKCLIB_C
 
@@ -8,7 +8,7 @@ char * cklibv = "C-Kermit library, 8.0.032, 11 Sep 2002";
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1999, 2002,
+  Copyright (C) 1999, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -667,7 +667,7 @@ ckindex(s1,s2,t,r,icase) char *s1, *s2; int t, r, icase; {
 
 /*  C K S T R S T R  --  Portable replacement for strstr()  */
 
-/*  Returns pointer to first occurrence of s2 in s2, or NULL */
+/*  Returns pointer to first occurrence of s1 in s2, or NULL */
 
 char *
 ckstrstr(s1, s2) char * s1, * s2; {
@@ -884,6 +884,31 @@ dquote(fn, len, flag) char *fn; int len; int flag; {
         *p = '\0';
     }
     return(k+2);
+}
+
+
+/*  U N T A B I F Y  ---  Untabify s1 into s2, assuming tabs every 8 space */
+
+int
+untabify(s1,s2,max) char * s1, * s2; int max; {
+    int i, j, k, x, z;
+    x = strlen(s1);
+    for (i = 0, k = 0; k < x; k++) {
+	if (s1[k] != '\t') {
+	    if (i >= max-1) {
+		s2[max-1] = '\0';
+		return(-1);
+	    }
+	    s2[i++] = s1[k];
+	    continue;
+	}
+	z = 8 - i%8;
+	if (z == 0) z = 8;
+	for (j = 0; j < z && i < max; j++)
+	  s2[i++] = ' ';
+    }
+    s2[i] = '\0';
+    return(0);
 }
 
 
@@ -1259,9 +1284,11 @@ ckmatch(pattern, string, icase, opts) char *pattern,*string; int icase, opts; {
     CHAR cp;				/* Current character from pattern */
     CHAR cs;				/* Current character from string */
     int plen, dot, globbing, xstar = 0;
+    int bronly = 0;			/* Whole pattern is {a,b,c,...} */
 
     debug(F111,"CKMATCH ENTRY pat opt",pattern,opts);
     debug(F111,"CKMATCH ENTRY str dep",string,matchdepth);
+    /* debug(F101,"CKMATCH ENTRY icase","",icase); */
 
     globbing = opts & 2;
 
@@ -1277,7 +1304,8 @@ ckmatch(pattern, string, icase, opts) char *pattern,*string; int icase, opts; {
 	matchend = 0;
 	ostring = string;
 	lastpat = pattern;
-
+	if (*pattern == '{')		/* Entire pattern is {a,b.c} */
+	  bronly = 1;			/* Maybe */
 	dot = (opts & 1) ||		/* Match leading dot (if file) */
 	    (opts & 2 == 0) ||		/* always if not file */
 	    (pattern[0] == '.');	/* or if pattern starts with '.' */
@@ -1485,6 +1513,10 @@ ckmatch(pattern, string, icase, opts) char *pattern,*string; int icase, opts; {
 	    } else {			/* Braces do match */
 		int q = 0, done = 0;
 		len = *p ? strlen(p+1) : 0; /* Length of rest of pattern */
+		if (len)
+		  bronly = 0;
+		if (bronly && (matchdepth != 1))
+		  bronly = 0;
 		n = p - pattern;	    /* Size of list in braces */
 		if ((buf = (char *)malloc(n+1))) { /* Copy so we can poke it */
 		    char * tp = NULL;
@@ -1522,12 +1554,19 @@ ckmatch(pattern, string, icase, opts) char *pattern,*string; int icase, opts; {
 				pp = matchpos > 0 ?
 				    &ostring[matchpos-1] :
 				    ostring;
-				tp[0] = '*';
-				tp[1] = NUL;
-				if (matchpos > 0)
-				  ckstrncpy(&tp[1],pp,sofar+1);
-				else
-				  ckstrncpy(&tp[1],pp,sofar);
+				if (bronly) {
+				    if (matchpos > 0)
+				      ckstrncpy(tp,pp,sofar+1);
+				    else
+				      ckstrncpy(tp,pp,sofar);
+				} else {
+				    tp[0] = '*';
+				    tp[1] = NUL;
+				    if (matchpos > 0)
+				      ckstrncpy(&tp[1],pp,sofar+1);
+				    else
+				      ckstrncpy(&tp[1],pp,sofar);
+				}
 				ckstrncat(tp,s2,tplen); /* Current segment */
 				ckstrncat(tp,p+1,tplen); /* rest of pattern */
 
@@ -2137,7 +2176,7 @@ b8tob64(s,n,out,len) char * s,* out; int n, len; {
      the new stream.
 */
 int
-b64tob8(s,n,out,len) char * s,* out; int len; {	/* Decode */
+b64tob8(s,n,out,len) char * s,* out; int n, len; { /* Decode */
     static int bits = 0;
     static unsigned int r = 0;
     int i, k = 0, x, t;

@@ -10,7 +10,7 @@ int kactive = 0;			/* Kermit protocol is active */
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2002,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -123,6 +123,8 @@ _PROTOTYP( int cmdsrc, (void) );
   extern int x_login, x_logged;
 #endif /* NOSERVER */
 
+#include "ckcnet.h"
+
 #ifdef TNCODE
   extern int ttnproto;			/* Network protocol */
 #endif /* TNCODE */
@@ -131,7 +133,6 @@ _PROTOTYP( int cmdsrc, (void) );
   extern short ctlp[];			/* Control-character prefix table */
 #endif /* CK_SPEED */
 
-#include "ckcnet.h"
 #ifdef TNCODE
   extern int tn_b_nlm, tn_b_xfer, tn_nlm;
 #ifdef CK_ENCRYPTION

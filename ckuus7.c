@@ -3,10 +3,13 @@
 /*  C K U U S 7 --  "User Interface" for C-Kermit, part 7  */
 
 /*
-  Author: Frank da Cruz <fdc@columbia.edu>,
-  Columbia University Academic Information Systems, New York City.
+  Authors:
+    Frank da Cruz <fdc@columbia.edu>,
+      The Kermit Project, Columbia University, New York City
+    Jeffrey E Altman <jaltman@secure-endpoints.com>
+      Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2002,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -27,6 +30,7 @@
 #include "ckcnet.h"                     /* Network symbols */
 #include "ckuusr.h"                     /* User interface symbols */
 #include "ckucmd.h"
+#include "ckclib.h"
 
 #ifdef VMS
 #ifndef TCPSOCKET
@@ -470,10 +474,12 @@ extern char *dftty;
 extern char *tp, *lp;                   /* Temporary buffer & pointers */
 extern char ttname[];
 
+#ifdef CK_TAPI
 int tttapi = 0;                         /* is Line TAPI? */
 struct keytab * tapilinetab = NULL;
 struct keytab * _tapilinetab = NULL;
 int ntapiline = 0;
+#endif /* CK_TAPI */
 
 #ifdef NETCONN                          /* Network items */
 
@@ -968,8 +974,10 @@ static struct keytab trmtab[] = {
 #ifndef NOCSETS
 #ifdef OS2
 #ifndef KUI
+    { "line-spacing",  XYTLSP,    CM_INV },
     { "local-character-set", XYTLCS,  0 },
 #else
+    { "line-spacing",  XYTLSP,    0 },
     { "local-character-set", XYTLCS,  CM_INV },
 #endif /* KUI */
 #else
@@ -1069,6 +1077,17 @@ struct keytab termctrl[] = {    /* SET TERM CONTROLS */
     { "8",      8, 0 }
 };
 int ntermctrl = (sizeof(termctrl) / sizeof(struct keytab));
+
+struct keytab curontab[] = {    /* SET TERM CURSOR */
+#ifdef KUI
+    { "noblink", 2, 0 },
+#else
+    { "noblink", 2, CM_INV },
+#endif /* KUI */
+    { "off",     0, 0 },
+    { "on",      1, 0 }
+};
+int ncuron = (sizeof(curontab) / sizeof(struct keytab));
 
 struct keytab rolltab[] = {   /* Set TERM Roll Options */
     { "insert",    TTR_INSERT, 0      },
@@ -1315,6 +1334,7 @@ int tt_type_mode = TT_VT320;            /* Terminal type set by host command */
 int tt_cursor = 0;                      /* Terminal cursor, 0 = Underline */
 int tt_cursor_usr = 0;                  /* Users Terminal cursor type */
 int tt_cursorena_usr = 1;               /* Users Terminal cursor enabled */
+int tt_cursor_blink = 1;                /* Terminal Cursor Blink */
 int tt_answer = 0;                      /* Terminal answerback (disabled) */
 int tt_scrsize[VNUM] = {512,512,512,1}; /* Terminal scrollback buffer size */
 int tt_roll[VNUM] = {1,1,1,1};          /* Terminal roll (on) */
@@ -1329,6 +1349,8 @@ extern int updmode;
 int tt_status[VNUM] = {1,1,0,0};        /* Terminal status line displayed */
 int tt_status_usr[VNUM] = {1,1,0,0};
 #else  /* KUI */
+extern CKFLOAT floatval;
+CKFLOAT tt_linespacing[VNUM] = {1.0,1.0,1.0,1.0};
 #ifdef K95G
 int tt_status[VNUM] = {1,1,0,0};        /* Terminal status line displayed */
 int tt_status_usr[VNUM] = {1,1,0,0};
@@ -1478,6 +1500,7 @@ int ncursors = 3;
 struct keytab ttyptab[] = {
     { "aaa",      TT_AAA,     CM_INV },     /* AnnArbor */
     { "adm3a",    TT_ADM3A,   0 },          /* LSI ADM-3A */
+    { "adm5",     TT_ADM5,    0 },          /* LSI ADM-5 */
     { "aixterm",  TT_AIXTERM, 0 },          /* IBM AIXterm */
     { "annarbor", TT_AAA,     0 },          /* AnnArbor */
     { "ansi-bbs", TT_ANSI,    0 },          /* ANSI.SYS (BBS) */
@@ -1566,6 +1589,7 @@ int nttyp = (sizeof(ttyptab) / sizeof(struct keytab));
 struct keytab ttkeytab[] = {
     { "aaa",       TT_AAA,        CM_INV },        /* AnnArbor */
     { "adm3a",     TT_ADM3A,      0 },             /* LSI ADM-3A */
+    { "adm5",      TT_ADM5,       0 },             /* LSI ADM-5 */
     { "aixterm",   TT_AIXTERM,    0 },             /* IBM AIXterm */
     { "annarbor",  TT_AAA,        0 },             /* AnnArbor */
     { "ansi-bbs",  TT_ANSI,       0 },             /* ANSI.SYS (BBS) */
@@ -1916,6 +1940,9 @@ int nidlacts = (sizeof(idlacts) / sizeof(struct keytab)) - 1;
 
 #ifndef NOSPL
 extern int indef, inecho, insilence, inbufsize, inautodl, inintr;
+#ifdef CKFLOAT
+extern CKFLOAT inscale;
+#endif	/* CKFLOAT */
 extern char * inpbuf, * inpbp;
 #ifdef OS2
 extern int interm;
@@ -1932,6 +1959,7 @@ struct keytab inptab[] = {              /* SET INPUT parameters */
 #ifdef OS2
     { "pacing",          IN_PAC, CM_INV },
 #endif /* OS2 */
+    { "scale-factor",    IN_SCA, 0 },
     { "silence",         IN_SIL, 0 },
 #ifdef OS2
     { "terminal",        IN_TRM, 0 },
@@ -3511,9 +3539,17 @@ setfil(rmsflg) int rmsflg; {
           x = strlen(s);
 
           if (x) {
-#ifdef datageneral
+#ifdef datageneral			/* AOS/VS */
               if (s[x-1] == ':')        /* homdir ends in colon, */
                 s[x-1] = NUL;           /* and "dir" doesn't like that... */
+#else
+#ifdef OS2ORUNIX			/* Unix or K-95... */
+	      if ((x < (LINBUFSIZ - 2)) && /* Add trailing dirsep */
+		  (s[x-1] != '/')) {	/* if none present.  */
+		  s[x] = '/';		/* Note that Windows path has */
+		  s[x+1] = NUL;		/* been canonicalized to forward */
+	      }                		/* slashes at this point. */
+#endif /* OS2ORUNIX */
 #endif /* datageneral */
               makestr(&dldir,s);
           } else
@@ -4194,11 +4230,17 @@ settrm() {
           extern int cursoron[] ;       /* Cursor state on/off       */
           if ((x = cmkey(ttycurtab,ncursors,"","underline",xxstring)) < 0)
             return(x);
-          if ((z = cmkey(onoff,2,"","on",xxstring)) < 0)
+          if ((z = cmkey(curontab,ncuron,"","on",xxstring)) < 0)
             return(z);
           if ((y = cmcfm()) < 0) return(y);
           tt_cursor = tt_cursor_usr = x;
-          cursorena[VTERM] = tt_cursorena_usr = z;/* turn cursor on/off */
+          if ( z == 2 ) {
+              cursorena[VTERM] = tt_cursorena_usr = 1;
+              tt_cursor_blink = 0;
+          } else {
+              cursorena[VTERM] = tt_cursorena_usr = z;/* turn cursor on/off */
+              tt_cursor_blink = 1;
+          }
           cursoron[VTERM] = FALSE; /* Force newcursor to restore the cursor */
           return(success = 1);
       }
@@ -4695,7 +4737,7 @@ settrm() {
       case XYTDEB:                      /* TERMINAL DEBUG */
         y = seton(&x);                  /* Go parse ON or OFF */
         if (y > 0)                      /* Command succeeded? */
-          setdebses(z);
+          setdebses(x);
         return(y);
 
 #ifdef OS2
@@ -5015,7 +5057,7 @@ settrm() {
               tt_modechg = x;
           }
           return(success = 1);
-#else /* KUI */
+#else
           return(success = 0);
 #endif /* KUI */
       }
@@ -5195,7 +5237,7 @@ settrm() {
           case TTATTPRO: {      /* Set default Protected Character attribute */
               extern vtattrib WPattrib;    /* current WP Mode Attrib */
               extern vtattrib defWPattrib; /* default WP Mode Attrib */
-              vtattrib wpa = {0,0,0,0,0,1,0,0,0};       /* Protected */
+              vtattrib wpa = {0,0,0,0,0,1,0,0,0,0,0};   /* Protected */
               int done = 0;
 
               x = 0;
@@ -5752,6 +5794,27 @@ settrm() {
           ckstrncpy(sni_term_firmware,term,7);
           return(success = 1);
     }
+
+    case XYTLSP: {              /* SET TERM LINE-SPACING */
+        if ((x = cmfld("Line Spacing","1",&s, xxstring)) < 0)
+          return(x);
+        if (isfloat(s,0) < 1) {		/* (sets floatval) */
+            printf("?Integer or floating-point number required\n");
+            return(-9);
+        }
+        if (floatval < 1.0 || floatval > 3.0) {
+            printf("?Value must within the range 1.0 and 3.0 (inclusive)\n");
+            return(-9);
+        }
+        if ((x = cmcfm()) < 0) return(x);
+#ifdef KUI
+        tt_linespacing[VCMD] = tt_linespacing[VTERM] = floatval;
+        return(success = 1);
+#else /* KUI */
+        printf("?Sorry, Line-spacing is only supported in K95G.EXE.\n");
+        return(success = 0);
+#endif /* KUI */
+    }
 #endif /* OS2 */
 
       default:                          /* Shouldn't get here. */
@@ -5782,7 +5845,7 @@ settitle(void) {
         return(success = 0);
     }
 #endif /* IKSD */
-
+    s = brstrip(s);
     ckstrncpy(usertitle,s,64);
     os2settitle("",1);
     return(1);
@@ -5885,6 +5948,13 @@ setdialer(void) {
         p = (*p == 'k' || *p == 'K') ? p + 1 : NULL;
     }
 #endif /* NOKVERBS */
+
+    /* Clear the definition for SET KEY */
+    if (macrotab[kc]) {                 /* Possibly free old macro from key. */
+        free((char *)macrotab[kc]);
+        macrotab[kc] = NULL;
+    }
+    keymap[kc] = (KEY) kc;
 
     /* Now reprogram the default value for all terminal types */
     /* remember to treat Wyse and Televideo terminals special */
@@ -5996,9 +6066,9 @@ setwin95( void ) {
             if ((x = cmnum("Maximum number of outstanding I/O requests",
                            "10",10,&z,xxstring)) < 0)
               return(x);
-            if (z < 1 || z > 30) {
+            if (z < 1 || z > 7) {
                 printf(
-"?Maximum outstanding I/O requests must be between 1 and 30.\n");
+"?Maximum outstanding I/O requests must be between 1 and 7.\n");
                 return(-9);
             }
         } else
@@ -6798,26 +6868,53 @@ Make sure your timeout interval is long enough for %d-byte packets.\n",z);
         }
 
       case XYMOVE:
+#ifdef COMMENT
         y = cmdir("Directory to move file(s) to after successful transfer",
                   "",&s,xxstring);
+#else
+        y = cmtxt("Directory to move file(s) to after successful transfer",
+		  "",&s,xxstring);
+#endif /* COMMENT */
+
         if (y < 0 && y != -3)
           return(y);
         ckstrncpy(line,s,LINBUFSIZ);
         s = brstrip(line);
+
+#ifdef COMMENT
+	/* Only needed for cmdir() */
         if ((x = cmcfm()) < 0)
           return(x);
+#endif /* COMMENT */
+	
+	/* Check directory existence if absolute */
+	/* THIS MEANS IT CAN'T INCLUDE ANY DEFERRED VARIABLES! */
+	if (s) if (*s) {
+	    if (isabsolute(s) && !isdir(s)) {
+		printf("?Directory does not exist - %s\n",s);
+		return(-9);
+	    }
+	}
         if (xx == XYSEND) {
             if (*s) {
-                makestr(&snd_move,s);
-                makestr(&g_snd_move,s);
+#ifdef COMMENT
+		/* Allow it to be relative */
+                zfnqfp(s,LINBUFSIZ,line);
+#endif /* COMMENT */
+                makestr(&snd_move,line);
+                makestr(&g_snd_move,line);
             } else {
                 makestr(&snd_move,NULL);
                 makestr(&g_snd_move,NULL);
             }
         } else {
             if (*s) {
-                makestr(&rcv_move,s);
-                makestr(&g_rcv_move,s);
+#ifdef COMMENT
+		/* Allow it to be relative */
+                zfnqfp(s,LINBUFSIZ,line);
+#endif /* COMMENT */
+                makestr(&rcv_move,line);
+                makestr(&g_rcv_move,line);
             } else {
                 makestr(&rcv_move,NULL);
                 makestr(&g_rcv_move,NULL);
@@ -6826,9 +6923,9 @@ Make sure your timeout interval is long enough for %d-byte packets.\n",z);
         return(success = 1);
 
       case XYRENAME:
-        y = cmdir("Template to rename file(s) to after successful transfer",
-                  "",&s,NULL);
-        if (y < 0 && y != -3)
+        y = cmtxt("Template to rename file(s) to after successful transfer",
+                  "",&s,NULL);		/* NOTE: no xxstring */
+        if (y < 0 && y != -3)		/* Evaluation is deferred */
           return(y);
         ckstrncpy(line,s,LINBUFSIZ);
         s = brstrip(line);
@@ -6854,7 +6951,7 @@ Make sure your timeout interval is long enough for %d-byte packets.\n",z);
         return(success = 1);
 
 #ifdef VMS
-      case 887:                 /* VERSION-NUMBERS */
+      case 887:				/* VERSION-NUMBERS */
         if (xx == XYSEND) {
             extern int vmssversions;
             return(seton(&vmssversions));
@@ -8148,6 +8245,19 @@ setinp() {
       case IN_DEF:                      /* SET INPUT DEFAULT-TIMEOUT */
         z = cmnum("Positive number","",10,&x,xxstring);
         return(setnum(&indef,x,z,94));
+#ifdef CKFLOAT
+      case IN_SCA:                      /* SET INPUT SCALE-FACTOR */
+	if ((x = cmfld("Number such as 2 or 0.5","1.0",&s, xxstring)) < 0)
+	  return(x);
+        if (isfloat(s,0)) {		/* A floating-point number? */
+            extern char * inpscale;
+	    inscale = floatval;		/* Yes, get its value */
+	    makestr(&inpscale,s);	/* Save it as \v(inscale) */
+	    return(success = 1);
+	} else {
+	    return(-2);
+	}
+#endif	/* CKFLOAT */
       case IN_TIM:                      /* SET INPUT TIMEOUT-ACTION */
         if ((z = cmkey(intimt,2,"","",xxstring)) < 0) return(z);
         if ((x = cmcfm()) < 0) return(x);
@@ -9268,6 +9378,7 @@ cx_net(net, protocol, xhost, svc,
 #endif /* NOSPL */
 
 	/* Try to open - network */
+	ckstrncpy(ttname,line,TTNAMLEN);
 	y = ttopen(line, &_local, mdmtyp, 0 );
 
 #ifndef NOHTTP
@@ -9311,6 +9422,7 @@ cx_net(net, protocol, xhost, svc,
 		    tcp_http_proxy_user = uid;
 		    tcp_http_proxy_pwd = pwd;
 
+		    ckstrncpy(ttname,line,TTNAMLEN);
 		    y = ttopen(line, &_local, mdmtyp, 0);
 		    memset(pwd,0,sizeof(pwd));
 		    tcp_http_proxy_user = proxy_user;
@@ -9654,12 +9766,12 @@ cx_serial(device, cx, sx, shr, flag, gui, special)
 #endif /* OS2 */
 
     /* Open the new line */        
+
+    ckstrncpy(ttname,s,TTNAMLEN);
     if ((y = ttopen(s,&_local,mdmtyp,cdtimo)) > -1) {
 	cxtype = (mdmtyp > 0) ? CXT_MODEM : CXT_DIRECT;
 #ifndef NODIAL
 	dialsta = DIA_UNK;
-#endif /* NODIAL */
-	success = 1;
 #ifdef CK_TAPI
 	/* if the line is a tapi device, then we need to auto-execute */
 	/* SET MODEM TYPE TAPI - which we do the equivalent of here.  */
@@ -9669,6 +9781,8 @@ cx_serial(device, cx, sx, shr, flag, gui, special)
 	    initmdm(38);		/* From ckudia.c n_TAPI == 38 */
 	}
 #endif /* CK_TAPI */
+#endif /* NODIAL */
+	success = 1;
     } else {				/* Failed */
 #ifdef OS2ONLY
 	if (!strcmp(s,dftty))   /* Do not generate an error with dftty */
@@ -11127,6 +11241,8 @@ int z_filcount = -1;                    /* Most recent FILE COUNT result */
 #define RD_LINE 0                       /* FILE READ options */
 #define RD_CHAR 1
 #define RD_SIZE 2
+#define RD_TRIM 8			/* Like Snobol &TRIM = 1 */
+#define RD_UNTA 9			/* Untabify */
 
 #define WR_LINE RD_LINE                 /* FILE WRITE options */
 #define WR_CHAR RD_CHAR
@@ -11846,7 +11962,9 @@ static struct keytab frdtab[] = {       /* READ types */
     { "/byte",      RD_CHAR, CM_INV },
     { "/character", RD_CHAR, 0      },
     { "/line",      RD_LINE, 0      },
-    { "/size",      RD_SIZE, CM_ARG }
+    { "/size",      RD_SIZE, CM_ARG },
+    { "/trim",      RD_TRIM, 0      },
+    { "/untabify",  RD_UNTA, 0      }
 };
 static int nfrdtab = (sizeof (frdtab) / sizeof (struct keytab));
 
@@ -11875,7 +11993,7 @@ dofile(op) int op; {                    /* Do the FILE command */
     int rsize, filmode = 0, relative = -1, eofflg = 0;
     int rc, x, y, cx, n, getval, dummy, confirmed, listing = -1;
     int charflag = 0, sizeflag = 0;
-    int pad = 32, wr_lpad = 0, wr_rpad = 0;
+    int pad = 32, wr_lpad = 0, wr_rpad = 0, rd_trim = 0, rd_untab = 0;
 
     if (op == XXFILE) {                 /* FILE command was given */
         /* Get subcommand */
@@ -12176,6 +12294,12 @@ dofile(op) int op; {                    /* Do the FILE command */
                     else
                       wr_rpad = 1;
                     break;
+		  case RD_TRIM:
+		    rd_trim = 1;
+		    break;
+		  case RD_UNTA:
+		    rd_untab = 1;
+		    break;
                 }
                 debug(F101,"FILE READ rsize 2","",rsize);
             } else
@@ -12272,10 +12396,11 @@ dofile(op) int op; {                    /* Do the FILE command */
             if (rsize >= LINBUFSIZ)     /* Don't overrun it */
               rsize = LINBUFSIZ - 1;
 
-            if (rsize == 0)             /* Read a line */
-              rc = z_in(n,line,LINBUFSIZ,LINBUFSIZ-1,0);
-            else
-              rc = z_in(n,line,LINBUFSIZ,rsize,1); /* Read a block */
+            if (rsize == 0) {		/* Read a line */
+		rc = z_in(n,line,LINBUFSIZ,LINBUFSIZ-1,0);
+            } else {
+		rc = z_in(n,line,LINBUFSIZ,rsize,1); /* Read a block */
+	    }
             if (rc < 0) {               /* Error... */
                 debug(F101,"FILE READ error","",rc);
                 debug(F101,"FILE READ errno","",errno);
@@ -12286,6 +12411,24 @@ dofile(op) int op; {                    /* Do the FILE command */
                     return(-9);
                 }
             }
+	    if (rsize == 0) {		/* FREAD /LINE postprocessing */
+		if (rd_trim) {		/* Trim */
+		    int i, k;
+		    k = strlen(line);
+		    if (k > 0) {
+			for (i = k-1; i > 0; i--) {
+			    if (line[i] == SP || line[i] == '\t')
+			      line[i] = NUL;
+			    else
+			      break;
+			}
+		    }
+		}
+		if (rd_untab) {		/* Untabify */
+		    if (untabify(line,tmpbuf,TMPBUFSIZ) > -1)
+		      ckstrncpy(line,tmpbuf,LINBUFSIZ);
+		}
+	    }
             debug(F110,"FILE READ data",line,0);
             if (vnambuf[0])             /* Read OK - If variable name given */
               addmac(vnambuf,line);     /* Assign result to variable */
@@ -13764,7 +13907,8 @@ sho_auth(cx) int cx; {
           case AUTHTYPE_SSL:
             kv = all ? AUTHTYPE_SRP : 0;
             if (ck_ssleay_is_installed()) {
-                printf(" Authentication:      SSL/TLS\n");
+                printf(" Authentication:      SSL/TLS (%s)\n",
+                        SSLeay_version(SSLEAY_VERSION));
                 if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
             } else {
                 printf(" Authentication:      SSL/TLS (not installed)\n");
@@ -13809,7 +13953,8 @@ sho_auth(cx) int cx; {
             printf(" Verify dir: %s\n",ssl_verify_dir?
                   ssl_verify_dir:"(none)");
             if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
-            printf(" Cipher list:\n");
+            printf(" Cipher list: %s\n",ssl_cipher_list ? ssl_cipher_list : 
+		    DEFAULT_CIPHER_LIST);
             if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
             if (ssl_con == NULL) {
                 SSL_library_init();

@@ -1,7 +1,7 @@
 /*  C K C D E B . H  */
 
 /*
-Thu Oct 24 16:08:26 2002
+  Tue Apr  6 14:00:16 2004
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
   compatible with C preprocessors that support only #ifdef, #else, #endif,
@@ -26,7 +26,7 @@ Thu Oct 24 16:08:26 2002
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2002,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -35,13 +35,17 @@ Thu Oct 24 16:08:26 2002
 /*
   Etymology: The name of this file means "C-Kermit Common-C-Language Debugging
   Header", because originally it contained only the formats (F000-F111) for
-  the debug() and tlog() functions.  See how it has grown...
+  the debug() and tlog() functions.  Since then it has grown to inlcude all
+  material required by all other C-Kermit modules, including the non-Kermit
+  specific ones.
 */
 
 #ifndef CKCDEB_H			/* Don't include me more than once. */
 #define CKCDEB_H
 
-#ifndef OS2
+#ifdef OS2
+#include "ckoker.h"
+#else /* OS2 */
 /* Unsigned numbers */
 
 #ifndef USHORT
@@ -649,7 +653,6 @@ struct filinfo {
 #ifndef OS2ORWIN32
 #define OS2ORWIN32
 #endif /* OS2ORWIN32 */
-#include "ckoker.h"
 #ifdef NT
 #define NOCRYPT
 #include <windows.h>
@@ -700,6 +703,18 @@ struct filinfo {
 #define BSD44
 #endif /* BSD44 */
 #endif /* AIXESA */
+
+#ifdef AIX53				/* AIX53 implies AIX52 */
+#ifndef AIX52
+#define AIX52
+#endif /* AIX52 */
+#endif /* AIX53 */
+
+#ifdef AIX52				/* AIX52 implies AIX51 */
+#ifndef AIX51
+#define AIX51
+#endif /* AIX51 */
+#endif /* AIX52 */
 
 #ifdef AIX51				/* AIX51 implies AIX50 */
 #ifndef AIX50
@@ -1181,6 +1196,23 @@ struct filinfo {
 #endif /* _POSIX_C_SOURCE */
 #endif	/* __DECC */
 
+#ifdef VMS
+#ifdef __ia64				/* VMS on Itanium */
+#ifndef VMSI64
+#define VMSI64
+#endif	/* VMSI64 */
+#endif	/* __ia64 */
+#ifndef VMS64BIT			/* 64-bit VMS on Itanium or Alpha */
+#ifdef __ia64
+#define VMS64BIT
+#else
+#ifdef __ALPHA
+#define VMS64BIT
+#endif	/* __ia64 */
+#endif	/* __ALPHA */
+#endif	/* VMS64BIT */
+#endif	/* VMS */
+
 #ifdef apollo				/* May be ANSI-C, check further */
 #ifdef __STDCPP__
 #define CK_ANSIC			/* Yes, this is real ANSI-C */
@@ -1501,8 +1533,6 @@ _PROTOTYP(int ckxfprintf,(FILE *, const char *, ...));
 #ifndef SIGTYP
 #define SIGTYP void
 #endif /* SIGTYP */
-
-#define strdup _strdup
 #endif /* NT */
 
 #ifndef SIGTYP
@@ -2110,6 +2140,10 @@ _PROTOTYP(VOID doxlog,(int, char *, long, int, int, char *));
 #else
 #ifdef USE_UU_LOCK			/* FreeBSD or other with uu_lock() */
 #define USETTYLOCK
+#else
+#ifdef HAVE_BAUDBOY			/* Red Hat Linux >= 7.2 */
+#define USETTYLOCK
+#endif /* HAVE_BAUDBOY */
 #endif /* USE_UU_LOCK */
 #endif /* AIXRS */
 #endif /* USETTYLOCK */
@@ -2524,9 +2558,11 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #ifdef NOICP				/* an interactive command parser */
 #define NOHTTP
 #endif /* NOICP */
+#ifndef VMS
 #ifndef OS2ORUNIX			/* K95 or UNIX (because of */
 #define NOHTTP				/* time functions, time_t, etc) */
 #endif /* OS2ORUNIX */
+#endif /* VMS */
 #endif /* NOHTTP */
 
 
@@ -2710,29 +2746,30 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #ifdef TNCODE
 #ifndef CK_AUTHENTICATION
 #ifdef OS2
-#ifdef NT
-#ifndef _M_PPC
-#ifndef _M_ALPHA
-#define SSL_KRB5
-#endif /* _M_ALPHA */
-#endif /* _M_PPC */
-#endif /* NT */
 #ifdef _M_PPC
 #define NO_KERBEROS
 #define NO_SRP
-#else
-#ifndef NO_ENCRYPTION
+#else /* _M_PPC */
 #ifndef NO_SSL
 #define CK_SSL
 #define SSLDLL
 #endif /* NO_SSL */
-#endif /* NO_ENCRYPTION */
 #endif /* _M_PPC */
 #ifndef NO_KERBEROS
 #define CK_KERBEROS
 #define KRB4
 #define KRB5
 #define KRB524
+#define KRB524_CONV
+#ifdef NT
+#ifndef _M_PPC
+#ifndef _M_ALPHA
+#ifndef NO_SSL_KRB5
+#define SSL_KRB5
+#endif /* NO_SSL_KRB5 */
+#endif /* _M_ALPHA */
+#endif /* _M_PPC */
+#endif /* NT */
 #endif /* NO_KERBEROS */
 #ifndef NO_SRP
 #define CK_SRP
@@ -2746,6 +2783,8 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #ifndef NO_ENCRYPTION
 #ifdef OS2
 #define CK_ENCRYPTION
+#define CK_DES
+#define CK_CAST
 #endif /* OS2 */
 #endif /* NO_ENCRYPTION */
 #endif /* CK_ENCRYPTION */
@@ -2806,6 +2845,9 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #ifdef SSHBUILTIN			/* undefines any SSH selctors */
 #undef SSHBUILTIN
 #endif /* SSHBUILTIN */
+#ifdef SFTP_BUILTIN
+#undef SFTP_BUILTIN
+#endif /* SFTP_BUILTIN */
 #ifdef SSHCMD
 #undef SSHCMD
 #endif /* SSHCMD */
@@ -2858,6 +2900,7 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #define CK_SECURITY
 #else
 #ifdef CK_SSL
+#define CK_AUTHENTICATION
 #define CK_SECURITY
 #endif /* CK_SSL */
 #endif /* CK_AUTHENTICATION */
@@ -4425,11 +4468,21 @@ extern int errno;
 #else /* not STRATUS */
 #ifndef VMS
 #ifndef OS2
+#ifdef __GLIBC__
 /*
-  The following declaration causes problems for VMS and OS/2, in which
+  "glibc uses threads, kermit uses glibc; errno access is in Thread Local
+  Storage (TLS) from glibc-3.2.2.  ...a thread specific errno is being run in
+  thread local storage relative to the %gs segment register, so some means to
+  revector gets/puts needs to be done." - Jeff Johnson, Red Hat, Feb 2003.
+*/
+#include <errno.h>
+#else
+/*
+  The following declaration would cause problems for VMS and OS/2, in which
   errno is an "extern volatile int noshare"...
 */
-extern int errno;			/* Needed by most modules. */
+ extern int errno;			/* Needed by most modules. */
+#endif /* __GLIBC__ */
 #endif /* OS2 */
 #endif /* VMS */
 #endif /* STRATUS */
@@ -5052,6 +5105,10 @@ _PROTOTYP( int zchout, (int, char) );
 _PROTOTYP( int zoutdump, (void) );
 _PROTOTYP( int zsyscmd, (char *) );
 _PROTOTYP( int zshcmd, (char *) );
+#ifdef UNIX
+_PROTOTYP( int zsetfil, (int, int) );
+_PROTOTYP( int zchkpid, (unsigned long) );
+#endif	/* UNIX */
 #ifdef CKEXEC
 _PROTOTYP( VOID z_exec, (char *, char **, int) );
 #endif /* CKEXEC */
@@ -6244,6 +6301,9 @@ _PROTOTYP( int le_getchar, (CHAR *));
 #ifdef OS2ORUNIX
 #define CMDATE2TM
 #endif /* OS2ORUNIX */
+#ifdef VMS
+#define CMDATE2TM
+#endif /* VMS */
 #endif /* CMDATE2TM */
 #endif /* NOCMDATE2TM */
 
@@ -6272,6 +6332,12 @@ _PROTOTYP( struct tm * cmdate2tm, (char *,int));
 #ifndef SYSUTIMEH
 #define SYSUTIMEH
 #endif /* SYSUTIMEH */
+#else /* OS2 */
+#ifdef VMS
+#ifndef UTIMEH
+#define UTIMEH
+#endif /* UTIMEH */
+#endif /* VMS */
 #endif /* OS2 */
 #endif /* SUNOS41 */
 #endif /* OSF */
@@ -6299,33 +6365,5 @@ _PROTOTYP(DWORD ckGetLongPathname,(LPCSTR lpFileName,
 
 #include "ckclib.h"
 
-#ifdef NT
-#ifdef __STDC__
-#define stricmp _stricmp
-#define putenv _putenv
-#define sopen _sopen
-#define strupr _strupr
-#define close _close
-#define stat _stat
-#define fileno _fileno
-#define sys_errlist _sys_errlist
-#define unlink _unlink
-#define write _write
-#define creat _creat
-#define getpid _getpid
-#define isascii __isascii
-#define utime _utime
-#define mktemp _mktemp
-#define strnicmp _strnicmp
-#define read _read
-#define open _open
-#define access _access
-#define wcsdup _wcsdup
-#define chmod _chmod
-#define fstat _fstat
-#define ftime _ftime
-#endif /* __STDC__ */
-#endif /* NT */
-#endif /* CKCDEB_H */
-
 /* End of ckcdeb.h */
+#endif /* CKCDEB_H */

@@ -1,4 +1,4 @@
-char *cktelv = "Telnet support, 8.0.258, 20 Aug 2002";
+char *cktelv = "Telnet support, 8.0.269, 4 Mar 2004";
 #define CKCTEL_C
 
 int sstelnet = 0;                       /* Do server-side Telnet negotiation */
@@ -18,7 +18,7 @@ int sstelnet = 0;                       /* Do server-side Telnet negotiation */
     Telnet KERMIT support by Jeffrey Altman
     Other contributions as indicated in the code.
 
-  Copyright (C) 1985, 2002,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -47,6 +47,9 @@ int sstelnet = 0;                       /* Do server-side Telnet negotiation */
 #define TNC_NAMES
 #include "ckcnet.h"
 #include "ckctel.h"
+#ifdef CK_AUTHENTICATION
+#include "ckuath.h"
+#endif /* CK_AUTHENTICATION */
 #ifdef CK_SSL
 #include "ck_ssl.h"
 #endif /* CK_SSL */
@@ -57,11 +60,12 @@ int sstelnet = 0;                       /* Do server-side Telnet negotiation */
 #ifndef NT
 #include <os2.h>
 #undef COMMENT
+#else
+#define isascii __isascii
 #endif /* NT */
 #include "ckocon.h"
 extern int tt_type, max_tt;
 extern struct tt_info_rec tt_info[];
-extern char ttname[];
 #endif /* OS2 */
 #endif /* NOTERM */
 
@@ -102,6 +106,8 @@ int tn_infinite = 0;                    /* Telnet Bug Infinite-Loop-Check */
 int tn_rem_echo = 1;                    /* We will echo if WILL ECHO */
 int tn_b_xfer = 0;                      /* Telnet Binary for Xfers? */
 int tn_sb_bug = 1;                      /* Telnet BUG - SB w/o WILL or DO */
+int tn_auth_krb5_des_bug = 1;           /* Telnet BUG - AUTH KRB5 DES */
+                                        /*              truncates long keys */
 int tn_no_encrypt_xfer = 0;             /* Turn off Telnet Encrypt? */
 int tn_delay_sb = 1;                    /* Delay SBs until safe */
 int tn_auth_how = TN_AUTH_HOW_ANY;
@@ -122,7 +128,7 @@ char tn_msg[TN_MSG_LEN];                /* Telnet data can be rather long */
 char hexbuf[TN_MSG_LEN];
 char tn_msg_out[TN_MSG_LEN];
 #ifdef CK_FORWARD_X
-char fwdx_msg_out[TN_MSG_LEN];
+CHAR fwdx_msg_out[TN_MSG_LEN];
 #endif /* CK_FORWARD_X */
 
 /*
@@ -566,6 +572,7 @@ tn_wait(where) char * where;
               case 6:                   /* Logout */
                 break;
               case -1:
+		if (!quiet)
                 printf("?Telnet Option negotiation error.\n");
                 if (tn_deb || debses)
                   tn_debug("<Telnet Option negotiation error>");
@@ -573,6 +580,7 @@ tn_wait(where) char * where;
               case -2:
                 printf("?Connection closed by peer.\n");
                 if (tn_deb || debses) tn_debug("<Connection closed by peer>");
+		ttclos(0);
                 return(-2);
               default:
                 if (ch < 0) {
@@ -636,9 +644,9 @@ tn_wait(where) char * where;
 #ifdef TN_COMPORT
         /* Must disable carrier detect check if we are using Telnet Comport */
         savcarr = ttcarr;
-        ttcarr = CAR_OFF;
+        ttscarr(CAR_OFF);
         count = ttchk();
-        ttcarr = savcarr;
+        ttscarr(savcarr);
 #else /* TN_COMPORT */
         count = ttchk();
 #endif /* TN_COMPORT */
@@ -2512,6 +2520,7 @@ tn_set_modes() {
 #ifdef CK_SSL
     TELOPT_SB(TELOPT_START_TLS).start_tls.u_follows = 0;
     TELOPT_SB(TELOPT_START_TLS).start_tls.me_follows = 0;
+    TELOPT_SB(TELOPT_START_TLS).start_tls.auth_request = 0;
 #endif /* CK_SSL */
 
     /* Now set the ones we want to accept to the proper values */
@@ -2811,6 +2820,7 @@ tn_reset() {
     }
     TELOPT_SB(TELOPT_START_TLS).start_tls.u_follows = 0;
     TELOPT_SB(TELOPT_START_TLS).start_tls.me_follows = 0;
+    TELOPT_SB(TELOPT_START_TLS).start_tls.auth_request = 0;
 #endif /* CK_SSL */
 
 #ifdef CK_ENCRYPTION
@@ -2870,20 +2880,6 @@ tn_start() {
         TELOPT_UNANSWERED_DO(TELOPT_START_TLS) = 1;
         wait = 1;
     }
-#ifdef COMMENT
-/*
-  We can put off waiting for this until after we have requested AUTH.  The
-  next draft will specify how the WILL side is to decide between these
-  conflicting options.
-*/
-    if (wait) {
-        if (tn_wait("start_tls") < 0) {
-            tn_push();
-            return(-1);
-        }
-        wait = 0;
-    }
-#endif /* COMMENT */
 #endif /* CK_SSL */
 
 #ifdef CK_AUTHENTICATION
@@ -3243,8 +3239,11 @@ tn_ini() {
         ttnproto = NP_TELNET;           /* pretend it's telnet anyway, */
         oldplex = duplex;               /* save old duplex value */
         duplex = 1;                     /* and set to half duplex for telnet */
+        if (inserver)
+          debug(F100,"tn_ini skipping telnet negotiations","",0);
+          else
         tn_wait("tn_ini - waiting to see if telnet negotiations were sent");
-        debug(F100,"tn_ini skipping telnet negotiations","",0);
+	tn_push();
         return(0);
       case NP_TCPRAW:                   /* Raw socket requested. */
         debug(F100,"tn_ini telnet negotiations ignored","tn_init",tn_init);
@@ -3281,7 +3280,7 @@ tn_hex(buf, buflen, data, datalen)
 #endif /* CK_ANSIC */
 {
     int i = 0, j = 0, k = 0;
-    CHAR tmp[8];
+    CHAR tmp[16];		/* in case value is treated as negative */
 #ifdef COMMENT
     int was_hex = 1;
 
@@ -3298,7 +3297,7 @@ tn_hex(buf, buflen, data, datalen)
     if (!was_hex)
         ckstrncat((char *)buf,"\" ",buflen);
 #else /* COMMENT */
-    if (datalen <= 0 || data == NULL)
+    if (datalen <= 0 || data == NULL || buf == NULL || buflen <= 0)
         return(0);
 
     for (i = 0; i < datalen; i++) {
@@ -3308,7 +3307,7 @@ tn_hex(buf, buflen, data, datalen)
               sprintf((char *)tmp,
                       "%s%02x ",
                       (j == 8 ? "| " : ""),
-                      (char) data[i + j]
+                      (unsigned int) data[i + j]
                       );
             else
               sprintf((char *)tmp,
@@ -3567,7 +3566,7 @@ tn_sb( opt, len, fn ) int opt; int * len; int (*fn)();
                 int i;
                 ckmakmsg( tn_msg,TN_MSG_LEN,
                           "TELNET RCVD SB ",TELOPT(opt),
-                                                  " DATA(buffer-full) ",NULL);
+			  " DATA(buffer-full) ",NULL);
                 tn_hex(tn_msg,TN_MSG_LEN,&sb[1],n-3);
                 if (flag == 2)
                     ckstrncat(tn_msg," SE",TN_MSG_LEN);
@@ -4220,7 +4219,7 @@ tn_sb( opt, len, fn ) int opt; int * len; int (*fn)();
                   NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
         {
             int i;
-            for (i = 0; i <= 15; i++) {
+            for (i = 0; i < 16; i++) {
                 if (s[i][0]) {
                     ckstrncat(tn_msg,s[i],TN_MSG_LEN);
                     ckstrncat(tn_msg," ",TN_MSG_LEN);
@@ -4508,6 +4507,16 @@ tn_xdoop(z, echo, fn) CHAR z; int echo; int (*fn)();
                   /* We now have to perform a SB SEND to identify the  */
                   /* supported authentication types to the other side. */
                   extern int authentication_version;
+
+#ifdef CK_SSL
+                  /* if we have an outstanding DO START_TLS then we must 
+                   * wait for the response before we determine what to do
+                   */
+                  if (TELOPT_UNANSWERED_DO(TELOPT_START_TLS)) {
+                      TELOPT_SB(TELOPT_START_TLS).start_tls.auth_request = 1;
+                      break;
+                  }
+#endif /* CK_SSL */
                   authentication_version = AUTHTYPE_AUTO;
                   ck_tn_auth_request();
                   break;
@@ -4616,11 +4625,19 @@ tn_xdoop(z, echo, fn) CHAR z; int echo; int (*fn)();
             switch(x) {
 #ifdef CK_SSL
             case TELOPT_START_TLS:
-                if (sstelnet && TELOPT_U_MODE(x) == TN_NG_MU) {
-                    printf("Telnet Start-TLS refused.\n");
-                    ttclos(0);
-                    whyclosed = WC_TELOPT;
-                    return(-3);
+                if (sstelnet) {
+                    if (TELOPT_U_MODE(x) == TN_NG_MU) {
+                        printf("Telnet Start-TLS refused.\n");
+                        ttclos(0);
+                        whyclosed = WC_TELOPT;
+                        return(-3);
+                    }
+                    if (TELOPT_SB(x).start_tls.auth_request) {
+                        extern int authentication_version;
+                        TELOPT_SB(x).start_tls.auth_request = 0;
+                        authentication_version = AUTHTYPE_AUTO;
+                        ck_tn_auth_request();
+                    }
                 }
                 break;
 #endif /* CK_SSL */
@@ -4870,18 +4887,6 @@ tn_xdoop(z, echo, fn) CHAR z; int echo; int (*fn)();
               case TELOPT_LOGOUT:
                 ttclos(0);              /* And then hangup */
                 whyclosed = WC_TELOPT;
-#ifdef COMMENT
-#ifdef IKSD
-                if (inserver
-#ifndef NOLOCAL
-                    && !local
-#endif /* NOLOCAL */
-                    )
-                  doexit(GOOD_EXIT,0);
-#endif /* IKSD */
-#endif /* COMMENT */
-                if (TELOPT_UNANSWERED_WILL(x))
-                  TELOPT_UNANSWERED_WILL(x) = 0;
                 return(6);
 #ifdef CK_SNDLOC
                case TELOPT_SNDLOC:
@@ -5144,6 +5149,7 @@ tn_xdoop(z, echo, fn) CHAR z; int echo; int (*fn)();
 #endif /* CK_ENCRYPTION */
                       /* if START_TLS is not REQUIRED, then retry without it */
                       if ( def_tls_me_mode != TN_NG_MU ) {
+                          extern char ttname[];
 #ifndef NOLOCAL
                           tls_norestore = 1;
 #endif /* NOLOCAL */
@@ -5155,7 +5161,7 @@ tn_xdoop(z, echo, fn) CHAR z; int echo; int (*fn)();
                           ttnproto = NP_TELNET;
                           printf("Reconnecting without TLS.\n");
                           sleep(2);
-                          if (ttopen(line,&x,mdmtyp,0)<0)
+                          if (ttopen(ttname,&x,mdmtyp,0)<0)
                               rc = -3;
                       } else {
                           TELOPT_DEF_C_U_MODE(TELOPT_START_TLS) =
@@ -5205,7 +5211,7 @@ tn_xdoop(z, echo, fn) CHAR z; int echo; int (*fn)();
 #endif /* CK_SSL */
 #ifdef CK_AUTHENTICATION
           case TELOPT_AUTHENTICATION:
-            if (ck_tn_sb_auth(sb,n) < 0) {
+            if (ck_tn_sb_auth((char *)sb,n) < 0) {
                 if (sstelnet && TELOPT_U_MODE(x) == TN_NG_MU) {
                     ttclos(0);
                     whyclosed = WC_TELOPT;
@@ -5727,7 +5733,7 @@ tn_rnenv(sb, len) CHAR * sb; int len;
 #define SFUTLNTVER "SFUTLNTVER"
 #define SFUTLNTMODE "SFUTLNTMODE"
 #define SFUTLNTVER_VALUE  "2"
-#define SFUTLNTMODE_VALUE "console"  /* The other value is "stream" */
+#define SFUTLNTMODE_VALUE "console"	/* The other value is "stream" */
 
 /* Telnet send new environment */
 /* Returns -1 on error, 0 if nothing happens, 1 on success */
@@ -5745,10 +5751,11 @@ tn_snenv(sb, len) CHAR * sb; int len;
     int i,j,n;                          /* Worker. */
     int type = 0;       /* 0 for NONE, 1 for VAR, 2 for USERVAR in progress */
     extern int ck_lcname;
-    char localuidbuf[UIDBUFLEN];
+    char localuidbuf[UIDBUFLEN];	/* (Initialized just below) */
     char * uu = uidbuf;
     char * disp = NULL;
 
+    localuidbuf[0] = '\0';
     if (ttnet != NET_TCPB) return(0);
     if (ttnproto != NP_TELNET) return(0);
     if (!sb) return(-1);
@@ -6611,6 +6618,9 @@ tnc_tn_sb(sb, len) CHAR * sb; int len;
     }
 #endif /* CK_SSL */
 
+    debug(F111,"tnc_tn_sb","sb[0]",sb[0]);
+    debug(F111,"tnc_tn_sb","len",len);
+
     switch (sb[0]) {
       case TNC_C2S_SIGNATURE:
       case TNC_S2C_SIGNATURE:
@@ -6746,7 +6756,12 @@ tnc_tn_sb(sb, len) CHAR * sb; int len;
         switch ( sb[1] ) {
           case TNC_CTL_OFLOW_REQUEST:
             /* determine local outbound flow control and send to peer */
+	    /* Cisco IOS returns 0 (TNC_CTL_OFLOW_REQUEST) when attempting */
+	    /* to set the inbound flow control if it is not supported      */
+	    /* separately from outbound flow control.  So must reset       */
+	    /* wait for sb flag.                                           */
             debug(F110,"tnc_tn_sb","oflow request",0);
+            TELOPT_SB(TELOPT_COMPORT).comport.wait_for_sb = 0;
             break;
           case TNC_CTL_OFLOW_NONE:
           case TNC_CTL_OFLOW_XON_XOFF:

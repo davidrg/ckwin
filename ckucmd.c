@@ -1,6 +1,6 @@
 #include "ckcsym.h"
 
-char *cmdv = "Command package 8.0.153, 26 Jul 2002";
+char *cmdv = "Command package 8.0.157, 11 May 2003";
 
 /*  C K U C M D  --  Interactive command package for Unix  */
 
@@ -8,7 +8,7 @@ char *cmdv = "Command package 8.0.153, 26 Jul 2002";
   Author: Frank da Cruz (fdc@columbia.edu),
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2002,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -222,7 +222,7 @@ modules would have to be changed...
 extern int cmdadl, justone;
 #endif /* CK_AUTODL */
 
-extern int timelimit, nzxopts, nopush, nolocal, xcmdsrc;
+extern int timelimit, nzxopts, nopush, nolocal, xcmdsrc, keepallchars;
 
 #ifdef CKSYSLOG
 #ifdef UNIX
@@ -1259,7 +1259,12 @@ cmnum(xhlp,xdef,radix,n,f) char *xhlp, *xdef; int radix, *n; xx_strp f; {
 	    if (!zp) return(-2);
 	    if (!strcmp(zp,"-1")) return(-2);
 	}
-        *n = atoi(zp);			/* Convert decimal string to int. */
+	errno = 0;			/* Got one, we're done. */
+        *n = atoi(zp);
+	if (errno) {
+	    perror(zp);
+	    return(-9);
+	}
 	debug(F101,"cmnum 1st chknum ok","",*n);
         return(0);
     } else if ((x = xxesc(&zp)) > -1) {	/* Check for backslash escape */
@@ -1288,7 +1293,12 @@ cmnum(xhlp,xdef,radix,n,f) char *xhlp, *xdef; int radix, *n; xx_strp f; {
 	    if (!zp) return(-2);
 	    if (!strcmp(zp,"-1")) return(-2);
 	}
-        *n = atoi(zp);			/* Got one, we're done. */
+	errno = 0;
+        *n = atoi(zp);
+	if (errno) {
+	    perror(zp);
+	    return(-9);
+	}
 	debug(F101,"cmnum 2nd chknum ok","",*n);
         return(0);
 #ifndef NOSPL
@@ -1309,7 +1319,12 @@ cmnum(xhlp,xdef,radix,n,f) char *xhlp, *xdef; int radix, *n; xx_strp f; {
 		if (!zp) return(-2);
 		if (!strcmp(zp,"-1")) return(-2);
 	    }
+	    errno = 0;
 	    *n = atoi(p);
+	    if (errno) {
+		perror(p);
+		return(-9);
+	    }
 	    debug(F101,"cmnum exp eval ok","",*n);
 	    return(0);
 	} else return(-2);
@@ -1882,6 +1897,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 	    }
 #endif /* VMS */
 
+	    debug(F101,"cmifi dirflg","",dirflg);
 	    if (dirflg) {		/* Parsing a directory name? */
 		/* Yes, does it contain wildcards? */
 		if (iswild(*xp) ||
@@ -1890,8 +1906,9 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 		    nzxopts |= ZX_DIRONLY; /* Match only directory names */
 		    if (matchdot)  nzxopts |= ZX_MATCHDOT;
 		    if (recursive) nzxopts |= ZX_RECURSE;
-		    debug(F101,"cmifi nzxopts 2","",nzxopts);
+		    debug(F111,"cmifi nzxopts 2",*xp,nzxopts);
 		    y = nzxpand(*xp,nzxopts);
+		    debug(F111,"cmifi nzxpand 2",*xp,y);
 		    nfiles = y;
 		    expanded = 1;
 		} else {
@@ -2010,6 +2027,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 		if (matchdot)  nzxopts |= ZX_MATCHDOT;
 		if (recursive) nzxopts |= ZX_RECURSE;
 		y = nzxpand(*xp,nzxopts);
+		debug(F111,"cmifi diractive nzxpand",*xp,y);
 		nfiles = y;
 		expanded = 1;
 	    }
@@ -2020,11 +2038,16 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 #endif /* RECURSIVE */
 
 	    debug(F111,"cmifi sv wild",sv,*wild);
+	    debug(F101,"cmifi y","",y);
 	    if (dirflg && *wild && cdactive) {
-		printf("?Wildcard matches more than one directory\n");
-		if (sv) free(sv);
-		if (np) free(np);
-		return(-9);
+		if (y > 1) {
+		    printf("?Wildcard matches more than one directory\n");
+		    if (sv) free(sv);
+		    if (np) free(np);
+		    return(-9);
+		} else {
+		    znext(*xp);
+		}
 	    }
 	    if (itsadir && d && !dirflg) { /* It's a directory and not wild */
 		if (sv) free(sv);	/* and it's ok to parse directories */
@@ -2735,11 +2758,16 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 
 /*  C M F L D  --  Parse an arbitrary field  */
 /*
- Returns
-   -3 if no input present when required,
-   -2 if field too big for buffer,
-   -1 if reparse needed,
-    0 otherwise, xp pointing to string result.
+  Returns:
+    -3 if no input present when required,
+    -2 if field too big for buffer,
+    -1 if reparse needed,
+     0 otherwise, xp pointing to string result.
+
+  NOTE: Global flag keepallchars says whether this routine should break on CR
+  or LF: needed for MINPUT targets and DECLARE initializers, where we want to
+  keep control characters if the user specifies them (March 2003).  It might
+  have been better to change the calling sequence but that was not practical.
 */
 int
 cmfld(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; {
@@ -2800,13 +2828,15 @@ cmfld(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; {
 		atxn = CMDBL;
 		if ((*f)(*xp,&zq,&atxn) < 0)
 		  return(-2);
-		if (setatm(atxbuf,1) < 0) { /* Replace by new value */
+		debug(F111,"cmfld 3",atxbuf,xc);
+		/* Replace by new value -- for MINPUT only keep all chars */
+		if (setatm(atxbuf,keepallchars ? 3:1) < 0) { /* 16 Mar 2003 */
 		    printf("Value too long\n");
 		    return(-9);
 		}
 		*xp = atmbuf;
 	    }
-	    debug(F111,"cmfld 3",atmbuf,xc);
+	    debug(F111,"cmfld 4",atmbuf,xc);
 	    if (**xp == NUL) {		/* If variable evaluates to null */
 		if (setatm(xdef,0) < 0) {
 		    printf("?Default too long\n");
@@ -5227,7 +5257,8 @@ cmdiffdate(d1,d2) char * d1, * d2; {
     A date string in standard format: yyyymmdd hh:mm:ss (time optional).
     Options:
       1: Reformat date to yyyy-mmm-dd (mmm = English month abbreviation).
-      2. Reformat date to dd-mmm-yyyy (mmm = English month abbreviation).
+      2: Reformat date to dd-mmm-yyyy (mmm = English month abbreviation).
+      3: Reformat as numeric yyyymmddhhmmss.
     Returns:
       Pointer to result if args valid, otherwise original arg pointer.
 */
@@ -5241,10 +5272,24 @@ shuffledate(p,opt) char * p; int opt; {
 
     if (!p) p = "";
     if (!*p) p = ckdate();
-    if (opt < 1 || opt > 2)
+    if (opt < 1 || opt > 3)
       return(p);
     len = strlen(p);
     if (len < 8 || len > 31) return(p);
+    if (opt == 3) {
+	ckstrncpy(obuf,p,48);
+	/* yyyymmdd hh:mm:ss */
+	/* 01234567890123456 */
+	/* yyyymmddhhmmss    */
+	obuf[8] = obuf[9];
+	obuf[9] = obuf[10];
+	obuf[10] = obuf[12];
+	obuf[11] = obuf[13];
+	obuf[12] = obuf[15];
+	obuf[13] = obuf[16];
+	obuf[14] = NUL;
+	return((char *)obuf);
+    }
     ckstrncpy(ibuf,p,32);
     c = ibuf[4];			/* Warning: not Y10K compliant */
     ibuf[4] = NUL;
@@ -6674,6 +6719,7 @@ addbuf(cp) char *cp; {
     fcode = 0 means break on whitespace or EOL.
     fcode = 1 means don't break on space.
     fcode = 2 means break on space, ':', or '='.
+    fcode = 3 means copy the whole string.
   Null-terminate the result.
   Return length of token, and also set global "cc" to this length.
   Return -1 if token was too long.
@@ -6746,10 +6792,10 @@ setatm(cp,fcode) char *cp; int fcode; {
 			}
 		    }
 		}
-	    } else if ((*cp == SP || *cp == HT) && (fcode != 1))
+	    } else if ((*cp == SP || *cp == HT) && fcode != 1 && fcode != 3)
 	      break;
 	    if ((fcode == 2) && (*cp == '=' || *cp == ':')) break;
-	    if (*cp == LF || *cp == CR) break;
+	    if ((fcode != 3) && (*cp == LF || *cp == CR)) break;
 	}
         *ap++ = *cp++;
         cc++;
@@ -7284,6 +7330,10 @@ xxesc(s) char **s; {			/* Expand backslash escapes */
      * the most beautiful programming style but requires the least
      * amount of changes to other routines.
      */
+    if (*p == '{') {			/* Sun May 11 20:00:40 2003 */
+	brace = 1;			/* Allow {} after radix indicator */
+	p++;
+    }
     if (radix <= 10) {			/* Number in radix 8 or 10 */
 	for ( x = y = 0;
  	      (*p) && (*p >= '0') && (*p <= hd)
@@ -7523,7 +7573,8 @@ xlookup(table,cmd,n,x) struct keytab table[]; char *cmd; int n, *x; {
     c = *cmd;				/* First char of string to look up */
     if (!*(cmd+1)) {			/* Special handling for 1-char names */
 	cmdlen = 1;
-	if (isupper(c)) { c = tolower(c); *cmd = c; }
+	if (isupper(c))
+	  c = tolower(c);
 	one = 1;
     } else {
 	cmdlen = 0;
@@ -7546,6 +7597,7 @@ xlookup(table,cmd,n,x) struct keytab table[]; char *cmd; int n, *x; {
 	if (one) {			/* Name is one char long */
 	    if (!*(s+1)) {
 		if (x) *x = i;
+                *cmd = c; 
 		return(table[i].kwval);	/* So is table entry */
 	    }
 	} else {			/* Otherwise do string comparison */

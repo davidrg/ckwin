@@ -3,10 +3,13 @@
 /*  C K U U S X --  "User Interface" common functions. */
 
 /*
-  Author: Frank da Cruz <fdc@columbia.edu>,
-  Columbia University Academic Information Systems, New York City.
+  Authors:
+    Frank da Cruz <fdc@columbia.edu>,
+      The Kermit Project, Columbia University, New York City
+    Jeffrey E Altman <jaltman@secure-endpoints.com>
+      Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2002,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -75,7 +78,9 @@ extern xx_strp xxstring;
 #else /* OS2 */
 _PROTOTYP(int getlocalipaddr, (void));
 _PROTOTYP(int istncomport, (void));
-
+#ifndef NOCKGETFQHOST
+_PROTOTYP( char * ckgetfqhostname,(char *));
+#endif	/* NOCKGETFQHOST */
 #ifndef NETCONN
 /*
   We should just pull in ckcnet.h here, but it causes a conflict with curses.h.
@@ -269,7 +274,7 @@ extern int apcactive;
 /* External variables */
 
 extern int local, quiet, binary, network, what, parity, xitsta, escape,
-  tlevel, bgset, backgrd, suspend, cmdint, nettype, seslog, dfloc;
+  tlevel, bgset, backgrd, xsuspend, cmdint, nettype, seslog, dfloc;
 
 extern int cmd_rows, cmd_cols, xcmdsrc;
 
@@ -1046,7 +1051,7 @@ _PROTOTYP( char * strerror, (int) );
 /*
   Filename pattern recognition lists for automatic text/binary switching.
   These are somewhat passe after the addition of scanfile()  (7.0).
-  But with the addition of FTP [M]GET, they're back in style (7.1).
+  But with the addition of FTP [M]GET, they're back in style (8.0).
 
   Although, with FTP the lists need to be used in the reverse.  With
   Kermit the list is used to imply the types of the local system.  Whereas
@@ -1064,6 +1069,8 @@ char *binpatterns[FTPATTERNS+1] = { NULL, NULL };
   Similarly for ".dat", ".inf", and so on.  Also ".ps" since PostScript files
   are not always text.  ".log" is omitted since logs can be text or binary,
   except in VMS they are usually text, etc etc.
+
+  Later (Sep 2003): Add PostScript to binary patterns.
 */
 static char *txtp[SYS_MAX][FTPATTERNS] = {
     /* UNKNOWN */ {
@@ -1141,48 +1148,48 @@ static char *binp[SYS_MAX][FTPATTERNS] = {
     "*.gz","*.Z","*.tgz","*.gif", "*.tar","*.zip","*.o","*.so","*.a","*.out",
     "*.exe", "*.jpg", "*.jpeg", "*.tif","*.tiff", "*.pdf", "*.so.*", "*.class",
     "*.rpm", "*.bmp", "*.bz2", "*.BMP", "*.dll", "*.doc", "*.vxd", "*.dcx",
-    "*.pdf", "*.xl*", "*.lzh", "*.lhz", "*.au", "*.voc", "*.mpg",
-    "*.mpeg","[wk]ermit","krbmit",NULL
+    "*.xl*", "*.lzh", "*.lhz", "*.au", "*.voc", "*.mpg", "*.mpeg","[wk]ermit",
+    "*.ps", NULL
     },
     {					/* WIN32 */
     "*.exe", "*.zip", "*.obj", "*.com", "*.gif", "*.jpg", "*.wav", "*.ram",
     "*.class","*.cla","*.dll", "*.drv", "*.ocx", "*.vbx", "*.lib", "*.ico",
     "*.bmp", "*.tif", "*.tar", "*.gz",  "*.tgz", "*.xl*", "*.doc", "*.vxd",
     "*.pdf", "*.lzh", "*.vxd", "*.snd", "*.au", "* .voc", "*.mpg", "*.mpeg",
-    NULL
+    "*.ps", NULL
     },
     {					/* VMS */
     "*.exe","*.obj","*.bak","*.bin","*.adf","*.stb","*.mai","*.sys","*.dmp",
-    "*.dat","*.par", NULL
+    "*.ps", "*.dat","*.par", NULL
     },
     {					/* OS2 */
     "*.exe", "*.zip", "*.obj", "*.com", "*.gif", "*.jpg", "*.wav", "*.ram",
     "*.class", "*.cla", "*.dll", "*.drv", "*.ocx", "*.vbx", "*.lib", "*.ico",
     "*.bmp", "*.tif", "*.tar", "*.gz", "*.tgz", "*.xl*", "*.doc", "*.vxd",
-    "*.pdf", "*.lzh", NULL
+    "*.pdf", "*.ps", "*.lzh", NULL
     },
     {					/* DOS */
     "*.exe", "*.zip", "*.obj", "*.com", "*.gif", "*.jpg", "*.wav", "*.ram",
     "*.cla", "*.dll", "*.drv", "*.ocx", "*.vbx", "*.lib", "*.ico",
     "*.bmp", "*.tif", "*.tar", "*.gz", "*.tgz", "*.xl*", "*.doc", "*.vxd",
-    "*.pdf", "*.lzh", NULL
+    "*.pdf", "*.ps", "*.lzh", NULL
     },
     {					/* TOPS10 */
     "*.exe","*.sav","*.bin","*.rim","*.rel","*.unv","*.lib","*.tap","*.dvi",
-    NULL
+    "*.ps", NULL
     },
     {					/* TOPS20 */
     "*.exe","*.sav","*.bin","*.rim","*.rel","*.unv","*.lib","*.tap","*.dvi",
-    NULL
+    "*.ps", NULL
     },
     {					/* STRATUS VOS */
     "*.exe", "*.zip", "*.obj", "*.com", "*.gif", "*.jpg", "*.wav", "*.ram",
     "*.class", "*.cla", "*.dll", "*.drv", "*.ocx", "*.vbx", "*.lib", "*.ico",
     "*.bmp", "*.tif", "*.tar", "*.gz", "*.tgz", "*.xl*", "*.doc", "*.vxd",
-    "*.pdf", "*.lzh", "*.pm", NULL
+    "*.pdf", "*.ps", "*.lzh", "*.pm", NULL
     },
     {					/* DG */
-    "*.ob", "*.pr", "*.dmp", NULL
+    "*.ob", "*.pr", "*.dmp", "*.ps", NULL
     },
     { /* OSK */
     "*.gz","*.Z","*.z","*.tgz","*.lhz","*.tar",	/* archivers */
@@ -1190,7 +1197,7 @@ static char *binp[SYS_MAX][FTPATTERNS] = {
     /* object files, libraries, executables */
     "*.r","*.l","*.exe", "*.dll", "*.so.*", "*.class",
     /* images */
-    "*.gif", "*.jpg", "*.jpeg", "*.tif","*.tiff", "*.pdf",
+    "*.gif", "*.jpg", "*.jpeg", "*.tif","*.tiff", "*.pdf", "*.ps",
     "*.bmp", "*.bz2", "*.BMP","*.pcx",
     NULL
     }
@@ -1486,7 +1493,7 @@ scanfile(name,flag,nscanfile) char * name; int * flag, nscanfile; {
 #endif /* PATTERNS */
 
 #ifdef VMS
-/* We don't scan in VMS because text files can various record formats in */
+/* We don't scan in VMS where text files have various record formats in  */
 /* which record headers contain seemingly non-text bytes.  So the best   */
 /* we can do in VMS is tell whether the file is text or binary, period.  */
     {
@@ -1536,6 +1543,70 @@ scanfile(name,flag,nscanfile) char * name; int * flag, nscanfile; {
 	    break;
 	}
 	debug(F111,"scanfile buffer ok",name,count);
+
+	if (bytes == 0 && count > 8) {
+	    /* PDF files can look like text in the beginning. */
+	    if (!ckstrcmp((char *)buf,"%PDF-1.",7,1)) {
+		if (isdigit(buf[7])) {
+		    if (buf[8] == '\015' ||
+			count > 9 && buf[8] == SP && buf[9] == '\015') {
+#ifdef DEBUG
+			buf[8] = NUL;
+			debug(F110,"scanfile PDF",buf,0);
+#endif /* DEBUG */
+			binary = 1;	/* But they are binary. */
+			break;
+		    }
+		}
+	    } else if (!ckstrcmp((char *)buf,"%!PS-Ado",8,1)) {
+		/* Ditto for PostScript */
+#ifdef DEBUG
+		int i;
+		for (i = 8; i < count; i++) {
+		    if (buf[i] < '!') {
+			buf[i] = NUL;
+			break;
+		    }
+		}
+		debug(F110,"scanfile PostScript",buf,0);
+#endif /* DEBUG */
+		binary = 1;
+		break;
+#ifndef NOPCLSCAN
+	    } else if (!ckstrcmp((char *)buf,") HP-PCL",8,1)) {
+		/* HP PCL printer language */
+#ifdef DEBUG
+		int i;
+		for (i = 8; i < count; i++) {
+		    if (buf[i] < '!') {
+			buf[i] = NUL;
+			break;
+		    }
+		}
+		debug(F110,"scanfile PCL",buf,0);
+#endif /* DEBUG */
+		binary = 1;
+		break;
+	    } 
+#endif /* NOPCLSCAN */
+#ifndef NOPJLSCAN
+	      else if (buf[0] == '\033' && (buf[1] == 'E' || buf[1] == '%')) {
+		/* Ditto for PJL Job printer header */
+#ifdef DEBUG
+		int i;
+		for (i = 2; i < count; i++) {
+		    if (buf[i] < '!') {
+			buf[i] = NUL;
+			break;
+		    }
+		}
+		debug(F110,"scanfile PJL Job printer header",buf,0);
+#endif /* DEBUG */
+		binary = 1;
+		break;
+#endif /* NOPJLSCAN */
+	    }
+	}
 
 #ifdef UNICODE
 	if (bytes == 0 && count > 1) {
@@ -1842,6 +1913,8 @@ scanfile(name,flag,nscanfile) char * name; int * flag, nscanfile; {
 		debug(F100,"scanfile small UCS2 doubtful","",0);
 		rc = FT_BIN;
 		goto xscanfile;
+	    } else if (oddzero == 0 && evenzero == 0) {
+		rc = eightbit ? FT_8BIT : FT_7BIT;
 	    }
 	}
 	goto xscanfile;			/* Seems to be UCS-2 */
@@ -2272,11 +2345,19 @@ chkerr() {
 VOID
 fatal(msg) char *msg; {
     extern int initflg;
+    static int initing = 0;
     if (!msg) msg = "";
     debug(F111,"fatal",msg,initflg);
 
-    if (!initflg)                       /* In case called from prescan. */
-      sysinit();
+    if (!initflg) {			/* If called from prescan */
+	if (initing)			/* or called from sysinit() */
+          exit(253);
+	initing = 1;
+	sysinit();
+    }
+
+    debug(F111,"fatal",msg,xitsta);
+    tlog(F110,"Fatal:",msg,0L);
 #ifdef VMS
     if (strncmp(msg,"%CKERMIT",8))
       conol("%CKERMIT-E-FATAL, ");
@@ -2284,14 +2365,15 @@ fatal(msg) char *msg; {
 #else /* !VMS */
     conoll(msg);
 #endif /* VMS */
-    debug(F111,"fatal",msg,xitsta);
-    tlog(F110,"Fatal:",msg,0L);
 #ifdef OS2
 #ifndef NOXFER
-    if (xfrbel) bleep(BP_FAIL);
-    sleep(1);
-    if (xfrbel) bleep(BP_FAIL);
+    if (xfrbel) {
+        bleep(BP_FAIL);
+        sleep(1);
+        bleep(BP_FAIL);
+    }
 #endif /* NOXFER */
+
 #endif /* OS2 */
     doexit(BAD_EXIT,xitsta | 1);        /* Exit indicating failure */
 }
@@ -2775,6 +2857,7 @@ trap(sig) int sig;
     extern int timelimit;
 #endif /* NOICP */
 #ifdef OS2
+    extern unsigned long startflags;
 #ifndef NOSETKEY
     extern int os2gks;
 #endif /* NOSETKEY */
@@ -2811,6 +2894,13 @@ trap(sig) int sig;
 	  debug(F101,"trap caught signal","",sig);
     }
 #endif /* DEBUG */
+
+#ifdef OS2
+    if ( sig == SIGBREAK && (startflags & 128) ) {
+        debug(F101,"trap ignoring SIGBREAK","",sig);
+        return;
+    }
+#endif /* OS2 */
 
 #ifndef NOICP
     timelimit = 0;                      /* In case timed ASK interrupted */
@@ -3024,7 +3114,7 @@ stptrap(sig) int sig;
 #ifndef NOJC
     int x; extern int cmflgs;
     debug(F101,"stptrap() caught signal","",sig);
-    if (!suspend) {
+    if (!xsuspend) {
         printf("\r\nsuspend disabled\r\n");
 #ifndef NOICP
         if (what & W_COMMAND) {		/* If we were parsing commands */
@@ -3040,7 +3130,7 @@ stptrap(sig) int sig;
         /* in the background, which could make us block */
         fflush(stdout);
 
-        x = psuspend(suspend);          /* Try to suspend. */
+        x = psuspend(xsuspend);		/* Try to suspend. */
         if (x < 0)
 #endif /* OS2 */
           printf("Job control not supported\r\n");
@@ -3203,15 +3293,20 @@ doxlog(x, fn, fs, fm, status, msg)
 
     bufp = buf;
     left = sizeof(buf);
+    debug(F101,"XXX doxlog left 1","",left);
 
     p = zzndate();                      /* Date */
-    ckmakmsg(buf,left, p ? p : "00000000", sep, NULL, NULL);
+    ckmakmsg(buf, left, p ? p : "00000000", sep, NULL, NULL);
     bufp += 9;
     left -= 9;
+    debug(F111,"XXX doxlog left 2",buf,left);
+
     ztime(&p);
     ckstrncpy(bufp,p+11,left);
     bufp += 8;
     left -= 8;
+    debug(F111,"XXX doxlog left 3",buf,left);
+
     if (ftp) {
 	if (!(x & (W_SEND|W_RECV)))
 	  return;
@@ -3224,6 +3319,8 @@ doxlog(x, fn, fs, fm, status, msg)
     ckmakmsg(bufp,left,sep,s,sep,NULL);
     bufp += k + 2;
     left -= (k + 2);
+    debug(F111,"XXX doxlog left 4",buf,left);
+
     s = "";
     if (ckstrchr(fn,sep[0]))		/* Filename */
       s = "\"";
@@ -3251,6 +3348,10 @@ doxlog(x, fn, fs, fm, status, msg)
     ckstrncat(buf, status ? "FAILED" : "OK",CKMAXPATH);
     len = strlen(buf);
     left = CKMAXPATH+256 - len;
+    if (left < 2) fatal("doxlog buffer overlow");
+
+    debug(F111,"XXX doxlog left 5",buf,left);
+
     debug(F110,"doxlog buf 1", buf, len);
     s = buf + len;
     if (status == 0 && left > 32) {
@@ -3268,6 +3369,8 @@ doxlog(x, fn, fs, fm, status, msg)
     } else if ((int)strlen(msg) + 4 < left) {
         sprintf(s,"%s\"%s\"",sep,msg);
     }
+    debug(F111,"XXX doxlog left 5",buf,left);
+
     debug(F110,"doxlog 5",buf,0);
     x = zsoutl(ZTFILE,buf);
     debug(F101,"doxlog zsoutl","",x);
@@ -4504,8 +4607,13 @@ doexit(exitstat,code) int exitstat, code; {
     quitting++;
 
 #ifdef OS2
-    if ( !SysInited )
+    if ( !SysInited ) {
+        static int initing = 0;
+        if ( initing )
+	  exit(253);
+        initing = 1;
         sysinit();
+    }
 #endif /* OS2 */
 
     if (deblog) {
@@ -4705,7 +4813,7 @@ VOID
 setint() {                              /* According to SET COMMAND INTERRUP */
     int x = 0;
     if (cmdint)  x |= 1;
-    if (suspend) x |= 2;
+    if (xsuspend) x |= 2;
     debug(F101,"setint","",x);
 
     switch (x) {                        /* Set the desired combination */
@@ -5561,7 +5669,10 @@ fxdinit(xdispla) int xdispla; {
 #endif /* VMS */
             ) {
             printf("Warning: terminal type unknown: \"%s\"\n",s);
+#ifdef COMMENT
+	    /* Confusing - nobody knows what this means */
             printf("SCREEN command will use ANSI sequences.\n");
+#endif /* COMMENT */
             if (local)
               printf("Fullscreen file transfer display disabled.\n");
             fdispla = XYFD_S;
@@ -6107,7 +6218,7 @@ ck_outc(x) TPUTSARGTYPE x;
 }
 
 int
-ck_curpos(row, col) {
+ck_curpos(row, col) int row, col; {
 #ifdef CK_ANSIC
     TPUTSFNTYPE (*fn)(TPUTSARGTYPE);
 #else

@@ -1,12 +1,13 @@
 /*
   C K _ S S L . H --  OpenSSL Interface Header for C-Kermit
 
-  Copyright (C) 1985, 2001,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
-  Author:  Jeffrey E Altman (jaltman@columbia.edu)
+    Author:  Jeffrey E Altman (jaltman@secure-endpoints.com)
+               Secure Endpoints Inc., New York City
 */
 
 #ifdef CK_SSL
@@ -101,6 +102,7 @@ extern int tls_http_active_flag;
 
 extern int ssl_initialized;
 
+_PROTOTYP(VOID ssl_once_init,(void));
 _PROTOTYP(int ssl_tn_init,(int));
 _PROTOTYP(int ssl_http_init,(char *));
 _PROTOTYP(int ck_ssl_http_client,(int,char *));
@@ -122,7 +124,10 @@ _PROTOTYP(int ssl_passwd_callback,(char *, int, int, VOID *));
 _PROTOTYP(VOID ssl_client_info_callback,(const SSL *,int, int));
 _PROTOTYP(int ssl_anonymous_cipher,(SSL * ssl));
 _PROTOTYP(int tls_load_certs,(SSL_CTX * ctx, SSL * con, int server));
-
+_PROTOTYP(int ssl_verify_crl,(int, X509_STORE_CTX *));
+_PROTOTYP(int tls_is_krb5,(int));
+_PROTOTYP(int X509_userok,(X509 *,const char *));
+_PROTOTYP(int ck_X509_save_cert_to_user_store,(X509 *));
 #ifdef OS2
 #include "ckosslc.h"
 #include "ckossl.h"
@@ -133,4 +138,10 @@ _PROTOTYP(int tls_load_certs,(SSL_CTX * ctx, SSL * con, int server));
 #define SSL_HTTP   2
 
 #define SSL_ERR_BFSZ 4096
+
+#ifdef SSL_KRB5
+#define DEFAULT_CIPHER_LIST "HIGH:MEDIUM:LOW:+KRB5:+ADH:+EXP"
+#else
+#define DEFAULT_CIPHER_LIST "HIGH:MEDIUM:LOW:+ADH:+EXP"
+#endif /* SSL_KRB5 */
 #endif /* CK_SSL */

@@ -7,10 +7,13 @@
 /*  C K U U S 3 --  "User Interface" for C-Kermit, part 3  */
 
 /*
-  Author: Frank da Cruz <fdc@columbia.edu>,
-  Columbia University Academic Information Systems, New York City.
+  Authors:
+    Frank da Cruz <fdc@columbia.edu>,
+      The Kermit Project, Columbia University, New York City
+    Jeffrey E Altman <jaltman@secure-endpoints.com>
+      Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2002,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -128,7 +131,7 @@ extern int
   local, server, success, dest, sleepcan, inserver, flow, autoflow, binary,
   parity, escape, what, turn, duplex, backgrd, hwparity, stopbits, turnch,
   mdmtyp, network, quiet, nettype, carrier, debses, debtim, cdtimo, nlangs,
-  bgset, pflag, msgflg, cmdmsk, suspend, techo, pacing, xitwarn, xitsta,
+  bgset, pflag, msgflg, cmdmsk, xsuspend, techo, pacing, xitwarn, xitsta,
   outesc, cmd_cols, cmd_rows, ckxech, xaskmore, haveline, didsetlin, isguest,
   mdmsav, clearrq, saveask;
 
@@ -905,6 +908,7 @@ struct keytab dial_m[] = {              /* DIAL METHOD */
     "tone",    XYDM_T, 0
 };
 int ndial_m = (sizeof(dial_m)/sizeof(struct keytab));
+#endif /* NODIAL */
 
 #ifdef CK_TAPI
 struct keytab tapitab[] = {             /* Top-Level Microsoft TAPI */
@@ -944,7 +948,6 @@ extern int tapiinactivity;
 extern int tapibong;
 extern int tapiusecfg;
 #endif /* CK_TAPI */
-#endif /* NODIAL */
 
 #ifndef NOPUSH
 extern int nopush;
@@ -1327,7 +1330,7 @@ int nls = (sizeof(lstab) / sizeof(struct keytab));
 /* SET TELNET tables */
 #ifdef TNCODE
 extern int tn_nlm, tn_b_nlm, tn_b_meu, tn_b_ume, tn_b_xfer, tn_sb_bug;
-extern int tn_no_encrypt_xfer;
+extern int tn_no_encrypt_xfer, tn_auth_krb5_des_bug;
 extern int tn_wait_flg, tn_duplex, tn_delay_sb, tn_sfu;
 extern int sl_tn_saved;
 extern int tn_infinite;
@@ -1513,6 +1516,7 @@ extern char *tcp_address;
 extern char * tcp_http_proxy;
 extern char * tcp_http_proxy_user;
 extern char * tcp_http_proxy_pwd;
+extern char * tcp_http_proxy_agent;
 #endif /* NOHTTP */
 #ifdef NT
 #ifdef CK_SOCKS
@@ -1524,10 +1528,12 @@ extern char *tcp_socks_ns;
 #endif /* CK_SOCKS */
 #endif /* NT */
 
-#define UPW_USER 1
-#define UPW_PASS 2
+#define UPW_USER  1
+#define UPW_PASS  2
+#define UPW_AGENT 3
 
 static struct keytab userpass[] = {
+    { "/agent",   UPW_AGENT, CM_ARG },
     { "/password", UPW_PASS, CM_ARG },
     { "/user",     UPW_USER, CM_ARG },
 };
@@ -1579,6 +1585,7 @@ static int ntnfwdx = sizeof(tnfwdxtab)/sizeof(struct keytab) ;
 #endif /* CK_FORWARD_X */
 
 static struct keytab tnbugtab[] = {     /* TELNET BUG table */
+    "auth-krb5-des",         4, 0,
     "binary-me-means-u-too", 0, 0,
     "binary-u-means-me-too", 1, 0,
     "infinite-loop-check",   2, 0,
@@ -2032,6 +2039,12 @@ struct keytab ftrtab[] = {              /* Feature table */
 "sexpression",          1, 0,
 #endif /* NOSEXP */
 
+#ifdef SFTP_BUILTIN
+"sftp",                 1, 0,
+#else
+"sftp",                 0, 0,
+#endif /* SFTP_BUILTIN */
+
 #ifndef NOSHOW
 "show-command",         0, 0,
 #else
@@ -2382,7 +2395,7 @@ cklogin() {
 static int
 setdcd() {
     int x, y, z = 0;
-    if ((y = cmkey(crrtab,ncrr,"","auto",xxstring)) < 0) return(y);
+    if ((y = cmkey(crrtab,ncrr,"","automatic",xxstring)) < 0) return(y);
     if (y == CAR_ON) {
         x = cmnum("Carrier wait timeout, seconds","0",10,&z,xxstring);
         if (x < 0) return(x);
@@ -2530,7 +2543,7 @@ extern HWND hwndConsole;
 _PROTOTYP(int gui_txt_dialog,(char *,char *,int,char *,int,char *,int));
 _PROTOTYP(int gui_mtxt_dialog,(char *,int,struct txtbox []));
 _PROTOTYP(int gui_position,(int, int));
-_PROTOTYP(int gui_resize_scale_font,(int));
+_PROTOTYP(int gui_resize_mode,(int));
 _PROTOTYP(int gui_win_run_mode,(int));
 _PROTOTYP(int gui_saveas_dialog,(char *,char *, int, char *, char *, int));
 extern int gui_dialog;
@@ -2655,7 +2668,7 @@ uq_ok(preface,prompt,mask,help,dflt)
 int
 #ifdef CK_ANSIC
 uq_txt(char * preface, char * prompt, int echo, char ** help, char * buf, 
-       int buflen, char *dflt)
+       int buflen, char *dflt, int timer)
 #else /* CK_ANSIC */
 uq_txt(preface,prompt,echo,help,buf,buflen,dflt,timer)
     char * preface, * prompt, ** help, * buf, * dflt; 
@@ -2675,7 +2688,7 @@ uq_txt(preface,prompt,echo,help,buf,buflen,dflt,timer)
       return(0);
 #ifdef KUI
     if ( gui_dialog ) {
-        rc = gui_txt_dialog(preface,prompt,echo,buf,buflen,dflt,0);
+        rc = gui_txt_dialog(preface,prompt,echo,buf,buflen,dflt,timer);
         if ( rc > -1 )
             return(rc);
     /* Otherwise, the dialog could not be created.  Fallback to text mode */
@@ -3413,6 +3426,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
     struct stringarray * q = NULL;      /* cksplit() return type */
     char * p[SEXPMAX+1], ** p2;         /* List items (must be on stack) */
     char * line = NULL;                 /* For building macro argument list */
+    int nosplit = 0;
     int linelen = 0;
     int linepos = 0;
     int quote = 0;                      /* LISP quote flag */
@@ -3497,12 +3511,14 @@ dosexp(s) char *s; {                    /* s = S-Expression */
     if (!*(s+1) || !*(s+2)) {           /* No need to call cksplit() */
         n = 1;                          /* if it's one or two chars. */
         p[1] = s;                       /* No need to malloc this either. */
+	nosplit = 1;
         debug(F101,sexpdebug("nosplit"),"",n);
         if (s[0] == '(') {              /* () empty */
             s2 = "";
             goto xdosexp;
         }
     } else {
+	nosplit = 0;
         q = cksplit(1,SEXPMAX,s,NULL,"\\%[]&$+-/=*^_@!{}/<>|.#~'`:;?",8,39,0);
         if (!q)
           goto xdosexp;
@@ -3596,6 +3612,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
             }
             if (!x) {                   /* None of the above, look it up */
                 x = xlookup(sexpops,p[1],nsexpops,&kw);
+		debug(F111,"XXX",p[1],x);
                 if (x > 0) {
                     kwflags = sexpops[kw].flgs;
                     builtin = 1;
@@ -3665,7 +3682,6 @@ dosexp(s) char *s; {                    /* s = S-Expression */
                 if (!s2) s2 = "";
                 if (xxfloat(s2,0) > 0)  /* Macro value is a number */
                   goto xdosexp;
-
                 if (j > -1) {           /* It's a macro */
                     mx = j;
                     x = j;              /* whose definition is not numeric */
@@ -3690,8 +3706,15 @@ dosexp(s) char *s; {                    /* s = S-Expression */
                     }
                     if (*s2 == '\047') {
                         s2++;
-                        makestr(&p[1],s2);
+#ifdef COMMENT
+			/* Dumps core if petty optimization was taken */
+                        makestr(&(p[1]),s2);
+#else
+			if (!nosplit && p[1]) free(p[1]);
+			p[1] = (char *)malloc((int)strlen(s2) + 1);
+#endif /* COMMENT */
                         s2 = p[1];
+			if (!s2) s2 = "";
                         if (*s2 == '(') {
                             if (s2[makestrlen-1] == ')') {
                                 s2[makestrlen-1] = NUL;
@@ -4589,6 +4612,7 @@ dologend() {                            /* Write record to connection log */
         int x = locus;
 #ifdef NEWFTP
         extern int ftpisconnected();
+	debug(F101,"dologend ftpisconnected","",ftpisconnected());
         setlocus(ftpisconnected() ? 0 : 1, 1);
 #else
         setlocus(1,1);
@@ -5434,12 +5458,22 @@ setdial(y) int y; {
       case XYDRTM:
         y = cmnum("Number of times to try dialing a number",
                   "1",10,&x,xxstring);
-        return(setnum(&dialrtr,x,y,16383));
+	z = setnum(&dialrtr,x,y,-1);
+	if (z > -1 && dialrtr < 0) {
+	    printf("?Sorry, negative dial retries not valid: %d\n",dialrtr);
+	    return(-9);
+	}
+        return(z);
 
       case XYDINT:
         y = cmnum("Seconds to wait between redial attempts",
                   "30",10,&x,xxstring);
-        return(setnum(&dialint,x,y,128));
+        z = setnum(&dialint,x,y,-1);
+	if (z > -1 && dialint < 0) {
+	    printf("?Sorry, negative dial interval not valid: %d\n",dialint);
+	    return(-9);
+	}
+        return(z);
 
       case XYDLAC:                      /* DIAL AREA-CODE */
         if ((x = dialstr(&diallac,"Area code you are calling from")) < 0)
@@ -5804,168 +5838,6 @@ setdial(y) int y; {
     }
 }
 
-#ifdef CK_TAPI
-int                                             /* TAPI action commands */
-dotapi() {
-    int x,y;
-    char *s;
-
-    if (!TAPIAvail) {
-        printf("\nTAPI is unavailable on this system.\n");
-        return(-9);
-    }
-    if ((y = cmkey(tapitab,ntapitab,"MS TAPI command","",xxstring)) < 0)
-      return(y);
-    switch (y) {
-      case XYTAPI_CFG: {                        /* TAPI CONFIGURE-LINE */
-          extern struct keytab * tapilinetab;
-          extern struct keytab * _tapilinetab;
-          extern int ntapiline;
-          extern int LineDeviceId;
-          int lineID=LineDeviceId;
-          if (TAPIAvail)
-            cktapiBuildLineTable(&tapilinetab, &_tapilinetab, &ntapiline);
-          if (tapilinetab && _tapilinetab && ntapiline > 0) {
-              int i=0, j = 9999, k = -1;
-
-              if ( LineDeviceId == -1 ) {
-                  /* Find out what the lowest numbered TAPI device is */
-                  /* and use it as the default.                       */
-                  for (i = 0; i < ntapiline; i++ ) {
-                      if (tapilinetab[i].kwval < j) {
-                          k = i;
-                      }
-                  }
-              } else {
-                  /* Find the LineDeviceId in the table and use that entry */
-                  for (i = 0; i < ntapiline; i++ ) {
-                      if (tapilinetab[i].kwval == LineDeviceId) {
-                          k = i;
-                          break;
-                      }
-                  }
-              }
-              if (k >= 0)
-                s = _tapilinetab[k].kwd;
-              else
-                s = "";
-
-              if ((y = cmkey(_tapilinetab,ntapiline,
-                              "TAPI device name",s,xxstring)) < 0)
-                return(y);
-              lineID = y;
-          }
-          if ((x = cmcfm()) < 0) return(x);
-#ifdef IKSD
-          if (inserver) {
-              printf("Sorry, command disabled\r\n");
-              return(success = 0);
-          }
-#endif /* ISKD */
-          cktapiConfigureLine(lineID);
-          break;
-      }
-      case XYTAPI_DIAL:                 /* TAPI DIALING-PROPERTIES */
-        if ((x = cmcfm()) < 0)
-          return(x);
-#ifdef IKSD
-        if (inserver) {
-            printf("Sorry, command disabled\r\n");
-            return(success = 0);
-        }
-#endif /* ISKD */
-        cktapiDialingProp();
-        break;
-    }
-    return(success = 1);
-}
-
-static int                              /* SET TAPI command options */
-settapi() {
-    int x, y;
-    char *s;
-
-    if (!TAPIAvail) {
-        printf("\nTAPI is unavailable on this system.\n");
-        return(-9);
-    }
-    if ((y = cmkey(settapitab,nsettapitab,"MS TAPI option","",xxstring)) < 0)
-      return(y);
-    switch (y) {
-      case XYTAPI_USE:
-        return (success = seton(&tapiusecfg));
-      case XYTAPI_LGHT:
-        return (success = seton(&tapilights));
-      case XYTAPI_PRE:
-        return (success = seton(&tapipreterm));
-      case XYTAPI_PST:
-        return (success = seton(&tapipostterm));
-      case XYTAPI_INA:
-        y = cmnum("seconds of inactivity before auto-disconnect",
-                  "0",10,&x,xxstring);
-        return(setnum(&tapiinactivity,x,y,65535));
-      case XYTAPI_BNG:
-        y = cmnum("seconds to wait for credit card tone",
-                  "8",10,&x,xxstring);
-        return(setnum(&tapibong,x,y,90));
-      case XYTAPI_MAN:
-        return (success = seton(&tapimanual));
-      case XYTAPI_CON:                  /* TAPI CONVERSIONS */
-        return (success = setonaut(&tapiconv));
-      case XYTAPI_LIN:                  /* TAPI LINE */
-        x = setlin(XYTAPI_LIN,1,0);
-        if (x > -1) didsetlin++;
-        return(x);
-      case XYTAPI_PASS: {               /* TAPI PASSTHROUGH */
-        /* Passthrough became Modem-dialing which is an antonym */
-        success = seton(&tapipass);
-        tapipass = !tapipass;
-        return (success);
-      }
-      case XYTAPI_LOC: {                /* TAPI LOCATION */
-          extern char tapiloc[];
-          extern int tapilocid;
-          int i = 0, j = 9999, k = -1;
-
-          cktapiBuildLocationTable(&tapiloctab, &ntapiloc);
-          if (!tapiloctab || !ntapiloc) {
-              printf("\nNo TAPI Locations are configured for this system\n");
-              return(-9);
-          }
-          if (tapilocid == -1)
-            tapilocid = cktapiGetCurrentLocationID();
-
-          /* Find the current tapiloc entry */
-          /* and use it as the default. */
-          for (k = 0; k < ntapiloc; k++) {
-              if (tapiloctab[k].kwval == tapilocid)
-                break;
-          }
-          if (k >= 0 && k < ntapiloc)
-            s = tapiloctab[k].kwd;
-          else
-            s = "";
-
-          if ((y = cmkey(tapiloctab,ntapiloc, "TAPI location",s,xxstring)) < 0)
-            return(y);
-
-          if ((x = cmcfm()) < 0)
-            return(x);
-#ifdef IKSD
-          if (inserver) {
-              printf("Sorry, command disabled\r\n");
-              return(success = 0);
-          }
-#endif /* ISKD */
-          cktapiFetchLocationInfoByID( y );
-          CopyTapiLocationInfoToKermitDialCmd();
-        }
-        break;
-    }
-    return(success=1);
-}
-#endif /* CK_TAPI */
-
 #ifndef NOSHOW
 int                                     /* SHOW MODEM */
 shomodem() {
@@ -6131,6 +6003,175 @@ shomodem() {
 }
 #endif /* NOSHOW */
 #endif /* NODIAL */
+
+#ifdef CK_TAPI
+int                                             /* TAPI action commands */
+dotapi() {
+    int x,y;
+    char *s;
+
+    if (!TAPIAvail) {
+        printf("\nTAPI is unavailable on this system.\n");
+        return(-9);
+    }
+    if ((y = cmkey(tapitab,ntapitab,"MS TAPI command","",xxstring)) < 0)
+      return(y);
+    switch (y) {
+      case XYTAPI_CFG: {                        /* TAPI CONFIGURE-LINE */
+          extern struct keytab * tapilinetab;
+          extern struct keytab * _tapilinetab;
+          extern int ntapiline;
+          extern int LineDeviceId;
+          int lineID=LineDeviceId;
+          if (TAPIAvail)
+            cktapiBuildLineTable(&tapilinetab, &_tapilinetab, &ntapiline);
+          if (tapilinetab && _tapilinetab && ntapiline > 0) {
+              int i=0, j = 9999, k = -1;
+
+              if ( LineDeviceId == -1 ) {
+                  /* Find out what the lowest numbered TAPI device is */
+                  /* and use it as the default.                       */
+                  for (i = 0; i < ntapiline; i++ ) {
+                      if (tapilinetab[i].kwval < j) {
+                          k = i;
+                      }
+                  }
+              } else {
+                  /* Find the LineDeviceId in the table and use that entry */
+                  for (i = 0; i < ntapiline; i++ ) {
+                      if (tapilinetab[i].kwval == LineDeviceId) {
+                          k = i;
+                          break;
+                      }
+                  }
+              }
+              if (k >= 0)
+                s = _tapilinetab[k].kwd;
+              else
+                s = "";
+
+              if ((y = cmkey(_tapilinetab,ntapiline,
+                              "TAPI device name",s,xxstring)) < 0)
+                return(y);
+              lineID = y;
+          }
+          if ((x = cmcfm()) < 0) return(x);
+#ifdef IKSD
+          if (inserver) {
+              printf("Sorry, command disabled\r\n");
+              return(success = 0);
+          }
+#endif /* ISKD */
+          cktapiConfigureLine(lineID);
+          break;
+      }
+      case XYTAPI_DIAL:                 /* TAPI DIALING-PROPERTIES */
+        if ((x = cmcfm()) < 0)
+          return(x);
+#ifdef IKSD
+        if (inserver) {
+            printf("Sorry, command disabled\r\n");
+            return(success = 0);
+        }
+#endif /* ISKD */
+        cktapiDialingProp();
+        break;
+    }
+    return(success = 1);
+}
+
+static int                              /* SET TAPI command options */
+settapi() {
+    int x, y;
+    char *s;
+
+    if (!TAPIAvail) {
+        printf("\nTAPI is unavailable on this system.\n");
+        return(-9);
+    }
+    if ((y = cmkey(settapitab,nsettapitab,"MS TAPI option","",xxstring)) < 0)
+      return(y);
+    switch (y) {
+      case XYTAPI_USE:
+        return (success = seton(&tapiusecfg));
+      case XYTAPI_LGHT:
+        return (success = seton(&tapilights));
+      case XYTAPI_PRE:
+        return (success = seton(&tapipreterm));
+      case XYTAPI_PST:
+        return (success = seton(&tapipostterm));
+      case XYTAPI_INA:
+        y = cmnum("seconds of inactivity before auto-disconnect",
+                  "0",10,&x,xxstring);
+        return(setnum(&tapiinactivity,x,y,65535));
+      case XYTAPI_BNG:
+        y = cmnum("seconds to wait for credit card tone",
+                  "8",10,&x,xxstring);
+        return(setnum(&tapibong,x,y,90));
+      case XYTAPI_MAN:
+        return (success = seton(&tapimanual));
+      case XYTAPI_CON:                  /* TAPI CONVERSIONS */
+        return (success = setonaut(&tapiconv));
+      case XYTAPI_LIN:                  /* TAPI LINE */
+        x = setlin(XYTAPI_LIN,1,0);
+        if (x > -1) didsetlin++;
+        return(x);
+      case XYTAPI_PASS: {               /* TAPI PASSTHROUGH */
+#ifdef NODIAL
+          printf("\n?Modem-dialing not supported\n");
+          return(-9);
+#else /* NODIAL */
+          /* Passthrough became Modem-dialing which is an antonym */
+          success = seton(&tapipass);
+          tapipass = !tapipass;
+          return (success);
+#endif /* NODIAL */        
+      }
+      case XYTAPI_LOC: {                /* TAPI LOCATION */
+          extern char tapiloc[];
+          extern int tapilocid;
+          int i = 0, j = 9999, k = -1;
+
+          cktapiBuildLocationTable(&tapiloctab, &ntapiloc);
+          if (!tapiloctab || !ntapiloc) {
+              printf("\nNo TAPI Locations are configured for this system\n");
+              return(-9);
+          }
+          if (tapilocid == -1)
+            tapilocid = cktapiGetCurrentLocationID();
+
+          /* Find the current tapiloc entry */
+          /* and use it as the default. */
+          for (k = 0; k < ntapiloc; k++) {
+              if (tapiloctab[k].kwval == tapilocid)
+                break;
+          }
+          if (k >= 0 && k < ntapiloc)
+            s = tapiloctab[k].kwd;
+          else
+            s = "";
+
+          if ((y = cmkey(tapiloctab,ntapiloc, "TAPI location",s,xxstring)) < 0)
+            return(y);
+
+          if ((x = cmcfm()) < 0)
+            return(x);
+#ifdef IKSD
+          if (inserver) {
+              printf("Sorry, command disabled\r\n");
+              return(success = 0);
+          }
+#endif /* IKSD */
+          cktapiFetchLocationInfoByID( y );
+#ifndef NODIAL
+          CopyTapiLocationInfoToKermitDialCmd();
+#endif /* NODIAL */
+        }
+        break;
+    }
+    return(success=1);
+}
+#endif /* CK_TAPI */
 #endif /* NOLOCAL */
 
 #ifndef NOSPL
@@ -7462,6 +7503,7 @@ setprinter(xx) int xx; {
 #define SSH_VRB 20                      /* Verbosity level */
 #define SSH_IDF 21                      /* Identity File */
 #define SSH_CFG 22                      /* Use OpenSSH Config */
+#define SSH_HBT 23                      /* Heartbeat Interval */
 #endif /* SSHBUILTIN */
 
 static struct keytab sshtab[] = {       /* SET SSH command table */
@@ -7472,6 +7514,7 @@ static struct keytab sshtab[] = {       /* SET SSH command table */
     { "dynamic-forwarding",      SSH_DYF,  0 },
     { "gateway-ports",           SSH_GWP,  0 },
     { "gssapi",                  SSH_GSS,  0 },
+    { "heartbeat-interval",      SSH_HBT,  0 },
     { "identity-file",           SSH_IDF,  0 },
 #ifdef COMMENT
     { "kbd-interactive-devices", SSH_KBD,  0 },
@@ -7568,7 +7611,7 @@ static int nsshv1tab = (sizeof(sshv1tab) / sizeof(struct keytab)) - 1;
 
 static struct keytab sshv2tab[] = {     /* SET SSH V2 command table */
     { "authentication",          SSH2_AUT, 0 },
-    { "auto-rekey",              SSH2_ARK, CM_INV },
+    { "auto-rekey",              SSH2_ARK, 0 },
     { "ciphers",                 SSH2_CIF, 0 },
     { "global-known-hosts-file", SSH2_GNH, 0 },
     { "hostkey-algorithms",      SSH2_HKA, 0 },
@@ -7666,11 +7709,12 @@ int                                     /* SET SSH variables */
   ssh_k4tgt = 0,                        /* k4 tgt passing */
   ssh_k5tgt = 0,                        /* k5 tgt passing */
   ssh_shk = 2,                          /* Strict host key (no, yes, ask) */
-  ssh2_ark = 0,                         /* Auto re-key */
+  ssh2_ark = 1,                         /* Auto re-key */
   ssh_cas = 0,                          /* command as subsys */
   ssh_cfg = 0,                          /* use OpenSSH config? */
   ssh_gkx = 1,                          /* gssapi key exchange */
   ssh_k5_is_k4 = 1,                     /* some SSH v1 use same codes */
+  ssh_hbt = 0,                          /* heartbeat (seconds) */
   ssh_dummy = 0;                        /* bottom of list */
 
 char                                    /* The following are to be malloc'd */
@@ -7709,6 +7753,15 @@ extern struct ssh_pf ssh_pf_lcl[32];    /* Port forwarding structs */
 extern struct ssh_pf ssh_pf_rmt[32];    /* (declared in ckuusr.c) */
 #endif /* SSHBUILTIN */
 
+#ifdef SFTP_BUILTIN
+static struct keytab sftptab[] = {
+    { "end-of-line",            XY_SFTP_EOL, 0, },
+    { "remote-character-set",   XY_SFTP_RCS, 0, },
+    { "", 0, 0 }
+};
+static int nsftptab = (sizeof(sftptab) / sizeof(struct keytab)) - 1;
+#endif /* SFTP_BUILTIN */
+
 VOID
 shossh() {
 #ifdef SSHBUILTIN
@@ -7745,6 +7798,7 @@ shossh() {
     printf(" ssh identity-file:               %d\n",ssh_idf_n);
     for (i = 0; i < ssh_idf_n; i++)
       printf("  %2d. %s\n",i+1,showstring(ssh_idf[i]));
+    printf(" ssh heartbeat interval:          %d\n", ssh_hbt);
     printf(" ssh k4 tgt-passing:              %s\n",showoff(ssh_k4tgt));
     printf(" ssh k5 tgt-passing:              %s\n",showoff(ssh_k5tgt));
 
@@ -7872,6 +7926,13 @@ dosetssh() {
           return(x);
         ssh_shk = y;
         return(success = 1);
+
+      case SSH_HBT:
+	x = cmnum("Heartbeat interval, seconds","0",10,&z,xxstring);
+	if (x < 0) return(x);
+	if ((x = cmcfm()) < 0) return(x);
+	ssh_hbt = z;
+	return(success = 1);
 
       case SSH_V1:                      /* SSH V1 */
         if ((y = cmkey(sshv1tab,nsshv1tab,"","", xxstring)) < 0)
@@ -8217,6 +8278,22 @@ dosetssh() {
 }
 #endif /* ANYSSH */
 
+#ifdef SFTP_BUILTIN
+static int
+dosetsftp() {
+    int cx, x, y, z;
+    char * s;
+
+    if ((cx = cmkey(sftptab,nsftptab,"","", xxstring)) < 0)
+      return(cx);
+    switch (cx) {
+    case XY_SFTP_EOL:
+    case XY_SFTP_RCS:
+    default:
+        return(-2);
+    }
+}
+#endif /* SFTP_BUILTIN */
 
 #ifdef KUI
 #include "ikui.h"
@@ -8232,8 +8309,9 @@ extern ULONG RGBTable[16];
 #define GUIW_POS 1
 #define GUIW_RES 2
 #define GUIW_RUN 3
-#define GUIWR_DIM 1
-#define GUIWR_FON 2
+#define GUIWR_NON 0
+#define GUIWR_FON 1
+#define GUIWR_DIM 2
 #define GUIWN_RES 1
 #define GUIWN_MIN 2
 #define GUIWN_MAX 3
@@ -8259,6 +8337,7 @@ static int nguiwtab = (sizeof(guiwtab) / sizeof(struct keytab));
 
 static struct keytab guiwrtab[] = {
     { "change-dimensions",  GUIWR_DIM, 0 },
+    { "none",               GUIWR_NON, 0 },
     { "scale-font",         GUIWR_FON, 0 },
     { "", 0, 0}
 };
@@ -8302,13 +8381,48 @@ int nrgb = (sizeof(rgbtab) / sizeof(struct keytab));
 
 VOID
 shogui() {
+    extern gui_dialog;
+    extern HWND getHwndKUI();
     unsigned char cmdsav = colorcmd;
-    int i, red, green, blue;
+    int i, red, green, blue, lines=0;
     char * s;
 
-    printf("RGB Color Table\n\n");
+
+    printf("GUI paramters:\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+    printf("  Dialogs:     %s\n",showoff(gui_dialog));
+    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+    printf("  Position:    %d,%d\n",get_gui_window_pos_x(),
+            get_gui_window_pos_y());
+    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+    printf("  Resolution:  %d x %d\n",GetSystemMetrics(SM_CXSCREEN),
+            GetSystemMetrics(SM_CYSCREEN));
+    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+    printf("  Run-mode:    %s\n",IsIconic(getHwndKUI()) ? "minimized" :
+            IsZoomed(getHwndKUI()) ? "maximized" : "restored");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+    switch ( get_gui_resize_mode() ) {
+      case GUIWR_NON:
+        s = "none";
+        break;
+      case GUIWR_FON:
+        s = "scales font";
+        break;
+      case GUIWR_DIM:
+        s= "changes dimensions";
+        break;
+    }
+    printf("  Resize-mode: %s\n",s);
+    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+    printf("\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+
+    printf("RGB Color Table:\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     printf("  Color              Red Green Blue\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     printf("  ------------------------------------------\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     for (i = 0; i < nrgb; i++) {
         if (!rgbtab[i].flgs) {
             blue = (RGBTable[rgbtab[i].kwval] & 0x00FF0000)>>16;
@@ -8319,6 +8433,12 @@ shogui() {
             printf("********");
             colorcmd = cmdsav;
             printf("\n");
+            if (++lines > cmd_rows - 3) {
+		if (!askmore())
+		  return;
+		else
+		  lines = 0;
+	    }
         }
     }
     printf("\n");
@@ -8376,7 +8496,7 @@ setguiwin() {
           return(x);
         if ((z = cmcfm()) < 0)
           return(z);
-        gui_resize_scale_font(x == GUIWR_FON);
+        gui_resize_mode(x);
         return(success = 1);
       case GUIW_RUN:
 	if ((x = cmkey(guiwntab,nguiwntab,"","",xxstring)) < 0)
@@ -8912,7 +9032,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
           case XYTCP_HTTP_PROXY: {
 	      struct FDB sw, tx;
 	      int n, x;
-	      char ubuf[LOGINLEN+1], pbuf[LOGINLEN+1];
+	      char ubuf[LOGINLEN+1], pbuf[LOGINLEN+1], abuf[256];
+	      ubuf[0] = pbuf[0] = abuf[0] = 0;
 
 	      cmfdbi(&sw,		/* First FDB - switches */
 		     _CMKEY,		/* fcode */
@@ -8950,12 +9071,17 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 		  switch (n) {
 		    case UPW_USER:
 		    case UPW_PASS:
-		      if ((x = cmfld((n == UPW_USER) ? "Username" : "Password",
+		    case UPW_AGENT:
+		      if ((x = cmfld((n == UPW_USER) ?
+				     "Username" :
+				     ((n == UPW_PASS) ? "Password" : "Agent"),
 				     "", &s, xxstring)) < 0) {
 			  if (x != -3)
 			    return(x);
 		      }
-		      ckstrncpy((n == UPW_USER) ? ubuf : pbuf, s, LOGINLEN+1);
+		      ckstrncpy((n == UPW_USER) ? ubuf :
+                        ((n == UPW_PASS) ? pbuf : abuf), s, 
+                        (n == UPW_AGENT) ? 256 : (LOGINLEN+1));
 		  }
 	      }
 	      if (cmresult.fcode != _CMTXT)
@@ -8967,10 +9093,11 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	      if (iksdcf)
 		return(success = 0);
 #endif /* IKSDCONF */
-	      makestr(&tcp_http_proxy_user,ubuf);
-              makestr(&tcp_http_proxy_pwd,pbuf);
+	      makestr(&tcp_http_proxy_user,ubuf[0]?ubuf:NULL);
+	      makestr(&tcp_http_proxy_pwd,pbuf[0]?pbuf:NULL);
+	      makestr(&tcp_http_proxy_agent,abuf[0]?abuf:NULL);
 	      makestr(&tcp_http_proxy,s);
-              memset(pbuf,0,sizeof(pbuf));
+	      memset(pbuf,0,sizeof(pbuf));
 	      return(success = 1);
 	  }
 #endif /* NOHTTP */
@@ -9099,7 +9226,12 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 #ifdef IKSDCONF
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
-            success = keepalive(ttyfd,z);
+#ifdef SSHBUILTIN
+            if (network && nettype == NET_SSH && ssh_sock != -1)
+              success = keepalive(ssh_sock,z);
+            else
+#endif /* SSHBUILTIN */
+	      success = keepalive(ttyfd,z);
             return(success);
 #endif /* SO_KEEPALIVE */
 #ifdef SO_DONTROUTE
@@ -9109,7 +9241,12 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 #ifdef IKSDCONF
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
-            success = dontroute(ttyfd,z);
+#ifdef SSHBUILTIN
+            if (network && nettype == NET_SSH && ssh_sock != -1)
+              success = dontroute(ssh_sock,z);
+            else
+#endif /* SSHBUILTIN */
+	      success = dontroute(ttyfd,z);
             return(success);
 #endif /* SO_DONTROUTE */
 #ifdef TCP_NODELAY
@@ -9119,7 +9256,12 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 #ifdef IKSDCONF
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
-            success = no_delay(ttyfd,z);
+#ifdef SSHBUILTIN
+            if (network && nettype == NET_SSH && ssh_sock != -1)
+              success = no_delay(ssh_sock,z);
+            else
+#endif /* SSHBUILTIN */
+	      success = no_delay(ttyfd,z);
             return(success);
           case XYTCP_NAGLE:             /* The inverse of NODELAY */
             if ((z = cmkey(onoff,2,"","on",xxstring)) < 0) return(z);
@@ -9127,7 +9269,12 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 #ifdef IKSDCONF
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
-            success = no_delay(ttyfd,!z);
+#ifdef SSHBUILTIN
+            if (network && nettype == NET_SSH && ssh_sock != -1)
+              success = no_delay(ssh_sock,z);
+            else
+#endif /* SSHBUILTIN */
+	      success = no_delay(ttyfd,!z);
             return(success);
 #endif /* TCP_NODELAY */
 #ifdef SO_LINGER
@@ -9145,7 +9292,12 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 #ifdef IKSDCONF
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
-            success = ck_linger(ttyfd,z,y);
+#ifdef SSHBUILTIN
+            if (network && nettype == NET_SSH && ssh_sock != -1)
+              success = ck_linger(ssh_sock,z,y);
+            else
+#endif /* SSHBUILTIN */
+	      success = ck_linger(ttyfd,z,y);
             return(success);
 #endif /* SO_LINGER */
 #ifdef SO_SNDBUF
@@ -9156,7 +9308,12 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 #ifdef IKSDCONF
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
-            success = sendbuf(ttyfd,z);
+#ifdef SSHBUILTIN
+            if (network && nettype == NET_SSH && ssh_sock != -1)
+              success = sendbuf(ssh_sock,z);
+            else
+#endif /* SSHBUILTIN */
+	      success = sendbuf(ttyfd,z);
             return(success);
 #endif /* SO_SNDBUF */
 #ifdef SO_RCVBUF
@@ -9178,7 +9335,12 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
                 return(-9);
             }
 #endif /* QNX16 */
-            success = recvbuf(ttyfd,z);
+#ifdef SSHBUILTIN
+            if (network && nettype == NET_SSH && ssh_sock != -1)
+              success = recvbuf(ssh_sock,z);
+            else
+#endif /* SSHBUILTIN */
+	      success = recvbuf(ttyfd,z);
             return(success);
 #endif /* SO_RCVBUF */
 
@@ -9917,6 +10079,9 @@ case XYCARR:                            /* CARRIER-WATCH */
               case 3:
                 tn_sb_bug = z;
                 break;
+              case 4:
+                tn_auth_krb5_des_bug = z;
+                break;
             }
             return(success = 1);
 
@@ -10420,11 +10585,11 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
     }
 
     switch (xx) {
-#ifndef NODIAL
 #ifdef CK_TAPI
       case XYTAPI:
         return(settapi());
 #endif /* CK_TAPI */
+#ifndef NODIAL
       case XYDIAL:                      /* SET MODEM or SET DIAL */
         return(setdial(-1));
       case XYMODM:
@@ -10808,7 +10973,7 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
 #ifdef UNIX
 #ifndef NOJC
       case XYSUSP:                      /* SET SUSPEND */
-        seton(&suspend);                /* on or off... */
+        seton(&xsuspend);		/* on or off... */
         return(success = 1);
 #endif /* NOJC */
 #endif /* UNIX */
@@ -12885,6 +13050,11 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
         return(dosetssh());
 #endif /* ANYSHH */
 
+#ifdef SFTP_BUILTIN
+      case XYSFTP:
+        return(dosetsftp());
+#endif /* SFTP_BUILTIN */
+
 #ifdef LOCUS
       case XYLOCUS:
           if ((x = cmkey(locustab,nlocustab,"",
@@ -12944,10 +13114,12 @@ hupok(x) int x; {                       /* Returns 1 if OK, 0 if not OK */
 #endif /* UNIX */
 #endif /* VMS */
 
+#ifndef K95G
     debug(F101,"hupok local","",local);
 
     if (!local)                         /* No warnings in remote mode */
       return(1);
+#endif /* K95G */
 
     if (x == 0 && exithangup == 0)      /* EXIT and EXIT HANGUP is OFF */
       return(1);
@@ -12996,7 +13168,11 @@ hupok(x) int x; {                       /* Returns 1 if OK, 0 if not OK */
 
 /* If a warning was issued, get user's permission to EXIT. */
 
-        if (needwarn || (!x && xitwarn == 2 && local)) {
+        if (needwarn || (!x && xitwarn == 2
+#ifndef K95G
+			&& local
+#endif /* K95G */
+			 )) {
 #ifdef COMMENT
 	    printf("%s",warning);
             z = getyesno(x ? "OK to close? " : "OK to exit? ",0);

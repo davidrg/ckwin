@@ -1,6 +1,6 @@
-ckaaaa.txt                                                        24 Oct 2002
+ckaaaa.txt                                                        10 Apr 2004
 
-			   C-KERMIT VERSION 8.0.206
+			   C-KERMIT VERSION 8.0.211
 			      OVERVIEW OF FILES
 
 	       Communications software for UNIX and (Open)VMS.
@@ -15,7 +15,7 @@ ckaaaa.txt                                                        24 Oct 2002
 	    http://www.columbia.edu/kermit/ - kermit@columbia.edu
 
 
-  Copyright (C) 1985, 2002,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -31,10 +31,10 @@ PLATFORMS
                    Security
    Name            Included   Last Updated
 
-   Unix               Yes     8.0.206  24 Oct 2002
-   Windows (K95)      Yes     8.0.206  24 Oct 2002  (K95 2.1)
-   OS/2 (K95)         Yes     8.0.206  24 Oct 2002  (K95 2.1)
-   (Open)VMS          No      8.0.206  24 Oct 2002
+   Unix               Yes     8.0.211  10 Apr 2004
+   (Open)VMS          No      8.0.208  10 Apr 2004
+   Windows (K95)      Yes     8.0.208  14 Mar 2003  (K95 2.1)
+   OS/2 (K95)         Yes     8.0.208  14 Mar 2003  (K95 2.1)
    DG AOS/VS          No      7.0.196   1 Jan 2000
    Stratus VOS        No      7.0.196   1 Jan 2000
    Bell Plan 9        No      7.0.196   1 Jan 2000
@@ -57,18 +57,18 @@ QUICK START FOR FTP USERS
 
 C-Kermit for UNIX computers that have a C compiler and 'make' program:
 
-  Directory kermit/archives, binary mode, file cku206.tar.Z or cku206.tar.gz
+  Directory kermit/archives, binary mode, file cku211.tar.Z or cku211.tar.gz
 
   This is a compressed tar archive of UNIX C-Kermit source code, makefile, and
   other files.  It unpacks into its current directory, so download it into a
   fresh directory.  Transfer in binary mode, uncompress (or gunzip), untar (tar
-  xvf cku206.tar), and then give the appropriate "make" command to build for
+  xvf cku211.tar), and then give the appropriate "make" command to build for
   your UNIX system; read the comments in the makefile and ckuins.txt for
   further info.
 
 C-Kermit for VMS:
 
-  If you have VMS UNZIP, get the file kermit/archives/ckv206.zip in binary
+  If you have VMS UNZIP, get the file kermit/archives/ckv211.zip in binary
   mode, unzip, and build with CKVKER.COM.
 
 Others:  In the kermit/f or kermit/test directories under the appropriate
@@ -220,7 +220,7 @@ The following files are of interest mainly to programmers and historians
   ckcker.ann - Release announcements.
   ckccfg.txt - Configuration information (feature selection), general.
   ckcplm.txt - Program logic manual (for programmers).
-  ckc206.txt - Program update history for edit 201-206.
+  ckc211.txt - Program update history for edit 201-211.
   ckc200.txt - Program update history for edit 198-200 (big)
   ckc197.txt - Program update history for edit 195-197 (big)
   ckc190.txt - Program update history for edits 189-190 (big).
@@ -247,7 +247,7 @@ SOURCE FILES
 The source files for the UNIX version (all UNIX versions) are available in
 kermit/archives/ckuNNN.tar.Z, approximately 1MB in size.  Transfer this file
 in binary mode.  This is a compressed tar archive.  There is also a gzip'd
-version, cku206.tar.gz.  To get the binary tar archive:
+version, cku211.tar.gz.  To get the binary tar archive:
 
   mkdir kermit                   (at shell prompt, make a Kermit directory)
   cd kermit                      (make it your current directory)
@@ -257,11 +257,11 @@ version, cku206.tar.gz.  To get the binary tar archive:
   password:                      (use your email id as a password)
   cd kermit/archives             (go to the archives directory)
   type binary                    (specify binary file transfer)
-  get cku206.tar.Z               (get the tar archive) (or get cku192.tar.gz)
+  get cku211.tar.Z               (get the tar archive) (or get cku192.tar.gz)
   bye                            (disconnect and exit from ftp)
 
-  uncompress cku206.tar.Z        (at the shell prompt, uncompress the archive)
-  tar xvf cku206.tar             (extract the files from the tar archive)
+  uncompress cku211.tar.Z        (at the shell prompt, uncompress the archive)
+  tar xvf cku211.tar             (extract the files from the tar archive)
   make xxx                       (build C-Kermit for your system)
 
 (where "xxx" is the makefile entry appropriate for your system.)
@@ -296,7 +296,7 @@ the files you need, and in some cases maybe a few extra):
    OS-9:   ck[cuw9]*.[cwha]
 
 For a detailed, specific source file list for this C-Kermit release, see the
-file ckcxxx.txt, where xxx is the current C-Kermit edit number, such as 206.
+file ckcxxx.txt, where xxx is the current C-Kermit edit number, such as 211.
 
 Finally, here is a more detailed description of the C-Kermit file naming
 conventions.  A C-Kermit filename has the form:
@@ -354,7 +354,7 @@ otherwise mistake them for Microsoft Word or Windows Help documents.
   plm: Program Logic Manual
   ker: General C-Kermit definitions, information, documentation
 
-  nnn: Digits: C-Kermit edit number (e.g. cku206.tar.gz)
+  nnn: Digits: C-Kermit edit number (e.g. cku211.tar.gz)
   cmd: Command parsing
   con: CONNECT command
   cns: CONNECT command (UNIX only - version that uses select(), not fork())

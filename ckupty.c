@@ -17,8 +17,8 @@
 
   Modified for use in C-Kermit, and new material added, by:
 
-  Jeffrey Altman <jaltman@columbia.edu>
-  The Kermit Project, Columbia University, New York City
+  Jeffrey Altman <jaltman@secure-endpoints.com>
+  Secure Endpoints Inc., New York City
   November 1999
 */
 

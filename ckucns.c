@@ -1,12 +1,12 @@
 #include "ckcsym.h"
-char *connv = "CONNECT Command for UNIX:select(), 8.0.134, 11 Sep 2002";
+char *connv = "CONNECT Command for UNIX:select(), 8.0.135, 29 Nov 2002";
 
 /*  C K U C N S  --  Terminal connection to remote system, for UNIX  */
 /*
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2002,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -1341,7 +1341,11 @@ conect() {
     signal(SIGQUIT, SIG_IGN);
 
     debug(F101,"CONNECT carrier-watch","",carrier);
-    if (!network && (carrier != CAR_OFF)) {
+    if ((!network 
+#ifdef TN_COMPORT
+        || istncomport()
+#endif /* TN_COMPORT */
+	) && (carrier != CAR_OFF)) {
 	int x;
 	x = ttgmdm();
 	debug(F100,"CONNECT ttgmdm","",x);
@@ -1924,6 +1928,9 @@ conect() {
 		    }
 		}
 	    }
+	    debug(F111,"CONNECT","c",c);
+	    debug(F111,"CONNECT","network",network);
+	    debug(F111,"CONNECT","IS_TELNET",IS_TELNET());
 	    if ((c == IAC) && network && IS_TELNET()) {
 #ifdef CK_ENCRYPTION
 		int x_auth = TELOPT_ME(TELOPT_AUTHENTICATION);

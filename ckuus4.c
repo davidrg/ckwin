@@ -3,10 +3,13 @@
 /*  C K U U S 4 --  "User Interface" for C-Kermit, part 4  */
 
 /*
-  Author: Frank da Cruz <fdc@columbia.edu>,
-  Columbia University Academic Information Systems, New York City.
+  Authors:
+    Frank da Cruz <fdc@columbia.edu>,
+      The Kermit Project, Columbia University, New York City
+    Jeffrey E Altman <jaltman@secure-endpoints.com>
+      Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2002,
+  Copyright (C) 1985, 2004,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -19,9 +22,9 @@
 #include "ckcdeb.h"
 #include "ckcasc.h"
 #include "ckcker.h"
+#include "ckcnet.h"                     /* Network symbols */
 #include "ckuusr.h"
 #include "ckuver.h"
-#include "ckcnet.h"                     /* Network symbols */
 #include "ckcxla.h"                     /* Character sets */
 
 #ifdef CK_AUTHENTICATION
@@ -100,7 +103,7 @@ extern int ttyfd;
 #ifdef TNCODE
 extern int tn_nlm, tn_b_nlm, tn_b_xfer, tn_sb_bug;
 extern int tn_rem_echo;
-extern int tn_b_meu, tn_b_ume;
+extern int tn_b_meu, tn_b_ume, tn_auth_krb5_des_bug;
 #endif /* TNCODE */
 
 char * xferfile = NULL;
@@ -278,6 +281,7 @@ extern char * floname[];
 extern int fndiags;                     /* Function diagnostics on/off */
 extern int divbyzero;
 int ispattern = 0;
+int isjoin = 0;
 #ifdef CK_APC
 extern int apcactive;                   /* Nonzero = APC command was rec'd */
 extern int apcstatus;                   /* Are APC commands being processed? */
@@ -444,6 +448,9 @@ extern int cmdlvl;
 extern char **a_ptr[];                  /* Arrays */
 extern int a_dim[];
 static char * inpmatch = NULL;
+#ifdef CKFLOAT
+char * inpscale = NULL;
+#endif	/* CKFLOAT */
 extern char * inpbuf, inchar[];         /* Buffers for INPUT and REINPUT */
 extern char *inpbp;                     /* And pointer to same */
 static char *r3 = (char *)0;
@@ -697,6 +704,7 @@ struct keytab vartab[] = {
     { "incount",   VN_ICNT,  0},
     { "inidir",    VN_INI,   0},        /* 192 */
     { "inmatch",   VN_MATCH, 0},        /* 196 */
+    { "inscale",   VN_ISCALE,0},        /* 210 */
     { "instatus",  VN_ISTAT, 0},        /* 192 */
     { "intime",    VN_INTIME,0},        /* 193 */
     { "inwait",    VN_INTMO, 0},        /* 195 */
@@ -1115,6 +1123,7 @@ struct keytab fnctab[] = {              /* Function names */
     { "unhexify",   FN_UNH,  0},        /* Unhexify */
     { "unix2dospath",FN_PC_UD, 0},      /* UNIX to DOS path */
     { "unixtodospath",FN_PC_UD, CM_INV}, /* UNIX to DOS path */
+    { "untabify",   FN_UNTAB,0},        /* Untabify */
     { "upper",      FN_UPP,  0},        /* Return uppercased argument */
     { "utcdate",    FN_TOGMT,0},        /* Date-time to UTC (GMT) */
     { "verify",     FN_VER,  0},        /* Verify */
@@ -1353,6 +1362,7 @@ trtrap(foo) int foo;                    /* TRANSMIT interrupt trap */
 VOID
 getexedir() {
     extern char * xarg0;
+    long xx;
   /*
     Unix provides no standard service for this.  We look in argv[0], and if
     we're lucky there's a full pathname.  If not we do a PATH search.
@@ -1369,17 +1379,18 @@ getexedir() {
                 if (line[0])
                   p = line;
             }
-            if (zchki(p) > -1) {        /* Is the result an existing file? */
+            xx = zchki(p);
+            if (xx > -1) {		/* Is the result an existing file? */
                 k = strlen(p);
                 for (i = k-1; i > 0; i--) { /* Yes, strip name part */
-                    if (tmpbuf[i] == '/') {
+                    if (p[i] == '/') {
                         if (i < k-1)
-                          tmpbuf[i+1] = NUL;
+                          p[i+1] = NUL;
                         break;
                     }
                 }
-                makestr(&exedir,p);     /* Save the result */
             }
+	    makestr(&exedir,p);		/* Save the result */
         }
     }
     if (!exedir && xarg0) {             /* Not found? */
@@ -1523,6 +1534,15 @@ prescan(dummy) int dummy; {             /* Arg is ignored. */
                         x = *(*yargv+1);
                         while (x) {
                             switch (x) {
+#ifndef NOICP
+			      case '+':
+			      case '-':
+                                if (doxarg(yargv,1) < 0) {
+                                    fatal("Extended argument error");
+                                }
+                                yp = "";
+                                break;
+#endif /* NOICP */
                               case 'Y':
                                 noinit++;
                                 break;
@@ -1613,6 +1633,15 @@ prescan(dummy) int dummy; {             /* Arg is ignored. */
                 x = *(*yargv+1);
                 while (x) {
                     switch (x) {
+#ifndef NOICP
+		      case '+':
+		      case '-':
+                        if (doxarg(yargv,1) < 0) {
+                            fatal("Extended argument error");
+                        }
+                        yp = "";
+                        break;
+#endif /* NOICP */
                       case 'Y':
                         noinit++;
                         break;
@@ -1712,8 +1741,12 @@ prescan(dummy) int dummy; {             /* Arg is ignored. */
                     if (doxarg(yargv,1) < 0) {
                         fatal("Extended argument error");
                     }
+#ifndef COMMENT				/* Jeff 28 Apr 2003 */
+                    yp = NULL;		/* (not "") */
+#else
                     yargv++, yargc--;
                     yp = *yargv;
+#endif /* COMMENT */
                     break;
 #endif /* NOICP */
 
@@ -2073,9 +2106,9 @@ doconect(q,async) int q, async; {
         }
     }
 #else /* CK_AUTODL */
-    if (TELOPT_SB(TELOPT_KERMIT).kermit.me_start) {
+    if (is_tn && TELOPT_ME(TELOPT_KERMIT) &&
+	TELOPT_SB(TELOPT_KERMIT).kermit.me_start)
         tn_siks(KERMIT_STOP);
-    }
 #endif /* CK_AUTODL */
 #endif /* IKS_OPTION */
 
@@ -2249,6 +2282,9 @@ doconect(q,async) int q, async; {
         if ((keymac > 0) && (keymacx > -1)) { /* Executing a keyboard macro? */
             /* Set up the macro and return */
             /* Do not clear the keymac flag */
+#ifdef OS2
+	    term_io = term_io_save;
+#endif /* OS2 */
             return(dodo(keymacx,NULL,CF_KMAC|cmdstk[cmdlvl].ccflgs));
         }
 #endif /* NOKVERBS */
@@ -4285,7 +4321,7 @@ shoparc() {
 #ifdef TN_COMPORT
         if (istncomport()) {
             int modemstate;
-            char * oflow, * iflow = "", * parity, * stopsize;
+            char * oflow, * iflow = "", * parity, * stopsize, * signature;
             int baud = tnc_get_baud();
 
             switch (tnc_get_oflow()) {
@@ -4354,7 +4390,8 @@ shoparc() {
               default:
                 stopsize = "(unknown)";
             }
-            printf("\n  Signature            : %s\n", tnc_get_signature());
+	    signature = (char *)tnc_get_signature();
+            printf("\n  Signature            : %s\n",signature?signature:"");
             if (baud <= 0)
               printf("  Speed                : (unknown)\n");
             else
@@ -4591,9 +4628,11 @@ shoparc() {
         printf(" Lockfile directory: %s\n", *s ? s : "(none)");
     }
 #endif /* UNIX */
+#ifndef MACOSX
     if (!local) {
         printf(" Typical port device name: %s\n",ttgtpn());
     }
+#endif	/* MACOSX */
     if (local) {
         int i;
         i = parity ? 7 : 8;
@@ -4916,6 +4955,8 @@ shotel(n) int n; {
     printf(" bug binary-u-means-me-too: %s\n",showoff(tn_b_ume));
     if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
     printf(" bug sb-implies-will-do: %s\n",showoff(tn_sb_bug));
+    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    printf(" bug auth-krb5-des: %s\n",showoff(tn_auth_krb5_des_bug));
     if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
     printf(" terminal-type: ");
     if (tn_term) {
@@ -5405,7 +5446,7 @@ doshodial() {
            dialhng ? "on " : "off", dialdpy ? "on" : "off");
     if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
     if (dialrtr > 0) {
-        printf(" Dial retries: %-6d          Dial interval: %d\n",
+        printf(" Dial retries: %-12d    Dial interval: %d\n",
                dialrtr, dialint);
     } else {
         printf(" Dial retries: (auto)          Dial interval: %d\n", dialint);
@@ -6120,7 +6161,7 @@ showassoc() {
 
 VOID
 shopar() {
-    printf("Show what?  (Type \"show ?\" for a list of possiblities.)\n");
+    printf("Show what?  (Type \"show ?\" for a list of possibilities.)\n");
 }
 #endif /* NOSHOW */
 
@@ -6382,9 +6423,10 @@ static int matchindex = 0;
   ms   = Array of strings to wait for.
   mp   = Array of flags.
          If mp[i] == 0, ms[i] is literal, else it's a pattern.
+  flags = for now, 1 or 0.  If 1, then don't match anything.
 */
 int
-doinput(timo,ms,mp) int timo; char *ms[]; int mp[]; {
+doinput(timo,ms,mp,flags) int timo; char *ms[]; int mp[]; int flags; {
     extern int inintr;
 #ifdef CK_AUTODL
     extern int inautodl;
@@ -6393,6 +6435,7 @@ doinput(timo,ms,mp) int timo; char *ms[]; int mp[]; {
 #ifdef GFTIMER
     CKFLOAT fpt = 0.0;
 #endif /* GFTIMER */
+    int nomatch = 0;
     int lastchar = 0;
     int waiting = 0;
     int imask = 0;
@@ -6409,6 +6452,10 @@ doinput(timo,ms,mp) int timo; char *ms[]; int mp[]; {
 #endif /* TNCODE */
     int is_tn = 0;
     int wrapped = 0;
+#ifdef SSHBUILTIN
+    extern int ssh_cas;
+    extern char * ssh_cmd;
+#endif /* SSHBUILTIN */
 
 #define CK_BURST
 /*
@@ -6423,6 +6470,7 @@ doinput(timo,ms,mp) int timo; char *ms[]; int mp[]; {
     imask = cmask;
     if (parity) imask = 0x7f;
     inwait = timo;                      /* For \v(inwait) */
+    nomatch = flags & 1;
     makestr(&inpmatch,NULL);
 
     if (!matchbuf) {
@@ -6454,10 +6502,19 @@ doinput(timo,ms,mp) int timo; char *ms[]; int mp[]; {
 #ifndef NOLOCAL
     if (local) {                        /* In local mode... */
         if ((waiting = ttchk()) < 0) {  /* check that connection is open */
-            printf("?Connection %s %s is not open.\n",
-                   network ? "to" : "on",
-                   ttname
-                   );
+	    if (!quiet) {
+		if ((!network 
+#ifdef TN_COMPORT
+		      || istncomport()
+#endif /* TN_COMPORT */
+		      ) && carrier != CAR_OFF)
+		    printf("?Carrier detect failure on %s.\n", ttname);
+		else
+		    printf("?Connection %s %s is not open.\n",
+		       network ? "to" : "on",
+		       ttname
+		       );
+	    }
             instatus = INP_IO;
             return(0);
         }
@@ -6471,6 +6528,16 @@ doinput(timo,ms,mp) int timo; char *ms[]; int mp[]; {
     }
 #endif /* NOLOCAL */
 
+#ifdef SSHBUILTIN
+    if ( network && nettype == NET_SSH && ssh_cas && ssh_cmd && 
+         !(strcmp(ssh_cmd,"kermit") && strcmp(ssh_cmd,"sftp"))) {
+        if (!quiet)
+	  printf("?SSH Subsystem active: %s\n", ssh_cmd);
+        instatus = INP_IKS;
+        return(0);
+    }
+#endif /* SSHBUILTIN */
+
     debug(F111,"doinput ms[0]",ms[0],waiting);
 
     if (!ms[0]) {                       /* If we were passed a NULL pointer */
@@ -6479,8 +6546,11 @@ doinput(timo,ms,mp) int timo; char *ms[]; int mp[]; {
         y = (int)strlen(ms[0]);         /* Or if search string is empty */
         anychar = (y < 1);              /* any input character will do. */
     }
+    if (flags & 1) anychar = 0;		/* Don't match anything */
+
     if (!anychar && waiting == 0 && timo == 0)
       return(0);
+
 
 #ifndef NODEBUG
     if (deblog) {
@@ -6508,7 +6578,8 @@ doinput(timo,ms,mp) int timo; char *ms[]; int mp[]; {
 #ifdef CK_AUTODL
         /* If we are processing packets during INPUT and we have not */
         /* sent a START message, do so now.                          */
-        if (inautodl && !TELOPT_SB(TELOPT_KERMIT).kermit.me_start) {
+        if (inautodl && TELOPT_ME(TELOPT_KERMIT) &&
+			!TELOPT_SB(TELOPT_KERMIT).kermit.me_start) {
             tn_siks(KERMIT_START);      /* Send Kermit-Server Start */
         }
 #endif /* CK_AUTODL */
@@ -6695,7 +6766,8 @@ doinput(timo,ms,mp) int timo; char *ms[]; int mp[]; {
 #ifdef IKS_OPTION
                     tx = scriptwrtbuf((USHORT)y);
                     if (tx == 4) {
-                        if (TELOPT_SB(TELOPT_KERMIT).kermit.u_start &&
+                        if (TELOPT_U(TELOPT_KERMIT) && 
+			    TELOPT_SB(TELOPT_KERMIT).kermit.u_start &&
                             !tcp_incoming
                             ) {
                             instatus = INP_IKS;
@@ -6828,7 +6900,7 @@ doinput(timo,ms,mp) int timo; char *ms[]; int mp[]; {
             /* Here is the matching section */
 
             y = -1;                     /* Loop thru search strings */
-            while ((s = ms[++y])) {     /* ...as many as we have. */
+            while (!nomatch && (s = ms[++y])) {	/* ...as many as we have. */
                 if (mp[y]) {            /* Pattern match? */
 #ifdef COMMENT
                     int j;
@@ -6848,7 +6920,8 @@ doinput(timo,ms,mp) int timo; char *ms[]; int mp[]; {
 #else
                     /* July 2001 - ckmatch() returns match position. */
                     /* It works and it's not gross. */
-                    x = ckmatch(s,matchbuf,1,1+4); /* (4 = floating pattern) */
+		    /* (4 = floating pattern) */
+                    x = ckmatch(s,matchbuf,inpcas[cmdlvl],1+4);
                     if (x > 0) {
                         matchindex = x - 1;
                         x = 1;
@@ -6905,9 +6978,23 @@ doinput(timo,ms,mp) int timo; char *ms[]; int mp[]; {
                     term_io = term_io_save;
 #endif /* OS2 */
 #endif /* NOLOCAL */
-                    printf("Fatal error - disconnected.\n");
-                    ttclos(1);
-                    break;
+
+		    if ((!network 
+#ifdef TN_COMPORT
+		         || istncomport()
+#endif /* TN_COMPORT */
+			 ) && carrier != CAR_OFF) {
+	/* The test is written this way because the Microsoft compiler
+	 * is producing bad code if written:
+	 *
+	 *  if (network && (!istncomport() || carrier == CAR_OFF) )
+	 */
+			break;
+                     } else {
+			 printf("Fatal error - disconnected.\n");
+			 ttclos(1);
+			 break;
+		     }
                 }
                 if (inintr) {
                     if ((icn = conchk()) > 0) { /* Interrupt from keyboard? */
@@ -6948,8 +7035,9 @@ doinput(timo,ms,mp) int timo; char *ms[]; int mp[]; {
           break;
 #endif /* CK_BURST */
     }                                   /* Still have time left, continue. */
+    if (nomatch) x = 1;			/* Succeed if nomatch and timed out. */
     myflsh();                           /* Flush buffered output. */
-    if (x > 0)
+    if (x > 0 && !nomatch)
       instatus = 0;
 #ifndef NOLOCAL
 #ifdef OS2
@@ -6976,7 +7064,8 @@ doinput(timo,ms,mp) int timo; char *ms[]; int mp[]; {
     inetime = (int)(gtimer() * 1000);
 #endif /* GFTIMER */
 
-    makestr(&inpmatch,&matchbuf[matchindex]); /* \v(inmatch) */
+    if (!nomatch)
+      makestr(&inpmatch,&matchbuf[matchindex]); /* \v(inmatch) */
     return(x);                          /* Return the return code. */
 }
 #endif /* NOSPL */
@@ -7609,6 +7698,24 @@ dokwval(s,sep) char * s, sep; {
     return((x < 0) ? "0" : "1");
 }
 
+static int
+isaarray(s) char * s; {			/* Is s an associative array element */
+    int state = 0;
+    CHAR c;
+    if (!s) return(0);
+    while ((c = *s++)) {
+	if (!isprint(c)) {
+	    return(0);
+	} else if (c == '<') {
+	    if (state != 0)
+	      return(0);
+	    state = 1;
+	} else if (c == '>') {
+	    return((state != 1 || *s) ? 0 : 1);
+	}
+    }
+    return(0);
+}
 
 static char *                           /* Evaluate builtin functions */
 fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
@@ -7978,7 +8085,9 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 #endif /* TCPSOCKET */
 
       case FN_DEF:                      /* \fdefinition(arg1) */
-        k = mxlook(mactab,bp[0],nmac);
+        k = isaarray(bp[0]) ?
+	    mxxlook(mactab,bp[0],nmac) :
+		mxlook(mactab,bp[0],nmac);
         p = (k > -1) ? mactab[k].mval : "";
         goto fnend;
 
@@ -8380,7 +8489,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
             p = fnval;
             i = *bp[0];
             sprintf(p,"%d",(i & 0xff)); /* SAFE */
-        } else p = "";                  /* Can't happen */
+        } else p = "0";			/* Can't happen */
         goto fnend;
 
       case FN_LEN:                      /* \flength(arg1) */
@@ -8674,6 +8783,13 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
         goto fnend;
 
       case FN_VER:                      /* \fverify() */
+	p = "-1";
+	if (argn == 1)			/* No second arg */
+	  goto fnend;
+	else if (!bp[1])		/* Or second arg null */
+	  goto fnend;
+	else if (!*(bp[1]))		/* or empty. */
+	  goto fnend;
         p = "0";
         if (argn > 1) {                 /* Only works if we have 2 or 3 args */
             int start;
@@ -8768,6 +8884,21 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
             p = fnval;
         }
         goto fnend;
+
+      case FN_UNTAB:			/* \funtab(arg1) */
+	if (argn < 1)
+	  goto fnend;
+	if ((int)strlen(bp[0]) < (FNVALL * 2)) {
+	    s = bp[0];
+	    p = fnval;
+	    if (untabify(bp[0],p,FNVALL) < 0) {
+		failed = 1;
+		if (fndiags)
+		  ckmakmsg(fnval,FNVALL,
+			   "<ERROR:OVERFLOW:\\f",fn,"()>",NULL);
+	    }
+	    goto fnend;
+	}
 
       case FN_UNH: {                    /* \funhex(arg1) */
           int c[2], i;
@@ -10830,6 +10961,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
                 goto fnend;
             }
         }
+	isjoin = 1;
         goto fnend;
     }
     if (cx == FN_SUBST) {               /* \fsubstitute() */
@@ -12940,6 +13072,11 @@ nvlook(s) char *s; {
       case VN_MATCH:                    /* INPUT MATCH */
         return(inpmatch ? inpmatch : "");
 
+#ifdef CKFLOAT
+      case VN_ISCALE:			/* INPUT SCALE-FACTOR */
+        return(inpscale ? inpscale : "1.0");
+#endif	/* CKFLOAT */
+
       case VN_SLMSG: {                  /* SET LINE / HOST message */
           extern char * slmsg;
           vvbuf[0] = NUL;
@@ -13314,6 +13451,21 @@ nvlook(s) char *s; {
 */
 
 #define XXDEPLIM 100                    /* Recursion depth limit */
+/*
+  In Windows the stack is limited to 256K so big character arrays like
+  vnambuf can't be on the stack in recursive functions like zzstring().
+  But that's no reason use malloc() in Unix or VMS, which don't have
+  this kind of restriction.
+*/
+#ifdef DVNAMBUF				/* Dynamic vnambuf[] */
+#undef DVNAMBUF				/* Clean slate */
+#endif /* DVNAMBUF */
+
+#ifndef NOSPL				/* Only if SPL included */
+#ifdef OS2				/* Only for K95 */
+#define DVNAMBUF
+#endif /* OS2 */
+#endif /* NOSPL */
 
 int
 zzstring(s,s2,n) char *s; char **s2; int *n; {
@@ -13343,11 +13495,11 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
     char *r3p;
 
 #ifndef NOSPL
-#ifdef DYNAMIC
+#ifdef DVNAMBUF
     char * vnambuf = NULL;              /* Buffer for variable/function name */
-#else /* DYNAMIC */
+#else /* DVNAMBUF */
     char vnambuf[VNAML];                /* Buffer for variable/function name */
-#endif /* DYNAMIC */
+#endif /* DVNAMBUF */
     char *argp[FNARGS];                 /* Pointers to function args */
 #endif /* NOSPL */
 
@@ -13363,6 +13515,7 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
 
 #ifndef NOSPL
     ispattern = 0;                      /* For \fpattern() */
+    isjoin = 0;				/* For \fjoin() */
 #endif /* NOSPL */
     depth++;                            /* Sink to a new depth */
     if (depth > XXDEPLIM) {             /* Too deep? */
@@ -13395,8 +13548,7 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
         depth = 0;
         return(-1);
     }
-#ifndef NOSPL
-#ifdef DYNAMIC
+#ifdef DVNAMBUF
     debug(F100,"vnambuf malloc...","",0);
     vnambuf = malloc(VNAML);
     if (vnambuf == NULL) {
@@ -13404,8 +13556,7 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
         return(-1);
     }
     debug(F100,"vnambuf malloc ok","",0);
-#endif /* DYNAMIC */
-#endif /* NOSPL */
+#endif /* DVNAMBUF */
 
     while ((x = *s)) {                  /* Loop for all characters */
         if (x != CMDQ) {                /* Is it the command-quote char? */
@@ -13413,11 +13564,9 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
             if (--n2 < 0) {             /* and count it, careful of overflow */
                 debug(F101,"zzstring overflow 1","",depth);
                 depth = 0;
-#ifndef NOSPL
-#ifdef DYNAMIC
+#ifdef DVNAMBUF
                 if (vnambuf) free(vnambuf);
-#endif /* DYNAMIC */
-#endif /* NOSPL */
+#endif /* DVNAMBUF */
                 return(-1);
             }
             continue;
@@ -13433,11 +13582,9 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
             *new++ = *s++;
             if (--n2 < 0) {
                 debug(F101,"zzstring overflow 2","",0);
-#ifdef DYNAMIC
-#ifndef NOSPL
+#ifdef DVNAMBUF
                 if (vnambuf) free(vnambuf);
-#endif /* NOSPL */
-#endif /* DYNAMIC */
+#endif /* DVNAMBUF */
                 return(-1);
             }
             break;
@@ -13457,8 +13604,12 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
                 if (!vp) vp = "";
 #else
 		char * ss = new;
-                if (zzstring("\\fjoin(&_[],,1)",&new,&n2) < 0)
-                  return(-1);
+                if (zzstring("\\fjoin(&_[],,1)",&new,&n2) < 0) {
+#ifdef DVNAMBUF
+		    if (vnambuf) free(vnambuf);
+#endif /* DVNAMBUF */
+		    return(-1);
+		}
 		debug(F110,"zzstring \\%*",ss,0);
                 break;
 #endif /* COMMENT */
@@ -13473,11 +13624,9 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
                 debug(F010,"zzstring %n vp",vp,0);
                 if (zzstring(vp,&new,&n2) < 0) { /* call self to evaluate it */
                     debug(F101,"zzstring fail 6","",depth);
-#ifdef DYNAMIC
-#ifndef NOSPL
+#ifdef DVNAMBUF
                     if (vnambuf) free(vnambuf);
-#endif /* NOSPL */
-#endif /* DYNAMIC */
+#endif /* DVNAMBUF */
                     return(-1);         /* Pass along failure */
                 }
 #ifdef COMMENT
@@ -13494,11 +13643,9 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
             debug(F111,"zzstring arraynam",s,x);
             if (x < 0) {
                 debug(F101,"zzstring fail 7","",depth);
-#ifdef DYNAMIC
-#ifndef NOSPL
+#ifdef DVNAMBUF
                 if (vnambuf) free(vnambuf);
-#endif /* NOSPL */
-#endif /* DYNAMIC */
+#endif /* DVNAMBUF */
                 return(-1);
             }
             pp = 0;                     /* Bracket counter */
@@ -13533,11 +13680,9 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
                     if (s1) {
                         if (zzstring(s1,&new,&n2) < 0) { /* evaluate */
                             debug(F101,"zzstring fail 7.5","",depth);
-#ifdef DYNAMIC
-#ifndef NOSPL
+#ifdef DVNAMBUF
                             if (vnambuf) free(vnambuf);
-#endif /* NOSPL */
-#endif /* DYNAMIC */
+#endif /* DVNAMBUF */
                             return(-1); /* Pass along failure */
                         }
                     } else {
@@ -13546,7 +13691,7 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
                     }
                 } else
 #endif /* COMMENT */
-                  if (a_dim[vbi] >= d) {        /* If subscript in range */
+                  if (a_dim[vbi] >= d) { /* If subscript in range */
                     char **ap;
 #ifndef COMMENT
                     debug(F110,"zzstring a_ptr[vbi]",a_ptr[vbi],0);
@@ -13558,11 +13703,9 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
                             debug(F111,"zzstring ap[d]",ap[d],d);
                             if (zzstring(ap[d],&new,&n2) < 0) { /* evaluate */
                                 debug(F101,"zzstring fail 8","",depth);
-#ifdef DYNAMIC
-#ifndef NOSPL
+#ifdef DVNAMBUF
                                 if (vnambuf) free(vnambuf);
-#endif /* NOSPL */
-#endif /* DYNAMIC */
+#endif /* DVNAMBUF */
                                 return(-1); /* Pass along failure */
                             }
                         }
@@ -13571,7 +13714,7 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
                         n2 = nx;
                     }
                 }
-            }
+	    }
             break;
 
           case 'f':                     /* A builtin function */
@@ -13595,11 +13738,9 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
                 debug(F101,"zzstring fail 9","",depth);
                 *new = NUL;
                 depth = 0;
-#ifdef DYNAMIC
-#ifndef NOSPL
+#ifdef DVNAMBUF
                 if (vnambuf) free(vnambuf);
-#endif /* NOSPL */
-#endif /* DYNAMIC */
+#endif /* DVNAMBUF */
                 return(-1);
             }
             if (r3) free(r3); /* And another to copy literal arg string */
@@ -13610,11 +13751,9 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
                 depth = 0;
                 *new = NUL;
                 if (r2) free(r2);
-#ifdef DYNAMIC
-#ifndef NOSPL
+#ifdef DVNAMBUF
                 if (vnambuf) free(vnambuf);
-#endif /* NOSPL */
-#endif /* DYNAMIC */
+#endif /* DVNAMBUF */
                 return(-1);
             } else
               r3p = r3;
@@ -13680,11 +13819,9 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
                         debug(F101,"zzstring fail 12","",depth);
                         if (r2) { free(r2); r2 = NULL; }
                         if (r3) { free(r3); r3 = NULL; }
-#ifdef DYNAMIC
-#ifndef NOSPL
+#ifdef DVNAMBUF
                         if (vnambuf) free(vnambuf);
-#endif /* NOSPL */
-#endif /* DYNAMIC */
+#endif /* DVNAMBUF */
                         return(-1);
                     }
                 }
@@ -13705,11 +13842,9 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
                 *new++ = *s++;          /* If not, just copy it */
                 if (--n2 < 0) {
                     debug(F101,"zzstring overflow 3","",depth);
-#ifdef DYNAMIC
-#ifndef NOSPL
+#ifdef DVNAMBUF
                     if (vnambuf) free(vnambuf);
-#endif /* NOSPL */
-#endif /* DYNAMIC */
+#endif /* DVNAMBUF */
                     return(-1);
                 }
                 break;
@@ -13788,8 +13923,10 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
                 if (x == ':') {
                     vp = vnambuf;
                 } else {
-                    y = mxlook(mactab,vnambuf,nmac); /* get definition */
-                    if (y > -1) {               /* Got definition */
+		    y = isaarray(vnambuf) ?
+			mxxlook(mactab,vnambuf,nmac) :
+			mxlook(mactab,vnambuf,nmac);
+                    if (y > -1) {	/* Got definition */
                         vp = mactab[y].mval;
                     } else {
                         vp = NULL;
@@ -13832,11 +13969,9 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
                   if (--n2 < 0) {
                       if (q) free(q);
                       debug(F101,"zzstring overflow 4","",depth);
-#ifdef DYNAMIC
-#ifndef NOSPL
+#ifdef DVNAMBUF
                       if (vnambuf) free(vnambuf);
-#endif /* NOSPL */
-#endif /* DYNAMIC */
+#endif /* DVNAMBUF */
                       return(-1);
                   }
                 new--;                  /* Back up over terminating null */
@@ -13923,11 +14058,9 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
               n2 -= 2;
               if (n2 < 0) {
                   debug(F101,"zzstring overflow 5","",depth);
-#ifdef DYNAMIC
-#ifndef NOSPL
+#ifdef DVNAMBUF
                   if (vnambuf) free(vnambuf);
-#endif /* NOSPL */
-#endif /* DYNAMIC */
+#endif /* DVNAMBUF */
                   return(-1);
               }
               continue;                 /* and go back for more */
@@ -13935,11 +14068,9 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
               *new++ = (char) y;        /* else deposit interpreted value */
               if (--n2 < 0) {
                   debug(F101,"zzstring overflow 6","",depth);
-#ifdef DYNAMIC
-#ifndef NOSPL
+#ifdef DVNAMBUF
                   if (vnambuf) free(vnambuf);
-#endif /* NOSPL */
-#endif /* DYNAMIC */
+#endif /* DVNAMBUF */
                   return(-1);
               }
           }
@@ -13952,11 +14083,9 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
     *s2 = new;                          /* Copy results back into */
     *n = n2;                            /* the argument addresses */
     debug(F101,"zzstring ok","",depth);
-#ifdef DYNAMIC
-#ifndef NOSPL
+#ifdef DVNAMBUF
     if (vnambuf) free(vnambuf);
-#endif /* NOSPL */
-#endif /* DYNAMIC */
+#endif /* DVNAMBUF */
     return(0);                          /* and return. */
 }
 #endif /* NOICP */
