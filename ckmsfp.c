@@ -51,7 +51,7 @@ SFReply sfr;			/* holds file info */
 Boolean sendselflg;		/* TRUE means file was selected */
 Boolean sendasflg;		/* TRUE means AS field is active */
 
-
+int sendusercvdef = FALSE;	/* use rec. file mode defaults as send defaults */
 
 /****************************************************************************/
 /* gethdl - return a control handle given a resource ID */
@@ -89,15 +89,56 @@ DialogPtr dlg;
     ControlHandle ctlhdl;
     int i;
 
-    if (item >= RADITM_FIRST &&	/* check for item... is it  */
-	item <= RADITM_LAST) {	/* a radio item for us? */
-	filargs.filflg |= radflgs[item - RADITM_FIRST];	/* yes... set flag */
-	filargs.filflg &= ~radnotflgs[item - RADITM_FIRST];	/* clear opposite */
+    switch(item) {
+	case RADITM_MACB:	/* MacBinary mode */
+	filargs.filflg &= ~FIL_TEXT;
+	filargs.filflg |= FIL_BINA | FIL_RSRC | FIL_DATA;
+	break;
+	
+	case RADITM_TEXT:	/* Text mode */
+	if ((filargs.filflg & (FIL_RSRC | FIL_DATA)) == (FIL_RSRC | FIL_DATA))
+	    filargs.filflg &= ~FIL_RSRC;
+	filargs.filflg &= ~FIL_BINA;
+	filargs.filflg |= FIL_TEXT;
+	break;
+	
+	case RADITM_BINA:	/* Binary mode */
+	if ((filargs.filflg & (FIL_RSRC | FIL_DATA)) == (FIL_RSRC | FIL_DATA))
+	    filargs.filflg &= ~FIL_RSRC;
+	filargs.filflg &= ~FIL_TEXT;
+	filargs.filflg |= FIL_BINA;
+	break;
+	
+	case RADITM_DATA:	/* Data fork */
+	filargs.filflg &= ~FIL_RSRC;
+	filargs.filflg |= FIL_DATA;
+	break;
+	
+	case RADITM_RSRC:	/* Resource fork */
+	filargs.filflg &= ~FIL_DATA;
+	filargs.filflg |= FIL_RSRC;
+	break;
+
     }
-    for (i = RADITM_FIRST; i <= RADITM_LAST; i++) {	/* update all */
-	ctlhdl = getctlhdl (i, dlg);	/* get a handle on his radio item */
-	SetCtlValue (ctlhdl,
-	     (filargs.filflg & radflgs[i - RADITM_FIRST]) ? btnOn : btnOff);
+    /* if MacBinary mode */
+    if ((filargs.filflg & (FIL_RSRC | FIL_DATA)) == (FIL_RSRC | FIL_DATA)) {
+	SetCtlValue (getctlhdl(RADITM_MACB, dlg), btnOn);
+	SetCtlValue (getctlhdl(RADITM_TEXT, dlg), btnOff);
+	SetCtlValue (getctlhdl(RADITM_BINA, dlg), btnOff);
+
+	SetCtlValue (getctlhdl(RADITM_DATA, dlg), btnOn);
+	SetCtlValue (getctlhdl(RADITM_RSRC, dlg), btnOn);
+	HiliteControl(getctlhdl(RADITM_DATA, dlg), 255);  /* disable it */
+	HiliteControl(getctlhdl(RADITM_RSRC, dlg), 255);  /* disable it */
+    } else {	/* not MacBinary mode */
+	SetCtlValue (getctlhdl(RADITM_MACB, dlg), btnOff);
+	HiliteControl(getctlhdl(RADITM_DATA, dlg), 0);  /* enable it */
+	HiliteControl(getctlhdl(RADITM_RSRC, dlg), 0);  /* enable it */
+	for (i = RADITM_FIRST; i <= RADITM_LAST; i++) {	/* update all */
+	    ctlhdl = getctlhdl (i, dlg);    /* get a handle on his radio item */
+	    SetCtlValue (ctlhdl,
+	       (filargs.filflg & radflgs[i - RADITM_FIRST]) ? btnOn : btnOff);
+	}
     }
 }				/* setfilflgs */
 
@@ -183,9 +224,14 @@ DialogPtr DLG;
 	    SetCTitle (getctlhdl (getOpen, DLG), "Send");
 	    isfolder = FALSE;
 	}
-	filargs.filflg |= (isappl) ?	/* update flags */
-	    (FIL_RSRC | FIL_BINA) :	/* application */
-	    (FIL_DATA | FIL_TEXT);	/* not application */
+
+	if (sendusercvdef) {	/* use recieve file type defaults */
+	    filargs.filflg = filargs.fildflg;
+	} else {		/* figure out defaults on our own */
+	    filargs.filflg |= (isappl) ?	/* update flags */
+		(FIL_RSRC | FIL_BINA) :	/* application */
+		(FIL_DATA | FIL_TEXT);	/* not application */
+	}
     }
     switch (ITEM) {		/* according to the item */
       case getNmList:		/* user hit file name */
@@ -363,6 +409,7 @@ initfilrecv ()
 
 
 /****************************************************************************/
+/* initialize the file settings, called only at init time		    */
 /****************************************************************************/
 initfilset ()
 {
@@ -441,3 +488,30 @@ char *fn;
     }
     return (filargs.fildflg & FIL_RBDT);	/* else return default */
 }				/* sfprtol */
+
+/****************************************************************************/
+/*
+ *	set_cwd - set the working directory
+ *	   Originally wdset() from NCSA Telnet for the Macintosh, v2.2
+ */
+/****************************************************************************/
+
+short cwdpt[] = {100, 100};	/* Used as Point */
+
+int
+set_cwd()
+{
+	SFReply reply;
+	int err;
+
+	err=SetVol (0L, filargs.filvol);
+	SFPPutFile ((Point *) sendpt, "Set Transfer Directory",
+		"Doesn't Matter", 0L, &reply, CWDBOXID, 0L);
+
+	if(!reply.good) return(-1);
+	filargs.filvol = reply.vRefNum;
+	err = SetVol (0L, filargs.filvol);
+	if (err != noErr)
+	    printerr("Trouble setting transfer directory:", err);
+	return (err);
+}

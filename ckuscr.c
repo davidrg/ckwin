@@ -33,6 +33,11 @@ char *loginv = "Script Command, V2.0(007) 3 Aug 87";
 #include <setjmp.h>
 #include "ckcker.h"
 
+#ifdef OS2
+#define SIGALRM SIGUSR1
+void alarm( unsigned );
+#endif
+ 
 extern int local, speed, flow, seslog, mdmtyp, quiet, duplex;
 extern char ttname[];
 extern CHAR dopar();
@@ -52,7 +57,11 @@ static int got_it, no_cr;
 
 static jmp_buf alrmRng;		/* Envir ptr for connect errors */
 
+SIGTYP
 scrtime() {				/* modem read failure handler, */
+#ifdef OS2
+    alarmack();				/* Acknowledge the signal */
+#endif
     longjmp(alrmRng,1);		/* notifies parent process to stop */
 }
 
@@ -80,8 +89,8 @@ sequenc()  {
 
 	if (*s == '~') {		/* escape character */
 	    switch (c = *(++s) ) {
-		case 'n':	seq_buf[i++] = '\n'; break;
-		case 'r':	seq_buf[i++] = '\r'; break;
+		case 'n':	seq_buf[i++] = LF; break;
+		case 'r':	seq_buf[i++] = CR; break;
 		case 't':	seq_buf[i++] = '\t'; break;
 		case 'b':	seq_buf[i++] = '\b'; break;
 		case 'q':	seq_buf[i++] = '?';  break;
@@ -147,7 +156,11 @@ recvSeq()  {
 	}
 	tlog(F111,"expecting sequence",e,(long) l);
 	if (l == 0) {		/* null sequence, just delay a little */
+#ifdef OS2
+	    msleep (NULL_EXP*1000);
+#else
 	    sleep (NULL_EXP);
+#endif
 	    got_it = 1;
 	    tlog(F100,"got it (null sequence)","",0l);
 	    return;
@@ -248,10 +261,10 @@ login(cmdstr) char *cmdstr; {
 	    return(-2);
     	}
     	if (!quiet)
-	  printf("Executing script thru %s, speed %d.\r\n",ttname,speed);
+	  printf("Executing script thru %s, speed %d.\n",ttname,speed);
 	*seq_buf=0;
 	for (e=s; *e; e++) strcat(seq_buf, chstr(*e) );
-	if (!quiet) printf("Script string: %s\r\n",seq_buf);
+	if (!quiet) printf("Script string: %s\n",seq_buf);
 	tlog(F110,"Script string: ",seq_buf, 0l);
 
 /* Condition console terminal and communication line */	    
@@ -297,13 +310,13 @@ login(cmdstr) char *cmdstr; {
 	if (*s) if (outSeq()) goto failRet; /* If any */
     }
     signal(SIGALRM,saveAlm);
-    if (!quiet) printf("Script successful.\r\n");
+    if (!quiet) printf("Script successful.\n");
     tlog(F100,"Script successful.","",0l);
     return(0);
 
 failRet:
     signal(SIGALRM,saveAlm);
-    printf("Sorry, script failed\r\n");
+    printf("Sorry, script failed\n");
     tlog(F100,"Script failed","",0l);
     return(-2);
 }

@@ -1,11 +1,12 @@
-char *protv = "C-Kermit Protocol Module 4E(032), 13 Jan 89"; /* -*-C-*- */
+char *protv = "C-Kermit Protocol Module 4F(034), 19 Jun 89"; /* -*-C-*- */
 
 /* C K C P R O  -- C-Kermit Protocol Module, in Wart preprocessor notation. */
 /*
- Authors: Frank da Cruz (SY.FDC@CU20B), Bill Catchings, Jeff Damens;
- Columbia University Center for Computing Activities, January 1985.
- Copyright (C) 1985, Trustees of Columbia University in the City of New York.
- Permission is granted to any individual or institution to use, copy, or
+ Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
+ Columbia University Center for Computing Activities.
+ First released January 1985.
+ Copyright (C) 1985, 1989, Trustees of Columbia University in the City of New 
+ York.  Permission is granted to any individual or institution to use, copy, or
  redistribute this software so long as it is not sold for profit, provided this
  copyright notice is retained. 
 */
@@ -21,7 +22,7 @@ char *protv = "C-Kermit Protocol Module 4E(032), 13 Jan 89"; /* -*-C-*- */
 */
 
 /* State definitions for Wart (or Lex) */
-%states ipkt rfile rdata ssinit ssfile ssdata sseof sseot
+%states ipkt rfile rattr rdata ssinit ssfile ssattr ssdata sseof sseot
 %states serve generic get rgen
 
 /* External C-Kermit variable declarations */
@@ -29,10 +30,11 @@ char *protv = "C-Kermit Protocol Module 4E(032), 13 Jan 89"; /* -*-C-*- */
   extern char data[], filnam[], srvcmd[], ttname[], *srvptr;
   extern int pktnum, timint, nfils, hcflg, xflg, speed, flow, mdmtyp;
   extern int prvpkt, cxseen, czseen, server, local, displa, bctu, bctr, quiet;
-  extern int tsecs, parity, backgrd;
+  extern int tsecs, parity, backgrd, nakstate, atcapu;
   extern int putsrv(), puttrm(), putfil(), errpkt();
+  extern CHAR *rdatap, recpkt[];
   extern char *DIRCMD, *DELCMD, *TYPCMD, *SPACMD, *SPACM2, *WHOCMD;
-  extern char *rdatap;
+  extern struct zattr iattr;
 
 /* Local variables */
   static char vstate = 0;  		/* Saved State   */
@@ -40,7 +42,8 @@ char *protv = "C-Kermit Protocol Module 4E(032), 13 Jan 89"; /* -*-C-*- */
   int x;				/* General-purpose integer */
   char *s;				/* General-purpose string pointer */
 
-/* Macros - Note, BEGIN is predefined by Wart (and Lex) */
+/* Macros - Note, BEGIN is predefined by Wart (and Lex) as "state = ", */
+/* BEGIN is NOT a GOTO! */
 #define SERVE  tinit(); BEGIN serve
 #define RESUME if (server) { SERVE; } else { sleep(2); return; }
 
@@ -58,133 +61,334 @@ g { tinit(); vstate = rgen; vcmd = 'G'; sipkt('I'); BEGIN ipkt; } /* Generic */
 
 x { sleep(1); SERVE; }	    	    	/* Be a Server */
 
-a { errpkt("User cancelled transaction"); /* "Abort" -- Tell other side. */
-    x = quiet; quiet = 1; 		/* Close files silently. */
-    clsif(); clsof(1); 
-    quiet = x; return(0); }		/* Return from protocol. */
+a { errpkt("User cancelled transaction"); /* "ABEND" -- Tell other side. */
+    return(0); }			/* Return from protocol. */
 
 /* Dynamic states: <current-states>input-character { action } */
 
-<rgen,get,serve>S { rinit(rdatap); bctu = bctr; /* Get Send-Init */
-	   resetc();			/* Reset counters */
-    	   rtimer();			/* Reset timer */
-	   BEGIN rfile; }
+<rgen,get,serve>S {			/* Receive Send-Init packet */
+    rinit(rdatap);			/* Set parameters */
+    bctu = bctr;			/* Switch to agreed-upon block check */
+    resetc();				/* Reset counters */
+    rtimer();				/* Reset timer */
+    BEGIN rfile;			/* Go into receive-file state */
+}
 
-<ipkt>Y  { spar(rdatap);		/* Get ack for I-packet */
-    	   if (vcmd) { scmd(vcmd,cmarg); vcmd = 0; }
-    	   if (vstate == get) srinit();
-	   BEGIN vstate; }
+/* States in which we get replies back from commands sent to a server. */
 
-<ipkt>E  { if (vcmd) scmd(vcmd,cmarg);	/* Get E for I-packet (ignore) */
-    	   vcmd = 0; if (vstate == get) srinit();
-	   BEGIN vstate; }
+<ipkt>Y {				/* Get ack for I-packet */
+    spar(rdatap);			/* Set parameters */
+    if (vcmd) {				/* If sending a generic command */
+	scmd(vcmd,cmarg);		/* Do that */
+	vcmd = 0;			/* and then un-remember it. */
+    }
+    if (vstate == get) srinit();	/* If sending GET command, do that */
+    BEGIN vstate;			/* Switch to desired state */
+}
 
-<get>Y { srinit(); } /* Resend of previous I-pkt ACK, same seq number! */
+<ipkt>E {				/* Ignore Error reply to I packet */
+    if (vcmd) {				/* in case other Kermit doesn't */
+	scmd(vcmd,cmarg);		/* understand I-packets. */
+	vcmd = 0;			/* Otherwise act as above... */
+    }
+    if (vstate == get) srinit();
+    BEGIN vstate;
+}
 
-<serve>R { srvptr = srvcmd; decode(rdatap,putsrv); /* Get Receive-Init */
-	   cmarg = srvcmd;  nfils = -1;
-    	   if (sinit()) BEGIN ssinit; else { SERVE; } }
+<get>Y {		/* Resend of previous I-pkt ACK, same seq number! */
+    srinit();
+}
 
-<serve>I { spar(rdatap); ack1(rpar());	           /* Get Init Parameters */
-	   pktnum = 0; prvpkt = -1; }
+/* States in which we're being a server */
 
-<serve>G { srvptr = srvcmd; decode(rdatap,putsrv); /* Get & decode command. */
-	   putsrv('\0'); putsrv('\0');
-	   sstate = srvcmd[0]; BEGIN generic; }
+<serve>I {				/* Get I-packet */
+    spar(rdatap);			/* Set parameters from it */
+    ack1(rpar());			/* Respond with our own parameters */
+    pktnum = 0;				/* Reset packet sequence numbers */
+    prvpkt = -1;			/* Stay in server command wait */
+}
 
-<serve>C { srvptr = srvcmd;		    	 /* Get command for shell */
-	   decode(rdatap,putsrv); putsrv('\0');
-	   if (syscmd(srvcmd,"")) BEGIN ssinit;
-	   else { errpkt("Can't do system command"); SERVE; } }
+<serve>R {				/* Get Receive-Init */
+    srvptr = srvcmd;			/* Point to server command buffer */
+    decode(rdatap,putsrv);		/* Decode the GET command into it */
+    cmarg = srvcmd;
+    nfils = -1;				/* Initialize number of files */
+    if (sinit())			/* Send Send-Init */
+      BEGIN ssinit;			/* If successful, switch state */
+    else { SERVE; }			/* Else back to server command wait */
+}
 
-<serve>. { errpkt("Unimplemented server function"); SERVE; } /* Other */
+<serve>G {				/* Generic server command */
+    srvptr = srvcmd;			/* Point to command buffer */
+    decode(rdatap,putsrv);		/* Decode packet data into it */
+    putsrv('\0');			/* Insert a couple nulls */
+    putsrv('\0');			/* for termination */
+    sstate = srvcmd[0];			/* Set requested start state */
+    BEGIN generic;			/* Switch to generic command state */
+}
 
-<generic>C { if (!cwd(srvcmd+1)) errpkt("Can't change directory"); /* CWD */
-    	     SERVE; }
+<serve>C {				/* Receive Host command */
+    srvptr = srvcmd;			/* Point to command buffer */
+    decode(rdatap,putsrv);		/* Decode command packet into it */
+    putsrv('\0');			/* Null-terminate */
+    if (syscmd(srvcmd,""))		/* Try to execute the command */
+      BEGIN ssinit;			/* If OK, send back its output */
+    else {				/* Otherwise */
+	errpkt("Can't do system command"); /* report error */
+	SERVE;				/* & go back to server command wait */
+    }
+}
 
-<generic>D { if (syscmd(DIRCMD,srvcmd+2)) BEGIN ssinit;	/* Directory */
-    	     else { errpkt("Can't list directory"); SERVE; } }
+<serve>. {				/* Any other command in this state */
+    errpkt("Unimplemented server function"); /* we don't know about */
+    SERVE;				/* back to server command wait */
+}
 
-<generic>E { if (syscmd(DELCMD,srvcmd+2)) BEGIN ssinit;	/* Erase */
-    	     else { errpkt("Can't remove file"); SERVE; } }
+<generic>C {				/* Got REMOTE CWD command */
+    if (!cwd(srvcmd+1)) errpkt("Can't change directory"); /* Try to do it */
+    SERVE;				/* Back to server command wait */
+}
 
-<generic>F { ack(); screen(SCR_TC,0,0l,""); return(0); } /* Finish and Bye */
-<generic>L { ack(); ttres(); screen(SCR_TC,0,0l,""); return(zkself()); }
+<generic>D {				/* REMOTE DIRECTORY command */
+    if (syscmd(DIRCMD,srvcmd+2))	/* If it can be done */
+      BEGIN ssinit;			/* send the results back */
+    else {				/* otherwise */
+	errpkt("Can't list directory");	/* report failure */
+	SERVE;				/* & return to server command wait */
+    }
+}
 
-<generic>H { if (sndhlp()) BEGIN ssinit;
-    	     else { errpkt("Can't send help"); SERVE; } }
+<generic>E {				/* REMOTE DELETE (Erase) command */
+    if (syscmd(DELCMD,srvcmd+2))	/* Try to do it */
+      BEGIN ssinit;			/* If OK send results back */
+    else {				/* otherwise */
+	errpkt("Can't remove file");	/* report failure */
+	SERVE;				/* & return to server command wait */
+    }
+}
 
-<generic>T { if (syscmd(TYPCMD,srvcmd+2)) BEGIN ssinit;
-    	     else { errpkt("Can't type file"); SERVE; } }
+<generic>F {				/* FINISH */
+    ack();				/* Acknowledge */
+    screen(SCR_TC,0,0l,"");		/* Display */
+    return(0);				/* Done */
+}
 
-<generic>U { x = *(srvcmd+1);			/* Disk Usage query */
-    	     x = ((x == '\0') || (x == SP));
-	     x = (x ? syscmd(SPACMD,"") : syscmd(SPACM2,srvcmd+2));
-    	     if (x) BEGIN ssinit; else { errpkt("Can't check space"); SERVE; }}
+<generic>L {				/* BYE (LOGOUT) */
+    ack();				/* Acknowledge */
+    ttres();				/* Reset the terminal */
+    screen(SCR_TC,0,0l,"");		/* Display */
+    return(zkself());			/* Try to log self out */
+}
 
-<generic>W { if (syscmd(WHOCMD,srvcmd+2)) BEGIN ssinit;
-    	     else { errpkt("Can't do who command"); SERVE; } }
+<generic>H {				/* REMOTE HELP */
+    if (sndhlp()) BEGIN ssinit;		/* Try to send it */
+    else {				/* If not ok, */
+	errpkt("Can't send help");	/* send error message instead */
+	SERVE;				/* and return to server command wait */
+    }
+}
 
-<generic>. { errpkt("Unimplemented generic server function"); SERVE; }
-
-/* Dynamic states, cont'd */
+<generic>T {				/* REMOTE TYPE */
+    if (syscmd(TYPCMD,srvcmd+2))	/* Try */
+      BEGIN ssinit;			/* OK */
+    else {				/* not OK */
+	errpkt("Can't type file");	/* give error message */
+	SERVE;				/* wait for next server command */
+    }
+}
 
+<generic>U {				/* REMOTE SPACE */
+    x = *(srvcmd+1);			/* Get area to check */
+    x = ((x == '\0') || (x == SP));
+    x = (x ? syscmd(SPACMD,"") : syscmd(SPACM2,srvcmd+2));
+    if (x)				/* If we got the info */
+      BEGIN ssinit;			/* send it */
+    else {				/* otherwise */
+	errpkt("Can't check space");	/* send error message */
+	SERVE;				/* and await next server command */
+    }
+}
 
-<rgen>Y { decode(rdatap,puttrm); RESUME; }    /* Got reply in ACK data */
+<generic>W {				/* REMOTE WHO */
+    if (syscmd(WHOCMD,srvcmd+2))	/* The now-familiar scenario... */
+      BEGIN ssinit;
+    else {
+	errpkt("Can't do who command");
+	SERVE;
+    }
+}
 
-<rgen,rfile>F { if (rcvfil())		      /* File header */
-		  { encstr(filnam); ack1(data); BEGIN rdata; }
-                else { errpkt("Can't open file"); RESUME; } }
+<generic>. {				/* Anything else in this state... */
+    errpkt("Unimplemented generic server function"); /* Complain */
+    SERVE;				/* and return to server command wait */
+}
 
-<rgen,rfile>X { opent(); ack(); BEGIN rdata; }	/* Screen data is coming */
+<rgen>Y {				/* Short-Form reply */
+    decode(rdatap,puttrm);		/* in ACK Data field */
+    RESUME;
+}
 
-<rfile>B { ack(); tsecs = gtimer(); reot(); RESUME; } /* Got EOT */
+<rgen,rfile>F {				/* File header */
+    xflg = 0;				/* Not screen data */
+    rcvfil(filnam);			/* Figure out local filename */
+    encstr(filnam);			/* Encode it */
+    ack1(data);				/* Send it back in ACK */
+    initattr(&iattr);			/* Clear file attribute structure */
+    nakstate = 1;			/* In this state we can send NAKs */
+    BEGIN rattr;			/* Now expect Attribute packets */
+}
 
-<rdata>D { if (cxseen) ack1("X");	/* Got data. */
-    	       else if (czseen) ack1("Z");
-	       else ack();
-	   decode(rdatap,putfil); }
+<rgen,rfile>X {				/* X-packet instead of file header */
+    xflg = 1;				/* Screen data */
+    ack();				/* Acknowledge the X-packet */
+    initattr(&iattr);			/* Initialize attribute structure */
+    nakstate = 1;			/* Say that we can send NAKs */
+    BEGIN rattr;			/* Expect Attribute packets */
+}
 
-<rdata>Z  { if (reof() < 0) {	    	/* Got End Of File */
-    	      errpkt("Can't close file"); RESUME;
-    	    } else { ack(); BEGIN rfile; } }
+<rattr>A {				/* Attribute packet */
+    if (gattr(rdatap,&iattr) == 0)	/* Read into attribute structure */
+      ack();				/* If OK, acknowledge */
+    else				/* If not */
+      ack1("N");			/* refuse to accept the file */
+}
 
-<ssinit>Y { spar(rdatap); bctu = bctr;	/* Got ACK to Send-Init */
-    	    x = sfile(xflg);		/* Send X or F header packet */
-	    if (x) { resetc(); rtimer(); BEGIN ssfile; }
-	   	else { s = xflg ? "Can't execute command" : "Can't open file";
-		    errpkt(s); RESUME; }
-          }
+<rattr>D {				/* First data packet */
+    if (xflg)				/* If screen data */
+      x = opent();			/* "open" the screen */
+    else				/* otherwise */
+      x = opena(filnam,&iattr);		/* open the file, with attributes */
+    if (x) {				/* If file was opened ok */
+	if (decode(rdatap,putfil) < 0) { /* decode first data packet */
+	    errpkt("Error writing data");
+	    RESUME;
+	}
+	ack();				/* acknowledge it */
+	BEGIN rdata;			/* and switch to receive-data state */
+    } else {				/* otherwise */
+	errpkt("Can't open file");	/* send error message */
+	RESUME;				/* and quit. */
+    }
+}
 
-<ssfile>Y { srvptr = srvcmd;		    	 /* Got ACK to F */
-	    decode(rdatap,putsrv); putsrv('\0');
-	    if (*srvcmd) tlog(F110," stored as",srvcmd,0);
-	    if (sdata() < 0) { clsif(); seof(""); BEGIN sseof; }
-    	    	else BEGIN ssdata; }
+<rfile>B {				/* EOT, no more files */
+    ack();				/* Acknowledge */
+    tsecs = gtimer();			/* Get timing for statistics */
+    reot();				/* Do EOT things */
+    RESUME;				/* and quit */
+}
 
-<ssdata>Y { if (canned(rdatap)) { clsif(); seof("D"); BEGIN sseof; }
-	    	else if (sdata() < 0) { clsif(); seof(""); BEGIN sseof; } }
+<rdata>D {				/* Data packet */
+    if (cxseen)				/* If file interrupt */
+      ack1("X");			/* put "X" in ACK */
+    else if (czseen)			/* If file-group interrupt */
+      ack1("Z");			/* put "Z" in ACK */
+    else if (decode(rdatap,putfil) < 0) { /* Normal case, */
+	errpkt("Error writing data");	/*   decode data to file */
+	RESUME;				/* Send ACK if data written */
+    } else ack();			/* to file OK. */
+}
 
-<sseof>Y  { if (gnfile() > 0) {		/* Got ACK to EOF, get next file */
-		if (sfile(xflg)) BEGIN ssdata;
-		else { errpkt("Can't open file") ; RESUME; }
-	    } else {			/* If no next file, EOT */
-		tsecs = gtimer();
-		seot();
-		BEGIN sseot; }
-	  }
+<rdata,rattr>Z {			/* End Of File (EOF) Packet */
+    if (reof(&iattr) < 0) {		/* Close & dispose of the file */
+	errpkt("Can't close file");	/* If problem, send error message */
+	RESUME;				/* and quit */
+    } else {				/* otherwise */
+	ack();				/* acknowledge the EOF packet */
+	BEGIN rfile;			/* and await another file */
+    }
+}
 
-<sseot>Y { RESUME; }			/* Got ACK to EOT */
+<ssinit>Y {				/* ACK for Send-Init */
+    spar(rdatap);			/* set parameters from it */
+    bctu = bctr;			/* switch to agreed-upon block check */
+    x = sfile(xflg);			/* Send X or F header packet */
+    if (x) {				/* If the packet was sent OK */
+	resetc();			/* reset per-transaction counters */
+	rtimer();			/* reset timers */
+	BEGIN ssfile;			/* and switch to receive-file state */
+    } else {				/* otherwise send error msg & quit */
+	s = xflg ? "Can't execute command" : "Can't open file";
+	errpkt(s);
+	RESUME;
+    }
+}
 
-E { ermsg(rdatap);			/* Error packet, issue message. */
+<ssfile>Y {				/* ACK for F packet */
+    srvptr = srvcmd;			/* Point to string buffer */
+    decode(rdatap,putsrv);		/* Decode data field, if any */
+    putsrv('\0');			/* Terminate with null */
+    if (*srvcmd)			/* If remote name was recorded */
+      tlog(F110," stored as",srvcmd,0); /* Record it in transaction log. */
+    if (atcapu) {			/* If attributes are to be used */
+	if (sattr(xflg) < 0) {		/* set and send them */
+	    errpkt("Can't send attributes"); /* if problem, say so */
+	    RESUME;			     /* and quit */
+	} else BEGIN ssattr;		/* if ok, switch to attribute state */
+    } else if (sdata() < 0) {		/* No attributes, send data */
+	clsif();			/* If not ok, close input file, */
+	seof("");			/* send EOF packet */
+	BEGIN sseof;			/* and switch to EOF state. */
+    } else BEGIN ssdata;		/* All ok, switch to send-data state */
+}
+
+<ssattr>Y {				/* Got ACK to A packet */
+    if (rsattr(rdatap) < 0) {		/* Was the file refused? */
+	clsif();			/* yes, close it */
+	seof("D");			/* send EOF with "discard" code */
+	BEGIN sseof;			/* switch to send-EOF state */
+    } else if (sdata() < 0) {		/* File accepted, send data */
+	clsif();			/* If problem, close input file */
+	seof("");			/* send EOF packet */
+	BEGIN sseof;			/* and switch to send-EOF state. */
+    } else BEGIN ssdata;		/* All ok, enter send-data state. */
+}
+
+<ssdata>Y {				/* Got ACK to Data packet */
+    if (canned(rdatap)) {		/* If file transfer cancelled */
+	clsif();			/* close input file */
+	seof("D");			/* send EOF packet with Discard code */
+	BEGIN sseof;			/* switch to EOF state */
+    } else if (sdata() < 0) {		/* Not cancelled, send next data */
+	clsif();			/* If there was a problem close file */
+	seof("");			/* Send EOF packet */
+	BEGIN sseof;			/* enter send-eof state */
+    }
+}
+
+<sseof>Y {				/* Got ACK to EOF */
+    if (gnfile() > 0) {			/* Any more files to send? */
+	if (sfile(xflg))		/* Yes, try to send next file header */
+	  BEGIN ssfile;			/* if ok, enter send-file state */
+	else {				/* otherwise */
+	    errpkt("Can't open file");	/* send error message */
+	    RESUME;			/* and quit */
+	}
+    } else {				/* No next file */
+	tsecs = gtimer();		/* get statistics timers */
+	seot();				/* send EOT packet */
+	BEGIN sseot;			/* enter send-eot state */
+    }
+}
+
+<sseot>Y {				/* Got ACK to EOT */
+    RESUME;				/* All done, just quit */
+}
+
+E {					/* Got Error packet, in any state */
+    ermsg(rdatap);			/* Issue message. */
     x = quiet; quiet = 1;		/* Close files silently, */
     clsif(); clsof(1);			/* discarding any output file. */
-    tsecs = gtimer();
-    quiet = x;
+    tsecs = gtimer();			/* Get timers */
+    quiet = x;				/* restore quiet state */
     if (backgrd && !server) fatal("Protocol error");
-    RESUME; }
+    RESUME;
+}
 
-. { errpkt("Unknown packet type"); RESUME; } /* Anything else, send error */
+. {					/* Anything not accounted for above */
+    errpkt("Unknown packet type");	/* Give error message */
+    RESUME;				/* and quit */
+}
 %%
 
 /*  P R O T O  --  Protocol entry function  */
@@ -229,9 +433,9 @@ proto() {
 	}
     } else server = 0;
     if (sstate == 'v' && !local && !quiet)
-      conoll("Escape back to your local system and give a SEND command...");
+      conoll("Escape back to your local Kermit and give a SEND command...");
     if (sstate == 's' && !local && !quiet)
-      conoll("Escape back to your local system and give a RECEIVE command...");
+      conoll("Escape back to your local Kermit and give a RECEIVE command...");
     sleep(1);
 /*
  The 'wart()' function is generated by the wart program.  It gets a

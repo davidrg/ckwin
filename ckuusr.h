@@ -1,29 +1,38 @@
 /*  C K U U S R . H  --  Symbol definitions for C-Kermit ckuus*.c modules  */
  
 /*
- Author: Frank da Cruz (SY.FDC@CU20B),
- Columbia University Center for Computing Activities, January 1985.
- Copyright (C) 1985, Trustees of Columbia University in the City of New York.
- Permission is granted to any individual or institution to use, copy, or
+ Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
+ Columbia University Center for Computing Activities.
+ First released January 1985.
+ Copyright (C) 1985, 1989, Trustees of Columbia University in the City of New 
+ York.  Permission is granted to any individual or institution to use, copy, or
  redistribute this software so long as it is not sold for profit, provided this
  copyright notice is retained.
 */
  
 /* Name of C-Kermit program initialization file. */
-#ifdef vax11c
-#define KERMRC "kermit.ini"
+#ifdef vms
+#define KERMRC "ckermit.ini"
+#else
+#ifdef OS2
+#define KERMRC "ckermit.ini"
 #else
 #define KERMRC ".kermrc"
 #endif
+#endif
 
+#ifndef OS2
 #ifndef AMIGA
-#ifndef vax11c
+#ifndef vms
 #ifndef datageneral
+#ifndef OSK
 #include <pwd.h>
 #endif
 #endif
 #endif
- 
+#endif
+#endif 
+
 /* Values associated with top-level commands, must be 0 or greater. */
  
 #define XXBYE   0	/* BYE */
@@ -111,6 +120,10 @@
 #define XYSEND 31	/* SEND parameters, used with some of the above */
 #define XYRECV 32   	/* RECEIVE parameters, ditto */
 #define XYTERM 33	/* Terminal parameters */
+#define XYATTR 34       /* Attribute packets */
+#define XYSERV 35	/* Server parameters */
+#define   XYSERT 0      /*  Server timeout   */
+#define XYWIND 36       /* Window size */
  
 /* REMOTE command symbols */
  

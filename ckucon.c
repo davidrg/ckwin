@@ -1,22 +1,14 @@
-char *connv = "Connect Command for Unix, V4E(017) 14 Sep 87";
+char *connv = "Connect Command for Unix, 4F(018) 19 Jun 89";
 
 /*  C K U C O N  --  Dumb terminal connection to remote system, for Unix  */
 /*
- This module should work under all versions of Unix.  It calls externally
- defined system-dependent functions for i/o, but depends upon the existence
- of the fork() function.
-
- Author: Frank da Cruz (SY.FDC@CU20B),
- Columbia University Center for Computing Activities, January 1985.
- Copyright (C) 1985, Trustees of Columbia University in the City of New York.
- Permission is granted to any individual or institution to use, copy, or
+ Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
+ Columbia University Center for Computing Activities.
+ First released January 1985.
+ Copyright (C) 1985, 1989, Trustees of Columbia University in the City of New 
+ York.  Permission is granted to any individual or institution to use, copy, or
  redistribute this software so long as it is not sold for profit, provided this
  copyright notice is retained. 
-
- Enhanced by H. Fischer to detect when child process (modem reader)
- reports that the communications line has been broken and hang up.
- Also enhanced to allow escaping from connect state to command
- interpreter, to allow sending/receiving without breaking connection.
 */
 
 #include <stdio.h>
@@ -39,6 +31,8 @@ extern int local, speed, escape, duplex, parity, flow, seslog, mdmtyp;
 extern int errno, cmask, fmask;
 extern char ttname[], sesfil[];
 extern CHAR dopar();
+static int quitnow = 0;
+static int dohangup = 0;
 
 int i, active;				/* Variables global to this module */
 int io_retry = 0;
@@ -52,7 +46,7 @@ char lbuf[LBUFL];
 
 static jmp_buf env_con;			/* Envir ptr for connect errors */
 
-static
+SIGTYP 
 conn_int() {				/* Modem read failure handler, */
     longjmp(env_con,1);			/* notifies parent process to stop */
 }
@@ -87,6 +81,7 @@ conect() {
 	    perror(errmsg);
 	    return(-2);
     	}
+        dohangup = 0;
     	printf("Connecting thru %s, speed %d.\r\n",ttname,speed);
 	printf("The escape character is %s (%d).\r\n",chstr(escape),escape);
 	printf("Type the escape character followed by C to get back,\r\n");
@@ -145,6 +140,8 @@ conect() {
 	    kill(pid,9);		/* Done, kill inferior fork. */
 	    wait((int *)0);		/* Wait till gone. */
 	    conres();			/* Reset the console. */
+	    if (quitnow) doexit(GOOD_EXIT);
+	    if (dohangup) tthang();
 	    printf("\r[Back at Local System]\n");
 	    return(0);
 
@@ -159,7 +156,8 @@ conect() {
 			tthang();
 			continue;
 		    }
-		    perror("\r\nCan't get character");
+		    if (errno != 9999)
+		      perror("\r\nCan't get character");
 		    kill(parent_id,SIGUSR1); /* notify parent. */
 		    pause();		/* Wait to be killed by parent. */
 		}
@@ -186,7 +184,8 @@ hconne() {
 \r\n  C to close the connection, or:",
 "\r\n  0 (zero) to send a null",
 "\r\n  B to send a BREAK",
-"\r\n  H to hangup and close connection",
+"\r\n  H to hangup",
+"\r\n  Q to hangup and quit Kermit",
 "\r\n  S for status",
 "\r\n  ? for help",
 "\r\n escape character twice to send the escape character.\r\n\r\n",
@@ -238,7 +237,10 @@ doesc(c) char c; {
 
 	case 'h':			/* Hangup */
 	case '\010':
-	    tthang(); active = 0; conol("\r\n"); return;
+	    dohangup = 1; active = 0; conol("\r\n"); return;
+
+	case 'q':
+	    quitnow = 1; active = 0; conol("\r\n"); return;
 
 	case 's':			/* Status */
 	    conol("\r\nConnected thru ");

@@ -1,18 +1,15 @@
-char *userv = "User Interface 4E(060), 13 Jan 89";
- 
+char *userv = "User Interface 4F(065), 20 Jul 89";
+
 /*  C K U U S R --  "User Interface" for Unix Kermit (Part 1)  */
- 
+
 /*
- 4E, support for Apollo Aegis, Data General added, July 87.
-*/
-/*
- Author: Frank da Cruz (fdc@cunixc.cc.columbia.edu, FDCCU@CUVMA.BITNET),
+ Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
  Columbia University Center for Computing Activities.
  First released January 1985.
- Copyright (C) 1985, 1989, Trustees of Columbia University in the City of New 
+ Copyright (C) 1985, 1989, Trustees of Columbia University in the City of New
  York.  Permission is granted to any individual or institution to use, copy, or
  redistribute this software so long as it is not sold for profit, provided this
- copyright notice is retained. 
+ copyright notice is retained.
 */
 
 /*
@@ -23,23 +20,23 @@ char *userv = "User Interface 4E(060), 13 Jan 89";
  functions that are likely to vary among Unix implementations -- like setting
  terminal modes or interrupts -- are invoked via calls to functions that are
  defined in the system-dependent modules, ck?[ft]io.c.
- 
+
  The command line parser processes any arguments found on the command line,
  as passed to main() via argv/argc.  The interactive parser uses the facilities
  of the cmd package (developed for this program, but usable by any program).
- 
+
  Any command parser may be substituted for this one.  The only requirements
  for the Kermit command parser are these:
- 
+
  1. Set parameters via global variables like duplex, speed, ttname, etc.
     See ckmain.c for the declarations and descriptions of these variables.
- 
+
  2. If a command can be executed without the use of Kermit protocol, then
     execute the command directly and set the variable sstate to 0. Examples
     include 'set' commands, local directory listings, the 'connect' command.
- 
+
  3. If a command requires the Kermit protocol, set the following variables:
- 
+
     sstate                             string data
       'x' (enter server mode)            (none)
       'r' (send a 'get' command)         cmarg, cmarg2
@@ -47,11 +44,11 @@ char *userv = "User Interface 4E(060), 13 Jan 89";
       'g' (send a generic command)       cmarg
       's' (send files)                   nfils, cmarg & cmarg2 OR cmlist
       'c' (send a remote host command)   cmarg
- 
+
     cmlist is an array of pointers to strings.
     cmarg, cmarg2 are pointers to strings.
-    nfils is an integer.    
- 
+    nfils is an integer.
+
     cmarg can be a filename string (possibly wild), or
        a pointer to a prefabricated generic command string, or
        a pointer to a host command string.
@@ -62,7 +59,7 @@ char *userv = "User Interface 4E(060), 13 Jan 89";
       -1: argument string is in cmarg, and should be expanded internally.
        0: stdin.
       >0: number of files to send, from cmlist.
- 
+
  The screen() function is used to update the screen during file transfer.
  The tlog() function maintains a transaction log.
  The debug() function maintains a debugging log.
@@ -71,19 +68,24 @@ char *userv = "User Interface 4E(060), 13 Jan 89";
 */
 
 /* Includes */
- 
+
 #include "ckcdeb.h"
 #include <stdio.h>
 #include <ctype.h>
 #ifndef AMIGA
+/* Apparently these should be included for OS/2 C-Kermit after all... */
+/* #ifndef OS2 */
 #include <signal.h>
+#include <setjmp.h>
+/* #endif */
 #endif
+
 #include "ckcker.h"
 #include "ckucmd.h"
 #include "ckuusr.h"
- 
+
 #ifdef datageneral
-#define fgets(stringbuf,max,fd) dg_fgets(stringbuf,max,fd) 
+#define fgets(stringbuf,max,fd) dg_fgets(stringbuf,max,fd)
 #define fork() vfork()
 /* DG version 3.21 of C has bugs in the following routines, since they
  * depend on /etc/passwd.  In the context where the routines are used,
@@ -95,52 +97,60 @@ char *userv = "User Interface 4E(060), 13 Jan 89";
 #endif
 
 /* External Kermit Variables, see ckmain.c for description. */
- 
-extern int size, rpsiz, urpsiz, speed, local, 
+
+extern int size, rpsiz, urpsiz, speed, local,
   server, displa, binary, parity, deblog, escape, xargc, flow,
   turn, duplex, nfils, ckxech, pktlog, seslog, tralog, stdouf,
-  turnch, dfloc, keep, maxrps, warn, quiet, cnflg, tlevel;
- 
+  turnch, dfloc, keep, maxrps, warn, quiet, cnflg, tlevel,
+  mdmtyp, zincnt;
+
 extern char *versio, *protv, *ckxv, *ckzv, *fnsv, *connv, *dftty, *cmdv;
 extern char *dialv, *loginv;
 extern char *ckxsys, *ckzsys, *cmarg, *cmarg2, **xargv, **cmlist;
 extern char *DIRCMD, *PWDCMD, cmerrp[];
 extern CHAR sstate, ttname[];
+extern CHAR *zinptr;
 char *strcpy(), *getenv();
 #ifdef AMIGA
 char *getcwd();
 #endif
- 
+#ifdef OS2
+char *getcwd();
+#endif
+
 /* Declarations from cmd package */
- 
+
 extern char cmdbuf[];			/* Command buffer */
- 
+
 /* Declarations from ck?fio.c module */
- 
+
 extern char *SPACMD, *zhome();		/* Space command, home directory. */
 extern int backgrd;			/* Kermit executing in background */
- 
+#ifdef OS2
+extern char *zfindfile();
+#endif
+
 /* The background flag is set by ckutio.c (via conint() ) to note whether */
 /* this kermit is executing in background ('&' on shell command line).    */
- 
- 
+
+
 /* Variables and symbols local to this module */
- 
+
 char line[CMDBL+10], *lp;		/* Character buffer for anything */
 char debfil[50];			/* Debugging log file name */
 char pktfil[50];			/* Packet log file name */
 char sesfil[50];			/* Session log file name */
 char trafil[50];			/* Transaction log file name */
- 
+
 int n,					/* General purpose int */
     cflg,				/* Command-line connect cmd given */
     action,				/* Action selected on command line*/
     repars,				/* Reparse needed */
     cwdf = 0;				/* CWD has been done */
- 
+
 #define MAXTAKE 20			/* Maximum nesting of TAKE files */
 FILE *tfile[MAXTAKE];			/* File pointers for TAKE command */
- 
+
 char *homdir;				/* Pointer to home directory string */
 char cmdstr[100];			/* Place to build generic command */
 
@@ -155,14 +165,13 @@ cmdlin() {
     cmarg = "";				/* Initialize globals */
     cmarg2 = "";
     action = cflg = 0;
- 
+
     while (--xargc > 0) {		/* Go through command line words */
 	xargv++;
 	debug(F111,"xargv",*xargv,xargc);
     	if (**xargv == '-') {		/* Got an option (begins with dash) */
 	    x = *(*xargv+1);		/* Get the option letter */
-	    x = doarg(x);		/* Go handle the option */
-	    if (x < 0) doexit(BAD_EXIT);
+	    if (doarg(x) < 0) doexit(BAD_EXIT);	/* Go handle the option */
     	} else {			/* No dash where expected */
 	    usage();
 	    doexit(BAD_EXIT);
@@ -188,9 +197,9 @@ cmdlin() {
 	if (local) displa = 1;
 	if (stdouf) { displa = 0; quiet = 1; }
     }
- 
+
     if (quiet) displa = 0;		/* No display if quiet requested */
- 
+
     if (cflg) {
 	conect();			/* Connect if requested */
 	if (action == 0) {
@@ -203,49 +212,49 @@ cmdlin() {
 }
 
 /*  D O A R G  --  Do a command-line argument.  */
- 
+
 doarg(x) char x; {
     int z; char *xp;
- 
+
     xp = *xargv+1;			/* Pointer for bundled args */
     while (x) {
 	switch (x) {
- 
+
 case 'x':				/* server */
     if (action) fatal("conflicting actions");
     action = 'x';
     break;
- 
+
 case 'f':
     if (action) fatal("conflicting actions");
     action = setgen('F',"","","");
     break;
- 
+
 case 'r':				/* receive */
     if (action) fatal("conflicting actions");
     action = 'v';
     break;
- 
+
 case 'k':				/* receive to stdout */
     if (action) fatal("conflicting actions");
     stdouf = 1;
     action = 'v';
     break;
- 
+
 case 's': 				/* send */
     if (action) fatal("conflicting actions");
     if (*(xp+1)) fatal("invalid argument bundling after -s");
     z = nfils = 0;			/* Initialize file counter, flag */
     cmlist = xargv+1;			/* Remember this pointer */
-    while (--xargc > 0) {		/* Traverse the list */	
-	*xargv++;
+    while (--xargc > 0) {		/* Traverse the list */
+	xargv++;
 	if (**xargv == '-') {		/* Check for sending stdin */
 	    if (strcmp(*xargv,"-") != 0) break;
 	    z++;
         }
 	nfils++;			/* Bump file counter */
     }
-    xargc++, *xargv--;			/* Adjust argv/argc */
+    xargc++, xargv--;			/* Adjust argv/argc */
     if (nfils < 1) fatal("missing filename for -s");
     if (z > 1) fatal("-s: too many -'s");
     if (z == 1) {
@@ -258,44 +267,44 @@ case 's': 				/* send */
     debug(F101,*xargv,"",nfils);
     action = 's';
     break;
- 
+
 /* cont'd... */
 
 /* ...doarg(), cont'd */
- 
+
 case 'g':				/* get */
     if (action) fatal("conflicting actions");
     if (*(xp+1)) fatal("invalid argument bundling after -g");
-    *xargv++, xargc--;
+    xargv++, xargc--;
     if ((xargc == 0) || (**xargv == '-'))
     	fatal("missing filename for -g");
     cmarg = *xargv;
     action = 'r';
     break;
- 
+
 case 'c':				/* connect before */
     cflg = 1;
     break;
- 
+
 case 'n':				/* connect after */
     cnflg = 1;
     break;
- 
+
 case 'h':				/* help */
     usage();
-    return(-1);
- 
+    doexit(GOOD_EXIT);
+
 case 'a':				/* "as" */
     if (*(xp+1)) fatal("invalid argument bundling after -a");
-    *xargv++, xargc--;
+    xargv++, xargc--;
     if ((xargc < 1) || (**xargv == '-'))
     	fatal("missing name in -a");
     cmarg2 = *xargv;
     break;
- 
+
 case 'l':				/* set line */
     if (*(xp+1)) fatal("invalid argument bundling after -l");
-    *xargv++, xargc--;
+    xargv++, xargc--;
     if ((xargc < 1) || (**xargv == '-'))
     	fatal("communication line device name missing");
     strcpy(ttname,*xargv);
@@ -304,20 +313,20 @@ case 'l':				/* set line */
     debug(F101,"local","",local);
     ttopen(ttname,&local,0);
     break;
- 
+
 case 'b':   	    			/* set baud */
     if (*(xp+1)) fatal("invalid argument bundling");
-    *xargv++, xargc--;
+    xargv++, xargc--;
     if ((xargc < 1) || (**xargv == '-'))
     	fatal("missing baud");
     z = atoi(*xargv);			/* Convert to number */
     if (chkspd(z) > -1) speed = z;	/* Check it */
     	else fatal("unsupported baud rate");
     break;
- 
+
 case 'e':				/* Extended packet length */
     if (*(xp+1)) fatal("invalid argument bundling");
-    *xargv++, xargc--;
+    xargv++, xargc--;
     if ((xargc < 1) || (**xargv == '-'))
     	fatal("missing length");
     z = atoi(*xargv);			/* Convert to number */
@@ -330,27 +339,27 @@ case 'e':				/* Extended packet length */
 case 'i':				/* Treat files as binary */
     binary = 1;
     break;
- 
+
 /* cont'd... */
 
 /* ...doarg(), cont'd */
- 
- 
+
+
 case 'w':				/* File warning */
     warn = 1;
     break;
- 
+
 case 'q':				/* Quiet */
     quiet = 1;
     break;
- 
+
 case 'd':				/* debug */
     debopn("debug.log");
     break;
- 
+
 case 'p':				/* set parity */
     if (*(xp+1)) fatal("invalid argument bundling");
-    *xargv++, xargc--;
+    xargv++, xargc--;
     if ((xargc < 1) || (**xargv == '-'))
     	fatal("missing parity");
     switch(x = **xargv) {
@@ -362,42 +371,64 @@ case 'p':				/* set parity */
 	default:  fatal("invalid parity");
         }
     break;
- 
+
 case 't':
     turn = 1;				/* Line turnaround handshake */
     turnch = XON;			/* XON is turnaround character */
     duplex = 1;				/* Half duplex */
     flow = 0;				/* No flow control */
     break;
- 
+
+#ifdef OS2
+case 'u':
+    /* get numeric argument */
+    if (*(xp+1)) fatal("invalid argument bundling");
+    *xargv++, xargc--;
+    if ((xargc < 1) || (**xargv == '-'))
+    	fatal("missing handle");
+    z = atoi(*xargv);			/* Convert to number */
+    ttclos();
+    if (!ttiscom(z)) fatal("invalid handle");
+    speed = ttspeed();
+    break;
+#endif /* OS2 */
+
 default:
     fatal("invalid argument, type 'kermit -h' for help");
         }
- 
+
     x = *++xp;				/* See if options are bundled */
     }
     return(0);
 }
 
 /* Misc */
- 
+
 fatal(msg) char *msg; {			/* Fatal error message */
+#ifdef OSK
+    fprintf(stderr,"\nFatal: %s\n",msg);
+#else
     fprintf(stderr,"\r\nFatal: %s\n",msg);
+#endif /* OSK */
     tlog(F110,"Fatal:",msg,0l);
     doexit(BAD_EXIT);			/* Exit indicating failure */
 }
- 
- 
+
+
 ermsg(msg) char *msg; {			/* Print error message */
+#ifdef OSK
+    if (!quiet) fprintf(stderr,"\n%s - %s\n",cmerrp,msg);
+#else
     if (!quiet) fprintf(stderr,"\r\n%s - %s\n",cmerrp,msg);
+#endif /* OSK */
     tlog(F110,"Error -",msg,0l);
 }
 
-/* Interactive command parser */ 
- 
- 
+/* Interactive command parser */
+
+
 /* Top-Level Keyword Table */
- 
+
 struct keytab cmdtab[] = {
     "!",	   XXSHE, 0,
     "%",    	   XXCOM, CM_INV,
@@ -428,13 +459,15 @@ struct keytab cmdtab[] = {
     "show", 	   XXSHO, 0,
     "space",       XXSPA, 0,
     "statistics",  XXSTA, 0,
-    "take",	   XXTAK, 0
+    "take",	   XXTAK, 0,
+    "transmit",    XXTRA, 0
 };
 int ncmd = (sizeof(cmdtab) / sizeof(struct keytab));
 
 /* Parameter keyword table */
- 
+
 struct keytab prmtab[] = {
+    "attributes",       XYATTR,  0,
     "baud",	        XYSPEE,  CM_INV,
     "block-check",  	XYCHKT,  0,
     "delay",	    	XYDELA,  0,
@@ -455,16 +488,17 @@ struct keytab prmtab[] = {
     "receive",          XYRECV,  0,
     "retry",            XYRETR,  0,
     "send",             XYSEND,  0,
+    "server",           XYSERV,  0,
     "speed",	        XYSPEE,  0,
     "start-of-packet",  XYMARK,  CM_INV,    /* moved to send/receive */
     "terminal",         XYTERM,  0,
     "timeout",	        XYTIMO,  CM_INV     /* moved to send/receive */
 };
 int nprm = (sizeof(prmtab) / sizeof(struct keytab)); /* How many parameters */
- 
- 
+
+
 /* Remote Command Table */
- 
+
 struct keytab remcmd[] = {
     "cd",        XZCWD, CM_INV,
     "cwd",       XZCWD, 0,
@@ -477,7 +511,7 @@ struct keytab remcmd[] = {
     "who",  	 XZWHO, 0
 };
 int nrmt = (sizeof(remcmd) / sizeof(struct keytab));
- 
+
 struct keytab logtab[] = {
     "debugging",    LOGD, 0,
     "packets",	    LOGP, 0,
@@ -485,38 +519,51 @@ struct keytab logtab[] = {
     "transactions", LOGT, 0
 };
 int nlog = (sizeof(logtab) / sizeof(struct keytab));
- 
+
 /* Show command arguments */
- 
+
 #define SHPAR 0				/* Parameters */
 #define SHVER 1				/* Versions */
- 
+
 struct keytab shotab[] = {
     "parameters", SHPAR, 0,
     "versions",   SHVER, 0
 };
 
 /*  C M D I N I  --  Initialize the interactive command parser  */
- 
+
 cmdini() {
 
 #ifdef AMIGA
     congm();
     concb(escape);
-#endif 
+#endif
     tlevel = -1;			/* Take file level */
     cmsetp("C-Kermit>");		/* Set default prompt */
- 
-/* Look for init file in home or current directory. */
 
+/* Look for init file in home or current directory. */
+#ifdef OS2
+    lp = zfindfile(KERMRC);
+    strcpy(line,lp);
+    if ((tfile[0] = fopen(line,"r")) != NULL) {
+        tlevel = 0;
+        debug(F110,"init file",line,0);
+    } else {
+        debug(F100,"no init file","",0);
+    }
+#else
     homdir = zhome();
     lp = line;
     lp[0] = '\0';
+#ifdef vms
+    zkermini(line,sizeof(line),KERMRC);
+#else
     if (homdir) {
 	strcpy(lp,homdir);
 	if (lp[0] == '/') strcat(lp,"/");
     }
     strcat(lp,KERMRC);
+#endif
 #ifdef AMIGA
     reqoff();			/* disable requestors */
 #endif
@@ -526,48 +573,56 @@ cmdini() {
     }
     if (homdir && (tlevel < 0)) {
     	strcpy(lp,KERMRC);
-	if ((tfile[0] = fopen(line,"r")) != NULL) {
-	    tlevel = 0;
-	    debug(F110,"init file",line,0);
-	} else {
-	    debug(F100,"no init file","",0);
-        }
+	if ((tfile[0] = fopen(line,"r")) != NULL) tlevel = 0;
     }
+#endif
 #ifdef AMIGA
     reqpop();				/* restore requestors */
 #else
     congm();				/* Get console tty modes */
 #endif
 }
- 
+
 /* Display version herald and initial prompt */
 
 herald() {
     if (!backgrd) printf("%s,%s\nType ? for help\n",versio,ckxsys);
 }
 
- 
+
 /*  T R A P  --  Terminal interrupt handler */
- 
-trap() {
-    debug(F100,"terminal interrupt...","",0);
+
+trap(sig,code) int sig, code; {
+    fprintf(stderr,"^C...\n");
+    debug(F101,"trap() caught signal","",sig);
+    debug(F101," code","",code);
     doexit(GOOD_EXIT);			/* Exit indicating success */
 }
 
 /*  S T P T R A P -- Handle SIGTSTP signals */
 
-stptrap() {
+#ifdef RTU
+    extern int rtu_bug;
+#endif
+
+stptrap(sig,code) int sig, code; {
+    debug(F101,"stptrap() caught signal","",sig);
+    debug(F101," code","",code);
     conres();				/* Reset the console */
 #ifdef SIGTSTP
+#ifdef RTU
+    rtu_bug = 1;
+#endif
     kill(0, SIGSTOP);			/* If job control, suspend the job */
 #else
     doexit(GOOD_EXIT);			/* Probably won't happen otherwise */
 #endif
-    concb();				/* Put console back in Kermit mode */
+    concb(escape);			/* Put console back in Kermit mode */
+    if (!backgrd) prompt();		/* Reissue prompt when fg'd */
 }
 
 /*  P A R S E R  --  Top-level interactive command parser.  */
- 
+
 parser() {
     int xx, cbn;
     char *cbp;
@@ -597,9 +652,9 @@ debug(F101,"tlevel","",tlevel);
 	if (tlevel > -1) {		/* If in take file */
 	    cbp = cmdbuf;		/* Get the next line. */
 	    cbn = CMDBL;
- 
+
 /* Loop to get next command line and all continuation lines from take file. */
- 
+
 again:	    if (fgets(line,cbn,tfile[tlevel]) == NULL) continue;
 	    lp = line;			/* Got one, copy it. */
 	    while (*cbp++ = *lp++)
@@ -609,9 +664,9 @@ again:	    if (fgets(line,cbn,tfile[tlevel]) == NULL) continue;
 		goto again;		/* go back, get next line. */
 	    }
 	    stripq(cmdbuf);		/* Strip any quotes from cmd buffer. */
- 
+
 	} else {			/* No take file, get typein. */
- 
+
 	    if (!backgrd) prompt();	/* Issue interactive prompt. */
 	    cmini(ckxech);
     	}
@@ -644,15 +699,15 @@ again:	    if (fgets(line,cbn,tfile[tlevel]) == NULL) continue;
         }
     }
 /* Got an action command; disable terminal interrupts and return start state */
- 
+
     if (!local) connoi();		/* Interrupts off only if remote */
     return(sstate);
 }
 
 /*  D O E X I T  --  Exit from the program.  */
- 
+
 doexit(exitstat) int exitstat; {
-    
+
     ttclos();				/* Close external line, if any */
     if (local) {
 	strcpy(ttname,dftty);		/* Restore default tty */
@@ -660,7 +715,7 @@ doexit(exitstat) int exitstat; {
     }
     if (!quiet) conres();		/* Restore console terminal. */
     if (!quiet) connoi();		/* Turn off console interrupt traps. */
- 
+
     if (deblog) {			/* Close any open logs. */
 	debug(F100,"Debug Log Closed","",0);
 	*debfil = '\0';
@@ -688,7 +743,7 @@ doexit(exitstat) int exitstat; {
 }
 
 /*  B L D L E N  --  Make length-encoded copy of string  */
- 
+
 char *
 bldlen(str,dest) char *str, *dest; {
     int len;
@@ -697,13 +752,13 @@ bldlen(str,dest) char *str, *dest; {
     strcpy(dest+1,str);
     return(dest+len+1);
 }
- 
- 
+
+
 /*  S E T G E N  --  Construct a generic command  */
- 
+
 setgen(type,arg1,arg2,arg3) char type, *arg1, *arg2, *arg3; {
     char *upstr, *cp;
- 
+
     cp = cmdstr;
     *cp++ = type;
     *cp = NUL;
@@ -716,34 +771,38 @@ setgen(type,arg1,arg2,arg3) char type, *arg1, *arg2, *arg3; {
     }
     cmarg = cmdstr;
     debug(F110,"setgen",cmarg,0);
- 
+
     return('g');
 }
 
 /*  D O C M D  --  Do a command  */
- 
+
 /*
  Returns:
    -2: user typed an illegal command
    -1: reparse needed
     0: parse was successful (even tho command may have failed).
-*/ 
- 
+*/
+
 docmd(cx) int cx; {
     int x, y;
     char *s;
- 
+
     switch (cx) {
- 
+
 case -4:				/* EOF */
+#ifdef OSK
+    if (!quiet && !backgrd) printf("\n");
+#else
     if (!quiet && !backgrd) printf("\r\n");
+#endif /* OSK */
     doexit(GOOD_EXIT);
 case -3:				/* Null command */
     return(0);
 case -2:				/* Error */
 case -1:				/* Reparse needed */
     return(cx);
- 
+
 case XXBYE:				/* bye */
     if ((x = cmcfm()) < 0) return(x);
     if (!local) {
@@ -752,11 +811,11 @@ case XXBYE:				/* bye */
     }
     sstate = setgen('L',"","","");
     return(0);
- 
+
 case XXCOM:				/* comment */
     if ((x = cmtxt("Text of comment line","",&s)) < 0) return(x);
     return(0);
- 
+
 case XXCON:                     	/* connect */
     if ((x = cmcfm()) < 0) return(x);
     return(doconect());
@@ -775,11 +834,34 @@ case XXCWD:
     else
 	if (!backgrd) printf("%s\n", line);
 #else
-    if (cmtxt("Name of local directory, or carriage return",homdir,&s) < 0)
-    	return(-1);    
-    if (chdir(s)) perror(s);
+/*    if (cmtxt("Name of local directory, or carriage return",homdir,&s) < 0)
+/*    	return(-1);     <-- this replaced by new cmdir() function, below.
+*/
+    if ((x = cmdir("Name of local directory, or carriage return",homdir,&s))
+	 < 0 ) return(x);
+    if (x == 2) {
+	printf("\n?Wildcards not allowed in directory name\n");
+	return(-2);
+    }
+#ifdef OS2
+    if ( s!=NUL ) {
+	if (strlen(s)>=2 && s[1]==':') {	/* Disk specifier */
+	    if (zchdsk(*s)) {			/* Change disk successful */
+	    	if ( strlen(s)>=3 & ( s[2]=='\\' || isalnum(s[2]) ) ) {
+	    	    if (chdir(s)) perror(s);
+	    	}
+	    } else perror(s);
+	} else if (chdir(s)) perror(s);
+    }
+    cwdf = 1;
+    concooked();
+    system(PWDCMD);
+    conraw();
+#else
+    if (! zchdir(s)) perror(s);
     cwdf = 1;
     system(PWDCMD);
+#endif
 #endif
     return(0);
 
@@ -792,7 +874,7 @@ case XXCLO:
     if (x < 0) return(x);
     if ((y = cmcfm()) < 0) return(y);
     switch (x) {
- 
+
 	case LOGD:
 	    if (deblog == 0) {
 		printf("?Debugging log wasn't open\n");
@@ -801,7 +883,7 @@ case XXCLO:
 	    *debfil = '\0';
 	    deblog = 0;
 	    return(zclose(ZDFILE));
- 
+
 	case LOGP:
 	    if (pktlog == 0) {
 		printf("?Packet log wasn't open\n");
@@ -810,7 +892,7 @@ case XXCLO:
 	    *pktfil = '\0';
 	    pktlog = 0;
 	    return(zclose(ZPFILE));
- 
+
 	case LOGS:
 	    if (seslog == 0) {
 		printf("?Session log wasn't open\n");
@@ -819,7 +901,7 @@ case XXCLO:
 	    *sesfil = '\0';
 	    seslog = 0;
 	    return(zclose(ZSFILE));
- 
+
     	case LOGT:
 	    if (tralog == 0) {
 		printf("?Transaction log wasn't open\n");
@@ -828,7 +910,7 @@ case XXCLO:
 	    *trafil = '\0';
 	    tralog = 0;
 	    return(zclose(ZTFILE));
- 
+
 	default:
 	    printf("\n?Unexpected log designator - %ld\n", x);
 	    return(0);
@@ -836,24 +918,41 @@ case XXCLO:
 
 case XXDIAL:				/* dial number */
     if ((x = cmtxt("Number to be dialed","",&s)) < 0) return(x);
+/***/ debug(F110,"ckuusr calling ckdial",s,0);
     return(ckdial(s));
- 
+
 case XXDIR:				/* directory */
+#ifdef vms
+    if ((x = cmtxt("Directory/file specification","",&s)) < 0) return(x);
+    /* now do this the same as a shell command - helps with LAT  */
+    conres();           /* make console normal */
+    lp = line;
+    sprintf(lp,"%s %s",DIRCMD,s);
+    debug(F110,"Directory string: ", line, 0);
+    concb(escape);
+    return(0);
+#else
 #ifdef AMIGA
     if ((x = cmtxt("Directory/file specification","",&s)) < 0) return(x);
 #else
 #ifdef datageneral
     if ((x = cmtxt("Directory/file specification","+",&s)) < 0) return(x);
 #else
-    if ((x = cmtxt("Directory/file specification",".",&s)) < 0) return(x);
+    if ((x = cmdir("Directory/file specification","*",&s)) < 0) return(x);
 #endif
 #endif
     lp = line;
     sprintf(lp,"%s %s",DIRCMD,s);
+#ifdef OS2
+    concooked();
     system(line);
+    conraw();
+#else
+    system(line);
+#endif
     return(0);
- 
- 
+#endif
+
 case XXECH: 				/* echo */
     if ((x = cmtxt("Material to be echoed","",&s)) < 0) return(x);
     for ( ; *s; s++) {
@@ -868,12 +967,12 @@ case XXECH: 				/* echo */
     }
     printf("\n");
     return(0);
- 
+
 case XXQUI:				/* quit, exit */
 case XXEXI:
     if ((x = cmcfm()) > -1) doexit(GOOD_EXIT);
     else return(x);
- 
+
 case XXFIN:				/* finish */
     if ((x = cmcfm()) < 0) return(x);
     if (!local) {
@@ -890,20 +989,20 @@ case XXGET:				/* get */
     }
     x = cmtxt("Name of remote file(s), or carriage return","",&cmarg);
     if ((x == -2) || (x == -1)) return(x);
- 
+
 /* If foreign file name omitted, get foreign and local names separately */
- 
+
     x = 0;				/* For some reason cmtxt returns 1 */
     if (*cmarg == NUL) {
- 
+
 	if (tlevel > -1) {		/* Input is from take file */
- 
+
 	    if (fgets(line,100,tfile[tlevel]) == NULL)
 	    	fatal("take file ends prematurely in 'get'");
-debug(F110,"take-get 2nd line",line,0);
+	    debug(F110,"take-get 2nd line",line,0);
 	    stripq(line);
 	    for (x = strlen(line);
-	     	 x > 0 && (line[x-1] == '\n' || line[x-1] == '\r');
+	     	 x > 0 && (line[x-1] == LF || line[x-1] == CR);
 		 x--)
 		line[x-1] = '\0';
 	    cmarg = line;
@@ -911,14 +1010,14 @@ debug(F110,"take-get 2nd line",line,0);
 	    	fatal("take file ends prematurely in 'get'");
 	    stripq(cmdbuf);
 	    for (x = strlen(cmdbuf);
-	     	 x > 0 && (cmdbuf[x-1] == '\n' || cmdbuf[x-1] == '\r');
+	     	 x > 0 && (cmdbuf[x-1] == LF || cmdbuf[x-1] == CR);
 		 x--)
 		cmdbuf[x-1] = '\0';
 	    if (*cmdbuf == NUL) cmarg2 = line; else cmarg2 = cmdbuf;
             x = 0;			/* Return code */
 
         } else {			/* Input is from terminal */
- 
+
 	    char psave[40];		/* Save old prompt */
 	    cmsavp(psave,40);
 	    cmsetp(" Remote file specification: "); /* Make new one */
@@ -952,7 +1051,7 @@ debug(F110,"take-get 2nd line",line,0);
 	    	cmsetp(psave);		        /* Restore old prompt, */
 		return(0);		    	/* and return. */
 	    } else if (x < 0) return(x);        /* Handle parse errors. */
-	    
+
 	    x = -1;			/* Get confirmation. */
 	    while (x == -1) x = cmcfm();
 	    cmsetp(psave);		/* Restore old prompt. */
@@ -967,7 +1066,7 @@ debug(F110,"take-get 2nd line",line,0);
 case XXHLP:				/* Help */
     x = cmkey(cmdtab,ncmd,"C-Kermit command","help");
     return(dohlp(x));
- 
+
 case XXHAN:				/* Hangup */
     if ((x = cmcfm()) > -1) return(tthang());
 
@@ -979,11 +1078,11 @@ case XXLOG:				/* Log */
     }
     if (x < 0) return(x);
     return(dolog(x));
- 
+
 case XXLOGI:				/* Send script remote system */
     if ((x = cmtxt("Text of login script","",&s)) < 0) return(x);
     return( login(s) );			/* Return 0=completed, -2=failed */
- 
+
 case XXREC:				/* Receive */
     cmarg2 = "";
     x = cmofi("Name under which to store the file, or CR","",&cmarg2);
@@ -993,7 +1092,7 @@ case XXREC:				/* Receive */
     sstate = 'v';
     if (local) displa = 1;
     return(0);
- 
+
 case XXREM:				/* Remote */
     if (!local) {
 	printf("\nYou have to 'set line' first\n");
@@ -1018,7 +1117,6 @@ case XXSEN:				/* Send */
     nfils = -1;				/* Files come from internal list. */
     strcpy(line,s);			/* Save copy of string just parsed. */
     debug(F101,"Send: wild","",y);
-    *cmarg2 = '\0';			/* Initialize send-as name */
     if (y == 0) {
 	if ((x = cmtxt("Name to send it with","",&cmarg2)) < 0) return(x);
     } else {
@@ -1030,7 +1128,7 @@ case XXSEN:				/* Send */
     sstate = 's';			/* Set start state */
     if (local) displa = 1;
     return(0);
- 
+
 case XXSER:				/* Server */
     if ((x = cmcfm()) < 0) return(x);
     sstate = 'x';
@@ -1039,7 +1137,7 @@ case XXSER:				/* Server */
     reqoff();				/* no DOS requestors while server */
 #endif
     return(0);
- 
+
 case XXSET:				/* Set */
     x = cmkey(prmtab,nprm,"Parameter","");
     if (x == -3) {
@@ -1048,7 +1146,7 @@ case XXSET:				/* Set */
     }
     if (x < 0) return(x);
     return(doprm(x));
-    
+
 /* XXSHE code by H. Fischer; copyright rights assigned to Columbia Univ */
 /*
  Adapted to use getpwuid to find login shell because many systems do not
@@ -1061,19 +1159,33 @@ case XXSHE:				/* Local shell command */
 #ifdef AMIGA
     if (cmtxt("Command to execute","",&s) < 0) return(-1);
 #else
+#ifdef OS2
+    if (cmtxt("OS2 command to execute","",&s) < 0) return(-1);
+#else
     if (cmtxt("Unix shell command to execute","",&s) < 0) return(-1);
-#endif
+#endif /* Amiga */
+#endif /* OS2 */
+
     conres();				/* Make console normal  */
+
+#ifdef OS2
+    if (*s == '\0') sprintf(s,"%s","CMD"); /* Command processor */
+    concooked();
+    system(s);
+    conraw();
+#else
+#ifdef OSK
+    system(s);
+#else
 #ifdef AMIGA
     system(s);
 #else
 #ifdef MSDOS
     zxcmd(s);
 #else
-#ifdef vax11c
- 
+#ifdef vms
     system(s);				/* Best we can do for VMS? */
-#else					/* All Unix systems... */
+#else
 #ifdef datageneral
     if (*s == NUL)			/* Interactive shell requested? */
 #ifdef mvux
@@ -1083,22 +1195,22 @@ case XXSHE:				/* Local shell command */
 #endif
     else				/* Otherwise, */
         system(s);			/* Best for aos/vs?? */
- 
-#else					/* All Unix systems... */
-#ifdef apollo
+
+#else
+#ifdef aegis
     if ((pid = vfork()) == 0) {		/* Make child quickly */
 	char *shpath, *shname, *shptr;	/* For finding desired shell */
 
         if ((shpath = getenv("SHELL")) == NULL) shpath = "/com/sh";
-#else
- 
+
+#else					/* All Unix systems */
     if ((pid = fork()) == 0) {		/* Make child */
 	char *shpath, *shname, *shptr;	/* For finding desired shell */
 	struct passwd *p;
 	extern struct passwd * getpwuid();
 	extern int getuid();
 	char *defShel = "/bin/sh";	/* Default */
- 
+
 	p = getpwuid( getuid() );	/* Get login data */
 	if ( p == (struct passwd *) NULL || !*(p->pw_shell) )
 	    shpath = defShel;
@@ -1111,29 +1223,32 @@ case XXSHE:				/* Local shell command */
 
 /* Remove following uid calls if they cause trouble */
 #ifdef BSD4
+#ifndef BSD41
 	setegid(getgid());		/* Override 4.3BSD csh security */
 	seteuid(getuid());		/*  checks. */
 #endif
-
+#endif
 	if (*s == NUL)			/* Interactive shell requested? */
 	    execl(shpath,shname,"-i",NULL);    /* Yes, do that */
 	else				/* Otherwise, */
 	    execl(shpath,shname,"-c",s,NULL); /* exec the given command */
 	exit(BAD_EXIT); }		/* Just punt if it didn't work */
- 
+
     else {				/* Parent */
- 
+
     	int wstat;			/* Kermit must wait for child */
 	SIGTYP (*istat)(), (*qstat)();
- 
+
 	istat = signal(SIGINT,SIG_IGN);	/* Let the fork handle keyboard */
 	qstat = signal(SIGQUIT,SIG_IGN); /* interrupts itself... */
- 
+
     	while (((wstat = wait((int *)0)) != pid) && (wstat != -1)) ;
 	                                /* Wait for fork */
 	signal(SIGINT,istat);		/* Restore interrupts */
 	signal(SIGQUIT,qstat);
     }
+#endif
+#endif
 #endif
 #endif
 #endif
@@ -1147,11 +1262,11 @@ case XXSHO:				/* Show */
     if (x < 0) return(x);
     if ((y = cmcfm()) < 0) return(y);
     switch (x) {
- 
+
 	case SHPAR:
 	    shopar();
 	    break;
- 
+
 	case SHVER:
 	    printf("\nVersions:\n %s\n %s\n",versio,protv);
 	    printf(" %s\n",fnsv);
@@ -1161,13 +1276,13 @@ case XXSHO:				/* Show */
 	    printf(" %s\n",connv);
 	    printf(" %s\n %s\n\n",dialv,loginv);
 	    break;
- 
+
 	default:
 	    printf("\nNothing to show...\n");
 	    break;
     }
     return(0);
- 
+
 case XXSPA:				/* space */
 #ifdef datageneral
     /* The DG can take an argument after its "space" command. */
@@ -1182,10 +1297,16 @@ case XXSPA:				/* space */
     }
 #else
     if ((x = cmcfm()) < 0) return(x);
+#ifdef OS2
+    concooked();
+    system(SPACMD);
+    conraw();
+#else
     system(SPACMD);
 #endif
+#endif
     return(0);
- 
+
 case XXSTA:				/* statistics */
     if ((x = cmcfm()) < 0) return(x);
     return(dostat());
@@ -1195,7 +1316,7 @@ case XXTAK:				/* take */
 	printf("?Take files nested too deeply\n");
 	return(-2);
     }
-    if ((y = cmifi("C-Kermit command file","",&s,&x)) < 0) { 
+    if ((y = cmifi("C-Kermit command file","",&s,&x)) < 0) {
 	if (y == -3) {
 	    printf("?A file specification is required\n");
 	    return(-2);
@@ -1213,7 +1334,37 @@ case XXTAK:				/* take */
 	tlevel--;
     }
     return(0);
- 
+
+case XXTRA:				/* transmit */
+    if ((x = cmifi("File to transmit","",&s,&y)) < 0) {
+	if (x == -3) {
+	    printf("?Name of an existing file\n");
+	    return(-2);
+	}
+	return(x);
+    }
+    if (y != 0) {
+	printf("?Only a single file may be transmitted\n");
+	return(-2);
+    }
+    strcpy(line,s);			/* Save copy of string just parsed. */
+    y = cmnum("Decimal ASCII value of line turnaround character","10",10,&x);
+    debug(F101,"transmit parse turnaround","",x);
+    if (y < 0) return(y);
+    if (x < 0 || x > 127) {
+	printf("?Decimal number between 0 and 127\n");
+	return(-2);
+    }
+    if ((y = cmcfm()) < 0) return(y);	/* Confirm the command */
+/*
+    if (!local) {
+	printf("?Transmit requires prior SET LINE\n");
+	return(-2);
+    }
+*/
+    debug(F110,"calling transmit",line,0);
+    return(transmit(line,x));		/* Do the command */
+
 default:
     printf("Not available - %s\n",cmdbuf);
     return(-2);
@@ -1221,15 +1372,124 @@ default:
 }
 
 /*  D O C O N E C T  --  Do the connect command  */
- 
+
 /*  Note, we don't call this directly from dial, because we need to give */
 /*  the user a chance to change parameters (e.g. parity) after the */
 /*  connection is made. */
- 
+
 doconect() {
     int x;
     conres();				/* Put console back to normal */
     x = conect();			/* Connect */
     concb(escape);			/* Put console into cbreak mode, */
     return(x);				/* for more command parsing. */
+}
+
+/*  T R A N S M I T  --  Raw upload  */
+
+/*  Obey current line, duplex, parity, flow, text/binary settings. */
+/*  Returns 0 upon apparent success, 1 on obvious failure.  */
+
+/***
+ Things to add:
+ . Make both text and binary mode obey set file bytesize.
+ . Maybe allow user to specify terminators other than CR?
+ . Maybe allow user to specify prompts other than single characters?
+***/
+
+int tr_int;				/* Flag if TRANSMIT interrupted */
+
+trtrap() {				/* TRANSMIT interrupt trap */
+    tr_int = 1;
+    return(0);
+}
+
+transmit(s,t) char *s; char t; {
+#define LINBUFSIZ 150
+    char linbuf[LINBUFSIZ+2];		/* Line buffer */
+
+#ifndef OS2
+    SIGTYP (* oldsig)();		/* For saving old interrupt trap. */
+#endif
+    int z = 0;				/* Return code. */
+    int x, c, i, n;			/* Workers... */
+    CHAR tt;
+
+    tt = dopar(t);			/* Turnaround char, with parity */
+    debug(F101,"transmit turnaround","",t);
+
+    if (zopeni(ZIFILE,s) == 0) {	/* Open the file to be transmitted */
+	printf("?Can't open %s\n",s);
+	return(1);
+    }
+    x = -1;				/* Open the communication line */
+    if (ttopen(ttname,&x,mdmtyp) < 0) {	/* (does no harm if already open) */
+	printf("Can't open %s\n",ttname);
+	return(1);
+    }
+    x = x ? speed : -1;			/* Put the line in "packet mode" */
+    if (ttpkt(x,flow,parity) < 0) {
+	printf("Can't condition line\n");
+	return(1);
+    }
+    i = 0;				/* Beginning of buffer. */
+#ifndef OS2
+    oldsig = signal(SIGINT, trtrap);	/* Save current interrupt trap. */
+#endif
+    tr_int = 0;				/* Have not been interrupted (yet). */
+    z = 0;				/* Return code presumed good. */
+
+    while ((c = zminchar()) != -1) {	/* Loop for all characters in file */
+	if (tr_int) {			/* Interrupted? */
+	    fprintf(stderr,"^C...\n");	/* Print message */
+	    z = 1;
+	    break;
+	}
+	if (duplex) conoc(c);		/* Echo character on screen */
+	if (binary) {			/* If binary file */
+	    if (ttoc(dopar(c)) < 0) {	/* just try to send the character */
+		printf("?Can't transmit character\n");
+		z = 1;
+		break;
+	    }
+	    if (! duplex) {
+		x = ttinc(1);		/* Try to read back echo */
+		if (x > -1) conoc(x);
+	    }
+	} else {			/* Line at a time for text files... */
+	    if (c == '\n') {		/* Got a line */
+		if (linbuf[i-1] != dopar('\r'))
+		  linbuf[i++] = dopar('\r'); /* Terminate it with CR */
+		if (ttol(linbuf,i) < 0) { /* try to send it */
+		    printf("?Can't transmit line\n");
+		    z = 1;
+		    break;
+		}
+		i = 0;			/* Reset the buffer pointer */
+		if (t) {		/* If we want a turnaround character */
+		    x = 0;		/* wait for it */
+		    while ((x != -1) && (x != t)) {
+			x = ttinc(1);
+			if (! duplex) conoc(x);	/* also echo any echoes */
+		    }
+		}
+	    } else {			/* Not a newline, regular character */
+		linbuf[i++] = dopar(c); /* Put it in line buffer. */
+		if (i == LINBUFSIZ) {	/* If buffer full, */
+		    if (ttol(linbuf,i) < 0) { /* try to send it. */
+			printf("Can't send buffer\n");
+			z = 1;
+			break;
+		    }			/* Don't wait for turnaround */
+		    i = 0;		/* Reset buffer pointer */
+		}
+	    }
+	}
+    }
+#ifndef OS2
+    signal(SIGINT,oldsig);		/* put old signal action back. */
+#endif /* OS2 */
+    ttres();				/* Done, restore tty, */
+    zclose(ZIFILE);			/* close file, */
+    return(z);				/* and return successfully. */
 }

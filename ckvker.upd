@@ -1,0 +1,135 @@
+From: buda%star.DEC@decwrl.dec.com (Mark A. Buda; 381-1969)
+Date: 2 May 89 10:52
+Subject: Updated files CKermit - CKVKER.UPD
+
+		01-May-1989	mab
+ckvtio.c  Add debugging code and general cleanup.
+
+		24-Apr-1989	mab
+ckvtio.c  Add some parity code from bitnet.
+
+		23-Apr-1989	mab
+ckvdia.c  Add Joe Grissom's changes to debug(F110,"dialing",lbuf,0);
+ckuusr.c   "   "    "          "    for command line exit when using -h
+
+ckvfio.c   #ifdef chkfn() and code gtdir() for V4.x
+
+		16-Apr-1989	mab
+ckvvms.h   Add definition of SUB_PROC buffer sizes
+ckvfio.c   Fix remote command failure
+
+		11-Apr-1989	mab
+ckvker.com Add CMS support
+ckvmak.com Add CMS support
+
+		10-Apr-1989	mab
+ckvtio.c  More fixes to lcl/remote code.
+
+		 8-Apr-1989	mab
+ckcker.h  Bump receive packet max to 1920 conditionaly, for VMS.  Do not
+	  go larger without adding code to ttini to check for maxbuf
+	  size.  Doing a QIO(W) larger than MAXBUF returns exquota error.
+
+		 5-Apr-1989	mab
+ckvfio.c (016) Add PWP code to optimize packetizing.
+	  Fix zxpand code to use pointer correctly so user would not
+	  get '?too many files' error.
+
+		 4-Apr-1989	mab
+ckvfio.c (015) Add latent support for attribute packet and clean up
+ 	  file name parsing code.
+ckvcdt.com Wrote procedure that compares dates of source to dates of
+	  modules in object libraries.
+ckvtio.c (017) Fix some minor bugs to lcl/remote detection.
+
+		25-Mar-1989	mab
+ckcpro.w  The second '%states' was being passed through to the compiler and
+ 	  causing it pain.  I removed the second '%states' and it seems to work
+	  ok and compile ok now.
+
+		24-Mar-1989	mab
+ckvker.bwr Cleaned out the rif-raf.
+ckuusr.h  Modify Kermit.ini to Ckermit.ini
+ckvtio.c  Allow XON/XOFF usage for console cbreak mode.
+
+		23-Mar-1989	mab
+ckuus2.c  Change printf("%s","blah...",cmdbuf) to printf("blah...",cmdbuf)
+	  in two places...
+	  HELP SET TERM does not have any text.
+ckuus3.c  Add call from chkspd to ttsspd to check for valid speeds.
+	  Change one printf so a colon is now a comma.  The line
+	  would have looked like '_TXA1:: baud 9600' and is now
+	  '_TXA1:, baud 9600'.
+ckvtio.c  Add IO$M_BREAKTHRU's to IO$_WRITEVBLK.  Also changed the processing
+	  of inbound charcters.  Characters typed at console will have first
+	  chance at getting out over the wire.  If there are no characters
+	  typed at the console, then all tty characters are processed.  This
+	  now allows a person to use ^Y/^O etc... correctly.
+	  Added code to hopefully process parity correctly.  This needs
+	  to be tested.
+	  Added new routine that enables all old terminal characteristics
+	  but does not turn on echo.  This allows the ^\(byte) not to show
+	  on the screen.  Also allows XON/XOFF to work.
+ckvfio.c  Added fdc's initial code for attribute packet
+ckvvms.h  R_OK was not defined for access().  Defined all for bits worth.
+ckvcon.c  Clean up doesc() code.  Replace static buffer with malloc'd buffer
+	  that is also larger in size.
+
+---- Sent to fdc
+
+		15-Mar-1989	mab
+ckvfio.c  Check for non-null data, not array of pointers in zkermini
+
+		07-Mar-1989	mab
+ckudia.c debug(F110,"Dialing",mumble) needed additional arguement added to line
+ckuus2.c changed variable rdatap to data+1, so debug logging would not accvio.
+
+		07-Mar-1989	mab
+ckvtio.c Fix overwrite of DCL prompt on exit
+
+		06-Mar-1989	mab
+ckcfns.c Add Barry A's changes.
+ckvfio.c Add more of Barry's changes.
+
+ckvfio.c	05-Mar-1898	mab
+ckvtio.c
+ckvvms.h
+ 1) Create ckvvms.h for common definitions.
+ 2) Make sure all qio(w) have iosb's for ALL VMS dependant modules
+ 3) When assigning channel, grab speed and use it as default.  This
+    way joe blow does not have to type 'set speed xxxx'.  It will
+    default to whatever was retreived by the sensemode.
+
+ckvfio.c	26-Feb-1989	mab
+ckuusr.c
+ckucmd.h
+ 1) Add code that will search for kermit.ini file.
+ 2) Increase line buf to 255 in case someone has a long device name
+    with sub.sub.subdirectory and long file name etc...  This
+    was hardcaoded but should have been NAM$C_MAXRSS, but NAM is not
+    #included possibly, so do the next best thing.
+    
+
+ckvtio.c	26-feb-1989	mab
+ 1) Add dcl exit handler.  This needs to have more routines added
+    to do cleanup.  This is a start.
+
+ckvcon.c	15-feb-1989	mab
+ 1) In hconne ignore  XOFF's from the console.  This usually comes
+    because a VT100 XOFF'd.  This gets buffered up and coninc() returns
+    this to hconne.  hconne then writes this to the console, freezeing
+    it with an XOFF.  Somewhat cosmetic but agrivated me enough to fix it.
+
+ckvker.com	14-feb-1989	mab
+ 1) Make this work in batch so I can sleep and have a log when it is done!
+
+ckvtio.c	14-feb-1989	mab
+ 1) Get break working.  It is conditional on V4/V5.
+ 2) Add iosb's to ALL qio's.  Saftey precaution in case any
+    asynch I/O would set event flag 0.
+
+ckvfio.c	14-feb-1989	mab
+ 1) uncomment out zgtdir so it will work.
+ 2) make zkself use delprc.
+ 3) Remove function to system();
+

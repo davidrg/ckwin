@@ -1,3 +1,6 @@
+/* John A. Oberschelp for Emory University -- vt102 printer support 22 May 1989 */
+/*                    Emory contact is Peter W. Day, ospwd@emoryu1.cc.emory.edu */ 
+/* Paul Placeway 4/89    - fixed up things for profiling, minor changes */
 /* Paul Placeway 3/28/88 - created by moving a bunch of junk out of ckmusr.c */
 /*
  * file ckmini.c
@@ -25,14 +28,31 @@
 #include <dialogs.h>
 #include <fonts.h>
 #include <menus.h>
+#include <Memory.h>
+#include <Resources.h>
+#include <Traps.h>
 #include <toolutils.h>
+#include <devices.h>
 #include <serial.h>
 #include <textedit.h>
 #include <segload.h>
 #include <ctype.h>
-#include <environs.h>
+
+extern	Handle	hPrintBuffer;					/*JAO*/
+#include <printing.h>						/*JAO*/
+
+/* here is what is different */
+#ifndef __QUICKDRAW__
+#include <QuickDraw.h>
+#endif
 #include <osutils.h>
+
 /* PWP: put the #include for the script manager here! */
+
+#ifdef PROFILE
+#include <Perf.h>
+TP2PerfGlobals ThePGlobals = nil;
+#endif /* PROFILE */
 
 #include "ckmdef.h"		/* General Mac defs */
 #include "ckmres.h"		/* Mac resource equates */
@@ -48,9 +68,8 @@ int protocmd;			/* protocol file cmd, or -1 for */
  /* remote cmds, or 0 if not in */
  /* protocol */
 
-char *mybuff;			/* Serial drivers new buffer */
-CursHandle watchcurs;		/* the watch cursor */
-SerShk controlparam;		/* To change serial driver paramaters */
+Cursor *watchcurs;		/* the watch cursor */
+Cursor *textcurs, *normcurs;
 
 int quit = FALSE;
 
@@ -60,6 +79,11 @@ Boolean fkeysactive = TRUE;	/* Enable FKEYs */
 WindowPtr terminalWindow;	/* the terminal window */
 extern WindowPtr remoteWindow;	/* the remote command window */
 
+extern int dfloc;                       /* Default location: remote/local */
+extern int dfprty;                      /* Default parity */
+extern int dfflow;                      /* Default flow control */
+
+extern int local;			/* running local or remote? */
 
 extern Boolean have_multifinder; /* becomes true if we are running MF */
 extern Boolean in_background;	/* becomes TRUE if have_multifinder and
@@ -71,6 +95,8 @@ extern long mf_sleep_time;	/* this is the number of (60Hz) ticks to
 				 * the serial line)
 				 */
 
+extern Boolean have_128roms;	/* actually, a Mac + or better */
+
 /* local variables */
 
 Boolean have_fourone = FALSE;	/* true if we are running system 4.1 or
@@ -78,7 +104,6 @@ Boolean have_fourone = FALSE;	/* true if we are running system 4.1 or
 Boolean have_ctrl_key = FALSE; /* true if we have an ADB (SE or II) keyboard */
 
 Boolean usingRAMdriver = FALSE;	/* true if using the RAM serial driver */
-
 
 short takeFRefNum;		/* file reference number of the take file */
 
@@ -383,21 +408,50 @@ nextcmd ()
 setup_menus ()
 {
     int i;
+    static int menus_are_drawn = 0;
+    THz curZone;
+
+    if (!menus_are_drawn) {	/* if the first time through */
+	/*
+	 * PWP: we do command keys by default ONLY on a keyboard that has a CTRL
+	 * key
+	 */
+	mcmdactive = have_ctrl_key;
+	
+	/* setup Apple menu */
+	if ((menus[APPL_MENU] = GetMenu (APPL_MENU)) == NIL)
+	    printerr("Couldn't get MENU", APPL_MENU);
+	else
+	    AddResMenu (menus[APPL_MENU], 'DRVR');
+    } else {
+    	ClearMenuBar();		/* remove all menus from the list */
+    }
+    
+    InsertMenu (menus[APPL_MENU], 0);	/* Put Apple Menu on menu line */
 
     for (i = MIN_MENU; i <= MAX_MENU; i++) {	/* For all menus */
-	menus[i] = GetMenu (i);	/* Fetch it from resource file */
+        if (menus_are_drawn && menus[i]) {
+	    curZone = GetZone();		/* as per John Norstad's (Disinfectant) */
+	    SetZone(HandleZone(menus[i]));	/* "Toolbox Gotchas" */
+	    ReleaseResource(menus[i]);		/* free old resource */
+	    SetZone(curZone);
+	}
+    	if (mcmdactive) {
+	    if ((menus[i] = GetMenu (i)) == NIL)	/* Fetch it from resource file */
+		printerr("Couldn't get MENU", i);
+	} else {
+	    if ((menus[i] = GetMenu (i+32)) == NIL) {	/* try to get w/o clover */
+	        printerr("Couldn't get MENU", i+32);
+		menus[i] = GetMenu (i);	/* Fetch normal from resource file */
+	    }
+	}
 	InsertMenu (menus[i], 0);	/* Put it on menu line */
     }
 
-    AddResMenu (menus[APPL_MENU], 'DRVR');
     DrawMenuBar ();		/* Finish up by displaying the bar */
 
-    /*
-     * PWP: we do command keys by default ONLY on a keyboard that has a CTRL
-     * key
-     */
-    CheckItem (menus[SETG_MENU], MCDM_SETG, have_ctrl_key);
-    mcmdactive = have_ctrl_key;
+    CheckItem (menus[SETG_MENU], MCDM_SETG, mcmdactive);
+    menus_are_drawn = 1;
 }				/* setup_menus */
 
 Boolean
@@ -427,13 +481,21 @@ IsWNEImplemented ()
     have_ctrl_key = (theWorld.keyBoardType == envAExtendKbd) ||
 	(theWorld.keyBoardType == envStandADBKbd);
 
+    have_128roms = !((theWorld.machineType == envMac) ||
+    		     (theWorld.machineType == envXL) ||
+    		     (theWorld.machineType == envMachUnknown));
+    
     /* is WNE implemented? */
     if (theWorld.machineType < 0)
 	return FALSE;		/* we don't know what kind of Mac this is. */
 
     /* "..., 1" 'cause these are tooltraps: */
-    if (NGetTrapAddress (num_WaitNextEvent, 1) !=
-	NGetTrapAddress (num_UnknownTrap, 1))
+    /* 6.0.2 bug fixed by RWR <CES00661%UDACSVM.BITNET@cunyvm.cuny.edu> */
+    
+    if ((NGetTrapAddress (num_WaitNextEvent, 1) !=
+	 NGetTrapAddress (num_UnknownTrap, 1)) &&	/* RWR  */
+	(NGetTrapAddress (num_JugglDispatch, 1) !=	/* RWR  */
+	 NGetTrapAddress (num_UnknownTrap, 1)))		/* RWR  */
 	return TRUE;
 
     return FALSE;
@@ -443,7 +505,10 @@ extern hmacrodefs macroshdl;	/* handle to the macro table */
 extern modrec modtable[NUMOFMODS];	/* modifier records */
 extern RgnHandle dummyRgn;	/* dummy region for ckmcon */
 WindowRecord terminalWRec;	/* store window stuff here */
-
+extern char **myclip_h;		/* internal clipboard */
+extern int myclip_size;		/* size of above */
+extern long MyCaretTime;	/* ticks between flashes for cursor */
+extern char **myclip_h;		/* internal terminal clipboard */
 
 /****************************************************************************/
 /* mac_init - Initialize the macintosh and any window, menu, or other */
@@ -453,9 +518,11 @@ mac_init ()
 {
     int err;
     int i;
+    CursHandle cursh;
 
     MaxApplZone ();		/* Make appl. heap big as can be */
 
+    MoreMasters ();		/* Create some more master pointers */
     MoreMasters ();		/* Create some more master pointers */
     err = MemError ();
     if (err != noErr)
@@ -465,6 +532,7 @@ mac_init ()
     InitFonts ();		/* The fonts */
     InitWindows ();		/* The windows */
 
+/* Debugger(); */
     /*
      * PWP: we MUST call IsWNEImplemented() BEFORE using have_fourone, or
      * have_ctrl_key (in InitMenus() )
@@ -477,34 +545,30 @@ mac_init ()
     InitCursor ();		/* start with a nice cursor */
     SetEventMask (everyEvent - keyUpMask);
 
-#ifdef COMMENT
-    /******** N O T E : *********/
-    /* PWP: this has not ever been tested.  I don't know if it will work */
-    /****************************/
+    dummyRgn = NewRgn ();
 
-    if (have_fourone) {		/* if we are system 4.1 or later... */
-	/* set the key map */
-	err = SetScript (smRoman, smScriptKeys, NODEAD_KCHR);
-	if (err)
-	    printerr ("Trouble setting custom keymap (KCHR):", err);
-	/* set the icon */
-	err = SetScript (smRoman, smScriptIcon, NODEAD_KCHR);
-	if (err)
-	    printerr ("Trouble setting keymap icon (SICN):", err);
-	KeyScript (smRoman);
+    normcurs = &qd.arrow;
+    if ((cursh = GetCursor (watchCursor)) != NIL) {
+	HLock(cursh);
+	watchcurs = *cursh;		/* the waiting cursor */
     } else {
-	/* do something or other to do the old way */
+    	watchcurs = &qd.arrow;
     }
-#endif
+    if ((cursh = GetCursor (iBeamCursor)) != NIL) {
+	HLock(cursh);
+	textcurs = *cursh;		/* the text body cursor */
+    } else {
+    	textcurs = &qd.arrow;
+    }
 
-    watchcurs = GetCursor (watchCursor);	/* the waiting cursor */
-
-    mybuff = NewPtr ((long) MYBUFSIZE);	/* Allocate mybuff from the heap */
-    if (mybuff == NIL)
-	printerr ("Unable to allocate mybuff", 0);
-
+    MyCaretTime = GetCaretTime();
+    if (MyCaretTime < 3 || MyCaretTime > 300)
+	MyCaretTime = 20L;
+    
     setup_menus ();		/* build our menus */
     ScrDmpEnb = scrdmpenabled;	/* enable FKEYs */
+
+    inittiobufs();		/* init terminal I/O buffers */
 
     initrcmdw ();		/* init remote cmd window */
     initfilset ();		/* init file settings */
@@ -515,55 +579,23 @@ mac_init ()
     TextFont (monaco);		/* Monaco font for non-proportional spacing */
     TextSize (9);
 
-    FlushEvents (everyEvent, 0);/* clear click ahead */
+    FlushEvents (everyEvent, 0);	/* clear click ahead */
 
-    /* Set up IO drivers */
-    innum = -6;
-    outnum = -7;
-    err = RAMSDOpen (sPortA);
-    if (err != noErr) {
-    	printerr("Can't open RAM serial driver; using the ROM driver without\
- flow control.",0);
-	err = OpenDriver (".AIn", &innum);
-	if (err != noErr)
-	    fatal ("macinit could not OpenDriver .AIn: ", err);
-	err = OpenDriver (".AOut", &outnum);
-	if (err != noErr)
-	    fatal ("macinit could not OpenDriver .AOut: ", err);
-    	usingRAMdriver = FALSE;
-    } else {
-    	usingRAMdriver = TRUE;
-    }
-
-    parity = DEFPAR;
-    setserial (innum, outnum, DSPEED, DEFPAR);	/* set speed parity */
-
-    if (mybuff != NIL) {
-	err = SerSetBuf (innum, mybuff, MYBUFSIZE);
-			/* Make driver use larger buff */
-	if (err)
-	    printerr ("Trouble making IO buffer:", err);
-    }
+    port_open(-6);	/* open Modem port by default */
     
-    /* PWP: .fXOn and .fInX TRUE as per Matthias' note */
-    controlparam.fXOn = TRUE;	/* Specify handshake options */
-    controlparam.fCTS = FALSE;
-    controlparam.xOn = 17;
-    controlparam.xOff = 19;
-    controlparam.errs = FALSE;
-    controlparam.evts = FALSE;
-    controlparam.fInX = TRUE;
-
-    err = SerHShake (outnum, &controlparam);
-    if (err)
-	printerr ("Trouble with output handshake: ", err);
-    err = SerHShake (innum, &controlparam);
-    if (err)
-	printerr ("Trouble with input handshake: ", err);
-
+    parity = DEFPAR;
+    if (!setserial (innum, outnum, DSPEED, DEFPAR))	/* set speed parity */
+	fatal("Couldn't set serial port to default speed",0);
+	
+    ttres();			/* (PWP) set up flow control for interactive use */
+    
     consetup ();		/* Set up for connecting */
     displa = TRUE;		/* Make everything goes to screen */
 
+    /* init (internal) clipboard */
+    myclip_h = (char **) NewHandle (32);
+    myclip_size = 0;
+    
     /* init the macro table */
     macroshdl = (hmacrodefs) NewHandle (MacroBaseSize);
     (*macroshdl)->numOfMacros = 0;
@@ -575,9 +607,20 @@ mac_init ()
     loadkset ();		/* PWP: get our defaults for these */
     loadmset ();
 
-    dummyRgn = NewRgn ();
-}				/* mac_init */
+    /* Frank changed main() to call init and then set flow, parity, etc.
+       so we make sure they will be set right (again) after we return. */
+    dfloc = local;                      /* And whether it's local or remote. */
+    dfprty = parity;                    /* Set initial parity, */
+    dfflow = flow;                      /* and flow control. */
 
+
+#ifdef PROFILE
+    if (!INITPERF(&ThePGlobals, 1, 8, FALSE, TRUE, "\pCODE", 0, "\pROMII",
+    	          FALSE, 0, 0, 0))
+	fatal("Could not start profiling", 0);
+    (void) PerfControl(ThePGlobals, TRUE);
+#endif /* PROFILE */
+}				/* mac_init */
 
 
 /****************************************************************************/
@@ -587,41 +630,17 @@ mac_init ()
 /****************************************************************************/
 mac_cleanup ()
 {
-    int err;
-
     ScrDmpEnb = scrdmpenabled;	/* re-enabled screen dumping */
     
-    /* PWP: some day, these calls will make it into the real code... */\
-    err = KillIO(innum);	/* Kill off IO drivers */
-    if (err != noErr)
-    	printerr("trouble KillIO-ing serial input driver:",err);
-    err = KillIO(outnum);	/* Kill off IO drivers */
-    if (err != noErr)
-    	printerr("trouble KillIO-ing serial output driver:",err);
+    FutzOptKey(0);		/* reset old Mac key map */
+    
+#ifdef PROFILE
+    if (PERFDUMP(ThePGlobals, "\pPerform.out", true, 80))
+	fatal("Could not dump profiling output", 0);
+    (void) TermPerf (ThePGlobals);
+#endif /* PROFILE */
 
-    err = SerSetBuf (innum, NULL, 0);	/* Make driver default buffer */
-    if (err != noErr)
-    	printerr("trouble resetting serial IO buffer:",err);
-
-    if (usingRAMdriver) {
-	err = RAMSDClose (sPortA);
-	/* PWP: I don't know why this returns -1 on a Mac II */
-	if ((err != noErr) && (err != -1))
-    	    printerr("trouble closing RAM serial driver:",err);
-    } else { /* close the old ROM drivers */
-	err = CloseDriver (innum);
-	if (err != noErr)
-    	    printerr("trouble closing serial input driver:",err);
-#ifdef COMMENT
-For some reason or other, doing this close on a 64k ROM machine will cause
-the mouse to freeze.  Since the input driver is the only one that really
-matters, we just close it.
-
-	err = CloseDriver (outnum);
-	if (err != noErr)
-    	    printerr("trouble closing serial output driver:",err);
-#endif COMMENT
-    }
+    port_close();		/* close the serial port down */
 
 #ifdef TLOG
     if (tralog)			/* close transaction log if necessary */
@@ -632,7 +651,17 @@ matters, we just close it.
 	closeslog ();
 
     DisposeMacros ();		/* dipose all macro strings */
-    DisposHandle ((Handle) macroshdl);	/* release the macro table */
+    if (macroshdl)
+	DisposHandle ((Handle) macroshdl);	/* release the macro table */
+    macroshdl = 0L;
+    
+    if (myclip_h)
+	DisposHandle(myclip_h);											/*JAO*/
+    myclip_h = 0L;													/*JAO*/
+
+    if (hPrintBuffer)
+	DisposHandle(hPrintBuffer);											/*JAO*/
+    hPrintBuffer = 0L;													/*JAO*/
 
     DisposeRgn (dummyRgn);
 }				/* mac_cleanup */

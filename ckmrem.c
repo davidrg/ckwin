@@ -27,6 +27,7 @@
 #include <fonts.h>
 #include <menus.h>
 #include <toolutils.h>
+#include <OSUtils.h>
 
 #include "ckmdef.h"		/* General Mac defs */
 #include "ckmres.h"		/* Resource file defs */
@@ -158,6 +159,7 @@ initrcmdw ()
     sizeteviewr ();		/* resize text edit rect */
 
     teh = TENew (&teviewr, &teviewr);	/* create text edit portion */
+    HLock((Handle)teh);
     (*teh)->crOnly = -1;	/* only break lines at CR */
 
     consette (teh);		/* setup for low lvl console rtns */
@@ -228,11 +230,11 @@ rcdactivate (mod)
 /****************************************************************************/
 /****************************************************************************/
 void pascal
-doscroll (WHICHCONTROL, THECODE)
+rdoscroll (WHICHCONTROL, THECODE)
 ControlHandle WHICHCONTROL;
 short THECODE;
 {
-    register int amount = 0;
+    register int amount = 0, val, max;
 
     if (THECODE == inUpButton)
 	amount = -1;
@@ -240,9 +242,13 @@ short THECODE;
 	amount = 1;
     if (amount == 0)
 	return;
+    val = GetCtlValue (WHICHCONTROL) + amount;
+    max = GetCtlMax (WHICHCONTROL);
+    if ((val < 0) || (val > max))
+	return;
     SetCtlValue (WHICHCONTROL, GetCtlValue (WHICHCONTROL) + amount);
     scrollbits ();
-}				/* doscroll */
+}				/* rdoscroll */
 
 
 
@@ -254,10 +260,9 @@ EventRecord *evt;
 {
     int actrlcode;
     int t;
-
     ControlHandle acontrol;
     GrafPtr savePort;
-
+    
     GetPort (&savePort);	/* save the current port */
     SetPort (remoteWindow);
 
@@ -270,7 +275,7 @@ EventRecord *evt;
     switch (actrlcode) {
       case inUpButton:
       case inDownButton:
-	t = TrackControl (acontrol, &evt->where, doscroll);
+	t = TrackControl (acontrol, &evt->where, rdoscroll);
 	break;
 
       case inPageUp:

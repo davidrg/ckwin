@@ -30,10 +30,12 @@
 
 #define	__SEG__ KStuff
 #include <controls.h>
+#include <devices.h>
 #include <dialogs.h>
 #include <packages.h>
 #include <serial.h>
 #include <menus.h>
+#include <Memory.h>
 #include <resources.h>
 #include <events.h>
 #include <toolutils.h>
@@ -43,6 +45,7 @@
 #include "ckmdef.h"		/* General Mac defs */
 #include "ckmres.h"		/* Resource file defs */
 #include "ckmasm.h"		/* Assembler code */
+#include "ckmcon.h"		/* defines, etc. for terminal emulator */
 
 extern MenuHandle menus[];
 
@@ -215,7 +218,9 @@ DialogPtr dlg;
 }				/* SetStrText */
 
 
-extern char *protv;
+extern char *protv;		/* protocol version number */
+extern char *versio;		/* C-Kermit version number */
+
 extern int tsecs;		/* Seconds for transaction */
 extern long filcnt,		/* Number of files in transaction */
     flci,			/* Characters from line, current file */
@@ -234,6 +239,7 @@ aboutKermit ()
     Handle kversion;
     short itemhit;
     DialogPtr aboutDlg;
+    THz curZone;
 
     aboutDlg = GetNewDialog (ABOUTID, NILPTR, (WindowPtr) - 1);
     circleOK(aboutDlg);
@@ -243,23 +249,66 @@ aboutKermit ()
     p2cstr (*kversion);		/* convert to C string */
 
     SetStrText (AB_VERS, *kversion, aboutDlg);
-    SetStrText (AB_PROV, protv, aboutDlg);
-    SetNumText (AB_TSEC, tsecs, aboutDlg);
-    SetNumText (AB_TLCI, tlci, aboutDlg);
-    SetNumText (AB_TLCO, tlco, aboutDlg);
-    SetNumText (AB_TFC, tfc, aboutDlg);
-    if (tsecs > 0)
-	SetNumText (AB_EBAUD, ((tfc*10)/tsecs), aboutDlg);
-    else
-	SetStrText (AB_EBAUD, "n/a", aboutDlg);
+    SetStrText (AB_PROV, versio, aboutDlg);	/* was protv */
+
+#ifdef COMMENT
+/* take these out for the real version */
+SetStrText (AB_COPY, "\rThis is a Beta Test copy of Kermit.  Please do not \
+redistribute, and please get a real copy after July 31, 1989", aboutDlg);
+SetStrText (AB_BUGS, "Bugs to: paul@cis.ohio-state.edu", aboutDlg);
+#endif /* COMMENT */
 
     ModalDialog (NILPROC, &itemhit);
     DisposDialog (aboutDlg);
 
+    c2pstr (*kversion);		/* convert back to Pascal string */
     HUnlock (kversion);		/* undo previous HLock */
-    ReleaseResource (kversion);	/* no longer needed */
+    curZone = GetZone();		/* as per John Norstad's (Disinfectant) */
+    SetZone(HandleZone(kversion));	/* "Toolbox Gotchas" */
+    ReleaseResource(kversion);	/* no longer needed */
+    SetZone(curZone);
 }				/* aboutKermit */
 
+/****************************************************************************/
+/* show_stats -- show some statistics about the file transfer speed */
+/****************************************************************************/
+show_stats ()
+{
+    Handle kversion;
+    short itemhit;
+    DialogPtr statDlg;
+    long lx;
+
+    statDlg = GetNewDialog (STATBOXID, NILPTR, (WindowPtr) - 1);
+    circleOK(statDlg);
+    
+    SetNumText (ST_TSEC, tsecs, statDlg);
+    SetNumText (ST_TLCI, tlci, statDlg);
+    SetNumText (ST_TLCO, tlco, statDlg);
+    SetNumText (ST_TFC, tfc, statDlg);
+    if (tsecs > 0)
+	SetNumText (ST_EBAUD, ((tfc*10)/tsecs), statDlg);
+    else
+	SetStrText (ST_EBAUD, "n/a", statDlg);
+
+    if (tsecs > 0) {
+	lx = (tfc * 10l) / tsecs;
+	SetNumText (ST_EBAUD, lx, statDlg);
+	if (speed > 0) {
+	    lx = (lx * 100l) / speed;
+	    SetNumText (ST_EEFF, lx, statDlg);
+	} else {
+	    SetStrText (ST_EEFF, "n/a", statDlg);
+	}
+    } else {
+	SetStrText (ST_EBAUD, "n/a", statDlg);
+	SetStrText (ST_EEFF, "n/a", statDlg);
+    }
+
+
+    ModalDialog (NILPROC, &itemhit);
+    DisposDialog (statDlg);
+}				/* aboutKermit */
 
 
 /****************************************************************************/
@@ -300,7 +349,6 @@ int accitem;
 }				/* handapple */
 
 
-
 typedef struct {
     unsigned kerval;
     int macval;
@@ -315,58 +363,86 @@ KMTBL kerbaudtbl[] = {
     {4800, baud4800},
     {7200, baud7200},
     {9600, baud9600},
-    {19200, baud19200},
+    {19200, baud19200},    
+    {38400, 2}		/* this is a guess */
     {57600, baud57600}
 };
 
 #define kerbaudlen ((sizeof (kerbaudtbl))/(sizeof (KMTBL)))
 
-KMTBL kerparitytbl[] = {
-    {KPARITY_ODD, MPARITY_ODD},
-    {KPARITY_EVEN, MPARITY_EVEN},
-    {KPARITY_MARK, MPARITY_MARK},
-    {KPARITY_SPACE, MPARITY_SPACE},
-    {KPARITY_NONE, MPARITY_NONE}
-};
+extern Boolean usingRAMdriver;	/* true if using the RAM serial driver */
 
-#define kerparitylen ((sizeof (kerparitytbl))/(sizeof (KMTBL)))
+#define PARITY_ETC	(noParity+stop10+data8)
 
-/****************************************************************************/
-/* setserial - set the baud and parity for the serial port.	*/
-/****************************************************************************/
+int
 setserial (irefnum, orefnum, b, p)
+int irefnum, orefnum, b, p;
 {
-    int err, i, mb, mp = 0;
+    int err, mb, i;
+    long *mbp;
+    CntrlParam cpb;
+    
+    if ((b < 300) || (b > 57600))
+    	return;		/* was a garbage value */
 
-    speed = b;			/* set global kermit value */
-
-    for (i = 0; i <= kerbaudlen; i++)
-	if (kerbaudtbl[i].kerval == b)
-	    mb = kerbaudtbl[i].macval;	/* set mac value for baud */
+    if (usingRAMdriver) {
+	mb = baud9600;
+    } else {
+	for (i = 0; i <= kerbaudlen; i++) {
+	    if (kerbaudtbl[i].kerval == b) {
+		mb = kerbaudtbl[i].macval;	/* set mac value for baud */
+		goto found_speed;
+	    }
+	}
+	printerr("Can't set serial port to", b);
+	return (0);
+      found_speed:
+    }
 
 /*
- * PWP: if MAC_DOES_PARITY gets defined, then Even parity seems to not work
- * correctly, so we leave it undefined, and have Kermit to parity in
+ * PWP: if the Mac does parity in hardware, then Even parity seems to
+ * not work correctly, so we have Kermit do parity in
  * software.
  */
-#ifdef MAC_DOES_PARITY
-    for (i = 0; i <= kerparitylen; i++)
-	if (kerparitytbl[i].kerval == p)
-	    mp = kerparitytbl[i].macval;	/* set mac value for parity */
-#else
-    mp = MPARITY_NONE;
-#endif
 
-    err = SerReset (irefnum, mb + mp);	/* reset serial input port */
-    if (err != noErr)
-	fatal ("setserial couldn't set port (input): ", err);
+    err = SerReset (irefnum, mb + PARITY_ETC);	/* reset serial input port */
+    if (err != noErr) {
+	printerr ("setserial couldn't set port (input): ", err);
+	return (0);
+    }
 
-    err = SerReset (orefnum, mb + mp);	/* reset serial output port */
-    if (err != noErr)
-	fatal ("setserial couldn't set port (output): ", err);
+    if (usingRAMdriver) {
+	cpb.csCode = 13;			/* set baud rate */
+	cpb.csParam[0] = (unsigned short) b;
+	cpb.ioCRefNum = irefnum;
+	err = PBControl (&cpb, FALSE);
+	if (err != noErr) {
+	    printerr ("setserial couldn't set port (input): ", err);
+	    return (0);
+	}
+    }
+
+    err = SerReset (orefnum, mb + PARITY_ETC);	/* reset serial output port */
+    if (err != noErr) {
+	printerr ("setserial couldn't set port (output): ", err);
+	return (0);
+    }
+
+    if (usingRAMdriver) {
+	cpb.csCode = 13;			/* set baud rate */
+	cpb.csParam[0] = (unsigned short) b;
+	cpb.ioCRefNum = orefnum;
+	err = PBControl (&cpb, FALSE);
+	if (err != noErr) {
+	    printerr ("setserial couldn't set port (input): ", err);
+	    return (0);
+	}
+    }
+
+    speed = b;			/* set global kermit value */
+    
+    return (1);	/* we did it */
 }				/* setserial */
-
-
 
 typedef struct {
     int resval;
@@ -379,11 +455,19 @@ RESSERTBL commbaudtbl[] = {
     {CR_BAUD1200, 1200},
     {CR_BAUD1800, 1800},
     {CR_BAUD2400, 2400},
+    {CR_BAUD3600, 3600},
     {CR_BAUD4800, 4800},
     {CR_BAUD7200, 7200},
     {CR_BAUD9600, 9600},
+    {CR_BAUD14400, 14400},
     {CR_BAUD19200, 19200},
+    {CR_BAUD28800, 28800},
+    {CR_BAUD38400, 38400},
     {CR_BAUD57600, 57600},
+#ifdef NOT_YET
+    {CR_BAUD76800, 76800},
+    {CR_BAUD115200, 115200},
+#endif
     {0, 0}
 };
 
@@ -395,6 +479,8 @@ RESSERTBL commparitytbl[] = {
     {CR_PARNONE, KPARITY_NONE},
     {0, 0}
 };
+
+
 
 /****************************************************************************/
 /* rshilite - hilite the radio control item matching the given */
@@ -471,6 +557,8 @@ RESSERTBL rstbl[];
 #define CREF_BAUD 1
 #define CREF_PARITY 2
 
+extern int drop_dtr;
+
 /****************************************************************************/
 /* commdialog - enter communications setup dialog. */
 /****************************************************************************/
@@ -482,7 +570,9 @@ commdialog ()
     short itemtype;
     int dlgspeed;
     int dlgparity;
-
+    int dlgflow;
+    int dlgport, newinnum;
+    int dlgdtr;
     Handle itemhdl;
     Rect itembox;
 
@@ -491,9 +581,31 @@ commdialog ()
     
     dlgspeed = speed;		/* initialize to current global */
     dlgparity = parity;		/* values of baud and parity */
+    dlgflow = flow;
+    if (innum == -6)
+	dlgport = CR_PMODEM;
+    else
+	dlgport = CR_PPRINTER;
+    if (!usingRAMdriver) {
+	/* grey out all the speeds we can't set */
+	GetDItem (commdlg, CR_BAUD3600, &itemtype, &itemhdl, &itembox);
+	HiliteControl((ControlHandle) itemhdl, 255);	/* grey out */
+	GetDItem (commdlg, CR_BAUD14400, &itemtype, &itemhdl, &itembox);
+	HiliteControl((ControlHandle) itemhdl, 255);	/* grey out */
+	GetDItem (commdlg, CR_BAUD28800, &itemtype, &itemhdl, &itembox);
+	HiliteControl((ControlHandle) itemhdl, 255);	/* grey out */
+	GetDItem (commdlg, CR_BAUD38400, &itemtype, &itemhdl, &itembox);
+	HiliteControl((ControlHandle) itemhdl, 255);	/* grey out */
+    }
+    dlgdtr = drop_dtr;
 
     rshilite (dlgspeed, commbaudtbl, commdlg);	/* hilite our baud */
     rshilite (dlgparity, commparitytbl, commdlg); /* hilite our parity */
+    SetCtlValue (getctlhdl (CR_XONXOFF, commdlg), /* hilite our flow */
+		 dlgflow ? btnOn : btnOff);
+    SetCtlValue (getctlhdl (dlgport, commdlg), btnOn);	/* hilite our port */
+    SetCtlValue (getctlhdl (CR_DROPDTR, commdlg), /* hilite our DTR */
+		 dlgdtr ? btnOn : btnOff);
 
 /* for all baud and parity controls set the reference value for each
  * control to the resource-serial table address so we can manipulate
@@ -508,13 +620,54 @@ commdialog ()
 
 	switch (itemhit) {
 	  case OKBtn:
+	    drop_dtr = dlgdtr;
+	    if (dlgport == CR_PMODEM) {
+		newinnum = -6;
+	    } else {
+		newinnum = -8;
+	    }
+	    if (newinnum != innum) {
+		dlgdtr = drop_dtr;
+		drop_dtr = 1;	/* so we don't confuse AppleTalk */
+		port_close();
+		drop_dtr = dlgdtr;
+		port_open(newinnum);
+	    }
 	    parity = dlgparity;
-	    setserial (innum, outnum, dlgspeed, KPARITY_NONE);
+	    flow = dlgflow;
+	    if (!setserial (innum, outnum, dlgspeed, KPARITY_NONE))
+		break;	/* keep doing dialog */
 
 	  case QuitBtn:
 	    DisposDialog (commdlg);	/* finished with the dialog */
 	    return;		/* so return */
 
+	  case CR_XONXOFF:	/* do flow control */
+	    dlgflow = !dlgflow;
+	    SetCtlValue (getctlhdl (CR_XONXOFF, commdlg),
+			 dlgflow ? btnOn : btnOff);
+	    break;
+
+	  case CR_DROPDTR:	/* drop DTR on exit */
+	    dlgdtr = !dlgdtr;
+	    SetCtlValue (getctlhdl (CR_DROPDTR, commdlg),
+			 dlgdtr ? btnOn : btnOff);
+	    break;
+
+	  case CR_PMODEM:
+	  case CR_IMODEM:
+	    SetCtlValue (getctlhdl (dlgport, commdlg), btnOff);
+	    dlgport = CR_PMODEM;
+	    SetCtlValue (getctlhdl (dlgport, commdlg), btnOn);
+	    break;
+
+	  case CR_PPRINTER:
+	  case CR_IPRINTER:
+	    SetCtlValue (getctlhdl (dlgport, commdlg), btnOff);
+	    dlgport = CR_PPRINTER;
+	    SetCtlValue (getctlhdl (dlgport, commdlg), btnOn);
+	    break;
+	    	    
 	  default:		/* default is radio button */
 	    GetDItem (commdlg, itemhit, &itemtype, &itemhdl, &itembox);
 	    i = GetCRefCon ((ControlHandle) itemhdl);
@@ -672,8 +825,9 @@ int *intcell;
     StringToNum (itembuf, &rslt);
 
     /* check inbound packet length */
-    if ((item == PR_INPKTLEN) && (rslt > MAXRP)) {
-	printerr ("Sorry, the maximum receive packet length is ", MAXRP);
+    /* MAXRP-8 is for the rest of the header (MARK, SEQ, TYPE, etc.) */
+    if ((item == PR_INPKTLEN) && (rslt > MAXRP-8)) {
+	printerr ("Sorry, the maximum receive packet length is ", MAXRP-8);
 	return (FALSE);
     }
     /* check outbound packet length */
@@ -766,6 +920,7 @@ protodialog ()
 		dlgval = rsserval (itemhit, protochrtbl);
 		dlgval = (int) *protochrcells[dlgval];	/* now cell value */
 		SetNumText (itemhit, dlgval, protoDialog); /* and reset it */
+		SelIText(protoDialog, itemhit, 0, 32767);
 	    }
 	    break;
 
@@ -780,6 +935,7 @@ protodialog ()
 		dlgval = rsserval (itemhit, protointtbl);
 		dlgval = *protointcells[dlgval];	/* now cell value */
 		SetNumText (itemhit, dlgval, protoDialog); /* and reset it */
+		SelIText(protoDialog, itemhit, 0, 32767);
 	    }
 	    break;
 
@@ -812,7 +968,7 @@ protodialog ()
 #define TR_FIRST TR_AUTOWRAP
 #define TR_LAST TR_BLINKC
 
-/* extern long mf_sleep_time; */
+extern int screensize;	/* number of screen lines */
 
 /****************************************************************************/
 /****************************************************************************/
@@ -821,7 +977,7 @@ termsetdialog ()
     DialogPtr termdlg;
     short itemhit;
     short i;
-    int dlgint, t_tslice;
+    int dlgint, t_numlines;
     Boolean ts[TR_LAST + 1];
 
     termdlg = GetNewDialog (TERMINALBOXID, NILPTR, (WindowPtr) - 1);
@@ -837,16 +993,18 @@ termsetdialog ()
     ts[TR_BLOCKC] = blockcursor;
     ts[TR_MOUSE] = mouse_arrows;
     ts[TR_VISBELL] = visible_bell;
-    ts[TR_NATCHARS] = nat_chars;
+    ts[TR_EIGHTBIT] = eightbit_disp;
     ts[TR_BLINKC] = blinkcursor;
-    /* t_tslice = (int) mf_sleep_time; */
+    t_numlines = screensize;
 
+    /* set the ctl values according to the flags */
+    for (i = TR_FIRST; i <= TR_LAST; i++)
+	SetCtlValue (getctlhdl (i, termdlg), (ts[i]) ? btnOn : btnOff);
+
+    SetNumText(TR_NUMLINES,t_numlines,termdlg);
+    SelIText(termdlg, TR_NUMLINES, 0, 32767);
+    
     for (;;) {
-	/* set the ctl values according to the flags */
-	for (i = TR_FIRST; i <= TR_LAST; i++)
-	    SetCtlValue (getctlhdl (i, termdlg), (ts[i]) ? btnOn : btnOff);
-	/* SetNumText(TR_MFSLICE,t_tslice,termdlg); */
-
 	ModalDialog (NILPROC, &itemhit);
 
 	switch (itemhit) {
@@ -857,26 +1015,27 @@ termsetdialog ()
 	    newline = ts[TR_AUTOLF];
 	    duplex = ts[TR_LOCLECHO];
 	    transparent = !ts[TR_TRANSP];
-	    mouse_arrows = ts[TR_MOUSE];
 	    visible_bell = ts[TR_VISBELL];
-	    nat_chars = ts[TR_NATCHARS];
+	    eightbit_disp = ts[TR_EIGHTBIT];
 	    if ((blockcursor != ts[TR_BLOCKC]) ||
-		(blinkcursor != ts[TR_BLINKC])) {
+		(blinkcursor != ts[TR_BLINKC]) ||
+		(ts[TR_MOUSE])) {
 		cursor_erase ();
 		blockcursor = ts[TR_BLOCKC];
 		blinkcursor = ts[TR_BLINKC];
+		mouse_arrows = ts[TR_MOUSE];
 		cursor_draw ();
 	    }
 	    if (screeninvert != ts[TR_INVERT])
 		invert_term ();
-	    /* mf_sleep_time = (long) t_tslice; */
+	    grow_term_to(t_numlines);
 
 	  case QuitBtn:	/* fall in from above */
 	    DisposDialog (termdlg);	/* finished with the dialog */
 	    return;		/* return */
 
 	  case TR_RESETBTN:
-	    consetup();		/* reset the terminal emulator */
+	    term_reset();		/* reset the terminal emulator */
 	    break;
 	    
 	  case TR_AUTOWRAP:
@@ -889,24 +1048,251 @@ termsetdialog ()
 	  case TR_BLOCKC:
 	  case TR_MOUSE:
 	  case TR_VISBELL:
-	  case TR_NATCHARS:
+	  case TR_EIGHTBIT:
 	  case TR_BLINKC:
 	    ts[itemhit] = !ts[itemhit];
+	    SetCtlValue (getctlhdl (itemhit, termdlg),
+	    		 (ts[itemhit]) ? btnOn : btnOff);
 	    break;
 
-#ifdef COMMENT
-/* PWP: this field doesn't exist in the dialog. */
-	  case TR_MFSLICE:
-	    if (!etgetnum (TR_MFSLICE, termdlg, &dlgint)) {
-		SetNumText (TR_MFSLICE, t_tslice, termdlg); /* and reset it */
+	  case TR_NUMLINES:
+	    if (!etgetnum (TR_NUMLINES, termdlg, &dlgint)) {
+		SetNumText (TR_NUMLINES, t_numlines, termdlg);
+		SelIText(termdlg, TR_NUMLINES, 0, 32767);
 	    } else {
-		t_tslice = dlgint;
+		if (dlgint > MAX_SCREENSIZE) {
+		    printerr ("Sorry, the maximum screen length is",
+		      MAX_SCREENSIZE);
+		    SetNumText (TR_NUMLINES, t_numlines, termdlg);
+		    SelIText(termdlg, TR_NUMLINES, 0, 32767);
+		} else {
+		    t_numlines = dlgint;
+		}
 	    }
 	    break;
-#endif
 	}
     }
 }				/* termsetdialog */
+
+#define CS_AFIRST	CS_USA
+#define CS_ALAST	CS_SWISS
+#define CS_BFIRST	CS_ISOLATIN1
+#define CS_BLAST	CS_ISOLATIN5
+
+extern int screensize;	/* number of screen lines */
+extern int nat_set;	/* current national character set */
+extern int nat_char_mode;	/* FALSE if doing ISO 8859 stuff */
+
+/****************************************************************************/
+/****************************************************************************/
+charsetdialog ()
+{
+    DialogPtr chardlg;
+    short itemhit;
+    short i;
+    int dlg_g0 = CS_USA, dlg_g1 = CS_VTGRAPH;
+
+    chardlg = GetNewDialog (CHARBOXID, NILPTR, (WindowPtr) - 1);
+    circleOK(chardlg);
+    
+    if (nat_char_mode)
+        dlg_g0 = nat_set + CS_USA - USA_NAT;
+    else
+	dlg_g0 = CS_USA;	/* Should handle GRAF_SET here too */
+
+    switch (graphicsinset[1]) {
+      case LAT1_SET:
+      case DECINTL_SET:
+	dlg_g1 = CS_ISOLATIN1;
+	break;
+
+      case LAT2_SET:
+	dlg_g1 = CS_ISOLATIN2;
+	break;
+
+      case LAT3_SET:
+	dlg_g1 = CS_ISOLATIN3;
+	break;
+
+      case LAT4_SET:
+	dlg_g1 = CS_ISOLATIN4;
+	break;
+
+      case LATCYR_SET:
+	dlg_g1 = CS_ISOCYRILLIC;
+	break;
+
+      case LATARAB_SET:
+	dlg_g1 = CS_ISOARABIC;
+	break;
+
+      case LATGREEK_SET:
+	dlg_g1 = CS_ISOGREEK;
+	break;
+
+      case LATHEBREW_SET:
+	dlg_g1 = CS_ISOHEBREW;
+	break;
+
+      case LAT5_SET:
+	dlg_g1 = CS_ISOLATIN5;
+	break;
+
+      case GRAF_SET:
+	dlg_g1 = CS_VTGRAPH;
+	break;
+
+      case TECH_SET:
+	dlg_g1 = CS_VTTECH;
+	break;
+
+    }
+
+    for (i = CS_AFIRST; i <= CS_ALAST; i++)
+	SetCtlValue (getctlhdl (i, chardlg), btnOff);
+    SetCtlValue (getctlhdl (dlg_g0, chardlg), btnOn);
+    for (i = CS_BFIRST; i <= CS_BLAST; i++)
+	SetCtlValue (getctlhdl (i, chardlg), btnOff);
+    SetCtlValue (getctlhdl (dlg_g1, chardlg), btnOn);
+    
+    for (;;) {
+
+	ModalDialog (NILPROC, &itemhit);
+
+	switch (itemhit) {
+	  case OKBtn:		/* finish up */
+	    switch (dlg_g0) {
+	      case CS_USA:
+		nat_set = USA_NAT;
+		graphicsinset[0] = ASCII_SET;
+		/* but we leave the setting of nat_char_mode as is */
+		break;
+
+	      case CS_UK:
+	      case CS_DUTCH:
+	      case CS_FINNISH:
+	      case CS_FRENCH:
+	      case CS_FRCAN:
+	      case CS_GERMAN:
+	      case CS_ITALIAN:
+	      case CS_NORDAN:
+	      case CS_PORTUGUESE:
+	      case CS_SPANISH:
+	      case CS_SWEDISH:
+	      case CS_SWISS:
+		graphicsinset[0] = ASCII_SET;
+		nat_set = dlg_g0 - CS_USA + USA_NAT;
+		nat_char_mode = TRUE;
+		break;
+	    }
+	    switch (dlg_g1) {
+	      case CS_ISOLATIN1:
+		graphicsinset[1] = LAT1_SET;
+		nat_char_mode = FALSE;
+		break;
+
+	      case CS_ISOLATIN2:
+		graphicsinset[1] = LAT2_SET;
+		nat_char_mode = FALSE;
+		break;
+
+	      case CS_ISOLATIN3:
+		graphicsinset[1] = LAT3_SET;
+		nat_char_mode = FALSE;
+		break;
+
+	      case CS_ISOLATIN4:
+		graphicsinset[1] = LAT4_SET;
+		nat_char_mode = FALSE;
+		break;
+
+	      case CS_ISOCYRILLIC:
+		graphicsinset[1] = LATCYR_SET;
+		nat_char_mode = FALSE;
+		break;
+
+	      case CS_ISOARABIC:
+		graphicsinset[1] = LATARAB_SET;
+		nat_char_mode = FALSE;
+		break;
+
+	      case CS_ISOGREEK:
+		graphicsinset[1] = LATGREEK_SET;
+		nat_char_mode = FALSE;
+		break;
+
+	      case CS_ISOHEBREW:
+		graphicsinset[1] = LATHEBREW_SET;
+		nat_char_mode = FALSE;
+		break;
+
+	      case CS_ISOLATIN5:
+		graphicsinset[1] = LAT5_SET;
+		nat_char_mode = FALSE;
+		break;
+
+	      case CS_VTGRAPH:
+		graphicsinset[1] = GRAF_SET;
+		break;
+
+	      case CS_VTTECH:
+		graphicsinset[1] = TECH_SET;
+		break;
+	    }
+	    set_char_map();    /* change the display translate table */
+	    /* fall through */
+	    
+	  case QuitBtn:	/* fall in from above */
+	    DisposDialog (chardlg);	/* finished with the dialog */
+	    return;		/* return */
+
+	  case CS_UK:
+	  case CS_DUTCH:
+	  case CS_FINNISH:
+	  case CS_FRENCH:
+	  case CS_FRCAN:
+	  case CS_GERMAN:
+	  case CS_ITALIAN:
+	  case CS_NORDAN:
+	  case CS_PORTUGUESE:
+	  case CS_SPANISH:
+	  case CS_SWEDISH:
+	  case CS_SWISS:
+	    /* national char mode implies not ISO 8859 */
+	    SetCtlValue (getctlhdl (dlg_g1, chardlg), btnOff);
+	    dlg_g1 = CS_VTGRAPH;
+	    SetCtlValue (getctlhdl (dlg_g1, chardlg), btnOn);
+	    /* fall through */
+	  case CS_USA:
+	    SetCtlValue (getctlhdl (dlg_g0, chardlg), btnOff);
+	    dlg_g0 = itemhit;
+	    SetCtlValue (getctlhdl (dlg_g0, chardlg), btnOn);
+	    break;
+	    
+	  case CS_ISOLATIN1:
+	  case CS_ISOLATIN2:
+	  case CS_ISOLATIN3:
+	  case CS_ISOLATIN4:
+	  case CS_ISOCYRILLIC:
+	  case CS_ISOARABIC:
+	  case CS_ISOGREEK:
+	  case CS_ISOHEBREW:
+	  case CS_ISOLATIN5:
+	    /* 8859 says that the lower half (G0) is straight ASCII */
+	    SetCtlValue (getctlhdl (dlg_g0, chardlg), btnOff);
+	    dlg_g0 = CS_USA;
+	    SetCtlValue (getctlhdl (dlg_g0, chardlg), btnOn);
+	    /* fall through */
+	  case CS_VTGRAPH:
+	  case CS_VTTECH:
+	    SetCtlValue (getctlhdl (dlg_g1, chardlg), btnOff);
+	    dlg_g1 = itemhit;
+	    SetCtlValue (getctlhdl (dlg_g1, chardlg), btnOn);
+	    break;
+
+	}
+    }
+}				/* charsetdialog */
 
 
 
@@ -942,6 +1328,8 @@ setfiledialog ()
 		    (filargs.filflg & FIL_OKILL), setfdlg);
 	SetCtlValue (getctlhdl (FSET_KEEP, setfdlg),
 		     (keep) ? btnOn : btnOff);
+	SetCtlValue (getctlhdl (FSET_XMITTOO, setfdlg),
+		     (sendusercvdef) ? btnOn : btnOff);
 
 	ModalDialog (NILPROC, &item);
 	switch (item) {
@@ -964,6 +1352,10 @@ setfiledialog ()
 
 	  case FSET_KEEP:
 	    keep = !keep;
+	    break;
+	    
+	  case FSET_XMITTOO:
+	    sendusercvdef = !sendusercvdef;
 	    break;
 	}
     }
@@ -1015,6 +1407,11 @@ handlelaunch ()
 /****************************************************************************/
 fstats ()
 {
+    tfc += ffc;
+    tlog(F100," end of file","",0l);
+    tlog(F101,"  file characters        ","",ffc);
+    tlog(F101,"  communication line in  ","",flci);
+    tlog(F101,"  communication line out ","",flco);
 }				/* fstats */
 
 

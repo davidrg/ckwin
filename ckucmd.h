@@ -1,12 +1,13 @@
 /*  C K U C M D . H  --  Header file for Unix cmd package  */
  
 /*
- Author: Frank da Cruz (SY.FDC@CU20B),
- Columbia University Center for Computing Activities, January 1985.
- Copyright (C) 1985, Trustees of Columbia University in the City of New York.
- Permission is granted to any individual or institution to use, copy, or
+ Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
+ Columbia University Center for Computing Activities.
+ First released January 1985.
+ Copyright (C) 1985, 1989, Trustees of Columbia University in the City of New 
+ York.  Permission is granted to any individual or institution to use, copy, or
  redistribute this software so long as it is not sold for profit, provided this
- copyright notice is retained.
+ copyright notice is retained. 
 */
  
 /* Special getchars... */
@@ -29,9 +30,9 @@
  
 #define HLPLW  78			/* Width of ?-help line */
 #define HLPCW  19			/* Width of ?-help column */
-#define CMDBL  200			/* Command buffer length */
+#define CMDBL  255			/* Command buffer length */
 #define HLPBL  100			/* Help string buffer length */
-#define ATMBL  100			/* Command atom buffer length*/
+#define ATMBL  256			/* Command atom buffer length*/
  
 /* Special characters */
  

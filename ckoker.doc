@@ -3,7 +3,7 @@
 
                                C-Kermit for OS/2
 
-                                 Version 1.0p
+                                 Version 1.00
 
                              by Chris Adie et al.
 
@@ -115,7 +115,7 @@ provides the Category 1 IOCTLs which are used extensively within the program.)
 The connecting cable and the  modem (or other computer,  PAD etc to which  your
 computer is connected) must satisfy the  requirements of your computer's  RS232
 interface.  In particular, the computer will provide two output control signals
-(RTS and DTR), and  may expect to see  signals on four  input lines (DCD,  DSR,
+(RTS and DTR), and  may expect to  see signals on four  input lines (DCD,  DSR,
 CTS, RI).  The precise behaviour of  these lines is software configurable  (for
 instance by using the  OS/2 'MODE' command), and  C-Kermit makes no attempt  to
 impose a particular method of using them.
@@ -127,7 +127,7 @@ The default behaviour for  the input lines is  that DSR and CTS  must be ON  to
 enable the port to work.   If the modem you are  connected to does not  provide
 these signals, you can 'loop back' the  RTS output signal from the computer  to
 DSR and CTS, using  a suitably modified  cable.  An alternative  is to use  the
-MODE command to disable  the DSR and CTS  inputs.  To do  this, type a  command
+MODE command to disable  the DSR and  CTS inputs.  To do  this, type a  command
 similar to the following at the OS/2 CMD prompt:
 
     MODE COM1:9600,N,8,1,OCTS=OFF,ODSR=OFF,IDSR=OFF
@@ -138,7 +138,7 @@ You can check the effect using:
 
 which reports  the current  settings  of COM1.   Note  that on  some  machines,
 C-Kermit may appear  to work even  although DSR  and CTS are  not connected  to
-anything, nor disabled using 'MODE'.   This is because unconnected input  lines
+anything, nor disabled using 'MODE'.  This  is because unconnected input  lines
 tend to 'float high'.  Although this  situation may not cause any problems,  it
 is not good practice - you should explicitly disable the inputs as above.
 
@@ -184,7 +184,7 @@ OS/2 file specifications are of the form
 
 
 where DEVICE stands for a single character identifier (for instance, A for  the
-first floppy disk,  C for  the first  fixed disk, D  for a  RAM disk  emulator)
+first floppy disk,  C for  the first fixed  disk, D  for a  RAM disk  emulator)
 followed by a colon (':'), PATHNAME is up to 63 characters of identifier(s) (up
 to 8 characters each) surrounded by backslashes ('\'), NAME is an identifier of
 up to 8 characters, and TYPE is an identifier of up to 3 characters in  length.
@@ -213,7 +213,7 @@ and the special characters '-' (dash), '_' (underscore), '$' (dollar sign), '&'
 (ampersand), '#'  (number sign),  '@' (at  sign), '!'  (exclamation mark),  '''
 (single  quote),  '()'  (parentheses),  '{}'  (curly  braces),  '^'  (caret  or
 circumflex), '~' (tilde), and '`' (accent grave).  Normally, you should confine
-your filenames to letters and digits  for maximum transportability to  non-OS/2
+your filenames to letters and  digits for maximum transportability to  non-OS/2
 systems (by default, C-Kermit will translate filenames being sent by converting
 non-alphanumeric characters  to  'X').   When you  type  lowercase  letters  in
 filenames, they  are  converted  automatically  to  uppercase.   There  are  no
@@ -224,8 +224,8 @@ indicated above (ie colon, backslash and dot).
 
 The name field is the primary identifier  for the file.  The type, also  called
 the extension or suffix, is an indicator which, by convention, tells what  kind
-of file we have.  For instance FOO.BAS  is the source of a BASIC program  named
-FOO; FOO.OBJ  might be  the relocatable  object  module produced  by  compiling
+of file we have.  For instance FOO.BAS is  the source of a BASIC program  named
+FOO; FOO.OBJ  might be  the  relocatable object  module produced  by  compiling
 FOO.BAS; FOO.EXE could be  an executable program  produced by loading  FOO.OBJ,
 and so forth.  .EXE is the normal suffix for executable programs.
 
@@ -235,14 +235,14 @@ string of  characters  from the  current  position to  the  end of  the  field,
 including no characters at all; a  '?' matches any single character.  Here  are
 some examples:
 
-*.BAS           All files  of type  BAS (BASIC  source  files) in  the  current
+*.BAS           All files  of type  BAS  (BASIC source  files) in  the  current
                 directory.
 
 FOO.*           Files of all types with name FOO.
 
 F*.*            All files whose names start with F.
 
-*.?             All files with  types exactly  one character long,  or with  no
+*.?             All files with  types exactly one  character long,  or with  no
                 type at all.
 
 Wildcard notation is used on many computer  systems in similar ways, and it  is
@@ -277,16 +277,16 @@ used.  The opposite, 'set file type text', is the default.
 
 Non-OS/2 systems may be confused by nonstandard ASCII files sent by C-Kermit:
 
-   - Files containing any  of the 8-bit  "extended ASCII"  characters may  need
+   - Files containing any  of the  8-bit "extended ASCII"  characters may  need
      conversion (or translation) to 7-bit ASCII.
-   - Files produced by word processing  programs like Word Perfect or  Wordstar
+   - Files produced by word processing programs  like Word Perfect or  Wordstar
      may contain special binary formatting codes, and could need conversion  to
      conventional 7-bit  ASCII format  prior  to transmission,  using  commonly
      available "exporter" programs.
    - Spreadsheet or  database  files  usually need  special  formatting  to  be
      meaningful to non-OS/2 recipients (though they can be transmitted  between
      OS/2 and MS-DOS systems with Kermit).
-   - BASIC programs  are normally  saved in  a  binary "tokenized"  form.   Use
+   - BASIC programs  are normally  saved  in a  binary "tokenized"  form.   Use
      BASIC's ",a" option to save them as regular ASCII text, as in
 
                   save"foofa",a
@@ -300,7 +300,7 @@ different kind of system, consult the Kermit manual for that system.
 
 
 When C-Kermit  is  transferring a  file,  the screen  (stdout)  is  continously
-updated to show the progress of the  file transer.  A dot is printed for  every
+updated to show the progress of the file  transer.  A dot is printed for  every
 four data packets, other packets are shown by type:
 
     I Exchange Parameter Information
@@ -448,7 +448,7 @@ options specify either protocol transactions or terminal connection.
 
 
 Before proceeding, a few words about remote and local operation are  necessary.
-Kermit (in general, not  just C-Kermit) is "local"  if it is  running on PC  or
+Kermit (in general, not  just C-Kermit) is  "local" if it is  running on PC  or
 workstation that you are  using directly, or  if it is  running on a  multiuser
 system and transferring files over an  external communication line -- not  your
 job's controlling terminal or console. Kermit is  remote if it is running on  a
@@ -683,11 +683,11 @@ commands:
     SP  (Space) --  Delimits fields  (keywords,  filenames, numbers)  within  a
         command.  The tab key may also be used for this purpose.
 
-    CR  (Carriage Return or  Enter) -- Enters  the command  for execution.   LF
+    CR  (Carriage Return or  Enter) --  Enters the command  for execution.   LF
         (Linefeed or Control-J) or FF (formfeed or Control-L) may also be  used
         for this purpose.
 
-    ^   (Circumflex) -- Enter  any of the  above characters  into the  command,
+    ^   (Circumflex) -- Enter  any of  the above characters  into the  command,
         literally.  To enter a ^, type two of them in a row (^^).  A circumflex
         at the end of a command  line causes the next line  to be treated as  a
         continuation line; this  is useful  for readability  in command  files,
@@ -697,7 +697,7 @@ You may type the editing characters (BS, ^W, etc) repeatedly, to delete all the
 way back to  the prompt.   No action  will be  performed until  the command  is
 entered by typing  carriage return,  linefeed, or  formfeed.  If  you make  any
 mistakes, you will  receive an informative  error message and  a new prompt  --
-make liberal use of '?' and 'ESC' to  feel your way through the commands.   One
+make liberal use of '?' and 'ESC'  to feel your way through the commands.   One
 important command  is 'help'  --  you should  use it  the  first time  you  run
 C-Kermit.
 
@@ -783,7 +783,7 @@ Kermit book.  Special aspects of certain C-Kermit commands are described below.
 Syntax:     send fn
 or          send fn1 rfn1
 
-Send the file  or files  denoted by fn  to the  other Kermit,  which should  be
+Send the file  or files  denoted by  fn to the  other Kermit,  which should  be
 running as a  server, or which  should have been  given the 'receive'  command.
 Each file is sent under  its own name (as described  above, or as specified  by
 the 'set file names'  command).  If the  second form of  the 'send' command  is
@@ -832,7 +832,7 @@ for example
      Remote file specification: profile exec
      Local name to store it under: profile.ibm
 
-As with 'receive',  if more  than one file  arrives as  a result  of the  'get'
+As with 'receive',  if more  than one  file arrives as  a result  of the  'get'
 command, only the first will be stored  under the alternate name given by  fn1;
 the remaining files will be stored under their own names if possible.  If a '?'
 is to be included in the remote file specification, you must prefix it with '^'
@@ -931,14 +931,14 @@ name is omitted, the file is created with a default name as shown below.
 log debugging
         This produces a voluminous log of the internal workings of C-Kermit, of
         use to Kermit developers or maintainers in tracking down suspected bugs
-        in the C-Kermit program.  Use of  this feature dramatically slows  down
+        in the C-Kermit program.  Use  of this feature dramatically slows  down
         the Kermit  protocol.   Default  name:  debug.log.  (Debug  logging  is
         disabled.)
 
 log packets
-        This produces a record  of all the packets  that go in  and out of  the
+        This produces a record  of all the  packets that go in  and out of  the
         communication port.  This log is of  use to Kermit maintainers who  are
-        tracking down protocol problems in either  C-Kermit or any Kermit  that
+        tracking down protocol problems in  either C-Kermit or any Kermit  that
         C-Kermit is connected to.  Default name: packet.log.
 
 log session
@@ -1009,7 +1009,7 @@ available in the current release of C-Kermit:
 block-check {1, 2, 3}
         Determines the level of per-packet error  detection.  "1" is a  single-
         character 6-bit checksum, folded to include the values of all bits from
-        each character.   "2" is  a 2-character,  12-bit  checksum.  "3"  is  a
+        each character.   "2" is  a  2-character, 12-bit  checksum.  "3"  is  a
         3-character, 16-bit  cyclic redundancy  check  (CRC).  The  higher  the
         block check,  the better  the error  detection and  correction and  the
         higher the resulting  overhead.  Type 1  is most commonly  used; it  is
@@ -1052,7 +1052,7 @@ file {display, names, type, warning}
                 appearing in a  received file specification  must exist and  be
                 write-accessible.  When  literal  naming  is  being  used,  the
                 sender should  not use  path names  in the  file  specification
-                unless the  same  path  exists  on the  target  system  and  is
+                unless the  same  path  exists on  the  target  system  and  is
                 writable.
 
         type {binary, text} [{7, 8}]
@@ -1073,7 +1073,7 @@ file {display, names, type, warning}
                 overwrite existing files of the same name.  When 'on' ('-w'  on
                 command line)  Kermit  will check  if  an arriving  file  would
                 overwrite an existing file; if so, it will construct a new name
-                for the arriving file, of the  form FZZn.BAR, where FZZ.BAR  is
+                for the arriving file, of  the form FZZn.BAR, where FZZ.BAR  is
                 the name they share and n is a "generation number"; if  FZZ.BAR
                 exists, then  the new  file will  be called  FZZ00001.BAR.   If
                 FZZ.BAR  and  FZZ00001.BAR   exist,  the  new   file  will   be
@@ -1088,7 +1088,7 @@ file {display, names, type, warning}
 
 
 flow-control {none, xon/xoff}
-        Normally 'xon/xoff' for  full duplex  flow control.  Should  be set  to
+        Normally 'xon/xoff' for  full duplex flow  control.  Should  be set  to
         'none' if the other system cannot  do xon/xoff flow control, or if  you
         have issued  a 'set  handshake' command.   If set  to 'xon/xoff',  then
         'handshake' should be set to 'none'.  This setting applies during  both
@@ -1096,7 +1096,7 @@ flow-control {none, xon/xoff}
 
 incomplete {discard, keep}
         Disposition for incompletely  received files.  If  an incoming file  is
-        interrupted or  an error  occurs during  transfer,  the part  that  was
+        interrupted or  an error  occurs  during transfer,  the part  that  was
         received so far is  normally discarded.  If  you 'set incomplete  keep'
         then such file fragments will be kept.
 
@@ -1117,7 +1117,7 @@ modem-dialer {direct, hayes, racalvadic, ventel, ...}
         The type of modem dialer on the communication line.  'direct' indicates
         either there is no dialout modem, or that if the line requires  carrier
         detection to open, then  'set line' will hang  waiting for an  incoming
-        call.  'hayes', 'ventel', and the others  indicate that 'set line'  (or
+        call.  'hayes', 'ventel', and the  others indicate that 'set line'  (or
         the '-l' argument) will prepare for a subsequent 'dial' command for the
         given dialer.  Support for new dialers  is added from time to time,  so
         type 'set  modem ?'  for a  list of  those supported  in your  copy  of
@@ -1137,7 +1137,7 @@ prompt [string ]
         will be stripped and any leading and trailing blanks will be retained.
 
 send parameter
-        Establish parameters to  use when  sending packets.  These  will be  in
+        Establish parameters to  use when sending  packets.  These  will be  in
         effect only for  the initial packet  sent, since the  other Kermit  may
         override  these  parameters  during  the  protocol  parameter  exchange
         (unless noted below).
@@ -1250,7 +1250,7 @@ terminal parameter value
 
 Syntax:     show {parameters, versions}
 
-The 'show'  command with  the default  argument  of 'parameters'  displays  the
+The 'show'  command with  the  default argument  of 'parameters'  displays  the
 values of  all  the  'set'  parameters described  above.   If  you  type  'show
 versions', then C-Kermit will display the version numbers and dates of all  its
 internal modules.  You should use the 'show versions' command to ascertain  the
@@ -1346,7 +1346,7 @@ restart the program, or  else make a command  file that executes the  necessary
 
 An implicit 'take' command is executed upon your CKERMIT.INI file when C-Kermit
 starts up, upon either interactive or command-line invocation.  The CKERMIT.INI
-file should contain 'set'  or other commands you  want to be  in effect at  all
+file should contain 'set'  or other commands  you want to be  in effect at  all
 times.  For instance, you might want override the default action when  incoming
 files have the same names as existing files -- in that case, put the command
 
@@ -1386,7 +1386,7 @@ your screen will also be recorded to your session log.  This provides a way  to
 
 To get back to your  own system, you must type  the escape character, which  is
 Control-] (^]) (unless  you have  changed it  with the  'set escape'  command),
-followed by a  single-character command, such  as 'c'  for "close  connection".
+followed by a  single-character command,  such as 'c'  for "close  connection".
 Single-character commands include:
 
   c     Close the connection
@@ -1446,7 +1446,7 @@ common modem type used with an OS/2 system is "Hayes compatible".  Support  for
 new modems is added to the program from time to time; you can check the current
 list by typing 'set modem ?'.
 
-The device used for  dialing out is  the one selected in  the most recent  'set
+The device used for  dialing out is the  one selected in  the most recent  'set
 line' command.
 
 Example:
@@ -1463,7 +1463,7 @@ Example:
 
 this disconnects modem, and hangs up the line.
 
-C-Kermit requires that  the modem track  the computer's  "data terminal  ready"
+C-Kermit requires that  the modem  track the computer's  "data terminal  ready"
 (DTR) signal.  If a switch setting is available to simulate DTR asserted within
 the modem, then it should normally not be in that setting.  Otherwise the modem
 will be unable to hang up at the end of a call.
@@ -1513,7 +1513,7 @@ special characters, including:
 ~o[o[o]]  an octal character
 ~w[d[d]]  wait specified interval during expect, then time out
 
-As with some UUCP systems, sent strings are  followed by ~r unless they have  a
+As with some UUCP systems, sent strings  are followed by ~r unless they have  a
 ~c.
 
 Only the last 7 characters in each expect are matched.  A null expect, e.g.  ~0
@@ -1530,7 +1530,7 @@ where dashed sequences are followed as long as previous expects fail.  Timeouts
 for expects can be specified using ~w; ~w with no arguments waits 15 seconds.
 
 Expect/send transactions can  be easily  be debugged  by logging  transactions.
-This records all  exchanges, both  expected and actual.   The script  execution
+This records all  exchanges, both expected  and actual.   The script  execution
 will also be logged in the session log, if that is activated.
 
 Note that '^' characters in login scripts, as in any other C-Kermit interactive
@@ -1564,7 +1564,7 @@ or          help keyword
 or          help {set, remote} keyword
 
 Brief help messages or menus are always available at interactive command  level
-by typing a question mark at any  point.  A slightly more verbose form of  help
+by typing a question mark at any point.   A slightly more verbose form of  help
 is available through the 'help' command.  The 'help' command with no  arguments
 prints a brief summary of  how to enter commands and  how to get further  help.
 'help' may be followed by one of the top-level C-Kermit command keywords,  such
@@ -1604,7 +1604,7 @@ comms port, the current baud rate and how to obtain help.
 
 Some keys on the VT102 keyboard have  no direct equivalent on the PC  keyboard.
 The following table shows the mapping  which obtains between VT102 keys and  PC
-keys.  Note that the Alt n combinations  use the number keys along the top  row
+keys.  Note that the Alt n combinations use  the number keys along the top  row
 of the keyboard, not the numeric keypad.
 
 VT102               IBMPC
@@ -1645,7 +1645,7 @@ is frozen.  The status line indicates when the emulator is in this state.
 Information which scrolls off the top of the screen is not in fact lost, but is
 stored in an "extended display buffer",  which can be examined by pressing  the
 'PgUp' key.  The extended display buffer can contain a number of screenfulls of
-data, and the 'PgUp' and 'PgDn' keys can  be used to range freely through  this
+data, and the 'PgUp' and 'PgDn' keys  can be used to range freely through  this
 data.  If  any  other key  is  pressed while  the  extended display  buffer  is
 visible, the current screen contents are redisplayed and the keystroke is  sent
 to the host.   The 'PgUp' and  'PgDn' keys may  be used even  when the host  is
@@ -1813,9 +1813,10 @@ author:
 
           Dr C J Adie
           Edinburgh University Computing Service
+          Main Library
           George Square
           Edinburgh
-          EH8 9JU
+          EH8 9LJ
           United Kingdom
 
 or   (preferably)   by   electronic   mail    on   the   Janet   network    to:
@@ -1829,8 +1830,9 @@ C.J.Adie@UK.AC.EDINBURGH
 
 3. Set Delay: This should default to zero.  Currently it has no effect.
 
-4. Dial: The DIAL command has not  been tested.  It is impossible to  terminate
-   the dialling process short of pressing Control-Break.
+4. Dial: The DIAL appears not to work.  The author has no convenient access  to
+   a dial-out modem, so is not able to test it out properly.  It is  impossible
+   to terminate the dialling process short of pressing Control-Break.
 
 5. Keyboard handling: In interactive command mode (as opposed to connect mode),
    the keyboard has  only the  natural key-to-ascii-code  mapping.  This  means
@@ -2010,4 +2012,3 @@ Hayes Modem  1
 6 Terminal Emulation                                                        1
 7 C-Kermit Restrictions and Known Bugs                                      1
 A Invoking C-Kermit from Another Program                                 1
-

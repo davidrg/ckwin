@@ -1,0 +1,62 @@
+This is release version 0.97(57) of MacKermit.  Please send all bugs to
+"Info-Kermit@cunixc.cc.columbia.edu" (on the Internet).
+
+New additions include:
+
+    A sizable window
+
+    Scroll back
+
+    Faster file transfer
+	
+	(hopefully) Correct binary transfer code
+	
+	MacBinary format transfers
+	
+	Partial emulation of a vt 300 series terminal
+	
+	Better keyboard handling
+	
+More keyboard macros have been added to better handle the vt100 keyboard
+and normal/application mode stuff:
+
+	\keypad0 -- \keypad9
+	\keypad,
+	\keypad.
+	\keypad-
+	\pf1
+	\pf2
+	\pf3
+	\pf4
+	\leftarrow
+	\rightarrow
+	\uparrow
+	\downarrow
+
+The keypad comes configured for a Plus; if you have an ADB machine, you
+will have to remap the + and - keys, and possibly =, /, and * to be
+pf2 -- pf4
+
+Bugs still outstanding:
+
+    Running in inverted screen mode doesn't work.
+	
+	The option key is still a dead key for the usual characters (e, u, etc.)
+	
+	It is possible to confuse the selection by draging past the top of
+	the window, waiting, and draging down past the end of the window.
+		
+	Parts of the Edit menu should be greyed out when they do not apply.
+	
+	Cut and Paste do not deal with the real Scrapbook (yet).
+	
+	There still isn't a Tektronics emulator built in.
+	
+Other than these, if you find a problem please send mail to the mailing
+list about it.  Please include Kermit version number, a discription
+of the hardware, the System version number, and if possible a repeat-by.
+
+				Happy Kermiting,
+				
+				Paul Plaeway, MacKermit coord.
+				paul@cis.ohio-state.edu

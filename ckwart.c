@@ -24,13 +24,13 @@ char *wartv = "Wart Version 1A(006) Jan 1989";
 #include <ctype.h>
 
 /*
- The following "short" should be changed to "long" if your wart program
- will generate more than 255 states.  Since wart is used mainly with C-Kermit,
- which has less than 50 states, "short" is adequate.  This keeps the program
- about 3K-4K smaller.
+ The following "CHAR" should be changed to "short", "int", or "long" if your
+ wart program will generate more than 127 states.  Since wart is used mainly
+ with C-Kermit, which has less than 50 states, "short" is adequate.  This 
+ keeps the program about 3K-4K smaller.
 */
 
-#define TBL_TYPE "short"		/* C data type of state table */
+#define TBL_TYPE "CHAR"			/* C data type of state table */
 
 #define C_L 014				/* Formfeed */
 
@@ -264,7 +264,7 @@ rdrules(fp,out)
 FILE *fp,*out;
 {
   Trans head,cur,prev;
-  int curtok,i;
+  int curtok;
   head = cur = NULL;
   while ((curtok = gettoken(fp)) != SEP) 
 

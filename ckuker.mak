@@ -1,4 +1,4 @@
-# CKUKER.MAK, Version 2.13, 24 January 1989
+# CKUKER.MAK, Version 2.21, 28 Jul 89
 #
 # -- Makefile to build C-Kermit for Unix and Unix-like systems --
 #
@@ -6,42 +6,63 @@
 # ckuker.bwr (the "beware file"), and then rename this file to "makefile"
 # or "Makefile" if necessary, and then:
 #
+# for Alliant FX/8 with Concentrix 4.1, "make bsdlck"
 # for Amdahl UTS 2.4 on IBM 370 series & compatible mainframes, "make uts24"
 # for Amdahl UTSV IBM 370 series & compatible mainframes, "make sys3"
 # for Apollo DOMAIN/IX, "make bsd" or "make sys3", for desired environment
-# for AT&T 3B1, 6300 machines, "make sys3"
+# for Apollo with SR10.0 BSD or later, "make sr10-bsd"
+# for Apple Macintosh II with A/UX, "make aux"
+# for AT&T 6300 PLUS, "make att6300"
 # for AT&T 3B2, 3B20 systems, "make att3bx"
-# for AT&T 7300 Unix PC machine, "make sys3upc"
+# for AT&T 3B1, 7300 Unix PC, "make sys3upc"
 # for AT&T generic System III/System V, "make sys3" or "make sys3nid"
-# for ATT System V R3, use "make sys5r3".  This is different from the above.
+# for AT&T System V R3, use "make sys5r3".  This is different from the above.
 # for BBN C/70 with IOS 2.0, "make c70"
 # for Bell Unix Version 7 (aka 7th Edition), "make v7" (but see below)
-# for Berkeley Unix 4.x, "make bsd" (tested with 4.1, 4.2, and 4.3)
+# for Berkeley Unix 4.1, "make bsd41"
+# for Berkeley Unix 4.2, "make bsd" (tested with 4.2 and 4.3)
+# for Berkeley Unix 4.3, "make bsd43" (uses acucntrl program)
+# for Berkeley Unix 4.3 without acucntrl program, "make bsdlck" or "make bsd"
+# for Berkeley Unix 4.2 or 4.3 with HoneyDanBer UUCP, "make bsdhdb"
 # for Berkeley Unix 2.9 (DEC PDP-11 or Pro-3xx), "make bsd29"
 # for Berkeley Unix 2.10, "make bsd210"
 # for CDC VX/VE 5.2.1 Sys V emulation, "make vxve"
+# for Charles River Data Systems 680x0 systems with Unos, "make sys3nid"
 # for CIE Systems 680/20 with Regulus, "make cie"
-# for DEC Ultrix, "make bsd"
+# for Convex C1, "make convex"
+# for DEC Ultrix on VAX or DECstation, "make bsd"
 # for DEC Pro-350 with Pro/Venix V1.x, "make provx1"
 # for DEC Pro-350 with Pro/Venix V2.0 (Sys V), "make sys3nid" 
 # for DEC Pro-380 with Pro/Venix V2.0 (Sys V), "make sys3" or "make sys3nid"
+# for Encore Multimax 310, 510 with UMAX 4.2, "make bsd"
+# for Encore Multimax 310, 510 with UMAX V 2.2, use Berkeley cc, "make bsd"
 # for Fortune 32:16, For:Pro 1.8, "make ft18"
 # for HP-9000 Series with HP-UX, "make hpux"
 # for IBM 370 Series with IX/370, "make ix370"
+# for IBM PS/2 with PS/2 AIX, "make ps2aix"
+# for IBM RT PC with AIX 2.1, "make sys3"
+# for IBM RT PC with AIX 2.2, "make rtaix" (is one of these extraneous?)
+# for IBM RT PC with ACIS, "make bsd"
 # for Intel Xenix, "make sco286"
 # for Interactive System III (PC/IX) on PC/XT, "make pcix"
 # for Interactive Sys III on other systems, "make is3"
 # for Masscomp variation on Sys III, "make rtu"
+# for Masscomp/Concurrent with RTU 4.0 or later Berkeley, "make rtubsd"
 # for Microport Sys V, "make mpsysv"
 # for Microsoft,IBM Xenix (/286, PC/AT, etc), "make xenix" or "make sco286"
 # for NCR Tower 1632, OS 1.02, "make tower1"
 # for NCR Tower 1632 with System V, "make sys3"
+# for NeXT, "make next"
 # for SCO Xenix 2.2.1 with development system 2.2 on 8086/8 "make sco86"
 # for SCO Xenix/286 2.2.1 with development system 2.2 on 80286, "make sco286"
 # for SCO Xenix/386 2.2.2, "make sco386"
-# for Sequent Balance 8000, "make bsd"
-# for SUN with SUNOS 4.0 or later, "make sunos4"
+# for Sequent Balance 8000 or B8 with DYNIX 3.0.14, "make bsdlck"
+# for Sequent Symmetry S81 running DYNIX 3.0.12, "make bsdlck"
+# for SUN with SUNOS 4.0 or later, "make sunos4" (uses BSD environment)
+# for SUN with SUNOS 4.0 or later, "make sys5r3" (uses AT&T environment)
+# for Tandy 16/6000 with Xenix 3.0, "make trs16"
 # for Valid Scaldstar, "make valid"
+# for Zilog ZEUS 3.21, "make zilog"
 #
 # The result should be a runnable program called "wermit" in the current 
 # directory.  After satisfactory testing, you can rename wermit to "kermit" 
@@ -218,10 +239,31 @@ ckuscr.o: ckuscr.c ckcker.h ckcdeb.h
 # Make commands for specific systems:
 #
 #
-#Berkeley Unix 4.1 or 4.2, 4.3, also Ultrix-32 1.x, 2.0
+#Apple Mac II, A/UX
+aux:
+	make wermit "CFLAGS = -DAUX -DUXIII -DDEBUG -DTLOG -i -O" \
+		"LNKFLAGS = -i"
+
+#Berkeley Unix 4.1
+bsd41:
+	make wermit "CFLAGS= -DBSD4 -DBSD41 -DDEBUG -DTLOG" "LIBS = -ljobs"
+
+#Berkeley 4.2, 4.3, also Ultrix-32 1.x, 2.0, maybe 3.0, many others
 bsd:
 	make wermit "CFLAGS= -DBSD4 -DDEBUG -DTLOG"
 
+#Berkeley Unix 4.2 or 4.3 with lock directory /usr/spool/uucp/LCK/LCK..tty??,
+#but without acucntrl program
+bsdlck:
+	make wermit "CFLAGS= -DLCKDIR -DBSD4 -DDEBUG -DTLOG"
+
+#Berkeley Unix with HoneyDanBer UUCP
+bsdhdb:
+	make wermit "CFLAGS= -DHDBUUCP -DBSD4 -DDEBUG -DTLOG"
+
+#Berkeley Unix 4.3 with acucntrl program
+bsd43:
+	make wermit "CFLAGS= -DBSD43 -DNEWUUCP -DBSD4 -DDEBUG -DTLOG -O"
 
 #Berkeley Unix 2.8, 2.9 for PDP-11s with I&D space, maybe also Ultrix-11???
 #If you have trouble with this, try removing "-l ndir".  If you still have
@@ -236,9 +278,21 @@ bsd210:
 	make wermit "CFLAGS= -DBSD29 -DDEBUG -DTLOG" -DLCKDIR \
 		"LNKFLAGS= -i " "CC= cc " "CC2= cc"
 
-#SUN OS version 4.0 or later
+#Convex C1 with Berkeley Unix
+convex:
+	make wermit "CFLAGS= -DBSD4 -Dmsleep=mnap -DDEBUG -DTLOG"
+
+#NeXT
+next:
+	make wermit "CFLAGS= -fwritable-strings -DLCKDIR -DBSD4 -DDEBUG -DTLOG"
+
+#SUN OS version 4.0 or later (like Berkeley, but different signal() type)
 sunos4:
 	make wermit "CFLAGS= -DBSD4 -DSUNOS4 -DDEBUG -DTLOG"
+
+#Apollo with SR10.0 or later
+sr10-bsd:
+	make wermit "CFLAGS= -DBSD4 -DDEBUG -DTLOG -Uaegis"
 
 #Version 7 Unix (see comments above)
 v7:
@@ -263,6 +317,12 @@ sys3:
 sys3nid:
 	make wermit "CFLAGS = -DUXIII -DDEBUG -DTLOG -O" "LNKFLAGS ="
 
+#AT&T 6300 PLUS
+att6300:
+	make wermit "CFLAGS = -DUXIII -DDEBUG -DTLOG -DATT6300 \
+		-i -O -Ml" \
+		"LNKFLAGS = -i -Ml"
+
 #AT&T 7300/Unix PC systems, sys3 but define symbol ATT7300
 sys3upc:
 	make wermit "CFLAGS = -DUXIII -DATT7300 -DDEBUG -DTLOG -i -O" \
@@ -272,6 +332,13 @@ sys3upc:
 #  Only difference from sys3 is lock file stuff...
 att3bx:
 	make wermit "CFLAGS = -DUXIII -DATT3BX -DDEBUG -DTLOG -i -O" \
+		"LNKFLAGS = -i"
+
+#IBM PS/2 with AIX 1.0 (currently in field test as F10A)
+#  Reports indicate that -O switch must be omitted.
+#  It is also possible that "made bsd" will work (reports welcome).
+ps2aix:
+	make wermit "CFLAGS = -DUXIII -DDEBUG -DTLOG -i" \
 		"LNKFLAGS = -i"
 
 #HP 9000 series 300, 500, 800.
@@ -284,27 +351,31 @@ cie:
 
 #Microport Sys V for IBM PC/AT and clones
 mpsysv:
-	make wermit "CFLAGS= -O -DXENIX -DUXIII -DTLOG -Ml -i" \
+	make wermit "CFLAGS= -O -DXENIX -Dunix -DUXIII -DTLOG -Ml -i" \
 		"LNKFLAGS = -Ml -i"
 
 #Microsoft "Xenix/286" e.g. for IBM PC/AT
 xenix:
-	make wermit "CFLAGS= -DXENIX -DUXIII -DDEBUG -DTLOG -F 3000 -i" \
+	make wermit "CFLAGS= -DXENIX -Dunix -DUXIII -DDEBUG -DTLOG \
+	-F 3000 -i" \
 		"LNKFLAGS = -F 3000 -i"
 
 #SCO Xenix/286 2.2.1, e.g. for IBM PC/AT, PS/2 Model 50, etc.
 sco286:
-	make wermit "CFLAGS= -DXENIX -DUXIII -DDEBUG -DTLOG -F 3000 -i -M2le" \
+	make wermit "CFLAGS= -DXENIX  -Dunix -DUXIII -DDEBUG -DTLOG \
+	-F 3000 -i -M2le" \
 		"LNKFLAGS = -F 3000 -i -M2le"
 
 #SCO Xenix 2.2.1 for IBM PC, XT, PS2/30, or other 8088 or 8086 machine
 sco86:
-	make wermit "CFLAGS= -DXENIX -DUXIII -DDEBUG -DTLOG -F 3000 -i -M0me" \
+	make wermit "CFLAGS= -DXENIX  -Dunix -DUXIII -DDEBUG -DTLOG \
+	-F 3000 -i -M0me" \
 		"LNKFLAGS = -F 3000 -i -M0me"
 
 #SCO Xenix/386 2.2.2
 sco386:
-	make wermit "CFLAGS= -DXENIX -DUXIII -DDEBUG -DTLOG -Otcl  -i -M3e" \
+	make wermit "CFLAGS= -DXENIX -Dunix -DUXIII -DDEBUG -DTLOG \
+	-Otcl  -i -M3e" \
 		"LNKFLAGS = -i"
 
 #PC/IX, Interactive Corp System III for IBM PC/XT
@@ -312,7 +383,6 @@ pcix:
 	make wermit \
 	"CFLAGS= -DPCIX -DUXIII -DISIII -DDEBUG -DTLOG -Dsdata=sdatax -O -i" \
 		"LNKFLAGS = -i"
-
 
 #Interactive Corp System III port in general --
 is3:
@@ -325,6 +395,10 @@ is3:
 rtu:
 	make wermit "CFLAGS= -UFIONREAD -DUXIII -DDEBUG -DTLOG -O" \
 		"LNKFLAGS =" "LIBS= -ljobs"
+
+#Masscomp/Concurrent RTU 4.0 or later, Berkeley environment:
+rtubsd:
+	ucb make wermit "CFLAGS= -DBSD4 -DRTU -DDEBUG -DTLOG"
 
 #DEC Pro-3xx with Pro/Venix V1.0 or V1.1
 # Requires code-mapping on non-I&D-space 11/23 processor, plus some
@@ -367,11 +441,23 @@ c70:
 
 #Zilog ZEUS 3.21
 zilog:
-	make wermit "CFLAGS = -DUXIII -DZILOG -DTLOG -i -O" "LNKFLAGS = -i"
+	make wermit "CFLAGS = -DUXIII -DZILOG -DTLOG -i -O" \
+	"LNKFLAGS = -i -lpw"
 
 #CDC VX/VE 5.2.1
 vxve:
 	make wermit "CFLAGS = -DUXIII -DVXVE -i -O" "LNKFLAGS = -i"
+ 
+#IBM PC-RT with AIX
+rtaix:
+	make wermit "CFLAGS = -DUXIII -DRTAIX -DDEBUG -DTLOG -O -w" \
+	"LNKFLAGS = -i"
+   
+#Tandy 16/6000 with Xenix 3.0
+trs16:
+	make wermit "CFLAGS= -DTRS16 -DXENIX -Dunix -DUXIII -DDEBUG -DTLOG \
+	-DM_VOID -Dvoid=int -F 3000 -n" \
+		"LNKFLAGS = -F 3000 -n"
 
 #Clean up intermediate and object files
 clean:

@@ -1,132 +1,41 @@
 CURRENT KNOWN BUGS WITH AMIGA KERMIT
 
+It is probably time for someone to upgrade this for the current version
+of the Lattice C compiler.  This has not been done for two years.
+
 No DIAL or SCRIPT commands yet.
 
-The perror() command used under 3.03 does not give helpful error messages,
-only error numbers, if available.
-
-Depending on unknown factors of AmigaDOS buffering, it is possible that
-wildcard expansion nested inside several levels of directories will cause
-significant disk thrashing.  I have not seen this yet, and have avoided
-complicating the expansion code by modifying it to not thrash.
-
-When the Amiga's serial output is looped back to its serial input, (through
-a modem, say) and the serial device is set to a high baud rate (>100K), when
-a break is sent, the Amiga will hang up.
-
-The setup and cleanup of Kermit's window does not currently support
-Workbench, and the default window created by Lattice's _main is not
-eliminated.  This is easily fixed, but there are other problems with
-Workbench invocation.  See below.
+Workbench invocation of C Kermit is not yet supported.  However, one
+can simply use IconX (which is included with V1.3) and attach an icon
+to an AmigaDOS Execute script which starts up Kermit.
 
 The current directory name is constructed from the previous current
 directory name and a new relative name.  This is similar to the way the CD
 command operates, but it is subject to some peculiarities.  For instance,
 'CWD C:' followed by 'CWD /' results in the current directory being the
 the parent of C: and a directory name of 'C:/'.  It is possible to
-reconstruct the name using the Parent() AmigaDOS function.  (This would
-also allow Kermit under the Workbench to reconstruct the current directory
-name.)  However, the V1.1 RAM: handler has bugs in the Parent() function,
-and so would probably not function with this method.  Under 3.04 Lattice C,
-the Lattice functions are used for chdir() and getcwd(), since they seem to
-use Parent() reconstruction. (Lattice 3.04 C in general assumes use of the
-fixed V1.2 RAM: handler.)
+reconstruct the name using the Parent() AmigaDOS function, and this should
+be done;  a previous bing in the RAM: handler has been fixed.
 
 There should be some form of output control and input for one-liners invoked
 with the '!' command.
 
-Due to a bug in all C-Kermit's, the transaction timer is not reset before
-some remote commands are executed on some other versions of Kermit.  The
-reported transaction time will be the elapsed time since the timer was last
-reset, or the base (zero) time of the system, midnight January 1, 1978 on
-the Amiga.  This can be demonstrated by starting C-Kermit, requesting REMOTE
-HELP from a VMS Kermit-32 version 3.2.077 server before any file transfer,
-and then requesting STAT.
-
-An audible bell is needed.
+An audible bell is needed, but can be added with a PD program called
+InstallBeep.
 
 The use of 'SET MODEM-TYPE type' to select modem control usage will have
 to change when the DIAL command is supported.
 
-The 23 by 77 window in connect mode is incompatible with the assumptions of
-many editors.  Emulation of a real terminal like a "not quite" ANSI VT100
-would be nice.
+The 23 by 77 window in connect mode is incompatible with the
+assumptions of many editors.  A PD program called MoreRows allows the
+size of the Workbench screen to be increased; an extra 16 columns and
+8 rows allows a 24 by 80 window for Kermit.  Emulation of a real
+terminal like a "not quite" ANSI VT100 would be nice.
 
 Kermit should support AmigaDOS wildcarding, especially for SEND's.  It can
 be argued that Unix wildcarding is often appropriate for remote GET's from
 the Amiga server, but AmigaDOS wildcarding should be optionally available.
-12-May-89 15:23:18-GMT,3695;000000000001
-Return-Path: <@cuvmb.cc.columbia.edu:RCCSBLN@HDETUD1.BITNET>
-Received: from cunixc.cc.columbia.edu by watsun.cc.columbia.edu (4.0/SMI-4.0)
-	id AA04707; Fri, 12 May 89 11:22:52 EDT
-Resent-Message-Id: <8905121522.AA04707@watsun.cc.columbia.edu>
-Message-Id: <8905121522.AA04707@watsun.cc.columbia.edu>
-Received: from CUVMB.COLUMBIA.EDU (cuvmb.cc.columbia.edu) by cunixc.cc.columbia.edu (5.54/5.10) id AA09250; Fri, 12 May 89 11:22:37 EDT
-Received: from CUVMB.CC.COLUMBIA.EDU by CUVMB.COLUMBIA.EDU (IBM VM SMTP R1.2) with BSMTP id 3411; Fri, 12 May 89 07:49:19 EDT
-Received: from HDETUD1.BITNET by CUVMB.CC.COLUMBIA.EDU (Mailer R2.03B) with
- BSMTP id 8378; Fri, 12 May 89 07:49:18 EDT
-Received: by HDETUD1 (Mailer X1.25) id 5799; Fri, 12 May 89 13:48:22 MET
-Resent-Date:  Fri, 12 May 89 13:42:46 MET
-Resent-From: "Boelen, Lodewijk J.M." <RCCSBLN%HDETUD1@cuvmb.cc.columbia.edu>
-Resent-To: Frank da Cruz <FDC@cunixc.cc.columbia.edu>
-Date:         Fri, 21 Apr 89 09:16:59 MET
-From: "Boelen, Lodewijk J.M." <RCCSBLN%HDETUD1@cuvmb.cc.columbia.edu>
-Subject:      Errors on compiling Kermit
-To: I-AMIGA@dearn.BITNET
 
-     Frank,
-Since I have got problems on compiling Kermit, I sent out the following
-message to I-AMIGA. Because I have not got any answer I turn up to you
-directly I hope you to help me.
-     Greetings,
-     Lodewijk.
-----------------------------Original message----------------------------
-
-     Lectori Salutem
-
-In december I have got both the sources and a BOO-ed version of Kermit on my
-Amiga. By curiosity I compiled the sources with the Lattice 3.10 compiler to
-get acquainted with the software available on my new (second hand) AMIGA2000.
-I love that machine!
-
-I remarked the following compiletime errors:
-  1.there are many warnings 89 on the variables "pid" and "D7Save" and others;
-  2. ckitio.c:
-    .1 error 71: formal declaration error "m";
-    .2 error 9: undefined identifier "m";
-    .3 error 63: duplicate declaration of item "m";
-  3. ckifio.c: error 57: semicolon expected;
-  4. ckuus3.c: error 25: invalid macro usage.
-
-The total time needed for compilation on my two diskette machine, with an
-adapted make-file, is 15 minutes. On scanning the sources near the marked
-lines I made some changes I will describe hereafter. All the compiletime
-errors were gone but the one in ckuus3.c.
-To get a Kermit program I had to attack the BOO-ed version I guessed to be in
-ckiker.upd. When anyone is interested I will mail my critics and the way I
-got a working Kermit program. I could emulate a terminal, that's all.
-I called for HELP but got no responses on the sources problems.
-
-So I waited for the newest version, announced in the meanwhile, hoping on the
-errors to be corrected. Before yesterday I compiled the newest sources the
-first time. I was sad to find the same errors as described above plus one:
-the version of HEARNs ckucmd.c is cut off. After receiving the TUVMA-version
-and applying the corrections, yesterday I got in the same situation as in
-january. So now my second call for HELP!
-
-Here are the corrections on the lines of the actual version:
-  1. ckitio.c: all the errors are gone when you change line 692 from:
-    "int n, m;" into: "int n;" and insert after line 695: "int m;";
-  2. ckifio.c: a little above line 343 you can find: "return(...));". If you
-    change this line in "return(...);" (one ")" less!) all is well.
-
-I don't know C though it looks very nice, but also a colleague could not find
-a solution on the error in ckuus3.c.
-
-I wonder if the warnings are not harmful, but I don't know to correct them.
-
-Can anyone help me? I would be gratefull,
-
-      Lodewijk.
-<< It is my job to use computers in favour of the people who work with them >>
-
+This code probably won't work if the eol character changes as a result
+of the startup packet negotiation.  See the comment in ttinl() in
+ckitio.c for the gory details.

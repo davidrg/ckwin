@@ -16,20 +16,21 @@
 /*
  DEBUG and TLOG should be defined in the Makefile if you want debugging
  and transaction logs.  Don't define them if you want to save the space
- overhead.
+ and overhead.  (Note, in version 4F these definitions changed from "{}"
+ to the null string to avoid problems with semicolons after braces, as in:
+ "if (x) tlog(this); else tlog(that);"
 */
 #ifndef DEBUG
-#define debug(a,b,c,d) {}
+#define debug(a,b,c,d)
 #endif
 
 #ifndef TLOG
-#define tlog(a,b,c,d) {}
+#define tlog(a,b,c,d)
 #endif
 
 /* Formats for debug(), tlog(), etc */
 
 #define F000 0
-
 #define F001 1
 #define F010 2
 #define F011 3
@@ -37,6 +38,34 @@
 #define F101 5
 #define F110 6
 #define F111 7
+
+/* Structure definitions for Kermit file attributes */
+/* All strings come as pointer and length combinations */
+/* Empty string (or for numeric variables, -1) = unused attribute. */
+
+struct zstr {             /* string format */
+    int len;	          /* length */
+    char *val;            /* value */
+};
+struct zattr {            /* Kermit File Attribute structure */
+    long lengthk;         /* (!) file length in K */
+    struct zstr type;     /* (") file type (text or binary) */
+    struct zstr date;     /* (#) file creation date [yy]yymmdd[ hh:mm[:ss]] */
+    struct zstr creator;  /* ($) file creator id */
+    struct zstr account;  /* (%) file account */
+    struct zstr area;     /* (&) area (e.g. directory) for file */
+    struct zstr passwd;   /* (') password for area */
+    long blksize;         /* (() file blocksize */
+    struct zstr access;   /* ()) file access: new, supersede, append, warn */
+    struct zstr encoding; /* (*) encoding (transfer syntax) */
+    struct zstr disp;     /* (+) disposition (mail, message, print, etc) */
+    struct zstr lprotect; /* (,) protection (local syntax) */
+    struct zstr gprotect; /* (-) protection (generic syntax) */
+    struct zstr systemid; /* (.) ID for system of origin */
+    struct zstr recfm;    /* (/) record format */
+    struct zstr sysparam; /* (0) system-dependent parameter string */
+    long length;          /* (1) exact length on system of origin */
+};
 
 /* Unix Version Dependencies */
 
@@ -51,13 +80,25 @@ typedef int SIGTYP;
 #endif
 #endif
 
+/* Systems that expand tilde at the beginning of file or directory names */
+#ifdef BSD4
+#define DTILDE
+#endif
+#ifdef UXIII
+#define DTILDE
+#endif
+#ifdef OSK
+#define DTILDE
+#endif
+
 /* C Compiler Dependencies */
 
 #ifdef ZILOG
 #define setjmp setret
 #define longjmp longret
 #define jmp_buf ret_buf
-typedef int ret_buf[10];
+#define getcwd curdir
+/* typedef int ret_buf[10]; (apparently duplicated in setret.h) */
 #endif /* zilog */
 
 #ifdef PROVX1
@@ -98,14 +139,22 @@ typedef int void;
 */
 #ifdef MAC                              /* Macintosh */
 #define NLCHAR 015
+#else
+#ifdef OSK				/* OS-9/68K */
+#define NLCHAR 015
 #else                                   /* All Unix-like systems */
 #define NLCHAR 012
 #endif
+#endif
+
 /*
  At this point, if there's a system that uses ordinary CRLF line
  delimitation AND the C compiler actually returns both the CR and
  the LF when doing input from a file, then #undef NLCHAR.
 */
+#ifdef OS2
+#undef NLCHAR
+#endif
 
 /* The device name of a job's controlling terminal */
 /* Special for VMS, same for all Unixes (?), not used by Macintosh */
@@ -116,7 +165,12 @@ typedef int void;
 #ifdef datageneral
 #define CTTNAM "@output"
 #else
+#ifdef OSK
+extern char myttystr[];
+#define CTTNAM myttystr
+#else
 #define CTTNAM "/dev/tty"
+#endif
 #endif
 #endif
 
@@ -156,3 +210,8 @@ typedef int void;
 #define FWRITE 0x10
 #endif
 
+/* special hack for os9/68k */
+#ifdef OSK
+#define SIGARB	5342			/* arbitrary user signal */
+#define SIGALRM 5343			/* and another */
+#endif

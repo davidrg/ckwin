@@ -2,6 +2,9 @@
 /* Compile this resource definition with Rez */
 /* Created: 10/5/87 Matthias Aebi */
 /* Modifications: */
+/* 05/22/89 John A. Oberschelp for Emory University -- vt102 printer support */
+/*                 Emory contact is Peter W. Day, ospwd@emoryu1.cc.emory.edu */ 
+/* 02/27/89 PWP: moved all fonts to ckmfnt.r */
 /* 03/23/88 PWP: made just about everything preload (because I */
 /* 			object to swaping disks a lot), and purgable (in */
 /*			hope of making this run on a 128k Mac */
@@ -12,7 +15,7 @@
 /* 10/12/87 Moved KR09 0 declaration to ckmkr2.r to get the */
 /*			compilation date on each link operation. */
 /* 10/8/87	Changed settings filetype in FREF to KERS; added */
-/*			header. Changed "Restore SettingsI" to "Load */
+/*			header. Changed "Restore Settings…" to "Load */
 /*			Settings". Removed output port selection from */
 /* 			Communications dialog. Made packet length fields */
 /*			wider (for long packets. Removed blank cursor re- */
@@ -20,11 +23,18 @@
 /* 10/7/87	Changed version info to October 1987 (M.Aebi) */
 
 #include "Types.r"		/* To get system types */
+#include "SysTypes.r"	/* get more system types */
 
 /* The KR09 0 resource is created separately by ckmkr2.r */
-/* The ... character is \311 and is done that way so no 8 bit chars */
-/* are in the file */
 
+/*
+ * (PWP) I'm borrowing yet another idea from NCSA Telnet: there are
+ * two sets of menus, one with clover marks (1..31) and one without
+ * (33..63).  If clover keys are selected, then the marked ones are
+ * displayed, and if not, the unmarked ones (thus not confusing people
+ * who are running on Pluses and such).
+ */
+ 
 resource 'MENU' (1, preload) {
 	1,
 	textMenuProc,
@@ -33,96 +43,203 @@ resource 'MENU' (1, preload) {
 	apple,
 	{	/* array: 2 elements */
 		/* [1] */
-		"About Kermit\311", noIcon, "", "", plain,
+		"About Kermit…", noIcon, noKey, noMark, plain,
 		/* [2] */
-		"-", noIcon, "", "", plain
+		"-", noIcon, noKey, noMark, plain
 	}
 };
 
-resource 'MENU' (2, preload) {
+resource 'MENU' (2) {
 	2,
 	textMenuProc,
-	0x7FFFFFBB,
+	0x7FFFFEFB,
 	enabled,
 	"File",
 	{	/* array: 8 elements */
 		/* [1] */
-		"Load Settings\311", noIcon, noKey, noMark, plain,
+		"Load Settings…", noIcon, noKey, noMark, plain,
 		/* [2] */
-		"Save Settings\311", noIcon, noKey, noMark, plain,
+		"Save Settings…", noIcon, noKey, noMark, plain,
 		/* [3] */
 		"-", noIcon, noKey, noMark, plain,
 		/* [4] */
-		"Get file from server\311", noIcon, "G", noMark, plain,
+		"Get file from server…", noIcon, "G", noMark, plain,
 		/* [5] */
-		"Send file\311", noIcon, "S", noMark, plain,
+		"Send file…", noIcon, "S", noMark, plain,
 		/* [6] */
-		"Receive file\311", noIcon, "R", noMark, plain,
+		"Receive file…", noIcon, "R", noMark, plain,
 		/* [7] */
-		"-", noIcon, noKey, noMark, plain,
+		"Transfer stats…", noIcon, noKey, noMark, plain,
 		/* [8] */
-		"Transfer\311", noIcon, "T", "", plain,
+		"Set transfer directory…", noIcon, noKey, noMark, plain,
 		/* [9] */
-		"Quit", noIcon, "Q", "", plain
+		"-", noIcon, noKey, noMark, plain,
+		/* [10] */
+		"Transfer to App…", noIcon, "T", noMark, plain,
+		/* [11] */
+		"Quit", noIcon, "Q", noMark, plain
 	}
 };
 
-resource 'MENU' (3, preload) {
-	3,
+resource 'MENU' (34) {
+	2,
 	textMenuProc,
-	0x7FFFFFFD,
+	0x7FFFFEFB,
 	enabled,
-	"Edit",
+	"File",
 	{	/* array: 8 elements */
 		/* [1] */
-		"Undo", noIcon, "", "", plain,
+		"Load Settings…", noIcon, noKey, noMark, plain,
 		/* [2] */
-		"-", noIcon, "", "", plain,
+		"Save Settings…", noIcon, noKey, noMark, plain,
 		/* [3] */
-		"Cut", noIcon, "", "", plain,
+		"-", noIcon, noKey, noMark, plain,
 		/* [4] */
-		"Copy", noIcon, "", "", plain,
+		"Get file from server…", noIcon, noKey, noMark, plain,
 		/* [5] */
-		"Paste", noIcon, "", "", plain,
+		"Send file…", noIcon, noKey, noMark, plain,
 		/* [6] */
-		"Clear", noIcon, "", "", plain,
+		"Receive file…", noIcon, noKey, noMark, plain,
 		/* [7] */
-		/* "-", noIcon, "", "", plain, */
+		"Transfer stats…", noIcon, noKey, noMark, plain,
 		/* [8] */
-		/* "Select All", noIcon, "A", "", plain */
+		"Set transfer directory…", noIcon, noKey, noMark, plain,
+		/* [9] */
+		"-", noIcon, noKey, noMark, plain,
+		/* [10] */
+		"Transfer to App…", noIcon, noKey, noMark, plain,
+		/* [11] */
+		"Quit", noIcon, noKey, noMark, plain
 	}
 };
 
-resource 'MENU' (4, preload) {
+resource 'MENU' (3) {
+	3,
+	textMenuProc,
+	0x7FFFFFBD,
+	enabled,
+	"Edit",
+	{	/* array: 10 elements */
+		/* [1] */
+		"Undo", noIcon, "Z", noMark, plain,
+		/* [2] */
+		"-", noIcon, noKey, noMark, plain,
+		/* [3] */
+		"Cut", noIcon, "X", noMark, plain,
+		/* [4] */
+		"Copy", noIcon, "C", noMark, plain,
+		/* [5] */
+		"Paste", noIcon, "V", noMark, plain,
+		/* [6] */
+		"Clear", noIcon, noKey, noMark, plain,
+		/* [7] */
+		"-", noIcon, noKey, noMark, plain,
+		/* [8] */
+		"Send Break", noIcon, "B", noMark, plain,
+		/* [9] */
+		"Send Long Break", noIcon, noKey, noMark, plain,
+		/* [10] */
+		"Send XON", noIcon, noKey, noMark, plain,
+		/* [11] */
+		"Toggle DTR", noIcon, noKey, noMark, plain
+	}
+};
+resource 'MENU' (35) {
+	3,
+	textMenuProc,
+	0x7FFFFFBD,
+	enabled,
+	"Edit",
+	{	/* array: 10 elements */
+		/* [1] */
+		"Undo", noIcon, noKey, noMark, plain,
+		/* [2] */
+		"-", noIcon, noKey, noMark, plain,
+		/* [3] */
+		"Cut", noIcon, noKey, noMark, plain,
+		/* [4] */
+		"Copy", noIcon, noKey, noMark, plain,
+		/* [5] */
+		"Paste", noIcon, noKey, noMark, plain,
+		/* [6] */
+		"Clear", noIcon, noKey, noMark, plain,
+		/* [7] */
+		"-", noIcon, noKey, noMark, plain,
+		/* [8] */
+		"Send Break", noIcon, noKey, noMark, plain,
+		/* [9] */
+		"Send Long Break", noIcon, noKey, noMark, plain,
+		/* [10] */
+		"Send XON", noIcon, noKey, noMark, plain,
+		/* [11] */
+		"Toggle DTR", noIcon, noKey, noMark, plain
+	}
+};
+
+
+resource 'MENU' (4) {
 	4,
 	textMenuProc,
-	0x7FFFFFEF,
+	0x7FFFFFDF,
 	enabled,
 	"Settings",
 	{	/* array: 12 elements */
 		/* [1] */
-		"File Defaults\311", noIcon, noKey, noMark, plain,
+		"File Defaults…", noIcon, noKey, noMark, plain,
 		/* [2] */
-		"Communications\311", noIcon, noKey, noMark, plain,
+		"Communications…", noIcon, noKey, noMark, plain,
 		/* [3] */
-		"Protocol\311", noIcon, noKey, noMark, plain,
+		"Protocol…", noIcon, noKey, noMark, plain,
 		/* [4] */
-		"Terminal\311", noIcon, noKey, noMark, plain,
+		"Terminal…", noIcon, noKey, noMark, plain,
 		/* [5] */
-		"-", noIcon, noKey, noMark, plain,
+		"Character Set…", noIcon, noKey, noMark, plain,
 		/* [6] */
-		"\0x11-Shift-1I\0x11-Shift-9 active", noIcon, noKey,
-		    check, plain,
+		"-", noIcon, noKey, noMark, plain,
 		/* [7] */
-		"Menu \0x11-Keys active", noIcon, "M", noMark, plain,
+		"\0x11-Shift-1…\0x11-Shift-9 active", noIcon, noKey,
+		    check, plain,
 		/* [8] */
-		"Set key macros\311", noIcon, noKey, noMark, plain,
+		"Menu \0x11-Keys active", noIcon, "M", noMark, plain,
 		/* [9] */
-		"Set modifiers\311", noIcon, noKey, noMark, plain
+		"Set key macros…", noIcon, noKey, noMark, plain,
+		/* [10] */
+		"Set modifiers…", noIcon, noKey, noMark, plain
+	}
+};
+resource 'MENU' (36) {
+	4,
+	textMenuProc,
+	0x7FFFFFDF,
+	enabled,
+	"Settings",
+	{	/* array: 12 elements */
+		/* [1] */
+		"File Defaults…", noIcon, noKey, noMark, plain,
+		/* [2] */
+		"Communications…", noIcon, noKey, noMark, plain,
+		/* [3] */
+		"Protocol…", noIcon, noKey, noMark, plain,
+		/* [4] */
+		"Terminal…", noIcon, noKey, noMark, plain,
+		/* [5] */
+		"Character Set…", noIcon, noKey, noMark, plain,
+		/* [6] */
+		"-", noIcon, noKey, noMark, plain,
+		/* [7] */
+		"\0x11-Shift-1…\0x11-Shift-9 active", noIcon, noKey,
+		    check, plain,
+		/* [8] */
+		"Menu \0x11-Keys active", noIcon, noKey, noMark, plain,
+		/* [9] */
+		"Set key macros…", noIcon, noKey, noMark, plain,
+		/* [10] */
+		"Set modifiers…", noIcon, noKey, noMark, plain
 	}
 };
 
-resource 'MENU' (5, preload) {
+
+resource 'MENU' (5) {
 	5,
 	textMenuProc,
 	0x7FFFDFED,
@@ -136,33 +253,90 @@ resource 'MENU' (5, preload) {
 		/* [3] */
 		"Finish", noIcon, noKey, noMark, plain,
 		/* [4] */
-		"Bye", noIcon, noKey, noMark, plain,
+		"Logout", noIcon, noKey, noMark, plain,
 		/* [5] */
 		"-", noIcon, noKey, noMark, plain,
 		/* [6] */
-		"Cwd\311", noIcon, noKey, noMark, plain,
+		"Cwd…", noIcon, noKey, noMark, plain,
 		/* [7] */
-		"Delete file\311", noIcon, noKey, noMark, plain,
+		"Delete file…", noIcon, noKey, noMark, plain,
 		/* [8] */
-		"Directory\311", noIcon, noKey, noMark, plain,
+		"Directory…", noIcon, noKey, noMark, plain,
 		/* [9] */
-		"Help\311", noIcon, noKey, noMark, plain,
+		"Help…", noIcon, noKey, noMark, plain,
 		/* [10] */
-		"Host\311", noIcon, noKey, noMark, plain,
+		"Host…", noIcon, noKey, noMark, plain,
 		/* [11] */
-		"Space\311", noIcon, noKey, noMark, plain,
+		"Space…", noIcon, noKey, noMark, plain,
 		/* [12] */
-		"Type\311", noIcon, noKey, noMark, plain,
+		"Type…", noIcon, noKey, noMark, plain,
 		/* [13] */
-		"Who\311", noIcon, noKey, noMark, plain,
+		"Who…", noIcon, noKey, noMark, plain,
 		/* [14] */
 		"-", noIcon, noKey, noMark, plain,
 		/* [15] */
 		"Be a Server", noIcon, "H", noMark, plain
 	}
 };
+resource 'MENU' (37) {
+	5,
+	textMenuProc,
+	0x7FFFDFED,
+	enabled,
+	"Remote",
+	{	/* array: 15 elements */
+		/* [1] */
+		"Show Response", noIcon, noKey, noMark, plain,
+		/* [2] */
+		"-", noIcon, noKey, noMark, plain,
+		/* [3] */
+		"Finish", noIcon, noKey, noMark, plain,
+		/* [4] */
+		"Logout", noIcon, noKey, noMark, plain,
+		/* [5] */
+		"-", noIcon, noKey, noMark, plain,
+		/* [6] */
+		"Cwd…", noIcon, noKey, noMark, plain,
+		/* [7] */
+		"Delete file…", noIcon, noKey, noMark, plain,
+		/* [8] */
+		"Directory…", noIcon, noKey, noMark, plain,
+		/* [9] */
+		"Help…", noIcon, noKey, noMark, plain,
+		/* [10] */
+		"Host…", noIcon, noKey, noMark, plain,
+		/* [11] */
+		"Space…", noIcon, noKey, noMark, plain,
+		/* [12] */
+		"Type…", noIcon, noKey, noMark, plain,
+		/* [13] */
+		"Who…", noIcon, noKey, noMark, plain,
+		/* [14] */
+		"-", noIcon, noKey, noMark, plain,
+		/* [15] */
+		"Be a Server", noIcon, noKey, noMark, plain
+	}
+};
 
-resource 'MENU' (6, preload) {
+resource 'MENU' (6) {
+	6,
+	textMenuProc,
+	0x7FFFFFFD,
+	enabled,
+	"Log",
+	{	/* array: 3 elements */
+		/* [1] */
+		"Session", noIcon, noKey, noMark, plain,
+		/* [2] */
+		"Dump screen to session log", noIcon, noKey, noMark, plain
+#ifdef TLOG
+		,
+		/* [3] */
+		"Transactions", noIcon, noKey, noMark, plain
+#endif
+	}
+};
+resource 'MENU' (38) {
 	6,
 	textMenuProc,
 	0x7FFFFFFD,
@@ -181,9 +355,40 @@ resource 'MENU' (6, preload) {
 	}
 };
 
+resource 'MENU' (7) {										/*JAO*/
+	7,																/*JAO*/
+	textMenuProc,													/*JAO*/
+	0x7FFFFFFF,														/*JAO*/
+	disabled,														/*JAO*/
+	"Print",														/*JAO*/
+	{	/* array: 3 elements */										/*JAO*/
+		/* [1] */													/*JAO*/
+		"Print Captured Text…", noIcon, "P", noMark, plain,			/*JAO*/
+		/* [2] */													/*JAO*/
+		"Status…", noIcon, noKey, noMark, plain,					/*JAO*/
+		/* [3] */													/*JAO*/
+		"Discard Captured Text", noIcon, noKey, noMark, plain		/*JAO*/
+	}																/*JAO*/
+};
+resource 'MENU' (39) {										/*JAO*/
+	7,																/*JAO*/
+	textMenuProc,													/*JAO*/
+	0x7FFFFFFF,														/*JAO*/
+	disabled,														/*JAO*/
+	"Print",														/*JAO*/
+	{	/* array: 3 elements */										/*JAO*/
+		/* [1] */													/*JAO*/
+		"Print Captured Text…", noIcon, noKey, noMark, plain,		/*JAO*/
+		/* [2] */													/*JAO*/
+		"Status…", noIcon, noKey, noMark, plain,					/*JAO*/
+		/* [3] */													/*JAO*/
+		"Discard Captured Text", noIcon, noKey, noMark, plain		/*JAO*/
+	}																/*JAO*/
+};
+
 resource 'WIND' (1000, preload) {
 	{40, 5, 335, 505},
-	noGrowDocProc,
+	documentProc,		/* was: noGrowDocProc */
 	visible,
 	noGoAway,
 	0x0,
@@ -301,9 +506,9 @@ resource 'ALRT' (1013, preload, purgeable) {
 };
 
 /* DLOG 230 - Status display (during transfer) */
-resource 'DLOG' (230, preload, purgeable) {
-	{60, 60, 288, 450},
-	noGrowDocProc,		/* PWP: was dBoxProc */
+resource 'DLOG' (230, purgeable, preload) {
+	{60, 40, 300, 458},
+	noGrowDocProc,
 	visible,
 	noGoAway,
 	0x0,
@@ -312,8 +517,8 @@ resource 'DLOG' (230, preload, purgeable) {
 };
 
 /* About Kermit */
-resource 'DLOG' (257, preload, purgeable) {
-	{40, 28, 328, 454},
+resource 'DLOG' (257, purgeable, preload) {
+	{38, 16, 306, 500},
 	dBoxProc,
 	visible,
 	noGoAway,
@@ -322,8 +527,8 @@ resource 'DLOG' (257, preload, purgeable) {
 	""
 };
 
-resource 'DLOG' (1001, preload, purgeable) {
-	{50, 60, 250, 455},
+resource 'DLOG' (1001, purgeable, preload) {
+	{40, 60, 292, 454},
 	dBoxProc,
 	visible,
 	noGoAway,
@@ -352,8 +557,8 @@ resource 'DLOG' (1003, preload, purgeable) {
 	""
 };
 
-resource 'DLOG' (1004, preload, purgeable) {
-	{55, 85, 305, 430},
+resource 'DLOG' (1004, purgeable, preload) {
+	{44, 80, 306, 426},
 	dBoxProc,
 	visible,
 	noGoAway,
@@ -402,6 +607,86 @@ resource 'DLOG' (1008, preload, purgeable) {
 	""
 };
 
+resource 'DLOG' (1014, purgeable, preload) {
+	{34, 50, 306, 458},
+	dBoxProc,
+	visible,
+	noGoAway,
+	0x0,
+	1014,
+	""
+};
+
+resource 'DLOG' (1015) {
+	{0, 0, 184, 304},
+	dBoxProc,
+	invisible,
+	noGoAway,
+	0x0,
+	1015,
+	""
+};
+
+resource 'DLOG' (1016, purgeable, preload) {
+	{46, 94, 288, 370},
+	dBoxProc,
+	visible,
+	noGoAway,
+	0x0,
+	1016,
+	""
+};
+
+resource 'DLOG' (2001, preload, purgeable) {		/*JAO*/
+	{93, 70, 250, 381},								/*JAO*/
+	dBoxProc,										/*JAO*/
+	visible,										/*JAO*/
+	noGoAway,										/*JAO*/
+	0x0,											/*JAO*/
+	2001,											/*JAO*/
+	""												/*JAO*/
+};													/*JAO*/
+ 
+resource 'DLOG' (2002, preload, purgeable) {		/*JAO*/
+	{30, 70, 70, 300},								/*JAO*/
+	dBoxProc,										/*JAO*/
+	visible,										/*JAO*/
+	noGoAway,										/*JAO*/
+	0x0,											/*JAO*/
+	2002,											/*JAO*/
+	""												/*JAO*/
+};													/*JAO*/
+ 
+resource 'DLOG' (2003, preload, purgeable) {		/*JAO*/
+	{190, 70, 245, 346},							/*JAO*/
+	dBoxProc,										/*JAO*/
+	visible,										/*JAO*/
+	noGoAway,										/*JAO*/
+	0x0,											/*JAO*/
+	2003,											/*JAO*/
+	""												/*JAO*/
+};													/*JAO*/
+
+resource 'DLOG' (2004, preload, purgeable) {		/*JAO*/
+	{93, 70, 250, 381},								/*JAO*/
+	dBoxProc,										/*JAO*/
+	visible,										/*JAO*/
+	noGoAway,										/*JAO*/
+	0x0,											/*JAO*/
+	2004,											/*JAO*/
+	""												/*JAO*/
+};													/*JAO*/
+
+resource 'DLOG' (2005, preload, purgeable) {		/*JAO*/
+	{70, 100, 120, 300},							/*JAO*/
+	dBoxProc,										/*JAO*/
+	visible,										/*JAO*/
+	noGoAway,										/*JAO*/
+	0x0,											/*JAO*/
+	2005,											/*JAO*/
+	""												/*JAO*/
+};													/*JAO*/
+
 resource 'DLOG' (3998, preload, purgeable) {
 	{70, 77, 203, 360},
 	dBoxProc,
@@ -432,40 +717,40 @@ resource 'DLOG' (4000, preload, purgeable) {
 	""
 };
 
-resource 'DITL' (230, preload, purgeable) {
-	{	/* array DITLarray: 21 elements */
+resource 'DITL' (230, purgeable, preload) {
+	{	/* array DITLarray: 24 elements */
 		/* [1] */
-		{184, 88, 216, 180},
+		{168, 88, 200, 180},
 		Button {
 			enabled,
 			"Cancel File"
 		},
 		/* [2] */
-		{184, 192, 216, 284},
+		{168, 224, 200, 316},
 		Button {
 			enabled,
 			"Cancel Group"
 		},
 		/* [3] */
-		{8, 8, 24, 77},
+		{8, 8, 24, 76},
 		StaticText {
 			disabled,
 			"Receiving"
 		},
 		/* [4] */
-		{8, 80, 25, 268},
+		{8, 80, 24, 272},
 		StaticText {
 			disabled,
 			""
 		},
 		/* [5] */
-		{32, 48, 49, 74},
+		{32, 56, 48, 76},
 		StaticText {
 			disabled,
 			"As"
 		},
 		/* [6] */
-		{32, 80, 49, 268},
+		{32, 80, 48, 272},
 		StaticText {
 			disabled,
 			""
@@ -483,71 +768,70 @@ resource 'DITL' (230, preload, purgeable) {
 			""
 		},
 		/* [9] */
-		{56, 136, 73, 196},
+		{56, 144, 73, 204},
 		StaticText {
 			disabled,
 			"Packets:"
 		},
 		/* [10] */
-		{56, 200, 73, 256},
+		{56, 205, 73, 261},
 		StaticText {
 			disabled,
 			""
 		},
 		/* [11] */
-		{56, 272, 73, 327},
+		{56, 288, 73, 343},
 		StaticText {
 			disabled,
 			"Retries:"
 		},
 		/* [12] */
-		{56, 328, 73, 375},
+		{56, 344, 73, 391},
 		StaticText {
 			disabled,
 			""
 		},
 		/* [13] */
-		{32, 288, 49, 357},
+		{32, 288, 48, 408},
 		StaticText {
 			disabled,
 			""
 		},
 		/* [14] */
-		{8, 288, 24, 379},
+		{8, 288, 24, 408},
 		StaticText {
 			disabled,
 			""
 		},
 		/* [15] */
-		{136, 24, 170, 355},
+		{104, 40, 120, 368},
 		StaticText {
 			disabled,
-			"Emergency exit: hold down \0x11 and type a "
-			"period."
+			""
 		},
 		/* [16] */
-		{80, 136, 96, 221},
+		{80, 144, 96, 229},
 		StaticText {
 			disabled,
 			"Packet size:"
 		},
 		/* [17] */
-		{80, 223, 96, 263},
+		{80, 230, 96, 270},
 		StaticText {
 			disabled,
-			"0000"
+			""
 		},
 		/* [18] */
-		{80, 272, 96, 344},
+		{80, 288, 96, 360},
 		StaticText {
 			disabled,
 			"Checksum:"
 		},
 		/* [19] */
-		{80, 346, 96, 366},
+		{80, 361, 96, 381},
 		StaticText {
 			disabled,
-			"0"
+			""
 		},
 		/* [20] */
 		{80, 8, 96, 99},
@@ -559,292 +843,354 @@ resource 'DITL' (230, preload, purgeable) {
 		{80, 100, 96, 121},
 		StaticText {
 			disabled,
-			"00"
+			""
+		},
+		/* [22] */
+		{208, 40, 224, 368},
+		StaticText {
+			disabled,
+			"Emergency exit: hold down \0x11 and type a p"
+			"eriod."
+		},
+		/* [23] */
+		{124, 40, 140, 368},
+		StaticText {
+			disabled,
+			""
+		},
+		/* [24] */
+		{144, 40, 160, 368},
+		StaticText {
+			disabled,
+			""
 		}
 	}
 };
 
+
 /* About Kermit */
-resource 'DITL' (257, preload, purgeable) {
-	{	/* array DITLarray: 25 elements */
+resource 'DITL' (257, purgeable, preload) {
+	{	/* array DITLarray: 20 elements */
 		/* [1] */
-		{248, 312, 272, 376},
+		{224, 360, 248, 448},
 		Button {
 			enabled,
 			"OK"
 		},
 		/* [2] */
-		{8, 16, 24, 410},
+		{8, 16, 24, 464},
 		StaticText {
 			disabled,
 			""
 		},
 		/* [3] */
-		{26, 56, 42, 410},
+		{26, 56, 42, 464},
 		StaticText {
 			disabled,
 			""
 		},
 		/* [4] */
-		{192, 176, 208, 248},
+		{44, 56, 60, 464},
 		StaticText {
 			disabled,
-			""
+			"©1986—1989 Columbia University, All Righ"
+			"ts Reserved"
 		},
 		/* [5] */
-		{208, 176, 224, 248},
-		StaticText {
-			disabled,
-			""
-		},
-		/* [6] */
-		{224, 176, 240, 248},
-		StaticText {
-			disabled,
-			""
-		},
-		/* [7] */
-		{240, 176, 256, 248},
-		StaticText {
-			disabled,
-			""
-		},
-		/* [8] */
-		{192, 42, 208, 162},
-		StaticText {
-			disabled,
-			"Transaction time (seconds)"
-		},
-		/* [9] */
-		{208, 16, 224, 160},
-		StaticText {
-			disabled,
-			"Characters from line"
-		},
-		/* [10] */
-		{224, 34, 240, 162},
-		StaticText {
-			disabled,
-			"Characters to line"
-		},
-		/* [11] */
-		{240, 17, 256, 161},
-		StaticText {
-			disabled,
-			"Effective characters"
-		},
-		/* [12] */
-		{44, 56, 60, 410},
-		StaticText {
-			disabled,
-			")1986, 1988 Columbia University, "
-			"All Rights Reserved"
-		},
-		/* [13] */
 		{26, 16, 58, 48},
 		Icon {
 			disabled,
 			1000
 		},
-		/* [14] */
-		{72, 80, 104, 112},
+		/* [6] */
+		{136, 16, 168, 48},
 		Icon {
 			disabled,
 			2000
 		},
-		/* [15] */
-		{104, 48, 120, 139},
+		/* [7] */
+		{136, 52, 168, 124},
 		StaticText {
 			disabled,
 			"Bill Catchings"
 		},
-		/* [16] */
-		{72, 288, 104, 320},
+		/* [8] */
+		{136, 260, 168, 292},
 		Icon {
 			disabled,
 			2001
 		},
-		/* [17] */
-		{104, 272, 120, 339},
+		/* [9] */
+		{136, 296, 168, 344},
 		StaticText {
 			disabled,
 			"Bill Schilit"
 		},
-		/* [18] */
-		{72, 184, 104, 216},
+		/* [10] */
+		{136, 148, 168, 180},
 		Icon {
 			disabled,
 			2002
 		},
-		/* [19] */
-		{104, 152, 120, 248},
+		/* [11] */
+		{136, 184, 168, 240},
 		StaticText {
 			disabled,
 			"Frank da Cruz"
 		},
-		/* [20] */
-		{160, 48, 176, 144},
+		/* [12] */
+		{136, 400, 168, 464},
 		StaticText {
 			disabled,
 			"Matthias Aebi"
 		},
-		/* [21] */
-		{128, 80, 160, 112},
+		/* [13] */
+		{136, 364, 168, 396},
 		Icon {
 			disabled,
 			2003
 		},
-		/* [22] */
-		{128, 184, 160, 216},
+		/* [14] */
+		{176, 16, 208, 48},
 		Icon {
 			disabled,
 			2004
 		},
-		/* [23] */
-		{160, 152, 177, 251},
+		/* [15] */
+		{176, 52, 208, 124},
 		StaticText {
 			disabled,
 			"Paul Placeway"
 		},
-		/* [24] */
-		{256, 24, 272, 160},
+		/* [16] */
+		{64, 16, 80, 464},
 		StaticText {
 			disabled,
-			"Effective baud rate"
+			"Permission is granted to any individual "
+			"or institution to use, copy,"
 		},
-		/* [25] */
-		{256, 176, 272, 248},
+		/* [17] */
+		{224, 16, 256, 337},
 		StaticText {
 			disabled,
-			""
+			"Please send bugs, comments, and question"
+			"s to: Info-Kermit@cunixc.cc.columbia.edu"
+		},
+		/* [18] */
+		{176, 152, 208, 240},
+		StaticText {
+			disabled,
+			"And many, many others"
+		},
+		/* [19] */
+		{80, 16, 96, 464},
+		StaticText {
+			disabled,
+			"or redistribute this software so long as"
+			" it is not sold for profit,"
+		},
+		/* [20] */
+		{96, 16, 128, 464},
+		StaticText {
+			disabled,
+			"provided this copyright notice is retain"
+			"ed.  “Kermit the Frog” used by permissio"
+			"n of Henson Associates, Inc."
 		}
 	}
 };
 
-resource 'DITL' (1001, preload, purgeable) {
-	{	/* array DITLarray: 20 elements */
+resource 'DITL' (1001, purgeable, preload) {
+	{	/* array DITLarray: 31 elements */
 		/* [1] */
-		{165, 105, 185, 185},
+		{216, 104, 236, 184},
 		Button {
 			enabled,
 			"OK"
 		},
 		/* [2] */
-		{165, 205, 185, 285},
+		{216, 200, 236, 280},
 		Button {
 			enabled,
 			"Cancel"
 		},
 		/* [3] */
-		{5, 5, 21, 172},
+		{0, 104, 16, 280},
 		StaticText {
 			disabled,
 			"Communications Settings"
 		},
 		/* [4] */
-		{35, 5, 50, 75},
+		{24, 8, 40, 80},
 		StaticText {
 			disabled,
-			"Baud Rate"
+			"Baud Rate:"
 		},
 		/* [5] */
-		{35, 80, 50, 130},
+		{24, 96, 40, 152},
 		RadioButton {
 			enabled,
 			"300"
 		},
 		/* [6] */
-		{35, 155, 50, 205},
+		{24, 168, 40, 224},
 		RadioButton {
 			enabled,
 			"600"
 		},
 		/* [7] */
-		{35, 230, 50, 280},
+		{24, 240, 40, 296},
 		RadioButton {
 			enabled,
 			"1200"
 		},
 		/* [8] */
-		{35, 305, 50, 355},
+		{24, 312, 40, 368},
 		RadioButton {
 			enabled,
 			"1800"
 		},
 		/* [9] */
-		{55, 80, 70, 130},
+		{40, 96, 56, 152},
 		RadioButton {
 			enabled,
 			"2400"
 		},
 		/* [10] */
-		{55, 155, 70, 205},
+		{40, 168, 56, 224},
+		RadioButton {
+			enabled,
+			"3600"
+		},
+		/* [11] */
+		{40, 240, 56, 296},
 		RadioButton {
 			enabled,
 			"4800"
 		},
-		/* [11] */
-		{55, 230, 70, 280},
+		/* [12] */
+		{40, 312, 56, 368},
 		RadioButton {
 			enabled,
 			"7200"
 		},
-		/* [12] */
-		{55, 305, 70, 355},
+		/* [13] */
+		{56, 96, 72, 152},
 		RadioButton {
 			enabled,
 			"9600"
 		},
-		/* [13] */
-		{75, 80, 90, 140},
-		RadioButton {
-			enabled,
-			"19.2K"
-		},
 		/* [14] */
-		{75, 155, 90, 215},
+		{56, 168, 72, 232},
 		RadioButton {
 			enabled,
-			"57.6K"
+			"14400"
 		},
 		/* [15] */
-		{125, 5, 141, 48},
-		StaticText {
-			disabled,
-			"Parity"
+		{56, 240, 72, 304},
+		RadioButton {
+			enabled,
+			"19200"
 		},
 		/* [16] */
-		{125, 255, 141, 312},
+		{56, 312, 72, 376},
 		RadioButton {
 			enabled,
-			"Mark"
+			"28800"
 		},
 		/* [17] */
-		{125, 319, 141, 384},
+		{72, 96, 88, 160},
 		RadioButton {
 			enabled,
-			"Space"
+			"38400"
 		},
 		/* [18] */
-		{125, 80, 141, 130},
+		{72, 168, 88, 232},
 		RadioButton {
 			enabled,
-			"Even"
+			"57600"
 		},
 		/* [19] */
-		{125, 140, 141, 190},
-		RadioButton {
-			enabled,
-			"Odd"
+		{104, 8, 120, 88},
+		StaticText {
+			disabled,
+			"Parity/Bits:"
 		},
 		/* [20] */
-		{125, 197, 141, 251},
+		{104, 272, 120, 352},
 		RadioButton {
 			enabled,
-			"None"
+			"Mark/7"
+		},
+		/* [21] */
+		{120, 272, 136, 360},
+		RadioButton {
+			enabled,
+			"Space/7"
+		},
+		/* [22] */
+		{104, 184, 120, 256},
+		RadioButton {
+			enabled,
+			"Even/7"
+		},
+		/* [23] */
+		{120, 184, 136, 256},
+		RadioButton {
+			enabled,
+			"Odd/7"
+		},
+		/* [24] */
+		{104, 96, 120, 168},
+		RadioButton {
+			enabled,
+			"None/8"
+		},
+		/* [25] */
+		{184, 184, 200, 360},
+		CheckBox {
+			enabled,
+			"XOn/XOff flow control"
+		},
+		/* [26] */
+		{152, 8, 168, 88},
+		StaticText {
+			disabled,
+			"Serial Port:"
+		},
+		/* [27] */
+		{152, 96, 168, 116},
+		RadioButton {
+			enabled,
+			""
+		},
+		/* [28] */
+		{144, 116, 176, 148},
+		Icon {
+			enabled,
+			3000
+		},
+		/* [29] */
+		{152, 184, 168, 204},
+		RadioButton {
+			enabled,
+			""
+		},
+		/* [30] */
+		{144, 204, 176, 236},
+		Icon {
+			enabled,
+			3001
+		},
+		/* [31] */
+		{184, 8, 200, 152},
+		CheckBox {
+			enabled,
+			"Drop DTR on Quit"
 		}
 	}
 };
+
 
 resource 'DITL' (1002, preload, purgeable) {
 	{	/* array DITLarray: 35 elements */
@@ -1115,59 +1461,61 @@ resource 'DITL' (1003, preload, purgeable) {
 	}
 };
 
-resource 'DITL' (1004, preload, purgeable) {
-	{	/* array DITLarray: 15 elements */
+resource 'DITL' (1004, purgeable, preload) {
+	{	/* array DITLarray: 17 elements */
 		/* [1] */
-		{222, 79, 242, 159},
+		{224, 72, 248, 152},
 		Button {
 			enabled,
 			"OK"
 		},
 		/* [2] */
-		{222, 190, 242, 270},
+		{224, 184, 248, 264},
 		Button {
 			enabled,
 			"Cancel"
 		},
 		/* [3] */
-		{10, 10, 26, 93},
+		{8, 8, 24, 96},
 		StaticText {
 			disabled,
-			"File Settings"
+			"File Settings:"
 		},
 		/* [4] */
-		{45, 10, 65, 325},
+		{32, 8, 48, 320},
 		RadioButton {
 			enabled,
 			"Attended: dialog on each file received."
 		},
 		/* [5] */
-		{75, 10, 95, 330},
+		{56, 8, 72, 328},
 		RadioButton {
 			enabled,
 			"Unattended: with the following defaults."
 			".."
 		},
 		/* [6] */
-		{100, 30, 115, 335},
+		{80, 24, 96, 336},
 		RadioButton {
 			enabled,
-			"Supersede existing files of the same name."
+			"Supersede existing files of the same nam"
+			"e."
 		},
 		/* [7] */
-		{120, 30, 135, 320},
+		{96, 24, 112, 320},
 		RadioButton {
 			enabled,
-			"Create new file names to avoid conflicts."
+			"Create new file names to avoid conflicts"
+			"."
 		},
 		/* [8] */
-		{175, 25, 190, 70},
+		{144, 24, 160, 72},
 		StaticText {
 			disabled,
 			"Mode:"
 		},
 		/* [9] */
-		{175, 175, 190, 210},
+		{144, 176, 160, 216},
 		StaticText {
 			disabled,
 			"Fork:"
@@ -1179,58 +1527,71 @@ resource 'DITL' (1004, preload, purgeable) {
 			"-"
 		},
 		/* [11] */
-		{175, 220, 190, 270},
+		{144, 224, 160, 288},
 		RadioButton {
 			enabled,
 			"Data"
 		},
 		/* [12] */
-		{190, 220, 205, 300},
+		{160, 224, 176, 312},
 		RadioButton {
 			enabled,
 			"Resource"
 		},
 		/* [13] */
-		{175, 80, 190, 125},
+		{144, 80, 160, 136},
 		RadioButton {
 			enabled,
 			"Text"
 		},
 		/* [14] */
-		{190, 80, 205, 140},
+		{160, 80, 176, 144},
 		RadioButton {
 			enabled,
 			"Binary"
 		},
 		/* [15] */
-		{145, 10, 160, 220},
+		{176, 80, 192, 176},
+		RadioButton {
+			enabled,
+			"MacBinary"
+		},
+		/* [16] */
+		{120, 24, 136, 232},
 		CheckBox {
 			enabled,
 			"Keep partially received files"
+		},
+		/* [17] */
+		{200, 8, 216, 304},
+		CheckBox {
+			enabled,
+			"Use above defaults for sending too"
 		}
 	}
 };
 
-/* PWP was here... (many times) */
-resource 'DITL' (1005, preload, purgeable) {
-	{	/* array DITLarray: 15 elements */
+
+/* PWP was here… (many times) */
+resource 'DITL' (1005, purgeable, preload) {
+	{	/* array DITLarray: 18 elements */
 		/* [1] */
-		{208, 304, 232, 384},
+		{216, 304, 240, 384},
 		Button {
 			enabled,
 			"OK"
 		},
 		/* [2] */
-		{208, 208, 232, 288},
+		{216, 208, 240, 288},
 		Button {
 			enabled,
 			"Cancel"
 		},
 		/* [3] */
-		{10, 10, 26, 130},
+		{8, 128, 24, 256},
 		StaticText {
 			disabled,
-			"Terminal Settings"
+			"Terminal Settings:"
 		},
 		/* [4] */
 		{64, 24, 80, 168},
@@ -1245,7 +1606,7 @@ resource 'DITL' (1005, preload, purgeable) {
 			"Auto Repeat Keys"
 		},
 		/* [6] */
-		{40, 208, 56, 336},
+		{160, 24, 176, 152},
 		CheckBox {
 			enabled,
 			"Inverted Screen"
@@ -1293,10 +1654,10 @@ resource 'DITL' (1005, preload, purgeable) {
 			"Visible Bell"
 		},
 		/* [14] */
-		{160, 24, 176, 200},
+		{184, 24, 200, 304},
 		CheckBox {
 			enabled,
-			"Extended Character Set"
+			"Accept Eight Bit Characters"
 		},
 		/* [15] */
 		{136, 24, 152, 144},
@@ -1305,13 +1666,26 @@ resource 'DITL' (1005, preload, purgeable) {
 			"Blinking Cursor"
 		},
 		/* [16] */
-		{208, 24, 232, 136},
+		{216, 24, 240, 136},
 		Button {
 			enabled,
 			"Reset Terminal"
+		},
+		/* [17] */
+		{40, 200, 56, 220},
+		EditText {
+			enabled,
+			"00"
+		},
+		/* [18] */
+		{40, 225, 56, 377},
+		StaticText {
+			disabled,
+			"Lines on the screen"
 		}
 	}
 };
+
 
 
 resource 'DITL' (1006, preload, purgeable) {
@@ -1689,7 +2063,7 @@ resource 'DITL' (1009, preload, purgeable) {
 			"Enter the string to be sent to the line "
 			"into the edit box and click on OK.\n\nTo d"
 			"efine unprintable characters like ESC, B"
-			"ell, BS, DEL, I enter a \\ followed by th"
+			"ell, BS, DEL, … enter a \\ followed by th"
 			"e octal representation of the ASCII ch"
 			"aracter desired.  To enter a \\ just double it."
 		},
@@ -1827,6 +2201,426 @@ resource 'DITL' (1013, preload, purgeable) {
 	}
 };
 
+resource 'DITL' (1014, purgeable, preload) {
+	{	/* array DITLarray: 29 elements */
+		/* [1] */
+		{240, 304, 264, 384},
+		Button {
+			enabled,
+			"OK"
+		},
+		/* [2] */
+		{240, 208, 264, 288},
+		Button {
+			enabled,
+			"Cancel"
+		},
+		/* [3] */
+		{8, 104, 24, 280},
+		StaticText {
+			disabled,
+			"Terminal Character Sets:"
+		},
+		/* [4] */
+		{56, 8, 72, 168},
+		RadioButton {
+			enabled,
+			"USA National (ASCII)"
+		},
+		/* [5] */
+		{72, 8, 88, 168},
+		RadioButton {
+			enabled,
+			"UK National"
+		},
+		/* [6] */
+		{88, 8, 104, 168},
+		RadioButton {
+			enabled,
+			"Dutch National"
+		},
+		/* [7] */
+		{104, 8, 120, 168},
+		RadioButton {
+			enabled,
+			"Finnish National"
+		},
+		/* [8] */
+		{120, 8, 136, 168},
+		RadioButton {
+			enabled,
+			"French National"
+		},
+		/* [9] */
+		{136, 8, 152, 200},
+		RadioButton {
+			enabled,
+			"French Canadian National"
+		},
+		/* [10] */
+		{152, 8, 168, 168},
+		RadioButton {
+			enabled,
+			"German National"
+		},
+		/* [11] */
+		{168, 8, 184, 168},
+		RadioButton {
+			enabled,
+			"Italian National"
+		},
+		/* [12] */
+		{184, 8, 200, 192},
+		RadioButton {
+			enabled,
+			"Norwegian/Danish Nat."
+		},
+		/* [13] */
+		{200, 8, 216, 168},
+		RadioButton {
+			enabled,
+			"Portuguese National"
+		},
+		/* [14] */
+		{216, 8, 232, 168},
+		RadioButton {
+			enabled,
+			"Spanish National"
+		},
+		/* [15] */
+		{232, 8, 248, 168},
+		RadioButton {
+			enabled,
+			"Swedish National"
+		},
+		/* [16] */
+		{248, 8, 264, 168},
+		RadioButton {
+			enabled,
+			"Swiss National"
+		},
+		/* [17] */
+		{88, 208, 104, 376},
+		RadioButton {
+			enabled,
+			"ISO Latin 1 (Western)"
+		},
+		/* [18] */
+		{104, 208, 120, 368},
+		RadioButton {
+			disabled,
+			"ISO Latin 2 (Eastern)"
+		},
+		/* [19] */
+		{120, 208, 136, 376},
+		RadioButton {
+			disabled,
+			"ISO Latin 3 (Romance)"
+		},
+		/* [20] */
+		{136, 208, 152, 400},
+		RadioButton {
+			disabled,
+			"ISO Latin 4 (Scandinavian)"
+		},
+		/* [21] */
+		{152, 208, 168, 368},
+		RadioButton {
+			disabled,
+			"ISO Latin/Cyrillic"
+		},
+		/* [22] */
+		{168, 208, 184, 368},
+		RadioButton {
+			disabled,
+			"ISO Latin/Arabic"
+		},
+		/* [23] */
+		{184, 208, 200, 368},
+		RadioButton {
+			disabled,
+			"ISO Latin/Greek"
+		},
+		/* [24] */
+		{200, 208, 216, 368},
+		RadioButton {
+			disabled,
+			"ISO Latin/Hebrew"
+		},
+		/* [25] */
+		{216, 208, 232, 368},
+		RadioButton {
+			disabled,
+			"ISO Latin 5 (Turkish)"
+		},
+		/* [26] */
+		{56, 208, 72, 368},
+		RadioButton {
+			enabled,
+			"DEC Graphics"
+		},
+		/* [27] */
+		{72, 208, 88, 368},
+		RadioButton {
+			enabled,
+			"DEC Technical"
+		},
+		/* [28] */
+		{32, 8, 48, 176},
+		StaticText {
+			disabled,
+			"G0 (normal characters):"
+		},
+		/* [29] */
+		{32, 208, 48, 360},
+		StaticText {
+			disabled,
+			"G1 (8 bit characters):"
+		}
+	}
+};
+
+
+resource 'DITL' (1015) {
+	{	/* array DITLarray: 8 elements */
+		/* [1] */
+		{132, 218, 150, 288},
+		Button {
+			enabled,
+			"Set"
+		},
+		/* [2] */
+		{158, 218, 176, 288},
+		Button {
+			enabled,
+			"Cancel"
+		},
+		/* [3] */
+		{10, 15, 26, 198},
+		StaticText {
+			disabled,
+			"Select Default Directory"
+		},
+		/* [4] */
+		{29, 198, 49, 302},
+		UserItem {
+			disabled
+		},
+		/* [5] */
+		{56, 218, 74, 288},
+		Button {
+			enabled,
+			"Eject"
+		},
+		/* [6] */
+		{82, 218, 100, 288},
+		Button {
+			enabled,
+			"Drive"
+		},
+		/* [7] */
+		{0, 1500, 50, 1550},
+		EditText {
+			enabled,
+			""
+		},
+		/* [8] */
+		{59, 14, 157, 197},
+		UserItem {
+			disabled
+		}
+	}
+};
+
+resource 'DITL' (1016, purgeable, preload) {
+	{	/* array DITLarray: 14 elements */
+		/* [1] */
+		{208, 104, 232, 168},
+		Button {
+			enabled,
+			"OK"
+		},
+		/* [2] */
+		{16, 56, 32, 216},
+		StaticText {
+			disabled,
+			"File Transfer Statistics"
+		},
+		/* [3] */
+		{48, 50, 64, 170},
+		StaticText {
+			disabled,
+			"Transaction time:"
+		},
+		/* [4] */
+		{72, 24, 88, 168},
+		StaticText {
+			disabled,
+			"Characters from line:"
+		},
+		/* [5] */
+		{96, 42, 112, 170},
+		StaticText {
+			disabled,
+			"Characters to line:"
+		},
+		/* [6] */
+		{120, 25, 136, 169},
+		StaticText {
+			disabled,
+			"Effective characters:"
+		},
+		/* [7] */
+		{144, 32, 160, 168},
+		StaticText {
+			disabled,
+			"Effective baud rate:"
+		},
+		/* [8] */
+		{48, 184, 64, 248},
+		StaticText {
+			disabled,
+			""
+		},
+		/* [9] */
+		{72, 184, 88, 248},
+		StaticText {
+			disabled,
+			""
+		},
+		/* [10] */
+		{96, 184, 112, 248},
+		StaticText {
+			disabled,
+			""
+		},
+		/* [11] */
+		{120, 184, 136, 248},
+		StaticText {
+			disabled,
+			""
+		},
+		/* [12] */
+		{144, 184, 160, 248},
+		StaticText {
+			disabled,
+			""
+		},
+		/* [13] */
+		{168, 95, 184, 167},
+		StaticText {
+			disabled,
+			"Efficiency:"
+		},
+		/* [14] */
+		{168, 184, 184, 248},
+		StaticText {
+			disabled,
+			""
+		}
+	}
+};
+
+resource 'DITL' (2001, preload, purgeable) {	/*JAO*/
+	{	/* array DITLarray: 5 elements */		/*JAO*/
+		/* [1] */								/*JAO*/
+		{120, 216, 144, 296},					/*JAO*/
+		Button {								/*JAO*/
+			enabled,							/*JAO*/
+			"OK"								/*JAO*/
+		},										/*JAO*/
+		/* [2] */								/*JAO*/
+		{88, 34, 104, 227},						/*JAO*/
+		StaticText {							/*JAO*/
+			enabled,							/*JAO*/
+			"Characters Lost: ^0"				/*JAO*/
+		},										/*JAO*/
+		/* [3] */								/*JAO*/
+		{65, 34, 81, 258},						/*JAO*/
+		StaticText {							/*JAO*/
+			enabled,							/*JAO*/
+			"Characters Buffered: ^1"			/*JAO*/
+		},										/*JAO*/
+		/* [4] */								/*JAO*/
+		{40, 34, 56, 202},						/*JAO*/
+		StaticText {							/*JAO*/
+			enabled,							/*JAO*/
+			"Buffer Size: ^2"					/*JAO*/
+		},										/*JAO*/
+		/* [5] */								/*JAO*/
+		{8, 8, 24, 127},						/*JAO*/
+		StaticText {							/*JAO*/
+			enabled,							/*JAO*/
+			"Status…"							/*JAO*/
+		}										/*JAO*/
+	}											/*JAO*/
+};												/*JAO*/
+ 
+resource 'DITL' (2002, preload, purgeable) {	/*JAO*/
+	{	/* array DITLarray: 1 element */		/*JAO*/
+		/* [1] */								/*JAO*/
+		{10, 15, 500, 500},						/*JAO*/
+		StaticText {							/*JAO*/
+			enabled,							/*JAO*/
+			"Capturing text to be printed"		/*JAO*/
+		},										/*JAO*/
+	}											/*JAO*/
+};												/*JAO*/
+ 
+ 
+resource 'DITL' (2003, preload, purgeable) {	/*JAO*/
+	{	/* array DITLarray: 1 element */		/*JAO*/
+		/* [1] */								/*JAO*/
+		{10, 15, 500, 500},						/*JAO*/
+		StaticText {							/*JAO*/
+			enabled,							/*JAO*/
+			"Warning, captured text overflowed\nits storage space, some text is lost."	/*JAO*/
+		},										/*JAO*/
+	}											/*JAO*/
+};												/*JAO*/
+ 
+ 
+resource 'DITL' (2004, preload, purgeable) {	/*JAO*/
+	{	/* array DITLarray: 4 elements */		/*JAO*/
+		/* [1] */								/*JAO*/
+		{55, 56, 79, 216},						/*JAO*/
+		Button {								/*JAO*/
+			enabled,							/*JAO*/
+			"Print anyway"						/*JAO*/
+		},										/*JAO*/
+		/* [2] */								/*JAO*/
+		{90, 56, 114, 216},						/*JAO*/
+		Button {								/*JAO*/
+			enabled,							/*JAO*/
+			"Cancel"							/*JAO*/
+		},										/*JAO*/
+		/* [3] */								/*JAO*/
+		{125, 56, 149, 216},					/*JAO*/
+		Button {								/*JAO*/
+			enabled,							/*JAO*/
+			"Cancel, discard text"				/*JAO*/
+		},										/*JAO*/
+		/* [4] */								/*JAO*/
+		{10, 34, 42, 327},						/*JAO*/
+		StaticText {							/*JAO*/
+			enabled,							/*JAO*/
+			"Captured text overflowed storage,\nsome text is lost.  Print anyway?"	/*JAO*/
+		}										/*JAO*/
+	}											/*JAO*/
+};												/*JAO*/
+ 
+ 
+resource 'DITL' (2005, preload, purgeable) {	/*JAO*/
+	{	/* array DITLarray: 3 elements */		/*JAO*/
+		/* [1] */								/*JAO*/
+		{10, 34, 42, 174},						/*JAO*/
+		StaticText {							/*JAO*/
+			enabled,							/*JAO*/
+			"Printing…\nTo cancel press \0x11-."/*JAO*/
+		}										/*JAO*/
+	}											/*JAO*/
+};												/*JAO*/
+
 resource 'DITL' (3998, preload, purgeable) {
 	{	/* array DITLarray: 5 elements */
 		/* [1] */
@@ -1862,22 +2656,22 @@ resource 'DITL' (3998, preload, purgeable) {
 	}
 };
 
-resource 'DITL' (3999, preload, purgeable) {
-	{	/* array DITLarray: 15 elements */
+resource 'DITL' (3999, purgeable, preload) {
+	{	/* array DITLarray: 16 elements */
 		/* [1] */
-		{215, 16, 235, 86},
+		{216, 16, 236, 86},
 		Button {
 			enabled,
 			"OK"
 		},
 		/* [2] */
-		{215, 96, 235, 166},
+		{216, 96, 236, 166},
 		Button {
 			enabled,
 			"Cancel"
 		},
 		/* [3] */
-		{119, 16, 135, 184},
+		{112, 16, 128, 184},
 		StaticText {
 			enabled,
 			"Receive as:"
@@ -1900,7 +2694,7 @@ resource 'DITL' (3999, preload, purgeable) {
 			"Drive"
 		},
 		/* [7] */
-		{144, 16, 158, 184},
+		{136, 16, 152, 184},
 		EditText {
 			enabled,
 			""
@@ -1922,31 +2716,37 @@ resource 'DITL' (3999, preload, purgeable) {
 			enabled
 		},
 		/* [11] */
-		{168, 112, 184, 170},
+		{160, 112, 176, 168},
 		RadioButton {
 			enabled,
 			"Data"
 		},
 		/* [12] */
-		{185, 112, 202, 194},
+		{176, 112, 192, 192},
 		RadioButton {
 			enabled,
 			"Resource"
 		},
 		/* [13] */
-		{168, 16, 184, 79},
+		{160, 16, 176, 80},
 		RadioButton {
 			enabled,
 			"Text"
 		},
 		/* [14] */
-		{185, 16, 202, 81},
+		{176, 16, 192, 88},
 		RadioButton {
 			enabled,
 			"Binary"
 		},
 		/* [15] */
-		{215, 176, 235, 336},
+		{192, 16, 208, 112},
+		RadioButton {
+			enabled,
+			"MacBinary"
+		},
+		/* [16] */
+		{216, 176, 236, 336},
 		Button {
 			enabled,
 			"Proceed Automatically"
@@ -1954,8 +2754,8 @@ resource 'DITL' (3999, preload, purgeable) {
 	}
 };
 
-resource 'DITL' (4000, preload, purgeable) {
-	{	/* array DITLarray: 19 elements */
+resource 'DITL' (4000, purgeable, preload) {
+	{	/* array DITLarray: 20 elements */
 		/* [1] */
 		{51, 174, 69, 254},
 		Button {
@@ -2013,54 +2813,60 @@ resource 'DITL' (4000, preload, purgeable) {
 			"h"
 		},
 		/* [11] */
-		{186, 169, 203, 227},
+		{176, 168, 192, 224},
 		RadioButton {
 			enabled,
 			"Data"
 		},
 		/* [12] */
-		{202, 169, 219, 251},
+		{192, 168, 208, 248},
 		RadioButton {
 			enabled,
 			"Resource"
 		},
 		/* [13] */
-		{186, 49, 203, 112},
+		{176, 48, 192, 112},
 		RadioButton {
 			enabled,
 			"Text"
 		},
 		/* [14] */
-		{202, 49, 220, 114},
+		{192, 48, 208, 112},
 		RadioButton {
 			enabled,
 			"Binary"
 		},
 		/* [15] */
+		{208, 48, 224, 144},
+		RadioButton {
+			enabled,
+			"MacBinary"
+		},
+		/* [16] */
 		{132, 12, 150, 44},
 		StaticText {
 			disabled,
 			"As:"
 		},
-		/* [16] */
+		/* [17] */
 		{52, 455, 148, 556},
 		EditText {
 			enabled,
 			""
 		},
-		/* [17] */
-		{155, 15, 176, 255},
+		/* [18] */
+		{155, 15, 171, 255},
 		EditText {
 			enabled,
 			""
 		},
-		/* [18] */
+		/* [19] */
 		{31, 311, 63, 343},
 		Icon {
 			disabled,
 			1000
 		},
-		/* [19] */
+		/* [20] */
 		{225, 15, 245, 260},
 		CheckBox {
 			enabled,
@@ -2123,15 +2929,39 @@ resource 'ICON' (2003, preload, purgeable) {
 	$"007F FE00 003F FC00 001F F800 0007 E0"
 };
 
-resource 'ICON' (2004, preload, purgeable) {
-	$"0000 0000 0007 E000 0038 0E00 00F0 0780"
-	$"01E0 03C0 01C0 01C0 03C0 0060 0380 00F0"
-	$"0380 0078 0700 00F8 0780 0058 0700 0078"
-	$"0700 002C 0578 7454 0703 0224 0539 3828"
+resource 'ICON' (2004, purgeable, preload) {
+	$"0000 0000 0007 E000 0038 7E00 00F0 0F80"
+	$"01E0 1BC0 01C0 07C0 03C0 06E0 0380 01F0"
+	$"0380 0278 0700 00F8 0780 00D8 0700 0078"
+	$"0700 006C 0578 7454 0703 0224 0539 3828"
 	$"0311 1048 0302 0028 0102 0050 0102 0030"
 	$"0081 8040 0080 0040 0088 1080 0047 E080"
 	$"0060 0100 0020 0200 0010 0400 0008 1800"
 	$"0007 E0"
+};
+
+/* Modem port (phone) Icon */
+resource 'ICON' (3000, purgeable) {
+	$"FFFF FFFF 8000 0001 8000 0001 80E0 0001"
+	$"8110 0301 8208 0481 8208 0481 8208 1301"
+	$"8210 0801 8220 6401 8220 9001 8210 9001"
+	$"8108 6001 8104 0001 8082 0001 8041 0001"
+	$"8020 8701 8010 4881 8008 3041 8004 0041"
+	$"8002 0041 8001 8081 8000 7F01 8000 0001"
+	$"9100 4001 9B00 4001 9531 CCD1 914A 5EA9"
+	$"914A 5089 9131 CC89 8000 0001 FFFF FFFF"
+};
+
+/* Printer port icon */
+resource 'ICON' (3001, purgeable) {
+	$"FFFF FFFF 8000 0001 80FF FE01 8080 2201"
+	$"8080 3201 8080 2A01 8080 3E01 8080 0201"
+	$"8080 0201 8080 0201 8080 0201 8F80 03E1"
+	$"8880 0221 8880 0239 8880 0229 88FF FE29"
+	$"8800 0039 8800 0021 8FFF FFE1 8800 0021"
+	$"8800 0021 8FFF FFE1 8000 0001 8000 0001"
+	$"8C00 0001 8A10 2001 8CC6 7361 8895 2741"
+	$"8895 2441 8895 2341 8000 0001 FFFF FFFF"
 };
 
 resource 'ICN#' (128) {
@@ -2225,442 +3055,2675 @@ data 'FSET' (2, purgeable) {
 };
 
 /* PWP: new KSET and MSET -- does vt100 arrow keys */
-data 'KSET' (4, purgeable) {
-	$"0000 0000 0000 3000 2284 0000 0000 001E"	/* ......0."...... */
-	$"0000 0000 0000 2000 0000 0000 0000 0000"	/* ...... ......... */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 2000 0000 0000 0000 0000"	/* ...... ......... */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
+data 'KSET' (4) {
+	$"0000 0000 0000 3000 779E 7FD8 0000 001E"        /* ......0.wû.ÿ.... */
+	$"0000 0000 0000 2000 0100 0000 0000 0000"        /* ...... ......... */
+	$"0000 0000 0000 0000 2284 0000 0000 0000"        /* ........"Ñ...... */
+	$"0000 0210 0000 2000 0000 0000 0000 0000"        /* ...... ......... */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 2000 0000 0000 0000 0000"        /* ...... ......... */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
+	$"0000 0000 0000 0000 0000 0000 0000 0000"        /* ................ */
 };
 
-data 'MSET' (5, purgeable) {
-	$"0102 00BC 0045 83FC 0002 6AE2 0000 0000"	/* ...<.E...j..... */
-	$"0002 6AE2 0045 0012 00BC 0045 83FC 0002"	/* ..j..E...<.E... */
-	$"6AE2 0000 0000 0002 6AE2 0045 0000 00BC"	/* j.......j..E...< */
-	$"0045 83FC 0002 6AE2 0000 0000 0002 6AE2"	/* .E...j.......j. */
-	$"0045 0000 00BC 0045 83FC 0002 6AE2 0000"	/* .E...<.E...j... */
-	$"0000 0002 6AE2 0045 000C 0033 0001 7F00"	/* ....j..E...3.... */
-	$"3200 011B 00B2 0001 6000 7E00 031B 4F41"	/* 2....2..`.~...OA */
-	$"007D 0003 1B4F 4200 7C00 031B 4F43 007B"	/* .}...OB.|...OC.{ */
-	$"0003 1B4F 4400 4600 031B 4F44 004D 0003"	/* ...OD.F...OD.M.. */
-	$"1B4F 4100 4800 031B 4F42 0042 0003 1B4F"	/* .OA.H...OB.B...O */
-	$"4308 3200 0160 00DC 011E 011F 7FFF 0096"	/* C.2..`......... */
-	$"00DC"                                   	/* .. */
-};
-
-/* yes, we NEED the FOND resource -- PWP */
-data 'FOND' (128, "VT100", preload, purgeable) {
-	$"6000 0080 0000 0000 0000 0000 0000 0000"	/* `.............. */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0001 0000 0009 0000 4009"          	/* .......F..@F */
-};
-
-data 'FOND' (129, "VT100 Bold", preload, purgeable) {
-	$"6000 0081 0000 0000 0000 0000 0000 0000"	/* `.............. */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0001 0000 0009 0000 4089"          	/* .......F..@	 */
-};
-
-data 'FONT' (16393, preload, purgeable) {
-	$"9000 0000 00FE 0006 FFD1 FFF7 00FF 000C"	/* ........Q...... */
-	$"0376 0009 0003 0000 0034 6186 1861 8618"	/* .v.F.....4a.a. */
-	$"6184 1041 0410 4104 10E3 8E38 E38E 38E3"	/* a.A..A...8.8. */
-	$"8E38 0000 0000 0000 0000 0000 0000 0000"	/* 8.............. */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0404 1000"	/* ................ */
-	$"0000 0412 0080 0000 0000 0000 0000 0000"	/* ............... */
-	$"0000 9249 2492 4924 924C 30C3 0C30 C30C"	/* ..I$I$L0C.0C. */
-	$"3010 4104 1041 0410 4104 0000 0000 0000"	/* 0.A..A..A....... */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0380 0000"	/* ............... */
-	$"0000 0000 0404 11F8 0000 0412 0080 0000"	/* ............... */
-	$"0000 0000 3FC0 8000 0000 9249 2492 4924"	/* ....?@...I$I$ */
-	$"9244 1041 0410 4104 1061 8618 6186 1861"	/* D.A..A..a.a.a */
-	$"8618 CA89 944C 2000 02E4 EF8B EEFB 9C04"	/* .J	L ....... */
-	$"10E7 13CE F7FE E8F3 C611 CBBC EF3B F18C"	/* ...N....F.K<.;. */
-	$"631F F8E4 0404 0010 1810 430C 0000 0000"	/* c.........C..... */
-	$"1000 0000 0549 095A 7190 624A 8404 1000"	/* .....IFZqbJ... */
-	$"0000 0412 0092 0004 7800 0000 3FC0 8000"	/* .......x...?@. */
-	$"0000 9249 2492 4924 9244 1041 0410 4104"	/* ..I$I$D.A..A. */
-	$"1082 0820 8208 2082 0104 CA9F BA52 A900"	/* .. . ..J:R). */
-	$"031D 109A 110C 6208 0918 A931 4C21 18A1"	/* .....b.F.)1L!.! */
-	$"4A1B CC63 18C4 918C 6310 C82A 0204 0010"	/* J.Lc.Dc.H*.... */
-	$"2430 0104 0000 0000 1000 0000 0555 1CAA"	/* $0...........U.* */
-	$"4210 926A 8404 1007 E000 0412 00A1 004A"	/* B.j........!.J */
-	$"4800 0000 3FC0 8000 0000 6186 1861 8618"	/* H...?@...a.a. */
-	$"618E 38E3 8E38 E38E 38F3 CF3C F3CF 3CF3"	/* a8.8.8.O<.O<. */
-	$"CE38 CFE8 6A61 7100 0534 112B D014 6313"	/* N8O.jaq..4.+P.c. */
-	$"E41B C530 4C21 08A1 521F AC63 18C0 918C"	/* ..E0L!.!R.,c.@ */
-	$"5511 4431 0175 9CD7 21F6 C325 AB3B CFB3"	/* U.D1.uW!.C%+;O3 */
-	$"FA51 8C63 F552 3F5E 6210 9FDA 8404 1000"	/* .Qc.R?^b..... */
-	$"0000 0412 00C0 FFE8 4800 0000 3FC0 8000"	/* .....@..H...?@. */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 829C 4621 27C7"	/* ..........F!'G */
-	$"C554 634A 3E23 9E60 022A C5D0 4FBD 0FA1"	/* ETcJ>#`.*EPO=.! */
-	$"6215 AC7D 1F38 9155 48A2 4420 000E 6338"	/* b.,}.8UH"D ..c8 */
-	$"F239 4345 5CC6 314C 1251 8AA2 2820 3EAA"	/* .9CE\F1L.Q
-"( >* */
-	$"419C 6249 1FFF FE00 1F80 07FF FFA1 289D"	/* AbI........!( */
-	$"4800 0000 3FC0 8000 0000 1823 8E08 F18F"	/* H...?@....#.. */
-	$"1861 8238 E08F 18F1 8618 238E 08E1 8F18"	/* .a8....#... */
-	$"6182 87CA C9A1 7100 0994 80FC 3124 4213"	/* aJI!q.F.1$B. */
-	$"E44B 7D30 4C21 38A1 5211 9C61 1A04 9155"	/* .K}0L!8!R.a..U */
-	$"5444 4220 007C 611F A231 43C5 58C6 3143"	/* TDB .|a."1CEXF1C */
-	$"9251 A926 4540 1D5A 5C07 0248 00C0 1000"	/* Q)&E@.Z\..H.@.. */
-	$"0000 0410 0892 2BE8 4800 0000 0000 0000"	/* .....+.H....... */
-	$"0000 2460 4118 8201 2492 4604 1188 2012"	/* ..$`A..$F.. . */
-	$"4924 6041 1882 0124 9246 02BD B912 A900"	/* I$`A..$F.=9.). */
-	$"0915 088A 3144 6308 0808 4531 4C21 18A9"	/* F..
-1Dc...E1L!.) */
-	$"4A11 9C61 2944 9127 E248 4220 00CE 6138"	/* J.a)D'.HB .Na8 */
-	$"21F1 4325 58C7 CF40 564A FA9A 8540 08A3"	/* !.C%XGO@VJ.@.# */
-	$"90C4 0F90 E0C0 1000 007E 0410 0880 290C"	/* D..@...~...). */
-	$"4800 0000 3FC0 8000 0000 2421 8628 E382"	/* H...?@...$!(. */
-	$"1872 4218 628E 3821 8724 2186 28E3 8218"	/* .rB.b8!$!(.. */
-	$"7242 8289 368C 2018 30EF F709 CE43 9C44"	/* rB	6 .0..FNCD */
-	$"1047 47CE F7E0 E8F6 47F1 8BA0 D8B8 8E22"	/* .GGN....G. X8" */
-	$"A24F F1E0 F87D 9ED7 A031 E31F 18BA 0147"	/* "O...}W 1...:.G */
-	$"89E4 5443 F540 0151 18A6 0010 40C0 1000"	/* 	.TC.@.Q.&..@@.. */
-	$"0000 0410 08FF C81A 7800 0000 0000 0000"	/* ......H.x....... */
-	$"0000 2422 013C 1244 2412 4220 13C1 2442"	/* ..$".<.D$.B .A$B */
-	$"4124 2201 3C12 4424 1242 0000 0000 0010"	/* A$".<.D$.B...... */
-	$"1000 0000 0000 0040 0000 0000 0000 0000"	/* .......@........ */
-	$"0000 0000 0000 0000 0000 0100 0000 0000"	/* ................ */
-	$"0220 1200 0002 0100 0000 0022 0380 0001"	/* . ........."... */
-	$"10C4 0010 40C0 1000 0001 FC10 0880 0008"	/* .D..@@......... */
-	$"0000 0000 0000 0000 0000 1873 CE08 E184"	/* ...........sN.. */
-	$"1861 873C E08E 1841 8618 73CE 08E1 8418"	/* .a<..A.sN... */
-	$"6187 0000 0000 0020 0000 0000 0000 0080"	/* a..... ....... */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 01C0 0C00 0002 0100"	/* .........@...... */
-	$"0000 001C 0000 0001 10A4 001C 40C0 1000"	/* .........$..@@.. */
-	$"0000 0410 0880 0000 0000 0000 0000 0000"	/* ............... */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 00C0 1000 0000 0410 0880 0000"	/* .....@......... */
-	$"0000 0000 0000 0000 0000 0000 0006 000C"	/* ................ */
-	$"0012 0018 001E 0024 002A 0030 0036 003C"	/* .......$.*.0.6.< */
-	$"0042 0048 004E 0054 005A 0060 0066 006C"	/* .B.H.N.T.Z.`.f.l */
-	$"0072 0078 007E 0084 008A 0090 0096 009C"	/* .r.x.~..
-... */
-	$"00A2 00A8 00AE 00B4 00BA 00C0 00C0 00C1"	/* .".(...4.:.@.@.A */
-	$"00C5 00CA 00CF 00D4 00D9 00DA 00DD 00E0"	/* .E.J.O.T........ */
-	$"00E5 00EA 00ED 00F2 00F3 00F7 00FC 00FF"	/* ................ */
-	$"0104 0109 010E 0113 0118 011D 0122 0127"	/* ...F.........".' */
-	$"0128 012A 012E 0133 0137 013C 0141 0146"	/* .(.*...3.7.<.A.F */
-	$"014B 0150 0155 015A 015F 0164 0169 016C"	/* .K.P.U.Z._.d.i.l */
-	$"0171 0176 017B 0180 0185 018A 018F 0194"	/* .q.v.{...
-.. */
-	$"0199 019E 01A3 01A8 01AD 01B2 01B7 01BC"	/* ...#.(.-.2.7.< */
-	$"01C1 01C4 01C8 01CB 01D0 01D5 01D8 01DD"	/* .A.D.H.K.P.U.X.. */
-	$"01E2 01E7 01EC 01F1 01F6 01FB 0200 0203"	/* ................ */
-	$"0207 020C 020F 0214 0219 021E 0223 0228"	/* .............#.( */
-	$"022D 0232 0236 023B 0240 0245 024A 024F"	/* .-.2.6.;.@.E.J.O */
-	$"0254 0257 0258 025B 0260 0261 0261 0261"	/* .T.W.X.[.`.a.a.a */
-	$"0261 0261 0261 0261 0261 0261 0261 0261"	/* .a.a.a.a.a.a.a.a */
-	$"0261 0261 0261 0261 0261 0261 0261 0261"	/* .a.a.a.a.a.a.a.a */
-	$"0261 0261 0261 0261 0261 0261 0261 0261"	/* .a.a.a.a.a.a.a.a */
-	$"0261 0261 0261 0261 0261 0261 0261 0261"	/* .a.a.a.a.a.a.a.a */
-	$"0261 0261 0261 0261 0261 0261 0261 0261"	/* .a.a.a.a.a.a.a.a */
-	$"0261 0261 0261 0261 0261 0261 0261 0261"	/* .a.a.a.a.a.a.a.a */
-	$"0261 0261 0261 0261 0261 0261 0261 0261"	/* .a.a.a.a.a.a.a.a */
-	$"0261 0261 0261 0261 0261 0261 0261 0261"	/* .a.a.a.a.a.a.a.a */
-	$"0261 0261 0261 0261 0261 0261 0261 0261"	/* .a.a.a.a.a.a.a.a */
-	$"0261 0261 0261 0261 0261 0261 0261 0261"	/* .a.a.a.a.a.a.a.a */
-	$"0261 0261 0261 0261 0261 0261 0261 0261"	/* .a.a.a.a.a.a.a.a */
-	$"0261 0261 0261 0261 0261 0262 0267 026C"	/* .a.a.a.a.a.b.g.l */
-	$"0271 0276 027B 0280 0284 0289 028E 0293"	/* .q.v.{...	.. */
-	$"0296 0299 029D 02A1 02A7 02AD 02B3 02B9"	/* ....!.'.-.3.9 */
-	$"02BF 02C5 02C9 02CC 02D2 02D8 02D9 02DD"	/* .?.E.I.L.R.X.... */
-	$"02E1 02E6 02EB 02EF 02F0 02F6 2F06 2F06"	/* ...........././. */
-	$"2F06 2F06 2F06 2F06 2F06 2F06 2F06 2F06"	/* /./././././././. */
-	$"2F06 2F06 2F06 2F06 2F06 2F06 2F06 2F06"	/* /./././././././. */
-	$"2F06 2F06 2F06 2F06 2F06 2F06 2F06 2F06"	/* /./././././././. */
-	$"2F06 2F06 2F06 2F06 2F06 2F06 2606 3106"	/* /./././././.&.1. */
-	$"3006 2F06 2F06 2F06 2F06 3106 3006 3006"	/* 0././././.1.0.0. */
-	$"2F06 2F06 3006 2F06 3106 3006 2F06 3006"	/* /./.0./.1.0./.0. */
-	$"2F06 2F06 2F06 2F06 2F06 2F06 2F06 2F06"	/* /./././././././. */
-	$"3106 3006 3006 2F06 2F06 2F06 2F06 2F06"	/* 1.0.0./././././. */
-	$"2F06 2F06 2F06 2F06 2F06 2F06 2F06 3006"	/* /././././././.0. */
-	$"2F06 2F06 2F06 2F06 2F06 2F06 2F06 2F06"	/* /./././././././. */
-	$"2F06 2F06 2F06 2F06 2F06 2F06 2F06 2F06"	/* /./././././././. */
-	$"2F06 3006 3006 3006 2F06 2F06 3006 2F06"	/* /.0.0.0././.0./. */
-	$"2F06 2F06 2F06 2F06 2F06 2F06 2F06 3006"	/* /././././././.0. */
-	$"2F06 2F06 3006 2F06 2F06 2F06 2F06 2F06"	/* /./.0./././././. */
-	$"2F06 2F06 2F06 2F06 2F06 2F06 2F06 2F06"	/* /./././././././. */
-	$"2F06 3006 3106 3006 2F06 3106 2306 FFFF"	/* /.0.1.0./.1.#... */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"	/* ................ */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"	/* ................ */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"	/* ................ */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"	/* ................ */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"	/* ................ */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"	/* ................ */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"	/* ................ */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"	/* ................ */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"	/* ................ */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"	/* ................ */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"	/* ................ */
-	$"FFFF FFFF FFFF FFFF FFFF 3206 2F06 2F06"	/* ..........2././. */
-	$"2F06 2F06 2F06 2F06 2F06 3006 2F06 2F06"	/* /././././.0././. */
-	$"2F06 2F06 3106 3106 2F06 2F06 2F06 2F06"	/* /./.1.1././././. */
-	$"2F06 2F06 3106 2F06 2F06 2F06 3106 2F06"	/* /./.1./././.1./. */
-	$"3006 2F06 2F06 2F06 3106 2F06 0000"     	/* 0./././.1./... */
-};
-
-data 'FONT' (16384, "VT100", preload, purgeable) {
-};
-
-data 'FONT' (16521, preload, purgeable) {
-	$"9000 0000 00FE 0007 FFDA FFF7 00FF 000C"	/* ............... */
-	$"0316 0009 0003 0000 002C 0000 0000 0000"	/* ...F.....,...... */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0001 8061 9F80 0000 6198"	/* ........a..a */
-	$"0600 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 007E 0000 0078 0000 0001"	/* .......~...x.... */
-	$"8061 9F80 0000 6198 0600 0000 0000 0000"	/* a..a........ */
-	$"3FC0 0000 1EF7 8000 0000 F6A2 6D99 E100"	/* ?@........"m.. */
-	$"001B 99DF 1FDD F738 0306 1CE2 79DE FFDD"	/* ......8....y... */
-	$"BF3F 788C DDE7 79DF EF7B DEFF F390 180C"	/* ??x..y..{..... */
-	$"0060 3030 C3C7 0000 0000 0600 0000 00DB"	/* .`00CG.......... */
-	$"3413 FB60 EC38 13D9 8061 8000 0000 6198"	/* 4..`.8..a...a */
-	$"0678 0118 7800 0000 3FC0 0000 1EF7 8000"	/* .x..x...?@..... */
-	$"0000 F7F7 EF5B 3548 001E FB63 3E36 3DEF"	/* .....[5H...c>6=. */
-	$"06FB 3797 6F7B C637 B61B 78DE F7BD EF66"	/* ..7o{F76.x..=.f */
-	$"6F7B DEFF B1B8 0C0C 0060 6870 00C3 0000"	/* o{..18...`hp.C.. */
-	$"0000 0600 0000 00DB 7C3B 7B71 8C6C 9BD9"	/* ........|;{ql. */
-	$"8061 807E 0000 6198 06CC 1FB4 4800 0000"	/* a~..a.L.4H... */
-	$"3FC0 0000 1EF7 8000 0000 F7FE 1B5E 1FC8"	/* ?@..........^.H */
-	$"0036 D866 7FB0 6DEF 6CF9 87FD EF7B C631"	/* .6Xf.0m.l...{F1 */
-	$"B61B D8FF F7BD EF06 6F7B 76CD 99EC 06EF"	/* 6.X..=..o{vM... */
-	$"39EE 63FD C3DB 7BCE F3FC FF6F 75DE FEDB"	/* 9.c.C.{N...ou... */
-	$"587E BF61 8C6C 9FF9 8061 807E 0000 6198"	/* X~?al.a~..a */
-	$"0787 FFB0 4800 0000 3FC0 0000 18C6 0000"	/* ..0H...?@...F.. */
-	$"0000 C0A7 3986 1BBE 3E37 D8CE DEFC C73C"	/* ..@'9.>>7XN..G< */
-	$"7800 CDDD FB1B F7B7 F61B 98FF F7ED F9C6"	/* x.M....7......F */
-	$"6F7F 2399 9980 003D FF7B F6F6 C3F3 7F7B"	/* o.#.=.{..C..{ */
-	$"DEF7 C66F 7576 CF81 807F 7B60 EF3B FB77"	/* ..FouvO.{`.;.w */
-	$"FFFF E001 F800 7FFF FECD E278 4800 0000"	/* .........M.xH... */
-	$"3FC0 0000 18C6 0000 0000 C1F3 B366 1FFE"	/* ?@...F....A.3f.. */
-	$"3E36 D983 F8F6 CD8C 0CF9 99EF EF7B C633"	/* >6...M....{F3 */
-	$"B6DB D8FF F78D EC66 6FFF 71B1 9980 00FD"	/* 6.X..fo.q1.. */
-	$"E77F 66F6 C3E3 577B DEF0 E66F 7F26 DCDB"	/* ..f.C.W{...o.&.. */
-	$"007E BB1E 0783 F927 FFFF E001 F800 7FFF"	/* .~;...'........ */
-	$"FE78 AFB3 4800 0000 0000 0000 0000 0000"	/* .x/3H........... */
-	$"0000 01FF 6F43 3548 01E6 DB1B 1EF7 8DEF"	/* ....oC5H...... */
-	$"06FB 018D EF7B C63F B6DB 78DE F78F 6F66"	/* ...{F?6.x..of */
-	$"6DDB D9BF 8D80 01BD E378 63F6 C3F3 577B"	/* m..?=.xc.C.W{ */
-	$"F3F0 76ED DF73 F8DB 003B 6798 E600 8C78"	/* ..v..s...;g..x */
-	$"1E01 8000 07E0 6180 6600 AFBB 4800 0000"	/* .....af./;H... */
-	$"3FC0 0000 18C6 0000 0000 C0A2 6DA1 E108"	/* ?@...F....@"m!.. */
-	$"C1E3 BFEE 1B9D 873B 6306 18ED F9DE FE1B"	/* A.?..;c....... */
-	$"BF73 7FDE 5D87 EDC6 3891 D9BF CF83 E0FF"	/* ?s..].F8.?O.. */
-	$"3DEF 60F7 FBDF D76E C0F1 E33C 8AD8 FEDB"	/* =.`...Wn@..<
-X.. */
-	$"0013 E31C D703 EC30 1E01 8000 07E0 6180"	/* ....W..0.....a */
-	$"67FF 2474 7800 0000 0000 0000 0000 0000"	/* g.$tx........... */
-	$"0000 0000 0000 0000 C000 0000 0000 0000"	/* ........@....... */
-	$"6000 0000 0000 0000 0000 0000 0000 0000"	/* `............... */
-	$"0000 0000 0003 E000 0000 06C0 1B00 0000"	/* ...........@.... */
-	$"C0C0 0000 0006 C07E 0000 0318 E603 EC30"	/* @@....@~.......0 */
-	$"1E01 8000 001F E180 67FE 0030 0000 0000"	/* ......g..0.... */
-	$"0000 0000 0000 0000 0000 0000 0000 0001"	/* ................ */
-	$"8000 0000 0000 0000 C000 0000 0000 0000"	/* .......@....... */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0380 0E00 0000 C0C0 0000 0003 8000"	/* .......@@..... */
-	$"0000 0318 D600 0F30 1E01 8000 001F E180"	/* ....V..0...... */
-	$"6600 0000 0000 0000 0000 0000 0000 0000"	/* f............... */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"1E01 8000 0000 6180 6600 0000 0000 0000"	/* .....af....... */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0000"	/* ................ */
-	$"0000 0000 0000 0000 0000 0000 0000 0002"	/* ................ */
-	$"0007 000C 0011 0016 001B 001D 0021 0025"	/* .............!.% */
-	$"002A 002F 0032 0037 0039 003D 0042 0046"	/* .*...2.7.9.=.B.F */
-	$"004B 0050 0055 005A 005F 0064 0069 006E"	/* .K.P.U.Z._.d.i.n */
-	$"0070 0073 0078 007D 0082 0087 008C 0091"	/* .p.s.x.}.... */
-	$"0096 009B 00A0 00A5 00AA 00AF 00B4 00B8"	/* ... .%.*./.4.8 */
-	$"00BE 00C3 00C8 00CD 00D2 00D7 00DC 00E1"	/* .>.C.H.M.R.W.... */
-	$"00E6 00EB 00F1 00F6 00FB 0100 0105 010A"	/* ................ */
-	$"010F 0112 0116 0119 011E 0123 0127 012C"	/* ...........#.'., */
-	$"0131 0136 013B 0140 0145 014A 014F 0153"	/* .1.6.;.@.E.J.O.S */
-	$"0158 015D 0161 0166 016B 0170 0175 017A"	/* .X.].a.f.k.p.u.z */
-	$"017F 0184 0189 018E 0193 0198 019D 01A2"	/* ....	....." */
-	$"01A7 01AB 01AD 01B1 01B6 01B7 01B8 01B8"	/* .'.+.-.1.6.7.8.8 */
-	$"01B8 01B8 01B8 01B8 01B8 01B8 01B8 01B8"	/* .8.8.8.8.8.8.8.8 */
-	$"01B8 01B8 01B8 01B8 01B8 01B8 01B8 01B8"	/* .8.8.8.8.8.8.8.8 */
-	$"01B8 01B8 01B8 01B8 01B8 01B8 01B8 01B8"	/* .8.8.8.8.8.8.8.8 */
-	$"01B8 01B8 01B8 01B8 01B8 01B8 01B8 01B8"	/* .8.8.8.8.8.8.8.8 */
-	$"01B8 01B8 01B8 01B8 01B8 01B8 01B8 01B8"	/* .8.8.8.8.8.8.8.8 */
-	$"01B8 01B8 01B8 01B8 01B8 01B8 01B8 01B8"	/* .8.8.8.8.8.8.8.8 */
-	$"01B8 01B8 01B8 01B8 01B8 01B8 01B8 01B8"	/* .8.8.8.8.8.8.8.8 */
-	$"01B8 01B8 01B8 01B8 01B8 01B8 01B8 01B8"	/* .8.8.8.8.8.8.8.8 */
-	$"01B8 01B8 01B8 01B8 01B8 01B8 01B8 01B8"	/* .8.8.8.8.8.8.8.8 */
-	$"01B8 01B8 01B8 01B8 01B8 01B8 01B8 01B8"	/* .8.8.8.8.8.8.8.8 */
-	$"01B8 01B8 01B8 01B8 01B8 01B8 01B8 01B8"	/* .8.8.8.8.8.8.8.8 */
-	$"01B8 01B8 01B8 01B8 01B8 01B9 01BE 01C3"	/* .8.8.8.8.8.9.>.C */
-	$"01C9 01CF 01D4 01D9 01DE 01E3 01E8 01ED"	/* .I.O.T.......... */
-	$"01F1 01F5 01F9 01FD 0203 0209 020F 0215"	/* ...........F.... */
-	$"021B 0221 0225 0229 022F 0235 0237 023B"	/* ...!.%.)./.5.7.; */
-	$"023F 0244 0249 024E 0250 0256 0000 2600"	/* .?.D.I.N.P.V..&. */
-	$"2600 2600 2600 2600 FFFF FFFF FFFF 2C06"	/* &.&.&.&.......,. */
-	$"FFFF FFFF FFFF 2600 FFFF FFFF FFFF FFFF"	/* ......&......... */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"	/* ................ */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF 1D06 2806"	/* ..............(. */
-	$"2606 2606 2606 2606 2606 2706 2606 2706"	/* &.&.&.&.&.'.&.'. */
-	$"2606 2606 2706 2606 2806 2706 2606 2706"	/* &.&.'.&.(.'.&.'. */
-	$"2606 2606 2606 2606 2606 2606 2606 2606"	/* &.&.&.&.&.&.&.&. */
-	$"2806 2706 2606 2606 2606 2606 2606 2606"	/* (.'.&.&.&.&.&.&. */
-	$"2606 2606 2606 2606 2606 2606 2606 2706"	/* &.&.&.&.&.&.&.'. */
-	$"2606 2606 2606 2606 2606 2606 2606 2606"	/* &.&.&.&.&.&.&.&. */
-	$"2606 2606 2606 2606 2606 2606 2606 2606"	/* &.&.&.&.&.&.&.&. */
-	$"2606 2706 2706 2706 2606 2606 2706 2606"	/* &.'.'.'.&.&.'.&. */
-	$"2606 2606 2606 2606 2606 2606 2606 2706"	/* &.&.&.&.&.&.&.'. */
-	$"2606 2606 2706 2606 2606 2606 2606 2606"	/* &.&.'.&.&.&.&.&. */
-	$"2606 2606 2606 2606 2606 2606 2606 2606"	/* &.&.&.&.&.&.&.&. */
-	$"2606 2706 2806 2606 2606 2806 2906 FFFF"	/* &.'.(.&.&.(.)... */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"	/* ................ */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"	/* ................ */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"	/* ................ */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"	/* ................ */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"	/* ................ */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"	/* ................ */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"	/* ................ */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"	/* ................ */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"	/* ................ */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"	/* ................ */
-	$"FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"	/* ................ */
-	$"FFFF FFFF FFFF FFFF FFFF 2806 2606 2606"	/* ..........(.&.&. */
-	$"2606 2606 2606 2606 2607 2606 2606 2606"	/* &.&.&.&.&.&.&.&. */
-	$"2606 2606 2806 2806 2606 2606 2606 2606"	/* &.&.(.(.&.&.&.&. */
-	$"2606 2606 2806 2606 2606 2606 2806 2606"	/* &.&.(.&.&.&.(.&. */
-	$"2706 2606 2606 2606 2706 2606 0000"     	/* '.&.&.&.'.&... */
-};
-
-data 'FONT' (16512, "VT100 Bold", preload, purgeable) {
+data 'MSET' (5) {
+	$"0102 00BC 0045 83FC 0002 6AE2 0000 0000"        /* ...º.EÉ...j..... */
+	$"0002 6AE2 0045 0012 00BC 0045 83FC 0002"        /* ..j..E...º.EÉ... */
+	$"6AE2 0000 0000 0002 6AE2 0045 0000 00BC"        /* j.......j..E...º */
+	$"0045 83FC 0002 6AE2 0000 0000 0002 6AE2"        /* .EÉ...j.......j. */
+	$"0045 0000 00BC 0045 83FC 0002 6AE2 0000"        /* .E...º.EÉ...j... */
+	$"0000 0002 6AE2 0045 0026 0033 0001 7F00"        /* ....j..E.&.3.... */
+	$"3200 011B 00B2 0001 6000 7E05 0000 7D06"        /* 2....≤..`.~...}. */
+	$"0000 7C04 0000 7B03 0000 4609 0000 4D0C"        /* ..|...{...F∆..M. */
+	$"0000 480B 0000 420A 0008 3200 0160 004C"        /* ..H...B...2..`.L */
+	$"1900 00C7 0100 019B 0001 1F00 4707 0000"        /* ...«...õ....G... */
+	$"4E0C 0000 520F 0000 5310 0000 5411 0000"        /* N...R...S...T... */
+	$"5512 0000 5613 0000 5714 0000 5815 0000"        /* U...V...W...X... */
+	$"5916 0000 5B17 0000 5C18 0000 410D 0001"        /* Y...[...\...A¬.. */
+	$"9600 011E 01B2 0001 1E01 4808 0001 4D09"        /* ñ....≤....H...M∆ */
+	$"0001 420A 0001 460B 0000 450B 0000 430A"        /* ..B...F...E...C. */
+	$"0000 4B09 0000 5108 0043 616E 6365 6C00"        /* ..K∆..Q..Cancel. */
+	$"0000 0020 0000 4CAC 5361 7665 2076 6172"        /* ... ..L¨Save var */
+	$"6961 626C 6573 2069 6E20 6669 6C65 3A"          /* iables in file: */
 };
 
 /* for the benifit of MultiFinder.. */
-data 'SIZE' (-1) {
-	$"5000 0002 8000 0002 8000"               	/* .......... */
 	/* 12th bit (2^0 == 0th) is "can background", 14th is */
 	/*  does accept suspend and resume events */
 	/*     { this  } is the (long) prefered memory size */
 	/*  and          { this  } is the minimum memory size */
 	/* we are currently playing it safe with these (160K) */
+data 'SIZE' (-1) {
+	$"5000 0004 0000 0004 0000"                       /* X......... */
+};
+data 'SIZE' (0) {
+	$"5000 0004 0000 0004 0000"                       /* X......... */
 };
 
-#ifdef SCRIPTMGR
 /* so that the Apple keyboard doesn't do dead keys on OPTION */
-data 'KCHR' (13000, "US-NODEADKEYS", sysheap, locked) {
-	$"32C8 0000 0100 0202 0100 0303 0303 0303"	/* 2H.............. */
-	$"0303 0303 0303 0303 0303 0303 0303 0303"	/* ................ */
-	$"0303 0100 0100 0100 0100 0303 0303 0303"	/* ................ */
-	$"0303 0303 0303 0303 0303 0303 0303 0303"	/* ................ */
-	$"0303 0303 0303 0303 0303 0303 0303 0303"	/* ................ */
-	$"0303 0303 0303 0303 0303 0303 0303 0303"	/* ................ */
-	$"0303 0303 0303 0303 0303 0303 0303 0303"	/* ................ */
-	$"0303 0303 0303 0303 0303 0303 0303 0303"	/* ................ */
-	$"0303 0303 0303 0303 0303 0303 0303 0303"	/* ................ */
-	$"0303 0303 0303 0303 0303 0303 0303 0303"	/* ................ */
-	$"0303 0303 0303 0303 0303 0303 0303 0303"	/* ................ */
-	$"0303 0303 0303 0303 0303 0303 0303 0303"	/* ................ */
-	$"0303 0303 0303 0303 0303 0303 0303 0303"	/* ................ */
-	$"0303 0303 0303 0303 0303 0303 0303 0303"	/* ................ */
-	$"0303 0303 0303 0303 0303 0303 0303 0303"	/* ................ */
-	$"0303 0303 0303 0303 0303 0303 0303 0303"	/* ................ */
-	$"0303 0005 6173 6466 6867 7A78 6376 0062"	/* ....asdfhgzxcv.b */
-	$"7177 6572 7974 3132 3334 3635 3D39 372D"	/* qweryt123465=97- */
-	$"3830 5D6F 755B 6970 0D6C 6A27 6B3B 5C2C"	/* 80]ou[ipBlj'k;\, */
-	$"2F6E 6D2E 0920 6008 031B 0000 0000 0000"	/* /nm.F `......... */
-	$"0000 0000 002E 1D2A 002B 1C1B 1F00 002F"	/* .......*.+...../ */
-	$"031E 2D00 003D 3031 3233 3435 3637 0038"	/* ..-..=01234567.8 */
-	$"3900 0000 1010 1010 1010 1010 1010 1010"	/* 9............... */
-	$"1010 1010 1010 0501 0B7F 1004 100C 101C"	/* ................ */
-	$"1D1F 1E00 4153 4446 4847 5A58 4356 0042"	/* ....ASDFHGZXCV.B */
-	$"5157 4552 5954 2140 2324 5E25 2B28 265F"	/* QWERYT!@#$^%+(&_ */
-	$"2A29 7D4F 557B 4950 0D4C 4A22 4B3A 7C3C"	/* *)}OU{IPBLJ"K:|< */
-	$"3F4E 4D3E 0920 7E08 031B 0000 0000 0000"	/* ?NM>F ~......... */
-	$"0000 0000 002E 2A2A 002B 2B1B 3D00 002F"	/* ......**.++.=../ */
-	$"032F 2D00 003D 3031 3233 3435 3637 0038"	/* ./-..=01234567.8 */
-	$"3900 0000 1010 1010 1010 1010 1010 1010"	/* 9............... */
-	$"1010 1010 1010 0501 0B7F 1004 100C 101C"	/* ................ */
-	$"1D1F 1E00 4153 4446 4847 5A58 4356 0042"	/* ....ASDFHGZXCV.B */
-	$"5157 4552 5954 3132 3334 3635 3D39 372D"	/* QWERYT123465=97- */
-	$"3830 5D4F 555B 4950 0D4C 4A27 4B3B 5C2C"	/* 80]OU[IPBLJ'K;\, */
-	$"2F4E 4D2E 0920 6008 031B 0000 0000 0000"	/* /NM.F `......... */
-	$"0000 0000 002E 1D2A 002B 1C1B 1F00 002F"	/* .......*.+...../ */
-	$"031E 2D00 003D 3031 3233 3435 3637 0038"	/* ..-..=01234567.8 */
-	$"3900 0000 1010 1010 1010 1010 1010 1010"	/* 9............... */
-	$"1010 1010 1010 0501 0B7F 1004 100C 101C"	/* ................ */
-	$"1D1F 1E00 8CA7 B6C4 FAA9 BDC5 8DC3 00BA"	/* ....'6D.)=E.: */
-	$"CFB7 8EA8 B4A0 C1AA A3A2 A4B0 ADBB A6D0"	/* O7(4 A*#"$0-;&P */
-	$"A5BC D4BF 9FD2 94B9 0DC2 C6BE FBC9 C7B2"	/* %<T?R9BBF>.IG2 */
-	$"D696 B5B3 09CA 6008 031B 0000 0000 0000"	/* V53FJ`......... */
-	$"0000 0000 002E 1D2A 002B 1C1B 1F00 002F"	/* .......*.+...../ */
-	$"031E 2D00 003D 3031 3233 3435 3637 0038"	/* ..-..=01234567.8 */
-	$"3900 0000 1010 1010 1010 1010 1010 1010"	/* 9............... */
-	$"1010 1010 1010 0501 0B7F 1004 100C 101C"	/* ................ */
-	$"1D1F 1E00 81EA EBEC EEED F3F4 82D7 00F5"	/* ...........W.. */
-	$"CEE3 E4E5 E7E6 DADB DCDD DFDE B1E1 E0D1"	/* N...........1..Q */
-	$"A1E2 D5AF E8D3 E9B8 0DF1 EFAE F0F2 C8F8"	/* !.U/.S.8B.....H. */
-	$"C0F6 F7F9 09CA D908 031B 0000 0000 0000"	/* @...FJ.......... */
-	$"0000 0000 002E 2A2A 002B 2B1B 3D00 002F"	/* ......**.++.=../ */
-	$"032F 2D00 003D 3031 3233 3435 3637 0038"	/* ./-..=01234567.8 */
-	$"3900 0000 1010 1010 1010 1010 1010 1010"	/* 9............... */
-	$"1010 1010 1010 0501 0B7F 1004 100C 101C"	/* ................ */
-	$"1D1F 1E00 0000"                         	/* ...... */
+resource 'KCHR' (13000, "US-NoDeadKeys", sysheap, locked) {
+	13000,
+	{	/* array: 256 elements */
+		/* [1] */
+		0,
+		/* [2] */
+		0,
+		/* [3] */
+		1,
+		/* [4] */
+		0,
+		/* [5] */
+		2,
+		/* [6] */
+		2,
+		/* [7] */
+		1,
+		/* [8] */
+		0,
+		/* [9] */
+		3,
+		/* [10] */
+		6,
+		/* [11] */
+		4,
+		/* [12] */
+		4,
+		/* [13] */
+		5,
+		/* [14] */
+		5,
+		/* [15] */
+		4,
+		/* [16] */
+		4,
+		/* [17] */
+		7,
+		/* [18] */
+		7,
+		/* [19] */
+		7,
+		/* [20] */
+		7,
+		/* [21] */
+		7,
+		/* [22] */
+		7,
+		/* [23] */
+		7,
+		/* [24] */
+		7,
+		/* [25] */
+		7,
+		/* [26] */
+		7,
+		/* [27] */
+		7,
+		/* [28] */
+		7,
+		/* [29] */
+		7,
+		/* [30] */
+		7,
+		/* [31] */
+		7,
+		/* [32] */
+		7,
+		/* [33] */
+		1,
+		/* [34] */
+		0,
+		/* [35] */
+		1,
+		/* [36] */
+		0,
+		/* [37] */
+		1,
+		/* [38] */
+		0,
+		/* [39] */
+		1,
+		/* [40] */
+		0,
+		/* [41] */
+		4,
+		/* [42] */
+		4,
+		/* [43] */
+		4,
+		/* [44] */
+		4,
+		/* [45] */
+		4,
+		/* [46] */
+		4,
+		/* [47] */
+		4,
+		/* [48] */
+		4,
+		/* [49] */
+		7,
+		/* [50] */
+		7,
+		/* [51] */
+		7,
+		/* [52] */
+		7,
+		/* [53] */
+		7,
+		/* [54] */
+		7,
+		/* [55] */
+		7,
+		/* [56] */
+		7,
+		/* [57] */
+		7,
+		/* [58] */
+		7,
+		/* [59] */
+		7,
+		/* [60] */
+		7,
+		/* [61] */
+		7,
+		/* [62] */
+		7,
+		/* [63] */
+		7,
+		/* [64] */
+		7,
+		/* [65] */
+		3,
+		/* [66] */
+		6,
+		/* [67] */
+		4,
+		/* [68] */
+		4,
+		/* [69] */
+		5,
+		/* [70] */
+		5,
+		/* [71] */
+		4,
+		/* [72] */
+		4,
+		/* [73] */
+		3,
+		/* [74] */
+		6,
+		/* [75] */
+		4,
+		/* [76] */
+		4,
+		/* [77] */
+		5,
+		/* [78] */
+		5,
+		/* [79] */
+		4,
+		/* [80] */
+		4,
+		/* [81] */
+		7,
+		/* [82] */
+		7,
+		/* [83] */
+		7,
+		/* [84] */
+		7,
+		/* [85] */
+		7,
+		/* [86] */
+		7,
+		/* [87] */
+		7,
+		/* [88] */
+		7,
+		/* [89] */
+		7,
+		/* [90] */
+		7,
+		/* [91] */
+		7,
+		/* [92] */
+		7,
+		/* [93] */
+		7,
+		/* [94] */
+		7,
+		/* [95] */
+		7,
+		/* [96] */
+		7,
+		/* [97] */
+		4,
+		/* [98] */
+		4,
+		/* [99] */
+		4,
+		/* [100] */
+		4,
+		/* [101] */
+		4,
+		/* [102] */
+		4,
+		/* [103] */
+		4,
+		/* [104] */
+		4,
+		/* [105] */
+		4,
+		/* [106] */
+		4,
+		/* [107] */
+		4,
+		/* [108] */
+		4,
+		/* [109] */
+		4,
+		/* [110] */
+		4,
+		/* [111] */
+		4,
+		/* [112] */
+		4,
+		/* [113] */
+		7,
+		/* [114] */
+		7,
+		/* [115] */
+		7,
+		/* [116] */
+		7,
+		/* [117] */
+		7,
+		/* [118] */
+		7,
+		/* [119] */
+		7,
+		/* [120] */
+		7,
+		/* [121] */
+		7,
+		/* [122] */
+		7,
+		/* [123] */
+		7,
+		/* [124] */
+		7,
+		/* [125] */
+		7,
+		/* [126] */
+		7,
+		/* [127] */
+		7,
+		/* [128] */
+		7,
+		/* [129] */
+		7,
+		/* [130] */
+		7,
+		/* [131] */
+		7,
+		/* [132] */
+		7,
+		/* [133] */
+		7,
+		/* [134] */
+		7,
+		/* [135] */
+		7,
+		/* [136] */
+		7,
+		/* [137] */
+		7,
+		/* [138] */
+		7,
+		/* [139] */
+		7,
+		/* [140] */
+		7,
+		/* [141] */
+		7,
+		/* [142] */
+		7,
+		/* [143] */
+		7,
+		/* [144] */
+		7,
+		/* [145] */
+		7,
+		/* [146] */
+		7,
+		/* [147] */
+		7,
+		/* [148] */
+		7,
+		/* [149] */
+		7,
+		/* [150] */
+		7,
+		/* [151] */
+		7,
+		/* [152] */
+		7,
+		/* [153] */
+		7,
+		/* [154] */
+		7,
+		/* [155] */
+		7,
+		/* [156] */
+		7,
+		/* [157] */
+		7,
+		/* [158] */
+		7,
+		/* [159] */
+		7,
+		/* [160] */
+		7,
+		/* [161] */
+		7,
+		/* [162] */
+		7,
+		/* [163] */
+		7,
+		/* [164] */
+		7,
+		/* [165] */
+		7,
+		/* [166] */
+		7,
+		/* [167] */
+		7,
+		/* [168] */
+		7,
+		/* [169] */
+		7,
+		/* [170] */
+		7,
+		/* [171] */
+		7,
+		/* [172] */
+		7,
+		/* [173] */
+		7,
+		/* [174] */
+		7,
+		/* [175] */
+		7,
+		/* [176] */
+		7,
+		/* [177] */
+		7,
+		/* [178] */
+		7,
+		/* [179] */
+		7,
+		/* [180] */
+		7,
+		/* [181] */
+		7,
+		/* [182] */
+		7,
+		/* [183] */
+		7,
+		/* [184] */
+		7,
+		/* [185] */
+		7,
+		/* [186] */
+		7,
+		/* [187] */
+		7,
+		/* [188] */
+		7,
+		/* [189] */
+		7,
+		/* [190] */
+		7,
+		/* [191] */
+		7,
+		/* [192] */
+		7,
+		/* [193] */
+		7,
+		/* [194] */
+		7,
+		/* [195] */
+		7,
+		/* [196] */
+		7,
+		/* [197] */
+		7,
+		/* [198] */
+		7,
+		/* [199] */
+		7,
+		/* [200] */
+		7,
+		/* [201] */
+		7,
+		/* [202] */
+		7,
+		/* [203] */
+		7,
+		/* [204] */
+		7,
+		/* [205] */
+		7,
+		/* [206] */
+		7,
+		/* [207] */
+		7,
+		/* [208] */
+		7,
+		/* [209] */
+		7,
+		/* [210] */
+		7,
+		/* [211] */
+		7,
+		/* [212] */
+		7,
+		/* [213] */
+		7,
+		/* [214] */
+		7,
+		/* [215] */
+		7,
+		/* [216] */
+		7,
+		/* [217] */
+		7,
+		/* [218] */
+		7,
+		/* [219] */
+		7,
+		/* [220] */
+		7,
+		/* [221] */
+		7,
+		/* [222] */
+		7,
+		/* [223] */
+		7,
+		/* [224] */
+		7,
+		/* [225] */
+		7,
+		/* [226] */
+		7,
+		/* [227] */
+		7,
+		/* [228] */
+		7,
+		/* [229] */
+		7,
+		/* [230] */
+		7,
+		/* [231] */
+		7,
+		/* [232] */
+		7,
+		/* [233] */
+		7,
+		/* [234] */
+		7,
+		/* [235] */
+		7,
+		/* [236] */
+		7,
+		/* [237] */
+		7,
+		/* [238] */
+		7,
+		/* [239] */
+		7,
+		/* [240] */
+		7,
+		/* [241] */
+		7,
+		/* [242] */
+		7,
+		/* [243] */
+		7,
+		/* [244] */
+		7,
+		/* [245] */
+		7,
+		/* [246] */
+		7,
+		/* [247] */
+		7,
+		/* [248] */
+		7,
+		/* [249] */
+		7,
+		/* [250] */
+		7,
+		/* [251] */
+		7,
+		/* [252] */
+		7,
+		/* [253] */
+		7,
+		/* [254] */
+		7,
+		/* [255] */
+		7,
+		/* [256] */
+		7
+	},
+	{	/* array TableArray: 8 elements */
+		/* [1] */
+		{	/* array: 128 elements */
+			/* [1] */
+			"a",
+			/* [2] */
+			"s",
+			/* [3] */
+			"d",
+			/* [4] */
+			"f",
+			/* [5] */
+			"h",
+			/* [6] */
+			"g",
+			/* [7] */
+			"z",
+			/* [8] */
+			"x",
+			/* [9] */
+			"c",
+			/* [10] */
+			"v",
+			/* [11] */
+			"",
+			/* [12] */
+			"b",
+			/* [13] */
+			"q",
+			/* [14] */
+			"w",
+			/* [15] */
+			"e",
+			/* [16] */
+			"r",
+			/* [17] */
+			"y",
+			/* [18] */
+			"t",
+			/* [19] */
+			"1",
+			/* [20] */
+			"2",
+			/* [21] */
+			"3",
+			/* [22] */
+			"4",
+			/* [23] */
+			"6",
+			/* [24] */
+			"5",
+			/* [25] */
+			"=",
+			/* [26] */
+			"9",
+			/* [27] */
+			"7",
+			/* [28] */
+			"-",
+			/* [29] */
+			"8",
+			/* [30] */
+			"0",
+			/* [31] */
+			"]",
+			/* [32] */
+			"o",
+			/* [33] */
+			"u",
+			/* [34] */
+			"[",
+			/* [35] */
+			"i",
+			/* [36] */
+			"p",
+			/* [37] */
+			"\n",
+			/* [38] */
+			"l",
+			/* [39] */
+			"j",
+			/* [40] */
+			"'",
+			/* [41] */
+			"k",
+			/* [42] */
+			";",
+			/* [43] */
+			"\\",
+			/* [44] */
+			",",
+			/* [45] */
+			"/",
+			/* [46] */
+			"n",
+			/* [47] */
+			"m",
+			/* [48] */
+			".",
+			/* [49] */
+			"\t",
+			/* [50] */
+			" ",
+			/* [51] */
+			"`",
+			/* [52] */
+			"\b",
+			/* [53] */
+			"\0x03",
+			/* [54] */
+			"\0x1B",
+			/* [55] */
+			"",
+			/* [56] */
+			"",
+			/* [57] */
+			"",
+			/* [58] */
+			"",
+			/* [59] */
+			"",
+			/* [60] */
+			"",
+			/* [61] */
+			"",
+			/* [62] */
+			"",
+			/* [63] */
+			"",
+			/* [64] */
+			"",
+			/* [65] */
+			"",
+			/* [66] */
+			".",
+			/* [67] */
+			"\0x1D",
+			/* [68] */
+			"*",
+			/* [69] */
+			"",
+			/* [70] */
+			"+",
+			/* [71] */
+			"\0x1C",
+			/* [72] */
+			"\0x1B",
+			/* [73] */
+			"\0x1F",
+			/* [74] */
+			"",
+			/* [75] */
+			"",
+			/* [76] */
+			"/",
+			/* [77] */
+			"\0x03",
+			/* [78] */
+			"\0x1E",
+			/* [79] */
+			"-",
+			/* [80] */
+			"",
+			/* [81] */
+			"",
+			/* [82] */
+			"=",
+			/* [83] */
+			"0",
+			/* [84] */
+			"1",
+			/* [85] */
+			"2",
+			/* [86] */
+			"3",
+			/* [87] */
+			"4",
+			/* [88] */
+			"5",
+			/* [89] */
+			"6",
+			/* [90] */
+			"7",
+			/* [91] */
+			"",
+			/* [92] */
+			"8",
+			/* [93] */
+			"9",
+			/* [94] */
+			"",
+			/* [95] */
+			"",
+			/* [96] */
+			"",
+			/* [97] */
+			"\0x10",
+			/* [98] */
+			"\0x10",
+			/* [99] */
+			"\0x10",
+			/* [100] */
+			"\0x10",
+			/* [101] */
+			"\0x10",
+			/* [102] */
+			"\0x10",
+			/* [103] */
+			"\0x10",
+			/* [104] */
+			"\0x10",
+			/* [105] */
+			"\0x10",
+			/* [106] */
+			"\0x10",
+			/* [107] */
+			"\0x10",
+			/* [108] */
+			"\0x10",
+			/* [109] */
+			"\0x10",
+			/* [110] */
+			"\0x10",
+			/* [111] */
+			"\0x10",
+			/* [112] */
+			"\0x10",
+			/* [113] */
+			"\0x10",
+			/* [114] */
+			"\0x10",
+			/* [115] */
+			"\0x05",
+			/* [116] */
+			"\0x01",
+			/* [117] */
+			"\v",
+			/* [118] */
+			"\?",
+			/* [119] */
+			"\0x10",
+			/* [120] */
+			"\0x04",
+			/* [121] */
+			"\0x10",
+			/* [122] */
+			"\f",
+			/* [123] */
+			"\0x10",
+			/* [124] */
+			"\0x1C",
+			/* [125] */
+			"\0x1D",
+			/* [126] */
+			"\0x1F",
+			/* [127] */
+			"\0x1E",
+			/* [128] */
+			""
+		},
+		/* [2] */
+		{	/* array: 128 elements */
+			/* [1] */
+			"A",
+			/* [2] */
+			"S",
+			/* [3] */
+			"D",
+			/* [4] */
+			"F",
+			/* [5] */
+			"H",
+			/* [6] */
+			"G",
+			/* [7] */
+			"Z",
+			/* [8] */
+			"X",
+			/* [9] */
+			"C",
+			/* [10] */
+			"V",
+			/* [11] */
+			"",
+			/* [12] */
+			"B",
+			/* [13] */
+			"Q",
+			/* [14] */
+			"W",
+			/* [15] */
+			"E",
+			/* [16] */
+			"R",
+			/* [17] */
+			"Y",
+			/* [18] */
+			"T",
+			/* [19] */
+			"!",
+			/* [20] */
+			"@",
+			/* [21] */
+			"#",
+			/* [22] */
+			"$",
+			/* [23] */
+			"^",
+			/* [24] */
+			"%",
+			/* [25] */
+			"+",
+			/* [26] */
+			"(",
+			/* [27] */
+			"&",
+			/* [28] */
+			"_",
+			/* [29] */
+			"*",
+			/* [30] */
+			")",
+			/* [31] */
+			"}",
+			/* [32] */
+			"O",
+			/* [33] */
+			"U",
+			/* [34] */
+			"{",
+			/* [35] */
+			"I",
+			/* [36] */
+			"P",
+			/* [37] */
+			"\n",
+			/* [38] */
+			"L",
+			/* [39] */
+			"J",
+			/* [40] */
+			"\"",
+			/* [41] */
+			"K",
+			/* [42] */
+			":",
+			/* [43] */
+			"|",
+			/* [44] */
+			"<",
+			/* [45] */
+			"?",
+			/* [46] */
+			"N",
+			/* [47] */
+			"M",
+			/* [48] */
+			">",
+			/* [49] */
+			"\t",
+			/* [50] */
+			" ",
+			/* [51] */
+			"~",
+			/* [52] */
+			"\b",
+			/* [53] */
+			"\0x03",
+			/* [54] */
+			"\0x1B",
+			/* [55] */
+			"",
+			/* [56] */
+			"",
+			/* [57] */
+			"",
+			/* [58] */
+			"",
+			/* [59] */
+			"",
+			/* [60] */
+			"",
+			/* [61] */
+			"",
+			/* [62] */
+			"",
+			/* [63] */
+			"",
+			/* [64] */
+			"",
+			/* [65] */
+			"",
+			/* [66] */
+			".",
+			/* [67] */
+			"*",
+			/* [68] */
+			"*",
+			/* [69] */
+			"",
+			/* [70] */
+			"+",
+			/* [71] */
+			"+",
+			/* [72] */
+			"\0x1B",
+			/* [73] */
+			"=",
+			/* [74] */
+			"",
+			/* [75] */
+			"",
+			/* [76] */
+			"/",
+			/* [77] */
+			"\0x03",
+			/* [78] */
+			"/",
+			/* [79] */
+			"-",
+			/* [80] */
+			"",
+			/* [81] */
+			"",
+			/* [82] */
+			"=",
+			/* [83] */
+			"0",
+			/* [84] */
+			"1",
+			/* [85] */
+			"2",
+			/* [86] */
+			"3",
+			/* [87] */
+			"4",
+			/* [88] */
+			"5",
+			/* [89] */
+			"6",
+			/* [90] */
+			"7",
+			/* [91] */
+			"",
+			/* [92] */
+			"8",
+			/* [93] */
+			"9",
+			/* [94] */
+			"",
+			/* [95] */
+			"",
+			/* [96] */
+			"",
+			/* [97] */
+			"\0x10",
+			/* [98] */
+			"\0x10",
+			/* [99] */
+			"\0x10",
+			/* [100] */
+			"\0x10",
+			/* [101] */
+			"\0x10",
+			/* [102] */
+			"\0x10",
+			/* [103] */
+			"\0x10",
+			/* [104] */
+			"\0x10",
+			/* [105] */
+			"\0x10",
+			/* [106] */
+			"\0x10",
+			/* [107] */
+			"\0x10",
+			/* [108] */
+			"\0x10",
+			/* [109] */
+			"\0x10",
+			/* [110] */
+			"\0x10",
+			/* [111] */
+			"\0x10",
+			/* [112] */
+			"\0x10",
+			/* [113] */
+			"\0x10",
+			/* [114] */
+			"\0x10",
+			/* [115] */
+			"\0x05",
+			/* [116] */
+			"\0x01",
+			/* [117] */
+			"\v",
+			/* [118] */
+			"\?",
+			/* [119] */
+			"\0x10",
+			/* [120] */
+			"\0x04",
+			/* [121] */
+			"\0x10",
+			/* [122] */
+			"\f",
+			/* [123] */
+			"\0x10",
+			/* [124] */
+			"\0x1C",
+			/* [125] */
+			"\0x1D",
+			/* [126] */
+			"\0x1F",
+			/* [127] */
+			"\0x1E",
+			/* [128] */
+			""
+		},
+		/* [3] */
+		{	/* array: 128 elements */
+			/* [1] */
+			"A",
+			/* [2] */
+			"S",
+			/* [3] */
+			"D",
+			/* [4] */
+			"F",
+			/* [5] */
+			"H",
+			/* [6] */
+			"G",
+			/* [7] */
+			"Z",
+			/* [8] */
+			"X",
+			/* [9] */
+			"C",
+			/* [10] */
+			"V",
+			/* [11] */
+			"",
+			/* [12] */
+			"B",
+			/* [13] */
+			"Q",
+			/* [14] */
+			"W",
+			/* [15] */
+			"E",
+			/* [16] */
+			"R",
+			/* [17] */
+			"Y",
+			/* [18] */
+			"T",
+			/* [19] */
+			"1",
+			/* [20] */
+			"2",
+			/* [21] */
+			"3",
+			/* [22] */
+			"4",
+			/* [23] */
+			"6",
+			/* [24] */
+			"5",
+			/* [25] */
+			"=",
+			/* [26] */
+			"9",
+			/* [27] */
+			"7",
+			/* [28] */
+			"-",
+			/* [29] */
+			"8",
+			/* [30] */
+			"0",
+			/* [31] */
+			"]",
+			/* [32] */
+			"O",
+			/* [33] */
+			"U",
+			/* [34] */
+			"[",
+			/* [35] */
+			"I",
+			/* [36] */
+			"P",
+			/* [37] */
+			"\n",
+			/* [38] */
+			"L",
+			/* [39] */
+			"J",
+			/* [40] */
+			"'",
+			/* [41] */
+			"K",
+			/* [42] */
+			";",
+			/* [43] */
+			"\\",
+			/* [44] */
+			",",
+			/* [45] */
+			"/",
+			/* [46] */
+			"N",
+			/* [47] */
+			"M",
+			/* [48] */
+			".",
+			/* [49] */
+			"\t",
+			/* [50] */
+			" ",
+			/* [51] */
+			"`",
+			/* [52] */
+			"\b",
+			/* [53] */
+			"\0x03",
+			/* [54] */
+			"\0x1B",
+			/* [55] */
+			"",
+			/* [56] */
+			"",
+			/* [57] */
+			"",
+			/* [58] */
+			"",
+			/* [59] */
+			"",
+			/* [60] */
+			"",
+			/* [61] */
+			"",
+			/* [62] */
+			"",
+			/* [63] */
+			"",
+			/* [64] */
+			"",
+			/* [65] */
+			"",
+			/* [66] */
+			".",
+			/* [67] */
+			"\0x1D",
+			/* [68] */
+			"*",
+			/* [69] */
+			"",
+			/* [70] */
+			"+",
+			/* [71] */
+			"\0x1C",
+			/* [72] */
+			"\0x1B",
+			/* [73] */
+			"\0x1F",
+			/* [74] */
+			"",
+			/* [75] */
+			"",
+			/* [76] */
+			"/",
+			/* [77] */
+			"\0x03",
+			/* [78] */
+			"\0x1E",
+			/* [79] */
+			"-",
+			/* [80] */
+			"",
+			/* [81] */
+			"",
+			/* [82] */
+			"=",
+			/* [83] */
+			"0",
+			/* [84] */
+			"1",
+			/* [85] */
+			"2",
+			/* [86] */
+			"3",
+			/* [87] */
+			"4",
+			/* [88] */
+			"5",
+			/* [89] */
+			"6",
+			/* [90] */
+			"7",
+			/* [91] */
+			"",
+			/* [92] */
+			"8",
+			/* [93] */
+			"9",
+			/* [94] */
+			"",
+			/* [95] */
+			"",
+			/* [96] */
+			"",
+			/* [97] */
+			"\0x10",
+			/* [98] */
+			"\0x10",
+			/* [99] */
+			"\0x10",
+			/* [100] */
+			"\0x10",
+			/* [101] */
+			"\0x10",
+			/* [102] */
+			"\0x10",
+			/* [103] */
+			"\0x10",
+			/* [104] */
+			"\0x10",
+			/* [105] */
+			"\0x10",
+			/* [106] */
+			"\0x10",
+			/* [107] */
+			"\0x10",
+			/* [108] */
+			"\0x10",
+			/* [109] */
+			"\0x10",
+			/* [110] */
+			"\0x10",
+			/* [111] */
+			"\0x10",
+			/* [112] */
+			"\0x10",
+			/* [113] */
+			"\0x10",
+			/* [114] */
+			"\0x10",
+			/* [115] */
+			"\0x05",
+			/* [116] */
+			"\0x01",
+			/* [117] */
+			"\v",
+			/* [118] */
+			"\?",
+			/* [119] */
+			"\0x10",
+			/* [120] */
+			"\0x04",
+			/* [121] */
+			"\0x10",
+			/* [122] */
+			"\f",
+			/* [123] */
+			"\0x10",
+			/* [124] */
+			"\0x1C",
+			/* [125] */
+			"\0x1D",
+			/* [126] */
+			"\0x1F",
+			/* [127] */
+			"\0x1E",
+			/* [128] */
+			""
+		},
+		/* [4] */
+		{	/* array: 128 elements */
+			/* [1] */
+			"å",
+			/* [2] */
+			"ß",
+			/* [3] */
+			"∂",
+			/* [4] */
+			"ƒ",
+			/* [5] */
+			"\0xFA",
+			/* [6] */
+			"©",
+			/* [7] */
+			"Ω",
+			/* [8] */
+			"≈",
+			/* [9] */
+			"ç",
+			/* [10] */
+			"√",
+			/* [11] */
+			"",
+			/* [12] */
+			"∫",
+			/* [13] */
+			"œ",
+			/* [14] */
+			"∑",
+			/* [15] */
+			"é",
+			/* [16] */
+			"®",
+			/* [17] */
+			"¥",
+			/* [18] */
+			"†",
+			/* [19] */
+			"¡",
+			/* [20] */
+			"™",
+			/* [21] */
+			"£",
+			/* [22] */
+			"¢",
+			/* [23] */
+			"§",
+			/* [24] */
+			"∞",
+			/* [25] */
+			"≠",
+			/* [26] */
+			"ª",
+			/* [27] */
+			"¶",
+			/* [28] */
+			"–",
+			/* [29] */
+			"•",
+			/* [30] */
+			"º",
+			/* [31] */
+			"‘",
+			/* [32] */
+			"ø",
+			/* [33] */
+			"ü",
+			/* [34] */
+			"“",
+			/* [35] */
+			"î",
+			/* [36] */
+			"π",
+			/* [37] */
+			"\n",
+			/* [38] */
+			"¬",
+			/* [39] */
+			"∆",
+			/* [40] */
+			"æ",
+			/* [41] */
+			"\0xFB",
+			/* [42] */
+			"…",
+			/* [43] */
+			"«",
+			/* [44] */
+			"≤",
+			/* [45] */
+			"÷",
+			/* [46] */
+			"ñ",
+			/* [47] */
+			"µ",
+			/* [48] */
+			"≥",
+			/* [49] */
+			"\t",
+			/* [50] */
+			" ",
+			/* [51] */
+			"è",
+			/* [52] */
+			"\b",
+			/* [53] */
+			"\0x03",
+			/* [54] */
+			"\0x1B",
+			/* [55] */
+			"",
+			/* [56] */
+			"",
+			/* [57] */
+			"",
+			/* [58] */
+			"",
+			/* [59] */
+			"",
+			/* [60] */
+			"",
+			/* [61] */
+			"",
+			/* [62] */
+			"",
+			/* [63] */
+			"",
+			/* [64] */
+			"",
+			/* [65] */
+			"",
+			/* [66] */
+			".",
+			/* [67] */
+			"\0x1D",
+			/* [68] */
+			"*",
+			/* [69] */
+			"",
+			/* [70] */
+			"+",
+			/* [71] */
+			"\0x1C",
+			/* [72] */
+			"\0x1B",
+			/* [73] */
+			"\0x1F",
+			/* [74] */
+			"",
+			/* [75] */
+			"",
+			/* [76] */
+			"/",
+			/* [77] */
+			"\0x03",
+			/* [78] */
+			"\0x1E",
+			/* [79] */
+			"-",
+			/* [80] */
+			"",
+			/* [81] */
+			"",
+			/* [82] */
+			"=",
+			/* [83] */
+			"0",
+			/* [84] */
+			"1",
+			/* [85] */
+			"2",
+			/* [86] */
+			"3",
+			/* [87] */
+			"4",
+			/* [88] */
+			"5",
+			/* [89] */
+			"6",
+			/* [90] */
+			"7",
+			/* [91] */
+			"",
+			/* [92] */
+			"8",
+			/* [93] */
+			"9",
+			/* [94] */
+			"",
+			/* [95] */
+			"",
+			/* [96] */
+			"",
+			/* [97] */
+			"\0x10",
+			/* [98] */
+			"\0x10",
+			/* [99] */
+			"\0x10",
+			/* [100] */
+			"\0x10",
+			/* [101] */
+			"\0x10",
+			/* [102] */
+			"\0x10",
+			/* [103] */
+			"\0x10",
+			/* [104] */
+			"\0x10",
+			/* [105] */
+			"\0x10",
+			/* [106] */
+			"\0x10",
+			/* [107] */
+			"\0x10",
+			/* [108] */
+			"\0x10",
+			/* [109] */
+			"\0x10",
+			/* [110] */
+			"\0x10",
+			/* [111] */
+			"\0x10",
+			/* [112] */
+			"\0x10",
+			/* [113] */
+			"\0x10",
+			/* [114] */
+			"\0x10",
+			/* [115] */
+			"\0x05",
+			/* [116] */
+			"\0x01",
+			/* [117] */
+			"\v",
+			/* [118] */
+			"\?",
+			/* [119] */
+			"\0x10",
+			/* [120] */
+			"\0x04",
+			/* [121] */
+			"\0x10",
+			/* [122] */
+			"\f",
+			/* [123] */
+			"\0x10",
+			/* [124] */
+			"\0x1C",
+			/* [125] */
+			"\0x1D",
+			/* [126] */
+			"\0x1F",
+			/* [127] */
+			"\0x1E",
+			/* [128] */
+			""
+		},
+		/* [5] */
+		{	/* array: 128 elements */
+			/* [1] */
+			"Å",
+			/* [2] */
+			"\0xEA",
+			/* [3] */
+			"\0xEB",
+			/* [4] */
+			"\0xEC",
+			/* [5] */
+			"\0xEE",
+			/* [6] */
+			"\0xED",
+			/* [7] */
+			"\0xF3",
+			/* [8] */
+			"\0xF4",
+			/* [9] */
+			"Ç",
+			/* [10] */
+			"◊",
+			/* [11] */
+			"",
+			/* [12] */
+			"\0xF5",
+			/* [13] */
+			"Œ",
+			/* [14] */
+			"\0xE3",
+			/* [15] */
+			"\0xE4",
+			/* [16] */
+			"\0xE5",
+			/* [17] */
+			"\0xE7",
+			/* [18] */
+			"\0xE6",
+			/* [19] */
+			"\0xDA",
+			/* [20] */
+			"\0xDB",
+			/* [21] */
+			"\0xDC",
+			/* [22] */
+			"\0xDD",
+			/* [23] */
+			"\0xDF",
+			/* [24] */
+			"\0xDE",
+			/* [25] */
+			"±",
+			/* [26] */
+			"\0xE1",
+			/* [27] */
+			"\0xE0",
+			/* [28] */
+			"—",
+			/* [29] */
+			"°",
+			/* [30] */
+			"\0xE2",
+			/* [31] */
+			"’",
+			/* [32] */
+			"Ø",
+			/* [33] */
+			"\0xE8",
+			/* [34] */
+			"”",
+			/* [35] */
+			"\0xE9",
+			/* [36] */
+			"∏",
+			/* [37] */
+			"\n",
+			/* [38] */
+			"\0xF1",
+			/* [39] */
+			"\0xEF",
+			/* [40] */
+			"Æ",
+			/* [41] */
+			"\0xF0",
+			/* [42] */
+			"\0xF2",
+			/* [43] */
+			"»",
+			/* [44] */
+			"\0xF8",
+			/* [45] */
+			"¿",
+			/* [46] */
+			"\0xF6",
+			/* [47] */
+			"\0xF7",
+			/* [48] */
+			"\0xF9",
+			/* [49] */
+			"\t",
+			/* [50] */
+			" ",
+			/* [51] */
+			"\0xD9",
+			/* [52] */
+			"\b",
+			/* [53] */
+			"\0x03",
+			/* [54] */
+			"\0x1B",
+			/* [55] */
+			"",
+			/* [56] */
+			"",
+			/* [57] */
+			"",
+			/* [58] */
+			"",
+			/* [59] */
+			"",
+			/* [60] */
+			"",
+			/* [61] */
+			"",
+			/* [62] */
+			"",
+			/* [63] */
+			"",
+			/* [64] */
+			"",
+			/* [65] */
+			"",
+			/* [66] */
+			".",
+			/* [67] */
+			"*",
+			/* [68] */
+			"*",
+			/* [69] */
+			"",
+			/* [70] */
+			"+",
+			/* [71] */
+			"+",
+			/* [72] */
+			"\0x1B",
+			/* [73] */
+			"=",
+			/* [74] */
+			"",
+			/* [75] */
+			"",
+			/* [76] */
+			"/",
+			/* [77] */
+			"\0x03",
+			/* [78] */
+			"/",
+			/* [79] */
+			"-",
+			/* [80] */
+			"",
+			/* [81] */
+			"",
+			/* [82] */
+			"=",
+			/* [83] */
+			"0",
+			/* [84] */
+			"1",
+			/* [85] */
+			"2",
+			/* [86] */
+			"3",
+			/* [87] */
+			"4",
+			/* [88] */
+			"5",
+			/* [89] */
+			"6",
+			/* [90] */
+			"7",
+			/* [91] */
+			"",
+			/* [92] */
+			"8",
+			/* [93] */
+			"9",
+			/* [94] */
+			"",
+			/* [95] */
+			"",
+			/* [96] */
+			"",
+			/* [97] */
+			"\0x10",
+			/* [98] */
+			"\0x10",
+			/* [99] */
+			"\0x10",
+			/* [100] */
+			"\0x10",
+			/* [101] */
+			"\0x10",
+			/* [102] */
+			"\0x10",
+			/* [103] */
+			"\0x10",
+			/* [104] */
+			"\0x10",
+			/* [105] */
+			"\0x10",
+			/* [106] */
+			"\0x10",
+			/* [107] */
+			"\0x10",
+			/* [108] */
+			"\0x10",
+			/* [109] */
+			"\0x10",
+			/* [110] */
+			"\0x10",
+			/* [111] */
+			"\0x10",
+			/* [112] */
+			"\0x10",
+			/* [113] */
+			"\0x10",
+			/* [114] */
+			"\0x10",
+			/* [115] */
+			"\0x05",
+			/* [116] */
+			"\0x01",
+			/* [117] */
+			"\v",
+			/* [118] */
+			"\?",
+			/* [119] */
+			"\0x10",
+			/* [120] */
+			"\0x04",
+			/* [121] */
+			"\0x10",
+			/* [122] */
+			"\f",
+			/* [123] */
+			"\0x10",
+			/* [124] */
+			"\0x1C",
+			/* [125] */
+			"\0x1D",
+			/* [126] */
+			"\0x1F",
+			/* [127] */
+			"\0x1E",
+			/* [128] */
+			""
+		},
+		/* [6] */
+		{	/* array: 128 elements */
+			/* [1] */
+			"Å",
+			/* [2] */
+			"\0xEA",
+			/* [3] */
+			"\0xEB",
+			/* [4] */
+			"\0xEC",
+			/* [5] */
+			"\0xEE",
+			/* [6] */
+			"\0xED",
+			/* [7] */
+			"\0xF3",
+			/* [8] */
+			"\0xF4",
+			/* [9] */
+			"Ç",
+			/* [10] */
+			"◊",
+			/* [11] */
+			"",
+			/* [12] */
+			"\0xF5",
+			/* [13] */
+			"Œ",
+			/* [14] */
+			"\0xE3",
+			/* [15] */
+			"\0xE4",
+			/* [16] */
+			"\0xE5",
+			/* [17] */
+			"\0xE7",
+			/* [18] */
+			"\0xE6",
+			/* [19] */
+			"¡",
+			/* [20] */
+			"™",
+			/* [21] */
+			"£",
+			/* [22] */
+			"¢",
+			/* [23] */
+			"§",
+			/* [24] */
+			"∞",
+			/* [25] */
+			"≠",
+			/* [26] */
+			"ª",
+			/* [27] */
+			"¶",
+			/* [28] */
+			"–",
+			/* [29] */
+			"•",
+			/* [30] */
+			"º",
+			/* [31] */
+			"‘",
+			/* [32] */
+			"Ø",
+			/* [33] */
+			"\0xE8",
+			/* [34] */
+			"“",
+			/* [35] */
+			"\0xE9",
+			/* [36] */
+			"∏",
+			/* [37] */
+			"\n",
+			/* [38] */
+			"\0xF1",
+			/* [39] */
+			"\0xEF",
+			/* [40] */
+			"Æ",
+			/* [41] */
+			"\0xF0",
+			/* [42] */
+			"…",
+			/* [43] */
+			"«",
+			/* [44] */
+			"≤",
+			/* [45] */
+			"÷",
+			/* [46] */
+			"\0xF6",
+			/* [47] */
+			"\0xF7",
+			/* [48] */
+			"≥",
+			/* [49] */
+			"\t",
+			/* [50] */
+			" ",
+			/* [51] */
+			"`",
+			/* [52] */
+			"\b",
+			/* [53] */
+			"\0x03",
+			/* [54] */
+			"\0x1B",
+			/* [55] */
+			"",
+			/* [56] */
+			"",
+			/* [57] */
+			"",
+			/* [58] */
+			"",
+			/* [59] */
+			"",
+			/* [60] */
+			"",
+			/* [61] */
+			"",
+			/* [62] */
+			"",
+			/* [63] */
+			"",
+			/* [64] */
+			"",
+			/* [65] */
+			"",
+			/* [66] */
+			".",
+			/* [67] */
+			"\0x1D",
+			/* [68] */
+			"*",
+			/* [69] */
+			"",
+			/* [70] */
+			"+",
+			/* [71] */
+			"\0x1C",
+			/* [72] */
+			"\0x1B",
+			/* [73] */
+			"\0x1F",
+			/* [74] */
+			"",
+			/* [75] */
+			"",
+			/* [76] */
+			"/",
+			/* [77] */
+			"\0x03",
+			/* [78] */
+			"\0x1E",
+			/* [79] */
+			"-",
+			/* [80] */
+			"",
+			/* [81] */
+			"",
+			/* [82] */
+			"=",
+			/* [83] */
+			"0",
+			/* [84] */
+			"1",
+			/* [85] */
+			"2",
+			/* [86] */
+			"3",
+			/* [87] */
+			"4",
+			/* [88] */
+			"5",
+			/* [89] */
+			"6",
+			/* [90] */
+			"7",
+			/* [91] */
+			"",
+			/* [92] */
+			"8",
+			/* [93] */
+			"9",
+			/* [94] */
+			"",
+			/* [95] */
+			"",
+			/* [96] */
+			"",
+			/* [97] */
+			"\0x10",
+			/* [98] */
+			"\0x10",
+			/* [99] */
+			"\0x10",
+			/* [100] */
+			"\0x10",
+			/* [101] */
+			"\0x10",
+			/* [102] */
+			"\0x10",
+			/* [103] */
+			"\0x10",
+			/* [104] */
+			"\0x10",
+			/* [105] */
+			"\0x10",
+			/* [106] */
+			"\0x10",
+			/* [107] */
+			"\0x10",
+			/* [108] */
+			"\0x10",
+			/* [109] */
+			"\0x10",
+			/* [110] */
+			"\0x10",
+			/* [111] */
+			"\0x10",
+			/* [112] */
+			"\0x10",
+			/* [113] */
+			"\0x10",
+			/* [114] */
+			"\0x10",
+			/* [115] */
+			"\0x05",
+			/* [116] */
+			"\0x01",
+			/* [117] */
+			"\v",
+			/* [118] */
+			"\?",
+			/* [119] */
+			"\0x10",
+			/* [120] */
+			"\0x04",
+			/* [121] */
+			"\0x10",
+			/* [122] */
+			"\f",
+			/* [123] */
+			"\0x10",
+			/* [124] */
+			"\0x1C",
+			/* [125] */
+			"\0x1D",
+			/* [126] */
+			"\0x1F",
+			/* [127] */
+			"\0x1E",
+			/* [128] */
+			""
+		},
+		/* [7] */
+		{	/* array: 128 elements */
+			/* [1] */
+			"å",
+			/* [2] */
+			"ß",
+			/* [3] */
+			"∂",
+			/* [4] */
+			"ƒ",
+			/* [5] */
+			"\0xFA",
+			/* [6] */
+			"©",
+			/* [7] */
+			"Ω",
+			/* [8] */
+			"≈",
+			/* [9] */
+			"ç",
+			/* [10] */
+			"√",
+			/* [11] */
+			"",
+			/* [12] */
+			"∫",
+			/* [13] */
+			"œ",
+			/* [14] */
+			"∑",
+			/* [15] */
+			"´",
+			/* [16] */
+			"®",
+			/* [17] */
+			"¥",
+			/* [18] */
+			"†",
+			/* [19] */
+			"¡",
+			/* [20] */
+			"™",
+			/* [21] */
+			"£",
+			/* [22] */
+			"¢",
+			/* [23] */
+			"§",
+			/* [24] */
+			"∞",
+			/* [25] */
+			"≠",
+			/* [26] */
+			"ª",
+			/* [27] */
+			"¶",
+			/* [28] */
+			"–",
+			/* [29] */
+			"•",
+			/* [30] */
+			"º",
+			/* [31] */
+			"‘",
+			/* [32] */
+			"ø",
+			/* [33] */
+			"¨",
+			/* [34] */
+			"“",
+			/* [35] */
+			"^",
+			/* [36] */
+			"π",
+			/* [37] */
+			"\n",
+			/* [38] */
+			"¬",
+			/* [39] */
+			"∆",
+			/* [40] */
+			"æ",
+			/* [41] */
+			"\0xFB",
+			/* [42] */
+			"…",
+			/* [43] */
+			"«",
+			/* [44] */
+			"≤",
+			/* [45] */
+			"÷",
+			/* [46] */
+			"~",
+			/* [47] */
+			"µ",
+			/* [48] */
+			"≥",
+			/* [49] */
+			"\t",
+			/* [50] */
+			" ",
+			/* [51] */
+			"`",
+			/* [52] */
+			"\b",
+			/* [53] */
+			"\0x03",
+			/* [54] */
+			"\0x1B",
+			/* [55] */
+			"",
+			/* [56] */
+			"",
+			/* [57] */
+			"",
+			/* [58] */
+			"",
+			/* [59] */
+			"",
+			/* [60] */
+			"",
+			/* [61] */
+			"",
+			/* [62] */
+			"",
+			/* [63] */
+			"",
+			/* [64] */
+			"",
+			/* [65] */
+			"",
+			/* [66] */
+			".",
+			/* [67] */
+			"\0x1D",
+			/* [68] */
+			"*",
+			/* [69] */
+			"",
+			/* [70] */
+			"+",
+			/* [71] */
+			"\0x1C",
+			/* [72] */
+			"\0x1B",
+			/* [73] */
+			"\0x1F",
+			/* [74] */
+			"",
+			/* [75] */
+			"",
+			/* [76] */
+			"/",
+			/* [77] */
+			"\0x03",
+			/* [78] */
+			"\0x1E",
+			/* [79] */
+			"-",
+			/* [80] */
+			"",
+			/* [81] */
+			"",
+			/* [82] */
+			"=",
+			/* [83] */
+			"0",
+			/* [84] */
+			"1",
+			/* [85] */
+			"2",
+			/* [86] */
+			"3",
+			/* [87] */
+			"4",
+			/* [88] */
+			"5",
+			/* [89] */
+			"6",
+			/* [90] */
+			"7",
+			/* [91] */
+			"",
+			/* [92] */
+			"8",
+			/* [93] */
+			"9",
+			/* [94] */
+			"",
+			/* [95] */
+			"",
+			/* [96] */
+			"",
+			/* [97] */
+			"\0x10",
+			/* [98] */
+			"\0x10",
+			/* [99] */
+			"\0x10",
+			/* [100] */
+			"\0x10",
+			/* [101] */
+			"\0x10",
+			/* [102] */
+			"\0x10",
+			/* [103] */
+			"\0x10",
+			/* [104] */
+			"\0x10",
+			/* [105] */
+			"\0x10",
+			/* [106] */
+			"\0x10",
+			/* [107] */
+			"\0x10",
+			/* [108] */
+			"\0x10",
+			/* [109] */
+			"\0x10",
+			/* [110] */
+			"\0x10",
+			/* [111] */
+			"\0x10",
+			/* [112] */
+			"\0x10",
+			/* [113] */
+			"\0x10",
+			/* [114] */
+			"\0x10",
+			/* [115] */
+			"\0x05",
+			/* [116] */
+			"\0x01",
+			/* [117] */
+			"\v",
+			/* [118] */
+			"\?",
+			/* [119] */
+			"\0x10",
+			/* [120] */
+			"\0x04",
+			/* [121] */
+			"\0x10",
+			/* [122] */
+			"\f",
+			/* [123] */
+			"\0x10",
+			/* [124] */
+			"\0x1C",
+			/* [125] */
+			"\0x1D",
+			/* [126] */
+			"\0x1F",
+			/* [127] */
+			"\0x1E",
+			/* [128] */
+			""
+		},
+		/* [8] */
+		{	/* array: 128 elements */
+			/* [1] */
+			"\0x01",
+			/* [2] */
+			"\0x13",
+			/* [3] */
+			"\0x04",
+			/* [4] */
+			"\0x06",
+			/* [5] */
+			"\b",
+			/* [6] */
+			"\0x07",
+			/* [7] */
+			"\0x1A",
+			/* [8] */
+			"\0x18",
+			/* [9] */
+			"\0x03",
+			/* [10] */
+			"\0x16",
+			/* [11] */
+			"0",
+			/* [12] */
+			"\0x02",
+			/* [13] */
+			"\0x11",
+			/* [14] */
+			"\0x17",
+			/* [15] */
+			"\0x05",
+			/* [16] */
+			"\0x12",
+			/* [17] */
+			"\0x19",
+			/* [18] */
+			"\0x14",
+			/* [19] */
+			"1",
+			/* [20] */
+			"2",
+			/* [21] */
+			"3",
+			/* [22] */
+			"4",
+			/* [23] */
+			"6",
+			/* [24] */
+			"5",
+			/* [25] */
+			"=",
+			/* [26] */
+			"9",
+			/* [27] */
+			"7",
+			/* [28] */
+			"\0x1F",
+			/* [29] */
+			"8",
+			/* [30] */
+			"0",
+			/* [31] */
+			"\0x1D",
+			/* [32] */
+			"\0x0F",
+			/* [33] */
+			"\0x15",
+			/* [34] */
+			"\0x1B",
+			/* [35] */
+			"\t",
+			/* [36] */
+			"\0x10",
+			/* [37] */
+			"\n",
+			/* [38] */
+			"\f",
+			/* [39] */
+			"\0x0A",
+			/* [40] */
+			"'",
+			/* [41] */
+			"\v",
+			/* [42] */
+			";",
+			/* [43] */
+			"\0x1C",
+			/* [44] */
+			",",
+			/* [45] */
+			"/",
+			/* [46] */
+			"\0x0E",
+			/* [47] */
+			"\n",
+			/* [48] */
+			".",
+			/* [49] */
+			"\t",
+			/* [50] */
+			" ",
+			/* [51] */
+			"`",
+			/* [52] */
+			"\b",
+			/* [53] */
+			"\0x03",
+			/* [54] */
+			"\0x1B",
+			/* [55] */
+			"",
+			/* [56] */
+			"",
+			/* [57] */
+			"",
+			/* [58] */
+			"",
+			/* [59] */
+			"",
+			/* [60] */
+			"",
+			/* [61] */
+			"",
+			/* [62] */
+			"",
+			/* [63] */
+			"",
+			/* [64] */
+			"",
+			/* [65] */
+			"",
+			/* [66] */
+			".",
+			/* [67] */
+			"\0x1D",
+			/* [68] */
+			"*",
+			/* [69] */
+			"",
+			/* [70] */
+			"+",
+			/* [71] */
+			"\0x1C",
+			/* [72] */
+			"\0x1B",
+			/* [73] */
+			"\0x1F",
+			/* [74] */
+			"",
+			/* [75] */
+			"",
+			/* [76] */
+			"/",
+			/* [77] */
+			"\0x03",
+			/* [78] */
+			"\0x1E",
+			/* [79] */
+			"-",
+			/* [80] */
+			"",
+			/* [81] */
+			"",
+			/* [82] */
+			"=",
+			/* [83] */
+			"0",
+			/* [84] */
+			"1",
+			/* [85] */
+			"2",
+			/* [86] */
+			"3",
+			/* [87] */
+			"4",
+			/* [88] */
+			"5",
+			/* [89] */
+			"6",
+			/* [90] */
+			"7",
+			/* [91] */
+			"",
+			/* [92] */
+			"8",
+			/* [93] */
+			"9",
+			/* [94] */
+			"",
+			/* [95] */
+			"",
+			/* [96] */
+			"",
+			/* [97] */
+			"\0x10",
+			/* [98] */
+			"\0x10",
+			/* [99] */
+			"\0x10",
+			/* [100] */
+			"\0x10",
+			/* [101] */
+			"\0x10",
+			/* [102] */
+			"\0x10",
+			/* [103] */
+			"\0x10",
+			/* [104] */
+			"\0x10",
+			/* [105] */
+			"\0x10",
+			/* [106] */
+			"\0x10",
+			/* [107] */
+			"\0x10",
+			/* [108] */
+			"\0x10",
+			/* [109] */
+			"\0x10",
+			/* [110] */
+			"\0x10",
+			/* [111] */
+			"\0x10",
+			/* [112] */
+			"\0x10",
+			/* [113] */
+			"\0x10",
+			/* [114] */
+			"\0x10",
+			/* [115] */
+			"\0x05",
+			/* [116] */
+			"\0x01",
+			/* [117] */
+			"\v",
+			/* [118] */
+			"\?",
+			/* [119] */
+			"\0x10",
+			/* [120] */
+			"\0x04",
+			/* [121] */
+			"\0x10",
+			/* [122] */
+			"\f",
+			/* [123] */
+			"\0x10",
+			/* [124] */
+			"\0x1C",
+			/* [125] */
+			"\0x1D",
+			/* [126] */
+			"\0x1F",
+			/* [127] */
+			"\0x1E",
+			/* [128] */
+			""
+		}
+	},
+	{	/* array DeadArray: 0 elements */
+	}
 };
 
 /* and the icon for our new key map */
 resource 'SICN' (13000) {
 	{	/* array: 1 elements */
 		/* [1] */
-		$"0003 0023 0050 00FC 013C 0E7C 38E8 4328"
-		$"8C50 8850 88D8 E9F8 5978 7620 3FE0 07F0"
+		$"0DD8 1634 1C1C 2002 5009 5819 4662 318C"
+		$"0C30 1FFE 7AB2 C953 8AB1 8D79 8FF8 9FF8"
 	}
 };
-#endif SCRIPTMGR

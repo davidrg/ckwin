@@ -1,7 +1,0 @@
-xktock.c is a program that renames the xk*.* files to ck*.* in the current
-directory, so that you can compile them with the Makefile, and so that the
-include files will have the right names.  Compile xktock with your C compiler
-(e.g. "cc -o xktock xktock.c") and then run it (e.g. "xktock xk*").
-
-Before doing this, you should have put all the xk* files in their own
-directory and cd'd to it.

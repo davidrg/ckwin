@@ -1,10 +1,11 @@
 /*  C K U U S 2  --  "User Interface" STRINGS module for Unix Kermit  */
  
 /*
- Author: Frank da Cruz (SY.FDC@CU20B),
- Columbia University Center for Computing Activities, January 1985.
- Copyright (C) 1985, Trustees of Columbia University in the City of New York.
- Permission is granted to any individual or institution to use, copy, or
+ Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
+ Columbia University Center for Computing Activities.
+ First released January 1985.
+ Copyright (C) 1985, 1989, Trustees of Columbia University in the City of New 
+ York.  Permission is granted to any individual or institution to use, copy, or
  redistribute this software so long as it is not sold for profit, provided this
  copyright notice is retained. 
 */
@@ -23,11 +24,11 @@ extern CHAR data[], *rdatap, ttname[];
 extern char cmdbuf[], line[], debfil[], pktfil[], sesfil[], trafil[];
 extern int nrmt, nprm, dfloc, deblog, seslog, speed, local, parity, duplex;
 extern int turn, turnch, pktlog, tralog, mdmtyp, flow, cmask, timef, spsizf;
-extern int rtimo, timint, npad, mypadn, bctr, delay;
+extern int rtimo, timint, srvtim, npad, mypadn, bctr, delay;
 extern int maxtry, spsiz, urpsiz, maxsps, maxrps, ebqflg, ebq;
 extern int rptflg, rptq, fncnv, binary, pktlog, warn, quiet, fmask, keep;
-extern int tsecs, bctu, len, atcapu, lpcapu, swcapu, wsize, sq, rpsiz;
-extern int capas;
+extern int tsecs, bctu, len, atcapu, lpcapu, swcapu, wslots, sq, rpsiz;
+extern int capas, atcapr;
 extern long filcnt, tfc, tlci, tlco, ffc, flci, flco;
 extern char *dftty, *versio, *ckxsys;
 extern struct keytab prmtab[];
@@ -51,7 +52,7 @@ char *hlp1[] = {
 "     settings --\n",
 "       -l line      communication line device\n",
 "       -b baud      line speed, e.g. 1200\n",
-"       -i           binary file or Unix-to-Unix (text by default)\n",
+"       -i           binary file (text by default)\n",
 "       -p x         parity, x is one of e,o,m,s,n\n",
 "       -t           line turnaround handshake = xon, half duplex\n",
 "       -w           don't write over preexisting files\n",
@@ -75,16 +76,16 @@ static char *tophlp[] = { "\n\
 Type ? for a list of commands, type 'help x' for any command x.\n\
 While typing commands, use the following special characters:\n\n\
  DEL, RUBOUT, BACKSPACE, CTRL-H: Delete the most recent character typed.\n\
- CTRL-W: Delete the most recent word typed.\n",
+ CTRL-W:  Delete the most recent word typed.\n",
  
 "\
- CTRL-U: Delete the current line.\n\
- CTRL-R: Redisplay the current line.\n\
- ?       (question mark) display help on the current command or field.\n\
- ESC     (Escape or Altmode) Attempt to complete the current field.\n",
+ CTRL-U:  Delete the current line.\n\
+ CTRL-R:  Redisplay the current line.\n\
+ ?        (question mark) Display help on the current command or field.\n\
+ ESC      (or TAB) Attempt to complete the current field.\n",
  
 "\
- \\       (backslash) include the following character literally.\n\n\
+ \\        (backslash) include the following character literally.\n\n\
 From system level, type 'kermit -h' to get help about command line args.\
 \n",
 "" };
@@ -172,7 +173,8 @@ Type of packet block check to be used for error detection, 1, 2, or 3.\n",
 "" } ;
 
  
-static char *hmxyf[] = { "set file: names, type, warning, display.\n\n",
+static char *hmxyf[] = { "\
+set file: names, type, warning, display.\n\n",
 "'names' are normally 'converted', which means file names are converted\n",
 "to 'common form' during transmission; 'literal' means use filenames\n",
 "literally (useful between like systems).\n\n",
@@ -222,7 +224,11 @@ Change Working Directory, equivalent to VMS SET DEFAULT command"));
 #ifdef datageneral
     return(hmsg("Change Working Directory, equivalent to DG 'dir' command"));
 #else
+#ifdef OS2
+   return(hmsg("Change Working Directory, equivalent to OS2 'chdir' command"));
+#else
     return(hmsg("Change Working Directory, equivalent to Unix 'cd' command"));
+#endif
 #endif
 #endif
  
@@ -269,7 +275,7 @@ case XXREC:
 case XXREM:
     if ((y = cmkey(remcmd,nrmt,"Remote command","")) == -2) return(y);
     if (y == -1) return(y);
-    if (x = (cmcfm()) < 0) return(x);
+    if ((x = cmcfm()) < 0) return(x);
     return(dohrmt(y));
  
 case XXSEN:
@@ -281,7 +287,7 @@ case XXSER:
 case XXSET:
     if ((y = cmkey(prmtab,nprm,"Parameter","")) == -2) return(y);
     if (y == -2) return(y);
-    if (x = (cmcfm()) < 0) return(x);
+    if ((x = cmcfm()) < 0) return(x);
     return(dohset(y));
  
 case XXSHE:
@@ -297,8 +303,13 @@ Issue a command to CLI (space required after '!')"));
     return(hmsg("\
 Issue a command to the CLI (space required after '!')"));
 #else
+#ifdef OS2
+    return(hmsg("\
+Issue a command to CMD.EXE (space required after '!')"));
+#else
     return(hmsg("\
 Issue a command to the Unix shell (space required after '!')"));
+#endif
 #endif
 #endif
 #endif
@@ -325,8 +336,15 @@ case XXTAK:
 Take Kermit commands from the named file.  Kermit command files may\n\
 themselves contain 'take' commands, up to a reasonable depth of nesting."));
  
+case XXTRA:
+    return(hmsg("\
+Raw upload. Send a file, a line at a time (text) or a character at a time.\n\
+For text, wait for turnaround character (default 10 = LF) after each line.\n\
+Specify 0 for no waiting."
+));
+
 default:
-    if (x = (cmcfm()) < 0) return(x);
+    if ((x = cmcfm()) < 0) return(x);
     printf("Not available yet - %s\n",cmdbuf);
     break;
     }
@@ -345,9 +363,9 @@ hmsg(s) char *s; {
  
 hmsga(s) char *s[]; {			/* Same function, but for arrays */
     int x, i;
-    if ( x = (cmcfm()) < 0) return(x);
+    if ((x = cmcfm()) < 0) return(x);
     for ( i = 0; *s[i] ; i++ ) fputs(s[i], stdout);
-    fputc( '\n', stdout);
+    putc( '\n', stdout);
     return(0);
 }
 
@@ -360,6 +378,14 @@ dohset(xx) int xx; {
     if (xx < 0) return(xx);
     switch (xx) {
  
+case XYATTR:
+    puts("Turn Attribute packet exchange off or on");
+    return(0);
+
+case XYIFD:
+    puts("Discard or Keep incompletely received files, default is discard");
+    return(0);
+
 case XYCHKT:
     return(hmsga(hmxychkt));
  
@@ -368,6 +394,11 @@ case XYDELA:
 Number of seconds to wait before sending first packet after 'send' command.");
     return(0);
  
+case XYTERM:
+    puts("\
+'set terminal bytesize 7 or 8' to use 7- or 8-bit terminal characters.");
+    return(0);
+
 case XYDUPL:
     puts("\
 During 'connect': 'full' means remote host echoes, 'half' means this program");
@@ -459,7 +490,12 @@ Communication line speed for external tty line specified in most recent");
 #else
     puts("\
 'set line' command.  Any of the common baud rates:");
+#ifdef OS2
+    puts(" 0, 110, 150, 300, 600, 1200, 2400, 4800, 9600, 19200.");
+    puts("The highest speed available is hardware-dependant");
+#else
     puts(" 0, 110, 150, 300, 600, 1200, 1800, 2400, 4800, 9600, 19200.");
+#endif
 #endif
 #endif
     return(0);
@@ -490,6 +526,14 @@ Start-Of-Packet (ASCII value), and Timeout (94 seconds or less),");
 all specified as decimal numbers.");
     return(0);
  
+case XYSERV:
+    puts("server timeout:");
+    puts("\
+Server command wait timeout interval, how often the C-Kermit server issues");
+    puts("\
+a NAK while waiting for a command packet.  Specify 0 for no NAKs at all.");
+    return(0);
+
 default:
     printf("%s","Not available yet - %s\n",cmdbuf);
     return(0);
@@ -540,7 +584,7 @@ Ask the remote Kermit server to list who's logged in, or to give information\n\
 about the specified user."));
  
 default:
-    if (x = (cmcfm()) < 0) return(x);
+    if ((x = cmcfm()) < 0) return(x);
     printf("%s","not working yet - %s\n",cmdbuf);
     return(-2);
     }
@@ -638,6 +682,7 @@ dolog(x) int x; {
 debopn(s) char *s; {
 #ifdef DEBUG
     char *tp;
+
     zclose(ZDFILE);
     deblog = zopeno(ZDFILE,s);
     if (deblog > 0) {
@@ -694,7 +739,8 @@ shopar() {
     printf("\nProtocol Parameters:   Send    Receive");
     if (timef || spsizf) printf("    (* = override)");
     printf("\n Timeout:      %11d%9d", rtimo,  timint);
-    if (timef) printf("*");
+    if (timef) printf("*"); else printf(" ");
+    printf("       Server timeout:%4d\n",srvtim);
     printf("\n Padding:      %11d%9d", npad,   mypadn);
     printf("        Block Check: %6d\n",bctr);
     printf(  " Pad Character:%11d%9d", padch,  mypadc);
@@ -711,7 +757,9 @@ shopar() {
       printf("   Repeat Prefix:  '%c'",rptq);
     printf(  "\n Length Limit: %11d%9d\n", maxsps, maxrps);
  
-    printf("\nFile parameters:\n File Names:   ");
+    printf("\nFile parameters:              Attributes:       ");
+    if (atcapr) printf("on"); else printf("off");
+    printf("\n File Names:   ");
     if (fncnv) printf("%-12s","converted"); else printf("%-12s","literal");
 #ifdef DEBUG
     printf("   Debugging Log:    ");
@@ -753,7 +801,7 @@ dostat() {
 	if (tsecs > 0) {
 	    long lx;
 	    lx = (tfc * 10l) / tsecs;
-	    printf(" effective baud rate    : %ld\n",lx);
+	    printf(" effective data rate    : %ld\n",lx);
 	    if (speed > 0) {
 		lx = (lx * 100l) / speed;
 		printf(" efficiency             : %ld %%\n",lx);
@@ -773,6 +821,7 @@ dostat() {
 /*  F S T A T S  --  Record file statistics in transaction log  */
 
 fstats() {
+    tfc += ffc;      
     tlog(F100," end of file","",0l);
     tlog(F101,"  file characters        ","",ffc);
     tlog(F101,"  communication line in  ","",flci);
@@ -803,14 +852,15 @@ tstats() {
 
     tlog(F101," elapsed time (seconds)  ","",(long) tsecs);
     if (tsecs > 0) {
-	x = (tfc / tsecs) * 10;
-	tlog(F101," effective baud rate     ","",x);
+	long lx;
+	lx = (tfc / tsecs) * 10;
+	tlog(F101," effective baud rate     ","",lx);
 	if (speed > 0) {
-	    x = (x * 100) / speed;
-	    tlog(F101," efficiency (percent)    ","",x);
+	    lx = (lx * 100L) / speed;
+	    tlog(F101," efficiency (percent)    ","",lx);
 	}
     }
-    tlog(F100,"","",0);			/* Leave a blank line */
+    tlog(F100,"","",0L);		/* Leave a blank line */
 }
 
 /*  S D E B U  -- Record spar results in debugging log  */
@@ -831,12 +881,12 @@ sdebu(len) int len; {
     debug(F101," atcapu","",atcapu);
     debug(F101," lpcapu","",lpcapu);
     debug(F101," swcapu","",swcapu);
-    debug(F101," wsize ","", wsize);
+    debug(F101," wslots","", wslots);
 }
 /*  R D E B U -- Debugging display of rpar() values  */
 
 rdebu(len) int len; {
-    debug(F111,"spar: data",rdatap,len);
+    debug(F111,"rpar: data",data+1,len); /*** was rdatap ***/
     debug(F101," rpsiz ","",xunchar(data[1]));
     debug(F101," rtimo ","", rtimo);
     debug(F101," mypadn","",mypadn);
@@ -854,6 +904,6 @@ rdebu(len) int len; {
     debug(F101," atcapu","",atcapu);
     debug(F101," lpcapu","",lpcapu);
     debug(F101," swcapu","",swcapu);
-    debug(F101," wsize ","", wsize);
+    debug(F101," wslots","", wslots);
     debug(F101," rpsiz(extended)","",rpsiz);
 }

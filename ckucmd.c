@@ -1,17 +1,24 @@
-char *cmdv = "Unix cmd package V2(023), 13 Jan 89";
+char *cmdv = "Unix cmd package V2(025), 19 Jul 89";
  
 /*  C K U C M D  --  Interactive command package for Unix  */
 
 /*
- V2 adds support for Data General and Apollo Aegis.
+ Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
+ Columbia University Center for Computing Activities.
+ First released January 1985.
+ Copyright (C) 1985, 1989, Trustees of Columbia University in the City of New 
+ York.  Permission is granted to any individual or institution to use, copy, or
+ redistribute this software so long as it is not sold for profit, provided this
+ copyright notice is retained. 
 */
+
 /*
  Modelled after the DECSYSTEM-20 command parser (the COMND JSYS)
  
  Features:
- . parses and verifies keywords, text strings, numbers, and other data
+ . parses and verifies keywords, filenames, text strings, numbers, other data
  . displays appropriate menu or help message when user types "?"
- . does keyword and filename completion when user types ESC
+ . does keyword and filename completion when user types ESC or TAB
  . accepts any unique abbreviation for a keyword
  . allows keywords to have attributes, like "invisible"
  . can supply defaults for fields omitted by user
@@ -30,6 +37,7 @@ char *cmdv = "Unix cmd package V2(023), 13 Jan 89";
   cmnum  - Parse a number
   cmifi  - Parse an input file name
   cmofi  - Parse an output file name
+  cmdir  - Parse a directory name (UNIX only)
   cmfld  - Parse an arbitrary field
   cmtxt  - Parse a text string
   cmcfm  - Parse command confirmation (end of line)
@@ -54,13 +62,6 @@ char *cmdv = "Unix cmd package V2(023), 13 Jan 89";
  wakeup/noecho mode, care should be taken to restore it before exit from
  or interruption of the program.  If the character wakeup mode is not
  set, the system's own line editor may be used.
- 
- Author: Frank da Cruz (SY.FDC@CU20B),
- Columbia University Center for Computing Activities, January 1985.
- Copyright (C) 1985, Trustees of Columbia University in the City of New York.
- Permission is granted to any individual or institution to use, copy, or
- redistribute this software so long as it is not sold for profit, provided this
- copyright notice is retained. 
 */
 
 /* Includes */
@@ -68,8 +69,16 @@ char *cmdv = "Unix cmd package V2(023), 13 Jan 89";
 #include <stdio.h>                      /* Standard C I/O package */
 #include <ctype.h>                      /* Character types */
 #include "ckucmd.h"                     /* Command parsing definitions */
-#include "ckcdeb.h"                     /* Formats for debug() */
- 
+#include "ckcdeb.h"                     /* Formats for debug(), etc. */
+#ifdef OS2
+#define INCL_SUB
+#include <os2.h>
+#endif /* OS2 */
+
+#ifdef OSK
+#define cc ccount			/* OS-9/68K compiler bug */
+#endif
+
 /* Local variables */
  
 int psetf = 0,                          /* Flag that prompt has been set */
@@ -127,7 +136,11 @@ cmsavp(s,n) int n; char s[]; {
  
 prompt() {
     if (psetf == 0) cmsetp(dfprom);     /* If no prompt set, set default. */
+#ifdef OSK
+    fputs(cmprom, stdout);
+#else
     printf("\r%s",cmprom);              /* Print the prompt. */
+#endif
 }
  
  
@@ -186,9 +199,10 @@ cmnum(xhlp,xdef,radix,n) char *xhlp, *xdef; int radix, *n; {
  
     x = cmfld(xhlp,xdef,&s);
     debug(F101,"cmnum: cmfld","",x);
-    if (x < 0) return(x);    /* Parse a field */
+    debug(F111,"cmnum: atmbuf",atmbuf,cc);
+    if (x < 0) return(x);		/* Parse a field */
  
-    if (digits(atmbuf)) {               /* Convert to number */
+    if (rdigits(atmbuf)) {               /* Convert to number */
         *n = atoi(atmbuf);
         return(x);
     } else {
@@ -212,12 +226,20 @@ cmnum(xhlp,xdef,radix,n) char *xhlp, *xdef; int radix, *n; {
 */
 cmofi(xhlp,xdef,xp) char *xhlp, *xdef, **xp; {
     int x; char *s;
- 
+#ifdef DTILDE
+    char *tilde_expand(), *dirp;
+#endif 
+
     if (*xhlp == NUL) xhlp = "Output file";
     *xp = "";
  
     if ((x = cmfld(xhlp,xdef,&s)) < 0) return(x);
- 
+
+#ifdef DTILDE
+    dirp = tilde_expand(s);		/* Expand tilde, if any, */
+    if (*dirp != '\0') setatm(dirp);	/* right in the atom buffer. */
+#endif
+
     if (chkwld(s)) {
         printf("\n?Wildcards not allowed - %s\n",s);
         return(-2);
@@ -253,6 +275,9 @@ cmofi(xhlp,xdef,xp) char *xhlp, *xdef, **xp; {
 */
 cmifi(xhlp,xdef,xp,wild) char *xhlp, *xdef, **xp; int *wild; {
     int i, x, xc; long y; char *sp;
+#ifdef DTILDE
+    char *tilde_expand(), *dirp;
+#endif
  
     cc = xc = 0;                        /* Initialize counts & pointers */
     *xp = "";
@@ -278,13 +303,16 @@ cmifi(xhlp,xdef,xp,wild) char *xhlp, *xdef, **xp; int *wild; {
  
 /* ...cmifi(), cont'd */
  
- 
             case 0:                     /* SP or NL */
             case 1:
-                if (xc == 0) *xp = xdef;    /* If no input, return default. */
+                if (xc == 0) *xp = xdef;     /* If no input, return default. */
                 else *xp = atmbuf;
                 if (**xp == NUL) return(-3); /* If field empty, return -3. */
-                
+
+#ifdef DTILDE
+		dirp = tilde_expand(*xp);    /* Expand tilde, if any, */
+		if (*dirp != '\0') setatm(dirp); /* right in atom buffer. */
+#endif
                 /* If filespec is wild, see if there are any matches */
  
                 *wild = chkwld(*xp);
@@ -303,6 +331,7 @@ cmifi(xhlp,xdef,xp,wild) char *xhlp, *xdef, **xp; int *wild; {
                 /* If not wild, see if it exists and is readable. */
  
                 y = zchki(*xp);
+
                 if (y == -3) {
                     printf("\n?Read permission denied - %s\n",*xp);
                     return(-2);
@@ -316,7 +345,6 @@ cmifi(xhlp,xdef,xp,wild) char *xhlp, *xdef, **xp; int *wild; {
                 return(x);
 /* cont'd... */
 
- 
 /* ...cmifi(), cont'd */
  
  
@@ -331,6 +359,10 @@ cmifi(xhlp,xdef,xp,wild) char *xhlp, *xdef, **xp; int *wild; {
                     }
                     break;
                 } 
+#ifdef DTILDE
+		dirp = tilde_expand(*xp);    /* Expand tilde, if any, */
+		if (*dirp != '\0') setatm(dirp); /* in the atom buffer. */
+#endif
                 if (*wild = chkwld(*xp)) {  /* No completion if wild */
                     putchar(BEL);
                     break;
@@ -372,7 +404,11 @@ cmifi(xhlp,xdef,xp,wild) char *xhlp, *xdef, **xp; int *wild; {
                 else
                     printf(" %s",xhlp);
                 if (xc > 0) {
-                    sp = atmbuf + cc;   /* Insert * at end */
+#ifdef DTILDE
+		    dirp = tilde_expand(*xp);    /* Expand tilde, if any */
+		    if (*dirp != '\0') setatm(dirp);
+#endif
+                    sp = atmbuf + cc;   /* Insert "*" at end */
 #ifdef datageneral
                     *sp++ = '+';        /* Insert +, the DG wild card */
 #else
@@ -403,9 +439,91 @@ cmifi(xhlp,xdef,xp,wild) char *xhlp, *xdef, **xp; int *wild; {
     x = gtword();
     }
 }
+
+/*  C M D I R  --  Parse a directory specification  */
  
+/*
+ This function depends on the external functions:
+   zchki()  - Check if input file exists and is readable.
+ If these functions aren't available, then use cmfld() to parse dir names.
+ Note: this function quickly cobbled together, mainly by deleting lots of
+ lines from cmifi().  It seems to work, but various services are missing,
+ like completion, lists of matching directories on "?", etc.
+*/
+/*
+ Returns
+   -4 EOF
+   -3 if no input present when required,
+   -2 if out of space or other internal error,
+   -1 if reparse needed,
+    0 or 1, with xp pointing to name, if directory specified,
+    2 if a wildcard was included.
+*/
+cmdir(xhlp,xdef,xp) char *xhlp, *xdef, **xp; {
+    int i, x, xc; long y; char *sp;
+#ifdef DTILDE
+    char *tilde_expand(), *dirp;
+#endif 
+
+    cc = xc = 0;                        /* Initialize counts & pointers */
+    *xp = "";
+    if ((x = cmflgs) != 1) {            /* Already confirmed? */
+        x = gtword();                   /* No, get a word */
+    } else {
+        cc = setatm(xdef);              /* If so, use default, if any. */
+    }
+    *xp = atmbuf;                       /* Point to result. */
  
+    while (1) {
+        xc += cc;                       /* Count the characters. */
+        debug(F111,"cmifi: gtword",atmbuf,xc);
+        switch (x) {
+            case -4:                    /* EOF */
+            case -2:                    /* Out of space. */
+            case -1:                    /* Reparse needed */
+                return(x);
+            case 0:                     /* SP or NL */
+            case 1:
+                if (xc == 0) *xp = xdef;     /* If no input, return default. */
+                else *xp = atmbuf;
+                if (**xp == NUL) return(-3); /* If field empty, return -3. */
+#ifdef DTILDE
+		dirp = tilde_expand(*xp);    /* Expand tilde, if any, */
+		if (*dirp != '\0') setatm(dirp); /* in the atom buffer. */
+#endif
+		if (chkwld(*xp) != 0)	/* If wildcard included... */
+		  return(2);
+
+                /* If not wild, see if it exists and is readable. */
  
+                y = zchki(*xp);
+
+                if (y == -3) {
+                    printf("\n?Read permission denied - %s\n",*xp);
+                    return(-2);
+		} else if (y == -2) {	/* Probably a directory... */
+		    return(x);
+                } else if (y < 0) {
+                    printf("\n?Not found - %s\n",*xp);
+                    return(-2);
+                }
+                return(x);
+            case 2:                     /* ESC */
+		putchar(BEL);
+		break;
+
+            case 3:                     /* Question mark */
+                if (*xhlp == NUL)
+                    printf(" Directory name");
+                else
+                    printf(" %s",xhlp);
+                printf("\n%s%s",cmprom,cmdbuf);
+                break;
+        }
+    x = gtword();
+    }
+}
+ 
 /*  C H K W L D  --  Check for wildcard characters '*' or '?'  */
  
 chkwld(s) char *s; {
@@ -435,8 +553,10 @@ chkwld(s) char *s; {
 cmfld(xhlp,xdef,xp) char *xhlp, *xdef, **xp; {
     int x, xc;
  
+    debug(F110,"cmfld: xdef",xdef,0);
     cc = xc = 0;                        /* Initialize counts & pointers */
     *xp = "";
+    debug(F101,"cmfld: cmflgs","",cmflgs);
     if ((x = cmflgs) != 1) {            /* Already confirmed? */
         x = gtword();                   /* No, get a word */
     } else {
@@ -455,9 +575,10 @@ cmfld(xhlp,xdef,xp) char *xhlp, *xdef, **xp; {
                 return(x);
             case 0:                     /* SP or NL */
             case 1:
-                if (xc == 0) *xp = xdef;    /* If no input, return default. */
-                else *xp = atmbuf;
-                if (**xp == NUL) x = -3;    /* If field empty, return -3. */
+                if (xc == 0) 		/* If no input, return default. */
+		  cc = setatm(xdef);
+		*xp = atmbuf;
+                if (**xp == NUL) x = -3; /* If field empty, return -3. */
                 return(x);
             case 2:                     /* ESC */
                 if (xc == 0) {
@@ -854,7 +975,11 @@ gtword() {
     static int inword = 0;              /* Flag for start of word found */
     int quote = 0;                      /* Flag for quote character */
     int echof = 0;                      /* Flag for whether to echo */
-    int ignore = 0;
+    int ignore;
+
+#ifdef RTU
+    extern int rtu_bug;
+#endif
 
 #ifdef datageneral
     extern int termtype;                /* DG terminal type flag */
@@ -888,12 +1013,24 @@ gtword() {
                echof = 1;
             }
 #else
+#ifdef OS2
+	    c = isatty(0) ? coninc(0) : getchar();
+	    if (c<0) return(-4);
+#else
             c = getchar();              /* or from tty. */
+#ifdef RTU
+	    if (rtu_bug) {
+		c = getchar();          /* RTU doesn't discard the ^Z */
+		rtu_bug = 0;
+	    }
+#endif /* RTU */
+
             if (c == EOF) {
 /***		perror("ckucmd getchar");  (just return silently) ***/
 		return(-4);
 	    }
 	    c &= 127;			/* Strip any parity bit. */
+#endif
 #endif
         } else ignore = 1;
  
@@ -905,16 +1042,29 @@ gtword() {
             }
             if (c == FF) {              /* Formfeed. */
                 c = NL;                 /* Replace with newline */
-#ifdef apollo
+#ifdef aegis
                 putchar(FF);
 #else
 #ifdef AMIGA
                 putchar(FF);
 #else
+#ifdef OSK
+                putchar(FF);
+#else
 #ifdef datageneral
                 putchar(FF);
 #else
+#ifdef OS2
+		{ char cell[2];
+		cell[0] = ' ';
+		cell[1] = 7;
+		VioScrollUp(0,0,-1,-1,-1,cell,0);
+		VioSetCurPos(0,0,0);
+		}
+#else
                 system("clear");        /* and clear the screen. */
+#endif
+#endif
 #endif
 #endif
 #endif
@@ -944,7 +1094,10 @@ gtword() {
                 *bp = NUL;              /* End the string */
                 if (echof) {            /* If echoing, */
                     putchar(c);         /* echo the typein */
-#ifdef apollo
+#ifdef OS2
+                    if (c == CR) putchar(NL);
+#endif
+#ifdef aegis
                     if (c == CR) putchar(NL);
 #endif
 #ifdef AMIGA
@@ -1058,7 +1211,14 @@ gtword() {
                 continue;
             }
         }
+#ifdef OS2
+        if (echof) {
+        	putchar(c);          /* If tty input, echo. */
+        	if (quote==1 && c==CR) putchar(NL);
+        }
+#else
         if (echof) putchar(c);          /* If tty input, echo. */
+#endif
         inword = 1;                     /* Flag we're in a word. */
         if (quote == 0 || c != NL) *bp++ = c;   /* And deposit it. */
         quote = 0;                      /* Turn off quote. */
@@ -1085,12 +1245,17 @@ addbuf(cp) char *cp; {
     return(len);                        /* Return the length */
 }
  
-/*  S E T A T M  --  Deposit a string in the atom buffer  */
+/*  S E T A T M  --  Deposit a token in the atom buffer.  */
+/*  Break on space, newline, carriage return, or null. */
+/*  Null-terminate the result. */
+/*  If the source pointer is the atom buffer itself, do nothing. */
+/*  Return length of token, and also set global "cc" to this length. */
  
 setatm(cp) char *cp; {
     char *ap;
     cc = 0;
     ap = atmbuf;
+    if (cp == ap) return(cc = strlen(ap));
     *ap = NUL;
     while (*cp == SP) cp++;
     while ((*cp != SP) && (*cp != NL) && (*cp != NUL) && (*cp != CR)) {
@@ -1101,9 +1266,9 @@ setatm(cp) char *cp; {
     return(cc);                         /* Return length */
 }
  
-/*  D I G I T S  -- Verify that all the characters in line are digits  */
+/*  R D I G I T S  -- Verify that all the characters in line ARE DIGITS  */
  
-digits(s) char *s; {
+rdigits(s) char *s; {
     while (*s) {
         if (!isdigit(*s)) return(0);
         s++;

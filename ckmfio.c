@@ -1,6 +1,5 @@
 /* Version 0.9(37) - Paul Placeway at Ohio State, Jan 1988 */
 /*  reformatted all of the code so that it would be 79 or fewer colums */
-/*  May 88 - Added dummy zgtdir() function, Frank, CU.
 /* Version 0.8(35) - Jim Noble at Planning Research Corporation, June 1987. */
 /* Ported to Megamax native Macintosh C compiler. */
 /* Edit by Bill on Thu May 30, 00:18 */
@@ -54,6 +53,7 @@ char *WHOCMD = "";		/* For seeing who's logged in */
    zopeno(n,name)   -- Opens a new file for output.
    zclose(n)        -- Closes a file.
    zchin(n)         -- Gets the next character from an input file.
+   zinfill()	    -- (re) fill the file input buffer, and return the first character
    zsout(n,s)       -- Write a null-terminated string to output file, buffered.
    zsoutl(n,s)      -- Like zsout, but appends a line terminator.
    zsoutx(n,s,x)    -- Write x characters to output file, unbuffered.
@@ -68,6 +68,9 @@ char *WHOCMD = "";		/* For seeing who's logged in */
    zclosf()         -- Close input file associated with zxcmd()'s lower fork.
    zrtol(n1,n2)     -- Convert remote filename into local form.
    zltor(n1,n2)     -- Convert local filename into remote form.
+   zchdir(dirnam)   -- Change working directory.
+   zhome()          -- Return pointer to home directory name string.
+   zkself()         -- Kill self, log out own job.
  */
 
 #include "ckcdeb.h"		/* Debug() and tlog() defs */
@@ -87,15 +90,20 @@ char *WHOCMD = "";		/* For seeing who's logged in */
 #include "ckmres.h"		/* Resource defs */
 #include "ckmasm.h"		/* Assembler code */
 
-/* These should all be settable by the File Settings Menu */
+/* (PWP) external def. of things used in buffered file input and output */
+extern CHAR zinbuffer[], zoutbuffer[];
+extern CHAR *zinptr, *zoutptr;
+extern int zincnt, zoutcnt;
+static long zcnt_written;
 
-OSType authortext = 'MACA';	/* set creator to "MacWrite" */
+/* These should all be settable by the File Settings Menu */
 
 #define FS_WIND 1		/* file is a text edit buffer */
 #define FS_OPEN 2		/* file has been opened */
 #define FS_RSRC 4		/* opened in resource fork */
 #define FS_DATA 8
 #define FS_PIPE 16		/* file is a memory buffer */
+#define FS_MACB 32		/* we are sending a file in MacBinary format */
 
 #define PIPESIZE 128
 typedef struct {
@@ -115,7 +123,10 @@ MACFILE fp[ZNFILS] = {		/* File information */
     {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}
 };
 
+static long iflen = -1;			/* Input file length */
+static long oflen = -1;			/* Output file length */
 
+char printfbuf[256];
 
 /****************************************************************************/
 /*  Z O P E N I --  Open an existing file for input.
@@ -139,6 +150,7 @@ char *name;
 	printerr ("At zopeni file is already open ", n);
 	return (FALSE);
     }
+    zincnt = 0;		/* (PWP) clear buffer input count */
     fpp = &fp[n];
 
     if (n == ZCTERM) {		/* Terminal open? */
@@ -151,22 +163,206 @@ char *name;
     if (n == ZSYSFN)		/* trying to open a pipe? */
 	return (zxcmd (name));	/* yes... */
 
-    if (n == ZIFILE &&		/* opening input file? */
-	(filargs.filflg & FIL_RSRC))	/* and they said resource? */
-	err = OpenRF (name, filargs.filvol, &fpp->frefnum);
-    else			/* else some other channel or data */
-	err = FSOpen (name, filargs.filvol, &fpp->frefnum);
-
-    if (err != noErr)		/* check for open error */
-	return (ioutil (err));	/* failed... */
+    if (n == ZIFILE) {		/* opening input file? */
+    	/* if we are doing MacBinary format */
+	if ((filargs.filflg & (FIL_RSRC|FIL_DATA)) == (FIL_RSRC|FIL_DATA)) {
+	    err = macbinopen(name, fpp);
+	    if (err == noErr)
+	    	return (TRUE);
+	    else
+	    	return (ioutil (err));
+	} else {
+	    if (filargs.filflg & FIL_RSRC)	/* and they said resource? */
+		err = OpenRF (name, filargs.filvol, &fpp->frefnum);
+	    else			/* else some other channel or data */
+		err = FSOpen (name, filargs.filvol, &fpp->frefnum);
+	    if (err != noErr)		/* check for open error */
+		return (ioutil (err));	/* failed... */
+	}
+    }
 
     fpp->fstatus = FS_OPEN | (	/* set flags */
 			   (filargs.filflg & FIL_RSRC) ? FS_RSRC : FS_DATA);
 
     GetEOF (fpp->frefnum, &filargs.filsiz);	/* set size for screen */
+    fsize = filargs.filsiz;	/* PWP: set size for screen */
     return (TRUE);		/* Return success */
 }				/* zopeni */
 
+MBHead filHead;
+static char MBname[64];
+
+void
+bzero (b, n)
+register char *b;
+register int n;
+{
+    while (n-- > 0)
+	*b++ = 0;
+}
+
+void
+bcopy (a, b, n)
+register char *a, *b;
+register int n;
+{
+    while (n-- > 0)
+	*b++ = *a++;
+}
+
+/* these next three taken from NCSA Telnet 2.2 */
+int
+GetFileInfo(vol,name,iop)
+short vol;
+char *name;
+FileParam *iop;
+{
+    char thename[64];
+	
+    strncpy (thename, name, 64);	/* make my own copy of this */
+    thename[63] = '\0';
+    c2pstr(thename);
+	
+    iop->ioNamePtr = thename;
+    iop->ioVRefNum=vol;
+    iop->ioFVersNum=iop->ioFDirIndex=0;
+    PBGetFInfo(iop, FALSE);
+    return (iop->ioResult);
+}
+
+int
+SetFileInfo(vol,name,iop)
+short vol;
+char *name;
+FileParam *iop;
+{
+    char thename[64];
+	
+    strncpy (thename, name, 64);	/* make my own copy of this */
+    thename[63] = '\0';
+    c2pstr(thename);
+	
+    iop->ioNamePtr = thename;
+    iop->ioVRefNum=vol;
+    iop->ioFVersNum=iop->ioFDirIndex=0;
+    PBSetFInfo(iop, FALSE);
+    return (iop->ioResult);
+}
+
+int
+MakeTextFile(vol,name,iop)
+short vol;
+char *name;
+FileParam *iop;
+{
+    GetFileInfo(vol,name,iop);
+    iop->ioFlFndrInfo.fdType='TEXT';
+    iop->ioFlFndrInfo.fdCreator='EDIT';
+    SetFileInfo(vol,name,iop);
+    return (iop->ioResult);
+}
+
+int
+macbinopen(name, fpp)
+char *name;
+MACFILE *fpp;
+{
+    FileParam finfo;
+    char *cp;
+    int i, err;
+    
+	/* open first fork of name for reading and fill input buffer
+	   with MacBinary header */
+    /* save file name for later */
+    strncpy (MBname, name, 64);
+    MBname[64] = 0;
+    
+    /* clear out the header */
+    bzero (&filHead, sizeof(MBHead));
+    
+    /* put the name into place */
+    strncpy (&filHead.name[0], name, 64);
+    filHead.name[63] = '\0';
+    c2pstr(filHead.name);
+    
+    /* get the file info */
+    if ((err = GetFileInfo( filargs.filvol, name, &finfo)) != noErr) {
+	printerr("macbinopen: problem with GetFileInfo", err);
+	return (err);
+    }
+
+    bcopy( &finfo.ioFlFndrInfo, &filHead.type[0], sizeof(FInfo) );
+    filHead.protected = (filHead.zero2 & 0x40)?1:0;
+    filHead.zero2 = 0;
+    bcopy(&finfo.ioFlLgLen, &filHead.dflen[0], 4);
+    bcopy(&finfo.ioFlRLgLen, &filHead.rflen[0], 4);
+    bcopy(&finfo.ioFlCrDat, &filHead.cdate[0], 4);
+    bcopy(&finfo.ioFlMdDat, &filHead.mdate[0], 4);
+
+    filargs.filsiz=finfo.ioFlLgLen;
+    filargs.rsrcsiz=finfo.ioFlRLgLen;
+    
+    fsize = ((filargs.filsiz + 127) & ~127) +
+	    ((filargs.rsrcsiz + 127) & ~127) + 128;
+    
+    bcopy (&filHead, zinbuffer, 128);	/* put header in xfer buffer */
+    zincnt = 128;			/* init buffer to 128 to send */
+    zinptr = zinbuffer;	   /* set pointer to beginning, (== &zinbuffer[0]) */
+
+    if (filargs.filsiz <= 0) {
+	/* we do the data fork first, then the resource fork */
+	if ((err = OpenRF (name, filargs.filvol, &fpp->frefnum)) != noErr) {
+	     printerr("macbinopen: problem with OpenRF", err);
+	     return (err);
+	}
+	fpp->fstatus = FS_OPEN | FS_RSRC | FS_MACB;
+    } else {
+	/* we do the data fork first, then the resource fork */
+	if ((err = FSOpen (name, filargs.filvol, &fpp->frefnum)) != noErr) {
+	     printerr("macbinopen: problem with FSOpen", err);
+	     return (err);
+	}
+	fpp->fstatus = FS_OPEN | FS_DATA | FS_MACB;
+    }
+    return (noErr);
+}
+
+/* is this a MacBinary I header -- see standard-macbinary-ii.txt (on Sumex) */
+is_macbinary(h)
+MBHead h;
+{
+    register int i;
+    long l;
+    
+    if ((h.zero1 != 0) || (h.zero2 != 0) || (h.zero3 != 0)) {
+	printerr("zeros", 0);
+    	return (0);
+    }
+    if ((h.name[0] == 0) || (h.name[0] & 0xc0)) {
+	printerr("name length", h.name[0]);
+    	return (0);
+    }
+    bcopy (&h.dflen[0], &l, 4);
+    if ((l < 0) || (l > 0x7fffff)) {
+	printerr("data length", l);
+        return (0);
+    }
+    bcopy (&h.rflen[0], &l, 4);
+    if ((l < 0) || (l > 0x7fffff))  {
+	printerr("rsrc length", l);
+        return (0);
+    }
+#ifdef COMMENT
+    /* MacBinary II uses this area for more stuff, so don't check it */
+    for (i = 2; i < 27; i++) {
+    	if (h.filler[i] != 0) {
+	    printerr("filler index:", i);
+	    return (0);
+	}
+    }
+#endif /* COMMENT */
+    return (1);
+}
 
 
 /****************************************************************************/
@@ -182,7 +378,7 @@ zopeno (n, name)
 int n;
 char *name;
 {
-    OSType forktext;
+    OSType forktext, authortext;
     int err;
     FInfo finfo;
     register MACFILE *fpp;
@@ -198,12 +394,25 @@ char *name;
 	    printerr ("ZOFILE already open...: ", n);
 	fp[ZOFILE].fstatus = FS_WIND;	/* yes, redirect... here it is */
 	fpp->fstatus = FS_WIND;	/* Indicate this is open too */
+	zoutcnt = 0;		/* (PWP) reset output buffer */
+	zoutptr = zoutbuffer;
 	return (conopen ());	/* Return from low level open */
     }
-    if (n == ZOFILE && (filargs.filflg & FIL_RSRC))
-	forktext = 'APPL';
-    else
-	forktext = 'TEXT';	/* Make fork reflect fork choice */
+    if (n == ZOFILE) {
+	zoutcnt = 0;		/* (PWP) reset output buffer */
+	zoutptr = zoutbuffer;
+	if ((filargs.filflg & (FIL_RSRC|FIL_DATA)) == (FIL_RSRC|FIL_DATA)) {
+	    /* if MacBinary */
+	    forktext = 'rsrc';
+	    authortext = 'RSED';    /* a ResEdit document (for the moment) */
+	} else if (filargs.filflg & FIL_RSRC) {
+	    forktext = 'APPL';
+	    authortext = '????';
+	} else {
+	    forktext = 'TEXT';		/* Make fork reflect fork choice */
+	    authortext = 'MACA';	/* set creator to "MacWrite" */
+	}
+    }
 
     err = Create (name, filargs.filvol, authortext, forktext);
     if (err == dupFNErr) {	/* duplicate file? */
@@ -223,13 +432,27 @@ char *name;
     finfo.fdFldr = filargs.filfldr;	/* set new folder */
     SetFInfo (name, filargs.filvol, &finfo);	/* and tell system about it */
 
-    if (n == ZOFILE &&		/* is it our transferred file? */
-	(filargs.filflg & FIL_RSRC))	/* want to use resource fork?  */
-	err = OpenRF (name, filargs.filvol,	/* yes... */
+    if (n == ZOFILE) {		/* is it our transferred file? */
+	zcnt_written = 0;
+    	/* if we are doing MacBinary format */
+	if ((filargs.filflg & (FIL_RSRC|FIL_DATA)) == (FIL_RSRC|FIL_DATA)) {
+	    /* save file name for later */
+	    strncpy (MBname, name, 64);
+	    MBname[64] = 0;
+	    /* we delay opening any forks until we have the MacBin header */
+	    fp[n].fstatus = FS_OPEN | FS_MACB;	/* neither DATA nor RSRC yet */
+	    return (TRUE);		/* done ok */
+	} else { 	/* not MacBinary */
+	    if (filargs.filflg & FIL_RSRC)	/* want to use resource fork?  */
+		err = OpenRF (name, filargs.filvol,	/* yes... */
 		      &fpp->frefnum);
-    else			/* else data, or some other file */
+	    else			/* else data, or some other file */
+		err = FSOpen (name, filargs.filvol, &fpp->frefnum);
+	}
+    } else {
 	err = FSOpen (name, filargs.filvol, &fpp->frefnum);
-
+    }
+    
     if (err != noErr)		/* able to open? */
 	return (ioutil (err));	/* no. fail return now */
 
@@ -253,11 +476,16 @@ char *name;
 zclose (n)
 int n;
 {
-    int err = noErr;
+    int err = noErr, e2 = 0;
     register MACFILE *fpp;
+    FileParam finfo;
+    Point old_location;
 
     if (!chkfn (n))		/* is it opened? */
 	return (FALSE);		/* no return now */
+
+    if ((n == ZOFILE) && (zoutcnt > 0))	/* (PWP) output leftovers */
+	e2 = zoutdump();
 
     fpp = &fp[n];
 
@@ -266,18 +494,89 @@ int n;
     else if (fpp->fstatus == FS_PIPE)	/* is this a pipe? */
 	fp[ZSYSFN].fstatus = 0;	/* yes, no pipe now, clear ZSYSFN */
     else {
+	if (fpp->fstatus & FS_MACB) {	/* if MacBinary format */
+	    if (!cxseen && !czseen &&
+	        (zcnt_written > ((filargs.rsrcsiz + 127) & ~127)) ||
+		(zcnt_written < filargs.rsrcsiz)) {
+		sprintf(printfbuf, "Resource fork size mismatch: should be %d is %d",
+		    filargs.rsrcsiz, zcnt_written);
+		printerr(printfbuf, 0);
+	    }
+	    SetEOF (fpp->frefnum, filargs.rsrcsiz);	/* trim padding off */
+	}
 	err = FSClose (fpp->frefnum);	/* else use OS close */
 	if (err == noErr)	/* and if that worked */
-	    /* i PWP: the above if should be ==, NOT != !!!!! */
+	    /* PWP: the above if should be ==, NOT != !!!!! */
 	    err = FlushVol (NILPTR,	/* flush buffers in case write worked */
 			    filargs.filvol);
+	if (err != noErr)
+	    printerr("zclose(): problem closing/flushing:", err);
+	    
+	if (fpp->fstatus & FS_MACB) {
+				/* if MacBinary and no error */
+	    if ((err = GetFileInfo(filargs.filvol, MBname, &finfo)) != noErr) {
+		sprintf(printfbuf, "Could not GetFileInfo on \"%s\": error %d",
+		    MBname, err);
+		printerr(printfbuf,0);
+	    } else {
+		old_location = finfo.ioFlFndrInfo.fdLocation;
+	    
+		filHead.protected &= 01;	/* nuke all but low order bit */
+	    
+		bcopy(&filHead.type[0], &finfo.ioFlFndrInfo, sizeof(FInfo));
+		bcopy(&filHead.cdate[0], &finfo.ioFlCrDat, 4);
+		bcopy(&filHead.mdate[0], &finfo.ioFlMdDat, 4);
+
+		/* As per the MacBinary II doc, I clear the following flags:
+		 *
+		 *  0 - Set if file/folder is on the desktop (Finder 5.0 and later)
+		 *  1 - bFOwnAppl (used internally)
+		 *  8 - Inited (seen by Finder)
+		 *  9 - Changed (used internally by Finder)
+		 * 10 - Busy (copied from File System busy bit)
+		 */
+		finfo.ioFlFndrInfo.fdFlags &= 0xf8fc;
+
+		/* finfo.ioFlFndrInfo.fdFldr = filargs.filfldr; */	/* set new folder */
+		finfo.ioFlFndrInfo.fdFldr = 0;	/* set new folder */
+		finfo.ioFlFndrInfo.fdLocation = old_location;	/* old_location */
+	    
+		if (finfo.ioFlLgLen != filargs.filsiz) {
+		    sprintf(printfbuf, "%s: Data fork size mismatch: should be %d is %d",
+		    	MBname, filargs.filsiz, finfo.ioFlLgLen);
+		    printerr(printfbuf, 0);
+		}
+		if (finfo.ioFlRLgLen != filargs.rsrcsiz) {
+		    sprintf(printfbuf, "%s: Resource fork size mismatch: should be %d is %d",
+		    	MBname, filargs.rsrcsiz, finfo.ioFlRLgLen);
+		    printerr(printfbuf, 0);
+		}
+		/* finfo.ioFlRLgLen=out->rlen; */
+		/* finfo.ioFlLgLen =out->dlen; */
+	
+		if ((err = SetFileInfo(filargs.filvol, MBname, &finfo)) != noErr)
+		    printerr("Could not SetFileInfo:", err);
+		/* make sure the new data got to disk */
+		p2cstr(filHead.name);
+		if ((err = Rename(MBname, filargs.filvol, filHead.name)) != noErr)
+		    printerr("Could not rename file:", err);
+		err = FlushVol (NILPTR, filargs.filvol);
+	    }
+	}
     }
 
     fpp->fstatus = 0;		/* clear out status word */
     if (n == ZOFILE || n == ZIFILE)	/* turn off both flags */
 	filargs.filflg &= ~(FIL_RSRC | FIL_DATA);
 
-    return (ioutil (err));	/* return according to io operations */
+    iflen = -1;			/* Invalidate file length */
+
+    if (e2 < 0) {
+	(void) ioutil (err);
+	return (FALSE);
+    } else {
+	return (ioutil (err));	/* return according to io operations */
+    }
 }				/* zclose */
 
 
@@ -299,6 +598,9 @@ char *c;
     long rdcnt;			/* pascal long */
     register MACFILE *fpp;
     register MACPIPE *pipe;
+
+    if (n == ZIFILE)
+	return (zminchar());	/* (PWP) go through the macro */
 
     if (!chkfn (n))
 	return (0);
@@ -341,6 +643,81 @@ char *c;
     return (ioutil (err) ? 0 : -1);	/* success or unknown failure */
 }				/* zchin */
 
+/*
+ * (PWP) (re)fill the buffered input buffer with data.  All file
+ * input should go through this routine, usually by calling the
+ * zminchar() macro
+ */
+
+zinfill() {
+    int err;
+    long rdcnt;			/* pascal long */
+    register MACFILE *fpp;
+    char *cp;
+
+    fpp = &fp[ZIFILE];
+
+    /* if not an open file; just get one character */
+    if (!(fpp->fstatus & FS_OPEN)) {
+	zincnt = 0;
+	if (zchin (ZIFILE, zinbuffer) < 0)
+	    return (-1);
+	return (zinbuffer[0]);
+    }
+    
+    rdcnt = INBUFSIZE;
+    err = FSRead (fpp->frefnum, &rdcnt, zinbuffer);
+    zincnt = rdcnt;			/* set number actually read */
+
+    /* check for any errors */
+    if ((err != noErr) && (err != eofErr) && (!ioutil(err)))
+	return (-1);
+
+    /*
+     * PWP: FSRead will return eofErr when it reads the last
+     * partial block of data.  If rdcnt > 0, then we still have
+     * the last bit of the file to send out...
+     */
+    if (err == eofErr) {
+	if (rdcnt == 0) {	/* if actual EOF */
+	    return (-1);		/* EOF return */
+	} else {		/* last real block */
+	    if (fpp->fstatus & FS_MACB) {	/* if MacBinary format */
+		/* pad out things */
+		rdcnt = (128 - (filargs.filsiz % 128)) % 128;
+		for (cp = &zinbuffer[zincnt]; rdcnt > 0; rdcnt--)
+		    *cp++ = 0;
+			
+		zincnt = (zincnt + 127) & ~127;	/* pad out to 128 bytes */
+		    
+		if (fpp->fstatus & FS_DATA) {	/* if we were doing the data fork */
+		    fpp->fstatus &= ~FS_DATA;
+		    
+		    if (filargs.rsrcsiz != 0) {	/* if a resource fork */
+			if ((err = FSClose (fpp->frefnum)) != noErr) {
+			    printerr("zinfill: trouble closing data fork:", err);
+			    return (-1);
+			}
+
+			/* open the resource fork 'cause we do that next */
+			if ((err = OpenRF (MBname, filargs.filvol,
+			    		       &fpp->frefnum)) != noErr) {
+			    printerr("zinfill: trouble closing data fork:", err);
+			    return (-1);
+			}
+
+			/* in case anyone else needs to know */
+			fpp->fstatus |= FS_RSRC;
+		    }
+		}
+	    }
+	}
+    }
+    
+    zinptr = zinbuffer;	   /* set pointer to beginning, (== &zinbuffer[0]) */
+    zincnt--;			/* one less char in buffer */
+    return((int)(*zinptr++) & 0377); /* because we return the first */
+}
 
 
 /****************************************************************************/
@@ -438,6 +815,10 @@ char c;
 	conoc (c);		/* Then send to console routine */
 	return (0);		/* Then send to console routine */
     }
+    
+    if (n == ZOFILE)	/* (PWP) just in case */
+	return (zmchout(c));
+    
     wrcnt = 1;
     err = FSWrite (fp[n].frefnum, &wrcnt, &c);
     if (err != noErr)		/* error occured? */
@@ -445,7 +826,139 @@ char c;
     return (ioutil (err) ? 0 : -1);	/* else return code */
 }				/* zchout */
 
+/* (PWP) buffered character output routine to speed up file IO */
+zoutdump()
+{
+    long wrcnt, tmpcnt;			/* pascal long */
+    int err;
+    FileParam finfo;
+    char *outp;
+    
+    if ((wrcnt = zoutcnt) <= 0)
+        return (0);
 
+    if (fp[ZOFILE].fstatus == FS_WIND) {	/* if console output */
+	conxo(zoutbuffer, zoutcnt);
+	zoutcnt = 0;
+	zoutptr = zoutbuffer;
+	return(0);
+    }
+
+    outp = zoutbuffer;
+    if (fp[ZOFILE].fstatus & FS_MACB) {	/* if MacBinary format */
+	if (!(fp[ZOFILE].fstatus & (FS_RSRC | FS_DATA))) {  /* looking for header */
+	    if (zoutcnt < 128)	/* we don't have all of the header yet */
+		return (0);
+
+	    bcopy(zoutbuffer, &filHead, 128);
+
+	    if (!is_macbinary(filHead)) {
+		screen(SCR_WM, 0, 0l, "Not a MacBinary file, reverting to binary, data fork");
+		screen(SCR_AN,0,0l,MBname);	/* stop saying MacBinary mode */
+		err = FSOpen (MBname, filargs.filvol, &fp[ZOFILE].frefnum);
+		if (err != noErr) {
+		    printerr("zoutdump(): trouble with FSOpen:", err);
+		    (void) ioutil(err);
+		    return (-1);
+		}
+		fp[ZOFILE].fstatus = FS_OPEN | FS_DATA;	/* unset FS_MACB */
+		goto norm_file;
+	    }
+
+	    /* adjust pointers */
+	    wrcnt = zoutcnt - 128;
+	    outp = &zoutbuffer[128];
+	    
+	    /* get the sizes from header */
+	    bcopy(&filHead.dflen[0], &filargs.filsiz, 4);
+	    bcopy(&filHead.rflen[0], &filargs.rsrcsiz, 4);
+
+	    if (filargs.filsiz > 0) {	/* is there a data fork?  */
+		err = FSOpen (MBname, filargs.filvol, &fp[ZOFILE].frefnum);
+		if (err != noErr) printerr("zoutdump(): trouble with FSOpen:", err);
+		fp[ZOFILE].fstatus |= FS_DATA;
+	    } else {			/* else data, or some other file */
+		err = OpenRF (MBname, filargs.filvol,	/* yes... */
+		      &fp[ZOFILE].frefnum);
+		if (err != noErr) printerr("zoutdump(): trouble with OpenRF:", err);
+		fp[ZOFILE].fstatus |= FS_RSRC;
+	    }
+	    
+	    if (err != noErr) {
+		sstate = 'a';		/* yes, abort protocol */
+		return (ioutil (err) ? 0 : -1);
+	    }
+	    
+	    zcnt_written = 0;
+
+	    /* screen(SCR_AN,0,0l,MBname); */	/* Make screen say MacBinary mode */
+	    
+	    if (wrcnt <= 0) {	/* if nothing to write */
+		zoutcnt = 0;
+		zoutptr = zoutbuffer;
+		return (0);	/* we are done this time */
+	    }
+	}
+	
+	/* can't be "else if" here, above if may feed this if */
+	if (fp[ZOFILE].fstatus & FS_DATA) {	/* if doing data fork */
+	    if (zcnt_written + wrcnt > filargs.filsiz) {
+		tmpcnt = wrcnt;		/* save old amount of data */
+
+		/* figure how how much we really should write */
+		wrcnt = filargs.filsiz - zcnt_written;
+		err = FSWrite (fp[ZOFILE].frefnum, &wrcnt, outp);
+		zcnt_written += wrcnt;
+		outp += wrcnt;
+		
+		wrcnt = tmpcnt - wrcnt;	/* adjust to reflect the write */
+		
+		/* close data fork, open rsrc fork */
+		if (err == noErr)
+		    err = FSClose (fp[ZOFILE].frefnum);
+		if (err == noErr)	/* and if that worked */
+		    err = FlushVol (NILPTR,	/* flush  OS buffers */
+			    filargs.filvol);
+		if (err == noErr)
+		    err = OpenRF (MBname, filargs.filvol,	/* yes... */
+				  &fp[ZOFILE].frefnum);
+		if (err != noErr) {		/* error occured? */
+		    zoutcnt = 0;
+		    zoutptr = zoutbuffer;
+		    sstate = 'a';		/* yes, abort protocol */
+		    return (ioutil (err) ? 0 : -1);	/* else return code */
+		}
+		
+		fp[ZOFILE].fstatus &= ~FS_DATA;
+		fp[ZOFILE].fstatus |= FS_RSRC;
+		
+		/* skip padding */
+		while (zcnt_written & 127) {
+		    outp++;
+		    wrcnt--;
+		    zcnt_written++;
+		}
+		zcnt_written = 0;	/* restart counter for rsrc fork */
+
+		if (wrcnt <= 0) {	/* if nothing to write */
+		    zoutcnt = 0;
+		    zoutptr = zoutbuffer;
+		    return (0);		/* we are done this time */
+		}
+	    }
+	}
+    }
+  norm_file:
+    err = FSWrite (fp[ZOFILE].frefnum, &wrcnt, outp);
+    zcnt_written += wrcnt;
+    zoutcnt = 0;
+    zoutptr = zoutbuffer;
+    if (err != noErr) {		/* error occured? */
+	sstate = 'a';		/* yes, abort protocol */
+	return (ioutil (err) ? 0 : -1);	/* else return code */
+    }
+    return (0);		/* no problems */
+}
 
 /****************************************************************************/
 /*  C H K F N  --  Internal function to verify file number is ok.
@@ -496,7 +1009,6 @@ long
 zchki (name)
 char *name;
 {
-    long size;
     int err;
     FileParam info;
 
@@ -518,10 +1030,11 @@ char *name;
 	printerr ("zchki failed: ", err);	/* tell me about it */
 	return (-1);
     }
-    size = (filargs.filflg & FIL_RSRC) ?	/* if thinking about RSRC */
+    iflen = (filargs.filflg & FIL_RSRC) ?	/* if thinking about RSRC */
 	info.ioFlRPyLen :	/* return that size, */
 	info.ioFlPyLen;		/* else DATA */
-    return (size);		/* did ok */
+
+    return (iflen);		/* did ok */
 }				/* zchki */
 
 
@@ -623,7 +1136,7 @@ char *dirnam;
     int err;
     int volnum;
     WDPBRec vinfo;
-    short *FSFCBLen = 0x3F6;
+    short *FSFCBLen = (short *)0x3F6;
 
     if (*FSFCBLen < 0) {	/* if no HFS ROM's */
 	err = SetVol (dirnam, 0);
@@ -653,12 +1166,21 @@ char *dirnam;
 }				/* zchdir */
 
 /****************************************************************************/
-/*  Z G T D I R  --  Get name of current directory or volume */
+/*  Z H O M E  --  Return pointer to user's home directory  */
 /****************************************************************************/
+
 char *
-zgtdir ()
-{
-    return("(unknown)");
+zhome() {
+    return("(directory unknown)");	/* PWP: for now */
+}
+
+/****************************************************************************/
+/*  Z G T D I R  --  Return pointer to user's current directory  */
+/****************************************************************************/
+
+char *
+zgtdir() {
+    return ("(directory unknown)");	/* PWP: for now */
 }
 
 /****************************************************************************/
@@ -798,7 +1320,7 @@ zldir ()
     unsigned long secs;
     long size;
 
-    short *FSFCBLen = 0x3F6;
+    short *FSFCBLen = (short *) 0x3F6;
 
     if (*FSFCBLen < 0) {
 	errpkt ("Sorry, the server uses 64 kByte ROM's");
@@ -1099,11 +1621,62 @@ char *fn, **s;
 	if (zchki (*s) == -1)	/* is this file known? */
 	    return;		/* no, made a good one! */
     }
-    fatal ("znewn failed to find unique name in 64 attempts", 0);
+    printerr ("znewn failed to find unique name in 99 attempts", 0);
     return;
 }				/* znewn */
 
+/*  Z S A T T R */
+/*
+ Fills in a Kermit file attribute structure for the file which is to be sent.
+ Returns 0 on success with the structure filled in, or -1 on failure.
+ If any string member is null, then it should be ignored.
+ If any numeric member is -1, then it should be ignored.
+*/
+zsattr(xx) struct zattr *xx; {
+    long k;
 
+    k = iflen % 1024L;                  /* File length in K */
+    if (k != 0L) k = 1L;
+    xx->lengthk = (iflen / 1024L) + k;
+    xx->type.len = 0;                   /* File type can't be filled in here */
+    xx->type.val = "";
+    xx->date.len = 0;                   /* File creation date */
+    xx->date.val = "";
+    xx->creator.len = 0;                /* File creator */
+    xx->creator.val = "";
+    xx->account.len = 0;                /* File account */
+    xx->account.val = "";
+    xx->area.len = 0;                   /* File area */
+    xx->area.val = "";
+    xx->passwd.len = 0;                 /* Area password */
+    xx->passwd.val = "";
+    xx->blksize = -1L;                  /* File blocksize */
+    xx->access.len = 0;                 /* File access */
+    xx->access.val = "";
+    xx->encoding.len = 0;               /* Transfer syntax */
+    xx->encoding.val = 0;
+    xx->disp.len = 0;                   /* Disposition upon arrival */
+    xx->disp.val = "";
+    xx->lprotect.len = 0;               /* Local protection */
+    xx->lprotect.val = "";
+    xx->gprotect.len = 0;               /* Generic protection */
+    xx->gprotect.val = "";
+    xx->systemid.len = 2;               /* System ID */
+    xx->systemid.val = "A3";		/* (A3: Apple Macintosh) */
+    xx->recfm.len = 0;                  /* Record format */
+    xx->recfm.val = "";
+    xx->sysparam.len = 0;               /* System-dependent parameters */
+    xx->sysparam.val = "";
+    xx->length = iflen;                 /* Length */
+    return(0);
+}
+
+/* Find initialization file. */
+
+zkermini() {
+/*  nothing yet...  this function added for benefit of VMS Kermit.  */
+    return(0);
+}
 
 /****************************************************************************/
 pascal void
@@ -1141,7 +1714,13 @@ zkself ()
     reset ();
 }				/* zkself */
 
+zmail(p,f) char *p; char *f; {		/* Send file f as mail to address p */
+    screen (SCR_WM,0,0l,"There is no mail support in Mac Kermit.");
+}
 
+zprint(p,f) char *p; char *f; {		/* Print file f with options p */
+    screen (SCR_WM,0,0l,"There is no printer support in Mac Kermit yet.");
+}
 
 struct {
     int errnum;
@@ -1168,6 +1747,9 @@ struct {
     },
     {
 	opWrErr, "File is already open with write permission"
+    },
+    {
+	fnfErr, "File does not exist"
     },
     {
 	0, NILPTR
@@ -1282,7 +1864,7 @@ char *s2;
 	strcat (outstr, "\r");
 
 	count = strlen (outstr);
-	FSWrite (tlogfile, &count, &outstr);
+	FSWrite (tlogfile, &count, outstr);
     }
 }				/* tlog */
 
@@ -1369,3 +1951,8 @@ int n;
     count = 1;
     FSWrite (slogfile, &count, "\r");
 }				/* slog */
+
+char *
+tilde_expand(dirname) char *dirname; {
+    return("");
+}

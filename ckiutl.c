@@ -31,8 +31,7 @@
 #include "libraries/dosextens.h"
 #define fh_Interact fh_Port
 #define fh_Process  fh_Type
-#define ACTION_CLOSE 1007
-#ifdef LAT310
+#if LAT310 | AZTEC_C
 #include "fcntl.h"
 #include "signal.h"
 #else
@@ -80,6 +79,12 @@ LONG WaitForChar();
 /* portable library */
 char *malloc();
 
+#ifdef AZTEC_C
+/* translate Unix file handle (0, 1, or 2) to AmigaDOS file handle */
+#define DOSFH(n) (_devtab[n].fd)
+/* translate Unix file handle (0, 1, or 2) to Aztec file handle */
+#define FILENO(n) (n)
+#else
 #ifdef LAT310
 /* translate Unix file handle (0, 1, or 2) to AmigaDOS file handle */
 #define DOSFH(n) fileno(&_iob[n])
@@ -91,6 +96,7 @@ extern struct UFB _ufbs[];
 extern int Enable_Abort;
 #define DOSFH(n) (_ufbs[n].ufbfh)
 #define FILENO(n) (n)
+#endif
 #endif
 
 /* Amiga Kermit externals (defined in ckitio.c) */
@@ -188,6 +194,7 @@ register char *name;
 	register UBYTE *dirname;		/* DOS directory name BSTR */
 	char buf[100];				/* about same size as DOS */
 	register char *tail;
+	char *strrchr();
 
 	/* locate the DOS copy of the directory name */
 	if (CurCLI == NULL) return;
@@ -302,7 +309,7 @@ char *name;
 	return(0);
 }
 
-#ifndef LAT310
+#if !LAT310 & !AZTEC_C
 /*
  * print an error message with explanation
  * (no explanation currently)

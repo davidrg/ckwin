@@ -12,13 +12,17 @@
 /* this copyright notice is retained.                                        */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-char *ckxv = "Amiga tty I/O, 4D(005), 31 Jul 87";
+char *ckxv = "Amiga tty I/O, 4F(007), 7 Nov 89";
  
 /*  C K I T I O  --  Serial and Console I/O support for the Amiga */
 
 /*
  Author: Jack Rouse, The Software Distillery
  Based on the CKUTIO.C module for Unix
+
+ Modified for Manx Aztec C and Version 1.2 and forward of Amiga's OS by
+ Stephen Walton of California State University, Northridge,
+ ecphssrw@afws.csun.edu.  Further mods documented in ckiker.upd.
 */
 
 #include <stdio.h>		/* standard I/O stuff */
@@ -34,12 +38,26 @@ char *ckxv = "Amiga tty I/O, 4D(005), 31 Jul 87";
 #include "intuition/intuition.h"
 #include "intuition/intuitionbase.h"
 #define BREAKSIGS (SIGBREAKF_CTRL_C|SIGBREAKF_CTRL_D)
+#ifdef AZTEC_C
+#include "fcntl.h"
+#include "signal.h"
+#else
 #ifdef LAT310
 #include "fcntl.h"
 #include "signal.h"
 #include "ios1.h"		/* defines ufbs structure */
 #else
 #include "lattice/ios1.h"	/* defines ufbs structure */
+#endif
+#endif
+
+/*
+ * We can't #include "ckcdeb.h" as we'd like here, because its typedef
+ * for LONG conflicts with the one in exec/types.h.
+ */
+
+#ifndef DEBUG
+#define debug(a,b,c,d)
 #endif
 
 char *ckxsys = " Commodore Amiga";	/* system name */
@@ -58,7 +76,7 @@ int ckxech = 0;				/* echo in case redirected stdin */
 
 struct Process *CurProc;		/* current process */
 struct CommandLineInterface *CurCLI;	/* current CLI info */
-extern struct IntuitionBase *IntuitionBase;	/* ptr to Intuition lib */
+struct IntuitionBase *IntuitionBase;	/* ptr to Intuition lib */
  
 /* static definitions */
 static struct MsgPort *serport;		/* message port for serial comm */
@@ -128,6 +146,13 @@ struct DateStamp *DateStamp();
 struct DosPacket *CreatePacket();
 VOID DeletePacket();
 
+#ifdef AZTEC_C
+/* translate Unix file handle (0, 1, or 2) to AmigaDOS file handle */
+#define DOSFH(n) (_devtab[n].fd)
+/* translate Unix file handle (0, 1, or 2) to Aztec file handle */
+#define FILENO(n) (n)
+extern int Enable_Abort;
+#else
 #ifdef LAT310
 /* translate Unix file handle (0, 1, or 2) to AmigaDOS file handle */
 #define DOSFH(n) fileno(&_iob[n])
@@ -139,6 +164,7 @@ extern struct UFB _ufbs[];
 extern int Enable_Abort;
 #define DOSFH(n) (_ufbs[n].ufbfh)
 #define FILENO(n) (n)
+#endif
 #endif
 
 /*
@@ -217,10 +243,30 @@ sysinit()
 		Fail("can't open serial.device");
 	/* set parameters from system defaults */
 	flow   = !(iob->io_SerFlags & SERF_XDISABLED);
-	parity = !(iob->io_SerFlags & SERF_PARTY_ON) ? 0 :
-		 (iob->io_SerFlags & SERF_PARTY_ODD) ? 'o' : 'e';
+	/*
+	 * Set default (startup) parity from Preferences settings.
+	 * This module is called AFTER, not BEFORE, ckcmai.c sets
+	 * "parity" to "dfprty".  If it
+	 * called this first, the code below could set dfprty, which
+	 * it is supposed to modify;  "parity" should be private to
+	 * the system-independent code.
+ 	 */
+	if (iob->io_SerFlags & SERF_PARTY_ON) 	/* Parity is on */
+		if (iob->io_ExtFlags & SEXTF_MSPON)	/* Space or mark */
+			if (iob->io_ExtFlags & SEXTF_MARK)
+				parity = 'm';		/* Mark parity */
+			else
+				parity = 's';		/* Space parity */
+		else					/* Even or odd */
+			if (iob->io_SerFlags & SERF_PARTY_ODD)
+				parity = 'o';		/* Odd parity */
+			else
+				parity = 'e';		/* Even parity */
+	else
+		parity = 0;				/* No parity. */
 	speed  = iob->io_Baud;
 	mdmtyp = (iob->io_SerFlags & SERF_7WIRE) != 0;
+	ttprty = parity;
 
 	CloseDevice(iob);
 	serialopen = FALSE;
@@ -300,7 +346,6 @@ struct IORequest *iob;
 	AbortIO(iob);
 	return(WaitIO(iob));
 }
-
 /*
  * DoIOQuick -- DoIO with quick IO
  * This should not be used where waiting is expected since
@@ -376,7 +421,6 @@ static int SerialWait(iob, timeout)
 register struct IOExtSer *iob;
 int timeout;
 {
-	register int D7Save;		/* save register D7 */
 	register LONG sigs;
 	register struct timerequest *timer = TimerIOB;
 	register LONG waitsigs;
@@ -495,8 +539,8 @@ tthang()
  * ttpkt -- set serial device up for packet transmission
  *    sets serial parameters
  */
-ttpkt(baud, flow)
-int baud, flow;
+ttpkt(baud, flow, newpar)
+int baud, flow, newpar;
 {
 	extern UBYTE eol;
 	register struct IOExtSer *iob = ReadIOB;
@@ -510,7 +554,11 @@ int baud, flow;
 	/* fill in parameters */
 	iob->io_CtlChar = 0x11130000;
 	if (baud >= 0 && (speed = ttsspd(baud)) >= 0) iob->io_Baud = speed;
-	setmem(&iob->io_TermArray, sizeof(struct IOTArray), eol);
+	/*
+	 * Notice the dopar(eol) here to set the EOL character with the
+	 * appropriate parity.  See also ttinl().
+	 */
+	setmem(&iob->io_TermArray, sizeof(struct IOTArray), dopar(eol));
 	iob->io_ReadLen = iob->io_WriteLen = 8;
 	iob->io_StopBits = 1;
 	if (flow)
@@ -522,7 +570,17 @@ int baud, flow;
 		iob->io_SerFlags |= SERF_RAD_BOOGIE;
 	else
 		iob->io_SerFlags &= ~SERF_RAD_BOOGIE;
+
+	/*
+	 * Parity setting.  For packet send/receive, we turn off the
+	 * Amiga's internal parity generation and checking, as this code
+	 * does it itself (which makes it bigger and slower...).  We
+	 * save the current parity for ttinl().
+	 */
+
+	ttprty = newpar;
 	iob->io_SerFlags &= ~(SERF_EOFMODE|SERF_PARTY_ON|SERF_PARTY_ODD);
+	iob->io_ExtFlags = 0;		/* MUST BE ZERO unless Mark or Space. */
 
 	/* set the parameters */
 	iob->IOSer.io_Command = SDCMD_SETPARAMS;
@@ -531,11 +589,12 @@ int baud, flow;
 }
 
 /*
- * ttvt -- set up serial device for connect mode
+ * ttvt -- set up serial device for connect mode.  This is the same
+ * as ttpkt() on the Amiga.
  */
-ttvt(baud, flow)
-int baud, flow;
-{	return(ttpkt(baud, flow)); }
+ttvt(baud, flow, newparity)
+int baud, flow, newparity;
+{	return(ttpkt(baud, flow, newparity)); }
 
 /*
  * ttsspd -- verify baud rate
@@ -543,7 +602,7 @@ int baud, flow;
 int ttsspd(speed)
 {
     if (speed < 110 || speed > 292000) return(-1);
-    return(max(112, speed));
+    return(speed < 112 ? 112 : speed);
 }
 
 /*
@@ -652,24 +711,34 @@ int timeout;
 }
 
 /*
- * ttol -- write n chars to serial device, assumes <= 256 characters
+ * ttol -- write n chars to serial device.  For small writes, we have
+ * a small local buffer which allows them to run asynchronously.  For
+ * large writes, we do them synchronously.  This seems to be the best
+ * compromise between speed and code simplicity and size.
+ *
+ * Stephen Walton, 23 October 1989
  */
 ttol(buf, n)
 char *buf;
 int n;
 {
-	register int D7Save;
 	register struct IOExtSer *write = WriteIOB;
 	static char outbuf[256];	/* safe place for output characters */
 
 	if (!serialopen) return(-1);
 	if (TerminateWrite(0) != 0) return(-1);
 	pendwrite = TRUE;
-	movmem(buf, outbuf, n);
 	write->IOSer.io_Command = CMD_WRITE;
-	write->IOSer.io_Data    = (APTR)outbuf;
-	write->IOSer.io_Length  = n;
-	SendIO(write);
+	if (n <= 256) {
+		movmem(buf, outbuf, n);
+		write->IOSer.io_Data    = (APTR)outbuf;
+		write->IOSer.io_Length  = n;
+		SendIO(write);
+	} else {
+		write->IOSer.io_Data	= (APTR) buf;
+		write->IOSer.io_Length	= n;
+		DoIOQuick(write);
+	}
 	return(n);
 }
 
@@ -693,22 +762,22 @@ int n;
 int timeout;				/* timeout in seconds or <= 0 */
 int eol;				/* end of line character */
 {
-        int m;
-	register int D7Save;
+        unsigned  mask;
 	register struct IOExtSer *read = ReadIOB;
 	register int count;
+	int nread, i, error;
 
 	testint(0L);
  	if (!serialopen || pendread || n <= 0) return(-1);
 
-	m = (ttprty ? 0177 : 0377);	/* parity stripping mask */
+	mask = (ttprty ? 0177 : 0377);	/* parity stripping mask */
 
 	/* handle pushback */
 	if (queuedser >= 0)
 	{
-		*buf = queuedser;
+		*buf = queuedser & mask;	/* Strip queued character. */
 		queuedser = -1;
-		if ((*buf & 0177) == eol || n == 1) return(1);
+		if (*buf == eol || n == 1) return(1);
 		++buf;
 		--n;
 		count = 1;
@@ -719,17 +788,30 @@ int eol;				/* end of line character */
 	/* set up line terminator */
 	if (eol >= 0)
 	{
-		/* set up line terminator */
-/*** Watch out -- need to recognize 7-bit eol, even if it comes in with ***/
-/*** parity bit on.  It's not obvious to me how to change this code to  ***/
-/*** do that!   - Frank, C-Kermit 4E ***/
+		/*
+		 * For reasons which are obscure to me, this batch of
+		 * code generally fails.  Normally, this doesn't matter,
+		 * because io_TermArray is set in ttpkt() above, and so
+		 * this code is only executed if eol changes as a result
+		 * of the initial packet negotiation.  I found the bug
+		 * by inadvertently not using dopar(eol) in the setting
+		 * of io_TermArray in ttpkt(), which did cause this code
+		 * to be called if parity was MARK or EVEN (since in that
+		 * case dopar(eol) != eol).
+		 */
 
-		if (eol != *(UBYTE *)&read->io_TermArray)
+		if (dopar(eol) != *(UBYTE *)&read->io_TermArray)
 		{
 			setmem(&read->io_TermArray,
-			       sizeof(struct IOTArray), eol);
+			       sizeof(struct IOTArray), dopar(eol));
 			read->IOSer.io_Command = SDCMD_SETPARAMS;
-			DoIOQuick(read);
+			if (DoIOQuick(read) != 0) {
+				debug(7, "SETPARAMS fails in ttinl()",
+				      "io_Error", (int) read->IOSer.io_Error);
+				read->io_TermArray.TermArray0 =
+					read->io_TermArray.TermArray1 = -1;
+				return -1;
+			}
 		}
 		read->io_SerFlags |= SERF_EOFMODE;
 	}
@@ -745,19 +827,21 @@ int eol;				/* end of line character */
 	read->IOSer.io_Flags = IOF_QUICK;
 	BeginIO(read);
 	if (read->IOSer.io_Flags & IOF_QUICK)
-	{
 		read->IOSer.io_Flags = 0;
-		return ((read->IOSer.io_Error == 0)
-			? (count + (int)read->IOSer.io_Actual)
-			: -1);
-	}
+	else
+		/* wait for read to complete if no QUICK. */
+		if (SerialWait(read, timeout) != 0)
+			return -1;
+    
+	if (read->IOSer.io_Error != 0)
+		return -1;
 
-/*** Need code somewhere here to strip parity if ttprty != 0 ***/
-
-	/* wait for read to complete */
-	return ((SerialWait(read, timeout) != 0)
-		? -1
-		: count + (int)read->IOSer.io_Actual );
+	/* Strip parity bits if need be. */
+	nread = (int) read->IOSer.io_Actual;
+	if (ttprty)
+		for (i = 0; i < nread; i++)
+			buf[i] &= mask;
+	return(count + nread);
 }
 
 /*
@@ -766,7 +850,6 @@ int eol;				/* end of line character */
 static Sleeper(secs, micro)
 LONG secs, micro;
 {
-	register int D7Save;
 	register LONG sigs;
 	register LONG waitsigs;
 	register struct timerequest *timer = TimerIOB;
@@ -1011,7 +1094,6 @@ int timeout;
  */
 ttsndb()
 {
-	register int D7Save;
 
 	if (!serialopen) return(-1);
 	/* flush queued output */
@@ -1093,7 +1175,6 @@ contte()
  */
 int contti()
 {
-	register int D7Save;
 	register int i;
 	register LONG waitsigs;
 	register struct DosPacket *pkt = conpkt;

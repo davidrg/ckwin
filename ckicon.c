@@ -79,7 +79,7 @@ conect() {
 	printf("Sorry, can't condition console terminal\n");
 	return(-2);
     }
-    if (ttvt(speed,flow) < 0) {
+    if (ttvt(speed,flow,parity) < 0) {
 	conres();
 	printf("Sorry, Can't condition communication line\n");
 	return(-2);

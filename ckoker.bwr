@@ -1,73 +1,31 @@
-From:	C.J.Adie @ uk.ac.edinburgh 31-AUG-1988 16:37
-To:	SYSKERMIT
-Subj:	Re: OS2 Kermit 1.0b
+CKOKER.BWR - "Beware" file for the OS/2 version of C-Kermit
+Last update: Wed Aug  9 17:53:45 1989
 
->> Summary:- PS/2 model 80 running OS/2 1.00
->>           Switched into terminale mode OK but didn't transmit.
+CKOKER.LNK contains a reference to the file SETARGV.OBJ.  This file
+is not guaranteed to be in any particular path; it is dependent on how 
+the system was installed.  So it may be necessary to change:
 
-Yes, Doug Moncur at York (?) also had this problem.  I eventually diagnosed
-it by remote control as probably due to not providing the right modem
-control signals.  CTS and DSR must both be ON, otherwise it won't transmit
-anything.  I don't know if Doug tried this - I havn't heard from him since,
-so I assume it worked.
+setargv.obj
 
-OS/2 Kermit currently accepts whatever behaviour is set up on the serial port,
-which by default is that CTS and DSR must both be present, otherwise
-nothing gets transmitted.  Perhaps it would be better to disable explicitly
-any sensitivity to the modem control lines, since it seems this is going to
-be a source of problems.
+to something like:
 
-Chris
+c:\pmsdk\lib\setargv.obj
 
 ------------------------------
 
-           <<<HUMAN::DISK$HUMAN_WRKD:[NOTES$LIBRARY]KERMIT.NOTE;1 >>>
-                        -< KERMIT reopen for business >-
-================================================================================
-Note 566.2        Problems with file transfers and OS/2 Kermit            2 of 2
-KOALA::BOEBINGER                                     20 lines   2-DEC-1988 10:55
-                            -< Good news, Bad news >-
---------------------------------------------------------------------------------
+In the makefile, CKOKER.MAK, the CMPLFLAGS line contains the following:
 
-It turns out that I can solve the problem of the modem by playing with the
-MODE command under OS/2.  The trick is that the IDSR and ODSR must be set to
-OFF.  The MODE command I'm using is as follows:
+/D US_CHAR
 
-MODE COM1 2400,N,8,1,TO=OFF,XON=OFF,IDSR=OFF,ODSR=OFF,OCTS=ON,DTR=ON,RTS=ON
+This symbol definition causes the default character set to be US ASCII,
+in which character 02/03 (decimal 35) is the "number", "sharp", or
+"tic-tac-toe" sign.  If you want this character instead to be to the British
+Pound Sterling sign, remove this definition from CMPLFLAGS line.
 
-However, I can't transfer any files that have the eighth bit set.  This
-includes any ARC files, for example.  It also includes any text files with
-MCS characters in them.  The same files can be transferred with the MS-DOS
-Kermit, so the problem isn't at the VAX end.  I can move large text files
-that don't have any characters with the eighth bit set.
+Also in the Makefile, if you have an older release of the Software Developers
+Kit, you should include the definition:
 
-The Kermit on the VAX identifies itself as VMS Kermit-32 version 3.3.111.
-When I try to transfer an ARC file I get a bunch of T%T%T% symbols followed
-by the error "C-Kermit - Timed out."
+/D NEED_DCBINFO
 
-Any ideas?
-
-john
-
-           <<< HUMAN::DISK$HUMAN_WRKD:[NOTES$LIBRARY]KERMIT.NOTE;1 >>>
-                        -< KERMIT reopen for business >-
-================================================================================
-Note 566.4        Problems with file transfers and OS/2 Kermit            4 of 4
-KOALA::BOEBINGER                                     12 lines   2-DEC-1988 13:23
-                         -< So near, and yet so far. >-
---------------------------------------------------------------------------------
-
-Alas, no go.
-
-I did a SET TERM/PERM/PARITY=EVEN on the VAX side.  I used the MODE command 
-under OS/2 to set the parity of the COM1 port.  Then I did SET PARITY EVEN
-both to Kermit-32 and then to OS/2 Kermit.  It didn't even get as far as
-before.  It usually prints out this "IRS" thing at the begining.  Now it
-generates a bunch of "T%" even before it gets to the "R".
-
-The thing does fine on text files.  It's anything with that eighth bit set
-that gives it gas.
-
-john
-   --------
+This affects a section of the CKOTIO.C file.
 

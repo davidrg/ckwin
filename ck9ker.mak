@@ -22,23 +22,23 @@
 #
 #  Compile and Link variables:
 #
-LNKFLAGS= -i
+LNKFLAGS= -i -bg
 CC= cc
 CC2= cc
 CFLAGS= -t=/r0 -dDEBUG -dTLOG
 OBJDIR= /dd/cmds
+PROGRAM= kermit
 #
 ###########################################################################
 #
 # Dependencies Section:
 #
-
-$(OBJDIR)/wermit: ckcmai.r ckucmd.r ckuusr.r ckuus2.r \
+BIN = ckcmai.r ckucmd.r ckuusr.r ckuus2.r \
    ckuus3.r ckcpro.r ckcfns.r \
    ckcfn2.r ck9con.r ck9tio.r ck9fio.r ckudia.r ckuscr.r
- $(CC2) $(LNKFLAGS) -f=$(OBJDIR)/wermit ckcmai.r ck9tio.r ck9fio.r ckcfns.r \
-   ckcfn2.r ckcpro.r ckucmd.r ckuus2.r ckuus3.r ckuusr.r \
-   ck9con.r ckudia.r ckuscr.r
+
+$(OBJDIR)/$(PROGRAM): $(BIN)
+ $(CC2) $(LNKFLAGS) -f=$(OBJDIR)/$(PROGRAM) $(BIN)
 
 ckcmai.r: ckcmai.c ckcker.h ckcdeb.h
 

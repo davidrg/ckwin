@@ -47,6 +47,14 @@
 OSType kermtype = ApplCreator, settingstype = 'KERS';
 
 int scrinvert;			/* intermediate container for screeninvert */
+int scrsize;			/* ditto for size */
+int savinnum;			/* intermediate container for innum (I/O port) */
+char savmcmdactive;		/* intermediate container for mcmdactive */
+
+extern int drop_dtr;
+
+extern int dfprty;                      /* Default parity */
+extern int dfflow;                      /* Default flow control */
 
 int *inames[] = {
     &speed, &parity, &duplex, &delay, &mypadn,
@@ -54,15 +62,16 @@ int *inames[] = {
     &turnch, &turn, &bctr, &filargs.fildflg,
     &newline, &autowrap, &scrinvert, &autorepeat,
     &smoothscroll, &transparent, &keep, &blockcursor,
-    &mouse_arrows, &visible_bell, &nat_chars,
-    &blinkcursor
+    &mouse_arrows, &visible_bell, &eightbit_disp,
+    &blinkcursor, &scrsize, &savinnum, &sendusercvdef,
+    &drop_dtr, &flow
 };
 
 #define NINAMES (sizeof(inames) / sizeof(int *))
 
 char *cnames[] = {
     &mypadc, &padch, &eol, &seol, &stchr, &mystch,
-    &fkeysactive, &mcmdactive
+    &fkeysactive, &savmcmdactive
 };
 
 #define NCNAMES (sizeof(cnames) / sizeof(char *))
@@ -112,7 +121,7 @@ savevals ()
     FInfo finf;
     char name[256];
 
-    GetWTitle (terminalWindow, &name);
+    GetWTitle (terminalWindow, name);
 
     SetPt (&where, 75, 115);
     SFPutFile (&where, "Save variables in file:", name, NILPROC, &savr);
@@ -167,10 +176,13 @@ savevals ()
     }
 
     scrinvert = screeninvert;	/* save the current value */
+    scrsize = screensize;
+    savinnum = innum;		/* save current port too */
+    savmcmdactive = mcmdactive;
 
     /*
      * PWP: changed the format so {count, item, item, ...} so that we can
-     * load older versions without dieing
+     * load older versions without dying
      */
 
     ihdl = (IHandle) NewHandle ((long) (NINAMES + 1) * sizeof (int));
@@ -258,6 +270,7 @@ int refnum;
     int i, n;
     IHandle resinames;
     CHandle rescnames;
+    int old_screensize = screensize;
 
     SetVol (NILPTR, refnum);	/* select volume */
     rfnum = OpenResFile (fn);	/* open the resource file */
@@ -279,7 +292,7 @@ int refnum;
     cursor_erase ();		/* hide the current cursor */
 
     /*
-     * PWP: changed the format so {count, item, item, ...} so that we can
+     * PWP: changed the format to {count, item, item, ...} so that we can
      * load older versions without dieing
      */
 
@@ -301,18 +314,46 @@ int refnum;
     loadmset ();		/* release current MSET and load new one */
 
     CloseResFile (rfnum);	/* no longer needed */
-
+    
     /* change the screen if necessary */
+    if (scrsize != screensize)	/* if we changed size */
+	grow_term_to (scrsize);
+
     if (scrinvert != screeninvert)
 	invert_term ();
 
+    if (savinnum != innum) {	/* if using the other port */
+	port_close();
+	port_open(savinnum);
+    }
+    
     /* tell serial driver about new vals */
-    setserial (innum, outnum, speed, KPARITY_NONE);
+    (void) setserial (innum, outnum, speed, KPARITY_NONE);
+    
+    /* Frank changed main() to call init and then set flow, parity, etc.
+       so we make sure they will be set right (again) after we return. */
+    dfprty = parity;                    /* Set initial parity, */
+    dfflow = flow;                      /* and flow control. */
 
     /* set the two check menus */
     ScrDmpEnb = (fkeysactive) ? scrdmpenabled : scrdmpdisabled;
     CheckItem (menus[SETG_MENU], SCRD_SETG, (fkeysactive));
+    if (savmcmdactive != mcmdactive) {
+	mcmdactive = savmcmdactive;
+	setup_menus();
+    }
     CheckItem (menus[SETG_MENU], MCDM_SETG, (mcmdactive));
 
     SetWTitle (terminalWindow, fn);
+
+    /* (PWP) bounds check the values we just got to be double extra safe */
+    
+    if (urpsiz > MAXRP-8) {
+    	printerr("Recieve packet lengh is too big", urpsiz);
+	urpsiz = MAXRP-8;
+    }
+    if (spsiz > MAXSP) {
+    	printerr("Send packet length is too big", spsiz);
+	spsiz = MAXSP;
+    }
 }				/* doloadvals */

@@ -1,4 +1,4 @@
-The following VT100 escape sequences are performed by MacKermit 0.8(34) VT100
+The following VT100 escape sequences are performed by MacKermit 0.97(57) VT100
 emulation:
 
 Cursor Movement Commands:
@@ -23,8 +23,13 @@ Character Attributes:
         0 or none               All Attributes Off
         1                       Bold on
         4                       Underscore on
-        5                       Reverse Video on (VT100 uses Blink)
+        2, 3, 5, 6              Italics on (VT100 uses Blink)
         7                       Reverse Video on
+	21, 22                  Bold off
+	24                      Underline off
+	25                      Italics off
+	27                      Reverse Video off
+
 
 Erasing:
 
@@ -35,19 +40,48 @@ Erasing:
     From Beginning of Screen to Cursor  ESC[1J
     Entire Screen                       ESC[2J
 
+
 Character Sets:
 
-    The G0 and G1 character sets are designated as follows:
+    The G0 and G1 character sets are designated with a Select sequence
+    followed by a designator letter.
 
-    Character Set               G0 designator   G1 designator
+    Select (locking shift)
+    G0		ESC (
+    G1		ESC )
+    
+    Character Set               	Designator   G1 designator
 
-    United Kingdom (UK)         ESC(A           ESC)A
-    United States (USASCII)     ESC(B           ESC)B
-    Special graphics characters ESC(0           ESC)0
+    United States (USASCII)     	B
+    Special graphics characters 	0
       and line drawing set
-    [Alternate Set] (USASCII)   ESC(1           ESC)1
-    [Alternate Set] (USASCII)   ESC(2           ESC)2
+    DEC Technical set			>
+    [Alternate Set] (USASCII)   	1
+    [Alternate Set] (USASCII)   	2
       and special graphics
+    
+    To select national character sets, the sequence "ESC [ ? 4 2 h"
+    (with no spaces).  National character set designators::
+    
+    Dutch				4
+    Finnish				C or 5
+    French				R
+    French Canadian			9 or Q
+    German				K
+    Italian				Y
+    Norwegian/Danish			` or E or 6
+    Portuguese		(sequence:)	ESC % ( 6
+    Spanish				Z
+    Swedish				7 or H
+    Swiss				=
+    United Kingdom (UK)			A
+    United States (USASCII)		B
+
+    To select ISO 8859 international character sets, substitute "l" for "h"
+    in the above sequence.  ISO 8859 character set designators:
+    
+    Latin 1				A
+
 
 Scrolling Region:
 
@@ -105,16 +139,34 @@ Editing:
     Delete Line                 ESC[PnM
     Insert Line                 ESC[PnL
 
+Modes:
+                            To Set                  To Reset
+    Mode Name           Mode      Sequence      Mode      Sequence
+
+    Cursor Key Mode     Application ESC[?1h     Cursor    ESC[?1l
+    Scrolling Mode      Smooth      ESC[?4h     Jump      ESC[?4l
+    Keypad Mode         Application ESC=        Numeric   ESC[>
+
+Print Control Sequences:
+
+    Auto Print Mode: Enter              ESC[?5i
+                     Exit               ESC[?4i
+    Printer Controller mode: Enter      ESC[5i
+                             Exit       ESC[4i
+
+
+Heath ANSI Control Sequences:
+
+		 To Set		 		   To Reset
+    Mode		Sequence	Mode			Sequence
+    Block Cursor	ESC[>4h		Underline Cursor	ESC[>4l
+    Cursor Shown	ESC[>5h		Cursor Hidden		ESC[>5l
 
 
 
 
 
-
-
-
-
-The following sequences are NOT performed by MacKermit VT100 emulation:
+The following sequences are NOT performed by MacKermit 0.97(57) VT100 emulation:
 
 Line Size:
 
@@ -122,10 +174,6 @@ Line Size:
     Change this line to double-height bottom half       ESC#4
     Change this line to single-width single-height      ESC#5
     Change this line to double-width single-height      ESC#6
-
-Character Attributes:
-
-    ESC[5m      uses reverse video, not blinking video
 
 Programmable LEDS:
 
@@ -135,22 +183,15 @@ Modes:
                             To Set                  To Reset
     Mode Name           Mode      Sequence      Mode      Sequence
 
-    Cursor Key Mode     Application ESC[?1h     Cursor    ESC[?1l
     ANSI/VT52 Mode      ANSI        N/A         VT52      ESC[?2l
     Column Mode         132 Col     ESC[?3h     80 Col    ESC[?3l
-    Scrolling Mode      Smooth      ESC[?4h     Jump      ESC[?4l
     Interlace           On          ESC[?9h     Off       ESC[?9l
-    Keypad Mode         Application ESC=        Numeric   ESC[>
 
     Print Termination   Form Feed   ESC[18h     None      ESC[18l
     Print Extent        Full Page   ESC[19h     Window    ESC[19l
 
 Print Control Sequences:
 
-    Auto Print Mode: Enter              ESC[?5i
-                     Exit               ESC[?4i
-    Printer Controller mode: Enter      ESC[5i
-                             Exit       ESC[4i
     Print Line                          ESC[?1i
     Print Page                          ESC[i
 

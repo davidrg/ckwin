@@ -1,3 +1,12 @@
+PREFACE
+
+Most of this short introduction to C-Kermit is by Jack Rouse, late of the
+Software Distillery and SAS Institute.  I say "late" because I, Stephen
+Walton, have not been able to contact him and have therefore volunteered
+to take over maintenance of the Amiga C-Kermit code.  The Software Distillery
+blurb at the end is left intact, with the exception of a note to the effect
+that Jack Rouse can no longer be reached at these addresses.
+
 INTRODUCTION
 
 This version of Amiga Kermit is a port of the Unix C-Kermit which attempts
@@ -20,15 +29,25 @@ specific features are noted below.
 
 INVOKING C-KERMIT
 
-Amiga Kermit is usually invoked from a CLI process.  It currently can not
-be invoked from the Workbench.  From a CLI window, you generally enter:
+Amiga Kermit is usually invoked from a CLI process.  It currently can
+not be invoked from the Workbench directly; i.e., you cannot attach a
+Tool icon to Kermit and double-click on it.  However, you can use the
+AmigaDOS 1.2 XIcon command in the following way:  Create an AmigaDOS
+script file containing the command needed to start Kermit;  for instance,
+
+C:KERMIT
+
+Put the script in S: or Sys:system or wherever.  Create a Project icon
+for this file, and set its default tool to C:Xicon.
+
+From a CLI window, you generally enter:
    KERMIT
 or
    RUN KERMIT
 to execute Kermit and start up the Kermit command interpreter.  Kermit
 will create its own window and greet you with:
 
-   C-Kermit, 4D(060) 18 Apr 86, Commodore Amiga
+   C-Kermit, 4F(095) 31 Aug 89, Commodore Amiga
    Type ? for help
 
    C-Kermit>
@@ -38,12 +57,14 @@ produce a list of the items that can be entered at any point.  Typing ?
 here will produce a list of commands:
 
    C-Kermit>? Command, one of the following:
-    !                  bye                close              connect
-    cwd                dial               directory          echo
-    exit               finish             get                help
-    log                quit               receive            remote
-    script             send               server             set
-    show               space              statistics         take
+ Command, one of the following:
+ !                  bye                cd                 close
+ connect            cwd                dial               directory
+ echo               exit               finish             get
+ hangup             help               log                quit
+ receive            remote             script             send
+ server             set                show               space
+ statistics         take               transmit           
 
 Typing ? at various points during command entry will help you navigate
 through the command processor.  The 'help' command is also quite useful.
@@ -221,14 +242,19 @@ while BYE exits Amiga Kermit altogether.
 
 CONNECT MODE
 
-Connect mode on Amiga Kermit currently provides you with a 23 line by
-77 column screen.  The Amiga console device is used to provide ANSI
-terminal emulation.  While you are in connect mode, you can give
+Connect mode on Amiga Kermit currently provides you with a standard
+AmigaDOS console device window.  Using the default Preferences
+setting, this gives a 23 row by 77 column screen.  However, the
+MoreRows program allows you to increase the size of the Workbench
+window beyond the 640 by 200 default size; increasing the number of
+rows by 8 and the number of columns by 16 will allow a 24 row by 80
+column Kermit window.  The Amiga console device is used to provide
+ANSI terminal emulation.  While you are in connect mode, you can give
 single character commands which are prefixed by an escape character
 which can be set from within C-Kermit.  By default, the escape
-character is CTRL-\.  You can use '<escape>H' to close the serial device
-and exit connect mode, which makes the DTR line drop causing most modems
-to hang up the phone line.
+character is CTRL-\.  You can use '<escape>H' to close the serial
+device and exit connect mode, which makes the DTR line drop causing
+most modems to hang up the phone line.
 
 You can currently get a 25 by 80 screen in Kermit by means of a kludge.
 Entering the Kermit command line (backslashes will be echoed only once):
@@ -261,7 +287,6 @@ connect mode is exited or a break is sent, as specified.  When output
 characters are queued, connect status (accessed by '<escape>S') will
 indicate the number of queued output characters.
 
-
 BLURB
 
 Amiga Kermit is a product of the Software Distillery group, which develops
@@ -279,5 +304,5 @@ Cary, NC 27511
 
 (919) 467-8000 (work)
 (919) 481-1395 (home)
-USENET: mcnc!rti-sel!sas!jjr
+USENET: mcnc!rti-sel!sas!jjr [this address doesn't work as of 1 Nov 1989]
 COMPUSERVE: 74176,1757

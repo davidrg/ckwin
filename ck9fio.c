@@ -1,4 +1,4 @@
-char *ckzv = "OS-9 file support, V4c(004) 30 Apr 87";
+char *ckzv = "OS-9 file support, 17 Jul 89";
 char *ckzsys = " OS-9/68000";
  
 /* c k 9 F I O  --  Kermit file system support for OS-9/68k systems */
@@ -9,6 +9,8 @@ char *ckzsys = " OS-9/68000";
  Federal Republic of Germany,   February 1987
  
  04/30/87 Robert Larson		Cleanup, merge with standard C-kermit
+ 04/07/89 Robert Larson		Update for ckermit 4f(77)
+ 07/16/89 Robert Larson		4f(85)
 
  adapted from Unix C-Kermit
  Author: Frank da Cruz (SY.FDC@CU20B),
@@ -65,6 +67,7 @@ char *WHOCMD = "procs ";	/* we have no who yet*/
    zchdir(dirnam)   -- Change working directory.
    zhome()          -- Return pointer to home directory name string.
    zkself()         -- Kill self, log out own job.
+   zsattr(struc zattr *) -- Return attributes for file which is being sent.
  */
  
  
@@ -84,8 +87,17 @@ char *WHOCMD = "procs ";	/* we have no who yet*/
 FILE *fp[ZNFILS] = {    /* File pointers */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL };
  
+/* (PWP) external def. of things used in buffered file input and output */
+extern CHAR zinbuffer[], zoutbuffer[];
+extern CHAR *zinptr, *zoutptr;
+extern int zincnt, zoutcnt;
+
+static long iflen = -1;			/* Input file length */
+static long oflen = -1;			/* Output file length */
+
 static int pid;				/* pid of child fork */
 static int fcount;			/* Number of files in wild group */
+static char nambuf[MAXNAMLEN+2];	/* Buffer for a filename */
 char *malloc(), *getenv(), *strcpy();	/* System functions */
 extern errno;				/* System error code */
  
@@ -158,9 +170,11 @@ zopeni(n,name) int n; char *name; {
     debug(F111," zopeni",name,n);
     debug(F101,"  fp","",(int) fp[n]);
     if (chkfn(n) != 0) return(0);
-    if (n == ZSYSFN) {   /* Input from a system function? */
+    zincnt = 0;				/* Reset input buffer */
+    if (n == ZSYSFN) {   		/* Input from a system function? */
         debug(F110," invoking zxcmd",name,0);
-	return(zxcmd(name));  /* Try to fork the command */
+	*nambuf = '\0';			/* No file name this time... */
+	return(zxcmd(name));		/* Try to fork the command */
     }
     if (n == ZSTDIO) {   /* Standard input? */
 	if (isatty(0)) {
@@ -171,7 +185,7 @@ zopeni(n,name) int n; char *name; {
 	fp[ZIFILE] = stdin;
 	return(1);
     }
-    fp[n] = fopen(name,"r");  /* Real file. */
+    fp[n] = fopen(name,"r");		/* Real file. */
     debug(F111," zopeni", name, (int) fp[n]);
     if (fp[n] == NULL) perror("zopeni");
     return((fp[n] != NULL) ? 1 : 0);
@@ -185,6 +199,8 @@ zopeno(n,name) int n; char *name; {
     if ((n == ZCTERM) || (n == ZSTDIO)) {   /* Terminal or standard output */
 	fp[ZOFILE] = stdout;
 	debug(F101," fp[]=stdout", "", (int) fp[n]);
+	zoutcnt = 0;
+	zoutptr = zoutbuffer;
 	return(1);
     }
     fp[n] = fopen(name,"w");  /* A real file, try to open */
@@ -194,6 +210,8 @@ zopeno(n,name) int n; char *name; {
 	/* chown(name, getuid(), getgid());     In case set[gu]id */
         if (n == ZDFILE) setbuf(fp[n],NULL); /* Debugging file unbuffered */
     }
+    zoutcnt = 0;		/* (PWP) reset output buffer */
+    zoutptr = zoutbuffer;
     debug(F101, " fp[n]", "", (int) fp[n]);
     return((fp[n] != NULL) ? 1 : 0);
 }
@@ -203,15 +221,20 @@ zopeno(n,name) int n; char *name; {
 /*  Returns 0 if arg out of range, 1 if successful, -1 if close failed.  */
  
 zclose(n) int n; {
-    int x;
+    int x, x2;
     if (chkfn(n) < 1) return(0); /* Check range of n */
+
+    if ((n == ZOFILE) && (zoutcnt > 0))	/* (PWP) output leftovers */
+	x2 = zoutdump();
+
     if ((n == ZIFILE) && fp[ZSYSFN]) { /* If system function */
 	x = zclosf();   /* do it specially */
     } else {
 	if ((fp[n] != stdout) && (fp[n] != stdin)) x = fclose(fp[n]);
 	fp[n] = NULL;
     }
-    return((x == EOF) ? -1 : 1);
+    iflen = -1;				/* Invalidate file length */
+    return ((x == EOF) || (x2 < 0)) ? -1 : 1;
 }
  
 /*  Z C H I N  --  Get a character from the input file.  */
@@ -220,13 +243,32 @@ zclose(n) int n; {
  
 zchin(n,c) int n; char *c; {
     int a;
-    if (chkfn(n) < 1) return(-1);
+
+    /* (PWP) Just in case this gets called when it shoudn't */
+    if (n == ZIFILE)
+	return (zminchar());
+
+    /* if (chkfn(n) < 1) return(-1); */
     a = getc(fp[n]);
     if (a == EOF) return(-1);
     *c = a & 0377;
     return(0);
 }
  
+/*  Z I N F I L L  --  Get a character from the input file.
+ * (PWP) (re)fill the buffered input buffer with data.  All file input
+ * should go through this routine, usually by calling the zminchar()
+ * macro (in ckcker.h).
+ */
+
+zinfill() {
+    zincnt = fread(zinbuffer, sizeof (char), INBUFSIZE, fp[ZIFILE]);
+    if (zincnt == 0) return (-1);	/* end of file */
+    zinptr = zinbuffer;	   /* set pointer to beginning, (== &zinbuffer[0]) */
+    zincnt--;				/* one less char in buffer */
+    return((int)(*zinptr++) & 0377);	/* because we return the first */
+}
+
 /*  Z S O U T  --  Write a string to the given file, buffered.  */
  
 zsout(n,s) int n; char *s; {
@@ -238,7 +280,7 @@ zsout(n,s) int n; char *s; {
 /*  Z S O U T L  --  Write string to file, with line terminator, buffered  */
  
 zsoutl(n,s) int n; char *s; {
-    if (chkfn(n) < 1) return(-1);
+    /* if (chkfn(n) < 1) return(-1); */
     fputs(s,fp[n]);
     fputs("\n",fp[n]);
     return(0);
@@ -247,7 +289,7 @@ zsoutl(n,s) int n; char *s; {
 /*  Z S O U T X  --  Write x characters to file, unbuffered.  */
  
 zsoutx(n,s,x) int n, x; char *s; {
-    if (chkfn(n) < 1) return(-1);
+    /* if (chkfn(n) < 1) return(-1); */
     return(write(fileno(fp[n]),s,x));
 }
  
@@ -256,8 +298,8 @@ zsoutx(n,s,x) int n, x; char *s; {
  
 /*  Should return 0 or greater on success, -1 on failure (e.g. disk full)  */
  
-zchout(n,c) int n; char c; {
-    if (chkfn(n) < 1) return(-1);
+zchout(n,c) register int n; char c; {
+    /* if (chkfn(n) < 1) return(-1); */
     if (n == ZSFILE)
 	return(write(fileno(fp[n]),&c,1)); /* Use unbuffered for session log */
     else {    /* Buffered for everything else */
@@ -267,6 +309,20 @@ zchout(n,c) int n; char c; {
     }
 }
  
+/* (PWP) buffered character output routine to speed up file IO */
+zoutdump()
+{
+    if (zoutcnt <= 0) return (0); /* nothing to output */
+
+    if (fwrite (zoutbuffer, 1, zoutcnt, fp[ZOFILE])) {
+	zoutcnt = 0;		/* reset output buffer */
+	zoutptr = zoutbuffer;
+	return(0);		/* things worked OK */
+    } else {
+	return(ferror(fp[ZOFILE])?-1:0); /* Check to make sure */
+    }
+}
+
 /*  C H K F N  --  Internal function to verify file number is ok  */
  
 /*
@@ -307,7 +363,7 @@ chkfn(n) int n; {
 long
 zchki(name) char *name; {
     struct fildes buf;
-    int x; long y;   
+    int x;   
  
     if (access(name,0) < 0) {
 	if(access(name,S_IFDIR)>=0) {
@@ -327,10 +383,11 @@ zchki(name) char *name; {
 	debug(F111,"zchki can't open:",name,errno);
 	return(-2);
     }
-    y = _gs_size(x);
+    iflen = _gs_size(x);		/* remember size */
+    strncpy(nambuf,name,MAXNAMLEN);	/* and name globally */
     close(x);
-    debug(F111," access ok:",name,(int) y); /* Yes */
-    return( (y > -1) ? y : 0 );
+    debug(F111," access ok:",name,(int) iflen); /* Yes */
+    return( (iflen > -1) ? iflen : 0 );
 }
  
 /*  Z C H K O  --  Check if output file can be created  */
@@ -562,6 +619,77 @@ znewn(fn,s) char *fn, **s; {
 /* If we ever get here, we'll overwrite the xxx~100 file... */
 }
  
+/*  Z S A T T R */
+/*
+ Fills in a Kermit file attribute structure for the file which is to be sent.
+ Returns 0 on success with the structure filled in, or -1 on failure.
+ If any string member is null, then it should be ignored.
+ If any numeric member is -1, then it should be ignored.
+*/
+zsattr(xx) struct zattr *xx; {
+    long k;
+    char *zfcdat();
+
+    k = iflen % 1024L;			/* File length in K */
+    if (k != 0L) k = 1L;
+    xx->lengthk = (iflen / 1024L) + k;
+    xx->type.len = 0;			/* File type can't be filled in here */
+    xx->type.val = "";
+debug(F110,"before calling zfcdat",nambuf,0);
+    if (nambuf) {
+	xx->date.val = zfcdat(nambuf);	/* File creation date */
+	xx->date.len = strlen(xx->date.val);
+    } else {
+	xx->date.len = 0;
+	xx->date.val = "";
+    }
+debug(F111,"attr date",xx->date.val,xx->date.len);
+    xx->creator.len = 0;		/* File creator */
+    xx->creator.val = "";
+    xx->account.len = 0;		/* File account */
+    xx->account.val = "";
+    xx->area.len = 0;			/* File area */
+    xx->area.val = "";
+    xx->passwd.len = 0;			/* Area password */
+    xx->passwd.val = "";
+    xx->blksize = -1L;			/* File blocksize */
+    xx->access.len = 0;			/* File access */
+    xx->access.val = "";
+    xx->encoding.len = 0;		/* Transfer syntax */
+    xx->encoding.val = 0;
+    xx->disp.len = 0;			/* Disposition upon arrival */
+    xx->disp.val = "";
+    xx->lprotect.len = 0;		/* Local protection */
+    xx->lprotect.val = "";
+    xx->gprotect.len = 0;		/* Generic protection */
+    xx->gprotect.val = "";
+    xx->systemid.len = 2;		/* System ID */
+    xx->systemid.val = "UD";
+    xx->recfm.len = 0;			/* Record format */
+    xx->recfm.val = "";
+    xx->sysparam.len = 0;		/* System-dependent parameters */
+    xx->sysparam.val = "";
+    xx->length = iflen;			/* Length */
+    return(0);
+}
+
+/* Z F C D A T -- Return a string containing the time stamp for a file */
+
+char *
+zfcdat(name) char *name; {
+    int fp;
+    struct fildes fd;
+    static char datbuf[9];
+
+    if((fp = open(name, 0)) < 0) return "";
+    if(_gs_gfd(fp, &fd, sizeof fd) >= 0) {
+    	sprintf(datbuf,"%4d%02d%02d",fd.fd_dcr[0],fd.fd_dcr[1],fd.fd_dcr[2]);
+    } else datbuf[0] = '\0';
+    close(fp);
+    debug(F111,"zcfdat",datbuf,strlen(datbuf));
+    return datbuf;
+}
+
 /* Directory Functions for Unix, written by Jeff Damens, CUCCA, 1984. */
  
 /*
@@ -725,8 +853,7 @@ register char *sofar,*endcur;
     *endcur++ = '/';
     while (dirbuf = readdir(fd)) {
 	if (dirbuf->d_addr != 0) {
-	    /* Get a null terminated copy!!! */
-	    strncpy(endcur,dirbuf->d_name,MAXNAMLEN);
+	    strncpy(endcur,dirbuf->d_name,MAXNAMLEN); /* Get a null terminated copy!!! */
 	    if(match(pl -> npart,endcur)) {
 	    	char *eos;
 	    	eos = endcur + strlen(endcur);
@@ -803,3 +930,21 @@ char *string;
     extern int errno;
     fprintf(stderr,"%s ERRNO: %d\n",string,errno);
 }
+
+#ifdef DTILDE
+char *
+tilde_expand(dirname)
+register char *dirname;
+{
+    static char *home = NULL;
+    static char temp[MAXNAMLEN];
+
+    debug(F111,"tilde_expand dirname", dirname, dirname[0]);
+    if(*dirname++ != '~' || (*dirname != '\0' && *dirname != '/')) return --dirname;
+    if(home == NULL && (home = getenv("HOME")) == NULL) return --dirname;
+    if(*dirname == '\0') return home;
+    strcpy(temp, home);
+    strcat(temp, dirname);
+    return temp;
+}
+#endif

@@ -1,11 +1,11 @@
-char *fnsv = "C-Kermit functions, 4E(054) 13 Jan 89";
+char *fnsv = "C-Kermit functions, 4F(058) 14 Jul 89";
 
 /*  C K C F N S  --  System-independent Kermit protocol support functions.  */
 
 /*  ...Part 1 (others moved to ckcfn2 to make this module small enough) */
 
 /*
- Author: Frank da Cruz (fdc@cunixc.cc.columbia.edu, FDCCU@CUVMA.BITNET),
+ Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
  Columbia University Center for Computing Activities.
  First released January 1985.
  Copyright (C) 1985, 1989, Trustees of Columbia University in the City of New 
@@ -28,8 +28,8 @@ char *fnsv = "C-Kermit functions, 4E(054) 13 Jan 89";
 #endif
 
 /* Externals from ckcmai.c */
-extern int spsiz, rpsiz, timint, rtimo, npad, ebq, ebqflg, rpt, rptq,
- rptflg, capas, keep;
+extern int spsiz, spmax, rpsiz, timint, srvtim, rtimo, npad, ebq, ebqflg,
+ rpt, rptq, rptflg, capas, keep;
 extern int pktnum, prvpkt, sndtyp, bctr, bctu, fmask,
  size, osize, maxsize, spktl, nfils, stdouf, warn, timef, spsizf;
 extern int parity, speed, turn, turnch, 
@@ -37,10 +37,13 @@ extern int parity, speed, turn, turnch,
 extern long filcnt, ffc, flci, flco, tlci, tlco, tfc, fsize;
 extern int tsecs;
 extern int deblog, hcflg, binary, savmod, fncnv, local, server, cxseen, czseen;
-extern int rq, rqf, sq, wsize, urpsiz, rln;
+extern int nakstate;
+extern int rq, rqf, sq, wslots, urpsiz, rln;
 extern int atcapr, atcapb, atcapu;
 extern int lpcapr, lpcapb, lpcapu;
 extern int swcapr, swcapb, swcapu;
+extern int bsave, bsavef;
+extern int numerrs;
 extern CHAR padch, mypadc, eol, seol, ctlq, myctlq, sstate;
 extern CHAR filnam[], sndpkt[], recpkt[], data[], srvcmd[], stchr, mystch;
 extern char *cmarg, *cmarg2, *hlptxt, **cmlist;
@@ -49,6 +52,11 @@ extern char *rdatap;
 long zchki();
 char *strcpy();
 CHAR *rpar();
+
+/* (PWP) external def. of things used in buffered file input and output */
+extern CHAR zinbuffer[], zoutbuffer[];
+extern CHAR *zinptr, *zoutptr;
+extern int zincnt, zoutcnt;
 
 /* Variables local to this module */
 
@@ -60,6 +68,9 @@ static int  sndsrc;			/* Flag for where to send from: */
 					/* -1: name in cmdata */
 					/*  0: stdin          */
 					/* >0: list in cmlist */
+
+static int n_len;		/* (PWP) packet encode-ahead length (& flag) */
+				/* if < 0, no pre-encoded data */
 
 static int  memstr,			/* Flag for input from memory string */
     first;				/* Flag for first char from input */
@@ -139,13 +150,36 @@ encode(a) CHAR a; {			/* The current character */
     data[size] = '\0';			/* itself, and mark the end. */
 }
 
+/*  Output functions passed to 'decode':  */
+
+putsrv(c) register char c; { 	/*  Put character in server command buffer  */
+    *srvptr++ = c;
+    *srvptr = '\0';	/* Make sure buffer is null-terminated */
+    return(0);
+}
+
+puttrm(c) register char c; {     /*  Output character to console.  */
+    conoc(c);
+    return(0);
+}
+
+putfil(c) register char c; {			/*  Output char to file. */
+    if (zchout(ZOFILE, c & fmask) < 0) {
+	czseen = 1;   			/* If write error... */
+	debug(F101,"putfil zchout write error, setting czseen","",1);
+	return(-1);
+    }
+    return(0);
+}
+
 /* D E C O D E  --  Kermit packet decoding procedure */
 
 /* Call with string to be decoded and an output function. */
 /* Returns 0 on success, -1 on failure (e.g. disk full).  */
 
-decode(buf,fn) CHAR *buf; int (*fn)(); {
-    unsigned int a, a7, b8;		/* Low order 7 bits, and the 8th bit */
+decode(buf,fn) register CHAR *buf; register int (*fn)(); {
+    register unsigned int a, a7, b8;	/* Low order 7 bits, and the 8th bit */
+    int x;
 
     rpt = 0;				/* Initialize repeat count. */
 
@@ -177,33 +211,19 @@ decode(buf,fn) CHAR *buf; int (*fn)(); {
     	    if (a == LF) a = NLCHAR; 	/* convert LF to system's newline. */
     	}
 #endif
-	for (; rpt > 0; rpt--) {	/* Output the char RPT times */
-	    if ((*fn)(a) < 0) return(-1); /* Send it to the output function. */
-	    ffc++, tfc++;		/* Count the character */
+	if (fn == putfil) { /* (PWP) speedup via buffered output and a macro */
+	    for (; rpt > 0; rpt--) {	/* Output the char RPT times */
+		if ((x = zmchout(a)) < 0) { /* zmchout is a macro */
+		    debug(F101,"decode zmchout","",x);
+		    return(-1);
+		}
+		ffc++;			/* Count the character */
+	    }
+	} else {			/* Not to the file */
+	    for (; rpt > 0; rpt--) {	/* Output the char RPT times */
+		if ((*fn)(a) < 0) return(-1); /* Send to output function. */
+	    }
 	}
-    }
-    return(0);
-}
-
-
-/*  Output functions passed to 'decode':  */
-
-putsrv(c) char c; { 	/*  Put character in server command buffer  */
-    *srvptr++ = c;
-    *srvptr = '\0';	/* Make sure buffer is null-terminated */
-    return(0);
-}
-
-puttrm(c) char c; {     /*  Output character to console.  */
-    conoc(c);
-    return(0);
-}
-
-putfil(c) char c; {			/*  Output char to file. */
-    if (zchout(ZOFILE, c & fmask) < 0) {
-	czseen = 1;   			/* If write error... */
-	debug(F101,"putfil zchout write error, setting czseen","",1);
-	return(-1);
     }
     return(0);
 }
@@ -225,107 +245,181 @@ putfil(c) char c; {			/*  Output char to file. */
 
 Returns the size as value of the function, and also sets global size,
 and fills (and null-terminates) the global data array.  Returns 0 upon eof.
+
+Rewritten by Paul W. Placeway (PWP) of Ohio State University, March 1989.
+Incorporates old getchx() and encode() inline to eliminate function calls,
+uses buffered input for much-improved efficiency, and clears up some
+confusion with line termination (CRLF vs LF vs CR).
 */
 
 getpkt(bufmax) int bufmax; {		/* Fill one packet buffer */
-    int i, x;				/* Loop index. */
-	
-    static char leftover[6] = { '\0', '\0', '\0', '\0', '\0', '\0' };
+    register CHAR rt = t, rnext = next; /* register shadows of the globals */
+    register CHAR *dp, *odp, *p1, *p2;	/* pointers... */
+    register int x;			/* Loop index. */
+    register int a7;			/* Low 7 bits of character */
+    static CHAR leftover[6] = { '\0', '\0', '\0', '\0', '\0', '\0' };
 
     if (first == 1) {		/* If first time thru...  */
 	first = 0;		/* remember, */
 	*leftover = '\0';   	/* discard any interrupted leftovers, */
-	x = getchx(&t);		/* get first character of file into t, */
-	if (x == 0) {	    	/* watching out for null file, */
-	    first = -1;
-	    return(size = 0);	
+	/* get first character of file into t, watching out for null file */
+	if (memstr) {
+	    if ((rt = *memptr++) == '\0') { /* end of string ==> EOF */
+		first = -1;
+	        size = 0;
+		debug(F100,"getpkt: empty string","",0);
+		return (0);
+	    }
+	} else {
+	    if ((x = zminchar()) == -1) { /* End of file */
+		first = -1;
+		debug(F100,"getpkt: empty file","",0);
+	        size = 0;
+		return (0);
+	    }
+	    ffc++;			/* Count a file character */
+	    rt = x;
 	}
+	rt &= fmask;			/* bytesize mask */
+
+	/* PWP: handling of NLCHAR is done later (in the while loop)... */
+
     } else if ((first == -1) && (*leftover == '\0')) /* EOF from last time? */
         return(size = 0);
 
     /* Do any leftovers */
 
-    for (size = 0; (data[size] = leftover[size]) != '\0'; size++)
+    dp = data;
+    for (p1 = leftover; (*dp = *p1) != '\0'; p1++, dp++) /* copy leftovers */
     	;
     *leftover = '\0';
-    if (first == -1) return(size);	/* Handle final leftovers leftovers */
-
+    if (first == -1) 
+      return(size = (dp - data));	/* Handle final leftovers */
+  
     /* Now fill up the rest of the packet. */
-
     rpt = 0;				/* Clear out any old repeat count. */
     while (first > -1) {		/* Until EOF... */
-	x = getchx(&next);		/* Get next character for lookahead. */
-	if (x == 0) first = -1;		/* Flag eof for next time. */
-	osize = size;			/* Remember current position. */
-        encode(t);			/* Encode the current character. */
-	t = next;			/* Next is now current. */
-
-	if (size == bufmax) { 		/* If the packet is exactly full, */
-/**	    debug(F101,"getpkt exact fit","",size); **/
-            return(size);		/* ... return. */
+	if (memstr) {			/* get next character */
+	    if ((rnext = *memptr++) == '\0') { /* end of string ==> EOF */
+		first = -1;		/* Flag eof for next time. */
+	    } else {
+		rnext &= fmask;		/* Bytesize mask. */
+	    }
+	} else {
+	    if ((x = zminchar()) == -1) { /* End of file */
+		first = -1;		/* Flag eof for next time. */
+	    } else {
+		rnext = x & fmask;	/* Bytesize mask. */
+		ffc++;			/* Count it */
+	    }
 	}
-	if (size > bufmax) {		/* If too big, save some for next. */
-	    for (i = 0; (leftover[i] = data[osize+i]) != '\0'; i++)
-	    	;
-/**	    debug(F111,"getpkt leftover",leftover,size); **/
-/**	    debug(F101," osize","",osize);               **/
-	    size = osize;		/* Return truncated packet. */
-	    data[size] = '\0';
+
+	/* PWP: handling of NLCHAR is done in a bit...  */
+
+	odp = dp;			/* Remember current position. */
+
+	/* PWP: the encode() procedure, in-line (for speed) */
+	if (rptflg) {			/* Repeat processing? */
+	    if (
+#ifdef NLCHAR
+		/*
+		 * PWP: this is a bit esoteric, so bear with me.
+		 * If the next char is really CRLF, then we cannot
+		 * be doing a repeat (unless CR,CR,LF which becomes
+		 * "~ <n-1> CR CR LF", which is OK but not most efficient).
+		 * I just plain don't worry about this case.  The actual
+		 * conversion from NL to CRLF is done after the rptflg if...
+		 */
+	    (binary || (rnext != NLCHAR)) &&
+#endif /* NLCHAR */
+	    rt == rnext && (first == 0)) { /* Got a run... */
+		if (++rpt < 94) {	/* Below max, just count */
+		    continue;		/* go back and get another */
+		}
+		else if (rpt == 94) {	/* Reached max, must dump */
+		    *dp++ = rptq;
+		    *dp++ = tochar(rpt);
+		    rpt = 0;
+		}
+	    } else if (rpt == 1) {	/* Run broken, only 2? */
+		/* 
+		 * PWP: Must encode two characters.  This is handled
+		 * later, with a bit of blue smoke and mirrors, after
+		 * the first character is encoded.
+		 */
+	    } else if (rpt > 1) {	/* More than two */
+		*dp++ = rptq;		/* Insert the repeat prefix */
+		*dp++ = tochar(++rpt);	/* and count. */
+		rpt = 0;		/* Reset repeat counter. */
+	    }
+	}
+
+#ifdef NLCHAR
+	/*
+	 * PWP: even more esoteric NLCHAR handling.  Remember, at
+	 * this point t may still be the _system_ NLCHAR.  If so,
+	 * we do it here.
+	 */
+	if (!binary && (rt == NLCHAR)) {
+	    *dp++ = myctlq;		/* just put in the encoding directly */
+	    *dp++ = 'M';		/* == ctl(CR) */
+	    if ((dp-data) <= maxsize) odp = dp;	/* check packet bounds */
+	    rt = LF;
+	}
+#endif
+
+	/* meta control stuff fixed by fdc */
+	a7 = rt & 0177;			/* Low 7 bits of character */
+	if (ebqflg && (rt & 0200)) {	/* Do 8th bit prefix if necessary. */
+	    *dp++ = ebq;
+	    rt = a7;
+	}
+	if ((a7 < SP) || (a7 == DEL)) { /* Do control prefix if necessary */
+	    *dp++ = myctlq;
+	    rt = ctl(rt);
+	}
+	if (a7 == myctlq)		/* Prefix the control prefix */
+	    *dp++ = myctlq;
+
+	if ((rptflg) && (a7 == rptq))	/* If it's the repeat prefix, */
+	    *dp++ = myctlq;		/* quote it if doing repeat counts. */
+
+	if ((ebqflg) && (a7 == ebq))	/* Prefix the 8th bit prefix */
+	    *dp++ = myctlq;		/* if doing 8th-bit prefixes */
+
+	*dp++ = rt;			/* Finally, insert the character */
+	
+	if (rpt == 1) {			/* Exactly two copies? */
+	    rpt = 0;
+	    p2 = dp;			/* save current size temporarily */
+	    for (p1 = odp; p1 < p2; p1++) /* copy the old chars over again */
+		*dp++ = *p1;
+	    if ((p2-data) <= maxsize) odp = p2; /* check packet bounds */
+	}
+	rt = rnext;			/* Next is now current. */
+	if ((dp-data) >= bufmax) {	/* If too big, save some for next. */
+	    size = (dp-data);
+	    *dp = '\0';			/* mark (current) the end. */
+	    if ((dp-data) > bufmax) {	/* if packet is overfull */
+		for (p1 = leftover, p2=odp; (*p1 = *p2) != '\0'; p1++,p2++)
+		    ;
+		debug(F111,"getpkt leftover",leftover,size);
+		debug(F101," osize","",(odp-data));
+		size = (odp-data);	/* Return truncated packet. */
+		*odp = '\0';		/* mark real end */
+	    } else {			/* If the packet is exactly full, */
+		debug(F101,"getpkt exact fit","",size);
+	    }
+	    t = rt; next = rnext;	/* save for next time */
 	    return(size);
 	}
     }					/* Otherwise, keep filling. */
+    size = (dp-data);
+    *dp = '\0';				/* mark (current) the end. */
     debug(F111,"getpkt eof/eot",data,size); /* Fell thru before packet full, */
-    return(size);		   /* return partially filled last packet. */
+    return(size);		     /* return partially filled last packet. */
 }
 
-/*  G E T C H X  --  Get the next character from file (or pipe). */
- 
-/*
- On systems like Unix, the Macintosh, etc, that use a single character
- (NLCHAR, defined in ckcdeb.h) to separate lines in text files, and
- when in text/ascii mode (binary == 0), this function maps the newline
- character to CRLF.  If NLCHAR is not defined, then this mapping is
- not done, even in text mode.
-
- Returns 1 on success with ch set to the character, or 0 on failure (EOF)
-*/
-getchx(ch) char *ch; {			/* Get next character */
-    int x; CHAR a;			/* The character to return. */
-    static int b = 0;			/* A character to remember. */
-    
-    if (b > 0) {			/* Do we have a LF saved? */
-	b = 0;				/* Yes, return that. */
-	*ch = LF;
-	return(1);
-    }
-
-    if (memstr)				/* Try to get the next character */
-    	x = ((a = *memptr++) == '\0');	/* from the appropriate source, */
-    else				/* memory or the current file. */
-    	x = (zchin(ZIFILE,&a) == -1);
-
-    if (x)
-    	return(0);			/* No more, return 0 for EOF. */
-    else {				/* Otherwise, read the next char. */
-	ffc++, tfc++;			/* Count it. */
-	a &= fmask;			/* Bytesize mask. */
-#ifdef NLCHAR
-	if (!binary && (a == NLCHAR)) {	/* If nl and we must do nl-CRLF */
-	    b = 1;			/* mapping, remember a linefeed, */
-	    *ch = CR;			/* and return a carriage return. */
-	    return(1);
-	} else {
-	    *ch = a;			/*  General case, return the char. */
-	    return(1);	
-        }
-#else
-        *ch = a;
-        return(1);	
-#endif
-    }
-}
-
-
 /*  C A N N E D  --  Check if current file transfer cancelled */
 
 canned(buf) char *buf; {
@@ -338,6 +432,7 @@ canned(buf) char *buf; {
 
 /*  R E S E T C  --  Reset per-transaction character counters */
 resetc() {
+    flci = flco = 0;
     tfc = tlci = tlco = 0;	/* Total file chars, line chars in & out */
 }
 
@@ -349,28 +444,36 @@ tinit() {
     rqf = -1;				/* Reset 8th-bit-quote request flag */
     memstr = 0;				/* Reset memory-string flag */
     memptr = NULL;			/*  and pointer */
+    n_len = -1;				/* No encoded-ahead data */
     bctu = 1;				/* Reset block check type to 1 */
     ebq = ebqflg = 0;			/* Reset 8th-bit quoting stuff */
-    if (savmod) {			/* If binary file mode was saved, */
+    if (savmod) {			/* If global file mode was saved, */
     	binary = 1;			/*  restore it, */
 	savmod = 0;			/*  unsave it. */
     }
     prvpkt = -1;			/* Reset packet number */
     pktnum = 0;
+    numerrs = 0;			/* Transmission error counter */
     cxseen = czseen = 0;		/* Reset interrupt flags */
     *filnam = '\0';			/* Clear file name */
     *sndpkt = '\0';			/* Clear retransmission buffer */
+    spktl = 0;				/* And its length */
+    nakstate = 0;			/* Say we're not in a NAK'ing state */
     if (server) 			/* If acting as server, */
-	timint = 30;			/* Use 30 second timeout, */
+	timint = srvtim;		/* Use server timeout interval. */
 }
 
 
-/*  R I N I T  --  Respond to S packet  */
+/*  R I N I T  --  Respond to S or I packet  */
 
 rinit(d) char *d; {
     char *tp;
     ztime(&tp);
     tlog(F110,"Transaction begins",tp,0l); /* Make transaction log entry */
+    if (binary)
+      tlog(F100,"Global file mode = binary","",0l);
+    else
+      tlog(F100,"Global file mode = text","",0l);
     filcnt = 0;				/* Init file counter */
     spar(d);
     ack1(rpar());
@@ -387,13 +490,22 @@ sinit() {
 
     filcnt = 0;
     sndsrc = nfils;			/* Where to look for files to send */
+
     ztime(&tp);
     tlog(F110,"Transaction begins",tp,0l); /* Make transaction log entry */
     debug(F101,"sinit: sndsrc","",sndsrc);
     if (sndsrc < 0) {			/* Must expand from 'send' command */
+#ifdef DTILDE
+	char *tnam, *tilde_expand();	/* May have to expand tildes */
+	tnam = tilde_expand(cmarg);	/* Try to expand tilde. */
+	if (*tnam != '\0') cmarg = tnam;
+#endif
 	nfils = zxpand(cmarg);		/* Look up literal name. */
 	if (nfils < 0) {
-	    screen(SCR_EM,0,0l,"Too many files");
+	    if (server)
+	      errpkt("Too many files");
+	    else
+	      screen(SCR_EM,0,0l,"Too many files");
 	    return(0);
         } else if (nfils == 0) {	/* If none found, */
 	    char xname[100];		/* convert the name. */
@@ -447,13 +559,28 @@ sipkt(c) char c; {			/* Send S or I packet. */
 
 /*  R C V F I L -- Receive a file  */
 
-rcvfil() {
-    int x;
-    ffc = flci = flco = 0;		/* Init per-file counters */
+/*
+  Incoming filename is in data field of F packet.
+  This function decodes it into the srvcmd buffer, substituting an
+  alternate "as-name", if one was given.
+  Finally, it does any requested transformations (like converting to
+  lowercase) then if a file of the same name already exists, makes
+  a new unique name.
+*/
+rcvfil(n) char *n; {
+    char xname[100], *xp;		/* Buffer for constructing name */
+#ifdef DTILDE
+    char *dirp, *tilde_expand();
+#endif
+
     srvptr = srvcmd;			/* Decode file name from packet. */
     decode(rdatap,putsrv);
     if (*srvcmd == '\0')		/* Watch out for null F packet. */
     	strcpy(srvcmd,"NONAME");
+#ifdef DTILDE
+    dirp = tilde_expand(srvcmd);	/* Expand tilde, if any. */
+    if (*dirp != '\0') strcpy(srvcmd,dirp);
+#endif
     screen(SCR_FN,0,0l,srvcmd);		/* Put it on screen */
     tlog(F110,"Receiving",srvcmd,0l);	/* Transaction log entry */
     if (cmarg2 != NULL) {               /* Check for alternate name */
@@ -462,35 +589,108 @@ rcvfil() {
 	    *cmarg2 = '\0';
         }
     }
-    x = openo(srvcmd,filnam);		/* Try to open it */
-    if (x) {
-	tlog(F110," as",filnam,0l);
-	screen(SCR_AN,0,0l,filnam);
-	intmsg(++filcnt);
+    xp = xname;				/* OK to proceed. */
+    if (fncnv)				/* If desired, */
+    	zrtol(srvcmd,xp);		/* convert name to local form */
+    else				/* otherwise, */
+    	strcpy(xname,srvcmd);		/* use it literally */
+
+    if (warn) {				/* File collision avoidance? */
+	if (zchki(xname) != -1) {	/* Yes, file exists? */
+	    znewn(xname,&xp);		/* Yes, make new name. */
+	    strcpy(xname,xp);
+	    debug(F110," exists, new name ",xname,0);
+        }
+    }
+    debug(F110,"rcvfil: xname",xname,0);
+    strcpy(n,xname);			/* Return pointer to actual name. */
+    ffc = 0;				/* Init file character counter */
+    filcnt++;
+    return(1);				/* Always succeeds */
+}
+
+/*  O P E N A -- Open a file, with attributes.  */
+/*
+  This function tries to open a new file to put the arriving data in.
+  The filename is the one in the srvcmd buffer.  If warning is on and
+  a file of that name already exists, then a unique name is chosen.
+*/
+opena(f,zz) char *f; struct zattr *zz; {
+    int x;
+
+    adebu(f,zz);			/* Write attributes to debug log */
+
+    if (bsavef) {			/* If somehow file mode */
+	binary = bsave;			/* was saved but not restored, */
+	bsavef = 0;			/* restore it. */
+	debug(F101,"opena restoring binary","",binary);
+    }
+    if (x = openo(f)) {			/* Try to open the file. */
+	tlog(F110," as",f,0l);		/* OK, open, record name. */
+	if (zz->type.val[0] == 'A') {	/* Check attributes */
+	    bsave = binary;		/* Save global file type */
+	    bsavef = 1;			/* ( restore it in clsof() ) */
+	    binary = 0;
+	    debug(F100,"opena attribute A = text","",binary);
+	} else if (zz->type.val[0] == 'B') {
+	    bsave = binary;		/* Save global file type */
+	    bsavef = 1;
+	    binary = 1;
+	    debug(F100,"opena attribute B = binary","",binary);
+	}
+	if (binary)			/* Log file mode in transaction log */
+	  tlog(F100," mode: binary","",0l);
+	else
+	  tlog(F100," mode: text","",0l);
+	screen(SCR_AN,0,0l,f);
+	intmsg(filcnt);
+
 #ifdef datageneral
 /* Need to turn on multi-tasking console interrupt task here, since multiple */
 /* files may be received. */
         if ((local) && (!quiet))        /* Only do this if local & not quiet */
             consta_mt();                /* Start the asynch read task */
 #endif
-    } else {
-        tlog(F110,"Failure to open",filnam,0l);
+
+    } else {				/* Did not open file OK. */
+        tlog(F110,"Failure to open",f,0l);
 	screen(SCR_EM,0,0l,"Can't open file");
     }
+    ffc = 0;				/* Init file character counter */
     return(x);				/* Pass on return code from openo */
 }
 
 /*  R E O F  --  Receive End Of File  */
 
-reof() {
+reof(yy) struct zattr *yy; {
     int x;
+    char *p;
+    char c;
+
     if (cxseen == 0) cxseen = (*rdatap == 'D');	/* Got discard directive? */
     x = clsof(cxseen | czseen);
     if (cxseen || czseen) {
 	tlog(F100," *** Discarding","",0l);
 	cxseen = 0;
-    } else
-	fstats();
+    } else {
+	fstats();			/* Close out file statistics */
+	if (yy->disp.len != 0) {	/* Handle file disposition */
+	    p = yy->disp.val;
+	    c = *p++;
+	    if (c == 'M') {		/* Mail to user. */
+		zmail(p,filnam);	/* Do the system's mail command */
+		tlog(F110,"mailed",filnam,0l);
+		tlog(F110," to",p,0l);
+		zdelet(filnam);		/* Delete the file */
+	    } else if (c == 'P') {	/* Print the file. */
+		zprint(p,filnam);	/* Do the system's print command */
+		tlog(F110,"printed",filnam,0l);
+		tlog(F110," with options",p,0l);
+		zdelet(filnam);		/* Delete the file */
+	    }
+	}
+    }
+    *filnam = '\0';
     return(x);
 }
 
@@ -535,7 +735,6 @@ sfile(x) int x; {
     	s = cmdstr;			/* Name for data field */
     }
 
-    flci = flco = ffc = 0;		/* Init counters, etc. */
     encstr(s);				/* Encode the name into data[]. */
     nxtpkt(&pktnum);			/* Increment the packet number */
     spack(x ? 'X' : 'F', pktnum, size, data); /* Send the F or X packet */
@@ -556,20 +755,45 @@ sfile(x) int x; {
     }
     intmsg(++filcnt);			/* Count file, give interrupt msg */
     first = 1;				/* Init file character lookahead. */
+    n_len = -1;			/* (PWP) Init the packet encode-ahead length */
+    ffc = 0;				/* Init file character counter. */
     return(1);
 }
 
+/*  S D A H E A D -- (PWP) Encode the next data packet to send */
+
+sdahead() {    
+    if (spsiz > MAXPACK)	     /* see the logic in ckcfn2.c, spack() */
+	n_len = getpkt(spsiz-bctu-5);	/* long packet size */
+    else
+	n_len = getpkt(spsiz-bctu-2);	/* short packet size */
+}
+
 /*  S D A T A -- Send a data packet */
 
 /*  Return -1 if no data to send, else send packet and return length  */
 
 sdata() {
     int len;
-    if (cxseen || czseen) return(-1);	/* If interrupted, done. */
-    if ((len = getpkt(spsiz-bctu-3)) == 0) /* Done if no data. */
+    
+    if (cxseen || czseen) {		/* If interrupted, done. */
+	return(-1);
+    }	
+    
+    if (n_len < 0)			/* (PWP) if we haven't encoded the */
+    	 sdahead();			/*  packet yet, do it now */
+
+    len = n_len;
+    if (len == 0) 			/* Done if no data. */
     	return(-1);
+
     nxtpkt(&pktnum);			/* Increment the packet number */
     spack('D',pktnum,len,data);		/* Send the packet */
+    
+/* comment out next statement if it causes problems... */
+    if (len > 0)			/* if we got data last time */
+	sdahead();			/* encode more now */
+
     return(len);
 }
 
@@ -627,7 +851,7 @@ rpar() {
     	data[9] = '~'; 		
 
     data[10] = tochar((atcapr?atcapb:0)|(lpcapr?lpcapb:0)|(swcapr?swcapb:0));
-    data[capas+1] = tochar(swcapr ? wsize : 0);	/* Window size */
+    data[capas+1] = tochar(swcapr ? wslots : 0); /* Window size */
 
     rpsiz = urpsiz;			/* Long packets ... */
     data[capas+2] = tochar(rpsiz / 95);	/* Long packet size, big part */
@@ -643,9 +867,9 @@ rpar() {
 spar(s) char *s; {			/* Set parameters */
     int x, lpsiz;
 
-    s--;				/* Line up with field numbers. */
+debug(F110,"entering spar",s,0);
 
-debug(F101,"spar rln","",rln);
+    s--;				/* Line up with field numbers. */
 
 /* Limit on size of outbound packets */
     x = (rln >= 1) ? xunchar(s[1]) : 80;
@@ -725,13 +949,17 @@ debug(F101,"spar rln","",rln);
 	}
     }
 
+    /* (PWP) save current send packet size for optimal packet size calcs */
+    spmax = spsiz;
+    numerrs = 0;
+    
 /* Sliding Windows */
     if (swcapu) {
         if (rln > capas+1) {
 	    x = xunchar(s[capas+1]);
-	    wsize = x > MAXWS ? MAXWS : x;
+	    wslots = x > MAXWS ? MAXWS : x;
 	}
-	else wsize = 1;
+	else wslots = 1;
     }
     if (deblog) sdebu(rln);		/* Record parameters in debug log */
 }
@@ -866,8 +1094,7 @@ openi(name) char *name; {
 
 /*  Returns actual name under which the file was opened in string 'name2'. */
 
-openo(name,name2) char *name, *name2; {
-    char xname[100], *xp;
+openo(name) char *name; {
 
     if (stdouf)				/* Receiving to stdout? */
 	return(zopeno(ZSTDIO,""));
@@ -878,28 +1105,12 @@ openo(name,name2) char *name, *name2; {
 	debug(F100," open cancelled","",0); /* destroying existing file. */
 	return(1);			/* Pretend to succeed. */
     }
-    xp = xname;				/* OK to proceed. */
-    if (fncnv)				/* If desired, */
-    	zrtol(name,xp);			/* convert name to local form */
-    else				/* otherwise, */
-    	strcpy(xname,name);		/* use it literally */
-
-    debug(F110,"openo: xname",xname,0);
-
-    if (warn) {				/* File collision avoidance? */
-	if (zchki(xname) != -1) {	/* Yes, file exists? */
-	    znewn(xname,&xp);		/* Yes, make new name. */
-	    strcpy(xname,xp);
-	    debug(F110," exists, new name ",xname,0);
-        }
-    }
-    if (zopeno(ZOFILE,xname) == 0) {	/* Try to open the file */
-	debug(F110,"openo failed",xname,0);
-	tlog(F110,"Failure to open",xname,0l);
+    if (zopeno(ZOFILE,name) == 0) {	/* Try to open the file */
+	debug(F110,"openo failed",name,0);
+	tlog(F110,"Failure to open",name,0l);
 	return(0);
     } else {
-	strcpy(name2,xname);
-	debug(F110,"openo ok, name2",name2,0);
+	debug(F110,"openo ok, name",name,0);
 	return(1);
     }
 }
@@ -929,6 +1140,7 @@ clsif() {
     	screen(SCR_ST,ST_OK,0l,"");
     cxseen = hcflg = 0;			/* Reset flags, */
     *filnam = '\0';			/* and current file name */
+    n_len = -1;		   /* (pwp) reinit packet encode-ahead length */
 }
 
 
@@ -939,8 +1151,14 @@ clsif() {
 
 clsof(disp) int disp; {
     int x;
+
+    if (bsavef) {			/* If we saved global file type */
+	debug(F101,"clsof restoring binary","",binary);
+	binary = bsave;			/* restore it */
+	bsavef = 0;			/* only this once. */
+    }
 #ifdef datageneral
-    if ((local) && (!quiet))    /* Only do this if local & not quiet */
+    if ((local) && (!quiet))		/* Only do this if local & not quiet */
         connoi_mt();
 #endif
     if ((x = zclose(ZOFILE)) < 0) {	/* Try to close the file */
@@ -955,7 +1173,6 @@ clsof(disp) int disp; {
 	debug(F100,"Closed","",0);	/* and give comforting messages. */
 	screen(SCR_ST,ST_OK,0l,"");
     }
-    *filnam = '\0';			/* Zero the current file name. */
     return(x);				/* Send back zclose() return code. */
 }
 
@@ -985,15 +1202,28 @@ sndhlp() {
 
 cwd(vdir) char *vdir; {
     char *cdd, *zgtdir();
-    vdir[xunchar(*vdir) + 1] = '\0';	/* End with a null */
-    if (zchdir(vdir+1)) {
+    char *dirp;
+#ifdef DTILDE
+    char *tilde_expand();
+#endif
+
+    vdir[xunchar(*vdir) + 1] = '\0';	/* Terminate string with a null */
+
+    dirp = vdir+1;
+#ifdef DTILDE
+    dirp = tilde_expand(vdir+1);	/* Attempt to expand tilde */
+    if (*dirp == '\0') dirp = vdir+1;	/* in directory name. */
+#endif
+    tlog(F110,"Directory requested: ",dirp,01);
+    if (zchdir(dirp)) {
 	cdd = zgtdir();			/* Get new working directory. */
+	tlog(F110,"Changed directory to ",cdd,01);
 	encstr(cdd);
 	ack1(data);
 	tlog(F110,"Changed directory to",cdd,0l);
 	return(1); 
     } else {
-	tlog(F110,"Failed to change directory to",vdir+1,0l);
+	tlog(F110,"Failed to change directory to",dirp,0l);
 	return(0);
     }
 }
@@ -1022,7 +1252,7 @@ syscmd(prefix,suffix) char *prefix, *suffix; {
     debug(F110,"syscmd",cmdstr,0);
     if (zopeni(ZSYSFN,cmdstr) > 0) {
 	debug(F100,"syscmd zopeni ok",cmdstr,0);
-	nfils = sndsrc = 0;		/* Flag that input from stdin */
+	nfils = sndsrc = 0;		/* Flag that input is from stdin */
 	xflg = hcflg = 1;		/* And special flags for pipe */
 	if (binary) {			/* If file mode is binary, */
 	    binary = 0;			/*  turn it back to text for this, */
@@ -1033,4 +1263,31 @@ syscmd(prefix,suffix) char *prefix, *suffix; {
 	debug(F100,"syscmd zopeni failed",cmdstr,0);
 	return(0);
     }
+}
+
+/*  A D E B U -- Write attribute packet info to debug log  */
+
+adebu(f,zz) char *f; struct zattr *zz; {
+#ifdef DEBUG
+    if (deblog == 0) return(0);
+    debug(F110,"Attributes for incoming file ",f,0);
+    debug(F101," length in K","",(int) zz->lengthk);
+    debug(F111," file type",zz->type.val,zz->type.len);
+    debug(F111," creation date",zz->date.val,zz->date.len);
+    debug(F111," creator",zz->creator.val,zz->creator.len);
+    debug(F111," account",zz->account.val,zz->account.len);
+    debug(F111," area",zz->area.val,zz->area.len);
+    debug(F111," password",zz->passwd.val,zz->passwd.len);
+    debug(F101," blksize",(int) zz->blksize,0);
+    debug(F111," access",zz->access.val,zz->access.len);
+    debug(F111," encoding",zz->encoding.val,zz->encoding.len);
+    debug(F111," disposition",zz->disp.val,zz->disp.len);
+    debug(F111," lprotection",zz->lprotect.val,zz->lprotect.len);
+    debug(F111," gprotection",zz->gprotect.val,zz->gprotect.len);
+    debug(F111," systemid",zz->systemid.val,zz->systemid.len);
+    debug(F111," recfm",zz->recfm.val,zz->recfm.len);
+    debug(F111," sysparam",zz->sysparam.val,zz->sysparam.len);
+    debug(F101," length","",(int) zz->length);
+#endif /* DEBUG */
+    return(0);
 }

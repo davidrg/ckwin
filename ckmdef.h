@@ -44,7 +44,9 @@ typedef struct {		/* file arguments since Kermit */
     short filvol;		/* file volume */
     int filfldr;		/* file folder for new files */
     long filsiz;		/* size of file after open */
+    long rsrcsiz;		/* size of resource fork (for MacBinary fmt) */
 }   FILINF;
+
 
 /* Flags in filflg, fildflg */
 
@@ -58,6 +60,29 @@ typedef struct {		/* file arguments since Kermit */
 
 #define FIL_RBDT (FIL_RSRC | FIL_BINA | FIL_DATA | FIL_TEXT)
 
+/* (PWP) MacBinary is selected when both FIL_RSRC and FIL_DATA are selected */
+
+/* MacBinary format is the following header, the data fork (padded to 128),
+   and the resource fork (padded to 128) */
+/* MacBinary header structure (lifted from NCSA Telnet 2.2) */
+typedef struct MBHead {		/* MacBinary Header */
+    char zero1;
+    char name[64];
+    char type[4];
+    char creator[4];
+    char flags;
+    char zero2;
+    char location[6];
+    char protected;
+    char zero3;
+    char dflen[4];
+    char rflen[4];
+    char cdate[4];
+    char mdate[4];
+    char filler[27];
+    char typeid[2];
+} MBHead;
+
 
 /* type definitions for keyboard macro structures */
 typedef struct {
@@ -68,8 +93,35 @@ typedef struct {
     long macro;			/* if len <=4 contains the macrostring else */
 }   macrorec;			/* it contains a pointer to the macrostring */
 
-#define shortBreak 1		/* flag for short break */
-#define longBreak	 2	/* flag for long break */
+#define shortBreak	1	/* flag for short break */
+#define longBreak	2	/* flag for long break */
+
+#define leftArrowKey	3	/* send left arrow */
+#define rightArrowKey	4	/* send right arrow */
+#define upArrowKey	5
+#define downArrowKey	6
+
+#define keypf1		7
+#define keypf2		8
+#define keypf3		9
+#define keypf4		10
+
+#define keycomma	11
+#define keyminus	12
+#define keyperiod	13
+	      /* there is no keyslash */
+#define key0		15
+#define key1		16
+#define key2		17
+#define key3		18
+#define key4		19
+#define key5		20
+#define key6		21
+#define key7		22
+#define key8		23
+#define key9		24
+
+#define keyenter	25
 
 #define NUMOFMODS 4
 typedef struct {
@@ -96,7 +148,6 @@ typedef struct {		/* dummy struct definiton to get the size of */
 
 typedef macrodefs **hmacrodefs;	/* handle to a macrodefs structure */
 
-
 /* Globals Kermit variables */
 
 extern char *cmarg,		/* pointer to cmd argument (file) */
@@ -106,10 +157,12 @@ extern char *cmarg,		/* pointer to cmd argument (file) */
     seol, mystch,		/* outbound packet start character */
     stchr, sstate;		/* kermit protocol state */
 
-extern long ffc;		/* file character count  */
+extern long ffc,		/* file character count  */
+    fsize;			/* size of current file */
 
 extern int speed,		/* speed of port */
     parity,			/* current parity setting */
+    flow,			/* TRUE if using flow control */
     duplex,			/* TRUE if full duplex */
     binary,			/* TRUE if file mode is binary */
     displa,			/* TRUE for calls to screen() */
@@ -141,12 +194,45 @@ extern int speed,		/* speed of port */
     blockcursor,		/* TRUE if block cursor is used */
     mouse_arrows,		/* TRUE if we send arrow keys on mouse downs */
     visible_bell,		/* true if we do blink instead of bell */
-    nat_chars,			/* half transparent -- show undef. control
-				 * chars */
-    blinkcursor;		/* TRUE if we make the cursor blink */
+    eightbit_disp,		/* do 8 bit wide to the screen */
+    screensize,			/* number of lines on the screen */
+    graphicsinset[4],		/* (UoR) current character sets */
+    blinkcursor,		/* TRUE if we make the cursor blink */
+    sendusercvdef;		/* use rec. file mode defaults as send defaults */
 
 extern Boolean mcmdactive,	/* TRUE if menu command keys are active */
     fkeysactive;		/* TRUE if FKEYs are enabled */
+
+#define ASCII_SET	0	/* (UoR) VT100 character set numbers */
+
+#define GRAF_SET	2	/* (PWP) Note: these refer to the 7 bit      */
+#define TECH_SET	3	/*  character set part.  Eg. full ISO 8859/1 */
+#define DECINTL_SET	4	/*  is formed by USA_SET in GL and LAT1_SET  */
+#define LAT1_SET	5	/*  in GR.  Read ISO 2022 about 4 times and  */
+#define LAT2_SET	6	/*  you will understand what is going on     */
+#define LAT3_SET	7
+#define LAT4_SET	8
+#define LATCYR_SET	9
+#define LATARAB_SET	10
+#define LATGREEK_SET	11
+#define LATHEBREW_SET	12
+#define LAT5_SET	13
+
+/* the order of these must match that of ckmres.h */
+#define USA_NAT		0	/* (PWP) "national" character set numbers */
+#define UK_NAT		1
+#define DUTCH_NAT	2
+#define FINNISH_NAT	3
+#define FRENCH_NAT	4
+#define FRENCHCAN_NAT	5
+#define GERMAN_NAT	6
+#define ITALIAN_NAT	7
+#define NORWEGIAN_NAT	8
+#define PORTUGUESE_NAT	9
+#define SPANISH_NAT	10
+#define SWEDISH_NAT	11
+#define SWISS_NAT	12
+
 
 /* Mac global variables */
 

@@ -1,6 +1,0 @@
-comment
-comment Following are the recommended debug options for use with the SWAT
-comment debugger.  See the C manual for further details.
-comment
-
-ckdcc/debug/line/procid%/% %-%

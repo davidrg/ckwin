@@ -1,63 +1,102 @@
-Date: Thu 26 May 88 16:42:08-EDT
-From: Christine Gianone <SY.CHRISTINE@CU20B.COLUMBIA.EDU>
-Subject: Announcing Macintosh Kermit Version 0.9(40)
-To: Info-Kermit@CU20B.COLUMBIA.EDU, Info-Mac@SUMEX-AIM.STANFORD.EDU
-Keywords: MacKermit 0.9(40)
+Date: Tue, 27 Jun 89 15:33:06 EDT
+From: Paul Placeway <paul@cis.ohio-state.edu>
+Subject: Announcing Release 0.97(57) of Macintosh Kermit 
+Keywords: MacKermit 0.97(57), MacBinary, Macintosh Kermit
+Xref: Apple Macintosh, See Macintosh
 
-This is to announce Macintosh Kermit 0.9(40), by Paul Placeway of
-Ohio State University and Matthias Aebi of ECOFIN Research and Consulting, Ltd,
-Zuerich.  MacKermit 0.9(40) runs on all Macs except the 128K original.  If you
-have a 128K Mac, you should keep version 0.8(34), the last formal release.
+The new Macintosh Kermit, version 0.97(57), is ready for testing.
 
-As of 0.9, MacKermit has been translated into Apple MPW C, so that it can be
-edited, compiled, and built on the Macintosh itself.  This translation was
-based on work by Jim Noble of Planning Research Corporation, who converted
-MacKermit 0.8(34) from SUMACC C (which had to be cross-compiled on a UNIX
-system) to Megamax C.  Matthias converted Jim's version to MPW C, and he also
-added many of the new features listed below.  After that, Paul Placeway
-integrated the program with version 4E of C-Kermit and added additional new
-features, also shown below.
+Included are all the ckm*.* sources, a .hqx file which can be converted into
+the MacKermit application using BinHex Version 4, and two short doc files,
+(ckmvt1.doc and ckmker.hlp).  All of this is built on top of C-Kermit 4F(080),
+with my bug fixes in the ckc files (it even builds a wart to use).
 
- - Long packet support
- - The cursor with open desk accessories now works correctly
- - New program icon
- - New settings files are no longer TEXT
- - Settings can now be written back to an already existing settings file
- - Key redefinition function built in to Kermit, no more CKMKEY
- - Server mode directory listing feature
- - Multifile (folder) send
- - Server "Delete" file command
- - Server "Space" command
- - Get whole folder content from the server with filename ":"
- - Support of menu command keys (key macros)
- - Terminal settings dialog separated from communication settings
- - Non-transparent terminal mode
- - Display of statistics and protocol version to "About Kermit" dialog
- - Parity problems fixed
- - More efficient file transfer in many cases, especially when parity in use
- - Session logging (screen capture)
- - Transaction logging
- - Multifinder support
- - Additions to the VT102 emulator (smooth scrolling, etc)
- - Rearrangement of menus and displays
- - Program no longer hangs if remote response window gets too full
- - Program now works correctly on 64K ROM machines
- - A new manual
+I have personally tested it on a 512k (not e) running System 1.1, a Lisa
+running MacWorks 3.0, Mac Pluses running System 2.0 through 6.0.3 and a Mac II
+running 6.0.2; I am told it works on SE and SE30 machines also (which is not
+really a supprise).  Basically the only thing it doesn't work on (for sure) is
+an old 128k "Classic" Mac (if I had one here I could probably make it work
+there too).
 
-The new files are among those in KER:CK*.* on CU20B.COLUMBIA.EDU, available
-via anonymous FTP, and on BITNET, as CK* * from KERMSRV at CUVMA.  In
-particular:
+Anyone who is doing work on Mac Kermit should get a copy of the new sources as
+soon as they can; I have changed some things around, especially the terminal
+emulator internals.  Code based on 0.9(40) may or may not be easy to work into
+the new sources.
 
- CKMKER.HQX is the MacKermit application, in BinHex Version 4 format
- CKMKER.DOC is the new Kermit User Guide chapter for MacKermit
- CKMKER.MSS is the Scribe source for the manual chapter
+New additions to the program since the 0.9(40) release in May 1988 include:
 
-If you want sources, the files you need (using Unix notation for brevity) are:
-CK[CMU]*.[CHRW], that is, all files whose names start with CK, followed by C,
-M, or U, and then some more characters, with a filetype of C, H, R, or W.  You
-also need the file CKMMAK.HQX, which is the "makefile" in BinHex v4 format.
+    Vertically sizeable terminal emulation window.
+    Scroll back.
+    Faster file transfer.
+    (hopefully) Correct binary transfer code.
+    MacBinary format transfers.
+    Better keyboard handling.
+    Partial emulation of a DEC VT300-Series terminal, including support
+      for ISO 646 National Replacement Character sets, and Latin Alphabet 1.
+	
+More keyboard macros have been added to better handle the vt100 keyboard
+and normal/application mode stuff:
 
-Thanks to all the Info-Kermit readers who have been beta-testing different
-versions of this program since last October.  And many thanks to Paul and
-Matthias for putting this release together and making it available.  Please
-report any problems to Info-Kermit-Request@CU20B.
+	\keypad0 -- \keypad9
+	\keypad,
+	\keypad.
+	\keypad-
+	\pf1-4
+	\leftarrow
+	\rightarrow
+	\uparrow
+	\downarrow
+
+The keypad comes configured for a Plus; if you have an ADB machine, you will
+have to remap the + and - keys, and possibly =, /, and * to be pf2-4.
+
+Bugs and limitations still outstanding:
+
+    Running in inverted screen mode doesn't work.
+    The option key is still a dead key for the usual characters (e, u, etc.)
+    Parts of the Edit menu should be greyed out when they do not apply.
+    Cut and Paste do not deal with the real Scrapbook (yet).
+    There still isn't a Tektronix graphics terminal emulator built-in.
+    It is possible to confuse the selection by draging past the top of
+      the window, waiting, and dragging down past the end of the window.
+	
+Other than these, if you find a problem please send mail to
+Info-Kermit@watsun.cc.columbia.edu (on the Internet), or KERMIT@CUVMA on
+BITNET.  Please include Kermit version number, a discription of the hardware,
+the System version number, and if possible a "repeat-by".
+
+				Happy Kermiting,
+				
+				Paul Plaeway, MacKermit coordinator
+				paul@cis.ohio-state.edu
+
+[Ed. - Many thanks, Paul!  The new files have been placed in the kermit/test
+directory on watsun and cunixc, and in the T: area of BITNET KERMSRV on CUVMA.
+This release has to be considered a test release because it is based on a
+test version of C-Kermit, and also because there is not yet a new manual.  Mac
+Kermit users, please take a copy, try it out, and report bugs to Info-Kermit
+as Paul asks.]
+
+------------------------------
+
+Date: Tue, 22 Aug 89 16:46:26 EDT
+From: Paul Placeway <pplaceway@bbn.com>
+Subject: New Test Release of Mac Kermit
+Keywords: Macintosh Kermit
+
+New sources for Mac Kermit 0.98(62), compilable with the 4F(095) C-Kermit
+files are now available, along with an up-to-date CKMKER.HQX file, which
+can be decoded into the working Mac Kermit application using BinHex V4.
+
+This version fixes the font assignment problems, makes mouse->arrow keys
+work again, and does statistics on file transfer right.  It also is better
+about keys when running under System 4.2 or better (specifically, it
+disables dead-keys and doesn't strip off shifting when unmodifying keys).
+
+                --Paul
+
+[Ed. - Thanks Paul!  The new files have relaced the old ones in
+kermit/test/ckm*.* on watsun, and in the T: area of BITNET KERMSRV on
+CUVMA.  Please send reports and comments to Info-Kermit@watsun.]
+
+------------------------------

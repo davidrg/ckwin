@@ -1,4 +1,475 @@
-C-KERMIT FOR UNIX, CHANGES FROM VERSION 4E(070) TO 4E(071), 18 Jan 89
+File CKUKER.UPD, Update history for C-Kermit.                      -*- text -*-
+Author: F. da Cruz, Columbia University Center for Computing Activities
+
+4F(095) Thu Aug 31 20:04:59 1989
+
+Fix a bug which has been in ckucmd.c forever -- can't believe nobody ever
+noticed it before!  If cmnum() is called as the last field in a command, and
+it is supplied a default value, and the user types carriage return instead of
+a number, then the default was not supplied.  The fix was in cmfld(), to
+copy the default into the atom buffer, rather than just pointing to it.  This
+fixes the problem with the transmit command not waiting for the echoed
+linefeed when the user types "transmit foo.bar" and does not supply the final
+field, the turnaround character, which was supposed to be linefeed (10) by
+default.  Also, fix transmit so it echoes right on both full and half duplex
+connections.
+
+Addition of support for a variety of AT&T modems in ckudia.c, from Eric F.
+Jones at AT&T, including the 2212C, 2224B, 2224CEO, and 2296A (should also
+work with 2224G and 2248A, but not tested).  Also the AT&T Digital Terminal
+Data Module (DTDM) found in the telephones connected to the AT&T System 85
+digital PBX.
+
+In ckutio.c: (a) for AT&T-based systems, modify tthang() to not wait for
+carrier when reopening the device, (b) don't attempt to use the TIOCSINUSE
+ioctl() unless TIOCSINUSE is a defined symbol.
+
+Several minor cosmetic changes for the benefit of VMS.
+
+4F(094) Sat Aug 19 18:29:14 1989
+
+C-Kermit fails to write out one or more output file buffers on the AT&T
+3B2/300, but works ok on all other systems tested, including other AT&T
+systems.  Added bullet-proofing and debugging to zmchout() in ckufio.c,
+and in ckcpro.w, checked decode()'s return code and cancelled the protocol
+transaction upon decode() failure.  Also, commented out a trailing token
+after an #endif in ckuusr.c.  (Later, turns out that the mere act of assigning
+the value returned by zmchout() to a variable caused the macro to be evaluated
+correctly).
+
+4F(093) Wed Aug 16 22:22:05 1989
+
+Many places ckudia.c, ckucon.c, ckuscr.c, and ckutio.c -- change the type
+of functions that are passed as arguments to signal() to SIGTYP rather than
+no type at all (i.e. int).  This should prevent many compiler warnings and
+maybe even some runtime problems?
+
+In ckcfns.c, fix the file counting (ffc++) so that correct file sizes are
+reported by 'statistics'.
+
+4F(092) Fri Aug 11 15:06:39 1989
+
+Add code for converting file time to seconds since Jan 1, 1970 GMT.
+Not used yet, but will be used in setting Unix file date from incoming
+file attributes.  From David MacKenzie and Michael Haertel.  (This code is
+enclosed in #ifdef NOY_YET brackets, because it causes numerous compile &
+link time errors on certain systems).
+
+Rename memcpy() replacement in ckudia.c to xcpy(), to eliminate core dumps
+that the memcpy replacement caused on the ATT7300 and perhaps other systems.
+Peter Mauzey, AT&T.
+
+makefile addition for ATT6300, Peter Mauzey, AT&T.  makefile addition for
+Convex, Peter Mossel, Columbia Univ Health Sciences.
+
+4F(091) Sat Aug  5 14:29:41 1989
+
+Fix send-packet size recalculation to not respond to spurious errors like
+timout-retransmission of initial S-packet.
+
+Reorganize code that responds to MAIL and REMOTE PRINT commands so that it's
+in the system-dependent module, ckufio.c.  This will require adding zmail()
+and zprint() functions to all other ck*fio.c modules.
+
+Make a couple small changes to ckotio.c for OS/2, and in ckuusr.c also include
+signal.h and setjmp.h for OS/2 (Rob Kedoin, blessed by Chris Adie).
+
+4F(090) Wed Aug  2 19:24:01 1989
+
+Fixes from Bob Larson:
+Remove duplicate call to sysinit() from ckcmai.c.
+Don't call strlen() on a constant in a loop (tilde_expand(), ckufio.c).
+A couple OS-9 specific changes.
+
+Put definition of memcpy() function into ckudia.c, because it is not available
+to certain C compilers (used in Microcom modem support).
+
+Attempt to make the Apollo SR10-BSD version compile correctly:
+Change all "#ifdef apollo" back to "#ifdef aegis", and remove -Uapollo
+from the sr10-bsd makefile entry.  This way, "apollo" is still defined,
+which apparently it needs to be when #include'ing <stdio.h>, otherwise
+there are horrible compiler errors regarding _bufsiz, etc.
+
+4F(089) Thu Jul 20 19:59:25 1989
+
+OS-9/68K support from Bob Larson, USC.  The main difference between OS-9 and
+Unix (from Kermit's point of view) is that the OS-9 file system uses CR as
+a line terminator, rather than LF.  The OS-9 specific modules are ck9con.c,
+ck9fio.c, and ck9tio.c
+
+Other modules had "#ifdef OSK"..."#endif" conditionals added: ckuus*.*,
+ckcmai.c, ckcdeb.h, ckucmd.c, mainly having to do with \r, \n differences
+between OS-9 and Unix.
+
+Bob also found and corrected a lot of mistakes in the command parser --
+extraneous dereferencing of pointers, misgrouped parentheses in numerous calls
+to cmcfm(), etc.
+
+Bob also replaced Jim Knutson's Microcom modem support in ckudia.c with 
+a different style of support for this modem.  As Bob says, "the two
+versions make very different assumptions on how the modem will be configured
+and used.  Mine assumes the modem is configured for reasonable interactive
+use, and will try the autobaud sequence if the modem doens't respond to
+a return.  The other one forces the configuration into modes that may be
+slightly easier for a computer to understand, but make it hard to use
+interactively."  Note, Bob makes extensive use of memcpy().  I hope that all
+the systems that use ckudia.c support this function!  If not, it can
+be replaced by strncpy().
+
+Also, in ckudia.c, add support for additional responses from Hayes-like
+modems: NO DIALTONE, BUSY, NO ANSWER, RING, ERROR.  From Bo Kullmar, Kista,
+Sweden.
+
+Also, in ckudia.c, add a couple sleep(1)'s for Rolm CBX dialing.  This made
+it work, finally.
+
+In ckutio.c, function tthang(), remove the closing and reopening of the tty
+for BSD42.  It doesn't seem to be necessary.
+
+In ckufio.c, add a little bullet-proofing to zsout() and zopeno(), to prevent
+the case where you could crash the program by typing the command "log debug"
+twice in a row.
+
+Fix the TRANSMIT command to be interruptible by Ctrl-C, by getting rid of
+longjmp, which apparently leaves you executing on the wrong stack.  Live &
+learn...  Put all references to signal handling in the TRANSMIT command
+(ckuusr.c) within #ifndef OS2...#endif conditionals.
+
+Make the "size" message on incoming files in local mode less space consuming,
+and put a space between it and the "A".
+
+From Bo Kullmar in Sweden, fix ckucon.c not to give "Can't get character"
+message if myread() returned its special error 9999.
+
+4F(088) Wed Jul 19 20:54:06 1989
+
+These releases are flying thick and fast!  This one has fixed-up support for
+Masscomp/Concurrent RTU, plus a couple minor cosmetic improvements from
+Farrel Woods, ftw@westford.ccur.com (Concurrent, formerly Masscomp):
+
+The first is to get around a bug/inconsistancy in RTU signal handling in the
+Berkeley environment.  It turns out that if a user handles a signal (SIGTSTP),
+then any pending system call will return with EINTR when the program is
+resumed. This caused Kermit to exit after being resumed, since our library
+(e.g., getchar) will not re-try the system call.  Subsequent reads (and,
+getchars) will work alright.  The fix is set a flag before sending SIGSTOP to
+ourselves, and upon resumption, do an extra getchar if the flag was set.
+(yuck).
+
+Masscomp/Concurrent was added to the herald.
+
+The flag for the first bug was located in ckutio.c.  It seemed to be
+the place to put those kind of globals...
+
+RTU as of version 4 uses Honey Dan Ber (sic?) uucp.  The lock files
+live in /usr/spool/locks.
+
+Upon resuming after being suspended, call prompt() if not in background mode
+so that you know Kermit is paying attention to you again.
+
+The Makefile was changed to build Kermit in the ucb universe, with the
+BSD42 flag turned on.
+
+4F(087) Wed Jul 19 11:35:09 1989
+
+Hmmm....  A month ago, I merged in all of Chris Adie's OS/2 conditionals,
+and now all of that has disappeared!  I can't explain it.  Maybe there was a
+disk crash and the previous copies of the files were restored on top of the
+new ones?  Sigh...  Anyway, I did it again.  New copies of: ckcmai.c,
+ckucmd.c, ckudia.c, ckuscr.c, ckuusr.c, ckuus2.c, and ckuus3.c.
+
+4F(086) Tue Jul 18 11:52:16 1989 
+
+Add missing #ifdef OS2's to ckcdeb.h and ckuusr.h.  Forgot these before, oops.
+
+Change definition of tlog() and debug() when not defined to be the null
+string, instead of {}, to prevent problems with semicolons in if-else
+constructs (Steve Walton, Cal State Northridge).
+
+In ckutio.c, function ttopen(), also put local line in no-echo mode for
+ATT Sys III/V, as is done for BSD (David MacKenzie, Environmental Defense
+Fund, Rockefeller Univ).
+
+Major problems compiling on Apollo SR10 involving use of getchar() in
+ckucmd.c with "make sr10-bsd", reported & not yet fixed.
+
+4F(085) Fri Jul 14 13:19:00 1989
+
+ckcfns.c: In opena(), save global file mode (i.e. transfer syntax, variable
+"binary") in variable "bsave".  Check incoming file type attribute ("), if
+any.  If text (A), set transfer syntax to binary for this file only.  If
+binary (B), set to binary for this file only.  In clsof(), restore global file
+mode from bsave.  This allows the sender to tell the C-Kermit receiver whether
+the file is being transferred in text or file mode, so that you don't have to
+type a "set file type { text, binary }" command on the C-Kermit receiver.
+This code has no effect if the sender does not send the file-type attribute,
+or if the C-Kermit receiver has "set attributes off".
+
+4F(084) Mon Jul 10 20:47:51 1989
+
+Get rid of index() function in tilde_expand(), ckufio.c.  Some systems
+don't have it (like Xenix).
+
+Fix directory command to allow ~name, and ~name/, as well as ~name/file.
+
+Install missing help message for "set incomplete" and "set terminal".
+
+4F(083) Wed Jul  5 12:09:50 1989
+
+Add support for RT PC AIX 2.2 to ckutio (mostly lockfile stuff) and makefile,
+from Ge van Geldorp, Netherlands).
+
+Minor fixes to Zilog Zeus support from John R. Evans, IRS, Kansas City.
+
+4F(082) Mon Jul  3 15:19:22 1989
+
+Don't try to output to debug log in cmdini() in ckuusr.c, because it's not
+open yet (Martin Maclaren, Bath Univ, UK).
+
+Allow cd/cwd to also accept "~" notation in directory.  Required the addition
+of a new parsing function, cmdir(), to ckucmd.c.  Hacked it in as quickly as
+possible, mostly by killing stuff from a copy of cmifi().  Seems to work for
+SUNOS and Ultrix.  Hope it doesn't break all the other versions...
+
+Add tilde expansion to cwd() function in ckcfns.c, so that server can also
+expand tildes in 'remote cwd' commands.  Also add tilde expansion in sinit()
+when C-Kermit server executes the 'get' command.  Also in rcvfil() so it can
+receive files into directories specified in tilde-notation.
+
+Add tilde expansion to System-V based versions too.  Code for ckucmd.c from
+Dave MacKenzie at Rockefeller U.  Those who have experience with other kinds
+of systems (V7, Sys III, etc) should look at this code.  Should be simple to
+get it working for any Unix variant.  See #ifdef DTILDE.
+
+Move tilde-expansion code from ckucmd.c to ckufio.c.  Tilde-expansion code
+is compiled based on existence of TILDE symbol, which is defined in ckcdeb.h.
+
+Enable sending file timestamps from System V.  Code for ckufio.c from Dave
+MacKenzie.  See #ifdef TIMESTAMP.
+
+Clear up some packet-length confusion in pwp's new sdahead() encode-ahead
+function, in ckcfns.c.  Previously, C-Kermit was sending slightly-longer-
+than-negotiated packets.
+
+Fix pwp's modification to zopeni() in ckufio.c.  File input buffer was not
+being reset in all cases, resulting in leftover text from a previous transfer
+being prepended to the next transfer.
+
+Add "make next" to makefile, Mic Kaczmarczik, UT Austin Computation Center
+
+
+4F(081) Thu Jun 22 12:26:04 1989
+
+Add makefile entry for Berkely Unix 4.x with HoneyDanBer UUCP and clean up
+lock-file selection conditionals and code in ckutio.c (Paul Placeway),.
+
+From David MacKenzie, a couple small patches to make ckutio.c compile
+correctly on recent versions of UNOS.
+
+4F(080) Mon Jun 19 20:51:41 1989
+
+Merge in changes from Chris Adie, Edinburgh University, Scotland, for OS/2
+support:
+
+ - New OS/2-specific modules:
+     ckocon.c (terminal emulation), ckofio.c, ckutio.c.
+
+ - Minor changes to the following files under #ifdef OS2 conditionals:
+     ckcdeb.h, ckucmd.h, ckuusr.h, ckcmai.c, ckucmd.c, ckudia.c, ckuscr.c,
+     ckuusr.c, ckuus2.c, ckuus3.c.
+
+ - Add new material to Chris's ckofio.c OS/2 file-system support module:
+     Limited file attribute support.
+     Paul Placeway's buffered file input and output.
+
+Chris Adie's work was based on an older C-Kermit, and so this two-way merge
+was unavoidable.  The result is entirely untested and may not work at all, so
+those with OS/2 development systems are urged to debug it and send back the
+necessary fixes.
+
+Change the interactive command parser, for BSD4.x only, to expand tildes in
+filenames in SEND, RECEIVE, DIRECTORY, LOG, and similar commands.  This code
+is all in ckucmd.c, under #ifdef BSD4 conditionals, in the cmifi() and cmofi()
+functions.  AT&T UNIX users are invited to adapt it to System III, System V,
+etc.
+
+Add file creation date to attributes sent by C-Kermit (BSD 4.x only).
+
+Change input() function in ckcfn2.c to avoid getting into retransmission loops
+when it receives an ACK for the previous packet or a NAK for the next packet.
+
+Restore lost comment delimiter in ckcpro.w, on "<serve>I" line, which
+prevented type-2 or -3 block checks from being selected by the client.
+
+Remove something that was added in 4F(077), i.e. using file descriptor for the
+terminal in packet mode.  It turns out that this prevented Kermit from
+sending/receiving files to/from standard input.
+
+Changes for 4.1 BSD from Frank Prindle:
+Make setegid() and seteuid() calls in ckuusr.c and ckufio.c conditional
+upon BSD42, rather than BSD4, because 4.1 BSD doesn't support them.  In
+file ckutio.c, tthang() shouldn't close and open the ttyfd, and ttpkt()
+should choose the "old" line discipline.  Add special BSD41 entry in
+makefile.
+
+Another one from Frank Prindle: When assigning an external line for local-mode
+operation, turn off ECHO bit in sg_flags.  This eliminates the problem of
+bizzare delayed echoing when connecting back to a remote system after a file
+transfer, which first appeared in 4E(072).  For the benefit of those still
+running versions between then and now, the fix is to find the following lines
+in function ttopen() in the file ckutio.c:
+
+#ifndef UXIII
+    gtty(ttyfd,&ttold);                 /* Get sgtty info */
+
+and add the following line immediately after them:
+
+    if (xlocal) ttold.sg_flags &= ~ECHO; /* Turn off echo on local line */
+
+In ckucmd.c, change the name of the function digits() to rdigits(), because
+digits is now apparently a reserved word on some systems, like NEC Astra XL
+3.4 (Gary Holbrook).
+
+Try to fix the hangup code.  In ckutio.c, function tthang(), where we close
+and reopen the line, if the reopen fails, kill the lock file.  Add message,
+"[hanging up]".  In ckucon.c, fix ^\h escape (hangup) in connect mode to wait
+until tty port reader fork terminates.  Add ^\q escape (hangup and quit from
+Kermit).  All this from Patrick Wolfe, Kuck & Associates, Inc, pat@kai.com.
+
+"mail" has been changed to "Mail" to ensure that the Berkeley version will
+be used, which accepts a "-s" switch on the command line for subject.
+
+Add support for Microcom ax9624 modem from Jim Knutson in ckudia.c.
+
+Remove #include <sys/file.h> for Apollo aegis in ckutio.c (Martin Maclaren).
+
+
+4F(079)
+
+Add 'transmit' command for raw uploading.  For now, there's no way to
+interrupt it.
+
+4F(078)
+
+Changes by Paul Placeway, Ohio State University, to speed up decoding of
+Kermit packets and writing out to files.  Also code from Paul to dynamically
+size outbound packets based on the frequency of retransmissions - the noisier
+the line, the shorter the packets, the cleaner the line, the longer the
+packets (up to the maximum negotiated length).
+
+C-KERMIT FOR UNIX, CHANGES FROM VERSION 4E(072) TO 4F(077), 1 Apr 89
+
+A somewhat major new release, in beta-test form (but if it tests ok,
+it can become a real release without requiring any further changes).
+
+ATTRIBUTE PACKETS.  Minimal support for attribute packets added: ckcpro.w,
+ckcdeb.h, ckcfn2.c, ckufio.c, ckuus*.c.  C-Kermit can send Attribute packets
+containing system ID, file sizes (K and bytes), and encoding method (text or
+binary), and will honor positive and negative responses.  It will also receive
+Attribute packets (see below).  In the ckuus* modules, the command 'set
+attributes {on, off}' was added, to allow Attribute packet processing to be
+disabled in case of misunderstandings; it is enabled by default.
+
+IMPORTANT: ckcpro.w calls a new function, sattr(), which is defined in
+ckcfn2.c.  The sattr() function, in turn, calls zsattr(), which MUST BE
+DEFINED in in each and every ck?fio.c module.  So far, it has only been
+defined in ckufio.c, for Unix.  Macintosh and VMS Kermit developers -- be sure
+to add this function to your system-dependent code.  In the future, a similar
+function will have to be added to ck?fio.c to modify an incoming file's
+attributes.
+
+C-Kermit receives and processes attribute packets, and fills in an attribute
+structure.  So far, C-Kermit does nothing with these attributes except for
+"Disposition" (Attribute "+").  If the disposition is M, then the file is
+mailed to the designated address(es).  If the disposition is P, then the file
+is printed with the specified options.  These operations are currently done
+in the crudest possible way (via "system()"), and only for UNIX.
+
+EFFICIENCY: Modifications from Paul Placeway at Ohio Statue University that
+dramatically speed up C-Kermit when sending.  Changes as follows:
+ ckcker.h - define a file input macro similar to getc(), and a buffer size.
+ ckufio.c - function zinfill() added to fill input buffer, zchin() modified
+            to use buffered input.  NOTE: zinfill() will have to be added to
+            all the other ck?fio.c modules (Macintosh, VMS, etc etc).
+ ckcfns.c - getpkt() totally rewritten and demodularized.  It used to be
+            pretty, but now it's fast.  getchx() and encode() copied inline.
+
+The SET SERVER TIMEOUT command was added to control the rate at which the
+C-Kermit server issues NAKs during command wait, 0 = no NAKs at all.  Changes
+to ckuus*.c, ckuusr.h, ckcfns.c, ckcmai.c.  The server's periodic NAKs can
+interfere with originate/answer devices like digital PBXs or autodial modems,
+putting them in originate mode when the user wanted the device to be in answer
+mode.  SET SERVER TIMEOUT 0 can now be used in such situations.
+
+MAKE C-KERMIT SEND NAKs: ckcpro.w, ckcfns.c, ckcfn2.c, ckcmai.c.  Up till now,
+C-Kermit has always responded to a corrupted packet or a timeout by resending
+its previous packet.  It turns out that when talking to a more generalized
+Kermit program -- i.e. one that provides for sliding-window packet transfer,
+in which a window size of 1 is just a special case -- that it is better for
+C-Kermit to send NAK packets in response to corrupted packets or timeouts,
+which a sliding-windows Kermit will act upon immediately.  This is done by
+adding a flag variable, nakstate, in ckcmai.c.  This variable is set to 1 in
+ckcpro.w before rdata state is entered.  In the input() function (ckcfn2.c), a
+NAK is sent in response to a timeout or corrupted packet if nakstate != 0,
+otherwise the previous packet is resent, as before.  In function tinit()
+(module ckcfns.c) nakstate is reset to zero at the beginning of each
+transaction.
+
+ckcpro.w: Cure a longstanding bug.  When in <sseof>Y state, if there's another
+file to send, the transition is to state ssfile, not ssdata!  The problem was
+that if C-Kermit was sending a file whose name began with X or Z, and the
+other Kermit echoed back the filename in the data field of the ACK packet (as
+C-Kermit itself does), the improper immediate transition into ssdata state
+caused the ACK data field to be checked for X or Z, which is the signal for
+file interruption.  The fix prevents the data packet protocol from looking in
+the ACK to the file header.  The reason it escaped notice for so long is that
+it could only happen when sending a wildcard group of files with names
+starting with X or Z and with SET FILE NAMES LITERAL (which forced the
+normally lowercase X's or Z's to be uppercase) from one C-Kermit to another
+C-Kermit (actually, could also have happened a lot with Mac Kermit too).
+
+ckcpro.w: Reformat and comment.  No longer try to preserve the illusion that
+Kermit is such a simple protocol it can fit on 2 pages...
+
+ckcfns.c: In tinit(), set spktl = 0, so that a 'server' command given after
+some other command will transmit a NAK(0), rather than whatever the last
+packet happened to be (this bug had been there forever).  In sinit(), make
+sure that C-Kermit sends an error packet if a 'get' command to the C-Kermit
+server results in too many filenames.
+
+ckwart.c: Change data type of state transition array from short to CHAR.  Save
+several more K.
+
+VMS support: Add changes from Mark Buda & Barry Archer to ckuusr.c within
+"#ifdef vms" conditionals -- VMS-specific way to find init file, and special
+handling of DIRECTORY command.
+
+ckuusr.c: Add some debugging info to trap().
+
+ckuus2.c: In rdebu(), change reference to rdatap (which could sometimes
+be uninitialized) to data+1, which always works.  This one could cause core
+dumps with 'set debug on' at beginning of file transfer.
+
+ckuus3.c: In screen(), always issue error or warning messages (even if
+in quiet or no-display mode).
+
+ckutio.c: Many changes, mainly to prevent opening of terminal in O_NDELAY
+mode, skip the exclusive access baloney, hanging up, etc etc, when terminal is
+job's controlling tty.  Also, if terminal is job's controlling tty, use file
+descriptor 0 (stdin) rather than obtaining a new file descriptor on it.  This
+allows UNIX "idle line monitors" to properly detect Kermit activity and not
+log out Kermit users in the middle of 40-megabyte file transfers because the
+tty line appears to be idle.
+
+ckufio.c and ckutio.c: Add UNOS support from David MacKenzie,
+edf@rocky2.rockefeller.edu.  Add function zinfill() for buffered file input,
+from Paul Placeway.
+
+ckudia.c: Slightly better support for Hayes modems -- try to catch the case 
+where user dials out at 2400 but gets connected at 1200.
+
+
+C-KERMIT FOR UNIX, CHANGES FROM VERSION 4E(070) TO 4E(072), 24 Jan 89
 
 Maintenance release.  Fixes some major bugs, makes a few minor changes in
 functionality.
@@ -65,11 +536,11 @@ Utah State Univ, Feb 88.  Large changes to ckutio.c and ckudia.c.
 
 12. When sending ACK for F-packet, encode the filename rather than sending it
 bare.  Change to ckcpro.w, entry "<rgen,rfile>F".  Doesn't jibe with MS-Kermit
-2.32, but that will be fixed in next MS-Kermit release.
+2.32, but that is fixed in 2.32/A.
 
-13. Add support for IBM/Siemens/Rolm dialing in ckudia.c.  Might not actually
-work, since the CBX is not really a modem and its modem signals do not behave
-like a real modem's.
+13. Add support for IBM/Siemens/Rolm CBX dialing in ckudia.c.  Might not
+actually work, since the CBX is not really a modem and its modem signals do
+not behave like a real modem's.
 
 14. Have command parser (ckucmd.c) treat Ctrl-I as an ESC, rather than a space,
 in line with current C-Shell, K-Shell, GNU EMACS, etc, practice.  Also in same
@@ -137,6 +608,8 @@ the hangup function, tthang() from ckutio.c.
 also close and open the line.  Without the close/open sequence, subsequent
 'connect' commands would hang.
 
+29. Make 'cd' a synonym for 'cwd'.
+
 
 C-KERMIT FOR UNIX, CHANGES FROM VERSION 4E(069) TO 4E(070), 29 Jan 88
 
@@ -164,7 +637,7 @@ ckutio.c:
   on something that really works, namely testing the process group against
   the controlling terminal's process group.  There is apparently no way to
   do this in Sys V...  This fixes the disappearing prompt problem, at least
-  on BSD-based systems.  (Thanks to Fuat Baran for this.)
+  on BSD-based systems.  (Thanks to Fuat Baran of CUCCA for this.)
 
 
 C-KERMIT FOR UNIX, CHANGES FROM VERSION 4E(067) TO 4E(068), 24 Jan 88

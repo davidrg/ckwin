@@ -32,7 +32,7 @@ struct keytab mdmtab[] = {
 
 int nmdm = sizeof(mdmtab) / sizeof(struct keytab);
  
-dial()
+ckdial()
 {
 	printf("Sorry, DIAL command not implemented yet.\n");
 	return(-2);

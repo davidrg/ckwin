@@ -1,8 +1,8 @@
-char *ckxv = "OS-9 tty I/O, 23 Feb 88";
+char *ckxv = "OS-9 tty I/O, 07 Apr 89";
  
 /*  c k 9 T I O  */
  
-/* C-Kermit interrupt, terminal control & i/o functions for Unix systems */
+/* C-Kermit interrupt, terminal control & i/o functions for os9/68k systems */
  
 /*
  Author: Peter Scholz
@@ -11,6 +11,7 @@ char *ckxv = "OS-9 tty I/O, 23 Feb 88";
  
  Bob Larson (Blarson@ecla.usc.edu)
  Cleanup, fix timeouts, fix connect escape
+ Rewrite ttinl for less overhead
 
  adapted from unix C-Kermit
  Author: Frank da Cruz (SY.FDC@CU20B),
@@ -32,11 +33,12 @@ char *ckxv = "OS-9 tty I/O, 23 Feb 88";
 #define JULIAN 1
 #endif
 #define MIDNIGHT 86400
-#include <stdio.h>   /* Standard i/o */
-#include <signal.h>   /* Interrupts */
+#include <stdio.h>	/* Standard i/o */
+#include <signal.h>	/* Interrupts */
 #include <errno.h>
-#include <sgstat.h>   /* Set/Get tty modes */
-#include "ckcdeb.h"   /* Typedefs, formats for debug() */
+#include <sgstat.h>	/* Set/Get tty modes */
+#include <sg_codes.h>	/* setstat/getstat function codes */
+#include "ckcdeb.h"	/* Typedefs, formats for debug() */
  
 /* Maximum length for the name of a tty device */
  
@@ -221,6 +223,7 @@ sysinit() {
 	if(_gs_devn(2, myttystr+1) < 0) return -1;
     } else strcpy(myttystr+1, cp);
     strcpy(dfttystr, myttystr);
+    dftty = &dfttystr[0];
     return 0;
 }
  
@@ -566,9 +569,12 @@ ttoc(c) char c; {
   within "timo" seconds.
 */
  
-ttinl(dest,max,timo,eol) int max,timo; register char *dest; char eol; {
-    register int  n,x,m;
-    CHAR c;
+ttinl(dest,max,timo,eol)
+int max,timo;
+register char *dest;
+char eol;
+{
+    register int  i,j,n,m;
     int time, date, t;
     short day;
  
@@ -576,20 +582,41 @@ ttinl(dest,max,timo,eol) int max,timo; register char *dest; char eol; {
     if (ttyfd < 0) return(-1);  /* Not open. */
     if (timo <= 0) {   /* Untimed read... */
  	if(when == MIDNIGHT) { /* unalarmed read */
-	    for (c = x = 0; (x < max) && (c != eol); x++) {
-	    	n = read(ttyfd,&c,1);
-		if (n<0) return(n);
-		c &= m;
-		dest[x] = c;
+	    i = 0;
+	    j = 0;
+	    for(;;) {
+	    	if ((n = _gs_rdy(ttyfd)) > 0) {		/* see how many chars ready */
+		    if (n > (max - i)) n = max - i;
+		    if ((n = read(ttyfd, dest, n)) < 0) { /* get them all */
+		        return -1;
+		    }
+		} else {
+		    if((n = read(ttyfd, dest, 1)) < 0) {
+		        return -1;
+		    }
+		}
+		j += n;
+		if (j >= max) {
+		    debug(F101, "ttinl buffer overflow", "", j);
+		    return -1;
+		}
+		for (; i < j; i++,dest++) {
+		    *dest &= m;
+		    if (*dest == eol) {
+		        *++dest = '\0';
+			return i;
+		    }
+		}
 	    }
-	    return x;		/* Return the count. */ 
 	}
     } else {	/* timed read */
 	_sysdate(1, &when, &date, &day, &t);
 	when += timo;
 	if(when >= MIDNIGHT) when -= MIDNIGHT;
     }
-    for (c = x = 0; (x < max) && (c != eol); x++) {
+    i = 0;
+    j = 0;
+    for (;;) {
 	while(((n=_gs_rdy(ttyfd))<0)&&(errno==E_NOTRDY)) {
 	    ticks = SLEEPINT;
 	    _ss_ssig(ttyfd, SIGARB);
@@ -602,13 +629,27 @@ ttinl(dest,max,timo,eol) int max,timo; register char *dest; char eol; {
 	    }
 	    tsleep(ticks);
 	}
-	if (n>0) n = read(ttyfd, &c, 1);
-	c &= m;
-	if (n < 0)  return n;  /* Return the error indication. */
-	dest[x] = c;
+	if (n > max - i) n = max - i;
+	if (n > 0) n = read(ttyfd, dest, n);
+	if (n < 0) {
+	    if(timo>0) when = MIDNIGHT;
+	    return n;  /* Return the error indication. */
+	}
+	j += n;
+	if (j >= max) {
+	    debug(F101, "ttinl buffer overflow", "", j);
+	    if(timo>0) when = MIDNIGHT;
+	    return -1;
+	}
+	for(; i < j; i++, dest++) {
+	    *dest &= m;
+	    if (*dest == eol) {
+	        *++dest = '\0';
+		if(timo>0) when = MIDNIGHT;
+		return i;
+	    }
+	}
     }
-    if(timo>0) when = MIDNIGHT;
-    return x+1;    /* Return the count. */
 }
  
 /*  T T I N C --  Read a character from the communication line  */
@@ -653,10 +694,8 @@ ttinc(timo) int timo; {
  
 ttsndb()
 {
-    int x; long n; char spd;
- 
     if (ttyfd < 0) return(-1);  /* Not open. */
-    return(-1); /* for now we can't do a break */
+    return setstat(SS_Break, ttyfd);
 }
  
 /*  R T I M E R --  Reset elapsed time counter  */

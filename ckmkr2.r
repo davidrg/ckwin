@@ -1,10 +1,10 @@
 /* Create the version string for Kermit with the last compi-	*/
-/* lation time. Compile this resource definition with Rez.	*/
-/* Created: 10/12/87 Matthias Aebi				*/
-/* Modifications:						*/
+/* lation time. Compile this resource definition with Rez.		*/
+/* Created: 10/12/87 Matthias Aebi								*/
+/* Modifications:												*/
 
 type 'KR09' {
-	byte = 39;		/* the string length */
+	byte = 40;		/* (40) the string length */
 	array CompileTime {
 		string;
 		byte;		/* month first digit */
@@ -25,7 +25,7 @@ type 'KR09' {
 };
 
 resource 'KR09' (0) {
-	{	"Kermit Version 0.9(40) Q ",
+	{	"Kermit Version 0.98(63) Ñ ",
 		($$Month/10)+48,
 		($$Month%10)+48,
 		($$Day/10)+48,

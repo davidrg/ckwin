@@ -122,7 +122,9 @@ RgnHandle mouseRgn;
 extern 0xA860;			/* it's a toolbox trap... */
 
 #define num_WaitNextEvent	0x60
+#define num_JugglDispatch	0x8F	/* The Temp Memory calls (RWR) */
 #define num_UnknownTrap		0x9F
+#define num_ScriptTrap		0xBF
 
 /***********************************/
 pascal void

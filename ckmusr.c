@@ -1,3 +1,6 @@
+/* edit by John A. Oberschelp for Emory University -- vt102 printer support 22 May 1989 */
+/*                    Emory contact is Peter W. Day, ospwd@emoryu1.cc.emory.edu */ 
+/* various edits by PWP 8/88 -- 5/89: much rearangement, new menus 'n stuff */
 /* edit by PWP 3/27/88 -- Make the log session and transaction stuff a   */
 /*  separate menu. */
 /* edits by PWP -- Nov. 87..Mar. 88  Fixed several oversights, bugs, etc., */
@@ -53,7 +56,13 @@
 #include <textedit.h>
 #include <segload.h>
 #include <ctype.h>
-#include <environs.h>
+
+#include <printing.h>	/*JAO*/
+
+/* here is what is different */
+#ifndef __QUICKDRAW__
+#include <QuickDraw.h>
+#endif
 #include <osutils.h>
 /* PWP: put the #include for the script manager here! */
 
@@ -72,7 +81,7 @@ int protocmd;			/* protocol file cmd, or -1 for */
  /* protocol */
 
 char *mybuff;			/* Serial drivers new buffer */
-CursHandle watchcurs;		/* the watch cursor */
+
 SerShk controlparam;		/* To change serial driver paramaters */
 
 int quit = FALSE;
@@ -96,6 +105,14 @@ long mf_sleep_time = 3L;	/* this is the number of (60Hz) ticks to
 				 * the serial line)
 				 */
 
+Boolean have_128roms = FALSE;	/* actually, a Mac + or better */
+
+#define switchEvt	 1		/* Switching event (suspend/resume )  for app4evt */
+
+void updateCursor();
+
+extern Handle	hPrintBuffer;			/*JAO*/
+
 /****************************************************************************/
 /*
  *  p a r s e r
@@ -114,28 +131,22 @@ parser ()
     char nextcmd ();
     char rstate = 0;
     EventRecord myevent;
-    extern int oldlin;		/* used in mouse --> cursor stuff */
 
     if (tlevel > -1) {		/* if we are working under take-file */
 	rstate = nextcmd ();	/* file control, get next command */
 	if (!quit)
 	    return (rstate);
     }
-    InitCursor ();		/* back to normal cursor */
     protocmd = 0;		/* protocol not active */
-
+    updateCursor(1, NIL);	/* back to normal cursor */
+    
     while (!(quit || rstate)) {	/* Until they want to quit */
 	/* or return */
 	if (!have_multifinder)	/* MF does this for us */
 	    SystemTask ();	/* Update system things */
 
-	inpchars ();		/* Handle all the pending port chars */
-
-	if (blinkcursor)	/* PWP: save some time */
-	    flash_cursor (terminalWindow);	/* (UoR) for flashing cursor */
-	if (mouse_arrows || (oldlin >= 0))	/* PWP: save more time */
-	    check_pointer (terminalWindow);	/* (UoR) check for mouse
-						 * cursor pointer */
+	/* Handle all the pending port chars */
+	inpchars ();
 
 	if (have_multifinder)
 	    /* task, task */
@@ -165,17 +176,26 @@ parser ()
 	    rstate = domouse (&myevent);
 	    break;
 
-	  case app4Evt:	/* really a suspend/resume event */
-	    if (have_multifinder)
-		in_background = !in_background;
+	  case app4Evt:	/* could be a suspend/resume event */
+	    if ((have_multifinder) &&
+	        (((myevent.message >> 24) & 0xff) == switchEvt)) {
+		in_background = ((myevent.message & 0x1) == 0);
+		/* do suspend things */
+	    }
+	    updateCursor(1, myevent.message);
 	    break;
 	}
+	
+	if (blinkcursor)	/* PWP: save some time */
+	    flash_cursor (terminalWindow);	/* (UoR) for flashing cursor */
+
+	updateCursor(0, NIL);
     }
 
     if (quit)			/* want to exit the program? */
 	doexit (0);		/* yes, finish up */
 
-    SetCursor (*watchcurs);	/* set the watch */
+    updateCursor(1, NIL);	/* set the watch */
     return (rstate);		/* and return with state */
 }				/* parser */
 
@@ -216,14 +236,21 @@ miniparser (deplete)		/* deplete pending events */
 	    break;
 
 	  case keyDown:
-	    if ((ev.modifiers & cmdKey) && ((ev.message & 0x7f) == '.'))
+	    if ((ev.modifiers & cmdKey) && ((ev.message & 0x7f) == '.')) {
 		if (CautionAlert (ALERT_ABORT, NILPROC) == OKBtn)
 		    sstate = 'a';	/* move into abort state */
+#ifdef COMMENT
+	    } else {
+		if ((ev.message & 0x7f) == 015)	/* if RETURN */
+		    resend();
+#endif
+	    }
 	    break;
 
 	  case app4Evt:	/* really a suspend/resume event */
-	    if (have_multifinder) {
-		in_background = !in_background;
+	    if ((have_multifinder) &&
+	        (((ev.message >> 24) & 0xff) == switchEvt)) {
+		in_background = ((ev.message & 0x1) == 0);
 		/* PWP: do stuff for disabling the status window here */
 	    }
 	    break;
@@ -249,7 +276,7 @@ EventRecord *evt;
 
     switch (evtwcode) {		/* Tell us where */
       case inMenuBar:		/* Looking at the menus? */
-	check_pointer ((WindowPtr) NIL);	/* (UoR) mouse cursor off */
+	updateCursor (1, (WindowPtr) NIL);	/* (UoR) mouse cursor off */
 	state = menu_event (MenuSelect (&evt->where));
 	HiliteMenu (0);		/* Done, so un-hilite */
 	break;			/* All done */
@@ -262,7 +289,7 @@ EventRecord *evt;
 	if (window != FrontWindow ())
 	    SelectWindow (window);	/* make window current */
 	else if (window == terminalWindow)
-	    mouse_cursor_move (evt);	/* (UoR) check for mouse cursor move */
+	    termmouse (evt);
 	else if (window == remoteWindow)
 	    rcdmouse (evt);
 	break;
@@ -277,7 +304,12 @@ EventRecord *evt;
 	break;
 
       case inGrow:
-	growwindow (remoteWindow, &evt->where);
+	if (window != FrontWindow ())
+	    SelectWindow (window);	/* make window current */
+	else if (window == terminalWindow)
+	    growterm (&evt->where);
+	else if (window == remoteWindow)
+	    growwindow (remoteWindow, &evt->where);
 	break;
     }
 
@@ -319,14 +351,29 @@ doactivate (window, mod)
 WindowPtr window;
 int mod;
 {
+    GrafPtr savePort;
+
+    GetPort (&savePort);
+    SetPort (window);
+
     HiliteWindow (window, ((mod & activeFlag) != 0));
-    if (window == remoteWindow)
+    if (window == remoteWindow) {
 	rcdactivate (mod);
+    } else if (window == terminalWindow) {
+    	term_activate(mod & activeFlag);
+    }
+    updateCursor(1, window);
+    if (!EmptyRgn(((WindowPeek)terminalWindow)->updateRgn))
+	doupdate (terminalWindow);	/* Fake an update event */
+
+    SetPort (savePort);
 }				/* doactivate */
 
 
 
 char genstr[100];
+
+#define VT100FONT  128		/* VT100 Terminal Font (not-bold) */		/*JAO*/
 
 /****************************************************************************/
 /****************************************************************************/
@@ -338,6 +385,7 @@ long menu_item;
     short item = LoWord (menu_item);
     char state = '\0';
     int remotedialog ();	/* returns boolean */
+    WindowPtr window;
 
     switch (menu) {
       case APPL_MENU:		/* Mac system menu item */
@@ -345,6 +393,7 @@ long menu_item;
 	break;			/* all done */
 
       case FILE_MENU:
+      case FILE_MEN2:
 	switch (item) {		/* Find out which was selected */
 	  case QUIT_FIL:	/* Want to quit program? */
 	    quit = TRUE;	/* Yes... flag it */
@@ -377,6 +426,14 @@ long menu_item;
 	    if (dogetfdialog (&cmarg))	/* remote-file. */
 		state = 'r';	/* Say we want to get */
 	    break;
+	    
+	  case STATS_FIL:	/* show transfer stats */
+	    show_stats();
+	    break;
+	    
+	  case CWD_FIL:		/* set transfer directory */
+	    set_cwd();
+	    break;
 	}
 
 	if (state != '\0') {	/* going to enter protocol? */
@@ -386,12 +443,97 @@ long menu_item;
 	break;
 
       case EDIT_MENU:		/* PWP: good for DA editors */
-	if (SystemEdit (item - 1))
+      case EDIT_MEN2:		/* PWP: good for DA editors */
+        window = FrontWindow();	/* we do different things based on this */
+	
+        switch(item) {
+	  case UNDO_EDIT:	/* undo */
+	    if (window == terminalWindow) {
+		SysBeep(3);
+	    } else if (window == remoteWindow) {
+		SysBeep (3);
+	    } else {
+		if (!SystemEdit (item - 1))
+		    SysBeep (3);
+	    }
 	    break;
-	SysBeep (3);
+
+	  case CUT_EDIT:	/* cut */
+	    if (window == terminalWindow) {
+		SysBeep (3);
+	    } else if (window == remoteWindow) {
+		SysBeep (3);
+	    } else {
+		if (!SystemEdit (item - 1))
+		    SysBeep (3);
+	    }
+	    break;
+
+	  case COPY_EDIT:	/* copy */
+	    if (window == terminalWindow) {
+		scr_copy();
+	    } else if (window == remoteWindow) {
+		SysBeep (3);
+	    } else {
+		if (!SystemEdit (item - 1))
+		    SysBeep (3);
+	    }
+	    break;
+
+	  case PASTE_EDIT:	/* paste */
+	    if (window == terminalWindow) {
+		scr_paste();
+	    } else if (window == remoteWindow) {
+		SysBeep (3);
+	    } else {
+		if (!SystemEdit (item - 1))
+		    SysBeep (3);
+	    }
+	    break;
+
+	  case CLEAR_EDIT:	/* clear */
+	    if (window == terminalWindow) {
+		SysBeep(3);
+	    } else if (window == remoteWindow) {
+		SysBeep (3);
+	    } else {
+		if (!SystemEdit (item - 1))
+		    SysBeep (3);
+	    }
+	    break;
+	  
+	  case BREAK_EDIT:	/* send break */
+	    if (window == terminalWindow)
+		sendbreak(5);
+	    else
+		SysBeep(3);
+	    break;
+
+	  case LBREAK_EDIT:	/* send break */
+	    if (window == terminalWindow)
+		sendbreak(70);
+	    else
+		SysBeep(3);
+	    break;
+
+	  case XON_EDIT:	/* send XON */
+	    if (window == terminalWindow)
+		do_xon();
+	    else
+		SysBeep(3);
+	    break;
+
+	  case DTR_EDIT:	/* toggle DTR */
+	    if (window == terminalWindow)
+		toggle_dtr(70);
+	    else
+		SysBeep(3);
+	    break;
+	}
 	break;
 
       case SETG_MENU:
+      case SETG_MEN2:
 	switch (item) {
 	  case PROT_SETG:
 	    protodialog ();
@@ -409,6 +551,10 @@ long menu_item;
 	    termsetdialog ();
 	    break;
 
+	  case CHARS_SETG:	/* do terminal emulation settings */
+	    charsetdialog ();
+	    break;
+
 	  case SCRD_SETG:	/* fkeys  active / not active */
 	    CheckItem (menus[SETG_MENU], SCRD_SETG,
 		       (fkeysactive = !fkeysactive));
@@ -418,6 +564,7 @@ long menu_item;
 	  case MCDM_SETG:	/* menu command keys active / not active */
 	    CheckItem (menus[SETG_MENU], MCDM_SETG,
 		       (mcmdactive = !mcmdactive));
+	    setup_menus();	/* redo menus */
 	    break;
 
 	  case KEYM_SETG:
@@ -436,6 +583,7 @@ long menu_item;
 	 */
 
       case REMO_MENU:
+      case REMO_MEN2:
 	cmarg = genstr;		/* indicate cmd ok to proceed */
 	switch (item) {
 	  case RESP_REMO:	/* Want to toggle display */
@@ -473,13 +621,16 @@ long menu_item;
 	break;
 	
       case LOG_MENU:
+      case LOG_MEN2:
 	switch(item) {
 	  case SLOG_LOG:	/* session logging */
 	    if (seslog) {
+	    	scrlasttolog();	/* save the last line on the screen */
 		closeslog ();
 		seslog = 0;
 	    } else {
 		seslog = openslog ();
+		scrtolog ();	/* if the file is open, just do the dump */
 	    }
 	    CheckItem (menus[LOG_MENU], SLOG_LOG, seslog);
 	    if (seslog)
@@ -511,10 +662,30 @@ long menu_item;
 	}
 	break;
 
+    case PRNT_MENU:															/*JAO*/
+    case PRNT_MEN2:															/*JAO*/
+	switch(item) {																/*JAO*/
+	  case NOW_PRNT:	/* Print the Buffer */
+	    now_print();
+	    break;
+	    
+	  case STAT_PRNT:	/* Print Buffer Status Dialog Box */
+	    pr_stat();
+	    break;
+	    
+	  case DISC_PRNT:	/* Discard the Print Buffer */
+	    DisableItem(menus[PRNT_MENU], 0);
+	    DrawMenuBar();
+	    if (hPrintBuffer)
+		DisposHandle(hPrintBuffer);
+	    hPrintBuffer = 0L;
+	    break;
+	}
+	break;
+
     }
     return (state);		/* Don't go into Kermit protocol */
 }				/* menu_event */
-
 
 /****************************************************************************/
 /****************************************************************************/

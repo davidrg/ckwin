@@ -26,6 +26,7 @@
 #include <dialogs.h>
 #include <controls.h>
 #include <toolutils.h>
+#include <Memory.h>
 #include <ctype.h>
 
 #include "ckmdef.h"		/* Common Mac module definitions */
@@ -139,16 +140,21 @@ char *theStr;			/* PWP: note: this is now a Pascal string */
 	printerr ("snh SetMacro", 0);
 
     macros->mcr[theIndex].code = theCode;
-    slen = theStr[0] + 1;	/* PWP: was ... = strlen(theStr); */
-    if (slen > 4) {
-	sptr = NewPtr (slen);
-	BlockMove (theStr, sptr, slen);	/* PWP: yes, we save the length too */
-	macros->mcr[theIndex].macro = (long) sptr;
-    } else
-	BlockMove (theStr, &macros->mcr[theIndex].macro, slen);
-
-    macros->mcr[theIndex].len = slen;
     macros->mcr[theIndex].flags = *theFlags;
+    if (*theFlags) {	/* (PWP) save a bit of space: if flags, then no string */
+	macros->mcr[theIndex].macro = 0;
+	macros->mcr[theIndex].len = 1;
+    } else {
+	slen = theStr[0] + 1;	/* PWP: was ... = strlen(theStr); */
+	if (slen > 4) {
+	    sptr = NewPtr (slen);
+	    BlockMove (theStr, sptr, slen);	/* PWP: yes, we save the length too */
+	    macros->mcr[theIndex].macro = (long) sptr;
+	} else {
+	    BlockMove (theStr, &macros->mcr[theIndex].macro, slen);
+	}
+	macros->mcr[theIndex].len = slen;
+    }
 }				/* SetMacro */
 
 
@@ -301,11 +307,53 @@ char *flags;
 
     if ((strcmp (s, "\\break") == 0) ||
 	(strcmp (s, "\\shortbreak") == 0)) {
-	*flags |= shortBreak;
+	*flags = shortBreak;
 	return;
-    }
+    } else
     if (strcmp (s, "\\longbreak") == 0) {
-	*flags |= longBreak;
+	*flags = longBreak;
+	return;
+    } else
+    if (strcmp (s, "\\leftarrow") == 0) {
+	*flags = leftArrowKey;
+	return;
+    } else
+    if (strcmp (s, "\\rightarrow") == 0) {
+	*flags = rightArrowKey;
+	return;
+    } else
+    if (strcmp (s, "\\uparrow") == 0) {
+	*flags = upArrowKey;
+	return;
+    } else
+    if (strcmp (s, "\\downarrow") == 0) {
+	*flags = downArrowKey;
+	return;
+    } else
+    if (strcmp (s, "\\pf1") == 0) {
+	*flags = keypf1;
+	return;
+    } else
+    if (strcmp (s, "\\pf2") == 0) {
+	*flags = keypf2;
+	return;
+    } else
+    if (strcmp (s, "\\pf3") == 0) {
+	*flags = keypf3;
+	return;
+    } else
+    if (strcmp (s, "\\pf4") == 0) {
+	*flags = keypf4;
+	return;
+    } else
+    if (strcmp (s, "\\enter") == 0) {
+	*flags = keyenter;
+	return;
+    } else
+    if ((strncmp (s, "\\keypad", 7) == 0) && (s[8] == '\0')) {
+	if ((s[7] >= ',') && (s[7] <= '9')) {
+	    *flags = keycomma + (s[7] - ',');
+	}
 	return;
     }
     *(s + 255) = '\0';
@@ -381,14 +429,64 @@ char flags;			/* PWP: note! not a pointer */
 				 * overflow 256, but be safe */
     register int i, j;
 
-    if (flags & shortBreak) {
+    switch (flags) {
+      case shortBreak:
 	strcpy (s, "\\break");
 	return;
-    }
-    if (flags & longBreak) {
+
+      case longBreak:
 	strcpy (s, "\\longbreak");
 	return;
+
+      case leftArrowKey:
+	strcpy (s, "\\leftarrow");
+	return;
+
+      case rightArrowKey:
+	strcpy (s, "\\rightarrow");
+	return;
+	
+      case upArrowKey:
+	strcpy (s, "\\uparrow");
+	return;
+	
+      case downArrowKey:
+	strcpy (s, "\\downarrow");
+	return;
+	
+      case keypf1:
+      case keypf2:
+      case keypf3:
+      case keypf4:
+	strcpy (s, "\\pf");
+	s[3] = flags - keypf1 + '1';
+	s[4] = '\0';
+	return;
+	
+      case keyenter:
+	strcpy (s, "\\enter");
+	return;
+	
+      case keycomma:
+      case keyminus:
+      case keyperiod:
+      /* there is no keyslash */
+      case key0:
+      case key1:
+      case key2:
+      case key3:
+      case key4:
+      case key5:
+      case key6:
+      case key7:
+      case key8:
+      case key9:
+	strcpy (s, "\\keypad");
+	s[7] = flags - keycomma + ',';
+	s[8] = '\0';
+	return;
     }
+
     tp = t;
     for (i = 1; i <= s[0]; i++) {	/* PWP: step through a Pascal string */
 	ch = s[i];
@@ -465,7 +563,7 @@ short *itemHit;
 	strcat (modstr, codeStr);
 	strcat (modstr, ")");
 
-	if (BitTst (&keytable, lastCode))
+	if (BitTst (keytable, lastCode))
 	    strcat (modstr, " bound to:");
 	else
 	    strcat (modstr, " [unbound]");
@@ -507,11 +605,12 @@ keymacros ()
 	    circleOK(macro2dlg);
 
 	    /* display the current macrostring if there is one */
-	    if (BitTst (&keytable, lastCode)) {
+	    if (BitTst (keytable, lastCode)) {
 		GetMacro (lastCode, &flags, keystr);
 		DecodeString (keystr, flags);	/* decode invisible
 						 * characters */
 		SetIText (gethdl (KY_TEXT, macro2dlg), keystr);
+		SelIText(macro2dlg, KY_TEXT, 0, 32767);
 	    }
 	    itemhit = 0;
 	    while (itemhit == 0) {
@@ -522,16 +621,16 @@ keymacros ()
 		    GetIText (gethdl (KY_TEXT, macro2dlg), keystr);
 		    EncodeString (keystr, flags);	/* encode '\'
 							 * expressions */
-		    if (BitTst (&keytable, lastCode))
+		    if (BitTst (keytable, lastCode))
 			if (strlen (keystr) > 0)
 			    ReplaceMacro (lastCode, flags, keystr);
 			else {
 			    RemoveMacro (lastCode);
-			    BitClr (&keytable, lastCode);
+			    BitClr (keytable, lastCode);
 			}
 		    else if (strlen (keystr) > 0) {
 			InsertMacro (lastCode, flags, keystr);
-			BitSet (&keytable, lastCode);
+			BitSet (keytable, lastCode);
 		    }
 		  case QuitBtn:
 		    DisposDialog (macro2dlg);	/* finished with the dialog */
@@ -586,7 +685,7 @@ keymoddialog ()
     for (i = 0; i < NUMOFMODS; i++) {
 	/* PWP: these are saved as pascal strings now... */
 	theStr[0] = 0;		/* be double extra safe */
-	BlockMove (&tmodtable[i].prefix, theStr, (tmodtable[i].prefix[0] + 1));
+	BlockMove (tmodtable[i].prefix, theStr, (tmodtable[i].prefix[0] + 1));
 	DecodeString (theStr, (char) 0);
 	SetIText (gethdl (i + MOD_PRF1, moddlg), theStr);
     }
@@ -607,12 +706,14 @@ keymoddialog ()
 		if ((unsigned) (theStr[0]) > 19) /* Limit the length of
 						  * the thing */
 		    theStr[0] = 19;
-		BlockMove (theStr, &tmodtable[i].prefix, 20);
+		BlockMove (theStr, tmodtable[i].prefix, 20);
 	    }
 
 	    /* write the temporary copy back */
 	    for (i = 0; i < NUMOFMODS; i++)
 		modtable[i] = tmodtable[i];
+
+	    UpdateOptKey(1);		/* make Option key processing right */
 	}
 	if ((itemhit == OKBtn) || (itemhit == QuitBtn)) {
 	    DisposDialog (moddlg);	/* finished with the dialog */
@@ -647,6 +748,7 @@ loadkset ()
     Handle ktab;
     char *k;
     int i;
+    THz curZone;
 
     /* load the bit table */
     ktab = GetResource (KSET_TYPE, KSVER);
@@ -663,9 +765,12 @@ loadkset ()
 	return;
     }
     HLock (ktab);
-    BlockMove (*ktab, &keytable, sizeof (keytable));
+    BlockMove (*ktab, keytable, sizeof (keytable));
     HUnlock (ktab);
-    ReleaseResource (ktab);
+    curZone = GetZone();		/* as per John Norstad's (Disinfectant) */
+    SetZone(HandleZone(ktab));	/* "Toolbox Gotchas" */
+    ReleaseResource(ktab);
+    SetZone(curZone);
 }				/* loadkset */
 
 
@@ -682,6 +787,7 @@ loadmset ()
     Handle mtab;
     char *src;
     char flags;
+    THz curZone;
 
     DisposeMacros ();		/* release all macro strings */
 
@@ -697,8 +803,10 @@ loadmset ()
     src = *mtab;
 
     /* load the modifier information */
-    BlockMove (src, &modtable, sizeof (modtable));
+    BlockMove (src, modtable, sizeof (modtable));
     src += sizeof (modtable);
+
+    UpdateOptKey(1);		/* make Option key processing right */
 
     /* get the number of macro key definitions */
     BlockMove (src, &num, sizeof (num));
@@ -721,7 +829,10 @@ loadmset ()
 
     HUnlock ((Handle) macroshdl);
     HUnlock (mtab);
-    ReleaseResource (mtab);
+    curZone = GetZone();		/* as per John Norstad's (Disinfectant) */
+    SetZone(HandleZone(mtab));	/* "Toolbox Gotchas" */
+    ReleaseResource(mtab);
+    SetZone(curZone);
 }				/* loadmset */
 
 
@@ -742,7 +853,7 @@ savekset ()
 	return;
     }
     HLock (ktab);
-    BlockMove (&keytable, *ktab, sizeof (keytable));
+    BlockMove (keytable, *ktab, sizeof (keytable));
     HUnlock (ktab);
     AddResource (ktab, KSET_TYPE, KSVER, "");
 }				/* savekset */
@@ -791,7 +902,7 @@ savemset ()
     dest = *mtab;
 
     /* save the modifier information */
-    BlockMove (&modtable, dest, sizeof (modtable));
+    BlockMove (modtable, dest, sizeof (modtable));
     dest += sizeof (modtable);
 
     /* save the number of key macros */
@@ -816,7 +927,7 @@ savemset ()
 
 	    /* save the macro string */
 	    if (leng > 4)
-		src = macros->mcr[i].macro;
+		src = (Ptr) macros->mcr[i].macro;   /* the address is stored here */
 	    else
 		src = &macros->mcr[i].macro;
 	    BlockMove (src, dest, leng);

@@ -1,12 +1,13 @@
-char *ckzv = "Unix file support, 4E(038) 24 Jan 89";
+char *ckzv = "Unix file support, 4E(039) 19 Jun 89";
 
 /* C K U F I O  --  Kermit file system support for Unix systems */
 
 /*
- Author: Frank da Cruz (SY.FDC@CU20B),
- Columbia University Center for Computing Activities, January 1985.
- Copyright (C) 1985, Trustees of Columbia University in the City of New York.
- Permission is granted to any individual or institution to use, copy, or
+ Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
+ Columbia University Center for Computing Activities.
+ First released January 1985.
+ Copyright (C) 1985, 1989, Trustees of Columbia University in the City of New 
+ York.  Permission is granted to any individual or institution to use, copy, or
  redistribute this software so long as it is not sold for profit, provided this
  copyright notice is retained. 
 */
@@ -20,11 +21,53 @@ char *ckzv = "Unix file support, 4E(038) 24 Jan 89";
 #include <sys/dir.h>			/* Directory structure */
 #include <pwd.h>			/* Password file for shell name */
 
+/* File date material */
+
+#ifdef BSD4
+#define TIMESTAMP
+#include <time.h>
+#include <sys/timeb.h>
+#ifdef NOT_YET
+static long timezone;
+#endif /* NOT_YET - see comments in front of mktime() below */
+#endif /* BSD4 */
+
+#ifdef UXIII
+#define TIMESTAMP
+#include <time.h>
+#ifdef NOT_YET
+void tzset();
+extern long timezone;
+#endif /* NOT_YET - see comments in front of mktime() below */
+#endif /* uxiii */
+ 
+/* Is `y' a leap year? */
+#define leap(y) (((y) % 4 == 0 && (y) % 100 != 0) || (y) % 400 == 0)
+
+/* Number of leap years from 1970 to `y' (not including `y' itself). */
+#define nleap(y) (((y) - 1969) / 4 - ((y) - 1901) / 100 + ((y) - 1601) / 400)
+
+/* Number of days in each month of the year. */
+static char monlens[] =
+{
+  31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+};
+
 #ifdef CIE
 #include <stat.h>			/* File status */
 #else
 #include <sys/stat.h>
 #endif
+
+/* Support for tilde-expansion in file and directory names */
+
+#ifdef BSD4
+#define NAMEENV "USER"			/* Environment variable for tilde */
+#endif /* BSD4 */
+
+#ifdef UXIII
+#define NAMEENV "LOGNAME"		/* Environment variable for tilde */
+#endif /* UXIII */
 
 /* Berkeley Unix Version 4.x */
 /* 4.1bsd support from Charles E Brooks, EDN-VAX */
@@ -32,6 +75,9 @@ char *ckzv = "Unix file support, 4E(038) 24 Jan 89";
 #ifdef BSD4
 #ifdef MAXNAMLEN
 #define BSD42
+#ifdef BSD43
+char *ckzsys = " 4.3 BSD";
+#else
 #ifdef SUNOS4
 char *ckzsys = " SUNOS 4.x";
 #else
@@ -41,6 +87,7 @@ char *ckzsys = " VAX/Ultrix";
 char *ckzsys = " 4.2 BSD";
 #endif /* ultrix */
 #endif /* sunos4 */
+#endif /* bsd43 */
 #else
 #ifdef FT18
 #define BSD41
@@ -82,7 +129,11 @@ char *ckzsys = " Xenix/386";
 #ifdef M_I286
 char *ckzsys = " Xenix/286";
 #else
+#ifdef TRS16
+char *ckzsys = " Xenix/68000";
+#else
 char *ckzsys = " Xenix/86";
+#endif
 #endif
 #endif
 #else
@@ -95,7 +146,9 @@ char *ckzsys = " Interactive Systems Corp, System III";
 #ifdef ZILOG
 char *ckzsys = " Zilog S8000 Zeus 3.21+";
 #else
+#ifndef TRS16
 char *ckzsys = " AT&T System III/System V";
+#endif
 #endif
 #endif
 #endif
@@ -165,6 +218,7 @@ char *WHOCMD = "who ";			/* For seeing who's logged in */
    zchdir(dirnam)   -- Change working directory.
    zhome()          -- Return pointer to home directory name string.
    zkself()         -- Kill self, log out own job.
+   zsattr(struc zattr *) -- Return attributes for file which is being sent.
  */
 
 #ifdef FT18
@@ -176,9 +230,11 @@ char *WHOCMD = "who ";			/* For seeing who's logged in */
 #ifndef aegis
 #ifndef CIE
 #ifndef XENIX
+#ifndef unos
 /* Watch out, some versions of Xenix might need to do this include, */
 /* but reportedly SCO Xenix 2.2 on an 80x86 system does not. */
 #include <sys/file.h>			/* File access */
+#endif
 #endif
 #endif
 #endif
@@ -231,9 +287,18 @@ char *WHOCMD = "who ";			/* For seeing who's logged in */
 FILE *fp[ZNFILS] = { 			/* File pointers */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
+/* (PWP) external def. of things used in buffered file input and output */
+extern CHAR zinbuffer[], zoutbuffer[];
+extern CHAR *zinptr, *zoutptr;
+extern int zincnt, zoutcnt;
+
+static long iflen = -1;			/* Input file length */
+static long oflen = -1;			/* Output file length */
+
 static int pid = 0;			/* pid of child fork */
 static int fcount;			/* Number of files in wild group */
 static char nambuf[MAXNAMLEN+2];	/* Buffer for a filename */
+static char zmbuf[200];			/* For mail, remote print strings */
 char *malloc(), *getenv(), *strcpy();	/* System functions */
 extern errno;				/* System error code */
 
@@ -275,8 +340,10 @@ zopeni(n,name) int n; char *name; {
     debug(F111," zopeni",name,n);
     debug(F101,"  fp","",(int) fp[n]);
     if (chkfn(n) != 0) return(0);
+    zincnt = 0;				/* Reset input buffer */
     if (n == ZSYSFN) {			/* Input from a system function? */
         debug(F110," invoking zxcmd",name,0);
+	*nambuf = '\0';			/* No filename this time... */
 	return(zxcmd(name));		/* Try to fork the command */
     }
     if (n == ZSTDIO) {			/* Standard input? */
@@ -303,11 +370,16 @@ zopeno(n,name) int n; char *name; {
 /** The code shown allegedly works in 4.xBSD, Ultrix, etc.     **/
 
 /*  int uid, euid;			/** suid variables...  */
-    debug(F111," zopeno",name,n);
+    
+    if (n != ZDFILE)
+      debug(F111," zopeno",name,n);
     if (chkfn(n) != 0) return(0);
     if ((n == ZCTERM) || (n == ZSTDIO)) {   /* Terminal or standard output */
 	fp[ZOFILE] = stdout;
-	debug(F101," fp[]=stdout", "", (int) fp[n]);
+	if (n != ZDFILE)
+	  debug(F101," fp[]=stdout", "", (int) fp[n]);
+	zoutcnt = 0;
+	zoutptr = zoutbuffer;
 	return(1);
     }
 /*  uid = getuid(); euid = geteuid();	/** In case running suid to uucp, */
@@ -320,7 +392,10 @@ zopeno(n,name) int n; char *name; {
 	chown(name, getuid(), getgid());     /* In case set[gu]id */
         if (n == ZDFILE) setbuf(fp[n],NULL); /* Debugging file unbuffered */
     }
-    debug(F101, " fp[n]", "", (int) fp[n]);
+    zoutcnt = 0;		/* (PWP) reset output buffer */
+    zoutptr = zoutbuffer;
+    if (n != ZDFILE)
+      debug(F101, " fp[n]", "", (int) fp[n]);
     return((fp[n] != NULL) ? 1 : 0);
 }
 
@@ -329,15 +404,28 @@ zopeno(n,name) int n; char *name; {
 /*  Returns 0 if arg out of range, 1 if successful, -1 if close failed.  */
 
 zclose(n) int n; {
-    int x;
+    int x, x2;
     if (chkfn(n) < 1) return(0);	/* Check range of n */
+
+    if ((n == ZOFILE) && (zoutcnt > 0))	/* (PWP) output leftovers */
+      x2 = zoutdump();
+    else
+      x2 = 0;
+
+    x = 0;				/* Initialize return code */
     if ((n == ZIFILE) && fp[ZSYSFN]) {	/* If system function */
     	x = zclosf();			/* do it specially */
     } else {
     	if ((fp[n] != stdout) && (fp[n] != stdin)) x = fclose(fp[n]);
 	fp[n] = NULL;
     }
-    return((x == EOF) ? -1 : 1);
+    iflen = -1;				/* Invalidate file length */
+    if (x == EOF)			/* if we got a close error */
+	return (-1);
+    else if (x2 < 0)		/* or an error flushing the last buffer */
+	return (-1);		/* then return an error */
+    else
+	return (1);
 }
 
 /*  Z C H I N  --  Get a character from the input file.  */
@@ -346,17 +434,36 @@ zclose(n) int n; {
 
 zchin(n,c) int n; char *c; {
     int a;
-    if (chkfn(n) < 1) return(-1);
+
+    /* (PWP) Just in case this gets called when it shoudn't */
+    if (n == ZIFILE)
+	return (zminchar());
+
+    /* if (chkfn(n) < 1) return(-1); */
     a = getc(fp[n]);
     if (a == EOF) return(-1);
     *c = a & 0377;
     return(0);
 }
+
+/*
+ * (PWP) (re)fill the buffered input buffer with data.  All file input
+ * should go through this routine, usually by calling the zminchar()
+ * macro (in ckcker.h).
+ */
+
+zinfill() {
+    zincnt = fread(zinbuffer, sizeof (char), INBUFSIZE, fp[ZIFILE]);
+    if (zincnt == 0) return (-1); /* end of file */
+    zinptr = zinbuffer;	   /* set pointer to beginning, (== &zinbuffer[0]) */
+    zincnt--;			/* one less char in buffer */
+    return((int)(*zinptr++) & 0377); /* because we return the first */
+}
 
-/*  Z S O U T  --  Write a string to the given file, buffered.  */
+/*  Z S O U T  --  Write a string out to the given file, buffered.  */
 
 zsout(n,s) int n; char *s; {
-    if (chkfn(n) < 1) return(-1);
+    if (chkfn(n) < 1) return(-1); /* Keep this here, prevents memory faults */
     fputs(s,fp[n]);
     return(0);
 }
@@ -364,7 +471,7 @@ zsout(n,s) int n; char *s; {
 /*  Z S O U T L  --  Write string to file, with line terminator, buffered  */
 
 zsoutl(n,s) int n; char *s; {
-    if (chkfn(n) < 1) return(-1);
+    /* if (chkfn(n) < 1) return(-1); */
     fputs(s,fp[n]);
     fputs("\n",fp[n]);
     return(0);
@@ -373,7 +480,7 @@ zsoutl(n,s) int n; char *s; {
 /*  Z S O U T X  --  Write x characters to file, unbuffered.  */
 
 zsoutx(n,s,x) int n, x; char *s; {
-    if (chkfn(n) < 1) return(-1);
+    /* if (chkfn(n) < 1) return(-1); */
 /*  return(write(fp[n]->_file,s,x));  */
     return(write(fileno(fp[n]),s,x));
 }
@@ -383,8 +490,8 @@ zsoutx(n,s,x) int n, x; char *s; {
 
 /*  Should return 0 or greater on success, -1 on failure (e.g. disk full)  */
 
-zchout(n,c) int n; char c; {
-    if (chkfn(n) < 1) return(-1);
+zchout(n,c) register int n; char c; {
+    /* if (chkfn(n) < 1) return(-1); */
     if (n == ZSFILE)
     	return(write(fileno(fp[n]),&c,1)); /* Use unbuffered for session log */
     else {				/* Buffered for everything else */
@@ -392,6 +499,30 @@ zchout(n,c) int n; char c; {
 	    return(ferror(fp[n])?-1:0);	/* Check to make sure */
 	else				/* Otherwise... */
 	    return(0);			/* There was no error. */
+    }
+}
+
+/* (PWP) buffered character output routine to speed up file IO */
+
+zoutdump() {
+    int x;
+    zoutptr = zoutbuffer;		/* reset buffer pointer in all cases */
+    debug(F101,"zoutdump chars","",zoutcnt);
+    if (zoutcnt == 0) {			/* nothing to output */
+	return(0);
+    } else if (zoutcnt < 0) {		/* unexpected negative value */
+	zoutcnt = 0;			/* reset output buffer count */
+	return(-1);			/* and fail. */
+    }
+    if (x = fwrite(zoutbuffer, 1, zoutcnt, fp[ZOFILE])) {
+	debug(F101,"zoutdump fwrite wrote","",x);
+	zoutcnt = 0;			/* reset output buffer count */
+	return(0);			/* things worked OK */
+    } else {
+	zoutcnt = 0;			/* reset output buffer count */
+	x = ferror(fp[ZOFILE]);		/* get error code */
+	debug(F101,"zoutdump fwrite error","",x);
+	return(x ? -1 : 0);		/* return failure if error */
     }
 }
 
@@ -456,9 +587,10 @@ zchki(name) char *name; {
 	debug(F111," access failed:",name,x); /* No */
     	return(-3);			
     } else {
-	y = buf.st_size;
-	debug(F111," access ok:",name,(int) y); /* Yes */
-	return( (y > -1) ? y : 0 );
+	iflen = buf.st_size;		      /* Yes, remember size */
+	strncpy(nambuf,name,MAXNAMLEN);	      /* and name globally. */
+	debug(F111," access ok:",name,(int) iflen);
+	return( (iflen > -1) ? iflen : 0 );
     }
 }
 
@@ -660,11 +792,12 @@ zxcmd(comand) char *comand; {
 #ifdef aegis
 	if ((shpath = getenv("SERVERSHELL")) == NULL) shpath = "/bin/sh";
 #else
-
-/**** 	shptr = shname = shpath = getenv("SHELL");  /* What shell? */
-	p = getpwuid( getuid() );	/* get login data */
-	if ( p == (struct passwd *) NULL || !*(p->pw_shell) ) shpath = defShel;
+	shpath = getenv("SHELL");	/* What shell? */
+	if (shpath == NULL) {
+	  p = getpwuid( getuid() );	/* get login data */
+	  if (p == (struct passwd *) NULL || !*(p->pw_shell)) shpath = defShel;
 	  else shpath = p->pw_shell;
+        }
 #endif
 	shptr = shname = shpath;
 	while (*shptr != '\0') if (*shptr++ == '/') shname = shptr;
@@ -673,8 +806,10 @@ zxcmd(comand) char *comand; {
 
 /* Remove the following uid calls if they cause trouble... */
 #ifdef BSD4
+#ifndef BSD41
 	setegid(getgid());		/* Override 4.3BSD csh */
 	seteuid(getuid());		/*  security checks */
+#endif /* bsd41 */
 #endif /* bsd4 */
 
 	execl(shpath,shname,"-c",comand,(char *)NULL); /* Execute the cmd */
@@ -781,6 +916,202 @@ znewn(fn,s) char *fn, **s; {
     }
 /* If we ever get here, we'll overwrite the xxx~100 file... */
 }
+
+/*  Z S A T T R */
+/*
+ Fills in a Kermit file attribute structure for the file which is to be sent.
+ Returns 0 on success with the structure filled in, or -1 on failure.
+ If any string member is null, then it should be ignored.
+ If any numeric member is -1, then it should be ignored.
+*/
+zsattr(xx) struct zattr *xx; {
+    long k;
+    char *zfcdat();
+
+    k = iflen % 1024L;			/* File length in K */
+    if (k != 0L) k = 1L;
+    xx->lengthk = (iflen / 1024L) + k;
+    xx->type.len = 0;			/* File type can't be filled in here */
+    xx->type.val = "";
+debug(F110,"before calling zfcdat",nambuf,0);
+    if (nambuf) {
+	xx->date.val = zfcdat(nambuf);	/* File creation date */
+	xx->date.len = strlen(xx->date.val);
+    } else {
+	xx->date.len = 0;
+	xx->date.val = "";
+    }
+debug(F111,"attr date",xx->date.val,xx->date.len);
+    xx->creator.len = 0;		/* File creator */
+    xx->creator.val = "";
+    xx->account.len = 0;		/* File account */
+    xx->account.val = "";
+    xx->area.len = 0;			/* File area */
+    xx->area.val = "";
+    xx->passwd.len = 0;			/* Area password */
+    xx->passwd.val = "";
+    xx->blksize = -1L;			/* File blocksize */
+    xx->access.len = 0;			/* File access */
+    xx->access.val = "";
+    xx->encoding.len = 0;		/* Transfer syntax */
+    xx->encoding.val = 0;
+    xx->disp.len = 0;			/* Disposition upon arrival */
+    xx->disp.val = "";
+    xx->lprotect.len = 0;		/* Local protection */
+    xx->lprotect.val = "";
+    xx->gprotect.len = 0;		/* Generic protection */
+    xx->gprotect.val = "";
+    xx->systemid.len = 2;		/* System ID */
+    xx->systemid.val = "U1";
+    xx->recfm.len = 0;			/* Record format */
+    xx->recfm.val = "";
+    xx->sysparam.len = 0;		/* System-dependent parameters */
+    xx->sysparam.val = "";
+    xx->length = iflen;			/* Length */
+    return(0);
+}
+
+/* Z F C D A T -- Return a string containing the time stamp for a file */
+
+char *
+zfcdat(name) char *name; {
+
+#ifdef TIMESTAMP
+
+    struct stat buffer;
+    struct tm *time_stamp, *localtime();
+    static char datbuf[20];
+
+    datbuf[0] = '\0';
+    if(stat(name,&buffer) != 0) {
+	debug(F110,"zcfdat stat failed",name,0);
+	return("");
+    }
+    time_stamp = localtime(&(buffer.st_mtime));
+    if (time_stamp->tm_year < 1900) time_stamp->tm_year += 1900;
+    sprintf(datbuf,"%-4.4d%02.2d%02.2d %002.2d:%002.2d:%002.2d",
+	    time_stamp->tm_year,
+	    time_stamp->tm_mon + 1,
+	    time_stamp->tm_mday,
+	    time_stamp->tm_hour,
+	    time_stamp->tm_min,
+	    time_stamp->tm_sec);
+    debug(F111,"zcfdat",datbuf,strlen(datbuf));
+    return(datbuf);
+#else
+    return("");
+#endif /* TIMESTAMP */
+}
+
+#ifdef NOT_YET
+/*
+  Don't try this yet.  Apparently, the definition of timezone is a big
+  problem.  Every computer I looked at deals with it in a different way.
+  On the SUN with SUNOS 4.0, you have to declare it yourself.  On a VAX
+  with Ultrix, it's declared in <time.h> as "char * timezone()" for BSD,
+  or as "extern long timezone" for System V.  So to use this, it looks
+  like we'll need an #ifdef per system, OS version, etc.
+*/  
+/*
+  ANSI C mktime for Unix
+  by David MacKenzie <edf@rocky2.rockefeller.edu>
+  and Michael Haertel <mike@stolaf.edu>
+  08/09/89
+
+  Convert the exploded time structure `tm', containing a local
+  time and date, into the number of seconds past Jan 1, 1970 GMT.
+  Sets `tm->tm_yday' and `tm->tm_wday' correctly, but
+  doesn't set `tm->tm_isdst'.
+  Doesn't return -1 if passed invalid values.
+*/
+#ifdef TIMESTAMP
+time_t
+mktime (tm) struct tm *tm; {
+    int years, months, days, hours, minutes, seconds;
+
+#ifdef ANYBSD
+    struct timeb *tbp;
+
+    ftime(tbp);
+    timezone = tbp->timezone * 60;
+    if (tbp->dstflag)
+      timezone -= 3600;
+#endif
+
+#ifdef UXIII
+    tzset ();				/* Set `timezone'. */
+#endif
+
+    years = tm->tm_year + 1900;		/* year - 1900 -> year */
+    months = tm->tm_mon;		/* 0..11 */
+    days = tm->tm_mday - 1;		/* 1..31 -> 0..30 */
+    hours = tm->tm_hour;		/* 0..23 */
+    minutes = tm->tm_min;		/* 0..59 */
+    seconds = tm->tm_sec;		/* 0..59 */
+
+    /* Set `days' to the number of days into the year. */
+    if (months > 1 && leap (years))
+      ++days;
+    while (months-- > 0)
+      days += monlens[months];
+    tm->tm_yday = days;
+
+    /* Now set `days' to the number of days since Jan 1, 1970. */
+    days += 365 * (years - 1970) + nleap (years);
+    tm->tm_wday = (days + 4) % 7;	/* Jan 1, 1970 was Thursday. */
+
+    return 86400 * days + 3600 * hours + 60 * minutes + seconds + timezone;
+}
+#endif /* TIMESTAMP */
+#endif /* NOT_YET */
+
+/* Find initialization file. */
+
+zkermini() {
+/*  nothing here for Unix.  This function added for benefit of VMS Kermit.  */
+    return(0);
+}
+
+zmail(p,f) char *p; char *f; {		/* Send file f as mail to address p */
+
+#ifdef BSD4
+/* The idea is to use /usr/ucb/mail, rather than regular mail, so that   */
+/* a subject line can be included with -s.  Since we can't depend on the */
+/* user's path, we use the convention that /usr/ucb/Mail = /usr/ucb/mail */
+/* and even if Mail has been moved to somewhere else, this should still  */
+/* find it... But there really should be a better way... */
+
+/* Should also make some check on zmbuf overflow... */
+
+    sprintf(zmbuf,"Mail -s %cfile %s%c %s < %s", '"', f, '"', p, f);
+    system(zmbuf);
+#else
+#ifdef UXIII
+    sprintf(zmbuf,"mail %s < %s", p, f);
+    system(zmbuf);
+#else
+    *zmbuf = '\0';
+#endif
+#endif    
+    return(0);
+}
+
+zprint(p,f) char *p; char *f; {		/* Print file f with options p */
+
+#ifdef BSD4
+    sprintf(zmbuf,"lpr %s %s", p, f); /* Construct print command */
+    system(zmbuf);
+#else
+#ifdef UXIII
+    sprintf(zmbuf,"lp %s %s", p, f);
+    system(zmbuf);    
+#else
+    *zmbuf = '\0';
+#endif
+#endif
+    return(0);
+}
+
 
 /* Directory Functions for Unix, written by Jeff Damens, CUCCA, 1984. */
 
@@ -1026,7 +1357,11 @@ char *sofar,*endcur;
 {
   strncpy(nambuf,dirbuf->d_name,MAXNAMLEN); /* Get a null terminated copy!!! */
   nambuf[MAXNAMLEN] = '\0';
+#ifdef unos  
+  if (dirbuf->d_ino != -1 && match(pl -> npart,nambuf)) {
+#else
   if (dirbuf->d_ino != 0 && match(pl -> npart,nambuf)) {
+#endif
     char *eos;
     strcpy(endcur,nambuf);
     eos = endcur + strlen(nambuf);
@@ -1114,4 +1449,119 @@ match(pattern,string) char *pattern,*string; {
 	    pattern = psave;		/* and back up pattern */
 	} else return(0);		/* otherwise just fail */
     }
+}
+
+/* The following two functions are for expanding tilde in filenames */
+/* Contributed by Howie Kaye, CUCCA, developed for CCMD package. */
+/* 
+
+/* 
+ * WHOAMI:
+ * 1) Get real uid
+ * 2) See if the $USER environment variable is set ($LOGNAME on AT&T)
+ * 3) If $USER's uid is the same as realuid, realname is $USER
+ * 4) Otherwise get logged in user's name
+ * 5) If that name has the same uid as the real uid realname is loginname
+ * 6) Otherwise, get a name for realuid from /etc/passwd
+ */
+
+char *
+whoami () {
+#ifdef DTILDE
+  static char realname[256];		/* user's name */
+  static int realuid = -1;		/* user's real uid */
+  char loginname[256], envname[256];	/* temp storage */
+  char *getlogin(), *getenv(), *c;
+  struct passwd *p, *getpwnam(), *getpwuid(), *getpwent();
+
+  if (realuid != -1)
+    return(realname);
+
+  realuid = getuid ();			/* get our uid */
+
+  /* how about $USER or $LOGNAME? */
+  if ((c = getenv(NAMEENV)) != NULL) {	/* check the env variable */
+    strcpy (envname, c);		
+    p = getpwnam(envname);
+    if (p->pw_uid == realuid) {		/* get passwd entry */
+					/* for envname */
+      strcpy (realname, envname);	/* if the uid's are the same */
+      return(realname);
+    }
+  }
+
+  /* can we use loginname() ? */
+  if ((c =  getlogin()) != NULL) {	/* name from utmp file */
+    strcpy (loginname, c);	
+    if ((p = getpwnam(loginname)) != NULL) /* get passwd entry */
+      if (p->pw_uid == realuid) {	/* for loginname */ 
+	strcpy (realname, loginname);	/* if the uid's are the same */
+	return(realname);
+      }
+  }
+
+  /* Use first name we get for realuid */
+  if ((p = getpwuid(realuid)) == NULL) { /* name for uid */
+    realname[0] = '\0';			/* no user name */
+    realuid = -1;
+    return(NULL);
+  }
+  strcpy (realname, p->pw_name);	
+  return(realname);
+#else
+  return(NULL);
+#endif /* dtilde */
+}
+
+/*
+ * expand ~user to the user's home directory.
+ */
+
+#define DIRSEP '/'
+
+char *
+tilde_expand(dirname) char *dirname; {
+#define BUFLEN 256
+#ifdef DTILDE
+  struct passwd *user, *getpwuid(), *getpwnam();
+  static char olddir[BUFLEN];
+  static char oldrealdir[BUFLEN];
+  static char temp[BUFLEN];
+  int i, j;
+  char *whoami();
+
+  debug(F111,"tilde_expand dirname",dirname,dirname[0]);
+
+  if (dirname[0] != '~') return(dirname); /* not a tilde...return param */
+  if (!strcmp(olddir,dirname)) return(oldrealdir); /* same as last time. */
+					/* so return old answer */
+  else {
+
+    j = strlen(dirname);
+    for (i = 0; i < j; i++)		/* find username part of string */
+      if (dirname[i] != DIRSEP)
+	temp[i] = dirname[i];
+      else break;
+    temp[i] = '\0';			/* tie off with a NULL */
+    if (i == 1) {			/* if just a "~" */
+      user = getpwnam(whoami());	/*  get info on current user */
+    }
+    else {
+      user = getpwnam(&temp[1]);	/* otherwise on the specified user */
+    }
+  }
+  if (user != NULL) {			/* valid user? */
+    strcpy(olddir, dirname);		/* remember the directory */
+    strcpy(oldrealdir,user->pw_dir);	/* and their home directory */
+    strcat(oldrealdir,&dirname[i]);
+    return(oldrealdir);
+  }
+  else {				/* invalid? */
+    strcpy(olddir, dirname);		/* remember for next time */
+    strcpy(oldrealdir, dirname);
+    return(oldrealdir);
+  }
+#else
+  return(NULL);
+#endif /* dtilde */
 }

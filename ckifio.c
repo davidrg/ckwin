@@ -1,4 +1,4 @@
-char *ckzv = "Amiga file support, 4D(004) 24 Jan 88";
+char *ckzv = "Amiga file support, 4F(005) 15 Oct 89";
  
 /* C K I F I O  --  Kermit file system support for the Amiga */
 
@@ -11,6 +11,9 @@ char *ckzv = "Amiga file support, 4D(004) 24 Jan 88";
  copyright notice is retained.
  
  Modified for Amiga by Jack J. Rouse, The Software Distillery
+
+ Further modified for C Kermit version 4F(095) by Stephen Walton,
+ California State University, Northridge, ecphssrw@afws.csun.edu
 */
 
 /* Includes */
@@ -69,7 +72,16 @@ char *WHOCMD = "status ";		/* Check process status */
 FILE *fp[ZNFILS] = { 			/* File pointers */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL };
  
+/* (PWP) external def. of things used in buffered file input and output */
+extern CHAR zinbuffer[], zoutbuffer[];
+extern CHAR *zinptr, *zoutptr;
+extern int zincnt, zoutcnt;
+
+static long iflen = -1;			/* Input file length. */
+static long oflen = -1;			/* Output file length. */
+
 static int fcount;			/* Number of files in wild group */
+static char  nambuf[MAXNAMLEN+2];	/* Buffer for a filename */
 char *malloc(), *strcpy();		/* System functions */
 char *strrchr();
  
@@ -100,6 +112,7 @@ zopeni(n,name) int n; char *name; {
     if (chkfn(n) != 0) return(0);
     if (n == ZSYSFN) {			/* Input from a system function? */
         debug(F110," invoking zxcmd",name,0);
+        *nambuf = '\0';			/* Invalidate file name */
 	return(zxcmd(name));		/* Try to fork the command */
     }
     if (n == ZSTDIO) {			/* Standard input? */
@@ -133,7 +146,10 @@ zopeno(n,name) int n; char *name; {
     } else {
         if (n == ZDFILE) setbuf(fp[n],NULL); /* Debugging file unbuffered */
     }
-    debug(F101, " fp[n]", "", (int) fp[n]);
+    zoutcnt = 0;		/* (PWP) reset output buffer */
+    zoutptr = zoutbuffer;
+    if (n != ZDFILE)
+      debug(F101, " fp[n]", "", (int) fp[n]);
     return((fp[n] != NULL) ? 1 : 0);
 }
 
@@ -142,15 +158,28 @@ zopeno(n,name) int n; char *name; {
 /*  Returns 0 if arg out of range, 1 if successful, -1 if close failed.  */
  
 zclose(n) int n; {
-    int x;
+    int x, x2;
+
     if (chkfn(n) < 1) return(0);	/* Check range of n */
+
+    if ((n == ZOFILE) && (zoutcnt > 0))	/* (PWP) output leftovers */
+      x2 = zoutdump();
+    else
+      x2 = 0;
+
     if ((n == ZIFILE) && fp[ZSYSFN]) {	/* If system function */
     	x = zclosf();			/* do it specially */
     } else {
     	if ((fp[n] != stdout) && (fp[n] != stdin)) x = fclose(fp[n]);
 	fp[n] = NULL;
     }
-    return((x == EOF) ? -1 : 1);
+    iflen = -1;				/* Invalidate file length */
+    if (x == EOF)			/* if we got a close error */
+	return (-1);
+    else if (x2 < 0)		/* or an error flushing the last buffer */
+	return (-1);		/* then return an error */
+    else
+	return (1);
 }
  
 /*  Z C H I N  --  Get a character from the input file.  */
@@ -159,11 +188,30 @@ zclose(n) int n; {
  
 zchin(n,c) int n; char *c; {
     int a;
-    if (chkfn(n) < 1) return(-1);
+
+    /* (PWP) Just in case this gets called when it shoudn't */
+    if (n == ZIFILE)
+	return (zminchar());
+
+    /* if (chkfn(n) < 1) return(-1); */
     a = getc(fp[n]);
     if (a == EOF) return(-1);
     *c = a & 0377;
     return(0);
+}
+
+/*
+ * (PWP) (re)fill the buffered input buffer with data.  All file input
+ * should go through this routine, usually by calling the zminchar()
+ * macro (in ckcker.h).
+ */
+
+zinfill() {
+    zincnt = fread(zinbuffer, sizeof (char), INBUFSIZE, fp[ZIFILE]);
+    if (zincnt == 0) return (-1); /* end of file */
+    zinptr = zinbuffer;	   /* set pointer to beginning, (== &zinbuffer[0]) */
+    zincnt--;			/* one less char in buffer */
+    return((int)(*zinptr++) & 0377); /* because we return the first */
 }
 
 /*  Z S O U T  --  Write a string to the given file, buffered.  */
@@ -204,6 +252,30 @@ zchout(n,c) int n; CHAR c; {
 	    return(ferror(fp[n])?-1:0);	/* Check to make sure */
 	else				/* Otherwise... */
 	    return(0);			/* There was no error. */
+    }
+}
+
+/* (PWP) buffered character output routine to speed up file IO */
+
+zoutdump() {
+    int x;
+    zoutptr = zoutbuffer;		/* reset buffer pointer in all cases */
+    debug(F101,"zoutdump chars","",zoutcnt);
+    if (zoutcnt == 0) {			/* nothing to output */
+	return(0);
+    } else if (zoutcnt < 0) {		/* unexpected negative value */
+	zoutcnt = 0;			/* reset output buffer count */
+	return(-1);			/* and fail. */
+    }
+    if (x = fwrite(zoutbuffer, 1, zoutcnt, fp[ZOFILE])) {
+	debug(F101,"zoutdump fwrite wrote","",x);
+	zoutcnt = 0;			/* reset output buffer count */
+	return(0);			/* things worked OK */
+    } else {
+	zoutcnt = 0;			/* reset output buffer count */
+	x = ferror(fp[ZOFILE]);		/* get error code */
+	debug(F101,"zoutdump fwrite error","",x);
+	return(x ? -1 : 0);		/* return failure if error */
     }
 }
 
@@ -249,6 +321,8 @@ zchki(name) char *name; {
 
 	size = readstat(name);
 	debug(F111,"zchki file size",name,(int)size);
+	iflen = size;
+	strcpy(nambuf, name);		/* Remember file name globally. */
 	return(size);
 }
 
@@ -420,6 +494,103 @@ znewn(fn,s) char *fn, **s; {
 
     *s = buf;
 }
+/*  Z S A T T R */
+/*
+ Fills in a Kermit file attribute structure for the file which is to be sent.
+ Returns 0 on success with the structure filled in, or -1 on failure.
+ If any string member is null, then it should be ignored.
+ If any numeric member is -1, then it should be ignored.
+*/
+zsattr(xx) struct zattr *xx; {
+    long k;
+    char *zfcdat();
+
+    k = iflen % 1024L;			/* File length in K */
+    if (k != 0L) k = 1L;
+    xx->lengthk = (iflen / 1024L) + k;
+    xx->type.len = 0;			/* File type can't be filled in here */
+    xx->type.val = "";
+    if (*nambuf) {
+	xx->date.val = zfcdat(nambuf);	/* File creation date */
+	xx->date.len = strlen(xx->date.val);
+    } else {
+	xx->date.len = 0;
+	xx->date.val = "";
+    }
+    xx->creator.len = 0;		/* File creator */
+    xx->creator.val = "";
+    xx->account.len = 0;		/* File account */
+    xx->account.val = "";
+    xx->area.len = 0;			/* File area */
+    xx->area.val = "";
+    xx->passwd.len = 0;			/* Area password */
+    xx->passwd.val = "";
+    xx->blksize = -1L;			/* File blocksize */
+    xx->access.len = 0;			/* File access */
+    xx->access.val = "";
+    xx->encoding.len = 0;		/* Transfer syntax */
+    xx->encoding.val = 0;
+    xx->disp.len = 0;			/* Disposition upon arrival */
+    xx->disp.val = "";
+    xx->lprotect.len = 0;		/* Local protection */
+    xx->lprotect.val = "";
+    xx->gprotect.len = 0;		/* Generic protection */
+    xx->gprotect.val = "";
+    xx->systemid.len = 2;		/* System ID length */
+    xx->systemid.val = "L3";		/* Amiga system ID code */
+    xx->recfm.len = 0;			/* Record format */
+    xx->recfm.val = "";
+    xx->sysparam.len = 0;		/* System-dependent parameters */
+    xx->sysparam.val = "";
+    xx->length = iflen;			/* Length */
+    return(0);
+}
+
+/* Z F C D A T -- Return a string containing the time stamp for a file */
+
+char *
+zfcdat(name) char *name; {
+
+#ifdef TIMESTAMP
+
+    struct stat buffer;
+    struct tm *time_stamp, *localtime();
+    static char datbuf[20];
+
+    datbuf[0] = '\0';
+    if(stat(name,&buffer) != 0) {
+	debug(F110,"zcfdat stat failed",name,0);
+	return("");
+    }
+    time_stamp = localtime(&(buffer.st_mtime));
+    if (time_stamp->tm_year < 1900) time_stamp->tm_year += 1900;
+    sprintf(datbuf,"%-4.4d%02.2d%02.2d %002.2d:%002.2d:%002.2d",
+	    time_stamp->tm_year,
+	    time_stamp->tm_mon + 1,
+	    time_stamp->tm_mday,
+	    time_stamp->tm_hour,
+	    time_stamp->tm_min,
+	    time_stamp->tm_sec);
+    debug(F111,"zcfdat",datbuf,strlen(datbuf));
+    return(datbuf);
+#else
+    return("");
+#endif /* TIMESTAMP */
+}
+
+/*
+ * Dummy functions for the Amiga.  Sending mail cannot be done;  I haven't
+ * decided how to handle print requests yet.
+ */
+
+zmail(p,f) char *p; char *f; {		/* Send file f as mail to address p */
+	return(0);
+}
+
+zprint(p,f) char *p; char *f; {		/* Print file f with flags p */
+	return(0);
+}
+
 
 /* Directory Functions for Unix, written by Jeff Damens, CUCCA, 1984. */
 

@@ -1,0 +1,84 @@
+Date: Mon Jun 19 16:52:29 1989
+From: Frank da Cruz <fdc@watsun.cc.columbia.edu>
+Subject: New Release of C-Kermit Available for Testing
+Keywords: C-Kermit, UNIX Kermit, Attribute Packets, SUN, Ultrix
+Keywords: Encore Multimax, OS/2, NeXT
+Xref: File Attributes, see Attribute Packets
+
+This is to announce another test release of C-Kermit, 4F(082), to replace
+the earlier test release 4F(077) that was announced on April 3, 1989.  This
+version fixes several serious problems in 4F(077), namely:
+
+  - Connect-mode lockup when when connecting back to a remote system
+    after transferring a file.  Thanks to Frank Prindle for finding
+    the fix for this.  The fix is only for BSD versions, other versions
+    may still experience minor problems (a few glitch characters) under
+    these circumstances -- if anybody can track down the problem and
+    fix it, please do!
+
+  - Protocol misnegotiations when C-Kermit running in server mode,
+    caused by a missing comment delimeter.
+
+  - Hangup command, and ^\h connect-escape, fixed up so as not
+    to leave lock files around (Patrick Wolfe).  Seems to work OK
+    in BSD-based UNIX versions, untested in System III/V.
+
+Besides these fixes, 4F(080) has several new features, including:
+
+  - Further performance improvements, mostly from Paul Placeway of Ohio
+    State University (of Macintosh Kermit fame), including "encode-ahead"
+    and dynamic packet sizing.
+
+  - Support for OS/2, contributed by Chris Adie of Edinburgh University
+    in Scotland.  Unfortunately, Chris's work was based on release 4E(070)
+    of C-Kermit, and so there had to be a lot of code-shuffling.  The result
+    is entirely untested, which is one reason why this release is a test
+    release rather than a real release.  See the separate announcement from
+    Chris Adie.
+    
+  - A new 'transmit' command, for raw uploading.
+
+  - 'dial' command support for the Microcom ax9624 modem, from Jim Knutson.
+
+  - Support for 4.1BSD, Apple A/UX, and NeXT added to makefile (but not
+    tested).
+
+  - Addition of file creation date to the attributes which C-Kermit sends.
+    C-Kermit still does not do anything with dates on received files (tested
+    in Berkeley versions, not tested in AT&T or other versions).
+
+  - Support for tilde in file names in all interactive commands that parse
+    input or output file names (SEND, RECEIVE, GET, DIRECTORY, LOG, CD, etc).
+
+  - Support for tilde in file names sent to the C-Kermit server in GET,
+    REMOTE DIRECTORY, and similar commands.
+
+See the file ckuker.upd for details about the changes and contributors.
+
+This release has been compiled and tested on a SUN-4/280 with SUNOS 4.0, a
+VAX/8700 with Ultrix 2.0, and an Encore Multimax 310 with UMAX V 2.2.  This
+version was also briefly tested in the AT&T System V environment on the SUN,
+and seemed to work OK.  Further testing is required on AT&T UNIX variants,
+Xenix, etc.
+
+The new release is available via ftp from watsun.cc.columbia.edu, in the
+directory kermit/test/ck*.  Also in the same directory on cunixc.
+
+BITNET/EARN users may also access the test files in the new KERMSRV test area.
+Refer to these files as T:CKU*.*, T:CKC*.*, T:CKW*.*, and (for OS/2) T:CKO*.*,
+for example:
+
+  TELL KERMSRV AT CUVMA MAIL DIR T:*.*
+  TELL KERMSRV AT CUVMA SEND T:CKC*.*
+
+Please get the files, try them out, and report any problems to me.  After the
+kinks are worked out, version 4F will replace the current standard 4E release.
+
+Note, there are also some ckv*.* files in kermit/test for the VAX/VMS version
+of C-Kermit, but they are not totally up-to-date with this new test release.
+Watch Info-Kermit for further announcements.
+
+There are also some other C-Kermit systems that haven't been updated in a
+long time, including the Amiga (cki*.*), and Data General AOS/VS (ckd*.*).
+Volunteers?
+

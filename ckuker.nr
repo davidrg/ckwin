@@ -8,7 +8,7 @@ kermit \- kermit file transfer
 .I Kermit
 is a file transfer program that allows files to be moved
 between machines of many different operating systems and architectures.
-This man page describes version 4E(072) of the program.  See the C-Kermit
+This man page describes version 4F(082) of the program.  See the C-Kermit
 documentation (ckuker.doc) or the Kermit book for further information.
 .PP
 Arguments are optional. If
@@ -23,8 +23,8 @@ The following notation is used in command descriptions:
 .TP 8
 .I fn
 A Unix file specification, possibly containing either of the "wildcard"
-characters '*' or '?' ('*' matches all character strings, '?' matches
-any single character).
+characters '~', '*', or '?' ('~' matches a user's home directory name,
+'*' matches all character strings, '?' matches any single character).
 .TP
 .I fn1
 A Unix file specification which may not contain '*' or '?'.
@@ -145,7 +145,7 @@ your PC or workstation.
 .PP
 If you are running 
 .I Kermit
-on most systems,
+On most systems,
 .I Kermit
 runs in remote mode by default, so on a PC or workstation, you will have
 to put it into local mode.  The following command sets
@@ -331,7 +331,7 @@ list of files.
 .B ESC
 (The Escape or Altmode key) \(em Request completion of the current keyword
 or filename, or insertion of a default value.  The result will be a beep
-if the requested operation fails.  Tab does the same thing.
+if the requested operation fails.
 .TP 8
 .B DEL
 (The Delete or Rubout key) \(em Delete the previous character from the
@@ -348,7 +348,7 @@ command.  You may also use BS (Backspace, Control-H) for this function.
 .TP
 .B SP
 (Space) \(em Delimits fields (keywords, filenames, numbers) within a
-command.
+command.  HT (Horizontal Tab) may also be used for this purpose.
 .TP
 .B CR
 (Carriage Return) \(em Enters the command for execution.
@@ -409,7 +409,7 @@ Close a log file.
 Establish a terminal connection to a remote system.
 .TP
 .B  cwd
-Change Working Directory (also, "cd").
+Change Working Directory.
 .TP
 .B dial
 Dial a telephone number.
@@ -476,10 +476,16 @@ Display statistics about most recent transaction.
 .TP
 .B take 
 Execute commands from a file.
+.TP
+.B transmit
+Send a file without error checking.
 .sp 1
 .PP
 The 'set' parameters are:
 .TP 21
+.B attributes
+Turn attribute packet exchange on or off (default is on).
+.TP
 .B block-check
 Level of packet error detection.
 .TP
@@ -525,6 +531,9 @@ Set the packet retransmission limit.
 .B send
 Set various parameters for outbound packets.
 .TP
+.B server
+Set server-related parameters (like timeout).
+.TP
 .B speed
 Communication line speed.
 .sp 1
@@ -532,7 +541,7 @@ Communication line speed.
 The 'remote' commands are:
 .TP 12
 .B cwd  
-Change remote working directory (also, "remote cd").
+Change remote working directory.
 .TP
 .B delete  
 Delete remote files.
@@ -554,6 +563,9 @@ Display a remote file on your screen.
 .TP
 .B who
 Display who's logged in, or get information about a user.
+.SH AUTHORS
+Frank da Cruz, Columbia University Center for Computing Activities,
+with contributions from many others.
 .SH FILES
 .ta \w"$HOME/.kermrc  "u
 $HOME/.kermrc	\fIKermit\fR initialization commands
@@ -565,7 +577,7 @@ cu(1C), uucp(1C)
 .br
 Christine Gianone,
 .IR "Kermit User's Guide" ,
-Columbia University, 7th Edition
+Columbia University, 8th Edition
 .TP
 Frank da Cruz,
 .IR "Kermit, A File Transfer Protocol" ,
@@ -580,3 +592,4 @@ itself are intended to be self-explanatory.
 See recent issues of the Info-Kermit digest (on the Internetwork, BITNET,
 USENET, etc), or the file ckuker.bwr, for a list of bugs.  See the file
 ckuker.upd for descriptions of bugs that were fixed in each release.
+

@@ -1,0 +1,7 @@
+This directory contains C-Kermit version 4F(095), which was never formally
+released.  It is an upgrade of version 4E(072).  Its major new feature is
+attribute packets.  The VMS support files, ckv*.*, are known to be
+inconsistent with the mainline cku*.* and ckc*.* files.  These files are
+kept as a fallback for version 5A of C-Kermit, which is much bigger.  There
+may be computers for which version 5A is too big, and version 4F will still
+fit...

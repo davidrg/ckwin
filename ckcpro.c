@@ -6,14 +6,15 @@
 /* Wart Version Info: */
 char *wartv = "Wart Version 1A(006) Jan 1989";
 
-char *protv = "C-Kermit Protocol Module 4E(032), 13 Jan 89"; /* -*-C-*- */
+char *protv = "C-Kermit Protocol Module 4F(034), 19 Jun 89"; /* -*-C-*- */
 
 /* C K C P R O  -- C-Kermit Protocol Module, in Wart preprocessor notation. */
 /*
- Authors: Frank da Cruz (SY.FDC@CU20B), Bill Catchings, Jeff Damens;
- Columbia University Center for Computing Activities, January 1985.
- Copyright (C) 1985, Trustees of Columbia University in the City of New York.
- Permission is granted to any individual or institution to use, copy, or
+ Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
+ Columbia University Center for Computing Activities.
+ First released January 1985.
+ Copyright (C) 1985, 1989, Trustees of Columbia University in the City of New 
+ York.  Permission is granted to any individual or institution to use, copy, or
  redistribute this software so long as it is not sold for profit, provided this
  copyright notice is retained. 
 */
@@ -31,26 +32,29 @@ char *protv = "C-Kermit Protocol Module 4E(032), 13 Jan 89"; /* -*-C-*- */
 /* State definitions for Wart (or Lex) */
 #define ipkt 1
 #define rfile 2
-#define rdata 3
-#define ssinit 4
-#define ssfile 5
-#define ssdata 6
-#define sseof 7
-#define sseot 8
-#define serve 9
-#define generic 10
-#define get 11
-#define rgen 12
+#define rattr 3
+#define rdata 4
+#define ssinit 5
+#define ssfile 6
+#define ssattr 7
+#define ssdata 8
+#define sseof 9
+#define sseot 10
+#define serve 11
+#define generic 12
+#define get 13
+#define rgen 14
 
 /* External C-Kermit variable declarations */
   extern char sstate, *versio, *srvtxt, *cmarg, *cmarg2, *rpar();
   extern char data[], filnam[], srvcmd[], ttname[], *srvptr;
   extern int pktnum, timint, nfils, hcflg, xflg, speed, flow, mdmtyp;
   extern int prvpkt, cxseen, czseen, server, local, displa, bctu, bctr, quiet;
-  extern int tsecs, parity, backgrd;
+  extern int tsecs, parity, backgrd, nakstate, atcapu;
   extern int putsrv(), puttrm(), putfil(), errpkt();
+  extern CHAR *rdatap, recpkt[];
   extern char *DIRCMD, *DELCMD, *TYPCMD, *SPACMD, *SPACM2, *WHOCMD;
-  extern char *rdatap;
+  extern struct zattr iattr;
 
 /* Local variables */
   static char vstate = 0;  		/* Saved State   */
@@ -58,7 +62,8 @@ char *protv = "C-Kermit Protocol Module 4E(032), 13 Jan 89"; /* -*-C-*- */
   int x;				/* General-purpose integer */
   char *s;				/* General-purpose string pointer */
 
-/* Macros - Note, BEGIN is predefined by Wart (and Lex) */
+/* Macros - Note, BEGIN is predefined by Wart (and Lex) as "state = ", */
+/* BEGIN is NOT a GOTO! */
 #define SERVE  tinit(); BEGIN serve
 #define RESUME if (server) { SERVE; } else { sleep(2); return; }
 
@@ -70,7 +75,7 @@ int state = 0;
 wart()
 {
     int c,actno;
-    extern short tbl[];
+    extern CHAR tbl[];
     while (1) {
 	c = input();
 	if ((actno = tbl[c + state*128]) != -1)
@@ -96,246 +101,464 @@ case 6:
     { sleep(1); SERVE; }
     break;
 case 7:
-    { errpkt("User cancelled transaction"); /* "Abort" -- Tell other side. */
-    x = quiet; quiet = 1; 		/* Close files silently. */
-    clsif(); clsof(1); 
-    quiet = x; return(0); }
+    { errpkt("User cancelled transaction"); /* "ABEND" -- Tell other side. */
+    return(0); }
     break;
 case 8:
-    { rinit(rdatap); bctu = bctr; /* Get Send-Init */
-	   resetc();			/* Reset counters */
-    	   rtimer();			/* Reset timer */
-	   BEGIN rfile; }
+    {			/* Receive Send-Init packet */
+    rinit(rdatap);			/* Set parameters */
+    bctu = bctr;			/* Switch to agreed-upon block check */
+    resetc();				/* Reset counters */
+    rtimer();				/* Reset timer */
+    BEGIN rfile;			/* Go into receive-file state */
+}
     break;
 case 9:
-    { spar(rdatap);		/* Get ack for I-packet */
-    	   if (vcmd) { scmd(vcmd,cmarg); vcmd = 0; }
-    	   if (vstate == get) srinit();
-	   BEGIN vstate; }
+    {				/* Get ack for I-packet */
+    spar(rdatap);			/* Set parameters */
+    if (vcmd) {				/* If sending a generic command */
+	scmd(vcmd,cmarg);		/* Do that */
+	vcmd = 0;			/* and then un-remember it. */
+    }
+    if (vstate == get) srinit();	/* If sending GET command, do that */
+    BEGIN vstate;			/* Switch to desired state */
+}
     break;
 case 10:
-    { if (vcmd) scmd(vcmd,cmarg);	/* Get E for I-packet (ignore) */
-    	   vcmd = 0; if (vstate == get) srinit();
-	   BEGIN vstate; }
+    {				/* Ignore Error reply to I packet */
+    if (vcmd) {				/* in case other Kermit doesn't */
+	scmd(vcmd,cmarg);		/* understand I-packets. */
+	vcmd = 0;			/* Otherwise act as above... */
+    }
+    if (vstate == get) srinit();
+    BEGIN vstate;
+}
     break;
 case 11:
-    { srinit(); }
+    {		/* Resend of previous I-pkt ACK, same seq number! */
+    srinit();
+}
     break;
 case 12:
-    { srvptr = srvcmd; decode(rdatap,putsrv); /* Get Receive-Init */
-	   cmarg = srvcmd;  nfils = -1;
-    	   if (sinit()) BEGIN ssinit; else { SERVE; } }
+    {				/* Get I-packet */
+    spar(rdatap);			/* Set parameters from it */
+    ack1(rpar());			/* Respond with our own parameters */
+    pktnum = 0;				/* Reset packet sequence numbers */
+    prvpkt = -1;			/* Stay in server command wait */
+}
     break;
 case 13:
-    { spar(rdatap); ack1(rpar());	           /* Get Init Parameters */
-	   pktnum = 0; prvpkt = -1; }
+    {				/* Get Receive-Init */
+    srvptr = srvcmd;			/* Point to server command buffer */
+    decode(rdatap,putsrv);		/* Decode the GET command into it */
+    cmarg = srvcmd;
+    nfils = -1;				/* Initialize number of files */
+    if (sinit())			/* Send Send-Init */
+      BEGIN ssinit;			/* If successful, switch state */
+    else { SERVE; }			/* Else back to server command wait */
+}
     break;
 case 14:
-    { srvptr = srvcmd; decode(rdatap,putsrv); /* Get & decode command. */
-	   putsrv('\0'); putsrv('\0');
-	   sstate = srvcmd[0]; BEGIN generic; }
+    {				/* Generic server command */
+    srvptr = srvcmd;			/* Point to command buffer */
+    decode(rdatap,putsrv);		/* Decode packet data into it */
+    putsrv('\0');			/* Insert a couple nulls */
+    putsrv('\0');			/* for termination */
+    sstate = srvcmd[0];			/* Set requested start state */
+    BEGIN generic;			/* Switch to generic command state */
+}
     break;
 case 15:
-    { srvptr = srvcmd;		    	 /* Get command for shell */
-	   decode(rdatap,putsrv); putsrv('\0');
-	   if (syscmd(srvcmd,"")) BEGIN ssinit;
-	   else { errpkt("Can't do system command"); SERVE; } }
+    {				/* Receive Host command */
+    srvptr = srvcmd;			/* Point to command buffer */
+    decode(rdatap,putsrv);		/* Decode command packet into it */
+    putsrv('\0');			/* Null-terminate */
+    if (syscmd(srvcmd,""))		/* Try to execute the command */
+      BEGIN ssinit;			/* If OK, send back its output */
+    else {				/* Otherwise */
+	errpkt("Can't do system command"); /* report error */
+	SERVE;				/* & go back to server command wait */
+    }
+}
     break;
 case 16:
-    { errpkt("Unimplemented server function"); SERVE; }
+    {				/* Any other command in this state */
+    errpkt("Unimplemented server function"); /* we don't know about */
+    SERVE;				/* back to server command wait */
+}
     break;
 case 17:
-    { if (!cwd(srvcmd+1)) errpkt("Can't change directory"); /* CWD */
-    	     SERVE; }
+    {				/* Got REMOTE CWD command */
+    if (!cwd(srvcmd+1)) errpkt("Can't change directory"); /* Try to do it */
+    SERVE;				/* Back to server command wait */
+}
     break;
 case 18:
-    { if (syscmd(DIRCMD,srvcmd+2)) BEGIN ssinit;	/* Directory */
-    	     else { errpkt("Can't list directory"); SERVE; } }
+    {				/* REMOTE DIRECTORY command */
+    if (syscmd(DIRCMD,srvcmd+2))	/* If it can be done */
+      BEGIN ssinit;			/* send the results back */
+    else {				/* otherwise */
+	errpkt("Can't list directory");	/* report failure */
+	SERVE;				/* & return to server command wait */
+    }
+}
     break;
 case 19:
-    { if (syscmd(DELCMD,srvcmd+2)) BEGIN ssinit;	/* Erase */
-    	     else { errpkt("Can't remove file"); SERVE; } }
+    {				/* REMOTE DELETE (Erase) command */
+    if (syscmd(DELCMD,srvcmd+2))	/* Try to do it */
+      BEGIN ssinit;			/* If OK send results back */
+    else {				/* otherwise */
+	errpkt("Can't remove file");	/* report failure */
+	SERVE;				/* & return to server command wait */
+    }
+}
     break;
 case 20:
-    { ack(); screen(SCR_TC,0,0l,""); return(0); }
+    {				/* FINISH */
+    ack();				/* Acknowledge */
+    screen(SCR_TC,0,0l,"");		/* Display */
+    return(0);				/* Done */
+}
     break;
 case 21:
-    { ack(); ttres(); screen(SCR_TC,0,0l,""); return(zkself()); }
+    {				/* BYE (LOGOUT) */
+    ack();				/* Acknowledge */
+    ttres();				/* Reset the terminal */
+    screen(SCR_TC,0,0l,"");		/* Display */
+    return(zkself());			/* Try to log self out */
+}
     break;
 case 22:
-    { if (sndhlp()) BEGIN ssinit;
-    	     else { errpkt("Can't send help"); SERVE; } }
+    {				/* REMOTE HELP */
+    if (sndhlp()) BEGIN ssinit;		/* Try to send it */
+    else {				/* If not ok, */
+	errpkt("Can't send help");	/* send error message instead */
+	SERVE;				/* and return to server command wait */
+    }
+}
     break;
 case 23:
-    { if (syscmd(TYPCMD,srvcmd+2)) BEGIN ssinit;
-    	     else { errpkt("Can't type file"); SERVE; } }
+    {				/* REMOTE TYPE */
+    if (syscmd(TYPCMD,srvcmd+2))	/* Try */
+      BEGIN ssinit;			/* OK */
+    else {				/* not OK */
+	errpkt("Can't type file");	/* give error message */
+	SERVE;				/* wait for next server command */
+    }
+}
     break;
 case 24:
-    { x = *(srvcmd+1);			/* Disk Usage query */
-    	     x = ((x == '\0') || (x == SP));
-	     x = (x ? syscmd(SPACMD,"") : syscmd(SPACM2,srvcmd+2));
-    	     if (x) BEGIN ssinit; else { errpkt("Can't check space"); SERVE; }}
+    {				/* REMOTE SPACE */
+    x = *(srvcmd+1);			/* Get area to check */
+    x = ((x == '\0') || (x == SP));
+    x = (x ? syscmd(SPACMD,"") : syscmd(SPACM2,srvcmd+2));
+    if (x)				/* If we got the info */
+      BEGIN ssinit;			/* send it */
+    else {				/* otherwise */
+	errpkt("Can't check space");	/* send error message */
+	SERVE;				/* and await next server command */
+    }
+}
     break;
 case 25:
-    { if (syscmd(WHOCMD,srvcmd+2)) BEGIN ssinit;
-    	     else { errpkt("Can't do who command"); SERVE; } }
+    {				/* REMOTE WHO */
+    if (syscmd(WHOCMD,srvcmd+2))	/* The now-familiar scenario... */
+      BEGIN ssinit;
+    else {
+	errpkt("Can't do who command");
+	SERVE;
+    }
+}
     break;
 case 26:
-    { errpkt("Unimplemented generic server function"); SERVE; }
+    {				/* Anything else in this state... */
+    errpkt("Unimplemented generic server function"); /* Complain */
+    SERVE;				/* and return to server command wait */
+}
     break;
 case 27:
-    { decode(rdatap,puttrm); RESUME; }
+    {				/* Short-Form reply */
+    decode(rdatap,puttrm);		/* in ACK Data field */
+    RESUME;
+}
     break;
 case 28:
-    { if (rcvfil())		      /* File header */
-		  { encstr(filnam); ack1(data); BEGIN rdata; }
-                else { errpkt("Can't open file"); RESUME; } }
+    {				/* File header */
+    xflg = 0;				/* Not screen data */
+    rcvfil(filnam);			/* Figure out local filename */
+    encstr(filnam);			/* Encode it */
+    ack1(data);				/* Send it back in ACK */
+    initattr(&iattr);			/* Clear file attribute structure */
+    nakstate = 1;			/* In this state we can send NAKs */
+    BEGIN rattr;			/* Now expect Attribute packets */
+}
     break;
 case 29:
-    { opent(); ack(); BEGIN rdata; }
+    {				/* X-packet instead of file header */
+    xflg = 1;				/* Screen data */
+    ack();				/* Acknowledge the X-packet */
+    initattr(&iattr);			/* Initialize attribute structure */
+    nakstate = 1;			/* Say that we can send NAKs */
+    BEGIN rattr;			/* Expect Attribute packets */
+}
     break;
 case 30:
-    { ack(); tsecs = gtimer(); reot(); RESUME; }
+    {				/* Attribute packet */
+    if (gattr(rdatap,&iattr) == 0)	/* Read into attribute structure */
+      ack();				/* If OK, acknowledge */
+    else				/* If not */
+      ack1("N");			/* refuse to accept the file */
+}
     break;
 case 31:
-    { if (cxseen) ack1("X");	/* Got data. */
-    	       else if (czseen) ack1("Z");
-	       else ack();
-	   decode(rdatap,putfil); }
+    {				/* First data packet */
+    if (xflg)				/* If screen data */
+      x = opent();			/* "open" the screen */
+    else				/* otherwise */
+      x = opena(filnam,&iattr);		/* open the file, with attributes */
+    if (x) {				/* If file was opened ok */
+	if (decode(rdatap,putfil) < 0) { /* decode first data packet */
+	    errpkt("Error writing data");
+	    RESUME;
+	}
+	ack();				/* acknowledge it */
+	BEGIN rdata;			/* and switch to receive-data state */
+    } else {				/* otherwise */
+	errpkt("Can't open file");	/* send error message */
+	RESUME;				/* and quit. */
+    }
+}
     break;
 case 32:
-    { if (reof() < 0) {	    	/* Got End Of File */
-    	      errpkt("Can't close file"); RESUME;
-    	    } else { ack(); BEGIN rfile; } }
+    {				/* EOT, no more files */
+    ack();				/* Acknowledge */
+    tsecs = gtimer();			/* Get timing for statistics */
+    reot();				/* Do EOT things */
+    RESUME;				/* and quit */
+}
     break;
 case 33:
-    { spar(rdatap); bctu = bctr;	/* Got ACK to Send-Init */
-    	    x = sfile(xflg);		/* Send X or F header packet */
-	    if (x) { resetc(); rtimer(); BEGIN ssfile; }
-	   	else { s = xflg ? "Can't execute command" : "Can't open file";
-		    errpkt(s); RESUME; }
-          }
+    {				/* Data packet */
+    if (cxseen)				/* If file interrupt */
+      ack1("X");			/* put "X" in ACK */
+    else if (czseen)			/* If file-group interrupt */
+      ack1("Z");			/* put "Z" in ACK */
+    else if (decode(rdatap,putfil) < 0) { /* Normal case, */
+	errpkt("Error writing data");	/*   decode data to file */
+	RESUME;				/* Send ACK if data written */
+    } else ack();			/* to file OK. */
+}
     break;
 case 34:
-    { srvptr = srvcmd;		    	 /* Got ACK to F */
-	    decode(rdatap,putsrv); putsrv('\0');
-	    if (*srvcmd) tlog(F110," stored as",srvcmd,0);
-	    if (sdata() < 0) { clsif(); seof(""); BEGIN sseof; }
-    	    	else BEGIN ssdata; }
+    {			/* End Of File (EOF) Packet */
+    if (reof(&iattr) < 0) {		/* Close & dispose of the file */
+	errpkt("Can't close file");	/* If problem, send error message */
+	RESUME;				/* and quit */
+    } else {				/* otherwise */
+	ack();				/* acknowledge the EOF packet */
+	BEGIN rfile;			/* and await another file */
+    }
+}
     break;
 case 35:
-    { if (canned(rdatap)) { clsif(); seof("D"); BEGIN sseof; }
-	    	else if (sdata() < 0) { clsif(); seof(""); BEGIN sseof; } }
+    {				/* ACK for Send-Init */
+    spar(rdatap);			/* set parameters from it */
+    bctu = bctr;			/* switch to agreed-upon block check */
+    x = sfile(xflg);			/* Send X or F header packet */
+    if (x) {				/* If the packet was sent OK */
+	resetc();			/* reset per-transaction counters */
+	rtimer();			/* reset timers */
+	BEGIN ssfile;			/* and switch to receive-file state */
+    } else {				/* otherwise send error msg & quit */
+	s = xflg ? "Can't execute command" : "Can't open file";
+	errpkt(s);
+	RESUME;
+    }
+}
     break;
 case 36:
-    { if (gnfile() > 0) {		/* Got ACK to EOF, get next file */
-		if (sfile(xflg)) BEGIN ssdata;
-		else { errpkt("Can't open file") ; RESUME; }
-	    } else {			/* If no next file, EOT */
-		tsecs = gtimer();
-		seot();
-		BEGIN sseot; }
-	  }
+    {				/* ACK for F packet */
+    srvptr = srvcmd;			/* Point to string buffer */
+    decode(rdatap,putsrv);		/* Decode data field, if any */
+    putsrv('\0');			/* Terminate with null */
+    if (*srvcmd)			/* If remote name was recorded */
+      tlog(F110," stored as",srvcmd,0); /* Record it in transaction log. */
+    if (atcapu) {			/* If attributes are to be used */
+	if (sattr(xflg) < 0) {		/* set and send them */
+	    errpkt("Can't send attributes"); /* if problem, say so */
+	    RESUME;			     /* and quit */
+	} else BEGIN ssattr;		/* if ok, switch to attribute state */
+    } else if (sdata() < 0) {		/* No attributes, send data */
+	clsif();			/* If not ok, close input file, */
+	seof("");			/* send EOF packet */
+	BEGIN sseof;			/* and switch to EOF state. */
+    } else BEGIN ssdata;		/* All ok, switch to send-data state */
+}
     break;
 case 37:
-    { RESUME; }
+    {				/* Got ACK to A packet */
+    if (rsattr(rdatap) < 0) {		/* Was the file refused? */
+	clsif();			/* yes, close it */
+	seof("D");			/* send EOF with "discard" code */
+	BEGIN sseof;			/* switch to send-EOF state */
+    } else if (sdata() < 0) {		/* File accepted, send data */
+	clsif();			/* If problem, close input file */
+	seof("");			/* send EOF packet */
+	BEGIN sseof;			/* and switch to send-EOF state. */
+    } else BEGIN ssdata;		/* All ok, enter send-data state. */
+}
     break;
 case 38:
-    { ermsg(rdatap);			/* Error packet, issue message. */
-    x = quiet; quiet = 1;		/* Close files silently, */
-    clsif(); clsof(1);			/* discarding any output file. */
-    tsecs = gtimer();
-    quiet = x;
-    if (backgrd && !server) fatal("Protocol error");
-    RESUME; }
+    {				/* Got ACK to Data packet */
+    if (canned(rdatap)) {		/* If file transfer cancelled */
+	clsif();			/* close input file */
+	seof("D");			/* send EOF packet with Discard code */
+	BEGIN sseof;			/* switch to EOF state */
+    } else if (sdata() < 0) {		/* Not cancelled, send next data */
+	clsif();			/* If there was a problem close file */
+	seof("");			/* Send EOF packet */
+	BEGIN sseof;			/* enter send-eof state */
+    }
+}
     break;
 case 39:
-    { errpkt("Unknown packet type"); RESUME; }
+    {				/* Got ACK to EOF */
+    if (gnfile() > 0) {			/* Any more files to send? */
+	if (sfile(xflg))		/* Yes, try to send next file header */
+	  BEGIN ssfile;			/* if ok, enter send-file state */
+	else {				/* otherwise */
+	    errpkt("Can't open file");	/* send error message */
+	    RESUME;			/* and quit */
+	}
+    } else {				/* No next file */
+	tsecs = gtimer();		/* get statistics timers */
+	seot();				/* send EOT packet */
+	BEGIN sseot;			/* enter send-eot state */
+    }
+}
+    break;
+case 40:
+    {				/* Got ACK to EOT */
+    RESUME;				/* All done, just quit */
+}
+    break;
+case 41:
+    {					/* Got Error packet, in any state */
+    ermsg(rdatap);			/* Issue message. */
+    x = quiet; quiet = 1;		/* Close files silently, */
+    clsif(); clsof(1);			/* discarding any output file. */
+    tsecs = gtimer();			/* Get timers */
+    quiet = x;				/* restore quiet state */
+    if (backgrd && !server) fatal("Protocol error");
+    RESUME;
+}
+    break;
+case 42:
+    {					/* Anything not accounted for above */
+    errpkt("Unknown packet type");	/* Give error message */
+    RESUME;				/* and quit */
+}
     break;
 
 	    }
     }
 }
 
-short tbl[] = {
--1, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 38, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39,  7, 39,  4, 39, 39, 39,  5, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39,  3,  1, 39, 39,  2, 39,  6, 39, 39, 39, 39, 39, 39, 39, 
--1, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 10, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39,  9, 39, 39, 39, 39, 39, 39, 
-39,  7, 39,  4, 39, 39, 39,  5, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39,  3,  1, 39, 39,  2, 39,  6, 39, 39, 39, 39, 39, 39, 39, 
--1, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 30, 39, 39, 38, 28, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 29, 39, 39, 39, 39, 39, 39, 39, 
-39,  7, 39,  4, 39, 39, 39,  5, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39,  3,  1, 39, 39,  2, 39,  6, 39, 39, 39, 39, 39, 39, 39, 
--1, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 31, 38, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 32, 39, 39, 39, 39, 39, 
-39,  7, 39,  4, 39, 39, 39,  5, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39,  3,  1, 39, 39,  2, 39,  6, 39, 39, 39, 39, 39, 39, 39, 
--1, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 38, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 33, 39, 39, 39, 39, 39, 39, 
-39,  7, 39,  4, 39, 39, 39,  5, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39,  3,  1, 39, 39,  2, 39,  6, 39, 39, 39, 39, 39, 39, 39, 
--1, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 38, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 34, 39, 39, 39, 39, 39, 39, 
-39,  7, 39,  4, 39, 39, 39,  5, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39,  3,  1, 39, 39,  2, 39,  6, 39, 39, 39, 39, 39, 39, 39, 
--1, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 38, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 35, 39, 39, 39, 39, 39, 39, 
-39,  7, 39,  4, 39, 39, 39,  5, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39,  3,  1, 39, 39,  2, 39,  6, 39, 39, 39, 39, 39, 39, 39, 
--1, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 38, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 36, 39, 39, 39, 39, 39, 39, 
-39,  7, 39,  4, 39, 39, 39,  5, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39,  3,  1, 39, 39,  2, 39,  6, 39, 39, 39, 39, 39, 39, 39, 
--1, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 38, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 37, 39, 39, 39, 39, 39, 39, 
-39,  7, 39,  4, 39, 39, 39,  5, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39,  3,  1, 39, 39,  2, 39,  6, 39, 39, 39, 39, 39, 39, 39, 
+CHAR tbl[] = {
+-1, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 41, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42,  7, 42,  4, 42, 42, 42,  5, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42,  3,  1, 42, 42,  2, 42,  6, 42, 42, 42, 42, 42, 42, 42, 
+-1, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 10, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42,  9, 42, 42, 42, 42, 42, 42, 
+42,  7, 42,  4, 42, 42, 42,  5, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42,  3,  1, 42, 42,  2, 42,  6, 42, 42, 42, 42, 42, 42, 42, 
+-1, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 32, 42, 42, 41, 28, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 29, 42, 42, 42, 42, 42, 42, 42, 
+42,  7, 42,  4, 42, 42, 42,  5, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42,  3,  1, 42, 42,  2, 42,  6, 42, 42, 42, 42, 42, 42, 42, 
+-1, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 30, 42, 42, 31, 41, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 34, 42, 42, 42, 42, 42, 
+42,  7, 42,  4, 42, 42, 42,  5, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42,  3,  1, 42, 42,  2, 42,  6, 42, 42, 42, 42, 42, 42, 42, 
+-1, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 33, 41, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 34, 42, 42, 42, 42, 42, 
+42,  7, 42,  4, 42, 42, 42,  5, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42,  3,  1, 42, 42,  2, 42,  6, 42, 42, 42, 42, 42, 42, 42, 
+-1, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 41, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 35, 42, 42, 42, 42, 42, 42, 
+42,  7, 42,  4, 42, 42, 42,  5, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42,  3,  1, 42, 42,  2, 42,  6, 42, 42, 42, 42, 42, 42, 42, 
+-1, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 41, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 36, 42, 42, 42, 42, 42, 42, 
+42,  7, 42,  4, 42, 42, 42,  5, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42,  3,  1, 42, 42,  2, 42,  6, 42, 42, 42, 42, 42, 42, 42, 
+-1, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 41, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 37, 42, 42, 42, 42, 42, 42, 
+42,  7, 42,  4, 42, 42, 42,  5, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42,  3,  1, 42, 42,  2, 42,  6, 42, 42, 42, 42, 42, 42, 42, 
+-1, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 41, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 38, 42, 42, 42, 42, 42, 42, 
+42,  7, 42,  4, 42, 42, 42,  5, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42,  3,  1, 42, 42,  2, 42,  6, 42, 42, 42, 42, 42, 42, 42, 
+-1, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 41, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 39, 42, 42, 42, 42, 42, 42, 
+42,  7, 42,  4, 42, 42, 42,  5, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42,  3,  1, 42, 42,  2, 42,  6, 42, 42, 42, 42, 42, 42, 42, 
+-1, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 41, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 40, 42, 42, 42, 42, 42, 42, 
+42,  7, 42,  4, 42, 42, 42,  5, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42,  3,  1, 42, 42,  2, 42,  6, 42, 42, 42, 42, 42, 42, 42, 
 -1, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 
 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 
 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 
 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 
-16, 16, 16, 15, 16, 16, 16, 14, 16, 13, 16, 16, 16, 16, 16, 16, 
-16, 16, 12,  8, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 
+16, 16, 16, 15, 16, 16, 16, 14, 16, 12, 16, 16, 16, 16, 16, 16, 
+16, 16, 13,  8, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 
 16,  7, 16,  4, 16, 16, 16,  5, 16, 16, 16, 16, 16, 16, 16, 16, 
 16, 16,  3,  1, 16, 16,  2, 16,  6, 16, 16, 16, 16, 16, 16, 16, 
 -1, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 
@@ -346,22 +569,22 @@ short tbl[] = {
 26, 26, 26, 26, 23, 24, 26, 25, 26, 26, 26, 26, 26, 26, 26, 26, 
 26,  7, 26,  4, 26, 26, 26,  5, 26, 26, 26, 26, 26, 26, 26, 26, 
 26, 26,  3,  1, 26, 26,  2, 26,  6, 26, 26, 26, 26, 26, 26, 26, 
--1, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 38, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39,  8, 39, 39, 39, 39, 39, 11, 39, 39, 39, 39, 39, 39, 
-39,  7, 39,  4, 39, 39, 39,  5, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39,  3,  1, 39, 39,  2, 39,  6, 39, 39, 39, 39, 39, 39, 39, 
- 0, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39, 39, 39, 38, 28, 39, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39, 39,  8, 39, 39, 39, 39, 29, 27, 39, 39, 39, 39, 39, 39, 
-39,  7, 39,  4, 39, 39, 39,  5, 39, 39, 39, 39, 39, 39, 39, 39, 
-39, 39,  3,  1, 39, 39,  2, 39,  6, 39, 39, 39, 39, 39, 39, 39, 
+-1, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 41, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42,  8, 42, 42, 42, 42, 42, 11, 42, 42, 42, 42, 42, 42, 
+42,  7, 42,  4, 42, 42, 42,  5, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42,  3,  1, 42, 42,  2, 42,  6, 42, 42, 42, 42, 42, 42, 42, 
+ 0, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42, 42, 42, 41, 28, 42, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42, 42,  8, 42, 42, 42, 42, 29, 27, 42, 42, 42, 42, 42, 42, 
+42,  7, 42,  4, 42, 42, 42,  5, 42, 42, 42, 42, 42, 42, 42, 42, 
+42, 42,  3,  1, 42, 42,  2, 42,  6, 42, 42, 42, 42, 42, 42, 42, 
 };
 
 
@@ -407,9 +630,9 @@ proto() {
 	}
     } else server = 0;
     if (sstate == 'v' && !local && !quiet)
-      conoll("Escape back to your local system and give a SEND command...");
+      conoll("Escape back to your local Kermit and give a SEND command...");
     if (sstate == 's' && !local && !quiet)
-      conoll("Escape back to your local system and give a RECEIVE command...");
+      conoll("Escape back to your local Kermit and give a RECEIVE command...");
     sleep(1);
 /*
  The 'wart()' function is generated by the wart program.  It gets a

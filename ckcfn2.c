@@ -20,16 +20,20 @@
 #include "ckcker.h"
 #include "ckcdeb.h"
 
-extern int spsiz, rpsiz, timint, npad, ebq, ebqflg, rpt, rptq, rptflg, capas;
+extern int spsiz, spmax, rpsiz, timint, npad, ebq, ebqflg,
+ rpt, rptq, rptflg, capas, spsizf;
 extern int pktnum, prvpkt, sndtyp, bctr, bctu, rsn, rln, maxtry, size;
 extern int osize, maxsize, spktl, nfils, stdouf, warn, timef, parity, speed;
 extern int turn, turnch,  delay, displa, pktlog, tralog, seslog, xflg, mypadn;
 extern int deblog, hcflg, binary, fncnv, local, server, cxseen, czseen;
+extern int nakstate, quiet;
 extern long filcnt, ffc, flci, flco, tlci, tlco, tfc, fsize;
 extern char *cmarg, *cmarg2, **cmlist;
 extern CHAR padch, mypadc, eol, seol, ctlq, myctlq, sstate, *hlptxt;
 extern CHAR filnam[], sndpkt[], recpkt[], data[], srvcmd[];
 extern CHAR *srvptr, stchr, mystch, *rdatap;
+
+int numerrs = 0;	/* (PWP) total number of packet errors so far */
 
 char *strcpy();				/* Forward declarations */
 unsigned int chk2();			/* of non-int functions */
@@ -87,9 +91,12 @@ static unsigned int crctb[16] = {0, 010611, 021422, 031233, 043044,
 input() {
     int type, numtry;
 
+debug(F101,"input sstate","",sstate);
+
     if (sstate != 0) {			/* If a start state is in effect, */
 	type = sstate;			/* return it like a packet type, */
 	sstate = 0;			/* and then nullify it. */
+	numerrs = 0;			/* (PWP) no errors so far */
 	return(type);
     } else type = rpack();		/* Else, try to read a packet. */
 
@@ -100,23 +107,42 @@ debug(F111,"input",rdatap,type);
     if (type == sndtyp) type = rpack();
 
     chkint();				/* Check for console interrupts. */
+
+	debug(F101," nakstate","",nakstate);
+	debug(F000," type","=",type);
+	debug(F101," rsn","",rsn);
+	debug(F101," prvpkt","",prvpkt);
+
 /*
  If previous packet again, a timeout pseudopacket, or a bad packet, try again.
 */
     for (numtry = 0;
       (rsn == prvpkt || type == 'T' || type == 'Q' || type == 'N');
       numtry++) {
+	debug(F101,"input() try","",numtry);
+	debug(F101," nakstate","",nakstate);
+	debug(F000," type","=",type);
+	debug(F101," rsn","",rsn);
+	debug(F101," prvpkt","",prvpkt);
 	if (numtry > maxtry) {		/* If too many tries, give up */
-	    strcpy(data,"Timed out.");	/* and send a timeout error packet, */
-	    rdatap = data;		/* and pretend we read one. */
+	    strcpy(recpkt,"Timed out."); /* and send a timeout error packet, */
+	    rdatap = recpkt;		/* and pretend we read one. */
 	    return('E');
 	}
-	if (type == 'E') return('E');	/* Don't even bother about seq no */
-	if ((type == 'N') && (rsn == ((pktnum+1) & 63))) {
-					/* NAK for next packet */
-	    return('Y');		/* is ACK for current. */
+	if (type == 'E') {		/* Got error packet. */
+	    break;			/* Don't even bother about seq no */
+	} else if ((type == 'N') && (rsn == ((pktnum+1) & 63))) {
+	    type = 'Y';			/* NAK for next packet */
+	    break;			/* is ACK for current. */
+	} else if ((rsn == prvpkt) && (type == 'Y')) {
+	    ;			     /* (nothing) Another ACK for previous. */
+	} else if ((nakstate != 0) && (type == 'Q' || type == 'T')) {
+	    nack();			/* Send NAK if trashed or timed out */
 	} else {    
-	    resend();			/* Else, send last packet again, */
+	    resend();			/* Else just send last packet again */
+	    numerrs++;			/* (PWP) another error */
+	    if (spktl && !spsizf)
+		rcalcpsz();		/* (PWP) recalc optimal packet size */
 	}
 	if (sstate != 0) {		/* If an interrupt routine has set */
 	    type = sstate;		/* sstate behind our back, return */
@@ -125,12 +151,33 @@ debug(F111,"input",rdatap,type);
 	    return(type);
 	} else type = rpack();		/* Else try to read a packet. */
 	chkint();			/* Look again for interruptions. */
-	if (type == sndtyp) type = rpack();
+	if (type == sndtyp) type = rpack(); /* and for echoes. */
     }
     ttflui();			/* Got what we want, clear input buffer. */
+    if (spktl && !spsizf && !(rsn & 007))  /* should we recalc pack len? */
+	rcalcpsz();		/* (PWP) recalc every 8 packets */
     return(type);		/* Success, return packet type. */
 }
 
+/*  D O P A R  --  Add an appropriate parity bit to a character  */
+
+/*
+  (PWP) this is still used in the Mac terminal emulator, so we have to keep it
+*/
+CHAR
+dopar(ch)
+    register CHAR ch; {
+    register unsigned int a;
+    if (!parity) return(ch & 255); else a = ch & 127;
+    switch (parity) {
+	case 'e':  return(partab[a]);	    /* Even */
+	case 'm':  return(a | 128);         /* Mark */
+	case 'o':  return(partab[a] ^ 128); /* Odd */
+	case 's':  return(a);		    /* Space */
+	default:   return(a);
+    }
+}
+
 /*  S P A C K  --  Construct and send a packet  */
 
 /*
@@ -142,48 +189,73 @@ debug(F111,"input",rdatap,type);
  later retransmission.  Updates global sndpktl (send-packet length).
 */
 
-spack(type,n,len,d) char type, *d; int n, len; {
-    int i, j, lp; CHAR *sohp = sndpkt; CHAR pc;
+spack(type,n,len,d)
+char type;
+int n;
+register int len;
+register char *d;
+{
+    register int i;
+    int j, lp;
+    register CHAR *sohp = sndpkt;
+    register CHAR *cp;
     unsigned crc;
 
     spktl = 0;
-    pc = dopar(padch);			/* The pad character, if any. */
-    for (i = 0; i < npad; sndpkt[i++] = pc) /* Do any requested padding */
+    for (i = 0; i < npad; sndpkt[i++] = padch) /* Do any requested padding */
       sohp++;
-    sndpkt[i++] = dopar(mystch);	/* MARK */
+    sndpkt[i++] = mystch;		/* MARK */
     lp = i++;				/* Position of LEN, fill in later */
-    sndpkt[i++] = dopar(tochar(n));	/* SEQ field */
-    sndpkt[i++] = dopar(sndtyp = type);	/* TYPE field */
+    sndpkt[i++] = tochar(n);		/* SEQ field */
+    sndpkt[i++] = sndtyp = type;	/* TYPE field */
     j = len + bctu;			/* Length of data + block check */
     if (j+2 > MAXPACK) {		/* Long packet? */
-        sndpkt[lp] = dopar(tochar(0));	/* Yes, set LEN to zero */
-        sndpkt[i++] = dopar(tochar(j / 95)); /* High part */
-        sndpkt[i++] = dopar(tochar(j % 95)); /* Low part */
+        sndpkt[lp] = tochar(0);		/* Yes, set LEN to zero */
+        sndpkt[i++] = tochar(j / 95);	/* High part */
+        sndpkt[i++] = tochar(j % 95);	/* Low part */
         sndpkt[i] = '\0';		/* Header checksum */
-        sndpkt[i++] = dopar(tochar(chk1(sndpkt+lp)));
-    } else sndpkt[lp] = dopar(tochar(j+2)); /* Normal LEN */
+        sndpkt[i++] = tochar(chk1(sndpkt+lp));
+    } else sndpkt[lp] = tochar(j+2);	/* Normal LEN */
 
-    while (len-- > 0) sndpkt[i++] = dopar(*d++); /* Packet data */
+    for (cp = &sndpkt[i]; len-- > 0; i++)
+	*cp++ = *d++;			/* Packet data */
     sndpkt[i] = '\0';			/* Null-terminate */
 
     switch (bctu) {			/* Block check */
 	case 1:				/* 1 = 6-bit chksum */
-	    sndpkt[i++] = dopar(tochar(chk1(sndpkt+lp)));
+	    sndpkt[i++] = tochar(chk1(sndpkt+lp));
 	    break;
 	case 2:				/* 2 = 12-bit chksum */
 	    j = chk2(sndpkt+lp);
-	    sndpkt[i++] = dopar((unsigned)tochar((j >> 6) & 077));
-	    sndpkt[i++] = dopar((unsigned)tochar(j & 077));
+	    sndpkt[i++] = (unsigned)tochar((j >> 6) & 077);
+	    sndpkt[i++] = (unsigned)tochar(j & 077);
 	    break;
         case 3:				/* 3 = 16-bit CRC */
 	    crc = chk3(sndpkt+lp);
-	    sndpkt[i++] = dopar((unsigned)tochar(((crc & 0170000)) >> 12));
-	    sndpkt[i++] = dopar((unsigned)tochar((crc >> 6) & 077));
-	    sndpkt[i++] = dopar((unsigned)tochar(crc & 077));
+	    sndpkt[i++] = (unsigned)tochar(((crc & 0170000)) >> 12);
+	    sndpkt[i++] = (unsigned)tochar((crc >> 6) & 077);
+	    sndpkt[i++] = (unsigned)tochar(crc & 077);
 	    break;
     }
-    sndpkt[i++] = dopar(seol);		/* End of line (packet terminator) */
+    sndpkt[i++] = seol;			/* End of line (packet terminator) */
     sndpkt[i] = '\0';			/* Terminate string */
+
+    /* (PWP) add the parity quickly at the end */
+    switch (parity) {
+	case 'e':			/* Even */
+	    for (cp = &sndpkt[i-1]; cp >= sndpkt; cp--)
+		*cp = partab[*cp];
+	    break;
+	case 'm':			/* Mark */
+	    for (cp = &sndpkt[i-1]; cp >= sndpkt; cp--)
+		*cp = *cp | 128;
+	    break;
+	case 'o':			/* Odd */
+	    for (cp = &sndpkt[i-1]; cp >= sndpkt; cp--)
+		*cp = partab[*cp] ^ 128;
+	    break;
+    }
+
     if (ttol(sndpkt,i) < 0) return(-1);	/* Send the packet */
     spktl = i;				/* Remember packet length */
     flco += spktl;			/* Count the characters */
@@ -196,25 +268,10 @@ spack(type,n,len,d) char type, *d; int n, len; {
     return(i);				/* Return length */
 }
 
-/*  D O P A R  --  Add an appropriate parity bit to a character  */
-
-CHAR
-dopar(ch) CHAR ch; {
-    unsigned int a;
-    if (!parity) return(ch & 255); else a = ch & 127;
-    switch (parity) {
-	case 'e':  return(partab[a]);	    /* Even */
-	case 'm':  return(a | 128);         /* Mark */
-	case 'o':  return(partab[a] ^ 128); /* Odd */
-	case 's':  return(a);		    /* Space */
-	default:   return(a);
-    }
-}
-
 /*  C H K 1  --  Compute a type-1 Kermit 6-bit checksum.  */
 
-chk1(pkt) char *pkt; {
-    unsigned int chk;
+chk1(pkt) register CHAR *pkt; {
+    register unsigned int chk;
     chk = chk2(pkt);
     chk = (((chk & 0300) >> 6) + chk) & 077;
     return(chk);
@@ -223,8 +280,8 @@ chk1(pkt) char *pkt; {
 /*  C H K 2  --  Compute the numeric sum of all the bytes in the packet.  */
 
 unsigned int
-chk2(pkt) CHAR *pkt; {
-    long chk; unsigned int m;
+chk2(pkt) register CHAR *pkt; {
+    register long chk; register unsigned int m;
     m = (parity) ? 0177 : 0377;
     for (chk = 0; *pkt != '\0'; pkt++)
       chk += *pkt & m;
@@ -238,9 +295,9 @@ chk2(pkt) CHAR *pkt; {
  table.  Assumes the argument string contains no embedded nulls.
 */
 unsigned int
-chk3(pkt) CHAR *pkt; {
-    LONG c, crc;
-    unsigned int m;
+chk3(pkt) register CHAR *pkt; {
+    register LONG c, crc;
+    register unsigned int m;
     m = (parity) ? 0177 : 0377;
     for (crc = 0; *pkt != '\0'; pkt++) {
 	c = (*pkt & m) ^ crc;
@@ -265,10 +322,62 @@ nack() {				/* Negative acknowledgment. */
     spack('N',pktnum,0,"");		/* NAK's never have data. */
 }
 
+/*
+ * (PWP) recalculate the optimal packet length in the face of errors.
+ * This is a modified version of the algorithm by John Chandler in Kermit/370, 
+ * see "Dynamic Packet Size Control", Kermit News, V2 #1, June 1988.
+ *
+ * My implementation minimizes the total overhead equation, which is
+ *
+ *  Total chars = file_chars + (header_len * num_packs)
+ *                           + (errors * (header_len + packet_len))
+ *
+ * Differentiate with respect to number of chars, solve for packet_len, get:
+ *
+ *  packet_len = sqrt (file_chars * header_len / errors)
+ */
+
+rcalcpsz()
+{
+    register long x, q;
+
+    if (numerrs == 0) return;	/* bounds check just in case */
+
+    /* overhead on a data packet is npad+5+bctr, plus 3 if extended packet */
+    /* an ACK is 5+bctr */
+
+    /* first set x = per packet overhead */
+#ifdef COMMENT
+    /* (PWP) hook for doing windowing code */
+    if (window)
+	x = (long) (npad+5+bctr);    /* only the packet, don't count the ack */
+    else
+#endif /* COMMENT */
+	x = (long) (npad+5+3+bctr+5+bctr);
+
+    /* then set x = packet length ** 2 */
+    x = x * ((long) ffc / (long) numerrs);	/* careful of overflow */
+    
+    /* calculate the long integer sqrt(x) quickly */
+    q = 500;
+    q = (q + x/q) >> 1;
+    q = (q + x/q) >> 1;
+    q = (q + x/q) >> 1;
+    q = (q + x/q) >> 1;		/* should converge in about 4 steps */
+    if ((q > 94) && (q < 130))	/* break-even point for long packets */
+	q = 94;
+    if (q > spmax) q = spmax;	/* maximum bounds */
+    if (q < 10) q = 10;		/* minimum bounds */
+    spsiz = q;			/* set new send packet size */
+}
+
 resend() {				/* Send the old packet again. */
-    if (spktl)				/* If buffer has something, */
-    	ttol(sndpkt,spktl);		/* resend it, */
-    else nack();			/* otherwise send a NAK. */
+    if (spktl) {			/* If buffer has something, */
+    	if (ttol(sndpkt,spktl) < 1)	/* resend it, */
+	    nack();
+    } else {
+	nack();				/* otherwise send a NAK. */
+    }
     
     debug(F111,"resend",sndpkt,spktl);
     screen(SCR_PT,'%',(long)pktnum,"(resend)");	/* Say resend occurred */
@@ -279,9 +388,12 @@ resend() {				/* Send the old packet again. */
 }
 
 errpkt(reason) char *reason; {		/* Send an error packet. */
+    int x;
     encstr(reason);
     spack('E',pktnum,size,data);
+    x = quiet; quiet = 1; 		/* Close files silently. */
     clsif(); clsof(1);
+    quiet = x;
     screen(SCR_TC,0,0l,"");
 }
 
@@ -300,8 +412,10 @@ nxtpkt(num) int *num; {
     *num = (*num + 1) % 64;		/* Increment packet number mod 64 */
 }
 
-sigint() {				/* Terminal interrupt handler */
-    errpkt("User typed ^C");
+sigint(sig,code) int sig, code; {	/* Terminal interrupt handler */
+    if (local) errpkt("User typed ^C");
+    debug(F101,"sigint() caught signal","",sig);
+    debug(F101," code","",code);
     doexit(GOOD_EXIT);			/* Exit program */
 }
 
@@ -314,7 +428,7 @@ sigint() {				/* Terminal interrupt handler */
  data length), and rdatap (pointer to null-terminated data field).
 */
 rpack() {
-    int i, j, x, try, type, lp;		/* Local variables */
+    register int i, j, x, try, type, lp;		/* Local variables */
     unsigned crc;
     CHAR pbc[4];			/* Packet block check */
     CHAR *sohp = recpkt;		/* Pointer to SOH */
@@ -333,7 +447,7 @@ rpack() {
 #define TTITRY 3
 
     for (try = 0; try < TTITRY; try++) { /* Try x times to get a "line". */
-	j = ttinl(recpkt,MAXRP,timint,e); 
+	j = ttinl(recpkt,MAXRP+50,timint,e); 	/* (PWP) add a bit of extra */
 	if (j < 0) {
 	    if (j < -1) doexit(BAD_EXIT); /* Bail out if ^C^C typed. */
 	    debug(F101,"rpack: ttinl fails","",j);
@@ -419,4 +533,214 @@ rpack() {
     }
     screen(SCR_PT,type,(long)rsn,sohp);	/* Update screen */
     return(type);			/* Return packet type */
+}
+
+/* Attribute Packets. */
+
+/*
+  Call with xp == 0 if we're sending a real file (F packet),
+  or xp != 0 for screen data (X packet).
+  Returns 0 on success, -1 on failure.
+*/
+sattr(xp) int xp; {			/* Send Attributes */
+    int i, j, aln;
+    struct zattr x;
+
+    if (zsattr(&x) < 0) return(-1);	/* Get attributes or die trying */
+    i = 0;
+    data[i++] = '.';			/* System type */
+    data[i++] = tochar(x.systemid.len); /* Copy from attribute structure */
+    for (j = 0; j < x.systemid.len; j++)
+      data[i++] = x.systemid.val[j];
+    data[i++] = '"';			/* File type */
+    if (binary) {			/* Binary  */
+	data[i++] = tochar(2);		/* Two characters */
+	data[i++] = 'B';		/* B for Binary */
+	data[i++] = '8';		/* 8-bit bytes (note assumption...) */
+    } else {				/* Text */
+	data[i++] = tochar(3);		/* Three characters */
+	data[i++] = 'A';		/* A for ASCII with CRLFs */
+	data[i++] = 'M';		/* M for carriage return */
+	data[i++] = 'J';		/* J for linefeed */
+    }
+
+    if ((xp == 0) && (x.length > -1L)) { /* If it's a real file */
+
+	if ((aln = x.date.len) > 0) {	/* Creation date, if any */
+	    data[i++] = '#';
+	    data[i++] = tochar(aln);
+	    for (j = 0; j < aln; j++)
+	      data[i++] = x.date.val[j];
+	}
+	data[i] = '!';			/* File length in K */
+	sprintf(&data[i+2],"%ld",x.lengthk);
+	aln = strlen(&data[i+2]);
+	data[i+1] = tochar(aln);
+	i += aln + 2;
+
+	data[i] = '1';			/* File length in bytes */
+	sprintf(&data[i+2],"%ld",fsize);
+	aln = strlen(&data[i+2]);
+	data[i+1] = tochar(aln);
+	i += aln + 2;
+    }
+    data[i] = '\0';			/* Make sure it's null terminated */
+    nxtpkt(&pktnum);			/* Increment packet number */
+    aln = strlen(data);
+    spack('A',pktnum,aln,data); /* Send the Attribute packet */
+    debug(F111,"sattr",data,aln);
+    return(0);
+}
+
+rsattr(s) char *s; {			/* Read response to attribute packet */
+    debug(F111,"rsattr: ",s,*s);	/* If it's 'N' followed by anything */
+    if (*s == 'N') return(-1);		/* then other Kermit is refusing. */
+    return(0);
+}
+
+gattr(s, yy) char *s; struct zattr *yy;{ /* Read incoming attribute packet */
+    char c;
+    int aln, i, x;
+    long l;
+#define ABUFL 100			/* Temporary buffer for conversions */
+    char abuf[ABUFL];
+#define FTBUFL 10			/* File type buffer */
+    static char ftbuf[FTBUFL];
+#define DTBUFL 24			/* File creation date */
+    static char dtbuf[DTBUFL];
+#define TSBUFL 10			/* Transfer syntax */
+    static char tsbuf[TSBUFL];
+#define IDBUFL 10			/* System ID */
+    static char idbuf[IDBUFL];
+#define DSBUFL 100			/* Disposition */
+    static char dsbuf[DSBUFL];
+#define SPBUFL 512			/* System-dependent parameters */
+    static char spbuf[SPBUFL];
+
+/* fill in the attributes we have received */
+
+    while (c = *s++) {			/* Get attribute tag */
+	aln = xunchar(*s++);		/* Length of attribute string */
+	switch (c) {
+	  case '!':			/* file length in K */
+	    for (i = 0; (i < aln) && (i < ABUFL); i++) /* Copy it */
+	      abuf[i] = *s++;
+	    abuf[i] = '\0';		/* Terminate with null */
+	    yy->lengthk = atol(abuf);	/* Convert to number */
+	    break;
+
+	  case '"':			/* file type */
+	    for (i = 0; (i < aln) && (i < FTBUFL); i++)
+	      ftbuf[i] = *s++;		/* Copy it into a static string */
+	    ftbuf[i] = '\0';
+	    yy->type.val = ftbuf;	/* Pointer to string */
+	    yy->type.len = i;		/* Length of string */
+	    break;
+
+	  case '#':			/* file creation date */
+	    for (i = 0; (i < aln) && (i < DTBUFL); i++)
+	      dtbuf[i] = *s++;		/* Copy it into a static string */
+	    dtbuf[i] = '\0';
+	    yy->date.val = dtbuf;	/* Pointer to string */
+	    yy->date.len = i;		/* Length of string */
+	    break;
+
+	  case '*':			/* encoding (transfer syntax) */
+	    for (i = 0; (i < aln) && (i < TSBUFL); i++)
+	      tsbuf[i] = *s++;		/* Copy it into a static string */
+	    tsbuf[i] = '\0';
+	    yy->encoding.val = tsbuf;	/* Pointer to string */
+	    yy->encoding.len = i;	/* Length of string */
+	    break;
+
+	  case '+':			/* disposition */
+	    for (i = 0; (i < aln) && (i < DSBUFL); i++)
+	      dsbuf[i] = *s++;		/* Copy it into a static string */
+	    dsbuf[i] = '\0';
+	    yy->disp.val = dsbuf;	/* Pointer to string */
+	    yy->disp.len = i;		/* Length of string */
+	    break;
+
+	  case '.':			/* sender's system ID */
+	    for (i = 0; (i < aln) && (i < IDBUFL); i++)
+	      idbuf[i] = *s++;		/* Copy it into a static string */
+	    idbuf[i] = '\0';
+	    yy->systemid.val = idbuf;	/* Pointer to string */
+	    yy->systemid.len = i;	/* Length of string */
+	    break;
+
+	  case '0':			/* system-dependent parameters */
+	    for (i = 0; (i < aln) && (i < SPBUFL); i++)
+	      spbuf[i] = *s++;		/* Copy it into a static string */
+	    spbuf[i] = '\0';
+	    yy->sysparam.val = spbuf;	/* Pointer to string */
+	    yy->sysparam.len = i;	/* Length of string */
+	    break;
+
+	  case '1':			/* file length in bytes */
+	    for (i = 0; (i < aln) && (i < ABUFL); i++) /* Copy it */
+	      abuf[i] = *s++;
+	    abuf[i] = '\0';		/* Terminate with null */
+	    yy->length = atol(abuf);	/* Convert to number */
+	    debug(F101,"gattr length","",(int) yy->length);
+	    break;
+
+	  default:			/* Unknown attribute */
+	    s += aln;			/* Just skip past it */
+	    break;
+	}
+    }
+
+    /* (PWP) show the info */
+    if (yy->length > 0) {
+	fsize = yy->length;		/* let the world know */
+	screen(SCR_QE,0,fsize," Size");
+    } else if (yy->lengthk > 0) {
+	fsize = yy->lengthk * 1024L;	/* let the world know */
+	screen(SCR_QE,0,fsize," Size");
+    }
+#ifdef CHECK_SIZE
+    if ((l > 0) && ( l > zfree(filnam))) {
+	cxseen = 1 ; 	/* Set to true so file will be deleted */
+	return(-1);	/* can't accept file */
+    }
+#endif
+
+    return(0);
+}
+
+/*  I N I T A T T R  --  Initialize file attribute structure  */
+
+initattr(yy) struct zattr *yy; {
+    yy->lengthk = -1L;
+    yy->type.val = "";
+    yy->type.len = 0;
+    yy->date.val = "";
+    yy->date.len = 0;
+    yy->encoding.val = "";
+    yy->encoding.len = 0;
+    yy->disp.val = "";
+    yy->disp.len = 0;
+    yy->systemid.val = "";
+    yy->systemid.len = 0;
+    yy->sysparam.val = "";
+    yy->sysparam.len = 0;
+    yy->creator.val = "";
+    yy->creator.len = 0;
+    yy->account.val = "";
+    yy->account.len = 0;
+    yy->area.val = "";
+    yy->area.len = 0;
+    yy->passwd.val = "";
+    yy->passwd.len = 0;
+    yy->blksize = -1L;
+    yy->access.val = "";
+    yy->access.len = 0;
+    yy->lprotect.val = "";
+    yy->lprotect.len = 0;
+    yy->gprotect.val = "";
+    yy->gprotect.len = 0;
+    yy->recfm.val = "";
+    yy->recfm.len = 0;
+    return(0);
 }

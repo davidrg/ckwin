@@ -1,5 +1,0 @@
-from    lib:c.o+ckcmai.o+ckitio.o+ckcfns.o+ckcfn2.o+*
-        ckipro.o+ckiutl.o+ckuus2.o+ckuus3.o+ckucmd.o+ckuusr.o+*
-        ckifio.o+ckicon.o+ckistu.o
-to      kermit
-library lib:lc.lib+lib:amiga.lib

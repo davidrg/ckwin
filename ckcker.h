@@ -1,10 +1,11 @@
 /* ckcker.h -- Symbol and macro definitions for C-Kermit */
 
 /*
- Author: Frank da Cruz (SY.FDC@CU20B),
- Columbia University Center for Computing Activities, January 1985.
- Copyright (C) 1985, Trustees of Columbia University in the City of New York.
- Permission is granted to any individual or institution to use, copy, or
+ Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
+ Columbia University Center for Computing Activities.
+ First released January 1985.
+ Copyright (C) 1985, 1989, Trustees of Columbia University in the City of New 
+ York.  Permission is granted to any individual or institution to use, copy, or
  redistribute this software so long as it is not sold for profit, provided this
  copyright notice is retained. 
 */
@@ -25,7 +26,11 @@
 /* each system. */
 
 #define MAXSP 2048			/* Send packet buffer size  */
+#ifdef vms
+#define MAXRP 1920			/* Receive packet buffer size  */
+#else
 #define MAXRP 1024			/* Receive packet buffer size  */
+#endif
 #define MAXWS 1				/* Maximum window size */
 
 /* Kermit parameters and defaults */
@@ -41,6 +46,7 @@
 
 #define DMYTIM	    7	  	/* Default timeout interval to use. */
 #define URTIME	    10	  	/* Timeout interval to be used on me. */
+#define DSRVTIM     30		/* Default server command wait timeout. */
 
 #define DEFTRN	    0           /* Default line turnaround handshake */
 #define DEFPAR	    0           /* Default parity */
@@ -64,6 +70,19 @@
 #define ZSFILE      7		/* Current session log file */
 #define ZSYSFN	    8		/* Input from a system function */
 #define ZNFILS      9	    	/* How many defined file numbers */
+
+/*
+ * (PWP) this is used to avoid gratuitous function calls while encoding
+ * or decoding a packet.  The previous way involved 2 nested function calls 
+ * for EACH character of the file.  This way, we only do 2 calls per K of
+ * data.  This reduces packet encoding time to 1% of its former cost.
+ */
+#define INBUFSIZE 1024	/* size of the buffered file input and output buffer */
+
+/* get/put the next file character; like getc()/putc() macros */
+#define zminchar() (((--zincnt)>=0) ? ((int)(*zinptr++) & 0377) : zinfill())
+#define zmchout(c) \
+((*zoutptr++ = (CHAR)(c)), ((++zoutcnt) >= INBUFSIZE) ? zoutdump() : 0)
 
 /* Screen functions */
 

@@ -111,19 +111,19 @@
 @MajorHeading(C-KERMIT USER GUIDE)
 @heading(For UNIX, VMS, and Many Other Operating Systems)
 
-@b<Version 4E(072)>
+@b<Version 4F(085)>
 
-C. Gianone, F. da Cruz
+C.@ Gianone, F.@ da Cruz
 
 Columbia University Center for Computing Activities
 New York, New York  10027
 
 
-@i<February 8, 1989>
+@i<July 14, 1989>
 
 
 
-Copyright (C) 1981,1988
+Copyright (C) 1981,1989
 Trustees of Columbia University in the City of New York
 
 @i<Permission is granted to any individual or institution to use, copy,
