@@ -1,0 +1,373 @@
+COMMENT - File CKEDEMO.KSC
+;
+; Exercises Kermit's programming constructs.
+; Converted to block-structured format, March 1996.
+;
+; Usage: tell Kermit to "take ckedemo.ksc"
+;
+; echo If you don't see the message "Proceeding..."
+; echo on the next line, C-Kermit was not configured for script programming.
+; check if
+; echo Proceeding...
+; sleep 2
+; echo
+
+; forward arrays
+
+switch \v(program) {
+  :MS-DOS_KERMIT,
+    if < \v(version) 315 stop 1 Version 3.15 or later required...
+    echo MS-DOS Kermit Programming-Constructs Test
+    break
+  :C-Kermit,
+    if < \v(version) 600192 stop 1 Version 6.0 or later required...
+    echo C-Kermit Programming-Constructs Test
+}
+echo
+echo Defining macros:
+
+define ERRMSG if def \%1 echo \%1, end 1
+
+COMMENT - COPY macro.  Only works for single files.
+;
+echo { COPY}
+define COPY {
+  if > \v(argc) 3 -                     ; Too many arguments given?
+    end 1 \%0: too many arguments       ;  Too many, fail.
+  if not def \%1 -                      ; Was a source file given?
+    end 1 copy what?                    ;  No.
+  if not = \ffiles(\%1) 1 -             ; Yes, but is it "wild?"?
+    end 1 wildcards not allowed         ;  Sorry, no wildcards.
+  if not exist \%1 -                    ; Does source file exist?
+    end 1 file \%1 doesn't exist        ;  No, so it can't be copied.
+  if not def \%2 -                      ; Destination file specified?
+    end 1 copy \%1 to what?             ;  No, so it can't be copied to.
+  if not = \ffiles(\%2) 0 -             ; Does it already exist?
+    end 1 file \%2 already exists       ;  Yes, so don't write over it.
+  if equal "\v(system)" "UNIX" -        ; COPY command for UNIX:
+    run cp \%1 \%2                      ;   cp source destination
+  else if equal "\v(system)" "AOS/VS" - ; For AOS/VS:
+    run COPY \%2 \%1                    ;   COPY destination source
+  else run COPY \%1 \%2                 ; Others: COPY source destination
+  if exist \%2 end 0                    ; Check our work and return SUCCESS
+  else end 1 COPY failed.               ;   or FAILURE as appropriate.
+}
+
+COMMENT - SPELLNUM macro.
+;
+echo { SPELLNUM}
+define SPELLNUM {
+  local \%x
+  if not def \%1 end 1
+  if not numeric \%1 end 1 { Sorry, not a number}
+  xif < \%1 0 {
+     asg \%x { minus}
+     asg \%1 \feval(0-\%1)
+  }
+  asg \%1 \feval(\%1)  ; This takes care of "09" etc
+  if > \%1 9 end 1 { Sorry, too hard}
+  else forward \%1
+  :0,end 0 \%x zero
+  :1,end 0 \%x one
+  :2,end 0 \%x two
+  :3,end 0 \%x three
+  :4,end 0 \%x four
+  :5,end 0 \%x five
+  :6,end 0 \%x six
+  :7,end 0 \%x seven
+  :8,end 0 \%x eight
+  :9,end 0 \%x nine
+}
+
+COMMENT - CALC macro.  "Pocket calculator".  No arguments.
+;
+echo { CALC}
+define CALC {
+  echo Press Return to exit       ; Say how to exit.
+  def \%1 1                       ; Initial condition for loop
+  while def \%1 {                 ; Loop until they want to exit
+    ask \%1 { expression: }       ; Ask for an expression
+    echo \flpad(\feval(\%1),10)   ; Evaluate and print answer
+  }
+  echo Back to...                 ; All done
+}
+
+echo { ADDINGMACHINE}
+define ADDINGMACHINE {
+  local total \%s
+  echo Type numbers (one per line) or press Return to quit...
+  assign total 0                          ; Initialize the sum
+  while true {                            ; Loop till done
+    askq \%s                              ; Wait for a number
+    if not def \%s break                  ; Return quits loop
+    increment total \%s                   ; Add it to the sum
+    write screen \flpad(\%s,10)\flpad(\m(total),10) ; Print number and subtotal
+  }
+  echo Total\flpad(\m(total),15,.)
+}
+
+COMMENT - SMALLEST macro, recursive.  Arguments:
+; 1 = a number
+; 2 = a number
+; 3 = a number
+; Prints the smallest of the three.
+;
+echo { SMALLEST}
+def SMALLEST {
+  if < \v(argc) 4 end 1 { Sorry - three numbers required.}
+  xif < \%1 \%2 {                   ; Compare first two arguments
+    echo \%1 is less than \%2       ; The first one is smaller
+    xif < \%1 \%3 {                 ; Compare it with the third
+      echo \%1 is less than \%3     ; The first one is smaller
+      def \%a \%1                   ; Copy it to \%a
+    } else {                        ; The third is smaller
+      echo \%1 is not less than \%3
+      def \%a \%3                   ; Copy it to \%a
+    }
+  } else {                          ; Otherwise
+    echo \%1 is not less than \%2   ; The second is smaller
+    xif < \%2 \%3 {                 ; Compare it with the third
+      echo \%2 is less than \%3     ; The second is smaller
+      def \%a \%2                   ; Copy it to \%a
+    } else {                        ; The third is smaller
+      echo \%2 is not less than \%3
+      def \%a \%3                   ; Copy it to \%a
+    }
+  }
+  echo So the smallest is \%a.      ; Announce the winner
+}
+
+ec Spelling some numbers...
+for \%i -5 9 1 { spellnum \%i }
+
+echo Calculator demo...
+calc
+
+echo Adding machine demo - Enter an empty line to quit...
+addingmachine
+
+if eq {\v(program)} {MS-DOS_KERMIT} forward smallest
+
+; No \fexec() in MS-DOS Kermit.
+
+COMMENT - SUM macro, recursive.  Argument:
+; 1 = limit of sum, a positive number.
+; Returns sum of 1 through the number.
+;
+echo { SUM}
+def SUM {
+  if not def \%1 return        ; Make sure there is an argument
+  if not numeric \%1 return    ; Make sure argument is numeric
+  if not > \%1 0 return        ; Make sure argument is positive
+  if = \%1 1 return 1          ; If argument is 1, the sum is 1
+  else return \feval(\%1+\fexecute(sum,\feval(\%1-1)))
+}
+
+COMMENT - ADDEMUP macro, for calling SUM.
+;
+echo { ADDEMUP}
+def ADDEMUP {
+  local total
+  assign total \fexec(sum,\%1)
+  if def total echo SUM = \m(total)
+  else echo SUM doesn't work for \%1
+}
+
+addemup 1
+addemup 2
+addemup 3
+addemup 4
+addemup 5
+addemup 10
+addemup 20
+
+:SMALLEST
+
+while true {
+  ask \%x { Type 3 numbers separated by spaces or an empty line to quit:  }
+  if not def \%x break
+  smallest \%x
+}
+
+echo WHILE-LOOP TEST...
+echo You should see:
+echo { 0 1 2 3 4}
+def \%a 0
+while < \%a 5 { write scr { \%a}, incr \%a }
+echo
+
+echo NESTED WHILE-LOOP TEST...
+echo You should see:
+echo { 0:0 0:1 0:2 1:0 1:1 1:2 2:0 2:1 2:2}
+def \%a 0
+while < \%a 3 {
+  def \%b 0
+  while < \%b 3 {
+    write scr { \%a:\%b}
+    incr \%b
+  }
+  incr \%a 
+}
+echo
+
+echo FOR-LOOP INSIDE WHILE-LOOP
+echo You should see:
+echo { 1:1 1:2 1:3 2:1 2:2 2:3 3:1 3:2 3:3}
+def \%a 1
+while < \%a 4 { 
+  for \%i 1 3 1 { write scr { \%a:\%i} }
+  inc \%a 
+}
+echo
+
+echo WHILE-LOOP INSIDE FOR-LOOP
+echo You should see:
+echo { 1:1 1:2 1:3 2:1 2:2 2:3 3:1 3:2 3:3}
+for \%i 1 3 1 {
+  def \%a 1
+  while < \%a 4 {
+    writ scr { \%i:\%a}
+    incr \%a 
+  }
+}
+echo
+
+echo NESTED FOR LOOP TEST
+echo You should see:
+echo { 1:1 1:2 1:3 2:2 2:3 3:3}
+for \%i 1 3 1 {
+  for \%j \%i 3 1 {
+    write scr { \%i:\%j} 
+  }
+}
+echo
+
+echo NESTED FOR/WHILE/BREAK/CONTINUE TEST 
+echo You should see:
+echo { 1:1 1:3 3:1 3:3}
+for \%i 1 4 1 { 
+  if = \%i 2 continue
+  else if = \%i 4 break
+  asg \%j 0
+  while < \%j 4 { 
+    incr \%j
+    if = \%j 2 continue
+    else if = \%j 4 break
+    write screen { \%i:\%j} 
+  }
+}
+echo
+
+echo END from inside nested FOR loops
+echo You should see:
+echo { 1:1 1:2 1:3 2:1 2:2 2:3 3:1}
+define xx {
+  for \%i 1 3 1 {
+    for \%j 1 3 1 {
+      write scr { \%i:\%j}
+      if = \%i 3 if = \%j 1 end 
+    }
+  }
+}
+do xx
+echo
+
+if not eq {\v(program)} {C-Kermit} forward xifendtest
+
+echo RETURN from inside nested FOR loops
+echo You should see "IT WORKS":
+define xx {
+  local \%i \%j
+  for \%i 1 3 1 { 
+    for \%j 1 3 1 { 
+      if = \%i 3 if = \%j 1 return IT \%1 
+    } 
+  } 
+  echo YOU SHOULD NOT SEE THIS
+}
+echo "\fexec(xx WORKS)"
+
+:XIFENDTEST
+echo END message from inside XIF
+echo You should see "IT WORKS"
+def xx xif = 1 1 { end 0 "IT \%1"}
+xx WORKS
+
+echo Grouping of words in IF EQUAL
+echo You should see "IT WORKS":
+def \%a one two three
+if equal {\%a} {one two three} echo "IT WORKS"
+else echo It doesn't work, foo.
+ec
+
+echo Use of expressions and braces in FOR-loop variables
+echo You should see "1 2 3":
+def \%a 2
+for \%i 1 { 1 + \%a } 1 { write screen {\%i } }
+echo
+
+echo A macro that echoes its arguments
+def XX {
+  local \%i
+  for \%i 1 { \v(argc) - 1 } 1 {
+    echo \%i. "\&_[\%i]"
+  }
+}
+while true {
+  ask \%a {Type some words (or just carriage return to quit): }
+  if not def \%a break
+  xx \%a
+}
+echo
+
+if eq {\v(program)} {MS-DOS_KERMIT} forward arrays
+if not eq {\v(connection)} {\v(remote)} forward arrays
+ec MINPUT test...
+ec Please type one of the following (without the number):
+ec 1. ab cd
+ec 2. abcd
+ec 3. xyz
+ec You have 20 seconds...
+minput 20 {ab cd} abcd xyz
+ec
+if success echo You typed Number \v(minput).
+else echo You did not type any of them within the time limit.
+echo
+
+:ARRAYS
+getc \%c {ARRAY TEST -- type a char to continue: }
+
+declare \&a[26]
+local \%i \%j \%t                    ; Local variables
+assign \%i 1
+asg \&a[\%i] zebra
+incr \%i
+asg \&a[\%i] x-ray
+incr \%i 1
+asg \&a[\%i] baker
+incr \%i 3-2
+asg \&a[\%i] able
+decr \%i -1
+asg \&a[\%i] charlie
+asg \&a[\%i+1] easy
+asg \&a[\%i+2] george
+asg \&a[\%i+3] dog
+asg \%n \%i+2+8/4
+asg \&a[\%n] fox
+echo ARRAY TEST - Sorting ...
+getc \%c {Type a char to continue: }
+for \%i 1 \%n-1 1 {                  ; Outer loop: i from 1 to n-1
+    for \%j \%i \%n 1 {               ; Inner loop: j from i to n
+	xif lgt \&a[\%i] \&a[\%j] {  ; Compare array elements
+	    asg \%t \&a[\%i]         ; If out of order,
+	    asg \&a[\%i] \&a[\%j]    ; exchange them
+	    asg \&a[\%j] \%t
+	}
+    }
+}
+echo You should see 9 words in alphabetical order:
+getc \%c {Type a char to continue: }
+for \%i 1 \%n 1 { echo \&a[\%i] }    ; All sorted - print them
+
+echo End of \v(cmdfile)
+echo

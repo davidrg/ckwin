@@ -1,13 +1,13 @@
-CKUKER.BWR          "Beware File" for C-Kermit Version 5A          -*- text -*-
+CKUKER.BWR         "Beware File" for C-Kermit Version 6.0         -*- text -*-
 
 				 UNIX VERSION
 
-As of C-Kermit version:  5A(190)
-This file last updated:  Sat Nov 12 13:07:44 1994
+As of C-Kermit version:  6.0.192
+This file last updated:  Fri Sep  6 23:23:23 1996
 
 Authors: Frank da Cruz and Christine M. Gianone, Columbia University.
 
-  Copyright (C) 1985, 1994, Trustees of Columbia University in the City of New
+  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
   York.  The C-Kermit software may not be, in whole or in part, licensed or
   sold for profit as a software product itself, nor may it be included in or
   distributed with commercial products or otherwise distributed by commercial
@@ -28,8 +28,8 @@ etc, as well as to UNIX).
 
 CONTENTS:
 
-  (1) DOCUMENTATION
-  (2) IMPORTANT FILES
+  (0) DOCUMENTATION
+  (1) IMPORTANT FILES
   (2) BINARIES
   (3) NOTES ON SPECIFIC UNIX VERSIONS
   (3.1) C-KERMIT AND AIX
@@ -37,20 +37,22 @@ CONTENTS:
   (3.3) C-KERMIT AND LINUX
   (3.4) C-KERMIT AND NEXTSTEP
   (3.5) C-KERMIT AND QNX
-  (3.6) C-KERMIT AND SCO UNIX, XENIX, AND ODT
+  (3.6) C-KERMIT AND SCO UNIX, XENIX, ODT, AND OPENSERVER
   (3.7) C-KERMIT AND SOLARIS
   (3.8) C-KERMIT AND SUNOS
   (3.9) C-KERMIT AND ULTRIX
   (3.10) C-KERMIT AND UNIXWARE
   (3.11) C-KERMIT AND APOLLO SR10
   (3.12) C-KERMIT AND TANDY XENIX 3.0
-  (3.13) C-KERMIT AND OSF/1
+  (3.13) C-KERMIT AND OSF/1 (DIGITAL UNIX)
+  (3.14) C-KERMIT AND SGI IRIX
+  (3.15) C-KERMIT AND THE BEBOX
   (4) GENERAL UNIX-SPECIFIC LIMITATIONS AND BUGS
   (5) INITIALIZATION AND COMMAND FILES
   (6) COMMUNICATION SPEED SELECTION
   (7) COMMUNICATIONS AND DIALING
   (8) HARDWARE FLOW CONTROL
-  (9) TERMINAL CONNECTION
+  (9) TERMINAL CONNECTION AND KEY MAPPING
   (10) FILE TRANSFER
   (11) EXTERNAL FILE TRANSFER PROTOCOLS
   (11.1) C-KERMIT AS AN EXTERNAL PROTOCOL
@@ -58,32 +60,49 @@ CONTENTS:
   (11.3) USING C-KERMIT WITH TERM
   (12) MISCELLANEOUS
 
-(1) DOCUMENTATION
+(0) DOCUMENTATION
 
-C-Kermit 5A is documented in the book "Using C-Kermit" by Frank da Cruz and
-Christine M. Gianone, 1993, Digital Press / Butterworth-Heinemann, Woburn, MA,
-USA, ISBN 1-55558-108-0.  Price: US $34.95.  Available in book and computer
-stores, or order by phone, call Columbia University at +1 212 854-3703, or
-Butterworth-Heinemann at +1 800 366-2665.  A German edition is available from
-Verlag Heinz Heise in Hannover, Germany.
+C-Kermit is documented in the book "Using C-Kermit" by Frank da Cruz and
+Christine M. Gianone, Digital Press, Burlington, MA, USA, ISBN 1-55558-164-1.
+Price: US $39.95.  To order, call Columbia University, New York City,
+at +1 212 854-3703, or Digital Press / Butterworth-Heinemann at:
+
+  +1 800 366-2665  (Massachusetts office for USA & Canada)
+  +441 1993 414414 (Rushden, England office for Europe)
+  +61 2 372-5511   (Chatswood, NSW, office for Australia & New Zealand)
+  +65 220-3684     (Singapore office for Asia)
+
+A German edition is available from Verlag Heinz Heise in Hannover, Germany,
+Tel. +49 (05 11) 53 52-0, Fax. +49 (05 11) 53 52-1 29.
 
 New features added since these books were published are documented in the
 ckcker.upd file.
 
+TECHNICAL SUPPORT
+
 Please consult the documentation listed above, plus the ckcker.bwr file and
 this file itself, before submitting questions, reporting problems, etc, to:
 
-  E-Mail: kermit@columbia.edu
+  E-Mail: kermit-support@columbia.edu
 
-    Post: Kermit Development and Distribution
-          Columbia University Academic Information Systems
-          612 West 115th Street, New York, NY  10025  USA
+    News: comp.protocols.kermit.misc
+
+    Post: The Kermit Project
+          Columbia University
+          612 West 115th Street
+          New York NY  10025-7799
+          USA
 
     Fax: +1 212 663-8202
      or: +1 212 662-6442
 
+Telephone support also available:
 
-(2) IMPORTANT FILES
+  USA Only:  +1 900 555-5595, cost: $2.50 per minute
+  Anywhere:  +1 212 854-5126, cost: $25.00 per call, payable via Visa or MC.
+
+
+(1) IMPORTANT FILES
 
 In addition to the published documentation, the following files are useful
 in troubleshooting:
@@ -109,7 +128,9 @@ rarely possible (or safe) to run a binary built on a later one, for example
 to run a binary built under SunOS 4.1.2 on a SunOS 4.1.1 system.
 
 When in doubt, build C-Kermit from the source code on the system where it is
-to be run (if possible!).
+to be run (if possible!).  If not, ask us for a binary specific to your
+configuration.  We might have one, and if we don't, we might be able to get
+one.
 
 (3) NOTES ON SPECIFIC UNIX VERSIONS
 
@@ -120,7 +141,8 @@ The following sections apply to specific UNIX versions.
 Many problems reported with bidirectional terminal lines on AIX 3.2.x on the
 RS/6000.  Workaround: don't use bidirectional terminal lines, or write some
 kind of shell script that turns getty off on the line before starting Kermit,
-or before Kermit attempts to do the SET LINE.
+or before Kermit attempts to do the SET LINE.  (But note: These problems
+MIGHT be fixed in C-Kermit 6.0.192.)
 
 Reportedly, all versions of IBM AIX use the same (undocumented) lockfile
 conventions as RTAIX.  If this is true, the "makes" for PS/2 AIX and AIX/370
@@ -191,6 +213,84 @@ advice from a knowledgeable AIX user:
   (...end quote)
 
 (3.2) C-KERMIT AND HP-UX
+
+During the C-Kermit 6.0 Beta cycle, something happened to ckcpro.w (or, more
+precisely, the ckcpro.c file that is generated from it) which causes HP
+optimizing compilers under HP-UX versions 7.0 and 8.0 (apparently on all
+platforms) as well as under HP-UX 9.0 on Motorola platforms only, to blow up.
+The symptoms vary from the system grinding to a halt, to the compiler
+crashing, to the compilation of the ckcpro.c module taking very long periods
+of time, like 9 hours.
+
+On HP-UX 9.0, a kernel parameter, maxdsiz (maximum process data segment size),
+seems to be important.  On Motorola systems, it is 16MB by default, whereas on
+RISC systems the default is much bigger.  Increasing maxdsiz to about 80MB
+seems to make the problem go away, but only if the system also has a lot of
+physical memory -- otherwise it swaps itself to death.
+
+Therefore, the C-Kermit 6.0 makefile entries for HP-UX 7.x and 8.x that do
+optimization, compile ckcpro.c first without optimization.  For HP-UX 9.0, a
+special entry, hpux90mot, was added for Motorola makes; the regular entries
+optimize all modules.
+
+Even so, the optimizing compiler will often complain about "some optimizations
+skipped" on certain modules, due to lack of space available to the optimizer.
+You can always increase the space (the incantation depends on the particular
+compiler version -- see the makefile), but doing so tends to make the
+compilations take a much longer time.  For example, the "hpux100o+" makefile
+entry adds the "+Onolimit" compiler flag, and about an hour to the compile
+time on an HP-9000/730.  But it *does* produce an executable that is about
+10K smaller :-)
+
+(3.2.0) Performance
+
+An unexpected slowness has been noted when transferring files over local
+Ethernet connections when an HP-UX system (9.0 or later, perhaps also earlier
+versions) is on the remote end.   The following experiment was conducted to
+determine the cause.
+
+The systems were HP-UX 10.00 (on 715/33) and SunOS 4.1.3 (on Sparc-20), both
+on the same local 10Mbps Ethernet.  Window size 20, packet length 4096, parity
+none, control prefixing "cautious", using only local disks on each machine --
+no NFS.  The file was a 1.08MB binary file (wermit), transferred in binary
+mode.  Conditions were relatively poor: the Sun and the local net heavily
+loaded; the HP system is slow and memory-constrained.
+
+ Client   Server   Send    Receive
+  Sun      HP       36       18    <-- K cps
+  HP       HP       25       15      
+  HP       Sun      77       83
+  Sun      Sun      60       60
+
+So whenever HP is the server we have bad performance.  Why?
+
+ . Changing file display to CRT has no effect (so it's not the curses
+   library on the client side).
+
+ . Changing TCP RECV-BUFFER or SEND-BUFFER has very little effect.
+
+ . Telling the client to make a binary-mode connection (SET TELNET BINARY
+   REQUESTED, which successfully negotiates a binary connection) has no effect.
+
+BUT...  If I start C-Kermit as a TCP server:
+
+  set host * 3000
+  server
+
+and then from the client "set host blah 3000", I get:
+
+ Client   Server   Send    Receive
+  HP       HP       50       50
+  Sun      HP       77       67
+  HP       Sun      57       85
+  Sun      Sun      57       50
+
+Therefore the HP-UX telnet server or pty driver seems to be adding more
+overhead than the SunOS one, and most others.  When going through this type of
+connection (a remote telnet server) there is nothing Kermit can do improve
+matters, since the telnet server and pty driver are between the two Kermits,
+and neither Kermit can have any influence over them (except putting the Telnet
+connection in binary mode, but that doesn't help).
 
 (3.2.1) HP-UX 5.21
 
@@ -326,7 +426,85 @@ next Kermit program that tries to assign the device, under any of its various
 names, will automatically clean up the stale lockfiles because the pids
 they contain are invalid.
 
+(3.2.4) HP-UX 10.10 AND LATER
+
+C-Kermit is included as part of the HP-UX 10.xx operating system by contract
+between Hewlett Packard and Columbia University.  Each level of HP-UX 10.xx
+includes a freshly built C-Kermit binary in /bin/kermit, which should work
+correctly.  However, if you are building your own or downloading from
+Columbia, you should be aware that you can only use a binary that was built
+under the same OS level as you are running.  As of C-Kermit version 6.0, HP-UX
+10.xx binaries announce, in the startup herald and the VERSION command, the
+explicit HP-UX version they were built for: HP-UX 10.00, 10.10, 10.20, or
+10.30.  If there is a version mismatch, HP-UX does something like "Invalid
+version for shared lib /usr/lib/libc.1, IOT trap (core dumped)".
+
+Beginning in 10.10, libcurses is linked to libxcurses, the new UNIX95 (X/Open)
+version of curses, which has some serious bugs; some routines, when called,
+would hang and never return, some would dump core.  Evidently libxcurses
+contains a select() routine, and whenever C-Kermit calls what it thinks is the
+regular (sockets) select(), it gets the curses one, causing a segmentation
+fault.  There is a patch for this from HP, PHCO_8086, "s700_800 10.10
+libcurses patch", "shared lib curses program hangs on 10.10", "10.10 enhanced
+X/Open curses core dumps due to using wrong select call", 96/08/02 (you can
+tell if the patch is installed with "what /usr/lib/libxcurses.1"; the unpatched
+version is 76.20, the patched one is 76.20.1.2.  It has been verified that
+C-Kermit works OK with the patched library, but results are not definite for
+HP-UX 10.20 or higher.  
+
+To ensure that C-Kermit works even on non-patched HP-UX 10.10 systems,
+separate makefile entries are provided for HP-UX 10.00/10.01, 10.10, 10.20,
+etc, in which the entries for 10.10 and above link with libHcurses, which is
+"HP curses", the one that was used in 10.00/10.01.
+
 (3.3) C-KERMIT AND LINUX
+
+Be sure to read the comments in the "linux:" makefile entry.  There are all
+sorts of confusing issues caused by the many and varied Linux distributions.
+Some of the worst involve the curses library and header files: where are they,
+what are they called, which ones are they really?  Ditto for UUCP lock files.
+
+Run C-Kermit in the regular console screen, which provides VT100 emulation via
+the "console" termcap entry, or under X-Windows in an xterm window.  Before
+starting C-Kermit in an xterm window, tell the xterm window's shell to "stty
+sane".
+
+How to set up your PC console keyboard to send VT220 key sequences when using
+C-Kermit as your communications program in an X terminal window: Create a file
+somewhere (e.g. in /root/) called .xmodmaprc, containing something like the
+following:
+
+  keycode 77  = KP_F1       ! Num Lock     => DEC Gold (PF1)
+  keycode 112 = KP_F2       ! Keypad /     => DEC PF1
+  keycode 63  = KP_F3       ! Keypad *     => DEC PF3
+  keycode 82  = KP_F4       ! Keypad -     => DEC PF4
+  keycode 111 = Help        ! Print Screen => DEC Help
+  keycode 78  = F16         ! Scroll Lock  => DEC Do
+  keycode 110 = F16         ! Pause        => DEC Do
+  keycode 106 = Find        ! Insert       => DEC Find
+  keycode 97  = Insert      ! Home         => DEC Insert
+  keycode 99  = 0x1000ff00  ! Page Up      => DEC Remove
+  keycode 107 = Select      ! Delete       => DEC Select
+  keycode 103 = Page_Up     ! End          => DEC Prev Screen
+  keycode 22  = Delete      ! Backspace sends Delete (127)
+
+Then put "xmodmap <filename>" in your .xinitrc file (in your login
+directory), e.g.
+
+  xmodmap /root/.xmodmaprc
+
+Of course you can move things around.  Use the xev program to find out key
+codes.
+
+Different UUCP lockfile conventions are used by Linux, depending on your Linux
+distribution.  In C-Kermit 6.0, "make linux" uses /var/lock/LCK..name, decimal
+ASCII 10-byte PID string with leading spaces because -DLINUXFSSTND ("Linux File
+System Standard") is included in the compilation CFLAGS.  If you remove this
+definition, C-Kermit will use the earlier arrangement of integer PID,
+/usr/spool/uucp/LCK..name.  The leading spaces are required by FSSTND 1.2, but
+FSSTND 1.0 required leading zeros; to get the leading zeros, also include
+-DFSSTND10.  Use whichever option agrees with your uucp, cu, tip, etc,
+programs.
 
 Building C-Kermit on Linux 1.1.33 and 1.1.34 gets fatal compilation errors
 due to inconsistencies in the Linux header files.  Linux kernel versions prior
@@ -335,25 +513,173 @@ to 1.1.33 and later than 1.1.34 should be OK.
 C-Kermit versions prior to 5A(190) did not support hardware flow control or
 high interface speeds for Linux.
 
-Different UUCP lockfile conventions are used by Linux, depending on your
-Linux distribution.  By default, "make linux" or "make linuxtcp" uses
-/usr/spool/uucp/LCK..name, integer PID.  If you add -DLINUXFSSTND ("Linux
-File System Standard") to the compile-time definitions, for example:
-
-  make linux KFLAGS=-DLINUXFSSTND
-
-then it will use /var/lock/LCK..name, decimal ASCII 10-byte PID string with
-leading zeros.  Use whichever option agrees with your uucp, cu, tip, etc,
-programs.
-
-Run C-Kermit in the regular console screen, which provides VT100 emulation via
-the "console" termcap entry, or under X-Windows in an xterm window.  Before
-starting C-Kermit in an xterm window, tell the xterm window's shell to "stty
-sane".
-
 One Linux user reported problems dialing out using the /dev/cua device;
 "device busy" errors.  He said that using the alternative name (driver) for
 the device, /dev/ttyS2, made the problem go away.
+
+Reportedly there is a bug in gcc 2.5.8 with signed to unsigned compares
+that can wreak havoc when Kermit (or most any other program) is compiled with
+this version of gcc; reportedly this can be worked around, at least in part,
+by adding "-fno-unroll-loops" to the gcc compilation options.
+
+Reportedly, if you have the iBCS2 (Intel Binary Compatibility Standard 2)
+module installed, you can also run SCO Xenix and UNIX binaries under Linux,
+including the SCO C-Kermit binaries, shareable libraries and all.
+(iCBS2 is available via anonymous ftp from tsx-11.mit.edu, along with an
+SCO libc_s compatibility module for Linux).
+
+Some Linux users reported that after doing a file transfer using the
+fullscreen display (thermometer), that "screen scrolling locks up" and the
+cursor "is stuck on the bottom of the screen".  This probably only happens
+when using the console device.  This turns out to be a problem with Linux
+ncurses.  The workaround is to use "set file display crt" or "serial".  The
+cure (reportedly) is to build C-Kermit with Linux ncurses 1.8.7 (or later).
+
+(Time passes...)  Now (early 1996) we have increasing reports of C-Kermit core
+dumping in Linux 1.2.x, e.g. when the "set line" command is given.  But they
+are conflicting -- it happens to some people, not to others.  Not much can be
+said about this but:
+
+From: fdc@watsun.cc.columbia.edu (Frank da Cruz)
+Newsgroups: comp.protocols.kermit.misc
+Subject: Re: Kermit drops core at SET LINE /dev/cua1
+Date: 14 Feb 1996 15:43:07 GMT
+Organization: Columbia University
+
+In article <4fr2nc$n0o@mozo.cc.purdue.edu>,
+Branden Robinson <branden@ecn.purdue.edu> wrote:
+: I'm trying to run C-Kermit under Linux, but as soon as I type "set line
+: /dev/cua1", kermit gets a segmentation fault.  This is the correct line, as
+: evidenced by the fact that "echo ATDT" and a phone number redirected to
+: /dev/cua1 makes the modem dial.
+: 
+: I thought this might have something to do with the lock file put on
+: /dev/cua1, but both the compliation with the -DLINUXFSSTND and without it
+: yield the same result.  What is going on here?
+: 
+: Relevant hardware:
+:  Hayes Accura 14.4 + FAX internal on COM 2
+: 
+: Relevant software:
+:  Linux Debian 0.93R6, kernel 1.2.13, GCC 2.6.3, C-kermit 1.90
+: 
+C-Kermit 5A(190) was tested successfully on every known Linux variation at
+the time it was released (October 1994), but since then what is
+collectively known as Linux has been changing rapidly out from underneath
+us, thanks in large part to its numerous repackagers.  Most of the
+problems stem from the many and varied curses libraries; this is the first
+report I have heard of this nature.  You might try:
+
+ 1. The Debian C-Kermit distribution, put together and tested by the
+    Debian Project.  Maybe they linked it with different libraries than
+    you did:
+
+      ftp://kermit.columbia.edu/kermit/linux/
+
+ 2. The 6.0.192 Alpha not-yet-a-release:
+
+      ftp://kermit.columbia.edu/kermit/test/
+
+ 3. Taking a debug log of a core-dumping session and sending the last
+    hundred lines or so to kermit@columbia.edu for analysis.  Also see if
+    you can get a backtrace from the core file to find out what routine it
+    was in when it faulted.  I don't know what the command for this is on
+    Linux -- locally I use "adb kermit core" and then "$c", where "kermit"
+    is Kermit's pathname and "core" is the core file's pathname.
+
+griffith@axopta.kodak.com (John D. Griffith) replies:
+Well I am succesfully using C-kermit 1.90 with the same modem on 
+/dev/cua2 (COM3).  I am running linux 1.2.13 (a.out) and gcc 2.5.8.
+My distribution was originally Red Hat Release 1.0, but has been
+considerably customized since then. 
+
+mitchell@mdd.comm.mot.com (Bill Mitchell) replies:
+I'm the debian kermit maintainer, but I'm afraid I don't have much
+of a clue about this.  The debian kermit sources are stock kermit
+sources except for the addition of some debian-specific files (debian.*)
+which don't impact non-debian compilation and the addition of a debian
+target in debian.makefile.
+I use kermit regularly on my debian linux system with the 1.2.13 kernel,
+and my modem is on /dev/cua1.
+
+And in the same vein...
+
+Date: Wed, 15 Nov 95 10:16:24 EST
+From: Frank da Cruz <fdc@watsun.cc.columbia.edu>
+To: kurt klingbeil <kurtk@pc160.aec.env.gov.ab.ca>
+Subject: Re: cku190 & linux 1.1.59 vs 1.2.x ??
+In-Reply-To: Your message of Tue, 14 Nov 1995 23:57:21 -0700 (MST)
+
+> Any idea what's changed in the serial handling of linux
+> between 1.1.x and 1.2.x ?
+> 
+Absolutely no idea.  It's just the way of the world.  The rule is that if
+Kermit works in release n of any operating system, then release n+1 breaks it.
+I think this must be an internal requirement for OS developers.  The nice
+thing about Linux is you don't even know who to ask about it.
+
+> Using cku190 to connect to a USR v.everything (no getty or any other process
+> active on that tty port):
+> I can dial, connect, run a remote session.
+> When I hangup, the loss of CD causes kermit 
+> to disconnect, drop RTS and DTR, and return to its prompt.
+> 
+> When attempting to immediately re-connect to the modem
+> (using c command), I can see the DTR and RTS lines being brought up:
+> (The modem's CTS and DSR remain set at all times.)
+> 
+> Under Linux 1.1.59, kermit is immediately able to communincate with 
+> the modem.  Under Linux 1.2.{3,8,13} kermit appears to be hung -
+> no modem responses are received, kermit ignores it's escape character
+> and will wait forever.  If one sends kermit a signal (either via kill,
+> or, if one is on the console via break (control-C is ignored as well)),
+> then a few characters of garbage appear in kermit's session, and
+> things are back to normal.
+> 
+> I suspect that either a previously non-blocking read is now a blocking
+> read, or that previously the port was being properly flushed before
+> a connection was made, and that under 1.2.x it isn't and hence kermit
+> gets deadlocked waiting forever for a conidition which never occurs.
+> 
+> Any ideas ?
+> 
+(Unhelpful response deleted)
+
+Could this be the explanation? --
+
+Date: Sat, 13 Jan 1996 09:48:11 -0800 (PST)
+From: John Harris <jharris@langara.bc.ca>
+Subject: C-Kermit Installation on Linux 1.2.1 
+
+Below is a letter which addresses the problem I was having installing 
+C-Kermit on a Linux platform.  So you do not need to waste your time 
+addressing my difficulty, I wish to inform you that I have just resolved 
+it; that is, the compile now takes place without even a warning. 
+
+So that someone else can benefit, I briefly describe the cause of the 
+problem.  The following directories were not present: /usr/include/linux/ 
+and /usr/src/linux/include/asm.  There may also have been other files 
+missing in certain directories; for example, /usr/include/linux and 
+/usr/include/asm.  The problem may have arisen from an oversight during
+Linux installation; for example, I may have forgotten to create the file
+system in advance of installation with "mke2fs -c <partition> <size>" or
+perhaps I simply neglected to transfer some library files during the 
+software installation itself.
+
+In more recent releases of Linux (mid-1996), the trend is to replace curses by
+ncurses.  But of course this is not transparent to application software that
+includes curses.h and links with libcurses.  Linus says it *should* be
+transparent -- the application should continue to refer to curses and not to
+ncurses.  C-Kermit follows this recommendation, so if you have curses-related
+trouble during compilation or at runtime, create symbolic links called
+curses.h and libcurses.a (or .sa, or .so, or .so.XX, etc) pointing to
+ncurses.h and libncurses-dot-whatever, and rebuild Kermit.
+
+Also note that some Linux distributions have internal problems in their header
+files.  In one case, there are fatal errors in <termcap.h> that can be fixed
+by adding "#include <termios.h>" to the termcap.h file.
+
+See additional comments in the Linux entry in the makefile.
 
 (3.4) C-KERMIT AND NEXTSTEP
 
@@ -436,7 +762,13 @@ makefile entry (e.g. add -DHDBUUCP).
 BUG: The fullscreen file transfer display works fine the first time, but it is
 fractured on subsequent file transfers.  Cause and cure unknown.
 
-(3.6) C-KERMIT AND SCO UNIX, XENIX, AND ODT
+(3.6) C-KERMIT AND SCO UNIX, XENIX, ODT, AND OPENSERVER
+
+There is all sorts of confusion among SCO versions, particularly when third-
+party communications boards and drivers are installed, regarding lockfile
+naming conventions.  Basically, all bets are off if you are using a third
+party multiport board.  At least you have the source code.  Hopefully you also
+have a C compiler :-)
 
 Use SCO-provided utilities for switching the directionality of a modem line,
 such as "enable" and "disable" commands.  For example, to dial out on tty1a,
@@ -461,17 +793,54 @@ creating the UUCP lockfile (this is, according to SCO experts, the proper
 behavior, but reportedly not all other communications applications found on
 SCO systems follow this rule).
 
-One user of C-Kermit on SCO UNIX 3.2.4 reports that C-Kermit dumps core when
-receiving files in local mode.  The crash invariably occurs when the 16384th
-byte arrives, obviously indicating some kind of int/long, or short/int, or
-similar mismatch in argument-passing -- no doubt the byte count.  Other users
-of SCO UNIX 3.2.4, built using the same makefile entry, report that they can
-receive files of any length with no problem at all.  Maybe it depends on which
-file transfer display is being used?  If this happens to you, try using a
-different file transfer display (SET FILE DISPLAY NONE, SERIAL, CRT, or
-FULLSCREEN).
+One user of C-Kermit 5A(190) on SCO UNIX 3.2.4 reported that C-Kermit dumps
+core when receiving files in local mode.  The crash invariably occurs when the
+16384th byte arrives, obviously indicating some kind of int/long, or
+short/int, or similar mismatch in argument-passing -- no doubt the byte count.
+Other users of SCO UNIX 3.2.4, built using the same makefile entry, report
+that they can receive files of any length with no problem at all.  Maybe it
+depends on which file transfer display is being used?  If this happens to you,
+try using a different file transfer display (SET FILE DISPLAY NONE, SERIAL,
+CRT, or FULLSCREEN).
+
+SCO users report that only one copy of Kermit can run at a time when a
+Stallion Technologies multiport boards are installed.
 
 (3.7) C-KERMIT AND SOLARIS
+
+The built-in SunLink X.25 support for Solaris 2.3/2.4./25 and SunLink 8.01 or
+9.00 works OK provided the X.25 system has been installed and initialized
+properly.  Packet sizes might need to be reduced to 256, maybe even less,
+depending on the configuration of the X.25 installation.  On one connection
+where C-Kermit 6.0 was tested, very large packets and window sizes could be
+used in one direction, but only very small ones would work in the other.
+
+In any case, according to Sun, C-Kermit's X.25 support is superfluous with
+SunLink 8.x / Solaris 2.3.  Quoting an anonymous Sun engineer:
+
+  ... there is now no need to include any X.25 code within kermit.  As of
+  X.25 8.0.1 we support the use of kermit, uucp and similar protocols over
+  devices of type /dev/xty.  This facility was there in 8.0, and should
+  also work on the 8.0 release if patch 101524 is applied, but I'm not 100%
+  sure it will work in all cases, which is why we only claim support from
+  8.0.1 onwards.
+
+  When configuring X.25, on the "Advanced Configuration->Parameters" screen
+  of the x25tool you can select a number of XTY devices.  If you set this
+  to be > 1, press Apply, and reboot, you will get a number of /dev/xty
+  entries created.
+
+  Ignore /dev/xty0, it is a special case.  All the others can be used exactly
+  as if they were a serial line (e.g. /dev/tty) connected to a modem, except
+  that instead of using Hayes-style commands, you use PAD commands.
+
+  From kermit you can do a 'set line' command to, say, /dev/xty1, then set
+  your dialing command to be "CALL 12345678", etc.  All the usual PAD
+  commands will work (SET, PAR, etc).
+
+  I know of one customer in Australia who is successfully using this, with
+  kermit scripts, to manage some X.25-connected switches. He used standard
+  kermit, compiled for Solaris 2, with X.25 8.0 xty devices.
 
 C-Kermit can't be compiled successfully under Solaris 2.3 using SUNWspro cc
 2.0.1 unless at least some of the following patches are applied to cc (it is
@@ -486,6 +855,82 @@ not known which one(s), if any, fix the problem):
 
 With unpatched cc 2.0.1, the symptom is that certain modules generate
 truncated object files, resulting in many unresolved references at link time.
+
+Using a Sun workstation keyboard for VT emulation when accessing VMS:
+
+From: Jerry Leichter <leichter@smarts.com>
+Newsgroups: comp.os.vms
+Subject: Re: VT100 keyboard mapping to Sun X server
+Date: Mon, 19 Aug 1996 12:44:21 -0400
+
+> I am stuck right now using a Sun keyboard (type 5) on systems running SunOS
+> and Solaris.  I would like to use EVE on an OpenVMS box with display back to
+> the Sun.  Does anyone know of a keyboard mapping (or some other procedure)
+> which will allow the Sun keyboard to approximate a VT100/VT220?
+
+You can't get it exactly - because the keypad has one fewer key - but
+you can come pretty close.  Here's a set of keydefs I use:
+
+keycode 101=KP_0
+keycode 119=KP_1
+keycode 120=KP_2
+keycode 121=KP_3
+keycode 98=KP_4
+keycode 99=KP_5
+keycode 100=KP_6
+keycode 75=KP_7
+keycode 76=KP_8
+keycode 77=KP_9
+keycode 52=KP_F1
+keycode 53=KP_F2
+keycode 54=KP_F3
+keycode 57=KP_Decimal
+keycode 28=Left
+keycode 29=Right
+keycode 30=KP_Separator
+keycode 105=KP_F4
+keycode 78=KP_Subtract
+keycode 8=Left
+keycode 10=Right
+keycode 32=Up
+keycode 33=Down
+keycode 97=KP_Enter
+
+Put this in a file - I use "keydefs" in my home directory and feed it
+into xmodmap:
+
+  xmodmap - <$HOME/keydefs
+
+This takes care of the arrow keys and the "calculator" key cluster.  The
+"+" key will play the role of the DEC "," key.	The Sun "-" key will be
+like the DEC "-" key, though it's in a physically different position -
+where the DEC PF4 key is.  The PF4 key is ... damn, I'm not sure where
+"key 105" is.  I *think* it may be on the leftmost key of the group of
+four just above the "calculator" key cluster.
+
+I also execute the following (this is all in my xinitrc file):
+
+xmodmap -e 'keysym KP_Decimal = KP_Decimal'
+xmodmap -e 'keysym BackSpace = Delete BackSpace' \
+        -e 'keysym Delete = BackSpace Delete'
+xmodmap -e 'keysym KP_Decimal = Delete Delete KP_Decimal'
+xmodmap -e 'add mod1 = Meta_R'
+xmodmap -e 'add mod1 = Meta_L'
+
+Beware of one thing about xmodmap:  Keymap changes are applied to the
+*whole workstation*, not just to individual windows.  There is, in fact,
+no way I know of to apply them to individual windows.  These definitions
+*may* confuse some Unix programs (and/or some Unix users).
+
+If you're using Motif, you may also need to apply bindings at the Motif
+level.  If just using xmodmap doesn't work, I can try and dig that stuff
+up for you.
+
+(end quote)
+
+  NOTE: The rest of the problems in this section have to do with bidirectional
+  tty lines and the Solaris Port Monitor.  Hopefully these are all fixed in
+  C-Kermit 6.0.192 Beta.029, 22 Aug 96.
 
 Reportedly, "C-Kermit ... causes a SPARCstation running Solaris 2.3
 to panic after the modem connects.  I have tried compiling C-Kermit with Sun's
@@ -591,38 +1036,6 @@ last a in /dev/cua/a
 
 (end quote)
 
-The built-in SunLink X.25 support for Solaris 2.3 and SunLink 8.01 works
-OK provided the X.25 system has been installed and initialized properly.
-Packet sizes might need to be reduced to 256, depending on the configuration
-of the X.25 installation.
-
-In any case, according to Sun, C-Kermit's X.25 support is superfluous with
-SunLink 8.x / Solaris 2.3.  Quoting an anonymous Sun engineer:
-
-  ... there is now no need to include any X.25 code within kermit.  As of
-  X.25 8.0.1 we support the use of kermit, uucp and similar protocols over
-  devices of type /dev/xty.  This facility was there in 8.0, and should
-  also work on the 8.0 release if patch 101524 is applied, but I'm not 100%
-  sure it will work in all cases, which is why we only claim support from
-  8.0.1 onwards.
-
-  When configuring X.25, on the "Advanced Configuration->Parameters" screen
-  of the x25tool you can select a number of XTY devices.  If you set this
-  to be > 1, press Apply, and reboot, you will get a number of /dev/xty
-  entries created.
-
-  Ignore /dev/xty0, it is a special case.  All the others can be used exactly
-  as if they were a serial line (e.g. /dev/tty) connected to a modem, except
-  that instead of using Hayes-style commands, you use PAD commands.
-
-  From kermit you can do a 'set line' command to, say, /dev/xty1, then set
-  your dialing command to be "CALL 12345678", etc.  All the usual PAD
-  commands will work (SET, PAR, etc).
-
-  I know of one customer in Australia who is successfully using this, with
-  kermit scripts, to manage some X.25-connected switches. He used standard
-  kermit, compiled for Solaris 2, with X.25 8.0 xty devices.
-
 (3.8) C-KERMIT AND SUNOS
 
 Sun SPARCstation users should read the section "Setting up Modem Software" in
@@ -668,7 +1081,7 @@ establish the connection, then SET FLOW RTS/CTS
 It has also been reported that RTS/CTS flow control under SunOS 4.1 through
 4.1.3 works only on INPUT, not on output, and that there is a patch from Sun
 to correct this problem: Patch-ID# T100513-04, 20 July 1993 (this patch might
-apply only to version 4.1.3).  It might also be necessary to configure the
+apply only to SunOS 4.1.3).  It might also be necessary to configure the
 eeprom parameters of the serial port; e.g. do the following as root at the
 shell prompt:
 
@@ -692,6 +1105,9 @@ SunLink X.25 support in C-Kermit 5A(190) has been built and tested
 successfully under SunOS 4.1.3b and SunLink X.25 7.00.
 
 (3.9) C-KERMIT AND ULTRIX
+
+There is no hardware flow control in Ultrix.  That's not a Kermit deficiency,
+but an Ultrix one.
 
 Reportedly, DEC ULTRIX 4.3 is immune to C-Kermit's disabling of SIGQUIT,
 which is the signal that is generated when the user types Ctrl-\, which kills
@@ -753,18 +1169,121 @@ occur during the SET PROMPT [\v(dir)] ... sequence).  Cure: unknown.
 Workaround: don't interrupt C-Kermit while it is executing its init file on
 the Tandy 16/6000.
 
-(3.13) C-KERMIT AND OSF/1
+(3.13) C-KERMIT AND OSF/1 (DIGITAL UNIX)
 
 Reportedly, if a modem is set for &S0 (assert DSR at all times), the system
 resets or drops DTR every 30 seconds; reportedly DEC says to set &S1.
 
-(4) GENERAL UNIX-SPECIFIC LIMITATIONS AND BUGS
+Digital UNIX 3.2 evidently wants to believe your terminal is one line longer
+than you say it is, e.g. when a "more" or "man" command is given.  This is has
+nothing to do with C-Kermit, but tends to annoy those who use Kermit or other
+terminal emulators to access Digital UNIX systems.  Workaround: tell UNIX
+to "stty rows 23" (or whatever).
+
+(3.14) C-KERMIT AND SGI IRIX
+
+Reportedly on Silicon Graphics (SGI) machines with IRIX 4.0, Kermit cannot be
+suspended by typing the suspend ("swtch") character if it was started from
+csh, even though other programs can be suspended this way, and even though the
+Z and SUSPEND commands still work correctly.  This is evidently because IRIX's
+csh does not deliver the SIGTSTP signal to Kermit.  The reason other programs
+can be suspended in the same environment is probably that they do not trap
+SIGTSTP themselves, so the shell is doing the suspending rather than the
+application.
+
+Reportedly some Indys have bad serial port hardware.  IRIX 5.2, for example,
+needs patch 151 to work around this; or upgrade to a later release.
+Similarly, IRIX 5.2 has several problems with serial i/o, flow control, etc.
+Again, patch or upgrade.
+
+For hardware flow control on IRIX, use the ttyf* (modem control AND hardware
+flow control) devices and not the ttyd* (direct) or ttym* (modem control but
+no hardward flow control) ones, and obtain the proper "hardware handshaking"
+cable from SGI, which is incompatible with the ones for the Macintosh and
+NeXT even though they look the same.  "man serial" for further info.
+
+(3.15) C-KERMIT AND THE BEBOX
+
+The BeBox isn't a real product yet, and BeOS -- particularly the POSIX pieces
+of it -- aren't finished.  As the POSIX bits are fleshed out, a lot of the
+Be-specific code can Be removed.  The workarounds in this version are for
+DR7, contributed by an anonymous donor, sufficient to:
+
+  - set line /dev/serial2 (and probably the other serial ports)
+  - set speed 115200 (and at least some of the lower baud rates)
+  - connect
+  - set modem type hayes (and likely others, too)
+  - dial [phone number]
+  - set send packet length 2048 (other lengths for both send and receive)
+  - set receive packet length 2048
+  - set file type binary (text mode works, too)
+  (with remote kermit session in server mode)
+  - put bedrop.jpg
+  - get bedrop.jpg
+  - get bedrop.jpg bedrop.jpg2
+  - finish, bye
+
+The following do not work:
+  - kermit does not detect modem hangup
+  - !/RUN/PUSH [commandline command]
+  - running kermit in remote mode
+  - using other protocols (x/y/zmodem)
+  - TCP networking interface (Be's TCP/IP API has a ways to go, still)
+
+(4) GENERAL UNIX-SPECIFIC HINTS, LIMITATIONS, AND BUGS
+
+In version 6.0, the default C-Kermit prompt includes your current (working)
+directory; for example:
+
+  [/usr/olga] C-Kermit>
+
+If that directory is on an NFS-mounted disk, and NFS stops working or the
+disk becomes unavailable, C-Kermit will hang waiting for NFS and/or the disk
+to come back.  Whether you can interrupt C-Kermit when it is hung this way
+depends on the specific OS.  Kermit has called the operating systems's
+getcwd() function, and is waiting for it to return.  Some versions of UNIX
+(e.g. HP-UX 9.x) allow this function to be interrupted with SIGINT (Ctrl-C),
+others (such as HP-UX 8.x) do not.  To avoid this effect, you can always
+use SET PROMPT change your prompt to something that does not involve calling
+getcwd(), but if NFS is not responding, C-Kermit will still hang any time you
+give a command that refers to the current directory.  Also note that in some
+cases, the uninterruptibility of NFS-dependent system or library calls is
+considered a bug, and sometimes there are patches.  For HP-UX, for example:
+
+  HP-UX 10.20     libc    PHCO_8764
+  HP-UX 10.10     libc    PHCO_8763
+  HP-UX 9.x       libc    PHCO_7747       S700
+  HP-UX 9.x       libc    PHCO_6779       S800
+
+You might have reason to make C-Kermit the login shell for a specific user,
+by entering the pathname of Kermit (possibly with command-line switches, such
+as -x to put it in server mode) into the shell field of the /etc/passwd file.
+This works pretty well.  In some cases, for "ultimate security", you might
+want to use a version built with -DNOPUSH (see ckccfg.doc) for this, but even
+if you don't, then PUSHing or shelling out from C-Kermit just brings up a
+new copy of C-Kermit (but warning: this does not prevent the user from
+explicitly running a shell; e.g. "run /bin/sh"; use NOPUSH to prevent this).
 
 C-Kermit will not work as expected on a remote UNIX system, when used through
-the GNU "screen" program.  In this case, terminal connections to the remote
-UNIX system work, but attempts to transfer files fail because the screen
-optimization (or at least, line wrapping, control-character absorption) done
-by this package interferes with Kermit's packets.
+the "splitvt" or GNU "screen" programs.  In this case, terminal connections to
+the remote UNIX system work, but attempts to transfer files fail because the
+screen optimization (or at least, line wrapping, control-character absorption)
+done by this package interferes with Kermit's packets.
+
+You might try the following -- what we call "doomsday Kermit" settings to
+push packets through even the densest and most obstructive connections, such
+as "screen" and "splitvt" (and certain kinds of 3270 protocol emulators):
+Give these commands to BOTH Kermit programs:
+
+  SET FLOW NONE
+  SET CONTROL PREFIX ALL
+  SET RECEIVE PACKET-LENGTH 70
+  SET RECEIVE START 62       
+  SET SEND START 62          
+  SET SEND PAUSE 100
+  SET BLOCK B                
+
+If it works, it will be slow.
 
 On UNIX workstations equipped with DOS emulators like SoftPC, watch out for
 what these emulators do to the serial port drivers.  After using a DOS
@@ -790,16 +1309,6 @@ defend itself against this.  If you use a non-job control shell on a computer
 that supports job control, give a command like "stty susp undef" to fix it so
 the suspend signal is not attached to any particular key, or give the command
 SET SUSPEND OFF to C-Kermit, or build C-Kermit with -DNOJC.
-
-A more subtle problem occurs on certain system / shell combinations.
-Reportedly, for example, on Silicon Graphics (SGI) machines with IRIX 4.0,
-Kermit cannot be suspended by typing the suspend ("swtch") character if it was
-started from csh, even though other programs can be suspended this way, and
-even though the Z and SUSPEND commands still work correctly.  This is
-evidently because IRIX's csh does not deliver the SIGTSTP signal to Kermit.
-The reason other programs can be suspended in the same environment is probably
-that they do not trap SIGTSTP themselves, so the shell is doing the suspending
-rather than the application.
 
 Reportedly, the UNIX C-Kermit server, under some conditions, on certain
 particular systems, fails to log out its login session upon receipt of a
@@ -897,6 +1406,11 @@ Some recent versions of UNIX, and/or terminal device drivers that come with
 certain third-party add-in high-speed serial communication interfaces, use the
 low "baud rates" to stand for higher ones.  For example, SET SPEED 50 gets you
 57600 bps; SET SPEED 75 gets you 76800; SET SPEED 110 gets 115200.
+
+SCO ODT 3.0 is an example where a "baud-rate-table patch" can be applied that
+can rotate the tty driver baud rate table such that 600=57600 and 1800=115k
+baud.   Similarly for Digiboard multiport/portservers, which have a
+"fastbaud" setting that does this.
 
 The situation is similar, but different, in System V.  SVID Third Edition
 lists the same speeds, 0 through 38400.
@@ -1131,16 +1645,17 @@ hardware flow-control related commands.  BUT...  That does not necessarily
 mean that they will work.  In some cases, the underlying functions are simply
 not coded into the operating system.
 
-(9) TERMINAL CONNECTION
+(9) TERMINAL CONNECTION AND KEY MAPPING
 
 UNIX C-Kermit's SET KEY command currently can not be used with keys that
 generate "wide" scan codes or multibyte sequences, such as workstation 
-function or arrow keys.  More about this in CKCKER.BWR.
+function or arrow keys, because UNIX C-Kermit does not have direct access to
+the keyboard.  More about this in CKCKER.BWR.
 
-Many UNIX workstations and/or console drivers provide their own key mapping
-feature.  With xterm, for example, you can use 'xmodmap' ("man xmodmap" for
-details); here is an xterm mapping to map the Sun keyboard to DEC VT200 values
-for use with VT-terminal oriented applications like VMS EVE:
+However, many UNIX workstations and/or console drivers provide their own key
+mapping feature.  With xterm, for example, you can use 'xmodmap' ("man
+xmodmap" for details); here is an xterm mapping to map the Sun keyboard to DEC
+VT200 values for use with VT-terminal oriented applications like VMS EVE:
 
   keycode 101=KP_0
   keycode 119=KP_1
@@ -1167,6 +1682,11 @@ for use with VT-terminal oriented applications like VMS EVE:
   keycode 33=Down
   keycode 97=KP_Enter
 
+Users of Linux consoles can use loadkeys ("man dumpkeys loadkeys keytables"
+for details.  The format used by loadkeys is compatible with that used by
+Xmodmap, although it is not definitely certain that the keycodes are
+compatible for different keyboard types (e.g. Sun vs HP vs PC, etc).
+
 UNIX GNU EMACS includes a "kermit" library that allows Kermit connections to
 be made to other computers from within an EMACS window.  As of June 1994,
 there is also a Kermit file transfer library for GNU EMACS.
@@ -1184,6 +1704,13 @@ in 512-byte blocks, i.e. 0.5K).
 
 UNIX C-Kermit discards all carriage returns from incoming files when in text
 mode.
+
+If C-Kermit is receiving a file on a dialup connection and the connection
+hangs up, the SIGHUP signal is delivered to the top-level shell, which kills
+all processes (including Kermit and any of its subforks) and closes all open
+files, including the file that was being received.  Even if you have told
+Kermit to SET FILE INCOMPLETE DISCARD, the partially received file is kept.
+See comments in ckutio.c (search for SIGHUP) for details.
 
 If you SET FILE DISPLAY FULLSCREEN, and C-Kermit complains "Sorry, terminal
 type not supported", it means that the terminal library (termcap or termlib)
@@ -1207,7 +1734,8 @@ version of C-Kermit with -DCK_NEWTERM.  Similarly if it echoes doubly, which
 might even happen during a subsequent CONNECT session.  If rebuilding with
 -DCK_NEWTERM doesn't fix it, then there is something very strange about your
 systems curses library, and you should probably not use it.  Tell C-Kermit
-to SET FILE DISPLAY CRT or anything else other than FULLSCREEN.
+to SET FILE DISPLAY CRT or anything else other than FULLSCREEN, or rebuild
+without -DCK_CURSES, and without linking with (termlib and) curses.
 
 It has been observed on a couple platforms -- e.g. BSDI and QNX -- that the
 curses display works properly only once.  The second and subsequent times,
@@ -1219,14 +1747,12 @@ distributions), a cure was obtained by linking to a different curses library
 Reportedly, when using "MSEND *" from a 14-character filename UNIX system to
 another system (e.g. BSD) that allows longer names, with SET FILE NAMES
 LITERAL, any files with 14-character names will have a space added to the end
-of the name on the receiving machine.
+of the name on the receiving machine (this *should* be fixed in 6.0).
 
 Optimum file transfer performance is a matter of tuning parameters like packet
-length and window size, and, on serial connections, of ensuring there is an
-effective flow control method, preferably hardware (such as RTS/CTS).  In
-C-Kermit 5A(189) and later, you can also use the new "control character
-unprefixing feature" to boost performance, particularly for binary and/or
-precompressed files (see the ckcker.upd file for details).
+length, window size, control-character unprefixing, and on serial connections,
+ensuring there is an effective flow control method, preferably hardware (such
+as RTS/CTS).
 
 However, a fully-configured C-Kermit program can be slower than a minimally
 configured one simply because of its size.  A command-line-only version that
@@ -1255,9 +1781,10 @@ UNIX system.  If the UNIX system is the one you have dialed in to, you don't
 need any of these tricks.  Just run the desired software on your UNIX system
 instead of Kermit.  When dialing out from a UNIX system, the difficulty is
 getting two programs to share the same communication device in spite of the
-UNIX UUCP lockfile mechanism, which would normally prevent any sharing.
-
-(11.1) C-KERMIT AS AN EXTERNAL PROTOCOL
+UNIX UUCP lockfile mechanism, which would normally prevent any sharing, and
+preventing the external protocol from closing (and therefore hanging up) the
+device when it exits back to the program that invoked it.
+(This section deleted; see ckcker.upd.)
 
 "pcomm" is a general-purpose terminal program that provides file transfer
 capabilities itself (X- and YMODEM variations) and the ability to call on
@@ -1279,9 +1806,43 @@ the communication device unless you instruct it:
 The "-l 0" option means to use file descriptor 0 for the communication device.
 
 In general, any program can pass any open file descriptor to C-Kermit for the
-communication device in the "-l" command-line option.
+communication device in the "-l" command-line option.  When Kermit is given
+a number as the argument to the "-l" option, it simply uses it as a file
+descriptor, and it does not attempt to close it upon exit.
+
+Here's another example, for Seyon (a Linux communication program).  First try
+the technique above.  If that works, fine; otherwise...  If Seyon does not
+give you a way to access and pass along the file descriptor, but it starts up
+the Kermit program with its standard i/o redirected to its (Seyon's)
+communications file descriptor, you can also experiment with the following
+method, which worked here in brief tests on SunOS.  Instead of having Seyon
+use "kermit -r" or "kermit -s filename" as its Kermit protocol commands, use
+something like this (examples assume C-Kermit 6.0):
+
+  For serial connections:
+
+    kermit -YqQl 0 -r                     <-- to receive
+    kermit -YqQl 0 -s filename(s)         <-- to send one or more files
+
+  For Telnet connections:
+
+    kermit -YqQF 0 -r                     <-- to receive
+    kermit -YqQF 0 -s filename(s)         <-- to send one or more files
+
+Command line options:
+
+  Y    - skip executing the init file
+  Q    - use fast file transfer settings
+  l 0  - transfer files using file descriptor 0 for a serial connection
+  F 0  - transfer files using file descriptor 0 for a Telnet connection
+  q    - quiet - no messages
+  r    - receive
+  s    - send
 
 (11.2) INVOKING EXTERNAL PROTOCOLS FROM C-KERMIT
+
+   (This section is obsolete, but not totally useless.  
+    See section 8 of CKCKER.UPD.)
 
 After you have opened a communication link with C-Kermit's SET LINE (SET PORT)
 or SET HOST (TELNET) command, C-Kermit makes its file descriptor available to
@@ -1289,7 +1850,7 @@ you in the \v(ttyfd) variable so you can make it available to other programs
 that you RUN from C-Kermit.  Here, for example, C-Kermit runs itself as an
 external protocol:
 
-  C-Kermit>set modem hayes
+  C-Kermit>set modem type hayes
   C-Kermit>set line /dev/acu
   C-Kermit>set speed 2400
   C-Kermit>dial 7654321

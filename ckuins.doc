@@ -1,11 +1,11 @@
-C-KERMIT 5A INSTALLATION INSTRUCTIONS FOR UNIX                       -*-text-*-
+C-KERMIT 6.0 INSTALLATION INSTRUCTIONS FOR UNIX                      -*-text-*-
 
-  As of C-Kermit version:  5A(190)
-  This file last updated:  Sat Oct 29 10:44:46 1994
+  As of C-Kermit version:  6.0.192
+  This file last updated:  Fri Sep  6 23:23:24 1996
 
-  F. da Cruz, Columbia University
+  Frank da Cruz, Columbia University
 
-  Copyright (C) 1985, 1994, Trustees of Columbia University in the City of New
+  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
   York.  The C-Kermit software may not be, in whole or in part, licensed or
   sold for profit as a software product itself, nor may it be included in or
   distributed with commercial products or otherwise distributed by commercial
@@ -32,20 +32,20 @@ DISCLAIMER:
 
 DOCUMENTATION
 
-  Frank da Cruz and Christine M. Gianone, "Using C-Kermit", Digital Press /
-  Butterworth-Heinemann, Woburn, MA, 1993, 514 pages, ISBN 1-55558-108-0
+  Frank da Cruz and Christine M. Gianone, "Using C-Kermit", Second Edition,
+  Digital Press / Butterworth-Heinemann, Woburn, MA, 1997, ISBN 1-55558-164-1
 
-  US single-copy price: $34.95; quantity discounts available.  Available in
+  US single-copy price: $39.95; quantity discounts available.  Available in
   computer bookstores or directly from Columbia University:
 
     Kermit Development and Distribution
     Columbia University Academic Information Systems
     612 West 115th Street
-    New York, NY  10025  USA
+    New York, NY  10025-7799  USA
     Telephone: (USA) 212 854-3703
 
-  Domestic and overseas orders accepted.  Price: $34.95 (US, Canada, and
-  Mexico), $45 elsewhere.  Orders may be paid by MasterCard or Visa, or
+  Domestic and overseas orders accepted.  Price: $39.95 (US, Canada, and
+  Mexico), $50 elsewhere.  Orders may be paid by MasterCard or Visa, or
   prepaid by check in US dollars.  Add $35 bank fee for checks not drawn on
   a US bank.  Price includes shipping.  Do not include sales tax.
   Inquire about quantity discounts.
@@ -53,11 +53,11 @@ DOCUMENTATION
   You can also order by phone from the publisher, Digital Press /
   Butterworth-Heinemann, with MasterCard, Visa, or American Express:
 
-    +1 800 366-2665 (Woburn, Massachusetts office for USA & Canada)
-    +1 800 665-1148 (Logan Bros, Winnepeg, Manitoba office for Canada)
-    +44 993 58521   (Rushden, England office for Europe)
-    +61 2 372-5511  (Chatswood, NSW office for Australia & New Zealand)
-    +65 220-3684    (Singapore office for Asia)
+    +1 800 366-2665   (Woburn, Massachusetts office for USA & Canada)
+    +44 1865 314627   (Oxford, England distribution centre for UK & Europe)
+    +61 03 9245 7111  (Melbourne, Vic, office for Australia & NZ)
+    +65 356-1968      (Singapore office for Asia) 
+    +27 (31) 2683111  (Durban office for South Africa)
 
   A German-language edition is also available:
 
@@ -72,15 +72,16 @@ OVERVIEW
 This file contains UNIX-specific information.  For a description of general
 (system-independent) configuration options for C-Kermit, please read the file
 CKCCFG.DOC.  For information about known limitations or bugs, and possible
-workarounds, see the files CKCKER.BWR and CKUKER.BWR.
+workarounds, see the files CKERMIT.BWR and CKUKER.BWR.
+
 
 BUILDING C-KERMIT FOR UNIX
 
 UNIX C-Kermit is built using the "make" utility, which contains the rules for
 building the program for each of the hundreds of different kinds of UNIX
 systems that C-Kermit attempts to support.  "make" is driven by a file called
-"makefile", which is normally distributed as ckuker.mak.  You must rename this
-file to makefile before you can build the program:
+"makefile".  If your distribution does not contain a file with this name, then
+rename the file called ckuker.mak to makefile:
 
   mv ckuker.mak makefile
 
@@ -92,13 +93,18 @@ For example, to build C-Kermit for Berkeley UNIX 4.2, type:
 
 Also check to see if there are comments about your particular version in its
 makefile entry itself.  In a text editor such as EMACS or VI, search for the
-make entry name followed by a colon, e.g. "bsd:"
+make entry name followed by a colon, e.g. "linux:" (if you really are building
+C-Kermit for Linux, do this now).
+
+If your compiler supports a compile-time option to treat ALL chars (and
+char *'s, etc) as unsigned, by all means use it -- and send me email to let
+me know what it is.
 
 To add compilation options (which are explained later in this document) to
 your makefile entry without editing the makefile, include "KFLAGS=..." on the
 make command line, for example:
 
-  make bsd KFLAGS=-DNODEBUG
+  make linux KFLAGS=-DNODEBUG
   make bsd "KFLAGS=-DKANJI -DNODEBUG -DNOTLOG -DDYNAMIC -UTCPSOCKET"
 
 Multiple options must be separated by spaces.  Quotes are necessary if the
@@ -120,6 +126,14 @@ others not.  When in doubt, "make clean" first to make sure all your object
 files are consistent.  Similarly, if you change CFLAGS, LIBS, or any other
 items in the makefile, or you rebuild using a different makefile entry, "make
 clean" first.
+
+2.10 and 2.11 BSD
+
+Use the separate makefile ckubs2.mak.  Read the instructions in that file.
+
+PLAN 9
+
+Use the separate makefile ckpker.mk.
 
 SYSTEM-WIDE INITIALIZATION FILE
 
@@ -199,14 +213,14 @@ that directory.  Suggested directory names are:
 The files are:
 
   READ.ME
-    Explanation of the following files.  Just clip out the file list
-    below.
+    Explanation of the following files.  Create this file by clipping
+    out the following file list.
 
   ckermit.ini
     The standard initialization file.  Users should copy this to
-    their home directories and rename it to .kermrc.  (In C-Kermit 5A(190),
-    you can designate a single copy as the system-wide initialization file;
-    details above).
+    their home directories and rename it to .kermrc.  (In C-Kermit 5A(190)
+    and later, you can designate a single copy as the system-wide
+    initialization file; details above).
 
   ckermod.ini
     A sample customization file.  Users should copy this file to
@@ -216,27 +230,49 @@ The files are:
   ckermit.kdd
     A sample dialing directory file.
 
+  ckermit.knd
+    A sample network directory.
+
   ckermit.ksd
     A sample services directory.
 
-  ckedemo.ini
+  ckedemo.ksc
     Macro definitions from "Using C-Kermit".
 
-  ckevt.ini
+  ckevt.ksc
     Command file to demonstrate special screen effects from "Using C-Kermit".
+
+  ckepage.ksc
+    A sample script for sending alphanumeric pages.
 
   ckurzsz.ini
     Macros for using rz and sz as external protocols.
 
-  ckcker.upd
+  ckermit.upd
     A file listing the updates, changes, and corrections made to C-Kermit
     since publication of "Using C-Kermit".
 
-  ckcker.bwr
+  ckermit.bwr
     The general C-Kermit "beware" file.
 
   ckuker.bwr
     The UNIX-specific C-Kermit beware file.
+
+THE INITIALIZATION FILE
+
+We recommend that the C-Kermit initialization file, named ckermit.ini in the
+distribution, be executed by all users, since it defines and sets up certain
+important features, such as the dialing directory, services directory,
+commonly-used macros, etc.  On multiuser systems, it can be put in a common
+place and shared by all users, but this requires building C-Kermit from source
+in a special way, which embeds the full path of common initialization file in
+the program binary, described above.
+
+Alternatively, each user can copy the ckermit.ini file into her login
+directory and rename it to .kermrc.
+
+The user's private "customization file" goes in the login directory and is
+called .mykermrc.
 
 UNIX MAKEFILE
 
@@ -342,8 +378,8 @@ C-Kermit was built correctly for your UNIX system.
 
  3.5 - Make sure that Kermit has the maximum path length right.  Just type
     SHOW FILE and see what it says about this.  If it is too short, there
-    could be some problems at runtime.  To correct, look in ckufio.c to see
-    how the symbol MAXPATH is set and make any needed adjustments.
+    could be some problems at runtime.  To correct, look in ckcdeb.h to see
+    how the symbol CKMAXPATH is set and make any needed adjustments.
 
  4. Type Ctrl-C (or whatever your UNIX interrupt character is) at the prompt.
     Do you get "^C..." and a new prompt?  If instead, you get a core dump
@@ -364,8 +400,8 @@ C-Kermit was built correctly for your UNIX system.
     case, look in the congm() and psuspend() routines in ckutio.c and see if
     you can figure out what's wrong.  If you can't, rebuild with -DNOJC.
 
- 6. Try dialing out: SET MODEM <whatever>, SET LINE <whatever>, SET SPEED
-    <whatever>, DIAL <phone-number>.  If it doesn't work, keep reading.
+ 6. Try dialing out: SET MODEM TYPE <whatever>, SET LINE <whatever>, SET 
+    SPEED <whatever>, DIAL <phone-number>.  If it doesn't work, keep reading.
     After dialing, can you REDIAL?
 
  7. If your version was built with TCP/IP network support, try the TELNET
@@ -385,7 +421,7 @@ C-Kermit was built correctly for your UNIX system.
     are problems, see the section THE FULLSCREEN FILE TRANSFER DISPLAY below.
 
 11. If your version was built with script programming language support,
-    TAKE the cketest.ini file to give it a workout.
+    TAKE the ckedemo.ksc file to give it a workout.
 
 12. Does C-Kermit interlock correctly with UUCP-family programs (cu, tip,
     uucp, etc)?  If not, read the section DIALING OUT AND COORDINATING WITH
@@ -530,14 +566,7 @@ like the following:
   wclear, wrefresh, endwin, etc...
 
 it means that your <curses.h> file does not contain prototypes for these
-functions.  The warnings are harmless.
-
-C-Kermit maintains a buffer to hold your termcap entry.  The size of this
-buffer is 1024.  Some termcap entries might be longer than this.  To allow for
-longer termcap entries, add a definition of TRMBUFL to your compilation
-CFLAGS, for example:
-
-  -DTRMBUFL=2048
+functions.  The warnings should be harmless.
 
 Screen refresh capability (to repaint a file transfer display that was messed
 up because of a broadcast message or similar interference) was added in
@@ -716,28 +745,10 @@ On the other hand, if your compiler defines __STDC__ but still complains about
 the syntax of Kermit's function prototypes, you can disable the ANSI-style
 function prototyping by including -DNOANSI on the command line.
 
-For SCO UNIX, ODT, and XENIX compilations, be sure to pick the most
-appropriate makefile entry, and be sure you have installed an SCO development
-system that is keyed to your exact SCO operating system release, down to the
-minor version (like 2.3.1).
-
-There seems to be a lot of controversy about whether to use the SCO Shared
-Libraries (lc_s), especially when building C-Kermit with curses or network
-support.  An executable built under one version of SCO UNIX (say 3.2.2) might
-not run correctly on another version (say 3.2.4).
-
-More on SCO: In version 3.2.2 the order in which libc and libx are searched is
-important for the directory-reading routines (opendir).  When using <ndir.h>,
-libx must be searched before libc (-lx -lc).  In version 3.2.4, <dirent.h>
-and libc should be used.  One user recommends the following for 3.2.2:
-
-    -lx
-    -lx -lsocket        (net version)
-
-and for 3.2.4:
-
-    -lc -lx
-    -lc -lx -lsocket    (net version)
+For SCO OpenServer, UNIX, ODT, and XENIX compilations, be sure to pick the
+most appropriate makefile entry, and be sure you have installed an SCO
+development system that is keyed to your exact SCO operating system release,
+down to the minor version (like 2.3.1).
 
 Also note that SCO distributes some of its libraries in encrypted form, and
 they must be decrypted before C-Kermit can be linked with them.  If not, you
@@ -865,15 +876,12 @@ then compile the others normally (with optimization), for example:
 #Fortune 32:16, For:Pro 2.1 (mostly like 4.1bsd)
 ft21:
 	@echo 'Making C-Kermit $(CKVER) for Fortune 32:16 For:Pro 2.1...'
-	$(MAKE) ckuusx.($EXT) "CFLAGS= -DNODEBUG -DBSD4 -DFT21 -DNOFILEH \
-	-SYM 800 \ -DDYNAMIC -DNOSETBUF -DCK_CURSES $(KFLAGS) -DPID_T=short" \
-	"LNKFLAGS= -n -s" "LIBS= -lcurses -ltermcap -lv -lnet"
-	$(MAKE) ckuxla.($EXT) "CFLAGS= -DNODEBUG -DBSD4 -DFT21 -DNOFILEH \
-	-SYM 800 \ -DDYNAMIC -DNOSETBUF -DCK_CURSES $(KFLAGS) -DPID_T=short" \
-	"LNKFLAGS= -n -s" "LIBS= -lcurses -ltermcap -lv -lnet"
-	$(MAKE) ckudia.($EXT) "CFLAGS= -DNODEBUG -DBSD4 -DFT21 -DNOFILEH \
-	-SYM 800 \ -DDYNAMIC -DNOSETBUF -DCK_CURSES $(KFLAGS) -DPID_T=short" \
-	"LNKFLAGS= -n -s" "LIBS= -lcurses -ltermcap -lv -lnet"
+	$(MAKE) ckuusx.$(EXT) "CFLAGS= -DNODEBUG -DBSD4 -DFT21 -DNOFILEH \
+	-SYM 800 \ -DDYNAMIC -DNOSETBUF -DCK_CURSES $(KFLAGS) -DPID_T=short"
+	$(MAKE) ckuxla.$(EXT) "CFLAGS= -DNODEBUG -DBSD4 -DFT21 -DNOFILEH \
+	-SYM 800 \ -DDYNAMIC -DNOSETBUF -DCK_CURSES $(KFLAGS) -DPID_T=short"
+	$(MAKE) ckudia.$(EXT) "CFLAGS= -DNODEBUG -DBSD4 -DFT21 -DNOFILEH \
+	-SYM 800 \ -DDYNAMIC -DNOSETBUF -DCK_CURSES $(KFLAGS) -DPID_T=short"
 	$(MAKE) wermit "CFLAGS= -O -DNODEBUG -DBSD4 -DFT21 -DNOFILEH -SYM 800 \
 	-DDYNAMIC -DNOSETBUF -DCK_CURSES $(KFLAGS) -DPID_T=short" \
 	"LNKFLAGS= -n -s" "LIBS= -lcurses -ltermcap -lv -lnet"
@@ -882,7 +890,11 @@ As an extreme example, some compilers (e.g. gcc on the DG AViiON) have been
 known to dump core when trying to compile ckwart.c with optimization.  So just
 do this one "by hand":
 
-   cc -o wart ckwart.c
+  cc -o wart ckwart.c
+
+or:
+
+  touch ckcpro.c
 
 and then give the "make" command again.
 
@@ -952,9 +964,7 @@ directory.  This happens most commonly on AT&T System-V based UNIXes,
 particularly System V R3 and earlier, that provide long file and directory
 names (longer than 14 characters).  Examples include certain releases of
 HP-UX, DIAB DNIX, older versions of Silicon Graphics IRIX, and perhaps also
-MIPS.  In this case, try adding -DLONGFN to your makefile entry.  For further
-details, see the discussion under edit 5A(149) in the program update history,
-ckuker.upd.
+MIPS.  In this case, try adding -DLONGFN to your makefile entry.
 
 Another problem child is <sys/file.h>.  Most UNIX C-Kermit versions need to
 #include this file from within ckutio.c and ckufio.c, but some not only do not
@@ -1036,6 +1046,7 @@ system.  Here are some examples:
 4. NeXTSTEP and IRIX, and possibly others, support hardware flow control, but
    do not furnish an API to control it, and thus on these systems Kermit has
    no command to select it -- instead, a special device name must be used.
+   (NeXTSTEP: /dev/cufa instead of /dev/cua; IRIX: /dev/ttyf00)
 
 5. RTS/CTS is available in Linux, but you have to place a line like:
 
@@ -1182,12 +1193,17 @@ from altering the buffering.  See makefile entries for AT&T 6300 and 3B1.
 The UNIX version of C-Kermit includes code to switch to file descriptor zero
 (stdin) for remote-mode file transfer.  This code is necessary to prevent
 Kermit from giving the impression that it is "idle" during file transfers,
-which, at some sites, can result in the job being logged out by idle-job
-watchers.  However, this feature can interfere with certain setups; for
-example, there is a package which substitutes a pty/tty pair for /dev/tty and
-sets file descriptor 0 to be read-only, preventing Kermit from sending
-packets.  To remove this feature and allow Kermit to work in such
-environments, add the compile-time option:
+which, at some sites, can result in the job being logged out in the middle of
+an active file transfer by idle-job monitors.
+
+However, this feature can interfere with certain setups; for example, there is
+a package which substitutes a pty/tty pair for /dev/tty and sets file
+descriptor 0 to be read-only, preventing Kermit from sending packets.  Or...
+When a UNIX shell is invoked under the PICK environment, file descriptor 0
+is inoperative.
+
+To remove this feature and allow Kermit to work in such environments, add the
+compile-time option:
 
   -DNOFDZERO
 
@@ -1460,6 +1476,10 @@ intervention by the manager (superuser) of your UNIX system:
       exploited to grant the user the privileges of the user to whom the
       program is setuid'd or setgid'd to.
 
+If you make C-Kermit setuid or setgid to root, it refuses to run:
+
+  Fatal: C-Kermit setuid to root!
+
 For the lockfile mechanism to achieve its desired purpose -- prevention of
 access to the same tty device by more than one process at a time -- ALL
 programs on a given computer that open, read or write, and close tty devices
@@ -1599,7 +1619,7 @@ resulting debug.log file.  The last entry should be in the vicinity of the
 crash.  In VAX/VMS, a crash automatically produces a "stack dump" which shows
 the routine where the crash occurs.  In some versions of UNIX, you can get a
 stack dump with "adb" -- just type "adb wermit core" and then give the command
-"$c", then Ctrl-D to quit.
+"$c", then Ctrl-D to quit.  Or use gdb to get a backtrace, etc.
 
 In edit 186, one implementation, UNISYS 5000/95 built with "make sys5r3", has
 been reported to run out of memory very quickly (e.g. while executing a short

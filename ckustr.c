@@ -1,28 +1,45 @@
+/*
+  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
+  York.  The C-Kermit software may not be, in whole or in part, licensed or
+  sold for profit as a software product itself, nor may it be included in or
+  distributed with commercial products or otherwise distributed by commercial
+  concerns to their clients or customers without written permission of the
+  Office of Kermit Development and Distribution, Columbia University.  This
+  copyright notice must not be removed, altered, or obscured.
+*/
+
+/*
+ * ckustr.c - string extraction/restoration routines
+*/
+
 #include <stdio.h>
 #include <sysexits.h>
 #include <varargs.h>
-
-/* string extraction/restoration routines */
+#include <paths.h>
 
 /*
   STR_FILE must be defined as a quoted string on the cc command line,
   for example:
 
-  	-DSTR_FILE=\\\"/usr/local/lib/kermit5.sr\\\"
+  	-DSTR_FILE=\\\"/usr/local/lib/cku192.sr\\\"
 
   This is the file where the strings go, and where C-Kermit looks for them
   at runtime.
 */
+
 #ifdef STR_FILE
 char	*StringFile = STR_FILE;
 #else
-char	*StringFile = "/usr/local/lib/kermit5.sr";
+char	*StringFile = "/usr/local/lib/cku192.sr";
 #endif /* STR_FILE */
 
-#ifdef STR_CTIMED
-char	*Ctimed = STR_CTIMED;
-#else
-char	*Ctimed = "/usr/lib/ctimed";
+/*
+ * If _PATH_CTIMED is defined (in <paths.h>) then use that definition.  2.11BSD
+ * has this defined but 2.10BSD and other systems do not.
+*/
+
+#ifndef _PATH_CTIMED
+#define	_PATH_CTIMED STR_CTIMED
 #endif
 
 extern int errno;
@@ -94,7 +111,8 @@ strsrerror(fmt, obuf, va_alist)
 /* extracted string front end for fprintf() */
 /*VARARGS1*/
 strfrerror(fmt, fd, va_alist)
-	int fmt, fd;
+	int fmt;
+	FILE *fd;
 	va_dcl
 {
 	va_list	ap;
@@ -125,8 +143,21 @@ perror(str)
 	printf("%s: errno %d\n", str, errno);
 	}
 
-#include	<sys/types.h>
-#include	<sys/time.h>
+/*
+ * The following is needed _only_ on systems which do not have the C library
+ * stubs for the ctime() and getpw*() functions.  In 2.11BSD these are
+ * present in the libstubs.a library and accessed via "-lstubs" at link time.
+ *
+ * 2.10BSD's cpp has the BSD2_10 symbol builtin.  Other systems without 
+ * libstubs.a will need to define (via a -D option in CFLAGS) 'BSD2_10'.
+*/
+
+#ifdef	BSD2_10
+
+#include <sys/types.h>
+#include <sys/time.h>
+#include <pwd.h>
+#include <utmp.h>
 
 #define	SEND_FD	W[1]
 #define	RECV_FD	R[0]
@@ -138,9 +169,16 @@ perror(str)
 #define	GMTIME	5
 #define	OFFTIME	6
 
+#define GETPWENT        7
+#define GETPWNAM        8
+#define GETPWUID        9
+#define SETPASSENT      10
+#define ENDPWENT        11
+
 	static	int	R[2], W[2], inited;
-	static	char	result[26];
+	static	char	result[256 + 4];
 	static	struct	tm	tmtmp;
+	static	struct	passwd	_pw, *getandfixpw();
 
 char	*
 ctime(t)
@@ -149,7 +187,7 @@ ctime(t)
 	u_char	fnc = CTIME;
 
 	sewer();
-	write(SEND_FD, fnc, sizeof fnc);
+	write(SEND_FD, &fnc, sizeof fnc);
 	write(SEND_FD, t, sizeof (*t));
 	getb(RECV_FD, result, 26);
 	return(result);
@@ -223,6 +261,104 @@ offtime(clock, offset)
 	return(&tmtmp);
 	}
 
+struct passwd *
+getpwent()
+	{
+	u_char	fnc = GETPWENT;
+
+	sewer();
+	write(SEND_FD, &fnc, sizeof fnc);
+	return(getandfixpw());
+	}
+
+struct	passwd *
+getpwnam(nam)
+	char	*nam;
+	{
+	u_char	fnc = GETPWNAM;
+	char	lnam[UT_NAMESIZE + 1];
+	int	len;
+
+	len = strlen(nam);
+	if	(len > UT_NAMESIZE)
+		len = UT_NAMESIZE;
+	bcopy(nam, lnam, len);
+	lnam[len] = '\0';
+
+	sewer();
+	write(SEND_FD, &fnc, 1);
+	write(SEND_FD, &len, sizeof (int));
+	write(SEND_FD, lnam, len);
+	return(getandfixpw());
+	}
+
+struct	passwd	*
+getpwuid(uid)
+	uid_t	uid;
+	{
+	u_char	fnc = GETPWUID;
+
+	sewer();
+	write(SEND_FD, &fnc, sizeof fnc);
+	write(SEND_FD, &uid, sizeof (uid_t));
+	return(getandfixpw());
+	}
+
+setpwent()
+	{
+	return(setpassent(0));
+	}
+
+setpassent(stayopen)
+	int	stayopen;
+	{
+	u_char	fnc = SETPASSENT;
+	int	sts;
+
+	sewer();
+	write(SEND_FD, &fnc, sizeof fnc);
+	write(SEND_FD, &stayopen, sizeof (int));
+	getb(RECV_FD, &sts, sizeof (int));
+	return(sts);
+	}
+
+void
+endpwent()
+	{
+	u_char	fnc = ENDPWENT;
+
+	sewer();
+	write(SEND_FD, &fnc, sizeof fnc);
+	return;
+	}
+
+/* setpwfile() is deprecated */
+void
+setpwfile(file)
+	char	*file;
+	{
+	return;
+	}
+
+struct passwd *
+getandfixpw()
+	{
+	short	sz;
+
+	getb(RECV_FD, &sz, sizeof (int));
+	if	(sz == 0)
+		return(NULL);
+	getb(RECV_FD, &_pw, sizeof (_pw));
+	getb(RECV_FD, result, sz);
+	_pw.pw_name += (int)result;
+	_pw.pw_passwd += (int)result;
+	_pw.pw_class += (int)result;
+	_pw.pw_gecos += (int)result;
+	_pw.pw_dir += (int)result;
+	_pw.pw_shell += (int)result;
+	return(&_pw);
+	}
+
 getb(f, p, n)
 	register int f, n;
 	register char *p;
@@ -260,7 +396,7 @@ sewer()
 		dup2(R[1], 1);		/* parent read side to our stdout */
 		close(SEND_FD);		/* copies made, close the... */
 		close(RECV_FD);		/* originals now */
-		execl(Ctimed, "ctimed", 0);
+		execl(_PATH_CTIMED, "ctimed", 0);
 		_exit(EX_OSFILE);
 		}
 	if	(pid == -1)
@@ -280,3 +416,4 @@ XXctime()
 	SEND_FD = RECV_FD = 0;
 	inited = 0;
 	}
+#endif	/* BSD2_10 */

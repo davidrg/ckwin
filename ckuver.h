@@ -1,9 +1,9 @@
 /* ckuver.h -- C-Kermit UNIX Version heralds */
 /*
-  Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
+  Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 1993, Trustees of Columbia University in the City of New
+  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
   York.  The C-Kermit software may not be, in whole or in part, licensed or
   sold for profit as a software product itself, nor may it be included in or
   distributed with commercial products or otherwise distributed by commercial
@@ -17,6 +17,18 @@
 
 /* Arranged more or less alphabetically by compiler symbol */
 /* Must be included AFTER ckcdeb.h. */
+
+#ifdef BEBOX
+#ifdef BE_DR_7
+#define HERALD " BeBox DR7"
+#else
+#define HERALD " BeBox"
+#endif /* BE_DR_7 */
+#endif /* BEBOX */
+
+#ifdef BELLV10
+#define HERALD " Bell Labs Research UNIX V10"
+#endif /* BELLV10 */
 
 #ifdef MAC
 #define HERALD " Apple Macintosh"
@@ -41,7 +53,7 @@
 #ifdef AIXRS
 #ifdef SVR4
 #ifdef AIX41
-#define HERALD " IBM RS/6000 AIX 4.1"
+#define HERALD " IBM AIX 4.1"
 #else
 #define HERALD " IBM RS/6000 AIX 3.2"
 #endif /* AIX41 */
@@ -51,11 +63,11 @@
 #endif /* AIXRS */
 
 #ifdef PS2AIX10
-#define HERALD " IBM PS/2 (AIX 1.x)"
+#define HERALD " IBM PS/2 AIX 1.x"
 #endif /* PS2AIX10 */
 
 #ifdef AIXPS2
-#define HERALD " IBM PS/2 (AIX 3.x)"
+#define HERALD " IBM PS/2 AIX 3.x"
 #endif /* AIXPS2 */
 
 #ifdef AIX370
@@ -161,11 +173,7 @@
 #endif /* DGUX430 */
 
 #ifdef DGUX540
-#ifdef DGUX543
-#define HERALD " Data General DG/UX 5.4R3.00"
-#else
 #define HERALD " Data General DG/UX 5.4"
-#endif /* DGUX543 */
 #endif /* DGUX540 */
 
 #ifdef datageneral
@@ -173,6 +181,10 @@
 #define HERALD " Data General AOS/VS"
 #endif /* HERALD */
 #endif /* datageneral */
+
+#ifdef SINIX
+#define HERALD " Siemens Nixdorf SINIX V5.42"
+#endif /* SINIX */
 
 #ifdef DELL_SVR4
 #define HERALD " Dell System V R4"
@@ -206,13 +218,17 @@
 #endif /* SVR3JC */
 #endif /* I386IX */
 
+#ifdef IRIX60
+#define HERALD " Silicon Graphics IRIX 6.x"
+#else
 #ifdef IRIX51
-#define HERALD " Silicon Graphics IRIX 5.1"
+#define HERALD " Silicon Graphics IRIX 5.x"
 #else
 #ifdef IRIX40
 #define HERALD " Silicon Graphics IRIX 4.0"
-#endif /* IRIX51 */
 #endif /* IRIX40 */
+#endif /* IRIX51 */
+#endif /* IRIX60 */
 
 #ifdef ISIII
 #define HERALD " Interactive Systems Corp System III"
@@ -230,12 +246,28 @@
 #define HERALD " HP-UX 9.0"
 #else
 #ifdef HPUX10
-#define HERALD " HP-UX 10.0"
+#ifdef HPUX1030
+#define HERALD " HP-UX 10.30"
+#else
+#ifdef HPUX1020
+#define HERALD " HP-UX 10.20"
+#else
+#ifdef HPUX1010
+#define HERALD " HP-UX 10.10"
+#else
+#ifdef HPUX10xx
+#define HERALD " HP-UX 10.xx"
+#else
+#define HERALD " HP-UX 10.00"
+#endif /* HPUX10XX */
+#endif /* HPUX1010 */
+#endif /* HPUX1020 */
+#endif /* HPUX1030 */
 #else
 #define HERALD " HP-UX"
-#endif /* HPUX8  */
-#endif /* HPUX9  */
 #endif /* HPUX10 */
+#endif /* HPUX9  */
+#endif /* HPUX8  */
 #endif /* HPUX   */
 
 #ifdef MINIX
@@ -243,11 +275,15 @@
 #endif /* MINIX */
 
 #ifdef MIPS
-#define HERALD " MIPS RISC/OS (System V R3)"
+#define HERALD " MIPS RISC/OS SVR3"
 #endif /* MIPS */
 
 #ifdef NEXT
+#ifdef NEXT33
+#define HERALD " NeXTSTEP 3.3"
+#else
 #define HERALD " NeXTSTEP"
+#endif /* NEXT33 */
 #endif /* NEXT */
 
 #ifdef OSF
@@ -258,7 +294,15 @@
 #endif /* __GNUC */
 #else
 #ifdef __alpha
-#define HERALD " DEC OSF/1 AXP"
+#ifdef OSF40
+#define HERALD " Digital UNIX 4.0 Alpha"
+#else
+#ifdef OSF32
+#define HERALD " Digital UNIX 3.2 Alpha"
+#else
+#define HERALD " DEC OSF/1 Alpha"
+#endif /* OSF40 */
+#endif /* OSF32 */
 #else
 #define HERALD " DEC OSF/1"
 #endif /* __alpha */
@@ -308,9 +352,9 @@
 #ifdef SUNOS4
 #ifdef BSD4
 #ifdef SUNOS41
-#define HERALD " SunOS 4.1 (BSD)"
+#define HERALD " SunOS 4.1"
 #else
-#define HERALD " SunOS 4.0 (BSD)"
+#define HERALD " SunOS 4.0"
 #endif /* SUNOS41 */
 #endif /* BSD4 */
 #endif /* SUNOS4 */
@@ -328,19 +372,19 @@
 #endif /* STRATUS */
 
 #ifdef TOWER1
-#define HERALD " NCR Tower 1632 (OS 1.02)"
+#define HERALD " NCR Tower 1632 OS 1.02"
 #endif /* TOWER1 */
 
 #ifdef TRS16
-#define HERALD " Tandy 16/6000 (Xenix 3.0)"
+#define HERALD " Tandy 16/6000 Xenix 3.0"
 #endif /* TRS16 */
 
 #ifdef u3b2
 #ifndef HERALD
 #ifdef SVR3
-#define HERALD " AT&T 3B2 (System V R3)"
+#define HERALD " AT&T 3B2 System V R3"
 #else
-#define HERALD " AT&T 3B2 (System V)"
+#define HERALD " AT&T 3B2 System V"
 #endif /* SVR3 */
 #endif /* HERALD */
 #endif /* u3b2 */
@@ -375,13 +419,17 @@
 #ifdef __linux__
 #define HERALD " Linux"
 #else
-#ifdef _386BSD				/* 386BSD (Jolix) */
+#ifdef _386BSD				/* 386BSD Jolix */
 #define HERALD " 386BSD"
 #else
 #ifdef LYNXOS				/* Lynx OS 2.2 */
 #define HERALD " Lynx OS"
 #else
+#ifdef Plan9
+#define HERALD " Plan 9 from Bell Labs"
+#else
 #define HERALD " POSIX"
+#endif /* Plan9 */
 #endif /* LYNXOS */
 #endif /* _386BSD */
 #endif /* __linux__ */
@@ -400,6 +448,12 @@
 #define HERALD " CDC VX/VE 5.2.1 System V"
 #endif /* VXVE */
 
+#ifdef CK_SCOV5
+#ifdef HERALD
+#undef HERALD
+#endif /* HERALD */
+#define HERALD " SCO OpenServer R5"
+#else
 #ifdef XENIX
 #ifdef HERALD
 #undef HERALD
@@ -422,6 +476,7 @@
 #endif /* M_UNIX */
 #endif /* ODT30 */
 #endif /* XENIX  */
+#endif /* CK_SCOV5 */
 
 #ifdef ZILOG
 #define HERALD " Zilog S8000 Zeus 3.21+"
@@ -479,16 +534,16 @@
 #endif /* SVR4 */
 #endif /* HERALD */
 
-#ifdef WINNT
-#define HERALD " Windows NT"
-#else
 #ifdef OS2
 #ifdef HERALD
 #undef HERALD
 #endif /* HERALD */
+#ifdef NT
+#define HERALD " Windows NT"
+#else /* NT */
 #define HERALD " OS/2"
+#endif /* NT */
 #endif /* OS/2 */
-#endif /* WINNT */
 
 #ifndef HERALD
 #define HERALD " Unknown Version"
@@ -507,7 +562,7 @@
 #endif /* CKCPU */
 #endif /* pdp11 */
 
-#ifdef __ALPHA				/* DEC Alpha AXP */
+#ifdef __ALPHA				/* DEC Alpha */
 #ifndef CKCPU
 #define CKCPU "Alpha"
 #endif /* CKCPU */
@@ -518,6 +573,22 @@
 #define CKCPU "Alpha"
 #endif /* CKCPU */
 #endif /* __alpha */
+
+#ifdef DGUX				/* Override Motorola 88k assumption */
+#ifndef CKCPU				/* New AViiONs are Intel based... */
+#ifdef i586
+#define CKCPU "i586"
+#else
+#ifdef i486
+#define CKCPU "i486"
+#else
+#ifdef i386
+#define CKCPU "i386"
+#endif /* i386 */
+#endif /* i486 */
+#endif /* i586 */
+#endif /* CKCPU */
+#endif /* DGUX */
 
 /* HP 9000 */
 
@@ -612,6 +683,11 @@
 #define CKCPU "mc68000"
 #endif /* CKCPU */
 #endif /* m68k */
+#ifdef i586				/* Intel 80586 */
+#ifndef CKCPU
+#define CKCPU "i586"
+#endif /* CKCPU */
+#endif /* i80586 */
 #ifdef i486				/* Intel 80486 */
 #ifndef CKCPU
 #define CKCPU "i486"
@@ -632,11 +708,16 @@
 #define CKCPU "i186"
 #endif /* CKCPU */
 #endif /* i186 */
-#ifdef M_I386				/* Intel 80386 */
+#ifdef M_I586				/* Intel 80586 */
 #ifndef CKCPU
-#define CKCPU "i386"
+#define CKCPU "i586"
 #endif /* CKCPU */
-#endif /* M_I386 */
+#endif /* M_I586 */
+#ifdef M_I486				/* Intel 80486 */
+#ifndef CKCPU
+#define CKCPU "i486"
+#endif /* CKCPU */
+#endif /* M_I486 */
 #ifdef _M_I386				/* Intel 80386 */
 #ifndef CKCPU
 #define CKCPU "i386"

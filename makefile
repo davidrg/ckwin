@@ -1,15 +1,17 @@
-# CKUKER.MAK, Mon Dec  5 13:50:05 1994
+# CKUKER.MAK / ckuker.mak / makefile / Makefile
+# Fri Sep  6 23:23:25 1996
 #
-CKVER= "5A(190)"
+CKVER= "6.0.192"
 #
-# -- Makefile to build C-Kermit 5A for UNIX and UNIX-like systems --
+# -- Makefile to build C-Kermit for UNIX and UNIX-like systems --
 #
-# Author: Frank da Cruz, Columbia University Academic Information Systems,
-# 612 West 115th Street, New York, NY 10025-7221, USA.
-# Phone: +1 212 854-5126, Fax: +1 212 662-6442.
-# E-mail: fdc@columbia.edu or FDCCU@CUVMA.BITNET.
+# Author: Frank da Cruz, Columbia University
+# 612 West 115th Street, New York NY 10025-7799, USA.
+# E-mail: fdc@columbia.edu
+# Fax:    +1 212 662-6442.
+# Web:    http://www.columbia.edu/kermit/
 #
-# Copyright (C) 1985, 1994, Trustees of Columbia University in the City of New
+# Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
 # York.  The C-Kermit software may not be, in whole or in part, licensed or
 # sold for profit as a software product itself, nor may it be included in or
 # distributed with commercial products or otherwise distributed by commercial
@@ -27,7 +29,8 @@ CKVER= "5A(190)"
 # away the parts that do not apply to your system and try again.
 #
 # For 2.10 or 2.11 BSD on DEC PDP-11s, use the separate makefile, ckubs2.mak.
-#   
+# For Plan 9, use ckpker.mk.
+#
 #   C-Kermit can also be built for other systems not supported by this
 #   makefile, including VAX/VMS and OpenVMS, Data General AOS/VS, OS/2, the
 #   Apple Macintosh, Stratus VOS, Apollo Aegis, the Commodore Amiga, OS-9, and
@@ -53,21 +56,23 @@ CKVER= "5A(190)"
 # command or to the makefile entry, or 'strip' the executable after
 # building.  To further reduce the size after building, use 'mcs -d' if your
 # system has such a command.  For further details on size reduction, read
-# ckccfg.doc.
+# ckccfg.doc to find out how to remove unneeded features.
 #
 # TCP/IP networking support: If your C-Kermit version does not include TCP/IP
 # networking, but your UNIX system does, try adding -DTCPSOCKET to the CFLAGS
 # of your makefile entry.  If that doesn't work, look at some of the other
 # entries that include this flag for ideas about what libraries might need to
-# be included, etc.
+# be included, etc.  NOTE: In some cases (certain versions of SCO or HP-UX),
+# you might need not only a C compiler, but also a "TCP/IP developers kit"
+# for the required object libraries and header files.
 #
 # Fullscreen file transfer display support: If you are going to use C-Kermit
-# for establishing connections (dialed, network, etc), you can configure it to
-# produce a formatted file transfer display by including the curses library
+# for establishing connections (dialed, network, etc), you can configure it 
+# to produce a formatted file transfer display by including the curses library
 # and adding -DCK_CURSES to the CFLAGS for your option, and linking with the
 # appropriate libraries.  There are many examples below, usually ending in
 # "c", like rs6000c, du42c, sunos41c, etc.  Also add -DCK_WREFRESH if your
-# curses library includes clearok() and wrefresh() functions (or add
+# curses library includes clearok() and wrefresh() functions (or remove
 # -DNOWREFRESH if the linker complains that it can't find these functions).
 # After building, you still have to SET FILE DISPLAY FULLSCREEN to get the
 # formatted screen display.
@@ -75,11 +80,14 @@ CKVER= "5A(190)"
 # Please report modifications, successes, failures (preferably with fixes) or
 # successes to the author.
 #
-# MAKE COMMANDS FOR DIFFERENT UNIX VERSIONS:
+# MAKE COMMANDS FOR DIFFERENT UNIX PLATFORMS AND VERSIONS:
 #
-# + Marks those that have been tested successfully with C-Kermit 5A.
-# - Marks those that are known not to work in version 5A.
-# ? Marks those as yet untested in version 5A.
+# + Marks those that have been tested successfully with C-Kermit 5A or later.
+# - Marks those that are known not to work in version 5A or later.
+# ? Marks those as yet untested in version 5A or later.  Some of these have 
+#     never been tried, others are known to have worked in C-Kermit version 4
+#     (1985-1989), which was considerably smaller, but have not been tested
+#     in version 5A.
 #
 # + for 386BSD (Jolix) 0.0, 0.1, "make 386bsd" (see comments in entry),
 #     or (preferably, if it works) "make bsd44" or "make bsd44c".
@@ -99,6 +107,7 @@ CKVER= "5A(190)"
 # + for Apple Macintosh with A/UX 3.0 and gcc, "make aux3gcc" or aux3gccc
 # ? for Apple Macintosh with Minix 1.5.10, "make minix68k" or "make minixc68"
 # ? for Arix System 90 with AT&T SVR3, "make sys5r3na"
+# ? for AT&T 6300 with IN/ix, "make sys5"
 # + for AT&T 6300 PLUS, "make att6300" or (with no debugging) "make att6300nd"
 # + for AT&T 6386 WGS UNIX PC, "make sys5r3"
 # + for AT&T 3B2, 3B20 systems, "make att3bx" or "make att3bxc"
@@ -112,21 +121,36 @@ CKVER= "5A(190)"
 # + for AT&T System III/System V with Honey DanBer UUCP, "make sys3hdb"
 # + for AT&T System V on DEC VAX, "make sys3" or "make sys5r3"
 # + for AT&T System V R3, use "make sys5r3" or "make sys5r3c"
+# + for AT&T System V/386 R320.0 Versyss Systems, use "make sys5r3"
+#     or "make sys5r3c" with KFLAGS=-DNONAWS.
 # + for AT&T System V R4, "make sys5r4", "make sys5r4sx", or "make sys5r4nx",
 #     or if the ANSI C function prototyping makes trouble, add -DNOANSI,
 #     as in "sys5r4sxna" entry
 # + for AT&T System V R4 with bundled TCP/IP, "make sys5r4netc", ...
 # + for AT&T System V R4 with Wollongong TCP/IP, "make sys5r4twg", ...
 # + for AT&T (USL) System V R4.2 use the sys5r4* entries.
+# + for Atari Falcon with MiNT, "make posix"
 # + for Atari ST with Minix ST 1.5.10.3, "make minix68k" or "make minixc68"
 # ? for BBN C/70 with IOS 2.0, "make c70"
-# + for Bell UNIX Version 7 (aka 7th Edition), "make v7" (but see notes below)
-# + for BSDI/386, "make bsdi"
+# + for BeBox with Be OS 1.x DR7, "make beboxdr7"
+#     Compiles OK but doesn't link with default linker which is limited to 64K.
+#     Links OK with "Code Warrior Gold".  Many hacks in the source code need
+#     to be removed when DR8 and later come out.
+# + for BeBox with Be OS 1.x DR8, "make bebox"
+# ? for Bell Labs UNIX Version 6 (6th Edition), there is no makefile entry.
+# + for Bell Labs UNIX Version 7 (7th Edition), "make v7" (but see notes below)
+# ? for Bell Labs Research UNIX Version 8,  "make bellv10"
+# ? for Bell Labs Research UNIX Version 9,  "make bellv10"
+# + for Bell Labs Research UNIX Version 10, "make bellv10"
+# + for Bell Labs / Lucent Plan 9, use separate makefile ckpker.mk:
+#     can be built for Intel, MIPS, 680x0, and PowerPC.
+# + for BSDI/386 1.x, "make bsdi"
+# + for BSDI/386 2.x, "make bsdi"
 # + for Berkeley Unix 2.4, "make v7" (but read v7 material below)
 # ? for Berkeley Unix 2.9 (DEC PDP-11 or Pro-3xx), "make bsd29"
 # + for Berkeley Unix 2.10, use ckubs2.mak (a separate makefile)
 # + for Berkeley Unix 2.11, use ckubs2.mak (a separate makefile)
-#     Read the instructions in ckubs2.mak.
+#     This makefile is too big.  Read the instructions in ckubs2.mak.
 #     Rename ckubs2.mak to makefile, then "make bsd210" or "make bsd211".
 # + for Berkeley Unix 4.1, "make bsd41"
 # + for Berkeley Unix 4.2, "make bsd" (tested with 4.2 and 4.3)
@@ -138,6 +162,7 @@ CKVER= "5A(190)"
 # + for Berkeley Unix 4.3-Carson City, "make bsd44" or "make bsd44c"
 # + for Berkeley Unix 4.4-Networking/2 or -Alpha, "make bsd44" or "make bsd44c"
 # + for Berkeley Unix 4.4, "make bsd44" or "make bsd44c"
+# + for Berkeley Unix 4.4-Lite, "make bsd44" or "make bsd44c"
 # + for Bull DPX/2 with BOS/X, "make bulldpx2"
 # ? for Cadmus, "make sys3"
 # ? for Callan Unistar, "make sys3"
@@ -169,32 +194,42 @@ CKVER= "5A(190)"
 # + for Cray Research X/MP or YMP or C90 with UNICOS 8.0 Alpha, "make cray8"
 # + for Cray Computer Cray-2 or Cray3 with CSOS, "make craycsos"
 # + for Cyber 910 (Silicon-Graphics Iris) with Irix 3.3, "irix33"
-# + for Data General AViiON with DG/UX 5.4R3.00, "make dgux543c"
 # + for Data General AViiON with DG/UX 5.4, "make dgux540"
 #     or "make dgux540c" (compile ckwart separately if necessary)
+# + for Data General AViiON with DG/UX 5.4R3.00, "make dgux543c"
+# + for DG/UX 5.4 R4.11 on AViiON Intel models, "make dgux544i" or dgux544ic.
 # + for Data General AViiON with DG/UX 4.3x using Sys V-isms, "make dgux430"
 # ? for Data General AViiON with DG/UX 4.3x using BSD-isms, "make dgux430bsd"
 # ? for Data General AViiON, earlier UNIX versions,
-#     "make sys5r3" (maybe compile ckwart separately)
+#     "make sys5r3" (maybe compile ckwart separately, or "touch ckcpro.c")
 # ? for Data General MV systems with DG/UX, ???
 # + for Data General MV systems with MV/UX, use AOS/VS C-Kermit (CKDKER.MAK)
 # + for Data General MV systems with AOS/VS, use CKDKER.MAK.
+# + for DEC PDP-11 with Berkeley UNIX 2.x, see Berkeley UNIX 2.x.
+# ? for DEC PDP-11 with Mini-UNIX (Bell 6th Edition for PDP-11 with no MMU),
+#     probably no way to fit C-Kermit without I&D space.
+# ? for DEC PDP-11 with Ultrix-11 3.x, ??? (probably needs overlays)
 # + for DEC VAX with Ultrix 1.x "make bsd"
-# + for DEC VAX with Ultrix 2.x "make du2"
-# + for DEC VAX or DECstation with Ultrix 3.0, 3.1, "make du3"
-# + for DECstation (or VAX) with Ultrix 4.0 or 4.1, "make du4"
-# + for DECstation (or VAX) with Ultrix 4.x and Kanji support, "make du4kanji"
-# + for DECstation (or VAX) with Ultrix 4.2, "make du42" or "make du42c"
-# + for DECstation (or VAX) with Ultrix 4.2, Sys V R4 world, "make du42s5r4"
-# + for DECstation (or VAX) with Ultrix 4.x, POSIX world, "make posix"
-# + for DECstation with Ultrix 4.3, "make du42"
+# + for DEC VAX with Ultrix 2.x "make ultrix2s"
+# + for DEC VAX or DECstation with Ultrix 3.0, 3.1, "make ultrix3x"
+# + for DECstation or VAX with Ultrix 4.0 or 4.1, "make ultrix40"
+# + for DECstation or VAX with Ultrix 4.2 or later, "make ultrix42" or
+#     "make ultrix42c"
+# + for DECstation 5000/50, /150 or /260 (R4x00 MIPS CPU), Ultrix 4.3A or later
+#     "make ultrix43-mips3" or "make ultrix43c-mips3"
+# + for DECstation or VAX with Ultrix 4.2, Sys V R4 world, "make du42s5r4"
+# + for DECstation or VAX with Ultrix 4.x, POSIX world, "make posix"
+# + for DECstation with Ultrix 4.3, "make ultrix42"
 # + for DECstation 5000/50 or /150 or /260 (R4x00 MIPS CPU), Ultrix 4.3A/4.4
-#     "make du43c-mips3" or "make du44-mips3"
+#     "make ultrix43c-mips3" or "make ultrix44-mips3"
+# ? for DECstation (MIPS) with Berkeley Sprite, "make bsd44"?
 # + for DECstation (MIPS) with OSF/1 V1.0 to 1.3, "make dec-osf"
-# + for DEC Alpha AXP with OSF/1 1.0 to 1.3, "make dec-osf"
+# + for DEC Alpha with OSF/1 1.0 to 1.3, "make dec-osf"
 # + for DEC PC 486 with OSF/1, "make dec-osf"
-# + for DEC Alpha AXP with OSF/1 2.x, "make dec-osf20"
-# + for DEC Alpha AXP with OSF/1 3.0, "make dec-osf30"
+# + for DEC Alpha with OSF/1 2.x, "make dec-osf20"
+# + for DEC Alpha with OSF/1 3.0, "make dec-osf30"
+# + for DEC Alpha with Digital UNIX 3.2, "make du32"
+# + for DEC Alpha with Digital UNIX 4.0, "make du40"
 # - for DEC Pro-350 with Pro/Venix V1.x, "make provx1" (version 5A is too big)
 # ? for DEC Pro-350 with Pro/Venix V2.0 (Sys V), "make sys3nid"
 # ? for DEC Pro-380 with Pro/Venix V2.0 (Sys V), "make sys3" or "make sys3nid"
@@ -234,7 +269,10 @@ CKVER= "5A(190)"
 # + for HP-9000 Series, HP-UX < 6.5, without long filenames, no job control,
 #     "make hpuxpre65"
 # + for HP-9000 Series, HP-UX pre-7.0, without long filenames, "make hpux"
-# ? for HP-9000 Series, HP-UX 7.0 or later, no long filenames, "make hpux7sf"
+# + for HP-9000 Series, HP-UX 6.5, without long filenames,
+#     "make hpux65" or "make hpux65c"
+# + for HP-9000 Series, HP-UX 7.0 or later, no long filenames, "make hpux7sf"
+#     or (to include tcp/ip, curses, etc) "make hpux7sftcpc"
 # + for HP-9000 Series with HP-UX Sys V R2, BSD long names, "make hpuxlf"
 # + for HP-9000 Series with HP-UX Sys V R2, dirent long names, "make hpuxde"
 #     or (to include TCP/IP support) "make hpuxdetcp"
@@ -246,17 +284,21 @@ CKVER= "5A(190)"
 #      or "make hpux80pac"
 # + for HP-9000 Series with HP-UX 8.0, no TCP/IP, long filenames,
 #      "make hpux80notcp" or "make hpuxde"
-# + for HP-9000 Series, HP-UX 9.0 - 9.05, TCP/IP, curses, restricted compiler
+# + for HP-9000 Series, HP-UX 9.0 - 9.10, TCP/IP, curses, restricted compiler
 #     (no optimization, no ANSI), all models, "make hpux90".  Read the hpux90
 #     entry below for more info.
 # + for HP-9000 700 and 800 Series, HP-UX 9.x, TCP/IP, curses,
 #     HP optimizing ANSI C compiler, "make hpux90o700".
+# + for HP-9000 with Motorola CPUs, HP-UX 9.x, TCP/IP, curses,
+#     HP optimizing ANSI C compiler, "make hpux90mot".
+# + for HP-9000 on other CPUs, HP-UX 9.x, TCP/IP, curses,
+#     HP optimizing ANSI C compiler, "make hpux90o".
 # + for HP-9000 series, HP-UX 9.x, TCP/IP, curses, gcc, all models,
 #     "make hpux90gcc"
-# + for HP-9000 700/800 Series, HP-UX 10.0, TCP/IP, curses, restricted compiler
-#     (no optimization, no ANSI) "make hpux100".
-# + for HP-9000 700/800 Series, HP-UX 10.0, TCP/IP, curses, HP ANSI/optimizing
-#     compiler "make hpux100o".
+# + for HP-9000 700/800 Series, HP-UX 10.00,10.01,10.10,10.20,10.30, TCP/IP,
+#     curses, restricted compiler (no optimization, no ANSI) "make hpux100".
+# + for HP-9000 700/800 Series, HP-UX 10.00,10.01,10.10,10.20,10.30, TCP/IP,
+#     curses, HP ANSI/optimizing compiler "make hpux100o" or "make hpux100o+"
 # ? for IBM 370 Series with IX/370, "make ix370"
 # + for IBM 370 Series with AIX/370 1.2, "make aix370"
 # ? for IBM 370 Series with AIX/370 3.0, "make aix370"
@@ -302,16 +344,14 @@ CKVER= "5A(190)"
 #     or "make is5r3net2"
 # + for Interactive 386/ix 2.2.1, job control, curses, no net, gcc,
 #     "make is5r3gcc"
-# + for Interactive 386/ix 2.2 - 3.0 with TCP/IP networking and job control,
-#     "make is5r3netjc"
-# + for Interactive UNIX Sys V R3 2.2 with job control, curses, "make is5r3jc"
-# + for Interactive UNIX Sys V R3 3.0, "make is5r3jc"
+# + for Interactive UNIX Sys V R3.2 V2.2 - 4.0 without TCP/IP, "make is5r3jc"
+# + for Interactive UNIX Sys V R3.2 V2.2 - 4.0 with TCP/IP, "make is5r3netjc"
 # + for Intergraph Clipper, "make clix" or "make clixnetc"
-# + for Linux/386, "make linux" or (to add TCP/IP) "linuxtcp".
-#     For static linking, use "make linuxs" or "make linuxtcps".
-#     Default UUCP lockfile directory is /usr/spool/uucp with int pid; to get
-#     FSSTND-recommended /var/lock with string pid, add -DLINUXFSSTND.
-#     If you get compiler errors regarding <linux/serial.h>, add -DNOHISPEED.
+# + for Jolix (see 386BSD)
+# + for Linux, "make linux" or (to remove TCP/IP) "make linuxnotcp".
+#     For static linking, use "make linuxs".  IMPORTANT: Read the comments
+#     that accompany the "linux:" entry.
+# + for Linux with lcc compiler, "make linuxnotcp-lcc"
 # + for Luxor ABC-9000 (DIAB DS-90) with pre-5.2 DNIX, add "getcwd" to libc.a
 #     (see ckuins.doc), then "make dnixold".
 # + for Mach 2.6 on (anything, e.g. DECstation), "make bsd42" or "make bsd43".
@@ -323,12 +363,14 @@ CKVER= "5A(190)"
 # ? for Microsoft,IBM Xenix (/286, PC/AT, etc), "make xenix" or "make sco286"
 # + for MIPS System with RISC/os (UMIPS) 4.52 = AT&T SVR3, "make mips"
 #     or "make mipstcpc"
+# ? for MkLinux on Power Macintosh, "make linux"
 # + for Modcomp 9730, Real/IX, "make sys5r3" (or modify to use gcc = GLS cc)
 # + for Modcomp Realstar 1000 with REAL/IX D.1, "make sv88r32"
 # ? for Motorola Four Phase, "make sys3" or "make sys3nid"
 # + for Motorola Delta System V/68 R3, "make sv68r3"
 # + for Motorola Delta System V/68 R3V5, "make sv68r3v5"
 # + for Motorola Delta System V/68 R3V5.1, "make sv68r3v51"
+# + for Motorola Delta System V/68 R3V6 with NSE TCP/IP, "make sv68r3v6"
 # + for Motorola Delta System V/88 R32, "make sv88r32"
 # + for Motorola Delta System V/88 R40, "make sv88r40"
 # + for Mt Xinu Mach386 on 386/486-based PCs, "make bsd43"
@@ -341,35 +383,43 @@ CKVER= "5A(190)"
 # + for NCR Tower 32, OS Releases based on Sys V R3 with gcc "make tower32g"
 # + for NCR System 3000, AT&T UNIX System V R4 2.0, "make sys5r4sxna"
 # + for NCR System 3000, AT&T UNIX System V R4 2.0 with Wollongong TCP/IP,
-#     "make sys5r4net2".  Some header files might misplaced; try this:
+#     "make sys5r4net2" or "make sys5r4net2c".
+#      Some header files might misplaced; try this:
 #       ln /usr/include/netinet/in.h /usr/include/sys/in.h
 #       ln /usr/include/arpa/inet.h /usr/include/sys/inet.h
 #       ln /usr/include/sys/termiox.h /usr/include/termiox.h
 # + for NCR System 3000, NCR UNIX 02.02.01, same as above.
-# + for NetBSD on PC 386/486, etc, "make netbsd"
+# + for NCR MP-RAS System V R4 V2.03, same as above.
+# + for NCR System 3000, NCR UNIX 02.03.x or 02.04.x, "make sys5r4net2c"
+# + for NetBSD on PC 386/486,..., "make netbsd" or (ncurses) "make netbsdn"
 # + for NeXT with NeXTSTEP 1.0 through 3.2, "make next" (on a NeXT)
+# + for NeXT with NeXTSTEP 3.3, "make next33"
 # + for NeXTSTEP/486, "make next" (on a PC)
 # + for NeXTSTEP portable binary (runs on Intel or Motorola), "make nextfat"
 # + for Nixdorf Targon/31, "make t31tos40x"
-# + for Novell UnixWare, "make unixware" or "make unixwarenetc"
 # + for Norsk Data Uniline 88/17 with SV/88 R3.2, "make sv88r32"
+#   for Novell UnixWare - see UnixWare
 # + for OSF/1 (vanilla, from OS/F), "make posix"
 # + for OkiStation 7300 Series, "make sys5r4sxtcp"
 # + for Olivetti LSX-3020 with X/OS R.2.3, "make xos23" or "make xos23c"
+# ? for OpenBSD, "make netbsd"?
 # + for Perkin-Elmer (Concurrent) 3200 series, "make sys5".
 # + for Perkin-Elmer (Concurrent) 3200 series with <dirent.h>, "make ccop1"
 # + for Perkin-Elmer/Concurrent 3200 with Xelos R02, "make ccop1"
 # + for PFU Compact A Series SX/A TISP V10/E50 (Japan), "make sxae50"
 # ? for Plexus, "make sys3"
 # + for Pyramid 9XXX (e.g. 9845) or MIServer T series, OSx 4.4b thru 5.1,
-#     "ucb make pyramid" or for HDB UUCP, "ucb make pyramid-hdb" or
+#     "ucb make pyramid" or for HDB UUCP, "ucb make pyramid-hdb" or:
 # + for Pyramid MIServer S or ES Series, DataCenter/OSx, "make pyrdcosx"
 # + for Pyramid MIS-S MIPS R3000, DataCenter OSx System V R4, "make pyrdcosx"
 # + for POSIX on anything, "make posix" (but adjustments might be necessary).
 # + for POSIX on SunOS 4.1 or later, "make sunposix"
+# + for Prime 8000 MIPS, SVR3, "make mips" or "make mipstcpc"
 # + for QNX 4.0 or 4.1, 16-bit, on 286 PC, Watcom C 8.5, "make qnx16_41"
-# + for QNX 4.2.1, 16-bit, on 386 or above, Watcom C 9.5, "make qnx16"
-# + for QNX 4.2.1, 32-bit, on 386 or above, Watcom C 9.5, "make qnx32"
+# + for QNX 4.21 - 4.22A (286+), and 4.23 (386+), 16-bit, Watcom C 9.5x,
+#     "make qnx16"
+# + for QNX 4.21 and above, 32-bit, 386 or above, Watcom C 10.6, "make qnx32"
+#     NOTE: Default is qnx32 ("make qnx")
 # ? for Ridge 32 (ROS3.2), "make ridge32"
 # ? for Samsung MagicStation, "make sys5r4"
 # ? for SCO Xenix 2.2.1 with development system 2.2 on 8086/8 "make sco86"
@@ -380,33 +430,47 @@ CKVER= "5A(190)"
 # + for SCO Xenix/386 2.3.x, "make sco3r2" or "make sco3r2x"
 # + for SCO Xenix/386 SCO 2.3.3 or 2.3.4 with gcc 1.37 or later,
 #     "make sco386gcc" or (to add curses) "make sco386gccc".
-#   for SCO UNIX...  ALSO READ COMMENTS in SCO UNIX entries for more info!
+# + for SCO Xenix/386 or UNIX/386 with Excelan TCP/IP, "make sco3r2net"
+#     or (to add curses support) "make sco3r2netc" or "sco386netc"
+# + for SCO Xenix 2.3.x with Racal-InterLan TCP/IP, "make sco3r2netri"
+# + for other UNIX varieties with Racal Interlan TCP/IP, read sco3r2netri entry
+# + for SCO Xenix 2.3.x with SCO (Lachman) TCP/IP, "make sco3r2lai"
+#     or (to add curses) "make sco3r2laic"
+#   for SCO UNIX...  ALSO READ COMMENTS in the SCO UNIX entries for more info!
 # + for SCO UNIX/386 3.2.0 or 3.2.1, "make sco3r2" or "make sco3r2x"
 # + for SCO UNIX/386 3.2.2, "make sco3r22" or "make sco3r22gcc"
 #     or "make sco3r22c"
 # + for SCO UNIX/386 3.2.2 with SCO TCP/IP, "make sco3r22net"
 #     or "make sco3r22netc" (curses)
 # + for SCO ODT 1.1, "make sco3r22net" or "make sco3r22netc" (curses)
-# + for SCO UNIX/386 3.2 V4.0, no network support, "make sco32v4"
-# + for SCO UNIX 3.2v4.0 with TCP/IP, <dirent.h> for Extended Acer File
+# + for SCO UNIX/386 3.2 V4.x, no network support, "make sco32v4"
+# + for SCO UNIX/386 3.2 V5.0 - see SCO OpenServer.
+# + for SCO UNIX 3.2v4.x with TCP/IP, <dirent.h> for Extended Acer File
 #     System (EAFS), curses, ANSI C compilation, "make sco32v4net"
 # + for SCO UNIX 3.2v4.2, "make sco_odt30"
+#
+# NOTE: Also see below for other entries that are variations on these,
+# e.g. to compile with gcc rather than the SCO Development System.
+# Also be sure to read the comments accompanying each SCO entry.
+#
 # + for SCO ODT 2.0, "make sco32v4net"
 # + for SCO ODT 3.0, "make sco_odt30"
-# + for SCO Xenix/386 or UNIX/386 with Excelan TCP/IP, "make sco3r2net"
-#     or (to add curses support) "make sco3r2netc" or "sco386netc"
-# + for SCO Xenix 2.3.x with Racal-InterLan TCP/IP, "make sco3r2netri"
-# + for SCO Xenix 2.3.x with SCO (Lachman) TCP/IP, "make sco3r2lai"
-#     or (to add curses) "make sco3r2laic"
-# + for other UNIX varieties with Racal Interlan TCP/IP, read sco3r2netri entry
+# + for SCO OpenServer 5.0 (OSR5), "make sco32v5"
+# + for SCO OpenServer 5.0 (OSR5) with networking, "make sco32v5net"
+# + for SCO OpenServer 5.0 (OSR5), gcc, "make sco32v5gcc"
+# + for SCO OpenServer 5.0 (OSR5), gcc, with networking, "make sco32v5netgcc"
+# + for SCO OpenServer 5.0 (OSR5) as above, ELF binary, "make sco32v5netgccelf"
+#   for SCO UnixWare - see UnixWare
 # + for Sequent with DYNIX/ptx 1.2.1, "make dynixptx12"
 # + for Sequent with DYNIX/ptx 1.3 or 1.4 with TCP/IP, "make dynixptx13"
-# + for Sequent with DYNIX/ptx 2.0, 2.1 or 4.0 with TCP/IP, "make dynixptx20"
+# + for Sequent with DYNIX/ptx 2.0 or 2.1 with TCP/IP, "make dynixptx20"
 #     or "dynixptx20c"
+# + for Sequent with DYNIX/ptx 4.0 V4.1.3 with TCP/IP, "make dynixptx41c"
 # + for Sequent Balance 8000 or B8 with DYNIX 3.0.xx, "make dynix3"
 #    or "make dynix3noacu"
 # + for Sequent Symmetry S81 with DYNIX 3.0.xx, "make dynix3"
 # + for Sequent DYNIX 3.1.xx, "make dynix31" or "make dynix31c"
+# + for Siemens/Nixdorf SINIX-N MIPS V5.42, "make sinix542"
 # + for Silicon Graphics Iris System V IRIX 3.2 or earlier, "make iris"
 # + for Silicon Graphics Sys V R3 with IRIX 3.3 or later, "make sys5r3"
 # + for Silicon Graphics Iris Indigo with IRIX 4.0 or 5.0, "make irix40" or
@@ -414,12 +478,11 @@ CKVER= "5A(190)"
 # + for Silicon Graphics Iris Indigo or Elan with IRIX 4.0.x with microcode
 #     optimization and -O4, "make irix40u" or "irix40uc" (and read notes
 #     accompanying these entries).
-# + for Silicon Graphics Challenge XL with IRIX 5.1/5.2 or Indigo Elan with
-#     IRIX 5.2, "make irix51ypc".
-# + for Silicon Graphics Challenge XL with IRIX 5.1/5.2, "make irix51ypc".
-# + for Solaris 2.0-2.3 on SPARC or Intel, SunPro CC, "make solaris2x",
+# + for Silicon Graphics IRIX 5.1/5.2/5.3, "make irix51".
+# + for Silicon Graphics models with IRIX 6.0, "make irix60".
+# + for Solaris 2.0-2.4 on SPARC or Intel, SunPro CC, "make solaris2x",
 # +   or to add SunLink X.25 8.0x support, "make solaris2x25".
-# + for Solaris 2.0-2.3 on SPARC or Intel, GNU CC, "make solaris2xg".
+# + for Solaris 2.0-2.4 on SPARC or Intel, GNU CC, "make solaris2xg".
 # + for Solbourne 4/500 with OS/MP 4 "make sunos4"
 # + for Solbourne 4/500 with OS/MP 4.1 "make sunos41" or "make sunos41c"
 # + for SONY NEWS with NEWS-OS 4.0.1C, "make sonynews"
@@ -451,8 +514,8 @@ CKVER= "5A(190)"
 #     NOTE3: If an executable built on one type of Sun hardware does not work
 #       on another type, rebuild the program from source on the target machine.
 # + for Sun with Solaris 1.x use SunOS 4.1 entries.
-# + for Sun with Solaris 2.0 through 2.3 and SunPro CC, "make solaris2x"
-# + for Sun with Solaris 2.0 through 2.3 and GNU CC, "make solaris2xg"
+# + for Sun with Solaris 2.0 through 2.5 and SunPro CC, "make solaris2x"
+# + for Sun with Solaris 2.0 through 2.5 and GNU CC, "make solaris2xg"
 # + for Tandy 16/6000 with Xenix 3.0, "make trs16"
 # + for Tektronix 6130/4132/43xx (e.g.4301) with UTek OS, "make utek"
 #     or (for models without hardware flow control), "make uteknohwfc"
@@ -463,7 +526,8 @@ CKVER= "5A(190)"
 # + for UNISYS U5000 UNIX SVR3 6.x, "make sys5r3" or "make sys5r3c"
 # + for UNISYS U6000 UNIX SVR4 1.x, "make sys5r4nx" or "make sys5r4nxnetc"
 #   for UNISYS ... (also see Sperry)
-#   for Univel, UnixWare: see Novell
+#   for Univel - see UnixWare
+# + for UnixWare, "make unixware" or "make unixwarenetc"
 # ? for Valid Scaldstar, "make valid"
 # ? for Whitechapel MG01 Genix 1.3, "make white"
 # ? for Zilog ZEUS 3.21, "make zilog"
@@ -514,8 +578,8 @@ CKVER= "5A(190)"
 # link flags.  Without I&D space, overlays will be necessary (if available),
 # or code segment mapping (a`la Pro/Venix) if that's available.
 #
-# C-Kermit 5A can be built for 2.10 and 2.11BSD, using overlays, but a
-# separate makefile is used because this one is too big.
+# C-Kermit 5A (and 6.0?) can be built for 2.10 and 2.11BSD, using overlays,
+# but a separate makefile is used because this one is too big.
 #
 ##############################################################################
 #
@@ -550,7 +614,9 @@ SHELL=/bin/sh
 # SAMPLE ONLY.
 # Easy installation. Modify this to suit your own computer's file organization
 # and permissions.  If you don't have write access to the destination
-# directories, "make install" will fail.
+# directories, "make install" will fail.  In many cases, a real installation
+# will also require you to chown / chgrp for the UUCP lockfile and/or tty
+# devices, and perhaps also to chmod +s the appropriate permission fields.
 
 WERMIT = makewhat
 DESTDIR =
@@ -592,13 +658,14 @@ wermit:	ckcmai.$(EXT) ckucmd.$(EXT) ckuusr.$(EXT) ckuus2.$(EXT) ckuus3.$(EXT) \
 		ckuusx.$(EXT) ckuusy.$(EXT) ckcpro.$(EXT) ckcfns.$(EXT) \
 		ckcfn2.$(EXT) ckcfn3.$(EXT) ckuxla.$(EXT) ckucon.$(EXT) \
 		ckutio.$(EXT) ckufio.$(EXT) ckudia.$(EXT) ckuscr.$(EXT) \
-		ckcnet.$(EXT)
+		ckcnet.$(EXT) ckusig.$(EXT)
 	$(CC2) $(LNKFLAGS) -o wermit ckcmai.$(EXT) ckutio.$(EXT) \
 		ckufio.$(EXT) ckcfns.$(EXT) ckcfn2.$(EXT) ckcfn3.$(EXT) \
 		ckuxla.$(EXT) ckcpro.$(EXT) ckucmd.$(EXT) ckuus2.$(EXT) \
 		ckuus3.$(EXT) ckuus4.$(EXT) ckuus5.$(EXT) ckuus6.$(EXT) \
 		ckuus7.$(EXT) ckuusx.$(EXT) ckuusy.$(EXT) ckuusr.$(EXT) \
-		ckucon.$(EXT) ckudia.$(EXT) ckuscr.$(EXT) ckcnet.$(EXT) $(LIBS)
+		ckucon.$(EXT) ckudia.$(EXT) ckuscr.$(EXT) ckcnet.$(EXT) \
+		ckusig.$(EXT) $(LIBS)
 
 #Malloc Debugging version
 
@@ -607,43 +674,14 @@ mermit:	ckcmdb.$(EXT) ckcmai.$(EXT) ckucmd.$(EXT) ckuusr.$(EXT) ckuus2.$(EXT) \
 		ckuus7.$(EXT) ckuusx.$(EXT) ckuusy.$(EXT) ckcpro.$(EXT) \
 		ckcfns.$(EXT) ckcfn2.$(EXT) ckcfn3.$(EXT) ckuxla.$(EXT) \
 		ckucon.$(EXT) ckutio.$(EXT) ckufio.$(EXT) ckudia.$(EXT) \
-		ckuscr.$(EXT) ckcnet.$(EXT)
+		ckuscr.$(EXT) ckcnet.$(EXT) ckusig.$(EXT)
 	$(CC2) $(LNKFLAGS) -o mermit ckcmdb.$(EXT) ckcmai.$(EXT) \
 		ckutio.$(EXT) ckufio.$(EXT) ckcfns.$(EXT) ckcfn2.$(EXT) \
 		ckcfn3.$(EXT) ckuxla.$(EXT) ckcpro.$(EXT) ckucmd.$(EXT) \
 		ckuus2.$(EXT) ckuus3.$(EXT) ckuus4.$(EXT) ckuus5.$(EXT) \
 		ckuus6.$(EXT) ckuus7.$(EXT) ckuusx.$(EXT) ckuusy.$(EXT) \
 		ckuusr.$(EXT) ckucon.$(EXT) ckudia.$(EXT) ckuscr.$(EXT) \
-		ckcnet.$(EXT) $(LIBS)
-
-# Here is an example of building Kermit with overlays for a small machine,
-# like a PDP-11 without separate I&D space. This example is for 2.11 BSD:
-
-ovwermit: ckcmai.$(EXT) ckucmd.$(EXT) ckuusr.$(EXT) ckuus2.$(EXT) \
-	ckuus3.$(EXT) ckuus4.$(EXT) ckuus5.$(EXT) ckcpro.$(EXT) \
-	ckcfns.$(EXT) ckcfn2.$(EXT) ckcfn3.$(EXT) ckuxla.$(EXT) \
-	ckucon.$(EXT) ckutio.$(EXT) ckufio.$(EXT) ckudia.$(EXT) \
-	ckuscr.$(EXT) ckcnet.$(EXT) ckuus6.$(EXT) ckuus7.$(EXT) ckuusx.$(EXT) \
-	ckuusy.$(EXT) ckustr.o strings.o
-	ar x /lib/libc.a getpwent.o ctime.o ndbm.o
-	$(CC2) $(LNKFLAGS) -o wermit ckcmai.$(EXT) \
-		ckutio.$(EXT) ckufio.$(EXT) ckcfns.$(EXT) ckcfn2.$(EXT) \
-		ckcfn3.$(EXT) \
-		 -Z ckuxla.$(EXT) ckcpro.$(EXT) ckucmd.$(EXT) \
-		    ckuus3.$(EXT) \
-		 -Z ckuus4.$(EXT) ckuus5.$(EXT) ckuusr.$(EXT) ckuus6.$(EXT) \
-		    ctime.o \
-		 -Z ckuus7.$(EXT) ckcfn3.$(EXT) ckudia.$(EXT) ckuscr.$(EXT) \
-		    ckcnet.$(EXT)  \
-		 -Z ckuus2.$(EXT) ckuusx.$(EXT) ckucon.$(EXT) ckuusy.$(EXT) \
-		    getpwent.o ndbm.o \
-		 -Y ckustr.o strings.o $(LIBS)
-
-strings.o: strings
-	xstr
-	cc -c xs.c
-	mv -f xs.o strings.o
-	rm -f xs.c
+		ckcnet.$(EXT) ckusig.$(EXT) $(LIBS)
 
 ###########################################################################
 # man page...
@@ -661,7 +699,8 @@ ckuker.nr: ckuker.cpp
 ###########################################################################
 # Dependencies for each module...
 #
-ckcmai.$(EXT): ckcmai.c ckcker.h ckcdeb.h ckcsym.h ckcasc.h ckcnet.h
+ckcmai.$(EXT): ckcmai.c ckcker.h ckcdeb.h ckcsym.h ckcasc.h ckcnet.h ckcsig.h \
+		ckuusr.h
 
 ckcpro.$(EXT): ckcpro.c ckcker.h ckcdeb.h ckcsym.h ckcasc.h
 
@@ -699,7 +738,7 @@ ckuus6.$(EXT): ckuus6.c ckucmd.h ckcker.h ckuusr.h ckcdeb.h ckcasc.h ckcnet.h \
 ckuus7.$(EXT): ckuus7.c ckucmd.h ckcker.h ckuusr.h ckcdeb.h ckcxla.h ckuxla.h \
 		ckcasc.h ckcnet.h ckcsym.h
 
-ckuusx.$(EXT): ckuusx.c  ckcker.h ckuusr.h ckcdeb.h ckcasc.h ckcsym.h
+ckuusx.$(EXT): ckuusx.c  ckcker.h ckuusr.h ckcdeb.h ckcasc.h ckcsym.h ckcsig.h
 
 ckuusy.$(EXT): ckuusy.c  ckcker.h ckcdeb.h ckcasc.h ckcnet.h ckcsym.h
 
@@ -711,7 +750,7 @@ ckutio.$(EXT): ckutio.c ckcdeb.h ckcnet.h ckuver.h ckcsym.h
 
 ckucon.$(EXT): ckucon.c ckcker.h ckcdeb.h ckcasc.h ckcnet.h ckcsym.h
 
-ckcnet.$(EXT): ckcnet.c ckcdeb.h ckcker.h ckcnet.h ckcsym.h
+ckcnet.$(EXT): ckcnet.c ckcdeb.h ckcker.h ckcnet.h ckcsym.h ckcsig.h
 
 wart: ckwart.$(EXT)
 	$(CC) $(LNKFLAGS) -o wart ckwart.$(EXT) $(LIBS)
@@ -720,9 +759,11 @@ ckcmdb.$(EXT): ckcmdb.c ckcdeb.h ckcsym.h
 
 ckwart.$(EXT): ckwart.c
 
-ckudia.$(EXT): ckudia.c ckcker.h ckcdeb.h ckucmd.h ckcasc.h ckcsym.h
+ckudia.$(EXT): ckudia.c ckcker.h ckcdeb.h ckucmd.h ckcasc.h ckcsym.h ckcsig.h
 
-ckuscr.$(EXT): ckuscr.c ckcker.h ckcdeb.h ckcasc.h ckcsym.h
+ckuscr.$(EXT): ckuscr.c ckcker.h ckcdeb.h ckcasc.h ckcsym.h ckcsig.h
+
+ckusig.$(EXT): ckusig.c ckcasc.h ckcdeb.h ckcker.h ckcnet.h ckuusr.h ckcsig.h
 
 ###########################################################################
 #
@@ -774,6 +815,15 @@ aux3cgcc:
 	@echo Making C-Kermit $(CKVER) for Macintosh A/UX 3.0...
 	$(MAKE) "MAKE=$(MAKE)" aux3gcc "KFLAGS=$(KFLAGS) -DCK_CURSES" \
 	"LIBS = -lcurses $(LIBS)"
+
+#Bell Labs Research UNIX V10
+#Can't add TCP/IP because there is no sockets library.  It would have to
+#be done using streams, but there is no code in C-Kermit for that.
+#Remove -DNOJC if desired (if your system has csh, ksh, or bash).
+bellv10:
+	@echo Making C-Kermit $(CKVER) for Bell Labs Research UNIX V10...
+	$(MAKE) wermit "CFLAGS= -DBELLV10 -DBSD4 -DNDIR -DDYNAMIC -DNOJC \
+	-DNOSYSIOCTLH -DNOSETREU -DNOSETBUF -DNOCSETS -MINIDIAL $(KFLAGS)"
 
 #Berkeley Unix 4.1
 bsd41:
@@ -840,8 +890,17 @@ bsd44c:
 	"CFLAGS= -DBSD44 -DCK_CURSES -DDYNAMIC -DTCPSOCKET $(KFLAGS) -O" \
 	"LIBS= -lcurses -ltermcap"
 
+#NetBSD
 netbsd:
 	$(MAKE) bsd44c "KFLAGS=$(KFLAGS) -DNOCOTFMC"
+
+#NetBSD with ncurses
+netbsdn:
+	@echo Making C-Kermit $(CKVER) for NetBSD with ncurses...
+	$(MAKE) wermit \
+	"CFLAGS= -DBSD44 -DCK_CURSES -DDYNAMIC -DTCPSOCKET -DNOCOTFMC \
+	$(KFLAGS) -O" \
+	"LIBS= -lncurses -ltermcap"
 
 #Acorn RISCiX, based on ...
 #Berkeley Unix 4.2 or 4.3 with lock directory /usr/spool/uucp/LCK/LCK..ttyxx,
@@ -877,7 +936,6 @@ utek:
 	"CFLAGS= -O -DLCKDIR -DBSD4 -DTCPSOCKET -DDYNAMIC \
 	-DUTEK -DDCLPOPEN -DLOCK_DIR=\\\"/usr/spool/uucp/LCK.\\\" \
 	-DTRMBUFL=2048 -DCK_DTRCTS $(KFLAGS)"
-
 
 #Tektronix 4315, 4316, 4317 with UTek OS, /usr/spool/uucp/LCK./...
 #The models that do not fully support hardware flow control.
@@ -930,7 +988,6 @@ ccop1:
 clix:
 	$(MAKE) "CC=acc" "CC2=acc" sys5r3
 
-
 #Intergraph Clipper, as above plus curses, TCP/IP, job control, HDB UUCP.
 #Probably, should be added to regular clix entry too.
 clixnetc:
@@ -944,7 +1001,7 @@ clixnetc:
 coherent:
 	$(MAKE) "CFLAGS = -O -DCOHERENT -DDYNAMIC -DNOANSI -DNOICP -DNOSETKEY \
 	-DNOCSETS -DNOHELP -DNODIAL -DNOSCRIPT -DNODEBUG -DNOTLOG -DNOXMIT \
-	-DNOMSEND -DNOFRILLS -DNOSYSIOCTLH $(KFLAGS) -VSUVAR" wermit
+	-DNOMSEND -DNOFRILLS -DNOSYSIOCTLH -DSELECT_H $(KFLAGS) -VSUVAR" wermit
 
 #Mark Williams Coherent 386 on IBM PC family.
 #This will make a "minimum interactive" version - no scripts,
@@ -955,77 +1012,107 @@ coherentmi:
 	-DNOSHOW -DNOCSETS -DNOHELP -DNODIAL -DNOSCRIPT -DNODEBUG -DNOTLOG \
 	-DNOXMIT -DNOMSEND -DNOFRILLS -DNOSYSIOCTLH -DNOSERVER -DNOUUCP \
 	-DNOSPL -DNOSETBUF -DNOPUSH -DNOMDMHUP -DNOJC -DNOFDZERO -DNOESCSEQ \
-	-DNOCMDL $(KFLAGS) -VSUVAR" wermit
+	-DNOCMDL $(KFLAGS) -VSUVAR -DSELECT_H" wermit
 
 #Mark Williams Coherent 386 on IBM PC/AT family.
 coherentmax:
-	$(MAKE) "CFLAGS = -O -DCOHERENT -DDYNAMIC -DNOANSI \
+	$(MAKE) "CFLAGS = -O -DCOHERENT -DDYNAMIC -DNOANSI -DSELECT_H \
 	-DNOSYSIOCTLH $(KFLAGS) -VSUVAR" "LNKFLAGS = -O -s" wermit
 
 #Mark Williams Coherent 386 4.2 on IBM PC/AT family
 coherent42:
 	$(MAKE) "CFLAGS = -T0 -O -DCOHERENT -DDYNAMIC -DNOANSI -DSELECT \
 	-DDIRENT -DCK_CURSES -DCK_NEWTERM -DCK_WREFRESH -DNOSYSIOCTLH \
-	$(KFLAGS) -VSUVAR" "LNKFLAGS = -O -s" \
+	-DSELECT_H $(KFLAGS) -VSUVAR" "LNKFLAGS = -O -s" \
 	"LIBS  = -lsocket -lcurses" wermit
 
 #DEC Ultrix 2.x
 # Add -O, -DDYNAMIC, -s, etc, if they work.
-du2:
+ultrix2x:
 	@echo Making C-Kermit $(CKVER) for Ultrix 2.x ...
 	$(MAKE) wermit "CFLAGS= -DBSD4 -DTCPSOCKET -DDU2 $(KFLAGS)"
 
+du2:
+	$(MAKE) "MAKE=$(MAKE)" ultrix2x
+
 #DEC Ultrix 3.1 (and probably also 3.0)
-du3:
+ultrix3x:
 	@echo Making C-Kermit $(CKVER) for Ultrix 3.x...
 	$(MAKE) wermit "CFLAGS= -DBSD4 -DTCPSOCKET -DDIRENT -DSIG_V \
 	-DDYNAMIC $(KFLAGS) -O" "LNKFLAGS = -s"
+du3:
+	$(MAKE) "MAKE=$(MAKE)" ultrix3x
 
-#Name changed from ds4 to du4, should work on VAXes as well as DECstations.
-ds4:
-	$(MAKE) "MAKE=$(MAKE)" du4
 
 #DEC Ultrix 4.0 or 4.1 on DECstation, VAXstation, VAX, etc.
-du4:
+ultrix40:
 	@echo Making C-Kermit $(CKVER) for Ultrix 4.0 or 4.1...
 	$(MAKE) wermit \
 	"CFLAGS= -DBSD4 -DTCPSOCKET -DSIG_V -DDYNAMIC -DDU4 \
 	$(KFLAGS) -Olimit 1450" "LNKFLAGS = -s"
 
-#DEC Ultrix 4.2 on DECstation, VAXstation, VAX, etc.
-#Like du4, except new C compiler supports -O2 optimization.
+du4:
+	$(MAKE) "MAKE=$(MAKE)" ultrix4x
+
+#DEC Ultrix 4.2-4.5 on DECstation, DECsystem, VAXstation, VAX, etc.
+#Like du4, except now C compiler supports -O2 optimization.
+ultrix42:
+	@echo Making C-Kermit $(CKVER) for Ultrix 4.2 or later...
+	$(MAKE) wermit "CFLAGS= -DBSD4 -DTCPSOCKET -DSIG_V -DDYNAMIC \
+	$(KFLAGS) -O2 -Olimit 1750" "LNKFLAGS = -s"
+
 du42:
-	@echo Making C-Kermit $(CKVER) for Ultrix 4.2...
-	$(MAKE) wermit "CFLAGS= -DBSD4 -DTCPSOCKET -DSIG_V -DDYNAMIC \
-	$(KFLAGS) -O2 -Olimit 1500" "LNKFLAGS = -s"
+	$(MAKE) "MAKE=$(MAKE)" ultrix42
 
-#DEC Ultrix 4.2 on DECstation, VAXstation, VAX, etc.
+#DEC Ultrix 4.2-4.5 on DECstation, DECsystem, VAXstation, VAX, etc.
 #Like du42, but with curses support added
-du42c:
-	@echo Making C-Kermit $(CKVER) for Ultrix 4.2...
+ultrix42c:
+	@echo Making C-Kermit $(CKVER) for Ultrix 4.2 or later...
+	@echo WARNING - If you have problems with the executable
+	@echo then rebuild without -O2.
 	$(MAKE) wermit "CFLAGS= -DBSD4 -DTCPSOCKET -DSIG_V -DDYNAMIC \
-	-DCK_CURSES $(KFLAGS) -O2 -Olimit 1500" "LNKFLAGS = -s" \
+	-DCK_CURSES $(KFLAGS) -O2 -Olimit 1750" "LNKFLAGS = -s" \
 	"LIBS= -lcurses -ltermcap"
 
-#DEC Ultrix 4.3A on DECstation 5000/50 or /150 with R4000 MIPS processor,
-#or 5000/260 with R4400.  "-mips3" switch generates faster, more compact code.
-#Curses included.
-du43c-mips3:
-	@echo Making C-Kermit $(CKVER) for Ultrix 4.3A, R4000 cpu ...
+du42c:
+	$(MAKE) "MAKE=$(MAKE)" ultrix42c
+
+#DEC Ultrix 4.3A or later on DECsystem and DECstation 5000/50, /150 or /260
+#with MIPS R4x00 processor.  The "-mips3" switch generates R4000-specific
+#code, which is faster and more compact, but *won't* run on earlier
+#DECsystems and DECstations.
+ultrix43-mips3:
+	@echo Making C-Kermit $(CKVER) for Ultrix 4.3A or later, R4000 cpu...
 	$(MAKE) wermit "CFLAGS= -DBSD4 -DTCPSOCKET -DSIG_V -DDYNAMIC \
-	-DCK_CURSES $(KFLAGS) -O2 -Olimit 1450 -mips3" "LNKFLAGS = -s -mips3" \
+	$(KFLAGS) -O2 -Olimit 1750 -mips3" "LNKFLAGS = -s -mips3"
+
+du43-mips3:
+	$(MAKE) "MAKE=$(MAKE)" ultrix43-mips3
+
+#DEC Ultrix 4.3A or later on MIPS R4x000 based systems.
+#Like ultrix43-mips3 but with curses support added
+ultrix43c-mips3:
+	@echo Making C-Kermit $(CKVER) for Ultrix 4.3A or later, R4000 cpu...
+	$(MAKE) wermit "CFLAGS= -DBSD4 -DTCPSOCKET -DSIG_V -DDYNAMIC \
+	-DCK_CURSES $(KFLAGS) -O2 -Olimit 1750 -mips3" "LNKFLAGS = -s -mips3" \
 	"LIBS= -lcurses -ltermcap"
+
+du43c-mips3:
+	$(MAKE) "MAKE=$(MAKE)" ultrix43c-mips3
 
 #DEC Ultrix 4.4 on DECstation 5000/50 or /150 with R4000 MIPS processor,
 #or 5000/260 with R4400.  The "-mips3" switch generates R4000-specific code,
 #which is faster and more compact but *won't* run on earlier DECstations.
-du44-mips3:
+ultrix44-mips3:
 	@echo Making C-Kermit $(CKVER) for Ultrix 4.4, R4000 cpu ...
 	$(MAKE) wermit "CFLAGS= -DBSD4 -DTCPSOCKET -DSIG_V -DDYNAMIC \
 	$(KFLAGS) -O2 -Olimit 1450 -mips3" "LNKFLAGS = -s -mips3"
 
+du44-mips3:
+	$(MAKE) "MAKE=$(MAKE)" ultrix44c-mips3
+
 #DEC Ultrix 4.2 on DECstation, VAXstation, VAX, etc, System V R4 environment
-du42s5r4:
+ultrix42s5r4:
 	@echo 'Making C-Kermit $(CKVER) for AT&T UNIX System V R4 on Ultrix...'
 	$(MAKE) wermit \
 	"CFLAGS = -O2 -Olimit 1500 -DSVR4 -DDIRENT -DHDBUUCP \
@@ -1038,17 +1125,17 @@ osf:
 	-DDYNAMIC -DKANJI -DCK_CURSES -DCK_RTSCTS $(KFLAGS)" \
 	"LNKFLAGS = -s" "LIBS = -lbsd -lcurses -ltermcap"
 
-#DEC OSF/1 V1.0-1.3 on DECstation, VAX, Alpha AXP, or PC.
+#DEC OSF/1 V1.0-1.3 on DECstation, VAX, Alpha, or PC.
 dec-osf:
 	@echo Making C-Kermit $(CKVER) for DEC OSF/1 V1.x...
 	@echo If you are building for DEC OSF/1 2.0, please use dec-osf20.
 	@echo Remove or adjust -O2 and/or -Olimit if they cause trouble.
 	$(MAKE) osf "KFLAGS= -O2 -Olimit 1460 $(KFLAGS)"
 
-#DEC OSF/1 2.0 on Alpha AXP and probably nowhere else.
+#DEC OSF/1 2.0 on Alpha and probably nowhere else.
 #The only difference from OSF/1 is that optimization is omitted.
-#The optimized version gets strange #runtime errors, like the PAUSE command
-#not working.
+#The optimized version gets strange runtime errors, like the PAUSE command
+#not working.  Add "-unsigned" to make all chars unsigned.
 dec-osf20:
 	@echo Making C-Kermit $(CKVER) for DEC OSF/1 V2.0...
 	@echo Optimization omitted because it causes runtime errors.
@@ -1057,7 +1144,30 @@ dec-osf20:
 
 dec-osf30:
 	@echo Making C-Kermit $(CKVER) for DEC OSF/1 V3.0...
-	$(MAKE) osf "KFLAGS= -DOSF20 -DOSF30 -O2 -Olimit 1460 $(KFLAGS)"
+	$(MAKE) osf "KFLAGS= -DOSF30 -O2 -Olimit 1760 $(KFLAGS)"
+
+#Digital UNIX 3.2
+du32:
+	@echo Making C-Kermit $(CKVER) for Digital UNIX 3.2...
+	$(MAKE) osf \
+	"KFLAGS= -DOSF32 -DHDBUUCP -O2 -Olimit 1760 $(KFLAGS)"
+
+dec-osf32:
+	$(MAKE) "MAKE=$(MAKE)" du32
+
+du40:
+	@echo Making C-Kermit $(CKVER) for Digital UNIX 4.0...
+	$(MAKE) osf \
+	"KFLAGS= -DOSF40 -DHDBUUCP -unsigned -std1 -O3 -Olimit 1760 $(KFLAGS)"
+
+dec-osf40:
+	$(MAKE) "MAKE=$(MAKE)" du40
+
+du40-ridiculous-checking:
+	@echo Making C-Kermit $(CKVER) for Digital UNIX 4.0.
+	@echo Checking everything - assumes DECC...
+	$(MAKE) osf "KFLAGS= -DOSF40 -DHDBUUCP -w0 -warnprotos -check \
+	-portable -unsigned -std1 -O3 -Olimit 1760 $(KFLAGS)"
 
 #Sequent DYNIX/ptx 1.2.1
 dynixptx12:
@@ -1092,6 +1202,14 @@ dynixptx20c:
 	"CFLAGS= -DPOSIX -DHDBUUCP -DDYNAMIC -DTCPSOCKET \
 	-DWAIT_T=int -DNOSETBUF -DPTX  -DCK_CURSES -DCK_NEWTERM -O" \
 	"LIBS = -lsocket -linet -lnsl -lcurses -ltermcap"
+
+#Sequent DYNIX/ptx 4.0, ANSI C compilation, with curses
+dynixptx41c:
+	@echo 'Making C-Kermit $(CKVER) for POSIX, Sequent DYNIX/ptx 4.1...'
+	$(MAKE) wermit \
+	"CFLAGS= -DPOSIX -DHDBUUCP -DDYNAMIC -DTCPSOCKET \
+	-DWAIT_T=int -DNOSETBUF -DPTX  -DCK_CURSES -DCK_NEWTERM -O" \
+	"LIBS = -lsocket -lnsl -lcurses -ltermcap"
 
 #Sequent DYNIX 3.0.x
 dynix3:
@@ -1141,11 +1259,18 @@ umax42:
 	"CFLAGS= -DBSD4 -DENCORE -DDYNAMIC -DTCPSOCKET $(KFLAGS) -O"
 
 #Encore 88K UMAX 5.3 with TCP/IP support
-encore88K:
+encore88k:
 	@echo 'Making C-Kermit $(CKVER) for Encore 88K UMAX V, TCP/IP...'
 	$(MAKE) wermit \
 	"CFLAGS = -q ext=pcc -DSVR3 -DTCPSOCKET -DDIRENT \
-	-DHDBUUCP -DDYNAMIC $(KFLAGS) -O" "LNKFLAGS ="
+	-DNOGETID_PROTOS -DHDBUUCP -DDYNAMIC $(KFLAGS) -O" "LNKFLAGS ="
+
+#Encore 88K UMAX 5.3 with TCP/IP support
+encore88kgcc:
+	@echo 'Making C-Kermit $(CKVER) for Encore 88K UMAX V, TCP/IP, gcc...'
+	$(MAKE) wermit CC=gcc CC2=gcc \
+	"CFLAGS = -DSVR3 -DTCPSOCKET -DDIRENT \
+	-DNOGETID_PROTOS -DHDBUUCP -DDYNAMIC $(KFLAGS) -O" "LNKFLAGS ="
 
 #Berkeley Unix 2.8, 2.9 for PDP-11s with I&D space, maybe also Ultrix-11???
 #C-Kermit(5A) is simply too large (even turning off almost every feature
@@ -1242,6 +1367,22 @@ nextg:
 nextgc:
 	$(MAKE) "MAKE=$(MAKE)" next KFLAGS=-Wall
 
+#NeXTSTEP 3.3.
+#Includes fullscreen file transfer display and TCP/IP.
+next33:
+	@echo Making C-Kermit $(CKVER) for NeXTSTEP 3.3...
+	$(MAKE) wermit \
+	"CFLAGS= -DNEXT33 -DNOSETBUF -DTCPSOCKET -DDYNAMIC -DLCKDIR -DKANJI \
+	-DCK_CURSES $(KFLAGS) -O -w" "LIBS = -lsys_s -lcurses -ltermcap"
+
+#NeXT with malloc debugger
+nextmd:
+	@echo Making C-Kermit $(CKVER) for NeXT with malloc debugging...
+	$(MAKE) mermit \
+	"CFLAGS= -DNEXT -DNOSETBUF -DTCPSOCKET -DDYNAMIC -DLCKDIR -DKANJI \
+	-DCK_CURSES $(KFLAGS) -O -w -Dmalloc=dmalloc -Dfree=dfree -DMDEBUG" \
+	"LIBS = -lsys_s -lcurses -ltermcap"
+
 #Build for NeXTSTEP with "fat" binaries (MABs) that run on both Motorola
 #and Intel platforms.
 nextfat:
@@ -1257,6 +1398,28 @@ next486:
 	"CFLAGS= -DNEXT -DNOSETBUF -DTCPSOCKET -DDYNAMIC -DLCKDIR -DKANJI \
 	-DNODEBUG -O3 -fno-omit-frame-pointer -fschedule-insns2 -pipe \
 	-DCK_CURSES $(KFLAGS) -w" "LIBS = -lsys_s -lcurses -ltermcap"
+
+#BeBox
+beboxdr7:
+	@echo 'Making C-Kermit $(CKVER) for the BeBox...'
+	@echo 'Link step will fail with default Metroworks linker 64K limit.'
+	@echo 'Code Warrior Gold required to link big programs.'
+	$(MAKE) wermit \
+	"CC=/boot/develop/tools/mwcc" "CC2=/boot/develop/tools/mwld" \
+	"CFLAGS= -DBEBOX -DBE_DR_7 -DPOSIX -DNOUUCP $(KFLAGS) -O"
+
+#BeBox
+bebox:
+	@echo 'Making C-Kermit $(CKVER) for the BeBox...'
+	@echo 'Link step will fail with default Metroworks linker 64K limit.'
+	@echo 'Code Warrior Gold required to link big programs.'
+	$(MAKE) wermit \
+	"CC=/boot/develop/tools/mwcc" "CC2=/boot/develop/tools/mwld" \
+	"CFLAGS= -DBEBOX -DPOSIX -DNOUUCP $(KFLAGS) -O"
+
+#Plan 9 from Bell Labs
+plan9:
+	make -f ckpker.mk
 
 #POSIX
 posix:
@@ -1363,15 +1526,16 @@ rs6000:
 	@echo Making C-Kermit $(CKVER) for IBM AIX 3.0 or 3.1, RS/6000...
 	$(MAKE) wermit \
 	"CFLAGS= -DAIXRS -DTCPSOCKET -DSVR3 -DDIRENT -DDYNAMIC -DCK_ANSIC \
-	-DCK_POLL -DNOSETBUF -DCLSOPN -DKANJI -O $(KFLAGS)" "LNKFLAGS = -s"
+	-DCK_POLL -DNOSETBUF -DCLSOPN -DKANJI -DSELECT_H -O $(KFLAGS)" \
+	"LNKFLAGS = -s"
 
 #IBM AIX 3.0, 3.1, or 3.2 for RISC System/6000, with curses.
 rs6000c:
 	@echo Making C-Kermit $(CKVER) for IBM AIX 3.0 or 3.1, RS/6000...
 	$(MAKE) wermit \
 	"CFLAGS= -DAIXRS -DTCPSOCKET -DSVR3 -DDIRENT -DDYNAMIC -DCK_ANSIC \
-	-DCK_POLL -DNOSETBUF -DCLSOPN -DCK_CURSES -DKANJI -O $(KFLAGS)" \
-	"LIBS= -lcurses -ltermcap" "LNKFLAGS = -s"
+	-DCK_POLL -DNOSETBUF -DCLSOPN -DCK_CURSES -DKANJI  -DSELECT_H \
+	-O $(KFLAGS)" "LIBS= -lcurses -ltermcap" "LNKFLAGS = -s"
 
 #IBM AIX 3.2 for RISC System/6000.
 #In case of "subprogram too complex" warnings, add "-qmaxmem=4000" to CFLAGS.
@@ -1379,7 +1543,7 @@ rs6aix32:
 	@echo Making C-Kermit $(CKVER) for IBM AIX 3.2, RS/6000...
 	$(MAKE) wermit \
 	"CFLAGS= -DAIXRS -DTCPSOCKET -DSVR4 -DDIRENT -DDYNAMIC -DCK_ANSIC \
-	-DCLSOPN -DKANJI -DCK_POLL -O $(KFLAGS)" "LNKFLAGS = -s"
+	-DSELECT_H -DCLSOPN -DKANJI -O $(KFLAGS)" "LNKFLAGS = -s"
 
 #IBM AIX 3.2 for RISC System/6000.
 rs6aix32c:
@@ -1388,19 +1552,25 @@ rs6aix32c:
 	@echo add -qmaxmem=4000 to CFLAGS.
 	$(MAKE) wermit \
 	"CFLAGS= -DAIXRS -DTCPSOCKET -DSVR4 -DDIRENT -DDYNAMIC -DCK_ANSIC \
-	-DCLSOPN -DCK_CURSES -DKANJI -DCK_POLL -O $(KFLAGS)" "LNKFLAGS = -s" \
-	"LIBS=-lcurses"
+	-DCLSOPN -DCK_CURSES -DKANJI -DSELECT_H -O $(KFLAGS)" \
+	"LNKFLAGS = -s" "LIBS=-lcurses"
 
-#IBM AIX 4.1 (Beta) or AIX 4.1.1 for RISC System/6000.
+#IBM AIX 4.1 (Beta) or AIX 4.1.1 for RISC System/6000 or Power Series
 rs6aix41c:
-	@echo Making C-Kermit $(CKVER) for IBM AIX 4.1.1, RS/6000...
-	@echo In case of Subprogram Too Complex warnings,
-	@echo add -qmaxmem=4000 to CFLAGS.
+	@echo Making C-Kermit $(CKVER) for IBM AIX 4.1.1 RS/6000 or PowerPC...
 	$(MAKE) wermit \
 	"CFLAGS= -DAIXRS -DAIX41 -DSVR4 -DSTERMIOX -DTCPSOCKET -DDIRENT \
-	-DDYNAMIC -DCK_ANSIC -DCLSOPN -DCK_CURSES -DKANJI -DCK_POLL \
-	-O $(KFLAGS)" \
-	"LNKFLAGS = -s" "LIBS=-lcurses"
+	-DDYNAMIC -DCK_ANSIC -DCLSOPN -DCK_CURSES -DKANJI -DSELECT -DSELECT_H \
+	-qmaxmem=6000 -O $(KFLAGS)" "LNKFLAGS = -s" "LIBS=-lcurses"
+
+#IBM AIX 4.1 (Beta) or AIX 4.1.1 for RISC System/6000 or Power Series
+rs6aix41d:
+	@echo Making C-Kermit $(CKVER) for IBM AIX 4.1.1 - debugging...
+	$(MAKE) wermit \
+	"CFLAGS= -g -DAIXRS -DAIX41 -DSVR4 -DSTERMIOX -DTCPSOCKET -DDIRENT \
+	-DDYNAMIC -DCK_ANSIC -DCLSOPN -DCK_CURSES -DKANJI -DSELECT -DSELECT_H \
+	-DRLOGCODE -qcheck -qextchk -qinfo -qproto -qflag=i:i -langlvl=ansi \
+	-qtbtable=full -bnoquiet $(KFLAGS)" "LNKFLAGS = -s" "LIBS=-lcurses"
 
 #Bull DPX/2 with BOS/X, somewhat like AIX/RS6000
 bulldpx2:
@@ -1435,7 +1605,7 @@ sunos4x25:
 sunos41:
 	@echo Making C-Kermit $(CKVER) for SunOS 4.1 / BSD...
 	$(MAKE) wermit "CFLAGS= -O -DSUNOS41 -DHDBUUCP -DDIRENT -DTCPSOCKET \
-	-DNOSETBUF -DKANJI -DSAVEDUID -DDYNAMIC $(KFLAGS)"
+	-DNOSETBUF -DKANJI -DSAVEDUID -DDYNAMIC -DHADDRLIST $(KFLAGS)"
 
 #As above, but compile with gcc.  Gives 24-32K size reduction
 #with gcc 2.1 or 2.2.2.  CAUTION: make sure "fixincludes" has been run on
@@ -1469,7 +1639,7 @@ sunos41x25:
 	@echo SunLink X.25 support
 	$(MAKE) "MAKE=$(MAKE)" sunos41 "KFLAGS=$(KFLAGS) -DSUNX25"
 
-#SUNOS 4.1 with SunLink X.25 support
+#SUNOS 4.1 with SunLink X.25 support and curses
 sunos41x25c:
 	@echo SunLink X.25 support, curses
 	$(MAKE) "MAKE=$(MAKE)" sunos41c "KFLAGS=$(KFLAGS) -DSUNX25"
@@ -1524,19 +1694,33 @@ sunos51:
 #Your PATH should start with something like:
 #  /usr/local/gnu/bin:/usr/ccs/bin:
 #Produces a huge executable -- strip with /usr/ccs/bin/strip (not Gnu strip).
-#Also don't add "LNKFLAGS = -s" - strip manually.
+#Also don't add "LNKFLAGS = -s" -- strip manually instead.
 #Also note: this can NOT be linked statically - Sun makes it impossible.
+#And for Solaris 2.4, you might have replace:
+# /usr/local/lib/gcc-lib/i486-sun-solaris2/2.4.5/include/sys/stat.h
+#with /usr/include/sys/stat.h.
 solaris2xg:
 	@echo 'Making C-Kermit $(CKVER) for Solaris 2.x with GNU cc...'
 	@echo 'Please read the comments that accompany this entry.'
 	$(MAKE) wermit CC=gcc CC2=gcc \
-	"CFLAGS = -g -O -Usun -DSVR4 -DSOLARIS -DSTERMIOX -DCK_POLL \
+	"CFLAGS = -g -O -Usun -DSVR4 -DSOLARIS -DSTERMIOX -DSELECT \
 	-DCK_CURSES -DCK_NEWTERM -DDIRENT -DHDBUUCP -DDYNAMIC -DNOSETBUF \
 	-DTCPSOCKET -DKANJI $(KFLAGS)" \
 	"LIBS= -ltermlib -lsocket -lnsl"
 
+#As above with SunLink X.25 added.
+solaris2xg25:
+	@echo 'Making C-Kermit $(CKVER) for Solaris 2.x + X.25 with GNU cc...'
+	@echo 'Please read the comments that accompany the solaris2xg entry.'
+	$(MAKE) wermit CC=gcc CC2=gcc \
+	"CFLAGS = -g -O -Usun -DSVR4 -DSOLARIS -DSTERMIOX -DSELECT -DSUNX25 \
+	-DCK_CURSES -DCK_NEWTERM -DDIRENT -DHDBUUCP -DDYNAMIC -DNOSETBUF \
+	-DTCPSOCKET -DKANJI $(KFLAGS)" \
+	"LIBS= -ltermlib -L/opt/SUNWconn/lib -R/opt/SUNWconn/lib \
+	-lsockx25 -lsocket -lnsl"
+
 sunos51cgcc:
-	$(MAKE) "MAKE=$(MAKE)" solaris2x
+	$(MAKE) "MAKE=$(MAKE)" solaris2xg
 
 #Solaris 2.x, SunPro compiler, includes curses and TCP/IP.
 #When using SUNWspro CC 2.0.1 under Solaris 2.3, be sure all cc patches
@@ -1546,23 +1730,27 @@ sunos51cgcc:
 #  /usr/ucb:/usr/sbin:/sbin:.
 # or (depending on where the compiler has been installed):
 #  /usr/openwin/bin:/export/home/SUNWspro/bin:/usr/ccs/bin:/usr/sbin:/usr/bin.
+#For additional optimization try using "-fast -xO4 -xdepend".
 solaris2x:
 	@echo 'Making C-Kermit $(CKVER) for Solaris 2.x with SunPro cc...'
 	$(MAKE) wermit \
-	"CFLAGS = -O -Usun -DSVR4 -DDIRENT -DSOLARIS -DHDBUUCP \
-	-DDYNAMIC -DCK_POLL -DCK_CURSES -DCK_NEWTERM -DSTERMIOX -DNOSETBUF \
-	-DTCPSOCKET -DKANJI $(KFLAGS)" "LNKFLAGS = -s" \
+	"CFLAGS = -O -Usun -i -DSVR4 -DDIRENT -DSOLARIS -DHDBUUCP \
+	-DDYNAMIC -DSELECT -DCK_CURSES -DCK_NEWTERM -DSTERMIOX -DNOSETBUF \
+	-DTCPSOCKET -DKANJI -DHADDRLIST $(KFLAGS)" "LNKFLAGS = -s" \
 	"LIBS= -ltermlib -lsocket -lnsl"
 
 #Solaris 2.x with SunLink X.25 support.
+#This will only run if user has /opt/SUNWconn/lib/libsockx25.so.1
+#exists and can be dynamically linked.
 solaris2x25:
 	@echo 'Making C-Kermit $(CKVER) for Solaris 2.x+X.25 with SunPro cc...'
 	$(MAKE) wermit \
-	"CFLAGS = -O -Usun -DSVR4 -DSOLARIS -DDIRENT \
-	-DSUNX25 -DTCPSOCKET -DHDBUUCP \
-	-DDYNAMIC -DCK_POLL -DCK_CURSES -DCK_NEWTERM -DSTERMIOX -DNOSETBUF \
+	"CFLAGS = -O -i -Usun -DSVR4 -DSOLARIS -DDIRENT \
+	-DSUNX25 -DTCPSOCKET -DHADDRLIST -DHDBUUCP \
+	-DDYNAMIC -DSELECT -DCK_CURSES -DCK_NEWTERM -DSTERMIOX -DNOSETBUF \
 	-DKANJI $(KFLAGS)" "LNKFLAGS = -s" \
-	"LIBS= -ltermlib -L/opt/SUNWconn/lib -lsockx25 -lsocket -lnsl"
+	"LIBS= -ltermlib -L/opt/SUNWconn/lib -R/opt/SUNWconn/lib \
+	-lsockx25 -lsocket -lnsl"
 
 sunos51tcp:
 	$(MAKE) "MAKE=$(MAKE)" solaris2x
@@ -1578,7 +1766,7 @@ sunos41x:
 	-DNOSETBUF -DKANJI -DDYNAMIC -DNOICP -DNOLOCAL $(KFLAGS)"
 
 #SunOS 4.1.x, debugging with Pure Software, Inc., Purify 2 (commercial runtime
-#error-detection software).
+#error-detection software for catching wild array references, etc).
 #Before running the resulting wermit, you'll also need to define and export
 #the following environment variables (as in this example):
 #PURIFYHOME=/usr/local/purify ; export PURIFYHOME
@@ -1591,6 +1779,21 @@ sunos41cp:
 	-DKANJI -DSAVEDUID -DDYNAMIC -DCK_CURSES $(KFLAGS)" \
 	"LIBS= -lcurses -ltermcap"
 
+#SunOS 4.1 with malloc debugger
+sunos41md:
+	@echo Making C-Kermit $(CKVER) for SunOS 4.1 malloc debug...
+	$(MAKE) mermit \
+	"CFLAGS= -O -DSUNOS41 -DHDBUUCP -DDIRENT -DTCPSOCKET \
+	-DSAVEDUID -DDYNAMIC $(KFLAGS) -Dmalloc=dmalloc -Dfree=dfree -DMDEBUG"
+
+sunos41gmd:
+	@echo Making C-Kermit $(CKVER) for SunOS 4.1/BSD with gcc and curses...
+	$(MAKE) mermit "CC= gcc " "CC2= gcc" \
+	"CFLAGS= -g -DSUNOS41 -DHDBUUCP -DDIRENT -DTCPSOCKET -DNOSETBUF \
+	-DNDGPWNAM -DSAVEDUID -DDYNAMIC -DKANJI -DCK_CURSES -DRLOGCODE \
+	$(KFLAGS) -Dmalloc=dmalloc -Dfree=dfree -DMDEBUG" \
+	"LIBS= -lcurses -ltermcap"
+
 #SunOS version 4.1, gcc, profiling with gprof, no debugging.
 #To get profile, "make sunos4p" (on Sun), then "./wermit".  After running
 #wermit, "gprof ./wermit | lpr" (or whatever) to get execution profile.
@@ -1598,36 +1801,25 @@ sunos41p:
 	@echo Making C-Kermit $(CKVER) for SunOS 4.x with profiling...
 	$(MAKE) wermit "CC= gcc " "CC2= gcc" \
 	"CFLAGS= -DSUNOS41 -DNODEBUG -DSAVEDUID -DDIRENT -DTCPSOCKET \
-	-DDYNAMIC $(KFLAGS) -pg" "LNKFLAGS = -pg"
+	-DNDGPWNAM -DDYNAMIC $(KFLAGS) -pg" "LNKFLAGS = -pg"
 
 #SunOS version 4.1, BSD environment, minimum size...
 sunos41m:
 	@echo Minimum size
 	$(MAKE) "MAKE=$(MAKE)" sunos41 \
-	"KFLAGS=$(KFLAGS) -DNODIAL -DNOHELP -DNODEBUG -DNOTLOG \
-	-DNOSCRIPT -DNOCSETS -DNOICP -DNOMSEND -UTCPSOCKET" "LNKFLAGS = -s"
+	"KFLAGS=$(KFLAGS) -DNODIAL -DNOHELP -DNODEBUG -DNOTLOG -DNOCKSPEED \
+	-DNOSCRIPT -DNOCSETS -DNOICP -DNOMSEND -UTCPSOCKET" \
+	"LNKFLAGS = -s"
 
 #SunOS version 4.1 or later, BSD environment, minimum size w/command parser.
 sunos41mi:
 	@echo Minimum interactive
 	$(MAKE) "MAKE=$(MAKE)" sunos41 \
-	"KFLAGS=-DNOSPL -DNOXMIT -DNOMSEND -DNOFRILLS -DNORETRY \
+	"KFLAGS=-DNOSPL -DNOXMIT -DNOMSEND -DNOFRILLS -DNORETRY -DNOCKSPEED \
 	-DNODIAL -DNOHELP -DNODEBUG -DNOTLOG -DNOSCRIPT -DNOCSETS \
 	-DNOSHOW -DNOSETKEY -DNOSERVER -DNOUUCP -DNORECALL -DNOREDIRECT \
 	-DNOSETBUF -DNOPUSH -DNOMDMHUP -DNOJC -DNOFDZERO -DNOESCSEQ \
 	-DNOCMDL -UTCPSOCKET $(KFLAGS)" "LNKFLAGS = -s"
-
-#SunOS version 4.1, BSD, no debugging log.
-sunos41nd:
-	@echo No debugging...
-	$(MAKE) "MAKE=$(MAKE)" sunos41 "KFLAGS=$(KFLAGS) -DNODEBUG"
-
-#SunOS 4.1 with malloc debugger
-sunos41md:
-	@echo Making C-Kermit $(CKVER) for SunOS 4.1 malloc debug...
-	$(MAKE) mermit \
-	"CFLAGS= -O -DSUNOS41 -DHDBUUCP -DDIRENT -DTCPSOCKET \
-	-DSAVEDUID -DDYNAMIC $(KFLAGS) -Dmalloc=dmalloc -Dfree=dfree -DMDEBUG"
 
 #SunOS 4.1, System V R3 environment (-i option omitted).
 sunos41s5:
@@ -1645,7 +1837,7 @@ sunos41s5c:
 	@echo For a useable version, make sunos41 instead.
 	$(MAKE) wermit "CC= /usr/5bin/cc " "CC2=/usr/5bin/cc " \
 	"CFLAGS = -DSUN4S5 -DDIRENT -DHDBUUCP -DDYNAMIC \
-	-DCK_CURSES -DCK_POLL -DCK_NEWTERM $(KFLAGS) -O" "LIBS= -lcurses"
+	-DCK_POLL -DCK_CURSES -DCK_NEWTERM $(KFLAGS) -O" "LIBS= -lcurses"
 
 #As above, but with curses support AND net support
 sunos41s5tcpc:
@@ -1704,6 +1896,7 @@ v7:
 #AT&T UNIX System V R3, signal() is void rather than int.
 #Uses dirent.h and Honey DanBer UUCP.
 #Add the -i link option if necessary.
+#If you get errors like "ws_row undefined" in ckutio.c, add -DNONAWS.
 sys5r3:
 	@echo 'Making C-Kermit $(CKVER) for AT&T UNIX System V R3...'
 	$(MAKE) wermit \
@@ -1775,6 +1968,16 @@ sys5r4net2:
 	@echo ' PLEASE READ ckuins.doc IF YOU GET MISSING HEADER FILES.'
 	@echo ' (Search for WOLLONGONG...)'
 	$(MAKE) sys5r4net "LIBS= -lsocket -lnsl"
+
+#As above plus curses.
+sys5r4net2c:
+	echo 'Making C-Kermit $(CKVER) for System V R4 + Wollongong TCP/IP...'
+	@echo ' PLEASE READ ckuins.doc IF YOU GET MISSING HEADER FILES.'
+	@echo ' (Search for WOLLONGONG...)'
+	$(MAKE) wermit \
+	"CFLAGS = -O -DSVR4 -DDIRENT -DHDBUUCP -DDYNAMIC \
+	-DTERMIOX -DWOLLONGONG -DCK_CURSES $(KFLAGS)" "LNKFLAGS = -s" \
+	"LIBS= -lsocket -lnsl -lcurses"
 
 #DELL UNIX System V R4.
 #Has <sys/termiox.h>, regular Berkeley sockets library, i.e. in.h and inet.h
@@ -1882,6 +2085,14 @@ sys5r4sxna:
 	@echo No ANSI C prototyping...
 	$(MAKE) "MAKE=$(MAKE)" sys5r4sx "KFLAGS=$(KFLAGS) -DNOANSI"
 
+#SINIX V5.42 - includes curses, tcp/ip, everything
+sinix542:
+	@echo 'Making C-Kermit $(CKVER) for Siemens/Nixdorf SINIX V5.42...'
+	$(MAKE) wermit "CFLAGS = -DSINIX -DSVR4 -DDIRENT -DHDBUUCP -DDYNAMIC \
+	-DSTERMIOX -DCK_CURSES -DTCPSOCKET -DSELECT -DKANJI CK_ANSIC \
+	-kansi -W0 -O -KOlimit,1600 $(KFLAGS)" \
+	"LIBS= -lsocket -lnsl -lcurses -ltermcap" "LNKFLAGS = -s"
+
 #Commodore Amiga with AT&T UNIX System V R4 and TCP/IP support.
 #Has <sys/termiox.h>.
 svr4amiganet:
@@ -1891,15 +2102,24 @@ svr4amiganet:
 	-DTCPSOCKET -DCK_CURSES $(KFLAGS)" "LNKFLAGS = -s" \
 	"LIBS = -lsocket -lnsl -ltermlib"
 
-#Novell UnixWare.  This assumes the Novell SDK 1.0, which has <sys/termiox.h>.
+#SCO (Novell (Univel)) UnixWare 1.x or 2.x, no TCP/IP.
+#This assumes the Novell SDK 1.0, which has <sys/termiox.h>.
 #UnixWare users with the "Prime Time Freeware" CD-ROM SDK will probably have
 #to use the sys5r4 entry (no termiox.h file, so no hardware flow control).
+#Change -DSELECT to -DCK_POLL if -DSELECT causes problems.
 unixware:
-	$(MAKE) "MAKE=$(MAKE)" sys5r4sx "KFLAGS=-DUNIXWARE -DCK_POLL"
+	$(MAKE) "MAKE=$(MAKE)" sys5r4sx \
+	"KFLAGS=-DUNIXWARE -DSELECT $(KFLAGS)"
 
+#UnixWare 1.x or 2.x with TCP/IP and curses.
 unixwarenetc:
-	$(MAKE) "MAKE=$(MAKE)" sys5r4sxtcpc "KFLAGS=-DUNIXWARE -DCK_POLL"
+	$(MAKE) "MAKE=$(MAKE)" sys5r4sxtcpc \
+	"KFLAGS=-DUNIXWARE -DSELECT $(KFLAGS)"
 
+#No difference between 1.x and 2.x as far as Kermit is concerned.
+unixware2:
+	$(MAKE) "MAKE=$(MAKE)" sys5r4sxtcpc \
+	"KFLAGS=-DUNIXWARE -DSELECT $(KFLAGS)"
 
 #ESIX SVR4.0.3 or 4.04 with TCP/IP support.
 #Has <sys/termiox.h>, ANSI C function prototyping disabled.
@@ -2006,6 +2226,20 @@ dgux540c:
 dgux54c:
 	make dgux540c
 
+#Data General DG/UX 5.40 (System V R4) for Intel AViiON, with TCP/IP support.
+dgux540i:
+	@echo 'Making C-Kermit $(CKVER) for DG AViiON DG/UX 5.40...'
+	$(MAKE) wermit "CFLAGS = -O -DDGUX540 -DDIRENT -DHDBUUCP -DNOINADDRX \
+	-DKANJI -DDYNAMIC -DSTERMIOX -DTCPSOCKET -DCK_POLL $(KFLAGS)" \
+	"LIBS = -lsocket -lnsl"
+
+#As above + curses.
+dgux540ic:
+	@echo 'Making C-Kermit $(CKVER) for DG AViiON DG/UX 5.40...'
+	$(MAKE) wermit "CFLAGS = -O -DDGUX540 -DDIRENT -DHDBUUCP -DNOINADDRX \
+	-DKANJI -DDYNAMIC -DSTERMIOX -DTCPSOCKET -DCK_POLL -DCK_CURSES \
+	$(KFLAGS)" "LIBS = -lsocket -lnsl -lcurses -ltermcap"
+
 #Silicon Graphics System V R3 with BSD file system (IRIS)
 iris:
 	@echo Making C-Kermit $(CKVER) for Silicon Graphics IRIX pre-3.3...
@@ -2029,6 +2263,7 @@ irix40:
 	"LNKFLAGS = -s"
 
 #As above, but with fullscreen display (curses) and Sun Yellow Pages support.
+#NOTE: IRIX versions prior to 5 run COFF binaries.
 irix40ypc:
 	@echo 'Making C-Kermit $(CKVER) for Silicon Graphics IRIX 4.0.'
 	@echo 'Includes fullscreen file display and Sun Yellow Pages...'
@@ -2058,16 +2293,32 @@ irix40uc:
 	-DCK_ANSIC -DCK_CURSES -DTCPSOCKET $(KFLAGS) -O4 -Olimit 1500" \
 	"LNKFLAGS=-O4 -Olimit 1500 -s" "EXT=u" "LIBS= -lcurses -ltermcap"
 
-#As above, but with fullscreen display (curses) and Sun Yellow Pages support.
-#Silicon Graphics Challenge XL with IRIX 5.1 or 5.2 or Indigo Elan with 5.2.
-irix51ypc:
-	@echo 'Making C-Kermit $(CKVER) for Silicon Graphics IRIX 5.1/5.2'
+#Silicon Graphics IRIX 5.x.
+#Yellow Pages and Curses support included.
+#IRIX version 5.x can run COFF or ELF binaries.
+irix51:
+	@echo 'Making C-Kermit $(CKVER) for Silicon Graphics IRIX 5.x'
 	@echo 'Includes fullscreen file display and Yellow Pages...'
+	@echo 'Add -mips<n> to CFLAGS specify a particular hardware target.'
 	$(MAKE) wermit \
 	"CFLAGS = -DIRIX51 -DSVR4 -DDIRENT -DHDBUUCP -DDYNAMIC -DCK_CURSES \
-	-DPWID_T=uid_t -DCK_ANSIC -DTCPSOCKET -DCK_POLL -DKANJI $(KFLAGS) \
-	-O -Olimit 1500" \
-	"LIBS = -lcurses" "LNKFLAGS = -s"
+	-DPWID_T=uid_t -DCK_ANSIC -DTCPSOCKET -DSELECT -DKANJI \
+	$(KFLAGS) -O -Olimit 1500" "LIBS = -lcurses" "LNKFLAGS = -s"
+
+irix51ypc:
+	$(MAKE) "MAKE=$(MAKE)" irix51
+
+#Silicon Graphics IRIX 6.0 or later.
+#Yellow Pages and Curses support included.
+#IRIX version 6.0 and later runs only ELF binaries.
+irix60:
+	@echo 'Making C-Kermit $(CKVER) for Silicon Graphics IRIX 6.0'
+	@echo 'Includes fullscreen file display and Yellow Pages...'
+	@echo 'Add -mips<n> to specify a particular hardware target.'
+	$(MAKE) wermit \
+	"CFLAGS = -DIRIX51 -DIRIX60 -DSVR4 -DDIRENT -DHDBUUCP -DDYNAMIC \
+	-DCK_CURSES -DCK_NEWTERM -DPWID_T=uid_t -DCK_ANSIC -DTCPSOCKET \
+	-DSELECT -DKANJI -O $(KFLAGS)" "LIBS = -lcurses" "LNKFLAGS = -s"
 
 #In case they type "make sys5"...
 sys5:
@@ -2077,6 +2328,7 @@ sys5:
 sys3:
 	@echo 'Making C-Kermit $(CKVER) for AT&T UNIX System III'
 	@echo 'or System V R2 or earlier...'
+	@echo 'add -DNOMKDIR if mkdir is an undefined symbol.'
 	$(MAKE) wermit "CFLAGS = -DATTSV $(KFLAGS) -i -O" \
 	"LNKFLAGS = -i"
 
@@ -2228,7 +2480,7 @@ sys5hdb:
 
 #IBM PS/2 with AIX 1.0.
 #  Reports indicate that -O switch must be omitted.
-#  It is also possible that "made bsd" will work (reports welcome).
+#  It is also possible that "make bsd" will work (reports welcome).
 #  One report said "make LIBS=-lbsd bsd" did the trick.
 ps2aix:
 	@echo 'Making C-Kermit $(CKVER) for IBM AIX 1.0 PS/2...'
@@ -2240,7 +2492,7 @@ ps2aix:
 rtaix:
 	@echo 'Making C-Kermit $(CKVER) for IBM RT PC, AIX 2.2.1...'
 	$(MAKE) wermit \
-	"CFLAGS = -DATTSV -DRTAIX -DHDBUUCP -DTCPSOCKET \
+	"CFLAGS = -DATTSV -DRTAIX -DHDBUUCP -DTCPSOCKET -Wq,-SJ2 \
 	-DCLSOPN $(KFLAGS) -O -w" "LNKFLAGS = -s"
 
 #IBM RT PC with AIX 2.2.1
@@ -2249,26 +2501,25 @@ rtaixc:
 	@echo 'Making C-Kermit $(CKVER) for IBM RT PC, AIX 2.2.1, curses...'
 	$(MAKE) wermit \
 	"CFLAGS = -DATTSV -DRTAIX -DHDBUUCP -DTCPSOCKET -DCK_CURSES \
-	-DCLSOPN $(KFLAGS) -O -w" "LIBS=-lcurses" "LNKFLAGS = -s"
+	-DCLSOPN -Wq,-SJ2 $(KFLAGS) -O -w" "LIBS=-lcurses" "LNKFLAGS = -s"
 
-#IBM RT PC with AIX 2.2.1 (BSD 4.3)
+#IBM RT PC with AIX (ACIS) 2.2.1 (BSD 4.3)
 # Add -O, -DDYNAMIC, -s, etc, if they work.
 rtacis:
 	@echo Making C-Kermit $(CKVER) for RT PC with ACIS 2.2.1 = BSD 4.3...
-	$(MAKE) wermit \
-	"CFLAGS= -DBSD4 -DTCPSOCKET $(KFLAGS) -U__STDC__" \
+	$(MAKE) wermit "CFLAGS= -DBSD4 -DTCPSOCKET $(KFLAGS) -U__STDC__" \
 	"LNKFLAGS = -s"
 
+hpux:
+	@echo 'Please pick a more specific HP-UX entry.'
+
 #HP 9000 series 300, 500, 800, no long filenames and no job control.
-#This is certainly only good for HP-UX versions earlier than 6.5.
+#This works for HP-UX versions earlier than 6.5.
 #It definitely works with HP-UX 5.21.
 hpuxpre65:
 	@echo 'Making C-Kermit $(CKVER) for HP-9000 HP-UX, no long filenames.'
 	$(MAKE) wermit \
 	"CFLAGS = -DHPUX -DHPUXPRE65 $(KFLAGS) -O" "LNKFLAGS ="
-
-hpux:
-	@echo 'Please pick a more specific HP-UX entry.'
 
 #HP-9000 500 HP-UX 5.21 with Wollongong WIN/TCP 1.2 TCP/IP
 #Requires /usr/wins/usr/include and /usr/lib/libnet.a from Wollongong
@@ -2278,12 +2529,6 @@ hpux500wintcp:
 	"CFLAGS = -DHPUX -DHPUXPRE65 -DTCPSOCKET -DDYNAMIC \
 	-I/usr/wins/usr/include $(KFLAGS) -O" \
 	"LIBS = /usr/lib/libnet.a" "LNKFLAGS = "
-
-#HP-UX 7.0, no long filenames, no network support.
-hpux7sf:
-	@echo 'Making C-Kermit $(CKVER) for HP-9000 HP-UX, no long filenames.'
-	$(MAKE) wermit \
-	"CFLAGS = -DHPUX $(KFLAGS) -DSIG_V -O" "LNKFLAGS ="
 
 #HP 9000 series 300, 800, long filenames (using BSD file system)
 # (This one is probably necessary for the Series 300)
@@ -2315,57 +2560,121 @@ hpuxs5r3:
 	"CFLAGS = -DHPUX -DSVR3 -DDIRENT -DTCPSOCKET -DDYNAMIC \
 	-DNOSETBUF $(KFLAGS) -O" "LNKFLAGS =" "LIBS=-lBSD"
 
-#HP 9000 series 800 HP-UX 7.0, long filenames, network support, HDB uucp.
-#there must be <arpa/telnet.h> & <arpa/inet.h> present to support this
+#HP-UX 6.5, short filenames, no network support.
+#ckcpro and ckuusr are broken out because they make the optimizer run away.
+hpux65:
+	@echo 'Making C-Kermit $(CKVER) for HP-UX 6.5, no long filenames.'
+	$(MAKE) ckcpro.$(EXT) \
+	"CFLAGS = -DHPUX -DDYNAMIC -DNOSETBUF -DSIG_V $(KFLAGS)"
+	$(MAKE) ckuusr.$(EXT) \
+	"CFLAGS = -DHPUX -DDYNAMIC -DNOSETBUF -DSIG_V $(KFLAGS)"
+	$(MAKE) wermit \
+	"CFLAGS = -DHPUX -DDYNAMIC -DNOSETBUF -DSIG_V $(KFLAGS) -O"
+
+#HP-UX 6.5, as above, plus curses:
+hpux65c:
+	@echo 'Making C-Kermit $(CKVER) for HP-UX 6.5 + curses.'
+	$(MAKE) ckcpro.$(EXT) \
+	"CFLAGS = -DHPUX -DDYNAMIC -DNOSETBUF -DCK_CURSES -DSIG_V $(KFLAGS)"
+	$(MAKE) ckuusr.$(EXT) \
+	"CFLAGS = -DHPUX -DDYNAMIC -DNOSETBUF -DCK_CURSES -DSIG_V $(KFLAGS)"
+	$(MAKE) wermit \
+	"CFLAGS = -DHPUX -DDYNAMIC -DNOSETBUF -DCK_CURSES -DSIG_V $(KFLAGS) \
+	-O" "LIBS= -lcurses -ltermcap" 
+
+#HP-UX 7.0, no long filenames, no network support.
+hpux7sf:
+	@echo 'Making C-Kermit $(CKVER) for HP-9000 HP-UX, no long filenames.'
+	$(MAKE) ckcpro.$(EXT) \
+	"CFLAGS = -DHPUX $(KFLAGS) -DSIG_V"
+	$(MAKE) wermit \
+	"CFLAGS = -DHPUX $(KFLAGS) -DSIG_V -O" "LNKFLAGS ="
+
+#HP-UX 7.0, short filenames, but with tcp/ip and curses.
+#There must be <arpa/telnet.h> & <arpa/inet.h> present to support this
 #configuration.  To use this, you must have bought the ARPA Services
 #Product from HP, and you must get the files "telnet.h" and "inet.h"
 #from the Berkeley Standard Distribution because (reportedly) they are not
 #part of the HP product.  And you need /usr/lib/libBSD.a.
-#
+hpux70sftcpc:
+	@echo 'Making C-Kermit $(CKVER) for HP9000/8xx HP-UX V. 7.0'
+	@echo 'supporting: NO long filenames, networking, curses, HDB uucp...'
+	$(MAKE) ckcpro.$(EXT) \
+	"CFLAGS = -DHPUXDEBUG -DHPUX -DSVR3 -DCK_REDIR -DDYNAMIC -DNOSETBUF \
+	-DTCPSOCKET -DCK_CURSES $(KFLAGS)"
+	$(MAKE) wermit \
+	"CFLAGS = -DHPUXDEBUG -DHPUX -DSVR3 -DCK_REDIR -DDYNAMIC -DNOSETBUF \
+	-DHDBUUCP -DLOCK_DIR=\\\"/usr/spool/uucp\\\" -DCK_RTSCTS \
+	-DTCPSOCKET -DCK_CURSES $(KFLAGS) -O" \
+	"LNKFLAGS = -s" "LIBS= -lcurses -ltermcap -lBSD"
+
+#HP 9000 series 800 HP-UX 7.0, long filenames, network support, HDB uucp.
+#See comments in hpux70sftcpc about TCP/IP support.
 hpux70lfn:
 	@echo 'Making C-Kermit $(CKVER) for HP9000/8xx HP-UX V. 7.0'
 	@echo 'supporting: long filenames, networking, HDB uucp...'
+	$(MAKE) ckcpro.$(EXT) \
+	"CFLAGS = -DHPUXDEBUG -DHPUX -DSVR3 -DDYNAMIC -DNOSETBUF \
+	-DCK_REDIR -DCK_RTSCTS -DTCPSOCKET $(KFLAGS)"
 	$(MAKE) wermit \
-	"CFLAGS = -DHPUXDEBUG -DHPUX -DSVR3 -DDIRENT -DLONGFN \
-	-DHDBUUCP -DDYNAMIC -DLOCK_DIR=\\\"/usr/spool/uucp\\\" -DNOSETBUF \
-	-DTCPSOCKET  $(KFLAGS) -O" "LNKFLAGS = -s" "LIBS = -lBSD"
+	"CFLAGS = -DHPUXDEBUG -DHPUX -DSVR3 -DDYNAMIC -DNOSETBUF \
+	-DHDBUUCP -DLOCK_DIR=\\\"/usr/spool/uucp\\\" -DDIRENT -DLONGFN \
+	-DCK_REDIR -DCK_RTSCTS -DTCPSOCKET  $(KFLAGS) -O" \
+	"LNKFLAGS = -s" "LIBS = -lBSD"
 
 hpux70lfnc:
 	@echo 'Making C-Kermit $(CKVER) for HP9000/8xx HP-UX V. 7.0'
 	@echo 'supporting: curses, long filenames, networking, HDB UUCP...'
+	$(MAKE) ckcpro.$(EXT) \
+	"CFLAGS = -DHPUXDEBUG -DHPUX -DSVR3 -DDIRENT -DLONGFN \
+	-DDYNAMIC -DNOSETBUF -DCK_REDIR -DTCPSOCKET -DCK_CURSES $(KFLAGS)"
 	$(MAKE) wermit \
 	"CFLAGS = -DHPUXDEBUG -DHPUX -DSVR3 -DDIRENT -DLONGFN \
-	-DHDBUUCP -DDYNAMIC -DLOCK_DIR=\\\"/usr/spool/uucp\\\" -DNOSETBUF \
-	-DTCPSOCKET  -DCK_CURSES $(KFLAGS) -O" \
+	-DHDBUUCP -DLOCK_DIR=\\\"/usr/spool/uucp\\\" -DCK_RTSCTS \
+	-DDYNAMIC -DNOSETBUF -DCK_REDIR -DTCPSOCKET -DCK_CURSES $(KFLAGS) -O" \
 	"LIBS= -lcurses -ltermcap -lBSD" "LNKFLAGS = -s"
 
 #HP 9000 Series 300 or 400, HP-UX 8.0, long filenames and TCP/IP support.
 #This one should also work on 700/800, but without PA-specific optimization.
+#In case -DCK_RTSCTS and -DCK_REDIR make trouble, remove them.
+#NOTE: ckcpro.c blows up the optimizer, so don't optimize it. For HP-UX 8.0
+#on Motorola CPUs, you might have to reinstall your kernel with maxdsiz >=
+#0x02000000.  But if physical memory is small, that still will not help much.
 hpux80:
 	@echo 'Making C-Kermit $(CKVER) for HP9000 HP-UX V. 8.0'
 	@echo 'supporting: long filenames, TCP/IP, HDB UUCP...'
-	$(MAKE) -B wermit "CFLAGS = \
-	-DHPUXDEBUG -DHPUX -DHPUX8 -DSVR3 -DDIRENT -DLONGFN -DRENAME \
-	-DHDBUUCP -DDYNAMIC -DLOCK_DIR=\\\"/usr/spool/uucp\\\" -DNOSETBUF \
-	-DTCPSOCKET  $(KFLAGS) -O" "LNKFLAGS = -s" "LIBS = -lBSD"
+	$(MAKE) -B "CC=$(CC)" "CC2=$(CC2)" ckcpro.$(EXT) \
+	"CFLAGS = -DCK_REDIR -DHPUXDEBUG -DHPUX -DHPUX8 -DSVR3 -DRENAME \
+	-DDYNAMIC -DTCPSOCKET $(KFLAGS)"
+	$(MAKE) -B "CC=$(CC)" "CC2=$(CC2)" wermit \
+	"CFLAGS = -DCK_REDIR -DHPUXDEBUG -DHPUX -DHPUX8 -DSVR3 -DRENAME \
+	-DDIRENT -DLONGFN -DCK_RTSCTS \
+	-DHDBUUCP -DLOCK_DIR=\\\"/usr/spool/uucp\\\" -DNOSETBUF \
+	-DDYNAMIC -DTCPSOCKET $(KFLAGS) -O" \
+	"LNKFLAGS = -s" "LIBS = -lBSD"
 
 #Exactly as above + curses.
 hpux80c:
 	@echo 'Making C-Kermit $(CKVER) for HP9000 HP-UX V. 8.0'
 	@echo 'supporting: long filenames, TCP/IP, HDB UUCP, curses...'
-	$(MAKE) -B wermit "CFLAGS = -DCK_CURSES -DRENAME \
-	-DHPUXDEBUG -DHPUX -DHPUX8 -DSVR3 -DDIRENT -DLONGFN \
-	-DHDBUUCP -DDYNAMIC -DLOCK_DIR=\\\"/usr/spool/uucp\\\" -DNOSETBUF \
-	-DTCPSOCKET -O $(KFLAGS)" "LNKFLAGS = -s" "LIBS = -lBSD -lcurses"
+	$(MAKE) -B "CC=$(CC)" "CC2=$(CC2)" ckcpro.$(EXT) \
+	"CFLAGS = -DCK_REDIR -DHPUXDEBUG -DHPUX -DHPUX8 -DSVR3 -DRENAME \
+	-DDYNAMIC -DTCPSOCKET $(KFLAGS)"
+	$(MAKE) -B "CC=$(CC)" "CC2=$(CC2)" wermit \
+	"CFLAGS = -DCK_REDIR -DHPUXDEBUG -DHPUX -DHPUX8 -DSVR3 -DRENAME \
+	-DDIRENT -DLONGFN -DCK_RTSCTS -DCK_CURSES \
+	-DHDBUUCP -DLOCK_DIR=\\\"/usr/spool/uucp\\\" -DNOSETBUF \
+	-DDYNAMIC -DTCPSOCKET $(KFLAGS) -O" \
+	"LNKFLAGS = -s" "LIBS = -lBSD -lcurses"
 
 #HP 9000 Series 700 or 800, HP-UX 8.0, long filenames and TCP/IP support.
 # Like the previous entries, but with PA-specific optimization.
 hpux80pa:
-	$(MAKE) hpux80 "KFLAGS = $(KFLAGS) +Obb700"
+	$(MAKE) hpux80 "KFLAGS = $(KFLAGS) +Obb1100"
 
 #As above, but with curses.
 hpux80pac:
-	$(MAKE) hpux80c "KFLAGS = $(KFLAGS) +Obb700"
+	$(MAKE) hpux80c "KFLAGS = $(KFLAGS) +Obb1100"
 
 #As above, but compiled with GCC 2.3.3.
 hpux80pagcc:
@@ -2376,13 +2685,13 @@ hpux80pagcc:
 #HP 9000 HP-UX 8.0, no TCP/IP because /usr/lib/libBSD.a can't be found,
 #or TCP/IP header files missing.
 hpux80notcp:
-	$(MAKE) "MAKE=$(MAKE)" hpux80 "KFLAGS= $(KFLAGS) -UTCPSOCKET"
+	$(MAKE) "MAKE=$(MAKE)" hpux80 "KFLAGS = $(KFLAGS) -UTCPSOCKET"
 
-#HP-UX 9.0, 9.01, 9.03, 9.04, 9.05, ..., + TCP/IP + curses, fully configured.
-#Use this entry with restricted compiler: no optimization, no ANSI support.
-#In case libBSD.a is not available, remove "-lBSD" and try without it, and
-#then if you get unresolved references at link time, then also remove
-#-DTCPSOCKET.
+#HP-UX 9.0, 9.01, 9.03, 9.04, 9.05, 9.07, 9.10 ..., + TCP/IP + curses, fully
+#configured.  Use this entry with the restricted compiler: no optimization, no
+#ANSI support.  If you get unresolved sockets library references at link time,
+#then try adding -lBSD to LIBS, or else remove -DTCPSOCKET to build a version
+#without TCP/IP support.
 hpux90:
 	@echo 'Making C-Kermit $(CKVER) for HP9000 HP-UX V. 9.0...'
 	@echo 'Read comments in the hpux90 entry if you have trouble.'
@@ -2390,7 +2699,7 @@ hpux90:
 	-DTCPSOCKET -DCK_CURSES -DHDBUUCP -DDYNAMIC -DNOSETBUF -DKANJI \
 	-DSTERMIOX -DCK_REDIR -DRENAME \
 	-DLOCK_DIR=\\\"/usr/spool/uucp\\\" $(KFLAGS)" \
-	"LNKFLAGS = -s" "LIBS = -lBSD -lcurses" "CC=$(CC)" "CC2=$(CC2)"
+	"LNKFLAGS = -s" "LIBS = -lcurses" "CC=$(CC)" "CC2=$(CC2)"
 
 #Like hpux90, but for the "value-added" compiler on all HP 9000 models.
 #Adds optimization and ANSI compilation:
@@ -2398,15 +2707,34 @@ hpux90:
 # +O3 adds interprocedural global optimization, makes bigger executable.
 # If optimization fails on some modules, you can add:
 #  +Obb<n>, +Olimit <n>, or +Onolimit, depending on your cc version,
-# where <n> is a number (use the smallest number that works), e.g. +Obb1000
+# where <n> is a number, e.g. +Obb1200.  In other words, if you get optimizer
+# warnings, add (for example) +Obb1200; if you still get optimizer warnings,
+# increase the number.  Repeat until warnings go away.  If your compiler
+# permits it, use +Onolimit. If optimizer blows up on ckcpro.c, see next entry.
+# Reportedly, on some configurations, such as HP9000/425e or /340, perhaps
+# depending on the amount of main memory, this entry might fail no matter what
+# you do ("Out of Memory", "cc: Fatal error in /lib/c.c1", etc).  In that case
+# use "make hpux90" (no "o").
 hpux90o:
 	$(MAKE) hpux90 \
 	"KFLAGS = $(KFLAGS) -Aa -DCK_ANSIC -D_HPUX_SOURCE +O2"
 
-#As above but with model-700/800-specific optimizations.
+# For HP-UX 9.0 on Motorola CPUs, optimization of ckcpro.c tends to blow up
+# the compiler.  You might have to reinstall your kernel with maxdsiz >=
+# 0x03000000.  But if physical memory is small, that still will not help much.
+# In that case, use this entry to skip optimization of ckcpro.c.
+hpux90mot:
+	$(MAKE) ckcpro.$(EXT) "CFLAGS = -DHPUX9 -DHPUXDEBUG \
+	-DTCPSOCKET -DDYNAMIC -DCK_REDIR -DRENAME $(KFLAGS)"
+	$(MAKE) hpux90 \
+	"KFLAGS = $(KFLAGS) -Aa -DCK_ANSIC -D_HPUX_SOURCE +O2"
+
+#Like hpux90o but with additional model-700/800-specific optimizations.
 # +ESlit = consolidate strings in read-only memory.
 # +ESfsc = inline millicode calls when comparing pointers.
 hpux90o700:
+	@echo 'If you get optimizer warnings'
+	@echo 'Try "make hpux90o700 KFLAGS=+Obb1200"'
 	$(MAKE) hpux90o "KFLAGS = $(KFLAGS) +ESlit +ESsfc"
 
 #HP-UX 9.0, 9.01, 9.03, 9.04, ..., + TCP/IP + curses, fully configured,
@@ -2417,42 +2745,58 @@ hpux90gcc:
 
 #HP-9000 HP-UX 10.0 + TCP/IP + curses, fully configured.
 #Use with restricted (bundled) compiler: no optimization, no ANSI support.
-#libBSD needed for TCP/IP, libcurses needed for fullscreen file xfer display.
-#Note: if there is no /bin/sh, you must run this entry like this:
-# make "SHELL=/usr/bin/sh" hpux100
+#libcurses needed for fullscreen file xfer display in HP-UX 10.00 and 10.01.
+#libHcurses (NOT libcurses!) for fullscreen display, to work around fatal bugs 
+#in HP-UX 10.10 and 10.20 curses. Maybe we could use lcurses for 10.30, since 
+#the 10.10 curses problem is supposedly fixed in 10.30.
 hpux100:
-	@echo 'Making C-Kermit $(CKVER) for HP9000 HP-UX V. 10.0...'
+	@echo 'Making C-Kermit $(CKVER) for HP9000 HP-UX V.10.xx...'
 	@touch ckuker.cpp
 	$(MAKE) "SHELL=/usr/bin/sh" "CFLAGS=-DHPUX10" manpage
+	@case `uname -r` in \
+	   [AB].10.0*)	KFLAGS='-DHPUX1000 $(KFLAGS)' ; \
+			LIBS='	-lcurses'  ;; \
+	   [AB].10.1*)	KFLAGS='-DHPUX1010 -D__HP_CURSES $(KFLAGS)' ; \
+			LIBS='	-lHcurses' ;; \
+	   [AB].10.2*)	KFLAGS='-DHPUX1020 -D__HP_CURSES $(KFLAGS)' ; \
+			LIBS='	-lHcurses' ;; \
+	   [AB].10.3*)	KFLAGS='-DHPUX1030 -D__HP_CURSES $(KFLAGS)' ; \
+			LIBS='	-lHcurses' ;; \
+	   [AB].10.?*)	KFLAGS='-DHPUX10XX -D__HP_CURSES $(KFLAGS)' ; \
+			LIBS='	-lHcurses' ;; \
+	esac ; \
 	$(MAKE) "SHELL=/usr/bin/sh" wermit \
 	"CFLAGS = -DHPUX10 -DDIRENT -DSTERMIOX -DCK_DSYSINI -DHDBUUCP \
 	-DCK_CURSES -DCK_WREFRESH -DKANJI -DDYNAMIC -DNOSETBUF \
-	-DTCPSOCKET -DCK_REDIR -DRENAME $(KFLAGS)" \
-	"LNKFLAGS= -s" "LIBS = -lBSD -lcurses"
+	-DTCPSOCKET -DCK_REDIR -DRENAME $$KFLAGS" \
+	"LNKFLAGS=-s $(LNKFLAGS)" "LIBS = $$LIBS"
 
-#Synonym for hpux100
-hpux10:
-	$(MAKE) "SHELL=/usr/bin/sh" hpux100
-
-#HP-9000 HP-UX 10.0 with ANSI prototyping and optimization.
+#HP-9000 HP-UX 10.00 and higher with ANSI prototyping and optimization.
+#PA-RISC only, no Motorola or other hardware is support in HP-UX 10.00++.
 #The unbundled optional compiler is required.
 #Your path should start with /opt/ansic/bin.
 # -Wl,-Fw = Remove stack unwind table (info used by debuggers).
 # +O2 makes a smaller executable (= -O = Level-1 and global optimization).
 # +O3 adds interprocedural global optimization, makes a bigger executable.
-# If optimization fails on some modules, you can try adding +Onolimit.
+# +Onolimit allows all modules to be optimized, no matter how complex.	But:
+#  (a) +Onolimit does not seem to always be there in HP-UX 10.00, and:
+#  (b) some modules might take hours on low-memory and/or slow systems.
 # The following are PA-RISC-specific optimizations:
 # +ESlit = Consolidate strings in read-only memory.
 # +ESfsc = Inline millicode calls when comparing pointers.
 # +DA1.0 = Generate code that runs on both 700 and 800 models.
+# You might need to configure your kernel for a maxdsiz of 0x06000000 (96MB) 
+# or greater to prevent the optimizer from running out of space.
 hpux100o:
-	$(MAKE) "SHELL=/usr/bin/sh" hpux100 \
+	$(MAKE) "SHELL=/usr/bin/sh" "PATH=/opt/ansic/bin:$$PATH" hpux100 \
 	"KFLAGS = $(KFLAGS) \
 	-Aa -D_HPUX_SOURCE -DCK_ANSIC -DUTIMEH \
-	+O2 -Wl,-Fw +ESlit +ESsfc +DA1.0"
+	+O2 -Wl,-Fw +ESlit +ESsfc +DA1.0" 
 
-hpux100xo:
-	$(MAKE) "SHELL=/usr/bin/sh" hpux100o "KFLAGS=-DSUNX25"
+#The same like hpux100o but with "+Onolimit"
+hpux100o+:
+	$(MAKE) hpux100o \
+	"KFLAGS = $(KFLAGS) +Onolimit" 
 
 #Regulus on CIE Systems 680/20
 cie:
@@ -2460,40 +2804,82 @@ cie:
 	$(MAKE) wermit \
 	"CFLAGS = -DATTSV -DNOFILEH -DCIE $(KFLAGS) -O" "LNKFLAGS ="
 
-# Linux with gcc 2.1, no TCP/IP, dynamic libraries.
-# CK_POSIX_SIG (POSIX signal handling) is good for Linux releases back to at
-# least 0.99.14; if it causes trouble for, just remove it.
-# If you get a link error reporting "no such file or directory..libncurses",
-# then change -lncurses to -lcurses.
+# Linux 0.99.14 or later with gcc, dynamic libraries, curses, TCP/IP.
+# 
+# -DLINUXFSSTND (Linux File System Standard) gives UUCP lockfil /var/lock with
+# string pid.  Remove this and get /usr/spool/uucp with int pid, which was used
+# in early Linux versions.
+#
+# If you get compiler errors regarding <linux/serial.h>, add -DNOHISPEED.
+#
+# -DCK_POSIX_SIG (POSIX signal handling) is good for Linux releases back to at
+# least 0.99.14; if it causes trouble for you, just remove it.
+#
+# -DCK_CURSES: Here we link with the regular curses library.  But you should
+# be using ncurses.  Internally, the ckuusx.c module includes <curses.h>, but
+# this really should be <ncurses.h>.  Thus if you have the new curses
+# material, you should either install it with the standard names, or else
+# create symbolic links from the standard names to the new ones.  If you get
+# compile-time errors complaining about data definitions in termcap.h, it
+# means you have new kernel material mixed with older libc header files.  To
+# fix, add "#include <termios.h>" to the <termcap.h> file.  Or if all this is
+# too confusing, create a new makefile entry based on this one, but with
+# -DCK_CURSES removed from CFLAGS and the entire LIBS= clause removed.
+#
+# But wait, there's more.  On most Linux systems, -ltermcap must be included
+# in LIBS.  But on others, the linker complains that libtermcap can't be
+# found.  In that case, try removing -ltermcap from LIBS=.
+#
+# But wait, there's more.  The format of the PID string in the UUCP lockfile
+# changed between Linux FSSTND 1.0 and 1.2.  In the earlier standard, it had
+# leading zeros; in the second, it has leading spaces.  By default this entry
+# uses the newer standard.  To force the second one, add -DFSSTND10.
+#
+# "The nice thing about the Linux standard is there are so many to choose from"
+#
+# NOTE: Remove -DBIGBUFOK for small-memory or limited-resource systems.
 linux:
 	@echo 'Making C-Kermit $(CKVER) for Linux...'
+	@echo 'IMPORTANT: Read the comments in the linux section of the'
+	@echo 'makefile if you get compilation or link errors.'
+	$(MAKE) wermit "CC = gcc" "CC2 = gcc" \
+	"CFLAGS = -O -DPOSIX -DDYNAMIC -DCK_CURSES -DCK_POSIX_SIG \
+	-DBIGBUFOK -DTCPSOCKET -DLINUXFSSTND $(KFLAGS)" \
+	"LNKFLAGS = $(LNKFLAGS)" "LIBS = -lcurses -ltermcap"
+
+#This version was used for Linux prior to C-Kermit 6.0.192.
+#Now the "Linux File System Standard" is considered standard, ditto TCP/IP.
+linuxold:
+	@echo 'Making C-Kermit $(CKVER) for Linux...'
 	@echo 'For FSSTND-recommended UUCP lockfiles, use:'
-	@echo '  make linux "KFLAGS=-DLINUXFSSTND'
+	@echo '  make linux "KFLAGS=-DLINUXFSSTND".'
 	@echo 'Use "make linuxtcp" to add TCP/IP support.'
 	@echo 'Read comments in makefile for additional options.'
 	$(MAKE) wermit "CC = gcc" "CC2 = gcc" \
 	"CFLAGS = -O -DPOSIX -DDYNAMIC -DCK_CURSES -DCK_POSIX_SIG \
-	$(KFLAGS)" "LNKFLAGS = $(LNKFLAGS)" "LIBS = -lncurses -ltermcap" 
-
-# As above, with TCP/IP added...
-linuxtcp:
-	$(MAKE) linux "KFLAGS = -DTCPSOCKET $(KFLAGS)"
-
-linuxnet:
-	$(MAKE) linux "KFLAGS = -DTCPSOCKET $(KFLAGS)"
+	$(KFLAGS)" "LNKFLAGS = $(LNKFLAGS)" "LIBS = -lcurses -ltermcap"
 
 # "make linux", but with static linking to avoid confusion with DLL versions.
 # Use this to make a portable binary.  Adds about 100K to the executable.
 linuxs:
 	$(MAKE) linux "KFLAGS = $(KFLAGS)" "LNKFLAGS = -static"
 
-# "make linuxtcp", but with static linking.
-# Use this to make a portable binary.  Adds about 120K to the executable.
-linuxtcps:
-	$(MAKE) linux "KFLAGS = -DTCPSOCKET $(KFLAGS)" "LNKFLAGS = -static"
+linuxnotcp:
+	$(MAKE) linux "KFLAGS = -DNONET $(KFLAGS)"
 
-linuxtnets:
-	$(MAKE) linux "KFLAGS = -DTCPSOCKET $(KFLAGS)" "LNKFLAGS = -static"
+# "make linuxnotcp" with lcc (see http://www.cs.princeton.edu/software/lcc)
+# lcc does not understand various gcc extensions:
+#  "__inline__" -- can be eliminated by adding "-D__inline__="
+#  "__asm__ and "long long" -- in header files, should be surrounded by
+#                              "#ifndef(__STRICT_ANSI__)"/"#endif"
+#  however, TCP requires some __asm__ functions, so cannot be compiled
+linuxnotcp-lcc:
+	@echo 'Making C-Kermit $(CKVER) for Linux with lcc ...'
+	@echo 'Read comments in makefile for additional information.'
+	$(MAKE) wermit "CC = lcc" "CC2 = lcc" \
+	"CFLAGS = -DPOSIX -DDYNAMIC -DCK_CURSES -DCK_POSIX_SIG \
+	-UTCPSOCKET -DLINUXFSSTND $(KFLAGS)" \
+	"LNKFLAGS = $(LNKFLAGS)" "LIBS = -lcurses -ltermcap"
 
 # LynxOS 2.2 with GCC compiler, TCP/IP and fullscreen display.
 # Probably also works with Lynx 2.1, and maybe even Lynx 2.0.
@@ -2566,7 +2952,7 @@ sco286hdb:
 	-DHDBUUCP $(KFLAGS) -F 3000 -i -M2let32" \
 	"LIBS = -lx" "LNKFLAGS = -s -O -LARGE -F 3000 -i -M2let32"
 
-#SCO Xenix/386 2.2.2
+#SCO Xenix/386 2.2.2 and 2.2.3
 sco386:
 	@echo 'Making C-Kermit $(CKVER) for SCO Xenix/386 2.2.2...'
 	$(MAKE) wermit \
@@ -2574,17 +2960,22 @@ sco386:
 	"LNKFLAGS = -s" "LIBS = -lx"
 
 #SCO XENIX/386 2.2.3 with Excelan TCP/IP + curses.
+# NOTE: This one might need some work in C-Kermit 6.0.
+# You might need to include /usr/include/sys/types.h
+# containing "typedef char *caddr_t;".  Then at least it compiles, but the
+# stack 
 sco386netc:
 	@echo 'Making C-Kermit $(CKVER) for SCO Xenix/386 2.2.3 + Excelan TCP'
 	$(MAKE) wermit \
 	"CFLAGS= -I/usr/include/exos -DXENIX -DNOFILEH -DCK_CURSES -DDYNAMIC \
-	-Dunix -DRDCHK -DNAP -DTCPSOCKET -DEXCELAN -DNOJC -DNOMKDIR $(KFLAGS) \
-	-Otcl -M3e" \
+	-Dunix -DRDCHK -DNAP -DTCPSOCKET -DEXCELAN -DNOJC -DNOMKDIR \
+	$(KFLAGS) -Otcl -M3e" \
 	"LNKFLAGS = -s" "LIBS = -lc -lx -lsocket -lcurses -ltermcap"
 
 #SCO XENIX/386 2.3.3 with gcc 1.37 or later...
 sco386gcc:
 	@echo 'Making C-Kermit $(CKVER) for SCO Xenix/386 2.3.3, gcc...'
+	@echo 'Add -D_NO_PROTOTYPE if you have trouble with Xenix header files'
 	$(MAKE) wermit "CC = gcc" "CC2 = gcc" \
 	"CFLAGS= -O -DXENIX -DSVR3 -DNOFILEH -DHDBUUCP -DRDCHK -DNAP \
 	-DNOJC -DNODEBUG -DDYNAMIC $(KFLAGS) \
@@ -2597,6 +2988,7 @@ sco386gcc:
 #As above, but with curses...
 sco386gccc:
 	@echo 'Making C-Kermit $(CKVER) for SCO Xenix/386 2.3.3, gcc...'
+	@echo 'Add -D_NO_PROTOTYPE if you have trouble with Xenix header files'
 	$(MAKE) wermit "CC = gcc" "CC2 = gcc" \
 	"CFLAGS= -O -DXENIX -DSVR3 -DNOFILEH -DHDBUUCP -DRDCHK -DNAP \
 	-DNOJC -DNODEBUG -DDYNAMIC -DCK_CURSES $(KFLAGS) \
@@ -2627,7 +3019,7 @@ sco386gccc:
 #NOTE: -Otcl removed and replaced by -O, since -Otcl produced incorrect code.
 #SCO UNIX/386 3.2.0, 3.2.1, and SCO Xenix 2.3.x
 sco3r2:
-	@echo 'Making C-Kermit $(CKVER) for SCO UNIX/386...'
+	@echo 'Making C-Kermit $(CKVER) for SCO UNIX/386 3.2.0 or 3.2.1 ...'
 	@echo 'Warning: If make blows up, edit the makefile to join'
 	@echo 'the following three continued lines into one line.'
 	@echo 'Also, remove -DRENAME if _rename unresolved at link time.'
@@ -2754,27 +3146,34 @@ sco3r22gcc:
 	"LIBS = -lc_s -lc -lx"
 
 #SCO UNIX/386 3.2v2 (ODT 1.1) (POSIX job control) with SCO TCP/IP, shared libs
+#Requires SCO TCP/IP or ODT development system for telnet.h, etc.
 sco3r22net:
 	@echo 'Making C-Kermit $(CKVER) for SCO UNIX/386 3.2.2 + TCP/IP...'
 	@echo 'Warning: If make blows up, edit the makefile to join'
 	@echo 'the following three continued lines into one line.'
 	make wermit \
 	"CFLAGS= -DXENIX -DSVR3 -DNOFILEH -DHDBUUCP -DRDCHK -DNAP -DTCPSOCKET \
-	-DRENAME -DPID_T=pid_t -DPWID_T=int -DDIRENT -DDYNAMIC $(KFLAGS) -O" \
-	"LNKFLAGS = -s" "LIBS = -lsocket -lc_s -lc -lx"
+	-DRENAME -DPID_T=pid_t -DPWID_T=int -DDIRENT -DDYNAMIC \
+	$(KFLAGS) -O" "LNKFLAGS = -s" "LIBS = -lsocket -lc_s -lc -lx"
 
 #As above, but with curses for fullscreen file transfer display.
+#Requires SCO TCP/IP or ODT development system for telnet.h, etc.
 sco3r22netc:
 	@echo 'Making C-Kermit $(CKVER) for SCO UNIX/386 3.2v2 + TCP/IP...'
 	@echo 'Warning: If make blows up, edit the makefile to join'
 	@echo 'the following three continued lines into one line.'
 	make wermit "CFLAGS= \
 	-DXENIX -DSVR3 -DNOFILEH -DHDBUUCP -DRDCHK -DNAP -DTCPSOCKET -DRENAME \
-	-DCK_CURSES -DDIRENT -DDYNAMIC -DPID_T=pid_t -DPWID_T=int -O" \
+	-DCK_CURSES -DDIRENT -DDYNAMIC \
+	-DPID_T=pid_t -DPWID_T=int -O $(KFLAGS)" \
 	"LNKFLAGS = -s" "LIBS = -lcurses -lsocket -lc_s -lc -lx"
 
 #SCO UNIX/386 3.2v4 (POSIX job control), curses, ANSI C compilation,
-#<dirent.h> (EAFS) file system.
+#<dirent.h> (EAFS) file system.  Remove -lmalloc if it causes trouble.
+#It was put there to avoid core dumps caused by regular libc.a malloc.
+#CK_POLL is used instead of SELECT because SELECT requires gettimeofday(),
+#which is in libsocket.a, which is available only on systems with the
+#TCP/IP development system.  Add -J to make all chars unsigned.
 sco32v4:
 	@echo 'Making C-Kermit $(CKVER) for SCO UNIX/386 3.2v4...'
 	@echo 'If you get _ftime redefinition_ complaint,'
@@ -2783,10 +3182,10 @@ sco32v4:
 	"CFLAGS= -DXENIX -DSVR3 -DDIRENT -DNOFILEH -DHDBUUCP -DCK_POLL -DNAP \
 	-DRENAME -DCK_CURSES -DM_TERMINFO -DNOANSI -DPID_T=pid_t -DPWID_T=int \
 	-DNOSETBUF -DDYNAMIC -DSVR3JC -DCK_RTSCTS $(KFLAGS) -O" \
-	"LNKFLAGS = -s" "LIBS = -lcurses -lc_s -lc -lx"
+	"LNKFLAGS = -s" "LIBS = -lcurses -lmalloc -lc_s -lc -lx"
 
 #SCO UNIX/386 3.2v4 with gcc 1.40 or later, POSIX job control
-#gcc 1.40 or later
+#gcc 1.40 or later.  Also see comments in sco32r4 entry.
 sco32v4gcc:
 	make wermit "CC = gcc" \
 	"CFLAGS= -O -DXENIX -DSVR3 -DNOFILEH -DHDBUUCP -DCK_POLL -DNAP \
@@ -2800,14 +3199,14 @@ sco32v4gcc:
 	"LNKFLAGS = -s" "LIBS = -lcurses -lc_s -lc -lx"
 
 #SCO UNIX/386 3.2v4 (POSIX job control), TCP/IP, curses, ANSI C compilation,
+#Requires SCO TCP/IP or ODT development system for telnet.h, etc.
 #<dirent.h> (EAFS) file system.  With DIRENT, -lc must come before -lx.
-#gcc 1.40 or later
+#gcc 1.40 or later.  Also see comments in sco32r4 entry.
 sco32v4netgcc:
-	make wermit "CC = gcc" \
-	"CFLAGS= -O2 -DXENIX -DSVR3 -DNOFILEH -DHDBUUCP -DCK_POLL -DNAP \
+	make wermit "CC = gcc" "CC2=gcc" \
+	"CFLAGS= -O2 -DXENIX -DSVR3 -DNOFILEH -DHDBUUCP -DSELECT -DNAP \
 	-DNOANSI -DRENAME -DTCPSOCKET -DDIRENT -DCK_CURSES -DM_TERMINFO \
-	-DNOSETBUF -traditional -fpcc-struct-return -fstrength-reduce \
-	-D_KR -D_NO_PROTOTYPE -D_SVID \
+	-DNOSETBUF -DDYNAMIC -D_KR -D_NO_PROTOTYPE -D_SVID \
 	-DM_BITFIELDS -DM_COFF -DM_I386 -DM_I86 -DM_I86SM \
 	-DM_INTERNAT -DM_SDATA -DM_STEXT -DM_SYS3 -DM_SYS5 \
 	-DM_SYSIII -DM_SYSV -DM_UNIX -DM_WORDSWAP -DM_XENIX -Dunix \
@@ -2816,19 +3215,20 @@ sco32v4netgcc:
 
 #SCO UNIX/386 3.2v4 (POSIX job control), TCP/IP, curses, ANSI C compilation,
 #<dirent.h> (EAFS) file system.  With DIRENT, -lc must come before -lx.
+#Reportedly it's OK to add -DCK_REDIR and -DCK_WREFRESH, and to remove -lc_s.
+#Requires SCO TCP/IP development system or ODT for telnet.h, etc.
+#See sco32v4 above for additional comments.
 sco32v4net:
 	@echo 'Making C-Kermit $(CKVER) for SCO UNIX/386 3.2v4...'
 	@echo 'If you get _ftime redefinition_ complaint,'
 	@echo 'use make sco_odt30.'
 	$(MAKE) wermit \
 	"CFLAGS= -DXENIX -DSVR3 -DDIRENT -DNOFILEH -DHDBUUCP -DRENAME \
-	-DDYNAMIC -DTCPSOCKET -DCK_ANSIC -DCK_CURSES -DNAP -D_IBCS2 -DCK_POLL \
-	-DNOSETBUF -DPID_T=pid_t -DPWID_T=int -DSVR3JC -DCK_RTSCTS -O \
-	$(KFLAGS)" \
-	"LNKFLAGS = $(LNKFLAGS) -s" \
-	"LIBS = $(LIBS) -lcurses -lsocket -lc_s -lc -lx"
+	-DDYNAMIC -DTCPSOCKET -DCK_ANSIC -DCK_CURSES -DNAP -DCK_WREFRESH \
+	-D_IBCS2 -DSELECT -DNOSETBUF -DPID_T=pid_t -DPWID_T=int -DSVR3JC \
+	-DCK_RTSCTS -O -DCK_SCOV4 $(KFLAGS)" "LNKFLAGS = $(LNKFLAGS) -s" \
+	"LIBS = $(LIBS) -lcurses -lsocket -lmalloc -lc_s -lc -lx"
 
-# Add -DCK_LINGER to KFLAGS if desired - see ckcnet.c.
 sco32v4netnd:
 	@echo sco32v4net with no debug
 	$(MAKE) "MAKE=$(MAKE)" sco32v4net \
@@ -2847,6 +3247,41 @@ sco3r2netnd:
 sco_odt30:
 	@echo SCO ODT 3.0
 	$(MAKE) "MAKE=$(MAKE)" sco32v4net "KFLAGS=$(KFLAGS) -DODT30"
+
+#SCO OpenServer 5.0 (SCO UNIX 3.2v5.0) with SCO development tools, no TCP/IP.
+#SCO OSR5 is much more like standard System V than previous SCO releases.
+#Thanks to Robert Lipe for the simplified makefile entries.
+sco32v5: 
+	@echo Making C-Kermit $(CKVER) for SCO OpenServer Release 5...
+	$(MAKE) wermit CC=$(CC) CC2=$(CC2) \
+	"CFLAGS= -O -DBIGBUFOK -DDYNAMIC -DDIRENT -DHDBUUCP -DSVR4 -DCK_SCOV5 \
+	-DCK_RTSCTS -DCK_CURSES -DCK_WREFRESH -DCK_NEWTERM -DSELECT \
+	-DSELECT_H $(KFLAGS)" "LIBS=-lcurses $(LIBS)" "LNKFLAGS=-s $(LNKFLAGS)"
+
+#SCO OpenServer 5.0 with gcc, no networking.
+sco32v5gcc:
+	@echo Using gcc...
+	$(MAKE) "MAKE=$(MAKE)" sco32v5 CC=gcc CC2=gcc
+
+#SCO OpenServer 5.0 with networking, SCO development tools.
+#Networking libraries are now provided with the OS.
+sco32v5net:
+	@echo TCP/IP networking added...
+	$(MAKE) "MAKE=$(MAKE)" sco32v5 KFLAGS="-DTCPSOCKET $(KFLAGS)" \
+	LIBS="-lsocket"
+
+#SCO OpenServer 5.0 with networking, gcc.
+sco32v5netgcc:
+	@echo TCP/IP networking added - using gcc...
+	$(MAKE) "MAKE=$(MAKE)" sco32v5 CC=gcc CC2=gcc KFLAGS="-DTCPSOCKET" \
+	LIBS="-lsocket"
+
+#SCO OpenServer 5.0 with networking, gcc, elf.
+sco32v5netgccelf:
+	@echo TCP/IP networking added - using gcc, dynamic elf library
+	$(MAKE) "MAKE=$(MAKE)" sco32v5 CC=gcc CC2=gcc \
+	KFLAGS="-DTCPSOCKET -O3 -belf" \
+	LNKFLAGS="-belf" LIBS="-lsocket"
 
 #PC/IX, Interactive Corp System III for IBM PC/XT
 pcix:
@@ -2921,9 +3356,12 @@ is5r3gcc:
 is5r3net:
 	@echo 'Making C-Kermit $(CKVER) for Interactive 386/ix...'
 	@echo 'If this does not work please read the makefile entry.'
-	$(MAKE) wermit \
+	$(MAKE) wermit CC="$(CC)" CC2="$(CC2)" \
 	"CFLAGS = -DSVR3 -DDIRENT -DHDBUUCP -DDYNAMIC -DTCPSOCKET \
 	-DI386IX $(KFLAGS) -O" "LIBS = -linet"
+
+is5r3netgcc:
+	$(MAKE) is5r3net CC=gcc CC2=gcc
 
 #Interactive UNIX System V R3, no job control, signal() void rather than int.
 #Uses dirent.h and Honey DanBer uucp.  Needs -linet for net functions.
@@ -2940,20 +3378,32 @@ is5r3net2:
 #Uses dirent.h and Honey DanBer UUCP.
 is5r3jc:
 	@echo 'Making C-Kermit $(CKVER) for Interactive Unix 2.2 or later...'
-	$(MAKE) wermit \
+	$(MAKE) wermit CC="$(CC)" CC2="$(CC2)" \
 	"CFLAGS = -DSVR3 -DDIRENT -DHDBUUCP -O -DNOCSETS \
 	-DUID_T=ushort -DGID_T=ushort -DDYNAMIC -DI386IX -DSVR3JC -DCK_CURSES \
-	$(KFLAGS)" "LNKFLAGS = -s" "LIBS=-lcurses -lc_s"
+	-DPOSIX_JC -DCK_REDIR -DNOSETBUF \
+	-DCK_POLL \
+	$(KFLAGS)" "LIBS=-lcurses -lc_s"
+
+is5r3jcgcc:
+	$(MAKE) is5r3jc CC="gcc -DCK_ANSILIBS -DDCGPWNAM -O4" CC2=gcc \
+	KFLAGS="$(KFLAGS)" LNKFLAGS="$(LNKFLAGS)"
 
 #Sunsoft/Interactive UNIX System V R3 (version 2.2 or later)
 #with job control, curses, and TCP/IP networking.
 #Uses dirent.h and Honey DanBer UUCP.
 is5r3netjc:
 	@echo 'Making C-Kermit $(CKVER) for Interactive Unix 2.2 or later...'
-	$(MAKE) wermit \
+	$(MAKE) wermit CC="$(CC)" CC2="$(CC2)" \
 	"CFLAGS = -DSVR3 -DDIRENT -DHDBUUCP -O -DNOCSETS \
 	-DUID_T=ushort -DGID_T=ushort -DDYNAMIC -DI386IX -DSVR3JC -DCK_CURSES \
-	-DTCPSOCKET $(KFLAGS)" "LNKFLAGS = -s" "LIBS=-linet -lcurses -lc_s"
+	-DPOSIX_JC -DCK_REDIR -DNOSETBUF \
+	-DTCPSOCKET -DSELECT -DHADDRLIST \
+	$(KFLAGS)" "LIBS=-linet -lcurses -lc_s"
+
+is5r3netjcgcc:
+	$(MAKE) is5r3netjc CC="gcc -DCK_ANSILIBS -DDCGPWNAM -O4" CC2=gcc \
+	KFLAGS="$(KFLAGS)" LNKFLAGS="$(LNKFLAGS)"
 
 #Masscomp System III
 rtu:
@@ -3154,13 +3604,15 @@ vxve:
 #Add more -DNOxxx options to remove features if program won't load.
 #Successful operation is a function of program size, physical memory,
 #available swap space, etc.  The following stripped-down configuration
-#seems to work on most Tandy 6000s.
+#seems to work on most Tandy 6000s.  NOTE: "-+" means allow long variable
+#names, needed for C-Kermit 6.0 because some identifiers are not unique
+#within the first six characters.
 trs16:
-	@echo 'Making C-Kermit $(CKVER) for Tandy 16/16000, Xenix 3.0...'
+	@echo 'Making C-Kermit $(CKVER) for Tandy 16/6000, Xenix 3.0...'
 	$(MAKE) wermit \
-	"CFLAGS = -DATTSV -DTRS16 -DNOMKDIR -DDCLPOPEN -DCK_CURSES -DDYNAMIC \
-	-DNODEBUG -DNOTLOG -DNOHELP -DNOSCRIPT -DNOCSETS \
-	$(KFLAGS) -O" "LIBS= -lcurses -ltermcap" "LNKFLAGS = -n -s"
+	"CFLAGS = -+ -DATTSV -DTRS16 -DNOMKDIR -DDCLPOPEN -DCK_CURSES \
+	-DDYNAMIC -DNODEBUG -DNOTLOG -DNOHELP -DNOSCRIPT -DNOCSETS \
+	$(KFLAGS) -O" "LIBS= -lcurses -ltermcap" "LNKFLAGS = -+ -n -s"
 
 #DIAB DS90 or LUXOR ABC-9000 with pre-5.2 DNIX.  Sys V with nap() and rdchk().
 # nd = no opendir(), readdir(), closedir(), etc.
@@ -3237,44 +3689,72 @@ dnix5r3ansinet:
 	-DTCPSOCKET -DCK_ANSILIBS -DCK_CURSES -DRENAME -O -X7 -X9 $(KFLAGS) \
 	-I/usr/include/bsd" "LIBS= -ln -lcurses"
 
-#QNX 4.2.1 and above, 32-bit version, Watcom C16 9.5, fully configured,
-# except no job control, because QNX 4.2.1 does not support it.
+# QNX 4.21 and above, 32-bit version, Watcom C32 10.6, register calling
+# conventions, fully configured, except no job control because QNX 4.x
+# does not support it.  New NCURSES library used instead of CURSES.
+#
 # -Oatx optimizes to favor speed over size: loop optimization, inline fn's.
 # -Os favors size over speed.  The size difference is about 30-40K.
 # -NOUUCP is included because QNX is shipped without UUCP and no native
 # QNX software uses UUCP lockfiles.  Remove -DNOUUCP if you want to use
 # UUCP lockfiles for exclusive access to dialout devices.
 qnx32:
-	@echo 'Making C-Kermit $(CKVER) for QNX 4.2.1, 32-bit...'
+	@echo 'Making C-Kermit $(CKVER) for QNX 4.2x, 32-bit...'
 	$(MAKE) wermit \
-	"CFLAGS = -DQNX -DDYNAMIC -DKANJI -DTCPSOCKET -DCK_CURSES -DNOUUCP \
-	-DCK_WREFRESH -DCK_REDIR -DSELECT -DCK_RTSCTS -DNOJC -DNOSETBUF \
-	-DCK_ANSIC -DPID_T=pid_t -Oatx -zc $(KFLAGS)" \
-	"LIBS= -lcurses -ltermcap"
+	"LNKFLAGS = -3r" \
+	"CFLAGS = -3r -ms -DQNX -DDYNAMIC -DKANJI -DTCPSOCKET -DCK_CURSES \
+	-DCK_WREFRESH -DCK_REDIR -DSELECT -DSELECT_H -DCK_RTSCTS -DNOJC \
+	-DNOUUCP -DNOSETBUF -DCK_ANSIC -DPID_T=pid_t -Oatx -zc $(KFLAGS)" \
+	"LIBS= -lsocket -lncurses -ltermcap"
+	@wermit -h >use.qnx
+	@usemsg wermit use.qnx
+	@rm use.qnx
 
-#Synonym for qnx32.
+# Synonym for qnx32. 
 qnx:
 	$(MAKE) qnx32 "KFLAGS=$(KFLAGS)"
 
-#QNX 4.2.1, 16-bit version, Watcom C 8.5 & above, on i286 PCs & above.
-#Stacksize 26000, objects larger than 100 bytes in their own segments,
-#string constants to the codesegment, etc.  Fully configured except NOJC.
-#This entry works for building a 16-bit executable on a 32-bit system, but
-#has not been tested on a 16-bit system.  Uses large memory model, links
-#explicitly with large-model sockets library.  Correct-model curses library is
-#chosen automatically.  See comment in qnx32 entry about -DNOUUCP.
+# QNX 4.21 and above, 16-bit version, Watcom C 8.5 - Watcom 9.52
+# on i286 PCs and above.
+#
+#	IMPORTANT: Do not use Watcom C 10.6!!!
+#	If you have it installed, add "-v9.52 to CFLAGS"
+#
+# NOTE: QNX 4.23 onward does not work on 286's anyway.
+# Stacksize 26000, objects larger than 100 bytes in their own segments,
+# string constants to the codesegment, etc.  Fully configured except job ctrl.
+# This entry works for building a 16-bit executable on a 32-bit system, but
+# has not been tested on a 16-bit system.  Uses large memory model, links
+# explicitly with large-model sockets library.  Correct-model curses library
+# is chosen automatically.  See comment in qnx32 entry about -DNOUUCP.
+#
+# WARNING:
+#
+# Watcom C prior to 10.6 never had released curses library. To link against it,
+# you must obtain ported free curses source from ftp://ftp.qnx.com/usr/free,
+# then compile and build library (cursesl.lib) and place it in /usr/lib.  You
+# must also copy curses.h to /usr/include.  Be aware that if you have Watcom
+# 10.6 installed, you should already have curses.h, which is for new ncurses
+# library. You must back it up and use free curses.h instead, since ncurses is
+# only for 32-bit applications and some definitions in these files are
+# different (e.g., clearok()).
+#
 qnx16:
-	@echo 'Making C-Kermit $(CKVER) for QNX 4.2.1, 16-bit...'
+	@echo 'Making C-Kermit $(CKVER) for QNX 4.21, 16-bit...'
 	$(MAKE) wermit \
 	"LNKFLAGS = -2 -ml -N 26000" \
 	"CFLAGS = -2 -Oatx -zc -zt100 -ml -DNOSETBUF -DNOUUCP \
-	-DQNX -DDYNAMIC -DCK_REDIR -DSELECT -DNOJC -DTCPSOCKET -DCK_RTSCTS \
-	-DCK_CURSES -DCK_WREFRESH -DCK_ANSIC -DKANJI -DPID_T=pid_t $(KFLAGS)" \
-	"LIBS=-lsocketl -lcurses -ltermcap"
+	-DQNX -DDYNAMIC -DCK_REDIR -DSELECT -DSELECT_H -DNOJC -DTCPSOCKET \
+	-DCK_RTSCTS -DCK_CURSES -DCK_WREFRESH -DCK_ANSIC -DKANJI \
+	-DPID_T=pid_t $(KFLAGS)" \
+	"LIBS=-lsocketl -lcurses -ltermcap -ltermlib"
+	@wermit -h >use.qnx
+	@usemsg wermit use.qnx
+	@rm use.qnx
 
-#QNX 4.1, 16-bit version, with Watcom C 8.5 on i286 PCs and above.
-#stacksize 26000, objects larger than 100 bytes in their own segments,
-#string constants to the codesegment, etc.  Add -DNOUUCP if desired.
+# QNX 4.1, 16-bit version, with Watcom C 8.5 on i286 PCs and above.
+# stacksize 26000, objects larger than 100 bytes in their own segments,
+# string constants to the codesegment, etc.  Add -DNOUUCP if desired.
 qnx16_41:
 	@echo 'Making C-Kermit $(CKVER) for QNX 4.1, 16-bit...'
 	$(MAKE) wermit \
@@ -3282,6 +3762,9 @@ qnx16_41:
 	-Wc,-Ols -Wc,-zdf -Wc,-zc -Wc,-zt100 -mh -DPOSIX -DQNX -DDIRENT \
 	-DNOCYRIL -DNODEBUG -DNOMSEND -DMINIDIAL -DNOXMIT -DNOSCRIPT -DNOSPL \
 	-DNOSETKEY -DDYNAMIC -DPID_T=pid_t $(KFLAGS)"
+	@wermit -h >use.qnx
+	@usemsg wermit use.qnx
+	@rm use.qnx
 
 #Ridge 32 with ROS 3.2
 ridge32:
@@ -3322,16 +3805,16 @@ altosi:
 # also, sys/types.h needed modifying:
 #   #ifdef __SYS_TYPES_H__, #define ..., #endif
 # also, ckuus2.c MUST be compiled NOOPT else symbol table is destroyed!
-# Submission by Robert Weiner/Programming Plus, rweiner@watsun.cc.columbia.edu
+# Submission by Robert Weiner/Programming Plus, rweiner@progplus.com.
 #
 altos3:
 	@echo 'Making C-Kermit $(CKVER) for Altos ACS68k UNIX System III'
 	$(MAKE) ckuus2.$(EXT) "CFLAGS = -DATTSV -DNOCSETS -DNOSETKEY -DNOJC \
-	  -DNODIAL -DDCLPOPEN -DNOSETBUF -DNOSCRIPT -DNOHELP $(KFLAGS) -i"
+	-DNODIAL -DDCLPOPEN -DNOSETBUF -DNOSCRIPT -DNOHELP $(KFLAGS) -i"
 	$(MAKE) wermit \
-       "CFLAGS = -DATTSV -DNOCSETS -DNOSETKEY -DNOJC \
-	  -DNODIAL -DDCLPOPEN -DNOSETBUF -DNOSCRIPT -DNOHELP $(KFLAGS) -i -O" \
-		"LNKFLAGS = -i" "LIBS = getcwd.$(EXT)"
+	"CFLAGS = -DATTSV -DNOCSETS -DNOSETKEY -DNOJC \
+	-DNODIAL -DDCLPOPEN -DNOSETBUF -DNOSCRIPT -DNOHELP $(KFLAGS) -i -O" \
+	"LNKFLAGS = -i" "LIBS = getcwd.$(EXT)"
 
 #MINIX - Original PC version with 64K+64K limit.
 # Reportedly, the linker (asld) can run out of space while linking.  The only
@@ -3411,6 +3894,17 @@ minixc68:
 	-DNOSCRIPT -DNOCSETS -DNOSPL $(KFLAGS) \
 	-DPID_T=pid_t -DUID_T=uid_t -DGID_T=gid_t -DSIG_V"
 
+#MINIX - 68k version with c68 compiler.
+#A variation on the above that was recently (Sep 95) reported to work.
+minixc68a:
+	@echo 'Making C-Kermit $(CKVER) for MINIX 68k with c68...
+	$(MAKE) wermit "CC= cc -c68" \
+	"CFLAGS= -DV7 -DMINIX -D_MINIX -D_POSIX_SOURCE -DDYNAMIC \
+	-DCK_ANSIC -DNODEBUG -DNOTLOG -DMINIDIAL -DEXTEN -DMYCURSES \
+	-DNOSCRIPT -DNOCSETS -DNOSPL -DNOJC -DDIRENT -DNOSETBUF \
+	-DNOSETKEY -DNOESCSEQ $(KFLAGS) \
+	-DPID_T=pid_t -DUID_T=uid_t -DGID_T=gid_t -DSIG_V"
+
 #MIPS Computer Systems with UMIPS RISC/OS 4.52 = AT&T UNIX System V R3.0.
 #Remove -DNOJC if job control can be safely used.
 mips:
@@ -3453,6 +3947,17 @@ sv68r3v51:
 	"CFLAGS = -DSVR3 -DDIRENT -DHDBUUCP -DDYNAMIC -DNODEBUG -DNOSETBUF \
 	$(KFLAGS) -O2 -v -ftraditional" "LNKFLAGS = -s -v" "LIBS = -lm881"
 
+#Motorola MVME147 System V/68 R3V6. derived from Motorola Delta System R3V5.
+#Checked on larger Motorola System V/68 R3V6 ( with NSE Network Services Ext.)
+#After building, use "strip" to reduce size of the executable program.
+#Try removing the LIBS clause if it causes trouble (libnsl might not actually
+#be necessary, and reportedly it is missing on some systems).
+sv68r3v6:
+	@echo 'Making C-Kermit $(CKVER) for Motorola UNIX System V/68 R3V6'
+	@echo 'Remove the LIBS clause if it causes trouble.'
+	$(MAKE) wermit "CFLAGS = -DSVR3 -DDIRENT -DHDBUUCP -DDYNAMIC \
+	-DTCPSOCKET $(KFLAGS) -O" "LNKFLAGS =" "LIBS = -lnsl"
+
 #Motorola Delta System V/88 R32, signal() is void rather than int.
 #Uses dirent.h and Honey DanBer uucp.  Needs <sys/utime.h> for setting
 #file dates.  Supports TCP/IP.
@@ -3469,11 +3974,12 @@ sv88r32:
 #locking on devices, etc.  curses support added.  Reportedly, the
 #/usr/include/sys/vnode.h file has a bug which must be fixed before this
 #makefile entry can work correctly.  The "if DEBUG" directive at about line
-#320 must be changed to "ifdef DEBUG".
+#320 must be changed to "ifdef DEBUG" (Reportedly, this was fixed in
+#in System V/88 R4.3).
 #After building, use "mcs -d" to reduce size of the executable program.
 sv88r40:
 	@echo 'Making C-Kermit $(CKVER) for Motorola UNIX System V/88 R40...'
-	$(MAKE) wermit "CFLAGS = -O -DSVR4 -DDIRENT -DHDBUUCP \
+	$(MAKE) wermit "CFLAGS = -O -DSVR4 -DMOTSV88R4 -DDIRENT -DHDBUUCP \
 	-DDYNAMIC -DSTERMIOX -DTCPSOCKET -DCK_CURSES $(KFLAGS)" \
 	"LIBS= -lsocket -lnsl -lcurses" "LNKFLAGS = -s"
 
@@ -3512,8 +4018,8 @@ clean:
 ckuus3.$(EXT) ckuus4.$(EXT) ckuus5.$(EXT) ckcpro.$(EXT) ckcfns.$(EXT) \
 ckcfn2.$(EXT) ckcfn3.$(EXT) ckuxla.$(EXT) ckucon.$(EXT) ckutio.$(EXT) \
 ckufio.$(EXT) ckudia.$(EXT) ckuscr.$(EXT) ckwart.$(EXT) ckuusx.$(EXT) \
-ckuusy.$(EXT) ckcnet.$(EXT) ckuus6.$(EXT) ckuus7.$(EXT) ckcmdb.$(EXT) \
-ckcpro.c wart
+ckuusy.$(EXT) ckcnet.$(EXT) ckuus6.$(EXT) ckuus7.$(EXT) ckusig.$(EXT) \
+ckcmdb.$(EXT) ckcpro.c wart
 
 #Run Lint on this mess for the SUN/BSD version.
 lintsun:

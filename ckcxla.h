@@ -8,7 +8,7 @@
   Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 1993, Trustees of Columbia University in the City of New
+  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
   York.  The C-Kermit software may not be, in whole or in part, licensed or
   sold for profit as a software product itself, nor may it be included in or
   distributed with commercial products or otherwise distributed by commercial
@@ -19,23 +19,33 @@
 #ifndef CKCXLA_H			/* Guard against multiple inclusion */
 #define CKCXLA_H
 
-#ifndef KANJI		/* Systems including Kanji support by default */
-#ifdef OS2		/* OS/2... */
+#ifndef KANJI				/* Systems supporting Kanji */
+#ifdef OS2
 #define KANJI
 #endif /* OS2 */
 #endif /* KANJI */
 
-#ifdef NOKANJI		/* Except if NOKANJI is defined. */
+#ifdef NOKANJI				/* Except if NOKANJI is defined. */
 #ifdef KANJI
 #undef KANJI
 #endif /* KANJI */
 #endif /* NOKANJI */
+
+#ifndef CKOUNI				/* Unicode support */
+#ifdef OS2
+#define CKOUNI
+#endif /* OS2 */
+#endif /* CKOUNI */
 
 /*
    Disable all support for all classes of character sets
    if NOCSETS is defined.
 */
 #ifdef NOCSETS
+
+#ifdef CKOUNI
+#undef CKOUNI
+#endif /* CKOUNI */
 #ifdef KANJI
 #undef KANJI
 #endif /* KANJI */
@@ -49,7 +59,7 @@
 #undef HEBREW
 #endif /* HEBREW */
 
-#else /* Rest of this file... */
+#else /* Not NOCSETS - Rest of this file... */
 
 #ifndef NOLATIN2			/* If they didn't say "no Latin-2" */
 #ifndef LATIN2				/* Then if LATIN2 isn't already */
@@ -126,10 +136,10 @@
 
 /*
   File character-sets are defined in the system-specific ck?xla.h file,
-  except for the following one, which must be available to all versions:
+  except for the following ones, which must be available to all versions:
 */
 #define FC_TRANSP  254			/* Transparent */
-
+#define FC_UNDEF   255			/* Undefined   */
 /*
   Designators for Kermit's transfer character sets.  These are all standard
   sets, or based on them.  Symbols must be unique in the first 8 characters,
@@ -219,14 +229,21 @@ struct langinfo {
 #include "ckuxla.h"
 #endif /* STRATUS */
 
-#endif /* NOCSETS */
-
-#endif /* CKCXLA_H */
-
 #ifdef KANJI
 _PROTOTYP( int xkanjf, (void) );
 _PROTOTYP( int xkanjz, (int (*)(char)) );
 _PROTOTYP( int xkanji, (int, int (*)(char)) );
 #endif /* KANJI */
+
+#ifndef MAC
+#ifndef NOLOCAL
+_PROTOTYP( int cs_size, (int) );
+_PROTOTYP( int cs_is_std, (int) );
+_PROTOTYP( int cs_is_nrc, (int) );
+#endif /* NOLOCAL */
+#endif /* MAC */
+
+#endif /* NOCSETS */
+#endif /* CKCXLA_H */
 
 /* End of ckcxla.h */

@@ -1,0 +1,422 @@
+File CKERMIT.UPD, Supplement to "Using C-Kermit", Second Edition   -*- text -*-
+
+As of C-Kermit version:  6.0.192
+This file last updated:  6 Dec 1996
+
+Authors: Frank da Cruz and Christine M. Gianone
+Address: The Kermit Project
+         Watson Laboratory
+         Columbia University
+         612 West 115th Street, New York NY 10025-7799, USA.
+Fax:     +1 (212) 662-6442  -- or --  +1 (212) 663-8202
+E-Mail:  kermit@columbia.edu
+Web:     http://www.columbia.edu/kermit/
+
+  Copyright (C) 1992, 1996, Trustees of Columbia University in the City of
+  New York.  All rights reserved.
+
+------------------------------
+WHAT IS IN THIS FILE
+
+This file lists changes made to C-Kermit since the second edition of the book
+"Using C-Kermit" was published in November 1996.  Use this file as a
+supplement to the second edition of "Using C-Kermit".  If the "most recent
+update" shown above is long ago, contact Columbia University to see if there
+is a newer release.
+
+For further information, also see the CKERMIT.BWR ("C-Kermit beware") file for
+hints, tips, tricks, restrictions, frequently asked questions, etc, plus the
+system-specific "beware file", e.g. CKUKER.BWR for UNIX, CKVKER.BWR for VMS,
+etc, and also any system-specific update files such as CKERMIT.INF for OS/2,
+or BUGS.DOC and UPDATES.DOC for Windows 95 and NT.
+
+------------------------------
+NOTE TO KERMIT 95 USERS
+
+This file concentrates on the aspects of C-Kermit that are common to all
+versions: UNIX, VMS, OS/2, etc.  Please refer to your Kermit 95 documentation:
+the "Kermit 95" booklet, the UPDATES.DOC and BUGS.DOC files, and to all the
+other files in the Kermit 95 DOCS directory for information that is specific
+to Kermit 95.  Also, please note that "Using C-Kermit" predates Kermit 95
+altogether, and so please pardon the fact that it does not mention Windows 95
+or NT; it is still the definitive reference for the C-Kermit command and
+script programming language.
+
+-----------------------------------------
+A WORD ABOUT VERSIONS AND VERSION NUMBERS
+
+"C-Kermit" refers to all the many programs that are compiled in whole or in
+part from common C-language source code, comprising:
+
+ . A Kermit file transfer protocol module
+ . A command parser and script execution module
+ . A modem-dialing module
+ . A network support module
+ . A character-set translation module.
+
+and several others.  These "system-independent" modules are combined with
+system-dependent modules for each platform to provide the required
+input/output functions, and also in some cases overlaid with an alternative
+user interface, such as Macintosh Kermit's point-and-click interface, and in
+some cases also a terminal emulator, as Kermit 95.
+
+The C-Kermit version number started as 1.0, ... 3.0, 4.0, 4.1 and then
+(because of confusion at the time with Berkeley UNIX 4.2), 4B, 4C, and so on,
+with the specific edit number in parentheses, for example 4E(072) or 5A(188).
+This scheme was used through 5A(191), but now we have gone back to the
+traditional numbering scheme with decimal points:  major.minor.edit; for
+example 6.0.192.
+
+Meanwhile, C-Kermit versions for some platforms might go through several
+releases while C-Kermit itself remains the same.  These versions have their
+own platform-specific version numbers, such as Kermit 95 1.1.1, 1.1.2, and
+so on.
+
+------------------------------
+CONTENTS
+
+ I.  C-KERMIT DOCUMENTATION: Information about the C-Kermit manual.
+
+ II. NEW FEATURES: Documentation for features added since 6.0.192 --
+
+     (1) PROGRAM MANAGEMENT AND COMMANDS
+         1.1. Command Continuation
+     (2) MAKING AND USING CONNECTIONS
+	 2.1. Modems
+	 2.2. TELNET and RLOGIN
+	 2.3. The EIGHTBIT command
+	 2.4. The Services Directory
+     (3) TERMINAL CONNECTION
+     (4) FILE TRANSFER AND MANAGEMENT
+     (5) NEW CLIENT/SERVER FEATURES
+     (6) INTERNATIONAL CHARACTER SETS
+         6.1. The HP-Roman8 Character Set
+     (7) SCRIPT PROGRAMMING
+         7.1. INPUT Command Details
+     (8) USING OTHER FILE TRANSFER PROTOCOLS
+     (9) NEW COMMAND-LINE OPTIONS
+
+III. APPENDICES  
+
+IV. ERRATA & CORRIGENDA: Corrections to "Using C-Kermit"
+
+------------------------------
+I. C-KERMIT DOCUMENTATION
+
+The user manual for C-Kermit is:
+
+  Frank da Cruz and Christine M. Gianone, "Using C-Kermit", Second Edition,
+  Digital Press /  Butterworth-Heinemann, Woburn, MA, 1997, 622 pages,
+  ISBN 1-55558-164-1.
+
+  US single-copy price: $39.95; quantity discounts available.  Available in
+  computer bookstores or directly from Columbia University:
+
+    The Kermit Project
+    Columbia University
+    612 West 115th Street
+    New York NY  10025-7799
+    USA
+    Telephone: +1 (212) 854-3703
+    Fax:       +1 (212) 663-8202
+
+  Domestic and overseas orders accepted.  Price: US $39.95 (US, Canada, and
+  Mexico), $50 elsewhere.  Orders may be paid by MasterCard or Visa, or
+  prepaid by check in US dollars.  Add $35 bank fee for checks not drawn on
+  a US bank.  Price includes shipping.  Do not include sales tax.
+  Inquire about quantity discounts.
+
+  You can also order by phone from the publisher, Digital Press /
+  Butterworth-Heinemann, with MasterCard, Visa, or American Express:
+
+    +1 800 366-2665   (Woburn, Massachusetts office for USA & Canada)
+    +44 1865 314627   (Oxford, England distribution centre for UK & Europe)
+    +61 03 9245 7111  (Melbourne, Vic, office for Australia & NZ)
+    +65 356-1968      (Singapore office for Asia) 
+    +27 (31) 2683111  (Durban office for South Africa)
+
+  A German-language edition of the First Edition is also available:
+
+    Frank da Cruz and Christine M. Gianone, "C-Kermit - Einfuehrung und
+    Referenz", Verlag Heinz Heise, Hannover, Germany (1994).
+    ISBN 3-88229-023-4.  Deutsch von Gisbert W. Selke.  Price: DM 88,00.  
+    Verlag Heinz Heise GmbH & Co. KG, Helstorfer Strasse 7, D-30625 Hannover.
+    Tel. +49 (05 11) 53 52-0, Fax. +49 (05 11) 53 52-1 29.
+
+The Kermit file transfer protocol is specified in:
+
+  Frank da Cruz, "Kermit, A File Transfer Protocol", Digital Press,
+  Bedford, MA, 1987, 379 pages, ISBN 0-932376-88-6.
+  US single-copy price: $32.95.  Availability as above.
+
+Kermit for Windows 95 is documented in:
+
+  Christine M. Gianone and Frank da Cruz, "Kermit 95",
+  Manning Publications, Greenwich CT (1996), 88 pages, ISBN 1-884777-14-7.
+  US single-copy price: $14.95.  Included in Kermit 95 shrink wrapped
+  package and available separately from Columbia University or direct
+  from the publisher:
+
+    Manning Publications Co.
+    3 Lewis Street
+    Greenwich CT  06830
+    USA
+    Fax:   +1 (203) 661 9018
+    Email: 73150.1431@compuserve.com
+
+News and articles about Kermit software and protocol are published
+periodically in the journal, Kermit News.  Subscriptions are free; contact
+Columbia University at the address above.
+
+Online news about Kermit is published in the comp.protocols.kermit.announce
+and comp.protocols.kermit.misc newsgroups.
+
+------------------------------
+II. NEW FEATURES
+
+Support for the Bell Labs Plan 9 operating system was added to version
+6.0.192 too late to be mentioned in the book (although it does appear on
+the cover).
+
+Specific items below are grouped together by major topic, roughly
+corresponding to the chapters of "Using C-Kermit".
+
+(1) PROGRAM MANAGEMENT AND COMMANDS
+
+1.1. Command Continuation
+
+Comments that start with ";" or "#" can no longer be continued.  In:
+
+  ; this is a comment -
+  echo blah
+
+the ECHO command will execute, rather than being taken as a continuation of
+the preceding comment line.  However, the text of the COMMENT command can
+still be continued onto subsequent lines:
+
+  comment this is a comment -
+  echo blah
+
+As of version 6.0.192, backslash is no longer a valid continuation character.
+Only hyphen should be used for command continuation.  This is to make it
+possible to issue commands like "cd a:\" on DOS-like systems.
+
+(2) MAKING AND USING CONNECTIONS
+
+2.1. Modems
+
+Cardinal modem type added, for Cardinal V.34 MVP288X series.
+
+2.2. TELNET and RLOGIN
+
+SET TELNET BUG BINARY-ME-MEANS-U-TOO { ON, OFF } was added to edit 192
+after the book was printed.  Also SET TELNET BUG BINARY-U-MEANS-ME-TOO.
+The default for both is OFF.  ON should be used when communicating with a
+Telnet partner (client or server) that mistakenly believes that telling
+C-Kermit to enter Telnet binary mode also means that it, too, is in binary
+mode, contrary to the Telnet specification, which says that binary mode must
+be negotiated in each direction separately.
+
+The RLOGIN section on page 123 does not make it clear that you can use the
+SET TELNET TERMINAL-TYPE command to govern the terminal type that is reported
+by C-Kermit to the RLOGIN server.
+
+Note that the SET TCP commands described on pages 122-123 might be absent;
+some platforms that support TCP/IP do not support these particular controls.
+
+2.3. The EIGHTBIT command
+
+EIGHTBIT is simply a shorthand for: SET PARITY NONE, SET TERMINAL BYTESIZE 8,
+SET COMMAND BYTESIZE 8; that is, a way to set up an 8-bit clean connection
+in a single command.
+
+2.4. The Services Directory
+
+Chapter 7 of "Using C-Kermit" does not mention the ULOGIN macro, which is
+used by our sample services directory, CKERMIT.KND.  Unlike UNIXLOGIN,
+VMSLOGIN, etc, this one is for use with systems that require a user ID but
+no password.  Therefore it doesn't prompt for a password or wait for a
+password prompt from the remote service.
+
+(3) TERMINAL CONNECTION
+
+(4) FILE TRANSFER
+
+(5) NEW CLIENT/SERVER FEATURES
+
+(6) INTERNATIONAL CHARACTER SETS
+
+6.1. The HP-Roman8 Character Set
+
+The HP-Roman8 character set was omitted from Table VII-4:
+
+Hewlett Packard Roman8 Character Set
+dec col/row oct hex  description
+160  10/00  240  A0  (Undefined)
+161  10/01  241  A1  A grave
+162  10/02  242  A2  A circumflex
+163  10/03  243  A3  E grave
+164  10/04  244  A4  E circumflex
+165  10/05  245  A5  E diaeresis
+166  10/06  246  A6  I circumflex
+167  10/07  247  A7  I diaeresis
+168  10/08  250  A8  Acute accent
+169  10/09  251  A9  Grave accent
+170  10/10  252  AA  Circumflex accent
+171  10/11  253  AB  Diaeresis
+172  10/12  254  AC  Tilde accent
+173  10/13  255  AD  U grave
+174  10/14  256  AE  U circumflex
+175  10/15  257  AF  Lira symbol
+176  11/00  260  B0  Top bar (macron)
+177  11/01  261  B1  Y acute
+178  11/02  262  B2  y acute
+179  11/03  263  B3  Degree Sign
+180  11/04  264  B4  C cedilla
+181  11/05  265  B5  c cedilla
+182  11/06  266  B6  N tilde
+183  11/07  267  B7  n tilde
+184  11/08  270  B8  Inverted exclamation mark
+185  11/09  271  B9  Inverted question mark
+186  11/10  272  BA  Currency symbol
+187  11/11  273  BB  Pound sterling symbol
+188  11/12  274  BC  Yen symbol
+189  11/13  275  BD  Paragraph
+190  11/14  276  BE  Florin (Guilder) symbol
+191  11/15  277  BF  Cent symbol
+192  12/00  300  C0  a circumflex
+193  12/01  301  C1  e circumflex
+194  12/02  302  C2  o circumflex
+195  12/03  303  C3  u circumflex
+196  12/04  304  C4  a acute
+197  12/05  305  C5  e acute
+198  12/06  306  C6  o acute
+199  12/07  307  C7  u acute
+200  12/08  310  C8  a grave
+201  12/09  311  C9  e grave
+202  12/10  312  CA  o grave
+203  12/11  313  CB  u grave
+204  12/12  314  CC  a diaeresis
+205  12/13  315  CD  e diaeresis
+206  12/14  316  CE  o diaeresis
+207  12/15  317  CF  u diaeresis
+208  13/00  320  D0  A ring
+209  13/01  321  D1  i circumflex
+210  13/02  322  D2  O with stroke
+211  13/03  323  D3  AE digraph
+212  13/04  324  D4  a ring
+213  13/05  325  D5  i acute
+214  13/06  326  D6  o with stroke
+215  13/07  327  D7  ae digraph
+216  13/08  330  D8  A diaeresis
+217  13/09  331  D9  i grave
+218  13/10  332  DA  O diaeresis
+219  13/11  333  DB  U diaeresis
+220  13/12  334  DC  E acute
+221  13/13  335  DD  i diaeresis
+222  13/14  336  DE  German sharp s
+223  13/15  337  DF  O circumflex
+224  14/00  340  E0  A acute
+225  14/01  341  E1  A tilde
+226  14/02  342  E2  a tilde
+227  14/03  343  E3  Icelandic Eth
+228  14/04  344  E4  Icelandic eth
+229  14/05  345  E5  I acute
+230  14/06  346  E6  I grave
+231  14/07  347  E7  O acute
+232  14/08  350  E8  O grave
+233  14/09  351  E9  O tilde
+234  14/10  352  EA  o tilde
+235  14/11  353  EB  S caron
+236  14/12  354  EC  s caron
+237  14/13  355  ED  U acute
+238  14/14  356  EE  Y diaeresis
+239  14/15  357  EF  y diaeresis
+240  15/00  360  F0  Icelandic Thorn
+241  15/01  361  F1  Icelandic thorn
+242  15/02  362  F2  Middle dot
+243  15/03  363  F3  Greek mu
+244  15/04  364  F4  Pilcrow sign
+245  15/05  365  F5  Fraction 3/4
+246  15/06  366  F6  Long dash, horizontal bar
+247  15/07  367  F7  Fraction 1/4
+248  15/08  370  F8  Fraction 1/2
+249  15/09  371  F9  Feminine ordinal
+250  15/10  372  FA  Masculine ordinal
+251  15/11  373  FB  Left guillemot
+252  15/12  374  FC  Solid box
+253  15/13  375  FD  Right guillemot
+254  15/14  376  FE  Plus or minus sign
+255  15/15  377  FF  (Undefined)
+
+(7) SCRIPT PROGRAMMING
+
+7.1. INPUT Command Details
+
+The description of the INPUT command on page 422 fails to mention the
+following two points about the timeout:
+
+ 1. "INPUT -1 text" (or "INPUT \%x text", where \%x is any variable whose 
+    value is -1 or less) means "wait forever".
+
+ 2. "INPUT 0 text" means don't wait at all -- fail immediately if the text 
+    is not already waiting to be read.
+
+The same points apply to MINPUT.
+
+(8) USING OTHER FILE TRANSFER PROTOCOLS
+
+(9) NEW COMMAND-LINE OPTIONS
+
+III. APPENDICES
+
+Figure II-5 on page 494.  The pin assignments of the Mini Din-8 connector
+are not described anywhere.  As noted in the text, these tend to vary from
+vendor to vendor.  One common arrangement is:
+
+  1. HSKout (Handshake out -- definition depends on software)
+  2. HSKin  (Handshake in or external clock)
+  3. TxD-
+  4. Not used
+  5. RxD-
+  6. TxD+
+  7. Not used
+  8. RxD+
+
+Note the "balanced pairs" for Receive Data (RxD) and Transmit Data (TxD), and
+the utter lack of modem signals.  These connectors follow the RS-423 standard,
+rather than RS-232.  In some arrangements, Pin 1 is used for DTR and Pin 2 for
+CD; in others Pin 1 is RTS and Pin 2 is CTS.
+
+IV. ERRATA & CORRIGENDA
+
+The following errors in "Using C-Kermit", Second Edition, first printing,
+have been noted:
+
+First, some missing acknowledgements: JE Jones of Microware for help with
+OS-9, Nigel Roles for his help with Plan 9, Lucas Hart for help with VMS and
+Digital UNIX, Igor Kovalenko for his help with QNX.
+
+PAGE    REMARKS
+COVER   "COS" is a misprint.  There is no COS.  Pretend it says "SCO" or "VOS".
+123     Third paragraph from bottom: "..otherwise if a your local username.."
+        should be "..otherwise your local username..".
+298     Table 16-2, Portuguese entry.  Column 4/00 should show section sign,
+        not acute accent.
+453     "the the" (last paragraph) should be "the".
+454     EOT (last paragraph) is End of Transmission, not End of Text.
+457     "macro for and" (last paragraph) should be "macro and".
+560-563 HP-Roman8 missing from Table VII-4.  It is listed in section II(6).
+565     "d stroke" in Table VII-5 has the wrong appearance; the stem should
+        be upright.  The letter shown in the table is actually a lowercase
+        Icelandic eth, which has a curved stem.
+601-604 BeBox, BeOS, Plan 9, and probably others not listed in trademarks.
+604     The words "SCRIBE TEXT FORMATTER" appear at the end of the last
+        sentence of the first parapgraph of the Colophon.  They should have
+        been in the Index.
+
+Please send reports of other errors to the authors, as well as suggestions for
+improvements, additional index entries, and any other comments.
+
+------------------------------
+END OF CKERMIT.UPD

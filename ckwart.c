@@ -1,5 +1,5 @@
 #include "ckcsym.h"
-char *wartv = "Wart Version 2A(009) 14 Jan 92";
+char *wartv = "Wart Version 2A(010) 4 Apr 95";
 
 #define CKWART_C
 
@@ -31,7 +31,7 @@ char *wartv = "Wart Version 2A(009) 14 Jan 92";
   Authors: Jeff Damens, Frank da Cruz
   Columbia University Center for Computing Activites.
   First released November 1984.
-  Copyright (C) 1984, 1992, Trustees of Columbia University in the City of New
+  Copyright (C) 1984, 1996, Trustees of Columbia University in the City of New
   York.  Permission is granted to any individual or institution to use this
   software as long as it is not sold for profit.  This copyright notice must be
   retained.  This software may not be included in commercial products without
@@ -71,7 +71,15 @@ char *wartv = "Wart Version 2A(009) 14 Jan 92";
  keeps the program about 3K-4K smaller.
 */
 
+#ifdef IRIX60
+/*
+  Also use short or int if your compiler complains inordinately about
+  "integer conversion resulted in a change of sign"...
+*/
+#define TBL_TYPE "short"		/* C data type of state table */
+#else
 #define TBL_TYPE "char"			/* C data type of state table */
+#endif /* IRIX60 */
 
 #define C_L 014				/* Formfeed */
 

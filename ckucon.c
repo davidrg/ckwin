@@ -2,14 +2,14 @@
 #ifdef NOLOCAL
 char *connv = "";
 #else
-char *connv = "CONNECT Command for UNIX, 5A(073) 15 Sep 94";
+char *connv = "CONNECT Command for UNIX, 6.0.083, 6 Sep 96";
 
 /*  C K U C O N  --  Terminal connection to remote system, for UNIX  */
 /*
-  Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
+  Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 1994, Trustees of Columbia University in the City of New
+  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
   York.  The C-Kermit software may not be, in whole or in part, licensed or
   sold for profit as a software product itself, nor may it be included in or
   distributed with commercial products or otherwise distributed by commercial
@@ -17,10 +17,21 @@ char *connv = "CONNECT Command for UNIX, 5A(073) 15 Sep 94";
   Office of Kermit Development and Distribution, Columbia University.  This
   copyright notice must not be removed, altered, or obscured.
 
-  Special thanks to Eduard Vopicka in Prague, Czech Republic, for valuable
-  contributions to this module in July 1994.
+  Special thanks to Eduard Vopicka, Prague University of Economics,
+  Czech Republic, for valuable contributions to this module in July 1994,
+  and to Neal P. Murphy of the Motorola Cellular Infrastructure Group
+  for rearranging the code to allow operation on the BeBox, yet still work
+  in regular UNIX.
 */
 #include "ckcdeb.h"			/* Common things first */
+
+#ifdef BEBOX
+static double time_started = 0.0;
+#include <kernel/OS.h>
+_PROTOTYP( static long concld, (void *) );
+#else
+_PROTOTYP( static VOID concld, (void) );
+#endif /* BEBOX */
 
 #ifdef NEXT
 #undef NSIG
@@ -35,6 +46,7 @@ char *connv = "CONNECT Command for UNIX, 5A(073) 15 Sep 94";
 #else
 #include <setjmp.h>
 #endif /* ZILOG */
+#include "ckcsig.h"
 
 /* Kermit-specific includes */
 
@@ -54,13 +66,17 @@ _PROTOTYP( static VOID logchar, (char) );
 _PROTOTYP( int hconne, (void) );
 _PROTOTYP( VOID shomdm, (void) );
 _PROTOTYP( static int kbget, (void) );
+_PROTOTYP( static int pipemsg, (int) );
+_PROTOTYP( static VOID ck_sndmsg, (void) );
+_PROTOTYP( static int ckcputf, (void) );
+_PROTOTYP( static VOID ck_sndmsg, (void) );
 
 /*
   For inter-fork signaling.  Normally we use SIGUSR1, except on SCO, where 
   we use SIGUSR2 because SIGUSR1 is used by the system.  You can define
   CK_FORK_SIG to be whatever other signal you might want to use at compile
   time.  We don't use SIGUSR2 everywhere because in some systems, like
-  UnixWare, the default action for SIGUSR2 is to killthe process that gets it.
+  UnixWare, the default action for SIGUSR2 is to kill the process that gets it.
 */
 #ifndef CK_FORK_SIG
 
@@ -82,11 +98,20 @@ _PROTOTYP( static int kbget, (void) );
 
 /* External variables */
 
+extern struct ck_p ptab[];
+
 extern int local, escape, duplex, parity, flow, seslog, sessft, debses,
  mdmtyp, ttnproto, cmask, cmdmsk, network, nettype, deblog, sosi, tnlm,
- xitsta, what, ttyfd, quiet, backgrd, pflag, tt_crd, tn_nlm, ttfdflg;
+ xitsta, what, ttyfd, quiet, backgrd, pflag, tt_crd, tn_nlm, ttfdflg,
+ tt_escape, justone;
+
 extern long speed;
 extern char ttname[], sesfil[], myhost[], *ccntab[];
+#ifdef TNCODE
+extern int tn_b_nlm, me_binary, u_binary;
+#endif /* TNCODE */
+
+extern int nopush;
 
 #ifdef CK_APC
 extern int apcactive;			/* Application Program Command (APC) */
@@ -98,7 +123,18 @@ extern char *apcbuf;
 extern char apcbuf[];
 #endif /* DCMDBUF */
 static int apcbuflen = APCBUFLEN - 2;
+extern int autodl, protocol;		/* Auto download */
 #endif /* CK_APC */
+
+#ifdef CK_XYZ
+#ifdef XYZ_INTERNAL
+static int zmdlok = 1;			/* Zmodem autodownloads available */
+#else
+static int zmdlok = 0;			/* Depends on external protocol def */
+#endif /* XYZ_INTERNAL */
+#else
+static int zmdlok = 0;			/* Not available at all */
+#endif /* CK_XYZ */
 
 #ifndef NOSETKEY			/* Keyboard mapping */
 extern KEY *keymap;			/* Single-character key map */
@@ -108,7 +144,9 @@ static MACRO kmptr = NULL;		/* Pointer to current key macro */
 
 /* Global variables local to this module */
 
-static int quitnow = 0,			/* <esc-char>Q was typed */
+static int
+  quitnow = 0,				/* <esc-char>Q was typed */
+  jbset = 0,				/* Flag whether jmp buf is set. */
   dohangup = 0,				/* <esc-char>H was typed */
   sjval,				/* Setjump return value */
   goterr = 0,				/* Fork/pipe creation error flag */
@@ -118,7 +156,7 @@ static int quitnow = 0,			/* <esc-char>Q was typed */
   inshift = 0,				/* SO/SI shift states */
   outshift = 0;
 
-static PID_T parent_id = (PID_T)0;	/* Process id of keyboard fork */
+static PID_T parent_id = (PID_T)0;	/* Process ID of keyboard fork */
 
 static char ecbuf[10], *ecbp;		/* Escape char buffer & pointer */
 
@@ -168,7 +206,7 @@ int obufl;				/* Length of output buffer */
 unsigned char tosend = 0;
 int linkid, lcn;
 static int dox25clr = 0;
-CHAR padparms[MAXPADPARMS+1];
+extern CHAR padparms[];
 #endif /* SUNX25 */
 
 static int xpipe[2] = {-1, -1};	/* Pipe descriptor for child-parent messages */
@@ -218,6 +256,12 @@ static int tcs;			/* Intermediate ("transfer") character set. */
 #define CEV_PAD 2			/* X.25 - change PAD parameters */
 #define CEV_DUP 3			/* Toggle duplex */
 #define CEV_APC 4			/* Execute APC */
+#ifdef TNCODE
+#define CEV_MEBIN 5			/* Change of me_binary */
+#define CEV_UBIN 6			/* Change of u_binary */
+#endif /* TNCODE */
+#define CEV_ADL 7			/* Autodownload */
+#define CEV_AUL 8			/* Autoupload */
 
 #ifdef NOESCSEQ
 #define chkaes(x) 0
@@ -336,7 +380,7 @@ chkaes(c) char c;
 	      inesc = ES_STRING;	/* Switch to STRING-absorption state */
 #ifdef CK_APC
 	      if (c == '_' && pid == 0 && /* APC handled in child only */
-		  apcstatus != APC_OFF) { 
+		  apcstatus != APC_OFF) { /* and only if not disabled. */
 		  debug(F100,"APC begin","",0);
 		  apcactive = 1;	/* Set APC-Active flag */
 		  apclength = 0;	/* and reset APC buffer pointer */
@@ -368,6 +412,12 @@ chkaes(c) char c;
 #ifdef CK_APC
 	  else if (apcactive && (apclength < apcbuflen)) /* If in APC, */
 	    apcbuf[apclength++] = c;	/* deposit this character. */
+	  else {			/* Buffer overrun */
+	      apcactive = 0;		/* Discard what we got */
+	      apclength = 0;		/* and go back to normal */
+	      apcbuf[0] = 0;		/* Not pretty, but what else */
+	      inesc = ES_NORMAL;	/* can we do?  (ST might not come) */
+	  }
 #endif /* CK_APC */
 	  break;			/* Absorb all other characters. */
 
@@ -399,7 +449,7 @@ chkaes(c) char c;
 
 /* Routines used by the child process */
 
-int
+static int
 pipemsg(n) int n; {			/* Send message ID to parent */
     int code = n & 255;
     return(write(xpipe[1], &code, sizeof(code)));
@@ -419,15 +469,11 @@ forkint(foo) int foo; {
     signal(CK_FORK_SIG, SIG_IGN);	/* Set to ignore CK_FORK_SIG */
     debug(F100, "forkint - CK_FORK_SIG", "", 0);
     /* Force return from ck_sndmsg() */
-#ifdef CK_POSIX_SIG
-    siglongjmp(sig_env, 1);
-#else
-    longjmp(sig_env, 1);
-#endif /* CK_POSIX_SIG */
+    cklongjmp(sig_env, 1);
     /* NOTREACHED */
 }
 
-static void
+static VOID
 ck_sndmsg() {				/* Executed by child only ... */
     debug(F100, "ck_sndmsg - notifying parent", "", 0);
     if (
@@ -442,7 +488,7 @@ ck_sndmsg() {				/* Executed by child only ... */
         for (;;) pause();		/* Wait for CK_FORK_SIG or SIGKILL */
 	/* NOTREACHED */
     }
-    /* We come here from forkint() via [sig]longjmp(sig_env,1) */
+    /* We come here from forkint() via [sig]cklongjmp(sig_env,1) */
     debug(F100, "ck_sndmsg - returning", "", 0);
 }
 
@@ -453,7 +499,6 @@ static sigjmp_buf con_env;
 #else
 static jmp_buf con_env;
 #endif /* CK_POSIX_SIG */
-
 /*
   pipeint() handles CK_FORK_SIG signals from the lower (port) fork.
   It reads a function code from the pipe that connects the two forks,
@@ -462,9 +507,13 @@ static jmp_buf con_env;
 static SIGTYP
 pipeint(arg) int arg; {			/* Dummy argument */
     int code;
-    /* IMPORTANT: At this point, the child fork is waiting for CK_FORK_SIG
-       (eventually for SIGKILL) inside of ck_sndmsg().  So we can't get any
-       subsequent CK_FORK_SIG from child before we send it CK_FORK_SIG.
+#ifndef NOCCTRAP
+    extern ckjmpbuf cmjbuf;
+#endif /* NOCCTRAP */
+    /*
+      IMPORTANT: At this point, the child fork is waiting for CK_FORK_SIG
+      (eventually for SIGKILL) inside of ck_sndmsg().  So we can't get any
+      subsequent CK_FORK_SIG from child before we send it CK_FORK_SIG.
     */
     signal(CK_FORK_SIG, SIG_IGN);	/* Ignore CK_FORK_SIG now */
     debug(F101,"pipeint arg","",arg);
@@ -472,21 +521,85 @@ pipeint(arg) int arg; {			/* Dummy argument */
     read(xpipe[0], &code, sizeof(code)); /* Get function code from pipe */
     debug(F101,"pipeint code","",code);
 
+#ifndef NOCCTRAP
+#ifndef NOICP
+#define USECCJMPBUF
+#endif /* NOICP */
+#endif /* NOCCTRAP */
+/*
+  The CEV_HUP case is executed when the other side has hung up on us.
+  In some cases, this happens before we have had a chance to execute the
+  setjmp(con_env,1) call, and in that case we'd better not take the longjmp!
+  A good example is when you TELNET to port 13 on the local host; it prints
+  its asctime() string (26 chars) and then closes the connection.
+*/
     switch (code & 255) {
       case CEV_HUP:
-        sjval = CEV_HUP;		/* Set global variable */
-#ifdef CK_POSIX_SIG			/* Notify parent process to stop */
-        siglongjmp(con_env,sjval);
+        sjval = CEV_HUP;		/* Set global variable. */
+	if (jbset) {			/* jmp_buf is initialized */
+	    cklongjmp(con_env,sjval);	/* so do the right thing. */
+	} else {
+#ifdef USECCJMPBUF
+	    /* jmp_buf not init'd yet a close approximation... */
+	    ttclos(0);			/* Close our end of the connection */
+#ifdef BEBOX
+	    {
+		long ret_val;
+		if (pid) kill(pid,SIGKILLTHR);	/* Kill lower fork */
+		wait_for_thread (pid, &ret_val);
+	    }
 #else
-        longjmp(con_env,sjval);
-#endif /* CK_POSIX_SIG */
-        /* NOTREACHED */
+#ifdef Plan9
+	    if (pid) kill(pid, SIGKILL); /* (should always use this really) */
+#else
+	    if (pid) kill(pid,9);	/* Kill lower fork (history) */
+#endif /* Plan9 */
+#endif /* BEBOX */
+	    conres();			/* Reset the console. */
+	    if (!quiet) {
+		printf("\r\n(Back at %s)\r\n",
+		       *myhost ? myhost :
+#ifdef UNIX
+		       "local UNIX system"
+#else
+		       "local system"
+#endif /* UNIX */
+		       );
+	    }
+	    what = W_NOTHING;		/* So console modes are set right. */
+	    printf("\r\n");		/* prevent prompt-stomping */
+	    cklongjmp(cmjbuf,0);	/* Do what the Ctrl-C handler does */
+#else
+	    printf("\r\nLongjump failure - fatal\r\n");
+	    doexit(1);			/* Better than dumping core... */
+#endif /* USECCJMPBUF */
+	}
+#ifdef USECCJMPBUF
+#undef USECCJMPBUF
+#endif /* USECCJMPBUF */
+
       case CEV_DUP:			/* Child sends duplex change */
 	read(xpipe[0], (char *)&duplex, sizeof(duplex));
 	debug(F101,"pipeint duplex","",duplex);
 	break;
+#ifdef TNCODE
+      case CEV_MEBIN:			/* Child sends me_binary change */
+	read(xpipe[0], (char *)&me_binary, sizeof(me_binary));
+	debug(F101,"pipeint me_binary","",me_binary);
+	break;
+      case CEV_UBIN:			/* Child sends u_binary change */
+	read(xpipe[0], (char *)&u_binary, sizeof(u_binary));
+	debug(F101,"pipeint u_binary","",u_binary);
+	break;
+#endif /* TNCODE */
 
 #ifdef CK_APC
+      case CEV_AUL:			/* Autoupload */
+	justone = 1;
+	debug(F100,"autoupload at parent","",0);
+      case CEV_ADL:			/* Autodownload */
+	apcstatus = APC_LOCAL;
+	if (!justone) debug(F100,"autodownload at parent","",0);
       case CEV_APC:			/* Application Program Command */
 	read(xpipe[0], (char *)&apclength, sizeof(apclength));
 	read(xpipe[0], apcbuf, apclength+1); /* Include trailing zero byte */
@@ -498,11 +611,7 @@ pipeint(arg) int arg; {			/* Dummy argument */
 	}
 	obc = 0; obp = obuf; *obuf = NUL; /* Because port fork flushed */
 	sjval = CEV_APC;
-#ifdef CK_POSIX_SIG
-	siglongjmp(con_env,sjval);
-#else
-	longjmp(con_env,sjval);
-#endif /* CK_POSIX_SIG */
+	cklongjmp(con_env,sjval);
 	/* NOTREACHED */
 #endif /* CK_APC */
 
@@ -512,11 +621,7 @@ pipeint(arg) int arg; {			/* Dummy argument */
 	read(xpipe[0],padparms,MAXPADPARMS);
 	sjval = CEV_PAD;		/* Set global variable. */
 #ifdef COMMENT				/* We might not need to do this... */
-#ifdef CK_POSIX_SIG
-	siglongjmp(con_env,sjval);
-#else
-	longjmp(con_env,sjval);
-#endif /* CK_POSIX_SIG */
+	cklongjmp(con_env,sjval);
 	/* NOTREACHED */
 #else  /* COMMENT */
 	break;
@@ -532,7 +637,7 @@ pipeint(arg) int arg; {			/* Dummy argument */
   Output is buffered to avoid slow screen writes on fast connections.
   NOTE: These could (easily?) become macros ...
 */
-int
+static int
 ckcputf() {				/* Dump the output buffer */
     int x = 0;
     if (obc > 0)			/* If we have any characters, */
@@ -669,8 +774,412 @@ kbget() {
     return((int)(*kbp++) & 0377);	/* and return first character. */
 }
 
+/*  C O N C L D --  Interactive terminal connection child function */
 
-/*  C O N E C T  --  Perform terminal connection  */
+static
+#ifdef BEBOX
+long
+#else
+VOID
+#endif /* BEBOX */
+concld (
+#ifdef BEBOX
+       void *bevoid
+#endif /* BEBOX */
+       ) {
+    int	n;			/* General purpose counter */
+
+    int c;			/* c is a character, but must be signed 
+				   integer to pass thru -1, which is the
+				   modem disconnection signal, and is
+				   different from the character 0377 */
+    int c2;			/* A copy of c */
+    int csave;			/* Another copy of c */
+    int tx;			/* tn_doop() return code */
+#ifdef SUNX25
+    int i;				/* Worker for X.25 code */
+#endif /* SUNX25 */
+#ifdef NETCONN
+
+#endif /* NETCONN */
+#ifndef NOESCSEQ
+    int apcrc;
+#endif /* NOESCSEQ */
+
+
+    int conret = 0;			/* Return value from conect() */
+    /* jbchksum = -1L; */
+    jbset = 0;				/* jmp_buf not set yet, don't use it */
+    debug(F101,"CONCLD entry","",CK_FORK_SIG);
+ 	/* *** */		/* Inferior reads, prints port input */
+
+    if (priv_can()) {			/* Cancel all privs */
+	printf("?setuid error - fatal\n");
+	doexit(BAD_EXIT,-1);
+    }
+    signal(SIGINT, SIG_IGN);		/* In case these haven't been */
+    signal(SIGQUIT, SIG_IGN);		/* inherited from above... */
+    signal(CK_FORK_SIG, SIG_IGN);	/* CK_FORK_SIG not expected yet */
+
+    inshift = outshift = 0;		/* Initial SO/SI shift state. */
+    {					/* Wait for parent's setup */
+	int i;
+	while ((i = read(xpipe[0], &c, 1)) <= 0) {
+	    if (i < 0) {
+		pipemsg(CEV_HUP);	/* Read error - hangup */
+		ck_sndmsg();		/* Send and wait to be killed */
+		/* NOTREACHED */
+	    } /* Restart interrupted read() */
+	}
+    }
+    close(xpipe[0]); xpipe[0] = -1;	/* Child - prevent future reads */
+#ifdef DEBUG
+    if (deblog) {
+	debug(F100,"CONNECT starting port fork","",0);
+	debug(F101,"CONNECT port fork ibc","",ibc);
+	debug(F101,"CONNECT port fork obc","",obc);
+    }
+#endif /* DEBUG */
+    what = W_CONNECT;
+
+    while (1) {				/* Fresh read, wait for a character. */
+#ifdef SUNX25
+	if (network && (nettype == NET_SX25)) {
+	    bzero(x25ibuf,sizeof(x25ibuf)) ;
+	    if ((ibufl = ttxin(MAXIX25,(CHAR *)x25ibuf)) < 0) {
+		if (ibufl == -2) {  /* PAD parms changes */
+		    pipemsg(CEV_PAD);
+		    write(xpipe[1],padparms,MAXPADPARMS);
+		    ck_sndmsg();
+		} else {
+		    if (!quiet)
+		      printf("\r\nCommunications disconnect ");
+		    pipemsg(CEV_HUP);
+		    ck_sndmsg();		/* Wait to be killed */
+		    /* NOTREACHED */
+		}
+		/* pause(); <--- SHOULD BE OBSOLETE NOW! */
+		/* BECAUSE pause() is done inside of ck_sndmsg() */
+	    }
+	    if (debses) {		/* Debugging output */
+		p = x25ibuf ;
+		while (ibufl--) { c = *p++; conol(dbchr(c)); }
+	    } else {
+		if (sosi
+#ifndef NOCSETS
+		    || tcsl != tcsr
+#endif /* NOCSETS */
+		    ) { /* Character at a time */
+		    for (i = 1; i < ibufl; i++) {
+			c = x25ibuf[i] & cmask;
+			if (sosi) { /* Handle SI/SO */
+			    if (c == SO) {
+				inshift = 1;
+				continue;
+			    } else if (c == SI) {
+				inshift = 0;
+				continue;
+			    }
+			    if (inshift)
+			      c |= 0200;
+			}
+#ifndef NOCSETS
+#ifdef NOESCSEQ
+			/* Translate character sets */
+			/* From local to intermediate. */
+			if (sxo) c = (*sxo)(c);
+			/* From intermediate to remote. */
+			if (rxo) c = (*rxo)(c);
+#else
+			/* If not inside escape sequence... */
+			if (inesc == ES_NORMAL) {
+			    /* Translate character sets */
+			    if (sxo) c = (*sxo)(c);
+			    if (rxo) c = (*rxo)(c);
+			}
+			    if (escseq) apcrc = chkaes(c);
+#endif /* NOESCSEQ */
+#endif /* NOCSETS */
+			c &= cmdmsk; /* Apply command mask. */
+			conoc(c);    /* Output to screen */
+			logchar(c);  /* and session log */
+		    }
+		} else {		/* All at once */
+		    for (i = 1; i < ibufl; i++)
+		      x25ibuf[i] &= (cmask & cmdmsk);
+		    conxo(ibufl,x25ibuf);
+		    if (seslog) zsoutx(ZSFILE,x25ibuf,ibufl);
+		}
+	    }
+	    continue;
+
+	} else {			/* Not X.25... */
+#endif /* SUNX25 */
+/*
+  Get the next communication line character from our internal buffer.
+  If the buffer is empty, refill it.
+*/
+	    c = ckcgetc(0);		/* Get next character */
+	    /* debug(F101,"CONNECT c","",c); */
+	    if (c < 0) {		/* Failed... */
+		debug(F101,"CONNECT disconnect ibc","",ibc);
+		debug(F101,"CONNECT disconnect obc","",obc);
+		ckcputf();		/* Flush CONNECT output buffer */
+		if (!quiet) {
+		    printf("\r\nCommunications disconnect ");
+		    if ( c == -3
+#ifdef ultrix
+/* This happens on Ultrix if there's no carrier */
+			&& errno != EIO
+#endif /* ultrix */
+#ifdef UTEK
+/* This happens on UTEK if there's no carrier */
+			&& errno != EWOULDBLOCK
+#endif /* UTEK */
+			)
+		      perror("\r\nCan't read character");
+		}
+#ifdef NOSETBUF
+		fflush(stdout);
+#endif /* NOSETBUF */
+		tthang();		/* Hang up the connection */
+		pipemsg(CEV_HUP);
+		ck_sndmsg();		/* Wait to be killed */
+	    }
+	    debug(F101,"** PORT","",c); /* Got character c OK. */
+#ifdef TNCODE
+	    /* Handle TELNET negotiations... */
+
+	    if (c == IAC && network && ttnproto == NP_TELNET) {
+		int me_bin = me_binary;
+		int u_bin = u_binary;
+		debug(F100,"CONNECT got IAC","",0);
+		ckcputf();		/* Dump screen-output buffer */
+		if ((tx = tn_doop((CHAR)(c & 0xff),duplex,ckcgetc)) == 0) {
+		    if (me_bin != me_binary) {
+			debug(F101,"CONNECT TELNET me_bin","",me_binary);
+			pipemsg(CEV_MEBIN); /* Tell parent */
+			write(xpipe[1], &me_binary, sizeof(me_binary));
+			ck_sndmsg();	/* Tell the parent fork */
+		    } else if (u_bin != u_binary) {
+			debug(F101,"CONNECT TELNET u_bin","",u_binary);
+			pipemsg(CEV_UBIN); /* Tell parent */
+			write(xpipe[1], &u_binary, sizeof(u_binary));
+			ck_sndmsg();	/* Tell the parent fork */
+		    }
+		    continue;
+		} else if (tx == -1) {	/* I/O error */
+		    if (!quiet)
+		      printf("\r\nCommunications disconnect ");
+#ifdef NOSETBUF
+		    fflush(stdout);
+#endif /* NOSETBUF */
+		    pipemsg(CEV_HUP);
+		    ck_sndmsg();		/* Wait to be killed */
+		    /* NOTREACHED */
+		} else if ((tx == 1) && (!duplex)) { /* ECHO change */
+		    duplex = 1;		/* Turn on local echo */
+		    debug(F101,"CONNECT TELNET duplex change","",duplex);
+		    pipemsg(CEV_DUP);	/* Tell parent */
+		    write(xpipe[1], &duplex, sizeof(duplex));
+		    ck_sndmsg();	/* Tell the parent fork */
+		    continue;
+		} else if ((tx == 2) && (duplex)) { /* ECHO change */
+		    duplex = 0;
+		    debug(F101,"CONNECT TELNET duplex change","",duplex);
+		    pipemsg(CEV_DUP);
+		    write(xpipe[1], &duplex, sizeof(duplex));
+		    ck_sndmsg();
+		    continue;
+		} else if (tx == 3) { /* Quoted IAC */
+		    c = parity ? 127 : 255;
+		} else continue;	/* Negotiation OK, get next char. */
+	    } else if (parity)
+	      c &= 0x7f;
+
+#endif /* TNCODE */
+	    if (debses) {		/* Output character to screen */
+		char *s;		/* Debugging display... */
+		s = dbchr(c);
+		while (*s)
+		  ckcputc(*s++);
+	    } else {			/* Regular display ... */
+		c &= cmask;		/* Apply Kermit-to-remote mask */
+#ifdef CK_APC
+/*
+  Autodownload.  Check for Kermit S packet prior to translation, since that
+  can change the packet and make it unrecognizable (as when the terminal
+  character set is an ISO 646 one)...  Ditto for Zmodem start packet.
+*/
+		if (autodl) {		/* Autodownload enabled? */
+		    int k;
+		    k = kstart((CHAR)c); /* Kermit S or I packet? */
+#ifdef CK_XYZ			
+		    if (!k && zmdlok) /* Or an "sz" start? */
+		      k = zstart((CHAR)c);
+#endif /* CK_XYZ */
+		    if (k) {
+			extern CHAR mystch, seol;
+			CHAR buf[6];
+			int ksign = 0;
+			if (k < 0) { /* Minus-Protocol? */
+#ifdef NOSERVER
+			    goto noserver; /* Need server mode for this */
+#else
+			    ksign = 1; /* Remember */
+			    k = 0 - k; /* Convert to actual protocol */
+			    justone = 1; /* Flag for protocol module */
+#endif /* NOSERVER */
+			} else
+			  justone = 0;
+			k--;		/* Adjust [kz]start's return value */
+			if (k == PROTO_K
+#ifdef CK_XYZ
+			    || k == PROTO_Z
+#endif /* CK_XYZ */
+			    ) {
+			    /* Temporarily switch protocol */
+			    sprintf(apcbuf,
+				    "set proto %s, %s, set proto %s",
+				    ptab[k].p_name,
+				    ksign ? "server" : "receive",
+				    ptab[protocol].p_name
+				    );
+			    apclength = strlen(apcbuf);
+			    debug(F110,"autodownload",apcbuf,0);
+			    apcactive = APC_LOCAL;
+			    if (k == PROTO_K) { /* Kermit */
+				/* Send a NAK to make them resend S pkt */
+				sprintf((char *)buf,
+					"%c%s%c",
+					mystch,
+					"# N3",
+					seol
+					);
+				ttol(buf,6);
+			    }
+			    ckcputf();	/* Force screen update */
+			    /* Notify parent */
+			    pipemsg(justone ? CEV_AUL : CEV_ADL);
+			    /* Write buffer including trailing NUL byte */
+			    write(xpipe[1],
+				  (char *)&apclength,
+				  sizeof(apclength)
+				  );
+			    write(xpipe[1], apcbuf, apclength+1);
+
+			    /* Copy our input buffer to the parent fork */
+
+			    debug(F101,"autodownload complete ibc","",ibc);
+			    debug(F101,"autodownload complete obc","",obc);
+			    write(xpipe[1], (char *)&ibc, sizeof(ibc));
+			    if (ibc > 0) {
+				write(xpipe[1], (char *)&ibp, sizeof(ibp));
+				write(xpipe[1], ibp, ibc);
+			    }			
+			    debug(F101,"autodownload justone","",justone);
+			    ck_sndmsg(); /* Wait to be killed */
+			    /* NOTREACHED */
+			}
+		    }
+		}
+#ifdef NOSERVER
+	      noserver:
+#endif /* NOSERVER */
+#endif /* CK_APC */
+		if (sosi) {		/* Handle SI/SO */
+		    if (c == SO) {	/* Shift Out */
+			inshift = 1;
+			continue;
+		    } else if (c == SI) { /* Shift In */
+			inshift = 0;
+			continue;
+		    }
+		    if (inshift) c |= 0200; 
+		}
+#ifndef NOCSETS
+		if (
+#ifndef NOESCSEQ
+		    inesc == ES_NORMAL /* If not in an escape sequence */
+#else
+		    1
+#endif /* NOESCSEQ */
+		    ) {			/* Translate character sets */
+		    if (sxi) c = (*sxi)((CHAR)c);
+		    if (rxi) c = (*rxi)((CHAR)c);
+		}
+#endif /* NOCSETS */
+
+#ifndef NOESCSEQ
+		if (escseq)		/* If handling escape sequences */
+		  apcrc = chkaes((char)c); /* update our state */
+#ifdef CK_APC
+/*
+  If we are handling APCs, we have several possibilities at this point:
+   1. Ordinary character to be written to the screen.
+   2. An Esc; we can't write it because it might be the beginning of an APC.
+   3. The character following an Esc, in which case we write Esc, then char,
+      but only if we have not just entered an APC sequence.
+*/
+		if (escseq && apcstatus != APC_OFF) {
+		    if (inesc == ES_GOTESC)	/* Don't write ESC yet */
+		      continue;
+		    else if (oldesc == ES_GOTESC && !apcactive) {
+			ckcputc(ESC);	/* Write saved ESC */
+			if (seslog) logchar((char)ESC);
+		    } else if (apcrc) {	/* We have an APC */
+			debug(F111,"APC complete",apcbuf,apclength);
+			ckcputf();		/* Force screen update */
+			pipemsg(CEV_APC);	/* Notify parent */
+			write(xpipe[1],
+			      (char *)&apclength,
+			      sizeof(apclength)
+			      );
+			/* Write buffer including trailing NUL byte */
+
+			write(xpipe[1], apcbuf, apclength+1);
+
+			/* Copy our input buffer to the parent fork */
+
+			debug(F101,"APC complete ibc","",ibc);
+			debug(F101,"APC complete obc","",obc);
+			write(xpipe[1], (char *)&ibc, sizeof(ibc));
+			if (ibc > 0) {
+			    write(xpipe[1], (char *)&ibp, sizeof(ibp));
+			    write(xpipe[1], ibp, ibc);
+			}			
+			ck_sndmsg();	/* Wait to be killed */
+			/* NOTREACHED */
+		    }
+		}
+#endif /* CK_APC */
+#endif /* NOESCSEQ */
+
+		if (
+#ifdef CK_APC
+		    !apcactive		/* Ignore APC sequences */
+#else
+		    1
+#endif /* CK_APC */
+		    ) {
+		    c &= cmdmsk;	/* Apply command mask. */
+		    if (c == CR && tt_crd) { /* SET TERM CR-DISPLA CRLF? */
+			ckcputc(c);	     /* Yes, output CR */
+			if (seslog) logchar((char)c);
+			c = LF;		/* and insert a linefeed */
+		    }
+		    ckcputc(c);		/* Write character to screen */
+		}
+		if (seslog) logchar((char)c); /* Handle session log */
+	    }
+#ifdef SUNX25
+	}   
+#endif /* SUNX25 */	
+    }
+}
+
+
+/*  C O N E C T  --  Interactive terminal connection  */
 
 int
 conect() {
@@ -682,17 +1191,10 @@ conect() {
 				   different from the character 0377 */
     int c2;			/* A copy of c */
     int csave;			/* Another copy of c */
-    int tx;			/* tn_doop() return code */
 #ifdef SUNX25
-    int i;			/* Worker for X.25 code */
+    int i;				/* Worker for X.25 code */
 #endif /* SUNX25 */
 #ifdef NETCONN
-
-/* NOTE: SIGPIPE is now ignored the whole time Kermit is running. */
-/* (as of 30 Aug 94) */
-/* #ifdef SIGPIPE */
-/*    SIGTYP (*sigpiph)() = NULL; */
-/* #endif */ /* SIGPIPE */
 
 #endif /* NETCONN */
 #ifndef NOESCSEQ
@@ -700,6 +1202,8 @@ conect() {
 #endif /* NOESCSEQ */
 
     int conret = 0;			/* Return value from conect() */
+    /* jbchksum = -1L; */
+    jbset = 0;				/* jmp_buf not set yet, don't use it */
 
     debug(F101,"CONNECT fork signal","",CK_FORK_SIG);
     signal(CK_FORK_SIG, SIG_IGN);	/* Initial CK_FORK_SIG handling, */
@@ -829,10 +1333,15 @@ conect() {
 #ifdef NETCONN
 	}
 #endif /* NETCONN */
-	printf(".\r\nThe escape character is Ctrl-%c (ASCII %d, %s)\r\n",
-	       ctl(escape), escape, (escape == 127 ? "DEL" : ccntab[escape]));
-	printf("Type the escape character followed by C to get back,\r\n");
-	printf("or followed by ? to see other options.\r\n");
+	if (tt_escape) {
+	    printf(".\r\nThe escape character is Ctrl-%c (ASCII %d, %s)\r\n",
+		   ctl(escape), escape,
+		   (escape == 127 ? "DEL" : ccntab[escape]));
+	    printf("Type the escape character followed by C to get back,\r\n");
+	    printf("or followed by ? to see other options.\r\n");
+	} else {
+	    printf(".\r\n\nESCAPE CHARACTER IS DISABLED\r\n\n");
+	}
 	if (seslog) {
 	    printf("(Session logged to %s, ",sesfil);
 	    printf("%s)\r\n", sessft ? "binary" : "text");
@@ -908,6 +1417,18 @@ conect() {
 #endif /* DEBUG */
 #endif /* COMMENT */
 
+#ifdef CK_XYZ
+#ifndef XYZ_INTERNAL
+    {
+	extern int binary;		/* See about ZMODEM autodownloads */
+	char * s;
+	s = binary ? ptab[PROTO_Z].p_b_rcmd : ptab[PROTO_Z].p_t_rcmd;
+	if (!s) s = "";
+	zmdlok = (*s != NUL);		/* OK if we have external commands */
+    }
+#endif /* XYZ_INTERNAL */
+#endif /* CK_XYZ */
+
 #ifndef NOESCSEQ
 /*
   We need to activate the escape-sequence recognition feature when:
@@ -936,13 +1457,15 @@ conect() {
   This is a label we jump back to when the lower fork sensed the need
   to change modes.  As of 5A(178), this is used only by X.25 code
   (perhaps unnecessarily? -- The X.25 code needs a lot of testing and
-  cleaning up...)  As of 5A(190), it should not be used at all.
+  cleaning up...)  As of 5A(190), it is not used at all, good.
 */
 #ifdef COMMENT
-newfork: /* Label no longer used */
-#endif /* COMMENT */
+newfork:
     debug(F100,"CONNECT newfork","",0);
+#endif /* COMMENT */
+
     parent_id = getpid();		/* Get parent's pid for signalling */
+    debug(F101,"CONNECT parent pid","",parent_id);
 
     if (xpipe[0] > -1)			/* If old pipe hanging around, close */
       close(xpipe[0]);
@@ -953,11 +1476,21 @@ newfork: /* Label no longer used */
     goterr = 0;				/* Error flag for pipe & fork */
     if (pipe(xpipe) != 0) {		/* Create new pipe to pass info */
 	perror("Can't make pipe");	/* between forks. */
+	debug(F101,"CONNECT pipe error","",errno);
 	goterr = 1;
-    } else if ((pid = fork()) == (PID_T) -1) { /* Pipe OK, make port fork. */
+    } else
+#ifdef BEBOX
+    {
+        pid = spawn_thread(concld, "Lower Fork", B_NORMAL_PRIORITY, NULL);
+        resume_thread(pid);
+    }
+#else
+    if ((pid = fork()) == (PID_T) -1) { /* Pipe OK, make port fork. */
 	perror("Can't make port fork");
+	debug(F101,"CONNECT fork error","",errno);
 	goterr = 1;	
     }
+#endif /* BEBOX */
     if (goterr) {			/* Failed to make pipe or fork */
 	conres();			/* Reset the console. */
 	if (!quiet) {
@@ -979,11 +1512,11 @@ newfork: /* Label no longer used */
 	parent_id = (PID_T) 0;		/* Clean up */
 	goto conret1;
     }
+    debug(F101,"CONNECT fork pid","",pid);
 
 /* Upper fork (KEYB fork) reads keystrokes and sends them out. */
 
     if (pid) {				/* pid != 0, so I am the upper fork. */
-  
 /*
   Before doing anything significant, the child fork must wait for a go-ahead
   character from xpipe[0].  Before starting to wait, we have enough time to
@@ -1016,23 +1549,13 @@ newfork: /* Label no longer used */
 /*
   At this point, perhaps you are wondering why we use forks at all.  It is
   simply because there is no other method portable among all UNIX variations.
+  Not threads, not select(), ...
 */
 	ibp = ibuf;			/* Clear ibuf[]. */
 	ibc = 0;			/* Child now has its own copy */
 	signal(CK_FORK_SIG, pipeint);	/* Handler for messages from child. */
 	write(xpipe[1], ibuf, 1);	/* Allow child to proceed */
 	close(xpipe[1]); xpipe[1] = -1; /* Parent - prevent future writes */
-
-#ifdef COMMENT
-#ifdef NETCONN
-#ifdef SIGPIPE
-	/* SIGPIPE is raised if a process sends on a broken stream */
-	/* (do it, but only once!) */
-	if (network && ! sigpiph)
-	  sigpiph = signal(SIGPIPE, SIG_IGN);
-#endif /* SIGPIPE */
-#endif /* NETCONN */
-#endif /* COMMENT */
 
 	what = W_CONNECT;		/* Keep track of what we're doing */
 	active = 1;
@@ -1045,7 +1568,7 @@ newfork: /* Label no longer used */
 
         if ((var = [sig]setjmp(env)) == 0) ...
 
-  which prevents the value returned by longjmp() from being used at all.
+  which prevents the value returned by cklongjmp() from being used at all.
   So the signal handlers set a global variable, sjval, instead.
 */
 	if (
@@ -1054,12 +1577,16 @@ newfork: /* Label no longer used */
 #else
 	    setjmp(con_env)
 #endif /* CK_POSIX_SIG */
-	    == 0) {	/* Normal entry... */
+	    == 0) {			/* Normal entry... */
+	    jbset = 1;			/* Now we have a longjmp buffer */
 	    sjval = CEV_NO;		/* Initialize setjmp return code. */
+
+	    debug(F101,"CONNECT setjmp normal entry","",sjval);
+
 #ifdef SUNX25
 	    if (network && nettype == NET_SX25) {
 		obufl = 0;
-		bzero (x25obuf,sizeof(x25obuf)) ;
+		bzero (x25obuf,sizeof(x25obuf));
 	    }
 #endif /* SUNX25 */
 /*
@@ -1137,7 +1664,7 @@ newfork: /* Label no longer used */
 #ifndef NOSETKEY
 		    !kmptr &&
 #endif /* NOSETKEY */
-		    ((c & 0x7f) == escape)) { /* Escape character? */
+		    (tt_escape && (c & 0x7f) == escape)) { /* Escape char? */
 		    debug(F000,"CONNECT got escape","",c);
 		    c = CONGKS() & 0177; /* Got esc, get its arg */
 		    /* No key mapping here */
@@ -1230,7 +1757,7 @@ newfork: /* Label no longer used */
                             else if (c == CR) tosend = 1;
                         }
                         if (tosend) 
-			  if (ttol(x25obuf,obufl) < 0) {
+			  if (ttol((CHAR *)x25obuf,obufl) < 0) {
 			      perror ("\r\nCan't send characters");
 			      active = 0;
 			  } else {
@@ -1246,9 +1773,15 @@ newfork: /* Label no longer used */
 			    stuff = LF; 	/* Stuff LF */
 #ifdef TNCODE
 			} else if (network &&	/* TELNET NEWLINE ON/OFF/RAW */
-				   (ttnproto == NP_TELNET) &&
-				   (tn_nlm != TNL_CR)) {
-			    stuff = (tn_nlm == TNL_CRLF) ? LF : NUL;
+				   (ttnproto == NP_TELNET)) {
+			    switch (!me_binary ? tn_nlm : tn_b_nlm) {
+			    case TNL_CRLF:
+				stuff = LF;
+				break;
+			    case TNL_CRNUL:
+				stuff = NUL;
+				break;
+			    }
 #endif /* TNCODE */
 			}
 			if (stuff > -1) {
@@ -1291,12 +1824,13 @@ newfork: /* Label no longer used */
 #endif /* SUNX25 */
 		}
 	    }
+
 	    /* now active == 0 */
             signal(CK_FORK_SIG, SIG_IGN); /* Turn off CK_FORK_SIG */
 	    sjval = CEV_NO;		/* Set to hangup */
 	}				/* Come here on termination of child */
 
-/* longjmp() executed in pipeint() (parent only!) comes here */
+/* cklongjmp() executed in pipeint() (parent only!) comes here */
 
 /*
   Now the child fork is gone or is waiting for CK_FORK_SIG in ck_sndmsg().
@@ -1306,10 +1840,23 @@ newfork: /* Label no longer used */
 	debug(F100,"CONNECT signaling port fork","",0);
 	signal(CK_FORK_SIG, SIG_IGN);	/* Turn this off */
 	debug(F100,"CONNECT killing port fork","",0);
-	kill(pid,9);			/* Done, kill inferior fork. */
+#ifdef BEBOX
+	{
+	    long ret_val;
+	    if (pid) kill(pid,SIGKILLTHR); /* Kill lower fork */
+	    wait_for_thread (pid, &ret_val);
+	}
+#else
+#ifdef Plan9
+	if (pid) kill(pid,SIGKILL);	/* Kill lower fork */
+#else
+	if (pid) kill(pid,9);		/* Kill lower fork */
+#endif /* Plan9 */
+#endif /* BEBOX */
 	debug(F100,"CONNECT killed port fork","",0);
 	pid = -1;
 	wait((WAIT_T *)0);		/* Wait till gone. */
+	
 	if (sjval == CEV_HUP) {		/* Read error on comm device */
 	    dohangup = 1;		/* so we want to hang up our side */
 #ifdef NETCONN
@@ -1381,271 +1928,12 @@ newfork: /* Label no longer used */
 	parent_id = (PID_T) 0;
 	goto conret1;
 
-    } else {	/* *** */		/* Inferior reads, prints port input */
-
-	if (priv_can()) {		/* Cancel all privs */
-	    printf("?setuid error - fatal\n");
-	    doexit(BAD_EXIT,-1);
-	}
-	signal(SIGINT, SIG_IGN);	/* In case these haven't been */
-	signal(SIGQUIT, SIG_IGN);	/* inherited from above... */
-	signal(CK_FORK_SIG, SIG_IGN);	/* CK_FORK_SIG not expected yet */
-
-	inshift = outshift = 0;		/* Initial SO/SI shift state. */
-	{				/* Wait for parent's setup */
-	    int i;
-	    while ((i = read(xpipe[0], &c, 1)) <= 0) {
-		if (i < 0) {
-		    pipemsg(CEV_HUP);	/* Read error - hangup */
-		    ck_sndmsg();	/* Send and wait to be killed */
-		    /* NOTREACHED */
-		}			/* Restart interrupted read() */
-	    }
-	}
-	close(xpipe[0]); xpipe[0] = -1;	/* Child - prevent future reads */
-	debug(F100,"CONNECT starting port fork","",0);
-	debug(F101,"CONNECT port fork ibc","",ibc);
-	debug(F101,"CONNECT port fork obc","",obc);
-
-	while (1) {			/* Fresh read, wait for a character. */
-#ifdef SUNX25
-	    if (network && (nettype == NET_SX25)) {
-		bzero(x25ibuf,sizeof(x25ibuf)) ;
-		if ((ibufl = ttxin(MAXIX25,x25ibuf)) < 0) {
-		    if (ibufl == -2) {  /* PAD parms changes */
-			pipemsg(CEV_PAD);
-			write(xpipe[1],padparms,MAXPADPARMS);
-			ck_sndmsg();
-		    } else {
-			if (!quiet)
-			  printf("\r\nCommunications disconnect ");
-		        pipemsg(CEV_HUP);
-			ck_sndmsg();		/* Wait to be killed */
-			/* NOTREACHED */
-		    }
-		    /* pause(); <--- SHOULD BE OBSOLETE NOW! */
-		    /* BECAUSE pause() is done inside of ck_sndmsg() */
-		}
-		if (debses) {		/* Debugging output */
-		    p = x25ibuf ;
-                        while (ibufl--) { c = *p++; conol(dbchr(c)); }
-		} else {
-		    if (sosi
-#ifndef NOCSETS
-			|| tcsl != tcsr
-#endif /* NOCSETS */
-			) { /* Character at a time */
-			for (i = 1; i < ibufl; i++) {
-			    c = x25ibuf[i] & cmask;
-			    if (sosi) { /* Handle SI/SO */
-				if (c == SO) {
-				    inshift = 1;
-				    continue;
-				} else if (c == SI) {
-				    inshift = 0;
-				    continue;
-				}
-				if (inshift)
-				  c |= 0200;
-			    }
-#ifndef NOCSETS
-#ifdef NOESCSEQ
-			    /* Translate character sets */
-			    /* From local to intermediate. */
-			    if (sxo) c = (*sxo)(c);
-			    /* From intermediate to remote. */
-			    if (rxo) c = (*rxo)(c);
-#else
-			    /* If not inside escape sequence... */
-			    if (inesc == ES_NORMAL) {
-				/* Translate character sets */
-				if (sxo) c = (*sxo)(c);
-				if (rxo) c = (*rxo)(c);
-			    }
-			    if (escseq) apcrc = chkaes(c);
-#endif /* NOESCSEQ */
-#endif /* NOCSETS */
-			    c &= cmdmsk; /* Apply command mask. */
-			    conoc(c);    /* Output to screen */
-			    logchar(c);  /* and session log */
-			}
-		    } else {		 /* All at once */
-			for (i = 1; i < ibufl; i++)
-			  x25ibuf[i] &= (cmask & cmdmsk);
-			conxo(ibufl,x25ibuf);
-			if (seslog) zsoutx(ZSFILE,x25ibuf,ibufl);
-		    }
-		}
-		continue;
-
-	    } else {			/* Not X.25... */
-#endif /* SUNX25 */
-/*
-  Get the next communication line character from our internal buffer.
-  If the buffer is empty, refill it.
-*/
-		c = ckcgetc(0);		/* Get next character */
-		/* debug(F101,"CONNECT c","",c); */
-		if (c < 0) {		/* Failed... */
-		    debug(F101,"CONNECT disconnect ibc","",ibc);
-		    debug(F101,"CONNECT disconnect obc","",obc);
-		    ckcputf();		/* Flush CONNECT output buffer */
-		    if (!quiet) {
-			printf("\r\nCommunications disconnect ");
-			if ( c == -3
-#ifdef ultrix
-/* This happens on Ultrix if there's no carrier */
-			    && errno != EIO
-#endif /* ultrix */
-#ifdef UTEK
-/* This happens on UTEK if there's no carrier */
-			    && errno != EWOULDBLOCK
-#endif /* UTEK */
-			    )
-			  perror("\r\nCan't read character");
-		    }
-#ifdef NOSETBUF
-		    fflush(stdout);
-#endif /* NOSETBUF */
-		    tthang();		/* Hang up the connection */
-		    pipemsg(CEV_HUP);
-		    ck_sndmsg();	/* Wait to be killed */
-		    /* NOTREACHED */
-		}
-		debug(F101,"** PORT","",c); /* Got character c OK. */
-#ifdef TNCODE
-		/* Handle TELNET negotiations... */
-
-		if (c == IAC && network && ttnproto == NP_TELNET) {
-		    debug(F100,"CONNECT got IAC","",0);
-		    ckcputf();		/* Dump screen-output buffer */
-		    if ((tx = tn_doop((CHAR)(c & 0xff),duplex,ckcgetc)) == 0) {
-			continue;
-		    } else if (tx == -1) { /* I/O error */
-			if (!quiet)
-			  printf("\r\nCommunications disconnect ");
-#ifdef NOSETBUF
-			fflush(stdout);
-#endif /* NOSETBUF */
-			pipemsg(CEV_HUP);
-			ck_sndmsg();		/* Wait to be killed */
-			/* NOTREACHED */
-		    } else if ((tx == 1) && (!duplex)) { /* ECHO change */
-			duplex = 1;	/* Turn on local echo */
-			debug(F101,"CONNECT TELNET duplex change","",duplex);
-			pipemsg(CEV_DUP); /* Tell parent */
-			write(xpipe[1], &duplex, sizeof(duplex));
-			ck_sndmsg();      /* Tell the parent fork */
-			continue;
-		    } else if ((tx == 2) && (duplex)) { /* ECHO change */
-			duplex = 0;
-			debug(F101,"CONNECT TELNET duplex change","",duplex);
-			pipemsg(CEV_DUP);
-			write(xpipe[1], &duplex, sizeof(duplex));
-			ck_sndmsg();
-			continue;
-		    } else if (tx == 3) { /* Quoted IAC */
-			c = 255;
-		    } else continue;	/* Negotiation OK, get next char. */
-		}
-#endif /* TNCODE */
-		if (debses) {		/* Output character to screen */
-		    char *s;		/* Debugging display... */
-		    s = dbchr(c);
-		    while (*s)
-		      ckcputc(*s++);
-		} else {		/* Regular display ... */
-		    c &= cmask;		/* Apply Kermit-to-remote mask */
-		    if (sosi) {		/* Handle SI/SO */
-			if (c == SO) {	/* Shift Out */
-			    inshift = 1;
-			    continue;
-			} else if (c == SI) { /* Shift In */
-			    inshift = 0;
-			    continue;
-			}
-			if (inshift) c |= 0200; 
-		    }
-#ifndef NOCSETS
-		    if (
-#ifndef NOESCSEQ
-			inesc == ES_NORMAL /* If not in an escape sequence */
-#else
-			1
-#endif /* NOESCSEQ */
-			) {		/* Translate character sets */
-			if (sxi) c = (*sxi)((CHAR)c);
-			if (rxi) c = (*rxi)((CHAR)c);
-		    }
-#endif /* NOCSETS */
-
-#ifndef NOESCSEQ
-		    if (escseq)		/* If handling escape sequences */
-		      apcrc = chkaes((char)c); /* update our state */
-#ifdef CK_APC
-/*
-  If we are handling APCs, we have several possibilities at this point:
-   1. Ordinary character to be written to the screen.
-   2. An Esc; we can't write it because it might be the beginning of an APC.
-   3. The character following an Esc, in which case we write Esc, then char,
-      but only if we have not just entered an APC sequence.
-*/
-		    if (escseq && apcstatus != APC_OFF) {
-			if (inesc == ES_GOTESC)	/* Don't write ESC yet */
-			  continue;
-			else if (oldesc == ES_GOTESC && !apcactive) {
-			    ckcputc(ESC);	/* Write saved ESC */
-			    if (seslog) logchar((char)ESC);
-			} else if (apcrc) {     /* We have an APC */
-			    debug(F111,"APC complete",apcbuf,apclength);
-			    ckcputf();		/* Force screen update */
-			    pipemsg(CEV_APC);	/* Notify parent */
-			    write(xpipe[1],
-				  (char *)&apclength,
-				  sizeof(apclength)
-				  );
-			    /* Write buffer including trailing NUL byte */
-
-			    write(xpipe[1], apcbuf, apclength+1);
-
-			    /* Copy our input buffer to the parent fork */
-
-			    debug(F101,"APC complete ibc","",ibc);
-			    debug(F101,"APC complete obc","",obc);
-			    write(xpipe[1], (char *)&ibc, sizeof(ibc));
-			    if (ibc > 0) {
-				write(xpipe[1], (char *)&ibp, sizeof(ibp));
-				write(xpipe[1], ibp, ibc);
-			    }			
-			    ck_sndmsg();		/* Wait to be killed */
-			    /* NOTREACHED */
-			}
-		    }
-#endif /* CK_APC */
-#endif /* NOESCSEQ */
-
-		    if (
-#ifdef CK_APC
-			!apcactive	/* Ignore APC sequences */
-#else
-			1
-#endif /* CK_APC */
-			) {
-			c &= cmdmsk;	/* Apply command mask. */
-			if (c == CR && tt_crd) { /* SET TERM CR-DISPLA CRLF? */
-			    ckcputc(c);	     /* Yes, output CR */
-			    if (seslog) logchar((char)c);
-			    c = LF;	/* and insert a linefeed */
-			}
-			ckcputc(c);	/* Write character to screen */
-		    }
-		    if (seslog) logchar((char)c); /* Handle session log */
-		}
-#ifdef SUNX25
-	    }   
-#endif /* SUNX25 */	
-	}
     }
+#ifndef BEBOX
+    else {	/* *** */		/* Inferior reads, prints port input */
+        concld(/* (void *)&pid */);
+    }
+#endif /* BEBOX */
 
 conret1:
     conret = 1;
@@ -1680,11 +1968,20 @@ hconne() {
 "\r\n  R to reset X.25 virtual circuit",
 #endif /* SUNX25 */
 #endif /* NETCONN */
-"\r\n  H to hangup and close the connection",
+"\r\n  U to hangup and close the connection",
 "\r\n  Q to hangup and quit Kermit",
 "\r\n  S for status",
+#ifdef NOPUSH
+"\r\n  ! to push to local shell (disabled)",
+"\r\n  Z to suspend (disabled)",
+#else
 "\r\n  ! to push to local shell",
+#ifdef NOJC
+"\r\n  Z to suspend (disabled)",
+#else
 "\r\n  Z to suspend",
+#endif /* NOJC */
+#endif /* NOPUSH */
 "\r\n  \\ backslash code:",
 "\r\n    \\nnn  decimal character code",
 "\r\n    \\Onnn octal character code",
@@ -1778,7 +2075,7 @@ doesc(c) char c;
 	    ttsndlb(); return;
 #endif /* CK_LBRK */
 
-	case 'h':			/* Hangup */
+	case 'u':			/* Hangup */
      /*	case '\010': */			/* No, too dangerous */
 #ifdef SUNX25
             if (network && (nettype == NET_SX25)) dox25clr = 1;
@@ -1830,26 +2127,39 @@ doesc(c) char c;
 	    if (!network) shomdm();
 	    return;
 
+	case 'h':			/* Help */
 	case '?':			/* Help */
 	    c = hconne(); continue;
 
 	case '0':			/* Send a null */
 	    c = '\0'; d = dopar((CHAR) c); ttoc((char) d); return;
 
-#ifndef NOPUSH
 	case 'z': case '\032':		/* Suspend */
-	    stptrap(0); return;
+#ifndef NOPUSH
+	    if (!nopush)
+	      stptrap(0);
+	    else
+	      conoc(BEL);
+#else
+	    conoc(BEL);
+#endif /* NOPUSH */
+	    return;
 
 	case '@':			/* Start inferior command processor */
 	case '!':
-	    conres();			/* Put console back to normal */
-	    zshcmd("");			/* Fork a shell. */
-	    if (conbin((char)escape) < 0) {
-		printf("Error resuming CONNECT session\n");
-		active = 0;
-	    }
-	    return;
+#ifndef NOPUSH
+	    if (!nopush) {
+		conres();		      /* Put console back to normal */
+		zshcmd("");		      /* Fork a shell. */
+		if (conbin((char)escape) < 0) {
+		    printf("Error resuming CONNECT session\n");
+		    active = 0;
+		}
+	    } else conoc(BEL);
+#else
+	    conoc(BEL);
 #endif /* NOPUSH */
+	    return;
 
 	case SP:			/* Space, ignore */
 	    return;

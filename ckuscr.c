@@ -4,12 +4,12 @@ char *loginv = "";
 #else
 #ifndef NOICP
 #ifndef NOSCRIPT
-char *loginv = "Script Command, 5A(023) 4 Oct 94";
+char *loginv = "Script Command, 6.0.028, 8 Feb 96";
 
 /*  C K U S C R  --  Login script for logging onto remote system */
 
 /*
-  Copyright (C) 1985, 1993, Trustees of Columbia University in the City of New
+  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
   York.  The C-Kermit software may not be, in whole or in part, licensed or
   sold for profit as a software product itself, nor may it be included in or
   distributed with commercial products or otherwise distributed by commercial
@@ -43,18 +43,31 @@ char *loginv = "Script Command, 5A(023) 4 Oct 94";
 */
 #include "ckcdeb.h"
 #include <signal.h>
+#ifdef NT
+#include <setjmpex.h>
+#else /* NT */
 #include <setjmp.h>
+#endif /* NT */
 #include "ckcasc.h"
 #include "ckcker.h"
 #include "ckuusr.h"
 #include "ckcnet.h"
+#include "ckcsig.h"
 
 _PROTOTYP( VOID flushi, (void) );
+_PROTOTYP( static VOID myflsh, (void) );
+_PROTOTYP( static int sequenc, (void) );
+_PROTOTYP( static VOID recvseq, (void) );
+_PROTOTYP( static int outseq, (void) );
 
 #ifdef MAC
-#define SIGALRM (1<<10)
-#undef SIGTYP				/* Put in ckcdeb.h later */
-#define SIGTYP void
+#define signal msignal
+#define SIGTYP long
+#define alarm malarm
+#define SIG_IGN 0
+#define SIGALRM 1
+#define SIGINT  2
+SIGTYP (*msignal(int type, SIGTYP (*func)(int)))(int);
 #endif /* MAC */
 
 #ifdef AMIGA
@@ -84,6 +97,10 @@ extern int network, ttnproto;
 extern long speed;
 extern char ttname[];
 
+#ifdef NTSIG
+extern int TlsIndex;
+#endif /* NTSIG */
+
 #ifndef NOSPL
 #ifdef DCMDBUF
 extern struct cmdptr *cmdstk;
@@ -105,21 +122,42 @@ static int exp_alrm = 15;		/* Time to wait for expect string */
 static char seq_buf[SBUFL], *s;		/* expect-send sequence buffer */
 static int got_it, no_cr;
 
-/*  connect state parent/child communication signal handlers */
+/*  Connect state parent/child communication signal handlers */
 
+#ifdef COMMENT
 #ifdef CK_POSIX_SIG
 static sigjmp_buf alrmrng;
 #else
 static jmp_buf alrmrng;
 #endif /* CK_POSIX_SIG */
+#else
+static ckjmpbuf alrmrng;
+#endif /* COMMENT */
 
 static SIGTYP
-scrtime(foo) int foo; {			/* modem read failure handler, */
-#ifdef CK_POSIX_SIG			/* notifies parent process to stop */
-    siglongjmp(alrmrng,1);
-#else
-    longjmp(alrmrng,1);
-#endif /* CK_POSIX_SIG */
+#ifdef CK_ANSIC
+scrtime(int foo)			/* modem read failure handler, */
+#else 
+scrtime(foo) int foo;			/* Alarm handler */
+#endif /* CK_ANSIC */
+/* scrtime */ {
+
+#ifdef BEBOX
+    alarm_expired();
+#endif /* BEBOX */
+#ifdef NTSIG
+    if (foo == SIGALRM)
+      PostAlarmSigSem();
+    else
+      PostCtrlCSem();
+#else /* NTSIG */
+#ifdef NT
+    cklongjmp(ckjaddr(alrmrng),1);
+#else /* NT */
+    cklongjmp(alrmrng,1);
+#endif /* NT */
+#endif /* NTSIG */
+    SIGRETURN;
 }
 
 /*
@@ -178,13 +216,13 @@ sequenc() {
 		}
 		default:
 		    if ( isdigit(c) ) {	    	/* octal character */
-		    	oct_char = (c & 7);	/* most significant digit */
+		    	oct_char = (char) (c & 7); /* most significant digit */
 			if (isdigit( *(s+1) ) ) {
 			    s++;
-			    oct_char = (oct_char<<3) | ( *s & 7 ) ;
+			    oct_char = (char) ((oct_char<<3) | ( *s & 7 ));
 			    if (isdigit( *(s+1) ) ) {
 				s++;
-			    	oct_char = (oct_char<<3) | ( *s & 7 ) ;
+			    	oct_char = (char) ((oct_char<<3) | ( *s & 7 ));
 			    }
 			}
 			seq_buf[i++] = oct_char;
@@ -219,6 +257,101 @@ myflsh() {
     }
 }
 
+/* these variables are used to pass data between the recvseq() */
+/* and the dorseq().  They are necessary because in some versions */
+/* dorseq() is executed in a separate thread and data cannot be */
+/* passed by parameter. */
+
+static char *rseqe, * rseqgot, * rseqtrace ;
+static int rseql;
+
+static SIGTYP
+#ifdef CK_ANSIC
+dorseq(void * threadinfo)
+#else /* CK_ANSIC */
+dorseq(threadinfo) VOID * threadinfo;
+#endif /* CK_ANSIC */
+/* dorseq */ {
+    int i, x;
+    int burst = 0;			/* chars remaining in input burst */
+
+#ifdef NTSIG
+    if (threadinfo) {			/* Thread local storage... */
+	TlsSetValue(TlsIndex,threadinfo);
+    }
+#endif /* NTSIG */
+
+    while (!got_it) {
+	for (i = 0; i < rseql-1; i++) rseqgot[i] = rseqgot[i+1];
+	x = ttinc(0);			/* Read a character */
+	debug(F101,"recvseq","",x);
+	if (x < 0) {
+#ifdef NTSIG
+	    ckThreadEnd(threadinfo);
+#endif /* NTSIG */
+	    SIGRETURN;			/* Check for error */
+	}
+#ifdef NETCONN
+#ifdef TNCODE
+/* Check for telnet protocol negotiation */
+	if (network &&
+	    (ttnproto == NP_TELNET) &&
+	    ( (x & 0xff) == IAC) ) { /* Break from input burst for "tn_doop" */
+	    myflsh();
+	    burst = 0;
+	    switch (tn_doop((CHAR)(x & 0xff),duplex,ttinc)) {
+	      case 2: duplex = 0; continue;
+	      case 1: duplex = 1;
+	      default: continue;
+	    }
+	}
+#endif /* TNCODE */
+#endif /* NETCONN */
+	rseqgot[rseql-1] = (char) (x & 0x7f); /* Got a character */
+	burst--;			/* One less waiting */
+	if (scr_echo) conbuf[concnt++] = rseqgot[rseql-1]; /* Buffer it */
+	if (seslog)			/* Log it in session log */
+#ifdef UNIX
+	  if (sessft != 0 || rseqgot[rseql-1] != '\r')
+#else
+#ifdef OSK
+	    if (sessft != 0 || rseqgot[rseql-1] != '\012')
+#endif /* OSK */
+#endif /* UNIX */
+	      sesbuf[sescnt++] = rseqgot[rseql-1];
+	if ((int)strlen(rseqtrace) < SBUFL-2 ) 
+	  strcat(rseqtrace,dbchr(rseqgot[rseql-1]));
+	got_it = (!strncmp(rseqe, rseqgot, rseql));
+	if (burst <= 0) {		/* Flush buffered output */
+	    myflsh();
+	    if ((burst = ttchk()) < 0) { /* Get size of next input burst */
+#ifdef NTSIG
+		ckThreadEnd(threadinfo);
+#endif /* NTSIG */
+		SIGRETURN;
+	    }
+	    /* prevent overflow of "conbuf" and "sesbuf" */
+	    if (burst > MAXBURST)
+	      burst = MAXBURST;
+	}
+    }    
+#ifdef NTSIG
+    ckThreadEnd(threadinfo);
+#endif /* NTSIG */
+    SIGRETURN;
+}
+
+static SIGTYP
+#ifdef CK_ANSIC
+failrseq(void * threadinfo)
+#else /* CK_ANSIC */
+failrseq(threadinfo) VOID * threadinfo; 
+#endif /* CK_ANSIC */
+/* failrseq */ {
+     got_it = 0;			/* Timed out here */    
+     SIGRETURN;
+}
+
 /*
   Receive sequence -- see if expected response comes,
   return success (or failure) in got_it.
@@ -226,8 +359,7 @@ myflsh() {
 static VOID
 recvseq() {
     char *e, got[7], trace[SBUFL];
-    int i, l, x;
-    int burst = 0;			/* chars remaining in input burst */
+    int i, l;
     
     sequenc();
     l = (int)strlen(e=seq_buf);		/* no more than 7 chars allowed */
@@ -245,67 +377,18 @@ recvseq() {
     *trace = '\0';
     for (i = 0; i < 7; i++) got[i]='\0';
 
-    signal(SIGALRM,scrtime);		/* did we get it? */
-    if (!
-#ifdef CK_POSIX_SIG
-	sigsetjmp(alrmrng,1)
-#else
-	setjmp(alrmrng)
-#endif /* CK_POSIX_SIG */
-	) {		/* not timed out yet */
-	alarm(exp_alrm);
-	while (!got_it) {
-	    for (i = 0; i < l-1; i++) got[i] = got[i+1]; /* Shift over */
-	    x = ttinc(0);		/* Read a character */
-	    debug(F101,"recvseq","",x);
-	    if (x < 0) goto rcvx;	/* Check for error */
-#ifdef NETCONN
-#ifdef TNCODE
-/* Check for telnet protocol negotiation */
-	    if (network &&
-		(ttnproto == NP_TELNET) &&
-		( (x & 0xff) == IAC) ) {
+    rseqtrace = trace;
+    rseqe = e;
+    rseqgot = got;
+    rseql = l;
 
-		/* Break from input burst for "tn_doop" */
-		myflsh();
-		burst = 0;
-		switch (tn_doop((CHAR)(x & 0xff),duplex,ttinc)) {
-		  case 2: duplex = 0; continue;
-		  case 1: duplex = 1;
-		  default: continue;
-		}
-	    }
-#endif /* TNCODE */
-#endif /* NETCONN */
-	    got[l-1] = x & 0x7f;	/* Got a character */
-	    burst--;			/* One less waiting */
-	    if (scr_echo) conbuf[concnt++] = got[l-1]; /* Buffer it */
-	    if (seslog)			/* Log it in session log */
-#ifdef UNIX
-	      if (sessft != 0 || got[l-1] != '\r')
-#endif /* UNIX */
-		sesbuf[sescnt++] = got[l-1];
-	    if ((int)strlen(trace) < sizeof(trace)-2 ) 
-	      strcat(trace,dbchr(got[l-1]));
-	    got_it = (!strncmp(e, got, l));
-	    if (burst <= 0) {		/* Flush buffered output */
-		myflsh();
-		burst = ttchk();	/* Get size of next input burst */
-		/* prevent overflow of "conbuf" and "sesbuf" */
-		if (burst > MAXBURST)
-		  burst = MAXBURST;
-	    }
-	}
-    } else got_it = 0;			/* Timed out here */
-rcvx:
-    alarm(0);
-    signal(SIGALRM,SIG_IGN);
+    alrm_execute(ckjaddr(alrmrng), exp_alrm, scrtime, dorseq, failrseq);
+
     tlog(F110,"received sequence: ",trace,0L);
     tlog(F101,"returning with got-it code","",(long) got_it);
     myflsh();				/* Flush buffered output */
     return;
 }
-
 
 /*
  Output A Sequence starting at pointer s,
@@ -315,66 +398,96 @@ rcvx:
 static int oseqret = 0;			/* Return code for outseq */
 					/* Out here to prevent clobbering */
 					/* by longjmp. */
+
+static SIGTYP
+#ifdef CK_ANSIC
+dooseq(void * threadinfo)
+#else /* CK_ANSIC */
+dooseq(threadinfo) VOID * threadinfo; 
+#endif /* CK_ANSIC */
+{
+    int l;
+    char *sb;
+#ifdef TCPSOCKET
+    extern int tn_nlm, tn_b_nlm, me_binary;
+#endif /* TCPSOCKET */
+
+#ifdef NTSIG
+    if (threadinfo) {			/* Thread local storage... */
+	TlsSetValue(TlsIndex,threadinfo);
+    }
+#endif /* NTSIG */
+
+    l = (int)strlen(seq_buf);
+    tlog(F111,"sending sequence ",seq_buf,(long) l);
+
+    if (!strcmp(seq_buf,"EOT")) {
+	ttoc(dopar('\004'));
+	if (scr_echo) conol("<EOT>");
+	if (seslog && duplex) if (zsout(ZSFILE,"<EOT>") < 0)
+	  seslog = 0;
+    } else if (!strcmp(seq_buf,"BREAK") ||
+	       !strcmp(seq_buf,"\\b") ||
+	       !strcmp(seq_buf,"\\B")) {
+	ttsndb();
+	if (scr_echo) conol("<BREAK>");
+	if (seslog) if (zsout(ZSFILE,"{BREAK}") < 0) seslog = 0;
+    } else {
+	if (l > 0) {
+	    for ( sb = seq_buf; *sb; sb++)
+	      *sb = dopar(*sb);	/* add parity */
+	    ttol((CHAR *)seq_buf,l); /* send it */
+	    if (scr_echo && duplex) conxo(l,seq_buf);
+	    if (seslog && duplex) /* log it */
+	      if (zsout(ZSFILE,seq_buf) < 0)
+		seslog=0;
+	}
+	if (!no_cr) {
+	    ttoc( dopar(CR) );
+#ifdef TCPSOCKET
+	    if (network && ttnproto == NP_TELNET) {
+		if (!me_binary && tn_nlm != TNL_CR)
+		  ttoc((char)((tn_nlm == TNL_CRLF) ?
+			      dopar(LF) : dopar(NUL)));
+		else if (me_binary &&
+			 (tn_b_nlm == TNL_CRLF || tn_b_nlm == TNL_CRNUL))
+		  ttoc((char)((tn_b_nlm == TNL_CRLF) ?
+			      dopar(LF) : dopar(NUL)));
+	    }
+#endif /* TCPSOCKET */
+	    if (seslog && duplex)
+	      if (zchout(ZSFILE,dopar(CR)) < 0)
+		seslog = 0;
+	}
+    }    
+#ifdef NTSIG
+    ckThreadEnd(threadinfo);
+#endif /* NTSIG */
+    SIGRETURN;
+}
+
+SIGTYP
+#ifdef CK_ANSIC
+failoseq(void * threadinfo)
+#else /* CK_ANSIC */
+failoseq(threadinfo) VOID * threadinfo; 
+#endif /* CK_ANSIC */
+/* failoseq */ {
+     oseqret = -1;		/* else -- alarm rang */    
+     SIGRETURN;
+}
+
 static int
 outseq() {
-    char *sb;
-    int l;
     int delay;
-#ifdef TCPSOCKET
-    extern int tn_nlm;
-#endif /* TCPSOCKET */
 
     oseqret = 0;			/* Initialize return code */
     while(1) {
 	delay = sequenc();  
-	l = (int)strlen(seq_buf);
-	tlog(F111,"sending sequence ",seq_buf,(long) l);
-	signal(SIGALRM,scrtime);
-	if (!
-#ifdef CK_POSIX_SIG
-	    sigsetjmp(alrmrng,1)
-#else
-	    setjmp(alrmrng)
-#endif /* CK_POSIX_SIG */
-	    ) {
-	    alarm(SND_ALRM);
-	    if (!strcmp(seq_buf,"EOT")) {
-		ttoc(dopar('\004'));
-		if (scr_echo) conol("<EOT>");
-		if (seslog && duplex) if (zsout(ZSFILE,"<EOT>") < 0)
-		  seslog = 0;
-	    } else if (!strcmp(seq_buf,"BREAK") ||
-		       !strcmp(seq_buf,"\\b") ||
-		       !strcmp(seq_buf,"\\B")) {
-		ttsndb();
-		if (scr_echo) conol("<BREAK>");
-		if (seslog) if (zsout(ZSFILE,"{BREAK}") < 0) seslog = 0;
-	    } else {
-		if (l > 0) {
-		    for ( sb = seq_buf; *sb; sb++)
-		      *sb = dopar(*sb);	/* add parity */
-		    ttol((CHAR *)seq_buf,l); /* send it */
-		    if (scr_echo && duplex) conxo(l,seq_buf);
-		    if (seslog && duplex) /* log it */
-		      if (zsout(ZSFILE,seq_buf) < 0)
-			seslog=0;
-		}
-		if (!no_cr) {
-		    ttoc( dopar(CR) );
-#ifdef TCPSOCKET
-		    if (network && ttnproto == NP_TELNET && tn_nlm != TNL_CR)
-		      ttoc((char)((tn_nlm == TNL_CRLF) ?
-				  dopar(LF) : dopar(NUL)));
-#endif /* TCPSOCKET */
-		    if (seslog && duplex)
-		      if (zchout(ZSFILE,dopar(CR)) < 0)
-			seslog = 0;
-		}
-	    }
-	} else oseqret = -1;		/* else -- alarm rang */
-	alarm(0);
-	signal(SIGALRM,SIG_IGN);
-	if (!delay) return(oseqret);
+	alrm_execute( ckjaddr(alrmrng), SND_ALRM, scrtime, dooseq, failoseq ) ;
+
+	if (!delay) 
+	  return(oseqret);
 #ifndef MAC
 	msleep(DEL_MSEC);		/* delay, loop to next send */
 #endif /* MAC */
@@ -387,55 +500,63 @@ outseq() {
 int
 dologin(cmdstr) char *cmdstr; {
 
-	SIGTYP (*savealm)();		/* Save incoming alarm function */
-	char *e;
+#ifdef OS2
+#ifdef NT
+    SIGTYP (* savealm)(int);		/* Save incoming alarm function */
+#else /* NT */
+    SIGTYP (* volatile savealm)(int);	/* Save incoming alarm function */
+#endif /* NT */
+#else /* OS2 */
+    SIGTYP (*savealm)();		/* Save incoming alarm function */
+#endif /* OS2 */
+    char *e;
 
-	s = cmdstr;			/* Make global to this module */
+    s = cmdstr;				/* Make global to this module */
 
-	tlog(F100,loginv,"",0L);
+    tlog(F100,loginv,"",0L);
 
-	if (speed < 0L) speed = ttgspd();
-	if (ttopen(ttname,&local,mdmtyp,0) < 0) {
-	    sprintf(seq_buf,"Sorry, can't open %s",ttname);
-	    perror(seq_buf);
-	    return(0);
-    	}
-	/* Whether to echo script commands ... */
-	scr_echo = (!quiet && !backgrd && secho);
+    if (speed < 0L) speed = ttgspd();
+    if (ttopen(ttname,&local,mdmtyp,0) < 0) {
+	sprintf(seq_buf,"Sorry, can't open %s",ttname);
+	perror(seq_buf);
+	return(0);
+    }
+    /* Whether to echo script commands ... */
+    scr_echo = (!quiet && !backgrd && secho);
 #ifndef NOSPL
-	if (scr_echo && cmdlvl > 1) {
-	    if (cmdstk[cmdlvl].src == CMD_TF)
-	      scr_echo = techo;
-	    if (cmdstk[cmdlvl].src == CMD_MD)
-	      scr_echo = mecho;
-	}
+    if (scr_echo && cmdlvl > 1) {
+	if (cmdstk[cmdlvl].src == CMD_TF)
+	  scr_echo = techo;
+	if (cmdstk[cmdlvl].src == CMD_MD)
+	  scr_echo = mecho;
+    }
 #endif /* NOSPL */
-    	if (scr_echo) {
+    if (scr_echo) {
 #ifdef NETCONN
-	    if (network)
-	      printf("Executing SCRIPT to host %s.\n",ttname);
-	    else
+	if (network)
+	  printf("Executing SCRIPT to host %s.\n",ttname);
+	else
 #endif /* NETCONN */
-	      printf("Executing SCRIPT through %s, speed %ld.\n",ttname,speed);
-	}
-	*seq_buf = 0;
-	for (e = s; *e; e++) strcat(seq_buf, dbchr(*e) );
+	  printf("Executing SCRIPT through %s, speed %ld.\n",ttname,speed);
+    }
+    *seq_buf = 0;
+    for (e = s; *e; e++) strcat(seq_buf, dbchr(*e) );
 #ifdef COMMENT
 /* Skip this because it tends to contain a password... */
-	if (scr_echo) printf("SCRIPT string: %s\n",seq_buf);
+    if (scr_echo) printf("SCRIPT string: %s\n",seq_buf);
 #endif /* COMMENT */
-	tlog(F110,"SCRIPT string: ",seq_buf, 0L);
+    tlog(F110,"SCRIPT string: ",seq_buf, 0L);
 
 /* Condition console terminal and communication line... */ 
 
-	if (ttvt(speed,flow) < 0) {
-	    printf("Sorry, Can't condition communication line\n");
-	    return(0);
-    	}
-	/* Save initial timer interrupt value */
-	savealm = signal(SIGALRM,SIG_IGN);
+    if (ttvt(speed,flow) < 0) {
+	printf("Sorry, Can't condition communication line\n");
+	return(0);
+    }
+    /* Save initial timer interrupt value */
+    savealm = signal(SIGALRM,SIG_IGN);
 
-	flushi();			/* Flush stale input */
+    flushi();				/* Flush stale input */
 
 /* start expect - send sequence */
 
@@ -481,21 +602,26 @@ flushi() {
     int n, x;
 #ifdef NETCONN
 #ifdef TNCODE
-    int is_tn;
+    int is_tn=0;
 #endif /* TNCODE */
 #endif /* NETCONN */
 
+#ifdef TNCODE
+	/* TELNET input must be scanned for IAC */
+	is_tn = (network && (ttnproto == NP_TELNET));
+#endif /* TNCODE */
     if (
 	seslog				/* Logging session? */
 	|| scr_echo			/* Or console echoing? */
 #ifdef NETCONN
 #ifdef TNCODE
 	/* TELNET input must be scanned for IAC */
-	|| (is_tn = (network && (ttnproto == NP_TELNET)))
+	|| is_tn 
 #endif /* TNCODE */
 #endif /* NETCONN */
 	) {
-        n = ttchk();			/* Yes, anything in buffer? */
+        if ((n = ttchk()) < 0)		/* Yes, anything in buffer? */
+	  return;
 	if (n > MAXBURST) n = MAXBURST;	/* Make sure not too much, */
 	myflsh();			/* and that buffers are empty. */
 	while (n-- > 0) {
@@ -512,27 +638,28 @@ flushi() {
 		}
 
 		/* Recalculate flush count */
-		n = ttchk();
+		if ((n = ttchk()) < 0)
+		  return;
 		if (n > MAXBURST) n = MAXBURST;
   		continue;
   	    }
 #endif /* TNCODE */
 #endif /* NETCONN */
-	    if (scr_echo) conbuf[concnt++] = x;	/* buffer for console */
+	    if (scr_echo) conbuf[concnt++] = (CHAR) x; /* buffer for console */
 	    if (seslog)
 #ifdef UNIX
 	      if (sessft != 0 || x != '\r')
+#else
+#ifdef OSK
+	      if (sessft != 0 || x != '\012')
+#endif /* OSK */
 #endif /* UNIX */
-		sesbuf[sescnt++] = x;	/* buffer for session log */
+		sesbuf[sescnt++] = (CHAR) x; /* buffer for session log */
   	}
 	myflsh();
     } else ttflui();			/* Otherwise just flush. */
 }
 
-#ifdef MAC
-alarm (s) int s; {			/* Fix this later */
-}
-#endif /* MAC */
 #else /* NOSCRIPT */
 char *loginv = "Script Command Disabled";
 #endif /* NOSCRIPT */

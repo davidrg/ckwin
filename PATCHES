@@ -1,0 +1,474 @@
+C-KERMIT 6.0 PATCHES
+
+Most recent update: Wed Dec 18 11:44:34 1996
+
+This file contains source-level patches to C-Kermit 6.0.192.
+
+You can apply these patches if you have source code and the necessary C
+compiler and libraries to build a new executable.  There is no need to apply
+any patch if it does not apply to your configuration, or if the symptom does
+not affect you or your users.
+
+Each patch is self-contained and independent from the others.  Line numbers
+correspond to the source-code files of the 6.0.192 release.
+
+The patches included in this file are believed to be safe, but come with no
+guarantees.  They appear in chronological order as email messages separated by
+lines of underscores.
+
+CONTENTS:
+
+Number Domain           Description
+ 0001   UNIX             C-Kermit mishandles timestamps on very old files
+ 0002	Solaris 2.5++    Compilation error on Solaris 2.5 with Pro C
+ 0003	VMS              CKERMIT.INI Fix for VMS
+ 0004	VMS/VAX/UCX 2.0  C-Kermit 6.0 can't TELNET on VAX/VMS with UCX 2.0
+ 0005	All              C-Kermit Might Send Packets Outside Window
+ 0006	All              MOVE from SEND-LIST does not delete original files
+ 0007	Solaris 2.5++    Higher serial speeds on Solaris 2.5
+ 0008   All              C-Kermit application file name can't contain spaces
+
+Legend:
+ ++ means "and above"
+____________________
+X-Patch-Number: 0001
+Date: Sun, 1 Dec 1996 22:16:56 -0800
+From: Paul Eggert <eggert@twinsun.com>
+To: kermit-support@columbia.edu
+Subject: C-Kermit mishandles timestamps on very old files
+
+C-Kermit 6.0.192 rejects files whose timestamps are before 1970-01-01
+local time.  But every Unix can represent files with timestamps before
+that.  It's common, for example, in the US/Pacific time zone to have a
+file with timestamp 1969-12-31 16:00:00 local time, since this equals
+1970-01-01 00:00:00 UTC.  And many Unixes can represent times before
+the epoch, e.g. on Solaris 2.5.1:
+
+  $ uname -a
+  SunOS shade 5.5.1 Generic_103640-03 sun4u sparc SUNW,Ultra-1
+  $ echo $TZ
+  UTC0
+  $ ls -l test
+  -rw-rw-r--   1 eggert   eggert         0 Dec 13  1901 test
+
+It is certainly not a requirement of the ANSI C Library, or of Posix,
+that timestamps before 1970 cannot be represented.  Here is a patch:
+
+RCS file: RCS/ckufio.c,v
+retrieving revision 6.0.192.0
+retrieving revision 6.0.192.1
+diff -c -r6.0.192.0 -r6.0.192.1
+*** ckufio.c	1996/11/23 19:27:13	6.0.192.0
+--- ckufio.c	1996/12/02 06:07:54	6.0.192.1
+***************
+*** 2659,2666 ****
+      yy = time_stamp->tm_year;		/* Year - 1900 */
+      yy += 1900;
+      debug(F101,"zdatstr year","",yy);
+-     if (yy < 1970)			/* By definition of C library */
+-       return("");
+  
+      if (time_stamp->tm_mon  < 0 || time_stamp->tm_mon  > 11)
+        return("");
+--- 2659,2664 ----
+[It is not known if this patch is safe on all UNIX platforms.]
+____________________
+X-Patch-Number: 0002
+Date: Mon, 02 Dec 1996 13:47:13 -0500
+To: kermit-support@columbia.edu
+Subject: Compilation error on Solaris 2.5 with Pro C
+From: "David J. Fiander" <davidf@worf.mks.com>
+
+I defined CK_ENVIRONMENT and found that the prototype for tn_snenv() in
+ckcnet.h conflicted with the function definition in ckcnet.c.  the former
+declared the first parameter to be a CHAR * (i.e. an unsigned char *),
+while the latter declared to be a char * (i.e. signed char *).  The
+Pro C compiler treats this as an error.  I changed the function definition
+in ckcnet.c to declare the parameter as a CHAR * and the problem was
+resolved.
+
+- David
+
+[Note: This problem does not occur with standard builds.
+Resolution: CK_ENVIRONMENT, which controls the use of TELNET
+NEW-ENVIRONMENT protocol, is not supported in the UNIX version of
+C-Kermit 6.0.192.  The type mismatch is a mistake, however.]
+____________________
+X-Patch-Number: 0003
+Date: Tue, 3 Dec 96 10:56:50 EST
+From: Mike Freeman <freeman@WATSUN.CC.COLUMBIA.EDU>
+Subject: CKERMIT.INI Fix for VMS
+
+A minor fix to CKERMIT.INI from the 6-Sep release is shown below. 
+Needed to get C-Kermit 6(192) to run on my Vax/VMS system with VmS
+V5.5-2 and VAX C V3.1.
+
+*** $ker:ckermit.ini;-1
+--- $ker:ckermit.ini;
+**************
+*** 680,686
+  
+  ; In VMS and OpenVMS, allow for system-wide site customizations
+  
+! if equal "\v(system)" "VMS" {
+      xif exist CKERMIT_INI:CKERMIT.SYS {
+  	echo Executing CKERMIT_INI:CKERMIT.SYS
+  	take CKERMIT_INI:CKERMIT.SYS
+--- 680,686 -----
+  
+  ; In VMS and OpenVMS, allow for system-wide site customizations
+  
+! xif equal "\v(system)" "VMS" {
+      xif exist CKERMIT_INI:CKERMIT.SYS {
+  	echo Executing CKERMIT_INI:CKERMIT.SYS
+  	take CKERMIT_INI:CKERMIT.SYS
+
+MIke Freeman                    | Internet: freeman@watsun.cc.columbia.edu
+Amateur Radio Calsign: K7UIJ    | */ PGP Public Key Available */
+____________________
+X-Patch-Number: 0004
+Date: Thu, 5 Dec 1996 15:20:00 EST
+From: Frank da Cruz <fdc@columbia.edu>
+Subject: C-Kermit 6.0 can't TELNET on VAX/VMS with UCX 2.0
+
+PROBLEM:
+
+On VAX/VMS systems with early versions of DEC TCP/IP (UCX), "set host" and
+"telnet" commands might fail with "Connection refused", even though the system
+(UCX) TELNET program to the same host works correctly.
+
+DIAGNOSIS:
+
+If you don't specify a port, Kermit substitutes the service name "telnet" and
+then asks UCX to look it up; similary, if you specify a port by name, rather
+than number, Kermit asks UCX to look it up.
+
+On VAX/VMS with DEC TCP/IP UCX 2.0, 2.0A, 2.0B, or 2.0C, the getservbyname()
+function fails to return the port number in network byte order as it should,
+and instead returns the number with its bytes swapped (e.g. 5888 instead of
+23).  Then Kermit tries to connect to port 5888 on the host; most hosts will
+refuse the connection; if they don't, you probably didn't reach a Telnet port
+anyway.
+
+This bug was fixed in UCX 2.0D and thereafter.  However, there is no way for
+Kermit to know which version of UCX is being used.
+
+WORKAROUND:
+
+Specify the port number (not name) in your SET HOST or TELNET command, e.g.:
+
+  set host xyzcorp.com 23
+
+CURE:
+
+A new command:
+
+  SET TCP UCX-PORT-BUG { ON, OFF }
+
+It is OFF by default, so UCX versions of VMS C-Kermit will work with all
+latter-day versions of UCX with no special effort.  But if you have an old
+UCX system, and you tell C-Kermit to "set host" or "telnet" and it says
+"Connection refused", tell it to SET TCP UCX-PORT-BUG ON and try again.  If
+this works, then put this command into your (or the system-wide) CKERMIT.INI
+file.  The following patch adds this command to VMS versions of C-Kermit that
+were built for UCX support.  It has already been applied to the CKVV55-UCX20
+binary in the Kermit archive.
+
+PATCH:
+
+*** /w/pub/ftp/kermit/f/ckcnet.c	Wed Nov 27 19:54:46 1996
+--- ./ckcnet.c	Wed Dec  4 17:14:41 1996
+***************
+*** 1,4 ****
+! char *cknetv = "Network support, 6.0.078, 6 Sep 1996";
+  
+  /*  C K C N E T  --  Network support  */
+  
+--- 1,4 ----
+! char *cknetv = "Network support, 6.0.079, 4 Dec 1996";
+  
+  /*  C K C N E T  --  Network support  */
+  
+***************
+*** 960,965 ****
+--- 960,967 ----
+  extern VOID C$$SOCK_TRANSLATE();
+  #endif /* CK_ANSIC */
+  
++ int ucx_port_bug = 0;			/* Explained below */
++ 
+  struct servent *
+  my_getservbyname (service, proto) char *service, *proto; {
+      static struct servent sent;
+***************
+*** 1007,1035 ****
+  	C$$SOCK_TRANSLATE(&s.sb.st[0]);
+  	return NULL;
+      }
+-     /* sent.s_port is returned by UCX in network byte order. */
+-     /* Calling htons here swaps the bytes, which ruins everything. */
+- 
+-     /* Oh yeah?  WHICH VERSION of UCX???  Let's try this... */
+- 
+- #ifndef __alpha /* Maybe it should be __DECC, or some version thereof... */
+  /*
+!   Hunter says: "In fact, the "#ifndef __alpha" isn't even needed, since
+!   my_getservbyname() isn't included if "__DECC" is defined, and that's
+!   always defined on Alpha."  But if it doesn't hurt either, better not risk
+!   taking it out.
+  */
+! #ifndef TCPWARE
+! #define DO_HTONS
+! #endif /* TCPWARE */
+! #endif /* __alpha */
+! 
+! #ifdef DO_HTONS
+      sent.s_port = htons(sent.s_port);
+!     debug(F111,"UCX getservbyname","port",ntohs(sent.s_port));
+! #else
+!     debug(F111,"UCX getservbyname","port",sent.s_port);
+! #endif /* DO_HTONS */
+      return &sent;
+  }
+  #endif /* __DECC */
+--- 1009,1028 ----
+  	C$$SOCK_TRANSLATE(&s.sb.st[0]);
+  	return NULL;
+      }
+  /*
+!   sent.s_port is supposed to be returned by UCX in network byte order.
+!   However, UCX 2.0 through 2.0C did not do this; 2.0D and later do it.
+!   But there is no way of knowing which UCX version, so we have a user-settable
+!   runtime variable.  Note: UCX 2.0 was only for the VAX.
+  */
+!     debug(F101,"UCX getservbyname port","",sent.s_port);
+!     debug(F101,"UCX getservbyname ntohs(port)","",ntohs(sent.s_port));
+!     if (ucx_port_bug) {
+  	sent.s_port = htons(sent.s_port);
+! 	debug(F100,"UCX-PORT-BUG ON: swapping bytes","",0);
+! 	debug(F101,"UCX swapped port","",sent.s_port);
+! 	debug(F101,"UCX swapped ntohs(port)","",ntohs(sent.s_port));
+!     }
+      return &sent;
+  }
+  #endif /* __DECC */
+*** /w/pub/ftp/kermit/f/ckuus3.c	Sun Nov 24 19:20:50 1996
+--- ./ckuus3.c	Wed Dec  4 16:58:49 1996
+***************
+*** 3031,3036 ****
+--- 3031,3046 ----
+        success = recvbuf(z);
+        return(success);
+  #endif /* SO_RCVBUF */
++ 
++ #ifdef VMS
++ #ifdef DEC_TCPIP
++     case XYTCP_UCX: {			/* UCX 2.0 port swabbing bug */
++ 	extern int ucx_port_bug;
++ 	return(success = seton(&ucx_port_bug));
++     }
++ #endif /* DEC_TCPIP */
++ #endif /* VMS */
++ 
+     default:
+        return(0);
+     }
+*** /w/pub/ftp/kermit/f/ckuusr.c	Sun Nov 24 19:20:51 1996
+--- ./ckuusr.c	Wed Dec  4 17:12:50 1996
+***************
+*** 1098,1103 ****
+--- 1098,1108 ----
+  #ifdef SO_SNDBUF
+     "sendbuf", XYTCP_SENDBUF, 0,
+  #endif /* SO_SNDBUF */
++ #ifdef VMS
++ #ifdef DEC_TCPIP
++    "ucx-port-bug", XYTCP_UCX, 0,
++ #endif /* DEC_TCPIP */
++ #endif /* VMS */
+     "",0,0
+  };
+  int ntcpopt = (sizeof(tcpopt) / sizeof(struct keytab));
+*** /w/pub/ftp/kermit/f/ckuusr.h	Sun Nov 24 19:20:52 1996
+--- ./ckuusr.h	Wed Dec  4 16:59:18 1996
+***************
+*** 803,808 ****
+--- 803,809 ----
+  #define  XYTCP_LINGER    3  /* Linger */
+  #define  XYTCP_RECVBUF   4  /* Receive Buffer Size */
+  #define  XYTCP_KEEPALIVE 5  /* Keep Alive packets */
++ #define  XYTCP_UCX       6  /* UCX 2.0 port swabbing bug */
+  
+  #define XYMSK  83       /* MS-DOS Kermit compatibility options */
+  #define  MSK_COLOR 0    /*  Terminal color handling   */
+____________________
+X-Patch-Number: 0005
+Date: Mon, 9 Dec 1996 17:00:56 EST
+From: Frank da Cruz <fdc@columbia.edu>
+Subject: C-Kermit Might Send Packets Outside Window
+
+PROBLEM:
+
+When sending a file with a window size greater than 1 under conditions of
+packet loss, C-Kermit might send packets outside the current window.  This
+should not cause file corruption, and in many cases (depending on the Kermit
+implementation on the receiving end), it won't even cause a noticable problem,
+but in other cases it might cause the transfer to stop unnecessarily.
+
+CURE:
+
+In the ckcfn2.c module, replace the nxtpkt() function with this new one:
+
+/*  N X T P K T  --  Next Packet  */
+/*
+  Get packet number of next packet to send and allocate a buffer for it.
+  Returns:
+    0 on success, with global pktnum set to the packet number;
+   -1 on failure to allocate buffer (fatal);
+   -2 if resulting packet number is outside the current window. 
+*/
+int
+nxtpkt() {				/* Called by file sender */
+    int j, n, x;
+
+    debug(F101,"nxtpkt pktnum","",pktnum);
+    debug(F101,"nxtpkt winlo ","",winlo);
+    n = (pktnum + 1) % 64;		/* Increment packet number mod 64 */
+    debug(F101,"nxtpkt n","",n);
+    x = chkwin(n,winlo,wslots);		/* Don't exceed window boundary */
+    debug(F101,"nxtpkt chkwin","",x);
+    if (x)
+      return(-2);
+
+    j = getsbuf(n);			/* Get a buffer for packet n */
+    if (j < 0) {
+	debug(F101,"nxtpkt getsbuf failure","",j);
+	return(-1);
+    }
+    pktnum = n;	      
+    return(0);
+}
+
+____________________
+X-Patch-Number: 0006
+Date: Wed, 11 Dec 1996 12:26:00 EST
+From: Frank da Cruz <fdc@columbia.edu>
+Subject: MOVE from SEND-LIST does not delete original files
+
+If you build up a list of files to be sent using ADD SEND-LIST and then
+give a SEND command with no operands, it sends the files in the send list.
+If you give a MOVE command with no operands, it does the same thing.  But
+unlike SEND, MOVE should delete each original after sending it successfully;
+in C-Kermit 6.0.192, it does not.
+
+Here's the patch:
+
+*** /w/pub/ftp/kermit/f/ckuusr.c	Sun Nov 24 19:20:51 1996
+--- ckuusr.c	Wed Dec 11 12:39:01 1996
+***************
+*** 2863,2868 ****
+--- 2863,2870 ----
+  		    sndsrc = nfils;	/* Like MSEND */
+  		    addlist = 1;	/* But using a different list... */
+  		    filenext = filehead;
++ 		    if (cx == XXMOVE)
++ 		      moving = 1;
+  		    sstate = 's';
+  		    goto sendend;
+  		} else {		/* Oops, no list. */
+
+____________________
+X-Patch-Number: 0007
+Date: Thu, 12 Dec 1996 21:11:47 -0500
+From: "Richard L. Hamilton" <rlhamil@mindwarp.smart.net>
+Subject: Higher serial speeds on Solaris 2.5
+
+Here's how I hacked up C-Kermit 6.0 for more of the speeds that
+Solaris >= 2.5 supports.
+
+This was with the following make command, to get rid of references
+to unsupported speeds as well as to help get some of the additional
+speeds.  POSIX is a must, 'cause setting speeds > 38400 without
+the cfsetospeed() and similar functions is a pain.  The #ifndef VANILLA
+was just so I could turn off all my hacks real easily, and it and the
+corresponding #endif should probably be removed.
+
+make solaris2xg KFLAGS="-DCK_DSYSINI -DCK_INI_B -DCK_WREFRESH -DPOSIX
+-DNOB_3600 -DNOB_7200 -DBPS_134 -DBPS_1800 -DBPS_57K -DBPS_76K
+-DBPS_115K -DBPS_230K"
+
+diff ckutio.c.orig ckutio.c
+4605c4605,4616
+< 
+---
+> #ifndef VANILLA
+> #ifdef SOLARIS
+> #ifdef POSIX
+> #ifdef BPS_76K
+>       case 7680: s = B76800; break;
+> #endif /* BPS_76K */
+> #ifdef BPS_230K
+>       case 23040: s = B230400; break;
+> #endif /* BPS_230K */
+> #endif /* POSIX */
+> #endif /* SOLARIS */
+> #endif /* VANILLA */
+4951a4963,4974
+> #ifndef VANILLA
+> #ifdef SOLARIS
+> #ifdef POSIX
+> #ifdef BPS_76K
+>       case B76800: ss = 76800L; break;
+> #endif /* BPS_76K */
+> #ifdef BPS_230K
+>       case B230400: ss = 230400L; break;
+> #endif /* BPS_230K */
+> #endif /* POSIX */
+> #endif /* SOLARIS */
+> #endif /* VANILLA */
+diff ckuus3.c.orig ckuus3.c
+328a329,331
+> #ifdef BPS_1800
+>   "1800", 180, 0,
+> #endif /* BPS_1800 */
+
+____________________
+X-Patch-Number: 0008
+Date: Wed, 18 Dec 1996 11:42:00 EST
+From: Frank da Cruz <fdc@columbia.edu>
+Subject: C-Kermit application file name can't contain spaces
+
+When the first command-line argument to C-Kermit is a filename, C-Kermit 
+should execute the commands from the file, e.g.
+
+  kermit filename
+
+But if the filename contains spaces, this doesn't work in version 6.0, even
+if the filename is properly quoted to the shell:
+
+  kermit "this is a file name"
+
+Here is the patch:
+
+*** /w/pub/ftp/kermit/f/ckuus4.c	Sun Nov 24 19:20:50 1996
+--- ckuus4.c	Wed Dec 18 11:40:46 1996
+***************
+*** 636,642 ****
+  */
+  	    cmdini();			/* Allocate command buffers etc */
+  	    cmini(0);			/* Initialize them */
+! 	    strcpy(cmdbuf,yargv[1]);	/* Stuff filename into command buf */
+  	    strcat(cmdbuf,"\r\r");	/* And some carriage returns */
+  	    if ((y = cmifip("","",&s,&x,0,takepath,xxstring)) < 0)
+  	      doexit(BAD_EXIT,xitsta);
+--- 636,642 ----
+  */
+  	    cmdini();			/* Allocate command buffers etc */
+  	    cmini(0);			/* Initialize them */
+! 	    sprintf(cmdbuf,"{%s}",yargv[1]); /* Put filename in command buf */
+  	    strcat(cmdbuf,"\r\r");	/* And some carriage returns */
+  	    if ((y = cmifip("","",&s,&x,0,takepath,xxstring)) < 0)
+  	      doexit(BAD_EXIT,xitsta);
+
+__________________________________
+(End of C-Kermit 6.0 PATCHES file)

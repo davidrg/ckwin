@@ -1,10 +1,10 @@
 /* ckcnet.h -- Symbol and macro definitions for C-Kermit network support */
 
 /*
-  Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
+  Author: Frank da Cruz <fdc@columbia.edu>
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 1994, Trustees of Columbia University in the City of New
+  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
   York.  The C-Kermit software may not be, in whole or in part, licensed or
   sold for profit as a software product itself, nor may it be included in or
   distributed with commercial products or otherwise distributed by commercial
@@ -26,6 +26,8 @@
 #define NET_PIPE 6			/* LAN Manager Named Pipe */
 #define NET_VX25 7			/* Stratus VOS X.25 */
 #define NET_BIOS 8			/* IBM NetBios */
+#define NET_SLAT 9			/* Meridian Technologies' SuperLAT */
+#define NET_FILE 10			/* Read from a file */
 
 #ifdef OS2				/* In OS/2, only the 32-bit */
 #ifndef __32BIT__			/* version gets NETBIOS */
@@ -34,6 +36,18 @@
 #endif /* CK_NETBIOS */
 #endif /* __32BIT__ */
 #endif /* OS2 */
+
+#ifdef _M_PPC
+#ifdef SUPERLAT
+#undef SUPERLAT
+#endif /* SUPERLAT */
+#endif /* _M_PPC */
+
+#ifdef _M_ALPHA
+#ifdef SUPERLAT
+#undef SUPERLAT
+#endif /* SUPERLAT */
+#endif /* _M_ALPHA */
 
 #ifdef NPIPE				/* For items in common to */
 #define NPIPEORBIOS			/* Named Pipes and NETBIOS */
@@ -52,6 +66,10 @@
 #define NP_X3 3				/* CCITT X.3 */
 #define NP_X28 4			/* CCITT X.28 */
 #define NP_X29 5			/* CCITT X.29 */
+#define NP_RLOGIN 6         /* TCP/IP Rlogin */
+#define NP_KERMIT 7         /* TCP/IP Kermit */
+#define NP_FTP    8         /* TCP/IP FTP */
+
 #define NP_CTERM 20			/* DEC CTERM */
 #define NP_LAT 21			/* DEC LAT */
 /* others here... */
@@ -61,25 +79,17 @@
 #define TNL_CR     0			/* CR sends bare carriage return */
 #define TNL_CRNUL  1			/* CR and NUL */
 #define TNL_CRLF   2			/* CR and LF */
+#define TNL_LF     3            /* LF instead of CR */
 
-#ifdef COMMENT /* no longer used but might come in handy again later... */
-/*
-  CK_READ0 can (and should) be defined if and only if:
-  (a) read(fd,&x,0) can be used harmlessly on a TCP/IP socket connection.
-  (b) read(fd,&x,0) returns 0 if the connection is up, -1 if it is down.
-*/
-#ifndef CK_READ0
-#ifdef TCPSOCKET
-#ifdef SUNOS41				/* It works in SunOS 4.1 */
-#define CK_READ0
-#else
-#ifdef NEXT				/* and NeXTSTEP */
-#define CK_READ0
-#endif /* NEXT */
-#endif /* SUNOS41 */
-#endif /* TCPSOCKET */
-#endif /* CK_READ0 */
-#endif /* COMMENT */
+/* TELNET Binary Mode */
+
+#define    TN_BM_RF 0       /*  Negotiation REFUSED */
+#define    TN_BM_AC 1       /*  Negotiation ACCEPTED */
+#define    TN_BM_RQ 2       /*  Negotiation REQUESTED */
+
+/* RLOGIN Modes */
+#define    RL_RAW     0     /*  Do Not Process XON/XOFF */
+#define    RL_COOKED  1     /*  Do Process XON/XOFF */
 
 /* Basic network function prototypes, common to all. */
 
@@ -89,6 +99,7 @@ _PROTOTYP( int netflui, (void) );
 _PROTOTYP( int nettchk, (void) );
 _PROTOTYP( int netbreak, (void) );
 _PROTOTYP( int netinc, (int) );
+_PROTOTYP( int netxin, (int, char*) );
 _PROTOTYP( int nettol, (char *, int) );
 _PROTOTYP( int nettoc, (char) );
 
@@ -120,7 +131,7 @@ _PROTOTYP( int nettoc, (char) );
 #define NETCONN
 #endif /* NETCONN */
 
-#define MAXPADPARMS                18	/* Number of PAD parameters */
+#define MAXPADPARMS                22	/* Number of PAD parameters */
 #define MAXCUDATA		   12	/* Max length of X.25 call user data */
 #define X29PID			    1   /* X.29 protocol ID */
 #define X29PIDLEN		    4   /* X.29 protocol ID length */
@@ -280,12 +291,83 @@ _PROTOTYP( int x25inl, (CHAR *, int, int, CHAR) );
 #endif /* TCPSOCKET */
 #endif /* INTERLAN */
 
+#ifdef COMMENT /* no longer used but might come in handy again later... */
+/*
+  CK_READ0 can (and should) be defined if and only if:
+  (a) read(fd,&x,0) can be used harmlessly on a TCP/IP socket connection.
+  (b) read(fd,&x,0) returns 0 if the connection is up, -1 if it is down.
+*/
+#ifndef CK_READ0
+#ifdef TCPSOCKET
+#ifdef SUNOS41				/* It works in SunOS 4.1 */
+#define CK_READ0
+#else
+#ifdef NEXT				/* and NeXTSTEP */
+#define CK_READ0
+#endif /* NEXT */
+#endif /* SUNOS41 */
+#endif /* TCPSOCKET */
+#endif /* CK_READ0 */
+#endif /* COMMENT */
+
 /* Telnet protocol */
 
 #ifdef TCPSOCKET			/* TCPSOCKET implies TNCODE */
 #ifndef TNCODE				/* Which means... */
 #define TNCODE				/* Compile in telnet code */
 #endif /* TNCODE */
+#ifndef RLOGCODE			/* What about Rlogin? */
+#ifndef NORLOGIN
+/*
+  Rlogin can be enabled only for UNIX versions that have both SIGURG
+  (SCO doesn't) and CK_TTGWSIZ (OSF/1 doesn't), so we don't assume that
+  any others have these without verifying first.  Not that it really makes
+  much difference since you can only use Rlogin if you are root...
+*/
+#ifdef SUNOS41
+#define RLOGCODE
+#else
+#ifdef SOLARIS
+#define RLOGCODE
+#else
+#ifdef HPUX9
+#define RLOGCODE
+#else
+#ifdef NEXT
+#define RLOGCODE
+#else
+#ifdef AIX41
+#define RLOGCODE
+#else
+#ifdef UNIXWARE
+#define RLOGCODE
+#else
+#ifdef IRIX51
+#define RLOGCODE
+#else
+#ifdef IRIX60
+#define RLOGCODE
+#else
+#ifdef QNX
+#define RLOGCODE
+#else
+#ifdef __linux__
+#define RLOGCODE
+#endif /* __linux__ */
+#endif /* QNX */
+#endif /* IRIX60 */
+#endif /* IRIX51 */
+#endif /* UNIXWARE */
+#endif /* AIX41 */
+#endif /* NEXT */
+#endif /* SOLARIS */
+#endif /* HPUX9 */
+#endif /* SUNOS41 */
+#endif /* NORLOGIN */
+#ifdef VMS				/* VMS */
+#define RLOGCODE
+#endif /* VMS */
+#endif /* RLOGCODE */
 #endif /* TCPSOCKET */
 
 #ifdef SUNX25				/* SUNX25 implies TCPSOCKET */
@@ -301,6 +383,16 @@ _PROTOTYP( int x25inl, (CHAR *, int, int, CHAR) );
 #ifndef NETCONN				/* TCPSOCKET implies NETCONN */
 #define NETCONN
 #endif /* NETCONN */
+
+#ifdef TCPSOCKET			/* select() is required to support */
+#ifndef NOLISTEN			/* incoming connections. */
+#ifndef SELECT
+#ifndef OS2
+#define NOLISTEN
+#endif /* OS2 */
+#endif /* SELECT */
+#endif /* NOLISTEN */
+#endif /* TCPSOCKET */
 
 /* BSD sockets library header files */
 
@@ -403,6 +495,7 @@ unsigned long inet_network();
 #define ENAMETOOLONG ORG_NLONG
 #undef ENOTEMPTY
 #define ENOTEMPTY ORG_NEMPTY
+#include <netinet/tcp.h>		/* for inet_addr() */
 #endif /* I386IX */
 /*
   Data type of the inet_addr() function...
@@ -412,23 +505,27 @@ unsigned long inet_network();
   handled here.  Other systems that need it can be added here, or else
   -DINADDRX can be included in the CFLAGS on the cc command line.
 */
-#ifdef DGUX540				/* Data General UX 5.4 */
-#ifndef DGUX543				/* But not DG/US 5.4R3.00 */
+#ifndef NOINADDRX
+#ifdef DGUX540				/* Data General UX 5.40 */
 #define INADDRX
-#endif /* DGUX543 */
 #endif /* DGUX540 */
-
 #ifdef DU2				/* DEC Ultrix 2.0 */
 #define INADDRX
 #endif /* DU2 */
+#endif /* NOINADDRX */
 
 #else /* Not UNIX */
 
 #ifdef VMS				/* (Open)VMS section */
 
-#ifdef WINTCP				/* TWG WIN/TCP = PathWay for VMS */
+#ifdef WINTCP				/* WIN/TCP = PathWay for VMS */
+#ifdef OLD_TWG
+#include "twg$tcp:[netdist.include.sys]errno.h"
+#include "twg$tcp:[netdist.include.sys]types2.h"   /* avoid some duplicates */
+#else
 #include <errno.h>
 #include "twg$tcp:[netdist.include.sys]types.h"
+#endif /* OLD_TWG */
 #include "twg$tcp:[netdist.include.sys]socket.h"
 #include "twg$tcp:[netdist.include]netdb.h"
 #include "twg$tcp:[netdist.include.sys]domain.h"
@@ -443,7 +540,14 @@ unsigned long inet_network();
 #include "multinet_root:[multinet.include.sys]socket.h"
 #include "multinet_root:[multinet.include]netdb.h"
 #include "multinet_root:[multinet.include.netinet]in.h"
+#include "multinet_root:[multinet.include.arpa]inet.h"
 #include "multinet_root:[multinet.include.sys]ioctl.h"
+/*
+  We should be able to pick these up from <strings.h> but it's
+  not portable between VAXC and DECC.
+*/
+_PROTOTYP( void bzero, (char *, int) );
+_PROTOTYP( void bcopy, (char *, char *, int) );
 #ifdef __DECC
 /*
    If compiling under DEC C the socket calls must not be prefixed with
@@ -453,8 +557,14 @@ unsigned long inet_network();
    are present in ANSI compilers).  At any rate, such calls are fixed
    here by explicitly prefixing them.
 */
+#ifdef COMMENT
+/*
+   But this causes errors with VMS 6.2 / DEC C 5.3-006 / MultiNet 4.0A on
+   a VAX (but not on an Alpha).  So now what happens if we skip doing this?
+*/
 #define close decc$close
 #define alarm decc$alarm
+#endif /* COMMENT */
 #endif /* __DECC */
 #endif /* MULTINET */
 
@@ -464,12 +574,35 @@ unsigned long inet_network();
 #include <socket.h>
 #include "ckvioc.h"
 #define socket_errno errno
+/*
+  Translation: In <strings.h>, which exists only for DECC >= 5.2, bzero()
+  and bcopy() are declared only for OpenVMS >= 7.0.  This still might need
+  adjustment for DECC 5.0 and (if there is such a thing) 5.1.
+*/
+#ifdef __DECC_VER
+#ifdef VMSV70
+/*
+  Note: you can't use "#if (__VMS_VER>=70000000)" because that is not
+  portable and kills non-VMS builds.
+*/
+#include <strings.h>
+#else
 #define bzero(s,n) memset(s,0,n)
 #define bcopy(h,a,l) memmove(a,h,l)
+#endif /* VMSV70 */
+#else
+#define bzero(s,n) memset(s,0,n)
+#define bcopy(h,a,l) memmove(a,h,l)
+#endif /* __DECC_VER */
 #define socket_read 	read
 #define socket_write 	write
 #define socket_ioctl	ioctl
 #define socket_close    close
+#ifdef __DECC
+int ioctl (int d, int request, void *argp);
+#else
+int ioctl (int d, int request, char *argp);
+#endif /* DECC */
 /*
   UCX supports select(), but does not provide the needed symbol and
   structure definitions in any header file, so ...
@@ -564,8 +697,16 @@ typedef	struct fd_set {
 
 #else /* Not VMS */
 
+#ifdef BEBOX
+#define TCPIPLIB
+#define socket_close(x) closesocket(x)
+#endif /* BEBOX */
+
 #ifdef OS2
 #include "ckonet.h"
+#ifndef NT
+#include <nerrno.h>
+#endif
 #endif /* OS2 */
 
 #ifdef STRATUS  /* Stratus VOS using OS TCP/IP products S235, S236, S237 */
@@ -574,6 +715,15 @@ typedef	struct fd_set {
 /* OS TCP provides bzero(), but not bcopy()... go figure. */
 #define bcopy(s,d,z) memcpy(d,s,z)
 #endif /* STRATUS */
+
+#ifdef OSK
+#include <inet/in.h>
+#include <inet/netdb.h>
+#include <inet/socket.h>
+#define bzero(s,n) memset(s,0,n)
+#define bcopy(h,a,l) memcpy(a,h,l)
+typedef char * caddr_t; /* core address type */
+#endif /* OSK */
 
 #endif /* VMS */
 #endif /* UNIX */
@@ -609,7 +759,11 @@ typedef	struct fd_set {
 #define SE 240
 #endif /* SE */
 
-#ifndef TELOPT_ECHO			/* Then the options */
+/* Then the options */
+#ifndef TELOPT_BINARY 
+#define TELOPT_BINARY 0
+#endif /* TELOPT_BINARY */
+#ifndef TELOPT_ECHO			
 #define TELOPT_ECHO 1
 #endif /* TELOPT_ECHO */
 #ifndef TELOPT_SGA
@@ -621,70 +775,26 @@ typedef	struct fd_set {
 #ifndef TELOPT_TTYPE
 #define	TELOPT_TTYPE 24
 #endif /* TELOPT_TTYPE */
+#ifndef TELOPT_NAWS
+#define TELOPT_NAWS 31
+#endif  /* TELOPT_NAWS */
 #ifndef NTELOPTS
 #define	NTELOPTS 24
 #endif /* NTELOPTS */
+#ifndef TELOPT_NEWENVIRON
+#define TELOPT_NEWENVIRON 39
+#endif /* TELOPT_NEWENVIRON */
 
-/* Systems where we know we can define NAWS automatically. */
-
-/*
-   NOTE: in the future we should separate the notion of TELNET NAWS
-   negotiation from "finding out my own screen size".  This might be as
-   simple as moving the following section out of the TNCODE section,
-   but then its name will be confusing, etc.
-*/
-#ifndef NONAWS				/* Unless they said not to... */
-#ifndef CK_NAWS				/* and it's not already enabled... */
-#ifdef SUNOS41				/* SunOS 4.1 */
-#define CK_NAWS
-#else
-#ifdef NEXT				/* NeXTSTEP */
-#define CK_NAWS
-#else
-#ifdef BSD44				/* 4.4BSD */
-#define CK_NAWS
-#else
-#ifdef OS2				/* OS/2 */
-#define CK_NAWS
-#else
-#ifdef SVR4				/* System V R4 */
-#define CK_NAWS
-#else
-#ifdef OSF				/* OSF/1 */
-#define CK_NAWS
-#else
-#ifdef VMS				/* VMS */
-#define CK_NAWS
-#else
-#ifdef AIXRS				/* AIX/6000 */
-#define CK_NAWS
-#else
-#ifdef SOLARIS				/* Solaris 2.x */
-#define CK_NAWS
-#else
-#ifdef DU4				/* DEC ULTRIX 4.x */
-#define CK_NAWS
-#else
-#ifdef QNX				/* DEC ULTRIX 4.x */
-#define CK_NAWS
-#endif /* QNX */
-#endif /* DU4 */
-#endif /* SOLARIS */
-#endif /* AIXRS */
-#endif /* VMS */
-#endif /* OSF */
-#endif /* SVR4 */
+#ifdef OS2
+#define CK_ENVIRONMENT
 #endif /* OS2 */
-#endif /* BSD44 */
-#endif /* NEXT */
-#endif /* SUNOS41 */
-#endif /* CK_NAWS */
-#endif /* NONAWS */
 
-#ifdef CK_NAWS
-#ifndef TELOPT_NAWS
-#define TELOPT_NAWS 31
-#endif /* TELOPT_NAWS */
+/* Systems where we know we can define TELNET NAWS automatically. */
+
+#ifndef CK_NAWS				/* In other words, if both */
+#ifdef CK_TTGWSIZ			/* TNCODE and TTGWSIZ are defined */
+#define CK_NAWS				/* then we can do NAWS. */
+#endif /* CK_TTGWSIZ */
 #endif /* CK_NAWS */
 
 /* Telnet protocol functions defined in C-Kermit */
@@ -693,8 +803,114 @@ _PROTOTYP( int tn_ini, (void) );	/* Telnet protocol support */
 _PROTOTYP( int tn_sopt, (int, int) );
 _PROTOTYP( int tn_doop, (CHAR, int, int (*)(int) ) );
 _PROTOTYP( int tn_sttyp, (void) );
+_PROTOTYP( int tn_snenv, (CHAR *, int) ) ;
 _PROTOTYP( int tnsndbrk, (void) );
 
+#ifndef NOTCPOPTS
+/*
+  Automatically define NOTCPOPTS for configurations where they can't be
+  used at runtime or cause too much trouble at compile time.
+*/
+#ifdef CMU_TCPIP			/* CMU/Tek */
+#define NOTCPOPTS
+#endif /* CMU_TCPIP */
+#ifdef MULTINET				/* Multinet on Alpha */
+#ifdef __alpha
+#define NOTCPOPTS
+#endif /* __alpha */
+#endif /* MULTINET */
+#endif /* NOTCPOPTS */
+
+#ifdef NOTCPOPTS
+#ifdef TCP_NODELAY
+#undef TCP_NODELAY
+#endif /* TCP_NODELAY */
+#ifdef SO_LINGER
+#undef SO_LINGER
+#endif /* SO_LINGER */
+#ifdef SO_KEEPALIVE
+#undef SO_KEEPALIVE
+#endif /* SO_KEEPALIVE */
+#ifdef SO_SNDBUF
+#undef SO_SNDBUF
+#endif /* SO_SNDBUF */
+#ifdef SO_RCVBUF
+#undef SO_RCVBUF
+#endif /* SO_RCVBUF */
+#endif /* NOTCPOPTS */
+
+#ifdef SOL_SOCKET
+#ifdef TCP_NODELAY
+_PROTOTYP( int no_delay, (int) );
+#endif /* TCP_NODELAY */
+#ifdef SO_KEEPALIVE
+_PROTOTYP( int keepalive, (int) ) ;
+#endif /* SO_KEEPALIVE */
+#ifdef SO_LINGER 
+_PROTOTYP( int ck_linger, (int, int) ) ;
+#endif /* SO_LINGER */
+#ifdef SO_SNDBUF
+_PROTOTYP( int sendbuf,(int) ) ; 
+#endif /* SO_SNDBUF */
+#ifdef SO_RCVBUF
+_PROTOTYP( int recvbuf, (int) ) ;
+#endif /* SO_RCVBUF */
+#endif /* SOL_SOCKET */
+
+/* On HP-9000/500 HP-UX 5.21 this stuff is not defined in any header file */
+
+#ifdef hp9000s500
+#ifndef NEEDSELECTDEFS
+#define NEEDSELECTDEFS
+#endif /* NEEDSELECTDEFS */
+#endif /* hp9000s500 */
+
+#ifdef NEEDSELECTDEFS
+typedef long fd_mask;
+#ifndef NBBY
+#define NBBY 8
+#endif /* NBBY */
+#ifndef FD_SETSIZE
+#define FD_SETSIZE 32
+#endif /* FD_SETSIZE */
+#ifndef NFDBITS
+#define NFDBITS (sizeof(fd_mask) * NBBY)
+#endif /* NFDBITS */
+#ifndef howmany
+#define howmany(x,y) (((x)+((y)-1))/(y))
+#endif /* howmany */
+typedef struct fd_set {
+    fd_mask fds_bits[howmany(FD_SETSIZE, NFDBITS)];
+} fd_set;
+#ifndef FD_SET
+#define FD_SET(n,p) ((p)->fds_bits[(n)/NFDBITS] |= (1 << ((n) % NFDBITS)))
+#endif /* FD_SET */
+#ifndef FD_CLR
+#define FD_CLR(n,p) ((p)->fds_bits[(n)/NFDBITS] &= ~(1 << ((n) % NFDBITS)))
+#endif /* FD_CLR */
+#ifndef FD_ISSET
+#define FD_ISSET(n,p) ((p)->fds_bits[(n)/NFDBITS] & (1 << ((n) % NFDBITS)))
+#endif /* FD_ISSET */
+#ifndef FD_COPY
+#define FD_COPY(f,t) (bcopy(f,t,sizeof(*(f)))
+#endif /* FD_COPY */
+#ifndef FD_ZERO
+#define FD_ZERO(p) bzero((char *)(p),sizeof(*(p)))
+#endif /* FD_ZERO */
+#endif /* NEEDSELECTDEFS */
+
 #endif /* TNCODE */
+
+#ifdef RLOGCODE
+#ifndef CK_TTGWSIZ
+SORRY_RLOGIN_REQUIRES_TTGWSIZ_see_ckcplm.doc
+#endif /* CK_TTGWSIZ */
+#endif /* RLOGCODE */
+
+#ifdef CK_NAWS
+#ifndef CK_TTGWSIZ
+SORRY_CK_NAWS_REQUIRES_TTGWSIZ_see_ckcplm.doc
+#endif /* CK_TTGWSIZ */
+#endif /* CK_NAWS */
 
 #endif /* CKCNET_H */

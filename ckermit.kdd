@@ -1,13 +1,55 @@
-{Naval Observatory} 1-202-653-0351 2400 none
-sprintnet  7654321      2400   mark
-oofanet    6543210      1200   odd    This entry has a comment
-tymnet     93,876-5432  2400   even   Punctuation allowed
-decstore  1-800-2341998 2400   none   The DIGITAL Store
-hometone   T5551212     1200   none   T forces Hayes tone dialing
-homepulse  P5551212     1200   none   P forces Hayes pulse dialing
-home       5551212      1200   none   Default dialing method
-anyspeed   999-9999     =      none   Use current speed
-anyparity  888-8888     9600   =      Use current parity
-whocares   777-7777     =      =      Use current speed and parity
-{my sun}   {987 6543}   2400   none   With word grouping
-defaults   987-6543
+; C-Kermit 6.0 Sample Dialing Directory
+;
+; NOTE: Semicolon (;) begins a comment.
+; DISCLAIMER: None of these numbers is guaranteed to be correct.
+;
+; Format: name phone-number ; optional comment.
+; Name must start with a letter and contain no spaces.
+; Phone number may contain spaces.  If phone number begins with a + sign,
+; that means it is in country-code area-code subscriber-number format.
+; See Chapter 5 of "Using C-Kermit", 2nd Edition, for details.
+
+; Commercial E-mail services
+;
+ATTmail     +1 (800) 624 5123      ; AT&T Mail (Easylink), USA
+ATTmail     +1 (416) 502 3000      ; AT&T Mail (Easylink), Canada
+ATTmail    +81 3 5568 9134         ; AT&T Mail (Easylink), Japan
+ATTmail   +852 3003 4900           ; AT&T Mail (Easylink), Hong Kong
+ATTmail    +44  (71) 537 4121      ; AT&T Mail (Easylink), UK
+MCImail     +1 (800) 456 6245      ; MCI Mail
+
+; Publishers
+;
+Heise      +49 (511) 535 2301      ; Verlag Heinz Heise c't BBS, Germany
+
+; Commercial general information services
+;
+Dow-Jones   +1 (212) 741 8100      ; Dow Jones News Retrieval, NYC
+
+; For signup to GEnie, set half duplex, dial the following number, enter HHH
+; upon connection, at the U#= prompt enter "SIGNUP".
+Genie       +1 (800) 638 8369      ; Sign-up number,see GENIE.KDD for local #s
+Delphi      +1 (800) 365 4636      ; Username: JOINDELPHI / Password: WWW
+BIX         +1 (800) 695 4882      ; BYTE Magazine Information Exchange
+BIX         +1 (617) 491 5410      ; BYTE Magazine Information Exchange
+CIX        +44 (181) 296 1255      ; Compulink Information Exchange
+
+; Commercial discipline-specific information services
+;
+Westlaw-WATS +1 (800) 535 1578    ; Also accessible via SprintNet,Tymnet,CISNet
+
+; Vendor support and sales BBS's and online services
+;
+Cabletron           +1 (603) 335 3358 ; Cabletron BBS
+Creative-Labs       +1 (405) 742 6660 ; Creative Labs BBS
+DECstore            +1 (800) 234 1998 ; Digital Equipment Corporation store
+Hayes               +1 (800) 874 2937 ; Hayes Online BBS
+IBM-PC-Company      +1 (919) 517 0001 ; IBM PC Company BBS
+Intel               +1 (503) 645 6275 ; Intel Corporation BBS
+Microcom            +1 (617) 255 1125 ; Microcom BBS
+Microsoft           +1 (206) 936 6735 ; Microsoft Download Service BBS USA
+Microsoft           +1 (905) 507 3022 ; Microsoft Download Service BBS Canada
+Science-Press       +1 (717) 738 9422 ; Science Press BBS
+US-Robotics         +1 (708) 982 5092 ; US Robotics BBS
+
+; Etc etc, the end.

@@ -4,7 +4,7 @@
   Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 1993, Trustees of Columbia University in the City of New
+  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
   York.  The C-Kermit software may not be, in whole or in part, licensed or
   sold for profit as a software product itself, nor may it be included in or
   distributed with commercial products or otherwise distributed by commercial
@@ -16,15 +16,23 @@
 #ifndef CKUCMD_H
 #define CKUCMD_H
 
-/* Special getchars... */
- 
+/* Command recall */
+
+#ifdef pdp11				/* Not enough room */
+#ifndef NORECALL
+#define NORECALL
+#endif /* NORECALL */
+#endif /* pdp11 */
+
 #ifdef DYNAMIC				/* Dynamic command buffers */
 /*
   Use malloc() to allocate the many command-related buffers in ckucmd.c.
 */
-#ifdef pdp11				/* Not enough room */
+#ifndef DCMDBUF
+#ifndef NORECALL
 #define NORECALL
-#endif /* pdp11 */
+#endif /* NORECALL */
+#endif /* DCMDBUF */
 
 #ifndef NORECALL
 #define CK_RECALL
@@ -33,13 +41,26 @@
 #undef CK_RECALL
 #endif /* CK_RECALL */
 #endif /* NORECALL */
+#else
+#ifndef NORECALL
+#define NORECALL
+#endif /*  NORECALL */
 #endif /* DYNAMIC */
+
+#ifdef NORECALL
+#ifdef CK_RECALL
+#undef CK_RECALL
+#endif /* CK_RECALL */
+#endif /* NORECALL */
+
+/* Special getchars */
 
 #ifdef VMS
 #ifdef getchar				/* This is for VMS GCC */
 #undef getchar
 #endif /* getchar */
 #define getchar()   vms_getchar()
+int vms_getchar(void);
 #endif /* VMS */
  
 #ifdef aegis
@@ -52,21 +73,48 @@
 #define getchar() coninc(0)
 #endif /* AMIGA */
 
+#ifdef Plan9
+#undef getchar
+#define getchar() coninc(0)
+#undef putchar
+#define putchar(c) conoc(c)
+#define printf conprint
+#endif /* Plan9 */
+
 /* Sizes of things */
  
 #ifndef CMDDEP
-#define CMDDEP  20			/* Maximum command recursion depth */
+#ifdef BIGBUFOK
+#define CMDDEP  64			/* Maximum command recursion depth */
+#else
+#define CMDDEP  20
+#endif /* BIGBUFOK */
 #endif /* CMDDEP */
 #define HLPLW   78			/* Width of ?-help line */
 #define HLPCW   19			/* Width of ?-help column */
 #define HLPBL  100			/* Help string buffer length */
-#define ATMBL  256			/* Command atom buffer length*/
+#ifdef BIGBUFOK
+#define ATMBL 4072			/* Command atom buffer length*/
+#else
+#ifdef NOSPL
+#define ATMBL  256
+#else
+#define ATMBL  1024
+#endif /* NOSPL */
+#endif /* BIGBUFOK */
+
+#ifndef CMDBL
 #ifdef NOSPL
 /* No script programming language, save some space */
 #define CMDBL 512			/* Command buffer length */
 #else
+#ifdef BIGBUFOK
+#define CMDBL 4072			/* Max size to fit in one page */
+#else
 #define CMDBL 1024			/* Command buffer length */
+#endif /* OS2 */
 #endif /* NOSPL */
+#endif /* CMDBL */
  
 /* Special characters */
  
@@ -89,6 +137,18 @@
 #define CMT_SHE 1			/* Shell escape (!) */
 #define CMT_LBL 2			/* Label (:) */
 #define CMT_FIL 3			/* Indirect filespec (@) */
+
+/* Path separator for path searches */
+
+#ifdef OS2
+#define PATHSEP ';'
+#else
+#ifdef UNIX
+#define PATHSEP ':'
+#else
+#define PATHSEP ','
+#endif /* UNIX */
+#endif /* OS2 */
 
 /* Keyword Table Template */
  
@@ -124,18 +184,21 @@ _PROTOTYP( VOID untab, (char *) );
 _PROTOTYP( int cmnum, (char *, char *, int, int *, xx_strp ) );
 _PROTOTYP( int cmofi, (char *, char *, char **, xx_strp ) );
 _PROTOTYP( int cmifi, (char *, char *, char **, int *, xx_strp ) );
-_PROTOTYP( int cmifi2,(char *, char *, char **, int *, int, xx_strp ) );
+_PROTOTYP( int cmifip,(char *, char *, char **, int *, int, char *, xx_strp ));
+_PROTOTYP( int cmifi2,(char *, char *, char **, int *, int, char *, xx_strp ));
 _PROTOTYP( int cmdir, (char *, char *, char **, xx_strp ) );
 _PROTOTYP( int cmfld, (char *, char *, char **, xx_strp ) );
 _PROTOTYP( int cmtxt, (char *, char *, char **, xx_strp ) );
-_PROTOTYP( int cmkey, (struct keytab [], int, char *, char *, xx_strp) );
-_PROTOTYP( int cmkey2,(struct keytab [], int, char *, char *, char *,xx_strp));
+_PROTOTYP( int cmkey,  (struct keytab [], int, char *, char *, xx_strp) );
+_PROTOTYP( int cmkeyx, (struct keytab [], int, char *, char *, xx_strp) );
+_PROTOTYP( int cmkey2,(struct keytab [],int,char *,char *,char *,xx_strp,int));
 _PROTOTYP( int chktok, (char *) );
 _PROTOTYP( int cmcfm, (void) );
 _PROTOTYP( int rdigits, (char *) );
 _PROTOTYP( int chknum, (char *) );
 _PROTOTYP( int lower, (char *) );
 _PROTOTYP( int lookup, (struct keytab [], char *, int, int *) );
+_PROTOTYP( VOID kwdhelp, (struct keytab[], int, char *, char *, char *, int) );
 _PROTOTYP( int ungword, (void) );
 _PROTOTYP( int cmdsquo, (int) );
 _PROTOTYP( int cmdgquo, (void) );

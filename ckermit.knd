@@ -1,0 +1,78 @@
+; C-Kermit 6.0 Sample Network Services Directory
+;
+; Add or replace these entries with the network hosts or services
+; you commonly use C-Kermit to connect to.
+;
+;   NOTE: Semicolon (;) begins a comment.
+;   DISCLAIMER: None of these services is guaranteed to be there.
+;
+; Format: name phone-number ; optional comment.
+; Name must start with a letter and contain no spaces.
+; Phone number may contain spaces.  If phone number begins with a + sign,
+; that means it is in country-code area-code subscriber-number format.
+; See Chapter 6 of "Using C-Kermit", 2nd Edition, for details.
+
+ColumbiaNet       tcp/ip columbianet.columbia.edu ; Columbia University
+
+; Commercial services - Most require login
+;
+BIX               tcp/ip bix.com
+CompuServe        tcp/ip compuserve.com
+CIX          	  tcp/ip cix.compulink.co.uk
+Dow-Jones	  tcp/ip djnr.dowjones.com
+
+; Newspapers Online
+;
+USA-Today         tcp/ip kanga.ins.cwru.edu   ; Cleveland Freenet
+
+; Internet searches
+;
+UofIowa           tcp/ip grind.isca.uiowa.edu ; Search a huge ftp site
+                                              ; and download with Kermit...
+Info-ANU          tcp/ip info.anu.edu.au      ; Australia 
+Archie            tcp/ip archie.sura.net      ; USA MD
+Archie            tcp/ip archie.unl.edu       ; USA NE
+Archie            tcp/ip archie.ans.net       ; USA NY
+Archie            tcp/ip archie.rutgers.edu   ; USA NJ
+
+; Jobs, Careers, Resumes
+;
+HEART             tcp/ip career.com           ; HEART Career Center
+
+; US Government Information
+;
+Federal-Files     tcp/ip federal.bbs.gpo.gov 3001  ; US Govt Printing Office
+FDA-BBS           tcp/ip fdabbs.fda.gov            ; US Food & Drug Admin BBS
+
+; Bibliographic
+;
+LOC               tcp/ip locis.loc.gov             ; US Library of Congress
+CARL              tcp/ip pac.carl.org              ; CARL Online
+
+; Standards
+;
+InterNIC           tcp/ip rs.internic.net          ; Internet information
+
+; Weather information
+;
+Weather           tcp/ip madlab.sprl.umich.edu:3000
+Weather           tcp/ip wind.atmos.uah.edu 3000
+Weather           tcp/ip vicbeta.vic.bom.gov.au 55555
+Pilot-c-weather   tcp/ip duat.gtefsd.com             ; For certified pilots
+Pilot-u-weather   tcp/ip duats.gtefsd.com            ; For uncertified pilots
+Pollution         tcp/ip ttnbbs.rtpnc.epa.gov        ; Air pollution
+CA-Emergency      tcp/ip oes1.oes.ca.gov 5501        ; CA Emergency Services
+Floods-Hurricanes tcp/ip exnet.iastate.edu           ; Login: flood
+
+; Geographic/agricultural/earthquake/flood information
+;
+Geography         tcp/ip martini.eecs.umich.edu:3000 ; Geography
+Land-use          tcp/ip glis.cr.usgs.gov            ; Maps, data
+Metro-Search      tcp/ip metro.jussieu.fr 10000      ; Subway routes all over
+
+; Ham Radio operators database
+;
+Callsign          tcp/ip callsign.cs.buffalo.edu 2000
+Callsign          tcp/ip pc.usl.edu 2000
+
+; Etc etc, the end

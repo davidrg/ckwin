@@ -1,8 +1,10 @@
-XXVMA      vmlinelogin olaf     serial /dev/ttyh8 9600
-XXVMB      vmfullogin  olaf     call hayes /dev/cua 2400 765-4321
-CUMIN      vmslogin    olaf     net  tcp/ip cumin
-WATSUN     unixlogin   olaf     net  tcp/ip watsun.cc.columbia.edu
-COMPUSERVE cislogin    000,0000 call hayes /dev/cua 2400 876-5432
-DJNR       djnrsprint  xxxx     call hayes /dev/cua 2400 741-8100
-GEOGRAPHY  nologin     xxxx     net  tcp/ip 141.212.99.9:3000
-CONGRESS   nologin     xxxx     net  tcp/ip dra.com
+COLUMBIANET nologin     xxxx     net  tcp/ip columbianet.columbia.edu
+CONGRESS    nologin     xxxx     net  tcp/ip dra.com
+DIGITAL     nologin     xxxx     net  tcp/ip order.sales.digital.com
+FLOODS      ulogin      flood    net  tcp/ip exnet.iastate.edu
+GEOGRAPHY   nologin     xxxx     net  tcp/ip 141.212.99.9:3000
+LAWNET      ulogin      lawnet   net  tcp/ip lawnet.law.columbia.edu
+METROS      nologin     xxxx     net  tcp/ip metro.jussieu.fr:10000
+SPACELINK   ulogin      guest    net  tcp/ip spacelink.msfc.nasa.gov
+VIENNA-SE   ulogin      BOERSE   net  tcp/ip fiivs01.tu-graz.ac.at
+WUSTL       ulogin      hytelnet net  tcp/ip library.wustl.edu

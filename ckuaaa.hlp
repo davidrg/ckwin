@@ -1,10 +1,10 @@
-File CKUAAA.HLP                                                   October 1994
+File CKUAAA.HLP                                                 September 1996
 
 			   C-KERMIT FILES FOR UNIX
 
-C-Kermit 5A bears the following copyright notice:
+C-Kermit bears the following copyright notice:
 
-  Copyright (C) 1985, 1994, Trustees of Columbia University in the City of New
+  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
   York.  The C-Kermit software may not be, in whole or in part, licensed or
   sold for profit as a software product itself, nor may it be included in or
   distributed with commercial products or otherwise distributed by commercial
@@ -16,12 +16,13 @@ All files for UNIX C-Kermit have Kermit Distribution names beginning with
 'ck'.  Those particular to UNIX begin with 'cku'.  Those that UNIX C-Kermit
 share in common with other C-Kermit implementations begin with 'ckc' or 'ckw'.
 When retrieving these files via ftp from kermit.columbia.edu, a UNIX computer,
-use only lowercase letters in filenames.
+use only lowercase letters in filenames.  (Actually, many of the 'cku' files
+are also used on other platforms, too.)
 
 All the files needed for UNIX C-Kermit are listed below, and are available
-separately in the kermit/b directory.  They are also available in a compressed
+separately in the kermit/f directory.  They are also available in a compressed
 tar archive in kermit/archives called ckuxxx.tar.Z, where xxx is the C-Kermit
-edit number, for example cku190.tar.Z (and also .gz for gunzip).  Retrieve
+edit number, for example cku192.tar.Z (and also .gz for gunzip).  Retrieve
 this file to your UNIX system in binary mode.  Here is an example of how to
 retrieve, unpack, and build:
 
@@ -32,13 +33,14 @@ retrieve, unpack, and build:
   Password: (supply your email address)
   ftp> cd kermit/archives
   ftp> binary (or "type binary")
-  ftp> get cku190.tar.Z (or .gz)
+  ftp> get cku192.tar.Z (or .gz)
   ftp> bye
-  uncompress cku190.tar.Z (or gunzip cku190.tar.gz)
-  tar xvf cku190.tar
+  uncompress cku192.tar.Z (or gunzip cku192.tar.gz)
+  tar xvf cku192.tar
   make xxx
 
 where "xxx" is the appropriate makefile entry, for example "make sunos41c".
+Please read the comments at the top of the makefile for details.
 
 Prebuilt binary executables for selected platforms are in kermit/bin, with
 names starting with 'cku'.  See kermit/bin/READ.ME for further information.
@@ -46,8 +48,8 @@ names starting with 'cku'.  See kermit/bin/READ.ME for further information.
 DOCUMENTATION
 
   C-Kermit 5A is documented in the book "Using C-Kermit" by Frank da Cruz and
-  Christine M. Gianone, 1993, Digital Press, Woburn, MA, USA.  Digital Press
-  ISBN: 1-55558-108-0.  Price: US $34.95.  Available in bookstores and
+  Christine M. Gianone, Digital Press, Woburn, MA, USA.  Digital Press
+  ISBN: 1-55558-164-1.  Price: US $39.95.  Available in bookstores and
   computer stores, or order from Columbia University, phone 1-212-854-3703,
   MasterCard and Visa accepted.  Please purchase the documentation: it should
   answer most of your questions, and sales help to fund the Kermit development
@@ -59,6 +61,8 @@ ckuaaa.hlp  - This file.
 
 ckuker.nr   - UNIX man page for C-Kermit, to be installed in the system's
               local man page directory.  Format via 'nroff -man'.
+
+ckuker.cpp  - C-Preprocessor source for the ckuker.nr file.
 
 The following files should be placed in a world-readable directory, such as
 /usr/local/lib/kermit, so everybody can read and/or copy them:
@@ -73,41 +77,51 @@ ckermod.ini - Sample C-Kermit customization file.  Rename to .mykermrc and
 ckermit.kdd - Sample dialing directory file.  Replace this with your own
               dialing directory in the same format, and rename it to .kdd.
 
+ckermit.knd - Sample network directory file.  Replace this with your own
+              dialing directory in the same format, and rename it to .knd.
+
 ckermit.ksd - Sample services directory.  Replace this with your own services
               directory in the same format, and rename to .ksd.
 
-ckcker.upd  - Updates to C-Kermit since "Using C-Kermit" was published;
-              documentation for new features.
+ckermit.upd - Updates to C-Kermit since the most recent edition of "Using
+              C-Kermit" was published; documentation for new features.
 
-ckcker.bwr  - General C-Kermit "Beware file" - hints and tips, known bugs, etc.
+ckermit.bwr - General C-Kermit "Beware file" - hints and tips, known bugs, etc.
 
 ckuker.bwr  - UNIX-specific C-Kermit "Beware File".
 
-ckedemo.ini, cketest.ini, ckevt.ini -
+ckedemo.ksc, ckevt.ksc, ckepage.ksc -
               Macro definitions used in "Using C-Kermit".
 
 FILES FOR BUILDING UNIX C-KERMIT:
 
 ckuins.doc  - UNIX C-Kermit installation instructions.  
 
+ckcplm.doc  - C-Kermit Program Logic Manual.
+
 ckccfg.doc  - Documentation for configuration options.
 
-ckuker.mak  - UNIX makefile for building C-Kermit from source code.  Rename to
-              Makefile (or makefile).  See ckuins.doc for details, and also
-              read the comments at the top of the makefile.  This makefile has
-              nearly 300 entries in it; please be careful to pick the most
-              appropriate one.
+makefile    - UNIX makefile for building C-Kermit from source code.  See
+              ckuins.doc for details, and also read the comments at the top 
+              of the makefile.  This makefile has hundreds of entries in it;
+              please be careful to pick the most appropriate one.  (NOTE: if
+              you don't find a file called "makefile" then look for it under
+              alternative names: "Makefile", "ckuker.mak", etc.
 
-ckubs2.mak  - As above, but for 2.10 and 2.11 BSD systems.
+ckubs2.mak  - Makefile specifically for 2.10 and 2.11 BSD systems.
+
+ckpker.mk   - Makefile specifically for Plan 9.
 
 C-KERMIT SOURCE FILES:
 
 ckcdeb.h    - Header file common to all C-Kermit modules.
 ckcasc.h    - Header file for ASCII character definitions.
+ckcsig.h    - Header file for signal handling functions.
 ckuver.h    - Header file for version heralds.
 
 ckufio.c    - UNIX (and OS/2) system-specific file i/o module for C-Kermit.
 ckutio.c    - UNIX system-specific communications i/o module for C-Kermit.
+ckusig.c    - UNIX signal handling functions.
 ckucon.c    - The UNIX C-Kermit CONNECT command.
 
 ckcpro.w    - System-independent C-Kermit protocol module, written in 'wart',
@@ -146,7 +160,7 @@ OTHER FILES:
 These are not included in the tar.Z file.  FTP these separately from the
 kermit/b directory if you need them.
 
-ckcplm.doc  - C-Kermit program logic manual (for programmers).
+ckc192.upd  - Program update history for edits 191-192.
 ckc190.upd  - Program update history for edits 189-190.
 ckc188.upd  - Program update history, edits 179-188 (big).
 ckc178.upd  - Program edit history, 5A edits through 178 (very big).

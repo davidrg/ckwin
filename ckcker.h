@@ -1,10 +1,10 @@
 /* ckcker.h -- Symbol and macro definitions for C-Kermit */
 
 /*
-  Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
+  Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 1994, Trustees of Columbia University in the City of New
+  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
   York.  The C-Kermit software may not be, in whole or in part, licensed or
   sold for profit as a software product itself, nor may it be included in or
   distributed with commercial products or otherwise distributed by commercial
@@ -16,10 +16,26 @@
 #ifndef CKCKER_H
 #define CKCKER_H
 
+/*
+  If NEWDEFAULTS is defined then:
+   - RECEIVE PACKET-LENGTH is 2048 rather than 90
+   - WINDOW is 20 rather than 1
+   - BLOCK-CHECK is 3 rather than 1
+   - FILE TYPE is BINARY rather than TEXT
+*/
+#ifdef OS2				/* OS/2, Windows NT, Windows 95 */
+#ifndef NEWDEFAULTS
+#define NEWDEFAULTS
+#endif /* NEWDEFAULTS */
+#endif /* OS2 */
+
 #ifdef NOICP				/* No Interactive Command Parser */
 #ifndef NOSPL				/* implies... */
 #define NOSPL				/* No Script Programming Language */
 #endif /* NOSPL */
+#ifndef NOCSETS				/* No character-set translation */
+#define NOCSETS				/* because the only way to set it up */
+#endif /* NOCSETS */			/* is with interactive commands */
 #endif /* NOICP */
 
 #ifdef pdp11				/* There is a maximum number of */
@@ -33,6 +49,79 @@
 #undef WHATAMI
 #endif /* WHATAMI */
 #endif /* pdp11 */
+
+#define LOGINLEN 32			/* Length of server login field */
+
+/* Control-character (un)prefixing options */
+
+#define PX_ALL  0			/* Prefix all control chars */
+#define PX_CAU  1			/* Unprefix cautiously */
+#define PX_WIL  2			/* Unprefix with wild abandon */
+#define PX_NON  3			/* Unprefix all (= prefix none) */
+
+/* Destination codes */
+
+#define  DEST_D 0	/*  DISK */
+#define  DEST_S 1	/*  SCREEN */
+#define  DEST_P 2	/*  PRINTER */
+
+/* File transfer protocols */
+
+#define  PROTO_K    0	/*   Kermit   */
+#ifdef CK_XYZ
+#define  PROTO_X    1	/*   XMODEM   */
+#define  PROTO_Y    2	/*   YMODEM   */
+#define  PROTO_G    3	/*   YMODEM-g */
+#define  PROTO_Z    4	/*   ZMODEM   */
+#define  PROTO_O    5   /*   OTHER    */
+#define  NPROTOS    6   /*   How many */
+#else
+#define  NPROTOS    1   /*   How many */
+#endif /* CK_XYZ */
+
+struct ck_p {				/* C-Kermit Protocol info structure */
+    char * p_name;			/* Protocol name */
+    int rpktlen;			/* Packet length - receive */
+    int spktlen;			/* Packet length - send */
+    int spktflg;			/* ... */
+    int winsize;			/* Window size */
+    int prefix;				/* Control-char prefixing options */
+    int fnca;				/* Filename collision action */
+    int fncn;				/* Filename conversion */
+    int fnsp;				/* Send filename path stripping */
+    int fnrp;				/* Receive filename path stripping */
+    char * h_b_init;		/* Host receive initiation string - text   */
+    char * h_t_init;		/* Host receive initiation string - binary */
+    char * p_b_scmd;		/* SEND cmd for external protocol - text   */
+    char * p_t_scmd;		/* SEND cmd for external protocol - binary */
+    char * p_b_rcmd;		/* RECV cmd for external protocol - text   */
+    char * p_t_rcmd;		/* RECV cmd for external protocol - binary */
+};
+
+struct filelist {			/* Send-file list element */
+    char * fl_name;			/* Filename */
+    int fl_mode;			/* Transfer mode */
+    char * fl_alias;			/* Name to send the file under */
+    struct filelist * fl_next;		/* Pointer to next element */
+};
+
+/* Kermit system IDs and associated properties... */
+
+struct sysdata {
+    char *sid_code;	/* Kermit system ID code */
+    char *sid_name;	/* Descriptive name */
+    short sid_unixlike;	/* Tree-structured directory with separators */
+    char  sid_dirsep;	/* Directory separator character if unixlike */
+    short sid_dev;	/* Can start with dev: */
+    short sid_case;	/* Bit mapped: 1 = case matters, 2 = case preserved */
+    short sid_recfm;    /* Text record separator */
+/*
+   0 = unknown or nonstream
+   1 = cr
+   2 = lf
+   3 = crlf
+*/
+};
 
 #ifndef NOSPL
 /*
@@ -77,6 +166,22 @@
 #define APC_OFF 0	/* APC OFF (disabled) */
 #define APC_ON 1	/* APC ON (enabled for non-dangerous commands) */
 #define APC_UNCH 2	/* APC UNCHECKED (enabled for ALL commands) */
+#define APC_INACTIVE 0	/* APC not in use */
+#define APC_REMOTE   1	/* APC in use from Remote */
+#define APC_LOCAL    2	/* APC being used from with Kermit */
+#ifndef CK_AUTODL	/* Autodownload */
+#ifdef OS2
+#define CK_AUTODL
+#else
+#ifdef UNIX
+#define CK_AUTODL
+#else
+#ifdef VMS
+#define CK_AUTODL
+#endif /* VMS */
+#endif /* UNIX */
+#endif /* OS2 */
+#endif /* CK_AUTODL */
 #endif /* CK_APC */
 
 /* Codes for what we are doing now */
@@ -110,8 +215,11 @@
 
 #define MAXPACK 94			/* Maximum unextended packet size */
 					/* Can't be more than 94. */
-#define MAXWS 32			/* Maximum window size */
-					/* Can't be more than 32. */
+#ifdef pdp11				/* Maximum sliding window slots */
+#define MAXWS  8
+#else
+#define MAXWS 32			/* Can't be more than 32. */
+#endif /* pdp11 */
 
 /* Maximum long packet size for sending packets */
 /* Override these from cc command line via -DMAXSP=nnn */
@@ -123,7 +231,7 @@
 #else  /* not DYNAMIC */
 #ifndef MAXSP
 #ifdef pdp11
-#define MAXSP 1280
+#define MAXSP 1024
 #else
 #define MAXSP 2048
 #endif /* pdp11 */
@@ -140,7 +248,7 @@
 #else  /* not DYNAMIC */
 #ifndef MAXRP 
 #ifdef pdp11
-#define MAXRP 1280
+#define MAXRP 1024
 #else
 #define MAXRP 2048
 #endif /* pdp11 */
@@ -150,66 +258,31 @@
   Default sizes for windowed packet buffers.
   Override these from cc command line via -DSBSIZ=nnn, -DRBSIZ=nnn.
   Or just -DBIGBUFOK.
-
-  First, implementations where we know we can have big buffers...
 */
-#ifndef BIGBUFOK			/* If not already defined... */
 
-#ifdef sparc				/* SPARC processors */
-#define BIGBUFOK
-#endif /* sparc */
-
-#ifdef HPUX10				/* HP-UX 10.0 PA-RISC */
-#define BIGBUFOK
-#endif /* HPUX10 */
-
-#ifdef NEXT				/* NeXTSTEP */
-#ifdef mc68000				/* on NEXT platforms... */
-#define BIGBUFOK
-#endif /* mc68000 */
-#endif /* NEXT */
-
-#ifdef OS2				/* 32-bit OS/2 2.x */
-#ifdef __32BIT__
-#define BIGBUFOK
-#endif /* __32BIT__ */
-#endif /* OS2 */
-
-#ifdef VMS				/* Any VMS is OK */
-#define BIGBUFOK
-#endif /* VMS */
-
-#ifdef __alpha				/* DEC 64-bit Alpha AXP, e.g. OSF/1 */
-#ifndef BIGBUFOK			/* Might already be defined for VMS */
-#define BIGBUFOK
+#ifndef MAXGETPATH			/* Maximum number of directories */
+#ifdef BIGBUFOK				/* for GET path... */
+#define MAXGETPATH 128
+#else
+#define MAXGETPATH 16
 #endif /* BIGBUFOK */
-#endif /* __alpha */
-
-#ifdef IRIX40				/* SGI with IRIX 4.0 or later */
-#define BIGBUFOK
-#endif /* IRIX40 */
-
-#ifdef __bsdi__				/* BSDI is OK */
-#define BIGBUFOK
-#endif /* __bsdi__ */
-
-#endif /* BIGBUFOK */
+#endif /* MAXGETPATH */
 
 #ifndef NOSPL				/* Query buffer length */
 #ifdef OS2
-#define QBUFL 4096
+#define QBUFL 4095
 #else
-#define QBUFL 1024
+#define QBUFL 1023
 #endif /* OS2 */
 #endif /* NOSPL */
 
 #ifdef DYNAMIC
 #ifndef SBSIZ 
 #ifdef BIGBUFOK				/* If big buffers are safe... */
-#define SBSIZ 90500			/* Allow for 10 x 9024 */
+#define SBSIZ 90500			/* Allow for 10 x 9024 or 20 x 4096 */
 #else					/* Otherwise... */
 #ifdef pdp11
-#define SBSIZ 4000
+#define SBSIZ 3020
 #else
 #define SBSIZ 9050			/* Allow for 3 x 3000, etc. */
 #endif /* pdp11 */
@@ -221,19 +294,24 @@
 #define RBSIZ 90500
 #else
 #ifdef pdp11
-#define RBSIZ 4000
+#define RBSIZ 3020
 #else
 #define RBSIZ 9050
 #endif /* pdp11 */
 #endif /* BIGBUFOK */
 #endif /* RBSIZ */
 #else  /* not DYNAMIC */
+#ifdef pdp11
+#define SBSIZ 3020
+#define RBSIZ 3020
+#else
 #ifndef SBSIZ
-#define SBSIZ (MAXPACK * (MAXWS + 1))
+#define SBSIZ (MAXSP * (MAXWS + 1))
 #endif /* SBSIZ */
 #ifndef RBSIZ
-#define RBSIZ (MAXPACK * (MAXWS + 1))
+#define RBSIZ (MAXRP * (MAXWS + 1))
 #endif /* RBSIZ */
+#endif /* pdp11 */
 #endif /* DYNAMIC */
 
 /* Kermit parameters and defaults */
@@ -246,18 +324,27 @@
 #define MYPADN	    0			/* How many padding chars I need */
 #define MYPADC	    '\0'		/* Which padding character I need */
 
-#define DMYTIM	    7			/* Default timeout interval to use. */
-#define URTIME	    10			/* Timeout interval to use on me. */
+#define DMYTIM	    8			/* Initial timeout interval to use. */
+#define URTIME	    15			/* Timeout interval to use on me. */
 #define DSRVTIM     0			/* Default server cmd wait timeout. */
 
 #define DEFTRN	    0			/* Default line turnaround handshake */
 
 #define MYEOL	    CR			/* Incoming packet terminator. */
 
+#ifdef NEWDEFAULTS
+#define DRPSIZ	  4095			/* Default incoming packet size. */
+#define DFWSIZ      20			/* Default window size */
+#define DFBCT        3			/* Default block-check type */
+#else
 #define DRPSIZ	    90			/* Default incoming packet size. */
+#define DFWSIZ       1			/* Default window size */
+#define DFBCT        3			/* Default block-check type */
+#endif /* NEWDEFAULTS */
+
 #define DSPSIZ	    90			/* Default outbound packet size. */
 
-#define DDELAY      5			/* Default delay. */
+#define DDELAY      1			/* Default delay. */
 #define DSPEED	    9600		/* Default line speed. */
 
 #ifdef OS2				/* Default CONNECT-mode */
@@ -306,40 +393,44 @@
 #define ZMFILE     11		/* Miscellaneous output file, e.g. for XLATE */
 #define ZNFILS     12	    	/* How many defined file numbers */
 
-/*
- Buffered file i/o is used to avoid gratuitous function calls while encoding a
- packet.  The previous way involved 2 nested function calls for EACH character
- of the file.  This way, we only do 2 calls per K of data.  This reduces
- packet encoding time to 1% of its former cost.  Originally added by Paul
- Placeway.
-*/
+/*  Buffered file i/o ...  */
+#ifdef pdp11
+#define INBUFSIZE 512
+#define OBUFSIZE 512
+#else
 #ifdef VMS		/* In VMS, allow for longest possible RMS record */
-#ifdef DYNAMIC
-#define INBUFSIZE 32768	/* File input buffer size */
-#define OBUFSIZE 32768 	/* File output buffer size */
-#else /* VMS, not dynamic */
-#define INBUFSIZE 4096	/* File input buffer size */
-#define OBUFSIZE 4096 	/* File output buffer size */
-#endif /* DYNAMIC */
-#else  /* Not VMS */	/* For all others, just use a 1K buffer */
+#define INBUFSIZE 32768			/* File input buffer size */
+#define OBUFSIZE 32768			/* File output buffer size */
+#else  /* Not VMS */
+#ifdef BIGBUFOK				/* Systems where memory is */
+#define INBUFSIZE 32768			/* not a problem... */
+#define OBUFSIZE 32768
+#else /* Not BIGBUFOK */
 #ifdef STRATUS
 #ifdef DYNAMIC
-#define INBUFSIZE 32767	/* File input buffer size */
-#define OBUFSIZE 32767 	/* File output buffer size */
+#define INBUFSIZE 32767			/* File input buffer size */
+#define OBUFSIZE 32767			/* File output buffer size */
 #else /* STRATUS, not DYNAMIC */
-#define INBUFSIZE 4096	/* File input buffer size */
-#define OBUFSIZE 4096 	/* File output buffer size */
+#define INBUFSIZE 4096			/* File input buffer size */
+#define OBUFSIZE 4096			/* File output buffer size */
 #endif /* DYNAMIC */
 #else /* not STRATUS */
-#ifdef OS2   /* take advantage of HPFS block allocation */
-#define INBUFSIZE 4096
-#define OBUFSIZE 4096
-#else /* not OS2 */
+#ifdef OS2				/* OS/2 and friends */
+#ifdef NT
+#define INBUFSIZE 32768			/* Windows 95 and NT */
+#define OBUFSIZE 32768
+#else
+#define INBUFSIZE 4095			/* OS/2 HPFS block allocation */
+#define OBUFSIZE 4095
+#endif /* NT */
+#else
 #define INBUFSIZE 1024
 #define OBUFSIZE 1024
 #endif /* OS2 */
 #endif /* STRATUS */
+#endif /* BIGBUFOK */
 #endif /* VMS */
+#endif /* pdp11 */
 
 /* get the next char; sorta like a getc() macro */
 #define zminchar() (((--zincnt)>=0) ? ((int)(*zinptr++) & 0377) : zinfill())
@@ -364,7 +455,8 @@
 #define   ST_SKIP 3 	/*  Skipped */
 #define   ST_ERR  4 	/*  Fatal Error */
 #define   ST_REFU 5     /*  Refused (use Attribute codes for reason) */
-#define   ST_INC  6	/* Incompletely received */
+#define   ST_INC  6	/*  Incompletely received */
+#define   ST_MSG  7	/*  Informational message */
 #define SCR_PN 6    	/* packet number */
 #define SCR_PT 7    	/* packet type or pseudotype */
 #define SCR_TC 8    	/* transaction complete */
@@ -384,21 +476,35 @@
 #define ctl(ch)     (((ch) ^ 64 ) & 0xFF )	/* Controllify/Uncontrollify */
 #define unpar(ch)   (((ch) & 127) & 0xFF )	/* Clear parity bit */
 
-/* Modem dialing result codes */
+#ifndef NODIAL
 
-#ifndef NODIAL				/* DIAL command result codes */
-#define DIA_UNK  -1			/* No DIAL command given yet */
-#define DIA_OK    0			/* DIAL succeeded */
-#define DIA_NOMO  1			/* Modem type not specified */
-#define DIA_NOLI  2			/* Communication line not spec'd */
-#define DIA_OPEN  3			/* Line can't be opened */
-#define DIA_NOSP  4			/* Speed not specified */
-#define DIA_HANG  5			/* Hangup failure */
-#define DIA_IE    6			/* Internal error (malloc, etc) */
-#define DIA_IO    7			/* I/O error */
-#define DIA_TIMO  8			/* Dial timeout expired */
-#define DIA_INTR  9			/* Dialing interrupted by user */
+/* Modem capabilities (bit values) */
+#define CKD_AT   1			/* Hayes AT commands and responses */
+#define CKD_V25  2			/* V.25bis commands and responses */
+#define CKD_SB   4			/* Speed buffering */
+#define CKD_EC   8			/* Error correction */
+#define CKD_DC  16			/* Data compression */
+#define CKD_HW  32			/* Hardware flow control */
+#define CKD_SW  64			/* (Local) software flow control */
+#define CKD_KS 128			/* Kermit spoofing */
+#define CKD_TB 256			/* Made by Telebit */
+
+/* DIAL command result codes */
+#define DIA_UNK   -1			/* No DIAL command given yet */
+#define DIA_OK     0			/* DIAL succeeded */
+#define DIA_NOMO   1			/* Modem type not specified */
+#define DIA_NOLI   2			/* Communication line not spec'd */
+#define DIA_OPEN   3			/* Line can't be opened */
+#define DIA_NOSP   4			/* Speed not specified */
+#define DIA_HANG   5			/* Hangup failure */
+#define DIA_IE     6			/* Internal error (malloc, etc) */
+#define DIA_IO     7			/* I/O error */
+#define DIA_TIMO   8			/* Dial timeout expired */
+#define DIA_INTR   9			/* Dialing interrupted by user */
 #define DIA_NRDY  10			/* Modem not ready */
+#define DIA_PART  11			/* Partial dial command OK */
+#define DIA_DIR   12			/* Dialing directory error */
+#define DIA_HUP   13			/* Modem was hung up OK */
 #define DIA_ERR   20			/* Modem command error */
 #define DIA_NOIN  21			/* Failure to initialize modem */
 #define DIA_BUSY  22			/* Phone busy */
@@ -409,8 +515,48 @@
 #define DIA_DISC  27			/* Disconnected */
 #define DIA_VOIC  28			/* Answered by voice */
 #define DIA_NOAC  29			/* Access denied, forbidden call */
+#define DIA_BLCK  30			/* Blacklisted */
+#define DIA_DELA  31			/* Delayed */
+#define DIA_FAX   32			/* Fax */
 #define DIA_UERR  98			/* Unknown error */
 #define DIA_UNSP  99		/* Unspecified failure detected by modem */
+
+#define MDMINF	struct mdminf
+
+MDMINF {			/* Structure for modem-specific information */
+    
+    char * name;		/* Descriptive name */
+    char * pulse;		/* Command to force pulse dialing */
+    char * tone;		/* Command to force tone dialing */
+    int    dial_time;		/* Time modem allows for dialing (secs) */
+    char * pause_chars;		/* Character(s) to tell modem to pause */
+    int	   pause_time;		/* Time associated with pause chars (secs) */
+    char * wake_str;		/* String to wakeup modem & put in cmd mode */
+    int	   wake_rate;		/* Delay between wake_str characters (msecs) */
+    char * wake_prompt;		/* String prompt after wake_str */
+    char * dmode_str;		/* String to put modem in dialing mode */
+    char * dmode_prompt;	/* String prompt for dialing mode */
+    char * dial_str;		/* Dialing string, with "%s" for number */
+    int    dial_rate;		/* Interchar delay to modem (msec) */
+    int    esc_time;		/* Escape sequence guard time (msec) */
+    int    esc_char;		/* Escape character */
+    char * hup_str;		/* Hangup string */
+    char * hwfc_str;		/* Hardware flow control string */
+    char * swfc_str;		/* Software flow control string */
+    char * nofc_str;		/* No flow control string */
+    char * ec_on_str;		/* Error correction on string */
+    char * ec_off_str;		/* Error correction off string */
+    char * dc_on_str;		/* Data compression on string */
+    char * dc_off_str;		/* Data compression off string */
+    char * aa_on_str;		/* Autoanswer on string */
+    char * aa_off_str;		/* Autoanswer off string */
+    char * sb_on_str;		/* Speed buffering on string */
+    char * sb_off_str;		/* Speed buffering off string */
+    long   max_speed;		/* Maximum interface speed */
+    long   capas;		/* Capability bits */
+    /* function to read modem's response string to a non-dialing command */
+    _PROTOTYP( int (*ok_fn), (int,int) );
+};
 #endif /* NODIAL */
 
 /* Symbols for File Attributes */
@@ -446,7 +592,6 @@ struct pktinfo {			/* Packet information structure */
     int   pk_len;			/*  length of data within buffer */
     int   pk_typ;			/*  packet type */
     int   pk_seq;			/*  packet sequence number */
-    int   pk_flg;			/*  ack'd bit */
     int   pk_rtr;			/*  retransmission count */
 };
 
@@ -461,7 +606,12 @@ struct pktinfo {			/* Packet information structure */
 
 /* File-related symbols and structures */
 
+#define XMODE_A 0	/* Transfer mode Automatic */
+#define XMODE_M 1	/* Transfer mode Manual    */
+
 #define   XYFILN 0  	/*  Naming  */
+#define     XYFN_L 0	/*    Literal */
+#define     XYFN_C 1	/*    Converted */
 #define   XYFILT 1  	/*  Type    */
 #define     XYFT_T 0    /*    Text  */
 #define     XYFT_B 1    /*    Binary */
@@ -511,6 +661,12 @@ struct pktinfo {			/* Packet information structure */
 #define   XYFILL 13     /*  File Label (VMS) */
 #define   XYFILI 14     /*  File Incomplete */
 #define   XYFILQ 15     /*  File path action (strip or not) */
+#define   XYFILG 16     /*  File download directory */
+#define   XYFILA 17     /*  Line terminator for local text files */
+#define     XYFA_L 012  /*    LF (as in UNIX) */
+#define     XYFA_C 015  /*    CR (as in OS-9 or Mac OS) */
+#define     XYFA_2 000  /*  CRLF -- Note: this must be defined as 0 */
+#define   XYFILY 18     /*  Destination */
 
 struct tt_info_rec {			/* Terminal emulation info */
     char *x_name;
@@ -537,7 +693,7 @@ _PROTOTYP( VOID logpkt, (char, int, CHAR *) );
 _PROTOTYP( CHAR dopar, (CHAR) );
 _PROTOTYP( int chk1, (CHAR *) );
 _PROTOTYP( unsigned int chk2, (CHAR *) );
-_PROTOTYP( unsigned int chk3, (CHAR *) );
+_PROTOTYP( unsigned int chk3, (CHAR *, int) );
 _PROTOTYP( int sipkt, (char) );
 _PROTOTYP( int sinit, (void) );
 _PROTOTYP( VOID rinit, (CHAR *) );
@@ -607,7 +763,7 @@ _PROTOTYP( int nack, (int) );
 _PROTOTYP( VOID rcalcpsz, (void) );
 _PROTOTYP( int resend, (int) );
 _PROTOTYP( int errpkt, (CHAR *) );
-_PROTOTYP( int srinit, (void) );
+_PROTOTYP( int srinit, (int, int) );
 _PROTOTYP( VOID tstats, (void) );
 _PROTOTYP( VOID fstats, (void) );
 _PROTOTYP( VOID intmsg, (long) );
@@ -623,11 +779,13 @@ _PROTOTYP( SIGTYP trap, (int, int) );
 _PROTOTYP( SIGTYP stptrap, (int) );
 _PROTOTYP( SIGTYP trap, (int) );
 #endif /* COMMENT */
+_PROTOTYP( char * ck_errstr, (void) );
 
 /* User interface functions needed by main program, etc. */
 
 _PROTOTYP( VOID prescan, (int) );
 _PROTOTYP( VOID setint, (void) );
+_PROTOTYP( VOID doinit, (void) );
 _PROTOTYP( VOID cmdini, (void) );
 _PROTOTYP( int dotake, (char *) );
 _PROTOTYP( int cmdlin, (void) );
@@ -643,6 +801,33 @@ _PROTOTYP( VOID doclean, (void) );
 _PROTOTYP( int sndhlp, (char *) );
 _PROTOTYP( VOID ckhost, (char *, int) );
 _PROTOTYP( int gettcs, (int, int) );
+_PROTOTYP( VOID makestr, (char **, char *) );
+_PROTOTYP( VOID getdialenv, (void) );
+_PROTOTYP( VOID setprefix, (int) );
+_PROTOTYP( VOID initproto, (int,char *,char *,char *,char *,char *,char *) );
+_PROTOTYP( char * getsysid, (char *) );
+_PROTOTYP( int getsysix, (char *) );
+#ifdef CK_TIMERS
+_PROTOTYP( VOID rttinit, (void) );
+_PROTOTYP( int getrtt, (int, int) );
+#endif /* CK_TIMERS */
+
+_PROTOTYP( int is_a_tty, (int) );
+_PROTOTYP( int snddir, (char *) );
+_PROTOTYP( int snddel, (char *) );
+_PROTOTYP( int sndtype, (char *) );
+_PROTOTYP( int dooutput, (char *) );
+_PROTOTYP( int isabsolute, (char *) );
+_PROTOTYP( int chkspkt, (char *) );
+_PROTOTYP( VOID whoarewe, (void) );
+
+#ifdef CK_APC
+_PROTOTYP( int kstart, (CHAR) );
+_PROTOTYP( int zstart, (CHAR) );
+#ifdef CK_XYZ
+_PROTOTYP( int chkspkt, (char *) );
+#endif /* CK_XYZ */
+#endif /* CK_APC */
 
 #ifdef KANJI
 _PROTOTYP( int zkanji, (int (*)(void)) ); /* Kanji function prototypes */

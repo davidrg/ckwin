@@ -10,12 +10,26 @@
   retained.  This software may not be included in commercial products without
   written permission of Columbia University.
 */
+/* Use the real ones in this module! */
+#ifdef malloc
+#undef malloc
+#endif /* malloc */
+#ifdef calloc
+#undef calloc
+#endif /* calloc */
+#ifdef realloc
+#undef realloc
+#endif /* realloc */
+#ifdef free
+#undef free
+#endif /* free */
+
 #include "ckcsym.h"
 #include <stdio.h>
 #include "ckcdeb.h"
 
 #ifdef COHERENT
-FILE * fdopen();
+_PROTOTYP ( FILE * fdopen, (int, char *) );
 #endif /* COHERENT */
 
 /*
@@ -34,24 +48,42 @@ int inited = 0;
   and then link it with ckcmdb.c.
 */
 #ifdef MDEBUG
-/* Use the real ones in this module! */
-#ifdef malloc
-#undef malloc
-#endif /* malloc */
-#ifdef calloc
-#undef calloc
-#endif /* calloc */
-#ifdef realloc
-#undef realloc
-#endif /* realloc */
-#ifdef free
-#undef free
-#endif /* free */
 
-char *malloc(), *realloc();
-char *set_range_check();
-char *check_range();
-char *maybe_check_range();
+#ifndef M_SIZE_T
+#ifdef NEXT
+#define M_SIZE_T size_t
+#else
+#ifdef SUNOS41
+#define M_SIZE_T unsigned
+#else
+#define M_SIZE_T int
+#endif /* SUNOS41 */
+#endif /* NEXT */
+#endif /* M_SIZE_T */
+
+#ifdef CK_ANSIC
+_PROTOTYP( void free, (void *) );
+_PROTOTYP( void * malloc, (size_t) );
+_PROTOTYP( void * realloc, (void *, size_t) );
+#else
+_PROTOTYP( VOID free, (char *) );
+_PROTOTYP( char * malloc, (M_SIZE_T) );
+_PROTOTYP( char * realloc, (char *, M_SIZE_T) );
+#endif /* NEXT */
+
+_PROTOTYP( VOID m_insert, (char *) );
+_PROTOTYP( int m_delete, (char *) );
+
+_PROTOTYP( char * dmalloc, (int) );
+_PROTOTYP( char * dcalloc, (int, int) );
+_PROTOTYP( char * drealloc, (char *, int) );
+
+_PROTOTYP( char *set_range_check, (char *, int) );
+_PROTOTYP( char *check_range, (char *) );
+_PROTOTYP( static char *maybe_check_range, (char *) );
+
+_PROTOTYP( static VOID maybe_quit, (char *) );
+_PROTOTYP( static int ask, (char *) );
 
 #define min(x,y) ((x) < (y) ? (x) : (y))
 #define RANGE "ABCDEFGHIJKLMNOP"
@@ -101,6 +133,7 @@ drealloc(bp,size) char *bp; int size; {
     return(cp);
 }
 
+VOID
 dfree(cp) char *cp; {
     if (cp == NULL)
 	maybe_quit("Freeing NULL pointer");
@@ -116,7 +149,9 @@ dfree(cp) char *cp; {
 	    break;
 	}
     }
+#ifndef CK_ANSIC
     return(free(cp));
+#endif /* CK_ANSIC */
 }
 
 char *
@@ -234,7 +269,7 @@ m_insert2(cp) register char *cp; {
     disabled ++;
 }
 
-VOID
+int
 m_delete(cp) register char *cp; {
     register int i;
 
@@ -261,6 +296,10 @@ m_init() {
 
     inited = 1;
     disabled = 0;
+#ifdef NEXT
+    malloc_debug(2+4+8+16);
+#endif /* NEXT */
+
     for(i = 0; i < BUCKETS; i++)
       m_used[i] = 0;
 }

@@ -1,0 +1,94 @@
+; File CKEPAGE.SCR
+;
+; Authors: F. da Cruz and C. Gianone, Columbia University, September 1996.
+;
+; For use with C-Kermit 6.0.192 or later.
+;
+; TAPMSG, defined below, is an alphanumeric pager dialing script that
+; implements the TAP protocol for sending one-line alphanumeric pages.
+; To use the script, save it into a file, then tell C-Kermit to "take"
+; the file.  Now you have the TAPMSG macro defined.  It assumes you have
+; already made the phone connection.  Then invoke it with two arguments:
+; the pager ID and the message.
+;
+; Of course, it is also easy to define a macro for making the connection and
+; then sending the page, for example (just a sample, change as required):
+
+define APAGE {
+    set modem type usr         ; I have a USR modem
+    set port com1              ; on COM1
+    set speed 2400             ; Must use 2400 bps for paging
+    set parity even            ; and even parity
+    set flow xon/xoff          ; and Xon/Xoff flow control
+    set modem flow none        ; end-to-end, not local
+    set dial retries 10        ; Allow 10 redials
+    dial 5554321               ; Call the pager service
+    if success -               ; If the call is answered
+      tapmsg \%1 {\%2}         ; Send the page
+    else end 1 Page failed.    ; otherwise fail
+}
+
+; To invoke the APAGE macro, put it in a file, edit it as necessary for your
+; setup, tell C-Kermit to "take" the file, and then just type:
+;
+;   apage number { this is a message }
+;
+; at the C-Kermit> prompt.  Note: the phone number should not contain any
+; spaces or else you have to enclose it in braces:
+;
+;   apage { 1 212 555-1212 } { this is a message }
+;
+; Ditto for the message.
+
+COMMENT - TAPMSG - Send a one-line alpha page using TAP
+;   \%1 = Pager ID
+;   \%2 = Message
+;
+def TAPMSG {
+    local \%i \%m \%s block    ; Local variables
+    asg \%m \2\%1\13\%2\13\3   ; <STX>ID<CR>msg<CR><ETX>
+    asg \%s \fchecksum(\%m)    ; Get checksum and make block
+    asg block \%m\fchar(\fmod(\%s/256,16)+48)-
+\fchar(\fmod(\%s/16,16)+48)-
+\fchar(\fmod(\%s,16)+48)\13    ; Checksummed TAP block
+
+    for \%i 1 3 1 {            ; Try 3 times to get prompt
+        output \13             ; Send <CR>
+        input 3 ID=            ; Wait for "ID="
+        if success break
+    }
+    if > \%i 3 end 1 No prompt
+    for \%i 1 3 1 {            ; Send <ESC>PG1, get <ACK>
+        msleep 500
+	output \{27}PG1\13
+	minput 3 {\6\13} {\21\13} {\27\4\13}
+        switch \v(minput) {
+          :0, continue                ; Timeout
+          :1, break                   ; <ACK>
+          :2, continue                ; <NAK>
+          :3, end 1 Forced disconnect ; Fatal error
+       }
+       break
+    }
+    if > \%i 3 end 1 Timed out or unknown response
+    input 5 \27[p\13                  ; Wait for go-ahead
+    if fail end 1 No go-ahead         ; Didn't get it
+    for \%i 1 3 1 {                   ; Try three times
+        msleep 500
+        output \m(block)              ; Send block
+	minput 5 {\6\13} {\21\13} {\13\27\4\13} {\30\13}
+        switch \v(minput) {           ; Get response
+          :0, continue                ; Timeout
+          :1, break                   ; <ACK> - success
+          :2, continue                ; <NAK>
+          :3, end 1 Forced disconnect
+          :4, end 1 Illegal message
+       }
+       output \4\13                   ; Sign off with <EOT>
+       input 5 \27\4\13               ; Get <ESC><EOT> back
+       break                          ; But ignore timeout
+    }
+    if > \%i 3 end 1 Timed out or unknown response
+    end 0
+}
+; (End)

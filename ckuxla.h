@@ -11,7 +11,7 @@
   Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 1993, Trustees of Columbia University in the City of New
+  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
   York.  The C-Kermit software may not be, in whole or in part, licensed or
   sold for profit as a software product itself, nor may it be included in or
   distributed with commercial products or otherwise distributed by commercial
@@ -76,5 +76,10 @@
 #define FC_CP862   34  /* Hebrew PC Code Page */
 
 #define MAXFCSETS  34  /* Highest file character set number */
+
+#ifdef OS2
+#define FC_DECSPEC 253                  /* Not a real character-set */
+#define FC_DECTECH 252
+#endif /* OS2 */
 
 #endif /* CKUXLA_H */

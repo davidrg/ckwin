@@ -1,7 +1,7 @@
-.\" @(#) kermit.1 5A(190) 94/10/04 Columbia University
-.TH KERMIT 1C "4 Oct 94" "UNIX C-Kermit"
+.\" @(#) kermit.1 6.0.192 96/09/06 Columbia University
+.TH KERMIT 1C "6 Sep 96" "UNIX C-Kermit"
 .SH NAME
-kermit \- C-Kermit 5A(190) communications software for serial and network
+kermit \- C-Kermit 6.0.192 communications software for serial and network
 connections: modem dialing, file transfer and management, terminal connection,
 character-set translation, and script programming.
 .SH SYNOPSIS
@@ -20,14 +20,15 @@ C-Kermit can be thought of as a user-friendly and powerful alternative to cu,
 tip, uucp, ftp, and telnet; a single package for both network and serial
 communications, offering automation, convenience, and language features not
 found in the other packages, and having a great deal in common with its
-cousins, C-Kermit on other UNIX platforms, MS-DOS Kermit for PCs with DOS and
-Windows, and IBM Mainframe Kermit-370 for VM/CMS, MVS/TSO, and CICS.  C-Kermit
-itself also runs on OS/2, Digital VMS, Data General AOS/VS, Stratus VOS, OS-9,
-Apollo Aegis, the Apple Macintosh, Commodore Amiga, and the Atari ST.
-Together, C-Kermit, MS-DOS Kermit, and IBM Mainframe Kermit offer a consistent
-and nearly universal approach to inter-computer communications.
+cousins, C-Kermit on other UNIX platforms, Kermit 95 for Windows 95 and NT and
+OS/2, MS-DOS Kermit for PCs with DOS and Windows 3.x, and IBM Mainframe
+Kermit-370 for VM/CMS, MVS/TSO, and CICS.  C-Kermit itself also runs on
+Digital VMS, Data General AOS/VS, Stratus VOS, OS-9, QNX, the BeBox, Plan 9,
+the Commodore Amiga, and elsewhere.  Together, C-Kermit, Kermit 95, MS-DOS
+Kermit, and IBM Mainframe Kermit offer a consistent and nearly universal
+approach to inter-computer communications.
 .PP
-C-Kermit 5A(190) is Copyright (C) 1985, 1994 by the Trustees of Columbia
+C-Kermit 6.0.192 is Copyright (C) 1985, 1996 by the Trustees of Columbia
 University in the City of New York.  The C-Kermit software may not be, in
 whole or in part, licensed or sold for profit as a software product itself,
 nor may it be included in or distributed with commercial products or otherwise
@@ -37,12 +38,18 @@ Columbia University.  This copyright notice must not be removed, altered, or
 obscured.
 .PP
 .PP
-C-Kermit is thoroughly documented in the book
+C-Kermit 6.0 is thoroughly documented in the book
 .IR "Using C-Kermit"
-by Frank da Cruz and Christine M. Gianone, Digital Press, 1993; see REFERENCES
-at the end of this manual page.  New features added since the book was
+by Frank da Cruz and Christine M. Gianone, Digital Press, Second Edition,
+1997; see REFERENCES
+at the end of this manual page.  This manual page is not a substitute for the
+book.  If you are a serious user of C-Kermit, particularly if plan to write
+C-Kermit script programs, you should purchase the manual.  Book sales are the
+primary source of funding for the nonprofit Kermit Project.
+.PP
+Any new features added since most recent edition of the book was
 published are documented in the online file
-.IR "ckcker.upd".
+.IR "ckermit.upd".
 Hints, tips, limitations, restrictions are listed in
 .IR "ckcker.bwr"
 (general C-Kermit) and
@@ -53,12 +60,17 @@ before reporting problems or asking for technical support.
 Kermit software is available for hundreds of different computers and operating
 systems from Columbia University.  For best file-transfer results, please use
 C-Kermit in conjunction with real Columbia University Kermit software on other
-computers, such as MS-DOS Kermit for DOS or Windows.  See CONTACTS below.
+computers, such as Kermit 95 for Windows 95 and NT or MS-DOS Kermit for DOS
+3.x or Windows.  See CONTACTS below.
 .SH "MODES OF OPERATION"
 C-Kermit can be used in two "modes": remote and local.  In
 .IR "remote mode",
-you connect to the UNIX system from a desktop PC, Macintosh, or workstation
-and transfer files between your desktop computer and UNIX C-Kermit.  In that
+you connect to the
+UNIX
+system from a desktop computer
+and transfer files between your desktop computer and
+UNIX
+C-Kermit.  In that
 case, connection establishment (dialing, TELNET connection, etc) is handled
 by the Kermit program on your desktop computer.
 .PP
@@ -122,7 +134,7 @@ should work in all cases.
 .ti -0.2i
 \(bu	Start Kermit on your local computer and establish a connection to the
 remote computer.  If C-Kermit is on your local
-computer, use the sequence SET MODEM
+computer, use the sequence SET MODEM TYPE
 .IR "modem-name" \c
 \&\|, SET LINE
 .IR "device-name" \c
@@ -151,7 +163,7 @@ DUPLEX, and FLOW-CONTROL.
 \(bu	Start Kermit on the remote computer, give it any desired SET commands
 for file-, communication-, or protocol-related parameters.  If you will be
 transferring binary files, give the command SET FILE TYPE BINARY to the
-remote Kermit program.
+Kermit program that will be sending them.
 .sp
 .ti -0.2i
 \(bu	To
@@ -178,12 +190,12 @@ will tell the receiving Kermit the name (and other attributes) of each file.
 \(bu	Escape back to the Kermit program on your local (desktop) computer.  If
 your local computer is running C-Kermit, type Ctrl-\\ c (Control-backslash
 followed by the letter 'c') (on NeXT workstations, use Ctrl-] c).  If MS-DOS
-or OS/2 Kermit, use Alt-x (hold down the Alt key, press 'x').  Now you should
-see your local Kermit program's prompt.
+or OS/2 or Windows Kermit, use Alt-x (hold down the Alt key, press 'x').  Now 
+you should see your local Kermit program's prompt.
 .sp
 .ti -0.2i
 \(bu	If you will be transferring binary files, give the command SET FILE
-TYPE BINARY to your local Kermit program.
+TYPE BINARY to the Kermit program that is sending the files.
 .sp
 .ti -0.2i
 \(bu	If you are
@@ -199,7 +211,7 @@ the
 Kermit and give it the opposite command, RECEIVE or SEND.
 .sp
 .ti -0.2i
-\(bu When you finish transferring files, give a CONNECT command.  Now you are
+\(bu When the transfer is complete, give a CONNECT command.  Now you are
 talking to Kermit on the remote computer again.  Type EXIT to get back to the
 command prompt on the remote computer.  When you are finished using the remote
 computer, log out and then (if necessary) escape back to Kermit on your local
@@ -213,15 +225,14 @@ C-Kermit's file transfer protocol defaults are deliberately conservative,
 resulting in file transfer that almost always works, but might be somewhat
 slow.  To increase file transfer performance on computers and connections that
 permit it, use SET RECEIVE PACKET-LENGTH to increase the packet length, SET
-WINDOW to increase the window size, and use SET CONTROL UNPREFIX to reduce the
-overhead of control-character prefixing.  On serial connections, use hardware
-flow control (SET FLOW RTS/CTS) if available, rather than software (XON/XOFF)
-flow control.  On TCP/IP connections, SET FLOW NONE.  For details, read
-Chapter 8 of
-.IR "Using C-Kermit"
-and see the section on control-character unprefixing in the
-.IR "ckcker.upd"
-file.
+WINDOW to increase the packet window size, and use SET PREFIXING to reduce the
+overhead of control-character prefixing.  (Hint: try the
+.IR FAST
+command to enable all these performance options at once.)  On serial
+connections, use hardware flow control (SET FLOW RTS/CTS) if available, rather
+than software (XON/XOFF) flow control.  On TCP/IP connections, SET FLOW NONE.
+For details, including benchmarks, read Chapter 12 of
+.IR "Using C-Kermit".
 .SH OTHER FEATURES
 C-Kermit includes features too numerous to be explained in a man page.  For
 further information about connection establishment, modem dialing, networks,
@@ -229,8 +240,7 @@ terminal connection, key mapping, logging, file transfer options and features,
 troubleshooting, client/server operation, character-set translation during
 terminal connection and file transfer, "raw" up- and downloading of files,
 macro construction, script programming, convenience features, and shortcuts,
-plus a command reference, numerous tables, examples, and illustrations, please
-consult
+plus numerous tables, examples, and illustrations, please consult
 .IR "Using C-Kermit".
 .SH HELP
 .PP
@@ -295,7 +305,8 @@ following the \\ identifies what the special quantity is:
   \\ the backslash character itself
   b (or B) the BREAK signal (OUTPUT command only)
   l (or L) a Long BREAK signal (OUTPUT only)
-  a decimal digit (a 1-3 digit decimal number) such as \\27
+  n (or n) a NUL (0) character (OUTPUT only)
+  a decimal digit (a 1-, 2-, or 3-digit decimal number) such as \\27
   {} used for grouping, e.g. \\{27}123
   anything else: following character taken literally.
 .sp
@@ -322,6 +333,7 @@ Program Management:
   CHECK	See if a particular feature is configured.
   CLOSE	Close a log or other local file.
   COMMENT	Introduce a full-line comment.
+  DATE	Display current date & time.
 * EXIT	Leave the program, return to UNIX.
 * HELP	Display a help message for a given command.
 * INTRO	Print a brief introduction to C-Kermit.
@@ -332,7 +344,7 @@ Program Management:
   RUN	Run a program or system command.
   SET COMMAND	Command-related parameters: bytesize, recall buffer size.
   SET DEBUG	Log or display debugging information.
-  SET EXIT	Items related to C-Kermit's action upon exit.
+  SET EXIT	Items related to C-Kermit's action upon exit or SET LINE/HOST.
   SET PROMPT	The C-Kermit program's interactive command prompt.
   SHOW EXIT	Display SET EXIT parameters.
   SHOW FEATURES	Show features that C-Kermit was built with.
@@ -351,25 +363,28 @@ Program Management:
 Connection Establishment and Release:
 * DIAL	Dial a telephone number.
 * HANGUP	Hang up the phone or network connection.
-  PAD	Command for X.25 PAD.
+  PAD	Command for X.25 PAD (SunOS / Solaris / VOS only).
   PING	Check status of remote TCP/IP host.
   REDIAL	The the most recently DIALed number again.
   SET CARRIER	Treatment of carrier on terminal connections.
 * SET DIAL	Parameters related to modem dialing.
-* SET FLOW	Communication line flow control: RTS/CTS, XON/XOFF, etc.
+* SET FLOW	Communication line flow control: AUTO, RTS/CTS, XON/XOFF, etc.
 * SET HOST	Specify remote network host name or address.
 * SET LINE	Specify serial communication device name, like /dev/cua.
-* SET MODEM	Specify type of modem on SET LINE device, like HAYES.
-* SET NETWORK	Network type, TCP/IP or X.25.
-  SET PAD	X.25 X.3 PAD parameters.
+* SET MODEM TYPE	Specify type of modem on SET LINE device, like HAYES.
+* SET NETWORK	Network type, TCP/IP or X.25 (SunOS / Solaris / VOS only).
+  SET TCP	Specify TCP protocol options (advanced).
+  SET TELNET	Specify TELNET protocol options.
+  SET PAD	X.25 X.3 PAD parameters (SunOS / Solaris / VOS only).
 * SET PARITY	Character parity (none, even, etc) for communications.
 * SET SPEED	Serial communication device speed, e.g. 2400, 9600, 57600.
-  SET X.25	Specify X.25 connection parameters.
+  SET X.25	Specify X.25 connection parameters (SunOS/Solaris/VOS only).
   SHOW COMM	Display all communications settings.
   SHOW DIAL	Display SET DIAL values.
   SHOW MODEM	Display modem type, signals, etc.
   SHOW NETWORK	Display network-related items.
 * TELNET	= SET NETWORK TCP/IP, SET HOST ..., CONNECT.
+  TELOPT	Send a TELNET option negotiation (advanced).
 .sp
 Terminal Connection:
 * C	Special abbreviation for CONNECT.
@@ -388,19 +403,24 @@ Terminal Connection:
 	  ? to see other options.
 .sp
 File Transfer:
+  ADD	Add a file specification to the SEND-LIST
   LOG SESSION   Download a file with no error checking.
+  MOVE	Send a file and then delete it
+  MMOVE	Multiple MOVE - accepts a list of files, separated by spaces.
   MSEND	Multiple SEND - accepts a list of files, separated by spaces.
 * RECEIVE	Passively wait for files to arrive from other Kermit.
 * R	Special abbreviation for RECEIVE.
 * SEND	Send files.
 * S	Special abbreviation for SEND.
-  RESEND	Continue a incomplete transmission.
+  REGET	Continue a incomplete download from a server.
+  RESEND	Continue a incomplete upload.
   PSEND	Send part of a file.
   SET ATTRIB	Control transmission of file attributes.
 * SET BLOCK	Choose error-checking level, 1, 2, or 3.
   SET BUFFERS	Size of send and receive packet buffers.
-  SET CONTROL	Which control characters to "unprefix" during file transfer.
+  SET PREFIX	Which control characters to "unprefix" during file transfer.
   SET DELAY	How long to wait before sending first packet.
+  SET DESTINATION	DISK, PRINTER, or SCREEN for incoming files.
 * SET FILE	Transfer mode (type), character-set, collision action, etc.
 * SET RECEIVE	Parameters for inbound packets: packet-length, etc.
   SET REPEAT	Repeat-count compression parameters.
@@ -409,7 +429,7 @@ File Transfer:
   SET HANDSHAKE	Communication line half-duplex packet turnaround character.
   SET LANGUAGE	Enable language-specific character-set translations.
   SET SESSION-LOG	File type for session log, text or binary.
-  SET TRANSFER	File transfer parameters: character-set, etc.
+  SET TRANSFER	File transfer parameters: character-set, display, etc.
   SET TRANSMIT	Control aspects of TRANSMIT command execution.
   SET UNKNOWN	Specify handling of unknown character sets.
 * SET WINDOW	File transfer packet window size, 1-31.
@@ -424,13 +444,14 @@ File Transfer:
   XMIT	Synonym for TRANSMIT.
 .sp
 File Management:
-* CD	Change Working Directory (also, CWD).
+* CD	Change Directory.
 * DELETE	Delete a file or files.
 * DIRECTORY	Display a directory listing.
   MAIL	Send a file to other Kermit, to be delivered as e-mail.
   PRINT	Print a local file on a local printer.
 * PWD	Display current working directory.
   RENAME	Change the name of a local file.
+  SET PRINTER	Choose printer device.
   SPACE	Display current disk space usage.
   SHOW CHARACTER-SETS	Display character-set translation info.
   TRANSLATE	Translate a local file's character set.
@@ -445,7 +466,10 @@ Client/Server operation:
   FINISH	Instruct a remote Kermit server to exit, but not log out.
   G	Special abbreviation for GET.
   GET	Get files from a remote Kermit server.
+  RETRIEVE	Like GET but server deletes files after.
+  REMOTE xxx	Command for server, can be redirected with > or |.
   REMOTE CD	Tell remote Kermit server to change its directory.
+  REMOTE ASSIGN	Assign a variable
   REMOTE DELETE	Tell server to delete a file.
   REMOTE DIRECTORY	Ask server for a directory listing.
   REMOTE HELP	Ask server to send a help message.
@@ -454,6 +478,7 @@ Client/Server operation:
   REMOTE LOGIN	Authenticate yourself to a remote Kermit server.
   REMOTE LOGOUT	Log out from a Kermit server previously LOGIN'd to.
   REMOTE PRINT	Print a local file on the server's printer.
+  REMOTE QUERY	Get value of a variable.
   REMOTE SET	Send a SET command to a remote server.
   REMOTE SPACE	Ask server how much disk space it has left.
   REMOTE TYPE	Ask server to display a file on your screen.
@@ -475,13 +500,16 @@ Script programming:
   ECHO	Display text on the screen.
   ELSE	Used with IF.
   END	A command file or macro.
+  EVALUATE	an arithmetic expression.
   FOR	Execute commands repeatedly in a counted loop.
+  FORWARD	GOTO in the forward direction only.
   GETC	Issue a prompt, get one character from keyboard.
   GETOK	Ask question, get Yes or No answer, set SUCCESS or FAILURE.
   GOTO	Go to a labeled command in a command file or macro.
   IF	Conditionally execute the following command.
   INCREMENT	Add one (or other number) to a variable.
   INPUT	Match characters from another computer against a given text.
+  LOCAL	Declares local variables in a macro
   MINPUT	Like INPUT, but allows several match strings.
   MSLEEP	Sleep for given number of milliseconds.
   OPEN	Open a local file for reading or writing.
@@ -492,7 +520,9 @@ Script programming:
   REINPUT	Reexamine text previously received from another computer.
   RETURN	Return from a user-defined function.
   SCRIPT	Execute a UUCP-style login script.
+  SET ALARM	Set a timer to be used with IF ALARM; SHOW ALARM shows it.
   SET CASE	Treatment of alphabetic case in string comparisons.
+  SET COMMAND	QUOTING turns on/off interpretation of backslash notation.
   SET COUNT	For counted loops.
   SET INPUT	Control behavior of INPUT command.
   SET MACRO	Control aspects of macro execution.
@@ -507,11 +537,13 @@ Script programming:
   SHOW VARIABLES	Display values all \\v() variables.
   SLEEP	Sleep for given number of seconds.
   STOP	Stop executing macro or command file, return to prompt.
+  UNDEFINE	Undefine a variable
   WAIT	Wait for the specified modem signals.
   WHILE	Execute commands repeatedly while a condition is true.
   WRITE	Write material to a local file.
   WRITE-LINE	Write a line (record) to a local file.
   WRITELN	Synonym for WRITE-LINE.
+  XECHO	Like ECHO but no CRLF at end.
   XIF	Extended IF command.
 .ll
 .in
@@ -524,44 +556,81 @@ VARIABLES for a current list.
 .sp
   \\v(argc)      number of arguments in current macro
   \\v(args)      number of program command-line arguments
+  \\v(charset)	 current file character-set
   \\v(cmdfile)   name of current command file, if any
   \\v(cmdlevel)  current command level
   \\v(cmdsource) where command are currently coming from, macro, file, etc.
+  \\v(cols)      number of screen columns
   \\v(connection)connection type: serial, tcp/ip, etc.
   \\v(count)     current COUNT value
   \\v(cps)       speed of most recent file transfer in chars per second
   \\v(cpu)       CPU type C-Kermit was built for
+  \\v(crc16)     16-bit CRC of most recent file transfer
+  \\v(d$ac)      SET DIAL AREA-CODE value
+  \\v(d$cc)      SET DIAL COUNTRY-CODE value
+  \\v(d$ip)      SET DIAL INTL-PREFIX value
+  \\v(d$lc)      SET DIAL LD-PREFIX value
   \\v(date)      date as 8 Feb 1993
   \\v(day)       day of week
   \\v(directory) current/default directory
   \\v(dialstatus)return code from DIAL command (0 = OK, 22 = BUSY, etc)
+  \\v(download)  current download directory if any
+  \\v(errno)     current "errno" (system error number) value
+  \\v(errstring) error message string associated with errno
+  \\v(evaluate)  result of most recent EVALUATE command
   \\v(exitstatus)current EXIT status (0 = good, nonzero = something failed)
   \\v(filespec)  filespec given in most recent SEND/RECEIVE/GET command
   \\v(fsize)     size of file most recently transferred
+  \\v(ftype)     SET FILE TYPE value (text, binary)
   \\v(home)      home directory
-  \\v(host)      computer host name
+  \\v(host)      computer host name (comuter where C-Kermit is running)
   \\v(input)     current INPUT buffer contents
   \\v(inchar)    character most recently INPUT
   \\v(incount)   how many characters arrived during last INPUT
+  \\v(inidir)    directory where initialization file was found
+  \\v(instatus)  status of most recent INPUT command
   \\v(line)      current communications device, set by LINE or HOST
   \\v(local)     0 if in remote mode, 1 if in local mode
   \\v(macro)     name of currently executing macro, if any
+  \\v(minput)    Result of most recent MINPUT command 
+  \\v(modem)     Current modem type
+  \\v(m_aa_off)  Modem command to turn autoanswer off
+  \\v(m_aa_on)   Modem command to turn autoanswer on
+  \\v(m_dc_off)  Modem command to turn data compression off
+  \\v(m_dc_on)   Modem command to turn data compression on
+  \\v(m_dial)    Telephone number most recently dialed
+  \\v(m_ec_off)  Modem command to turn error correction off
+  \\v(m_ec_on)   Modem command to turn error correction on
+  \\v(m_fc_hw)   Modem command to turn hardware flow control on
+  \\v(m_fc_no)   Modem command to turn flow control off
+  \\v(m_fc_sw)   Modem command to turn software flow control on
+  \\v(m_hup)     Modem command to hang up connection
+  \\v(m_init)    Modem initialization string
+  \\v(m_pulse)   Modem command to select pulse dialing
+  \\v(m_tone)    Modem command to select tone dialing
   \\v(ndate)     Current date as 19930208 (yyyymmdd)
   \\v(nday)      Numeric day of week (0 = Sunday)
   \\v(newline)   System-independent newline character or sequence
   \\v(ntime)     Current local time in seconds since midnight (noon = 43200)
+  \\v(packetlen) Current SET RECEIVE PACKET-LENGTH value
   \\v(parity)    Current parity setting
   \\v(platform)  Specific machine and/or operating system
   \\v(program)   Name of this program ("C-Kermit")
+  \\v(query)     Result of most recent REMOTE QUERY command
+  \\v(protocol)  Currently selected file transfer protocol
   \\v(return)    Most recent RETURN value
+  \\v(rows)      Number of rows on the terminal screen
   \\v(speed)     Current speed, if known, or "unknown"
   \\v(status)    0 or 1 (SUCCESS or FAILURE of previous command)
+  \\v(sysid)     Kermit attribute code for system ID
   \\v(system)    UNIX
-  \\v(terminal)  terminal type
-  \\v(tfsize)    total size of file group most recently transferred
-  \\v(time)      time as 13:45:23 (hh:mm:ss)
-  \\v(ttyfd)     file descriptor of current communication device
-  \\v(version)   numeric version of Kermit, e.g. 501190.
+  \\v(terminal)  Terminal type
+  \\v(tfsize)    Total size of file group most recently transferred
+  \\v(time)      Time as 13:45:23 (hh:mm:ss)
+  \\v(tmpdir)    Temporary directory
+  \\v(ttyfd)     File descriptor of current communication device
+  \\v(version)   Numeric version of Kermit, e.g. 501190.
+  \\v(window)    Current window size (SET WINDOW value)
 .fi
 .SH "BUILT-IN FUNCTIONS"
 Builtin functions are invoked as \\Fname(args), can be used in any command,
@@ -569,30 +638,47 @@ and are usually used in script programs.  Type SHOW FUNCTIONS for a current
 list.
 .nf
 .sp
+   \\Fbasename(file)    basename of file
+   \\Fbreak(s,c)        left substring of s up to 1st occurence of char c
+   \\Fcapitalize(s)     uppercase first letter of s and lowercase the rest
    \\Fcharacter(arg)    convert numeric arg to character
+   \\Fchecksum(s)       32-bit arithmetic checksum of string s
    \\Fcode(char)        numeric code for character
    \\Fcontents(v)       return current definition of variable
+   \\Fcrc16(s)          16-bit CRC of string s
    \\Fdate(filename)    return file's modification date/time
    \\Fdefinition(m)     return current definition of macro
    \\Feval(expr)        evaluate arithmetic expression
-   \\Fexecute(m a)      execute macro "m" with parameters "a"
+   \\Fexecute(m,a,b,..) execute macro "m" with arguments "a", "b", etc
    \\Ffiles(f)          number of files matching file spec
-   \\Findex(a1,a2,a3)   position of string a2 in a1, starting at pos a3
+   \\Fhexify(s)         translate s into a hexadecimal string
+   \\Findex(a1,a2,a3)   position of string a1 in a2, starting at pos a3
+   \\Fipaddress(s)      returns first IP address from string s
    \\Flength(arg)       length of the string "arg"
    \\Fliteral(arg)      copy argument literally, no evaluation
    \\Flower(arg)        convert to lower case
    \\Flpad(text,n,c)    left pad text to length n with char c
+   \\Fltrim(s)          Trim whitespace from left of s
    \\Fmax(a1,a2)        max of two numbers
    \\Fmin(a1,a2)        min of two numbers
-   \\Fnextfile()        next file name from list in last \\Ffiles
+   \\Fmodulus(n1,n2)    modulus n2 of integer n1
+   \\Fnextfile()        next file name from list in last \\Ffiles()
+   \\Fpathname(file)    full pathname of file
    \\Frepeat(a1,a2)     repeat a1 a2 times
    \\Freplace(a1,a2,a3) replace a2 by a3 in a1
    \\Freverse(arg)      reverse characters in arg
    \\Fright(a1,a2)      rightmost a2 characters of string a1
+   \\Frindex(a1,a2,a3)  like \\Findex, but searching from right
    \\Frpad(text,n,c)    right pad text to length n with char c
    \\Fsize(filename)    return file's length in bytes
+   \\Fspan(a1,a2)       left substring of a1 containing only chars from a2
    \\Fsubstr(a1,a2,a3)  substring of a1, starts at a2, length a3
-   \\Fupper(arg)        convert to upper case
+   \\Ftod2secs(s)       converts hh:mm:ss to seconds since midnight
+   \\Ftrim(s)           removes trailing whitespace from s
+   \\Funhexify(s)       converts a hexacimal string s back to original
+   \\Fupper(s)          converts s to upper case
+   \\Fverify(a1,a2,n)   returns index of 1st char in a2 that is not in a1
+                        starting at position n of a2.
 .sp
 .fi
 \\Feval() allows the following operators in the expression.  The expression
@@ -654,19 +740,23 @@ Settings:
   -l line	communication line device (to make a serial connection)
   -l n	open file descriptor of communication device
   -j host	TCP/IP network host name (to make a network connection)
-  -l n	open file descriptor of TCP/IP connection
+  -J host	Connect like TELNET, exit when connection closes
+  -l n	open file descriptor of TCP/IP connection (n = number)
   -X	X.25 network address
   -Z	open file descriptor of X.25 connection
   -o n	X.25 closed user group call info
   -u	X.25 reverse-charge call
   -q	quiet during file transfer
+  -8	8-bit clean
   -i	transfer files in binary mode
+  -T	transfer files in text mode
   -b bps	serial line speed, e.g. 1200
   -m name	modem type, e.g. hayes
   -p x	parity, x = e,o,m,s, or n
   -t	half duplex, xon handshake
   -e n	receive packet-length
   -v n	window size
+  -Q	Quick file-transfer settings
   -w	write over files of same name, don't backup old file
   -D n	delay n seconds before sending a file
 .sp
@@ -678,6 +768,7 @@ Other:
   -S	Stay, don't exit, after action command
   -C "cmds"	Interactive-mode commands, comma-separated
   -z	Force foreground operation
+  -B	Force background (batch) operation
   -h	print command-line option help screen
   =	Ignore all text that follows
 .sp
@@ -719,7 +810,7 @@ $HOME/.ksd	Your personal services directory.
 .PP
 The following should be in a publicly accessible plain-text documentation area,
 such as usr/local/lib/kermit, /usr/local/doc, or /usr/share/lib/kermit, or
-available via an information server such as gopher:
+available via an information server such as gopher, or by ftp from Columbia:
 .nf
 .ta 16
 .sp
@@ -728,12 +819,12 @@ ckermit.ini     Standard initialization file.
 ckermod.ini	Sample C-Kermit customization file.
 ckermit.kdd	Sample dialing directory.
 ckermit.ksd	Sample services directory.
-ckcker.upd	Supplement to "Using C-Kermit".
+ckermit.upd	Supplement to "Using C-Kermit".
 ckcker.bwr	C-Kermit "beware" file - hints & tips.
 ckuker.bwr	UNIX-specific beware file.
 ckedemo.ini     Demonstration macros from "Using C-Kermit".
 ckevt.ini       Ditto.
-cketest.ini     Ditto.
+ckepager.ksc    Alpha pager script.
 .fi
 .PP
 If C-Kermit has not been installed on your system with the system-wide
@@ -756,8 +847,10 @@ like the sample one in
 ckermit.kdd.
 Your personalized dialing directory
 should be stored in your home directory as
-.IR ".kdd" .
-See Chapter 3 of
+.IR ".kdd"
+and your personal network directory as
+.IR ".knd" .
+See Chapters 5 and 6 of
 .IR "Using C-Kermit"
 for details.
 .sp
@@ -767,14 +860,14 @@ like the sample one in
 ckermit.ksd.
 Your personalized services directory should be stored in your home directory as
 .IR ".ksd" .
-See Chapter 13 of
+See Chapter 7 of
 .I "Using C-Kermit"
 for instructions.
 .sp
 The demonstration files illustrate C-Kermit's script programming constructs;
-they are discussed in chapters 11-13 of the book.  You can run them by typing
+they are discussed in chapters 17-19 of the book.  You can run them by typing
 the appropriate TAKE command at the C-Kermit> prompt, for example:
-"take /usr/share/lib/kermit/cketest.ini".
+"take /usr/share/lib/kermit/ckedemo.ini".
 .PD
 .SH AUTHORS
 Frank da Cruz, Columbia University, with contributions from hundreds of
@@ -784,9 +877,10 @@ other volunteer programmers all over the world.  See Acknowledgements in
 .TP
 Frank da Cruz and Christine M. Gianone,
 .IR "Using C-Kermit",
+Second Edition, 1997, 622 pages,
 Digital Press / Butterworth-Heinemann, 225 Wildwood Street,
-Woburn, MA 01801, USA (1993).
-ISBN 1-55558-108-0.  (In the USA, call +1 800 366-2665 to order Digital Press
+Woburn, MA 01801, USA.
+ISBN 1-55558-164-1.  (In the USA, call +1 800 366-2665 to order Digital Press
 books.)  Also available in a German edition from Verlag Heinze Heise,
 Hannover.
 .sp
@@ -813,21 +907,24 @@ returns a SUCCESS or FAILURE status that can be tested by IF FAILURE or
 IF SUCCESS.  In addition, the program itself returns an exit status code of
 0 upon successful operation or nonzero if any of various operations failed.
 .SH BUGS
-See recent issues of the Info-Kermit digest (on BITNET/EARN and the Internet),
-or the comp.protocols.kermit.* newsgroups on Usenet for discussion, or the 
-files  ckcker.bwr and ckuker.bwr, for a list of bugs, hints, tips. etc.  Report
-bugs via e-mail to kermit@columbia.edu.
-Subscribe to Info-Kermit by sending e-mail to LISTSERV@CUVMA.BITNET or
-LISTSERV@CUVMA.CC.COLUMBIA.EDU containing the text "subscribe i$kermit"
-followed by your name.
+See the comp.protocols.kermit.* newsgroups on Usenet for discussion, or the 
+files ckcker.bwr and ckuker.bwr, for a list of bugs, hints, tips. etc.  Report
+bugs via e-mail to kermit-support@columbia.edu.
 .SH CONTACTS
-For more information about Kermit software and documentation, write to:
+For more information about Kermit software and documentation, visit the
+Kermit Web site:
 .nf
 .sp
-  Kermit Development and Distribution
+  http://www.columbia.edu/kermit/
+.sp
+.fi
+Or write to:
+.nf
+.sp
+  The Kermit Project
   Columbia University
   612 West 115th Street
-  New York, NY  10025-7221
+  New York NY  10025-7799
   USA
 .sp
 .fi

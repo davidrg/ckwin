@@ -1,10 +1,10 @@
 /*  C K U U S R . H  --  Symbol definitions for C-Kermit ckuus*.c modules  */
  
 /*
-  Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
+  Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 1994, Trustees of Columbia University in the City of New
+  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
   York.  The C-Kermit software may not be, in whole or in part, licensed or
   sold for profit as a software product itself, nor may it be included in or
   distributed with commercial products or otherwise distributed by commercial
@@ -20,42 +20,61 @@
 /* Sizes of things */
 
 #define FSPECL 300			/* Max length for MSEND/GET string */
-#define VNAML 20			/* Max length for variable name */
+#define VNAML 64			/* Max length for variable name */
+#define ARRAYREFLEN 128			/* Max length for array reference */
 #define FORDEPTH 10			/* Maximum depth of nested FOR loops */
 #define GVARS 126			/* Highest global var allowed */
-#define MAXTAKE 30			/* Maximum nesting of TAKE files */
-#define MACLEVEL 50			/* Maximum nesting for macros */
+#define MAXTAKE 32			/* Maximum nesting of TAKE files */
+#define MACLEVEL 64			/* Maximum nesting for macros */
 #define NARGS 10			/* Max number of macro arguments */
 #define LINBUFSIZ (CMDBL + 10)		/* Size of line[] buffer */
-#define TMPBUFSIZ 150			/* Size of temporary buffer */
+#define TMPBUFSIZ 257			/* Size of temporary buffer */
 #define LBLSIZ 50			/* Maximum length for a GOTO label */
-#define INPBUFSIZ 257			/* Size of INPUT buffer */
+#define INPBUFSIZ 256			/* Size of INPUT buffer */
 #define CMDSTKL ( MACLEVEL + MAXTAKE + 2) /* Command stack depth */
 #define MAC_MAX 256			/* Maximum number of macros */
 #define MSENDMAX 100			/* Number of filespecs for MSEND */
-#define PROMPTL 80			/* Max length for prompt */
+#define PROMPTL 256			/* Max length for prompt */
 
 #ifndef NOMINPUT			/* MINPUT command */
 #ifndef NOSPL
 #define CK_MINPUT
-#define MINPMAX   16			/* Max number of MINPUT strings */
+#ifndef MINPMAX
+#ifdef BIGBUFOK
+#define MINPMAX 96			/* Max number of MINPUT strings */
+#else
+#define MINPMAX 16
+#endif /* BIGBUFOK */
+#endif /* MINPMAX */
 #define MINPBUFL 256			/* Size of MINPUT temp buffer */
 #endif /* NOSPL */
 #endif /* NOMINPUT */
 
-#ifndef NORETRY				/* Command retry */
-#define CM_RETRY
-#endif /* NORETRY */
+#define ARRAYBASE 95			/* Lowest array-name character */
+
+/* Bit values (1, 2, 4, 8, ...) for the ccflgs field */
+
+#define CF_APC  1			/* Executing an APC command */
+#define CF_KMAC 2			/* Executing a \Kmacro */
+#define CF_CMDL 4			/* Macro from -C "blah" command line */
+#define CF_REXX 8			/* Macro from REXX interpreter */
 
 struct cmdptr {				/* Command stack structure */
     int src;				/* Command Source */
     int lvl;				/* Current TAKE or DO level */
+    int ccflgs;				/* Flags */
 };
 
 struct mtab {				/* Macro table, like keyword table */
     char *kwd;				/* But with pointers for vals */
     char *mval;				/* instead of ints. */
     short flgs;
+};
+
+struct localvar {			/* Local variable structure. */
+    char * lv_name;
+    char * lv_value;
+    struct localvar * lv_next;
 };
 
 /*
@@ -126,7 +145,11 @@ struct mtab {				/* Macro table, like keyword table */
 #define KERMRCL 256
 #else
 #ifdef OS2
-#define KERMRC "ckermit.ini"
+#ifdef NT
+#define KERMRC "k95.ini"
+#else
+#define KERMRC "k2.ini"
+#endif /* NT */
 #define KERMRCL 256
 #else
 #ifdef UNIX
@@ -161,7 +184,15 @@ struct mtab {				/* Macro table, like keyword table */
 #define CK_PCT_BAR
 #endif /* NO_PCT_BAR */
 #endif /* CK_PCT_BAR */
-#endif /* OS2 */
+#endif /* CK_CURSES */
+
+#ifdef KUI			/* KUI requires the Thermometer code */
+#ifndef NO_PCT_BAR
+#ifndef CK_PCT_BAR
+#define CK_PCT_BAR
+#endif /* NO_PCT_BAR */
+#endif /* CK_PCT_BAR */
+#endif /* KUI */
 
 /* Includes */
 
@@ -200,6 +231,11 @@ struct mtab {				/* Macro table, like keyword table */
 #define XFRCAN
 #endif /* XFRCAN */
 #endif /* STRATUS */
+#ifdef OSK				/* OS-9 */
+#ifndef XFRCAN
+#define XFRCAN
+#endif /* XFRCAN */
+#endif /* OSK */
 
 /* Top Level Commands */
 /* Values associated with top-level commands must be 0 or greater. */
@@ -309,6 +345,36 @@ struct mtab {				/* Macro table, like keyword table */
 #define XXGETC 103	/* GETC */
 #define XXEVAL 104	/* EVALUATE */
 #define XXFWD  105	/* FORWARD */
+#define XXUPD  106      /* UPDATES */
+#define XXBEEP 107      /* BEEP */
+#define XXMOVE 108      /* MOVE */
+#define XXMMOVE 109     /* MMOVE */
+#define XXREGET 110     /* REGET */
+#define XXLOOK  111	/* LOOKUP */
+#define XXVIEW  112     /* VIEW (terminal buffer) */
+#define XXANSW  113	/* ANSWER (the phone) */
+#define XXPDIA  114	/* PDIAL (partial dial) */
+#define XXASC   115	/* ASCII / TEXT */
+#define XXBIN   116	/* BINARY */
+#define XXFTP   117	/* FTP */
+#define XXMKDIR 118	/* MKDIR */
+#define XXRMDIR 119	/* RMDIR */
+#define XXTELOP 120	/* TELOPT */
+#define XXRLOG  121	/* RLOGIN */
+#define XXUNDEF 122	/* UNDEFINE */
+#define XXNPSH  123	/* NOPUSH */
+#define XXADD   124	/* ADD */
+#define XXLOCAL 125	/* LOCAL */
+#define XXKERMI 126	/* KERMIT */
+#define XXDATE  127	/* DATE */
+#define XXSWIT  128     /* SWITCH */
+#define XXXFWD  129	/* _FORWARD */
+#define XXSAVE  130     /* SAVE */
+#define XXXECH  131     /* XECHO */
+#define XXRDBL  132     /* READBLOCK */
+#define XXWRBL  133     /* WRITEBLOCK */
+#define XXRETR  134     /* RETRIEVE */
+#define XXEIGHT 135     /* EIGHTBIT */
 
 /* IF conditions */
 
@@ -332,6 +398,12 @@ struct mtab {				/* Macro table, like keyword table */
 #define  XXIFDI 17      /* IF DIRECTORY */
 #define  XXIFNE 18      /* IF NEWER */
 #define  XXIFRO 19      /* IF REMOTE-ONLY */
+#define  XXIFAL 20	/* IF ALARM */
+#define  XXIFSD 21      /* IF STARTED-FROM-DIALER */
+#define  XXIFTR 22      /* IF TRUE */
+#define  XXIFNT 23      /* IF FALSE */
+#define  XXIFTM 24      /* IF TERMINAL-MACRO */
+#define  XXIFEM 25      /* IF EMULATION */
 
 /* SET parameters */
  
@@ -365,10 +437,11 @@ struct mtab {				/* Macro table, like keyword table */
 #define XYSPEE 27	/* Line speed (baud rate) */
 #define XYTACH 28	/* Character to be doubled */
 #define XYTIMO 29	/* Timeout interval */
-#define XYMODM 30	/* Modem type */
-#define XYSEND 31	/* SEND parameters, used with some of the above */
-#define XYRECV 32   	/* RECEIVE parameters, ditto */
-#define XYTERM 33	/* Terminal parameters */
+#define XYMODM 30	/* Modem - also see XYDIAL */
+
+#define XYSEND 31	/* SET SEND parameters */
+#define XYRECV 32   	/* SET RECEIVE parameters */
+#define XYTERM 33	/* SET TERMINAL parameters */
 #define   XYTBYT 0      /*  Terminal Bytesize (7 or 8) */
 #define   XYTTYP 1      /*  Terminal emulation Type */
 #define     TT_NONE  0	/*    NONE, no emulation */
@@ -377,19 +450,68 @@ struct mtab {				/* Macro table, like keyword table */
   numerical order, so that higher ones can be treated as supersets of
   lower ones with respect to capabilities.
 */
-#define     TT_VT52  1	/*    DEC VT-52  */
-#define     TT_ANSI  2	/*    IBM ANSI.SYS (BBS) */
-#define     TT_VT100 3	/*    DEC VT-100 */
-#define     TT_VT102 4	/*    DEC VT-102 */
-#define     TT_VT220 5	/*    DEC VT-220 */
-#define     TT_VT320 6	/*    DEC VT-320 */
+#define     TT_DG200    1 	/*    Data General 200/210 */
+#define     TT_HP2621   2 	/*    Hewlett-Packard 2621A */
+#define     TT_HZL1500  3 	/*    Hazeltine 1500 */
+#define     TT_VC4404   4 	/*    Volker Craig VC4404/404 */
+#define     TT_WY30     5	/*    WYSE-30/30+ */
+#define     TT_WY50     6 	/*    WYSE-50/50+ */
+#define     TT_WY60     7       /*    WYSE-60	 */
+#define     TT_VT52     8	/*    DEC VT-52  */
+#define     TT_H19      9	/*    Heath-19 */
+#define     TT_ANSI    10	/*    IBM ANSI.SYS (BBS) */
+#define     TT_SCOANSI 11	/*    SCOANSI (Unix mode) */
+#define     TT_AT386   12 	/*    Unixware AT386 (Unix mode) */
+#define     TT_VT100   13	/*    DEC VT-100 */
+#define     TT_VT102   14	/*    DEC VT-102 */
+#define     TT_VT220   15	/*    DEC VT-220 */
+#define     TT_VT320   16	/*    DEC VT-320 */
+#define     TT_WY370   17	/*    WYSE 370 ANSI Terminal */
+#define     TT_TVI910  18	/*    TVI 910+ */
+#define     TT_TVI925  19       /*    TVI 925  */
+#define     TT_TVI950  20       /*    TVI950   */
+#define     TT_MAX   TT_TVI950
+#define     TT_VT420   96	/*    DEC VT-420 */
+#define     TT_VT520   97	/*    DEC VT-520/525 */	
+#define     TT_IBM     98       /*    IBM 31xx */
 #define     TT_TEK40 99	/*    Tektronix 401x */
+
+#define ISANSI(x)  (x >= TT_ANSI && x <= TT_AT386)
+#define ISSCO(x)   (x == TT_SCOANSI)
+#define ISAT386(x) (x == TT_AT386)
+#define ISAVATAR(x) (x == TT_ANSI)
+#define ISUNIXCON(x) (x == TT_SCOANSI || x == TT_AT386)
+#define ISDG200(x) (x == TT_DG200)
+#define ISHZL(x)   (x == TT_HZL1500)
+#define ISH19(x)   (x == TT_H19) 
+#define ISIBM(x)   (x == TT_IBM)
+#define ISTVI(x)   (x >= TT_TVI910 && x <= TT_TVI950)
+#define ISTVI910(x) (x == TT_TVI910)
+#define ISTVI925(x) (x == TT_TVI925)
+#define ISTVI950(x) (x == TT_TVI950)
+#define ISVT52(x)  (x == TT_VT52 || x == TT_H19)
+#define ISVT100(x) (x >= TT_VT100 && x <= TT_WY370)
+#define ISVT102(x) (x >= TT_VT102 && x <= TT_WY370)
+#define ISVT220(x) (x >= TT_VT220 && x <= TT_WY370)
+#define ISVT320(x) (x >= TT_VT320 && x <= TT_WY370)
+#define ISVT420(x) (x >= TT_VT420 && x <= TT_VT520)
+#define ISVT520(x) (x == TT_VT520)
+#define ISWY30(x)  (x == TT_WY30)
+#define ISWY50(x)  (x >= TT_WY30 && x <= TT_WY60)
+#define ISWY60(x)  (x == TT_WY60)
+#define ISWY370(x) (x == TT_WY370)
+#define ISVC(x)    (x == TT_VC4404)
+#define ISHP(x)    (x == TT_HP2621)
+
 #define   XYTCS  2      /*  Terminal Character Set */
 #define   XYTSO  3	/*  Terminal Shift-In/Shift-Out */
 #define   XYTNL  4      /*  Terminal newline mode */
 #define   XYTCOL 5      /*  Terminal colors */
 #define   XYTEC  6	/*  Terminal echo = duplex = local-echo */
 #define   XYTCUR 7	/*  Terminal cursor */
+#define     TTC_ULINE 0 
+#define     TTC_HALF  1
+#define     TTC_BLOCK 2
 #define   XYTARR 8	/*  Terminal arrow-key mode */
 #define   XYTKPD 9      /*  Terminal keypad mode */
 #define    TTK_NORM 0   /*    Normal mode for arrow / keyad keys */
@@ -401,18 +523,81 @@ struct mtab {				/* Macro table, like keyword table */
 #define   XYTAPC 14	/*  Terminal APC */
 #define   XYTBEL 15     /*  Terminal Bell */
 #define   XYTDEB 16	/*  Terminal Debug */
-#define   XYTROL 17     /*  Terminal Roll */
+#define   XYTROL 17     /*  Terminal Rollback */
+#define     TTR_OVER   0  /*  Rollback Overwrite */
+#define     TTR_INSERT 1  /*  Rollback Insert */
 #define   XYTCTS 18     /*  Terminal Transmit-Timeout */
 #define   XYTCPG 19     /*  Terminal Code Page */
+#ifdef COMMENT
 #define   XYTHCU 20     /*  Terminal Hide-Cursor */
-#define   XYTPAC 21	/*  Terminal Output-Pacing */
-#define   XYTMOU 22	/*  Terminal Mouse */
+#endif /* COMMENT */
+#define   XYTPAC 21	    /*  Terminal Output-Pacing */
+#define   XYTMOU 22	    /*  Terminal Mouse */
+#define   XYTHIG 23     /*  Terminal Width */
+#define   XYTWID 24     /*  Terminal Height */
+#define   XYTUPD 25     /*  Terminal Screen-update */
+#define    TTU_FAST 0   /*     FAST but jerky */
+#define    TTU_SMOOTH 1 /*     SMOOTH but slow */
+#define   XYTFON 26     /*  Terminal Full screen Font */
+#define    TTF_ROM    0 /*     ROM font */
+#define    TTF_CY1    1 /*     CYRILL1 font */
+#define    TTF_CY2    2 /*     CYRILL2 font */
+#define    TTF_CY3    3 /*     CYRILL3 font */
+#define    TTF_111  111 /*     CP111 font */
+#define    TTF_112  112 /*     CP112 font */
+#define    TTF_113  113 /*     CP113 font */
+#define    TTF_437  437 /*     CP437 font */
+#define    TTF_850  850 /*     CP850 font */
+#define    TTF_851  851 /*     CP851 font */
+#define    TTF_852  852 /*     CP852 font */
+#define    TTF_853  853 /*     CP853 font */
+#define    TTF_860  860 /*     CP860 font */
+#define    TTF_861  861 /*     CP861 font */
+#define    TTF_862  862 /*     CP862 font */
+#define    TTF_863  863 /*     CP863 font */
+#define    TTF_864  864 /*     CP864 font */
+#define    TTF_865  865 /*     CP865 font */
+#define    TTF_866  866 /*     CP866 font */
+#define    TTF_880  880 /*     CP880 font */
+#define    TTF_881  881 /*     CP881 font */
+#define    TTF_882  882 /*     CP882 font */
+#define    TTF_883  883 /*     CP883 font */
+#define    TTF_884  884 /*     CP884 font */
+#define    TTF_885  885 /*     CP885 font */
+#define   XYTVCH 27     /* SET TERMINAL VIDEO-CHANGE */
+#define   XYTAUTODL 28  /* SET TERMINAL AUTODOWNLOAD */
+#define   XYTAUTOUL 29  /* SET TERMINAL AUTOUPLOAD   */
+#define   XYTATTBUG 30  /* SET TERM ATTR-BUG */
+#define   XYTSTAT   31  /* SET TERM STATUSLINE */
+#define   XYTESC    32  /* SET TERM ESCAPE-CHARACTER */
+#define   XYTCTRL   33  /* SET TERM CONTROLS */
+#define   XYTATTR   34  /* SET TERM ATTRIBUTE representation */
+#define   XYTSGRC   35  /* SET TERM SGRCOLORS */
+#define   XYTLCS    36  /* SET TERM LOCAL-CHARACTER-SET */
+#define   XYTRCS    37  /* SET TERM REMOTE-CHARACTER-SET */
+#define   XYTUNI    38  /* SET TERM UNICODE */
+#define   XYTKEY    39  /* SET TERM KEY */
+#define   XYTSEND   40  /* SET TERM SEND-DATA */
+#define   XYTSEOB   41  /* SET TERM SEND-END-OF-BLOCK */
+
 #define XYATTR 34       /* Attribute packets */
 #define XYSERV 35	/* Server parameters */
 #define   XYSERT 0      /*  Server timeout   */
 #define   XYSERD 1	/*  Server display   */
+#define   XYSERI 2      /*  Server idle      */
+#define   XYSERP 3	/*  Server get-path  */
+#define   XYSERL 4	/*  Server login     */
 #define XYWIND 36       /* Window size */
 #define XYXFER 37       /* Transfer */
+#define   XYX_CAN 0	/*   Cancellation  */
+#define   XYX_CSE 1	/*   Character-Set */
+#define   XYX_LSH 2	/*   Locking-Shift */
+#define   XYX_PRO 3	/*   Protocol      */
+#define   XYX_MOD 4	/*   Mode          */
+#define   XYX_DIS 5	/*   Display       */
+#define   XYX_SLO 6	/*   Slow-start    */
+#define   XYX_CRC 7	/*   CRC calculation */
+#define   XYX_BEL 8	/*   Bell */
 #define XYLANG 38       /* Language */
 #define XYCOUN 39       /* Count */
 #define XYTAKE 40       /* Take */ 
@@ -420,31 +605,119 @@ struct mtab {				/* Macro table, like keyword table */
 #define XYKEY  42       /* Key */
 #define XYMACR 43       /* Macro */
 #define XYHOST 44       /* Hostname on network */
-#define XYNET  45       /* Type of Network */
+#define XYNET  45       /* SET NETWORK things */
+
+#define XYNET_D 99	/* NETWORK DIRECTORY */
+#define XYNET_T 100	/* NETWORK TYPE */
+
 #define XYCARR 46	/* Carrier */
 #define XYXMIT 47       /* Transmit */
+
 #define XYDIAL 48       /* Dial options */
+
+/* And now we interrupt the flow to bring you lots of stuff about dialing */
+
+#ifndef MAXDNUMS
+#ifdef BIGBUFOK
+#define MAXDDIR 32	/* Maximum number of dialing directories */
+#define MAXDNUMS 4095	/* Max numbers to fetch from dialing directories */
+#else
+#define MAXDDIR 12
+#define MAXDNUMS 1024
+#endif /* BIGBUFOK */
+#endif /* MAXDNUMS */
+/*
+  IMPORTANT: In 5A(192), the old SET DIAL command was split into two commands:
+  SET MODEM (for modem-related parameters) and SET DIAL (for dialing items).
+  To preserve the old formats, etc, invisibly we keep one symbol space for
+  both commands.
+*/
 #define  XYDHUP  0	/*   Dial Hangup */
-#define  XYDINI  1      /*   Dial Initialization string */
-#define  XYDKSP  2      /*   Dial Kermit-Spoof */
+#define  XYDINI  1      /*   MODEM (dial) Initialization string */
+#define  XYDKSP  2      /*   MODEM (dial) Kermit-Spoof */
 #define  XYDTMO  3      /*   Dial Timeout */
 #define  XYDDPY  4      /*   Dial Display */
 #define  XYDSPD  5      /*   Dial Speed matching */
-#define  XYDMNP  6	/*   Dial MNP negotiation enabled */
-#define  XYDEC   7	/*   Dial error correction (in general) enabled */
-#define  XYDDC   8      /*   Dial compression (in general) enabled */
-#define  XYDHCM  9      /*   Dial hangup-string (hup-string) */
+#define  XYDMNP  6	/*   MODEM (dial) MNP negotiation enabled (obsolete) */
+#define  XYDEC   7	/*   MODEM (dial) error correction enabled */
+#define  XYDDC   8      /*   MODEM (dial) compression enabled */
+#define  XYDHCM  9      /*   MODEM (dial) hangup-string (moved elsewhere) */
 #define  XYDDIR 10	/*   Dial directory */
-#define  XYDDIA 11	/*   Dial dial-command */
-#define  XYDMHU 12	/*   Dial modem-hangup */
-#define  XYDNPR 13      /*   Dial number-prefix */
+#define  XYDDIA 11	/*   MODEM (dial) dial-command */
+#define  XYDMHU 12	/*   MODEM HANGUP (dial modem-hangup) */
+#define  XYDNPR 13      /*   Dial PREFIX */
+#define  XYDSTR 14	/*   MODEM COMMAND (dial string) ... */
+
+#define   XYDS_DC 0	/*    Data compression */
+#define   XYDS_EC 1	/*    Error correction */
+#define   XYDS_HU 2     /*    Hangup command */
+#define   XYDS_HW 3     /*    Hardware flow control */
+#define   XYDS_IN 4     /*    Init-string */
+#define   XYDS_NF 5     /*    No flow control */
+#define   XYDS_PX 6     /*    Prefix (no, this goes in SET DIAL) */
+#define   XYDS_SW 7     /*    Software flow control */
+#define   XYDS_DT 8     /*    Tone dialing command */
+#define   XYDS_DP 9     /*    Pulse dialing command */
+#define   XYDS_AN 10    /*    Autoanswer */
+#define   XYDS_RS 11    /*    Reset */
+#define   XYDS_MS 12    /*    Dial mode string */
+#define   XYDS_MP 13    /*    Dial mode prompt */
+
+#define   XYDM_D  0     /*    Method: Default */
+#define   XYDM_T  1     /*      Tone */
+#define   XYDM_P  2     /*      Pulse */
+
+#define  XYDFC   15	/*   MODEM (dial) flow-control */
+#define  XYDMTH  16	/*   Dial method */
+#define  XYDESC  17     /*   MODEM (dial) escape-character */
+#define  XYDMAX  18	/*   MODEM (dial) maximum interface speed */
+#define  XYDCAP  19     /*   MODEM (dial) capabilities */
+#define  XYDTYP  20	/*   MODEM TYPE */
+#define  XYDINT  21	/*   DIAL retries */
+#define  XYDRTM  22	/*   DIAL time between retries */
+#define  XYDNAM  23	/*   MODEM NAME */
+#define  XYDLAC  24	/*   DIAL LOCAL-AREA-CODE */
+#define  XYDMCD  25	/*   MODEM CARRIER */
+
+#define  XYDCNF  26	/*   DIAL CONFIRMATION */
+#define  XYDCVT  27	/*   DIAL CONVERT-DIRECTORY */
+#define  XYDIXP  28	/*   DIAL INTERNATIONAL-PREFIX */
+#define  XYDIXS  29	/*   DIAL INTERNATIONAL-SUFFIX */
+#define  XYDLCC  30	/*   DIAL LOCAL-COUNTRY-CODE */
+#define  XYDLDP  31	/*   DIAL LONG-DISTANCE-PREFIX */
+#define  XYDLDS  32	/*   DIAL LONG-DISTANCE-SUFFIX */
+#define  XYDPXX  33	/*   DIAL PBX-EXCHANGE */
+#define  XYDPXI  34	/*   DIAL PBX-INTERNAL-PREFIX */
+#define  XYDPXO  35	/*   DIAL PBX-OUTSIDE-PREFIX */
+#define  XYDSFX  36	/*   DIAL SUFFIX */
+#define  XYDSRT  37	/*   DIAL SORT */
+#define  XYDTFC  38	/*   DIAL TOLL-FREE-AREA-CODE */
+#define  XYDTFP  39	/*   DIAL TOLL-FREE-PREFIX */
+#define  XYDTFS  40	/*   DIAL TOLL-FREE-SUFFIX */
+#define  XYDCON  41     /*   DIAL CONNECT */
+#define  XYDRSTR 42     /*   DIAL RESTRICT */
+#define  XYDRSET 42     /*   MODEM RESET */
 
 #define XYSESS 49       /* SET SESSION options */
 #define XYBUF  50       /* Buffer length */
 #define XYBACK 51	/* Background */
 #define XYDFLT 52       /* Default */
 #define XYDOUB 53	/* Double */
-#define XYCMD  54       /* Command */
+#define XYCMD  54       /* COMMAND */
+
+/* SET COMMAND items... */
+
+#define SCMD_BSZ 0	/* BYTESIZE */
+#define SCMD_RCL 1	/* RECALL */
+#define SCMD_RTR 2	/* RETRY */
+#define SCMD_QUO 3	/* QUOTING */
+#define SCMD_COL 4	/* COLOR */
+#define SCMD_HIG 5	/* HEIGHT */
+#define SCMD_WID 6	/* WIDTH */
+#define SCMD_CUR 7	/* CURSOR-POSITION */
+#define SCMD_SCR 8	/* SCROLLBACK */
+#define SCMD_MOR 9	/* MORE-PROMPTING */
+
 #define XYCASE 55       /* Case */
 #define XYCOMP 56       /* Compression */
 #define XYX25  57       /* X.25 parameter (ANYX25) */
@@ -461,11 +734,87 @@ struct mtab {				/* Macro table, like keyword table */
 #define  CK_TN_EC 0	/*  TELNET ECHO */
 #define  CK_TN_TT 1	/*  TELNET TERMINAL-TYPE */
 #define  CK_TN_NL 2     /*  TELNET NEWLINE-MODE */
+#define  CK_TN_BM 3     /*  TELNET BINARY-MODE */
+#define  CK_TN_BUG 4    /*  TELNET BUG */
+#define  CK_TN_ENV 5    /*  TELNET ENVIRONMENT */
+#define    TN_ENV_USR  0 /*    VAR USER */
+#define    TN_ENV_JOB  1 /*    VAR JOB */
+#define    TN_ENV_ACCT 2 /*    VAR ACCT */
+#define    TN_ENV_PRNT 3 /*    VAR PRINTER */
+#define    TN_ENV_SYS  4 /*    VAR SYSTEMTYPE */
+#define    TN_ENV_DISP 5 /*    VAR DISPLAY */
+#define    TN_ENV_UVAR 6 /*    USERVAR */
 #define XYOUTP 68	/* OUTPUT command parameters */
 #define  OUT_PAC 0	/*  OUTPUT pacing */
-#define XYEXIT 69	/* SET EXIT */
-#define XYPRTR 70	/* SET PRINTER */
+#define XYEXIT  69	/* SET EXIT */
+#define XYPRTR  70	/* SET PRINTER */
 #define XYFPATH 71	/* PATHNAME */
+#define XYMOUSE 72	/* MOUSE SUPPORT */
+
+#define  XYM_ON     0   /* Mouse ON/OFF        */
+#define  XYM_BUTTON 1   /* Define Mouse Events */
+#define  XYM_CLEAR  2   /* Clear Mouse Events  */
+/* These must match similar definitions in ckokey.h */
+#define   XYM_B1 0      /* Mouse Button One */
+#define   XYM_B2 1      /* Mouse Button Two */
+#define   XYM_B3 2      /* Mouse Button Three */
+#define   XYM_ALT   1     /* Alt */
+#define   XYM_CTRL  2     /* Ctrl */
+#define   XYM_SHIFT 4     /* Shift */
+#define   XYM_C1    0     /* Single Click */
+#define   XYM_C2    8     /* Double Click */
+#define   XYM_DRAG  16    /* Drag Event */
+
+#define XYBELL 73   /* BELL */
+
+#define   XYB_NONE  0     /* No bell */
+#define   XYB_AUD   1     /* Audible bell */
+#define   XYB_VIS   2     /* Visible bell */
+#define   XYB_BEEP  0     /* Audible Beep */
+#define   XYB_SYS   4     /* Audible System Sounds */
+
+#define XYPRTY     74   /* Thread Priority Level */
+
+#define   XYP_IDLE  1 
+#define   XYP_REG   2
+#define   XYP_SRV   4
+#define   XYP_RTP   3
+
+#define XYALRM     75	/* SET ALARM */
+#define XYPROTO    76	/* SET PROTOCOL */
+#define XYPREFIX   77   /* SET PREFIXING */
+#define XYLOGIN    78   /* Login info for script programs... */
+
+#define  LOGI_UID   0	/* User ID  */
+#define  LOGI_PSW   1	/* Password */
+#define  LOGI_PRM   2	/* Prompt   */
+
+#define XYSTARTUP  79    /* Startup file */
+#define XYTMPDIR   80    /* Temporary directory */
+#define XYTAPI     81    /* Microsoft Telephone API options */
+#define   XYTAPI_CFG     1  /* TAPI Configure-Line */
+#define   XYTAPI_DIAL    2  /* TAPI Dialing-Properties */
+#define   XYTAPI_LIN     3  /* TAPI Line */
+#define   XYTAPI_LOC     4  /* TAPI Location */
+
+#define XYTCP  82       /* TCP options */
+#define  XYTCP_NODELAY   1  /* No Delay */
+#define  XYTCP_SENDBUF   2  /* Send Buffer Size */
+#define  XYTCP_LINGER    3  /* Linger */
+#define  XYTCP_RECVBUF   4  /* Receive Buffer Size */
+#define  XYTCP_KEEPALIVE 5  /* Keep Alive packets */
+
+#define XYMSK  83       /* MS-DOS Kermit compatibility options */
+#define  MSK_COLOR 0    /*  Terminal color handling   */
+#define  MSK_KEYS  1    /*  SET KEY uses MSK keycodes */
+
+#define XYDEST 84	/* SET DESTINATION as in MS-DOS Kermit */
+#define XYWIN95 85	/* SET WIN95 work arounds  */
+#define   XYWKEY  0	/*    Keyboard translation */
+#define   XYWAGR  1     /*    Alt-Gr               */
+#define   XYWOIO  2     /*    Overlapped I/O       */
+#define XYDLR  86 	/* SET K95 DIALER work arounds */
+#define XYTITLE 87	/* SET TITLE of window */
 
 /* #ifdef ANYX25 */
 /* PAD command parameters */
@@ -519,6 +868,12 @@ struct mtab {				/* Macro table, like keyword table */
 #define SHPRT 33			/* Show printer */
 #define SHCMD 34			/* Show command parameters */
 #define SHKVB 35			/* Show \Kverbs */
+#define SHMOU 36			/* Show Mouse (like Show Key) */
+#define SHTAB 37			/* Show Tabs */
+#define SHVSCRN 38			/* Show Virtual Screen (OS/2) */
+#define SHALRM  39			/* ALARM */
+#define SHSFL   40			/* SEND-LIST */
+#define SHUDK   41                      /* DEC VT UDKs (OS/2) */
 
 /* REMOTE command symbols */
  
@@ -552,6 +907,8 @@ struct mtab {				/* Macro table, like keyword table */
 #define IN_CAS  2			/* Case (matching) */
 #define IN_ECH  3			/* Echo */
 #define IN_SIL  4			/* Silence */
+#define IN_BUF  5			/* Buffer size */
+#define IN_PAC  6                       /* Input Pacing (debug) */
 
 /* ENABLE/DISABLE command parameters */
 
@@ -572,6 +929,28 @@ struct mtab {				/* Macro table, like keyword table */
 #define EN_BYE 14			/* BYE (as opposed to FINISH) */
 #define EN_QUE 15			/* QUERY */
 #define EN_ASG 16			/* ASSIGN */
+#define EN_CPY 17			/* COPY */
+#define EN_REN 18			/* RENAME */
+#define EN_RET 19			/* RETRIEVE */
+#define EN_MAI 20			/* MAIL */
+#define EN_PRI 21			/* PRINT */
+
+/* BEEP TYPES */
+#define BP_BEL  0           /* Terminal BEL         */
+#define BP_NOTE 1           /* Notify the user      */
+#define BP_WARN 2           /* Warn the user        */
+#define BP_FAIL 3           /* Failure has occurred */
+
+/* CLEAR command symbols */
+#define CLR_DEV  1                /* Clear Device Buffers */
+#define CLR_INP  2                /* Clear Input Buffers */
+#define CLR_BTH  CLR_DEV|CLR_INP  /* Clear Device and Input */
+#define CLR_SCL  4                /* Clear Scrollback buffer */
+#define CLR_CMD  8                /* Clear Command Screen */
+#define CLR_TRM  16               /* Clear Terminal Screen */
+#define CLR_DIA  32		  /* Clear Dial Status */
+#define CLR_SFL  64		  /* Clear Send-File-List */
+#define CLR_APC 128		  /* Clear APC */
 
 /* Symbols for logs */
  
@@ -644,6 +1023,61 @@ struct mtab {				/* Macro table, like keyword table */
 #define VN_MDM  55			/* Modem type */
 #define VN_EVAL 56			/* Most recent EVALUATE result */
 
+#define VN_D_CC 57			/* DIAL COUNTRY-CODE */
+#define VN_D_AC 58			/* DIAL AREA-CODE */
+#define VN_D_IP 59			/* DIAL INTERNATIONAL-PREFIX */
+#define VN_D_LP 60			/* DIAL LD-PREFIX */
+
+#define VN_UID  61
+#define VN_PWD  62
+#define VN_PRM  63
+
+#define VN_PROTO 64			/* Protocol */
+#define VN_DLDIR 65			/* Download directory */
+
+#define VN_M_AAA 66			/* First MODEM one */
+#define VN_M_INI 66			/* Modem init string */
+#define VN_M_DCM 67			/* Modem dial command */
+#define VN_M_DCO 68			/* Modem data compression on */
+#define VN_M_DCX 69			/* Modem data compression off */
+#define VN_M_ECO 70			/* Modem error correction on */
+#define VN_M_ECX 71			/* Modem error correction off */
+#define VN_M_AAO 72			/* Modem autoanswer on */
+#define VN_M_AAX 73			/* Modem autoanswer off */
+#define VN_M_HUP 74			/* Modem hangup command */
+#define VN_M_HWF 75			/* Modem hardware flow command */
+#define VN_M_SWF 76			/* Modem software flow command */
+#define VN_M_NFC 77			/* Modem no flow-control command */
+#define VN_M_PDM 78			/* Modem pulse dialing mode */
+#define VN_M_TDM 79			/* Modem tone dialing mode */
+#define VN_M_ZZZ 79			/* Last MODEM one */
+
+#define VN_SELCT 80			/* Selected Text from Mark Mode */
+#define VN_TEMP  81			/* Temporary directory */
+#define VN_ISTAT 82			/* INPUT command status */
+#define VN_INI   83			/* INI (kermrc) directory */
+#define VN_EXEDIR 84			/* EXE directory */
+#define VN_ERRNO  85			/* Value of errno */
+#define VN_ERSTR  86			/* Corresponding error message */
+#define VN_TFLN   87			/* TAKE file line number */
+#define VN_XVNUM  88			/* Product-specific version number */
+#define VN_RPSIZ  89			/* Receive packet length */
+#define VN_WINDO  90			/* Window size */
+#define VN_MDMSG  91			/* Modem message */
+#define VN_DNUM   92			/* Dial number */
+#define VN_APC    93			/* APC active */
+#define VN_IPADDR 94			/* My IP address */
+#define VN_CRC16  95			/* CRC-16 of most recent file group */
+#define VN_TRMK   96                    /* Macro executed from Terminal Mode */
+
+/* INPUT status values */
+
+#define INP_OK  0			/* Succeeded */
+#define INP_TO  1			/* Timed out */
+#define INP_UI  2			/* User interrupted */
+#define INP_IE  3			/* Internal error */
+#define INP_IO  4			/* I/O error or connection lost */
+
 /* Symbols for builtin functions */
 
 #define FNARGS 6			/* Maximum number of function args */
@@ -674,18 +1108,83 @@ struct mtab {				/* Macro table, like keyword table */
 #define FN_RPL 23			/* Replace */
 #define FN_FD  24			/* File date */
 #define FN_FS  25			/* File size */
+#define FN_RIX 26			/* Rindex (index from right) */
+#define FN_VER 27			/* Verify */
+#define FN_IPA 28			/* Find and return IP address */
+#define FN_CRY 39			/* ... */
+#define FN_OOX 40			/* ... */
+#define FN_HEX 41			/* Hexify */
+#define FN_UNH 42			/* Unhexify */
+#define FN_BRK 43			/* Break */
+#define FN_SPN 44			/* Span */
+#define FN_TRM 45			/* Trim */
+#define FN_LTR 46			/* Left-Trim */
+#define FN_CAP 47			/* Capitalize */
+#define FN_TOD 48			/* Time-of-day-to-secs-since-midnite */
+#define FN_SEC 49			/* Secs-since-midnite-to-time-of-day */
+#define FN_FFN 50			/* Full file name */
+#define FN_CHK 51			/* Checksum of text */
+#define FN_CRC 52			/* CRC-16 of text */
+#define FN_BSN 53			/* Basename of file */
+
+/* Screen line numbers */
+
+#define CW_BAN  0			/* Curses Window Banner */
+#define CW_DIR  2			/* Current directory */
+#define CW_LIN  3			/* Communication device */
+#define CW_SPD  4			/* Communication speed */
+#define CW_PAR  5			/* Parity */
+#define CW_TMO  6
+#define CW_NAM  7			/* Filename */
+#define CW_TYP  8			/* File type */
+#define CW_SIZ  9			/* File size */
+#define CW_PCD 10			/* Percent done */
+
+#ifndef CK_PCT_BAR
+#define CW_TR  11			/* Time remaining */
+#define CW_CP  12			/* Characters per second */
+#define CW_WS  13			/* Window slots */
+#define CW_PT  14			/* Packet type */
+#define CW_PC  15			/* Packet count */
+#define CW_PL  16			/* Packet length */
+#define CW_PR  17			/* Packet retry */
+#ifdef COMMENT
+#define CW_PB  17			/* Packet block check */
+#endif /* COMMENT */
+#else /* CK_PCT_BAR */
+#define CW_BAR 11       /* Percent Bar Scale */
+#define CW_TR  12			/* Time remaining */
+#define CW_CP  13			/* Chars per sec */
+#define CW_WS  14			/* Window slots */
+#define CW_PT  15			/* Packet type */
+#define CW_PC  16			/* Packet count */
+#define CW_PL  17			/* Packet length */
+#define CW_PR  18			/* Packet retry */
+#ifdef COMMENT
+#define CW_PB  18			/* Packet block check */
+#endif /* COMMENT */
+#endif /* CK_PCT_BAR */
+
+#define CW_ERR 19			/* Error message */
+#define CW_MSG 20			/* Info message */
+#define CW_INT 22			/* Instructions */
+
+/* Save Commands */
+#define XSKEY   0			/* Key map file */
 
 /* ANSI-style prototypes for user interface functions */
 
 _PROTOTYP( char * brstrip, (char *) );
 _PROTOTYP( int parser, ( int ) );
+_PROTOTYP( int chkvar, (char *) );
 _PROTOTYP( int zzstring, (char *, char **, int *) );
+#ifndef NOFRILLS
 _PROTOTYP( int yystring, (char *, char **) );
+#endif /* NOFRILLS */
 _PROTOTYP( int xxstrcmp, (char *, char *, int) );
 _PROTOTYP( int getncm, (char *, int) );
-_PROTOTYP( int getnct, (char *, int) );
+_PROTOTYP( int getnct, (char *, int, FILE *, int) );
 _PROTOTYP( VOID bgchk, (void) );
-_PROTOTYP( char * fneval, (char *, char * [], int ) );
 _PROTOTYP( char * nvlook, (char *) );
 _PROTOTYP( char * arrayval, (int, int) );
 _PROTOTYP( int arraynam, (char *, int *, int *) );
@@ -697,16 +1196,16 @@ _PROTOTYP( int macini, (void) );
 _PROTOTYP( VOID initmac, (void) );
 _PROTOTYP( int delmac, (char *) );
 _PROTOTYP( int addmac, (char *, char *) );
-_PROTOTYP( int domac, (char *, char *) );
+_PROTOTYP( int domac, (char *, char *, int) );
 _PROTOTYP( int addmmac, (char *, char *[]) );
 _PROTOTYP( int dobug, (void) );
 _PROTOTYP( int docd, (void) );
 _PROTOTYP( int doclslog, (int) );
 _PROTOTYP( int docmd, (int) );
 _PROTOTYP( int doconect, (int) );
-_PROTOTYP( int dodo, (int, char *) );
+_PROTOTYP( int dodo, (int, char *, int) );
 _PROTOTYP( int doenable, (int, int) );
-_PROTOTYP( int doget, (void) );
+_PROTOTYP( int doget, (int) );
 _PROTOTYP( int dogoto, (char *, int) );
 _PROTOTYP( int dogta, (int) );
 _PROTOTYP( int dohlp, (int) );
@@ -717,7 +1216,6 @@ _PROTOTYP( int doreinp, (int, char *) );
 _PROTOTYP( int dolog, (int) );
 _PROTOTYP( int dologin, (char *) );
 _PROTOTYP( int doopen, (void) );
-_PROTOTYP( int dooutput, (char *) );
 _PROTOTYP( int doprm, (int, int) );
 _PROTOTYP( int doreturn, (char *) );
 _PROTOTYP( int dormt, (int) );
@@ -729,20 +1227,21 @@ _PROTOTYP( int dotype, (char *) );
 _PROTOTYP( int transmit, (char *, char) );
 _PROTOTYP( int xlate, (char *, char *, int, int) );
 _PROTOTYP( int litcmd, (char **, char **) );
-_PROTOTYP( int incvar, (char *, int, int, int *) );
-_PROTOTYP( int ckdial, (char *) );
+_PROTOTYP( int incvar, (char *, int, int) );
+_PROTOTYP( int ckdial, (char *, int, int, int) );
 _PROTOTYP( char * getdws, (int) );
 _PROTOTYP( char * getdcs, (int) );
 _PROTOTYP( int hmsg, (char *) );
 _PROTOTYP( int hmsga, (char * []) );
 _PROTOTYP( int mlook, (struct mtab [], char *, int) );
 _PROTOTYP( int mxlook, (struct mtab [], char *, int) );
-_PROTOTYP( VOID prtopt, (char *) );
+_PROTOTYP( int prtopt, (int *, char *) );
 _PROTOTYP( CHAR rfilop, (char *, char) );
-_PROTOTYP( int setcc, (int *, int, int) );
+_PROTOTYP( int setcc, (char *, int *) );
 _PROTOTYP( int setnum, (int *, int, int, int) );
 _PROTOTYP( int seton, (int *) );
 _PROTOTYP( VOID shmdmlin, (void) );
+_PROTOTYP( VOID initmdm, (int) );
 _PROTOTYP( char * showoff, (int) );
 _PROTOTYP( int shoatt, (void) );
 _PROTOTYP( VOID shocharset, (void) );
@@ -770,23 +1269,47 @@ _PROTOTYP( char * evala, (char *) );
 _PROTOTYP( int setat, (int) );
 _PROTOTYP( int setinp, (void) );
 _PROTOTYP( int setlin, (int, int) );
-_PROTOTYP( int setdial, (void) );
+_PROTOTYP( int setmodem, (void) );
 _PROTOTYP( int setfil, (int) );
+#ifdef OS2    
+_PROTOTYP( int settapi, (void) ) ;
+#ifdef OS2MOUSE
+_PROTOTYP( int setmou, (void) );
+#endif /* OS2MOUSE */
+_PROTOTYP( int setbell, (void) );
+#endif /* OS2 */
 _PROTOTYP( int settrm, (void) );
 _PROTOTYP( int setsr, (int, int) );
 _PROTOTYP( int setxmit, (void) );
 _PROTOTYP( int set_key, (void) );
 _PROTOTYP( int dochk, (void) );
-_PROTOTYP( char *ludial, (char *, FILE *) );
-_PROTOTYP( VOID xwords, (char *, int, char *[]) );
+_PROTOTYP( int ludial, (char *, int) );
+_PROTOTYP( char * getdnum, (int) );
+_PROTOTYP( VOID getnetenv, (void) );
+_PROTOTYP( VOID setflow, (void) );
+_PROTOTYP( int getyesno, (char *) );
+_PROTOTYP( VOID xwords, (char *, int, char *[], int) );
 _PROTOTYP( VOID shotcs, (int, int) );
 _PROTOTYP( char *hhmmss, (long) );
 _PROTOTYP( VOID shoctl, (void) );
-_PROTOTYP( VOID kwdhelp, (struct keytab[], int, char *, char *, int) );
 _PROTOTYP( VOID keynaminit, (void) );
 _PROTOTYP( int xlookup, (struct keytab[], char *, int, int *) );	
 _PROTOTYP( VOID shokeycode, (int) );
 _PROTOTYP( int hupok, (int) );
+_PROTOTYP( VOID shods, (char *) );
+_PROTOTYP( char * zzndate, (void) );
+_PROTOTYP( char * chk_ac, (int, char[]) );
+_PROTOTYP( char * gmdmtyp, (void) );
+_PROTOTYP( char * gfmode, (int) );
+_PROTOTYP( int setdest, (void) );
+_PROTOTYP( VOID ndinit, (void) );
+_PROTOTYP( int doswitch, (void) );
+_PROTOTYP( int dolocal, (void) );
+_PROTOTYP( long tod2sec, (char *) );
+_PROTOTYP( int shomodem, (void) );
+_PROTOTYP( int lunet, (char *) );
+_PROTOTYP( int doxdis, (void) );
+_PROTOTYP( int dosave, (int) );
 
 #endif /* CKUUSR_H */
 

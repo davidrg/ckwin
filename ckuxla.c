@@ -1,6 +1,15 @@
 #include "ckcsym.h"
+
+#include "ckcdeb.h"			/* Includes... */
+#include "ckcker.h"
+#include "ckucmd.h"
+#include "ckcxla.h"
+#ifdef OS2				/* includes the definition of CKOUNI */
+#include "ckouni.h"
+#endif /* OS2 */
+
 #ifndef NOCSETS
-char *xlav = "Character Set Translation 5A(022), 24 Jan 94";
+char *xlav = "Character Set Translation 6.0.024, 4 Jul 96";
 
 /*  C K U X L A  */
 
@@ -9,7 +18,7 @@ char *xlav = "Character Set Translation 5A(022), 24 Jan 94";
   Author: Frank da Cruz (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 1994, Trustees of Columbia University in the City of New
+  Copyright (C) 1985, 1996, Trustees of Columbia University in the City of New
   York.  The C-Kermit software may not be, in whole or in part, licensed or
   sold for profit as a software product itself, nor may it be included in or
   distributed with commercial products or otherwise distributed by commercial
@@ -35,10 +44,6 @@ char *xlav = "Character Set Translation 5A(022), 24 Jan 94";
   internally using a universal character set like UNICODE (ISO 10646 BMP),
   the ultimate "transfer character set" (or not)...
 */
-#include "ckcdeb.h"			/* Includes... */
-#include "ckcker.h"
-#include "ckucmd.h"
-#include "ckcxla.h"
 
 /* Character set translation data and functions */
 
@@ -47,9 +52,19 @@ extern char *zinptr;
 extern int zoutcnt;
 extern char *zoutptr;
 
+#ifdef _UCC				/* For OS-9 */
+#define CONST const
+#else
+#define CONST
+#endif /* _UCC */
+
 int tslevel  = TS_L0;			/* Transfer syntax level (0,1,2) */
 int tcharset = TC_TRANSP;		/* Transfer syntax character set */
-int tcsr     = FC_USASCII;		/* Remote terminal character set */
+#ifdef CKOUNI
+int tcsr     = TX_8859_1;		/* Remote terminal character set */
+#else /* CKOUNI */
+int tcsr     = FC_USASCII;
+#endif /* CKOUNI */
 int language = L_USASCII;		/* Language */
 
 /*
@@ -76,8 +91,13 @@ int tcsl     = FC_APPQD;
 int fcharset = FC_1LATIN;		/* uses Latin-1 */
 int tcsl     = FC_1LATIN;
 #else					/* All others */
+#ifdef CKOUNI 				/* OS/2 Unicode */
+int fcharset = FC_1LATIN;
+int tcsl     = TX_8859_1;
+#else					/* All others */
 int fcharset = FC_USASCII;		/* use ASCII by default */
 int tcsl     = FC_USASCII;
+#endif /* CKOUNI */
 #endif /* AMIGA */
 #endif /* AUX */
 #endif /* MAC */
@@ -207,7 +227,7 @@ struct csinfo fcsinfo[] = { /* File character set information... */
   "ISO 8859-8 Latin/Hebrew",256, FC_HEBREW,  NULL, AL_HEBREW, "hebrew-iso",
   "CP862 Hebrew",           256, FC_CP862,   NULL, AL_HEBREW, "cp862-hebrew"
 #endif /* HEBREW */
-};    
+};
 
 /* Local file character sets */
 /* Includes 7-bit National Replacement Character Sets of ISO 646 */
@@ -481,7 +501,7 @@ int nlng = (sizeof(lngtab) / sizeof(struct keytab)); /* how many languages */
   set to a 7-bit set.  Accented letters are mapped to unaccented
   equivalents, C1 control characters are all translated to "?", etc.
 */
-CHAR
+CONST CHAR
 yl1as[] = {  /* ISO 8859-1 Latin Alphabet 1 to US ASCII */
       /*  Source character    Description               => Translation */
       /*  Dec row/col Set                                           */
@@ -752,7 +772,7 @@ UNK,  /*  190  11/14  G1      Three quarters            =>  UNK     */
   following tables corresponds to a column of ISO 8859-1.
 */
 
-CHAR
+CONST CHAR
 yl185[] = {  /* ISO 8859-1 Latin Alphabet 1 (Latin-1) to IBM Code Page 850 */
 /*
   This is based on IBM's official invertible translation.  Reference: IBM
@@ -779,7 +799,7 @@ yl185[] = {  /* ISO 8859-1 Latin Alphabet 1 (Latin-1) to IBM Code Page 850 */
 208, 164, 149, 162, 147, 228, 148, 246, 155, 151, 163, 150, 129, 236, 231, 152
 };
 
-CHAR
+CONST CHAR
 y85l1[] = {  /* IBM Code Page 850 to Latin-1 */
 /*
   This is from IBM CDRA page 153.  It is the inverse of yl185[].
@@ -805,7 +825,7 @@ y85l1[] = {  /* IBM Code Page 850 to Latin-1 */
 };
 
 #ifdef COMMENT
-CHAR
+CONST CHAR
 yl1r8[] = {  /* Latin-1 to Hewlett Packard Roman8 */
 /* This is HP's official translation, straight from iconv */
 /* It is NOT invertible. */
@@ -826,7 +846,7 @@ yl1r8[] = {  /* Latin-1 to Hewlett Packard Roman8 */
 200, 196, 192, 226, 204, 212, 215, 181, 201, 197, 193, 205, 217, 213, 209, 221,
 228, 183, 202, 198, 194, 234, 206,  47, 214, 203, 199, 195, 207, 178, 241, 239
 };
-CHAR
+CONST CHAR
 yr8l1[] = {  /* Hewlett Packard Roman8 to Latin-1 */
 /* This is HP's official translation, straight from iconv */
 /* It is NOT invertible. */
@@ -849,7 +869,7 @@ yr8l1[] = {  /* Hewlett Packard Roman8 to Latin-1 */
 };
 #else /* !COMMENT */
 /* This is an invertible mapping, approved by HP in January 1994. */
-CHAR
+CONST CHAR
 yl1r8[] = {  /* ISO Latin-1 to HP Roman8, Invertible */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -869,7 +889,7 @@ yl1r8[] = {  /* ISO Latin-1 to HP Roman8, Invertible */
 228, 183, 202, 198, 194, 234, 206, 255, 214, 203, 199, 195, 207, 178, 241, 239
 };
 
-CHAR
+CONST CHAR
 yr8l1[] = { /* HP Roman8 to ISO Latin-1, Invertible */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -890,7 +910,7 @@ yr8l1[] = { /* HP Roman8 to ISO Latin-1, Invertible */
 };
 #endif /* COMMENT */
 
-CHAR
+CONST CHAR
 yl143[] = {  /* Latin-1 to IBM Code Page 437 */
 /*
   Although the IBM CDRA does not include an official translation between CP437
@@ -918,7 +938,7 @@ yl143[] = {  /* Latin-1 to IBM Code Page 437 */
 208, 164, 149, 162, 147, 228, 148, 246, 189, 151, 163, 150, 129, 236, 231, 152
 };
 
-CHAR
+CONST CHAR
 y43l1[] = {  /* IBM Code Page 437 to Latin-1 */
 /*
   This table is the inverse of yl143[].
@@ -941,7 +961,7 @@ y43l1[] = {  /* IBM Code Page 437 to Latin-1 */
 173, 177, 143, 190, 182, 167, 247, 184, 176, 168, 183, 185, 179, 178, 142, 160
 };
 
-CHAR
+CONST CHAR
 yl1aq[] = {  /* Latin-1 to Extended Mac Latin (based on Apple QuickDraw) */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -961,7 +981,7 @@ yl1aq[] = {  /* Latin-1 to Extended Mac Latin (based on Apple QuickDraw) */
 221, 150, 152, 151, 153, 155, 154, 214, 191, 157, 156, 158, 159, 224, 223, 216
 };
 
-CHAR
+CONST CHAR
 yl1du[] = {  /* Latin-1 to Dutch ISO 646 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -981,7 +1001,7 @@ UNK,  78,  79,  79,  79,  79,  79, 120,  79,  85,  85,  85,  85,  89, UNK, 115,
 UNK, 110, 111, 111, 111, 111, 111,  47, 111, 117, 117, 117, 117, 121, UNK,  91
 };
 
-CHAR
+CONST CHAR
 yl1fi[] = {  /* Latin-1 to Finnish ISO 646 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -990,7 +1010,7 @@ yl1fi[] = {  /* Latin-1 to Finnish ISO 646 */
  64,  65,  66,  67,  68,  69,  70,  71,  72,  73,  74,  75,  76,  77,  78,  79,
  80,  81,  82,  83,  84,  85,  86,  87,  88,  89,  90, UNK, UNK, UNK, UNK,  95,
 UNK,  97,  98,  99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111,
-112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, UNK, UNK, UNK, UNK, UNK,
+112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, UNK, UNK, UNK, UNK, 127,
 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143,
 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159,
  32,  33, UNK, UNK, UNK, UNK, UNK, UNK,  34,  67, UNK,  34, UNK,  45,  82, UNK,
@@ -1001,7 +1021,7 @@ UNK,  78,  79,  79,  79,  79,  92, 120,  79,  85,  85,  85,  94,  89, UNK, 115,
 UNK, 110, 111, 111, 111, 111, 124,  47, 111, 117, 117, 117, 126, 121, UNK, 121
 };
 
-CHAR
+CONST CHAR
 yl1fr[] = {  /* Latin-1 to French ISO 646 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1021,7 +1041,7 @@ UNK,  78,  79,  79,  79,  79,  79, 120,  79,  85,  85,  85,  85,  89, UNK, 115,
 UNK, 110, 111, 111, 111, 111, 111,  47, 111, 124, 117, 117, 117, 121, UNK, 121
 };
 
-CHAR
+CONST CHAR
 yl1fc[] = {  /* Latin-1 to French-Canadian ISO 646 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1041,7 +1061,7 @@ UNK,  78,  79,  79,  79,  79,  79, 120,  79,  85,  85,  85,  85,  89, UNK, 115,
 UNK, 110, 111, 111,  96, 111, 111,  47, 111, 124, 117, 126, 117, 121, UNK, 121
 };
 
-CHAR
+CONST CHAR
 yl1ge[] = {  /* Latin-1 to German ISO 646 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1061,7 +1081,7 @@ UNK,  78,  79,  79,  79,  79,  92, 120,  79,  85,  85,  85,  93,  89, UNK, 126,
 UNK, 110, 111, 111, 111, 111, 124,  47, 111, 117, 117, 117, 125, 121, UNK, 121
 };
 
-CHAR
+CONST CHAR
 yl1hu[] = {  /* Latin-1 to Hungarian ISO-646 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1081,7 +1101,7 @@ UNK,  78,  79,  79,  79,  79,  92, 120,  79,  85,  85,  85,  93,  89, UNK, 115,
 UNK, 110, 111, 111, 111, 111, 124,  47, 111, 117, 117, 117, 125, 121, UNK, 121
 };
 
-CHAR
+CONST CHAR
 yl1it[] = {  /* Latin-1 to Italian ISO 646 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1101,7 +1121,7 @@ UNK,  78,  79,  79,  79,  79,  79, 120,  79,  85,  85,  85,  85,  89, UNK, 115,
 UNK, 110, 124, 111, 111, 111, 111,  47, 111,  96, 117, 117, 117, 121, UNK, 121
 };
 
-CHAR
+CONST CHAR
 yl1ne[] = {  /* Latin-1 to NeXT */
 /* NEED TO MAKE THIS ONE INVERTIBLE, LIKE CP850 */
 /*
@@ -1129,7 +1149,7 @@ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
 230, 231, 236, 237, 238, 239, 240, 159, 249, 242, 243, 244, 246, 247, 252, 253
 };
 
-CHAR
+CONST CHAR
 yl1no[] = {  /* Latin-1 to Norwegian/Danish ISO 646 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1149,7 +1169,7 @@ UNK,  78,  79,  79,  79,  79,  79, 120,  92,  85,  85,  85,  85,  89, UNK, 115,
 UNK, 110, 111, 111, 111, 111, 111,  47, 124, 117, 117, 117, 117, 121, UNK, 121
 };
 
-CHAR
+CONST CHAR
 yl1po[] = {  /* Latin-1 to Portuguese ISO 646 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1169,7 +1189,7 @@ UNK,  78,  79,  79,  79,  93,  79, 120,  79,  85,  85,  85,  85,  89, UNK, 115,
 UNK, 110, 111, 111, 111, 125, 111,  47, 111, 117, 117, 117, 117, 121, UNK, 121
 };
 
-CHAR
+CONST CHAR
 yl1sp[] = {  /* Latin-1 to Spanish ISO 646 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1189,7 +1209,7 @@ UNK,  92,  79,  79,  79,  79,  79, 120,  79,  85,  85,  85,  85,  89, UNK, 115,
 UNK, 124, 111, 111, 111, 111, 111,  47, 111, 117, 117, 117, 117, 121, UNK, 121
 };
 
-CHAR
+CONST CHAR
 yl1sw[] = {  /* Latin-1 to Swedish ISO 646 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1209,7 +1229,7 @@ UNK,  78,  79,  79,  79,  79,  92, 120,  79,  85,  85,  85,  94,  89, UNK, 115,
 UNK, 110, 111, 111, 111, 111, 124,  47, 111, 117, 117, 117, 126, 121, UNK, 121
 };
 
-CHAR
+CONST CHAR
 yl1ch[] = {  /* Latin-1 to Swiss ISO 646 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1229,7 +1249,7 @@ UNK,  78,  79,  79,  79,  79,  79, 120,  79,  85,  85,  85,  85,  89, UNK, 115,
 UNK, 110, 111, 111,  96, 111, 124,  47, 111,  35, 117, 126, 125, 121, UNK, 121
 };
 
-CHAR
+CONST CHAR
 yl1dm[] = {  /* Latin-1 to DEC Multinational Character Set */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1249,7 +1269,7 @@ UNK, 209, 210, 211, 212, 213, 214, 120, 216, 217, 218, 219, 220, 221, UNK, 223,
 UNK, 241, 242, 243, 244, 245, 246,  47, 248, 249, 250, 251, 252, UNK, UNK, 253
 };
 
-CHAR
+CONST CHAR
 yl1dg[] = {  /* Latin-1 to Data General International Character Set */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1273,7 +1293,7 @@ yl1dg[] = {  /* Latin-1 to Data General International Character Set */
 /* Local file character sets to ISO Latin Alphabet 1 */
 
 #ifdef NOTUSED
-CHAR
+CONST CHAR
 yasl1[] = {  /* ASCII to Latin-1 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1286,7 +1306,7 @@ yasl1[] = {  /* ASCII to Latin-1 */
 };
 #endif /* NOTUSED */
 
-CHAR
+CONST CHAR
 yaql1[] = {  /* Extended Mac Latin (based on Apple Quickdraw) to Latin-1 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1306,7 +1326,7 @@ yaql1[] = {  /* Extended Mac Latin (based on Apple Quickdraw) to Latin-1 */
 150, 210, 218, 219, 217, 151, 152, 153, 175, 154, 155, 156, 184, 157, 158, 159
 };
 
-CHAR
+CONST CHAR
 ydul1[] = {  /* Dutch ISO 646 to Latin-1 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1318,7 +1338,7 @@ ydul1[] = {  /* Dutch ISO 646 to Latin-1 */
 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 168, 164, 188,  39, 127
 };
 
-CHAR
+CONST CHAR
 yfil1[] = {  /* Finnish ISO 646 to Latin-1 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1330,7 +1350,7 @@ yfil1[] = {  /* Finnish ISO 646 to Latin-1 */
 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 228, 246, 229, 252, 127
 };
 
-CHAR
+CONST CHAR
 yfrl1[] = {  /* French ISO 646 to Latin-1 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1342,7 +1362,7 @@ yfrl1[] = {  /* French ISO 646 to Latin-1 */
 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 233, 249, 232, 168, 127
 };
 
-CHAR
+CONST CHAR
 yfcl1[] = {  /* French-Canadian ISO 646 to Latin-1 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1354,7 +1374,7 @@ yfcl1[] = {  /* French-Canadian ISO 646 to Latin-1 */
 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 233, 249, 232, 251, 127
 };
 
-CHAR
+CONST CHAR
 ygel1[] = {  /* German ISO 646 to Latin-1 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1366,7 +1386,7 @@ ygel1[] = {  /* German ISO 646 to Latin-1 */
 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 228, 246, 252, 223, 127
 };
 
-CHAR
+CONST CHAR
 yitl1[] = {  /* Italian ISO 646 to Latin-1 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1378,7 +1398,7 @@ yitl1[] = {  /* Italian ISO 646 to Latin-1 */
 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 224, 242, 232, 236, 127
 };
 
-CHAR
+CONST CHAR
 ynel1[] = {  /* NeXT to Latin-1 */
 /* NEED TO MAKE THIS ONE INVERTIBLE */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
@@ -1399,7 +1419,7 @@ UNK, 177, 188, 189, 190, 224, 225, 226, 227, 228, 229, 231, 232, 233, 234, 235,
 246, 230, 249, 250, 251, UNK, 252, 253, UNK, 248, UNK, 223, 254, 255, UNK, UNK
 };
 
-CHAR
+CONST CHAR
 ynol1[] = {  /* Norwegian/Danish ISO 646 to Latin-1 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1411,7 +1431,7 @@ ynol1[] = {  /* Norwegian/Danish ISO 646 to Latin-1 */
 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 230, 248, 229, 126, 127
 };
 
-CHAR
+CONST CHAR
 ypol1[] = {  /* Portuguese ISO 646 to Latin-1 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1423,7 +1443,7 @@ ypol1[] = {  /* Portuguese ISO 646 to Latin-1 */
 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 227, 231, 245, 126, 127
 };
 
-CHAR
+CONST CHAR
 yspl1[] = {  /* Spanish ISO 646 to Latin-1 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1435,7 +1455,7 @@ yspl1[] = {  /* Spanish ISO 646 to Latin-1 */
 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 176, 241, 231, 126, 127
 };
 
-CHAR
+CONST CHAR
 yswl1[] = {  /* Swedish ISO 646 to Latin-1 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1447,7 +1467,7 @@ yswl1[] = {  /* Swedish ISO 646 to Latin-1 */
 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 228, 246, 229, 252, 127
 };
 
-CHAR
+CONST CHAR
 ychl1[] = {  /* Swiss ISO 646 to Latin-1 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1459,7 +1479,7 @@ ychl1[] = {  /* Swiss ISO 646 to Latin-1 */
 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 228, 246, 252, 251, 127
 };
 
-CHAR
+CONST CHAR
 yhul1[] = {  /* Hungarian ISO 646 to Latin-1 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1471,7 +1491,7 @@ yhul1[] = {  /* Hungarian ISO 646 to Latin-1 */
 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 233, 246, 252,  34, 127
 };
 
-CHAR
+CONST CHAR
 ydml1[] = {  /* DEC Multinational Character Set to Latin-1 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1488,10 +1508,10 @@ ydml1[] = {  /* DEC Multinational Character Set to Latin-1 */
 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207,
 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223,
 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239,
-240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255,
+240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255
 };
 
-CHAR
+CONST CHAR
 ydgl1[] = {  /* Data General International to Latin-1 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1515,7 +1535,7 @@ ydgl1[] = {  /* Data General International to Latin-1 */
 /* Translation tables for Cyrillic character sets */
 
 #ifdef CYRILLIC
-CHAR
+CONST CHAR
 ylcac[] = {  /* Latin/Cyrillic to CP866 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19, 208, 209,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1535,7 +1555,7 @@ ylcac[] = {  /* Latin/Cyrillic to CP866 */
 252, 241, 164, 163, 243, 115, 105, 245, 106, 171, 173, 231, 170,  21, 247, 167
 };
 
-CHAR
+CONST CHAR
 ylck8[] = {  /* Latin/Cyrillic to Old KOI-8 Cyrillic */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1555,7 +1575,7 @@ UNK, 229, UNK, UNK, UNK,  83,  73,  73,  74, UNK, UNK, UNK, 235, UNK, 245, UNK,
 UNK, 197, UNK, UNK, UNK, 115, 105, 105, 106, UNK, UNK, UNK, 203, UNK, 213, UNK
 };
 
-CHAR
+CONST CHAR
 yaclc[] = {  /* CP866 to Latin/Cyrillic */
 /* NEED TO MAKE THIS ONE INVERTIBLE */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
@@ -1576,7 +1596,7 @@ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
 161, 241, 164, 244, 167, 247, 174, 254, UNK, UNK, UNK, UNK, 240, UNK, UNK, UNK
 };
 
-CHAR
+CONST CHAR
 yk8lc[] = {  /* Old KOI-8 Cyrillic to Latin/Cyrillic */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1596,7 +1616,7 @@ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
 191, 207, 192, 193, 194, 195, 182, 178, 204, 203, 183, 200, 205, 201, 199, 127
 };
 
-CHAR
+CONST CHAR
 ylcsk[] = {  /* Latin/Cyrillic to Short KOI */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1616,7 +1636,7 @@ ylcsk[] = {  /* Latin/Cyrillic to Short KOI */
 UNK, 101, UNK, UNK, UNK,  83,  73,  73,  74, UNK, UNK, UNK, 107, UNK, 117, UNK
 };
 
-CHAR yskcy[] = {  /* Short KOI to Latin/Cyrillic */
+CONST CHAR yskcy[] = {  /* Short KOI to Latin/Cyrillic */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
  32,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,
@@ -1632,8 +1652,8 @@ CHAR yskcy[] = {  /* Short KOI to Latin/Cyrillic */
 
 /* Latin-2 tables */
 
-CHAR
-yl252[] = {  /* Latin-2 to Code Page 852 */
+CONST CHAR
+yl252[] = {				/* Latin-2 to Code Page 852 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
  32,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,
@@ -1652,8 +1672,8 @@ yl252[] = {  /* Latin-2 to Code Page 852 */
 208, 228, 229, 162, 147, 139, 148, 246, 253, 133, 163, 251, 129, 236, 238, 250
 };
 
-CHAR
-y52l2[] = {  /* Code Page 852 to Latin-2 */
+CONST CHAR
+y52l2[] = {				/* Code Page 852 to Latin-2 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
  32,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,
@@ -1672,8 +1692,8 @@ y52l2[] = {  /* Code Page 852 to Latin-2 */
 158, 189, 178, 183, 162, 167, 247, 184, 176, 168, 255, 251, 216, 248, 159, 160
 };
 
-CHAR
-yl2l1[] = {  /* Latin-2 to Latin-1 */
+CONST CHAR
+yl2l1[] = {				/* Latin-2 to Latin-1 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
  32,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,
@@ -1692,8 +1712,8 @@ yl2l1[] = {  /* Latin-2 to Latin-1 */
 240, 'n', 'n', 243, 244, 'o', 246, 247, 'r', 'u', 250, 'u', 252, 253, 't', '.'
 };
 
-CHAR
-yl1l2[] = {  /* Latin-1 to Latin-2 */
+CONST CHAR
+yl1l2[] = {				/* Latin-1 to Latin-2 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
  32,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,
@@ -1712,8 +1732,8 @@ yl1l2[] = {  /* Latin-1 to Latin-2 */
 240, 'n', 'o', 243, 244, 'o', 246, 247, 'o', 'u', 250, 'u', 252, 253, UNK, 'y'
 };
 
-CHAR
-yl2as[] = {  /* Latin-2 to ASCII */
+CONST CHAR
+yl2as[] = {				/* Latin-2 to ASCII */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
  32,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,
@@ -1737,7 +1757,7 @@ UNK, 'a', UNK, 'l',  39, 'l', 's', UNK,  44, 's', 's', 't', 'z', UNK, 'z', 'z',
 /*
   8-bit Tables providing invertible translation between Latin/Hebrew and CP862.
 */
-CHAR
+CONST CHAR
 y62lh[] = {  /* PC Code Page 862 to ISO 8859-8 Latin/Hebrew */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1757,7 +1777,7 @@ y62lh[] = {  /* PC Code Page 862 to ISO 8859-8 Latin/Hebrew */
 218, 177, 219, 220, 221, 222, 186, 251, 176, 183, 252, 253, 254, 178, 255, 160
 };
 
-CHAR
+CONST CHAR
 ylh62[] = {  /* ISO 8859-8 Latin/Hebrew to PC Code Page 862 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1779,7 +1799,7 @@ ylh62[] = {  /* ISO 8859-8 Latin/Hebrew to PC Code Page 862 */
 /*
   7-bit table providing readable translation from DEC Hebrew-7 to CP862.
 */
-CHAR
+CONST CHAR
 yh762[] = {
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1793,7 +1813,7 @@ UNK,  65,  66,  67,  68,  69,  70,  71,  72,  73,  74,  75,  76,  77,  78,  79,
 /*
   8-bit table providing readable translation from CP862 to Hebrew-7.
 */
-CHAR
+CONST CHAR
 y62h7[] = {  /* PC Code Page 862 to Hebrew-7 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1815,7 +1835,7 @@ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK
 /*
   7-bit table providing readable translation from Hebrew-7 to ISO Latin/Hebrew.
 */
-CHAR
+CONST CHAR
 yh7lh[] = {
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1829,7 +1849,7 @@ yh7lh[] = {
 /*
   8-bit table providing readable translation from ISO Latin/Hebrew to Hebrew-7.
 */
-CHAR
+CONST CHAR
 ylhh7[] = {  /* Latin/Hebrew to Hebrew-7 */
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
@@ -1852,7 +1872,7 @@ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
 
 /* Translation functions ... */
 
-CHAR				/* The identity translation function.  */
+CONST CHAR				/* The identity translation function.  */
 #ifdef CK_ANSIC
 ident(CHAR c)				/* (no longer used) */
 #else
@@ -3875,7 +3895,7 @@ xkanji(a, fn) int a; int (*fn)();
 
     int i, r;
     int c7;
-    int state;
+    int state=0;
 
     r = 0;
     if (jpncnt == 0) {
@@ -4596,4 +4616,131 @@ CHAR (*xls[MAXTCSETS+1][MAXFCSETS+1])() =
     NULL,			/* 6,33 Latin/Hebrew to Latin/Hebrew */
     x62lh			/* 6,34 CP862 Hebrew to Latin/Hebrew */
 };
+
+#ifndef NOLOCAL
+/*
+  The following routines are useful only for terminal character sets, and so
+  ifdef'd out for NOLOCAL compilations.
+*/
+
+/*
+  C S _ I S _ N R C
+
+  Returns nonzero if argument indicates a 7-bit national character set,
+  zero otherwise.
+*/
+int
+cs_is_nrc(x) int x; {
+#ifdef CKOUNI
+    extern struct x_to_unicode * txrinfo[];
+    if (x == TX_J201R || x == TX_DECSPEC || x == TX_DECTECH)
+      return(0);
+    else
+      return(txrinfo[x]->flags & X2U_STD && txrinfo[x]->size == 94);
+#else /* CKOUNI */
+    if ((cs_size(x) == 94)
+#ifdef OS2
+	&& x != FC_DECSPEC 
+	&& x != FC_DECTECH
+#endif /* OS2 */	 
+	)
+      return(1);
+    else 
+      return(0);
+#endif /* CKOUNI */
+}
+
+/*
+  C S _ I S _ S T D
+
+  Returns nonzero if argument indicates an ISO 4873-standard-format
+  character set, i.e. one in which the control region is NOT used for
+  graphics; zero otherwise.
+*/
+int
+cs_is_std(x) int x; {
+#ifdef CKOUNI
+    extern struct x_to_unicode * txrinfo[];
+    if (txrinfo[x]->size == 128)	/* Just for safety */
+      return(0);
+    else
+      return(txrinfo[x]->flags & X2U_STD); /* Only this should be needed */
+#else
+    switch (x) {
+      case FC_CP437:			/* Code pages use C1 graphics */
+      case FC_CP850:
+      case FC_CP852:
+      case FC_CP862:
+      case FC_CP866:
+      case FC_APPQD:			/* So do Apple and NeXTSTEP */
+      case FC_NEXT:
+	return(0);
+      default:				/* Others behave */
+	return(1);
+    }
+#endif /* CKOUINI */
+}
+
+int
+cs_size(x) int x; {
+#ifdef CKOUNI
+    extern struct x_to_unicode * txrinfo[];
+    return(txrinfo[x]->size);
+#else
+    switch(x) {
+      case FC_USASCII:
+      case FC_UKASCII:
+      case FC_DUASCII:
+      case FC_FIASCII:
+      case FC_FRASCII:
+      case FC_FCASCII:
+      case FC_GEASCII:
+      case FC_HUASCII:
+      case FC_ITASCII:
+      case FC_NOASCII:
+      case FC_POASCII:
+      case FC_SPASCII:
+      case FC_SWASCII:
+      case FC_CHASCII:
+      case FC_KOI7:
+      case FC_HE7:
+#ifdef OS2
+      case FC_DECSPEC:
+      case FC_DECTECH:
+#endif /* OS2 */
+	return(94);
+
+      case FC_1LATIN:
+      case FC_2LATIN:
+      case FC_DECMCS:
+      case FC_DGMCS:
+      case FC_HPR8:
+      case FC_CYRILL:
+      case FC_KOI8:
+      case FC_HEBREW:
+	return(96);
+
+      case FC_NEXT:
+      case FC_CP437:
+      case FC_CP850:
+      case FC_CP852:
+      case FC_CP862:
+      case FC_CP866:
+      case FC_APPQD:
+	return(128);
+#ifdef KANJI
+      case FC_JIS7:
+	return(-94);
+      case FC_SHJIS:
+	return(-128);
+      case FC_JEUC:
+      case FC_JDEC:
+	return(-96);
+#endif /* KANJI */
+      default:
+	return(-1);
+    }
+#endif /* CKOUNI */
+}
+#endif /* NOLOCAL */
 #endif /* NOCSETS */
