@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2000,
+  Copyright (C) 1985, 2001,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -13,6 +13,18 @@
 #define CKUUSR_H
 
 #include "ckucmd.h"			/* Get symbols from command package */
+
+#ifndef NOLUCACHE			/* Use lookup() cache */
+#ifndef NOSPL				/* To speed up script programs */
+#ifndef USE_LUCACHE
+#define USE_LUCACHE
+#endif /* USE_LUCACHE */
+#endif /* NOSPL */
+#endif /* NOLUCACHE */
+
+#ifndef NODOUBLEQUOTING			/* New to 7.1 */
+#define DOUBLEQUOTING			/* Allow fields to be enclosed in */
+#endif /* NODOUBLEQUOTING */		/* doublequotes. */
 
 /* Sizes of things */
 
@@ -34,7 +46,7 @@
 #define MAC_MAX 1024
 #endif /* BIGBUFOK */
 
-#define GVARS 126			/* Highest global var allowed */
+#define GVARS 127			/* Highest global var allowed */
 #ifdef BIGBUFOK
 #define VNAML 4096			/* Max length for variable name */
 #define ARRAYREFLEN 1024		/* Max length for array reference */
@@ -77,12 +89,6 @@
 #define MINPBUFL 256			/* Size of MINPUT temp buffer */
 #endif /* NOSPL */
 #endif /* NOMINPUT */
-
-#ifdef CK_SMALL
-#define PWBUFL 63
-#else
-#define PWBUFL 255
-#endif /* CK_SMALL */
 
 #define ARRAYBASE 95			/* Lowest array-name character */
 
@@ -312,7 +318,9 @@ struct stringlist {			/* General purpose string list */
 #define XA_DBAS 17			/* --database */
 #define XA_DBFI 18			/* --dbfile */
 #define XA_PRIV 19			/* --privid */
-#define XA_MAX  19			/* Highest extended option number */
+#define XA_VERS 20			/* --version */
+#define XA_NPRM 21			/* --noperms */
+#define XA_MAX  21			/* Highest extended option number */
 #endif /* NOCMDL */
 
 #ifndef NOICP
@@ -323,17 +331,6 @@ struct stringlist {			/* General purpose string list */
 #define XXCLE   1	/* CLEAR */
 #define XXCLO   2	/* CLOSE */
 #define XXCON   3	/* CONNECT */
-
-/* CONNECT Switches */
-
-#define CONN_II  0	/* Idle interval */
-#define CONN_IS  1	/* Idle string */
-#define CONN_IL  2	/* Idle limit */
-#define CONN_NV  3	/* Non-Verbose */
-#define CONN_TL  4	/* Time limit */
-#define CONN_TS  5	/* Trigger string */
-#define CONN_MAX 5	/* Number of CONNECT switches */
-
 #define XXCPY   4	/* COPY */
 #define XXCWD   5	/* CWD (Change Working Directory) */
 #define XXDEF	6	/* DEFINE (a macro or variable) */
@@ -376,6 +373,11 @@ struct stringlist {			/* General purpose string list */
 #define DIR_NAF 33	/* NOT-AFTER: */
 #define DIR_BEF 34	/* BEFORE: */
 #define DIR_NBF 35	/* NOT-BEFORE: */
+#define DIR_SUM 36	/* SUMMARY */
+#define DIR_BIN 37	/* TYPE (only show binary or text) */
+#define DIR_LNK 38	/* follow symlinks */
+#define DIR_NLK 39	/* don't follow symlinks */
+#define DIR_OUT 40	/* Output file for listing */
 
 #define DIRS_NM 0       /* Sort directory by NAME */
 #define DIRS_DT 1       /* Sort directory by DATE */
@@ -436,7 +438,20 @@ struct stringlist {			/* General purpose string list */
 #define SND_DOT 29	/* Include dot-files */
 #define SND_NOD 30	/* Exclude dot-files */
 #define SND_ARR 31	/* Send from array */
-#define SND_MAX 31	/* Highest SEND switch */
+#define SND_TYP 32	/* TYPE (only send text (or binary)) */
+#define SND_XPA 33	/* TRANSPARENT */
+#define SND_PIP 34	/* PIPES */
+#define SND_ERR 35	/* ERROR */
+#define SND_CSL 36	/* Local character set */
+#define SND_CSR 37	/* Remote character set */
+#define SND_UPD 38	/* Update */
+#define SND_COL 39	/* Collision */
+#define SND_NML 40	/* Namelist */
+#define SND_SRN 41	/* Server-Rename */
+#define SND_LNK 42	/* Follow links */
+#define SND_NLK 43	/* Don't follow links */
+#define SND_SIM 44	/* Simulate */
+#define SND_MAX 44	/* Highest SEND switch */
 
 #define XXSER  29   	/* SERVER */
 #define XXSET  30	/* SET */
@@ -608,7 +623,7 @@ struct stringlist {			/* General purpose string list */
 #define XXGETK  188	/* GETKEYCODE */
 #define XXMORE  189	/* MORE */
 #define XXXOPTS 190	/* Extended-Options (help-only) */
-#define XXIKSD  191	/* IKSD (tcp/ip help-only) */
+#define XXIKSD  191	/* IKSD */
 #define XXRESET 192	/* RESET */
 #define XXASSOC 193     /* ASSOCIATE */
 
@@ -651,6 +666,25 @@ struct stringlist {			/* General purpose string list */
 #define XXTRACE 223	/* TRACE */
 #define XXNOTAV 224	/* The "not available" command */
 #define XXPTY   225     /* PTY (like PIPE) */
+#define XXCHMOD 226     /* CHMOD */
+#define XXPROMP 227	/* PROMPT */
+#define XXFEACH 228	/* FOREACH */
+#define XXGREP  229     /* GREP */
+#define XXSEXP  230	/* S-Expression */
+#define XXUNDCL 231	/* UNDECLARE */
+#define XXVOID  232     /* VOID */
+#define XXPUT   233	/* PUT */
+#define XXUNDFX 234	/* _UNDEFINE */
+#define XXHEAD  235     /* HEAD */
+#define XXTAIL  236     /* TAIL */
+#define XXDEBUG 237     /* DEBUG */
+#define XXLEARN 238     /* LEARN */
+#define XXPAT   239     /* PATTERNS (help only) */
+
+#define XXCDUP  240     /* CDUP (Change working directory upwards) */
+#define XXRCDUP 241     /* REMOTE CDUP */
+#define XXCAT   242	/* CAT (= TYPE /NOPAGE) */
+#define XXFIREW 243     /* FIREWALL (help only) */
 
 /* End of Top-Level Commands */
 
@@ -669,6 +703,7 @@ struct stringlist {			/* General purpose string list */
 #define ARR_DST   6			/* Destroy */
 #define ARR_SHO   7			/* Show */
 #define ARR_SET   8			/* Set */
+#define ARR_EQU   9			/* Equate */
 
 /* SORT options */
 
@@ -728,6 +763,12 @@ struct stringlist {			/* General purpose string list */
 #define DEL_SIM 18			/* /SIMULATE */
 #define DEL_ASK 19			/* /ASK */
 #define DEL_NAS 20			/* /NOASK */
+#define DEL_SUM 21			/* /SUMMARY */
+#define DEL_DIR 22			/* /DIRECTORY */
+#define DEL_ALL 23			/* /ALL */
+#define DEL_TYP 24			/* /TYPE: */
+#define DEL_LNK 25			/* /FOLLOWLINKS */
+#define DEL_NLK 26			/* /NOFOLLOWLINKS */
 
 /* FILE operations */
 
@@ -792,64 +833,10 @@ struct stringlist {			/* General purpose string list */
 #define KRB_I_NK4 18    /* /NO-KERBEROS4 */
 #define KRB_I_POP 19    /* /POPUP */
 #define KRB_I_ADR 20    /* /ADDRESSES: */
-#define KRB_I_MAX 20    /* Highest KERBEROS INIT switch number */
+#define KRB_I_NAD 21    /* /NO-ADDRESSES */
+#define KRB_I_MAX 21    /* Highest KERBEROS INIT switch number */
 
 #endif /* CK_KERBEROS */
-
-/* IF conditions */
-
-#define  XXIFCO 0       /* IF COUNT */
-#define  XXIFER 1       /* IF ERRORLEVEL */
-#define  XXIFEX 2       /* IF EXIST */
-#define  XXIFFA 3       /* IF FAILURE */
-#define  XXIFSU 4       /* IF SUCCESS */
-#define  XXIFNO 5       /* IF NOT */
-#define  XXIFDE 6       /* IF DEFINED */
-#define  XXIFEQ 7	/* IF EQUAL (strings) */
-#define  XXIFAE 8       /* IF = (numbers) */
-#define  XXIFLT 9       /* IF < (numbers) */
-#define  XXIFGT 10      /* IF > (numbers) */
-#define  XXIFLL 11      /* IF Lexically Less Than (strings) */
-#define  XXIFLG 12      /* IF Lexically Greater Than (strings) */
-#define  XXIFEO 13      /* IF EOF (READ file) */
-#define  XXIFBG 14      /* IF BACKGROUND */
-#define  XXIFNU 15	/* IF NUMERIC */
-#define  XXIFFG 16      /* IF FOREGROUND */
-#define  XXIFDI 17      /* IF DIRECTORY */
-#define  XXIFNE 18      /* IF NEWER */
-#define  XXIFRO 19      /* IF REMOTE-ONLY */
-#define  XXIFAL 20	/* IF ALARM */
-#define  XXIFSD 21      /* IF STARTED-FROM-DIALER */
-#define  XXIFTR 22      /* IF TRUE */
-#define  XXIFNT 23      /* IF FALSE */
-#define  XXIFTM 24      /* IF TERMINAL-MACRO */
-#define  XXIFEM 25      /* IF EMULATION */
-#define  XXIFOP 26	/* IF OPEN */
-#define  XXIFLE 27	/* IF <= */
-#define  XXIFGE 28	/* IF >= */
-#define  XXIFIP 29      /* IF INPATH */
-#define  XXIFTA 30      /* IF TAPI */
-#define  XXIFMA 31	/* IF MATCH */
-#define  XXIFFL 32	/* IF FLAG */
-#define  XXIFAB 33	/* IF ABSOLUTE */
-#define  XXIFAV 34	/* IF AVAILABLE */
-#define  XXIFAT 35      /* IF ASKTIMEOUT */
-#define  XXIFRD 36      /* IF READABLE */
-#define  XXIFWR 37      /* IF WRITEABLE */
-#define  XXIFAN 38	/* IF ... AND ... */
-#define  XXIFOR 39	/* IF ... OR ... */
-#define  XXIFLP 40      /* IF left parenthesis */
-#define  XXIFRP 41      /* IF right parenthesis */
-#define  XXIFNQ 42      /* IF != (== "NOT =") */
-#define  XXIFQU 43      /* IF QUIET */
-#define  XXIFCK 44	/* IF C-KERMIT */
-#define  XXIFK9 45	/* IF K-95 */
-#define  XXIFMS 46	/* IF MS-KERMIT */
-#define  XXIFWI 47	/* IF WILD */
-#define  XXIFLO 48	/* IF LOCAL */
-#define  XXIFCM 49	/* IF COMMAND */
-#define  XXIFFP 50	/* IF FLOAT */
-#define  XXIFIK 51      /* IF IKS */
 
 /* SET parameters */
 
@@ -872,21 +859,21 @@ struct stringlist {			/* General purpose string list */
 
 /* SET LINE / SET HOST command switches */
 
-#define SL_CNX  0	/* /CONNECT */
-#define SL_SRV  1	/* /SERVER */
-#define SL_SHR  2	/* /SHARE */
-#define SL_NSH  3	/* /NOSHARE */
-#define SL_BEE  4	/* /BEEP */
-#define SL_ANS  5	/* /ANSWER */
-#define SL_DIA  6	/* /DIAL:xxx */
-#define SL_SPD  7	/* /SPEED:xxx */
-#define SL_FLO  8	/* /FLOW:xxx */
-#define SL_TMO  9	/* /TIMEOUT:xxx */
-#define SL_CMD 10	/* /COMMAND */
-#define SL_PSW 11	/* /PASSWORD:xxx */
-#define SL_IKS 12       /* /KERMIT-SERVICE */
-#define SL_NET 13       /* /NETWORK-TYPE:xxx */
-#define SL_ENC 14       /* /ENCRYPT:type (telnet) /ENCRYPT (rlogin) */
+#define SL_CNX   0	/* /CONNECT */
+#define SL_SRV   1	/* /SERVER */
+#define SL_SHR   2	/* /SHARE */
+#define SL_NSH   3	/* /NOSHARE */
+#define SL_BEE   4	/* /BEEP */
+#define SL_ANS   5	/* /ANSWER */
+#define SL_DIA   6	/* /DIAL:xxx */
+#define SL_SPD   7	/* /SPEED:xxx */
+#define SL_FLO   8	/* /FLOW:xxx */
+#define SL_TMO   9	/* /TIMEOUT:xxx */
+#define SL_CMD  10	/* /COMMAND */
+#define SL_PSW  11	/* /PASSWORD:xxx */
+#define SL_IKS  12      /* /KERMIT-SERVICE */
+#define SL_NET  13      /* /NETWORK-TYPE:xxx */
+#define SL_ENC  14      /* /ENCRYPT:type (telnet) /ENCRYPT (rlogin) */
 #define SL_KRB4 15      /* /KERBEROS 4 (rlogin/telnet) */
 #define SL_KRB5 16      /* /KERBEROS 5 (rlogin/telnet) */
 #define SL_SRP  17      /* /SRP (telnet) */
@@ -966,7 +953,8 @@ struct stringlist {			/* General purpose string list */
 #define     TT_TVI910  34	/*    TVI 910+ */
 #define     TT_TVI925  35       /*    TVI 925  */
 #define     TT_TVI950  36       /*    TVI950   */
-#define     TT_VTNT    37       /*    Microsoft NT Virtual Terminal */
+#define     TT_ADM3A   37       /*    LSI ADM 3A */
+#define     TT_VTNT    38       /*    Microsoft NT Virtual Terminal */
 #define     TT_MAX   TT_VTNT
 #define     TT_VT420   96	/*    DEC VT-420 */
 #define     TT_VT520   97	/*    DEC VT-520/525 */
@@ -995,13 +983,20 @@ struct stringlist {			/* General purpose string list */
 #define ISTVI925(x) (x == TT_TVI925)
 #define ISTVI950(x) (x == TT_TVI950)
 #define ISVT52(x)  (x == TT_VT52 || x == TT_H19)
+#ifdef COMMENT
 #define ISVT520(x) (x == TT_VT520)
 #define ISVT420(x) (x >= TT_VT420 && x <= TT_VT520)
+#else /* COMMENT */
+/* Since we do not yet support 420/520 extend 320 */
+#define ISVT520(x) (ISVT320(x))
+#define ISVT420(x) (ISVT320(x))
+#endif /* COMMENT */
 #define ISVT320(x) (x >= TT_VT320 && x <= TT_97801)
 #define ISVT220(x) (x == TT_VT220 || x == TT_VT220PC || \
                     ISBEOS(x) || ISQANSI(x) || \
                     ISVT320(x) || ISLINUX(x))
-#define ISVT102(x) (x >= TT_VIP7809 && x <= TT_BA80 || ISVT220(x))
+#define ISVT102(x) (x >= TT_VIP7809 && x <= TT_BA80 || \
+		    x == TT_VT102 || ISVT220(x))
 #define ISVT100(x) (x == TT_VT100 || ISVT102(x))
 #define ISWY30(x)  (x == TT_WY30)
 #define ISWYSE(x)  (x >= TT_WY30 && x <= TT_WY160)
@@ -1018,6 +1013,7 @@ struct stringlist {			/* General purpose string list */
 #define ISAIXTERM(x) (x == TT_AIXTERM)
 #define ISTEK(x)   (x == TT_TEK40)
 #define ISVTNT(x)  (x == TT_VTNT)
+#define ISADM3A(x) (x == TT_ADM3A)
 #endif /* OS2 */
 
 #define   XYTCS  2      /*  Terminal Character Set */
@@ -1105,6 +1101,7 @@ struct stringlist {			/* General purpose string list */
 #define    TAD_X_STR     0 /*    STRING */
 #define    TAD_X_DETECT  1 /*    DETECTION ( PACKET, STRING ) */
 #define    TAD_X_C0      2 /*    C0 CONFLICTS */
+#define    TAD_ERR     4 /*    ERROR { STOP, CONTINUE } */
 #define   XYTAUTOUL 29  /* SET TERMINAL AUTOUPLOAD   */
 #ifdef OS2
 #define   XYTATTBUG 30  /* SET TERM ATTR-BUG */
@@ -1124,7 +1121,9 @@ struct stringlist {			/* General purpose string list */
 #define   XYTSEND   40  /* SET TERM SEND-DATA */
 #define   XYTSEOB   41  /* SET TERM SEND-END-OF-BLOCK */
 #define   XYTMBEL   42  /* SET TERM MARGIN-BELL */
+#endif /* OS2 */
 #define   XYTIDLE   43  /* SET TERM IDLE-SEND */
+#ifdef OS2
 #define   XYTKBMOD  44  /* SET TERM KEYBOARD-MODE */
 #define   XYTUNX    45  /* SET TERM UNIX-MODE (DG) */
 #define   XYTASCRL  46  /* SET TERM AUTOSCROLL */
@@ -1175,7 +1174,10 @@ struct stringlist {			/* General purpose string list */
 #define   XYTVTNRC  58  /* SET TERM VT-NRC-MODE */
 #define   XYTSNICC  59  /* SET TERM SNI-CH.CODE */
 #define   XYTSNIFV  60  /* SET TERM SNI-FIRMWARE-VERSIONS */
+#define   XYTURLHI  61  /* SET TERM URL-HIGHLIGHT */
 #endif /* OS2 */
+#define   XYTITMO   62  /* SET TERM IDLE-TIMEOUT */
+#define   XYTIACT   63  /* SET TERM IDLE-ACTION  */
 
 #define XYATTR 34       /* Attribute packets  */
 #define XYSERV 35	/* Server parameters  */
@@ -1199,6 +1201,8 @@ struct stringlist {			/* General purpose string list */
 #define   XYX_BEL 8	/*   Bell */
 #define   XYX_PIP 9	/*   Pipes */
 #define   XYX_INT 10    /*   Interruption */
+#define   XYX_XLA 11    /*   (character-set) Translation On/Off */
+#define   XYX_MSG 12	/*   Message */
 #define XYLANG 38       /* Language */
 #define XYCOUN 39       /* Count */
 #define XYTAKE 40       /* Take */
@@ -1262,6 +1266,11 @@ struct stringlist {			/* General purpose string list */
 #define  XYDDIR 10	/*   Dial directory */
 #define  XYDDIA 11	/*   MODEM (dial) dial-command */
 #define  XYDMHU 12	/*   MODEM HANGUP (dial modem-hangup) */
+
+#ifndef DEFMDHUP	/* Default MODEM HANGUP-METHOD */
+#define DEFMDMHUP 1	/* 0 = RS232, 1 = modem command */
+#endif /* DEFMDMHUP */
+
 #define  XYDNPR 13      /*   Dial PREFIX */
 #define  XYDSTR 14	/*   MODEM COMMAND (dial string) ... */
 
@@ -1353,6 +1362,8 @@ struct stringlist {			/* General purpose string list */
 #define SCMD_MOR 9	/* MORE-PROMPTING */
 #define SCMD_INT 10     /* INTERRUPTION */
 #define SCMD_ADL 11     /* AUTODOWNLOAD */
+#define SCMD_STA 12     /* STATUSLINE */
+#define SCMD_DBQ 13	/* DOUBLEQUOTING */
 
 #define XYCASE 55       /* Case */
 #define XYCOMP 56       /* Compression */
@@ -1381,6 +1392,7 @@ struct stringlist {			/* General purpose string list */
 #define    TN_ENV_SYS  4 /*    VAR SYSTEMTYPE */
 #define    TN_ENV_DISP 5 /*    VAR DISPLAY */
 #define    TN_ENV_UVAR 6 /*    USERVAR */
+#define    TN_ENV_LOC  7 /*    USERVAR LOCATION */
 #define    TN_ENV_ON  98 /*    ON (enabled) */
 #define    TN_ENV_OFF 99 /*    OFF (disabled) */
 #define  CK_TN_LOC 6    /*  TELNET LOCATION */
@@ -1421,6 +1433,9 @@ struct stringlist {			/* General purpose string list */
 #define  CK_TN_CPC    26  /* TELNET COM-PORT-CONTROL */
 #define  CK_TN_DB     27  /* TELNET DEBUG */
 #define  CK_TN_FX     28  /* TELNET FORWARD_X */
+#define  CK_TN_DL     29  /* TELNET DELAY-SB */
+#define  CK_TN_SFU    30  /* TELNET SFU-COMPATIBILITY */
+#define  CK_TN_LOG    31  /* TELNET LOGOUT */
 #endif /* TNCODE */
 #define XYOUTP 68	/* OUTPUT command parameters */
 #define   OUT_PAC 0	/*   OUTPUT PACING */
@@ -1434,6 +1449,7 @@ struct stringlist {			/* General purpose string list */
 #define  XYM_ON     0   /* Mouse ON/OFF        */
 #define  XYM_BUTTON 1   /* Define Mouse Events */
 #define  XYM_CLEAR  2   /* Clear Mouse Events  */
+#define  XYM_DEBUG  3   /* Debug Mode ON/OFF */
 /* These must match similar definitions in ckokey.h */
 #define   XYM_B1 0      /* Mouse Button One */
 #define   XYM_B2 1      /* Mouse Button Two */
@@ -1498,6 +1514,9 @@ struct stringlist {			/* General purpose string list */
 #define  XYTCP_ADDRESS   9  /* Set preferred IP Address */
 #define  XYTCP_DNS_SRV  10  /* Use DNS Service Records */
 #define  XYTCP_DONTROUTE 11 /* Dont Route */
+#define  XYTCP_SOCKS_SVR 12 /* Name of Socks Server */
+#define  XYTCP_HTTP_PROXY 13 /* Name/Port of HTTP Proxy Server */
+#define  XYTCP_SOCKS_NS  14 /* Name of Socks Name Server */
 #endif /* TCPSOCKET */
 
 #ifdef OS2
@@ -1558,6 +1577,9 @@ struct stringlist {			/* General purpose string list */
 #define XYKRBK5K4 13    /* Kerberos 5 Get K4 Tickets */
 #define XYKRBPRM  14    /* Kerberos 4/5 Prompt */
 #define XYKRBADR  15    /* Kerberos 4/5 CheckAddrs */
+#define XYKRBNAD  16    /* Kerberos 5 No Addresses */
+#define XYKRBADD  17    /* Kerberos 5 Address List */
+#define XYKRBKTB  18    /* Kerberos 4/5 Key Table */
 #define XYSRPPRM   0    /* SRP Prompt */
 #define XYSSLRCFL  0    /* SSL/TLS RSA Certs file */
 #define XYSSLCOK   1    /* SSL/TLS Certs-Ok flag */
@@ -1578,6 +1600,9 @@ struct stringlist {			/* General purpose string list */
 #define XYSSLCRLD 16    /* SSL/TLS CRL dir */
 #define XYSSLVRFF 17    /* SSL/TLS Verify file */
 #define XYSSLVRFD 18    /* SSL/TLS Verify dir */
+#define XYSSLRND  19    /* SSL/TLS Random file */
+#define XYSSLDCCF 20    /* SSL/TLS DSA Certs Chain File */
+#define XYSSLRCCF 21    /* SSL/TLS RSA Certs Chain File */
 
 /* The following must be powers of 2 for a bit mask */
 
@@ -1616,8 +1641,33 @@ struct stringlist {			/* General purpose string list */
 #define XYFACKP  121    /* F-ACK-PATH */
 #define XYSYSL   122    /* SysLog */
 #define XYQNXPL  123	/* QNX Port Lock */
+#define XYIKS    124    /* SET IKS ... */
+#define XYROOT   125    /* SET ROOT */
+#define XYFTPX   126    /* SET FTP */
+#define XYSEXP   127	/* SET SEXP */
+#define XYGPR    128    /* SET GET-PUT-REMOTE */
 
-/* END OF TOP-LEVEL SET COMMANDS */
+/* End of SET commands */
+
+/* S-Expressions -- floating-point support required */
+
+#ifndef CKFLOAT
+#ifndef NOSEXP
+#define NOSEXP
+#endif /* NOSEXP */
+#endif /* CKFLOAT */
+
+/* Maximum number of elements in an S-Expression */
+
+#ifndef NOSEXP
+#ifndef SEXPMAX
+#ifdef BIGBUFOK
+#define SEXPMAX 1024
+#else
+#define SEXPMAX 32
+#endif /* BIGBUFOK */
+#endif /* SEXPMAX */
+#endif /* NOSEXP */
 
 #ifdef ANYX25
 /* PAD command parameters */
@@ -1754,9 +1804,16 @@ struct stringlist {			/* General purpose string list */
 #define         n_MT5634ZPX     65	/* Multitech MT5634ZPX */
 #define         n_ULINKV250     66	/* Microlink ITU-T V.250 56K */
 #define         n_ITUTV250      67	/* Generic ITU-T V.250 */
-#define         n_RWV90         68	/* Generic Rockwell V.34 */
+#define         n_RWV90         68	/* Generic Rockwell V.90 */
 #define         n_SUPRAX        69      /* Diamond Supra Express V.90 */
-#define		MAX_MDM		69	/* Number of modem types */
+#define         n_LUCENT        70      /* Lucent Venus chipset */
+#define         n_PCTEL         71      /* PCTel chipset */
+#define         n_CONEXANT      72      /* Conexant modem family */
+#define		n_ZOOMV34	73	/* Zoom */
+#define		n_ZOOMV90	74	/* Zoom */
+#define         n_ZOOMV92       75      /* ZOOM V.92 */
+#define         n_MOTSM56       76	/* Motorola SM56 chipset */
+#define		MAX_MDM		76	/* Number of modem types */
 
 #endif /* MINIDIAL */
 #endif /* NODIAL */
@@ -1830,6 +1887,11 @@ struct stringlist {			/* General purpose string list */
 #define SHOPTS    63			/* SHOW OPTIONS */
 #define SHOFLO    64			/* SHOW FLOW-CONTROL */
 #define SHOXFER   65			/* SHOW TRANSFER */
+#define SHTCP     66                    /* SHOW TCP */
+#define SHHISTORY 67			/* SHOW (command) HISTORY */
+#define SHSEXP    68			/* SHOW SEXPRESSIONS */
+#define SHOSSH    69			/* SHOW SSH */
+#define SHOIKS    70                    /* SHOW IKS */
 
 /* REMOTE command symbols */
 
@@ -1858,6 +1920,7 @@ struct stringlist {			/* General purpose string list */
 #define XZMKD 22	/* mkdir */
 #define XZRMD 23	/* rmdir */
 #define XZXIT 24	/* Exit */
+#define XZCDU 25        /* CDUP */
 
 /* SET INPUT command parameters */
 
@@ -1904,12 +1967,6 @@ struct stringlist {			/* General purpose string list */
 #define EN_ENA 25			/* ENABLE */
 #endif /* NOICP */
 
-/* BEEP TYPES */
-#define BP_BEL  0			/* Terminal bell */
-#define BP_NOTE 1			/* Info */
-#define BP_WARN 2			/* Warning */
-#define BP_FAIL 3			/* Error */
-
 #ifndef NOICP
 /* CLEAR command symbols */
 #define CLR_DEV    1			/* Clear Device Buffers */
@@ -1925,6 +1982,7 @@ struct stringlist {			/* General purpose string list */
 #define CLR_TXT  512			/* Clear text-patterns */
 #define CLR_BIN 1024			/* Clear binary-patterns */
 #define CLR_SCR 2048			/* Clear screen */
+#define CLR_KBD 4096			/* Clear keyboard buffer */
 #endif /* NOICP */
 
 /* Symbols for logs */
@@ -1939,9 +1997,9 @@ struct stringlist {			/* General purpose string list */
 #define LOGE 7				/* Error (e.g. stderr) */
 #define LOGM 8				/* The dialing log */
 
+#ifndef NOSPL
 /* Symbols for builtin variables */
 
-#ifndef NOSPL
 #define VN_ARGC 0			/* ARGC */
 #define VN_COUN 1			/* COUNT */
 #define VN_DATE 2			/* DATE */
@@ -2116,6 +2174,8 @@ struct stringlist {			/* General purpose string list */
 #define VN_DM_WD  162			/* Dial Modifier: Wait for Dialtone */
 #define VN_DM_RC  163			/* Dial Modifier: Return to Command */
 
+/* (more below...) */
+
 #define VN_TY_LN  164			/* TYPE command line number */
 #define VN_TY_LC  165			/* TYPE command line count */
 #define VN_TY_LM  166			/* TYPE command match count */
@@ -2159,6 +2219,41 @@ struct stringlist {			/* General purpose string list */
 
 #define VN_X509_S 195                   /* X.509 Certificate Subject */
 #define VN_X509_I 196                   /* X.509 Certificate Issuer  */
+
+#define VN_PROMPT 197			/* C-Kermit's prompt */
+#define VN_BUILD  198			/* Build ID string */
+
+#define VN_SEXP   199			/* Last S-Expression */
+#define VN_VSEXP  200			/* Value of last S-Expression */
+#define VN_LSEXP  201			/* SEXP depth */
+
+#define VN_FTIME  202			/* Time as floating-poing number */
+
+#define VN_FTP_C  203                   /* FTP Reply Code */
+#define VN_FTP_M  204                   /* FTP Reply Message */
+#define VN_FTP_S  205			/* FTP Server type */
+#define VN_FTP_H  206			/* FTP Host */
+#define VN_FTP_X  207			/* FTP Connected */
+#define VN_FTP_L  208			/* FTP Logged in */
+#define VN_FTP_G  209			/* FTP GET-PUT-REMOTE setting */
+
+#define VN_SECURE 210                   /* Encrypted connection 0 or 1 */
+
+#define VN_DM_HF  211			/* Dial Modifier: Hook Flash */
+#define VN_DM_WB  212			/* Dial Modifier: Wait for Bong */
+#define VN_CX_STA 213			/* CX_STATUS */
+
+#define VN_FTP_B  214                   /* FTP CPL */
+#define VN_FTP_D  215                   /* FTP DPL */
+#define VN_FTP_Z  216                   /* FTP SECURITY */
+#define VN_HTTP_C 217                   /* HTTP Code */
+#define VN_HTTP_N 218                   /* HTTP Connected */
+#define VN_HTTP_H 219                   /* HTTP Host */
+#define VN_HTTP_M 220                   /* HTTP Message */
+#define VN_HTTP_S 221                   /* HTTP Security */
+
+#define VN_NOW    222			/* Timestamp yyyymmdd hh:mm:ss */
+#define VN_HOUR   223			/* Current hour of the day 0-23 */
 #endif /* NOSPL */
 
 /* INPUT status values */
@@ -2317,7 +2412,34 @@ struct stringlist {			/* General purpose string list */
 #define FN_HEX2IP  134			/* \fhextoip() */
 #define FN_IP2HEX  135			/* \fiptohex() */
 #define FN_RADIX   136			/* \fradix()   */
+#define FN_JOIN    137			/* \fjoin()    */
+#define FN_SUBST   138			/* \fsubstitute() */
+#define FN_SEXP    139			/* \fsexpression() */
+#define FN_CMDSTK  140			/* \fcmdstack() */
+#define FN_TOGMT   141			/* \ftogmt() */
+#define FN_CMPDATE 142			/* \fcmpdates() */
+#define FN_DIFDATE 143			/* \fdiffdates() */
+#ifdef TCPSOCKET
+#define FN_HSTADD  144			/* \faddr2name() */
+#define FN_HSTNAM  145			/* \fname2addr() */
+#endif /* TCPSOCKET */
+#define FN_DELSEC  146			/* \fdelta2sec() */
+#define FN_PC_DU   147			/* Path conversion DOS to Unix */
+#define FN_PC_VU   148			/* Path conversion VMS to Unix */
+#define FN_PC_UD   149			/* Path conversion Unix to DOS */
+#define FN_PC_UV   150			/* Path conversion Unix to VMS */
+#define FN_KWVAL   151			/* \fkeywordvalue() */
+#define FN_SLEEP   152			/* \fsleep() */
+#define FN_MSLEEP  153			/* \fmsleep() */
+
 #endif /* NOSPL */
+
+/* Time Units */
+
+#define TU_DAYS   0
+#define TU_WEEKS  1
+#define TU_MONTHS 2
+#define TU_YEARS  3
 
 #ifdef CK_CURSES
 /* Screen line numbers for fullscreen file-transfer display */
@@ -2383,6 +2505,8 @@ struct stringlist {			/* General purpose string list */
 
 /* ANSI-C prototypes for user interface functions */
 
+#ifndef NOICP
+_PROTOTYP( int matchname, ( char *, int, int ) );
 _PROTOTYP( int ck_cls, ( void ) );
 _PROTOTYP( int ck_cleol, ( void ) );
 _PROTOTYP( int ck_curpos, ( int, int ) );
@@ -2395,6 +2519,7 @@ _PROTOTYP( int yystring, (char *, char **) );
 #endif /* NOFRILLS */
 _PROTOTYP( int getncm, (char *, int) );
 _PROTOTYP( int getnct, (char *, int, FILE *, int) );
+#endif /* NOICP */
 _PROTOTYP( VOID bgchk, (void) );
 _PROTOTYP( char * nvlook, (char *) );
 _PROTOTYP( int xarray, (char *) );
@@ -2409,7 +2534,7 @@ _PROTOTYP( int pusharray, (int, int) );
 _PROTOTYP( int parsevar, (char *, int *, int *) );
 _PROTOTYP( int macini, (void) );
 _PROTOTYP( VOID initmac, (void) );
-_PROTOTYP( int delmac, (char *) );
+_PROTOTYP( int delmac, (char *, int) );
 _PROTOTYP( int addmac, (char *, char *) );
 _PROTOTYP( int domac, (char *, char *, int) );
 _PROTOTYP( int addmmac, (char *, char *[]) );
@@ -2436,8 +2561,9 @@ _PROTOTYP( int dormt, (int) );
 _PROTOTYP( int dosort, (void) );
 _PROTOTYP( int dostat, (int) );
 _PROTOTYP( int dostop, (void) );
-_PROTOTYP( int dotype, (char *, int, int, int, char *, int, char *) );
-_PROTOTYP( int transmit, (char *, char, int, int) );
+_PROTOTYP( int dotype, (char *, int, int, int, char *, int, char *, int, int,
+			char *, int));
+_PROTOTYP( int transmit, (char *, char, int, int, int) );
 _PROTOTYP( int xlate, (char *, char *, int, int) );
 _PROTOTYP( int litcmd, (char **, char **, int) );
 _PROTOTYP( int incvar, (char *, int, int) );
@@ -2461,6 +2587,7 @@ _PROTOTYP( int traopn, (char *,int) );
 _PROTOTYP( int sesopn, (char *,int) );
 _PROTOTYP( int debopn, (char *,int) );
 _PROTOTYP( int diaopn, (char *,int,int) );
+_PROTOTYP( int prepop, (void) );
 _PROTOTYP( int popclvl, (void) );
 _PROTOTYP( int varval, (char *, int *) );
 _PROTOTYP( char * evala, (char *) );
@@ -2470,7 +2597,6 @@ _PROTOTYP( int setat, (int) );
 _PROTOTYP( int setinp, (void) );
 _PROTOTYP( VOID dolognet, (void) );
 _PROTOTYP( VOID dologline, (void) );
-_PROTOTYP( long dologshow, (int) );
 _PROTOTYP( int setlin, (int, int, int) );
 _PROTOTYP( int setmodem, (void) );
 _PROTOTYP( int setfil, (int) );
@@ -2496,6 +2622,7 @@ _PROTOTYP( VOID xwords, (char *, int, char *[], int) );
 _PROTOTYP( VOID keynaminit, (void) );
 #endif /* OS2 */
 _PROTOTYP( int xlookup, (struct keytab[], char *, int, int *) );
+_PROTOTYP( char * rlookup, (struct keytab[], int, int) );
 _PROTOTYP( int hupok, (int) );
 _PROTOTYP( char * zzndate, (void) );
 _PROTOTYP( char * zjdate, (char *) );
@@ -2522,11 +2649,27 @@ _PROTOTYP (int cp_auth, ( void ) );
 #endif /* CK_KERBEROS */
 _PROTOTYP( long mjd, (char *) );
 _PROTOTYP( char * mjd2date, (long) );
-
 _PROTOTYP( char * ckgetpid, (void) );
+
+_PROTOTYP( int dogrep, (void) );
+
+#ifndef NOFTP
+#ifndef SYSFTP
+_PROTOTYP( int doxftp, (void) );
+_PROTOTYP( int doftphlp, (void) );
+_PROTOTYP( int dosetftp, (void) );
+_PROTOTYP( int dosetftphlp, (void) );
+_PROTOTYP( int shoftp, (int) );
+#endif /* SYSFTP */
+#endif /* NOFTP */
+
+_PROTOTYP( VOID cmhistory, (void) );
+_PROTOTYP( char * getdcset, (void) );
+_PROTOTYP( char * ttgtpn, (void) );
 
 #ifndef NOSHOW
 _PROTOTYP( int doshow, (int) );
+_PROTOTYP( int shotcp, (int) );
 _PROTOTYP( VOID shopar, (void) );
 _PROTOTYP( VOID shofil, (void) );
 _PROTOTYP( VOID shoparp, (void) );
@@ -2574,10 +2717,16 @@ _PROTOTYP( VOID shoflow, (void) );
 _PROTOTYP( VOID shoxfer, (void) );
 #endif /* NOSHOW */
 
+_PROTOTYP( VOID shostrdef, (CHAR *) );
+
+#ifndef NOSPL
+_PROTOTYP( int addlocal, (char *) );
+#endif /* NOSPL */
+
 _PROTOTYP( int setdelopts, (void) );
 
 #ifdef VMS
-_PROTOTYP( int cvtdir, (char *, char *) );
+_PROTOTYP( int cvtdir, (char *, char *, int) );
 #endif /* VMS */
 
 #ifdef FNFLOAT
@@ -2588,6 +2737,21 @@ _PROTOTYP( VOID initfloat, (void) );
 _PROTOTYP( int dofile, (int) );
 #endif /* CKCHANNELIO */
 
+#ifdef CKROOT
+_PROTOTYP( int dochroot, (void) );
+#endif /* CKROOT */
+
+#ifdef NEWFTP
+_PROTOTYP( int doftpusr, () );
+_PROTOTYP( int doftpput, (int,int) );
+_PROTOTYP( int doftpget, (int,int) );
+_PROTOTYP( int doftprmt, (int,int) );
+_PROTOTYP( int ftpopen,  (char *, char *, int) );
+_PROTOTYP( int cmdlinget,(int) );
+_PROTOTYP( int cmdlinput,(int) );
+_PROTOTYP( int doftparg, (char) );
+#endif /* NEWFTP */
+
 #ifdef COMMENT
 /* These prototypes are no longer used */
 _PROTOTYP( char * getdws, (int) );
@@ -2596,6 +2760,10 @@ _PROTOTYP( int doget, (int) );
 _PROTOTYP( char * arrayval, (int, int) );
 #endif /* COMMENT */
 
+#ifdef KUI
+_PROTOTYP(int BuildFontTable,
+          (struct keytab ** pTable, struct keytab ** pTable2, int * pN));
+#endif /* KUI */
 #endif /* CKUUSR_H */
 
 /* End of ckuusr.h */

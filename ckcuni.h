@@ -1,7 +1,7 @@
 /*  C K C U N I . H  --  Unicode/Terminal character-set translations  */
 
 /*
-  Copyright (C) 1999, 2000,
+  Copyright (C) 1999, 2001,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -150,9 +150,15 @@
 #define TX_MAZOVIA    101
 #define TX_TRANSP     102               /* Transparent - no translation */
 #define TX_HZ1500     103		/* Hazeltine 1500 graphics set */
-#define TX_KOI8R      104
-#define TX_KOI8U      105
-#define MAXTXSETS     106		/* Number of terminal character sets */
+#define TX_KOI8R      104		/* KOI8R - Russian */
+#define TX_KOI8U      105		/* KOI8U - Ukrainian */
+#define TX_APL1       106		/* APL ISO IR 68 */
+#define TX_APL2       107		/* Dyadic Systems Inc APL */
+#define TX_APL3       108		/* APL-Plus (APL-2000) */
+#define TX_APL4       109		/* IBM APL/2 */
+#define TX_APL5       110		/* APL-2741 */
+
+#define MAXTXSETS     111		/* Number of terminal character sets */
 
 /* The following are not implemented yet */
 /* UTF-8 is supported as a special mode in Kermit 95 (see utf8 flag) */

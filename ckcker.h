@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2000,
+  Copyright (C) 1985, 2001,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -17,6 +17,8 @@
 #define I_AM_TELNET  1
 #define I_AM_RLOGIN  2
 #define I_AM_IKSD    3
+#define I_AM_FTP     4
+#define I_AM_HTTP    5
 
 #ifndef NOSTREAMING
 #ifndef STREAMING
@@ -30,11 +32,11 @@
    - BLOCK-CHECK is 3 rather than 1
    - FILE TYPE is BINARY rather than TEXT
 */
-#ifdef OS2				/* OS/2, Windows NT, Windows 95 */
+#ifdef BIGBUFOK				/* (was OS2) */
 #ifndef NEWDEFAULTS
 #define NEWDEFAULTS
 #endif /* NEWDEFAULTS */
-#endif /* OS2 */
+#endif /* BIGBUFOK */
 
 #ifdef NOICP				/* No Interactive Command Parser */
 #ifndef NOSPL				/* implies... */
@@ -232,10 +234,17 @@ struct sysdata {
 #endif /* NOAPC */
 
 #ifdef CK_APC				/* APC buffer length */
-#define APCBUFLEN (CMDBL + 10)
-#define APC_OFF 0	/* APC OFF (disabled) */
-#define APC_ON 1	/* APC ON (enabled for non-dangerous commands) */
-#define APC_UNCH 2	/* APC UNCHECKED (enabled for ALL commands) */
+#ifndef APCBUFLEN			/* Should be no bigger than */
+#ifdef NOSPL				/* command buffer length */
+#define APCBUFLEN 608			/* (see ckucmd.h) but we can't */
+#else					/* reference ckucmd.h symbols here */
+#define APCBUFLEN 4096
+#endif /* NOSPL */
+#endif /* APCBUFLEN */
+#define APC_OFF   0	/* APC OFF (disabled) */
+#define APC_ON    1	/* APC ON (enabled for non-dangerous commands) */
+#define APC_UNCH  2	/* APC UNCHECKED (enabled for ALL commands) bitmask */
+#define APC_NOINP 4     /* APC (enabled with no input allowed - bitmask) */
 #define APC_INACTIVE 0	/* APC not in use */
 #define APC_REMOTE   1	/* APC in use from Remote */
 #define APC_LOCAL    2	/* APC being used from within Kermit */
@@ -282,14 +291,17 @@ struct sysdata {
 
 /* Codes for what we are doing now - bit mask values */
 
-#define W_NOTHING  0			/* Nothing */
-#define W_INIT     1			/* Initializing protocol */
-#define W_SEND     2			/* SENDing or MAILing */
-#define W_RECV     4			/* RECEIVEing or GETting */
-#define W_REMO     8			/* Doing a REMOTE command */
-#define W_CONNECT 16			/* CONNECT mode */
-#define W_COMMAND 32			/* Command mode */
-#define W_DIALING 64			/* Dialing a modem */
+#define W_NOTHING    0			/* Nothing */
+#define W_INIT       1			/* Initializing protocol */
+#define W_SEND       2			/* SENDing or MAILing */
+#define W_RECV       4			/* RECEIVEing or GETting */
+#define W_REMO       8			/* Doing a REMOTE command */
+#define W_CONNECT   16			/* CONNECT mode */
+#define W_COMMAND   32			/* Command mode */
+#define W_DIALING   64			/* Dialing a modem */
+#define W_FTP      128			/* FTP */
+#define W_FT_DELE   64			/* FTP MDELETE */
+#define W_KERMIT (W_INIT|W_SEND|W_RECV|W_REMO) /* Kermit protocol */
 
 #ifndef NOWHATAMI
 #ifndef WHATAMI
@@ -326,6 +338,16 @@ struct sysdata {
 
 /* Maximum long packet size for sending packets */
 /* Override these from cc command line via -DMAXSP=nnn */
+
+#ifdef IRIX				/* Irix 6.4 and earlier has */
+#ifndef MAXSP				/* Telnet server bug */
+#ifdef IRIX65
+#define MAXSP 9024
+#else
+#define MAXSP 4000
+#endif /* IRIX65 */
+#endif /* MAXSP */
+#endif /* IRIX */
 
 #ifdef DYNAMIC
 #ifndef MAXSP
@@ -454,8 +476,23 @@ struct sysdata {
 #define DFBCT        3			/* Default block-check type */
 #endif /* NEWDEFAULTS */
 
-#define DSPSIZ	    90			/* Default outbound packet size. */
+/* The HP-UX 5 and 6 Telnet servers can only swallow 513 bytes at once */
 
+#ifdef HPUX5
+#ifdef DRPSIZ
+#undef DRPSIZ
+#endif /* DRPSIZ */
+#define DRPSIZ 500
+#else
+#ifdef HPUX6
+#ifdef DRPSIZ
+#undef DRPSIZ
+#endif /* DRPSIZ */
+#define DRPSIZ 500
+#endif /* HPUX6 */
+#endif /* HPUX5 */
+
+#define DSPSIZ	    90			/* Default outbound packet size. */
 #define DDELAY      1			/* Default delay. */
 #define DSPEED	    9600		/* Default line speed. */
 
@@ -543,6 +580,7 @@ struct sysdata {
 #define FX_BOM    -11			/* Bad combination of open modes */
 #define FX_OFL    -12			/* Buffer overflow */
 #define FX_LNU    -13			/* Current line number unknown */
+#define FX_ROO    -14			/* Set Root violation */
 #define FX_NYI    -99			/* Feature not implemented yet */
 #define FX_UNK   -999			/* Unknown error */
 
@@ -560,8 +598,9 @@ _PROTOTYP( long z_getline, (int) );
 _PROTOTYP( long z_count, (int, int) );
 _PROTOTYP( char * z_getname, (int) );
 _PROTOTYP( char * ckferror, (int) );
-
 #endif /* CKCHANNELIO */
+
+_PROTOTYP( int scanfile, (char *, int *, int) );
 
 /*  Buffered file i/o ...  */
 #ifdef OS2				/* K-95 */
@@ -592,8 +631,8 @@ _PROTOTYP( char * ckferror, (int) );
 #else /* Not BIGBUFOK */
 #define INBUFSIZE 1024
 #define OBUFSIZE 1024
-#endif /* STRATUS */
 #endif /* BIGBUFOK */
+#endif /* STRATUS */
 #endif /* VMS */
 #endif /* pdp11 */
 #endif /* OS2 */
@@ -626,6 +665,12 @@ extern char ** sndarray;
 
 /* Screen functions */
 
+#define XYFD_N 0			/* None, Off */
+#define XYFD_R 1			/* Regular, Dots */
+#define XYFD_C 2			/* Cursor-positioning (e.g. curses) */
+#define XYFD_S 3			/* CRT Screen */
+#define XYFD_B 4			/* Brief */
+
 #ifdef NODISPLAY
 #define xxscreen(a,b,c,d)
 #define ckscreen(a,b,c,d)
@@ -655,6 +700,7 @@ ckscreen((int)a,(char)b,(long)c,(char *)d)
 #define   ST_REFU 5     /*  Refused (use Attribute codes for reason) */
 #define   ST_INC  6	/*  Incompletely received */
 #define   ST_MSG  7	/*  Informational message */
+#define   ST_SIM  8	/*  Transfer simulated (e.g. would be sent) */
 #define SCR_PN 6    	/* packet number */
 #define SCR_PT 7    	/* packet type or pseudotype */
 #define SCR_TC 8    	/* transaction complete */
@@ -666,6 +712,23 @@ ckscreen((int)a,(char)b,(long)c,(char *)d)
 #define SCR_QE 14	/* quantity equals (e.g. "foo: 7") */
 #define SCR_CW 15	/* close screen window */
 #define SCR_CD 16       /* display current directory */
+
+/* Skip reasons */
+
+#define SKP_DAT 1			/* Date-Time (Older) */
+#define SKP_EQU 2			/* Date-Time (Equal) */
+#define SKP_TYP 3			/* Type */
+#define SKP_SIZ 4			/* Size */
+#define SKP_NAM 5			/* Name collision */
+#define SKP_EXL 6			/* Exception list */
+#define SKP_DOT 7			/* Dot file */
+#define SKP_BKU 8			/* Backup file */
+#define SKP_RES 9			/* Recovery not needed */
+#define SKP_ACC 10			/* Access denied */
+#define SKP_NRF 11			/* Not a regular file */
+#define SKP_SIM 12			/* Simulation (WOULD BE SENT) */
+#define SKP_XUP 13 /* Simulation: Would be sent because remote file older */
+#define SKP_XNX 14 /* Simulation: ditto, because remote file does not exist */
 
 /* Macros */
 
@@ -691,6 +754,39 @@ extern int tcp_incoming;		/* Used by ENABLE macro */
 #define xunchar(ch) (((ch) - SP ) & 0xFF )	/* Character to number */
 #define ctl(ch)     (((ch) ^ 64 ) & 0xFF )	/* Control/Uncontrol toggle */
 #define unpar(ch)   (((ch) & 127) & 0xFF )	/* Clear parity bit */
+
+#ifndef NOLOCAL				/* CONNECT return status codes */
+
+/* Users will see the numbers so they can't be changed */
+/* Numbers >= 100 indicate connection loss */
+
+#define CSX_NONE        0		/* No CONNECT yet so no status */
+#define CSX_ESCAPE      1		/* User Escaped back */
+#define CSX_TRIGGER     2		/* Trigger was encountered */
+#define CSX_IKSD        3		/* IKSD autosynchronization */
+#define CSX_APC         4		/* Application Program Command */
+#define CSX_IDLE        5		/* Idle limit exceeded */
+#define CSX_TN_ERR      6		/* Telnet Error */
+#define CSX_MACRO       7               /* Macro bound to keystroke */
+#define CSX_TIME        8               /* Time Limit exceeded */
+#define CSX_INTERNAL  100		/* Internal error */
+#define CSX_CARRIER   101		/* Carrier required but not detected */
+#define CSX_IOERROR   102		/* I/O error on connection */
+#define CSX_HOSTDISC  103		/* Disconnected by host */
+#define CSX_USERDISC  104		/* Disconnected by user */
+#define CSX_SESSION   105		/* Session Limit exceeded */
+#define CSX_TN_POL    106		/* Rejected due to Telnet Policy */
+#define CSX_KILL_SIG  107               /* Received Kill Signal */
+
+/* SET TERMINAL IDLE-ACTION values */
+
+#define IDLE_RET  0			/* Return to prompt */
+#define IDLE_EXIT 1			/* Exit from Kermit */
+#define IDLE_HANG 2			/* Hangup the connection */
+#define IDLE_OUT  3			/* OUTPUT a string */
+#define IDLE_TNOP 4			/* TELNET NOP */
+#define IDLE_TAYT 5			/* TELNET AYT */
+#endif /* NOLOCAL */
 
 /* Modem and dialing definitions */
 
@@ -723,6 +819,7 @@ extern int tcp_incoming;		/* Used by ENABLE macro */
 #define DIA_PART  11			/* Partial dial command OK */
 #define DIA_DIR   12			/* Dialing directory error */
 #define DIA_HUP   13			/* Modem was hung up OK */
+#define DIA_NRSP  19			/* No response from modem */
 #define DIA_ERR   20			/* Modem command error */
 #define DIA_NOIN  21			/* Failure to initialize modem */
 #define DIA_BUSY  22			/* Phone busy */
@@ -831,6 +928,8 @@ struct pktinfo {			/* Packet information structure */
 #define SM_MAIL     4
 #define SM_PRINT    5
 
+#define OPTBUFLEN 256
+
 /* File-related symbols and structures */
 /* Used by SET FILE command but also by protocol and i/o modules */
 
@@ -847,14 +946,10 @@ struct pktinfo {			/* Packet information structure */
 #define     XYFT_L 3	/*    Labeled (tagged binary) (VMS or OS/2) */
 #define     XYFT_U 4    /*    Binary Undefined (VMS) */
 #define     XYFT_M 5	/*    MacBinary (Macintosh) */
+#define     XYFT_X 6	/*    TENEX (FTP TYPE L 8) */
 #define     XYFT_D 99   /*    Debug (for session logs) */
 #define   XYFILW 2      /*  Warning */
 #define   XYFILD 3      /*  Display */
-#define     XYFD_N 0    /*    None, Off */
-#define     XYFD_R 1    /*    Regular, Dots */
-#define     XYFD_C 2    /*    Cursor-positioning (e.g. with curses) */
-#define     XYFD_S 3    /*    CRT Screen */
-#define     XYFD_B 4    /*    Brief */
 #define   XYFILC 4      /*  Character set */
 #define   XYFILF 5      /*  Record Format */
 #define     XYFF_S  0   /*    Stream */
@@ -898,11 +993,26 @@ struct pktinfo {			/* Packet information structure */
 #define   XYFILV 19	/*  EOF Detection Method */
 #define     XYEOF_L 0   /*    File length */
 #define     XYEOF_Z 1   /*    Ctrl-Z in file */
-#define   XYFILH 20     /*  OUTPUT parameters - buffered, blocking, etc */
-#define   XYFIBP 21	/*  BINARY-PATTERN */
-#define   XYFITP 22     /*  TEXT-PATTERN */
-#define   XYFIPA 23     /*  PATTERNS ON/OFF */
-#define   XYFILU 24     /*  UCS ... */
+#define   XYFILH   20   /*  OUTPUT parameters - buffered, blocking, etc */
+#define   XYFIBP   21	/*  BINARY-PATTERN */
+#define   XYFITP   22   /*  TEXT-PATTERN */
+#define   XYFIPA   23   /*  PATTERNS ON/OFF */
+#define   XYFILU   24   /*  UCS ... */
+#define   XYF_PRM  25   /*  PERMISSIONS, PROTECTION */
+#define   XYF_INSP 26   /*  INSPECTION (SCAN) */
+#define   XYF_DFLT 27   /*  DEFAULT (character sets) */
+#define   XYF_SSPA 28   /*  STRINGSPACE */
+#define   XYF_LSIZ 29   /*  LISTSIZE */
+
+/* File Type (return code) definitions and corresponding name strings */
+
+#define FT_7BIT 0			/* 7-bit text */
+#define FT_8BIT 1			/* 8-bit text */
+#define FT_UTF8 2			/* UTF8 */
+#define FT_UCS2 3			/* UCS2 */
+#define FT_TEXT 4			/* Unknown text */
+#define FT_BIN  5			/* Binary */
+#define SCANFILEBUF 49152		/* Size of file scan (48K) */
 
 /* Connection closed reasons */
 
@@ -916,6 +1026,25 @@ struct pktinfo {			/* Packet information structure */
 #define FTPATTERNS 64
 #endif /* BIGBUFOK */
 
+#define SYS_UNK    0			/* Selected server system types */
+#define SYS_UNIX   1
+#define SYS_WIN32  2
+#define SYS_VMS    3
+#define SYS_OS2    4
+#define SYS_DOS    5
+#define SYS_TOPS10 6
+#define SYS_TOPS20 7
+#define SYS_VOS    8
+#define SYS_DG     9
+#define SYS_OSK    10
+#define SYS_MAX    11
+
+#ifdef CK_SMALL
+#define PWBUFL 63
+#else
+#define PWBUFL 255
+#endif /* CK_SMALL */
+
 #ifdef OS2
 struct tt_info_rec {			/* Terminal emulation info */
     char  *x_name;
@@ -923,6 +1052,12 @@ struct tt_info_rec {			/* Terminal emulation info */
     char  *x_id;
 };
 #endif /* OS2 */
+
+/* BEEP TYPES */
+#define BP_BEL  0			/* Terminal bell */
+#define BP_NOTE 1			/* Info */
+#define BP_WARN 2			/* Warning */
+#define BP_FAIL 3			/* Error */
 
 #ifndef NOIKSD
 #ifdef IKSDB				/* IKSD Database definitions */
@@ -1019,6 +1154,13 @@ struct iksdbfld {
     int len;				/* Length (bytes) */
     int typ;				/* Data type */
 };
+_PROTOTYP(int dbinit, (void));
+_PROTOTYP(int initslot, (int));
+_PROTOTYP(int getslot, (void));
+_PROTOTYP(int freeslot, (int));
+_PROTOTYP(int updslot, (int));
+_PROTOTYP(int slotstate, (int, char *, char *, char *));
+_PROTOTYP(int slotdir, (char *, char *));
 #endif /* IKSDB */
 #endif /* NOIKSD */
 
@@ -1132,12 +1274,12 @@ _PROTOTYP( char * ck_errstr, (void) );
 #ifndef NOXFER
 _PROTOTYP( int agnbyte, (void) );
 #endif /* NOXFER */
-_PROTOTYP( int xgnbyte, (int, int) );
+_PROTOTYP( int xgnbyte, (int, int, int (*)(void)) );
 _PROTOTYP( int xpnbyte, (int, int, int, int (*)(char)) );
 
 /* User interface functions needed by main program, etc. */
 
-_PROTOTYP( int doconect, (int) );
+_PROTOTYP( int doconect, (int,int) );
 _PROTOTYP( VOID setflow, (void) );
 _PROTOTYP( VOID prescan, (int) );
 _PROTOTYP( VOID setint, (void) );
@@ -1146,7 +1288,11 @@ _PROTOTYP( VOID dofast, (void) );
 _PROTOTYP( VOID cmdini, (void) );
 _PROTOTYP( int dotake, (char *) );
 _PROTOTYP( int cmdlin, (void) );
+#ifdef OS2
+_PROTOTYP( int conect, (int) );
+#else /* OS2 */
 _PROTOTYP( int conect, (void) );
+#endif /* OS2 */
 _PROTOTYP( int ckcgetc, (int) );
 _PROTOTYP( int ckcputc, (int) );
 _PROTOTYP (int mdmhup, (void) );
@@ -1191,8 +1337,10 @@ _PROTOTYP( VOID logstr, (char *, int) );
 
 #ifdef NOLOCAL
 #define dologend()
+#define dologshow()
 #else
 _PROTOTYP( VOID dologend, (void) );
+_PROTOTYP( long dologshow, (int) );
 #endif /* NOLOCAL */
 
 #ifdef NODISPLAY
@@ -1201,6 +1349,15 @@ _PROTOTYP( VOID dologend, (void) );
 _PROTOTYP( VOID fxdinit, (int) );
 #endif /* NODISPLAY */
 
+_PROTOTYP( int fileselect, (char *,
+			    char *, char *, char *, char *,
+			    long, long,
+			    int, int,
+			    char **) );
+
+
+_PROTOTYP( char * whoami, (void) );
+
 #ifdef CK_APC
 _PROTOTYP( int chkspkt, (char *) );
 _PROTOTYP( int kstart, (CHAR) );
@@ -1208,7 +1365,23 @@ _PROTOTYP( VOID autodown, (int));
 #ifdef CK_XYZ
 _PROTOTYP( int zstart, (CHAR) );
 #endif /* CK_XYZ */
+#ifdef OS2
+_PROTOTYP(void apc_command, (int, char*));
+#endif /* OS2 */
 #endif /* CK_APC */
+
+#ifdef CK_URL
+struct urldata {
+    char * sav;			/* The URL itself */
+    char * svc;			/* Service */
+    char * usr;			/* User */
+    char * psw;			/* Password */
+    char * hos;			/* Host */
+    char * por;			/* Port */
+    char * pth;			/* Path */
+};
+_PROTOTYP(int urlparse, (char *, struct urldata *));
+#endif /* CK_URL */
 
 #endif /* CKCKER_H */
 

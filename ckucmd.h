@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>
   Columbia University Kermit Project, New York City.
 
-  Copyright (C) 1985, 2000,
+  Copyright (C) 1985, 2001,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -104,7 +104,7 @@ int vms_getchar(void);
 #ifndef CMDBL
 #ifdef NOSPL
 /* No script programming language, save some space */
-#define CMDBL 508			/* Command buffer length */
+#define CMDBL 608			/* Command buffer length */
 #else
 #ifdef BIGBUFOK
 #define CMDBL 32763
@@ -133,6 +133,9 @@ int vms_getchar(void);
 #define CM_ARG 8			/* An argument is required */
 #define CM_NOR 16			/* No recall for this command */
 #define CM_PRE 32			/* Long-form cmdline arg for prescan */
+#define CM_PSH 64			/* Command disabled if nopush */
+#define CM_LOC 128			/* Command disabled if nolocal */
+
 /*
   A long-form command line option is a keyword using the regular struct keytab
   and lookup mechanisms.  Flags that make sense in this context are CM_ARG,
@@ -147,7 +150,7 @@ int vms_getchar(void);
 #define CMT_COM 0			/* Comment (; or #) */
 #define CMT_SHE 1			/* Shell escape (!) */
 #define CMT_LBL 2			/* Label (:) */
-#define CMT_FIL 3			/* Indirect filespec (@) */
+#define CMT_FIL 3			/* Indirect filespec (@) (not used) */
 
 /* Path separator for path searches */
 
@@ -228,6 +231,7 @@ _PROTOTYP( int xxesc, (char **) );
 _PROTOTYP( int cmrini, (int) );
 _PROTOTYP( VOID cmsetp, (char *) );
 _PROTOTYP( VOID cmsavp, (char [], int) );
+_PROTOTYP( char * cmgetp, () );
 _PROTOTYP( VOID prompt, (xx_strp) );
 _PROTOTYP( VOID pushcmd, (char *) );
 _PROTOTYP( VOID cmres, (void) );
@@ -271,9 +275,14 @@ _PROTOTYP( int cmdgetc, (int));
 _PROTOTYP( char * cmgetcmd, (char *) );
 _PROTOTYP( VOID addcmd, (char *) );
 _PROTOTYP( VOID cmaddnext, () );
-_PROTOTYP( int cmcvtdate, (char *, int) );
-_PROTOTYP( int filhelp, (int, char *, char *, int, int) );
 #endif /* CK_RECALL */
+_PROTOTYP( char * cmcvtdate, (char *, int) );
+_PROTOTYP( char * cmdiffdate, (char *, char *) );
+_PROTOTYP( char * cmdelta, (int,
+			    int,int,int,int,int,int,int,int,int,int,int,int ));
+_PROTOTYP( char * shuffledate, (char *, int) );
+_PROTOTYP( int filhelp, (int, char *, char *, int, int) );
+
 #ifdef DCMDBUF
 _PROTOTYP( int cmsetup, (void) );
 #endif /* DCMDBUF */

@@ -1,15 +1,13 @@
 #include "ckcsym.h"
-#ifdef NOLOCAL
-char *connv = "";
-#else
-char *connv = "CONNECT Command for UNIX:fork(), 7.0.104, 14 Nov 1999";
+
+char *connv = "CONNECT Command for UNIX:fork(), 8.0.109, 10 Nov 2001";
 
 /*  C K U C O N  --  Terminal connection to remote system, for UNIX  */
 /*
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2000,
+  Copyright (C) 1985, 2001,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -28,6 +26,8 @@ char *connv = "CONNECT Command for UNIX:fork(), 7.0.104, 14 Nov 1999";
   in regular UNIX.
 */
 #include "ckcdeb.h"			/* Common things first */
+
+#ifndef NOLOCAL
 
 #ifdef BEOSORBEBOX
 static double time_started = 0.0;
@@ -421,7 +421,7 @@ chkaes(c) char c;
 	      inesc = ES_STRING;	/* Switch to STRING-absorption state */
 #ifdef CK_APC
 	      if (c == '_' && pid == 0 && /* APC handled in child only */
-		  apcstatus != APC_OFF) { /* and only if not disabled. */
+		  (apcstatus & APC_ON)) { /* and only if not disabled. */
 		  debug(F100,"CONNECT APC begin","",0);
 		  apcactive = APC_REMOTE; /* Set APC-Active flag */
 		  apclength = 0;	/* and reset APC buffer pointer */
@@ -549,7 +549,7 @@ static jmp_buf con_env;
 */
 static SIGTYP
 pipeint(arg) int arg; {			/* Dummy argument */
-    int code, cx, x, i, n;
+    int code, cx, x, i /* , n */ ;
 
 #ifndef NOCCTRAP
     extern ckjmpbuf cmjbuf;
@@ -636,8 +636,8 @@ pipeint(arg) int arg; {			/* Dummy argument */
 #endif /* Plan9 */
 		wait((WAIT_T *)0);	/* Wait till gone. */
 		if (x < 0) {
-		    printf("ERROR: Failure to kill pid %d: %s, errno=%d\n",
-			   (int) pid, ck_errstr(), errno);
+		    printf("ERROR: Failure to kill pid %ld: %s, errno=%d\n",
+			   (long) pid, ck_errstr(), errno);
 		    debug(F111,"CONNECT error killing stale pid",
 			  ck_errstr(),errno);
 		}
@@ -694,7 +694,7 @@ pipeint(arg) int arg; {			/* Dummy argument */
 	debug(F100,"CONNECT autoupload at parent","",0);
 #ifdef CK_AUTODL
       case CEV_ADL:			/* Autodownload */
-	apcstatus = APC_LOCAL;
+	apcactive = APC_LOCAL;
 	if (!justone) debug(F100,"CONNECT autodownload at parent","",0);
 	/* Copy child's Kermit packet if any */
 	read(xpipe[0], (char *)&x, sizeof(x));
@@ -777,6 +777,19 @@ ckcputc(c) int c; {
 int
 ckcgetc(dummy) int dummy; {
     int c, n;
+#ifdef CK_SSL
+    extern int ssl_active_flag, tls_active_flag;
+#endif /* CK_SSL */
+
+#ifdef CK_ENCRYPTION
+    /* No buffering for possibly encrypted connections */
+    if (network && ttnproto == NP_TELNET && TELOPT_ME(TELOPT_AUTHENTICATION))
+      return(ttinc(0));
+#endif /* CK_ENCRYPTION */
+#ifdef CK_SSL
+    if (ssl_active_flag || tls_active_flag)
+        return(ttinc(0));
+#endif /* CK_SSL */
 #ifdef COMMENT
 /* too much */
     debug(F101,"CONNECT CKCGETC 1 ibc","",ibc); /* Log */
@@ -908,13 +921,14 @@ concld (
        ) {
     int	n;			/* General purpose counter */
     int i;			/* For loops... */
-    int c;			/* c is a character, but must be signed
+    int c = -1;			/* c is a character, but must be signed
 				   integer to pass thru -1, which is the
 				   modem disconnection signal, and is
 				   different from the character 0377 */
-    int c2;			/* A copy of c */
-    int csave;			/* Another copy of c */
+    int prev;
+#ifdef TNCODE
     int tx;			/* tn_doop() return code */
+#endif /* TNCODE */
 #ifdef CK_TRIGGER
     int ix;				/* Trigger index */
 #endif /* CK_TRIGGER */
@@ -922,8 +936,10 @@ concld (
     int apcrc;
 #endif /* NOESCSEQ */
 
+#ifdef COMMENT
     int conret = 0;			/* Return value from conect() */
-    /* jbchksum = -1L; */
+    jbchksum = -1L;
+#endif /* COMMENT */
     jbset = 0;				/* jmp_buf not set yet, don't use it */
     debug(F101,"CONNECT concld entry","",CK_FORK_SIG);
  	/* *** */		/* Inferior reads, prints port input */
@@ -973,6 +989,9 @@ concld (
 #endif /* IBMX25 */
 		    if (!quiet)
 		      printf("\r\nCommunications disconnect ");
+#ifdef CKLOGDIAL
+		    dologend();
+#endif /* CKLOGDIAL */
 		    pipemsg(CEV_HUP);
 		    ck_sndmsg();		/* Wait to be killed */
 		    /* NOTREACHED */
@@ -1013,7 +1032,6 @@ concld (
 			    int x;
 			    if (unicode == 1) {	/* Remote is UTF-8 */
 				x = u_to_b((CHAR)c);
-				debug(F101,"XXX conect u_to_b","",x);
 			        if (x == -1)
 				  continue;
 				else if (x == -2) { /* LS or PS */
@@ -1058,6 +1076,7 @@ concld (
   Get the next communication line character from our internal buffer.
   If the buffer is empty, refill it.
 */
+	    prev = c;			/* Remember previous character */
 	    c = ckcgetc(0);		/* Get next character */
 	    /* debug(F101,"CONNECT c","",c); */
 	    if (c < 0) {		/* Failed... */
@@ -1095,6 +1114,11 @@ concld (
 #ifdef TNCODE
 	    /* Handle TELNET negotiations... */
 
+	    if ((c == NUL) && network && (ttnproto == NP_TELNET)) {
+		if (prev == CR)		/* Discard <NUL> of <CR><NUL> */
+		  if (!TELOPT_U(TELOPT_BINARY))
+		    continue;
+	    }
 	    if ((c == IAC) && network && (ttnproto == NP_TELNET)) {
 		int me_bin = TELOPT_ME(TELOPT_BINARY);
 		int u_bin = TELOPT_U(TELOPT_BINARY);
@@ -1133,6 +1157,9 @@ concld (
 #ifdef NOSETBUF
 		    fflush(stdout);
 #endif /* NOSETBUF */
+#ifdef CKLOGDIAL
+		    dologend();
+#endif /* CKLOGDIAL */
 		    debug(F111,"CONNECT concld i/o error 2",ck_errstr(),errno);
 		    pipemsg(CEV_HUP);
 		    ck_sndmsg();	/* Wait to be killed */
@@ -1143,6 +1170,9 @@ concld (
 #ifdef NOSETBUF
 		    fflush(stdout);
 #endif /* NOSETBUF */
+#ifdef CKLOGDIAL
+		    dologend();
+#endif /* CKLOGDIAL */
 		    debug(F111,"CONNECT concld i/o error 2",ck_errstr(),errno);
 		    pipemsg(CEV_HUP);
 		    ck_sndmsg();	/* Wait to be killed */
@@ -1153,6 +1183,9 @@ concld (
 #ifdef NOSETBUF
 		    fflush(stdout);
 #endif /* NOSETBUF */
+#ifdef CKLOGDIAL
+		    dologend();
+#endif /* CKLOGDIAL */
 		    debug(F111,"CONNECT concld i/o error 2",ck_errstr(),errno);
 		    pipemsg(CEV_HUP);
 		    ck_sndmsg();	/* Wait to be killed */
@@ -1374,7 +1407,7 @@ concld (
    3. The character following an Esc, in which case we write Esc, then char,
       but only if we have not just entered an APC sequence.
 */
-		if (escseq && apcstatus != APC_OFF) {
+		if (escseq && (apcstatus & APC_ON)) {
 		    if (inesc == ES_GOTESC)	/* Don't write ESC yet */
 		      continue;
 		    else if (oldesc == ES_GOTESC && !apcactive) {
@@ -1479,6 +1512,7 @@ conect() {
     int msgflg = 0;
     /* jbchksum = -1L; */
     jbset = 0;				/* jmp_buf not set yet, don't use it */
+    debok = 1;
 
     debug(F101,"CONNECT fork signal","",CK_FORK_SIG);
     debug(F101,"CONNECT entry pid","",pid);
@@ -1637,7 +1671,7 @@ conect() {
 		   network ? -nettype : mdmtyp,
 		   0
 		   ) < 0) {
-	    sprintf(temp,"Sorry, can't open %s",ttname);
+	    ckmakmsg(temp,TMPLEN,"Sorry, can't open ",ttname,NULL,NULL);
 	    perror(temp);
 	    debug(F110,"CONNECT open failure",ttname,0);
 	    goto conret0;
@@ -1681,8 +1715,17 @@ conect() {
 	    printf(".\r\n\nESCAPE CHARACTER IS DISABLED\r\n\n");
 	}
 	if (seslog) {
-	    printf("(Session logged to %s, ",sesfil);
-	    printf("%s)\r\n", sessft ? "binary" : "text");
+	    extern int slogts;
+	    char * s = "";
+	    switch (sessft) {
+	      case XYFT_D:
+		s = "debug"; break;
+	      case XYFT_T:
+		s = slogts ? "timestamped-text" : "text"; break;
+	      default:
+		s = "binary";
+	    }
+	    printf("Session Log: %s, %s\r\n",sesfil,s);
 	}
 	if (debses) printf("Debugging Display...)\r\n");
         printf("----------------------------------------------------\r\n");
@@ -1703,12 +1746,15 @@ conect() {
 	    debug(F101,"CONNECT ttvt","",n);
 	    tthang();			/* Hang up and close the device. */
 	    ttclos(0);
+#ifdef CKLOGDIAL
+	    dologend();
+#endif /* CKLOGDIAL */
 	    if (ttopen(ttname,		/* Open it again... */
 		       &local,
 		       network ? -nettype : mdmtyp,
 		       0
 		       ) < 0) {
-		sprintf(temp,"Sorry, can't reopen %s",ttname);
+		ckmakmsg(temp,TMPLEN,"Sorry, can't reopen ",ttname,NULL,NULL);
 		perror(temp);
 		goto conret0;
 	    }
@@ -1731,13 +1777,13 @@ conect() {
 	x = ttgmdm();
 	debug(F100,"CONNECT ttgmdm","",x);
 	if ((x > -1) && !(x & BM_DCD)) {
-#ifndef NOICP
+#ifndef NOHINTS
 	    extern int hints;
-#endif /* NOICP */
+#endif /* NOHINTS */
 	    debug(F100,"CONNECT ttgmdm CD test fails","",x);
 	    conres();
 	    printf("?Carrier required but not detected.\n");
-#ifndef NOICP
+#ifndef NOHINTS
 	    if (!hints)
 	      return(0);
 	    printf("***********************************\n");
@@ -1746,7 +1792,7 @@ conect() {
 	    printf(" first tell C-Kermit to:\n\n");
 	    printf("   SET CARRIER-WATCH OFF\n\n");
 	    printf("***********************************\n\n");
-#endif /* NOICP */
+#endif /* NOHINTS */
 	    goto conret0;
 	}
 	debug(F100,"CONNECT ttgmdm ok","",0);
@@ -1833,7 +1879,7 @@ conect() {
 
 #ifndef NOESCSEQ
 #ifdef CK_APC
-    escseq = escseq || (apcstatus != APC_OFF);
+    escseq = escseq || (apcstatus & APC_ON);
     apcactive = 0;			/* An APC command is not active */
     apclength = 0;			/* ... */
 #endif /* CK_APC */
@@ -2285,6 +2331,9 @@ conect() {
 #ifdef NETCONN
 	    if (network) {		/* and/or close network connection */
 		ttclos(0);
+#ifdef CKLOGDIAL
+		dologend();
+#endif /* CKLOGDIAL */
 #ifdef SUNX25
 		if (nettype == NET_SX25) /* If X.25, restore the PAD params */
 		  initpad();
@@ -2525,10 +2574,16 @@ doesc(c) char c;
 	    conoll("----------------------------------------------------");
 #ifdef NETCMD
 	    if (ttpipe)
-	      sprintf(temp, " Pipe: \"%s\"", ttname);
+	      ckmakmsg(temp,TMPLEN," Pipe: \"",ttname,"\"",NULL);
 	    else
 #endif /* NETCMD */
-	      sprintf(temp, " %s: %s", (network ? "Host" : "Device"), ttname);
+	      ckmakmsg(temp,
+		       TMPLEN,
+		       " ",
+		       (network ? "Host" : "Device"),
+		       ": ",
+		       ttname
+		       );
 	    conoll(temp);
 	    if (!network && speed >= 0L) {
 		sprintf(temp,"Speed %ld", speed);
@@ -2540,11 +2595,17 @@ doesc(c) char c;
 	    conoll(temp);
 	    sprintf(temp," Command bytesize: %d", (cmdmsk == 0177) ? 7 : 8 );
 	    conoll(temp);
-	    sprintf(temp," Parity: %s", parnam(parity));
+	    sprintf(temp," Parity: %s", parnam((char)parity));
 	    conoll(temp);
 	    sprintf(temp," Autodownload: %s", autodl ? "on" : "off");
 	    conoll(temp);
-	    sprintf(temp," Session log: %s", *sesfil ? sesfil : "(none)");
+	    ckmakmsg(temp,		/* (would not be safe for sprintf) */
+		     TMPLEN,
+		     " Session log: ",
+		     *sesfil ? sesfil : "(none)",
+		     NULL,
+		     NULL
+		     );
 	    conoll(temp);
 #ifndef NOSHOW
 	    if (!network) shomdm();

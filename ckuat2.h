@@ -97,41 +97,55 @@ typedef struct des_ks_struct { Block _; } Schedule[16];
 #define	VALIDKEY(key) (key[0]|key[1]|key[2]|key[3]|key[4]|key[5]|key[6]|key[7])
 
 #define	SAMEKEY(k1, k2)	(!memcmp((void *)k1, (void *)k2, sizeof(Block)))
+#endif /* CK_DES_C */
 
-typedef	struct {
+typedef	struct _session_key {
   short		type;
   int		length;
   unsigned char	*data;
 } Session_Key;
-#endif /* CK_DES_C */
 
-#if !defined(P)
 #ifdef __STDC__
-#define P(x)	x
+typedef struct {
+  char	*name;
+  int	type;
+  void	(*output)(unsigned char *, int);
+  int	(*input)(int);
+  void	(*init)(int);
+  int	(*start)(int, int);
+  int	(*is)(unsigned char *, int);
+  int	(*reply)(unsigned char *, int);
+  int	(*session)(Session_Key *, int);
+  int	(*keyid)(int, unsigned char *, int *);
+  void	(*printsub)(unsigned char *, int, unsigned char *, int);
+} Encryptions;
+#if !defined(P)
+#define P(x) x
+#endif
 #else
-#define P(x)	()
+typedef struct {
+  char	*name;
+  int	type;
+  void	(*output)();
+  int	(*input)();
+  void	(*init)();
+  int	(*start)();
+  int	(*is)();
+  int	(*reply)();
+  int	(*session)();
+  int	(*keyid)();
+  void	(*printsub)();
+} Encryptions;
+#if !defined(P)
+#define P(x) ()
 #endif
-#endif
-
-#ifdef DEBUG
-int printsub(char, unsigned char *, size_t);
 #endif
 
 int encrypt_parse(unsigned char *, int);
 
-typedef struct {
-  char	*name;
-  int	type;
-  void	(*output) P((unsigned char *, int));
-  int	(*input) P((int));
-  void	(*init) P((int));
-  int	(*start) P((int, int));
-  int	(*is) P((unsigned char *, int));
-  int	(*reply) P((unsigned char *, int));
-  int	(*session) P((Session_Key *, int));
-  int	(*keyid) P((int, unsigned char *, int *));
-  void	(*printsub) P((unsigned char *, int, unsigned char *, int));
-} Encryptions;
+#ifdef DEBUG
+int printsub(char, unsigned char *, size_t);
+#endif
 
 #define SK_GENERIC      0       /* Just a string of bits */
 #define	SK_DES		1	/* Matched Kerberos v5 ENCTYPE_DES */
@@ -266,11 +280,7 @@ extern void (*encrypt_output) P((unsigned char *, int));
 int decrypt_ks_hack(unsigned char *, int);
 
 #endif /* __ENCRYPTION__ */
-
 #endif /* ENCRYPTION */
-
-#define FORWARD
-/* allow forwarding of credentials */
 
 #ifdef CRYPT_DLL
 struct _crypt_dll_init {
@@ -278,8 +288,8 @@ struct _crypt_dll_init {
 
     /* Version 1 variables */
     int (*p_ttol)(char *,int);
-    void (*p_dodebug)(int,char *,char *,long);
-    void (*p_dohexdump)(char *,char *,int);
+    int (*p_dodebug)(int,char *,char *,long);
+    int (*p_dohexdump)(char *,char *,int);
     void (*p_tn_debug)(char *);
     int (*p_vscrnprintf)(char *, ...);
 
@@ -314,11 +324,11 @@ struct _crypt_dll_init {
 #ifndef  ENCTYPE_DES3_CBC_RAW
 #define ENCTYPE_DES3_CBC_RAW    0x0006  /* DES-3 cbc mode raw */
 #endif
-#ifndef  ENCTYPE_DES3_HMAC_SHA1
-#define ENCTYPE_DES3_HMAC_SHA1  0x0007
-#endif
 #ifndef  ENCTYPE_DES_HMAC_SHA1
 #define ENCTYPE_DES_HMAC_SHA1   0x0008
+#endif
+#ifndef  ENCTYPE_DES3_CBC_SHA1
+#define ENCTYPE_DES3_CBC_SHA1  0x0010
 #endif
 #ifndef  ENCTYPE_UNKNOWN
 #define ENCTYPE_UNKNOWN         0x01ff

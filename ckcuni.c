@@ -1,4 +1,4 @@
-char * ckcuni = "Unicode support 7.0.107, 1 Jan 2000";
+char * ckcuni = "Unicode support 8.0.114, 23 Jul 2000";
 
 #ifdef OS2
 #define KERMITFONT
@@ -7,7 +7,7 @@ char * ckcuni = "Unicode support 7.0.107, 1 Jan 2000";
 /*  C K C U N I . C  --  Unicode/Terminal character-set translations  */
 
 /*
-  Copyright (C) 1999, 2000,
+  Copyright (C) 1999, 2001,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -153,6 +153,11 @@ struct _pair { int tx; int fc; } TXFC[] = {
     TX_CP1256,      -2,
     TX_CP1258,      -2,
     TX_MAZOVIA,     FC_MAZOVIA,
+    TX_APL1,        -2,
+    TX_APL2,        -2,
+    TX_APL3,        -2,
+    TX_APL4,        -2,
+    TX_APL5,        -2,
     TX_TRANSP,      FC_TRANSP
 };
 int nTXFC = sizeof(TXFC) / sizeof(struct _pair);
@@ -165,7 +170,7 @@ fc2tx(int c) int fc;
 #endif /* CK_ANSIC */
 {
     int i;
-    for (i = 0; i<nTXFC ; i++)
+    for (i = 0; i < nTXFC ; i++)
       if (TXFC[i].fc == fc && TXFC[i].tx >= 0)
 	return(TXFC[i].tx);
     return(TX_ASCII);
@@ -188,6 +193,11 @@ tx2fc(int x) int tx;
 /* SET TERMINAL REMOTE CHARACTER-SET keyword table */
 
 struct keytab txrtab[] = {
+    "apl2-ibm",         TX_APL4,       0,
+    "apl-2741",         TX_APL5,       0,
+    "apl-dyadic",       TX_APL2,       0,
+    "apl-iso",          TX_APL1,       0,
+    "apl-plus-2000",    TX_APL3,       0, /* = APL-2000 */
     "arabic-iso",       TX_8859_6,     0,
     "ascii",            TX_ASCII,      0,
     "british",          TX_BRITISH,    0,
@@ -4735,6 +4745,22 @@ struct x_to_unicode u_hebrew7 = {
     0x05e8, 0x05e9, 0x05ea, 0x007b, 0x007c, 0x007d, 0x007e
 };
 
+struct x_to_unicode u_apl1 = {
+    94, 33, X2U_ISO|X2U_STD, AL_ROMAN, "APL ISO", "apl-iso", 68, "e",
+            0x00a8, 0x0029, 0x003c, 0x2264, 0x003d, 0x003e, 0x005d,
+    0x2228, 0x2227, 0x2260, 0x00f7, 0x002c, 0x002b, 0x002e, 0x002f,
+    0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
+    0x0038, 0x0039, 0x0028, 0x005b, 0x003b, 0x00d7, 0x003a, 0x005c,
+    0x00af, 0x237a, 0x22a5, 0x22c2, 0x230a, 0x220a, 0x005f, 0x2207,
+    0x2206, 0x2373, 0x2218, 0x0027, 0x25af, 0x007c, 0x22a4, 0x25cb,
+    0x22c6, 0x003f, 0x2374, 0x2308, 0x223c, 0x2193, 0x222a, 0x2375,
+    0x2283, 0x2191, 0x2282, 0x2190, 0x22a2, 0x2192, 0x2265, 0x002d,
+    0x22c4, 0x0041, 0x0042, 0x0043, 0x0044, 0x0045, 0x0046, 0x0047,
+    0x0048, 0x0049, 0x004a, 0x004b, 0x004c, 0x004d, 0x004e, 0x004f,
+    0x0050, 0x0051, 0x0052, 0x0053, 0x0054, 0x0055, 0x0056, 0x0057,
+    0x0058, 0x0059, 0x005a, 0x007b, 0x22a3, 0x007d, 0x0024
+};
+
 /* ISO 8859 Latin Alphabets */
 
 struct x_to_unicode u_8859_1 = {
@@ -4922,6 +4948,85 @@ struct x_to_unicode u_8859_15 = {
     0x00E8, 0x00E9, 0x00EA, 0x00EB, 0x00EC, 0x00ED, 0x00EE, 0x00EF,
     0x00F0, 0x00F1, 0x00F2, 0x00F3, 0x00F4, 0x00F5, 0x00F6, 0x00F7,
     0x00F8, 0x00F9, 0x00FA, 0x00FB, 0x00FC, 0x00FD, 0x00FE, 0x00FF
+};
+
+/* Dyadic Systems Dyalog/X APL, corresponds to APLTERMI.TTF. */
+/* Unicode mappings according to ISO-IEC / JTC 1 / SC 22 N 3067, 1999-12-28. */
+
+struct x_to_unicode u_apl2 = {		/* Dyadic Systems APL + box drawings */
+    96, 32, X2U_STD, AL_ROMAN, "Dyadic Systems APL", "apl-dyadic", 0, NULL,
+    0x00a0, 0x00d7, 0x2502, 0x2524, 0x00a2, 0x2510, 0x2514, 0x2534,
+    0x252c, 0x251c, 0x2500, 0x253c, 0x2518, 0x250c, 0x2206, 0x00f7,
+    0x2260, 0x22c4, 0x2375, 0x2374, 0x237a, 0x220a, 0x2261, 0x2265,
+    0x2264, 0x22a5, 0x22a4, 0x2190, 0x2218, 0x235d, 0x233f, 0x2340,
+    0x234e, 0x2355, 0x234b, 0x2352, 0x2372, 0x2371, 0x2368, 0x235f,
+    0x25af, 0x235e, 0x2339, 0x236b, 0x236a, 0x2262, 0x230a, 0x2308,
+    0x2349, 0x2229, 0x222a, 0x236c, 0x00a3, 0x233d, 0x2296, 0x22a2,
+    0x22a3, 0x2337, 0x00af, 0x2373, 0x00a8, 0x25cb, 0x2192, 0x2228,
+    0x2282, 0x2283, 0x2359, 0x0041, 0x0042, 0x0043, 0x0044, 0x0045,
+    0x0046, 0x0047, 0x0048, 0x0049, 0x004a, 0x004b, 0x004c, 0x004d,
+    0x004e, 0x004f, 0x0050, 0x0051, 0x0052, 0x0053, 0x0054, 0x0055,
+    0x0056, 0x0057, 0x0058, 0x0059, 0x005a, 0x2207, 0x2191, 0x2193
+};
+
+struct x_to_unicode u_apl3 = {		/* APL-Plus = APL-2000 */
+    128, 0, X2U_CXG, AL_ROMAN, "APL-2000", "apl-2000", 0, NULL,
+    0x20ac, 0x22a3, 0x22a4, 0x22a5, 0x2190, 0x2192, 0x2191, 0x2193,
+    0x2264, 0x2265, 0x2372, 0x2371, 0x25af, 0x235e, 0x2339, 0x2359,
+    0x236b, 0x2206, 0x2207, 0x234b, 0x2352, 0x2355, 0x234e, 0x2308,
+    0x230a, 0x2340, 0x233f, 0x2282, 0x2283, 0x2229, 0x222a, 0x2228,
+    0x00a0, 0x00a1, 0x00a2, 0x00a3, 0x22a2, 0x00a5, 0x00a6, 0x00a7,
+    0x00a8, 0x235d, 0x22c4, 0x00ab, 0x2260, 0x2261, 0x236a, 0x00af,
+    0x2218, 0x25cb, 0x233d, 0x2349, 0x2296, 0x235f, 0x00b6, 0x00b7,
+    0x237a, 0x220a, 0x2377, 0x00bb, 0x2373, 0x2374, 0x2375, 0x00bf,
+    0x00c0, 0x00c1, 0x00c2, 0x00c3, 0x00c4, 0x00c5, 0x00c6, 0x00c7,
+    0x00c8, 0x00c9, 0x00ca, 0x00cb, 0x00cc, 0x00cd, 0x00ce, 0x00cf,
+    0x236c, 0x00d1, 0x00d2, 0x00d3, 0x00d4, 0x00d5, 0x00d6, 0x00d7,
+    0x00d8, 0x00d9, 0x00da, 0x00db, 0x00dc, 0x00dd, 0x2337, 0x00df,
+    0x00e0, 0x00e1, 0x00e2, 0x00e3, 0x00e4, 0x00e5, 0x00e6, 0x00e7,
+    0x00e8, 0x00e9, 0x00ea, 0x00eb, 0x00ec, 0x00ed, 0x00ee, 0x00ef,
+    0x2364, 0x00f1, 0x00f2, 0x00f3, 0x00f4, 0x00f5, 0x00f6, 0x00f7,
+    0x2205, 0x00f9, 0x00fa, 0x00fb, 0x00fc, 0x00fd, 0x2368, 0x00ff
+};
+
+struct x_to_unicode u_apl4 = {		/* IBM APL2 */
+    128, 0, X2U_CXG, AL_ROMAN, "IBM APL2", "apl2-ibm", 0, NULL,
+    0x00c7, 0x00fc, 0x00e9, 0x00e2, 0x00e4, 0x00e0, 0x00e5, 0x00e7,
+    0x00ea, 0x00eb, 0x00e8, 0x00ef, 0x00ee, 0x00ec, 0x00c4, 0x00c5,
+    0x25af, 0x235e, 0x2339, 0x00f4, 0x00f6, 0x00f2, 0x00fb, 0x00f9,
+    0x22a4, 0x00d6, 0x00dc, 0x00f8, 0x00a3, 0x22a5, 0x2190, 0x2336,
+    0x00e1, 0x00ed, 0x00f3, 0x00fa, 0x00f1, 0x00d1, 0x00aa, 0x00ba,
+    0x00bf, 0x2308, 0x00ac, 0x2192, 0x222a, 0x00a1, 0x2355, 0x234e,
+    0x2591, 0x2592, 0x2593, 0x2502, 0x2524, 0x235f, 0x2206, 0x2207,
+    0x2192, 0x2563, 0x2551, 0x2557, 0x255d, 0x2190, 0x230a, 0x2510,
+    0x2514, 0x2534, 0x252c, 0x251c, 0x2500, 0x253c, 0x2191, 0x2193,
+    0x255a, 0x2554, 0x2569, 0x2566, 0x2560, 0x2550, 0x256c, 0x2261,
+    0x2378, 0x2377, 0x2235, 0x2337, 0x2342, 0x233b, 0x22a2, 0x22a3,
+    0x22c4, 0x2518, 0x250c, 0x2588, 0x2584, 0x00a6, 0x00cc, 0x2580,
+    0x237a, 0x00df, 0x2282, 0x2283, 0x235d, 0x2372, 0x2374, 0x2371,
+    0x233d, 0x2296, 0x25cb, 0x2228, 0x2373, 0x2349, 0x00c5, 0x2229,
+    0x233f, 0x2340, 0x2265, 0x2264, 0x2260, 0x00d7, 0x00f7, 0x2359,
+    0x2218, 0x2375, 0x236b, 0x234b, 0x2352, 0x00af, 0x00a8, 0x00a0
+};
+
+struct x_to_unicode u_apl5 = {		/* APL-2741 */
+    128, 0, X2U_CXG, AL_ROMAN, "APL-2741", "apl-2741", 0, NULL,
+    0x20ac, 0x22a3, 0x22a4, 0x22a5, 0x2190, 0x2192, 0x2191, 0x2193,
+    0x2264, 0x2265, 0x2372, 0x2371, 0x25af, 0x235e, 0x2339, 0x2359,
+    0x236b, 0x2206, 0x2207, 0x234b, 0x2352, 0x2355, 0x234e, 0x2308,
+    0x230a, 0x2340, 0x233f, 0x2282, 0x2283, 0x2229, 0x222a, 0x2228,
+    0x00a0, 0x00a1, 0x00a2, 0x00a3, 0x22a2, 0x2378, 0x2261, 0x2336,
+    0x00a8, 0x235d, 0x22c4, 0x236c, 0x2260, 0x2261, 0x236a, 0x00af,
+    0x2218, 0x25cb, 0x233d, 0x2349, 0x2296, 0x235f, 0x00b6, 0x00b7,
+    0x237a, 0x220a, 0x2377, 0x2262, 0x2373, 0x2374, 0x2375, 0x00bf,
+    0x2514, 0x2534, 0x252c, 0x251c, 0x00c4, 0x00c5, 0x00c6, 0x00c7,
+    0x00c8, 0x00c9, 0x2342, 0x233b, 0x2510, 0x00cd, 0x2500, 0x253c,
+    0x236c, 0x00d1, 0x2350, 0x2357, 0x2347, 0x2348, 0x00d6, 0x00d7,
+    0x00d8, 0x2518, 0x250c, 0x2502, 0x00dc, 0x2524, 0x2337, 0x00df,
+    0x00e0, 0x00e1, 0x00e2, 0x00e3, 0x00e4, 0x00e5, 0x00e6, 0x00e7,
+    0x00e8, 0x00e9, 0x00ea, 0x00eb, 0x00ec, 0x00ed, 0x00ee, 0x00ef,
+    0x2364, 0x00f1, 0x00f2, 0x00f3, 0x00f4, 0x00f5, 0x00f6, 0x00f7,
+    0x2205, 0x00f9, 0x00fa, 0x00fb, 0x00fc, 0x2235, 0x2368, 0x2365
 };
 
 /* 8-bit GOST standard sets */
@@ -6025,7 +6130,8 @@ ascii_u(CHAR c)
 ascii_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
-    c &= 0x7f;
+    if (c & 0x80)
+      return(UNK);
 /*
   NOTE: Strict ANSI compilers complain about "<" and similar comparisons
   between unsigned and signed quantities, as found in all the routines of
@@ -6046,7 +6152,8 @@ british_u(CHAR c)
 british_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
-    c &= 0x7f;
+    if (c & 0x80)
+      return(UNK);
     if (c < u_british.offset)
       return(c);
     else if (c >= u_british.offset + u_british.size)
@@ -6062,7 +6169,8 @@ dutch_u(CHAR c)
 dutch_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
-    c &= 0x7f;
+    if (c & 0x80)
+      return(UNK);
     if (c < u_dutch.offset)
       return(c);
     else if (c >= u_dutch.offset + u_dutch.size)
@@ -6078,7 +6186,8 @@ finnish_u(CHAR c)
 finnish_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
-    c &= 0x7f;
+    if (c & 0x80)
+      return(UNK);
     if (c < u_finnish.offset)
       return(c);
     else if (c >= u_finnish.offset + u_finnish.size)
@@ -6094,7 +6203,8 @@ french_u(CHAR c)
 french_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
-    c &= 0x7f;
+    if (c & 0x80)
+      return(UNK);
     if (c < u_french.offset)
       return(c);
     else if (c >= u_french.offset + u_french.size)
@@ -6110,7 +6220,8 @@ fr_canadian_u(CHAR c)
 fr_canadian_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
-    c &= 0x7f;
+    if (c & 0x80)
+      return(UNK);
     if (c < u_fr_canadian.offset)
       return(c);
     else if (c >= u_fr_canadian.offset + u_fr_canadian.size)
@@ -6126,7 +6237,8 @@ german_u(CHAR c)
 german_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
-    c &= 0x7f;
+    if (c & 0x80)
+      return(UNK);
     if (c < u_german.offset)
       return(c);
     else if (c >= u_german.offset + u_german.size)
@@ -6142,7 +6254,8 @@ hungarian_u(CHAR c)
 hungarian_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
-    c &= 0x7f;
+    if (c & 0x80)
+      return(UNK);
     if (c < u_hungarian.offset)
       return(c);
     else if (c >= u_hungarian.offset + u_hungarian.size)
@@ -6158,7 +6271,8 @@ italian_u(CHAR c)
 italian_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
-    c &= 0x7f;
+    if (c & 0x80)
+      return(UNK);
     if (c < u_italian.offset)
       return(c);
     else if (c >= u_italian.offset + u_italian.size)
@@ -6174,7 +6288,8 @@ icelandic_u(CHAR c)
 icelandic_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
-    c &= 0x7f;
+    if (c & 0x80)
+      return(UNK);
     if (c < u_icelandic.offset)
       return(c);
     else if (c >= u_icelandic.offset + u_icelandic.size)
@@ -6190,7 +6305,8 @@ jis0201r_u(CHAR c)
 jis0201r_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
-    c &= 0x7f;
+    if (c & 0x80)
+      return(UNK);
     if (c < u_jis0201r.offset)
       return(c);
     else if (c >= u_jis0201r.offset + u_jis0201r.size)
@@ -6206,7 +6322,8 @@ jis0201k_u(CHAR c)
 jis0201k_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
-    c &= 0x7f;
+    if (c & 0x80)
+      return(UNK);
     if (c < u_jis0201k.offset)
       return(c);
     else if (c >= u_jis0201k.offset + u_jis0201k.size)
@@ -6222,7 +6339,8 @@ norwegian_u(CHAR c)
 norwegian_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
-    c &= 0x7f;
+    if (c & 0x80)
+      return(UNK);
     if (c < u_norwegian.offset)
       return(c);
     else if (c >= u_norwegian.offset + u_norwegian.size)
@@ -6238,7 +6356,8 @@ danish_u(CHAR c)
 danish_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
-    c &= 0x7f;
+    if (c & 0x80)
+      return(UNK);
     if (c < u_danish.offset)
       return(c);
     else if (c >= u_danish.offset + u_danish.size)
@@ -6254,7 +6373,8 @@ portuguese_u(CHAR c)
 portuguese_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
-    c &= 0x7f;
+    if (c & 0x80)
+      return(UNK);
     if (c < u_portuguese.offset)
       return(c);
     else if (c >= u_portuguese.offset + u_portuguese.size)
@@ -6270,7 +6390,8 @@ spanish_u(CHAR c)
 spanish_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
-    c &= 0x7f;
+    if (c & 0x80)
+      return(UNK);
     if (c < u_spanish.offset)
       return(c);
     else if (c >= u_spanish.offset + u_spanish.size)
@@ -6286,7 +6407,8 @@ swedish_u(CHAR c)
 swedish_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
-    c &= 0x7f;
+    if (c & 0x80)
+      return(UNK);
     if (c < u_swedish.offset)
       return(c);
     else if (c >= u_swedish.offset + u_swedish.size)
@@ -6302,13 +6424,31 @@ swiss_u(CHAR c)
 swiss_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
-    c &= 0x7f;
+    if (c & 0x80)
+      return(UNK);
     if (c < u_swiss.offset)
       return(c);
     else if (c >= u_swiss.offset + u_swiss.size)
       return(c);
     else
       return(u_swiss.map[c - u_swiss.offset]);
+}
+
+USHORT
+#ifdef CK_ANSIC
+apl1_u(CHAR c)
+#else
+apl1_u(c) CHAR c;
+#endif /* CK_ANSIC */
+{
+    if (c & 0x80)
+      return(UNK);
+    if (c < u_apl1.offset)
+      return(c);
+    else if (c >= u_apl1.offset + u_apl1.size)
+      return(c);
+    else
+      return(u_apl1.map[c - u_apl1.offset]);
 }
 
 USHORT
@@ -6328,6 +6468,8 @@ iso_8859_1_u(CHAR c)
 iso_8859_1_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
+    if (c >= 0x80 && c < 0xa0)
+      return(c);
     c &= 0x7f;
     if (c < u_8859_1.offset)
       return(c);
@@ -6344,6 +6486,8 @@ iso_8859_2_u(CHAR c)
 iso_8859_2_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
+    if (c >= 0x80 && c < 0xa0)
+      return(c);
     c &= 0x7f;
     if (c < u_8859_2.offset)
       return(c);
@@ -6360,6 +6504,8 @@ iso_8859_3_u(CHAR c)
 iso_8859_3_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
+    if (c >= 0x80 && c < 0xa0)
+      return(c);
     c &= 0x7f;
     if (c < u_8859_3.offset)
       return(c);
@@ -6376,6 +6522,8 @@ iso_8859_4_u(CHAR c)
 iso_8859_4_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
+    if (c >= 0x80 && c < 0xa0)
+      return(c);
     c &= 0x7f;
     if (c < u_8859_4.offset)
       return(c);
@@ -6392,6 +6540,8 @@ iso_8859_5_u(CHAR c)
 iso_8859_5_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
+    if (c >= 0x80 && c < 0xa0)
+      return(c);
     c &= 0x7f;
     if (c < u_8859_5.offset)
       return(c);
@@ -6408,6 +6558,8 @@ koi8_u(CHAR c)
 koi8_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
+    if (c >= 0x80 && c < 0xa0)
+      return(c);
     c &= 0x7f;
     if (c < u_koi8.offset)
       return(c);
@@ -6424,7 +6576,6 @@ koi8r_u(CHAR c)				/* KOI8-R to Unicode */
 koi8r_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
-    debug(F001,"koi8r_u","",c);
     c &= 0x7f;
     if (c < u_koi8r.offset)
       return(c);
@@ -6457,6 +6608,8 @@ iso_8859_6_u(CHAR c)
 iso_8859_6_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
+    if (c >= 0x80 && c < 0xa0)
+      return(c);
     c &= 0x7f;
     if (c < u_8859_6.offset)
       return(c);
@@ -6473,6 +6626,8 @@ iso_8859_7_u(CHAR c)
 iso_8859_7_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
+    if (c >= 0x80 && c < 0xa0)
+      return(c);
     c &= 0x7f;
     if (c < u_8859_7.offset)
       return(c);
@@ -6489,6 +6644,8 @@ iso_8859_8_u(CHAR c)
 iso_8859_8_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
+    if (c >= 0x80 && c < 0xa0)
+      return(c);
     c &= 0x7f;
     if (c < u_8859_8.offset)
       return(c);
@@ -6537,6 +6694,8 @@ iso_8859_9_u(CHAR c)
 iso_8859_9_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
+    if (c >= 0x80 && c < 0xa0)
+      return(c);
     c &= 0x7f;
     if (c < u_8859_9.offset)
       return(c);
@@ -6553,6 +6712,8 @@ iso_8859_10_u(CHAR c)
 iso_8859_10_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
+    if (c >= 0x80 && c < 0xa0)
+      return(c);
     c &= 0x7f;
     if (c < u_8859_10.offset)
       return(c);
@@ -6569,6 +6730,8 @@ iso_8859_15_u(CHAR c)
 iso_8859_15_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
+    if (c >= 0x80 && c < 0xa0)
+      return(c);
     c &= 0x7f;
     if (c < u_8859_15.offset)
       return(c);
@@ -6580,12 +6743,79 @@ iso_8859_15_u(c) CHAR c;
 
 USHORT
 #ifdef CK_ANSIC
+apl2_u(CHAR c)
+#else
+apl2_u(c) CHAR c;
+#endif /* CK_ANSIC */
+{
+    if (c >= 0x80 && c < 0xa0)
+      return(c);
+    c &= 0x7f;
+    if (c < u_apl2.offset)
+      return(c);
+    else if (c >= u_apl2.offset + u_apl2.size)
+      return(c);
+    else
+      return(u_apl2.map[c - u_apl2.offset]);
+}
+
+USHORT
+#ifdef CK_ANSIC
+apl3_u(CHAR c)
+#else
+apl3_u(c) CHAR c;
+#endif /* CK_ANSIC */
+{
+    c &= 0x7f;
+    if (c < u_apl3.offset)
+      return(c);
+    else if (c >= u_apl3.offset + u_apl3.size)
+      return(c);
+    else
+      return(u_apl3.map[c - u_apl3.offset]);
+}
+
+USHORT
+#ifdef CK_ANSIC
+apl4_u(CHAR c)
+#else
+apl4_u(c) CHAR c;
+#endif /* CK_ANSIC */
+{
+    c &= 0x7f;
+    if (c < u_apl4.offset)
+      return(c);
+    else if (c >= u_apl4.offset + u_apl4.size)
+      return(c);
+    else
+      return(u_apl4.map[c - u_apl4.offset]);
+}
+
+USHORT
+#ifdef CK_ANSIC
+apl5_u(CHAR c)
+#else
+apl5_u(c) CHAR c;
+#endif /* CK_ANSIC */
+{
+    c &= 0x7f;
+    if (c < u_apl5.offset)
+      return(c);
+    else if (c >= u_apl5.offset + u_apl5.size)
+      return(c);
+    else
+      return(u_apl5.map[c - u_apl5.offset]);
+}
+
+USHORT
+#ifdef CK_ANSIC
 koi7_u(CHAR c)
 #else
 koi7_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
-    c &= 0x7f;
+    if (c & 0x80)
+      return(UNK);
     if (c < u_koi7.offset)
       return(c);
     else if (c >= u_koi7.offset + u_koi7.size)
@@ -6601,6 +6831,8 @@ decmcs_u(CHAR c)
 decmcs_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
+    if (c >= 0x80 && c < 0xa0)
+      return(c);
     c &= 0x7f;
     if (c < u_decmcs.offset)
       return(c);
@@ -6627,6 +6859,8 @@ dgi_u(CHAR c)
 dgi_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
+    if (c >= 0x80 && c < 0xa0)
+      return(c);
     return(u_dgi.map[(c & 0x7f) - u_dgi.offset]);
 }
 
@@ -6637,6 +6871,8 @@ hproman8_u(CHAR c)
 hproman8_u(c) CHAR c;
 #endif /* CK_ANSIC */
 {
+    if (c >= 0x80 && c < 0xa0)
+      return(c);
     return(u_hproman8.map[(c & 0x7f) - u_hproman8.offset]);
 }
 
@@ -7251,14 +7487,12 @@ c1pics_u(c) CHAR c;
 #ifdef KANJI				/* Kanji/Unicode functions */
 
 static long				/* Statistics counters */
-  bytes = 0,				/* REMOVE THESE LATER... */
-  bad = 0,
+  bad = 0,				/* REMOVE THESE LATER... */
   kanji = 0,
   kana = 0,
   greek = 0,
   cyrillic = 0,
   special = 0,
-  other = 0,
   roman = 0;
 
 USHORT
@@ -7586,7 +7820,7 @@ tx_punc(c) USHORT c;
       return((CHAR)0x27);
     else if (c >= 0x201c && c <= 0x201f) /* Assorted double quotes */
       return((CHAR)0x22);
-    else if (c >= 0x2022 && c <= 0x2024 || c == 0x2043) /* Bullets */
+    else if ((c >= 0x2022 && c <= 0x2024) || c == 0x2043) /* Bullets */
       return((CHAR)0xb7);
     switch (c) {
       case 0x2039:			/* Less-than sign */
@@ -7633,7 +7867,7 @@ tx_usascii(c) USHORT c;			/* US ASCII */
       return((CHAR)0x27);
     else if (c >= 0x201c && c <= 0x201f) /* Assorted double quotes */
       return((CHAR)0x22);
-    else if (c >= 0x2022 && c <= 0x2024 || c == 0x2043) /* Bullets */
+    else if ((c >= 0x2022 && c <= 0x2024) || c == 0x2043) /* Bullets */
       return((CHAR)0xb7);
     switch (c) {
       case 0x2039:			/* Less-than sign */
@@ -7643,6 +7877,10 @@ tx_usascii(c) USHORT c;			/* US ASCII */
       case 0x2044:			/* Solidus -> Slash */
 	return((CHAR)0x2f);
     }
+    /*
+      Here we might also (a) map accented Roman letters to unaccented ones;
+      (b) map Greek/Cyrillic A (etc) to Roman, and so on.
+    */
     return((c & 0xff80) ? -1 : (CHAR)(c & 0x7f));
 }
 
@@ -7659,6 +7897,88 @@ tx_british(c) USHORT c;			/* British */
       return(0x2b);
     else
       return(tx_usascii(c));
+}
+
+int
+#ifdef CK_ANSIC
+tx_apl1(USHORT c)
+#else
+tx_apl1(c) USHORT c;			/* Apl1 */
+#endif /* CK_ANSIC */
+{
+    if (c >= 0x0041 && c <= 0x005a)	/* Letters */
+      return(c + 0x20);
+    switch (c) {			/* Others */
+      case 0x0024: return((CHAR)0x7e);
+      case 0x0027: return((CHAR)0x4b);
+      case 0x0028: return((CHAR)0x3a);
+      case 0x0029: return((CHAR)0x22);
+      case 0x002b: return((CHAR)0x2d);
+      case 0x002c: return((CHAR)0x2c);
+      case 0x002d: return((CHAR)0x5f);
+      case 0x002e: return((CHAR)0x2e);
+      case 0x002f: return((CHAR)0x2f);
+      case 0x0030: return((CHAR)0x30);
+      case 0x0031: return((CHAR)0x31);
+      case 0x0032: return((CHAR)0x32);
+      case 0x0033: return((CHAR)0x33);
+      case 0x0034: return((CHAR)0x34);
+      case 0x0035: return((CHAR)0x35);
+      case 0x0036: return((CHAR)0x36);
+      case 0x0037: return((CHAR)0x37);
+      case 0x0038: return((CHAR)0x38);
+      case 0x0039: return((CHAR)0x39);
+      case 0x003a: return((CHAR)0x3e);
+      case 0x003b: return((CHAR)0x3c);
+      case 0x003c: return((CHAR)0x23);
+      case 0x003d: return((CHAR)0x25);
+      case 0x003e: return((CHAR)0x26);
+      case 0x003f: return((CHAR)0x51);
+      case 0x005b: return((CHAR)0x3b);
+      case 0x005c: return((CHAR)0x3f);
+      case 0x005d: return((CHAR)0x27);
+      case 0x005f: return((CHAR)0x46);
+      case 0x007b: return((CHAR)0x7b);
+      case 0x007c: return((CHAR)0x4d);
+      case 0x007d: return((CHAR)0x7d);
+      case 0x00a8: return((CHAR)0x21);
+      case 0x00af: return((CHAR)0x40);
+      case 0x00d7: return((CHAR)0x3d);
+      case 0x00f7: return((CHAR)0x2b);
+      case 0x2190: return((CHAR)0x5b);
+      case 0x2191: return((CHAR)0x59);
+      case 0x2192: return((CHAR)0x5d);
+      case 0x2193: return((CHAR)0x55);
+      case 0x2206: return((CHAR)0x48);
+      case 0x2207: return((CHAR)0x47);
+      case 0x220a: return((CHAR)0x45);
+      case 0x2218: return((CHAR)0x4a);
+      case 0x2227: return((CHAR)0x29);
+      case 0x2228: return((CHAR)0x28);
+      case 0x222a: return((CHAR)0x56);
+      case 0x223c: return((CHAR)0x54);
+      case 0x2260: return((CHAR)0x2a);
+      case 0x2264: return((CHAR)0x24);
+      case 0x2265: return((CHAR)0x5e);
+      case 0x2282: return((CHAR)0x5a);
+      case 0x2283: return((CHAR)0x58);
+      case 0x22a2: return((CHAR)0x5c);
+      case 0x22a3: return((CHAR)0x7c);
+      case 0x22a4: return((CHAR)0x4e);
+      case 0x22a5: return((CHAR)0x42);
+      case 0x22c2: return((CHAR)0x43);
+      case 0x22c4: return((CHAR)0x60);
+      case 0x22c6: return((CHAR)0x50);
+      case 0x2308: return((CHAR)0x53);
+      case 0x230a: return((CHAR)0x44);
+      case 0x2373: return((CHAR)0x49);
+      case 0x2374: return((CHAR)0x52);
+      case 0x2375: return((CHAR)0x57);
+      case 0x237a: return((CHAR)0x41);
+      case 0x25af: return((CHAR)0x4c);
+      case 0x25cb: return((CHAR)0x4f);
+      default:   return(tx_usascii(c));
+    }
 }
 
 int					/* Canadian French */
@@ -7808,7 +8128,7 @@ tx_hebrew7(c) USHORT c;
       return((CHAR)(c & 0x7f));
     else if (c >= 123 && c < 128)	/* ASCII */
       return((CHAR)(c & 0x7f));
-    else if (c >= 0x05d0 && c < 0x05ea)	/* Hebrew 27 contiguous characters */
+    else if (c >= 0x05d0 && c <= 0x05ea) /* Hebrew 27 contiguous characters */
       return((CHAR)((int)c - 0x5d0 + 96));
     else return(-1);
 }
@@ -8106,6 +8426,511 @@ tx_swiss(c) USHORT c;
       case 0xfc: return(0x7d);		/* u umlaut */
       case 0xfb: return(0x7e);		/* u circumflex */
       default:   return(tx_usascii(c));
+    }
+}
+
+int					/* Dyadic APL */
+#ifdef CK_ANSIC
+tx_apl2(USHORT c)
+#else
+tx_apl2(c) USHORT c;
+#endif /* CK_ANSIC */
+{
+    if (c >= 0x0041 && c <= 0x005a)	/* Letters */
+      return(c - 0xa2);
+    switch (c) {
+      case 0x00a0: return((CHAR)0xa0);
+      case 0x00a2: return((CHAR)0xa4);
+      case 0x00a3: return((CHAR)0xd4);
+      case 0x00a8: return((CHAR)0xdc);
+      case 0x00af: return((CHAR)0xda);
+      case 0x00d7: return((CHAR)0xa1);
+      case 0x00f7: return((CHAR)0xaf);
+      case 0x2190: return((CHAR)0xbb);
+      case 0x2191: return((CHAR)0xfe);
+      case 0x2192: return((CHAR)0xde);
+      case 0x2193: return((CHAR)0xff);
+      case 0x2206: return((CHAR)0xae);
+      case 0x2207: return((CHAR)0xfd);
+      case 0x220a: return((CHAR)0xb5);
+      case 0x2218: return((CHAR)0xbc);
+      case 0x2228: return((CHAR)0xdf);
+      case 0x2229: return((CHAR)0xd1);
+      case 0x222a: return((CHAR)0xd2);
+      case 0x2260: return((CHAR)0xb0);
+      case 0x2261: return((CHAR)0xb6);
+      case 0x2262: return((CHAR)0xcd);
+      case 0x2264: return((CHAR)0xb8);
+      case 0x2265: return((CHAR)0xb7);
+      case 0x2282: return((CHAR)0xe0);
+      case 0x2283: return((CHAR)0xe1);
+      case 0x2296: return((CHAR)0xd6);
+      case 0x22a2: return((CHAR)0xd7);
+      case 0x22a3: return((CHAR)0xd8);
+      case 0x22a4: return((CHAR)0xba);
+      case 0x22a5: return((CHAR)0xb9);
+      case 0x22c4: return((CHAR)0xb1);
+      case 0x2308: return((CHAR)0xcf);
+      case 0x230a: return((CHAR)0xce);
+      case 0x2337: return((CHAR)0xd9);
+      case 0x2339: return((CHAR)0xca);
+      case 0x233d: return((CHAR)0xd5);
+      case 0x233f: return((CHAR)0xbe);
+      case 0x2340: return((CHAR)0xbf);
+      case 0x2349: return((CHAR)0xd0);
+      case 0x234b: return((CHAR)0xc2);
+      case 0x234e: return((CHAR)0xc0);
+      case 0x2352: return((CHAR)0xc3);
+      case 0x2355: return((CHAR)0xc1);
+      case 0x2359: return((CHAR)0xe2);
+      case 0x235d: return((CHAR)0xbd);
+      case 0x235e: return((CHAR)0xc9);
+      case 0x235f: return((CHAR)0xc7);
+      case 0x2368: return((CHAR)0xc6);
+      case 0x236a: return((CHAR)0xcc);
+      case 0x236b: return((CHAR)0xcb);
+      case 0x236c: return((CHAR)0xd3);
+      case 0x2371: return((CHAR)0xc5);
+      case 0x2372: return((CHAR)0xc4);
+      case 0x2373: return((CHAR)0xdb);
+      case 0x2374: return((CHAR)0xb3);
+      case 0x2375: return((CHAR)0xb2);
+      case 0x237a: return((CHAR)0xb4);
+      case 0x2500: return((CHAR)0xaa);
+      case 0x2502: return((CHAR)0xa2);
+      case 0x250c: return((CHAR)0xad);
+      case 0x2510: return((CHAR)0xa5);
+      case 0x2514: return((CHAR)0xa6);
+      case 0x2518: return((CHAR)0xac);
+      case 0x251c: return((CHAR)0xa9);
+      case 0x2524: return((CHAR)0xa3);
+      case 0x252c: return((CHAR)0xa8);
+      case 0x2534: return((CHAR)0xa7);
+      case 0x253c: return((CHAR)0xab);
+      case 0x25af: return((CHAR)0xc8);
+      case 0x25cb: return((CHAR)0xdd);
+      default:
+	if (c < 0xa0)
+	  return((CHAR)(c & 0xff));
+	return(tx_punc(c));
+    }
+}
+
+int					/* APL-Plus */
+#ifdef CK_ANSIC
+tx_apl3(USHORT c)
+#else
+tx_apl3(c) USHORT c;
+#endif /* CK_ANSIC */
+{
+    switch (c) {
+      case 0x00a0: return((CHAR)0xa0);
+      case 0x00a1: return((CHAR)0xa1);
+      case 0x00a2: return((CHAR)0xa2);
+      case 0x00a3: return((CHAR)0xa3);
+      case 0x00a5: return((CHAR)0xa5);
+      case 0x00a6: return((CHAR)0xa6);
+      case 0x00a7: return((CHAR)0xa7);
+      case 0x00a8: return((CHAR)0xa8);
+      case 0x00ab: return((CHAR)0xab);
+      case 0x00af: return((CHAR)0xaf);
+      case 0x00b6: return((CHAR)0xb6);
+      case 0x00b7: return((CHAR)0xb7);
+      case 0x00bb: return((CHAR)0xbb);
+      case 0x00bf: return((CHAR)0xbf);
+      case 0x00c0: return((CHAR)0xc0);
+      case 0x00c1: return((CHAR)0xc1);
+      case 0x00c2: return((CHAR)0xc2);
+      case 0x00c3: return((CHAR)0xc3);
+      case 0x00c4: return((CHAR)0xc4);
+      case 0x00c5: return((CHAR)0xc5);
+      case 0x00c6: return((CHAR)0xc6);
+      case 0x00c7: return((CHAR)0xc7);
+      case 0x00c8: return((CHAR)0xc8);
+      case 0x00c9: return((CHAR)0xc9);
+      case 0x00ca: return((CHAR)0xca);
+      case 0x00cb: return((CHAR)0xcb);
+      case 0x00cc: return((CHAR)0xcc);
+      case 0x00cd: return((CHAR)0xcd);
+      case 0x00ce: return((CHAR)0xce);
+      case 0x00cf: return((CHAR)0xcf);
+      case 0x00d1: return((CHAR)0xd1);
+      case 0x00d2: return((CHAR)0xd2);
+      case 0x00d3: return((CHAR)0xd3);
+      case 0x00d4: return((CHAR)0xd4);
+      case 0x00d5: return((CHAR)0xd5);
+      case 0x00d6: return((CHAR)0xd6);
+      case 0x00d7: return((CHAR)0xd7);
+      case 0x00d8: return((CHAR)0xd8);
+      case 0x00d9: return((CHAR)0xd9);
+      case 0x00da: return((CHAR)0xda);
+      case 0x00db: return((CHAR)0xdb);
+      case 0x00dc: return((CHAR)0xdc);
+      case 0x00dd: return((CHAR)0xdd);
+      case 0x00df: return((CHAR)0xdf);
+      case 0x00e0: return((CHAR)0xe0);
+      case 0x00e1: return((CHAR)0xe1);
+      case 0x00e2: return((CHAR)0xe2);
+      case 0x00e3: return((CHAR)0xe3);
+      case 0x00e4: return((CHAR)0xe4);
+      case 0x00e5: return((CHAR)0xe5);
+      case 0x00e6: return((CHAR)0xe6);
+      case 0x00e7: return((CHAR)0xe7);
+      case 0x00e8: return((CHAR)0xe8);
+      case 0x00e9: return((CHAR)0xe9);
+      case 0x00ea: return((CHAR)0xea);
+      case 0x00eb: return((CHAR)0xeb);
+      case 0x00ec: return((CHAR)0xec);
+      case 0x00ed: return((CHAR)0xed);
+      case 0x00ee: return((CHAR)0xee);
+      case 0x00ef: return((CHAR)0xef);
+      case 0x00f1: return((CHAR)0xf1);
+      case 0x00f2: return((CHAR)0xf2);
+      case 0x00f3: return((CHAR)0xf3);
+      case 0x00f4: return((CHAR)0xf4);
+      case 0x00f5: return((CHAR)0xf5);
+      case 0x00f6: return((CHAR)0xf6);
+      case 0x00f7: return((CHAR)0xf7);
+      case 0x00f9: return((CHAR)0xf9);
+      case 0x00fa: return((CHAR)0xfa);
+      case 0x00fb: return((CHAR)0xfb);
+      case 0x00fc: return((CHAR)0xfc);
+      case 0x00fd: return((CHAR)0xfd);
+      case 0x00ff: return((CHAR)0xff);
+      case 0x20ac: return((CHAR)0x80);
+      case 0x2190: return((CHAR)0x84);
+      case 0x2191: return((CHAR)0x86);
+      case 0x2192: return((CHAR)0x85);
+      case 0x2193: return((CHAR)0x87);
+      case 0x2205: return((CHAR)0xf8);
+      case 0x2206: return((CHAR)0x91);
+      case 0x2207: return((CHAR)0x92);
+      case 0x220a: return((CHAR)0xb9);
+      case 0x2218: return((CHAR)0xb0);
+      case 0x2228: return((CHAR)0x9f);
+      case 0x2229: return((CHAR)0x9d);
+      case 0x222a: return((CHAR)0x9e);
+      case 0x2260: return((CHAR)0xac);
+      case 0x2261: return((CHAR)0xad);
+      case 0x2264: return((CHAR)0x88);
+      case 0x2265: return((CHAR)0x89);
+      case 0x2282: return((CHAR)0x9b);
+      case 0x2283: return((CHAR)0x9c);
+      case 0x2296: return((CHAR)0xb4);
+      case 0x22a2: return((CHAR)0xa4);
+      case 0x22a3: return((CHAR)0x81);
+      case 0x22a4: return((CHAR)0x82);
+      case 0x22a5: return((CHAR)0x83);
+      case 0x22c4: return((CHAR)0xaa);
+      case 0x2308: return((CHAR)0x97);
+      case 0x230a: return((CHAR)0x98);
+      case 0x2337: return((CHAR)0xde);
+      case 0x2339: return((CHAR)0x8e);
+      case 0x233d: return((CHAR)0xb2);
+      case 0x233f: return((CHAR)0x9a);
+      case 0x2340: return((CHAR)0x99);
+      case 0x2349: return((CHAR)0xb3);
+      case 0x234b: return((CHAR)0x93);
+      case 0x234e: return((CHAR)0x96);
+      case 0x2352: return((CHAR)0x94);
+      case 0x2355: return((CHAR)0x95);
+      case 0x2359: return((CHAR)0x8f);
+      case 0x235d: return((CHAR)0xa9);
+      case 0x235e: return((CHAR)0x8d);
+      case 0x235f: return((CHAR)0xb5);
+      case 0x2364: return((CHAR)0xf0);
+      case 0x2368: return((CHAR)0xfe);
+      case 0x236a: return((CHAR)0xae);
+      case 0x236b: return((CHAR)0x90);
+      case 0x236c: return((CHAR)0xd0);
+      case 0x2371: return((CHAR)0x8b);
+      case 0x2372: return((CHAR)0x8a);
+      case 0x2373: return((CHAR)0xbc);
+      case 0x2374: return((CHAR)0xbd);
+      case 0x2375: return((CHAR)0xbe);
+      case 0x2377: return((CHAR)0xba);
+      case 0x237a: return((CHAR)0xb8);
+      case 0x25af: return((CHAR)0x8c);
+      case 0x25cb: return((CHAR)0xb1);
+      default:
+	return(tx_punc(c));
+    }
+}
+
+int					/* IBM APL2 */
+#ifdef CK_ANSIC
+tx_apl4(USHORT c)
+#else
+tx_apl4(c) USHORT c;
+#endif /* CK_ANSIC */
+{
+    switch (c) {
+      case 0x00a0: return((CHAR)0xff);
+      case 0x00a1: return((CHAR)0xad);
+      case 0x00a3: return((CHAR)0x9c);
+      case 0x00a6: return((CHAR)0xdd);
+      case 0x00a8: return((CHAR)0xfe);
+      case 0x00aa: return((CHAR)0xa6);
+      case 0x00ac: return((CHAR)0xaa);
+      case 0x00af: return((CHAR)0xfd);
+      case 0x00ba: return((CHAR)0xa7);
+      case 0x00bf: return((CHAR)0xa8);
+      case 0x00c4: return((CHAR)0x8e);
+      case 0x00c5: return((CHAR)0xee);	/* and 0x8f */
+      case 0x00c7: return((CHAR)0x80);
+      case 0x00cc: return((CHAR)0xde);
+      case 0x00d1: return((CHAR)0xa5);
+      case 0x00d6: return((CHAR)0x99);
+      case 0x00d7: return((CHAR)0xf5);
+      case 0x00dc: return((CHAR)0x9a);
+      case 0x00df: return((CHAR)0xe1);
+      case 0x00e0: return((CHAR)0x85);
+      case 0x00e1: return((CHAR)0xa0);
+      case 0x00e2: return((CHAR)0x83);
+      case 0x00e4: return((CHAR)0x84);
+      case 0x00e5: return((CHAR)0x86);
+      case 0x00e7: return((CHAR)0x87);
+      case 0x00e8: return((CHAR)0x8a);
+      case 0x00e9: return((CHAR)0x82);
+      case 0x00ea: return((CHAR)0x88);
+      case 0x00eb: return((CHAR)0x89);
+      case 0x00ec: return((CHAR)0x8d);
+      case 0x00ed: return((CHAR)0xa1);
+      case 0x00ee: return((CHAR)0x8c);
+      case 0x00ef: return((CHAR)0x8b);
+      case 0x00f1: return((CHAR)0xa4);
+      case 0x00f2: return((CHAR)0x95);
+      case 0x00f3: return((CHAR)0xa2);
+      case 0x00f4: return((CHAR)0x93);
+      case 0x00f6: return((CHAR)0x94);
+      case 0x00f7: return((CHAR)0xf6);
+      case 0x00f8: return((CHAR)0x9b);
+      case 0x00f9: return((CHAR)0x97);
+      case 0x00fa: return((CHAR)0xa3);
+      case 0x00fb: return((CHAR)0x96);
+      case 0x00fc: return((CHAR)0x81);
+      case 0x2190: return((CHAR)0x9e);
+      case 0x2191: return((CHAR)0xc6);
+      case 0x2192: return((CHAR)0xab);
+      case 0x2193: return((CHAR)0xc7);
+      case 0x2206: return((CHAR)0xb6);
+      case 0x2207: return((CHAR)0xb7);
+      case 0x2218: return((CHAR)0xf8);
+      case 0x2228: return((CHAR)0xeb);
+      case 0x2229: return((CHAR)0xef);
+      case 0x222a: return((CHAR)0xac);
+      case 0x2235: return((CHAR)0xd2);
+      case 0x2260: return((CHAR)0xf4);
+      case 0x2261: return((CHAR)0xcf);
+      case 0x2264: return((CHAR)0xf3);
+      case 0x2265: return((CHAR)0xf2);
+      case 0x2282: return((CHAR)0xe2);
+      case 0x2283: return((CHAR)0xe3);
+      case 0x2296: return((CHAR)0xe9);
+      case 0x22a2: return((CHAR)0xd6);
+      case 0x22a3: return((CHAR)0xd7);
+      case 0x22a4: return((CHAR)0x98);
+      case 0x22a5: return((CHAR)0x9d);
+      case 0x22c4: return((CHAR)0xd8);
+      case 0x2308: return((CHAR)0xa9);
+      case 0x230a: return((CHAR)0xbe);
+      case 0x2336: return((CHAR)0x9f);
+      case 0x2337: return((CHAR)0xd3);
+      case 0x2339: return((CHAR)0x92);
+      case 0x233b: return((CHAR)0xd5);
+      case 0x233d: return((CHAR)0xe8);
+      case 0x233f: return((CHAR)0xf0);
+      case 0x2340: return((CHAR)0xf1);
+      case 0x2342: return((CHAR)0xd4);
+      case 0x2349: return((CHAR)0xed);
+      case 0x234b: return((CHAR)0xfb);
+      case 0x234e: return((CHAR)0xaf);
+      case 0x2352: return((CHAR)0xfc);
+      case 0x2355: return((CHAR)0xae);
+      case 0x2359: return((CHAR)0xf7);
+      case 0x235d: return((CHAR)0xe4);
+      case 0x235e: return((CHAR)0x91);
+      case 0x235f: return((CHAR)0xb5);
+      case 0x236b: return((CHAR)0xfa);
+      case 0x2371: return((CHAR)0xe7);
+      case 0x2372: return((CHAR)0xe5);
+      case 0x2373: return((CHAR)0xec);
+      case 0x2374: return((CHAR)0xe6);
+      case 0x2375: return((CHAR)0xf9);
+      case 0x2377: return((CHAR)0xd1);
+      case 0x2378: return((CHAR)0xd0);
+      case 0x237a: return((CHAR)0xe0);
+      case 0x2500: return((CHAR)0xc4);
+      case 0x2502: return((CHAR)0xb3);
+      case 0x250c: return((CHAR)0xda);
+      case 0x2510: return((CHAR)0xbf);
+      case 0x2514: return((CHAR)0xc0);
+      case 0x2518: return((CHAR)0xd9);
+      case 0x251c: return((CHAR)0xc3);
+      case 0x2524: return((CHAR)0xb4);
+      case 0x252c: return((CHAR)0xc2);
+      case 0x2534: return((CHAR)0xc1);
+      case 0x253c: return((CHAR)0xc5);
+      case 0x2550: return((CHAR)0xcd);
+      case 0x2551: return((CHAR)0xba);
+      case 0x2554: return((CHAR)0xc9);
+      case 0x2557: return((CHAR)0xbb);
+      case 0x255a: return((CHAR)0xc8);
+      case 0x255d: return((CHAR)0xbc);
+      case 0x2560: return((CHAR)0xcc);
+      case 0x2563: return((CHAR)0xb9);
+      case 0x2566: return((CHAR)0xcb);
+      case 0x2569: return((CHAR)0xca);
+      case 0x256c: return((CHAR)0xce);
+      case 0x2580: return((CHAR)0xdf);
+      case 0x2584: return((CHAR)0xdc);
+      case 0x2588: return((CHAR)0xdb);
+      case 0x2591: return((CHAR)0xb0);
+      case 0x2592: return((CHAR)0xb1);
+      case 0x2593: return((CHAR)0xb2);
+      case 0x25af: return((CHAR)0x90);
+      case 0x25cb: return((CHAR)0xea);
+      default:
+	return(tx_punc(c));
+    }
+}
+
+int					/* APL-2741 */
+#ifdef CK_ANSIC
+tx_apl5(USHORT c)
+#else
+tx_apl5(c) USHORT c;
+#endif /* CK_ANSIC */
+{
+    switch (c) {
+      case 0x00a0: return((CHAR)0xa0);
+      case 0x00a1: return((CHAR)0xa1);
+      case 0x00a2: return((CHAR)0xa2);
+      case 0x00a3: return((CHAR)0xa3);
+      case 0x00a8: return((CHAR)0xa8);
+      case 0x00af: return((CHAR)0xaf);
+      case 0x00b6: return((CHAR)0xb6);
+      case 0x00b7: return((CHAR)0xb7);
+      case 0x00bf: return((CHAR)0xbf);
+      case 0x00c4: return((CHAR)0xc4);
+      case 0x00c5: return((CHAR)0xc5);
+      case 0x00c6: return((CHAR)0xc6);
+      case 0x00c7: return((CHAR)0xc7);
+      case 0x00c8: return((CHAR)0xc8);
+      case 0x00c9: return((CHAR)0xc9);
+      case 0x00cd: return((CHAR)0xcd);
+      case 0x00d1: return((CHAR)0xd1);
+      case 0x00d6: return((CHAR)0xd6);
+      case 0x00d7: return((CHAR)0xd7);
+      case 0x00d8: return((CHAR)0xd8);
+      case 0x00dc: return((CHAR)0xdc);
+      case 0x00df: return((CHAR)0xdf);
+      case 0x00e0: return((CHAR)0xe0);
+      case 0x00e1: return((CHAR)0xe1);
+      case 0x00e2: return((CHAR)0xe2);
+      case 0x00e3: return((CHAR)0xe3);
+      case 0x00e4: return((CHAR)0xe4);
+      case 0x00e5: return((CHAR)0xe5);
+      case 0x00e6: return((CHAR)0xe6);
+      case 0x00e7: return((CHAR)0xe7);
+      case 0x00e8: return((CHAR)0xe8);
+      case 0x00e9: return((CHAR)0xe9);
+      case 0x00ea: return((CHAR)0xea);
+      case 0x00eb: return((CHAR)0xeb);
+      case 0x00ec: return((CHAR)0xec);
+      case 0x00ed: return((CHAR)0xed);
+      case 0x00ee: return((CHAR)0xee);
+      case 0x00ef: return((CHAR)0xef);
+      case 0x00f1: return((CHAR)0xf1);
+      case 0x00f2: return((CHAR)0xf2);
+      case 0x00f3: return((CHAR)0xf3);
+      case 0x00f4: return((CHAR)0xf4);
+      case 0x00f5: return((CHAR)0xf5);
+      case 0x00f6: return((CHAR)0xf6);
+      case 0x00f7: return((CHAR)0xf7);
+      case 0x00f9: return((CHAR)0xf9);
+      case 0x00fa: return((CHAR)0xfa);
+      case 0x00fb: return((CHAR)0xfb);
+      case 0x00fc: return((CHAR)0xfc);
+      case 0x20ac: return((CHAR)0x80);
+      case 0x2190: return((CHAR)0x84);
+      case 0x2191: return((CHAR)0x86);
+      case 0x2192: return((CHAR)0x85);
+      case 0x2193: return((CHAR)0x87);
+      case 0x2205: return((CHAR)0xf8);
+      case 0x2206: return((CHAR)0x91);
+      case 0x2207: return((CHAR)0x92);
+      case 0x220a: return((CHAR)0xb9);
+      case 0x2218: return((CHAR)0xb0);
+      case 0x2228: return((CHAR)0x9f);
+      case 0x2229: return((CHAR)0x9d);
+      case 0x222a: return((CHAR)0x9e);
+      case 0x2235: return((CHAR)0xfd);
+      case 0x2260: return((CHAR)0xac);
+      case 0x2261: return((CHAR)0xa6);
+      case 0x2262: return((CHAR)0xbb);
+      case 0x2264: return((CHAR)0x88);
+      case 0x2265: return((CHAR)0x89);
+      case 0x2282: return((CHAR)0x9b);
+      case 0x2283: return((CHAR)0x9c);
+      case 0x2296: return((CHAR)0xb4);
+      case 0x22a2: return((CHAR)0xa4);
+      case 0x22a3: return((CHAR)0x81);
+      case 0x22a4: return((CHAR)0x82);
+      case 0x22a5: return((CHAR)0x83);
+      case 0x22c4: return((CHAR)0xaa);
+      case 0x2308: return((CHAR)0x97);
+      case 0x230a: return((CHAR)0x98);
+      case 0x2336: return((CHAR)0xa7);
+      case 0x2337: return((CHAR)0xde);
+      case 0x2339: return((CHAR)0x8e);
+      case 0x233b: return((CHAR)0xcb);
+      case 0x233d: return((CHAR)0xb2);
+      case 0x233f: return((CHAR)0x9a);
+      case 0x2340: return((CHAR)0x99);
+      case 0x2342: return((CHAR)0xca);
+      case 0x2347: return((CHAR)0xd4);
+      case 0x2348: return((CHAR)0xd5);
+      case 0x2349: return((CHAR)0xb3);
+      case 0x234b: return((CHAR)0x93);
+      case 0x234e: return((CHAR)0x96);
+      case 0x2350: return((CHAR)0xd2);
+      case 0x2352: return((CHAR)0x94);
+      case 0x2355: return((CHAR)0x95);
+      case 0x2357: return((CHAR)0xd3);
+      case 0x2359: return((CHAR)0x8f);
+      case 0x235d: return((CHAR)0xa9);
+      case 0x235e: return((CHAR)0x8d);
+      case 0x235f: return((CHAR)0xb5);
+      case 0x2364: return((CHAR)0xf0);
+      case 0x2365: return((CHAR)0xff);
+      case 0x2368: return((CHAR)0xfe);
+      case 0x236a: return((CHAR)0xae);
+      case 0x236b: return((CHAR)0x90);
+      case 0x236c: return((CHAR)0xab);
+      case 0x2371: return((CHAR)0x8b);
+      case 0x2372: return((CHAR)0x8a);
+      case 0x2373: return((CHAR)0xbc);
+      case 0x2374: return((CHAR)0xbd);
+      case 0x2375: return((CHAR)0xbe);
+      case 0x2377: return((CHAR)0xba);
+      case 0x2378: return((CHAR)0xa5);
+      case 0x237a: return((CHAR)0xb8);
+      case 0x2500: return((CHAR)0xce);
+      case 0x2502: return((CHAR)0xdb);
+      case 0x250c: return((CHAR)0xda);
+      case 0x2510: return((CHAR)0xcc);
+      case 0x2514: return((CHAR)0xc0);
+      case 0x2518: return((CHAR)0xd9);
+      case 0x251c: return((CHAR)0xc3);
+      case 0x2524: return((CHAR)0xdd);
+      case 0x252c: return((CHAR)0xc2);
+      case 0x2534: return((CHAR)0xc1);
+      case 0x253c: return((CHAR)0xcf);
+      case 0x25af: return((CHAR)0x8c);
+      case 0x25cb: return((CHAR)0xb1);
+      default:
+	return(tx_punc(c));
     }
 }
 
@@ -10480,7 +11305,7 @@ tx_cp1250(USHORT c)
 tx_cp1250(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0x80 || c > 0xbf && c <= 0xff) /* Has C1 graphics */
+    if (c < 0x80 || (c > 0xbf && c <= 0xff)) /* Has C1 graphics */
       return((CHAR)(c & 0xff));
     switch (c) {
       case 0x002D: return((CHAR)(0xad & 0xff));
@@ -10708,7 +11533,7 @@ tx_cp1252(USHORT c)
 tx_cp1252(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c < 0x80 || c > 0x9f && c <= 0xff) /* Has C1 graphics */
+    if (c < 0x80 || (c > 0x9f && c <= 0xff)) /* Has C1 graphics */
       return((CHAR)(c & 0xff));
     switch (c) {
       case 0x0152:			/* OE */
@@ -14511,7 +15336,12 @@ txrinfo[MAXTXSETS+1] = {
     &u_transparent,                     /* 102 Transparent */
     &u_hz1500,				/* 103 Hazeltine 1500/1520 graphics */
     &u_koi8r,				/* 104 KOI8-R */
-    &u_koi8u				/* 105 KOI8-U */
+    &u_koi8u,				/* 105 KOI8-U */
+    &u_apl1,				/* 106 APL 1 (ISO) */
+    &u_apl2,				/* 107 APL 2 (Dyadic) */
+    &u_apl3,				/* 108 APL 3 (Plus) */
+    &u_apl4,				/* 108 APL 4 (IBM) */
+    &u_apl5				/* 110 APL 5 (2741) */
 };
 
 /*
@@ -14630,7 +15460,12 @@ USHORT
     ident_u,    			/* 102 Transparent - no translation  */
     hz1500_u,				/* 103 Hazeltine 1500/1520 graphics */
     koi8r_u,				/* 104 KOI8-R */
-    koi8u_u				/* 105 KOI8-U */
+    koi8u_u,				/* 105 KOI8-U */
+    apl1_u,				/* 106 APL 1 (ISO) */
+    apl2_u,				/* 107 APL 2 (AIX) */
+    apl3_u,				/* 108 APL 3 (Plus) */
+    apl4_u,				/* 109 APL 4 (IBM) */
+    apl5_u				/* 110 APL 5 (2741) */
 };
 /*
   Table of Unicode-to-Blah translation functions.
@@ -14749,7 +15584,12 @@ int
     tx_ident,                           /* 102 Transparent - no translation */
     NULL,	/* Display only */	/* 103 Hazeltine 1500/1520 graphics */
     tx_koi8r,				/* 104 KOI8-R */
-    tx_koi8u				/* 105 KOI8-U */
+    tx_koi8u,				/* 105 KOI8-U */
+    tx_apl1,				/* 106 APL 1 (ISO) */
+    tx_apl2,				/* 107 APL 2 (AIX) */
+    tx_apl3,				/* 108 APL 3 (Plus) */
+    tx_apl4,				/* 108 APL 4 (IBM) */
+    tx_apl5				/* 110 APL 5 (2741) */
 };
 
 /*
@@ -14811,7 +15651,8 @@ USHORT
     NULL,				/* 45 UCS-2 */
     NULL,				/* 46 UTF-8 */
     koi8r_u,				/* 47 KOI8-R */
-    koi8u_u				/* 48 KOI8-U */
+    koi8u_u,				/* 48 KOI8-U */
+    cp1252_u				/* 49 CP1252 */
 };
 
 /*
@@ -14873,7 +15714,8 @@ int
     NULL,				/* 45 UCS-2 */
     NULL,				/* 46 UTF-8 */
     tx_koi8r,				/* 47 KOI8-R */
-    tx_koi8u				/* 48 KOI8-U */
+    tx_koi8u,				/* 48 KOI8-U */
+    tx_cp1252				/* 49 CP1252 */
 };
 
 /*
@@ -15262,8 +16104,9 @@ b_to_u(c, buf, buflen, setsize) CHAR c, * buf; int buflen, setsize;
     }
     count = ucs2_to_utf8(uc,&tmp);
     if (count < 0) {
-	buf[0] = 0xff;			/* == 0xFFFD in UTF-8 */
-	buf[1] = 0xbd;
+	buf[0] = 0xef;			/* == 0xFFFD in UTF-8 */
+	buf[1] = 0xbf;
+	buf[2] = 0xbd;
 	buf[3] = '\0';
 	return(2);
     }
@@ -15284,8 +16127,8 @@ isunicode(				/* Tells whether the host we are */
 	  void				/* display */
 #endif /* CK_ANSIC */
 	  ) {
-    extern int tt_unicode;
 #ifdef NT
+    extern int tt_unicode;
 #ifdef KUI
     return(tt_unicode);
 #else /* KUI */

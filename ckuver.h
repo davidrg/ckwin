@@ -3,7 +3,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2000,
+  Copyright (C) 1985, 2001,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -29,7 +29,7 @@
 #define HERALD " BeBox"
 #endif /* BE_DR_7 */
 #endif /* BEBOX */
-#endif /* BEOX */
+#endif /* BEOS */
 
 #ifdef BELLV10
 #define HERALD " Bell Labs Research UNIX V10"
@@ -66,6 +66,13 @@
 #ifndef HERALD
 
 #ifdef AIXRS
+
+#ifdef AIX51
+#define HERALD " IBM AIX 5.1"
+#else
+#ifdef AIX45
+#define HERALD " IBM AIX 5.0"
+#else
 #ifdef AIX45
 #define HERALD " IBM AIX 4.5"
 #else
@@ -91,6 +98,8 @@
 #endif /* AIX43 */
 #endif /* AIX44 */
 #endif /* AIX45 */
+#endif /* AIX50 */
+#endif /* AIX51 */
 #endif /* AIXRS */
 
 #ifdef PS2AIX10
@@ -137,7 +146,7 @@
 #define HERALD " Mac OS X"
 #endif /* MACOSX10 */
 #else
-#ifdef OPENBSD
+#ifdef __OpenBSD__
 #define HERALD " OpenBSD"
 #else
 #ifdef __bsdi__
@@ -156,9 +165,28 @@
 #endif /* BSDI4 */
 #else  /* __bsdi__ */
 #ifdef __NetBSD__
+#ifdef NETBSD15
+#define HERALD " NetBSD 1.5"
+#else
 #define HERALD " NetBSD"
+#endif /* NETBSD15 */
 #else
 #ifdef __FreeBSD__
+#ifdef FREEBSD44
+#define HERALD " FreeBSD 4.4"
+#else
+#ifdef FREEBSD43
+#define HERALD " FreeBSD 4.3"
+#else
+#ifdef FREEBSD42
+#define HERALD " FreeBSD 4.2"
+#else
+#ifdef FREEBSD41
+#define HERALD " FreeBSD 4.1"
+#else
+#ifdef FREEBSD4
+#define HERALD " FreeBSD 4.0"
+#else
 #ifdef FREEBSD3
 #define HERALD " FreeBSD 3.0"
 #else
@@ -168,6 +196,11 @@
 #define HERALD " FreeBSD"
 #endif /* FREEBSD2 */
 #endif /* FREEBSD3 */
+#endif /* FREEBSD4 */
+#endif /* FREEBSD41 */
+#endif /* FREEBSD42 */
+#endif /* FREEBSD43 */
+#endif /* FREEBSD44 */
 #else
 #ifdef __386BSD__
 #define HERALD " 386BSD"
@@ -177,7 +210,7 @@
 #endif /* __FreeBSD__ */
 #endif /* __NetBSD__ */
 #endif /* __bsdi__ */
-#endif /* OPENBSD */
+#endif /* __OpenBSD__ */
 #endif /* MACOSX */
 #endif /* BSD44 */
 
@@ -459,32 +492,43 @@
 #ifdef __GNUC
 #define OSFPC
 #endif /* __GNUC */
-#else
-#ifdef __alpha
-#ifdef OSF50
-#define HERALD " Compaq Tru64 UNIX 5.0"
-#else
-#ifdef OSF40
+#else  /* Not i386 so Alpha */
+
 #ifdef TRU64
+
+#ifdef OSF51A
+#define HERALD " Compaq Tru64 UNIX 5.1A"
+#else
+#ifdef OSF50
+#define HERALD " Compaq Tru64 UNIX 5.0A"
+#else
 #ifdef OSF40G
 #define HERALD " Compaq Tru64 UNIX 4.0G"
 #else
-#define HERALD " Compaq Tru64 UNIX 4.0E"
-#endif /* OSF40G */
+#ifdef OSF40F
+#define HERALD " Compaq Tru64 UNIX 4.0F"
 #else
+#ifdef OSF40E
+#define HERALD " Compaq Tru64 UNIX 4.0E"
+#endif /* OSF40E */
+#endif /* OSF40F */
+#endif /* OSF40G */
+#endif /* OSF50 */
+#endif /* OSF51 */
+
+#else  /* Not TRU64 */
+
+#ifdef OSF40
 #define HERALD " Digital UNIX 4.0"
-#endif /* TRU64 */
 #else
 #ifdef OSF32
 #define HERALD " Digital UNIX 3.2"
 #else
 #define HERALD " DEC OSF/1 Alpha"
-#endif /* OSF50 */
 #endif /* OSF40 */
 #endif /* OSF32 */
-#else
-#define HERALD " DEC OSF/1"
-#endif /* __alpha */
+
+#endif /* TRU64 */
 #endif /* i386 */
 #endif /* OSF */
 
@@ -577,7 +621,11 @@
 
 #ifdef ultrix
 #ifdef vax
+#ifdef ULTRIX3
+#define HERALD " VAX/ULTRIX 3.0"
+#else
 #define HERALD " VAX/ULTRIX"
+#endif /* ULTRIX3 */
 #else
 #ifdef mips
 #ifdef ULTRIX43
@@ -607,6 +655,14 @@
 #define HERALD " 386BSD"
 #endif /* _386BSD */
 
+#ifdef NEUTRINO
+#define HERALD " QNX Neutrino 2"
+#else  /* NEUTRINO */
+#ifdef QNX6
+#define HERALD " QNX6"
+#endif /* QNX6 */
+#endif /* NEUTRINO */
+
 #ifdef POSIX
 #ifdef PTX
 #ifdef PTX4
@@ -615,9 +671,14 @@
 #define HERALD " DYNIX/ptx"
 #endif /* PTX4 */
 #else
+#ifndef OSF		/* Let OSF -DPOSIX keep previously defined HERALD */
 #ifdef HERALD
 #undef HERALD
 #endif /* HERALD */
+#endif /* OSF */
+#ifdef OU8
+#define HERALD " OpenUNIX 8"
+#else
 #ifdef UW7
 #define HERALD " Unixware 7"
 #else
@@ -629,7 +690,11 @@
 #endif /* QNX16 */
 #else
 #ifdef __linux__
+#ifdef RH71
+#define HERALD " Red Hat Linux 7.1"
+#else
 #define HERALD " Linux"
+#endif /* RH71 */
 #else
 #ifdef _386BSD				/* 386BSD Jolix */
 #define HERALD " 386BSD"
@@ -668,6 +733,7 @@
 #endif /* _386BSD */
 #endif /* __linux__ */
 #endif /* QNX */
+#endif /* OU8 */
 #endif /* UW7 */
 #endif /* PTX */
 #endif /* POSIX */
@@ -704,6 +770,12 @@
 #ifdef HERALD
 #undef HERALD
 #endif /* HERALD */
+#ifdef SCO_OSR506A
+#define HERALD " SCO OpenServer R5.0.6a"
+#else
+#ifdef SCO_OSR506
+#define HERALD " SCO OpenServer R5.0.6"
+#else
 #ifdef SCO_OSR505
 #define HERALD " SCO OpenServer R5.0.5"
 #else
@@ -717,6 +789,8 @@
 #endif /* SCO_OSR502 */
 #endif /* SCO_OSR504 */
 #endif /* SCO_OSR505 */
+#endif /* SCO_OSR506 */
+#endif /* SCO_OSR506A */
 #else
 #ifdef XENIX
 #ifdef HERALD
@@ -770,10 +844,10 @@
 #else
 #ifdef BSD43
 #ifdef pdp11
-#define HERALD " PDP-11 2.10 BSD"
+#define HERALD " 2.10 BSD PDP-11"
 #else
 #ifdef vax
-#define HERALD " VAX 4.3 BSD"
+#define HERALD " 4.3 BSD VAX"
 #else
 #define HERALD " 4.3 BSD"
 #endif /* vax */
@@ -781,7 +855,7 @@
 #else
 #ifdef BSD4
 #ifdef vax
-#define HERALD " VAX 4.2 BSD"
+#define HERALD " 4.2 BSD VAX"
 #else
 #define HERALD " 4.2 BSD"
 #endif /* vax */
@@ -946,6 +1020,12 @@
 #define CKCPU "mc68000"
 #endif /* CKCPU */
 #endif /* m68k */
+
+#ifdef ia64				/* IA64 / Itanium */
+#ifndef CKCPU
+#define CKCPU "ia64"
+#endif /* CKCPU */
+#endif /* i686 */
 
 #ifdef i686				/* Intel 80686 */
 #ifndef CKCPU

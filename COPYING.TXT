@@ -1,16 +1,16 @@
-THE C-KERMIT 7.0 LICENSE
+THE C-KERMIT 7.0 AND 8.0 LICENSE
 
-  Last update: Sat Jan  8 16:20:45 2000
+  Last update: Sun Nov 18 17:41:07 2001
 
-This is the new C-Kermit 7.0 license.  The intention is to allow C-Kermit to
-be distributed with "free" operating systems such as GNU/Linux, FreeBSD,
-NetBSD, OpenBSD, The Hurd, etc, even when the distributions themselves (such
-as Red Hat or Caldera) might be sold and/or might include applications that
-are not free, and yet still require a license to include C-Kermit in or with
-"non-free" products such as commercial OS's, commercial software packages,
-embedded systems, and hardware (other than general-purpose computers
-preloaded with "free" operating systems), since these licenses furnish a
-large portion of the Kermit Project's funding.
+This is the new C-Kermit 7.0 and 8.0 license.  The intention is to allow
+C-Kermit to be distributed with "free" operating systems such as GNU/Linux,
+FreeBSD, NetBSD, OpenBSD, The Hurd, etc, even when the distributions
+themselves (such as Red Hat or Caldera) might be sold and/or might include
+applications that are not free, and yet still require a license to include
+C-Kermit in or with "non-free" products such as commercial OS's, commercial
+software packages, embedded systems, and hardware (other than general-purpose
+computers preloaded with "free" operating systems), since these licenses
+furnish a large portion of the Kermit Project's funding.
 
 There have been some questions about the provision in Clause (A) that:
 
@@ -36,11 +36,12 @@ package.  We are happy to work with any redistributor an any issues that
 concern them.  If you have questions, send them to kermit@columbia.edu.
 
 Note: All changes to this file since 1 January 2000 (the C-Kermit 7.0
-release date) are above; the license itself has not changed.
+release date) are above; the license itself has not changed, except to
+update the most recent copyright date.
 
 (Begin)
 
-Copyright (C) 1985, 2000,
+Copyright (C) 1985, 2001,
   The Trustees of Columbia University in the City of New York.
   All rights reserved.
 

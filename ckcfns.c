@@ -1,4 +1,4 @@
-char *fnsv = "C-Kermit functions, 7.0.187, 20 Dec 1999";
+char *fnsv = "C-Kermit functions, 8.0.210, 10 Nov 2001";
 
 char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 
@@ -10,7 +10,7 @@ char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2000,
+  Copyright (C) 1985, 2001,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -30,12 +30,23 @@ char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 
 int docrc  = 0;				/* Accumulate CRC for \v(crc16) */
 long crc16 = 0L;			/* File CRC = \v(crc16) */
+int gnferror = 0;			/* gnfile() failure reason */
 
 extern CHAR feol;
-extern int byteorder, xflg, remfile, what, fmask, cxseen, czseen;
+extern int byteorder, xflg, what, fmask, cxseen, czseen, nscanfile, sysindex;
+extern int xcmdsrc, dispos;
 extern long ffc;
 
+extern int nolinks;
+#ifdef VMSORUNIX
+extern int zgfs_dir;
+#ifdef CKSYMLINK
+extern int zgfs_link;
+#endif /* CKSYMLINK */
+#endif /* VMSORUNIX */
+
 #ifndef NOXFER
+extern int remfile;
 
 /* (move these prototypes to the appropriate .h files...) */
 
@@ -67,7 +78,7 @@ _PROTOTYP( long zfsize, (char *) );
 
 /* Externals from ckcmai.c */
 
-extern int srvcdmsg, srvidl, idletmo, bigendian;
+extern int srvcdmsg, srvidl, idletmo;
 extern char * cdmsgfile[];
 extern int spsiz, spmax, rpsiz, timint, srvtim, rtimo, npad, ebq, ebqflg,
  rpt, rptq, rptflg, capas, keep, fncact, pkttim, autopar, spsizr, xitsta;
@@ -115,16 +126,9 @@ extern struct zattr iattr;
 #endif /* OS2 */
 
 #ifdef PIPESEND
-extern int pipesend, usepipes;
+extern int usepipes;
 #endif /* PIPESEND */
-
-/* Per-file text/binary-mode recognition */
-
-#ifdef PATTERNS
-extern int patterns;
-extern char *txtpatterns[];
-extern char *binpatterns[];
-#endif /* PATTERNS */
+extern int pipesend;
 
 #ifdef STREAMING
 extern int streamrq, streaming, streamed, streamok;
@@ -151,12 +155,13 @@ extern int inserver;
 extern int isguest;
 #endif /* CK_LOGIN */
 
+extern int srvcmdlen;
 extern CHAR *srvcmd, * epktmsg;
 extern CHAR padch, mypadc, eol, seol, ctlq, myctlq, sstate, myrptq;
 extern CHAR *data, padbuf[], stchr, mystch;
 extern CHAR *srvptr;
 extern CHAR *rdatap;
-extern char *cmarg, *cmarg2, **cmlist, filnam[];
+extern char *cmarg, *cmarg2, **cmlist, filnam[], ofilnam[];
 extern char fspec[], *sfspec, *rfspec;
 extern int fspeclen;
 
@@ -165,7 +170,7 @@ extern struct filelist * filehead, * filenext;
 extern int addlist;
 #endif /* NOMSEND */
 
-_PROTOTYP( int lslook, (unsigned int b) );	/* Locking Shift Lookahead */
+_PROTOTYP( int lslook, (unsigned int b) ); /* Locking Shift Lookahead */
 _PROTOTYP( int szeof, (CHAR *s) );
 _PROTOTYP( VOID fnlist, (void) );
 #endif /* NOXFER */
@@ -173,9 +178,14 @@ _PROTOTYP( VOID fnlist, (void) );
 /* Character set Translation */
 
 #ifndef NOCSETS
-extern int tcharset, fcharset;
+extern int tcharset, fcharset, dcset7, dcset8;
+extern int fcs_save, tcs_save;
 extern int ntcsets, xlatype, cseqtab[];
 extern struct csinfo tcsinfo[], fcsinfo[];
+extern int r_cset, s_cset, afcset[];
+#ifdef UNICODE
+extern int ucsorder, fileorder;
+#endif /* UNICODE */
 
 _PROTOTYP( CHAR ident, (CHAR) );	/* Identity translation function */
 
@@ -216,7 +226,7 @@ extern char *zinbuffer, *zoutbuffer;
 extern char zinbuffer[], zoutbuffer[];
 #endif /* DYNAMIC */
 extern char *zinptr, *zoutptr;
-extern int zincnt, zoutcnt, zobufsize;
+extern int zincnt, zoutcnt, zobufsize, xfrxla;
 
 extern long crcta[], crctb[];		/* CRC-16 generation tables */
 extern int rseqtbl[];			/* Rec'd-packet sequence # table */
@@ -436,14 +446,13 @@ puttrm(c) register char c;
 #endif /* CK_ANSIC */
 /* puttrm */ {
 #ifndef NOSPL
-    extern int cmdsrc();
     extern char * qbufp;		/* If REMOTE QUERY active, */
     extern int query, qbufn;		/* also store response in */
     if (query && qbufn++ < 1024) {	/* query buffer. */
 	*qbufp++ = c;
 	*qbufp = NUL;
     }
-    if (!query || !cmdsrc())
+    if (!query || !xcmdsrc)
 #endif /* NOSPL */
       conoc(c);
     return(0);
@@ -638,14 +647,17 @@ pnbyte(c,fn) CHAR c; int (*fn)();
     long z;
 
 #ifdef OS2
+#ifndef NOXFER
     if (xflg && !remfile) {		/* Write to virtual screen */
 	char _a;
 	_a = c & fmask;
 	rc = conoc(_a);
 	if (rc < 1)
 	  return(-1);
-    } else {
+    } else
+#endif /* NOXFER */
 #endif /* OS2 */
+    {
 	if (fn == putfil)		/* Execute output function */
 	  rc = zmchout(c);		/* to-file macro (fast) */
 	else if (!fn)
@@ -654,17 +666,18 @@ pnbyte(c,fn) CHAR c; int (*fn)();
 	  rc = (*fn)(c);		/* function call (not as fast) */
 	if (rc < 0)
 	  return(rc);
-#ifdef OS2
     }
-#endif /* OS2 */
 /*
   Both xgnbyte() and xpnbyte() increment ffc (the file byte counter).
   During file transfer, only one of these functions is called.  However,
   the TRANSLATE command is likely to call them both.  offc, therefore,
   contains the output byte count, necessary for handling the UCS-2 BOM.
+  NOTE: It might be safe to just test for W_SEND, FTP or not.
 */
-    offc++;				/* Count the byte */
-    ffc++;				/* Count the byte */
+    if ((what & (W_FTP|W_SEND)) != (W_FTP|W_SEND)) {
+	offc++;				/* Count the byte */
+	ffc++;				/* Count the byte */
+    }
 #ifndef NOXFER
     if (docrc && !xflg && !remfile) {	/* Update file CRC */
 	z = crc16 ^ (long)c;
@@ -681,10 +694,12 @@ pnbyte(c,fn) CHAR c; int (*fn)();
   Only for Unicode.  Call with next untranslated byte from incoming
   byte stream, which can be in any Transfer Character Set: UCS-2, UTF-8,
   Latin-1, Latin-Hebrew, etc.  Translates to the file character set and
-  writes bytes to the output file.  Call with character as int to translate
+  writes bytes to the output file.  Call with character to translate
   as an int, plus the transfer character set (to translate from) and the
   file character set (to translate to), or -1,0,0 to reset the UCS-2 byte
-  number (which should be done at the beginning of a file).  Returns:
+  number (which should be done at the beginning of a file).  If the transfer
+  (source) character-set is UCS-2, bytes MUST arrive in Big-Endian order.
+  Returns:
    -1: On error
     0: Nothing to write (mid-sequence)
    >0: Number of bytes written.
@@ -702,9 +717,9 @@ xpnbyte(a,tcs,fcs,fn) int a, tcs, fcs; int (*fn)();
 #endif /* CK_ANSIC */
 /* xpnbyte */ {
 #ifdef UNICODE
-    extern int ucsorder, ucsbom;	/* Byte order */
+    extern int ucsbom;			/* Byte order */
 #endif /* UNICODE */
-    CHAR c;				/* Unsigned char worker */
+    /* CHAR c; */			/* Unsigned char worker */
     static union ck_short uc, eu, sj;	/* UCS-2, EUC, and Shift-JIS workers */
     USHORT ch;				/* ditto... */
     USHORT * us = NULL;			/* ditto... */
@@ -723,9 +738,14 @@ xpnbyte(a,tcs,fcs,fn) int a, tcs, fcs; int (*fn)();
 
 #ifdef UNICODE
     if (ucsorder != 1 && ucsorder != 0)	/* Also just in case... */
-      ucsorder = 0;
-    if ((byteorder && !ucsorder) || (!byteorder && ucsorder))
+      ucsorder = byteorder;
+    if ((byteorder && !ucsorder) || (!byteorder && fileorder))
       swapping = 1;			/* Swapping bytes to output */
+#ifdef COMMENT
+    debug(F101,"xpnbyte ucsorder","",ucsorder);
+    debug(F101,"xpnbyte swapping","",swapping);
+#endif /* COMMENT */
+
     if (tcs == TC_UTF8) {		/* 'a' is from a UTF-8 stream */
 	ch = a;
 	if (fcs == TC_UTF8)		/* Output is UTF-8 too */
@@ -754,7 +774,6 @@ xpnbyte(a,tcs,fcs,fn) int a, tcs, fcs; int (*fn)();
 	    bn = 0;			/* Done with sequence */
 	    haveuc = 1;			/* Have a Unicode */
 	}
-
     } else
 #endif /* UNICODE */
 
@@ -823,14 +842,16 @@ xpnbyte(a,tcs,fcs,fn) int a, tcs, fcs; int (*fn)();
     debug(F101,"xpnbyte haveuc","",haveuc);
 
     if (haveuc) {			/* If we have a Unicode... */
-	debug(F101,"xpnbyte uc.x_short A","",uc.x_short);
+	debug(F001,"xpnbyte uc.x_short","[A]",uc.x_short);
 	debug(F101,"xpnbyte feol","",feol);
-	if (feol && uc.x_short == CR) {
-	    return(0);
-	} else if (feol && uc.x_short == LF) {
-	    uc.x_short = feol;
+	if (what & W_KERMIT) {		/* If transferring a file */
+	    if (feol && uc.x_short == CR) {  /* handle eol conversion. */
+		return(0);
+	    } else if (feol && uc.x_short == LF) {
+		uc.x_short = feol;
+	    }
 	}
-	debug(F101,"xpnbyte uc.x_short B","",uc.x_short);
+	debug(F001,"xpnbyte uc.x_short","[B]",uc.x_short);
 	if (fcs == FC_UCS2) {		/* And FCS is UCS-2 */
 	    /* Write out the bytes in the appropriate byte order */
 	    int count = 0;
@@ -949,7 +970,7 @@ xpnbyte(a,tcs,fcs,fn) int a, tcs, fcs; int (*fn)();
 			return(1);
 		    } else {		/* Good */
 			int i;
-			/* ^^^ Use another name - 'a' hides parameter */
+			/* Use another name - 'a' hides parameter */
 			/* It's OK as is but causes compiler warnings */
 			char a = eu.x_char[1-byteorder]; /* Low byte */
 			debug(F001,"xpnbyte eu","",eu.x_short);
@@ -1428,7 +1449,7 @@ kgetm(
 #endif /* CK_ANSIC */
       ) {
     int x;
-    if (x = *memptr++) return(x);
+    if ((x = *memptr++)) return(x);
     else return(-1);
 }
 #endif /* KANJI */
@@ -1554,7 +1575,7 @@ bgetpkt(bufmax) int bufmax; {
 	first = 0;			/* Next char will not be the first */
 	ffc++;				/* Count a file character */
 	rt = (CHAR) x;			/* Convert int to char */
-	if (docrc && what == W_SEND) {	/* Accumulate file crc */
+	if (docrc && (what & W_SEND)) {	/* Accumulate file crc */
 	    z = crc16 ^ (long)rt;
 	    crc16 = (crc16 >> 8) ^
 	      (crcta[(z & 0xF0) >> 4] ^ crctb[z & 0x0F]);
@@ -1609,7 +1630,7 @@ bgetpkt(bufmax) int bufmax; {
 	    if (x == -2) cxseen = 1;	/* If error, cancel this file. */
 	} else {
 	    ffc++;			/* Count the character */
-	    if (docrc && what == W_SEND) { /* Accumulate file crc */
+	    if (docrc && (what & W_SEND)) { /* Accumulate file crc */
 		z = crc16 ^ (long)((CHAR)x & 0xff);
 		crc16 = (crc16 >> 8) ^
 		  (crcta[(z & 0xF0) >> 4] ^ crctb[z & 0x0F]);
@@ -1628,7 +1649,7 @@ bgetpkt(bufmax) int bufmax; {
     rptflg: repeat counts enabled.
     Other options don't apply in this routine.
 */
-	if (rptflg && rt == rnext && first == 0) { /* Got a run... */
+	if (rptflg && (rt == rnext) && (first == 0)) { /* Got a run... */
 	    if (++rpt < 94) {		/* Below max, just count */
 		continue;		/* go back and get another */
 	    } else if (rpt == 94) {	/* Reached max, must dump */
@@ -1667,11 +1688,27 @@ bgetpkt(bufmax) int bufmax; {
 /* Now construct the prefixed sequence */
 
 	if (xxrc) {			/* Repeat count */
+#ifdef COMMENT
 	    if (xxrc == (CHAR) '"' && !xxcq) { /* 2 in a row & not prefixed */
 		*dp++ = rt;		/* So just do this */
 	    } else {			/* More than two or prefixed */
 		*dp++ = (CHAR) rptq; *dp++ = xxrc; /* Emit repeat sequence */
 	    }
+#else					/* CHECK THIS */
+	    if (xxrc == (CHAR) '"' && !xxcq) { /* 2 in a row & not prefixed */
+                if (dp == data) {
+                    *dp++ = rt;		/* So just do this */
+                } else if (*(dp-1) == rt) {
+                    *dp++ = (CHAR) rptq;
+		    *dp++ = xxrc;	/* Emit repeat sequence */
+                } else {
+                    *dp++ = rt;		/* So just do this */
+                }
+	    } else {			/* More than two or prefixed */
+		*dp++ = (CHAR) rptq;
+		*dp++ = xxrc;		/* Emit repeat sequence */
+	    }
+#endif /* COMMENT */
 	}
 	if (xxcq) { *dp++ = myctlq; }	/* Control prefix */
 	*dp++ = rt;			/* Finally, the character itself */
@@ -1723,7 +1760,7 @@ agnbyte() {				/* Get next byte from array */
     static char * p = NULL;		/* Character pointer */
     static int i = 0, n = 0;		/* Array index and limit */
     extern int a_dim[];			/* Array dimension */
-    int x = 1;
+
     if (!ap) {				/* First time thru */
 	ap = sndarray;			/* Set up array pointers */
 	if (!ap || (i = sndxlo) > a_dim[sndxin]) {
@@ -1786,7 +1823,8 @@ agnbyte() {				/* Get next byte from array */
 static CHAR xlabuf[32] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 static int xlacount = 0;
 static int xlaptr = 0;
-static USHORT lastucs2 = 0;
+/* static USHORT lastucs2 = 0; */
+
 /*
   X G N B Y T E --  Get next translated byte from the input file.
 
@@ -1802,13 +1840,21 @@ static USHORT lastucs2 = 0;
   Returns:
     >= 0: A translated byte suitable for writing.
     <  0: Fatal error (such as EOF on input source).
+
+  NOTE WELL:
+    When the output character-set is UCS-2, bytes are returned in Big Endian
+    order if we are sending a file (what & W_SEND); otherwise they are
+    returned in the NATIVE byte order, as specified in the byteorder variable
+    (0 = Big Endian, 1 = Little Endian) (I think).
 */
 int
-xgnbyte(tcs,fcs) int tcs, fcs; {
+#ifdef CK_ANSIC
+xgnbyte(int tcs, int fcs, int (*fn)(void))
+#else /* CK_ANSIC */
+xgnbyte(tcs,fcs,fn) int tcs, fcs, (*fn)();
+#endif /* CK_ANSIC */
+/* xgnbyte */ {
     _PROTOTYP( int (*xx), (USHORT) ) = NULL;
-#ifdef UNICODE
-    extern int ucsorder;		/* SET FILE UCS BYTE-ORDER */
-#endif /* UNICODE */
     int haveuc = 0;			/* Flag for have Unicode character */
 #ifdef KANJI
     int havesj = 0;			/* Have Shift-JIS character */
@@ -1820,7 +1866,7 @@ xgnbyte(tcs,fcs) int tcs, fcs; {
     unsigned int xc, thischar;
     static int swapping = 0;
     CHAR rt;
-    USHORT ch;
+    /* USHORT ch; */
 #ifdef UNICODE
     union ck_short uc;
 #endif /* UNICODE */
@@ -1832,63 +1878,80 @@ xgnbyte(tcs,fcs) int tcs, fcs; {
     sj.x_short = 0;
 #endif /* KANJI */
 
+#ifdef DEBUG
+    if (deblog && ffc == 0) {
+	debug(F101,"xgnbyte initial swap","",swapping);
+    }
+#endif /* DEBUG */
+
     if (xlacount-- > 0) {		/* We already have some */
 	x = xlabuf[xlaptr++];
-	debug(F001,"xgnbyte SEND from buf","",x);
+	debug(F001,"xgnbyte from buf","",x);
 	return(x);
     }
     if (xlatype != XLA_NONE) {		/* Not not translating... */
 	haveuc = 0;
 #ifdef UNICODE
 	if (fcs == FC_UCS2) {		/* UCS-2: Read two bytes */
-	    if (ffc == 0) {		/* Beginning of file? */
-		swapping = 0;		/* Reset byte-swapping flag */
-	    }
+	    if (ffc == 0)		/* Beginning of file? */
+	      swapping = 0;		/* Reset byte-swapping flag */
 	    uc.x_short = 0;
 	  bomskip:
-	    x = zminchar();		/* Get first byte */
+	    x = fn ? (*fn)() : zminchar(); /* Get first byte */
+	    debug(F001,"zminchar swapping","",swapping);
+	    debug(F001,"zminchar C0","",x);
 	    flag = 1;			/* Remember we called zminchar() */
 	    if (x > -1) {		/* Didn't fail */
 		ffc++;			/* Count a file byte */
 		uc.x_char[swapping] = x & 0xff;
 #ifndef NOXFER
-		if (docrc && what == W_SEND)
+		if (docrc && (what & W_SEND))
 		  dofilcrc(x);
 #endif /* NOXFER */
-		if ((x = zminchar()) > -1) { /* If didn't fail */
+		x = fn ? (*fn)() : zminchar(); /* Get second byte */
+		if (x > -1) {		/* If didn't fail */
+		    debug(F001,"zminchar C1","",x);
 		    ffc++;		/* count another file byte */
 		    uc.x_char[1-swapping] = x & 0xff;
-		    haveuc = 1;	/* And remember we have Unicode */
+		    haveuc = 1;		/* And remember we have Unicode */
 #ifndef NOXFER
-		    if (docrc && what == W_SEND)
+		    if (docrc && (what & W_SEND))
 		      dofilcrc(x);
 #endif /* NOXFER */
 		    if (ffc == 2) {	/* Second char of file */
 			debug(F001,"xgnbyte 1st UCS2","",uc.x_short);
+			debug(F111,"xgnbyte fileorder","A",fileorder);
+			if (fileorder < 0) /* Byte order of this file */
+			  fileorder = ucsorder;	/* Default is ucsorder */
+			if (fileorder > 1)
+			  fileorder = 1;
+			debug(F111,"xgnbyte fileorder","B",fileorder);
 			if (uc.x_short == (USHORT)0xfeff) {
 			    swapping = 0;
 			    debug(F101,
 				  "xgnbyte UCS2 goodbom swap","",swapping);
+			    fileorder = byteorder; /* Note: NOT 0 */
 			    goto bomskip;
 			} else if (uc.x_short == (USHORT)0xfffe) {
 			    swapping = 1;
 			    debug(F101,
 				  "xgnbyte UCS2 badbom swap","",swapping);
+			    fileorder = (1 - byteorder); /* Note: NOT 1 */
 			    goto bomskip;
-			} else if ((byteorder && !ucsorder) ||
-				   (!byteorder && ucsorder)) {
+			} else if ((byteorder && !fileorder) || /* No BOM */
+				   (!byteorder && fileorder > 0)) {
+			    /* fileorder might have been set by scanfile() */
 			    CHAR c;
 			    c = uc.x_char[0];
 			    uc.x_char[0] = uc.x_char[1];
 			    uc.x_char[1] = c;
 			    swapping = 1;
-			    debug(F101,
-				  "xgnbyte UCS2 no BOM X swap","",swapping);
+			    debug(F111,"xgnbyte UCS2 noBOM swap","A",swapping);
 			} else {
 			    swapping = 0;
-			    debug(F101,
-				  "xgnbyte UCS2 no BOM Y swap","",swapping);
+			    debug(F111,"xgnbyte UCS2 noBOM swap","B",swapping);
 			}
+			debug(F111,"xgnbyte fileorder","C",fileorder);
 		    }
 		} else
 		  return(x);
@@ -1901,10 +1964,11 @@ xgnbyte(tcs,fcs) int tcs, fcs; {
 	    USHORT * us = NULL;
 	    uc.x_short = 0;
 	    flag = 1;			/* We (will) have called zminchar() */
-	    while ((x = zminchar()) > -1) { /* Read source bytes */
+	    /* Read source bytes */
+	    while ((x = fn ? (*fn)() : zminchar()) > -1) {
 		ffc++;			/* Got a byte - count it */
 #ifndef NOXFER
-		if (docrc && what == W_SEND)
+		if (docrc && (what & W_SEND))
 		  dofilcrc(x);
 #endif /* NOXFER */
 		ch = x;
@@ -1923,7 +1987,7 @@ xgnbyte(tcs,fcs) int tcs, fcs; {
 	    }
 	    if (x < 0)
 	      return(x);
-	    debug(F001,"xgnbyte UTF8->UTF2","",uc.x_short);
+	    debug(F001,"xgnbyte UTF8->UCS2","",uc.x_short);
 	}
 #endif /* UNICODE */
 
@@ -1932,13 +1996,13 @@ xgnbyte(tcs,fcs) int tcs, fcs; {
 	else
 #endif /* UNICODE */
 	  if (fcsinfo[fcs].alphabet == AL_JAPAN) { /* Japanese source file */
-	    int c7, x, y, done = 0;
+	    int c7, x, y;
 	    if (fcs == FC_JIS7) {	/* If file charset is JIS-7 */
 		if (ffc == 0L)		/* If first byte of file */
 		  j7init();		/* Initialize JIS-7 parser */
 		x = getj7();		/* Get a JIS-7 byte */
 	    } else			/* Otherwise */
-	      x = zminchar();		/* Just get byte */
+	      x = fn ? (*fn)() : zminchar(); /* Just get byte */
 	    if (x < 0) {		/* Propogate EOF or error */
 		debug(F100,"XGNBYTE EOF","",0);
 		return(x);
@@ -1946,7 +2010,7 @@ xgnbyte(tcs,fcs) int tcs, fcs; {
 	    debug(F001,"XGNBYTE x","",x);
 	    ffc++;			/* Count */
 #ifndef NOXFER
-	    if (docrc && what == W_SEND) dofilcrc(x); /* Do CRC */
+	    if (docrc && (what & W_SEND)) dofilcrc(x); /* Do CRC */
 #endif /* NOXFER */
 	    switch (fcs) {		/* What next depends on charset */
 	      case FC_SHJIS:		/* Shift-JIS */
@@ -1954,10 +2018,10 @@ xgnbyte(tcs,fcs) int tcs, fcs; {
 		    (x >= 0xa0 && x <= 0xdf)) { /* or halfwidth Katakana */
 		    sj.x_short = (USHORT) x;    /* we read one byte. */
 		} else {		/* Anything else */
-		    if ((y = zminchar()) < 0) /* get another */
+		    if ((y = fn ? (*fn)() : zminchar()) < 0) /* get another */
 		      return(y);
 #ifndef NOXFER
-		    if (docrc && what == W_SEND) dofilcrc(y);
+		    if (docrc && (what & W_SEND)) dofilcrc(y);
 #endif /* NOXFER */
 		    ffc++;
 		    sj.x_char[byteorder] = (CHAR) x;
@@ -1975,22 +2039,28 @@ xgnbyte(tcs,fcs) int tcs, fcs; {
 		} else {
 		    c7 = x & 0x7f;
 		    if (c7 > 0x20 && c7 < 0x7f) { /* Kanji: two bytes */
-			if ((y = (fcs == FC_JEUC) ? zminchar() : getj7()) < 0)
+			if ((y = (fcs == FC_JEUC) ?
+			     (fn ? (*fn)() : zminchar()) :
+			     getj7()	/* ^^^ */
+			     ) < 0)
 			  return(y);
 			ffc++;
 #ifndef NOXFER
-			if (docrc && what == W_SEND) dofilcrc(y);
+			if (docrc && (what & W_SEND)) dofilcrc(y);
 #endif /* NOXFER */
 			eu.x_char[byteorder] = (CHAR) x;
 			eu.x_char[1-byteorder] = (CHAR) y;
 			sj.x_short = eu_to_sj(eu.x_short);
 			haveeu = 1;
 		    } else if (x == 0x8e) { /* SS2 Katakana prefix: 2 bytes */
-			if ((y = (fcs == FC_JIS7) ? getj7() : zminchar()) < 0)
+			if ((y = (fcs == FC_JIS7) ?
+			     getj7() :	/* ^^^ */
+			     (fn ? (*fn)() : zminchar())
+			     ) < 0)
 			  return(y);
 			ffc++;
 #ifndef NOXFER
-			if (docrc && what == W_SEND) dofilcrc(y);
+			if (docrc && (what & W_SEND)) dofilcrc(y);
 #endif /* NOXFER */
 			sj.x_short = y | 0x80;
 			debug(F001,"XGNBYTE KANA SJ","",sj.x_short);
@@ -2011,7 +2081,7 @@ xgnbyte(tcs,fcs) int tcs, fcs; {
 #endif /* KANJI */
     }
     if (!flag) {			/* If no character was read yet... */
-	if ((x = zminchar()) > -1)	/* read one now */
+	if ((x = (fn ? (*fn)() : zminchar())) > -1)	/* read one now */
 	  ffc++;
 	debug(F101,"xgnbyte zminchar 1","",x);
 	if (x < 0)
@@ -2021,7 +2091,7 @@ xgnbyte(tcs,fcs) int tcs, fcs; {
 #ifdef UNICODE
     if (haveuc) {
 	thischar = uc.x_short;
-	lastucs2 = uc.x_short;
+	/* lastucs2 = uc.x_short; */
     } else
 #endif /* UNICODE */
       thischar = x;
@@ -2054,7 +2124,7 @@ xgnbyte(tcs,fcs) int tcs, fcs; {
   too soon and so might not have known whether it was a file transfer or a
   local operation.
 */
-	  xx = (what == W_SEND) ? xut : xuf;
+	  xx = (what & W_SEND) ? xut : xuf;
 	  eolflag = 0;
 	  if (haveuc) {			/* File is Unicode */
 	      /* See Unicode TR13, "Converting to Other Character Sets" */
@@ -2077,7 +2147,7 @@ xgnbyte(tcs,fcs) int tcs, fcs; {
 	      }
 #ifdef KANJI
 	      if (tcs == FC_JEUC) {	/* Translating to EUC-JP */
-		  USHORT sj;
+		  USHORT sj = 0;
 		  union ck_short eu;
 		  debug(F001,"xgnbyte UCS->EUC UCS","",uc.x_short);
 		  if (!havesj)		/* If we don't already have it */
@@ -2087,7 +2157,7 @@ xgnbyte(tcs,fcs) int tcs, fcs; {
 		  xlaptr = 0;
 		  xlacount = 0;
 		  if (eolflag) {
-		      if (what == W_SEND) {
+		      if (what & W_SEND) {
 			  xlabuf[xlacount++] = LF;
 			  return(CR);
 		      } else {
@@ -2156,13 +2226,15 @@ xgnbyte(tcs,fcs) int tcs, fcs; {
 		  xlabuf[k++] = 0xbd;
 	      }
 	      if (eolflag) {		/* We detected EOL in source file */
-		  if (what == W_SEND) {	/* Convert to CRLF */
+		  if (what & W_SEND) {	/* Convert to CRLF */
 		      xlabuf[k++] = LF;
 		      xlacount = k;
 		      return((unsigned int)CR);
+#ifdef COMMENT
 		  } else {		/* Or to local line-end */
 		      xlacount = k;
 		      return((unsigned int)feol);
+#endif /* COMMENT */
 		  }
 	      }
 	      c = xc;
@@ -2189,7 +2261,7 @@ xgnbyte(tcs,fcs) int tcs, fcs; {
 		  debug(F101,"xgnbyte error","",k);
 	      }
 	      if (eolflag) {		/* We detected EOL in source file */
-		  if (what == W_SEND) {	/* Convert to CRLF */
+		  if (what & W_SEND) {	/* Convert to CRLF */
 		      xlabuf[k++] = CR;
 		      xlabuf[k++] = NUL;
 		      xlabuf[k++] = LF;
@@ -2197,33 +2269,42 @@ xgnbyte(tcs,fcs) int tcs, fcs; {
 		      debug(F101,"xgnbyte send CRLF","",k);
 		      return(0);	/* Return NUL */
 		  } else {		/* Or to local line-end */
+#ifdef COMMENT
+		      /* This bypasses byte swapping that we might need */
 		      xlabuf[k++] = (CHAR)feol;
 		      xlacount = k;
 		      debug(F101,"xgnbyte send feol","",k);
 		      return(0);	/* Return NUL */
+#else
+		      xc = (CHAR)feol;
+#endif /* COMMENT */
 		  }
 	      }
-	      if (what == W_SEND || !ucsorder) {
+	      /* In which order should we return the bytes? */
+
+	      if ((what & W_SEND) || fileorder == 0) {
 		  xlabuf[k++] = (xc >> 8) & 0xff; /* Big Endian */
 		  xlabuf[k++] = xc & 0xff;
-		  debug(F110,"xgnbyte to UCS2 BE",ckitoa(xlabuf[0]),0);
+		  debug(F001,"xgnbyte->UCS2BE",
+			ckitox((int)xlabuf[0]),xlabuf[1]);
 	      } else {			/* Little Endian */
 		  xlabuf[k++] = xc & 0xff;
 		  xlabuf[k++] = (xc >> 8) & 0xff;
-		  debug(F110,"xgnbyte to UCS2 LE",ckitoa(xlabuf[0]),0);
+		  debug(F001,"xgnbyte->UCS2LE",
+			ckitox((int)xlabuf[0]),xlabuf[1]);
 	      }
 	      c = xlabuf[0];
 	      xlaptr = 1;
 	      xlacount = k-1;
 	      debug(F101,"xgnbyte c","",c);
 	      debug(F101,"xgnbyte xlaptr","",xlaptr);
-	      debug(F101,"xgnbyte xlacount","",xlacount);
+	      debug(F011,"xgnbyte xlabuf",xlabuf,xlacount);
 	      return((unsigned int)c);
 	  }
       }
 #endif /* UNICODE */
       case XLA_NONE:
-	return(zminchar());
+	return((fn ? (*fn)() : zminchar()));
       case XLA_BYTE:			/* Byte-for-Byte translation */
 	rt = x;
 	if (sx)
@@ -2294,7 +2375,6 @@ getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
     register CHAR *dp, *odp, *odp2, *p1, *p2; /* pointers... */
     register int x;			/* Loop index. */
     register int a7;			/* Low 7 bits of character */
-    int thischar = 0;			/* Might be byte or wide */
 
     CHAR xxls, xxdl, xxrc, xxss, xxcq;	/* Pieces of prefixed sequence */
 
@@ -2363,7 +2443,7 @@ getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
 	    first = 0;
 	    if (!memstr) {
 		ffc++;
-		if (docrc && what == W_SEND) /* Accumulate file crc */
+		if (docrc && (what & W_SEND)) /* Accumulate file crc */
 		  dofilcrc((int)rt);
 	    }
 	} else {			/* Not Kanji text */
@@ -2394,7 +2474,7 @@ getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
 		if (xlate && !binary) {	/* Could be Unicode */
 		    if (xlatype == XLA_UNICODE) {
 			/* Get next translated byte */
-			x = xgnbyte(cseqtab[tcharset],fcharset);
+			x = xgnbyte(cseqtab[tcharset],fcharset,NULL);
 			debug(F101,"getpkt xgnbyte","",x);
 		    } else {		/* Not Unicode */
 			x = zminchar();	/* Get next byte, translate below */
@@ -2430,7 +2510,7 @@ getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
 		    ffc++;
 		    if (sx)
 		      rt = (*sx)(rt);
-		    if (docrc && what == W_SEND)
+		    if (docrc && (what & W_SEND))
 		      dofilcrc(x);
 		}
 #endif /* NOCSETS */
@@ -2438,7 +2518,7 @@ getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
 		if (deblog)
 		  debug(F101,"getpkt 1st char","",rt);
 #endif /* DEBUG */
-		if (/* !haveuc && */ docrc && what == W_SEND)	/* File CRC */
+		if (/* !haveuc && */ docrc && (what & W_SEND)) /* File CRC */
 		  dofilcrc(x);
 	    }
 #ifdef KANJI
@@ -2511,15 +2591,15 @@ getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
 		if (xlate && !binary) {	/* Could be Unicode */
 		    if (xlatype == XLA_UNICODE) {
 			/* Get next translated byte */
-			x = xgnbyte(cseqtab[tcharset],fcharset);
+			x = xgnbyte(cseqtab[tcharset],fcharset,NULL);
 		    } else {		/* Not Unicode */
 			x = zminchar(); /* Get next byte, translate below */
-			debug(F101,"xgnbyte B zminchar","",x);
+			/* debug(F101,"xgnbyte B zminchar","",x); */
 		    }
 		} else {		/* Just get next byte */
 #endif /* NOCSETS */
 		    x = zminchar();
-		    debug(F101,"xgnbyte C zminchar","",x);
+		    /* debug(F101,"xgnbyte C zminchar","",x); */
 #ifndef NOCSETS
 		}
 #endif /* NOCSETS */
@@ -2542,7 +2622,7 @@ getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
 		    if (sx)
 		      rt = (*sx)(rt);
 #endif /* NOCSETS */
-		    if (docrc && what == W_SEND)
+		    if (docrc && (what & W_SEND))
 		      dofilcrc(x);
 
 #ifndef NOCSETS
@@ -2769,9 +2849,8 @@ tinit(flag) int flag; {
     int x;
 #ifdef CK_TIMERS
     extern int rttflg;
-#else
-    extern int rcvtimo;
 #endif /* CK_TIMERS */
+    extern int rcvtimo;
     extern int fatalio;
 
     debug(F101,"tinit flag","",flag);
@@ -2785,9 +2864,7 @@ tinit(flag) int flag; {
     fatalio = 0;			/* No fatal i/o error */
     if (server) {
 	moving  = 0;
-#ifdef PIPESEND
 	pipesend = 0; /* This takes care of multiple GETs sent to a server. */
-#endif /* PIPESEND */
     }
     bestlen = 0;			/* For packet length optimization */
     maxsend = 0;			/* Biggest data field we can send */
@@ -2822,6 +2899,9 @@ tinit(flag) int flag; {
 	wslots = 1;			/* One window slot */
 	wslotn = 1;			/* No window negotiated yet */
 	justone = 0;			/* (should this be zero'd here?) */
+	whoareu[0] = NUL;		/* Partner's system type */
+	sysindex = -1;
+	wearealike = 0;
 	what = W_INIT;			/* Doing nothing so far... */
     }
     fncnv = f_save;			/* Back to what user last said */
@@ -2845,9 +2925,9 @@ tinit(flag) int flag; {
 #ifdef CK_TIMERS
     if (rttflg && timint > 0)		/* Using round-trip timers? */
       rttinit();
-#else
-    rcvtimo = timint;
+    else
 #endif /* CK_TIMERS */
+      rcvtimo = timint;
 
     winlo = 0;				/* Packet 0 is at window-low */
     debug(F101,"tinit winlo","",winlo);
@@ -2878,7 +2958,7 @@ pktinit() {				/* Initialize packet sequence */
 
 VOID
 rinit(d) CHAR *d; {
-    char *tp;
+    char *tp = NULL;
     ztime(&tp);
     tlog(F110,"Transaction begins",tp,0L); /* Make transaction log entry */
     tlog(F110,"Global file mode:", binary ? "binary" : "text", 0L);
@@ -2909,7 +2989,7 @@ resetc() {
 #ifdef COMMENT
     fsize = -1L;			/* File size */
 #else
-    if (what != W_SEND)
+    if (!(what & W_SEND))
       fsize = -1L;
     debug(F101,"resetc fsize","",fsize);
 #endif /* COMMENT */
@@ -2995,9 +3075,12 @@ sinit() {
     }
     debug(F110,"sinit xp",xp,0);
     x = gnfile();			/* Get first filename. */
+    debug(F111,"sinit gnfile",ckitoa(gnferror),x);
+    if (x == 0) x = gnferror;		/* If none, get error reason */
     m = NULL;				/* Error message pointer */
     debug(F101,"sinit gnfil","",x);
     switch (x) {
+      case -6: m = "No files meet selection criteria"; break;
       case -5: m = "Too many files match wildcard"; break;
       case -4: m = "Cancelled"; break;
       case -3: m = "Read access denied"; break;
@@ -3017,10 +3100,15 @@ sinit() {
     debug(F101,"sinit nfils","",nfils);
     debug(F110,"sinit filnam",filnam,0);
     if (x < 1) {			/* Didn't get a file. */
-	if (server)			/* Doing GET command */
-	  errpkt((CHAR *)m);		/* so send Error packet. */
-	else				/* Doing SEND command */
-	  xxscreen(SCR_EM,0,0l,m);	/* so print message. */
+	debug(F111,"sinit msg",m,x);
+	if (server) {			/* Doing GET command */
+	    errpkt((CHAR *)m);		/* so send Error packet. */
+	} else if (!local) { 		/* Doing SEND command */
+	    interrupted = 1;		/* (To suppress hint) */
+	    printf("?%s\r\n",m);
+	} else {
+	    xxscreen(SCR_EM,0,0l,m);	/* so print message. */
+	}
 	tlog(F110,xp,m,0L);		/* Make transaction log entry. */
 	freerbuf(rseqtbl[0]);		/* Free the buffer the GET came in. */
 	return(0);			/* Return failure code */
@@ -3029,7 +3117,7 @@ sinit() {
       sleep(ckdelay);			/* Delay if requested */
 #ifdef datageneral
     if ((local) && (!quiet))            /* Only do this if local & not quiet */
-        consta_mt();                    /* Start the asynch read task */
+      consta_mt();			/* Start the async read task */
 #endif /* datageneral */
     freerbuf(rseqtbl[0]);		/* Free the buffer the GET came in. */
     sipkt('S');				/* Send the Send-Init packet. */
@@ -3049,15 +3137,26 @@ sipkt(c) char c;
 #endif
 /* sipkt */ {
     CHAR *rp; int k, x;
-    debug(F101,"sipkt pktnum","",pktnum);
+    extern int sendipkts;
+    debug(F101,"sipkt pktnum","",pktnum); /* (better be 0...) */
+    ttflui();				/* Flush pending input. */
+    /*
+      If this is an I packet and SET SEND I-PACKETS is OFF, don't send it;
+      set sstate to 'Y' which makes the next input() call return 'Y' as if we
+      had received an ACK to the I packet we didn't send.  This is to work
+      around buggy Kermit servers that can't handle I packets.
+    */
+    if ((sendipkts == 0) && (c == 'I')) { /* I packet but don't send I pkts? */
+	sstate = 'Y';			  /* Yikes! */
+	return(0);			  /* (see input()..)*/
+    }
     k = sseqtbl[pktnum];		/* Find slot for this packet */
-    debug(F101,"sipkt k","",k);
     if (k < 0) {			/* No slot? */
 	k = getsbuf(winlo = pktnum);	/* Make one. */
 	debug(F101,"sipkt getsbuf","",k);
     }
-    ttflui();				/* Flush pending input. */
     rp = rpar();			/* Get protocol parameters. */
+    if (!rp) rp = (CHAR *)"";
     x = spack(c,pktnum,(int)strlen((char *)rp),rp); /* Send them. */
     return(x);
 }
@@ -3095,6 +3194,7 @@ xsinit() {
 char ofn1[CKMAXPATH+4];			/* Buffer for output file name */
 char * ofn2;				/* Pointer to backup file name */
 int ofn1x;				/* Flag output file already exists */
+long ofn1len = 0L;
 int opnerr;				/* Flag for open error */
 
 int					/* Returns success ? 1 : 0 */
@@ -3103,6 +3203,7 @@ rcvfil(n) char *n; {
     extern char * rcvexcept[];
     int i, skipthis;
     char * n2;
+    char * dispo;
 #ifdef OS2ONLY
     char *zs, *longname, *newlongname, *pn; /* OS/2 long name items */
 #endif /* OS2ONLY */
@@ -3141,17 +3242,18 @@ rcvfil(n) char *n; {
     }
 #endif /* CALIBRATE */
     if (*srvcmd == '\0')		/* Watch out for null F packet. */
-      strcpy((char *)srvcmd,"NONAME");
+      ckstrncpy((char *)srvcmd,"NONAME",srvcmdlen);
     makestr(&rrfspec,(char *)srvcmd);
 #ifdef DTILDE
     if (*srvcmd == '~') {
 	dirp = tilde_expand((char *)srvcmd); /* Expand tilde, if any. */
-	if (*dirp != '\0') strcpy((char *)srvcmd,dirp);
+	if (*dirp != '\0')
+	  ckstrncpy((char *)srvcmd,dirp,srvcmdlen);
     }
 #else
 #ifdef OS2
     if (isalpha(*srvcmd) && srvcmd[1] == ':' && srvcmd[2] == '\0')
-      strcat((char *)srvcmd,"NONAME");
+      ckstrncat((char *)srvcmd,"NONAME",srvcmdlen);
 #endif /* OS2 */
 #endif /* DTILDE */
 
@@ -3222,7 +3324,7 @@ rcvfil(n) char *n; {
 	  *srvcmd = NUL;
 	if (!*srvcmd)			/* If we got something */
 #endif /* NOSPL */
-	  strcpy((char *)srvcmd,cmarg2);
+	  ckstrncpy((char *)srvcmd,cmarg2,srvcmdlen);
     }
     debug(F110,"rcvfil srvcmd 2",srvcmd,0);
 
@@ -3279,11 +3381,14 @@ rcvfil(n) char *n; {
 #endif /* VMS */
 #endif /* CK_LABELED */
 
+    debug(F111,"rcvfil pipesend",srvcmd,pipesend);
+
 #ifdef PIPESEND
     /* Skip all the filename manipulation and collision actions */
     if (pipesend) {
 	dirflg = 0;
-	sprintf(ofn1,"!%s",(char *)srvcmd);
+	ofn1[0] = '!';
+	ckstrncpy(&ofn1[1],(char *)srvcmd,CKMAXPATH+1);
 	ckstrncpy(n,ofn1,CKMAXPATH+1);
 	ckstrncpy(fspec,ofn1,CKMAXPATH+1);
 	makestr(&rfspec,fspec);
@@ -3291,6 +3396,14 @@ rcvfil(n) char *n; {
 	goto rcvfilx;
     }
 #endif /* PIPESEND */
+/*
+  This is to avoid passing email subjects through nzrtol().
+  We haven't yet received the A packet so we don't yet know it's e-mail,
+  so in fact we go ahead and convert it anyway, but later we get the
+  original back from ofilnam[].
+*/  
+    dispos = 0;
+    ckstrncpy(ofilnam,(char *)srvcmd,CKMAXPATH+1);
 
 #ifdef NZLTOR
     if (*cmarg2)
@@ -3313,8 +3426,8 @@ rcvfil(n) char *n; {
 	else if (*t == '\0')
 	  sprintf(ofn1,"FILE%02ld",filcnt);
 	else
-	  strcpy(ofn1,t);
-	strcpy((char *)srvcmd,ofn1);	/* Now copy it back. */
+	  ckstrncpy(ofn1,t,CKMAXPATH+1);
+	ckstrncpy((char *)srvcmd,ofn1,srvcmdlen); /* Now copy it back. */
     }
 /*
   SET RECEIVE PATHNAMES RELATIVE...
@@ -3325,8 +3438,9 @@ rcvfil(n) char *n; {
 #ifdef UNIXOROSK
     else if (fnrpath == PATH_REL && !*cmarg2) {
 	if (isabsolute((char *)srvcmd)) {
-	    sprintf(ofn1,".%s",(char *)srvcmd);
-	    strcpy((char *)srvcmd,ofn1);
+	    ofn1[0] = '.';
+	    ckstrncpy(&of1n[1],(char *)srvcmd,CKMAXPATH+1);
+	    ckstrncpy((char *)srvcmd,ofn1,srvcmdlen);
 	    debug(F110,"rcvfil PATH_REL",ofn1,0);
 	}
     }
@@ -3340,7 +3454,7 @@ rcvfil(n) char *n; {
 	    if (*p == '\\' || *p == '/')
 	      p++;
 	    ckstrncpy(ofn1,p,CKMAXPATH+1);
-	    strcpy((char *)srvcmd,ofn1);
+	    ckstrncpy((char *)srvcmd,ofn1,srvcmdlen);
 	    debug(F110,"rcvfil OS2 PATH_REL",ofn1,0);
 	}
     }
@@ -3357,12 +3471,12 @@ rcvfil(n) char *n; {
 
 #ifdef PIPESEND
     if (rcvfilter) {
-	char * s, * p = NULL, * q;
+	char * p = NULL, * q;
 	int nn = MAXRP;
 	pipesend = 1;
 	debug(F110,"rcvfil rcvfilter ",rcvfilter,0);
 #ifndef NOSPL
-	if (p = (char *) malloc(nn + 1)) {
+	if ((p = (char *) malloc(nn + 1))) {
 	    q = p;
 #ifdef COMMENT
             /* We have already processed srvcmd and placed it into ofn1 */
@@ -3402,7 +3516,7 @@ rcvfil(n) char *n; {
 	    iattr.longname.len = strlen(zs); /* Store in attribute structure */
 	    iattr.longname.val = (char *) malloc(iattr.longname.len + 1);
 	    if (iattr.longname.val)	/* Remember this (illegal) name */
-	      strcpy(iattr.longname.val, zs);
+	      strcpy(iattr.longname.val, zs); /* safe */
 	}
 #endif /* OS2ONLY */
 	debug(F110,"rcvfil: invalid file name",ofn1,0);
@@ -3433,8 +3547,9 @@ rcvfil(n) char *n; {
 #endif /* CK_TMPDIR */
 	  ;
     debug(F101,"rcvfil dirflg","",dirflg);
-    ofn1x = (zchki(ofn1) != -1);	/* File already exists? */
-    debug(F101,"rcvfil ofn1x",ofn1,ofn1x);
+    ofn1len = zchki(ofn1);		/* File already exists? */
+    debug(F111,"rcvfil ofn1len",ofn1,ofn1len);
+    ofn1x = (ofn1len != -1);
 
     if ( (
 #ifdef UNIX
@@ -3497,8 +3612,8 @@ rcvfil(n) char *n; {
 		    newlongname =
 		      (char *) malloc(strlen(longname) + strlen(tmp) + 1);
 		    if (newlongname) {
-			strcpy(newlongname, longname);
-			strcat(newlongname, tmp);
+			strcpy(newlongname, longname); /* safe (prechecked) */
+			strcat(newlongname, tmp); /* safe (prechecked) */
 			os2setlongname(ofn1, newlongname);
 			free(newlongname);
 			newlongname = NULL;
@@ -3537,16 +3652,16 @@ rcvfil(n) char *n; {
 		newlongname =
 		  (char *) malloc(iattr.longname.len + strlen(tmp) + 1);
 		if (newlongname) {
-		    strcpy(newlongname, iattr.longname.val);
-		    strcat(newlongname, tmp);
+		    strcpy(newlongname, iattr.longname.val); /* safe */
+		    strcat(newlongname, tmp); /* safe */
 		    debug(F110,
 			  "Rename Incoming: newlongname",newlongname,0);
-
 		    if (iattr.longname.len &&
 			iattr.longname.val)
 		      free(iattr.longname.val);
 		    iattr.longname.len = strlen(newlongname);
 		    iattr.longname.val = newlongname;
+		    /* free(newlongname) here ? */
 		}
 	    }
 #endif /* OS2ONLY */
@@ -3632,7 +3747,7 @@ rcvfil(n) char *n; {
 	if (x > 0) {
 	    if (ofn1[x-1] == ';') {
 		v = getvnum(ofn1);
-		strcpy(&ofn1[x],ckitoa(v));
+		ckstrncpy(&ofn1[x],ckitoa(v),CKMAXPATH-x);
 	    }
 	}
     }
@@ -3673,11 +3788,14 @@ rcvfil(n) char *n; {
     3 if disposition was print, file was printed, but not deleted.
    -2 if disposition was mail and mail could not be sent
    -3 if disposition was print and file could not be printed
+   -4 if MOVE-TO: failed
+   -5 if RENAME-TO: failed
 */
 int
 reof(f,yy) char *f; struct zattr *yy; {
     extern char * rcv_move, * rcv_rename;
-    int x;
+    extern int o_isopen;
+    int rc = 0;				/* Return code */
     char *p;
     char c;
 
@@ -3710,106 +3828,118 @@ reof(f,yy) char *f; struct zattr *yy; {
     if (cxseen || czseen)		/* (for hints) */
       interrupted = 1;
     success = (cxseen || czseen) ? 0 : 1; /* Set SUCCESS flag appropriately */
-    if (!success) filrej++;		/* "Uncount" this file */
-    debug(F101,"reof success","",success);
+    if (!success)			  /* "Uncount" this file */
+      filrej++;
+    debug(F101,"reof o_isopen","",o_isopen);
+
+    if (o_isopen) {			/* If an output file was open... */
 
 #ifdef CK_CTRLZ
-    if (success) {
-	debug(F101,"reof lastchar","",lastchar);
-	if (!binary && eofmethod == XYEOF_Z && lastchar != 26 &&
-	    (!xflg || (xflg && remfile)))
-	  pnbyte((char)26,putfil);
-    }
+	if (success) {
+	    debug(F101,"reof lastchar","",lastchar);
+	    if (!binary && eofmethod == XYEOF_Z && lastchar != 26 &&
+		(!xflg || (xflg && remfile)))
+	      pnbyte((char)26,putfil);
+	}
 #endif /* CK_CTRLZ */
 
-    x = clsof(cxseen || czseen);	/* Close the file (resets cxseen) */
-    debug(F101,"reof closf","",x);
-    if (x < 0) {			/* If failure to close, FAIL */
-	if (success) filrej++;
-	success = 0;
-    }
-    if (!calibrate) {
-    /* Set file modification date and/or permissions */
-	if (success)
-	  zstime(f,yy,0);
+	rc = clsof(cxseen || czseen);	/* Close the file (resets cxseen) */
+	debug(F101,"reof closf","",rc);
+	if (rc < 0) {			/* If failure to close, FAIL */
+	    if (success) filrej++;
+	    success = 0;
+	}
+	if (!calibrate) {
+	    /* Set file modification date and/or permissions */
+	    if (success)
+	      zstime(f,yy,0);
 #ifdef OS2ONLY
 #ifdef CK_LABELED
-	if (success && yy->longname.len)
-	  os2setlongname(f, yy->longname.val);
+	    if (success && yy->longname.len)
+	      os2setlongname(f, yy->longname.val);
 #endif /* CK_LABELED */
 #endif /* OS2ONLY */
-    }
-    if (success == 0) xitsta |= W_RECV;	/* And program return code */
+	}
+	if (success == 0) xitsta |= W_RECV; /* And program return code */
 
 /* Handle dispositions from attribute packet... */
 
-    c = NUL;
+	c = NUL;
 #ifndef NOFRILLS
-    if (!calibrate && yy->disp.len != 0) {
-	p = yy->disp.val;
-	c = *p++;
+	if (!calibrate && yy->disp.len != 0) {
+	    p = yy->disp.val;
+	    c = *p++;
 #ifndef UNIX
 /*
   See ckcpro.w.  In UNIX we don't use temp files any more -- we pipe the
   stuff right into mail or lpr.
 */
-	if (c == 'M') {			/* Mail to user. */
-	    x = zmail(p,filnam);	/* Do the system's mail command */
-	    if (x < 0) success = 0;	/* Remember status */
-	    tlog(F110,"mailed",filnam,0L);
-	    tlog(F110," to",p,0L);
-	    zdelet(filnam);		/* Delete the file */
-	} else if (c == 'P') {		/* Print the file. */
-	    x = zprint(p,filnam);	/* Do the system's print command */
-	    if (x < 0) success = 0;	/* Remember status */
-	    tlog(F110,"printed",filnam,0L);
-	    tlog(F110," with options",p,0L);
+	    if (c == 'M') {		/* Mail to user. */
+		rc = zmail(p,filnam);	/* Do the system's mail command */
+		if (rc < 0) success = 0;	/* Remember status */
+		tlog(F110,"mailed",filnam,0L);
+		tlog(F110," to",p,0L);
+		zdelet(filnam);		/* Delete the file */
+	    } else if (c == 'P') {	/* Print the file. */
+		rc = zprint(p,filnam);	/* Do the system's print command */
+		if (rc < 0) success = 0; /* Remember status */
+		tlog(F110,"printed",filnam,0L);
+		tlog(F110," with options",p,0L);
 #ifndef VMS
 #ifndef STRATUS
-	    /* spooler will delete file after print complete in VOS & VMS */
-	    if (zdelet(filnam) && x == 0) x = 3; /* Delete the file */
+		/* spooler deletes file after print complete in VOS & VMS */
+		if (zdelet(filnam) && rc == 0) rc = 3; /* Delete the file */
 #endif /* STRATUS */
 #endif /* VMS */
-	}
+	    }
 #endif /* UNIX */
-    }
+	}
 #endif /* NOFRILLS */
 
-    if (success &&
-#ifdef PIPESEND
-	!pipesend &&
-#endif /* PIPESEND */
-	!calibrate && c != 'M' && c != 'P') {
-	if (rcv_move) {			/* If /MOVE-TO was given... */
-	    int x;
-	    tlog(F110," moving received file to",rcv_move,0);
-	    x = zrename(filnam,rcv_move);
-	    debug(F111,"reof MOVE zrename",rcv_move,x);
-	} else if (rcv_rename) {	/* Or /RENAME-TO: */
-	    int x;
-	    char *s = rcv_rename;	/* This is the renaming string */
+	if (success &&
+	    !pipesend &&
+	    !calibrate && c != 'M' && c != 'P') {
+	    if (rcv_move) {		/* If /MOVE-TO was given... */
+
+		rc = zrename(filnam,rcv_move);
+		debug(F111,"reof MOVE zrename",rcv_move,rc);
+		if (rc > -1) {
+		    tlog(F110," moving received file to",rcv_move,0);
+		} else {
+		    rc = -4;
+		    tlog(F110," FAILED to move received file to",rcv_move,0);
+		}
+	    } else if (rcv_rename) {	/* Or /RENAME-TO: */
+		char *s = rcv_rename;	/* This is the renaming string */
 #ifndef NOSPL
-	    char tmpnam[CKMAXPATH+16];
-	    int y;			/* Pass it thru the evaluator */
-	    extern int cmd_quoting;	/* for \v(filename) */
-	    if (cmd_quoting) {		/* But only if cmd_quoting is on */
-		y = MAXRP;
-		s = (char *)tmpnam;
-		zzstring(rcv_rename,&s,&y);
-		s = (char *)tmpnam;
-	    }
+		char tmpnam[CKMAXPATH+16];
+		int y;			/* Pass it thru the evaluator */
+		extern int cmd_quoting;	/* for \v(filename) */
+		if (cmd_quoting) {	/* But only if cmd_quoting is on */
+		    y = MAXRP;
+		    s = (char *)tmpnam;
+		    zzstring(rcv_rename,&s,&y);
+		    s = (char *)tmpnam;
+		}
 #endif /* NOSPL */
-	    if (s) if (*s) {
-		x = zrename(filnam,s);
-		debug(F111,"reof RENAME zrename",s,x);
-		if (x > -1)
-		  tlog(F110," renaming received file to",s,0);
+		if (s) if (*s) {
+		    rc = zrename(filnam,s);
+		    debug(F111,"reof RENAME zrename",s,rc);
+		    if (rc > -1) {
+			tlog(F110," renaming received file to",s,0);
+		    } else {
+			rc = -5;
+			tlog(F110," FAILED to rename received file to",s,0);
+		    }
+		}
 	    }
 	}
     }
-    debug(F101,"reof returns","",x);
-    *filnam = '\0';
-    return(x);
+    debug(F101,"reof success","",success);
+    debug(F101,"reof returns","",rc);
+
+    filnam[0] = NUL;			/* Erase the filename */
+    return(rc);
 }
 
 /*  R E O T  --  Receive End Of Transaction  */
@@ -3817,7 +3947,7 @@ reof(f,yy) char *f; struct zattr *yy; {
 VOID
 reot() {
     cxseen = czseen = discard = 0;	/* Reset interruption flags */
-    tstats();
+    tstats();				/* Finalize transfer statistics */
 }
 
 /*  S F I L E -- Send File header or teXt header packet  */
@@ -3839,22 +3969,42 @@ sfile(x) int x; {
     char pktnam[PKTNL+1];		/* Local copy of name */
     char *s;
     int rc;
+    int notafile = 0;
+    extern int filepeek;
 #ifdef PIPESEND
     extern char * sndfilter;
 
-    debug(F101,"sfile x","",x);
     if (sndfilter) {
 	pipesend = 1;
 	debug(F110,"sfile send filter ",sndfilter,0);
     }
-#else
-    debug(F101,"sfile x","",x);
 #endif /* PIPESEND */
+
+    notafile = calibrate || sndarray || pipesend || x;
+    debug(F101,"sfile x","",x);
+    debug(F101,"sfile notafile","",notafile);
+
+#ifndef NOCSETS
+    if (tcs_save > -1) {                /* Character sets */
+        tcharset = tcs_save;
+        tcs_save = -1;
+	debug(F101,"sfile restored tcharset","",tcharset);
+    }
+    if (fcs_save > -1) {
+        fcharset = fcs_save;
+        fcs_save = -1;
+	debug(F101,"sfile restored fcharset","",fcharset);
+    }
+    setxlatype(tcharset,fcharset);      /* Translation type */
+#endif /* NOCSETS */
 
     /* cmarg2 or filnam (with that precedence) have the file's name */
 
     lsstate = 0;			/* Cancel locking-shift state */
+#ifdef COMMENT
+    /* Do this after making sure we can open the file */
     if (nxtpkt() < 0) return(0);	/* Bump packet number, get buffer */
+#endif /* COMMENT */
     pktnam[0] = NUL;			/* Buffer for name we will send */
     if (x == 0) {			/* F-Packet setup */
 	if (!cmarg2) cmarg2 = "";
@@ -3864,8 +4014,11 @@ sfile(x) int x; {
 	    debug(F101,"sfile binary 1","",binary);
 	    debug(F101,"sfile wearealike","",wearealike);
 	    debug(F101,"sfile xfermode","",xfermode);
+	    debug(F101,"sfile filepeek","",filepeek);
 #ifndef NOCSETS
+	    debug(F101,"sfile s_cset","",s_cset);
 	    debug(F101,"sfile tcharset","",tcharset);
+	    debug(F101,"sfile xfrxla","",xfrxla);
 #endif /* NOCSETS */
 	}
 #endif /* DEBUG */
@@ -3877,7 +4030,7 @@ sfile(x) int x; {
 	    /* Other Kermit is on a like system and no charset translation */
 	    if (wearealike
 #ifndef NOCSETS
-		&& tcharset == TC_TRANSP
+		&& (tcharset == TC_TRANSP || xfrxla == 0)
 #endif /* NOCSETS */
 		) {
 #ifdef VMS
@@ -3888,45 +4041,113 @@ sfile(x) int x; {
 #endif /* CK_LABELED */
 		    binary = XYFT_B;	/* Send all files in binary mode */
 	    }
-#ifdef PATTERNS
 
-	    /* Otherwise select transfer mode based on filename patterns */
+	    /* Otherwise select transfer mode based on file info */
 
-	    else if (patterns		/* PATTERNS are ON */
-#ifdef PIPESEND
-		     && !pipesend	/* But not if sending from pipe */
-#endif /* PIPESEND */
+	    else if (!notafile		/* but not if sending from pipe */
 #ifdef CK_LABELED
-		     && binary != XYFT_L /* And not if FILE TYPE LABELED */
+		     && binary != XYFT_L /* and not if FILE TYPE LABELED */
 #endif /* CK_LABELED */
 #ifdef VMS
 		     && binary != XYFT_I /* or FILE TYPE IMAGE */
 #endif /* VMS */
 		     ) {
-		if (binary != XYFT_T && txtpatterns[0]) {
-		    int i;
-		    for (i = 0; i < FTPATTERNS && txtpatterns[i]; i++) {
-			if (ckmatch(txtpatterns[i],filnam,filecase,1)) {
-			    binary = XYFT_T;
-			    break;
+#ifdef UNICODE
+		fileorder = -1;		/* File byte order */
+#endif /* UNICODE */
+		if (filepeek && !notafile) { /* Real file, FILE SCAN is ON */
+		    int k, x;
+		    k = scanfile(filnam,&x,nscanfile); /* Scan the file */
+		    debug(F101,"sfile scanfile","",k);
+		    switch (k) {
+		      case FT_TEXT:	/* Unspecified text */
+			debug(F100,"sfile scanfile text","",0);
+			binary = XYFT_T; /* SET FILE TYPE TEXT */
+			break;
+#ifndef NOCSETS
+		      case FT_7BIT:		/* 7-bit text */
+			binary = XYFT_T;	/* SET FILE TYPE TEXT */
+			/* If SEND CHARSET-SELECTION AUTO  */
+			/* and SET TRANSFER TRANSLATION is ON */
+			debug(F100,"sfile scanfile text7","",0);
+			if (s_cset == XMODE_A && xfrxla) {
+			    if (fcsinfo[fcharset].size != 128) {
+				fcs_save = fcharset; /* Current FCS not 7bit */
+				fcharset = dcset7;   /* Use default 7bit set */
+				debug(F101,"sfile scanfile 7 fcharset",
+				      "",fcharset);
+			    }
+			    /* And also switch to appropriate TCS */
+			    if (afcset[fcharset] > -1 &&
+				afcset[fcharset] <= MAXTCSETS) {
+				tcs_save = tcharset;
+				tcharset = afcset[fcharset];
+				debug(F101,"sfile scanfile 7 tcharset","",
+				      tcharset);
+			    }
+			    setxlatype(tcharset,fcharset);
 			}
-		    }
-		}
-		if (binary != XYFT_B && binpatterns[0]) {
-		    int i;
-		    for (i = 0; i < FTPATTERNS && binpatterns[i]; i++) {
-			if (ckmatch(binpatterns[i],filnam,filecase,1)) {
-			    binary = XYFT_B;
-			    break;
+			break;
+
+		      case FT_8BIT:	/* 8-bit text */
+			binary = XYFT_T; /* SET FILE TYPE TEXT */
+			/* If SEND CHARSET-SELEC AUTO  */
+			/* and SET TRANSFER TRANSLATION is ON */
+			debug(F100,"sfile scanfile text8","",0);
+			if (s_cset == XMODE_A && xfrxla) {
+			    if (fcsinfo[fcharset].size != 256) {
+				fcs_save = fcharset; /* Current FCS not 8bit */
+				fcharset = dcset8; /* Use default 8bit set */
+				debug(F101,"sfile scanfile 8 fcharset",
+				      "",fcharset);
+			    }
+			    /* Switch to corresponding transfer charset */
+			    if (afcset[fcharset] > -1 &&
+				afcset[fcharset] <= MAXTCSETS) {
+				tcs_save = tcharset;
+				tcharset = afcset[fcharset];
+				debug(F101,"sfile scanfile 8 tcharset","",
+				      tcharset);
+			    }
+			    setxlatype(tcharset,fcharset);
 			}
+			break;
+#ifdef UNICODE
+		      case FT_UTF8:	/* UTF-8 text */
+		      case FT_UCS2:	/* UCS-2 text */
+			debug(F101,"sfile scanfile Unicode","",k);
+			binary = XYFT_T;
+			/* If SEND CHARSET-SELEC AUTO  */
+			/* and SET TRANSFER TRANSLATION is ON */
+			if (s_cset == XMODE_A && xfrxla) {
+			    fcs_save = fcharset;
+			    tcs_save = tcharset;
+			    fcharset = (k == FT_UCS2) ? FC_UCS2 : FC_UTF8;
+			    if (k == FT_UCS2 && x > -1)
+			      fileorder = x;
+			}
+			/* Switch to associated transfer charset if any */
+			if (afcset[fcharset] > -1 &&
+			    afcset[fcharset] <= MAXTCSETS)
+			  tcharset = afcset[fcharset];
+			if (tcharset == TC_TRANSP) /* If none */
+			  tcharset = TC_UTF8;      /* use UTF-8 */
+			setxlatype(tcharset,fcharset);
+			debug(F101,"sfile Unicode tcharset","",tcharset);
+			break;
+#endif /* UNICODE */
+#endif /* NOCSETS */
+		      case FT_BIN:
+			debug(F101,"sfile scanfile binary","",k);
+			binary = XYFT_B;
+			break;
+		    /* Default: Don't change anything */
 		    }
 		}
 	    }
-#endif /* PATTERNS */
+	    debug(F101,"sfile binary 2","",binary);
+	    debug(F101,"sfile sendmode","",sendmode);
 	}
-	debug(F101,"sfile binary 2","",binary);
-	debug(F101,"sfile sendmode","",sendmode);
-
     	if (*cmarg2) {			/* If we have a send-as name... */
 	    int y; char *s;
 #ifndef NOSPL				/* and a script programming language */
@@ -3955,23 +4176,17 @@ sfile(x) int x; {
 	    int xfncnv, xpath;
 	    debug(F101,"sfile fnspath","",fnspath);
 	    debug(F101,"sfile fncnv","",fncnv);
-	    debug(F101,"sfile calibrate","",calibrate);
 	    xfncnv = fncnv;
 	    xpath = fnspath;
-#ifdef CALIBRATE
-	    if (calibrate) {
-		xfncnv = 0;		/* Don't convert */
-		xpath = PATH_OFF;	/* Remove path */
+	    if (notafile) {		/* If not an actual file */
+		xfncnv = 0;		/* Don't convert name */
+		xpath = PATH_OFF;	/* Leave path off */
+	    } else if (xfncnv &&
+		       (!strcmp(whoareu,"U1") || !strcmp(whoareu,"UN"))
+		       ) {
+		/* Less-strict conversion if partner is UNIX or Win32 */
+		xfncnv = -1;
 	    }
-#endif /* CALIBRATE */
-#ifdef PIPESEND
-	    debug(F101,"sfile pipesend","",pipesend);
-	    debug(F101,"sfile sndfilter","",sndfilter);
-	    if (pipesend || sndfilter) {
-		xfncnv = 0;		/* Don't convert */
-		xpath = PATH_ABS;	/* Leave or put path on */
-	    }
-#endif /* PIPESEND */
 	    debug(F101,"sfile xpath","",xpath);
 	    debug(F101,"sfile xfncnv","",xfncnv);
 	    nzltor(filnam,pktnam,xfncnv,xpath,PKTNL);
@@ -3980,9 +4195,7 @@ sfile(x) int x; {
 
 	    debug(F101,"sfile fnspath","",fnspath);
 	    if (fnspath == PATH_OFF	/* Stripping path names? */
-#ifdef PIPESEND
-		&& (!pipesend || !sndfilter) /* does this make sense? */
-#endif /* PIPESEND */
+		&& (!notafile)		/* (of actual files) */
 		) {
 		char *t;		/* Yes. */
 		zstrip(filnam,&t);	/* Strip off the path. */
@@ -3991,7 +4204,7 @@ sfile(x) int x; {
 		else if (*t == '\0')
 		  t = "UNKNOWN";
 		ckstrncpy(pktnam,t,PKTNL); /* Copy stripped name literally. */
-	    } else if (fnspath == PATH_ABS && !calibrate) {
+	    } else if (fnspath == PATH_ABS && !notafile) {
 		/* Converting to absolute form */
 		zfnqfp(filnam,PKTNL,pktnam);
 	    } else
@@ -4001,14 +4214,7 @@ sfile(x) int x; {
 	    /* But we still need to convert pktnam if FILE NAMES CONVERTED.  */
 
 	    debug(F101,"sfile fncnv","",fncnv);
-	    if (fncnv
-#ifdef PIPESEND
-		&& (!pipesend || !sndfilter)
-#endif /* PIPESEND */
-#ifdef CALIBRATE
-		&& !calibrate
-#endif /* CALIBRATE */
-		) {			/* If converting names, */
+	    if (fncnv && !notafile) {	/* If converting names of files */
 		zltor(pktnam,(char *)srvcmd); /* convert it to common form, */
 		ckstrncpy(pktnam,(char *)srvcmd,PKTNL);
 		*srvcmd = NUL;
@@ -4026,7 +4232,7 @@ sfile(x) int x; {
 	    char * p = NULL, * q;
 	    int n = CKMAXPATH;
 #ifndef NOSPL
-	    if (p = (char *) malloc(n + 1)) {
+	    if ((p = (char *) malloc(n + 1))) {
 		q = p;
 		debug(F110,"sfile pipesend filter",sndfilter,0);
 		zzstring(sndfilter,&p,&n);
@@ -4066,12 +4272,22 @@ sfile(x) int x; {
             /* Set appropriate error messages and make log entries here */
 #ifdef VMS
 	    if (binary == XYFT_L)
-	      sprintf((char *) epktmsg,
-		      "Recovery attempted in LABELED mode: %s",filnam);
+	      ckmakmsg((char *)epktmsg,
+		       PKTMSGLEN,
+		       "Recovery attempted in LABELED mode: ",
+		       filnam,
+		       NULL,
+		       NULL
+		       );
 	    else
 #endif /* VMS */
-            sprintf((char *)epktmsg,
-		    "Recovery attempted in TEXT mode: %s",filnam);
+	      ckmakmsg((char *)epktmsg,
+		       PKTMSGLEN,
+		       "Recovery attempted in TEXT mode: ",
+		       filnam,
+		       NULL,
+		       NULL
+		       );
             return(0);
         }
 	if (sendmode == SM_PSEND)	/* PSENDing? */
@@ -4099,6 +4315,8 @@ sfile(x) int x; {
 					/* Send the F or X packet */
     /* If the encoded string did not fit into the packet, it was truncated. */
 
+    if (nxtpkt() < 0) return(0);	/* Bump packet number, get buffer */
+
     rc = spack((char) (x ? 'X' : 'F'), pktnum, size, data);
     if (rc < 0)
       return(rc);
@@ -4121,9 +4339,9 @@ sfile(x) int x; {
     	tlog(F110,"Sending",filnam,0L);
 	makestr(&sfspec,filnam);
 #else
-	if (sndarray) {			/* Log fully qualified filename */
+	if (notafile) {			/* If not a file log simple name */
 	    tlog(F110,"Sending", filnam, 0L);
-	} else {
+	} else {			/* Log fully qualified filename */
 #ifdef COMMENT
 	    /* This section generates bad code in SCO 3.2v5.0.5's cc */
 	    char *p = NULL, *q = filnam;
@@ -4156,11 +4374,12 @@ sfile(x) int x; {
 	} else {			/* If text mode, check character set */
 	    tlog(F100," mode: text","",0L);
 #ifndef NOCSETS
-	    tlog(F110," file character set",fcsinfo[fcharset].name,0L);
-	    if (tcharset == TC_TRANSP)
-	      tlog(F110," xfer character set","transparent",0L);
-	    else
-	      tlog(F110," xfer character set",tcsinfo[tcharset].name,0L);
+	    if (tcharset == TC_TRANSP || xfrxla == 0) {
+		tlog(F110," character set","transparent",0L);
+	    } else {
+		tlog(F110," xfer character set",tcsinfo[tcharset].name,0L);
+		tlog(F110," file character set",fcsinfo[fcharset].name,0L);
+	    }
 #endif /* NOCSETS */
 	}
     } else {				/* Display for X-packet */
@@ -4232,15 +4451,19 @@ sdata() {
 	 ;
 	 i--) {
         debug(F101,"sdata countdown","",i);
+#ifdef STREAMING
 	if (streaming) {
 	    pktnum = (pktnum + 1) % 64;
 	    winlo = pktnum;
 	    debug(F101,"sdata streaming pktnum","",pktnum);
 	} else {
+#endif /* STREAMING */
 	    x = nxtpkt();		/* Get next pkt number and buffer */
 	    debug(F101,"sdata nxtpkt pktnum","",pktnum);
 	    if (x < 0) return(0);
+#ifdef STREAMING
 	}
+#endif /* STREAMING */
 	debug(F101,"sdata packet","",pktnum);
 	if (chkint() < 0)		/* Especially important if streaming */
 	  return(-9);
@@ -4270,7 +4493,7 @@ sdata() {
 	len = getpkt(spsiz,1);
 #endif /* CKTUNING */
 	s = (char *)data;
-	if (len == -3) {		/* Timed out */
+	if (len == -3) {		/* Timed out (e.g.reading from pipe) */
 	    s = "";			/* Send an empty data packet. */
 	    len = 0;
 	} else if (len == 0) {		/* Done if no data. */
@@ -4282,13 +4505,15 @@ sdata() {
 	}
 	debug(F101,"sdata pktnum","",pktnum);
 	debug(F101,"sdata len","",len);
-	debug(F011,"sdata data",data,len);
+	debug(F011,"sdata data",data,52);
 
 	x = spack('D',pktnum,len,(CHAR *)s); /* Send the data packet. */
 	if (x < 0)
 	  return(x);
+#ifdef STREAMING
 	if (streaming)			/* What an ACK would do. */
 	  winlo = pktnum;
+#endif /* STREAMING */
 	x = ttchk();			/* Peek at input buffer. */
 	debug(F101,"sdata ttchk","",x);	/* ACKs waiting, maybe?  */
 	if (x < 0)			/* Or connection broken? */
@@ -4334,9 +4559,10 @@ sdata() {
   There are two "send-eof" functions.  seof() is used to send the normal eof
   packet at the end of a file's data (even if the file has no data), or when
   a file transfer is interrupted.  sxeof() is used to send an EOF packet that
-  occurs because of attribute refusal.  The difference is purely a matter of
-  buffer allocation and packet sequence number management.  Both functions
-  act as "front ends" to the common send-eof function, szeof().
+  occurs because of attribute refusal or interruption prior to entering data
+  state.  The difference is purely a matter of buffer allocation and packet
+  sequence number management.  Both functions act as "front ends" to the
+  common send-eof function, szeof().
 */
 
 /* Code common to both seof() and sxeof() */
@@ -4360,10 +4586,8 @@ szeof(s) CHAR *s; {
     if (x < 0)
       return(x);
     discard = 0;			/* Turn off per-file discard flag */
-#ifdef PIPESEND
 /* If we were sending from a pipe, we're not any more... */
     pipesend = 0;
-#endif /* PIPESEND */
     return(0);
 }
 
@@ -4460,7 +4684,7 @@ rpar() {
 	break;				/*  otherwise with 'Y'. */
       case  2:				/* Other Kermit sent a valid prefix */
 	if (q8flag)
-	  sq = ebq;
+	  sq = ebq;			/* Fall through on purpose */
       case  0:				/* Other Kermit bid nothing */
 	break;				/* So I reply with 'Y'. */
     }
@@ -4593,7 +4817,6 @@ int
 spar(s) CHAR *s; {			/* Set parameters */
     int x, y, lpsiz, biggest;
     extern int rprmlen, lastspmax;
-    extern int sysindex;
     extern struct sysdata sysidlist[];
 
     whatru = 0;
@@ -4840,6 +5063,9 @@ spar(s) CHAR *s; {			/* Set parameters */
 	    if (streamrq == SET_ON ||
 		(streamrq == SET_AUTO &&
 		 (reliable == SET_ON || (reliable == SET_AUTO && !local)
+#ifdef TN_COMPORT
+                  && !istncomport()
+#endif /* TN_COMPORT */
 #ifdef IKSD
                    || inserver
 #endif /* IKSD */
@@ -4859,6 +5085,9 @@ spar(s) CHAR *s; {			/* Set parameters */
                 && ttnproto != NP_RLOGIN/* Rlogin is not clear */
                 && !(ttnproto >= NP_K4LOGIN && ttnproto <= NP_EK5LOGIN)
 #endif /* RLOGCODE */
+#ifdef TN_COMPORT
+                && !istncomport()
+#endif /* TN_COMPORT */
                   )
 #ifdef IKSD
                  || inserver
@@ -4938,12 +5167,6 @@ spar(s) CHAR *s; {			/* Set parameters */
 	}
     }
 
-#ifdef PATTERNS
-/* If attributes not negotiated and FILE PATTERNS is AUTO... */
-    if (patterns == SET_AUTO && atcapu == 0) /* Turn them OFF. */
-      patterns = SET_OFF;
-#endif /* PATTERNS */
-
 /* Record parameters in debug log */
 #ifdef DEBUG
     if (deblog) sdebu(biggest);
@@ -4980,26 +5203,38 @@ long sndlarger  = -1L;
    -3, read access denied
    -4, cancelled
    -5, too many files match wildcard
+   -6, no files selected
+  NOTE:
+    If gnfile() returns 0, then the global variable gnferror should be checked
+    to find out the most recent gnfile() error, and use that instead of the
+    return code (for reasons to hard to explain).
 */
 int
 gnfile() {
     int i = 0, x = 0; long y = 0L;
+    int dodirstoo = 0;
     int retcode = 0;
+
     char fullname[CKMAXPATH+1];
+
+    dodirstoo = ((what & (W_FTP|W_SEND)) == (W_FTP|W_SEND)) && recursive;
 
     debug(F101,"gnfile sndsrc","",sndsrc);
     debug(F101,"gnfile filcnt","",filcnt);
     debug(F101,"gnfile what","",what);
+    debug(F101,"gnfile recursive","",recursive);
+    debug(F101,"gnfile dodirstoo","",dodirstoo);
+    gnferror = 0;
     fsize = -1L;			/* Initialize file size */
     fullname[0] = NUL;
-    if (what != W_REMO && xfermode == XMODE_A
+    if (!(what & W_REMO) && (xfermode == XMODE_A)
 #ifndef NOMSEND
 	&& !addlist
 #endif /* NOMSEND */
 	) {
 #ifdef WHATAMI
 	/* We don't do this in server mode because it undoes WHATAMI */
-	if (!server || (server && (whatru & WMI_FLAG == 0)))
+	if (!server || (server && ((whatru & WMI_FLAG) == 0)))
 #endif /* WHATAMI */
 	  binary = gnf_binary;		/* Restore prevailing transfer mode */
 	debug(F101,"gnfile binary = gnf_binary","",gnf_binary);
@@ -5020,7 +5255,8 @@ gnfile() {
 
 #ifdef CALIBRATE
     if (sndsrc == -9) {
-	strcpy(filnam,"CALIBRATION");
+	debug(F100,"gnfile calibrate","",0);
+	ckstrncpy(filnam,"CALIBRATION",CKMAXPATH);
 	nfils = 0;
 	cal_j = 0;
 	fsize = calibrate;
@@ -5033,6 +5269,7 @@ gnfile() {
 #ifndef NOSPL
     if (sndarray) {			/* Sending from an array */
 	extern char sndxnam[];		/* Pseudo filename */
+	debug(F100,"gnfile array","",0);
 	nfils = 0;
 	fsize = -1L;			/* Size unknown */
 	sndsrc = 0;
@@ -5133,7 +5370,12 @@ nextinpath:
 			*/
 			goto gotnam;
 		    }
-		    nzxopts = 0;
+#ifdef COMMENT
+		    nzxopts = ZX_FILONLY; /* (was 0: 25 Jul 2001 fdc) */
+#else
+		    nzxopts = recursive ? 0 : ZX_FILONLY; /* 30 Jul 2001 */
+#endif /* COMMENT */
+		    if (nolinks) nzxopts |= ZX_NOLINKS;	/* (26 Jul 2001 fdc) */
 #ifdef UNIXOROSK
 		    if (matchdot) nzxopts |= ZX_MATCHDOT;
 #endif /* UNIXOROSK */
@@ -5141,8 +5383,9 @@ nextinpath:
 		    x = nzxpand(fullname,nzxopts); /* Expand wildcards */
 		    debug(F101,"gnfile nzxpand","",x);
 		    if (x == 1) {
-			znext(fullname);
-			debug(F110,"gnfile znext",fullname,0);
+			int xx;
+			xx = znext(fullname);
+			debug(F111,"gnfile znext A",fullname,xx);
 			goto gotnam;
 		    }
 		    if (x == 0) {	/* None match */
@@ -5151,15 +5394,19 @@ nextinpath:
 			  goto nextinpath;
 #endif /* NOSERVER */
 			retcode = -1;
+			debug(F101,"gnfile gnferror A","",gnferror);
+			gnferror = -1;
 			continue;
 		    }
 		    if (x < 0) {	/* Too many to expand */
+			debug(F101,"gnfile gnferror B","",gnferror);
+			gnferror = -5;
 			return(-5);
 		    }
 		    sndsrc = -1;	/* Change send-source to znext() */
 		}
 	    } else {			/* We're out of files. */
-		debug(F101,"gnfile done","",nfils);
+		debug(F111,"gnfile done",ckitoa(gnferror),nfils);
 		*filnam = '\0';
 		return(0);
 	    }
@@ -5168,14 +5415,21 @@ nextinpath:
 /* Otherwise, step to next element of internal wildcard expansion list. */
 
 	if (sndsrc == -1) {
+	    int xx = 0;
 	    while (1) {
-		znext(filnam);
+		debug(F111,"gnfile znext X",filnam,xx);
+		xx = znext(filnam);
+		debug(F111,"gnfile znext B",filnam,xx);
 		if (!filnam[0])
 		  break;
+		if (dodirstoo) {
+		    debug(F111,"gnfile FTP MPUT /RECURSIVE",filnam,xx);
+		    break;
+		}
 		if (!isdir(filnam))
 		  break;
 	    }
-	    debug(F111,"gnfile znext",filnam,x);
+	    debug(F111,"gnfile znext C",filnam,x);
 	    if (!filnam[0]) {		/* If no more, */
 		sndsrc = 1;		/* go back to previous list */
 		debug(F101,"gnfile setting sndsrc back","",sndsrc);
@@ -5187,6 +5441,7 @@ nextinpath:
 /* Get here with a filename. */
 
 gotnam:
+	debug(F110,"gnfile fullname",fullname,0);
 	if (fullname[0]) {
 #ifdef DTILDE
 	    char * dirp = "";
@@ -5196,15 +5451,25 @@ gotnam:
 	    }
 #endif /* DTILDE */
 	    y = zchki(fullname);	/* Check if file readable */
+	    debug(F111,"gnfile zchki",fullname,y);
 	    retcode = (int) y;		/* Possible return code */
+	    if (y == -2L && dodirstoo) {
+		y = 0L;
+	    }
+	    if (y < 0L) {
+		gnferror = (int) y;
+		debug(F101,"gnfile gnferror C","",gnferror);
+	    }
 	    if (y == -1L) {		/* If not found */
+		debug(F100,"gnfile -1","",0);
 #ifndef NOSERVER
 		if (server && ngetpath > i)
 		  goto nextinpath;
 #endif /* NOSERVER */
 		debug(F110,"gnfile skipping:",fullname,0);
-		tlog(F111,fullname,"not sent",0);
-		xxscreen(SCR_ST,ST_SKIP,0l,fullname);
+		tlog(F110,fullname,": open failure - skipped",0);
+		xxscreen(SCR_FN,0,0l,fullname);
+		xxscreen(SCR_ST,ST_SKIP,SKP_ACC,fullname);
 #ifdef TLOG
 		if (tralog && !tlogfmt)
 		  doxlog(what,fullname,fsize,binary,1,"Skipped");
@@ -5212,9 +5477,11 @@ gotnam:
 		continue;
 	    } else if (y < 0) {
 		if (y == -3) {		/* Exists but not readable */
+		    debug(F100,"gnfile -3","",0);
 		    filrej++;		/* Count this one as not sent */
 		    tlog(F110,"Read access denied",fullname,0); /* Log this */
-		    xxscreen(SCR_ST,ST_SKIP,0l,fullname); /* Display message */
+		    xxscreen(SCR_FN,0,0l,fullname);
+		    xxscreen(SCR_ST,ST_SKIP,SKP_ACC,fullname); /* Display it */
 #ifdef TLOG
 		    if (tralog && !tlogfmt)
 		      doxlog(what,fullname,fsize,binary,1,"Skipped");
@@ -5222,19 +5489,26 @@ gotnam:
 		}
 		continue;
 	    } else {
+		int xx;
 		fsize = y;
-		if (!fileselect(fullname,
+		xx = fileselect(fullname,
 				sndafter, sndbefore,
 				sndnafter,sndnbefore,
 				sndsmaller,sndlarger,
 				skipbup,
-				8,sndexcept)) {
+				8,sndexcept);
+		debug(F111,"gnfile fileselect",fullname,xx);
+		if (!xx) {
 		    y = -1L;
+		    gnferror = -6;
+		    debug(F101,"gnfile gnferror D","",gnferror);
 		    continue;
 		}
 		ckstrncpy(filnam,fullname,CKMAXPATH+1);
 		return(1);
 	    }
+#ifdef COMMENT
+	/* This can't be right! */
 	} else {			/* sndsrc is 0... */
 	    if (!fileselect(fullname,
 			    sndafter, sndbefore,
@@ -5242,14 +5516,18 @@ gotnam:
 			    sndsmaller,sndlarger,
 			    skipbup,
 			    8,sndexcept)) {
+		gnferror = -6;
+		debug(F111,"gnfile fileselect",fullname,gnferror);
 		y = -1L;
 		continue;
 	    }
 	    ckstrncpy(filnam,fullname,CKMAXPATH+1);
 	    return(1);
+#endif /* COMMENT */
 	}
     }
-    *filnam = '\0';			/* Should never get here */
+    debug(F101,"gnfile result","",retcode);
+    *filnam = '\0';
     return(0);
 }
 
@@ -5278,21 +5556,25 @@ char * endline = "\15\12";
 #endif /* datageneral */
 #endif /* UNIX */
 
-
-
-
+#ifdef MAC
+#define FNCBUFL 256
+#else
 #ifdef CKSYMLINK
 #define FNCBUFL (CKMAXPATH + CKMAXPATH + 64)
 #else
 #define FNCBUFL (CKMAXPATH + 64)
 #endif /* CKSYMLINK */
+#endif /* MAC */
+
+/* NB: The minimum FNCBUFL is 255 */
+
 static CHAR funcbuf[FNCBUFL];
-static int funcnxt = 0;
-static int funclen = 0;
-static int nxpnd = - 1;
-static long ndirs =   0;
-static long nfiles =  0;
-static long nbytes =  0;
+static int  funcnxt =  0;
+static int  funclen =  0;
+static int  nxpnd   = -1;
+static long ndirs   =  0;
+static long nfiles  =  0;
+static long nbytes  =  0;
 
 int
 sndstring(p) char * p; {
@@ -5338,7 +5620,7 @@ nxthlp(
     extern int
       en_cpy, en_cwd, en_del, en_dir, en_fin, en_get, en_bye, en_mai,
       en_pri, en_hos, en_ren, en_sen, en_spa, en_set, en_typ, en_who,
-      en_ret, en_mkd, en_rmd, en_asg, en_que, en_xit, x_login, x_logged,
+      /* en_ret, */ en_mkd, en_rmd, en_asg, en_que, en_xit, x_login, x_logged,
       xfinish;
     extern char * ckxsys;
 
@@ -5347,18 +5629,24 @@ nxthlp(
 
     switch (srvhlpnum++) {
       case 0:
-        sprintf((char *)funcbuf,
-		"Client Command     Status        Description\n");
-	x = strlen((char *)funcbuf);
+	x = ckstrncpy((char *)funcbuf,
+		      "Client Command     Status        Description\n",
+		      FNCBUFL
+		      );
 	if (x_login && !x_logged) {
-	    sprintf((char *)(funcbuf+x)," REMOTE LOGIN       required\n");
-	    x = strlen((char *)funcbuf);
+	    x += ckstrncat((char *)funcbuf,
+			   " REMOTE LOGIN       required\n",
+			   FNCBUFL
+			   );
 	}
+	if (FNCBUFL - x > 74)
 	sprintf((char *)(funcbuf+x)," GET                %-14s%s\n",
 		xnm(en_get),
 		"Transfer file(s) from server to client."
 		);
 	break;
+
+/* NOTE: The minimum funcbuf[] size is 255; all of the following are safe. */
 
       case 1:
 	sprintf((char *)funcbuf," SEND               %-14s%s\n",
@@ -5539,7 +5827,7 @@ sndhlp() {
     first = 1;				/* Init getchx lookahead */
     nfils = 0;				/* No files, no lists. */
     xflg = 1;				/* Flag we must send X packet. */
-    strcpy(cmdstr,"REMOTE HELP");	/* Data for X packet. */
+    ckstrncpy(cmdstr,"REMOTE HELP",CMDSTRL); /* Data for X packet. */
     sprintf((char *)funcbuf, "C-Kermit %s,%s\n\n", versio, ckxsys);
     funclen = strlen((char *)funcbuf);
 #ifdef IKSD
@@ -5584,8 +5872,11 @@ nxttype(
 int
 sndtype(file) char * file; {
 #ifndef NOSERVER
-    char * p = NULL, name[CKMAXPATH+1];
+    char name[CKMAXPATH+1];
+
 #ifdef OS2
+    char * p = NULL;
+
     if (*file) {
         ckstrncpy(name, file, CKMAXPATH+1);
         /* change / to \. */
@@ -5611,7 +5902,7 @@ sndtype(file) char * file; {
 
     nfils = 0;				/* No files, no lists. */
     xflg = 1;				/* Flag we must send X packet. */
-    strcpy(cmdstr,"type");		/* Data for X packet. */
+    ckstrncpy(cmdstr,"type",CMDSTRL);	/* Data for X packet. */
     first = 1;				/* Init getchx lookahead */
     funcstr = 1;			/* Just set the flag. */
     funcptr = nxttype;			/* And the pointer. */
@@ -5642,12 +5933,6 @@ nxtdir(
     char name[CKMAXPATH+1], dbuf[24], *p = NULL;
     char *dstr = NULL, * lnk = "";
     CHAR c, * linebuf = funcbuf;
-#ifdef VMSORUNIX
-    extern int zgfs_dir;
-#ifdef CKSYMLINK
-    extern int zgfs_link;
-#endif /* CKSYMLINK */
-#endif /* VMSUNIX */
 #ifdef OSK
     /* Work around bugs in OSK compiler */
     char *dirtag = "directories";
@@ -5706,9 +5991,9 @@ nxtdir(
         dstr = zfcdat(name);
 	debug(F111,"nxtdir zcfdat",dstr,0);
 	if (!dstr)
-	  dstr = "";
+	  dstr = "0000-00-00 00:00:00";
 	if (!*dstr) {
-	    dstr = "0000-00-00 00:00:00";
+	  dstr = "0000-00-00 00:00:00";
 	} else {
 	    dbuf[0] = dstr[0];
 	    dbuf[1] = dstr[1];
@@ -5756,6 +6041,13 @@ nxtdir(
 #endif /* CKSYMLINK */
 #endif /* UNIX */
 
+/*
+  The following sprintf's are safe; linebuf is a pointer to funcbuf,
+  which is 64 bytes larger than CKMAXPATH (or double CKMAXPATH when
+  symlinks are possible).  64 allows for the fixed-field portions of
+  the file listing line: permissions, size, and date.  CKMAXPATH allows
+  for the longest possible pathname.
+*/
 	if (itsadir && len < 0) {	/* Directory */
 #ifdef VMS
 	    sprintf((char *)linebuf,
@@ -5908,6 +6200,8 @@ snddir(spec) char * spec; {
     debug(F110,"snddir name 2",name,0);
     p = name + strlen(name);		/* Move it to end of list */
 
+    /* sprintf safe because funcbuf size >= max path len + 64 */
+
     if (sd_hdg) {
 	sprintf((char *)funcbuf,"Listing files: %s%s%s",fnbuf,endline,endline);
 	funcnxt = 0;
@@ -5919,11 +6213,11 @@ snddir(spec) char * spec; {
     if (zchki(name) == -2) {		/* Found a directory */
         p--;
         if (*p == '\\' || *p == '/')
-          strcat(name, "*");
+          ckstrncat(name, "*", CKMAXPATH);
         else if (*p == ':')
-          strcat(name, ".");
+          ckstrncat(name, ".", CKMAXPATH);
         else
-          strcat(name, "\\*");
+          ckstrncat(name, "\\*", CKMAXPATH);
 	debug(F110,"snddir directory",name,0);
     }
 #else
@@ -5932,25 +6226,25 @@ snddir(spec) char * spec; {
 	p--;
 #ifdef UNIXOROSK
 	if (*p == '/')			/* So append wildcard to it */
-	  strcat(s, "*");
+	  ckstrncat(s, "*", CKMAXPATH);
 	else
-	  strcat(s, "/*");
+	  ckstrncat(s, "/*", CKMAXPATH);
 #else
 #ifdef VMS
 	if (*p == ']' || *p == '>' || *p == ':')
-	  strcat(s, "*.*");
+	  ckstrncat(s, "*.*", CKMAXPATH);
 #else
 #ifdef datageneral
 	if (*p == ':')
-	  strcat(s, "+");
+	  ckstrncat(s, "+", CKMAXPATH);
 	else
-	  strcat(s, ":+");
+	  ckstrncat(s, ":+", CKMAXPATH);
 #else
 #ifdef VOS
 	if (*p == '>')
-	  strcat(s, "*");
+	  ckstrncat(s, "*", CKMAXPATH);
 	else
-	  strcat(s, ">*");
+	  ckstrncat(s, ">*", CKMAXPATH);
 #endif /* VOS */
 #endif /* datageneral */
 #endif /* VMS */
@@ -5979,9 +6273,9 @@ snddir(spec) char * spec; {
     nfils = 0;				/* No files, no lists. */
     xflg = 1;				/* Flag we must send X packet. */
     if ((int)strlen(name) < CMDSTRL - 11) /* Data for X packet. */
-      sprintf(cmdstr,"DIRECTORY %s",name);
+      sprintf(cmdstr,"DIRECTORY %s",name); /* safe */
     else
-      strcpy(cmdstr,"DIRECTORY");
+      ckstrncpy(cmdstr,"DIRECTORY",CMDSTRL);
     first = 1;				/* Init getchx lookahead */
     funcstr = 1;			/* Just set the flag. */
     funcptr = nxtdir;			/* And the pointer. */
@@ -6022,6 +6316,8 @@ nxtdel(
 
         for (p = name + strlen(name); p != name && *p != '/' ; p--) ;
         if (*p == '/') p++;
+
+	/* sprintf's safe because size of funcbuf >= 64 + maxpathlen */
 
         if (len > -1L) {
 	    if (zdelet(name)) {
@@ -6071,7 +6367,10 @@ nxtdel(
 int
 snddel(spec) char * spec; {
 #ifndef NOSERVER
-    char * p = NULL, name[CKMAXPATH+1];
+    char name[CKMAXPATH+1];
+#ifdef OS2
+    char * p = NULL;
+#endif /* #ifdef OS2 */
 
     if (!*spec)
       return(0);
@@ -6105,7 +6404,7 @@ snddel(spec) char * spec; {
       return(-1);
     nfils = 0;				/* No files, no lists. */
     xflg = 1;				/* Flag we must send X packet. */
-    strcpy(cmdstr,"REMOTE DELETE");	/* Data for X packet. */
+    ckstrncpy(cmdstr,"REMOTE DELETE",CMDSTRL); /* Data for X packet. */
     first = 1;				/* Init getchx lookahead */
     funcstr = 1;			/* Just set the flag. */
     funcptr = nxtdel;			/* And the pointer. */
@@ -6122,18 +6421,33 @@ int
 sndspace(drive) int drive; {
 #ifndef NOSERVER
     static char spctext[64];
-    if (drive)
-      sprintf(spctext,
-	      " Drive %c: %ldK free%s",
-	      drive,
-	      zdskspace(drive - 'A' + 1) / 1024L,
-	      endline
-	      );
-    else
-      sprintf(spctext, " Free space: %ldK%s", zdskspace(0) / 1024L, endline);
+    unsigned long space;
+
+    if (drive) {
+	space = zdskspace(drive - 'A' + 1);
+	if (space > 0 && space < 1024)
+	  sprintf(spctext,
+		  " Drive %c: unknown%s",
+		  drive,
+		  endline
+		  );
+	else
+	  sprintf(spctext,
+		  " Drive %c: %ldK free%s",
+		  drive,
+		  space / 1024L,
+		  endline
+		  );
+    } else {
+	space = zdskspace(0);
+	if (space > 0 && space < 1024)
+	  sprintf(spctext, " Free space: unknown%s", endline);
+	else
+	  sprintf(spctext, " Free space: %ldK%s", space / 1024L, endline);
+    }
     nfils = 0;				/* No files, no lists. */
     xflg = 1;				/* Flag we must send X packet. */
-    strcpy(cmdstr,"free space");	/* Data for X packet. */
+    ckstrncpy(cmdstr,"free space",CMDSTRL); /* Data for X packet. */
     first = 1;				/* Init getchx lookahead */
     memstr = 1;				/* Just set the flag. */
     memptr = spctext;			/* And the pointer. */
@@ -6150,7 +6464,7 @@ sndwho(who) char * who; {
 #ifndef NOSERVER
     nfils = 0;				/* No files, no lists. */
     xflg = 1;				/* Flag we must send X packet. */
-    strcpy(cmdstr,"who");		/* Data for X packet. */
+    ckstrncpy(cmdstr,"who",CMDSTRL);	/* Data for X packet. */
     first = 1;				/* Init getchx lookahead */
     memstr = 1;				/* Just set the flag. */
 #ifdef NT
@@ -6223,8 +6537,8 @@ syscmd(prefix,suffix) char *prefix, *suffix; {
       return(0);
     if (!*prefix)
       return(0);
-    for (cp = cmdstr; *prefix != '\0'; *cp++ = *prefix++);
-    while (*cp++ = *suffix++)
+    for (cp = cmdstr; *prefix != '\0'; (*cp++ = *prefix++));
+    while ((*cp++ = *suffix++))
 #ifdef OS2
         /* This takes away more than we gain in convenience
         if (*(cp-1) == '/') *(cp-1) = '\\' */

@@ -11,7 +11,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2000,
+  Copyright (C) 1985, 2001,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -102,8 +102,9 @@
 
 #define FC_KOI8R   47  /* KOI8-R (RFC1489) - Russian + boxdrawing */
 #define FC_KOI8U   48  /* KOI8-U (RFC2319) - Ukrainian + boxdrawing */
+#define FC_CP1252  49  /* Latin 1 Windows */
 
-#define MAXFCSETS  48  /* Highest file character set number */
+#define MAXFCSETS  49  /* Highest file character set number */
 
 #ifdef OS2
 #define FC_DECSPEC 253 /* Not real character-sets */

@@ -6,7 +6,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2000,
+  Copyright (C) 1985, 2001,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -55,16 +55,23 @@ ckmkdir(fc,s,r,m,cvt) int fc; char * s; char ** r; int m; int cvt; {
     if (!s) s = "";
     debug(F110,"ckmkdir 1 fc",s,fc);
     if (!*s) {
-	sprintf(ckmkdbuf,"%s: no name given", (fc == 0) ? "mkdir" : "rmdir");
+	ckmakmsg(ckmkdbuf,
+		 CKMAXPATH+1,
+		 (fc == 0) ? "mkdir" : "rmdir",
+		 ": no name given",
+		 NULL,
+		 NULL
+		 );
 	*r = ckmkdbuf;
 	return(-2);
     }
 #ifdef datageneral
-/* Come back and make this nicer later */
+/* Come back and make this nicer later if anybody notices */
     if (fc == 0) {			/* mkdir */
 	rc = createdir(s,0);
     } else {				/* rmdir */
-	sprintf(tmpbuf,"delete %s",s); /* AOS/VS rmdir() is a no-op. */
+	/* AOS/VS rmdir() is a no-op. */
+	ckmakmsg(tmpbuf,CKMAXPATH+1,"delete ",s,NULL,NULL);
 	debug(F110,"ckmkdir 2",tmpbuf,0);
 	rc = system(tmpbuf);
     }
@@ -85,7 +92,13 @@ ckmkdir(fc,s,r,m,cvt) int fc; char * s; char ** r; int m; int cvt; {
 	}
 	if (lb != 1 && rb != 1 && sl == 0 && p > s && *(p-1) != ':') {
 	    /* Probably just a word - convert to VMS format */
-	    sprintf(buf2,"[%s%s]", (*s == '.') ? "" : ".", s);
+	    ckmakmsg(buf2,
+		     CKMAXPATH+1,
+		     "[",
+		     (*s == '.') ? "" : ".",
+		     s,
+		     "]"
+		     );
 	    s = buf2;
 	} else if (lb == 0 && rb == 0 && sl != 0 && p > s && *(p-1) != ':') {
 	    int flag = 0;
@@ -93,7 +106,7 @@ ckmkdir(fc,s,r,m,cvt) int fc; char * s; char ** r; int m; int cvt; {
 	    x = strlen(s);
 	    if (x > 0 && s[x-1] != '/')
 	      flag = 1;
-	    sprintf(buf2,"%s%s",s,flag ? "/" : "");
+	    ckmakmsg(buf2,CKMAXPATH+1,s,flag ? "/" : "",NULL,NULL);
 	    s = buf2;
 	}
 	if (s == buf2) {
@@ -165,20 +178,23 @@ ckmkdir(fc,s,r,m,cvt) int fc; char * s; char ** r; int m; int cvt; {
 #endif /* datageneral */
     debug(F101,"ckmkdir rc","",rc);
     if (rc == -2) {
-	sprintf(ckmkdbuf,
-		"Directory %s not implemented in this version of C-Kermit",
-		(fc == 0) ? "creation" : "removal"
-		);
+	ckmakmsg(ckmkdbuf,
+		 CKMAXPATH,
+		 "Directory ",
+		 (fc == 0) ? "creation" : "removal",
+		 "not implemented in this version of C-Kermit",
+		 NULL
+		 );
 	*r = ckmkdbuf;
 	if (m) printf("%s\n",*r);
     } else if (rc < 0) {
 	if (m) perror(s);
-	sprintf(ckmkdbuf,"%s: %s",s,ck_errstr());
+	ckmakmsg(ckmkdbuf,CKMAXPATH,s,": ",ck_errstr(),NULL);
 	*r = ckmkdbuf;
     } else if (fc == 0 && zfnqfp(s,CKMAXPATH,ckmkdbuf)) {
 	*r = ckmkdbuf;
     } else if (fc != 0) {
-	sprintf(ckmkdbuf,"%s: removed",s);
+	ckmakmsg(ckmkdbuf,CKMAXPATH,s,": removed",NULL,NULL);
 	*r = ckmkdbuf;
     }
     return(rc);
@@ -193,12 +209,13 @@ ckmkdir(fc,s,r,m,cvt) int fc; char * s; char ** r; int m; int cvt; {
 #endif /* pdpd11 */
 #endif /* NODISPO */
 
+extern int pipesend;
 #ifdef PIPESEND
-int pipesend = 0;
+extern char ** sndfilter;
 #endif /* PIPESEND */
 
 extern int unkcs, wmax, wcur, discard, bctu, bctl, local, fdispla, what,
-  sendmode, opnerr, dest, epktrcvd, epktsent, filestatus, eofmethod;
+  sendmode, opnerr, dest, epktrcvd, epktsent, filestatus, eofmethod, dispos;
 extern long sendstart, calibrate, fncnv, fnrpath;
 
 extern char * ofn2, * rfspec, * sfspec;
@@ -217,11 +234,12 @@ extern CHAR *data;
 extern char filnam[];
 #ifndef NOFRILLS
 extern int rprintf, rmailf;		/* REMOTE MAIL, PRINT */
-char optbuf[100];			/* Options for MAIL or REMOTE PRINT */
+char optbuf[OPTBUFLEN];			/* Options for MAIL or REMOTE PRINT */
 #endif /* NOFRILLS */
 extern int wslots;
 extern int fblksiz, frecl, forg, frecfm, fncact, fncsav, fcctrl, lf_opts;
 extern CHAR * srvcmd;
+extern int srvcmdlen;
 
 extern int binary, spsiz;
 extern int pktnum, cxseen, czseen, nfils, stdinf;
@@ -251,7 +269,7 @@ extern long fsize, filcnt, ffc, tfc;
 #ifndef NOCSETS
 _PROTOTYP (VOID setxlate, (void));
 extern int tcharset, fcharset;
-extern int ntcsets, xlatype;
+extern int ntcsets, xlatype, xfrxla;
 extern struct csinfo tcsinfo[], fcsinfo[];
 #endif /* NOCSETS */
 
@@ -405,6 +423,7 @@ inibufs(s,r) int s, r; {
     if (!srvcmd) {			/* Allocate srvcmd buffer */
 	srvcmd = (CHAR *) malloc(r + 100);
 	if (!srvcmd) return(-1);
+	srvcmdlen = r + 99;
 	*srvcmd = NUL;
     }
     if (bigbufp) {			/* Free previous buffers, if any. */
@@ -622,6 +641,7 @@ getrbuf() {				/* Allocate a receive buffer */
     int i;
 #ifdef COMMENT
     /* This code is pretty stable by now... */
+    /* Looks like we might need this after all */
     debug(F101,"getrbuf rbufnum","",rbufnum);
     debug(F101,"getrbuf wslots","",wslots);
     debug(F101,"getrbuf dum002","",dum002);
@@ -802,7 +822,7 @@ chkwin(n,bottom,slots) int n, bottom, slots; {
 int
 dumpsbuf() {				/* Dump send-buffers */
 #ifdef DEBUG
-    int j, x;				/* to debug log. */
+    int j, x, z;			/* to debug log. */
 
     if (! deblog) return(0);
     x = zsoutl(ZDFILE,"SEND BUFFERS:");
@@ -815,18 +835,23 @@ dumpsbuf() {				/* Dump send-buffers */
 	deblog = 0;
 	return(0);
     }
-    for ( j = 0; j < wslots; j++ ) {
-	sprintf(xbuf,
+    for (j = 0; j < wslots; j++) {
+	if (!sbufuse[j])
+	  continue;
+	z = ((unsigned long)(s_pkt[j].bf_adr)) & 0xffff;
+
+	sprintf(xbuf,			/* safe (200) */
 		"%4d%6d%10d%5d%6d%4c%5d%6d\n",
-	       j,
-	       sbufuse[j],
-	       (int) s_pkt[j].bf_adr,
-	       s_pkt[j].bf_len,
-	       s_pkt[j].pk_len,
-	       s_pkt[j].pk_typ,
-	       s_pkt[j].pk_seq,
-	       s_pkt[j].pk_rtr
-	       );
+		j,
+		sbufuse[j],
+		/* Avoid warnings when addresses are bigger than ints */
+		z,
+		s_pkt[j].bf_len,
+		s_pkt[j].pk_len,
+		s_pkt[j].pk_typ,
+		s_pkt[j].pk_seq,
+		s_pkt[j].pk_rtr
+		);
 	if (zsout(ZDFILE,xbuf) < 0)  {
 	    deblog = 0;
 	    return(0);
@@ -834,18 +859,19 @@ dumpsbuf() {				/* Dump send-buffers */
 	if (s_pkt[j].pk_adr) {
 	    x = (int)strlen((char *) s_pkt[j].pk_adr);
 	    if (x)
-	      sprintf(xbuf,"[%.72s%s]\n",s_pkt[j].pk_adr, x > 72 ? "..." : "");
+	      sprintf(xbuf,		/* safe (checked) */
+		      "[%.72s%s]\n",s_pkt[j].pk_adr, x > 72 ? "..." : "");
 	    else
-	      sprintf(xbuf,"[(empty string)]\n");
+	      sprintf(xbuf,"[(empty string)]\n"); /* safe (200) */
 	} else {
-	    sprintf(xbuf,"[(null pointer)]\n");
+	    sprintf(xbuf,"[(null pointer)]\n");	/* safe (200) */
 	}
 	if (zsout(ZDFILE,xbuf) < 0) {
 	    deblog = 0;
 	    return(0);
 	}
     }
-    sprintf(xbuf,"free: %d, winlo: %d\n", sbufnum, winlo);
+    sprintf(xbuf,"free: %d, winlo: %d\n", sbufnum, winlo); /* safe (200) */
     if (zsout(ZDFILE,xbuf) < 0) {
 	deblog = 0;
 	return(0);
@@ -856,7 +882,7 @@ dumpsbuf() {				/* Dump send-buffers */
 int
 dumprbuf() {				/* Dump receive-buffers */
 #ifdef DEBUG
-    int j, x;
+    int j, x, z;
     if (! deblog) return(0);
     if (zsoutl(ZDFILE,"RECEIVE BUFFERS:") < 0) {
 	deblog = 0;
@@ -868,29 +894,34 @@ dumprbuf() {				/* Dump receive-buffers */
 	return(0);
     }
     for ( j = 0; j < wslots; j++ ) {
-	sprintf(xbuf,
+	if (!rbufuse[j])
+	  continue;
+	z = ((unsigned long)(r_pkt[j].bf_adr)) & 0xffff;
+	sprintf(xbuf,			/* 200, safe */
 		"%4d%6d%10d%5d%6d%4c%5d%6d\n",
-	       j,
-	       rbufuse[j],
-	       (int) r_pkt[j].bf_adr,
-	       r_pkt[j].bf_len,
-	       r_pkt[j].pk_len,
-	       r_pkt[j].pk_typ,
-	       r_pkt[j].pk_seq,
-	       r_pkt[j].pk_rtr
-	       );
+		j,
+		rbufuse[j],
+		/* Avoid warnings when addresses are bigger than ints */
+		z,
+		r_pkt[j].bf_len,
+		r_pkt[j].pk_len,
+		r_pkt[j].pk_typ,
+		r_pkt[j].pk_seq,
+		r_pkt[j].pk_rtr
+		);
 	if (zsout(ZDFILE,xbuf) < 0) {
 	    deblog = 0;
 	    return(0);
 	}
 	x = (int)strlen((char *)r_pkt[j].bf_adr);
-	sprintf(xbuf,"[%.72s%s]\n",r_pkt[j].bf_adr, x > 72 ? "..." : "");
+	sprintf(xbuf,			/* safe (checked) */
+		"[%.72s%s]\n",r_pkt[j].bf_adr, x > 72 ? "..." : "");
 	if (zsout(ZDFILE,xbuf) < 0)  {
 	    deblog = 0;
 	    return(0);
 	}
     }
-    sprintf(xbuf,"free: %d, winlo: %d\n", rbufnum, winlo);
+    sprintf(xbuf,"free: %d, winlo: %d\n", rbufnum, winlo); /* safe (200) */
     if (zsout(ZDFILE,xbuf) < 0)  {
 	deblog = 0;
 	return(0);
@@ -929,11 +960,21 @@ sattr(xp, flag) int xp, flag; {		/* Send Attributes */
     static int max;			/* Maximum length for Attributes */
     static short done[95];		/* Field-complete array */
     static struct zattr x;		/* File attribute struct */
+    static char xdate[24];
+
+    extern char * cksysid;
 
     /* Some extra flags are used because the "done" array is sparse */
 
     int i, j, rc, aln, left = 0, numset = 0, xbin = 0; /* Workers */
+    int notafile = 0;
     char *tp, c;
+
+    notafile = sndarray || pipesend ||
+#ifdef PIPESEND
+      sndfilter ||
+#endif /* PIPESEND */
+	calibrate;
 
     debug(F101,"sattr flag","",flag);
     if (!flag)				/* No more attributes to send */
@@ -943,22 +984,39 @@ sattr(xp, flag) int xp, flag; {		/* Send Attributes */
     /* Initialize Attribute mechanism */
 
     if (flag) {				/* First time here for this file? */
+	initattr(&x);			/* Blank out all the fields. */
 	for (j = 0; j < 95; j++)	/* Init array of completed fields */
 	  done[j] = 0;
 	max = maxdata();		/* Get maximum data field length */
-	rc = zsattr(&x);		/* Get attributes for this file  */
-	debug(F101,"sattr zsattr","",rc);
-	if (rc < 0)			/* Can't get 'em so don't send 'em */
-	  return(0);
-	debug(F101,"sattr init max","",max);
-    }
+	if (notafile || xp == 1) {	/* Is it not a real file? */
+	    extern char * zzndate();
+	    char * p;
+	    int i;
 #ifdef CALIBRATE
-    if (calibrate) {
-	x.lengthk = calibrate / 1024L;
-	x.length = calibrate;
-    }
+	    if (calibrate) {		/* Calibration run... */
+		x.lengthk = calibrate / 1024L; /* We know the length */
+		x.length = calibrate;
+	    }
 #endif /* CALIBRATE */
-
+	    x.systemid.val = cksysid;	/* System ID */
+	    x.systemid.len = (int)strlen(cksysid);
+	    ckstrncpy(xdate,zzndate(),24);
+	    xdate[8] = SP;
+	    ztime(&p);
+	    for (i = 11; i < 19; i++)	/* copy hh:mm:ss */
+	      xdate[i - 2] = p[i];	/* to xdate */
+	    xdate[17] = NUL;		/* terminate */
+	    x.date.val = xdate;
+	    x.date.len = 17;
+	    debug(F111,"sattr notafile date",x.date.val,x.date.len);
+	} else {			/* Real file */
+	    rc = zsattr(&x);		/* Get attributes for this file  */
+	    debug(F101,"sattr zsattr","",rc);
+	    if (rc < 0)			/* Can't get 'em so don't send 'em */
+	      return(0);
+	    debug(F101,"sattr init max","",max);
+	}
+    }
     if (nxtpkt() < 0)			/* Got 'em, get next packet number */
       return(-1);			/* Bad news if we can't */
 
@@ -969,7 +1027,7 @@ sattr(xp, flag) int xp, flag; {		/* Send Attributes */
 
     if (atsido && !done[xunchar(c = '.')]) { /* System type */
 	if (max - i >= x.systemid.len + 2) { /* Enough space ? */
-	    data[i++] = c;		    /* Yes, add parameter */
+	    data[i++] = c;		     /* Yes, add parameter */
 	    data[i++] = tochar(x.systemid.len);	 /* Add length */
 	    for (j = 0; j < x.systemid.len; j++) /* Add data */
 	      data[i++] = x.systemid.val[j];
@@ -1082,11 +1140,11 @@ sattr(xp, flag) int xp, flag; {		/* Send Attributes */
 	} else
 	  left++;
 #else
-	if (tcharset == TC_TRANSP) {	/* Transfer character set */
+	if (tcharset == TC_TRANSP || !xfrxla) {	/* Transfer character set */
 	    if (max - i >= 3) {
 		data[i++] = c;		/* Encoding */
 		data[i++] = tochar(1);	/* Length of value is 1 */
-		data[i++] = 'A';	/* A for ASCII */
+		data[i++] = 'A';	/* A for ASCII (i.e. text) */
 		numset++;
 		done[xunchar(c)] = 1;
 	    } else
@@ -1111,88 +1169,87 @@ sattr(xp, flag) int xp, flag; {		/* Send Attributes */
 	}
 #endif /* NOCSETS */
     }
-    if ((xp == 0 || calibrate) && (x.length > -1L)) { /* If it's a real file */
-	if (atdato && !calibrate &&	/* Creation date, if any */
-	    !done[xunchar(c = '#')] &&
-	    (aln = x.date.len) > 0) {
-	    if (max - i >= aln + 2) {
-		data[i++] = c;
-		data[i++] = tochar(aln);
-		for (j = 0; j < aln; j++)
-		  data[i++] = x.date.val[j];
-		numset++;
-		done[xunchar(c)] = 1;
-	    } else
-	      left++;
+    if (atdato && !done[xunchar(c = '#')] && /* Creation date, if any */
+	(aln = x.date.len) > 0) {
+	if (max - i >= aln + 2) {
+	    data[i++] = c;
+	    data[i++] = tochar(aln);
+	    for (j = 0; j < aln; j++)
+	      data[i++] = x.date.val[j];
+	    numset++;
+	    done[xunchar(c)] = 1;
+	} else
+	  left++;
+    }
+    /* File length in K */
+    if (atleno && !done[xunchar(c = '!')] && x.lengthk > -1L) {
+	sprintf((char *) &data[i+2],"%ld",x.lengthk); /* safe */
+	aln = (int)strlen((char *)(data+i+2));
+	if (max - i >= aln + 2) {
+	    data[i] = c;
+	    data[i+1] = tochar(aln);
+	    i += aln + 2;
+	    numset++;
+	    done[xunchar(c)] = 1;
+	} else {
+	    data[i] = NUL;
+	    left++;
 	}
-	if (atleno && !done[xunchar(c = '!')]) { /* File length in K */
-	    sprintf((char *) &data[i+2],"%ld",x.lengthk);
-	    aln = (int)strlen((char *)(data+i+2));
-	    if (max - i >= aln + 2) {
-		data[i] = c;
-		data[i+1] = tochar(aln);
-		i += aln + 2;
-		numset++;
-		done[xunchar(c)] = 1;
-	    } else {
-		data[i] = NUL;
-		left++;
-	    }
+    }
+    /* File length in bytes */
+    if (atleno && !done[xunchar(c = '1')] && x.length > -1L) {
+	sprintf((char *) &data[i+2],"%ld",x.length); /* safe */
+	aln = (int)strlen((char *)(data+i+2));
+	if (max - i >= aln + 2) {
+	    data[i] = c;
+	    data[i+1] = tochar(aln);
+	    i += aln + 2;
+	    numset++;
+	    done[xunchar(c)] = 1;
+	} else {
+	    data[i] = NUL;
+	    left++;
 	}
-	if (atleno && !done[xunchar(c = '1')]) { /* File length in bytes */
-	    sprintf((char *) &data[i+2],"%ld",x.length);
-	    aln = (int)strlen((char *)(data+i+2));
-	    if (max - i >= aln + 2) {
-		data[i] = c;
-		data[i+1] = tochar(aln);
-		i += aln + 2;
-		numset++;
-		done[xunchar(c)] = 1;
-	    } else {
-		data[i] = NUL;
-		left++;
-	    }
-	}
+    }
 #ifdef CK_PERMS
-	if (atlpro && !done[xunchar(c = ',')] && /* Local protection */
-	    (aln = x.lprotect.len) > 0 && !calibrate) {
-	    if (max - i >= aln + 2) {
-		data[i++] = c;
-		data[i++] = tochar(aln);
-		for (j = 0; j < aln; j++)
-		  data[i++] = x.lprotect.val[j];
-		numset++;
-		done[xunchar(c)] = 1;
-	    } else
-	      left++;
-	}
-	if (atgpro && !done[xunchar(c = '-')] && /* Generic protection */
-	    (aln = x.gprotect.len) > 0 && !calibrate) {
-	    if (max - i >= aln + 2) {
-		data[i++] = c;
-		data[i++] = tochar(aln);
-		for (j = 0; j < aln; j++)
-		  data[i++] = x.gprotect.val[j];
-		numset++;
-		done[xunchar(c)] = 1;
-	    } else
-	      left++;
-	}
+    if (atlpro && !done[xunchar(c = ',')] && /* Local protection */
+	(aln = x.lprotect.len) > 0 && !notafile && xp == 0) {
+	if (max - i >= aln + 2) {
+	    data[i++] = c;
+	    data[i++] = tochar(aln);
+	    for (j = 0; j < aln; j++)
+	      data[i++] = x.lprotect.val[j];
+	    numset++;
+	    done[xunchar(c)] = 1;
+	} else
+	  left++;
+    }
+    if (atgpro && !done[xunchar(c = '-')] && /* Generic protection */
+	(aln = x.gprotect.len) > 0 && !notafile && xp == 0) {
+	if (max - i >= aln + 2) {
+	    data[i++] = c;
+	    data[i++] = tochar(aln);
+	    for (j = 0; j < aln; j++)
+	      data[i++] = x.gprotect.val[j];
+	    numset++;
+	    done[xunchar(c)] = 1;
+	} else
+	  left++;
+    }
 #endif /* CK_PERMS */
-	if (atblko && fblksiz && !done[xunchar(c = '(')] &&
-	    !calibrate) {		/* Blocksize */
-	    sprintf((char *) &data[i+2],"%d",fblksiz);
-	    aln = (int)strlen((char *)(data+i+2));
-	    if (max - i >= aln + 2) {
-		data[i] = c;
-		data[i+1] = tochar(aln);
-		i += aln + 2;
-		numset++;
-		done[xunchar(c)] = 1;
-	    } else {
-		data[i] = NUL;
-		left++;
-	    }
+    if (atblko && fblksiz && !done[xunchar(c = '(')] &&
+	!notafile && xp == 0) {	/* Blocksize */
+	sprintf((char *) &data[i+2],"%d",fblksiz); /* safe */
+	aln = (int)strlen((char *)(data+i+2));
+	if (max - i >= aln + 2) {
+	    data[i] = c;
+	    data[i+1] = tochar(aln);
+	    i += aln + 2;
+	    numset++;
+	    done[xunchar(c)] = 1;
+	} else {
+	    data[i] = NUL;
+	    left++;
 	}
     }
 #ifndef NOFRILLS
@@ -1293,7 +1350,9 @@ getreason(s) char *s; {			/* Decode attribute refusal reason */
     else if ((c = *p) > SP) {		/* get reason, */
 	rejection = c;			/* remember it, */
 	c -= '!';			/* get offset */
-	p = ((unsigned int) ((CHAR) c) <= nreason) ? reason[c] : "unknown";
+	p = ((unsigned int) ((CHAR) c) <= (unsigned int) nreason) ?
+	  reason[c] :
+	    "unknown";
     }
     return(p);
 }
@@ -1529,16 +1588,20 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 		ss = tsbuf+1;
 		switch (*tsbuf) {
 #ifndef NOCSETS
-		  case 'A':		/* Normal, nothing special */
+		  case 'A':		  /* Normal, nothing special */
 		    tcharset = TC_TRANSP; /* Transparent chars untranslated */
 		    break;
-		  case 'C':		/* Specified character set */
+		  case 'C':		  /* Specified character set */
+		    if (!xfrxla) {	  /* But translation disabled */
+			tcharset = TC_TRANSP;
+			break;
+		    }
 #ifdef UNICODE
 		    if (!strcmp("I196",ss)) /* Treat I196 (UTF-8 no level) */
-		      ss = "I190";	/* as I190 (UTF-8 Level 1) */
+		      ss = "I190";	    /* as I190 (UTF-8 Level 1) */
 #endif /* UNICODE */
 		    if (!strcmp("I6/204",ss)) /* Treat "Latin-1 + Euro" */
-		      ss = "I6/100";	/* as I6/100 (regular Latin-1) */
+		      ss = "I6/100";	      /* as I6/100 (regular Latin-1) */
 		    for (i = 0; i < ntcsets; i++) {
 			if (!strcmp(tcsinfo[i].designator,ss))
 			  break;
@@ -1623,28 +1686,43 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 		    *rp++ = c;
 		    if (!opnerr) tlog(F101," refused: bad disposition","",d);
 		}
+		dispos = d;
+		debug(F000,"gattr dispos","",dispos);
+		switch (d) {
 #ifndef NOFRILLS
-		if (d == 'M' && !en_mai) {
-		    retcode = -1;
-		    *rp++ = c;
-		    if (!opnerr) tlog(F100," refused: mail disabled","",0);
-		} else
+		  case 'M':
+		    if (!en_mai) {
+			retcode = -1;
+			*rp++ = c;
+			if (!opnerr) tlog(F100," refused: mail disabled","",0);
+			dispos = 0;
+		    }
+		    break;
 #endif /* NOFRILLS */
-		  if (d == 'P' && !en_pri) {
-		    retcode = -1;
-		    *rp++ = c;
-		    if (!opnerr) tlog(F100," refused: print disabled","",0);
-		} else if (d == 'R') {	/* File is being resent */
+		  case 'P':
+		    if (!en_pri) {
+			retcode = -1;
+			*rp++ = c;
+			if (!opnerr)
+			  tlog(F100," refused: print disabled","",0);
+			dispos = 0;
+		    }
+		    break;
+
+		  case 'R':
+		    dispos = 0;
 #ifdef CK_RESEND
-		    rs_len = zchki(ff); /* Get length of file */
+		    rs_len = zgetfs(ff); /* Get length of file */
 		    debug(F111,"gattr RESEND",ff,rs_len);
 #ifdef VMS
 		    rs_len &= (long) -512; /* Ensure block boundary if VMS */
 		    rs_len -= 512;	  /* In case last block not complete */
 		    debug(F111,"gattr rs_len",ff,rs_len);
 #endif /* VMS */
-		    if (rs_len < 0L)
+#ifdef COMMENT
+		    if (rs_len < 0L)	/* Local file doesn't exist */
 		      rs_len = 0L;
+#endif /* COMMENT */
 /*
   Another possibility here (or later, really) would be to check if the two
   file lengths are the same, and if so, keep the prevailing collision action
@@ -1765,7 +1843,7 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 
 #ifdef DEBUG
     if (deblog) {
-	sprintf(abuf,"%ld",fsize);
+	sprintf(abuf,"%ld",fsize);	/* safe */
 	debug(F110,"gattr fsize",abuf,0);
     }
 #endif /* DEBUG */
@@ -1944,7 +2022,7 @@ opena(f,zz) char *f; struct zattr *zz; {
     else
       fcb.dsp = (fncact == XYFX_A) ? XYFZ_A : XYFZ_N; /* Disposition */
     debug(F101,"opena disp","",fcb.dsp);
-    fcb.os_specific = '\0';		/* OS-specific info */
+    fcb.os_specific = "";		/* OS-specific info */
 #ifdef CK_LABELED
     fcb.lblopts = lf_opts;		/* Labeled file options */
 #else
@@ -1969,6 +2047,8 @@ opena(f,zz) char *f; struct zattr *zz; {
 	    } else debug(F110,"opena rename ok",ofn2,0);
 	}
     } else if (dispos == 'R') {		/* Receiving a RESEND */
+	debug(F101,"opena remote len","",zz->length);
+	debug(F101,"opena local len","",rs_len);
 #ifdef COMMENT
         if (fncact == XYFX_R)		/* and file collision = RENAME */
 	  if (ofn1x)
@@ -1978,6 +2058,8 @@ opena(f,zz) char *f; struct zattr *zz; {
         if (fncact == XYFX_R)		/* if file collision is RENAME */
           ckstrncpy(filnam,ofn1,CKMAXPATH+1); /* restore the real name */
         xxscreen(SCR_AN,0,0L,f);	/* update name on screen */
+	if (zz->length == rs_len)	/* Local and remote lengths equal? */
+	  return(-17);			/* Secret code */
     }
     debug(F111,"opena [file]=mode: ",f,fcb.dsp);
     if (x = openo(f,zz,&fcb)) {		/* Try to open the file. */
@@ -2006,10 +2088,14 @@ opena(f,zz) char *f; struct zattr *zz; {
 	} else {			/* If text mode, check character set */
 	    tlog(F100," mode: text","",0L);
 #ifndef NOCSETS
-	    if (fcharset > -1 && fcharset <= MAXFCSETS)
-	      tlog(F110," file character-set:",fcsinfo[fcharset].name,0L);
-	    if (tcharset > -1 && tcharset <= MAXTCSETS)
-	      tlog(F110," xfer character-set:",tcsinfo[tcharset].name,0L);
+	    if (xfrxla) {
+		if (fcharset > -1 && fcharset <= MAXFCSETS)
+		  tlog(F110," file character-set:",fcsinfo[fcharset].name,0L);
+		if (tcharset > -1 && tcharset <= MAXTCSETS)
+		  tlog(F110," xfer character-set:",tcsinfo[tcharset].name,0L);
+	    } else {
+		  tlog(F110," character-set:","transparent",0L);
+	    }
 #endif /* NOCSETS */
 	    debug(F111," opena charset",zz->encoding.val,zz->encoding.len);
 	}
@@ -2111,6 +2197,7 @@ openi(name) char *name; {
 #endif /* NOSERVER */
 
 #ifdef PIPESEND
+    debug(F101,"openi pipesend","",pipesend);
     if (pipesend) {
 	int x;
 #ifndef NOPUSH
@@ -2146,7 +2233,7 @@ openi(name) char *name; {
 	zrtol(name,xname);		/* to local form and then */
 #endif /*  NZLTOR */
 	x = zopeni(filno,xname);	/* try opening it again. */
-	debug(F101,"openi zopeni 2",xname,x);
+	debug(F111,"openi zopeni 2",xname,x);
 	if (x) {
 	    i_isopen = 1;
 	    return(1);			/* It worked. */
@@ -2307,7 +2394,7 @@ clsif() {
 #ifdef TLOG
 	    if (tralog && !tlogfmt) {
 		char buf[128];
-		sprintf(buf,"Refused: %s",refused);
+		ckmakmsg(buf,128,"Refused: ",refused,NULL,NULL);
 		doxlog(what,sfspec,fsize,binary,1,buf);
 	    }
 #endif /* TLOG */
@@ -2340,11 +2427,14 @@ clsif() {
 		  doxlog(what,sfspec,fsize,binary,1,"Incomplete");
 #endif /* TLOG */
 	    } else {
+#ifdef COMMENT
+		/* Not yet -- we don't have confirmation from the receiver */
 		xxscreen(SCR_ST,ST_OK,0l,"");
+#endif /* COMMENT */
 #ifdef TLOG
 		if (tralog && !tlogfmt)
 		  doxlog(what,sfspec,fsize,binary,0,"");
-#endif /* #ifdef TLOG */
+#endif /* TLOG */
 	    }
 	}
     }
@@ -2401,7 +2491,7 @@ clsof(disp) int disp; {
 		) {
 		if (*filnam && (what & W_RECV)) /* AND we're receiving */
 		  zdelet(filnam);	/* ONLY THEN, delete it */
-		if (what != W_NOTHING && what != W_INIT) {
+		if (what & W_KERMIT) {
 		    debug(F100,"clsof incomplete discarded","",0);
 		    tlog(F100," incomplete: discarded","",0L);
 		    if (!epktrcvd && !epktsent) {
@@ -2416,19 +2506,20 @@ clsof(disp) int disp; {
 		debug(F100,"clsof fstats 1","",0);
 		fstats();
 		if (!discard) {	 /* Unless discarding for other reason... */
-		    if (what != W_NOTHING && what != W_INIT) {
+		    if (what & W_KERMIT) {
 			debug(F100,"closf incomplete kept","",0);
 			tlog(F100," incomplete: kept","",0L);
 		    }
 		}
-		if (what != W_NOTHING && what != W_INIT)
-		  if (!epktrcvd && !epktsent) {
-		      xxscreen(SCR_ST,ST_INC,0l,"");
+		if (what & W_KERMIT) {
+		    if (!epktrcvd && !epktsent) {
+			xxscreen(SCR_ST,ST_INC,0l,"");
 #ifdef TLOG
-		      if (tralog && !tlogfmt)
-			doxlog(what,rfspec,fsize,binary,1,"Incomplete");
+			if (tralog && !tlogfmt)
+			  doxlog(what,rfspec,fsize,binary,1,"Incomplete");
 #endif /* TLOG */
-		  }
+		    }
+		}
 	    }
 	}
     }

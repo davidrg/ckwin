@@ -1,14 +1,14 @@
 /*  C K C D E B . H  */
 
 /*
-  Thu Dec 30 10:49:22 1999
+Sat Dec  8 11:29:28 2001
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
   compatible with C preprocessors that support only #ifdef, #else, #endif,
   #define, and #undef.  Please do not use #if, logical operators, or other
-  preprocessor features in any of the portable C-Kermit modules.  You can,
-  of course, use these constructions in system-specific modules when you they
-  are supported.
+  later-model preprocessor features in any of the portable C-Kermit modules.
+  You can, of course, use these constructions in platform-specific modules 
+  when you know they are supported.
 */
 
 /*
@@ -26,7 +26,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2000,
+  Copyright (C) 1985, 2001,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -40,6 +40,74 @@
 
 #ifndef CKCDEB_H			/* Don't include me more than once. */
 #define CKCDEB_H
+
+#ifndef OS2
+/* Unsigned numbers */
+
+#ifndef USHORT
+#define USHORT unsigned short
+#endif /* USHORT */
+
+#ifndef UINT
+#define UINT unsigned int
+#endif /* UINT */
+
+#ifndef ULONG
+#define ULONG unsigned long
+#endif /* ULONG */
+#endif /* OS2 */
+
+/* Structure definitions for Kermit file attributes */
+/* All strings come as pointer and length combinations */
+/* Empty string (or for numeric variables, -1) = unused attribute. */
+
+struct zstr {             /* string format */
+    int len;	          /* length */
+    char *val;            /* value */
+};
+struct zattr {            /* Kermit File Attribute structure */
+    long lengthk;         /* (!) file length in K */
+    struct zstr type;     /* (") file type (text or binary) */
+    struct zstr date;     /* (#) file creation date yyyymmdd[ hh:mm[:ss]] */
+    struct zstr creator;  /* ($) file creator id */
+    struct zstr account;  /* (%) file account */
+    struct zstr area;     /* (&) area (e.g. directory) for file */
+    struct zstr password; /* (') password for area */
+    long blksize;         /* (() file blocksize */
+    struct zstr xaccess;  /* ()) file access: new, supersede, append, warn */
+    struct zstr encoding; /* (*) encoding (transfer syntax) */
+    struct zstr disp;     /* (+) disposition (mail, message, print, etc) */
+    struct zstr lprotect; /* (,) protection (local syntax) */
+    struct zstr gprotect; /* (-) protection (generic syntax) */
+    struct zstr systemid; /* (.) ID for system of origin */
+    struct zstr recfm;    /* (/) record format */
+    struct zstr sysparam; /* (0) system-dependent parameter string */
+    long length;          /* (1) exact length on system of origin */
+    struct zstr charset;  /* (2) transfer syntax character set */
+#ifdef OS2
+    struct zstr longname; /* OS/2 longname if applicable */
+#endif /* OS2 */
+    struct zstr reply;    /* This goes last, used for attribute reply */
+};
+
+/* Kermit file information structure */
+
+struct filinfo {
+  int bs;				/* Blocksize */
+  int cs;				/* Character set */
+  long rl;				/* Record length */
+  int org;				/* Organization */
+  int fmt;				/* Record format */
+  int cc;				/* Carriage control */
+  int typ;				/* Type (text/binary) */
+  int dsp;				/* Disposition */
+  char *os_specific;			/* OS-specific attributes */
+#ifdef OS2
+  unsigned long int lblopts;		/* LABELED FILE options bitmask */
+#else
+  int lblopts;
+#endif /* OS2 */
+};
 
 #ifdef MACOSX10				/* Mac OS X 1.0 */
 #ifndef MACOSX				/* implies Mac OS X */
@@ -66,7 +134,22 @@
 #include <sys/types.h>			/* To sidestep header-file mess */
 #endif /* SCO_OSR504 */
 
+#ifdef CK_SCOV5
+#ifndef ANYSCO
+#define ANYSCO
+#endif /* ANYSCO */
+#endif /* CK_SCOV5 */
+
+#ifdef UNIXWARE
+#ifndef ANYSCO
+#define ANYSCO
+#endif /* ANYSCO */
+#endif /* UNIXWARE */
+
 #ifdef CK_SCO32V4			/* SCO 3.2v4 */
+#ifndef ANYSCO
+#define ANYSCO
+#endif /* ANYSCO */
 #ifndef XENIX
 #define XENIX
 #endif /* XENIX */
@@ -100,14 +183,162 @@
 #ifndef NOCSETS				/* Or characer sets */
 #define NOCSETS
 #endif /* NOCSETS */
+#ifndef NOFTP				/* Or FTP client */
+#define NOFTP
+#endif /* NOFTP */
 #endif /* NOICP */
+
+/* Built-in makefile entries */
+
+#ifdef SOLARIS8				/* Solaris 8 implies 7 */
+#ifndef SOLARIS7
+#define SOLARIS7
+#endif /* SOLARIS7 */
+#endif /* SOLARIS8 */
+
+#ifdef SOLARIS7				/* Solaris 7 implies 2.6 */
+#ifndef SOLARIS26
+#define SOLARIS26
+#endif /* SOLARIS26 */
+#endif /* SOLARIS7 */
+
+#ifdef SOLARIS26			/* Solaris 2.6 implies 2.5 */
+#ifndef SOLARIS25
+#define SOLARIS25
+#endif /* SOLARIS25 */
+#endif /* SOLARIS26 */
+
+#ifdef SOLARIS25			/* Solaris 2.5 implies Solaris */
+#ifndef SOLARIS
+#define SOLARIS
+#endif /* SOLARIS */
+#ifndef POSIX				/* And POSIX */
+#define POSIX
+#endif /* POSIX */
+#ifndef CK_WREFRESH			/* And this (curses) */
+#define CK_WREFRESH
+#endif /* CK_WREFRESH */
+#endif /* SOLARIS25 */
+
+#ifdef SOLARIS24			/* Solaris 2.4 implies Solaris */
+#ifndef SOLARIS
+#define SOLARIS
+#endif /* SOLARIS */
+#endif /* SOLARIS24 */
+
+#ifdef SOLARIS				/* Solaris gets "POSIX" RTS/CTS API */
+#ifdef POSIX
+#ifndef POSIX_CRTSCTS
+#define POSIX_CRTSCTS
+#endif /* POSIX_CRTSCTS */
+#endif /* POSIX */
+#endif /* SOLARIS */
+
+#ifdef SUN4S5				/* Sun-4 System V environment */
+#ifndef SVR3				/* implies System V R3 or later */
+#define SVR3
+#endif /* SVR3 */
+#endif /* SUN4S5 */
+#ifdef SUNOS41				/* SUNOS41 implies SUNOS4 */
+#ifndef SUNOS4
+#define SUNOS4
+#endif /* SUNOS4 */
+#endif /* SUNOS41 */
+
+#ifdef SUN4S5				/* Sun-4 System V environment */
+#ifndef SVR3				/* implies System V R3 or later */
+#define SVR3
+#endif /* SVR3 */
+#endif /* SUN4S5 */
+
+#ifdef SUNOS41				/* SUNOS41 implies SUNOS4 */
+#ifndef SUNOS4
+#define SUNOS4
+#endif /* SUNOS4 */
+#endif /* SUNOS41 */
+
+#ifdef SUNOS4				/* Built-in SUNOS4 makefile entry */
+#ifndef UNIX
+#define UNIX
+#endif /* UNIX */
+#ifndef BSD4
+#define BSD4
+#endif /* BSD4 */
+#ifndef NOSETBUF
+#define NOSETBUF
+#endif /* NOSETBUF */
+#ifndef DIRENT
+#define DIRENT
+#endif /* DIRENT */
+#ifndef NONET
+#ifndef TCPSOCKET
+#define TCPSOCKET
+#endif /* TCPSOCKET */
+#endif /* NONET */
+#ifndef SAVEDUID
+#define SAVEDUID
+#endif /* SAVEDUID */
+#ifndef DYNAMIC
+#define DYNAMIC
+#endif /* DYNAMIC */
+#endif /* SUNOS4 */
+
+#ifdef SOLARIS				/* Built in makefile entry */
+#ifndef NOSETBUF			/* for Solaris 2.x */
+#define NOSETBUF
+#endif /* NOSETBUF */
+#ifndef NOCURSES
+#ifndef CK_CURSES
+#define CK_CURSES
+#endif /* CK_CURSES */
+#endif /* NOCURSES */
+#ifndef CK_NEWTERM
+#define CK_NEWTERM
+#endif /* CK_NEWTERM */
+#ifndef DIRENT
+#define DIRENT
+#endif /* DIRENT */
+#ifndef NONET
+#ifndef TCPSOCKET
+#define TCPSOCKET
+#endif /* TCPSOCKET */
+#endif /* NONET */
+#ifndef UNIX
+#define UNIX
+#endif /* UNIX */
+#ifndef SVR4
+#define SVR4
+#endif /* SVR4 */
+#ifndef HADDRLIST
+#define HADDRLIST
+#endif /* HADDRLIST */
+#ifndef STERMIOX
+#define STERMIOX
+#endif /* STERMIOX */
+#ifndef SELECT
+#define SELECT
+#endif /* SELECT */
+#ifndef DYNAMIC
+#define DYNAMIC
+#endif /* DYNAMIC */
+#ifndef NOUUCP
+#ifndef HDBUUCP
+#define HDBUUCP
+#endif /* HDBUUCP */
+#endif /* NOUUCP */
+#endif /* SOLARIS */
 
 /* Features that can be eliminated from a no-file-transfer version */
 
 #ifdef NOXFER
+#ifndef NOFTP
+#define NOFTP
+#endif /* NOFTP */
+#ifndef OS2
 #ifndef NOCURSES			/* Fullscreen file-transfer display */
 #define NOCURSES
 #endif /* NOCURSES */
+#endif /* OS2 */
 #ifndef NOCKXYZ				/* XYZMODEM support */
 #define NOCKXYZ
 #endif /* NOCKXYZ */
@@ -155,38 +386,25 @@
 #endif /* NOCKXYZ */
 #endif /* NOICP */
 
-/* Features that can be eliminated from a remote-only version */
-
-#ifdef NOLOCAL
-#ifndef NOCURSES			/* Fullscreen file-transfer display */
-#define NOCURSES
-#endif /* NOCURSES */
-#ifndef NODIAL
-#define NODIAL
-#endif /* NODIAL */
-#ifndef NOSCRIPT
-#define NOSCRIPT
-#endif /* NOSCRIPT */
-#ifndef NOAPC
-#define NOAPC
-#endif /* NOAPC */
-#ifndef NOSETKEY
-#define NOSETKEY
-#endif /* NOSETKEY */
-#ifndef NOXMIT
-#define NOXMIT
-#endif /* NOXMIT */
-#ifdef CK_CURSES
-#undef CK_CURSES
-#endif /* CK_CURSES */
-#ifndef NONET
-#define NONET
-#endif /* NONET */
+#ifndef NOIKSD
+#ifdef IKSDONLY
+#ifndef IKSD
+#define IKSD
+#endif /* IKSD */
+#ifndef NOLOCAL
+#define NOLOCAL
 #endif /* NOLOCAL */
-
-#ifdef NONET
-#ifdef NETCONN
-#undef NETCONN
+#ifndef NOPUSH
+#define NOPUSH
+#endif /* NOPUSH */
+#ifndef TNCODE
+#define TNCODE
+#endif /* TNCODE */
+#ifndef TCPSOCKET
+#define TCPSOCKET
+#endif /* TCPSOCKET */
+#ifndef NETCONN
+#define NETCONN
 #endif /* NETCONN */
 #ifdef SUNX25
 #undef SUNX25
@@ -215,28 +433,183 @@
 #ifdef NETPTY
 #undef NETPTY
 #endif /* NETPTY */
-#ifdef TCPSOCKET
-#undef TCPSOCKET
-#endif /* TCPSOCKET */
-#ifdef NOTCPOPTS
-#undef NOTCPOPTS
-#endif /* NOTCPOPTS */
 #ifdef RLOGCODE
 #undef RLOGCODE
 #endif /* RLOGCODE */
 #ifdef NETDLL
 #undef NETDLL
 #endif /* NETDLL */
-#ifdef SSH
-#undef SSH
-#endif /* SSH */
+#ifndef NOSSH
+#undef NOSSH
+#endif /* NOSSH */
+#ifndef NOFORWARDX
+#define NOFORWARDX
+#endif /* NOFORWARDX */
+#ifndef NOBROWSER
+#define NOBROWSER
+#endif /* NOBROWSER */
+#ifndef NOHTTP
+#define NOHTTP
+#endif /* NOHTTP */
+#ifndef NOFTP
+#define NOFTP
+#endif /* NOFTP */
+#ifndef NO_COMPORT
+#define NO_COMPORT
+#endif /* NO_COMPORT */
+#endif /* IKSDONLY */
+#endif /* NOIKSD */
+
+/* Features that can be eliminated from a remote-only version */
+
+#ifdef NOLOCAL
+#ifndef NOFTP
+#define NOFTP
+#endif /* NOFTP */
+#ifndef NOHTTP
+#define NOHTTP
+#endif /* NOHTTP */
+#ifndef NOSSH
+#define NOSSH
+#endif /* NOSSH */
+#ifndef NOTERM
+#define NOTERM
+#endif /* NOTERM */
+#ifndef NOCURSES			/* Fullscreen file-transfer display */
+#define NOCURSES
+#endif /* NOCURSES */
+#ifndef NODIAL
+#define NODIAL
+#endif /* NODIAL */
+#ifndef NOSCRIPT
+#define NOSCRIPT
+#endif /* NOSCRIPT */
+#ifndef NOSETKEY
+#define NOSETKEY
+#endif /* NOSETKEY */
+#ifndef NOKVERBS
+#define NOKVERBS
+#endif /* NOKVERBS */
+#ifndef NOXMIT
+#define NOXMIT
+#endif /* NOXMIT */
+#ifdef CK_CURSES
+#undef CK_CURSES
+#endif /* CK_CURSES */
+#ifndef IKSDONLY
+#ifndef NOAPC
+#define NOAPC
+#endif /* NOAPC */
+#ifndef NONET
+#define NONET
+#endif /* NONET */
+#endif /* IKSDONLY */
+#endif /* NOLOCAL */
+
+#ifdef NONET
+#ifdef NETCONN
+#undef NETCONN
+#endif /* NETCONN */
+#ifdef TCPSOCKET
+#undef TCPSOCKET
+#endif /* TCPSOCKET */
+#ifndef NOTCPOPTS
+#define NOTCPOPTS
+#endif /* NOTCPOPTS */
+#ifdef SUNX25
+#undef SUNX25
+#endif /* SUNX25 */
+#ifdef IBMX25
+#undef IBMX25
+#endif /* IBMX25 */
+#ifdef STRATUSX25
+#undef STRATUSX25
+#endif /* STRATUSX25 */
+#ifdef CK_NETBIOS
+#undef CK_NETBIOS
+#endif /* CK_NETBIOS */
+#ifdef SUPERLAT
+#undef SUPERLAT
+#endif /* SUPERLAT */
+#ifdef NPIPE
+#undef NPIPE
+#endif /* NPIPE */
+#ifdef NETFILE
+#undef NETFILE
+#endif /* NETFILE */
+#ifdef NETCMD
+#undef NETCMD
+#endif /* NETCMD */
+#ifdef NETPTY
+#undef NETPTY
+#endif /* NETPTY */
+#ifdef RLOGCODE
+#undef RLOGCODE
+#endif /* RLOGCODE */
+#ifdef NETDLL
+#undef NETDLL
+#endif /* NETDLL */
+#ifndef NOSSH
+#define NOSSH
+#endif /* NOSSH */
+#ifndef NOFTP
+#define NOFTP
+#endif /* NOFTP */
 #ifndef NOHTTP
 #define NOHTTP
 #endif /* NOHTTP */
 #ifndef NOBROWSER
 #define NOBROWSER
 #endif /* NOBROWSER */
+#ifndef NOFORWARDX
+#define NOFORWARDX
+#endif /* NOFORWARDX */
 #endif /* NONET */
+
+#ifdef IKSDONLY
+#ifdef SUNX25
+#undef SUNX25
+#endif /* SUNX25 */
+#ifdef IBMX25
+#undef IBMX25
+#endif /* IBMX25 */
+#ifdef STRATUSX25
+#undef STRATUSX25
+#endif /* STRATUSX25 */
+#ifdef CK_NETBIOS
+#undef CK_NETBIOS
+#endif /* CK_NETBIOS */
+#ifdef SUPERLAT
+#undef SUPERLAT
+#endif /* SUPERLAT */
+#ifdef NPIPE
+#undef NPIPE
+#endif /* NPIPE */
+#ifdef NETFILE
+#undef NETFILE
+#endif /* NETFILE */
+#ifdef NETCMD
+#undef NETCMD
+#endif /* NETCMD */
+#ifdef NETPTY
+#undef NETPTY
+#endif /* NETPTY */
+#ifdef RLOGCODE
+#undef RLOGCODE
+#endif /* RLOGCODE */
+#ifdef NETDLL
+#undef NETDLL
+#endif /* NETDLL */
+#ifndef NOSSH
+#define NOSSH
+#endif /* NOSSH */
+#ifndef NOHTTP
+#define NOHTTP
+#endif /* NOHTTP */
+#ifndef NOBROWSER
+#define NOBROWSER
+#endif /* NOBROWSER */
+#endif /* IKSDONLY */
 /*
   Note that none of the above precludes TNCODE, which can be defined in
   the absence of TCPSOCKET, etc, to enable server-side Telnet negotation.
@@ -282,39 +655,13 @@
 #ifndef OS2ORUNIX
 #define OS2ORUNIX
 #endif /* OS2ORUNIX */
+#ifndef OS2ORVMS
+#define OS2ORVMS
+#endif /* OS2ORVMS */
 #endif /* OS2 */
 
 #include <stdio.h>			/* Begin by including this. */
 #include <ctype.h>			/* and this. */
-
-#ifdef MAC
-/*
- * The MAC doesn't use standard stdio routines.
- */
-#undef getchar
-#define getchar()   mac_getchar()
-#undef putchar
-#define putchar(c)	mac_putchar(c)
-#define printf		mac_printf
-#define perror		mac_perror
-#define puts		mac_puts
-extern int mac_putchar (int c);
-extern int mac_puts (const char *string);
-extern int mac_printf(const char *, ...);
-extern int mac_getchar (void);
-#endif /* MAC */
-
-#ifdef OS2
-#define printf Vscrnprintf
-#define fprintf Vscrnfprintf
-extern int Vscrnprintf(const char *, ...);
-extern int Vscrnfprintf(FILE *, const char *, ...);
-#ifdef putchar
-#undef putchar
-#endif /* putchar */
-#define putchar(x) Vscrnprintf("%c",x)
-#define perror(x)  Vscrnperror(x)
-#endif /* OS2 */
 
 /* System-type compilation switches */
 
@@ -347,6 +694,18 @@ extern int Vscrnfprintf(FILE *, const char *, ...);
 #define BSD44
 #endif /* BSD44 */
 #endif /* AIXESA */
+
+#ifdef AIX51				/* AIX51 implies AIX50 */
+#ifndef AIX50
+#define AIX50
+#endif /* AIX50 */
+#endif /* AIX51 */
+
+#ifdef AIX50				/* AIX50 implies AIX45 */
+#ifndef AIX45
+#define AIX45
+#endif /* AIX45 */
+#endif /* AIX50 */
 
 #ifdef AIX45				/* AIX45 implies AIX44 */
 #ifndef AIX44
@@ -452,45 +811,6 @@ extern int Vscrnfprintf(FILE *, const char *, ...);
 #endif /* IRIX64 */
 #endif /* IRIX */
 
-#ifdef SUNOS41				/* SUNOS41 implies SUNOS4 */
-#ifndef SUNOS4
-#define SUNOS4
-#endif /* SUNOS4 */
-#endif /* SUNOS41 */
-
-#ifdef SOLARIS7				/* Solaris 7 implies 2.6 */
-#ifndef SOLARIS26
-#define SOLARIS26
-#endif /* SOLARIS26 */
-#endif /* SOLARIS7 */
-
-#ifdef SOLARIS26			/* Solaris 2.6 implies 2.5 */
-#ifndef SOLARIS25
-#define SOLARIS25
-#endif /* SOLARIS25 */
-#endif /* SOLARIS26 */
-
-#ifdef SOLARIS25
-#ifndef SOLARIS
-#define SOLARIS
-#endif /* SOLARIS */
-#ifndef POSIX
-#define POSIX
-#endif /* POSIX */
-#endif /* SOLARIS25 */
-
-#ifdef SOLARIS24
-#ifndef SOLARIS
-#define SOLARIS
-#endif /* SOLARIS */
-#endif /* SOLARIS24 */
-
-#ifdef SUN4S5				/* Sun-4 System V environment */
-#ifndef SVR3				/* implies System V R3 or later */
-#define SVR3
-#endif /* SVR3 */
-#endif /* SUN4S5 */
-
 #ifdef MIPS				/* MIPS System V environment */
 #ifndef SVR3				/* implies System V R3 or later */
 #define SVR3
@@ -563,6 +883,12 @@ extern int Vscrnfprintf(FILE *, const char *, ...);
 #define DIRENT
 #endif /* DIRENT */
 #endif /* BSD44 */
+
+#ifdef OPENBSD				/* OpenBSD might or might not */
+#ifndef __OpenBSD__			/* have this defined... */
+#define __OpenBSD__
+#endif /* __OpenBSD__ */
+#endif /* OPENBSD */
 
 #ifdef SVR3				/* SVR3 implies ATTSV */
 #ifndef ATTSV
@@ -643,12 +969,6 @@ extern int Vscrnfprintf(FILE *, const char *, ...);
 #define BSD4
 #endif /* BSD4 */
 #endif /* NEXT */
-
-#ifdef SUNOS4				/* SUNOS4 implies BSD4 */
-#ifndef BSD4
-#define BSD4
-#endif /* BSD4 */
-#endif /* SUNOS4 */
 
 #ifdef BSD41				/* BSD41 implies BSD4 */
 #ifndef BSD4
@@ -784,6 +1104,9 @@ extern int Vscrnfprintf(FILE *, const char *, ...);
 #else
 #ifdef VMS
 #define VMSORUNIX
+#ifndef OS2ORVMS
+#define OS2ORVMS
+#endif /* OS2ORVMS */
 #endif /* VMS */
 #endif /* UNIX */
 
@@ -912,16 +1235,20 @@ extern int Vscrnfprintf(FILE *, const char *, ...);
 #define _PROTOTYP( func, parms ) func()
 #endif /* CK_ANSIC */
 
+#ifndef OS2
 #ifdef NOLOGIN				/* NOLOGIN implies NOIKSD */
 #ifndef NOIKSD
 #define NOIKSD
 #endif /* NOIKSD */
 #endif /* NOLOGIN */
+#endif /* OS2 */
 
 #ifdef NOIKSD				/* Internet Kermit Service Daemon */
+#ifndef OS2
 #ifndef NOPRINTFSUBST
 #define NOPRINTFSUBST
 #endif /* NOPRINTFSUBST */
+#endif /* OS2 */
 #ifndef NOLOGIN
 #define NOLOGIN
 #endif /* NOLOGIN */
@@ -935,11 +1262,6 @@ extern int Vscrnfprintf(FILE *, const char *, ...);
 #ifndef IKSD
 #ifdef OS2ORUNIX			/* Platforms where IKSD is supported */
 #define IKSD
-#ifdef OS2ONLY
-#ifndef NOLOGIN
-#define NOLOGIN
-#endif /* NOLOGIN */
-#endif /* OS2 */
 #endif /* OS2ORUNIX */
 #endif /* IKSD */
 #endif /* NOIKSD */
@@ -983,6 +1305,36 @@ extern int Vscrnfprintf(FILE *, const char *, ...);
   lack of a terminal driver, mainly to supply CR after LF.
 */
 #ifndef NOPRINTFSUBST
+#ifdef MAC
+/*
+ * The MAC doesn't use standard stdio routines.
+ */
+#undef getchar
+#define getchar()   mac_getchar()
+#undef putchar
+#define putchar(c)	mac_putchar(c)
+#define printf		mac_printf
+#define perror		mac_perror
+#define puts		mac_puts
+extern int mac_putchar (int c);
+extern int mac_puts (const char *string);
+extern int mac_printf(const char *, ...);
+extern int mac_getchar (void);
+#endif /* MAC */
+
+#ifdef OS2
+#define printf Vscrnprintf
+#define fprintf Vscrnfprintf
+extern int Vscrnprintf(const char *, ...);
+extern int Vscrnprintw(const char *, ...);
+extern int Vscrnfprintf(FILE *, const char *, ...);
+#ifdef putchar
+#undef putchar
+#endif /* putchar */
+#define putchar(x) Vscrnprintf("%c",x)
+#define perror(x)  Vscrnperror(x)
+#endif /* OS2 */
+
 #ifndef CKWART_C
 #ifdef UNIX
 #ifndef pdp11
@@ -1058,12 +1410,16 @@ _PROTOTYP(int ckxfprintf,(FILE *, const char *, ...));
 #else
 #define CONST
 #endif /* _UCC */
+#else  /* !OSK */
+#ifdef CK_SCO32V4
+#define CONST
 #else
 #ifdef CK_ANSIC
 #define CONST const
 #else
 #define CONST
 #endif /* CK_ANSIC */
+#endif /* CK_SCO32V4 */
 #endif /* OSK */
 #endif /* CONST */
 
@@ -1156,20 +1512,6 @@ _PROTOTYP(int ckxfprintf,(FILE *, const char *, ...));
 #define signal ckntsignal
 SIGTYP (*ckntsignal(int type, SIGTYP (*)(int)))(int);
 #endif /* CKNTSIG */
-
-/* Unsigned numbers */
-
-#ifndef USHORT
-#define USHORT unsigned short
-#endif /* USHORT */
-
-#ifndef UINT
-#define UINT unsigned int
-#endif /* UINT */
-
-#ifndef ULONG
-#define ULONG unsigned long
-#endif /* ULONG */
 
 /* We want all characters to be unsigned if the compiler supports it */
 
@@ -1288,11 +1630,13 @@ int mac_fclose();
 
 /* Systems that support the Microsoft Telephony API (TAPI) */
 
+#ifndef NODIAL
 #ifndef CK_TAPI
 #ifdef NT
 #define CK_TAPI
 #endif /* NT */
 #endif /* CK_TAPI */
+#endif /* NODIAL */
 
 #ifndef NONZXPAND
 #ifndef NZXPAND
@@ -1325,6 +1669,7 @@ int mac_fclose();
 #define ZX_RECURSE   4			/* Descend through directory tree */
 #define ZX_MATCHDOT  8			/* Match "dot files" */
 #define ZX_NOBACKUP 16			/* Don't match "backup files" */
+#define ZX_NOLINKS  32			/* Don't follow symlinks */
 
 #ifndef NZXPAND
 #define nzxpand(a,b) zxpand(a)
@@ -1528,7 +1873,11 @@ int mac_fclose();
 #endif /* DEBUG */
 #endif /* NODEBUG */
 
-#ifndef NOTLOG
+#ifdef NOTLOG
+#ifdef TLOG
+#undef TLOG
+#endif /* TLOG */
+#else  /* NOTLOG */
 #ifndef TLOG
 #define TLOG
 #endif /* TLOG */
@@ -1562,6 +1911,8 @@ int mac_fclose();
 
 #ifndef CKCMAI
 extern int deblog;
+extern int debok;
+extern int debxlen;
 extern int matchdot;
 extern int tt_bell;
 #endif /* CKCMAI */
@@ -1572,22 +1923,6 @@ _PROTOTYP( void bleep, (short) );
 #define bleep(x) if(tt_bell)putchar('\07')
 #endif /* OS2 */
 
-#ifndef DEBUG
-/* Compile all the debug() statements away.  Saves a lot of space and time. */
-#define debug(a,b,c,d)
-#define hexdump(a,b,c)
-/* Now define the debug() macro. */
-#else
-#ifdef IFDEBUG
-/* Use this form to avoid function calls: */
-#define debug(a,b,c,d) if (deblog) dodebug(a,b,(char *)(c),(long)d)
-#define hexdump(a,b,c) if (deblog) dohexdump((CHAR *)(a),(CHAR *)(b),c)
-#else
-/* Use this form to save space: */
-#define debug(a,b,c,d) dodebug(a,b,(char *)(c),(long)d)
-#define hexdump(a,b,c) dohexdump((CHAR *)(a),(CHAR *)(b),c)
-#endif /* DEBUG */
-
 #ifndef BEOSORBEBOX
 #ifdef BEBOX				/* This was used only for DR7 */
 #define BEOSORBEBOX
@@ -1597,10 +1932,6 @@ _PROTOTYP( void bleep, (short) );
 #endif /* BEOS */
 #endif /* BEBOX */
 #endif /* BEOSORBEBOX */
-
-_PROTOTYP(int dodebug,(int, char *, char *, long));
-_PROTOTYP(VOID dohexdump,(CHAR *, CHAR *, int));
-#endif /* DEBUG */
 
 #ifdef NOICP
 #ifdef TLOG
@@ -1642,66 +1973,6 @@ _PROTOTYP(VOID doxlog,(int, char *, long, int, int, char *));
 #ifdef pdp11
 #define CK_SMALL
 #endif /* pdp11 */
-
-#ifdef SUNOS4				/* "built in makefile entry" */
-#ifndef NOSETBUF			/* for SunOS 4.x */
-#define NOSETBUF
-#endif /* NOSETBUF */
-#ifndef DIRENT
-#define DIRENT
-#endif /* DIRENT */
-#ifndef NONET
-#ifndef TCPSOCKET
-#define TCPSOCKET
-#endif /* TCPSOCKET */
-#endif /* NONET */
-#ifndef SAVEDUID
-#define SAVEDUID
-#endif /* SAVEDUID */
-#ifndef DYNAMIC
-#define DYNAMIC
-#endif /* DYNAMIC */
-#endif /* SUNOS4 */
-
-#ifdef SOLARIS				/* "built in makefile entry" */
-#ifndef NOSETBUF			/* for Solaris 2.x */
-#define NOSETBUF
-#endif /* NOSETBUF */
-#ifndef NOCURSES
-#ifndef CK_CURSES
-#define CK_CURSES
-#endif /* CK_CURSES */
-#endif /* NOCURSES */
-#ifndef CK_NEWTERM
-#define CK_NEWTERM
-#endif /* CK_NEWTERM */
-#ifndef DIRENT
-#define DIRENT
-#endif /* DIRENT */
-#ifndef TCPSOCKET
-#define TCPSOCKET
-#endif /* TCPSOCKET */
-#ifndef SVR4
-#define SVR4
-#endif /* SVR4 */
-#ifndef HADDRLIST
-#define HADDRLIST
-#endif /* HADDRLIST */
-#ifndef STERMIOX
-#define STERMIOX
-#endif /* STERMIOX */
-#ifndef SELECT
-#define SELECT
-#endif /* SELECT */
-#ifndef DYNAMIC
-#define DYNAMIC
-#endif /* DYNAMIC */
-#ifndef NOUUCP
-#ifndef HDBUUCP
-#define HDBUUCP
-#endif /* HDBUUCP */
-#endif /* NOUUCP */
-#endif /* SOLARIS */
 
 /* Can we use realpath()? */
 
@@ -1768,6 +2039,14 @@ _PROTOTYP(VOID doxlog,(int, char *, long, int, int, char *));
 #endif /* NOREALPATH */
 #endif /* CKREALPATH */
 #endif /* UNIX */
+
+#ifdef CKREALPATH
+#ifdef OS2ORUNIX
+#ifndef CKROOT
+#define CKROOT
+#endif /* CKROOT */
+#endif /* OS2ORUNIX */
+#endif /* CKREALPATH */
 
 /* CKSYMLINK should be set only if we can use readlink() */
 
@@ -1893,12 +2172,30 @@ _PROTOTYP(VOID doxlog,(int, char *, long, int, int, char *));
 #ifdef SVORPOSIX			/* System V or POSIX can have it */
 #define HWPARITY
 #else
+#ifdef SUNOS41				/* SunOS 4.1 can have it */
+#define HWPARITY
+#else
 #ifdef OS2				/* K95 can have it */
 #define HWPARITY
 #endif /* OS2 */
+#endif /* SUNOS41 */
 #endif /* SVORPOSIX */
 #endif /* HWPARITY */
 #endif /* NOHWPARITY */
+
+#ifndef NOSTOPBITS			/* Stop-bit selection */
+#ifndef STOPBITS
+#ifdef OS2ORUNIX
+/* In Unix really this should only be if CSTOPB is defined. */
+/* But we don't know that yet. */
+#define STOPBITS
+#else
+#ifdef TN_COMPORT
+#define STOPBITS
+#endif /* TN_COMPORT */
+#endif /* OS2ORUNIX */
+#endif /* STOPBITS */
+#endif /* NOSTOPBITS */
 
 #ifdef UNIX
 #ifndef NETCMD				/* Can SET NETWORK TYPE COMMAND */
@@ -2038,6 +2335,15 @@ _PROTOTYP(VOID doxlog,(int, char *, long, int, int, char *));
 
 /* If the following causes trouble use -DFLOAT=float on the command line */
 
+#ifdef NOSPL
+#ifdef FNFLOAT
+#undef FNFLOAT
+#endif /* FNFLOAT */
+#ifdef CKFLOAT
+#undef CKFLOAT
+#endif /* CKFLOAT */
+#endif /* NOSPL */
+
 #ifndef NOFLOAT
 
 #ifndef CKFLOAT
@@ -2069,12 +2375,6 @@ _PROTOTYP(VOID doxlog,(int, char *, long, int, int, char *));
 #endif /* STRATUS */
 #endif /* GFTIMER */
 #endif /* NOGFTIMER */
-
-#ifdef NOSPL
-#ifdef FNFLOAT
-#undef FNFLOAT
-#endif /* FNFLOAT */
-#endif /* NOSPL */
 
 #ifndef NOSPL
 #ifndef FNFLOAT				/* Floating-point math functions */
@@ -2176,6 +2476,7 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 
 #ifndef NOURL				/* Parse URLs in SET HOST, etc */
 #define CK_URL
+#define NO_FTP_AUTH                     /* No auth "ftp" / "anonymous" */
 #endif /* NOURL */
 
 #ifndef NOTRIGGER
@@ -2208,6 +2509,9 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #ifndef NOBROWSER
 #define NOBROWSER
 #endif /* NOBROWSER */
+#ifndef NOFTP
+#define NOFTP
+#endif /* NOFTP */
 #endif /* NOFRILLS */
 
 #ifndef NOHTTP				/* HTTP features need... */
@@ -2219,9 +2523,12 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #endif /* OS2ORUNIX */
 #endif /* NOHTTP */
 
-/* The HTTP code is not very portable, so it must be asked for with -DCKHTTP */
+
 #ifndef NONET
 #ifdef TCPSOCKET
+
+/* The HTTP code is not very portable, so it must be asked for with -DCKHTTP */
+
 #ifndef NOHTTP
 #ifndef CKHTTP
 #ifdef SUNOS4				/* We can use it in SunOS */
@@ -2245,12 +2552,72 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #ifdef UNIXWARE				/* In Unixware 2.1 and higher */
 #define CKHTTP				/* and probably also in 1.x and 2.0 */
 #endif /* UNIXWARE */
+#ifdef CK_SCOV5
+#define CKHTTP
+#endif /* CK_SCOV5 */
+#ifdef OSF                              /* And in OSF Digital UNIX/True 64 */
+#define CKHTTP
+#endif /* OSF */
+#ifdef ultrix                           /* And in Ultrix Mips */
+#ifdef mips
+#define CKHTTP
+#endif /* mips */
+#endif /* ultrix */
 /* Add more here... */
 #endif /* CKHTTP */
 #ifndef CKHTTP				/* If CKHTTP not defined yet */
 #define NOHTTP				/* then define HOHTTP */
 #endif /* CKHTTP */
 #endif /* NOHTTP */
+
+#ifdef NETCONN				/* Special "network" types... */
+#ifndef NOLOCAL
+#ifdef OS2
+#ifndef NETFILE
+#define NETFILE
+#endif /* NETFILE */
+#ifndef NOPUSH
+#ifndef NETCMD
+#define NETCMD
+#endif /* NETCMD */
+#endif /* NOPUSH */
+#ifdef NT
+#ifndef NETDLL
+#define NETDLL
+#endif /* NETDLL */
+#endif /* NT */
+#endif /* OS2 */
+#endif /* NOLOCAL */
+#endif /* NETCONN */
+
+#ifndef NOFTP
+#ifndef SYSFTP
+#ifndef NEWFTP
+#ifdef OS2ORUNIX
+#define NEWFTP
+#endif /* OS2ORUNIX */
+#endif /* NEWFTP */
+#endif /* SYSFTP */
+#endif /* NOFTP */
+
+#ifndef NOFTP
+#ifdef NEWFTP
+#ifdef SYSFTP
+#undef SYSFTP
+#endif /* SYSFTP */
+#else /* NEWFTP */
+#ifndef SYSFTP
+#define SYSFTP
+#endif /* SYSFTP */
+#endif /* NEWFTP */
+#else /* NOFTP */
+#ifdef NEWFTP
+#undef NEWFTP
+#endif /* NEWFTP */
+#ifdef SYSFTP
+#undef SYSFTP
+#endif /* SYSFTP */
+#endif /* NOFTP */
 
 #ifndef NOBROWSER
 #ifdef UNIX
@@ -2272,36 +2639,68 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #undef BROWSER
 #endif /* BROWSER */
 #endif /* NOBROWSER */
+
+#else /* TCPSOCKET */
+#ifndef NOHTTP                          /* HTTP requires TCPSOCKET */
+#define NOHTTP
+#endif /* NOHTTP */
 #endif /* TCPSOCKET */
 #endif /* NONET */
 
 #ifdef TCPSOCKET
+#ifdef OS2ONLY
+#ifndef NOSOCKS
+#define NOSOCKS
+#endif /* NOSOCKS */
+#endif /* OS2ONLY */
+#ifdef NOSOCKS
+#ifdef CK_SOCKS
+#undef CK_SOCKS
+#endif /* CK_SOCKS */
+#ifdef CK_SOCKS5
+#undef CK_SOCKS5
+#endif /* CK_SOCKS5 */
+#else /* NOSOCKS */
+#ifdef NT
+#ifndef CK_SOCKS
+#define CK_SOCKS
+#endif /* CK_SOCKS */
+#endif /* NT */
 #ifdef CK_SOCKS5			/* CK_SOCKS5 implies CK_SOCKS */
 #ifndef CK_SOCKS
 #define CK_SOCKS
 #endif /* CK_SOCKS */
 #endif /* CK_SOCKS5 */
+#endif /* NOSOCKS */
+#endif /* TCPSOCKET */
 
+#ifdef TNCODE
 #ifndef CK_AUTHENTICATION
 #ifdef OS2
-#ifdef OS2ONLY
-#define NO_KERBEROS
-#endif /* OS2ONLY */
-#ifndef NO_KERBEROS
-#define CK_KERBEROS
-#define KRB4
-#define KRB5
-#endif /* NO_KERBEROS */
+#ifdef NT
 #ifndef _M_PPC
 #ifndef _M_ALPHA
+#define SSL_KRB5
+#endif /* _M_ALPHA */
+#endif /* _M_PPC */
+#endif /* NT */
+#ifdef _M_PPC
+#define NO_KERBEROS
+#define NO_SRP
+#else
 #ifndef NO_ENCRYPTION
 #ifndef NO_SSL
 #define CK_SSL
 #define SSLDLL
 #endif /* NO_SSL */
 #endif /* NO_ENCRYPTION */
-#endif /* _M_ALPHA */
 #endif /* _M_PPC */
+#ifndef NO_KERBEROS
+#define CK_KERBEROS
+#define KRB4
+#define KRB5
+#define KRB524
+#endif /* NO_KERBEROS */
 #ifndef NO_SRP
 #define CK_SRP
 #endif /* NO_SRP */
@@ -2318,16 +2717,6 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #endif /* NO_ENCRYPTION */
 #endif /* CK_ENCRYPTION */
 #endif /* CK_AUTHENTICATION */
-
-#ifdef COMMENT
-#ifndef NO_KERBEROS
-#ifndef CK_KERBEROS			/* Temporary: for testing */
-#ifdef UNIX				/* This enables only parsing */
-#define CK_KERBEROS
-#endif /* UNIX */
-#endif /* CK_KERBEROS */
-#endif /* NO_KERBEROS */
-#endif /* COMMENT */
 
 #ifdef NO_AUTHENTICATION                /* Allow authentication to be */
 #ifdef CK_AUTHENTICATION                /* disabled in NT and OS/2    */
@@ -2349,6 +2738,87 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #undef CK_ENCRYPTION
 #endif /* CK_ENCRYPTION */
 #endif /* NO_ENCRYPTION */
+
+#ifdef CK_KERBEROS      /* Disable funcs not yet supported with Heimdal */
+#ifdef KRB5
+#ifndef HEIMDAL
+#define KRB5_U2U
+#endif /* HEIMDAL */
+#endif /* KRB5 */
+#endif /* CK_KERBEROS */
+
+/*
+  SSH section.  NOSSH disables any form of SSH support.
+  If NOSSH is not defined (or implied by NONET, NOLOCAL, etc)
+  then SSHBUILTIN is defined for K95 and SSHCMD is defined for UNIX.
+  Then, if either SSHBUILTIN or SSHCMD is defined, ANYSSH is also defined.
+*/
+
+#ifndef NOSSH
+#ifndef NO_SSL
+#ifdef OS2ONLY
+#define NOSSH
+#endif /* OS2ONLY */
+#ifdef NT
+#ifndef CK_SSL
+#define NOSSH
+#endif /* CK_SSL */
+#endif /* NT */
+#else /* NO_SSL */
+#define NOSSH
+#endif /* NO_SSL */
+#endif /* NOSSH */
+
+#ifdef NOSSH				/* NOSSH */
+#ifdef SSHBUILTIN			/* undefines any SSH selctors */
+#undef SSHBUILTIN
+#endif /* SSHBUILTIN */
+#ifdef SSHCMD
+#undef SSHCMD
+#endif /* SSHCMD */
+#ifdef ANYSSH
+#undef ANYSSH
+#endif /* ANYSSH */
+#else  /* Not NOSSH */
+#ifndef NOLOCAL
+#ifdef OS2
+#ifndef SSHBUILTIN
+#define SSHBUILTIN
+#endif /* SSHBUILTIN */
+#else  /* Not OS2 */
+#ifdef UNIX
+#ifndef SSHCMD
+#ifdef NETPTY
+#ifndef NOPUSH
+#define SSHCMD
+#endif /* NOPUSH */
+#endif /* NETPTY */
+#endif /* SSHCMD */
+#endif /* UNIX */
+#endif /* OS2 */
+#ifndef ANYSSH
+#ifdef SSHBUILTIN
+#define ANYSSH
+#else
+#ifdef SSHCMD
+#define ANYSSH
+#endif /* SSHCMD */
+#endif /* SSHBUILTIN */
+#endif /* ANYSSH */
+#endif /* NOLOCAL */
+#endif /* NOSSH */
+
+/* This is in case #ifdef SSH is used anywhere in the K95 modules */
+
+#ifdef OS2
+#ifdef SSHBUILTIN
+#ifndef SSH
+#define SSH
+#endif /* SSH */
+#endif /* SSHBUILTIN */
+#endif /* OS2 */
+
+/* Environment stuff */
 
 #ifndef OS2ORUNIX
 #ifndef NOPUTENV
@@ -2387,22 +2857,33 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #ifndef NOPUTENV
 #ifndef NOSELECT
 #ifndef CK_FORWARD_X
-#ifdef NT				/* EXPERIMENTAL */
+#ifdef CK_AUTHENTICATION
+#ifndef OS2ONLY
 #define CK_FORWARD_X
-#endif /* NT */
+#endif /* OS2ONLY */
+#endif /* CK_AUTHENTICATION */
 #endif /* CK_FORWARD_X */
 #endif /* NOSELECT */
 #endif /* NOPUTENV */
 #endif /* NOFORWARDX */
+#ifndef NO_COMPORT
+#ifdef TCPSOCKET
+#ifndef TN_COMPORT
+#define TN_COMPORT
+#endif /* TN_COMPORT */
 #endif /* TCPSOCKET */
+#endif /* NO_COMPORT */
+#endif /* TNCODE */
 
+#ifndef NOXFER
 #ifndef NOCTRLZ				/* Allow SET FILE EOF CTRL-Z */
 #ifndef CK_CTRLZ
-#ifdef OS2
+#ifdef OS2ORUNIX
 #define CK_CTRLZ
-#endif /* OS2 */
+#endif /* OS2ORUNIX */
 #endif /* CK_CTRLZ */
 #endif /* NOCTRLZ */
+#endif /* NOXFER */
 
 #ifndef NOPERMS				/* File permissions in A packets */
 #ifndef CK_PERMS
@@ -2626,6 +3107,7 @@ _PROTOTYP( int ttruncmd, (char *) );
 
 /* Versions where we support the RESEND command */
 
+#ifndef NOXFER
 #ifndef NORESEND
 #ifndef CK_RESEND
 #ifdef UNIX
@@ -2660,6 +3142,7 @@ _PROTOTYP( int ttruncmd, (char *) );
 
 #endif /* CK_RESEND */
 #endif /* NORESEND */
+#endif /* NOXFER */
 
 /* Systems implementing "Doomsday Kermit" protocol ... */
 
@@ -2764,8 +3247,9 @@ _PROTOTYP( int ttruncmd, (char *) );
 
 /* OS/2 C-Kermit features not available in 16-bit version... */
 
-#ifdef OS2
+#ifdef OS2ONLY
 #ifndef __32BIT__
+#ifndef NOLOCAL
 #ifdef PCFONTS				/* PC Font support */
 #undef PCFONTS
 #endif /* PCFONTS */
@@ -2781,11 +3265,12 @@ _PROTOTYP( int ttruncmd, (char *) );
 #ifdef OS2PM				/* Presentation Manager */
 #undef OS2PM
 #endif /* OS2PM */
+#endif /* NOLOCAL */
 #ifdef CK_REXX				/* Rexx */
 #undef CK_REXX
 #endif /* CK_REXX */
 #endif /* __32BIT__ */
-#endif /* OS2 */
+#endif /* OS2ONLY */
 
 /* OS/2 C-Kermit features not available in Windows NT version... */
 
@@ -2823,6 +3308,9 @@ _PROTOTYP( int ttruncmd, (char *) );
 #ifdef NEXT
 #define SELECT
 #else
+#ifdef RTAIX
+#define SELECT
+#else
 #ifdef HPUX
 /*
   Not really.  I think it's only in HP-UX 7.0 and later, except it's also
@@ -2856,6 +3344,7 @@ _PROTOTYP( int ttruncmd, (char *) );
 #endif /* BSD44 */
 #endif /* AIXRS */
 #endif /* HPUX */
+#endif /* RTAIX */
 #endif /* NEXT */
 #endif /* __linux__ */
 #endif /* SUNOS4 */
@@ -3207,7 +3696,10 @@ _PROTOTYP( long * ttspdlist, (void) );
   second, or (for bps values larger than 9999) thousands of bps followed by K.
   The total symbol length should be 8 characters or less.  Some values are
   enabled automatically below.  You can disable a particular value by defining
-  NOB_xxxx on the CC command line. */
+  NOB_xxxx on the CC command line.
+
+*/
+
 #ifndef NOB_50
 #define BPS_50				/* 50 bps */
 #endif
@@ -3639,6 +4131,9 @@ _PROTOTYP( long * ttspdlist, (void) );
 #ifdef __NetBSD__			/* NetBSD */
 #define POSIX_CRTSCTS
 #endif /* __NetBSD__ */
+#ifdef __OpenBSD__
+#define POSIX_CRTSCTS
+#endif /* __OpenBSD__ */
 #ifdef BEOSORBEBOX			/* BeBOX */
 #define POSIX_CRTSCTS
 /* BEBOX defines CRTSFL as (CTSFLOW & RTSFLOW) */
@@ -3911,6 +4406,12 @@ extern int errno;			/* Needed by most modules. */
 #ifndef NOBIGBUF
 #ifndef BIGBUFOK			/* Platforms with lots of memory */
 
+#ifdef QNX				/* QNX */
+#ifndef QNX16				/* But not 16-bit versions */
+#define BIGBUFOK
+#endif /* QNX16 */
+#endif /* QNX */
+
 #ifdef BSD44
 #define BIGBUFOK
 #endif /* BSD44 */
@@ -3988,6 +4489,12 @@ extern int errno;			/* Needed by most modules. */
 #endif /* BIGBUFOK */
 #endif /* CK_SCOV5 */
 
+#ifdef SOLARIS				/* Solaris x86 */
+#ifndef BIGBUFOK
+#define BIGBUFOK
+#endif /* BIGBUFOK */
+#endif /* SOLARIS */
+
 #endif /* BIGBUFOK */
 #endif /* NOBIGBUF */
 
@@ -4004,6 +4511,35 @@ extern int errno;			/* Needed by most modules. */
 #ifndef IFDEBUG
 #define IFDEBUG
 #endif /* IFDEBUG */
+#endif /* BIGBUFOK */
+#endif /* DEBUG */
+
+#ifndef DEBUG
+/* Compile all the debug() statements away.  Saves a lot of space and time. */
+#define debug(a,b,c,d)
+#define hexdump(a,b,c)
+/* Now define the debug() macro. */
+#else /* DEBUG */
+_PROTOTYP(int dodebug,(int,char *,char *,long));
+_PROTOTYP(int dohexdump,(CHAR *,CHAR *,int));
+#ifdef IFDEBUG
+/* Use this form to avoid function calls: */
+#ifdef COMMENT
+#define debug(a,b,c,d) if (deblog) dodebug(a,b,(char *)(c),(long)d)
+#define hexdump(a,b,c) if (deblog) dohexdump((CHAR *)(a),(CHAR *)(b),c)
+#else
+#ifdef CK_ANSIC
+#define debug(a,b,c,d) ((void)(deblog?dodebug(a,b,(char *)(c),(long)d):0))
+#define hexdump(a,b,c) ((void)(deblog?dohexdump((CHAR *)(a),(CHAR *)(b),c):0))
+#else
+#define debug(a,b,c,d) (deblog?dodebug(a,b,(char *)(c),(long)d):0)
+#define hexdump(a,b,c) (deblog?dohexdump((CHAR *)(a),(CHAR *)(b),c):0)
+#endif /* CK_ANSIC */
+#endif /* COMMENT */
+#else /* IFDEBUG */
+/* Use this form to save space: */
+#define debug(a,b,c,d) dodebug(a,b,(char *)(c),(long)d)
+#define hexdump(a,b,c) dohexdump((CHAR *)(a),(CHAR *)(b),c)
 #endif /* IFDEBUG */
 #endif /* DEBUG */
 
@@ -4099,12 +4635,6 @@ extern int errno;			/* Needed by most modules. */
 SIGTYP (*signal())();
 #endif /* OSK */
 
-#ifdef OS2
-#ifdef putchar                  /* MSC 5.1 simply uses a macro which causes */
-#undef putchar                  /* no problems. */
-#endif /* putchar */
-#endif /* OS2 */
-
 #ifdef MINIX
 #ifdef putchar
 #undef putchar
@@ -4170,9 +4700,8 @@ SIGTYP (*signal())();
 #define CXT_LAT     6			/* LAT */
 #define CXT_NETBIOS 7			/* NETBIOS */
 #define CXT_NPIPE   8			/* Named Pipe */
-#define CXT_SSH     9			/* SSH */
-#define CXT_PIPE   10			/* Pipe, Command, PTY, DLL, etc */
-#define CXT_MAX    10			/* Highest connection type */
+#define CXT_PIPE    9			/* Pipe, Command, PTY, DLL, etc */
+#define CXT_MAX     9			/* Highest connection type */
 
 /* Autodownload Detection Options */
 
@@ -4185,57 +4714,7 @@ SIGTYP (*signal())();
 #undef COMMENT
 #endif /* COMMENT */
 
-/* Structure definitions for Kermit file attributes */
-/* All strings come as pointer and length combinations */
-/* Empty string (or for numeric variables, -1) = unused attribute. */
-
-struct zstr {             /* string format */
-    int len;	          /* length */
-    char *val;            /* value */
-};
-struct zattr {            /* Kermit File Attribute structure */
-    long lengthk;         /* (!) file length in K */
-    struct zstr type;     /* (") file type (text or binary) */
-    struct zstr date;     /* (#) file creation date yyyymmdd[ hh:mm[:ss]] */
-    struct zstr creator;  /* ($) file creator id */
-    struct zstr account;  /* (%) file account */
-    struct zstr area;     /* (&) area (e.g. directory) for file */
-    struct zstr password; /* (') password for area */
-    long blksize;         /* (() file blocksize */
-    struct zstr xaccess;  /* ()) file access: new, supersede, append, warn */
-    struct zstr encoding; /* (*) encoding (transfer syntax) */
-    struct zstr disp;     /* (+) disposition (mail, message, print, etc) */
-    struct zstr lprotect; /* (,) protection (local syntax) */
-    struct zstr gprotect; /* (-) protection (generic syntax) */
-    struct zstr systemid; /* (.) ID for system of origin */
-    struct zstr recfm;    /* (/) record format */
-    struct zstr sysparam; /* (0) system-dependent parameter string */
-    long length;          /* (1) exact length on system of origin */
-    struct zstr charset;  /* (2) transfer syntax character set */
-#ifdef OS2
-    struct zstr longname; /* OS/2 longname if applicable */
-#endif /* OS2 */
-    struct zstr reply;    /* This goes last, used for attribute reply */
-};
-
-/* Kermit file information structure */
-
-struct filinfo {
-  int bs;				/* Blocksize */
-  int cs;				/* Character set */
-  long rl;				/* Record length */
-  int org;				/* Organization */
-  int fmt;				/* Record format */
-  int cc;				/* Carriage control */
-  int typ;				/* Type (text/binary) */
-  int dsp;				/* Disposition */
-  char *os_specific;			/* OS-specific attributes */
-#ifdef OS2
-  unsigned long int lblopts; /* LABELED FILE options bitmask */
-#else
-  int lblopts;
-#endif /* OS2 */
-};
+/* zstr zattr filinfo were here (moved to top for DECC 5 Jun 2000) */
 
 #ifndef ZFNQFP				/* Versions that have zfnqfp() */
 #ifdef UNIX
@@ -4258,9 +4737,9 @@ struct filinfo {
 #endif /* VMS */
 #endif /* UNIX */
 struct zfnfp {
-   int len;
-   char * fpath;
-   char * fname;
+   int len;				/* Length of full pathname */
+   char * fpath;			/* Pointer to full pathname */
+   char * fname;			/* Pointer to name part */
 };
 #endif /* ZFNQFP */
 
@@ -4338,7 +4817,7 @@ struct zfnfp {
 #ifndef MULTINET
 #include <if.h>				/* Needed to put up u_int typedef */
 #endif /* MULTINET */
-#else
+#else /* IF_DOT_H */
 #ifdef NEEDUINT
 typedef unsigned int u_int;
 #endif /* NEEDUINT */
@@ -4473,11 +4952,22 @@ typedef unsigned int u_int;
 typedef union wait WAIT_T;
 #else
 #ifdef POSIX
+#ifdef OSF
+/* OSF wait.h defines BSD wait if _BSD is defined so  hide _BSD from wait.h */
+#ifdef _BSD
+#define CK_OSF_BSD
+#undef  _BSD
+#endif /* _BSD */
+#endif /* OSF */
 #include <sys/wait.h>
 #define CK_WAIT_H
 #ifndef WAIT_T
 typedef int WAIT_T;
 #endif /* WAIT_T */
+#ifdef CK_OSF_BSD			/* OSF/1: Restore  _BSD definition */
+#define _BSD
+#undef CK_OSF_BSD
+#endif /* CK_OSF_BSD */
 #else /* !POSIX */
 typedef int WAIT_T;
 #endif /* POSIX */
@@ -4507,6 +4997,7 @@ _PROTOTYP( int zclose, (int) );
 #ifndef MAC
 _PROTOTYP( int zchin, (int, int *) );
 #endif /* MAC */
+_PROTOTYP( int zxin, (int, char *, int) );
 _PROTOTYP( int zsinl, (int, char *, int) );
 _PROTOTYP( int zinfill, (void) );
 _PROTOTYP( int zsout, (int, char*) );
@@ -4525,8 +5016,8 @@ _PROTOTYP( long zchki, (char *) );
 _PROTOTYP( long zgetfs, (char *) );
 #else
 #ifdef OS2
-#else
 _PROTOTYP( long zgetfs, (char *) );
+#else
 #define zgetfs(a) zchki(a)
 #endif /* OS2 */
 #endif /* VMSORUNIX */
@@ -4563,15 +5054,7 @@ _PROTOTYP( int zcopy, (char *, char *) );
 _PROTOTYP( int zsattr, (struct zattr *) );
 _PROTOTYP( int zfree, (char *) );
 _PROTOTYP( char * zfcdat, (char *) );
-#ifdef HPUX10
-#ifdef CK_ANSIC
-_PROTOTYP( int zstime, (const char *, struct zattr *, int) );
-#else
 _PROTOTYP( int zstime, (char *, struct zattr *, int) );
-#endif /* CK_ANSIC */
-#else
-_PROTOTYP( int zstime, (char *, struct zattr *, int) );
-#endif /* HPUX10 */
 #ifdef CK_PERMS
 _PROTOTYP( char * zgperm, (char *) );
 _PROTOTYP( char * ziperm, (char *) );
@@ -4605,6 +5088,7 @@ _PROTOTYP( unsigned long os2_mousehide, (void) );
 _PROTOTYP( unsigned long os2_mouseshow, (void) );
 _PROTOTYP( unsigned long os2_mouseoff, (void) );
 _PROTOTYP( void os2_mouseevt, (void *) );
+_PROTOTYP( int mousebuttoncount, (void));
 #endif /* OS2MOUSE */
 #endif /* OS2 */
 
@@ -4637,6 +5121,9 @@ _PROTOTYP( int ttscarr, (int) );
 _PROTOTYP( int ttgmdm, (void) );
 _PROTOTYP( int ttsndb, (void) );
 _PROTOTYP( int ttsndlb, (void) );
+#ifdef UNIX
+_PROTOTYP( char * ttglckdir, (void) );
+#endif /* UNIX */
 #ifdef PARSENSE
 #ifdef UNIX
 _PROTOTYP( int ttinl, (CHAR *, int, int, CHAR, CHAR, int) );
@@ -4768,30 +5255,34 @@ _PROTOTYP( int ck_cancio, (void) );
 #endif /* MAC */
 
 _PROTOTYP( int congks, (int) );
-#ifndef NOSETKEY
 #ifdef OS2
+/* OS2 requires these definitions even if SET KEY is not being supported */
 #define KMSIZE 8916
 typedef ULONG KEY;
 typedef CHAR *MACRO;
 extern int wideresult;
 #else /* Not OS2 */
+#ifndef NOSETKEY
 /*
   Catch-all for systems where we don't know how to read keyboard scan
-  codes > 255.  Note: CHAR (i.e. unsigned char) is very important here.
+  codes > 255.
 */
 #define KMSIZE 256
+/* Note: CHAR (i.e. unsigned char) is very important here. */
 typedef CHAR KEY;
 typedef CHAR * MACRO;
 #define congks coninc
-#endif /* OS2 */
 #endif /* NOSETKEY */
+#endif /* OS2 */
 
+#ifndef OS2
 #ifndef NOKVERBS			/* No \Kverbs unless... */
 #define NOKVERBS
 #endif /* NOKVERBS */
+#endif /* OS2 */
 
-#ifdef OS2				/* \Kverbs are supported in OS/2 */
-#undef NOKVERBS
+#ifndef NOKVERBS
+#ifdef OS2
 /*
   Note: this value chosen to be bigger than PC BIOS key modifier bits,
   but still fit in 16 bits without affecting sign.
@@ -4803,6 +5294,7 @@ typedef CHAR * MACRO;
 #define F_KVERB 0x4000			/* Bit indicating a keyboard verb */
 #define IS_KVERB(x) (x & F_KVERB)	/* Test this bit */
 #endif /* OS2 */
+#endif /* NOKVERBS */
 
 #define F_ESC   0x8000		/* Bit indicating ESC char combination */
 #define IS_ESC(x) (x & F_ESC)
@@ -4858,11 +5350,9 @@ typedef CHAR * MACRO;
 #define __32BIT__
 #endif /* __32BIT__ */
 #include <sys/timeb.h>
-#else
+#else /* __EMX__ */
 #include <direct.h>
-#ifdef OS2
 #undef SIGALRM
-#endif /* OS2 */
 #ifndef SIGUSR1
 #define SIGUSR1 7
 #endif /* SIGUSR1 */
@@ -4870,11 +5360,7 @@ typedef CHAR * MACRO;
 _PROTOTYP( unsigned alarm, (unsigned) );
 _PROTOTYP( unsigned sleep, (unsigned) );
 #endif /* __EMX__ */
-#ifdef OS2
 _PROTOTYP( unsigned long zdskspace, (int) );
-#else
-_PROTOTYP( long zdskspace, (int) );
-#endif /* OS2 */
 _PROTOTYP( int zchdsk, (int) );
 _PROTOTYP( int conincraw, (int) );
 _PROTOTYP( int ttiscom, (int f) );
@@ -4970,6 +5456,8 @@ _PROTOTYP( char *GetLoadPath, (void) );
 
 #else /* CK_WREFRESH is defined */
 
+/* This is within an ifdef CK_CURSES block.  The following is not needed */
+
 #ifndef CK_CURSES			/* CK_WREFRESH implies CK_CURSES */
 #define CK_CURSES
 #endif /* CK_CURSES */
@@ -4991,17 +5479,71 @@ _PROTOTYP( char *GetLoadPath, (void) );
 #endif /* CK_CURSES */
 
 /*
-  Whether to use ckmatch() in all its glory for pretty much full regexes.
+  Whether to use ckmatch() in all its glory for C-Shell-like patterns.
   If CKREGEX is NOT defined, all but * and ? matching are removed from
   ckmatch().  NOTE: Defining CKREGEX does not necessarily mean that ckmatch()
   regexes are used for filename matching.  That depends on whether zxpand()
-  in ck?fio.c calls ckmatch().
+  in ck?fio.c calls ckmatch().  NOTE 2: REGEX is a misnomer -- these are not
+  regular expressions in the computer-science sense (in which, e.g. "a*b"
+  matches 0 or more 'a' characters followed by 'b') but patterns (in which
+  "a*b" matches 'a' followed by 0 or more non-b characters, followed by b).
 */
 #ifndef NOCKREGEX
 #ifndef CKREGEX
 #define CKREGEX
 #endif /* CKREGEX */
 #endif /* NOCKREGEX */
+
+/* Learned-script feature */
+
+#ifndef NOLEARN
+#ifdef NOSPL
+#define NOLEARN
+#else
+#ifdef NOLOCAL
+#define NOLEARN
+#endif /* NOLOCAL */
+#endif /* NOSPL */
+#endif /* NOLEARN */
+
+#ifdef NOLEARN
+#ifdef CKLEARN
+#undef CKLEARN
+#endif /* CKLEARN */
+#else  /* !NOLEARN */
+#ifndef CKLEARN
+#ifdef OS2ORUNIX
+/* In UNIX this can work only with ckucns.c builds */
+#define CKLEARN
+#else
+#ifdef VMS
+#define CKLEARN
+#endif /* VMS */
+#endif /* OS2ORUNIX */
+#endif /* CKLEARN */
+#endif /* NOLEARN */
+
+#ifdef CKLEARN
+#ifndef LEARNBUFSIZ
+#define LEARNBUFSIZ 128
+#endif /* LEARNBUFSIZ */
+#endif /* CKLEARN */
+
+#ifndef IKSDONLY
+#ifndef CKTIDLE				/* Pseudo-keepalive in CONNECT */
+#ifdef OS2				/* In K95 */
+#define CKTIDLE
+#else
+#ifdef UNIX				/* In UNIX but only ckucns versions */
+#ifndef NOLEARN
+#ifndef NOSELECT
+#define CKTIDLE
+#endif /* NOSELECT */
+#endif /* NOLEARN */
+#endif /* UNIX */
+#endif /* OS2 */
+#endif /* CKTIDLE */
+#endif /* IKSDONLY */
 
 #ifdef CK_ANSILIBS
 /*
@@ -5110,6 +5652,28 @@ _PROTOTYP( long atol, (char *) );
 #endif /* SUNOS41 */
 #endif /* CK_ANSILIBS */
 
+/*
+  <sys/param.h> generally picks up NULL, MAXPATHLEN, and MAXNAMLEN
+  and seems to present on all Unixes going back at least to SCO Xenix
+  with the exception(s) noted.
+*/
+#ifndef NO_PARAM_H			/* 2001-11-03 */
+#ifndef UNIX				/* Non-Unixes don't have it */
+#define NO_PARAM_H
+#else
+#ifdef TRS16				/* Tandy Xenix doesn't have it */
+#define NO_PARAM_H
+#endif /* TRS16 */
+#endif /* UNIX */
+#endif /* NO_PARAM_H */
+
+#ifndef NO_PARAM_H
+#ifndef INCL_PARAM_H
+#define INCL_PARAM_H
+#endif /* INCL_PARAM_H */
+#include <sys/param.h>
+#endif /* NO_PARAM_H */
+
 #ifndef NULL				/* In case NULL is still not defined */
 #define NULL 0L
 /* or #define NULL 0 */
@@ -5127,6 +5691,9 @@ _PROTOTYP( long atol, (char *) );
 #ifdef MAXPATHLEN			/* (it probably isn't) */
 #define CKMAXPATH MAXPATHLEN
 #else
+#ifdef PATH_MAX				/* POSIX */
+#define CKMAXPATH PATH_MAX
+#else
 #ifdef MAC
 #define CKMAXPATH 63
 #else
@@ -5134,7 +5701,7 @@ _PROTOTYP( long atol, (char *) );
 #define CKMAXPATH 255
 #else
 #ifdef UNIX				/* Even though some are way less... */
-#define CKMAXPATH 1023
+#define CKMAXPATH 1024
 #else
 #ifdef VMS
 #define CKMAXPATH 675			/* (derivation is complicated...) */
@@ -5152,8 +5719,15 @@ _PROTOTYP( long atol, (char *) );
 #endif /* UNIX */
 #endif /* pdp11 */
 #endif /* MAC */
+#endif /* PATH_MAX */
 #endif /* MAXPATHLEN */
 #endif /* CKMAXPATH */
+
+/* Maximum length for the name of a tty device */
+
+#ifndef DEVNAMLEN
+#define DEVNAMLEN CKMAXPATH
+#endif /* DEVNAMLEN */
 
 #ifdef pdp11
 #define NOCHANNELIO
@@ -5287,36 +5861,17 @@ extern int OSVer;
 #endif /* OS2 */
 #endif /* SESLIMIT */
 
+#ifndef NOTERM
 #ifndef PCTERM
 #ifdef NT
 #define PCTERM
 #endif /* NT */
 #endif /* PCTERM */
+#endif /* NOTERM */
 
 #ifdef BEOSORBEBOX
 #define query ckquery
 #endif /* BEOSORBEBOX */
-
-#ifdef NETCONN				/* Special "network" types... */
-#ifdef OS2
-#ifndef NETFILE
-#define NETFILE
-#endif /* NETFILE */
-#ifndef NOPUSH
-#ifndef NETCMD
-#define NETCMD
-#endif /* NETCMD */
-#endif /* NOPUSH */
-#ifdef NT
-#ifndef NETDLL
-#define NETDLL
-#endif /* NETDLL */
-#ifndef SSH
-#define SSH
-#endif /* SSH */
-#endif /* NT */
-#endif /* OS2 */
-#endif /* NETCONN */
 
 #ifndef PTYORPIPE			/* NETCMD and/or NETPTY defined */
 #ifdef NETCMD
@@ -5327,6 +5882,30 @@ extern int OSVer;
 #endif /* NETPTY */
 #endif /* NETCMD */
 #endif /* PTYORPIPE */
+
+/* mktemp() and mkstemp() */
+
+#ifndef NOMKTEMP
+#ifndef MKTEMP
+#ifdef OS2ORUNIX
+#define MKTEMP
+#endif /* OS2ORUNIX */
+#endif /* MKTEMP */
+
+#ifdef MKTEMP
+#ifndef NOMKSTEMP
+#ifndef MKSTEMP
+#ifdef BSD44
+#define MKSTEMP
+#else
+#ifdef __linux__
+#define MKSTEMP
+#endif /* __linux__ */
+#endif /* BSD44 */
+#endif /* MKSTEMP */
+#endif /* NOMKSTEMP */
+#endif /* MKTEMP */
+#endif /* NOMKTEMP */
 
 /* Platforms that have memcpy() -- only after all headers included */
 
@@ -5371,12 +5950,12 @@ extern int OSVer;
 #define USE_MEMCPY
 #endif /* STRATUS */
 #endif /* datageneral */
-#endif /* SVR4 */
 #endif /* OSF */
+#endif /* SVR4 */
 #endif /* POSIX */
 #endif /* HPUX */
 #endif /* AIXRS */
-#endif /* SUNOS */
+#endif /* SUNOS4 */
 #endif /* SOLARIS */
 #endif /* __linux__ */
 #endif /* OS2 */
@@ -5386,6 +5965,11 @@ extern int OSVer;
 
 #ifndef USE_MEMCPY
 #define memcpy(a,b,c) ckmemcpy((a),(b),(c))
+#else
+#ifdef CK_SCO32V4
+/* Because the prototype isn't picked up in the normal header files */
+_PROTOTYP( void *memcpy, (void *, const void *, size_t));
+#endif /* CK_SCO32V4 */
 #endif /* USE_MEMCPY */
 
 /* User authentication for IKS -- So far K95 and UNIX only */
@@ -5398,11 +5982,22 @@ extern int OSVer;
 
 #ifndef NOLOGIN
 #ifdef OS2ORUNIX
+#ifndef CK_LOGIN
 #define CK_LOGIN
+#ifndef NOSHADOW
+#ifdef CK_SCOV5
+#define CK_SHADOW
+#endif /* CK_SCOV5 */
+#endif /* NOSHADOW */
+#endif /* CK_LOGIN */
 #ifdef NT
 #define NTCREATETOKEN
 #endif /* NT */
-#endif /* UNIX */
+#endif /* OS2ORUNIX */
+#else /* NOLOGIN */
+#ifdef CK_LOGIN
+#undef CK_LOGIN
+#endif /* CK_LOGIN */
 #endif /* NOLOGIN */
 
 #ifdef OS2
@@ -5419,7 +6014,7 @@ extern int OSVer;
 #ifdef NOSENDUID
 #undef NOSENDUID
 #endif /* NOSENDUID */
-#endif /* CK_AUTHENTICAITON */
+#endif /* CK_AUTHENTICATION */
 
 #ifdef TNCODE				/* Should TELNET send user ID? */
 #ifndef NOSENDUID
@@ -5453,7 +6048,7 @@ extern int OSVer;
 #endif /* COHERENT */
 #endif /* UNIXWARE */
 #endif /* SINIX */
-#endif /* AIXRX */
+#endif /* AIXRS */
 #endif /* PTX */
 #endif /* IRIX */
 #endif /* NOGETUSERSHELL */
@@ -5488,6 +6083,13 @@ _PROTOTYP( int ckxlogin, (CHAR *, CHAR *, CHAR *, int));
 _PROTOTYP( int ckxlogout, (VOID));
 #endif /* CK_LOGIN */
 
+#ifndef NOZLOCALTIME			/* zlocaltime() available. */
+#ifdef OS2ORUNIX
+#define ZLOCALTIME
+_PROTOTYP( char * zlocaltime, (char *) );
+#endif /* OS2ORUNIX */
+#endif /* NOZLOCALTIME */
+
 #ifdef CKSYSLOG				/* Syslogging levels */
 #define SYSLG_NO 0			/* No logging */
 #define SYSLG_LI 1			/* Login/out */
@@ -5521,6 +6123,17 @@ struct keytab {				/* Keyword table */
 };
 #endif /* CK_KEYTAB */
 
+#ifdef NETPTY
+_PROTOTYP( int do_pty, (char *));
+_PROTOTYP( VOID end_pty, (void));
+#endif /* NETPTY */
+
+#ifdef CKROOT
+_PROTOTYP( int zsetroot, (char *) );
+_PROTOTYP( char * zgetroot, (void) );
+_PROTOTYP( int zinroot, (char *) );
+#endif /* CKROOT */
+
 /* Local Echo Buffer prototypes */
 _PROTOTYP( VOID le_init, (void) );
 _PROTOTYP( VOID le_clean, (void));
@@ -5530,7 +6143,7 @@ _PROTOTYP( int le_puts, (CHAR *, int));
 _PROTOTYP( int le_putchar, (CHAR));
 _PROTOTYP( int le_getchar, (CHAR *));
 
-#ifndef NOHTTP
+/* #ifndef NOHTTP */
 #ifndef NOCMDATE2TM
 #ifndef CMDATE2TM
 #ifdef OS2ORUNIX
@@ -5542,13 +6155,77 @@ _PROTOTYP( int le_getchar, (CHAR *));
 #ifdef CMDATE2TM
 _PROTOTYP( struct tm * cmdate2tm, (char *,int));
 #endif /* CMDATE2TM */
-#endif /* NOHTTP */
+/* #endif */ /* NOHTTP */
+
+#ifndef NOSETTIME			/* This would be set in CFLAGS */
+#ifdef SVR4ORPOSIX			/* Defined in IEEE 1003.1-1996 */
+#ifndef UTIMEH				/* and in SVID for SVR4 */
+#define UTIMEH
+#endif /* UTIMEH */
+#else  /* SVR4ORPOSIX */
+#ifdef OSF				/* Verified by Lucas Hart */
+#ifndef UTIMEH
+#define UTIMEH
+#endif /* UTIMEH */
+#else  /* OSF */
+#ifdef SUNOS41				/* Verified by Lucas Hart */
+#ifndef UTIMEH
+#define UTIMEH
+#endif /* UTIMEH */
+#else  /* SUNOS41 */
+#ifdef OS2
+#ifndef SYSUTIMEH
+#define SYSUTIMEH
+#endif /* SYSUTIMEH */
+#endif /* OS2 */
+#endif /* SUNOS41 */
+#endif /* OSF */
+#endif /* SVR4ORPOSIX */
+#endif /* NOSETTIME */
+
+#ifdef NEWFTP
+_PROTOTYP( int ftpisconnected, (void));
+_PROTOTYP( int ftpisloggedin, (void));
+_PROTOTYP( int ftpissecure, (void));
+#endif /* NEWFTP */
 
 _PROTOTYP( int readpass, (char *, char *, int));
 _PROTOTYP( int readtext, (char *, char *, int));
 
+#ifdef OS2
+_PROTOTYP(int ck_auth_loaddll, (VOID));
+_PROTOTYP(int ck_auth_unloaddll, (VOID));
+#endif /* OS2 */
+
 #include "ckclib.h"
 
+#ifdef NT
+#ifdef __STDC__
+#define stricmp _stricmp
+#define putenv _putenv
+#define sopen _sopen
+#define strupr _strupr
+#define close _close
+#define stat _stat
+#define fileno _fileno
+#define sys_errlist _sys_errlist
+#define unlink _unlink
+#define write _write
+#define creat _creat
+#define getpid _getpid
+#define isascii __isascii
+#define utime _utime
+#define mktemp _mktemp
+#define strnicmp _strnicmp
+#define read _read
+#define open _open
+#define access _access
+#define wcsdup _wcsdup
+#define chmod _chmod
+#define fstat _fstat
+#define ftime _ftime
+#endif /* __STDC__ */
+#endif /* NT */
 #endif /* CKCDEB_H */
 
 /* End of ckcdeb.h */

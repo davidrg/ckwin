@@ -1,15 +1,12 @@
 #include "ckcsym.h"
-#ifdef NOLOCAL
-char *connv = "";
-#else
-char *connv = "CONNECT Command for UNIX:select(), 7.0.110, 30 Dec 1999";
+char *connv = "CONNECT Command for UNIX:select(), 8.0.127, 10 Nov 2001";
 
 /*  C K U C N S  --  Terminal connection to remote system, for UNIX  */
 /*
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2000,
+  Copyright (C) 1985, 2001,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -25,6 +22,8 @@ char *connv = "CONNECT Command for UNIX:select(), 7.0.110, 30 Dec 1999";
 
 #include "ckcdeb.h"			/* Common things first */
 
+#ifndef NOLOCAL
+
 #ifdef OSF13
 #ifdef CK_ANSIC
 #ifdef _NO_PROTO
@@ -34,9 +33,10 @@ char *connv = "CONNECT Command for UNIX:select(), 7.0.110, 30 Dec 1999";
 #endif /* OSF13 */
 
 #include <errno.h>			/* Error numbers */
-#ifdef __linux__
-#include <sys/time.h>			/* For FD_blah */
-#endif /* __linux__ */
+
+#ifndef NOTIMEH
+#include <time.h>			/* For FD_blah */
+#endif /* NOTIMEH */
 
 /* Kermit-specific includes */
 
@@ -54,7 +54,42 @@ char *connv = "CONNECT Command for UNIX:select(), 7.0.110, 30 Dec 1999";
 #include <stdio.h>
 #endif /* BEBOX */
 
-#include <signal.h>
+#include <signal.h>			/* Signals */
+
+/* All the following is for select()... */
+
+#ifdef CKTIDLE				/* Timeouts only for SET TERM IDLE */
+
+#ifndef DCLTIMEVAL
+#ifdef SV68R3V6
+#define DCLTIMEVAL
+#else
+#ifdef UNIXWARE
+#ifndef UW7
+#define DCLTIMEVAL
+#endif /* UW7 */
+#endif /* UNIXWARE */
+#endif /* SV68R3V6 */
+#endif /* DCLTIMEVAL */
+
+#ifdef DCLTIMEVAL			/* Declare timeval ourselves */
+struct timeval {
+    long tv_sec;
+    long tv_usec;
+};
+#else  /* !DCLTIMEVAL */
+#ifndef NOSYSTIMEH
+#ifdef SYSTIMEH
+#include <sys/time.h>
+#endif /* SYSTIMEH */
+#endif /* NOSYSTIMEH */
+#ifndef NOSYSTIMEBH
+#ifdef SYSTIMEBH
+#include <sys/timeb.h>
+#endif /* SYSTIMEBH */
+#endif /* NOSYSTIMEBH */
+#endif /* DCLTIMEVAL */
+#endif /* CKTIDLE */
 
 #ifndef SCO_OSR504
 #ifdef SELECT_H
@@ -62,8 +97,29 @@ char *connv = "CONNECT Command for UNIX:select(), 7.0.110, 30 Dec 1999";
 #endif /* SELECT_H */
 #endif /* SCO_OSR504 */
 
+#ifndef FD_SETSIZE
+#ifdef CK_FORWARD_X
+#define FD_SETSIZE 256
+#else
+#define FD_SETSIZE 32
+#endif /* CK_FORWARD_X */
+#endif /* FD_SETSIZE */
+
+#ifdef HPUX
+#ifndef HPUX10
+#ifndef HPUX1100
+/* The three interior args to select() are (int *) rather than (fd_set *) */
+#ifndef INTSELECT
+#define INTSELECT
+#endif /* INTSELECT */
+#endif /* HPUX1100 */
+#endif /* HPUX10 */
+#endif /* HPUX */
+
 /* Internal function prototypes */
 
+#ifdef NEWFTP
+#endif /* NEWFTP */
 _PROTOTYP( VOID ttflux, (void) );
 _PROTOTYP( VOID doesc, (char) );
 _PROTOTYP( int hconne, (void) );
@@ -82,6 +138,20 @@ extern int local, escape, duplex, parity, flow, seslog, sessft, debses,
  xitsta, what, ttyfd, ttpipe, quiet, backgrd, pflag, tt_crd, tn_nlm, ttfdflg,
  tt_escape, justone, carrier, ttpty;
 
+#ifndef NODIAL
+extern int dialmhu, dialsta;
+#endif /* NODIAL */
+
+#ifdef CKLEARN
+extern FILE * learnfp;
+extern int learning;
+static ULONG learnt1;
+static char learnbuf[LEARNBUFSIZ] = { NUL, NUL };
+static int  learnbc = 0;
+static int  learnbp = 0;
+static int  learnst = 0;
+#endif /* CKLEARN */
+
 extern long speed;
 extern char ttname[], sesfil[], myhost[], *ccntab[];
 #ifdef TNCODE
@@ -91,6 +161,13 @@ extern int tn_b_nlm, tn_rem_echo;
 #ifdef CK_TRIGGER
 extern char * tt_trigger[], * triggerval;
 #endif /* CK_TRIGGER */
+
+#ifdef CKTIDLE
+extern int tt_idlelimit, tt_idleact;
+extern char * tt_idlestr;
+static int idlelimit = 0;
+#endif /* CKTIDLE */
+extern int cx_status;			/* CONNECT status code */
 
 extern int nopush;
 
@@ -170,6 +247,10 @@ static char *ibuf = NULL, *obuf = NULL, *temp = NULL; /* Buffers */
 #else
 static char ibuf[IBUFL], obuf[OBUFL], temp[TMPLEN];
 #endif /* DYNAMIC */
+
+#ifdef TNCODE
+static char tnopt[4];
+#endif /* TNCODE */
 
 #ifdef DYNAMIC
 static char *ibp;			/* Input buffer pointer */
@@ -255,19 +336,18 @@ static int oldesc[2] = { -1, -1 };	/* Previous state of recognizer */
 #define chkaes(x,y) 0
 #else
 /*
-  As of edit 178, the CONNECT command skips past ANSI escape sequences to
-  avoid translating the characters within them.  This allows the CONNECT
+  As of C-Kermit 5A(178), the CONNECT command skips past ANSI escape sequences
+  to avoid translating the characters within them.  This allows the CONNECT
   command to work correctly with a host that uses a 7-bit ISO 646 national
   character set, in which characters like '[' would normally be translated
   into accented characters, ruining the terminal's interpretation (and
   generation) of escape sequences.
 
-  As of edit 190, the CONNECT command responds to APC escape sequences
+  As of 5A(190), the CONNECT command responds to APC escape sequences
   (ESC _ text ESC \) if the user SETs TERMINAL APC ON or UNCHECKED, and the
   program was built with CK_APC defined.
 
-  Non-ANSI/ISO-compliant escape sequences are not handled.
-*/
+  Non-ANSI/ISO-compliant escape sequences are not handled. */
 
 /* States for the escape-sequence recognizer. */
 
@@ -352,6 +432,7 @@ extern int tt_print;
 #define ESCBUFLEN 63
 static char escbuf[ESCBUFLEN+1] = { NUL, NUL };
 static int escbufc = 0;
+static int dontprint = 0;
 
 VOID
 printon() {				/* Turn printing on */
@@ -394,15 +475,16 @@ VOID
 printoff() {				/* Turn printing off */
     int x;
     extern int noprinter;
-    printing = 0;
     if (noprinter) {
-	debug(F110,"PRINTER OFF NOPRINTER","",0);
+	printing = 0;
+	debug(F100,"PRINTER OFF NOPRINTER","",0);
 	return;
     }
     debug(F100,"PRINTER OFF","",0);
     if (printing) {
 	x = zclose(ZMFILE);
 	debug(F101,"PRINTER CLOSE","",x);
+	printing = 0;
     }
 }
 #endif /* XPRINT */
@@ -486,7 +568,7 @@ chkaes(c,src) char c; int src;
 #endif /* XPRINT */
 #ifdef CK_APC
 	      /* If APC not disabled */
-	      if (!src && c == '_' && apcstatus != APC_OFF) {
+	      if (!src && c == '_' && (apcstatus & APC_ON)) {
 		  debug(F100,"CONNECT APC begin","",0);
 		  apcactive = APC_REMOTE; /* Set APC-Active flag */
 		  apclength = 0;	/* and reset APC buffer pointer */
@@ -496,7 +578,7 @@ chkaes(c,src) char c; int src;
 	      inesc[src] = ES_NORMAL;	/* Back to normal */
 #ifdef XPRINT
 	      if (!src) {
-		  if (printing & escbufc > 1) {
+		  if (printing && escbufc > 1) {
 		      /* Dump esc seq buf to printer */
 		      zsoutx(ZMFILE,escbuf,escbufc-1);
 		      debug(F111,"ESCBUF PRINT 1",escbuf,escbufc);
@@ -535,14 +617,17 @@ chkaes(c,src) char c; int src;
 	      if (!src && tt_print) {	/* Printer enabled? */
 		  if (c == 'i') {	/* Final char is "i"? */
 		      char * p = (char *) (escbuf + escbufc - 4);
-		      if (!strncmp(p, "\033[5i", 4)) /* Yes, turn printer on */
-			printon();
-		      else if (!strncmp(p, "\033[4i", 4)) { /* Or off... */
-			  printoff();	/* Turn off printer. */
-			  conxo(escbufc,escbuf); /* Display this sequence. */
+		      if (!strncmp(p, "\033[5i", 4)) { /* Turn printer on */
+			  printon();
+		      } else if (!strncmp(p, "\033[4i", 4)) { /* Or off... */
+			  int i;
+			  printoff();			/* Turn off printer. */
+			  dontprint = 1;
+			  for (i = 0; i < escbufc; i++)	/* And output the */
+			    ckcputc(escbuf[i]);         /* sequence. */
 		      } else if (printing && escbufc > 1) {
 			  zsoutx(ZMFILE,escbuf,escbufc-1);
-			  debug(F111,"ESCBUF PRINT 3",escbuf,escbufc);
+			  debug(F011,"ESCBUF PRINT 3",escbuf,escbufc);
 		      }
 		  } else if (printing && escbufc > 1) {
 		      zsoutx(ZMFILE,escbuf,escbufc-1);
@@ -625,7 +710,7 @@ chkaes(c,src) char c; int src;
   Output is buffered to avoid slow screen writes on fast connections.
 */
 static int
-ckcputf() {				/* Dump the output buffer */
+ckcputf() {				/* Dump the console output buffer */
     int x = 0;
     if (obc > 0)			/* If we have any characters, */
       x = conxo(obc,obuf);		/* dump them, */
@@ -697,10 +782,6 @@ ckcgetc(dummy) int dummy; {
 	    if (n > (IBUFL - ibc))	/* Get them all at once. */
 	      n = IBUFL - ibc;		/* Don't overflow buffer */
 	      if ((n = ttxin(n,(CHAR *)ibp)) > 0) {
-#ifdef CK_ENCRYPTION
-		  if (TELOPT_U(TELOPT_ENCRYPTION))
-                    ck_tn_decrypt(ibp,n);
-#endif /* CK_ENCRYPTION */
 		  ibc += n;		/* Advance counter */
               }
 	} else if (n < 0) {		/* Error? */
@@ -747,7 +828,7 @@ static char kbuf[KBUFL];
 
   Another note: We stick in this read() till the user types something.
   But we know they already did, since select() said so.  Therefore something
-  would need to be mighty wrong before we get in trouble here.
+  would need to be mighty wrong before we get stuck here.
 */
 static int				/* Keyboard buffer filler */
 kbget() {
@@ -886,6 +967,86 @@ kbdread(void * param) {
 }
 #endif /* BEBOX */
 
+#ifdef CKLEARN
+static VOID
+learnchar(c) int c; {			/* Learned script keyboard character */
+    int cc;
+    char xbuf[8];
+
+    if (!learning || !learnfp)
+      return;
+
+    switch (learnst) {			/* Learn state... */
+      case 0:				/* Neutral */
+      case 1:				/* Net */
+	if (learnbc > 0) {		/* Have net characters? */
+	    char buf[LEARNBUFSIZ];
+	    int i, j, n;
+	    ULONG t;
+
+	    t = (ULONG) time(0);	/* Calculate INPUT timeout */
+	    j = t - learnt1;
+	    j += (j / 4) > 0 ? (j / 4) : 1; /* Add some slop */
+	    if (j < 2) j = 2;		    /* 2 seconds minimum */
+
+	    fputs("\nINPUT ",learnfp);	/* Give INPUT command for them */
+	    fputs(ckitoa(j),learnfp);
+	    fputs(" {",learnfp);
+	    learnt1 = t;
+
+	    n = LEARNBUFSIZ;
+	    if (learnbc < LEARNBUFSIZ) {  /* Circular buffer */
+		n = learnbc;		  /*  hasn't wrapped yet. */
+		learnbp = 0;
+	    }
+	    j = 0;			/* Copy to linear buffer */
+	    for (i = 0; i < n; i++) {	/* Number of chars in circular buf */
+
+		cc = learnbuf[(learnbp + i) % LEARNBUFSIZ];
+
+		/* Later account for prompts that end with a newline? */
+
+		if (cc == CR && j > 0) {
+		    if (buf[j-1] != LF)
+		      j = 0;
+		}
+		buf[j++] = cc;
+	    }
+	    for (i = 0; i < j; i++) {	/* Now copy out the buffer */
+		cc = buf[i];		/* interpreting control chars */
+		if (cc == 0) {		/* We don't INPUT NULs */
+		    continue;
+		} else if (cc < SP ||	/* Controls need quoting */
+			   (cc > 126 && cc < 160)) {
+		    ckmakmsg(xbuf,8,"\\{",ckitoa((int)cc),"}",NULL);
+		    fputs(xbuf,learnfp);
+		} else {		/* Plain character */
+		    putc(cc,learnfp);
+		}
+	    }
+	    fputs("}\nIF FAIL STOP 1 INPUT timeout",learnfp);
+	    learnbc = 0;
+	}
+	learnbp = 0;
+	fputs("\nPAUSE 1\nOUTPUT ",learnfp); /* Emit OUTPUT and fall thru */
+
+      case 2:				/* Already in Keyboard state */
+	if (c == 0) {
+	    fputs("\\N",learnfp);
+	} else if (c == -7) {
+	    fputs("\\B",learnfp);
+	} else if (c == -8) {
+	    fputs("\\L",learnfp);
+	} else if (c < SP || (c > 126 && c < 160)) {
+	    ckmakmsg(xbuf,8,"\\{",ckitoa((int)c),"}",NULL);
+	    fputs(xbuf,learnfp);
+	} else {
+	    putc(c,learnfp);
+	}
+    }
+}
+#endif /* CKLEARN */
+
 static int printbar = 0;
 
 #define OUTXBUFSIZ 15
@@ -897,8 +1058,11 @@ static int outxcount = 0;		/* and count */
 int
 conect() {
     int rc = 0;				/* Return code: 0 = fail, 1 = OK */
-    int i, x = 0;
-    register int c, c2, csave;		/* Characters */
+    int i, x = 0, prev = -1;		/* Reason code in cx_status */
+#ifdef CKLEARN
+    int crflag = 0;
+#endif /* CKLEARN */
+    register int c = -1, c2, csave;	/* Characters */
 #ifdef TNCODE
     int tx;				/* For Telnet negotiations */
 #endif /* TNCODE */
@@ -917,6 +1081,9 @@ conect() {
     CHAR ch;
     CHAR buf[64];
 #endif /* BEBOX */
+
+    cx_status = CSX_INTERNAL;
+    debok = 1;
 
 #ifdef BEBOX
     {
@@ -957,7 +1124,12 @@ conect() {
     ttimoff();				/* Turn off any timer interrupts */
     if (!local) {			/* Be sure we're not in remote mode */
 #ifdef NETCONN
-	printf("Sorry, you must SET LINE or SET HOST first\n");
+#ifdef NEWFTP
+	if (ftpisconnected())
+	  printf("Sorry, you can't CONNECT to an FTP server\n");
+	else
+#endif /* NEWFTP */
+	  printf("Sorry, you must SET LINE or SET HOST first\n");
 #else
 	printf("Sorry, you must SET LINE first\n");
 #endif /* NETCONN */
@@ -1051,15 +1223,18 @@ conect() {
 		   network ? -nettype : mdmtyp,
 		   0
 		   ) < 0) {
-	    sprintf(temp,"Sorry, can't open %s",ttname);
+	    ckmakmsg(temp,TMPLEN,"Sorry, can't open ",ttname,NULL,NULL);
 	    perror(temp);
 	    debug(F110,"CONNECT open failure",ttname,0);
 	    return(0);
 	}
+
 #ifdef IKS_OPTION
 	/* If peer is in Kermit server mode, return now. */
-	if (TELOPT_SB(TELOPT_KERMIT).kermit.u_start)
-	  return(0);
+	if (TELOPT_SB(TELOPT_KERMIT).kermit.u_start) {
+	    cx_status = CSX_IKSD;
+	    return(0);
+	}
 #endif /* IKS_OPTION */
     }
     dohangup = 0;			/* Hangup not requested yet */
@@ -1100,8 +1275,17 @@ conect() {
 	    printf(".\r\n\nESCAPE CHARACTER IS DISABLED\r\n\n");
 	}
 	if (seslog) {
-	    printf("(Session logged to %s, ",sesfil);
-	    printf("%s)\r\n", sessft ? "binary" : "text");
+	    extern int slogts;
+	    char * s = "";
+	    switch (sessft) {
+	      case XYFT_D:
+		s = "debug"; break;
+	      case XYFT_T:
+		s = slogts ? "timestamped-text" : "text"; break;
+	      default:
+		s = "binary";
+	    }
+	    printf("Session Log: %s, %s\r\n",sesfil,s);
 	}
 	if (debses) printf("Debugging Display...)\r\n");
     }
@@ -1121,23 +1305,30 @@ conect() {
 	    debug(F101,"CONNECT ttvt","",n);
 	    tthang();			/* Hang up and close the device. */
 	    ttclos(0);
+#ifdef CKLOGDIAL
+	    dologend();
+#endif /* CKLOGDIAL */
 	    if (ttopen(ttname,		/* Open it again... */
 		       &local,
 		       network ? -nettype : mdmtyp,
 		       0
 		       ) < 0) {
-		sprintf(temp,"Sorry, can't reopen %s",ttname);
+		cx_status = CSX_INTERNAL;
+		ckmakmsg(temp,TMPLEN,"Sorry, can't reopen ",ttname,NULL,NULL);
 		perror(temp);
 		return(0);
 	    }
 #ifdef IKS_OPTION
-	    if (TELOPT_SB(TELOPT_KERMIT).kermit.u_start)
-	      return(0);
+	    if (TELOPT_SB(TELOPT_KERMIT).kermit.u_start) {
+		cx_status = CSX_IKSD;
+		return(0);
+	    }
 #endif /* IKS_OPTION */
 
 	    if (ttvt(speed,flow) < 0) {	/* Try virtual terminal mode again. */
 		conres();		/* Failure this time is fatal. */
 		printf("Sorry, Can't condition communication line\n");
+		cx_status = CSX_INTERNAL;
 		return(0);
 	    }
 	}
@@ -1156,13 +1347,14 @@ conect() {
 	x = ttgmdm();
 	debug(F100,"CONNECT ttgmdm","",x);
 	if ((x > -1) && !(x & BM_DCD)) {
-#ifndef NOICP
+#ifndef NOHINTS
 	    extern int hints;
-#endif /* NOICP */
+#endif /* NOHINTS */
 	    debug(F100,"CONNECT ttgmdm CD test fails","",x);
 	    conres();
 	    printf("?Carrier required but not detected.\n");
-#ifndef NOICP
+#ifndef NOHINTS
+	    cx_status = CSX_CARRIER;
 	    if (!hints)
 	      return(0);
 	    printf("***********************************\n");
@@ -1171,7 +1363,7 @@ conect() {
 	    printf(" first tell C-Kermit to:\n\n");
 	    printf("   SET CARRIER-WATCH OFF\n\n");
 	    printf("***********************************\n\n");
-#endif /* NOICP */
+#endif /* NOHINTS */
 	    return(0);
 	}
 	debug(F100,"CONNECT ttgmdm ok","",0);
@@ -1265,7 +1457,7 @@ conect() {
 
 #ifndef NOESCSEQ
 #ifdef CK_APC
-    escseq = escseq || (apcstatus != APC_OFF);
+    escseq = escseq || (apcstatus & APC_ON);
     apcactive = 0;			/* An APC command is not active */
     apclength = 0;			/* ... */
 #endif /* CK_APC */
@@ -1279,13 +1471,26 @@ conect() {
 
     if (ttyfd > -1) {			/* (just in case...) */
 	what = W_CONNECT;		/* Keep track of what we're doing */
+	active = 1;
+    }
+#ifdef CKLEARN
+    if (learning) {			/* Learned script active... */
+	learnbp = 0;			/* INPUT buffer pointer */
+	learnbc = 0;			/* INPUT buffer count */
+	learnst = 0;			/* State (0 = neutral, none) */
+	learnt1 = (ULONG) time(0);
+    }
+#endif /* CKLEARN */
+
+#ifdef CKTIDLE
+    idlelimit = tt_idlelimit;
+#endif /* CKTIDLE */
+
+    while (active) {			/* Big loop... */
+	debug(F100,"CONNECT top of loop","",0);
 	FD_ZERO(&in);			/* Clear select() structs */
 	FD_ZERO(&out);
 	FD_ZERO(&err);
-	active = 1;
-    }
-    while (active) {			/* Big loop... */
-	debug(F100,"CONNECT top of loop","",0);
 	gotkbd = 0;
 	gotnet = ttpeek();		/* Something sitting in ckutio buf */
 	debug(F101,"CONNECT ttpeek","",gotnet);
@@ -1318,13 +1523,90 @@ conect() {
 #endif /* CK_FORWARD_X */
 
 	    /* Wait till the first one of the above is ready for i/o */
+	    /* or TERM IDLE-SEND is active and we time out. */
 
-	    /* NOTE: here we could implement idle timeouts */
-
-	    debug(F100,"CONNECT select() waiting...","",0);
-	    c = select(16, &in, &out, &err, 0);
-	    debug(F101,"CONNECT select()","",c);
+	    errno = 0;
+#ifdef CKTIDLE
+	    /* This really could be moved out of the loop... */
+	    if (idlelimit) {		/* Idle timeout set */
+		struct timeval tv;
+		if (idlelimit > 0) {	/* Positive = sec */
+		    tv.tv_sec = (long) idlelimit;
+		    tv.tv_usec = 0L;
+		} else {		/* Negative = millisec */
+		    long u = (0 - idlelimit);
+		    tv.tv_sec = u / 1000L;
+		    tv.tv_usec = ((u % 1000L) * 1000L);
+		}
+#ifdef INTSELECT
+		c = select(FD_SETSIZE,(int *)&in,(int *)&out,(int *)&err, &tv);
+#else
+		c = select(FD_SETSIZE, &in, &out, &err, &tv);
+#endif /* INTSELECT */
+	    } else
+#endif /* CKTIDLE */
+#ifdef INTSELECT
+	      c = select(FD_SETSIZE, (int *)&in, (int *)&out, (int *)&err, 0);
+#else
+	      c = select(FD_SETSIZE, &in, &out, &err, 0);
+#endif /* INTSELECT */
 	    if (c < 1) {
+#ifdef CKTIDLE
+		if (c == 0) {		/* Timeout */
+		    debug(F101,"CONNECT select() timeout","",tt_idleact);
+		    switch (tt_idleact) {
+		      case IDLE_HANG: {	/* Hang up */
+			  int x = 0;
+#ifndef NODIAL
+			  if (dialmhu)
+			    x = mdmhup();
+			  if (x < 1)
+#endif /* NODIAL */
+			    tthang();	/* fall thru deliberately... */
+		      }
+		      case IDLE_RET:	/* Return to command mode */
+			cx_status = CSX_IDLE;
+			active = 0;
+			continue;
+		      case IDLE_OUT:	/* OUTPUT a string */
+			if (tt_idlestr) {
+			    int len = strlen(tt_idlestr);
+			    if (len > 0)
+			      ttol((CHAR *)tt_idlestr,len);
+			    else
+			      ttoc(NUL); /* No string, send a NUL */
+			} else
+			  ttoc(NUL);	/* No string, send a NUL */
+			continue;
+		      case IDLE_EXIT:	/* Exit from Kermit */
+			doexit(GOOD_EXIT,xitsta);
+#ifdef TNCODE
+		      case IDLE_TAYT:	/* Send Telnet Are You There? */
+			if (network && ttnproto == NP_TELNET) {
+			    tnopt[0] = (CHAR) IAC;
+			    tnopt[1] = (CHAR) TN_AYT;
+			    tnopt[2] = NUL;
+			    if (ttol((CHAR *)tnopt,2) < 0)
+			      active = 0;
+			}
+			continue;
+
+		      case IDLE_TNOP:	/* Send Telnet NOP */
+			if (network && ttnproto == NP_TELNET) {
+			    tnopt[0] = (CHAR) IAC;
+			    tnopt[1] = (CHAR) TN_NOP;
+			    tnopt[2] = NUL;
+			    if (ttol((CHAR *)tnopt,2) < 0)
+			      active = 0;
+			}
+			continue;
+#endif /* TNCODE */
+		    }
+		}
+#endif /* CKTIDLE */
+
+		debug(F101,"CONNECT select() errno","",errno);
+		/* A too-big first arg to select() gets EBADF */
 #ifdef EINTR
 		if (c == -1) {
 		    if (errno == EINTR) {
@@ -1336,13 +1618,17 @@ conect() {
 		continue;
 	    }
 #ifndef BEBOX
+#ifdef DEBUG
 	    if (FD_ISSET(scrnout, &out)) {
 		debug(F100,"CONNECT SELECT scrnout","",0);
 	    }
+#endif /* DEBUG */
 #endif /* BEBOX */
+
 #ifdef CK_FORWARD_X
             fwdx_check_sockets(&in);
 #endif /* CK_FORWARD_X */
+
 	    if (FD_ISSET(ttyfd, &in)) {	/* Read from net? */
 		debug(F110,"CONNECT SELECT ttyfd","in",0);
 		FD_CLR(ttyfd, &in);
@@ -1371,11 +1657,16 @@ conect() {
 		gotnet = 1;		/* Net is ready (don't set if pty) */
             }
 	}
-	debug(F101,"CONNECT gotkbd","",gotkbd);
-	debug(F101,"CONNECT kbc","",kbc);
+#ifdef DEBUG
+	if (deblog) {
+	    debug(F101,"CONNECT gotkbd","",gotkbd);
+	    debug(F101,"CONNECT kbc","",kbc);
 #ifndef NOSETKEY
-	debug(F101,"CONNECT kmptr","",kmptr);
+	    debug(F101,"CONNECT kmptr","",kmptr);
 #endif /* NOSETKEY */
+	}
+#endif /* DEBUG */
+
 	while (gotkbd || kbc > 0	/* If we have keyboard chars */
 #ifndef NOSETKEY
 	       || kmptr
@@ -1385,9 +1676,9 @@ conect() {
 	    if (kmptr) {		/* Have current macro? */
 		debug(F100,"CONNECT kmptr non NULL","",0);
 		if ((c = (CHAR) *kmptr++) == NUL) { /* Get char from it */
-		    kmptr = NULL;	/* If no more chars,  */
 		    debug(F100,"CONNECT macro empty, continuing","",0);
-		    continue;	/* reset pointer and continue */
+		    kmptr = NULL;	/* If no more chars,  */
+		    continue;		/* Reset pointer and continue */
 		}
 		debug(F000,"CONNECT char from macro","",c);
 	    } else {			/* No macro... */
@@ -1414,6 +1705,7 @@ conect() {
 		if (errno == EINTR)
 		  continue;
 #endif /* EINTR */
+		cx_status = CSX_IOERROR;
 		conoc(BEL);
 		goto conret0;
 	    }
@@ -1448,7 +1740,11 @@ conect() {
 		continue;		/* Back to loop */
 	    }
 	    csave = c;			/* Save it before translation */
-					/* for local echoing. */
+	    				/* for local echoing. */
+#ifdef CKLEARN
+	    crflag = (c == CR);		/* Remember if it was CR. */
+#endif /* CKLEARN */
+
 #ifndef NOCSETS
 	    if (inesc[1] == ES_NORMAL) { /* If not inside escape seq.. */
 		/* Translate character sets */
@@ -1549,6 +1845,17 @@ conect() {
 
 		x = ttoc((char)dopar((CHAR) c));
 		if (x > -1) {
+#ifdef CKLEARN
+		    if (learning) {	/* Learned script active */
+			if (crflag) {	/* User typed CR */
+			    learnchar(CR); /* Handle CR */
+			    learnst = 0;   /* Shift to Neutral */
+			} else {
+			    learnchar(c);  /* Not CR */
+			    learnst = 2;   /* Change state to Keyboard */
+			}
+		    }
+#endif /* CKLEARN */
 		    if (duplex) {	/* If half duplex, must echo */
 			if (debses)
 			  conol(dbchr(csave)); /* the original char */
@@ -1563,6 +1870,7 @@ conect() {
 		    }
 		} else {
 		    perror("\r\nCan't send character");
+		    cx_status = CSX_IOERROR;
 		    active = 0;
 		    break;
 		}
@@ -1573,6 +1881,7 @@ conect() {
 	}
 	while (gotnet > 0 || ibc > 0) {
 	    gotnet = 0;
+	    prev = c;
 	    c = ckcgetc(0);		/* Get next character */
 	    /* debug(F101,"CONNECT c","",c); */
 	    if (c < 0) {		/* Failed... */
@@ -1580,7 +1889,7 @@ conect() {
 		if (msgflg) {
 		    printf("\r\nCommunications disconnect ");
 #ifdef COMMENT
-		    if ( c == -3
+		    if (c == -3
 #ifdef ultrix
 /* This happens on Ultrix if there's no carrier */
 			&& errno != EIO
@@ -1596,12 +1905,25 @@ conect() {
 #ifdef NOSETBUF
 		fflush(stdout);
 #endif /* NOSETBUF */
+#ifdef CKLOGDIAL
+		dologend();
+#endif /* CKLOGDIAL */
 		tthang();		/* Hang up the connection */
 		debug(F111,"CONNECT i/o error 1",ck_errstr(),errno);
+		cx_status = CSX_HOSTDISC;
 		goto conret0;
 	    }
 #ifdef TNCODE
 	    tx = 0;
+	    if ((c == NUL) && network && (ttnproto == NP_TELNET)) {
+		if (prev == CR) {    /* Discard <NUL> of <CR><NUL> if peer */
+		    if (!TELOPT_U(TELOPT_BINARY)) {  /* not in binary mode */
+			debug(F111,"CONNECT NUL",ckitoa(prev),c);
+			ckcputf();	/* Flush screen output buffer */
+			break;
+		    }
+		}
+	    }
 	    if ((c == IAC) && network && (ttnproto == NP_TELNET)) {
 #ifdef CK_ENCRYPTION
 		int x_auth = TELOPT_ME(TELOPT_AUTHENTICATION);
@@ -1644,7 +1966,11 @@ conect() {
 #ifdef NOSETBUF
 		    fflush(stdout);
 #endif /* NOSETBUF */
+#ifdef CKLOGDIAL
+		    dologend();
+#endif /* CKLOGDIAL */
 		    debug(F111,"CONNECT i/o error 2",ck_errstr(),errno);
+		    cx_status = CSX_IOERROR;
 		    goto conret0;
 		} else if (tx == -2) {	/* I/O error */
 		    if (msgflg)
@@ -1652,7 +1978,11 @@ conect() {
 #ifdef NOSETBUF
 		    fflush(stdout);
 #endif /* NOSETBUF */
+#ifdef CKLOGDIAL
+		    dologend();
+#endif /* CKLOGDIAL */
 		    debug(F111,"CONNECT i/o error 3",ck_errstr(),errno);
+		    cx_status = CSX_IOERROR;
 		    goto conret0;
 		} else if (tx == -3) {	/* I/O error */
 		    if (msgflg)
@@ -1660,7 +1990,11 @@ conect() {
 #ifdef NOSETBUF
 		    fflush(stdout);
 #endif /* NOSETBUF */
+#ifdef CKLOGDIAL
+		    dologend();
+#endif /* CKLOGDIAL */
 		    debug(F111,"CONNECT i/o error 4",ck_errstr(),errno);
+		    cx_status = CSX_IOERROR;
 		    goto conret0;
 		} else if ((tx == 1) && (!duplex)) { /* ECHO change */
 		    duplex = 1;		/* Turn on local echo */
@@ -1680,6 +2014,7 @@ conect() {
                         /* side is in SERVER mode and that REMOTE     */
                         /* commands should be used.  And CONNECT mode */
                         /* should be ended.                           */
+			cx_status = CSX_IKSD;
 			active = 0;
                     }
                 }
@@ -1692,6 +2027,7 @@ conect() {
 		    fflush(stdout);
 #endif /* NOSETBUF */
 		    debug(F100,"CONNECT Remote Logout","",0);
+		    cx_status = CSX_TRIGGER;
 		    goto conret0;
                 } else
 		  continue;		/* Negotiation OK, get next char. */
@@ -1701,8 +2037,20 @@ conect() {
 	    /* I'm echoing for the remote */
             if (TELOPT_ME(TELOPT_ECHO) && tn_rem_echo)
 	      ttoc((char)c);
-
 #endif /* TNCODE */
+
+#ifdef CKLEARN
+	 /* Learned script: Record incoming chars if not in Keyboard state */
+
+	    if (learning && learnst != 2) { /* Learned script active */
+		learnbuf[learnbp++] = c;    /* Save for INPUT command */
+		if (learnbp >= LEARNBUFSIZ) /* in circular buffer */
+		  learnbp = 0;              /* wrapping if at end. */
+		learnbc++;                  /* Count this byte. */
+		learnst = 1;                /* State is Net. */
+	    }
+#endif /* CKLEARN */
+
 	    if (debses) {		/* Output character to screen */
 		char *s;		/* Debugging display... */
 		s = dbchr(c);
@@ -1765,6 +2113,7 @@ conect() {
 #endif /* CK_XYZ */
 
 #ifndef NOICP
+			    /* sprintf is safe here (builtin keywords) */
 			    sprintf(apcbuf,
 				    "set proto %s, %s, set proto %s",
 				    ptab[k].p_name,
@@ -1776,6 +2125,7 @@ conect() {
 			    debug(F110,"CONNECT autodownload",apcbuf,0);
 			    apcactive = APC_LOCAL;
 			    ckcputf();	/* Force screen update */
+			    cx_status = CSX_APC;
 			    goto conret1;
 #else
 /*
@@ -1860,16 +2210,16 @@ conect() {
    3. The character following an Esc, in which case we write Esc, then char,
       but only if we have not just entered an APC sequence.
 */
-		if (escseq && apcstatus != APC_OFF) {
+		if (escseq && (apcstatus & APC_ON)) {
 		    if (inesc[0] == ES_GOTESC) /* Don't write ESC yet */
 		      continue;
 		    else if (oldesc[0] == ES_GOTESC && !apcactive) {
-			debug(F100,"XXX WRITING ESC","",0);
 			ckcputc(ESC);	/* Write saved ESC */
 			if (seslog && !sessft) logchar((char)ESC);
 		    } else if (apcrc) {	/* We have an APC */
 			debug(F111,"CONNECT APC complete",apcbuf,apclength);
 			ckcputf();	/* Force screen update */
+			cx_status = CSX_APC;
 			goto conret1;
 		    }
 		}
@@ -1892,17 +2242,22 @@ conect() {
 			    if (seslog && !sessft) logchar((char)c);
 			    c = LF;	/* and insert a linefeed */
 			}
+			if (dontprint)	{ /* Do transparent printing. */
+			    dontprint = 0;
+			    continue;
+			} else
+
 			ckcputc(c);	/* Write character to screen */
 		    }
 		    if (seslog && !sessft) /* Handle session log. */
 		      logchar((char)c);
 #ifdef XPRINT
-		if (printing && !inesc[0]) { /* Do transparent printing. */
-		    /* zchout() can't be used because */
-		    /* it's buffered differently. */
-		    cbuf[0] = c;
-		    zsoutx(ZMFILE,(char *)cbuf,1);
-		}
+		    if (printing && !inesc[0]) {
+			/* zchout() can't be used because */
+			/* it's buffered differently. */
+			cbuf[0] = c;
+			zsoutx(ZMFILE,(char *)cbuf,1);
+		    }
 #endif /* XPRINT */
 
 #ifdef CK_TRIGGER
@@ -1915,6 +2270,7 @@ conect() {
 #ifdef NOSETBUF
 			    fflush(stdout); /* I mean really force it */
 #endif /* NOSETBUF */
+			    cx_status = CSX_TRIGGER;
 			    goto conret1;
 			}
 		    }
@@ -1940,11 +2296,14 @@ conect() {
 	wait_for_thread (tid, &ret_val);
     }
 #endif /* BEBOX */
+
+#ifdef CKLEARN
+    if (learning && learnfp)
+      fputs("\n",learnfp);
+#endif /* CKLEARN */
+
     conres();
     if (dohangup > 0) {
-#ifndef NODIAL
-	extern int dialmhu;
-#endif /* NODIAL */
 #ifdef NETCONN
 	if (network)
 	  ttclos(0);
@@ -1965,12 +2324,17 @@ conect() {
 	    tthang();			/* And make sure we don't hang up */
 #else
 	if (!network) {			/* Serial connection. */
-	    if (dialmhu)		/* Hang up the way they said. */
+#ifndef NODIAL
+	    if (dialmhu)		/* Hang up the way they said to. */
 	      mdmhup();
 	    else
+#endif /* NODIAL */
 	      tthang();
 	}
 #endif /* COMMENT */
+#ifdef CKLOGDIAL
+	dologend();
+#endif /* CKLOGDIAL */
 	dohangup = 0;			/* again unless requested again. */
     }
     if (quitnow)			/* Exit now if requested. */
@@ -2003,7 +2367,7 @@ conect() {
     } else
 	printbar = 0;
     fflush(stdout);
-    return(1);
+    return(rc);
 }
 
 /*  H C O N N E  --  Give help message for connect.  */
@@ -2016,45 +2380,46 @@ static struct hmsgtab {
     char * hmsg;
     int hflags;
 } hlpmsg[] = {
-    "  ? or H for this message",                0,
-    "  0 (zero) to send the NUL (0) character", 0,
-    "  B to send a BREAK signal (0.275sec)",  CXM_SER,
+    {"  ? or H for this message",                0},
+    {"  0 (zero) to send the NUL (0) character", 0},
+    {"  B to send a BREAK signal (0.275sec)",  CXM_SER},
 #ifdef NETCONN
-    "  B to send a network BREAK",            CXM_NET,
-    "  B to send a Telnet BREAK",             CXM_TEL,
+    {"  B to send a network BREAK",            CXM_NET},
+    {"  B to send a Telnet BREAK",             CXM_TEL},
 #endif /* NETCONN */
 #ifdef CK_LBRK
-    "  L to send a Long BREAK (1.5sec)",      CXM_SER,
+    {"  L to send a Long BREAK (1.5sec)",      CXM_SER},
 #endif /* CK_LBRK */
 #ifdef NETCONN
-    "  I to send a network interrupt packet", CXM_NET,
-    "  I to send a Telnet Interrupt request", CXM_TEL,
+    {"  I to send a network interrupt packet", CXM_NET},
+    {"  I to send a Telnet Interrupt request", CXM_TEL},
 #ifdef TNCODE
-    "  A to send Telnet Are-You-There?",      CXM_TEL,
+    {"  A to send Telnet Are-You-There?",      CXM_TEL},
 #endif /* TNCODE */
 #endif /* NETCONN */
-    "  U to hangup and close the connection", 0,
-    "  Q to hangup and quit Kermit",          0,
-    "  S for status",                         0,
+    {"  U to hangup and close the connection", 0},
+    {"  Q to hangup and quit Kermit",          0},
+    {"  S for status",                         0},
 #ifdef NOPUSH
-    "  ! to push to local shell (disabled)",  0,
-    "  Z to suspend (disabled)",              0,
+    {"  ! to push to local shell (disabled)",  0},
+    {"  Z to suspend (disabled)",              0},
 #else
-    "  ! to push to local shell",             0,
+    {"  ! to push to local shell",             0},
 #ifdef NOJC
-    "  Z to suspend (disabled)",              0,
+    {"  Z to suspend (disabled)",              0},
 #else
-    "  Z to suspend",                         0,
+    {"  Z to suspend",                         0},
 #endif /* NOJC */
 #endif /* NOPUSH */
-    "  \\ backslash code:",                   0,
-    "    \\nnn  decimal character code",      0,
-    "    \\Onnn octal character code",        0,
-    "    \\Xhh  hexadecimal character code;", 0,
-    "    terminate with Carriage Return.",    0,
-    "  Type the escape character again to send the escape character itself,",0,
-    "  or press the space-bar to resume the CONNECT session.",               0,
-    NULL, 0
+    {"  \\ backslash code:",                   0},
+    {"    \\nnn  decimal character code",      0},
+    {"    \\Onnn octal character code",        0},
+    {"    \\Xhh  hexadecimal character code;", 0},
+    {"    terminate with Carriage Return.",    0},
+    {"  Type the escape character again to send the escape character itself,",
+       0},
+    {"  or press the space-bar to resume the CONNECT session.", 0},
+    {NULL, 0}
 };
 
 int
@@ -2105,6 +2470,7 @@ doesc(c) char c;
 
 	  case 'c':			/* Escape back to prompt */
 	  case '\03':
+	    cx_status = CSX_ESCAPE;
 #ifdef NOICP
 	    conoll("");
 	    conoll("");
@@ -2128,18 +2494,18 @@ doesc(c) char c;
 
 	  case 'b':			/* Send a BREAK signal */
 	  case '\02':
+#ifdef CKLEARN
+	    learnchar(-7);
+#endif /* CKLEARN */
 	    ttsndb(); return;
 
 #ifdef NETCONN
 	  case 'i':			/* Send Interrupt */
 	  case '\011':
 #ifdef TCPSOCKET
-#ifndef IP
-#define IP 244
-#endif /* IP */
 	    if (network && ttnproto == NP_TELNET) { /* TELNET */
 		temp[0] = (CHAR) IAC;	/* I Am a Command */
-		temp[1] = (CHAR) IP;	/* Interrupt Process */
+		temp[1] = (CHAR) TN_IP;	/* Interrupt Process */
 		temp[2] = NUL;
 		ttol((CHAR *)temp,2);
 	    } else
@@ -2150,12 +2516,9 @@ doesc(c) char c;
 #ifdef TCPSOCKET
 	  case 'a':			/* "Are You There?" */
 	  case '\01':
-#ifndef AYT
-#define AYT 246
-#endif /* AYT */
 	    if (network && ttnproto == NP_TELNET) {
 		temp[0] = (CHAR) IAC;	/* I Am a Command */
-		temp[1] = (CHAR) AYT;	/* Are You There? */
+		temp[1] = (CHAR) TN_AYT; /* Are You There? */
 		temp[2] = NUL;
 		ttol((CHAR *)temp,2);
 	    } else conoc(BEL);
@@ -2165,14 +2528,19 @@ doesc(c) char c;
 
 #ifdef CK_LBRK
 	  case 'l':			/* Send a Long BREAK signal */
+#ifdef CKLEARN
+	    learnchar(-8);
+#endif /* CKLEARN */
 	    ttsndlb(); return;
 #endif /* CK_LBRK */
 
 	  case 'u':			/* Hangup */
        /* case '\010': */		/* No, too dangerous */
+	    cx_status = CSX_USERDISC;
 	    dohangup = 2; active = 0; conol("\r\nHanging up "); return;
 
 	  case 'q':			/* Quit */
+	    cx_status = CSX_USERDISC;
 	    dohangup = 2; quitnow = 1; active = 0; conol("\r\n"); return;
 
 	  case 's':			/* Status */
@@ -2180,13 +2548,22 @@ doesc(c) char c;
 	    conoll("----------------------------------------------------");
 #ifdef PTYORPIPE
 	    if (ttpipe)
-	      sprintf(temp, " Pipe: \"%s\"", ttname);
+	      ckmakmsg(temp,TMPLEN," Pipe: \"",ttname,"\"",NULL);
 	    else if (ttpty)
-	      sprintf(temp, " Pty: \"%s\"", ttname);
+	      ckmakmsg(temp,TMPLEN," Pty: \"",ttname,"\"",NULL);
 	    else
 #endif /* PTYORPIPE */
-	      sprintf(temp, " %s: %s", (network ? "Host" : "Device"), ttname);
+	      ckmakmsg(temp,
+		       TMPLEN,
+		       " ",
+		       (network ? "Host" : "Device"),
+		       ": ",
+		       ttname
+		       );
 	    conoll(temp);
+
+	    /* The following sprintf's are safe, temp[] size is at least 200 */
+
 	    if (!network && speed >= 0L) {
 		sprintf(temp,"Speed %ld", speed);
 		conoll(temp);
@@ -2203,7 +2580,13 @@ doesc(c) char c;
 	    sprintf(temp," Autodownload: %s", autodl ? "on" : "off");
 	    conoll(temp);
 #endif /* NOXFER */
-	    sprintf(temp," Session log: %s", *sesfil ? sesfil : "(none)");
+	    ckmakmsg(temp,		/* (would not be safe for sprintf) */
+		     TMPLEN,
+		     " Session log: ",
+		     *sesfil ? sesfil : "(none)",
+		     NULL,
+		     NULL
+		     );
 	    conoll(temp);
 #ifndef NOSHOW
 	    if (!network) shomdm();
@@ -2246,6 +2629,7 @@ doesc(c) char c;
 		conres();		      /* Put console back to normal */
 		zshcmd("");		      /* Fork a shell. */
 		if (conbin((char)escape) < 0) {
+		    cx_status = CSX_INTERNAL;
 		    printf("Error resuming CONNECT session\n");
 		    active = 0;
 		}

@@ -1,7 +1,9 @@
+#define TOKPRECHECK
+
 #include "ckcsym.h"
 #define DOCHKVAR
 
-char *cmdv = "Command package 7.0.121, 24 Dec 1999";
+char *cmdv = "Command package 8.0.150, 8 Dec 2001";
 
 /*  C K U C M D  --  Interactive command package for Unix  */
 
@@ -9,7 +11,7 @@ char *cmdv = "Command package 7.0.121, 24 Dec 1999";
   Author: Frank da Cruz (fdc@columbia.edu),
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2000,
+  Copyright (C) 1985, 2001,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -18,7 +20,7 @@ char *cmdv = "Command package 7.0.121, 24 Dec 1999";
 #ifdef OS2                    /* Command-terminal-to-C-Kermit character mask */
 int cmdmsk = 255;
 #else
-int cmdmsk = 127;
+int cmdmsk = 255;			/* 31 Dec 2000 (was 127) */
 #endif /* OS2 */
 
 #ifdef BS_DIRSEP			/* Directory separator is backslash */
@@ -42,6 +44,15 @@ int cmdmsk = 127;
 _PROTOTYP( int unhex, (char) );
 _PROTOTYP( static VOID cmdclrscn, (void) );
 
+#ifdef CKLEARN
+_PROTOTYP( VOID learncmd, (char *) );
+#endif /* CKLEARN */
+
+static char *moname[] = {
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+};
+
 struct keytab cmonths[] = {
   { "april",     4, 0 },
   { "august",    8, 0 },
@@ -64,14 +75,23 @@ _PROTOTYP( int chkvar, (char *) );
 extern int askflag;
 #endif /* NOSPL */
 
+#ifdef CKROOT
+extern int ckrooterr;
+#endif /* CKROOT */
+
+#ifdef IKSD
+extern int inserver;
+#endif /* IKSD */
+
 int cmfldflgs = 0;			/* Flags for cmfld() */
-static int cmkwflgs = 0;		/* Flags from last keyword parse */
+int cmkwflgs = 0;			/* Flags from last keyword parse */
 static int blocklvl = 0;		/* Block nesting level */
 static int linebegin = 0;		/* Flag for at start of a line */
 static int quoting = 1;			/* Quoting is allowed */
 static int swarg = 0;			/* Parsing a switch argument */
 static int xcmfdb = 0;			/* Flag for parsing chained fdbs... */
 static int chsrc = 0;			/* Source of character, 1 = tty */
+static int newcmd = 0;			/* See addcmd() */
 
 #ifdef BS_DIRSEP
 static int dirnamflg = 0;
@@ -99,6 +119,7 @@ Modeled after the DECSYSTEM-20 command parser (the COMND JSYS), RIP. Features:
 Functions:
  cmsetp - Set prompt (cmprom is prompt string)
  cmsavp - Save current prompt
+ cmgetp = Get current prompt
  prompt - Issue prompt
  cmini  - Clear the command buffer (before parsing a new command)
  cmres  - Reset command buffer pointers (before reparsing)
@@ -190,14 +211,18 @@ modules would have to be changed...
 extern int cmdadl, justone;
 #endif /* CK_AUTODL */
 
-extern int timelimit, nzxopts;
+extern int timelimit, nzxopts, nopush, nolocal, xcmdsrc;
 
 #ifdef CKSYSLOG
 #ifdef UNIX
 #ifdef CKXPRINTF			/* Our printf macro conflicts with */
 #undef printf				/* use of "printf" in syslog.h */
 #endif /* CKXPRINTF */
+#ifdef RTAIX
+#include <sys/syslog.h>
+#else  /* RTAIX */
 #include <syslog.h>
+#endif /* RTAIX */
 #ifdef CKXPRINTF
 #define printf ckxprintf
 #endif /* CKXPRINTF */
@@ -212,13 +237,6 @@ int psetf = 0,                          /* Flag that prompt has been set */
     dpx = 0,                            /* Duplex (0 = full) */
     inword = 0;				/* In the middle of getting a word */
 
-#ifdef OLDHELP
-static
-int hw = HLPLW,                         /* Help line width */
-    hc = HLPCW,                         /* Help line column width */
-    hh,                                 /* Current help column number */
-    hx;                                 /* Current help line position */
-#endif /* OLDHELP */
 char *dfprom = "Command? ";             /* Default prompt */
 
 int cmflgs;                             /* Command flags */
@@ -235,9 +253,6 @@ char *cmdbuf = NULL;			/* Command buffer */
 char *savbuf = NULL;			/* Buffer to save copy of command */
 char *atmbuf = NULL;			/* Atom buffer - for current field */
 char *atxbuf = NULL;			/* For expanding the atom buffer */
-#ifdef OLDHELP
-static char *hlpbuf;			/* Help string buffer */
-#endif /* OLDHELP */
 static char *atybuf = NULL;		/* For copying atom buffer */
 static char *filbuf = NULL;		/* File name buffer */
 static char *cmprom = NULL;		/* Program's prompt */
@@ -252,20 +267,24 @@ int cm_recall = R_MAX;			/* Size of command recall buffer */
 int on_recall = 1;			/* Recall feature is ON */
 static int no_recall = 0;		/* Recall OFF for this cmd only */
 static int force_add = 0;		/* Force cmd into recall buffer */
+static int last_recall = -1;		/* Last recall-related action */
+/*
+  -1 = none
+   0 = CR (a command was entered)
+   1 = Up
+   2 = Down
+*/
 int in_recall = 0;			/* Recall buffers are init'd */
 static int
   current = -1,				/* Pointer to current command */
   rlast = -1;				/* Index of last command in buffer */
 static char **recall = NULL;		/* Array of recall buffer pointers */
 #endif /* CK_RECALL */
-#else
+#else  /* !DCMDBUF */
 char cmdbuf[CMDBL+4];                   /* Command buffer */
 char savbuf[CMDBL+4];                   /* Buffer to save copy of command */
 char atmbuf[ATMBL+4];                   /* Atom buffer */
 char atxbuf[CMDBL+4];                   /* For expanding the atom buffer */
-#ifdef OLDHELP
-static char hlpbuf[HLPBL+4];		/* Help string buffer */
-#endif /* OLDHELP */
 static char atybuf[ATMBL+4];		/* For copying atom buffer */
 static char filbuf[ATMBL+4];		/* File name buffer */
 static char cmprom[PROMPTL+1];		/* Program's prompt */
@@ -299,11 +318,6 @@ extern int cmd_cols, cmd_rows, local, quiet;
 #define IAC 255
 #endif /* TNCODE */
 
-#ifdef OLDHELP
-_PROTOTYP( static VOID addhlp, (char *) );
-_PROTOTYP( static VOID clrhlp, (void) );
-_PROTOTYP( static VOID dmphlp, (void) );
-#endif /* OLDHELP */
 _PROTOTYP( static int gtword, (int) );
 _PROTOTYP( static int addbuf, (char *) );
 _PROTOTYP( static int setatm, (char *, int) );
@@ -419,11 +433,25 @@ kwdhelp(s,n,pat,pre,post,off,xhlp)
     if (xhlp & 4)			/* For switches */
       tmpbuf = (char *)malloc(TMPBUFSIZ+1);
 
-    if (s2 = (char **) malloc(n * sizeof(char *))) {
+    if ((s2 = (char **) malloc(n * sizeof(char *)))) {
 	for (i = 0; i < n; i++) {	/* Find longest keyword */
 	    s2[i] = NULL;
 	    if (ckstrcmp(s[i].kwd,pat,cc,0))
 	      continue;
+
+	    if (s[i].flgs & CM_PSH	/* NOPUSH or nopush screening */
+#ifndef NOPUSH
+		&& nopush
+#endif /* NOPUSH */
+		)
+	      continue;
+	    if (s[i].flgs & CM_LOC	/* NOLOCAL or nolocal screening */
+#ifndef NOLOCAL
+		&& nolocal
+#endif /* NOLOCAL */
+		)
+	      continue;
+
 	    if (s[i].flgs & CM_INV) {
 #ifdef COMMENT
 /* This code does not show invisible keywords at all except for "help ?" */
@@ -450,11 +478,13 @@ kwdhelp(s,n,pat,pre,post,off,xhlp)
 	    if (!(xhlp & 4) || !tmpbuf) { /* Regular keyword table */
 		s2[n2++] = s[i].kwd;	/* Copy pointers to visible ones */
 	    } else {			/* Switches */
-		sprintf(tmpbuf,		/* Make a copy that shows ":" if */
-			"%s%s",		/* the switch takes an argument. */
-			s[i].kwd,
-			(s[i].flgs & CM_ARG) ? ":" : ""
-			);
+		ckmakmsg(tmpbuf,	/* Make a copy that shows ":" if */
+			 TMPBUFSIZ,	/* the switch takes an argument. */
+			 s[i].kwd,
+			 (s[i].flgs & CM_ARG) ? ":" : "",
+			 NULL,
+			 NULL
+			 );
 		makestr(&(s2[n2]),tmpbuf);
 		if (s[i].flgs & CM_ARG) j++;
 		n2++;
@@ -522,7 +552,7 @@ kwdhelp(s,n,pat,pre,post,off,xhlp)
     }
   xkwdhelp:
     if (xhlp & 4) {
-	if (tmpbuf) free(tmpbuf);
+	if (tmpbuf) free((char *)tmpbuf);
 	for (i = 0; i < n; i++)
 	  if (s2[i]) free(s2[i]);
     }
@@ -561,9 +591,10 @@ filhelp(n,pre,post,off,cmdirflg) int n, off; char *pre, *post; int cmdirflg; {
     if (off < 0) off = 0;		/* Offset for first page */
     if (!pre) pre = "";			/* Handle null string pointers */
     if (!post) post = "";
+
     lc = off;				/* Screen-line counter */
 
-    if (s2 = (char **) malloc(n * sizeof(char *))) {
+    if ((s2 = (char **) malloc(n * sizeof(char *)))) {
 	for (i = 0; i < n; i++) {	/* Loop through filenames */
 	    itsadir = 0;
 	    s2[i] = NULL;		/* Initialize each pointer to NULL */
@@ -668,7 +699,7 @@ xfilhelp:
 	if (b) free(b);
 	for (i = 0; i < n2; i++)
 	  if (s2[i]) free(s2[i]);
-	if (s2) free(s2);
+	if (s2) free((char *)s2);
 	return(rc);
     }
 }
@@ -681,9 +712,6 @@ cmsetup() {
     if (!(cmdbuf = malloc(CMDBL + 4))) return(-1);
     if (!(savbuf = malloc(CMDBL + 4))) return(-1);
     savbuf[0] = '\0';
-#ifdef OLDHELP
-    if (!(hlpbuf = malloc(HLPBL + 4))) return(-1);
-#endif /* OLDHELP */
     if (!(atmbuf = malloc(ATMBL + 4))) return(-1);
     if (!(atxbuf = malloc(CMDBL + 4))) return(-1);
     if (!(atybuf = malloc(ATMBL + 4))) return(-1);
@@ -719,6 +747,11 @@ cmsavp(s,n) char s[]; int n;
       ckstrncpy(s,cmprxx,n);
 }
 
+char *
+cmgetp() {
+    return(cmprxx);
+}
+
 int
 cmgbrk() {
     return(brkchar);
@@ -741,7 +774,7 @@ prompt(f) xx_strp f; {
     extern int display_demo;
 
     /* If there is a demo screen to be displayed, display it */
-    if (display_demo && cmdsrc() == 0) {
+    if (display_demo && xcmdsrc == 0) {
         demoscrn();
         display_demo = 0;
     }
@@ -774,7 +807,14 @@ prompt(f) xx_strp f; {
 #ifdef MAC
     printf("%s", sx);
 #else
-    printf("\r%s",sx);			/* Print the prompt. */
+#ifdef IKSD
+    if (inserver) {			/* Print the prompt. */
+        ttoc(CR);			/* If TELNET Server */
+        ttoc(NUL);			/* must folloW CR by NUL */
+        printf("%s",sx);
+    } else
+#endif /* IKSD */
+      printf("\r%s",sx);
 #ifdef CK_SSL
     if (!(ssl_active_flag || tls_active_flag))
 #endif /* CK_SSL */
@@ -806,7 +846,7 @@ pushqcmd(s) char * s; {			/* For use with ELSE command. */
 	pushcmd(s);			/* do regular pushcmd */
 	return;
     }
-    while (c = *s++) {			/* Otherwise insert quotes */
+    while ((c = *s++)) {		/* Otherwise insert quotes */
 	if (c == CMDQ)
 	  *p++ = CMDQ;
 	*p++ = c;
@@ -867,27 +907,26 @@ cmini(d) int d; {
 #endif /* USE_MEMCPY */
 
     *atmbuf = *savbuf = *atxbuf = *atybuf = *filbuf = NUL;
-#ifdef OLDHELP
-    *hlpbuf = NUL;
-#endif /* OLDHELP */
-    blocklvl = 0;		/* Block level is 0 */
-    linebegin = 1;		/* And we're at the beginning of a line */
-    dpx = d;			/* Make a global copy of the echo flag */
+    blocklvl = 0;			/* Block level is 0 */
+    linebegin = 1;			/* At the beginning of a line */
+    dpx = d;				/* Global copy of the echo flag */
     debug(F101,"cmini dpx","",dpx);
-    crflag = 0;
+    crflag = 0;				/* Reset flags */
     qmflag = 0;
     esflag = 0;
 #ifdef CK_RECALL
-    no_recall = 0;
+    no_recall = 0;			/* Start out with recall enabled */
 #endif /* CK_RECALL */
-    cmres();
+    cmres();				/* Sets bp etc */
+    newcmd = 1;				/* See addcmd() */
 }
 
 #ifndef NOSPL
-/* The following bits are to allow the command package to call itself */
-/* in the middle of a parse.  To do this, begin by calling cmpush, and */
-/* end by calling cmpop. */
-
+/*
+  The following bits are to allow the command package to call itself
+  in the middle of a parse.  To do this, begin by calling cmpush, and
+  end by calling cmpop.  As you can see, this is rather expensive.
+*/
 #ifdef DCMDBUF
 struct cmp {
     int i[5];				/* stack for integers */
@@ -910,7 +949,7 @@ cmpush() {				/* Save the command environment */
     if (cmddep >= CMDDEP)		/* Enter a new command depth */
       return(-1);
     cmddep++;
-    debug(F101,"&cmpush","",cmddep);
+    debug(F101,"&cmpush to depth","",cmddep);
 
 #ifdef DCMDBUF
     /* allocate memory for cmp if not already done */
@@ -948,14 +987,7 @@ cmpush() {				/* Save the command environment */
     cmp[cmddep].b[1] = cp;
     if (cp == NULL) return(-1);
 
-#ifdef OLDHELP
-    cp = malloc((int)strlen(hlpbuf)+1);	/* 2: Help string buffer */
-    if (cp) strcpy(cp,hlpbuf);
-    cmp[cmddep].b[2] = cp;
-    if (cp == NULL) return(-1);
-#else
     cmp[cmddep].b[2] = NULL;
-#endif /* OLDHELP */
 
     cp = malloc((int)strlen(atmbuf)+1);	/* 3: Atom buffer */
     if (cp) strcpy(cp,atmbuf);
@@ -987,14 +1019,7 @@ cmpush() {				/* Save the command environment */
     cmp_b[cmddep][1] = cp;
     if (cp == NULL) return(-1);
 
-#ifdef OLDHELP
-    cp = malloc((int)strlen(hlpbuf)+1);	/* 2: Help string buffer */
-    if (cp) strcpy(cp,hlpbuf);
-    cmp_b[cmddep][2] = cp;
-    if (cp == NULL) return(-1);
-#else
     cmp_b[cmddep][2] = NULL;
-#endif /* OLDHELP */
 
     cp = malloc((int)strlen(atmbuf)+1);	/* 3: Atom buffer */
     if (cp) strcpy(cp,atmbuf);
@@ -1023,9 +1048,10 @@ cmpush() {				/* Save the command environment */
 
 int
 cmpop() {				/* Restore the command environment */
-    debug(F101,"&cmpop","",cmddep);
-    if (cmddep < 0) return(-1);		/* Don't pop too much! */
-
+    if (cmddep < 0) {
+	debug(F100,"&cmpop called from top level","",0);
+	return(-1);			/* Don't pop too much! */
+    }
 #ifdef DCMDBUF
     cmflgs = cmp[cmddep].i[0];		/* First do the global ints */
     cmfsav = cmp[cmddep].i[1];
@@ -1061,13 +1087,6 @@ cmpop() {				/* Restore the command environment */
 	free(cmp[cmddep].b[1]);
 	cmp[cmddep].b[1] = NULL;
     }
-#ifdef OLDHELP
-    if (cmp[cmddep].b[2]) {
-	strncpy(hlpbuf,cmp[cmddep].b[2],HLPBL); /* 2: Help buffer */
-	free(cmp[cmddep].b[2]);
-	cmp[cmddep].b[2] = NULL;
-    }
-#endif /* OLDHELP */
     if (cmp[cmddep].b[3]) {
 	strncpy(atmbuf,cmp[cmddep].b[3],ATMBL); /* 3: Atomic buffer! */
 	free(cmp[cmddep].b[3]);
@@ -1099,13 +1118,6 @@ cmpop() {				/* Restore the command environment */
 	free(cmp_b[cmddep][1]);
 	cmp_b[cmddep][1] = NULL;
     }
-#ifdef OLDHELP
-    if (cmp_b[cmddep][2]) {
-	strncpy(hlpbuf,cmp_b[cmddep][2],HLPBL); /* 2: Help buffer */
-	free(cmp_b[cmddep][2]);
-	cmp_b[cmddep][2] = NULL;
-    }
-#endif /* OLDHELP */
     if (cmp_b[cmddep][3]) {
 	strncpy(atmbuf,cmp_b[cmddep][3],ATMBL); /* 3: Atomic buffer! */
 	free(cmp_b[cmddep][3]);
@@ -1129,13 +1141,13 @@ cmpop() {				/* Restore the command environment */
 #endif /* DCMDBUF */
 
     cmddep--;				/* Rise, rise */
-    debug(F101,"&cmpop","",cmddep);
+    debug(F101,"&cmpop to depth","",cmddep);
     return(cmddep);
 }
 #endif /* NOSPL */
 
 #ifdef COMMENT
-VOID
+VOID					/* Not used */
 stripq(s) char *s; {                    /* Function to strip '\' quotes */
     char *t;
     while (*s) {
@@ -1159,8 +1171,8 @@ untab(s) char *s; {
 /*  C M N U M  --  Parse a number in the indicated radix  */
 
 /*
- The only radix allowed in unquoted numbers is 10.
- Parses unquoted numeric strings in base 10.
+ The radix is specified in the arg list.
+ Parses unquoted numeric strings in the given radix.
  Parses backslash-quoted numbers in the radix indicated by the quote:
    \nnn = \dnnn = decimal, \onnn = octal, \xnn = Hexadecimal.
  If these fail, then if a preprocessing function is supplied, that is applied
@@ -1177,11 +1189,14 @@ untab(s) char *s; {
 int
 cmnum(xhlp,xdef,radix,n,f) char *xhlp, *xdef; int radix, *n; xx_strp f; {
     int x; char *s, *zp, *zq;
+#ifdef COMMENT
     char lbrace, rbrace;
+#endif /* COMMENT */
 
     if (!xhlp) xhlp = "";
     if (!xdef) xdef = "";
 
+#ifdef COMMENT
     if (cmfldflgs & 1) {
 	lbrace = '(';
 	rbrace = ')';
@@ -1189,9 +1204,11 @@ cmnum(xhlp,xdef,radix,n,f) char *xhlp, *xdef; int radix, *n; xx_strp f; {
 	lbrace = '{';
 	rbrace = '}';
     }
-    if (radix != 10) {                  /* Just do base 10 */
+#endif /* COMMENT */
+
+    if (radix != 10 && radix != 8) {	/* Just do bases 8 and 10 */
         printf("cmnum: illegal radix - %d\n",radix);
-        return(-1);
+        return(-2);
     } /* Easy to add others but there has never been a need for it. */
     x = cmfld(xhlp,xdef,&s,(xx_strp)0);
     debug(F101,"cmnum: cmfld","",x);
@@ -1202,17 +1219,23 @@ cmnum(xhlp,xdef,radix,n,f) char *xhlp, *xdef; int radix, *n; xx_strp f; {
   spaces in expressions, but perhaps more important lets us have user-defined
   functions in numeric fields.
 */
-    if (*zp == lbrace) {		/* Braced field, strip braces */
+    zp = brstrip(zp);			/* Strip braces */
+    if (cmfldflgs & 1 && *zp == '(') {	/* Parens too.. */
 	x = (int) strlen(atmbuf);
-	if (x > 0) {			/* The "if" is to shut up optimizers */
-	    if (*(atmbuf+x-1) == rbrace) {
-		*(atmbuf+x-1) = NUL;	/* that complain about a possible */
-		zp++;			/* reference to atbmbuf[-1] even */
+	if (x > 0) {
+	    if (*(atmbuf+x-1) == ')') {
+		*(atmbuf+x-1) = NUL;
+		zp++;
 	    }
-	}				/* though we know that x > 0. */
+	}
     }
-    if (chknum(zp)) {			/* Check for decimal number */
-        *n = atoi(zp);			/* Got one, we're done. */
+    if (chknum(zp)) {			/* Check for number */
+	if (radix == 8) {		/* If it's supposed to be octal */
+	    zp = ckradix(zp,8,10);	/* convert to decimal */
+	    if (!zp) return(-2);
+	    if (!strcmp(zp,"-1")) return(-2);
+	}
+        *n = atoi(zp);			/* Convert decimal string to int. */
 	debug(F101,"cmnum 1st chknum ok","",*n);
         return(0);
     } else if ((x = xxesc(&zp)) > -1) {	/* Check for backslash escape */
@@ -1236,6 +1259,11 @@ cmnum(xhlp,xdef,radix,n,f) char *xhlp, *xdef; int radix, *n; xx_strp f; {
     if (!*zp) zp = xdef;		/* Result empty, substitute default */
     debug(F110,"cmnum zp 2",zp,0);
     if (chknum(zp)) {			/* Check again for decimal number */
+	if (radix == 8) {		/* If it's supposed to be octal */
+	    zp = ckradix(zp,8,10);	/* convert to decimal */
+	    if (!zp) return(-2);
+	    if (!strcmp(zp,"-1")) return(-2);
+	}
         *n = atoi(zp);			/* Got one, we're done. */
 	debug(F101,"cmnum 2nd chknum ok","",*n);
         return(0);
@@ -1252,6 +1280,11 @@ cmnum(xhlp,xdef,radix,n,f) char *xhlp, *xdef; int radix, *n; xx_strp f; {
 	char * p;
 	p = evala(zp);
 	if (chknum(p)) {
+	    if (radix == 8) {		/* If it's supposed to be octal */
+		zp = ckradix(zp,8,10);	/* convert to decimal */
+		if (!zp) return(-2);
+		if (!strcmp(zp,"-1")) return(-2);
+	    }
 	    *n = atoi(p);
 	    debug(F101,"cmnum exp eval ok","",*n);
 	    return(0);
@@ -1303,14 +1336,7 @@ cmofi(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; {
     if (x < 0)
       return(x);
 
-    if (*s == '{') {			/* Strip enclosing braces */
-	int n;
-	n = strlen(s);
-	if (s[n-1] == '}') {
-	    s[n-1] = NUL;
-	    s++;
-	}
-    }
+    s = brstrip(s);			/* Strip enclosing braces */
     debug(F110,"cmofi 1.5",s,0);
 
 #ifdef DOCHKVAR
@@ -1462,7 +1488,12 @@ o_again:
   has to print a message.
 */
 	debug(F110,"cmofi 6: failure",s,0);
-        printf("?Write permission denied - %s\n",s);
+#ifdef CKROOT
+	if (ckrooterr)
+	  printf("?Off Limits: %s\n",s);
+	else
+#endif /* CKROOT */
+	  printf("?Write permission denied - %s\n",s);
 #ifdef CKCHANNELIO
 	z_error = FX_ACC;
 #endif /* CKCHANNELIO */
@@ -1570,6 +1601,7 @@ cmdirp(xhlp,xdef,xp,path,f) char *xhlp, *xdef, **xp; char * path; xx_strp f; {
     xp    -- pointer to result (in our space, must be copied from here)
     wild  -- flag set upon return to indicate if filespec was wild
     d     -- 0 to parse files, 1 to parse files or directories
+             Add 2 to inhibit following of symlinks.
     path  -- search path for files
     f     -- pointer to string processing function (e.g. to evaluate variables)
     dirflg -- 1 to parse *only* directories, 0 otherwise
@@ -1577,8 +1609,9 @@ cmdirp(xhlp,xdef,xp,path,f) char *xhlp, *xdef, **xp; char * path; xx_strp f; {
 int
 cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
     char *xhlp,*xdef,**xp; int *wild, d; char * path; xx_strp f; int dirflg; {
-    extern int recursive, diractive;
-    int i, x, itsadir, xc, expanded = 0, nfiles = 0;
+    extern int recursive, diractive, cdactive, dblquo;
+    int i, x, itsadir, xc, expanded = 0, nfiles = 0, children = -1;
+    int qflag = 0;
     long y;
     char *sp = NULL, *zq, *np = NULL;
     char *sv = NULL, *p = NULL;
@@ -1609,6 +1642,13 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
     if (!xhlp) xhlp = "";
     if (!xdef) xdef = "";
 
+    nzxopts = 0;			/* zxpand() options */
+    debug(F101,"cmifi d","",d);
+    if (d & 2) {			/* d & 2 means don't follow symlinks */
+	d ^= 2;
+	nzxopts = ZX_NOLINKS;
+    }
+    debug(F101,"cmifi nzxopts","",nzxopts);
     cmfldflgs = 0;
     if (path)
       if (!*path)
@@ -1623,7 +1663,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
     }
     debug(F110,"cmifi2 path",path,0);
 
-    ckstrncpy(cmdefault,xdef,CMDEFAULT);	/* Copy default */
+    ckstrncpy(cmdefault,xdef,CMDEFAULT); /* Copy default */
     xdef = cmdefault;
 
     inword = 0;				/* Initialize counts & pointers */
@@ -1656,7 +1696,6 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 	  case -10:
 	    if (gtimer() > timelimit) {
 #ifdef IKSD
-                extern int inserver;
                 if (inserver) {
                     printf("\r\nIKSD IDLE TIMEOUT: %d sec\r\n", timelimit);
                     doexit(GOOD_EXIT,0);
@@ -1675,15 +1714,15 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 	  case -1:			/* Reparse needed */
 	    if (np) free(np);
 	    return(x);
-	  case 0:			/* SP or NL */
-	  case 1:
+	  case 1:			/* CR */
+	  case 0:			/* SP */
 	    if (xc == 0)		/* If no input... */
 	      *xp = xdef;		/* substitute the default */
-	    if (**xp == NUL) {		/* If field still empty return -3. */
+	    *xp = brstrip(*xp);		/* Strip braces */
+	    if (**xp == NUL) {		/* 12 mar 2001 */
 		if (np) free(np);
 		return(-3);
 	    }
-	    *xp = brstrip(*xp);		/* Strip braces */
 	    debug(F110,"cmifi brstrip",*xp,0);
 #ifndef NOSPL
 	    if (f) {			/* If a conversion function is given */
@@ -1691,7 +1730,9 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 		char *s = *xp;		/* See if there are any variables in */
 		int x;
 		while (*s) {		/* the string and if so, expand them */
-		    if (chkvar(s)) {
+		    x = chkvar(s);
+		    debug(F111,"cmifi chkvar",*xp,x);
+		    if (x) {
 #endif /* DOCHKVAR */
 			zq = atxbuf;
 			atxn = CMDBL;
@@ -1710,19 +1751,24 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 #endif /* DOCHKVAR */
 	    }
 #endif /* NOSPL */
-
-#ifdef DTILDE
-	    dirp = tilde_expand(*xp);	/* Expand tilde, if any, */
-	    if (*dirp != '\0') {	/* in the atom buffer. */
-		if (setatm(dirp,1) < 0) {
-		    printf("Expanded name too long\n");
-		    if (np) free(np);
-		    return(-9);
-		}
+	    if (**xp == NUL) {		/* 12 mar 2001 */
+		if (np) free(np);
+		return(-3);
 	    }
-	    *xp = atmbuf;
+#ifdef DTILDE
+	    if (dirflg) {
+		dirp = tilde_expand(*xp); /* Expand tilde, if any, */
+		if (*dirp != '\0') {	/* in the atom buffer. */
+		    if (setatm(dirp,1) < 0) {
+			printf("Expanded name too long\n");
+			if (np) free(np);
+			return(-9);
+		    }
+		}
+		*xp = atmbuf;
+		debug(F110,"cmifi tilde_expand",*xp,0);
+	    }
 #endif /* DTILDE */
-	    debug(F110,"cmifi tilde_expand",*xp,0);
 	    if (!sv) {			/* Only do this once */
 		sv = malloc((int)strlen(*xp)+1); /* Make a safe copy */
 		if (!sv) {
@@ -1778,7 +1824,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 		    flag = 1;
 		debug(F111,"cmifi VMS dirname flag",*xp,flag);
 		if (!flag) {
-		    sprintf(tmpbuf,"[.%s]",*xp);
+		    ckmakmsg(tmpbuf,TMPBUFSIZ,"[.",*xp,"]",NULL);
 		    itsadir = isdir(tmpbuf);
 		    if (itsadir) {
 			setatm(tmpbuf,0);
@@ -1789,7 +1835,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 	    } else if (itsadir == 1 && *(xp[0]) == '.' && *(xp[1])) {
 		char *p;
 		if (p = malloc(cc + 4)) {
-		    sprintf(p,"[%s]",*xp);
+		    ckmakmsg(p,cc+4,"[",*xp,"]",NULL);
 		    setatm(p,0);
 		    *xp = atmbuf;
 		    debug(F110,"cmdir .foo",*xp,0);
@@ -1800,7 +1846,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 		char *p;
 		p = malloc(cc + 4);
 		if (p) {
-		    x = cvtdir(*xp,p);	/* Convert to [FOO.BAR] */
+		    x = cvtdir(*xp,p,ATMBL); /* Convert to [FOO.BAR] */
 		    if (x > 0) {
 			setatm(p,0);
 			*xp = atmbuf;
@@ -1814,11 +1860,12 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 	    if (dirflg) {		/* Parsing a directory name? */
 		/* Yes, does it contain wildcards? */
 		if (iswild(*xp) ||
-		    diractive && (!strcmp(*xp,".")  || !strcmp(*xp,".."))
+		    (diractive && (!strcmp(*xp,".")  || !strcmp(*xp,"..")))
 		    ) {
-		    nzxopts = ZX_DIRONLY; /* Match only directory names */
+		    nzxopts |= ZX_DIRONLY; /* Match only directory names */
 		    if (matchdot)  nzxopts |= ZX_MATCHDOT;
 		    if (recursive) nzxopts |= ZX_RECURSE;
+		    debug(F101,"cmifi nzxopts 2","",nzxopts);
 		    y = nzxpand(*xp,nzxopts);
 		    nfiles = y;
 		    expanded = 1;
@@ -1847,9 +1894,9 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 			    dirbuf = (char *)malloc(n+4);
 			    if (dirbuf) {
 				if (*s == '.')
-				  sprintf(dirbuf,"[%s]",s);
+				  ckmakmsg(dirbuf,n+4,"[",s,"]",NULL);
 				else
-				  sprintf(dirbuf,"[.%s]",s);
+				  ckmakmsg(dirbuf,n+4,"[.",s,"]",NULL);
 				itsadir = isdir(dirbuf);
 				debug(F111,"cmdir dirbuf",dirbuf,itsadir);
 				if (itsadir) {
@@ -1866,7 +1913,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 			    char * p; int i, j, k, d;
 			    char rb[2] = "]";
 			    if (p = malloc(x + 8)) {
-				strcpy(p,*xp);
+				ckstrncpy(p,*xp,x+8);
 				i = ckindex(".",p,-1,1,1);
 				d = ckindex(".dir",p,0,0,0);
 				j = ckindex("]",p,-1,1,1);
@@ -1882,7 +1929,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 				if (j > 0 && j < n) {
 				    p[j-1] = '.';
 				    if (d > 0) p[d-1] = NUL;
-				    strcat(p,rb);
+				    ckstrncat(p,rb,x+8);
 				    debug(F110,"cmdir xxx",p,0);
 				}
 				itsadir = isdir(p);
@@ -1903,14 +1950,14 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 	    } else {			/* Parsing a filename. */
 		debug(F110,"cmifi *xp pre-zxpand",*xp,0);
 #ifndef COMMENT
-		nzxopts = (d == 0) ? ZX_FILONLY : 0; /* So always expand. */
+		nzxopts |= (d == 0) ? ZX_FILONLY : 0; /* So always expand. */
 		if (matchdot)  nzxopts |= ZX_MATCHDOT;
 		if (recursive) nzxopts |= ZX_RECURSE;
 		y = nzxpand(*xp,nzxopts);
 #else
 /* Here we're trying to fix a problem in which a directory name is accepted */
 /* as a filename, but this breaks too many other things. */
-		nzxopts = 0;
+		/* nzxopts = 0; */
 		if (!d) {
 		    if (itsadir & !iswild(*xp)) {
 			debug(F100,"cmifi dir when filonly","",0);
@@ -1919,7 +1966,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 			if (np) free(np);
 			return(-9);
 		    } else {
-			nzxopts = ZX_FILONLY;
+			nzxopts |= ZX_FILONLY;
 			if (matchdot)  nzxopts |= ZX_MATCHDOT;
 			if (recursive) nzxopts |= ZX_RECURSE;
 			y = nzxpand(*xp,nzxopts);
@@ -1934,7 +1981,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 	    /* domydir() calls zxrewind() so we MUST call nzxpand() here */
 	    if (!expanded && diractive) {
 		debug(F110,"cmifi diractive catch-all zxpand",*xp,0);
-		nzxopts = (d == 0) ? ZX_FILONLY : (dirflg ? ZX_DIRONLY : 0);
+		nzxopts |= (d == 0) ? ZX_FILONLY : (dirflg ? ZX_DIRONLY : 0);
 		if (matchdot)  nzxopts |= ZX_MATCHDOT;
 		if (recursive) nzxopts |= ZX_RECURSE;
 		y = nzxpand(*xp,nzxopts);
@@ -1948,7 +1995,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 #endif /* RECURSIVE */
 
 	    debug(F111,"cmifi sv wild",sv,*wild);
-	    if (dirflg && *wild && !diractive) {
+	    if (dirflg && *wild && cdactive) {
 		printf("?Wildcard matches more than one directory\n");
 		if (sv) free(sv);
 		if (np) free(np);
@@ -1974,10 +2021,10 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 #ifdef UNIX
 /* By definition of CDPATH, an empty member denotes the current directory */
 			    if (!*path)
-			      strcpy(atmbuf,".");
+			      ckstrncpy(atmbuf,".",ATMBL);
 			    else
 #endif /* UNIX */
-			      strncpy(atmbuf,path,ATMBL);
+			      ckstrncpy(atmbuf,path,ATMBL);
 #ifdef VMS
 			    atmbuf[ATMBL] = NUL;
 /* If we have a logical name, evaluate it recursively */
@@ -2000,20 +2047,20 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 #else
 #ifdef OS2
 			    if (*(ptr-1) != '\\' && *(ptr-1) != '/')
-			      strcat(atmbuf,"\\");
+			      ckstrncat(atmbuf,"\\",ATMBL);
 #else
 #ifdef UNIX
 			    if (*(ptr-1) != '/')
-			      strcat(atmbuf,"/");
+			      ckstrncat(atmbuf,"/",ATMBL);
 #else
 #ifdef datageneral
 			    if (*(ptr-1) != ':')
-			      strcat(atmbuf,":");
+			      ckstrncat(atmbuf,":",ATMBL);
 #endif /* datageneral */
 #endif /* UNIX */
 #endif /* OS2 */
 #endif /* VMS */
-			    strcat(atmbuf,sv);
+			    ckstrncat(atmbuf,sv,ATMBL);
 			    debug(F110,"cmifip add path",atmbuf,0);
 			    if (c == PATHSEP) ptr++;
 			    path = ptr;
@@ -2033,16 +2080,27 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 		    if (np) free(np);
 		    return(-2);
 		} else {
-		    if (!nomsg)
-		      printf("?No %s match - %s\n",
-			     dirflg ? "directories" : "files", sv);
+		    if (!nomsg) {
+#ifdef CKROOT
+			if (ckrooterr)
+			  printf("?Off Limits: %s\n",sv);
+			else
+#endif /* CKROOT */
+			  printf("?No %s match - %s\n",
+				 dirflg ? "directories" : "files", sv);
+		    }
 		    if (sv) free(sv);
 		    if (np) free(np);
 		    return(-9);
 		}
 	    } else if (y < 0) {
-		printf("?Too many %s match - %s\n",
-		       dirflg ? "directories" : "files", sv);
+#ifdef CKROOT
+		if (ckrooterr)
+		  printf("?Off Limits: %s\n",sv);
+		else
+#endif /* CKROOT */
+		  printf("?Too many %s match - %s\n",
+			 dirflg ? "directories" : "files", sv);
 		if (sv) free(sv);
 		if (np) free(np);
 		return(-9);
@@ -2055,7 +2113,6 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 	    /* If not wild, see if it exists and is readable. */
 
 	    debug(F111,"cmifi sv not wild",sv,*wild);
-
 	    if (expanded)
 	      znext(*xp);		/* Get first (only?) matching file */
 	    if (dirflg)			/* Maybe wild and expanded */
@@ -2066,7 +2123,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 		nfiles = zxrewind();	/* Rewind so next znext() gets 1st */
 #else
 
-		nzxopts = dirflg ? ZX_DIRONLY : 0;
+		nzxopts |= dirflg ? ZX_DIRONLY : 0;
 		if (matchdot)  nzxopts |= ZX_MATCHDOT;
 		if (recursive) nzxopts |= ZX_RECURSE;
 		nfiles = nzxpand(*xp,nzxopts);
@@ -2138,6 +2195,17 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 		}
 		break;
 	    }
+	    if (**xp == '{') {		/* Did user type opening brace... */
+		*xp = *xp + 1;
+		xc--;
+		cc--;
+		qflag = '}';
+	    } else if (dblquo && **xp == '"') {	/* or doublequote? */
+		*xp = *xp + 1;		/* If so ignore it and space past it */
+		xc--;
+		cc--;
+		qflag = '"';
+	    }
 #ifndef NOSPL
 	    if (f) {			/* If a conversion function is given */
 #ifdef DOCHKVAR
@@ -2169,22 +2237,44 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 #endif /* DOCHKVAR */
 	    }
 #endif /* NOSPL */
+
 #ifdef DTILDE
-	    dirp = tilde_expand(*xp);	/* Expand tilde, if any, */
-	    if (*dirp != '\0') {	/* in the atom buffer. */
-		if (setatm(dirp,0) < 0) {
-		    printf("Expanded name too long\n");
-		    if (np) free(np);
-		    return(-9);
+	    if (dirflg && *(*xp) == '~') {
+		debug(F111,"cmifi tilde_expand A",*xp,cc);
+		dirp = tilde_expand(*xp); /* Expand tilde, if any... */
+		if (!dirp) dirp = "";
+		if (*dirp) {
+		    int i, xx;
+		    char * sp;
+		    xc = cc;		/* Length of ~thing */
+		    xx = setatm(dirp,0); /* Copy expansion to atom buffer */
+		    debug(F111,"cmifi tilde_expand B",atmbuf,cc);
+		    if (xx < 0) {
+			printf("Expanded name too long\n");
+			if (np) free(np);
+			return(-9);
+		    }
+		    debug(F111,"cmifi tilde_expand xc","",xc);
+		    for (i = 0; i < xc; i++) {
+			cmdchardel();	/* Back up over ~thing */
+			bp--;
+		    }
+		    xc = cc;		/* How many new ones we just got */
+		    sp = atmbuf;
+		    printf("%s",sp);	/* Print them */
+		    while ((*bp++ = *sp++)) ;	/* Copy to command buffer */
+		    bp--;	    	        /* Back up over NUL */
 		}
+		*xp = atmbuf;
 	    }
-	    *xp = atmbuf;
 #endif /* DTILDE */
+
 	    sp = *xp + cc;
+
 #ifdef UNIXOROSK
 	    if (!strcmp(atmbuf,"..")) {
 		printf(" ");
-		strcat(cmdbuf," ");
+		ckstrncat(cmdbuf," ",CMDBL);
 		cc++;
 		bp++;
 		*wild = 0;
@@ -2218,9 +2308,9 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 	    /* Add wildcard and expand list. */
 #ifdef COMMENT
 	    /* This kills partial completion when ESC given in path segment */
-	    nzxopts = dirflg ? ZX_DIRONLY : (d ? 0 : ZX_FILONLY);
+	    nzxopts |= dirflg ? ZX_DIRONLY : (d ? 0 : ZX_FILONLY);
 #else
-	    nzxopts = 0;
+	    /* nzxopts = 0; */
 #endif /* COMMENT */
 	    if (matchdot)  nzxopts |= ZX_MATCHDOT;
 	    if (recursive) nzxopts |= ZX_RECURSE;
@@ -2241,12 +2331,19 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 	    } else
 	      *filbuf = '\0';
 	    filbuf[CKMAXPATH] = NUL;
-	    debug(F111,"cmifi filbuf",filbuf,y);
 	    *sp = '\0';			/* Remove wildcard. */
+	    debug(F111,"cmifi filbuf",filbuf,y);
+	    debug(F111,"cmifi *xp",*xp,cc);
+
 	    *wild = (y > 1);
 	    if (y == 0) {
 		if (!nomsg) {
-		    printf("?No %s match - %s\n",
+#ifdef CKROOT
+		    if (ckrooterr)
+		      printf("?Off Limits: %s\n",atmbuf);
+		    else
+#endif /* CKROOT */
+		      printf("?No %s match - %s\n",
 			   dirflg ? "directories" : "files", atmbuf);
 		    if (np) free(np);
 		    return(-9);
@@ -2256,11 +2353,20 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 		    return(-1);
 		}
 	    } else if (y < 0) {
-		printf("?Too many %s match - %s\n",
-		       dirflg ? "directories" : "files", atmbuf);
+#ifdef CKROOT
+		if (ckrooterr)
+		  printf("?Off Limits: %s\n",atmbuf);
+		else
+#endif /* CKROOT */
+		  printf("?Too many %s match - %s\n",
+			 dirflg ? "directories" : "files", atmbuf);
 		if (np) free(np);
 		return(-9);
-	    } else if (y > 1) {     /* Not unique. */
+	    } else if (y > 1		/* Not unique */
+#ifndef VMS
+		       || (y == 1 && isdir(filbuf)) /* Unique directory */
+#endif /* VMS */
+		       ) {
 #ifndef NOPARTIAL
 /* Partial filename completion */
 		int j, k; char c;
@@ -2271,7 +2377,8 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 		    int cur = 0,
 		    len = 0,
 		    len2 = 0,
-		    min = strlen(filbuf);
+		    min = strlen(filbuf),
+		    found = 0;
 		    char localfn[CKMAXPATH+1];
 
 		    len = min;
@@ -2279,6 +2386,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 			znext(localfn);
 			if (dirflg && !isdir(localfn))
 			  continue;
+			found = 1;
 			len2 = strlen(localfn);
 			for (cur = cc;
 			     cur < len && cur < len2 && cur <= min;
@@ -2291,6 +2399,8 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 			if (cur < min)
 			  min = cur;
 		    }
+		    if (!found)
+		      min = cc;
 		    filbuf[min] = NUL;
 		    if (min > cc)
 		      k++;
@@ -2303,20 +2413,74 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 		    else filbuf[i] = filbuf[i+1] = NUL;
 		}
 #endif /* OS2 */
-		debug(F111,"cmifi partial k",filbuf,k);
-		if (k > 0) {		/* Got more characters */
-		    sp = filbuf + cc;	/* Point to new ones */
-#ifdef VMS
-		    for (i = 0; i < cc; i++) {
-			cmdchardel();	/* Back up over old partial spec */
-			bp--;
+
+
+#ifndef VMS
+		/* isdir() function required for this! */
+		if (y == 1 && isdir(filbuf)) { /* Dont we already know this? */
+		    int len;
+		    len = strlen(filbuf);
+		    if (len > 0 && len < ATMBL - 1) {
+			if (filbuf[len-1] != dirsep) {
+			    filbuf[len] = dirsep;
+			    filbuf[len+1] = NUL;
+			}
 		    }
-		    sp = filbuf;	/* Point to new word start */
-		    debug(F100,"cmifi vms erase ok","",0);
+/*
+  At this point, before just doing partial completion, we should look first to
+  see if the given directory does indeed have any subdirectories (dirflg) or
+  files (!dirflg); if it doesn't we should do full completion.  Otherwise, the
+  result looks funny to the user and "?" blows up the command for no good
+  reason.
+*/
+		    {
+			int flags = 0;
+			filbuf[len+1] = '*';
+			filbuf[len+2] = NUL;
+			if (dirflg) flags = ZX_DIRONLY;
+			children = nzxpand(filbuf,flags);
+			debug(F111,"cmifi children",filbuf,children);
+			filbuf[len+1] = NUL;
+			nzxpand(filbuf,flags); /* Restore previous list */
+			if (children == 0)
+			  goto NOSUBDIRS;
+		    }
+		    if (len + 1 > cc)
+		      k++;
+		}
+                /* Add doublequotes if there are spaces in the name */
+		{
+		    int x;
+		    if (qflag) {
+			x = (qflag == '}'); /* (or braces) */
+		    } else {
+			x = !dblquo;
+		    }
+		    if (filbuf[0] != '"' && filbuf[0] != '{')
+		      k = dquote(filbuf,ATMBL,x);
+		}
 #endif /* VMS */
+		debug(F111,"cmifi REPAINT filbuf",filbuf,k);
+		if (k > 0) {		/* Got more characters */
+		    debug(F101,"cmifi REPAINT cc","",cc);
+		    debug(F101,"cmifi REPAINT xc","",xc);
+		    debug(F110,"cmifi REPAINT bp-cc",bp-cc,0);
+		    debug(F110,"cmifi REPAINT bp-xc",bp-xc,0);
+		    sp = filbuf + cc;	/* Point to new ones */
+		    if (qflag || strncmp(filbuf,bp-cc,cc)) { /* Repaint? */
+			int x;
+			x = cc;
+			if (qflag) x++;
+			for (i = 0; i < x; i++) {
+			    cmdchardel(); /* Back up over old partial spec */
+			    bp--;
+			}
+			sp = filbuf;	/* Point to new word start */
+			debug(F110,"cmifi erase ok",sp,0);
+		    }
 		    cc = k;		/* How many new ones we just got */
 		    printf("%s",sp);	/* Print them */
-		    while (*bp++ = *sp++) ;	/* Copy to command buffer */
+		    while ((*bp++ = *sp++)) ;	/* Copy to command buffer */
 		    bp--;	    	        /* Back up over NUL */
 		    debug(F110,"cmifi partial cmdbuf",cmdbuf,0);
 		    if (setatm(filbuf,0) < 0) {
@@ -2333,8 +2497,9 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 #ifndef VMS
 #ifdef CK_TMPDIR
 		/* isdir() function required for this! */
-		debug(F111,"cmifi unique",filbuf,cc);
-		if (isdir(filbuf) && !dirflg) {
+	      NOSUBDIRS:
+		debug(F111,"cmifi unique",filbuf,children);
+		if (isdir(filbuf) && children > 0) {
 		    int len;
 		    len = strlen(filbuf);
 		    if (len > 0 && len < ATMBL - 1) {
@@ -2347,7 +2512,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 		    bleep(BP_WARN);
 		    printf("%s",sp);
 		    cc++;
-		    while (*bp++ = *sp++) ;
+		    while ((*bp++ = *sp++)) ;
 		    bp--;
 		    if (setatm(filbuf,0) < 0) {
 			printf("?Directory name too long\n");
@@ -2374,21 +2539,28 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 #endif /* datageneral */
 #endif /* VMS */
 		    sp = filbuf + cc;	/* Point past what user typed. */
-#ifdef VMS
-		    debug(F111,"cmifi VMS erasing",filbuf,cc);
-		    for (i = 0; i < cc; i++) {
-			cmdchardel();	/* Back up over old partial spec */
-			bp--;
+		    {
+			int x;
+			if (qflag) {
+			    x = (qflag == '}');
+			} else {
+			    x = !dblquo;
+			}
+			if (filbuf[0] != '"' && filbuf[0] != '{')
+			  dquote(filbuf,ATMBL,x);
 		    }
-		    sp = filbuf;	/* Point to new word start */
-		    debug(F111,"cmifi after VMS erase sp=",sp,cc);
-#endif /* VMS */
-		    /* Complete the name. */
-#ifdef COMMENT
-		    printf("%s%s",dirflg ? "" : " ",sp);
-#else
-		    printf("%s ",sp); /* Complete the name. */
-#endif /* COMMENT */
+		    if (qflag || strncmp(filbuf,bp-cc,cc)) { /* Repaint? */
+			int x;
+			x = cc;
+			if (qflag) x++;
+			for (i = 0; i < x; i++) {
+			    cmdchardel(); /* Back up over old partial spec */
+			    bp--;
+			}
+			sp = filbuf;	/* Point to new word start */
+			debug(F111,"cmifi after erase sp=",sp,cc);
+		    }
+		    printf("%s ",sp);	/* Print the completed name. */
 #ifdef GEMDOS
 		    fflush(stdout);
 #endif /* GEMDOS */
@@ -2398,13 +2570,13 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 			if (np) free(np);
 			return(-9);
 		    }
-		    if (dirflg && !isdir(filbuf)) {
+		    inword = cmflgs = 0;
+		    *xp = brstrip(atmbuf); /* Return pointer to atmbuf. */
+		    if (dirflg && !isdir(*xp)) {
 			printf("?Not a directory - %s\n", filbuf);
 			if (np) free(np);
 			return(-9);
 		    }
-		    inword = cmflgs = 0;
-		    *xp = atmbuf;	/* Return pointer to atmbuf. */
 		    if (np) free(np);
 		    return(0);
 #ifndef VMS
@@ -2423,122 +2595,97 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 #ifdef GEMDOS
 	    fflush(stdout);
 #endif /* GEMDOS */
-#ifdef OLDHELP
-	    if (xc > 0) {
-#endif /* OLDHELP */
-#ifndef NOSPL
-		if (f) {		/* If a conversion function is given */
-#ifdef DOCHKVAR
-		    char *s = *xp;	/* See if there are any variables in */
-		    while (*s) {	/* the string and if so, expand them */
-			if (chkvar(s)) {
-#endif /* DOCHKVAR */
-			    zq = atxbuf;
-			    atxn = CMDBL;
-			    if ((x = (*f)(*xp,&zq,&atxn)) < 0) {
-				if (np) free(np);
-				return(-2);
-			    }
-#ifdef DOCHKVAR
-                    /* reduce cc by number of \\ consumed by conversion */
-                    /* function (needed for OS/2, where \ is path separator) */
-			    cc -= (strlen(*xp) - strlen(atxbuf));
-#endif /* DOCHKVAR */
-			    *xp = atxbuf;
-#ifdef DOCHKVAR
-			    break;
-			}
-			s++;
-		    }
-#endif /* DOCHKVAR */
-		}
-#endif /* NOSPL */
-#ifdef DTILDE
-		dirp = tilde_expand(*xp); /* Expand tilde, if any */
-		if (*dirp != '\0') {
-		    if (setatm(dirp,0) < 0) {
-			printf("?Expanded name too long\n");
-			if (np) free(np);
-			return(-9);
-		    }
-		}
-		*xp = atmbuf;
-#endif /* DTILDE */
-		debug(F111,"cmifi ? *xp, cc",*xp,cc);
-		sp = *xp + cc;		/* Insert "*" at end */
-#ifdef datageneral
-		*sp++ = '+';		/* Insert +, the DG wild card */
-#else
-		*sp++ = '*';
-#endif /* datageneral */
-		*sp-- = '\0';
-#ifdef GEMDOS
-		if (! strchr(*xp, '.'))	/* abde.e -> abcde.e* */
-		  strcat(*xp, ".*");	/* abc -> abc*.* */
-#endif /* GEMDOS */
-		debug(F110,"cmifi ? wild",*xp,0);
+	    /* If user typed an opening quote or brace, just skip past it */
 
-#ifdef COMMENT
-		/* This kills file lists when we're still the path part */
-		nzxopts = dirflg ? ZX_DIRONLY : (d ? 0 : ZX_FILONLY);
-#else
-#ifdef COMMENT
-		/* But this makes "cd ?" list regular files */
-		nzxopts = 0;
-#else
-		nzxopts = dirflg ? ZX_DIRONLY : 0;
-#endif /* COMMENT */
-#endif /* COMMENT */
-		debug(F101,"cmifi matchdot","",matchdot);
-		if (matchdot)  nzxopts |= ZX_MATCHDOT;
-		if (recursive) nzxopts |= ZX_RECURSE;
-		y = nzxpand(*xp,nzxopts);
-		nfiles = y;
-		*sp = '\0';
-		if (y == 0) {
-		    if (nomsg) {
-			printf(": %s\n",atmbuf);
-			printf("%s%s",cmprom,cmdbuf);
-			fflush(stdout);
-			if (np) free(np);
-			return(-1);
-		    } else {
-			printf("?No %s match - %s\n",
-			       dirflg ? "directories" : "files", atmbuf);
-			if (np) free(np);
-			return(-9);
+	    if (**xp == '"' || **xp == '{') {
+		*xp = *xp + 1;
+		xc--;
+		cc--;
+	    }
+#ifndef NOSPL
+	    if (f) {			/* If a conversion function is given */
+#ifdef DOCHKVAR
+		char *s = *xp;		/* See if there are any variables in */
+		while (*s) {		/* the string and if so, expand them */
+		    if (chkvar(s)) {
+#endif /* DOCHKVAR */
+			zq = atxbuf;
+			atxn = CMDBL;
+			if ((x = (*f)(*xp,&zq,&atxn)) < 0) {
+			    if (np) free(np);
+			    return(-2);
+			}
+#ifdef DOCHKVAR
+		    /* reduce cc by number of \\ consumed by conversion */
+		    /* function (needed for OS/2, where \ is path separator) */
+			cc -= (strlen(*xp) - strlen(atxbuf));
+#endif /* DOCHKVAR */
+			*xp = atxbuf;
+#ifdef DOCHKVAR
+			break;
 		    }
-		} else if (y < 0) {
-		    printf("?Too many %s match - %s\n",
-			   dirflg ? "directories" : "files", atmbuf);
+		    s++;
+		}
+#endif /* DOCHKVAR */
+	    }
+#endif /* NOSPL */
+	    debug(F111,"cmifi ? *xp, cc",*xp,cc);
+	    sp = *xp + cc;		/* Insert "*" at end */
+#ifdef datageneral
+	    *sp++ = '+';		/* Insert +, the DG wild card */
+#else
+	    *sp++ = '*';
+#endif /* datageneral */
+	    *sp-- = '\0';
+#ifdef GEMDOS
+	    if (! strchr(*xp, '.'))	/* abde.e -> abcde.e* */
+	      strcat(*xp, ".*");	/* abc -> abc*.* */
+#endif /* GEMDOS */
+	    debug(F110,"cmifi ? wild",*xp,0);
+
+	    nzxopts |= dirflg ? ZX_DIRONLY : (d ? 0 : ZX_FILONLY);
+
+	    debug(F101,"cmifi matchdot","",matchdot);
+	    if (matchdot)  nzxopts |= ZX_MATCHDOT;
+	    if (recursive) nzxopts |= ZX_RECURSE;
+	    y = nzxpand(*xp,nzxopts);
+	    nfiles = y;
+	    *sp = '\0';
+	    if (y == 0) {
+		if (nomsg) {
+		    printf(": %s\n",atmbuf);
+		    printf("%s%s",cmprom,cmdbuf);
+		    fflush(stdout);
+		    if (np) free(np);
+		    return(-1);
+		} else {
+#ifdef CKROOT
+		    if (ckrooterr)
+		      printf("?Off Limits: %s\n",atmbuf);
+		    else
+#endif /* CKROOT */
+		      printf("?No %s match - %s\n",
+			     dirflg ? "directories" : "files", atmbuf);
 		    if (np) free(np);
 		    return(-9);
-		} else {
-		    printf(", one of the following:\n");
-#ifdef OLDHELP
-		    clrhlp();
-		    for (i = 0; i < y; i++) {
-			znext(filbuf);
-			if (!dirflg || isdir(filbuf)) {
-#ifdef VMS
-			    printf(" %s\n",filbuf); /* VMS names can be long */
-#else
-			    addhlp(filbuf);
-#endif /* VMS */
-			}
-		    }
-		    dmphlp();
-#else  /* New way... */
-		    if (filhelp(y,"","",1,dirflg) < 0) {
-			if (np) free(np);
-			return(-9);
-		    }
-#endif /* OLDHELP */
 		}
-#ifdef OLDHELP
-	    } else
-	      printf("\n");
-#endif /* OLDHELP */
+	    } else if (y < 0) {
+#ifdef CKROOT
+		if (ckrooterr)
+		  printf("?Off Limits: %s\n",atmbuf);
+		else
+#endif /* CKROOT */
+		  printf("?Too many %s match - %s\n",
+			 dirflg ? "directories" : "files", atmbuf);
+		if (np) free(np);
+		return(-9);
+	    } else {
+		printf(", one of the following:\n");
+		if (filhelp((int)y,"","",1,dirflg) < 0) {
+		    if (np) free(np);
+		    return(-9);
+		}
+	    }
 	    printf("%s%s",cmprom,cmdbuf);
 	    fflush(stdout);
 	    break;
@@ -2581,6 +2728,7 @@ cmfld(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; {
     xdef = cmdefault;
 
     debug(F111,"cmfld xdef 2",xdef,cmflgs);
+    debug(F111,"cmfld atmbuf 1",atmbuf,xc);
 
     if ((x = cmflgs) != 1) {            /* Already confirmed? */
         x = gtword(0);                  /* No, get a word */
@@ -2591,11 +2739,11 @@ cmfld(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; {
 	}
     }
     *xp = atmbuf;                       /* Point to result. */
-    debug(F111,"cmfld atmbuf 1",atmbuf,cmflgs);
+    debug(F111,"cmfld atmbuf 2",atmbuf,cmflgs);
 
     while (1) {
         xc += cc;                       /* Count the characters. */
-        debug(F111,"cmfld: gtword",atmbuf,xc);
+        debug(F111,"cmfld gtword",atmbuf,xc);
         debug(F101,"cmfld x","",x);
         switch (x) {
 	  case -9:
@@ -2605,8 +2753,8 @@ cmfld(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; {
 	  case -2:			/* Out of space. */
 	  case -1:			/* Reparse needed */
 	    return(x);
-	  case 0:			/* SP or NL */
-	  case 1:
+	  case 1:			/* CR */
+	  case 0:			/* SP */
 	    debug(F111,"cmfld 1",atmbuf,xc);
 	    if (xc == 0) {		/* If no input, return default. */
 		if (setatm(xdef,0) < 0) {
@@ -2619,7 +2767,6 @@ cmfld(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; {
 	    if (f) {			/* If a conversion function is given */
 		zq = atxbuf;		/* employ it now. */
 		atxn = CMDBL;
-		debug(F111,"cmfld zzstring",atxbuf,x);
 		if ((*f)(*xp,&zq,&atxn) < 0)
 		  return(-2);
 		if (setatm(atxbuf,1) < 0) { /* Replace by new value */
@@ -2656,6 +2803,7 @@ cmfld(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; {
 	    }
 	    break;
 	  case 3:			/* Question mark */
+	    debug(F110,"cmfld QUESTIONMARK",cmdbuf,0);
 	    if (*xhlp == NUL)
 	      printf(" Please complete this field");
 	    else
@@ -2664,8 +2812,9 @@ cmfld(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; {
 	    fflush(stdout);
 	    break;
         }
+	debug(F111,"cmfld gtword A x",cmdbuf,x);
 	x = gtword(0);
-	/* *xp = atmbuf; */
+	debug(F111,"cmfld gtword B x",cmdbuf,x);
     }
 }
 
@@ -2692,10 +2841,13 @@ cmtxt(xhlp,xdef,xp,f) char *xhlp; char *xdef; char **xp; xx_strp f; {
     if (!xdef) xdef = "";
 
     cmfldflgs = 0;
-    ckstrncpy(cmdefault,xdef,CMDEFAULT); /* Copy default */
+
+    cmdefault[0] = NUL;
+    if (*xdef)
+      ckstrncpy(cmdefault,xdef,CMDEFAULT); /* Copy default */
     xdef = cmdefault;
 
-    debug(F101,"cmtxt, cmflgs","",cmflgs);
+    debug(F101,"cmtxt cmflgs","",cmflgs);
     inword = 0;				/* Start atmbuf counter off at 0 */
     cc = 0;
     if (cmflgs == -1) {                 /* If reparsing, */
@@ -2705,7 +2857,7 @@ cmtxt(xhlp,xdef,xp,f) char *xhlp; char *xdef; char **xp; xx_strp f; {
 	np = *xp;
 	pp = *xp;
     } else {                            /* otherwise, */
-	debug(F100,"cmtxt: fresh start","",0);
+	/* debug(F100,"cmtxt: fresh start","",0); */
         *xp = "";                       /* start fresh. */
         xc = 0;
     }
@@ -2716,7 +2868,7 @@ cmtxt(xhlp,xdef,xp,f) char *xhlp; char *xdef; char **xp; xx_strp f; {
 	while (!done) {
 	    x = gtword(0);		/* Get first word. */
 	    *xp = pp;			/* Save pointer to it. */
-	    debug(F111,"cmtxt:",*xp,cc);
+	    /* debug(F111,"cmtxt:",*xp,cc); */
 	    if (x == -10) {
 		if (gtimer() > timelimit) {
 		    if (!quiet) printf("?Timed out\n");
@@ -2728,8 +2880,8 @@ cmtxt(xhlp,xdef,xp,f) char *xhlp; char *xdef; char **xp; xx_strp f; {
     }
     while (1) {				/* Loop for each word in text. */
         xc += cc;                       /* Char count for all words. */
-        debug(F111,"cmtxt gtword",atmbuf,xc);
-        debug(F101,"cmtxt x","",x);
+        /* debug(F111,"cmtxt gtword",atmbuf,xc); */
+        /* debug(F101,"cmtxt x","",x); */
         switch (x) {
 	  case -10:
 	    if (gtimer() > timelimit) {
@@ -2761,28 +2913,54 @@ cmtxt(xhlp,xdef,xp,f) char *xhlp; char *xdef; char **xp; xx_strp f; {
 	  case 1:			/* CR or LF */
 	    if (xc == 0) *xp = xdef;
 	    if (f) {			/* If a conversion function is given */
+		char * sx = atxbuf;
 		zq = atxbuf;		/* Point to the expansion buffer */
 		atxn = CMDBL;		/* specify its length */
-		debug(F110,"cmtxt calling (*f)",*xp,0);
+		debug(F111,"cmtxt calling (*f)",*xp,atxbuf);
 		if ((x = (*f)(*xp,&zq,&atxn)) < 0) return(-2);
+		sx = atxbuf;
+#ifndef COMMENT
+		cc = 0;
+		while (*sx++) cc++;	/* (faster than calling strlen) */
+#else
 		cc = (int)strlen(atxbuf);
-		if (cc < 1) {
-		    *xp = xdef;
+#endif /* COMMENT */
+		/* Should be equal to (CMDBL - atxn) but isn't always. */
+		/* Why not? */
+		if (cc < 1) {		/* Nothing in expansion buffer? */
+		    *xp = xdef;		/* Point to default string instead. */
+#ifndef COMMENT
+		    sx = xdef;
+		    while (*sx++) cc++;	/* (faster than calling strlen) */
+#else
 		    cc = strlen(xdef);
-		} else {
-		    *xp = atxbuf;	/* and return pointer to it. */
+#endif /* COMMENT */
+		} else {		/* Expansion function got something */
+		    *xp = atxbuf;	/* return pointer to it. */
 		}
-		debug(F111,"cmtxt (*f) returns",*xp,cc);
+		debug(F111,"cmtxt (*f)",*xp,cc);
+	    } else {			/* No expansion function */
+#ifndef COMMENT
+		/* Avoid a strlen() call */
+		xx = *xp;
+		cc = 0;
+		while (*xx++) cc++;
+#else
+		/* NO!  xc is apparently not always set appropriately */
+		cc = xc;
+#endif /* COMMENT */
 	    }
 	    xx = *xp;
+#ifdef COMMENT
+	    /* strlen() no longer needed */
 	    for (i = (int)strlen(xx) - 1; i > 0; i--)
+#else
+	    for (i = cc - 1; i > 0; i--)
+#endif /* COMMENT */
 	      if (xx[i] != SP)		/* Trim trailing blanks */
 		break;
 	      else
 		xx[i] = NUL;
-#ifdef CK_RECALL
-	    addcmd(cmdbuf);
-#endif /* CK_RECALL */
 	    return(x);
 	  case 2:			/* ESC */
 	    if (xc == 0) {		/* Nothing typed yet */
@@ -2797,9 +2975,9 @@ cmtxt(xhlp,xdef,xp,f) char *xhlp; char *xdef; char **xp; xx_strp f; {
 	    } else {			/* Already in field */
 		int x; char *p;
 		x = strlen(atmbuf);
-		if (ckstrcmp(atmbuf,xdef,x,0)) /* Matches default? */
-		  bleep(BP_WARN);	/* No */
-		else {			/* Yes */
+		if (ckstrcmp(atmbuf,xdef,x,0)) {    /* Matches default? */
+		    bleep(BP_WARN);	            /* No */
+		} else if ((int)strlen(xdef) > x) { /* Yes */
 		    p = xdef + x;
 		    printf("%s ", p);
 #ifdef GEMDOS
@@ -2808,6 +2986,8 @@ cmtxt(xhlp,xdef,xp,f) char *xhlp; char *xdef; char **xp; xx_strp f; {
 		    addbuf(p);
 		    inword = cmflgs = 0;
 		    debug(F110,"cmtxt: addbuf",cmdbuf,0);
+		} else {
+		    bleep(BP_WARN);
 		}
 	    }
 	    break;
@@ -2867,12 +3047,12 @@ int
 cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
     struct keytab table[];
     int n;
-    char *xhlp,
-    *xdef;
+    char *xhlp, *xdef;
     char *tok;
     xx_strp f;
     int pmsg;
 { /* cmkey2 */
+    extern int havetoken;
     int i, tl, y, z = 0, zz, xc, wordlen = 0, cmswitch;
     char *xp, *zq;
 
@@ -2885,11 +3065,13 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 	return(-9);
     }
     tl = (int)strlen(tok);
+
     inword = xc = cc = 0;		/* Clear character counters. */
     cmswitch = pmsg & 4;		/* Flag for parsing a switch */
 
     debug(F101,"cmkey: pmsg","",pmsg);
     debug(F101,"cmkey: cmflgs","",cmflgs);
+    debug(F101,"cmkey: cmswitch","",cmswitch);
     /* debug(F101,"cmkey: cmdbuf","",cmdbuf);*/
 
     ppvnambuf[0] = NUL;
@@ -2899,18 +3081,20 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 	    printf("?Default too long\n");
 	    return(-9);
 	}
-    } else
-      zz = gtword((pmsg == 4) ? 1 : 0);	/* Otherwise get a command word */
+        rtimer();			 /* Reset timer */
+    } else {
+        rtimer();			 /* Reset timer */
+        zz = gtword((pmsg == 4) ? 1 : 0);/* Otherwise get a command word */
+    }
 
     debug(F101,"cmkey table length","",n);
     debug(F101,"cmkey cmflgs","",cmflgs);
-    debug(F101,"cmkey zz","",zz);
     debug(F101,"cmkey cc","",cc);
-    rtimer();				/* Reset timer */
 
     while (1) {
 	xc += cc;
 	debug(F111,"cmkey gtword xc",atmbuf,xc);
+	debug(F101,"cmkey gtword zz","",zz);
 
 	switch (zz) {
 	  case -10:			/* Timeout */
@@ -2937,8 +3121,9 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 	  case -1:			/* Or user did some deleting. */
 	    return(cmflgs = zz);
 
+
+	  case 1:			/* CR */
 	  case 0:			/* User terminated word with space */
-	  case 1:			/* or newline */
 	  case 4:			/* or switch ending in : or = */
 	    wordlen = cc;		/* Length if no conversion */
 	    if (cc == 0) {		/* Supply default if we got nothing */
@@ -2951,19 +3136,35 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 	      return(-3);
 
 	    if (f) {			/* If a conversion function is given */
-		char * pp;
+		char * p2;
 		zq = atxbuf;		/* apply it */
-		pp = atxbuf;
+		p2 = atxbuf;
 		atxn = CMDBL;
 		if ((*f)(atmbuf,&zq,&atxn) < 0) return(-2);
 		debug(F110,"cmkey atxbuf after *f",atxbuf,0);
-		if (!*pp)		/* Supply default if we got nothing */
-		  pp = xdef;
+		if (!*p2)		/* Supply default if we got nothing */
+		  p2 = xdef;
 		ckstrncpy(ppvnambuf,atmbuf,PPVLEN);
-		if ((wordlen = setatm(pp,(zz == 4) ? 2 : 0)) < 0) {
+		if ((wordlen = setatm(p2,(zz == 4) ? 2 : 0)) < 0) {
 		    printf("Evaluated keyword too long\n");
 		    return(-9);
 		}
+#ifdef M_UNGW
+		/*
+		  This bit lets us save more than one "word".
+		  For example, "define \%x echo one two three", "\%x".
+		  It works too, but it breaks labels, and therefore
+		  WHILE and FOR loops, etc.
+		*/
+		if (p2[wordlen] >= SP) {
+		    p2 += wordlen;
+		    while (*p2 == SP) p2++;
+		    if (*p2) {
+			ungword();
+			pp = p2;
+		    }
+		}
+#endif /* M_UNGW */
 	    }
 	    if (cmswitch && *atmbuf != '/') {
 		if (pmsg & 1) {
@@ -2977,12 +3178,31 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 		int i;
 		for (i = 0; i < wordlen; i++) {
 		    if (atmbuf[i] == ':' || atmbuf[i] == '=') {
+			brkchar = atmbuf[i];
 			atmbuf[i] = NUL;
 			break;
 		    }
 		}
 	    }
-	    y = lookup(table,atmbuf,n,&z); /* Look up the word in the table */
+
+#ifdef TOKPRECHECK
+/* This was an effective optimization but it breaks sometimes on labels. */
+	    if (tl && !isalpha(atmbuf[0])) { /* Precheck for token */
+		for (i = 0; i < tl; i++) { /* Save function call to ckstrchr */
+		    if (tok[i] == atmbuf[0]) {
+			debug(F000,"cmkey token:",atmbuf,*atmbuf);
+			ungword();  /* Put back the following word */
+			return(-5); /* Special return code for token */
+		    }
+		}
+	    }
+#endif /* TOKPRECHECK */
+
+	    y = lookup(table,atmbuf,n,&z); /* Look up word in the table */
+	    debug(F111,"cmkey lookup",atmbuf,y);
+	    debug(F101,"cmkey zz","",zz);
+	    debug(F101,"cmkey cmflgs","",cmflgs);
+	    debug(F101,"cmkey crflag","",crflag);
 	    switch (y) {
 	      case -3:			/* Nothing to look up */
 		break;
@@ -2995,6 +3215,7 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 		}
 		return(-2);
 	      case -1:			/* Not found at all */
+#ifndef TOKPRECHECK
 		if (tl) {
 		    for (i = 0; i < tl; i++) /* Check for token */
 		      if (tok[i] == *atmbuf) { /* Got one */
@@ -3003,6 +3224,8 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 			  return(-5); /* Special return code for token */
 		      }
 		}
+#endif /* TOKPRECHECK */
+
 		if (tl == 0) {		/* No tokens were included */
 #ifdef OS2
 		    /* In OS/2 and Windows, allow for a disk letter like DOS */
@@ -3087,7 +3310,7 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 		int j, k, len = 9999;	/* Do partial completion */
 		/* Skip past any abbreviations in the table */
 		for ( ; z < n; z++) {
-		    if (table[z].flgs & CM_ABR == 0)
+		    if ((table[z].flgs & CM_ABR) == 0)
 		      break;
 		    if (!(table[z].flgs & CM_HLP) || (pmsg & 2))
 		      break;
@@ -3109,10 +3332,10 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 		}
 		debug(F111,"cmkey partial len",table[z].kwd,len);
 		if (len != 9999 && len > cc) {
-		    strcat(atmbuf,table[z].kwd+cc);
+		    ckstrncat(atmbuf,table[z].kwd+cc,ATMBL);
 		    atmbuf[len] = NUL;
 		    printf("%s",atmbuf+cc);
-		    strcat(cmdbuf,atmbuf+cc);
+		    ckstrncat(cmdbuf,atmbuf+cc,CMDBL);
 		    xc += (len - cc);
 		    cc = len;
 		}
@@ -3220,28 +3443,24 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 		}
 		return(-2);
 	    }
+#ifndef COMMENT
+	    /* This is to allow ?-help to work immediately after a token */
+	    /* without having to type an intermediate space */
+	    if (tl) {
+		for (i = 0; i < tl; i++) /* Check for token */
+		  if (tok[i] == *atmbuf) { /* Got one */
+		      debug(F000,"cmkey token:",atmbuf,*atmbuf);
+		      ungword();	/* Put back the following word */
+		      cmflgs = 3;	/* Force help next time around */
+		      return(-5);	/* Special return code for token */
+		  }
+	    }
+#endif /* COMMENT */
+
 	    if (*xhlp == NUL)
 	      printf(" One of the following:\n");
 	    else
 	      printf(" %s, one of the following:\n",xhlp);
-
-#ifdef OLDHELP
-	    if ((y > -1) &&
-		!test(table[z].flgs,CM_ABR) &&
-		((z >= n-1) || ckstrcmp(table[z].kwd,table[z+1].kwd,cc,0))
-		) {
-		printf(" %s\n",table[z].kwd);
-	    } else {
-		clrhlp();
-		for (i = 0; i < n; i++) {
-		    if (!ckstrcmp(table[i].kwd,atmbuf,cc,0)
-			&& !test(table[i].flgs,CM_INV)
-			)
-		      addhlp(table[i].kwd);
-		}
-		dmphlp();
-	    }
-#else  /* New way ... */
 	    {
 		int x;
 		x = pmsg & (2|4);	/* See kwdhelp() comments */
@@ -3249,15 +3468,14 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 		  x |= 1;		/* also show invisibles */
 		kwdhelp(table,n,atmbuf,"","",1,x);
 	    }
-#endif /* OLDHELP */
 #ifndef NOSPL
-	    {
+	    if (!havetoken) {
 		extern int topcmd;
 		if (tl > 0 && topcmd != XXHLP) /* This is bad... */
-		  printf("or the name of a macro (\"do ?\" for a list)\n");
+		  printf("or a macro name (\"do ?\" for a list) ");
 	    }
 #endif /* NOSPL */
-	    if (*atmbuf == NUL) {
+	    if (*atmbuf == NUL && !havetoken) {
 		if (tl == 1)
 		  printf("or the token %c\n",*tok);
 		else if (tl > 1)
@@ -3271,7 +3489,7 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 	    printf("\n%d - Unexpected return code from gtword\n",zz);
 	    return(cmflgs = -2);
 	}
-	zz = gtword(0);
+	zz = gtword((pmsg == 4) ? 1 : 0);
 	debug(F111,"cmkey gtword zz",atmbuf,zz);
     }
 }
@@ -3286,293 +3504,730 @@ chktok(tlist) char *tlist; {
 
 /* Routines for parsing and converting dates and times */
 
-#define isdatesep(c) (c==SP||c=='-'||c=='/'||c=='.'||c=='_')
-#define istimesep(c) (c==':' || c=='P'||c=='p'||c=='A'||c=='a')
+#define isdatesep(c) (ckstrchr(" -/._",c))
 
-char cmdatebuf[18] = { NUL, NUL };
-
-#define TU_DAYS   0
-#define TU_WEEKS  1
-#define TU_MONTHS 2
-#define TU_YEARS  3
+#define CMDATEBUF 1024
+char cmdatebuf[CMDATEBUF+4] = { NUL, NUL };
+static char * cmdatebp = cmdatebuf;
+char * cmdatemsg = NULL;
 
 static struct keytab timeunits[] = {
-  { "days",   TU_DAYS,   0 },
-  { "months", TU_MONTHS, 0 },
-  { "weeks",  TU_WEEKS,  0 },
-  { "wks",    TU_WEEKS,  0 },
-  { "years",  TU_YEARS,  0 },
-  { "yrs",    TU_YEARS,  0 }
+    { "days",   TU_DAYS,   0 },
+    { "months", TU_MONTHS, 0 },
+    { "weeks",  TU_WEEKS,  0 },
+    { "wks",    TU_WEEKS,  0 },
+    { "years",  TU_YEARS,  0 },
+    { "yrs",    TU_YEARS,  0 }
 };
 static int nunits = (sizeof(timeunits) / sizeof(struct keytab));
+
+#define SYM_NOW  0
+#define SYM_TODA 1
+#define SYM_TOMO 2
+#define SYM_YEST 3
+
+static struct keytab symdaytab[] = {
+    { "now",       SYM_NOW,  0 },
+    { "today",     SYM_TODA, 0 },
+    { "tomorrow",  SYM_TOMO, 0 },
+    { "yesterday", SYM_YEST, 0 }
+};
+static int nsymdays = (sizeof(symdaytab) / sizeof(struct keytab));
+
+static struct keytab daysofweek[] = {
+    { "Friday",    5, 0 },
+    { "Monday",    1, 0 },
+    { "Saturday",  6, 0 },
+    { "Sunday",    0, 0 },
+    { "Thursday",  4, 0 },
+    { "Tuesday",   2, 0 },
+    { "Wednesday", 3, 0 }
+};
+
+static struct keytab usatz[] = {	/* RFC 822 timezones  */
+    { "cdt",  5, 0 },			/* Values are GMT offsets */
+    { "cst",  6, 0 },
+    { "edt",  4, 0 },
+    { "est",  5, 0 },
+    { "gmt",  0, 0 },
+    { "mdt",  6, 0 },
+    { "mst",  7, 0 },
+    { "pdt",  7, 0 },
+    { "pst",  8, 0 },
+    { "utc",  0, 0 },
+    { "zulu", 0, 0 }
+};
+static int nusatz = (sizeof(usatz) / sizeof(struct keytab));
+
 
 /*  C M C V T D A T E  --  Converts free-form date to standard form.  */
 
 /*
    Call with
-     s = pointer to free-format date-time
-     t = 0: return time only if time was given in s
-     t = 1: always return time (00:00:00 if no time given in s)
-     t = 2: allow time to be > 24:00:00
+     s = pointer to free-format date, time, or date and time.
+     t = 0: return time only if time was given in s.
+     t = 1: always return time (00:00:00 if no time given in s).
+     t = 2: allow time to be > 24:00:00.
    Returns:
-     -1 on failure, 0 or greater on success with result in cmdate[].
+     NULL on failure;
+     Pointer to "yyyymmdd hh:mm:ss" (local date-time) on success.
 */
+
+/*
+  Before final release the following long lines should be wrapped.
+  Until then we leave them long since wrapping them wrecks EMACS's
+  C indentation.
+*/
+
+/* asctime pattern */
+static char * atp1 = "[A-Z][a-z][a-z] [A-Z][a-z][a-z] [ 0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] [0-9][0-9][0-9][0-9]";
+
+/* asctime pattern with timezone */
+static char * atp2 = "[A-Z][a-z][a-z] [A-Z][a-z][a-z] [ 0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] [A-Z][A-Z][A-Z] [0-9][0-9][0-9][0-9]";
+
+#define DATEBUFLEN 127
+#define YYYYMMDD 12
+
+#define isleap(y) (((y) % 4 == 0 && (y) % 100 != 0) || (y) % 400 == 0)
+static int mdays[13] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+
+#define NEED_DAYS 1
+#define NEED_HRS  2
+#define NEED_MINS 3
+#define NEED_SECS 4
+#define NEED_FRAC 5
+
+#define DELTABUF 256
+static char deltabuf[DELTABUF];
+static char * deltabp = deltabuf;
+
+char *
+cmdelta(yy, mo, dd, hh, mm, ss, sign, dyy, dmo, ddd, dhh, dmm, dss)
+    int yy, mo, dd, hh, mm, ss, sign, dyy, dmo, ddd, dhh, dmm, dss;
+/* cmdelta */ {
+    int zyy, zmo, zdd, zhh, zmm, zss;
+    long t1, t2, t3, t4;
+    long d1 = 0, d2, d3;
+    char datebuf[DATEBUFLEN+1];
+
+#ifdef DEBUG
+    if (deblog) {
+	debug(F101,"cmdelta yy","",yy);
+	debug(F101,"cmdelta mo","",mo);
+	debug(F101,"cmdelta dd","",dd);
+	debug(F101,"cmdelta hh","",hh);
+	debug(F101,"cmdelta mm","",mm);
+	debug(F101,"cmdelta ss","",ss);
+	debug(F101,"cmdelta sin","",sign);
+	debug(F101,"cmdelta dyy","",dyy);
+	debug(F101,"cmdelta dmo","",dmo);
+	debug(F101,"cmdelta ddd","",ddd);
+	debug(F101,"cmdelta dhh","",dhh);
+	debug(F101,"cmdelta dmm","",dmm);
+	debug(F101,"cmdelta dss","",dss);
+    }
+#endif /* DEBLOG */
+
+    if (yy < 0 || yy > 9999) {
+	makestr(&cmdatemsg,"Base year out of range");
+	debug(F111,"cmdelta",cmdatemsg,-1);
+	return(NULL);
+    }
+    if (mo < 1 || mo > 12) {
+	makestr(&cmdatemsg,"Base month out of range");
+	debug(F111,"cmdelta",cmdatemsg,-1);
+	return(NULL);
+    }
+    if (dd < 1 || dd > mdays[mo]) {
+	makestr(&cmdatemsg,"Base day out of range");
+	debug(F111,"cmdelta",cmdatemsg,-1);
+	return(NULL);
+    }
+    if (hh < 0 || hh > 23) {
+	makestr(&cmdatemsg,"Base hour out of range");
+	debug(F111,"cmdelta",cmdatemsg,-1);
+	return(NULL);
+    }
+    if (mm < 0 || mm > 59) {
+	makestr(&cmdatemsg,"Base minute out of range");
+	debug(F111,"cmdelta",cmdatemsg,-1);
+	return(NULL);
+    }
+    if (ss < 0 || ss > 60) {
+	makestr(&cmdatemsg,"Base second out of range");
+	debug(F111,"cmdelta",cmdatemsg,-1);
+	return(NULL);
+    }
+    sign = (sign < 0) ? -1 : 1;
+    if (dmo != 0) {
+	mo += (sign * dmo);
+	if (mo > 12 || mo < 0) {
+	    yy += mo / 12;
+	    mo = mo % 12;
+	}
+    }
+    if (dyy != 0) {
+	yy += (sign * dyy);
+	if (yy > 9999 || yy < 0) {
+	    makestr(&cmdatemsg,"Result year out of range");
+	    debug(F111,"cmdelta",cmdatemsg,-1);
+	    return(NULL);
+	}
+    }
+    sprintf(datebuf,"%04d%02d%02d %02d:%02d:%02d",yy,mo,dd,hh,mm,ss);
+    d1 = mjd(datebuf);
+    debug(F111,"cmdelta mjd",datebuf,d1);    
+
+    t1 = hh * 3600 + mm * 60 + ss;	/* Base time to secs since midnight */
+    t2 = dhh * 3600 + dmm * 60 + dss;	/* Delta time, ditto */
+    t3 = t1 + (sign * t2);		/* Get sum (or difference) */
+    
+    d2 = (sign * ddd);			/* Delta days */
+    d2 += t3 / 86400L;
+
+    t4 = t3 % 86400L;			/* Fractional part of day */
+    if (t4 < 0) {			/* If negative */
+	d2--;				/* one less delta day */
+	t4 += 86400L;			/* get positive seconds */
+    }
+    hh = (int) (t4 / 3600L);
+    mm = (int) (t4 % 3600L) / 60;
+    ss = (int) (t4 % 3600L) % 60;
+
+    sprintf(datebuf,"%s %02d:%02d:%02d", mjd2date(d1+d2),hh,mm,ss);
+    {
+	int len, k, n;
+	char * p;
+	len = strlen(datebuf);
+	k = deltabp - (char *)deltabuf;	/* Space used */
+	n = DELTABUF - k - 1;		/* Space left */
+	if (n < len) {			/* Not enough? */
+	    deltabp = deltabuf;		/* Wrap around */
+	    n = DELTABUF;
+	}
+	ckstrncpy(deltabp,datebuf,n);
+	p = deltabp;
+	deltabp += len + 1;
+	return(p);
+    }
+}
+
+
+/* Convert Delta Time to Seconds */
+
 int
+delta2sec(s,result) char * s; long * result; {
+    long ddays = 0L, zz;
+    int dsign = 1, dhours = 0, dmins = 0, dsecs = 0, units;
+    int state = NEED_DAYS;
+    char *p, *p2, *p3, c = 0;
+    char buf[64];
+
+    if (!s) s = "";
+    if (!*s)
+      return(-1);
+    if ((int)strlen(s) > 63)
+      return(-1);
+    ckstrncpy(buf,s,64);
+    p = buf;
+
+    if (*p != '+' && *p != '-')
+      return(-1);
+
+    if (*p++ == '-')
+      dsign = -1;
+    while (*p == SP)			/* Skip intervening spaces */
+      p++;
+
+    while (state) {			/* FSA to parse delta time */
+	if (state < 0 || !isdigit(*p))
+	  return(-1);
+	p2 = p;				/* Get next numeric field */
+	while (isdigit(*p2))
+	  p2++;
+	c = *p2;			/* And break character */
+	*p2 = NUL;			/* Terminate the number */
+	switch (state) {		/* Interpret according to state */
+	  case NEED_DAYS:		/* Initial */
+	    if ((c == '-') ||		/* VMS format */
+		((c == 'd' || c == 'D')
+		 && !isalpha(*(p2+1)))) { /* Days */
+		ddays = atol(p);
+		if (!*(p2+1))			
+		  state = 0;
+		else			/* if anything is left */
+		  state = NEED_HRS;	/* now we want hours. */
+	    } else if (c == ':') {	/* delimiter is colon */
+		dhours = atoi(p);	/* so it's hours */
+		state = NEED_MINS;	/* now we want minutes */
+	    } else if (!c) {		/* end of string */
+		dhours = atoi(p);	/* it's still hours */
+		state = 0;		/* and we're done */
+	    } else if (isalpha(c) || c == SP) {
+		if (c == SP) {		/* It's a keyword? */
+		    p2++;		/* Skip spaces */
+		    while (*p2 == SP)
+		      p2++;
+		} else {		/* or replace first letter */
+		    *p2 = c;
+		}
+		p3 = p2;		/* p2 points to beginning of keyword */
+		while (isalpha(*p3))	/* Find end of keyword */
+		  p3++;
+		c = *p3;		/* NUL it out so we can look it up */
+		if (*p3)		/* p3 points to keyword terminator */
+		  *p3 = NUL;
+		if ((units = lookup(timeunits,p2,nunits,NULL)) < 0)
+		  return(-1);
+		*p2 = NUL;		/* Re-terminate the number */
+		*p3 = c;
+		while (*p3 == SP)	/* Point at field after units */
+		  p3++;
+		p2 = p3;
+		switch (units) {
+		  case TU_DAYS:
+		    ddays = atol(p);
+		    break;
+		  default:
+		    return(-1);
+		}
+		if (*p2) {
+		    state = NEED_HRS;
+		    p2--;
+		} else
+		  state = 0;
+	    } else {			/* Anything else */
+		state = -1;		/* is an error */
+	    }
+	    break;
+	  case NEED_HRS:		/* Looking for hours */
+	    if (c == ':') {
+		dhours = atoi(p);
+		state = NEED_MINS;
+	    } else if (!c) {
+		dhours = atoi(p);
+		state = 0;
+	    } else {
+		state = -1;
+	    }
+	    break;
+	  case NEED_MINS:		/* Looking for minutes */
+	    if (c == ':') {
+		dmins = atoi(p);
+		state = NEED_SECS;
+	    } else if (!c) {
+		dmins = atoi(p);
+		state = 0;
+	    } else {
+		state = -1;
+	    }
+	    break;
+	  case NEED_SECS:		/* Looking for seconds */
+	    if (c == '.') {
+		dsecs = atoi(p);
+		state = NEED_FRAC;
+	    } else if (!c) {
+		dsecs = atoi(p);
+		state = 0;
+	    } else {
+		state = -1;
+	    }
+	    break;
+	  case NEED_FRAC:		/* Fraction of second */
+	    if (!c && rdigits(p)) {
+		if (*p > '4')
+		  dsecs++;
+		state = 0;
+	    } else {
+		state = -1;
+	    }
+	    break;
+	}
+	if (c)				/* next field if any */
+	  p = p2 + 1;
+    }
+    if (state < 0)
+      return(-1);
+
+    /* if days > 24854 and sizeof(long) == 32 we overflow */
+
+    zz = ddays * 86400L;
+    if (zz < 0L)			/* This catches it */
+      return(-2);
+    zz += dhours * 3600L + dmins * 60L + dsecs;
+    zz *= dsign;
+    *result = zz;
+    return(0);
+}
+
+
+char *
 cmcvtdate(s,t) char * s; int t; {
-    int rc = 0, x, i, hh, mm, ss, pmflag = 0, nodate = 0, len;
-    int units;
-    char * fld[3], * p;
-    char * year, * month = NULL, * day;
+    int x, i, j, k, hh, mm, ss, ff, pmflag = 0, nodate = 0, len, dow;
+    int units, isgmt = 0, gmtsign = 0, d = 0, state = 0, nday;
+    int kn = 0, ft[8], isletter = 0, f2len = 0;
+
+    int zhh = 0;			/* Timezone adjustments */
+    int zmm = 0;
+    int zdd = 0;
+
+    int dsign = 1;			/* Delta-time adjustments */
+    int ddays = 0;
+    int dmonths = 0;
+    int dyears = 0;
+    int dhours = 0;
+    int dmins = 0;
+    int dsecs = 0;
+    int havedelta = 0;
+
+    char * fld[8], * p = "", * p2, * p3; /* Assorted buffers and pointers  */
+    char * s2, * s3;
+    char * year = NULL, * month = NULL, * day = NULL;
     char * hour = "00", * min = "00", * sec = "00";
+    char datesep = 0;
     char tmpbuf[8];
-    char xbuf[32];
-    char ybuf[32];
+    char xbuf[DATEBUFLEN+1];
+    char ybuf[DATEBUFLEN+1];
+    char zbuf[DATEBUFLEN+1];
+    char yyyymmdd[YYYYMMDD];
     char dbuf[26];
     char daybuf[3];
     char monbuf[3];
     char yearbuf[5];
+    char timbuf[16], *tb, cc;
+    char * dp = NULL;			/* Result pointer */
 
-    debug(F110,"cmcvtdate",s,0);
     if (!s) s = "";
-
     tmpbuf[0] = NUL;
 
     while (*s == SP) s++;		/* Gobble any leading blanks */
+    if (isalpha(*s))			/* Remember if 1st char is a letter */
+      isletter = 1;
 
     len = strlen(s);
-    if (len == 0) {
-	s = ckdate();
-	len = 17;
-	debug(F110,"cmcvtdate now",s,0);
+    debug(F110,"cmcvtdate",s,len);
+    if (len == 0) {			/* No arg - return current date-time */
+	dp = ckdate();
+	goto xcvtdate;
     }
-    if (len > 30) {			/* Check length of arg */
-	debug(F101,"cmcvtdate date too long","",-1);
-	return(-1);
+    if (len > DATEBUFLEN) {		/* Check length of arg */
+	makestr(&cmdatemsg,"Date-time string too long");
+	debug(F111,"cmcvtdate",cmdatemsg,-1);
+	return(NULL);
     }
-    ckstrncpy(xbuf,s,32);		/* Make a local copy we can poke */
+    hh = 0;				/* Init time to 00:00:00.0 */
+    mm = 0;
+    ss = 0;
+    ff = 0;
+    ztime(&p);
+    if (!p)
+      p  = "";
+    if (*p) {				/* Init time to current time */
+	x = ckstrncpy(dbuf,p,26);
+	if (x > 17) {
+	    hh = atoi(&dbuf[11]);
+	    mm = atoi(&dbuf[14]);
+	    ss = atoi(&dbuf[17]);
+	}
+    }
+    ckstrncpy(yyyymmdd,zzndate(),YYYYMMDD); /* Init date to current date */
+    ckstrncpy(yearbuf,yyyymmdd,5);
+    ckstrncpy(monbuf,&yyyymmdd[4],3);
+    ckstrncpy(daybuf,&yyyymmdd[6],3);
+    year = yearbuf;
+    month = monbuf;
+    day = daybuf;
+    nday = atoi(daybuf);
+
+    ckstrncpy(xbuf,s,DATEBUFLEN);	/* Make a local copy we can poke */
     s = xbuf;				/* Point to it */
     s[len] = NUL;
-
-/* First we handle "today", "yesterday", "tomorrow", etc */
-
-    if (ckstrchr("+-TtYy",s[0])) {
-	int i, k, n, minus = 0;
-	long jd;
-	jd = mjd(ckdate());
-	debug(F111,"cmcvtdate NEW",s,jd);
-	if (s[0] == '+' || s[0] == '-') { /* {+,-} <number> <timeunits> */
-	    char * kp, * np;
-	    char tmpyear[5];
-	    char * dp;
-	    if (s[0] == '-')		/* Sign */
-	      minus = 1;
-	    kp = s+1;			/* Skip intervening spaces */
-	    while (*kp) {
-		if (*kp == SP) kp++;
-		else break;
-	    }
-	    if (!*kp)
-	      return(-1);
-	    np = kp;			/* Number */
-	    while (*kp) {
-		if (isdigit(*kp)) kp++;
-		else break;
-	    }
-	    if (!*kp)
-	      return(-1);
-	    n = atoi(np);
-	    if (minus) n = 0 - n;
-	    debug(F101,"cmcvtdate offset n","",n);
-	    while (*kp) {		/* Find end of number */
-		if (isdigit(*kp)) kp++;
-		else break;
-	    }
-	    while (*kp) {		/* Skip spaces again */
-		if (*kp == SP) kp++;
-		else break;
-	    }
-	    debug(F110,"cmcvtdate unit start",kp,0);
-	    p = kp;			/* Units */
-	    while (*p) {
-		if (isalpha(*p)) {
-		    p++;
-		} else if (isdatesep(*p)) { /* Have a date separator */
-		    *p++ = NUL;
-		    break;
-		} else
-		  return(-1);
-	    }
-	    while (*p) {		/* Skip any spaces */
-		if (*p == SP) p++;
-		else break;
-	    }
-	    debug(F110,"cmcvtdate time pointer",p,0);
-	    debug(F110,"cmcvtdate unit",kp,0);
-	    x = lookup(timeunits,kp,nunits,&k);	/* Look up units */
-	    if (x < 0) {
-		debug(F111,"cmcvtdate lookup fails",kp,x);
-		return(-1);
-	    }
-	    units = x;
-	    debug(F111,"cmcvtdate offset units",timeunits[k].kwd,units);
-
-	    switch (units) {		/* Handle each unit */
-	      case TU_DAYS:		/* Days */
-		jd += n;
-		strcpy(ybuf,mjd2date(jd));
-		if (*p) {
-		    ybuf[8] = ' ';
-		    strcpy(ybuf+9,p);
-		} else
-		  strcpy(ybuf+8," 00:00:00");
-		s = ybuf;
-		len = strlen(ybuf);
-		debug(F111,"cmcvtdate days",s,len);
-		goto normal;
-
-	      case TU_WEEKS:		/* Weeks */
-		jd += (7 * n);
-		strcpy(ybuf,mjd2date(jd));
-		if (*p) {
-		    ybuf[8] = ' ';
-		    strcpy(ybuf+9,p);
-		} else
-		  strcpy(ybuf+8," 00:00:00");
-		s = ybuf;
-		len = strlen(ybuf);
-		debug(F111,"cmcvtdate weeks",s,len);
-		goto normal;
-
-	      case TU_MONTHS: {		/* Months */
-		  char tmpmonth[3];
-		  int xyear, xmonth;
-		  dp = ckdate();
-		  tmpyear[0] = dp[0];
-		  tmpyear[1] = dp[1];
-		  tmpyear[2] = dp[2];
-		  tmpyear[3] = dp[3];
-		  tmpyear[4] = NUL;
-		  tmpmonth[0] = dp[4];
-		  tmpmonth[1] = dp[5];
-		  tmpmonth[2] = NUL;
-		  xyear = atoi(tmpyear);
-		  xmonth = atoi(tmpmonth);
-		  xmonth += n;
-		  xyear += (xmonth / 12);
-		  xmonth = (xmonth % 12);
-		  if (xmonth <= 0) {
-		      xmonth += 12;
-		      xyear--;
-		  }
-		  sprintf(ybuf,"%04d%02d%s",xyear,xmonth,dp+6);
-		  if (*p) {
-		      ybuf[8] = ' ';
-		      strcpy(ybuf+9,p);
-		  } else
-		    strcpy(ybuf+8," 00:00:00");
-		  s = ybuf;
-		  len = strlen(ybuf);
-		  debug(F111,"cmcvtdate months",s,len);
-		  goto normal;
-	      }
-	      case TU_YEARS: {		/* Years */
-		  dp = ckdate();
-		  tmpyear[0] = dp[0];
-		  tmpyear[1] = dp[1];
-		  tmpyear[2] = dp[2];
-		  tmpyear[3] = dp[3];
-		  tmpyear[4] = NUL;
-		  sprintf(ybuf,"%04d%s",(atoi(tmpyear)+n),dp+4);
-		  if (*p) {
-		      ybuf[8] = ' ';
-		      strcpy(ybuf+9,p);
-		  } else
-		    strcpy(ybuf+8," 00:00:00");
-		  s = ybuf;
-		  len = strlen(ybuf);
-		  debug(F111,"cmcvtdate years",s,len);
-		  goto normal;
-	      }
-	    }
-	    return(-1);
-	}
-	i = ckstrpre(s,"today");	/* TODAY */
-	if (i > 2 && (s[i] == NUL || isdatesep(s[i]))) {
-	    strncpy(ybuf,ckdate(),8);
-	    strcpy(ybuf+8," 00:00:00");
-	    if (s[i])
-	      strcpy(ybuf+8,s+i);
-	    s = ybuf;
-	    len = strlen(s);
-	    debug(F111,"cmcvtdate today",s,len);
-	    goto normal;
-	}
-	i = ckstrpre(s,"tomorrow");	/* TOMORROW */
-	if (i > 2 && (s[i] == NUL || isdatesep(s[i]))) {
-	    jd++;
-	    strncpy(ybuf,mjd2date(jd),8);
-	    strcpy(ybuf+8," 00:00:00");
-	    if (s[i]) strcpy(ybuf+8,s+i);
-	    s = ybuf;
-	    len = strlen(s);
-	    debug(F111,"cmcvtdate tomorrow",s,len);
-	    goto normal;
-
-	}
-	i = ckstrpre(s,"yesterday");	/* YESTERDAY */
-	if (i > 0 && (s[i] == NUL || isdatesep(s[i]))) {
-	    jd--;
-	    strncpy(ybuf,mjd2date(jd),8);
-	    strcpy(ybuf+8," 00:00:00");
-	    if (s[i]) strcpy(ybuf+8,s+i);
-	    s = ybuf;
-	    len = strlen(s);
-	    debug(F111,"cmcvtdate yesterday",s,len);
-	    goto normal;
-	}
+    if (s[0] == ':') {
+	p = s;
+	goto dotime;
     }
+    /* Special preset formats... */
 
-  normal:
-
-    if (len >= 8) {			/* Already in right format? */
-	if (isdigit(s[0])  && isdigit(s[1])  &&
-	    isdigit(s[2])  && isdigit(s[3])  &&
-	    isdigit(s[4])  && isdigit(s[5])  &&
-	    isdigit(s[6])  && isdigit(s[7]))
-	  if (!s[8]) {
-	      strcat(s," 00:00:00");
-	      ckstrncpy(cmdatebuf,s,18);
-	      debug(F111,"cmcvtdate yyyymmdd",s,rc);
-	      return(rc);
-	  } else if (len == 17 &&
-		     isdigit(s[9])  && isdigit(s[10]) &&
-		     isdigit(s[12]) && isdigit(s[13]) &&
-		     isdigit(s[15]) && isdigit(s[16]) &&
-		     s[11] == ':'   && s[14] == ':'   &&
-		     (s[8] == SP || s[8] == '-' || s[8] == '_')) {
-	      ckstrncpy(cmdatebuf,s,18);
-	      debug(F111,"cmcvtdate yyyymmdd hh:mm:ss",s,rc);
-	      return(rc);
-	} else {			/* We have a numeric date */
-	    debug(F111,"cmcvtdate yyyymmdd xxx",s,rc);
-	    p = s+9;			/* Start of time field */
-
-	    yearbuf[0] = s[0]; yearbuf[1] = s[1];
-	    yearbuf[2] = s[2]; yearbuf[3] = s[3];
-	    yearbuf[4] = NUL;  year = yearbuf;
-
-	    monbuf[0] = s[4];  monbuf[1] = s[5];
-	    monbuf[2] = NUL;   month = monbuf;
-
-	    daybuf[0] = s[6];  daybuf[1] = s[7];
-	    daybuf[2] = NUL;   day = daybuf;
-
+    if (len >= 14) {			/* FTP MDTM all-numeric date */
+	char c;
+	c = s[14];			/* e.g. 19980615100045.014 */
+	s[14] = NUL;
+	x = rdigits(s);
+	s[14] = c;
+	if (x) {
+	    ckstrncpy(yyyymmdd,s,8+1);
+	    year = NULL;
+	    p = &s[8];
 	    goto dotime;
 	}
     }
+    x = 0;				/* Becomes > 0 for asctime format */
+    if (isalpha(s[0])) {
+	if (len == 24) {		/* Asctime format? */
+	    /* Sat Jul 14 15:57:32 2001 */
+	    x = ckmatch(atp1,s,0,0);
+	    debug(F111,"cmcvtdate asctime",s,x);
+	} else if (len == 28) {		/* Or Asctime plus timezone? */
+	    /* Sat Jul 14 15:15:39 EDT 2001 */
+	    x = ckmatch(atp2,s,0,0);
+	    debug(F111,"cmcvtdate asctime+timezone",s,x);
+	}
+    }
+    if (x > 0) {			/* Asctime format */
+        int xx;
+        strncpy(yearbuf,s + len - 4,4);
+        yearbuf[4] = NUL;
+        for (i = 0; i < 3; i++)
+          tmpbuf[i] = s[i+4];
+        tmpbuf[3] = NUL;
+	if ((xx = lookup(cmonths,tmpbuf,12,NULL)) < 0) {
+	    makestr(&cmdatemsg,"Invalid month");
+	    debug(F111,"cmcvtdate",cmdatemsg,-1);
+	    return(NULL);
+	}
+        debug(F101,"cmcvtdate asctime month","",xx);
+        monbuf[0] = (xx / 10) + '0'; 
+        monbuf[1] = (xx % 10) + '0'; 
+        monbuf[2] = NUL;
+        daybuf[0] = (s[8] == ' ' ? '0' : s[8]);
+        daybuf[1] = s[9];
+        daybuf[2] = NUL;
+	xbuf[0] = SP;
+        for (i = 11; i < 19; i++)
+          xbuf[i-10] = s[i];
+        xbuf[9] = NUL;
+	ckmakmsg(zbuf,18,yearbuf,monbuf,daybuf,xbuf);
+	debug(F110,"cmcvtdate asctime ok",zbuf,0);
+	if (len == 24) {
+	    dp = zbuf;
+	    goto xcvtdate;
+	} else {
+	    int n;
+	    n = ckmakmsg(ybuf,DATEBUFLEN-4,zbuf," ",NULL,NULL);
+	    ybuf[n++] = s[20];
+	    ybuf[n++] = s[21];
+	    ybuf[n++] = s[22];
+	    ybuf[n++] = NUL;
+	    ckstrncpy(xbuf,ybuf,DATEBUFLEN);
+	    s = xbuf;
+	    isletter = 0;
+	}
+    }
+
+/* Check for day of week */
+
+    p = s;
+    while (*p == SP) p++;
+    dow = -1;
+    if (*p) {
+	p2 = p;
+	cc = NUL;
+	while (1) {
+	    if (*p2 == ',' || *p2 == SP || !*p2) {
+		cc = *p2;		/* Save break char */
+		*p2 = NUL;		/* NUL it out */
+		p3 = p2;		/* Remember this spot */
+		if ((dow = lookup(daysofweek,p,7,NULL)) > -1) {
+		    debug(F111,"cmcvtdate dow",p,dow);
+		    s = p2;
+		    if (cc == ',' || cc == SP) { /* Point to next field */
+			s++;
+			while (*s == SP) s++;
+		    }
+		    p = s;
+		    debug(F111,"cmcvtdate dow new p",p,dow);
+		    break;
+		} else if (isalpha(*p) && cc == ',') {
+		    makestr(&cmdatemsg,"Unrecognized day of week");
+		    debug(F111,"cmcvtdate",cmdatemsg,-1);
+		    return(NULL);
+		} else {
+		    *p3 = cc;
+		    break;
+		}
+	    }
+	    p2++;
+	}
+    }
+    len = strlen(s);		/* Update length */
+
+    debug(F111,"cmcvtdate dow",p,dow);
+    if (dow > -1) {			/* Have a day number */
+	long zz; int n, j;
+	zz = mjd(zzndate());		/* Get today's MJD */
+	j = (((int)(zz % 7L)) + 3) % 7; /* Today's day-of-week number */
+	if (j == dow) {
+	    ckstrncpy(yyyymmdd,zzndate(),YYYYMMDD);
+	    year = NULL;
+	} else {
+	    n = dow - j;		/* Days from now */
+	    if (dow < j)
+	      n += 7;
+	    if (n < 0) n += 7;		/* Add to MJD */
+	    zz += n;
+	    ckstrncpy(yyyymmdd,mjd2date(zz),YYYYMMDD); /* New date */
+	    year = NULL;
+	}
+	if (len == 0) {
+	    ckmakmsg(zbuf,18,yyyymmdd," 00:00:00",NULL,NULL);
+	    goto xcvtdate;
+	}
+	isletter = 0;
+	if (rdigits(p) && len < 8)	/* Next field is time? */
+	  goto dotime;			/* If so go straight to time section */
+	else if (isdigit(*p)) {
+	    if (*(p+1) == ':')
+	      goto dotime;
+	    else if (isdigit(*(p+1)) && (*(p+2) == ':'))
+	      goto dotime;
+	}
+	debug(F110,"cmcvtdate A not time",p,0);
+	goto normal;			/* Skip past symbolic date section */
+    }
+    if (*s == '+' || *s == '-') {	/* Delta time only - skip ahead. */
+	p = s;
+	goto delta;
+    }
+
+    /* Handle "today", "yesterday", "tomorrow", and +/- n units */
+
+    if (ckstrchr("TtYyNn",s[0])) {
+	int i, k, n, minus = 0;
+	char c;
+	long jd;
+	jd = mjd(ckdate());
+	debug(F111,"cmcvtdate mjd",s,jd);
+
+	/* Symbolic date: TODAY, TOMORROW, etc...? */
+
+	s2 = s;				/* Find end of keyword */
+	i = 0;
+	while (isalpha(*s2)) {		/* and get its length */
+	    i++;
+	    s2++;
+	}
+	c = *s2;			/* Zap but save delimiter */
+	*s2 = NUL;
+	k = lookup(symdaytab,s,nsymdays,NULL); /* Look up keyword */
+	*s2 = c;			/* Replace delimiter */
+	if (k < 0)			/* Keyword not found */
+	  goto normal;
+	s3 = &s[i];
+	while (*s3 == SP)		/* Skip whitespace */
+	  s3++;
+	if (*s3 == '_' || *s3 == ':')
+	  s3++;
+
+	switch (k) {			/* Have keyword */
+	  case SYM_NOW:			/* NOW */
+	    ckstrncpy(ybuf,ckdate(),DATEBUFLEN);
+	    ckstrncpy(yyyymmdd,ybuf,YYYYMMDD);
+	    year = NULL;
+	    if (*s3) {			/* No overwriting current time. */
+		ckstrncat(ybuf," ",DATEBUFLEN);
+		ckstrncat(ybuf,s3,DATEBUFLEN);
+	    }
+	    break;
+	  default:			/* Yesterday, Today, and Tomorrow */
+	    if (k == SYM_TOMO) {	/* TOMORROW */
+		strncpy(ybuf,mjd2date(jd+1),8);
+	    } else if (k == SYM_YEST) {	/* YESTERDAY */
+		strncpy(ybuf,mjd2date(jd-1),8);
+	    } else {			/* TODAY */
+		strncpy(ybuf,ckdate(),8);
+	    }
+	    strncpy(ybuf+8," 00:00:00",DATEBUFLEN-8); /* Default time is 0 */
+	    ckstrncpy(yyyymmdd,ybuf,YYYYMMDD);
+	    year = NULL;
+	    if (*s3) {			/* If something follows keyword... */
+		if (isdigit(*s3)) {	/* Time - overwrite default time */
+		    strncpy(ybuf+8,s+i,DATEBUFLEN-8);
+		} else {		/* Something else, keep default time */
+		    ckstrncat(ybuf," ",DATEBUFLEN); /* and append */
+		    ckstrncat(ybuf,s3,DATEBUFLEN); /* whatever we have */
+		}
+	    }
+	}
+	s = ybuf;			/* Point to rewritten date-time */
+	len = strlen(s);		/* Update length */
+	isletter = 0;			/* Cancel this */
+    }
+
+/* Regular free-format non-symbolic date */
+
+  normal:
+
+    debug(F111,"cmcvtdate NORMAL",s,len);
+    if (yyyymmdd[0] && !year) {
+	ckstrncpy(yearbuf,yyyymmdd,5);
+	ckstrncpy(monbuf,&yyyymmdd[4],3);
+	ckstrncpy(daybuf,&yyyymmdd[6],3);
+	year = yearbuf;
+	month = monbuf;
+	day = daybuf;
+	nday = atoi(daybuf);
+    }
+    if (isdigit(s[0])) {		/* Time without date? */
+	p = s;
+	if (s[1] == ':') {
+	    debug(F111,"cmcvtdate NORMAL X1",s,len);
+	    goto dotime;
+	} else if (len > 1 && isdigit(s[1]) && s[2] == ':') {
+	    debug(F111,"cmcvtdate NORMAL X2",s,len);
+	    goto dotime;
+	} else if (rdigits(s) && len < 8) {
+	    debug(F111,"cmcvtdate NORMAL X3",s,len);
+	    goto dotime;
+	}
+    }
+    if (len >= 8 && isdigit(*s)) {	/* Check first for yyyymmdd* */
+	debug(F111,"cmcvtdate NORMAL A",s,len);
+	cc = s[8];
+	s[8] = NUL;			/* Isolate first 8 characters */
+	if (rdigits(s)) {
+	    /* Have valid time separator? */
+	    p2 = cc ? ckstrchr(" Tt_-:",cc) : NULL;
+	    if (!cc || p2) {
+		ckstrncpy(yyyymmdd,s,YYYYMMDD);	/* Valid separator */
+		year = NULL;
+		s += 8;			        /* or time not given */
+		if (cc) s++;		        /* Keep date */
+		p = s;			        /* and go handle time */
+		goto dotime;
+	    } else if (!p2) {
+		if (isdigit(cc))
+		  makestr(&cmdatemsg,"Numeric date too long");
+		else
+		  makestr(&cmdatemsg,"Invalid date-time separator");
+		debug(F111,"cmcvtdate",cmdatemsg,-1);
+		return(NULL);
+	    }
+	}
+	s[8] = cc;			/* Put this back! */
+    }
+    debug(F111,"cmcvtdate NORMAL non-yyyymmdd",s,len);
+
+    /* Free-format date -- figure it out */
+
+#ifdef COMMENT
+    if (*s && !isdigit(*s)) {
+	makestr(&cmdatemsg,"Unrecognized word in date");
+	debug(F111,"cmcvtdate",cmdatemsg,-1);
+	return(NULL);
+    }
+#endif /* COMMENT */
+    for (i = 0; i < 8; i++)		/* Field types */
+      ft[i] = -1;
     fld[i = 0] = (p = s);		/* First field */
     while (*p) {			/* Get next two fields */
 	if (isdatesep(*p)) {		/* Have a date separator */
+	    if (i == 0) {
+		datesep = *p;
+	    } else if (i == 1 && *p != datesep) {
+		makestr(&cmdatemsg,"Inconsistent date separators");
+		debug(F111,"cmcvtdate",cmdatemsg,-1);
+		return(NULL);
+	    }
 	    *p++ = NUL;			/* Replace by NUL */
 	    if (*p) {			/* Now we're at the next field */
 		while (*p == SP) p++;	/* Skip leading spaces */
@@ -3580,16 +4235,27 @@ cmcvtdate(s,t) char * s; int t; {
 		if (i == 2)		/* Last one? */
 		  break;
 		fld[++i] = p;		/* No, record pointer to this one */
-	    } else
-	      break;
-	} else if (istimesep(*p)) {	/* Have a time separator */
-	    if (isalpha(*p) && !isdigit(*(p-1))) { /* Might be letter */
-		p++;			/* in month name... */
-		continue;
-	    }
-	    if (i != 0) {		/* After a date */
-		debug(F111,"cmcvtdate date bad timesep",p,-1);
-		return(-1);
+	    } else {
+		break;
+	    }	    
+	} else if ((*p == 'T' || *p == 't') && isdigit(*(p+1))) { /* Time */
+	    *p++ = NUL;
+	    break;
+	} else if (*p == ':') {
+	    if (i == 0 && p == s) {
+		nodate = 1;
+		break;
+	    } else if (i != 0) {	/* After a date */
+		if (i == 2) {		/* OK as date-time separator (VMS) */
+		    *p++ = NUL;
+		    break;
+		}
+		if (i < 2)
+		  makestr(&cmdatemsg,"Too few fields in date");
+		else
+		  makestr(&cmdatemsg,"Misplaced time separator");
+		debug(F111,"cmcvtdate",cmdatemsg,-1);
+		return(NULL);
 	    }
 	    nodate = 1;			/* Or without a date */
 	    break;
@@ -3597,50 +4263,104 @@ cmcvtdate(s,t) char * s; int t; {
 	p++;
     }
     if (p > s && i == 0)		/* Make sure we have a date */
-      nodate = 1;
+      nodate = 1;			/* No date. */
 
-    if (nodate) {			/* No date */
+    if (nodate && dow > -1) {		/* Have implied date from DOW? */
+	goto dotime;			/* Use, use that, go do time. */
+
+    } else if (nodate) {		/* No date and no implied date */
 	char *tmp;			/* Substitute today's date */
 	ztime(&tmp);
-	if (!tmp) {
-	    debug(F101,"cmcvtdate null ztime","",-1);
-	    return(-1);
-	}
+	if (!tmp)
+	  tmp  = "";
 	if (!*tmp) {
-	    debug(F101,"cmcvtdate emtpy ztime","",-1);
-	    return(-1);
+	    makestr(&cmdatemsg,"Problem supplying current date");
+	    debug(F111,"cmcvtdate",cmdatemsg,-1);
+	    return(NULL);
 	}
 	ckstrncpy(dbuf,tmp,26);		/* Reformat */
 	if (dbuf[8] == SP) dbuf[8] = '0';
-	fld[0] = dbuf+8;
+	fld[0] = dbuf+8;		/* dd */
 	dbuf[10] = NUL;
-	fld[1] = dbuf+4;
+	fld[1] = dbuf+4;		/* mmm */
 	dbuf[7] = NUL;
-	fld[2] = dbuf+20;
+	fld[2] = dbuf+20;		/* yyyy */
 	dbuf[24] = NUL;
+	hh = atoi(&dbuf[11]);
+	mm = atoi(&dbuf[14]);
+	ss = atoi(&dbuf[17]);
 	p = s;				/* Back up source pointer to reparse */
-    } else if (i != 2) {
-	debug(F101,"cmcvtdate fail A","",-1);
-	return(-1);
+    } else if (i < 2) {
+	makestr(&cmdatemsg,"Too few fields in date");
+	debug(F111,"cmcvtdate",cmdatemsg,-1);
+	return(NULL);
     }
-    if (!rdigits(fld[0])) {		/* Now parse the date */
-	debug(F101,"cmcvtdate fail B","",-1);
-	return(-1);
+    /* Have three date fields - see what they are */
+
+    for (k = 0, j = 0; j < 3; j++) {	/* Get number of non-numeric fields */
+	ft[j] = rdigits(fld[j]);
+	debug(F111,"cmcvtdate fld",fld[j],j);
+	if (ft[j] == 0)
+	  k++;
     }
-    if (!rdigits(fld[1])) {
-	if ((x = lookup(cmonths,fld[1],12,NULL)) < 0) {
-	    debug(F101,"cmcvtdate fail C","",-1);
-	    return(-1);
+    kn = k;				/* How many numeric fields */
+    month = NULL;			/* Strike out default values */
+    year = NULL;
+    day = NULL;
+
+    if (k == 2 && ft[2] > 0) {		/* Jul 20, 2001 */
+	int xx;
+	xx = strlen(fld[1]);
+	p3 = fld[1];
+	if (xx > 0) if (p3[xx-1] == ',') {
+	    p3[xx-1] = NUL;
+	    if (rdigits(p3)) {
+		k = 1;	
+		ft[1] = 1;
+	    } else p3[xx-1] = ',';
+	}
+    }
+    if (k > 1) {			/* We can have only one non-numeric */
+	if (nodate)
+	  makestr(&cmdatemsg,"Unrecognized word in date"); 
+	else if (!ft[2] && isdigit(*(fld[2])))
+	  makestr(&cmdatemsg,"Invalid date-time separator"); 
+	else
+	  makestr(&cmdatemsg,"Too many non-numeric fields in date");
+	debug(F111,"cmcvtdate",cmdatemsg,-1);
+	return(NULL);
+    }
+    if (!ft[0]) {
+	k = 0;
+    } else if (!ft[1]) {
+	k = 1;
+    } else if (!ft[2]) {
+	makestr(&cmdatemsg,"Non-digit in third date field");
+	debug(F111,"cmcvtdate",cmdatemsg,-1);
+	return(NULL);
+    } else
+      k = -1;
+
+    if (k > -1) {
+	if ((x = lookup(cmonths,fld[k],12,NULL)) < 0) {
+	    makestr(&cmdatemsg,"Unknown month");
+	    debug(F111,"cmcvtdate",cmdatemsg,-1);
+	    return(NULL);
 	}
 	sprintf(tmpbuf,"%02d",x);
 	month = tmpbuf;
     }
-    if (((int)strlen(fld[0]) == 4)) {	/* yyyy-xx-dd */
+    f2len = strlen(fld[2]);		/* Length of 3rd field */
+
+    if (k == 0) {			/* monthname dd, yyyy */
+	day = fld[1];
+	year = fld[2];
+    } else if (((int)strlen(fld[0]) == 4)) { /* yyyy-xx-dd */
 	year = fld[0];
 	day = fld[2];
 	if (!month)
 	  month = fld[1];		/* yyyy-mm-dd */
-    } else if (((int)strlen(fld[2]) == 4)) { /* xx-xx-yyyy */
+    } else if (f2len == 4) {		/* xx-xx-yyyy */
 	year = fld[2];
 	if (month) {			/* dd-name-yyyy */
 	    day = fld[0];
@@ -3648,147 +4368,851 @@ cmcvtdate(s,t) char * s; int t; {
 	    int f0, f1;
 	    f0 = atoi(fld[0]);
 	    f1 = atoi(fld[1]);
-	    if ((f0 > 12) && (f1 <= 12)) {
+	    if (((f0 > 12) && (f1 <= 12)) || (f1 <= 12 && f0 == f1)) {
 		day = fld[0];		/* mm-dd-yyyy */
 		month = fld[1];
 	    } else if ((f0 <= 12) && (f1 > 12)) {
-		if (!rdigits(fld[1]))
-		  return(-1);
-		else
-		  day = fld[1];		/* dd-mm-yyyy */
+		if (!rdigits(fld[1])) {
+		    makestr(&cmdatemsg,"Day not numeric");
+		    debug(F111,"cmcvtdate",cmdatemsg,-1);
+		    return(NULL);
+		} else {
+		    day = fld[1];	/* dd-mm-yyyy */
+		}
 		month = fld[0];
-#ifdef COMMENT
-	    } else if ((f0 <= 12) && (f1 <= 12)) {
-		if (!quiet)
-		  printf("?Day and month are ambiguous - \"%s\"\n", o);
-		return(-9);
-#endif /* COMMENT */
 	    } else {
-		debug(F101,"cmcvtdate fail D","",-1);
-		return(-1);
+		if (!f0 || !f1)
+		  makestr(&cmdatemsg,"Day or month out of range");
+		else
+		  makestr(&cmdatemsg,"Day and month are ambiguous");
+		debug(F111,"cmcvtdate",cmdatemsg,-1);
+		return(NULL);
 	    }
 	}
+    } else if ((f2len < 4) &&		/* dd mmm yy (RFC822) */
+	       !rdigits(fld[1]) &&	/* middle field is monthname */
+	       rdigits(fld[2])) {
+	int tmpyear;
+	day = fld[0];
+	if (!fld[2][1]) {
+	    makestr(&cmdatemsg,"Too few digits in year");
+	    debug(F111,"cmcvtdate",cmdatemsg,-1);
+	    return(NULL);
+	}
+	tmpyear = atoi(fld[2]);
+	if (tmpyear < 50)		/* RFC 2822 windowing */
+	  tmpyear += 2000;
+	else				/* This includes 3-digit years. */
+	  tmpyear += 1900;
+	year = ckitoa(tmpyear);
+
+    } else if ((f2len < 4) && (k < 0) && ((int)strlen(fld[0]) < 4)) {
+	makestr(&cmdatemsg,"Ambiguous numeric date");
+	debug(F111,"cmcvtdate",cmdatemsg,-1);
+	return(NULL);
+    } else if ((f2len > 4) && ft[2]) {
+	makestr(&cmdatemsg,"Too many digits in year");
+	debug(F111,"cmcvtdate",cmdatemsg,-1);
+	return(NULL);
     } else {
-	debug(F101,"cmcvtdate fail E","",-1);
-	return(-1);
+	makestr(&cmdatemsg,"Unexpected date format");
+	debug(F111,"cmcvtdate",cmdatemsg,-1);
+	return(NULL);
     }
     x = atoi(month);
     sprintf(tmpbuf,"%02d",x);		/* 2-digit numeric month */
 
+/*
+   state = 1 = hours
+   state = 2 = minutes
+   state = 3 = seconds
+   state = 4 = fractions of seconds
+*/
+
   dotime:
+    if (isletter && (s == p)) {
+	makestr(&cmdatemsg,"Unknown date-time word");
+	debug(F111,"cmcvtdate",cmdatemsg,-1);
+	return(NULL);
+    }
+    if (!year && yyyymmdd[0]) {
+	debug(F110,"cmcvtdate dotime yyyymmdd",yyyymmdd,0);
+	for (i = 0; i < 4; i++)
+	  yearbuf[i] = yyyymmdd[i];
+	yearbuf[4] = NUL;
+	monbuf[0] = yyyymmdd[4];
+	monbuf[1] = yyyymmdd[5];
+	monbuf[2] = NUL;
+	daybuf[0] = yyyymmdd[6];
+	daybuf[1] = yyyymmdd[7];
+	daybuf[2] = NUL;
+	day = daybuf;
+	nday = atoi(daybuf);
+	month = monbuf;
+	year = yearbuf;
+    }
+    if (!year) {
+	makestr(&cmdatemsg,"Internal error - date not defaulted");
+	debug(F111,"cmcvtdate",cmdatemsg,-1);
+	return(NULL);
+    }
+    /* Get here with day, month, and year set */
+    debug(F110,"cmcvtdate dotime day",day,0);
+    debug(F110,"cmcvtdate dotime month",month,0);
+    debug(F110,"cmcvtdate dotime year",year,0);
     debug(F110,"cmcvtdate dotime s",s,0);
     debug(F110,"cmcvtdate dotime p",p,0);
-    if ((x  = atoi(day)) > 31) {
-	debug(F101,"cmcvtdate fail K","",-1);
-	return(-1);
+    x = atoi(month);
+    if (x > 12 || x < 1) {
+	makestr(&cmdatemsg,"Month out of range");
+	debug(F111,"cmcvtdate",cmdatemsg,-1);
+	return(NULL);
+    }
+    nday  = atoi(day);
+    i = mdays[x];
+    if (x == 2) if (isleap(atoi(year))) i++;
+    if (nday > i || nday < 1) {
+	makestr(&cmdatemsg,"Day out of range");
+	debug(F111,"cmcvtdate",cmdatemsg,-1);
+	return(NULL);
     }
     if (!*p && t == 0) {
-	sprintf(cmdatebuf,"%s%s%02d",year,month,x);
-	return(0);
+	sprintf(zbuf,"%04d%02d%02d",atoi(year),atoi(month),nday);	
+	dp = zbuf;
+	goto xcvtdate;
     }
-    fld[i = 0] = *p ? p : "00";		/* First time field */
-    fld[1] = "00";
-    fld[2] = "00";
-    while (*p) {			/* Get the rest, if any */
-	if (istimesep(*p)) {
-	    debug(F000,"cmcvtdate timesep:",p,*p);
-	    if (*p == 'P' || *p == 'p') {
-		if (*(p+1) != 'M' && *(p+1) != 'm') {
-		    debug(F101,"cmcvtdate fail F","",-1);
-		    return(-1);
-		} else if (!*(p+2)) {
-		    pmflag = 1;
-		    *p = NUL;
-		    break;
-		} else {
-		    debug(F101,"cmcvtdate fail F","",-1);
-		    return(-1);
-		}
-	    } else if (*p == 'A' || *p == 'a') {
-		if (*(p+1) != 'M' && *(p+1) != 'm') {
-		    debug(F101,"cmcvtdate fail F","",-1);
-		    return(-1);
-		}
-		if (*(p+2)) {
-		    debug(F101,"cmcvtdate fail F","",-1);
-		    return(-1);
-		}
-		*p = NUL;
+    if (*p == '+' || *p == '-') {	/* GMT offset without a time */
+	hh = 0;				/* so default time to 00:00:00 */
+	mm = 0;
+	ss = 0;
+	goto cmtimezone;		/* and go do timezone */
+    }
+    if (*p && !isdigit(*p) && *p != ':') {
+	makestr(&cmdatemsg,"Invalid time");
+	debug(F111,"cmcvtdate",cmdatemsg,-1);
+	return(NULL);
+    }
+    sprintf(yyyymmdd,"%s%s%02d",year,month,nday); /* for tz calculations... */
+
+    state = 1;				/* Initialize time-parsing FSA */
+    hh = 0;				/* hours */
+    mm = 0;				/* minutes */
+    ss = 0;				/* seconds */
+    ff = -1;				/* fraction */
+    d = 0;				/* Digit counter */
+    p2 = p;				/* Preliminary digit count... */
+    while (isdigit(*p2)) {
+	d++;
+	p2++;
+    }
+    if (d > 6) {
+	makestr(&cmdatemsg,"Too many time digits");
+	debug(F111,"cmcvtdate",cmdatemsg,-1);
+	return(NULL);
+    }
+    d = (d & 1 && *p2 != ':') ? 1 : 0;	/* Odd implies leading '0' */
+
+    while (*p) {			/* Get the time, if any */
+	if (isdigit(*p)) {		/* digit */
+	    if (d++ > 1) {
+		state++;
+		d = 1;
+	    }
+	    switch (state) {
+	      case 1:			/* Hours */
+		hh = hh * 10 + (*p - '0');
+		break;
+	      case 2:			/* Minutes */
+		mm = mm * 10 + (*p - '0');
+		break;
+	      case 3:			/* Seconds */
+		ss = ss * 10 + (*p - '0');
+		break;
+	      case 4:			/* Fraction of second */
+		if (ff < 0)
+		  ff = (*p > '4') ? 1 : 0;
 		break;
 	    }
-	    *p++ = NUL;
-	    if (*p) {
-		while (*p == SP) p++;
-		if (!*p) break;
-		if (i == 2)
-		  break;
-		fld[++i] = p;
-	    } else
-	      break;
+	} else if (*p == ':') {		/* Colon */
+	    state++;
+	    d = 0;
+	    if (state > 3) {
+		makestr(&cmdatemsg,"Too many time fields");
+		debug(F111,"cmcvtdate",cmdatemsg,-1);
+		return(NULL);
+	    }
+	} else if (*p == '.') {
+	    if (state == 3) {
+		state = 4;
+		d = 0;
+	    } else {
+		makestr(&cmdatemsg,"Improper fraction");
+		debug(F111,"cmcvtdate",cmdatemsg,-1);
+		return(NULL);
+	    }
+	} else if (*p == SP) {		/* Space */
+	    while (*p && (*p == SP))	/* position to first nonspace */
+	      p++;
+	    break;
+	} else if (isalpha(*p)) {	/* AM/PM/Z or timezone */
+	    break;
+	} else if (*p == '+' || *p == '-') { /* GMT offset */
+	    break;
+	} else {
+	    makestr(&cmdatemsg,"Invalid time characters");
+	    debug(F111,"cmcvtdate",cmdatemsg,-1);
+	    return(NULL);
 	}
 	p++;
     }
-    debug(F101,"cmcvtdate time i","",i);
-    debug(F110,"cmcvtdate time fld[0]",fld[0],0);
-    debug(F110,"cmcvtdate time fld[1]",fld[1],0);
-    debug(F110,"cmcvtdate time fld[2]",fld[2],0);
+    if (!*p)				/* If nothing left */
+      goto xcmdate;			/* go finish up */
 
-    if (!rdigits(fld[0]))
-      return(-1);
+    /* At this point we have HH, MM, SS, and FF */
+    /* Now handle the rest: AM, PM, and/or timezone info */
 
-    hour = fld[0];
-    if (i >= 1) {
-	if (!rdigits(fld[1]))
-	  return(-1);
-	else
-	  min = fld[1];
+    if (!ckstrcmp(p,"am",2,0)) {	/* AM/PM... */
+	pmflag = 0;
+	p += 2;
+    } else if (!ckstrcmp(p,"a.m.",4,0)) {
+	pmflag = 0;
+	p += 4;
+    } else if (!ckstrcmp(p,"pm",2,0)) {
+	pmflag = 1;
+	p += 2;
+    } else if (!ckstrcmp(p,"p.m.",4,0)) {
+	pmflag = 1;
+	p += 4;
     }
-    if (i == 2) {
-	if (!rdigits(fld[2]))
-	  return(-1);
-	else
-	  sec = fld[2];
+    if (pmflag && hh < 12)		/* If PM was given */
+      hh += 12;				/* add 12 to the hour */
+
+    /* Now handle timezone */
+
+  cmtimezone:
+    debug(F110,"cmcvtdate timezone",p,0);
+
+    zhh = 0;				/* GMT offset HH */
+    zmm = 0;				/* GMT offset MM */
+    gmtsign = 0;			/* Sign of GMT offset */
+    isgmt = 0;				/* 1 if time is GMT */
+
+    while (*p && *p == SP)		/* Gobble spaces */
+      p++;
+    if (!*p)				/* If nothing left */
+      goto xcmdate;			/* we're done */
+
+    if (isalpha(*p)) {			/* Something left */
+	int zone = 0;			/* Alphabetic must be timezone */
+	p2 = p;				/* Isolate timezone */
+	p++;
+	while (isalpha(*p))
+	  p++;
+	p3 = p;
+	cc = *p;
+	*p = NUL;
+	p = p2;				/* Have timezone, look it up */
+	zone = lookup(usatz,p,nusatz,NULL);
+	debug(F111,"cmcvtdate timezone alpha",p,zone);
+
+	if (zone < 0) {			/* Not found */
+	    makestr(&cmdatemsg,"Unknown timezone");
+	    debug(F111,"cmcvtdate",cmdatemsg,-1);
+	    return(NULL);
+	}
+	isgmt++;			/* All dates are GMT from here down */
+	if (zone != 0) {		/* But not this one so make it GMT */
+	    hh += zone;			/* RFC 822 timezone: EST etc */
+	    if (hh > 23) {		/* Offset crosses date boundary */
+		long jd;
+		jd = mjd(yyyymmdd);	/* Get MJD */
+		jd += hh / 24;		/* Add new day(s) */
+		hh = hh % 24;		/* and convert back to yyyymmdd */
+		ckstrncpy(yyyymmdd,mjd2date(jd),YYYYMMDD);
+	    }
+	}
+	p = p3;				/* Put back whatever we poked above */
+	*p = cc;
+
+    } else if (*p == '+' || *p == '-') { /* GMT/UTC offset */
+	p3 = p;
+	debug(F110,"cmcvtdate timezone GMT offset",p,0);
+	gmtsign = (*p == '+') ? -1 : 1;
+	isgmt++;
+	p++;
+	while (*p == SP) p++;
+	d = 0;
+	p2 = p;
+	while (isdigit(*p)) {		/* Count digits */
+	    d++;
+	    p++;
+	}
+	if (d != 4) {			/* Strict RFC [2]822 */
+	    isgmt = 0;			/* If not exactly 4 digits */
+	    p = p3;			/* it's not a GMT offset. */
+	    goto delta;			/* So treat it as a delta time. */
+	}
+	d = (d & 1 && *p != ':') ? 1 : 0; /* Odd implies leading '0' */
+	p = p2;
+	debug(F111,"cmcvtdate GMT offset sign",p,gmtsign);
+	debug(F101,"cmcvtdate GMT offset d","",d);
+	state = 1;
+	while (*p) {
+	    if (isdigit(*p)) {		/* digit */
+		if (d++ > 1) {
+		    state++;
+		    d = 1;
+		}
+		switch (state) {
+		  case 1:
+		    zhh = zhh * 10 + (*p - '0');
+		    break;
+		  case 2:
+		    zmm = zmm * 10 + (*p - '0');
+		    break;
+		  default:		/* Ignore seconds or fractions */
+		    break;
+		}			
+	    } else if (*p == ':') {	/* Colon */
+		state++;
+		d = 0;
+	    } else if (*p == SP || *p == '(') {
+		break;
+	    } else {
+		p = p3;			/* Maybe it's not a GMT offset. */
+		goto delta;		/* So treat it as a delta time. */
+	    }
+	    p++;
+	}
     }
-    hh = atoi(hour);
-    if (pmflag && hh <= 11)
-      hh += 12;
-    if ((t != 2 && hh > 24) || hh < 0) {
-	debug(F101,"cmcvtdate fail G","",-1);
-	return(-1);
+    debug(F110,"cmcvtdate after timezone",p,0);
+
+    if (*p) {				/* Anything left? */
+	p2 = p;
+	while (*p2 == SP)		/* Skip past spaces */
+	  p2++;
+	if (*p2 == '(') {		/* RFC-822 comment? */
+	    int pc = 1;			/* paren counter */
+	    p2++;
+	    while (*p2) {
+		if (*p2 == ')') {
+		    if (--pc == 0) {
+			p2++;
+			break;
+		    }
+		} else if (*p2 == ')') {
+		    pc++;
+		}
+		p2++;
+	    }		
+	    while (*p2 == SP)		/* Skip past spaces */
+	      p2++;
+	    if (!*p2)			/* Anything left? */
+	      *p = NUL;			/* No, erase comment */
+	}
+	if (!*p2)			/* Anything left? */
+	  goto xcmdate;			/* No, done. */
+	p = p2;
+
+      delta:
+	if (*p == '+' || *p == '-') {	/* Delta time */
+	    int state = NEED_DAYS;	/* Start off looking for days */
+	    char c = 0;
+	    dsign = 1;			/* Get sign */
+	    if (*p++ == '-')
+	      dsign = -1;
+	    while (*p == SP)		/* Skip intervening spaces */
+	      p++;
+	    while (state) {		/* FSA to parse delta time */
+		if (state < 0 || !isdigit(*p)) {
+		    makestr(&cmdatemsg,"Invalid delta time");
+		    debug(F111,"cmcvtdate",cmdatemsg,-1);
+		    return(NULL);
+		}
+		p2 = p;			/* Get next numeric field */
+		while (isdigit(*p2))
+		  p2++;
+		c = *p2;		/* And break character */
+		*p2 = NUL;		/* Terminate the number */
+
+		switch (state) {	/* Interpret according to state */
+		  case NEED_DAYS:	/* Initial */
+		    if ((c == '-') ||	/* VMS format */
+			((c == 'd' || c == 'D')
+			 && !isalpha(*(p2+1)))) { /* Days */
+			ddays = atoi(p);
+			if (!*(p2+1))			
+			  state = 0;
+			else		      /* if anything is left */
+			  state = NEED_HRS;   /* now we want hours. */
+		    } else if ((c == 'W' || c == 'w') && !isalpha(*(p2+1))) {
+			ddays = atoi(p) * 7;   /* weeks... */
+			if (!*(p2+1))			
+			  state = 0;
+			else
+			  state = NEED_HRS;
+		    } else if ((c == 'M' || c == 'm') && !isalpha(*(p2+1))) {
+			dmonths = atoi(p); /* months... */
+			if (!*(p2+1))			
+			  state = 0;
+			else
+			  state = NEED_HRS;
+		    } else if ((c == 'Y' || c == 'y') && !isalpha(*(p2+1))) {
+			dyears = atoi(p); /* years... */
+			if (!*(p2+1))			
+			  state = 0;
+			else
+			  state = NEED_HRS;
+		    } else if (c == ':') { /* delimiter is colon */
+			dhours = atoi(p);  /* so it's hours */
+			state = NEED_MINS; /* now we want minutes */
+		    } else if (!c) {       /* end of string */
+			dhours = atoi(p);  /* it's still hours */
+			state = 0;         /* and we're done */
+		    } else if (isalpha(c) || c == SP) {
+			if (c == SP) {	/* It's a keyword? */
+			    p2++;	/* Skip spaces */
+			    while (*p2 == SP)
+			      p2++;
+			} else {	/* or replace first letter */
+			    *p2 = c;
+			}
+			p3 = p2;	/* p2 points to beginning of keyword */
+			while (isalpha(*p3)) /* Find end of keyword */
+			  p3++;
+			c = *p3;	/* NUL it out so we can look it up */
+			if (*p3)	/* p3 points to keyword terminator */
+			  *p3 = NUL;
+			units = lookup(timeunits,p2,nunits,NULL);
+			if (units < 0) {
+			    makestr(&cmdatemsg,"Invalid units in delta time");
+			    debug(F111,"cmcvtdate",cmdatemsg,-1);
+			    return(NULL);
+			}
+			*p2 = NUL;	/* Re-terminate the number */
+			*p3 = c;
+			while (*p3 == SP) /* Point at field after units */
+			  p3++;
+			p2 = p3;
+			switch (units) {
+			  case TU_DAYS:
+			    ddays = atoi(p);
+			    break;
+			  case TU_WEEKS:
+			    ddays = atoi(p) * 7;
+			    break;
+			  case TU_MONTHS:
+			    dmonths = atoi(p);
+			    break;
+			  case TU_YEARS:
+			    dyears = atoi(p);
+			    break;
+			}
+			if (*p2) {
+			    state = NEED_HRS;
+			    p2--;
+			} else
+			  state = 0;
+
+		    } else {		/* Anything else */
+			state = -1;	/* is an error */
+		    }
+		    break;
+		  case NEED_HRS:	/* Looking for hours */
+		    debug(F000,"cmcvtdate NEED_HRS",p,c);
+		    if (c == ':') {
+			dhours = atoi(p);
+			state = NEED_MINS;
+		    } else if (!c) {
+			dhours = atoi(p);
+			state = 0;
+		    } else {
+			state = -1;
+		    }
+		    break;
+		  case NEED_MINS:	/* Looking for minutes */
+		    if (c == ':') {
+			dmins = atoi(p);
+			state = NEED_SECS;
+		    } else if (!c) {
+			dmins = atoi(p);
+			state = 0;
+		    } else {
+			state = -1;
+		    }
+		    break;
+		  case NEED_SECS:	/* Looking for seconds */
+		    if (c == '.') {
+			dsecs = atoi(p);
+			state = NEED_FRAC;
+		    } else if (!c) {
+			dsecs = atoi(p);
+			state = 0;
+		    } else {
+			state = -1;
+		    }
+		    break;
+		  case NEED_FRAC:	/* Fraction of second */
+		    if (!c && rdigits(p)) {
+			if (*p > '4')
+			  dsecs++;
+			state = 0;
+		    } else {
+			state = -1;
+		    }
+		    break;
+		}
+		if (c)			/* next field if any */
+		  p = p2 + 1;
+	    }
+	    havedelta = 1;
+
+	} else {
+	    makestr(&cmdatemsg,"Extraneous material at end");
+	    debug(F111,"cmcvtdate",cmdatemsg,-1);
+	    return(NULL);
+	}
     }
-    if ((mm = atoi(min)) > 59) {
-	debug(F101,"cmcvtdate fail H","",-1);
-	return(-1);
+
+ xcmdate:
+
+    if ((t != 2 && hh > 24) || hh < 0) { /* Hour range check */
+	makestr(&cmdatemsg,"Invalid hours");
+	debug(F111,"cmcvtdate",cmdatemsg,-1);
+	return(NULL);
     }
-    if ((ss = atoi(sec)) > 59) {
-	debug(F101,"cmcvtdate fail I","",-1);
-	return(-1);
+    if (mm > 59) {			/* Minute range check */
+	makestr(&cmdatemsg,"Invalid minutes");
+	debug(F111,"cmcvtdate",cmdatemsg,-1);
+	return(NULL);
     }
-    if (mm < 0 || ss < 0) return(-1);
-    if (t != 2 && (ss > 0 || mm > 0) && hh > 23) {
-	debug(F101,"cmcvtdate fail J","",-1);
-	return(-1);
+    if (ff > 0) {			/* Fraction of second? */
+	if (ss < 59) {
+	    ss++;
+	    ff = 0;
+	} else if (mm < 59) {
+	    ss = 0;
+	    mm++;
+	    ff = 0;
+	} else if (hh < 24) {
+	    ss = 0;
+	    mm = 0;
+	    hh++;
+	    ff = 0;
+	}
+	/* Must add a day -- leave ff at 1... */
+	/* (DO SOMETHING ABOUT THIS LATER) */
+    }
+    if (ss > 60) {			/* Seconds range check */
+	makestr(&cmdatemsg,"Invalid seconds"); /* 60 is ok because of */
+	debug(F111,"cmcvtdate",cmdatemsg,-1);  /* Leap Second. */
+	return(NULL);
+    }
+    if ((mm < 0 || ss < 0) ||
+	(t != 2 && (ss > 0 || mm > 0) && hh > 23)) {
+	makestr(&cmdatemsg,"Invalid minutes or seconds");
+	debug(F111,"cmcvtdate",cmdatemsg,-1);
+	return(NULL);
     }
     debug(F110,"cmcvtdate year",year,0);
     debug(F110,"cmcvtdate month",month,0);
-    debug(F101,"cmcvtdate x","",x);
+    debug(F101,"cmcvtdate nday","",nday);
     debug(F101,"cmcvtdate hh","",hh);
     debug(F101,"cmcvtdate mm","",mm);
     debug(F101,"cmcvtdate ss","",ss);
+    debug(F101,"cmcvtdate gmtsign","",gmtsign);
+    debug(F101,"cmcvtdate zhh","",zhh);
+    debug(F101,"cmcvtdate zmm","",zmm);
+    debug(F101,"cmcvtdate isgmt","",isgmt);
 
-    sprintf(cmdatebuf,"%s%s%02d %02d:%02d:%02d",year,month,x,hh,mm,ss);
+#ifdef ZLOCALTIME
+/* Handle timezone -- first convert to GMT */
+
+    zdd = 0;				/* Days changed */
+    if (isgmt && (zmm || zhh)) {	/* If GMT offset given */
+	long sec1, sec2, zz;
+	sec1 = ss + 60 * mm + 3600 * hh;
+	sec2 = gmtsign * (60 * zmm + 3600 * zhh);
+	sec1 += sec2;
+	if (sec1 < 0) {
+	    sec1 = 0 - sec1;
+	    zdd = 0L - (sec1 / 86400L);
+	    sec1 = sec1 % 86400L;
+	} else if (sec1 > 86400L) {
+	    zdd = sec1 / 86400L;
+	    sec1 = sec1 % 86400L;
+	}
+	ss = sec1 % 60;
+	zz = sec1 / 60;
+	mm = zz % 60;
+	hh = zz / 60;
+	debug(F101,"cmcvtdate NEW hh","",hh);
+	debug(F101,"cmcvtdate NEW mm","",mm);
+	debug(F101,"cmcvtdate NEW dd","",zdd);
+
+/* At this point hh:mm:ss is in GMT and zdd is the calendar adjustment */
+
+    }
+#endif /* ZLOCALTIME */
+
+    sprintf(zbuf,"%04d%02d%02d %02d:%02d:%02d", /* SAFE */
+	    atoi(year),atoi(month),nday,hh,mm,ss
+	    );
+    dp = zbuf;
+
+#ifdef ZLOCALTIME
+    /* Now convert from GMT to local time */
+
+    if (isgmt) {			/* If GMT convert to local time */
+	debug(F110,"cmcvtdate GMT 1",dp,0);
+	if (zdd) {			/* Apply any calendar adjustment */
+	    long zz;
+	    zz = mjd(dp) + zdd;
+	    sprintf(zbuf,"%s %02d:%02d:%02d",mjd2date(zz),hh,mm,ss);
+	}
+	debug(F110,"cmcvtdate GMT 2",dp,0);
+	if ((p = zlocaltime(dp))) {
+	    debug(F110,"cmcvtdate asctime zlocaltime",p,0);
+	    if (p) ckstrncpy(zbuf,p,18);
+	}
+	debug(F110,"cmcvtdate GMT 3",dp,0);
+	for (i = 0; i < 4; i++)
+	  yearbuf[i] = dp[i];
+	yearbuf[4] = NUL;
+	monbuf[0] = dp[4];
+	monbuf[1] = dp[5];
+	monbuf[2] = NUL;
+	daybuf[0] = dp[6];
+	daybuf[1] = dp[7];
+	daybuf[2] = NUL;
+	day = daybuf;
+	nday = atoi(daybuf);
+	month = monbuf;
+	year = yearbuf;
+	hh = atoi(&dp[9]);
+	mm = atoi(&dp[12]);
+	ss = atoi(&dp[15]);
+    }
+#endif /* ZLOCALTIME */
 
 #ifdef DEBUG
     if (deblog) {
 	debug(F101,"cmcvtdate hour","",hh);
 	debug(F101,"cmcvtdate minute","",mm);
 	debug(F101,"cmcvtdate second","",ss);
-	debug(F111,"cmcvtdate result",cmdatebuf,rc);
     }
 #endif /* DEBLOG */
-    return(0);
+
+    makestr(&cmdatemsg,NULL);
+    if (havedelta) {
+#ifdef DEBUG
+	if (deblog) {
+	    debug(F110,"cmcvtdate base ",dp,0);
+	    debug(F101,"cmcvtdate delta sign","",dsign);
+	    debug(F101,"cmcvtdate delta yrs ","",dyears);
+	    debug(F101,"cmcvtdate delta mos ","",dmonths);
+	    debug(F101,"cmcvtdate delta days","",ddays);
+	    debug(F101,"cmcvtdate delta hrs ","",dhours);
+	    debug(F101,"cmcvtdate delta mins","",dmins);
+	    debug(F101,"cmcvtdate delta secs","",dsecs);
+	}
+#endif /* DEBLOG */
+	if (!(dp = cmdelta(atoi(year),
+		    atoi(month),
+		    nday, hh, mm, ss,
+		    dsign, dyears, dmonths, ddays, dhours, dmins, dsecs))) {
+	    debug(F111,"cmcvtdate",cmdatemsg,-1);
+	    return(NULL);
+	}
+    }
+
+  xcvtdate:				/* Exit point for success */
+    {
+	int len, k, n;
+	char * p;
+	if (!dp) dp = "";		/* Shouldn't happen */
+	if (!*dp) return(NULL);		/* ... */
+	len = strlen(dp);
+	debug(F111,"cmcvtdate result",dp,len);
+	k = cmdatebp - (char *)cmdatebuf; /* Space used */
+	n = CMDATEBUF - k - 1;		/* Space left */
+	if (n < len) {			/* Not enough? */
+	    cmdatebp = cmdatebuf;	/* Wrap around */
+	    n = CMDATEBUF;
+	}
+	ckstrncpy(cmdatebp,dp,n);
+	p = cmdatebp;
+	cmdatebp += len + 1;
+	return(p);
+    }
 }
 
+int
+cmvdate(d) char * d; {			/* Verify date-time */
+    int i;
+    if (!d) return(0);
+    if ((int)strlen(d) != 17) return(0);
+    for (i = 0; i < 8; i++) { if (!isdigit(d[i])) return(0); }
+    if (!isdigit(d[9])  || !isdigit(d[10]) ||
+	!isdigit(d[12]) || !isdigit(d[13]) ||
+	!isdigit(d[15]) || !isdigit(d[16]))
+      return(0);
+    if (!ckstrchr(" Tt_-:",d[8])) return(0);
+    if (d[11] != ':' && d[14] != ':') return(0);
+    return(1);
+}
+
+/* c m d i f f d a t e  --  Get difference between two date-times */
+
+char *
+cmdiffdate(d1,d2) char * d1, * d2; {
+    char d1buf[9], d2buf[9];
+    char x1buf[18], x2buf[18];
+    char * p;
+
+    int hh1 = 0, mm1 = 0, ss1 = 0;
+    int hh2 = 0, mm2 = 0, ss2 = 0;
+    int hh, mm, ss;
+    int sign;
+    long jd1, jd2, jd, f1, f2, fx;
+    static char result[24], *rp;
+
+    debug(F110,"cmdiffdate d1 A",d1,0);
+    debug(F110,"cmdiffdate d2 A",d2,0);
+
+    if (!(p = cmcvtdate(d1,1)))		/* Convert dates to standard format */
+      return(NULL);
+    ckstrncpy(x1buf,p,18);
+    d1 = x1buf;
+
+    if (!(p = cmcvtdate(d2,1)))
+      return(NULL);
+    ckstrncpy(x2buf,p,18);
+    d2 = x2buf;
+
+    debug(F110,"cmdiffdate d1 B",d1,0);
+    debug(F110,"cmdiffdate d2 B",d2,0);
+    if (!cmvdate(d1) || !cmvdate(d2))
+      return(NULL);
+
+    hh1 = atoi(&d1[9]);			/* Get hours, minutes, and seconds */
+    mm1 = atoi(&d1[12]);		/* for first date */
+    ss1 = atoi(&d1[15]);
+    ckstrncpy(d1buf,d1,9);
+
+    hh2 = atoi(&d2[9]);			/* ditto for second date */
+    mm2 = atoi(&d2[12]);
+    ss2 = atoi(&d2[15]);
+    ckstrncpy(d2buf,d2,9);
+    
+    jd1 = mjd(d1buf);			/* Get the two Julian dates */
+    jd2 = mjd(d2buf);
+    f1 = ss1 + 60 * mm1 + 3600 * hh1;	/* Convert first time to seconds */
+
+    f2 = ss2 + 60 * mm2 + 3600 * hh2;	/* Ditto for second time */
+    debug(F101,"cmdiffdate jd1","",jd1);
+    debug(F101,"cmdiffdate f1","",f1);
+    debug(F101,"cmdiffdate jd2","",jd2);
+    debug(F101,"cmdiffdate f2","",f2);
+  
+    if (jd2 > jd1 || (jd1 == jd2 && f2 > f1)) {
+        sign = -1; 
+        if (f1 > f2) {jd2--; f2 += 86400L;}
+        jd = jd2 - jd1;
+        fx = f2 - f1;
+    } else {
+        sign = 1;
+        if (f2 > f1) {jd1--; f1 += 86400L;}
+        jd = jd1 - jd2;
+        fx = f1 - f2;
+    }
+    debug(F111,"cmdiffdate sign jd",sign<0?"-":"+",jd);
+    debug(F101,"cmdiffdate fx","",fx);
+  
+    hh = (int) (fx / 3600L);		/* Convert seconds to hh:mm:ss */
+
+    mm = (int) (fx % 3600L) / 60L;
+    ss = (int) (fx % 3600L) % 60L;
+
+    rp = result;			/* Format the result */
+    *rp++ = (sign < 0) ? '-' : '+';
+    if (jd != 0 && hh+mm+ss == 0) {
+	sprintf(rp,"%ldd",jd);
+    } else if (jd == 0) {
+	if (ss == 0)
+	  sprintf(rp,"%d:%02d",hh,mm);
+	else
+	  sprintf(rp,"%d:%02d:%02d",hh,mm,ss);
+    } else {
+	if (ss == 0)
+	  sprintf(rp,"%ldd%d:%02d",jd,hh,mm);
+	else
+	  sprintf(rp,"%ldd%d:%02d:%02d",jd,hh,mm,ss);
+    }
+    debug(F110,"cmdiffdate result",result,0);
+    return((char *)result);
+}
+
+/* s h u f f l e d a t e  --  Rearrange date string */
+
+/*
+  Call with:
+    A date string in standard format: yyyymmdd hh:mm:ss (time optional).
+    Options:
+      1: Reformat date to yyyy-mmm-dd (mmm = English month abbreviation).
+      2. Reformat date to dd-mmm-yyyy (mmm = English month abbreviation).
+    Returns:
+      Pointer to result if args valid, otherwise original arg pointer.
+*/
+char *
+shuffledate(p,opt) char * p; int opt; {
+    int len;
+    char ibuf[32];
+    static char obuf[48];
+    char c;
+    int yy, dd, mm;
+
+    if (!p) p = "";
+    if (!*p) p = ckdate();
+    if (opt < 1 || opt > 2)
+      return(p);
+    len = strlen(p);
+    if (len < 8 || len > 31) return(p);
+    ckstrncpy(ibuf,p,32);
+    c = ibuf[4];			/* Warning: not Y10K compliant */
+    ibuf[4] = NUL;
+    if (!rdigits(ibuf))
+      return(p);
+    yy = atoi(ibuf);
+    if (yy < 1 || yy > 9999)
+      return(p);
+    ibuf[4] = c;
+    c = ibuf[6];
+    ibuf[6] = NUL;
+    if (!rdigits(&ibuf[4]))
+      return(p);
+    mm = atoi(&ibuf[4]);
+    if (mm < 1 || mm > 12)
+      return(p);
+    ibuf[6] = c;
+    c = ibuf[8];
+    ibuf[8] = NUL;
+    if (!rdigits(&ibuf[6]))
+      return(p);
+    dd = atoi(&ibuf[6]);
+    ibuf[8] = c;
+    if (dd < 1 || mm > 31)
+      return(p);
+    /* IGNORE WARNINGS ABOUT moname[] REFS OUT OF RANGE - it's prechecked. */
+    switch (opt) {
+      case 1:
+	sprintf(obuf,"%04d-%s-%02d%s",yy,moname[mm-1],dd,&ibuf[8]);
+	break;
+      case 2:
+	sprintf(obuf,"%02d-%s-%04d%s",dd,moname[mm-1],yy,&ibuf[8]);
+    }
+    return((char *)obuf);
+}
 
 /*  C K C V T D A T E  --  Like cmcvtdate(), but returns string.  */
 /*  For use by date-related functions */
@@ -3796,10 +5220,11 @@ cmcvtdate(s,t) char * s; int t; {
 
 char *
 ckcvtdate(p,t) char * p; int t; {
-    if (cmcvtdate(p,t) < 0)
+    char * s;
+    if (!(s = cmcvtdate(p,t)))
       return("<BAD_DATE_OR_TIME>");	/* \fblah() error message */
     else
-      return((char *) cmdatebuf);
+      return(s);
 }
 
 
@@ -3812,8 +5237,8 @@ ckcvtdate(p,t) char * p; int t; {
 */
 int
 cmdate(xhlp,xdef,xp,quiet,f) char *xhlp, *xdef, **xp; int quiet; xx_strp f; {
-    int /* i, */ x, rc;
-    char *o, *s, *zq;
+    int x, rc;
+    char *o, *s, *zq, *dp;
 
     cmfldflgs = 0;
     if (!xhlp) xhlp = "";
@@ -3845,13 +5270,13 @@ cmdate(xhlp,xdef,xp,quiet,f) char *xhlp, *xdef, **xp; int quiet; xx_strp f; {
 	}
 	s = atxbuf;
     }
-    rc = cmcvtdate(s,1);
-    if (rc < 0) {
-	if (!quiet) printf("Invalid date or time - \"%s\"\n", o);
+    dp = cmcvtdate(s,1);
+    if (!dp) {
+	if (!quiet) printf("?%s\n",cmdatemsg);
 	return(-9);
     }
-    *xp = cmdatebuf;
-    return(rc);
+    *xp = dp;
+    return(0);
 }
 
 #ifdef CK_RECALL			/* Command-recall functions */
@@ -3907,63 +5332,148 @@ cmgetcmd(s) char * s; {
     }
     return(NULL);			/* No match, return NULL pointer */
 }
+#endif /* CK_RECALL */
 
 /*  A D D C M D  --  Add a command to the recall buffer  */
 
 VOID
 addcmd(s) char * s; {
-    int len;
+    int len = 0, nq = 0;
+    char * p;
+#ifdef CKLEARN
+    extern int learning;
+#endif /* CKLEARN */
+
+    if (xcmdsrc)			/* Only for interactive commands */
+      return;
+
+    if (!newcmd)			/* The command has been here already */
+      return;				/* so ignore it. */
+    newcmd = 0;				/* It's new but do this only once. */
 
     if (!s) s = cmdbuf;
-    len = strlen(s);
+    if (s[0])
+      len = strlen(s);
+
+    if (len < 1)			/* Don't save empty commands */
+      return;
+
+    p = s;
+    while (*p) { if (*p++ == '?') nq++; } /* Count question marks */
+
+#ifdef CKLEARN
+    if (learning)			/* If a learned script is active */
+      learncmd(s);			/* record this command. */
+#endif /* CKLEARN */
+
+    debug(F010,"CMD(P)",s,0);		/* Maybe record it in the debug log */
 
 #ifdef CKSYSLOG
-    /* Log all interactive commands */
-    /* Logging macros & TAKE files is way too much */
-    if (ckxlogging) {
-	if (ckxsyslog >= SYSLG_CX || ckxsyslog >= SYSLG_CM && !cmdsrc())
+    if (ckxlogging) {			/* Maybe record it in syslog */
+	if (ckxsyslog >= SYSLG_CX || ckxsyslog >= SYSLG_CM)
 	  cksyslog(SYSLG_CX, 1, "command", s, NULL);
     }
 #endif /* CKSYSLOG */
 
-    if ((!cmdsrc() || force_add) &&	/* Reading commands from keyboard? */
-	(on_recall) &&			/* Recall is turned on? */
-	(cm_recall > 0) &&		/* Saving commands? */
-	!no_recall &&			/* Not not saving this command? */
-	len > 0) {			/* Non-null command? */
+#ifdef CK_RECALL
+    last_recall = 0;
 
-	force_add = 0;
+    if (on_recall &&			/* Command recall is on? */
+	cm_recall > 0 &&		/* Recall buffer size is > 0? */
+	!no_recall) {			/* Not not saving this command? */
 
-        if (rlast >= cm_recall - 1) {	/* Yes, buffer full? */
-	    int i;			/* Yes. */
+	if (!force_add && rlast > -1)	/* If previous command was identical */
+	  if (!strcmp(s,recall[rlast])) /* don't add another copy */
+	    return;
+
+	force_add = 0;			/* Reset now in case it was set */
+
+        if (rlast >= cm_recall - 1) {	/* Recall buffer full? */
+	    int i;
 	    if (recall[0]) {		/* Discard oldest command */
 		free(recall[0]);
 		recall[0] = NULL;
 	    }
-	    for (i = 0; i < rlast; i++) { /* The rest */
-		recall[i] = recall[i+1]; /* move back */
+	    for (i = 0; i < rlast; i++) {  /* The rest */
+		recall[i] = recall[i+1];   /* move back */
 	    }
 	    rlast--;			/* Now we have one less */
 	}
         rlast++;			/* Index of last command in buffer */
 	current = rlast;		/* Also now the current command */
-	if (current >= cm_recall) {
-	    printf("Oops, command recall error\n");
-	} else {
+	if (current >= cm_recall) {	/* Shouldn't happen */
+	    printf("?Command history error\n");	/* but if it does */
+	    on_recall = 0;		        /* turn off command saving */
+#ifdef COMMENT
+	} else if (nq > 0) {		/* Have at least one question mark */
+	    recall[current] = malloc(len+nq+1);
+	    if (recall[current]) {
+		p = recall[current];
+		while (*s) {
+		    if (*s == '?')
+		      *p++ = '\\';
+		    *p++ = *s++;
+		}
+		*p = NUL;
+	    }
+#endif /* COMMENT */
+	} else {			/* Normal case, just copy */
 	    recall[current] = malloc(len+1);
 	    if (recall[current])
-	      strcpy(recall[current],s);
+	      ckstrncpy(recall[current],s,len+1);
+	}
+    }
+#endif /* CK_RECALL */
+}
+
+
+#ifdef CK_RECALL
+
+/* C M H I S T O R Y */
+
+VOID
+cmhistory() {
+    int i, lc = 1;
+    for (i = 0; i <= current; i++) {
+	printf(" %s\n", recall[i]);
+	if (++lc > (cmd_rows - 2)) {	/* Screen full? */
+	    if (!askmore())		/* Do more-prompting... */
+	      break;
+	    else
+	      lc = 0;
 	}
     }
 }
+
+int
+savhistory(s,disp) char *s; int disp; {
+    FILE * fp;
+    int i;
+
+    fp = fopen(s, disp ? "a" : "w");
+    if (!fp) {
+	perror(s);
+	return(0);
+    }
+    for (i = 0; i <= current; i++)
+      fprintf(fp,"%s\n", recall[i]);
+    fclose(fp);
+    return(1);
+}
 #endif /* CK_RECALL */
 
+#ifdef COMMENT
+/* apparently not used */
 int
 cmgetlc(s) char * s; {			/* Get leading char */
     char c;
-    while ((c = *s++) <= SP) ;
+    while ((c = *s++) <= SP) {
+	if (!c)
+	  break;
+    }
     return(c);
 }
+#endif /* COMMENT */
 
 
 /*  C M C F M  --  Parse command confirmation (end of line)  */
@@ -4002,7 +5512,8 @@ cmcfm() {
 		    printf("?Not confirmed - %s\n",atmbuf);
 		    return(-9);
 		}
-	    } else break;		/* Finish up below */
+	    } else
+	      break;			/* Finish up below */
 	  case 2:			/* ESC */
 	    if (xc == 0) {
 		bleep(BP_WARN);
@@ -4029,9 +5540,7 @@ cmcfm() {
 	    continue;
 	}
     }
-#ifdef CK_RECALL
-    addcmd(cmdbuf);
-#endif /* CK_RECALL */
+    debok = 1;
     return(0);
 }
 
@@ -4076,7 +5585,7 @@ cmfdb(fdbin) struct FDB * fdbin; {
 #endif /* NOSPL */
     struct FDB * in = fdbin;
     struct OFDB * out = &cmresult;
-    int x = 0, n;
+    int x = 0, n, r;
     char *s, *xp, *m = NULL;
     int errbits = 0;
 
@@ -4104,10 +5613,12 @@ cmfdb(fdbin) struct FDB * fdbin; {
 	debug(F101,"cmfdb in->fcode","",in->fcode);
 	switch (in->fcode) {		/* Current parsing function code */
 	  case _CMNUM:
+	    r = in->ndata1;
+	    if (r != 10 && r != 8) r = 10;
 #ifndef NOSPL
             x_ifnum = 1;                /* Disables warning messages */
 #endif /* NOSPL */
-	    x = cmnum(in->hlpmsg,in->dflt,10,&n,in->spf);
+	    x = cmnum(in->hlpmsg,in->dflt,r,&n,in->spf);
 #ifndef NOSPL
             x_ifnum = 0;
 #endif /* NOSPL */
@@ -4172,17 +5683,12 @@ cmfdb(fdbin) struct FDB * fdbin; {
 	    out->sresult = s;
 	    out->nresult = (in->fcode == _CMKEY) ? x : n;
 	    out->kflags = (in->fcode == _CMKEY) ? cmkwflgs : 0;
-	    debug(F101,"cmfdb out->nresult","",out->nresult);
+	    debug(F111,"cmfdb out->nresult",out->sresult,out->nresult);
 	    nomsg = 0;
 	    xcmfdb = 0;
-	    debug(F111,"cmfdb cmdbuf & crflag",cmdbuf,crflag);
+	    /* debug(F111,"cmfdb cmdbuf & crflag",cmdbuf,crflag); */
 	    if (crflag) {
 		cmflgs = 1;
-#ifdef CK_RECALL
-		debug(F101,"cmfdb code","",in->fcode);
-		if (in->fcode != _CMCFM)
-		  addcmd(cmdbuf);
-#endif /* CK_RECALL */
 	    }
 	    return(x);			/* and return */
 	}
@@ -4195,6 +5701,11 @@ cmfdb(fdbin) struct FDB * fdbin; {
 	    if (x == -6)
 	      x = -9;
 	    if (x == -9) {
+#ifdef CKROOT
+		if (ckrooterr)
+		  m = "Off Limits";
+		else
+#endif /* CKROOT */
 		/* Make informative messages for a few common cases */
 		switch (errbits) {
 		  case 4+32: m = "Does not match filename or switch"; break;
@@ -4229,60 +5740,15 @@ cmfdb(fdbin) struct FDB * fdbin; {
     }
 }
 
-#ifdef OLDHELP
-/* Keyword help routines */
-
-/*  C L R H L P -- Initialize/Clear the help line buffer  */
-
-static VOID
-clrhlp() {                              /* Clear the help buffer */
-    hlpbuf[0] = NUL;
-    hh = hx = 0;
-}
-
-
-/*  A D D H L P  --  Add a string to the help line buffer  */
-
-static VOID
-addhlp(s) char *s; {                    /* Add a word to the help buffer */
-    int j;
-
-    hh++;                               /* Count this column */
-
-    for (j = 0; (j < hc) && (*s != NUL); j++) { /* Fill the column */
-        hlpbuf[hx++] = *s++;
-    }
-    if (*s != NUL)                      /* Still some chars left in string? */
-        hlpbuf[hx-1] = '+';             /* Mark as too long for column. */
-
-    if (hh < (hw / hc)) {               /* Pad col with spaces if necessary */
-        for (; j < hc; j++) {
-            hlpbuf[hx++] = SP;
-        }
-    } else {                            /* If last column, */
-        hlpbuf[hx++] = NUL;             /* no spaces. */
-        dmphlp();                       /* Print it. */
-        return;
-    }
-}
-
-/*  D M P H L P  --  Dump the help line buffer  */
-
-static VOID
-dmphlp() {                              /* Print the help buffer */
-    hlpbuf[hx++] = NUL;
-    if ( hlpbuf[0] )
-       printf(" %s\n",hlpbuf);
-    clrhlp();
-}
-#endif /* OLDHELP */
 
 /*  G T W O R D  --  Gets a "word" from the command input stream  */
 
 /*
 Usage: retcode = gtword(brk);
   brk = 0 for normal word breaks (space, CR, Esc, ?)
-  brk = 1 to add / : = (for parsing switches)
+  brk = 1 to add ':' and '=' (for parsing switches).  These characters
+        act as break characters only if the first character of the field
+        is slash ('/'), i.e. switch introducer.
 
 Returns:
 -10 Timelimit set and timed out
@@ -4318,7 +5784,7 @@ ungword() {				/* Unget a word */
 
 VOID
 unungw() {
-    debug(F110,"unungw atmbuf",atmbuf,cmflgs);
+    debug(F010,"unungw atmbuf",atmbuf,0);
     if (ungw) {
 	ungw = 0;
 	cmflgs = cmfsav;
@@ -4333,12 +5799,16 @@ gtword(brk) int brk; {
     int echof = 0;                      /* Flag for whether to echo */
     int comment = 0;			/* Flag for in comment */
     char *cp = NULL;			/* Comment pointer */
-    int eintr = 0;
+    int eintr = 0;			/* Flag for syscall interrupted */
     int bracelvl = 0;			/* nested brace counter [jrs] */
-    int iscontd = 0;
+    int iscontd = 0;			/* Flag for continuation */
+    int realtty = 0;			/* Stdin is really a tty */
+    char firstnb  = NUL;
     char lastchar = NUL;
     char prevchar = NUL;
     char lbrace, rbrace;
+    int dq = 0;				/* Doublequote flag */
+    int dqn = 0;			/* and count */
 
 #ifdef RTU
     extern int rtu_bug;
@@ -4347,10 +5817,6 @@ gtword(brk) int brk; {
 #ifdef IKSD
     extern int inserver;
 #endif /* IKSD */
-#ifdef CK_LOGIN
-    extern int x_logged;
-#endif /* CK_LOGIN */
-
     extern int kstartactive;
 
 #ifdef datageneral
@@ -4358,6 +5824,30 @@ gtword(brk) int brk; {
     extern int con_reads_mt;            /* Console read asynch is active */
     if (con_reads_mt) connoi_mt();      /* Task would interfere w/cons read */
 #endif /* datageneral */
+
+
+#ifdef DEBUG
+    if (deblog) {
+	debug(F101,"gtword brk","",brk);
+	debug(F101,"gtword cmfldflgs","",cmfldflgs);
+	debug(F101,"gtword swarg","",swarg);
+	debug(F101,"gtword dpx","",dpx);
+	debug(F101,"gtword echof","",echof);
+#ifndef NOSPL
+	debug(F101,"gtword askflag","",askflag);
+	debug(F101,"gtword timelimit","",timelimit);
+#ifndef NOLOCAL
+#ifndef NOXFER
+#ifdef CK_AUTODL
+	debug(F101,"gtword cmdadl","",cmdadl);
+#endif /* CK_AUTODL */
+#endif /* NOXFER */
+#endif /* NOLOCAL */
+#endif /* NOSPL */
+    }
+#endif /* DEBUG */
+
+    realtty = is_a_tty(0);		/* Stdin is really a tty? */
 
     if (cmfldflgs & 1) {
 	lbrace = '(';
@@ -4374,50 +5864,99 @@ gtword(brk) int brk; {
 	inword = 1;
 	swarg = 0;
     }
-    debug(F000,"gtword brkchar","",brkchar);
-    debug(F101,"gtword brk","",brk);
     if (ungw) {				/* Have a word saved? */
+#ifdef M_UNGW
+	/* Experimental code to allow ungetting multiple words. */
+	/* See comments in ckmkey2() above. */
 	int x;
-	debug(F110,"gtword ungetting from pp",pp,0);
+	if (np > pp) pp = np;
+	while (*pp == SP) pp++;
+	if (!*pp) {
+	    ungw = 0;
+	    cmflgs = cmfsav;
+	} else {
+	    if ((x = setatm(pp,2)) < 0) {
+		printf("?Saved word too long\n");
+		return(-9);
+	    }
+	    if (pp[x] >= SP) {
+		char *p2;
+		p2 = pp;
+		p2 += x;
+		while (*p2 == SP) p2++;
+		if (*p2) {
+		    np = p2;
+		    ungword();
+		}
+	    } else {
+		ungw = 0;
+		cmflgs = cmfsav;
+		debug(F010,"gtword ungw return atmbuf",atmbuf,0);
+	    }
+	}
+	return(cmflgs);
+#else
+	/*
+	   You would think the following should be:
+             while (*pp == SP) pp++;
+           but you would be wrong -- making this change breaks GOTO.
+        */
 	while (*pp++ == SP) ;
 	if (setatm(pp,2) < 0) {
 	    printf("?Saved word too long\n");
 	    return(-9);
 	}
-	strncpy(atmbuf,pp,ATMBL);
-	atmbuf[ATMBL] = NUL;
-	x = strlen(atmbuf);
-	while (x > 0 && atmbuf[x-1] == SP) /* Trim trailing spaces */
-	  atmbuf[--x] = NUL;
 	ungw = 0;
 	cmflgs = cmfsav;
-	debug(F111,"gtword returning atmbuf",atmbuf,cmflgs);
+	debug(F010,"gtword ungw return atmbuf",atmbuf,0);
 	return(cmflgs);
+#endif /* M_UNGW */
     }
     pp = np;                            /* Start of current field */
 
-    debug(F110,"gtword cmdbuf",cmdbuf,0);
-    debug(F110,"gtword bp",bp,0);
-    debug(F110,"gtword pp",pp,0);
-
+#ifdef COMMENT
+#ifdef DEBUG
+    if (deblog) {
+	debug(F110,"gtword cmdbuf",cmdbuf,0);
+	debug(F110,"gtword bp",bp,0);
+	debug(F110,"gtword pp",pp,0);
+    }
+#endif /* DEBUG */
+#endif /* COMMENT */
+    {
+	/* If we are reparsing we have to recount any braces or doublequotes */
+	char * p = pp;
+	char c;
+	if (*p == '"')
+	  dq++;
+	while ((c = *p++))
+	  if (c == lbrace)
+	    bracelvl++;
+	  else if (c == rbrace)
+	    bracelvl--;
+	  else if (dq && c == '"')
+	    dqn++;
+    }
     while (bp < cmdbuf+CMDBL) {         /* Big get-a-character loop */
 	echof = 0;			/* Assume we don't echo because */
 	chsrc = 0;			/* character came from reparse buf. */
 #ifdef BS_DIRSEP
 CMDIRPARSE:
 #endif /* BS_DIRSEP */
+
 	c = *bp;
         if (!c) {			/* If no char waiting in reparse buf */
 	    if (dpx && (!pushc
 #ifndef NOSPL
 			|| askflag
 #endif /* NOSPL */
-			)) /* get from tty, set echo flag */
+			))		/* Get from tty, set echo flag */
 	      echof = 1;
-	    debug(F101,"gtword timelimit","",timelimit);
 	    c = cmdgetc(timelimit);	/* Read a command character. */
+#ifdef DEBUG
 	    debug(F101,"gtword c","",c);
-	    debug(F111,"gtword dpx,echof",ckitoa(dpx),echof);
+#endif /* DEBUG */
+
 	    if (timelimit && c < -1) {	/* Timed out */
 		return(-10);
 	    }
@@ -4432,7 +5971,7 @@ CMDIRPARSE:
   versions.  Add Zmodem later...
 */
 #ifdef CK_AUTODL
-	    if (!local && cmdadl	/* Autodownload enabled? */
+	    if ((!local && cmdadl)	/* Autodownload enabled? */
 #ifdef IKS_OPTION
 		|| TELOPT_SB(TELOPT_KERMIT).kermit.me_start
 #endif /* IKS_OPTION */
@@ -4518,7 +6057,13 @@ CMDIRPARSE:
 
 /* Now we have the next character */
 
-	debug(F000,"gtword char","",c);
+	if (!firstnb && c > SP) {	/* First nonblank */
+	    firstnb = c;
+	    if (c == '"')		/* Starts with doublequote */
+	      dq = 1;
+	}
+	if (c == '"')			/* Count doublequotes */
+	  dqn++;
 
 	if (quote && (c == CR || c == LF)) { /* Enter key following quote */
 	    *bp++ = CMDQ;		/* Double it */
@@ -4526,30 +6071,33 @@ CMDIRPARSE:
 	    quote = 0;
 	}
         if (quote == 0) {		/* If this is not a quoted character */
-            if (c == CMDQ) {		/* Got the quote character itself */
+	    switch (c) {
+	      case CMDQ:		/* Got the quote character itself */
 		if (!comment && quoting)
 		  quote = 1;		/* Flag it if not in a comment */
-            }
-	    if (c == FF) {		/* Formfeed. */
+		break;
+	      case FF:			/* Formfeed. */
                 c = NL;                 /* Replace with newline */
 		cmdclrscn();		/* Clear the screen */
-            }
-	    if (c == HT) {		/* Tab */
+		break;
+	      case HT:			/* Horizontal Tab */
 		if (comment)		/* If in comment, */
 		  c = SP;		/* substitute space */
 		else			/* otherwise */
 		  c = ESC;		/* substitute ESC (for completion) */
-	    }
-	    if (c == ';' || c == '#') { /* Trailing comment */
+		break;
+	      case ';':			/* Trailing comment */
+	      case '#':
 		if (inword == 0 && quoting) { /* If not in a word */
 		    comment = 1;	/* start a comment. */
 		    cp = bp;		/* remember where it starts. */
 		}
+		break;
 	    }
 	    if (!kstartactive &&	/* Not in possible Kermit packet */
 		!comment && c == SP) {	/* Space not in comment */
                 *bp++ = (char) c;	/* deposit in buffer if not already */
-		debug(F101,"gtword echof 2","",echof);
+		/* debug(F101,"gtword echof 2","",echof); */
 #ifdef BEBOX
                 if (echof) {
                     putchar(c);		/* echo it. */
@@ -4567,7 +6115,8 @@ CMDIRPARSE:
                     pp++;
                     continue;
                 } else {                /* If terminating, return. */
-		    if ((*pp != lbrace) || (bracelvl == 0)) {
+		    if ((!dq && ((*pp != lbrace) || (bracelvl == 0))) ||
+			(dq && dqn > 1 && *(bp-2) == '"')) {
 			np = bp;
 			cmbptr = np;
 			if (setatm(pp,0) < 0) {
@@ -4582,11 +6131,24 @@ CMDIRPARSE:
                     continue;
                 }
             }
-	    if (!kstartactive && !comment && brk && (c == '=' || c == ':')) {
-                *bp++ = (char) c;
+            if (c == lbrace) {
+		bracelvl++;
+		/* debug(F101,"gtword bracelvl++","",bracelvl); */
+	    }
+            if (c == rbrace && bracelvl > 0) {
+                bracelvl--;
+		/* debug(F101,"gtword bracelvl--","",bracelvl); */
+                if (linebegin)
+		  blocklvl--;
+            }
+	    if ((c == '=' || c == ':') &&
+		!kstartactive && !comment && brk && (firstnb == '/')
+		) {
+                *bp++ = (char) c;	/* Switch argument separator */
+		/* debug(F111,"gtword switch argsep",cmdbuf,brk); */
 #ifdef BEBOX
                 if (echof) {
-                    putchar(c);		/* echo it. */
+                    putchar(c);		/* Echo it. */
                     fflush(stdout);
                     fflush(stderr);
                 }
@@ -4609,13 +6171,6 @@ CMDIRPARSE:
 		    brkchar = c;
 		    return(4);
 		}
-            }
-            if (c == lbrace)
-              bracelvl++;
-            if (c == rbrace) {
-                bracelvl--;
-                if (linebegin)
-		  blocklvl--;
             }
             if (c == LF || c == CR) {	/* CR or LF. */
 		if (echof) {
@@ -4641,7 +6196,7 @@ CMDIRPARSE:
 		    /* Erase trailing whitespace */
 		    while (bp > qq && (*(bp-1) == SP || *(bp-1) == HT)) {
 			bp--;
-			debug(F000,"erasing","",*bp);
+			/* debug(F000,"erasing","",*bp); */
 			*bp = NUL;
 		    }
 		    lastchar = (bp > qq) ? *(bp-1) : NUL;
@@ -4687,200 +6242,208 @@ CMDIRPARSE:
 		    }
 		    inword = 0;		/* Not in a word any more. */
 		    crflag = 1;
-                    debug(F110,"gtword","crflag is set",0);
-		    return(cmflgs = 1);
-		}
-            }
-
-	    /* Question mark */
-
-            if ((c == '?')
-		&& quoting
-		&& !kstartactive
-		&& !comment
-		&& cmdsrc() == 0	/* Commands coming from terminal */
-		&& chsrc != 0		/* and NOT from reparse buffer! */
-		) {
-                putchar((CHAR)c);
-                *bp = NUL;
-                if (setatm(pp,0) < 0) {
-		    debug(F111,"gtword too long #3",pp,strlen(pp));
-		    printf("?Too long #3\n");
-		    return(-9);
-		}
-		qmflag = 1;
-                return(cmflgs = 3);
-            }
-            if (c == ESC) {		/* ESC */
-		if (!comment) {
-		    *bp = NUL;
-		    if (setatm(pp,0) < 0) {
-			debug(F111,"gtword too long #4",pp,strlen(pp));
-			printf("?Too long #4\n");
-			return(-9);
-		    }
-		    esflag = 1;
-		    return(cmflgs = 2);
-		} else {
-		    bleep(BP_WARN);
-		    continue;
-		}
-            }
-            if (c == BS || c == RUB) {  /* Character deletion */
-                if (bp > cmdbuf) {      /* If still in buffer... */
-		    cmdchardel();	/* erase it. */
-                    bp--;               /* point behind it, */
-#ifdef COMMENT
-                    if (*bp == SP) inword = 0; /* Flag if current field gone */
-#else
-/* fixed by Ulli Schlueter */
-                    if (*bp == lbrace) bracelvl--; /* Adjust brace count */
-                    if (*bp == rbrace) bracelvl++;
-                    if ((*bp == SP) &&       /* Flag if current field gone */
-			(*pp != lbrace || bracelvl == 0))
-		      inword = 0;
-#endif /* COMMENT */
-                    *bp = NUL;          /* Erase character from buffer. */
-                } else {                /* Otherwise, */
-		    bleep(BP_WARN);
-                    cmres();            /* and start parsing a new command. */
-		    *bp = *atmbuf = NUL;
-                }
-                if (pp < bp) continue;
-                else return(cmflgs = -1);
-            }
-            if (c == LDEL) {            /* ^U, line deletion */
-                while ((bp--) > cmdbuf) {
-                    cmdchardel();
-                    *bp = NUL;
-                }
-                cmres();                /* Restart the command. */
-		*bp = *atmbuf = NUL;
-                inword = 0;
-                return(cmflgs = -1);
-            }
-            if (c == WDEL) {            /* ^W, word deletion */
-                if (bp <= cmdbuf) {     /* Beep if nothing to delete */
-		    bleep(BP_WARN);
-                    cmres();
-		    *bp = *atmbuf = NUL;
-                    return(cmflgs = -1);
-                }
-                bp--;
-		/* Back up over any trailing nonalphanums */
-		/* This is dependent on ASCII collating sequence */
-		/* but isalphanum() is not available everywhere. */
-                for ( ; (bp >= cmdbuf) &&
-		     (*bp < '0') ||
-		     (*bp > '9' && *bp < '@') ||
-		     (*bp > 'Z' && *bp < 'a') ||
-		     (*bp > 'z') ; bp--) {
-                    cmdchardel();
-                    *bp = NUL;
-                }
-		/* Now delete back to rightmost remaining nonalphanum */
-                for ( ; (bp >= cmdbuf) && (*bp) ; bp--) {
-		    if ((*bp < '0') ||
-			(*bp > '9' && *bp < '@') ||
-			(*bp > 'Z' && *bp < 'a') ||
-			(*bp > 'z'))
-		      break;
-                    cmdchardel();
-                    *bp = NUL;
-                }
-                bp++;
-                inword = 0;
-                return(cmflgs = -1);
-            }
-            if (c == RDIS) {            /* ^R, redisplay */
-#ifdef COMMENT
-                *bp = NUL;
-                printf("\n%s%s",cmprom,cmdbuf);
-#else
-		char *cpx; char cx;
-                *bp = NUL;
-                printf("\n%s",cmprom);
-		cpx = cmdbuf;
-		while (cx = *cpx++) {
-#ifdef isprint
-		    putchar((CHAR) (isprint(cx) ? cx : '^'));
-#else
-		    putchar((CHAR) ((cx >= SP && cx < DEL) ? cx : '^'));
-#endif /* isprint */
-		}
-#endif /* COMMENT */
-		fflush(stdout);
-                continue;
-            }
+                    /* debug(F110,"gtword","crflag is set",0); */
 #ifdef CK_RECALL
-	    if (chsrc && on_recall &&	/* Reading commands from keyboard? */
-		(cm_recall > 0) &&	/* Saving commands? */
-		(c == C_UP || c == C_UP2)) { /* Go up one */
-		if (current < 0) {	/* Nowhere to go, */
-		    bleep(BP_WARN);
-		    continue;
-		}
-		if (recall[current]) {
-		    if (!strcmp(recall[current],cmdbuf)) {
-			if (current > 0) {
-			    current--;
-			} else {
-			    bleep(BP_WARN);
-			    continue;
-			}
-		    }
-		}
-		if (recall[current]) { /* We have a previous command */
-		    while ((bp--) > cmdbuf) { /* Erase current line */
-			cmdchardel();
-			*bp = NUL;
-		    }
-		    ckstrncpy(cmdbuf,recall[current],CMDBL);
-#ifdef OSK
-		    fflush(stdout);
-		    write(fileno(stdout), "\r", 1);
-		    printf("%s%s",cmprom,cmdbuf);
-#else
-		    printf("\r%s%s",cmprom,cmdbuf);
-#endif /* OSK */
-		    current--;
-		}
-		return(cmflgs = -1);	/* Force a reparse */
-	    }
-	    if (chsrc && on_recall &&	/* Reading commands from keyboard? */
-		(cm_recall > 0) &&	/* Saving commands? */
-		(c == C_DN)) {		/* Down one */
-		if (current + 1 > rlast) { /* Already at bottom, just beep */
-		    bleep(BP_WARN);
-		    continue;
-		}
-		current++;		/* OK to go down */
-		if (recall[current]) {
-		    if (!strcmp(recall[current],cmdbuf)) {
-			if (current + 1 > rlast) { /* At bottom, beep */
-			    bleep(BP_WARN);
-			    continue;
-			} else
-			  current++;
-		    }
-		}
-		if (recall[current]) {
-		    while ((bp--) > cmdbuf) { /* Erase current line */
-			cmdchardel();
-			*bp = NUL;
-		    }
-		    ckstrncpy(cmdbuf,recall[current],CMDBL);
-#ifdef OSK
-		    fflush(stdout);
-		    write(fileno(stdout), "\r", 1);
-		    printf("%s%s",cmprom,cmdbuf);
-#else
-		    printf("\r%s%s",cmprom,cmdbuf);
-#endif /* OSK */
-		    return(cmflgs = -1); /* Force reparse */
-		}
-	    }
+		    current = rlast;
 #endif /* CK_RECALL */
+		    cmflgs = 1;
+		    if (!xcmdsrc || force_add)
+		      addcmd(cmdbuf);
+		    return(cmflgs);
+		}
+            }
+/*
+  This section handles interactive help, completion, editing, and history.
+  Rearranged as a switch statement executed only if we're at top level since
+  there is no need for any of this within command files and macros: Aug 2000.
+  Jun 2001: Even if at top level, skip this if the character was fetched from
+  the reparse or recall buffer, or if stdin is redirected.
+*/
+	    if ((xcmdsrc == 0		/* Only at top level */
+#ifndef NOSPL
+		|| askflag		/* or user is typing ASK response */
+#endif /* NOSPL */
+		 ) && chsrc != 0 && realtty) { /* from the real keyboard */
+
+		switch (c) {
+		  case '?':		/* ?-Help */
+#ifndef NOSPL
+		    if (askflag)	/* No help in ASK response */
+		      break;
+#endif /* NOSPL */
+		    if (quoting
+			&& !kstartactive
+			&& !comment
+			) {
+			putchar((CHAR)c);
+			*bp = NUL;
+			if (setatm(pp,0) < 0) {
+			    debug(F111,"gtword too long ?",pp,strlen(pp));
+			    printf("?Too long\n");
+			    return(-9);
+			}
+			qmflag = 1;
+			return(cmflgs = 3);
+		    }
+
+		  case ESC:		/* Esc or Tab completion */
+		    if (!comment) {
+			*bp = NUL;
+			if (setatm(pp,0) < 0) {
+			    debug(F111,"gtword too long Esc",pp,strlen(pp));
+			    printf("?Too long\n");
+			    return(-9);
+			}
+			esflag = 1;
+			return(cmflgs = 2);
+		    } else {
+			bleep(BP_WARN);
+			continue;
+		    }
+
+		  case BS:		/* Character deletion */
+		  case RUB:
+		    if (bp > cmdbuf) {	/* If still in buffer... */
+			cmdchardel();	/* erase it. */
+			bp--;		/* point behind it, */
+			if (*bp == lbrace) bracelvl--; /* Adjust brace count */
+			if (*bp == rbrace) bracelvl++;
+			if ((*bp == SP) && /* Flag if current field gone */
+			    (*pp != lbrace || bracelvl == 0))
+			  inword = 0;
+			*bp = NUL;	/* Erase character from buffer. */
+		    } else {		/* Otherwise, */
+			bleep(BP_WARN);
+			cmres();	/* and start parsing a new command. */
+			*bp = *atmbuf = NUL;
+		    }
+		    if (pp < bp)
+		      continue;
+		    else
+		      return(cmflgs = -1);
+
+		  case LDEL:		/* ^U, line deletion */
+		    while ((bp--) > cmdbuf) {
+			cmdchardel();
+			*bp = NUL;
+		    }
+		    cmres();		/* Restart the command. */
+		    *bp = *atmbuf = NUL;
+		    inword = 0;
+		    return(cmflgs = -1);
+
+		  case WDEL:		/* ^W, word deletion */
+		    if (bp <= cmdbuf) {	/* Beep if nothing to delete */
+			bleep(BP_WARN);
+			cmres();
+			*bp = *atmbuf = NUL;
+			return(cmflgs = -1);
+		    }
+		    bp--;
+		    /* Back up over any trailing nonalphanums */
+		    /* This is dependent on ASCII collating sequence */
+		    /* but isalphanum() is not available everywhere. */
+		    for ( ;
+			 (bp >= cmdbuf) &&
+			 ((*bp < '0') ||
+			 ((*bp > '9') && (*bp < '@')) ||
+			 ((*bp > 'Z') && (*bp < 'a')) ||
+			 (*bp > 'z'));
+			 bp--
+			 ) {
+			cmdchardel();
+			*bp = NUL;
+		    }
+		    /* Now delete back to rightmost remaining nonalphanum */
+		    for ( ; (bp >= cmdbuf) && (*bp) ; bp--) {
+			if ((*bp < '0') ||
+			    (*bp > '9' && *bp < '@') ||
+			    (*bp > 'Z' && *bp < 'a') ||
+			    (*bp > 'z'))
+			  break;
+			cmdchardel();
+			*bp = NUL;
+		    }
+		    bp++;
+		    inword = 0;
+		    return(cmflgs = -1);
+
+		  case RDIS: {		/* ^R, redisplay */
+		      char *cpx; char cx;
+		      *bp = NUL;
+		      printf("\n%s",cmprom);
+		      cpx = cmdbuf;
+		      while ((cx = *cpx++)) {
+#ifdef isprint
+			  putchar((CHAR) (isprint(cx) ? cx : '^'));
+#else
+			  putchar((CHAR) ((cx >= SP && cx < DEL) ? cx : '^'));
+#endif /* isprint */
+		      }
+		      fflush(stdout);
+		      continue;
+		  }
+		}
+
+
+#ifdef CK_RECALL
+		if (on_recall &&	/* Reading commands from keyboard? */
+		    (cm_recall > 0) &&	/* Saving commands? */
+		    (c == C_UP || c == C_UP2)) { /* Go up one */
+		    if (last_recall == 2 && current > 0)
+		      current--;
+		    if (current < 0) {	/* Nowhere to go, */
+			bleep(BP_WARN);
+			continue;
+		    }
+		    if (recall[current]) { /* We have a previous command */
+			while ((bp--) > cmdbuf) { /* Erase current line */
+			    cmdchardel();
+			    *bp = NUL;
+			}
+			ckstrncpy(cmdbuf,recall[current],CMDBL);
+#ifdef OSK
+			fflush(stdout);
+			write(fileno(stdout), "\r", 1);
+			printf("%s%s",cmprom,cmdbuf);
+#else
+			printf("\r%s%s",cmprom,cmdbuf);
+#endif /* OSK */
+			current--;
+		    }
+		    last_recall = 1;
+		    return(cmflgs = -1); /* Force a reparse */
+		}
+		if (on_recall &&	/* Reading commands from keyboard? */
+		    (cm_recall > 0) &&	/* Saving commands? */
+		    (c == C_DN)) {	/* Down one */
+		    int x = 1;
+		    if (last_recall == 1)
+		      x++;
+		    if (current + x > rlast) { /* Already at bottom, beep */
+			bleep(BP_WARN);
+			continue;
+		    }
+		    current += x;	/* OK to go down */
+		    if (recall[current]) {
+			while ((bp--) > cmdbuf) { /* Erase current line */
+			    cmdchardel();
+			    *bp = NUL;
+			}
+			ckstrncpy(cmdbuf,recall[current],CMDBL);
+#ifdef OSK
+			fflush(stdout);
+			write(fileno(stdout), "\r", 1);
+			printf("%s%s",cmprom,cmdbuf);
+#else
+			printf("\r%s%s",cmprom,cmdbuf);
+#endif /* OSK */
+			last_recall = 2;
+			return(cmflgs = -1); /* Force reparse */
+		    }
+		}
+#endif /* CK_RECALL */
+	    }
 
 	    if (c < SP && quote == 0) { /* Any other unquoted control char */
 		if (!chsrc) {		/* If cmd file, point past it */
@@ -4903,12 +6466,12 @@ CMDIRPARSE:
         } else {			/* This character was quoted. */
 	    int qf = 1;
 	    quote = 0;			/* Unset the quote flag. */
-	    debug(F000,"gtword quote 0","",c);
+	    /* debug(F000,"gtword quote 0","",c); */
 	    /* Quote character at this level is only for SP, ?, and controls */
             /* If anything else was quoted, leave quote in, and let */
 	    /* the command-specific parsing routines handle it, e.g. \007 */
 	    if (c > 32 && c != '?' && c != RUB && chsrc != 0) {
-		debug(F000,"gtword quote 1","",c);
+		/* debug(F000,"gtword quote 1","",c); */
 		*bp++ = CMDQ;		/* Deposit \ if it came from tty */
 		qf = 0;			/* and don't erase it from screen */
 		linebegin = 0;		/* Not at beginning of line */
@@ -4922,14 +6485,12 @@ CMDIRPARSE:
   this time with the quote flag off.
 */
 	    } else if (dirnamflg && (c == CR || c == LF || c == SP)) {
-		debug(F000,"gtword quote 2","",c);
+		/* debug(F000,"gtword quote 2","",c); */
 		*bp++ = CMDQ;
 		linebegin = 0;		/* Not at beginning of line */
 		*bp = (c == SP ? SP : CR);
-        goto CMDIRPARSE ;
+		goto CMDIRPARSE;
 #endif /* BS_DIRSEP */
-	    } else {
-		debug(F000,"gtword quote 3","",c);
 	    }
 #ifdef BEBOX
 	    if (echof) {
@@ -4940,7 +6501,7 @@ CMDIRPARSE:
 #else
 	    if (echof) cmdecho((char) c, qf); /* Now echo quoted character */
 #endif /* BEBOX */
-	    debug(F111,"gtword quote",cmdbuf,c);
+	    /* debug(F111,"gtword quote",cmdbuf,c); */
 	}
 #ifdef COMMENT
         if (echof) cmdecho((char) c,quote); /* Echo what was typed. */
@@ -4987,18 +6548,18 @@ addbuf(cp) char *cp; {
     fcode = 1 means don't break on space.
     fcode = 2 means break on space, ':', or '='.
   Null-terminate the result.
-  If the source pointer is the atom buffer itself, do nothing.
-  (no longer true.  now we copy the buffer, edit it, and copy it back.)
   Return length of token, and also set global "cc" to this length.
   Return -1 if token was too long.
 */
 static int
 setatm(cp,fcode) char *cp; int fcode; {
-    char *ap, *xp;
-    int  bracelvl, n;
-    char lbrace, rbrace;
+    char *ap, *xp, *dqp = NULL, lbrace, rbrace;
+    int bracelvl = 0, dq = 0;
 
-    if (cmfldflgs & 1) {
+    register char * s;
+    register int n = 0;
+
+    if (cmfldflgs & 1) {		/* Handle grouping */
 	lbrace = '(';
 	rbrace = ')';
     } else {
@@ -5008,29 +6569,58 @@ setatm(cp,fcode) char *cp; int fcode; {
     cc = 0;				/* Character counter */
     ap = atmbuf;			/* Address of atom buffer */
 
-    if ((int) strlen(cp) > ATMBL)
-      return(-1);
+    s = cp;
 
+    while (*s++) n++;			/* Save a call to strlen */
+
+    if (n > ATMBL) {
+	printf("?Command buffer overflow\n");
+	return(-1);
+    }
+    /* debug(F111,"setatm",cp,n); */
     if (cp == ap) {			/* In case source is atom buffer */
 	xp = atybuf;			/* make a copy */
+#ifdef COMMENT
 	strncpy(xp,ap,ATMBL);		/* so we can copy it back, edited. */
 	cp = xp;
+#else
+	s = ap;
+	while ((*xp++ = *s++)) ;	/* We already know it's big enough */
+	cp = xp = atybuf;
+#endif /* COMMENT */
     }
     *ap = NUL;				/* Zero the atom buffer */
     if (fcode == 1) {			/* Trim trailing blanks */
-	n = strlen(cp);
-	while (--n >= 0)
-	  if (cp[n] != SP) break;
+	while (--n >= 0 && cp[n] == SP)
+	  ;
 	cp[n+1] = NUL;
     }
-    while (*cp == SP) cp++;		/* Trim leading spaces */
-    bracelvl = 0;
+    while (*cp == SP) {			/* Trim leading spaces */
+	cp++;
+	n--;
+    }
+    if (*cp == '"') {			/* Starts with doublequote? */
+	dq = 1;
+	dqp = cp;
+    }
     while (*cp) {
-        if (*cp == lbrace) bracelvl++;
-        if (*cp == rbrace) bracelvl--;
-	if (bracelvl < 0) bracelvl = 0;
+        if (*cp == lbrace)
+	  bracelvl++;
+        else if (*cp == rbrace)
+	  bracelvl--;
+	if (bracelvl < 0)
+	  bracelvl = 0;
 	if (bracelvl == 0) {
-	    if ((*cp == SP || *cp == HT) && (fcode != 1)) break;
+	    if (dq) {
+		if (*cp == SP || *cp == HT) {
+		    if (cp > dqp+1) {
+			if (*(cp-1) == '"' && *(cp-2) != CMDQ) {
+			    break;
+			}
+		    }
+		}
+	    } else if ((*cp == SP || *cp == HT) && (fcode != 1))
+	      break;
 	    if ((fcode == 2) && (*cp == '=' || *cp == ':')) break;
 	    if (*cp == LF || *cp == CR) break;
 	}
@@ -5038,6 +6628,7 @@ setatm(cp,fcode) char *cp; int fcode; {
         cc++;
     }
     *ap = NUL;				/* Terminate the string. */
+    /* debug(F111,"setatm result",atmbuf,cc); */
     return(cc);                         /* Return length. */
 }
 
@@ -5111,7 +6702,7 @@ cmdgetc(timelimit) int timelimit; {	/* Get a character from the tty. */
             if (c >= 0 && is_tn) {	/* Server-side Telnet */
                 switch (c) {
 		  case IAC:
-                    debug(F111,"gtword IAC","c",c);
+                    /* debug(F111,"gtword IAC","c",c); */
                     got_cr = 0;
                     if ((tx = tn_doop((CHAR)(c & 0xff),ckxech,coninc)) == 0) {
                         goto GETNEXTCH;
@@ -5143,7 +6734,7 @@ cmdgetc(timelimit) int timelimit; {	/* Get a character from the tty. */
 #ifdef COMMENT
                   case CR:
                     if (!TELOPT_U(TELOPT_BINARY)) {
-			if ( got_cr ) {
+			if (got_cr) {
 			    /* This means the sender is violating Telnet   */
 			    /* protocol because we received two CRs in a   */
 			    /* row without getting either LF or NUL.       */
@@ -5198,30 +6789,31 @@ cmdgetc(timelimit) int timelimit; {	/* Get a character from the tty. */
                     } else {
                         got_cr = 1;	/* Remember a CR was received */
                     }
-                    debug(F100,"gtword CR to LF","",0);
+                    /* debug(F100,"gtword CR to LF","",0); */
                     c = LF;
 		    break;
                   case LF:
                     if (got_cr) {
                         got_cr = 0;
-                        debug(F100,"gtword skipping LF","",0);
+                        /* debug(F100,"gtword skipping LF","",0); */
                         goto GETNEXTCH;
                     }
 		    break;
                   case NUL:
                     if (got_cr) {
                         got_cr = 0;
-                        debug(F100,"gtword skipping NUL","",0);
+                        /* debug(F100,"gtword skipping NUL","",0); */
                         goto GETNEXTCH;
+#ifdef COMMENT
                     } else {
                       debug(F100,"gtword NUL","",0);
+#endif /* COMMENT */
                     }
                     break;
 #endif /* COMMENT */
 #ifdef IKSD
 		  case ETX:		/* Ctrl-C... */
                   case EOT:		/* EOT = EOF */
-                      debug(F000,"gtword","",c);
                       if (inserver
 #ifdef CK_LOGIN
 			  && !x_logged
@@ -5236,17 +6828,17 @@ cmdgetc(timelimit) int timelimit; {	/* Get a character from the tty. */
             }
 #endif /* TNCODE */
     } else {
-	/* debug(F100,"cmdgetc getchar 1","",0); */
 #ifdef OS2
 	c = coninc(0);
 #else /* OS2 */
 	c = getchar();
-	/* debug(F101,"cmdgetc getchar 2","",c); */
+	/* debug(F101,"cmdgetc getchar","",c); */
 #endif /* OS2 */
     }
 #else  /* MINIX2 */
 #undef getc
     c = getc(stdin);
+    /* debug(F101,"cmdgetc getc","",c); */
 #endif /* MINIX2 */
 #ifdef RTU
     if (rtu_bug) {
@@ -5501,49 +7093,151 @@ unhex(x) char x;
 /*  L O O K U P  --  Lookup the string in the given array of strings  */
 
 /*
- Call this way:  v = lookup(table,word,n,&x);
+  Call this way:  v = lookup(table,word,n,&x);
 
-   table - a 'struct keytab' table.
-   word  - the target string to look up in the table.
-   n     - the number of elements in the table.
-   x     - address of an integer for returning the table array index,
-           or NULL if you don't need a table index.
+    table - a 'struct keytab' table.
+    word  - the target string to look up in the table.
+    n     - the number of elements in the table.
+    x     - address of an integer for returning the table array index,
+	    or NULL if you don't need a table index.
 
- The keyword table must be arranged in ascending alphabetical order.
- Alphabetic case doesn't matter.
+  The keyword table must be arranged in ascending alphabetical order;
+  alphabetic case doesn't matter but letters are treated as lowercase
+  for purposes of ordering; thus "^" and "_" come *before* the letters,
+  not after them.
 
- Returns the keyword's associated value (zero or greater) if found,
- with the variable x set to the keyword-table index, or:
+  Returns the keyword's associated value (zero or greater) if found,
+  with the variable x set to the keyword-table index.  If is lookup()
+  is not successful, it returns:
 
-  -3 if nothing to look up (target was null),
-  -2 if ambiguous,
-  -1 if not found.
+   -3 if nothing to look up (target was null),
+   -2 if ambiguous,
+   -1 if not found.
 
- A match is successful if the target matches a keyword exactly, or if
- the target is a prefix of exactly one keyword.  It is ambiguous if the
- target matches two or more keywords from the table.
+  A match is successful if the target matches a keyword exactly, or if
+  the target is a prefix of exactly one keyword.  It is ambiguous if the
+  target matches two or more keywords from the table.
+
+  Lookup() is the critical routine in scripts and so is optimized with a
+  simple static cache plus some other tricks.  Maybe it could be improved
+  further with binary search or hash techniques but I doubt it since most
+  keyword tables are fairly short.
 */
+
+#ifdef USE_LUCACHE			/* Lookup cache */
+extern int lusize;			/* (initialized in ckuus5.c) */
+extern char * lucmd[];
+extern int luval[];
+extern int luidx[];
+extern struct keytab * lutab[];
+long luhits = 0L;
+long lucalls = 0L;
+long xxhits = 0L;
+long luloop = 0L;
+#endif /* USE_LUCACHE */
+
 int
 lookup(table,cmd,n,x) char *cmd; struct keytab table[]; int n, *x; {
 
-    int i, v, len, cmdlen;
+    register int i, m;
+    int v, len, cmdlen = 0;
+    char c = NUL, c1, *s;
 
-/* Get length of search object, if it's null return code -3. */
+/* Get 1st char of search object, if it's null return -3. */
 
-    if (!cmd)
+    if (!cmd || n < 1)			/* Defense de nullarg */
       return(-3);
-    if (((cmdlen = (int) strlen(cmd)) == 0) || (n < 1))
+    c1 = *cmd;				/* First character */
+    if (!c1)				/* Make sure there is one */
       return(-3);
+    if (isupper(c1))			/* If letter make it lowercase */
+      c1 = tolower(c1);
 
-/* Not null, look it up */
+#ifdef USE_LUCACHE			/* lookup() cache */
+    m = lusize;
+    lucalls++;				/* Count this lookup() call */
+    for (i = 0; i < m; i++) {		/* Loop thru cache */
+	if (*(lucmd[i]) == c1) {	/* Same as 1st char of search item? */
+	    if (lutab[i] == table) {	/* Yes - same table too? */
+		if (!strcmp(cmd,lucmd[i])) { /* Yes - compare */
+		    if (x) *x = luidx[i];    /* Match - return index */
+		    luhits++;                /* Count cache hit */
+		    return(luval[i]);        /* Return associated value */
+		}
+	    }
+	}
+    }
+#endif /* USE_LUCACHE */
 
-    for (i = 0; i < n-1; i++) {
-	len = strlen(table[i].kwd);
-        if ((len == cmdlen && !ckstrcmp(table[i].kwd,cmd,len,0)) ||
-	    ((v = !ckstrcmp(table[i].kwd,cmd,cmdlen,0)) &&
-	     ckstrcmp(table[i+1].kwd,cmd,cmdlen,0))) {
-	    if (x) *x = i;
-	    return(table[i].kwval);
+/* Not null, not in cache, look it up */
+
+    s = cmd;
+    while (*s++) cmdlen++;		/* Length of target */
+/*
+  Quick binary search to find last table entry whose first character is
+  lexically less than the first character of the search object.  This is
+  the starting point of the next loop, which must go in sequence since it
+  compares adjacent table entries.
+*/
+    if (n < 5) {			/* Not worth it for small tables */
+	i = 0;
+    } else {
+	int lo = 0;
+	int hi = n;
+	int count = 0;
+	while (lo+2 < hi && ++count < 12) {
+	    i = lo + ((hi - lo) / 2);
+	    c = *(table[i].kwd);
+	    if (isupper(c)) c = tolower(c);
+	    if (c < c1) {
+		lo = i;
+	    } else {
+		hi = i;
+	    }
+	}
+	i = (c < c1) ? lo+1 : lo;
+#ifdef USE_LUCACHE
+	if (i > 0) xxhits++;
+#endif /* USE_LUCACHE */
+    }
+    for ( ; i < n-1; i++) {
+#ifdef USE_LUCACHE
+	luloop++;
+#endif /* USE_LUCACHE */
+	v = 0;
+	c = *(table[i].kwd);
+	if (c) {
+	    if (isupper(c)) c = tolower(c);
+
+	    /* The following is a big performance booster but makes it */
+	    /* absolutely essential that all lookup() tables are in order. */
+
+	    if (c > c1)			/* Leave early if past our mark */
+	      return(-1);
+
+#ifdef DEBUG
+	    /* Use LOG DEBUG to check */
+
+	    if (deblog) {
+		if (ckstrcmp(table[i].kwd,table[i+1].kwd,0,0) > 0) {
+		    printf("TABLE OUT OF ORDER [%s] [%s]\n",
+			   table[i].kwd,table[i+1].kwd);
+
+		}
+	    }
+#endif /* DEBUG */
+
+	    if (c == c1) {
+		len = 0;
+		s = table[i].kwd;
+		while (*s++) len++;
+		if ((len == cmdlen && !ckstrcmp(table[i].kwd,cmd,len,0)) ||
+		    ((v = !ckstrcmp(table[i].kwd,cmd,cmdlen,0)) &&
+		     ckstrcmp(table[i+1].kwd,cmd,cmdlen,0))) {
+		    if (x) *x = i;
+		    return(table[i].kwval);
+		}
+	    } else v = 0;
 	}
         if (v) {			/* Ambiguous */
 	    if (x) *x = i;		/* Set index of first match */
@@ -5555,29 +7249,75 @@ lookup(table,cmd,n,x) char *cmd; struct keytab table[]; int n, *x; {
 
     if (!ckstrcmp(table[n-1].kwd,cmd,cmdlen,0)) {
         if (x) *x = n-1;
+	debug(F111,"lookup",table[i].kwd,table);
         return(table[n-1].kwval);
     } else return(-1);
 }
 
-/* Like lookup, but requires a full (but case-independent) match */
+/*
+  x l o o k u p
 
+  Like lookup, but requires a full (but case-independent) match
+  and does NOT require the table to be in order.
+*/
 int
 xlookup(table,cmd,n,x) struct keytab table[]; char *cmd; int n, *x; {
-    int i, cmdlen;
+    register int i;
+    int len, cmdlen, one = 0;
+    register char c, * s, * s2;
 
-    if (!cmd)
-      return(-3);
-    if (((cmdlen = (int) strlen(cmd)) == 0) || (n < 1))
+    if (!cmd) cmd = "";			/* Check args */
+    if (!*cmd || n < 1) return(-3);
+
+    c = *cmd;				/* First char of string to look up */
+    if (!*(cmd+1)) {			/* Special handling for 1-char names */
+	cmdlen = 1;
+	if (isupper(c)) { c = tolower(c); *cmd = c; }
+	one = 1;
+    } else {
+	cmdlen = 0;
+	s = cmd;
+	while (*s++) cmdlen++;
+	c = *cmd;
+	if (isupper(c))
+	  c = tolower(c);
+    }
+    if (cmdlen < 1)
       return(-3);
 
     for (i = 0; i < n; i++) {
-	if (((int)strlen(table[i].kwd) == cmdlen) &&
-	    (!ckstrcmp(table[i].kwd,cmd,cmdlen,0))) {
-	    if (x) *x = i;
-	    return(table[i].kwval);
+	s = table[i].kwd;		/* This entry */
+	if (!s) s = "";
+	if (!*s) continue;		/* Empty table entry */
+	if (c != *s) continue;		/* First char doesn't match */
+	if (one) {			/* Name is one char long */
+	    if (!*(s+1)) {
+		if (x) *x = i;
+		return(table[i].kwval);	/* So is table entry */
+	    }
+	} else {			/* Otherwise do string comparison */
+	    s2 = s;
+	    len = 0;
+	    while (*s2++) len++;
+	    if (len == cmdlen && !ckstrcmp(s,cmd,-1,0)) {
+		if (x) *x = i;
+		return(table[i].kwval);
+	    }
 	}
     }
     return(-1);
+}
+
+/* Reverse lookup */
+
+char *
+rlookup(table,n,x) struct keytab table[]; int n, x; {
+    int i;
+    for (i = 0; i < n; i++) {
+        if (table[i].kwval == x)
+	  return(table[i].kwd);
+    }
+    return(NULL);
 }
 
 #ifndef NOICP

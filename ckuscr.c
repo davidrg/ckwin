@@ -2,12 +2,12 @@
 
 #ifndef NOICP
 #ifndef NOSCRIPT
-char *loginv = "Script Command, 7.0.030, 21 Oct 1998";
+char *loginv = "Script Command, 8.0.031, 20 Apr 2000";
 
 /*  C K U S C R  --  expect-send script implementation  */
 
 /*
-  Copyright (C) 1985, 2000,
+  Copyright (C) 1985, 2001,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -115,7 +115,7 @@ static int exp_alrm = 15;		/* Time to wait for expect string */
 #define DEL_MSEC 300			/* Milliseconds to pause on ~d */
 
 #define SBUFL 512
-static char seq_buf[SBUFL], *s;		/* expect-send sequence buffer */
+static char seq_buf[SBUFL+2], *s;	/* expect-send sequence buffer */
 static int got_it, no_cr;
 
 /*  Connect state parent/child communication signal handlers */
@@ -454,6 +454,7 @@ dooseq(threadinfo) VOID * threadinfo;
 	      *sb = dopar(*sb);	/* add parity */
 	    ttol((CHAR *)seq_buf,l); /* send it */
 	    if (scr_echo && duplex) {
+#ifndef NOLOCAL
 #ifdef OS2
 		{			/* Echo to emulator */
 		    char *s = seq_buf;
@@ -462,6 +463,7 @@ dooseq(threadinfo) VOID * threadinfo;
 		    }
 		}
 #endif /* OS2 */
+#endif /* NOLOCAL */
 		conxo(l,seq_buf);
 	    }
 	    if (seslog && duplex) /* log it */
@@ -541,7 +543,7 @@ dologin(cmdstr) char *cmdstr; {
 
     if (speed < 0L) speed = ttgspd();
     if (ttopen(ttname,&local,mdmtyp,0) < 0) {
-	sprintf(seq_buf,"Sorry, can't open %s",ttname);
+	ckmakmsg(seq_buf,SBUFL,"Sorry, can't open ",ttname,NULL,NULL);
 	perror(seq_buf);
 	return(0);
     }
@@ -570,7 +572,7 @@ dologin(cmdstr) char *cmdstr; {
 #endif /* TNCODE */
 
     *seq_buf = 0;
-    for (e = s; *e; e++) strcat(seq_buf, dbchr(*e) );
+    for (e = s; *e; e++) ckstrncat(seq_buf,dbchr(*e),SBUFL);
 #ifdef COMMENT
 /* Skip this because it tends to contain a password... */
     if (scr_echo) printf("SCRIPT string: %s\n",seq_buf);

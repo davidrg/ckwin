@@ -1,5 +1,5 @@
 char *protv =                                                     /* -*-C-*- */
-"C-Kermit Protocol Module 7.0.135, 1 Jan 2000";
+"C-Kermit Protocol Module 8.0.156, 10 Nov 2001";
 
 int kactive = 0;			/* Kermit protocol is active */
 
@@ -10,7 +10,7 @@ int kactive = 0;			/* Kermit protocol is active */
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2000,
+  Copyright (C) 1985, 2001,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -52,15 +52,16 @@ _PROTOTYP(int sndspace,(int));
   extern char *versio, *srvtxt, *cmarg, *cmarg2, **cmlist, *rf_err;
   extern char *cdmsgfile[];
   extern char * snd_move, * snd_rename, * srimsg;
-  extern char filnam[], fspec[], ttname[], ofn1[];
+  extern char filnam[], ofilnam[], fspec[], ttname[], ofn1[];
   extern CHAR sstate, *srvptr, *data;
   extern int timint, rtimo, nfils, hcflg, xflg, flow, mdmtyp, network;
-  extern int oopts, omode, oname, opath, nopush, isguest;
+  extern int oopts, omode, oname, opath, nopush, isguest, xcmdsrc;
   extern int rejection, moving, fncact, bye_active, urserver, fatalio;
   extern int protocol, prefixing, filcnt, carrier, fnspath, interrupted;
   extern int recursive, inserver, nzxopts, idletmo, srvidl, xfrint;
   extern struct ck_p ptab[];
   extern int remfile, rempipe, xferstat, filestatus, wearealike, fackpath;
+  extern int patterns, filepeek, gnferror;
   extern char * remdest;
 
 #ifdef PKTZEROHACK
@@ -75,11 +76,11 @@ static int havefs = 0;
 static int logtries = 0;
 #endif /* CK_LOGIN */
 
+static int cancel = 0;
+int fackbug = 0;
+
 #ifdef STREAMING
 extern int streaming, streamok;
-static int cancel = 0;
-
-int fackbug = 0;
 
 static VOID
 streamon() {
@@ -118,8 +119,11 @@ _PROTOTYP( int cmdsrc, (void) );
   extern int x_login, x_logged;
 #endif /* NOSERVER */
 
-#ifdef CK_SPEED
+#ifdef TNCODE
   extern int ttnproto;			/* Network protocol */
+#endif /* TNCODE */
+
+#ifdef CK_SPEED
   extern short ctlp[];			/* Control-character prefix table */
 #endif /* CK_SPEED */
 
@@ -245,7 +249,7 @@ if (justone) { justone=0; return(0); } else { SERVE; } }
 /*
   By late 1999, the big switch() statement generated from the following state
   table began choking even gcc, so here we extract the code from the larger
-  states into static void routines to reduce the size of the cases and the
+  states into static routines to reduce the size of the cases and the
   switch() overall.  The routines follow the state table; the prototypes are
   here.  Each of these routines simply contains the text from the
   corresponding case, but with return(-1) added in appropriate places; see
@@ -404,6 +408,7 @@ a {
 
 <rgen,get,serve,ropkt>S {		/* Receive Send-Init packet. */
     rc = rcv_s_pkt();
+    cancel = 0;				/* Reset cancellation counter */
     debug(F101,"rcv_s_pkt","",rc);
     if (rc > -1) return(rc);		/* (see below) */
 }
@@ -420,6 +425,7 @@ a {
     ipktlen = strlen(ipktack);
 #endif /* PKTZEROHACK */
     spar(rdatap);			/* Set parameters */
+    cancel = 0;
     winlo = 0;				/* Set window-low back to zero */
     debug(F101,"<ipkt>Y winlo","",winlo);
     urserver = 1;			/* So I know I'm talking to a server */
@@ -491,16 +497,17 @@ a {
     } else if (x > 0) {			/* Need to send more O-Packets */
 	BEGIN ssopkt;
     } else {
-	winlo = 0;			/* Back to packet 0 again. */
-	debug(F101,"<ipkt>E winlo","",winlo);
 	freerpkt(winlo);		/* Discard the Error packet. */
+	debug(F101,"<ipkt>E winlo","",winlo);
+	winlo = 0;			/* Back to packet 0 again. */
 	nakstate = 1;			/* Can send NAKs from here. */
 	BEGIN vstate;
     }
 }
 
-<get>Y {		/* Resend of previous I-pkt ACK, same seq number! */
-    srinit(reget, retrieve, opkt);	/* Send the GET packet again. */
+<get>Y {		/* Resend of previous I-pkt ACK, same seq number */
+    freerpkt(0);			/* Free the ACK's receive buffer */
+    resend(0);				/* Send the GET packet again. */
 }
 
 /* States in which we're being a server */
@@ -522,6 +529,7 @@ a {
 #endif /* COMMENT */
 #endif /* COMMENT */
 #endif /* NOSERVER */
+    cancel = 0;				/* Reset cancellation counter */
 }
 
 <serve>R {				/* GET */
@@ -1279,7 +1287,7 @@ _PROTOTYP(int sndwho,(char *));
 	  cksyslog(SYSLG_PR, 1, "server", "Interrupted", NULL);
 #endif /* CKSYSLOG */
 	success = 0;
-	xitsta |= what;
+	xitsta |= (what & W_KERMIT);
 	QUIT;
     } else if (interrupted) {
 	if (!ENABLED(en_fin)) {		/* Ctrl-C typed */
@@ -1291,7 +1299,7 @@ _PROTOTYP(int sndwho,(char *));
 	      cksyslog(SYSLG_PR, 1, "server", "Interrupted", NULL);
 #endif /* CKSYSLOG */
 	    success = 0;
-	    xitsta |= what;
+	    xitsta |= (what & W_KERMIT);
 	    QUIT;
 	}
     } else {				/* Shouldn't happen */
@@ -1327,11 +1335,12 @@ _PROTOTYP(int sndwho,(char *));
 }
 
 <rgen,rfile>F {				/* File header */
-    char *n2;
+    /* char *n2; */
     extern int rsn;
     debug(F101,"<rfile>F winlo 1","",winlo);
     xflg = 0;				/* Not screen data */
-    cancel = 0;				/* Reset cancellation counter */
+    if (!czseen)
+      cancel = 0;			/* Reset cancellation counter */
 #ifdef CALIBRATE
     if (dest == DEST_N)
       calibrate = 1;
@@ -1374,7 +1383,8 @@ _PROTOTYP(int sndwho,(char *));
 
 <rgen,rfile>X {				/* X-packet instead of file header */
     xflg = 1;				/* Screen data */
-    cancel = 0;				/* Reset cancellation counter */
+    if (!czseen)
+      cancel = 0;			/* Reset cancellation counter */
     ack();				/* Acknowledge the X-packet */
     initattr(&iattr);			/* Initialize attribute structure */
     streamon();
@@ -1421,8 +1431,9 @@ _PROTOTYP(int sndwho,(char *));
 }
 
 <rattr>D {				/* First data packet */
+    debug(F100,"<rattr> D firstdata","",0);
     rc = rcv_firstdata();
-    debug(F101,"srv_firstdata","",rc);
+    debug(F101,"rcv_firstdata rc","",rc);
     if (rc > -1) return(rc);		/* (see below) */
 }
 
@@ -1441,28 +1452,27 @@ _PROTOTYP(int sndwho,(char *));
     RESUME;				/* and quit */
 }
 
-<rdpkt>D {				/* Data packet */
-    if (cxseen || discard) {		/* If file interrupt */
+<rdpkt>D {				/* Got Data packet */
+    debug(F101,"<rdpkt>D cxseen","",cxseen);
+    debug(F101,"<rdpkt>D czseen","",czseen);
+    if (cxseen || czseen || discard) {	/* If file or group interruption */
+	CHAR * msg;
+	msg = czseen ? (CHAR *)"Z" : (CHAR *)"X";
 #ifdef STREAMING
-	if (streaming) {
-	    if (cancel++ == 0)
-	      ack1((CHAR *)"X");	/* put "X" in ACK */
-	    else
-	      fastack();
+	if (streaming) {		/* Need to cancel */
+	    debug(F111,"<rdpkt>D streaming cancel",msg,cancel);
+	    if (cancel++ == 0) {	/* Only do this once */
+		ack1(msg);		/* Put "X" or "Z" in ACK */
+	    } else if (czseen) {
+		errpkt((CHAR *)"User canceled");
+		RESUME;
+	    } else {
+		fastack();
+	    }
 	} else
 #endif /* STREAMING */
-	    ack1((CHAR *)"X");		/* put "X" in ACK */
-    } else if (czseen) {		/* If file-group interrupt */
-#ifdef STREAMING
-	if (streaming) {
-	    if (cancel++ == 0)
-	      ack1((CHAR *)"Z");	/* put "Z" in ACK */
-	    else
-	      fastack();
-	} else
-#endif /* STREAMING */
-	    ack1((CHAR *)"Z");		/* put "Z" in ACK */
-    } else {
+	  ack1(msg);
+    } else {				/* No interruption */
 	int rc, qf;
 #ifndef NOSPL
 	qf = query;
@@ -1510,11 +1520,17 @@ _PROTOTYP(int sndwho,(char *));
 #endif /* CALIBRATE */
     } else {				/* otherwise */
 	x = opena(filnam,&iattr);	/* open the file, with attributes */
+	if (x == -17) {			/* REGET skipped because same size */
+	    discard = 1;
+	    rejection = 1;
+	}
     }
-    if (!x || reof(filnam, &iattr) < 0) { /* Now close & dispose of the file */
+    if (!x || reof(filnam, &iattr) < 0) { /* Close output file */
 	errpkt((CHAR *) rf_err);	/* If problem, send error msg */
 	RESUME;				/* and quit */
     } else {				/* otherwise */
+	if (x == -17)
+	  xxscreen(SCR_ST,ST_SKIP,SKP_RES,"");
 	ack();				/* acknowledge the EOF packet */
 	BEGIN rfile;			/* and await another file */
     }
@@ -1533,6 +1549,14 @@ _PROTOTYP(int sndwho,(char *));
 #ifndef COHERENT /* Coherent compiler blows up on this switch() statement. */
     x = reof(filnam, &iattr);		/* Handle the EOF packet */
     switch (x) {			/* reof() sets the success flag */
+      case -5:				/* Handle problems */
+	errpkt((CHAR *)"RENAME failed"); /* Fatal */
+	RESUME;
+	break;
+      case -4:
+	errpkt((CHAR *)"MOVE failed");	/* Fatal */
+	RESUME;
+	break;
       case -3:				/* If problem, send error msg */
 	errpkt((CHAR *)"Can't print file"); /* Fatal */
 	RESUME;
@@ -1541,9 +1565,9 @@ _PROTOTYP(int sndwho,(char *));
 	errpkt((CHAR *)"Can't mail file"); /* Fatal */
 	RESUME;
 	break;
-      case 2:
+      case 2:				/* Not fatal */
       case 3:
-	xxscreen(SCR_EM,0,0L,"Can't delete temp file"); /* Not fatal */
+	xxscreen(SCR_EM,0,0L,"Receiver can't delete temp file");
 	RESUME;
 	break;
       default:
@@ -1555,7 +1579,15 @@ _PROTOTYP(int sndwho,(char *));
 	    if (query)			/* Query reponses generally */
 	      conoll("");		/* don't have line terminators */
 #endif /* NOSPL */
-	    ack();			/* Acknowledge the EOF packet */
+	    if (czseen) {		/* Batch canceled? */
+		if (cancel++ == 0) {	/* If we haven't tried this yet */
+		    ack1((CHAR *)"Z");	/* Try it once */
+		} else {		/* Otherwise */
+		    errpkt((CHAR *)"User canceled"); /* quite with Error */
+		    RESUME;
+		}
+	    } else
+	      ack();			/* Acknowledge the EOF packet */
 	    BEGIN rfile;		/* and await another file */
 	}
     }
@@ -1572,6 +1604,7 @@ _PROTOTYP(int sndwho,(char *));
 
 <ssinit>Y {				/* ACK for Send-Init */
     spar(rdatap);			/* set parameters from it */
+    cancel = 0;
     bctu = bctr;			/* switch to agreed-upon block check */
     bctl = (bctu == 4) ? 2 : bctu;	/* Set block-check length */
 #ifdef CK_RESEND
@@ -1597,8 +1630,8 @@ _PROTOTYP(int sndwho,(char *));
 	    if (ikdbopen) slotstate(what,
 				  (server ? "SERVER" : ""),
 				  "SEND",
-				  filnam,
-				  "");
+				  filnam
+				  );
 #endif /* IKSDB */
 	    BEGIN ssfile;		/* and switch to receive-file state */
 	} else {			/* otherwise send error msg & quit */
@@ -1613,10 +1646,10 @@ _PROTOTYP(int sndwho,(char *));
 }
 
 /*
- These states are necessary to handle the case where we get a server command
- packet (R, G, or C) reply with an S packet, but the client retransmits the
- command packet.  The input() function doesn't catch this because the packet
- number is still zero.
+  These states are necessary to handle the case where we get a server command
+  packet (R, G, or C) reply with an S packet, but the client retransmits the
+  command packet.  The input() function doesn't catch this because the packet
+  number is still zero.
 */
 <ssinit>R {				/* R packet was retransmitted. */
     xsinit();				/* Resend packet 0 */
@@ -1637,6 +1670,7 @@ _PROTOTYP(int sndwho,(char *));
     decode(rdatap,putsrv,0);		/* Decode data field, if any */
     putsrv(NUL);			/* Terminate with null */
     ffc = 0L;				/* Reset file byte counter */
+    debug(F101,"<ssfile>Y cxseen","",cxseen);
     if (*srvcmd) {			/* If remote name was recorded */
         if (sendmode != SM_RESEND) {
 	    extern char * srfspec;
@@ -1646,7 +1680,12 @@ _PROTOTYP(int sndwho,(char *));
 	    makestr(&srfspec,(char *)srvcmd);
         }
     }
-    if (atcapu) {			/* If attributes are to be used */
+    if (cxseen||czseen) {		/* Interrupted? */
+	debug(F101,"<ssfile>Y canceling","",0);
+	x = clsif();			/* Close input file */
+	sxeof(1);			/* Send EOF(D) */
+	BEGIN sseof;			/* and switch to EOF state. */
+    } else if (atcapu) {		/* If attributes are to be used */
 	if (sattr(xflg | stdinf, 1) < 0) { /* send them */
 	    errpkt((CHAR *)"Can't send attributes"); /* if problem, say so */
 	    RESUME;			/* and quit */
@@ -1655,9 +1694,8 @@ _PROTOTYP(int sndwho,(char *));
 	if (window(wslotn) < 0) {	/* Open window */
 	    errpkt((CHAR *)"Can't open window");
 	    RESUME;
-	}
-	if ((x = sdata()) == -2) {	/* Send first data packet data */
-	    window(1);			/* Failed, put window size back to 1 */
+	} else if ((x = sdata()) == -2) { /* Send first data packet data */
+	    window(1);			/* Connection lost, reset window */
 	    x = clsif();		/* Close input file */
 	    return(success = 0);	/* Return failure */
 	} else if (x == -9) {		/* User interrupted */
@@ -1665,7 +1703,7 @@ _PROTOTYP(int sndwho,(char *));
 	    window(1);			/* Set window size back to 1... */
 	    timint = s_timint;		/* Restore timeout */
 	    return(success = 0);	/* Failed */
-	} else if (x == -1) {		/* EOF (empty file) */
+	} else if (x < 0) {		/* EOF (empty file) or interrupted */
 	    window(1);			/* put window size back to 1, */
 	    debug(F101,"<ssfile>Y cxseen","",cxseen);
 	    x = clsif();		/* If not ok, close input file, */
@@ -1681,7 +1719,13 @@ _PROTOTYP(int sndwho,(char *));
 
 <ssattr>Y {				/* Got ACK to A packet */
     ffc = 0L;				/* Reset file byte counter */
-    if (rsattr(rdatap) < 0) {		/* Was the file refused? */
+    debug(F101,"<ssattr>Y cxseen","",cxseen);
+    if (cxseen||czseen) {		/* Interrupted? */
+	debug(F101,"<sattr>Y canceling","",0);
+	x = clsif();			/* Close input file */
+	sxeof(1);			/* Send EOF(D) */
+	BEGIN sseof;			/* and switch to EOF state. */
+    } else if (rsattr(rdatap) < 0) {	/* Was the file refused? */
 	discard = 1;			/* Set the discard flag */
 	clsif();			/* Close the file */
 	sxeof(1);			/* send EOF with "discard" code */
@@ -1695,13 +1739,15 @@ _PROTOTYP(int sndwho,(char *));
 	    RESUME;
 	}
 	if ((x = sdata()) == -2) {	/* File accepted, send first data */
-	    return(success = 0);	/* Failed */
+	    window(1);			/* Connection broken */
+	    x = clsif();		/* Close file */
+	    return(success = 0);	/* Return failure */
 	} else if (x == -9) {		/* User interrupted */
 	    errpkt((CHAR *)"User cancelled"); /* Send Error packet */
 	    window(1);			/* Set window size back to 1... */
 	    timint = s_timint;		/* Restore timeout */
 	    return(success = 0);	/* Failed */
-	} else if (x == -1) {		/* EOF */
+	} else if (x < 0) {		/* If data was not sent */
 	    window(1);			/* put window size back to 1, */
 	    debug(F101,"<ssattr>Y cxseen","",cxseen);
 	    if (clsif() < 0)		/* Close input file */
@@ -1723,8 +1769,10 @@ _PROTOTYP(int sndwho,(char *));
 
 <ssdata>Y {				/* Got ACK to Data packet */
     canned(rdatap);			/* Check if file transfer cancelled */
+    debug(F111,"<ssdata>Y cxseen",rdatap,cxseen);
+    debug(F111,"<ssdata>Y czseen",rdatap,czseen);
     if ((x = sdata()) == -2) {		/* Try to send next data */
-	window(1);			/* Set window size back to 1... */
+	window(1);			/* Connection lost, reset window */
 	x = clsif();			/* Close file */
 	return(success = 0);		/* Failed */
     } else if (x == -9) {		/* User interrupted */
@@ -1732,7 +1780,7 @@ _PROTOTYP(int sndwho,(char *));
 	window(1);			/* Set window size back to 1... */
 	timint = s_timint;		/* Restore original timeout */
 	return(success = 0);		/* Failed */
-    } else if (x == -1) {		/* EOF - finished sending data */
+    } else if (x < 0) {			/* EOF - finished sending data */
 	debug(F101,"<ssdata>Y cxseen","",cxseen);
 	window(1);			/* Set window size back to 1... */
 	if (clsif() < 0)		/* Close input file */
@@ -1741,25 +1789,46 @@ _PROTOTYP(int sndwho,(char *));
 	seof(cxseen||czseen);
 	BEGIN sseof;			/* and enter send-eof state */
     }
+    /* NOTE: If x == 0 it means we're draining: see sdata()! */
 }
 
 <sseof>Y {				/* Got ACK to EOF */
     int g;
+    canned(rdatap);			/* Check if file transfer cancelled */
+    debug(F111,"<sseof>Y cxseen",rdatap,cxseen);
+    debug(F111,"<sseof>Y czseen",rdatap,czseen);
     success = (cxseen == 0 && czseen == 0); /* Transfer status... */
+    debug(F101,"<sseof>Y success","",success);
     if (success && rejection > 0)	    /* If rejected, succeed if */
       if (rejection != '#' &&		    /* reason was date */
 	  rejection != 1 && rejection != '?') /* or name; */
 	success = 0;			    /* fail otherwise. */
     cxseen = 0;				/* This goes back to zero. */
     if (success) {			/* Only if transfer succeeded... */
+	xxscreen(SCR_ST,ST_OK,0L,"");
 	if (moving) {			/* If MOVE'ing */
-	    tlog(F110," deleting",filnam,0); /* delete the file */
-	    zdelet(filnam);
+	    x = zdelet(filnam);		/* Try to delete the source file */
+#ifdef TLOG
+	    if (tralog) {
+		if (x > -1) {
+		    tlog(F110," deleted",filnam,0);
+		} else {
+		    tlog(F110," delete failed:",ck_errstr(),0);
+		}
+	    }
+#endif /* TLOG */
 	} else if (snd_move) {		/* Or move it */
 	    int x;
-	    tlog(F110," moving source to",snd_move,0);
 	    x = zrename(filnam,snd_move);
-	    debug(F111,"send MOVE zrename",snd_move,x);
+#ifdef TLOG
+	    if (tralog) {
+		if (x > -1) {
+		    tlog(F110," moved to ",snd_move,0);
+		} else {
+		    tlog(F110," move failed:",ck_errstr(),0);
+		}
+	    }
+#endif /* TLOG */
 	} else if (snd_rename) {	/* Or rename it */
 	    char *s = snd_rename;	/* Renaming string */
 #ifndef NOSPL
@@ -1775,34 +1844,69 @@ _PROTOTYP(int sndwho,(char *));
 	    if (s) if (*s) {
 		int x;
 		x = zrename(filnam,s);
-		debug(F111,"send RENAME zrename",snd_rename,x);
-		if (x > -1)
-		  tlog(F110," renaming source to",s,0);
+#ifdef TLOG
+	    if (tralog) {
+		if (x > -1) {
+		    tlog(F110," renamed to",s,0);
+		} else {
+		    tlog(F110," rename failed:",ck_errstr(),0);
+		}
+	    }
+#endif /* TLOG */
 #ifdef COMMENT
 		*s = NUL;
 #endif /* COMMENT */
 	    }
 	}
     }
-    g = gnfile();
-    debug(F111,"<seof>Y gnfile",filnam,g);
-    if (g > 0) {			/* Any more files to send? */
-	if (sfile(xflg))		/* Yes, try to send next file header */
-	  BEGIN ssfile;			/* if ok, enter send-file state */
-	else {				/* otherwise */
-	    s = xflg ? "Can't execute command" : (char *)epktmsg;
-	    if (!*s) s = "Can't open file";
-	    errpkt((CHAR *)s);		/* send error message */
-	    RESUME;			/* and quit */
+    if (czseen) {			/* Check group interruption flag */
+	g = 0;				/* No more files if interrupted */
+    } else {				/* Otherwise... */
+#ifdef COMMENT
+	/* This code makes any open error fatal to a file-group transfer. */
+	g = gnfile();
+	debug(F111,"<sseof>Y gnfile",filnam,g);
+	if (g > 0) {			/* Any more files to send? */
+	    if (sfile(xflg))		/* Yes, try to send next file header */
+	      BEGIN ssfile;		/* if ok, enter send-file state */
+	    else {			/* otherwise */
+		s = xflg ? "Can't execute command" : (char *)epktmsg;
+		if (!*s) s = "Can't open file";
+		errpkt((CHAR *)s);	/* send error message */
+		RESUME;			/* and quit */
+	    }
+	} else {			/* No next file */
+	    tsecs = gtimer();		/* get statistics timers */
+#ifdef GFTIMER
+	    fptsecs = gftimer();
+#endif /* GFTIMER */
+	    seot();			/* send EOT packet */
+	    BEGIN sseot;		/* enter send-eot state */
 	}
-    } else {				/* No next file */
-	tsecs = gtimer();		/* get statistics timers */
+#else  /* COMMENT */
+	while (1) {			/* Keep trying... */
+	    g = gnfile();		/* Get next file */
+	    debug(F111,"<sseof>Y gnfile",filnam,g);
+	    if (g == 0 && gnferror == 0) /* No more, stop trying */
+	      break;
+	    if (g > 0) {		/* Have one */
+		if (sfile(xflg)) {	/* Try to open and send F packet */
+		    BEGIN ssfile;	/* If OK, enter send-file state */
+		    break;		/* and break out of loop. */
+		}
+	    } /* Otherwise keep trying to get one we can send... */
+	}
+    }
+    if (g == 0) {
+	debug(F101,"<sseof>Y no more files","",czseen);
+	tsecs = gtimer();		/* Get statistics timers */
 #ifdef GFTIMER
 	fptsecs = gftimer();
 #endif /* GFTIMER */
-	seot();				/* send EOT packet */
-	BEGIN sseot;			/* enter send-eot state */
+	seot();				/* Send EOT packet */
+	BEGIN sseot;			/* Enter send-eot state */
     }
+#endif /* COMMENT */
 }
 
 <sseot>Y {				/* Got ACK to EOT */
@@ -1824,25 +1928,29 @@ E {					/* Got Error packet, in any state */
       s = "Unknown error";
     success = 0;			/* For IF SUCCESS/FAIL. */
     debug(F101,"ckcpro.w justone at E pkt","",justone);
-    x = quiet; quiet = 1;		/* Close files silently, */
-    epktrcvd = 1;			/* Prevent messages from clsof() */
-    clsif(); clsof(1); 			/* discarding any output file. */
+
     success = 0;			/* Transfer failed */
     xferstat = success;			/* Remember transfer status */
-    ermsg(s);				/* Issue the message (calls screen). */
+    if (!epktsent) {
+	x = quiet; quiet = 1;		/* Close files silently, */
+	epktrcvd = 1;			/* Prevent messages from clsof() */
+	clsif();
+	clsof(1); 			/* discarding any output file. */
+	ermsg(s);			/* Issue the message (calls screen). */
+	quiet = x;			/* Restore quiet state */
+    }
     tstats();				/* Get stats */
-    quiet = x;				/* Restore quiet state */
 /*
   If we are executing commands from a command file or macro, let the command
   file or macro decide whether to exit, based on SET { TAKE, MACRO } ERROR.
 */
     if (
 #ifndef NOICP
-	!cmdsrc() &&
+	!xcmdsrc &&
 #endif /* NOICP */
 	backgrd && !server)
       fatal("Protocol error");
-    xitsta |= what;			/* Save this for doexit(). */
+    xitsta |= (what & W_KERMIT);	/* Save this for doexit(). */
 #ifdef CK_TMPDIR
 /* If we were cd'd temporarily to another device or directory ... */
     if (f_tmpdir) {
@@ -1863,7 +1971,7 @@ q { success = 0; QUIT; }		/* Ctrl-C or connection loss. */
 . {					/* Anything not accounted for above */
     errpkt((CHAR *)"Unexpected packet type"); /* Give error message */
     window(1);
-    xitsta |= what;			/* Save this for doexit(). */
+    xitsta |= (what & W_KERMIT);	/* Save this for doexit(). */
     RESUME;				/* and quit */
 }
 
@@ -1884,6 +1992,9 @@ q { success = 0; QUIT; }		/* Ctrl-C or connection loss. */
 */
 static int
 rcv_firstdata() {
+    extern int dispos;
+    debug(F101,"rcv_firstdata","",dispos);
+
     if (discard) {			/* if we're discarding the file */
 	ack1((CHAR *)"X");		/* just ack the data like this. */
 	cancel++;			/* and count it */
@@ -1922,18 +2033,36 @@ rcv_firstdata() {
   accepts '-s "subject"' on the command line.  MAILCMD (e.g. mail, Mail, mailx)
   is defined in ckufio.c.
 */
-	    if (*(iattr.disp.val) == 'M') {
+	    if (dispos == 'M') {	/* Mail... */
 		char *s;
-		char tmp[1024];
+		char * tmp = NULL;
+		int n = 0;
 		extern char *MAILCMD;
 		s = iattr.disp.val + 1;
-		sprintf(tmp,"%s -s %c%s%c %s", MAILCMD, '"', ofn1, '"', s);
-		x = openc(ZOFILE,(char *)tmp);
-	    } else if (*(iattr.disp.val) == 'P') { /* Ditto for print */
-		char tmp[1024];
+		n = (int)strlen(MAILCMD) +    /* Mail command */
+		  (int)strlen(s) +	      /* address */
+		  (int)strlen(ofilnam) + 32;  /* subject */
+		if (tmp = (char *)malloc(n)) {
+		    ckmakxmsg(tmp,n,
+			      MAILCMD," -s \"",ofilnam,"\" ",s,
+			      NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+		    debug(F111,"rcv_firsdata mail",tmp,(int)strlen(tmp));
+		    x = openc(ZOFILE,(char *)tmp);
+		    free(tmp);
+		} else
+		  x = 0;
+	    } else if (dispos == 'P') { /* Ditto for print */
+		char * tmp = NULL;
+		int n;
 		extern char *PRINTCMD;
-		sprintf(tmp,"%s %s", PRINTCMD, iattr.disp.val + 1);
-		x = openc(ZOFILE,(char *)tmp);
+		n = (int)strlen(PRINTCMD) + (int)strlen(iattr.disp.val+1) + 4;
+		if (tmp = (char *)malloc(n)) {
+		    sprintf(tmp,	/* safe (prechecked) */
+			    "%s %s", PRINTCMD, iattr.disp.val + 1);
+		    x = openc(ZOFILE,(char *)tmp);
+		    free(tmp);
+		} else
+		  x = 0;
 	    } else
 #endif /* UNIX */
 	      x = opena(filnam,&iattr);	/* open the file, with attributes */
@@ -1979,7 +2108,7 @@ rcv_shortreply() {
 #ifdef PKTZEROHACK
     success = 0;
     debug(F111,"rcv_shortreply",rdatap,ipktlen);
-    if (!strncmp(ipktack,(char *)rdatap,ipktlen)) {
+    if (ipktack[0] && !strncmp(ipktack,(char *)rdatap,ipktlen)) {
 	/* No it's the ACK to the I packet again */
 	x = scmd(vcmd,(CHAR *)cmarg);	/* So send the REMOTE command again */
 	/* Maybe this should be resend() */
@@ -2036,7 +2165,7 @@ rcv_shortreply() {
 			zsoutl(ZOFILE,"");
 		    } else {		/* or to screen. */
 #ifndef NOICP
-			if (!query || !cmdsrc())
+			if (!query || !xcmdsrc)
 #endif /* NOICP */
 			  conoll("");
 		    }
@@ -2389,6 +2518,12 @@ srv_login() {
 			x_logged = 1;
 		      debug(F101,"REMOTE LOGIN 4","",x_logged);
 		  }
+#ifdef CK_LOGIN 
+                else {
+		    x_logged = ckxlogin((CHAR *)f1,(CHAR *)f2,NULL,0);
+		    debug(F101,"REMOTE LOGIN 5","",x_logged);
+                }
+#endif /* CK_LOGIN */
 		if (x_logged) {		/* Logged in? */
 		    tlog(F110,"Logged in", x_user, 0);
 		    if (isguest)
@@ -2423,7 +2558,6 @@ srv_login() {
 
 static int
 srv_timeout() {
-#ifndef OS2
     /* K95 does this its own way */
     if (idletmo) {
 #ifdef IKSD
@@ -2434,15 +2568,11 @@ srv_timeout() {
 #endif /* IKSD */
 	idletmo = 0;
 	printf("\r\nSERVER IDLE TIMEOUT: %d sec\r\n", srvidl);
-	xitsta |= what;
+	xitsta |= (what & W_KERMIT);
 	QUIT;
     }
-#endif /* OS2 */
 #ifndef NOSERVER
-#ifndef OS2
-    else
-#endif /* OS2 */
-      if (fatalio) {			/* Connection lost */
+    else if (fatalio) {			/* Connection lost */
 #ifdef CKSYSLOG
 	  if (ckxsyslog >= SYSLG_PR && ckxlogging)
 	    cksyslog(SYSLG_PR, 1, "server", "Connection lost", NULL);
@@ -2467,7 +2597,7 @@ srv_timeout() {
 	    } else if (what == W_NOTHING && filcnt == 0) {
 		success = 1;
 	    } /* Otherwise leave success alone */
-	    xitsta |= what;
+	    xitsta |= (what & W_KERMIT);
 	    QUIT;
 	}
     } else {				/* Shouldn't happen */
@@ -2552,27 +2682,30 @@ proto() {
 #ifdef PIPESEND
     extern int pipesend;
 #endif /* PIPESEND */
+#ifndef NOLOCAL
 #ifdef OS2
     extern int cursorena[], cursor_save, term_io;
     extern BYTE vmode;
     extern int display_demo;
     int term_io_save;
 #endif /* OS2 */
+#endif /* NOLOCAL */
 #ifdef TNCODE
-    int _u_bin=0, _me_bin=0;
+    int _u_bin=0, _me_bin = 0;
 #ifdef IKS_OPTION
-    int _u_start=0, _me_start=0;
+    int /* _u_start=0, */ _me_start = 0;
 #endif /* IKS_OPTION */
 #endif /* TNCODE */
 #ifdef PATTERNS
-    extern int patterns;
     int pa_save;
     int i;
 #endif /* PATTERNS */
+    int scan_save;
 
 #ifdef PATTERNS
     pa_save = patterns;
 #endif /* PATTERNS */
+    scan_save = filepeek;
 
 #ifdef CK_LOGIN
     if (isguest) {			/* If user is anonymous */
@@ -2582,12 +2715,14 @@ proto() {
     }
 #endif /* CK_LOGIN */
 
+#ifndef NOLOCAL
 #ifdef OS2
     cursor_save = cursorena[vmode];
     cursorena[vmode] = 0;
     term_io_save = term_io;
     term_io = 0;
 #endif /* OS2 */
+#endif /* NOLOCAL */
     b_save = binary;			/* SET FILE TYPE */
     f_save = fncnv;			/* SET FILE NAMES */
     c_save = bctr;
@@ -2635,11 +2770,26 @@ proto() {
 	      tn_wait("proto set binary mode");
         }
 #ifdef IKS_OPTION
+#ifdef CK_XYZ
+        if (protocol != PROTO_K) {	/* Non-Kermit protocol selected */
+            if (TELOPT_U(TELOPT_KERMIT) &&
+                TELOPT_SB(TELOPT_KERMIT).kermit.u_start) {
+                iks_wait(KERMIT_REQ_STOP,0); /* Stop the other Server */
+		/* _u_start = 1; */
+            }
+            if (TELOPT_ME(TELOPT_KERMIT) &&
+                TELOPT_SB(TELOPT_KERMIT).kermit.me_start) {
+                tn_siks(KERMIT_STOP);	/* I'm not servering */
+	 	TELOPT_SB(TELOPT_KERMIT).kermit.me_start = 0;
+		_me_start = 1;
+            }
+        } else
+#endif /* CK_XYZ */
         if (sstate == 'x' || sstate == 'v') { /* Responding to a request */
             if (!inserver && TELOPT_U(TELOPT_KERMIT) &&
                 TELOPT_SB(TELOPT_KERMIT).kermit.u_start) {
                 iks_wait(KERMIT_REQ_STOP,0); /* Stop the other Server */
-		_u_start = 1;
+		/* _u_start = 1; */
             }
             if (TELOPT_ME(TELOPT_KERMIT) &&
                 !TELOPT_SB(TELOPT_KERMIT).kermit.me_start) {
@@ -2660,7 +2810,7 @@ proto() {
                     if (sstate != 's') {
 			success = 0;	/* Other Kermit refused to serve */
 			if (local)
-			  printf("A Kermit server is not available\r\n");
+			  printf("A Kermit Server is not available\r\n");
 			debug(F110,"proto()",
                              "A Kermit Server is not available",0);
 			tlog(F110,"IKS client/server failure",
@@ -2727,6 +2877,7 @@ proto() {
 #ifdef PATTERNS
     patterns = pa_save;
 #endif /* PATTERNS */
+    filepeek = scan_save;
 
 #ifdef STREAMING
     streaming = 0;
@@ -2741,7 +2892,7 @@ proto() {
 #endif /* COMMENT */
     urclear = 0;
     if (!success) {
-	xitsta |= what;
+	xitsta |= (what & W_KERMIT);
 	tlog(F110," failed:",(char *)epktmsg,0);
     }
     debug(F111,"proto xferstat",epktmsg,xferstat);
@@ -2761,11 +2912,13 @@ proto() {
 #ifdef PIPESEND
     pipesend = 0;    			/* Next time might not be pipesend */
 #endif /* PIPESEND */
+#ifndef NOLOCAL
 #ifdef OS2
     cursorena[vmode] = cursor_save;
     term_io = term_io_save;
     display_demo = 1;
 #endif /* OS2 */
+#endif /* NOLOCAL */
 }
 
 static VOID
@@ -2807,6 +2960,8 @@ _PROTOTYP( int pxyz, (int) );
     }
 
 /* Set up the communication line for file transfer. */
+/* NOTE: All of the xxscreen() calls prior to the wart() invocation */
+/* could just as easily be printf's or, for that matter, hints. */
 
     if (local && (speed < 0L) && (network == 0)) {
 	xxscreen(SCR_EM,0,0L,"Sorry, you must 'set speed' first");
@@ -2875,14 +3030,28 @@ _PROTOTYP( int pxyz, (int) );
 #endif /* CK_SPEED */
 	if (s) if (*s) {		/* If we have a command to send... */
 	    char tmpbuf[356];
+	    int tmpbufsiz = 356;
 	    int stuff = -1, stuff2 = -1, len = 0;
 	    extern int tnlm;
-	    strcpy(tmpbuf,s);
-	    if (sstate == 's')		/* Sending file(s) */
-	      sprintf(tmpbuf, s, cmarg2[0] ? cmarg2 : cmarg); /* For XMODEM */
-	    else			/* Command for server */
-	      sprintf(tmpbuf, s);
-	    strcat(tmpbuf, "\015");
+	    if (sstate == 's') {	/* Sending file(s) */
+#ifdef CK_XYZ
+		if (protocol == PROTO_X) {
+		    char * s2;
+		    s2 = cmarg2[0] ? cmarg2 : cmarg;
+		    if ((int)strlen(s) + (int)strlen(s2) + 4 < 356)
+		      sprintf(tmpbuf, s, s2);
+		    else
+		      tmpbuf[0] = NUL;
+		} else {
+#endif /* CK_XYZ */
+		    ckmakmsg(tmpbuf, 356, s, NULL, NULL, NULL);
+#ifdef CK_XYZ
+		}
+#endif /* CK_XYZ */
+	    } else {			/* Command for server */
+		ckstrncpy(tmpbuf,s,356);
+	    }
+	    ckstrncat(tmpbuf, "\015",sizeof(tmpbuf));
 	    if (tnlm)			/* TERMINAL NEWLINE ON */
 	      stuff = LF;		/* Stuff LF */
 #ifdef TNCODE
@@ -2923,9 +3092,9 @@ _PROTOTYP( int pxyz, (int) );
 #endif /* NETCONN */
 
 	    len = strlen(tmpbuf);
-	    if (stuff >= 0) {
+	    if (stuff >= 0 && len < tmpbufsiz - 1) {
 		tmpbuf[len++] = stuff;
-		if (stuff2 >= 0)
+		if (stuff2 >= 0 && len < tmpbufsiz - 1)
 		  tmpbuf[len++] = stuff2;
 		tmpbuf[len] = NUL;
 	    }
@@ -2938,7 +3107,22 @@ _PROTOTYP( int pxyz, (int) );
 #ifdef CK_XYZ
     if (protocol != PROTO_K) {		/* Non-Kermit protocol selected */
 	char tmpbuf[356];
+	int tmpbufsiz = 356;
 	char * s = "";
+
+#ifdef CK_TMPDIR
+	if (sstate == 'v') {		/* If receiving and... */
+	    if (dldir && !f_tmpdir) {	/* if they have a download directory */
+		if (s = zgtdir()) {	/* Get current directory */
+		    if (zchdir(dldir)) { /* Change to download directory */
+			ckstrncpy(savdir,s,TMPDIRLEN);
+			f_tmpdir = 1;	/* Remember that we did this */
+		    }
+		}
+	    }
+	}
+#endif /* CK_TMPDIR */
+
 #ifdef XYZ_INTERNAL			/* Internal */
 	success = !pxyz(sstate);
 #else
@@ -2953,9 +3137,21 @@ _PROTOTYP( int pxyz, (int) );
 	}
 	if (!s) s = "";
 	if (*s) {
-	    sprintf(tmpbuf,s,(sstate == 's') ? fspec : cmarg2);
+	    if (sstate == 's') {
+		if ((int)strlen(s) + (int)strlen(fspec) < tmpbufsiz) {
+		    sprintf(tmpbuf,s,fspec); /* safe (prechecked) */
+		    tlog(F110,"Sending",fspec,0L);
+		}
+	    } else {
+		if ((int)strlen(s) + (int)strlen(cmarg2) < tmpbufsiz) {
+		    sprintf(tmpbuf,s,cmarg2); /* safe (prechecked) */
+		    tlog(F110,"Receiving",cmarg2,0L);
+		}
+	    }
+	    tlog(F110," via external protocol:",tmpbuf,0);
 	    debug(F110,"ckcpro ttruncmd",tmpbuf,0);
 	    success = ttruncmd(tmpbuf);
+	    tlog(F110," status:",success ? "OK" : "FAILED", 0);
 	} else {
 	    printf("?Sorry, no external protocol defined for %s\r\n",
 		   ptab[protocol].p_name
@@ -3104,9 +3300,6 @@ static int
 sgetinit(reget,xget) int reget, xget; {	/* Server end of GET command */
     char * fs = NULL;			/* Pointer to filespec */
     int i, n, done = 0;
-#ifdef PATTERNS
-    extern int patterns;
-#endif /* PATTERNS */
 #ifdef PIPESEND
     extern int usepipes, pipesend;
 #endif /* PIPESEND */
@@ -3117,6 +3310,8 @@ sgetinit(reget,xget) int reget, xget; {	/* Server end of GET command */
     }
 
     /* OK to proceed */
+
+    filcnt = 0;
 
 #ifdef WHATAMI
     /* If they are alike this was already done in whoarewe() */
@@ -3187,9 +3382,8 @@ sgetinit(reget,xget) int reget, xget; {	/* Server end of GET command */
 		debug(F101,"sgetinit M val","",val);
 		if (val < 1)
 		  break;
-#ifdef PATTERNS
 		patterns = 0;		/* Takes precedence over patterns */
-#endif /* PATTERNS */
+		filepeek = 0;		/* and FILE SCAN */
 		if (val == GMOD_TXT) binary = XYFT_T; /* Text */
 		if (val == GMOD_BIN) binary = XYFT_B; /* Binary */
 		if (val == GMOD_LBL) binary = XYFT_L; /* Labeled */
@@ -3240,6 +3434,22 @@ sgetinit(reget,xget) int reget, xget; {	/* Server end of GET command */
 	    if (n == 0) {		/* If the name was not quoted */
 #ifndef NOMSEND
 		nfils = fnparse(fs);	/* Allow it to be a list of names */
+		debug(F111,"sgetinit A",fs,nfils);
+#ifdef COMMENT
+/* This doesn't work if a GET-PATH is set. */
+		if (nfils == 1 && !iswild(fs)) { /* Single file */
+		    char * m;
+		    if ((x = zchki(fs)) < 0) { /* Check if it's sendable */
+			switch (x) {
+			  case -1: m = "File not found"; break;
+			  case -2: m = "Not a regular file"; break;
+			  case -3: m = "Read access denied"; break;
+			}
+			errpkt((CHAR *)m);
+			return(-1);
+		    }
+		}
+#endif /* COMMENT */
 	    } else {			/* If it was quoted */
 #endif /* NOMSEND */
 		nzxopts = 0;
@@ -3249,6 +3459,7 @@ sgetinit(reget,xget) int reget, xget; {	/* Server end of GET command */
 		if (recursive) nzxopts |= ZX_RECURSE;
 		/* Treat as a single filespec */
 		nfils = 0 - nzxpand(fs,nzxopts);
+		debug(F111,"sgetinit B",fs,nfils);
 		cmarg = fs;
 	    }
 #ifdef PIPESEND

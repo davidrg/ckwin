@@ -104,10 +104,6 @@ extern BOOL forwarded_tickets;
 
 /* C-Kermit specific functions */
 _PROTOTYP(int ck_auth_init, (char *, char *, char *, int));
-#ifdef OS2
-_PROTOTYP(int ck_auth_loaddll, (VOID));
-_PROTOTYP(int ck_auth_unloaddll, (VOID));
-#endif /* OS2 */
 _PROTOTYP(int ck_tn_auth_in_progress,(VOID));
 _PROTOTYP(int ck_tn_sb_auth, (char *, int));
 _PROTOTYP(int ck_tn_sb_encrypt, (char *, int));
@@ -163,6 +159,7 @@ struct krb5_init_data {			/* INITIALIZE data structure */
     int    verbose;                     /* Verbose output? */
     int    getk4;                       /* Get K4 TGT? */
     char * addrs[KRB5_NUM_OF_ADDRS+1];  /* List of IP Addresses */
+    int  no_addresses;                  /* Do not include IP Addresses */
 };
 
 struct krb5_list_cred_data {		/* List Credentials data */
@@ -172,7 +169,8 @@ struct krb5_list_cred_data {		/* List Credentials data */
 };
 
 _PROTOTYP(int ck_krb5_autoget_TGT, (char *));
-_PROTOTYP(int ck_krb5_initTGT, (struct krb_op_data *,struct krb5_init_data *));
+_PROTOTYP(int ck_krb5_initTGT, (struct krb_op_data *,struct krb5_init_data *,
+                                 struct krb4_init_data *));
 _PROTOTYP(int ck_krb5_destroy, (struct krb_op_data *));
 _PROTOTYP(int ck_krb5_list_creds, (struct krb_op_data *,
                                     struct krb5_list_cred_data *));
@@ -206,6 +204,11 @@ _PROTOTYP(int krb4_des_read, (int,char *,int));
 _PROTOTYP(int krb5_des_avail,(int));
 _PROTOTYP(int krb5_des_write,(int,char *,int));
 _PROTOTYP(int krb5_des_read, (int,char *,int));
+_PROTOTYP(int krb5_u2u_avail,(int));
+_PROTOTYP(int krb5_u2u_write,(int,char *,int));
+_PROTOTYP(int krb5_u2u_read, (int,char *,int));
+_PROTOTYP(int k5_user_to_user_server_auth,(VOID));
+_PROTOTYP(int k5_user_to_user_client_auth,(VOID));
 #endif /* CK_KERBEROS */
 
 _PROTOTYP(int ck_krb5_is_installed,(void));
@@ -220,7 +223,10 @@ _PROTOTYP(int ck_get_crypt_table,(struct keytab **, int *));
 _PROTOTYP(char * ck_krb4_realmofhost,(char *));
 _PROTOTYP(char * ck_krb5_realmofhost,(char *));
 
-#define AUTHTYPLSTSZ 8
+#define FORWARD  /* allow forwarding of credential */
+#ifdef FORWARD
+_PROTOTYP(int kerberos5_forward,(VOID));
+#endif /* FORWARD */
 
-#define HEXDISP
+#define AUTHTYPLSTSZ 8
 #endif /*KRB5_KERMIT_H*/

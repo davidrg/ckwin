@@ -47,6 +47,7 @@
    . HP-UX 8.00 and earlier (no vhangup or ptsname routines)
 */
 
+#include "ckcsym.h"
 #include "ckcdeb.h"			/* To pick up NETPTY definition */
 
 #ifndef NETPTY				/* Selector for PTY support */
@@ -55,7 +56,7 @@ char * ptyver = "No PTY support";
 
 #else  /* (rest of this module...) */
 
-char * ptyver = "PTY support 7.0.011, 28 Nov 1999";
+char * ptyver = "PTY support 8.0.013, 5 Jun 2001";
 
 /* These will no doubt need adjustment... */
 
@@ -224,13 +225,31 @@ char * ptyver = "PTY support 7.0.011, 28 Nov 1999";
 #define INIT_SPTY
 #endif /* QNX */
 
+#ifdef LINUX
+#ifdef HAVE_PTMX
+#define HAVE_GRANTPT
+#define HAVE_PTSNAME
+#endif /* HAVE_PTMX */
+#else
+#ifdef HAVE_STREAMS
+#define HAVE_PTMX
+#endif /* HAVE_STREAMS */
+#endif /* LINUX */
+
 #include "ckupty.h"
 
+#ifdef PTYNOBLOCK
 #ifndef O_NDELAY
 #ifdef O_NONBLOCK
 #define O_NDELAY O_NONBLOCK
 #endif /* O_NONBLOCK */
 #endif /* O_NDELAY */
+#else /* PTYNOBLOCK */
+#ifdef O_NDELAY
+#undef O_NDELAY
+#endif /* O_NDELAY */
+#define O_NDELAY 0
+#endif /* PTYNOBLOCK */
 
 #ifndef ONLCR
 #define ONLCR 0
@@ -495,6 +514,9 @@ ptyint_void_association() {
         ioctl(con_fd, TIOCNOTTY, 0);
         close(con_fd);
     }
+#ifdef DEBUG
+    else debug(F101, "ptyint_void_association() open() errno","",errno);
+#endif /* DEBUG */
 #endif /* TIOCNOTTY */
 #endif /* NO_DEVTTY */
     return(0);
@@ -504,7 +526,9 @@ ptyint_void_association() {
 
 long
 pty_cleanup(slave, pid, update_utmp) char *slave; int pid; int update_utmp; {
+#ifdef VHANG_LAST
     int retval, fd;
+#endif /* VHANG_LAST */
 
     debug(F111,"pty_cleanup()",slave,pid);
 #ifdef WANT_UTMP
@@ -612,6 +636,7 @@ pty_getpty(fd, slave, slavelength) int slavelength; int *fd; char *slave; {
 #ifdef HAVE_OPENPTY
     int slavefd;
 
+    debug(F100,"HAVE_OPENPTY","",0);
     if (openpty(fd,
 		&slavefd,
 		slave,
@@ -633,7 +658,8 @@ pty_getpty(fd, slave, slavelength) int slavelength; int *fd; char *slave; {
   Irix gets working streams ptys in favor of maintaining the least needed code
   paths.
 */
-    if ((slaveret = _getpty(fd, O_RDWR|O_NDELAY, 0600, 0)) == 0) {
+    debug(F100,"HAVE__GETPTY","",0);
+    if ((slaveret = _getpty(fd, O_RDWR | O_NDELAY, 0600, 0)) == 0) {
 	*fd = -1;
 	return(PTY_GETPTY_NOPTY);
     }
@@ -642,7 +668,7 @@ pty_getpty(fd, slave, slavelength) int slavelength; int *fd; char *slave; {
 	*fd = -1;
 	return(PTY_GETPTY_SLAVE_TOOLONG);
     } else {
-	strcpy(slave, slaveret);
+	ckstrncpy(slave, slaveret, slavelength);
     }
     return(0);
 
@@ -654,13 +680,14 @@ pty_getpty(fd, slave, slavelength) int slavelength; int *fd; char *slave; {
         goto have_fd;
     }
 
-#ifdef HAVE_STREAMS
-    *fd = open("/dev/ptmx",O_RDWR|O_NDELAY); /*Solaris*/
+#ifdef HAVE_PTMX
+    debug(F100,"HAVE_PTMX","",0);
+    *fd = open("/dev/ptmx",O_RDWR|O_NDELAY);
     if (*fd >= 0) {
         debug(F110,"pty_getpty()","open(/dev/ptmx) success",0);
         goto have_fd;
     }
-#endif /* HAVE_STREAMS */
+#endif /* HAVE_PTMX */
 
     *fd = open("/dev/ptc", O_RDWR|O_NDELAY); /* AIX */
     if (*fd >= 0) {
@@ -674,17 +701,20 @@ pty_getpty(fd, slave, slavelength) int slavelength; int *fd; char *slave; {
   have_fd:
     if (*fd >= 0) {
 #ifdef HAVE_GRANTPT
-#ifdef HAVE_STREAMS
+#ifdef HAVE_PTMX
+        debug(F100,"HAVE_GRANTPT","",0);
 	if (grantpt(*fd) || unlockpt(*fd))
 	  return(PTY_GETPTY_STREAMS);
-#endif /* HAVE_STREAMS */
+#endif /* HAVE_PTMX */
 #endif /* HAVE_GRANTPT */
 
 #ifdef HAVE_PTSNAME
+        debug(F100,"HAVE_PTSNAME","",0);
 	p = (char *)ptsname(*fd);
         debug(F110,"pty_getpty() ptsname()",p,0);
 #else
 #ifdef HAVE_TTYNAME
+        debug(F100,"HAVE_TTYNAME","",0);
 	p = ttyname(*fd);
         debug(F110,"pty_getpty() ttyname()",p,0);
 #else
@@ -698,7 +728,7 @@ pty_getpty(fd, slave, slavelength) int slavelength; int *fd; char *slave; {
                 *fd = -1;
                 return(PTY_GETPTY_SLAVE_TOOLONG);
 	    }
-	    strcpy(slave, p);
+	    ckstrncpy(slave, p, slavelength);
 	    return(0);
 	}
 	if (fstat(*fd, &stb) < 0) {
@@ -706,7 +736,7 @@ pty_getpty(fd, slave, slavelength) int slavelength; int *fd; char *slave; {
 	    return(PTY_GETPTY_FSTAT);
 	}
 	ptynum = (int)(stb.st_rdev&0xFF);
-	sprintf(slavebuf, "/dev/ttyp%x", ptynum);
+	sprintf(slavebuf, "/dev/ttyp%x", ptynum); /* safe */
 	if (strlen(slavebuf) > slavelength - 1) {
 	    close(*fd);
 	    *fd = -1;
@@ -717,7 +747,7 @@ pty_getpty(fd, slave, slavelength) int slavelength; int *fd; char *slave; {
 	return(0);
     } else {
     	for (cp = "pqrstuvwxyzPQRST";*cp; cp++) {
-	    sprintf(slavebuf,"/dev/ptyXX");
+	    sprintf(slavebuf,"/dev/ptyXX"); /* safe */
 	    slavebuf[sizeof("/dev/pty") - 1] = *cp;
 	    slavebuf[sizeof("/dev/ptyp") - 1] = '0';
 	    if (stat(slavebuf, &stb) < 0)
@@ -749,6 +779,7 @@ long
 pty_init() {
 #ifdef HAVE_PTYM
     static char dummy;
+    debug(F100,"HAVE_PTYM","",0);
     tty_bank =  &master_name[strlen("/dev/ptym/pty")];
     tty_num  =  &master_name[strlen("/dev/ptym/ptyX")];
     slave_bank = &slave_name[strlen("/dev/pty/tty")];
@@ -791,7 +822,11 @@ pty_initialize_slave (fd) int fd; {
     struct sgttyb b;
 #endif /* POSIX_TERMIOS */
     int pid;
+#ifdef POSIX_TERMIOS
+#ifndef ultrix
     int rc;
+#endif /* ultrix */
+#endif /* POSIX_TERMIOS */
 
     debug(F111,"pty_initialize_slave()","fd",fd);
 
@@ -874,7 +909,7 @@ pty_logwtmp (tty, user, host) char *user, *tty, *host; {
     strncpy(ut.ut_user, user, sizeof(ut.ut_user));
 
     tmpx = tty + strlen(tty) - 2;
-    sprintf(utmp_id, "kr%s", tmpx);
+    ckmakmsg(utmp_id,5,"kr",tmpx,NULL,NULL);
     strncpy(ut.ut_id, utmp_id, sizeof(ut.ut_id));
     ut.ut_pid = (loggingin ? getpid() : 0);
     ut.ut_type = (loggingin ? USER_PROCESS : DEAD_PROCESS);
@@ -1035,9 +1070,10 @@ pty_open_slave(slave, fd) char *slave; int *fd; {
         return(retval);
     }
 #ifndef NO_DEVTTY
+    errno = 0;
     testfd = open("/dev/tty", O_RDWR|O_NDELAY);
     if (testfd < 0) {
-        debug(F110,"pty_open_slave() open failed","/dev/tty",0);
+        debug(F111,"pty_open_slave() open failed","/dev/tty",errno);
 	close(*fd);
 	*fd = -1;
 	return(PTY_OPEN_SLAVE_NOCTTY);
@@ -1142,9 +1178,9 @@ pty_update_utmp(process_type, pid, username, line, host, flags)
 	tmpx = line + strlen(line)-1;
 	if (*(tmpx-1) != '/') tmpx--;	/* last 2 chars unless it's a '/' */
 #ifdef __hpux
-	strcpy(utmp_id, tmpx);
+	ckstrncpy(utmp_id, tmpx, 5);
 #else
-	sprintf(utmp_id, "kl%s", tmpx);
+	ckmakmsg(utmp_id,5,"kl",tmpx,NULL,NULL);
 #endif /* __hpux */
 	strncpy(ent.ut_id, utmp_id, sizeof(ent.ut_id));
     }
@@ -1393,7 +1429,6 @@ getptyslave() {
     struct winsize ws;
     extern int cmd_rows, cmd_cols;
 #endif /* TIOCGWINSZ */
-    extern int def_tspeed, def_rspeed;
 
     debug(F100,"getptyslave()","",0);
 
@@ -1561,47 +1596,16 @@ pty_trap_handler(fd) int fd; {
 
 VOID
 exec_cmd(s) char * s; {
-    char *args[50];
-    char *cp;
-    int argi = 0;
-    int quoting = 0;
-    int in_token = 0;			/* TRUE if we are reading a token */
+    struct stringarray * q;
+    char ** args = NULL;
 
-    debug(F110,"exec_cmd()",s,0);
-    args[0] = cp = s;
-    while (*s && argi < 49) {
-        if (quoting) {
-            if (*s == '\\' && *(s+1) == '"') { /* quoted quote */
-                s++;    /* get past " */
-                *cp++ = *s++;
-            } else  if (*s == '\"') { /* close quote */
-                quoting = 0;
-            } else
-	      *cp++ = *s++;		/* suck up anything */
-        } else if (*s == '\"') {	/* open quote */
-            in_token = 1;
-            quoting = 1;
-            s++;
-        } else if (isspace(*s)) {
-            if (in_token) {
-                *cp++ = '\0';
-                argi++;
-                args[argi] = cp;
-                in_token = 0;
-            }
-            s++;
-        } else {
-            *cp++ = *s++;
-            in_token = 1;
-        }
-    }
-    if (args[argi][0]) {
-        *cp++ = '\0';
-        argi++;
-    }
-    args[argi] = (char *) 0;		/* terminate argv */
+    if (!s) return;
+    if (!*s) return;
 
-    debug(F111,"exec_cmd()","calling execvp() - # of args",argi-1);
+    q = cksplit(1,0,s,NULL,"\\%[]&$+-/=*^_@!{}/<>|.#~'`:;?",7,0,0);
+    if (!q) return;
+
+    args = q->a_head + 1;
     execvp(args[0],args);
 }
 
@@ -1609,15 +1613,20 @@ exec_cmd(s) char * s; {
 
 int
 do_pty(cmd) char * cmd; {
-    int ptynum;
     long retval;
     int syncpipe[2];
-    int i, x;
+    int i;
+#ifdef HAVE_PTYTRAP
+    int x;
+#endif /* HAVE_PTYTRAP */
 
     msg = 0;				/* Message counter */
     pty_init();				/* Find an available pty to use. */
+    errno = 0;
 
     if ((retval = pty_getpty(&ttyfd, Xline, 20)) != 0) {
+	if (msg++ == 0)
+	  perror(Xline);
         debug(F111,"do_pty()","pty_getpty() fails",retval);
         return(-1);
     }
@@ -1635,11 +1644,14 @@ do_pty(cmd) char * cmd; {
 
     if (pipe(syncpipe) < 0) {
         debug(F110,"do_pty()","pipe() fails",0);
+	perror("pipe() failed");
+	msg++;
+        debug(F111,"do_pty()","pipe fails",errno);
         return(-1);
     }
     if ((i = fork()) < 0) {
         /* XXX - need to clean up the allocated pty */
-        perror("Fork failure");
+        perror("fork() failed");
 	msg++;
         debug(F111,"do_pty()","fork fails",errno);
         return(-1);
@@ -1650,9 +1662,10 @@ do_pty(cmd) char * cmd; {
         int on = 1;
 #endif /* HAVE_PTYTRAP */
 	close(syncpipe[1]);
+	errno = 0;
         if (read(syncpipe[0], &c, 1) == 0) { /* Slave side died */
-	    if (msg++ == 0)
-	      printf("?Initialization failure\r\n");
+	    perror("Pipe read() failed");
+	    msg++;
             debug(F110,"do_pty()","Slave fails to initialize",0);
             close(syncpipe[0]);
             return(-1);
@@ -1669,7 +1682,6 @@ do_pty(cmd) char * cmd; {
         debug(F111,"do_pty()","synchronized - slavepid",slavepid);
         close(syncpipe[0]);
     } else {
-        char *p;
         debug(F110,"do_pty()","Slave starts",0);
         if (getptyslave() == 0) {
 #ifdef WANT_UTMP

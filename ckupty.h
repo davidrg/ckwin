@@ -89,8 +89,10 @@
 
 #include <netdb.h>
 /* #include <syslog.h> */
+#ifndef ultrix
 #include <string.h>
-#include <sys/param.h>
+#endif /* ultrix */
+/* #include <sys/param.h> */		/* (now done in ckcdeb.h) */
 
 #ifdef HAVE_STREAMS
 /* krlogin doesn't test sys/tty... */

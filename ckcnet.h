@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2000,
+  Copyright (C) 1985, 2001,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -27,10 +27,10 @@
 #define NET_FILE 10			/* Read from a file */
 #define NET_CMD  11                     /* Read from a sub-process */
 #define NET_DLL  12                     /* Load a DLL for use as comm channel*/
-#define NET_SSH  13                     /* Use SSH */
-#define NET_IX25 14			/* IBM AIX 4.1 X.25 */
-#define NET_HX25 15			/* HP-UX 10 X.25 */
-#define NET_PTY  16			/* Pseudoterminal */
+#define NET_IX25 13			/* IBM AIX 4.1 X.25 */
+#define NET_HX25 14			/* HP-UX 10 X.25 */
+#define NET_PTY  15			/* Pseudoterminal */
+#define NET_SSH  16                     /* SSH */
 
 #ifdef OS2				/* In OS/2, only the 32-bit */
 #ifndef __32BIT__			/* version gets NETBIOS */
@@ -55,31 +55,31 @@
 #endif /* NPIPEORBIOS */
 #endif /* CK_NETBIOS */
 
-/* Network virtual terminal protocols */
+/* Network virtual terminal protocols (for SET HOST connections) */
+/* FTP, HTTP and SSH have their own stacks                       */
 
-#define NP_DEFAULT 255
-#define NP_NONE 0			/* None (async) */
-#define NP_TELNET 1			/* TCP/IP telnet */
-#define NP_VTP 2			/* ISO Virtual Terminal Protocol */
-#define NP_X3 3				/* CCITT X.3 */
-#define NP_X28 4			/* CCITT X.28 */
-#define NP_X29 5			/* CCITT X.29 */
-#define NP_RLOGIN 6			/* TCP/IP Remote login */
-#define NP_KERMIT 7			/* TCP/IP Kermit */
-#define NP_FTP    8			/* TCP/IP FTP */
-#define NP_TCPRAW 9			/* TCP/IP Raw socket */
-#define NP_TCPUNK 10                    /* TCP/IP Unknown */
-#define NP_SSL 11                       /* TCP/IP SSLv23 */
-#define NP_TLS 12                       /* TCP/IP TLSv1 */
-#define NP_SSL_TELNET 13                /* TCP/IP Telnet over SSLv23 */
-#define NP_TLS_TELNET 14                /* TCP/IP Telnet over TLSv1 */
-#define NP_K4LOGIN     15               /* TCP/IP Kerberized remote login */
-#define NP_EK4LOGIN    16               /* TCP/IP Encrypted Kerberized ... */
-#define NP_K5LOGIN     17               /* TCP/IP Kerberized remote login */
-#define NP_EK5LOGIN    18               /* TCP/IP Encrypted Kerberized ... */
-
-#define NP_CTERM 20			/* DEC CTERM */
-#define NP_LAT 21			/* DEC LAT */
+#define NP_DEFAULT    255
+#define NP_NONE 	0		/* None (async) */
+#define NP_TELNET 	1		/* TCP/IP telnet */
+#define NP_VTP 		2		/* ISO Virtual Terminal Protocol */
+#define NP_X3 		3		/* CCITT X.3 */
+#define NP_X28 		4		/* CCITT X.28 */
+#define NP_X29 		5		/* CCITT X.29 */
+#define NP_RLOGIN 	6		/* TCP/IP Remote login */
+#define NP_KERMIT 	7		/* TCP/IP Kermit */
+#define NP_TCPRAW 	8		/* TCP/IP Raw socket */
+#define NP_TCPUNK       9               /* TCP/IP Unknown */
+#define NP_SSL         10               /* TCP/IP SSLv23 */
+#define NP_TLS         11               /* TCP/IP TLSv1 */
+#define NP_SSL_TELNET  12               /* TCP/IP Telnet over SSLv23 */
+#define NP_TLS_TELNET  13               /* TCP/IP Telnet over TLSv1 */
+#define NP_K4LOGIN     14               /* TCP/IP Kerberized remote login */
+#define NP_EK4LOGIN    15               /* TCP/IP Encrypted Kerberized ... */
+#define NP_K5LOGIN     16               /* TCP/IP Kerberized remote login */
+#define NP_EK5LOGIN    17               /* TCP/IP Encrypted Kerberized ... */
+#define NP_K5U2U       18               /* TCP/IP Kerberos 5 User to User */
+#define NP_CTERM       19		/* DEC CTERM */
+#define NP_LAT         20		/* DEC LAT */
 /* others here... */
 
 /* RLOGIN Modes */
@@ -254,7 +254,6 @@ _PROTOTYP( int nettoc, (CHAR) );
 #include <netx25/x25_ioctl.h>
 #else
 #include <sys/ioctl.h>			/* X.25 includes, Sun only */
-#include <sys/param.h>
 #include <sys/systm.h>
 #ifndef SOLARIS
 #include <sys/mbuf.h>
@@ -445,7 +444,10 @@ _PROTOTYP( int x25local_nua, (char *) ); /* find local NUA */
 #endif /* TCPSOCKET */
 #endif /* INTERLAN */
 
-#ifdef BEOSORBEBOX
+#ifdef BEBOX
+#ifndef TCPSOCKET
+#define TCPSOCKET
+#endif /* TCPSOCKET */
 #ifndef TCPIPLIB
 #define TCPIPLIB
 #endif /* TCPIPLIB */
@@ -457,15 +459,13 @@ _PROTOTYP( int x25local_nua, (char *) ); /* find local NUA */
 #ifndef FIONBIO
 #define FIONBIO 2
 #endif /* FIONBIO */
-#ifndef COHERENT			/* eh? */
 #ifndef FIONREAD
 #define FIONREAD       1
 #endif /* FIONREAD */
-#endif /* COHERENT */
 #ifndef SIOCATMARK
 #define SIOCATMARK     3
 #endif /* SIOCATMARK */
-#endif /* BEOSORBEBOX */
+#endif /* BEBOX */
 
 #ifdef COMMENT /* no longer used but might come in handy again later... */
 /*
@@ -485,34 +485,6 @@ _PROTOTYP( int x25local_nua, (char *) ); /* find local NUA */
 #endif /* TCPSOCKET */
 #endif /* CK_READ0 */
 #endif /* COMMENT */
-
-#ifdef TCPSOCKET
-#ifndef NOHADDRLIST
-#ifndef HADDRLIST
-#ifdef SUNOS41
-#define HADDRLIST
-#endif /* SUNOS41 */
-#ifdef SOLARIS
-#define HADDRLIST
-#endif /* SOLARIS */
-#ifdef LINUX
-#define HADDRLIST
-#endif /* LINUX */
-#ifdef AIXRX
-#define HADDRLIST
-#endif /* AIXRS */
-#ifdef HPUX
-#define HADDRLIST
-#endif /* HPUX */
-#ifdef IRIX
-#define HADDRLIST
-#endif /* IRIX */
-#ifdef I386IX
-#define HADDRLIST
-#endif /* I386IX */
-#endif /* HADDRLIST */
-#endif /* NOHADDRLIST */
-#endif /* TCPSOCKET */
 
 /* Telnet protocol */
 
@@ -548,39 +520,13 @@ _PROTOTYP( int x25local_nua, (char *) ); /* find local NUA */
 #endif /* datageneral */
 #endif /* CKGHNLHOST */
 
-/*
-  Telnet local-echo buffer, used for saving up user data that can't be
-  properly displayed and/or evaluated until pending Telnet negotiations are
-  complete.  TTLEBUF is defined for platforms (like UNIX) where net i/o is
-  done by the same routines that do serial i/o (in which case the relevant
-  code goes into the ck?tio.c module, in the ttinc(), ttchk(), etc, routines);
-  NETLETBUF is defined for platforms (like VMS) that use different APIs for
-  network and serial i/o, and enables the copies of the same routines that
-  are in ckcnet.c.
-*/
-#ifndef TTLEBUF
-#ifdef UNIX
-#define TTLEBUF
-#else
-#ifdef datageneral
-#define TTLEBUF
-#endif /* datageneral */
-#endif /* UNIX */
-#endif /* TTLEBUF */
-
-#ifndef NETLEBUF
-#ifdef VMS
-#define NETLEBUF
-#endif /* VMS */
-#endif /* NETLEBUF */
-
 #ifndef RLOGCODE			/* What about Rlogin? */
 #ifndef NORLOGIN
 /*
   Rlogin can be enabled only for UNIX versions that have both SIGURG
   (SCO doesn't) and CK_TTGWSIZ (OSF/1 doesn't), so we don't assume that
   any others have these without verifying first.  Not that it really makes
-  little difference since you can only use Rlogin if you are root...
+  much difference since you can only use Rlogin if you are root...
 */
 #ifdef SUNOS41
 #define RLOGCODE
@@ -617,6 +563,10 @@ _PROTOTYP( int x25local_nua, (char *) ); /* find local NUA */
 #else
 #ifdef __linux__
 #define RLOGCODE
+#else
+#ifdef BSD44
+#define RLOGCODE
+#endif /* BSD44 */
 #endif /* __linux__ */
 #endif /* QNX */
 #endif /* IRIX60 */
@@ -636,6 +586,34 @@ _PROTOTYP( int x25local_nua, (char *) ); /* find local NUA */
 #endif /* RLOGCODE */
 #endif /* TCPSOCKET */
 
+#ifdef TNCODE
+/*
+  Telnet local-echo buffer, used for saving up user data that can't be
+  properly displayed and/or evaluated until pending Telnet negotiations are
+  complete.  TTLEBUF is defined for platforms (like UNIX) where net i/o is
+  done by the same routines that do serial i/o (in which case the relevant
+  code goes into the ck?tio.c module, in the ttinc(), ttchk(), etc, routines);
+  NETLETBUF is defined for platforms (like VMS) that use different APIs for
+  network and serial i/o, and enables the copies of the same routines that
+  are in ckcnet.c.
+*/
+#ifndef TTLEBUF
+#ifdef UNIX
+#define TTLEBUF
+#else
+#ifdef datageneral
+#define TTLEBUF
+#endif /* datageneral */
+#endif /* UNIX */
+#endif /* TTLEBUF */
+
+#ifndef NETLEBUF
+#ifdef VMS
+#define NETLEBUF
+#endif /* VMS */
+#endif /* NETLEBUF */
+#endif /* TNCODE */
+
 #ifdef SUNX25				/* SUNX25 implies TCPSOCKET */
 #ifndef TCPSOCKET			/* But doesn't imply TNCODE */
 #define TCPSOCKET
@@ -648,18 +626,25 @@ _PROTOTYP( int x25local_nua, (char *) ); /* find local NUA */
 #endif /* NO_DNS_SRV */
 #endif /* TCPSOCKET */
 
-/* This is the TCPSOCKET section... */
+/* This is another TCPSOCKET section... */
 
 #ifdef TCPSOCKET
-
 #ifndef NETCONN				/* TCPSOCKET implies NETCONN */
 #define NETCONN
 #endif /* NETCONN */
 
 #ifndef NO_DNS_SRV
+#ifdef NOLOCAL
+#define NO_DNS_SRV
+#endif /* NOLOCAL */
 #ifdef OS2ONLY
 #define NO_DNS_SRV
 #endif /* OS2ONLY */
+#ifdef NT
+#ifdef _M_PPC
+#define NO_DNS_SRV
+#endif /* _M_DNS */
+#endif /* NO_DNS_SRV */
 #ifdef VMS
 #define NO_DNS_SRV
 #endif /* VMS */
@@ -748,7 +733,7 @@ _PROTOTYP( void bzero, (char *, int) );
 #include <interlan/in.h>
 #include <interlan/telnet.h>		/* Why twice ? ? ? */
 #else /* Not Interlan */
-#ifdef BEOSORBEBOX
+#ifdef BEBOX
 #include <socket.h>
 #else /* Not BEBOX */			/* Normal BSD TCP/IP library */
 #ifdef COMMENT
@@ -765,8 +750,11 @@ _PROTOTYP( void bzero, (char *, int) );
 #include <sys/in.h>
 #else
 #include <netinet/in.h>
+#ifndef SV68R3V6		/* (maybe this should be SVR3 in general) */
+#include <netinet/tcp.h>	/* Added June 2001 */
+#endif /* SV68R3V6 */
 #endif /* WOLLONGONG */
-#endif /* BEOSORBEBOX */
+#endif /* BEBOX */
 #endif /* INTERLAN */
 
 #ifndef EXCELAN
@@ -778,9 +766,9 @@ _PROTOTYP( void bzero, (char *, int) );
 #else
 #ifndef OXOS
 #ifndef HPUX
-#ifndef BEOSORBEBOX
+#ifndef BEBOX
 #include <arpa/inet.h>
-#endif /* BEOSORBEBOX */
+#endif /* BEBOX */
 #endif /* HPUX */
 #else /* OXOS */
 /* In too many releases of X/OS, <arpa/inet.h> declares inet_addr() as
@@ -1061,6 +1049,7 @@ typedef	struct fd_set {
 #include <in.h>
 #include <netdb.h>
 #include <socket.h>
+#include <inet.h>
 #include <ioctl.h>
 #include "ckvioc.h"
 #define socket_errno errno
@@ -1118,6 +1107,40 @@ typedef char * caddr_t; /* core address type */
 #endif /* UNIX */
 #endif /* TCPSOCKET */
 
+#ifdef TCPSOCKET
+#ifndef NOHADDRLIST
+#ifndef HADDRLIST
+#ifdef SUNOS41
+#define HADDRLIST
+#endif /* SUNOS41 */
+#ifdef SOLARIS
+#define HADDRLIST
+#endif /* SOLARIS */
+#ifdef LINUX
+#define HADDRLIST
+#endif /* LINUX */
+#ifdef AIXRS
+#define HADDRLIST
+#endif /* AIXRS */
+#ifdef HPUX
+#define HADDRLIST
+#endif /* HPUX */
+#ifdef IRIX
+#define HADDRLIST
+#endif /* IRIX */
+#ifdef I386IX
+#define HADDRLIST
+#endif /* I386IX */
+#endif /* HADDRLIST */
+/* A system that defines h_addr as h_addr_list[0] should be HADDRLIST */
+#ifndef HADDRLIST
+#ifdef h_addr
+#define HADDRLIST
+#endif /* h_addr */
+#endif /* HADDRLIST */
+#endif /* NOHADDRLIST */
+#endif /* TCPSOCKET */
+
 #ifdef TNCODE				/* If we're compiling telnet code... */
 #ifndef IKS_OPTION
 #ifndef STRATUS
@@ -1171,6 +1194,9 @@ extern int sstelnet;
 #endif /* SO_RCVBUF */
 #endif /* NOTCPOPTS */
 
+/* This function is declared even when TCPSOCKET is not available */
+_PROTOTYP( char * ckgetpeer, (VOID));
+
 #ifdef TCPSOCKET
 #ifdef SOL_SOCKET
 #ifdef TCP_NODELAY
@@ -1194,8 +1220,10 @@ _PROTOTYP(int dontroute, (int));
 #endif /* SOL_SOCKET */
 _PROTOTYP( int getlocalipaddr, (VOID));
 _PROTOTYP( int getlocalipaddrs, (char *,int,int));
-_PROTOTYP( char * ckgetpeer, (VOID));
 _PROTOTYP( char * ckgetfqhostname,(char *));
+_PROTOTYP( struct hostent * ck_copyhostent,(struct hostent *));
+_PROTOTYP( char * ckname2addr, (char *));
+_PROTOTYP( char * ckaddr2name, (char *));
 
 /* AIX */
 
@@ -1246,20 +1274,99 @@ _PROTOTYP( VOID ini_kerb, ( void ) );   /* Kerberos initialization routine */
 _PROTOTYP( int doauth, (int) );         /* AUTHENTICATE action routine */
 
 #ifdef CK_DNS_SRV
-_PROTOTYP(int locate_srv_dns,(const char *host, const char *service,
-			      const char *protocol, struct sockaddr **addr_pp,
+_PROTOTYP(int locate_srv_dns,(char *host, char *service,
+			      char *protocol, struct sockaddr **addr_pp,
 			      int *naddrs));
 #endif /* CK_DNS_SRV */
 
 #ifndef NOHTTP
-_PROTOTYP(int http_get, (char *,char **,char *,char *,char,char *,char *));
-_PROTOTYP(int http_head, (char *,char **,char *,char *,char,char *,char *));
+_PROTOTYP(int http_open, (char *, char *, int, char *, int));
+_PROTOTYP(int http_reopen, (VOID));
+_PROTOTYP(int http_close, (VOID));
+_PROTOTYP(int http_get, (char *,char **,char *,char *,char,char *,char *,
+			 int));
+_PROTOTYP(int http_head, (char *,char **,char *,char *,char,char *,char *,
+			  int));
 _PROTOTYP(int http_put, (char *,char **,char *,char *,char *,char,char *,
-			 char *));
+			 char *, char *, int));
 _PROTOTYP(int http_delete, (char *,char **,char *,char *,char,char *));
+_PROTOTYP(int http_connect, (int, char *,char **,char *,char *,char,char *));
 _PROTOTYP(int http_post, (char *,char **,char *,char *,char *,char,char *,
-		  char *));
-_PROTOTYP(int http_index, (char *,char **,char *,char *,char,char *,char *));
+		  char *,char *, int));
+_PROTOTYP(int http_index, (char *,char **,char *,char *,char,char *,char *,
+			   int));
+
+extern char * tcp_http_proxy;           /* Name[:port] of http proxy server */
+extern int    tcp_http_proxy_errno;     /* Return value from server */
+extern char * tcp_http_proxy_user;      /* Name of user for authentication */
+extern char * tcp_http_proxy_pwd;       /* Password of user */
 #endif /* NOHTTP */
+
+#ifdef TCPSOCKET
+
+/* Type needed as 5th argument (length) to get/setsockopt() */
+
+#ifndef SOCKOPT_T
+#define SOCKOPT_T int
+#ifdef AIX42
+#undef SOCKOPT_T
+#define SOCKOPT_T unsigned long
+#else
+#ifdef PTX
+#undef SOCKOPT_T
+#define SOCKOPT_T size_t
+#else
+#ifdef NT
+#undef SOCKOPT_T
+#define SOCKOPT_T int
+#else /* NT */
+#ifdef UNIXWARE
+#undef SOCKOPT_T
+#define SOCKOPT_T size_t
+#else /* UNIXWARE */
+#ifdef VMS
+#ifdef DEC_TCPIP
+#ifdef __DECC_VER
+#undef SOCKOPT_T
+#define SOCKOPT_T size_t
+#endif /* __DECC_VER */
+#endif /* DEC_TCPIP */
+#endif /* VMS */
+#endif /* UNIXWARE */
+#endif /* NT */
+#endif /* PTX */
+#endif /* AIX42 */
+#endif /* SOCKOPT_T */
+
+/* Ditto for getsockname() */
+
+#ifndef GSOCKNAME_T
+#define GSOCKNAME_T int
+#ifdef PTX
+#undef GSOCKNAME_T
+#define GSOCKNAME_T size_t
+#else
+#ifdef AIX42                            /* size_t in 4.2++, int in 4.1-- */
+#undef GSOCKNAME_T
+#define GSOCKNAME_T size_t
+#else
+#ifdef UNIXWARE
+#undef GSOCKNAME_T
+#define GSOCKNAME_T size_t
+#else
+#ifdef VMS
+#ifdef DEC_TCPIP
+#ifdef __DECC_VER
+#undef GSOCKNAME_T
+#define GSOCKNAME_T size_t
+#endif /* __DECC_VER */
+#endif /* DEC_TCPIP */
+#endif /* VMS */
+#endif /* UNIXWARE */
+#endif /* AIX41 */
+#endif /* PTX */
+#endif /* GSOCKNAME_T */
+
+#endif /* TCPSOCKET */
 
 #endif /* CKCNET_H */
