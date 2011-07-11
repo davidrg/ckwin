@@ -1,4 +1,4 @@
-char *fnsv = "C-Kermit functions, 8.0.223, 1 May 2003";
+char *fnsv = "C-Kermit functions, 9.0.233, 3 Jun 2011";
 
 char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 
@@ -10,7 +10,7 @@ char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2011,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -41,7 +41,6 @@ int gnferror = 0;			/* gnfile() failure reason */
 extern CHAR feol;
 extern int byteorder, xflg, what, fmask, cxseen, czseen, nscanfile, sysindex;
 extern int xcmdsrc, dispos, matchfifo;
-extern long ffc;
 extern int inserver;
 
 extern int nolinks;
@@ -82,9 +81,6 @@ _PROTOTYP( int lookup, (struct keytab[], char *, int, int *) );
 #ifndef NOSPL
 _PROTOTYP( int zzstring, (char *, char **, int *) );
 #endif /* NOSPL */
-#ifdef OS2ORUNIX
-_PROTOTYP( long zfsize, (char *) );
-#endif /* OS2ORUNIX */
 
 #ifdef OS2
 #include <io.h>
@@ -103,12 +99,14 @@ extern int srvcdmsg, srvidl, idletmo;
 extern char * cdmsgfile[];
 extern int spsiz, spmax, rpsiz, timint, srvtim, rtimo, npad, ebq, ebqflg,
  rpt, rptq, rptflg, capas, keep, fncact, pkttim, autopar, spsizr, xitsta;
-extern int pktnum, bctr, bctu, bctl, clfils, sbufnum, protocol,
+extern int pktnum, bctr, bctu, bctf, bctl, clfils, sbufnum, protocol,
  size, osize, spktl, nfils, ckwarn, timef, spsizf, sndtyp, rcvtyp, success;
 extern int parity, turn, network, whatru, fsecs, justone, slostart,
  ckdelay, displa, mypadn, moving, recursive, nettype;
-extern long filcnt, flci, flco, tlci, tlco, tfc, fsize, sendstart, rs_len;
-extern long filrej, oldcps, cps, peakcps, ccu, ccp, calibrate, filestatus;
+extern long filcnt;
+extern CK_OFF_T
+ tfc, fsize, sendstart, rs_len, flci, flco, tlci, tlco, calibrate;
+extern long filrej, oldcps, cps, peakcps, ccu, ccp, filestatus;
 extern int fblksiz, frecl, frecfm, forg, fcctrl, fdispla, skipbup;
 extern int spackets, rpackets, timeouts, retrans, crunched, wmax, wcur;
 extern int hcflg, binary, fncnv, b_save, f_save, server;
@@ -197,6 +195,8 @@ _PROTOTYP( int szeof, (CHAR *s) );
 _PROTOTYP( VOID fnlist, (void) );
 #endif /* NOXFER */
 
+extern CK_OFF_T ffc;
+
 /* Character set Translation */
 
 #ifndef NOCSETS
@@ -263,8 +263,8 @@ char sndnafter[19]  = { NUL, NUL };
 char sndnbefore[19] = { NUL, NUL };
 char *sndexcept[NSNDEXCEPT]  = { NULL, NULL };
 char *rcvexcept[NSNDEXCEPT]  = { NULL, NULL };
-long sndsmaller = -1L;
-long sndlarger  = -1L;
+CK_OFF_T sndsmaller = (CK_OFF_T)-1;
+CK_OFF_T sndlarger  = (CK_OFF_T)-1;
 
 /* Variables defined in this module but shared by other modules. */
 
@@ -438,7 +438,7 @@ encstr(s) CHAR* s;
     rc = 0;				/* Return code. */
     m = memstr; p = memptr;		/* Save these. */
     memptr = (char *)s;			/* Point to the string. */
-    debug(F101,"encstr memptr 1","",memptr);
+    /* debug(F101,"encstr memptr 1","",memptr); */
     memstr = 1;				/* Flag memory string as source. */
     first = 1;				/* Initialize character lookahead. */
     *data = NUL;			/* In case s is empty */
@@ -689,7 +689,7 @@ bdecode(buf,fn) register CHAR *buf; register int (*fn)();
 
 /*  P N B Y T E  --  Output next byte to file or other destination  */
 
-static long offc = 0L;
+static CK_OFF_T offc = 0L;
 
 static int
 #ifdef CK_ANSIC
@@ -786,7 +786,7 @@ xpnbyte(a,tcs,fcs,fn) int a, tcs, fcs; int (*fn)();
 					/* swapping must be 0 or 1 */
     if (a == -1 && (tcs | fcs) == 0) {	/* Reset in case previous run */
 	bn = 0;				/* left bn at 1... */
-	offc = 0L;
+	offc = (CK_OFF_T)0;
 	debug(F101,"xpnbyte RESET","",bn);
 	return(0);
     }
@@ -929,7 +929,7 @@ xpnbyte(a,tcs,fcs,fn) int a, tcs, fcs; int (*fn)();
             } output;
 #endif /* OS2 */
 #endif /* IKSDONLY */
-	    if (offc == 0L && ucsbom) {	/* Beginning of file? */
+	    if (!offc && ucsbom) {	/* Beginning of file? */
 
 #ifndef IKSDONLY
 #ifdef OS2
@@ -989,8 +989,8 @@ xpnbyte(a,tcs,fcs,fn) int a, tcs, fcs; int (*fn)();
 #ifdef OS2
             if (fn == NULL && !k95stdout && !inserver) {
                 offc++;
-                output.bytes[0] = uc.x_char[1-swapping];
-                output.bytes[1] = uc.x_char[swapping];
+                output.bytes[0] = uc.x_char[swapping];
+                output.bytes[1] = uc.x_char[1-swapping];
 
                 VscrnWrtUCS2StrAtt(VCMD,
                                    &output.ucs2,
@@ -1191,7 +1191,7 @@ xpnbyte(a,tcs,fcs,fn) int a, tcs, fcs; int (*fn)();
 	}
 	if (fcs == FC_UCS2) {		/* And FCS is UCS-2 */
 	    /* Write out the bytes in the appropriate byte order */
-	    if (offc == 0 && ucsbom) {	/* Beginning of file? */
+	    if (!offc && ucsbom) {	/* Beginning of file? */
 		if ((rc = pnbyte((ucsorder ? 0xff : 0xfe),fn)) < 0) /* BOM */
 		  return(rc);
 		if ((rc = pnbyte((ucsorder ? 0xfe : 0xff),fn)) < 0)
@@ -1466,7 +1466,7 @@ decode(buf,fn,xlate) register CHAR *buf; register int (*fn)(); int xlate;
 #ifdef KANJI
 		if (!binary && tcharset == TC_JEUC &&
 		    fcharset != FC_JEUC) { /* Translating from J-EUC */
-		    if (ffc == 0L) xkanjf();
+		    if (!ffc) xkanjf();
 		    if (xkanji(a,fn) < 0)  /* to something else? */
 		      return(-1);
 		    else t = 1;
@@ -1670,7 +1670,7 @@ bgetpkt(bufmax) int bufmax; {
 #endif /* DEBUG */
 
     if (first == 1) {			/* If first character of this file.. */
-	ffc = 0L;			/* reset file character counter */
+	ffc = (CK_OFF_T)0;		/* reset file character counter */
 #ifdef COMMENT
 /* Moved to below */
 	first = 0;			/* Next character won't be first */
@@ -2012,7 +2012,7 @@ xgnbyte(tcs,fcs,fn) int tcs, fcs, (*fn)();
 #endif /* KANJI */
 
 #ifdef DEBUG
-    if (deblog && ffc == 0) {
+    if (deblog && !ffc) {
 	debug(F101,"xgnbyte initial swap","",swapping);
     }
 #endif /* DEBUG */
@@ -2026,7 +2026,7 @@ xgnbyte(tcs,fcs,fn) int tcs, fcs, (*fn)();
 	haveuc = 0;
 #ifdef UNICODE
 	if (fcs == FC_UCS2) {		/* UCS-2: Read two bytes */
-	    if (ffc == 0)		/* Beginning of file? */
+	    if (!ffc)			/* Beginning of file? */
 	      swapping = 0;		/* Reset byte-swapping flag */
 	    uc.x_short = 0;
 	  bomskip:
@@ -2051,7 +2051,7 @@ xgnbyte(tcs,fcs,fn) int tcs, fcs, (*fn)();
 		    if (docrc && (what & W_SEND))
 		      dofilcrc(x);
 #endif /* NOXFER */
-		    if (ffc == 2) {	/* Second char of file */
+		    if (ffc == (CK_OFF_T)2) { /* Second char of file */
 			debug(F001,"xgnbyte 1st UCS2","",uc.x_short);
 			debug(F111,"xgnbyte fileorder","A",fileorder);
 			if (fileorder < 0) /* Byte order of this file */
@@ -2131,7 +2131,7 @@ xgnbyte(tcs,fcs,fn) int tcs, fcs, (*fn)();
 	  if (fcsinfo[fcs].alphabet == AL_JAPAN) { /* Japanese source file */
 	    int c7, x, y;
 	    if (fcs == FC_JIS7) {	/* If file charset is JIS-7 */
-		if (ffc == 0L)		/* If first byte of file */
+		if (!ffc)		/* If first byte of file */
 		  j7init();		/* Initialize JIS-7 parser */
 		x = getj7();		/* Get a JIS-7 byte */
 	    } else			/* Otherwise */
@@ -2257,7 +2257,38 @@ xgnbyte(tcs,fcs,fn) int tcs, fcs, (*fn)();
   too soon and so might not have known whether it was a file transfer or a
   local operation.
 */
+/*
+  (Many years later...) In testing this code I noticed that TRANSLATE'ing
+  Russian text from UTF-8 to ISO Latin/Cyrillic produced all question marks.
+  Rereading the previous paragraph it seems to me we are (I am) overloading
+  this function with responsibilites, satisfying the needs of file transfer
+  (local file charset -> transfer charset for outbound packet) and local file
+  conversion.  In the case of TRANSLATE, we call (xgnbyte(), xpnbyte()) in a
+  loop, expecting the xgnbyte() will feed UCS2 to xpnbyte().  But the
+  following code does what xpnbyte() is going to do, returning (in this case)
+  an ISO Latin/Cyrillic byte stream, which xpnbyte() believes to be UCS2, and
+  comes up with nonsense.  Not wanting to rip the whole thing apart and start
+  over, I made the following change that should do no harm, upon observing
+  that if the input character set is UTF-8 or UCS-2, then when we get here it
+  has already been converted to UCS2, so if we are not transferring a file, we
+  don't need to do anything else except put the bytes in the right place to be
+  returned, which is done further along.
+*/
+#ifdef COMMENT
+	  /* Previous code */
 	  xx = (what & W_SEND) ? xut : xuf;
+#else
+	  /* New code 2011-06-03 */
+	  if (what & W_SEND) {
+	      xx = xut;
+	  } else {
+	      if (fcs == FC_UCS2 || fcs == FC_UTF8)
+		xx = NULL;
+	      else
+		xx = xuf;
+	  }
+#endif	/* COMMENT */
+
 	  eolflag = 0;
 	  if (haveuc) {			/* File is Unicode */
 	      /* See Unicode TR13, "Converting to Other Character Sets" */
@@ -2550,7 +2581,7 @@ getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
 	debug(F101,"getpkt first uflag","",uflag);
 	debug(F101,"getpkt first rt","",rt);
 	if (!memstr && !funcstr)	/* and real file... */
-	  ffc = 0L;			/* reset file character counter */
+	  ffc = (CK_OFF_T)0;		/* reset file character counter */
 #ifdef COMMENT
 	/* Moved to below... */
 	first = 0;			/* Next character won't be first */
@@ -3034,7 +3065,11 @@ tinit(flag) int flag; {
     /* This stuff is only for BEFORE S/I/Y negotiation, not after */
 
     if (flag) {
-	bctu = bctl = 1;		/* Reset block check type to 1 */
+	if (bctf) {		      /* Force Block Check 3 on all packets */
+	    bctu = bctl = 3;		/* Set block check type to 3 */
+	} else {
+	    bctu = bctl = 1;		/* Reset block check type to 1 */
+	}
 	myinit[0] = '\0';		/* Haven't sent init string yet */
 	rqf = -1;			/* Reset 8th-bit-quote request flag */
 	ebq = MYEBQ;			/* Reset 8th-bit quoting stuff */
@@ -3127,17 +3162,17 @@ rinit(d) CHAR *d; {
 VOID
 resetc() {
     rptn = 0;				/* Repeat counts */
-    fsecs = flci = flco = 0L;		/* File chars in and out */
+    fsecs = flci = flco = (CK_OFF_T)0;	/* File chars in and out */
 #ifdef GFTIMER
     fpfsecs = 0.0;
 #endif /* GFTIMER */
-    tfc = tlci = tlco = 0L;		/* Total file, line chars in & out */
+    tfc = tlci = tlco = (CK_OFF_T)0;	/* Total file, line chars in & out */
     ccu = ccp = 0L;			/* Control-char statistics */
 #ifdef COMMENT
-    fsize = -1L;			/* File size */
+    fsize = (CK_OFF_T)-1;		/* File size */
 #else
     if (!(what & W_SEND))
-      fsize = -1L;
+      fsize = (CK_OFF_T)-1;
     debug(F101,"resetc fsize","",fsize);
 #endif /* COMMENT */
     timeouts = retrans = 0;		/* Timeouts, retransmissions */
@@ -3341,7 +3376,7 @@ xsinit() {
 char ofn1[CKMAXPATH+4];			/* Buffer for output file name */
 char * ofn2;				/* Pointer to backup file name */
 int ofn1x;				/* Flag output file already exists */
-long ofn1len = 0L;
+CK_OFF_T ofn1len = (CK_OFF_T)0;
 int opnerr;				/* Flag for open error */
 
 int					/* Returns success ? 1 : 0 */
@@ -3362,9 +3397,9 @@ rcvfil(n) char *n; {
 #endif /* PIPESEND */
 #ifdef CALIBRATE
     extern int dest;
-    int csave;
+    CK_OFF_T csave;
     csave = calibrate;			/* So we can decode filename */
-    calibrate = 0;
+    calibrate = (CK_OFF_T)0;
 #endif /* CALIBRATE */
 
     ofperms = "";			/* Reset old-file permissions */
@@ -3735,7 +3770,7 @@ Please confirm output file specification or supply an alternative:";
     debug(F101,"rcvfil dirflg","",dirflg);
     ofn1len = zchki(ofn1);		/* File already exists? */
     debug(F111,"rcvfil ofn1len",ofn1,ofn1len);
-    ofn1x = (ofn1len != -1);
+    ofn1x = (ofn1len != (CK_OFF_T)-1);
 
     if ( (
 #ifdef UNIX
@@ -3948,9 +3983,9 @@ Please confirm output file specification or supply an alternative:";
 
     debug(F110,"rcvfilx: n",n,0);
     debug(F110,"rcvfilx: ofn1",ofn1,0);
-    ffc = 0L;				/* Init per-file counters */
+    ffc = (CK_OFF_T)0;			/* Init per-file counters */
     cps = oldcps = 0L;
-    rs_len = 0L;
+    rs_len = (CK_OFF_T)0;
     rejection = -1;
     fsecs = gtimer();			/* Time this file started */
 #ifdef GFTIMER
@@ -4218,7 +4253,7 @@ sfile(x) int x; {
 	if (!cmarg2) cmarg2 = "";
 #ifdef DEBUG
 	if (deblog) {
-	    debug(F111,"sfile cmarg2",cmarg2,cmarg2);
+	    /* debug(F111,"sfile cmarg2",cmarg2,cmarg2); */
 	    debug(F101,"sfile binary 1","",binary);
 	    debug(F101,"sfile wearealike","",wearealike);
 	    debug(F101,"sfile xfermode","",xfermode);
@@ -4499,7 +4534,7 @@ sfile(x) int x; {
             return(0);
         }
 	if (sendmode == SM_PSEND)	/* PSENDing? */
-	  if (sendstart > 0L)		/* Starting position */
+	  if (sendstart > (CK_OFF_T)0)	/* Starting position */
 	    if (zfseek(sendstart) < 0)	/* seek to it... */
 	      return(0);
 #endif /* CK_RESEND */
@@ -4597,7 +4632,7 @@ sfile(x) int x; {
     }
     intmsg(++filcnt);			/* Count file, give interrupt msg */
     first = 1;				/* Init file character lookahead. */
-    ffc = 0L;				/* Init file character counter. */
+    ffc = (CK_OFF_T)0;			/* Init file character counter. */
     cps = oldcps = 0L;			/* Init cps statistics */
     rejection = -1;
     fsecs = gtimer();			/* Time this file started */
@@ -5157,7 +5192,7 @@ spar(s) CHAR *s; {			/* Set parameters */
     if (biggest >= 8) {
 	if (s[8] == 'B') x = 4;
 	else x = s[8] - '0';
-	if ((x < 1) || (x > 4)) x = 1;
+	if ((x < 1) || (x > 5)) x = 1;	/* "5" 20110605 */
     }
     bctr = x;
 
@@ -5424,7 +5459,8 @@ spar(s) CHAR *s; {			/* Set parameters */
 */
 int
 gnfile() {
-    int i = 0, x = 0; long y = 0L;
+    int i = 0, x = 0;
+    CK_OFF_T filesize = 0;
     int dodirstoo = 0;
     int retcode = 0;
 
@@ -5438,8 +5474,16 @@ gnfile() {
     debug(F101,"gnfile recursive","",recursive);
     debug(F101,"gnfile dodirstoo","",dodirstoo);
     gnferror = 0;
-    fsize = -1L;			/* Initialize file size */
+    fsize = (CK_OFF_T)-1;		/* Initialize file size */
     fullname[0] = NUL;
+
+#ifdef VMS
+    /* 
+      In VMS, zopeni() sets binary 0/1 automatically from the file
+      attributes.  Don't undo it here.
+    */
+    debug(F101,"gnfile VMS binary","",binary);
+#else  /* VMS */
     if (!(what & W_REMO) && (xfermode == XMODE_A)
 #ifndef NOMSEND
 	&& !addlist
@@ -5454,6 +5498,8 @@ gnfile() {
 	    binary = gnf_binary;	/* Restore prevailing transfer mode */
 	debug(F101,"gnfile binary = gnf_binary","",gnf_binary);
     }
+#endif	/* VMS */
+
 #ifdef PIPESEND
     debug(F101,"gnfile pipesend","",pipesend);
     if (pipesend) {			/* First one */
@@ -5486,7 +5532,7 @@ gnfile() {
 	extern char sndxnam[];		/* Pseudo filename */
 	debug(F100,"gnfile array","",0);
 	nfils = 0;
-	fsize = -1L;			/* Size unknown */
+	fsize = (CK_OFF_T)-1;		/* Size unknown */
 	sndsrc = 0;
 	ckstrncpy(filnam,sndxnam,CKMAXPATH);
 	return(1);
@@ -5511,8 +5557,8 @@ gnfile() {
 
 /* Loop through file list till we find a readable, sendable file */
 
-    y = -1L;				/* Loop exit (file size) variable */
-    while (y < 0L) {			/* Keep trying till we get one... */
+    filesize = (CK_OFF_T)-1;		/* Loop exit (file size) variable */
+    while (filesize < 0) {		/* Keep trying till we get one... */
 	retcode = 0;
 	if (sndsrc > 0) {		/* File list in cmlist or file */
 	    if (filefile) {		/* Reading list from file... */
@@ -5557,7 +5603,7 @@ nextinpath:
 		fromgetpath = 0;
 		if (server && !isabsolute(filnam) && (ngetpath > i)) {
 		    ckstrncpy(fullname,getpath[i],CKMAXPATH+1);
-		    strncat(fullname,filnam,CKMAXPATH);
+		    ckstrncat(fullname,filnam,CKMAXPATH);
 		    debug(F111,"gnfile getpath",fullname,i);
 		    fromgetpath = 1;
 		    i++;
@@ -5578,7 +5624,7 @@ nextinpath:
 		    ) {	/* It looks wild... */
 		    /* First check if a file with this name exists */
 		    debug(F110,"gnfile wild",fullname,0);
-		    if (zchki(fullname) > -1) {
+		    if (zchki(fullname) >= 0) {
 			/*
 			   Here we have a file whose name actually
 			   contains wildcard characters.
@@ -5665,17 +5711,17 @@ gotnam:
 		if (*dirp) ckstrncpy(fullname,dirp,CKMAXPATH+1);
 	    }
 #endif /* DTILDE */
-	    y = zchki(fullname);	/* Check if file readable */
-	    debug(F111,"gnfile zchki",fullname,y);
-	    retcode = (int) y;		/* Possible return code */
-	    if (y == -2L && dodirstoo) {
-		y = 0L;
+	    filesize = zchki(fullname);	/* Check if file readable */
+	    debug(F111,"gnfile zchki",fullname,filesize);
+	    retcode = filesize;		/* Possible return code */
+	    if (filesize == (CK_OFF_T)-2 && dodirstoo) {
+		filesize = 0;
 	    }
-	    if (y < 0L) {
-		gnferror = (int) y;
+	    if (filesize < 0) {
+		gnferror = (int)filesize;
 		debug(F101,"gnfile gnferror C","",gnferror);
 	    }
-	    if (y == -1L) {		/* If not found */
+	    if (filesize == (CK_OFF_T)-1) { /* If not found */
 		debug(F100,"gnfile -1","",0);
 #ifndef NOSERVER
 		if (server && ngetpath > i)
@@ -5690,8 +5736,8 @@ gotnam:
 		  doxlog(what,fullname,fsize,binary,1,"Skipped");
 #endif /* TLOG */
 		continue;
-	    } else if (y < 0) {
-		if (y == -3) {		/* Exists but not readable */
+	    } else if (filesize < 0) {
+		if (filesize == (CK_OFF_T)-3) { /* Exists but not readable */
 		    debug(F100,"gnfile -3","",0);
 		    filrej++;		/* Count this one as not sent */
 		    tlog(F110,"Read access denied",fullname,0); /* Log this */
@@ -5705,7 +5751,12 @@ gotnam:
 		continue;
 	    } else {
 		int xx;
-		fsize = y;
+		fsize = filesize;
+/* +++ */
+    debug(F111,"gnfile sndsmaller",ckfstoa(sndsmaller),sndsmaller);
+    debug(F111,"gnfile sndlarger",ckfstoa(sndlarger),sndlarger);
+    debug(F111,"gnfile (CK_OFF_T)-1",ckfstoa((CK_OFF_T)-1),(CK_OFF_T)-1);
+
 		xx = fileselect(fullname,
 				sndafter, sndbefore,
 				sndnafter,sndnbefore,
@@ -5714,7 +5765,7 @@ gotnam:
 				NSNDEXCEPT,sndexcept);
 		debug(F111,"gnfile fileselect",fullname,xx);
 		if (!xx) {
-		    y = -1L;
+		    filesize = (CK_OFF_T)-1;
 		    gnferror = -6;
 		    debug(F101,"gnfile gnferror D","",gnferror);
 		    continue;
@@ -5733,7 +5784,7 @@ gotnam:
 			    NSNDEXCEPT,sndexcept)) {
 		gnferror = -6;
 		debug(F111,"gnfile fileselect",fullname,gnferror);
-		y = -1L;
+		filesize = (CK_OFF_T)-1;
 		continue;
 	    }
 	    ckstrncpy(filnam,fullname,CKMAXPATH+1);
@@ -5789,7 +5840,7 @@ static int  funclen =  0;
 static int  nxpnd   = -1;
 static long ndirs   =  0;
 static long nfiles  =  0;
-static long nbytes  =  0;
+static CK_OFF_T nbytes  =  0;
 
 int
 sndstring(p) char * p; {
@@ -6154,7 +6205,7 @@ nxtdir(
     char *filetag = "files";
     char *bytetag = "bytes";
 #endif /* OSK */
-    long len = 0;
+    CK_OFF_T len = 0;
     int x, itsadir = 0, gotone = 0;
 
 #ifdef DEBUG
@@ -6278,19 +6329,19 @@ nxtdir(
 	} else {			/* Regular file */
 #ifdef VMS
 	    sprintf((char *)linebuf,
-		    "%-22s%10ld  %s  %s\n", p, len, dstr, name);
+		    "%-22s%10s  %s  %s\n", p, ckfstoa(len), dstr, name);
 #else
 	    if (p)
 	      sprintf((char *)linebuf,
-		      "%10s%10ld  %s  %s%s%s\n",
-		      p, len, dstr, name,
+		      "%10s%10s  %s  %s%s%s\n",
+		      p, ckfstoa(len), dstr, name,
 		      *lnk ? " -> " : "",
 		      lnk
 		      );
 	    else
 	      sprintf((char *)linebuf,
-		      "%10ld  %s  %s%s%s\n",
-		      len, dstr, name,
+		      "%10s  %s  %s%s%s\n",
+		      ckfstoa(len), dstr, name,
 		      *lnk ? " -> " : "",
 		      lnk
 		      );
@@ -6313,28 +6364,28 @@ nxtdir(
            dirtag = "directory";
         if (nfiles == 1)
            filetag = "file";
-        if (nbytes == 1)
+        if (nbytes == (CK_OFF_T)1)
            bytetag = "byte";
         sprintf((char *)funcbuf,
-           "%sSummary: %ld %s, %ld %s, %ld %s%s",
-           blankline,
-           ndirs,
-           dirtag,
-           nfiles,
-           filetag,
-           nbytes,
-           bytetag,
-           endline);
+		"%sSummary: %ld %s, %ld %s, %s %s%s",
+		blankline,
+		ndirs,
+		dirtag,
+		nfiles,
+		filetag,
+		ckfstoa(nbytes),
+		bytetag,
+		endline);
 #else
         sprintf((char *)funcbuf,
-		"%sSummary: %ld director%s, %ld file%s, %ld byte%s%s",
+		"%sSummary: %ld director%s, %ld file%s, %s byte%s%s",
 		blankline,
 		ndirs,
 		(ndirs == 1) ? "y" : "ies",
 		nfiles,
 		(nfiles == 1) ? "" : "s",
-		nbytes,
-		(nbytes == 1) ? "" : "s",
+		ckfstoa(nbytes),
+		(nbytes == (CK_OFF_T)1) ? "" : "s",
 		endline
 		);
 #endif /* OSK */
@@ -6414,7 +6465,7 @@ snddir(spec) char * spec; {
     debug(F110,"snddir name 1",name,0);
     ndirs = 0L;
     nfiles = 0L;
-    nbytes = 0L;
+    nbytes = (CK_OFF_T)0;
 
     if (zfnqfp(name,CKMAXPATH,fnbuf))
 
@@ -6504,7 +6555,8 @@ snddir(spec) char * spec; {
     first = 1;				/* Init getchx lookahead */
     funcstr = 1;			/* Just set the flag. */
     funcptr = nxtdir;			/* And the pointer. */
-    rc = sinit();
+    binary = XYFT_T;			/* Text mode for this */
+    rc = sinit();			/* 26 Aug 2005 */
     debug(F111,"snddir","sinit()",rc);
     return(rc);
 #else
@@ -6562,12 +6614,12 @@ nxtdel(
 
       if (nxpnd == 0) {
 	  sprintf((char *)funcbuf,
-		  "%s%ld file%s deleted, %ld byte%s freed%s",
+		  "%s%ld file%s deleted, %s byte%s freed%s",
 		  endline,
 		  nfiles,
 		  (nfiles == 1) ? "" : "s",
-		  nbytes,
-		  (nbytes == 1) ? "" : "s",
+		  ckfstoa(nbytes),
+		  (nbytes == (CK_OFF_T)1) ? "" : "s",
 		  endline
 		  );
 	  nxpnd--;
@@ -6611,7 +6663,8 @@ snddel(spec) char * spec; {
     }
 #endif /* OS2 */
 
-    nfiles = nbytes = 0L;
+    nfiles = 0L;
+    nbytes = (CK_OFF_T)0;
     sprintf((char *)funcbuf,"Deleting \"%s\"%s",name,endline);
     funcnxt = 0;
     funclen = strlen((char *)funcbuf);
@@ -6911,6 +6964,10 @@ remset(s) char *s; {
 	    return(1);
 	} else if (*p == 'B') {
 	    bctr = 4;
+	    c_save = -1;
+	    return(1);
+	} else if (*p == '5') {
+	    bctr = 3;
 	    c_save = -1;
 	    return(1);
 	}

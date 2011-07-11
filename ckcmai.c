@@ -1,24 +1,26 @@
-#define EDITDATE  "10 Apr 2004"		/* Update these with each edit */
-#define EDITNDATE "20040410"		/* Keep them in sync */
-/* Sat Apr 10 12:05:49 2004 */
+#define EDITDATE  "20 Aug 2011"		/* Last edit date dd mmm yyyy */
+#define EDITNDATE "20110820"		/* Keep them in sync */
+/* Sat Aug 20 17:20:17 2011 */
+
+/* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
 /*
   ckcsym.h is used for for defining symbols that normally would be defined
   using -D or -d on the cc command line, for use with compilers that don't
-  support this feature.  Must be before any tests for preprocessor symbols.
+  support this feature.  Must come before any tests for preprocessor symbols.
 */
 #include "ckcsym.h"
 /*
-  Consolidated program version information (for UNIX also see ckuver.h).
-  See makever() below for how they are used.
+  Consolidated program C-Kermit version information for all platforms
+  (but for UNIX also see ckuver.h).  See makever() below for how they are used.
 */
-/* #ifdef COMMENT */                    /* Uncomment this for test version */
-#ifndef OS2
-#ifndef BETATEST
-#define BETATEST
+#ifdef COMMENT                    /* Uncomment this for real K95 version */
+#ifndef OS2				/* OS2 actually means Kermit 95. */
+#ifndef BETATEST			/* It's because Kermit 95 started */
+#define BETATEST			/* out as C-Kermit for OS/2. */
 #endif /* BETATEST */
 #endif /* OS2 */
-/* #endif */ /* COMMENT */
+#endif /* COMMENT */
 
 #ifdef BETATEST
 #ifdef OS2
@@ -28,11 +30,14 @@
 #endif /* OS2 */
 #endif /* BETATEST */
 
-#ifndef MAC
+char * ck_cryear = "2011"; 		/* C-Kermit copyright year */
+
+#ifndef MAC				/* MAC = Kermit for MAC OS 6, 7, ... */
 /*
   Note: initialize ck_s_test to "" if this is not a test version.
   Use (*ck_s_test != '\0') to decide whether to print test-related messages.
 */
+
 #ifndef BETATEST
 #ifndef OS2                             /* UNIX, VMS, etc... (i.e. C-Kermit) */
 char *ck_s_test = "";			/* "Dev","Alpha","Beta","RC", or "" */
@@ -47,7 +52,7 @@ char *ck_s_tver = "";
 #endif /* BETATEST */
 #else /* MAC */
 char *ck_s_test = "Pre-Alpha";          /* Mac Kermit is always a test... */
-char *ck_s_tver = "";
+char *ck_s_tver = "";			/* (pre Mac OS X 10, that is!) */
 #endif /* MAC */
 
 #ifdef BETADATE                         /* Date of this version or edit */
@@ -59,15 +64,26 @@ char *ck_s_date = EDITDATE;		/* See top */
 char *buildid = EDITNDATE;		/* See top */
 
 #ifdef UNIX
-static char sccsid[] = "@(#)C-Kermit 8.0.211";
+static char sccsid[] = "@(#)C-Kermit 9.0.302";
 #endif /* UNIX */
 
-char *ck_s_ver = "8.0.211";             /* C-Kermit version string */
-long  ck_l_ver =  800211L;              /* C-Kermit version number */
+/*
+  The C-Kermit Version number is major.minor.edit (integers).
+  Major version always goes up.
+  Minor version is historical, hasn't been used since C-Kermit 7.1.
+  Edit is sequential, always goes up, but there can be gaps.
+  For example there might be many edits between releases.
+  If the major goes to 10, some version-number-based feature tests
+  could fail.  It might be better to use the minor version field
+  for future releases.
+*/
+
+char *ck_s_ver = "9.0.302";             /* C-Kermit version string */
+long  ck_l_ver =  900302L;              /* C-Kermit version number */
 
 #ifdef OS2
-char *ck_s_xver = "2.2.0";		/* Product-specific version string */
-long  ck_l_xver = 2200L;                /* Product-specific version number */
+char *ck_s_xver = "3.0.0";		/* Product-specific version string */
+long  ck_l_xver = 3000L;                /* Product-specific version number */
 #else
 #ifdef MAC
 char *ck_s_xver = "0.995";              /* Product-specific version string */
@@ -119,154 +135,58 @@ char * myhome = NULL;			/* Home directory override */
 
 /*
   Author: Frank da Cruz (fdc@columbia.edu),
-  Columbia University Academic Information Systems, New York City.
+  Columbia University in the city of New York,
+  Computer Center / Center for Computing Activities / Information Technology.
+  I am no longer at Columbia U as of 1 July 2011, but the email address
+  should still work.  The Kermit website http://kermit.columbia.edu should
+  still be available and under my control, as well as the Kermit FTP site,
+  ftp://kermit.columbia.edu/kermit/.
 
 COPYRIGHT NOTICE:
 */
 
-#ifdef OS2
-char *wiksdcpr[] = {
-"Windows Internet Kermit Service Daemon (WIKSD):",
-"Copyright (C) 1985, 2004, Trustees of Columbia University in the City of New",
-"York.  All rights reserved.",
-" ",
-"PERMISSIONS:",
-" ",
-"  The WIKSD software may be obtained directly, in binary form only, from",
-"  the Kermit Project at Columbia University by any individual for his or",
-"  her OWN USE, and by any company or other organization for its own",
-"  INTERNAL DISTRIBUTION and use, including installation on servers that",
-"  are accessed by customers or clients, WITHOUT EXPLICIT LICENSE.  All",
-"  other forms of redistribution must be licensed from the Kermit Project",
-"  at Columbia University.  These permissions apply only to the nonsecure",
-"  version of WIKSD.",
-" ",
-"DISCLAIMER:",
-" ",
-"  THIS SOFTWARE IS PROVIDED AS IS, WITHOUT REPRESENTATION FROM THE",
-"  TRUSTEES OF COLUMBIA UNIVERSITY IN THE CITY OF NEW YORK AS TO ITS",
-"  FITNESS FOR ANY PURPOSE, AND WITHOUT WARRANTY BY THE TRUSTEES OF",
-"  COLUMBIA UNIVERSITY IN THE CITY OF NEW YORK OF ANY KIND, EITHER",
-"  EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION THE IMPLIED",
-"  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.",
-"  THE TRUSTEES OF COLUMBIA UNIVERSITY IN THE CITY OF NEW YORK SHALL NOT",
-"  BE LIABLE FOR ANY DAMAGES, INCLUDING SPECIAL, INDIRECT, INCIDENTAL,",
-"  OR CONSEQUENTIAL DAMAGES, WITH RESPECT TO ANY CLAIM ARISING OUT OR IN",
-"  CONNECTION WITH THE USE OF THE SOFTWARE, EVEN IF IT HAS BEEN OR IS",
-"  HEREAFTER ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.  YOU SHALL",
-"  INDEMNIFY AND HOLD HARMLESS THE TRUSTEES OF COLUMBIA UNIVERSITY IN",
-"  THE CITY OF NEW YORK, ITS EMPLOYEES AND AGENTS FROM AND AGAINST ANY",
-"  AND ALL CLAIMS, DEMANDS, LOSS, DAMAGE OR EXPENSE (INCLUDING",
-"  ATTORNEYS' FEES) ARISING OUT OF YOUR USE OF THIS SOFTWARE.",
-" ",
-"The above copyright notice, permissions notice, and disclaimer may not be",
-"removed, altered, or obscured and shall be included in all copies of the",
-"WIKSD software.  The Trustees of Columbia University in the City of",
-"New York reserve the right to revoke this permission if any of the terms",
-"of use set forth above are breached.",
-" ",
-"For further information, contact the Kermit Project, Columbia University,",
-"612 West 115th Street, New York NY 10025-7799, USA; Phone +1 (212) 854 3703,",
-"Fax +1 (212) 662 6442, kermit@columbia.edu, http://www.columbia.edu/kermit/",
-""
-};
-#endif /* OS2 */
-
 char *copyright[] = {
 
 #ifdef pdp11
-"Copyright (C) 1985, 2004, Trustees of Columbia University, NYC.",
+"Copyright (C) 1985, %s, Trustees of Columbia University, NYC.",
 "All rights reserved.",
 " ",
 #else
-#ifdef OS2
-"Copyright (C) 1985, 2004, Trustees of Columbia University in the City of New",
-"York.  All rights reserved.  This software is furnished under license",
-"and may not be reproduced without license to do so.  This copyright notice",
-"must not be removed, altered, or obscured.",
-" ",
-"  THIS SOFTWARE IS PROVIDED AS IS, WITHOUT REPRESENTATION FROM THE",
-"  TRUSTEES OF COLUMBIA UNIVERSITY IN THE CITY OF NEW YORK AS TO ITS",
-"  FITNESS FOR ANY PURPOSE, AND WITHOUT WARRANTY BY THE TRUSTEES OF",
-"  COLUMBIA UNIVERSITY IN THE CITY OF NEW YORK OF ANY KIND, EITHER",
-"  EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION THE IMPLIED",
-"  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.",
-"  THE TRUSTEES OF COLUMBIA UNIVERSITY IN THE CITY OF NEW YORK SHALL NOT",
-"  BE LIABLE FOR ANY DAMAGES, INCLUDING SPECIAL, INDIRECT, INCIDENTAL,",
-"  OR CONSEQUENTIAL DAMAGES, WITH RESPECT TO ANY CLAIM ARISING OUT OR IN",
-"  CONNECTION WITH THE USE OF THE SOFTWARE, EVEN IF IT HAS BEEN OR IS",
-"  HEREAFTER ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.  YOU SHALL",
-"  INDEMNIFY AND HOLD HARMLESS THE TRUSTEES OF COLUMBIA UNIVERSITY IN",
-"  THE CITY OF NEW YORK, ITS EMPLOYEES AND AGENTS FROM AND AGAINST ANY",
-"  AND ALL CLAIMS, DEMANDS, LOSS, DAMAGE OR EXPENSE (INCLUDING",
-"  ATTORNEYS' FEES) ARISING OUT OF YOUR USE OF THIS SOFTWARE.",
-" ",
-#else
-"Copyright (C) 1985, 2004,",
+"Copyright (C) 1985, %s,",
 "  The Trustees of Columbia University in the City of New York.",
 "  All rights reserved.",
 " ",
-"PERMISSIONS:",
+"Redistribution and use in source and binary forms, with or without",
+"modification, are permitted provided that the following conditions",
+"are met:",
 " ",
-"The C-Kermit software may be obtained directly from the Kermit Project at",
-"Columbia University (or from any source explicitly licensed by the Kermit",
-"Project or implicitly licensed by Clause (A) below) by any individual for",
-"his or her OWN USE, and by any company or other organization for its own",
-"INTERNAL DISTRIBUTION and use, including installation on servers that are",
-"accessed by customers or clients, WITHOUT EXPLICIT LICENSE.",
+" + Redistributions of source code must retain the above copyright",
+"   notice, this list of conditions and the following disclaimer.",
 " ",
-"Conditions for REDISTRIBUTION are as follows:",
+" + Redistributions in binary form must reproduce the above copyright",
+"   notice, this list of conditions and the following disclaimer in",
+"   the documentation and/or other materials provided with the",
+"   distribution.",
 " ",
-"(A) The C-Kermit software, in source and/or binary form, may be",
-"    included WITHOUT EXPLICIT LICENSE in distributions of OPERATING",
-"    SYSTEMS that have OSI (Open Source Initiative, www.opensource.org)",
-"    approved licenses, even if non-Open-Source applications (but not",
-"    operating systems) are included in the same distribution.  Such",
-"    distributions include, but are not limited to, CD-ROM, FTP site,",
-"    Web site, or preinstalled software on a new GENERAL-PURPOSE",
-"    computer, as long as the primary character of the distribution is",
-"    an Open Source operating system with accompanying utilities.  The",
-"    C-Kermit source code may not be changed without the consent of the",
-"    Kermit Project, which will not be unreasonably withheld (this is",
-"    simply a matter of keeping a consistent and supportable code base).",
+" + Neither the name of Columbia University nor the names of its",
+"   contributors may be used to endorse or promote products derived",
+"   from this software without specific prior written permission.",
 " ",
-"(B) Inclusion of C-Kermit software in whole or in part, in any form, in",
-"    or with any product not covered by Clause (A), or its distribution",
-"    by any commercial enterprise to its actual or potential customers",
-"    or clients except as in Clause (A), requires a license from the",
-"    Kermit Project, Columbia University; contact kermit@columbia.edu.",
-" ",
-"The name of Columbia University may not be used to endorse or promote",
-"products derived from or including the C-Kermit software without specific",
-"prior written permission.",
-" ",
-"DISCLAIMER:",
-" ",
-"  THIS SOFTWARE IS PROVIDED AS IS, WITHOUT REPRESENTATION FROM THE",
-"  TRUSTEES OF COLUMBIA UNIVERSITY IN THE CITY OF NEW YORK AS TO ITS",
-"  FITNESS FOR ANY PURPOSE, AND WITHOUT WARRANTY BY THE TRUSTEES OF",
-"  COLUMBIA UNIVERSITY IN THE CITY OF NEW YORK OF ANY KIND, EITHER",
-"  EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION THE IMPLIED",
-"  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.",
-"  THE TRUSTEES OF COLUMBIA UNIVERSITY IN THE CITY OF NEW YORK SHALL NOT",
-"  BE LIABLE FOR ANY DAMAGES, INCLUDING SPECIAL, INDIRECT, INCIDENTAL,",
-"  OR CONSEQUENTIAL DAMAGES, WITH RESPECT TO ANY CLAIM ARISING OUT OF OR",
-"  IN CONNECTION WITH THE USE OF THE SOFTWARE, EVEN IF IT HAS BEEN OR IS",
-"  HEREAFTER ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.  YOU SHALL",
-"  INDEMNIFY AND HOLD HARMLESS THE TRUSTEES OF COLUMBIA UNIVERSITY IN",
-"  THE CITY OF NEW YORK, ITS EMPLOYEES AND AGENTS FROM AND AGAINST ANY",
-"  AND ALL CLAIMS, DEMANDS, LOSS, DAMAGE OR EXPENSE (INCLUDING",
-"  ATTORNEYS' FEES) ARISING OUT OF YOUR USE OF THIS SOFTWARE.",
-" ",
-"The above copyright notice, permissions notice, and disclaimer may not be",
-"removed, altered, or obscured and shall be included in all copies of the",
-"C-Kermit software.  The Trustees of Columbia University in the City of",
-"New York reserve the right to revoke this permission if any of the terms",
-"of use set forth above are breached.",
-#endif /* OS2 */
+"THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS",
+"\"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT",
+"LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR",
+"A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT",
+"HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,",
+"SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT",
+"LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,",
+"DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY",
+"THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT",
+"(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE",
+"OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.",
 #endif /* pdp11 */
 
 #ifdef OS2
+"Portions Copyright (C) 2002-2005, Secure Endpoints Inc, New York NY USA.",
 "Portions Copyright (C) 1995, Oy Online Solutions Ltd., Jyvaskyla, Finland.",
 #endif /* OS2 */
 
@@ -284,12 +204,14 @@ char *copyright[] = {
 
 #ifndef pdp11
 " ",
-"For further information, contact the Kermit Project, Columbia University,",
-"612 West 115th Street, New York NY 10025-7799, USA; phone +1 (212) 854 3703,",
-"fax +1 (212) 663 8202 or +1 (212) 662 6442, email kermit@columbia.edu,",
-"Web http://www.columbia.edu/kermit/ or http://www.kermit-project.org/.",
+"For further information, visit the Kermit Project website:",
+"http://www.columbia.edu/kermit/ .",
 #endif /* pdp11 */
 ""};
+
+/* Windows IKSD copyright used to be separate */
+char *wiksdcpr = (char *) copyright;
+
 
 /*
 DOCUMENTATION:
@@ -309,9 +231,10 @@ ACKNOWLEDGMENTS:
 
   The Kermit file transfer protocol was developed at the Columbia University
   Center for Computing Activities (CUCCA), which was since renamed to Columbia
-  University Academic Information Systems (AcIS).  Kermit is named after
-  Kermit the Frog, star of the television series THE MUPPET SHOW; the name is
-  used by permission of Henson Associates, Inc.
+  University Academic Information Systems (AcIS) and after that Columbia
+  University Information Technology (CUIT).  Kermit is named after Kermit the
+  Frog, star of the television series THE MUPPET SHOW; the name is used by
+  permission of Henson Associates, Inc.
 
   Thanks to at least the following people for their contributions to this
   program over the years, and apologies to anyone who was inadvertantly
@@ -331,6 +254,7 @@ ACKNOWLEDGMENTS:
    Stan Barber, Rice U
    Jim Barbour, U of Colorado
    Donn Baumgartner, Dell
+   Ian Beckwith, Debian Project
    Nelson Beebe, U of Utah
    Gerry Belanger, Cognitronics
    Karl Berry, UMB
@@ -339,10 +263,12 @@ ACKNOWLEDGMENTS:
    Gary Bilkus
    Peter Binderup, Denmark
    David Bolen, Advanced Networks and Services, Inc.
+   Joop Bonen
    Marc Boucher, U of Montreal
    Charles Brooks, EDN
    Bob Brown
    Mike Brown, Purdue U
+   Rob Brown
    Jack Bryans, California State U at Long Beach
    Mark Buda, DEC (VMS)
    Fernando Cabral, Padrao iX, Brasilia
@@ -358,6 +284,7 @@ ACKNOWLEDGMENTS:
    Howard Chu, U of Michigan
    Bill Coalson, McDonnell Douglas
    Bertie Coopersmith, London
+   Christian Corti
    Chet Creider, U of Western Ontario
    Alan Crosswell, Columbia U
    Jeff Damens, (formerly of) Columbia U
@@ -380,6 +307,7 @@ ACKNOWLEDGMENTS:
    Herm Fischer, Encino, CA (extensive contributions to version 4.0)
    Carl Fongheiser, CWRU
    Mike Freeman, Bonneville Power Authority
+   Carl Friedberg
    Marcello Frutig, Catholic University, Sao Paulo, Brazil (X.25 support)
    Hirofumi Fujii, Japan Nat'l Lab for High Energy Physics, Tokyo (Kanji)
    Chuck Fuller, Westinghouse Corporate Computer Services
@@ -449,6 +377,7 @@ ACKNOWLEDGMENTS:
    Douglas Kingston, morgan.com
    Lawrence Kirby, Wiltshire, UK
    Tom Kloos, Sequent Computer Systems
+   Guenter Knauf
    Jim Knutson, U of Texas at Austin
    John T. Kohl (BSDI)
    Scott Kramer, SRI International, Menlo Park, CA
@@ -463,6 +392,7 @@ ACKNOWLEDGMENTS:
    Bert Laverman, Groningen U, Netherlands
    Steve Layton
    David Lawyer, UC Irvine
+   Jason Lehr
    David LeVine, National Semiconductor Corporation
    Daniel S. Lewart, UIUC
    S.O. Lidie, Lehigh U
@@ -474,6 +404,7 @@ ACKNOWLEDGMENTS:
    Kevin Lowey, U of Saskatchewan (OS/2)
    Andy Lowry, Columbia U
    James Lummel, Caprica Telecomputing Resources (QNX)
+   Lewis McCarthy
    David MacKenzie, Environmental Defense Fund, U of Maryland
    John Mackin, University of Sidney, Australia
    Martin Maclaren, Bath U, UK
@@ -487,6 +418,7 @@ ACKNOWLEDGMENTS:
    Hellmuth Michaelis, Hanseatischer Computerservice GmbH, Hamburg, Germany
    Leslie Mikesell, American Farm Bureau
    Todd Miller, Courtesan Consulting
+   Gary Mills
    Martin Minow, DEC (VMS)
    Pawan Misra, Bellcore
    Ken Mizialko, IBM, Manassas, VA
@@ -518,6 +450,7 @@ ACKNOWLEDGMENTS:
    Tony Querubin, U of Hawaii
    Jean-Pierre Radley
    Anton Rang
+   Mike Rechtman
    Scott Ribe
    Alan Robiette, Oxford University, UK
    Michel Robitaille, U of Montreal (Mac)
@@ -538,9 +471,11 @@ ACKNOWLEDGMENTS:
    Dan Schullman, DEC (modems, DIAL command, etc)
    John Schultz, 3M
    Steven Schultz, Contel (PDP-11)
+   Steven Schweda
    APPP Scorer, Leeds Polytechnic, UK
    Gordon Scott, Micro Focus, Newbury UK
    Gisbert W. Selke, WIdO, Bonn, Germany
+   Kijal Shah
    David Singer, IBM Almaden Research Labs
    David Sizeland, U of London Medical School
    Fridrik Skulason, Iceland
@@ -556,6 +491,7 @@ ACKNOWLEDGMENTS:
    James R. Swenson, Accu-Weather, Inc.
    Ted T'so, MIT (Linux)
    Andy Tanenbaum, Vrije U, Amsterdam, Netherlands
+   Seth Theriault, Columbia U
    Glen Thobe
    Markku Toijala, Helsinki U of Technology
    Teemu Torma, Helsinki U of Technology
@@ -574,11 +510,13 @@ ACKNOWLEDGMENTS:
    Paul Vixie, DEC
    Bernie Volz, Process Software
    Eduard Vopicka, Prague University of Economics, Czech Republic
+   Martin Vorlaender
    Dimitri Vulis, CUNY
    Roger Wallace, Raytheon
    Stephen Walton, Calif State U, Northridge (Amiga)
    Jamie Watson, Adasoft, Switzerland (AIX)
    Rick Watson, U of Texas (Macintosh)
+   Eric Weaver, Columbia U
    Scott Weikart (Association for Progressive Communications)
    Robert Weiner, Programming Plus, New York City
    Lauren Weinstein, Vortex Technlogy
@@ -796,6 +734,7 @@ int spsiz = DSPSIZ,                     /* Current packet size to send */
     bctr = DFBCT,                       /* Block check type requested */
     bctu = 1,                           /* Block check type used */
     bctl = 1,                           /* Block check length */
+    bctf = 0,				/* Block check type 3 forced on all */
     c_save = -1,                        /* Block check saving and restoring */
     ss_save = -1,                       /* Slow-start saving and restoring */
     ebq =  MYEBQ,                       /* 8th bit prefix */
@@ -820,6 +759,8 @@ int xfrxla = 0;                         /* Character-set translation */
 #else
 int xfrxla = 1;                         /* enabled or disabled */
 #endif /* NOCSETS */
+
+int havelfs = 0;			/* Large file support available */
 
 #ifndef NOXFER
 int epktflg = 0;                        /* E-PACKET command active */
@@ -1071,14 +1012,18 @@ extern VOID zsyslog();
 extern int ckxlogging, ckxsyslog;
 #endif /* CKSYSLOG */
 
+CK_OFF_T fsize = (CK_OFF_T)0,		/* Size of current file */
+ sendstart = (CK_OFF_T)0,		/* SEND start position */
+ calibrate = (CK_OFF_T)0;		/* Nonzero if calibration run */
+
 int nzxopts = 0;                        /* Options for nzxpand() */
 int nfils = 0;                          /* Number of files in file group */
-long fsize = 0L;                        /* Size of current file */
+int wildena = 1;			/* Wildcard expansion enabled */
 #ifdef UNIX
-int wildxpand = 0;                      /* Who expands wildcards */
+int wildxpand = 0;                      /* Who expands wildcards, 0=Kermit.. */
 #else /* UNIX */
 #ifdef STRATUS
-int wildxpand = 1;
+int wildxpand = 1;			/* 1=Shell. */
 #endif /* STRATUS */
 #endif /* UNIX */
 #ifdef UNIXOROSK
@@ -1321,14 +1266,16 @@ int xsuspend = 0;
 
 /* Statistics variables */
 
-long filcnt,                    /* Number of files in transaction */
-    filrej,                     /* Number of files rejected in transaction */
+CK_OFF_T
     flci,                       /* Characters from line, current file */
     flco,                       /* Chars to line, current file  */
     tlci,                       /* Chars from line in transaction */
     tlco,                       /* Chars to line in transaction */
     ffc,                        /* Chars to/from current file */
-    tfc,                        /* Chars to/from files in transaction */
+    tfc;                        /* Chars to/from files in transaction */
+
+long filcnt,                    /* Number of files in transaction */
+    filrej,                     /* Number of files rejected in transaction */
     cps = 0L,                   /* Chars/sec last transfer */
     peakcps = 0L,               /* Peak chars/sec last transfer */
     ccu,                        /* Control chars unprefixed in transaction */
@@ -1351,6 +1298,7 @@ int deblog = 0,                         /* Debug log is open */
     debxlen = 54,                       /* Default length for debug strings */
     debses = 0,                         /* Flag for DEBUG SESSION */
     debtim = 0,                         /* Include timestamp in debug log */
+    debmsg = 0,                         /* Debug messages on/off */
     pktlog = 0,                         /* Flag for packet logging */
     seslog = 0,                         /* Session logging */
     dialog = 0,                         /* DIAL logging */
@@ -1447,9 +1395,6 @@ char * g_snd_move = NULL;
 char * g_snd_rename = NULL;
 char * g_rcv_move = NULL;
 char * g_rcv_rename = NULL;
-
-long sendstart = 0L;                    /* SEND start position */
-long calibrate = 0L;                    /* Nonzero if calibration run */
 
 #ifdef CK_TRIGGER
 char *tt_trigger[TRIGGERS] = { NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL };
@@ -1699,6 +1644,8 @@ getsysix(s) char *s; {                  /* Get system-type index */
 
 /* Tell if a pathname is absolute (versus relative) */
 /* This should be parceled out to each of the ck*fio.c modules... */
+/* VMS isabsolute() is now in ckvfio.c. */
+#ifndef VMS
 int
 isabsolute(path) char * path; {
     int rc = 0;
@@ -1709,21 +1656,6 @@ isabsolute(path) char * path; {
       return(0);
     x = (int) strlen(path);
     debug(F111,"isabsolute",path,x);
-#ifdef VMS
-    rc = 0;
-    x = ckindex("[",path,0,0,0);        /* 1-based */
-    if (!x)
-       x = ckindex("<",path,0,0,0);
-    debug(F111,"isabsolute left bracket",path,x);
-    if (!x) {
-        x = ckindex(":",path,-1,1,1);
-        if (x)
-          debug(F111,"isabsolute logical",path,x);
-    }
-    if (x > 0)
-      if (path[x] != '.')               /* 0-based */
-        rc = 1;
-#else
 #ifdef UNIX
     if (*path == '/'
 #ifdef DTILDE
@@ -1731,14 +1663,14 @@ isabsolute(path) char * path; {
 #endif /* DTILDE */
         )
       rc = 1;
-#else
+#else /* def UNIX */
 #ifdef OS2
     if (*path == '/' || *path == '\\')
       rc = 1;
     else if (isalpha(*path) && x > 2)
       if (*(path+1) == ':' && (*(path +2) == '/' || *(path+2) == '\\'))
         rc = 1;
-#else
+#else /* def OS2 */
 #ifdef AMIGA
     if (*path == '/'
 #ifdef DTILDE
@@ -1746,7 +1678,7 @@ isabsolute(path) char * path; {
 #endif /* DTILDE */
         )
       rc = 1;
-#else
+#else /* def AMIGA */
 #ifdef OSK
     if (*path == '/'
 #ifdef DTILDE
@@ -1754,17 +1686,17 @@ isabsolute(path) char * path; {
 #endif /* DTILDE */
         )
       rc = 1;
-#else
+#else /* def OSK */
 #ifdef datageneral
     if (*path == ':')
       rc = 1;
-#else
+#else /* def datageneral */
 #ifdef MAC
     rc = 0;                             /* Fill in later... */
-#else
+#else /* def MAC */
 #ifdef STRATUS
     rc = 0;                             /* Fill in later... */
-#else
+#else /* def STRATUS */
 #ifdef GEMDOS
     if (*path == '/' || *path == '\\')
       rc = 1;
@@ -1779,10 +1711,10 @@ isabsolute(path) char * path; {
 #endif /* AMIGA */
 #endif /* OS2 */
 #endif /* UNIX */
-#endif /* VMS */
     debug(F101,"isabsolute rc","",rc);
     return(rc);
 }
+#endif /* ndef VMS */
 
 /*  See if I have direct access to the keyboard  */
 
@@ -2288,7 +2220,7 @@ ikslogin() {
         if (nmac) {                     /* Any macros defined? */
             int k;                      /* Yes */
             char * cmd = "on_login";    /* MSVC 2.x compiler error */
-            k = mlook(mactab,cmd,nmac); /* Look up "on_exit" */
+            k = mlook(mactab,cmd,nmac); /* Look up "on_login" */
             if (k >= 0) {               /* If found, */
 #ifdef IKSDCONF
                 int saved = iksdcf;
@@ -2394,8 +2326,10 @@ failtakeini(threadinfo) VOID * threadinfo;
 #ifdef GEMDOS
     cc_clean();                         /* Atari: Clean up after ^C-trap. */
 #endif /* GEMDOS */
+    fixcmd();
     if (!cfilef) {
-        conoll("Interrupt during initialization or command-line processing.");
+        conoll("Interrupted during initialization or \
+command-line processing.");
         conoll("C-Kermit quitting...");
     }
     doexit(BAD_EXIT,-1);                /* Exit with bad status. */
@@ -2538,15 +2472,16 @@ docmdfile(threadinfo) VOID * threadinfo;
 #ifndef NOSPL
     addmac("\\%0",cmdfil);
 #endif /* NOSPL */
-    dotake(cmdfil);                     /* execute it */
-    while (tlevel > -1) {               /* until it runs out. */
+    dotake(cmdfil);			/* Set up the command file */
+    if (tlevel > -1)			/* Remember we did this */
+      cfilef = 1;
+    while (tlevel > -1) {               /* Execute it until it runs out. */
         sstate = parser(1);             /* Loop getting commands. */
         if (sstate) proto();            /* Enter protocol if requested. */
 #ifdef NTSIG
         ck_ih();
 #endif /* NTSIG */
     }
-    cfilef = 1;                         /* Remember we did this */
 
 #ifdef NTSIG
     ckThreadEnd(threadinfo);
@@ -2564,9 +2499,11 @@ failcmdfile(threadinfo) VOID * threadinfo;
 #ifdef GEMDOS
     cc_clean();                         /* Atari: Clean up after ^C-trap. */
 #endif /* GEMDOS */
+    fixcmd();
     if (!cfilef) {
-        conoll("Interrupt during initialization or command-line processing.");
-        conoll("C-Kermit quitting...");
+	conoll("Interrupted during initialization or \
+command-line processing.");
+	conoll("C-Kermit quitting...");
     }
     doexit(BAD_EXIT,-1);                /* Exit with bad status. */
 }
@@ -2661,6 +2598,7 @@ setprefix(z) int z; {                   /* Initial control-char prefixing */
 VOID
 makever() {                             /* Make version string from pieces */
     int x, y;
+    char * s;
 #ifndef OS2
 #ifndef MAC
     ck_s_xver = ck_s_ver;               /* Fill in C-Kermit version number */
@@ -2675,6 +2613,14 @@ makever() {                             /* Make version string from pieces */
         ckstrncpy(versio,"C-Kermit",CKVERLEN);
         return;
     }
+    x += y + 1;
+  
+    s = " OPEN SOURCE:";		/* C-Kermit 9.0 and later */
+    y = strlen(s);
+    if (CKVERLEN < x + y + 1)
+      return;
+    ckstrncat(versio,s,CKVERLEN);
+
     x += y + 1;
     if (*ck_s_who) {
         y = strlen(ck_s_who);
@@ -2957,7 +2903,40 @@ main(argc,argv) int argc; char **argv;
     *pfha = (short) 0;                  /* No user protection fault handler */
 #endif /* datageneral */
 
+    int unbuf = 0;			/* nonzero for unbuffered stdout */
+
+/* setbuf has to be called on the file descriptor before it is used */
+
+#ifdef UNIX
+#ifdef NONOSETBUF			/* Unbuffered console i/o */
+    unbuf++;				/* as a compile-time option */
+#endif	/* NONOSETBUF */
+    if (!unbuf) {			/* Or as a command-line selection */
+	int i, n;			/* We have to pre-pre-scan for */
+	char * s;			/* this one. */
+	for (i = 1; i < argc; i++) {
+	    s = argv[i];
+	    if (!s) n = 0; else n = (int)strlen(s);
+	    if (n > 4) {
+		if (!ckstrcmp("--unbuffered",s,n,0)) {
+		    unbuf++;
+		    break;
+		}
+	    }
+	}
+    }
+    if (unbuf)
+      setbuf(stdout,NULL);
+#endif	/* UNIX */
+
 /* Do some initialization */
+
+#ifdef VMS
+#ifdef __DECC
+    /* Get some RMS default settings. */
+    get_rms_defaults();
+#endif /* def __DECC */
+#endif /* def VMS */
 
 #ifndef MAC
     xargc = xargs = argc;               /* Make global copies of argc */
@@ -3031,6 +3010,9 @@ main(argc,argv) int argc; char **argv;
         byteorder = 0;                  /* Big Endian */
         bigendian = 1;
     }
+    if (sizeof(CK_OFF_T) == 8)		/* Large files and ints? */
+      havelfs = 1;
+
     if (sysinit() < 0)                  /* System-dependent initialization. */
       fatal("Can't initialize!");
     else
@@ -3365,6 +3347,8 @@ main(argc,argv) int argc; char **argv;
                 switch (ttnproto) {
 		  case NP_SSL:
 		  case NP_TLS:
+  		  case NP_SSL_RAW:
+		  case NP_TLS_RAW:
 		  case NP_SSL_TELNET:
 		  case NP_TLS_TELNET:
                     doexit(BAD_EXIT,1);

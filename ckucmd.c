@@ -1,14 +1,16 @@
 #include "ckcsym.h"
 
-char *cmdv = "Command package 8.0.157, 11 May 2003";
+char *cmdv = "Command package 9.0.168, 12 March 2010";
 
 /*  C K U C M D  --  Interactive command package for Unix  */
+
+/* (In reality, it's for all platforms, not just Unix) */
 
 /*
   Author: Frank da Cruz (fdc@columbia.edu),
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2010,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -83,7 +85,7 @@ struct keytab cmonths[] = {
 
 #ifndef NOSPL
 _PROTOTYP( int chkvar, (char *) );
-extern int askflag;
+extern int askflag, echostars;
 #endif /* NOSPL */
 
 #ifdef CKROOT
@@ -96,6 +98,7 @@ extern int inserver;
 
 int cmfldflgs = 0;			/* Flags for cmfld() */
 int cmkwflgs = 0;			/* Flags from last keyword parse */
+static int nomsg = 0;
 static int blocklvl = 0;		/* Block nesting level */
 static int linebegin = 0;		/* Flag for at start of a line */
 static int quoting = 1;			/* Quoting is allowed */
@@ -187,7 +190,13 @@ modules would have to be changed...
 #endif /* CK_ANSIC */
 #endif /* OSF13 */
 
+#ifndef HPUXPRE65
 #include <errno.h>			/* Error number symbols */
+#else
+#ifndef ERRNO_INCLUDED
+#include <errno.h>			/* Error number symbols */
+#endif	/* ERRNO_INCLUDED */
+#endif	/* HPUXPRE65 */
 
 #ifdef OS2
 #ifndef NT
@@ -202,10 +211,6 @@ modules would have to be changed...
 #include "ckocon.h"
 #include <io.h>
 #endif /* OS2 */
-
-#ifdef NT
-#define stricmp _stricmp
-#endif /* NT */
 
 #ifdef OSK
 #define cc ccount			/* OS-9/68K compiler bug */
@@ -249,6 +254,10 @@ int psetf = 0,                          /* Flag that prompt has been set */
     inword = 0;				/* In the middle of getting a word */
 
 char *dfprom = "Command? ";             /* Default prompt */
+#ifndef NOLASTFILE
+char *lastfile = NULL;			/* Last filespec */
+static char *tmplastfile = NULL;	/* Last filespec candidate */
+#endif	/* NOLASTFILE */
 
 int cmflgs;                             /* Command flags */
 int cmfsav;				/* A saved version of them */
@@ -264,6 +273,7 @@ char *cmdbuf = NULL;			/* Command buffer */
 char *savbuf = NULL;			/* Buffer to save copy of command */
 char *atmbuf = NULL;			/* Atom buffer - for current field */
 char *atxbuf = NULL;			/* For expanding the atom buffer */
+char *prevcmd = NULL;
 static char *atybuf = NULL;		/* For copying atom buffer */
 static char *filbuf = NULL;		/* File name buffer */
 static char *cmprom = NULL;		/* Program's prompt */
@@ -296,6 +306,7 @@ char cmdbuf[CMDBL+4];                   /* Command buffer */
 char savbuf[CMDBL+4];                   /* Buffer to save copy of command */
 char atmbuf[ATMBL+4];                   /* Atom buffer */
 char atxbuf[CMDBL+4];                   /* For expanding the atom buffer */
+char prevcmd[CMDBL+4];			/* For displaying the last command */
 static char atybuf[ATMBL+4];		/* For copying atom buffer */
 static char filbuf[ATMBL+4];		/* File name buffer */
 static char cmprom[PROMPTL+1];		/* Program's prompt */
@@ -304,7 +315,7 @@ static char cmprxx[PROMPTL+1];		/* Program's prompt, unevaluated */
 
 /* Command buffer pointers */
 
-#define PPVLEN 24
+#define PPVLEN VNAML			/* 20080305 Wolfram Sang (was 24) */
 char ppvnambuf[PPVLEN+1] = { NUL, NUL };
 
 char * cmbptr = NULL;			/* Current position (for export) */
@@ -585,7 +596,7 @@ kwdhelp(s,n,pat,pre,post,off,xhlp)
     return;
 }
 
-/*  F I L H E L P  --  Given a file list, print names in columns.  */
+/*  X F I L H E L P  --  Given a file list, print names in columns.  */
 /*
   Call with:
     n     - number of entries
@@ -593,6 +604,8 @@ kwdhelp(s,n,pat,pre,post,off,xhlp)
     post  - suffix to add to each filename
     off   - offset on first screenful, allowing room for introductory text
     cmdirflg - 1 if only directory names should be listed, 0 to list all files
+    fs    - call fileselect() to decide whether to include each file.
+    The rest of the args are the same as for fileselect().
 
   Arranges filenames in columns with width based on longest filename.
   Does "more?" prompting at end of screen.
@@ -600,7 +613,22 @@ kwdhelp(s,n,pat,pre,post,off,xhlp)
 */
 
 int
-filhelp(n,pre,post,off,cmdirflg) int n, off; char *pre, *post; int cmdirflg; {
+#ifdef CK_ANSIC
+xfilhelp(
+    int n, char *pre, char *post, int off, int cmdirflag,
+    int fs, char *sa, char *sb, char *sna, char *snb,
+    CK_OFF_T minsiz, CK_OFF_T maxsiz,
+    int nbu, int nxlist,
+    char ** xlist
+)
+#else
+xfilhelp(n,pre,post,off,cmdirflg,
+	 fs,sa,sb,sna,snb,minsiz,maxsiz,nbu,nxlist,xlist)
+    int n, off; char *pre, *post; int cmdirflg;
+    int fs; char *sa,*sb,*sna,*snb; CK_OFF_T minsiz,maxsiz;
+    int nbu,nxlist; char ** xlist;
+#endif	/* CK_ANSIC */
+ {
     char filbuf[CKMAXPATH + 1];		/* Temp buffer for one filename */
     int width = 0;
     int cols, height, i, j, k, lc, n2 = 0, rc = 0, itsadir = 0;
@@ -630,6 +658,11 @@ filhelp(n,pre,post,off,cmdirflg) int n, off; char *pre, *post; int cmdirflg; {
 	    if (cmdirflg && !itsadir)	/* No, listing directories only? */
 	      continue;			/* So skip this one. */
 #endif /* COMMENT */
+	    if (fs) if (fileselect(filbuf,
+			   sa,sb,sna,snb,
+			   minsiz,maxsiz,nbu,nxlist,xlist) < 1) {
+                    continue;
+	    }
 #ifdef VMS
 	    ckstrncpy(filbuf,zrelname(filbuf,cdp),CKMAXPATH);
 #endif /* VMS */
@@ -728,6 +761,17 @@ xfilhelp:
     }
 }
 
+/*
+  Simpler front end for xfilhelp() with shorter arg list when no
+  file selection is needed.
+*/
+int
+filhelp(n,pre,post,off,cmdirflg) int n, off; char *pre, *post; int cmdirflg; {
+    return(xfilhelp(n,pre,post,off,cmdirflg,
+		    0,NULL,NULL,NULL,NULL,
+		    (CK_OFF_T)0,(CK_OFF_T)0,0,0,(char **)NULL));
+}
+
 /*  C M S E T U P  --  Set up command buffers  */
 
 #ifdef DCMDBUF
@@ -736,6 +780,8 @@ cmsetup() {
     if (!(cmdbuf = malloc(CMDBL + 4))) return(-1);
     if (!(savbuf = malloc(CMDBL + 4))) return(-1);
     savbuf[0] = '\0';
+    if (!(prevcmd = malloc(CMDBL + 4))) return(-1);
+    prevcmd[0] = '\0';
     if (!(atmbuf = malloc(ATMBL + 4))) return(-1);
     if (!(atxbuf = malloc(CMDBL + 4))) return(-1);
     if (!(atybuf = malloc(ATMBL + 4))) return(-1);
@@ -810,8 +856,10 @@ prompt(f) xx_strp f; {
     sx = cmprxx;			/* Unevaluated copy */
     if (f) {				/* If conversion function given */
 	sy = cmprom;			/* Evaluate it */
+#ifdef COMMENT
 	debug(F101,"prompt sx","",sx);
 	debug(F101,"prompt sy","",sy);
+#endif	/* COMMENT */
 	n = PROMPTL;
 	if ((*f)(sx,&sy,&n) < 0)	/* If evaluation failed */
 	  sx = cmprxx;			/* revert to unevaluated copy */
@@ -1210,8 +1258,29 @@ untab(s) char *s; {
    -1 if reparse needed,
     0 otherwise, with argument n set to the number that was parsed
 */
+/* This is the traditional cmnum() that gets an int */
 int
 cmnum(xhlp,xdef,radix,n,f) char *xhlp, *xdef; int radix, *n; xx_strp f; {
+    CK_OFF_T z = (CK_OFF_T)0, check;
+    int x;
+    x = cmnumw(xhlp,xdef,radix,&z,f);
+    *n = z;
+    check = *n;
+    if (check != z) {
+	printf("?Magnitude of result too large for integer - %s\n",ckfstoa(z));
+	return(-9);
+    }
+    return(x);
+}
+
+/*
+  This is the new cmnum() that gets a "wide" result, whatever CK_OFF_T
+  is defined to be, normally 32 or 64 bits, depending on the platform.
+  fdc, 24 Dec 2005.
+*/
+int
+cmnumw(xhlp,xdef,radix,n,f)
+    char *xhlp, *xdef; int radix; CK_OFF_T *n; xx_strp f; {
     int x; char *s, *zp, *zq;
 #ifdef COMMENT
     char lbrace, rbrace;
@@ -1260,7 +1329,7 @@ cmnum(xhlp,xdef,radix,n,f) char *xhlp, *xdef; int radix, *n; xx_strp f; {
 	    if (!strcmp(zp,"-1")) return(-2);
 	}
 	errno = 0;			/* Got one, we're done. */
-        *n = atoi(zp);
+        *n = ckatofs(zp);
 	if (errno) {
 	    perror(zp);
 	    return(-9);
@@ -1294,7 +1363,7 @@ cmnum(xhlp,xdef,radix,n,f) char *xhlp, *xdef; int radix, *n; xx_strp f; {
 	    if (!strcmp(zp,"-1")) return(-2);
 	}
 	errno = 0;
-        *n = atoi(zp);
+        *n = ckatofs(zp);
 	if (errno) {
 	    perror(zp);
 	    return(-9);
@@ -1320,7 +1389,7 @@ cmnum(xhlp,xdef,radix,n,f) char *xhlp, *xdef; int radix, *n; xx_strp f; {
 		if (!strcmp(zp,"-1")) return(-2);
 	    }
 	    errno = 0;
-	    *n = atoi(p);
+	    *n = ckatofs(p);
 	    if (errno) {
 		perror(p);
 		return(-9);
@@ -1565,6 +1634,7 @@ o_again:
         wild = 1 if name contains '*' or '?', 0 otherwise.
 */
 
+#ifdef COMMENT /* This horrible hack has been replaced - see further down */
 /*
    C M I O F I  --  Parse an input file OR the name of a nonexistent file.
 
@@ -1584,6 +1654,7 @@ cmiofi(xhlp,xdef,xp,wild,f) char *xhlp, *xdef, **xp; int *wild; xx_strp f; {
     nomsg = msgsave;
     return(x);
 }
+#endif	/* COMMENT */
 
 int
 cmifi(xhlp,xdef,xp,wild,f) char *xhlp, *xdef, **xp; int *wild; xx_strp f; {
@@ -1653,6 +1724,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
     int i, x, itsadir, xc, expanded = 0, nfiles = 0, children = -1;
     int qflag = 0;
     long y;
+    CK_OFF_T filesize;
     char *sp = NULL, *zq, *np = NULL;
     char *sv = NULL, *p = NULL;
 #ifdef DTILDE
@@ -1682,6 +1754,9 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
     if (!xhlp) xhlp = "";
     if (!xdef) xdef = "";
 
+#ifndef NOLASTFILE
+    makestr(&tmplastfile,NULL);
+#endif	/* NOLASTFILE */
     nzxopts = 0;			/* zxpand() options */
     debug(F101,"cmifi d","",d);
     if (d & 2) {			/* d & 2 means don't follow symlinks */
@@ -1758,6 +1833,9 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 	  case 0:			/* SP */
 	    if (xc == 0)		/* If no input... */
 	      *xp = xdef;		/* substitute the default */
+#ifndef NOLASTFILE
+	    makestr(&tmplastfile,*xp);	/* Make a copy before bstripping */
+#endif	/* #ifndef NOLASTFILE */
 	    *xp = brstrip(*xp);		/* Strip braces */
 	    if (**xp == NUL) {		/* 12 mar 2001 */
 		if (np) free(np);
@@ -2052,6 +2130,9 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 	    if (itsadir && d && !dirflg) { /* It's a directory and not wild */
 		if (sv) free(sv);	/* and it's ok to parse directories */
 		if (np) free(np);
+#ifndef NOLASTFILE
+		makestr(&lastfile,tmplastfile);
+#endif	/* NOLASTFILE */
 		return(x);
 	    }
 	    if (y == 0) {		/* File was not found */
@@ -2140,7 +2221,8 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 			  printf("?Off Limits: %s\n",sv);
 			else
 #endif /* CKROOT */
-			  printf("?No %s match - %s\n",
+			  if (!quiet)
+			    printf("?No %s match - %s\n",
 				 dirflg ? "directories" : "files", sv);
 		    }
 		    if (sv) free(sv);
@@ -2161,6 +2243,9 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 	    } else if (*wild || y > 1) {
 		if (sv) free(sv);
 		if (np) free(np);
+#ifndef NOLASTFILE
+		makestr(&lastfile,tmplastfile);
+#endif	/* NOLASTFILE */
 		return(x);
 	    }
 
@@ -2171,7 +2256,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 	      znext(*xp);		/* Get first (only?) matching file */
 	    if (dirflg)			/* Maybe wild and expanded */
 	      itsadir = isdir(*xp);	/* so do this again. */
-	    y = dirflg ? itsadir : zchki(*xp); /* Now check accessibility */
+	    filesize = dirflg ? itsadir : zchki(*xp); /* Check accessibility */
 	    if (expanded) {
 #ifdef ZXREWIND
 		nfiles = zxrewind();	/* Rewind so next znext() gets 1st */
@@ -2184,15 +2269,16 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 #endif /* ZXREWIND */
 	    }
 	    debug(F111,"cmifi nfiles",*xp,nfiles);
+	    debug(F101,"cmifi filesize","",filesize);
 	    free(sv);			/* done with this */
 	    sv = NULL;
-	    if (dirflg && y == 0) {
+	    if (dirflg && !filesize) {
 		printf("?Not a directory - %s\n",*xp);
 #ifdef CKCHANNELIO
 		z_error = FX_ACC;
 #endif /* CKCHANNELIO */
 		return(-9);
-	    } else if (y == -3) {
+	    } else if (filesize == (CK_OFF_T)-3) {
 		if (!xcmfdb) {
 		    if (diractive)
 		      /* Don't show filename if we're not allowed to see it */
@@ -2205,10 +2291,15 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 		z_error = FX_ACC;
 #endif /* CKCHANNELIO */
 		return(xcmfdb ? -6 : -9);
-	    } else if (y == -2) {
+	    } else if (filesize == (CK_OFF_T)-2) {
 		if (!recursive) {
 		    if (np) free(np);
-		    if (d) return(0);
+		    if (d) {
+#ifndef NOLASTFILE
+			makestr(&lastfile,tmplastfile);
+#endif	/* NOLASTFILE */
+			return(0);
+		    }
 		    if (!xcmfdb)
 		      printf("?File not readable - %s\n",*xp);
 #ifdef CKCHANNELIO
@@ -2216,7 +2307,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 #endif /* CKCHANNELIO */
 		    return(xcmfdb ? -6 : -9);
 		}
-	    } else if (y < 0) {
+	    } else if (filesize < (CK_OFF_T)0) {
 		if (np) free(np);
 		if (!nomsg && !xcmfdb)
 		  printf("?File not found - %s\n",*xp);
@@ -2226,6 +2317,9 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 		return(xcmfdb ? -6 : -9);
 	    }
 	    if (np) free(np);
+#ifndef NOLASTFILE
+	    makestr(&lastfile,tmplastfile);
+#endif	/* NOLASTFILE */
 	    return(x);
 
 #ifndef MAC
@@ -2632,6 +2726,9 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 			return(-9);
 		    }
 		    if (np) free(np);
+#ifndef NOLASTFILE
+		    makestr(&lastfile,tmplastfile);
+#endif	/* NOLASTFILE */
 		    return(0);
 #ifndef VMS
 #ifdef CK_TMPDIR
@@ -2744,7 +2841,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 	    fflush(stdout);
 	    break;
 #endif /* MAC */
-        }
+	}
 #ifdef BS_DIRSEP
         dirnamflg = 1;
         x = gtword(0);                  /* No, get a word */
@@ -2752,7 +2849,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 #else
         x = gtword(0);                  /* No, get a word */
 #endif /* BS_DIRSEP */
-    *xp = atmbuf;
+	*xp = atmbuf;
     }
 }
 
@@ -2822,7 +2919,7 @@ cmfld(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; {
 		}
 	    }
 	    *xp = atmbuf;		/* Point to what we got. */
-	    debug(F111,"cmfld 2",atmbuf,(f) ? 1 : 0);
+	    debug(F111,"cmfld 2",atmbuf,((f) ? 1 : 0));
 	    if (f) {			/* If a conversion function is given */
 		zq = atxbuf;		/* employ it now. */
 		atxn = CMDBL;
@@ -2977,7 +3074,7 @@ cmtxt(xhlp,xdef,xp,f) char *xhlp; char *xdef; char **xp; xx_strp f; {
 		char * sx = atxbuf;
 		zq = atxbuf;		/* Point to the expansion buffer */
 		atxn = CMDBL;		/* specify its length */
-		debug(F111,"cmtxt calling (*f)",*xp,atxbuf);
+		/* debug(F111,"cmtxt calling (*f)",*xp,atxbuf); */
 		if ((x = (*f)(*xp,&zq,&atxn)) < 0) return(-2);
 		sx = atxbuf;
 #ifndef COMMENT
@@ -3076,17 +3173,25 @@ cmtxt(xhlp,xdef,xp,f) char *xhlp; char *xdef; char **xp; xx_strp f; {
    n        --  number of entries in table;
    xhlp     --  pointer to help string;
    xdef     --  pointer to default keyword;
-   f        --  processing function (e.g. to evaluate variables)
+   f        --  string preprocessing function (e.g. to evaluate variables)
    pmsg     --  0 = don't print error messages
                 1 = print error messages
                 2 = include CM_HLP keywords even if invisible
                 3 = 1+2
                 4 = parse a switch (keyword possibly ending in : or =)
+                8 = don't strip comments (used, e.g., for "help #")
  Returns:
    -3       --  no input supplied and no default available
    -2       --  input doesn't uniquely match a keyword in the table
    -1       --  user deleted too much, command reparse required
     n >= 0  --  value associated with keyword
+*/
+
+/*
+  Front ends for cmkey2(): 
+  cmkey()  - The normal keyword parser
+  cmkeyx() - Like cmkey() but suppresses error messages
+  cmswi()  - Switch parser
 */
 int
 cmkey(table,n,xhlp,xdef,f)
@@ -3143,9 +3248,12 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 	    return(-9);
 	}
         rtimer();			 /* Reset timer */
-    } else {
+    } else {				 /* Otherwise get a command word */
         rtimer();			 /* Reset timer */
-        zz = gtword((pmsg == 4) ? 1 : 0);/* Otherwise get a command word */
+	if (pmsg & 8)			 /* 8 is for parsing HELP tokens */
+	  zz = gtword(4);
+	else
+	  zz = gtword((pmsg == 4) ? 1 : 0);
     }
 
     debug(F101,"cmkey table length","",n);
@@ -3160,7 +3268,10 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 	switch (zz) {
 	  case -10:			/* Timeout */
 	    if (gtimer() < timelimit) {
-		zz = gtword((pmsg == 4) ? 1 : 0);
+		if (pmsg & 8)		/* 8 is for parsing HELP tokens */
+		  zz = gtword(4);
+		else
+		  zz = gtword((pmsg == 4) ? 1 : 0);
 		continue;
 	    } else {
 #ifdef IKSD
@@ -3227,6 +3338,7 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 		}
 #endif /* M_UNGW */
 	    }
+#ifdef COMMENT				/* ^^^ */
 	    if (cmswitch && *atmbuf != '/') {
 		if (pmsg & 1) {
 		    bleep(BP_FAIL);
@@ -3235,6 +3347,7 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 		cmflgs = -2;
 		return(-6);
 	    }
+#endif	/* COMMENT */
 	    if (cmswitch) {
 		int i;
 		for (i = 0; i < wordlen; i++) {
@@ -3556,7 +3669,7 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 	    printf("\n%d - Unexpected return code from gtword\n",zz);
 	    return(cmflgs = -2);
 	}
-	zz = gtword((pmsg == 4) ? 1 : 0);
+	zz = (pmsg & 8) ? gtword(4) : gtword((pmsg == 4) ? 1 : 0);
 	debug(F111,"cmkey gtword zz",atmbuf,zz);
     }
 }
@@ -3685,7 +3798,7 @@ cmdelta(yy, mo, dd, hh, mm, ss, sign, dyy, dmo, ddd, dhh, dmm, dss)
 	debug(F101,"cmdelta hh","",hh);
 	debug(F101,"cmdelta mm","",mm);
 	debug(F101,"cmdelta ss","",ss);
-	debug(F101,"cmdelta sin","",sign);
+	debug(F101,"cmdelta sign","",sign);
 	debug(F101,"cmdelta dyy","",dyy);
 	debug(F101,"cmdelta dmo","",dmo);
 	debug(F101,"cmdelta ddd","",ddd);
@@ -3727,11 +3840,24 @@ cmdelta(yy, mo, dd, hh, mm, ss, sign, dyy, dmo, ddd, dhh, dmm, dss)
     }
     sign = (sign < 0) ? -1 : 1;
     if (dmo != 0) {
-	mo += (sign * dmo);
-	if (mo > 12 || mo < 0) {
-	    yy += mo / 12;
-	    mo = mo % 12;
-	}
+        if (sign > 0) {
+            mo += (sign * dmo);
+            if (mo > 12) {
+                yy += mo / 12;
+                mo = mo % 12;
+            }
+        } else if (sign < 0) {
+            while (dmo > 12) {
+                yy--;
+                dmo -= 12;
+            }
+            if (dmo < mo) {
+                mo -= dmo;
+            } else {
+                yy--;
+                mo = 12 - (dmo - mo);
+            }
+        }
     }
     if (dyy != 0) {
 	yy += (sign * dyy);
@@ -4163,6 +4289,13 @@ cmcvtdate(s,t) char * s; int t; {
 	p = s;
 	goto delta;
     }
+#ifdef COMMENT
+/*
+  What is the purpose of this?  It breaks parsing of email dates like
+  "Wed, 13 Feb 2002 17:43:02 -0800 (PST)".  Removing this code fixes the
+  problem and Kermit still passes the 'dates' script.
+  - fdc, Sat Nov 26 10:52:45 2005.
+*/
     if (dow > -1) {
 	/* Day of week given followed by something that is not a time */
 	/* or a delta so it can't be valid */
@@ -4170,6 +4303,7 @@ cmcvtdate(s,t) char * s; int t; {
 	debug(F111,"cmcvtdate fail",cmdatemsg,-1);
 	return(NULL);
     }
+#endif	/* COMMENT */
 
     /* Handle "today", "yesterday", "tomorrow", and +/- n units */
 
@@ -4706,12 +4840,28 @@ cmcvtdate(s,t) char * s; int t; {
 	isgmt++;			/* All dates are GMT from here down */
 	if (zone != 0) {		/* But not this one so make it GMT */
 	    hh += zone;			/* RFC 822 timezone: EST etc */
+	    debug(F101,"cmcvtdate hh + zone","",hh);
 	    if (hh > 23) {		/* Offset crosses date boundary */
+		int i;
 		long jd;
 		jd = mjd(yyyymmdd);	/* Get MJD */
 		jd += hh / 24;		/* Add new day(s) */
 		hh = hh % 24;		/* and convert back to yyyymmdd */
 		ckstrncpy(yyyymmdd,mjd2date(jd),YYYYMMDD);
+		debug(F111,"cmcvtdate zone-adjusted date",yyyymmdd,hh);
+		for (i = 0; i < 4; i++)
+		  yearbuf[i] = yyyymmdd[i];
+		yearbuf[4] = NUL;
+		monbuf[0] = yyyymmdd[4];
+		monbuf[1] = yyyymmdd[5];
+		monbuf[2] = NUL;
+		daybuf[0] = yyyymmdd[6];
+		daybuf[1] = yyyymmdd[7];
+		daybuf[2] = NUL;
+		day = daybuf;
+		nday = atoi(daybuf);
+		month = monbuf;
+		year = yearbuf;
 	    }
 	}
 	p = p3;				/* Put back whatever we poked above */
@@ -4768,7 +4918,7 @@ cmcvtdate(s,t) char * s; int t; {
 	    p++;
 	}
     }
-    debug(F110,"cmcvtdate after timezone",p,0);
+    debug(F110,"cmcvtdate source string after timezone",p,0);
 
     if (*p) {				/* Anything left? */
 	p2 = p;
@@ -5250,6 +5400,7 @@ cmdiffdate(d1,d2) char * d1, * d2; {
     return((char *)result);
 }
 
+#ifndef NOSPL
 /* s h u f f l e d a t e  --  Rearrange date string */
 
 /*
@@ -5259,11 +5410,13 @@ cmdiffdate(d1,d2) char * d1, * d2; {
       1: Reformat date to yyyy-mmm-dd (mmm = English month abbreviation).
       2: Reformat date to dd-mmm-yyyy (mmm = English month abbreviation).
       3: Reformat as numeric yyyymmddhhmmss.
+      4: Reformat in asctime() format Sat Nov 26 11:10:34 2005
     Returns:
       Pointer to result if args valid, otherwise original arg pointer.
 */
 char *
 shuffledate(p,opt) char * p; int opt; {
+    extern char * wkdays[];
     int len;
     char ibuf[32];
     static char obuf[48];
@@ -5272,10 +5425,58 @@ shuffledate(p,opt) char * p; int opt; {
 
     if (!p) p = "";
     if (!*p) p = ckdate();
-    if (opt < 1 || opt > 3)
+    if (opt < 1 || opt > 4)
       return(p);
     len = strlen(p);
     if (len < 8 || len > 31) return(p);
+    if (opt == 4) {			/* Asctime format (26 Nov 2005) */
+	char c, * s;
+	long z; int k;
+	ckstrncpy(ibuf,p,31);
+	k = len;
+	while (k >= 0 && ibuf[k] == CR || ibuf[k] == LF)
+	  ibuf[k--] = NUL;
+	while (k >= 0 && ibuf[k] == SP || ibuf[k] == HT)
+	  ibuf[k--] = NUL;
+	if (k < 9) ckstrncpy(&ibuf[8]," 00:00:00",9);
+	p = ibuf;
+        z = mjd(p);                     /* Convert to modified Julian date */
+        z = z % 7L;
+        if (z < 0) {
+            z = 0 - z;
+            k = 6 - ((int)z + 3) % 7;
+        } else {
+            k = ((int)z + 3) % 7;	/* Day of week */
+        }
+	s = wkdays[k];
+        obuf[0] = s[0];			/* Day of week */
+        obuf[1] = s[1];
+        obuf[2] = s[2];
+        obuf[3] = SP;			/* Space */
+	c = p[6];
+        p[6] = NUL;
+	mm = atoi(&ibuf[4]);		/* Month */
+	s = moname[mm-1];		/* Name of month */
+	p[6] = c;
+
+        obuf[4] = s[0];			/* Month */
+        obuf[5] = s[1];
+        obuf[6] = s[2];
+        obuf[7] = SP;			/* Space */
+	if (p[6] == '0')		/* Date of month */
+	  obuf[8] = SP;
+	else
+	  obuf[8] = p[6];
+        obuf[9] = p[7];
+	ckstrncpy(&obuf[10],&p[8],10);	/* Time */
+        obuf[19] = SP;			/* Space */
+	obuf[20] = p[0];		/* Year */
+	obuf[21] = p[1];
+	obuf[22] = p[2];
+	obuf[23] = p[3];
+	obuf[24] = NUL;
+	return((char *)obuf);
+    }
     if (opt == 3) {
 	ckstrncpy(obuf,p,48);
 	/* yyyymmdd hh:mm:ss */
@@ -5325,6 +5526,7 @@ shuffledate(p,opt) char * p; int opt; {
     }
     return((char *)obuf);
 }
+#endif	/* NOSPL */
 
 /*  C K C V T D A T E  --  Like cmcvtdate(), but returns string.  */
 /*  For use by date-related functions */
@@ -5662,10 +5864,11 @@ cmcfm() {
 /* See ckucmd.h for FDB and OFDB definitions. */
 
 struct OFDB cmresult = {		/* Universal cmfdb result holder */
-    NULL,
-    0,
-    NULL,
-    0
+    NULL,				/* Address of succeeding FDB struct */
+    0,					/* Function code */
+    NULL,				/* String result */
+    0,					/* Integer result */
+    (CK_OFF_T)0				/* Wide result */
 };
 
 VOID
@@ -5699,6 +5902,7 @@ cmfdb(fdbin) struct FDB * fdbin; {
     struct FDB * in = fdbin;
     struct OFDB * out = &cmresult;
     int x = 0, n, r;
+    CK_OFF_T w = (CK_OFF_T)0;
     char *s, *xp, *m = NULL;
     int errbits = 0;
 
@@ -5736,6 +5940,19 @@ cmfdb(fdbin) struct FDB * fdbin; {
             x_ifnum = 0;
 #endif /* NOSPL */
 	    debug(F101,"cmfdb cmnum","",x);
+	    if (x < 0) errbits |= 1;
+	    break;
+	  case _CMNUW:			/* Wide cmnum - 24 Dec 2005 */
+	    r = in->ndata1;
+	    if (r != 10 && r != 8) r = 10;
+#ifndef NOSPL
+            x_ifnum = 1;                /* Disables warning messages */
+#endif /* NOSPL */
+	    x = cmnumw(in->hlpmsg,in->dflt,r,&w,in->spf);
+#ifndef NOSPL
+            x_ifnum = 0;
+#endif /* NOSPL */
+	    debug(F101,"cmfdb cmnumw","",w);
 	    if (x < 0) errbits |= 1;
 	    break;
 	  case _CMOFI:
@@ -5795,8 +6012,10 @@ cmfdb(fdbin) struct FDB * fdbin; {
 	    out->fdbaddr = in;
 	    out->sresult = s;
 	    out->nresult = (in->fcode == _CMKEY) ? x : n;
+	    out->wresult = w;
 	    out->kflags = (in->fcode == _CMKEY) ? cmkwflgs : 0;
 	    debug(F111,"cmfdb out->nresult",out->sresult,out->nresult);
+	    debug(F111,"cmfdb out->wresult",out->sresult,out->wresult);
 	    nomsg = 0;
 	    xcmfdb = 0;
 	    /* debug(F111,"cmfdb cmdbuf & crflag",cmdbuf,crflag); */
@@ -5836,7 +6055,6 @@ cmfdb(fdbin) struct FDB * fdbin; {
 	pp = np = bp = xp;		/* Back up pointers */
 	cmflgs = -1;			/* Force a reparse */
 
-
 #ifndef NOSPL
 	if (!askflag) {			/* If not executing ASK-class cmd... */
 #endif /* NOSPL */
@@ -5853,6 +6071,29 @@ cmfdb(fdbin) struct FDB * fdbin; {
     }
 }
 
+/*
+   C M I O F I  --  Parse an input file OR the name of a nonexistent file.
+
+   Replaces the commented-out version above.  This one actually works and
+   has the expected straightforward interface.
+*/
+int
+cmiofi(xhlp,xdef,xp,wild,f) char *xhlp, *xdef, **xp; int *wild; xx_strp f; {
+    int x;
+    struct FDB f1, f2;
+    cmfdbi(&f1,_CMIFI,xhlp,xdef,"",0,0,f,NULL,&f2);
+    cmfdbi(&f2,_CMOFI,"","","",0,0,f,NULL,NULL);
+    x = cmfdb(&f1);
+    if (x < 0) {
+	if (x == -3) {
+	    x = -9;
+	    printf("?Filename required\n");
+	}
+    }
+    *wild = cmresult.nresult;
+    *xp = cmresult.sresult;
+    return(x);
+}
 
 /*  G T W O R D  --  Gets a "word" from the command input stream  */
 
@@ -5862,6 +6103,7 @@ Usage: retcode = gtword(brk);
   brk = 1 to add ':' and '=' (for parsing switches).  These characters
         act as break characters only if the first character of the field
         is slash ('/'), i.e. switch introducer.
+  brk = 4 to not strip comments (used only for "help #" and "help ;").
 
 Returns:
 -10 Timelimit set and timed out
@@ -5938,7 +6180,6 @@ gtword(brk) int brk; {
     extern int con_reads_mt;            /* Console read asynch is active */
     if (con_reads_mt) connoi_mt();      /* Task would interfere w/cons read */
 #endif /* datageneral */
-
 
 #ifdef COMMENT
 #ifdef DEBUG
@@ -6062,7 +6303,11 @@ CMDIRPARSE:
 
 	c = *bp;
         if (!c) {			/* If no char waiting in reparse buf */
-	    if (dpx && (!pushc
+	    if ((dpx
+#ifndef NOSPL
+		 || echostars
+#endif /* NOSPL */
+		 ) && (!pushc
 #ifndef NOSPL
 			|| askflag
 #endif /* NOSPL */
@@ -6206,9 +6451,11 @@ CMDIRPARSE:
 		break;
 	      case ';':			/* Trailing comment */
 	      case '#':
-		if (inword == 0 && quoting) { /* If not in a word */
-		    comment = 1;	/* start a comment. */
-		    cp = bp;		/* remember where it starts. */
+		if (! (brk & 4) ) {	/* If not keeping comments */
+		    if (inword == 0 && quoting) { /* If not in a word */
+			comment = 1;	/* start a comment. */
+			cp = bp;	/* remember where it starts. */
+		    }
 		}
 		break;
 	    }
@@ -6218,13 +6465,13 @@ CMDIRPARSE:
 		/* debug(F101,"gtword echof 2","",echof); */
 #ifdef BEBOX
                 if (echof) {
-                    putchar(c);		/* echo it. */
+		    cmdecho((char) c, 0); /* Echo what was typed. */
                     fflush(stdout);
                     fflush(stderr);
                 }
 #else
-                if (echof) {		/* echo it. */
-		    putchar((CHAR)c);
+                if (echof) {
+		    cmdecho((char) c, 0); /* Echo what was typed. */
 		    if (timelimit)
 		      fflush(stdout);
 		}
@@ -6260,19 +6507,20 @@ CMDIRPARSE:
 		  blocklvl--;
             }
 	    if ((c == '=' || c == ':') &&
-		!kstartactive && !comment && brk && (firstnb == '/')
+		/* ^^^ */
+		!kstartactive && !comment && brk /* && (firstnb == '/') */
 		) {
                 *bp++ = (char) c;	/* Switch argument separator */
 		/* debug(F111,"gtword switch argsep",cmdbuf,brk); */
 #ifdef BEBOX
                 if (echof) {
-                    putchar(c);		/* Echo it. */
+		    cmdecho((char) c, 0); /* Echo what was typed. */
                     fflush(stdout);
                     fflush(stderr);
                 }
 #else
 		if (echof) {
-		    putchar((CHAR)c);
+		    cmdecho((char) c, 0); /* Echo what was typed. */
 		    if (timelimit)
 		      fflush(stdout);
 		}
@@ -6280,7 +6528,7 @@ CMDIRPARSE:
 		if ((*pp != lbrace) || (bracelvl == 0)) {
 		    np = bp;
 		    cmbptr = np;
-		    if (setatm(pp,0) < 0) {
+		    if (setatm(pp,2) < 0) { /* ^^^ */
 			printf("?Field too long error 1\n");
 			debug(F111,"gtword too long #1",pp,strlen(pp));
 			return(-9);
@@ -6447,7 +6695,7 @@ CMDIRPARSE:
 			&& !kstartactive
 			&& !comment
 			) {
-			putchar((CHAR)c);
+			cmdecho((char) c, 0);
 			*bp = NUL;
 			if (setatm(pp,0) < 0) {
 			    debug(F111,"gtword too long ?",pp,strlen(pp));
@@ -6546,17 +6794,31 @@ CMDIRPARSE:
 		      printf("\n%s",cmprom);
 		      cpx = cmdbuf;
 		      while ((cx = *cpx++)) {
-#ifdef isprint
-			  putchar((CHAR) (isprint(cx) ? cx : '^'));
-#else
-			  putchar((CHAR) ((cx >= SP && cx < DEL) ? cx : '^'));
-#endif /* isprint */
+			  cmdecho(cx,0);
 		      }
 		      fflush(stdout);
 		      continue;
 		  }
+#ifndef NOLASTFILE
+		  case VT:
+		    if (lastfile) {
+			printf("%s ",lastfile);
+#ifdef GEMDOS
+			fflush(stdout);
+#endif /* GEMDOS */
+			inword = cmflgs = 0;
+			addbuf(lastfile);	/* Supply default. */
+			if (setatm(lastfile,0) < 0) {
+			    printf("Last name too long\n");
+			    if (np) free(np);
+			    return(-9);
+			}
+		    } else {		/* No default */
+			bleep(BP_WARN);
+		    }
+		    return(0);
+#endif	/* NOLASTFILE */
 		}
-
 
 #ifdef CK_RECALL
 		if (on_recall &&	/* Reading commands from keyboard? */
@@ -6633,7 +6895,12 @@ CMDIRPARSE:
                 fflush(stderr);
             }
 #else
-            if (echof) cmdecho((char) c, 0); /* Echo what was typed. */
+#ifdef NOSPL
+            if (echof || chsrc)
+#else
+            if (echof || (echostars && chsrc))
+#endif	/* NOSPL */
+	      cmdecho((char) c, 0);	/* Echo what was typed. */
 #endif /* BEBOX */
         } else {			/* This character was quoted. */
 	    int qf = 1;
@@ -7209,7 +7476,10 @@ cmdnewl(c) char c;
 
 static VOID
 cmdchardel() {				/* Erase a character from the screen */
-    if (!dpx) return;
+#ifndef NOSPL
+    if (!echostars)
+#endif	/* NOSPL */
+      if (!dpx) return;
 #ifdef datageneral
     /* DG '\b' is EM (^y or \031) */
     if (termtype == 1)
@@ -7234,7 +7504,15 @@ cmdecho(char c, int quote)
 cmdecho(c,quote) char c; int quote;
 #endif /* CK_ANSIC */
 { /* cmdecho */
+#ifdef NOSPL
     if (!dpx) return;
+#else
+    if (!echostars) {
+	if (!dpx) return;
+    } else {
+	c = (char)echostars;
+    }
+#endif	/* NOSPL */
     /* Echo tty input character c */
     if (quote) {
 	putchar(BS);
@@ -7245,7 +7523,9 @@ cmdecho(c,quote) char c; int quote;
 #else
 	putchar((CHAR) ((c >= SP && c < DEL) ? c : '^'));
 #endif /* isprint */
-    } else putchar(c);
+    } else {
+	putchar(c);
+    }
 #ifdef OS2
     if (quote==1 && c==CR) putchar((CHAR) NL);
 #endif /* OS2 */
@@ -7550,7 +7830,7 @@ lookup(table,cmd,n,x) char *cmd; struct keytab table[]; int n, *x; {
 
     if (!ckstrcmp(table[n-1].kwd,cmd,cmdlen,0)) {
         if (x) *x = n-1;
-	debug(F111,"lookup",table[i].kwd,table);
+	/* debug(F111,"lookup",table[i].kwd,table); */
         return(table[n-1].kwval);
     } else return(-1);
 }

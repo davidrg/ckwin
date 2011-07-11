@@ -13,7 +13,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2011,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -83,6 +83,10 @@ extern char * exedir;
 extern int cm_retry;
 #endif /* CK_RECALL */
 
+#ifdef NEWFTP
+extern int ftpisopen();
+#endif /* NEWFTP */
+
 extern int cmdint;
 extern int srvidl;
 
@@ -107,9 +111,16 @@ char browsurl[4096] = { NUL, NUL };
 #endif /*  NOFRILLS */
 #endif /* NOPUSH */
 
+#ifndef NOFRILLS
+#ifndef NORENAME
+_PROTOTYP(int setrename, (void));
+#endif	/* NORENAME */
+#endif	/* NOFRILLS */
+
 /* Variables */
 
 int cmd_quoting = 1;
+int cmd_err = 1;
 extern int hints, xcmdsrc;
 
 #ifdef CK_KERBEROS
@@ -133,7 +144,7 @@ extern int
   mdmtyp, network, quiet, nettype, carrier, debses, debtim, cdtimo, nlangs,
   bgset, pflag, msgflg, cmdmsk, xsuspend, techo, pacing, xitwarn, xitsta,
   outesc, cmd_cols, cmd_rows, ckxech, xaskmore, haveline, didsetlin, isguest,
-  mdmsav, clearrq, saveask;
+  mdmsav, clearrq, saveask, debmsg;
 
 extern int reliable, setreliable, matchdot, matchfifo, dir_dots;
 
@@ -290,7 +301,7 @@ extern CHAR myctlq;                     /* Control-character prefix */
 extern CHAR myrptq;                     /* Repeat-count prefix */
 
 extern int protocol, size, spsiz, spmax, urpsiz, srvtim, srvcdmsg, slostart,
-  srvdis, xfermode, ckdelay, keep, maxtry, unkcs, bctr, ebqflg, swcapr,
+  srvdis, xfermode, ckdelay, keep, maxtry, unkcs, bctr, bctf, ebqflg, swcapr,
   wslotr, lscapr, lscapu, spsizr, rptena, rptmin, docrc, xfrcan, xfrchr,
   xfrnum, xfrbel, xfrint, srvping, g_xfermode, xfrxla;
 
@@ -336,6 +347,7 @@ extern int tlevel;                      /* Take Command file level */
 #ifndef NOLOCAL
 extern int sessft;                      /* Session-log file type */
 extern int slogts;                      /* Session-log timestamps on/off */
+extern int slognul;			/* Lines null-terminated */
 #endif /* NOLOCAL */
 
 char * tempdir = NULL;
@@ -385,9 +397,12 @@ struct keytab chktab[] = {              /* Block check types */
     "1", 1, 0,                          /* 1 =  6-bit checksum */
     "2", 2, 0,                          /* 2 = 12-bit checksum */
     "3", 3, 0,                          /* 3 = 16-bit CRC */
-    "4", 4, CM_INV,                     /* Same as B */
-    "blank-free-2", 4, 0                /* B = 12-bit checksum, no blanks */
+    "4", 4, 0,				/* Same as B */
+    "5", 5, 0,				/* Same as F */
+    "blank-free-2", 4, CM_INV,		/* B = 12-bit checksum, no blanks */
+    "force-3", 5, CM_INV		/* F = Force CRC on ALL packets */
 };
+static int nchkt = (sizeof(chktab) / sizeof(struct keytab));
 
 struct keytab rpttab[] = {              /* SET REPEAT */
     "counts",    0, 0,                  /* On or Off */
@@ -414,6 +429,17 @@ struct keytab ooatab[] = {              /* On/Off/Auto table */
     "on",        SET_ON,   0            /* 1 */
 };
 
+struct keytab ooetab[] = {              /* On/Off/Stderr table 2010/03/12 */
+    "off",       SET_OFF, 0,		/* for SET DEBUG MESSAGES */
+    "on",        SET_ON,  0,
+    "s",         2,       CM_ABR|CM_INV,
+    "st",        2,       CM_ABR|CM_INV,
+    "std",       2,       CM_ABR|CM_INV,
+    "stderr",    2,       0,
+    "stdout",    SET_ON,  CM_INV
+};
+static int nooetab = (sizeof(ooetab) / sizeof(struct keytab));
+
 struct keytab ooktab[] = {              /* On/Off/Ask table */
     "ask",       2,        0,           /* 2 */
     "off",       SET_OFF,  0,           /* 0 */
@@ -433,9 +459,13 @@ int nqvt = 2;
 #define DEB_SES  2
 #define DEB_TIM  3
 #define DEB_LEN  4
+#define DEB_MSG  5
 
 struct keytab dbgtab[] = {
     "linelength", DEB_LEN, CM_INV,
+    "m",          DEB_MSG, CM_ABR|CM_INV,
+    "message",    DEB_MSG, 0,
+    "msg",        DEB_MSG, CM_INV,
     "off",        DEB_OFF, 0,
     "on",         DEB_ON,  0,
     "session",    DEB_SES, 0,
@@ -655,6 +685,7 @@ static struct keytab sfttab[] = {       /* File types for SET SESSION-LOG */
     "ascii",     XYFT_T, CM_INV,
     "binary",    XYFT_B, 0,
     "debug",     XYFT_D, 0,
+    "null-padded-lines", 998, 0,
     "text",      XYFT_T, 0,
     "timestamped-text", 999, 0
 };
@@ -951,11 +982,21 @@ extern int tapiusecfg;
 
 #ifndef NOPUSH
 extern int nopush;
+extern int wildena;
 #ifdef UNIX
 struct keytab wildtab[] = {             /* SET WILDCARD-EXPANSION */
-    "kermit",  0, 0,
-    "shell",   1, 0
+#ifdef UNIX
+    "kermit",  WILD_KER, 0,		/* By Kermit */
+#endif	/* UNIX */
+    "off",     WILD_OFF, 0,		/* Disabled */
+    "on",      WILD_ON,  0,		/* Enabled */
+#ifdef UNIX
+    "shell",   WILD_SHE, 0,		/* By Shell */
+#endif	/* UNIX */
+    "", 0, 0
 };
+int nwild = (sizeof(wildtab) / sizeof(struct keytab)) - 1;
+
 struct keytab wdottab[] = {             /* cont'd */
     "/match-dot-files",    1, 0,
     "/no-match-dot-files", 0, 0
@@ -1019,6 +1060,10 @@ static struct keytab vbtab[] = {
     "brief",   0, 0,
 #ifdef OS2ORUNIX
     "ftp",     2, 0,
+#else
+#ifdef VMS
+    "ftp",     2, 0,
+#endif /* def VMS */
 #endif /* OS2ORUNIX */
     "verbose", 1, 0
 };
@@ -1189,6 +1234,8 @@ struct keytab scrtab[] = {
 #define SCMD_DBQ 13	/* DOUBLEQUOTING */
 #define SCMD_CBR 14	/* CBREAK */
 #define SCMD_BFL 15	/* BUFFER-SIZE (not used) */
+#define SCMD_ERR 16	/* ERROR */
+#define SCMD_VAR 17	/* VARIABLE-EVALUATION */
 
 static struct keytab scmdtab[] = {
 #ifdef CK_AUTODL
@@ -1211,6 +1258,7 @@ static struct keytab scmdtab[] = {
 #ifdef DOUBLEQUOTING
     "doublequoting",      SCMD_DBQ, 0,
 #endif /* DOUBLEQUOTING */
+    "error-display",      SCMD_ERR, 0,
     "height",             SCMD_HIG, 0,
     "interruption",       SCMD_INT, 0,
     "more-prompting",     SCMD_MOR, 0,
@@ -1227,6 +1275,7 @@ static struct keytab scmdtab[] = {
     "statusline",         SCMD_STA, 0,
 #endif /* ONETERMUPD */
 #endif /* OS2 */
+    "variable-evaluation", SCMD_VAR,0,
     "width",              SCMD_WID, 0
 };
 static int nbytt = (sizeof(scmdtab) / sizeof(struct keytab));
@@ -2085,7 +2134,7 @@ struct keytab ftrtab[] = {              /* Feature table */
 "xyzmodem",             0, 0,
 #else
 "xyzmodem",             1, 0,
-#endif /* NOXMIT */
+#endif /* CK_XYZ */
 
 "", 0, 0
 };
@@ -3224,7 +3273,8 @@ douchmod() {
 
 struct keytab sexptab[] = {
     "depth-limit", 1, 0,
-    "echo-result", 0, 0
+    "echo-result", 0, 0,
+    "truncate-all-results", 2
 };
 
 static int sexpmaxdep = 1000;           /* Maximum depth */
@@ -3307,18 +3357,18 @@ static struct keytab sexpops[] = {      /* Built-in operators */
     "not",     SX_NOT, SXF_ONE,         /* NOT */
     "mod",     SX_MOD, SXF_TWO,         /* Modulus */
 
-    "<",       SX_ALT, SXF_PRE|SXF_TWO, /* Comparisons */
-    ">",       SX_AGT, SXF_PRE|SXF_TWO,
-    "<=",      SX_ALE, SXF_PRE|SXF_TWO,
-    "=",       SX_AEQ, SXF_PRE|SXF_TWO,
-    ">=",      SX_AGE, SXF_PRE|SXF_TWO,
-    "!=",      SX_NEQ, SXF_PRE|SXF_TWO,
+    "<",       SX_ALT, SXF_PRE,		/* Comparisons */
+    ">",       SX_AGT, SXF_PRE,
+    "<=",      SX_ALE, SXF_PRE,
+    "=",       SX_AEQ, SXF_PRE,
+    ">=",      SX_AGE, SXF_PRE,
+    "!=",      SX_NEQ, SXF_PRE,
 
     "++",      SX_INC, SXF_ONE|SXF_TWO, /* Increment */
     "--",      SX_DEC, SXF_ONE|SXF_TWO, /* Decrement */
 
     "**",      SX_POW, SXF_TWO,         /* Common synonyms */
-    "==",      SX_AEQ, SXF_PRE|SXF_TWO,
+    "==",      SX_AEQ, SXF_PRE,
     "!",       SX_NOT, SXF_ONE,
     ".",       SX_EVA, 0,
 
@@ -3339,7 +3389,7 @@ static struct keytab sexpops[] = {      /* Built-in operators */
     "eval",    SX_EVA, 0,               /* Assorted commands */
     "abs",     SX_ABS, SXF_ONE,
     "truncate",SX_TRU, SXF_ONE|SXF_FLO,
-    "round",   SX_ROU, SXF_ONE|SXF_FLO,
+    "round",   SX_ROU, SXF_ONE|SXF_TWO|SXF_FLO,
     "ceiling", SX_CEI, SXF_ONE|SXF_FLO,
     "floor",   SX_FLR, SXF_ONE|SXF_FLO,
     "float",   SX_FLO, SXF_ONE|SXF_FLO,
@@ -3372,11 +3422,13 @@ static int nsexpconsts = (sizeof(sexpconsts) / sizeof(struct keytab)) - 1;
 
 int sexprc = 0;                         /* S-Expression error flag */
 int sexppv = -1;                        /* Predicate value */
+static int sexptrunc = 0;		/* Flag to force all results to int */
 
 #define SXMLEN 64                       /* Macro arg list initial length */
 #include <math.h>                       /* Floating-point functions */
 
 _PROTOTYP( char * fpformat, (CKFLOAT, int, int) );
+_PROTOTYP( CKFLOAT ckround, (CKFLOAT, int, char *, int) );
 
 extern char math_pi[];                  /* Value of Pi */
 extern int sexpecho;                    /* SET SEXPRESSION ECHO value */
@@ -3399,6 +3451,8 @@ shosexp() {
     printf(" maximum depth reached:   %d\n",sexpdmax);
     printf(" longest result returned: %d\n",sexprmax);
     printf("\n");
+    printf(" truncate all results:    %s\n",showoff(sexptrunc));
+    printf("\n");
     printf(" last sexpression:        %s\n",lastsexp ? lastsexp : "(none)");
     printf(" last value:              %s\n",sexpval ? sexpval : "(none)");
     printf("\n");
@@ -3417,6 +3471,8 @@ sexpdebug(s) char * s; {
 
 /*  Returns value as string (empty, numeric, or non-numeric) */
 
+static char sxroundbuf[32];		/* For ROUND result */
+
 char *
 dosexp(s) char *s; {                    /* s = S-Expression */
     extern struct mtab *mactab;         /* Macro table */
@@ -3431,9 +3487,10 @@ dosexp(s) char *s; {                    /* s = S-Expression */
     int linepos = 0;
     int quote = 0;                      /* LISP quote flag */
     char * s2;                          /* Workers */
-    int i, j, k, n = 0, x = 0, kw, kwflags, mx = 0;
-    int result = 0, not = 0, truncate = 0, builtin = 0;
+    int kw, kwflags, mx = 0, x = 0;
+    int not = 0, truncate = 0, builtin = 0;
     int fpflag = 0, quit = 0, macro = 0;
+    CK_OFF_T result = 0, i, j, k, n = 0;
     CKFLOAT fpj, fpresult = 0.0;        /* Floating-point results */
     int pflag = 0;                      /* Have predicate */
     int presult = 0;                    /* Predicate result */
@@ -3441,6 +3498,8 @@ dosexp(s) char *s; {                    /* s = S-Expression */
 
     sexppv = -1;                        /* Predicate value */
     s2 = "";                            /* Default return value */
+
+    debug(F111,sexpdebug("entry 1"),s,sexprc);
 
     if (++sexpdep > sexpmaxdep) {       /* Keep track of depth */
         printf("?S-Expression depth limit exceeded: %d\n",sexpmaxdep);
@@ -3453,14 +3512,13 @@ dosexp(s) char *s; {                    /* s = S-Expression */
     if (sexprc)                         /* Error, quit all levels */
       goto xdosexp;                     /* Always goto common exit point */
 
-    debug(F111,sexpdebug("entry"),s,sexprc);
+    debug(F111,sexpdebug("entry 2"),s,sexprc);
 
     if (!s) s = "";                     /* Null or empty arg */
 
     while (*s == SP) s++;               /* Strip leading spaces */
     if (!*s)                            /* so empty result */
       goto xdosexp;
-
 /*
   Allocate result stack upon first use, or after it has been resized with
   SET SEXP DEPTH-LIMIT.
@@ -3507,7 +3565,9 @@ dosexp(s) char *s; {                    /* s = S-Expression */
     }
     /* Break result up into "words" (an SEXP counts as a word) */
 
-    p[0] = NULL;                        /* (We don't use element 0) */
+    for (i = 0; i < SEXPMAX+1; i++ ) {	/* Clear the operands */
+	p[i] = NULL;
+    }
     if (!*(s+1) || !*(s+2)) {           /* No need to call cksplit() */
         n = 1;                          /* if it's one or two chars. */
         p[1] = s;                       /* No need to malloc this either. */
@@ -3550,7 +3610,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
     debug(F110,sexpdebug("head"),p[1],0);
 
     if (n == 1 && p[1]) {
-        if (*(p[1]) == '\047') {
+        if (*(p[1]) == '\047') {       /* Apostrophe = LISP quote character */
             s2 = p[1];
             goto xdosexp;
         }
@@ -3612,7 +3672,6 @@ dosexp(s) char *s; {                    /* s = S-Expression */
             }
             if (!x) {                   /* None of the above, look it up */
                 x = xlookup(sexpops,p[1],nsexpops,&kw);
-		debug(F111,"XXX",p[1],x);
                 if (x > 0) {
                     kwflags = sexpops[kw].flgs;
                     builtin = 1;
@@ -3640,7 +3699,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
     }
     if (n == 1) {                       /* Not an expression */
         if (builtin) {                  /* Built-in operand? */
-            switch (x) {                /* Operators with default values */
+            switch (x) {		/* Operators with default values */
               case SX_EVA:
                 s2 = "";
                 goto xdosexp;
@@ -3763,7 +3822,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
                     }
                     break;
                   case SXF_ONE:
-                    if (n != 2) {
+		    if (n != 2) {
                         printf("?Too %s operands - \"%s\"\n",
                                (n > 2) ? "many" : "few", s);
                         sexprc++;
@@ -3772,11 +3831,54 @@ dosexp(s) char *s; {                    /* s = S-Expression */
                 }
             }
             if (kwflags & SXF_PRE) {    /* Predicate? */
+		if (n < 2) {
+		    printf("?Too few operands - \"%s\"\n",s);
+		    sexprc++;
+		    goto xdosexp;
+		}
                 pflag = 1;
                 presult = 1;
             }
             if (kwflags & SXF_FLO)      /* Operator requires floating point */
               fpflag++;                 /* Force it */
+
+	    if (x == SX_ROU) {		/* ROUND can have 1 or 2 arguments */
+		if (n < 2 || n > 3) {
+		    printf("?Too %s operands - \"%s\"\n",
+			   (n > 3) ? "many" : "few", s);
+		    sexprc++;
+		    goto xdosexp;
+		}
+	    }
+	    if (x == SX_ROU) {
+		/* But they are not "cumulative" like other SEXP args */
+		/* So this case is handled specially */
+		char buf1[32], buf2[32];
+		float r;
+		char * s0, * s1;
+		char * q0, * q1;
+
+		s0 = p[2];
+		if (!s0) s0 = "";
+		if (!*s0) s0 = "0";
+		q0 = dosexp(s0);
+		ckstrncpy(buf1,q0,32);
+		q0 = buf1;
+
+		s1 = p[3];
+		if (!s1) s1 = "";
+		if (!*s1) s1 = "0";
+		q1 = dosexp(s1);
+		if (!q1) q1 = "";
+		if (!*q1) q1 = "0";
+		ckstrncpy(buf2,q1,32);
+		q1 = buf2;
+
+		r = ckround(atof(q0),(int)(atof(q1)),sxroundbuf,31);
+		s2 = sxroundbuf;
+		sexprc = 0;
+		goto xdosexp;
+	    }
         }
         if (x == SX_SET || x == SX_LET || /* Assignment is special */
             x == SX_INC || x == SX_DEC) {
@@ -3849,7 +3951,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
                         goto xdosexp;
                     }
                     while (*s2 == '+') s2++;
-                    result = atoi(s2);
+                    result = ckatofs(s2);
                     fpresult = floatval;
                     if (k > 1 || fpresult != result)
                       fpflag++;
@@ -3883,7 +3985,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
                         goto xdosexp;
                     }
                     while (*s2 == '+') s2++;
-                    j = atoi(s2);
+                    j = ckatofs(s2);
                     if (k > 1) {
                         fpj = floatval;
                         fpflag++;
@@ -3897,8 +3999,11 @@ dosexp(s) char *s; {                    /* s = S-Expression */
                         result -= j;
                         fpresult -= fpj;
                     }
+#ifdef FNFLOAT
                     if (result != fpresult) fpflag++;
-                    s2 = fpflag ? fpformat(fpresult,0,0) : ckitoa(result);
+#endif	/* FNFLOAT */
+                    s2 = (fpflag && !sexptrunc) ?
+			fpformat(fpresult,0,0) : ckfstoa(result);
                 }
                 if (x == SX_LET && cmdlvl > 0) /* LET makes var local */
                   addlocal(p[i+1]);
@@ -3913,7 +4018,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
                     sexprc++;
                     goto xdosexp;
                 }
-                if (s2) result = atoi(s2);
+                if (s2) result = ckatofs(s2);
             }
             goto xdosexp;
         } else if (x == SX_IFC) {               /* Conditional expression */
@@ -3926,7 +4031,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
             s2 = dosexp(p[2]);
             if (sexprc) goto xdosexp;
             if (s2) {
-                j = atoi(s2);
+                j = ckatofs(s2);
                 if (xxfloat(s2,0) == 2) {
                     fpflag++;
                     fpresult = (CKFLOAT)result;
@@ -3941,7 +4046,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
             } else {
                 s2 = dosexp(true ? p[3] : p[4]);
                 if (sexprc) goto xdosexp;
-                j = s2 ? atoi(s2) : 0;
+                j = s2 ? ckatofs(s2) : 0;
                 if (xxfloat(s2,0) == 2) {
                     fpflag++;
                     fpresult = (CKFLOAT)result;
@@ -3998,6 +4103,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
         quote = 0;
         s2 = p[i+1];                    /* Get operand */
         if (!s2) s2 = "";
+
 #ifdef COMMENT
         if (*s2 == '\047') {            /* Is it quoted? */
             debug(F110,sexpdebug("'B"),s2,0);
@@ -4098,7 +4204,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
             j = 0;
             fpj = 0.0;
         } else {
-            j = atoi(s2);
+            j = ckatofs(s2);
             /* Switch to floating-point upon encountering any f.p. arg */
             /* OR... if integer is too big */
             if (!fpflag) if (xxfloat(s2,0) == 2)
@@ -4108,7 +4214,10 @@ dosexp(s) char *s; {                    /* s = S-Expression */
         if (i == 1) {                   /* Initial result is first operand */
             result = (n == 2 && x == SX_SUB) ? 0-j : j;
             fpresult = (n == 2 && x == SX_SUB) ? -fpj : fpj;
-            if (!(kwflags & SXF_ONE))   /* Command with single arg */
+	    if ((x == SX_AND && result == 0) ||	/* Short circuit */
+		(x == SX_LOR && result != 0))
+	      quit++;
+            if (!(kwflags & SXF_ONE))	/* Command w/single arg */
               continue;
         }
         if (x == SX_MOD || x == SX_DIV) {
@@ -4120,7 +4229,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
                 goto xdosexp;
             }
         }
-        switch (x) {                    /* Accumulate result */
+        switch (x) {			/* Accumulate result */
 
           case SX_EVA:                  /* EVAL */
             result = j;
@@ -4130,22 +4239,28 @@ dosexp(s) char *s; {                    /* s = S-Expression */
           case SX_ADD:                  /* + */
             result += j;
             fpresult += fpj;
+#ifdef FNFLOAT
             if (result != fpresult)
               fpflag++;
+#endif	/* FNFLOAT */
             break;
 
           case SX_SUB:                  /* - */
             result -= j;
             fpresult -= fpj;
+#ifdef FNFLOAT
             if (result != fpresult)
               fpflag++;
+#endif	/* FNFLOAT */
             break;
 
           case SX_MUL:                  /* * */
             result *= j;
             fpresult *= fpj;
+#ifdef FNFLOAT
             if (result != fpresult)
               fpflag++;
+#endif	/* FNFLOAT */
             break;
 
           case SX_AND:                  /* AND */
@@ -4172,10 +4287,20 @@ dosexp(s) char *s; {                    /* s = S-Expression */
             break;
 
           case SX_DIV:                  /* / */
-            result /= j;
-            fpresult /= fpj;
-            if (result != fpresult)
-              fpflag++;
+	    if (j) {
+		result /= j;
+		fpresult /= fpj;
+#ifdef FNFLOAT
+		if (result != fpresult)
+		  fpflag++;
+#endif	/* FNFLOAT */
+	    } else {
+		fpresult /= fpj;
+		result = fpj;
+#ifdef FNFLOAT
+		  fpflag++;
+#endif	/* FNFLOAT */
+	    }
             break;
 
           case SX_AEQ:                  /* Test for equality */
@@ -4268,7 +4393,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
             if (j == 0) {
                 result = 1;
             } else {
-                int z, sign = 0;
+                CK_OFF_T z, sign = 0;
                 if (j < 0) {
                     if (result == 0) {
                         printf("?Divide by zero - \"%s\"\n",cmdbuf);
@@ -4284,8 +4409,10 @@ dosexp(s) char *s; {                    /* s = S-Expression */
                 if (sign)
                   result = 1 / result;
             }
+#ifdef FNFLOAT
             if (result != fpresult)
               fpflag++;
+#endif	/* FNFLOAT */
             break;
 
 #ifdef FNFLOAT
@@ -4346,21 +4473,13 @@ dosexp(s) char *s; {                    /* s = S-Expression */
             truncate = 1;
             break;
 
-          case SX_ROU:                  /* Round */
-            if (fpj > 0.0)
-              fpj += 0.5;
-            else if (fpj < 0.0)
-              fpj -= 0.5;
-            fpresult = fpj;
-            fpflag = 1;
-            truncate = 1;
-            break;
-
           case SX_ABS:                  /* Absolute value */
             result = (j < 0) ? 0 - j : j;
+#ifdef FNFLOAT
             fpresult = (fpj < 0.0) ? 0.0 - fpj : fpj;
             if (result != fpresult)
               fpflag++;
+#endif	/* FNFLOAT */
             break;
 
           case SX_MAX:                  /* Max */
@@ -4482,12 +4601,12 @@ dosexp(s) char *s; {                    /* s = S-Expression */
         if (not) presult = presult ? 0 : 1;
         sexppv = presult;               /* So set predicate value (0 or 1) */
         s2 = presult ? "1" : "0";
-    } else if (fpflag) {                /* Result is floating-point */
+    } else if (fpflag && !sexptrunc) {	/* Result is floating-point */
         if (not) fpresult = fpresult ? 0.0 : 1.0;
         s2 = fpformat(fpresult,0,0);
     } else if (x != SX_EVA) {
         if (not) result = result ? 0 : 1;
-        s2 = ckitoa(result);
+        s2 = ckfstoa(result);
     }
 
 /* Common exit point.  Always come here to exit. */
@@ -4611,7 +4730,6 @@ dologend() {                            /* Write record to connection log */
     if (autolocus) {
         int x = locus;
 #ifdef NEWFTP
-        extern int ftpisconnected();
 	debug(F101,"dologend ftpisconnected","",ftpisconnected());
         setlocus(ftpisconnected() ? 0 : 1, 1);
 #else
@@ -4653,8 +4771,8 @@ dologend() {                            /* Write record to connection log */
         cx_prev = t2;
         p = hhmmss(t2);
         debug(F110,"dologend hhmmss",p,0);
-        strncat(cxlogbuf,"E=",CXLOGBUFL); /* Append to log record */
-        strncat(cxlogbuf,p,CXLOGBUFL);
+        ckstrncat(cxlogbuf,"E=",CXLOGBUFL); /* Append to log record */
+        ckstrncat(cxlogbuf,p,CXLOGBUFL);
         debug(F110,"dologend cxlogbuf 2",cxlogbuf,0);
     } else
       cx_prev = 0L;
@@ -4806,6 +4924,7 @@ dologshow(fc) int fc; {                 /* SHOW (current) CONNECTION */
             switch (c) {
               case 'T': printf(" Type:         %s\n", s); break;
               case 'N': printf(" To:           %s\n", s); break;
+              case 'P': printf(" Port:         %s\n", s); break;
               case 'H': printf(" From:         %s\n", s); break;
               case 'D': printf(" Device:       %s\n", s); break;
               case 'O': printf(" Origin:       %s\n", s); break;
@@ -4884,7 +5003,9 @@ dologline() {
 VOID
 dolognet() {
     char * p, * s = "NET", * uu = uidbuf;
-    int n, m;
+    char * port = "";
+    int n, m, tcp = 0;
+    char * h = NULL;
 
     dologend();                         /* Previous session not closed out? */
     cx_prev = 0L;
@@ -4892,8 +5013,13 @@ dolognet() {
     p = ckdate();
     n = ckstrncpy(cxlogbuf,p,CXLOGBUFL);
 #ifdef TCPSOCKET
-    if (nettype == NET_TCPB || nettype == NET_TCPA)
-      s = "TCP";
+    if (nettype == NET_TCPB || nettype == NET_TCPA) {
+	tcp++;
+	s = "TCP";
+    } else if (nettype == NET_SSH) {
+	s = "SSH";
+	tcp++;
+    }
 #endif /* TCPSOCKET */
 #ifdef ANYX25
     if (nettype == NET_SX25 || nettype == NET_VX25 || nettype == NET_IX25)
@@ -4924,19 +5050,37 @@ dolognet() {
 #endif /* STRATUS */
 #endif /* UNIX */
     }
+#ifdef TCPSOCKET
+    if (tcp) {
+	int k;
+	makestr(&h,myhost);
+	if ((k = ckindex(":",h,0,0,0)) > 0) {
+	    h[k-1] = NUL;
+	    port = &h[k];
+	} else {
+	    int svcnum = gettcpport();
+	    if (svcnum > 0)
+	      port = ckitoa(svcnum);
+	    else
+	      port = "unk";
+	}
+    }
+#endif	/* TCPSOCKET */
     m = strlen(uu) + strlen(myhost) + strlen(ttname) + strlen(s) + 32;
     if (n+m < CXLOGBUFL-1) {            /* SAFE */
         p = cxlogbuf+n;
-        sprintf(p," %s %s T=%s N=%s H=%s ",
+        sprintf(p," %s %s T=%s N=%s H=%s P=%s ",
                 uu,
                 ckgetpid(),
                 s,
                 ttname,
-                myhost
+                myhost,
+		port
                 );
     } else
       ckstrncpy(cxlogbuf,"LOGNET BUFFER OVERFLOW",CXLOGBUFL);
     debug(F110,"dolognet cxlogbuf",cxlogbuf,0);
+    if (h) makestr(&h,NULL);
 }
 #endif /* NETCONN */
 #endif /* CKLOGDIAL */
@@ -4971,7 +5115,7 @@ initmdm(x) int x; {
     m = usermdm ? usermdm : mdmtyp;
 
     p = modemp[m];                      /* Point to modem info struct, and */
-    debug(F101,"initmdm p","",p);
+    /* debug(F101,"initmdm p","",p); */
     if (p) {
         dialec = p->capas & CKD_EC;     /* set DIAL ERROR-CORRECTION, */
         dialdc = p->capas & CKD_DC;     /* DIAL DATA-COMPRESSION, and */
@@ -6175,6 +6319,37 @@ settapi() {
 #endif /* NOLOCAL */
 
 #ifndef NOSPL
+/* Method for evaluating \%x and \&x[] variables */
+
+static struct keytab varevaltab[] = {
+    { "recursive", 1, 0 },
+    { "simple",    0, 0 }
+};
+static int nvarevaltab = (sizeof(varevaltab) / sizeof(struct keytab));
+
+int
+setvareval() {
+    int x = 0, y = 0;
+    extern int vareval;
+#ifdef DCMDBUF
+    extern int * xvarev;
+#else
+    extern int xvarev[];
+#endif /* DCMDBUF */
+
+    if ((x = cmkey(varevaltab,
+		   nvarevaltab, 
+		   "Method for evaluating \\%x and \\&x[] variables",
+		   "",
+		   xxstring)) < 0)
+      return(x);
+    if ((y = cmcfm()) < 0)
+      return(y);
+    xvarev[cmdlvl] = x;
+    vareval = x;
+    return(success = 1);
+}
+
 #ifdef CK_ANSIC                         /* SET ALARM */
 int
 setalarm(long xx)
@@ -6576,6 +6751,21 @@ struct keytab protos[] = {
 };
 int nprotos =  (sizeof(protos) / sizeof(struct keytab));
 
+#ifndef XYZ_INTERNAL
+#ifndef NOPUSH
+#define EXP_HANDLER 1
+#define EXP_STDERR  2
+#define EXP_TIMO    3
+
+static struct keytab extprotab[] = {
+    { "handler",          EXP_HANDLER, 0 },
+    { "redirect-stderr",  EXP_STDERR, 0 },
+    { "timeout",          EXP_TIMO, 0 }
+};
+static int nxtprotab =  (sizeof(extprotab) / sizeof(struct keytab));
+#endif	/* NOPUSH */
+#endif	/* XYZ_INTERNAL */
+
 #define XPCMDLEN 71
 
 _PROTOTYP(static int protofield, (char *, char *, char *));
@@ -6728,6 +6918,65 @@ protoexit:                              /* Common exit from this routine */
     return(success = 1);
 }
 
+#ifndef NOPUSH
+#ifndef XYZ_INTERNAL
+
+#define DEF_EXP_TIMO 12	 /* Default timeout for external protocol (seconds) */
+
+int exp_handler = 0;			/* These are exported */
+int exp_timo = DEF_EXP_TIMO;
+int exp_stderr = SET_AUTO;
+
+VOID
+shoextern() {				/* Invoked by SHOW PROTOCOL */
+    printf("\n External-protocol handler:         %s\n",
+	   exp_handler ? (exp_handler == 1 ? "pty" : "system") : "automatic");
+#ifdef COMMENT
+    printf(" External-protocol redirect-stderr: %s\n", showooa(exp_stderr));
+#endif	/* COMMENT */
+    printf(" External-protocol timeout:         %d (sec)\n", exp_timo);
+}
+
+static struct keytab setexternhandler[] = {
+    { "automatic", 0, 0 },
+    { "pty",       1, 0 },
+    { "system",    2, 0 }
+};
+
+int
+setextern() {				/* SET EXTERNAL-PROTOCOL */
+    int x, y;
+    if ((x = cmkey(extprotab,nxtprotab,"","",xxstring)) < 0)
+      return(x);
+    switch (x) {
+      case EXP_HANDLER:
+	if ((x = cmkey(setexternhandler,3,"","automatic",xxstring)) < 0)
+	  return(x);
+	if ((y = cmcfm()) < 0)
+	  return(y);
+	exp_handler = x;
+	break;
+	
+#ifdef COMMENT
+      case EXP_STDERR:
+	if ((x = cmkey(ooatab,3,"","automatic",xxstring)) < 0)
+	  return(x);
+	if ((y = cmcfm()) < 0)
+	  return(y);
+	exp_stderr = x;
+	break;
+#endif	/* COMMENT */
+
+      case EXP_TIMO:
+	y = cmnum("Inactivity timeout, seconds,",ckitoa(DEF_EXP_TIMO),
+		  10,&x,xxstring);
+        return(setnum(&exp_timo,x,y,-1));
+    }
+    return(success = 1);
+}
+#endif	/* XYZ_INTERNAL */
+#endif	/* NOPUSH */
+
 int
 setdest() {
     int x, y;
@@ -6821,10 +7070,7 @@ setprinter(xx) int xx; {
 #ifdef PRINTSWI
     int c, i, n, wild, confirmed = 0;   /* Workers */
     int getval = 0;                     /* Whether to get switch value */
-    struct stringint {                  /* Temporary array for switch values */
-        char * sval;
-        int ival;
-    } pv[PRN_MAX+1];
+    struct stringint pv[PRN_MAX+1];    /* Temporary array for switch values */
     struct FDB sw, of, cm;              /* FDBs for each parse function */
     int haveque = 0;
     int typeset = 0;
@@ -6856,6 +7102,7 @@ setprinter(xx) int xx; {
     for (i = 0; i <= PRN_MAX; i++) {    /* Initialize switch values */
         pv[i].sval = NULL;              /* to null pointers */
         pv[i].ival = -1;                /* and -1 int values */
+        pv[i].wval = (CK_OFF_T)-1;	/* and -1 wide values */
     }
     if (xx == XYBDCP) {                 /* SET BPRINTER == /BIDIRECTIONAL */
         pv[PRN_BID].ival = 1;
@@ -7196,7 +7443,7 @@ setprinter(xx) int xx; {
                        "auto-print/printscreen character-set",
                        "cp437",xxstring)) < 0)
                   goto xsetprn;
-              pv[n].ival = x;
+              pv[n].ival = y;
               break;
 #endif /* OS2 */
 
@@ -8184,7 +8431,7 @@ dosetssh() {
           case SSH2_UNH:
             if ((x = cmifi("Filename","",&s,&z,xxstring)) < 0) {
                 if (x != -3)
-                  return(y);
+                  return(x);
             } else {
                 ckstrncpy(line,s,LINBUFSIZ);
                 if (zfnqfp(line,TMPBUFSIZ,tmpbuf))
@@ -8305,6 +8552,7 @@ extern ULONG RGBTable[16];
 #define GUI_DIA  4
 #define GUI_TLB  5
 #define GUI_MNB  6
+#define GUI_CLS  7
 
 #define GUIW_POS 1
 #define GUIW_RES 2
@@ -8317,6 +8565,7 @@ extern ULONG RGBTable[16];
 #define GUIWN_MAX 3
 
 static struct keytab guitab[] = {
+    { "close",       GUI_CLS,  0 },
     { "dialogs",     GUI_DIA,  0 },
     { "font",        GUI_FON,  0 },
     { "menubar",     GUI_MNB,  0 },
@@ -8565,6 +8814,12 @@ setguitoolbar(x) int x;
     KuiSetProperty(KUI_GUI_TOOLBAR, (long)x, 0L);
 }
 
+VOID
+setguiclose(x) int x;
+{
+    KuiSetProperty(KUI_GUI_CLOSE, (long)x, 0L);
+}
+
 int
 setgui() {
     int cx, x, rc;
@@ -8591,6 +8846,11 @@ setgui() {
         rc = seton(&x);
         if (rc >= 0)
           setguimenubar(x);
+        return(rc);
+      case GUI_CLS:
+        rc = seton(&x);
+        if (rc >= 0)
+          setguiclose(x);
         return(rc);
       default:
         return(-2);
@@ -8868,7 +9128,9 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
               /* Construct default name  */
               if (z == NET_PIPE) {      /* Named pipe */
                   defnam = "kermit";    /* Default name is always "kermit" */
-              } else {                  /* NetBIOS */
+              } 
+#ifdef CK_NETBIOS
+	      else {			/* NetBIOS */
                   if (NetBiosName[0] != SP) { /* If there is already a name, */
                       char *p = NULL;
                       int n;            /* use it as the default. */
@@ -8885,7 +9147,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
                   else                  /* Otherwise use "kermit" */
                     defnam = "kermit";
               }
-              if ((y = cmtxt((z == NET_PIPE) ? "pipe name" :
+#endif /* CK_NETBIOS */
+              if ((y = cmtxt((z == NET_PIPE) ? "name of named-pipe" :
                              "local NETBIOS name",
                              defnam, &s, xxstring)) < 0)
                 return(y);
@@ -9512,9 +9775,17 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
       }
 
       case XYCHKT:                      /* BLOCK-CHECK */
-        if ((x = cmkey(chktab,4,"","3",xxstring)) < 0) return(x);
+        if ((x = cmkey(chktab,nchkt,"","3",xxstring)) < 0) return(x);
         if ((y = cmcfm()) < 0) return(y);
+	if (x == 5) {
+	    bctf = 1;
+#ifdef COMMENT
+	    printf("?5 - Not implemented yet\n");
+	    return(success = 0);
+#endif	/* COMMENT */
+	}
         bctr = x;                       /* Set local too even if REMOTE SET */
+
         if (rmsflg) {
             if (x == 4) {
                 tmpbuf[0] = 'B';
@@ -10283,11 +10554,7 @@ case XYCARR:                            /* CARRIER-WATCH */
               int i,len;
               if ((y = cmtxt("Prompt string","",&s,xxstring)) < 0)
                 return(y);
-              if (s == "") s = NULL;
-              if (s) {
-                  s = brstrip(s);
-                  if (s == "") s = NULL;
-              }
+	      s = brstrip(s);
               /* we must check to make sure there are no % fields */
               len = strlen(s);
               for (i = 0; i < len; i++) {
@@ -10504,6 +10771,13 @@ case XYCARR:                            /* CARRIER-WATCH */
           }
 #endif /* DOUBLEQUOTING */
 
+	  case SCMD_ERR:
+            y = cmnum("Error message verbosity level, 0-3","1",10,&x,xxstring);
+            return(setnum(&cmd_err,x,y,3));
+
+	  case SCMD_VAR:
+	    return(setvareval());
+
           default:
             return(-2);
         }
@@ -10569,6 +10843,12 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
             setdebses(1);
 #endif /* NOLOCAL */
             return(success = 1);
+
+	  case DEB_MSG:			/* Debug messages 2010/03/12 */
+	    if ((y = cmkey(ooetab,nooetab,"","on",xxstring)) < 0) return(y);
+	    if ((x = cmcfm()) < 0) return(x);
+	    debmsg = y;
+	    return(1);
         }
         break;
 
@@ -11076,6 +11356,8 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
         if (x == 999) {                 /* TIMESTAMPED-TEXT */
             sessft = XYFT_T;            /* Implies text */
             slogts = 1;                 /* and timestamps */
+	} else if (x == 998) {		/* NULL-PADDED-LINES */
+            slognul = 1;		/* adds NUL after ^J */
         } else {                        /* A regular type */
             sessft = x;                 /* The type */
             slogts = 0;                 /* No timestampes */
@@ -11243,7 +11525,7 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
             lscapu = (y == 2) ? 2 : 0;  /* FORCED:  used = 1 */
             return(success = 1);
 
-#ifdef CK_XYZ
+/* #ifdef CK_XYZ */
           case XYX_PRO:                 /* Protocol */
 #ifndef OS2
             if (inserver) {
@@ -11252,7 +11534,7 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
             }
 #endif /* OS2 */
             return(setproto());
-#endif /* CK_XYZ */
+/* #endif */ /* CK_XYZ */
 
           case XYX_MOD:                 /* Mode */
             if ((y = cmkey(xfrmtab,2,"","automatic",xxstring)) < 0)
@@ -11264,6 +11546,12 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
             }
             g_xfermode = y;
             xfermode = y;
+#ifdef NEWFTP
+	    if (ftpisopen()) {		/* If an FTP connection is open */
+		extern int ftp_xfermode; /* change its transfer mode too */
+		ftp_xfermode = xfermode;
+	    }	      
+#endif	/* NEWFTP */
             return(success = 1);
 
 #ifndef NOLOCAL
@@ -11340,8 +11628,8 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
 #ifndef NOPUSH
 #ifdef UNIX
       case XYWILD:                      /* WILDCARD-EXPANSION */
-        if ((y = cmkey(wildtab,2,
-                       "Who expands wildcards","kermit",xxstring)) < 0)
+        if ((y = cmkey(wildtab,nwild,
+                       "Wildcard expansion option","on",xxstring)) < 0)
           return(y);
         if ((z = cmkey(wdottab,
                        2,
@@ -11357,7 +11645,20 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
                 return(success = 0);
             }
         }
-        wildxpand = y;
+	switch (y) {
+	  case WILD_ON:
+	    wildena = 1; 
+	    break;
+	  case WILD_OFF:
+	    wildena = 0; 
+	    break;
+	  case WILD_KER:
+	    wildxpand = 0; 		/* These are the previous */
+	    break;			/* hardwired values */
+	  case WILD_SHE:
+	    wildxpand = 1; 
+	    break;
+	}
         matchdot = z;
         return(success = 1);
 #endif /* UNIX */
@@ -12400,11 +12701,7 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
                       krb4_autodel = z;
                     break;
                   case XYKRBPRM:        /* Prompt */
-                    if (s == "") s = NULL;
-                    if (s) {
-                        s = brstrip(s);
-                        if (s == "") s = NULL;
-                    }
+		    s = brstrip(s);
                     switch (z) {
                       case KRB_PW_PRM: { /* Password */
                           /* Check that there are no more than */
@@ -12487,11 +12784,7 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
                   return(y);
                 switch (x) {            /* Copy value to right place */
                   case XYSRPPRM:        /* Prompt */
-                    if (s == "") s = NULL;
-                    if (s) {
-                        s = brstrip(s);
-                        if (s == "") s = NULL;
-                    }
+		    s = brstrip(s);
                     switch (z) {
                       case SRP_PW_PRM: { /* Password */
                           /* Check %s fields */
@@ -12997,7 +13290,7 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
 #ifndef NOSPL
 #ifndef NOSEXP
       case XYSEXP: {
-          if ((x = cmkey(sexptab,2,"","", xxstring)) < 0)
+          if ((x = cmkey(sexptab,3,"","", xxstring)) < 0)
             return(x);
           switch (x) {
             case 0:
@@ -13026,6 +13319,8 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
                 }
                 break;
             }
+	    case 2:
+	      return(seton(&sexptrunc));
           }
           return(success = 1);
       }
@@ -13081,6 +13376,27 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
       case XYGUI:
         return(setgui());
 #endif /* KUI */
+
+#ifndef NOFRILLS
+#ifndef NORENAME
+      case XY_REN:			/* SET RENAME */
+	return(setrename());
+#endif	/* NORENAME */
+#endif	/* NOFRILLS */
+
+#ifndef NOPUSH
+#ifdef CK_REDIR
+#ifndef NOXFER
+      case XYEXTRN:			/* SET EXTERNAL-PROTOCOL */
+	return(setextern());
+#endif	/* NOXFER */
+#endif	/* CK_REDIR */
+#endif	/* NOPUSH */
+
+#ifndef NOSPL
+      case XYVAREV:			/* SET VARIABLE-EVALUATION */
+	return(setvareval());
+#endif	/* NOSPL */
 
       default:
          if ((x = cmcfm()) < 0) return(x);
@@ -13173,6 +13489,9 @@ hupok(x) int x; {                       /* Returns 1 if OK, 0 if not OK */
 			&& local
 #endif /* K95G */
 			 )) {
+            if ( !needwarn )
+                ckstrncpy(warning, "No active connections", 256);
+
 #ifdef COMMENT
 	    printf("%s",warning);
             z = getyesno(x ? "OK to close? " : "OK to exit? ",0);

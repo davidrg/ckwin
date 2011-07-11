@@ -1,8 +1,8 @@
-char *ckathv = "Authentication, 8.0.232, 7 Feb 2004";
+char *ckathv = "Authentication, 9.0.235, 16 Mar 2010";
 /*
   C K U A T H . C  --  Authentication for C-Kermit
 
-  Copyright (C) 1999, 2004,
+  Copyright (C) 1999, 2010,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -121,7 +121,11 @@ int accept_complete = 0;
 #ifndef VMS
 #ifndef FREEBSD4
 #ifndef OpenBSD
+#ifdef MACOSX
+#include <sys/malloc.h>
+#else /* MACOSX */
 #include <malloc.h>
+#endif /* MACOSX */
 #endif /* OpenBSD */
 #endif /* FREEBSD4 */
 #endif /* VMS */
@@ -137,7 +141,9 @@ int accept_complete = 0;
 #undef printf
 #endif /* printf */
 #include "krb5.h"
+
 #include "com_err.h"
+
 #ifdef saveprintf
 #define printf saveprintf
 #endif /* saveprintf */
@@ -209,8 +215,10 @@ _PROTOTYP(const char * krb_get_err_text_entry, (int));
 #ifdef CK_SSL
 #ifdef LIBDES
 #ifdef OPENSSL_097
+#ifdef CK_DES
 #define OPENSSL_ENABLE_OLD_DES_SUPPORT
 #include <openssl/des.h>
+#endif	/* CK_DES */
 #endif /* OPENSSL_097 */
 #ifndef HEADER_DES_H
 #define HEADER_DES_H
@@ -294,6 +302,12 @@ static krb5_keyblock     *k5_session_key = NULL;
 static krb5_ticket       *k5_ticket = NULL;
 #ifndef KRB5_SERVICE_NAME
 #define KRB5_SERVICE_NAME    "host"
+#ifdef MACOSX
+#define MIT_CURRENT 1
+#define decode_krb5_ticket  krb5_decode_ticket
+#define krb5_read_message   ck_krb5_read_message
+#define krb5_write_message  ck_krb5_write_message
+#endif /* MACOSX */
 #endif
 
 _PROTOTYP(static int k5_auth_send,(int,int,int));
@@ -1464,7 +1478,7 @@ ck_tn_sb_encrypt(sb,len) char * sb; int len;
 
     buf[0] = SB;
     memcpy( &buf[1], sb, len-2 );
-    rc = encrypt_parse(buf,len-1);
+    rc = encrypt_parse((CHAR *)buf,len-1);
 
     if (rc < 0) {
         free(buf);
@@ -1568,13 +1582,13 @@ ck_tn_encrypt( s,n ) char * s; int n;
 
     if (g_kstream->encrypt && encrypt_is_encrypting()) {
 #ifdef DEBUG
-      hexdump("from plaintext", s, n);
+      ckhexdump("from plaintext", s, n);
 #endif
         i.ptr = s;
         i.length = n;
         g_kstream->encrypt(&i, NULL);
 #ifdef DEBUG
-        hexdump("to cyphertext", s, n);
+        ckhexdump("to cyphertext", s, n);
 #endif
     }
     else debug(F101,"ck_tn_encrypt not encrypting","",n);
@@ -1598,14 +1612,14 @@ ck_tn_decrypt( s,n ) char * s; int n;
     if (g_kstream->decrypt && encrypt_is_decrypting()) {
 
 #ifdef DEBUG
-        hexdump("from cyphertext", s, n);
+        ckhexdump("from cyphertext", s, n);
 #endif
 
         i.ptr = s;
         i.length = n;
         g_kstream->decrypt(&i, NULL);
 #ifdef DEBUG
-        hexdump("to plaintext", s, n);
+        ckhexdump("to plaintext", s, n);
 #endif
     }
     else debug(F101,"ck_tn_decrypt not decrypting","",n);
@@ -3152,7 +3166,7 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
                                    &encdata, &data);
 #else /* MIT_CURRENT */
             memset(k4_sched,0,sizeof(Schedule));
-            hexdump("auth_send",cred.session,8);
+            ckhexdump("auth_send",cred.session,8);
             rc = des_key_sched(cred.session, k4_sched);
             if ( rc == -1 ) {
                 printf("?Invalid DES key specified in credentials\r\n");
@@ -3167,7 +3181,7 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
                 debug(F110,"auth_send",
                       "DES Key Schedule not set by credentials",0);
             }
-            hexdump("auth_send schedule",k4_sched,8*16);
+            ckhexdump("auth_send schedule",k4_sched,8*16);
 
             des_set_random_generator_seed(cred.session);
 
@@ -3176,7 +3190,7 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
                 des_fixup_key_parity(k4_session_key);
             } while ( ck_des_is_weak_key(k4_session_key) );
 
-            hexdump("auth_send des_new_random_key(k4_session_key)",
+            ckhexdump("auth_send des_new_random_key(k4_session_key)",
                      k4_session_key,8);
 
             /* Decrypt the session key so that we can send it to the */
@@ -3186,7 +3200,7 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
 #else /* NT */
             des_ecb_encrypt(&k4_session_key, &k4_session_key, k4_sched, 0);
 #endif /* NT */
-            hexdump(
+            ckhexdump(
                 "auth_send des_ecb_encrypt(k4_session_key,k4_session_key,0)",
                 k4_session_key,8
                     );
@@ -3200,7 +3214,7 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
             des_ecb_encrypt(&k4_session_key, &k4_challenge, k4_sched, 0);
 #endif /* NT */
 
-            hexdump("auth_send des_ecb_encrypt(k4_session_key,k4_challenge,0)",
+            ckhexdump("auth_send des_ecb_encrypt(k4_session_key,k4_challenge,0)",
                      k4_challenge,8);
 #endif /* MIT_CURRENT */
             /*
@@ -3214,7 +3228,7 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
                 if (x < 256)            /* if no overflow, all done */
                     break;
             }
-            hexdump("auth_send k4_challenge+1",k4_challenge,8);
+            ckhexdump("auth_send k4_challenge+1",k4_challenge,8);
 #ifdef MIT_CURRENT
             data.data = k4_challenge;
             data.length = 8;
@@ -3234,7 +3248,7 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
 #else /* NT */
             des_ecb_encrypt(&k4_challenge, &k4_challenge, k4_sched, 1);
 #endif /* NT */
-            hexdump("auth_send des_ecb_encrypt(k4_session_key,k4_challenge,1)",
+            ckhexdump("auth_send des_ecb_encrypt(k4_session_key,k4_challenge,1)",
                      k4_challenge,8);
 #endif /* MIT_CURRENT */
         }
@@ -3281,18 +3295,19 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
     case AUTHTYPE_KERBEROS_V5:
         debug(F111,"auth_send KRB5","k5_auth.length",k5_auth.length);
         for ( i=0 ; i<k5_auth.length ; i++ ) {
-            if ( ((char *)k5_auth.data)[i] == IAC )
+            if ( (char *)k5_auth.data[i] == IAC )
                 iaccnt++;
         }
-
-        if ( k5_auth.length + iaccnt + 10 < sizeof(buf) )
-          k5_auth.length = copy_for_net(&buf[7], k5_auth.data, k5_auth.length);
-        else {
+        if ( k5_auth.length + iaccnt + 10 < sizeof(buf) ) {
+	    k5_auth.length = copy_for_net(&buf[7],
+					  (CHAR *)k5_auth.data,
+					  k5_auth.length);
+	} else {
           debug(F100,"auth_send() KRB5 auth data too large for buffer","",0);
           k5_auth.length = 0;
         }
 
-        sprintf(&buf[k5_auth.length+7], "%c%c", IAC, SE);       /* safe */
+        sprintf((char *)&buf[k5_auth.length+7], "%c%c", IAC, SE); /* safe */
         if (deblog || tn_deb || debses) {
             int i;
             ckmakxmsg(tn_msg,TN_MSG_LEN,
@@ -3301,7 +3316,7 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
                       AUTHMODE_NAME(mode)," AUTH ",
                       NULL,NULL,NULL,NULL,NULL
                      );
-            tn_hex((char *)tn_msg,TN_MSG_LEN,&buf[7],k5_auth.length);
+            tn_hex((CHAR *)tn_msg,TN_MSG_LEN,&buf[7],k5_auth.length);
             ckstrncat(tn_msg,"IAC SE",TN_MSG_LEN);
             debug(F100,tn_msg,"",0);
             if (tn_deb || debses) tn_debug(tn_msg);
@@ -3966,7 +3981,7 @@ k4_auth_reply(parsedat,end_sub) unsigned char *parsedat; int end_sub;
 #else /* NT */
         des_ecb_encrypt(&k4_session_key, &k4_session_key, k4_sched, 1);
 #endif /* NT */
-        hexdump(
+        ckhexdump(
             "k4_auth_reply des_ecb_encrypt(k4_session_key,k4_session_key,1)",
              k4_session_key,
              8
@@ -4001,9 +4016,9 @@ k4_auth_reply(parsedat,end_sub) unsigned char *parsedat; int end_sub;
             return AUTH_FAILURE;
         }
 
-        hexdump("KRB4_RESPONSE &parsedat[5]",&parsedat[5],8);
+        ckhexdump("KRB4_RESPONSE &parsedat[5]",&parsedat[5],8);
 #ifdef CK_ENCRYPTION
-        hexdump("KRB4_RESPONSE k4_challenge",k4_challenge,8);
+        ckhexdump("KRB4_RESPONSE k4_challenge",k4_challenge,8);
 
         /* The datablock returned from the host should match the value */
         /* we stored in k4_challenge.                                  */
@@ -4097,7 +4112,7 @@ k4_auth_is(parsedat,end_sub) unsigned char *parsedat; int end_sub;
             memcpy((void *)k4_auth.dat, (void *)data, k4_auth.length);
         } else
             k4_auth.length = 0;
-        hexdump("k4_auth.dat",k4_auth.dat, k4_auth.length);
+        ckhexdump("k4_auth.dat",k4_auth.dat, k4_auth.length);
 
         /* Get Instance */
         inaddr.s_addr = inet_addr(myipaddr);
@@ -4122,7 +4137,7 @@ k4_auth_is(parsedat,end_sub) unsigned char *parsedat; int end_sub;
                             krb4_d_srv ? krb4_d_srv : KRB4_SERVICE_NAME,
                             instance, 0, &k4_adat, k4_keytab)) {
 
-            hexdump("k4_adat", &k4_adat, sizeof(AUTH_DAT));
+            ckhexdump("k4_adat", &k4_adat, sizeof(AUTH_DAT));
             krb_kntoln(&k4_adat, k4_name);
             ckmakmsg(strTmp,sizeof(strTmp),
                      "Kerberos failed him as ", k4_name,NULL,NULL);
@@ -4137,7 +4152,7 @@ k4_auth_is(parsedat,end_sub) unsigned char *parsedat; int end_sub;
 #ifdef CK_ENCRYPTION
         memcpy((void *)k4_session_key, (void *)k4_adat.session,
                 sizeof(Block));                 /* safe */
-        hexdump("k4_auth_is k4_session_key",k4_session_key,sizeof(Block));
+        ckhexdump("k4_auth_is k4_session_key",k4_session_key,sizeof(Block));
 #endif /* ENCRYPTION */
         krb_kntoln(&k4_adat, k4_name);
 
@@ -4257,10 +4272,10 @@ k4_auth_is(parsedat,end_sub) unsigned char *parsedat; int end_sub;
             debug(F110,"auth_is CHALLENGE",
                    "DES Key Schedule not set by credentials",0);
         }
-        hexdump("auth_is schedule",k4_sched,8*16);
+        ckhexdump("auth_is schedule",k4_sched,8*16);
 
         memcpy((void *)datablock, (void *)data, sizeof(Block)); /* safe */
-        hexdump("auth_is challege",datablock,sizeof(Block));
+        ckhexdump("auth_is challege",datablock,sizeof(Block));
 
         /*
         * Take the received encrypted challenge, and encrypt
@@ -4272,7 +4287,7 @@ k4_auth_is(parsedat,end_sub) unsigned char *parsedat; int end_sub;
 #else /* NT */
         des_ecb_encrypt(&datablock, &k4_session_key, k4_sched, 1);
 #endif /* NT */
-        hexdump("auth_is des_ecb_encrypt(datablock,k4_session_key,1)",
+        ckhexdump("auth_is des_ecb_encrypt(datablock,k4_session_key,1)",
                  k4_session_key,8);
 
 #ifdef CK_SSL
@@ -4293,7 +4308,7 @@ k4_auth_is(parsedat,end_sub) unsigned char *parsedat; int end_sub;
 #else /* NT */
         des_ecb_encrypt(&datablock, &k4_challenge, k4_sched, 0);
 #endif /* NT */
-        hexdump("auth_is des_ecb_encrypt(datablock,k4_challenge,0)",
+        ckhexdump("auth_is des_ecb_encrypt(datablock,k4_challenge,0)",
                  k4_session_key,8);
 #endif /* MIT_CURRENT */
         for (r = 7; r >= 0; r--) {
@@ -4303,7 +4318,7 @@ k4_auth_is(parsedat,end_sub) unsigned char *parsedat; int end_sub;
             if (t < 256)                /* if no overflow, all done */
                 break;
         }
-        hexdump("auth_is k4_challenge+1",k4_challenge,8);
+        ckhexdump("auth_is k4_challenge+1",k4_challenge,8);
 
 #ifdef MIT_CURRENT
         kdata.data = k4_challenge;
@@ -4325,7 +4340,7 @@ k4_auth_is(parsedat,end_sub) unsigned char *parsedat; int end_sub;
 #else /* NT */
         des_ecb_encrypt(&k4_challenge, &k4_challenge, k4_sched, 1);
 #endif /* NT */
-        hexdump("auth_is des_ecb_encrypt(k4_challenge_key,k4_challenge,1)",
+        ckhexdump("auth_is des_ecb_encrypt(k4_challenge_key,k4_challenge,1)",
                  k4_challenge,8);
 
 #endif /* MIT_CURRENT */
@@ -4397,7 +4412,7 @@ ck_krb5_autoget_TGT(char * realm)
         if ( !ok )
             passwd[0] = '\0';
     } else {
-        ckstrncpy(passwd,pwbuf,sizeof(passwd));
+        ckstrncpy(passwd,(char *)pwbuf,sizeof(passwd));
 #ifdef OS2
         if ( pwcrypt )
             ck_encrypt((char *)passwd);
@@ -5107,7 +5122,7 @@ k5_auth_reply(how,data,cnt) int how; unsigned char *data; int cnt;
             ssl_get_server_finished(&tls_verify[0],12);
             ssl_get_client_finished(&tls_verify[12],12);
 
-            reply.data = data;
+            reply.data = (char *)data;
             reply.length = cnt;
 
 			krb5_auth_con_genaddrs(k5_context, auth_context, ttyfd,
@@ -5237,7 +5252,7 @@ k5_auth_is(how,data,cnt) int how; unsigned char *data; int cnt;
     data += 4;                                  /* Point to status byte */
     cnt -= 4;
 
-    hexdump("k5_auth_is data",data,cnt);
+    ckhexdump("k5_auth_is data",data,cnt);
     debug(F111,"k5_auth_is","how",how);
 
     if (cnt-- < 1) {
@@ -5259,12 +5274,15 @@ k5_auth_is(how,data,cnt) int how; unsigned char *data; int cnt;
 
 #ifdef HEIMDAL
         if (!r)
-            r = krb5_auth_con_setaddrs_from_fd(k5_context,auth_context,&ttyfd);
-
+            r = krb5_auth_con_setaddrs_from_fd(k5_context,
+					       auth_context,
+					       &ttyfd);
         if (!r)
-            r = krb5_sock_to_principal(k5_context,0,"host",
-                                       KRB5_NT_SRV_HST,&server);
-
+            r = krb5_sock_to_principal(k5_context,
+				       0,
+				       "host",
+                                       KRB5_NT_SRV_HST,
+				       &server);
         if (!r)
 #else /* HEIMDAL */
         if (!r) {
@@ -5331,7 +5349,7 @@ k5_auth_is(how,data,cnt) int how; unsigned char *data; int cnt;
             if ((how & AUTH_ENCRYPT_MASK) == AUTH_ENCRYPT_START_TLS) {
                 ssl_get_client_finished(&type_check[2],12);
                 ssl_get_server_finished(&type_check[14],12);
-                hexdump("k5_auth_is type_check",type_check,26);
+                ckhexdump("k5_auth_is type_check",type_check,26);
             }
 #endif /* CK_SSL */
 
@@ -5390,7 +5408,7 @@ k5_auth_is(how,data,cnt) int how; unsigned char *data; int cnt;
             if ((how & AUTH_ENCRYPT_MASK) == AUTH_ENCRYPT_START_TLS) {
                 ssl_get_client_finished(&type_check[2],12);
                 ssl_get_server_finished(&type_check[14],12);
-                hexdump("k5_auth_is type_check",type_check,26);
+                ckhexdump("k5_auth_is type_check",type_check,26);
             }
 #endif /* CK_SSL */
 
@@ -6041,7 +6059,7 @@ k5_auth_is(how,data,cnt) int how; unsigned char *data; int cnt;
     data += 4;                                  /* Point to status byte */
     cnt -= 4;
 
-    hexdump("gssk5_auth_is data",data,cnt);
+    ckhexdump("gssk5_auth_is data",data,cnt);
     debug(F111,"gssk5_auth_is","how",how);
 
     if (cnt-- < 1) {
@@ -6773,8 +6791,8 @@ srp_is(how,data,cnt) int how; unsigned char *data; int cnt;
             if (!(ssl_active_flag || tls_active_flag))
 #endif /* CK_SSL */
             {
-                hexdump("SRP_RESPONSE ts",ts,sizeof(ts));
-                hexdump("SRP_RESPONSE session_key",
+                ckhexdump("SRP_RESPONSE ts",ts,sizeof(ts));
+                ckhexdump("SRP_RESPONSE session_key",
                          ts->session_key,
                          SESSION_KEY_LEN
                          );
@@ -11299,10 +11317,10 @@ ck_krb_rlogin(hostname, port,
 
         debug(F100,"ck_krb_rlogin version 5","",0);
 
-        realm = ck_krb5_realmofhost(hostname);
+        realm = ck_krb5_realmofhost((char *)hostname);
         if (!realm) {
             ckstrncpy(strTmp, "Can't find realm for host \"",AUTHTMPBL);
-            ckstrncat(strTmp, hostname,AUTHTMPBL);
+            ckstrncat(strTmp, (char *)hostname,AUTHTMPBL);
             ckstrncat(strTmp, "\"",AUTHTMPBL);
             printf("?Kerberos 5 error: %s\r\n",strTmp);
             krb5_errno = KRB5_ERR_HOST_REALM_UNKNOWN;
@@ -11317,15 +11335,13 @@ ck_krb_rlogin(hostname, port,
                 (ck_krb5_is_tgt_valid() > 0)) )
             ck_krb5_autoget_TGT(realm);
 
-        buflen = strlen(term_speed)+strlen(remoteuser)+64;
-        if ((cksumbuf = malloc(buflen)) == 0)
-        {
+        buflen = strlen((char *)term_speed) + strlen((char *)remoteuser) + 64;
+        if ((cksumbuf = malloc(buflen)) == 0) {
             printf("Unable to allocate memory for checksum buffer.\r\n");
             return(-1);
         }
-
         ckmakmsg(cksumbuf,buflen,ckuitoa((unsigned short) ntohs(port)),":",
-                  term_speed,remoteuser);
+		 (char *)term_speed,(char *)remoteuser);
         cksumdat.data = cksumbuf;
         cksumdat.length = strlen(cksumbuf);
 
@@ -11351,8 +11367,9 @@ ck_krb_rlogin(hostname, port,
             return(-1);
         }
         memset(get_cred,0,sizeof(krb5_creds));
-        status = krb5_sname_to_principal(k5_context, hostname, service,
-                                          KRB5_NT_SRV_HST, &get_cred->server);
+        status = krb5_sname_to_principal(k5_context, (char *) hostname,
+					 service, KRB5_NT_SRV_HST,
+					 &get_cred->server);
         if (status) {
             printf("ck_krb_rlogin: krb5_sname_to_principal failed: %s\r\n",
                      error_message(status));
@@ -11492,14 +11509,14 @@ ck_krb_rlogin(hostname, port,
             krb5_free_ap_rep_enc_part(k5_context, rep_ret);
         }
 
-        (void) ttol(remoteuser, strlen(remoteuser)+1);
-        (void) ttol(term_speed, strlen(term_speed)+1);
-        (void) ttol(localuser, strlen(localuser)+1);
+        (void) ttol(remoteuser, strlen((char *)remoteuser)+1);
+        (void) ttol(term_speed, strlen((char *)term_speed)+1);
+        (void) ttol(localuser, strlen((char *)localuser)+1);
 
         if (forward_flag) {   /* Forward credentials (global) */
             if (status = krb5_fwd_tgt_creds( k5_context,
                                              auth_context,
-                                             hostname,
+                                             (char *)hostname,
                                              ret_cred->client,
                                              ret_cred->server,
                                              0,
@@ -11531,7 +11548,7 @@ ck_krb_rlogin(hostname, port,
 
         if ((c = ttinc(0)) < 0) {
             if (c==-1) {
-                perror(hostname);
+                perror((char *)hostname);
             } else {
                 printf("ck_krb_rlogin: bad connection with remote host\r\n");
             }
@@ -11819,7 +11836,7 @@ krb5_des_read(fd, buf, len, secondary)
     if (status = krb5_c_encrypt_length(k5_context, 
                                     k5_session_key->enctype,
                                     use_ivecs ? rd_len + 4 : rd_len,
-                                    &net_len)) {
+				    (size_t *)&net_len)) {
         errno = status;
         return(-1);
     }
@@ -12120,7 +12137,7 @@ int len;
     } else if ( cc != rd_len )
         return(0);
 
-    hexdump("krb4_des_read des_inbuf",des_inbuf,8);
+    ckhexdump("krb4_des_read des_inbuf",des_inbuf,8);
 #ifdef CK_ENCRYPTION
 #ifdef KRB524
     (void) des_pcbc_encrypt(des_inbuf,
@@ -12138,7 +12155,7 @@ int len;
                              DECRYPT);
 #endif /* KRB524 */
 #endif /* ENCRYPTION */
-    hexdump("krb4_des_read storage",storage,8);
+    ckhexdump("krb4_des_read storage",storage,8);
 
     /*
     * when the cleartext block is < 8 bytes, it is "right-justified"
@@ -12200,9 +12217,9 @@ int len;
         random_confounder(8 - len, garbage_buf);
         /* this "right-justifies" the data in the buffer */
         (void) memcpy(garbage_buf + 8 - len, buf, len); /* safe */
-        hexdump("krb4_des_write garbage_buf",garbage_buf,8);
+        ckhexdump("krb4_des_write garbage_buf",garbage_buf,8);
     } else
-        hexdump("krb4_des_write buf",buf,8);
+        ckhexdump("krb4_des_write buf",buf,8);
 #ifdef CK_ENCRYPTION
 #ifdef KRB524
     (void) des_pcbc_encrypt((len < 8) ? garbage_buf : buf,
@@ -12221,10 +12238,10 @@ int len;
 #endif /* KRB524 */
 #endif /* ENCRYPTION */
     if ( len < 8 )
-        hexdump("krb4_des_write (post pcbc) garbage_buf",garbage_buf,8);
+        ckhexdump("krb4_des_write (post pcbc) garbage_buf",garbage_buf,8);
     else
-        hexdump("krb4_des_write (post pcbc) buf",buf,8);
-    hexdump("krb4_des_write (des_outpkt+4)",(des_outpkt+4),8);
+        ckhexdump("krb4_des_write (post pcbc) buf",buf,8);
+    ckhexdump("krb4_des_write (des_outpkt+4)",(des_outpkt+4),8);
 
     /* tell the other end the real amount, but send an 8-byte padded
     packet */
@@ -12232,7 +12249,7 @@ int len;
     len_buf[1] = (len & 0xff0000) >> 16;
     len_buf[2] = (len & 0xff00) >> 8;
     len_buf[3] = (len & 0xff);
-    hexdump("krb4_des_write des_outpkt len",des_outpkt,12);
+    ckhexdump("krb4_des_write des_outpkt len",des_outpkt,12);
     cc = net_write(fd, des_outpkt, roundup(len,8)+4);
     debug(F111,"net_write","chars written",cc);
     return(len);
@@ -13211,8 +13228,13 @@ ck_auth_init( hostname, ipaddr, username, socket )
     /* create k5_context */
     krb5_init_context(&k5_context);
 #ifndef MIT_CURRENT
+#ifndef NO_KRB5_INIT_ETS
+/* This routine is a no-op in Kerberos 1.4.x and later */
+/* and in some installations it can't be found in which case */
+/* define NO_KRB5_INIT_ETS */
     if (k5_context)
         krb5_init_ets(k5_context);
+#endif	/* NO_KRB5_INIT_ETS */
 #endif /* MIT_CURRENT */
 #ifdef KRB524_CONV
     krb524_init_ets(k5_context);
@@ -13284,4 +13306,57 @@ auth_finished(result) int result; {
         break;
     }
 }
+
+#ifdef MACOSX
+#ifdef KRB5
+
+krb5_error_code
+ck_krb5_write_message(krb5_context con, krb5_pointer ptr, krb5_data *data)
+{
+    int fd = *((int *)ptr);
+    long msglen;
+
+    msglen = htonl(data->length);
+    if (net_write(fd,(CHAR *)&msglen,4) != 4) {
+        return(-1);
+    }
+    if ( data->length ) {
+        if (net_write(fd,data->data,data->length) != data->length) {
+            return(-1);
+        }
+    }
+    return(0);
+}
+
+krb5_error_code
+ck_krb5_read_message( krb5_context context,
+                      krb5_pointer ptr,
+                      krb5_data * data)
+{
+    extern int ttyfd;
+    int fd = *((int *)ptr);
+    long msglen;
+    char *p;
+    int i, rc;
+
+    if (net_read(fd,&msglen,4) < 0)
+        return(-1);
+
+    data->length = ntohl(msglen);
+    if ( data->length ) {
+        data->data = malloc(data->length);
+
+        i = 0;
+        while ( i < data->length ) {
+            if ((rc = net_read(fd,&data->data[i],(data->length - i))) < 0)
+                return(-1);
+            i += rc;
+        }
+    }
+    return(0);
+}
+#endif /* KRB5 */
+#endif /* MACOSX */
 #endif /* CK_SECURITY */
+
+

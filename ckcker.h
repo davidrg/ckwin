@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2009,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -600,18 +600,19 @@ _PROTOTYP( int z_close, (int) );
 _PROTOTYP( int z_out, (int, char *, int, int) );
 _PROTOTYP( int z_in, (int, char *, int, int, int) );
 _PROTOTYP( int z_flush, (int) );
-_PROTOTYP( int z_seek, (int, long) );
-_PROTOTYP( int z_line, (int, long) );
+_PROTOTYP( int z_seek, (int, CK_OFF_T) );
+_PROTOTYP( int z_line, (int, CK_OFF_T) );
 _PROTOTYP( int z_getmode, (int) );
 _PROTOTYP( int z_getfnum, (int) );
-_PROTOTYP( long z_getpos, (int) );
-_PROTOTYP( long z_getline, (int) );
-_PROTOTYP( long z_count, (int, int) );
+_PROTOTYP( CK_OFF_T z_getpos, (int) );
+_PROTOTYP( CK_OFF_T z_getline, (int) );
+_PROTOTYP( CK_OFF_T z_count, (int, int) );
 _PROTOTYP( char * z_getname, (int) );
 _PROTOTYP( char * ckferror, (int) );
 #endif /* CKCHANNELIO */
 
 _PROTOTYP( int scanfile, (char *, int *, int) );
+_PROTOTYP( int scanstring, (char *) );
 
 /*  Buffered file i/o ...  */
 #ifdef OS2				/* K-95 */
@@ -687,15 +688,15 @@ extern char ** sndarray;
 #define xxscreen(a,b,c,d)
 #define ckscreen(a,b,c,d)
 #else
-_PROTOTYP( VOID ckscreen, (int, char, long, char *) );
+_PROTOTYP( VOID ckscreen, (int, char, CK_OFF_T, char *) );
 #ifdef VMS
 #define xxscreen(a,b,c,d) \
 if (local && fdispla != XYFD_N) \
-ckscreen((int)a,(char)b,(long)c,(char *)d)
+ckscreen((int)a,(char)b,(CK_OFF_T)c,(char *)d)
 #else
 #define xxscreen(a,b,c,d) \
 if (local && !backgrd && fdispla != XYFD_N) \
-ckscreen((int)a,(char)b,(long)c,(char *)d)
+ckscreen((int)a,(char)b,(CK_OFF_T)c,(char *)d)
 #endif /* VMS */
 #endif /* NODISPLAY */
 
@@ -724,6 +725,7 @@ ckscreen((int)a,(char)b,(long)c,(char *)d)
 #define SCR_QE 14	/* quantity equals (e.g. "foo: 7") */
 #define SCR_CW 15	/* close screen window */
 #define SCR_CD 16       /* display current directory */
+#define SCR_MS 17	/* message from client */
 
 /* Skip reasons */
 
@@ -1316,7 +1318,7 @@ _PROTOTYP( int doarg, (char) );
 _PROTOTYP( int doxarg, (char **, int) );
 _PROTOTYP( VOID usage, (void) );
 _PROTOTYP( VOID doclean, (int) );
-_PROTOTYP( int sndhlp, () );
+_PROTOTYP( int sndhlp, (void) );
 _PROTOTYP( int sndstring, (char *) );
 _PROTOTYP( VOID ckhost, (char *, int) );
 _PROTOTYP( int gettcs, (int, int) );
@@ -1364,11 +1366,9 @@ _PROTOTYP( VOID fxdinit, (int) );
 
 _PROTOTYP( int fileselect, (char *,
 			    char *, char *, char *, char *,
-			    long, long,
+			    CK_OFF_T, CK_OFF_T,
 			    int, int,
 			    char **) );
-
-
 _PROTOTYP( char * whoami, (void) );
 _PROTOTYP( int shoesc, (int) );
 
@@ -1401,6 +1401,11 @@ _PROTOTYP(int uq_mtxt, (char *,char **,int,struct txtbox[]) );
 _PROTOTYP(int uq_file, (char *,char *,int,char **,char *,char *,int));
 
 #ifdef CK_URL
+struct urlopt {
+    char * nam;
+    char * val;
+};
+#define MAX_URL_OPTS    16
 struct urldata {
     char * sav;			/* The URL itself */
     char * svc;			/* Service */
@@ -1409,6 +1414,8 @@ struct urldata {
     char * hos;			/* Host */
     char * por;			/* Port */
     char * pth;			/* Path */
+    int    nopts;               /* number of options */
+    struct urlopt opt[MAX_URL_OPTS];   /* options */
 };
 _PROTOTYP(int urlparse, (char *, struct urldata *));
 #endif /* CK_URL */

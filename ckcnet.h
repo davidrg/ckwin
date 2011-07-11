@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2009,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -80,6 +80,9 @@
 #define NP_K5U2U       18               /* TCP/IP Kerberos 5 User to User */
 #define NP_CTERM       19               /* DEC CTERM */
 #define NP_LAT         20               /* DEC LAT */
+#define NP_SSL_RAW     21		/* SSL with no Telnet permitted */
+#define NP_TLS_RAW     22		/* TLS with no Telnet permitted */
+
 /* others here... */
 
 #ifdef CK_SSL
@@ -191,11 +194,17 @@ _PROTOTYP( int netopen, (char *, int *, int) );
 _PROTOTYP( int netclos, (void) );
 _PROTOTYP( int netflui, (void) );
 _PROTOTYP( int nettchk, (void) );
+_PROTOTYP( int netxchk, (int) );
 _PROTOTYP( int netbreak, (void) );
 _PROTOTYP( int netinc, (int) );
 _PROTOTYP( int netxin, (int, CHAR *) );
 _PROTOTYP( int nettol, (CHAR *, int) );
 _PROTOTYP( int nettoc, (CHAR) );
+#ifdef TCPSOCKET
+_PROTOTYP( int gettcpport, (void) );
+_PROTOTYP( int gettcpport, (void) );
+#endif	/* TCPSOCKET */
+
 /*
   SunLink X.25 support by Marcello Frutig, Catholic University,
   Rio de Janeiro, Brazil, 1990.
@@ -734,6 +743,16 @@ _PROTOTYP( int x25local_nua, (char *) ); /* find local NUA */
 #endif /* bcopy */
 #endif /* VMS */
 
+#ifdef HPUX6
+/* These are missing in HP-UX 6.xx */
+#ifndef bzero
+#define bzero(s,n) memset(s,0,n)
+#endif /* bzero */
+#ifndef bcopy
+#define bcopy(h,a,l) memcpy(a,h,l)
+#endif /* bcopy */
+#endif /* HPUX6 */
+
 #ifdef UNIX                             /* UNIX section */
 
 #ifdef SVR4
@@ -980,6 +999,9 @@ typedef unsigned int u_int;
 #endif /* IF_DOT_H */
 
 #include <in.h>
+#ifdef VMS
+#include <inet.h>			/* (SMS 2007/02/15) */
+#endif	/* VMS */
 #include <netdb.h>
 #include <socket.h>
 #include "ckvioc.h"
@@ -1164,6 +1186,21 @@ typedef char * caddr_t; /* core address type */
 #endif /* VMS */
 #endif /* UNIX */
 #endif /* TCPSOCKET */
+
+#ifndef NOINADDRX		      /* 301 - Needed for Solaris 10 and 11 */
+#ifdef SOLARIS
+#define NOINADDRX
+#ifdef INADDR_NONE
+#undef INADDR_NONE
+#endif	/* INADDR_NONE */
+#endif	/* SOLARIS */
+#endif	/* NOINADDRX */
+
+#ifdef NOINADDRX
+#ifdef INADDRX
+#undef INADDRX
+#endif	/* INADDRX */
+#endif	/* NOINADDRX */
 
 #ifdef TCPSOCKET
 #ifndef NOHADDRLIST
@@ -1366,8 +1403,27 @@ extern char * tcp_http_proxy_pwd;       /* Password of user */
 
 /* Type needed as 5th argument (length) to get/setsockopt() */
 
+#ifdef TRU64
+/* They say it themselves - this does not conform to standards */
+#define socklen_t int
+#else
+#ifdef HPUX
+#define socklen_t int
+#endif	/* HPUX */
+#endif	/* TRU64 */
+
+#ifndef SOCKOPT_T
+#ifdef CK_64BIT
+#define SOCKOPT_T socklen_t
+#endif	/* CK_64BIT */
+#endif	/* SOCKOPT_T */
+
 #ifndef SOCKOPT_T
 #define SOCKOPT_T int
+#ifdef MACOSX10
+#undef SOCKOPT_T
+#define SOCKOPT_T unsigned int
+#else
 #ifdef AIX42
 #undef SOCKOPT_T
 #define SOCKOPT_T unsigned long
@@ -1396,12 +1452,23 @@ extern char * tcp_http_proxy_pwd;       /* Password of user */
 #endif /* NT */
 #endif /* PTX */
 #endif /* AIX42 */
+#endif /* MACOSX10 */
 #endif /* SOCKOPT_T */
 
 /* Ditto for getsockname() */
 
 #ifndef GSOCKNAME_T
+#ifdef CK_64BIT
+#define GSOCKNAME_T socklen_t
+#endif	/* CK_64BIT */
+#endif	/* GSOCKNAME_T */
+
+#ifndef GSOCKNAME_T
 #define GSOCKNAME_T int
+#ifdef MACOSX10
+#undef GSOCKNAME_T
+#define GSOCKNAME_T unsigned int
+#else
 #ifdef PTX
 #undef GSOCKNAME_T
 #define GSOCKNAME_T size_t
@@ -1425,6 +1492,7 @@ extern char * tcp_http_proxy_pwd;       /* Password of user */
 #endif /* UNIXWARE */
 #endif /* AIX41 */
 #endif /* PTX */
+#endif /* MACOSX10 */
 #endif /* GSOCKNAME_T */
 
 #endif /* TCPSOCKET */

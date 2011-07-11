@@ -9,7 +9,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2011,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -66,6 +66,7 @@
 #endif /* putchar */
 #define putchar(x) conoc(x)
 extern int mskkeys;
+extern int mskrename;
 #endif /* OS2 */
 
 #ifdef CK_AUTHENTICATION
@@ -97,6 +98,12 @@ extern CHAR feol;
 extern int g_matchdot, hints, xcmdsrc, rcdactive;
 
 extern char * k_info_dir;
+
+#ifdef CK_LOGIN
+#ifdef CK_PAM
+int gotemptypasswd = 0;   /* distinguish empty passwd from none given */
+#endif /* CK_PAM */
+#endif /* CK_LOGIN */
 
 #ifndef NOSPL
 extern int nmac;
@@ -528,11 +535,13 @@ static struct keytab tcprawtab[] = {    /* SET HOST options */
 #endif /* RLOGCODE */
 #ifdef CK_SSL
     { "/ssl",        NP_SSL,    0 },
+    { "/ssl-raw",    NP_SSL_RAW, 0 },
     { "/ssl-telnet", NP_SSL_TELNET, 0 },
 #endif /* CK_SSL */
     { "/telnet",     NP_TELNET, 0 },
 #ifdef CK_SSL
     { "/tls",        NP_TLS,    0 },
+    { "/tls-raw",    NP_TLS_RAW, 0 },
     { "/tls-telnet", NP_TLS_TELNET, 0 },
 #endif /* CK_SSL */
     { "", 0, 0 }
@@ -859,10 +868,11 @@ struct keytab colxtab[] = { /* SET FILE COLLISION options */
     { "backup",    XYFX_B, 0 },         /* rename old file */
 #ifndef MAC
     /* This crashes Mac Kermit. */
-    { "discard",   XYFX_D, 0 },         /* don't accept new file */
+    { "discard",   XYFX_D, CM_INV },	/* don't accept new file */
     { "no-supersede", XYFX_D, CM_INV }, /* ditto (MSK compatibility) */
 #endif /* MAC */
     { "overwrite", XYFX_X, 0 },         /* overwrite the old file */
+    { "reject",    XYFX_D, 0 },		/* (better word than discard) */
     { "rename",    XYFX_R, 0 },         /* rename the incoming file */
 #ifndef MAC                             /* This crashes Mac Kermit. */
     { "update",    XYFX_U, 0 },         /* replace if newer */
@@ -971,6 +981,7 @@ static struct keytab trmtab[] = {
     { "keyboard-mode", XYTKBMOD,  0 },
     { "keypad-mode",   XYTKPD,    0 },
 #endif /* OS2 */
+    { "lf-display",    XYTLFD,    0 },
 #ifndef NOCSETS
 #ifdef OS2
 #ifndef KUI
@@ -1205,6 +1216,7 @@ struct keytab crdtab[] = {              /* Carriage-return display */
     { "normal",      0, 0 }
 };
 extern int tt_crd;                      /* Carriage-return display variable */
+extern int tt_lfd;			/* Linefeed display variable */
 
 #ifdef CK_APC
 extern int apcstatus, apcactive;
@@ -1329,8 +1341,8 @@ int tt_arrow = TTK_NORM;                /* Arrow key mode: normal (cursor) */
 int tt_keypad = TTK_NORM;               /* Keypad mode: normal (numeric) */
 int tt_shift_keypad = 0;                /* Keypad Shift mode: Off */
 int tt_wrap = 1;                        /* Terminal wrap, 1 = On */
-int tt_type = TT_VT320;                 /* Terminal type, initially VT320 */
-int tt_type_mode = TT_VT320;            /* Terminal type set by host command */
+int tt_type = TT_VT220;                 /* Terminal type, initially VT220 */
+int tt_type_mode = TT_VT220;            /* Terminal type set by host command */
 int tt_cursor = 0;                      /* Terminal cursor, 0 = Underline */
 int tt_cursor_usr = 0;                  /* Users Terminal cursor type */
 int tt_cursorena_usr = 1;               /* Users Terminal cursor enabled */
@@ -2002,6 +2014,7 @@ struct keytab msktab[] = { /* SET MS-DOS KERMIT compatibilities */
 #ifdef COMMENT
     { "color",    MSK_COLOR,  0 },
 #endif /* COMMENT */
+    { "file-renaming", MSK_REN, 0 },
     { "keycodes", MSK_KEYS,   0 }
 };
 int nmsk = (sizeof(msktab) / sizeof(struct keytab));
@@ -2690,7 +2703,7 @@ dopurge() {                             /* Do the PURGE command */
     int xx[MAXKEEP+1];                  /* Array of numbers to keep */
     int min = -1;
     int x_hdg = 0, fs = 0, rc = 0;
-    long minsize = -1L, maxsize = -1L;
+    CK_OFF_T minsize = -1L, maxsize = -1L;
     char namebuf[CKMAXPATH+4];
     char basebuf[CKMAXPATH+4];
     char
@@ -2981,7 +2994,7 @@ dopurge() {                             /* Do the PURGE command */
     if (n < tokeep) {                   /* Not deleting any */
         count = 0;
         if (listing)
-          printf(" Matches = %d: Not enough to purge.\n");
+          printf(" Matches = %d: Not enough to purge.\n",n);
         goto xpurge;
     }
 
@@ -3141,7 +3154,7 @@ doxdis(which) int which; {		/* 1 = Kermit, 2 = FTP */
     if (which == 1)			/* It's OK. */
       fdispla = x;
 #ifdef NEWFTP
-    else
+    else if (which == 2)
       ftp_dis = x;
 #endif /* NEWFTP */
     return(success = 1);
@@ -3797,6 +3810,115 @@ setfil(rmsflg) int rmsflg; {
     }
 }
 
+#ifdef UNIX
+#ifndef NOPUTENV
+#ifdef BIGBUFOK
+#define NPUTENVS 4096
+#else
+#define NPUTENVS 128
+#endif	/* BIGBUFOK */
+/* environment variables must be static, not automatic */
+
+static char * putenvs[NPUTENVS];	/* Array of environment var strings */
+static int nputenvs = -1;		/* Pointer into array */
+/*
+  If anyone ever notices the limitation on the number of PUTENVs, the list
+  can be made dynamic, we can recycle entries with the same name, etc.
+*/
+int
+doputenv(s1, s2) char * s1; char * s2; {
+    char * s, * t = tmpbuf;		/* Create or alter environment var */
+
+    if (nputenvs == -1) {		/* Table not used yet */
+	int i;				/* Initialize the pointers */
+	for (i = 0; i < NPUTENVS; i++)
+	  putenvs[i] = NULL;
+	nputenvs = 0;
+    }
+    if (!s1) return(1);			/* Nothing to do */
+    if (!*s1) return(1);		/* ditto */
+
+    if (ckindex("=",s1,0,0,0)) {	/* Does the name contain an '='? */
+	printf(				/* putenv() does not allow this. */
+	 /* This also catches the 'putenv name=value' case */
+         "?PUTENV - Equal sign in variable name - 'help putenv' for info.\n");
+        return(-9);
+    }
+    nputenvs++;				/* Point to next free string */
+
+    debug(F111,"doputenv s1",s1,nputenvs);
+    debug(F111,"doputenv s2",s2,nputenvs);
+
+    if (nputenvs > NPUTENVS - 1) {	/* Notice the end */
+	printf("?PUTENV - static buffer space exhausted\n");
+	return(-9);
+    }
+    /* Quotes are not needed but we allow them for familiarity */
+    /* but then we strip them, so syntax is same as for Unix shell */
+
+    if (s2) {
+	s2 = brstrip(s2);
+    } else {
+	s2 = (char *)"";
+    }
+    ckmakmsg(t,TMPBUFSIZ,s1,"=",s2,NULL);
+    debug(F111,"doputenv",t,nputenvs);
+    (VOID) makestr(&(putenvs[nputenvs]),t); /* Make a safe permananent copy */
+    if (!putenvs[nputenvs]) {
+	printf("?PUTENV - memory allocation failure\n");
+	return(-9);
+    }
+    if (putenv(putenvs[nputenvs])) {
+	printf("?PUTENV - %s\n",ck_errstr());
+	return(-9);
+    } else return(success = 1);
+}
+#endif	/* NOPUTENV */
+#endif	/* UNIX */
+
+int
+settrmtyp() {
+#ifdef OS2
+#ifdef TNCODE
+    extern int ttnum;                    /* Last Telnet Terminal Type sent */
+    extern int ttnumend;                 /* Has end of list been found */
+#endif /* TNCODE */
+    if ((x = cmkey(ttyptab,nttyp,"","vt220",xxstring)) < 0)
+      return(x);
+    if ((y = cmcfm()) < 0)
+      return(y);
+    settermtype(x,1);
+#ifdef TNCODE
+    /* So we send the correct terminal name to the host if it asks for it */
+    ttnum = -1;                         /* Last Telnet Terminal Type sent */
+    ttnumend = 0;                       /* end of list not found */
+#endif /* TNCODE */
+    return(success = 1);
+#else  /* Not OS2 */
+#ifdef UNIX
+    extern int fxd_inited;
+    x = cmtxt("Terminal type name, case sensitive","",&s,NULL);
+#ifdef NOPUTENV
+    success = 1;
+#else
+    success = doputenv("TERM",s);	/* Set the TERM variable */
+#ifdef CK_CURSES
+    fxd_inited = 0;	       /* Force reinitialization of curses database */
+    (void)doxdis(0);		     /* Re-initialize file transfer display */
+    concb((char)escape);		/* Fix command terminal */
+#endif	/* CK_CURSES */
+#endif	/* NOPUTENV */
+    return(success);
+#else
+    printf(
+"\n Sorry, this version of C-Kermit does not support the SET TERMINAL TYPE\n");
+    printf(
+" command.  Type \"help set terminal\" for further information.\n");
+    return(success = 0);
+#endif	/* UNIX */
+#endif /* OS2 */
+}
+
 #ifndef NOLOCAL
 #ifdef OS2
 /* MS-DOS KERMIT compatibility modes */
@@ -3812,38 +3934,13 @@ setmsk() {
 #endif /* COMMENT */
       case MSK_KEYS:
         return(seton(&mskkeys));
+      case MSK_REN:
+        return(seton(&mskrename));
       default:                          /* Shouldn't get here. */
         return(-2);
     }
 }
 #endif /* OS2 */
-
-int
-settrmtyp() {
-#ifdef OS2
-#ifdef TNCODE
-    extern int ttnum;                    /* Last Telnet Terminal Type sent */
-    extern int ttnumend;                 /* Has end of list been found */
-#endif /* TNCODE */
-    if ((x = cmkey(ttyptab,nttyp,"","vt320",xxstring)) < 0)
-      return(x);
-    if ((y = cmcfm()) < 0)
-      return(y);
-    settermtype(x,1);
-#ifdef TNCODE
-    /* So we send the correct terminal name to the host if it asks for it */
-    ttnum = -1;                         /* Last Telnet Terminal Type sent */
-    ttnumend = 0;                       /* end of list not found */
-#endif /* TNCODE */
-    return(success = 1);
-#else  /* Not OS2 */
-    printf(
-"\n Sorry, this version of C-Kermit does not support the SET TERMINAL TYPE\n");
-    printf(
-" command.  Type \"help set terminal\" for further information.\n");
-#endif /* OS2 */
-    return(success = 0);
-}
 
 #ifdef CKTIDLE
 static char iactbuf[132];
@@ -3867,7 +3964,7 @@ getiact() {
           q = &iactbuf[k];
           p = tt_idlestr;
           if (!p) p = "";
-          if (!*p) return("output (nothing)");
+          if (!*p) return("output NUL");
           while ((c = *p++) && n < 131) {
               c &= 0xff;
               if (c == '\\') {
@@ -3876,7 +3973,7 @@ getiact() {
                   *q++ = '\\';
                   *q = NUL;
                   n += 2;
-              } else if ((c > 31 && c < 127) || c > 159) {
+              } else if ((c > 32 && c < 127) || c > 159) {
                   *q++ = c;
                   *q = NUL;
                   n++;
@@ -4522,6 +4619,12 @@ settrm() {
         tt_crd = x;
         return(success = 1);
 
+      case XYTLFD:                      /* SET TERMINAL LF-DISPLAY */
+        if ((x = cmkey(crdtab,2,"", "normal", xxstring)) < 0) return(x);
+        if ((y = cmcfm()) < 0) return(y);
+        tt_lfd = x;
+        return(success = 1);
+
 #ifdef OS2
       case XYTANS: {                    /* SET TERMINAL ANSWERBACK */
 /*
@@ -4721,7 +4824,7 @@ settrm() {
             return(y);
           if (y == IDLE_OUT) {
               if ((x = cmtxt("string to send, may contain kverbs and variables"
-                             , "\\v(newline)",&s,xxstring)) < 0)
+                             , "",&s,xxstring)) < 0)
                 return(x);
               makestr(&tt_idlestr,brstrip(s)); /* (new) */
               tt_idlesnd_str = tt_idlestr; /* (old) */
@@ -5829,7 +5932,7 @@ settrm() {
     return(-2);
 #endif /* COMMENT */
 #ifdef OS2
-return(-2);
+    return(-2);
 #endif /* OS2 */
 }
 
@@ -7071,7 +7174,22 @@ or type carriage return to confirm the command",
     debug(F101,"remcfm local","",local);
     debug(F110,"remcfm s",s,0);
     debug(F101,"remcfm cmd","",xzcmd);
-
+/* 
+  This check was added in C-Kermit 6.0 or 7.0 but it turns out to be
+  unhelpful in the situation where the remote is running a script that sends
+  REMOTE commands to the local workstation.  What happens is, the local
+  server executes the command and sends the result back as screen text, which
+  is indicated by using an X packet instead of an F packet as the file
+  header.  There are two parts to this: executing the command under control
+  of the remote Kermit, which is desirable (and in fact some big applications
+  depend on it, and therefore never installed any new C-Kermit versions after
+  5A), and displaying the result.  Commenting out the check allows the
+  command to be executed, but the result is still sent back to the remote in
+  a file transfer, where it vanishes into the ether.  Actually it's on the
+  communication connection, mixed in with the packets.  Pretty amazing that
+  the file transfer still works, right?
+*/
+#ifdef COMMENT
     if (!*s) {                          /* No redirection indicator */
         if (!local &&
             (xzcmd == XZDIR || xzcmd == XZTYP ||
@@ -7084,6 +7202,7 @@ or type carriage return to confirm the command",
         } else
           return(1);
     }
+#endif	/* COMMENT */
     c = *s;                             /* We have something */
     if (c != '>' && c != '|') {         /* Is it > or | ? */
         printf("?Not confirmed\n");     /* No */
@@ -7171,6 +7290,7 @@ remtxt(p) char ** p; {
     s = *p;
     if (!s)                             /* No redirection indicator */
       s = "";
+#ifdef COMMENT
     if (!*s) {                          /* Ditto */
         if (!local &&
             (xzcmd == XZDIR || xzcmd == XZTYP ||
@@ -7186,6 +7306,7 @@ remtxt(p) char ** p; {
         } else
           return(1);
     }
+#endif	/* COMMENT */
     bpos = -1;                          /* Position of > (bracket) */
     ppos = -1;                          /* Position of | (pipe) */
     x = strlen(s);                      /* Length of cmtxt() string */
@@ -7200,6 +7321,7 @@ remtxt(p) char ** p; {
           ppos = i;
     }
     if (bpos < 0 && ppos < 0) {         /* No redirectors. */
+#ifdef COMMENT
         if (!local &&
             (xzcmd == XZDIR || xzcmd == XZTYP ||
              xzcmd == XZXIT || xzcmd == XZSPA ||
@@ -7212,6 +7334,7 @@ remtxt(p) char ** p; {
             }
             return(-9);
         }
+#endif	/* COMMENT */
         s = brstrip(s);                 /* Remove outer braces if any. */
         *p = s;                         /* Point to result */
         return(1);                      /* and return. */
@@ -7644,6 +7767,14 @@ dormt(xx) int xx;
         if ((x = remtxt(&s)) < 0)
           return(x);
         retcode = sstate = setgen('U',s,"","");
+        break;
+
+      case XZMSG:                       /* Message */
+        if ((x = cmtxt("Short text message for server","",&s,xxstring)) < 0)
+          return(x);
+        if ((x = remtxt(&s)) < 0)
+          return(x);
+        retcode = sstate = setgen('M',s,"","");
         break;
 
 #ifndef NOFRILLS
@@ -8515,7 +8646,7 @@ int
 clsconnx(ask) int ask; {
     int x, rc = 0;
 #ifdef NEWFTP
-    extern int ftpget, ftpisopen(), ftpbye();
+    extern int ftpget, ftpisopen();
     if ((ftpget == 1) || ((ftpget == 2) && !local && ftpisopen()))
       return(success = ftpbye());
 #endif /* NEWFTP */
@@ -9048,30 +9179,96 @@ cx_net(net, protocol, xhost, svc,
 	  if (net == NET_TCPB) {
             switch (protocol) {
 #ifdef CK_SSL
+#ifdef COMMENT
+/*
+  Jeff's version from 30 Dec 2006 - doesn't work - SSL/TLS_RAW still
+  start Telnet negotions if a 0xff byte comes in.
+*/
+	      case NP_SSL_RAW:
+                ttnproto = NP_SSL_RAW;
+		debug(F101,"NP_SSL_RAW ttnproto","",ttnproto);
+                ssl_only_flag = 1;
+                tls_only_flag = 0;
+                break;
+
+	      case NP_TLS_RAW:
+		  ttnproto = NP_TLS_RAW;
+		  debug(F101,"NP_TLS_RAW ttnproto","",ttnproto);
+		  ssl_only_flag = 0;
+		  tls_only_flag = 1;
+		  break;
+
 	      case NP_SSL:
-                ttnproto = protocol;
+                ttnproto = NP_SSL;
+		debug(F101,"NP_SSL ttnproto","",ttnproto);
                 ssl_only_flag = 1;
                 tls_only_flag = 0;
                 break;
 
 	      case NP_TLS:
-                ttnproto = protocol;
+                ttnproto = NP_TLS;
+		debug(F101,"NP_TLS ttnproto","",ttnproto);
                 ssl_only_flag = 0;
                 tls_only_flag = 1;
                 break;
 
 	      case NP_SSL_TELNET:
                 ttnproto = NP_TELNET;
+		debug(F101,"NP_SSL_TELNET ttnproto","",ttnproto);
                 ssl_only_flag = 1;
                 tls_only_flag = 0;
                 break;
 
 	      case NP_TLS_TELNET:
                 ttnproto = NP_TELNET;
+		debug(F101,"NP_TLS_TELNET ttnproto","",ttnproto);
                 ssl_only_flag = 0;
                 tls_only_flag = 1;
                 break;
+#else
+/* fdc version of 4 Dec 2006 works OK */
+	      case NP_SSL_RAW:
+	      case NP_SSL:
+		ssl_raw_flag = (protocol == NP_SSL_RAW) ? 1 : 0;
+                ttnproto = protocol;
+		debug(F101,protocol==NP_SSL ?
+		      "NP_SSL ttnproto" :
+		      "NP_SSL_RAW ttnproto",
+		      "",ttnproto);
+                ssl_only_flag = 1;
+                tls_only_flag = 0;
+                break;
+
+	      case NP_TLS:
+	      case NP_TLS_RAW:
+		tls_raw_flag = (protocol == NP_SSL_RAW) ? 1 : 0;
+                ttnproto = protocol;
+		debug(F101,protocol==NP_TLS ?
+		      "NP_TLS ttnproto" :
+		      "NP_TLS_RAW ttnproto",
+		      "",ttnproto);
+                ssl_only_flag = 0;
+                tls_only_flag = 1;
+                break;
+
+	      case NP_SSL_TELNET:
+		ssl_raw_flag = 0;
+                ttnproto = NP_TELNET;
+		debug(F101,"NP_SSL_TELNET ttnproto","",ttnproto);
+                ssl_only_flag = 1;
+                tls_only_flag = 0;
+                break;
+
+	      case NP_TLS_TELNET:
+		tls_raw_flag = 0;
+                ttnproto = NP_TELNET;
+		debug(F101,"NP_TLS_TELNET ttnproto","",ttnproto);
+                ssl_only_flag = 0;
+                tls_only_flag = 1;
+                break;
+#endif	/* COMMENT */
 #endif /* CK_SSL */
+
 	      case NP_NONE:
 	      case NP_TCPRAW:
 	      case NP_RLOGIN:
@@ -9084,8 +9281,17 @@ cx_net(net, protocol, xhost, svc,
 	      default:
                 ttnproto = protocol;
 #ifdef CK_SSL
+#ifdef COMMENT
+		/* Jeff version from 30 Dec 2006 */
                 ssl_only_flag = 0;
                 tls_only_flag = 0;
+#else
+		/* fdc version from 4 Dec 2006 */
+		ssl_raw_flag = 0;
+		tls_raw_flag = 0;
+                ssl_only_flag = 0;
+                tls_only_flag = 0;
+#endif	/* COMMENT */
 #endif /* CK_SSL */
                 break;
             }
@@ -10055,7 +10261,11 @@ setlin(xx, zz, fc)
     if (xx == XXSSH) {                  /* SSH becomes PTY SSH ... */
         dossh = 1;
         xx = XYHOST;
+    } else if (!ckstrcmp("ssh ",line,4,0)) { /* 2010/03/01 */
+        dossh = 1;
+        xx = XYHOST;
     }
+    debug(F101,"setlin dossh","",dossh);
 #endif /* SSHCMD */
 
 #ifdef TNCODE
@@ -10114,25 +10324,32 @@ setlin(xx, zz, fc)
 #ifdef SSHCMD
         if (dossh) {                    /* SSH connection via pty */
             int k;
+	    extern int ttyfd;		/* 2010/03/01 */
             k = ckstrncpy(line, sshcmd ? sshcmd : defsshcmd, LINBUFSIZ);
             debug(F111,"setlin sshcmd 1",line,k);
             if ((x = cmtxt("Optional switches and hostname","",&s,xxstring))<0)
               return(x);
-            if (!*s) {
-                printf("?SSH to where?\n");
-                return(-9);
-            }
-            if (k < LINBUFSIZ) {
-                line[k++] = SP;
-                line[k] = NUL;
-                debug(F111,"setlin sshcmd 2",line,k);
-            } if (k < LINBUFSIZ) {
-                ckstrncpy(&line[k],s,LINBUFSIZ-k);
-                debug(F111,"setlin sshcmd 3",line,k);
-            } else {
-                printf("?Too long\n");
-                return(-9);
-            }
+
+            /* 2010-03-30 */
+	    if (!*s && ttyfd < 0 && !ckstrcmp("ssh ",ttname,4,0)) { 
+		x = ckstrncpy(line,ttname,LINBUFSIZ);
+	    } else {
+		if (!*s) {
+		    printf("?SSH to where?\n");
+		    return(-9);
+		}
+		if (k < LINBUFSIZ) {
+		    line[k++] = SP;
+		    line[k] = NUL;
+		    debug(F111,"setlin sshcmd 2",line,k);
+		} if (k < LINBUFSIZ) {
+		    ckstrncpy(&line[k],s,LINBUFSIZ-k);
+		    debug(F111,"setlin sshcmd 3",line,k);
+		} else {
+		    printf("?Too long\n");
+		    return(-9);
+		}
+	    }
 	    x = cx_net( NET_PTY,                /* network type */
                         0,                      /* protocol (not used) */
                         line,                   /* host */
@@ -10446,8 +10663,8 @@ setlin(xx, zz, fc)
                 if ((x = cmtxt("Rest of command","",&s,xxstring)) < 0)
                   return(x);
                 if (*s) {
-                    strncat(line," ",LINBUFSIZ);
-                    strncat(line,s,LINBUFSIZ);
+                    ckstrncat(line," ",LINBUFSIZ);
+                    ckstrncat(line,s,LINBUFSIZ);
                 }
                 s = line;
             }
@@ -11203,19 +11420,13 @@ setlin(xx, zz, fc)
   <#>ifdef'ing out this code and adding the equivalent replacement routines
   to the ck?fio.c module, e.g. for RMS-based file i/o in ckvfio.c.
 */
-
-/* Define NOSTAT if the <#>include causes trouble. */
-
 #ifndef NOSTAT
 #ifdef VMS
-#ifdef VAXC                             /* As it does in VAX C */
-#define NOSTAT
-#endif /* VAXC */
-#endif /* VMS */
-#endif /* NOSTAT */
-
-#ifndef NOSTAT
+/* 2010-03-09 SMS.  VAX C needs help to find "sys".  It's easier not to try. */
+#include <stat.h>
+#else /* def VMS */
 #include <sys/stat.h>
+#endif /* def VMS [else] */
 #endif /* NOSTAT */
 
 #ifdef NLCHAR
@@ -11227,10 +11438,10 @@ static int z_lt = 2;
 struct ckz_file {                       /* C-Kermit file struct */
     FILE * z_fp;                        /* Includes the C-Lib file struct */
     unsigned int z_flags;               /* Plus C-Kermit mode flags, */
-    long z_nline;                       /* current line number if known, */
+    CK_OFF_T z_nline;			/* current line number if known, */
     char z_name[CKMAXPATH+2];           /* and the file's name. */
 };
-static struct ckz_file * z_file = NULL; /* Array of C-Kermit file structs */
+static struct ckz_file ** z_file = NULL; /* Array of C-Kermit file structs */
 static int z_inited = 0;                /* Flag for array initialized */
 int z_maxchan = Z_MAXCHAN;              /* Max number of C-Kermit channels */
 int z_openmax = CKMAXOPEN;              /* Max number of open files overall */
@@ -11350,6 +11561,8 @@ z_open(name, flags) char * name; int flags; {
         /* Note: This could be a pretty big chunk of memory */
         /* if z_maxchan is a big number.  If this becomes a problem */
         /* we'll need to malloc and free each element at open/close time */
+#ifdef COMMENT
+	/* May 2006 - it's time - in current Linux this about 3MB */
         if (!(z_file = (struct ckz_file *)
               malloc(sizeof(struct ckz_file) * (z_maxchan + 1))))
           return(z_error = FX_NMF);
@@ -11359,19 +11572,42 @@ z_open(name, flags) char * name; int flags; {
             z_file[i].z_nline = 0;
             *(z_file[i].z_name) = '\0';
         }
-        z_inited = 1;                   /* Remember we did */
+#else
+	/* New economical way, allocate storage for each channel as needed */
+	if (!z_file) {
+	    z_file = (struct ckz_file **)malloc((z_maxchan + 1) *
+						sizeof(struct ckz_file *));
+	    if (!z_file)
+	      return(z_error = FX_NMF);
+	    for (i = 0; i < z_maxchan; i++)
+	      z_file[i] = NULL;
+	}
+#endif	/* COMMENT */
+        z_inited = 1;                   /* Remember we initialized */
     }
-    for (n = -1, i = 0; i < z_maxchan; i++) {
+    for (n = -1, i = 0; i < z_maxchan; i++) { /* Find a free channel */
+#ifdef COMMENT
         if (!z_file[i].z_fp) {
             n = i;
             break;
         }
+#else
+        if (!z_file[i]) {
+	    z_file[i] = (struct ckz_file *) malloc(sizeof(struct ckz_file));
+	    if (!z_file[i])
+	      return(z_error = FX_NMF);
+            n = i;
+            break;
+        }
+#endif	/* COMMENT */
+
     }
     if (n < 0 || n >= z_maxchan)        /* Any free channels? */
       return(z_error = FX_NMF);         /* No, fail. */
     errno = 0;
 
-    z_file[n].z_flags = 0;              /* In case of failure... */
+    z_file[n]->z_flags = 0;		/* In case of failure... */
+    z_file[n]->z_fp = NULL;		/* Set file pointer to NULL */
 
     t = fopen(name, mode);              /* Try to open the file. */
     if (!t) {                           /* Failed... */
@@ -11380,6 +11616,8 @@ z_open(name, flags) char * name; int flags; {
         if (errno == EMFILE)
           return(z_error = FX_NMF);
 #endif /* EMFILE */
+	free(z_file[n]);
+	z_file[n] = NULL;
         return(z_error = (errno ?  FX_SYS : FX_UNK)); /* Return error code */
     }
 #ifdef NT
@@ -11389,10 +11627,11 @@ z_open(name, flags) char * name; int flags; {
 #endif /* O_SEQUENTIAL */
 #endif /* NT */
     z_nopen++;                          /* Open, count it. */
-    z_file[n].z_fp = t;                 /* Stash the file pointer */
-    z_file[n].z_flags = flags;          /* and the flags */
+    z_file[n]->z_fp = t;		/* Stash the file pointer */
+    z_file[n]->z_flags = flags;		/* and the flags */
+    z_file[n]->z_nline = 0;		/* Current line number is 0 */
     z_error = 0;
-    zfnqfp(name,CKMAXPATH,z_file[n].z_name); /* and the file's full name */
+    zfnqfp(name,CKMAXPATH,z_file[n]->z_name); /* and the file's full name */
     return(n);                          /* Return the channel number */
 }
 
@@ -11404,17 +11643,21 @@ z_close(channel) int channel; {         /* Close file on given channel */
       return(z_error = FX_NOP);
     if (channel >= z_maxchan)           /* Channel out of range? */
       return(z_error = FX_CHN);
-    if (!(t = z_file[channel].z_fp))    /* Channel wasn't open? */
+    if (!z_file[channel])
+      return(z_error = FX_NOP);
+    if (!(t = z_file[channel]->z_fp))    /* Channel wasn't open? */
       return(z_error = FX_NOP);
     errno = 0;                          /* Set errno 0 to get a good reading */
     x = fclose(t);                      /* Try to close */
     if (x == EOF)                       /* On failure */
       return(z_error = FX_SYS);         /* indicate system error. */
     z_nopen--;                          /* Closed OK, decrement open count */
-    z_file[channel].z_fp = NULL;        /* Set file pointer to NULL */
-    z_file[channel].z_nline = 0;        /* Current line number is 0 */
-    z_file[channel].z_flags = 0;        /* Set flags to 0 */
-    *(z_file[channel].z_name) = '\0';   /* Clear name */
+    z_file[channel]->z_fp = NULL;	/* Set file pointer to NULL */
+    z_file[channel]->z_nline = 0;	/* Current line number is 0 */
+    z_file[channel]->z_flags = 0;	/* Set flags to 0 */
+    *(z_file[channel]->z_name) = '\0';	/* Clear name */
+    free(z_file[channel]);
+    z_file[channel] = NULL;
     return(z_error = 0);
 }
 
@@ -11453,9 +11696,11 @@ z_out(channel,s,length,flags) int channel, flags, length; char * s; {
       return(z_error = FX_NOP);
     if (channel >= z_maxchan)           /* Channel in range? */
       return(z_error = FX_CHN);
-    if (!(t = z_file[channel].z_fp))    /* File open? */
+    if (!z_file[channel])
       return(z_error = FX_NOP);
-    if (!((z_file[channel].z_flags) & (FM_WRI|FM_APP))) /* In write mode? */
+    if (!(t = z_file[channel]->z_fp))    /* File open? */
+      return(z_error = FX_NOP);
+    if (!((z_file[channel]->z_flags) & (FM_WRI|FM_APP))) /* In write mode? */
       return(z_error = FX_FOP);
     n = length;                         /* Length of string to write */
     if (n < 0) {                        /* Negative means get it ourselves */
@@ -11472,7 +11717,7 @@ z_out(channel,s,length,flags) int channel, flags, length; char * s; {
             if (x < 1)
               return(z_error = (errno ? FX_SYS : FX_UNK));
         }
-        z_file[channel].z_nline = -1;   /* Current line no longer known */
+        z_file[channel]->z_nline = -1;   /* Current line no longer known */
         z_error = 0;
         return(i);
     } else {                            /* Writing string arg */
@@ -11486,10 +11731,10 @@ z_out(channel,s,length,flags) int channel, flags, length; char * s; {
         if (flags == 0) {               /* If supplying line termination */
             if (fwrite("\n",1,1,t))     /* do that  */
               x += z_lt;                /* count the terminator */
-            if (z_file[channel].z_nline > -1) /* count this line */
-              z_file[channel].z_nline++;
+            if (z_file[channel]->z_nline > -1) /* count this line */
+              z_file[channel]->z_nline++;
         } else {
-            z_file[channel].z_nline = -1; /* Current line no longer known */
+            z_file[channel]->z_nline = -1; /* Current line no longer known */
         }
     }
     z_error = 0;
@@ -11523,9 +11768,11 @@ z_in(channel,s,buflen,length,flags)
       return(z_error = FX_NOP);
     if (channel >= z_maxchan)
       return(z_error = FX_CHN);
-    if (!(t = z_file[channel].z_fp))
+    if (!z_file[channel])
       return(z_error = FX_NOP);
-    if (!((z_file[channel].z_flags) & FM_REA))
+    if (!(t = z_file[channel]->z_fp))
+      return(z_error = FX_NOP);
+    if (!((z_file[channel]->z_flags) & FM_REA))
       return(z_error = FX_FOP);
     if (!s)                             /* Check destination */
      return(z_error = FX_RNG);
@@ -11542,24 +11789,33 @@ z_in(channel,s,buflen,length,flags)
       return(z_error = FX_RNG);
     errno = 0;                          /* Reset errno */
     if (flags) {                        /* Read block or byte */
-        i = fread(s,1,length,t);
+	int n;				/* 20050912 */
+	n = length;			/* 20050912 */
+	i = 0;				/* 20050912 */
+	while (n > 0) {			/* 20050912 */
+	    i = fread(s,1,n,t);		/* 20050912 */
 #ifdef DEBUG
-        if (deblog) {
-            debug(F111,"z_in block",s,i);
-            debug(F101,"z_in block errno","",errno);
-            debug(F101,"z_in block ferror","",ferror(t));
-            debug(F101,"z_in block feof","",feof(t));
-        }
+	    if (deblog) {
+		debug(F111,"z_in block",s,i);
+		debug(F101,"z_in block errno","",errno);
+		debug(F101,"z_in block ferror","",ferror(t));
+		debug(F101,"z_in block feof","",feof(t));
+	    }
 #endif /* DEBUG */
-        z_file[channel].z_nline = -1;   /* Current line no longer known */
+	    if (i == 0) break;		/* 20050912 */
+	    s += i;			/* 20050912 */
+	    n -= i;			/* 20050912 */
+	}
+	/* Current line no longer known */
+        z_file[channel]->z_nline = (CK_OFF_T)-1;
     } else {                            /* Read line */
 #ifndef COMMENT
         /* This method is used because it's simpler than the others */
         /* and also marginally faster. */
-        debug(F101,"z_in getc loop","",ftell(t));
+        debug(F101,"z_in getc loop","",CKFTELL(t));
         for (i = 0; i < length; i++) {
             if ((x = getc(t)) == EOF) {
-                debug(F101,"z_in getc error","",ftell(t));
+                debug(F101,"z_in getc error","",CKFTELL(t));
                 s[i] = '\0';
                 break;
             }
@@ -11570,9 +11826,9 @@ z_in(channel,s,buflen,length,flags)
             }
         }
         debug(F111,"z_in line byte loop",ckitoa(errno),i);
-        debug(F111,"z_in line got",s,z_file[channel].z_nline);
-        if (z_file[channel].z_nline > -1)
-          z_file[channel].z_nline++;
+        debug(F111,"z_in line got",s,z_file[channel]->z_nline);
+        if (z_file[channel]->z_nline > -1)
+          z_file[channel]->z_nline++;
 #else
 #ifdef COMMENT2
         /* Straightforward but strlen() slows it down. */
@@ -11583,15 +11839,15 @@ z_in(channel,s,buflen,length,flags)
             if (i > 0 && s[i-1] == '\n') i--;
         }
         debug(F111,"z_in line fgets",ckitoa(errno),i);
-        if (z_file[channel].z_nline > -1)
-          z_file[channel].z_nline++;
+        if (z_file[channel]->z_nline > -1)
+          z_file[channel]->z_nline++;
 #else
         /* This is a do-it-yourself fgets() with its own readahead and */
         /* putback.  It's a bit faster than real fgets() but not enough */
         /* to justify the added complexity or the risk of the ftell() and */
         /* fseek() calls failing. */
         int k, flag = 0;
-        long pos;
+        CK_OFF_T pos;
         for (i = 0; !flag && i <= (length - Z_INBUFLEN); i += Z_INBUFLEN) {
             k = ((length - i) < Z_INBUFLEN) ? length - i : Z_INBUFLEN;
             if ((x = fread(s+i,1,k,t)) < 1)
@@ -11601,10 +11857,10 @@ z_in(channel,s,buflen,length,flags)
                 if (s[i+j] == '\n') {
                     s[i+j] = '\0';
                     flag ++;
-                    pos = ftell(t);
+                    pos = CKFTELL(t);
                     if (pos > -1) {
                         pos -= (x - j - 1);
-                        x = fseek(t, pos, 0);
+                        x = CKFSEEK(t, pos, 0);
                         i += j;
                         break;
                     } else
@@ -11612,8 +11868,8 @@ z_in(channel,s,buflen,length,flags)
                 }
             }
         }
-        if (z_file[channel].z_nline > -1)
-          z_file[channel].z_nline++;
+        if (z_file[channel]->z_nline > -1)
+          z_file[channel]->z_nline++;
         debug(F111,"z_in line chunk loop",ckitoa(errno),i);
 #endif /* COMMENT2 */
 #endif /* COMMENT */
@@ -11638,9 +11894,11 @@ z_flush(channel) int channel; {         /* Flush output channel */
       return(z_error = FX_NOP);
     if (channel >= z_maxchan)
       return(z_error = FX_CHN);
-    if (!(t = z_file[channel].z_fp))
+    if (!z_file[channel])
       return(z_error = FX_NOP);
-    if (!((z_file[channel].z_flags) & (FM_WRI|FM_APP))) /* Write access? */
+    if (!(t = z_file[channel]->z_fp))
+      return(z_error = FX_NOP);
+    if (!((z_file[channel]->z_flags) & (FM_WRI|FM_APP))) /* Write access? */
       return(z_error = FX_FOP);
     errno = 0;                          /* Reset errno */
     x = fflush(t);                      /* Try to flush */
@@ -11649,9 +11907,9 @@ z_flush(channel) int channel; {         /* Flush output channel */
 
 int
 #ifdef CK_ANSIC
-z_seek(int channel, long pos)           /* Move file pointer to byte */
+z_seek(int channel, CK_OFF_T pos)	/* Move file pointer to byte */
 #else
-z_seek(channel,pos) int channel; long pos; /* (seek to given position) */
+z_seek(channel,pos) int channel; CK_OFF_T pos; /* (seek to given position) */
 #endif /* CK_ANSIC */
 {
     int i, x = 0, rc;
@@ -11660,42 +11918,46 @@ z_seek(channel,pos) int channel; long pos; /* (seek to given position) */
       return(z_error = FX_NOP);
     if (channel >= z_maxchan)
       return(z_error = FX_CHN);
-    if (!(t = z_file[channel].z_fp))
+    if (!z_file[channel])
+      return(z_error = FX_NOP);
+    if (!(t = z_file[channel]->z_fp))
       return(z_error = FX_NOP);
     if (pos < 0L) {
         x = 2;
         pos = (pos == -2) ? -1L : 0L;
     }
     errno = 0;
-    rc = fseek(t,pos,x);                /* Try to seek */
+    rc = CKFSEEK(t,pos,x);		/* Try to seek */
     debug(F111,"z_seek",ckitoa(errno),rc);
     if (rc < 0)                         /* OK? */
       return(z_error = FX_SYS); /* No. */
-    z_file[channel].z_nline = ((pos || x) ? -1 : 0);
+    z_file[channel]->z_nline = ((pos || x) ? -1 : 0);
     return(z_error = 0);
 }
 
 int
 #ifdef CK_ANSIC
-z_line(int channel, long pos)           /* Move file pointer to line */
+z_line(int channel, CK_OFF_T pos)           /* Move file pointer to line */
 #else
-z_line(channel,pos) int channel; long pos; /* (seek to given position) */
+z_line(channel,pos) int channel; CK_OFF_T pos; /* (seek to given position) */
 #endif /* CK_ANSIC */
 {
     int i, len, x = 0;
-    long current = 0L, prev = -1L, old = -1L;
+    CK_OFF_T current = (CK_OFF_T)0, prev = (CK_OFF_T)-1, old = (CK_OFF_T)-1;
     FILE * t;
     char tmpbuf[256];
     if (!z_inited)                      /* Check... */
       return(z_error = FX_NOP);
     if (channel >= z_maxchan)
       return(z_error = FX_CHN);
-    if (!(t = z_file[channel].z_fp))
+    if (!z_file[channel])
+      return(z_error = FX_NOP);
+    if (!(t = z_file[channel]->z_fp))
       return(z_error = FX_NOP);
     debug(F101,"z_line pos","",pos);
     if (pos < 0L) {                     /* EOF wanted */
-        long n;
-        n = z_file[channel].z_nline;
+        CK_OFF_T n;
+        n = z_file[channel]->z_nline;
         debug(F101,"z_line n","",n);
         if (n < 0 || pos < 0) {
             rewind(t);
@@ -11708,7 +11970,7 @@ z_line(channel,pos) int channel; long pos; /* (seek to given position) */
                 n++;
                 if (pos == -2) {
                     old = prev;
-                    prev = ftell(t);
+                    prev = CKFTELL(t);
                 }
             }
         }
@@ -11720,17 +11982,17 @@ z_line(channel,pos) int channel; long pos; /* (seek to given position) */
             else
               n--;
         }
-        z_file[channel].z_nline = n;
+        z_file[channel]->z_nline = n;
         return(z_error = 0);
     }
     if (pos == 0L) {                    /* Rewind wanted */
-        z_file[channel].z_nline = 0L;
+        z_file[channel]->z_nline = 0L;
         rewind(t);
         debug(F100,"z_line rewind","",0);
         return(0L);
     }
     tmpbuf[255] = NUL;                  /* Make sure buf is NUL terminated */
-    current = z_file[channel].z_nline;  /* Current line */
+    current = z_file[channel]->z_nline;  /* Current line */
     /*
       If necessary the following could be optimized, e.g. for positioning
       to a previous line in a large file without starting over.
@@ -11753,12 +12015,12 @@ z_line(channel,pos) int channel; long pos; /* (seek to given position) */
                 return(z_error = FX_UNK);
             }
         } else {
-            z_file[channel].z_nline = -1L;
+            z_file[channel]->z_nline = -1L;
             debug(F101,"z_line premature EOF","",current);
             return(z_error = FX_EOF);
         }
     }
-    z_file[channel].z_nline = current;
+    z_file[channel]->z_nline = current;
     debug(F101,"z_line result","",current);
     z_error = 0;
     return(current);
@@ -11775,11 +12037,15 @@ z_getname(channel) int channel; {       /* Return name of file on channel */
         z_error = FX_CHN;
         return(NULL);
     }
-    if (!(t = z_file[channel].z_fp)) {
+    if (!z_file[channel]) {
         z_error = FX_NOP;
         return(NULL);
     }
-    return((char *)(z_file[channel].z_name));
+    if (!(t = z_file[channel]->z_fp)) {
+        z_error = FX_NOP;
+        return(NULL);
+    }
+    return((char *)(z_file[channel]->z_name));
 }
 
 int
@@ -11797,47 +12063,53 @@ z_getmode(channel) int channel; {       /* Return OPEN modes of channel */
       return(0);
     if (channel >= z_maxchan)
       return(z_error = FX_CHN);
-    if (!(t = z_file[channel].z_fp))
+    if (!z_file[channel])
       return(0);
-    x = z_file[channel].z_flags;
+    if (!(t = z_file[channel]->z_fp))
+      return(0);
+    x = z_file[channel]->z_flags;
     if (feof(t)) {                      /* This might not work for */
         x |= FM_EOF;                    /* output files */
 #ifndef NOSTAT
     /* But this does if we can use it. */
-    } else if (stat(z_file[channel].z_name,&statbuf) > -1) {
-        if (ftell(t) == statbuf.st_size)
+    } else if (stat(z_file[channel]->z_name,&statbuf) > -1) {
+        if (CKFTELL(t) == statbuf.st_size)
           x |= FM_EOF;
 #endif /* NOSTAT */
     }
     return(x);
 }
 
-long
+CK_OFF_T
 z_getpos(channel) int channel; {        /* Get file pointer position */
     FILE * t;                           /* on this channel */
-    long x;
+    CK_OFF_T x;
     if (!z_inited)
       return(z_error = FX_NOP);
     if (channel >= z_maxchan)
       return(z_error = FX_CHN);
-    if (!(t = z_file[channel].z_fp))
+    if (!z_file[channel])
       return(z_error = FX_NOP);
-    x = ftell(t);
+    if (!(t = z_file[channel]->z_fp))
+      return(z_error = FX_NOP);
+    x = CKFTELL(t);
     return((x < 0L) ? (z_error = FX_SYS) : x);
 }
 
-long
+CK_OFF_T
 z_getline(channel) int channel; {       /* Get current line number */
     FILE * t;                           /* in file on this channel */
-    long rc;
+    CK_OFF_T rc;
     if (!z_inited)
       return(z_error = FX_NOP);
     if (channel >= z_maxchan)
       return(z_error = FX_CHN);
-    if (!(t = z_file[channel].z_fp))
+    if (!z_file[channel])
       return(z_error = FX_NOP);
-    debug(F101,"z_getline","",z_file[channel].z_nline);
-    rc = z_file[channel].z_nline;
+    if (!(t = z_file[channel]->z_fp))
+      return(z_error = FX_NOP);
+    debug(F101,"z_getline","",z_file[channel]->z_nline);
+    rc = z_file[channel]->z_nline;
     return((rc < 0) ? (z_error = FX_LNU) : rc);
 }
 
@@ -11848,7 +12120,9 @@ z_getfnum(channel) int channel; {       /* Get file number / handle */
       return(z_error = FX_NOP);
     if (channel >= z_maxchan)
       return(z_error = FX_CHN);
-    if (!(t = z_file[channel].z_fp))
+    if (!z_file[channel])
+      return(z_error = FX_NOP);
+    if (!(t = z_file[channel]->z_fp))
       return(z_error = FX_NOP);
     z_error = 0;
     return(fileno(t));
@@ -11858,27 +12132,31 @@ z_getfnum(channel) int channel; {       /* Get file number / handle */
   Line-oriented counts and seeks are as dumb as they can be at the moment.
   Later we can speed them up by building little indexes.
 */
-long
+CK_OFF_T
 z_count(channel, what) int channel, what; { /* Count bytes or lines in file */
     FILE * t;
     int i, x;
-    long pos, count = 0L;
+    CK_OFF_T pos, count = (CK_OFF_T)0;
     if (!z_inited)                      /* Check stuff... */
       return(z_error = FX_NOP);
     if (channel >= z_maxchan)
       return(z_error = FX_CHN);
-    if (!(t = z_file[channel].z_fp))
+    if (!z_file[channel])
       return(z_error = FX_NOP);
-    pos = ftell(t);                     /* Save current file pointer */
+    if (!(t = z_file[channel]->z_fp))
+      return(z_error = FX_NOP);
+    pos = CKFTELL(t);			/* Save current file pointer */
     errno = 0;
     z_error = 0;
     if (what == RD_CHAR) {              /* Size in bytes requested */
-        if (!fseek(t,0L,2)) {           /* Seek to end */
-            count = ftell(t);           /* Get file pointer */
-            fseek(t,pos,0);             /* Restore file file pointer */
+#ifdef COMMENT
+        if (!CKFSEEK(t,0L,2)) {		/* Seek to end */
+            count = CKFTELL(t);		/* Get file pointer */
+            CKFSEEK(t,pos,0);		/* Restore file file pointer */
             return(count);
         } else                          /* Fallback in case seek fails */
-          return(zgetfs(z_file[channel].z_name));
+#endif	/* COMMENT */
+          return(zgetfs(z_file[channel]->z_name));
     }
     rewind(t);                          /* Line count requested - rewind. */
     while (1) {                         /* Count lines. */
@@ -11887,7 +12165,7 @@ z_count(channel, what) int channel, what; { /* Count bytes or lines in file */
         if (x == '\n')                  /* else... */
           count++;
     }
-    x = fseek(t,pos,0);                 /* Restore file pointer */
+    x = CKFSEEK(t,pos,0);		/* Restore file pointer */
     return(count);
 }
 
@@ -11932,11 +12210,13 @@ static int nfsekwtab = (sizeof (fsekwtab) / sizeof (struct keytab));
 #define SEE_CHAR  RD_CHAR
 #define SEE_REL   3
 #define SEE_ABS   4
+#define SEE_FIND  5
 
 static struct keytab fskswtab[] = {
     { "/absolute",  SEE_ABS,  0 },
     { "/byte",      SEE_CHAR, 0 },
     { "/character", SEE_CHAR, CM_INV },
+    { "/find",      SEE_FIND, CM_ARG },
     { "/line",      SEE_LINE, 0 },
     { "/relative",  SEE_REL,  0 }
 };
@@ -11981,19 +12261,22 @@ static struct keytab fwrtab[] = {       /* WRITE types */
 static int nfwrtab = (sizeof (fwrtab) / sizeof (struct keytab));
 
 static char blanks[] = "\040\040\040\040"; /* Some blanks for formatting */
+static char * seek_target = NULL;
 
 int
 dofile(op) int op; {                    /* Do the FILE command */
     char vnambuf[VNAML];                /* Buffer for variable names */
     char *vnp = NULL;                   /* Pointer to same */
     char zfilnam[CKMAXPATH+2];
-    char * p;
+    char * p, * m;
     struct FDB fl, sw, nu;
-    long z;
+    CK_OFF_T z;
     int rsize, filmode = 0, relative = -1, eofflg = 0;
     int rc, x, y, cx, n, getval, dummy, confirmed, listing = -1;
     int charflag = 0, sizeflag = 0;
     int pad = 32, wr_lpad = 0, wr_rpad = 0, rd_trim = 0, rd_untab = 0;
+
+    makestr(&seek_target,NULL);
 
     if (op == XXFILE) {                 /* FILE command was given */
         /* Get subcommand */
@@ -12063,7 +12346,7 @@ dofile(op) int op; {                    /* Do the FILE command */
                     return(-9);
                 }
 #ifdef COMMENT
-                /* Uncomment if we add any switches ere that take args */
+                /* Uncomment if we add any switches here that take args */
                 if (!getval && (cmgkwflgs() & CM_ARG)) {
                     printf("?This switch requires an argument\n");
                     return(-9);         /* (none do...) */
@@ -12090,24 +12373,22 @@ dofile(op) int op; {                    /* Do the FILE command */
                 return(-9);
             }
         }
+	/* Assign a negative channel number in case we fail */
+	addmac(vnambuf,"-1");
+
         if (!(filmode & FM_RWA))        /* If no access mode specified */
           filmode |= FM_REA;            /* default to /READ. */
 
         y = 0;                          /* Now parse the filename */
-        if ((filmode & FM_RWA) == FM_WRI)
-          x = cmofi("Name of new file","",&s,xxstring);
-        else if ((filmode & FM_RWA) == FM_REA)
-          x = cmifi("Name of existing file","",&s,&y,xxstring);
-        else {
+        if ((filmode & FM_RWA) == FM_WRI) {
+	    x = cmofi("Name of new file","",&s,xxstring);
+	} else if ((filmode & FM_RWA) == FM_REA) {
+	    x = cmifi("Name of existing file","",&s,&y,xxstring);
+	} else {
             x = cmiofi("Filename","",&s,&y,xxstring);
-            debug(F101,"fopen /append x","",x);
-        }
-        if (x == -9) {
-            if (zchko(s) < 0) {
-                printf("Can't create \"%s\"\n",s);
-                return(x);
-            }
-        } else if (x < 0) {
+            debug(F111,"fopen /append x",s,x);
+	}
+        if (x < 0) {
             if (x == -3) {
                 printf("?Filename required\n");
                 x = -9;
@@ -12147,6 +12428,9 @@ dofile(op) int op; {                    /* Do the FILE command */
         }
         if ((x = cmcfm()) < 0)
           return(x);
+	if (n == -9) return(success = 0);
+	if (n == -8) return(success = 1);
+
         if ((rc = z_seek(n,0L)) < 0) {
             printf("?REWIND failed - Channel %d: %s\n",n,ckferror(rc));
             return(-9);
@@ -12154,29 +12438,41 @@ dofile(op) int op; {                    /* Do the FILE command */
         return(success = 1);
 
       case FIL_CLS:                     /* CLOSE */
-          cmfdbi(&sw,                   /* Second FDB - switches */
-                 _CMKEY,                /* fcode */
-                 "Channel number; or keyword",
-                 "",
-                 "",                    /* addtl string data */
-                 1,                     /* addtl numeric data 1: tbl size */
-                 0,                     /* addtl numeric data 2: 4 = cmswi */
-                 xxstring,              /* Processing function */
-                 fclkwtab,              /* Keyword table */
-                 &nu                    /* Pointer to next FDB */
-                 );
-          cmfdbi(&nu,                   /* First FDB - command switches */
+#ifdef COMMENT				/* fdc 20100804 - bad idea */
+         {
+	    int i, j, k;		/* Supply default if only one open */
+	    s = "";
+	    for (k = 0, j = 0, i = 0; i < z_maxchan; i++) {
+		if (z_file)
+		  if (z_file[i])
+		    if (z_file[i]->z_fp) { k++; j = i; }
+	    }
+	    if (k == 1) s = ckitoa(j);
+	 }
+#endif	/* COMMENT */
+          cmfdbi(&nu,                   /* Second FDB - channel number */
                  _CMNUM,                /* fcode */
-                 "",
-                 "",                    /* default */
+                 "Channel number or ALL", /* Help message */
+                 s,			/* default */
                  "",                    /* addtl string data */
                  10,                    /* addtl numeric data 1: radix */
                  0,                     /* addtl numeric data 2: 0 */
                  xxstring,              /* Processing function */
                  NULL,                  /* Keyword table */
-                 NULL                   /* Pointer to next FDB */
-                 );                     /*  */
-        x = cmfdb(&sw);                 /* Parse something */
+                 &sw			/* Pointer to next FDB */
+                 );                     /* Pointer to next FDB */
+	 cmfdbi(&sw,			/* First FDB - command switches */
+                 _CMKEY,                /* fcode */
+                 "",			/* help message */
+		 "",			/* Default */
+		 "",			/* No addtl string data */
+                 1,                     /* addtl numeric data 1: tbl size */
+                 0,                     /* addtl numeric data 2: 4 = cmswi */
+                 xxstring,              /* Processing function */
+                 fclkwtab,              /* Keyword table */
+		 NULL			/* Last in chain */
+                 );
+        x = cmfdb(&nu);                 /* Parse something */
         if (x < 0) {
             if (x == -3) {
                 printf("?Channel number or ALL required\n");
@@ -12190,6 +12486,9 @@ dofile(op) int op; {                    /* Do the FILE command */
           n = -1;
         if ((x = cmcfm()) < 0)
           return(x);
+	if (n == -9) return(success = 0);
+	if (n == -8) return(success = 1);
+
         rc = 1;
         if (n < 0) {
             int count = 0;
@@ -12276,6 +12575,11 @@ dofile(op) int op; {                    /* Do the FILE command */
                         }
                         return(x);
                     }
+		    if (rsize > LINBUFSIZ) {
+			printf("?Maximum FREAD/FWRITE size is %d\n",LINBUFSIZ);
+			rsize = 0;
+			return(-9);
+		    }
                     charflag = 0;
                     sizeflag = 1;
                     break;
@@ -12314,6 +12618,9 @@ dofile(op) int op; {                    /* Do the FILE command */
             int len = 0;
             if ((x = cmtxt("Text","",&s,xxstring)) < 0)
               return(x);
+	    if (n == -9) return(success = 0);
+	    if (n == -8) return(success = 1);
+
             ckstrncpy(line,s,LINBUFSIZ); /* Make a safe copy */
             s = line;
             s = brstrip(s);             /* Strip braces */
@@ -12392,9 +12699,14 @@ dofile(op) int op; {                    /* Do the FILE command */
               if ((x = cmcfm()) < 0)
                 return(x);
 
+	    if (n == -9) return(success = 0);
+	    if (n == -8) return(success = 1);
+
             line[0] = NUL;              /* Clear destination buffer */
+#ifdef COMMENT
             if (rsize >= LINBUFSIZ)     /* Don't overrun it */
               rsize = LINBUFSIZ - 1;
+#endif	/* COMMENT */
 
             if (rsize == 0) {		/* Read a line */
 		rc = z_in(n,line,LINBUFSIZ,LINBUFSIZ-1,0);
@@ -12485,6 +12797,15 @@ dofile(op) int op; {                    /* Do the FILE command */
                     switch (cmresult.nresult) {
                       case SEE_REL: relative = 1; break;
                       case SEE_ABS: relative = 0; break;
+		      case SEE_FIND: {
+			  if (getval) {
+			      y = cmfld("string or pattern","",&s,xxstring);
+			      if (y < 0)
+				return(y);
+			      makestr(&seek_target,brstrip(s));
+			      break;
+			  }
+		      }
                       default: rsize = cmresult.nresult;
                     }
                 } else if (cx == FIL_COU) {
@@ -12503,6 +12824,9 @@ dofile(op) int op; {                    /* Do the FILE command */
         if (cx == FIL_COU) {
             if ((x = cmcfm()) < 0)
               return(x);
+	    if (n == -9) return(success = 0);
+	    if (n == -8) return(success = 1);
+
             z_filcount = z_count(n,rsize);
             if (z_filcount < 0) {
                 rc = z_filcount;
@@ -12519,9 +12843,12 @@ dofile(op) int op; {                    /* Do the FILE command */
                      );
             return(success = (z_filcount > -1) ? 1 : 0);
         }
+	m = (rsize == RD_CHAR) ?
+	    "Number of bytes;\n or keyword" :
+	    "Number of lines;\n or keyword";
         cmfdbi(&sw,                     /* SEEK symbolic targets (EOF) */
                _CMKEY,                  /* fcode */
-               "Channel number;\n or keyword",
+               m,
                "",
                "",                      /* addtl string data */
                nfsekwtab,               /* addtl numeric data 1: table size */
@@ -12530,8 +12857,8 @@ dofile(op) int op; {                    /* Do the FILE command */
                fsekwtab,                /* Keyword table */
                &nu                      /* Pointer to next FDB */
                );
-        cmfdbi(&nu,                     /* Channel number */
-               _CMNUM,                  /* fcode */
+        cmfdbi(&nu,                     /* Byte or line number */
+               _CMNUW,                  /* fcode */
                "",
                "",                      /* default */
                "",                      /* addtl string data */
@@ -12549,8 +12876,8 @@ dofile(op) int op; {                    /* Do the FILE command */
             }
             return(x);
         }
-        if (cmresult.fcode == _CMNUM) {
-            y = cmresult.nresult;
+        if (cmresult.fcode == _CMNUW) {
+            z = cmresult.wresult;
             debug(F110,"FILE SEEK atmbuf",atmbuf,0);
             if (relative < 0) {
                 if (cx == FIL_SEE && (atmbuf[0] == '+' || atmbuf[0] == '-'))
@@ -12565,7 +12892,8 @@ dofile(op) int op; {                    /* Do the FILE command */
         }
         if ((x = cmcfm()) < 0)
           return(x);
-        z = y;                          /* Convert to long */
+	if (n == -9) return(success = 0);
+	if (n == -8) return(success = 1);
         y = 1;                          /* Recycle this */
         z_flush(n);
         debug(F101,"FILE SEEK relative","",relative);
@@ -12573,9 +12901,9 @@ dofile(op) int op; {                    /* Do the FILE command */
 
         if (rsize == RD_CHAR) {         /* Seek to byte position */
             if (relative > 0) {
-                long pos;
+                CK_OFF_T pos;
                 pos = z_getpos(n);
-                if (pos < 0L) {
+                if (pos < (CK_OFF_T)0) {
                     rc = pos;
                     printf("?Relative SEEK failed: %s\n",ckferror(rc));
                     return(-9);
@@ -12599,10 +12927,10 @@ dofile(op) int op; {                    /* Do the FILE command */
             }
         } else {                        /* Seek to line */
             if (relative > 0) {
-                long pos;
+                CK_OFF_T pos;
                 pos = z_getline(n);
                 debug(F101,"FILE SEEK /LINE pos","",pos);
-                if (pos < 0L) {
+                if (pos < 0) {
                     rc = pos;
                     printf("?Relative SEEK failed: %s\n",ckferror(rc));
                     return(-9);
@@ -12621,7 +12949,42 @@ dofile(op) int op; {                    /* Do the FILE command */
                 return(-9);
             }
         }
-        return(success = y);
+	/*
+	  Now, having sought to the desired starting spot, if a /FIND:
+	  target was specified, look for it now.
+	*/
+	if (seek_target) {
+	    int flag = 0, ispat = 0, matchresult = 0;
+	    while (!flag) {
+		y = z_in(n,line,LINBUFSIZ,LINBUFSIZ-1,0);
+		if (y < 0) {
+		    y = 0;
+		    break;
+		}
+		if (ispattern(seek_target)) {
+		    matchresult = ckmatch(seek_target,line,inpcas[cmdlvl],1+4);
+		} else {
+		    /* This is faster */
+		    matchresult = ckindex(seek_target,line,0,0,inpcas[cmdlvl]);
+		}
+		if (matchresult) {
+		    flag = 1;
+		    break;
+		}
+	    }
+	    if (flag) {
+		debug(F111,"FSEEK HAVE MATCH",seek_target,z_getline(n));
+		/* Back up to beginning of line where target found */
+		if ((y = z_line(n,z_getline(n)-1)) < 0) {
+		    if (rc == FX_EOF) return(success = 0);
+		    printf("?SEEK /LINE failed - Channel %d: %s\n",
+			   n,ckferror(rc));
+		    return(-9);
+		}
+		debug(F101,"FSEEK LINE","",y);
+	    }
+	}
+        return(success = (y < 0) ? 0 : 1);
 
       case FIL_LIS: {                   /* LIST open files */
 #ifdef CK_TTGWSIZ
@@ -12639,9 +13002,9 @@ dofile(op) int op; {                    /* Do the FILE command */
 #endif /* CK_TTGWSIZ */
             paging = xaskmore;
 
-          printf("System open file limit: %4d\n", z_openmax);
-          printf("Maximum for FILE OPEN:  %4d\n", z_maxchan);
-          printf("Files currently open:   %4d\n\n", z_nopen);
+          printf("System open file limit:%5d\n", z_openmax);
+          printf("Maximum for FILE OPEN: %5d\n", z_maxchan);
+          printf("Files currently open:  %5d\n\n", z_nopen);
           n = 4;
           for (i = 0; i < z_maxchan; i++) {
               s = z_getname(i);         /* Got one? */
@@ -12651,7 +13014,7 @@ dofile(op) int op; {                    /* Do the FILE command */
                   printf("%2d. %s",i,s); /* Print name */
                   n++;                   /* Count it */
                   x = z_getmode(i);      /* Get modes & print them */
-                  if (x > -1) {
+                  if (x > 0) {
                       if (x & FM_REA) ckstrncat(m,"R",8);
                       if (x & FM_WRI) ckstrncat(m,"W",8);
                       if (x & FM_APP) ckstrncat(m,"A",8);
@@ -12660,8 +13023,8 @@ dofile(op) int op; {                    /* Do the FILE command */
                         printf(" (%s)",m);
                       if (x & FM_EOF)
                         printf(" [EOF]");
-                      else
-                        printf(" %ld",z_getpos(i)); /* And file position too */
+                      else		/* And file position too */
+                        printf(" %s",ckfstoa(z_getpos(i)));
                   }
                   printf("\n");
 #ifdef CK_TTGWSIZ
@@ -12689,6 +13052,8 @@ dofile(op) int op; {                    /* Do the FILE command */
         }
         if ((x = cmcfm()) < 0)
           return(x);
+	if (n == -9) return(success = 0);
+	if (n == -8) return(success = 1);
         if ((rc = z_flush(n)) < 0) {
             printf("?FLUSH failed - Channel %d: %s\n",n,ckferror(rc));
             return(-9);
@@ -12696,15 +13061,32 @@ dofile(op) int op; {                    /* Do the FILE command */
         return(success = 1);
 
       case FIL_STA:                     /* STATUS */
-        if ((x = cmnum("Channel number","",10,&n, xxstring)) < 0) {
+	{
+	    int i, j, k;		/* Supply default if only one open */
+	    s = "";
+	    for (k = 0, j = 0, i = 0; i < z_maxchan; i++) {
+		if (z_file)
+		  if (z_file[i])
+		    if (z_file[i]->z_fp) { k++; j = i; }
+	    }
+	    if (k == 1) s = ckitoa(j);
+	}
+        if ((x = cmnum("Channel number",s,10,&n, xxstring)) < 0) {
             if (x == -3) {
-                printf("?Channel number required\n");
-                x = -9;
-            }
-            return(x);
+		if (z_nopen > 1) {
+		    printf("?%d files open - please supply channel number\n",
+			   z_nopen);
+		    return(-9);
+		}
+            } else
+	      return(x);
         }
-        if ((x = cmcfm()) < 0)
-          return(x);
+        if ((y = cmcfm()) < 0)
+          return(y);
+	if ((!z_file || z_nopen == 0) && x == -3) {
+	    printf("No files open\n");
+	    return(success = 1);
+	}
         p = blanks + 3;                 /* Tricky formatting... */
         if (n < 1000) p--;
         if (n < 100) p--;
@@ -12716,7 +13098,7 @@ dofile(op) int op; {                    /* Do the FILE command */
             printf("Channel %d:%sNot open\n",n,p);
             return(success = 0);
         } else {
-            long xx;
+            CK_OFF_T xx;
             s = z_getname(n);
             if (!s) s = "(name unknown)";
             printf("Channel %d:%sOpen\n",n,p);
@@ -12727,11 +13109,11 @@ dofile(op) int op; {                    /* Do the FILE command */
             if (rc & FM_BIN) printf(" /BINARY");
             if (rc & FM_CMD) printf(" /COMMAND");
             if (rc & FM_EOF) printf(" [EOF]");
-            printf("\n Size:        %ld\n",z_count(n,RD_CHAR));
-            printf(" At byte:     %ld\n",z_getpos(n));
+            printf("\n Size:        %s\n",ckfstoa(z_count(n,RD_CHAR)));
+            printf(" At byte:     %s\n",ckfstoa(z_getpos(n)));
             xx = z_getline(n);
-            if (xx > -1)
-              printf(" At line:     %ld\n",xx);
+            if (xx > (CK_OFF_T)-1)
+              printf(" At line:     %s\n",ckfstoa(xx));
             return(success = 1);
         }
       default:
@@ -13269,8 +13651,8 @@ dosave(xx) int xx; {
 #ifndef NORECALL
         if (y == SV_HIST)               /* .. HISTORY */
           return(success = savhistory(s,disp));
-        break;
 #endif /* NORECALL */
+        break;
 
 #ifdef OS2
 #ifndef NOLOCAL
@@ -13904,6 +14286,7 @@ sho_auth(cx) int cx; {
             printf("\n");
             if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
             break;
+#ifdef CK_SSL
           case AUTHTYPE_SSL:
             kv = all ? AUTHTYPE_SRP : 0;
             if (ck_ssleay_is_installed()) {
@@ -13915,8 +14298,6 @@ sho_auth(cx) int cx; {
                 if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
                 continue;
             }
-
-#ifdef CK_SSL
             printf(" RSA Certs file: %s\n",ssl_rsa_cert_file?
                   ssl_rsa_cert_file:"(none)");
             if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
@@ -14057,10 +14438,7 @@ cp_auth() {                             /* Command_Parse AUTHENTICATE */
 #ifdef CK_RECALL
     extern int on_recall;               /* around Password prompting */
 #endif /* CK_RECALL */
-    struct stringint {                  /* Temporary array for switch values */
-        char * sval;                    /* String value */
-        int ival;                       /* Integer value */
-    } pv[KRB_I_MAX+1];                  /* This many */
+    struct stringint pv[KRB_I_MAX+1];   /* Temporary array for switch values */
     struct FDB kw, sw, fl;              /* FDBs for each parse function */
 
     krb_action = -1;                    /* Initialize Kerberos action. */
@@ -14104,12 +14482,11 @@ cp_auth() {                             /* Command_Parse AUTHENTICATE */
         if (krb5_d_instance)
           makestr(&tmpinst,krb5_d_instance);
     }
-
     for (i = 0; i <= KRB_I_MAX; i++) {  /* Initialize switch values */
         pv[i].sval = NULL;              /* to null pointers */
         pv[i].ival = 0;                 /* and 0 int values */
+        pv[i].wval = (CK_OFF_T)-1;	/* and -1 wide values */
     }
-
     if (kv == 4) {                      /* Kerberos 4 */
         pv[KRB_I_LF].ival = krb4_d_lifetime;
         pv[KRB_I_PA].ival = krb4_d_preauth;
@@ -14656,9 +15033,9 @@ ckxlogin(userid, passwd, acct, promptok)
 #ifdef CK_RECALL
     extern int on_recall;               /* around Password prompting */
 #endif /* CK_RECALL */
-#ifdef CK_PAM
+#ifdef COMMENT
     extern int guest;
-#endif /* CK_PAM */
+#endif /* COMMENT */
     int rprompt = 0;                    /* Restore prompt */
 #ifdef CKSYSLOG
     int savlog;
@@ -14774,9 +15151,9 @@ ckxlogin(userid, passwd, acct, promptok)
     debug(F111,"ckxlogin zvuser",userid,ok);
 
     if (!*passwd && promptok
-#ifdef CK_PAM
+#ifdef COMMENT
         && guest
-#endif /* CK_PAM */
+#endif /* COMMENT */
         ) {
         char prmpt[80];
 
@@ -14852,6 +15229,9 @@ ckxlogin(userid, passwd, acct, promptok)
         if (pflag) prompt(xxstring);    /* Issue prompt if at top level */
         cmres();                        /* Reset the parser */
         for (x = -1; x < 0;) {          /* Prompt till they answer */
+#ifdef CK_PAM
+	    gotemptypasswd=0;
+#endif /* CK_PAM */
             x = cmtxt("","",&s,NULL);   /* Get a literal line of text */
             if (x == -4 || x == -10) {
                 printf("\r\n%sLogin cancelled\n",
@@ -14861,6 +15241,10 @@ ckxlogin(userid, passwd, acct, promptok)
 #endif /* CKSYSLOG */
                 doexit(GOOD_EXIT,0);
             }
+#ifdef CK_PAM
+	    if (!*s)
+	      gotemptypasswd = 1;
+#endif /* CK_PAM */
             if (sstate)                 /* In case of a Kermit packet */
               goto XCKXLOG;
             cmres();                    /* Reset the parser again */
@@ -14895,6 +15279,12 @@ ckxlogin(userid, passwd, acct, promptok)
     if (ok) {
         ok = zvpass((char *)passwd);    /* Check password */
         debug(F101,"ckxlogin zvpass","",ok);
+#ifdef CK_PAM
+    } else {
+	/* Fake pam password failure for nonexistent users */
+	sleep(1);
+	printf("Authentication failure\n");
+#endif	/* CK_PAM */
     }
 
     if (ok > 0 && isguest) {

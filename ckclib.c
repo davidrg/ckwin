@@ -1,4 +1,4 @@
-char * cklibv = "C-Kermit library, 8.0.033, 16 Mar 2003";
+char * cklibv = "C-Kermit library, 9.0.052, 29 Jun 2011";
 
 #define CKCLIB_C
 
@@ -8,7 +8,7 @@ char * cklibv = "C-Kermit library, 8.0.033, 16 Mar 2003";
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1999, 2004,
+  Copyright (C) 1999, 2011,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -33,6 +33,8 @@ char * cklibv = "C-Kermit library, 8.0.033, 16 Mar 2003";
     ckuitoa()    - Converts unsigned int to string.
     ckltoa()     - Converts long to string.
     ckultoa()    - Converts unsigned long to string.
+    ckfstoa()    - Converts off_t-type integer (long or long long) to string.
+    ckatofs()    - Converts a numeric string to an off_t-type integer.
     ckctoa()     - Converts char to string.
     ckmakmsg()   - Constructs a message from 4 source strings.
     ckmakxmsg()  - Constructs a message from 12 source strings.
@@ -52,6 +54,7 @@ char * cklibv = "C-Kermit library, 8.0.033, 16 Mar 2003";
     chknum()     - Checks if string is a (possibly signed) integer.
     rdigits()    - Checks if string is composed only of decimal digits.
     isfloat()    - Checks if string is a valid floating-point number.
+    ckround()    - Rounds a floating-point number to desired precision.
     parnam()     - Returns parity name string.
     hhmmss()     - Converts seconds to hh:mm:ss string.
     lset()       - Write fixed-length field left-adjusted into a record.
@@ -59,6 +62,7 @@ char * cklibv = "C-Kermit library, 8.0.033, 16 Mar 2003";
     ulongtohex() - Converts an unsigned long to a hex string.
     hextoulong() - Converts a hex string to an unsigned long.
     cksplit()    - Splits a string into an array of words.
+    ispattern()  - Tells if argument string is a pattern.
 
   Prototypes are in ckclib.h.
 
@@ -188,7 +192,7 @@ ckstrncat(dest,src,len) char * dest, * src; int len;
     s1--;				/* (back up over NUL) */
 
     i = 0;
-    s2 = src;
+    s2 = (char *)src;
     while (*s2++) i++;			/* i = strlen(src); */
 
     if (i > (len-j))
@@ -200,7 +204,7 @@ ckstrncat(dest,src,len) char * dest, * src; int len;
     strncpy(&dest[j],src,i);
 #else
     j = i;				/* This should be a bit faster...    */
-    s2 = src;				/* depends on strcpy implementation; */
+    s2 = (char *)src;		       /* depends on strcpy implementation; */
     while ((*s1++ = *s2++) && j--)	/* at least it shouldn't be slower.  */
       ;
     dest[len-1] = NUL;			/* In case of early exit. */
@@ -276,6 +280,7 @@ ckmakxmsg(buf,len,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,s12)
     int i, n = 0, m = 0;
     char *s;
     char *p, *a[12];
+
 
     if (!buf) return(n);		/* No destination */
     if (len < 1) return(n);		/* No size */
@@ -496,7 +501,7 @@ ckultoa(unsigned long n)
 #else
 ckultoa(n) unsigned long n;
 #endif /* CK_ANSIC */
-/* ckltoa */ {
+/* ckultoa */ {
     char buf[32];			/* Internal working buffer */
     char * p, * s, * q;
     int k, x, len = 0;
@@ -549,6 +554,84 @@ ckltox(n) long n;
     return(q);				/* Return pointer */
 }
 
+
+/*  C K F S T O A  --  File Size (or offset) to string  */
+
+/* This is just like ckltoa() except for the data type of the argument. */
+/* It's mainly for printing file sizes without having to know their data */
+/* type, so we don't have to hardware "%ld" or "%lld" into printf()s. */
+/* Works for 32 or 64 bits, according to CK_OFF_T definition. */
+
+char *
+#ifdef CK_ANSIC
+ckfstoa(CK_OFF_T n)
+#else
+ckfstoa(n) CK_OFF_T n;
+#endif /* CK_ANSIC */
+/* ckfstoa */ {
+    char buf[32];			/* Internal working buffer */
+    char * p, * s, * q;
+    int k, x, len = 0, sign = 0;
+
+    if (n < (CK_OFF_T)0) {		/* Sign */
+	n = (CK_OFF_T)0 - n;
+	sign = 1;
+    }
+    buf[31] = NUL;			/* 2^63-1 is about 20 decimal digits */
+    for (k = 30; k > 0; k--) {		/* Convert number to string */
+	x = n % (CK_OFF_T)10;
+	if (x < 0) {
+	    /* x += 10; */
+	    ckstrncpy(&buf[23],"OVERFLOW",32);
+	    sign = 0;
+	    k = 23;
+	    break;
+	}
+	buf[k] = x + '0';
+	n = n / (CK_OFF_T)10;
+	if (!n)
+	  break;
+    }
+    if (sign) buf[--k] = '-';		/* Add sign if necessary */
+    len = 31 - k;
+    if (len + numbp > NUMBUF)
+      numbp = 0;
+    p = numbuf + numbp;
+    q = p;
+    s = buf + k;
+    while ((*p++ = *s++)) ;		/* Copy */
+    *p++ = NUL;
+    numbp += len+1;
+    return(q);				/* Return pointer */
+}
+
+/*  C K A T O F S  --  String to File Size (or offset) */
+
+/* This is the inverse of ckfstoa(), a replacement for atol() that works */
+/* for either 32-bit or 64-bit arguments, according to CK_OFF_T definition. */
+/* Like atol(), there is no error indication. */
+
+CK_OFF_T
+#ifdef CK_ANSIC
+ckatofs(char * s)
+#else
+ckatofs(s) char * s;
+#endif /* CK_ANSIC */
+/* ckatofs */ {
+    CK_OFF_T result = (CK_OFF_T)0;
+    int minus = 0;
+    while (*s && (*s == SP || *s == HT)) s++;
+    if (*s == '+') s++;
+    if (*s == '-') {
+	minus = 1;
+	s++;
+    }
+    while (isdigit(*s)) {
+	result = (result * (CK_OFF_T)10) + (CK_OFF_T)(*s - '0');
+	s++;
+    }
+    return(minus ? -result : result);
+}
 
 /*  C K I T O A  --  Int to string  -- FOR DISCIPLINED USE ONLY  */
 
@@ -710,6 +793,7 @@ brstrip(p) char *p; {
 
 #else
 /* New version handles braces and doublequotes */
+/* WARNING: this function writes into its argument, it always has. */
 
 char *
 brstrip(p) char *p; {
@@ -1265,6 +1349,7 @@ ckstrpre(s1,s2) char *s1, *s2; {
     regular expression it matches any string of zero or more a's followed by
     one b.  Regular expressions are especially useful in matching strings of
     (say) digits, or letters, e.g. "[0-9]*" matches any string of digits.
+    So far, Kermit doesn't do this.
 */
 static char * mypat = NULL;		/* For rewriting pattern */
 static int matchpos = 0;
@@ -1276,13 +1361,44 @@ static char * ostring = NULL;
 #define MATCHRETURN(x,y) { rc=y; where=x; goto xckmatch; }
 static char * lastpat = NULL;
 
+static int xxflag = 0;			/* Global bailout flag for ckmatch() */
+
+int
+ispattern(s) char * s; {
+    int quote = 0, sbflag = 0, sb = 0, cbflag = 0, cb = 0;
+    
+    char c = 0;
+    if (*s == '^') return(1);
+    while ((c = *s++)) {
+	if (quote) {
+	    quote = 0;
+	    continue;
+	}
+	if (c == '\\') {
+	    quote = 1;
+	    continue;
+	}
+	if (c == '*') return(1);
+	if (c == '?') return(1);
+	/* Unquoted brackets or braces must match */
+	if (c == '[') { sbflag++; sb++; continue; }
+	if (c == ']') { sb--; continue; }
+	if (c == '{') { cbflag++; cb++; continue; }
+	if (c == '}') { cb--; continue; }
+	if (!*s && c == '$') return(1);
+    }
+    return(sbflag || cbflag);
+}
+
 int
 ckmatch(pattern, string, icase, opts) char *pattern,*string; int icase, opts; {
     int q = 0, i = 0, k = -1, x, flag = 0;
     int rc = 0;				/* Return code */
+    int havestar = 0;
     int where = -1;
     CHAR cp;				/* Current character from pattern */
     CHAR cs;				/* Current character from string */
+    char * patstart;			/* Start of pattern */
     int plen, dot, globbing, xstar = 0;
     int bronly = 0;			/* Whole pattern is {a,b,c,...} */
 
@@ -1294,11 +1410,17 @@ ckmatch(pattern, string, icase, opts) char *pattern,*string; int icase, opts; {
 
     if (!string) string = "";
     if (!pattern) pattern = "";
+
     if (!*pattern) {			/* Empty pattern matches anything */
 	matchdepth++;			/* (it wasn't incremented yet) */
 	MATCHRETURN(0,1);
+    } else if (!*string) {
+	MATCHRETURN(0,0);
     }
+    patstart = pattern;			/* Remember beginning of pattern */
+
     if (matchdepth == 0) {		/* Top-level call? */
+	xxflag = 0;
 	stringpos = 0;			/* Reset indices etc. */
 	matchpos = 0;
 	matchend = 0;
@@ -1307,7 +1429,7 @@ ckmatch(pattern, string, icase, opts) char *pattern,*string; int icase, opts; {
 	if (*pattern == '{')		/* Entire pattern is {a,b.c} */
 	  bronly = 1;			/* Maybe */
 	dot = (opts & 1) ||		/* Match leading dot (if file) */
-	    (opts & 2 == 0) ||		/* always if not file */
+	    ((opts & 2) == 0) ||	/* always if not file */
 	    (pattern[0] == '.');	/* or if pattern starts with '.' */
 
 	plen = strlen(pattern);		/* Length of pattern */
@@ -1428,7 +1550,8 @@ ckmatch(pattern, string, icase, opts) char *pattern,*string; int icase, opts; {
 	    }
 	    debug(F110,"CKMATCH ? pat",pattern,0);
 	    debug(F110,"CKMATCH ? str",string,0);
-	    pattern++, string++;
+	    pattern++;
+	    string++;
 	    stringpos++;
 	    continue;
 #ifdef CKREGEX
@@ -1437,12 +1560,14 @@ ckmatch(pattern, string, icase, opts) char *pattern,*string; int icase, opts; {
 	    char * psave = NULL;	/* and backup pointer */
 	    CHAR clist[256];		/* Character list from brackets */
 	    CHAR c, c1, c2;
+
 	    for (i = 0; i < 256; i++)	/* memset() etc not portable */
 	      clist[i] = NUL;
 	    psave = ++pattern;		/* Where pattern starts */
 	    debug(F111,"CKMATCH [] ",pattern-1, matchpos);
 	    for (flag = 0; !flag; pattern++) { /* Loop thru pattern */
 		c = (CHAR)*pattern;	/* Current char */
+		debug(F000,">>> pattern char","",c);
 		if (q) {		/* Quote within brackets */
 		    q = 0;
 		    clist[c] = 1;
@@ -1488,8 +1613,30 @@ ckmatch(pattern, string, icase, opts) char *pattern,*string; int icase, opts; {
 		    continue;
 		}
 	    }
-	    if (!clist[(unsigned)cs]) {	/* Match? */
-		MATCHRETURN(5,0);	/* Nope, done. */
+	    debug(F000,">>> cs","",cs);
+	    debug(F101,">>> clist[cs]","",clist[cs]);
+	    debug(F000,">>> string",string,*string);
+
+	    if (!clist[(unsigned)cs]) {	/* No match? */
+		if (!*string) {		/* This clause 16 Jun 2005 */
+		    MATCHRETURN(5,0);	/* Nope, done. */
+		}
+/*
+  We need to fail here if the [clist] is not allowed to float.
+  The [clist] is not allowed to float if it is not preceded
+  by an asterisk, right?  30 Dec 2005.
+*/
+		if (!havestar) {
+		    MATCHRETURN(500,0);
+		}
+		string++;		/* From here to end added 2005/6/15 */
+		stringpos++;
+		pattern = lastpat;	/* Back up pattern */
+		k = ckmatch(pattern,string,icase,opts);
+		if (xxflag) MATCHRETURN(0,0);
+		if (!matchpos && k > 0)
+		  matchpos = stringpos;
+		MATCHRETURN(5, (*string) ? matchpos : 0);
 	    }
 	    if (!matchpos) {
 		matchpos = stringpos;
@@ -1599,6 +1746,7 @@ ckmatch(pattern, string, icase, opts) char *pattern,*string; int icase, opts; {
 #endif /* DEBUG */
 				free(tp);
 				tp = NULL;
+				if (xxflag) MATCHRETURN(0,0);
 				if (k == 0) {
 				    matchpos = savpos;
 				}
@@ -1632,6 +1780,7 @@ ckmatch(pattern, string, icase, opts) char *pattern,*string; int icase, opts; {
 	    char * psave;
 	    char * p, * s = NULL;	/* meaning match anything */
 	    int k, n, q = 0;
+	    havestar++;			/* The rest can float */
 	    while (*pattern == '*')	/* Collapse successive asterisks */
 	      pattern++;
 	    psave = pattern;		/* First non-asterisk after asterisk */
@@ -1762,19 +1911,39 @@ ckmatch(pattern, string, icase, opts) char *pattern,*string; int icase, opts; {
 	    } else {			/* A meta char follows asterisk */
 		if (!*string)
 		  MATCHRETURN(17, matchpos = 0);
-		while (*string && (k = ckmatch(p,string,icase,opts) < 1)) {
+#ifdef COMMENT
+		/* This is more elegant but it doesn't work. */
+		p--;
+		string++;
+		stringpos++;
+		k = ckmatch(p,string,icase,opts);
+#else
+		while (*string && ((k = ckmatch(p,string,icase,opts)) < 1)) {
+		    if (xxflag) MATCHRETURN(0,0);
 		    string++;
 		    stringpos++;
 		}
+		if (!*string && k < 1) {
+/*
+  Definitely no match so we set a global flag to inibit further backing up
+  and retrying by previous incarnations, since they don't see that the string
+  and/or pattern, which are on the stack, have been exhausted at this level.
+*/
+		    xxflag++;
+		    debug(F111,"CKMATCH DEFINITELY NO MATCH",p,k);
+		    MATCHRETURN(91,0);
+		}
+#endif	/* COMMENT */
 		debug(F111,"CKMATCH *<meta> k",string, k);
 		if (!matchpos && k > 0) {
 		    matchpos = stringpos;
-		    debug(F111,"CKMATCH *<meta>",string, matchpos);
+		    debug(F111,"CKMATCH *<meta> matchpos",string, matchpos);
 		}
 		MATCHRETURN(12, (*string) ? matchpos : 0);
 	    }
 	} else if (cs == cp) {
-	    pattern++, string++;
+	    pattern++;
+	    string++;
 	    stringpos++;
 	    if (!matchpos) {
 		matchpos = stringpos;
@@ -1788,20 +1957,21 @@ ckmatch(pattern, string, icase, opts) char *pattern,*string; int icase, opts; {
   xckmatch:
     {
 #ifdef DEBUG
-	char msgbuf[96];
+	char msgbuf[256];
 #endif /* DEBUG */
 	if (matchdepth > 0)
 	  matchdepth--;
 	matchpos = rc;
 #ifdef DEBUG
-	ckmakxmsg(msgbuf,96,
+	ckmakxmsg(msgbuf,256,
 		  "CKMATCH RETURN[",
 		  ckitoa(where),
 		  "] matchpos=",
 		  ckitoa(matchpos),
 		  " matchdepth=",
 		  ckitoa(matchdepth),
-		  " string=",NULL,NULL,NULL,NULL,NULL
+		  " pat=",pattern,
+		  " string=",string,NULL,NULL
 		  );
 	debug(F110,msgbuf,string,0);
 #endif /* DEBUG */
@@ -1882,6 +2052,122 @@ isfloat(s,flag) char *s; int flag; {
     floatval = f;			/* Set result */
     return(d ? 2 : 1);			/* Succeed */
 }
+
+/*
+  c k r o u n d  --  Rounds a floating point number or an integer.
+
+  fpnum:
+    Floating-point number to round.
+  places:
+    Positive...To how many decimal places.
+    Zero.......Round to integer.
+    Negative...-1 = nearest ten, -2 = nearest 100, -3 = nearest thousand, etc.
+  obuf
+    Output buffer for string result if desired.
+  obuflen    
+    Length of output buffer.
+  Returns:
+    Result as CKFLOAT (which is not going to be as exact as the string result)
+    And the exact result in the string output buffer, if one was specified.
+*/
+CKFLOAT
+#ifdef CK_ANSIC
+ckround(CKFLOAT fpnum, int places, char *obuf, int obuflen)
+#else
+ckround(fpnum,places,obuf,obuflen)
+ CKFLOAT fpnum; int places, obuflen; char *obuf;
+#endif /* CK_ANSIC */
+/* ckround  */ {
+    char *s, *s2, *d;
+    int i, p, len, x, n, digits;
+    int carry = 0;
+    int minus = 0;
+    char buf[200];
+    char * number;
+    CKFLOAT value;
+    extern int fp_digits;
+
+    sprintf(buf,"%200.100f",fpnum);	/* Make string version to work with */
+    number = (char *) buf;		/* Make pointer to it */
+
+    p = places;				/* Precision */
+    d = (char *)0;			/* Pointer to decimal or string end */
+
+    s = number;				/* Fix number... */
+    while (*s == ' ' || *s == '\011') s++; /* Strip leading whitespace */
+    if (*s == '+') s++;			   /* Skip leading plus sign*/
+    number = s;				   /* Start of number */
+    if (*s == '-') { minus++; number++; s++; } /* Remember if negative */
+
+    s = number;				/* Don't allow false precision */
+    n = 0;
+    while (*s && *s != '.') s++, n++;   /* Find decimal */
+
+    if (p + n > fp_digits)		/* Too many digits */
+      p = fp_digits - n;		/* Don't ask for bogus precision */
+    if (p < 0) p = 0;			/* But don't ask for less than zero */
+    if (n > fp_digits)			/* Integer part has too many digits */
+      *s = 0;				/* but we can't truncate it */
+    else				/* Magnitude is OK */
+      number[fp_digits+1] = 0;		/* Truncate fractional part. */
+
+    len = (int)strlen(number);		/* Length of non-bogus number */
+    d = s;				/* Pointer to decimal point */
+    if (p > 0) {			/* Rounding the fractional part */
+	if (n + p < len) {		/* If it's not already shorter */
+	    if (*s == '.') s++;		/* Skip past decimal */
+	    s += p;			/* Go to desired spot */
+	    if (*s > '4' && *s <= '9')	/* Check value of digit */
+	      carry = 1;
+	    *s = 0;			/* And end the string */ 
+	    s--;			/* Point to last digit */
+	}
+    } else if (p == 0) {		/* Rounding to integer */
+	if (*s == '.') {
+	    *s = 0;			/* erase the decimal point */
+	    if (*(s+1)) {		/* and there is a factional part */
+		if (*(s+1) > '4' && *(s+1) <= '9') /* Check for carry */
+		  carry = 1;
+	    }
+	    s--;			/* Point to last digit */
+	}
+    } else {				/* Rounding the integer part */
+	if (s + p > number) {		/* as in "the nearest hundred" */
+	    s += p;			/* Go left to desired digit */
+	    *d = 0;			/* Discard fraction */
+	    carry = 0;
+	    if (*s > '4')		/* Check first digit of fraction */
+	      carry = 1;		/* and set carry flag */
+	    s2 = s;
+	    while (s2 < d)		/* Fill in the rest with zeros */
+	      *s2++ = '0';
+	    s--;			/* Point to last digit */
+	}
+    }
+    if (carry) {			/* Handle carry, if any */
+        while (s >= number) {
+            if (*s == '.') {		/* Skip backwards over decimal */
+                s--;
+                continue;
+            }
+            *s += 1;			/* Add 1 to current digit */
+            carry = 0;
+            if (*s <= '9') 		/* If result is 9 or less */
+	      break;			/* we're done */
+            *s = '0';			/* Otherwise put 0 */
+            carry = 1;			/* carry the 1 */
+            s--;			/* and back up to next digit */
+	}
+    }
+#ifdef __alpha
+    sscanf(number,"%f",&value);		/* Convert back to floating point */
+#else
+    sscanf(number,"%lf",&value);        /* Convert back to floating point */
+#endif
+    if (obuf) strncpy(obuf,number,obuflen); /* Set string result */
+    return(value);			    /* Return floating-point result */
+}
+
 #endif /* CKFLOAT */
 
 /* Sorting routines... */
@@ -2016,8 +2302,19 @@ char *
 ckradix(s,in,out) char * s; int in, out; {
     char c, *r = rxresult;
     int d, minus = 0;
+#ifdef COMMENT
     unsigned long zz = 0L;
     long z = 0L;
+#else
+    /*
+      To get 64 bits on 32-bit hardware we use off_t, but there
+      is no unsigned version of off_t, so we lose the ability to
+      detect overflow.
+    */
+    CK_OFF_T zz = (CK_OFF_T)0;
+    CK_OFF_T z = (CK_OFF_T)0;
+#endif	/* COMMENT */
+
     if (in < 2 || in > 36)		/* Verify legal input radix */
       return(NULL);
     if (out < 2 || out > 36)		/* and output radix. */
@@ -2222,7 +2519,7 @@ b64tob8(s,n,out,len) char * s,* out; int n, len; { /* Decode */
 /* C H K N U M  --  See if argument string is an integer  */
 
 /* Returns 1 if OK, zero if not OK */
-/* If OK, string should be acceptable to atoi() */
+/* If OK, string should be acceptable to atoi() or atol() or ckatofs() */
 /* Allows leading space, sign */
 
 int
@@ -2593,7 +2890,7 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
     int    gr_stk[NESTMAX];		/* Nesting bracket stack */
     int    gr_lvl = 0;			/* Nesting level */
     int    wordnum = 0;			/* Current word number */
-    char   c = 'A';			/* Current char (dummy start value) */
+    CHAR   c = 'A';			/* Current char (dummy start value) */
     int    class = 0;			/* Current character class */
     int    state = ST_BW;		/* Current FSA state */
     int    len = 0;			/* Length of current word */
@@ -2601,7 +2898,16 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
     int    gquote = 0;			/* Quoted group */
     int    cquote = 0;			/* Quoted character */
     int    collapse = 1;		/* Collapse adjacent separators */
+    int    all = 0;			/* s3 == ALL */
+    int    csv = 0;			/* s3 == CSV */
+    int    tsv = 0;			/* s3 == TSV */
+    int    prevstate = -1;
 
+    unsigned int hex80 = 128;
+    unsigned int hexff = 255;
+    CHAR notsepbuf[256];
+
+    notsepbuf[0] = NUL;			/* Keep set for "ALL" */
     if (n4) collapse = 0;		/* Don't collapse */
 
     for (i = 0; i < NESTMAX; i++)	/* Initialize nesting stack */
@@ -2619,16 +2925,24 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
     if (splitting) {			/* If splitting n = word count */
 	n = 0;				/* Initialize it */
     } else {				/* Otherwise */
+#ifdef COMMENT
 	if (n1 < 1) {			/* If 0 (or less) */
 	    ck_sval.a_size = 0;		/* nothing to do. */
 	    return(&ck_sval);
 	}
+#else
+	if (n1 == 0) {			/* If 0 */
+	    ck_sval.a_size = 0;		/* nothing to do. */
+	    return(&ck_sval);
+	}
+#endif	/* COMMENT */
 	n = n1;				/* n = desired word number. */
     }
     slen = 0;				/* Get length of s1 */
     debug(F111,"cksplit",s1,n);
 
     p = s1;
+
 #ifdef COMMENT
     while (*p++) slen++;		/* Make pokeable copy of s1 */
     if (!splitbuf || slen > nsplitbuf) { /* Allocate buffer if needed */
@@ -2680,16 +2994,53 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
     sep = s2;				/* s2 = break set */
     if (!sep) sep = "";
     notsep = s3;			/* s3 = include set */
-    if (!notsep) notsep = "";
+    if (!notsep) {
+	notsep = "";
+    } else if ((all = !ckstrcmp(notsep,"ALL",3,1)) ||
+	       (csv = !ckstrcmp(notsep,"CSV",3,1)) ||
+	       (tsv = !ckstrcmp(notsep,"TSV",3,1))) {
+	int i, flag; CHAR c;
+	int n = 0;
+	char * ss;
+	if (!all && (csv || tsv)) {
+	    all = 1;
+	    collapse = 0;
+	}
+	if (csv || tsv) {
+	    all = 1;
+	    collapse = 0;
+	}
+	for (i = 1; i < 256; i++) {
+	    flag = 0;
+	    ss = sep;
+	    while (c = *ss++ && !flag) {
+		if (c == i) flag++;
+	    }
+	    if (!flag) notsepbuf[n++] = c;
+	}
+	notsepbuf[n] = NUL;
+	notsep = (char *)notsepbuf;
+	debug(F110,"CKMATCH NOTSEPBUF ALL",notsep,0);
+    }
+    if (*s && csv) {			/* For CSV skip leading whitespace */
+        while (*s == SP || *s == HT)
+	  s++;
+	c = *s;
+    }
+    if (n2 == 0 && csv) n2 = 1;		/* CSV implies doublequote grouping */
     if (n2 < 0) n2 = 63;		/* n2 = grouping mask */
     grouping = n2;
     p = "";				/* Pointer to current word */
     while (c) {				/* Loop through string */
 	c = *s;
 	class = 0;
-	if (!cquote && c == CMDQ) {	/* If CMDQ */
-	    cquote++;			/* next one is quoted */
-	    goto nextc;			/* go get it */
+	if (!csv && !tsv) {		/* fdc 2010-12-30 */
+	    /* In CSV and TSV splitting, backslash is not special */
+	    if (!cquote && c == CMDQ) {	/* If CMDQ */
+		cquote++;		/* next one is quoted */
+		goto nextc;		/* go get it */
+	    }
+
 	}
 	if (cquote && c == CMDQ) {	/* Quoted CMDQ is special */
 	    if (state != ST_BW) {	/* because it can still separate */
@@ -2709,7 +3060,7 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
 	    cquote = 0;
 	    x = 1;
 	} else {			/* Character is not quoted */
-	    if (c < SP) {		/* Get its class */
+	    if (!all && c < SP) {	/* Get its class */
 		x = 0;			/* x == 0 means "is separator" */
 	    } else if (*sep) {		/* Break set given */
 		ss = sep;
@@ -2718,7 +3069,8 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
 	    } else {			/* Default break set is */
 		x = ((c >= 'a' && c <= 'z') || /* all but alphanumerics */
 		     (c >= '0' && c <= '9') ||
-		     (c >= 'A' && c <= 'Z')
+		     (c >= 'A' && c <= 'Z') ||
+		     ((unsigned int)c >= hex80 && (unsigned int)c <= hexff)
 		     );
 	    }
 	    if (x == 0 && *notsep && c) { /* Include set if given */
@@ -2751,6 +3103,10 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
 		}
 	    }
 	}
+	debug(F000,"cksplit char",s,c);
+	debug(F101,"cksplit state","",state);
+	debug(F101,"cksplit class","",class);
+
 	switch (state) {		/* State switcher... */
 	  case ST_BW:			/* BETWEENWORDS */
 	    if (class & CL_OPN) {	/* Group opener */
@@ -2761,6 +3117,7 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
 		if (gr_lvl >= NESTMAX)
 		  goto xxsplit;
 		gr_stk[gr_lvl] = gr_cls[ko];
+		prevstate = state;
 		state = ST_IG;		/* Switch to INGROUP state */
 	    } else if (class & CL_DAT) { /* Data character */
 		gr_lvl = 0;		/* Clear group nesting stack */
@@ -2772,6 +3129,7 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
 		    p--;
 		    gquote = 0;
 		}
+		prevstate = state;
 		state = ST_IW;		/* Switch to INWORD state */
 	    } else if (class & CL_QUO) { /* Group quote */
 		gquote = gr_lvl+1;	/* Remember quoted level */
@@ -2784,18 +3142,40 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
 	  case ST_IW:			/* INWORD (but not in a group) */
 	    if (class & CL_SEP) {	/* Ends on any kind of separator */
 		*s = NUL;		/* Terminate this word */
-		wordnum++;		/* Count it */
-		if (splitting) {	/* Dispose of it appropriately */
-		    if (wordnum > max) {   /* Add to array if splitting */
-			ck_sval.a_size = -2;
+		if (csv) {		/* If comma-separated list */
+		    char * s2 = s;	/* discard surrounding spaces */
+		    while (s2 > splitbuf) { /* first backwards... */
+			s2--;
+			if (*s2 == SP || *s2 == HT)
+			  *s2 = NUL;
+			else
+			  break;
+		    }
+		    s2 = s+1;		/* Then forwards... */
+		    while (*s2 && (*s2 == SP || *s2 == HT))
+		      *s2++;
+		    s = s2-1;
+		}
+		if (!csv || prevstate != ST_IG) {
+		    wordnum++;		      /* Count it */
+		    if (splitting || n < 0) { /* Dispose of it appropriately */
+			if (wordnum > max) {  /* Add to array if splitting */
+			    ck_sval.a_size = -2;
+			    return(&ck_sval);
+			}
+			/* This inelegant bit corrects an edge condition */
+			if (csv && !*p && (!c || !*(s+1))) {
+			    wordnum--;
+			} else {
+			    setword(wordnum,p,len);
+			}
+		    } else if (wordnum == n) { /* Searching for word n */
+			setword(1,p,len);
+			ck_sval.a_size = 1;
 			return(&ck_sval);
 		    }
-		    setword(wordnum,p,len);
-		} else if (wordnum == n) { /* Searching for word n */
-		    setword(1,p,len);
-		    ck_sval.a_size = 1;
-		    return(&ck_sval);
 		}
+		prevstate = state;
 		state = ST_BW;		/* Switch to BETWEENWORDS state */
 		len = 0;
 	    }
@@ -2803,6 +3183,14 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
 
 	  case ST_IG:			/* INGROUP */
 	    if (class & CL_CLS) {	/* Have group closer? */
+		if (csv) {
+		    if (*(s+1) == c) {
+			char *s2 = s;
+			while ((*s2 = *(s2+1))) s2++;
+			s++;
+			c = *s;
+		    }
+		}
 		if (c == gr_stk[gr_lvl]) { /* Does it match current opener? */
 		    gr_lvl--;		   /* Yes, pop stack */
 		    if (gr_lvl < 0)	   /* Don't pop it too much */
@@ -2812,10 +3200,9 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
 			  s++;
 			c = *s;
 			*s = NUL;	/* we have word. */
-
 			wordnum++;	/* Count and dispose of it. */
 			len--;
-			if (splitting) {
+			if (splitting || n < 0) {
 			    if (wordnum > max) {
 				ck_sval.a_size = -2;
 				return(&ck_sval);
@@ -2826,6 +3213,7 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
 			    ck_sval.a_size = 1;
 			    return(&ck_sval);
 			}
+			prevstate = state;
 			state = ST_BW;	/* Switch to BETWEENWORDS state */
 			len = 0;
 		    }
@@ -2846,26 +3234,44 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
     } /* while (c) */
 
     if (gr_lvl > 0) {			/* In case of an unclosed group */
-	if (splitting) {		/* make it the last word. */
+	if (splitting || n < 0) {	/* make it the last word. */
 	    if (++wordnum > max) {
 		ck_sval.a_size = -2;
 		return(&ck_sval);
 	    }
 	    setword(wordnum,p+1,len);
-	} else if (wordnum == n) {
+	} else if (wordnum == n) {	/* Counting from left */
 	    setword(1,p+1,len);
 	    ck_sval.a_size = 1;
 	    return(&ck_sval);
-	}
+	} else 	if (n < 0 && (wordnum + n > -1)) { /* Counting from right */
+	    char * s = wordarray[wordnum + n + 1];
+	    if (!s) s = "";
+	    setword(1,s,strlen(s));
+	    ck_sval.a_size = 1;
+	    return(&ck_sval);
+        }
     }
-    if (!splitting) {			/* Wanted word n but there was none? */
-	setword(1,NULL,0);
-	ck_sval.a_size = 0;
+    if (!splitting) {			/* Fword... */
+	if (n < 0 && (wordnum + n > -1)) { /* Counting from right */
+	    char * s = wordarray[wordnum + n + 1];
+	    if (!s) s = "";
+	    setword(1,s,strlen(s));
+	    ck_sval.a_size = 1;
+	    return(&ck_sval);
+        }
+	setword(1,NULL,0);		/* From left... */
+	ck_sval.a_size = 0;		/* but there weren't n words */
 	return(&ck_sval);
     } else {				/* Succeed otherwise */
 	ck_sval.a_size = wordnum;
+/* 
+  Always put a null element at the end of the array.  It does no harm in
+  the normal case, and it's required if we're making an argv[] array to 
+  pass to execvp().  This element is not included in the count.
+*/
 	if (wordnum < MAXWORDS)
-	  setword(wordnum+1,NULL,0);
+          setword(wordnum+1,NULL,0);
     }
 #ifdef DEBUG
     if (deblog) {
@@ -2879,5 +3285,35 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
     ck_sval.a_size = -2;
     return(&ck_sval);
 }
+
+/*
+  ckhexbytetoint() expects a string of two hex characters,
+  returns the int equivalent or -1 on error.
+*/
+int
+#ifdef CK_ANSIC
+ckhexbytetoint( char * s )
+#else
+ckhexbytetoint(s) char * s;
+#endif	/* CK_ANSIC */
+{
+    int i, c[2];
+    if (!s) return(-1);
+    if ((int)strlen(s) != 2) return(-1);
+    for (i = 0; i < 2; i++) {
+	c[i] = *s++;
+	if (!c[i]) return(-1);
+	if (islower(c[i])) c[i] = toupper(c[i]);
+	if (c[i] >= '0' && c[i] <= '9') {
+	    c[i] -= 0x30;
+	} else if (c[i] >= 'A' && c[i] <= 'F') {
+	    c[i] -= 0x37;
+	} else {
+	    return(-1);
+	}
+    }
+    return(c[0] * 16 + c[1]);
+}
+
 
 /* End of ckclib.c */

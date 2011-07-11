@@ -6,7 +6,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2010,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -215,8 +215,8 @@ extern char ** sndfilter;
 #endif /* PIPESEND */
 
 extern int unkcs, wmax, wcur, discard, bctu, bctl, local, fdispla, what,
-  sendmode, opnerr, dest, epktrcvd, epktsent, filestatus, eofmethod, dispos;
-extern long sendstart, calibrate, fncnv, fnrpath;
+    sendmode, opnerr, dest, epktrcvd, epktsent, filestatus, eofmethod, dispos,
+    fncnv, fnrpath;
 
 extern char * ofn2;
 extern char * rfspec, * sfspec, * prfspec, * psfspec, * rrfspec, * prrfspec;
@@ -265,7 +265,9 @@ extern int atfrmi, atfrmo, atcrei, atcreo, atacti, atacto;
 extern int quiet;
 #endif /* datageneral */
 
-extern long fsize, filcnt, ffc, tfc;
+extern long filcnt;
+extern CK_OFF_T fsize, ffc, tfc, sendstart, calibrate;
+CK_OFF_T rs_len;
 
 #ifndef NOCSETS
 _PROTOTYP (VOID setxlate, (void));
@@ -1183,8 +1185,12 @@ sattr(xp, flag) int xp, flag; {		/* Send Attributes */
 	  left++;
     }
     /* File length in K */
-    if (atleno && !done[xunchar(c = '!')] && x.lengthk > -1L) {
+    if (atleno && !done[xunchar(c = '!')] && x.lengthk > (CK_OFF_T)-1) {
+#ifdef COMMENT
 	sprintf((char *) &data[i+2],"%ld",x.lengthk); /* safe */
+#else
+	ckstrncpy((char *)&data[i+2],ckfstoa(x.lengthk),32);
+#endif	/* COMMENT */
 	aln = (int)strlen((char *)(data+i+2));
 	if (max - i >= aln + 2) {
 	    data[i] = c;
@@ -1198,8 +1204,12 @@ sattr(xp, flag) int xp, flag; {		/* Send Attributes */
 	}
     }
     /* File length in bytes */
-    if (atleno && !done[xunchar(c = '1')] && x.length > -1L) {
+    if (atleno && !done[xunchar(c = '1')] && x.length > (CK_OFF_T)-1) {
+#ifdef COMMENT
 	sprintf((char *) &data[i+2],"%ld",x.length); /* safe */
+#else
+	ckstrncpy((char *)&data[i+2],ckfstoa(x.length),32);
+#endif	/* COMMENT */
 	aln = (int)strlen((char *)(data+i+2));
 	if (max - i >= aln + 2) {
 	    data[i] = c;
@@ -1369,17 +1379,17 @@ rsattr(s) CHAR *s; {			/* Read response to attribute packet */
     }
 #ifdef CK_RESEND
     if (sendmode == SM_RESEND && *s == '1') { /* RESEND length */
-	int n; long z; CHAR *p;
+	int n; CK_OFF_T z; CHAR *p;
 	p = s + 1;
 	n = xunchar(*p++);
 	debug(F101,"rsattr RESEND n","",n);
-	z = 0L;
+	z = (CK_OFF_T)0;
 	while (n-- > 0)			/* We assume the format is good. */
-	  z = 10L * z + (long) (*p++ - '0');
+	  z = (CK_OFF_T)10 * z + (CK_OFF_T)(*p++ - '0');
 	debug(F101,"rsattr RESEND z","",z);
-	if (z > 0L) sendstart = z;
+	if (z > (CK_OFF_T)0) sendstart = z;
 	debug(F101,"rsattr RESEND sendstart","",sendstart);
-	if (sendstart > 0L)
+	if (sendstart > (CK_OFF_T)0)
 	  if (zfseek(sendstart) < 0)	/* Input file is already open. */
 	    return(0);
 #ifdef CK_CURSES
@@ -1392,8 +1402,6 @@ rsattr(s) CHAR *s; {			/* Read response to attribute packet */
     return(0);
 }
 
-long rs_len = 0L;			/* Length of file being resent to */
-
 /*
   Get attributes from incoming A packet.  Returns:
    0 on success, file is to be accepted
@@ -1403,7 +1411,7 @@ int
 gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
     char c, d;
     char *ff;
-    int aln, i;
+    int aln, i, overflow = 0;
 
 #ifndef NOCSETS
     extern int r_cset, axcset[];
@@ -1469,13 +1477,15 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
     while (c = *s++) {			/* Get attribute tag */
 	aln = xunchar(*s++);		/* Length of attribute string */
 	switch (c) {
+#ifdef COMMENT				/* This case combined with '1' below */
 	  case '!':			/* File length in K */
 	    for (i = 0; (i < aln) && (i < ABUFL); i++) /* Copy it */
 	      abuf[i] = *s++;
 	    abuf[i] = '\0';		/* Terminate with null */
 	    if (i < aln) s += (aln - i); /* If field was too long for buffer */
-	    yy->lengthk = atol(abuf);	/* Convert to number */
+	    yy->lengthk = ckatofs(abuf); /* Convert to number */
 	    break;
+#endif	/* COMMENT */
 
 	  case '/':			/* Record format */
 	    rfbuf[1] = NUL;
@@ -1659,7 +1669,7 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 	      dsbuf[i] = *s++;		/* Copy it into a separate string */
 	    dsbuf[i] = '\0';
 	    if (i < aln) s += (aln - i);
-	    rs_len = 0;
+	    rs_len = (CK_OFF_T)0;
 	    if (atdisi) {		/* We are doing this attribute */
 		/* Copy it into the attribute structure */
 		yy->disp.val = dsbuf;	/* Pointer to string */
@@ -1736,7 +1746,7 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
   the Recover attribute now.  So better to leave as-is.  Anyway, it's probably
   more useful this way.
 */
-		    if (rs_len > 0L) {
+		    if (rs_len > (CK_OFF_T)0) {
 			fncsav = fncact; /* Save collision action */
 			fncact = XYFX_A; /* Switch to APPEND */
 		    }
@@ -1780,15 +1790,40 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 	    }
 	    break;
 
-	  case '1':			/* File length in bytes */
-	    for (i = 0; (i < aln) && (i < ABUFL); i++) /* Copy it */
-	      abuf[i] = *s++;
-	    abuf[i] = '\0';		/* Terminate with null */
-	    if (i < aln) s += (aln - i);
-	    yy->length = atol(abuf);	/* Convert to number */
-	    debug(F111,"gattr length",abuf,(int) yy->length);
-	    break;
-
+	  case '!':			/* File length in K */
+	  case '1': {			/* File length in bytes */
+	      char * l2;
+	      CK_OFF_T xlen;
+	      for (i = 0; (i < aln) && (i < ABUFL); i++) /* Copy it */
+		abuf[i] = *s++;
+	      abuf[i] = '\0';		/* Terminate with null */
+	      if (i < aln) s += (aln - i);
+	      if (rdigits(abuf)) {	/* Make sure string is all digits */
+		  xlen = ckatofs(abuf);	/* Convert to number */
+		  l2 = ckfstoa(xlen);	/* Convert number back to string */
+		  if (c == '1')
+		    debug(F111,"gattr length",abuf,xlen);
+		  else
+		    debug(F111,"gattr lengthk",abuf,xlen);
+		  if (ckstrcmp(abuf,l2,-1,1)) { /* This is how we check... */
+		      xlen = (CK_OFF_T)-2; /* -2 = unk, possibly too long */
+		      overflow++;
+		      debug(F111,"gattr overflow",
+			    (c == '1') ? "length" : "lengthk",
+			    xlen);
+		  }
+		  if (c == '1') {
+		      yy->length = xlen;
+		      debug(F101,"gattr length","",xlen);
+		  } else {
+		      yy->lengthk = xlen;
+		      debug(F101,"gattr lengthk","",xlen);
+		  }
+	      }
+	      /* If the length field is not numeric accept the file */
+	      /* anyway but with an unknown length */
+	      break;
+	  }
 
 #ifdef CK_PERMS
 	  case ',':			/* System-dependent protection code */
@@ -1822,34 +1857,42 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 	}
     }
 
-    /* Check file length now, because we also need to know the file type */
+    /* Check space now, because we also need to know the file type */
     /* in case zchkspa() differentiates text and binary (VMS version does) */
 
-    if (atleni) {			/* Length attribute enabled? */
-	if (yy->length > -1L) {		/* Length-in-bytes attribute rec'd? */
+    if (atleni && !calibrate) {		/* Length attribute enabled? */
+	if (yy->length > (CK_OFF_T)-1) { /* Length-in-bytes attribute rec'd? */
 	    if (!zchkspa(ff,(yy->length))) { /* Check space */
 		retcode = -1;		     /* Not enuf */
 		*rp++ = '1';
 		if (!opnerr) tlog(F100," refused: length bytes","",0);
 	    }
-	} else if (yy->lengthk > -1L) {	/* Length in K attribute rec'd? */
-	    if (!zchkspa(ff,(yy->lengthk * 1024))) {
+	} else if (yy->lengthk > (CK_OFF_T)-1) { /* Length in K received? */
+	    long xlen;
+	    xlen = yy->lengthk * 1024;
+	    if (!zchkspa(ff,xlen)) {
 		retcode = -1;		/* Check space */
 		*rp++ = '!';
 		if (!opnerr) tlog(F100," refused: length K","",0);
 	    }
 	}
     }
-    if (yy->length > -1L) {		/* Remember the file size */
-	fsize = yy->length;
-    } else if (yy->lengthk > -1L) {
-	fsize = yy->lengthk * 1024L;
-    } else fsize = -1L;
+    if (retcode > -1L) {		/* Remember the file size */
+	if (yy->length > (CK_OFF_T)-1) {
+	    fsize = yy->length;
+	} else if (yy->lengthk > (CK_OFF_T)-1 && !overflow) {
+	    fsize = yy->lengthk * 1024L;
+	} else fsize = yy->length;	/* (e.g. -2L) */
+    }
 
 #ifdef DEBUG
     if (deblog) {
+#ifdef COMMENT
 	sprintf(abuf,"%ld",fsize);	/* safe */
-	debug(F110,"gattr fsize",abuf,0);
+#else
+	ckstrncpy(abuf,ckfstoa(fsize),ABUFL);
+#endif	/* COMMENT */
+debug(F110,"gattr fsize",abuf,0);
     }
 #endif /* DEBUG */
 
@@ -1867,7 +1910,11 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 	} else {			/* Binary mode */
 	    retcode = 0;		/* Accept the file */
 	    discard = 0;		/* If SET FILE COLLISION DISCARD */
+#ifdef COMMENT
 	    sprintf(rpbuf+2,"%ld",rs_len); /* Reply with length of file */
+#else
+	    ckstrncpy(rpbuf+2,ckfstoa(rs_len),RPBUFL-2);
+#endif	/* COMMENT */
 	    rpbuf[0] = '1';		/* '1' means Length in Bytes */
 	    rpbuf[1] = tochar((int)strlen(rpbuf+2)); /* Length of length */
 	    debug(F111,"gattr RESEND OK",rpbuf,retcode);
@@ -1896,7 +1943,7 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 
 int
 initattr(yy) struct zattr *yy; {
-    yy->lengthk = yy->length = -1L;
+    yy->lengthk = yy->length = (CK_OFF_T)-1;
     yy->type.val = "";
     yy->type.len = 0;
     yy->date.val = "";
@@ -1999,7 +2046,7 @@ opena(f,zz) char *f; struct zattr *zz; {
 
     adebu(f,zz);			/* Write attributes to debug log */
 
-    ffc = 0L;				/* Init file-character counter */
+    ffc = (CK_OFF_T)0;			/* Init file-character counter */
 
 #ifdef PIPESEND
     if (pipesend)			/* Receiving to a pipe - easy. */
@@ -2107,7 +2154,7 @@ opena(f,zz) char *f; struct zattr *zz; {
 	debug(F101,"opena binary","",binary);
 
 #ifdef COMMENT
-	if (fsize > -1L)
+	if (fsize >= 0)
 #endif /* COMMENT */
 	  xxscreen(SCR_FS,0,fsize,"");
 
@@ -2337,7 +2384,7 @@ openo(name,zz,fcb) char *name; struct zattr *zz; struct filinfo *fcb; {
 int
 opent(zz) struct zattr *zz; {
     int x;
-    ffc = tfc = 0L;
+    ffc = tfc = (CK_OFF_T)0;
     x = zopeno(ZCTERM,"",zz,NULL);
     debug(F101,"opent zopeno","",x);
     if (x >= 0) {
@@ -2352,7 +2399,7 @@ opent(zz) struct zattr *zz; {
 
 int
 ckopenx(zz) struct zattr *zz; {
-    ffc = tfc = 0L;			/* Reset counters */
+    ffc = tfc = (CK_OFF_T)0;		/* Reset counters */
     o_isopen = 1;
     debug(F101,"ckopenx fsize","",fsize);
     xxscreen(SCR_FS,0,fsize,"");	/* Let screen display know the size */
@@ -2409,7 +2456,7 @@ clsif() {
 	    }
 #endif /* TLOG */
 	} else if (!epktrcvd && !epktsent && !cxseen && !czseen) {
-	    long zz;
+	    CK_OFF_T zz;
 	    zz = ffc;
 #ifdef CK_RESEND
 	    if (sendmode == SM_RESEND || sendmode == SM_PSEND)
@@ -2450,7 +2497,7 @@ clsif() {
     }
     i_isopen = 0;
     hcflg = 0;				/* Reset flags */
-    sendstart = 0L;			/* Don't do this again! */
+    sendstart = (CK_OFF_T)0;		/* Don't do this again! */
 #ifdef COMMENT
 /*
   This prevents a subsequent call to clsof() from deleting the file
@@ -2546,7 +2593,7 @@ clsof(disp) int disp; {
 #endif /* TLOG */
 	}
     }
-    rs_len = 0;
+    rs_len = (CK_OFF_T)0;
     o_isopen = 0;			/* The file is not open any more. */
     cxseen = 0;				/* Reset per-file interruption flag */
     return(x);				/* Send back zclose() return code. */

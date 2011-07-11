@@ -1,7 +1,7 @@
 /*
   C K _ S S L . H --  OpenSSL Interface Header for C-Kermit
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2005,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -39,7 +39,15 @@
  * definitions there is no reason to have it included by openssl/evp.h
  */
 #define OPENSSL_NO_MDC2
+#ifdef OPENSSL_100
+#define OPENSSL_098
+#endif	/* OPENSSL_100 */
+#ifdef OPENSSL_098
+#define OPENSSL_097
+#endif /* OPENSSL_098 */
+#ifdef CK_DES
 #include <openssl/des.h>
+#endif	/* CK_DES */
 #include <openssl/ssl.h>
 #include <openssl/x509v3.h>
 #include <openssl/rand.h>
@@ -94,6 +102,9 @@ extern int tls_active_flag;
 extern int x509_cert_valid;
 extern X509_STORE *crl_store;
 
+extern int ssl_raw_flag;
+extern int tls_raw_flag;
+
 #ifndef NOHTTP
 extern SSL_CTX *tls_http_ctx;
 extern SSL *tls_http_con;
@@ -128,6 +139,8 @@ _PROTOTYP(int ssl_verify_crl,(int, X509_STORE_CTX *));
 _PROTOTYP(int tls_is_krb5,(int));
 _PROTOTYP(int X509_userok,(X509 *,const char *));
 _PROTOTYP(int ck_X509_save_cert_to_user_store,(X509 *));
+/* SMS 2007/02/15 */
+_PROTOTYP(int ssl_check_server_name,(SSL * ssl, char * hostname));
 #ifdef OS2
 #include "ckosslc.h"
 #include "ckossl.h"

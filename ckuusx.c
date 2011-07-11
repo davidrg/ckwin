@@ -9,7 +9,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2011,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -17,7 +17,8 @@
 
 /*
   This module contains user interface functions needed by both the interactive
-  user interface and the command-line-only user interface.
+  user interface and the command-line-only user interface, as well as the
+  screen-control routines (curses and equivalent).
 */
 
 /* Includes */
@@ -76,6 +77,7 @@ extern xx_strp xxstring;
 #ifdef OS2
 #include "ckcnet.h"
 #else /* OS2 */
+_PROTOTYP( char * ckgetpeer, (VOID));
 _PROTOTYP(int getlocalipaddr, (void));
 _PROTOTYP(int istncomport, (void));
 #ifndef NOCKGETFQHOST
@@ -207,8 +209,9 @@ _PROTOTYP( FILE * popen, (char *, char *) );
 #endif /* DCLPOPEN */
 
 int tt_crd = 0;                         /* Carriage return display */
+int tt_lfd = 0;                         /* Linefeed display */
 int interrupted = 0;                    /* Interrupted from keyboard flag */
-static int fxd_inited = 0;              /* Fullscreen stuff initialized */
+int fxd_inited = 0;			/* Fullscreen stuff initialized */
 
 #ifdef DEBUG
 char debfil[CKMAXPATH+1];               /* Debugging log file name */
@@ -258,6 +261,7 @@ int success = 1,                        /* Command success/failure flag */
     cmdlvl = 0,                         /* Command level */
     action = 0,				/* Action selected on command line */
     slogts = 0,				/* Session-log timestamps on/off */
+    slognul = 0,			/* Session-log null-terminated lines */
 #ifdef UNIX
     sessft = XYFT_T,                    /* Session log file type */
 #else
@@ -327,8 +331,11 @@ extern int streaming, streamok;
 
 /* Used internally */
 
-_PROTOTYP( VOID screenc, (int, char, long, char *) );
+#ifdef KUI
 _PROTOTYP( VOID screeng, (int, char, long, char *) );
+#endif	/* KUI */
+_PROTOTYP( VOID screenc, (int, char, CK_OFF_T, char *) );
+
 
 #ifdef CK_CURSES
 #ifndef DYNAMIC
@@ -338,8 +345,8 @@ char * trmbuf = xtrmbuf;
 char * trmbuf = NULL;
 #endif /* DYNAMIC */
 _PROTOTYP( static VOID dpyinit, (void) );
-_PROTOTYP( static long shocps, (int, long, long) );
-_PROTOTYP( static long shoetl, (long, long, long, long) );
+_PROTOTYP( static long shocps, (int, CK_OFF_T, CK_OFF_T) );
+_PROTOTYP( static CK_OFF_T shoetl, (CK_OFF_T, long, CK_OFF_T, CK_OFF_T) );
 #endif /* CK_CURSES */
 
 static int ft_win = 0;  /* Fullscreen file transfer display window is active */
@@ -384,7 +391,7 @@ extern int rcvtimo;
 
 #ifdef CK_RESEND
 extern int sendmode;
-extern long sendstart, rs_len;
+extern CK_OFF_T sendstart, rs_len;
 #endif /* CK_RESEND */
 
 #ifdef CK_PCT_BAR                       /* File transfer thermometer */
@@ -407,7 +414,8 @@ extern int server, bctu, rptflg, ebqflg, spsiz, urpsiz, wmax, czseen, cxseen,
   retrans, wcur, numerrs, fsecs, whatru, crunched, timeouts,
   rpackets, fncnv, bye_active, discard, inserver, diractive, cdactive;
 
-extern long filcnt, filrej, ffc, tfc, rptn, fsize, filcps, tfcps, cps, peakcps;
+extern long filcnt, filrej, rptn, filcps, tfcps, cps, peakcps;
+extern CK_OFF_T ffc, tfc, fsize; 
 
 long oldcps = 0L;
 
@@ -538,8 +546,8 @@ extern char * g_pswd, pwbuf[];
 extern int spsizf, spsizr, spmax, prefixing, fncact, fnspath, fnrpath;
 extern int moving;                      /* SEND criteria */
 extern char sndafter[], sndbefore[], *sndexcept[], *rcvexcept[];
-extern long sndlarger, sndsmaller, calibrate, skipbup;
-extern int rmailf, rprintf;
+extern CK_OFF_T sndlarger, sndsmaller, calibrate;
+extern int rmailf, rprintf, skipbup;
 extern char optbuf[];
 
 #ifdef PIPESEND
@@ -799,8 +807,9 @@ ftreset() {
           free(rcvexcept[i]);
         rcvexcept[i] = NULL;
     }
-    sndlarger =  -1L;
-    sndsmaller = -1L;
+    sndlarger =  (CK_OFF_T)-1;
+    sndsmaller = (CK_OFF_T)-1;
+    debug(F101,"present sndsmaller","",sndsmaller);
 #ifdef GFTIMER
     gtv = -1.0;
     oldgtv = -1.0;
@@ -1382,7 +1391,8 @@ matchname(filename, local, os) char * filename; int local; int os; {
      1 = UTF-8 text (flag = -1)
      2 = UCS-2 text (flag =  0: big-endian; flag = 1: little-endian)
      3 = 8-bit text (flag =  0: no C1 bytes; flag = 1: includes C1 bytes)
-     4 = binary     (flag = -1)
+     4 = Text       (type unknown)
+     5 = binary     (flag = -1)
 
   If UNICODE is defined:
 
@@ -1966,24 +1976,270 @@ scanfile(name,flag,nscanfile) char * name; int * flag, nscanfile; {
     return(rc);
 }
 
+/*
+  scanstring - like scan file but for a string.
+  This is just a quick butchery of scanfile without thinking too much.
+*/
+int
+scanstring(s) char * s; {
+    int x, val = -1, count = 0;		/* Workers */
+    int rc = -1;			/* Return code */
+    int pv = -1;			/* Pattern-match value */
+    int bytes = 0;			/* Total byte count */
+#ifdef UNICODE
+    unsigned int c0, c1;		/* First 2 file bytes (for BOM) */
+#endif /* UNICODE */
+    extern int pipesend, filepeek;
+
+    register int i;			/* Loop control */
+    int readsize = 0;			/* How much to read */
+    int eightbit = 0;			/* Number of bytes with 8th bit on */
+    int c0controls = 0;			/* C0 non-text control-char counter */
+    int c0noniso = 0;			/* C0 non-ISO control-char counter */
+    int c1controls = 0;			/* C1 control-character counter */
+    unsigned int c;			/* Current character */
+    int runmax = 0;			/* Longest run of 0 bytes */
+    int runzero = 0;			/* Run of 0 bytes */
+    int pctzero = 0;			/* Percentage of 0 bytes */
+    int txtcz = 0;
+
+#ifdef UNICODE
+    int notutf8 = 0;			/* Nonzero if definitely not UTF-8 */
+    int utf8state = 0;			/* UTF-8 recognizer state */
+    int oddzero = 0;			/* Number of 0 bytes in odd postions */
+    int evenzero = 0;			/* and in even positions */
+    int lfnul = 0;			/* Number of <LF><NUL> sequences */
+    int crlf = 0;			/* Number of <CRLF> sequences */
+#else
+    int notutf8 = 1;
+#endif /* UNICODE */
+
+    char * buf = s;
+    if (!s) s = "";
+    count = strlen(s);
+
+#ifdef UNICODE
+    if (bytes == 0 && count > 1) {
+	int incl_cnt = 0;
+
+	/* First look for BOM */
+
+	c0 = (unsigned)((unsigned)buf[0]&0xFF); /* First file byte */
+	c1 = (unsigned)((unsigned)buf[1]&0xFF); /* Second byte */
+
+	if (c0 == 0xFE && c1 == 0xFF) {	/* UCS-2 BE */
+	    rc = FT_UCS2;
+	    val = 0;
+	    debug(F111,"scanstring UCS2 BOM BE",ckitoa(val),rc);
+	    incl_cnt++;
+	} else if (c0 == 0xFF && c1 == 0xFE) { /* UCS-2 LE */
+	    rc = FT_UCS2;
+	    val = 1;
+	    debug(F111,"scanstring UCS2 BOM LE",ckitoa(val),rc);
+	    incl_cnt++;
+	} else if (count > 2) if (c0 == 0xEF && c1 == 0xBB &&
+		   (unsigned)((unsigned)buf[2]&0xFF) == 0xBF) {
+	    rc = FT_UTF8;
+	    debug(F111,"scanstring UTF8 BOM",ckitoa(val),rc);
+	    incl_cnt++;
+	}
+	if (incl_cnt) {		/* Have BOM */
+	    bytes += count;
+	    goto xscanstring;
+	}
+    }
+#endif /* UNICODE */
+
+    bytes += count;			/* Count bytes read */
+
+    for (i = 0; i < count; i++) {	/* For each byte... */
+	c = (unsigned)buf[i];	/* For ease of reference */
+	if (!c) {			/* Zero byte? */
+	    goto xscanstring;	/* Null terminated string */
+	}
+	if ((c & 0x80) == 0) {	/* We have a 7-bit byte */
+#ifdef UNICODE
+	    if (i > 0 && c == 10) { /* Linefeed */
+		if (buf[i-1] == 0) lfnul++; /* Preceded by NUL */
+		else if (buf[i-1] == 13) crlf++; /* or by CR... */
+	    }
+#endif /* UNICODE */
+	    if (c < ' ') {		/* Check for CO controls */
+		if (c != LF && c != CR && c != HT && c != FF) {
+		    c0controls++;
+		    if (c != ESC && c != SO && c != SI)
+		      c0noniso++;
+		}
+		if ((c == '\032')	/* Ctrl-Z */
+		    ) {
+		    c0controls--;
+		    c0noniso--;
+		}
+	    }
+#ifdef UNICODE
+	    if (!notutf8 && utf8state) { /* In UTF-8 sequence? */
+		utf8state = 0;
+		debug(F000,"scanstring","7-bit byte in UTF8 sequence",c);
+		notutf8++;		/* Then it's not UTF-8 */
+		continue;
+	    }
+#endif /* UNICODE */
+	} else {			/* We have an 8-bit byte */
+	    eightbit++;		/* Count it */
+	    if (c >= 0x80 && c < 0xA0) /* Check for C1 controls */
+	      c1controls++;
+#ifdef UNICODE
+	    if (!notutf8) {		/* If it might still be UTF8... */
+		switch (utf8state) { /* Enter the UTF-8 state machine */
+		  case 0:		 /* First byte... */
+		    if ((c & 0xE0) == 0xC0) { /* Tells number of */
+			utf8state = 1;        /* subsequent bytes */
+		    } else if ((c & 0xF0) == 0xE0) {
+			utf8state = 2;
+		    } else if ((c & 0xF8) == 0xF0) {
+			utf8state = 3;
+		    } else {
+			notutf8++;
+		    }
+		    break;
+		  case 1:		/* Subsequent byte */
+		  case 2:
+		  case 3:
+		    if ((c & 0xC0) != 0x80) { /* Must start with 10 */
+			debug(F000,"scanstring",
+			      "bad byte in UTF8 sequence",c);
+			notutf8++;
+			break;
+		    }
+		    utf8state--;	/* Good, one less in this sequence */
+		    break;
+		  default:		/* Shouldn't happen */
+		    debug(F111,"scanstring","bad UTF8 state",utf8state);
+		    notutf8++;
+		}
+	    }
+#endif /* UNICODE */
+	}
+    }
+    if (bytes == 0)			/* If nothing was read */
+      return(-1);			/* we're done. */
+
+#ifdef UNICODE
+    if (bytes > 100)			/* Bytes is not 0 */
+      pctzero = (evenzero + oddzero) / (bytes / 100);
+    else
+      pctzero = ((evenzero + oddzero) * 100) / bytes;
+#endif /* UNICODE */
+
+#ifdef UNICODE
+    x = eightbit ? bytes / 20 : bytes / 4; /* For UCS-2... */
+
+    if (runmax > 2) {			/* File has run of more than 2 NULs */
+	debug(F100,"scanstring BIN runmax","",0);
+	rc = FT_BIN;			/* so it can't be any kind of text. */
+	goto xscanstring;
+
+    } else if (rc == FT_UCS2 || (rc == FT_UTF8 && runmax == 0)) {
+	goto xscanstring;			/* File starts with a BOM */
+
+    } else if (eightbit > 0 && !notutf8) { /* File has 8-bit data */
+	if (runmax > 0) {		   /* and runs of NULs */
+	    debug(F100,"scanstring BIN (nnUTF8) runmax","",0);
+	    rc = FT_BIN;		   /* UTF-8 doesn't have NULs */
+	} else {			   /* No NULs */
+	    debug(F100,"scanstring UTF8 (nnUTF8 + runmax == 0)","",0);
+	    rc = FT_UTF8;		   /* and not not UTF-8, so is UTF-8 */
+	}
+	goto xscanstring;
+    }
+/*
+  It seems to be UCS-2 but let's be more certain since there is no BOM...
+  If the number of 7- and 8-bit characters is approximately equal, it might
+  be a compressed file.  In this case we decide based on the name.
+*/
+    if (rc == FT_UCS2) {
+	if (bytes < 100) {
+	    if (oddzero != 0 && evenzero != 0) {
+		debug(F100,"scanstring small UCS2 doubtful","",0);
+		rc = FT_BIN;
+		goto xscanstring;
+	    } else if (oddzero == 0 && evenzero == 0) {
+		rc = eightbit ? FT_8BIT : FT_7BIT;
+	    }
+	}
+	goto xscanstring;			/* Seems to be UCS-2 */
+    }
+
+/* If none of the above, it's probably not Unicode.  */
+
+    if (!eightbit) {			/* It's 7-bit */
+	if (c0controls) {		/* This would be strange */
+	    if ((c0noniso > 0) && (txtcz == 0)) {
+		debug(F100,"scanstring 7-bit BIN (c0coniso)","",0);
+		rc = FT_BIN;
+	    } else {
+		debug(F100,"scanstring 7-bit ISO2022 TEXT (no c0noniso)","",0);
+		rc = FT_7BIT;
+	    }
+	} else {			/* 7-bit text */
+	    debug(F100,"scanstring 7-bit TEXT (no c0controls)","",0);
+	    rc = FT_7BIT;
+	}
+    } else if (!c0noniso || txtcz) {	/* 8-bit text */
+	debug(F100,"scanstring 8-bit TEXT (no c0noniso)","",0);
+	rc = FT_8BIT;
+	val = c1controls ? 1 : 0;
+    } else {				/* 8-bit binary */
+	debug(F100,"scanstring 8-bit BIN (c0noniso)","",0);
+	rc = FT_BIN;
+    }
+
+#else  /* !UNICODE */
+
+    if (c0noniso) {
+	debug(F100,"scanstring 8-bit BIN (c0noniso)","",0);
+	rc = FT_BIN;
+    } else if (eightbit) {
+	debug(F100,"scanstring 8-bit TEXT (no c0noniso)","",0);
+	rc = FT_8BIT;
+	val = c1controls ? 1 : 0;
+    } else {
+	debug(F100,"scanstring 7-bit TEXT (no c0noniso)","",0);
+	rc = FT_7BIT;
+    }
+
+#endif /* UNICODE */
+
+  xscanstring:
+    debug(F101,"scanstring result     ","",rc);
+    return(rc);
+}
+
+
+
 /*  F I L E S E L E C T  --  Select this file for sending  */
 
 int
 #ifdef CK_ANSIC
 fileselect(
     char *f, char *sa, char *sb, char *sna, char *snb,
-    long minsiz, long maxsiz,
+    CK_OFF_T minsiz, CK_OFF_T maxsiz,
     int nbu, int nxlist,
     char ** xlist
 )
 #else
 fileselect(f,sa,sb,sna,snb,minsiz,maxsiz,nbu,nxlist,xlist)
- char *f,*sa,*sb,*sna,*snb; long minsiz,maxsiz; int nbu,nxlist; char ** xlist;
+ char *f,*sa,*sb,*sna,*snb; CK_OFF_T minsiz,maxsiz;
+ int nbu,nxlist; char ** xlist;
 #endif /* CK_ANSIC */
 /* fileselect */ {
     char *fdate;
     int n;
-    long z;
+    CK_OFF_T z;
+
+    debug(F111,"fileselect minsiz",ckfstoa(minsiz),minsiz);
+    debug(F111,"fileselect maxsiz",ckfstoa(maxsiz),maxsiz);
+    debug(F111,"fileselect (CK_OFF_T)-1",ckfstoa((CK_OFF_T)-1),(CK_OFF_T)-1);
 
     if (!sa) sa = "";
     if (!sb) sb = "";
@@ -1994,10 +2250,10 @@ fileselect(f,sa,sb,sna,snb,minsiz,maxsiz,nbu,nxlist,xlist)
 #ifndef NOICP
 #ifndef NOXFER
     if (nolinks) {
-	long zz;
+	CK_OFF_T zz;
 	zz = zgetfs(f);
 	debug(F111,"fileselect NOLINKS zgetfs",f,zz);
-	if (zz < 0L)
+	if (zz < (CK_OFF_T)0)
 	  return(0);
 	debug(F111,"fileselect NOLINKS zgfs_link",f,zgfs_link);
 	if (zgfs_link)
@@ -2040,17 +2296,18 @@ fileselect(f,sa,sb,sna,snb,minsiz,maxsiz,nbu,nxlist,xlist)
 	    return(0);
 	}
     }
-    if (minsiz > -1L || maxsiz > -1L) { /* Smaller or larger */
+    /* Smaller or larger */
+    if (minsiz > (CK_OFF_T)-1 || maxsiz > (CK_OFF_T)-1) {
 	z = zchki(f);			/* Get size */
 	debug(F101,"fileselect filesize","",z);
-	if (z < 0)
+	if (z < (CK_OFF_T)0)
 	  return(1);
-	if ((minsiz > -1L) && (z >= minsiz)) {
+	if ((minsiz > (CK_OFF_T)-1) && (z >= minsiz)) {
 	    debug(F111,"fileselect minsiz skipping",f,minsiz);
 	    /* tlog(F111,"Skipping (too big)",f,z); */
 	    return(0);
 	}
-	if ((maxsiz > -1L) && (z <= maxsiz)) {
+	if ((maxsiz > (CK_OFF_T)-1) && (z <= maxsiz)) {
 	    debug(F111,"fileselect maxsiz skipping",f,maxsiz);
 	    /* tlog(F110,"Skipping (too small)",f,0); */
 	    return(0);
@@ -2888,10 +3145,12 @@ trap(sig) int sig;
 
 #ifdef DEBUG
     if (deblog) {
+	debug(F100,"*********************","",0);
 	if (sig == SIGINT)
 	  debug(F101,"trap caught SIGINT","",sig);
-	else
+	else 
 	  debug(F101,"trap caught signal","",sig);
+	debug(F100,"*********************","",0);
     }
 #endif /* DEBUG */
 
@@ -3039,6 +3298,52 @@ trap(sig) int sig;
 #endif /* OSK */
 #endif /* UNIX */
 
+#ifdef NETPTY
+    /* Clean up Ctrl-C out of REDIRECT or external protocol */
+    {
+	extern PID_T pty_fork_pid;
+	extern int pty_master_fd, pty_slave_fd;
+	int x;
+
+	signal(SIGCHLD,SIG_IGN);	/* We don't want this any more */
+
+	debug(F101,"trap pty_master_fd","",pty_master_fd);
+	if (pty_master_fd > 2) {
+	    x = close(pty_master_fd);
+	    debug(F101,"trap pty_master_fd close","",x);
+	}
+	pty_master_fd = -1;
+	debug(F101,"trap pty_slave_fd","",pty_slave_fd);
+	if (pty_slave_fd > 2) {
+	    x = close(pty_slave_fd);
+	    debug(F101,"trap pty_slave_fd close","",x);
+	}
+	pty_slave_fd = -1;
+	debug(F101,"trap pty_fork_pid","",pty_fork_pid);
+	if (pty_fork_pid > 0) {
+	    x = kill(pty_fork_pid,0);	/* See if the fork is really there */
+	    debug(F111,"trap pty_fork_pid kill 0 errno",ckitoa(x),errno);
+	    if (x == 0) {		/* Seems to be active */
+		x = kill(pty_fork_pid,SIGHUP); /* Ask it to clean up & exit */
+		debug(F101,"trap pty_fork_pid kill SIGHUP","",x);
+		msleep(100);
+		errno = 0;
+		x = kill(pty_fork_pid,0); /* Is it still there? */
+		if (x == 0
+#ifdef ESRCH
+		    /* This module is not always exposed to <errno.h> */
+		    || errno != ESRCH
+#endif	/* ESRCH */
+		    ) {
+		    x = kill(pty_fork_pid,SIGKILL);
+		    debug(F101,"trap pty_fork_pid kill SIGKILL","",x);
+		}
+	    }
+	    pty_fork_pid = -1;
+	}
+    }
+#endif	/* NETPTY */
+
 #ifdef OSK
     sigmask(-1);
 /*
@@ -3174,9 +3479,9 @@ stptrap(sig) int sig;
 */
 VOID
 #ifdef CK_ANSIC
-dotlog(int f, char *s1, char *s2, long n)
+dotlog(int f, char *s1, char *s2, CK_OFF_T n)
 #else
-dotlog(f,s1,s2,n) int f; long n; char *s1, *s2;
+dotlog(f,s1,s2,n) int f; CK_OFF_T n; char *s1, *s2;
 #endif /* CK_ANSIC */
 /* dotlog */ {
     static char s[TBUFL];
@@ -3192,11 +3497,11 @@ dotlog(f,s1,s2,n) int f; long n; char *s1, *s2;
         if ((int)strlen(s1) + (int)strlen(s2) + 15 > TBUFL)
           sprintf(sp,"?T-Log string too long");
         else
-	  sprintf(sp,"%s %ld %s",s1,n,s2);
+	  sprintf(sp,"%s %s %s",s1,ckfstoa(n),s2);
         if (zsoutl(ZTFILE,s) < 0) tralog = 0;
         break;
       case F001:                        /* 1, " n" */
-        sprintf(sp," %ld",n);
+        sprintf(sp," %s",ckfstoa(n));
         if (zsoutl(ZTFILE,s) < 0) tralog = 0;
         break;
       case F010:                        /* 2, "[s2]" */
@@ -3212,7 +3517,7 @@ dotlog(f,s1,s2,n) int f; long n; char *s1, *s2;
         if (s2[x] == '\n') s2[x] = '\0';
         if (x + 6 > TBUFL)
           sprintf(sp,"?String too long");
-        else sprintf(sp,"[%s] %ld",s2,n);
+        else sprintf(sp,"[%s] %s",s2,ckfstoa(n));
         if (zsoutl(ZTFILE,s) < 0) tralog = 0;
         break;
       case F100:                        /* 4, "s1" */
@@ -3221,7 +3526,7 @@ dotlog(f,s1,s2,n) int f; long n; char *s1, *s2;
       case F101:                        /* 5, "s1: n" */
         if ((int)strlen(s1) + 15 > TBUFL)
           sprintf(sp,"?String too long");
-        else sprintf(sp,"%s: %ld",s1,n);
+        else sprintf(sp,"%s: %s",s1,ckfstoa(n));
         if (zsoutl(ZTFILE,s) < 0) tralog = 0;
         break;
       case F110:                        /* 6, "s1 s2" */
@@ -3239,11 +3544,11 @@ dotlog(f,s1,s2,n) int f; long n; char *s1, *s2;
         if ((int)strlen(s1) + x + 15 > TBUFL)
           sprintf(sp,"?String too long");
         else
-	  sprintf(sp,"%s%s%s: %ld",s1,((*s2 == ':') ? "" : " "),s2,n);
+	  sprintf(sp,"%s%s%s: %s",s1,((*s2 == ':') ? "" : " "),s2,ckfstoa(n));
         if (zsoutl(ZTFILE,s) < 0) tralog = 0;
         break;
       default:
-        sprintf(sp,"?Invalid format for tlog() - %ld",n);
+        sprintf(sp,"?Invalid format for tlog() - %d",f);
         if (zsoutl(ZTFILE,s) < 0) tralog = 0;
     }
 }
@@ -3267,10 +3572,10 @@ dotlog(f,s1,s2,n) int f; long n; char *s1, *s2;
 */
 VOID
 #ifdef CK_ANSIC
-doxlog(int x, char * fn, long fs, int fm, int status, char * msg)
+doxlog(int x, char * fn, CK_OFF_T fs, int fm, int status, char * msg)
 #else
 doxlog(x, fn, fs, fm, status, msg)
-    int x; char * fn; long fs; int fm; int status; char * msg;
+    int x; char * fn; CK_OFF_T fs; int fm; int status; char * msg;
 #endif /* CK_ANSIC */
 /* doxlog */ {
     extern int tlogsep;
@@ -3325,7 +3630,7 @@ doxlog(x, fn, fs, fm, status, msg)
     if (ckstrchr(fn,sep[0]))		/* Filename */
       s = "\"";
     ckmakmsg(bufp,left,s,fn,s,sep);
-    sprintf(tmpbuf,"%ld",fs);           /* Size */
+    sprintf(tmpbuf,"%s",ckfstoa(fs));	/* Size */
     ckstrncat(buf,tmpbuf,CKMAXPATH);
     ckstrncat(buf,sep,CKMAXPATH);
     debug(F110,"doxlog 4",buf,0);
@@ -3355,15 +3660,13 @@ doxlog(x, fn, fs, fm, status, msg)
     debug(F110,"doxlog buf 1", buf, len);
     s = buf + len;
     if (status == 0 && left > 32) {
-        long cps;
-
+        long cps = 0L;
 #ifdef GFTIMER
 	debug(F101,"DOXLOG fpxfsecs","",(long)(fpxfsecs * 1000));
-
-        cps = (long)((CKFLOAT) fs / fpxfsecs);
+        if (fpxfsecs) cps = (long)((CKFLOAT) fs / fpxfsecs);
         sprintf(s,"%s\"%0.3fsec %ldcps\"",sep,fpxfsecs,cps);
 #else
-        cps = fs / xfsecs;
+        if (xfsecs) cps = fs / xfsecs;
         sprintf(s,"%s\"%ldsec %ldcps\"",sep,xfsecs,cps);
 #endif /* GFTIMER */
     } else if ((int)strlen(msg) + 4 < left) {
@@ -3500,10 +3803,10 @@ chkint() {
           xxscreen(SCR_QE,0, speed, " speed");
         if (what & W_SEND)
 
-          xxscreen(SCR_QE,0,(long)spsiz, " packet length");
+          xxscreen(SCR_QE,0,spsiz, " packet length");
         else if (what & W_RECV || what & W_REMO)
-          xxscreen(SCR_QE,0,(long)urpsiz," packet length");
-        xxscreen(SCR_QE,0,(long)wslots,  " window slots");
+          xxscreen(SCR_QE,0,urpsiz," packet length");
+        xxscreen(SCR_QE,0,wslots,  " window slots");
         fdispla = ofd; /* [MF] Restore file display type */
         return(0);
 
@@ -3675,8 +3978,8 @@ static int newdpy = 0;                  /* New display flag */
 static char fbuf[80];                   /* Filename buffer */
 static char abuf[80];                   /* As-name buffer */
 static char a2buf[80];                  /* Second As-name buffer */
-static long oldffc = 0L;
-static long dots = 0L;
+static CK_OFF_T oldffc = 0L;
+static CK_OFF_T dots = 0L;
 static int hpos = 0;
 
 static VOID                             /* Initialize Serial or CRT display */
@@ -3685,8 +3988,8 @@ dpyinit() {
     char * s = "";
 
     newdpy = 0;                         /*  Don't do this again */
-    oldffc = 0L;                        /*  Reset this */
-    dots = 0L;                          /*  and this.. */
+    oldffc = (CK_OFF_T)0;		/*  Reset this */
+    dots = (CK_OFF_T)0;			/*  and this.. */
     oldcps = cps = 0L;
 
     conoll("");				/* New line */
@@ -3716,8 +4019,8 @@ dpyinit() {
     }
     *fbuf = NUL; *abuf = NUL; *a2buf = NUL;
     conoll("");
-    if (fsize > -1L) {			/* Size */
-        sprintf(fbuf,"Size: %ld, Type: ",fsize); /* SAFE (80) */
+    if (fsize > (CK_OFF_T)-1) {		/* Size */
+        sprintf(fbuf,"Size: %s, Type: ",ckfstoa(fsize)); /* SAFE (80) */
         conol(fbuf); *fbuf = NUL;
     } else conol("Size: unknown, Type: ");
     if (binary) {			/* Type */
@@ -3791,11 +4094,11 @@ showpkt(c) char c;
 #ifndef GFTIMER
     long et;                            /* Elapsed time, entire batch  */
 #endif /* GFTIMER */
-    long howfar;                        /* How far into file */
+    CK_OFF_T howfar;			/* How far into file */
     long pd;                            /* Percent done, this file     */
     long tp;                            /* Transfer rate, entire batch */
     long ps;                            /* Packet size, current packet */
-    long mytfc;                         /* Local copy of byte counter  */
+    CK_OFF_T mytfc;			/* Local copy of byte counter  */
 
 #ifdef GFTIMER
     CKFLOAT tnow;
@@ -3820,8 +4123,8 @@ showpkt(c) char c;
 #endif /* CK_RESEND */
     pd = -1;                            /* Percent done. */
     if (c == NUL) {                     /* Still going, figure % done */
-        if (fsize == 0L) return;        /* Empty file, don't bother */
-        pd = (fsize > 99L) ? (howfar / (fsize / 100L)) : 0L;
+        if (!fsize) return;		/* Empty file, don't bother */
+        pd = (fsize > 99) ? (howfar / (fsize / (CK_OFF_T)100)) : 0;
         if (pd > 100) pd = 100;         /* Expansion */
     }
     if (c != NUL)
@@ -3853,7 +4156,7 @@ showpkt(c) char c;
     pd = -1;                            /* Percent done. */
     if (c == NUL) {                     /* Still going, figure % done */
         if (fsize == 0L) return;        /* Empty file, don't bother */
-        pd = (fsize > 99L) ? (howfar / (fsize / 100L)) : 0L;
+        pd = (fsize > 99) ? (howfar / (fsize / (CK_OFF_T)100)) : 0;
         if (pd > 100) pd = 100;         /* Expansion */
     }
     if (c != NUL)
@@ -3867,7 +4170,7 @@ showpkt(c) char c;
   Rate so far is ffc / (et - fsecs),  estimated time for remaining bytes
   is (fsize - ffc) / (ffc / (et - fsecs)).
 */
-    tp = (howfar > 0L) ? (fsize - howfar) * (et - fsecs) / howfar : 0L;
+    tp = (howfar > 0) ? (fsize - howfar) * (et - fsecs) / howfar : 0;
 #endif /* CK_CPS */
 
 #ifdef CK_CPS
@@ -3891,9 +4194,9 @@ showpkt(c) char c;
 	/* These sprintfs should be safe until we have 32-digit numbers */
 
         if (pd > -1L)
-          sprintf(buffer, "%c%9ld%5ld%%%8ld%8ld ", CR, howfar, pd, tp, ps);
+          sprintf(buffer, "%c%9s%5ld%%%8ld%8ld ", CR,ckfstoa(howfar),pd,tp,ps);
         else
-          sprintf(buffer, "%c%9ld      %8ld%8ld ", CR, howfar, tp, ps);
+          sprintf(buffer, "%c%9s      %8ld%8ld ", CR,ckfstoa(howfar),tp,ps);
         conol(buffer);
         hpos = 31;
     } else if (fdispla == XYFD_R) {     /* SERIAL */
@@ -3934,9 +4237,9 @@ showpkt(c) char c;
 */
 VOID
 #ifdef CK_ANSIC
-ckscreen(int f, char c,long n,char *s)
+ckscreen(int f, char c,CK_OFF_T n,char *s)
 #else
-ckscreen(f,c,n,s) int f; char c; long n; char *s;
+ckscreen(f,c,n,s) int f; char c; CK_OFF_T n; char *s;
 #endif /* CK_ANSIC */
 /* screen */ {
     char buf[80];
@@ -4046,20 +4349,20 @@ _PROTOTYP( VOID conbgt, (int) );
 
       case SCR_FS:                      /* File-size */
         if (fdispla == XYFD_B) {
-            printf(" (%s) (%ld byte%s)",
+            printf(" (%s) (%s byte%s)",
 #ifdef NOICP
                    (binary ? "binary" : "text")
 #else
                    gfmode(binary,0)
 #endif /* NOICP */
-                   , n, n == 1L ? "" : "s");
+                   , ckfstoa(n), n == 1 ? "" : "s");
 #ifdef UNIX
             fflush(stdout);
 #endif /* UNIX */
             return;
         }
 #ifdef MAC
-        sprintf(buf,", Size: %ld",n);  conoll(buf);  hpos = 0;
+        sprintf(buf,", Size: %s",ckfstoa(n));  conoll(buf);  hpos = 0;
 #endif /* MAC */
         return;
 
@@ -4080,11 +4383,14 @@ _PROTOTYP( VOID conbgt, (int) );
             showpkt('Z');               /* Update numbers one last time */
             if (fdispla == XYFD_B) {
 #ifdef GFTIMER
-                printf(": OK (%0.3f sec, %ld cps)\n",fpxfsecs,
-                       (long)((CKFLOAT)ffc / fpxfsecs));
+		if (fpxfsecs)
+		  printf(": OK (%0.3f sec, %ld cps)",fpxfsecs,
+			 (long)((CKFLOAT)ffc / fpxfsecs));
 #else
-                printf(": OK (%d sec, %ld cps)\n",xfsecs,ffc/xfsecs);
+		if (xfsecs)
+		  printf(": OK (%d sec, %ld cps)",xfsecs,ffc/xfsecs);
 #endif /* GFTIMER */
+		printf("\n");
                 return;
             }
             if ((hpos += 5) > 78) conoll(""); /* Wrap screen line. */
@@ -4272,8 +4578,8 @@ _PROTOTYP( VOID conbgt, (int) );
             if (filcnt > 1) {
                 long fx;
                 fx = filcnt - filrej;
-                printf(" SUMMARY: %ld file%s", fx, ((fx == 1L) ? "" : "s"));
-                printf(", %ld byte%s", tfc, ((tfc == 1L) ? "" : "s"));
+                printf(" SUMMARY: %ld file%s", fx, ((fx == 1) ? "" : "s"));
+                printf(", %s byte%s", ckfstoa(tfc), ((tfc == 1) ? "" : "s"));
 #ifdef GFTIMER
                 printf(", %0.3f sec, %ld cps", fptsecs, tfcps);
 #else
@@ -4299,6 +4605,13 @@ _PROTOTYP( VOID conbgt, (int) );
       case SCR_WM:                      /* Warning message */
         if (fdispla == XYFD_B) {
             printf(" WARNING: %s\n",s);
+            return;
+        }
+        conoll(""); conoll(s); hpos = 0; return;
+
+      case SCR_MS:                      /* Message from other Kermit */
+        if (fdispla == XYFD_B) {
+            printf(" MESSAGE: %s\n",s);
             return;
         }
         conoll(""); conoll(s); hpos = 0; return;
@@ -4862,9 +5175,9 @@ static char *dbptr = (char *)0;
 
 int
 #ifdef CK_ANSIC
-dodebug(int f, char *s1, char *s2, long n)
+dodebug(int f, char *s1, char *s2, CK_OFF_T n)
 #else
-dodebug(f,s1,s2,n) int f; char *s1, *s2; long n;
+dodebug(f,s1,s2,n) int f; char *s1, *s2; CK_OFF_T n;
 #endif /* CK_ANSIC */
 /* dodebug */ {
     char *sp;
@@ -4993,7 +5306,7 @@ dodebug(f,s1,s2,n) int f; char *s1, *s2; long n;
               sprintf(sp,"%s[%s]=^%c\n",s1,s2,(CHAR) ((n+64) & 0x7F));
             else if (n > 127 && n < 160)
               sprintf(sp,"%s[%s]=~^%c\n",s1,s2,(CHAR)((n-64) & 0x7F));
-            else sprintf(sp,"%s[%s]=0x%lX\n",s1,s2,n);
+            else sprintf(sp,"%s[%s]=0x%lX\n",s1,s2,(long)n);
         } else {
             if ((n > 31 && n < 127) || (n > 159 && n < 256))
               sprintf(sp,"%s=%c\n",s1,(CHAR) n);
@@ -5001,7 +5314,7 @@ dodebug(f,s1,s2,n) int f; char *s1, *s2; long n;
               sprintf(sp,"%s=^%c\n",s1,(CHAR) ((n+64) & 0x7F));
             else if (n > 127 && n < 160)
               sprintf(sp,"%s=~^%c\n",s1,(CHAR)((n-64) & 0x7F));
-            else sprintf(sp,"%s=0x%lX\n",s1,n);
+            else sprintf(sp,"%s=0x%lX\n",s1,(long)n);
         }
         if (zsout(ZDFILE,dbptr) < 0) {
             deblog = 0;
@@ -5017,7 +5330,7 @@ dodebug(f,s1,s2,n) int f; char *s1, *s2; long n;
       case F001:                        /* 1, "=n" */
 #ifdef COMMENT
         /* This was never used */
-        sprintf(sp,"=%ld\n",n);
+        sprintf(sp,"=%s\n",ckfstoa(n));
 #else
         /* Like F111, but shows number n in hex */
 	ckmakxmsg(sp,DBUFL,
@@ -5153,7 +5466,7 @@ dodebug(f,s1,s2,n) int f; char *s1, *s2; long n;
 #endif /* CKSYSLOG */
         break;
       case F101:                        /* 5, "s1=n" */
-        sprintf(sp,"%s=%ld\n",s1,n);
+        sprintf(sp,"%s=%s\n",s1,ckfstoa(n));
         if (zsout(ZDFILE,dbptr) < 0) {
             deblog = 0;
             zclose(ZDFILE);
@@ -5177,7 +5490,7 @@ dodebug(f,s1,s2,n) int f; char *s1, *s2; long n;
 #endif /* CKSYSLOG */
         break;
       case F111:                        /* 7, "s1[s2]=n" */
-        sprintf(sp,"%s[%s]=%ld\n",s1,s2,n);
+        sprintf(sp,"%s[%s]=%s\n",s1,s2,ckfstoa(n));
         if (zsout(ZDFILE,dbptr) < 0) {
             deblog = 0;
             zclose(ZDFILE);
@@ -5321,7 +5634,6 @@ dohexdump(msg,st,cnt) CHAR *msg; CHAR *st; int cnt;
 
 /*  Session Log... */
 
-extern int slogts;			/* Session Log timestamps */
 int tsstate = 0;
 
 VOID
@@ -5335,13 +5647,13 @@ logchar(c) char c;
 #endif /* CK_ANSIC */
 #endif /* OS2 */
 /* logchar */ {                         /* Log character c to session log */
+    extern int slognul;
     int oktolog = 0;
 #ifndef NOLOCAL
     if (!seslog)
       return;
 
-    if ((sessft != XYFT_T) ||
-	(c != '\0' &&
+    if ((sessft != XYFT_T) || (
 #ifdef UNIX
 	 c != '\r' &&
 #else
@@ -5371,6 +5683,8 @@ logchar(c) char c;
 	 c != XON &&
 	 c != XOFF))
       oktolog = 1;
+    if (c == '\0' && !sessft)		/* NUL in text mode */
+      if (slognul) oktolog = 1;		/* only if padding (2009/10/22) */
     if (!oktolog)
       return;
     if (slogts) {			/* Log is timestamped */
@@ -5388,14 +5702,18 @@ logchar(c) char c;
 	    }
 	    if (zsout(ZSFILE,&ts[11]) < 0)
 	      goto xlogchar;
-	    if (c != '\n')		/* If this is not eol */
-	      tsstate = 1;		/* go to in-a-line state. */
-	} else if (c == '\n') {		/* In a line */
-	    tsstate = 0;		/* If eol go to between-lines state. */
 	}
     }
+    if (c == '\n')			/* At end of line? */
+      tsstate = 0;			/* yes */
+    else
+      tsstate = 1;			/* no */
     if (zchout(ZSFILE,(CHAR)(c & 0xFF)) < 0) /* Log the character */
       goto xlogchar;
+    if (tsstate == 0 && slognul != 0) {	/* Null-terminating lines? */
+	if (zchout(ZSFILE,(CHAR)0) < 0)	/* Add a NUL */
+	  goto xlogchar;
+    }
     return;
 
   xlogchar:
@@ -5499,7 +5817,9 @@ _PROTOTYP(int tgetent,(char *, char *));
 #undef CR
 #undef NL
 #undef SO
+#ifdef US
 #undef US
+#endif	/* US */
 #undef SP                               /* Used in ncurses */
 #define CHR_SP 32                       /* Use this instead */
 
@@ -5557,6 +5877,13 @@ extern int isvt52;                      /* From CKVTIO.C */
 #endif /* MYCURSES */
 #endif /* VMS */
 
+#ifdef BUG999
+_PROTOTYP(int tgetent,(char *, char *));
+_PROTOTYP(char *tgetstr,(char *, char **));
+_PROTOTYP(int tputs,(char *, int, int (*)()));
+_PROTOTYP(char *tgoto,(const char *, int, int));
+#endif	/* BUG999 */
+
 #endif /* CK_CURSES */
 
 /*  F X D I N I T  --  File Xfer Display Initialization  */
@@ -5583,13 +5910,7 @@ static int notermcap = 0;
 #endif /* NOTERMCAP */
 
 #ifndef NODISPLAY
-#ifdef OSK
-VOID
-#else
-#ifdef CK_ANSIC
-void
-#endif /* CKANSIC */
-#endif /* OSK */
+CKVOID
 fxdinit(xdispla) int xdispla; {
 #ifndef COHERENT
 #ifndef OS2
@@ -5641,9 +5962,9 @@ fxdinit(xdispla) int xdispla; {
                 fdispla = XYFD_S;
                 return;
             }
+#ifdef COMMENT
             debug(F111,"fxdinit malloc trmbuf","OK",TRMBUFL);
             debug(F001,"fxdinit trmbuf","",trmbuf);
-#ifdef COMMENT
             memset(trmbuf,'\0',(size_t)TRMBUFL);
             debug(F100,"fxdinit memset OK","",0);
 #endif /* COMMENT */
@@ -6420,29 +6741,29 @@ updpct(old, new) long old, new;
 #endif /* COMMENT */
 }
 
-static long old_tr = -1L;               /* Time remaining previously */
+static CK_OFF_T old_tr = (CK_OFF_T)-1;	/* Time remaining previously */
 
-static long
+static CK_OFF_T
 #ifdef CK_ANSIC
-shoetl(long old_tr, long cps, long fsiz, long howfar)
+shoetl(CK_OFF_T old_tr, long cps, CK_OFF_T fsiz, CK_OFF_T howfar)
 #else
-shoetl(old_tr, cps, fsiz, howfar) long old_tr, cps, fsiz, howfar;
+    shoetl(old_tr, cps, fsiz, howfar) long cps; CK_OFF_T old_tr, fsiz, howfar;
 #endif /* CK_ANSIC */
 /* shoetl */ {                          /* Estimated time left in transfer */
-    long tr;                            /* Time remaining, seconds */
+    CK_OFF_T tr;			/* Time remaining, seconds */
 
 #ifdef GFTIMER
     if (fsiz > 0L && cps > 0L)
-      tr = (long)((CKFLOAT)(fsiz - howfar) / (CKFLOAT)cps);
+      tr = (CK_OFF_T)((CKFLOAT)(fsiz - howfar) / (CKFLOAT)cps);
     else
-      tr = -1L;
+      tr = (CK_OFF_T)-1;
 #else
     tr = (fsiz > 0L && cps > 0L) ?
       ((fsiz - howfar) / cps) :
-        -1L;
+        (CK_OFF_T)-1;
 #endif /* GFTIMER */
     move(CW_TR,22);
-    if (tr > -1L) {
+    if (tr > (CK_OFF_T)-1) {
         if (tr != old_tr) {
             printw("%s",hhmmss(tr));
 #ifdef KUI
@@ -6466,18 +6787,18 @@ shoetl(old_tr, cps, fsiz, howfar) long old_tr, cps, fsiz, howfar;
 
 static long
 #ifdef CK_ANSIC
-shocps(int pct, long fsiz, long howfar)
+shocps(int pct, CK_OFF_T fsiz, CK_OFF_T howfar)
 #else
-shocps(pct, fsiz, howfar) int pct; long fsiz, howfar;
+shocps(pct, fsiz, howfar) int pct; CK_OFF_T fsiz, howfar;
 #endif /* CK_ANSIC */
 /* shocps */ {
 #ifdef CPS_WEIGHTED
-    static long oldffc = 0L;
+    static CK_OFF_T oldffc = 0L;
 #endif /* CPS_WEIGHTED */
 #ifdef GFTIMER
     CKFLOAT secs, xx;
 #else
-    long secs, xx;
+    CK_OFF_T secs, xx;
 #endif /* GFTIMER */
 
 #ifdef GFTIMER
@@ -6635,6 +6956,7 @@ int
 scrft() {                               /* Display file type */
     char xferstr[256];
     xferstr[0] = NUL;
+    debug(F101,"scrft binary","",binary);
     if (binary) {
         switch(binary) {
           case XYFT_L:
@@ -6756,17 +7078,13 @@ static int nnetname = (sizeof(netname) / sizeof(char *));
 
 #ifdef CK_ANSIC
 void
-screenc(int f, char c,long n,char *s)
+screenc(int f, char c,CK_OFF_T n,char *s)
 #else
-#ifdef MYCURSES
-VOID
-#else
-int
-#endif /* MYCURSES */
+CKVOID
 screenc(f,c,n,s)
 int f;          /* argument descriptor */
 char c;         /* a character or small integer */
-long n;         /* a long integer */
+CK_OFF_T n;     /* a long integer */
 char *s;        /* a string */
 #endif /* CK_ANSIC */
 /* screenc() */ {
@@ -6777,10 +7095,10 @@ char *s;        /* a string */
     extern int ttnproto;
 #endif /* RLOGCODE */
     static int q = 0;
-    static long fsiz = -1L;   /* Copy of file size */
-    static long fcnt = 0L;    /* Number of files transferred */
-    static long fbyt = 0L;    /* Total file bytes of all files transferred */
-    static long howfar = 0L;  /* How much of current file has been xfer'd. */
+    static long fcnt = 0L;		/* Number of files transferred */
+    static CK_OFF_T fsiz = (CK_OFF_T)-1; /* Copy of file size */
+    static CK_OFF_T fbyt = 0L; /* Total file bytes of all files transferred */
+    static CK_OFF_T howfar = 0L; /* How much of current file has been xfer'd */
     static int  pctlbl = 0L;  /* Percent done vs Bytes so far */
     long cps = 0L;
 
@@ -7259,7 +7577,7 @@ char *s;        /* a string */
         /* oldgtv = -1L; */
 #endif /* GFTIMER */
         oldwin = -1;
-        fsiz = -1L;                     /* Invalidate previous file size */
+        fsiz = (CK_OFF_T)-1;		/* Invalidate previous file size */
         move(CW_PCD,22);                /* Erase percent done from last time */
 #ifdef KUI
 #ifndef K95G
@@ -7298,35 +7616,35 @@ char *s;        /* a string */
         if (what & W_SEND) {		/* If we're sending... */
 #ifdef NEWFTP
 	    if (what & W_FTP) {		/* FTP */
-                move(CW_NAM,13);
-                printw("FTP PUT:");
+                move(CW_NAM,10);
+                printw("   FTP PUT:");
 	    } else
 #endif /* NEWFTP */
 #ifdef CK_RESEND
             switch (sendmode) {		/* Kermit */
               case SM_RESEND:
-                move(CW_NAM,11);
-                printw("RESENDING:");
+                move(CW_NAM,10);
+                printw(" RESENDING:");
                 break;
               default:
-                move(CW_NAM,13);
-                printw("SENDING:");
+                move(CW_NAM,10);
+                printw("   SENDING:");
                 break;
             }
 #else
-            move(CW_NAM,13);
-            printw("SENDING:");
+            move(CW_NAM,10);
+            printw("   SENDING:");
 #endif /* CK_RESEND */
 
         } else if (what & W_RECV) {	/* If we're receiving... */
 #ifdef NEWFTP
 	    if (what & W_FTP) {		/* FTP */
-                move(CW_NAM,13);
-                printw("FTP GET:");
+                move(CW_NAM,10);
+                printw("   FTP GET:");
 	    } else {
 #endif /* NEWFTP */
-		move(CW_NAM,11);
-		printw("RECEIVING:");
+		move(CW_NAM,10);
+		printw(" RECEIVING:");
 #ifdef NEWFTP
 	    }
         } else if (what == (W_FTP|W_FT_DELE)) {
@@ -7334,8 +7652,8 @@ char *s;        /* a string */
 		printw("FTP DELETE:");
 #endif /* NEWFTP */
         } else {                        /* If we don't know... */
-            move(CW_NAM,11);            /* (should never see this) */
-            printw("File Name:");
+            move(CW_NAM,10);            /* (should never see this) */
+            printw(" File Name:");
         }
         move(CW_NAM,22);                /* Display the filename */
         if (len > 57) {
@@ -7389,18 +7707,21 @@ char *s;        /* a string */
       case SCR_FS:                      /* File size */
         fsiz = n;
         move(CW_SIZ,22);
-        if (fsiz > -1L) {
+        if (fsiz > (CK_OFF_T)-1) {
 #ifdef KUI
 #ifndef K95G
             KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_SIZ, (long) n );
 #endif /* K95G */
 #endif /* KUI */
-            printw("%ld",n);
+            printw("%s",ckfstoa(n));
         }
+	if (fsiz == -2L) {
+	    printw("POSSIBLY EXCEEDS LOCAL FILE SIZE LIMIT");
+	}
         clrtoeol();
 #ifdef COMMENT
         move(CW_PCD, 8);
-        if (fsiz > -1L) {               /* Put up percent label */
+        if (fsiz > (CK_OFF_T)-1) {	/* Put up percent label */
             pctlbl = 1;
 	    clrtoeol();
             printw("Percent Done:");
@@ -7408,7 +7729,7 @@ char *s;        /* a string */
 #else
 	move(CW_PCD, 8);
 	clrtoeol();
-        if (fsiz > -1L) {               /* Put up percent label */
+        if (fsiz > (CK_OFF_T)-1) {	/* Put up percent label */
             pctlbl = 1;
             printw("Percent Done:");
         } else {
@@ -7626,7 +7947,7 @@ char *s;        /* a string */
                   updpct(oldpct, pct);
             } else {
                 move(CW_PCD,22);
-                printw("%ld", ffc);
+                printw("%s", ckfstoa(ffc));
             }
 #ifdef KUI
 #ifndef K95G
@@ -7759,7 +8080,7 @@ char *s;        /* a string */
             if (pctlbl)
               updpct(oldpct,100);
             else
-              printw("%ld", ffc);
+              printw("%s", ckfstoa(ffc));
 #ifdef KUI
 #ifndef K95G
             KuiSetProperty(KUI_FILE_TRANSFER, (long) CW_FFC, (long) ffc);
@@ -7783,7 +8104,7 @@ char *s;        /* a string */
 		  clrtoeol();		/* to "percent done"... */
 		updpct(oldpct,100);
 	    } else
-              printw("%ld", ffc);
+              printw("%s", ckfstoa(ffc));
 #ifdef KUI
 #ifndef K95G
             KuiSetProperty(KUI_FILE_TRANSFER, (long) CW_FFC, (long) ffc);
@@ -7979,7 +8300,7 @@ char *s;        /* a string */
           KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_CP, tfcps);
 #endif /* K95G */
 #endif /* KUI */
-          printw("%ld", tfcps);
+          printw("%s", ckfstoa(tfcps));
           clrtoeol();
           if (success) {
               move(CW_MSG,22);          /* Print statistics in message line */
@@ -7987,9 +8308,9 @@ char *s;        /* a string */
           }
           if (success) {
               sprintf(msgbuf,
-                      "SUCCESS.  Files: %ld, Bytes: %ld, %ld CPS",
+                      "SUCCESS.  Files: %ld, Bytes: %s, %ld CPS",
                       filcnt - filrej,
-                      fbyt,
+                      ckfstoa(fbyt),
                       tfcps
                       );
               printw("%s", msgbuf);
@@ -8083,6 +8404,11 @@ char *s;        /* a string */
       case SCR_TZ:                      /* Text delimited at end */
         return;                         /* (ignored in fullscreen display) */
 
+      case SCR_MS:			/* Message from Kermit partner */
+        move(CW_MSG,22);
+	printw("%s",s);
+        clrtoeol(); refresh(); return;
+
       case SCR_XD:                      /* X-packet data */
         pct = oldpct = 0;
         move(CW_NAM,22);
@@ -8146,7 +8472,7 @@ char *s;        /* a string */
 void
 screeng(int f, char c,long n,char *s)
 #else
-VOID
+CKVOID
 screeng(f,c,n,s)
 int f;          /* argument descriptor */
 char c;         /* a character or small integer */
@@ -8161,10 +8487,10 @@ char *s;        /* a string */
     extern int ttnproto;
 #endif /* RLOGCODE */
     static int q = 0;
-    static long fsiz = -1L;   /* Copy of file size */
+    static CK_OFF_T fsiz = (CK_OFF_T)-1; /* Copy of file size */
     static long fcnt = 0L;    /* Number of files transferred */
     static long fbyt = 0L;    /* Total file bytes of all files transferred */
-    static long howfar = 0L;  /* How much of current file has been xfer'd. */
+    static CK_OFF_T howfar = (CK_OFF_T)0; /* How much of file xfer'd so far */
     static int  pctlbl = 0L;  /* Percent done vs Bytes so far */
     long cps = 0L;
 
@@ -8336,7 +8662,7 @@ char *s;        /* a string */
         /* oldgtv = -1L; */
 #endif /* GFTIMER */
         oldwin = -1;
-        fsiz = -1L;                     /* Invalidate previous file size */
+        fsiz = (CK_OFF_T)-1L;		/* Invalidate previous file size */
         KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_PCD, (long) 0 );
         KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_FFC, (long) 0 );
         KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_SIZ, (long) 0 );
@@ -8359,10 +8685,10 @@ char *s;        /* a string */
 
       case SCR_FS:                      /* File size */
         fsiz = n;
-        if (fsiz > -1L) {
+        if (fsiz > (CK_OFF_T)-1) {
             KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_SIZ, (long) n );
         }
-        if (fsiz > -1L) {               /* Put up percent label */
+        if (fsiz > (CK_OFF_T)-1) {	/* Put up percent label */
             pctlbl = 1;
         } else {
             pctlbl = 0;
@@ -8730,9 +9056,9 @@ char *s;        /* a string */
           KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_CP, tfcps);
           if (success) {
               sprintf(msgbuf,
-                      "SUCCESS.  Files: %ld, Bytes: %ld, %ld CPS",
+                      "SUCCESS.  Files: %s, Bytes: %ld, %ld CPS",
                       filcnt - filrej,
-                      fbyt,
+                      ckfstoa(fbyt),
                       tfcps
                       );
               KuiSetProperty(KUI_FILE_TRANSFER,
@@ -8975,7 +9301,7 @@ dbinit() {
 int
 updslot(n) int n; {                     /* Update our slot */
     int rc = 0;
-    long position;
+    CK_OFF_T position;
 
     debug(F111,"updslot","ikdbopen",ikdbopen);
     if (!ikdbopen)                      /* Not if not ok */
@@ -8988,9 +9314,9 @@ updslot(n) int n; {                     /* Update our slot */
             return(-1);
         }
     }
-    debug(F111,"updslot dbfile",dbfile,dbfp);
+    /* debug(F111,"updslot dbfile",dbfile,dbfp); */
     position = n * DB_RECL;
-    if (fseek(dbfp,position,0) < 0) {   /* Seek to desired slot */
+    if (CKFSEEK(dbfp,position,0) < 0) {	/* Seek to desired slot */
         debug(F111,"updslot fseek failed",dbfile,mydbseek);
         ikdbopen = 0;
         rc = -1;
@@ -9165,6 +9491,10 @@ freeslot(n) int n; {
 
 /*  G E T S L O T  --  Find a free database slot; returns slot number  */
 
+#ifdef UNIX
+#include <fcntl.h>			/* For creat() */
+#endif	/* UNIX */
+
 int
 getslot() {                             /* Find a free slot for us */
     FILE * rfp = NULL;                  /* Returns slot number (0, 1, ...) */
@@ -9172,7 +9502,8 @@ getslot() {                             /* Find a free slot for us */
     char pidbuf[64], * s;
     int j, k, n, x, rc = -1;
     int lockfd, tries, haveslot = 0;
-    long lockpid, i;
+    long lockpid;
+    CK_OFF_T i;
     /* char ipbuf[17]; */
 
     if (!myhexip[0])                    /* Set my hex IP address if not set */
@@ -9189,7 +9520,7 @@ getslot() {                             /* Find a free slot for us */
 
     /* Make a temporary file */
 
-    lockfd = creat(tmplck, 0600);
+    lockfd = creat(tmplck, 0600);	/* BUT THIS ISN'T PORTABLE */
     if (lockfd < 0) {
         debug(F111,"getslock temp lockfile create failure", tmplck, errno);
         return(-1);
@@ -9290,10 +9621,10 @@ getslot() {                             /* Find a free slot for us */
 #ifdef COHERENT
             chsize(fileno(dbfp),i);
 #else
-            ftruncate(fileno(dbfp),i);
+            ftruncate(fileno(dbfp),(CK_OFF_T)i);
 #endif /* COHERENT */
             x = 0;
-            fseek(dbfp,i,0);
+            CKFSEEK(dbfp,i,0);
             break;
         }
 #endif /* NOFTRUNCATE */
@@ -9359,7 +9690,7 @@ getslot() {                             /* Find a free slot for us */
 #ifdef COHERENT
         x = chsize(fileno(dbfp),dblastused+DB_RECL);
 #else
-        x = ftruncate(fileno(dbfp),dblastused+DB_RECL);
+        x = ftruncate(fileno(dbfp),(CK_OFF_T)(dblastused+DB_RECL));
 #endif /* COHERENT */
         if (x < 0)                      /* (Not fatal) */
           debug(F101,"getslot ftruncate failed", "", errno);

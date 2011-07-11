@@ -3,21 +3,22 @@
 #define CK_NONBLOCK                     /* See zoutdump() */
 
 #ifdef aegis
-char *ckzv = "Aegis File support, 8.0.200, 4 Mar 2004";
+char *ckzv = "Aegis File support, 9.0.216, 20 Aug 2011";
 #else
 #ifdef Plan9
-char *ckzv = "Plan 9 File support, 8.0.200, 4 Mar 2004";
+char *ckzv = "Plan 9 File support, 9.0.216, 20 Aug 2011";
 #else
-char *ckzv = "UNIX File support, 8.0.200, 4 Mar 2004";
+char *ckzv = "UNIX File support, 9.0.216, 20 Aug 2011";
 #endif /* Plan9 */
 #endif /* aegis */
 /*
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City,
   and others noted in the comments below.  Note: CUCCA = Previous name of
-  Columbia University Academic Information Systems.
+  Columbia University Academic Information Systems.  Note: AcIS = Previous
+  of Columbia University Information Technology.
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2011,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -45,6 +46,17 @@ char *ckzv = "UNIX File support, 8.0.200, 4 Mar 2004";
 #include "ckcxla.h"
 #endif /* NOCSETS */
 
+/* To avoid pulling in all of ckuusr.h so we copy the few needed prototypes */
+
+struct mtab {				/* Macro table, like keyword table */
+    char *kwd;				/* But with pointers for vals */
+    char *mval;				/* instead of ints. */
+    short flgs;
+};
+_PROTOTYP( int mlook, (struct mtab [], char *, int) );
+_PROTOTYP( int dodo, (int, char *, int) );
+_PROTOTYP( int parser, ( int ) );
+
 #ifdef COMMENT
 /* This causes trouble in C-Kermit 8.0.  I don't remember the original */
 /* reason for this being here but it must have been needed at the time... */
@@ -57,7 +69,14 @@ char *ckzv = "UNIX File support, 8.0.200, 4 Mar 2004";
 #endif /* OSF13 */
 #endif /* COMMENT */
 
-#include <errno.h>
+#ifndef HPUXPRE65
+#include <errno.h>			/* Error number symbols */
+#else
+#ifndef ERRNO_INCLUDED
+#include <errno.h>			/* Error number symbols */
+#endif	/* ERRNO_INCLUDED */
+#endif	/* HPUXPRE65 */
+
 #include <signal.h>
 
 #ifdef MINIX2
@@ -236,6 +255,8 @@ extern long timezone;
 #else
 #include <sys/stat.h>
 #endif /* CIE */
+
+
 
 /* Macro to alleviate isdir() calls internal to this module */
 
@@ -490,6 +511,9 @@ extern char * anonroot;
 static char guestpass[GUESTPASS] = { NUL, NUL }; /* Anonymous "password" */
 static int logged_in = 0;               /* Set when user is logged in */
 static int askpasswd = 0;               /* Have OK user, must ask for passwd */
+#ifdef CK_PAM
+extern int gotemptypasswd;
+#endif /* CK_PAM */
 #endif /* CK_LOGIN */
 
 #ifdef CKROOT
@@ -500,6 +524,9 @@ int ckrooterr = 0;
 
 _PROTOTYP( VOID ignorsigs, (void) );
 _PROTOTYP( VOID restorsigs, (void) );
+#ifdef SELECT
+_PROTOTYP( int ttwait, (int, int) );	/* ckutio.c */
+#endif	/* SELECT */
 
 /*
   Change argument to "(const char *)" if this causes trouble.
@@ -555,7 +582,11 @@ _PROTOTYP( struct passwd * getpwent, (void) );
 #include <shadow.h>
 #endif /* CK_SHADOW */
 #ifdef CK_PAM                           /* PAM... */
+#ifdef MACOSX
+#include <pam/pam_appl.h>
+#else /* MACOSX */
 #include <security/pam_appl.h>
+#endif /* MACOSX */
 #ifndef PAM_SERVICE_TYPE                /* Defines which PAM service we are */
 #define PAM_SERVICE_TYPE "kermit"
 #endif /* PAM_SERVICE_TYPE */
@@ -861,11 +892,15 @@ static int maxnames = MAXWLD;
 #endif /* PROVX1 */
 static char sspace[SSPACE];             /* Buffer for generating filenames */
 #else /* is DYNAMIC */
-#ifdef BIGBUFOK
-#define SSPACE 500000
+#ifdef CK_64BIT
+#define SSPACE 2000000000		/* Two billion bytes */
 #else
-#define SSPACE 10000
+#ifdef BIGBUFOK
+#define SSPACE 10000000			/* Ten million */
+#else
+#define SSPACE 10000			/* Ten thousand */
 #endif /* BIGBUFOK */
+#endif	/* CK_64BIT */
 char *sspace = (char *)0;
 #endif /* DYNAMIC */
 static int ssplen = SSPACE;		/* Length of string space buffer */
@@ -1034,6 +1069,7 @@ logwtmp __P ((__const char *__ut_line, __const char *__ut_name,
 #endif /* IRIX60 */
 #endif /* SOLARIS */
 #endif /* HAVEUTMPX */
+
 #ifdef HAVEUTMPX
 #include <utmpx.h>
 #else
@@ -1047,6 +1083,12 @@ logwtmp __P ((__const char *__ut_line, __const char *__ut_name,
 #endif /* OSF50 */
 #endif /* HAVEUTMPX */
 #endif /* UTMPBUG */
+
+#ifdef HAVEUTMPX
+#define UTMPSTRUCT utmpx
+#else
+#define UTMPSTRUCT utmp
+#endif	/* HAVEUTMPX */
 
 #ifndef WTMPFILE
 #ifdef QNX
@@ -1095,11 +1137,7 @@ logwtmp(const char * line, const char * name, const char * host)
 logwtmp(line, name, host) char *line, *name, *host;
 #endif /* CK_ANSIC */
 /* logwtmp */ {
-#ifdef HAVEUTMPX
-    struct utmpx ut;                    /* Needed for ut_host[] */
-#else
-    struct utmp ut;
-#endif /* HAVEUTMPX */
+    struct UTMPSTRUCT ut;
     struct stat buf;
     /* time_t time(); */
 
@@ -1120,7 +1158,11 @@ logwtmp(line, name, host) char *line, *name, *host;
     }
     if (!fstat(wtmpfd, &buf)) {
         ckstrncpy(ut.ut_line, line, sizeof(ut.ut_line));
+#ifdef FREEBSD9
+        ckstrncpy(ut.ut_user, name, sizeof(ut.ut_user));
+#else
         ckstrncpy(ut.ut_name, name, sizeof(ut.ut_name));
+#endif	/* FREEBSD9 */
 #ifdef HAVEUTHOST
         /* Not portable */
         ckstrncpy(ut.ut_host, host, sizeof(ut.ut_host));
@@ -1143,11 +1185,20 @@ logwtmp(line, name, host) char *line, *name, *host;
             ut.ut_time = zz;
         }
 #else
+#ifdef CK_64BIT
+        {
+	    /* Now (Jan 2006) we can do this for any 64-bit build */
+            time_t zz;
+            time(&zz);
+            ut.ut_time = zz;
+        }
+#else
         time(&ut.ut_time);
+#endif	/* CK_64BIT */
 #endif /* LINUX */
 #endif /* HAVEUTMPX */
-        if (write(wtmpfd, (char *)&ut, sizeof(struct utmp)) !=
-            sizeof(struct utmp)) {
+        if (write(wtmpfd, (char *)&ut, sizeof(struct UTMPSTRUCT)) !=
+            sizeof(struct UTMPSTRUCT)) {
 #ifndef NOFTRUNCATE
 #ifndef COHERENT
             ftruncate(wtmpfd, buf.st_size); /* Error, undo any partial write */
@@ -1227,9 +1278,9 @@ extern char zinbuffer[], zoutbuffer[];
 #endif /* DYNAMIC */
 extern char *zinptr, *zoutptr;
 extern int zincnt, zoutcnt;
-extern int wildxpand;
+extern int wildxpand, wildena;		/* Wildcard handling */
 
-static long iflen = -1L;                /* Input file length */
+static CK_OFF_T iflen = (CK_OFF_T)-1;	/* Input file length */
 
 static PID_T pid = 0;                   /* pid of child fork */
 static int fcount = 0;                  /* Number of files in wild group */
@@ -1398,9 +1449,9 @@ zopeni(n,name) int n; char *name; {
     }
 #endif /* CKROOT */
     fp[n] = fopen(name,"r");            /* Real file, open it. */
-    debug(F111,"zopeni fopen", name, fp[n]);
+    /* debug(F111,"zopeni fopen", name, fp[n]); */
 #ifdef ZDEBUG
-    printf("ZOPENI fp[%d]=%ld\n",n,fp[n]);
+    /* printf("ZOPENI fp[%d]=%ld\n",n,fp[n]); */
 #endif /* ZDEBUG */
     ispipe[n] = 0;
 
@@ -1448,6 +1499,7 @@ zopeno(n,name,zz,fcb)
 
     char p[8];
     int append = 0;
+    int istty = 0, filefd = 0;
 
 /* As of Version 5A, the attribute structure and the file information */
 /* structure are included in the arglist. */
@@ -1474,10 +1526,12 @@ zopeno(n,name,zz,fcb)
 	fp[n] = stdout;
         ispipe[n] = 0;
 #endif /* COMMENT */
+#ifdef COMMENT
 #ifdef DEBUG
         if (n != ZDFILE)
           debug(F101,"zopeno fp[n]=stdout","",fp[n]);
 #endif /* DEBUG */
+#endif	/* COMMENT */
         zoutcnt = 0;
         zoutptr = zoutbuffer;
         return(1);
@@ -1501,7 +1555,6 @@ zopeno(n,name,zz,fcb)
             append = 1;
         }
     }
-
     if (xferlog
 #ifdef CKSYSLOG
         || ((ckxsyslog >= SYSLG_FC) && ckxlogging)
@@ -1510,8 +1563,37 @@ zopeno(n,name,zz,fcb)
         getfullname(name);
         debug(F110,"zopeno fullname",fullname,0);
     }
+    {
+    /* Allow tty devices to opened as output files 2009/10/20 */
+	int fd, mode = 0;
+	debug(F110,"zopeno attempting to open",name,0);
+#ifdef O_NONBLOCK
+	mode = O_NONBLOCK;
+#else
+#ifdef O_NDELAY
+	mode = O_NDELAY;
+#else
+#ifdef FNDELAY
+	mode = FNDELAY;
+#endif /* FNDELAY */
+#endif	/* O_NDELAY */
+#endif	/* O_NONBLOCK */
+	debug(F111,"zopeno open mode",name,mode);
+	fd = open(name,O_WRONLY,mode);
+	debug(F111,"zopeno open",name,fd); 
+	if (fd > -1) {
+	    if (isatty(fd)) {
+		filefd = fd;
+		istty++;
+	    }
+	}
+    }
+    debug(F111,"zopeno istty",name,istty);
     debug(F110,"zopeno fopen arg",p,0);
-    fp[n] = fopen(name,p);              /* Try to open the file */
+    if (istty)
+      fp[n] = fdopen(filefd,p);
+    else
+      fp[n] = fopen(name,p);		/* Try to open the file */
     ispipe[ZIFILE] = 0;
 
 #ifdef ZDEBUG
@@ -1520,6 +1602,7 @@ zopeno(n,name,zz,fcb)
 
     if (fp[n] == NULL) {                /* Failed */
         debug(F101,"zopeno failed errno","",errno);
+	if (istty) close(filefd);
 #ifdef CKSYSLOG
         if (ckxsyslog >= SYSLG_FC && ckxlogging)
           syslog(LOG_INFO, "file[%d] %s: %s failed (%m)",
@@ -1585,7 +1668,7 @@ zopeno(n,name,zz,fcb)
 int
 zclose(n) int n; {
     int x = 0, x2 = 0;
-    extern long ffc;
+    extern CK_OFF_T ffc;
 
     debug(F101,"zclose file number","",n);
     if (chkfn(n) < 1) return(0);        /* Check range of n */
@@ -1599,7 +1682,7 @@ zclose(n) int n; {
         x = EOF;
 #endif /* NOPUSH */
         debug(F101,"zclose zclosf","",x);
-        debug(F101,"zclose zclosf fp[n]","",fp[n]);
+        /* debug(F101,"zclose zclosf fp[n]","",fp[n]); */
     } else {
         if ((fp[n] != stdout) && (fp[n] != stdin))
           x = fclose(fp[n]);
@@ -1656,11 +1739,11 @@ zclose(n) int n; {
                         "%.24s [BUFFER WOULD OVERFLOW]\n",ctime(&timenow));
 		else
 		  sprintf(iksdmsg,	/* SAFE */
-                        "%.24s %d %s %ld %s %c %s %c %c %s %s %d %s\n",
+                        "%.24s %d %s %s %s %c %s %c %c %s %s %d %s\n",
                         ctime(&timenow),        /* date/time */
                         gtimer(),               /* elapsed secs */
                         s,                      /* peer name */
-                        ffc,                    /* byte count */
+			ckfstoa(ffc),	        /* byte count */
                         fnam,			/* full pathname of file */
                         (binary ? 'b' : 'a'),   /* binary or ascii */
                         "_",                    /* options = none */
@@ -1886,7 +1969,7 @@ zinfill() {
         }
 #endif /* USE_MEMCPY */
 	ckstrncpy(zinbuffer,"zinbuffer is a valid buffer",INBUFSIZE);
-	debug(F111,"ZINFILL about to call fread",zinbuffer,zinbuffer);
+	/* debug(F111,"ZINFILL about to call fread",zinbuffer,zinbuffer); */
     }
 #endif /* DEBUG */
 
@@ -1945,6 +2028,8 @@ zinfill() {
 
 /*  Z S O U T  --  Write a string out to the given file, buffered.  */
 
+/*  Returns 0 on success, -1 on failure */
+
 int
 zsout(n,s) int n; char *s; {
     int rc = 0;
@@ -1969,8 +2054,12 @@ zsout(n,s) int n; char *s; {
     }
 #endif /* IKSD */
 
-    if (n == ZSFILE)
-      return(write(fileno(fp[n]),s,(int)strlen(s)));
+    if (n == ZSFILE) {
+	int k;
+	k = strlen(s);
+	rc = write(fileno(fp[n]),s,k);
+	return((rc == k) ? 0 : -1);
+    }
     rc = fputs(s,fp[n]) == EOF ? -1 : 0;
     if (n == ZWFILE)
       fflush(fp[n]);
@@ -1978,6 +2067,8 @@ zsout(n,s) int n; char *s; {
 }
 
 /*  Z S O U T L  --  Write string to file, with line terminator, buffered  */
+
+/*  Returns 0 on success, -1 on failure */
 
 int
 zsoutl(n,s) int n; char *s; {
@@ -1995,7 +2086,7 @@ zsoutl(n,s) int n; char *s; {
 #endif /* IKSD */
 
     if (n == ZSFILE)                    /* Session log is unbuffered */
-      return(write(fileno(fp[n]),"\n",1));
+      return(write(fileno(fp[n]),"\n",1) == 1 ? 0 : -1);
     else if (fputs("\n",fp[n]) == EOF)
       return(-1);
     if (n == ZDIFIL || n == ZWFILE)     /* Flush connection log records */
@@ -2005,8 +2096,14 @@ zsoutl(n,s) int n; char *s; {
 
 /*  Z S O U T X  --  Write x characters to file, unbuffered.  */
 
+/*  Returns number of characters written on success, -1 on failure */
+
 int
 zsoutx(n,s,x) int n, x; char *s; {
+    int k;
+    if (!s) return(0);
+    if (!*s) return(0);
+
 #ifdef IKSD
     if (inserver && !local && (n == ZCTERM || n == ZSTDIO)) {
 #ifdef COMMENT
@@ -2017,6 +2114,7 @@ zsoutx(n,s,x) int n, x; char *s; {
     }
 #endif /* IKSD */
 
+    if ((k = (int)strlen(s)) > x) x = k; /* Nothing else would make sense */
 #ifdef COMMENT
     if (chkfn(n) < 1) return(-1);
     return(write(fp[n]->_file,s,x));
@@ -2166,11 +2264,11 @@ char linkname[CKMAXPATH+1];
 #endif /* _IFLNK */
 #endif /* CKSYMLINK */
 
-long
+CK_OFF_T
 zgetfs(name) char *name; {
     struct stat buf;
     char fnam[CKMAXPATH+4];
-    long size = -1L;
+    CK_OFF_T size = (CK_OFF_T)-1;
     int x;
     int needrlink = 0;
     char * s;
@@ -2312,7 +2410,7 @@ zgetfs(name) char *name; {
   For Berkeley Unix, a file must be of type "regular" to be readable.
   Directory files, special files, and symbolic links are not readable.
 */
-long
+CK_OFF_T
 zchki(name) char *name; {
     struct stat buf;
     char * s;
@@ -2408,7 +2506,7 @@ zchki(name) char *name; {
 int
 zchko(name) char *name; {
     int i, x, itsadir = 0;
-    char *s;
+    char *s = NULL;
     char * oname;
     extern int zchkod;                  /* Used by IF WRITEABLE */
 
@@ -2456,16 +2554,52 @@ zchko(name) char *name; {
   zchkod is a global flag meaning we're checking not to see if the directory
   file is writeable, but if it's OK to create files IN the directory.
 */
-    if (!zchkod && isdir(name))         /* Directories are not writeable */
-      return(-1);
-
+    if (!zchkod && isdir(name)) {	/* Directories are not writeable */
+	debug(F111,"zchko isdir",name,1);
+	return(-1);
+    }
     s = malloc(x+3);                    /* Must copy because we can't */
     if (!s) {                           /* write into our argument. */
         fprintf(stderr,"zchko: Malloc error 46\n");
         return(-1);
     }
     ckstrncpy(s,name,x+3);
-
+#ifdef UNIX
+#ifdef NOUUCP
+    {					/* 2009/10/20 */
+    /* Allow tty devices to opened as output files */
+	int fd, istty = 0, mode = 0;
+	debug(F110,"zchko attempting to open",name,0);
+	/* Don't block on lack of Carrier or other modem signals */
+#ifdef O_NONBLOCK
+	mode = O_NONBLOCK;
+#else
+#ifdef O_NDELAY
+	mode = O_NDELAY;
+#else
+#ifdef FNDELAY
+	mode = FNDELAY;
+#endif /* FNDELAY */
+#endif	/* O_NDELAY */
+#endif	/* O_NONBLOCK */
+	debug(F111,"zchko open mode",name,mode);
+	fd = open(name,O_WRONLY,mode);	/* Must attempt to open it */
+	debug(F111,"zchko open",name,fd); 
+	if (fd > -1) {			/* to get a file descriptor */
+	    if (isatty(fd))		/* for isatty() */
+	      istty++;
+	    debug(F111,"zchko isatty",name,istty);
+	    fd = close(fd);
+	    if (istty) {
+		goto doaccess;
+	    }
+	} else {
+	    debug(F101,"zchko open errno","",errno); 
+	    x = -1;
+	}
+    }
+#endif	/* NOUUCP */
+#endif	/* UNIX */
     for (i = x; i > 0; i--) {           /* Strip filename from right. */
         if (ISDIRSEP(s[i-1])) {
             itsadir = 1;
@@ -2519,6 +2653,8 @@ zchko(name) char *name; {
     if (!s[0])
       ckstrncpy(s,".",x+3);
 
+  doaccess:
+
 #ifdef SW_ACC_ID
     debug(F100,"zchko swapping ids for access()","",0);
     priv_on();
@@ -2535,7 +2671,7 @@ zchko(name) char *name; {
       debug(F111,"zchko access failed:",s,errno);
     else
       debug(F111,"zchko access ok:",s,x);
-    free(s);                            /* Free temporary storage */
+    if (s) free(s);			/* Free temporary storage */
 
     return((x < 0) ? -1 : 0);           /* and return. */
 }
@@ -3220,7 +3356,7 @@ zxcmd(filnum,comand) int filnum; char *comand; {
         shpath = getenv("SHELL");       /* What shell? */
         if (shpath == NULL) {
             p = getpwuid( real_uid() ); /* Get login data */
-            debug(F111,"zxcmd shpath","getpwuid()",p);
+            /* debug(F111,"zxcmd shpath","getpwuid()",p); */
             if (p == (struct passwd *)NULL || !*(p->pw_shell))
               shpath = defshell;
             else shpath = p->pw_shell;
@@ -3297,8 +3433,8 @@ zclosf(filnum) int filnum; {
         return((x != 0) ? -1 : 1);
     }
 #endif /* NOPOPEN */
-    debug(F101,"zclosf fp[filnum]","", fp[filnum]);
-    debug(F101,"zclosf fp[ZSYSFN]","", fp[ZSYSFN]);
+    /* debug(F101,"zclosf fp[filnum]","", fp[filnum]); */
+    /* debug(F101,"zclosf fp[ZSYSFN]","", fp[ZSYSFN]); */
 
     if (pid != (PID_T) 0) {
         debug(F101,"zclosf killing pid","",pid);
@@ -3327,7 +3463,7 @@ zclosf(filnum) int filnum; {
     fp[filnum] = fp[ZSYSFN] = NULL;
 
     ispipe[filnum] = 0;
-    debug(F101,"zclosf fp[filnum]","",fp[filnum]);
+    /* debug(F101,"zclosf fp[filnum]","",fp[filnum]); */
 #ifdef CK_CHILD
     return(pexitstat == 0 ? 1 : -1);
 #else
@@ -3358,6 +3494,9 @@ zclosf(filnum) int filnum; {
 
   Depends on external variable wildxpand: 0 means we expand wildcards
   internally, nonzero means we call the shell to do it.
+  
+  AND in C-Kermit 8.0.212 and later, on extern wildena: 1 means wildcards
+  are enabled, 0 means disabled, the characters are taken literally.
 */
 static int xdironly = 0;
 static int xfilonly = 0;
@@ -3537,34 +3676,28 @@ zxpand(fnarg) char *fnarg; {
             fn[x] = '\0';
         }
     }
-    debug(F111,"zxpand fn 3",fn,haveonedir);
+    debug(F111,"zxpand fn 3 haveonedir",fn,haveonedir);
 /*
   The following allows us to parse a single directory name without opening
   the directory and looking at its contents.  The diractive flag is a horrible
   hack (especially since DIR /NORECURSIVE turns it off), but otherwise we'd
   have to change the API.
 */
+    debug(F111,"zxpand fn 3 diractive",fn,diractive);
     if (!diractive && haveonedir) {
-#ifdef COMMENT
-	fcount = (mtchs == NULL &&
-		  (mtchs = (char **)malloc(maxnames * sizeof(*mtchs))) == NULL)
-	  ? 0 : 1;
-#else
 	fcount = 0;
 	if (!mtchs) {
 	    mtchs = (char **)malloc(maxnames * sizeof(*mtchs));
-	    if (mtchs)
-	      fcount = 1;
-	    if (!fcount)
+	    if (!mtchs)
 	      return(nxpand = fcount);
 	}
-#endif /* COMMENT */
+	fcount = 1;
 	debug(F110,"zxpand haveonedir A1",fnarg,0);
 	initspace(mtchs,ssplen);
 	addresult(fnarg,1);
 	if (numfnd < 0) return(-1);
 	mtchptr = mtchs;		/* Save pointer for next. */
-	debug(F110,"zxpand haveonedir A2",*mtchptr,0);
+	debug(F111,"zxpand haveonedir A2",*mtchptr,numfnd);
 	return(nxpand = fcount);
     }
 
@@ -3713,9 +3846,9 @@ znext(fn) char *fn; {
 /*ARGSUSED*/
 int
 #ifdef CK_ANSIC
-zchkspa(char *f, long n)
+zchkspa(char *f, CK_OFF_T n)
 #else
-zchkspa(f,n) char *f; long n;
+zchkspa(f,n) char *f; CK_OFF_T n;
 #endif /* CK_ANSIC */
 /* zchkspa() */ {
     /* In UNIX there is no good (and portable) way. */
@@ -4448,12 +4581,12 @@ ziperms(f) char *f; {
 
 int
 zsattr(xx) struct zattr *xx; {
-    long k; int x;
+    CK_OFF_T k; int x;
     struct stat buf;
 
-    k = iflen % 1024L;                  /* File length in K */
-    if (k != 0L) k = 1L;
-    xx->lengthk = (iflen / 1024L) + k;
+    k = iflen % 1024;			/* File length in K */
+    if (k) k = 1L;
+    xx->lengthk = (iflen / 1024) + k;
     xx->type.len = 0;                   /* File type can't be filled in here */
     xx->type.val = "";
     if (*nambuf) {
@@ -4887,7 +5020,9 @@ zstrdt(date,len) char * date; int len; {
             }
 #else
 #ifndef BSD44
+#ifndef NOTIMEZONE
             tmx += timezone;
+#endif	/* NOTIMEZONE */
 #endif /* BSD44 */
 #endif /* Plan9 */
 #endif /* ultrix */
@@ -5223,9 +5358,6 @@ zstime(f,yy,x)
     if (!f) f = "";
     if (!*f) return(-1);
     if (!yy) return(-1);
-
-    debug(F110,"zstime",f,0);
-    debug(F111,"zstime date",yy->date.val,yy->date.len);
 
 #ifdef CKROOT
     debug(F111,"zstime setroot",ckroot,ckrootset);
@@ -5724,7 +5856,7 @@ splitpath(p) char *p; {
 
     while (*p) {
         cur = (struct path *) malloc(sizeof (struct path));
-        debug(F101,"splitpath malloc","",cur);
+        /* debug(F101,"splitpath malloc","",cur); */
         if (cur == NULL) {
             debug(F100,"splitpath malloc failure","",0);
             prv -> fwd = NULL;
@@ -6086,7 +6218,7 @@ traverse(pl,sofar,endcur) struct path *pl; char *sofar, *endcur; {
     debug(F111,"traverse sofar 2",sofar,0);
 
     segisdir = ((pl -> fwd) == NULL) ? 0 : 1;
-    itswild = iswild(pl -> npart);
+    itswild = wildena ? (iswild(pl -> npart)) : 0; /* 15 Jun 2005 */
 
     debug(F111,"traverse segisdir",sofar,segisdir);
     debug(F111,"traverse itswild ",pl -> npart,itswild);
@@ -6165,7 +6297,7 @@ traverse(pl,sofar,endcur) struct path *pl; char *sofar, *endcur; {
         debug(F101,"traverse directory open() failed","",errno);
         return;
     }
-    while (read(fd, (char *)dirbuf, sizeof dir_entry))
+    while (read(fd, (char *)dirbuf, sizeof dir_entry) > 0)
 #endif /* OPENDIR */
       {                         /* Read each entry in this directory */
           int exists;
@@ -6570,17 +6702,24 @@ whoami() {
     struct passwd *p;
     _PROTOTYP(extern char * getlogin, (void) );
 
+    debug(F111,"whoami ruid A",realname,ruid);
+
     if (ruid != -1)
       return(realname);
 
     ruid = real_uid();                  /* get our uid */
+    debug(F101,"whoami ruid B","",ruid);
+    if (ruid < 0) ruid = getuid();
+    debug(F101,"whoami ruid C","",ruid);
 
   /* how about $USER or $LOGNAME? */
     if ((c = getenv(NAMEENV)) != NULL) { /* check the env variable */
         ckstrncpy(envname, c, 255);
+	debug(F110,"whoami envname",envname,0);
         if ((p = getpwnam(envname)) != NULL) {
             if (p->pw_uid == ruid) {    /* get passwd entry for envname */
                 ckstrncpy(realname, envname, UIDBUFLEN); /* uid's are same */
+		debug(F110,"whoami realname",realname,0);
                 return(realname);
             }
         }
@@ -6590,6 +6729,7 @@ whoami() {
 
     if ((c =  getlogin()) != NULL) {    /* name from utmp file */
         ckstrncpy (loginname, c, UIDBUFLEN);
+	debug(F110,"whoami loginname",loginname,0); 
         if ((p = getpwnam(loginname)) != NULL) /* get passwd entry */
           if (p->pw_uid == ruid)        /* for loginname */
             ckstrncpy(realname, envname, UIDBUFLEN); /* if uid's are same */
@@ -6598,11 +6738,13 @@ whoami() {
   /* Use first name we get for ruid */
 
     if ((p = getpwuid(ruid)) == NULL) { /* name for uid */
+	debug(F101,"whoami no username for ruid","",ruid); 
         realname[0] = '\0';             /* no user name */
         ruid = -1;
         return(NULL);
     }
     ckstrncpy(realname, p->pw_name, UIDBUFLEN);
+    debug(F110,"whoami realname from getpwuid",realname,0);
     return(realname);
 #else
     return(NULL);
@@ -6627,17 +6769,22 @@ tilde_expand(dirname) char *dirname; {
 
     debug(F111,"tilde_expand",dirname,dirname[0]);
 
-    if (dirname[0] != '~')              /* Not a tilde...return param */
-      return(dirname);
+    if (dirname[0] != '~') {              /* Not a tilde...return param */
+	debug(F000,"tilde_expand NOT TILDE","",dirname[0]);
+	return(dirname);
+    }
     if (!strcmp(olddir,dirname)) {      /* Same as last time */
-      return(oldrealdir);               /* so return old answer. */
+	debug(F110,"tilde_expand same as previous",oldrealdir,0);
+	return(oldrealdir);               /* so return old answer. */
     } else {
+	debug(F110,"tilde_expand working...","",0);
         j = (int)strlen(dirname);
         for (i = 0; i < j; i++)         /* find username part of string */
           if (!ISDIRSEP(dirname[i]))
             temp[i] = dirname[i];
           else break;
         temp[i] = '\0';                 /* tie off with a NULL */
+	debug(F111,"tilde_expand first part",temp,i);
         if (i == 1) {                   /* if just a "~" */
 #ifdef IKSD
             if (inserver)
@@ -6646,14 +6793,20 @@ tilde_expand(dirname) char *dirname; {
 #endif /* IKSD */
             {
                 char * p = whoami();
-                if (p)
-		  user = getpwnam(p);
-                else
-		  user = NULL;
+		debug(F110,"tilde_expand p",p,0);
+                if (p) {
+		    user = getpwnam(p);
+		    debug(F110,"tilde_expand getpwpam ~",user,0);
+		} else {
+		    user = NULL;
+		}
             }
         } else {
+	    debug(F110,"tilde_expand ~user",&temp[1],0);
             user = getpwnam(&temp[1]);  /* otherwise on the specified user */
+	    debug(F110,"tilde_expand getpwpam user",user,0);
         }
+
     }
     if (user != NULL) {                 /* valid user? */
         ckstrncpy(olddir, dirname, BUFLEN); /* remember the directory */
@@ -6782,6 +6935,9 @@ zshcmd(s) char *s; {
     return(0);
 #else
     if (nopush) return(-1);
+    if (!s) return(-1);
+    while (*s == ' ') s++;
+
     debug(F110,"zshcmd command",s,0);
 
 #ifdef aegis
@@ -6817,12 +6973,23 @@ zshcmd(s) char *s; {
 /* This allows user to specify a different shell. */
         shpath = getenv("SHELL");       /* What shell? */
 	debug(F110,"zshcmd SHELL",shpath,0);
-        if (shpath == NULL) {
-            p = getpwuid( real_uid() ); /* Get login data */
-            if (p == (struct passwd *)NULL || !*(p->pw_shell))
-              shpath = defshell;
-            else shpath = p->pw_shell;
-	    debug(F110,"zshcmd shpath",shpath,0);
+	{
+	    int x = 0;
+	    if (!shpath) {
+		x++;
+	    } else if (!*shpath) {
+		x++;
+	    }
+	    if (x) {
+		debug(F100,"zshcmd SHELL not defined","",0);
+		p = getpwuid( real_uid() ); /* Get login data */
+		if (p == (struct passwd *)NULL || !*(p->pw_shell)) {
+		    shpath = defshell;
+		} else {
+		    shpath = p->pw_shell;
+		}
+		debug(F110,"zshcmd shpath from getpwuid",shpath,0);
+	    }
         }
 #endif /* COMMENT */
 #endif /* aegis */
@@ -6831,12 +6998,17 @@ zshcmd(s) char *s; {
           if (*shptr++ == DIRSEP)
             shname = shptr;
 	restorsigs();			/* Restore ignored signals */
-	debug(F110,"zshcmd shname",shname,0);
+	debug(F110,"zshcmd execl shpath",shpath,0);
+	debug(F110,"zshcmd execl shname",shname,0);
         if (s == NULL || *s == '\0') {  /* Interactive shell requested? */
+	    debug(F100,"zshcmd execl interactive","",0);
             execl(shpath,shname,"-i",NULL); /* Yes, do that */
         } else {                        /* Otherwise, */
+	    debug(F110,"zshcmd execl command",s,0);
             execl(shpath,shname,"-c",s,NULL); /* exec the given command */
         }                               /* If execl() failed, */
+        debug(F101,"zshcmd errno","",errno);
+	perror(shpath);			/* print reason and */
         exit(BAD_EXIT);                 /* return bad return code. */
 
     } else {                            /* Parent */
@@ -6852,6 +7024,7 @@ zshcmd(s) char *s; {
         istat = signal(SIGINT,SIG_IGN); /* Let the fork handle keyboard */
         qstat = signal(SIGQUIT,SIG_IGN); /* interrupts itself... */
 
+	debug(F110,"zshcmd parent waiting for child",s,0);
 #ifdef CK_CHILD
         while (((wstat = wait(&child)) != pid) && (wstat != -1))
 #else
@@ -6874,7 +7047,7 @@ zshcmd(s) char *s; {
 
 /*
   Returns:
-    0 if argument is empty or is the name of a single file;
+    0 wildcards disabled or argument is empty or is the name of a single file;
     1 if it contains wildcard characters.
   Note: must match the algorithm used by match(), hence no [a-z], etc.
 */
@@ -6882,7 +7055,9 @@ int
 iswild(filespec) char *filespec; {
     char c, *p, *f; int x;
     int quo = 0;
-    if (!filespec)
+    if (!filespec)			/* Safety */
+      return(0);
+    if (!wildena)			/* Wildcards disabled - 12 Jun 2005 */
       return(0);
     f = filespec;
     if (wildxpand) {			/* Shell handles wildcarding */
@@ -6949,12 +7124,34 @@ clrdircache() {
 #endif /* ISDIRCACHE */
 
 int
+isalink(s) char *s; {
+#ifndef CKSYMLINK
+    return(0);
+#else
+    int r = 0;
+    char filbuf[CKMAXPATH+4];
+    if (readlink(s,filbuf,CKMAXPATH) > -1)
+      r = 1;
+    debug(F110,"isalink readlink",s,r);
+    return(r);
+#endif	/* CKSYMLINK */
+}
+
+int
 isdir(s) char *s; {
     int x, needrlink = 0, islink = 0;
     struct stat statbuf;
     char fnam[CKMAXPATH+4];
 
     if (!s) return(0);
+    debug(F110,"isdir entry",s,0);
+#ifdef DTILDE				/* 2005-08-13 */
+    if (*s == '~') {			/* Starts with tilde? */
+        s = tilde_expand(s);		/* Attempt to expand tilde */
+        if (!s) s = "";
+	debug(F110,"isdir tilde_expand",s,0);
+    }
+#endif /* DTILDE */
     if (!*s) return(0);
 
 #ifdef ISDIRCACHE
@@ -7169,7 +7366,7 @@ zrmdir(path) char *path; {
 /* Z F S E E K  --  Position input file pointer */
 /*
    Call with:
-    Long int, 0-based, indicating desired position.
+    CK_OFF_T (32 or 64 bits), 0-based, indicating desired position.
    Returns:
     0 on success.
    -1 on failure.
@@ -7177,19 +7374,25 @@ zrmdir(path) char *path; {
 #ifndef NORESEND
 int
 #ifdef CK_ANSIC
-zfseek(long pos)
+zfseek(CK_OFF_T pos)
 #else
-zfseek(pos) long pos;
+zfseek(pos) CK_OFF_T pos;
 #endif /* CK_ANSIC */
 /* zfseek */ {
     zincnt = -1;                        /* Must empty the input buffer */
     debug(F101,"zfseek","",pos);
-    return(fseek(fp[ZIFILE], pos, 0)?-1:0);
+    return(CKFSEEK(fp[ZIFILE], pos, 0)?-1:0);
 }
 #endif /* NORESEND */
 
 /*  Z F N Q F P  --  Convert filename to fully qualified absolute pathname */
 
+/*
+  Given a possibly unqualified or relative file specification fn, zfnqfp()
+  returns the fully qualified filespec for the same file, returning a struct
+  that contains the length (len) of the result, a pointer (fpath) to the
+  whole result, and a pointer (fname) to where the filename starts.
+*/
 static struct zfnfp fnfp = { 0, NULL, NULL };
 
 struct zfnfp *
@@ -7586,9 +7789,10 @@ sgetpwnam(name) char *name; {
 
 #ifdef CK_SHADOW
     sp = getspnam(name);
-    debug(F111,"sgetpwnam","getspnam()",sp);
-    if (sp == NULL)
-      return (NULL);
+    if (sp == NULL) {
+        debug(F110,"sgetpwnam","getspnam() fails",0);
+	return (NULL);
+    }
 #endif /* CK_SHADOW */
 
 #ifdef HPUX10_TRUSTED
@@ -7597,7 +7801,7 @@ sgetpwnam(name) char *name; {
 #endif /* HPUX10_TRUSTED */
 
     p = getpwnam(name);
-    debug(F111,"sgetpwnam","getpwnam()",p);
+    /* debug(F111,"sgetpwnam","getpwnam()",p); */
     if (p == NULL)
       return(NULL);
     if (save.pw_name) {
@@ -7673,8 +7877,11 @@ zvuser(name) char *name; {
     int x;
     char *shell;
 #ifdef GETUSERSHELL
-    char *getusershell();
+_PROTOTYP(char * getusershell, (void) );
 #endif /* GETUSERSHELL */
+#ifndef NODCLENDUSERSHELL
+_PROTOTYP(VOID endusershell, (void) );
+#endif	/* NODCLENDUSERSHELL */
 
 #ifdef CK_PAM
     int pam_status;
@@ -7768,11 +7975,15 @@ zvuser(name) char *name; {
 #ifdef GETUSERSHELL
         while ((cp = getusershell()) != NULL) {
             debug(F110,"zvuser getusershell",cp,0);
-            if (strcmp(cp, shell) == 0)
+            if ((int)strcmp(cp, shell) == 0)
               break;
         }
         debug(F100,"zvuser endusershell 1","",0);
+#ifndef NODCLENDUSERSHELL
+        (VOID) endusershell();
+#else
         endusershell();
+#endif	/* NODCLENDUSERSHELL */
         debug(F100,"zvuser endusershell 2","",0);
 #else /* GETUSERSHELL */
         cp = "";                        /* Do not refuse if we cannot check */
@@ -7886,7 +8097,7 @@ checkuser(name) char *name; {
       return(1);
 
     fd = fopen(userfile ? userfile : _PATH_FTPUSERS, "r");
-    debug(F111,"checkuser userfile",userfile,fd);
+    /* debug(F111,"checkuser userfile",userfile,fd); */
     if (fd) {
         line[0] = '\0';
         while (fgets(line, sizeof(line), fd)) {
@@ -7996,8 +8207,18 @@ zsyslog() {
 #define AUTH_VALID 4
 #endif /* AUTH_VALID */
 
+#ifdef __FreeBSD__			/* 299 This was necessary in */
+#ifndef NODCLINITGROUPS			/* FreeBSD 4.4, don't know */
+#define NODCLINITGROUPS			/* about other versions... */
+#endif	/* NODCLINITGROUPS */            
+#endif	/*  __FreeBSD__ */
+
 int
 zvpass(p) char *p; {
+#ifndef NODCLINITGROUPS
+_PROTOTYP(int initgroups, (const char *, gid_t) );
+#endif	/* NODCLINITGROUPS */
+
     char *xpasswd, *salt;
     char * dir = NULL;
 #ifdef CK_PAM
@@ -8043,8 +8264,22 @@ zvpass(p) char *p; {
             }
         }
         debug(F110,"zvpass","calling pam_authenticate",0);
+#ifdef COMMENT
         if (*p)
 	  pam_pw = p;
+#else
+/*
+  Make IKSD authentication (using PAM) ask for a password when an
+  invalid username has been given, to avoid disclosing which account
+  names are valid. See #417247 (Debian).
+*/
+        if (*p
+#ifdef CK_LOGIN
+	    || gotemptypasswd
+#endif /* CK_LOGIN */
+	    )
+	    pam_pw = p;
+#endif	/* COMMENT */
         if ((pam_status = pam_authenticate(pamh, 0)) != PAM_SUCCESS) {
             reply = pam_strerror(pamh, pam_status);
             debug(F110,"zvpass PAM failure",reply,0);

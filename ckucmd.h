@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>
   Columbia University Kermit Project, New York City.
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2009,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -212,8 +212,9 @@ typedef struct OFDB {
     struct FDB * fdbaddr;		/* Address of succeeding FDB struct */
     int fcode;				/* Function code */
     char * sresult;			/* String result */
-    int nresult;			/* Numeric result */
+    int nresult;			/* Integer result */
     int kflags;				/* Keyword flags if any */
+    CK_OFF_T wresult;			/* Long integer ("wide") result */
 } ofdb;
 
 #ifndef CKUCMD_C
@@ -230,6 +231,7 @@ extern struct OFDB cmresult;
 #define _CMKEY 5			/* Keyword */
 #define _CMCFM 6			/* Confirmation */
 #define _CMDAT 7			/* Date/time */
+#define _CMNUW 8			/* Wide version of cmnum */
 
 /* Function prototypes */
 
@@ -237,7 +239,7 @@ _PROTOTYP( int xxesc, (char **) );
 _PROTOTYP( int cmrini, (int) );
 _PROTOTYP( VOID cmsetp, (char *) );
 _PROTOTYP( VOID cmsavp, (char [], int) );
-_PROTOTYP( char * cmgetp, () );
+_PROTOTYP( char * cmgetp, (void) );
 _PROTOTYP( VOID prompt, (xx_strp) );
 _PROTOTYP( VOID pushcmd, (char *) );
 _PROTOTYP( VOID cmres, (void) );
@@ -248,6 +250,7 @@ _PROTOTYP( int cmpush, (void) );
 _PROTOTYP( int cmpop, (void) );
 _PROTOTYP( VOID untab, (char *) );
 _PROTOTYP( int cmnum, (char *, char *, int, int *, xx_strp ) );
+_PROTOTYP( int cmnumw, (char *, char *, int, CK_OFF_T *, xx_strp ) );
 _PROTOTYP( int cmofi, (char *, char *, char **, xx_strp ) );
 _PROTOTYP( int cmifi, (char *, char *, char **, int *, xx_strp ) );
 _PROTOTYP( int cmiofi, (char *, char *, char **, int *, xx_strp ) );
@@ -284,7 +287,7 @@ _PROTOTYP( int cmdconchk, (void) );
 #ifdef CK_RECALL
 _PROTOTYP( char * cmgetcmd, (char *) );
 _PROTOTYP( VOID addcmd, (char *) );
-_PROTOTYP( VOID cmaddnext, () );
+_PROTOTYP( VOID cmaddnext, (void) );
 #endif /* CK_RECALL */
 _PROTOTYP( char * cmcvtdate, (char *, int) );
 _PROTOTYP( char * cmdiffdate, (char *, char *) );
@@ -292,6 +295,13 @@ _PROTOTYP( char * cmdelta, (int,
 			    int,int,int,int,int,int,int,int,int,int,int,int ));
 _PROTOTYP( char * shuffledate, (char *, int) );
 _PROTOTYP( int filhelp, (int, char *, char *, int, int) );
+_PROTOTYP( int xfilhelp, (int, char *, char *, int, int,
+			  int,
+			  char *, char *, char *, char *,
+			  CK_OFF_T, CK_OFF_T,
+			  int, int,
+			  char **) );
+_PROTOTYP( int delta2sec, (char *, long *) );
 
 #ifdef DCMDBUF
 _PROTOTYP( int cmsetup, (void) );

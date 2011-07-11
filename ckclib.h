@@ -3,7 +3,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 2002, 2004,
+  Copyright (C) 2002, 2009,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -41,8 +41,11 @@ _PROTOTYP( char * ckitoa, (int) );
 _PROTOTYP( char * ckuitoa, (unsigned int) );
 _PROTOTYP( char * ckltoa, (long) );
 _PROTOTYP( char * ckultoa, (unsigned long) );
+_PROTOTYP( char * ckfstoa, (CK_OFF_T) );
+_PROTOTYP( CK_OFF_T ckatofs, (char *) );
 _PROTOTYP( char * ckitox, (int) );
 _PROTOTYP( char * ckltox, (long) );
+_PROTOTYP( int ispattern, (char *) );
 _PROTOTYP( int ckmatch, (char *, char *, int, int ) );
 _PROTOTYP( VOID ckmemcpy, (char *, char *, int) );
 _PROTOTYP( char * ckstrchr, (char *, char) );
@@ -97,4 +100,5 @@ _PROTOTYP( long hextoulong, (char *, int) );
 _PROTOTYP( struct stringarray * cksplit, (int,int,
                                           char *,char *,char *,int,int,int) );
 
+_PROTOTYP( int ckhexbytetoint, (char *) );
 #endif /* CKCLIB_H */

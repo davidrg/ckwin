@@ -1,7 +1,7 @@
 #include "ckcsym.h"
 #define XFATAL fatal
 
-/*  C K U U S Y --  "User Interface" for Unix Kermit, part Y  */
+/*  C K U U S Y --  "User Interface" for C-Kermit Kermit, part Y  */
 
 /*  Command-Line Argument Parser */
 
@@ -12,7 +12,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2009,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -156,6 +156,8 @@ _PROTOTYP(static int dossharg, (char x) );
 int haveftpuid = 0;			/* Have FTP user ID */
 static int have_cx = 0;			/* Have connection */
 
+static char * failmsg = NULL;		/* Failure message */
+
 #ifdef NEWFTP
 extern char * ftp_host;
 #endif /* NEWFTP */
@@ -219,7 +221,8 @@ struct urldata g_url = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
 /*
   Returns 0 if the candidate does not seem to be a URL.
   Returns 1 if it might be a URL, with the above pointers set to its pieces:
-    service : [ // ] [ user [ : password ] @ ] host [ : service ] [ / path ]
+    service : [ // ] [ user [ : password ] @ ] host [ : service ] [ / path ] -
+              [ ? name [ = value ]]
 
   Example: ftp://ds.internic.net:21/rfc/rfc1234.txt
     url.svc = [ftp]
@@ -282,6 +285,20 @@ urlparse(s,url) char *s; struct urldata * url; {
         free(url->pth);
         url->pth = NULL;
     }
+    if (url->nopts) {
+        int i;
+        for (i = 0; i < url->nopts && i < MAX_URL_OPTS; i++ ) {
+            if (url->opt[i].nam) {
+                free(url->opt[i].nam);
+                url->opt[i].nam = NULL;
+            }
+            if (url->opt[i].val) {
+                free(url->opt[i].val);
+                url->opt[i].val = NULL;
+            }
+        }
+        url->nopts = 0;
+    }
     p = urlbuf;				/* Was a service requested? */
     while (*p && *p != ':')		/* Look for colon */
       p++;
@@ -317,9 +334,11 @@ urlparse(s,url) char *s; struct urldata * url; {
                 p = q;
 		url->hos = p;
             }
+#ifdef COMMENT
 	    debug(F111,"urlparse url->usr",url->usr,url->usr);
 	    debug(F111,"urlparse url->psw",url->usr,url->psw);
 	    debug(F111,"urlparse url->hos",url->usr,url->hos);
+#endif	/* COMMENT */
 
             while (*p != NUL && *p != ':' && *p != '/')	/* Port? */
               p++;
@@ -447,7 +466,19 @@ static
 char *hlp4[] = {        /* ssh */
 "  [option-list] host[:port] [port]\n",
 "  The option-list consists of zero, one, or more of:\n",
+#ifdef OS2
+"  -# flags          Kermit 95 Startup Flags\n",
+"       1              turn off Win95 special fixes\n",
+"       2              do not load optional network dlls\n",
+"       4              do not load optional tapi dlls\n",
+"       8              do not load optional kerberos dlls\n",
+"      16              do not load optional zmodem dlls\n",
+"      32              use stdin for input instead of the console\n",
+"      64              use stdout for output instead of the console\n",
+"     128              do not terminate process in response to Session Logoff\n",
+#endif /* OS2 */
 "  -d                Turn on debug mode\n",
+"  -Y                Disable init file processing\n",
 "  -l user           Set username\n",
 ""
 };
@@ -508,7 +539,7 @@ xx_ftp(host, port) char * host, * port; {
       ftp_cmdlin++;			/* 2 = same plus file transfer */
 
 #ifndef NOURL
-    debug(F111,"ftp xx_ftp g_url.usr",g_url.usr,g_url.usr);
+    /* debug(F111,"ftp xx_ftp g_url.usr",g_url.usr,g_url.usr); */
     if (haveurl && g_url.usr) {		/* Wed Oct  9 15:15:22 2002 */
 	if (!*(g_url.usr)) {		/* Force username prompt if */
 	    haveftpuid = 0;		/* "ftp://:@host" given. */
@@ -1660,6 +1691,7 @@ struct keytab xargtab[] = {
     { "maximize",    XA_WMAX,  CM_PRE },
     { "minimize",    XA_WMIN,  CM_PRE },
     { "nobars",      XA_NOBAR, CM_PRE },
+    { "noclose" ,    XA_NOCLOSE, CM_PRE },
 #endif /* KUI */
     { "noescape",    XA_NOESCAPE, CM_PRE },
 #endif /* OS2 */
@@ -1727,6 +1759,9 @@ struct keytab xargtab[] = {
 #ifdef OS2
     { "title",       XA_TITL, CM_ARG },
 #endif /* OS2 */
+#ifdef UNIX
+    { "unbuffered",  XA_UNBUF, 0 },
+#endif	/* UNIX */
 #ifndef NOSPL
     { "user",        XA_USER, CM_ARG },
 #endif /* NOSPL */
@@ -1889,6 +1924,12 @@ inixopthlp() {
             xopthlp[j] = "--nointerrupts";
             xarghlp[j] = "Disable keyboard interrupts.";
             break;
+#ifdef UNIX
+          case XA_UNBUF:
+            xopthlp[j] = "--unbuffered";
+            xarghlp[j] = "Force unbuffered console i/o.";
+            break;
+#endif	/* UNIX */
 #ifdef IKSDB
           case XA_DBAS:
             xopthlp[j] = "--database:{on,off}";
@@ -1964,6 +2005,10 @@ inixopthlp() {
 	    xopthlp[j] = "--lockdown";
 	    xarghlp[j] = "Enable all lockdown options.";
 	    break;
+          case XA_NOCLOSE:
+            xopthlp[j] = "--noclose";
+            xarghlp[j] = "Disable Close Window and Menu Exit.";
+            break;
           case XA_NOSCROLL:
 	    xopthlp[j] = "--noscroll";
 	    xarghlp[j] = "Disable scrollback operations.";
@@ -2076,7 +2121,7 @@ iniopthlp() {
             break;
 #ifdef TCPSOCKET
           case 'F':
-            opthlp[i] = "Make a TCP connection";
+            opthlp[i] = "Use an existing TCP connection";
             arghlp[i] = "Numeric file descriptor of open TCP connection";
             break;
 #endif /* TCPSOCKET */
@@ -2559,6 +2604,11 @@ doxarg(s,pre) char ** s; int pre; {
 	xsuspend = 0;
         break;
 
+#ifdef UNIX
+      case XA_UNBUF:			/* Unbuffered console i/o*/
+	break;				/* This one is handled in ckcmai.c */
+#endif	/* UNIX */
+
 #ifdef IKSDB
       case XA_DBFI: {
           extern char * dbdir, * dbfile;
@@ -2724,10 +2774,15 @@ doxarg(s,pre) char ** s; int pre; {
         kui_init.nostatusbar = 1;
 #endif
         break;
-    case XA_NOSCROLL:
+#ifdef KUI
+      case XA_NOCLOSE:
+        kui_init.noclose = 1;
+        break;
+#endif /* KUI */
+      case XA_NOSCROLL:
         tt_scroll = 0;
         break;
-    case XA_NOESCAPE:
+      case XA_NOESCAPE:
         tt_escape = 0;
         break;
 #endif /* OS2 */
@@ -2806,9 +2861,12 @@ doxarg(s,pre) char ** s; int pre; {
 	  break;
       }
 #ifdef OS2
-    case XA_TITL:
-        os2settitle(p,1);
+    case XA_TITL: {
+        extern char usertitle[];
+        ckstrncpy(usertitle,p,64);
+        os2settitle("",1);
         break;
+    }
 #endif /* OS2 */
 
 #ifdef COMMENT				/* TO BE FILLED IN ... */
@@ -3523,18 +3581,37 @@ extern char *line, *tmpbuf;             /* Character buffers for anything */
 		      /* or contains wildcard characters matching real files */
 			  fil2snd = 1;
 			  nfils++;
+		      } else {
+			  if (!failmsg)
+			    failmsg = (char *)malloc(2000);
+			  if (failmsg) {
+			      ckmakmsg(failmsg,2000,
+#ifdef VMS
+				       "%CKERMIT-E-SEARCHFAIL "
+#else
+				       "kermit -s "
+#endif	/* VMS */
+				       ,
+				       *xargv,
+				       ": ",
+				       ck_errstr()
+				       );
+			  }
 		      }
 	      }
 	      xargc++, xargv--;		/* Adjust argv/argc */
 	      if (!fil2snd && z == 0) {
+		  if (!failmsg) {
 #ifdef VMS
-		  XFATAL("%CKERMIT-E-SEARCHFAIL, no files for -s");
+		      failmsg = "%CKERMIT-E-SEARCHFAIL, no files for -s";
 #else
-		  XFATAL("No files for -s");
+		      failmsg = "No files for -s";
 #endif /* VMS */
+		  }
+		  XFATAL(failmsg);
 	      }
 	      if (z > 1) {
-		  XFATAL("-s: too many -'s");
+		  XFATAL("kermit -s: too many -'s");
 	      }
 	      if (z == 1 && fil2snd) {
 		  XFATAL("invalid mixture of filenames and '-' in -s");
@@ -4293,14 +4370,18 @@ dotnarg(x) char x;
 #endif /* COMMENT */
 
 /*
+ * -#                Kermit 95 Startup Flags
  * -8                Negotiate Telnet Binary in both directions
  * -a                Require use of Telnet authentication
  * -c                Do not read the .telnetrc file
  * -d                Turn on debug mode
  * -E                No escape character
+ * -f                Forward credentials to host
  * -K                Refuse use of authentication; do not send username
+ * -k realm          Set default realm
  * -l user           Set username and request Telnet authentication
  * -L                Negotiate Telnet Binary Output only
+ * -q                Quiet mode (suppress messages)
  * -S tos            Use the IP type-of-service tos
  * -x                Require Encryption
  * -D                Disable forward-X
@@ -4310,8 +4391,7 @@ dotnarg(x) char x;
  * -T crldir=dir     Use CRLs in directory
  * -T cipher=string  Use only ciphers in string
  * -X atype          Disable use of atype authentication
- * -f                Forward credentials to host
- * -k realm          Set default realm
+ * -Y                Disable init file processing
  *
  */
 	  case 'h':			/* help */
@@ -4329,6 +4409,20 @@ dotnarg(x) char x;
 
 	  case 'a':			/* Require Telnet Auth */
 	    TELOPT_DEF_C_ME_MODE(TELOPT_AUTHENTICATION) = TN_NG_MU;
+	    break;
+
+	  case 'Y':
+	    xargv++, xargc--;		/* Skip past argument */
+	    break;			/* Action done in prescan */
+
+#ifdef OS2
+          case '#':			/* K95 stdio threads */
+	    xargv++, xargc--;		/* Skip past argument */
+	    break;			/* Action done in prescan */
+#endif /* OS2 */
+
+          case 'q':	                /* Quiet */
+	    quiet = 1;
 	    break;
 
 	  case 'd':
@@ -4496,6 +4590,18 @@ dorlgarg(x) char x;
 	    doexit(GOOD_EXIT,-1);
 	    break;
 
+          case 'Y':
+	    xargv++, xargc--;		/* Skip past argument */
+	    break;			/* Action done in prescan */
+#ifdef OS2
+          case '#':			/* K95 stdio threads */
+	    xargv++, xargc--;		/* Skip past argument */
+	    break;			/* Action done in prescan */
+#endif /* OS2 */
+          case 'q':	                /* Quiet */
+	    quiet = 1;
+	    break;
+
 	  case 'd':
 #ifdef DEBUG
 	    if (deblog) {
@@ -4567,12 +4673,26 @@ dossharg(x) char x;
 
 /*
  * -d                Debug
+ * -# args           Init
+ * -Y                no init file
  * -l user           Set username
  *
  */
 	  case 'h':			/* help */
 	    usage();
 	    doexit(GOOD_EXIT,-1);
+	    break;
+
+          case 'Y':
+	    xargv++, xargc--;		/* Skip past argument */
+	    break;			/* Action done in prescan */
+#ifdef OS2
+          case '#':			/* K95 stdio threads */
+	    xargv++, xargc--;		/* Skip past argument */
+	    break;			/* Action done in prescan */
+#endif /* OS2 */
+          case 'q':	                /* Quiet */
+	    quiet = 1;
 	    break;
 
 	  case 'd':
@@ -4601,7 +4721,7 @@ dossharg(x) char x;
 
 	  default:
 	    fatal2(*xargv,
-		   "invalid command-line option, type \"rlogin -h\" for help"
+		   "invalid command-line option, type \"ssh -h\" for help"
 		   );
         }
 
@@ -4614,9 +4734,9 @@ dossharg(x) char x;
 
 #else /* No command-line interface... */
 
-extern int xargc;
 int
 cmdlin() {
+    extern int xargc;
     if (xargc > 1) {
         XFATAL("Sorry, command-line options disabled.");
     }

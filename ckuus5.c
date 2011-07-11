@@ -15,7 +15,7 @@ int cmdsrc() { return(0); }
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2011,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -49,6 +49,8 @@ char tmpbuf[TMPBUFSIZ+1];               /* Temporary buffer */
 #include "ck_ssl.h"
 #endif /* CK_SSL */
 
+extern char * ck_cryear;       /* (ckcmai.c) Latest C-Kermit copyright year */
+
 #ifdef OS2
 #include "ckoetc.h"
 #ifndef NT
@@ -79,6 +81,11 @@ extern int cursor_save ;
 extern bool cursorena[] ;
 #endif /* OS2 */
 
+/* 2010-03-09 SMS.  VAX C V3.1-051 needs <stat.h> for off_t. */
+#ifdef VMS
+#include <stat.h>
+#endif /* def VMS */
+
 /* For formatted screens, "more?" prompting, etc. */
 
 #ifdef FT18
@@ -103,7 +110,7 @@ extern int carrier, cdtimo, local, quiet, backgrd, bgset, sosi, xsuspend,
   inserver, diractive, tlevel, cwdf, nfuncs, msgflg, remappd, hints, mdmtyp,
   zincnt, cmask, rcflag, success, xitsta, pflag, tnlm, tn_nlm, xitwarn,
   debses, xaskmore, parity, saveask, wasclosed, whyclosed, cdactive,
-  rcdactive, keepallchars;
+  rcdactive, keepallchars, cmd_err;
 
 #ifdef LOCUS
 extern int locus, autolocus;
@@ -169,6 +176,12 @@ extern char browsurl[];
 #endif /*  NOFRILLS */
 #endif /* NOPUSH */
 
+#ifndef NOFRILLS
+#ifndef NORENAME
+_PROTOTYP(VOID shorename, (void));
+#endif	/* NORENAME */
+#endif	/* NOFRILLS */
+
 #ifndef NOSERVER
 extern char * x_user, * x_passwd, * x_acct;
 #endif /* NOSERVER */
@@ -183,7 +196,7 @@ extern int ckrooterr;
 #endif /* CKROOT */
 
 #ifndef NOSPL
-extern int cfilef, xxdot;
+extern int cfilef, xxdot, vareval;
 extern char cmdfil[];
 
 struct localvar * localhead[CMDSTKL];
@@ -201,7 +214,7 @@ _PROTOTYP( static VOID expr,     (void) );
 _PROTOTYP( static VOID simple,   (void) );
 _PROTOTYP( static VOID simpler,  (void) );
 _PROTOTYP( static VOID simplest, (void) );
-_PROTOTYP( static long xparse,   (void) );
+_PROTOTYP( static CK_OFF_T xparse,   (void) );
 #endif /* NOSPL */
 #ifndef NOSHOW
 _PROTOTYP( int sho_iks, (void) );
@@ -398,7 +411,7 @@ extern char savdir[];                   /* Temporary directory */
 #endif /* CK_TMPDIR */
 
 #ifndef NOLOCAL
-extern int tt_crd, tt_escape;
+extern int tt_crd, tt_lfd, tt_escape;
 #endif /* NOLOCAL */
 
 #ifndef NOCSETS
@@ -511,8 +524,10 @@ extern int isguest;                     /* Flag for anonymous user */
 
 #ifdef DCMDBUF
 int *xquiet = NULL;
+int *xvarev = NULL;
 #else
 int xquiet[CMDSTKL];
+int xvarev[CMDSTKL];
 #endif /* DCMDBUF */
 
 char * prstring[CMDSTKL];
@@ -751,7 +766,8 @@ static struct keytab kcdtab[] = {	/* Symbolic directory names */
     { "lockdir",  VN_LCKDIR,    0 },
 #endif /* UNIX */
 #ifdef NT
-    { "personal", VN_PERSONAL,  0 },
+    { "my_documents",VN_PERSONAL,  0 },
+    { "personal", VN_PERSONAL,  CM_INV },
 #endif /* NT */
     { "startup",  VN_STAR,      0 },
     { "textdir",  VN_TXTDIR,    0 },
@@ -762,9 +778,9 @@ static int nkcdtab = (sizeof(kcdtab) / sizeof(struct keytab));
 
 #ifndef NOSPL
 _PROTOTYP( VOID freelocal, (int) );
-_PROTOTYP( static long expon, (long, long) );
-_PROTOTYP( static long gcd, (long, long) );
-_PROTOTYP( static long fact, (long) );
+_PROTOTYP( static CK_OFF_T expon, (CK_OFF_T, CK_OFF_T) );
+_PROTOTYP( static CK_OFF_T gcd, (CK_OFF_T, CK_OFF_T) );
+_PROTOTYP( static CK_OFF_T fact, (CK_OFF_T) );
 
 int                     /* Initialize macro data structures. */
 macini() {              /* Allocate mactab and preset the first element. */
@@ -1131,7 +1147,7 @@ cmdini() {
 #ifndef NOSPL
     /* Allocate INPUT command buffer */
     if (!inpbuf) {
-        if (!(inpbuf = (char *) malloc(INPBUFSIZ+1)))
+        if (!(inpbuf = (char *) malloc(INPBUFSIZ+8)))
           fatal("cmdini: no memory for INPUT buffer");
     }
     for (x = 0; x < INPBUFSIZ; x++)     /* Initialize it */
@@ -1164,6 +1180,8 @@ cmdini() {
       fatal("cmdini: no memory for merror");
     if (!(xquiet = (int *) malloc(sizeof(int)*CMDSTKL)))
       fatal("cmdini: no memory for xquiet");
+    if (!(xvarev = (int *) malloc(sizeof(int)*CMDSTKL)))
+      fatal("cmdini: no memory for xvarev");
     if (!kermrc)
       if (!(kermrc = (char *) malloc(KERMRCL+1)))
         fatal("cmdini: no memory for kermrc");
@@ -1203,6 +1221,7 @@ cmdini() {
     takerr[0] = 0;
     merror[0] = 0;
     xquiet[0] = quiet;
+    xvarev[0] = vareval;
 #endif /* NOSPL */
 
 #ifndef NOSPL
@@ -1567,6 +1586,7 @@ extern int ckrooterr;
         takerr[cmdlvl] = takerr[cmdlvl-1];
         merror[cmdlvl] = merror[cmdlvl-1];
         xquiet[cmdlvl] = quiet;
+        xvarev[cmdlvl] = vareval;
 #endif /* NOSPL */
         debug(F110,"doinit init file",line,0);
     } else {
@@ -1647,8 +1667,8 @@ extern int ckrooterr;
 
 #ifdef USE_CUSTOM
     /* If no init file was found, execute the customization file */
-    debug(F110,"CUSTOM 1",line,0);
-    if (!line[0] || zchki(line) < 0) {
+    debug(F111,"CUSTOM 1",line,rcflag);
+    if ((!line[0] || zchki(line) < 0) && !rcflag) {
 	int x;
 #ifdef OS2
 	x = ckmakestr(line,LINBUFSIZ,GetAppData(1),"/","K95CUSTOM.INI",NULL);
@@ -1700,6 +1720,7 @@ extern int ckrooterr;
         takerr[cmdlvl] = takerr[cmdlvl-1];
         merror[cmdlvl] = merror[cmdlvl-1];
         xquiet[cmdlvl] = quiet;
+        xvarev[cmdlvl] = vareval;
         debug(F101,"doinit open ok","",cmdlvl);
         xcmdsrc = CMD_TF;
         cmdstk[cmdlvl].src = CMD_TF;
@@ -1735,6 +1756,7 @@ extern int ckrooterr;
             takerr[cmdlvl] = takerr[cmdlvl-1];
             merror[cmdlvl] = merror[cmdlvl-1];
             xquiet[cmdlvl] = quiet;
+	    xvarev[cmdlvl] = vareval;
 #endif /* NOSPL */
         }
     }
@@ -1832,6 +1854,7 @@ doiksdinit() {
         takerr[cmdlvl] = takerr[cmdlvl-1];
         merror[cmdlvl] = merror[cmdlvl-1];
         xquiet[cmdlvl] = quiet;
+	xvarev[cmdlvl] = vareval;
 #endif /* NOSPL */
         debug(F110,"doiksdinit file ok",tfnam[tlevel],0);
     } else {
@@ -2054,7 +2077,7 @@ getnct(s,n,f,flag) char *s; int n; FILE *f; int flag; {
     int bc = 0;                         /* Block counter */
 
     s2 = s;                             /* Remember original pointer */
-    prev = s2;
+    prev = s2;				/* Here too */
     buflen = n;                         /* Remember original buffer length */
 
     if (n < 0)
@@ -2073,7 +2096,7 @@ getnct(s,n,f,flag) char *s; int n; FILE *f; int flag; {
     if (!lpx) {                         /* Get new one */
         if (!(lpx = (char *) malloc(n))) {
             debug(F101,"getnct malloc failure","",0);
-            printf("?Memory allocation failure [getnct]\n");
+            printf("?Memory allocation failure [getnct:%d]\n",n);
             return(-2);
         }
         lpxlen = n;
@@ -2093,6 +2116,7 @@ getnct(s,n,f,flag) char *s; int n; FILE *f; int flag; {
             *s = NUL;                   /* Make destination be empty */
             return(-1);                 /* Return failure code */
         }
+
 #ifndef NODIAL
         if (flag)                       /* Count this line */
           dirline++;
@@ -2237,7 +2261,7 @@ getnct(s,n,f,flag) char *s; int n; FILE *f; int flag; {
 #endif /* COMMENT */
 
         if (bc > 0 && *lp3 == '}') {    /* First char on line is '}' */
-            bc--;                               /* Decrement block counter */
+            bc--;			/* Decrement block counter */
         }
 
         if (bc == 0 &&                  /* Line is continued if bc > 0 */
@@ -2373,6 +2397,58 @@ shostack() {                            /* Dump the command stack */
       printf(" %2d. Prompt: (top level)\n",0);
 }
 
+/* For command error messages - avoid dumping out the contents of some */
+/* some huge FOR loop if it contains a syntax error. */
+
+static char *
+cmddisplay(s, cx) char * s; int cx; {
+    static char buf[80];
+    if ((int)strlen(s) > 70) {
+	sprintf(buf,"%.64s...",s);	/* SAFE */
+	s = buf;
+    }
+    return(s);
+}
+
+static VOID
+cmderr() {
+    if (xcmdsrc > 0) {
+	switch (cmd_err) {		/* SET COMMAND ERROR-DISPLAY */
+	  case 0:
+	    break;
+	  case 1:
+	  case 2:
+	    if (tlevel > -1) {
+#ifndef NOSPL
+		if (xcmdsrc == 2)
+		  printf(
+"In macro or block defined in file: %s starting about line %d\n",
+			 tfnam[tlevel] ? tfnam[tlevel] : "", tfline[tlevel]
+			 );
+		else
+#endif /* NOSPL */
+		  printf("File: %s, Line: %d\n",
+			 tfnam[tlevel] ? tfnam[tlevel] : "", tfline[tlevel]
+			 );
+	    }
+#ifndef NOSPL
+	    if (cmd_err == 2) {
+		if (cmdstk[cmdlvl].src == CMD_MD) { /* Executing a macro? */
+		    int m;
+		    m = cmdstk[cmdlvl].lvl;
+		    if (mlook(mactab,m_arg[m][0],nmac) >= 0)
+		      printf("Macro name: %s\n", m_arg[m][0]);
+		}
+	    }
+#endif /* NOSPL */
+	    break;
+
+	  case 3:
+	    printf("Command stack:\n");
+	    shostack();			    
+	}
+    }
+}
 
 /*  P A R S E R  --  Top-level interactive command parser.  */
 
@@ -2397,7 +2473,7 @@ parser(m) int m; {
 
 #ifndef NOSPL
     int inlevel;                        /* Level we were called at */
-    extern int askflag;
+    extern int askflag, echostars;
 #endif /* NOSPL */
     char *cbp;                          /* Command buffer pointer */
 #ifdef MAC
@@ -2407,8 +2483,6 @@ parser(m) int m; {
 #ifndef NOXFER
     extern int sndcmd, getcmd, fatalio, clearrq;
 #endif /* NOXFER */
-
-    debok = 1;                          /* Undisable debugging */
 
 #ifdef AMIGA
     reqres();                           /* Restore AmigaDOS requestors */
@@ -2493,7 +2567,8 @@ parser(m) int m; {
     if (cdlost && !interrupted && (sndcmd || getcmd)) {
         printf("?Connection broken (carrier signal lost)\n");
     }
-    if (sndcmd && !success && hints && !interrupted && !fatalio && !xcmdsrc) {
+    if (sndcmd && protocol == PROTO_K &&
+	!success && hints && !interrupted && !fatalio && !xcmdsrc) {
         int x = 0, n = 0;
         printf("\n*************************\n");
         printf("SEND-class command failed.\n");
@@ -2559,28 +2634,28 @@ parser(m) int m; {
 
 #ifdef CK_SPEED
         if (prefixing != PX_ALL && rpackets > 2) {
-            printf(" . Try it again with SET PREFIXING ALL.\n");
+            printf(" . Try it again with: SET PREFIXING ALL\n");
             x++;
         }
 #endif /* CK_SPEED */
 #ifdef STREAMING
         if (streamed) {
-            printf(" . Try it again with SET STREAMING OFF.\n");
+            printf(" . Try it again with: SET STREAMING OFF\n");
             x++;
         } else if (reliable) {
-            printf(" . Try it again with SET RELIABLE OFF.\n");
+            printf(" . Try it again with: SET RELIABLE OFF\n");
             x++;
         }
 #endif /* STREAMING */
 
 #ifdef CK_SPEED
         if (clearrq > 0 && prefixing == PX_NON) {
-            printf(" . Try it again with SET CLEAR-CHANNEL OFF.\n");
+            printf(" . Try it again with: SET CLEAR-CHANNEL OFF\n");
             x++;
         }
 #endif /* CK_SPEED */
         if (!parity) {
-            printf(" . Try it again with SET PARITY SPACE.\n");
+            printf(" . Try it again with: SET PARITY SPACE\n");
             x++;
         }
         printf(" . %sive a ROBUST command and try again.\n",
@@ -2589,11 +2664,16 @@ parser(m) int m; {
         printf("Also:\n");
         printf(" . Be sure the source file has read permission.\n");
         printf(" . Be sure the target directory has write permission.\n");
+/*
+        if the file was 2G or larger make sure other Kermit supports LFs...
+*/
+        printf(" . Be sure the target disk has sufficient space.\n");
         printf("(Use SET HINTS OFF to suppress hints.)\n");
         printf("*************************\n\n");
     }
     debug(F101,"topcmd","",topcmd);
-    if (getcmd && !success && hints && !interrupted && !fatalio && !xcmdsrc) {
+    if (getcmd && protocol == PROTO_K &&
+	!success && hints && !interrupted && !fatalio && !xcmdsrc) {
         int x = 0;
         extern int urpsiz, wslotr;
         printf("\n*************************\n");
@@ -2642,15 +2722,15 @@ parser(m) int m; {
 #endif /* NOLOCAL */
 #ifdef STREAMING
         if (streamed) {
-            printf(" . Try it again with SET STREAMING OFF.\n");
+            printf(" . Try it again with: SET STREAMING OFF\n");
             x++;
         } else if (reliable && local) {
-            printf(" . Try it again with SET RELIABLE OFF.\n");
+            printf(" . Try it again with: SET RELIABLE OFF\n");
             x++;
         } else
 #endif /* STREAMING */
         if (!parity) {
-            printf(" . Try it again with SET PARITY SPACE.\n");
+            printf(" . Try it again with: SET PARITY SPACE\n");
             x++;
         }
         printf((x > 0) ?
@@ -2659,6 +2739,7 @@ parser(m) int m; {
                );
         printf("Also:\n");
         printf(" . Be sure the target directory has write permission.\n");
+        printf(" . Be sure the target disk has sufficient space.\n");
         printf(" . Try telling the %s to SET PREFIXING ALL.\n",
                topcmd == XXGET ? "server" : "sender"
                );
@@ -2712,13 +2793,6 @@ parser(m) int m; {
         makestr(&snd_rename,g_snd_rename);
         makestr(&rcv_rename,g_rcv_rename);
 #endif /* NOXFER */
-        xaskmore = saveask;             /* Restore global more-prompting */
-        diractive = 0;
-        cdactive = 0;
-
-#ifndef NOSPL
-        askflag = 0;
-#endif /* NOSPL */
 
     /* Take requested action if there was an error in the previous command */
 
@@ -2886,6 +2960,14 @@ parser(m) int m; {
         while (repars) {                /* Parse this cmd until entered. */
 
             debug(F101,"parser top of while loop","",0);
+	    xaskmore = saveask;		/* Restore global more-prompting */
+	    diractive = 0;		/* DIR command not active */
+	    cdactive = 0;		/* CD command not active */
+#ifndef NOSPL
+	    askflag = 0;		/* ASK command not active */
+	    echostars = 0;		/* Nor ASKQ */
+	    debok = 1;			/* Undisable debugging */
+#endif /* NOSPL */
 
 #ifdef RECURSIVE
             /* In case of "send /recursive ./?<Ctrl-U>" etc */
@@ -2973,28 +3055,11 @@ parser(m) int m; {
 #endif /* NOSPL */
 
                   default:
-                    if (!quiet) {
-                        printf("\n?Invalid - \"%s\"\n",cmdbuf);
-#ifdef COMMENT
-#ifndef NOSPL
-                        if (maclvl > -1 && xcmdsrc == 2)
-                          printf("Macro: %s; ",
-                                 m_arg[maclvl][0] ?
-                                 m_arg[maclvl][0] : "");
-#endif /* NOSPL */
-                        if (tlevel > -1) {
-                            printf("Command file: %s, line %d\n",
-                                   tfnam[tlevel] ? tfnam[tlevel] : "",
-                                   tfline[tlevel]
-                                   );
-                        }
-#else
-                        if (xcmdsrc > 0) {
-                            printf("Command stack:\n");
-                            shostack();
-                        }
-#endif /* COMMENT */
-
+                    if (!quiet && !cmd_err) {
+                        printf("\n?Invalid - \"%s\"\n",
+			       cmddisplay((char *)cmdbuf,xx)
+			       );
+			cmderr();
                     }
                     xx = -2;
                 }
@@ -3034,6 +3099,19 @@ parser(m) int m; {
             zz = docmd(xx);             /* Parse rest of command & execute. */
 
 #ifndef NOSPL
+	    {				/* For \v(lastcommand) */
+		extern char * prevcmd;
+		/* The exception list kind of a hack but let's try it... */
+		if (ckstrcmp(cmdbuf,"_getarg",7,0) &&
+		    ckstrcmp(cmdbuf,"if ",3,0) &&
+		    ckstrcmp(cmdbuf,"xif ",4,0) &&
+		    ckstrcmp(cmdbuf,"do _if",6,0) &&
+		    ckstrcmp(cmdbuf,"_assign _if",11,0))
+		  ckstrncpy(prevcmd,cmdbuf,CMDBL);
+	    }
+#endif	/* NOSPL */
+
+#ifndef NOSPL
             if (fnerror && !fnsuccess)
               success = 0;
 #endif /* NOSPL */
@@ -3067,126 +3145,74 @@ parser(m) int m; {
 
 #endif /* OS2 */
               case -6:                  /* Invalid command given w/no args */
-              case -2:                  /* Invalid command given w/args */
-#ifdef COMMENT
-#ifndef NOSPL
-                    /* This is going to be really ugly... */
-                    yy = mlook(mactab,atmbuf,nmac); /* Look in macro table */
-                    if (yy > -1) {                  /* If it's there */
-                        if (zz == -2) {             /* insert "do" */
-                            char *mp;
-                            mp = malloc((int)strlen(cmdbuf) + 5);
-                            if (!mp) {
-                                printf("?malloc error 1\n");
-                                return(-2);
-                            }
-                            sprintf(mp,"do %s ",cmdbuf); /* SAFE (checked) */
-                            ckstrncpy(cmdbuf,mp,CMDBL);
-                            free(mp);
-                            mp = NULL;
-                        } else {
-                            if (((int)strlen(atmbuf) + 5) < CMDBL)
-                              sprintf(cmdbuf,"do %s %c",atmbuf, CR); /* SAFE */
-                            else
-                              ckstrncpy(cmdbuf,"echo ?Too long\r",CMDBL);
-                        }
-                        if (ifcmd[cmdlvl] == 2) /* This one doesn't count! */
-                          ifcmd[cmdlvl]--;
-                        debug(F111,"stuff cmdbuf",cmdbuf,zz);
-                        repars = 1;     /* Go for reparse */
-                        continue;
-                    } else {
-                        char *p;
-                        int n;
-                        p = cmdbuf;
-                        lp = line;
-                        n = LINBUFSIZ;
-                        if (cmflgs == 0) printf("\n");
-                        if (zzstring(p,&lp,&n) > -1)
-                          printf("?Invalid: %s\n",line);
-                        else
-                          printf("?Invalid: %s\n",cmdbuf);
-                    } /* (fall thru...) */
-#else
-                    printf("?Invalid: %s\n",cmdbuf);
-#endif /* NOSPL */
-#else /* Not COMMENT */
-                    printf("?Invalid: %s\n",cmdbuf);
-#endif /* COMMENT */
-
-                case -9:                /* Bad, error message already done */
-                    success = 0;
-                    debug(F110,"top-level cmkey failed",cmdbuf,0);
-                    /* If in background w/ commands coming stdin, terminate */
-                    if (pflag == 0 && tlevel < 0)
-                      fatal("Kermit command error in background execution");
+              case -2: {		/* Invalid command given w/args */
+		  int x = 0;
+		  char * eol = "";
+		  x = strlen(cmdbuf);	/* Avoid blank line */
+		  if (x > 0) {
+		      if (cmdbuf[x-1] != LF)
+			eol = "\n";
+		      printf("?Invalid: %s%s",
+			     cmddisplay(cmdbuf,xx),eol
+			     );
+		  } else
+		    printf("?Invalid\n");
+	      }
+	      case -9:			/* Bad, error message already done */
+		success = 0;
+		debug(F110,"top-level cmkey failed",cmdbuf,0);
+		/* If in background w/ commands coming stdin, terminate */
+		if (pflag == 0 && tlevel < 0)
+		  fatal("Kermit command error in background execution");
 /*
   Command retry feature, edit 190.  If we're at interactive prompting level,
   reprompt the user with as much of the command as didn't fail.
 */
 #ifdef CK_RECALL
-                    if (cm_retry && !xcmdsrc) { /* If at top level */
-                        int len;
-                        char *p, *s;
-                        len = strlen(cmdbuf); /* Length of command buffer */
-                        p = malloc(len + 1);  /* Allocate space for copy */
-                        if (p) {              /* If we got the space copy */
-                            strcpy(p,cmdbuf); /* the command buffer (SAFE). */
-                            /* Chop off final field, the one that failed. */
-                            s = p + len - 1;          /* Point to end */
-                            while (*s == SP && s > p) /* Trim blanks */
-                              s--;
-                            while (*s != SP && s > p) /* Trim last field */
-                              s--;
-                            if (s > p)        /* Keep the space */
-                              s++;            /* after last good field */
-                            if (s >= p)       /* Cut off remainder */
-                              *s = NUL;
-                            cmini(ckxech);    /* Reinitialize the parser */
-                            ckstrncpy(cmdbuf,p,CMDBL); /* Copy result back */
-                            free(p);          /* Free temporary storage */
-                            p = NULL;
-                            prompt(xxstring); /* Reprint the prompt */
-                            printf("%s",cmdbuf); /* Reprint partial command */
-                            repars = 1;          /* Force reparse */
-                            continue;
-                        }
-                    } else
+		if (cm_retry && !xcmdsrc) { /* If at top level */
+		    int len;
+		    char *p, *s;
+		    len = strlen(cmdbuf); /* Length of command buffer */
+		    p = malloc(len + 1);  /* Allocate space for copy */
+		    if (p) {              /* If we got the space copy */
+			strcpy(p,cmdbuf); /* the command buffer (SAFE). */
+			/* Chop off final field, the one that failed. */
+			s = p + len - 1;          /* Point to end */
+			while (*s == SP && s > p) /* Trim blanks */
+			  s--;
+			while (*s != SP && s > p) /* Trim last field */
+			  s--;
+			if (s > p)        /* Keep the space */
+			  s++;            /* after last good field */
+			if (s >= p)       /* Cut off remainder */
+			  *s = NUL;
+			cmini(ckxech);    /* Reinitialize the parser */
+			ckstrncpy(cmdbuf,p,CMDBL); /* Copy result back */
+			free(p);          /* Free temporary storage */
+			p = NULL;
+			prompt(xxstring); /* Reprint the prompt */
+			printf("%s",cmdbuf); /* Reprint partial command */
+			repars = 1;          /* Force reparse */
+			continue;
+		    }
+		} else
 #endif /* CK_RECALL */
-                      if (!quiet) {
-#ifdef COMMENT
-#ifndef NOSPL
-                          if (maclvl > -1)
-                            printf("Macro: %s; ",
-                                   m_arg[maclvl][0] ?
-                                   m_arg[maclvl][0] : "");
-#endif /* NOSPL */
-                          if (tlevel > -1)
-                            printf("Command file: %s, line %d\n",
-                                   tfnam[tlevel] ? tfnam[tlevel] : "",
-                                   tfline[tlevel]
-                                   );
-#else
-                          if (xcmdsrc > 0) {
-                              printf("Command stack:\n");
-                              shostack();
-                          }
-#endif /* COMMENT */
-                      }
-                      cmini(ckxech);    /* (fall thru) */
+		  cmderr();
 
-                case -3:                /* Empty command OK at top level */
-                    repars = 0;         /* Don't need to reparse. */
-                    continue;           /* Go back and get another command. */
+		cmini(ckxech);		/* (fall thru) */
 
-                default:                /* Command was successful. */
+	      case -3:			/* Empty command OK at top level */
+		repars = 0;		/* Don't need to reparse. */
+		continue;		/* Go back and get another command. */
+
+	      default:			/* Command was successful. */
 #ifndef NOSPL
-                    debug(F101,"parser preparing to continue","",maclvl);
+		debug(F101,"parser preparing to continue","",maclvl);
 #endif /* NOSPL */
-                    debug(F101,"parser success","",success);
-                    repars = 0;         /* Don't need to reparse. */
-                    continue;           /* Go back and get another command. */
-                }
+		debug(F101,"parser success","",success);
+		repars = 0;		/* Don't need to reparse. */
+		continue;		/* Go back and get another command. */
+	    }
         }
 #ifndef NOSPL
         debug(F101,"parser breaks out of while loop","",maclvl);
@@ -3357,7 +3383,7 @@ vardef(s,isarray,x1,x2) char * s; int * isarray, * x1, * x2; {
             }
             if (x < 0)
               return(NULL);
-            if (chkarray(vbi,d) > 0) {  /* Array is declared? */
+            if (chkarray(vbi,d) >= 0) {	/* Array is declared? */
                 vbi -= ARRAYBASE;       /* Convert name to index */
                 if (a_dim[vbi] >= d) {  /* If subscript in range */
                     char **ap;
@@ -3479,13 +3505,30 @@ dooutput(s, cx) char *s; int cx; {
 #ifdef NOLOCAL
         goto outerr;
 #else
-        if (ttchk() < 0) {
-            printf("?Connection %s %s is not open.\n",
-                   network ? "to" : "on",
-                   ttname
-                   );
-            return(0);
-        }
+	if (ttchk() < 0) {
+	    if (!network) {
+		if (carrier != CAR_OFF) {
+		    int x;
+		    x = ttgmdm();
+		    if ((x > -1) && ((x & BM_DCD) == 0)) {
+			printf(
+"?Carrier signal required but not present - Try SET CARRIER-WATCH OFF.\n"
+                              );
+			return(0);
+		    }
+		} else {
+		    printf(
+"?Problem with serial port or modem or cable - Try SHOW COMMUNICATIONS.\n"
+                          );
+		    return(0);
+		}
+	    }
+	    printf("?Connection %s %s is not open or not functioning.\n",
+		   network ? "to" : "on",
+		   ttname
+		   );
+	    return(0);
+	}
         if (ttvt(speed,flow) < 0) {
             printf("?OUTPUT initialization error\n");
             return(0);
@@ -3735,6 +3778,10 @@ herald() {
     int x = 0, i;
     extern int srvcdmsg;
     extern char * cdmsgfile[];
+    char * ssl;
+    char * krb4;
+    char * krb5;
+
 #ifndef NOCMDL
     extern char * bannerfile;
     debug(F110,"herald bannerfile",bannerfile,0);
@@ -3762,16 +3809,32 @@ herald() {
     /* The following generates bad code in SCO compilers. */
     /* Observed in both OSR5 and Unixware 2 -- after executing this */
     /* statement when all conditions are false, x has a value of -32. */
-    if (noherald || bgset > 0 || (bgset != 0 && backgrd != 0)) x = 1;
+    if (noherald || quiet || bgset > 0 || (bgset != 0 && backgrd != 0))
+      x = 1;
 #else
     x = 0;
-    if (noherald)
+    if (noherald || quiet)
       x = 1;
     else if (bgset > 0)
       x = 1;
     else if (bgset < 0 && backgrd > 0)
       x = 1;
 #endif /* COMMENT */
+
+    ssl = "";
+    krb4 = "";
+    krb5 = "";
+#ifdef CK_AUTHENTICATION
+#ifdef CK_SSL    
+    ssl = "+SSL";
+#endif	/* CK_SSL */
+#ifdef KRB4
+    krb4 = "+KRB4";
+#endif	/* KRB4 */
+#ifdef KRB5
+    krb5 = "+KRB5";
+#endif	/* KRB5 */
+#endif	/* CK_AUTHENTICATION */
 
     if (x == 0) {
 #ifdef datageneral
@@ -3780,10 +3843,14 @@ herald() {
 #ifdef OSK
         printf("%s, for%s\n",versio,ckxsys);
 #else
-        printf("%s, for%s\n\r",versio,ckxsys);
+#ifdef CK_64BIT
+        printf("%s, for%s%s%s%s (64-bit)\n\r",versio,ckxsys,ssl,krb4,krb5);
+#else
+        printf("%s, for%s%s%s%s\n\r",versio,ckxsys,ssl,krb4,krb5);
+#endif/* CK_64BIT */
 #endif /* OSK */
 #endif /* datageneral */
-        printf(" Copyright (C) 1985, 2004,\n");
+        printf(" Copyright (C) 1985, %s,\n", ck_cryear);
         printf("  Trustees of Columbia University in the City of New York.\n");
 #ifdef OS2
        shoreg();
@@ -4571,14 +4638,14 @@ popclvl() {                             /* Pop command level, return cmdlvl */
         /* Automatic arrays do not use the localhead list */
 
         for (i = 0; i < 28; i++) {      /* Free any local arrays */
-            if (aa_ptr[cmdlvl][i]) { /* Does this one exist? */
-                dclarray((char)(i+ARRAYBASE),0); /* Destroy global one */
+            if (aa_ptr[cmdlvl][i]) {	/* Does this one exist? */
+                dclarray((char)(i+ARRAYBASE),-1); /* Destroy global one */
                 a_ptr[i] = aa_ptr[cmdlvl][i];
                 a_dim[i] = aa_dim[cmdlvl][i];
                 aa_ptr[cmdlvl][i] = (char **)NULL;
                 aa_dim[cmdlvl][i] = 0;
             } else if (aa_dim[cmdlvl][i] == -23) { /* Secret code */
-                dclarray((char)(i+ARRAYBASE),0); /* (see pusharray()) */
+                dclarray((char)(i+ARRAYBASE),-1); /* (see pusharray()) */
                 aa_ptr[cmdlvl][i] = (char **)NULL;
                 aa_dim[cmdlvl][i] = 0;
             }
@@ -4606,6 +4673,7 @@ popclvl() {                             /* Pop command level, return cmdlvl */
             tlevel--;                   /* and pop take level */
             cmdlvl--;                   /* and command level */
             quiet = xquiet[cmdlvl];
+            vareval = xvarev[cmdlvl];
         } else
           tlevel = -1;
     } else if (cmdstk[cmdlvl].src == CMD_MD) { /* In a macro? */
@@ -4644,6 +4712,7 @@ popclvl() {                             /* Pop command level, return cmdlvl */
             debug(F010,"popclvl mac mrval[maclvl+1]",mrval[maclvl+2],0);
 
             quiet = xquiet[cmdlvl];
+	    vareval = xvarev[cmdlvl];
             if (maclvl > -1) {
                 a_ptr[0] = m_xarg[maclvl];
                 a_dim[0] = n_xarg[maclvl] - 1;
@@ -5573,6 +5642,7 @@ shotrm() {
     int lines = 0;
 #ifdef KUI
     extern CKFLOAT tt_linespacing[];
+    extern tt_cursor_blink;
 #endif /* KUI */
 #ifdef PCFONTS
     int i;
@@ -5630,12 +5700,20 @@ shotrm() {
     printf(" %19s: %-13s  %13s: %-15s\n","Echo",
            duplex ? "local" : "remote","Locking-shift",showoff(sosi));
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
-    printf(" %19s: %-13s  %13s: %-15s\n","Newline-mode",
-           showoff(tnlm),"Cr-display",tt_crd ? "crlf" : "normal");
+    printf(" %19s: %-13s  %13s: %-15s\n","Newline-mode", showoff(tnlm),
+	   "Cr-display",tt_crd ? "crlf" : "normal");
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     printf(" %19s: %-13s  %13s: %-15s\n","Cursor",
+#ifdef KUI
+	    (tt_cursor == 2) ? (tt_cursor_blink ? 
+				 "full (*)" : "full (.)") :
+	    (tt_cursor == 1) ? (tt_cursor_blink ? 
+				 "half (*)" : "half (.)") :
+	    (tt_cursor_blink ? "underline (*)" : "underline (.)"),
+#else /* KUI */
            (tt_cursor == 2) ? "full" :
            (tt_cursor == 1) ? "half" : "underline",
+#endif /* KUI */
 #ifdef CK_AUTODL
            "autodownload",autodl == TAD_ON ?
            (adl_err ? "on, error stop" : "on, error continue") : 
@@ -5752,7 +5830,7 @@ shotrm() {
            "Width",tt_cols[VTERM]);
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 #ifdef KUI
-    printf(" %19s: %-13f  %13s: %-15d\n","Line spacing",tt_linespacing[VTERM],
+    printf(" %19s: %-12f  %14s: %-15d\n","Line spacing",tt_linespacing[VTERM],
            "Display Height",VscrnGetDisplayHeight(VTERM));
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 #endif /* KUI */
@@ -5872,11 +5950,12 @@ shotrm() {
     printf("\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     {
-        extern int trueblink, truereverse, trueunderline, trueitalic;
+        extern int trueblink, truedim, truereverse, trueunderline, trueitalic;
         printf(
-    " Attribute:  blink: %-3s  reverse: %-3s  underline: %-3s italic: %-3s\n",
-                trueblink?"on":"off", truereverse?"on":"off",
-                trueunderline?"on":"off", trueitalic?"on":"off");
+	    " Attribute:  \
+blink: %-3s  dim: %-3s  italic: %-3s  reverse: %-3s  underline: %-3s\n",
+	    trueblink?"on":"off", truedim?"on":"off", trueitalic?"on":"off", 
+	    truereverse?"on":"off", trueunderline?"on":"off");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     }
     {
@@ -5927,9 +6006,10 @@ shotrm() {
 #ifdef CK_APC
     if (apcstatus == APC_ON) s = "on";
     else if (apcstatus == APC_OFF) s = "off";
-    else if (apcstatus == APC_ON|APC_UNCH) s = "unchecked";
-    else if (apcstatus == APC_ON|APC_NOINP) s = "no-input";
-    else if (apcstatus == APC_ON|APC_UNCH|APC_NOINP) s = "unchecked-no-input";
+    else if (apcstatus == (APC_ON|APC_UNCH)) s = "unchecked";
+    else if (apcstatus == (APC_ON|APC_NOINP)) s = "no-input";
+    else if (apcstatus == (APC_ON|APC_UNCH|APC_NOINP))
+      s = "unchecked-no-input";
     printf(" %19s: %-13s  %13s: %-15s\n",
            "APC", s,
 #ifdef CK_AUTODL
@@ -5954,17 +6034,20 @@ shotrm() {
            "Idle-action", getiact());
 #endif /* CKTIDLE */
 
+    printf(" %19s: %-13s  ","Lf-display", tt_lfd ? "crlf" : "normal");
+#ifdef UNIX
+#ifndef NOJC
+    printf("%13s: %-15s","Suspend", showoff(xsuspend));
+#endif /* NOJC */
+#endif /* UNIX */
+    printf("\n");
+
 #ifndef NOTRIGGER
     printf(" %19s: %-13s\n","Trigger",
            tt_trigger[0] ? tt_trigger[0] : "(none)");
 #endif /* NOTRIGGER */
-#ifdef UNIX
-#ifndef NOJC
-    printf(" %19s: %-13s\n\n","Suspend", showoff(xsuspend));
-#endif /* NOJC */
-#endif /* UNIX */
-
     printf("\n");
+
     (VOID) shoesc(escape);
 #ifndef NOCSETS
     shotcs(tcsl,tcsr);          /* Show terminal character sets */
@@ -6813,6 +6896,7 @@ doshow(x) int x; {
 
 #ifndef NOSPL
       case SHBUI:                       /* Built-in variables */
+	line[0] = NUL;
         if ((y = cmtxt("Variable name or pattern","",&s,xxstring)) < 0)
           return(y);
         ckstrncpy(line,s,LINBUFSIZ);
@@ -7047,6 +7131,8 @@ doshow(x) int x; {
         printf(" Macro echo:             %s\n", showoff(mecho));
         printf(" Macro error:            %s\n", showoff(merror[cmdlvl]));
         printf(" Quiet:                  %s\n", showoff(quiet));
+        printf(" Variable evaluation:    %s [\\%%x and \\&x[] variables]\n",
+	       vareval ? "recursive" : "simple");
         printf(" Function diagnostics:   %s\n", showoff(fndiags));
         printf(" Function error:         %s\n", showoff(fnerror));
 #ifdef CKLEARN
@@ -7295,6 +7381,7 @@ doshow(x) int x; {
 #ifdef PRINTSWI
           extern int printtimo, printertype, noprinter;
           extern char * printterm, * printsep;
+          extern int prncs;
 #ifdef BPRINT
           extern int printbidi;
 #endif /* BPRINT */
@@ -7358,6 +7445,7 @@ doshow(x) int x; {
           } else
             printf(" /END-OF-JOB-STRING:(none)\n");
           printf(" /JOB-HEADER-FILE:%s\n",printsep ? printsep : "(none)");
+          printf(" /CHARACTER-SET: %s\n",txrinfo[prncs]->keywd);
 #endif /* PRINTSWI */
           printf("\n");
           break;
@@ -7373,6 +7461,7 @@ doshow(x) int x; {
           printf(" Command autodownload: (not available)\n");
 #endif /* CK_AUTODL */
           printf(" Command bytesize: %d bits\n", (cmdmsk == 0377) ? 8 : 7);
+          printf(" Command error-display: %d\n", cmd_err);
 #ifdef CK_RECALL
           printf(" Command recall-buffer-size: %d\n",cm_recall);
 #else
@@ -7610,13 +7699,30 @@ doshow(x) int x; {
         }
 #endif /* IKSD */
 #ifdef DEBUG
-          printf("\n Debug log:       %s\n", deblog ? debfil : "(none)");
+          printf("\n Debug log:       %s", deblog ? debfil : "(none)");
+	  {
+	      extern int debtim;
+	      if (debtim) printf(" (timestamps)");
+	      printf("\n");
+	  }
 #endif /* DEBUG */
 #ifndef NOXFER
           printf(" Packet log:      %s\n",   pktlog ? pktfil : "(none)");
 #endif /* NOXFER */
 #ifndef NOLOCAL
-          printf(" Session log:     %s\n",   seslog ? sesfil : "(none)");
+          printf(" Session log:     %s",   seslog ? sesfil : "(none)");
+	  {
+	      extern int sessft, slogts, slognul;
+	      switch (sessft) {
+		case XYFT_T: printf(" (text)"); break;
+		case XYFT_B: printf(" (binary)"); break;
+		case XYFT_D: printf(" (debug)"); break;
+	      }
+	      if (slogts) printf("(timestamped)");
+	      if (slognul) printf("(null-padded)");
+	      printf("\n");
+	  }
+
 #endif /* NOLOCAL */
 #ifdef TLOG
           printf(" Transaction log: %s (%s)\n",
@@ -7882,6 +7988,14 @@ doshow(x) int x; {
         break;
 #endif /* KUI */
 
+#ifndef NOFRILLS
+#ifndef NORENAME
+      case SHOREN:
+        (VOID) shorename();
+        break;
+#endif	/* NORENAME */
+#endif	/* NOFRILLS */
+
       default:
         printf("\nNothing to show...\n");
         return(-2);
@@ -8007,11 +8121,11 @@ int x_ifnum = 0;                        /* Flag for IF NUMERIC active */
 static int xerror = 0;
 int divbyzero = 0;
 static char *cp;
-static long tokval;
+static CK_OFF_T tokval;
 static char curtok;
-static long expval;
+static CK_OFF_T expval;
 
-#define LONGBITS (8*sizeof (long))
+#define LONGBITS (8*sizeof (CK_OFF_T))
 #define NUMBER 'N'
 #define N_EOT 'E'
 
@@ -8150,7 +8264,7 @@ gettok() {
         x = chknum(s);
 #endif /* CKFLOAT */
         if (x > 0) {
-            tokval = atoi(s);
+            tokval = ckatofs(s);
         } else {
             if (cmdlvl == 0 && !x_ifnum && !xerror)
               printf("Bad number - \"%s\"\n",tbuf);
@@ -8163,14 +8277,14 @@ gettok() {
 #endif /* COMMENT */
 }
 
-static long
+static CK_OFF_T
 #ifdef CK_ANSIC
-expon(long x, long y)
+expon(CK_OFF_T x, CK_OFF_T y)
 #else
-expon(x,y) long x,y;
+expon(x,y) CK_OFF_T x,y;
 #endif /* CK_ANSIC */
 /* expon */ {
-    long result = 1;
+    CK_OFF_T result = 1;
     int sign = 1;
     if (y < 0) return(0);
     if (x < 0) {
@@ -8191,7 +8305,7 @@ expon(x,y) long x,y;
  */
 static VOID
 factor() {
-    long oldval;
+    CK_OFF_T oldval;
     simple();
     if (curtok == '^') {
         oldval = expval;
@@ -8208,7 +8322,7 @@ factor() {
 static VOID
 termp() {
     while (curtok == '*' || curtok == '/' || curtok == '%' || curtok == '&') {
-        long oldval;
+        CK_OFF_T oldval;
         char op;
         op = curtok;
         curtok = gettok();              /* skip past operator */
@@ -8233,14 +8347,14 @@ termp() {
     }
 }
 
-static long
+static CK_OFF_T
 #ifdef CK_ANSIC
-fact(long x)
+fact(CK_OFF_T x)
 #else
-fact(x) long x;
+fact(x) CK_OFF_T x;
 #endif /* CK_ANSIC */
 /* fact */ {                            /* factorial */
-    long result = 1;
+    CK_OFF_T result = 1;
     while (x > 1)
       result *= x--;
     return(result);
@@ -8256,11 +8370,11 @@ term() {
     termp();
 }
 
-static long
+static CK_OFF_T
 #ifdef CK_ANSIC
-gcd(long x, long y)
+gcd(CK_OFF_T x, CK_OFF_T y)
 #else
-gcd(x,y) long x,y;
+gcd(x,y) CK_OFF_T x,y;
 #endif /* CK_ANSIC */
 /* gcd */ {                             /* Greatest Common Divisor */
     int nshift = 0;
@@ -8277,7 +8391,7 @@ gcd(x,y) long x,y;
         while (!(x & 1)) x >>= 1;       /* eliminate unnecessary */
         while (!(y & 1)) y >>= 1;       /* powers of 2 */
         if (x < y) {                    /* force x to be larger */
-            long t;
+            CK_OFF_T t;
             t = x;
             x = y;
             y = t;
@@ -8285,7 +8399,7 @@ gcd(x,y) long x,y;
         x -= y;
     }
     if (x == 0 || y == 0) return((x + y) << nshift); /* gcd is non-zero one */
-    else return((long) 1 << nshift);    /* else gcd is 1 */
+    else return((CK_OFF_T) 1 << nshift);    /* else gcd is 1 */
 }
 
 /*
@@ -8295,7 +8409,7 @@ gcd(x,y) long x,y;
 static VOID
 exprp() {
     while (windex("+-|<>#@",curtok) != NULL) {
-        long oldval;
+        CK_OFF_T oldval;
         char op;
         op = curtok;
         curtok = gettok();              /* skip past operator */
@@ -8323,7 +8437,7 @@ expr() {
     exprp();
 }
 
-static long
+static CK_OFF_T
 xparse() {
     curtok = gettok();
     expr();
@@ -8360,13 +8474,13 @@ evalx(s) char *s; {
 
 char *
 evala(s) char *s; {
-    long v;                             /* Numeric value */
+    CK_OFF_T v;				/* Numeric value */
     if (!s) return("");
     xerror = 0;                         /* Start out with no error */
     divbyzero = 0;
     cp = s;                             /* Make the argument global */
     v = xparse();                       /* Parse the string */
-    return(xerror ? "" : ckltoa(v));    /* Return empty string on error */
+    return(xerror ? "" : ckfstoa(v));	/* Return empty string on error */
 }
 
 /*
@@ -8430,12 +8544,13 @@ simple() {
 /*
   Call with:
    char a = single character designator for the array, e.g. "a".
-   int  n = size of array.
+   int  n = size of array.  -1 means to undeclare the array.
   Returns:
    0 or greater on success, having created the requested array with
      with n+1 elements, 0..n.  If an array of the same name existed
      previously, it is destroyed.  The new array has all its elements
-     initialized to NULL pointers.
+     initialized to NULL pointers.  When an array is successfully created,
+     the return value is its index (0 = 'a', 1 = 'b', and so on.)
   -1 on failure (because 'a' out of range or malloc failure).
 */
 int
@@ -8458,7 +8573,7 @@ dclarray(a,n) char a; int n;
 
     c = a;
     a -= ARRAYBASE;                     /* Convert name to number */
-    rc = a;
+    rc = a;				/* Array index will be return code */
     if ((p = a_ptr[a]) != NULL) {       /* Delete old array of same name */
         if (a_link[a] > -1) {           /* Is it a link? */
             if (n == 0) {               /* If we're just deleting it */
@@ -8489,9 +8604,9 @@ dclarray(a,n) char a; int n;
         a_ptr[a] = (char **) NULL;      /* Remove pointer to element list */
         a_dim[a] = 0;                   /* Set dimension at zero. */
         a_link[a] = -1;                 /* Unset link word */
-        if (n == 0)
-          return(0);                    /* If dimension 0, just deallocate. */
     }
+    if (n < 0)				/* If only undeclaring, */
+      return(0);			/*  we're done. */
     p = (char **) malloc((n+1) * sizeof(char **)); /* Allocate for new array */
     if (p == NULL) return(-1);          /* Check */
     a_ptr[a] = p;                       /* Save pointer to member list */
@@ -8528,6 +8643,7 @@ xarray(s) char * s; {
     buf[4] = (x > 1) ? s[2] : NUL;
     buf[5] = (x > 2) ? s[3] : NUL;
     buf[6] = NUL;
+    debug(F110,"xarray buf[3]",&buf[3],0);
     s = buf+2;
     if (*s == '&') {
         buf[1] = CMDQ;
@@ -8537,6 +8653,7 @@ xarray(s) char * s; {
         buf[1] = '&';
         s = buf;
     }
+    debug(F110,"xarray s",s,0);
     c = *(s+2);
     if (isupper(c))
       c = tolower(c);
@@ -8545,7 +8662,131 @@ xarray(s) char * s; {
     x = (int)c - ARRAYBASE;
     if (*(s+3) == '[')
       *(s+3) = NUL;
-    return((x < 0 || x > 'z' - ARRAYBASE || *(s+3)) ? -1 : x);
+    if (x < 0) {
+	return(-1);
+    }
+    if (x > ('z' - ARRAYBASE)) {
+	debug(F101,"xarray x out of range","",x);
+	return(-1);
+    }
+    if (*(s+3)) {
+	debug(F110,"xarray syntax",s,0);
+	return(-1);
+    }
+    return(x);
+}
+
+/*
+  boundspair() -- parses blah[n:m]
+
+  For use with array segment specifiers and compact substring notation.
+  Ignores the "blah" part, gets the values of n and m, which can be
+  numbers, variables, or arithmetic expressions; anything that resolves
+  to a number.
+
+  Call with:
+   s    - string to parse
+   sep  - array of permissible bounds separator chars
+   lo   - pointer to low-bound result (or -1)
+   hi   - pointer to hi-bound result (or -1)
+   zz   - pointer to separator char that was encountered (or NUL)
+  Returns:
+   -1 on failure
+    0 on success
+*/      
+
+int
+#ifdef CK_ANSIC
+boundspair(char *s, char *sep, int *lo, int *hi, char *zz)
+#else
+boundspair(s,sep,lo,hi,zz) char *s, *sep, *zz; int *lo, *hi;
+#endif /* CK_ANSIC */
+{
+    int i, x, y, range[2], bc = 0;
+    char c = NUL, *s2 = NULL, buf[256], *p, *q, *r, *e[2], *tmp = NULL;
+
+    debug(F110,"boundspair s",s,0);
+    debug(F110,"boundspair sep",sep,0);
+
+    *lo = -1;                           /* Default bounds */
+    *hi = -1;
+    *zz = 0;				/* Default bounds separator */
+
+    range[0] = -1;                      /* It's OK -- get contents */
+    range[1] = -1;                      /* of subscript brackets */
+    if (!s) s = "";
+    if (!*s)
+      return(-1);
+    makestr(&tmp,s);                    /* Make a pokeable copy */
+    p = tmp;
+    q = NULL;
+    r = NULL;
+    for (p = s; *p; p++) {		/* Get the two elements */
+	if (*p == '[') {
+	    bc++;			/* Bracket counter */
+	    if (bc == 1 && !q) q = p+1;
+	} else if (*p == ']') {
+	    bc--;
+	    if (bc == 0 && q) *p = NUL;
+	} else if (bc == 1) {		/* If within brackers */
+	    s2 = ckstrchr(sep,*p);	/* Check for separator */
+	    if (s2) {
+		debug(F000,"boundspair *s2","",*s2);
+		if (c) {        
+		    debug(F000,"boundspair","Too many separators",*s2);
+		    makestr(&tmp,NULL);
+		    return(-1);
+		}
+		c = *s2;		/* Separator character */
+		*p = NUL;
+		r = p+1;
+	    }
+	}
+    }
+    if (bc == 0 && !q) {
+	/* This allows such constructions as "show array a" */
+	debug(F110,"boundspair","no brackets",0);
+	makestr(&tmp,NULL);
+	return(0);
+    }
+    if (bc != 0 || !q) {
+	debug(F110,"boundspair","unbalanced or missing brackets",0);
+	makestr(&tmp,NULL);
+	return(-1);
+    }
+    if (!q) q = "";
+    if (!*q) q = "-1";
+    if (!r) r = "";
+    if (!*r) r = "-1";
+
+    e[0] = q;
+    e[1] = r;
+
+    debug(F000,"boundspair c","",c);
+    debug(F110,"boundspair q",q,0);
+    debug(F110,"boundspair r",r,0);
+
+    for (i = 0; i < 2 && e[i]; i++) {
+	y = 255;			/* Expand variables, etc. */
+	s = buf;
+	zzstring(e[i],&s,&y);
+	s = evalx(buf);			/* Evaluate it arithmetically */
+	if (s) if (*s)
+	  ckstrncpy(buf,s,256);
+	if (!chknum(buf)) {		/* Did we get a number? */
+	    debug(F110,"boundspair element not numeric",buf,0);
+	    makestr(&tmp,NULL);		/* No, fail. */
+	    return(-1);
+	}
+	range[i] = atoi(buf);
+    }
+    makestr(&tmp,NULL);                 /* Free temporary poked string */
+    *lo = range[0];                     /* Return what we got */
+    *hi = range[1];
+    *zz = c;
+    debug(F101,"boundspair lo","",*lo);
+    debug(F101,"boundspair hi","",*hi);
+    return(0);
 }
 
 /*  A R R A Y B O U N D S  --  Parse array segment notation \&a[n:m]  */
@@ -8561,7 +8802,7 @@ xarray(s) char * s; {
 int
 arraybounds(s,lo,hi) char * s; int * lo, * hi; {
     int i, x, y, range[2];
-    char buf[256], * p, * q;
+    char zz, buf[256], * p, * q;
     char * tmp = NULL;
 
     *lo = -1;                           /* Default bounds */
@@ -8573,52 +8814,14 @@ arraybounds(s,lo,hi) char * s; int * lo, * hi; {
 
     x = xarray(s);                      /* Check basic structure */
     debug(F111,"arraybounds xarray",s,x);
-
     if (x < 0)                          /* Not OK, fail. */
       return(-1);
-    range[0] = -1;                      /* It's OK -- get contents */
-    range[1] = -1;                      /* of subscript brackets */
-    makestr(&tmp,s);                    /* Make a pokeable copy */
-    s = tmp;
-    p = s;
-    for (p = s, q = NULL; *p; p++) {    /* First find the brackets */
-        if (*p == '[') {
-            q = p+1;
-        } else if (*p == ']')
-          break;
-    }
-    if (q && *p == ']') {               /* If we have brackets... */
-        int quitnow = 0;
-        for (i = 0; i < 2 && !quitnow; i++) { /* Loop thru their contents */
-            for (p = q; *p; p++) {
-                if ((i == 0 && *p == ':') || *p == ']') {
-                    if (*p == ']')
-                      quitnow = 1;
-                    *p = NUL;
-                    if (*q) {           /* We have something */
-                        y = 255;        /* Expand variables, etc. */
-                        s = buf;
-                        zzstring(q,&s,&y);
-                        s = evalx(buf); /* Evaluate it arithmetically */
-                        if (s) if (*s)
-                          ckstrncpy(buf,s,256);
-                        if (!chknum(buf)) { /* Did we get a number? */
-                            makestr(&tmp,NULL); /* No, fail. */
-                            return(-1);
-                        }
-                        q = (i == 0) ? p+1 : NULL; /* Point to next if any */
-                        range[i] = atoi(buf); /* Set this one */
-                    }
-                    break;
-                }
-            }
-        }
-    }
-    makestr(&tmp,NULL);                 /* Free temporary poked string */
-    *lo = range[0];                     /* Return what we got */
-    *hi = range[1];
+    y = boundspair(s,":",lo,hi,&zz);
+    debug(F111,"arraybounds boundspair",s,y);
     debug(F101,"arraybounds lo","",*lo);
     debug(F101,"arraybounds hi","",*hi);
+    if (y < 0)				/* Get bounds */
+      return(-1);
     return(x);
 }
 
@@ -8703,10 +8906,17 @@ arraynam(ss,c,n) char *ss; int *c; int *n; {
       p++;
     sx = sxbuf;                         /* Where to put expanded subscript */
     y = 16;
-    zzstring(p,&sx,&y);                 /* Convert variables, etc. */
+    {
+	/* Even if VARIABLE-EVALUATION SIMPLE use RECURSIVE for subscripts */
+	/* NOTE: This is vulnerable to SIGINT and whatnot... */
+	int tmp = vareval;		/* Save VARIABLE-EVALUATION setting */
+	vareval = 1;			/* Force it to RECURSIVE */
+	zzstring(p,&sx,&y);		/* Convert variables, etc. */
+	vareval = tmp;			/* Restore VARIABLE-EVALUATION */
+    }
     sx = sxbuf;
     while (*sx == SP) sx++;
-    debug(F110,"arraynam sx","",sx);
+    /* debug(F110,"arraynam sx","",sx); */
     if (!*sx) {                         /* Empty brackets... */
         *n = -17;                       /* (Secret code :-) */
         return(-2);
@@ -8732,6 +8942,8 @@ arraynam(ss,c,n) char *ss; int *c; int *n; {
     *n = y;                             /* Return the subscript or dimension */
     return(0);
 }
+
+/* chkarray returns 0 or greater if array exists, negative otherwise */
 
 int
 chkarray(a,i) int a, i; {               /* Check if array is declared */
@@ -8872,7 +9084,7 @@ parsevar(s,c,i) char *s; int *c, *i; {
    -1 on failure (bad variable syntax, variable not defined or not numeric).
 */
 int
-varval(s,v) char *s; int *v; {
+varval(s,v) char *s; CK_OFF_T *v; {
     char valbuf[VALN+1];                /* s is pointer to variable name */
     char name[256];
     char *p;
@@ -8891,13 +9103,13 @@ varval(s,v) char *s; int *v; {
         valbuf[1] = NUL;
     }
     if (chknum(p)) {                    /* Convert numeric string to int */
-        *v = atoi(p);                   /* OK */
+        *v = ckatofs(p);		/* OK */
     } else {                            /* Not OK */
         p = evala(p);                   /* Maybe it's an expression */
         if (!chknum(p))                 /* Did it evaluate? */
           return(-1);                   /* No, failure. */
         else                            /* Yes, */
-          *v = atoi(p);                 /* success */
+          *v = ckatofs(p);		/* success */
     }
     return(0);
 }
@@ -8906,8 +9118,8 @@ varval(s,v) char *s; int *v; {
 /* Returns -1 on failure, 0 on success */
 
 int
-incvar(s,x,z) char *s; int x; int z; {  /* Increment a numeric variable */
-    int n;                              /* s is pointer to variable name */
+incvar(s,x,z) char *s; CK_OFF_T x; int z; {  /* Increment a numeric variable */
+    CK_OFF_T n;				/* s is pointer to variable name */
                                         /* x is amount to increment by */
                                         /* z != 0 means add */
                                         /* z = 0 means subtract */
@@ -8917,7 +9129,7 @@ incvar(s,x,z) char *s; int x; int z; {  /* Increment a numeric variable */
       n += x;
     else                                /* or decrement as requested. */
       n -= x;
-    addmac(s,ckitoa(n));                /* Replace old variable */
+    addmac(s,ckfstoa(n));		/* Replace old variable */
     return(0);
 }
 
@@ -8987,6 +9199,7 @@ dodo(x,s,flags) int x; char *s; int flags; {
     takerr[cmdlvl] = takerr[cmdlvl-1];  /*   and TAKE ERROR */
     merror[cmdlvl] = merror[cmdlvl-1];  /*   and MACRO ERROR */
     xquiet[cmdlvl] = quiet;
+    xvarev[cmdlvl] = vareval;
     xcmdsrc = CMD_MD;
     cmdstk[cmdlvl].src = CMD_MD;        /* Say we're in a macro */
     cmdstk[cmdlvl].lvl = maclvl;        /* and remember the macro level */
@@ -9810,6 +10023,10 @@ initoptlist() {
     sprintf(line,"INPBUFSIZ=%d",INPBUFSIZ); /* SAFE */
     makestr(&(optlist[noptlist++]),line);
 #endif /* INPBUFSIZE */
+#ifdef LINBUFSIZ
+    sprintf(line,"LINBUFSIZ=%d",LINBUFSIZ); /* SAFE */
+    makestr(&(optlist[noptlist++]),line);
+#endif /* LINBUFSIZE */
 #ifdef INBUFSIZE
     sprintf(line,"INBUFSIZE=%d",INBUFSIZE); /* SAFE */
     makestr(&(optlist[noptlist++]),line);
@@ -9863,7 +10080,7 @@ initoptlist() {
 #endif /* WHATAMI */
 #ifdef DYNAMIC
     makestr(&(optlist[noptlist++]),"DYNAMIC");
-#endif /* IFDEBUG */
+#endif /* DYNAMIC */
 #ifndef NOSPL
     sprintf(line,"CMDDEP=%d",CMDDEP);   /* SAFE */
     makestr(&(optlist[noptlist++]),line);
@@ -9969,6 +10186,101 @@ initoptlist() {
     makestr(&(optlist[noptlist++]),line);
 #endif /* MAC_MAX */
 
+#ifdef _LARGEFILE_SOURCE
+    makestr(&(optlist[noptlist++]),"_LARGEFILE_SOURCE");
+#endif	/* _LARGEFILE_SOURCE */
+
+#ifdef _FILE_OFFSET_BITS
+    sprintf(line,"_FILE_OFFSET_BITS=%d",_FILE_OFFSET_BITS); /* SAFE */
+    makestr(&(optlist[noptlist++]),line);
+#endif	/* _FILE_OFFSET_BITS */
+
+#ifdef __USE_FILE_OFFSET64
+    makestr(&(optlist[noptlist++]),"__USE_FILE_OFFSET64");
+#endif	/* __USE_FILE_OFFSET64 */
+
+#ifdef __USE_LARGEFILE64
+    makestr(&(optlist[noptlist++]),"__USE_LARGEFILE64");
+#endif	/* __USE_LARGEFILE64 */
+
+#ifdef COMMENT
+#ifdef CHAR_MAX
+    sprintf(line,"CHAR_MAX=%llx",CHAR_MAX); /* SAFE */
+    makestr(&(optlist[noptlist++]),line);
+#endif /* CHAR_MAX */
+#ifdef UCHAR_MAX
+    sprintf(line,"UCHAR_MAX=%llx",UCHAR_MAX); /* SAFE */
+    makestr(&(optlist[noptlist++]),line);
+#endif /* UCHAR_MAX */
+#ifdef SHRT_MAX
+    sprintf(line,"SHRT_MAX=%llx",SHRT_MAX); /* SAFE */
+    makestr(&(optlist[noptlist++]),line);
+#endif /* SHRT_MAX */
+#ifdef USHRT_MAX
+    sprintf(line,"USHRT_MAX=%llx",USHRT_MAX); /* SAFE */
+    makestr(&(optlist[noptlist++]),line);
+#endif /* USHRT_MAX */
+#ifdef INT_MAX
+    sprintf(line,"INT_MAX=%llx",INT_MAX); /* SAFE */
+    makestr(&(optlist[noptlist++]),line);
+#endif /* INT_MAX */
+#ifdef UINT_MAX
+    sprintf(line,"UINT_MAX=%llx",UINT_MAX); /* SAFE */
+    makestr(&(optlist[noptlist++]),line);
+#endif /* UINT_MAX */
+#ifdef MAX_LONG
+    sprintf(line,"MAX_LONG=%llx",MAX_LONG); /* SAFE */
+    makestr(&(optlist[noptlist++]),line);
+#endif /* MAX_LONG */
+#ifdef LONG_MAX
+    sprintf(line,"LONG_MAX=%llx",LONG_MAX); /* SAFE */
+    makestr(&(optlist[noptlist++]),line);
+#endif /* LONG_MAX */
+#ifdef ULONG_MAX
+    sprintf(line,"ULONG_MAX=%llx",ULONG_MAX); /* SAFE */
+    makestr(&(optlist[noptlist++]),line);
+#endif /* ULONG_MAX */
+#ifdef MAXINT
+    sprintf(line,"MAXINT=%llx",MAXINT); /* SAFE */
+    makestr(&(optlist[noptlist++]),line);
+#endif /* MAXINT */
+#ifdef MAXLONG
+    sprintf(line,"MAXLONG=%llx",MAXLONG); /* SAFE */
+    makestr(&(optlist[noptlist++]),line);
+#endif /* MAXLONG */
+#ifdef NT
+#ifdef LLONG_MAX
+    sprintf(line,"LLONG_MAX=%I64x",LLONG_MAX); /* SAFE */
+    makestr(&(optlist[noptlist++]),line);
+#endif /* LLONG_MAX */
+#ifdef ULLONG_MAX
+    sprintf(line,"ULLONG_MAX=%I64x",ULLONG_MAX); /* SAFE */
+    makestr(&(optlist[noptlist++]),line);
+#endif /* ULLONG_MAX */
+#ifdef MAXLONGLONG
+    sprintf(line,"MAXLONGLONG=%I64x",MAXLONGLONG);  /* SAFE */
+    makestr(&(optlist[noptlist++]),line);
+#endif /* MAXLONGLONG */
+#else
+#ifdef LLONG_MAX
+    sprintf(line,"LLONG_MAX=%llx",LLONG_MAX); /* SAFE */
+    makestr(&(optlist[noptlist++]),line);
+#endif /* LLONG_MAX */
+#ifdef ULLONG_MAX
+    sprintf(line,"ULLONG_MAX=%llx",ULLONG_MAX); /* SAFE */
+    makestr(&(optlist[noptlist++]),line);
+#endif /* ULLONG_MAX */
+#ifdef MAXLONGLONG
+    sprintf(line,"MAXLONGLONG=%llx",MAXLONGLONG);  /* SAFE */
+    makestr(&(optlist[noptlist++]),line);
+#endif /* MAXLONGLONG */
+#endif
+#ifdef _INTEGRAL_MAX_BITS
+    sprintf(line,"_INTEGRAL_MAX_BITS=%d",_INTEGRAL_MAX_BITS);  /* SAFE */
+    makestr(&(optlist[noptlist++]),line);
+#endif /* _INTEGRAL_MAX_BITS */
+#endif	/* COMMENT */
+
 #ifdef MINPUTMAX
     sprintf(line,"MINPUTMAX=%d",MINPUTMAX); /* SAFE */
     makestr(&(optlist[noptlist++]),line);
@@ -10001,6 +10313,7 @@ initoptlist() {
 #ifdef UNIX
     makestr(&(optlist[noptlist++]),"UNIX");
 #endif /* UNIX */
+
 #ifdef VMS
     makestr(&(optlist[noptlist++]),"VMS");
 #ifdef __VMS_VER
@@ -10010,7 +10323,6 @@ initoptlist() {
 #ifdef VMSV70
     makestr(&(optlist[noptlist++]),"VMSV70");
 #endif /* VMSV70 */
-#endif /* VMS */
 #ifdef OLD_VMS
     makestr(&(optlist[noptlist++]),"OLD_VMS");
 #endif /* OLD_VMS */
@@ -10029,6 +10341,8 @@ initoptlist() {
 #ifdef NOVMSSHARE
     makestr(&(optlist[noptlist++]),"NOVMSSHARE");
 #endif /* NOVMSSHARE */
+#endif /* VMS */
+
 #ifdef datageneral
     makestr(&(optlist[noptlist++]),"datageneral");
 #endif /* datageneral */
@@ -10056,54 +10370,70 @@ initoptlist() {
 #ifdef AUX
     makestr(&(optlist[noptlist++]),"AUX");
 #endif /* AUX */
+
 #ifdef OS2
     makestr(&(optlist[noptlist++]),"OS2");
 #ifdef NT
     makestr(&(optlist[noptlist++]),"NT");
 #endif /* NT */
 #endif /* OS2 */
+
 #ifdef OSK
     makestr(&(optlist[noptlist++]),"OS9");
 #endif /* OSK */
+
 #ifdef MSDOS
     makestr(&(optlist[noptlist++]),"MSDOS");
 #endif /* MSDOS */
+
 #ifdef DIRENT
     makestr(&(optlist[noptlist++]),"DIRENT");
 #endif /* DIRENT */
+
 #ifdef SDIRENT
     makestr(&(optlist[noptlist++]),"SDIRENT");
 #endif /* SDIRENT */
+
 #ifdef NDIR
     makestr(&(optlist[noptlist++]),"NDIR");
 #endif /* NDIR */
+
 #ifdef XNDIR
     makestr(&(optlist[noptlist++]),"XNDIR");
 #endif /* XNDIR */
+
 #ifdef SAVEDUID
     makestr(&(optlist[noptlist++]),"SAVEDUID");
 #endif /* SAVEDUID */
+
 #ifdef RENAME
     makestr(&(optlist[noptlist++]),"RENAME");
 #endif /* RENAME */
+
 #ifdef CK_TMPDIR
     makestr(&(optlist[noptlist++]),"CK_TMPDIR");
 #endif /* CK_TMPDIR */
+
 #ifdef NOCCTRAP
     makestr(&(optlist[noptlist++]),"NOCCTRAP");
 #endif /* NOCCTRAP */
+
 #ifdef NOCOTFMC
     makestr(&(optlist[noptlist++]),"NOCOTFMC");
 #endif /* NOCOTFMC */
+
 #ifdef NOFRILLS
     makestr(&(optlist[noptlist++]),"NOFRILLS");
 #endif /* NOFRILLS */
+
 #ifdef PARSENSE
     makestr(&(optlist[noptlist++]),"PARSENSE");
 #endif /* PARSENSE */
+
 #ifdef TIMEH
     makestr(&(optlist[noptlist++]),"TIMEH");
 #endif /* TIMEH */
+
 #ifdef NOTIMEH
     makestr(&(optlist[noptlist++]),"TIMEH");
 #endif /* NOTIMEH */
@@ -10111,6 +10441,7 @@ initoptlist() {
 #ifdef SYSTIMEH
     makestr(&(optlist[noptlist++]),"SYSTIMEH");
 #endif /* SYSTIMEH */
+
 #ifdef NOSYSTIMEH
     makestr(&(optlist[noptlist++]),"SYSTIMEH");
 #endif /* NOSYSTIMEH */
@@ -10118,12 +10449,15 @@ initoptlist() {
 #ifdef SYSTIMEBH
     makestr(&(optlist[noptlist++]),"SYSTIMEBH");
 #endif /* SYSTIMEBH */
+
 #ifdef NOSYSTIMEBH
     makestr(&(optlist[noptlist++]),"SYSTIMEBH");
 #endif /* NOSYSTIMEBH */
+
 #ifdef UTIMEH
     makestr(&(optlist[noptlist++]),"UTIMEH");
 #endif /* UTIMEH */
+
 #ifdef SYSUTIMEH
     makestr(&(optlist[noptlist++]),"SYSUTIMEH");
 #endif /* SYSUTIMEH */
@@ -10131,12 +10465,15 @@ initoptlist() {
 #ifdef CK_NEED_SIG
     makestr(&(optlist[noptlist++]),"CK_NEED_SIG");
 #endif /* CK_NEED_SIG */
+
 #ifdef CK_TTYFD
     makestr(&(optlist[noptlist++]),"CK_TTYFD");
 #endif /* CK_TTYFD */
+
 #ifdef NETCONN
     makestr(&(optlist[noptlist++]),"NETCONN");
 #endif /* NETCONN */
+
 #ifdef TCPSOCKET
     makestr(&(optlist[noptlist++]),"TCPSOCKET");
 #ifdef NOTCPOPTS
@@ -10296,9 +10633,18 @@ initoptlist() {
 #ifdef USE_UU_LOCK
     makestr(&(optlist[noptlist++]),"USE_UU_LOCK");
 #endif /* USE_UU_LOCK */
+#ifdef HAVE_LOCKDEV
+    makestr(&(optlist[noptlist++]),"HAVE_LOCKDEV");
+#endif /* HAVE_LOCKDEV */
 #ifdef HAVE_BAUDBOY
     makestr(&(optlist[noptlist++]),"HAVE_BAUDBOY");
 #endif /* HAVE_BAUDBOY */
+#ifdef HAVE_OPENPTY
+    makestr(&(optlist[noptlist++]),"HAVE_OPENPTY");
+#endif /* HAVE_OPENPTY */
+#ifdef TTPTYCMD
+    makestr(&(optlist[noptlist++]),"TTPTYCMD");
+#endif /* TTPTYCMD */
 #ifdef NOUUCP
     makestr(&(optlist[noptlist++]),"NOUUCP");
 #endif /* NOUUCP */
@@ -10424,6 +10770,15 @@ initoptlist() {
 #ifdef __FreeBSD__
     makestr(&(optlist[noptlist++]),"__FreeBSD__");
 #endif /* __FreeBSD__ */
+#ifdef FREEBSD4
+    makestr(&(optlist[noptlist++]),"FREEBSD4");
+#endif /* FREEBSD4 */
+#ifdef FREEBSD8
+    makestr(&(optlist[noptlist++]),"FREEBSD8");
+#endif /* FREEBSD8 */
+#ifdef FREEBSD9
+    makestr(&(optlist[noptlist++]),"FREEBSD9");
+#endif /* FREEBSD9 */
 #ifdef __linux__
     makestr(&(optlist[noptlist++]),"__linux__");
 #endif /* __linux__ */
@@ -10445,6 +10800,18 @@ initoptlist() {
 #ifdef HPUX
     makestr(&(optlist[noptlist++]),"HPUX");
 #endif /* HPUX */
+#ifdef HPUX9
+    makestr(&(optlist[noptlist++]),"HPUX9");
+#endif /* HPUX9 */
+#ifdef HPUX10
+    makestr(&(optlist[noptlist++]),"HPUX10");
+#endif /* HPUX10 */
+#ifdef HPUX1000
+    makestr(&(optlist[noptlist++]),"HPUX1000");
+#endif /* HPUX1000 */
+#ifdef HPUX1100
+    makestr(&(optlist[noptlist++]),"HPUX1100");
+#endif /* HPUX1100 */
 #ifdef HPUXPRE65
     makestr(&(optlist[noptlist++]),"HPUXPRE65");
 #endif /* HPUXPRE65 */
@@ -10508,6 +10875,15 @@ initoptlist() {
 #ifdef MINIX
     makestr(&(optlist[noptlist++]),"MINIX");
 #endif /* MINIX */
+#ifdef MINIX2
+    makestr(&(optlist[noptlist++]),"MINIX2");
+#endif /* MINIX2 */
+#ifdef MINIX3
+    makestr(&(optlist[noptlist++]),"MINIX3");
+#endif /* MINIX3 */
+#ifdef MINIX315
+    makestr(&(optlist[noptlist++]),"MINIX315");
+#endif /* MINIX315 */
 #ifdef C70
     makestr(&(optlist[noptlist++]),"C70");
 #endif /* C70 */
@@ -10618,6 +10994,12 @@ initoptlist() {
 #ifdef SOLARIS8
     makestr(&(optlist[noptlist++]),"SOLARIS8");
 #endif /* SOLARIS8 */
+#ifdef SOLARIS9
+    makestr(&(optlist[noptlist++]),"SOLARIS9");
+#endif /* SOLARIS9 */
+#ifdef SOLARIS10
+    makestr(&(optlist[noptlist++]),"SOLARIS10");
+#endif /* SOLARIS10 */
 #endif /* SOLARIS */
 
 #ifdef SUNOS4
@@ -10718,8 +11100,14 @@ initoptlist() {
     makestr(&(optlist[noptlist++]),"MACOSX10");
 #endif
 #ifdef MACOSX103
+    makestr(&(optlist[noptlist++]),"MACOSX10e");
+#endif
+#ifdef COMMENT
+/* not used */
+#ifdef MACOSX103
     makestr(&(optlist[noptlist++]),"MACOSX103");
 #endif
+#endif	/* COMMENT */
 
 #ifdef sgi
     makestr(&(optlist[noptlist++]),"sgi");
@@ -10802,11 +11190,62 @@ initoptlist() {
 #ifdef i386
     makestr(&(optlist[noptlist++]),"i386");
 #endif
+#ifdef __i386
+    makestr(&(optlist[noptlist++]),"__i386");
+#endif
+#ifdef __x86
+    makestr(&(optlist[noptlist++]),"__x86");
+#endif
+#ifdef __amd64
+    makestr(&(optlist[noptlist++]),"__amd64");
+#endif
+#ifdef _ILP32
+    makestr(&(optlist[noptlist++]),"_ILP32");
+#endif
+#ifdef _ILP64
+    makestr(&(optlist[noptlist++]),"_ILP64");
+#endif
+#ifdef _LP32
+    makestr(&(optlist[noptlist++]),"_LP32");
+#endif
+#ifdef _LP64
+    makestr(&(optlist[noptlist++]),"_LP64");
+#endif
+#ifdef __LP32__
+    makestr(&(optlist[noptlist++]),"__LP32__");
+#endif
+#ifdef __LP64__
+    makestr(&(optlist[noptlist++]),"__LP64__");
+#endif
+#ifdef _XGP4_2
+    makestr(&(optlist[noptlist++]),"_XGP4_2");
+#endif
+#ifdef __ppc__
+    makestr(&(optlist[noptlist++]),"__ppc__");
+#endif
+#ifdef __ppc32__
+    makestr(&(optlist[noptlist++]),"__ppc32__");
+#endif
+#ifdef __ppc64__
+    makestr(&(optlist[noptlist++]),"__ppc64__");
+#endif
+#ifdef CK_64BIT
+    makestr(&(optlist[noptlist++]),"CK_64BIT");
+#endif
 #ifdef i286
     makestr(&(optlist[noptlist++]),"i286");
 #endif
 #ifdef M_I286
     makestr(&(optlist[noptlist++]),"M_I286");
+#endif
+#ifdef __sparc
+    makestr(&(optlist[noptlist++]),"__sparc");
+#endif
+#ifdef __sparcv8
+    makestr(&(optlist[noptlist++]),"__sparcv8");
+#endif
+#ifdef __sparcv9
+    makestr(&(optlist[noptlist++]),"__sparcv9");
 #endif
 #ifdef mc68000
     makestr(&(optlist[noptlist++]),"mc68000");
@@ -10948,6 +11387,9 @@ initoptlist() {
 #endif
 #ifdef __STDC__
     makestr(&(optlist[noptlist++]),"__STDC__");
+#endif
+#ifdef cplusplus
+    makestr(&(optlist[noptlist++]),"cplusplus");
 #endif
 #ifdef __DECC
     makestr(&(optlist[noptlist++]),"__DECC");
@@ -11178,6 +11620,7 @@ initoptlist() {
     makestr(&(optlist[noptlist++]),"NOLOEARN");
 #endif /* NOLOEARN */
 #endif /* CKLEARN */
+
 #ifdef NOFLOAT
     makestr(&(optlist[noptlist++]),"NOFLOAT");
 #else
@@ -11211,8 +11654,12 @@ initoptlist() {
 #endif /* CK_TAPI */
 #ifdef CK_SSL
     makestr(&(optlist[noptlist++]),"CK_SSL");
+#ifdef OPENSSL_VERSION_TEXT
+    ckmakmsg(line,LINBUFSIZ,
+	     "OPENSSL_VERSION_TEXT=","\"",OPENSSL_VERSION_TEXT,"\"");
+    makestr(&(optlist[noptlist++]),line);
+#endif	/* OPENSSL_VERSION_TEXT */
 #endif /* CK_SSL */
-
     debug(F101,"initoptlist noptlist","",noptlist);
     sh_sort(optlist,NULL,noptlist,0,0,0);
 }
@@ -11229,6 +11676,7 @@ shofea() {
     printf("%s\n",versio);
     if (inserver)
       return(1);
+
     debug(F101,"shofea NOPTLIST","",NOPTLIST);
     initoptlist();
     debug(F101,"shofea noptlist","",noptlist);
@@ -11265,6 +11713,12 @@ shofea() {
     printf("Major optional features included:\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
 
+    if (sizeof(CK_OFF_T) == 8) {
+	printf(" Large files and large integers (64 bits)\n");
+        if (++lines > cmd_rows - 3) {
+	    if (!askmore()) return(1); else lines = 0;
+	}
+    }
 #ifdef NETCONN
     printf(" Network support (type SHOW NET for further info)\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
@@ -11320,6 +11774,7 @@ shofea() {
     printf(" Telnet CAST Encryption\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
 #endif /* CK_CAST */
+
 #ifdef CK_KERBEROS
 #ifdef KRB5
 #ifdef ALLOW_KRB_3DES_ENCRYPT
@@ -11328,6 +11783,7 @@ shofea() {
 #endif /* ALLOW_KRB_3DES_ENCRYPT */
 #endif /* KRB5 */
 #endif /* CK_KERBEROS */
+
 #endif /* CK_ENCRYPTION */
 #endif /* CK_AUTHENTICATION */
 #ifdef CK_FORWARD_X
@@ -11468,6 +11924,13 @@ shofea() {
     printf("Major optional features not included:\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
 
+    if (sizeof(CK_OFF_T) <= 4) {
+	printf(" No large files or large integers\n");
+        if (++lines > cmd_rows - 3) {
+	    if (!askmore()) return(1); else lines = 0;
+	}
+    }
+
 #ifdef NOXFER
     printf(" No file-transfer protocols\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
@@ -11510,6 +11973,21 @@ shofea() {
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
     flag = 1;
 #endif /* CK_XYZ */
+
+#ifdef NOFLOAT
+    printf(" No floating-point arithmetic\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+    flag = 1;
+    printf(" No S-Expressions (LISP interpreter)\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+    flag = 1;
+#else
+#ifdef NOSEXP
+    printf(" No S-Expressions (LISP interpreter)\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+    flag = 1;
+#endif	/* NOSEXP */
+#endif	/* NOFLOAT */
 
 #ifdef NOTLOG
     printf(" No transaction log\n");
@@ -11608,6 +12086,8 @@ shofea() {
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
     flag = 1;
 #endif /* CK_CAST */
+
+#ifdef COMMENT
 #ifdef CK_KERBEROS
 #ifdef KRB5
 #ifndef ALLOW_KRB_3DES_ENCRYPT
@@ -11616,6 +12096,8 @@ shofea() {
 #endif /* ALLOW_KRB_3DES_ENCRYPT */
 #endif /* KRB5 */
 #endif /* CK_KERBEROS */
+#endif /* COMMENT */
+
 #endif /* OS2 */
 #endif /* CK_ENCRYPTION */
 #endif /* CK_AUTHENTICATION */
@@ -11876,26 +12358,59 @@ shofea() {
              " endian",
              NULL
              );
-    if (!prtopt(&lines,line)) return(0);
-    if (!prtopt(&lines,"")) return(0);  /* Start a new section */
-    sprintf(line,"sizeofs: int=%ld",sizeof(int)); /* SAFE */
-    if (!prtopt(&lines,line)) return(0);
-    sprintf(line,"long=%ld",sizeof(long)); /* SAFE */
-    if (!prtopt(&lines,line)) return(0);
-    sprintf(line,"short=%ld",sizeof(short)); /* SAFE */
-    if (!prtopt(&lines,line)) return(0);
-    sprintf(line,"char=%ld",sizeof(char)); /* SAFE */
-    if (!prtopt(&lines,line)) return(0);
-    sprintf(line,"char*=%ld",sizeof(char *)); /* SAFE */
-    if (!prtopt(&lines,line)) return(0);
-#ifdef LONG_MAX
-    sprintf(line,"LONG_MAX=%d",LONG_MAX); /* SAFE */
-#endif /* LONG_MAX */
-#ifdef CKFLOAT
-    sprintf(line,"float=%ld",sizeof(float)); /* SAFE */
-    if (!prtopt(&lines,line)) return(0);
-    sprintf(line,"double=%ld",sizeof(double)); /* SAFE */
-    if (!prtopt(&lines,line)) return(0);
+    {
+/* Whether to use %d or %ld with sizeof is a portability issue, so... */
+	int size = 0;
+
+	if (!prtopt(&lines,line)) return(0);
+	if (!prtopt(&lines,"")) return(0);  /* Start a new section */
+
+	size = (int)sizeof(int);
+	sprintf(line,"sizeofs: int=%d",size); /* SAFE */
+	if (!prtopt(&lines,line)) return(0);
+
+	size = (int)sizeof(long);
+	sprintf(line,"long=%d",size); /* SAFE */
+	if (!prtopt(&lines,line)) return(0);
+
+#ifndef OS2
+	/* Windows doesn't have off_t */
+	size = (int)sizeof(off_t);
+	sprintf(line,"off_t=%d",size); /* SAFE */
+	if (!prtopt(&lines,line)) return(0);
+#endif /* OS2 */
+
+	size = (int)sizeof(CK_OFF_T);
+	sprintf(line,"CK_OFF_T=%d",size); /* SAFE */
+	if (!prtopt(&lines,line)) return(0);
+
+#ifdef BIGBUFOK
+	size = (int)sizeof(size_t);
+	sprintf(line,"size_t=%d",size); /* SAFE */
+	if (!prtopt(&lines,line)) return(0);
+#endif /* BIGBUFOK */
+
+	size = (int)sizeof(short);
+	sprintf(line,"short=%d",size); /* SAFE */
+	if (!prtopt(&lines,line)) return(0);
+
+	size = (int)sizeof(char);
+	sprintf(line,"char=%d",size); /* SAFE */
+	if (!prtopt(&lines,line)) return(0);
+
+	size = (int)sizeof(char *);
+	sprintf(line,"char*=%d",size); /* SAFE */
+	if (!prtopt(&lines,line)) return(0);
+
+	size = (int)sizeof(float);
+	sprintf(line,"float=%d",size); /* SAFE */
+	if (!prtopt(&lines,line)) return(0);
+
+	size = (int)sizeof(double);
+	sprintf(line,"double=%d",size); /* SAFE */
+	if (!prtopt(&lines,line)) return(0);
+    }
+
 #ifdef FNFLOAT
     if (!prtopt(&lines,"")) return(0);  /* Start a new section */
     if (!prtopt(&lines,"floating-point:")) return(0);
@@ -11904,7 +12419,6 @@ shofea() {
     sprintf(line,"rounding=%d",fp_rounding); /* SAFE */
     if (!prtopt(&lines,line)) return(0);
 #endif /* FNFLOAT */
-#endif /* CKFLOAT */
 
     prtopt(&lines,"");
     return(0);

@@ -1,65 +1,93 @@
 # makefile / Makefile / ckuker.mak / CKUKER.MAK
 #
-# Sat Apr 17 14:49:18 2004
-BUILDID=20040417
-#
-CKVER= "8.0.211"
+# Sun Aug 21 10:33:08 2011
+BUILDID=20110821
+CKVER= "9.0.302"
 #
 # -- Makefile to build C-Kermit for UNIX and UNIX-like platforms --
 #
-# Copyright (C) 1985, 2004,
+# Copyright (C) 1985, 2011,
 #   Trustees of Columbia University in the City of New York.
 #   All rights reserved.  See the C-Kermit COPYING.TXT file or the
 #   copyright text in the ckcmai.c module for disclaimer and permissions.
+#   In case you can't find the COPYING.TXT file, it contains the 
+#   Simplified 3-Clause BSD License, which is an Open Source license.
 #
 # Author: Frank da Cruz, Columbia University
 # 612 West 115th Street, New York NY 10025-7799, USA
-# E-mail: fdc@columbia.edu
-# Fax:    +1 212 662-6442
-# Web:    http://www.columbia.edu/kermit/
+# Email: fdc@columbia.edu
+# Web:   http://kermit.columbia.edu/
+# FTP:   ftp://kermit.columbia.edu/kermit/
+#
+# Note: Author is no longer at Columbia University or at the 115th Street
+# address effective 1 July 2011.  The email address should still work,
+# as well as the website and FTP addresses, for the foreseeable future.
+# For new developments, also check:
+#
+#    http://www.columbia.edu/~fdc/kermit/
 #
 # Contributions from many others.  Special thanks to Jeff Altman for the
-# secure-target entries, Peter Eichhorn, assyst GmbH, for the consolidated
-# HP-UX entries and the "uninstall" target, to Robert Lipe for the updated
-# and consolidated SCO UNIX / ODT / OSR5 entries, to Ric Anderson for the
-# IRIX 6.x entries.
+# secure-build targets, Peter Eichhorn, assyst GmbH, for the consolidated
+# HP-UX targets and the "uninstall" target, to Robert Lipe for the updated
+# and consolidated SCO UNIX / ODT / OSR5 targets, to Ric Anderson for the
+# IRIX 6.x targets, to Seth Theriault for major improvements to the
+# Mac OS X targets, and to Alexey Dokuchaev for FreeBSD 9.0.
+#
+# C-Kermit is written and produced by hand without any automated procedures
+# such as autoconf / automake / configure, although some of the targets below
+# (especially the linux target) inspect the environment and make some
+# decisions in the most portable way possible. The automated tools are not
+# used because (a) C-Kermit predates them, and (b) they are not portable to
+# all the platforms where C-Kermit must be (or once was) built, and (c) to
+# keep C-Kermit as independent as possible from external tools over which
+# we have no control.
 #
 # Most entries use the "xermit" target, which uses the select()-based CONNECT
-# module, ckucns.c.  The "wermit" target uses the older fork()-base CONNECT
-# module, ckucon.c, which has some drawbacks (but is more portable).  If your
-# entry still uses the "wermit" target, please try substituting the "xermit"
-# one and if it works, let us know (mailto:kermit-support@columbia.edu).
-# When changing a target over from wermit to xermit, also remove -DNOLOEARN.
+# module, ckucns.c.  The "wermit" target uses the original fork()-based CONNECT
+# module, ckucon.c, which has some drawbacks but was portable to every Unix
+# variant whether it had TCP/IP or not (select() is part of the TCP/IP
+# library, which was not standard on older Unixes).  If your target still uses
+# the "wermit" target, please try substituting the "xermit" one and if it
+# works, let us know (mailto:kermit-support@columbia.edu).  When changing a
+# target over from wermit to xermit, also remove -DNOLOEARN.
 #
 # CAREFUL: Don't put the lowercase word "if", "define", or "end" as the first
 # word after the "#" comment introducer in the makefile, even if it is
 # separated by whitespace.  Some versions of "make" understand these as
 # directives.  Uppercase letters remove the danger, e.g. "# If you have..."
+# 
+# WARNING: This is a huge makefile.  Although this is less likely since the
+# turn of the century, some "make" programs might run out of memory.  If this
+# happens to you, edit away the parts that do not apply to your platform and
+# try again.
 #
-# WARNING: This is a huge makefile and it contains nested makes.  Some "make"
-# programs might run out of memory.  If this happens to you, edit away the
-# parts that do not apply to your platform and try again.
+# WARNING 2: In many cases this file invokes itself recursively, sometimes
+# several levels deep (as in the Linux targets); i.e. some targets are used
+# as 'subroutines' of other targets, with parameters passed by setting
+# environment variables.  For that reason, don't use 'make -e'.
 #
 # Certain UNIX variations have their own separate makefiles:
-#  . For 2.10 or 2.11 BSD on DEC PDP-11s, use ckubs2.mak.
+#  . For 2.10 or 2.11 BSD on the DEC PDP-11, use ckubs2.mak.
 #  . For Plan 9, use ckpker.mk.
 #
 # Separate build procedures are provided non-UNIX platforms: VMS, VOS,
-# AOS/VS, etc.  See the ckaaaa.txt file for details.
+# AOS/VS, etc.  See the ckaaaa.txt file or the Kermit website for details.
 #
 #
-# DIRECTIONS
+# DIRECTIONS FOR UNIX
 #
 # Rename this file to "makefile" or "Makefile" if necessary.  Pick out the
 # entry most appropriate for your UNIX version from the list below and then
-# give the appropriate "make" command, for example "make aix43", "make sys5r4",
+# give the appropriate "make" command, for example "make aix", "make macosx",
 # "make linux".  If you experience any difficulties with the build procedure,
 # then please also read any comments that accompany the make entry itself
 # (search for the make entry name on the left margin).
 #
-# Other entries:
+# Other targets:
 #  'make install' is an installation script (read accompanying comments!).
+#  'make uninstall' undoes 'make install' (read accompanying comments!).
 #  'make clean' removes intermediate and object files.
+#  'make show' tells the default include and lib paths for secure builds.
 #
 # IMPORTANT:
 #   For more detailed installation instructions, read the files ckuins.txt
@@ -72,7 +100,7 @@ CKVER= "8.0.211"
 #   http://www.columbia.edu/kermit/ckcbwr.html
 #   http://www.columbia.edu/kermit/ckubwr.html
 #
-# Most entries build C-Kermit with its symbol table included.  To reduce the
+# Most targets build C-Kermit with its symbol table included.  To reduce the
 # size of the executable program, add "LNKFLAGS=-s" to the end of your 'make'
 # command or to the makefile entry, or 'strip' the executable after
 # building.  To further reduce the size after building, use 'mcs -d' if your
@@ -82,33 +110,64 @@ CKVER= "8.0.211"
 # TCP/IP networking support: If your C-Kermit version does not include TCP/IP
 # networking, but your UNIX system does, try adding -DTCPSOCKET to the CFLAGS
 # of your makefile entry.  If that doesn't work, look at some of the other
-# entries that include this flag for ideas about what libraries might need to
+# targets that include this flag for ideas about what libraries might need to
 # be included (typically -lsocket and/or -lBSD and/or -lnsl and/or -linet).
 # NOTE: In some cases (old versions of SCO or HP-UX), you might need not only
 # a C compiler, but also a "TCP/IP developers kit" for the required object
 # libraries and header files.
 #
-# Fullscreen file transfer display support: If you are going to use C-Kermit
-# for establishing connections (dialed, network, etc), you can configure it to
-# produce a formatted file transfer display by including the curses library
-# and adding -DCK_CURSES to the CFLAGS for your option, and linking with the
-# appropriate libraries.  There are many examples below, usually ending in
-# "c", like sunos41c.  Also add -DCK_WREFRESH if your curses library includes
-# clearok() and wrefresh() functions (or remove -DNOWREFRESH if the linker
-# complains that it can't find these functions).
-#
 # Please report modifications, failures (preferably with fixes) or successes
-# to the author.
-#
-# SECURE TARGETS
-#  These are described after the next section.  Search for ******* below.
+# to the author, fdc@columbia.edu.
 #
 # TARGETS FOR DIFFERENT UNIX PLATFORMS AND VERSIONS:
 #
-# + Marks those that have been built successfully for C-Kermit 8.0 or later.
+# + Marks those that have been built successfully for C-Kermit 9.0 or later.
 # - Those that once built OK but no longer do (e.g. too big).
 # ? Those that worked in a previous version but have not been tested recently.
 # --------------------------
+# Some commonly used targets:
+#
+# + "make linux" should work for any version of Linux on any hardware.
+# + "make linux+ssl" ditto, with OpenSSL security added.
+# + "make linux+krb5" ditto, with Kerberos 5 security added.
+# + "make linux+krb5+ssl" Linux with OpenSSL and Kerberos 5.
+# + "make netbsd", NetBSD, any version.
+# + "make netbsd+ssl", NetBSD with OpenSSL 0.9.7 or later.
+# + "make netbsd+krb5", NetBSD with Kerberos 5.
+# + "make netbsd+krb5+ssl", NetBSD with Kerberos 5 and OpenSSL 0.9.7 or later.
+# ? "make freebsd1" for FreeBSD 1.x
+# ? "make freebsd2" for FreeBSD 2.x
+# + "make freebsd3" for FreeBSD 3.x
+# ? "make freebsd4" for FreeBSD 4.0
+# + "make freebsd", FreeBSD 4.1 or later.
+# + "make freebsd+ssl", FreeBSD 5.0 or later with OpenSSL 0.9.7 or later.
+# + "make openbsd", OpenBSD 2.3 or later.
+# + "make openbsd+ssl", OpenBSD 2.3 or later with OpenSSL 0.9.7 or later.
+# + "make mirbsd", MirBSD.
+# + "make mirbsd+ssl", MirBSD with OpenSSL 0.9.7 or later.
+# + "make macosx" should work for any Mac OS X version 10.3.9 or later.
+# + "make macosx+krb5+openssl" Mac OS X 10.3.9 or later + Kerberos V + OpenSSL.
+# + "make aix" should work for any version of AIX 4.2 or later.
+# + "make aixg" should work for any version of AIX 4.2 or later, using gcc.
+# + "make aix+ssl" ditto, with OpenSSL (specifying SSLLIB and SSLINC)
+# + "make aix+ibmssl" ditto, with IBM OpenSSL
+# + "make solaris9", "make solaris10" for Solaris 9 or 10 with Sun cc.
+# + "make solaris9g", "make solaris10g" for Solaris 9 or 10 with gcc.
+# + "make solaris11" for Solaris 11 with Sun CC
+# + "make solaris11g" for Solaris 11 with gcc
+# + "make sco_osr600" for SCO OpenServer 6.0.0.
+#
+# For other current OSs such as Solaris, HP-UX, and SCO there are separate
+# targets for different combinations of OS version and compiler; see the
+# complete list.  For older OS's see the complete list.  If an old target
+# doesn't work in this release of C-Kermit you can get a previous release from
+# the Kermit FTP site: ftp://kermit.columbia.edu/kermit/
+#
+# SECURE TARGETS (versions that support authentication and encryption)
+#  are described after the following list.  Search for ******* below.
+#
+# --------------------------
+# Complete list (alphabetical):
 # ? for 386BSD (Jolix) 0.0, 0.1, "make 386bsd" (see comments in entry),
 #     or (preferably, if it works) "make bsd44" or "make bsd44c".
 # ? for Acorn RISCiX, "make riscix" or "make riscix-gcc"
@@ -127,35 +186,36 @@ CKVER= "8.0.211"
 # ? for Apple Macintosh II with A/UX pre-3.0, "make aux", "auxgcc" or "auxufs"
 # ? for Apple Macintosh with A/UX 3.0 and gcc, "make aux3gcc" or aux3gccc
 # ? for Apple PowerMac with MkLinux, "make mklinux" (read Linux entry first)
-# + for Apple PowerMac with LinuxPPC, "make linuxppc"
+# ? for Apple PowerMac with LinuxPPC, "make linuxppc"
 # ? for Apple Macintosh with Minix 1.5.10, "make minix68k" or "make minixc68"
-# + for Apple Macintosh with Mac OS X 1.0 (Rhapsody), "make macosx10"
+# ? for Apple Macintosh with Mac OS X 1.0 (Rhapsody), "make macosx10"
 #     (no curses), "make macosx10c" (curses), or "make macosx10nc" (ncurses).
 #     Or "make macosx10ncx" (ncurses but "make macosx10nc" doesn't work).
-# + for Apple Macintosh with Mac OS X 10.2, "make macosx102nc" (ncurses).
-# + for Apple Macintosh with Mac OS X 10.3, "make macosx103"
+# ? for Apple Macintosh with Mac OS X 10.2, "make macosx102nc" (ncurses).
+# ? for Apple Macintosh with Mac OS X 10.3, "make macosx103"
+# ? for Apple Macintosh with Mac OS X 10.3.9 or later, "make macosx"
 # ? for Arix System 90 with AT&T SVR3, "make sys5r3na"
 # - for AT&T 6300 with IN/ix, "make sys5"
 # - for AT&T 6300 PLUS, "make att6300" or (with no debugging) "make att6300nd"
 # ? for AT&T 6386 WGS UNIX PC, "make sys5r3"
-# + for AT&T 3B2, 3B20 systems, "make att3b2".
+# ? for AT&T 3B2, 3B20 systems, "make att3b2".
 #   for AT&T 3B1, 7300 UNIX PC (see notes with the entries):
 #     In C-Kermit 7.0, only the gcc entries work:
-# +   "make sys3upcg", "make sys3upcgc", "make att351gm"
+# ?   "make sys3upcg", "make sys3upcgc", "make att351gm"
 #    The others fail with "too many defines" (usually in ckuusr.h):
 # -   "make sys3upc", "make sys3upcold", "make sys3upcc", "make sys3upcx",
 #       "make sys3upcm", "make att351m"
 # ? for AT&T System III/System V R2 or earlier, "make sys3" or "make sys3nid"
 # ? for AT&T System III/System V with Honey DanBer UUCP, "make sys3hdb"
 # ? for AT&T System V on DEC VAX, "make sys3" or "make sys5r3"
-# + for AT&T System V R3, use "make sys5r3" or "make sys5r3c"
-# + for AT&T System V/386 R3.2 built on Interactive 4.1.1, "make sys5r32is".
+# ? for AT&T System V R3, use "make sys5r3" or "make sys5r3c"
+# ? for AT&T System V/386 R3.2 built on Interactive 4.1.1, "make sys5r32is".
 # ? for AT&T System V/386 R320.0 Versyss Systems, use "make sys5r3"
 #     or "make sys5r3c".
-# + for AT&T System V R4, "make sys5r4", "make sys5r4sx", or "make sys5r4nx",
+# ? for AT&T System V R4, "make sys5r4", "make sys5r4sx", or "make sys5r4nx",
 #     or if the ANSI C function prototyping makes trouble, add -DNOANSI,
 #     as in "sys5r4sxna" entry
-# + for AT&T (USL) System V R4.2 use the sys5r4* entries.
+# ? for AT&T (USL) System V R4.2 use the sys5r4* entries.
 # ? for Atari Falcon with MiNT, "make posix"
 # ? for Atari ST with Minix ST 1.5.10.3, "make minix68k" or "make minixc68"
 # ? for BBN C/70 with IOS 2.0, "make c70"
@@ -173,11 +233,11 @@ CKVER= "8.0.211"
 #    (last built successfully in C-Kermit 6.0)
 # ? for Bell Labs / Lucent Plan 9, use separate makefile ckpker.mk:
 #    can be built for Intel, MIPS, 680x0, and PowerPC (last built C-Kermit 7.0)
-# + for BSDI BSD/386 1.x, "make bsdi"
-# + for BSDI BSD/OS 2.x, "make bsdi2"
-# + for BSDI BSD/OS 3.0 or 3.1, "make bsdi3"
-# + for BSDI BSD/OS 4.x, "make bsdi4"
-# + for BSDI BSD/OS 4.x, to build a binary that also works on FreeBSD,
+# ? for BSDI BSD/386 1.x, "make bsdi"
+# ? for BSDI BSD/OS 2.x, "make bsdi2"
+# ? for BSDI BSD/OS 3.0 or 3.1, "make bsdi3"
+# ? for BSDI BSD/OS 4.x, "make bsdi4"
+# ? for BSDI BSD/OS 4.x, to build a binary that also works on FreeBSD,
 #     "make bsdix".
 # ? for Berkeley Unix 2.4, "make v7" (but read v7 material below)
 # ? for Berkeley Unix 2.9 (DEC PDP-11 or Pro-3xx), "make bsd29"
@@ -186,23 +246,23 @@ CKVER= "8.0.211"
 #     This makefile is too big.  Read the instructions in ckubs2.mak.
 #     "make -f ckubs2.mak bsd210" or "make -f ckubs2.mak bsd211".
 #     (last built successfully in C-Kermit 6.0 - later versions too big)
-# + for Berkeley Unix 2.11 "make -f ckubs2.mak bsd210noicp" (no command parser)
+# ? for Berkeley Unix 2.11 "make -f ckubs2.mak bsd210noicp" (no command parser)
 # ? for Berkeley Unix 4.1, "make bsd41"
-# + for Berkeley Unix 4.2 on VAX, "make bsd42" or "make bsd42c"
+# ? for Berkeley Unix 4.2 on VAX, "make bsd42" or "make bsd42c"
 # ? for Berkeley Unix 4.2 or 4.3 with HoneyDanBer UUCP, "make bsdhdb"
-# + for Berkeley Unix 4.3 on VAX, "make bsd43", "make bsd43nc".
-# + for Berkeley Unix 4.3 on VAX, no networking "make bsd43nonet.
-# + for Berkeley Unix 4.3 without acucntrl program, "make bsd42" or "bsd42c"
+# ? for Berkeley Unix 4.3 on VAX, "make bsd43", "make bsd43nc".
+# ? for Berkeley Unix 4.3 on VAX, no networking "make bsd43nonet.
+# ? for Berkeley Unix 4.3 without acucntrl program, "make bsd42" or "bsd42c"
 #     NOTE: all the C-Kermit 7.0 full builds for old BSDs fail with
 #     "too many defines" in CPP, even on big architectures like VAX.  This
 #     can be worked around with a clever ruse.  See comments at target.
-# + for Berkeley Unix 4.3, command-line only, "make bsdm".
-# + for Berkeley Unix 4.3-Tahoe, same as 4.3 BSD
-# + for Berkeley Unix 4.3-Reno, "make bsd43" or "make bsd44" or "make bsd44c"
-# + for Berkeley Unix 4.3-Carson City, "make bsd44" or "make bsd44c"
-# + for Berkeley Unix 4.4-Networking/2 or -Alpha, "make bsd44" or "make bsd44c"
-# + for Berkeley Unix 4.4, "make bsd44" or "make bsd44c"
-# + for Berkeley Unix 4.4-Lite, "make bsd44" or "make bsd44c"
+# ? for Berkeley Unix 4.3, command-line only, "make bsdm".
+# ? for Berkeley Unix 4.3-Tahoe, same as 4.3 BSD
+# ? for Berkeley Unix 4.3-Reno, "make bsd43" or "make bsd44" or "make bsd44c"
+# ? for Berkeley Unix 4.3-Carson City, "make bsd44" or "make bsd44c"
+# ? for Berkeley Unix 4.4-Networking/2 or -Alpha, "make bsd44" or "make bsd44c"
+# ? for Berkeley Unix 4.4, "make bsd44" or "make bsd44c"
+# ? for Berkeley Unix 4.4-Lite, "make bsd44" or "make bsd44c"
 # ? for Bull DPX/2 with BOS/X, "make bulldpx2"
 # ? for Cadmus, "make sys3"
 #   for Caldera, see SCO, Linux.
@@ -211,8 +271,8 @@ CKVER= "8.0.211"
 # ? for Charles River Data Systems Universe 680x0 with UNOS 9.2, maybe
 #     also other UNOS versions, "make crds"
 # ? for CIE Systems 680/20 with Regulus, "make cie"
-# + for Commodore Amiga 3000UX Sys V R4, "make sys5r4sx"
-# + for Commodore Amiga 3000UX Sys V R4 and TCP/IP, "make svr4amiganet"
+# ? for Commodore Amiga 3000UX Sys V R4, "make sys5r4sx"
+# ? for Commodore Amiga 3000UX Sys V R4 and TCP/IP, "make svr4amiganet"
 # ? for Commodore Amiga with Minix 1.5.10, "make minix68k" of "make minixc68"
 # ? for Concurrent/Masscomp with RTU 4.0 or later, BSD environment, "make
 #     rtubsd", "make rtubsd2", "make rtubsd3" (depending on where ndir.h
@@ -220,7 +280,7 @@ CKVER= "8.0.211"
 # ? for Concurrent/Masscomp with RTU 4.0 or later, System V R2, "make rtus5"
 # ? for Concurrent (Perkin-Elmer) 3200 series, "make sys5".
 # ? for Concurrent (Perkin-Elmer) 3200 series with <dirent.h>, "make ccop1"
-# + for Concurrent PowerMAX OS SVR4, "make powermax"
+# ? for Concurrent PowerMAX OS SVR4, "make powermax"
 # ? for Consensys UNIX SV/386 R4V3, "make sys5r4sxtcpc" or "make sys5r4sx"
 # ? for Convergent with CTIX Sys V R2, "make sys5"
 # ? for Convergent with CTIX 6.4.1, "make ctix"
@@ -238,17 +298,17 @@ CKVER= "8.0.211"
 # ? for Cyber 910 (Silicon-Graphics Iris) with Irix 3.3, "irix33"
 # ? for Data General AViiON with DG/UX 5.4 before R3.00, "make dgux540"
 #     or "make dgux540c" (compile ckwart separately if necessary)
-# + for DG/UX 5.4 on AViiON Intel models, "make dgux540i" or dgux540ic.
+# ? for DG/UX 5.4 on AViiON Intel models, "make dgux540i" or dgux540ic.
 # ? for DG/UX 5.4R4.11 on AViiON, all models, "make dgux54411"
-# + for DG/UX 5.4R4.20 on AViiON, all models, "make dgux54420"
-# + for Data General AViiON with DG/UX 4.3x using Sys V-isms, "make dgux430"
+# ? for DG/UX 5.4R4.20 on AViiON, all models, "make dgux54420"
+# ? for Data General AViiON with DG/UX 4.3x using Sys V-isms, "make dgux430"
 # ? for Data General AViiON with DG/UX 4.3x using BSD-isms, "make dgux430bsd"
 # ? for Data General AViiON, earlier UNIX versions,
 #     "make sys5r3" (maybe compile ckwart separately, or "touch ckcpro.c")
 # ? for Data General MV systems with DG/UX, ???
 # ? for Data General MV systems with MV/UX, use AOS/VS C-Kermit (CKDKER.MAK)
 # ? for Data General MV systems with AOS/VS, use CKDKER.MAK (last = C-K 7.0)
-#   for DEC PDP-11 with Berkeley UNIX 2.x, see Berkeley UNIX 2.x.
+# ? for DEC PDP-11 with Berkeley UNIX 2.x, see Berkeley UNIX 2.x.
 # ? for DEC PDP-11 with Mini-UNIX (Bell 6th Edition for PDP-11 with no MMU),
 #     probably no way to fit C-Kermit without I&D space.
 # ? for DEC PDP-11 with Ultrix-11 3.x, ??? (probably needs overlays)
@@ -258,8 +318,8 @@ CKVER= "8.0.211"
 # ? for DECstation or VAX with Ultrix 4.0 or 4.1, "make ultrix40"
 # ? for DECstation or VAX with Ultrix 4.2, "make ultrix42" or "make ultrix42c"
 # ? for DECstation or VAX with Ultrix 4.x, POSIX world, "make posix"
-# + for DECstation or VAX with Ultrix 4.3, "make ultrix43".
-# + for DECstation or VAX with Ultrix 4.4, "make ultrix44".
+# ? for DECstation or VAX with Ultrix 4.3, "make ultrix43".
+# ? for DECstation or VAX with Ultrix 4.4, "make ultrix44".
 # ? for DECstation 5000/50, /150 or /260 (R4x00 MIPS CPU), Ultrix 4.3A or later
 #     "make ultrix43-mips3" or "make ultrix43c-mips3"
 # ? for DECstation (MIPS) with Berkeley Sprite, "make bsd44"?
@@ -267,10 +327,11 @@ CKVER= "8.0.211"
 # ? for DEC Alpha with OSF/1 1.0 to 1.3, "make dec-osf"
 # ? for DEC PC 486 with OSF/1, "make dec-osf"
 # ? for DEC Alpha with OSF/1 2.x, "make dec-osf20"
-# + for DEC Alpha with OSF/1 3.0, "make dec-osf30"
-# + for DEC Alpha with Digital UNIX 3.2, "make du32"
-# + for DEC Alpha with Digital UNIX 4.0-4.0D, "make du40" or "make du40gcc"
-# + for DEC Alpha with Digital UNIX 4.0E or higher, see Tru64.
+# ? for DEC Alpha with OSF/1 3.0, "make dec-osf30"
+# ? for DEC Alpha with Digital UNIX 3.2, "make du32"
+# ? for DEC Alpha with Digital UNIX 4.0-4.0D, "make du40" or "make du40gcc"
+# ? for DEC Alpha with Digital UNIX 4.0E or higher, see Tru64.
+# + for DEC Alpha with any version of DU or OSF/1, "make dec-osf1"
 # - for DEC Pro-350 with Pro/Venix V1.x, "make provx1" (version 5A is too big)
 # ? for DEC Pro-380 with Pro/Venix V2.0 (Sys V), "make sys3" or "make sys3nid"
 # ? for DEC Pro-380 with 2.9, 2.10, or 2.11 BSD, "make bsd29" or "make bsd210"
@@ -303,66 +364,61 @@ CKVER= "8.0.211"
 # ? for Fortune 32:16, For:Pro 1.8, "make ft18"
 # ? for Fortune 32:16, For:Pro 2.1, "make ft21"
 # ? for FPS 500 with FPX 4.1, "made bsd"
-# + for FreeBSD 1.0, "make freebsd1"
-# + for FreeBSD 2.x, "make freebsd2" (ncurses) or "make freebsd2c" (curses)
-# + for FreeBSD 3.x, "make freebsd3" (ncurses) or "make freebsd3c" (curses)
-# + for FreeBSD 4.0, "make freebsd4"
-# + for FreeBSD 4.1, "make freebsd41"
-# + for FreeBSD 4.2, "make freebsd42"
-# + for FreeBSD 4.3, "make freebsd43"
-# + for FreeBSD 4.4, "make freebsd44"
-# + for FreeBSD 4.5, "make freebsd45"
-# + for FreeBSD 4.6, "make freebsd46"
-# + for FreeBSD 4.7, "make freebsd47"
-# + for FreeBSD 4.8, "make freebsd48"
-# + for FreeBSD 4.9, "make freebsd49"
-# ? for FreeBSD 5.0, "make freebsd50"
-# ? for FreeBSD 5.1, "make freebsd51"
+# ? for FreeBSD 1.0, "make freebsd1"
+# ? for FreeBSD 2.x, "make freebsd2" (ncurses) or "make freebsd2c" (curses)
+# ? for FreeBSD 3.x, "make freebsd3" (ncurses) or "make freebsd3c" (curses)
+# ? for FreeBSD 4.0, "make freebsd40"
+# ? for FreeBSD 4.1 or later, "make freebsd"
+# + NOTE: Just use "make freebsd" for any reasonably recent FreeBSD version.
 # ? for Harris HCX-2900, "make sys5r3"
 # ? for Harris Night Hawk 88K or 68K with CX/UX pre-6.1, "make sys5r3"
 # ? for Harris Night Hawk 88K or 68K with CX/UX 6.1 or later, "make cx_ux"
 # ? for Heurikon, "make sys3"
 # ? for HP-3000, MPE/ix, "make posix"?
-# + for HP-9000 Series 300 with 4.4BSD, "make bsd44"
-# + for HP-9000 Series 500, HP-UX 5.21 and no networking "make hpux0500"
-# + for HP-9000 Series 500, HP-UX 5.21 with WIN/TCP 1.2 "make hpux0500wintcp"
-# + for HP-9000 Series, HP-UX 6.5, without long filenames,
-#     "make hpux0650" or "make hpux0650c"
-# + for HP-9000 Series, HP-UX 7.0 or later no long filenames, "make hpux0700sf"
+# ? for HP-9000 Series 300 with 4.4BSD, "make bsd44"
+
+# NOTE: Most of the HP-UX targets were tested successfully in 2010.
+# Verification needed for C-Kermit 9.0 Beta.01...
+
+# ? for HP-9000 Series 500, HP-UX 5.21 and no networking "make hpux0500"
+# ? for HP-9000 Series 500, HP-UX 5.21 with WIN/TCP 1.2 "make hpux0500wintcp"
+# ? for HP-9000 Series, HP-UX 6.5, without long filenames,
+#     "make hpux0650", "make hpux0650c" or "make hpux0650tcpc"
+# ? for HP-9000 Series, HP-UX 7.0 or later no long filenames, "make hpux0700sf"
 #     or (to include tcp/ip, curses, etc) "make hpux0700sftcpc"
-# + for HP-9000 Series with HP-UX 7.0, TCP/IP,long filenames,"make hpux0700lfn"
-# + for HP-9000 300/400 Series (680x0) with HP-UX 8.0, TCP/IP, "make hpux0800"
+# ? for HP-9000 Series with HP-UX 7.0, TCP/IP,long filenames,"make hpux0700lfn"
+# ? for HP-9000 300/400 Series (680x0) with HP-UX 8.0, TCP/IP, "make hpux0800"
 #      or "make hpux0800c"
-# + for HP-9000 700/800 Series (PA-RISC), HP-UX 8.0, TCP/IP, "make hpux0800pa"
+# ? for HP-9000 700/800 Series (PA-RISC), HP-UX 8.0, TCP/IP, "make hpux0800pa"
 #      or "make hpux0800pac"
-# + for HP-9000 Series with HP-UX 8.0, no TCP/IP, long filenames,
+# ? for HP-9000 Series with HP-UX 8.0, no TCP/IP, long filenames,
 #      "make hpux0800notcp"
-# + for HP-9000 Series, HP-UX 9.0 - 9.10, TCP/IP, curses, restricted compiler
+# ? for HP-9000 Series, HP-UX 9.0 - 9.10, TCP/IP, curses, restricted compiler
 #     (no optimization, no ANSI), all models, "make hpux0900".  Read the
 #     hpux0900 entry below for more info.
-# + for HP-9000 700 and 800 Series, HP-UX 9.x, TCP/IP, curses,
+# ? for HP-9000 700 and 800 Series, HP-UX 9.x, TCP/IP, curses,
 #     HP optimizing ANSI C compiler, "make hpux0900o700".
-# + for HP-9000 with Motorola CPUs, HP-UX 9.x, TCP/IP, curses,
+# ? for HP-9000 with Motorola CPUs, HP-UX 9.x, TCP/IP, curses,
 #     HP optimizing ANSI C compiler, "make hpux0900mot".
-# + for HP-9000 on other CPUs, HP-UX 9.x, TCP/IP, curses,
+# ? for HP-9000 on other CPUs, HP-UX 9.x, TCP/IP, curses,
 #     HP optimizing ANSI C compiler, "make hpux0900o".
-# + for HP-9000 series, HP-UX 9.x, TCP/IP, curses, gcc, all models,
+# ? for HP-9000 series, HP-UX 9.x, TCP/IP, curses, gcc, all models,
 #     "make hpux0900gcc"
-# + for HP-9000 700/800 Series, HP-UX 10.00,10.01,10.10,10.20,10.30, TCP/IP,
+# ? for HP-9000 700/800 Series, HP-UX 10.00,10.01,10.10,10.20,10.30, TCP/IP,
 #     curses, restricted compiler (no optimization, no ANSI) "make hpux1000".
-# + for HP-9000 700/800 Series, HP-UX 10.00,10.01,10.10,10.20,10.30, TCP/IP,
+# ? for HP-9000 700/800 Series, HP-UX 10.00,10.01,10.10,10.20,10.30, TCP/IP,
 #     curses, HP ANSI/optimizing compiler "make hpux1000o" or "make hpux1000o+"
-# + for HP-9000 HP-UX 10.00 or later with gcc, "make hpux1000gcc"
-# + for Trusted HP-UX 10.xx "make hpux1000t", "make hpux1000to",
+# ? for HP-9000 HP-UX 10.00 or later with gcc, "make hpux1000gcc"
+# ? for Trusted HP-UX 10.xx "make hpux1000t", "make hpux1000to",
 #     or make hpux1000to+"
-# + for HP-9000 700/800 Series, HP-UX 11.00,TCP/IP,curses, restricted compiler
+# ? for HP-9000 700/800 Series, HP-UX 11.00,TCP/IP,curses, restricted compiler
 #     (no optimization, no ANSI) "make hpux1100".
-# + for HP-9000 700/800 Series, HP-UX 11.00,TCP/IP,curses, restricted compiler
+# ? for HP-9000 700/800 Series, HP-UX 11.00,TCP/IP,curses, restricted compiler
 #     HP ANSI/optimizing compiler "make hpux1100o" or "make hpux1100o+"
-# + for Trusted HP-UX 11.xx "make hpux1100t", "make hpux1100to",
+# ? for Trusted HP-UX 11.xx "make hpux1100t", "make hpux1100to",
 #     make hpux1100to+"
-# + for HP-9000 PA-RISC models with NeXTSTEP 3.3, "make nextquadfat".
-# + for HP-9000 PA-RISC models with OPENSTEP/Mach 4.1, "make nextquadfat".
+# ? for HP-9000 PA-RISC models with NeXTSTEP 3.3, "make nextquadfat".
+# ? for HP-9000 PA-RISC models with OPENSTEP/Mach 4.1, "make nextquadfat".
 # ? for IBM 370 Series with IX/370, "make ix370"
 # ? for IBM 370 Series with AIX/370 1.2, "make aix370"
 # ? for IBM 370 Series with AIX/370 3.0, "make aix370"
@@ -373,39 +429,44 @@ CKVER= "8.0.211"
 #     minimum interactive version, "make coherentmi"
 # ? for IBM PC 386 & compatibles with Mark Williams Coherent OS,
 #     full interactive version, prior to v4.2, "make coherentmax"
-# + for IBM PC 386 & compatibles with Mark Williams Coherent OS 4.2,
+# ? for IBM PC 386 & compatibles with Mark Williams Coherent OS 4.2,
 #     "make coherent42"
 # ? for IBM PC 386 & compatibles with LynxOS 2.0 or 2.1, "make lynx21"
 # ? for IBM PC 386 & compatibles with LynxOS 2.2, "make lynx"
 # - for IBM PC/AT & compatibles with original MINIX, "make minix" (too big)
 # ? for IBM PC family, 386-based, with MINIX/386 1.5, "make minix386"
 #     or if you have GNU CC, "make minix386gcc"
-# + for IBM PC family, 386-based, with MINIX 2.0, "make minix20"
-# + for IBM PS/2 with PS/2 AIX 1.0, 1.1, or 1.2, "make ps2aix" or ps2aixnetc.
+# ? for IBM PC family, 386-based, with MINIX 2.0, "make minix20"
+# ? for IBM PC family, 386-based, with MINIX 3.0, "make minix3"
+# + for IBM PC family, 386-based, with MINIX 3.0, "make minix315"
+# ? for IBM PS/2 with PS/2 AIX 1.0, 1.1, or 1.2, "make ps2aix" or ps2aixnetc.
 # ? for IBM PS/2 with PS/2 AIX 1.3, "make ps2aix3"
 # ? for IBM RISC System/6000 with AIX 3.0, "make aix30"
 # ? for IBM RISC System/6000 with AIX 3.1.x, "make aix31"
-# + for IBM RISC System/6000 with AIX 3.2.0 thru 3.2.5, "make aix32"
-# + for IBM RS/6000 or Power Series with AIX 4.1.x, "make aix41"
-# + for IBM RS/6000 or Power Series with AIX 4.1.x with gcc, "make aix41g"
-# + for IBM RS/6000 or Power Series with AIX 4.1 with X.25, "make aix41x25"
-# + for IBM RS/6000 or Power Series with AIX 4.2, "make aix42"
-# + for IBM RS/6000 or Power Series with AIX 4.3, "make aix43" (or aix43gcc)
-# + for IBM RS/6000 or Power Series with AIX 4.4, "make aix44" (or aix44gcc)
-# + for IBM RS/6000 or Power Series with AIX 4.5, "make aix45" (or aix45gcc)
-# + for IBM RS/6000 or Power Series with AIX 5.0, "make aix50" (or aix50gcc)
-# + for IBM RS/6000 or Power Series with AIX 5.1, "make aix51" (or aix51gcc)
+# ? for IBM RISC System/6000 with AIX 3.2.0 thru 3.2.5, "make aix32"
+# ? for IBM RS/6000 or Power Series with AIX 4.1.x, "make aix41"
+# ? for IBM RS/6000 or Power Series with AIX 4.1.x with gcc, "make aix41g"
+# ? for IBM RS/6000 or Power Series with AIX 4.1 with X.25, "make aix41x25"
+# ? for IBM RS/6000 or Power Series with AIX 4.2 or later: "make aix"
+#  (the following "make aixnn" targets are no longer necessary except for gcc)
+# ? for IBM RS/6000 or Power Series with AIX 4.2, "make aix42"
+# ? for IBM RS/6000 or Power Series with AIX 4.3, "make aix43" (or aix43gcc)
+# ? for IBM RS/6000 or Power Series with AIX 4.4, "make aix44" (or aix44gcc)
+# ? for IBM RS/6000 or Power Series with AIX 4.5, "make aix45" (or aix45gcc)
+# ? for IBM RS/6000 or Power Series with AIX 5.0, "make aix50" (or aix50gcc)
+# ? for IBM RS/6000 or Power Series with AIX 5.1, "make aix51" (or aix51gcc)
 # ? for IBM RS/6000 or Power Series with AIX 5.2, "make aix52" (or aix52gcc)
 # ? for IBM RS/6000 or Power Series with AIX 5.3, "make aix53" (or aix53gcc)
+# ? for IBM RS/6000 or Power Series with AIX 6.1, "make aix61" (or aix53gcc)
 # ? for IBM RT PC with AIX 2.1, "make sys3"
-# + for IBM RT PC with AIX 2.2.1, "make rtaix" or "make rtaixc"
+# ? for IBM RT PC with AIX 2.2.1, "make rtaix" or "make rtaixc"
 # ? for IBM RT PC with ACIS 4.2, "make bsd"
 # ? for IBM RT PC with ACIS 4.3, "make rtacis" or "make bsd KFLAGS=-DNOANSI"
 # ? for IBM RT PC with 4.3BSD/Reno, "make bsd44" or "make bsd44c"
 # ? for ICL DRS400 or 400E, "make iclsys5r3"
 # ? for ICL DRS3000 (80486) with DRS/NX, "make iclsys5r4_486"
 # ? for ICL DRS6000 (SPARC) with DRS/NX, "make iclsys5r4"
-# + for ICL DRS6000 (SPARC) with DRS/NX 4.2MP 7MPlus, "make iclsys5r4m+"
+# ? for ICL DRS6000 (SPARC) with DRS/NX 4.2MP 7MPlus, "make iclsys5r4m+"
 # ?     Ditto but with IKSD support included, "make iclsys5r4m+iksd"
 # ? for Integrated Solutions Inc V8S VME 68020, "make isi"
 # ? for Intel 302 with Bell Tech Sys V/386 R3.2, "make sys5r3"
@@ -418,11 +479,24 @@ CKVER= "8.0.211"
 #     or "make is5r3net2"
 # ? for Interactive 386/ix 2.2.1, job control, curses, no net, gcc,
 #     "make is5r3gcc"
-# + for Interactive UNIX Sys V R3.2 V2.2 - 4.0 without TCP/IP, "make is5r3jc"
-# + for Interactive UNIX Sys V R3.2 V2.2 - 4.0 with TCP/IP, "make is5r3netjc"
-# + for Intergraph Clipper, "make clix" or "make clixnet"
+# ? for Interactive UNIX Sys V R3.2 V2.2 - 4.0 without TCP/IP, "make is5r3jc"
+# ? for Interactive UNIX Sys V R3.2 V2.2 - 4.0 with TCP/IP, "make is5r3netjc"
+# ? for Intergraph Clipper, "make clix" or "make clixnet"
 # ? for Jolix (see 386BSD)
-# + for Red Hat Linux 7.1 (and higher) fully configured (krb5, SSL, etc):
+# + for Linux 1.2 and later, "make linux".  Uses ncurses.  This version
+#     handles serial speeds up to 460800 bps, Linux FSSTD 1.2, TCP/IP, and
+#     should work on both libc and glibc systems.  For static linking, use
+#     "make linux LNKFLAGS=-static".  Please read the comments that accompany
+#     the linux entry.  As of 8.0.212 Dev.10, this also includes Large File
+#     Support (LFS).
+# + for Linux builds that fail with "sys/select.h: No such file or directory",
+#     "make linuxns"
+# + for Linux 1.2 and later but with curses.h and libcurses (rather than
+#     ncurses.h and libncurses), use "make linuxc".
+# + for Linux 1.2 and later with no curses support at all, "make linuxnc".
+# + for Linux with no TCP/IP, "make linuxnotcp"
+# (The following Linux targets are historic and might not work...)
+# ? for Red Hat Linux 7.1 through RH9, fully configured (krb5, SSL, etc):
 #     "make redhat71", "make redhat72", "make redhat73", "make redhat80"
 #     "make redhat9"
 #     NOTE: You must use this target for Red Hat 7.1 since it
@@ -430,23 +504,11 @@ CKVER= "8.0.211"
 #     WARNING: These targets create binaries that include code for
 #     strong encryption and are therefore not exportable. DO NOT PUT
 #     THESE BINARIES ON US OR CANADIAN WEB OR FTP SITES.
-# + for Linux 1.2 and later, "make linux".  Uses ncurses.  This version
-#     handles serial speeds up to 460800 bps, Linux FSSTD 1.2, TCP/IP, and
-#     should work on both libc and glibc systems.  For static linking, use
-#     "make linux LNKFLAGS=-static".  Please read the comments that accompany
-#     the linux entry.
-# + for Linux builds that fail with "sys/select.h: No such file or directory",
-#     "make linuxns"
-# + for Linux 1.2 and later but with curses.h and libcurses (rather than
-#     ncurses.h and libncurses), use "make linuxc".
-# + for Linux 1.2 and later with no curses support at all, "make linuxnc".
-# + for Linux on PowerMac (Mklinux DR3), "make mklinux".
-# + for Linux 1.2 and later, to build with egcs, "make linuxegcs".
-# + for Linux with no TCP/IP, "make linuxnotcp"
-# + for Linux with lcc compiler, no TCP/IP, "make linuxnotcp-lcc"
-# ? for Linux 1.0 or earlier, "make linux10", or (to remove TCP/IP)
-#     "make linuxnotcp".
-#     IMPORTANT: Read the comments that accompany the "linux:" entry.
+# ? for Linux on PowerMac (Mklinux DR3), "make mklinux".
+# ? for Linux 1.2 and later, to build with egcs, "make linuxegcs".
+# ? for Linux with lcc compiler, no TCP/IP, "make linuxnotcp-lcc"
+# ? for Linux 1.0 or earlier, "make linux10".
+# (End old linux targets)
 # ? for Mach 2.6 on (anything, e.g. DECstation), "make bsd42" or "make bsd43".
 # ? for MachTen (Tenon) 2.1.1.D on (e.g.) Apple Powerbook, "make machten".
 # ? for Masscomp RTU AT&T System III, "make rtu"
@@ -456,16 +518,16 @@ CKVER= "8.0.211"
 # ? for Microsoft,IBM Xenix (/286, PC/AT, etc), "make xenix" or "make sco286"
 # ? for MIPS System with RISC/os (UMIPS) 4.52 = AT&T SVR3, "make mips"
 #     or "make mipstcpc"
-# + for MkLinux on Power Macintosh, "make mklinux"
+# ? for MkLinux on Power Macintosh, "make mklinux"
 # ? for Modcomp 9730, Real/IX, "make sys5r3" (or modify to use gcc = GLS cc)
 # ? for Modcomp Realstar 1000 with REAL/IX D.1, "make sv88r32"
 # ? for Motorola Four Phase, "make sys3" or "make sys3nid"
-# + for Motorola Delta System V/68 R3, "make sv68r3"
-# + for Motorola Delta System V/68 R3V5, "make sv68r3v5"
-# + for Motorola Delta System V/68 R3V5.1, "make sv68r3v51"
-# + for Motorola Delta System V/68 R3V6 with NSE TCP/IP, "make sv68r3v6"
-# + for Motorola Delta System V/88 R32, "make sv88r32"
-# + for Motorola Delta System V/88 R40, "make sv88r40"
+# ? for Motorola Delta System V/68 R3, "make sv68r3"
+# ? for Motorola Delta System V/68 R3V5, "make sv68r3v5"
+# ? for Motorola Delta System V/68 R3V5.1, "make sv68r3v51"
+# ? for Motorola Delta System V/68 R3V6 with NSE TCP/IP, "make sv68r3v6"
+# ? for Motorola Delta System V/88 R32, "make sv88r32"
+# ? for Motorola Delta System V/88 R40, "make sv88r40"
 # ? for Mt Xinu Mach386 on 386/486-based PCs, "make bsd43"
 # ? for NCR Tower 1632, OS 1.02, "make tower1"
 # ? for NCR Tower 1632 or Minitower with System V R2, "make sys3"
@@ -482,13 +544,15 @@ CKVER= "8.0.211"
 #       ln /usr/include/arpa/inet.h /usr/include/sys/inet.h
 #       ln /usr/include/sys/termiox.h /usr/include/termiox.h
 # ? for NCR System 3000, NCR UNIX 02.02.01, same as above.
-# + for NCR MP-RAS System V R4 V2.03 or 3.02, "make mpras" or "make mprastcpc"
-# + for NetBSD through 1.4.x on any architecture, "make netbsd"
-# + for NetBSD 1.5.0 and later, "make netbsd15"
-# + for NeXT with NeXTSTEP 1.0 through 3.2, "make next" (on a NeXT)
-# + for NeXT with NeXTSTEP 3.3, "make next33"
+# ? for NCR MP-RAS System V R4 V2.03 or 3.02, "make mpras" or "make mprastcpc"
+# + for NetBSD any version on any architecture, "make netbsd"
+# + for NetBSD with OpenSSL, "make netbsd+ssl"
+# ? for NetBSD with ncurses specified instead of curses, "make netbsdn"
+# ? for NetBSD with all curses support omitted, "make netbsdnc"
+# ? for NeXT with NeXTSTEP 1.0 through 3.2, "make next" (on a NeXT)
+# ? for NeXT with NeXTSTEP 3.3, "make next33"
 # ? for NeXT with OPENSTEP/Mach 4.1, "make nextquadfat".
-# + for NeXT with OPENSTEP/Mach 4.2, "make openstep42".
+# ? for NeXT with OPENSTEP/Mach 4.2, "make openstep42".
 # ? for NeXTSTEP/486, "make next" (on a PC)
 # ? for NeXTSTEP portable binary (runs on Intel or Motorola), "make nextfat"
 # ? for NeXTSTEP portable binary (Intel, Motorola, HP PA-RISC, or SPARC),
@@ -501,26 +565,27 @@ CKVER= "8.0.211"
 # ? for Olivetti LSX-3020 with X/OS R.2.3, "make xos23" or "make xos23c"
 # + for OpenBSD, "make openbsd" (also see secure targets listed below).
 # ? for OPENSTEP/Mach 4.1, "make nextquadfat" (NeXT, Intel, PA-RISC, SPARC)
-# + for OPENSTEP/Mach 4.2, "make openstep42" (tested on NeXT)
+# ? for OPENSTEP/Mach 4.2, "make openstep42" (tested on NeXT)
 # ? for Perkin-Elmer (Concurrent) 3200 series, "make sys5".
 # ? for Perkin-Elmer (Concurrent) 3200 series with <dirent.h>, "make ccop1"
 # ? for Perkin-Elmer/Concurrent 3200 with Xelos R02, "make ccop1"
 # ? for PFU Compact A Series SX/A TISP V10/E50 (Japan), "make sxae50"
 # ? for Plexus, "make sys3"
-# + for Pyramid 9XXX (e.g. 9845) or MIServer T series, OSx 4.4b thru 5.1,
+# ? for Pyramid 9XXX (e.g. 9845) or MIServer T series, OSx 4.4b thru 5.1,
 #     "ucb make pyramid" or for HDB UUCP, "ucb make pyramid-hdb" or:
-# + for Pyramid MIServer S or ES Series, DataCenter/OSx, "make pyrdcosx"
-# + for Pyramid MIS-S MIPS R3000, DataCenter OSx System V R4, "make pyrdcosx"
-# + for POSIX on anything, "make posix" (but adjustments might be necessary).
+# ? for Pyramid MIServer S or ES Series, DataCenter/OSx, "make pyrdcosx"
+# ? for Pyramid MIS-S MIPS R3000, DataCenter OSx System V R4, "make pyrdcosx"
+# ? for POSIX on anything, "make posix" (but adjustments might be necessary).
+#      NOTE: this target is not very useful - many features are missing.
 # ? for Prime 8000 MIPS, SVR3, "make mips" or "make mipstcpc"
 # - for QNX 2.x (sorry we don't have a version of C-Kermit for QNX 2.x)
 # ? for QNX 4.0 or 4.1, 16-bit, on 286 PC, Watcom C 8.5, "make qnx16_41"
-# + for QNX 4.21 - 4.22A (286+), and 4.23 (386+), or higher, 16-bit,
+# ? for QNX 4.21 - 4.22A (286+), and 4.23 (386+), or higher, 16-bit,
 #     Watcom C 9.5x or higher, "make qnx16"
 # + for QNX 4.21-4.25, 32-bit, 386 or above, Watcom C 10.6, "make qnx32"
 #     NOTE: ("make qnx" == "make qnx32")
 # ? for QNX Neutrino 2+, "make qnx_nto2+" (crosscompiled on QNX4 with Watcom C)
-# + for QNX 6 = Neutrino 2.xx, "make qnx6"
+# ? for QNX 6 = Neutrino 2.xx, "make qnx6"
 # ? for Ridge 32 (ROS3.2), "make ridge32"
 # ? for Samsung MagicStation, "make sys5r4"
 # ? for SCO Xenix 2.2.1 with development system 2.2 on 8086/8 "make sco86"
@@ -534,7 +599,7 @@ CKVER= "8.0.211"
 # ? for SCO Xenix/386 or UNIX/386 with Excelan TCP/IP, "make sco3r2net"
 #     or (to add curses support) "make sco3r2netc" or "sco386netc"
 # + for SCO XENIX 2.3.4, "make sco234" or "make sco234c" to add curses.
-# + for SCO XENIX 2.3.4 with SCO TCP/IP & curses, "make sco234netc".
+# ? for SCO XENIX 2.3.4 with SCO TCP/IP & curses, "make sco234netc".
 # ? for SCO Xenix 2.3.x with Racal-InterLan TCP/IP, "make sco3r2netri"
 #   for other UNIX varieties with Racal Interlan TCP/IP, read sco3r2netri entry
 # ? for SCO Xenix 2.3.x with SCO (Lachman) TCP/IP, "make sco3r2lai"
@@ -546,62 +611,63 @@ CKVER= "8.0.211"
 # ? for SCO UNIX/386 3.2.2 with SCO TCP/IP, "make sco3r22net"
 #     or "make sco3r22netc" (curses)
 # ? for SCO ODT 1.1, "make sco3r22net" or "make sco3r22netc" (curses)
-# + for SCO UNIX/386 3.2 V4.x, no network support, "make sco32v4"
-# +   or "make sco32v4ns" (this one uses no select() or sockets library)
-# + for SCO UNIX/386 3.2 V4.x with TCP/IP, "make sco32v4net"
+# ? for SCO UNIX/386 3.2 V4.x, no network support, "make sco32v4"
+# ?   or "make sco32v4ns" (this one uses no select() or sockets library)
+# ? for SCO UNIX/386 3.2 V4.x with TCP/IP, "make sco32v4net"
 #     (also sco32v4gcc, sco32v4netgcc)
-# + for SCO UNIX/386 3.2 V5.0 - see SCO OpenServer.
-# + for SCO UNIX 3.2v4.x with TCP/IP, <dirent.h> for Extended Acer File
+# ? for SCO UNIX/386 3.2 V5.0 - see SCO OpenServer.
+# ? for SCO UNIX 3.2v4.x with TCP/IP, <dirent.h> for Extended Acer File
 #     System (EAFS), curses, ANSI C compilation, "make sco32v4net"
-# +   or (to use select()-based CONNECT module) "make sco32v4netx".
-# + for SCO UNIX 3.2v4.2, "make sco-odt30" (includes TCP/IP).
-# + for SCO MPX 3.0 - The SCO UNIX binary runs on the corresponding MPX system.
+# ?   or (to use select()-based CONNECT module) "make sco32v4netx".
+# ? for SCO UNIX 3.2v4.2, "make sco-odt30" (includes TCP/IP).
+# ? for SCO MPX 3.0 - The SCO UNIX binary runs on the corresponding MPX system.
 #
 # NOTE: Also see below for other entries that are variations on these.
 # Also be sure to read the comments accompanying each SCO entry.
 # Also see Unixware section.
 #
-# + for SCO ODT 2.0, "make sco32v4net"
-# + for SCO ODT 3.0, "make sco-odt30"
-# + for SCO OpenServer 5.0 (OSR5), "make sco32v500"
-# + for SCO OpenServer 5.0 (OSR5) with networking, "make sco32v500net"
-# + for SCO OpenServer 5.0 (OSR5), gcc, "make sco32v500gcc"
-# + for SCO OpenServer 5.0 (OSR5), gcc, with networking, "make sco32v500netgcc"
-# + for SCO OpenServer 5.0 (OSR5), as above, ELF, "make sco32v500netgccelf"
-# + for SCO OpenServer 5.0.2, use "make sco32v502xxx" entries as above.
-# + for SCO OpenServer 5.0.4, use "make sco32v504xxx" entries as above.
-# + for SCO OpenServer 5.0.5, use "make sco32v505xxx" entries as above.
+# ? for SCO ODT 2.0, "make sco32v4net"
+# ? for SCO ODT 3.0, "make sco-odt30"
+# ? for SCO OpenServer 5.0 (OSR5), "make sco32v500"
+# ? for SCO OpenServer 5.0 (OSR5) with networking, "make sco32v500net"
+# ? for SCO OpenServer 5.0 (OSR5), gcc, "make sco32v500gcc"
+# ? for SCO OpenServer 5.0 (OSR5), gcc, with networking, "make sco32v500netgcc"
+# ? for SCO OpenServer 5.0 (OSR5), as above, ELF, "make sco32v500netgccelf"
+# ? for SCO OpenServer 5.0.2, use "make sco32v502xxx" entries as above.
+# ? for SCO OpenServer 5.0.4, use "make sco32v504xxx" entries as above.
+# ? for SCO OpenServer 5.0.5, use "make sco32v505xxx" entries as above.
 #     Use the sco32v505udkxxx entries if you have the UDK rather than /bin/cc.
-# + for SCO OpenServer 5.0.6, use "make sco32v506xxx" entries as above.
-# + for SCO OpenServer 5.0.6a,use "make sco32v506axxx" entries as above.
-# + for SCO OpenServer 5.0.7, use "make sco32v507", "make sco32v507net"
+# ? for SCO OpenServer 5.0.6, use "make sco32v506xxx" entries as above.
+# ? for SCO OpenServer 5.0.6a,use "make sco32v506axxx" entries as above.
+# ? for SCO OpenServer 5.0.7, use "make sco32v507", "make sco32v507net"
 # ? for SCO (Univel) UnixWare 1.x, "make unixware" or "make unixwarenetc".
 #     If there are problems with this in C-K 7+ see notes at unixware entry.
-# + for SCO UnixWare 2.0.x, "make uw20"
-# + for SCO UnixWare 2.1.0, "make uw21"
-# + for SCO UnixWare 2.1.3, "make uw213"
-# + for SCO UnixWare 7, "make uw7"
-# + for SCO UnixWare 7 with IKSD support, "make uw7iksd" or "make uw7iksdudk"
-# + for SCO UnixWare 7 with OpenSSL, "make uw7ssl"
-# + for SCO (Caldera) Open UNIX 8, "make ou8"
-# + for Sharp Zaurus SL5500 PDA, "make zsl5500".
+# + for SCO OpenServer 6.0.0, "make sco_osr600"
+# ? for SCO UnixWare 2.0.x, "make uw20"
+# ? for SCO UnixWare 2.1.0, "make uw21"
+# ? for SCO UnixWare 2.1.3, "make uw213"
+# + for SCO UnixWare 7, "make uw7" (includes large file support)
+# ? for SCO UnixWare 7 with IKSD support, "make uw7iksd" or "make uw7iksdudk"
+# ? for SCO UnixWare 7 with OpenSSL, "make uw7ssl"
+# ? for SCO (Caldera) Open UNIX 8, "make ou8"
+# ? for Sharp Zaurus SL5500 PDA, "make zsl5500".
 # ? for Sequent with DYNIX/ptx 1.2.1, "make dynixptx12"
 # ? for Sequent with DYNIX/ptx 1.3 or 1.4 with TCP/IP, "make dynixptx13"
 # ? for Sequent with DYNIX/ptx 2.0 or 2.1 with TCP/IP, "make dynixptx20"
 #     or "dynixptx20c"
-# + for Sequent with DYNIX/ptx 2.1.6 on i486, "dynixptx216c"
+# ? for Sequent with DYNIX/ptx 2.1.6 on i486, "dynixptx216c"
 # ? for Sequent with DYNIX/ptx V4.1.3 with TCP/IP, "make dynixptx41c"
-# + for Sequent with DYNIX/ptx V4.4.2 with TCP/IP, "make dynixptx44"
+# ? for Sequent with DYNIX/ptx V4.4.2 with TCP/IP, "make dynixptx44"
 # ? for Sequent Balance 8000 or B8 with DYNIX 3.0.xx, "make dynix3"
 #    or "make dynix3noacu"
 # ? for Sequent Symmetry S81 with DYNIX 3.0.xx, "make dynix3"
 # ? for Sequent DYNIX 3.1.xx, "make dynix31" or "make dynix31c"
-# + for Siemens/Nixdorf SINIX-L Intel V5.41, "make sinix541i"
+# ? for Siemens/Nixdorf SINIX-L Intel V5.41, "make sinix541i"
 # + for Siemens/Nixdorf SINIX-N MIPS V5.42, "make sinix542"
-# + for Siemens/Nixdorf SINIX-P MIPS V5.42 with gcc, "make sinix542g"
-# + for Siemens/Nixdorf SINIX-Z Intel V5.42, "make sinix542i"
-# + for Siemens/Nixdorf Reliant UNIX V5.43, "make sni543"
-# + for Siemens/Nixdorf Reliant UNIX V5.44, "make sni544"
+# ? for Siemens/Nixdorf SINIX-P MIPS V5.42 with gcc, "make sinix542g"
+# ? for Siemens/Nixdorf SINIX-Z Intel V5.42, "make sinix542i"
+# ? for Siemens/Nixdorf Reliant UNIX V5.43, "make sni543"
+# ? for Siemens/Nixdorf Reliant UNIX V5.44, "make sni544"
 # ? for Silicon Graphics Iris System V IRIX 3.2 or earlier, "make iris"
 # ? for Silicon Graphics Sys V R3 with IRIX 3.3 or later, "make sys5r3"
 # ? for Silicon Graphics Iris Indigo with IRIX 4.0 or 5.0, "make irix40" or
@@ -609,32 +675,39 @@ CKVER= "8.0.211"
 # ? for Silicon Graphics Iris Indigo or Elan with IRIX 4.0.x with microcode
 #     optimization and -O4, "make irix40u" or "irix40uc" (and read notes
 #     accompanying these entries).
-# + for Silicon Graphics IRIX 5.1, "make irix51" or "irix51x" (no optimize)
-# + for Silicon Graphics IRIX 5.2, "make irix52"
-# + for Silicon Graphics IRIX 5.3, "make irix53" or "irix53x" (no optimize)
-# + for Silicon Graphics IRIX 6.0, "make irix60".
-# + for Silicon Graphics IRIX 6.2, "make irix62".
-# + for Silicon Graphics IRIX 6.3, "make irix63".
-# + for Silicon Graphics IRIX 6.4, "make irix64" or "make irix64gcc".
+# ? for Silicon Graphics IRIX 5.1, "make irix51" or "irix51x" (no optimize)
+# ? for Silicon Graphics IRIX 5.2, "make irix52"
+# ? for Silicon Graphics IRIX 5.3, "make irix53" or "irix53x" (no optimize)
+# ? for Silicon Graphics IRIX 6.0, "make irix60".
+# ? for Silicon Graphics IRIX 6.2, "make irix62".
+# ? for Silicon Graphics IRIX 6.3, "make irix63".
+# ? for Silicon Graphics IRIX 6.4, "make irix64" or "make irix64gcc".
+# + for Silicon Graphics (SGI) IRIX 6.5, "make irix65"
+# +   or "make irix65mips2" to force MIPS2, or "make irix65gcc" for GCC.
 # + for Silicon Graphics (SGI) IRIX 6.5, "make irix65" or "make irix65mips2"
+# ? for SGI IRIX 6.5 with SSL/TLS, SRP, and ZLIB "make irix65+ssl+srp+zlib"
 # ? for Solaris 2.0-2.3 on SPARC or Intel, SunPro CC, "make solaris2x",
 # ?   or to add SunLink X.25 8.0x support, "make solaris2x25".
-# + for Solaris 2.4 built with gcc, "make solaris24g".
-# + for Solaris 2.0-2.3 on SPARC or Intel, GNU CC, "make solaris2xg".
-# + for Solaris 2.4 with X.25, "make solaris24x25".
-# + for Solaris 2.5 on SPARC or Intel, SunPro CC, "make solaris25".
-# +   or to add SunLink X.25 8.0x support, "make solaris25x25".
-# + for Solaris 2.5 on SPARC or Intel, GNU CC, "make solaris25g".
-# + for Solaris 2.6 on SPARC or Intel, "make solaris26".
-# + for Solaris 7 on SPARC or Intel, SunPro CC, "make solaris7".
-# + for Solaris 7 on SPARC or Intel, GNU CC, "make solaris7g".
-# + for Solaris 8 on SPARC or Intel, SunPro CC, "make solaris8".
-# + for Solaris 8 on SPARC or Intel, GNU CC, "make solaris8g".
+# ? for Solaris 2.4 built with gcc, "make solaris24g".
+# ? for Solaris 2.0-2.3 on SPARC or Intel, GNU CC, "make solaris2xg".
+# ? for Solaris 2.4 with X.25, "make solaris24x25".
+# ? for Solaris 2.5 on SPARC or Intel, SunPro CC, "make solaris25".
+# ?   or to add SunLink X.25 8.0x support, "make solaris25x25".
+# ? for Solaris 2.5 on SPARC or Intel, GNU CC, "make solaris25g".
+# ? for Solaris 2.6 on SPARC or Intel, "make solaris26".
+# ? for Solaris 7 on SPARC or Intel, SunPro CC, "make solaris7".
+# ? for Solaris 7 on SPARC or Intel, GNU CC, "make solaris7g".
+# ? for Solaris 8 on SPARC or Intel, SunPro CC, "make solaris8".
+# ? for Solaris 8 on SPARC or Intel, GNU CC, "make solaris8g".
 # + for Solaris 9 on SPARC (or Intel?), 32-bit, SunPro CC, "make solaris9".
 # + for Solaris 9 on SPARC (or Intel?), 32-bit, GNU CC, "make solaris9g".
-# + for Solaris 9 on SPARC (or Intel?), 64-bit, GNU CC, "make solaris9g64".
-# + for Solbourne 4/500 with OS/MP 4 "make sunos4"
-# + for Solbourne 4/500 with OS/MP 4.1 "make sunos41" or "make sunos41c"
+# ? for Solaris 9 on SPARC (or Intel?), 64-bit, GNU CC, "make solaris9g64".
+# + for Solaris 10 on SPARC (or Intel?), 32-bit, SunPro CC, "make solaris10".
+# + for Solaris 10 on SPARC 64-bit, SunPro CC, "make solaris10_64".
+# + for Solaris 10 on SPARC (or Intel?), 32-bit, GNU CC, "make solaris10g".
+# ? for Solaris 10 on SPARC (or Intel?), 64-bit, GNU CC, "make solaris10g64".
+# ? for Solbourne 4/500 with OS/MP 4 "make sunos4"
+# ? for Solbourne 4/500 with OS/MP 4.1 "make sunos41" or "make sunos41c"
 # ? for SONY NEWS with NEWS-OS 4.0.1C, "make sonynews"
 # ? for SONY NEWS with NEWS-OS 4.1.2C, "make sonynews"
 # ? for Sperry/UNISYS 5000/20, UTS V 5.2 3R1, "make sys5"
@@ -644,17 +717,17 @@ CKVER= "8.0.211"
 #     For UNISYS SVR3 it might be necessary to "make sys5r3 KFLAGS=-UDYNAMIC"
 # ? for Stardent 1520, "make sys5r3"
 # ? for Stratus FTX 2.x, try "make ftx" or else "make sys5r4" or "sys5r4sx"
-# + for Stratus FTX 3.x, PA-RISC 1.0 or 2.0, "make ftx" or "make ftxtcp"
+# ? for Stratus FTX 3.x, PA-RISC 1.0 or 2.0, "make ftx" or "make ftxtcp"
 # ? for Sun with Sun UNIX 3.5 and gcc, "make sunos3gcc"
 # ? for Sun with pre-4.0 SunOS versions, "make bsd" (or appropriate variant)
 # ? for Sun with SunOS 4.0, BSD environment, "make sunos4"
 # ? for Sun with SunOS 4.0, BSD, with SunLink X.25, make sunos4x25
-# + for Sun with SunOS 4.1 or 4.1.1, BSD environment, "make sunos41"
+# ? for Sun with SunOS 4.1 or 4.1.1, BSD environment, "make sunos41"
 #     or "make sunos41c" (curses) or "make sunos41gcc" (compile with gcc)
-# + for Sun with SunOS 4.1.x, BSD, with SunLink X.25 7.00 or earlier,
+# ? for Sun with SunOS 4.1.x, BSD, with SunLink X.25 7.00 or earlier,
 #     "make sunos41x25" or "make sunos41x25c" (curses)
-# + for Sun with SunOS 4.1, 4.1.1, AT&T Sys V R3 environment, "make sunos41s5"
-# + for Sun with SunOS 4.1.2, "make sunos41" or any of its variations.
+# ? for Sun with SunOS 4.1, 4.1.1, AT&T Sys V R3 environment, "make sunos41s5"
+# ? for Sun with SunOS 4.1.2, "make sunos41" or any of its variations.
 #     NOTE:  All SunOS 4.x systems -- Shared libraries are used by default.
 #       If this causes problems, add -Bstatic to CFLAGS.
 #     NOTE2: When building C-Kermit under SunOS for the BSD universe,
@@ -672,11 +745,13 @@ CKVER= "8.0.211"
 #     or (for models without hardware flow control), "make uteknohwfc"
 # ? for Tektronix XD88 series with UTekV OS, "make utekvr3"
 # ? for Tri Star Flash Cache with Esix SVR3.2, "make sys5r3"
-# + for Tru-64 UNIX 4.0E, "make tru64-40e"
-# + for Tru-64 UNIX 4.0F, "make tru64-40f"
-# + for Tru-64 UNIX 4.0G, "make tru64-40g"
-# + for Tru-64 UNIX 5.0A, "make tru64-50a"
-# + for Tru-64 UNIX 5.1A, "make tru64-51a"
+# NOTE: The Tru64 builds have been failing since 2010, but "make dec-osf" is OK
+# ? for Tru64 UNIX 4.0E, "make tru64-40e"
+# ? for Tru64 UNIX 4.0F, "make tru64-40f"
+# ? for Tru64 UNIX 4.0G, "make tru64-40g"
+# ? for Tru64 UNIX 5.0A, "make tru64-50a"
+# ? for Tru64 UNIX 5.1A, "make tru64-51a"
+# ? for Tru64 UNIX 5.1B, "make tru64-51b"
 # ? for Unistar, "make sys5"
 # ? for Unisys S/4040 68040 CTIX SVR3.2 6.4.1, "make ctix" or "make sys5r3"
 # ? for Unisys U5000 UNIX SVR3 6.x, "make sys5r3" or "make sys5r3c"
@@ -690,7 +765,8 @@ CKVER= "8.0.211"
 #
 # The result should be a runnable program called "wermit" in the current
 # directory.  After satisfactory testing, you can rename wermit to "kermit"
-# and put it where users can find it.
+# and put it in some directory that's in everybody's PATH, such as
+# /usr/local or /opt/local.
 #
 # To remove intermediate and object files, "make clean".
 # If your C compiler produces files with an extension other than "o",
@@ -721,19 +797,26 @@ CKVER= "8.0.211"
 # for specific details regarding supported versions.
 #
 # NOTE: OpenSSL 0.9.6 and earlier are not compatible with 0.9.7 and later.
-# C-Kermit code is designed for 0.9.6.  To build with 0.9.7 you must add
-# -DOPENSSL_097 to avoid missing symbols in the DES library and to use the
-# entry points that were renamed to avoid conflict with Kerberos 4.
-#
+# C-Kermit code was originally designed for 0.9.6.  To build with 0.9.7 you
+# must add -DOPENSSL_097 to avoid missing symbols in the DES library and to
+# use the entry points that were renamed to avoid conflict with Kerberos 4.
+# If you have OpenSSL 0.9.8, add -DOPENSSL_098, which is a synonym for
+# -DOPENSSL_097.  If you have 1.0.0 or later, add -DOPENSSL_100, which is
+# another synonym.
+
 # In OpenSSL builds add -ldl if you get unresolved references for
 # dlopen, dlclose, dlsym, and/or dlerror.
 #
-# The following symbols are used to specify library and header file locations
-# Redefine them to the values used on your system by:
-# . editing this file
-# . defining the values on the command line
-# . defining the values in the environment and use the -e option
+# In order to build a secure version of Kermit, you need to know the location
+# of the header (include) files and libraries for the desired form of
+# security.  Unless you specify a location, this makefile looks in /usr/local
+# and if the required files are not found, the build fails.
 #
+# If the secure headers and libraries are not on your computer, you have
+# to download and install them, for example from http://www.openssl.org .
+#
+# The following symbols are used to specify library and header file locations:
+# 
 prefix  = /usr/local
 srproot = $(prefix)
 sslroot = $(prefix)
@@ -747,11 +830,19 @@ SRPLIB=-L$(srproot)/lib
 SRPINC=-I$(srproot)/include
 SSLLIB=-L$(sslroot)/ssl/lib
 SSLINC=-I$(sslroot)/ssl/include
+
+# To override these assignments; for example, if your OpenSSL files are
+# not in /usr/local/ssl, invoke the desired target like this:
+# 
+#  make solaris9+openssl "SSLINC=-I/opt/openssl-0.9.8k/include" \
+#   "SSLLIB=-L/opt/openssl-0.9.8k/lib"
 #
-# aix41+krb5+krb4:                    IBM AIX 4.1 with Kerberos IV and V
-# aix43gcc+krb5+krb4:                 IBM AIX 4.3 built with gcc, ditto
-# aix43gcc+krb5+krb4+openssl:         Ditto, plus OpenSSL (SSL/TLS)
-# aix43gcc+openssl:                   IBM AIX 4.3 with OpenSSL
+# (don't set the variables and then do "make -e" because that breaks 
+# chaining of makefile targets.)
+#
+# Here are some up-to-date secure targets as of Sep 2009: 
+#
+# aix+openssl:                        IBM AIX 4.2 or later with OpenSSL
 # freebsd44+srp+openssl               FreeBSD 4.4 with SRP and OpenSSL
 # freebsd50+openssl                   FreeBSD 5.0 with OpenSSL
 # hpux1100o+openssl:                  HP-UX 11.xx with OpenSSL
@@ -759,7 +850,13 @@ SSLINC=-I$(sslroot)/ssl/include
 # hpux1100gcc+openssl:                HP-UX 11.xx with OpenSSL (build with gcc)
 # irix6x+krb5:                        IRIX 6.x with Kerberos V
 # irix65+krb5:                        etc etc...
-# linux+krb5:
+# solaris9+openssl                    Solaris 9,10, or 11 with Openssl (Sun cc)
+# solaris9g+openssl                   Solaris 9,10, or 11 with Openssl (gcc)
+# linux+ssl                           OpenSSL only
+# linux+krb5+ssl                      Linux with Kerberos 5 and OpenSSL
+# linux+krb5:                         Kerberos 5 only
+# 
+# The following secure Linux targets have not been updated or tested recently.
 # linux+krb5+krb4:
 # linux+srp:
 # linux+srp+pam:
@@ -784,9 +881,15 @@ SSLINC=-I$(sslroot)/ssl/include
 # linux+krb5+krb4+srp+openssl+zlib+pam:
 # linux+krb5+krb4+openssl+shadow+pam:
 # linux+krb5+openssl+zlib+shadow+pam:
-# openbsd30+ssl (includes OpenSSL):
-# redhat71, redhat72, redhat73, redhat80, redhat9
-#  (Krb5, OpenSSL, Showdow, PAM, Zlib)
+# 
+# The following have not been tested recently either and might
+# need adjustment.
+#
+# macosx+krb5+ssl:     Mac OS X 10.3.9 or later + OpenSSL and Kerberos 5
+# macosx103+secure:    This one is probably redundant
+# netbsd+openssl:      NetBSD with OpenSSL
+# openbsd30+ssl:       OpenBSD 3.0 with OpenSSL
+# redhat71,redhat72,redhat73,redhat80,redhat9 (Krb5,OpenSSL,Showdow,PAM,Zlib)
 # sco32v500net+ssl:
 # sco32v505net+ssl:
 # solaris2x+krb4:
@@ -807,59 +910,8 @@ SSLINC=-I$(sslroot)/ssl/include
 # sunos41gcc+krb4+openssl+zlib:       ditto, plus ZLIB compression
 # sunos41gcc+krb4+srp+openssl+zlib:   ditto, plus SRP
 # sunos41gcc+srp+openssl+zlib:
-# uw7ssl
-#
-##############################################################################
-#
-# NOTES FOR V7 AND 2.X BSD (BASED ON VERSION 4E OF C-KERMIT, 1987):
-#
-# For Unix Version 7, several variables must be defined to the values
-# associated with your system.  BOOTNAME=/edition7 is the kernel image on
-# okstate's Perkin-Elmer 3230.  Others will probably be /unix.  PROCNAME=proc
-# is the name of the structure assigned to each process on okstate's system.
-# This may be "_proc" or some other variation.  See <sys/proc.h> for more
-# info on your systems name conventions.  NPROCNAME=nproc is the name of a
-# kernel variable that tells how many "proc" structures there are.  Again
-# this may be different on your system, but nproc will probably be somewhere.
-# The variable NPTYPE is the type of the nproc variable -- int, short, etc.
-# which can probably be gleaned from <sys/param.h>.  The definition of DIRECT
-# is a little more complicated.  If nlist() returns, for "proc" only, the
-# address of the array, then you should define DIRECT as it is below.  If
-# however, nlist() returns the address of a pointer to the array, then you
-# should give DIRECT a null definition (DIRECT= ).  The extern declaration in
-# <sys/proc.h> should clarify this for you.  If it is "extern struct proc
-# *proc", then you should NOT define DIRECT.  If it is "extern struct proc
-# proc[]", then you should probably define DIRECT as it is below.  See
-# ckuv7.hlp for further information.
-#
-# For 2.9 BSD, the makefile may use pcc rather than cc for compiles; that's
-# what the CC and CC2 definitions are for (the current version of the
-# makefile uses cc for both; this was tested in version 4E of C-Kermit and
-# worked OK on the DEC Pro 380, but all bets are off for version 5A).  2.9
-# support basically follows the 4.1 path.  Some 2.9 systems use "dir.h" for
-# the directory header file, others will need to change this to "ndir.h".
-#
-# The v7 and 2.9bsd versions assume I&D space on a PDP-11.  When building
-# C-Kermit for v7 on a PDP-11, you should probably add the -i option to the
-# link flags.  Without I&D space, overlays will be necessary (if available),
-# or code segment mapping (a`la Pro/Venix) if that's available.
-#
-# C-Kermit 5A (and 6.0?) can be built for 2.10 and 2.11BSD, using overlays,
-# but a separate makefile is used because this one is too big.
-#
-##############################################################################
-#
-# V7-specific variables.
-# These are set up for Perkin-Elmer 3230 V7 Unix:
-#
-PROC=proc
-DIRECT=
-NPROC=nproc
-NPTYPE=int
-BOOTFILE=/edition7
-#
-# ( For old Tandy TRS-80 Model 16A or 6000 V7-based Xenix, use PROC=_proc,
-#   DIRECT=-DDIRECT, NPROC=_Nproc, NPTYPE=short, BOOTFILE=/xenix )
+# tru64-51b-openssl:                  Tru64 (Digital) Unix 5.1B with OpenSSL
+# uw7ssl                              Unixware 7 with SSL
 #
 ###########################################################################
 #
@@ -875,6 +927,20 @@ CC= cc
 CC2= cc
 MAKE= make
 SHELL=/bin/sh
+
+###########################################################################
+# (Ancient) UNIX V7-specific variables.
+# These are set up for Perkin-Elmer 3230 V7 Unix:
+#
+PROC=proc
+DIRECT=
+NPROC=nproc
+NPTYPE=int
+BOOTFILE=/edition7
+#
+# ( For old Tandy TRS-80 Model 16A or 6000 V7-based Xenix, use PROC=_proc,
+#   DIRECT=-DDIRECT, NPROC=_Nproc, NPTYPE=short, BOOTFILE=/xenix )
+#
 
 ###########################################################################
 # SAMPLE INSTALLATION SCRIPT
@@ -893,7 +959,7 @@ SHELL=/bin/sh
 #
 # You can also build and install in one step, e.g.:
 #
-#   make solaris8 install
+#   make linux install
 #
 # If you use the 'install' target to install C-Kermit, it creates an
 # UNINSTALL script that can be used to uninstall it.
@@ -929,6 +995,21 @@ ckuusy.$(EXT) ckcnet.$(EXT) ckuus6.$(EXT) ckuus7.$(EXT) ckusig.$(EXT) \
 ckucns.$(EXT) ckcmdb.$(EXT) ckuath.$(EXT) ckctel.$(EXT) ckclib.$(EXT) \
 ckcuni.$(EXT) ck_crp.$(EXT) ck_ssl.$(EXT) ckupty.$(EXT) ckcftp.$(EXT) \
 ckcpro.c wart
+
+show:
+	@echo prefix=$(prefix)
+	@echo srproot=$(srproot)
+	@echo sslroot=$(sslroot)
+	@echo manroot=$(manroot)
+	@echo K4LIB=$(K4LIB)
+	@echo K4INC=$(K4INC)
+	@echo K5LIB=$(K5LIB)
+	@echo K5INC=$(K5INC)
+	@echo SRPLIB=$(SRPLIB)
+	@echo SRPINC=$(SRPINC)
+	@echo SSLLIB=$(SSLLIB)
+	@echo SSLINC=$(SSLINC)
+	@exit
 
 # Install C-Kermit after building -- IMPORTANT: Read the instructions above
 # (SAMPLE INSTALLATION SCRIPT).  For SSL/TLS versions, ca_certs.pem file
@@ -998,7 +1079,7 @@ install:
 	echo "RmF $(DESTDIR)$(BINDIR)/kermit-sshsub" >&3;\
 	echo "RmF $(DESTDIR)$(BINDIR)/kermit" >&3;\
 	if test -f ckermit.ini; then\
-		echo "#!$(DESTDIR)$(BINDIR)/kermit" >\
+		echo "#!$(BINDIR)/kermit" >\
 			$(DESTDIR)$(BINDIR)/_tmp.ini;\
 		cat ckermit.ini >> $(DESTDIR)$(BINDIR)/_tmp.ini;\
 		mv $(DESTDIR)$(BINDIR)/_tmp.ini\
@@ -1019,20 +1100,19 @@ install:
 	echo " for details.";\
 	echo;\
 	echo MANDIR=$(MANDIR);\
-	if test -n "$(MANDIR)"; then\
-		if test -d $(MANDIR); then\
-			echo  "$(MANDIR) exists...";\
+	if test -n "$(DESTDIR)$(MANDIR)"; then\
+		if test -d $(DESTDIR)$(MANDIR); then\
+			echo  "$(DESTDIR)$(MANDIR) exists...";\
 		else\
 			echo "Creating $(MANDIR)...";\
 			mkdir $(MANDIR) || exit 1;\
 			chmod 755 $(MANDIR) || exit 1;\
 		fi;\
-		echo "Installing man page...";\
-		rm -f $(MANDIR)/kermit.$(MANEXT);\
-		cp    ckuker.nr $(MANDIR)/kermit.$(MANEXT) || exit 1;\
-		chmod 644       $(MANDIR)/kermit.$(MANEXT) || exit 1;\
+		rm -f $(DESTDIR)$(MANDIR)/kermit.$(MANEXT);\
+		cp ckuker.nr $(DESTDIR)$(MANDIR)/kermit.$(MANEXT) || exit 1;\
+		chmod 644 $(DESTDIR)$(MANDIR)/kermit.$(MANEXT) || exit 1;\
 		echo 'set flag=f\nPrC Removing man pages' >&3;\
-		echo "RmF $(MANDIR)/kermit.$(MANEXT)" >&3;\
+		echo "RmF $(DESTDIR)$(MANDIR)/kermit.$(MANEXT)" >&3;\
 		echo 'EfM' >&3;\
 		echo;\
 	else\
@@ -1163,14 +1243,12 @@ uninstall:
 
 makewhat:
 	@echo 'make what?  You must tell which platform to make C-Kermit for.'
-	@echo Examples: make linux, make hpux1100, make aix43, make solaris8.
+	@echo Examples: make linux, make aix, make solaris10, make hpux1100.
 	@echo Please read the comments at the beginning of the makefile.
 
 ###########################################################################
 #
 # Dependencies Section:
-
-# Normal version
 
 wermit:	ckcmai.$(EXT) ckclib.$(EXT) ckucmd.$(EXT) ckuusr.$(EXT) ckuus2.$(EXT) \
 		ckuus3.$(EXT) ckuus4.$(EXT) ckuus5.$(EXT) ckuus6.$(EXT) \
@@ -1189,7 +1267,7 @@ wermit:	ckcmai.$(EXT) ckclib.$(EXT) ckucmd.$(EXT) ckuusr.$(EXT) ckuus2.$(EXT) \
 		ckusig.$(EXT) ckcuni.$(EXT) ckupty.$(EXT) ckcftp.$(EXT) \
 		$(LIBS)
 
-# Version with CONNECT module that uses select() instead of fork()
+# Preferred configuration with select()-based CONNECT
 
 xermit:	ckcmai.$(EXT) ckclib.$(EXT) ckucmd.$(EXT) ckuusr.$(EXT) ckuus2.$(EXT) \
 		ckuus3.$(EXT) ckuus4.$(EXT) ckuus5.$(EXT) ckuus6.$(EXT) \
@@ -1405,6 +1483,9 @@ ckcnet.$(EXT): ckcnet.c ckcdeb.h ckcker.h ckcnet.h ckcsym.h ckcsig.h ckctel.h \
 		 ckclib.h
 
 ckctel.$(EXT): ckcsym.h ckcdeb.h ckcker.h ckcnet.h ckctel.h ckclib.h
+
+# ck_off_t: ck_off_t.$(EXT)
+#	$(CC) -o ck_off_t ck_off_t.$(EXT)
 
 wart: ckwart.$(EXT)
 	$(CC) $(LNKFLAGS) -o wart ckwart.$(EXT) $(LIBS)
@@ -1631,6 +1712,7 @@ freebsd2c:
 
 #FreeBSD 3.x with ncurses and uu_lock()
 #(Note: uu_lock() goes back to 2.2.2, but not necessarily 2.0)
+#OK 2011/08/20 FreeBSD 3.3
 freebsd3:
 	@echo 'Making C-Kermit $(CKVER) for FreeBSD 3.x with ncurses...'
 	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
@@ -1650,7 +1732,7 @@ freebsd3c:
 
 #FreeBSD 4.0 with ncurses and uu_lock().  Note - there is no curses in 4.0.
 #ncurses 5.0 is broken requiring us to work around with setbuf().
-freebsd4:
+freebsd40:
 	@echo 'Making C-Kermit $(CKVER) for FreeBSD 4.x with ncurses...'
 	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS= -DBSD44 -DCK_NCURSES -DTCPSOCKET -DNOCOTFMC -DFNFLOAT \
@@ -1658,198 +1740,200 @@ freebsd4:
 	-DNONOSETBUF -DUSE_UU_LOCK $(KFLAGS) -O -pipe" \
 	"LIBS= -lncurses -lcrypt -lutil -lm $(LIBS)"
 
-#FreeBSD 4.1, as above but without the NONOSETBUF hack and with CK_NEWTERM.
-#This works with ncurses 5.1.
-freebsd41:
-	@echo 'Making C-Kermit $(CKVER) for FreeBSD 4.1 with ncurses...'
+#FreeBSD 4.1 and above
+#Like FreeBSD 4.0 but without the NONOSETBUF hack and with CK_NEWTERM.
+#NOTE: This target definitely does not work for FreeBSD 3.3 in 9.0.302.
+#and it has not been tested on 4 or 5.
+#OK 2011/06/xx FreeBSD 3.3, 4,4, 4.7, and 8.2
+#OK 2011/08/21 FreeBSD 3.3, 4.4, 6.4, 9.0
+freebsd freebsd41 freebsd72 freebsd5 freebsd6 freebsd7 freebsd8 freebsd9:
+	@echo 'Making C-Kermit $(CKVER) for FreeBSD 4.1 or later...'
+	@if test `uname -r | cut -d . -f 1` -ge 8; then \
+	   HAVE_FBSD8='-DFREEBSD8'; \
+	else HAVE_FBSD8=''; fi; \
+	if test `uname -r | cut -d . -f 1` -ge 9; then \
+	   HAVE_FBSD9='-DFREEBSD9'; \
+	else HAVE_FBSD9='';  fi; \
+	if test -f /usr/include/utmpx.h ; \
+	then HAVE_UTMPX='-DHAVEUTMPX' ; \
+	else HAVE_UTMPX='' ; fi; \
 	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS= -DBSD44 -DCK_NCURSES -DCK_NEWTERM -DTCPSOCKET -DNOCOTFMC \
-	-DFREEBSD4 -DFREEBSD41 -DUSE_UU_LOCK -DFNFLOAT \
-	-funsigned-char -DTPUTSARGTYPE=int -DUSE_STRERROR $(KFLAGS) -O -pipe" \
+	-DFREEBSD4 $$HAVE_FBSD8 $$HAVE_FBSD9 -DUSE_UU_LOCK -DFNFLOAT \
+	$$HAVE_UTMPX -DHERALD=\"\\\" `uname -rs`\\\"\" \
+	-funsigned-char -DTPUTSARGTYPE=int -DUSE_STRERROR $(KFLAGS) \
+	-O2 -pipe"\
 	"LIBS= -lncurses -lcrypt -lutil -lm $(LIBS)"
 
-#Default FreeBSD make for C-Kermit 8.0...
-freebsd:
-	$(MAKE) "MAKE=$(MAKE)" CC=$(CC) CC2=$(CC2) \
-	KTARGET=$${KTARGET-$(@)} freebsd45
+#FreeBSD 5.0 or later with OpenSSL.
+#OK 2011/06/15 FreeBSD 4.7 and 8.2
+#OK 2011/08/20 FreeBSD 9.0-CURRENT
+freebsd+ssl freebsd+openssl freebsd50+openssl:
+	@echo 'Making C-Kermit $(CKVER) for FreeBSD with Kerberos 5...'
+	@case `openssl version` in \
+	  *0.9.7*) OPENSSLOPTION="-DOPENSSL_097" ;; \
+	  *0.9.8*) OPENSSLOPTION="-DOPENSSL_098" ;; \
+	  *1.[0-9].[0-9]*) OPENSSLOPTION="-DOPENSSL_100" ;; \
+	  *) OPENSSLOPTION="" ;; \
+	esac; \
+	HAVE_DES=''; \
+	DES_LIB=''; \
+	if ls /usr/lib/libdes* > /dev/null 2> /dev/null || \
+	   ls $(SSLLIB)/libdes* > /dev/null 2> /dev/null; then \
+	      DES_LIB='-ldes'; \
+	      HAVE_DES='-DCK_DES -DLIBDES'; \
+              echo "HAVE DES"; \
+           else echo "NO DES"; \
+	fi; \
+	$(MAKE) freebsd KTARGET=$${KTARGET:-$(@)} "CC = $(CC)" "CC2 = $(CC2)" \
+	KFLAGS="-DCK_AUTHENTICATION -DCK_SSL $(SSLINC) -DZLIB $$OPENSSLOPTION \
+	$$HAVE_DES $(KFLAGS)"  "LNKFLAGS = $(LNKFLAGS)" \
+	"LIBS= -lncurses -lcrypt -lssl -lcrypto -lutil -lm \
+	$(SSLLIB) $$DES_LIB $(LIBS)"; \
+	if [ ! -f ./wermit ] || [ ./ckcmai.o -nt ./wermit ] ; then \
+		echo ""; \
+		echo "If build failed try:"; \
+		echo ""; \
+		echo "  make clean ; make $${KTARGET:-$(@)} KFLAGS=-UCK_DES"; \
+		echo ""; \
+	fi
 
-#FreeBSD 4.2, like 4.1.
-freebsd42:
-	@echo 'Making C-Kermit $(CKVER) for FreeBSD 4.2...'
-	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
-	"CFLAGS= -DBSD44 -DCK_NCURSES -DCK_NEWTERM -DTCPSOCKET -DNOCOTFMC \
-	-DFREEBSD4 -DFREEBSD41 -DFREEBSD42 -DUSE_UU_LOCK -DFNFLOAT \
-	-funsigned-char -DTPUTSARGTYPE=int -DUSE_STRERROR $(KFLAGS) -O -pipe" \
-	"LIBS= -lncurses -lcrypt -lutil -lm $(LIBS)"
-
-#FreeBSD 4.3, like 4.2.
-freebsd43:
-	@echo 'Making C-Kermit $(CKVER) for FreeBSD 4.3...'
-	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
-	"CFLAGS= -DBSD44 -DCK_NCURSES -DCK_NEWTERM -DTCPSOCKET -DNOCOTFMC \
-	-DFREEBSD4 -DFREEBSD41 -DFREEBSD42 -DFREEBSD43 -DUSE_UU_LOCK \
-	-DFNFLOAT -funsigned-char -DTPUTSARGTYPE=int -DUSE_STRERROR $(KFLAGS) \
-	-O -pipe" "LIBS= -lncurses -lcrypt -lutil -lm $(LIBS)"
-
-#FreeBSD 4.4, like 4.3.
-freebsd44:
-	@echo 'Making C-Kermit $(CKVER) for FreeBSD 4.4...'
-	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
-	"CFLAGS= -DBSD44 -DCK_NCURSES -DCK_NEWTERM -DTCPSOCKET -DNOCOTFMC \
-	-DFREEBSD4 -DFREEBSD41 -DFREEBSD42 -DFREEBSD43 -DFREEBSD44 \
-	-DUSE_UU_LOCK -DFNFLOAT -funsigned-char -DTPUTSARGTYPE=int \
-	-DUSE_STRERROR $(KFLAGS) -O -pipe" \
-	"LIBS= -lncurses -lcrypt -lutil -lm $(LIBS)"
-
-#FreeBSD 4.5, like 4.3 and 4.4.
-freebsd45:
-	@echo 'Making C-Kermit $(CKVER) for FreeBSD 4.5...'
-	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
-	"CFLAGS= -DBSD44 -DCK_NCURSES -DCK_NEWTERM -DTCPSOCKET -DNOCOTFMC \
-	-DFREEBSD4 -DUSE_UU_LOCK -DFNFLOAT -funsigned-char -DTPUTSARGTYPE=int \
-	-DFREEBSD41 -DFREEBSD42 -DFREEBSD43 -DFREEBSD44 -DFREEBSD45 \
-	-DUSE_STRERROR $(KFLAGS) -O -pipe" \
-	"LIBS= -lncurses -lcrypt -lutil -lm $(LIBS)"
-
-#FreeBSD 4.6, like 4.5
-freebsd46:
-	@echo 'Making C-Kermit $(CKVER) for FreeBSD 4.6...'
-	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
-	"CFLAGS= -DBSD44 -DCK_NCURSES -DCK_NEWTERM -DTCPSOCKET -DNOCOTFMC \
-	-DFREEBSD4 -DUSE_UU_LOCK -DFNFLOAT -funsigned-char -DTPUTSARGTYPE=int \
-	-DFREEBSD41 -DFREEBSD42 -DFREEBSD43 -DFREEBSD44 -DFREEBSD45 \
-	-DFREEBSD46 -DUSE_STRERROR $(KFLAGS) -O -pipe" \
-	"LIBS= -lncurses -lcrypt -lutil -lm $(LIBS)"
-
-#FreeBSD 4.7, like 4.6
-freebsd47:
-	@echo 'Making C-Kermit $(CKVER) for FreeBSD 4.7...'
-	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
-	"CFLAGS= -DBSD44 -DCK_NCURSES -DCK_NEWTERM -DTCPSOCKET -DNOCOTFMC \
-	-DFREEBSD4 -DUSE_UU_LOCK -DFNFLOAT -funsigned-char -DTPUTSARGTYPE=int \
-	-DFREEBSD41 -DFREEBSD42 -DFREEBSD43 -DFREEBSD44 -DFREEBSD45 \
-	-DFREEBSD46 -DFREEBSD47 -DUSE_STRERROR $(KFLAGS) -O -pipe" \
-	"LIBS= -lncurses -lcrypt -lutil -lm $(LIBS)"
-
-#FreeBSD 4.8, like 4.7
-freebsd48:
-	@echo 'Making C-Kermit $(CKVER) for FreeBSD 4.7...'
-	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
-	"CFLAGS= -DBSD44 -DCK_NCURSES -DCK_NEWTERM -DTCPSOCKET -DNOCOTFMC \
-	-DFREEBSD4 -DUSE_UU_LOCK -DFNFLOAT -funsigned-char -DTPUTSARGTYPE=int \
-	-DFREEBSD41 -DFREEBSD42 -DFREEBSD43 -DFREEBSD44 -DFREEBSD45 \
-	-DFREEBSD46 -DFREEBSD47 -DFREEBSD48 \
-	-DUSE_STRERROR $(KFLAGS) -O -pipe" \
-	"LIBS= -lncurses -lcrypt -lutil -lm $(LIBS)"
-
-#FreeBSD 4.9
-freebsd49:
-	@echo 'Making C-Kermit $(CKVER) for FreeBSD 4.7...'
-	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
-	"CFLAGS= -DBSD44 -DCK_NCURSES -DCK_NEWTERM -DTCPSOCKET -DNOCOTFMC \
-	-DFREEBSD4 -DUSE_UU_LOCK -DFNFLOAT -funsigned-char -DTPUTSARGTYPE=int \
-	-DFREEBSD41 -DFREEBSD42 -DFREEBSD43 -DFREEBSD44 -DFREEBSD45 \
-	-DFREEBSD46 -DFREEBSD47 -DFREEBSD48 -DFREEBSD49 \
-	-DUSE_STRERROR $(KFLAGS) -O -pipe" \
-	"LIBS= -lncurses -lcrypt -lutil -lm $(LIBS)"
-
-#FreeBSD 5.0, like 4.6
-freebsd50:
-	@echo 'Making C-Kermit $(CKVER) for FreeBSD 5.0 with ncurses...'
-	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
-	"CFLAGS= -DBSD44 -DCK_NCURSES -DCK_NEWTERM -DTCPSOCKET -DNOCOTFMC \
-	-DFREEBSD4 -DUSE_UU_LOCK -DFNFLOAT -funsigned-char -DTPUTSARGTYPE=int \
-	-DFREEBSD41 -DFREEBSD42 -DFREEBSD43 -DFREEBSD44 -DFREEBSD45 \
-	-DFREEBSD46 -DFREEBSD50 -DUSE_STRERROR $(KFLAGS) -O -pipe" \
-	"LIBS= -lncurses -lcrypt -lutil -lm $(LIBS)"
-
-#FreeBSD 5.1
-freebsd51:
-	@echo 'Making C-Kermit $(CKVER) for FreeBSD 5.0 with ncurses...'
-	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
-	"CFLAGS= -DBSD44 -DCK_NCURSES -DCK_NEWTERM -DTCPSOCKET -DNOCOTFMC \
-	-DFREEBSD4 -DUSE_UU_LOCK -DFNFLOAT -funsigned-char -DTPUTSARGTYPE=int \
-	-DFREEBSD41 -DFREEBSD42 -DFREEBSD43 -DFREEBSD44 -DFREEBSD45 \
-	-DFREEBSD46 -DFREEBSD50 -DFREEBSD51 \
-	-DUSE_STRERROR $(KFLAGS) -O -pipe" \
-	"LIBS= -lncurses -lcrypt -lutil -lm $(LIBS)"
-
-#Secure builds for FreeBSD...  gcc required.
-
-freebsd44+srp+openssl:
-	@echo 'Making C-Kermit $(CKVER) for FreeBSD 4.3 with SRP,SSL...'
-	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} "CC = gcc" "CC2 = gcc" \
-	"CFLAGS= -DBSD44 -DCK_NCURSES -DCK_NEWTERM -DTCPSOCKET -DNOCOTFMC \
-	-DFREEBSD4 -DFREEBSD41 -DFREEBSD42 -DFREEBSD43 -DFREEBSD44 \
-	-DCK_AUTHENTICATION -DCK_SRP \
-	-DCK_ENCRYPTION -DCK_CAST -DCK_DES -DLIBDES -DCK_SSL \
-	-DCK_CURSES -DTCPSOCKET  \
-	$(SRPINC) $(SSLINC) $(KFLAGS)" "LNKFLAGS = $(LNKFLAGS)" \
-	"LIBS = $(SRPLIB) $(SSLLIB) \
-	-lncurses -ltermcap -lsrp -lssl -lkrypto -lcrypto \
-	-lcrypt "
-
-# The following fragmentary FreeBSD+SLL target was suggested, but it's not
-# clear which version of FreeBSD it applies to.
-#
-# ALL_TARGET=	xermit
-# MAKE_ARGS=	KTARGET=freebsd \
-#		CFLAGS="${CFLAGS} -DBSD44 -DCK_NCURSES -DCK_NEWTERM \
-#		-DTCPSOCKET -DNOCOTFMC -DFREEBSD4 -DUSE_UU_LOCK -DFNFLOAT \
-#		-funsigned-char -DTPUTSARGTYPE=int -DUSE_STRERROR -DCKHTTP \
-#		-DCK_SSL -DCK_AUTHENTICATION -DCK_ENCRYPTION -DCK_DES" \
-#		LIBS="-lssl -lcrypto -ldes -lncurses -lcrypt -lutil -lm"
-
-#FreeBSD 5.0 with OpenSSL 0.9.7.
-freebsd50+openssl:
-	@echo 'Making C-Kermit $(CKVER) for FreeBSD 5.0, ncurses, openssl'
-	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
-	"CFLAGS= -DBSD44 -DCK_NCURSES -DCK_NEWTERM -DTCPSOCKET -DNOCOTFMC \
-	-DCK_AUTHENTICATION -DCK_SSL $(SSLINC) -DZLIB \
-	-DFREEBSD4 -DUSE_UU_LOCK -DFNFLOAT -funsigned-char -DTPUTSARGTYPE=int \
-	-DFREEBSD41 -DFREEBSD42 -DFREEBSD43 -DFREEBSD44 -DFREEBSD45 \
-	-DFREEBSD46 -DFREEBSD50 -DUSE_STRERROR $(KFLAGS) -O -pipe" \
-	"LIBS= -lncurses -lcrypt -lssl -lcrypto -lutil -lm $(SSLLIB) $(LIBS)"
-
-#NetBSD - all versions - with curses, not ncurses.
-#Some builds seem to need KFLAGS=-DTPUTSFNTYPE=int, others don't.
-#(Only to get rid of a warning -- the binaries are identical.)
-netbsd:
+#NetBSD 1.4.1 or later with vanity banner automated with uname
+#and automatic inclusion of large file support if it is available.
+#This target tested successfully on NetBSD 1.4.1, 1.5.2, and 2.0.3 (Jan 2006).
+#Fails on NetBSD 2.0 on Sun/3 mc68030 with gcc 3.3.3 unless optimization is
+#disabled on ckcfn2.c ("KFLAGS=-O0") (Letter O Digit Zero).
+#(This could be automated by testing `uname -m` for "sun3".)
+#OK: 2011/06/15 on NetBSD 1.5.2 and 5.1.
+#OK: 2011/08/21 on 5.1.
+netbsd netbsd2 netbsd15 netbsd16 old-netbsd:
 	@echo Making C-Kermit $(CKVER) for NetBSD with curses...
 	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
-	"CFLAGS= -DBSD44 -DCK_CURSES -DTCPSOCKET -DUSE_STRERROR -DTPUTSISVOID \
+	"CFLAGS=`grep fseeko /usr/include/stdio.h > /dev/null && \
+	echo '-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64'` \
+	-DBSD44 -DCK_CURSES -DTCPSOCKET -DUSE_STRERROR -DHAVE_OPENPTY \
+	-funsigned-char -DHERALD=\"\\\" NetBSD `uname -r`\\\"\" \
 	-DCK_DTRCD -DCK_DTRCTS -DTPUTSARGTYPE=int -DFNFLOAT $(KFLAGS) -O" \
-	"LIBS= -lcurses -lcrypt -lm $(LIBS)"
+	"LIBS= -lcurses -lcrypt -lm -lutil $(LIBS)"
 
-#NetBSD 1.5.x in which the return type of the function pointer that is the
-#third argument of tputs() was changed from void to int...  The regular NetBSD
-#target builds OK here but this one eliminates the (harmless) warning.
-netbsd15:
+#NetBSD 1.4.1 or later with OpenSSL
+#OK: 2011/06/15 on NetBSD 5.1 (but not 1.5.2 with OpenSSL 0.9.5a)
+#OK: 2011/08/21 on 5.1.
+netbsd+ssl netbsd+openssl:
+	@echo 'Making C-Kermit $(CKVER) for NetBSD+OpenSSL SSLLIB=$(SSLLIB)'
+	@case `openssl version` in \
+	  *0.9.7*) OPENSSLOPTION="-DOPENSSL_097" ;; \
+	  *0.9.8*) OPENSSLOPTION="-DOPENSSL_098" ;; \
+	  *1.[0-9].[0-9]*) OPENSSLOPTION="-DOPENSSL_100" ;; \
+	  *) OPENSSLOPTION="" ;; \
+	esac; \
+	HAVE_DES=''; \
+	DES_LIB=''; \
+	if ls /usr/lib/libdes* > /dev/null 2> /dev/null || \
+	   ls $(SSLLIB)/libdes* > /dev/null 2> /dev/null; then \
+	      DES_LIB='-ldes'; \
+	      HAVE_DES='-DCK_DES -DLIBDES'; \
+              echo "HAVE DES"; \
+           else echo "NO DES"; \
+	fi; \
+	$(MAKE) netbsd KTARGET=$${KTARGET:-$(@)} "CC = $(CC)" "CC2 = $(CC2)" \
+	"KFLAGS= -DCK_AUTHENTICATION -DCK_ENCRYPTION -DCK_CAST $$HAVE_DES \
+	-DCK_SSL -DCK_PAM -DZLIB -DNO_DCL_INET_ATON $$OPENSSLOPTION \
+	$(KFLAGS)" "LNKFLAGS = $(LNKFLAGS)" \
+	"LIBS= -L/usr/pkg/lib -R/usr/pkg/lib -lssl $$DES_LIB -lcurses \
+	-lcrypto -lcrypt -lz -lm -lpam -lutil $(LIBS)"
+
+#NetBSD with MIT Kerberos 5:
+# OK 2011/06/15 (once K5INC and K5LIB were set right).
+# NOT OK for Heimdal - Heimdal Kerberos support in C-Kermit needs work.
+# OK: 2011/08/21 on 5.1.
+netbsd+krb5:
+	@echo 'Making C-Kermit $(CKVER) for NetBSD with Kerberos 5...'
+	@case `openssl version` in \
+	  *0.9.7*) OPENSSLOPTION="-DOPENSSL_097" ;; \
+	  *0.9.8*) OPENSSLOPTION="-DOPENSSL_098" ;; \
+	  *1.[0-9].[0-9]*) OPENSSLOPTION="-DOPENSSL_100" ;; \
+	  *) OPENSSLOPTION="" ;; \
+	esac; \
+	HAVE_DES=''; \
+	DES_LIB=''; \
+	if ls /usr/lib/libdes* > /dev/null 2> /dev/null || \
+	   ls $(SSLLIB)/libdes* > /dev/null 2> /dev/null; then \
+	      DES_LIB='-ldes'; \
+	      HAVE_DES='-DCK_DES -DLIBDES'; \
+              echo "HAVE DES"; \
+           else echo "NO DES"; \
+	fi; \
+	$(MAKE) netbsd KTARGET=$${KTARGET:-$(@)} "CC = $(CC)" "CC2 = $(CC2)" \
+	"KFLAGS= -DCK_AUTHENTICATION -DCK_ENCRYPTION -DCK_KERBEROS -DKRB5 \
+	-DCK_CAST $$HAVE_DES -DNOFTP_GSSAPI $(K5INC) $(K5INC)/krb5 \
+	$(KFLAGS)" \
+	"LIBS= $(K5LIB) -L/usr/pkg/lib -R/usr/pkg/lib -lcurses $$DES_LIB \
+	-lcrypto -lgssapi -lkrb5 -lm -lutil $(LIBS)"
+
+# NetBSD - With Kerberos 5 and SSL and Zlib.
+# OK: 2011/08/21 on 5.1 with MIT Kerberos.
+netbsd+krb5+ssl netbsd+krb5+openssl+zlib:
+	@echo 'Making C-Kermit $(CKVER) for NetBSD+OpenSSL+Kerberos5...'
+	@case `openssl version` in \
+	  *0.9.7*) OPENSSLOPTION="-DOPENSSL_097" ;; \
+	  *0.9.8*) OPENSSLOPTION="-DOPENSSL_098" ;; \
+	  *1.[0-9].[0-9]*) OPENSSLOPTION="-DOPENSSL_100" ;; \
+	  *) OPENSSLOPTION="" ;; \
+	esac; \
+	HAVE_DES=''; \
+	DES_LIB=''; \
+	if ls /usr/lib/libdes* > /dev/null 2> /dev/null || \
+	   ls $(SSLLIB)/libdes* > /dev/null 2> /dev/null; then \
+	      DES_LIB='-ldes'; \
+	      HAVE_DES='-DCK_DES -DLIBDES'; \
+              echo "HAVE DES"; \
+           else echo "NO DES"; \
+	fi; \
+	$(MAKE) netbsd KTARGET=$${KTARGET:-$(@)} "CC = $(CC)" "CC2 = $(CC2)" \
+	"KFLAGS= -DCK_AUTHENTICATION -DCK_ENCRYPTION -DCK_CAST $$HAVE_DES \
+	-DCK_KERBEROS -DKRB5 -DNOFTP_GSSAPI $(K5INC) $(K5INC)/krb5 \
+	-DCK_SSL -DCK_PAM -DZLIB -DNO_DCL_INET_ATON $$OPENSSLOPTION \
+	$(KFLAGS)" "LNKFLAGS = $(LNKFLAGS)" \
+	"LIBS= $(K5LIB) -L/usr/pkg/lib -R/usr/pkg/lib -lssl $$DES_LIB \
+	-lcrypto -lcrypt -lgssapi -lkrb5 -lz -lm -lpam -lutil -lcurses $(LIBS)"
+
+#Special Security Enhanced NetBSD target with SRP, SSL, and zlib support.
+#To build this, you need to BUILD the pkgsrc srp_client package.  After
+#you build it, you must go into work/srp-x.y.z/libkrypto and "bmake install"
+#then go to work/srp-x.y.z/libsrp and "bmake install".  As of 2005Q3, the
+#pkgsrc install only installed the statically linked client applications.  You
+#need to manually install the libraries to build your own applications.
+#NOT TESTED RECENTLY - probably needs work.
+netbsd+ssl+srp+zlib:
 	@echo Making C-Kermit $(CKVER) for NetBSD with curses...
 	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS= -DBSD44 -DCK_CURSES -DTCPSOCKET -DUSE_STRERROR -DNETBSD15 \
-	-DCK_DTRCD -DCK_DTRCTS -DTPUTSARGTYPE=int -DFNFLOAT $(KFLAGS) -O" \
-	"LIBS= -lcurses -lcrypt -lm $(LIBS)"
+	-DCK_DTRCD -DCK_DTRCTS -DTPUTSARGTYPE=int -DHAVE_OPENPTY \
+	-I/usr/include/openssl -I/usr/pkg/include \
+	-DCK_AUTHENTICATION -DCK_SRP -DPRE_SRP_1_4_5 -DCK_ENCRYPTION \
+	-DCK_CAST -DCK_DES -DLIBDES -DCK_SSL -DZLIB -DFNFLOAT $(KFLAGS) -O" \
+	"LIBS= -L/usr/pkg/lib -R/usr/pkg/lib -lcurses -lsrp -lgmp -ldes \
+	-lssl -lkrypto -lcrypto -lcrypt -lz -lm -lutil $(LIBS)"
 
-#NetBSD 1.6 - like 1.5.x but with vanity banner saying 1.6.
-netbsd16:
-	@echo Making C-Kermit $(CKVER) for NetBSD with curses...
-	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
-	"CFLAGS= -DBSD44 -DCK_CURSES -DTCPSOCKET -DUSE_STRERROR \
-	-DNETBSD15 -DNETBSD16 \
-	-DCK_DTRCD -DCK_DTRCTS -DTPUTSARGTYPE=int -DFNFLOAT $(KFLAGS) -O" \
-	"LIBS= -lcurses -lcrypt -lm $(LIBS)"
+#NetBSD with curses left out (e.g. for use as IKSD).
+netbsdnc:
+	@echo Making C-Kermit $(CKVER) for NetBSD with no curses...
+	$(MAKE) CC=$(CC) CC2=$(CC2) netbsd KTARGET=$${KTARGET:-$(@)} \
+	"KFLAGS=-DNOCURSES"
 
 #NetBSD with ncurses requested explicitly rather than curses-which-is-ncurses
 netbsdn:
-	@echo Making C-Kermit $(CKVER) for NetBSD with ncurses...
+	@echo Making C-Kermit $(CKVER) for NetBSD with curses...
 	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
-	"CFLAGS= -DBSD44 -DCK_CURSES -DTCPSOCKET -DNOCOTFMC -DCK_DTRCD \
-	-DCK_DTRCTS -DFNFLOAT -DUSE_STRERROR -DTPUTSISVOID -DTPUTSARGTYPE=int \
-	$(KFLAGS) -O" \
-	"LIBS= -L/usr/pkg/lib -lncurses -lcrypt -lm $(LIBS)"
+	"CFLAGS=`grep fseeko /usr/include/stdio.h > /dev/null && \
+	echo '-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64'` \
+	-DBSD44 -DCK_CURSES -DTCPSOCKET -DUSE_STRERROR -DHAVE_OPENPTY \
+	-DHERALD=\"\\\" NetBSD `uname -r`\\\"\" \
+	-DCK_DTRCD -DCK_DTRCTS -DTPUTSARGTYPE=int -DFNFLOAT $(KFLAGS) -O" \
+	"LIBS= -L/usr/pkg/lib -lncurses -lcrypt -lm -lutil $(LIBS)"
 
-#OpenBSD - All versions.
+#OpenBSD before 2.3.
 #Uses ncurses as its curses so use -ltermlib, not -ltermcap
 #But it doesn't use uu_lock() which was introduced in OpenBSD 2.3.
 #For that use the next entry.
@@ -1867,10 +1951,22 @@ openbsdold:
 # -DUSE_UU_LOCK and -lutil added for uu_lock()
 # -DNDSYSERRLIST changed to -DUSE_STRERROR
 #If this gives you trouble use the previous entry.
+#NOTE: The openbsd and openbsd+ssl should be reworked to be like the
+#corresponding FreeBSD and NetBSD targets.  The mirbsd targets should
 openbsd:
 	@echo Making C-Kermit $(CKVER) for OpenBSD 2.3 or later...
 	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS= -DBSD44 -DCK_CURSES -DCK_NEWTERM -DTCPSOCKET -DOPENBSD \
+	-DHERALD=\"\\\" OpenBSD `uname -r`\\\"\" \
+	-DUSE_UU_LOCK -DFNFLOAT -DUSE_STRERROR $(KFLAGS) -O" \
+	"LIBS= -lcurses -lutil -lm"
+
+#Better to chain to the openbsd target but...
+mirbsd:
+	@echo Making C-Kermit $(CKVER) for OpenBSD 2.3 or later...
+	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
+	"CFLAGS= -DBSD44 -DCK_CURSES -DCK_NEWTERM -DTCPSOCKET -DOPENBSD \
+	-DHERALD=\"\\\" MirBSD `uname -r`\\\"\" \
 	-DUSE_UU_LOCK -DFNFLOAT -DUSE_STRERROR $(KFLAGS) -O" \
 	"LIBS= -lcurses -lutil -lm"
 
@@ -1881,12 +1977,22 @@ openbsd:
 # -DUSE_UU_LOCK and -lutil added for uu_lock()
 # -DNDSYSERRLIST changed to -DUSE_STRERROR
 #If this gives you trouble use the previous entry.
-openbsd30+ssl:
+openbsd+ssl:
 	@echo Making C-Kermit $(CKVER) for OpenBSD 3.0 or later...
 	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS= -DBSD44 -DCK_CURSES -DCK_NEWTERM -DTCPSOCKET -DOPENBSD \
+	-DHERALD=\"\\\" OpenBSD `uname -r`\\\"\" \
 	-DUSE_UU_LOCK -DFNFLOAT -DUSE_STRERROR -DCK_AUTHENTICATION \
 	-DCK_SSL $(KFLAGS) -O" \
+	"LIBS= -lcurses -lutil -lm -lssl -lcrypto"
+
+mirbsd+ssl:
+	@echo Making C-Kermit $(CKVER) for OpenBSD 3.0 or later...
+	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
+	"CFLAGS= -DBSD44 -DCK_CURSES -DCK_NEWTERM -DTCPSOCKET -DOPENBSD \
+	-DHERALD=\"\\\" MirBSD `uname -r`\\\"\" \
+	-DUSE_UU_LOCK -DFNFLOAT -DUSE_STRERROR -DCK_AUTHENTICATION \
+	-DCK_SSL -DNO_DCL_INET_ATON $(KFLAGS) -O" \
 	"LIBS= -lcurses -lutil -lm -lssl -lcrypto"
 
 # make 386bsd 0.0new, posix
@@ -1902,8 +2008,11 @@ openbsd30+ssl:
 	-DLOCK_DIR=\\\"/var/spool/lock\\\" \
 	$(KFLAGS) -O" "LNKFLAGS = -s" "LIBS = -lcurses -ltermcap"
 
+# Mac OS X 10 early versions.
+# For 10.3.9 and later, use the macosx target below.
+
 #Mac OS X 1.0 (Rhapsody, Darwin) -- TCP/IP but no curses.
-macosx10:
+oldmacosx10:
 	@echo Making C-Kermit $(CKVER) for `uname -s`...
 	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS= -DMACOSX10 -DTCPSOCKET -DUSE_STRERROR -O $(KFLAGS)"
@@ -1911,7 +2020,7 @@ macosx10:
 #Mac OS X 1.0 (Rhapsody, Darwin) -- TCP/IP and curses.
 #Note: curses must be obtained separately.  See next entry for ncurses.
 #Add "LIBS = -lcurses -ltermcap" if necessary (but reportedly it is not).
-macosx10c:
+oldmacosx10c:
 	@echo Making C-Kermit $(CKVER) for `uname -s` + curses...
 	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS= -DMACOSX10 -DCK_CURSES -DTPUTSFNTYPE=void -DTPUTSISVOID \
@@ -1920,14 +2029,14 @@ macosx10c:
 #Mac OS X 1.0 (Rhapsody, Darwin) -- TCP/IP and ncurses.
 #Note: ncurses must be obtained separately.
 #In the event of trouble with this one try the next one.
-macosx10nc:
+oldmacosx10nc:
 	@echo Making C-Kermit $(CKVER) for `uname -s` + ncurses...
 	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS= -DMACOSX10 -DCK_NCURSES -DTCPSOCKET -DUSE_STRERROR -O \
 	$(KFLAGS)" "LIBS= -lncurses $(LIBS)"
 
 #Mac OS X 10.2 (Jaguar) ncurses.
-macosx102nc:
+oldmacosx102nc:
 	@echo Making C-Kermit $(CKVER) for `uname -s` + ncurses...
 	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS= -DMACOSX10 -DCK_NCURSES -DTCPSOCKET -DUSE_STRERROR -O \
@@ -1935,8 +2044,8 @@ macosx102nc:
 
 #The problem here is that if curses.h also exists, it conflicts with
 #ncurses.h and and we have fatal errors.  If this happens to you, then
-#try this entry.
-macosx10ncx:
+#try this target.
+oldmacosx10ncx:
 	@echo Making C-Kermit $(CKVER) for `uname -s` + ncurses...
 	@rm -f ./curses.h; touch ./curses.h
 	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
@@ -1946,15 +2055,90 @@ macosx10ncx:
 	@rm -f ./curses.h
 
 #Mac OS X 10.3 (Panther) - Assumes ncurses is installed.
-macosx103: 
+oldmacosx103: 
 	@echo Making C-Kermit $(CKVER) for `uname -s` + ncurses...
 	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
-	"CFLAGS= -DMACOSX10 -DMACOSX103 -DCK_NCURSES -DTCPSOCKET \
+	"CFLAGS= -DMACOSX10 -DMACOSX103 -DCK_NCURSES -DTCPSOCKET -DCKHTTP \
 	-DUSE_STRERROR -DUSE_NAMESER_COMPAT -O \
 	$(KFLAGS) " "LIBS= -lncurses -lresolv $(LIBS)"
 
-macosx103nc:
-	$(MAKE) MAKE=$(MAKE) CC=$(CC) CC2=$(CC2) macosx103
+#Mac OS X 10.3 (Panther) with Kerberos 5 and SSL, assumes ncurses is installed.
+oldmacosx103+secure:
+	@echo Making Secure C-Kermit $(CKVER) for `uname -s` + ncurses...
+	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
+	"CFLAGS= -DMACOSX10 -DMACOSX103 -DCK_NCURSES -DTCPSOCKET \
+	-DUSE_STRERROR -DUSE_NAMESER_COMPAT -O -DCK_PAM \
+	-DCK_AUTHENTICATION -DCK_KERBEROS -DKRB5 -DZLIB \
+	-DCK_ENCRYPTION -DCK_CAST -DCK_DES -DLIBDES -DCK_SSL \
+	$(KFLAGS) " "LIBS= -lssl -lcrypto -lkrb5 -lcom_err \
+	-lk5crypto -lgssapi_krb5 -lpam -lncurses -lresolv $(LIBS)"
+
+# THIS IS THE MAIN MAC OS X TARGET (the next one is for Kerberos/SSL builds).
+# Use this target for 10.3.9 (or maybe earlier) through 10.6 (maybe later)
+# on both Power and Intel architectures.  This one uses utmp.h on 10.4 and
+# earlier and utmpx.h on 10.5 onwards.
+# Note: Mac OS X 10.5 and earlier are 32-bit; 10.6 and later 64-bit.
+# Note 2: As of C-Kermit 9.0 -NOUUCP is included by default because
+# Mac OS X doesn't support UUCP.  To undo this, use KFLAGS=-UNOUUCP.
+#OK: 2011/06/14 (for 10.4.11, 10.5.8, 10.6.7)
+macosx macosx10 macosx10.3.9 macosx10.4 macosx10.5 macosx10.6:
+	@MACOSNAME=`/usr/bin/sw_vers -productName`; \
+	MACOSV=`/usr/bin/sw_vers -productVersion`; \
+	echo Making C-Kermit $(CKVER) for $$MACOSNAME $$MACOSV... ; \
+	MACCPU=$$HOSTTYPE; \
+	if test `uname -r | cut -d . -f 1` -gt 8; \
+	then if test -f /usr/include/utmpx.h ; \
+	then HAVE_UTMPX='-DHAVEUTMPX -D_UTMPX_COMPAT' ; \
+	else HAVE_UTMPX='' ; fi ; fi; \
+	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
+	"CFLAGS= -DMACOSX10 -DMACOSX103 -DCK_NCURSES -DTCPSOCKET -DCKHTTP \
+	-DUSE_STRERROR -DUSE_NAMESER_COMPAT -DNOCHECKOVERFLOW -DFNFLOAT \
+	-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 $$HAVE_UTMPX \
+	-funsigned-char -DNODCLINITGROUPS \
+	-DNOUUCP -O -DHERALD=\"\\\" $${MACOSNAME} $${MACOSV}\\\"\" \
+	-DCKCPU=\"\\\"$${MACCPU}\\\"\" \
+	$(KFLAGS)" "LIBS= -lncurses -lresolv $(LIBS)"
+
+# Mac OS X 10.3.9 or later with Kerberos 5 and OpenSSL...
+# NOTE: Apple has removed all support for DES in OpenSSL and Kerberos
+#   in Mac OS X 10.6 and later.  The DES flags are included or left out
+#   automatically based on the Mac OS X version number.
+# See note about UUCP in previous target.
+#OK: 2009/11/16 (for 10.3.9, 10.4.11, 10.5.8, 10.6.1)
+#OK: 2011/06/14 (for 10.4.11, 10.5.8, 10.6.7)
+macosx+krb5+ssl macosx10.5+krb5+ssl macosx10.6+krb5+ssl \
+macosx+krb5+openssl macosx10.5+krb5+openssl macosx10.6+krb5+openssl:
+	@MACOSNAME=`/usr/bin/sw_vers -productName`; \
+	MACOSV=`/usr/bin/sw_vers -productVersion`; \
+	echo Making C-Kermit $(CKVER) for $$MACOSNAME $$MACOSV... ; \
+	MACCPU=$$HOSTTYPE; \
+	if test `uname -r | cut -d . -f 1` -gt 8; \
+	then if test -f /usr/include/utmpx.h ; \
+	then HAVE_UTMPX='-DHAVEUTMPX -D_UTMPX_COMPAT' ; \
+	else HAVE_UTMPX='' ; fi ; fi; \
+	if test `uname -r | cut -d . -f 1` -eq 7; \
+	then IS_MACOSX103='-DMACOSX103' ; \
+	else IS_MACOSX103='' ; fi; \
+	case $$MACOSV in \
+	  10.[012345].*) HAVE_DES='-DCK_DES -DLIBDES' ;; \
+	  *.*) HAVE_DES='' ;; \
+	esac ; \
+	if test -x /usr/bin/krb5-config ; \
+	then HAVE_KRB5CONFIG=`/usr/bin/krb5-config --libs krb5 gssapi` ; \
+	else HAVE_KRB5CONFIG='-lgssapi_krb5 -lkrb5 -lk5crypto \
+	-lcom_err -lresolv' ; fi; \
+	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
+	"CFLAGS= -DMACOSX10 $$IS_MACOSX103 -DCK_NCURSES -DTCPSOCKET \
+	-DUSE_STRERROR -DUSE_NAMESER_COMPAT -DNOCHECKOVERFLOW -DFNFLOAT \
+	-DCKHTTP -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 $$HAVE_UTMPX \
+	-DNODCLINITGROUPS -DCK_AUTHENTICATION -DCK_KERBEROS -DKRB5 -DZLIB \
+	-DCK_ENCRYPTION -DCK_CAST -DCK_SSL -DOPENSSL_098 $$HAVE_DES \
+	-DNOUUCP -DHERALD=\"\\\" $${MACOSNAME} $${MACOSV}\\\"\" \
+	-DCKCPU=\"\\\"$${MACCPU}\\\"\" \
+	-funsigned-char -O $(KFLAGS)" \
+	"LIBS= $$HAVE_KRB5CONFIG -lssl -lcrypto -lpam -lncurses $(LIBS)"
+
+# End of Mac OS X Section
 
 #Acorn RISCiX, based on ...
 #Berkeley Unix 4.2 or 4.3 with lock directory /usr/spool/uucp/LCK/LCK..ttyxx,
@@ -1989,7 +2173,7 @@ ctix:
 	@echo 'Making C-Kermit $(CKVER) for Convergent CTIX 6.4.1'
 	$(MAKE) wermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS= -DSVR3 -DDIRENT -DTCPSOCKET -DHDBUUCP -DCK_CURSES \
-	-DNONAWS -DNOLEARN $(KFLAGS) -XO" \
+	-DNONAWS -DNOLEARN -DNOLONGLONG $(KFLAGS) -XO" \
 	"LNKFLAGS=-s" "LIBS=-lsocket -lcurses -lc_s"
 	mcs -d wermit
 
@@ -2003,8 +2187,8 @@ cx_ux:
 	@echo Making C-Kermit $(CKVER) for Harris Night Hawk CX/UX 6.1 or later
 	$(MAKE) wermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS=-DPOSIX -DTCPSOCKET -DHDBUUCP -DPID_T=pid_t -DWAIT_T=int \
-	-Dd_ino=d_fileno -DUID_T=uid_t -DGID_T=gid_t $(KFLAGS) -Xa \
-	-O3 -g" "LNKFLAGS=-O3"
+	-Dd_ino=d_fileno -DUID_T=uid_t -DGID_T=gid_t -DNOLONGLONG \
+	$(KFLAGS) -Xa -O3 -g" "LNKFLAGS=-O3"
 
 #Intergraph Clipper, CLIX, job control, HDB UUCP.
 clix:
@@ -2183,14 +2367,14 @@ ultrix42s5r4:
 	-DTCPSOCKET $(KFLAGS)" "LNKFLAGS = -s"
 
 #OSF/1
-osf:
+osf osf1:
 	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS= -DBSD4 -DOSF -D_BSD -DTCPSOCKET -DCK_ANSIC -DSIG_V \
 	-DCK_CURSES -DCK_RTSCTS -DFNFLOAT $(KFLAGS)" \
-	"LNKFLAGS = -s" "LIBS = -lbsd -lcurses -ltermcap -lm"
+	"LNKFLAGS = -s" "LIBS = $(LIBS) -lbsd -lcurses -ltermcap -lm"
 
 #DEC OSF/1 V1.0-1.3 on DECstation, VAX, Alpha, or PC.
-dec-osf:
+dec-osf dec-osf1:
 	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS= -DBSD4 -DOSF -DOSF13 -D_BSD -DTCPSOCKET -DCK_ANSIC -DSIG_V \
 	-DNOREALPATH -DNOIKSD -DCK_CURSES -DCK_RTSCTS -DFNFLOAT -DNODEBUG \
@@ -2283,10 +2467,20 @@ tru64-51a:
 	-unsigned -std1 -O3 -Olimit 2400 $(KFLAGS)"
 
 tru64-51b:
-	@echo Making C-Kermit $(CKVER) for Tru64 UNIX 5.1A...
+	@echo Making C-Kermit $(CKVER) for Tru64 UNIX 5.1B...
 	$(MAKE) CC=$(CC) CC2=$(CC2) osf KTARGET=$${KTARGET:-$(@)} \
 	"KFLAGS= -DTRU64 -DOSF50 -DOSF51A -DOSF51B -DHDBUUCP \
 	-unsigned -std1 -O3 -Olimit 2400 $(KFLAGS)"
+
+# Added 5.1b version with OpenSSL - CDW 6-13-2005...
+tru64-51b+openssl:
+	@echo Making C-Kermit $(CKVER) for Tru64 UNIX 5.1b
+	@echo  including OpenSSL...
+	$(MAKE) CC=$(CC) CC2=$(CC2) osf KTARGET=$${KTARGET:-$(@)} \
+	"KFLAGS= -DTRU64 -DOSF50 -DOSF51A -DOSF51B -DHDBUUCP \
+	-unsigned -std1 -O3 -Olimit 2400 \
+	-DCK_AUTHENTICATION -DCK_SSL $(SSLINC) $(KFLAGS)" \
+	"LIBS= $(SSLLIB) -rpath $(sslroot)/ssl/lib -lssl -lcrypto"
 
 du50:
 	$(MAKE) CC=$(CC) CC2=$(CC2) tru64-50a KTARGET=$${KTARGET:-$(@)}
@@ -2498,6 +2692,9 @@ nextgc:
 
 #NeXTSTEP 3.3.
 #Includes fullscreen file transfer display and TCP/IP.
+# You might have to add 1 line to 1 NeXT header file <ip.h>
+# to declare n_long as u_long by adding #include <bsd/netinet/in_systm.h>
+
 next33:
 	@echo Making C-Kermit $(CKVER) for NeXTSTEP 3.3...
 	$(MAKE) xermit CC=$(CC) CC2=$(CC2) KTARGET=$${KTARGET:-$(@)} \
@@ -2623,7 +2820,7 @@ bsdi4:
 	$(MAKE) "MAKE=$(MAKE)" CC=$(CC) CC2=$(CC2) bsdi \
 	KTARGET=$${KTARGET:-$(@)} \
 	"KFLAGS=-DBSDI2 -DBSDI3 -DBSDI4 -DTPUTSFNTYPE=void -DTPUTSISVOID \
-	-m486 $(KFLAGS)"
+	-DCKHTTP -m486 $(KFLAGS)"
 
 # (old name for the above)
 bsdiposix:
@@ -2714,6 +2911,8 @@ rtaix:
 	-DUSE_LSTAT -DFNFLOAT -Nn2500 -Np1000 -Wq,-SJ2 -a -w $(KFLAGS)" \
 	"LIBS = -lm $(LIBS)" "LNKFLAGS = -s"
 
+#### IBM RT PC - these targets were last verified in C-Kermit 8.0.211.
+
 #IBM RT PC with AIX 2.2.1 + curses
 rtaixc:
 	$(MAKE) rtaix CC=$(CC) CC2=$(CC2) "KFLAGS=-DCK_CURSES" "LIBS=-lcurses"
@@ -2725,6 +2924,77 @@ rtacis:
 	$(MAKE) xermit KTARGET=$${KTARGET-$(@)} \
 	"CFLAGS= -DBSD4 -DTCPSOCKET -DNOREALPATH -DNOIKSD -DNOPUTENV \
 	$(KFLAGS) -U__STDC__" "LNKFLAGS = -s"
+
+#### IBM AIX.  The first two targets should work for any version of AIX
+#### from 4.2 onwards.  The ones after that are for older versions or
+#### specific configurations, and/or with gcc.
+
+# This one should work for any AIX 4.2 or later: "make aix".
+# Other tags are for compatibility with old makefile targets.
+#OK: 2011/06/11
+aix aix42 aix43 aix44 aix45 aix50 aix51 aix52 aix53 aix54 aix61:
+	@echo Making C-Kermit $(CKVER) for IBM AIX...
+	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} \
+	"CFLAGS= -DAIXRS -DAIX41 -DAIX42 -DSVR4 -DSTERMIOX -DTCPSOCKET \
+	-DDIRENT -DCK_ANSIC -DCLSOPN -DCK_CURSES -DCK_NEWTERM -DFNFLOAT \
+	-DSELECT -DSELECT_H -DNOGETUSERSHELL -qmaxmem=16000 -O \
+	-DCKCPU=\\\"`uname -p`\\\" \
+	-DHERALD=\"\\\" IBM AIX `uname -v`.`uname -r`\\\"\" \
+	-D_LARGE_FILES $(KFLAGS)" "LNKFLAGS = -s" "LIBS=-lcurses -lm"
+
+# Same but using gcc instead of cc
+# This works but we get "gcc: unrecognized option '-qmaxmem-..'" each module.
+aixg:
+	@echo "Using gcc..."
+	$(MAKE) aix KTARGET=$${KTARGET:-$(@)} \
+	CC=gcc CC2=gcc "KFLAGS=-pipe -funsigned-char"
+
+# AIX 4.2 or later with OpenSSL 0.9.7 or later: "make aix+ssl"
+# For earlier OpenSSL remove -DOPENSSL_097 or add "KFLAGS=-UOPENSSL_097".
+# Synonym target names added to cover old redundant targets that were removed.
+# If SSL is not installed in the /usr/local tree (see SSLINC and SSLLIB
+# definitions near the top), you can specify the locations in your make
+# command as in this example:
+#
+#  SSLINC=-I/opt/ssl/include SSLLIB=-L/opt/ssl/lib make -e aix+ssl
+#
+# To build with gcc use "make aix CC=gcc CC2=gcc", or "make aixg"
+#
+#OK: 2011/06/15
+aix+ssl aix51+openssl aix52+openssl aix53+openssl:
+	@echo "Making C-Kermit $(CKVER) for IBM AIX with OpenSSL..."
+	@echo "SSLINC=$(SSLINC) SSLLIB=$(SSLLIB)"
+	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} \
+	CC=$(CC) CC2=$(CC2) \
+	"CFLAGS=-DAIXRS -DAIX41 -DAIX42 -DSVR4 -DSTERMIOX -DTCPSOCKET \
+	-DDIRENT -DCK_ANSIC -DCLSOPN -DCK_CURSES -DCK_NEWTERM -DFNFLOAT \
+	-D_LARGE_FILES -DSELECT -DSELECT_H -DNOGETUSERSHELL \
+	-DCKCPU=\\\"`uname -p`\\\" \
+	-DHERALD=\"\\\" IBM AIX `uname -v`.`uname -r`\\\"\" \
+	-DCK_AUTHENTICATION -DCK_SSL -DOPENSSL_097 $(SSLINC) $(KFLAGS)" \
+	"LNKFLAGS=-s" "LIBS=$(SSLLIB) -lssl -lcrypto -lcurses -lm -lcrypt"
+
+# AIX 5.3 or 6.1 or later with IBM OpenSSL, which is always in the directories
+# shown below so you don't have to set SSLINC and SSLLIB.  If for some reason
+# the SSL include files and libraries are not in the places assumed, then use
+# "make aix+ssl" (just above) and set SSLINC and SSLLIB to indicate where the
+# SSL files are.  To build with gcc use "make aix+ibmssl CC=gcc CC2=gcc".
+aix+ibmssl:
+	@echo "Making C-Kermit $(CKVER) for IBM AIX 6.1 with OpenSSL..."
+	@echo "If this fails use 'make aix+ss' and specify SSLINC and SSLLIB"
+	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} \
+	CC=$(CC) CC2=$(CC2) \
+	"CFLAGS=-DAIXRS -DAIX41 -DAIX42 -DSVR4 -DSTERMIOX -DTCPSOCKET \
+	-DDIRENT -DCK_ANSIC -DCLSOPN -DCK_CURSES -DCK_NEWTERM -DFNFLOAT \
+	-D_LARGE_FILES -DSELECT -DSELECT_H -DNOGETUSERSHELL \
+	-DCKCPU=\\\"`uname -p`\\\" \
+	-DHERALD=\"\\\" IBM AIX `uname -v`.`uname -r`\\\"\" \
+	-DCK_AUTHENTICATION -DCK_SSL -DOPENSSL_098 \
+	-I/usr/include/openssl $(KFLAGS)" \
+	"LNKFLAGS=-s" \
+	"LIBS=-L/usr/lib/openssl -lssl -lcrypto -lcurses -lm -lcrypt"
+
+# Old AIX versions...
 
 #IBM AIX 3.0, 3.1, or 3.2 for RISC System/6000.
 rs6000:
@@ -2834,20 +3104,25 @@ aix41x25o:
 	"LNKFLAGS = -bI:/lib/pse.exp" "LIBS=-lcurses -lodm -lcfg"
 	-@echo "]0;kermit done\c"
 
-#AIX 4.2 -- Must have CK_NEWTERM or echoing is lost after curses.
-# Add -bbigtoc in case ld fails with TOC overflow.
-aix42:
+#AIX 4.2 -- Use this target if the regular "make aix" doesn't work.
+# Must have CK_NEWTERM or echoing is lost after curses.
+# Add -bbigtoc in case ld fails with TOC overflow.  As of C-Kermit 8.0.212,
+# all AIX builds 4.2 and later include large file support.
+oldaix42:
 	@echo Making C-Kermit $(CKVER) for IBM AIX 4.2 or higher...
 	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS= -DAIXRS -DAIX41 -DAIX42 -DSVR4 -DSTERMIOX -DTCPSOCKET \
 	-DDIRENT -DCK_ANSIC -DCLSOPN -DCK_CURSES -DCK_NEWTERM -DFNFLOAT \
-	-DSELECT -DSELECT_H -DNOGETUSERSHELL -qmaxmem=16000 -O $(KFLAGS)" \
-	"LNKFLAGS = -s" "LIBS=-lcurses -lm"
+	-DSELECT -DSELECT_H -DNOGETUSERSHELL -qmaxmem=16000 -O \
+	-DCKCPU=\\\"`uname -p`\\\" \
+	-DHERALD=\\\"\ IBM\ AIX\ `uname -v`.`uname -r`\\\" \
+	-D_LARGE_FILES $(KFLAGS)" "LNKFLAGS = -s" "LIBS=-lcurses -lm"
 
-#AIX 4.3 -- Must NOT have CK_NEWTERM or else C-Kermit hangs after curses.
+#AIX 4.3 - Use this target if the regular "make aix" doesn't work.
+# Must NOT have CK_NEWTERM or else C-Kermit hangs after curses.
 # -bbigtoc needed on some systems but not others to avoid TOC overflow.
 # "man ld" says -bbigtoc makes program run slower.
-aix43:
+oldaix43:
 	@echo Making C-Kermit $(CKVER) for IBM AIX 4.3 or higher...
 	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS= -DAIXRS -DAIX41 -DAIX43 -DSVR4 -DSTERMIOX -DTCPSOCKET \
@@ -2911,7 +3186,6 @@ aix43gccz:
 	-DSTERMIOX -DTCPSOCKET -DFNFLOAT -DNOGETUSERSHELL $(KFLAGS)" \
 	"LIBS= -L. -lcurses -bloadmap -bnoquiet"
 
-
 #AIX 4.3 with MIT Kerberos 5 and Kerberos 4 compatibility mode
 # Must NOT have CK_NEWTERM or else C-Kermit hangs after curses.
 # -mminimal-toc needed on some systems but not others to avoid TOC overflow.
@@ -2953,30 +3227,6 @@ aix43gcc+openssl:
 	-DSTERMIOX -DTCPSOCKET -DFNFLOAT -DNOGETUSERSHELL \
 	-DCK_AUTHENTICATION -DCK_SSL -funsigned-char $(SSLINC) $(KFLAGS)" \
 	"LIBS=$(SSLLIB) -lssl -lcrypto -lcurses -lm -lcrypt"
-
-aix44:
-	$(MAKE) aix42 "KFLAGS=-DAIX44 -qmaxmem=20000 $(KFLAGS)" \
-	KTARGET=$${KTARGET:-$(@)}
-
-aix45:
-	$(MAKE) aix42 "KFLAGS=-DAIX45 -qmaxmem=20000 $(KFLAGS)" \
-	KTARGET=$${KTARGET:-$(@)}
-
-aix50:
-	$(MAKE) aix42 "KFLAGS=-DAIX50 -qmaxmem=20000 $(KFLAGS)" \
-	KTARGET=$${KTARGET:-$(@)}
-
-aix51:
-	$(MAKE) aix42 "KFLAGS=-DAIX51 -qmaxmem=20000 $(KFLAGS)" \
-	KTARGET=$${KTARGET:-$(@)}
-
-aix52:
-	$(MAKE) aix42 "KFLAGS=-DAIX52 -qmaxmem=20000 $(KFLAGS)" \
-	KTARGET=$${KTARGET:-$(@)}
-
-aix53:
-	$(MAKE) aix42 "KFLAGS=-DAIX53 -qmaxmem=20000 $(KFLAGS)" \
-	KTARGET=$${KTARGET:-$(@)}
 
 aix44gcc:
 	$(MAKE) aix43g "KFLAGS=-DAIX44 $(KFLAGS)" \
@@ -3037,6 +3287,10 @@ sunos4x25:
 # /var/spool/ should be a symbolic link to  /usr/spool/.
 # ... or 'make xermit "CC= /usr/ucb/cc " \'
 # Note: "xermit" means use the select() version of the CONNECT module.
+# Note for C-Kermit 9.0: Reportedly 'you need to modify the sys/ioctl.h
+# include file, i.e. comment out the "struct winsize" and "struct
+# ttysize". Otherwise there will be a conflict with sys/ttycom.h (included by
+# termios.h) which also declares these structs. But you need both includes.'
 sunos41:
 	@echo Making C-Kermit $(CKVER) for SunOS 4.1 / BSD...
 	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} \
@@ -3045,7 +3299,7 @@ sunos41:
 
 #As above, but compiled with gcc.  Gives 24-32K size reduction
 #with gcc 2.1 or 2.2.2.  CAUTION: make sure "fixincludes" has been run on
-#the include files, so gcc's are in sync with the regular Sun ones!
+#the include files, so gcc's are in sync with the regular Sun ones.
 #This includes the curses library for fullscreen file transfer display.
 #NDGPWNAM needed for GCC 2.5.6, not needed for 2.4.0, but it's uncertain
 #whether it will do any harm for 2.4.0 compilation -- if so, remove it.
@@ -3213,6 +3467,33 @@ solaris21:
 	"CFLAGS = -O -Usun -DSVR4 -DSOLARIS -DDIRENT -DHDBUUCP -DFNFLOAT \
 	-DSELECT -DNODEBUG -DSTERMIOX $(KFLAGS)" "LIBS = -lm" "LNKFLAGS = -s"
 
+#Solaris 2.0 - 2.4, SunPro compiler, includes curses and TCP/IP.
+#When using SUNWspro CC 2.0.1 under Solaris 2.3, be sure all cc patches
+#are applied, otherwise corrupt or truncated object files can result.
+#To build, set your PATH as follows:
+#  /usr/local/bin:/usr/bin:/opt/SUNWspro/bin:/usr/ccs/bin:\
+#  /usr/ucb:/usr/sbin:/sbin:.
+# or (depending on where the compiler has been installed):
+#  /usr/openwin/bin:/export/home/SUNWspro/bin:/usr/ccs/bin:/usr/sbin:/usr/bin.
+#For additional optimization try using "-fast -xO4 -xdepend".
+solaris2x:
+	@echo 'Making C-Kermit $(CKVER) for Solaris 2.x with SunPro cc...'
+	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} \
+	"CFLAGS = -O -Usun -i -DSVR4 -DDIRENT -DSOLARIS -DHDBUUCP -DFNFLOAT \
+	-DSELECT -DCK_CURSES -DCK_NEWTERM -DSTERMIOX -DTCPSOCKET $(KFLAGS)" \
+	"LNKFLAGS = -s" "LIBS= -ltermlib -lsocket -lnsl -lm -lresolv"
+
+#as above but configured for Kerberos IV
+solaris2x+krb4:
+	@echo 'Making C-Kermit $(CKVER) for Solaris 2.x, SunPro cc, krb4...'
+	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} \
+	"CFLAGS = -O -Usun -i -DSVR4 -DDIRENT -DSOLARIS -DHDBUUCP -DFNFLOAT \
+	-DSELECT -DCK_CURSES -DCK_NEWTERM -DSTERMIOX -DTCPSOCKET  \
+	-DCK_AUTHENTICATION -DCK_KERBEROS  -DKRB4 \
+	-DCK_ENCRYPTION -DCK_DES -DCK_CAST $(K4INC) $(KFLAGS)" \
+	"LNKFLAGS = -s" \
+	"LIBS= $(K4LIB) -ltermlib -lsocket -lnsl -lm -lresolv -lkrb -ldes"
+
 #C-Kermit for Solaris 2.0-2.4 compiled with gcc, includes curses and TCP/IP.
 #Change -O2 to -O if -O2 gives trouble.
 #Remove -Usun if it causes trouble.
@@ -3267,7 +3548,7 @@ solaris2xg+openssl+zlib+pam+shadow:
 
 #Ditto but with GCC 3.1 in which you have to specify 32-bit with -m32.
 #In Solaris 9 (and maybe 8) you'll also need specifiy the Library path.
-#Reportedly this can't be done here, but only with:
+#Reportedly this can be done here, but only with:
 # crle -l /usr/lib:/usr/local/ssl/lib
 #prior to building.  Note: 64-bit not tested with SSL.
 #For no-crypto 64-bit builds see the solaris9g64 target.
@@ -3332,122 +3613,19 @@ solaris24g:
 	$(MAKE) "MAKE=$(MAKE)" KTARGET=$${KTARGET:-$(@)} \
 	solaris2xg "KFLAGS=-DSOLARIS24 -DPOSIX_CRTSCTS $(KFLAGS)"
 
-#Solaris 2.5 built with gcc
-solaris25g:
-	$(MAKE) "MAKE=$(MAKE)" solaris2xg KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS=-funsigned-char -DSOLARIS25 $(KFLAGS)"
-
-#Solaris 2.5 built with gcc and Kerberos IV
-solaris25g+krb4:
-	$(MAKE) "MAKE=$(MAKE)" solaris2xg+krb4 KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS=-funsigned-char -DSOLARIS25 $(KFLAGS)"
-
-#Solaris 2.5 built with gcc and Kerberos V/IV, SSL, ...
-solaris25g+krb5+krb4+openssl+shadow:
-	$(MAKE) "MAKE=$(MAKE)" solaris2xg+krb5+krb4+openssl+shadow \
-	KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS=-funsigned-char -DSOLARIS25 $(KFLAGS)"
-
-#Solaris 2.6 with gcc
-solaris26g:
-	$(MAKE) "MAKE=$(MAKE)" KTARGET=$${KTARGET:-$(@)} solaris2xg \
-	"KFLAGS= -DSOLARIS26 -DCK_PAM -DCK_SHADOW $(KFLAGS)" \
-	"LIBS = -lpam"
-
-#Solaris 2.6 with gcc and SSL
-solaris26g+openssl:
-	$(MAKE) "MAKE=$(MAKE)"  solaris2xg+openssl+pam+shadow \
-	KTARGET=$${KTARGET:-$(@)} "KFLAGS= -DSOLARIS26 $(KFLAGS)"
-
-#Solaris 2.6 with gcc, no curses (e.g. because libtermlib is missing).
-solaris26gnc:
-	$(MAKE) "MAKE=$(MAKE)" KTARGET=$${KTARGET:-$(@)} solaris2xgnc \
-	"KFLAGS= -DSOLARIS26 -DCK_PAM -DCK_SHADOW $(KFLAGS)" \
-	"LIBS= -lpam"
-
-#Solaris 7 with gcc (32-bit)
-solaris7g:
-	$(MAKE) "MAKE=$(MAKE)" solaris2xg KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS=-DSOLARIS7 -DCK_PAM -DCK_SHADOW $(KFLAGS)" \
-	"LIBS= -lpam"
-
-#Solaris 7 with gcc + Kerberos IV (32-bit)
-solaris7g+krb4:
-	$(MAKE) "MAKE=$(MAKE)" solaris2xg+krb4 KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS=-DSOLARIS7 -DCK_PAM -DCK_SHADOW $(KFLAGS)" \
-	"LIBS= -lpam"
-
-solaris7g+openssl+zlib+pam+shadow:
-	$(MAKE) "MAKE=$(MAKE)" solaris2xg+openssl+zlib+pam+shadow \
-	KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS=-DSOLARIS7 -DCK_PAM -DCK_SHADOW $(KFLAGS)"
-
-#Solaris 7 with gcc + OpenSSL (32-bit)
-solaris7g+openssl+zlib+srp+pam+shadow:
-	$(MAKE) "MAKE=$(MAKE)" solaris2xg+openssl+zlib+srp+pam+shadow \
-	KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS=-DSOLARIS7 -DCK_PAM -DCK_SHADOW $(KFLAGS)"
-
-#Solaris 8 with gcc (32-bit)
-solaris8g:
-	$(MAKE) "MAKE=$(MAKE)" solaris2xg KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS=-DSOLARIS8 -DCK_PAM -DCK_SHADOW $(KFLAGS)" \
-	"LIBS= -lpam"
-
-#Solaris 9 with gcc + OpenSSL + Shadow (32-bit)
-solaris9g+openssl+shadow+pam+zlib:
-	$(MAKE) "MAKE=$(MAKE)" solaris2xg+openssl+zlib+pam+shadow \
-	KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS=-DSOLARIS9 -DHDBUUCP -DDIRENT -DZLIB -DCK_PAM -DCK_SHADOW \
-	-DLIBDES $(KFLAGS)" "LIBS= -lpam -ldes425 -lz $(LIBS)"
-
-#Solaris 9 with gcc + OpenSSL + Kerberos 5 + Krb4 + Shadow (32-bit)
-solaris9g+krb5+krb4+openssl+shadow+pam+zlib:
-	$(MAKE) "MAKE=$(MAKE)" solaris2xg+krb5+krb4+openssl+shadow \
-	KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS=-DSOLARIS9 -DHDBUUCP -DDIRENT -DZLIB -DCK_PAM -DCK_SHADOW \
-	-DLIBDES $(KFLAGS)" "LIBS= -lpam -ldes425 -lz $(LIBS)"
-
-#Solaris 9 with gcc 3.1 (32-bit)
-solaris9g:
-	@echo 'Making C-Kermit $(CKVER) for Solaris 9 with gcc'
-	$(MAKE) "MAKE=$(MAKE)" CC="gcc -m32" CC2="gcc -m32" xermit \
-	KTARGET=$${KTARGET:-$(@)} \
-	"CFLAGS = -g -O -Usun -DSVR4 -DSOLARIS -DSOLARIS9 -DUSE_STRERROR \
-	-DSTERMIOX -DSELECT -DFNFLOAT -DCK_PAM -DCK_SHADOW -funsigned-char \
-	-DCK_CURSES -DCK_NEWTERM -DDIRENT -DHDBUUCP -DTCPSOCKET $(KFLAGS)" \
-	"LIBS= -ltermlib -lsocket -lnsl -lm -lresolv -lpam"
-
-#Solaris 9 with gcc 3.1 (64-bit)
-#Peeking inside struct FILE at its members ist strengst verboten.
-solaris9g64:
-	@echo 'Making C-Kermit $(CKVER) for Solaris 9 with gcc'
-	$(MAKE) "MAKE=$(MAKE)" CC="gcc -m64" CC2="gcc -m64" xermit \
-	KTARGET=$${KTARGET:-$(@)} \
-	"CFLAGS = -g -O -Usun -DSVR4 -DSOLARIS 	-DSOLARIS9 -DNOARROWKEYS \
-	-DSTERMIOX -DSELECT -DFNFLOAT -DUSE_STRERROR -DCK_PAM -DCK_SHADOW \
-	-DCK_CURSES -DCK_NEWTERM -DDIRENT -DHDBUUCP -DTCPSOCKET $(KFLAGS)" \
-	"LIBS= -ltermlib -lsocket -lnsl -lm -lresolv -lpam"
-
-# In OpenSSL builds add -ldl if you get unresolved references for
-# dlclose, dlsym, dlopen, dlerror.
-
-#Solaris 8 with gcc + OpenSSL (32-bit)
-solaris8g+openssl+zlib+pam+shadow:
-	$(MAKE) "MAKE=$(MAKE)" solaris2xg+openssl+zlib+pam+shadow \
-	KTARGET=$${KTARGET:-$(@)} "KFLAGS=-DSOLARIS8 $(KFLAGS)"
-
-#Solaris 9 with gcc 3.1 + OpenSSL (32-bit)
-solaris9g+openssl+zlib+pam+shadow:
-	$(MAKE) "MAKE=$(MAKE)" solaris2xg32+openssl+zlib+pam+shadow \
-	KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS=-DSOLARIS9 -DUSE_STRERROR $(KFLAGS)"
-
-#Solaris 8 with gcc + Kerberos IV (32-bit)
-solaris8g+krb4:
-	$(MAKE) "MAKE=$(MAKE)" solaris2xg+krb4 KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS=-DSOLARIS8 -DCK_PAM -DCK_SHADOW $(KFLAGS)" \
-	"LIBS= -lpam"
+#Solaris 2.0-2.3, SunPro compiler, with SunLink X.25 support.
+#This will only run if user has /opt/SUNWconn/lib/libsockx25.so.1
+#exists and can be dynamically linked.
+#NOTE: Do not change target to xermit -- it doesn't support X.25.
+solaris2x25:
+	@echo 'Making C-Kermit $(CKVER) for Solaris 2.x+X.25 with SunPro cc...'
+	$(MAKE) wermit KTARGET=$${KTARGET:-$(@)} \
+	"CFLAGS = -O -i -Usun -DSVR4 -DSOLARIS -DDIRENT \
+	-DSUNX25 -DTCPSOCKET -DHDBUUCP -DFNFLOAT -DNOLEARN \
+	-DSELECT -DCK_CURSES -DCK_NEWTERM -DSTERMIOX $(KFLAGS)" \
+	"LNKFLAGS = -s" \
+	"LIBS= -ltermlib -L/opt/SUNWconn/lib -R/opt/SUNWconn/lib \
+	-lsockx25 -lsocket -lnsl -lm -lresolv"
 
 #Solaris 2.0-2.4, gcc, SunLink X.25 added.
 #NOTE: Can't use xermit target with X.25.
@@ -3461,43 +3639,29 @@ solaris2xgx25:
 	"LIBS= -ltermlib -lm -L/opt/SUNWconn/lib -R/opt/SUNWconn/lib \
 	-lsockx25 -lsocket -lnsl"
 
-#Solaris 2.5, gcc, SunLink X.25 added.
-solaris25gx25:
-	$(MAKE) "MAKE=$(MAKE)" KTARGET=$${KTARGET:-$(@)} solaris2xgx25 \
-	"KFLAGS=-DSOLARIS25 $(KFLAGS)"
-
-#Solaris 2.6, gcc, SunLink X.25 added.
-solaris26gx25:
-	$(MAKE) "MAKE=$(MAKE)" KTARGET=$${KTARGET:-$(@)} solaris2xgx25 \
-	"KFLAGS=-DSOLARIS26 -DCK_PAM -DCK_SHADOW $(KFLAGS)" \
-	"LIBS= -lpam"
-
-#Solaris 2.0 - 2.4, SunPro compiler, includes curses and TCP/IP.
-#When using SUNWspro CC 2.0.1 under Solaris 2.3, be sure all cc patches
-#are applied, otherwise corrupt or truncated object files can result.
-#To build, set your PATH as follows:
-#  /usr/local/bin:/usr/bin:/opt/SUNWspro/bin:/usr/ccs/bin:\
-#  /usr/ucb:/usr/sbin:/sbin:.
-# or (depending on where the compiler has been installed):
-#  /usr/openwin/bin:/export/home/SUNWspro/bin:/usr/ccs/bin:/usr/sbin:/usr/bin.
-#For additional optimization try using "-fast -xO4 -xdepend".
-solaris2x:
-	@echo 'Making C-Kermit $(CKVER) for Solaris 2.x with SunPro cc...'
-	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} \
-	"CFLAGS = -O -Usun -i -DSVR4 -DDIRENT -DSOLARIS -DHDBUUCP -DFNFLOAT \
-	-DSELECT -DCK_CURSES -DCK_NEWTERM -DSTERMIOX -DTCPSOCKET $(KFLAGS)" \
-	"LNKFLAGS = -s" "LIBS= -ltermlib -lsocket -lnsl -lm -lresolv"
-
-#as above but configured for Kerberos IV
-solaris2x+krb4:
-	@echo 'Making C-Kermit $(CKVER) for Solaris 2.x, SunPro cc, krb4...'
-	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} \
-	"CFLAGS = -O -Usun -i -DSVR4 -DDIRENT -DSOLARIS -DHDBUUCP -DFNFLOAT \
-	-DSELECT -DCK_CURSES -DCK_NEWTERM -DSTERMIOX -DTCPSOCKET  \
-	-DCK_AUTHENTICATION -DCK_KERBEROS  -DKRB4 \
-	-DCK_ENCRYPTION -DCK_DES -DCK_CAST $(K4INC) $(KFLAGS)" \
+#Solaris 2.4, SunPro compiler, with SunLink X.25 support.
+#This will only run if user has /opt/SUNWconn/lib/libsockx25.so.1
+#exists and can be dynamically linked.
+solaris24x25:
+	@echo 'Making C-Kermit $(CKVER) for Solaris 2.4+X.25 with SunPro cc...'
+	$(MAKE) wermit KTARGET=$${KTARGET:-$(@)} \
+	"CFLAGS = -O -i -Usun -DSVR4 -DSOLARIS -DSOLARIS24 -DDIRENT -DNOLEARN \
+	-DSUNX25 -DTCPSOCKET -DHDBUUCP -DFNFLOAT -DPOSIX_CRTSCTS \
+	-DSELECT -DCK_CURSES -DCK_NEWTERM -DSTERMIOX $(KFLAGS)" \
 	"LNKFLAGS = -s" \
-	"LIBS= $(K4LIB) -ltermlib -lsocket -lnsl -lm -lresolv -lkrb -ldes"
+	"LIBS= -ltermlib -L/opt/SUNWconn/lib -R/opt/SUNWconn/lib \
+	-lsockx25 -lsocket -lnsl -lm -lresolv"
+
+#Solaris 2.5, SunPro compiler, with SunLink X.25 support.
+solaris25x25:
+	@echo 'Making C-Kermit $(CKVER) for Solaris 2.5+X.25 with SunPro cc...'
+	$(MAKE) wermit KTARGET=$${KTARGET:-$(@)} \
+	"CFLAGS = -O -i -Usun -DSVR4 -DSOLARIS25 -DDIRENT -DSUNX25 \
+	-DTCPSOCKET -DHDBUUCP -DSELECT -DCK_CURSES \
+	-DCK_NEWTERM -DSTERMIOX -DFNFLOAT -DPOSIX_CRTSCTS -DNOLEARN \
+	-I/opt/SUNWconn/include $(KFLAGS)" \
+	"LIBS= -ltermlib -L/opt/SUNWconn/lib -R/opt/SUNWconn/lib \
+	-lsockx25 -lsocket -lnsl -lm -lresolv"
 
 solaris23:
 	$(MAKE) "MAKE=$(MAKE)" solaris2x KTARGET=$${KTARGET:-$(@)} \
@@ -3525,75 +3689,55 @@ solaris25+krb4:
 	$(MAKE) "MAKE=$(MAKE)" solaris25x+krb4 KTARGET=$${KTARGET:-$(@)} \
 	"KFLAGS=-DSOLARIS25 $(KFLAGS)"
 
+#Solaris 2.5 built with gcc
+solaris25g:
+	$(MAKE) "MAKE=$(MAKE)" solaris2xg KTARGET=$${KTARGET:-$(@)} \
+	"KFLAGS=-funsigned-char -DSOLARIS25 $(KFLAGS)"
+
+#Solaris 2.5 built with gcc and Kerberos IV
+solaris25g+krb4:
+	$(MAKE) "MAKE=$(MAKE)" solaris2xg+krb4 KTARGET=$${KTARGET:-$(@)} \
+	"KFLAGS=-funsigned-char -DSOLARIS25 $(KFLAGS)"
+
+#Solaris 2.5 built with gcc and Kerberos V/IV, SSL, ...
+solaris25g+krb5+krb4+openssl+shadow:
+	$(MAKE) "MAKE=$(MAKE)" solaris2xg+krb5+krb4+openssl+shadow \
+	KTARGET=$${KTARGET:-$(@)} \
+	"KFLAGS=-funsigned-char -DSOLARIS25 $(KFLAGS)"
+
+#Solaris 2.5, gcc, SunLink X.25 added.
+solaris25gx25:
+	$(MAKE) "MAKE=$(MAKE)" KTARGET=$${KTARGET:-$(@)} solaris2xgx25 \
+	"KFLAGS=-DSOLARIS25 $(KFLAGS)"
+
+#Solaris 2.6, gcc, SunLink X.25 added.
+solaris26gx25:
+	$(MAKE) "MAKE=$(MAKE)" KTARGET=$${KTARGET:-$(@)} solaris2xgx25 \
+	"KFLAGS=-DSOLARIS26 -DCK_PAM -DCK_SHADOW $(KFLAGS)" \
+	"LIBS= -lpam"
+
 #Solaris 2.6, SunPro compiler, curses, TCP/IP
 solaris26:
 	$(MAKE) "MAKE=$(MAKE)" solaris25x KTARGET=$${KTARGET:-$(@)} \
 	"KFLAGS=-DSOLARIS26 -DCK_PAM -DCK_SHADOW $(KFLAGS)" \
 	"LIBS= -lpam"
 
-#Solaris 7 (aka 2.7)
-solaris7:
-	$(MAKE) "MAKE=$(MAKE)" solaris25x KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS=-DSOLARIS7 -DCK_PAM -DCK_SHADOW $(KFLAGS)" \
+#Solaris 2.6 with gcc
+solaris26g:
+	$(MAKE) "MAKE=$(MAKE)" KTARGET=$${KTARGET:-$(@)} solaris2xg \
+	"KFLAGS= -DSOLARIS26 -DCK_PAM -DCK_SHADOW $(KFLAGS)" \
+	"LIBS = -lpam"
+
+#Solaris 2.6 with gcc and SSL
+solaris26g+openssl:
+	$(MAKE) "MAKE=$(MAKE)"  solaris2xg+openssl+pam+shadow \
+	KTARGET=$${KTARGET:-$(@)} "KFLAGS= -DSOLARIS26 $(KFLAGS)"
+
+#Solaris 2.6 with gcc, no curses (e.g. because libtermlib is missing).
+solaris26gnc:
+	$(MAKE) "MAKE=$(MAKE)" KTARGET=$${KTARGET:-$(@)} solaris2xgnc \
+	"KFLAGS= -DSOLARIS26 -DCK_PAM -DCK_SHADOW $(KFLAGS)" \
 	"LIBS= -lpam"
-
-#Solaris 8
-solaris8:
-	$(MAKE) "MAKE=$(MAKE)" solaris25x KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS=-DSOLARIS8 -DCK_PAM -DCK_SHADOW $(KFLAGS)" \
-	"LIBS= -lpam"
-
-#Solaris 9
-solaris9:
-	$(MAKE) "MAKE=$(MAKE)" solaris25x KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS=-DSOLARIS9 -DCK_PAM -DCK_SHADOW -DUSE_STRERROR $(KFLAGS)" \
-	"LIBS= -lpam"
-
-#Solaris 9 with malloc debugging
-solaris9md:
-	$(MAKE) mermit KTARGET=$${KTARGET:-$(@)} \
-	"CFLAGS = -DFNFLOAT -O -Usun -i \
-	-DSOLARIS9 -Dmalloc=dmalloc -Dfree=dfree -DMDEBUG \
-	-DCK_PAM -DCK_SHADOW -DUSE_STRERROR $(KFLAGS)" \
-	"LIBS= -lpam -ltermlib -lsocket -lnsl -lm -lresolv"
-
-#Solaris 2.0-2.3, SunPro compiler, with SunLink X.25 support.
-#This will only run if user has /opt/SUNWconn/lib/libsockx25.so.1
-#exists and can be dynamically linked.
-#NOTE: Do not change target to xermit -- it doesn't support X.25.
-solaris2x25:
-	@echo 'Making C-Kermit $(CKVER) for Solaris 2.x+X.25 with SunPro cc...'
-	$(MAKE) wermit KTARGET=$${KTARGET:-$(@)} \
-	"CFLAGS = -O -i -Usun -DSVR4 -DSOLARIS -DDIRENT \
-	-DSUNX25 -DTCPSOCKET -DHDBUUCP -DFNFLOAT -DNOLEARN \
-	-DSELECT -DCK_CURSES -DCK_NEWTERM -DSTERMIOX $(KFLAGS)" \
-	"LNKFLAGS = -s" \
-	"LIBS= -ltermlib -L/opt/SUNWconn/lib -R/opt/SUNWconn/lib \
-	-lsockx25 -lsocket -lnsl -lm -lresolv"
-
-#Solaris 2.4, SunPro compiler, with SunLink X.25 support.
-#This will only run if user has /opt/SUNWconn/lib/libsockx25.so.1
-#exists and can be dynamically linked.
-solaris24x25:
-	@echo 'Making C-Kermit $(CKVER) for Solaris 2.4+X.25 with SunPro cc...'
-	$(MAKE) wermit KTARGET=$${KTARGET:-$(@)} \
-	"CFLAGS = -O -i -Usun -DSVR4 -DSOLARIS -DSOLARIS24 -DDIRENT -DNOLEARN \
-	-DSUNX25 -DTCPSOCKET -DHDBUUCP -DFNFLOAT -DPOSIX_CRTSCTS \
-	-DSELECT -DCK_CURSES -DCK_NEWTERM -DSTERMIOX $(KFLAGS)" \
-	"LNKFLAGS = -s" \
-	"LIBS= -ltermlib -L/opt/SUNWconn/lib -R/opt/SUNWconn/lib \
-	-lsockx25 -lsocket -lnsl -lm -lresolv"
-
-#Solaris 2.5, SunPro compiler, with SunLink X.25 support.
-solaris25x25:
-	@echo 'Making C-Kermit $(CKVER) for Solaris 2.5+X.25 with SunPro cc...'
-	$(MAKE) wermit KTARGET=$${KTARGET:-$(@)} \
-	"CFLAGS = -O -i -Usun -DSVR4 -DSOLARIS25 -DDIRENT -DSUNX25 \
-	-DTCPSOCKET -DHDBUUCP -DSELECT -DCK_CURSES \
-	-DCK_NEWTERM -DSTERMIOX -DFNFLOAT -DPOSIX_CRTSCTS -DNOLEARN \
-	-I/opt/SUNWconn/include $(KFLAGS)" \
-	"LIBS= -ltermlib -L/opt/SUNWconn/lib -R/opt/SUNWconn/lib \
-	-lsockx25 -lsocket -lnsl -lm -lresolv"
 
 #Solaris 2.6, SunPro compiler, with SunLink X.25 support.
 solaris26x25:
@@ -3606,7 +3750,307 @@ solaris26x25:
 	"LIBS= -ltermlib -L/opt/SUNWconn/lib -R/opt/SUNWconn/lib \
 	-lsockx25 -lsocket -lnsl -lm -lresolv -lpam"
 
-#The following sunosxxx entries are for debugging and testing only.
+#Solaris 7 (2.7) with Sun CC
+solaris7:
+	$(MAKE) "MAKE=$(MAKE)" solaris25x KTARGET=$${KTARGET:-$(@)} \
+	"KFLAGS=-DSOLARIS7 -DCK_PAM -DCK_SHADOW $(KFLAGS)" \
+	"LIBS= -lpam"
+
+#Solaris 7 with gcc (32-bit)
+solaris7g:
+	$(MAKE) "MAKE=$(MAKE)" solaris2xg KTARGET=$${KTARGET:-$(@)} \
+	"KFLAGS=-DSOLARIS7 -DCK_PAM -DCK_SHADOW $(KFLAGS)" \
+	"LIBS= -lpam"
+
+#Solaris 7 with gcc + Kerberos IV (32-bit)
+solaris7g+krb4:
+	$(MAKE) "MAKE=$(MAKE)" solaris2xg+krb4 KTARGET=$${KTARGET:-$(@)} \
+	"KFLAGS=-DSOLARIS7 -DCK_PAM -DCK_SHADOW $(KFLAGS)" \
+	"LIBS= -lpam"
+
+solaris7g+openssl+zlib+pam+shadow:
+	$(MAKE) "MAKE=$(MAKE)" solaris2xg+openssl+zlib+pam+shadow \
+	KTARGET=$${KTARGET:-$(@)} \
+	"KFLAGS=-DSOLARIS7 -DCK_PAM -DCK_SHADOW $(KFLAGS)"
+
+#Solaris 7 with gcc + OpenSSL (32-bit)
+solaris7g+openssl+zlib+srp+pam+shadow:
+	$(MAKE) "MAKE=$(MAKE)" solaris2xg+openssl+zlib+srp+pam+shadow \
+	KTARGET=$${KTARGET:-$(@)} \
+	"KFLAGS=-DSOLARIS7 -DCK_PAM -DCK_SHADOW $(KFLAGS)"
+
+#Solaris 8
+solaris8:
+	$(MAKE) "MAKE=$(MAKE)" solaris25x KTARGET=$${KTARGET:-$(@)} \
+	"KFLAGS=-DSOLARIS8 -DCK_PAM -DCK_SHADOW $(KFLAGS)" \
+	"LIBS= -lpam"
+
+#Solaris 8 with gcc (32-bit)
+solaris8g:
+	$(MAKE) "MAKE=$(MAKE)" solaris2xg KTARGET=$${KTARGET:-$(@)} \
+	"KFLAGS=-DSOLARIS8 -DCK_PAM -DCK_SHADOW $(KFLAGS)" \
+	"LIBS= -lpam"
+
+# In OpenSSL builds add -ldl if you get unresolved references for
+# dlclose, dlsym, dlopen, dlerror.
+
+#Solaris 8 with gcc + OpenSSL (32-bit)
+solaris8g+openssl+zlib+pam+shadow:
+	$(MAKE) "MAKE=$(MAKE)" solaris2xg+openssl+zlib+pam+shadow \
+	KTARGET=$${KTARGET:-$(@)} "KFLAGS=-DSOLARIS8 $(KFLAGS)"
+
+#Solaris 8 with gcc + Kerberos IV (32-bit)
+solaris8g+krb4:
+	$(MAKE) "MAKE=$(MAKE)" solaris2xg+krb4 KTARGET=$${KTARGET:-$(@)} \
+	"KFLAGS=-DSOLARIS8 -DCK_PAM -DCK_SHADOW $(KFLAGS)" \
+	"LIBS= -lpam"
+
+solaris9nolfs:
+	$(MAKE) "MAKE=$(MAKE)" solaris25x KTARGET=$${KTARGET:-$(@)} \
+	"KFLAGS=-DSOLARIS9 -DCK_PAM -DCK_SHADOW -DUSE_STRERROR $(KFLAGS)" \
+	"LIBS= -lpam"
+
+#Solaris 9 with malloc debugging
+solaris9md:
+	$(MAKE) mermit KTARGET=$${KTARGET:-$(@)} \
+	"CFLAGS = -DFNFLOAT -O -Usun -i -D_FILE_OFFSET_BITS=64 \
+	-DSOLARIS9 -Dmalloc=dmalloc -Dfree=dfree -DMDEBUG \
+	-DCK_PAM -DCK_SHADOW -DUSE_STRERROR $(KFLAGS)" \
+	"LIBS= -lpam -ltermlib -lsocket -lnsl -lm -lresolv"
+
+#Solaris 9 with gcc + OpenSSL + Shadow (32-bit)
+#Add -DOPENSSL_097 for OpenSSL 0.9.7 or later.
+solaris9g+openssl+shadow+pam+zlib:
+	$(MAKE) "MAKE=$(MAKE)" solaris2xg+openssl+zlib+pam+shadow \
+	KTARGET=$${KTARGET:-$(@)} \
+	"KFLAGS=-DSOLARIS9 -DHDBUUCP -DDIRENT -D_FILE_OFFSET_BITS=64 \
+	-DNO_DCL_INET_ATON -DZLIB -DCK_PAM -DCK_SHADOW -DLIBDES $(KFLAGS)" \
+	"LIBS= -lpam -ldes425 -lz $(LIBS)"
+
+#Solaris 9 with gcc + OpenSSL + Kerberos 5 + Krb4 + Shadow (32-bit)
+#Add -DOPENSSL_097 for OpenSSL 0.9.7 or later.
+solaris9g+krb5+krb4+openssl+shadow+pam+zlib:
+	$(MAKE) "MAKE=$(MAKE)" solaris2xg+krb5+krb4+openssl+shadow \
+	KTARGET=$${KTARGET:-$(@)} \
+	"KFLAGS=-DSOLARIS9 -DHDBUUCP -DDIRENT -D_FILE_OFFSET_BITS=64 \
+	-DNO_DCL_INET_ATON -DZLIB -DCK_PAM -DCK_SHADOW -DLIBDES $(KFLAGS)" \
+	"LIBS= -lpam -ldes -lz $(LIBS)"
+
+#Solaris 9 with gcc + Kerberos 4 and 5:
+solaris9g+krb5+krb4:
+	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} CC=gcc CC2=gcc \
+	"CFLAGS = -O -Usun -DSVR4 -DSOLARIS9 -DSTERMIOX -DSELECT -DFNFLOAT \
+	-DCK_CURSES -DCK_NEWTERM -DDIRENT -DHDBUUCP -DTCPSOCKET \
+	-DCK_AUTHENTICATION -DCK_KERBEROS -DKRB5 -DKRB4 -DKRB524 \
+	-D_FILE_OFFSET_BITS=64 \
+	-DCK_ENCRYPTION -DCK_DES -DCK_CAST -DBIGBUFOK \
+	$(K5INC) $(K5INC)/krb5 $(KFLAGS)" \
+	"LIBS= $(K5LIB) -ltermlib -lsocket -lnsl -lm -lresolv \
+	-lkrb4 -lcrypto -lgssapi_krb5 -lkrb5 -lcom_err -lk5crypto \
+	-ldes $(LIBS)"
+
+#Solaris 9, 10, or 11 with gcc...  
+#Uses streams PTYs rather than BSD ptys as in C-Kermit 8.0 and earlier.
+#This target is chained to be the secure solaris9g+xxx targets below.
+solaris9g solaris10g solaris11g:
+	@echo 'Making C-Kermit $(CKVER) for Solaris 9 or later with gcc'
+	@case `uname -r` in \
+	  5.9) SOLARISVERSION="-DSOLARIS9" ;; \
+	  5.10) SOLARISVERSION="-DSOLARIS10" ;; \
+	  5.11) SOLARISVERSION="-DSOLARIS11" ;; \
+	  *) SOLARISVERSION="-DSOLARIS" ;; \
+	esac ; \
+	$(MAKE) "MAKE=$(MAKE)" CC="gcc -m32" CC2="gcc -m32" xermit \
+	KTARGET=$${KTARGET:-$(@)} \
+	"CFLAGS = -g -O -Usun -DSVR4 $$SOLARISVERSION -DUSE_STRERROR \
+	-DSTERMIOX -DSELECT -DFNFLOAT -DCK_PAM -DCK_SHADOW -funsigned-char \
+	-DHAVE_STREAMS -DHAVE_GRANTPT -DHAVE_PTSNAME -DPUSH_PTEM \
+	-DPUSH_LDTERM -DPUSH_TTCOMPAT \
+	-DCK_CURSES -DCK_NEWTERM -DDIRENT -DHDBUUCP -DTCPSOCKET \
+	-D_FILE_OFFSET_BITS=64 $(KFLAGS)" \
+	"LIBS= -ltermlib -lsocket -lnsl -lm -lresolv -lpam $(LIBS)"
+
+#Solaris 9, 10, or 11 with gcc + Kerberos 5 + OpenSSL.
+#OK C-Kermit 9.0.301.
+solaris9g+krb5+ssl solaris10g+krb5+ssl solaris11g+krb5+ssl:
+	@case `openssl version` in \
+	  *0.9.7*) OPENSSLOPTION="-DOPENSSL_097" ;; \
+	  *0.9.8*) OPENSSLOPTION="-DOPENSSL_098" ;; \
+	  *1.[0-9].[0-9]*) OPENSSLOPTION="-DOPENSSL_100" ;; \
+	  *) OPENSSLOPTION="" ;; \
+	esac ; \
+	HAVE_DES=''; \
+	DES_LIB=''; \
+	if ls $(SSLLIB)/libdes* > /dev/null 2> /dev/null; then \
+	      DES_LIB='-ldes425'; \
+	      HAVE_DES='-DCK_DES -DLIBDES'; \
+              echo "HAVE DES"; \
+           else echo "NO DES"; \
+	fi; \
+	GSSAPILIB=''; \
+	K5DIR=`echo $(K5LIB) | sed 's|-L||'`; \
+	echo K5DIR=$$K5DIR; \
+	if ls $$K5DIR/libgssapi_krb5* > /dev/null 2> /dev/null; then \
+              GSSAPILIB='-lgssapi_krb5'; \
+          else GSSAPILIB='-lgssapi'; \
+        fi; \
+	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} CC=gcc CC2=gcc \
+	"CFLAGS = -O -Usun -DSVR4 -DSOLARIS9 -DSTERMIOX -DSELECT -DFNFLOAT \
+	-DCK_CURSES -DCK_NEWTERM -DDIRENT -DHDBUUCP -DTCPSOCKET  -DBIGBUFOK \
+	-DCK_AUTHENTICATION -DCK_SSL -DZLIB -DCK_KERBEROS -DKRB5 \
+	-DCK_ENCRYPTION -DCK_CAST $$OPENSSLOPTION \
+	$$HAVE_DES $(SSLINC) $(K5INC) $(K5INC)/krb5 $(KFLAGS)" \
+	"LIBS= $(SSLLIB) $(K5LIB) -lz -lssl -ltermlib -lsocket -lnsl -lm \
+	-lresolv -lcrypto \
+	$$GSSAPILIB -lkrb5 -lcom_err -lk5crypto $$DES_LIB $(LIBS)"
+
+#Solaris 9, 10, or 11 with gcc, 64 bit build.
+#Peeking inside FILE struct not allowed in 64-bit world.
+#DON'T USE THIS ONE ON PC ARCHITECTURE - It compiles and links but won't run.
+#OK: 2009/09/25 (but not tested on Solaris 11)
+solaris9g64 solaris10g64 solaris11g64:
+	@echo 'Making C-Kermit $(CKVER) for Solaris 9++ with gcc 64-bit'
+	@case `uname -r` in \
+	  5.9) SOLARISVERSION="-DSOLARIS9" ;; \
+	  5.10) SOLARISVERSION="-DSOLARIS10" ;; \
+	  5.11) SOLARISVERSION="-DSOLARIS11" ;; \
+	  *) SOLARISVERSION="-DSOLARIS" ;; \
+	esac ; \
+	$(MAKE) "MAKE=$(MAKE)" CC="gcc -m64" CC2="gcc -m64" xermit \
+	KTARGET=$${KTARGET:-$(@)} \
+	"CFLAGS = -g -O -Usun -funsigned-char \
+	-DSVR4 $$SOLARISVERSION -DNOARROWKEYS \
+	-DSTERMIOX -DSELECT -DFNFLOAT -DUSE_STRERROR -DCK_PAM -DCK_SHADOW \
+	-DHAVE_STREAMS -DHAVE_GRANTPT -DHAVE_PTSNAME -DPUSH_PTEM \
+	-DPUSH_LDTERM -DPUSH_TTCOMPAT \
+	-DCK_CURSES -DCK_NEWTERM -DDIRENT -DHDBUUCP -DTCPSOCKET $(KFLAGS)" \
+	"LIBS= -ltermlib -lsocket -lnsl -lm -lresolv -lpam $(LIBS)"
+
+#Solaris 9, 10, or 11 with SunPro CC
+#Uses streams PTYs rather than BSD ptys as in C-Kermit 8.0 and earlier.
+#This target is chained to by the secure targets below.
+#OK C-Kermit 9.0
+solaris9 solaris10 solaris11:
+	@echo 'Making C-Kermit $(CKVER) for Solaris 9 or later with Sun CC'
+	@case `uname -r` in \
+	  5.9) SOLARISVERSION="-DSOLARIS9" ;; \
+	  5.10) SOLARISVERSION="-DSOLARIS10" ;; \
+	  5.11) SOLARISVERSION="-DSOLARIS11" ;; \
+	  *) SOLARISVERSION="-DSOLARIS" ;; \
+	esac ; \
+	$(MAKE) "MAKE=$(MAKE)" xermit KTARGET=$${KTARGET:-$(@)} \
+	"CFLAGS = -O -Usun -DSVR4 $$SOLARISVERSION -DUSE_STRERROR \
+	-DSTERMIOX -DSELECT -DFNFLOAT -DCK_PAM -DCK_SHADOW \
+	-DHAVE_STREAMS -DHAVE_GRANTPT -DHAVE_PTSNAME -DPUSH_PTEM \
+	-DPUSH_LDTERM -DPUSH_TTCOMPAT \
+	-DCK_CURSES -DCK_NEWTERM -DDIRENT -DHDBUUCP -DTCPSOCKET \
+	-D_FILE_OFFSET_BITS=64 $(KFLAGS)" \
+	"LIBS= $(LIBS) -ltermlib -lsocket -lnsl -lm -lresolv -lpam"
+
+# Solaris 9, 10, or 11 with OpenSSL built with Sun CC.
+# Here's an example of how to invoke this target in case your OpenSSL
+# headers and libraries are not in /usr/local:
+#
+# make solaris9+openssl "SSLINC=" "SSLLIB=" \
+#  "KFLAGS= -I/opt/openssl-0.9.8k/include -L/opt/openssl-0.9.8k/lib"
+#
+# Don't use 'make -e' because that inhibits passing of KFLAGS to
+# the base (solaris9) target.
+#
+#OK C-Kermit 9.0
+solaris9+ssl solaris10+ssl solaris11+ssl \
+solaris9+openssl solaris10+openssl solaris11+openssl:
+	@echo 'Making C-Kermit $(CKVER) for Solaris 9/10/11 with OpenSSL: cc'
+	@case `openssl version` in \
+	  *0.9.7*) OPENSSLOPTION="-DOPENSSL_097" ;; \
+	  *0.9.8*) OPENSSLOPTION="-DOPENSSL_098" ;; \
+	  *1.[0-9].[0-9]*) OPENSSLOPTION="-DOPENSSL_100" ;; \
+	  *) OPENSSLOPTION="" ;; \
+	esac ; \
+	HAVE_DES=''; \
+	DES_LIB=''; \
+	if ls $(SSLLIB)/libdes* > /dev/null 2> /dev/null; then \
+	      DES_LIB='-ldes425'; \
+	      HAVE_DES='-DCK_DES -DLIBDES'; \
+              echo "HAVE DES"; \
+           else echo "NO DES"; \
+	fi; \
+	$(MAKE) "MAKE=$(MAKE)" solaris9 KTARGET=$${KTARGET:-$(@)} \
+	"KFLAGS=-DCK_AUTHENTICATION -DCK_SSL -DZLIB $$HAVE_DES \
+	-DNO_DCL_INET_ATON $$OPENSSLOPTION $(SSLINC) $(KFLAGS)" \
+	"LIBS= $(SSLLIB) -lz -lssl $$DES_LIB -lcrypto  $(LIBS)"
+
+# Solaris 9 or later with OpenSSL, built with gcc.
+# Remove -DNO_DCL_INET_ATON if inet_aton comes up missing.  This target nicely
+# chains to the solaris{9,10,11}g target but for some reason it doesn't work if
+# you add the -DFORWARD_X option, thus the solaris9g+openssl+forward_x target.
+#
+#OK: 2011/06/14
+solaris9g+ssl solaris10g+ssl solaris11g+ssl \
+solaris9g+openssl solaris10g+openssl solaris11g+openssl:
+	@echo 'Making C-Kermit $(CKVER) for Solaris 9/10/11 with OpenSSL: gcc'
+	@case `openssl version` in \
+	  *0.9.7*) OPENSSLOPTION="-DOPENSSL_097" ;; \
+	  *0.9.8*) OPENSSLOPTION="-DOPENSSL_098" ;; \
+	  *1.[0-9].[0-9]*) OPENSSLOPTION="-DOPENSSL_100" ;; \
+	  *) OPENSSLOPTION="" ;; \
+	esac ; \
+	HAVE_DES=''; \
+	DES_LIB=''; \
+	if ls $(SSLLIB)/libdes* > /dev/null 2> /dev/null; then \
+	      DES_LIB='-ldes425'; \
+	      HAVE_DES='-DCK_DES -DLIBDES'; \
+              echo "HAVE DES"; \
+           else echo "NO DES"; \
+	fi; \
+	$(MAKE) "MAKE=$(MAKE)" solaris9g KTARGET=$${KTARGET:-$(@)} \
+	"KFLAGS=-DCK_AUTHENTICATION -DCK_SSL -DZLIB $$HAVE_DES \
+	-DNO_DCL_INET_ATON $$OPENSSLOPTION $(SSLINC) $(KFLAGS)" \
+	"LIBS= $(SSLLIB) -lz -lssl $$DES_LIB -lcrypto  $(LIBS)"
+
+# Solaris 9 or later with gcc + OpenSSL + Shadow (32-bit).
+# Remove -DNO_DCL_INET_ATON if inet_aton comes up missing.
+# Includes long file support - not sure if this was available before Solaris 9.
+# Detects Solaris version automatically.
+#
+solaris9g+openssl+forward_x:
+	@echo 'Making C-Kermit $(CKVER) for Solaris 9 or later with OpenSSL...'
+	@case `openssl version` in \
+	  *0.9.7*) OPENSSLOPTION="-DOPENSSL_097" ;; \
+	  *0.9.8*) OPENSSLOPTION="-DOPENSSL_098" ;; \
+	  *1.[0-9].[0-9]*) OPENSSLOPTION="-DOPENSSL_100" ;; \
+	  *) OPENSSLOPTION="" ;; \
+	esac ; case `uname -r` in \
+	  5.9) SOLARISVERSION="-DSOLARIS9" ;; \
+	  5.10) SOLARISVERSION="-DSOLARIS10" ;; \
+	  5.11) SOLARISVERSION="-DSOLARIS11" ;; \
+	  *) SOLARISVERSION="-DSOLARIS" ;; \
+	esac ; \
+	$(MAKE) xermit 	KTARGET=$${KTARGET:-$(@)} CC=gcc CC2=gcc \
+	"CFLAGS = -g -O -Usun -DSVR4 $$SOLARISVERSION \
+	-DHAVE_STREAMS -DHAVE_GRANTPT -DHAVE_PTSNAME -DPUSH_PTEM \
+	-DPUSH_LDTERM -DPUSH_TTCOMPAT \
+	-DSTERMIOX -DSELECT -DFNFLOAT -DBIGBUFOK -D_FILE_OFFSET_BITS=64 \
+	-DCK_AUTHENTICATION -DCK_SSL -DCK_PAM -DCK_SHADOW -DZLIB -DLIBDES \
+	-DFORWARD_X $$OPENSSLOPTION $(SSLINC) $(KFLAGS)" \
+	"LIBS= $(SSLLIB) -lpam -ldes425 -lz -ltermlib \
+	-lsocket -lnsl -lm -lresolv -lssl -lcrypto -lpam -lz $(LIBS)"
+
+# These two should be folded in with the ones just above.
+
+#Solaris 9 with gcc 3.1 + OpenSSL (32-bit)
+solaris9g+openssl+zlib+pam+shadow:
+	$(MAKE) "MAKE=$(MAKE)" solaris2xg32+openssl+zlib+pam+shadow \
+	KTARGET=$${KTARGET:-$(@)} \
+	"KFLAGS=-DSOLARIS9 -DUSE_STRERROR $(KFLAGS)"
+
+#Solaris 10 with gcc 3.1 + OpenSSL (32-bit)
+solaris10g+openssl+zlib+pam+shadow:
+	$(MAKE) "MAKE=$(MAKE)" solaris2xg32+openssl+zlib+pam+shadow \
+	KTARGET=$${KTARGET:-$(@)} \
+	"KFLAGS=-DSOLARIS10 -DUSE_STRERROR $(KFLAGS)"
+
+#The following (old, old) sunosxxx entries are for debugging and testing only.
 
 sunos41x:
 	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} \
@@ -4156,6 +4600,7 @@ uw21iksd:
 	"KFLAGS=-DCK_SHADOW $(KFLAGS)" "LIBS= -lgen"
 
 #UnixWare 7 with tc[gs]etspeed() high serial speeds & select()-based CONNECT
+#and as of C-Kermit 8.0.212, large file support (LFS).
 #NOTE: This is the one we use.
 unixware7t:
 	@echo 'Making C-Kermit $(CKVER) for UnixWare 7 with POSIX i/o...'
@@ -4163,7 +4608,7 @@ unixware7t:
 	"CFLAGS = -O -DUNIXWARE -DSELECT -DSVR4 -DDIRENT -DHDBUUCP -DBIGBUFOK \
 	-DFNFLOAT -DNOGETUSERSHELL -DSTERMIOX -DCK_CURSES -DTCPSOCKET -DPOSIX \
 	-DUW7 -DUSETCSETSPEED -DCK_NEWTERM -DNOLSTAT -DDCLTIMEVAL \
-	-DNEEDMDMDEFS $(KFLAGS)" \
+	-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -DNEEDMDMDEFS $(KFLAGS)" \
 	"LIBS=-lsocket -lnsl -lcurses -ltermcap -lcrypt -lm -lresolv $(LIBS)" \
 	"LNKFLAGS = -s"
 
@@ -4216,7 +4661,7 @@ ou8:
 	KTARGET=$${KTARGET:-$(@)}
 
 #UnixWare 7 with OpenSSL
-uw7ssl:
+uw7ssl uw7+ssl:
 	@echo 'Making C-Kermit $(CKVER) for UnixWare 7 and OpenSSL...'
 	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS = -O -DCK_AUTHENTICATION -DCK_SSL -DCK_SHADOW \
@@ -4500,7 +4945,7 @@ irix53x:
 #Silicon Graphics IRIX 6.[024] common stuff.
 #Yellow Pages and Curses support included.
 #IRIX version 6.0 and later runs only ELF binaries.
-#Depends on code changes in ckudeb.h that make -DIRIX6x define all
+#Depends on code changes in ckcdeb.h that make -DIRIX6x define all
 #lower IRIX6x values and IRIX51.
 irix6x:
 	@echo 'Includes fullscreen file display and Yellow Pages...'
@@ -4550,15 +4995,46 @@ irix64:
 irix64gcc:
 	@echo 'Making C-Kermit $(CKVER) for Silicon Graphics IRIX 6.4 gcc'
 	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} "CC = gcc" "CC2 = gcc" \
-	"CFLAGS= -DSVR4 -DIRIX64 -DCK_CURSES -DTCPSOCKET -DNOCOTFMC \
+	"CFLAGS= -DSVR4 -DIRIX64 -DDIRENT -DHDBUUCP -DNOGETUSERSHELL \
+	-DSELECT -DPWID_T=uid_t -DTCPSOCKET -DNOCOTFMC \
+	-DCK_ANSIC -DCK_RTSCTS -DCK_NEWTERM -DCK_CURSES \
 	$(KFLAGS) -O" "LIBS= -lcurses -ltermcap -lcrypt"
 
 #Note the new Optimization option syntax for MIPSpro CC 7.2.1.2m.
+#See note on irix65gcc target about Large File Support (LFS).
 irix65:
 	@echo 'Making C-Kermit $(CKVER) for SGI IRIX 6.5'
 	@$(MAKE) "MAKE=$(MAKE)" LNKFLAGS="-Wl,-woff,84" \
-	"KFLAGS=-DIRIX65 -DCK_RTSCTS -OPT:Olimit=0 -woff 1110,1552,1174 \
-	$(KFLAGS)" \
+	"KFLAGS=-DIRIX65 -D_LARGEFILE_SOURCE -DCK_RTSCTS -OPT:Olimit=0 \
+	-woff 1110,1552,1174 $(KFLAGS)" \
+	irix6x KTARGET=$${KTARGET:-$(@)}
+
+#Build for those that have GCC instead of MIPSpro.
+#
+# Large File Support note: use the define _LARGEFILE_SOURCE to enable support
+# for files larger than 2GB.  This may work on releases of Irix prior to
+# 6.5.xx.  To verify, check the man page for fstat and verify that off_t is a
+# 64 bit value for an -n32 build.  Also check the manpage for fseek and ftell
+# to verify that the fseek64 and ftell64 functions are provided.  If so, then
+# LFS support should work and you can try adding -D_LARGEFILE_SOURCE to CFLAGS
+# for your selected Irix target.
+#
+irix65gcc:
+	@echo 'Making C-Kermit $(CKVER) for SGI IRIX 6.5 with gcc'
+	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} \
+	"CC = gcc" "CC2 = gcc" \
+	"CFLAGS= -DSVR4 -DIRIX65 -D_LARGEFILE_SOURCE -DDIRENT -DHDBUUCP \
+	-DNOGETUSERSHELL -DSELECT -DPWID_T=uid_t -DTCPSOCKET -DNOCOTFMC \
+	-DCK_ANSIC -DCK_RTSCTS -DCK_NEWTERM -DCK_CURSES \
+	$(KFLAGS) -O" "LIBS= -lcurses"
+
+# The 64-bit IRIX target works but presumably is no longer needed given the
+# large file support in the more portable and compact 32-bit version.
+irix65_64:
+	@echo 'Making C-Kermit $(CKVER) 64-bit for SGI IRIX 6.5'
+	@$(MAKE) "MAKE=$(MAKE)" LNKFLAGS="-Wl,-woff,84" \
+	"KFLAGS=-DIRIX65 -64 -DCK_RTSCTS -OPT:Olimit=0 -woff 1110,1552,1174 \
+	-DCK_64BIT $(KFLAGS)" \
 	irix6x KTARGET=$${KTARGET:-$(@)}
 
 #Dumb down to MIPS-2 if building on R5000 or higher...
@@ -4568,6 +5044,23 @@ irix65mips2:
 	"KFLAGS=-DIRIX65 -DCK_RTSCTS -OPT:Olimit=0 -o32 -mips2 \
 	-woff 1110,1552,1174 $(KFLAGS)" \
 	irix6x KTARGET=$${KTARGET:-$(@)}
+
+#Special target that adds srp, ssl, and zlib support.  This requires
+#that you have pkgsrc installed instead of Irix Freeware.  See
+#NetBSD.org for pkgsrc for Irix.  You will need to BUILD the srp_client
+#package yourself.  Install it manually using the directions found
+#in the netbsds+ssl+srp+zlib target comments.
+irix65+ssl+srp+zlib:
+	@echo 'Making C-Kermit $(CKVER) for IRIX 6.5 with gcc and SSL SRP ZLIB'
+	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} \
+	"CC = gcc" "CC2 = gcc" \
+	"CFLAGS= -DIRIX65 -DSVR4 -DDIRENT -DHDBUUCP -DNOGETUSERSHELL -DSELECT \
+	-DTCPSOCKET -DNOCOTFMC -DCK_NEWTERM -DPWID_T=uid_t -DCK_ANSIC \
+	-I/usr/pkg/include -DCK_AUTHENTICATION -DCK_SRP -DPRE_SRP_1_4_5 \
+	-DCK_RTSCTS -DCK_NCURSES -DCK_ENCRYPTION -DCK_CAST -DCK_DES -DCK_SSL \
+	-DLIBDES -DZLIB -DFNFLOAT -I/usr/pkg/include/openssl $(KFLAGS) -O" \
+	"LIBS= -L/usr/pkg/lib -rpath /usr/pkg/lib -lncurses -lsrp -lgmp -ldes \
+	-lssl -lkrypto -lcrypto -lcrypt -lz -lm"
 
 irix6x+krb5:
 	@echo 'Includes fullscreen file display and Yellow Pages...'
@@ -4850,10 +5343,10 @@ unisys5r2:
 sys5hdb:
 	$(MAKE) "MAKE=$(MAKE)" sys3hdb
 
-#Create the common header line for all hpux[5-10]* entries. This extra entry is
-#here because our header message length may differ for each C-Kermit version.
-#Don't use 'fold -s' for HP-UX 5.x - 7.x! This option is there only since
-#HP-UX 8.0!
+#Create the common header line for all hpux[5-11]* entries and above. This 
+#extra entry is here because our header message length may differ for each 
+#C-Kermit version. Don't use 'fold -s' for HP-UX 5.x - 7.x! This option is 
+#available only for HP-UX 8.0 and above!
 hpux-header:
 	@HPUX=`uname -r | sed -e 's/^[^1-9]*//' -e 's/\.00$$/.0/'` ; \
 	[ "$(MESSAGE0)" ] && MESSAGE1="$(MESSAGE0)" ; \
@@ -4868,6 +5361,7 @@ hpux-header:
 # Peter E's updated HP-UX 5.xx entries Oct 2001.
 
 #HP-9000 500 HP-UX 5.xx, no TCP/IP.
+# Last known successful build: C-Kermit 8.0.206 2002/20/27.
 hpux0500:
 	@MESSAGE0="no TCP/IP and no compiler optimization";\
 	MESSAGE0=$${MESSAGE1:-$$MESSAGE0} \
@@ -4875,72 +5369,90 @@ hpux0500:
 	$(MAKE) wermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS = -DHPUX -DHPUX5 -DHPUXPRE65 -DNOREDIRECT -DDCLGETCWD \
 	-DNOGETUSERSHELL -DNOGFTIMER -DNOSYSLOG -DNOTOMACROS -DNOLSTAT \
-	-DNOSYMLINK -DNOINITGROUPS -DNOUNICODE -DNOLEARN $(KFLAGS)" \
-	"LIBS = $(LIBS)" "LNKFLAGS = "
+	-DNOSYMLINK -DNOINITGROUPS -DNOUNICODE -DNOLEARN -DNOLONGLONG \
+	-DVOID=int -DCKVOID=int $(KFLAGS)" "LIBS = $(LIBS)" "LNKFLAGS = "
 
 #HP-9000 500 HP-UX 5.21 with Wollongong WIN/TCP 1.2 TCP/IP.
 #Requires /usr/wins/usr/include and /usr/lib/libnet.a from Wollongong.
 #Optimization skipped - takes forever.	Really.
 # WARNING: this doesn't work if a file called "hpux0500" is on the disk.
+# Last known successful build: C-Kermit 8.0.206 2002/20/27.
 hpux0500wintcp:
 	@MESSAGE1="with WIN/TCP but without any extra compiler optimization" \
 	$(MAKE) hpux0500 KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS = -DTCPSOCKET -DHPUX5WINTCP -DINADDRX -DNO_DNS_SRV -DNOMHHOST \
-	-DNOHADDRLIST -I/usr/wins/usr/include $(KFLAGS)" \
-	"LIBS = /usr/lib/libnet.a"
+	"KFLAGS = -DTCPSOCKET -DHPUX5WINTCP -DINADDRX -DNO_DNS_SRV \
+	-DNOMHHOST -DVOID=int -DCKVOID=int -DNOHADDRLIST -DNOLONGLONG \
+	-I/usr/wins/usr/include $(KFLAGS)" "LIBS = /usr/lib/libnet.a"
 
 #HP-UX 6.5, short filenames, no network and no curses support.
 #ckcpro, ckuusr, ckuus3 and others are broken out because they make the
-#optimizer run away.  Note that xermit target does not work with this one!
-#If you get compiler warnings like 'Switch table overflow' increase the '...'
-#value in '-Wc,-Nw...'!
+#optimizer run away.  Note that the XERMIT target does not work with HP-UX 6.5!
+#
+#If you get compiler warnings like:
+#'Switch table overflow. Try the -Wc,-Nw option.' (for ckcuni.c, or
+#other files) increase the '...' value in '-Wc,-Nw...'! The default maximum
+#switch table stack (-Nw) is 250 table entries. ckcuni.c from Oct 16 2009
+#needs 257 table entries (C-Kermit Version "9.0.299").
+#OK: 2010/03/26
 hpux0650:
 	@$(MAKE) hpux-header
-	@echo 'supporting: NO long filenames, NO network${MESSAGE2}.'
+	@MESSAGE2=$${MESSAGE2:-'and NO network'}; \
+	echo "supporting: NO long filenames $$MESSAGE2."
 
 	$(MAKE) KTARGET=$${KTARGET:-$(@)} \
-		ckuusr.$(EXT) ckuus3.$(EXT) ckuus4.$(EXT) ckuus5.$(EXT) \
-	        ckuus6.$(EXT) ckuxla.$(EXT) ckcpro.$(EXT) \
+		ckuus3.$(EXT) ckuus4.$(EXT) ckuus5.$(EXT) ckuus6.$(EXT) \
+		ckuusr.$(EXT) ckuxla.$(EXT) ckcftp.$(EXT) ckcpro.$(EXT) \
 	"CFLAGS = -DHPUX -DHPUX6 -DSIG_V -DNOSYSLOG -DNOSELECT -DFNFLOAT \
-	-DDCLGETCWD -DNOGETUSERSHELL -DNO_DNS_SRV -DNOLEARN $(KFLAGS) \
-	-Wc,-Nw260"
+	-DDCLGETCWD -DNOGETUSERSHELL -DNO_DNS_SRV -DNOLEARN -DNOLONGLONG \
+	$(KFLAGS)"
 
 	$(MAKE) wermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS = -DHPUX -DHPUX6 -DSIG_V -DNOSYSLOG -DNOSELECT -DFNFLOAT \
-	-DDCLGETCWD -DNOGETUSERSHELL -DNO_DNS_SRV -DNOLEARN $(KFLAGS) \
-	-Wc,-Nw260 $(OFLAGS)" "LNKFLAGS = -s" "LIBS = -lm $(LIBS)"
+	-DDCLGETCWD -DNOGETUSERSHELL -DNO_DNS_SRV -DNOLEARN -DNOLONGLONG \
+	$(KFLAGS) -Wc,-Nw260 $(OFLAGS)" "LNKFLAGS = -s" "LIBS = -lm $(LIBS)"
 
 #Exactly as above, plus curses:
+#OK: 2009/10/06
 hpux0650c:
-	@MESSAGE2=", but with curses" \
+	@MESSAGE2="and NO network but with curses" \
 	$(MAKE) hpux0650 KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS= -DCK_CURSES $(KFLAGS)" \
-	"LIBS= -lcurses"
+	"KFLAGS = -DCK_CURSES $(KFLAGS)" \
+	"LIBS = -lcurses"
 
 #Exactly as above, plus curses + network:
-#(doesn't work -- HP-UX 6 lacks the FD_SET macros -- this can be addressed
-
+#OK: 2009/10/02
 hpux0650tcpc:
-	@MESSAGE2=", but with curses and with tcp/ip" \
+	@MESSAGE2="but with curses and with TCP/IP" \
 	$(MAKE) hpux0650 KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS= -DCK_CURSES -DTCPSOCKET -DNOHADDRLIST $(KFLAGS)" \
-	"LIBS= -lcurses"
+	"KFLAGS=-DCK_CURSES -DTCPSOCKET -DNOHADDRLIST \
+	-DINTSELECT -DNOCKGETFQHOST $(KFLAGS)" \
+	"LIBS=-lcurses"
 
 #Exactly as hpux0650 but with compiler optimization:
+#OK: 2009/10/06
 hpux0650o:
 	@MESSAGE1="with compiler optimization" \
 	$(MAKE) hpux0650 KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS= $(KFLAGS)" "OFLAGS = -O"
+	"KFLAGS = $(KFLAGS)" "OFLAGS = -O"
 
 #Exactly as hpux0650c but with compiler optimization:
+#OK: 2009/10/06
 hpux0650oc:
 	@MESSAGE1="with compiler optimization" \
 	$(MAKE) hpux0650c KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS= $(KFLAGS)" "OFLAGS = -O"
+	"KFLAGS = $(KFLAGS)" "OFLAGS = -O"
 
-#Take this as startup entry for all 'none optimized' files under HP-UX 7.x!
-#Make sure we doesn't call it with the '-O' option because this will blow up
+#Exactly as hpux0650tcpc but with compiler optimization:
+#OK: 2009/10/06
+hpux0650otcpc:
+	@MESSAGE1="with compiler optimization" \
+	$(MAKE) hpux0650tcpc KTARGET=$${KTARGET:-$(@)} \
+	"KFLAGS = $(KFLAGS)" "OFLAGS = -O"
+
+#Take this as startup entry for all 'non-optimized' files under HP-UX 7.x!
+#Make sure we don't call it with the '-O' option because this will blow up
 #the compiler!
+#OK: 2009/09/30
 hpux0700noopt:
 	@case "$(CFLAGS)" in \
 	*-O*) echo "Don't use CFLAGS= -O here!" ;; \
@@ -4952,8 +5464,12 @@ hpux0700noopt:
 	esac
 
 #HP-UX 7.0, no long filenames, no network support, no curses.
-#If you get compiler warnings like 'Switch table overflow' increase the '...'
-#value in '-Wc,-Nw...'!
+#If you get compiler warnings like:
+#'Switch table overflow. Try the -Wc,-Nw option.' (for ckcuni.c, or
+#other files) increase the '...' value in '-Wc,-Nw...'! The default maximum
+#switch table stack (-Nw) is 250 table entries. ckcuni.c from Oct 16 2009
+#needs 257 table entries (C-Kermit Version "9.0.299").
+#OK: 2010/10/26
 hpux0700sf:
 	@$(MAKE) hpux-header
 	@echo 'supporting: NO long filenames, NO network, NO curses.'
@@ -4967,14 +5483,22 @@ hpux0700sf:
 	"LNKFLAGS = -s" "LIBS = -lm $(LIBS)"
 
 #Exactly as hpux0700sf but with compiler optimization:
+#OK: 2009/09/30
 hpux0700osf:
 	@MESSAGE1="with compiler optimization" \
 	$(MAKE) hpux0700sf KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS= $(KFLAGS)" "OFLAGS = -O"
+	"KFLAGS = $(KFLAGS)" "OFLAGS = -O"
 
 #HP-UX 7.0, short filenames, but with tcp/ip and curses.
 #To use this, you must have bought the ARPA Services Product from HP, and you
 #must have /usr/lib/libBSD.a.
+#
+#If you get compiler warnings like:
+#'Symbol table overflow. Try the -Wc,-Ns option.' (as for ckuus4.c or
+#other files) increase the '...' value in '-Wc,-Ns...'! The default maximum
+#symbol table size (-Ns) is 2000 table entries. ckuus4.c from Mar 12 2010
+#needs 2031 table entries (C-Kermit Version "9.0.299").
+#OK: 2010/03/24
 hpux0700sftcpc:
 	@$(MAKE) hpux-header
 	@echo 'supporting: NO long filenames, \c'
@@ -4982,23 +5506,32 @@ hpux0700sftcpc:
 	$(MAKE) hpux0700noopt KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS =  -DHPUXDEBUG -DHPUX -DHPUX7 -DTCPSOCKET -DSIG_V \
 	-DCK_REDIR -DCK_RTSCTS -DCK_CURSES -DNOGETUSERSHELL -DFNFLOAT \
-	-DNO_DNS_SRV -DHDBUUCP -DLOCK_DIR=\\\"/usr/spool/uucp\\\" $(KFLAGS) \
-	-Wc,-Nw260"
+	-DNO_DNS_SRV -DHDBUUCP -DLOCK_DIR=\\\"/usr/spool/uucp\\\" \
+	-DNOLONGLONG $(KFLAGS) -Wc,-Nw260,-Ns2040"
 
 	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS =  -DHPUXDEBUG -DHPUX -DHPUX7 -DTCPSOCKET -DSIG_V \
 	-DCK_REDIR -DCK_RTSCTS -DCK_CURSES -DNOGETUSERSHELL -DFNFLOAT \
-	-DNO_DNS_SRV -DHDBUUCP  -DLOCK_DIR=\\\"/usr/spool/uucp\\\" $(KFLAGS) \
-	-Wc,-Nw260 $(OFLAGS)" "LNKFLAGS = -s" "LIBS= -lm -lBSD -lcurses"
+	-DNO_DNS_SRV -DHDBUUCP -DLOCK_DIR=\\\"/usr/spool/uucp\\\" \
+	-DNOLONGLONG $(KFLAGS) -Wc,-Nw260,-Ns2040 $(OFLAGS)" \
+	"LNKFLAGS = -s" "LIBS = -lm -lBSD -lcurses"
 
 #Exactly as above but with compiler optimization:
+#OK: 2009/09/30
 hpux0700osftcpc:
 	@MESSAGE1="with compiler optimization" \
 	$(MAKE) hpux0700sftcpc KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS= $(KFLAGS)" "OFLAGS = -O"
+	"KFLAGS = $(KFLAGS)" "OFLAGS = -O"
 
 #HP 9000 series 300/800 HP-UX 7.0, long filenames, network support, HDB uucp,
 #but NO curses. See comments in hpux0700sftcpc about TCP/IP support.
+#
+#If you get compiler warnings like:
+#'Symbol table overflow. Try the -Wc,-Ns option.' (as for ckuus4.c or
+#other files) increase the '...' value in '-Wc,-Ns...'! The default maximum
+#symbol table size (-Ns) is 2000 table entries. ckuus4.c from Mar 12 2010
+#needs 2031 table entries (C-Kermit Version "9.0.299").
+#OK: 2010/03/24
 hpux0700lfn:
 	@$(MAKE) hpux-header
 	@echo 'supporting: long filenames, networking, HDB uucp$(MESSAGE2)...'
@@ -5006,33 +5539,36 @@ hpux0700lfn:
 	"CFLAGS =  -DHPUXDEBUG -DHPUX -DHPUX7 -DTCPSOCKET -DSIG_V -DFNFLOAT \
 	-DNOGETUSERSHELL -DNOSETBUF -DCK_REDIR -DCK_RTSCTS -DLONGFN \
 	-DNO_DNS_SRV -DDIRENT -DHDBUUCP -DLOCK_DIR=\\\"/usr/spool/uucp\\\" \
-	$(KFLAGS) -Wc,-Nw260"
+	-DNOLONGLONG $(KFLAGS) -Wc,-Nw260,-Ns2040"
 
 	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS =  -DHPUXDEBUG -DHPUX -DHPUX7 -DTCPSOCKET -DSIG_V -DFNFLOAT \
 	-DNOGETUSERSHELL -DNOSETBUF -DCK_REDIR -DCK_RTSCTS -DLONGFN \
 	-DNO_DNS_SRV -DDIRENT -DHDBUUCP -DLOCK_DIR=\\\"/usr/spool/uucp\\\" \
-	$(KFLAGS) -Wc,-Nw260 \
-	$(OFLAGS)" "LNKFLAGS = -s" "LIBS = -lm -lBSD $(LIBS)"
+	-DNOLONGLONG $(KFLAGS) -Wc,-Nw260,-Ns2040 $(OFLAGS)" \
+	"LNKFLAGS = -s" "LIBS = -lm -lBSD $(LIBS)"
 
 #Exactly as above + curses.
+#OK: 2009/09/30
 hpux0700lfnc:
 	@MESSAGE2=', curses' \
 	$(MAKE) hpux0700lfn KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS= -DCK_CURSES $(KFLAGS)" \
-	"LIBS= -lcurses"
+	"KFLAGS = -DCK_CURSES $(KFLAGS)" \
+	"LIBS = -lcurses"
 
 #Exactly as above hpux0700lfn but with compiler optimization:
+#OK: 2009/09/30
 hpux0700olfn:
 	@MESSAGE1="with compiler optimization" \
 	$(MAKE) hpux0700lfn KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS= $(KFLAGS)" "OFLAGS = -O"
+	"KFLAGS = $(KFLAGS)" "OFLAGS = -O"
 
 #Exactly as above hpux0700lfnc but with compiler optimization:
+#OK: 2009/09/30
 hpux0700olfnc:
 	@MESSAGE1="with compiler optimization" \
 	$(MAKE) hpux0700lfnc KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS= $(KFLAGS)" "OFLAGS = -O"
+	"KFLAGS = $(KFLAGS)" "OFLAGS = -O"
 
 #HP 9000 Series 300 or 400, HP-UX 8.0, long filenames and TCP/IP support.
 #This one should also work on 700/800, but without PA-specific optimization.
@@ -5042,6 +5578,7 @@ hpux0700olfnc:
 #For HP-UX 8.0 on Motorola CPUs, you might have to reinstall your kernel with
 #maxdsiz >= 0x03000000.  But if physical memory is small, that still will not
 #help much.
+#OK: 2009/10/01
 hpux0800:
 	@$(MAKE) hpux-header
 	@MESSAGE3=$${MESSAGE3:='TCP/IP'}; \
@@ -5051,15 +5588,17 @@ hpux0800:
 	"CFLAGS =  -DCK_REDIR -DHPUXDEBUG -DHPUX -DHPUX8 -DRENAME -DSIG_V \
 	-DNOSETBUF -DDIRENT -DCK_RTSCTS -DSTERMIOX -DLONGFN -DTCPSOCKET \
 	-DHDBUUCP  -DNO_DNS_SRV -DLOCK_DIR=\\\"/usr/spool/uucp\\\" -DFNFLOAT \
-	$(KFLAGS)"
+	-DNOLONGLONG $(KFLAGS)"
 
 	$(MAKE) -B "CC=$(CC)" "CC2=$(CC2)" xermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS =  -DCK_REDIR -DHPUXDEBUG -DHPUX -DHPUX8 -DRENAME -DSIG_V \
 	-DNOSETBUF -DDIRENT -DCK_RTSCTS -DSTERMIOX -DLONGFN -DTCPSOCKET \
 	-DHDBUUCP  -DNO_DNS_SRV -DLOCK_DIR=\\\"/usr/spool/uucp\\\" -DFNFLOAT \
-	$(KFLAGS) $(OFLAGS)" "LNKFLAGS = -s" "LIBS = -lm -lBSD $(LIBS)"
+	-DNOLONGLONG -DNODCLENDUSERSHELL $(KFLAGS) $(OFLAGS)" \
+	"LNKFLAGS = -s" "LIBS = -lm -lBSD $(LIBS)"
 
 #Exactly as above hpux0800 + curses.
+#OK: 2009/10/01
 hpux0800c:
 	@MESSAGE2=', curses' \
 	$(MAKE) hpux0800  KTARGET=$${KTARGET:-$(@)} \
@@ -5067,24 +5606,28 @@ hpux0800c:
 
 #HP 9000 HP-UX 8.0, no TCP/IP because /usr/lib/libBSD.a can't be found,
 #or TCP/IP header files missing.
+#OK: 2009/10/01
 hpux0800notcp:
 	@MESSAGE3='NO network, NO curses' \
 	$(MAKE) "MAKE=$(MAKE)" hpux0800 KTARGET=$${KTARGET:-$(@)} \
 	"KFLAGS = $(KFLAGS) -UTCPSOCKET"
 
 #Now the same as above hpux0800 but with compiler optimization
+#OK: 2009/10/01
 hpux0800o:
 	@MESSAGE1="with compiler optimization" \
 	$(MAKE) hpux0800 KTARGET=$${KTARGET:-$(@)} \
 	"KFLAGS = $(KFLAGS)" "OFLAGS = -O"
 
 #Exactly as above hpux0800 + curses and with compiler optimization.
+#OK: 2009/10/01
 hpux0800oc:
 	@MESSAGE1="with compiler optimization" \
 	$(MAKE) hpux0800c KTARGET=$${KTARGET:-$(@)} \
 	"KFLAGS = $(KFLAGS)" "OFLAGS = -O" "LIBS = -lcurses"
 
 #Exactly as above hpux0800notcp but with compiler optimization
+#OK: 2009/10/01
 hpux0800onotcp:
 	@MESSAGE1="with compiler optimization" \
 	$(MAKE) "MAKE=$(MAKE)" hpux0800notcp KTARGET=$${KTARGET:-$(@)} \
@@ -5092,41 +5635,62 @@ hpux0800onotcp:
 
 #HP 9000 Series 700 or 800, HP-UX 8.0, long filenames and TCP/IP support.
 # Like the previous entries, but with PA-RISC-specific optimization.
+#OK: 2009/10/01
 hpux0800pa:
 	@MESSAGE1="with PA-RISC-specific optimization" \
 	$(MAKE) hpux0800 KTARGET=$${KTARGET:-$(@)} \
 	"KFLAGS = $(KFLAGS) +Obb1100"
 
 #As above, but with curses.
+#OK: 2009/10/01
 hpux0800pac:
 	@MESSAGE1="with PA-RISC-specific optimization" \
 	$(MAKE) hpux0800c KTARGET=$${KTARGET:-$(@)} \
 	"KFLAGS = $(KFLAGS) +Obb1100"
 
 #As above, but compiled with GCC 2.3.3.
+#OK: 2009/10/01
 hpux0800pagcc:
 	@MESSAGE1='using the gcc compiler' \
 	$(MAKE) hpux0800 KTARGET=$${KTARGET:-$(@)} \
-	"CC=gcc" "CC2=gcc" "KFLAGS= -funsigned-char $(KFLAGS)"
+	"CC=gcc" "CC2=gcc" "KFLAGS = -funsigned-char $(KFLAGS)"
 
 #HP-UX 9.0, 9.01, 9.03, 9.04, 9.05, 9.07, 9.10 ..., + TCP/IP + curses, fully
 #configured.  Use this entry with the restricted compiler: no optimization, no
 #ANSI support.  If you get unresolved sockets library references at link time,
 #then try adding -lBSD to LIBS, or else remove -DTCPSOCKET to build a version
 #without TCP/IP support.
+#
+#Please note that we have to add the compiler option +DA1.0/+DA1.1 to avoid
+#core-dumps for large arguments in IF MATCH. The man page says these options
+#are default but C-Kermit dumps core without them! Therefore keep them
+#untouched. If you want to overwrite or disable the +DA1.0/+DA1.1 option use
+#'make hpux0900 OFLAGS=...'. An other possibility would be to create a new
+#kernel with maxssiz >= 0x01185000 (default maxssiz=0x00800000).
+#OK: 2009/09/24
 hpux0900:
 	@MESSAGE1A='. Read hpux0900 entry comments if you have trouble.' \
 	$(MAKE) hpux-header
+	@case `uname -m` in \
+	  */[34]*) KFLAGS='-DNOLONGLONG $(KFLAGS)' ;; \
+	  */7*)    AFLAGS='+DA1.1' ;; \
+	  */8*)    AFLAGS='+DA1.0' ;; \
+	esac ; \
+	OFLAGS=$${OFLAGS:-$$AFLAGS} ; \
 	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS = -DHPUXDEBUG -DHPUX9 -DSTERMIOX -DDIRENT -DUTIMEH \
 	-DNOSETBUF -DCK_CURSES -DTCPSOCKET -DRENAME -DCK_REDIR -DLONGFN \
-	-DHDBUUCP -DLOCK_DIR=\\\"/usr/spool/uucp\\\" -DFNFLOAT $(KFLAGS)" \
+	-DHDBUUCP -DLOCK_DIR=\\\"/usr/spool/uucp\\\" -DFNFLOAT \
+	-DNODCLENDUSERSHELL $$KFLAGS $$OFLAGS" \
 	"LNKFLAGS = -s" "LIBS = -lm -lcurses" "CC=$(CC)" "CC2=$(CC2)"
 
 #Like hpux0900, but for the "value-added" compiler on all HP 9000 models.
 #Adds optimization and ANSI compilation:
 # +O2 makes smaller executable (= -O = Level-1 and global optimization)
 # +O3 adds interprocedural global optimization, makes bigger executable.
+# Please note: To support long-long we would need compiler switch '-Ae' but
+# this one works only on Risc systems. But the equivalant compiler flags
+# '-Aa -D_HPUX_SOURCE +e' works for Motorola and Risc.
 # If optimization fails on some modules, you can add:
 #  +Obb<n>, +Olimit <n>, or +Onolimit, depending on your cc version,
 # where <n> is a number, e.g. +Obb1200.  In other words, if you get optimizer
@@ -5137,10 +5701,11 @@ hpux0900:
 # depending on the amount of main memory, this entry might fail no matter what
 # you do ("Out of Memory", "cc: Fatal error in /lib/c.c1", etc).  In that case
 # use "make hpux0900" (no "o").
+#OK: 2009/09/24
 hpux0900o:
 	@MESSAGE1=$${MESSAGE1:-"with compiler optimization"} \
 	$(MAKE) hpux0900 KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS = $(KFLAGS) -Aa -DCK_ANSIC -D_HPUX_SOURCE +O2"
+	"KFLAGS = $(KFLAGS) -Aa -DCK_ANSIC -D_HPUX_SOURCE +O2 +e"
 
 # For HP-UX 9.0 on Motorola CPUs, optimization of ckcpro.c tends to blow up
 # the compiler.  You might have to reinstall your kernel with maxdsiz >=
@@ -5148,17 +5713,21 @@ hpux0900o:
 # In that case, use this entry to skip optimization of ckcpro.c.  But for
 # C-Kermit 8.0.208 you need a kernel with maxdsiz >= 0x02000000 to compile an
 # optimized ckcftp.c.
+# Please note: To support long-long we would need compiler switch '-Ae' but
+# this one works only on Risc systems. But the equivalant compiler flags
+# '-Aa -D_HPUX_SOURCE +e' works for Motorola and Risc.
 hpux0900m68ko:
 	@MESSAGE1='without compiler optimization for ckcpro.$(EXT) ...' \
 	$(MAKE) hpux-header
-	$(MAKE) ckuusr.$(EXT) ckuus3.$(EXT) ckcpro.$(EXT) \
+	$(MAKE) ckuusr.$(EXT) ckuus3.$(EXT) ckuus4.$(EXT) \
+	ckcftp.$(EXT) ckcpro.$(EXT) \
 	"CFLAGS = -DHPUXDEBUG -DHPUX9 -DSTERMIOX -DDIRENT \
 	-DNOSETBUF -DCK_CURSES -DTCPSOCKET -DRENAME  -DCK_REDIR -DLONGFN \
 	-DHDBUUCP -DLOCK_DIR=\\\"/usr/spool/uucp\\\" -DFNFLOAT $(KFLAGS)"
 	@echo
 	@MESSAGE1="with compiler optimization for the rest" \
 	$(MAKE) hpux0900 KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS = $(KFLAGS) -Aa -DCK_ANSIC -D_HPUX_SOURCE +O2"
+	"KFLAGS = $(KFLAGS) -Aa -DCK_ANSIC -D_HPUX_SOURCE +O2 +e"
 
 # Old name for hpux0900m68ko.
 hpux0900mot:
@@ -5181,7 +5750,8 @@ hpux0900o700:
 hpux0900gcc:
 	@MESSAGE1='using the gcc compiler' \
 	$(MAKE) hpux0900 KTARGET=$${KTARGET:-$(@)} CC=gcc CC2=gcc \
-	"KFLAGS = $(KFLAGS) -DCK_ANSIC -funsigned-char -O2"
+	"KFLAGS = -DCK_ANSIC $(KFLAGS)" \
+	"OFLAGS = -funsigned-char -O2 $(OFLAGS)"
 
 #HP-9000 HP-UX 10.0 + TCP/IP + curses, fully configured.
 #Use with restricted (bundled) compiler: no optimization, no ANSI support.
@@ -5191,14 +5761,19 @@ hpux0900gcc:
 #the 10.10 curses problem is supposedly fixed in 10.30.
 # +DA1.0 = Generate PA-RISC 1.0 code that runs on both 700 and 800 models.
 # +DA1.1 = Generate PA-RISC 1.1 code that runs on both 700 and 800 models.
-# Note that HP-UX 10.20 and upwards  not support PA-RISC 1.0 systems.
+# Note that HP-UX 10.20 and upwards do not support PA-RISC 1.0 systems.
 # And that as of Dec 2001, 11.00 and 11.11 are PA-only and 11.20 is IA64-only.
 # Later 11.2x releases are expected to be for both.  Architecture can be
 # determined with the model command, at least in 10.20 and later...
 #For future releases, we need to include +DA1.1 for PA builds, so that a
 #binary built on PA 2.0 will still work on PA 1.1 machines, whereas +DA1.1
 #must NOT be included for IA64 builds.
-#
+#4 Jan 2006 - Added Large File Support (LFS).  Large files (>2GB) are
+#possible in HP-UX 10.20 and later.  The only change is to add:
+# -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
+#to KFLAGS.  These should be harmless in 10.00 and 10.10, if any of examples
+#of those still exist, but I have no way to test this hypothesis.
+#OK: 2009/11/16
 hpux1000:
 	@$(MAKE) hpux-header
 	@LIBS='-lHcurses' ; \
@@ -5226,6 +5801,7 @@ hpux1000:
 	"CC=$(CC)" "CC2=$(CC2)" \
 	"CFLAGS = -DHPUX10 -DDIRENT -DSTERMIOX -DCK_DSYSINI -DHDBUUCP \
 	-DCK_CURSES -DCK_WREFRESH -DTCPSOCKET -DCK_REDIR -DRENAME -DFNFLOAT \
+	-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 \
 	$$KFLAGS $$OFLAGS" \
 	"LNKFLAGS=-s $(LNKFLAGS)" "LIBS = -lm $$LIBS $(KLIBS)"
 
@@ -5233,16 +5809,17 @@ hpux1000:
 # (add CC and CC2, drop the A1.[0||1])
 # Builds w/ no compiler warnings but minimally tested.
 #
+#OK: 2009/09/21
 hpux1000gcc:
 	@MESSAGE1="using the gcc compiler $(MESSAGE1)" \
 	$(MAKE) hpux1000 KTARGET=$${KTARGET:-$(@)} CC=gcc CC2=gcc \
-	"KFLAGS = $(KFLAGS)" OFLAGS=" -DCK_ANSIC -funsigned-char -O2"
+	"KFLAGS = $(KFLAGS)" "OFLAGS = -DCK_ANSIC -funsigned-char -O2"
 
 # Trusted HP-UX 10
 # echo KFLAGS=$(KFLAGS) YTARGET YTARGET=$(YTARGET) $(XTARGET) ;
 hpux1000t:
 	@case "$(KTARGET)" in \
-	   *+openssl) \
+	   *+openssl | *+ssl) \
 		KENTRY=hpux1000o+openssl ;; \
 	   *gcc) \
 		KENTRY=hpux1000gcc ;; \
@@ -5252,7 +5829,7 @@ hpux1000t:
 	esac ; \
 	MESSAGE1="and support for 'Trusted HP-UX'" \
 	$(MAKE) $$KENTRY KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS= $(KFLAGS) -DHPUX10_TRUSTED" "KLIBS=-lsec"
+	"KFLAGS = $(KFLAGS) -DHPUX10_TRUSTED" "KLIBS=-lsec"
 
 hpux1000to:
 	$(MAKE) hpux1000t KTARGET=$${KTARGET:-$(@)}
@@ -5263,10 +5840,10 @@ hpux1000to+:
 hpux1000tgcc:
 	$(MAKE) hpux1000t KTARGET=$${KTARGET:-$(@)}
 
-hpux1000to+openssl:
+hpux1000to+ssl hpux1000to+openssl:
 	$(MAKE) hpux1000t KTARGET=$${KTARGET:-$(@)}
 
-hpux1000tgcc+openssl:
+hpux1000tgcc+ssl hpux1000tgcc+openssl:
 	$(MAKE) hpux1000t KTARGET=$${KTARGET:-$(@)}
 
 #HP-9000 HP-UX 10.00 and higher with ANSI prototyping and optimization.
@@ -5290,6 +5867,7 @@ hpux1000tgcc+openssl:
 # +DA1.1 is PA-only.  If this is included in in HP-UX 11.00 or later,
 # then +DS2.0 should be included too (but don't use +DS2.0 without +DA1.1,
 # or else the binary won't run on older PA hardware).
+#OK: 2009/09/21
 hpux1000o:
 	@case `uname -m` in \
 	  ia64) ;; \
@@ -5298,7 +5876,7 @@ hpux1000o:
 	MESSAGE1="with PA-RISC-specific optimizations $(MESSAGE1)" \
 	$(MAKE) "SHELL=/usr/bin/sh" "PATH=/opt/ansic/bin:$$PATH" hpux1000 \
 	KTARGET=$${KTARGET:-$(@)} "KFLAGS = $(KFLAGS) \
-	-Aa -D_HPUX_SOURCE -DCK_ANSIC -DUTIMEH \
+	-Ae -D_HPUX_SOURCE -DCK_ANSIC -DUTIMEH \
 	+O2 -Wl,-Fw $$MFLAGS"
 
 #Like hpux1000o but with "+Onolimit".
@@ -5311,8 +5889,8 @@ hpux1000o+:
 
 #HP-UX 10.xx + 11.xx with optimizing ANSI compiler and OpenSSL.
 #Define SSLLIB and SSLINC appropriately for your OpenSSL installation.
-#Do overwrite the default SSLLIB and SSLINC settings you can also use the
-#command-line variable KSSLLIB and KSSLINC like: 
+#To overwrite the default SSLLIB and SSLINC settings you can also use the
+#command-line variable KSSLLIB and KSSLINC like:
 #make hpux1000o+openssl KSSLLIB=-L/opt/openssl/lib KSSLINC=-I/...
 #Ditto for the Zlib location.
 #This entry works for C-Kermit 8.0.206 on HP-UX 10.20 + 11.11
@@ -5320,21 +5898,32 @@ hpux1000o+:
 #NOTE: an ANSI C compiler is required for the SSL interface.  If you don't
 #have the HP Optimizing ANSI compiler, see the hpux1000gcc+openssl target
 #below.
-hpux1000o+openssl:
+hpux1000o+ssl hpux1000o+openssl:
 	@case "$(KTARGET)" in \
-	   *gcc+*) KENTRY=hpux1000gcc ;; \
-	   *)      KENTRY=hpux1000o ;; \
+	   *gcc+*) \
+	        KENTRY=hpux1000gcc ;; \
+	   *)   KENTRY=hpux1000o ;; \
+	esac ; \
+	case "$(KTARGET)" in \
+	   *-zlib*) \
+	        DZLIB= LZLIB= ;; \
+	   *)   DZLIB=-DZLIB LZLIB='-L/opt/zlib/lib -lz' ;; \
 	esac ; \
 	SSLINC=$${KSSLINC:-$(SSLINC)}; \
 	SSLLIB=$${KSSLLIB:-$(SSLLIB)}; \
 	MESSAGE1="and with OpenSSL $(MESSAGE1)" \
 	$(MAKE) $$KENTRY KTARGET=$${KTARGET:-$(@)} \
-	KFLAGS="-DCK_AUTHENTICATION -DCK_SSL -DOPENSSL_097 -DZLIB \
+	KFLAGS="-DCK_AUTHENTICATION -DCK_SSL -DOPENSSL_097 $$DZLIB \
 	$$SSLINC $(KFLAGS)" \
 	KLIBS="$(KLIBS) \
 	$$SSLLIB -lssl -lcrypto \
-	-L/opt/zlib/lib -lz \
-	" 
+	$$LZLIB \
+	"
+
+# Ditto but without Zlib:
+hpux1000o+ssl-zlib hpux1000o+openssl-zlib:
+	@MESSAGE1="but without Zlib $(MESSAGE1)" \
+	$(MAKE) hpux1000o+ssl KTARGET=$${KTARGET:-$(@)}
 
 #HP-UX 10.00 or higher with OpenSSL 0.9.7.  Compiled with gcc.
 #From Chris Chaney, NEC America Inc.  His instructions:
@@ -5350,26 +5939,43 @@ hpux1000o+openssl:
 # (5) Install gmp version 3.1.1 from http://hpux.cs.utah.edu/
 #
 #Note from Peter Eichhorn, assyst Munich. It works also without gcc make!
-hpux1000gcc+openssl:
+hpux1000gcc+ssl hpux1000gcc+openssl:
 	$(MAKE) hpux1000o+openssl KTARGET=$${KTARGET:-$(@)}
+
+# Ditto but without Zlib:
+hpux1000gcc+ssl-zlib hpux1000gcc+openssl-zlib:
+	$(MAKE) hpux1000o+openssl-zlib KTARGET=$${KTARGET:-$(@)}
 
 # Same for HP-UX 11
-hpux1100o+openssl:
+hpux1100o+ssl hpux1100o+openssl:
 	$(MAKE) hpux1000o+openssl KTARGET=$${KTARGET:-$(@)}
 
-hpux1100gcc+openssl:
+#OK: 2009/09/26
+hpux1100gcc+ssl hpux1100gcc+openssl:
 	$(MAKE) hpux1000gcc+openssl KTARGET=$${KTARGET:-$(@)}
 
+hpux1100o+ssl-zlib hpux1100o+openssl-zlib:
+	$(MAKE) hpux1000o+openssl-zlib KTARGET=$${KTARGET:-$(@)}
+
+hpux1100gcc+ssl-zlib hpux1100gcc+openssl-zlib:
+	$(MAKE) hpux1000gcc+openssl-zlib KTARGET=$${KTARGET:-$(@)}
+
 # HP-UX 11
+# Note: these are 32-bit builds even on IA64.
+# Adding +DD64 to CFLAGS produces 64-bit object files,
+# but the linker fails to find the needed 64-bit libs.
+#OK: 2009/09/26
 hpux1100:
 	$(MAKE) hpux1000 KTARGET=$${KTARGET:-$(@)}
 
+#OK: 2009/09/26
 hpux1100o:
 	$(MAKE) hpux1000o KTARGET=$${KTARGET:-$(@)}
 
 hpux1100o+:
 	$(MAKE) hpux1000o+ KTARGET=$${KTARGET:-$(@)}
 
+#OK: 2009/09/26
 hpux1100gcc:
 	$(MAKE) hpux1000gcc KTARGET=$${KTARGET:-$(@)}
 
@@ -5386,10 +5992,10 @@ hpux1100to+:
 hpux1100tgcc:
 	$(MAKE) hpux1000tgcc KTARGET=$${KTARGET:-$(@)}
 
-hpux1100to+openssl:
+hpux1100to+ssl hpux1100to+openssl:
 	$(MAKE) hpux1000to+openssl KTARGET=$${KTARGET:-$(@)}
 
-hpux1100tgcc+openssl:
+hpux1100tgcc+ssl hpux1100tgcc+openssl:
 	$(MAKE) hpux1000tgcc+openssl KTARGET=$${KTARGET:-$(@)}
 
 #Regulus on CIE Systems 680/20
@@ -5432,13 +6038,13 @@ cie:
 #
 # Add -DCK_DSYSINI if you want a shared system-wide init file.
 #
-# See ckubwr.txt about -DNOCOTFMC.  In fact, you really should read the
-# entire Linux section of ckubwr.txt.
+# See http://www.columbia.edu/kermit/ckubwr.html about -DNOCOTFMC.
+# Better still, should read the entire Linux section of that document.
 #
 # The "linuxa" entry can be referenced directly on LIBC systems, but not
 # GLIBC, where -lcrypt is required.  The "make linux" entry should normally
 # be used for all builds on all Linux distributions unless you have special
-# requirements, in which case keep reading.  CK_NEWTERM added after 7.0B04
+# requirements, in which case keep reading.  CK_NEWTERM added after 7.0b04
 # due to new complaints about ncurses changing buffering of tty.
 
 linuxa:
@@ -5448,85 +6054,300 @@ linuxa:
 	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} "CC = gcc" "CC2 = gcc" \
 	"CFLAGS = -O -DLINUX -pipe -funsigned-char -DFNFLOAT -DCK_POSIX_SIG \
 	-DCK_NEWTERM -DTCPSOCKET -DLINUXFSSTND -DNOCOTFMC -DPOSIX \
-	-DUSE_STRERROR $(KFLAGS)" "LNKFLAGS = $(LNKFLAGS)" "LIBS = $(LIBS) -lm"
+	-DUSE_STRERROR $(KFLAGS)" "LNKFLAGS = $(LNKFLAGS)" \
+	"LIBS = $(LIBS) -lm"
 
 # As above but with profiling
 linuxp:
 	$(MAKE) linuxa KTARGET=$${KTARGET:-$(@)} "KFLAGS=$(KFLAGS) -pg" \
 	"LIBS=-pg -lcrypt -lresolv"
 
-#New primary Linux entry for C-Kermit 8.0, replacing big nested
-#if-then-else construction full of repeated clauses with a simpler scheme
-#for automatically detecting:
+#Linux.  This entry should work for any Linux distribution on any platform,
+#32-bit or 64-bit, except for extremely ancient ones.  Automatically detects:
+# . curses, ncurses, or no curses
 # . Old versus new pty handling (new == glibc 2.1++)
-# . Presence or absence of librypt.a and <crypt.h>
+# . Presence or absence of libcrypt.a and <crypt.h>
 # . Presence or absence of libresolv.a
-#Unlike the previous scheme, this one is easily extended to include more tests.
+# . Transitional Long File API for 32-bit platforms (SUS V2 UNIX 98 LFS).
 #Note: The HAVE_PTMX test was previously "if test -c /dev/ptmx" but this was
 #not sufficient for Debian 2.1, because although it had /dev/ptmx, it did not
 #have grantpt(), unlockpt(), or ptsname(), so has been changed to look for a
-#grantpt() prototype in the header files.  Warning: uses a temporary file in
-#the current directory.  Modified in 8.0.206 to allow for libraries that
-#contain .so's but no .a's, e.g. Mandrake 9.0.
+#grantpt() prototype in the header files.  Modified in 8.0.206 to allow for
+#libraries that contain .so's but no .a's, e.g. Mandrake 9.0.
 #HAVE_BAUDBOY added in 8.0.210 for Red Hat -- it's like AIX ttylock().
+#Modified 17 Aug 2005 to use openpty() if available because the other stuff
+#dumps core in 64-bit ia64 and x86_64 builds.
+#Long file support for 32-bit builds added in 8.0.212 - if features.h contains
+#__USE_LARGEFILE64 then we set the flags that must be set before reading any
+#header files; on 32-bit platforms such as i386, this produces a 32-bit build
+#capable of accessing, sending, receiving, and managing long (> 2GB) files.
+#On 64-bit platforms, it does no harm.
+#As of 3 March 2009 we detect automatically if we have curses, ncurses,
+#or no curses at all.
+#Added HAVE_LOCKDEV as openSuSE >= 11.3 uses ttylock directly instead of
+#baudboy 2010/08/23
+#OK: 2011/06/18
 linux:
 	@if test \
 	`grep grantpt /usr/include/*.h /usr/include/sys/*.h | wc -l` -gt 0; \
 	then if test -c /dev/ptmx; then HAVE_PTMX='-DHAVE_PTMX'; \
 	else HAVE_PTMX=''; fi; fi ; \
+	if test `grep openpty /usr/include/pty.h | wc -l` -gt 0; \
+	then HAVE_OPENPTY='-DHAVE_OPENPTY'; \
+	else HAVE_OPENPTY=''; fi ; \
+	HAVE_LIBCURSES=''; \
+	if test -f /usr/lib64/libncurses.so || \
+	   test -f /usr/lib/libncurses.a  || \
+	   test -f /usr/lib/libncurses.so; then \
+	  HAVE_LIBCURSES='-lncurses'; \
+	else if test -f /usr/lib64/libcurses.so || \
+	   test -f /usr/lib/libcurses.a || \
+	   test -f /usr/lib/libcurses.so; then \
+	     HAVE_LIBCURSES='-lcurses'; fi; fi; \
+	HAVE_CURSES=''; \
+	if test -n '$$HAVE_LIBCURSES'; then \
+	  if test -f /usr/include/ncurses.h; then \
+	    HAVE_CURSES='-DCK_NCURSES  -I/usr/include/ncurses'; \
+	  else if test -f /usr/include/curses.h; then \
+	    HAVE_CURSES='-DCK_CURSES'; \
+	fi; fi; fi; \
+	if test -f /usr/include/baudboy.h || test -f /usr/include/ttylock.h; \
+	then HAVE_LOCKDEV='-DHAVE_LOCKDEV' ; \
+	else HAVE_LOCKDEV='' ; fi ; \
 	if test -f /usr/include/baudboy.h ; \
 	then HAVE_BAUDBOY='-DHAVE_BAUDBOY' ; \
 	else HAVE_BAUDBOY='' ; fi ; \
 	$(MAKE) KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS=-DCK_NCURSES -I/usr/include/ncurses \
-	$$HAVE_PTMX $$HAVE_BAUDBOY \
+	"KFLAGS=$$HAVE_CURSES $$HAVE_PTMX $$HAVE_LOCKDEV \
+	$$HAVE_BAUDBOY $$HAVE_OPENPTY \
+	`grep __USE_LARGEFILE64 /usr/include/features.h > /dev/null && \
+	echo '-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64'` \
 	`if test -f /usr/include/crypt.h; then echo -DHAVE_CRYPT_H; fi` \
 	$(KFLAGS)" \
-	"LIBS=-lncurses \
-	`if test -f /usr/lib/libresolv.a || test -f /usr/lib/libresolv.so; \
+	"LIBS=$(LIBS) $$HAVE_LIBCURSES \
+	`if test -n '$$HAVE_OPENPTY'; then echo -lutil; fi` \
+	`if test -f /usr/lib64/libresolv.a || test -f /usr/lib64/libresolv.so \
+	|| test -f /usr/lib/libresolv.a || test -f /usr/lib/libresolv.so \
+	|| test -f /usr/lib/i386-linux-gnu/libresolv.a \
+	|| test -f /usr/lib/i386-linux-gnu/libresolv.so \
+	|| ls /lib/x86_64-linux-gnu/libresolv.* > /dev/null 2> /dev/null; \
 	then echo -lresolv; fi` \
-	`if test -f /usr/lib/libcrypt.a || test -f /usr/lib/libcrypt.so; \
-	then echo -lcrypt; fi`" \
+	`if test -f /usr/lib64/libcrypt.a || test -f /usr/lib64/libcrypt.so \
+	|| test -f /usr/lib/libcrypt.a || test -f /usr/lib/libcrypt.so \
+	|| ls /lib/x86_64-linux-gnu/libcrypt.* > /dev/null 2> /dev/null; \
+	then echo -lcrypt; fi` \
+	`if test -f /usr/lib64/liblockdev.a || \
+	test -f /usr/lib64/liblockdev.so || \
+	test -f /usr/lib/liblockdev.a || \
+	test -f /usr/lib/liblockdev.so; \
+	then echo -llockdev; fi`" \
 	linuxa
 
-# As above but for Linux systems that have no <sys/select.h>.
+# Linux + Shadow passwords + PAM
+# OK 2011/06/18
+linux+shadow+pam:
+	@echo 'Making C-Kermit $(CKVER) for Linux+Shadow+PAM...'
+	$(MAKE) linux KTARGET=$${KTARGET:-$(@)} \
+	KFLAGS="-DCK_SHADOW -DCK_PAM $(KFLAGS)" \
+	"LNKFLAGS = $(LNKFLAGS)" \
+	"LIBS = -lpam"
+
+# Linux systems that have no <sys/select.h>.
+# (not tested in recent years, perhaps no longer needed)
 linuxns:
 	$(MAKE) linux KTARGET=$${KTARGET:-$(@)} KFLAGS=-DNO_SYS_SELECT_H
 
-# As above, but forces use of curses rather than ncurses.
-# Add -ltermcap to LIBS if necessary.
-# Also watch out for libcurses and/or libtermcap having been moved.
-# In that case you might need something like:
-#  "LIBS = -L/usr/lib/curses -lcurses -L/usr/lib/termcap -ltermcap"
+# Linux-script-only:
+# A minimum-size version for Linux that does only scripting and
+# serial communication -- no networks, no file transfer, no security.
+# OK 2011/06/18
+linuxso:
+	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} "CC = gcc" "CC2 = gcc" \
+	"CFLAGS = -O -DLINUX -pipe -funsigned-char -DPOSIX -DCK_POSIX_SIG \
+	-DLINUXFSSTND -DNOCOTFMC -DNOXFER -DNODEBUG -DNOCSETS -DNOHELP \
+	-DNONET -DMINIDIAL -DNOSCRIPT -DNOIKSD -DNOPUSH $(KFLAGS)" \
+	"LNKFLAGS = $(LNKFLAGS)" "LIBS = "
 
-linuxc:
-	@if test \
-	`grep grantpt /usr/include/*.h /usr/include/sys/*.h | wc -l` -gt 0; \
-	then if test -c /dev/ptmx; then HAVE_PTMX='-DHAVE_PTMX'; \
-	else HAVE_PTMX=''; fi; fi ; \
-	$(MAKE) KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS=-DCK_CURSES $$HAVE_PTMX \
-	`if test -f /usr/lib/libcrypt.a; then echo -DHAVE_CRYPTH; fi` \
-	$(KFLAGS)" \
-	"LIBS=-lcurses \
-	`if test -f /usr/lib/libresolv.a; then echo -lresolv; fi` \
-	`if test -f /usr/lib/libcrypt.a; then echo -lcrypt; fi`" \
-	linuxa
+# Secure targets for Linux.  These work on RHAS4, RHEL4, and RHEL5,
+# unlike some of the older targets that follow.  They hook into the main Linux
+# target so we pick up all the other new stuff - large files, baudboy.h, the
+# appropriate pty interface, etc.
 
-# As above but with with no curses support, for example because you installed
-# the developer tools but did not install (n)curses.
-linuxnc:
-	@if test \
-	`grep grantpt /usr/include/*.h /usr/include/sys/*.h | wc -l` -gt 0; \
-	then if test -c /dev/ptmx; then HAVE_PTMX='-DHAVE_PTMX'; \
-	else HAVE_PTMX=''; fi; fi ; \
-	$(MAKE) KTARGET=$${KTARGET:-$(@)} \
-	"KFLAGS= $$HAVE_PTMX \
-	`if test -f /usr/lib/libcrypt.a; then echo -DHAVE_CRYPTH; fi` \
-	$(KFLAGS)" "LIBS= \
-	`if test -f /usr/lib/libresolv.a; then echo -lresolv; fi` \
-	`if test -f /usr/lib/libcrypt.a; then echo -lcrypt; fi`" \
-	linuxa
+# Linux with Kerberos 5.
+# Use "make linux+krb5 KFLAGS=-DNO_KRB5_INIT_ETS" if necessary.
+#OK 2011/06/16 on Fedora 14 with:
+# make linux+krb5 "LIBS=$LIBS /lib/libk5crypto.so.3 /lib/libcom_err.so.2"
+# On RHEL5: make linux+krb5 -UCK_DES
+linux+krb5:
+	@echo 'Making C-Kermit $(CKVER) for Linux with Kerberos 5...'
+	@case `openssl version` in \
+	  *0.9.7*) OPENSSLOPTION="-DOPENSSL_097" ;; \
+	  *0.9.8*) OPENSSLOPTION="-DOPENSSL_098" ;; \
+	  *1.[0-9].[0-9]*) OPENSSLOPTION="-DOPENSSL_100" ;; \
+	  *) OPENSSLOPTION="" ;; \
+	esac; \
+	HAVE_DES=''; \
+	DES_LIB=''; \
+	if ls /usr/lib/libdes* > /dev/null 2> /dev/null || \
+	   ls $(SSLLIB)/libdes* > /dev/null 2> /dev/null; then \
+	      DES_LIB='-ldes425'; \
+	      HAVE_DES='-DCK_DES -DLIBDES'; \
+              echo "HAVE DES"; \
+           else echo "NO DES"; \
+	fi; \
+	K5CRYPTO=''; \
+        if ls /lib/libk5crypto* > /dev/null 2> /dev/null; then \
+                K5CRYPTO='-lk5crypto'; \
+	else if ls /usr/lib/libk5crypto* > /dev/null 2> /dev/null; then \
+		K5CRYPTO='-lk5crypto'; \
+        else if ls /usr/lib64/libk5crypto* > /dev/null 2> /dev/null; then \
+                K5CRYPTO='-lk5crypto'; \
+        fi; fi; fi; \
+	COM_ERR=''; \
+	if ls /lib/libcom_err* > /dev/null 2> /dev/null; then \
+		COM_ERR='-lcom_err'; \
+	fi; \
+	GSSAPILIB='-lgssapi'; \
+	if ls /lib/libgssapi_krb5* > /dev/null 2> /dev/null; then \
+		GSSAPILIB='-lgssapi_krb5'; \
+	else if ls /usr/lib/libgssapi_krb5* > /dev/null 2> /dev/null; then \
+		GSSAPILIB='-lgssapi_krb5'; \
+	else K5DIR=`echo $(K5LIB) | sed 's|-L||'`; \
+		if ls $$K5DIR/libgssapi_krb5* > /dev/null 2> /dev/null; then \
+			GSSAPILIB='-lgssapi_krb5'; \
+	fi; fi; fi; \
+	$(MAKE) linux KTARGET=$${KTARGET:-$(@)} "CC = gcc" "CC2 = gcc" \
+	"KFLAGS= -DCK_AUTHENTICATION -DCK_KERBEROS -DKRB5 $$OPENSSLOPTION \
+	-DCK_ENCRYPTION $$HAVE_DES $(K5INC) $(K5INC)/krb5 \
+	-I/usr/include/et $(KFLAGS)" "LNKFLAGS = $(LNKFLAGS)" \
+	"LIBS = $(K5LIB) $$DES_LIB -lcrypto $$GSSAPILIB -lkrb5 \
+	$$K5CRYPTO $$COM_ERR $(LIBS)" ; \
+	if [ ! -f ./wermit ] || [ ./ckcmai.o -nt ./wermit ] ; then \
+		echo ""; \
+		echo "If build failed try:"; \
+		echo ""; \
+		echo "  make clean ; make $${KTARGET:-$(@)} KFLAGS=-UCK_DES"; \
+		echo ""; \
+	fi
+
+# Linux with Kerberos 5 and Kerberos 4.
+# Use "make linux+krb5 KFLAGS=-DNO_KRB5_INIT_ETS" if necessary.
+# Add "KFLAGS=-UCK_DES" if failure messages look DES-related.
+# UNTESTED (because I can't find a box with Krb4 and Krb5 installed)
+linux+krb5+krb4:
+	@echo 'Making C-Kermit for Linux with Kerberos 4 and Kerberos 5'
+	$(MAKE) linux+krb5 KTARGET=$${KTARGET:-$(@)} \
+	"KFLAGS=-DKRB4 -DKRB524 $(KFLAGS)" "LIBS=$(LIBS) -lkrb4"
+
+# Linux with OpenSSL 
+# In Linux, SSL libs are often in /lib or /usr/lib and so found by default.
+# This targets takes into account the DES library might or might not
+# exist.  If it does exist, however, the target will require some editing
+# if its basename is not libdes425.  - fdc Tue Sep 21 14:28:00 2010
+# IMPORTANT: Some Linux platforms have DES libraries but they are missing
+# functions used by Kermit.  In that case you will get fatal errors at
+# link time involving routines such as des_ecb3_encrypt, des_random_seed,
+# and des_set_odd_parity.  In that case, "make linux KFLAGS=-UCK_DES"
+# There's a new warning at the end that should come out if this happens,
+# and that should not come out if it didn't.
+#
+linux+ssl linux+openssl linux+openssl+zlib+shadow+pam linux+openssl+shadow:
+	@echo 'Making C-Kermit $(CKVER) for Linux+OpenSSL SSLLIB=$(SSLLIB)'
+	@case `openssl version` in \
+	  *0.9.7*) OPENSSLOPTION="-DOPENSSL_097" ;; \
+	  *0.9.8*) OPENSSLOPTION="-DOPENSSL_098" ;; \
+	  *1.[0-9].[0-9]*) OPENSSLOPTION="-DOPENSSL_100" ;; \
+	  *) OPENSSLOPTION="" ;; \
+	esac; \
+	HAVE_DES=''; \
+	DES_LIB=''; \
+	if ls /usr/lib/libdes* > /dev/null 2> /dev/null || \
+	   ls $(SSLLIB)/libdes* > /dev/null 2> /dev/null; then \
+	      DES_LIB='-ldes425'; \
+	      HAVE_DES='-DCK_DES -DLIBDES'; \
+	      echo "HAVE DES"; \
+	   else echo "NO DES"; \
+	fi; \
+	$(MAKE) linux KTARGET=$${KTARGET:-$(@)} "CC = gcc" "CC2 = gcc" \
+	"KFLAGS= -DCK_AUTHENTICATION -DCK_ENCRYPTION -DCK_CAST $$HAVE_DES \
+	-DCK_SSL -DCK_PAM -DZLIB -DCK_SHADOW $$OPENSSLOPTION $(SSLINC) \
+	$(KFLAGS)" "LNKFLAGS = $(LNKFLAGS)" \
+	"LIBS = $(SSLLIB) -lssl $$DES_LIB -lcrypto -lpam -ldl -lz $(LIBS)" ; \
+	if [ ! -f ./wermit ] || [ ./ckcmai.o -nt ./wermit ] ; then \
+		echo ""; \
+		echo "If build failed try:"; \
+		echo ""; \
+		echo "  make clean ; make $${KTARGET:-$(@)} KFLAGS=-UCK_DES"; \
+		echo ""; \
+	fi
+
+# Linux with Kerberos 5 and OpenSSL
+# OK 2011/05/16
+# Add -UCK_DES if functions like des_ecb3_encrypt, es_random_seed,
+# come up missing at link time.
+linux+krb5+ssl linux+krb5+openssl:
+	@echo 'Making C-Kermit $(CKVER) for Linux with Krb5 and OpenSSL...'
+	@case `openssl version` in \
+	  *0.9.7*) OPENSSLOPTION="-DOPENSSL_097" ;; \
+	  *0.9.8*) OPENSSLOPTION="-DOPENSSL_098" ;; \
+	  *1.[0-9].[0-9]*) OPENSSLOPTION="-DOPENSSL_100" ;; \
+	  *) OPENSSLOPTION="" ;; \
+	esac; \
+	HAVE_DES=''; \
+	DES_LIB=''; \
+	if ls /usr/lib/libdes* > /dev/null 2> /dev/null || \
+	   ls $(SSLLIB)/libdes* > /dev/null 2> /dev/null; then \
+	      DES_LIB='-ldes425'; \
+	      HAVE_DES='-DCK_DES -DLIBDES'; \
+	      echo "HAVE DES"; \
+	   else echo "NO DES"; \
+	fi; \
+	K5CRYPTO=''; \
+        if ls /lib/libk5crypto* > /dev/null 2> /dev/null; then \
+                K5CRYPTO='-lk5crypto'; \
+	else if ls /usr/lib/libk5crypto* > /dev/null 2> /dev/null; then \
+		K5CRYPTO='-lk5crypto'; \
+        else if ls /usr/lib64/libk5crypto* > /dev/null 2> /dev/null; then \
+                K5CRYPTO='-lk5crypto'; \
+	fi; fi; fi; \
+	COM_ERR=''; \
+	if ls /lib/libcom_err* > /dev/null 2> /dev/null; then \
+		COM_ERR='-lcom_err'; \
+	fi; \
+	GSSAPILIB='-lgssapi'; \
+	if ls /lib/libgssapi_krb5* > /dev/null 2> /dev/null; then \
+		GSSAPILIB='-lgssapi_krb5'; \
+	else if ls /usr/lib/libgssapi_krb5* > /dev/null 2> /dev/null; then \
+		GSSAPILIB='-lgssapi_krb5'; \
+	else K5DIR=`echo $(K5LIB) | sed 's|-L||'`; \
+		if ls $$K5DIR/libgssapi_krb5* > /dev/null 2> /dev/null; then \
+			GSSAPILIB='-lgssapi_krb5'; \
+	fi; fi; fi; \
+	$(MAKE) linux KTARGET=$${KTARGET:-$(@)} "CC = gcc" "CC2 = gcc" \
+	"KFLAGS= -DCK_AUTHENTICATION -DCK_KERBEROS -DKRB5 \
+	-DCK_SSL -DCK_PAM -DZLIB -DCK_SHADOW $$OPENSSLOPTION $(SSLINC) \
+	-DCK_ENCRYPTION $$HAVE_DES $(K5INC) $(K5INC)/krb5 \
+	-I/usr/include/et $(KFLAGS)" "LNKFLAGS = $(LNKFLAGS)" \
+	"LIBS = $(K5LIB) $(SSLLIB) -lssl $$DES_LIB -lpam -lz \
+	-lcrypto $$GSSAPILIB -lkrb5 $$K5CRYPTO $$COM_ERR $(LIBS)" ; \
+	if [ ! -f ./wermit ] || [ ./ckcmai.o -nt ./wermit ] ; then \
+		echo ""; \
+		echo "If build failed try:"; \
+		echo ""; \
+		echo "  make clean ; make $${KTARGET:-$(@)} KFLAGS=-UCK_DES"; \
+		echo ""; \
+	fi
+
+# ::BEGIN_OLD_LINUX_TARGETS::
+
+# The remaining Linux entries are for special or customized builds.  They have
+# not been generalized ("subroutinized") like the ones above.  Ideally, we
+# should allow for every combination of libc vs glibc, gcc vs egcs, curses vs
+# ncurses, Kerberos IV vs Kerberos V vs SRP (in any combination), and so on.
+# The best way to do this is to set KFLAGS and LIBS values and then chain to
+# the main "linux" target, as in the examples just above.  To skip past all of
+# these old targets (and there are many) search for ::END_OLD_LINUX_TARGETS::
+# (after this line).
 
 #Sharp Zaurus SL-5500 - Linux based
 zsl5500:
@@ -5535,15 +6356,6 @@ zsl5500:
 	@touch wart
 	$(MAKE) linuxnc KTARGET=$${KTARGET:-$(@)} "KFLAGS=-DZSL5500" \
 	"CC = gcc" "CC2 = gcc"
-
-# A minimum-size version for Linux that does only scripting and
-# serial communication -- no networks, no file transfer.
-linuxso:
-	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} "CC = gcc" "CC2 = gcc" \
-	"CFLAGS = -O -DLINUX -pipe -funsigned-char -DPOSIX -DCK_POSIX_SIG \
-	-DLINUXFSSTND -DNOCOTFMC -DNOXFER -DNODEBUG -DNOCSETS -DNOHELP \
-	-DNONET -DMINIDIAL -DNOSCRIPT -DNOIKSD -DNOPUSH $(KFLAGS)" \
-	"LNKFLAGS = $(LNKFLAGS)" "LIBS = "
 
 #Mklinux DR3 has horrible bug in <utmpbits.h> - see ckufio.c.
 mklinux:
@@ -5580,16 +6392,9 @@ linuxppc:
 	fi
 
 
-# The remaining Linux entries are for special or customized builds.  They
-# have not been generalized like the ones above.  Ideally, we should allow
-# for every combination of libc vs glibc, gcc vs egcs, curses vs ncurses,
-# Kerberos IV vs Kerberos V vs SRP (in any combination), and so on --
-# volunteers welcome.
-
+# Like "make linux" but built with egcs rather than gcc.
 # If you get "Internal compiler error xxx, output pipe has been closed",
 # try removing -pipe.
-
-# Like "make linux" but built with egcs rather than gcc.
 linuxegcs:
 	@echo 'Making C-Kermit $(CKVER) for Linux 1.2 or later with egcs...'
 	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} "CC = egcs" "CC2 = egcs" \
@@ -5599,7 +6404,7 @@ linuxegcs:
 	"LNKFLAGS = $(LNKFLAGS)" "LIBS = -lncurses -lcrypt -lresolv"
 
 #Linux on Intel PC with Cygnus or MIT Kerberos 5 1.2.1 (no K4 compatibility).
-linux+krb5:
+linux+krb5-old:
 	@echo 'Making C-Kermit $(CKVER) for Linux on Intel with Kerberos...'
 	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} "CC = gcc" "CC2 = gcc" \
 	"CFLAGS = -O -funsigned-char -pipe -DPOSIX -DLINUX -DNOCOTFMC \
@@ -5609,20 +6414,6 @@ linux+krb5:
 	$(KFLAGS)" "LNKFLAGS = $(LNKFLAGS)" \
 	"LIBS = $(K5LIB) -lncurses -ltermcap -ldes425 -lkrb5 \
 	-lcom_err -lk5crypto -lgssapi_krb5 -lcrypt -lresolv"
-
-#Linux on Intel PC with Cygnus or MIT Kerberos 5 1.2.1 with K4 compatibility.
-#
-# Requires the Kerberos 1.2.1 be compiled with KRB4 compatibility.
-linux+krb5+krb4:
-	@echo 'Making C-Kermit $(CKVER) for Linux on Intel with Kerberos...'
-	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} "CC = gcc" "CC2 = gcc" \
-	"CFLAGS = -O -funsigned-char -pipe -DPOSIX -DLINUX -DNOCOTFMC \
-	-DCK_AUTHENTICATION -DCK_KERBEROS -DKRB5 -DKRB4 -DKRB524 \
-	-DCK_ENCRYPTION -DCK_DES -DCK_CURSES -DCK_POSIX_SIG \
-	-DTCPSOCKET -DLINUXFSSTND -DHAVE_CRYPT_H $(K5INC) $(K5INC)/krb5 \
-	$(KFLAGS)" "LNKFLAGS = $(LNKFLAGS)" \
-	"LIBS = $(K5LIB) -lncurses -ltermcap -lkrb4 -ldes425 -lkrb5 \
-	-lcom_err -lk5crypto -lcrypt -lgssapi_krb5 -lresolv"
 
 # Linux on Intel PC with SRP 1.7.4 using GNU MP, Krypto, and Eric Young's
 # DES library.  Remove the -DCK_DES, -DLIBDES and -ldes if you do not have
@@ -5697,54 +6488,6 @@ linux+srp+pam:
 	"LNKFLAGS = $(LNKFLAGS)" \
 	"LIBS = $(SRPLIB) $(SSLLIB) -lncurses -ltermcap -lsrp -lkrypto \
 	-lcrypto -lcrypt -lpam -ldl -lm -lresolv"
-
-linux+shadow+pam:
-	@echo 'Making C-Kermit $(CKVER) for Linux on i386 with Shadow+PAM...'
-	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} "CC = gcc" "CC2 = gcc" \
-	"CFLAGS = -O -funsigned-char -pipe -DPOSIX -DLINUX -DNOCOTFMC \
-	-DCK_CURSES -DCK_POSIX_SIG -DTCPSOCKET -DLINUXFSSTND -DHAVE_CRYPT_H \
-	-DCK_SHADOW -DCK_PAM -DFNFLOAT \
-	$(KFLAGS)" "LNKFLAGS = $(LNKFLAGS)" \
-	"LIBS = -lncurses -ltermcap -lcrypt -lpam -ldl -lm -lresolv"
-
-#Linux configured for SSL/TLS.
-#Remove -ltermcap if it causes trouble e.g. in Debian 2.2.
-#If you have OpenSSL 0.9.7 or later, add -DOPENSSL_097 to KFLAGS.
-linux+openssl:
-	@echo 'Making C-Kermit $(CKVER) for Linux on i386 with SSL/TLS...'
-	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} "CC = gcc" "CC2 = gcc" \
-	"CFLAGS = -O -funsigned-char -pipe -DPOSIX -DLINUX -DNOCOTFMC \
-	-DCK_AUTHENTICATION -DCK_SSL \
-	-DCK_CURSES -DCK_POSIX_SIG -DTCPSOCKET -DLINUXFSSTND -DHAVE_CRYPT_H \
-	-DFNFLOAT $(SSLINC) $(KFLAGS)" "LNKFLAGS = $(LNKFLAGS)" \
-	"LIBS= $(SSLLIB) \
-	-lncurses -ltermcap -lssl -lcrypto -lm -lresolv -lcrypt"
-
-#Linux configured for SSL/TLS and Shadow Passwords
-#Remove -ltermcap if it causes trouble e.g. in Debian 2.2.
-#If you have OpenSSL 0.9.7 or later, add -DOPENSSL_097 to KFLAGS.
-linux+openssl+shadow:
-	@echo 'Making C-Kermit $(CKVER) for Linux on i386 with SSL/TLS...'
-	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} "CC = gcc" "CC2 = gcc" \
-	"CFLAGS = -O -funsigned-char -pipe -DPOSIX -DLINUX -DNOCOTFMC \
-	-DCK_AUTHENTICATION -DCK_SSL \
-	-DCK_CURSES -DCK_POSIX_SIG -DTCPSOCKET -DLINUXFSSTND -DHAVE_CRYPT_H \
-	-DFNFLOAT -DCK_SHADOW $(SSLINC) $(KFLAGS)" "LNKFLAGS = $(LNKFLAGS)" \
-	"LIBS= $(SSLLIB) \
-	-lncurses -ltermcap -lssl -lcrypto -lm -lresolv -lcrypt"
-
-#Linux configured for SSL/TLS, ZLIB, PAM and Shadow Passwords
-#Remove -ltermcap if it causes trouble e.g. in Debian 2.2.
-#If you have OpenSSL 0.9.7 or later, add -DOPENSSL_097 to KFLAGS.
-linux+openssl+zlib+shadow+pam:
-	@echo 'Making C-Kermit $(CKVER) for Linux on i386 with SSL/TLS...'
-	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} "CC = gcc" "CC2 = gcc" \
-	"CFLAGS = -O -funsigned-char -pipe -DPOSIX -DLINUX -DNOCOTFMC \
-	-DCK_AUTHENTICATION -DCK_SSL -DCK_PAM -DZLIB \
-	-DCK_CURSES -DCK_POSIX_SIG -DTCPSOCKET -DLINUXFSSTND -DHAVE_CRYPT_H \
-	-DFNFLOAT -DCK_SHADOW $(SSLINC) $(KFLAGS)" "LNKFLAGS = $(LNKFLAGS)" \
-	"LIBS= $(SSLLIB) \
-	-lncurses -ltermcap -lssl -lcrypto -lm -lresolv -lcrypt -lz -lpam -ldl"
 
 #Linux on Intel PC with SRP and SSL/TLS.
 #
@@ -6018,6 +6761,12 @@ redhat9+srp:
 	$(MAKE) linux+krb5+krb4+srp+openssl+zlib+shadow+pam \
 	KTARGET=$${KTARGET:-$(@)} "KFLAGS = -DRH90 -DOPENSSL_097 $(KFLAGS)"
 
+#For Red Hat AS 2.1 with OpenSSL
+redhat21+ssl:
+	@echo "Building SECURE Kermit for Red Hat 2.1..."
+	$(MAKE) linux+openssl+zlib+shadow+pam \
+	KTARGET=$${KTARGET:-$(@)} "KFLAGS =  $(KFLAGS)"
+
 #Red Hat Linux 8.0 - full install includes Kerberos 5 (4 compat), PAM, SSL.
 #Also works around bug in curses in which terminal goes dead after
 #returning from file-transfer display.
@@ -6076,7 +6825,7 @@ linux+krb5+openssl+zlib+shadow+pam:
 	@echo 'Making C-Kermit $(CKVER) for Linux on i386 with KRB5,SSL...'
 	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} "CC = gcc" "CC2 = gcc" \
 	"CFLAGS = -g -O -funsigned-char -pipe -DPOSIX -DLINUX -DNOCOTFMC \
-	-DCK_AUTHENTICATION -DCK_KERBEROS  -DKRB5 -DCK_SHADOW \
+	-DCK_AUTHENTICATION -DCK_KERBEROS  -DKRB5 -DCK_SHADOW -DHAVE_PTMX \
 	-DCK_ENCRYPTION -DCK_CAST -DCK_DES -DLIBDES -DCK_SSL -DCK_PAM -DZLIB \
 	-DCK_CURSES -DCK_POSIX_SIG -DTCPSOCKET -DLINUXFSSTND -DHAVE_CRYPT_H \
 	$(K5INC) $(K5INC)/krb5 $(SSLINC) \
@@ -6156,6 +6905,8 @@ linuxold:
 	$(MAKE) wermit KTARGET=$${KTARGET:-$(@)} "CC = gcc" "CC2 = gcc" \
 	"CFLAGS = -O -DLINUX -DPOSIX -DCK_CURSES -DCK_POSIX_SIG -DNOLEARN \
 	$(KFLAGS)" "LNKFLAGS = $(LNKFLAGS)" "LIBS = -lcurses -ltermcap"
+
+# ::END_OLD_LINUX_TARGETS::
 
 # LynxOS 2.2 with GCC compiler, TCP/IP and fullscreen display.
 # Probably also works with Lynx 2.1, and maybe even Lynx 2.0.
@@ -6411,6 +7162,7 @@ sco3r22netc:
 #Use -M3 to generate 32-bit i386 code instead of 16-bit segmented i286 code.
 #Use -Me to enable MS nonstandard keywords in system headers.
 #Use -W2 or W3 to increase the warning level.
+#OK: 2011/06/15
 sco234:
 	@echo 'Making C-Kermit $(CKVER) for SCO XENIX 2.3.4...'
 	$(MAKE) wermit KTARGET=$${KTARGET:-$(@)} \
@@ -6746,6 +7498,8 @@ sco32v505net+ssl:
 	@echo TCP/IP networking and OpenSSL added...
 	$(MAKE) "MAKE=$(MAKE)" sco32v500net+ssl KTARGET=$${KTARGET:-$(@)} \
 	"KFLAGS=-DSCO_OSR505 -DNOSHADOW -b elf -DPOSIX $(KFLAGS) " \
+	"LIBS=$(SSLLIB) -lcurses -lsocket -lssl -lcrypto $(LIBS)" \
+	"LNKFLAGS=$(LNKFLAGS)"
 
 #SCO OpenServer 5.0.5 with networking, SCO UDK.
 #See comments with above sco32v505 targets.
@@ -6839,14 +7593,29 @@ sco32v507net:
 	-DHAVE_PTSNAME -DHAVE_PTMX -DHAVE_GRANTPT \
 	-b elf -DPOSIX $(KFLAGS)"
 
-#Tandy 16/6000 with Xenix 3.0
+#SCO OpenServer 6 (new target 30 Jan 2006)
+sco_osr600 sco600:
+	@echo Making C-Kermit $(CKVER) for SCO OpenServer 6.0.0...
+	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} \
+	"CFLAGS= -O -DDIRENT -DHDBUUCP -DSVR4 -DCK_SCOV5 -DCK_RTSCTS \
+	-DCK_CURSES -DCK_WREFRESH -DCK_NEWTERM -DSELECT -DSELECT_H \
+	-DNOGETUSERSHELL -DNOLSTAT -DNOLINKBITS -DTCPSOCKET \
+	-DNO_DNS_SRV -DSCO_OSR505 -DSCO_OSR506 -DSCO_OSR507 -DNEEDMDMDEFS \
+	-DHAVE_PTSNAME -DHAVE_PTMX -DHAVE_GRANTPT -DDCLTIMEVAL \
+	-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 \
+	-DSOCKOPT_T=socklen_t -DGSOCKNAME_T=size_t -DGPEERNAME_T=size_t \
+	-DHERALD=\"\\\" SCO OpenServer `uname -v`\\\"\" \
+	-b elf -DPOSIX $(KFLAGS)" \
+	"LIBS=-lcurses -lsocket $(LIBS)" "LNKFLAGS=$(LNKFLAGS)"
+
+#Tandy 16/6000 with Xenix 3.0 (16 bits)
+#C-Kermit 7.0 (and later) do not build here; "too many defines".
 #Add more -DNOxxx options to remove features if program won't load.
 #Successful operation is a function of program size, physical memory,
 #available swap space, etc.  The following stripped-down configuration
 #seems to work on most Tandy 6000s.  NOTE: "-+" means allow long variable
 #names, needed for C-Kermit 6.0 because some identifiers are not unique
 #within the first six characters.
-#C-Kermit 7.0 does not build here; "too many defines".
 trs16:
 	@echo 'Making C-Kermit $(CKVER) for Tandy 16/6000, Xenix 3.0...'
 	$(MAKE) wermit KTARGET=$${KTARGET:-$(@)} \
@@ -6854,6 +7623,142 @@ trs16:
 	-DNODEBUG -DNOTLOG -DNOHELP -DNOSCRIPT -DNOCSETS -DNOIKSD \
 	-DNOREDIRECT -DNOSYSLOG -DNOPUTENV -DNOREALPATH -DNOLEARN \
 	$(KFLAGS) -O" "LIBS= -lcurses -ltermcap" "LNKFLAGS = -+ -n -s"
+
+# QNX 4.21 and above, 32-bit version, Watcom C32 10.6, fully configured,
+# except no job control because QNX 4.x does not support it.  New NCURSES
+# library used instead of CURSES.
+#
+# -Oatx optimizes to favor speed over size: loop optimization, inline fn's.
+# -Os favors size over speed.  Saves 30-40K out of about 1.75M.
+# -3r = generate 386 code with register-based arg passing.
+# -3s = generate 386 code with stack-based arg passing.
+# -ms = separate code & data 4GB segments (32-bit builds only).
+# -mf = flat memory model code+data in one 4GB segment (ditto).
+# -zc = place literal strings in code segment.
+# -N4M = Big stack (increase the digit upon SIGSEGVs at runtime).
+# chars are unsigned by default (-j makes them signed by default).
+# -NOUUCP is included because QNX doesn't use it.
+# Add these to the end if you like but they dump core on my QNX 4.25 system:
+#
+#	@wermit -h >use.qnx
+#	@usemsg wermit use.qnx
+#	@rm use.qnx
+#
+# If you get warnings about HEADER or C_IN add -DNO_DNS_SRV.
+# OK 2011/06/14
+qnx32:
+	@echo 'Making C-Kermit $(CKVER) for QNX 4.2x, 32-bit...'
+	$(MAKE) xermit \
+	"LNKFLAGS = -N4M -3r" \
+	"CFLAGS = -ms -3r -DQNX -DTCPSOCKET -DCK_CURSES -DNOGETUSERSHELL \
+	-DCK_WREFRESH -DCK_REDIR -DSELECT -DSELECT_H -DCK_RTSCTS -DNOJC \
+	-DNOINITGROUPS -DNOUUCP -DCK_ANSIC -DPID_T=pid_t -Oatx -zc $(KFLAGS)" \
+	"LIBS= -lsocket -lncurses -ltermcap"
+
+# As above but no networking since some QNX systems do not have TCP/IP
+# installed, or the TCP/IP developers kit, which includes all the needed
+# header files.  This entry has not been tested on a QNX system that, in
+# fact, does not have TCP/IP installed; some adjustments might be necessary,
+# in particular regarding the use of select(): is -lsocket needed, can we
+# get the needed definitions from non-TCP/IP header files (FD_SET, etc)?
+qnx32nonet:
+	@echo 'Making C-Kermit $(CKVER) for QNX 4.2x, 32-bit, no net...'
+	$(MAKE) xermit \
+	"LNKFLAGS = -N4M -3r" \
+	"CFLAGS = -3r -ms -DQNX -DNONET -DNOIKSD -DCK_CURSES \
+	-DCK_WREFRESH -DCK_REDIR -DSELECT -DSELECT_H -DCK_RTSCTS -DNOJC \
+	-DNOUUCP -DCK_ANSIC -DPID_T=pid_t -Oatx -zc $(KFLAGS)" \
+	"LIBS= -lsocket -lncurses -ltermcap"
+	@wermit -h >use.qnx
+	@usemsg wermit use.qnx
+	@rm use.qnx
+
+# Synonym for qnx32.
+qnx:
+	$(MAKE) qnx32 "KFLAGS=$(KFLAGS)"
+
+# QNX 4.21 and above, 16-bit version, Watcom C 8.5 - and higher on i286 PCs
+# and above.
+#
+#	IMPORTANT: Do not use Watcom C 10.6!!!
+#	If you have it installed, add "-v9.52 to CFLAGS"
+#
+# NOTE: QNX 4.23 onward does not work on 286's anyway.
+# Stacksize 26000, objects larger than 100 bytes in their own segments,
+# string constants to the codesegment, etc.  Fully configured except job ctrl.
+# This entry works for building a 16-bit executable on a 32-bit system, but
+# has not been tested on a 16-bit system.  Uses large memory model, links
+# explicitly with large-model sockets library.  Correct-model curses library
+# is chosen automatically.  See comment in qnx32 entry about -DNOUUCP.
+#
+# WARNING:
+#
+# Watcom C prior to 10.6 never had released curses library. To link against it,
+# you must obtain ported free curses source from ftp://ftp.qnx.com/usr/free,
+# then compile and build library (cursesl.lib) and place it in /usr/lib.  You
+# must also copy curses.h to /usr/include.  Be aware that if you have Watcom
+# 10.6 installed, you should already have curses.h, which is the new ncurses
+# library. You must back it up and use free curses.h instead, since ncurses is
+# only for 32-bit applications and some definitions in these files are
+# different (e.g., clearok()).  For safety, curses is not defined in build.
+#
+# In 7.0 -DNOHELP added to keep ckuus2.c from blowing up; NOCSETS and NOSPL
+# added because ckuus4 was blowing up, and NOFLOAT just because it seemed
+# dangerous (remove -DNOFLOAT if you want to try it), The result works OK
+# except for some mysterious beeps upon termination of the top-level keyword.
+#
+# Things to try next time we get in trouble:
+#  . Change -zt100 to something smaller like -zt25
+#  . Change -Oatx to -Omilerat (enable stack checking)
+#  . Maybe get rid of -v9.52 -- it's only there because we were warned.
+#
+qnx16:
+	@echo 'Making C-Kermit $(CKVER) for QNX 4.21, 16-bit...'
+	$(MAKE) xermit \
+	"LNKFLAGS = -2 -ml -N 26000" \
+	"CFLAGS = -2 -Oatx -zc -zt100 -ml -DQNX -DQNX16 -DNOUUCP -DNOHELP \
+	-DCK_REDIR -DSELECT -DSELECT_H -DNOJC -DNOGETUSERSHELL -DNOCSETS \
+	-v9.52 -DTCPSOCKET -DCK_RTSCTS -DCK_ANSIC -DNOINITGROUPS -DNOKVERBS \
+	-DNORANDOM -DNOCSETS -DNOSPL -DNOFLOAT -DPID_T=pid_t $(KFLAGS)"
+
+# QNX 4.1, 16-bit version, with Watcom C 8.5 on i286 PCs and above.
+# stacksize 26000, objects larger than 100 bytes in their own segments,
+# string constants to the codesegment, etc.  Add -DNOUUCP if desired.
+qnx16_41:
+	@echo 'Making C-Kermit $(CKVER) for QNX 4.1, 16-bit...'
+	$(MAKE) xermit \
+	"LNKFLAGS = -mh -N 26000" "CFLAGS = -Wc,-fpc -Wc,-j -DNOGETUSERSHELL \
+	-Wc,-Ols -Wc,-zdf -Wc,-zc -Wc,-zt100 -mh -DPOSIX -DQNX -DDIRENT \
+	-DNOCYRIL -DNODEBUG -DNOMSEND -DMINIDIAL -DNOXMIT -DNOSCRIPT -DNOSPL \
+	-DNOSETKEY -DNOINITGROUPS -DQNX16 -DPID_T=pid_t $(KFLAGS)"
+
+# QNX Neutrino 2 (pwaechtler@qnx.de) crosscompiled on QNX 4.25.
+# Gets lots of compiler warnings.
+qnx_nto2+:
+	@echo 'Making C-Kermit $(CKVER) for QNX Neutrino 2+ '
+	cc -o wart ckwart.c
+	$(MAKE) xermit \
+	"CC = qcc -Vgcc_ntox86" \
+	"CC2 = qcc -Vgcc_ntox86" \
+	"LNKFLAGS = " \
+	"CFLAGS = -DNEUTRINO -DTCPSOCKET -DCK_CURSES -DNOGETUSERSHELL \
+	-DNOUUCP -DCK_WREFRESH -DCK_REDIR -DSELECT -DSELECT_H -DCK_RTSCTS \
+	-DNOJC -DNOINITGROUPS -DCK_ANSIC -DPID_T=pid_t -DUNIX -DDIRENT \
+	-DMYREAD -DBSD44ORPOSIX -DSVORPOSIX -DNDGPWNAM $(KFLAGS)" \
+	"LIBS= -lsocket -lncurses "
+
+# QNX 6 (= Neutrino 2.xx) native build (kirussel@cisco.com).
+qnx6:
+	@echo 'Making C-Kermit $(CKVER) for QNX6'
+	$(MAKE) xermit KTARGET=QNX6 \
+	"CFLAGS = -DPOSIX -DCK_POSIX_SIG -DNETPTY -DNOARROWKEYS \
+	-DUSE_TIOCSDTR -DBIGBUFOK -DCKMAXOPEN=100 -DRLOGCODE -DNOREALPATH \
+	-DMAXNAMLEN=48 -DQNX6 -DUSE_TERMIO -DINIT_SPTY \
+	-DCK_CURSES -DCK_WREFRESH -DCK_NEWTERM -DDYNAMIC \
+	-DTCPSOCKET -DNOGETUSERSHELL -DCK_REDIR -DSELECT -DSELECT_H \
+	-DCK_RTSCTS -DNOJC -DSVORPOSIX -DBSD44ORPOSIX -DNOUUCP -DCK_ANSIC \
+	$(KFLAGS) -O" \
+	"LIBS= -lsocket  -lncurses"
 
 #MINIX/2.0 32 Bit version for intel 386+ running the POSIX-compliant MINIX
 # version 2.0 (The definition of fatal avoids a conflict with a symbol by
@@ -6904,7 +7809,7 @@ minix386gcc:
 # Make sure make(1) has (at least) 100000 chmemory!
 # If you are using the Amsterdam C compiler, you might have to add "-D__ACK__".
 minix68k:
-	@echo 'Making C-Kermit $(CKVER) for MINIX 68k with ACK...
+	@echo 'Making C-Kermit $(CKVER) for MINIX 68k with ACK...'
 	$(MAKE) wermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS= -DV7 -DMINIX -D_MINIX -D_POSIX_SOURCE -DNOLEARN \
 	-DNODIAL -DNOHELP -DNODEBUG -DNOTLOG \
@@ -6919,7 +7824,7 @@ minix68k:
 # call of make fails due to memory shortage.  Try "make -n minixc68 >makeit",
 # followed by ". makeit".  Otherwise, as above.
 minixc68:
-	@echo 'Making C-Kermit $(CKVER) for MINIX 68k with c68...
+	@echo 'Making C-Kermit $(CKVER) for MINIX 68k with c68...'
 	$(MAKE) wermit "CC= cc -c68" KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS= -DV7 -DMINIX -D_MINIX -D_POSIX_SOURCE -DNOLEARN \
 	-DNODIAL -DNOHELP -DNODEBUG -DNOTLOG \
@@ -6929,7 +7834,7 @@ minixc68:
 #MINIX - 68k version with c68 compiler.
 #A variation on the above that was recently (Sep 95) reported to work.
 minixc68a:
-	@echo 'Making C-Kermit $(CKVER) for MINIX 68k with c68...
+	@echo 'Making C-Kermit $(CKVER) for MINIX 68k with c68...'
 	$(MAKE) wermit "CC= cc -c68" KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS= -DV7 -DMINIX -D_MINIX -D_POSIX_SOURCE \
 	-DCK_ANSIC -DNODEBUG -DNOTLOG -DMINIDIAL -DEXTEN -DMYCURSES \
@@ -7519,141 +8424,6 @@ dnix5r3ansinet:
 	-DTCPSOCKET -DCK_ANSILIBS -DCK_CURSES -DRENAME -O -X7 -X9 $(KFLAGS) \
 	-I/usr/include/bsd" "LIBS= -ln -lcurses"
 
-# QNX 4.21 and above, 32-bit version, Watcom C32 10.6, fully configured,
-# except no job control because QNX 4.x does not support it.  New NCURSES
-# library used instead of CURSES.
-#
-# -Oatx optimizes to favor speed over size: loop optimization, inline fn's.
-# -Os favors size over speed.  Saves 30-40K out of about 1.75M.
-# -3r = generate 386 code with register-based arg passing.
-# -3s = generate 386 code with stack-based arg passing.
-# -ms = separate code & data 4GB segments (32-bit builds only).
-# -mf = flat memory model code+data in one 4GB segment (ditto).
-# -zc = place literal strings in code segment.
-# -N4M = Big stack (increase the digit upon SIGSEGVs at runtime).
-# chars are unsigned by default (-j makes them signed by default).
-# -NOUUCP is included because QNX doesn't use it.
-# Add these to the end if you like but they dump core on my QNX 4.25 system:
-#
-#	@wermit -h >use.qnx
-#	@usemsg wermit use.qnx
-#	@rm use.qnx
-#
-# If you get warnings about HEADER or C_IN add -DNO_DNS_SRV.
-qnx32:
-	@echo 'Making C-Kermit $(CKVER) for QNX 4.2x, 32-bit...'
-	$(MAKE) xermit \
-	"LNKFLAGS = -N4M -3r" \
-	"CFLAGS = -ms -3r -DQNX -DTCPSOCKET -DCK_CURSES -DNOGETUSERSHELL \
-	-DCK_WREFRESH -DCK_REDIR -DSELECT -DSELECT_H -DCK_RTSCTS -DNOJC \
-	-DNOINITGROUPS -DNOUUCP -DCK_ANSIC -DPID_T=pid_t -Oatx -zc $(KFLAGS)" \
-	"LIBS= -lsocket -lncurses -ltermcap"
-
-# As above but no networking since some QNX systems do not have TCP/IP
-# installed, or the TCP/IP developers kit, which includes all the needed
-# header files.  This entry has not been tested on a QNX system that, in
-# fact, does not have TCP/IP installed; some adjustments might be necessary,
-# in particular regarding the use of select(): is -lsocket needed, can we
-# get the needed definitions from non-TCP/IP header files (FD_SET, etc)?
-qnx32nonet:
-	@echo 'Making C-Kermit $(CKVER) for QNX 4.2x, 32-bit, no net...'
-	$(MAKE) xermit \
-	"LNKFLAGS = -N4M -3r" \
-	"CFLAGS = -3r -ms -DQNX -DNONET -DNOIKSD -DCK_CURSES \
-	-DCK_WREFRESH -DCK_REDIR -DSELECT -DSELECT_H -DCK_RTSCTS -DNOJC \
-	-DNOUUCP -DCK_ANSIC -DPID_T=pid_t -Oatx -zc $(KFLAGS)" \
-	"LIBS= -lsocket -lncurses -ltermcap"
-	@wermit -h >use.qnx
-	@usemsg wermit use.qnx
-	@rm use.qnx
-
-# Synonym for qnx32.
-qnx:
-	$(MAKE) qnx32 "KFLAGS=$(KFLAGS)"
-
-# QNX 4.21 and above, 16-bit version, Watcom C 8.5 - and higher on i286 PCs
-# and above.
-#
-#	IMPORTANT: Do not use Watcom C 10.6!!!
-#	If you have it installed, add "-v9.52 to CFLAGS"
-#
-# NOTE: QNX 4.23 onward does not work on 286's anyway.
-# Stacksize 26000, objects larger than 100 bytes in their own segments,
-# string constants to the codesegment, etc.  Fully configured except job ctrl.
-# This entry works for building a 16-bit executable on a 32-bit system, but
-# has not been tested on a 16-bit system.  Uses large memory model, links
-# explicitly with large-model sockets library.  Correct-model curses library
-# is chosen automatically.  See comment in qnx32 entry about -DNOUUCP.
-#
-# WARNING:
-#
-# Watcom C prior to 10.6 never had released curses library. To link against it,
-# you must obtain ported free curses source from ftp://ftp.qnx.com/usr/free,
-# then compile and build library (cursesl.lib) and place it in /usr/lib.  You
-# must also copy curses.h to /usr/include.  Be aware that if you have Watcom
-# 10.6 installed, you should already have curses.h, which is the new ncurses
-# library. You must back it up and use free curses.h instead, since ncurses is
-# only for 32-bit applications and some definitions in these files are
-# different (e.g., clearok()).  For safety, curses is not defined in build.
-#
-# In 7.0 -DNOHELP added to keep ckuus2.c from blowing up; NOCSETS and NOSPL
-# added because ckuus4 was blowing up, and NOFLOAT just because it seemed
-# dangerous (remove -DNOFLOAT if you want to try it), The result works OK
-# except for some mysterious beeps upon termination of the top-level keyword.
-#
-# Things to try next time we get in trouble:
-#  . Change -zt100 to something smaller like -zt25
-#  . Change -Oatx to -Omilerat (enable stack checking)
-#  . Maybe get rid of -v9.52 -- it's only there because we were warned.
-#
-qnx16:
-	@echo 'Making C-Kermit $(CKVER) for QNX 4.21, 16-bit...'
-	$(MAKE) xermit \
-	"LNKFLAGS = -2 -ml -N 26000" \
-	"CFLAGS = -2 -Oatx -zc -zt100 -ml -DQNX -DQNX16 -DNOUUCP -DNOHELP \
-	-DCK_REDIR -DSELECT -DSELECT_H -DNOJC -DNOGETUSERSHELL -DNOCSETS \
-	-v9.52 -DTCPSOCKET -DCK_RTSCTS -DCK_ANSIC -DNOINITGROUPS -DNOKVERBS \
-	-DNORANDOM -DNOCSETS -DNOSPL -DNOFLOAT -DPID_T=pid_t $(KFLAGS)"
-
-# QNX 4.1, 16-bit version, with Watcom C 8.5 on i286 PCs and above.
-# stacksize 26000, objects larger than 100 bytes in their own segments,
-# string constants to the codesegment, etc.  Add -DNOUUCP if desired.
-qnx16_41:
-	@echo 'Making C-Kermit $(CKVER) for QNX 4.1, 16-bit...'
-	$(MAKE) xermit \
-	"LNKFLAGS = -mh -N 26000" "CFLAGS = -Wc,-fpc -Wc,-j -DNOGETUSERSHELL \
-	-Wc,-Ols -Wc,-zdf -Wc,-zc -Wc,-zt100 -mh -DPOSIX -DQNX -DDIRENT \
-	-DNOCYRIL -DNODEBUG -DNOMSEND -DMINIDIAL -DNOXMIT -DNOSCRIPT -DNOSPL \
-	-DNOSETKEY -DNOINITGROUPS -DQNX16 -DPID_T=pid_t $(KFLAGS)"
-
-# QNX Neutrino 2 (pwaechtler@qnx.de) crosscompiled on QNX 4.25.
-# Gets lots of compiler warnings.
-qnx_nto2+:
-	@echo 'Making C-Kermit $(CKVER) for QNX Neutrino 2+ '
-	cc -o wart ckwart.c
-	$(MAKE) xermit \
-	"CC = qcc -Vgcc_ntox86" \
-	"CC2 = qcc -Vgcc_ntox86" \
-	"LNKFLAGS = " \
-	"CFLAGS = -DNEUTRINO -DTCPSOCKET -DCK_CURSES -DNOGETUSERSHELL \
-	-DNOUUCP -DCK_WREFRESH -DCK_REDIR -DSELECT -DSELECT_H -DCK_RTSCTS \
-	-DNOJC -DNOINITGROUPS -DCK_ANSIC -DPID_T=pid_t -DUNIX -DDIRENT \
-	-DMYREAD -DBSD44ORPOSIX -DSVORPOSIX -DNDGPWNAM $(KFLAGS)" \
-	"LIBS= -lsocket -lncurses "
-
-# QNX 6 (= Neutrino 2.xx) native build (kirussel@cisco.com).
-qnx6:
-	@echo 'Making C-Kermit $(CKVER) for QNX6'
-	$(MAKE) xermit KTARGET=QNX6 \
-	"CFLAGS = -DPOSIX -DCK_POSIX_SIG -DNETPTY -DNOARROWKEYS \
-	-DUSE_TIOCSDTR -DBIGBUFOK -DCKMAXOPEN=100 -DRLOGCODE -DNOREALPATH \
-	-DMAXNAMLEN=48 -DQNX6 -DUSE_TERMIO -DINIT_SPTY \
-	-DCK_CURSES -DCK_WREFRESH -DCK_NEWTERM -DDYNAMIC \
-	-DTCPSOCKET -DNOGETUSERSHELL -DCK_REDIR -DSELECT -DSELECT_H \
-	-DCK_RTSCTS -DNOJC -DSVORPOSIX -DBSD44ORPOSIX -DNOUUCP -DCK_ANSIC \
-	$(KFLAGS) -O" \
-	"LIBS= -lsocket  -lncurses"
-
 #Ridge 32 with ROS 3.2
 ridge32:
 	@echo 'Making C-Kermit $(CKVER) Ridge 32 ROS 3.2'
@@ -7715,7 +8485,7 @@ altos3:
 # -DNOSPL, plus every other -DNOxxx flag there is, except for -DNOICP
 # (see ckccfg.txt).
 minix:
-	@echo 'Making C-Kermit $(CKVER) for MINIX, no command parser...
+	@echo 'Making C-Kermit $(CKVER) for MINIX, no command parser...'
 	@echo 'TOTALLY UNTESTED!'
 	$(MAKE) wermit EXT=s \
 	"CFLAGS= -DV7 -DMINIX -i -D_MINIX -D_POSIX_SOURCE \
@@ -7727,7 +8497,7 @@ minix:
 #MINIX - PC version with 64K+64K limit, new (as yet unreleased) ACK 2.0 beta C
 #compiler, which outputs .o object files, rather than .s.  But 'make' still
 #expects .s files, so must be patched to use .o.  Tested on Minix 1.5.10.
-minixnew:
+minix15:
 	@echo 'Making C-Kermit $(CKVER) for MINIX (new ACK 2.0 compiler),'
 	@echo 'no command parser...  TOTALLY UNTESTED!'
 	$(MAKE) wermit \
@@ -7735,6 +8505,24 @@ minixnew:
 	-DPID_T=pid_t -DUID_T=uid_t -DGID_T=gid_t -DSIG_V -DNODIAL \
 	-DNOHELP -DNODEBUG -DNOTLOG -DNOSCRIPT -DNOCSETS -DNOICP $(KFLAGS)" \
 	"LNKFLAGS= -i -T"
+
+#MINIX3 - MINIX 3.0 (no VM) - May-Aug 2005 (not sure if this ever worked...)
+minix3:
+	@echo 'Making C-Kermit $(CKVER) for MINIX3...'
+	$(MAKE) wermit KTARGET=$${KTARGET:-$(@)} \
+	"CFLAGS= -DPOSIX -DNOUUCP -DNOLEARN $(KFLAGS) -DMINIX2 \
+	-DMINIX3 -DNO_PARAM_H -DNOSYSLOG -DNOGETUSERSHELL \
+	-DNOINITGROUPS -DNOFTRUNCATE -DNOARROWKEYS -DDNOREALPATH \
+	-DTCPSOCKET -DNOTIMEZONE -DNOFTP -DNO_DNS_SRV -O"
+
+#MINIX315 - MINIX 3 1.5 - January 2010
+minix315:
+	@echo 'Making C-Kermit $(CKVER) for Minix 3 1.5...'
+	$(MAKE) wermit KTARGET=$${KTARGET:-$(@)} \
+	"CFLAGS= -DMINIX315 -DPOSIX -DNOUUCP -DNOJC -DNOLEARN $(KFLAGS) \
+	-DHAVE_OPENPTY -DNO_PARAM_H -DNOSYSLOG -DNOGETUSERSHELL \
+	-DSYSTIMEH -DNOINITGROUPS -DNOFTRUNCATE -DNOARROWKEYS -DNOREALPATH \
+	-DTCPSOCKET -DNOTIMEZONE -DNO_DNS_SRV -DNOFTP -O"
 
 #PFU Compact A Series UNIX System V R3, SX/A TISP V10/L50 (Japan)
 #Maybe the -i link option should be removed?

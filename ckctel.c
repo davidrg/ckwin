@@ -1,4 +1,4 @@
-char *cktelv = "Telnet support, 8.0.269, 4 Mar 2004";
+char *cktelv = "Telnet support, 9.0.274, 16 Mar 2010";
 #define CKCTEL_C
 
 int sstelnet = 0;                       /* Do server-side Telnet negotiation */
@@ -18,7 +18,7 @@ int sstelnet = 0;                       /* Do server-side Telnet negotiation */
     Telnet KERMIT support by Jeffrey Altman
     Other contributions as indicated in the code.
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2010,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -91,6 +91,7 @@ int tn_init = 0;                        /* Telnet protocol initialized flag */
 int tn_begun = 0;                       /* Telnet protocol started flag */
 static int tn_first = 1;                /* First time init flag */
 extern int tn_exit;                     /* Exit on disconnect */
+extern int nettype;
 extern int inserver;                    /* Running as IKSD */
 char *tn_term = NULL;                   /* Terminal type override */
 
@@ -492,6 +493,8 @@ tn_wait(where) char * where;
     extern int ttcarr;
 #endif /* TN_COMPORT */
 
+    /* if (!IS_TELNET()) return(1); */
+
     rtimer();
 
     debug(F110,"tn_wait waiting for",where,0);
@@ -680,8 +683,10 @@ tn_push() {
 #ifdef NETLEBUF
     extern int tt_push_inited;
 #endif /* NETLEBUF */
+    /* if (!IS_TELNET()) return(1); */
+
     if (tn_wait_idx) {
-        hexdump((CHAR *)"tn_push",tn_wait_buf,tn_wait_idx);
+        ckhexdump((CHAR *)"tn_push",tn_wait_buf,tn_wait_idx);
 #ifdef NETLEBUF
         if (!tt_push_inited)            /* Local handling */
           le_init();
@@ -718,7 +723,6 @@ tn_sopt(cmd,opt) int cmd, opt; {        /* TELNET SEND OPTION */
     CHAR buf[5];
     char msg[128];
     int rc;
-
     if (ttnet != NET_TCPB) return(-1);  /* Must be TCP/IP */
     if (ttnproto != NP_TELNET) return(-1); /* Must be telnet protocol */
     if (!TELCMD_OK(cmd)) return(-1);
@@ -917,6 +921,8 @@ tn_flui() {
     extern int ckxech;
     int x = 0;
 
+    /* if (!IS_TELNET()) return(0); */
+
     /* Wait up to 5 sec for responses to outstanding telnet negotiations */
     while (x >= 0 && ttchk() > 0  && tn_wait_idx < TN_WAIT_BUF_SZ) {
         x = ttinc(1);
@@ -961,6 +967,8 @@ tn_get_display()
     /* If one is not assigned, do not send a string unless the user has */
     /* explicitedly requested we try to send one via X-Display Location */
     /* But do not send a string at all if FORWARD_X is in use.          */
+
+    /* if (!IS_TELNET()) return(0); */
 
     debug(F110,"tn_get_display() myipaddr",myipaddr,0);
 #ifdef CK_ENVIRONMENT
@@ -1304,7 +1312,7 @@ fwdx_tn_sb( sb, n ) unsigned char * sb; int n;
         p[0] = sb[i++];
         p[1] = sb[i++];
         hchannel = ntohs(nchannel);
-        rc = fwdx_send_xauth_to_xserver(hchannel,(char *)&sb[3],n-5);
+        rc = fwdx_send_xauth_to_xserver(hchannel,(CHAR *)&sb[3],n-5);
         if ( rc >= 0 && n-5-rc > 0) {
             rc = fwdx_write_data_to_channel(hchannel,(char *)&sb[3+rc],n-5-rc);
             if ( rc < 0 ) {
@@ -1612,7 +1620,7 @@ fwdx_send_close(channel) int channel;
     sb_out[i++] = (CHAR) SE;                /* marked by IAC SE */
 #ifdef DEBUG
     if (deblog || tn_deb || debses) {
-        ckmakxmsg(fwdx_msg_out,TN_MSG_LEN,"TELNET SENT SB ",
+        ckmakxmsg((char *)fwdx_msg_out,TN_MSG_LEN,"TELNET SENT SB ",
                   TELOPT(TELOPT_FORWARD_X),
                   " CLOSE CHANNEL=",ckitoa(channel)," IAC SE",
                   NULL,NULL,NULL,NULL,NULL,NULL,NULL
@@ -1623,8 +1631,8 @@ fwdx_send_close(channel) int channel;
     RequestTelnetMutex( SEM_INDEFINITE_WAIT );
 #endif
 #ifdef DEBUG
-    debug(F100,fwdx_msg_out,"",0);
-    if (tn_deb || debses) tn_debug(fwdx_msg_out);
+    debug(F100,(char *)fwdx_msg_out,"",0);
+    if (tn_deb || debses) tn_debug((char *)fwdx_msg_out);
 #endif /* DEBUG */
     rc = (ttol((CHAR *)sb_out,i) < 0);      /* Send it. */
 #ifdef OS2
@@ -1670,7 +1678,7 @@ fwdx_send_open(channel) int channel;
     sb_out[i++] = (CHAR) SE;                  /* marked by IAC SE */
 #ifdef DEBUG
     if (deblog || tn_deb || debses) {
-        ckmakxmsg(fwdx_msg_out,TN_MSG_LEN,"TELNET SENT SB ",
+        ckmakxmsg((char *)fwdx_msg_out,TN_MSG_LEN,"TELNET SENT SB ",
                   TELOPT(TELOPT_FORWARD_X),
                   " OPEN CHANNEL=",ckitoa(channel)," IAC SE",
                   NULL,NULL,NULL,NULL,NULL,NULL,NULL);
@@ -1680,8 +1688,8 @@ fwdx_send_open(channel) int channel;
     RequestTelnetMutex( SEM_INDEFINITE_WAIT );
 #endif
 #ifdef DEBUG
-    debug(F100,fwdx_msg_out,"",0);
-    if (tn_deb || debses) tn_debug(fwdx_msg_out);
+    debug(F100,(char *)fwdx_msg_out,"",0);
+    if (tn_deb || debses) tn_debug((char *)fwdx_msg_out);
 #endif /* DEBUG */
     rc = (ttol((CHAR *)sb_out,i) < 0);        /* Send it. */
 #ifdef OS2
@@ -1732,7 +1740,7 @@ fwdx_client_reply_options(opts, n) char *opts; int n;
     sb_out[i++] = (CHAR) SE;                  /* marked by IAC SE */
 #ifdef DEBUG
     if (deblog || tn_deb || debses) {
-        ckmakxmsg(fwdx_msg_out,TN_MSG_LEN,"TELNET SENT SB ",
+        ckmakxmsg((char *)fwdx_msg_out,TN_MSG_LEN,"TELNET SENT SB ",
                   TELOPT(TELOPT_FORWARD_X),
                   " OPTIONS ",ckctox(sb_out[4],1)," IAC SE",
                   NULL,NULL,NULL,NULL,NULL,NULL,NULL);
@@ -1742,8 +1750,8 @@ fwdx_client_reply_options(opts, n) char *opts; int n;
     RequestTelnetMutex( SEM_INDEFINITE_WAIT );
 #endif
 #ifdef DEBUG
-    debug(F100,fwdx_msg_out,"",0);
-    if (tn_deb || debses) tn_debug(fwdx_msg_out);
+    debug(F100,(char *)fwdx_msg_out,"",0);
+    if (tn_deb || debses) tn_debug((char *)fwdx_msg_out);
 #endif /* DEBUG */
     rc = (ttol((CHAR *)sb_out,i) < 0);        /* Send it. */
 #ifdef OS2
@@ -1778,7 +1786,7 @@ fwdx_send_options() {
 
 #ifdef DEBUG
     if (deblog || tn_deb || debses) {
-        ckmakmsg(fwdx_msg_out,TN_MSG_LEN,"TELNET SENT SB ",
+        ckmakmsg((char *)fwdx_msg_out,TN_MSG_LEN,"TELNET SENT SB ",
                  TELOPT(TELOPT_FORWARD_X),
                  " OPTIONS 00 IAC SE",NULL);
     }
@@ -1787,8 +1795,8 @@ fwdx_send_options() {
     RequestTelnetMutex( SEM_INDEFINITE_WAIT );
 #endif
 #ifdef DEBUG
-    debug(F100,fwdx_msg_out,"",0);
-    if (tn_deb || debses) tn_debug(fwdx_msg_out);
+    debug(F100,(char *)fwdx_msg_out,"",0);
+    if (tn_deb || debses) tn_debug((char *)fwdx_msg_out);
 #endif /* DEBUG */
     rc = (ttol((CHAR *)sb_out,i) < 0);        /* Send it. */
 #ifdef OS2
@@ -1851,20 +1859,21 @@ fwdx_send_data_from_channel(channel, data, len)
 
 #ifdef DEBUG
             if (deblog || tn_deb || debses) {
-                ckmakxmsg( fwdx_msg_out,TN_MSG_LEN,"TELNET SENT SB ",
+                ckmakxmsg( (char *)fwdx_msg_out,TN_MSG_LEN,"TELNET SENT SB ",
                            TELOPT(TELOPT_FORWARD_X),
                            " DATA CHANNEL=",ckitoa(channel)," ",
                            NULL,NULL,NULL,NULL,NULL,NULL,NULL );
-                tn_hex(fwdx_msg_out,TN_MSG_LEN,&sb_priv[j_sav],j-(j_sav+2));
-                ckstrncat(fwdx_msg_out," IAC SE",TN_MSG_LEN);
+                tn_hex((CHAR *)fwdx_msg_out,
+		       TN_MSG_LEN,&sb_priv[j_sav],j-(j_sav+2));
+                ckstrncat((char *)fwdx_msg_out," IAC SE",TN_MSG_LEN);
             }
 #endif /* DEBUG */
 #ifdef OS2
             RequestTelnetMutex( SEM_INDEFINITE_WAIT );
 #endif
 #ifdef DEBUG
-            debug(F100,fwdx_msg_out,"",0);
-            if (tn_deb || debses) tn_debug(fwdx_msg_out);
+            debug(F100,(char *)fwdx_msg_out,"",0);
+            if (tn_deb || debses) tn_debug((char *)fwdx_msg_out);
 #endif /* DEBUG */
             rc = (ttol(sb_priv,j) < 0);                /* Send it. */
 #ifdef OS2
@@ -1894,20 +1903,20 @@ fwdx_send_data_from_channel(channel, data, len)
 
 #ifdef DEBUG
     if (deblog || tn_deb || debses) {
-        ckmakxmsg( fwdx_msg_out,TN_MSG_LEN,
+        ckmakxmsg( (char *)fwdx_msg_out,TN_MSG_LEN,
                    "TELNET SENT SB ",TELOPT(TELOPT_FORWARD_X),
                    " DATA ",ckctox(p[0],1)," ",ckctox(p[1],1)," ",
                    NULL,NULL,NULL,NULL,NULL);
-        tn_hex(fwdx_msg_out,TN_MSG_LEN,&sb_priv[6],j-8);
-        ckstrncat(fwdx_msg_out," IAC SE",TN_MSG_LEN);
+        tn_hex((CHAR *)fwdx_msg_out,TN_MSG_LEN,&sb_priv[6],j-8);
+        ckstrncat((char *)fwdx_msg_out," IAC SE",TN_MSG_LEN);
     }
 #endif /* DEBUG */
 #ifdef OS2
     RequestTelnetMutex( SEM_INDEFINITE_WAIT );
 #endif
 #ifdef DEBUG
-    debug(F100,fwdx_msg_out,"",0);
-    if (tn_deb || debses) tn_debug(fwdx_msg_out);
+    debug(F100,(char *)fwdx_msg_out,"",0);
+    if (tn_deb || debses) tn_debug((char *)fwdx_msg_out);
 #endif /* DEBUG */
     rc = (ttol(sb_priv,j) < 0);                /* Send it. */
 #ifdef OS2
@@ -2052,10 +2061,10 @@ fwdx_send_xauth(void)
 
 #ifdef DEBUG
     if (deblog || tn_deb || debses) {
-        sprintf(fwdx_msg_out,"TELNET SENT SB %s OPTION_DATA XAUTH ",
+        sprintf((char *)fwdx_msg_out,"TELNET SENT SB %s OPTION_DATA XAUTH ",
                  TELOPT(TELOPT_FORWARD_X));
-        tn_hex(fwdx_msg_out,TN_MSG_LEN,&sb_priv[5],(p-sb_priv)-7);
-        ckstrncat(fwdx_msg_out," IAC SE",TN_MSG_LEN);
+        tn_hex((char *)fwdx_msg_out,TN_MSG_LEN,&sb_priv[5],(p-sb_priv)-7);
+        ckstrncat((char *)fwdx_msg_out," IAC SE",TN_MSG_LEN);
     }
 #endif /* DEBUG */
 
@@ -2064,8 +2073,8 @@ fwdx_send_xauth(void)
     RequestTelnetMutex( SEM_INDEFINITE_WAIT );
 #endif
 #ifdef DEBUG
-    debug(F100,fwdx_msg_out,"",0);
-    if (tn_deb || debses) tn_debug(fwdx_msg_out);
+    debug(F100,(char *)fwdx_msg_out,"",0);
+    if (tn_deb || debses) tn_debug((char *)fwdx_msg_out);
 #endif /* DEBUG */
     rc = ( ttol(sb_priv,p-sb_priv) < 0 );                /* Send it. */
 #ifdef OS2
@@ -2631,6 +2640,8 @@ tn_set_modes() {
 
 VOID
 tn_sdsb() {
+    /* if (!IS_TELNET()) return; */
+
     if (TELOPT_SB(TELOPT_TTYPE).term.need_to_send) {
         tn_sttyp();
         TELOPT_SB(TELOPT_TTYPE).term.need_to_send = 0;
@@ -2683,6 +2694,8 @@ tn_sdsb() {
 int
 tn_reset() {
     int x,opt,cmd;
+
+    /* if (!IS_TELNET()) return(1); */
 
     tn_wait_idx = 0;                    /* Clear the tn_push() buffer */
     tn_wait_tmo = TN_TIMEOUT;           /* Reset wait timer stats */
@@ -2854,6 +2867,8 @@ tn_reset() {
 int
 tn_start() {
     int wait, x, opt;
+
+    /* if (!IS_TELNET()) return(0); */
 
     if (tn_init && tn_begun)
         return(0);
@@ -3217,6 +3232,10 @@ tn_ini() {
 
     if (ttnet != NET_TCPB)              /* Make sure connection is TCP/IP */
       return(0);
+/*
+    if (!IS_TELNET())
+      return(0);
+*/
     if (tn_init)                        /* Have we done this already? */
       return(0);                        /* Don't do it again. */
 
@@ -3233,21 +3252,45 @@ tn_ini() {
         tn_init = 1;
         debug(F100,"tn_ini telnet negotiations ignored","tn_init",tn_init);
         return(0);
+#ifdef COMMENT
+      /* Jeff's code from 30 Dec 2005 - doesn't work with SSL POP server */
       case NP_NONE:
       case NP_SSL:
-      case NP_TLS:                      /* If not talking to a telnet port, */
+      case NP_TLS:
         ttnproto = NP_TELNET;           /* pretend it's telnet anyway, */
         oldplex = duplex;               /* save old duplex value */
         duplex = 1;                     /* and set to half duplex for telnet */
         if (inserver)
           debug(F100,"tn_ini skipping telnet negotiations","",0);
-          else
-        tn_wait("tn_ini - waiting to see if telnet negotiations were sent");
+	else
+	  tn_wait("tn_ini - waiting to see if telnet negotiations were sent");
+	tn_push();
+        return(0);
+      case NP_SSL_RAW:
+      case NP_TLS_RAW:
+      case NP_TCPRAW:                   /* Raw socket requested. */
+        debug(F100,"tn_ini telnet negotiations ignored","tn_init",tn_init);
+        return(0);
+#else
+      /* My code from 4 Dec 2005 - works with SSL POP server */
+      case NP_NONE:
+      case NP_SSL:
+      case NP_TLS:                      /* If not talking to a telnet port, */
+      case NP_SSL_RAW:			/* SSL and TLS with Telnet */
+      case NP_TLS_RAW:			/* negotiations disabled. */
+        ttnproto = NP_TELNET;           /* pretend it's telnet anyway, */
+        oldplex = duplex;               /* save old duplex value */
+        duplex = 1;                     /* and set to half duplex for telnet */
+        if (inserver)
+          debug(F100,"tn_ini skipping telnet negotiations","",0);
+	else
+	  tn_wait("tn_ini - waiting to see if telnet negotiations were sent");
 	tn_push();
         return(0);
       case NP_TCPRAW:                   /* Raw socket requested. */
         debug(F100,"tn_ini telnet negotiations ignored","tn_init",tn_init);
         return(0);
+#endif	/* COMMENT */
       case NP_KERMIT:                   /* switching to Telnet protocol */
       case NP_SSL_TELNET:
       case NP_TLS_TELNET:
@@ -3418,6 +3461,7 @@ tn_siks(cmd) int cmd; {         /* TELNET SEND IKS SUB */
 
     if (ttnet != NET_TCPB) return(0);   /* Must be TCP/IP */
     if (ttnproto != NP_TELNET) return(0); /* Must be telnet protocol */
+
     if (cmd < KERMIT_START || cmd > KERMIT_RESP_STOP) /* Illegal subcommand */
       return(-1);
 
@@ -3516,6 +3560,8 @@ tn_sb( opt, len, fn ) int opt; int * len; int (*fn)();
 #endif /* CK_ANSIC */
 /* tn_sb */ {
     int c, x, y, n, m, flag;
+    /* if (!IS_TELNET()) return(1); */
+
     debug(F100,"Entering tn_sb()","",0);
     *len = 0;                   /* Initialize Len to 0 */
     n = flag = 0;               /* Flag for when done reading SB */
@@ -3567,7 +3613,7 @@ tn_sb( opt, len, fn ) int opt; int * len; int (*fn)();
                 ckmakmsg( tn_msg,TN_MSG_LEN,
                           "TELNET RCVD SB ",TELOPT(opt),
 			  " DATA(buffer-full) ",NULL);
-                tn_hex(tn_msg,TN_MSG_LEN,&sb[1],n-3);
+                tn_hex((CHAR *)tn_msg,TN_MSG_LEN,&sb[1],n-3);
                 if (flag == 2)
                     ckstrncat(tn_msg," SE",TN_MSG_LEN);
                 else if (flag == 3)
@@ -4333,6 +4379,7 @@ tn_xdoop(z, echo, fn) CHAR z; int echo; int (*fn)();
 #endif /* NOICP */
 #endif /* IKS_OPTION */
 
+    /* if (!IS_TELNET()) return(7); */
 
 /* Have IAC, read command character. */
 
@@ -5040,10 +5087,10 @@ tn_xdoop(z, echo, fn) CHAR z; int echo; int (*fn)();
 #endif /* CK_SSL */
 
         if (!TELOPT_OK(x)) {
-            hexdump("unknown telnet subnegotiation",sb,n);
+            ckhexdump("unknown telnet subnegotiation",sb,n);
             break;
         } else if ( !(TELOPT_ME(x) || TELOPT_U(x)) ) {
-            hexdump("telnet option not negotiated",sb,n);
+            ckhexdump("telnet option not negotiated",sb,n);
             if (!tn_sb_bug)
                 break;
             if (TELOPT_UNANSWERED_WILL(x)) {
@@ -5140,7 +5187,7 @@ tn_xdoop(z, echo, fn) CHAR z; int echo; int (*fn)();
                       rc = -3;
                   } else {
 #ifndef NOLOCAL
-                      extern tls_norestore;
+                      extern int tls_norestore;
 #endif /* NOLOCAL */
                       printf("TLS failed:  Disconnecting...\n");
 #ifdef CK_ENCRYPTION
@@ -5259,7 +5306,7 @@ tn_xdoop(z, echo, fn) CHAR z; int echo; int (*fn)();
 #endif /* CK_AUTHENTICATION */
 #ifdef CK_ENCRYPTION
           case TELOPT_ENCRYPTION:
-            if (ck_tn_sb_encrypt(sb, n) < 0) {
+            if (ck_tn_sb_encrypt((char *)sb, n) < 0) {
                 if (TELOPT_U_MODE(x) == TN_NG_MU ||
                     TELOPT_ME_MODE(x) == TN_NG_MU)
                   {
@@ -5543,6 +5590,17 @@ tn_doop(z, echo, fn) CHAR z; int echo; int (*fn)();
 /* tn_doop */ {
     int x=0, y=0;
 
+    debug(F101,"tn_doop char","",z);
+    debug(F101,"tn_doop ttnproto","",ttnproto);
+
+    if (!IS_TELNET()) return(3);
+
+#ifdef CK_SSL
+    debug(F101,"tn_doop ssl_raw_flag","",ssl_raw_flag);
+    if (ssl_raw_flag || tls_raw_flag) return(7);
+#endif	/* CK_SSL */
+    debug(F100,"tn_doop ttnproto proceeding...","",0);
+
     if (z != (CHAR) IAC) {
         debug(F101,"tn_doop bad call","",z);
         return(-1);
@@ -5779,7 +5837,7 @@ tn_snenv(sb, len) CHAR * sb; int len;
         uu = localuidbuf;
     }
 
-    hexdump((CHAR *)"tn_snenv sb[]",sb,len);
+    ckhexdump((CHAR *)"tn_snenv sb[]",sb,len);
     debug(F110,"tn_snenv uidbuf",uidbuf,0);
     debug(F110,"tn_snenv localuidbuf",localuidbuf,0);
     debug(F110,"tn_snenv tn_env_sys",tn_env_sys,0);
@@ -6320,6 +6378,8 @@ tn_sndfwdx() {                          /* Send Fwd X Screen number to host */
     char * disp;
     int i,rc;
 
+    /* if (!IS_TELNET()) return(0); */
+
     if (!TELOPT_U(TELOPT_FORWARD_X)) return(0);
 #ifdef CK_SSL
     if (TELOPT_SB(TELOPT_START_TLS).start_tls.me_follows) {
@@ -6333,7 +6393,7 @@ tn_sndfwdx() {                          /* Send Fwd X Screen number to host */
      * the localhost; the screen defaults to 0
      */
 
-    disp = tn_get_display();
+    disp = (char *)tn_get_display();
     if (disp) {
         int colon,dot;
         colon = ckindex(":",disp,0,0,1);
@@ -6386,6 +6446,8 @@ int
 tn_sndloc() {                           /* Send location. */
     int i,rc;                              /* Worker. */
     char *ttloc;
+
+    /* if (!IS_TELNET()) return(0); */
 
     if (!TELOPT_ME(TELOPT_SNDLOC)) return(0);
 
@@ -6530,6 +6592,8 @@ tnc_init()
 /* tnc_init */ {
     debug(F100,"tnc_init","",0);
 
+    /* if (!IS_TELNET()) return(0); */
+
     if (tnc_signature) {
         free(tnc_signature);
         tnc_signature = NULL;
@@ -6562,6 +6626,8 @@ tn_sndcomport()
     int baud, datasize, parity, stopsize, oflow, iflow;
     CONST char * signature;
 
+    /* if (!IS_TELNET()) return(0); */
+
     debug(F100,"tnc_sndcomport","",0);
     signature = tnc_get_signature();
     baud = tnc_get_baud();
@@ -6583,6 +6649,9 @@ tnc_wait(msg, ms) CHAR * msg; int ms;
 #endif /* CK_ANSIC */
 /* tnc_wait */ {
     int rc, tn_wait_save = tn_wait_flg;
+
+    /* if (!IS_TELNET()) return(0); */
+
     debug(F111,"tnc_wait","begin",ms);
     if ( ms )
         TELOPT_SB(TELOPT_COMPORT).comport.wait_for_ms = 1;

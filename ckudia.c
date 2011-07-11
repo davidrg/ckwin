@@ -1,10 +1,10 @@
 #include "ckcsym.h"
-char *dialv = "Dial Command, 8.0.160, 29 Apr 2002";
+char *dialv = "Dial Command, 9.0.160, 16 Oct 2009";
 
 /*  C K U D I A	 --  Module for automatic modem dialing. */
 
 /*
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2009,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -5524,7 +5524,7 @@ _dodial(threadinfo) VOID * threadinfo;
 		     );
 #endif /* COMMENT */
 	}
-	debug(F101,"ckudia xx_ok","",xx_ok);
+	/* debug(F101,"ckudia xx_ok","",xx_ok); */
 	if (x && xx_ok) {			/* Look for OK response */
 	    debug(F100,"ckudia calling xx_ok for EC","",0);
 	    x = (*xx_ok)(5,1);

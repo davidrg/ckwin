@@ -3,7 +3,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2010,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -148,11 +148,7 @@
 
 #ifdef BSD44
 #ifdef MACOSX
-#ifdef MACOSX103
-#define HERALD " Mac OS X 10.3"
-#else
 #define HERALD " Mac OS X"
-#endif /* MACOSX103 */
 #else
 #ifdef __OpenBSD__
 #define HERALD " OpenBSD"
@@ -173,6 +169,7 @@
 #endif /* BSDI4 */
 #else  /* __bsdi__ */
 #ifdef __NetBSD__
+#ifndef HERALD
 #ifdef NETBSD16
 #define HERALD " NetBSD 1.6"
 #else
@@ -182,6 +179,7 @@
 #define HERALD " NetBSD"
 #endif /* NETBSD15 */
 #endif /* NETBSD16 */
+#endif /* HERALD */
 #else  /* __NetBSD__ */
 #ifdef __FreeBSD__
 #ifdef FREEBSD51
@@ -506,11 +504,38 @@
 #endif /* HPUX5  */
 #endif /* HPUX   */
 
+#ifndef MINIX
+#ifdef MINIX315
+#define MINIX
+#endif	/* MINIX315 */
+#endif	/* MINIX */
+
+#ifndef MINIX
+#ifdef MINIX3
+#define MINIX
+#endif	/* MINIX3 */
+#endif	/* MINIX */
+
 #ifdef MINIX
+#ifdef MINIX315
+#define HERALD " Minix 3.1.5"
+#ifndef MINIX3
+#define MINIX3
+#endif	/* MINIX3 */
+#endif	/* MINIX315 */
+#ifdef MINIX3
+#ifndef MINIX2
+#define MINIX2
+#endif	/* MINIX2 */
+#ifndef HERALD
+#define HERALD " Minix 3.0"
+#endif	/* HERALD */
+#else
 #ifdef MINIX2
 #define HERALD " Minix 2.0"
 #else
-#define HERALD " Minix 1.x"
+#define HERALD " Minix 1.0"
+#endif /* MINIX3 */
 #endif /* MINIX2 */
 #endif /* MINIX */
 
@@ -771,6 +796,12 @@
 #ifdef Plan9
 #define HERALD " Plan 9 from Bell Labs"
 #else
+#ifdef SOLARIS11
+#define HERALD " Solaris 11"
+#else
+#ifdef SOLARIS10
+#define HERALD " Solaris 10"
+#else
 #ifdef SOLARIS9
 #define HERALD " Solaris 9"
 #else
@@ -798,6 +829,8 @@
 #endif /* SOLARIS7 */
 #endif /* SOLARIS8 */
 #endif /* SOLARIS9 */
+#endif /* SOLARIS10 */
+#endif /* SOLARIS11 */
 #endif /* Plan9 */
 #endif /* LYNXOS */
 #endif /* _386BSD */

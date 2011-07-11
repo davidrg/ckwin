@@ -6,15 +6,15 @@
            Frank da Cruz <fdc@columbia.edu>
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2009,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
   Notes:
+  . This file should be used in place of "arpa/telnet.h"
   . Only one source file should include #defines for
     TELCMDS, TELOPTS, TELOPT_STATES, SLC_NAMES, and AUTH_NAMES.
-  . This file should be used inplace of "arpa/telnet.h"
 */
 
 #ifndef CKCTEL_H
@@ -24,6 +24,9 @@
   Definitions for the TELNET protocol.
   can't rely on library header files for any of them.
 */
+#ifdef COMMENT
+/* In some compilers these are prone to sign extension */
+
 #ifndef IAC                             /* First the telnet commands */
 #define IAC 255
 #endif /* IAC */
@@ -89,8 +92,80 @@
 
 #define TN_SAK 200              /* IBM Secure Attention Key */
 #endif /* LAST_TN_CMD */
-
 #define SYNCH   242             /* for telfunc calls */
+
+#else
+/* Hex notation seems to suppress the sugn extension effect */
+
+
+#ifndef IAC                             /* First the telnet commands */
+#define IAC 0xff
+#endif /* IAC */
+#ifndef DONT
+#define DONT 0xfe			/* 254 */
+#endif /* DONT */
+#ifndef DO
+#define DO 0xfd				/* 253 */
+#endif /* DO */
+#ifndef WONT
+#define WONT 0xfc			/* 252 */
+#endif /* WONT */
+#ifndef WILL
+#define WILL 0xfb			/* 251 */
+#endif /* WILL */
+#ifndef SB
+#define SB 0xfa				/* 250 */
+#endif /* SB */
+#ifndef TN_GA
+#define TN_GA 0xf9			/* 249 */
+#endif /* TN_GA */
+#ifndef TN_EL
+#define TN_EL 0xf8			/* 248 */
+#endif /* TN_EL */
+#ifndef TN_EC
+#define TN_EC 0xf7			/* 247 */
+#endif /* TN_EC */
+#ifndef TN_AYT
+#define TN_AYT 0xf6			/* 246 */
+#endif /* TN_AYT */
+#ifndef TN_AO
+#define TN_AO 0xf5			/* 245 */
+#endif /* TN_AO */
+#ifndef TN_IP
+#define TN_IP 0xf4			/* 244 */
+#endif /* TN_IP */
+#ifndef BREAK
+#define BREAK 0xf3			/* 243 */
+#endif /* BREAK */
+#ifndef TN_DM
+#define TN_DM 0xf2			/* 242 */
+#endif /* TN_DM */
+#ifndef TN_NOP
+#define TN_NOP 0xf1			/* 241 */
+#endif /* TN_NOP */
+#ifndef SE
+#define SE 0xf0				/* 240 */
+#endif /* SE */
+#ifndef TN_EOR
+#define TN_EOR 0xef			/* 239 */
+#endif /* TN_EOR */
+#ifndef TN_ABORT
+#define TN_ABORT 0xee			/* 238 */
+#endif /* TN_ABORT */
+#ifndef TN_SUSP
+#define TN_SUSP 0xed			/* 237 */
+#endif /* TN_SUSP */
+#ifndef TN_EOF
+#define TN_EOF 0xec			/* 236 */
+#endif /* TN_EOF */
+#ifndef LAST_TN_CMD
+#define LAST_TN_CMD 0xec		/* 236 */
+
+#define TN_SAK 0xc8			/* 200 - IBM Secure Attention Key */
+#endif /* LAST_TN_CMD */
+#define SYNCH 0xf2			/* 242 - for telfunc calls */
+
+#endif	/* COMMENT */
 
 #ifdef TELCMDS
 char *telcmds[] = {
@@ -1070,8 +1145,10 @@ _PROTOTYP( VOID fwdx_check_sockets,(fd_set *));
 _PROTOTYP( int fwdx_init_fd_set,(fd_set *));
 _PROTOTYP( int fwdx_authorize_channel, (int, unsigned char *, int));
 _PROTOTYP( int fwdx_create_fake_xauth, (char *, int, int));
-_PROTOTYP( int fwdx_send_xauth, (VOID));
+_PROTOTYP( int fwdx_send_xauth_to_xserver, (int, unsigned char *, int len));
 _PROTOTYP( int fwdx_server_avail, (VOID));
+_PROTOTYP( int fwdx_parse_displayname, (char *, int *, char **, int *, int *, char **));
+
 #ifdef NT
 _PROTOTYP( VOID fwdx_thread,(VOID *));
 #endif /* NT */

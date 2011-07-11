@@ -1,31 +1,32 @@
-.\" @(#) kermit.1 8.0.211 2004/04/10 Columbia University
-.TH KERMIT 1 "APRIL 2004" "User Manuals"
+.\" @(#) kermit.1 9.0.302 2011/08/20 Columbia University
+.TH KERMIT 1 "JULY 2011" "User Manuals"
 .na
 .SH NAME
 kermit \-
-.B C-Kermit 8.0:
-transport- and platform-independent
+.B C\(hyKermit 9.0:
+transport\(hy and platform\(hyindependent
 interactive and scriptable communications software.
 .IP
 
-This document is intended to give the beginner sufficient information to make
-basic (if not advanced) use of C-Kermit 8.0.  Although it might be rather long
-for a Unix manual page, it's still far shorter than the C-Kermit manual, which
-should be consulted for advanced topics such as customization, character-sets,
-scripting, etc. We also attempt to provide a clear structural overview of
-C-Kermit's many capabilities, functional areas, states, and modes and their
-interrelation, that should be helpful to beginners and veterans alike, as well
-as to those upgrading to version 8.0 from earlier releases.
+This document is intended to give the beginner sufficient information to
+make basic (if not advanced) use of C\(hyKermit 9.0.  Although it might be
+rather long for a Unix manual page, it's still far shorter than the
+C\(hyKermit manual, which should be consulted for advanced topics such as
+customization, character\(hysets, scripting, etc. We also attempt to provide
+a clear structural overview of C\(hyKermit's many capabilities, functional
+areas, states, and modes and their interrelation, that should be helpful to
+beginners and veterans alike, as well as to those upgrading to version 9.0
+from earlier releases.
 .PP
 This document is also available as a Web page at:
 .IP
 http://www.columbia.edu/kermit/ckututor.html
 .SH DESCRIPTION
-C-Kermit is an all-purpose communications software package from the Kermit
+C\(hyKermit is an all\(hypurpose communications software package from the Kermit
 Project at Columbia University that:
 .PP
 .nf
-\(bu	Is portable to many platforms, Unix and non-Unix alike.
+\(bu	Is portable to many platforms, Unix and non\(hyUnix alike.
 .br
 \(bu	Can make both serial and network connections.
 .br
@@ -35,39 +36,39 @@ Project at Columbia University that:
 .br
 \(bu	Can convert character sets in the terminal session.
 .br
-\(bu	Can convert character sets during text-file file transfer.
+\(bu	Can convert character sets during text\(hyfile file transfer.
 .br
 \(bu	Is customizable in every aspect of its operation.
 .fi
 .PP
-C-Kermit is a modem program, a Telnet client, an Rlogin client, an FTP
+C\(hyKermit is a modem program, a Telnet client, an Rlogin client, an FTP
 client, an HTTP client, and on selected platforms, also an X.25 client. It
-can make its own secure Internet connections using IETF-approved security
+can make its own secure Internet connections using IETF\(hyapproved security
 methods including Kerberos IV, Kerberos V, SSL/TLS, and SRP and it can also
 make SSH connections through your external SSH client application. It can
-be the far-end file-transfer or client/server partner of your desktop
+be the far\(hyend file\(hytransfer or client/server partner of your desktop
 Kermit client. It can also accept incoming dialed and network connections.
 It can even be installed as an Internet service on its own standard TCP
 socket, 1649 [RFC2839, RFC2840].
 .PP
 And perhaps most important, everything you can do "by hand" (interactively)
-with C-Kermit, can be "scripted" (automated) using its built-in
-cross-platform transport-independent script programming language, which
+with C\(hyKermit, can be "scripted" (automated) using its built\(hyin
+cross\(hyplatform transport\(hyindependent script programming language, which
 happens to be identical to its interactive command language.
 .PP
-This manual page offers an overview of C-Kermit 8.0 for Unix ("Unix" is an
-operating system family that includes AIX, DG/UX, FreeBSD, HP-UX, IRIX,
+This manual page offers an overview of C\(hyKermit 9.0 for Unix ("Unix" is an
+operating system family that includes AIX, DG/UX, FreeBSD, HP\(hyUX, IRIX,
 Linux, Mac OS X, NetBSD, OpenBSD, Open Server, Open Unix, QNX, Solaris,
 SunOS, System V R3, System V R4, Tru64 Unix, Unixware, Xenix, and many
-others). For thorough coverage, please consult the published C-Kermit
+others). For thorough coverage, please consult the published C\(hyKermit
 manual and supplements (see DOCUMENTATION below). For further information
-about C-Kermit, Kermit software for other platforms, and Kermit manuals,
+about C\(hyKermit, Kermit software for other platforms, and Kermit manuals,
 visit the Kermit Project website:
 .PP
   http://www.columbia.edu/kermit/
 .PP
-This is a longer-than-average manual page, and yet it barely scratches the
-surface. Don't be daunted. C-Kermit is a large and complex package,
+This is a longer\(hythan\(hyaverage manual page, and yet it barely scratches the
+surface. Don't be daunted. C\(hyKermit is a large and complex package,
 evolving over decades of practice and experience, but that doesn't mean
 it's hard to learn or use. Its most commonly used functions are explained
 here with pointers to additional information elsewhere.
@@ -76,7 +77,7 @@ here with pointers to additional information elsewhere.
 .I filename
 .B ] [
 .I options
-.B ] [ {=,--,+}
+.B ] [ {=,\-\-,+}
 .I text
 .B ] ]
 .PP
@@ -85,12 +86,12 @@ or:
 .B kermit 
 .I URL
 .PP
-If the first command-line argument is the name of a file, interactive-mode
-commands are executed from the file. The '=' (or "--") argument tells
+If the first command\(hyline argument is the name of a file, interactive\(hymode
+commands are executed from the file. The '=' (or "\-\-") argument tells
 Kermit not to parse the remainder of the command line, but to make the
 words following '=' available as \e%1, \e%2, ... \e%9. The "+" argument is
 like "=" but for use in "kerbang scripts" (explained below). A second
-command-line format allows the one and only argument to be a Telnet, FTP,
+command\(hyline format allows the one and only argument to be a Telnet, FTP,
 HTTP, or IKSD URL.
 .PP
 Order of execution:
@@ -100,338 +101,338 @@ The command file (if any).
 .TP
 .nf
  2.
-The initialization file, if any, unless suppressed with -Y.
+The initialization file, if any, unless suppressed with \-Y.
 .fi
 .TP
  3.
 The customization file (if it is executed by the initialization file).
 .TP
  4.
-The command-line URL (if any, and if so, execution stops here).
+The command\(hyline URL (if any, and if so, execution stops here).
 .TP
  5.
-Command-line options (if any).
+Command\(hyline options (if any).
 .TP
  6.
 Interactive commands.
 .PP
-Some command-line options can cause actions (such as -s to send a file);
+Some command\(hyline options can cause actions (such as \-s to send a file);
 others just set parameters. If any action options are included on the
-command line, Kermit exits when finished unless also given the -S ("stay")
+command line, Kermit exits when finished unless also given the \-S ("stay")
 option. If no action options are given, no initialization or command files
 contained an EXIT or QUIT command, and no fatal errors occurred, Kermit
 issues its prompt and waits for you to type commands.
 .IP
-Bear in mind that C-Kermit can be built with selected features
+Bear in mind that C\(hyKermit can be built with selected features
 disabled, and also that certain features are not available on all
-platforms. For example, C-Kermit can't be built with TCP/IP
+platforms. For example, C\(hyKermit can't be built with TCP/IP
 support on a platform that does not have TCP/IP header files and
 libraries (and even if Kermit does include TCP/IP support, it
 can't be used to make TCP/IP connections on a computer that does
-not have a TCP/IP stack installed). If your version of lacks
-C-Kermit a feature mentioned here, use its SHOW FEATURES command to
+not have a TCP/IP stack installed). If your version of 
+C\(hyKermit lacks a feature mentioned here, use its SHOW FEATURES command to
 see what might have been excluded.
 .PP
-C-Kermit has three kinds of commands: regular single-letter command-line
-options, extended-format command-line options, and interactive commands.
+C\(hyKermit has three kinds of commands: regular single\(hyletter command\(hyline
+options, extended\(hyformat command\(hyline options, and interactive commands.
 .PP
-Like most Unix commands, C-Kermit can be be given options on the command
-line. But C-Kermit also can be used interactively by giving it commands
-composed of words, which are more intuitive than cryptic command-line
+Like most Unix commands, C\(hyKermit can be be given options on the command
+line. But C\(hyKermit also can be used interactively by giving it commands
+composed of words, which are more intuitive than cryptic command\(hyline
 options, and more flexible too. In other words, you don't have to use
-C-Kermit's command-line options, but they are available if you want to. (By
-the same token, you don't have to use its interactive commands either --
+C\(hyKermit's command\(hyline options, but they are available if you want to. (By
+the same token, you don't have to use its interactive commands either \(hy\(hy
 you can use either or both in any combination.)
 .PP
-C-Kermit is generally installed in the PATH as "kermit", and therefore is
+C\(hyKermit is generally installed in the PATH as "kermit", and therefore is
 invoked by typing the word "kermit" (lowercase) at the shell prompt, and
-then pressing the Return or Enter key. If you wish to include command-line
+then pressing the Return or Enter key. If you wish to include command\(hyline
 options, put them after the word "kermit" but before pressing Return or
 Enter, separated by spaces, for example:
 .PP
-  $ kermit -s ckermit.tar.gz
+  $ kermit \-s ckermit.tar.gz
 .PP
-('$' is the shell prompt; "kermit -s ckermit.tar.gz" is what you type,
+('$' is the shell prompt; "kermit \-s ckermit.tar.gz" is what you type,
 followed by Return or Enter.)
 .SH OPTIONS
-Here is a list of C-Kermit's single-letter command-line options, which
-start with a single dash (-), in ASCII ("alphabetical") order. Alphabetic
-case is significant (-A is not the same as -a).  Action options are 
+Here is a list of C\(hyKermit's single\(hyletter command\(hyline options, which
+start with a single dash (\-), in ASCII ("alphabetical") order. Alphabetic
+case is significant (\-A is not the same as \-a).  Action options are 
 tagged "ACTION".
 .TP
--0
+\-0
 (digit zero)  100% transparent Connect state for
-"in-the-middle" operation: 8 bits, no parity, no
+"in\(hythe\(hymiddle" operation: 8 bits, no parity, no
 escape character, everything passes through.
 .TP
--8
-(digit eight)  Connection is 8-bit clean (this is the
-default in C-Kermit 8.0). Equivalent to the EIGHTBIT
+\-8
+(digit eight)  Connection is 8\(hybit clean (this is the
+default in C\(hyKermit 8.0 and later). Equivalent to the EIGHTBIT
 command, which in turn is a shortcut for SET TERMINAL
 BYTESIZE 8, SET COMMAND BYTESIZE 8, SET PARITY NONE.
 .TP
--9 arg
+\-9 arg
 (digit nine)  Make a connection to an FTP server.
 Equivalent to the FTP OPEN command.
-Argument: IP-address-or-hostname[:optional-TCP-port].
-NOTE: C-Kermit also has a separate FTP command-line
-personality, with regular FTP-like command-line
+Argument: IP\(hyaddress\(hyor\(hyhostname[:optional\(hyTCP\(hyport].
+NOTE: C\(hyKermit also has a separate FTP command\(hyline
+personality, with regular FTP\(hylike command\(hyline
 syntax. More about this below.
 .TP
--A
+\-A
 Kermit is to be started as an Internet service (IKSD)
 (only from inetd.conf).
 .TP
--B
+\-B
 Kermit is running in Batch or Background (no
 controlling terminal). To be used in case Kermit
 doesn't automatically sense its background status.
 Equivalent to the SET BACKGROUND ON command.
 .TP
--C arg
-Interactive-mode Commands to be executed.
+\-C arg
+Interactive\(hymode Commands to be executed.
 Argument: Commands separated by commas, list in
 doublequotes.
 .TP
--D arg
+\-D arg
 Delay before starting to send in Remote mode.
 Equivalent to the SET DELAY command.
 Argument: Number of seconds.
 .TP
--E
+\-E
 Exit automatically when connection closes. Equivalent
-to SET EXIT ON-DISCONNECT ON.
+to SET EXIT ON\-DISCONNECT ON.
 .TP
--F arg
+\-F arg
 Use an open TCP connection.
 Argument: Numeric file descriptor of open TCP
 connection.
-Also see: -j, -J.
+Also see: \-j, \-J.
 .TP
--G arg
+\-G arg
 (ACTION) Get file(s) from server, send contents to standard
 output, which normally would be piped to another
 process.
 Argument: Remote file specification, in quotes if it
 contains metacharacters.
-Also see: -g, -k.
+Also see: \-g, \-k.
 .TP
--H
+\-H
 Suppress program startup Herald and greeting.
 .TP
--I
+\-I
 Tell Kermit it has a reliable connection, to force streaming to be used where
 it normally would not be.  Equivalent to the SET RELIABLE ON command.
 .TP
--J arg
-(ACTION) "Be like Telnet." Like -j but implies -E.  Argument: IP
-hostname/address optionally followed by service.  NOTE: C-Kermit also has a
-separate Telnet command-line personality, with regular Telnet-like
-command-line syntax. More about this below.
+\-J arg
+(ACTION) "Be like Telnet." Like \-j but implies \-E.  Argument: IP
+hostname/address optionally followed by service.  NOTE: C\(hyKermit also has a
+separate Telnet command\(hyline personality, with regular Telnet\(hylike
+command\(hyline syntax. More about this below.
 .TP
--L
-Recursive directory descent for files in -s option.
+\-L
+Recursive directory descent for files in \-s option.
 .TP
--M arg
+\-M arg
 My user name (for use with Telnet, Rlogin, FTP, etc).
 Equivalent to the SET LOGIN USER command.
 Argument: Username string.
 .TP
--O
+\-O
 (ACTION) (Uppercase letter O) Be a server for One command only.
-Also see: -x.
+Also see: \-x.
 .TP
--P
+\-P
 Don't convert file (Path) names of transferred files.
 Equivalent to SET FILE NAMES LITERAL.
 .TP
--Q
+\-Q
 Quick Kermit protocol settings. Equivalent to the FAST
-command. This is the default in C-Kermit 7.0 and later.
+command. This is the default in C\(hyKermit 7.0 and later.
 .TP
--R
-Remote-only (this just makes IF REMOTE true).
+\-R
+Remote\(hyonly (this just makes IF REMOTE true).
 .TP
--S
+\-S
 Stay (enter command parser after action options).
 .TP
--T
-Force Text mode for file transfer; implies -V.
+\-T
+Force Text mode for file transfer; implies \-V.
 Equivalent to SET TRANSFER MODE MANUAL, SET FILE TYPE TEXT.
 .TP
--V
-Disable automatic per-file text/binary switching.
+\-V
+Disable automatic per\(hyfile text/binary switching.
 Equivalent to SET TRANSFER MODE MANUAL.
 .TP
--Y
+\-Y
 Skip (don't execute) the initialization file.
 .TP
--a arg
-As-name for file(s) in -s, -r, or -g.
-Argument: As-name string (alternative filename). When
+\-a arg
+As\(hyname for file(s) in \-s, \-r, or \-g.
+Argument: As\(hyname string (alternative filename). When
 receiving files, this can be a directory name.
 .TP
--b arg
+\-b arg
 Speed for serial device. Equivalent to SET SPEED.
 Argument: Numeric Bits per second for serial
 connections.
 .TP
--c
+\-c
 (ACTION) Enter Connect state before transferring files.
 .TP
--d
+\-d
 Create a debug.log file with detailed debugging
-information (a second -d adds timestamps). Equivalent
+information (a second \-d adds timestamps). Equivalent
 to LOG DEBUG but takes effect sooner.
 .TP
--e arg
-Maximum length for incoming Kermit file-transfer
-packets. Equivalent to SET RECEIVE PACKET-LENGTH.
+\-e arg
+Maximum length for incoming Kermit file\(hytransfer
+packets. Equivalent to SET RECEIVE PACKET\-LENGTH.
 Argument: Length in bytes.
 .TP
--f
+\-f
 (ACTION) Send a FINISH command to a Kermit server.
 .TP
--g arg
+\-g arg
 Get file(s) from a Kermit server.
 Argument: File specification on other computer, in
 quotes if it contains metacharacters. Equivalent to
-GET. Also see: -a, -G, -r.
+GET. Also see: \-a, \-G, \-r.
 .TP
--h
-(ACTION) Print Help text for single-letter command-line options
+\-h
+(ACTION) Print Help text for single\(hyletter command\(hyline options
 (pipe thru 'more' to prevent scrolling).
 .TP
--i
+\-i
 Force binary (Image) mode for file transfer; implies
--V. Equivalent to SET TRANSFER MODE MANUAL, SET FILE
+\-V. Equivalent to SET TRANSFER MODE MANUAL, SET FILE
 TYPE BINARY.
 .TP
--j arg
+\-j arg
 Make a TCP/IP connection.
 Argument: IP host name/address and optional service
 name or number. Equivalent to the TELNET command.
-Also see: -J, -F.
+Also see: \-J, \-F.
 .TP
--k
+\-k
 (ACTION) Receive file(s) to standard output, which normally 
 would be piped to another process.
-Also see: -r, -G.
+Also see: \-r, \-G.
 .TP
--l arg
+\-l arg
 (Lowercase letter L) Make a connection on the given
 serial communications device. Equivalent to the SET
 LINE (SET PORT) command.
 Argument: Serial device name, e.g. /dev/ttyS0.
 .TP
--m arg
-Modem type for use with the -l device. Equivalent to
+\-m arg
+Modem type for use with the \-l device. Equivalent to
 the SET MODEM TYPE command.
 Argument: Modem name as in SET MODEM TYPE command,
 e.g. "usrobotics".
 .TP
--n
+\-n
 (ACTION) Enter Connect state after transferring files (historical).
 .TP
--p arg
+\-p arg
 Parity. Equivalent to the SET PARITY command.
 Argument: One of the following: e(ven), o(dd), m(ark),
 n(one), s(pace).
 .TP
--q
+\-q
 Quiet (suppress most messages). Equivalent to SET QUIET ON.
 .TP
--r
+\-r
 (ACTION) Receive file(s). Equivalent to the RECEIVE command.
-Argument: (none, but see -a)
+Argument: (none, but see \-a)
 .TP
--s arg
+\-s arg
 Send file(s).
 Argument: One or more local file specifications.
 Equivalent to the SEND command.
-Also see: -a.
+Also see: \-a.
 .TP
--t
-(Historical) Xon (Ctrl-Q) Turnaround character for
-half-duplex connections (used on serial linemode
+\-t
+(Historical) Xon (Ctrl\-Q) Turnaround character for
+half\(hyduplex connections (used on serial linemode
 connections to old mainframes). Equivalent to SET
 DUPLEX HALF, SET HANDSHAKE XON.
 .TP
--v arg
+\-v arg
 Window size for Kermit protocol (ignored when
-streaming). Equivalanet to SET WINDOW-SIZE.
+streaming). Equivalanet to SET WINDOW\-SIZE.
 Argument: Number, 1 to 32.
 .TP
--w
+\-w
 Incoming files Write over existing files. Equivalent
 to SET FILE COLLISION OVERWRITE.
 .TP
--x
+\-x
 (ACTION) Enter server mode. Equivalent to the SERVER command.
-Also see: -O.
+Also see: \-O.
 .TP
--y arg
+\-y arg
 Alternative initialization file.
 Argument: Filename.
 .TP
--z
+\-z
 Force foreground behavior. To be used in case Kermit
 doesn't automatically sense its foreground status.
 Equivalent to the SET BACKGROUND OFF command.
 .PP
-Extended command-line options (necessary because single-letter ones are
-about used up) start with two dashes (--), with words rather than single
+Extended command\(hyline options (necessary because single\(hyletter ones are
+about used up) start with two dashes (\-\-), with words rather than single
 letters as option names. If an extended option takes an argument, it is
 separated from the option word by a colon (:). Extended options include:
 
 .TP
- --bannerfile:filename
+ \-\-bannerfile:filename
 File to display upon startup or IKSD login.
 .TP
- --cdfile:filename
+ \-\-cdfile:filename
 File to be sent for display to the client when
 server changes directory (filename is relative to
-the changed-to directory).
+the changed\(hyto directory).
 .TP
- --cdmessage:{on,off}
+ \-\-cdmessage:{on,off}
 Enable/disable the server CD message feature.
 .TP
- --help
+ \-\-help
 Prints usage message for extended options.
 .TP
- --helpfile:filename
+ \-\-helpfile:filename
 Designates a file containing custom text to
-replace the top-level HELP command.
+replace the top\(hylevel HELP command.
 .TP
- --nointerrupts
+ \-\-nointerrupts
 Disables keyboard interrupts.
 .TP
- --noperms
+ \-\-noperms
 Disables the Kermit protocol file Permissions
 attribute, to prevent transmission of file
 permissions (protection) from sender to receiver.
 .TP
- --version
-(ACTION) C-Kermit prints its version number.
+ \-\-version
+(ACTION) C\(hyKermit prints its version number.
 .PP
-Plus several other IKSD-Only options described at:
+Plus several other IKSD\(hyOnly options described at:
 .PP
   http://www.columbia.edu/kermit/iksd.html
 .PP
-See the file-transfer section for examples of command-line invocation.
+See the file\(hytransfer section for examples of command\(hyline invocation.
 .SH COMMAND LANGUAGE
-C-Kermit's interactive command language is the subject of a 622-page book
+C\(hyKermit's interactive command language is the subject of a 622\(hypage book
 and another several hundred pages of updates, far too much for a manual
 page. But it's not hard to get started. At the shell prompt, just type
-"kermit" to get C-Kermit's interactive command prompt:
+"kermit" to get C\(hyKermit's interactive command prompt:
 .PP
 .nf
   $ kermit
-  (/current/directory) C-Kermit>
+  (/current/directory) C\-Kermit>
 .fi
 .PP
 Begin by typing "help" (and then press the Return or Enter key) for a
-top-level overview, read it, and go from there. Your second command should
+top\(hylevel overview, read it, and go from there. Your second command should
 probably be "intro" (introduction). Note the prompt shows your current
 directory (unless you tell Kermit to prompt you with something else).
 .PP
@@ -448,11 +449,11 @@ which sets Kermit's "transfer mode" to "automatic" (whatever that means).
 .PP
 While typing commands, you can abbreviate, ask for help (by pressing the
 "?" key anywhere in a command), complete keywords or filenames (with the
-Tab or Esc key), and edit your typing with Backspace or Delete, Ctrl-W,
-Ctrl-U, etc. You can also recall previous commands, save your command
+Tab or Esc key), and edit your typing with Backspace or Delete, Ctrl\-W,
+Ctrl\-U, etc. You can also recall previous commands, save your command
 history, and who knows what else. Give the INTRO command for details.
 .PP
-C-Kermit has hundreds of commands, and they can be issued in infinite
+C\(hyKermit has hundreds of commands, and they can be issued in infinite
 variety and combinations, including commands for:
 .nf
 .PP
@@ -485,15 +486,15 @@ variety and combinations, including commands for:
 .fi
 And of course QUIT or EXIT to get out and HELP to get help, and for
 programmers: loops, decision making, variables, arrays, associative arrays,
-integer and floating point arithmetic, macros, built-in and user-defined
+integer and floating point arithmetic, macros, built\(hyin and user\(hydefined
 functions, string manipulation, pattern matching, block structure, scoping,
-recursion, and all the rest. To get a list of all C-Kermit's commands, type
+recursion, and all the rest. To get a list of all C\(hyKermit's commands, type
 a question mark (?) at the prompt. To get a description of any command,
 type HELP followed by the name of the command, for example:
 .PP
   help send
 .PP
-The command interruption character is Ctrl-C (hold down the Ctrl key and
+The command interruption character is Ctrl\-C (hold down the Ctrl key and
 press the C key).
 .PP
 The command language "escape character", used to introduce variable names,
@@ -505,7 +506,7 @@ literal backslash in a command, type two of them, e.g.:
 A file containing Kermit commands is called a Kermit command file or Kermit
 script. It can be executed with Kermit's TAKE command:
 .PP
-  (/current/dir) C-Kermit> take commandfile
+  (/current/dir) C\-Kermit> take commandfile
 .PP
 (where "commandfile" is the name of the command file). Please don't pipe a
 command file into Kermit's standard input (which might or might not work);
@@ -599,16 +600,16 @@ scripts that depend on the initialization file, include the command
 .PP
   take \ev(home).kermrc
 .PP
-at the desired spot in the script. By the way, \ev(xxx) is a built-in
+at the desired spot in the script. By the way, \ev(xxx) is a built\(hyin
 variable (xxx is the variable name, "home" in this case). To see what
-built-in variables are available, type "show variables" at the C-Kermit
+built\(hyin variables are available, type "show variables" at the C\(hyKermit
 prompt. To see what else you can show, type "show ?". \em(xxx) is a user
 defined variable (strictly speaking, it is a macro used as a variable).
 .SS Command List
-C-Kermit has more than 200 top-level commands, and some of these, such as
+C\(hyKermit has more than 200 top\(hylevel commands, and some of these, such as
 SET, branch off into hundreds of subcommands of their own, so it's not
 practical to describe them all here. Instead, here's a concise list of the
-most commonly used top-level commands, grouped by category. To learn about
+most commonly used top\(hylevel commands, grouped by category. To learn about
 each command, type "help" followed by the command name, e.g. "help set".
 Terms such as Command state and Connect state are explained in subsequent
 sections.
@@ -620,7 +621,7 @@ are (optional) switches like /PAGE, /NOPAGE, /QUIET, etc, listed in the
 HELP text for each command. Example:
 .PP
 .nf
-  send /recursive /larger:10000 /after:-1week /except:*.txt *
+  send /recursive /larger:10000 /after:\-1week /except:*.txt *
 .fi
 .PP
 which can be read as "send all the files in this directory and all the ones
@@ -631,19 +632,19 @@ Basic Commands
 .RS
 .TP
 HELP
-Requests top-level help.
+Requests top\(hylevel help.
 .TP
 HELP command
 Requests help about the given command.
 .TP
 INTRODUCTION
-Requests a brief introduction to C-Kermit.
+Requests a brief introduction to C\(hyKermit.
 .TP
 LICENSE
-Displays the C-Kermit software copyright and license.
+Displays the C\(hyKermit software copyright and license.
 .TP
 VERSION
-Displays C-Kermit's version number.
+Displays C\(hyKermit's version number.
 .TP
 EXIT [ number ]
 Exits from Kermit with the given
@@ -667,13 +668,13 @@ Shows settings in a given category.
 STATUS
 Tells whether previous command succeeded or failed.
 .TP
-DATE [ date-and/or-time ]
-Shows current date-time or interprets given date-time.
+DATE [ date\(hyand/or\(hytime ]
+Shows current date\(hytime or interprets given date\(hytime.
 .TP
-RUN [ extern-command [ parameters... ]                 
+RUN [ extern\(hycommand [ parameters... ]                 
 Runs the given external command. Synonym: !.
 .TP
-EXEC [ extern-command [ params... ]
+EXEC [ extern\(hycommand [ params... ]
 Kermit overlays itself with the given command.
 .TP
 SUSPEND
@@ -703,7 +704,7 @@ Displays lines from files that match
 the pattern. Synonym: FIND.
 .TP
 DIRECTORY [ options ] [filespec ]
-Lists files (built-in, many options).
+Lists files (built\(hyin, many options).
 .TP
 LS [ options ] [ filespec ]   
 Lists files (runs external "ls" command).
@@ -799,10 +800,10 @@ Opens an FTP connection to the host.
 HTTP [ options ] OPEN host
 Opens an HTTP connection to the host.
 .TP
-PTY external-command
+PTY external\(hycommand
 Runs the command on a pseudoterminal as if it were a connection.
 .TP
-PIPE external-command
+PIPE external\(hycommand
 Runs the command through a pipe as if it were a connection.
 .RE
 .SS
@@ -818,24 +819,24 @@ Redirects the given external command over the connection.
 TELOPT command
 Sends a Telnet protocol command (Telnet connections only).
 .TP
-Ctrl-\eC
+Ctrl\-\eC
 "Escapes back" from Connect state to Command state.
 .TP
-Ctrl-\eB
+Ctrl\-\eB
 (In Connect state) Sends a BREAK signal (serial or Telnet).
 .TP
-Ctrl-\e!
+Ctrl\-\e!
 (In Connect state) Enters inferior shell; "exit" to return.
 .TP
-Ctrl-\e?
-(In Connect state) Shows a menu of other escape-level options.
+Ctrl\-\e?
+(In Connect state) Shows a menu of other escape\(hylevel options.
 .TP
-Ctrl-\eCtrl-\e
+Ctrl\-\eCtrl\-\e
 (In Connect state) Type two
-Ctrl-Backslashes to send one of them.
+Ctrl\-Backslashes to send one of them.
 .TP
 SET ESCAPE [ character ]
-Changes Kermit's Connect-state escape character.
+Changes Kermit's Connect\(hystate escape character.
 .RE
 .SS
 Closing Connections
@@ -843,18 +844,18 @@ Closing Connections
 .TP
 HANGUP
 Hangs up the currently open
-serial-port or network connection.
+serial\(hyport or network connection.
 .TP
 CLOSE
 Closes the currently open
-serial-port or network connection.
+serial\(hyport or network connection.
 .TP
 SET LINE (with no devicename)
 Closes the currently open
-serial-port or network connection.
+serial\(hyport or network connection.
 .TP
 SET HOST (with no hostname)
-Closes the currently open serial-port or network connection.
+Closes the currently open serial\(hyport or network connection.
 .TP
 FTP CLOSE
 Closes the currently open FTP connection.
@@ -872,29 +873,29 @@ Suppresses warning about open connections on exit or close.
 File Transfer
 .RS
 .TP
-SEND [ options ] filename [ as-name ]
+SEND [ options ] filename [ as\(hyname ]
 Sends the given file. Synonym: S.
 .TP
 SEND [ options ] filespec
 Sends all files that match.
 .TP
 RESEND [ options ] filespec
-Resumes an interupted SEND from the point of failure.
+Resumes an interrupted SEND from the point of failure.
 .TP
-RECEIVE [ options ] [ as-name ]                    
+RECEIVE [ options ] [ as\(hyname ]                    
 Waits passively for files to arrive. Synonym: R.
 .TP
 LOG TRANSACTIONS [ filename ]
 Keeps a record of file transfers.
 .TP
 FAST
-Use fast file-transfer settings (default).
+Use fast file\(hytransfer settings (default).
 .TP
 CAUTIOUS
-Use cautious and less fast file-transfer settings.
+Use cautious and less fast file\(hytransfer settings.
 .TP
 ROBUST
-Use ultra-conservative and slow file-transfer settings.
+Use ultra\(hyconservative and slow file\(hytransfer settings.
 .TP
 STATISTICS [ options ] 
 Gives statistics about the most recent file transfer.
@@ -909,7 +910,7 @@ LOG SESSION [ filename ]
 Captures remote text or files without protocol.
 .TP
 SET PROTOCOL [ name... ]
-Tells Kermit to use an external file-transfer protocol.
+Tells Kermit to use an external file\(hytransfer protocol.
 .TP
 FTP { PUT, MPUT, GET, MGET, ... }
 FTP client commands.
@@ -940,19 +941,19 @@ Logs in to a Kermit server or IKSD that requires it.
 [ REMOTE ] LOGOUT
 Logs out from a Kermit server or IKSD.
 .TP
-SEND [ options ] filename [ as-name ]                   
+SEND [ options ] filename [ as\(hyname ]                   
 Sends the given file to the server. Synonyms: S, PUT.
 .TP
 SEND [ options ] filespec
 Sends all files that match.
 .TP
 RESEND [ options ] filespec
-Resumes an interupted SEND from the point of failure.
+Resumes an interrupted SEND from the point of failure.
 .TP
-GET [ options ] remote-filespec
+GET [ options ] remote\(hyfilespec
 Asks the server to send the given files. Synonym: G.
 .TP
-REGET [ options ] remote-filespec
+REGET [ options ] remote\(hyfilespec
 Resumes an interrupted GET from the point of failure.
 .TP
 REMOTE CD [ directory ]
@@ -972,7 +973,7 @@ REMOTE [ command... ]
 (Many other commands: "remote ?" for a list).
 .TP
 MAIL [ options ] filespec
-Sends file(s) to be delivered as e-mail (Kermit only).
+Sends file(s) to be delivered as e\(hymail (Kermit only).
 .TP
 FINISH
 Asks the server to exit server state (Kermit only).
@@ -1005,21 +1006,21 @@ Use question mark to feel your way through an unfamiliar command, as in
 this example:
 .PP
 .nf
-  C-Kermit> remote ? One of the following:
+  C\-Kermit> remote ? One of the following:
    assign     directory  kermit     print      rmdir
    cd         exit       login      pwd        set
    copy       help       logout     query      space
    delete     host       mkdir      rename     type
-  C-Kermit> remote set ? One of the following:
+  C\-Kermit> remote set ? One of the following:
    attributes   file         retry        transfer
-   block-check  receive      server       window
-  C-Kermit> remote set file ? One of the following:
-   character-set  incomplete     record-length
+   block\-check  receive      server       window
+  C\-Kermit> remote set file ? One of the following:
+   character\-set  incomplete     record\-length
    collision      names          type
-  C-Kermit> remote set file names ? One of the following:
+  C\-Kermit> remote set file names ? One of the following:
    converted  literal
-  C-Kermit> remote set file names literal
-  C-Kermit>
+  C\-Kermit> remote set file names literal
+  C\-Kermit>
 .PP
 .fi
 This is called menu on demand: you get a menu when you want one, but menus
@@ -1030,25 +1031,25 @@ in the middle of a keyword or filename, not just at the beginning. For
 example, "send x?" lists all the files in the current directory whose names
 start with 'x'.
 .SH INITIALIZATION FILE
-In its default configuration, C-Kermit executes commands from a file 
+In its default configuration, C\(hyKermit executes commands from a file 
 called .kermrc in your home directory when it starts, unless it is given the
--Y or -y command-line option. Custom configurations might substitute a shared
-system-wide initialization file. The SHOW FILE command tells what
+\-Y or \-y command\(hyline option. Custom configurations might substitute a shared
+system\(hywide initialization file. The SHOW FILE command tells what
 initialization file, if any, was used. The standard initialization file
 "chains" to an individual customization file, .mykermc, in the home directory,
 in which each user can establish her/his own preferences, define macros, and
 so on.
 .PP
 Since execution of the initialization file (at least the standard one)
-makes C-Kermit take longer to start, it might be better not to have an
+makes C\(hyKermit take longer to start, it might be better not to have an
 initialization file, especially now that Kermit's default startup
-configuration is well attuned to modern computing and networking -- in
+configuration is well attuned to modern computing and networking \(hy\(hy in
 other words, you no longer have do anything special to make Kermit
 transfers go fast. So instead of having an initialization file that is
 executed every time Kermit starts, you might consider making one or more
 kerbang scripts (with names other that .kermrc) that do NOT include an
 "exit" command, and invoke those when you need the settings, macro
-definitions, and/or scripted actions they contain, and invoke C-Kermit
+definitions, and/or scripted actions they contain, and invoke C\(hyKermit
 directly when you don't.
 .PP
 To put it another way... We still distribute the standard initialization
@@ -1068,7 +1069,7 @@ remote computer, it is said to be in Remote mode (as long as it has not
 made any connections of its own). The local Kermit communicates over the
 communications device or network connection, acting as a conduit between
 the the remote computer and your keyboard and screen. The remote Kermit is
-the file-transfer partner to the local Kermit and communicates only through
+the file\(hytransfer partner to the local Kermit and communicates only through
 its standard input and output.
 .PP
 At any moment, a Kermit program can be in any of the following states. It's
@@ -1091,7 +1092,7 @@ state with the SERVER command. The TAKE command tells Kermit to read
 and execute commands from a file. The (perhaps implied) DO command
 tells Kermit to read and execute commands from a macro definition.
 While in Command state, you can interrupt any command, macro, or
-command file by typing Ctrl-C (hold down the Ctrl key and press the C
+command file by typing Ctrl\-C (hold down the Ctrl key and press the C
 key); this normally brings you back to the prompt.
 .TP
 Shell state
@@ -1111,24 +1112,24 @@ you give a CONNECT, DIAL, TELNET, RLOGIN, or IKSD command. You can
 return to command state by logging out of the remote computer, or by
 typing:
 .sp
-  Ctrl-\ec
+  Ctrl\-\ec
 .sp
 That is: Hold down the Ctrl key and press the backslash key, then let
 go of the Ctrl key and press the C key. This is called escaping back.
-Certain other escape-level commands are also provided; type Ctrl-\e?
+Certain other escape\(hylevel commands are also provided; type Ctrl\-\e?
 for a list. For example, you can enter Shell state with:
 .sp
-  Ctrl-\e!
+  Ctrl\-\e!
 .sp
-To send a Ctrl-\e to the host while in Connect state, type two of them
+To send a Ctrl\-\e to the host while in Connect state, type two of them
 in a row. See HELP CONNECT and HELP SET ESCAPE for more info.
 .TP
-Local file-transfer state
+Local file\(hytransfer state
 In this state, Kermit is sending packets back and forth with the other
 computer in order to transfer a file or accomplish some other
-file-related task. And at the same time, it is displaying its progress
+file\(hyrelated task. And at the same time, it is displaying its progress
 on your screen and watching your keyboard for interruptions. In this
-state, the following single-keystroke commands are accepted:
+state, the following single\(hykeystroke commands are accepted:
 .sp
 .RS
 .TP
@@ -1141,61 +1142,61 @@ Interrupt the current file and skip all the rest.
 E
 Like Z but uses a "stronger" protocol (use if X or Z don't work).
 .TP
-Ctrl-C
-Interrupt file-transfer mode (use if Z or E don't work).
+Ctrl\-C
+Interrupt file\(hytransfer mode (use if Z or E don't work).
 .sp
 .RE
 Kermit returns to its previous state (Command or Connect) when the
 transfer is complete or when interrupted successfully by X, Z, E, or
-Ctrl-C (hold down the Ctrl key and press the C key).
+Ctrl\-C (hold down the Ctrl key and press the C key).
 .TP
-Remote file-transfer state
-In this state, Kermit is exchanging file-transfer packets with its
+Remote file\(hytransfer state
+In this state, Kermit is exchanging file\(hytransfer packets with its
 local partner over its standard i/o. It leaves this state
 automatically when the transfer is complete. In case you find your
-local Kermit in Connect state and the remote one in File-transfer
+local Kermit in Connect state and the remote one in File\(hytransfer
 state (in which it seems to ignore your keystrokes), you can usually
-return it to command state by typing three Ctrl-C's in a row. If that
-doesn't work, return your local Kermit to Command state (Ctrl-\e C) and
-type "e-packet" and then press the Return or Enter key; this forces a
+return it to command state by typing three Ctrl\-C's in a row. If that
+doesn't work, return your local Kermit to Command state (Ctrl\-\e C) and
+type "e\(hypacket" and then press the Return or Enter key; this forces a
 fatal Kermit protocol error.
 .TP
 Remote Server state
-This is like Remote File-transfer state, except it never returns
+This is like Remote File\(hytransfer state, except it never returns
 automatically to Command state. Rather, it awaits further instructions
 from the client program; that is, from your Local Kermit program. You
 can return the Remote Server to its previous state by issuing a
 "finish" command to the client, or if you are in Connect state, by
-typing three Ctrl-C's in a row. You can tell the server job to log out
+typing three Ctrl\-C's in a row. You can tell the server job to log out
 and break the connection by issuing a "bye" command to the client.
 .TP
 Local Server state
-Like Remote-Server state, but in local mode, and therefore with its
-file-transfer display showing, and listening for single-key commands,
-as in Local File-transfer state. Usually this state is entered
+Like Remote\(hyServer state, but in local mode, and therefore with its
+file\(hytransfer display showing, and listening for single\(hykey commands,
+as in Local File\(hytransfer state. Usually this state is entered
 automatically when a remote Kermit program gives a GET command.
 .sp
-C-Kermit, Kermit 95, and MS-DOS Kermit all can switch automatically from
-Connect state to Local File-transfer state when you initiate a file
+C\(hyKermit, Kermit 95, and MS\(hyDOS Kermit all can switch automatically from
+Connect state to Local File\(hytransfer state when you initiate a file
 transfer from the remote computer by starting Kermit and telling it to send
 or get a file, in which case, Connect state is automatically resumed after
 the file transfer is finished.
 .sp
-Note that C-Kermit is not a terminal emulator. It is a communications
+Note that C\(hyKermit is not a terminal emulator. It is a communications
 application that you run in a terminal window (e.g. console or Xterm). The
 specific emulation, such as VT100, VT220, Linux Console, or Xterm, is
-provided by the terminal window in which you are running C-Kermit. Kermit
-95 and MS-DOS Kermit, on the other hand, are true terminal emulators. Why
-is C-Kermit not a terminal emulator? CLICK HERE to read about it.
+provided by the terminal window in which you are running C\(hyKermit. Kermit
+95 and MS\(hyDOS Kermit, on the other hand, are true terminal emulators. Why
+is C\(hyKermit not a terminal emulator? CLICK HERE to read about it.
 .SH MAKING CONNECTIONS
 Here is how to make different kinds of connections using interactive Kermit
-commands (as noted above, you can also make connections with command-line
+commands (as noted above, you can also make connections with command\(hyline
 options). Note that you don't have to make connections with Kermit. It can
 also be used on the far end of a connection as the remote file transfer and
 management partner of your local communications software.
 .TP
 Making a Telnet Connection
-At the C-Kermit command prompt, simply type:
+At the C\(hyKermit command prompt, simply type:
 .sp
 .nf
   telnet foo.bar.com
@@ -1224,10 +1225,10 @@ Rlogin uses a privileged TCP port:
 More info: HELP RLOGIN.
 .TP
 Making an SSH Connection
-Unlike Telnet and Rlogin, SSH connections are not built-in, but
+Unlike Telnet and Rlogin, SSH connections are not built\(hyin, but
 handled by running your external SSH client through a pseudoterminal.
-Using C-Kermit to control the SSH client gives you all of Kermit's
-features (file transfer, character-set conversion, scripting, etc)
+Using C\(hyKermit to control the SSH client gives you all of Kermit's
+features (file transfer, character\(hyset conversion, scripting, etc)
 over SSH.
 .sp
   ssh foo.bar.com
@@ -1236,7 +1237,7 @@ More info: HELP SSH, HELP SET SSH.
 .TP
 Dialing with a Modem
 If it's an external modem, make sure it is connected to a usable
-serial port on your computer with a regular (straight-through) modem
+serial port on your computer with a regular (straight\(hythrough) modem
 cable, and to the telephone jack with a telephone cable, and that it's
 turned on. Then use these commands:
 .sp
@@ -1251,7 +1252,7 @@ turned on. Then use these commands:
 .sp
 Type "set modem type ?" for a list of supported modem types. If you
 omit the SET MODEM TYPE command, the default type is
-"generic-high-speed", which should work for most modern AT-command-set
+"generic\(hyhigh\(hyspeed", which should work for most modern AT\(hycommand\(hyset
 modems. If the line is busy, Kermit redials automatically. If the call
 does not succeed, use "set dial display on" and try it again to watch
 what happens. If the call succeeds, Kermit enters Connect state
@@ -1262,34 +1263,34 @@ You can also dial from a modem that is accessible by Telnet, e.g. to a
 reverse terminal server. In this case the command sequence is:
 .sp
 .nf
-  set host ts.xxx.com 2000   ; Terminal-server and port
+  set host ts.xxx.com 2000   ; Terminal\(hyserver and port
   set modem type usrobotics  ; Or other supported type
   set dial method tone       ; (or pulse)
   dial 7654321               ; Dial the desired number
 .fi
 .sp
 If the terminal server supports the Telnet Com Port Option, RFC 2217,
-you can also give serial-port related commands such as SET SPEED, SET
+you can also give serial\(hyport related commands such as SET SPEED, SET
 PARITY, and so on, and Kermit relays them to the terminal server using
 the protocol specified in the RFC.
 .sp
 More info: HELP SET MODEM, HELP SET LINE, HELP SET SPEED, HELP SET
 FLOW, HELP DIAL, HELP SET DIAL, HELP SET MODEM, HELP SET 
-CARRIER-WATCH, SHOW COMMUNICATIONS, SHOW MODEM, SHOW DIAL.
+CARRIER\-WATCH, SHOW COMMUNICATIONS, SHOW MODEM, SHOW DIAL.
 .TP
 Direct Serial Port
 Connect the two computers, A and B, with a null modem cable (or two
-modem cables interconnected with a null-modem adapter or modem
+modem cables interconnected with a null\(hymodem adapter or modem
 eliminator). From Computer A:
 .sp
 .nf
   set modem type none   ; There is no modem
   set line /dev/ttyS0   ; Specify device name
-  set carrier-watch off ; If DTR CD are not cross-connected
+  set carrier\-watch off ; If DTR CD are not cross\(hyconnected
   set speed 57600       ; Or other desired speed
-  set flow rts/cts      ; If RTS and CTS are cross-connected
+  set flow rts/cts      ; If RTS and CTS are cross\(hyconnected
   set parity even       ; (or "mark" or "space", if necessary)
-  set stop-bits 2       ; (rarely necessary)
+  set stop\-bits 2       ; (rarely necessary)
   set flow xon/xoff     ; If you can't use RTS/CTS
   connect               ; Enter Connect (terminal) state
 .fi
@@ -1299,25 +1300,25 @@ can run a copy of Kermit on Computer B and follow approximately the
 same directions. More info: As above plus HELP CONNECT.
 .PP
 With modems or direct serial connections, you might also have to "set
-parity even" (or "mark" or "space") if it's a 7-bit connection.
+parity even" (or "mark" or "space") if it's a 7\(hybit connection.
 .PP
 Of the connection types listed above, only one can be open at a time.
 However, any one of these can be open concurrently with an FTP or HTTP
 session. Each connection type can be customized to any desired degree,
 scripted, logged, you name it. See the manual.
 .PP
-NOTE: On selected platforms, C-Kermit also can make X.25 connections. See
+NOTE: On selected platforms, C\(hyKermit also can make X.25 connections. See
 the manual for details.
 .SH TRANSFERRING FILES WITH KERMIT
 There is a widespread and persistent belief that Kermit is a slow protocol.
 This is because, until recently, it used conservative tuning by default to
 make sure file transfers succeeded, rather than failing because they
-overloaded the connection. Some extra commands (or command-line options,
-like -Q) were needed to make it go fast, but nobody bothered to find out
-about them. Also, it takes two to tango: most non-Kermit-Project Kermit
-protocol implementations really ARE slow. The best file-transfer partners
-for C-Kermit are: another copy of C-Kermit (7.0 or later) and Kermit 95.
-These combinations work well and they work fast by default. MS-DOS Kermit
+overloaded the connection. Some extra commands (or command\(hyline options,
+like \-Q) were needed to make it go fast, but nobody bothered to find out
+about them. Also, it takes two to tango: most non\(hyKermit\(hyProject Kermit
+protocol implementations really ARE slow. The best file\(hytransfer partners
+for C\(hyKermit are: another copy of C\(hyKermit (7.0 or later) and Kermit 95.
+These combinations work well and they work fast by default. MS\(hyDOS Kermit
 is good too, but you have to tell it to go fast (by giving it the FAST
 command).
 .PP
@@ -1326,50 +1327,50 @@ Furthermore, all three of these Kermit programs support "autodownload" and
 packet comes in from the remote, they automatically switch into file
 transfer mode.
 .PP
-And plus, C-Kermit and K95 also switch automatically between text and
+And plus, C\(hyKermit and K95 also switch automatically between text and
 binary mode for each file, so there is no need to "set file type binary" or
 "set file type text", or to worry about files being corrupted because they
 were transferred in the wrong mode.
 .PP
-What all of these words add up to is that now, when you use up-to-date
+What all of these words add up to is that now, when you use up\(hyto\(hydate
 Kermit software from the Kermit Project, file transfer is not only fast,
 it's ridiculously easy. You barely have to give any commands at all.
 .TP
 Downloading Files
-Let's say you have Kermit 95, C-Kermit, or MS-DOS Kermit on your
+Let's say you have Kermit 95, C\(hyKermit, or MS\(hyDOS Kermit on your
 desktop computer, with a connection to a Unix computer that has
-C-Kermit installed as "kermit". To download a file (send it from Unix
+C\(hyKermit installed as "kermit". To download a file (send it from Unix
 to your desktop computer), just type the following command at your
 Unix shell prompt:
 .sp
-  kermit -s oofa.txt
+  kermit \-s oofa.txt
 .sp
 (where oofa.txt is the filename). If you want to send more than one
 file, you can put as many filenames as you want on the command line,
 and they can be any combination of text and binary:
 .sp
-  kermit -s oofa.txt oofa.zip oofa.html oofa.tar.gz
+  kermit \-s oofa.txt oofa.zip oofa.html oofa.tar.gz
 .sp
 and/or you can use wildcards to send groups of files:
 .sp
-  kermit -s oofa.*
+  kermit \-s oofa.*
 .sp
 If you want to send a file under an assumed name, use:
 .sp
-  kermit -s friday.txt -a today.txt
+  kermit \-s friday.txt \-a today.txt
 .sp
 This sends the file friday.txt but tells the receiving Kermit that its
 name is today.txt. In all cases, as noted, when the file transfer is
 finished, your desktop Kermit returns automatically to Connect state.
-No worries about escaping back, re-connecting, text/binary mode
+No worries about escaping back, re\(hyconnecting, text/binary mode
 switching. Almost too easy, right?
 .TP
 Uploading Files
 To upload files (send them from your desktop computer to the remote
-Unix computer) do the same thing, but use the -g (GET) option instead
-of -s:
+Unix computer) do the same thing, but use the \-g (GET) option instead
+of \-s:
 .sp
-  kermit -g oofa.txt
+  kermit \-g oofa.txt
 .sp
 This causes your local Kermit to enter server mode; then the remote
 Kermit program requests the named file and the local Kermit sends it
@@ -1379,27 +1380,27 @@ If you want to upload multiple files, you have have use shell quoting
 rules, since these aren't local files:
 .sp
 .nf
-  kermit -g "oofa.txt oofa.zip oofa.html oofa.tar.gz"
-  kermit -g "oofa.*"
+  kermit \-g "oofa.txt oofa.zip oofa.html oofa.tar.gz"
+  kermit \-g "oofa.*"
 .fi
 .sp
 If you want to upload a file but store it under a different name, use:
 .sp
-  kermit -g friday.txt -a today.txt
+  kermit \-g friday.txt \-a today.txt
 .TP
-Kermit Transfers the Old-Fashioned Way
+Kermit Transfers the Old\(hyFashioned Way
 If your desktop communications software does not support autoupload or
 autodownload, or it does not include Kermit server mode, the procedure
 requires more steps.
 .sp
 To download a file, type:
 .sp
-  kermit -s filename
+  kermit \-s filename
 .sp
 on the host as before, but if nothing happens automatically in
 response to this command, you have to switch your desktop
 communications software into Kermit Receive state. This might be done
-by escaping back using keyboard characters or hot keys (Alt-x is
+by escaping back using keyboard characters or hot keys (Alt\-x is
 typical) and/or with a command (like RECEIVE) or a menu. When the file
 transfer is complete, you have to go back to Connect state, Terminal
 emulation, or whatever terminology applies to your desktop
@@ -1407,11 +1408,11 @@ communications software.
 .sp
 To upload a file, type:
 .sp
-  kermit -r
+  kermit \-r
 .sp
-on the host (rather than "kermit -g"). This tells C-Kermit to wait
+on the host (rather than "kermit \-g"). This tells C\(hyKermit to wait
 passively for a file to start arriving. Then regain the attention of
-your desktop software (Alt-x or whatever) and instruct it to send the
+your desktop software (Alt\-x or whatever) and instruct it to send the
 desired file(s) with Kermit protocol. When the transfer is finished,
 return to the Connect or Terminal screen.
 .TP
@@ -1422,8 +1423,8 @@ for troubleshooting:
 .RS
 .TP
 FAST
-Use fast file-transfer settings. This has been the default since
-C-Kermit 7.0 now that most modern computers and connections
+Use fast file\(hytransfer settings. This has been the default since
+C\(hyKermit 7.0 now that most modern computers and connections
 support it. If transfers fail with fast settings, try . . .
 .TP
 CAUTIOUS
@@ -1434,21 +1435,21 @@ ROBUST
 Use the most robust, resilient, conservative, safe, and reliable
 settings. File transfers will almost certainly work, but they
 will be quite slow (of course this is a classic tradeoff; ROBUST
-was C-Kermit's default tuning in versions 6.0 and earlier, which
+was C\(hyKermit's default tuning in versions 6.0 and earlier, which
 made everybody think Kermit protocol was slow). If ROBUST doesn't
 do the trick, try again with SET PARITY SPACE first in case it's
-not an 8-bit connection.
+not an 8\(hybit connection.
 .RE
 .sp
 Obviously the success and performance of a file transfer also depends
-on C-Kermit's file transfer partner. Up-to-date, real Kermit Project
+on C\(hyKermit's file transfer partner. Up\(hyto\(hydate, real Kermit Project
 partners are recommended because they contain the best Kermit protocol
 implementations and because we can support them in case of trouble.
 .sp
-If you still have trouble, consult Chapter 10 of Using C-Kermit, or
-send email to kermit-support@columbia.edu.
+If you still have trouble, consult Chapter 10 of Using C\(hyKermit, or
+send email to kermit\(hysupport@columbia.edu.
 .TP
-Advanced Kermit File-Transfer Features
+Advanced Kermit File\(hyTransfer Features
 Obviously there is a lot more to Kermit file transfer, including all
 sorts of interactive commands, preferences, options, logging,
 debugging, troubleshooting, and anything else you can imagine but
@@ -1460,10 +1461,10 @@ commands:
 Logging transfers:
 LOG TRANSACTIONS (HELP LOG)
 .TP
-Automatic per-file text/binary mode switching:
+Automatic per\(hyfile text/binary mode switching:
 SET TRANSFER MODE { AUTOMATIC, MANUAL } (HELP SET TRANSFER).
 .TP
-Cross-platform recursive directory tree transfer:
+Cross\(hyplatform recursive directory tree transfer:
 SEND /RECURSIVE, GET /RECURSIVE (HELP SEND, HELP GET).
 .TP
 File collision options:
@@ -1478,14 +1479,14 @@ Filename selection patterns:
 Flexible file selection:
 SEND (or GET) /BEFORE /AFTER /LARGER /SMALLER /TYPE /EXCEPT, ...
 .TP
-Character-set conversion:
-SET { FILE, TRANSFER } CHARACTER-SET, ASSOCIATE, ...
+Character\(hyset conversion:
+SET { FILE, TRANSFER } CHARACTER\-SET, ASSOCIATE, ...
 .TP
 File/Pathname control:
 SET { SEND, RECEIVE } PATHNAMES, SET FILE NAMES.
 .TP
 Atomic file movement:
-SEND (or GET) /DELETE /RENAME /MOVE-TO
+SEND (or GET) /DELETE /RENAME /MOVE\-TO
 .TP
 Transferring to/from standard i/o of other commands:
 SEND (or GET) /COMMAND
@@ -1494,8 +1495,8 @@ Recovery of interrupted transfer from point of failure:
 RESEND, REGET (HELP RESEND, HELP REGET).
 .RE
 .TP
-Non-Kermit File Transfer
-You can also use C-Kermit to transfer files with FTP or HTTP Internet
+Non\(hyKermit File Transfer
+You can also use C\(hyKermit to transfer files with FTP or HTTP Internet
 protocols; see below.
 .sp
 On a regular serial or Telnet connection where the other computer
@@ -1510,10 +1511,10 @@ Kermit can use them as external protocols. HELP SET PROTOCOL for
 details.
 .sp
 You can also capture "raw" data streams from the other computer with
-LOG SESSION (HELP LOG and HELP SET SESSION-LOG for details), and you
+LOG SESSION (HELP LOG and HELP SET SESSION\-LOG for details), and you
 can upload files without any protocol at all with TRANSMIT (HELP
 TRANSMIT, HELP SET TRANSMIT).
-.SH KERMIT'S BUILT-IN FTP AND HTTP CLIENTS
+.SH KERMIT'S BUILT\(hyIN FTP AND HTTP CLIENTS
 Kermit's FTP client is like the regular Unix FTP client that you're used
 to, but with some differences:
 .TP
@@ -1542,7 +1543,7 @@ client is thoroughly documented at the Kermit Project website:
   http://www.columbia.edu/kermit/ftpclient.html
 .sp
 You also can use HELP FTP and HELP SET FTP to get descriptions of Kermit's
-FTP-related commands.
+FTP\(hyrelated commands.
 .PP
 The HTTP client is similar to the FTP one, except you prefix each command
 with HTTP instead of FTP: HTTP OPEN, HTTP GET, HTTP PUT, HTTP CLOSE, etc.
@@ -1551,12 +1552,12 @@ HTTP connections can be open at the same time as regular serial or Telnet
 connections and FTP connections. So Kermit can manage up to three types
 connections simultaneously.
 .SH INTERNET KERMIT SERVICE
-C-Kermit can be configured and run as an Internet service (called IKSD),
+C\(hyKermit can be configured and run as an Internet service (called IKSD),
 similar to an FTP server (FTPD) except you can (but need not) interact with
 it directly, plus it does a lot more than an FTP server can do. The TCP
-port for IKSD is 1649. It uses Telnet protocol. C-Kermit can be an Internet
+port for IKSD is 1649. It uses Telnet protocol. C\(hyKermit can be an Internet
 Kermit Server, or it can be a client of an IKSD. You can make connections
-from C-Kermit to an IKSD with any of the following commands:
+from C\(hyKermit to an IKSD with any of the following commands:
 .sp
 .nf
   telnet foo.bar.edu 1649
@@ -1574,8 +1575,8 @@ the system administrator). For instructions, see:
 .sp
   http://www.columbia.edu/kermit/iksd.html
 .SH SECURITY
-All of C-Kermit's built-in TCP/IP networking methods (Telnet, Rlogin, IKSD,
-FTP, and HTTP) can be secured by one or more of the following IETF-approved
+All of C\(hyKermit's built\(hyin TCP/IP networking methods (Telnet, Rlogin, IKSD,
+FTP, and HTTP) can be secured by one or more of the following IETF\(hyapproved
 methods:
 .PP
 \(bu	MIT Kerberos IV
@@ -1590,43 +1591,43 @@ For complete instructions see:
 .PP
   http://www.columbia.edu/kermit/security.html
 .PP
-And as noted previously, you can also make SSH connections with C-Kermit if
+And as noted previously, you can also make SSH connections with C\(hyKermit if
 you already have an SSH client installed.
-.SH ALTERNATIVE COMMAND-LINE PERSONALITIES
+.SH ALTERNATIVE COMMAND\(hyLINE PERSONALITIES
 When invoked as "kermit" or any other name besides "ftp" or "telnet",
-C-Kermit has the command-line options described above in the OPTIONS
-section. However, if you invoke C-Kermit as "telnet" or "ftp", it changes
-its command-line personality to match. This can be done (among other ways)
-with symbolic links (symlinks). For example, if you want C-Kermit to be
+C\(hyKermit has the command\(hyline options described above in the OPTIONS
+section. However, if you invoke C\(hyKermit as "telnet" or "ftp", it changes
+its command\(hyline personality to match. This can be done (among other ways)
+with symbolic links (symlinks). For example, if you want C\(hyKermit to be
 your regular Telnet client, or the Telnet helper of your Web browser, you
 can create a link like the following in a directory that lies in your PATH
 ahead of the regular telnet program:
 .sp
-  ln -s /usr/local/bin/kermit telnet
+  ln \-s /usr/local/bin/kermit telnet
 .sp
 Now when you give a "telnet" command, you are invoking Kermit instead, but
-with its Telnet command-line personality so, for example:
+with its Telnet command\(hyline personality so, for example:
 .sp
   telnet xyzcorp.com
 .sp
 Makes a Telnet connection to xyzcorp.com, and Kermit exits automatically
 when the connection is closed (just like the regular Telnet client). Type
-"telnet -h" to get a list of Kermit's Telnet-personality command-line
+"telnet \-h" to get a list of Kermit's Telnet\(hypersonality command\(hyline
 options, which are intended to be as compatible as possible with the
 regular Telnet client.
 .PP
 Similarly for FTP:
 .sp
-  ln -s /usr/local/bin/kermit ftp
+  ln \-s /usr/local/bin/kermit ftp
 .sp
-And now type "ftp -h" to see its command-line options, and command lines
+And now type "ftp \-h" to see its command\(hyline options, and command lines
 just like you would give your regular FTP client:
 .sp
   ftp xyzcorp.com
 .sp
 but with additional options allowing an entire session to be specified on
 the command line. Finally, if Kermit's
-first command-line option is a Telnet, FTP, IKSD, or HTTP URL, Kermit
+first command\(hyline option is a Telnet, FTP, IKSD, or HTTP URL, Kermit
 automatically makes the appropriate kind of connection and, if indicated by
 the URL, takes the desired action:
 .TP
@@ -1649,19 +1650,19 @@ kermit http://www.columbia.edu/kermit/index.html
 Grabs a web page
 .fi
 .SH LICENSE
-C-Kermit has an unusual license, but a fair and sensible one since the
+C\(hyKermit has an unusual license, but a fair and sensible one since the
 Kermit Project must support itself out of revenue: it's not a BSD license,
 not GPL, not Artistic, not commercial, not shareware, not freeware. It can
-be summed up like this: if you want C-Kermit for your own use, you can
+be summed up like this: if you want C\(hyKermit for your own use, you can
 download and use it without cost or license (but we'd appreciate it if you
-would purchase the manual). But if you want to sell C-Kermit or bundle it
+would purchase the manual). But if you want to sell C\(hyKermit or bundle it
 with a product or otherwise distribute it in a commercial setting EXCEPT
-WITH AN OPEN-SOURCE OPERATING SYSTEM DISTRIBUTION such as Linux, FreeBSD,
+WITH AN OPEN\(hySOURCE OPERATING SYSTEM DISTRIBUTION such as Linux, FreeBSD,
 NetBSD, or OpenBSD, you must license it. To see the complete license, give
 the LICENSE command at the prompt, or see the COPYING.TXT file distributed
-with C-Kermit 7.0 or later, or download it from
+with C\(hyKermit 7.0 or later, or download it from
 .sp
-  ftp://kermit.columbia.edu/kermit/c-kermit/COPYING.TXT
+  ftp://kermit.columbia.edu/kermit/c\-kermit/COPYING.TXT
 .sp
 Send licensing inquiries to kermit@columbia.edu.
 .SH BUGS
@@ -1669,27 +1670,27 @@ See the following files for listings of known bugs, limitations,
 workarounds, hints and tips:
 .TP
 ckcbwr.txt
-General C-Kermit bugs, hints, tips.
+General C\(hyKermit bugs, hints, tips.
 .TP
 ckubwr.txt
-Unix-specific C-Kermit bugs, hints, tips.
+Unix\(hyspecific C\(hyKermit bugs, hints, tips.
 .PP
 Report bugs and problems by email to:
 .sp
-   kermit-support@columbia.edu.
+   kermit\-support@columbia.edu.
 .sp
 Before requesting technical support, please read the hints here:
 .sp
   http://www.columbia.edu/kermit/support.html
 .sp
-and also read the C-Kermit Frequently Asked Questions:
+and also read the C\(hyKermit Frequently Asked Questions:
 .sp
   http://www.columbia.edu/kermit/ckfaq.html
 .SH OTHER TOPICS
-There's way more to C-Kermit than we've touched on here -- troubleshooting,
+There's way more to C\(hyKermit than we've touched on here \(hy\(hy troubleshooting,
 customization, character sets, dialing directories, sending pages, script
 writing, and on and on, all of which are covered in the manual and updates
-and supplements. For the most up-to-date information on documentation (or
+and supplements. For the most up\(hyto\(hydate information on documentation (or
 updated documentation itself) visit the Kermit Project website:
 .sp
   http://www.columbia.edu/kermit/
@@ -1698,21 +1699,24 @@ There you will also find Kermit software packages for other platforms:
 different Unix varieties, Windows, DOS, VMS, IBM mainframes, and many
 others: 20+ years' worth.
 .SH DOCUMENTATION AND UPDATES
-The manual for C-Kermit is:
+The manual for C\(hyKermit is:
 .TP
 .I
-Using C-Kermit
+Using C\(hyKermit
 Frank da Cruz and Christine M. Gianone,
-Second Edition, Digital Press / Butterworth-Heinemann, Woburn, MA, 1997, 622
-pages, ISBN 1-55558-164-1. This is a printed book. It covers C-Kermit 6.0.
+Second Edition, Digital Press / Butterworth\(hyHeinemann, Woburn, MA, 1997, 622
+pages, ISBN 1\-55558\-164\-1. This is a printed book. It covers C\(hyKermit 6.0.
 .TP
-The C-Kermit 7.0 Supplement
-http://www.columbia.edu/kermit/ckermit2.html
+The C\(hyKermit 7.0 Supplement
+http://www.columbia.edu/kermit/ckermit70.html
 .TP
-The C-Kermit 8.0 Supplement
-http://www.columbia.edu/kermit/ckermit3.html
+The C\(hyKermit 8.0 Supplement
+http://www.columbia.edu/kermit/ckermit80.html
+.TP
+The C\(hyKermit 9.0 Supplement
+http://www.columbia.edu/kermit/ckermit90.html
 .PP
-Visit C-Kermit home page:
+Visit C\(hyKermit home page:
 .sp
   http://www.columbia.edu/kermit/ckermit.html
 .sp
@@ -1727,13 +1731,13 @@ http://www.columbia.edu/kermit/newfaq.html
 The Kermit FAQ (Frequently Asked Questions about Kermit)
 .TP
 http://www.columbia.edu/kermit/ckfaq.html
-The C-Kermit FAQ (Frequently Asked Questions about C-Kermit)
+The C\(hyKermit FAQ (Frequently Asked Questions about C\(hyKermit)
 .TP
 http://www.columbia.edu/kermit/telnet.html
-C-Kermit Telnet client documentation
+C\(hyKermit Telnet client documentation
 .TP
 http://www.columbia.edu/kermit/security.html
-C-Kermit security documentation (Kerberos, SSL/TLS, etc)
+C\(hyKermit security documentation (Kerberos, SSL/TLS, etc)
 .TP
 http://www.columbia.edu/kermit/cuiksd.html
 Internet Kermit Service user documentation
@@ -1755,7 +1759,7 @@ The Kermit newsgroup (unmoderated).
 .SH FILES
 .TP
 COPYING.TXT
-C-Kermit license.
+C\(hyKermit license.
 .TP
 ~/.kermrc
 Initialization file.
@@ -1780,16 +1784,16 @@ Installation instructions for Unix.  Also at
 http://www.columbia.edu/kermit/ckuins.html.
 .TP
 ckcbwr.txt
-General C-Kermit bugs, hints, tips.
+General C\(hyKermit bugs, hints, tips.
 .TP
 ckubwr.txt
-Unix-specific C-Kermit bugs, hints, tips.
+Unix\(hyspecific C\(hyKermit bugs, hints, tips.
 .TP
 ckcplm.txt
-C-Kermit program logic manual.
+C\(hyKermit program logic manual.
 .TP
 ckccfg.txt
-C-Kermit compile-time configuration options.
+C\(hyKermit compile\(hytime configuration options.
 .TP
 ssh
 (in your PATH) SSH connection helper.
@@ -1804,21 +1808,21 @@ UUCP lockfile for dialing out (see installation instructions).
 Software
 Frank da Cruz and Jeffrey E Altman,
 .br
-1985-present, with contributions from hundreds of others all over the
+1985\(hypresent, with contributions from hundreds of others all over the
 world.
 .TP
 Documentation
-Frank da Cruz and Christine M Gianone
+Frank da Cruz
 .TP
 Address
 .nf
-The Kermit Project - Columbia Univerity
+The Kermit Project \(hy Columbia Univerity
 612 West 115th Street
-New York NY 10025-7799
+New York NY 10025\-7799
 USA
 .fi
 .TP
-E-Mail
+E\(hyMail
 kermit@columbia.edu
 .TP
 Web

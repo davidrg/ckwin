@@ -1,72 +1,125 @@
 
-                         C-Kermit Program Logic Manual
+   [1]The Columbia Crown The Kermit Project | Columbia University
+   612 West 115th Street, New York NY 10025 USA o [2]kermit@columbia.edu
+   ...since 1981
+   [3]Home [4]Kermit 95 [5]C-Kermit [6]Scripts [7]Current [8]New [9]FAQ
+   [10]Support
+
+C-Kermit Program Logic Manual
 
      Frank da Cruz
-     [1]The Kermit Project
-     [2]Columbia University
+     [11]The Kermit Project
 
-   As of: C-Kermit 8.0.211, 10 April 2004
-   This page last updated: Sat Apr 10 16:45:30 2004 (New York USA Time)
+   As of: C-Kermit 9.0.300, 30 June 2011
+   Last update: Fri Jul 1 15:47:34 2011
 
      IF YOU ARE READING A PLAIN-TEXT version of this document, note that
      this file is a plain-text dump of a Web page. You can visit the
      original (and possibly more up-to-date) Web page here:
 
-  [3]http://www.columbia.edu/kermit/ckcplm.html
+  [12]http://www.columbia.edu/kermit/ckcplm.html
 
-   [ [4]C-Kermit Home ] [ [5]Kermit Home ]
-    ________________________________________________________________________
+CONTENTS
 
-  CONTENTS
+  1. [13]INTRODUCTION
+  2. [14]FILES
+  3. [15]SOURCE CODE PORTABILITY AND STYLE
+  4. [16]MODULES
+     4.A. [17]Group A: Library Routines
+     4.B. [18]Group B: Kermit File Transfer
+     4.C. [19]Group C: Character-Set Conversion
+     4.D. [20]Group D: User Interface
+     4.E. [21]Group E: Platform-Dependent I/O
+     4.F. [22]Group F: Network Support
+     4.G. [23]Group G: Formatted Screen Support
+     4.H. [24]Group H: Pseudoterminal Support
+     4.I. [25]Group I: Security
+  I. [26]APPENDIX I: FILE PERMISSIONS
 
-  1. [6]INTRODUCTION
-  2. [7]FILES
-  3. [8]SOURCE CODE PORTABILITY AND STYLE
-  4. [9]MODULES
-     4.A. [10]Group A: Library Routines
-     4.B. [11]Group B: Kermit File Transfer
-     4.C. [12]Group C: Character-Set Conversion
-     4.D. [13]Group D: User Interface
-     4.E. [14]Group E: Platform-Dependent I/O
-     4.F. [15]Group F: Network Support
-     4.G. [16]Group G: Formatted Screen Support
-     4.H. [17]Group H: Pseudoterminal Support
-     4.I. [18]Group I: Security
-  I. [19]APPENDIX I: FILE PERMISSIONS
-    ________________________________________________________________________
+1. INTRODUCTION
 
-  1. INTRODUCTION
+   The Kermit Protocol is specified in the book [27]Kermit, A File
+   Transfer Protocol by Frank da Cruz, Digital Press / Butterworth
+   Heinemann, Newton, MA, USA (1987), 379 pages, ISBN 0-932376-88-6. It is
+   assumed the reader is familiar with the Kermit protocol specification.
 
-   The Kermit Protocol is specified in the book Kermit, A File Transfer
-   Protocol by Frank da Cruz, Digital Press / Butterworth Heinemann,
-   Newton, MA, USA (1987), 379 pages, ISBN 0-932376-88-6. It is assumed
-   the reader is familiar with the Kermit protocol specification.
-
-   This file describes the relationship among the modules and functions
-   of C-Kermit 5A and later, and other programming considerations.
-   C-Kermit is designed to be portable to any kind of computer that has a
-   C compiler. The source code is broken into many files that are grouped
-   according to their function, as shown in the [20]Contents.
+   This file describes the relationship among the modules and functions of
+   C-Kermit 5A and later, and other programming considerations. C-Kermit
+   is designed to be portable to any kind of computer that has a C
+   compiler. The source code is broken into many files that are grouped
+   according to their function, as shown in the [28]Contents.
 
    C-Kermit has seen constant development since 1985. Throughout its
    history, there has been a neverending tug-of-war among:
 
     a. Functionality: adding new features, fixing bugs, improving
        performance.
-    b. Adding support for new platforms.
+    b. Adding support for new platforms or communication methods.
     c. "Buzzword 1.0 compliance".
 
    The latter category is the most frustrating, since it generally
    involves massive changes just to keep the software doing what it did
-   before in some new setting: e.g. the K&R-to-ANSIC conversion (which
-   had to be done, of course, without breaking K&R); Y2K (not a big deal
-   in our case); the many and varied UNIX and other API "standards";
-   IPv6.
+   before in some new setting: e.g. the K&R-to-ANSIC conversion (which had
+   to be done, of course, without breaking K&R); Y2K (not a big deal in
+   our case); the many and varied UNIX and other API "standards" with
+   which to "comply".
 
-   [ [21]Contents ] [ [22]C-Kermit ] [ [23]Kermit Home ]
-    ________________________________________________________________________
+   Upon first glance at the source code, you will probably be appalled.
+   Many will be tempted to clean it up and modernize it. But as soon as
+   you do, you are sure to break something. Remember that above all else,
+   the C-Kermit code is portable to every Unix platform that ever existed,
+   going back Unix V7 (1979)*, and to several other completely different
+   and unrelated operating-system families such as DEC/HP VMS, DG AOS/VS,
+   and Stratus VOS, as well as to some Unix offshoots like OS-9 and Plan 9
+   (from Outer Space). Every release of Kermit has been checked on every
+   platform available -- the older the better! -- to make sure it still
+   builds and runs. Even today (2011), there are modern Unix systems that
+   have non-ANSI C compilers, foremost among them HP-UX (where an ANSI
+   optimizing C compiler is available, but only as an expensive add-on).
+   In a way, portability is the most important feature of C-Kermit and
+   every effort should be made to preserve it through future releases.
 
-  2. FILES
+   Voluminous edit histories are available going back to May 1985. The
+   first versions of C-Kermit were done on our [29]DEC VAX-11/750 with
+   Ultrix 1.0 and 2.0 (as well as departmental 750s with 4.2BSD**), DEC
+   Pro-380 workstations (desktop PDP-11s) running 2.9BSD, which was
+   [30]ported to the 380 by us. Later (1988 or so) on a big VAX 8650 with
+   Ultrix, which became an 8700 (these no doubt weighed several tons), and
+   finally a succession of non-DEC equipment: an Encore Multimax, 25 years
+   worth of Suns, and now Linux on [31]HP Blades. We also had our own VMS
+   development systems for some years. All this plus a generous assortment
+   of departmental and offsite guest accounts on a multitude of platforms.
+   Anyway, the edit histories:
+
+     [32]ckc04e.txt C-Kermit 4.2(030) May 1985 to 4E(072) Jan 1989.
+     [33]ckc04f.txt C-Kermit 4F(077) Arp 1989 to 4F(095) Aug 1989.
+     [34]ckc168.txt Updates to C-Kermit 5A(168) for VMS Nov 1991
+     [35]ckc178.txt C-Kermit 5A(100) Jul 1989 to 5A(178) Jan 1992
+     [36]ckc188.txt C-Kermit 5A(188) development, 1992
+     [37]ckc189.txt C-Kermit 5A(189) development, 1993
+     [38]ckc192.txt C-Kermit 6.0(192) development, 1998
+     [39]ckc197.txt C-Kermit 7.0(197) development, 2000
+     [40]ckc200.txt C-Kermit 8.0.200 development, 2001
+     [41]ckc211.txt C-Kermit 8.0.201 through 8.0.209 2001-2004
+     [42]ckc300.txt C-Kermit 9.0.300 June 2011
+
+   _________________________________
+   * C-Kermit 6.0 was the last one to be built on V7, as I recall. The
+   code should still be good for V7 but it probably has outgrown the
+   16-bit address space. In any case there is still a V7 makefile target
+   and a V7 path through the forest of #ifdefs in the code if anybody is
+   running V7 on an emulator and would like to try building C-Kermit.
+   There is no support for V6 but that is only because no V6 system was
+   ever found for development. Notice that some other 16-bit Unixes are
+   supported in the code, including 2.9BSD and Tandy Xenix 3.0, but have
+   not been tried since C-Kermit 6.0
+
+   **  C-Kermit 9.0.300 was built successfully on 4.2BSD about 25 years
+   later, in June 2011.
+
+   [ [43]Contents ] [ [44]C-Kermit ] [ [45]Kermit Home ]
+
+2. FILES
 
    C-Kermit source files begin with the two letters "ck", for example
    ckutio.c. Filenames are kept short (6.3) for maximum portability and
@@ -87,13 +140,13 @@
      k     (unused)
      l     Stratus VOS
      m     Macintosh with Mac OS 1-9
-     n     Microsoft Windows NT/2000/XP
-     o     OS/2 and/or Microsoft Windows 9x/ME/NT/2000/XP
+     n     (unused)
+     o     OS/2 and Microsoft Windows 9x/ME/NT/2000/XP/Vista/etc
      p     Plan 9 from Bell Labs
      q     (reserved)
-     r     DEC PDP-11 with RSTS/E (never used, open for reassigment)
+     r     DEC PDP-11 with RSTS/E (never used, open for reassignment)
      s     Atari ST GEMDOS (last supported in version 5A(189))
-     t     DEC PDP-11 with RT-11 (never used, open for reassigment)
+     t     DEC PDP-11 with RT-11 (never used, open for reassignment)
      u     Unix-based operating systems (*)
      v     VMS and OpenVMS
      w     Wart (Lex-like preprocessor, platform independent)
@@ -104,7 +157,7 @@
      4     IBM AS/400
      5-8   (reserved)
      9     Microware OS-9
-     _     Encryption modules
+     _     (underscore) Encryption modules
 
    (*) In fact there is little distinction between the ckc*.* and cku*.*
    categories. It would make more sense for all cku*.* modules to be
@@ -112,31 +165,30 @@
    ckupty.c, which truly are specific to Unix. The rest (ckuus*.c,
    ckucmd.c, etc) are quite portable.
 
-   One hint before proceeding: functions are scattered all over the
-   ckc*.c and cku*.c modules, where function size has begun to take
-   precedence over the desirability of grouping related functions
-   together, the aim being to keep any particular module from growing
-   disproportionately large. The easiest way (in UNIX) to find out in
-   what source file a given function is defined is like this (where the
-   desired function is foo()...):
+   One hint before proceeding: functions are scattered all over the ckc*.c
+   and cku*.c modules, where function size has begun to take precedence
+   over the desirability of grouping related functions together, the aim
+   being to keep any particular module from growing disproportionately
+   large. The easiest way (in UNIX) to find out in what source file a
+   given function is defined is like this (where the desired function is
+   foo()...):
 
   grep ^foo\( ck*.c
 
    This works because the coding convention has been to make function
-   names always start on the left margin with their contents indented,
-   for example:
+   names always start on the left margin with their contents indented, for
+   example:
 
 static char *
 foo(x,y) int x, y; {
     ...
 }
 
-   Also note the style for bracket placement. This allows
-   bracket-matching text editors (such as EMACS) to help you make sure
-   you know which opening bracket a closing bracket matches, particularly
-   when the opening bracket is above the visible screen, and it also
-   makes it easy to find the end of a function (search for '}' on the
-   left margin).
+   Also note the style for bracket placement. This allows bracket-matching
+   text editors (such as EMACS) to help you make sure you know which
+   opening bracket a closing bracket matches, particularly when the
+   opening bracket is above the visible screen, and it also makes it easy
+   to find the end of a function (search for '}' on the left margin).
 
    Of course EMACS tags work nicely with this format too:
 
@@ -145,41 +197,39 @@ foo(x,y) int x, y; {
   $ emacs
   Esc-X Visit-Tags-Table<CR><CR>
 
-   (but remember that the source file for ckcpro.c is [24]ckcpro.w!)
+   (but remember that the source file for ckcpro.c is [46]ckcpro.w!)
 
    Also:
 
      * Tabs should be set every 8 spaces, as on a VT100.
-     * All lines must no more than 79 characters wide after tab
-       expansion.
+     * All lines must no more than 79 characters wide after tab expansion.
      * Note the distinction between physical tabs (ASCII 9) and the
        indentation conventions, which are: 4 for block contents, 2 for
        most other stuff (obviously this is not a portability issue, just
        style).
 
-   [ [25]Contents ] [ [26]C-Kermit ] [ [27]Kermit Home ]
-    ________________________________________________________________________
+   [ [47]Contents ] [ [48]C-Kermit ] [ [49]Kermit Home ]
 
-  3. SOURCE CODE PORTABILITY AND STYLE
+3. SOURCE CODE PORTABILITY AND STYLE
 
-   C-Kermit was designed in 1985 as a platform-independent replacement
-   for the earlier Unix Kermit. c-Kermit's design was expected to promote
+   C-Kermit was designed in 1985 as a platform-independent replacement for
+   the earlier Unix Kermit. C-Kermit's design was expected to promote
    portability, and judging from the number of platforms to which it has
    been adapted since then, the model is effective, if not ideal
    (obviously if we had it all to do over, we'd change a few things). To
    answer the oft-repeated question: "Why are there so many #ifdefs?",
    it's because:
 
-     * Many of them are related to feature selection and program size,
-       and so need to be there anyway.
+     * Many of them are related to feature selection and program size, and
+       so need to be there anyway.
      * Those that treat compiler, library, platform, header-file, and
        similar differences have built up over time as hundreds of people
        all over the world adapted C-Kermit to their particular
        environments and sent back their changes. There might be more
        politically-correct ways to achieve portability, but this one is
-       natural and proven. The basic idea is to introduce changes that
-       can be selected by defining a symbol, which, if not defined,
-       leaves the program exactly as it was before the changes.
+       natural and proven. The basic idea is to introduce changes that can
+       be selected by defining a symbol, which, if not defined, leaves the
+       program exactly as it was before the changes.
      * Although it might be possible to "clean up" the "#ifdef mess",
        nobody has access to all the hundreds of platforms served by the
        #ifdefs to check the results.
@@ -188,18 +238,17 @@ foo(x,y) int x, y; {
    just use GNU autoconfig / automake / autowhatever instead of
    hard-coding all those #ifdefs?" Answers:
 
-     * The GNU tools are not available on all the platforms where
-       C-Kermit must be built and I wouldn't necessarily trust them if
-       they were.
+     * The GNU tools are not available on all the platforms where C-Kermit
+       must be built and I wouldn't necessarily trust them if they were.
      * Each platform is a moving target, so the tools themselves would
        need to updated before Kermit could be updated.
-     * It would only add another layer of complexity to an already
-       complex process.
+     * It would only add another layer of complexity to an already complex
+       process.
      * Conversion at this point would not be practical unless there was a
        way to test the results on all the hundreds of platforms where
        C-Kermit is supposed to build.
 
-   When writing code for the system-indendent C-Kermit modules, please
+   When writing code for the system-independent C-Kermit modules, please
    stick to the following coding conventions to ensure portability to the
    widest possible variety of C preprocessors, compilers, and linkers, as
    well as certain network and/or email transports. The same holds true
@@ -207,35 +256,33 @@ foo(x,y) int x, y; {
    ones, since they must be buildable by a wide variety of compilers and
    linkers, new and old.
 
-   This list does not purport to be comprehensive, and although some
-   items on it might seem far-fetched, they would not be listed unless I
-   had encountered them somewhere, some time. I wish I had kept better
-   records so I could cite specific platforms and compilers.
+   This list does not purport to be comprehensive, and although some items
+   on it might seem far-fetched, they would not be listed unless I had
+   encountered them somewhere, some time. I wish I had kept better records
+   so I could cite specific platforms and compilers.
 
-     * Try to keep variable and function names unique within 6
-       characters, especially if they are used across modules, since 6 is
-       the maximum for some old linkers (actually, this goes back to
-       TOPS-10 and -20 and other old DEC OS's where C-Kermit never ran
-       anyway; a more realistic maximum is probably somewhere between 8
-       and 16). We know for certain that VAX C has a 31-character max
-       because it complains -- others might not complain, but just
-       silently truncate, thus folding two or more routines/variables
-       into one.
+     * Try to keep variable and function names unique within 6 characters,
+       especially if they are used across modules, since 6 is the maximum
+       for some old linkers (actually, this goes back to TOPS-10 and -20
+       and other old DEC OS's where C-Kermit never ran anyway; a more
+       realistic maximum is probably somewhere between 8 and 16). We know
+       for certain that VAX C has a 31-character max because it complains
+       -- others might not complain, but just silently truncate, thus
+       folding two or more routines/variables into one.
      * Keep preprocessor symbols unique within 8 characters; that's the
-       max for some preprocessors (sorry, I can't give a specific
-       example, but in 1988 or thereabouts, I had to change character-set
-       symbols like TC_LATIN1 and TC_LATIN2 to TC_1LATIN and TC_2LATIN
-       because the digits were being truncated and ignored on a platform
-       where I actually had to build C-Kermit 5A; unfortunately I didn't
-       note which platform -- maybe some early Ultrix version?)
+       max for some preprocessors (sorry, I can't give a specific example,
+       but in 1988 or thereabouts, I had to change character-set symbols
+       like TC_LATIN1 and TC_LATIN2 to TC_1LATIN and TC_2LATIN because the
+       digits were being truncated and ignored on a platform where I
+       actually had to build C-Kermit 5A; unfortunately I didn't note
+       which platform -- maybe some early Ultrix version?)
      * Don't create preprocessor symbols, or variable or function names,
        that start with underscore (_). These are usually reserved for
        internal use by the compiler and header files.
      * Don't put #include directives inside functions or { blocks }.
      * Don't use the #if or #elif preprocessor constructions, only use
        #ifdef, #ifndef, #define, #undef, and #endif.
-     * Put tokens after #endif in comment brackets, e.g.
-       #endif /* FOO */.
+     * Put tokens after #endif in comment brackets, e.g. #endif /* FOO */.
      * Don't indent preprocessor statements - # must always be first char
        on line.
      * Don't put whitespace after # in preprocessor statements.
@@ -248,12 +295,10 @@ foo(x,y) int x, y; {
        all the time).
      * Always cast strlen() in expressions to int:
        if ((int)strlen(foo) < x)...
-     * Any variable whose value might exceed 16383 should be declared as
-       long, or if that is not possible, then as unsigned.
      * Avoid typedefs; they might be portable but they are very confusing
-       and there's no way to test for their presence or absence at
-       compile time. Use preprocessor symbols instead if possible; at
-       least you can test their definitions.
+       and there's no way to test for their presence or absence at compile
+       time. Use preprocessor symbols instead if possible; at least you
+       can test their definitions.
      * Unsigned long is not portable; use a preprocessor symbol (Kermit
        uses ULONG for this).
      * Long long is not portable. If you really need it, be creative.
@@ -261,36 +306,36 @@ foo(x,y) int x, y; {
        modifier other than L.
      * Unsigned char is not portable, use CHAR (a preprocessor symbol
        defined in the Kermit header files) and always take precautions
-       against character signage (more about this [28]below).
+       against character signage (more about this [50]below).
      * Don't use initializers with automatic arrays or structs: it's not
        portable.
      * Don't use big automatic arrays or structs in functions that might
        be called recursively; some platforms have fixed-size stacks (e.g.
        Windows 9x: 256K) and recursive functions crash with stack
-       overflow. Even when there is not a compiler limitation, this
-       causes memory to be consumed without bound, and can end up filling
-       swap space.
+       overflow. Even when there is not a compiler limitation, this causes
+       memory to be consumed without bound, and can end up filling swap
+       space.
      * Don't assume that struct assignment performs a copy, or that it
        even exists.
      * Don't use sizeof to get the size of an array; someone might come
-       along later and and change it from static to malloc'd. Always use
-       a symbol to refer to the array's size.
+       along later and and change it from static to malloc'd. Always use a
+       symbol to refer to the array's size.
      * Don't put prototypes for static functions into header files that
-       are used by modules that don't contain that function; the link
-       step can fail with unresolved references (e.g. on AOS/VS).
+       are used by modules that don't contain that function; the link step
+       can fail with unresolved references (e.g. on AOS/VS).
      * Avoid the construction *++p (the order of evaluation varies; it
        shouldn't but at least one compiler had a bug that made me include
        this item).
      * Don't use triple assignments, like a = b = c = 0; (or quadruple,
        etc). Some compilers generate bad code for these, or crash, etc
        (some version of DEC C as I recall).
-     * Some compilers don't allow structure members to have the same
-       names as other identifiers. Try to give structure members unique
-       names.
+     * Some compilers don't allow structure members to have the same names
+       as other identifiers. Try to give structure members unique names.
      * Don't assume anything about order of evaluation in boolean
        expressions, or that they will stop early if a required condition
        is not true, e.g.:
   if (i > 0 && p[i-1] == blah)
+
        can still dump core if i == 0 (hopefully this is not true of any
        modern compiler, but I would not have said this if it did not
        actually happen somewhere).
@@ -323,14 +368,13 @@ foo(x,y) int x, y; {
        and "1.0" is the first edition.
      * Don't use or depend on anything_t (size_t, pid_t, etc), except
        time_t, without #ifdef protection (time_t is the only one I've
-       found that is accepted everywhere). This is a tough one because
-       the same function might require (say) a size_t arg on one
-       platform, whereas size_t is unheard of on another; or worse, it
-       might require a totally different data type, like int or long or
-       some other typedef'd thing. It has often proved necessary to
-       define a symbol to stand for the type of a particular argument to
-       a particular library or system function to get around this
-       problem.
+       found that is accepted everywhere). This is a tough one because the
+       same function might require (say) a size_t arg on one platform,
+       whereas size_t is unheard of on another; or worse, it might require
+       a totally different data type, like int or long or some other
+       typedef'd thing. It has often proved necessary to define a symbol
+       to stand for the type of a particular argument to a particular
+       library or system function to get around this problem.
      * Don't use or depend on internationalization ("i18n") features,
        wchar_t, locales, etc, in portable code; they are not portable.
        Anyway, locales are not the right model for Kermit's
@@ -346,9 +390,9 @@ foo(x,y) int x, y; {
        and always use SIGRETURN at exit points from signal handlers.
      * Signals should always be re-armed to be used again (this barely
        scratches the surface -- the differences between BSD/V7 and System
-       V and POSIX signal handling are numerous, and some platforms do
-       not even support signals, alarms, or longjmps correctly or at all
-       -- avoid all of this if you can).
+       V and POSIX signal handling are numerous, and some platforms do not
+       even support signals, alarms, or longjmps correctly or at all --
+       avoid all of this if you can).
      * On the other hand, don't assume that signals are disarmed after
        being raised. In some platforms you have to re-arm them, in others
        they stay armed.
@@ -370,28 +414,28 @@ foo(x,y) int x, y; {
        out with 0's and overwriting whatever was there before. Use
        C-Kermit ckstrncpy() if you want predictable non-padding behavior,
        guaranteed NUL-termination, and a useful return code.
-     * DID YOU KNOW.. that some versions of inet_blah() routines return
-       IP addresses in network byte order, while others return them local
+     * DID YOU KNOW.. that some versions of inet_blah() routines return IP
+       addresses in network byte order, while others return them local
        machine byte order? So passing them to ntohs() or whatever is not
        always the right thing to do.
      * Don't use ANSI-format function declarations without #ifdef
        CK_ANSIC, and always provide an #else for the non-ANSI case.
-     * Use the Kermit _PROTOTYP() macro for declaring function
-       prototypes; it works in both the ANSI and non-ANSI cases.
-     * Don't depend on any other ANSI preprocessor features like
-       "pasting" -- they are often missing or nonoperational.
+     * Use the Kermit _PROTOTYP() macro for declaring function prototypes;
+       it works in both the ANSI and non-ANSI cases.
+     * Don't depend on any other ANSI preprocessor features like "pasting"
+       -- they are often missing or nonoperational.
      * Don't assume any C++ syntax or semantics.
      * Don't use // as a comment introducer. C is not C++.
      * Don't declare a string as "char foo[]" in one module and "extern
        char * foo" in another, or vice-versa: this causes core dumps.
      * With compiler makers falling all over themselves trying to outdo
-       each other in ANSI strictness, it has become increasingly
-       necessary to cast EVERYTHING. This is increasingly true for char
-       vs unsigned char. We need to use unsigned chars if we want to deal
-       with 8-bit character sets, but most character- and string-oriented
-       APIs want (signed) char arguments, so explicit casts are
-       necessary. It would be nice if every compiler had a
-       -funsigned-char option (as gcc does), but they don't.
+       each other in ANSI strictness, it has become increasingly necessary
+       to cast EVERYTHING. Especially char vs unsigned char. We need to
+       use unsigned chars if we want to deal with 8-bit character sets,
+       but most character- and string-oriented APIs want (signed) char
+       arguments, so explicit casts are necessary. It would be nice if
+       every compiler had a -funsigned-char option (as gcc does), but they
+       don't.
      * a[x], where x is an unsigned char, can produce a wild memory
        reference if x, when promoted to an int, becomes negative. Cast it
        to (unsigned), even though it ALREADY IS unsigned.
@@ -399,7 +443,7 @@ foo(x,y) int x, y; {
        arguments; for ANSI compilers you MUST use ANSI declarations to
        avoid promotion problems, but you can't use ANSI declarations with
        non-ANSI compilers. Thus declarations of such functions must be
-       hideously entwined in #ifdefs. Example: latter:
+       hideously entwined in #ifdefs. Example:
   int                          /*  Put character in server command buffer  */
   #ifdef CK_ANSIC
   putsrv(char c)
@@ -411,20 +455,21 @@ foo(x,y) int x, y; {
       *srvptr = '\0';           /* Make sure buffer is null-terminated */
       return(0);
   }
-     * Be careful how you return characters from functions that return
-       int values -- "getc-like functions" -- in the ANSI world. Unless
-       you explicitly cast the return value to (unsigned), it is likely
-       to be "promoted" to an int and have its sign extended.
+
+     * Be careful how you return characters from functions that return int
+       values -- "getc-like functions" -- in the ANSI world. Unless you
+       explicitly cast the return value to (unsigned), it is likely to be
+       "promoted" to an int and have its sign extended.
      * At least one compiler (the one on DEC OSF/1 1.3) treats "/*" and
-       "*/" within string constants as comment begin and end. No amount
-       of #ifdefs will get around this one. You simply can't put these
+       "*/" within string constants as comment begin and end. No amount of
+       #ifdefs will get around this one. You simply can't put these
        sequences in a string constant, e.g. "/usr/local/doc/*.*".
      * Avoid putting multiple macro references on a single line, e.g.:
   putchar(BS); putchar(SP); putchar(BS)
 
-   This overflows the CPP output buffer of more than a few C
-   preprocessors (this happened, for example, with SunOS 4.1 cc, which
-   evidently has a 1K macro expansion buffer).
+   This overflows the CPP output buffer of more than a few C preprocessors
+   (this happened, for example, with SunOS 4.1 cc, which evidently has a
+   1K macro expansion buffer).
 
    C-Kermit needs constant adjustment to new OS and compiler releases.
    Every new OS release shuffles header files or their contents, or
@@ -436,8 +481,8 @@ foo(x,y) int x, y; {
 
    Assume nothing. Don't assume header files are where they are supposed
    to be, that they contain what you think they contain, that they define
-   specific symbols to have certain values -- or define them at all!
-   Don't assume system header files protect themselves against multiple
+   specific symbols to have certain values -- or define them at all! Don't
+   assume system header files protect themselves against multiple
    inclusion. Don't assume that particular system or library calls are
    available, or that the arguments are what you think they are -- order,
    data type, passed by reference vs value, etc. Be conservative when
@@ -447,48 +492,46 @@ foo(x,y) int x, y; {
    mistake -- it might be there for a reason, and changing it or removing
    is likely to cause compilation, linking, or runtime failures sometime,
    somewhere. Some huge percentage of the code, especially in the
-   platform-dependent modules, is workarounds for compiler, linker, or
-   API bugs.
+   platform-dependent modules, is workarounds for compiler, linker, or API
+   bugs.
 
    But finally... feel free to violate any or all of these rules in
    platform-specific modules for environments in which the rules are
    certain not to apply. For example, in VMS-specific code, it is OK to
    use #if, because VAX C, DEC C, and VMS GCC all support it.
 
-   [ [29]Contents ] [ [30]C-Kermit ] [ [31]Kermit Home ]
-    ________________________________________________________________________
+   [ [51]Contents ] [ [52]C-Kermit ] [ [53]Kermit Home ]
 
-  3.1. Memory Leaks
+3.1. Memory Leaks
 
    The C language and standard C library are notoriously inadequate and
    unsafe. Strings are arrays of characters, usually referenced through
    pointers. There is no native string datatype. Buffers are fixed size,
-   and C provides no runtime bounds checking, thus allowing overwriting
-   of other data or even program code. With the popularization of the
+   and C provides no runtime bounds checking, thus allowing overwriting of
+   other data or even program code. With the popularization of the
    Internet, the "buffer exploit" has become a preferred method for
    hackers to hijack privileged programs; long data strings are fed to a
    program in hopes that it uses unsafe C library calls such as strcpy()
    or sprintf() to copy strings into automatic arrays, thus overwriting
-   the call stack, and therefore the routine's return address. When such
-   a hole is discovered, a "string" can be constructed that contains
-   machine code to hijack the program's privileges and penetrate the
-   system.
+   the call stack, and therefore the routine's return address. When such a
+   hole is discovered, a "string" can be constructed that contains machine
+   code to hijack the program's privileges and penetrate the system.
 
    This problem is partially addressed by the strn...() routines, which
    should always be used in preference to their str...() equivalents
    (except when the copy operation has already been prechecked, or there
    is a good reason for not using them, e.g. the sometimes undesirable
-   side effect of strncpy() zeroing the remainder of the buffer). The
-   most gaping whole, however, is sprintf(), which performs no length
-   checking on its destination buffer, and is not easy to replace.
-   Although snprintf() routines are starting to appear, they are not yet
+   side effect of strncpy() zeroing the remainder of the buffer). The most
+   gaping whole, however, is sprintf(), which performs no length checking
+   on its destination buffer, and is not easy to replace. Although
+   snprintf() routines are starting to appear, they are not yet
    widespread, and certainly not universal, nor are they especially
    portable, or even full-featured.
 
    For these reasons, we have started to build up our own little library
    of C Library replacements, ckclib.[ch]. These are safe and highly
-   portable primitives for memory management and string manipulation,
-   such as:
+   portable primitives for memory management and string manipulation, such
+   as:
 
    ckstrncpy()
           Like strncpy but returns a useful value, doesn't zero buffer.
@@ -509,41 +552,39 @@ foo(x,y) int x, y; {
    ckmakxmsg()
           Like ckmakmsg() but accepts up to 12 items
 
-   More about library functions in [32]Section 4.A.
+   More about library functions in [54]Section 4.A.
 
-   [ [33]Contents ] [ [34]C-Kermit ] [ [35]Kermit Home ]
-    ________________________________________________________________________
+   [ [55]Contents ] [ [56]C-Kermit ] [ [57]Kermit Home ]
 
-  3.2. The "char" vs "unsigned char" Dilemma
+3.2. The "char" vs "unsigned char" Dilemma
 
-   This is one of the most aggravating and vexing characteristics of the
-   C language. By design, chars (and char *'s) are SIGNED. But in the
-   modern era, however, we need to process characters that can have (or
-   include) 8-bit values, as in the ISO Latin-1, IBM CP 850, or UTF-8
-   character sets, so this data must be treated as unsigned. But some C
-   compilers (such as those based on the Bell UNIX V7 compiler) do not
-   support "unsigned char" as a data type. Therefore we have the macro or
-   typedef CHAR, which we use when we need chars to be unsigned, but
-   which, unfortunately, resolves itself to "char" on those compilers
-   that don't support "unsigned char". AND SO... We have to do a lot of
-   fiddling at runtime to avoid sign extension and so forth.
+   This is one of the most aggravating and vexing characteristics of the C
+   language. By design, chars (and char *'s) are SIGNED. But in the modern
+   era, however, we need to process characters that can have (or include)
+   8-bit values, as in the ISO Latin-1, IBM CP 850, or UTF-8 character
+   sets, so this data must be treated as unsigned. But some C compilers
+   (such as those based on the Bell UNIX V7 compiler) do not support
+   "unsigned char" as a data type. Therefore we have the macro or typedef
+   CHAR, which we use when we need chars to be unsigned, but which,
+   unfortunately, resolves itself to "char" on those compilers that don't
+   support "unsigned char". AND SO... We have to do a lot of fiddling at
+   runtime to avoid sign extension and so forth.
 
    Some modern compilers (e.g. IBM, DEC, Microsoft) have options that say
    "make all chars be unsigned" (e.g. GCC "-funsigned-char") and we use
    them when they are available. Other compilers don't have this option,
    and at the same time, are becoming increasingly strict about type
    mismatches, and spew out torrents of warnings when we use a CHAR where
-   a char is expected, or vice versa. We fix these one by one using
-   casts, and the code becomes increasingly ugly. But there remains a
-   serious problem, namely that certain library and kernel functions have
+   a char is expected, or vice versa. We fix these one by one using casts,
+   and the code becomes increasingly ugly. But there remains a serious
+   problem, namely that certain library and kernel functions have
    arguments that are declared as signed chars (or pointers to them),
-   whereas our character data is unsigned. Fine, we can can use casts
-   here too -- but who knows what happens inside these routines.
+   whereas our character data is unsigned. Fine, we can can use casts here
+   too -- but who knows what happens inside these routines.
 
-   [ [36]Contents ] [ [37]C-Kermit ] [ [38]Kermit Home ]
-    ________________________________________________________________________
+   [ [58]Contents ] [ [59]C-Kermit ] [ [60]Kermit Home ]
 
-  4. MODULES
+4. MODULES
 
    When C-Kermit is on the far end of a connection, it is said to be in
    remote mode. When C-Kermit has made a connection to another computer,
@@ -558,7 +599,7 @@ foo(x,y) int x, y; {
           conxxx() (console i/o) routines.
 
    Protocol State
-          Reading and writing from the communicatons device. In this
+          Reading and writing from the communications device. In this
           mode, all i/o is handled by the Group E ttxxx() (terminal i/o)
           routines.
 
@@ -566,117 +607,112 @@ foo(x,y) int x, y; {
           Reading from the keyboard with conxxx() routines and writing to
           the communications device with ttxxx() routines AND vice-versa.
 
-   When in local mode, the console and communications device are
-   distinct. During file transfer, Kermit may put up a file-transfer
-   display on the console and sample the console for interruption
-   signals.
+   When in local mode, the console and communications device are distinct.
+   During file transfer, Kermit may put up a file-transfer display on the
+   console and sample the console for interruption signals.
 
    When in remote mode, the console and communications device are the
    same, and therefore there can be no file-transfer display on the
    console or interruptions from it (except for "in-band" interruptions
    such as ^C^C^C).
 
-   [ [39]Contents ] [ [40]C-Kermit ] [ [41]Kermit Home ]
-    ________________________________________________________________________
+   [ [61]Contents ] [ [62]C-Kermit ] [ [63]Kermit Home ]
 
-  4.A. Group A: Library Functions
+4.A. Group A: Library Functions
 
-   Library functions, strictly portable, can be used by all modules on
-   all platforms: [42]ckclib.h, [43]ckclib.c.
+   Library functions, strictly portable, can be used by all modules on all
+   platforms: [64]ckclib.h, [65]ckclib.c.
 
-   (To be filled in... For now, see [44]Section 3.1 and the comments in
+   (To be filled in... For now, see [66]Section 3.1 and the comments in
    ckclib.c.)
 
-   [ [45]Contents ] [ [46]C-Kermit ] [ [47]Kermit Home ]
-    ________________________________________________________________________
+   [ [67]Contents ] [ [68]C-Kermit ] [ [69]Kermit Home ]
 
-  4.B. Group B: Kermit File Transfer
+4.B. Group B: Kermit File Transfer
 
    The Kermit protocol kernel. These files, whose names start with "ckc
    are supposed to be totally portable C, and are expected to compile
-   correctly on any platform with any C compiler. "Portable" does not
-   mean the same as as "ANSI" -- these modules must compile on 10- and
-   20-year old computers, with C preprocessors, compilers, and/or linkers
-   that have all sorts of restrictions. The Group B modules do not
-   include any header files other than those that come with Kermit
-   itself. They do not contain any library calls except from the standard
-   C library (e.g. printf()). They most certainly do not contain any
-   system calls. Files:
+   correctly on any platform with any C compiler. "Portable" does not mean
+   the same as as "ANSI" -- these modules must compile on 10- and 20-year
+   old computers, with C preprocessors, compilers, and/or linkers that
+   have all sorts of restrictions. The Group B modules do not include any
+   header files other than those that come with Kermit itself. They do not
+   contain any library calls except from the standard C library (e.g.
+   printf()). They most certainly do not contain any system calls. Files:
 
-   [48]ckcsym.h
+   [70]ckcsym.h
           For use by C compilers that don't allow -D on the command line.
 
-   [49]ckcasc.h
+   [71]ckcasc.h
           ASCII character symbol definitions.
 
-   [50]ckcsig.h
+   [72]ckcsig.h
           System-independent signal-handling definitions and prototypes.
 
-   [51]ckcdeb.h
+   [73]ckcdeb.h
           Originally, debugging definitions. Now this file also contains
-          all definitions and prototypes that are shared by all modules
-          in all groups.
+          all definitions and prototypes that are shared by all modules in
+          all groups.
 
-   [52]ckcker.h
+   [74]ckcker.h
           Kermit protocol symbol definitions.
 
-   [53]ckcxla.h
+   [75]ckcxla.h
           Character-set-related symbol definitions (see next section).
 
-   [54]ckcmai.c
+   [76]ckcmai.c
           The main program. This module contains the declarations of all
           the protocol-related global variables that are shared among the
           other modules.
 
-   [55]ckcpro.w
+   [77]ckcpro.w
           The protocol module itself, written in "wart", a lex-like
           preprocessor that is distributed with Kermit under the name
           CKWART.C.
 
-   [56]ckcfns.c, [57]ckcfn2.c, [58]ckcfn3.c
+   [78]ckcfns.c, [79]ckcfn2.c, [80]ckcfn3.c
           The protocol support functions used by the protocol module.
 
-   [59]Group B modules may call upon functions from [60]Group E, but not
-   from [61]Group D modules (with the single exception that the main
+   [81]Group B modules may call upon functions from [82]Group E, but not
+   from [83]Group D modules (with the single exception that the main
    program invokes the user interface, which is in Group D). (This last
    assertion is really only a conjecture.)
 
-   [ [62]Contents ] [ [63]C-Kermit ] [ [64]Kermit Home ]
-    ________________________________________________________________________
+   [ [84]Contents ] [ [85]C-Kermit ] [ [86]Kermit Home ]
 
-  4.C. Group C: Character-Set Conversion
+4.C. Group C: Character-Set Conversion
 
-   Character set translation tables and functions. Used by the [65]Group
+   Character set translation tables and functions. Used by the [87]Group
    B, protocol modules, but may be specific to different computers. (So
    far, all character character sets supported by C-Kermit are supported
-   in [66]ckuxla.c and [67]ckuxla.h, including Macintosh and IBM
-   character sets). These modules should be completely portable, and not
-   rely on any kind of system or library services.
+   in [88]ckuxla.c and [89]ckuxla.h, including Macintosh and IBM character
+   sets). These modules should be completely portable, and not rely on any
+   kind of system or library services.
 
-   [68]ckcxla.h
+   [90]ckcxla.h
           Character-set definitions usable by all versions of C-Kermit.
 
    ck?xla.h
-          Character-set definitions for computer "?", e.g. [69]ckuxla.h
-          for UNIX, [70]ckmxla.h for Macintosh.
+          Character-set definitions for computer "?", e.g. [91]ckuxla.h
+          for UNIX, [92]ckmxla.h for Macintosh.
 
-   [71]ck?xla
-          Character-set translation tables and functions for computer
-          "?", For example, CKUXLA.C for UNIX, CKMXLA.C for Macintosh. So
-          far, these are the only two such modules. The UNIX module is
-          used for all versions of C-Kermit except the Macintosh version.
+   [93]ck?xla
+          Character-set translation tables and functions for computer "?",
+          For example, CKUXLA.C for UNIX, CKMXLA.C for Macintosh. So far,
+          these are the only two such modules. The UNIX module is used for
+          all versions of C-Kermit except the Macintosh version.
 
-   [72]ckcuni.h
+   [94]ckcuni.h
           Unicode definitions
 
-   [73]ckcuni.c
+   [95]ckcuni.c
           Unicode module
 
-   Here's how to add a new file character set in the original
-   (non-Unicode modules). Assuming it is based on the Roman (Latin)
-   alphabet. Let's call it "Barbarian". First, in ck?xla.h, add a
-   definition for FC_BARBA (8 chars maximum length) and increase
-   MAXFCSETS by 1. Then, in ck?xla.c:
+   Here's how to add a new file character set in the original (non-Unicode
+   modules). Assuming it is based on the Roman (Latin) alphabet. Let's
+   call it "Barbarian". First, in ck?xla.h, add a definition for FC_BARBA
+   (8 chars maximum length) and increase MAXFCSETS by 1. Then, in
+   ck?xla.c:
 
      * Add a barbarian entry into the fcsinfo array.
      * Add a "barbarian" entry to file character set keyword table,
@@ -731,18 +767,17 @@ foo(x,y) int x, y; {
 
           + (To be filled in...)
 
-   [ [74]Contents ] [ [75]C-Kermit ] [ [76]Kermit Home ]
-    ________________________________________________________________________
+   [ [96]Contents ] [ [97]C-Kermit ] [ [98]Kermit Home ]
 
-  4.D. Group D: User Interface
+4.D. Group D: User Interface
 
    This is the code that communicates with the user, gets her commands,
    informs her of the results. It may be command-line oriented,
    interactive prompting dialog, menus and arrow keys, windows and mice,
    speech recognition, telepathy, etc. The one provided is command-and
    prompt, with the ability to read commands from various sources: the
-   console keyboard, a file, or a macro definition. The user interface
-   has three major functions:
+   console keyboard, a file, or a macro definition. The user interface has
+   three major functions:
 
     1. Sets the parameters for the file transfer and then starts it. This
        is done by setting certain (many) global variables, such as the
@@ -752,11 +787,11 @@ foo(x,y) int x, y; {
     2. Displays messages on the user's screen during the file transfer,
        using the screen() function, which is called by the group-1
        modules.
-    3. Executes any commands directly that do not require Kermit
-       protocol, such as the CONNECT command, local file management
-       commands, parameter-setting commands, FTP client commands, etc.
+    3. Executes any commands directly that do not require Kermit protocol,
+       such as the CONNECT command, local file management commands,
+       parameter-setting commands, FTP client commands, etc.
 
-   If you plan to imbed the [77]Group B, files into a program with a
+   If you plan to embed the [99]Group B, files into a program with a
    different user interface, your interface must supply an appropriate
    screen() function, plus a couple related ones like chkint() and
    intmsg() for handling keyboard (or mouse, etc) interruptions during
@@ -765,44 +800,44 @@ foo(x,y) int x, y; {
    see which missing symbols turn up.
 
    C-Kermit's character-oriented user interface (as opposed to the
-   Macintosh version's graphical user interface) consists of the
-   following modules. C-Kermit can be built with an interactive command
-   parser, a command-line-option-only parser, a graphical user interface,
-   or any combination, and it can even be built with no user interface at
-   all (in which case it runs as a remote-mode Kermit server).
+   Macintosh version's graphical user interface) consists of the following
+   modules. C-Kermit can be built with an interactive command parser, a
+   command-line-option-only parser, a graphical user interface, or any
+   combination, and it can even be built with no user interface at all (in
+   which case it runs as a remote-mode Kermit server).
 
-   [78]ckucmd.h
-   [79]ckucmd.c
+   [100]ckucmd.h
+   [101]ckucmd.c
           The command parsing primitives used by the interactive command
           parser to parse keywords, numbers, filenames, etc, and to give
           help, complete fields, supply defaults, allow abbreviations and
-          editing, etc. This package is totally independent of Kermit,
-          but does depend on the [80]Group E functions.
+          editing, etc. This package is totally independent of Kermit, but
+          does depend on the [102]Group E functions.
 
-   [81]ckuusr.h
+   [103]ckuusr.h
           Definitions of symbols used in Kermit's commands.
 
    ckuus*.c
           Kermit's interactive command parser, including the script
-          programming language: [82]ckuusr.c (includes top-level keyword
-          tables); [83]ckuus2.c (HELP command text); [84]ckuus3.c (most
-          of the SET command); [85]ckuus4.c (includes variables and
+          programming language: [104]ckuusr.c (includes top-level keyword
+          tables); [105]ckuus2.c (HELP command text); [106]ckuus3.c (most
+          of the SET command); [107]ckuus4.c (includes variables and
           functions); ckuus[567].c (miscellaneous);
 
-   [86]ckuusy.c
+   [108]ckuusy.c
           The command-line-option parser.
 
-   [87]ckuusx.c
+   [109]ckuusx.c
           User interface functions common to both the interactive and
           command-line parsers.
 
-   [88]ckuver.h
+   [110]ckuver.h
           Version heralds for different implementations.
 
-   [89]ckuscr.c
+   [111]ckuscr.c
           The (old, uucp-like) SCRIPT command
 
-   [90]ckudia.c
+   [112]ckudia.c
           The DIAL command. Includes specific knowledge of many types of
           modems.
 
@@ -816,8 +851,8 @@ foo(x,y) int x, y; {
           The CONNECT command. Terminal connection, and in some cases
           (Macintosh, Windows) also terminal emulation. NOTE: As of
           C-Kermit 7.0, there are two different CONNECT modules for UNIX:
-          [91]ckucon.c -- the traditional, portable, fork()-based version
-          -- and [92]ckucns.c, a new version that uses select() rather
+          [113]ckucon.c -- the traditional, portable, fork()-based version
+          -- and [114]ckucns.c, a new version that uses select() rather
           than forks so it can handle encryption. ckucns.c is the
           preferred version for Unix; ckucon.c is not likely to keep pace
           with it in terms of upgrades, etc. However, since select() is
@@ -842,15 +877,15 @@ foo(x,y) int x, y; {
    global variables are shared among the many modules. These should, some
    day, be collected into classes or structures that can be passed around
    as needed; not only for purity's sake, but also to allow for multiple
-   simultaneous communication sessions and or user interfaces. Our list
-   of things to do is endless, and reorganizing the source is almost
-   always at the bottom.
+   simultaneous communication sessions and or user interfaces. Our list of
+   things to do is endless, and reorganizing the source is almost always
+   at the bottom.
 
    The ckuus*.c modules (like many of the ckc*.c modules) depend on the
    existence of C library features like fopen, fgets, feof, (f)printf,
-   argv/argc, etc. Other functions that are likely to vary among
-   operating systems -- like setting terminal modes or interrupts -- are
-   invoked via calls to functions that are defined in the [93]Group E
+   argv/argc, etc. Other functions that are likely to vary among operating
+   systems -- like setting terminal modes or interrupts -- are invoked via
+   calls to functions that are defined in the [115]Group E
    platform-dependent modules, ck?[ft]io.c. The command line parser
    processes any arguments found on the command line, as passed to main()
    via argv/argc. The interactive parser uses the facilities of the cmd
@@ -859,7 +894,7 @@ foo(x,y) int x, y; {
    requirements for the Kermit command parser are these:
 
     1. Set parameters via global variables like duplex, speed, ttname,
-       etc. See [94]ckcmai.c for the declarations and descriptions of
+       etc. See [116]ckcmai.c for the declarations and descriptions of
        these variables.
     2. If a command can be executed without the use of Kermit protocol,
        then execute the command directly and set the sstate (start state)
@@ -874,6 +909,7 @@ foo(x,y) int x, y; {
    'g' (send a generic command)       cmarg
    's' (send files)                   nfils, cmarg & cmarg2 OR cmlist
    'c' (send a remote host command)   cmarg
+
 
        cmlist is an array of pointers to strings.
        cmarg, cmarg2 are pointers to strings.
@@ -906,19 +942,18 @@ foo(x,y) int x, y; {
    defined). The intmsg() and chkint() functions provide the user i/o for
    interrupting file transfers.
 
-   [ [95]Contents ] [ [96]C-Kermit ] [ [97]Kermit Home ]
-    ________________________________________________________________________
+   [ [117]Contents ] [ [118]C-Kermit ] [ [119]Kermit Home ]
 
-  4.E. Group E: Platform-Dependent I/O
+4.E. Group E: Platform-Dependent I/O
 
    Platform-dependent function definitions. All the Kermit modules,
    including the command package, call upon these functions, which are
    designed to provide system-independent primitives for controlling and
    manipulating devices and files. For Unix, these functions are defined
-   in the files [98]ckufio.c (files), [99]ckutio.c (communications), and
-   [100]ckusig.c (signal handling).
+   in the files [120]ckufio.c (files), [121]ckutio.c (communications), and
+   [122]ckusig.c (signal handling).
 
-   For VMS, the files are [101]ckvfio.c, ckvtio.c, and [102]ckusig.c (VMS
+   For VMS, the files are [123]ckvfio.c, ckvtio.c, and [124]ckusig.c (VMS
    can use the same signal handling routines as Unix). It doesn't really
    matter what the files are called, except for Kermit distribution
    purposes (grouping related files together alphabetically), only that
@@ -933,7 +968,7 @@ foo(x,y) int x, y; {
    reported as undefined. But that was a long time ago, probably circa
    Version 6.)
 
-  4.E.1. Global Variables
+4.E.1. Global Variables
 
    char *DELCMD;
           Pointer to string containing command for deleting files.
@@ -957,8 +992,8 @@ foo(x,y) int x, y; {
           filespec is not given. (currently not used, handled in another
           way.)
           Example: char *DIRCMD2 = "/bin/ls -ld *";
-          NOTE: DIRCMD2 is used only in versions that do not provide
-          their own built-in DIRECTORY command.
+          NOTE: DIRCMD2 is used only in versions that do not provide their
+          own built-in DIRECTORY command.
 
    char *PWDCMD;
           Pointer to string containing command to display current
@@ -1008,9 +1043,9 @@ foo(x,y) int x, y; {
    char *ckxsys;
           Pointer to string that names the computer and operating system.
           Example: char *ckxsys = " NeXT Mach 1.0";
-          Tells what computer system ckxv applies to. In UNIX Kermit,
-          this variable is also used to print the program herald, and in
-          the SHOW VERSION command.
+          Tells what computer system ckxv applies to. In UNIX Kermit, this
+          variable is also used to print the program herald, and in the
+          SHOW VERSION command.
 
    char *ckxv;
           Pointer to version/edit info of ck?tio.c module.
@@ -1032,7 +1067,7 @@ foo(x,y) int x, y; {
    int dfflow;
           Default flow control. 0 = none, 1 = Xon/Xoff, ... (see FLO_xxx
           symbols in ckcdeb.h)
-          Set by Group E module. Used by [103]ckcmai.c to initialize flow
+          Set by Group E module. Used by [125]ckcmai.c to initialize flow
           control variable.
 
    int dfloc;
@@ -1041,13 +1076,13 @@ foo(x,y) int x, y; {
           places in the user interface.
 
    int dfprty;
-          Default parity. 0 = none, 'e' = even, 'o' = odd, 'm' = mark,
-          's' = space. Set by Group E module. Used by ckcmai.c to
-          initialize parity variable.
+          Default parity. 0 = none, 'e' = even, 'o' = odd, 'm' = mark, 's'
+          = space. Set by Group E module. Used by ckcmai.c to initialize
+          parity variable.
 
    char *dftty;
           Default communication device. Set by Group E module. Used in
-          many places. This variable should be initialized the the symbol
+          many places. This variable should be initialized the symbol
           CTTNAM, which is defined in ckcdeb.h, e.g. as "/dev/tty" for
           UNIX, "TT:" for VMS, etc. Example: char *dftty = CTTNAM;
 
@@ -1081,22 +1116,21 @@ foo(x,y) int x, y; {
    int ttyfd;
           File descriptor of the communication device. -1 if there is no
           open or usable connection, including when C-Kermit is in remote
-          mode. Since this is not implemented everywhere, references to
-          it are in #ifdef CK_TTYFD..#endif.
+          mode. Since this is not implemented everywhere, references to it
+          are in #ifdef CK_TTYFD..#endif.
 
-   [ [104]Contents ] [ [105]C-Kermit ] [ [106]Kermit Home ]
-    ________________________________________________________________________
+   [ [126]Contents ] [ [127]C-Kermit ] [ [128]Kermit Home ]
 
-  4.E.2. Functions
+4.E.2. Functions
 
    These are divided into three categories: file-related functions (B.1),
    communication functions (B.2), and miscellaneous functions (B.3).
 
-    4.E.2.1. File-Related Functions
+4.E.2.1. File-Related Functions
 
    In most implementations, these are collected together into a module
-   called ck?fio.c, where ? = "u" ([107]ckutio.c for Unix), "v"
-   ([108]ckvtio.c for VMS), [109]etc. To be totally platform-independent,
+   called ck?fio.c, where ? = "u" ([129]ckutio.c for Unix), "v"
+   ([130]ckvtio.c for VMS), [131]etc. To be totally platform-independent,
    C-Kermit maintains its own file numbers, and provides the functions
    described in this section to deal with the files associated with them.
    The file numbers are referred to symbolically, and are defined as
@@ -1113,11 +1147,11 @@ foo(x,y) int x, y; {
   #define ZSYSFN      8           /* Input from a system function (pipe) */
   #define ZRFILE      9           /* Local file for READ command */  (NEW)
   #define ZWFILE     10           /* Local file for WRITE command */ (NEW)
-  #define ZMFILE     11           /* Auxilliary file for internal use */ (NEW)
+  #define ZMFILE     11           /* Auxiliary file for internal use */ (NEW)
   #define ZNFILS     12           /* How many defined file numbers */
 
-   In the descriptions below, fn refers to a filename, and n refers to
-   one of these file numbers. Functions are of type int unless otherwise
+   In the descriptions below, fn refers to a filename, and n refers to one
+   of these file numbers. Functions are of type int unless otherwise
    noted, and are listed mostly alphabetically.
 
    int
@@ -1138,12 +1172,12 @@ foo(x,y) int x, y; {
    int
           isdir(string) char *string;
           Checks if the string is the name of an existing directory. The
-          idea is to check whether the string can be "cd'd" to, so in
-          some cases (e.g. DOS) it might also indicate any file
-          structured device, such as a disk drive (like A:). Other
-          nonzero returns indicate system-dependent information; e.g. in
-          VMS isdir("[.FOO]") returns 1 but isdir("FOO.DIR;1") returns 2
-          to indicate the directory-file name is in a format that needs
+          idea is to check whether the string can be "cd'd" to, so in some
+          cases (e.g. DOS) it might also indicate any file structured
+          device, such as a disk drive (like A:). Other nonzero returns
+          indicate system-dependent information; e.g. in VMS
+          isdir("[.FOO]") returns 1 but isdir("FOO.DIR;1") returns 2 to
+          indicate the directory-file name is in a format that needs
           conversion before it can be combined with a filename. Returns:
             0: not a directory (including any kind of error)
             1: it is an existing directory
@@ -1151,28 +1185,28 @@ foo(x,y) int x, y; {
    char *
           zfcdat(name) char *name;
           Returns modification (preferably, otherwise creation) date/time
-          of file whose name is given in the argument string. Return
-          value is a pointer to a string of the form yyyymmdd hh:mm:ss,
-          for example 19931231 23:59:59, which represents the local time
-          (no timezone or daylight savings time finagling required).
-          Returns the null string ("") on failure. The text pointed to by
-          the string pointer might be in a static buffer, and so should
-          be copied to a safe place by the caller before any subsequent
-          calls to this function.
+          of file whose name is given in the argument string. Return value
+          is a pointer to a string of the form yyyymmdd hh:mm:ss, for
+          example 19931231 23:59:59, which represents the local time (no
+          timezone or daylight savings time finagling required). Returns
+          the null string ("") on failure. The text pointed to by the
+          string pointer might be in a static buffer, and so should be
+          copied to a safe place by the caller before any subsequent calls
+          to this function.
 
    struct zfnfp *
           zfnqfp(fn, buflen, buf) char * fn; int buflen; char * buf;
           Given the filename fn, the corresponding fully qualified,
-          absolute filename is placed into the buffer buf, whose length
-          is buflen. On failure returns a NULL pointer. On success
-          returns a pointer to a struct zfnfp containing pointers to the
-          full pathname and to just the filename, and an int giving the
-          length of the full pathname. All references to this function in
+          absolute filename is placed into the buffer buf, whose length is
+          buflen. On failure returns a NULL pointer. On success returns a
+          pointer to a struct zfnfp containing pointers to the full
+          pathname and to just the filename, and an int giving the length
+          of the full pathname. All references to this function in
           mainline code must be protected by #ifdef ZFNQFP..#endif,
           because it is not present in all of the ck*fio.c modules. So if
           you implement this function in a version that did not have it
-          before, be sure to add #define ZFNQFP in the appropriate spot
-          in ckcdeb.h or in the build-procedure CFLAGS.
+          before, be sure to add #define ZFNQFP in the appropriate spot in
+          ckcdeb.h or in the build-procedure CFLAGS.
 
    int
           zcmpfn(s1,s2) char * s2, * s2;
@@ -1200,8 +1234,8 @@ foo(x,y) int x, y; {
 
    int
           zchdir(dirnam) char *dirnam;
-          Changes current or default directory to the one given in
-          dirnam. Returns:
+          Changes current or default directory to the one given in dirnam.
+          Returns:
             0: On failure.
             1: on success.
 
@@ -1210,8 +1244,7 @@ foo(x,y) int x, y; {
           Check to see if file with name fn is a regular, readable,
           existing file, suitable for Kermit to send -- not a directory,
           not a symbolic link, etc. Returns:
-           -3: if file exists but is not accessible (e.g.
-          read-protected);
+           -3: if file exists but is not accessible (e.g. read-protected);
            -2: if file exists but is not of a readable type (e.g. a
           directory);
            -1: on error (e.g. file does not exist, or fn is garbage);
@@ -1229,10 +1262,9 @@ foo(x,y) int x, y; {
           zgetfs(fn) char *fn;
           Gets the size of the given file, regardless of accessibility.
           Used for directory listings. Unlike zchki(), should return the
-          size of any kind of file, even a directory. zgetfs() also
-          should serve as a mini "get file info" function that can be
-          used until we design a better one, by also setting some global
-          variables:
+          size of any kind of file, even a directory. zgetfs() also should
+          serve as a mini "get file info" function that can be used until
+          we design a better one, by also setting some global variables:
             int zgfs_link   = 1/0 = file is (not) a symbolic link.
             int zgfs_dir    = 1/0 = file is (not) a directory.
             char linkname[] = if zgfs_link != 0, name of file link points
@@ -1251,11 +1283,11 @@ foo(x,y) int x, y; {
    int
           zchkspa(fn,len) char *f; long len;
           Checks to see if there is sufficient space to store the file
-          named fn, which is len bytes long. If you can't write a
-          function to do this, then just make a dummy that always returns
-          1; higher level code will recover from disk-full errors. The
-          receiving Kermit uses this function to refuse an incoming file
-          based on its size, via the attribute mechanism. Returns:
+          named fn, which is len bytes long. If you can't write a function
+          to do this, then just make a dummy that always returns 1; higher
+          level code will recover from disk-full errors. The receiving
+          Kermit uses this function to refuse an incoming file based on
+          its size, via the attribute mechanism. Returns:
            -1: on error.
             0: if there is not enough space.
             1: if there is enough space.
@@ -1296,9 +1328,9 @@ foo(x,y) int x, y; {
           Returns a pointer to the system-dependent symbolic
           permissions/protection string for file f, or NULL upon failure.
           Used if CK_PERMS is defined. Example: In UNIX zgperm(f) might
-          return "100770", but ziperm() might return "-rwxrwx---". In
-          VMS, zgperm() would return a hexadecimal string, but ziperm()
-          would return something like "(RWED,RWED,RE,)".
+          return "100770", but ziperm() might return "-rwxrwx---". In VMS,
+          zgperm() would return a hexadecimal string, but ziperm() would
+          return something like "(RWED,RWED,RE,)".
 
    char *
           zgtdir()
@@ -1313,19 +1345,19 @@ foo(x,y) int x, y; {
    char *
           zhome()
           Returns a pointer to a string containing the user's home
-          directory, or NULL upon error. Should be formatted like
-          zgtdir() (q.v.).
+          directory, or NULL upon error. Should be formatted like zgtdir()
+          (q.v.).
 
    int
           zinfill()
           Fill buffer from input file. This function is used by the macro
-          zminchar(), which is defined in ckcker.h. zminchar() manages
-          its own buffer, and calls zinfill() to fill it whenever it
-          becomes empty. It is used only for sending files, and reads
-          characters only from file number ZIFILE. zinfill() returns -1
-          upon end of file, -2 upon fatal error, and -3 upon timeout
-          (e.g. when reading from a pipe); otherwise it returns the first
-          character from the buffer it just read.
+          zminchar(), which is defined in ckcker.h. zminchar() manages its
+          own buffer, and calls zinfill() to fill it whenever it becomes
+          empty. It is used only for sending files, and reads characters
+          only from file number ZIFILE. zinfill() returns -1 upon end of
+          file, -2 upon fatal error, and -3 upon timeout (e.g. when
+          reading from a pipe); otherwise it returns the first character
+          from the buffer it just read.
 
    int
           zkself()
@@ -1373,15 +1405,15 @@ foo(x,y) int x, y; {
           Local-To-Remote filename translation. OBSOLETE: replaced by
           nzltor() (q.v.). Translates the local filename fn into a format
           suitable for transmission to an arbitrary type of computer, and
-          copies the result into the buffer pointed to by fn2.
-          Translation may involve (a) stripping the device and/or
-          directory/path name, (b) converting lowercase to uppercase, (c)
-          removing spaces and strange characters, or converting them to
-          some innocuous alphabetic character like X, (d) discarding or
-          converting extra periods (there should not be more than one).
-          Does its best. Returns no value. name2 is a pointer to a
-          buffer, furnished by the caller, into which zltor() writes the
-          resulting name. No length checking is done.
+          copies the result into the buffer pointed to by fn2. Translation
+          may involve (a) stripping the device and/or directory/path name,
+          (b) converting lowercase to uppercase, (c) removing spaces and
+          strange characters, or converting them to some innocuous
+          alphabetic character like X, (d) discarding or converting extra
+          periods (there should not be more than one). Does its best.
+          Returns no value. name2 is a pointer to a buffer, furnished by
+          the caller, into which zltor() writes the resulting name. No
+          length checking is done.
 
    #ifdef NZLTOR
           VOID
@@ -1396,15 +1428,15 @@ foo(x,y) int x, y; {
             PATH_REL: The relative pathname is to be included
             PATH_ABS: The full pathname is to be included
 
-          After handling pathnames, conversion is done to the result as
-          in the zltor() description if convert != 0; if relative or
-          absolute pathnames are included, they are converted to UNIX
-          format, i.e. with slash (/) as the directory separator. The max
-          parameter specifies the maximum size of fn2. If convert > 0,
-          the regular conversions are done; if convert < 0, minimal
-          conversions are done (we skip uppercasing the letters, we allow
-          more than one period, etc; this can be used when we know our
-          partner is UNIX or similar).
+          After handling pathnames, conversion is done to the result as in
+          the zltor() description if convert != 0; if relative or absolute
+          pathnames are included, they are converted to UNIX format, i.e.
+          with slash (/) as the directory separator. The max parameter
+          specifies the maximum size of fn2. If convert > 0, the regular
+          conversions are done; if convert < 0, minimal conversions are
+          done (we skip uppercasing the letters, we allow more than one
+          period, etc; this can be used when we know our partner is UNIX
+          or similar).
 
    #endif /* NZLTOR */
 
@@ -1433,11 +1465,12 @@ foo(x,y) int x, y; {
       znext(buf);
       printf("%s\n", buf);
   }
+
             should print all the file names; no more, no less.
-         2. In UNIX, DOS, OS-9, etc, where directories contain entries
-            for themselves (.) and the superior directory (..), these
-            should NOT be included in the list under any circumstances,
-            including when ZX_MATCHDOT is set.
+         2. In UNIX, DOS, OS-9, etc, where directories contain entries for
+            themselves (.) and the superior directory (..), these should
+            NOT be included in the list under any circumstances, including
+            when ZX_MATCHDOT is set.
          3. Additional option bits might be added in the future, e.g. for
             sorting (sort by date/name/size, reverse/ascending, etc).
             Currently this is done only in higher level code (through a
@@ -1466,13 +1499,12 @@ foo(x,y) int x, y; {
 
    int
           zrmdir(path) char *path;
-          Attempts to remove the given directory. Returns 0 on success,
-          -1 on failure. The detailed semantics are open -- should it
-          fail if the directory contains any files or subdirectories,
-          etc. It is probably best for this routine to behave in whatever
-          manner is customary on the underlying platform; e.g. in UNIX,
-          VMS, DOS, etc, where directories can not be removed unless they
-          are empty.
+          Attempts to remove the given directory. Returns 0 on success, -1
+          on failure. The detailed semantics are open -- should it fail if
+          the directory contains any files or subdirectories, etc. It is
+          probably best for this routine to behave in whatever manner is
+          customary on the underlying platform; e.g. in UNIX, VMS, DOS,
+          etc, where directories can not be removed unless they are empty.
 
    VOID
           znewn(fn,s) char *fn, **s;
@@ -1481,23 +1513,23 @@ foo(x,y) int x, y; {
           same as fn; Otherwise, it's different. this function does its
           best, returns no value. New name is created in caller's space.
           Call like this: znewn(old,&new);. The second parameter is a
-          pointer to the new name. This pointer is set by znewn() to
-          point to a static string in its own space, so be sure to the
-          result to a safe place before calling this function again.
+          pointer to the new name. This pointer is set by znewn() to point
+          to a static string in its own space, so be sure to the result to
+          a safe place before calling this function again.
 
    int
           znext(fn) char *fn;
           Copies the next file name from a file list created by zxpand()
-          into the string pointed to by fn (see zxpand). If no more
-          files, then the null string is placed there. Returns 0 if there
-          are no more filenames, with 0th element the array pointed to by
-          fn set to NUL. If there is a filename, it is stored in the
-          array pointed to by fn and a positive number is returned. NOTE:
-          This is a change from earlier definitions of this function
-          (pre-1999), which returned the number of files remaining; thus
-          0 was the return value when returning the final file. However,
-          no mainline code ever depended on the return value, so this
-          change should be safe.
+          into the string pointed to by fn (see zxpand). If no more files,
+          then the null string is placed there. Returns 0 if there are no
+          more filenames, with 0th element the array pointed to by fn set
+          to NUL. If there is a filename, it is stored in the array
+          pointed to by fn and a positive number is returned. NOTE: This
+          is a change from earlier definitions of this function
+          (pre-1999), which returned the number of files remaining; thus 0
+          was the return value when returning the final file. However, no
+          mainline code ever depended on the return value, so this change
+          should be safe.
 
    int
           zopeni(n,fn) int n; char *fn;
@@ -1513,26 +1545,26 @@ foo(x,y) int x, y; {
           containing various information about the file, including its
           size, creation date, and so forth. This function should attempt
           to honor as many of these as possible. fcb is a "file control
-          block" in the traditional sense, defined in ckcdeb.h,
-          containing information relevant to complicated file systems
-          like VMS (RMS), IBM MVS, etc, like blocksize, record length,
-          organization, record format, carriage control, etc. Returns:
+          block" in the traditional sense, defined in ckcdeb.h, containing
+          information relevant to complicated file systems like VMS (RMS),
+          IBM MVS, etc, like blocksize, record length, organization,
+          record format, carriage control, etc. Returns:
             0: on failure.
             1: on success.
 
    int
           zoutdump()
           Dumps a file output buffer. Used with the macro zmchout()
-          defined in ckcker.h. Used only with file number ZOFILE, i.e.
-          the file that is being received by Kermit during file transfer.
+          defined in ckcker.h. Used only with file number ZOFILE, i.e. the
+          file that is being received by Kermit during file transfer.
           Returns:
            -1: on failure.
             0: on success.
 
    int
           zprint(p,fn) char *p, *f;
-          Prints the file with name fn on a local printer, with options
-          p. Returns:
+          Prints the file with name fn on a local printer, with options p.
+          Returns:
             0: on success
             3: if file sent to printer but can't be deleted
            -3: if file can't be printed
@@ -1540,10 +1572,10 @@ foo(x,y) int x, y; {
    int
           zrename(fn,fn2) char *fn, *fn2;
           Changes the name of file fn to fn2. If fn2 is the name of an
-          existing directory, or a file-structured device, then file fn
-          is moved to that directory or device, keeping its original
-          name. If fn2 lacks a directory separator when passed to this
-          function, an appropriate one is supplied. Returns:
+          existing directory, or a file-structured device, then file fn is
+          moved to that directory or device, keeping its original name. If
+          fn2 lacks a directory separator when passed to this function, an
+          appropriate one is supplied. Returns:
            -1: on failure.
             0: on success.
 
@@ -1587,32 +1619,31 @@ foo(x,y) int x, y; {
 
    int
           zsattr(xx) struct zattr *xx;
-          Fills in a Kermit file attribute structure for the file which
-          is to be sent, namely the currently open ZIFILE. Note that this
-          is not a very good design, but we're stuck with it. Callers
-          must ensure that zsattr() is called only on real files, not on
-          pipes, internally generated file-like objects such as server
-          REMOTE command responses, etc. Returns:
+          Fills in a Kermit file attribute structure for the file which is
+          to be sent, namely the currently open ZIFILE. Note that this is
+          not a very good design, but we're stuck with it. Callers must
+          ensure that zsattr() is called only on real files, not on pipes,
+          internally generated file-like objects such as server REMOTE
+          command responses, etc. Returns:
            -1: on failure.
             0: on success with the structure filled in.
           If any string member is null, it should be ignored by the
           caller.
-          If any numeric member is -1, it should be ignored by the
-          caller.
+          If any numeric member is -1, it should be ignored by the caller.
 
    int
           zshcmd(s) char *s;
           s contains to pointer to a command to be executed by the host
           computer's shell, command parser, or operating system. If the
           system allows the user to choose from a variety of command
-          processors (shells), then this function should employ the
-          user's preferred shell. If possible, the user's job
-          (environment, process, etc) should be set up to catch keyboard
-          interruption signals to allow the user to halt the system
-          command and return to Kermit. The command must run in ordinary,
-          unprivileged user mode. If possible, this function should
-          return -1 on failure to start the command, or else it should
-          return 1 if the command succeeded and 0 if it failed.
+          processors (shells), then this function should employ the user's
+          preferred shell. If possible, the user's job (environment,
+          process, etc) should be set up to catch keyboard interruption
+          signals to allow the user to halt the system command and return
+          to Kermit. The command must run in ordinary, unprivileged user
+          mode. If possible, this function should return -1 on failure to
+          start the command, or else it should return 1 if the command
+          succeeded and 0 if it failed.
 
    int
           pexitstatus
@@ -1624,24 +1655,24 @@ foo(x,y) int x, y; {
           s contains to pointer to a command to be executed by the host
           computer's shell, command parser, or operating system. If the
           system allows the user to choose from a variety of command
-          processors (shells), then this function should employ the
-          system standard shell (e.g. /bin/sh for Unix), so that the
-          results will always be the same for everybody. If possible, the
-          user's job (environment, process, etc) should be set up to
-          catch keyboard interruption signals to allow the user to halt
-          the system command and return to Kermit. The command must run
-          in ordinary, unprivileged user mode. If possible, this function
-          should return -1 on failure to start the command, or else it
-          should return 1 if the command succeeded and 0 if it failed.
+          processors (shells), then this function should employ the system
+          standard shell (e.g. /bin/sh for Unix), so that the results will
+          always be the same for everybody. If possible, the user's job
+          (environment, process, etc) should be set up to catch keyboard
+          interruption signals to allow the user to halt the system
+          command and return to Kermit. The command must run in ordinary,
+          unprivileged user mode. If possible, this function should return
+          -1 on failure to start the command, or else it should return 1
+          if the command succeeded and 0 if it failed.
 
    VOID
           z_exec(s,args) char * s; char * args[];
-          This one executes the command s (which is searched for using
-          the system's normal searching mechanism, such as PATH in UNIX),
-          with the given argument vector, which follows the conventions
-          of UNIX argv[]: the name of the command pointed to by element
-          0, the first arg by element 1, and so on. A null args[] pointer
-          indicates the end of the arugment list. All open files must
+          This one executes the command s (which is searched for using the
+          system's normal searching mechanism, such as PATH in UNIX), with
+          the given argument vector, which follows the conventions of UNIX
+          argv[]: the name of the command pointed to by element 0, the
+          first arg by element 1, and so on. A null args[] pointer
+          indicates the end of the argument list. All open files must
           remain open so the exec'd process can use them. Returns only if
           unsuccessful.
 
@@ -1670,8 +1701,8 @@ foo(x,y) int x, y; {
 
    int
           zsoutx(n,s,x) int n, x; char *s;
-          Writes exactly x characters from string s to file number n. If
-          s has fewer than x characters, then the entire string s is
+          Writes exactly x characters from string s to file number n. If s
+          has fewer than x characters, then the entire string s is
           written. Returns:
            -1: on failure.
           >= 0: on success, the number of characters actually written.
@@ -1679,15 +1710,15 @@ foo(x,y) int x, y; {
    int
           zstime(fn,yy,x) char *fn; struct zattr *yy; int x;
           Sets the creation date (and other attributes) of an existing
-          file, or compares a file's creation date with a given date.
-          Call with:
+          file, or compares a file's creation date with a given date. Call
+          with:
 
    fn: pointer to name of existing file.
    yy: Pointer to a Kermit file attribute structure in which yy->date.val
    is a date of the form yyyymmdd hh:mm:ss, e.g. 19900208 13:00:00, which
    is to be used for setting or comparing the file date. Other attributes
    in the struct can also be set, such as the protection/permission (See
-   [110]Appendix I), when it makes sense (e.g. "yy->lprotect.val" can be
+   [132]Appendix I), when it makes sense (e.g. "yy->lprotect.val" can be
    set if the remote system ID matches the local one).
     x: A function code: 0 means to set the file's creation date as given.
    1 means compare the date from the yy struct with the file's date.
@@ -1695,17 +1726,17 @@ foo(x,y) int x, y; {
           Returns:
            -1: on any kind of error.
             0: if x is 0 and the file date was set successfully.
-            0: if x is 1 and date from attribute structure > file
-          creation date.
+            0: if x is 1 and date from attribute structure > file creation
+          date.
             1: if x is 1 and date from attribute structure <= file
           creation date.
 
    VOID
           zstrip(name,name2) char *name, **name2;
           Strips pathname from filename "name". Constructs the resulting
-          string in a static buffer in its own space and returns a
-          pointer to it in name2. Also strips device name, file version
-          numbers, and other "non-name" material.
+          string in a static buffer in its own space and returns a pointer
+          to it in name2. Also strips device name, file version numbers,
+          and other "non-name" material.
 
    int
           zxcmd(n,s) char *s;
@@ -1725,11 +1756,10 @@ foo(x,y) int x, y; {
    int
           zxrewind()
           Returns the number of files returned by the most recent
-          nzxpand() call, and resets the list to the beginning so the
-          next znext() call returns the first file. Returns -1 if zxpand
-          has not yet been called. If this function is available,
-          ZXREWIND should be defined; otherwise it should not be
-          referenced.
+          nzxpand() call, and resets the list to the beginning so the next
+          znext() call returns the first file. Returns -1 if zxpand has
+          not yet been called. If this function is available, ZXREWIND
+          should be defined; otherwise it should not be referenced.
 
    #endif /* ZXREWIND */
 
@@ -1742,12 +1772,12 @@ foo(x,y) int x, y; {
           in ordinary unprivileged user mode. If possible, xsystem()
           returns the return code of the command that was executed.
 
-    4.E.2.2. IKSD Variables and Functions
+4.E.2.2. IKSD Variables and Functions
 
    These must be implemented in any C-Kermit version that is to be
-   installed as an Internet Kermit Service Daemon (IKSD). IKSD is
-   expected to be started by the Internet Daemon (e.g. inetd) with its
-   standard i/o redirected to the incoming connection.
+   installed as an Internet Kermit Service Daemon (IKSD). IKSD is expected
+   to be started by the Internet Daemon (e.g. inetd) with its standard i/o
+   redirected to the incoming connection.
 
    int ckxanon;
           Nonzero if anonymous logins allowed.
@@ -1771,19 +1801,19 @@ foo(x,y) int x, y; {
    int
           zvuser(name) char * name;
           Verifies that user "name" exists and is allowed to log in. If
-          the name is "ftp" or "anonymous" and ckxanon != 0, a guest
-          login is set up. Returns 0 if user not allowed to log in,
-          nonzero if user may log in.
+          the name is "ftp" or "anonymous" and ckxanon != 0, a guest login
+          is set up. Returns 0 if user not allowed to log in, nonzero if
+          user may log in.
 
    int
           zvpass(string) char * string;
           Verifies password of the user from the most recent zvuser()
           call. Returns nonzero if password is valid for user, 0 if it
           isn't. Makes any appropriate system log entries (IKSD logins,
-          failed login attempts, etc). If password is valid, logs the
-          user in as herself (if real user), or sets up restricted
-          anonymous access if user is guest (e.g. changes file-system
-          root to anonroot and sets isguest = 1).
+          failed login attempts, etc). If password is valid, logs the user
+          in as herself (if real user), or sets up restricted anonymous
+          access if user is guest (e.g. changes file-system root to
+          anonroot and sets isguest = 1).
 
    VOID
           zsyslog()
@@ -1794,20 +1824,20 @@ foo(x,y) int x, y; {
           Terminates an IKSD session. In most cases this is simply a
           wrapper for exit() or doexit(), with some system logging added.
 
-    4.E.2.3. Privilege Functions
+4.E.2.3. Privilege Functions
 
    These functions are used by C-Kermit to adapt itself to operating
    systems where the program can be made to run in a "privileged" mode,
-   e.g. setuid or setgid in Unix. C-Kermit should NOT read and write
-   files or start subprocesses as a privileged program. This would
-   present a serious threat to system security. The security package has
-   been installed to prevent such security breaches by turning off the
+   e.g. setuid or setgid in Unix. C-Kermit should NOT read and write files
+   or start subprocesses as a privileged program. This would present a
+   serious threat to system security. The security package has been
+   installed to prevent such security breaches by turning off the
    program's special privileges at all times except when they are needed.
 
    In UNIX, the only need Kermit has for privileged status is access to
    the UUCP lockfile directory, in order to read, create, and destroy
    lockfiles, and to open communication devices that are normally
-   protected against the user (see the [111]Unix C-Kermit Installation
+   protected against the user (see the [133]Unix C-Kermit Installation
    Instructions for discussion). Therefore, privileges should only be
    enabled for these operations and disabled at all other times. This
    relieves the programmer of the responsibility of putting expensive and
@@ -1832,8 +1862,8 @@ foo(x,y) int x, y; {
 
    int
           priv_on()
-          If the program is not privileged, this function does nothing.
-          If the program is privileged, this function returns it to
+          If the program is not privileged, this function does nothing. If
+          the program is privileged, this function returns it to
           privileged status. priv_ini() must have been called first.
           Returns:
             0 on success
@@ -1857,42 +1887,41 @@ foo(x,y) int x, y; {
           priv_chk()
           Attempts to turns privileges off in such a way that they can be
           turned on again later. Then checks to make sure that they were
-          really turned off. If they were not really turned off, then
-          they are cancelled permanently. Returns:
+          really turned off. If they were not really turned off, then they
+          are canceled permanently. Returns:
             0 on success
             nonzero on failure
 
-    4.E.2.4. Console-Related Functions
+4.E.2.4. Console-Related Functions
 
    These relate to the program's "console", or controlling terminal, i.e.
-   the terminal that the user is logged in on and types commands at, or
-   on a PC or workstation, the actual keyboard and screen.
+   the terminal that the user is logged in on and types commands at, or on
+   a PC or workstation, the actual keyboard and screen.
 
    int
           conbin(esc) char esc;
           Puts the console into "binary" mode, so that Kermit's command
           parser can control echoing and other treatment of characters
           that the user types. esc is the character that will be used to
-          get Kermit's attention during packet mode; puts this in a
-          global place. Sets the ckxech variable. Returns:
+          get Kermit's attention during packet mode; puts this in a global
+          place. Sets the ckxech variable. Returns:
            -1: on error.
             0: on success.
 
    int
           concb(esc) char esc;
-          Put console in "cbreak" (single-character wakeup) mode. That
-          is, ensure that each console character is available to the
-          program immediately when the user types it. Otherwise just like
+          Put console in "cbreak" (single-character wakeup) mode. That is,
+          ensure that each console character is available to the program
+          immediately when the user types it. Otherwise just like
           conbin(). Returns:
            -1: on error.
             0: on success.
 
    int
           conchk()
-          Returns a number, 0 or greater, the number of characters
-          waiting to be read from the console, i.e. the number of
-          characters that the user has typed that have not been read yet
-          by Kermit.
+          Returns a number, 0 or greater, the number of characters waiting
+          to be read from the console, i.e. the number of characters that
+          the user has typed that have not been read yet by Kermit.
 
    long
           congspd();
@@ -1902,13 +1931,13 @@ foo(x,y) int x, y; {
    int
           congks(timo) int timo;
           Get Keyboard Scancode. Reads a keyboard scan code from the
-          physical console keyboard. If the timo parameter is greater
-          than zero, then times out and returns -2 if no character
-          appears within the given number of seconds. Upon any other kind
-          of error, returns -1. Upon success returns a scan code, which
-          may be any positive integer. For situations where scan codes
-          cannot be read (for example, when an ASCII terminal is used as
-          the job's controlling terminal), this function is identical to
+          physical console keyboard. If the timo parameter is greater than
+          zero, then times out and returns -2 if no character appears
+          within the given number of seconds. Upon any other kind of
+          error, returns -1. Upon success returns a scan code, which may
+          be any positive integer. For situations where scan codes cannot
+          be read (for example, when an ASCII terminal is used as the
+          job's controlling terminal), this function is identical to
           coninc(), i.e. it returns an 8-bit character value. congks() is
           for use with workstations whose keyboards have Alternate,
           Command, Option, and similar modifier keys, and Function keys
@@ -1917,18 +1946,18 @@ foo(x,y) int x, y; {
    int
           congm()
           Console get modes. Gets the current console terminal modes and
-          saves them so that conres() can restore them later. Returns 1
-          if it got the modes OK, 0 if it did nothing (e.g. because
-          Kermit is not connected with any terminal), -1 on error.
+          saves them so that conres() can restore them later. Returns 1 if
+          it got the modes OK, 0 if it did nothing (e.g. because Kermit is
+          not connected with any terminal), -1 on error.
 
    int
           coninc(timo) int timo;
           Console Input Character. Reads a character from the console. If
-          the timo parameter is greater than zero, then coninc() times
-          out and returns -2 if no character appears within the given
-          number of seconds. Upon any other kind of error, returns -1.
-          Upon success, returns the character itself, with a value in the
-          range 0-255 decimal.
+          the timo parameter is greater than zero, then coninc() times out
+          and returns -2 if no character appears within the given number
+          of seconds. Upon any other kind of error, returns -1. Upon
+          success, returns the character itself, with a value in the range
+          0-255 decimal.
 
    VOID
           conint(f,s) SIGTYP (*f)(), (*s)();
@@ -1938,8 +1967,8 @@ foo(x,y) int x, y; {
           the address of the function that suspends the job. Sets the
           global variable "backgrd" to zero if Kermit is running in the
           foreground, and to nonzero if Kermit is running in the
-          background. See ckcdeb.h for the definition of SIGTYP. No
-          return value.
+          background. See ckcdeb.h for the definition of SIGTYP. No return
+          value.
 
    VOID
           connoi()
@@ -1965,8 +1994,8 @@ foo(x,y) int x, y; {
           conoll(s) char *s;
           Writes string s to the console, followed by the necessary line
           termination characters to put the console cursor at the
-          beginning of the next line. Returns -1 on error, 0 or greater
-          on success.
+          beginning of the next line. Returns -1 on error, 0 or greater on
+          success.
 
    int
           conres()
@@ -1982,47 +2011,46 @@ foo(x,y) int x, y; {
           conkbg();
           Returns a pointer to the designator of the console keyboard
           type. For example, on a PC, this function would return "88",
-          "101", etc. Upon failure, returns a pointer to the empty
-          string.
+          "101", etc. Upon failure, returns a pointer to the empty string.
 
-    4.E.2.5. Communications Functions
+4.E.2.5. Communications Functions
 
    The communication device is the device used for terminal emulation and
-   file transfer. It may or may not be the same device as the console,
-   and it may or may not be a terminal (serial-port) device; it could
-   also be a network connection. For brevity, the communication device is
-   referred to here as the "tty". When the communication device is the
-   same as the console device, Kermit is said to be in remote mode. When
-   the two devices are different, Kermit is in local mode.
+   file transfer. It may or may not be the same device as the console, and
+   it may or may not be a terminal (serial-port) device; it could also be
+   a network connection. For brevity, the communication device is referred
+   to here as the "tty". When the communication device is the same as the
+   console device, Kermit is said to be in remote mode. When the two
+   devices are different, Kermit is in local mode.
 
    int
           ttchk()
           Returns the number of characters that have arrived at the
           communication device but have not yet been read by ttinc(),
-          ttinl(), and friends. If communication input is buffered (and
-          it should be), this is the sum of the number of unread
-          characters in Kermit's buffer PLUS the number of unread
-          characters in the operating system's internal buffer. The call
-          must be nondestructive and nonblocking, and as inexpensive as
-          possible. Returns:
+          ttinl(), and friends. If communication input is buffered (and it
+          should be), this is the sum of the number of unread characters
+          in Kermit's buffer PLUS the number of unread characters in the
+          operating system's internal buffer. The call must be
+          nondestructive and nonblocking, and as inexpensive as possible.
+          Returns:
             0: or greater on success,
             0: in case of internal error,
            -1: or less when it determines the connection has been broken,
           or there is no connection.
 
-          That is, a negative return from ttchk() should reliably
-          indicate that there is no usable connection. Furthermore,
-          ttchk() should be callable at any time to see if the connection
-          is open. When the connection is open, every effort must be made
-          to ensure that ttchk returns an accurate number of characters
-          waiting to be read, rather than just 0 (no characters) or 1 (1
-          or more characters), as would be the case when we use select().
-          This aspect of ttchk's operation is critical to successful
-          operation of sliding windows and streaming, but "nondestructive
-          buffer peeking" is an obscure operating system feature, and so
-          when it is not available, we have to do it ourselves by
-          managing our own internal buffer at a level below ttinc(),
-          ttinl(), etc, as in the UNIX version (non-FIONREAD case).
+          That is, a negative return from ttchk() should reliably indicate
+          that there is no usable connection. Furthermore, ttchk() should
+          be callable at any time to see if the connection is open. When
+          the connection is open, every effort must be made to ensure that
+          ttchk returns an accurate number of characters waiting to be
+          read, rather than just 0 (no characters) or 1 (1 or more
+          characters), as would be the case when we use select(). This
+          aspect of ttchk's operation is critical to successful operation
+          of sliding windows and streaming, but "nondestructive buffer
+          peeking" is an obscure operating system feature, and so when it
+          is not available, we have to do it ourselves by managing our own
+          internal buffer at a level below ttinc(), ttinl(), etc, as in
+          the UNIX version (non-FIONREAD case).
 
           An external global variable, clsondisc, if nonzero, means that
           if a serial connection drops (carrier on-to-off transition
@@ -2032,40 +2060,39 @@ foo(x,y) int x, y; {
    int
           ttclos()
           Closes the communication device (tty or network). If there were
-          any kind of exclusive access locks connected with the tty,
-          these are released. If the tty has a modem connection, it is
-          hung up. For true tty devices, the original tty device modes
-          are restored. Returns:
+          any kind of exclusive access locks connected with the tty, these
+          are released. If the tty has a modem connection, it is hung up.
+          For true tty devices, the original tty device modes are
+          restored. Returns:
            -1: on failure.
             0: on success.
 
    int
           ttflui()
           Flush communications input buffer. If any characters have
-          arrived but have not yet been read, discard these characters.
-          If communications input is buffered by Kermit (and it should
-          be), this function flushes Kermit's buffer as well as the
-          operating system's internal input buffer. Returns:
+          arrived but have not yet been read, discard these characters. If
+          communications input is buffered by Kermit (and it should be),
+          this function flushes Kermit's buffer as well as the operating
+          system's internal input buffer. Returns:
            -1: on failure.
             0: on success.
 
    int
           ttfluo()
-          Flush tty output buffer. If any characters have been written
-          but not actually transmitted (e.g. because the system has been
+          Flush tty output buffer. If any characters have been written but
+          not actually transmitted (e.g. because the system has been
           flow-controlled), remove them from the system's output buffer.
-          (Note, this function is not actually used, but it is
-          recommended that all C-Kermit programmers add it for future
-          use, even if it is only a dummy function that returns 0
-          always.)
+          (Note, this function is not actually used, but it is recommended
+          that all C-Kermit programmers add it for future use, even if it
+          is only a dummy function that returns 0 always.)
 
    int
           ttgmdm()
-          Looks for the modem signals CTS, DSR, and CTS, and returns
-          those that are on in as its return value, in a bit mask as
-          described for ttwmdm, in which a bit is on (1) or off (0)
-          according to whether the corresponding signal is on (asserted)
-          or off (not asserted). Return values:
+          Looks for the modem signals CTS, DSR, and CTS, and returns those
+          that are on in as its return value, in a bit mask as described
+          for ttwmdm, in which a bit is on (1) or off (0) according to
+          whether the corresponding signal is on (asserted) or off (not
+          asserted). Return values:
            -3: Not implemented
            -2: if the line does not have modem control
            -1: on error
@@ -2086,17 +2113,17 @@ foo(x,y) int x, y; {
           successfully obtained. Upon success, the external global
           variables tt_rows and tt_cols are set to the number of screen
           rows and number of screen columns, respectively. As this
-          function is not implemented in all ck*tio.c modules, calls to
-          it must be wrapped in #ifdef CK_TTGWSIZ..#endif. NOTE: This
+          function is not implemented in all ck*tio.c modules, calls to it
+          must be wrapped in #ifdef CK_TTGWSIZ..#endif. NOTE: This
           function must be available to use the TELNET NAWS feature
           (Negotiate About Window Size) as well as Rlogin.
 
    int
           tthang()
           Hang up the current tty device. For real tty devices, turn off
-          DTR for about 1/3-1/2 second (or other length of time,
-          depending on the system). If the tty is really a network
-          connection, close it. Returns:
+          DTR for about 1/3-1/2 second (or other length of time, depending
+          on the system). If the tty is really a network connection, close
+          it. Returns:
            -1: on failure.
             0: if it does not even try to hang up.
             1: if it believes it hung up successfully.
@@ -2128,27 +2155,27 @@ foo(x,y) int x, y; {
           ttinl(dest,max,timo,eol,start,turn) int max,timo,turn; CHAR
           *dest, eol, start;
           ttinl() is Kermit's packet reader. Reads a packet from the
-          communications device, or up to max characters, whichever
-          occurs first. A line is a string of characters starting with
-          the start character up to and including the character given in
-          eol or until the length is exhausted, or, if turn != 0, until
-          the line turnaround character (turn) is read. If turn is 0,
-          ttinl() *should* use the packet length field to detect the end,
-          to allow for the possibility that the eol character appears
-          unprefixed in the packet data. (The turnaround character is for
-          half-duplex linemode connections.)
+          communications device, or up to max characters, whichever occurs
+          first. A line is a string of characters starting with the start
+          character up to and including the character given in eol or
+          until the length is exhausted, or, if turn != 0, until the line
+          turnaround character (turn) is read. If turn is 0, ttinl()
+          *should* use the packet length field to detect the end, to allow
+          for the possibility that the eol character appears unprefixed in
+          the packet data. (The turnaround character is for half-duplex
+          linemode connections.)
 
           If timo is greater than zero, ttinl() times out if the eol
           character is not encountered within the given number of seconds
           and returns -1.
 
-          The characters that were input are copied into "dest" with
-          their parity bits stripped if parity is not none. The first
-          character copied into dest should be the start character, and
-          the last should be the final character of the packet (the last
-          block check character). ttinl() should also absorb and discard
-          the eol and turn characters, and any other characters that are
-          waiting to be read, up until the next start character, so that
+          The characters that were input are copied into "dest" with their
+          parity bits stripped if parity is not none. The first character
+          copied into dest should be the start character, and the last
+          should be the final character of the packet (the last block
+          check character). ttinl() should also absorb and discard the eol
+          and turn characters, and any other characters that are waiting
+          to be read, up until the next start character, so that
           subsequent calls to ttchk() will not succeed simply because
           there are some terminators still sitting in the buffer that
           ttinl() didn't read. This operation, if performed, MUST NOT
@@ -2156,8 +2183,8 @@ foo(x,y) int x, y; {
           way, don't do it).
 
           On success, ttinl() returns the number of characters read.
-          Optionally, ttinl() can sense the parity of incoming packets.
-          If it does this, then it should set the global variable ttprty
+          Optionally, ttinl() can sense the parity of incoming packets. If
+          it does this, then it should set the global variable ttprty
           accordingly. ttinl() should be coded to be as efficient as
           possible, since it is at the "inner loop" of packet reception.
           ttinl() returns:
@@ -2177,13 +2204,12 @@ foo(x,y) int x, y; {
           actually written to the tty (0 or 1). This function should only
           be used for interactive, character-mode operations, like
           terminal connection, script execution, dialer i/o, where the
-          overhead of the signals and alarms does not create a
-          bottleneck. (THIS DESCRIPTION NEEDS IMPROVEMENT -- If the
-          operation fails within a "certain amount of time"... which
-          might be dependent on the communication method, speed, etc. In
-          particular, flow-control deadlocks must be accounted for and
-          broken out of to prevent the program from hanging indefinitely,
-          etc.)
+          overhead of the signals and alarms does not create a bottleneck.
+          (THIS DESCRIPTION NEEDS IMPROVEMENT -- If the operation fails
+          within a "certain amount of time"... which might be dependent on
+          the communication method, speed, etc. In particular,
+          flow-control deadlocks must be accounted for and broken out of
+          to prevent the program from hanging indefinitely, etc.)
 
    int
           ttol(s,n) int n; char *s;
@@ -2198,17 +2224,16 @@ foo(x,y) int x, y; {
    int
           ttopen(ttname,lcl,modem,timo) char *ttname; int *lcl, modem,
           timo;
-          Opens a tty device, if it is not already open. ttopen must
-          check to make sure the SAME device is not already open; if it
-          is, ttopen returns successfully without doing anything. If a
+          Opens a tty device, if it is not already open. ttopen must check
+          to make sure the SAME device is not already open; if it is,
+          ttopen returns successfully without doing anything. If a
           DIFFERENT device is currently open, ttopen() must call ttclos()
           to close it before opening the new one.
 
         Parameters:
 
               ttname:
-                      character string - device name or network host
-                      name.
+                      character string - device name or network host name.
 
               lcl:
                       If called with lcl < 0, sets value of lcl as
@@ -2224,17 +2249,16 @@ foo(x,y) int x, y; {
               modem:
                       Less than zero: this is the negative of the network
                       type, and ttname is a network host name. Network
-                      types (from [112]ckcnet.h:
+                      types (from [134]ckcnet.h:
 
-  NET_TCPB 1   TCP/IP Berkeley (socket)  (implemented in [113]ckutio.c)
+  NET_TCPB 1   TCP/IP Berkeley (socket)  (implemented in [135]ckutio.c)
   NET_TCPA 2   TCP/IP AT&T (streams)     (not yet implemented)
   NET_DEC  3   DECnet                    (not yet implemented)
 
                       Zero or greater: ttname is a terminal device name.
                       Zero means a direct connection (don't use modem
-                      signals). Positive means use modem signals
-                      depending on the current setting of ttcarr (see
-                      ttscarr()).
+                      signals). Positive means use modem signals depending
+                      on the current setting of ttcarr (see ttscarr()).
 
               timo:
                       > 0: number of seconds to wait for open() to return
@@ -2248,13 +2272,12 @@ foo(x,y) int x, y; {
                       requires no special action).
 
         Side effects:
-                Copies its arguments and the tty file descriptor to
-                global variables that are available to the other
-                tty-related functions, with the lcl value altered as
-                described above. Gets all parameters and settings
-                associated with the line and puts them in a global area,
-                so that they can be restored by ttres(), e.g. when the
-                device is closed.
+                Copies its arguments and the tty file descriptor to global
+                variables that are available to the other tty-related
+                functions, with the lcl value altered as described above.
+                Gets all parameters and settings associated with the line
+                and puts them in a global area, so that they can be
+                restored by ttres(), e.g. when the device is closed.
 
         Returns:
                   0: on success
@@ -2277,21 +2300,19 @@ foo(x,y) int x, y; {
                       speed.
 
               flow:
-                      if in the range 0-3, ttpkt selects the
-                      corresponding type of flow control. Currently 0 is
-                      defined as no flow control, 1 is Xon/Xoff, and no
-                      other types are defined. If (and this is a horrible
-                      hack, but it goes back many years and will be hard
-                      to eradicate) flow is 4, then the appropriate tty
-                      modes are set for modem dialing, a special case in
-                      which we talk to a modem-controlled line without
-                      requiring carrier. If flow is 5, then we require
-                      carrier.
+                      if in the range 0-3, ttpkt selects the corresponding
+                      type of flow control. Currently 0 is defined as no
+                      flow control, 1 is Xon/Xoff, and no other types are
+                      defined. If (and this is a horrible hack, but it
+                      goes back many years and will be hard to eradicate)
+                      flow is 4, then the appropriate tty modes are set
+                      for modem dialing, a special case in which we talk
+                      to a modem-controlled line without requiring
+                      carrier. If flow is 5, then we require carrier.
 
               parity:
-                      This is simply copied into a global variable so
-                      that other functions (like ttinl, ttinc, etc) can
-                      use it.
+                      This is simply copied into a global variable so that
+                      other functions (like ttinl, ttinc, etc) can use it.
 
         Side effects:
                 Copies its arguments to global variables, flushes the
@@ -2347,37 +2368,37 @@ foo(x,y) int x, y; {
 
    CAR_OFF: Ignore carrier at all times.
    CAR_ON: Require carrier at all times, except when dialing. This means,
-   for example, that ttopen() could hang forever waiting for carrier if
-   it is not present.
+   for example, that ttopen() could hang forever waiting for carrier if it
+   is not present.
    CAR_AUTO: If the modem type is zero (i.e. the connection is direct),
    this is the same as CAR_OFF. If the modem type is positive, then heed
    carrier during CONNECT (ttvt mode), but ignore it at other times
-   (packet mode, during SET LINE, etc). Compatible with pre-5A versions
-   of C-Kermit. This should be the default carrier mode.
+   (packet mode, during SET LINE, etc). Compatible with pre-5A versions of
+   C-Kermit. This should be the default carrier mode.
 
-          Kermit's DIAL command ignores the carrier setting, but
-          ttopen(), ttvt(), and ttpkt() all honor the carrier option in
-          effect at the time they are called. None of this applies to
-          remote mode (the tty device is the job's controlling terminal)
-          or to network host connections (modem type is negative).
+          Kermit's DIAL command ignores the carrier setting, but ttopen(),
+          ttvt(), and ttpkt() all honor the carrier option in effect at
+          the time they are called. None of this applies to remote mode
+          (the tty device is the job's controlling terminal) or to network
+          host connections (modem type is negative).
 
    int
           ttsndb()
           Sends a BREAK signal on the tty device. On a real tty device,
           send a real BREAK lasting approximately 275 milliseconds. If
-          this is not possible, simulate a BREAK by (for example)
-          dropping down some very low baud rate, like 50, and sending a
-          bunch of null characters. On a network connection, do the
-          appropriate network protocol for BREAK. Returns:
+          this is not possible, simulate a BREAK by (for example) dropping
+          down some very low baud rate, like 50, and sending a bunch of
+          null characters. On a network connection, do the appropriate
+          network protocol for BREAK. Returns:
            -1: on error.
             0: on success.
 
    int
           ttsndlb()
           Like ttsndb(), but sends a "Long BREAK" (approx 1.5 seconds).
-          For network connections, it is identical to ttsndb().
-          Currently, this function is used only if CK_LBRK is defined (as
-          it is for UNIX and VMS).
+          For network connections, it is identical to ttsndb(). Currently,
+          this function is used only if CK_LBRK is defined (as it is for
+          UNIX and VMS).
 
    int
           ttsspd(cps) int cps;
@@ -2386,10 +2407,10 @@ foo(x,y) int x, y; {
           characters per second, but transmission speeds are in bits per
           second. cps are used rather than bps because high speeds like
           38400 are not expressible in a 16-bit int but longs cannot be
-          used because keyword-table values are ints and not longs. If
-          the argument is 7, then the bps is 75, not 70. If the argument
-          is 888, this is a special code for 75/1200 split-speed
-          operation (75 bps out, 1200 bps in). Returns:
+          used because keyword-table values are ints and not longs. If the
+          argument is 7, then the bps is 75, not 70. If the argument is
+          888, this is a special code for 75/1200 split-speed operation
+          (75 bps out, 1200 bps in). Returns:
            -1: on error, meaning the requested speed is not valid or
           available.
           >=0: on success (don't try to use this value for anything).
@@ -2400,11 +2421,11 @@ foo(x,y) int x, y; {
           for terminal emulation. The arguments are interpreted as in
           ttpkt(). Side effects: ttvt() stores its arguments in global
           variables, and sets a flag that it has been called so that
-          subsequent calls can be ignored so long as the arguments are
-          the same as in the last effective call. Other functions, such
-          as ttopen(), ttclose(), ttres(), ttvt(), etc, that change the
-          tty device in any way must unset this flag. In UNIX Kermit,
-          this flag is called tvtflg.
+          subsequent calls can be ignored so long as the arguments are the
+          same as in the last effective call. Other functions, such as
+          ttopen(), ttclose(), ttres(), ttvt(), etc, that change the tty
+          device in any way must unset this flag. In UNIX Kermit, this
+          flag is called tvtflg.
 
    int
           ttwmdm(mdmsig,timo) int mdmsig, timo;
@@ -2425,35 +2446,35 @@ foo(x,y) int x, y; {
    int
           ttxin(n,buf) int n; CHAR *buf;
           Reads x characters from the tty device into the specified buf,
-          stripping parity if parity is not none. This call waits
-          forever, there is no timeout. This function is designed to be
-          called only when you know that at least x characters are
-          waiting to be read (as determined, for example, by ttchk()).
-          This function should use the same buffer as ttinc().
+          stripping parity if parity is not none. This call waits forever,
+          there is no timeout. This function is designed to be called only
+          when you know that at least x characters are waiting to be read
+          (as determined, for example, by ttchk()). This function should
+          use the same buffer as ttinc().
 
    int
           txbufr(timo) int timo;
           Reads characters into the internal communications input buffer.
-          timo is a timeout interval, in seconds. 0 means no timeout,
-          wait forever. Called by ttinc() (and possibly ttxin() and
-          ttinl()) when the communications input buffer is empty. The
-          buffer should be called ttxbuf[], its length is defined by the
-          symbol TXBUFL. The global variable txbufn is the number of
-          characters available to be read from ttxbuf[], and txbufp is
-          the index of the next character to be read. Should not be
-          called if txbufn > 0, in which case the buffer does not need
-          refilling. This routine returns:
+          timo is a timeout interval, in seconds. 0 means no timeout, wait
+          forever. Called by ttinc() (and possibly ttxin() and ttinl())
+          when the communications input buffer is empty. The buffer should
+          be called ttxbuf[], its length is defined by the symbol TXBUFL.
+          The global variable txbufn is the number of characters available
+          to be read from ttxbuf[], and txbufp is the index of the next
+          character to be read. Should not be called if txbufn > 0, in
+          which case the buffer does not need refilling. This routine
+          returns:
             -2: Communications disconnect
             -1: Timeout
           >=0: A character (0 - 255) On success, the first character that
-          was read, with the variables txbufn and txbufp set
-          appropriately for any remaining characters.
-          NOTE: Currently this routine is used internally only by the
-          UNIX and VMS versions. The aim is to make it available to all
+          was read, with the variables txbufn and txbufp set appropriately
+          for any remaining characters.
+          NOTE: Currently this routine is used internally only by the UNIX
+          and VMS versions. The aim is to make it available to all
           versions so there is one single coherent and efficient way of
           reading from the communications device or network.
 
-    4.E.2.6. Miscellaneous system-dependent functions
+4.E.2.6. Miscellaneous system-dependent functions
 
    VOID
           ztime(s) char **s;
@@ -2462,27 +2483,27 @@ foo(x,y) int x, y; {
           the C runtime asctime() function, like: "Sun Sep 16 13:23:45
           1973\n" so that callers of this function can extract the
           different fields. The pointer value is filled in by ztime, and
-          the data it points to is not safe, so should be copied to a
-          safe place before use. ztime() has no return value. As a side
-          effect, this routine can also fill in the following two
-          external variables (which must be defined in the
-          system-dependendent modules for each platform):
+          the data it points to is not safe, so should be copied to a safe
+          place before use. ztime() has no return value. As a side effect,
+          this routine can also fill in the following two external
+          variables (which must be defined in the system-dependent modules
+          for each platform):
             long ztusec: Fraction of seconds of clock time, microseconds.
             long ztmsec: Fraction of seconds of clock time, milliseconds.
-          If these variables are not set by zstime(), they remain at
-          their initial value of -1L.
+          If these variables are not set by zstime(), they remain at their
+          initial value of -1L.
 
    int
           gtimer()
-          Returns the current value of the elapsed time counter in
-          seconds (see rtimer), or 0 on any kind of error.
+          Returns the current value of the elapsed time counter in seconds
+          (see rtimer), or 0 on any kind of error.
 
    #ifdef GFTIMER
           CKFLOAT
           gftimer()
           Returns the current value of the elapsed time counter in
-          seconds, as a floating point number, capable of representing
-          not only whole seconds, but also the fractional part, to the
+          seconds, as a floating point number, capable of representing not
+          only whole seconds, but also the fractional part, to the
           millisecond or microsecond level, whatever precision is
           available. Requires a function to get times at subsecond
           precision, as well as floating-point support. That's why it's
@@ -2500,8 +2521,8 @@ foo(x,y) int x, y; {
    VOID
           rtimer()
           Sets the elapsed time counter to zero. If you want to time how
-          long an operation takes, call rtimer() when it starts and
-          gtimer when it ends. rtimer() has no return value.
+          long an operation takes, call rtimer() when it starts and gtimer
+          when it ends. rtimer() has no return value.
 
    #ifdef GFTIMER
           VOID
@@ -2517,8 +2538,8 @@ foo(x,y) int x, y; {
    int
           sysinit()
           Does whatever needs doing upon program start. In particular, if
-          the program is running in any kind of privileged mode, turns
-          off the privileges (see priv_ini()). Returns:
+          the program is running in any kind of privileged mode, turns off
+          the privileges (see priv_ini()). Returns:
            -1: on error.
             0: on success.
 
@@ -2530,27 +2551,26 @@ foo(x,y) int x, y; {
 
    int
           psuspend()
-          Suspends the Kermit process, puts it in the background so it
-          can be continued ("foregrounded") later. Returns:
+          Suspends the Kermit process, puts it in the background so it can
+          be continued ("foregrounded") later. Returns:
            -1: if this function is not supported.
             0: on success.
 
-   [ [114]Contents ] [ [115]C-Kermit ] [ [116]Kermit Home ]
-    ________________________________________________________________________
+   [ [136]Contents ] [ [137]C-Kermit ] [ [138]Kermit Home ]
 
-  4.F. Group F: Network Support
+4.F. Group F: Network Support
 
    As of version 5A, C-Kermit includes support for several networks.
    Originally, this was just worked into the ttopen(), ttclos(), ttinc(),
-   ttinl(), and similar routines in [117]ckutio.c. But this made it
-   impossible to share this code with non-UNIX versions, like VMS,
-   AOS/VS, OS/2, etc. So as of edit 168, network code has been separated
-   out into its own module and header file, ckcnet.c and ckcnet.h:
+   ttinl(), and similar routines in [139]ckutio.c. But this made it
+   impossible to share this code with non-UNIX versions, like VMS, AOS/VS,
+   OS/2, etc. So as of edit 168, network code has been separated out into
+   its own module and header file, ckcnet.c and ckcnet.h:
 
-     [118]ckcnet.h: Network-related symbol definitions.
-     [119]ckcnet.c: Network i/o (TCP/IP, X.25, etc), shared by most
+     [140]ckcnet.h: Network-related symbol definitions.
+     [141]ckcnet.c: Network i/o (TCP/IP, X.25, etc), shared by most
    platforms.
-     [120]cklnet.c: Network i/o (TCP/IP, X.25, etc) specific to Stratus
+     [142]cklnet.c: Network i/o (TCP/IP, X.25, etc) specific to Stratus
    VOS.
 
    The routines and variables in these modules fall into two categories:
@@ -2567,13 +2587,13 @@ foo(x,y) int x, y; {
    functions are protocol specific and have names prefixed by a protocol
    identifier, like tn for telnet x25 for X.25.
 
-   ckcnet.h contains prototypes for all these functions, as well as
-   symbol definitions for network types, protocols, and network- and
-   protocol- specific symbols, as well as #includes for the header files
-   necessary for each network and protocol.
+   ckcnet.h contains prototypes for all these functions, as well as symbol
+   definitions for network types, protocols, and network- and protocol-
+   specific symbols, as well as #includes for the header files necessary
+   for each network and protocol.
 
-   The following functions are to be provided for networks that do not
-   use normal system i/o (open, read, write, close):
+   The following functions are to be provided for networks that do not use
+   normal system i/o (open, read, write, close):
 
    int
           netopen()
@@ -2604,8 +2624,8 @@ foo(x,y) int x, y; {
 
    int
           netinc()
-          To get a character from the network. Calling conventions same
-          as Group E ttsndbrk().
+          To get a character from the network. Calling conventions same as
+          Group E ttsndbrk().
 
    int
           nettoc()
@@ -2617,12 +2637,12 @@ foo(x,y) int x, y; {
           Send a "line" (sequence of bytes) to the network. Calling
           conventions same as Group E ttol().
 
-   Conceivably, some systems support network connections simply by
-   letting you open a device of a certain name and letting you do i/o to
-   it. Others (like the Berkeley sockets TCP/IP library on UNIX) require
-   you to open the connection in a special way, but then do normal i/o
-   (read, write). In such a case, you would use netopen(), but you would
-   not use nettinc, nettoc, etc.
+   Conceivably, some systems support network connections simply by letting
+   you open a device of a certain name and letting you do i/o to it.
+   Others (like the Berkeley sockets TCP/IP library on UNIX) require you
+   to open the connection in a special way, but then do normal i/o (read,
+   write). In such a case, you would use netopen(), but you would not use
+   nettinc, nettoc, etc.
 
    VMS TCP/IP products have their own set of functions for all network
    operations, so in that case the full range of netxxx() functions is
@@ -2630,15 +2650,14 @@ foo(x,y) int x, y; {
 
    The technique is to put a test in each corresponding ttxxx() function
    to see if a network connection is active (or is being requested), test
-   for which kind of network it is, and if necessary route the call to
-   the corresponding netxxx() function. The netxxx() function must also
+   for which kind of network it is, and if necessary route the call to the
+   corresponding netxxx() function. The netxxx() function must also
    contain code to test for the network type, which is available via the
    global variable ttnet.
 
-   [ [121]Contents ] [ [122]C-Kermit ] [ [123]Kermit Home ]
-      ______________________________________________________________________
+   [ [143]Contents ] [ [144]C-Kermit ] [ [145]Kermit Home ]
 
-    4.F.1. Telnet Protocol
+4.F.1. Telnet Protocol
 
    (This section needs a great deal of updating...)
 
@@ -2646,8 +2665,8 @@ foo(x,y) int x, y; {
    it can be implemented in remote mode, which does not have a network
    connection:
 
-      [124]ckctel.h: Telnet protocol symbol definitions.
-      [125]ckctel.c: Telnet protocol.
+      [146]ckctel.h: Telnet protocol symbol definitions.
+      [147]ckctel.c: Telnet protocol.
 
    The Telnet protocol is supported by the following variables and
    routines:
@@ -2670,22 +2689,19 @@ foo(x,y) int x, y; {
    int
           tn_sttyp()
           Send terminal type using telnet protocol.
-      ______________________________________________________________________
 
-    4.F.2. FTP Protocol
+4.F.2. FTP Protocol
 
-   (To be filled in...)
-      ______________________________________________________________________
+   (To be filled in...) See the [148]source file
 
-    4.F.3. HTTP Protocol
+4.F.3. HTTP Protocol
 
    (To be filled in...)
-      ______________________________________________________________________
 
-    4.F.4. X.25 Networks
+4.F.4. X.25 Networks
 
-   These routines were written SunLink X.25 and have since been adapted
-   to at least on one other: IBM AIXLink/X.25.
+   These routines were written SunLink X.25 and have since been adapted to
+   at least on one other: IBM AIXLink/X.25.
 
    int
           x25diag()
@@ -2727,10 +2743,9 @@ foo(x,y) int x, y; {
           x25inl()
           Read a Kermit packet from X.25 circuit.
 
-   [ [126]Contents ] [ [127]C-Kermit ] [ [128]Kermit Home ]
-      ______________________________________________________________________
+   [ [149]Contents ] [ [150]C-Kermit ] [ [151]Kermit Home ]
 
-    4.F.5. Adding New Network Types
+4.F.5. Adding New Network Types
 
    Example: Adding support for IBM X.25 and Hewlett Packard X.25. First,
    add new network type symbols for each one. There are already some
@@ -2754,9 +2769,9 @@ foo(x,y) int x, y; {
   -DHPX25   (for HP)
 
    So we can build C-Kermit versions for AIX and HP-UX both with and
-   without X.25 support (since not all AIX and IBM systems have the
-   needed libraries, and so an executable that was linked with them might
-   no load).
+   without X.25 support (since not all AIX and IBM systems have the needed
+   libraries, and so an executable that was linked with them might no
+   load).
 
    Then in ckcnet.h:
 
@@ -2772,9 +2787,9 @@ foo(x,y) int x, y; {
    or HPX25 for code specific to IBM or HP.
 
    It might also happen that some code can be shared between two or more
-   of these, but not the others. Suppose, for example, that you write
-   code that applies to both IBM and HP, but not Sun or VOS X.25. Then
-   you add the following definition to ckcnet.h:
+   of these, but not the others. Suppose, for example, that you write code
+   that applies to both IBM and HP, but not Sun or VOS X.25. Then you add
+   the following definition to ckcnet.h:
 
 #ifndef HPORIBMX25
 #ifdef HPX25
@@ -2789,20 +2804,19 @@ foo(x,y) int x, y; {
    You can NOT use constructions like "#if defined (HPX25 || IBMX25)";
    they are not portable.
 
-   [ [129]Contents ] [ [130]C-Kermit ] [ [131]Kermit Home ]
-    ________________________________________________________________________
+   [ [152]Contents ] [ [153]C-Kermit ] [ [154]Kermit Home ]
 
-  4.G. Group G: Formatted Screen Support
+4.G. Group G: Formatted Screen Support
 
    So far, this is used only for the fullscreen local-mode file transfer
    display. In the future, it might be extended to other uses. The
    fullscreen display code is in and around the routine screenc() in
-   [132]ckuusx.c.
+   [155]ckuusx.c.
 
    In the UNIX version, we use the curses library, plus one call from the
    termcap library. In other versions (OS/2, VMS, etc) we insert dummy
-   routines that have the same names as curses routines. So far, there
-   are two methods for simulating curses routines:
+   routines that have the same names as curses routines. So far, there are
+   two methods for simulating curses routines:
 
     1. In VMS, we use the Screen Management Library (SMG), and insert
        stubs to convert curses calls into SMG calls.
@@ -2814,14 +2828,14 @@ foo(x,y) int x, y; {
    int
           tgetent(char *buf, char *term)
           Arguments are ignored. Returns 1 if the user has a supported
-          terminal type, 0 otherwise. Sets a global variable (for
-          example, "isvt52" or "isdasher") to indicate the terminal type.
+          terminal type, 0 otherwise. Sets a global variable (for example,
+          "isvt52" or "isdasher") to indicate the terminal type.
 
    VOID
           move(int row, int col)
           Sends the escape sequence to position the cursor at the
-          indicated row and column. The numbers are 0-based, e.g. the
-          home position is 0,0.
+          indicated row and column. The numbers are 0-based, e.g. the home
+          position is 0,0.
 
    int
           clear()
@@ -2843,24 +2857,22 @@ foo(x,y) int x, y; {
           management service keeps a copy of the entire screen, as curses
           and SMG do. C-Kermit does not do this itself.
 
-   [ [133]Contents ] [ [134]C-Kermit ] [ [135]Kermit Home ]
-    ________________________________________________________________________
+   [ [156]Contents ] [ [157]C-Kermit ] [ [158]Kermit Home ]
 
-  4.H. Group H: Pseudoterminal Support
+4.H. Group H: Pseudoterminal Support
 
-   (To be filled in...)
-    ________________________________________________________________________
+   (To be filled in...) But see: [159]these comments, and the source files
+   [160]ckupty.h and [161]ckupty.c.
 
-  4.I. Group I: Security
+4.I. Group I: Security
 
-   (To be filled in...)
+   (To be filled in...) Meanwhile, see [162]security.html.
 
-   [ [136]Contents ] [ [137]C-Kermit ] [ [138]Kermit Home ]
-    ________________________________________________________________________
+   [ [163]Contents ] [ [164]C-Kermit ] [ [165]Kermit Home ]
 
-  APPENDIX I. FILE PERMISSIONS
+APPENDIX I. FILE PERMISSIONS
 
-  I.1. Format of System-Dependent File Permissions in A-Packets
+I.1. Format of System-Dependent File Permissions in A-Packets
 
    The format of this field (the "," attribute) is interpreted according
    to the System ID ("." Attribute).
@@ -2884,9 +2896,9 @@ foo(x,y) int x, y; {
   s-02-01-^A%"Y.5!
 
    A VMS directory listing shows the file's protection as (E,RWED,RED,RE)
-   which really means (S=E,O=RWED,G=RED,W=RE), which is reverse order
-   from the internal storage, so (RE,RED,RWED,E). Now translate each
-   letter to its corresponding bit:
+   which really means (S=E,O=RWED,G=RED,W=RE), which is reverse order from
+   the internal storage, so (RE,RED,RWED,E). Now translate each letter to
+   its corresponding bit:
 
   RE=0101, RED=1101, RWED=1111, E=0010
 
@@ -2898,8 +2910,7 @@ foo(x,y) int x, y; {
 
   1010001000001101
 
-   This is the internal representation of the VMS file permission; in
-   hex:
+   This is the internal representation of the VMS file permission; in hex:
 
   A20B
 
@@ -2908,7 +2919,7 @@ foo(x,y) int x, y; {
    The VMS format probably would also apply to RSX or any other FILES-11
    system.
 
-  I.2. Handling of Generic Protection
+I.2. Handling of Generic Protection
 
    To be used when the two systems are different (and/or do not recognize
    or understand each other's local protection codes).
@@ -2919,158 +2930,184 @@ foo(x,y) int x, y; {
    etc), except that no non-Owner field should give more permissions than
    the Owner field.
 
-   [ [139]Top ] [ [140]Contents ] [ [141]C-Kermit Home ] [ [142]Kermit
+   [ [166]Top ] [ [167]Contents ] [ [168]C-Kermit Home ] [ [169]Kermit
    Home ]
-     _________________________________________________________________
+     __________________________________________________________________
 
 
-    C-Kermit Program Logic Manual / [143]The Kermit Project /
-    [144]Columbia University / [145]kermit@columbia.edu / 10 April 2004
+    C-Kermit Program Logic Manual / [170]The Kermit Project /
+    [171]kermit@columbia.edu / 30 June 2011
 
 References
 
-   1. http://www.columbia.edu/kermit/
-   2. http://www.columbia.edu/
-   3. http://www.columbia.edu/kermit/ckcplm.html
-   4. http://www.columbia.edu/kermit/ckermit.html
-   5. http://www.columbia.edu/kermit/index.html
-   6. http://www.columbia.edu/kermit/ckcplm.html#x1
-   7. http://www.columbia.edu/kermit/ckcplm.html#x2
-   8. http://www.columbia.edu/kermit/ckcplm.html#x3
-   9. http://www.columbia.edu/kermit/ckcplm.html#x4
-  10. http://www.columbia.edu/kermit/ckcplm.html#x4.A
-  11. http://www.columbia.edu/kermit/ckcplm.html#x4.B
-  12. http://www.columbia.edu/kermit/ckcplm.html#x4.C
-  13. http://www.columbia.edu/kermit/ckcplm.html#x4.D
-  14. http://www.columbia.edu/kermit/ckcplm.html#x4.E
-  15. http://www.columbia.edu/kermit/ckcplm.html#x4.F
-  16. http://www.columbia.edu/kermit/ckcplm.html#x4.G
-  17. http://www.columbia.edu/kermit/ckcplm.html#x4.H
-  18. http://www.columbia.edu/kermit/ckcplm.html#x4.I
-  19. http://www.columbia.edu/kermit/ckcplm.html#xa1
-  20. http://www.columbia.edu/kermit/ckcplm.html#contents
-  21. http://www.columbia.edu/kermit/ckcplm.html#contents
-  22. http://www.columbia.edu/kermit/ckermit.html
-  23. http://www.columbia.edu/kermit/index.html
-  24. ftp://kermit.columbia.edu/kermit/c-kermit/ckcpro.w
-  25. http://www.columbia.edu/kermit/ckcplm.html#contents
-  26. http://www.columbia.edu/kermit/ckermit.html
-  27. http://www.columbia.edu/kermit/index.html
-  28. http://www.columbia.edu/kermit/ckcplm.html#x3.2
-  29. http://www.columbia.edu/kermit/ckcplm.html#contents
-  30. http://www.columbia.edu/kermit/ckermit.html
-  31. http://www.columbia.edu/kermit/index.html
-  32. http://www.columbia.edu/kermit/ckcplm.html#x4.A
-  33. http://www.columbia.edu/kermit/ckcplm.html#contents
-  34. http://www.columbia.edu/kermit/ckermit.html
-  35. http://www.columbia.edu/kermit/index.html
-  36. http://www.columbia.edu/kermit/ckcplm.html#contents
-  37. http://www.columbia.edu/kermit/ckermit.html
-  38. http://www.columbia.edu/kermit/index.html
-  39. http://www.columbia.edu/kermit/ckcplm.html#contents
-  40. http://www.columbia.edu/kermit/ckermit.html
-  41. http://www.columbia.edu/kermit/index.html
-  42. ftp://kermit.columbia.edu/kermit/c-kermit/ckclib.h
-  43. ftp://kermit.columbia.edu/kermit/c-kermit/ckclib.c
-  44. http://www.columbia.edu/kermit/ckcplm.html#x3.1
-  45. http://www.columbia.edu/kermit/ckcplm.html#contents
-  46. http://www.columbia.edu/kermit/ckermit.html
-  47. http://www.columbia.edu/kermit/index.html
-  48. ftp://kermit.columbia.edu/kermit/c-kermit/ckcsym.h
-  49. ftp://kermit.columbia.edu/kermit/c-kermit/ckcasc.h
-  50. ftp://kermit.columbia.edu/kermit/c-kermit/ckcsig.h
-  51. ftp://kermit.columbia.edu/kermit/c-kermit/ckcdeb.h
-  52. ftp://kermit.columbia.edu/kermit/c-kermit/ckcker.h
-  53. ftp://kermit.columbia.edu/kermit/c-kermit/ckcxla.h
-  54. ftp://kermit.columbia.edu/kermit/c-kermit/ckcmai.c
-  55. ftp://kermit.columbia.edu/kermit/c-kermit/ckcpro.w
-  56. ftp://kermit.columbia.edu/kermit/c-kermit/ckcfns.c
-  57. ftp://kermit.columbia.edu/kermit/c-kermit/ckcfn2.c
-  58. ftp://kermit.columbia.edu/kermit/c-kermit/ckcfn3.c
-  59. http://www.columbia.edu/kermit/ckcplm.html#x4.B
-  60. http://www.columbia.edu/kermit/ckcplm.html#x4.E
-  61. http://www.columbia.edu/kermit/ckcplm.html#x4.D
-  62. http://www.columbia.edu/kermit/ckcplm.html#contents
-  63. http://www.columbia.edu/kermit/ckermit.html
-  64. http://www.columbia.edu/kermit/index.html
-  65. http://www.columbia.edu/kermit/ckcplm.html#x4.B
-  66. ftp://kermit.columbia.edu/kermit/c-kermit/ckuxla.c
-  67. ftp://kermit.columbia.edu/kermit/c-kermit/ckuxla.h
-  68. ftp://kermit.columbia.edu/kermit/c-kermit/ckcxla.h
-  69. ftp://kermit.columbia.edu/kermit/c-kermit/ckuxla.h
-  70. ftp://kermit.columbia.edu/kermit/c-kermit/ckmxla.h
-  71. ftp://kermit.columbia.edu/kermit/c-kermit/ck?xla
-  72. ftp://kermit.columbia.edu/kermit/c-kermit/ckcuni.h
-  73. ftp://kermit.columbia.edu/kermit/c-kermit/ckcuni.c
-  74. http://www.columbia.edu/kermit/ckcplm.html#contents
-  75. http://www.columbia.edu/kermit/ckermit.html
-  76. http://www.columbia.edu/kermit/index.html
-  77. http://www.columbia.edu/kermit/ckcplm.html#x4.B
-  78. ftp://kermit.columbia.edu/kermit/c-kermit/ckucmd.h
-  79. ftp://kermit.columbia.edu/kermit/c-kermit/ckucmd.c
-  80. http://www.columbia.edu/kermit/ckcplm.html#x4.E
-  81. ftp://kermit.columbia.edu/kermit/c-kermit/ckuusr.h
-  82. ftp://kermit.columbia.edu/kermit/c-kermit/ckuusr.c
-  83. ftp://kermit.columbia.edu/kermit/c-kermit/ckuus2.c
-  84. ftp://kermit.columbia.edu/kermit/c-kermit/ckuus3.c
-  85. ftp://kermit.columbia.edu/kermit/c-kermit/ckuus4.c
-  86. ftp://kermit.columbia.edu/kermit/c-kermit/ckuusy.c
-  87. ftp://kermit.columbia.edu/kermit/c-kermit/ckuusx.c
-  88. ftp://kermit.columbia.edu/kermit/c-kermit/ckuver.h
-  89. ftp://kermit.columbia.edu/kermit/c-kermit/ckuscr.c
-  90. ftp://kermit.columbia.edu/kermit/c-kermit/ckudia.c
-  91. ftp://kermit.columbia.edu/kermit/c-kermit/ckucon.c
-  92. ftp://kermit.columbia.edu/kermit/c-kermit/ckucns.c
-  93. http://www.columbia.edu/kermit/ckcplm.html#x4.E
-  94. ftp://kermit.columbia.edu/kermit/c-kermit/ckcmai.c
-  95. http://www.columbia.edu/kermit/ckcplm.html#contents
-  96. http://www.columbia.edu/kermit/ckermit.html
-  97. http://www.columbia.edu/kermit/index.html
-  98. ftp://kermit.columbia.edu/kermit/c-kermit/ckufio.c
-  99. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
- 100. ftp://kermit.columbia.edu/kermit/c-kermit/ckusig.c
- 101. ftp://kermit.columbia.edu/kermit/c-kermit/ckvfio.c
- 102. ftp://kermit.columbia.edu/kermit/c-kermit/ckusig.c
- 103. ftp://kermit.columbia.edu/kermit/c-kermit/ckcmai.c
- 104. http://www.columbia.edu/kermit/ckcplm.html#contents
- 105. http://www.columbia.edu/kermit/ckermit.html
- 106. http://www.columbia.edu/kermit/index.html
- 107. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
- 108. ftp://kermit.columbia.edu/kermit/c-kermit/ckvtio.c
- 109. http://www.columbia.edu/kermit/ckcplm.html#x2
- 110. http://www.columbia.edu/kermit/ckcplm.html#xa1
- 111. http://www.columbia.edu/kermit/ckuins.html
- 112. ftp://kermit.columbia.edu/kermit/c-kermit/ckcnet.h
- 113. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
- 114. http://www.columbia.edu/kermit/ckcplm.html#contents
- 115. http://www.columbia.edu/kermit/ckermit.html
- 116. http://www.columbia.edu/kermit/index.html
- 117. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
- 118. ftp://kermit.columbia.edu/kermit/c-kermit/ckcnet.h
- 119. ftp://kermit.columbia.edu/kermit/c-kermit/ckcnet.c
- 120. ftp://kermit.columbia.edu/kermit/c-kermit/cklnet.c
- 121. http://www.columbia.edu/kermit/ckcplm.html#contents
- 122. http://www.columbia.edu/kermit/ckermit.html
- 123. http://www.columbia.edu/kermit/index.html
- 124. ftp://kermit.columbia.edu/kermit/c-kermit/ckctel.h
- 125. ftp://kermit.columbia.edu/kermit/c-kermit/ckctel.c
+   1. http://www.columbia.edu/
+   2. mailto:kermit@columbia.edu
+   3. http://www.columbia.edu/kermit/index.html
+   4. http://www.columbia.edu/kermit/k95.html
+   5. http://www.columbia.edu/kermit/ckermit.html
+   6. http://www.columbia.edu/kermit/ckscripts.html
+   7. http://www.columbia.edu/kermit/current.html
+   8. http://www.columbia.edu/kermit/whatsnew.html
+   9. http://www.columbia.edu/kermit/ckfaq.html
+  10. http://www.columbia.edu/kermit/support.html
+  11. http://www.columbia.edu/kermit/
+  12. http://www.columbia.edu/kermit/ckcplm.html
+  13. http://www.columbia.edu/kermit/ckcplm.html#x1
+  14. http://www.columbia.edu/kermit/ckcplm.html#x2
+  15. http://www.columbia.edu/kermit/ckcplm.html#x3
+  16. http://www.columbia.edu/kermit/ckcplm.html#x4
+  17. http://www.columbia.edu/kermit/ckcplm.html#x4.A
+  18. http://www.columbia.edu/kermit/ckcplm.html#x4.B
+  19. http://www.columbia.edu/kermit/ckcplm.html#x4.C
+  20. http://www.columbia.edu/kermit/ckcplm.html#x4.D
+  21. http://www.columbia.edu/kermit/ckcplm.html#x4.E
+  22. http://www.columbia.edu/kermit/ckcplm.html#x4.F
+  23. http://www.columbia.edu/kermit/ckcplm.html#x4.G
+  24. http://www.columbia.edu/kermit/ckcplm.html#x4.H
+  25. http://www.columbia.edu/kermit/ckcplm.html#x4.I
+  26. http://www.columbia.edu/kermit/ckcplm.html#xa1
+  27. http://www.amazon.com/gp/product/0932376886?ie=UTF8&tag=aleidmoreldom-20&linkCode=as2&camp=1789&creative=9325&creativeASIN=0932376886
+  28. http://www.columbia.edu/kermit/ckcplm.html#contents
+  29. http://www.columbia.edu/kermit/vax_11-750.jpg
+  30. http://www.columbia.edu/cu/computinghistory/hermit.html
+  31. http://www.columbia.edu/kermit/cudocs/ilosetup.html
+  32. ftp://kermit.columbia.edu/kermit/f/ckc04e.txt
+  33. ftp://kermit.columbia.edu/kermit/f/ckc04f.txt
+  34. ftp://kermit.columbia.edu/kermit/f/ckc168.txt
+  35. ftp://kermit.columbia.edu/kermit/f/ckc178.txt
+  36. ftp://kermit.columbia.edu/kermit/f/ckc188.txt
+  37. ftp://kermit.columbia.edu/kermit/f/ckc189.txt
+  38. ftp://kermit.columbia.edu/kermit/f/ckc192.txt
+  39. ftp://kermit.columbia.edu/kermit/f/ckc197.txt
+  40. ftp://kermit.columbia.edu/kermit/f/ckc200.txt
+  41. ftp://kermit.columbia.edu/kermit/f/ckc211.txt
+  42. ftp://kermit.columbia.edu/kermit/f/ckc300.txt
+  43. http://www.columbia.edu/kermit/ckcplm.html#contents
+  44. http://www.columbia.edu/kermit/ckermit.html
+  45. http://www.columbia.edu/kermit/index.html
+  46. ftp://kermit.columbia.edu/kermit/c-kermit/ckcpro.w
+  47. http://www.columbia.edu/kermit/ckcplm.html#contents
+  48. http://www.columbia.edu/kermit/ckermit.html
+  49. http://www.columbia.edu/kermit/index.html
+  50. http://www.columbia.edu/kermit/ckcplm.html#x3.2
+  51. http://www.columbia.edu/kermit/ckcplm.html#contents
+  52. http://www.columbia.edu/kermit/ckermit.html
+  53. http://www.columbia.edu/kermit/index.html
+  54. http://www.columbia.edu/kermit/ckcplm.html#x4.A
+  55. http://www.columbia.edu/kermit/ckcplm.html#contents
+  56. http://www.columbia.edu/kermit/ckermit.html
+  57. http://www.columbia.edu/kermit/index.html
+  58. http://www.columbia.edu/kermit/ckcplm.html#contents
+  59. http://www.columbia.edu/kermit/ckermit.html
+  60. http://www.columbia.edu/kermit/index.html
+  61. http://www.columbia.edu/kermit/ckcplm.html#contents
+  62. http://www.columbia.edu/kermit/ckermit.html
+  63. http://www.columbia.edu/kermit/index.html
+  64. ftp://kermit.columbia.edu/kermit/c-kermit/ckclib.h
+  65. ftp://kermit.columbia.edu/kermit/c-kermit/ckclib.c
+  66. http://www.columbia.edu/kermit/ckcplm.html#x3.1
+  67. http://www.columbia.edu/kermit/ckcplm.html#contents
+  68. http://www.columbia.edu/kermit/ckermit.html
+  69. http://www.columbia.edu/kermit/index.html
+  70. ftp://kermit.columbia.edu/kermit/c-kermit/ckcsym.h
+  71. ftp://kermit.columbia.edu/kermit/c-kermit/ckcasc.h
+  72. ftp://kermit.columbia.edu/kermit/c-kermit/ckcsig.h
+  73. ftp://kermit.columbia.edu/kermit/c-kermit/ckcdeb.h
+  74. ftp://kermit.columbia.edu/kermit/c-kermit/ckcker.h
+  75. ftp://kermit.columbia.edu/kermit/c-kermit/ckcxla.h
+  76. ftp://kermit.columbia.edu/kermit/c-kermit/ckcmai.c
+  77. ftp://kermit.columbia.edu/kermit/c-kermit/ckcpro.w
+  78. ftp://kermit.columbia.edu/kermit/c-kermit/ckcfns.c
+  79. ftp://kermit.columbia.edu/kermit/c-kermit/ckcfn2.c
+  80. ftp://kermit.columbia.edu/kermit/c-kermit/ckcfn3.c
+  81. http://www.columbia.edu/kermit/ckcplm.html#x4.B
+  82. http://www.columbia.edu/kermit/ckcplm.html#x4.E
+  83. http://www.columbia.edu/kermit/ckcplm.html#x4.D
+  84. http://www.columbia.edu/kermit/ckcplm.html#contents
+  85. http://www.columbia.edu/kermit/ckermit.html
+  86. http://www.columbia.edu/kermit/index.html
+  87. http://www.columbia.edu/kermit/ckcplm.html#x4.B
+  88. ftp://kermit.columbia.edu/kermit/c-kermit/ckuxla.c
+  89. ftp://kermit.columbia.edu/kermit/c-kermit/ckuxla.h
+  90. ftp://kermit.columbia.edu/kermit/c-kermit/ckcxla.h
+  91. ftp://kermit.columbia.edu/kermit/c-kermit/ckuxla.h
+  92. ftp://kermit.columbia.edu/kermit/c-kermit/ckmxla.h
+  93. ftp://kermit.columbia.edu/kermit/c-kermit/ck?xla
+  94. ftp://kermit.columbia.edu/kermit/c-kermit/ckcuni.h
+  95. ftp://kermit.columbia.edu/kermit/c-kermit/ckcuni.c
+  96. http://www.columbia.edu/kermit/ckcplm.html#contents
+  97. http://www.columbia.edu/kermit/ckermit.html
+  98. http://www.columbia.edu/kermit/index.html
+  99. http://www.columbia.edu/kermit/ckcplm.html#x4.B
+ 100. ftp://kermit.columbia.edu/kermit/c-kermit/ckucmd.h
+ 101. ftp://kermit.columbia.edu/kermit/c-kermit/ckucmd.c
+ 102. http://www.columbia.edu/kermit/ckcplm.html#x4.E
+ 103. ftp://kermit.columbia.edu/kermit/c-kermit/ckuusr.h
+ 104. ftp://kermit.columbia.edu/kermit/c-kermit/ckuusr.c
+ 105. ftp://kermit.columbia.edu/kermit/c-kermit/ckuus2.c
+ 106. ftp://kermit.columbia.edu/kermit/c-kermit/ckuus3.c
+ 107. ftp://kermit.columbia.edu/kermit/c-kermit/ckuus4.c
+ 108. ftp://kermit.columbia.edu/kermit/c-kermit/ckuusy.c
+ 109. ftp://kermit.columbia.edu/kermit/c-kermit/ckuusx.c
+ 110. ftp://kermit.columbia.edu/kermit/c-kermit/ckuver.h
+ 111. ftp://kermit.columbia.edu/kermit/c-kermit/ckuscr.c
+ 112. ftp://kermit.columbia.edu/kermit/c-kermit/ckudia.c
+ 113. ftp://kermit.columbia.edu/kermit/c-kermit/ckucon.c
+ 114. ftp://kermit.columbia.edu/kermit/c-kermit/ckucns.c
+ 115. http://www.columbia.edu/kermit/ckcplm.html#x4.E
+ 116. ftp://kermit.columbia.edu/kermit/c-kermit/ckcmai.c
+ 117. http://www.columbia.edu/kermit/ckcplm.html#contents
+ 118. http://www.columbia.edu/kermit/ckermit.html
+ 119. http://www.columbia.edu/kermit/index.html
+ 120. ftp://kermit.columbia.edu/kermit/c-kermit/ckufio.c
+ 121. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
+ 122. ftp://kermit.columbia.edu/kermit/c-kermit/ckusig.c
+ 123. ftp://kermit.columbia.edu/kermit/c-kermit/ckvfio.c
+ 124. ftp://kermit.columbia.edu/kermit/c-kermit/ckusig.c
+ 125. ftp://kermit.columbia.edu/kermit/c-kermit/ckcmai.c
  126. http://www.columbia.edu/kermit/ckcplm.html#contents
  127. http://www.columbia.edu/kermit/ckermit.html
  128. http://www.columbia.edu/kermit/index.html
- 129. http://www.columbia.edu/kermit/ckcplm.html#contents
- 130. http://www.columbia.edu/kermit/ckermit.html
- 131. http://www.columbia.edu/kermit/index.html
- 132. ftp://kermit.columbia.edu/kermit/c-kermit/ckuusx.c
- 133. http://www.columbia.edu/kermit/ckcplm.html#contents
- 134. http://www.columbia.edu/kermit/ckermit.html
- 135. http://www.columbia.edu/kermit/index.html
+ 129. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
+ 130. ftp://kermit.columbia.edu/kermit/c-kermit/ckvtio.c
+ 131. http://www.columbia.edu/kermit/ckcplm.html#x2
+ 132. http://www.columbia.edu/kermit/ckcplm.html#xa1
+ 133. http://www.columbia.edu/kermit/ckuins.html
+ 134. ftp://kermit.columbia.edu/kermit/c-kermit/ckcnet.h
+ 135. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
  136. http://www.columbia.edu/kermit/ckcplm.html#contents
  137. http://www.columbia.edu/kermit/ckermit.html
  138. http://www.columbia.edu/kermit/index.html
- 139. http://www.columbia.edu/kermit/ckcplm.html#top
- 140. http://www.columbia.edu/kermit/ckcplm.html#contents
- 141. http://www.columbia.edu/kermit/ckermit.html
- 142. http://www.columbia.edu/kermit/index.html
- 143. http://www.columbia.edu/kermit/index.html
- 144. http://www.columbia.edu/
- 145. mailto:kermit@columbia.edu
+ 139. ftp://kermit.columbia.edu/kermit/c-kermit/ckutio.c
+ 140. ftp://kermit.columbia.edu/kermit/c-kermit/ckcnet.h
+ 141. ftp://kermit.columbia.edu/kermit/c-kermit/ckcnet.c
+ 142. ftp://kermit.columbia.edu/kermit/c-kermit/cklnet.c
+ 143. http://www.columbia.edu/kermit/ckcplm.html#contents
+ 144. http://www.columbia.edu/kermit/ckermit.html
+ 145. http://www.columbia.edu/kermit/index.html
+ 146. ftp://kermit.columbia.edu/kermit/c-kermit/ckctel.h
+ 147. ftp://kermit.columbia.edu/kermit/c-kermit/ckctel.c
+ 148. ftp://kermit.columbia.edu/kermit/c-kermit/ckcftp.c
+ 149. http://www.columbia.edu/kermit/ckcplm.html#contents
+ 150. http://www.columbia.edu/kermit/ckermit.html
+ 151. http://www.columbia.edu/kermit/index.html
+ 152. http://www.columbia.edu/kermit/ckcplm.html#contents
+ 153. http://www.columbia.edu/kermit/ckermit.html
+ 154. http://www.columbia.edu/kermit/index.html
+ 155. ftp://kermit.columbia.edu/kermit/c-kermit/ckuusx.c
+ 156. http://www.columbia.edu/kermit/ckcplm.html#contents
+ 157. http://www.columbia.edu/kermit/ckermit.html
+ 158. http://www.columbia.edu/kermit/index.html
+ 159. http://www.columbia.edu/kermit/ckermit90.html#LooseEnd
+ 160. ftp://kermit.columbia.edu/kermit/f/ckupty.h
+ 161. ftp://kermit.columbia.edu/kermit/f/ckupty.c
+ 162. http://www.columbia.edu/kermit/security.html
+ 163. http://www.columbia.edu/kermit/ckcplm.html#contents
+ 164. http://www.columbia.edu/kermit/ckermit.html
+ 165. http://www.columbia.edu/kermit/index.html
+ 166. http://www.columbia.edu/kermit/ckcplm.html#top
+ 167. http://www.columbia.edu/kermit/ckcplm.html#contents
+ 168. http://www.columbia.edu/kermit/ckermit.html
+ 169. http://www.columbia.edu/kermit/index.html
+ 170. http://www.columbia.edu/kermit/index.html
+ 171. mailto:kermit@columbia.edu

@@ -37,7 +37,9 @@
 #include <stdio.h>
 
 #include <sys/stat.h>
+#ifndef SUNOS41
 #include <sys/ioctl.h>
+#endif	/* SUNOS41 */
 #include <sys/file.h>
 #include <sys/time.h>
 #include <ctype.h>
@@ -106,6 +108,22 @@
 #endif /* HAVE_SYS_PTYVAR_H */
 #endif /* HAVE_STREAMS */
 
+#ifdef COMMENT
+/* This block moved to ckcdeb.h */
+#ifndef NO_OPENPTY
+/* For NetBSD, see makefile */
+#ifndef HAVE_OPENPTY
+#ifdef __FreeBSD__
+#define HAVE_OPENPTY
+#else
+#ifdef MACOSX10
+#define HAVE_OPENPTY
+#endif	/* MACOSX10 */
+#endif	/* __FreeBSD__ */
+#endif	/* HAVE_OPENPTY */
+#endif	/* NO_OPENPTY */
+#endif	/* COMMENT */
+
 #ifdef HAVE_VHANGUP
 #ifndef OPEN_CTTY_ONLY_ONCE
 /*
@@ -142,8 +160,8 @@ _PROTOTYP(long ptyint_update_wtmp, (struct utmp *, char *, char *));
 
 _PROTOTYP(long pty_init,(void));
 _PROTOTYP(long pty_getpty, ( int *, char *, int));
-_PROTOTYP(long pty_open_slave, (char *, int *));
-_PROTOTYP(long pty_open_ctty, (char *, int *));
+_PROTOTYP(long pty_open_slave, (char *, int *, int));
+_PROTOTYP(long pty_open_ctty, (char *, int *, int));
 _PROTOTYP(long pty_initialize_slave, (int));
 #ifdef WANT_UTMP
 _PROTOTYP(long pty_update_utmp, (int, int, char *, char *, char *, int));
@@ -172,3 +190,4 @@ extern struct error_table et_pty_error_table;
 
 #define __LIBPTY_H__
 #endif /* __LIBPTY_H__ */
+

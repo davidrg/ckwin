@@ -1,12 +1,12 @@
 #include "ckcsym.h"
-char *connv = "CONNECT Command for UNIX:select(), 8.0.135, 29 Nov 2002";
+char *connv = "CONNECT Command for UNIX:select(), 9.0.139, 1 Mar 2010";
 
 /*  C K U C N S  --  Terminal connection to remote system, for UNIX  */
 /*
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2010,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -135,7 +135,8 @@ extern struct ck_p ptab[];
 
 extern int local, escape, duplex, parity, flow, seslog, sessft, debses,
  mdmtyp, ttnproto, cmask, cmdmsk, network, nettype, sosi, tnlm,
- xitsta, what, ttyfd, ttpipe, quiet, backgrd, pflag, tt_crd, tn_nlm, ttfdflg,
+ xitsta, what, ttyfd, ttpipe, quiet, backgrd, pflag, tt_crd, tt_lfd,
+ tn_nlm, ttfdflg,
  tt_escape, justone, carrier, ttpty, hwparity;
 
 #ifndef NODIAL
@@ -330,20 +331,23 @@ static int printing = 0;
 #endif /* NOCSETS */
 #endif /* NOESCSEQ */
 
+/* inesc[] and oldesc[] made global 2010/03/01 for INPUT command */
+
 static int escseq = 0;			/* 1 = Recognizer is active */
-static int inesc[2] = { 0, 0 };		/* State of sequence recognizer */
-static int oldesc[2] = { -1, -1 };	/* Previous state of recognizer */
+/* static */ int inesc[2] = { 0, 0 };	/* State of sequence recognizer */
+/* static */ int oldesc[2] = { -1, -1 }; /* Previous state of recognizer */
 
 #ifdef NOESCSEQ
+#define ES_NORMAL 0			/* Normal, not in an escape sequence */
 #define chkaes(x,y) 0
 #else
 /*
   As of C-Kermit 5A(178), the CONNECT command skips past ANSI escape sequences
   to avoid translating the characters within them.  This allows the CONNECT
   command to work correctly with a host that uses a 7-bit ISO 646 national
-  character set, in which characters like '[' would normally be translated
-  into accented characters, ruining the terminal's interpretation (and
-  generation) of escape sequences.
+  character set, in which characters like '[' would normally be converted to
+  accented letters, ruining the terminal's interpretation (and generation)
+  of escape sequences.
 
   As of 5A(190), the CONNECT command responds to APC escape sequences
   (ESC _ text ESC \) if the user SETs TERMINAL APC ON or UNCHECKED, and the
@@ -706,6 +710,22 @@ chkaes(c,src) char c; int src;
     return(0);
 }
 #endif /* NOESCSEQ */
+
+VOID
+#ifdef CK_ANSIC
+LOGCHAR(char c)
+#else
+LOGCHAR(c) char c;
+#endif /* CK_ANSIC */
+/* LOGCHAR */ {                         /* Log character c to session log */
+    /* but skip over escape sequences if session log is text */
+    if (escseq) {
+	if ((sessft == XYFT_T) && (debses == 0) &&
+	    (inesc[0] != ES_NORMAL || oldesc[0] != ES_NORMAL))
+	  return;
+    }
+    logchar(c);
+}
 
 /*  C K C P U T C  --  C-Kermit CONNECT Put Character to Screen  */
 /*
@@ -1286,7 +1306,7 @@ conect() {
 	      default:
 		s = "binary";
 	    }
-	    printf("Session Log: %s, %s\r\n",sesfil,s);
+	    printf("Session Log: %s, %s (%d) \r\n",sesfil,s,sessft);
 	}
 	if (debses) printf("Debugging Display...)\r\n");
     }
@@ -1449,7 +1469,9 @@ conect() {
 /*
   We need to activate the escape-sequence recognition feature when:
    (a) translation is elected, AND
-   (b) the local and/or remote set is a 7-bit set other than US ASCII.
+   (b) the local and/or remote set is a 7-bit set other than US ASCII;
+  Or:
+   SET SESSION-LOG is TEXT (so we can strip escape sequences out of the log);
   Or:
    SET TERMINAL APC is not OFF (handled in the next statement).
 */
@@ -1460,6 +1482,10 @@ conect() {
 #endif /* NOCSETS */
 
 #ifndef NOESCSEQ
+    if (!escseq) {			/* 2009/10/22 */
+	if (seslog && !sessft)
+	  escseq = 1;
+    }
 #ifdef CK_APC
     escseq = escseq || (apcstatus & APC_ON);
     apcactive = 0;			/* An APC command is not active */
@@ -1468,8 +1494,9 @@ conect() {
 #ifdef XPRINT
     escseq |= tt_print;
 #endif /* XPRINT */
-    inesc[0] = ES_NORMAL;		/* Initial state of recognizer */
-    inesc[1] = ES_NORMAL;
+    /* Initial state of recognizer */
+    inesc[0] = ES_NORMAL;		/* Remote to screen */
+    inesc[1] = ES_NORMAL;		/* Keyboard to remote */
     debug(F101,"CONNECT escseq","",escseq);
 #endif /* NOESCSEQ */
 
@@ -1665,9 +1692,11 @@ conect() {
 	if (deblog) {
 	    debug(F101,"CONNECT gotkbd","",gotkbd);
 	    debug(F101,"CONNECT kbc","",kbc);
+#ifdef COMMENT
 #ifndef NOSETKEY
 	    debug(F101,"CONNECT kmptr","",kmptr);
 #endif /* NOSETKEY */
+#endif	/* COMMENT */
 	}
 #endif /* DEBUG */
 
@@ -1783,7 +1812,7 @@ conect() {
 	    }
 	    if (escseq)
 	      apcrc = chkaes((char)c,1);
-#else
+#else  /* NOCSETS */
 	    outxbuf[0] = c;
 	    outxcount = 1;
 	    outxbuf[outxcount] = NUL;
@@ -1871,7 +1900,7 @@ conect() {
 			    c2 = csave;
 			    if (sessft == 0 && csave == '\r')
 			      c2 = '\n';
-			    logchar((char)c2);
+			    LOGCHAR((char)c2);
 			}
 		    }
 		} else {
@@ -1889,7 +1918,6 @@ conect() {
 	    gotnet = 0;
 	    prev = c;
 	    c = ckcgetc(0);		/* Get next character */
-	    /* debug(F101,"CONNECT c","",c); */
 	    if (c < 0) {		/* Failed... */
 		ckcputf();		/* Flush CONNECT output buffer */
 		if (msgflg) {
@@ -2054,13 +2082,17 @@ conect() {
 
 	    if (debses) {		/* Output character to screen */
 		char *s;		/* Debugging display... */
-		s = dbchr(c);
-		while (*s)
-		  ckcputc(*s++);
+		s = dbchr(c);		/* Make char into string */
+		while (*s) {		/* Output each char from string */
+		    ckcputc(*s);
+		    if (seslog)		/* And maybe log it. */
+		      LOGCHAR((char)*s);
+		    s++;
+		}
 	    } else {			/* Regular display ... */
 		c &= cmask;		/* Apply Kermit-to-remote mask */
 		if (seslog && sessft)	/* If binary session log */
-		  logchar((char)c);	/* log the character now. */
+		  LOGCHAR((char)c);	/* log the character now. */
 #ifndef NOXFER
 #ifdef CK_AUTODL
 /*
@@ -2222,7 +2254,7 @@ conect() {
 		      continue;
 		    else if (oldesc[0] == ES_GOTESC && !apcactive) {
 			ckcputc(ESC);	/* Write saved ESC */
-			if (seslog && !sessft) logchar((char)ESC);
+			if (seslog && !sessft) LOGCHAR((char)ESC);
 		    } else if (apcrc) {	/* We have an APC */
 			debug(F111,"CONNECT APC complete",apcbuf,apclength);
 			ckcputf();	/* Force screen update */
@@ -2244,20 +2276,29 @@ conect() {
 
 			) {
 			c &= cmdmsk;	/* Apply command mask. */
+
+			/* Handle bare carriage returns and linefeeds */
+
 			if (c == CR && tt_crd) { /* SET TERM CR-DISPLA CRLF? */
 			    ckcputc(c);	/* Yes, output CR */
-			    if (seslog && !sessft) logchar((char)c);
+			    if (seslog && !sessft) LOGCHAR((char)c);
 			    c = LF;	/* and insert a linefeed */
 			}
+			if (c == LF && tt_lfd) { /* SET TERM CR-DISPLA CRLF? */
+			    ckcputc(CR); /* Yes, output CR */
+			    if (seslog && !sessft) LOGCHAR((char)CR);
+			}
+#ifndef NOESCSEQ
 			if (dontprint)	{ /* Do transparent printing. */
 			    dontprint = 0;
 			    continue;
 			} else
-
+#endif	/* NOESCSEQ */
 			ckcputc(c);	/* Write character to screen */
 		    }
-		    if (seslog && !sessft) /* Handle session log. */
-		      logchar((char)c);
+		    if (seslog && !sessft) { /* Handle session log. */
+			LOGCHAR((char)c);
+		    }
 #ifdef XPRINT
 		    if (printing && !inesc[0]) {
 			/* zchout() can't be used because */

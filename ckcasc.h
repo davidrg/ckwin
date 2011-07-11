@@ -6,7 +6,7 @@
   Author: Frank da Cruz (fdc@columbia.edu).
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2009,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -42,7 +42,7 @@
 #define SYN   22        /* SYN, Ctrl-V */
 #define ETB   23        /* Ctrl-W */
 #define CAN   24        /* CAN, Ctrl-X */
-#define EM    25        /* Ctrl-Y */
+#define XEM   25        /* Ctrl-Y (was EM but conflicts with OpenSSL) */
 #define SUB   26        /* SUB Ctrl-Z */
 #define ESC   27        /* Escape Ctrl-[ */
 #define XFS   28        /* Field Separator,  Ctrl-Backslash */

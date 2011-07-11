@@ -1,10 +1,12 @@
+#define CKUTIO_C
+
 #ifdef aegis
-char *ckxv = "Aegis Communications support, 8.0.303, 17 Apr 2004";
+char *ckxv = "Aegis Communications support, 9.0.326, 20 August 2011";
 #else
 #ifdef Plan9
-char *ckxv = "Plan 9 Communications support, 8.0.303, 17 Apr 2004";
+char *ckxv = "Plan 9 Communications support, 9.0.326, 20 August 2011";
 #else
-char *ckxv = "UNIX Communications support, 8.0.303, 17 Apr 2004";
+char *ckxv = "UNIX Communications support, 9.0.326, 20 August 2011";
 #endif /* Plan9 */
 #endif /* aegis */
 
@@ -16,7 +18,7 @@ char *ckxv = "UNIX Communications support, 8.0.303, 17 Apr 2004";
   Author: Frank da Cruz (fdc@columbia.edu),
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2011,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -33,6 +35,7 @@ char *ckxv = "UNIX Communications support, 8.0.303, 17 Apr 2004";
 */
 
 extern int nettype;			/* Defined in ckcmai.c */
+extern int duplex;
 
 /* Includes */
 
@@ -47,7 +50,13 @@ extern int nettype;			/* Defined in ckcmai.c */
 #endif /* CK_ANSIC */
 #endif /* OSF13 */
 
-#include <errno.h>			/* System error numbers */
+#ifndef HPUXPRE65
+#include <errno.h>			/* Error number symbols */
+#else
+#ifndef ERRNO_INCLUDED
+#include <errno.h>			/* Error number symbols */
+#endif	/* ERRNO_INCLUDED */
+#endif	/* HPUXPRE65 */
 
 #ifdef __386BSD__
 #define ENOTCONN 57
@@ -197,6 +206,20 @@ bzero(s,n) char *s; int n; {
 #endif /* FT21 */
 #endif /* MAXNAMLEN */
 #endif /* BSD4 */
+
+#ifdef SUNOS41				/* From Christian Corti */
+#define BSD44ORPOSIX			/* Uni Stuttgart */
+#define SVORPOSIX			/* February 2010 */
+#include <termios.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+#include <limits.h>
+#endif	/* SUNOS41 */
+
+#ifdef SNI542
+#include <sys/filio.h>			/* 299 for FIONREAD */
+#endif	/* SNI542 */
+
 /*
   Minix 2.0 support added by Terry McConnell,
   Syracuse University <tmc@barnyard.syr.edu>
@@ -204,10 +227,11 @@ bzero(s,n) char *s; int n; {
 */
 #ifdef MINIX2
 #define _MINIX   /* Needed for some Minix header files */
-#undef MINIX     /* Old minix 1.0: used sgtty interface */
 #define BSD44ORPOSIX
 #define SVORPOSIX
+#ifndef MINIX3
 #define DCLTIMEVAL
+#endif	/* MINIX3 */
 #define NOFILEH
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -301,19 +325,49 @@ char unm_ver[CK_SYSNMLN+1] = { '\0', '\0' };
 #include <sys/stat.h>
 #endif /* CIE */
 
+#ifdef QNX				/* 299 */
+#ifndef IXANY
+#define IXANY 0
+#endif	/* IXANY */
+#endif	/* QNX */
+
 /* UUCP lockfile material... */
 
 #ifndef NOUUCP
 #ifdef USETTYLOCK
+#ifdef HAVE_LOCKDEV			/* Red Hat baudboy/lockdev */
+/*
+  Watch out: baudboy.h references open() without making sure it has been
+  declared, resulting in warnings on at least Red Hat 7.3.  It's declared in
+  fcntl.h, but we don't include that until later.  In this case only, we
+  include it here, and then the second include is harmless because in Red Hat
+  Linux (the only place where you find baudboy.h) fcntl.h is protected from
+  multiple inclusion by _FCNTL_H.   - fdc, 10 May 2004.
+
+  NOTE: Although Linux /usr/sbin/lockdev obviates the need for setuid or
+  setgid bits to access the lockfile, C-Kermit will still need them to access
+  the serial port itself unless the port is open for world read/write.
+  Normally setgid uucp does the trick.
+
+  Extra: HAVE_LOCKDEV has been added als openSuSE >= 11.3 doesn't use baudboy
+  but ttylock.  - jb, 26 Jul 2010
+*/
+#include <fcntl.h>			/* This has to come before baudboy */
 #ifdef HAVE_BAUDBOY			/* Red Hat baudboy/lockdev */
 #include <baudboy.h>
-#else
+#else  /* !HAVE_BAUDBOY */		/* openSuSE lock via ttylock */
+#include <ttylock.h>
+#endif  /* HAVE_BAUDBOY */
+#define LOCK_DIR "/var/lock"		/* (even though we don't care) */
+
+#else  /* !HAVE_LOCKDEV */
+
 #ifdef USE_UU_LOCK
 #ifdef __FreeBSD__
 #include <libutil.h>			/* FreeBSD */
 #else
 #include <util.h>			/* OpenBSD */
-#endif /* HAVE_BAUDBOY */
+#endif /* HAVE_LOCKDEV */
 #endif /* __FreeBSD */
 #endif /* USE_UU_LOCK */
 #else  /* USETTYLOCK */
@@ -780,10 +834,18 @@ Time functions
 #endif /* XENIX */
 
 #ifdef CK_SCOV5				/* Ditto for SCO OpenServer 5.0 */
+#ifndef SCO_OSR507			/* 299 */
 #ifdef FIONREAD
 #undef FIONREAD
 #endif /* FIONREAD */
-#endif /* XENIX */
+#endif	/* SCO_OSR507 */
+#endif /* CK_SCOV5 */
+
+#ifdef SCO_OSR507			/* 299 */
+#ifdef RDCHK
+#undef RDCHK
+#endif	/* RDCHK */
+#endif	/* SCO_OSR507 */
 
 /* Whether to include <fcntl.h> */
 
@@ -931,6 +993,18 @@ struct timezone {
 #ifndef O_RDONLY
 #define O_RDONLY 000
 #endif /* O_RDONLY */
+
+/* This is for ancient Unixes that don't have these tty symbols defined. */
+
+#ifndef PENDIN
+#define PENDIN ICANON
+#endif /* PENDIN */
+#ifndef FLUSHO
+#define FLUSHO ICANON
+#endif /* FLUSHO */
+#ifndef EXTPROC
+#define EXTPROC ICANON
+#endif /* EXTPROC */
 
 #ifdef SVORPOSIX
 /*
@@ -1148,6 +1222,9 @@ static CHAR le_buf[LEBUFSIZ];
 static int le_start = 0, le_end = 0, le_data = 0;
 #endif /* TTLEBUF */
 
+#define MSGBUF_SIZE 1024		/* For debugging */
+static char msgbuf[MSGBUF_SIZE];
+
 static int gotsigs = 0;
 
 static time_t tcount = (time_t)0;	/* Elapsed time counter */
@@ -1208,6 +1285,11 @@ int ttyfd = -1;				/* TTY file descriptor */
 
 int ttpipe = 0;				/* NETCMD: Use pipe instead of ttyfd */
 int ttpty  = 0;                         /* NETPTY: Use pty instead of ttfyd */
+
+#ifdef NETPTY				/* These are in ckupty.c */
+extern PID_T pty_fork_pid;
+extern int pty_master_fd, pty_slave_fd;
+#endif	/* NETPTY */
 
 #ifdef NETCMD
 #ifdef NETCONN
@@ -1465,6 +1547,7 @@ _PROTOTYP( static int ttrpid, (char *) );
 _PROTOTYP( static int ttchkpid, (char *) );
 _PROTOTYP( static int ttlock, (char *) );
 _PROTOTYP( static int ttunlck, (void) );
+_PROTOTYP( static VOID sigchld_handler, (int) );
 _PROTOTYP( int mygetbuf, (void) );
 _PROTOTYP( int myfillbuf, (void) );
 _PROTOTYP( VOID conbgt, (int) );
@@ -1547,7 +1630,7 @@ timerh(foo) int foo; {
 /*ARGSUSED*/
 SIGTYP
 xtimerh(foo) int foo; {			/* Like timerh() but does */
-#ifdef BEOSORBEBOX			/* not reset the timer itslef */
+#ifdef BEOSORBEBOX			/* not reset the timer itself */
 /* #ifdef BE_DR_7 */
     alarm_expired();
 /* #endif */ /* BE_DR_7 */
@@ -1677,7 +1760,7 @@ le_puts(s,n) CHAR * s; int n;
     int rc = 0;
     int i = 0;
     CHAR * p = (CHAR *)"le_puts";
-    hexdump(p,s,n);
+    ckhexdump(p,s,n);
     for (i = 0; i < n; i++)
       rc = le_putchar((char)s[i]);
     debug(F101,"le_puts","",rc);
@@ -1694,7 +1777,7 @@ le_putstr(s) CHAR * s;
     CHAR * p;
     int rc = 0;
     p = (CHAR *)"le_putstr";
-    hexdump(p,s,(int)strlen((char *)s));
+    ckhexdump(p,s,(int)strlen((char *)s));
     for (p = s; *p && !rc; p++)
       rc = le_putchar(*p);
     return(rc);
@@ -1809,14 +1892,15 @@ ttgwsiz() {
 }
 
 
+#ifdef RLOGCODE
+_PROTOTYP( int rlog_naws, (void) );
+#endif	/* RLOGCODE */
+
 #ifndef NOSIGWINCH
 #ifdef SIGWINCH
 SIGTYP
 winchh(foo) int foo; {			/* SIGWINCH handler */
     int x = 0;
-#ifdef NETPTY
-    extern int pty_fork_pid;
-#endif /* NETPTY */
 #ifdef CK_TTYFD
 #ifndef VMS
     extern int ttyfd;
@@ -2021,6 +2105,10 @@ sysinit() {
     signal(SIGWINCH,winchh);		/* Catch window-size change */
 #endif /* SIGWINCH */
 #endif /* NOSIGWINCH */
+
+#ifdef SIGXFSZ
+    signal(SIGXFSZ,SIG_IGN);		/* Ignore writing past file limit */ 
+#endif	/* SIGXFSZ */
 
 #ifndef NOJC
 /*
@@ -2429,7 +2517,7 @@ ttopen(ttname,lcl,modem,timo) char *ttname; int *lcl, modem, timo; {
                 netconn = 1;            /* but we don't use network i/o */
                 ttpty = 1;
                 debug(F110,"ttopen PTY",ttname,0);
-		x = do_pty(ttname);
+		x = do_pty(&ttyfd,ttname,0);
 		if (x > -1) {
 		    ckstrncpy(ttnmsv,ttname,DEVNAMLEN);
 		    xlocal = *lcl = 1;	/* It's local */
@@ -3581,6 +3669,26 @@ ttclos(foo) int foo; {			/* Arg req'd for signal() prototype */
 		x = tthang();		/* Hang up first, then... */
 		debug(F101,"ttclos tthang()","",x);
 	    }
+#ifndef CK_NOHUPCL
+/*
+  Oct 2006 - Leave DTR on if SET EXIT HANGUP OFF.
+  Suggested by Soewono Effendi.
+*/
+#ifdef HUPCL
+	    else {
+		ttold.c_cflag &= ~HUPCL; /* Let's see how this travels */
+#ifdef BSD44ORPOSIX
+		tcsetattr(ttyfd,TCSANOW,&ttold);
+#else /* !BSD44ORPOSIX */
+#ifdef ATTSV
+		ioctl(ttyfd,TCSETAW,&ttold);		
+#else  /* !ATTSV */
+		stty(ttyfd,&ttold);
+#endif	/* ATTSV */
+#endif	/* BSD44ORPOSIX */
+	    }
+#endif	/* HUPCL */
+#endif	/* CK_NOHUPCL */
 	}
 	/* Put back device modes as we found them */
 
@@ -4868,6 +4976,9 @@ ttlock(ttdev) char *ttdev; {
 
     int x, n;
     int islink = 0;
+#ifdef __FreeBSD__
+    char *devname;
+#endif	/* __FreeBSD__ */
 
 #ifdef NOUUCP
     debug(F100,"ttlock NOUUCP","",0);
@@ -4879,8 +4990,17 @@ ttlock(ttdev) char *ttdev; {
 #ifdef USETTYLOCK
     haslock = 0;                        /* Not locked yet. */
     *flfnam = '\0';			/* Lockfile name is empty. */
+#ifdef __FreeBSD__
+    if ((devname = xxlast(ttdev,'/')) != NULL)
+#ifdef FREEBSD8
+      ckstrncat(lockname,devname+1,DEVNAMLEN-ckstrncpy(lockname,"pts",4));
+#else
+      ckstrncpy(lockname,devname+1,DEVNAMLEN);
+#endif	/* FREEBSD8 */
+#else
     if (!strncmp(ttdev,"/dev/",5) && ttdev[5])
       ckstrncpy(lockname,ttdev+5,DEVNAMLEN);
+#endif	/* __FreeBSD__ */
     else
       ckstrncpy(lockname,ttdev,DEVNAMLEN);
 /*
@@ -5834,7 +5954,19 @@ _PROTOTYP( int tcsetattr, (int, int, struct termios *) );
 		x = tcsetattr(ttyfd,TCSANOW,&temp);
 		debug(F111,"tthflow POSIX_CRTSCTS OFF tcsetattr",
 		      ckitoa(x),errno);
-	    }
+	    } else {			/* John Dunlap 2010-01-26 */
+		debug(F001,
+		      "tthflow before forcing off attrs CRTSCTS",
+		      "",
+		      attrs->c_cflag&CRTSCTS
+		      );
+		attrs->c_cflag &= ~CRTSCTS; /* force it off if !status */
+		debug(F001,
+		      "tthflow after forcing off attrs CRTSCTS",
+		      "",
+		      attrs->c_cflag&CRTSCTS
+		      );
+		}
 	} else {			/* Turn hard flow on */
 	    if (
 #ifdef COMMENT
@@ -6650,6 +6782,81 @@ ttpkt(speed,xflow,parity) long speed; int xflow, parity;
 #ifdef BEOSORBEBOX
     ttraw.c_cc[VMIN] = 0;		/* DR7 can only poll. */
 #endif /* BEOSORBEBOX */
+
+#define TESTING234
+#ifdef TESTING234
+    if (1) {
+	debug(F100,"ttpkt TESTING234 rawmode","",0);
+
+	/* iflags */
+	ttraw.c_iflag &= ~(PARMRK|ISTRIP|BRKINT|INLCR|IGNCR|ICRNL);
+	ttraw.c_iflag &= ~(INPCK|IGNPAR|IXON|IXOFF);
+	ttraw.c_iflag |= IGNBRK;
+#ifdef IMAXBEL
+	ttraw.c_iflag &= ~IMAXBEL;
+#endif	/* IMAXBEL */
+#ifdef IXANY
+	ttraw.c_iflag &= ~IXANY;
+#endif	/* IXANY */
+#ifdef IUCLC
+	ttraw.c_iflag &= ~IUCLC;
+#endif /* IUCLC */
+
+	/* oflags */
+	ttraw.c_oflag &= ~OPOST;
+#ifdef OXTABS
+	ttraw.c_oflag &= ~OXTABS;
+#endif /* OXTABS */
+#ifdef ONOCR
+	ttraw.c_oflag &= ~ONOCR;
+#endif /* ONOCR */
+#ifdef ONLRET
+	ttraw.c_oflag &= ~ONLRET;
+#endif /* ONLRET */
+#ifdef ONLCR
+	ttraw.c_oflag &= ~ONLCR;
+#endif /* ONLCR */
+
+	/* lflags */
+	ttraw.c_lflag &= ~ECHO;
+#ifdef ECHOE
+	ttraw.c_lflag &= ~ECHOE;
+#endif /* ECHOE */
+#ifdef ECHONL
+	ttraw.c_lflag &= ~ECHONL;
+#endif /* ECHONL */
+#ifdef ECHOPRT
+	ttraw.c_lflag &= ~ECHOPRT;
+#endif /* ECHOPRT */
+#ifdef ECHOKE
+	ttraw.c_lflag &= ~ECHOKE;
+#endif /* ECHOKE */
+#ifdef ECHOCTL
+	ttraw.c_lflag &= ~ECHOCTL;
+#endif /* ECHOCTL */
+#ifdef ALTWERASE
+	ttraw.c_lflag &= ~ALTWERASE;
+#endif /* ALTWERASE */
+#ifdef EXTPROC
+	ttraw.c_lflag &= ~EXTPROC;
+#endif /* EXTPROC */
+	ttraw.c_lflag &= ~(ICANON|ISIG|IEXTEN|TOSTOP|FLUSHO|PENDIN);
+#ifdef NOKERNINFO
+	ttraw.c_lflag |= NOKERNINFO;
+#endif	/* NOKERNINFO */
+	/* ttraw.c_lflag |= NOFLSH; */
+	ttraw.c_lflag &= ~NOFLSH;
+
+	/* cflags */
+	ttraw.c_cflag &= ~(CSIZE|PARENB|PARODD);
+	ttraw.c_cflag |= CS8|CREAD;
+#ifdef VMIN
+	ttraw.c_cc[VMIN] = 1;		/* Supposedly needed for AIX */
+#endif	/* VMIN */
+
+    }
+#endif /* TESTING234 */
+
     debug(F100,"ttpkt calling tcsetattr(TCSETAW)","",0);
     x = tcsetattr(ttyfd,TCSADRAIN,&ttraw);
     debug(F101,"ttpkt BSD44ORPOSIX tcsetattr","",x);
@@ -7337,10 +7544,6 @@ ttsspd(cps) int cps; {
 
 #else  /* Not USETCSETSPEED */
 
-#ifdef MINIX2        /* Hack alert */
-#define MINIX        /* Use pre-2.0 speed selection for Minix 2.0 as well */
-#endif /* MINIX2 */
-
     /* First check that the given speed is valid. */
 
     switch (cps) {
@@ -7965,11 +8168,6 @@ ttgspd() {				/* Get current serial device speed */
 #endif /* EXTA */
 #endif /* B19200 */
 
-#ifdef MINIX2
-/* End of hack to make MINIX2 use MINIX1 speed setting */
-#undef MINIX
-#endif /* MINIX2 */
-
 #ifndef MINIX
 #ifdef B38400
       case B38400:
@@ -8019,7 +8217,7 @@ ttgspd() {				/* Get current serial device speed */
 #endif /* B460800 */
 #endif /* HPUX */
 #ifdef B921600
-      case 92160: ss = 921600L; break;
+      case B921600: ss = 921600L; break;
 #endif /* B921600 */
       default:
 	ss = -1; break;
@@ -8126,6 +8324,10 @@ ttpeek() {
 
 /* myread() -- Efficient read of one character from communications line.
  *
+ * NOTE: myread() and its helpers mygetbuf() and myfillbuf() return raw
+ * bytes from connection, so when the connection is encrypted, these bytes
+ * must be decrypted.
+ *
  * Uses a private buffer to minimize the number of expensive read() system
  * calls.  Essentially performs the equivalent of read() of 1 character, which
  * is then returned.  By reading all available input from the system buffers
@@ -8165,16 +8367,20 @@ ttpeek() {
  * that guarantees that there is space for at least one character.  If push
  * back was really needed after EOF, a small addition could provide that.
  *
- * myunrd() is currently not called from anywhere inside kermit...
+ * As of 02/2007 myunrd() is used by ttinl().
  */
-#ifdef COMMENT /* not used */
-myunrd(ch) CHAR ch; {
+VOID
+#ifdef CK_ANSIC
+myunrd(CHAR ch)
+#else
+myunrd(ch) CHAR ch;
+#endif	/* CK_ANSIC */
+{
     if (my_item >= 0) {
 	mybuf[my_item--] = ch;
 	++my_count;
     }
 }
-#endif /* COMMENT */
 
 /*  T T P U S H B A C K  --  Put n bytes back into the myread buffer */
 
@@ -8246,7 +8452,7 @@ mygetbuf() {
 #ifdef COMMENT
     if (deblog) debug(F101, "mygetbuf read", "", my_count);
 #else /* COMMENT */
-    if (deblog) hexdump("mygetbuf read", mybuf, my_count);
+    ckhexdump("mygetbuf read", mybuf, my_count);
 #endif /* COMMENT */
 #endif /* DEBUG */
     x = my_count;
@@ -8347,7 +8553,7 @@ myfillbuf() {
     }
 #else /* BEOSORBEBOX */
     errno = 0;
-    debug(F100,"SVORPOSIX myfillbuf calling read()","",0);
+    /* debug(F101,"SVORPOSIX myfillbuf calling read() fd","",fd); */
 #ifdef IBMX25
     if (netconn && (nettype == NET_IX25)) {
 	/* can't use sizeof because mybuf is a pointer, and not an array! */
@@ -8358,6 +8564,7 @@ myfillbuf() {
 #ifdef CK_SSL
       if (ssl_active_flag || tls_active_flag) {
 	  int error, n = 0;
+	  debug(F100,"myfillbuf calling SSL_read() fd","",0);
 	  while (n == 0) {
 	      if (ssl_active_flag)
                 n = SSL_read(ssl_con, (char *)mybuf, sizeof(mybuf));
@@ -8393,7 +8600,8 @@ myfillbuf() {
 #ifdef KRB4
 #ifdef RLOGCODE
     if (ttnproto == NP_EK4LOGIN) {
-        if ((n = krb4_des_read(ttyfd,mybuf,sizeof(mybuf))) < 0)
+	debug(F101,"myfillbuf calling krb4_des_read() fd","",ttyfd);
+        if ((n = krb4_des_read(ttyfd,(char *)mybuf,sizeof(mybuf))) < 0)
 	  return(-3);
         else
 	  return(n);
@@ -8403,7 +8611,8 @@ myfillbuf() {
 #ifdef KRB5
 #ifdef RLOGCODE
     if (ttnproto == NP_EK5LOGIN) {
-        if ((n = krb5_des_read(ttyfd,mybuf,sizeof(mybuf),0)) < 0)
+	debug(F101,"myfillbuf calling krb5_des_read() fd","",ttyfd);
+        if ((n = krb5_des_read(ttyfd,(char *)mybuf,sizeof(mybuf),0)) < 0)
 	  return(-3);
         else
 	  return(n);
@@ -8411,7 +8620,8 @@ myfillbuf() {
 #endif /* RLOGCODE */
 #ifdef KRB5_U2U
     if (ttnproto == NP_K5U2U) {
-        if ((n = krb5_u2u_read(ttyfd,mybuf,sizeof(mybuf))) < 0)
+	debug(F101,"myfillbuf calling krb5_u2u_read() fd","",ttyfd);
+        if ((n = krb5_u2u_read(ttyfd,(char *)mybuf,sizeof(mybuf))) < 0)
 	  return(-3);
         else
 	  return(n);
@@ -8425,6 +8635,7 @@ myfillbuf() {
     /* Special handling for HP-UX pty i/o */
   ptyread:
     if (ttpty && pty_trap_pending(ttyfd) > 0) {
+	debug(F101,"myfillbuf calling pty_trap_handler() fd","",ttyfd);
         if (pty_trap_handler(ttyfd) > 0) {
             ttclos(0);
             return(-3);
@@ -8432,10 +8643,11 @@ myfillbuf() {
     }
 #endif /* HAVE_PTYTRAP */
 #endif /* NETPTY */
+    debug(F101,"myfillbuf calling read() fd","",ttyfd);
     n = read(fd, mybuf, sizeof(mybuf));
-    debug(F101,"SVORPOSIX myfillbuf","",n);
-    debug(F101,"SVORPOSIX myfillbuf ttcarr","",ttcarr);
+    debug(F101,"SVORPOSIX myfillbuf read","",n);
     debug(F101,"SVORPOSIX myfillbuf errno","",errno);
+    debug(F101,"SVORPOSIX myfillbuf ttcarr","",ttcarr);
     if (n < 1) {
 #ifdef NETPTY
 #ifdef HAVE_PTYTRAP
@@ -8605,7 +8817,7 @@ myfillbuf() {
 	debug(F101,"myfillbuf read","",x);
 	debug(F101,"myfillbuf read errno","",errno);
         if (x > 0)
-	  hexdump("myfillbuf mybuf",mybuf,x);
+	  ckhexdump("myfillbuf mybuf",mybuf,x);
     }
 #endif /* DEBUG */
     if (x < 1) x = -3;			/* read 0 == connection loss */
@@ -8698,10 +8910,6 @@ myfillbuf() {
 
 #endif /* MYREAD */
 
-#ifdef MINIX2
-#undef MINIX
-#endif /* MINIX2 */
-
 /*  T T _ T N O P T  --  Handle Telnet negotions in incoming data */
 /*
   Call with the IAC that was encountered.
@@ -8720,7 +8928,6 @@ tt_tnopt(n) int n; {			/* Handle Telnet options */
     if (n == IAC &&
 	((xlocal && netconn && IS_TELNET()) ||
 	 (!xlocal && sstelnet))) {
-	extern int duplex;
 	extern int server;
 	int tx = 0;
 	debug(F100,"ttinl calling tn_doop()","",0);
@@ -8809,7 +9016,7 @@ ttflux() {				/* But first... */
 	    ch = myread();
 #ifdef CK_ENCRYPTION
             if (TELOPT_U(TELOPT_ENCRYPTION))
-	      ck_tn_decrypt(&ch,1);
+	      ck_tn_decrypt((char *)&ch,1);
 #endif /* CK_ENCRYPTION */
             if (ch == IAC)
 	      x = tt_tnopt(ch);
@@ -9063,6 +9270,10 @@ conbgt(flag) int flag; {
 #undef PGROUP_T
 #endif /* MIPS */
 
+#ifdef MINIX
+#undef PGROUP_T
+#endif	/* MINIX */
+
 #ifdef PGROUP_T
 /*
   Semi-reliable process-group test.  Check whether this process's group is
@@ -9122,9 +9333,11 @@ conbgt(flag) int flag; {
 #endif /* POSIX */
 #endif /* SVR3 */
 
-#ifdef MINIX2
-#undef BSD44ORPOSIX
-#endif /* MINIX2 */
+#ifdef MINIX
+    /* MINIX does not support job control so Kermit is always in foreground */
+    x = 0;
+
+#else  /* Not MINIX */
 
 /* Now get controlling tty's process group */
 #ifdef BSD44ORPOSIX
@@ -9135,15 +9348,12 @@ conbgt(flag) int flag; {
    /* debug(F101,"non-POSIX conbgt terminal process group","",(int) ctpgrp); */
 #endif /* BSD44ORPOSIX */
 
-#ifdef MINIX2
-#define BSD44ORPOSIX
-#endif /* MINIX2 */
-
     if ((mypgrp > (PID_T) 0) && (ctpgrp > (PID_T) 0))
       x = (mypgrp == ctpgrp) ? 0 : 1;	/* If they differ, then background. */
     else x = -1;			/* If error, remember. */
     debug(F101,"conbgt process group test","",x);
 #endif /* PGROUP_T */
+#endif	/* MINIX */
 
 /* Try to see if job control is available */
 
@@ -9241,8 +9451,8 @@ conbgt(flag) int flag; {
 	osigint = signal(SIGINT,SIG_IGN);	/* What is SIGINT set to? */
 	sigint_ign = 1;
 	x = (osigint == SIG_IGN) ? 1 : 0;	/* SIG_IGN? */
-	debug(F101,"conbgt osigint","",osigint);
-	debug(F101,"conbgt signal test","",x);
+	/* debug(F101,"conbgt osigint","",osigint); */
+	/* debug(F101,"conbgt signal test","",x); */
     }
 
 /* Also check to see if we're running with redirected stdio. */
@@ -10120,7 +10330,10 @@ ttol(s,n) int n; CHAR *s; {
     if (ttyfd < 0)			/* Not open? */
       return(-3);
 #ifdef DEBUG
-    if (deblog) hexdump("ttol s",s,n);
+    if (deblog) {
+	/* debug(F101,"ttol ttyfd","",ttyfd); */
+	ckhexdump("ttol s",s,n);
+    }
 #endif /* DEBUG */
 
 #ifdef NETCMD
@@ -10153,7 +10366,7 @@ ttol(s,n) int n; CHAR *s; {
 	    s[n] = '\0';
 	}
 #ifdef DEBUG
-        if (deblog) hexdump("ttol doubled s",s,n);
+        ckhexdump("ttol doubled s",s,n);
 #endif /* DEBUG */
     }
 #endif /* CKXXCHAR */
@@ -10255,12 +10468,12 @@ ttol(s,n) int n; CHAR *s; {
 #ifdef KRB5
 #ifdef RLOGCODE
             if (ttnproto == NP_EK5LOGIN) {
-                return(krb5_des_write(ttyfd,s,n,0));
+                return(krb5_des_write(ttyfd,(char *)s,n,0));
             } else
 #endif /* RLOGCODE */
 #ifdef KRB5_U2U
             if (ttnproto == NP_K5U2U) {
-                return(krb5_u2u_write(ttyfd,s,n));
+                return(krb5_u2u_write(ttyfd,(char *)s,n));
             } else
 #endif /* KRB5_U2U */
 #endif /* KRB5 */
@@ -10429,7 +10642,7 @@ ttoc(c) char c;
 #ifdef KRB4
 #ifdef RLOGCODE
 	  if (ttnproto == NP_EK4LOGIN) {
-	      rc = (krb4_des_write(ttyfd,&c,1) == 1);
+	      rc = (krb4_des_write(ttyfd,(char *)&c,1) == 1);
 	  } else
 #endif /* RLOGCODE */
 #endif /* KRB4 */
@@ -10461,7 +10674,7 @@ ttoc(c) char c;
 
 /*  T T I N L  --  Read a record (up to break character) from comm line.  */
 /*
-  Reads up to "max" characters from the communication line, terminating on:
+  Reads up to "max" characters from the connection, terminating on:
     (a) the packet length field if the "turn" argument is zero, or
     (b) on the packet-end character (eol) if the "turn" argument is nonzero
     (c) a certain number of Ctrl-C's in a row
@@ -10472,13 +10685,21 @@ ttoc(c) char c;
     -2 on user interruption (c);
     -3 on fatal error like connection lost.
 
-  The characters that were input are copied into "dest" with their parity bits
-  stripped if parity was selected.  Returns the number of characters read.
-  Characters after the eol are available upon the next call to this function.
+  The name of this routine dates from the early days when Kermit packets
+  were, indeed, always lines of text.  That was before control-character
+  unprefixing and length-driven packet framing were introduced, which this
+  version handle.  NB: this routine is ONLY for reading incoming Kermit
+  packets, nothing else.  To read other kinds of incoming material, use
+  ttinc() or ttxin().
+
+  The bytes that were input are copied into "dest" with their parity bits
+  stripped if parity was selected.  Returns the number of bytes read.
+  Bytes after the eol are available upon the next call to this function.
 
   The idea is to minimize the number of system calls per packet, and also to
   minimize timeouts.  This function is the inner loop of the protocol and must
-  be as efficient as possible.  The current strategy is to use myread().
+  be as efficient as possible.  The current strategy is to use myread(), a
+  macro to manage buffered (and generally nonblocking) reads.
 
   WARNING: This function calls parchk(), which is defined in another module.
   Normally, ckutio.c does not depend on code from any other module, but there
@@ -10494,10 +10715,10 @@ ttoc(c) char c;
   (a) to allow Kermit to be built without the automatic parity sensing feature
   (b) one of each type for ANSI C, one for non-ANSI.
 */
-
-static int csave = -1;
-
 #ifndef NOXFER
+
+static int pushedback = 0;
+
 int
 #ifdef PARSENSE
 #ifdef CK_ANSIC
@@ -10510,7 +10731,7 @@ ttinl(dest,max,timo,eol,start,turn) int max,timo,turn; CHAR *dest, eol, start;
 ttinl(CHAR *dest, int max,int timo, CHAR eol)
 #else
 ttinl(dest,max,timo,eol) int max,timo; CHAR *dest, eol;
-#endif /* __SDTC__ */
+#endif /* CK_ANSIC */
 #endif /* PARSENSE */
 /* ttinl */ {
 
@@ -10538,7 +10759,17 @@ ttinl(dest,max,timo,eol) int max,timo; CHAR *dest, eol;
 #endif /* STREAMING */
 
     if (ttyfd < 0) return(-3);          /* Not open. */
-
+/*
+  In February 2007 I fixed ttinl() to work better under the truly awful
+  conditions encountered by the AM-APEX oceanographic floats that gather
+  hurricane data and phone home using Iridium satellite modems, which under
+  certain conditions, can send two packets back to back after a long pause.
+  In this case the second packet would be ignored because the SOH was skipped
+  due to the ttflui() call.  But the reworked lookahead/pushback logic broke
+  Kermit transfers on encrypted connections.  This was fixed 12-13 August
+  2007.  All of this happened after 8.0.212 Dev.27 was released and before
+  Dev.28, so no harm done other than the delay.
+*/
     debug(F101,"ttinl max","",max);
     debug(F101,"ttinl timo","",timo);
 
@@ -10592,21 +10823,11 @@ ttinl(dest,max,timo,eol) int max,timo; CHAR *dest, eol;
 
 	while (i < max-1) {
 #ifdef MYREAD
-	    /* debug(F101,"ttinl i","",i); */
 	    errno = 0;
-	    if (csave > -1) {
-	        n = csave;
-		debug(F101,"ttinl unsaving","",n);
-	    } else
-#ifdef COMMENT
-	      if (xlocal && conchk() > 0) {
-		  /* Here we could catch keyboard interruptions. */
-		  /* But this would be VERY expensive. */
-		  /* We could also do it in myread() but it would be */
-		  /* expensive there too -- even if done with select()... */
-	      }
-#endif /* COMMENT */
-	      if ((n = myread()) < 0) {	/* Timeout or i/o error? */
+	    /* On encrypted connections myread returns encrypted bytes */
+	    n = myread();
+	    debug(F000,"TTINL myread char","",n);
+	    if (n < 0) {	/* Timeout or i/o error? */
 #ifdef DEBUG
 		if (deblog) {
 		    debug(F101,"ttinl myread failure, n","",n);
@@ -10643,28 +10864,26 @@ ttinl(dest,max,timo,eol) int max,timo; CHAR *dest, eol;
 	    }
 
 #else /* not MYREAD (is this code used anywhere any more?) */
-
-	    if (csave > -1)		/* Char saved from last time */
-	      ch = csave;
-	    else if ((n = read(fd, &ch, 1)) < 1)
+/*
+  The non-MYREAD code dates from the 1980s and was needed on certain platforms
+  where there were no nonblocking reads.  -fdc, 2007/02/22.
+*/
+	    if ((n = read(fd, &n, 1)) < 1)
 	      break;			/* Error - break out of while loop */
-	    n = ch;
 
 #endif /* MYREAD */
 
 	    /* Get here with char in n */
 
 #ifdef CK_ENCRYPTION
-	    /* If csave > -1 we already decrypted this character */
-	    /* So don't decrypt it again */
-	    if (TELOPT_U(TELOPT_ENCRYPTION) && csave == -1) {
+	    if (TELOPT_U(TELOPT_ENCRYPTION) && !pushedback) {
 		CHAR ch = n;
-		ck_tn_decrypt(&ch,1);
+		ck_tn_decrypt((char *)&ch,1);
 		n = ch;
+		debug(F000,"TTINL decryp char","",n);
 	    }
+	    pushedback = 0;
 #endif /* CK_ENCRYPTION */
-
-	    csave = -1;			/* Unflag that we unsaved a char */
 
 #ifdef TCPSOCKET
 	    if (n == IAC &&		/* Handle Telnet options */
@@ -10681,12 +10900,12 @@ ttinl(dest,max,timo,eol) int max,timo; CHAR *dest, eol;
 		  continue;
 	    }				/* Quoted IAC - keep going */
 #endif /* TCPSOCKET */
+
 #ifdef CKXXCHAR
 	    if (ignflag)
 	      if (dblt[(unsigned) n] & 1) /* Character to ignore? */
 		continue;
 #endif /* CKXXCHAR */
-
 /*
   Use parity mask, rather than always stripping parity, to check for
   cancellation.  Otherwise, runs like \x03\x83\x03 in a packet could cancel
@@ -10708,27 +10927,41 @@ ttinl(dest,max,timo,eol) int max,timo; CHAR *dest, eol;
 	    } else ccn = 0;		/* No cancellation, reset counter, */
 
 #ifdef PARSENSE
-	    if (flag == 0) {		/* Find the Start-Of-Packet. */
-		if ((n & sopmask) == start) { /* Got it */
-		    flag = 1;
-		} else {		/* Keep looking... */
-		    debug(F000,"ttinl skipping","",n);
-		    continue;
-		}
+/*
+  Restructured code allows for a new packet to appear somewhere in the
+  middle of a previous one.  -fdc, 24 Feb 2007.
+*/
+	    if ((n & sopmask) == start) { /* Start of Packet */
+		debug(F101,"ttinl SOP i","",i);
+		flag = 1;		/* Flag that we are in a packet */
+		havelen = 0;		/* Invalidate previous length */
+		pktlen = -1;		/* (if any) in case we were */
+		lplen = 0;		/* alread processand a packet */
+		i = 0;			/* and reset the dest buffer pointer */
+	    }
+	    if (flag == 0) {		/* No SOP yet... */
+		debug(F000,"ttinl skipping","",n);
+		continue;
 	    }
 	    dest[i++] = n & ttpmsk;
 /*
-  If we have not been instructed to wait for a turnaround character, we
-  can go by the packet length field.  If turn != 0, we must wait for the
-  end of line (eol) character before returning.  This is an egregious
-  violation of all principles of layering...
+  If we have not been instructed to wait for a turnaround character, we can go
+  by the packet length field.  If turn != 0, we must wait for the end of line
+  (eol) character before returning.  This is an egregious violation of all
+  principles of layering...  (Less egregious in C-Kermit 9.0, in which we go
+  by the length field but also look for the eol in case it arrives early,
+  e.g. if the length field was corrupted upwards.)
 */
 	    if (!havelen) {
 		if (i == 2) {
+		    if ((dest[1] & 0x7f) < 32) /* Garbage in length field */
+		      return(-1);	/* fdc - 13 Apr 2010 */
 		    pktlen = xunchar(dest[1] & 0x7f);
+                    if (pktlen > 94)	/* Rubout in length field */
+		      return(-1);	/* fdc - 13 Apr 2010 */
 		    if (pktlen > 1) {
 			havelen = 1;
-			debug(F101,"ttinl length","",pktlen);
+			debug(F101,"ttinl pktlen value","",pktlen);
 		    }
 		} else if (i == 5 && pktlen == 0) {
 		    lplen = xunchar(dest[4] & 0x7f);
@@ -10781,7 +11014,9 @@ ttinl(dest,max,timo,eol) int max,timo; CHAR *dest, eol;
     /* Check for end of packet */
 
 	    if (
+		((n & ttpmsk) == eol)	/* Always break on the eol char */
 #ifdef PARSENSE
+		 ||			/* fdc - see notes of 13 Apr 2010 */
 /*
   Purely length-driven if SET HANDSHAKE NONE (i.e. turn == 0).
   This allows packet terminators and handshake characters to appear
@@ -10789,49 +11024,73 @@ ttinl(dest,max,timo,eol) int max,timo; CHAR *dest, eol;
 */
 		(havelen && (i > pktlen+1) &&
 		 (!turn || (turn && (n & 0x7f) == turn))) /* (turn, not eol) */
-#else /* !PARSENSE */
-/*
-  Built without PARSENSE, so just look for packet terminator.
-*/
-		((n & 0x7f) == eol)
+
 #endif /* PARSENSE */
 		) {
+/*
+  Here we have either read the last byte of the packet based on its length
+  field, or else we have read the packet terminator (eol) or the half-duplex
+  line-turnaround char (turn).
+*/
 #ifndef PARSENSE
 		debug(F101,"ttinl got eol","",eol); /* (or turn) */
 		dest[i] = '\0';		/* Yes, terminate the string, */
 		/* debug(F101,"ttinl i","",i); */
-#else
+
+#else  /* PARSENSE */
+
 #ifdef DEBUG
 		if (deblog) {
-		    if ((n & 0x7f) != eol) {
+		    if ((n & ttpmsk) != eol) {
 			debug(F101,"ttinl EOP length","",pktlen);
-			debug(F101,"ttinl i","",i);
-#ifdef MYREAD
-#ifdef PARSENSE
-/*
-  We read a packet based on its length.  This leaves the EOP character still
-  unread, and so ttchk() will always return at least 1 because of this.  But
-  if we know it is there, we can safely get rid of it.  So...
-*/
-			{
-			    int x;
-			    while (my_count > 0) {
-				x = ttinc(0);
-				/* Start of next packet */
-				if (x == start) { /* Save for next time */
-				    csave = (unsigned)((unsigned)x & 0xff);
-				    debug(F000,"ttinl csaved","",x);
-				    break;
-				}
-				debug(F000,"ttinl removed","",x);
-			    }
-			}
-#endif /* PARSENSE */
-#endif /* MYREAD */
-
-		    } else debug(F101,"ttinl got eol","",eol); /* (or turn) */
+			debug(F000,"ttinl EOP current char","",n);
+			debug(F101,"ttinl EOP packet buf index","",i);
+		    } else debug(F101,"ttinl got eol","",eol);
 		}
 #endif /* DEBUG */
+
+#ifdef MYREAD
+/*
+  The packet was read based on its length.  This leaves the packet terminator
+  unread, and so ttchk() will always return at least 1 because of this,
+  possibly giving a false positive to the "is there another packet waiting?"
+  test.  But if we know the terminator (or any other interpacket junk) is
+  there, we can safely get rid of it.
+
+  NOTE: This code reworked to (a) execute even if the debug log isn't active;
+  and (b) actually work.  -fdc, 2007/02/22.  And again 2007/08/12-13 to also
+  work on encrypted connections.
+*/	
+		debug(F101,"TTINL my_count","",my_count);
+		if ((n & ttpmsk) != eol) { /* Not the packet terminator */
+		    int x;
+		    while (my_count > 0) {
+			x = myread();	   /* (was ttinc(0) */
+			debug(F000,"TTINL lkread char","",x);
+#ifdef CK_ENCRYPTION
+			if (TELOPT_U(TELOPT_ENCRYPTION)) {
+			    CHAR ch = x;
+			    ck_tn_decrypt((char *)&ch,1);
+			    x = ch;
+			    debug(F000,"TTINL lkdecr char","",x); 
+			}
+#endif	/* CK_ENCRYPTION */
+			/*
+			  Note: while it might seem more elegant to simply
+			  push back the encrypted byte, that desynchronizes
+			  the decryption stream; the flag is necessary so we
+			  don't try to decrypt the same byte twice.
+			*/
+			if ((x & ttpmsk) == start) { /* Start of next packet */
+			    myunrd(x);	/* Push back the decrypted byte */
+			    pushedback = 1; /* And set flag */
+			    debug(F000,"TTINL lkpush char","",x);
+			    break;
+			}
+		    }
+		}
+#endif /* MYREAD */
+
 		dest[i] = '\0';		/* Terminate the string, */
 	        if (needpchk) {		/* Parity checked yet? */
 		    if (ttprty == 0) {	/* No, check. */
@@ -10845,21 +11104,18 @@ ttinl(dest,max,timo,eol) int max,timo; CHAR *dest, eol;
 			    debug(F110,"ttinl packet after ",dest,0);
 			} else ttprty = 0; /* Restore if parchk error */
 		    }
-		    sopmask = ttprty;
+		    sopmask = ttpmsk;
 		    needpchk = 0;
 		}
 #endif /* PARSENSE */
-		if (timo) {		/* Turn off timer. */
-		    ttimoff();
-		}
-#ifdef COMMENT
-		debug(F011,"ttinl got", dest, (i < 60) ? i : -60);
-#else /* COMMENT */
-                hexdump("ttinl got",dest,i);
-#endif /* COMMENT */
+
+		if (timo)		/* Turn off timer if it was on */
+		  ttimoff();
+                ckhexdump("ttinl got",dest,i);
+
 #ifdef STREAMING
 		/* ttinl() was called because there was non-packet */
-		/* data sitting int the channel.  Ignore it.       */
+		/* data sitting in the back channel.  Ignore it.   */
 		if (streaming && sndtyp == 'D')
 		  return(-1);
 #endif /* STREAMING */
@@ -10934,7 +11190,7 @@ ttinc(timo) int timo; {
 	/* debug(F101,"ttinc u_encrypt","",TELOPT_U(TELOPT_ENCRYPTION)); */
 	if (TELOPT_U(TELOPT_ENCRYPTION) && n >= 0) {
 	    ch = n;
-	    ck_tn_decrypt(&ch,1);
+	    ck_tn_decrypt((char *)&ch,1);
 	    n = ch;
 	}
 #endif /* CK_ENCRYPTION */
@@ -11009,7 +11265,7 @@ ttinc(timo) int timo; {
 
 #ifdef CK_ENCRYPTION
 	    if (TELOPT_U(TELOPT_ENCRYPTION) && n >= 0) {
-		ck_tn_decrypt(&ch,1);
+		ck_tn_decrypt((char *)&ch,1);
 	    }
 #endif /* CK_ENCRYPTION */
 	    if (n >= 0)
@@ -11927,7 +12183,7 @@ concb(char esc)
 concb(esc) char esc;
 #endif /* CK_ANSIC */
 /* concb */ {
-    int x;
+    int x, y = 0;
     debug(F101,"concb constate","",constate);
     debug(F101,"concb cgmf","",cgmf);
     debug(F101,"concb backgrd","",backgrd);
@@ -12070,23 +12326,9 @@ concb(esc) char esc;
 #ifdef COHERENT
 #undef SVORPOSIX
 #endif /* COHERENT */
+
     debug(F101,"concb x","",x);
     debug(F101,"concb errno","",errno);
-#ifdef NONOSETBUF
-    if (x > -1) {
-	setbuf(stdout,NULL);    /* Make console unbuffered. */
-	debug(F100,"concb setbuf A","",0);
-    }
-#else
-#ifndef aegis
-#ifndef NOSETBUF
-    if (x > -1) {
-	setbuf(stdout,NULL);    /* Make console unbuffered. */
-	debug(F100,"concb setbuf B","",0);
-    }
-#endif /* NOSETBUF */
-#endif /* aegis */
-#endif /* NONOSETBUF */
 
 #ifdef  V7
 #ifndef MINIX
@@ -12414,7 +12656,7 @@ conol(s) char *s; {
 		nxpacket = 0;
 	    }
 	    len = len > 10240 ? len : 10240;
-	    xpacket = (char *)malloc(len);
+	    xpacket = (CHAR *)malloc(len);
 	    if (!xpacket) {
 		fprintf(stderr,"ttol malloc failure\n");
 		return(-1);
@@ -12422,7 +12664,7 @@ conol(s) char *s; {
 	      nxpacket = len;
 	}
 	memcpy(xpacket,s,len);
-	s = xpacket;
+	s = (char *)xpacket;
 	ck_tn_encrypt(s,len);
     }
 #endif /* CK_ENCRYPTION */
@@ -12482,7 +12724,7 @@ conoll(s) char *s; {
 #ifdef IKSD
 #ifdef CK_ENCRYPTION
     if (inserver && TELOPT_ME(TELOPT_ENCRYPTION))
-      ck_tn_encrypt(buf,2);
+      ck_tn_encrypt((char *)buf,2);
 #endif /* CK_ENCRYPTION */
 #endif /* IKSD */
 
@@ -12594,7 +12836,7 @@ coninc(timo) int timo; {
 #ifdef CK_ENCRYPTION
                 debug(F100,"coninc decrypt 1","",0);
                 if (inserver && !local && TELOPT_U(TELOPT_ENCRYPTION))
-		  ck_tn_decrypt(&ch,1);
+		  ck_tn_decrypt((char *)&ch,1);
 #endif /* CK_ENCRYPTION */
 #endif /* IKSD */
 		return((unsigned)(ch & 0xff)); /* return the character. */
@@ -12678,7 +12920,7 @@ coninc(timo) int timo; {
 #ifdef CK_ENCRYPTION
         debug(F100,"coninc decrypt 2","",0);
         if (inserver && !local && TELOPT_U(TELOPT_ENCRYPTION))
-	  ck_tn_decrypt(&ch,1);
+	  ck_tn_decrypt((char *)&ch,1);
 #endif /* CK_ENCRYPTION */
 #endif /* IKSD */
 	return((unsigned)(ch & 0xff));	/* Return it. */
@@ -13395,15 +13637,21 @@ psuspend(flag) int flag; {
 #ifndef PS2AIX10
 #ifndef sequent
 #ifndef HPUX9
+#ifndef HPUX10
 #ifndef COHERENT
 #ifndef NOGETID_PROTOS
-extern UID_T getuid(), geteuid(), getreuid();
-extern GID_T getgid(), getegid(), getregid();
+_PROTOTYP( UID_T getuid, (void) );
+_PROTOTYP( UID_T geteuid, (void) );
+_PROTOTYP( UID_T getreuid, (void) );
+_PROTOTYP( UID_T getgid, (void) );
+_PROTOTYP( UID_T getegid, (void) );
+_PROTOTYP( UID_T getregid, (void) );
 #endif /* NOGETID_PROTOS */
 #else
-extern UID_T getreuid();
-extern GID_T getregid();
+_PROTOTYP( UID_T getreuid, (void) );
+_PROTOTYP( UID_T getregid, (void) );
 #endif /* COHERENT */
+#endif /* HPUX10 */
 #endif /* HPUX9 */
 #endif /* sequent */
 #endif /* PS2AIX10 */
@@ -13509,7 +13757,7 @@ int
 priv_ini() {
     int err = 0;
 
-#ifndef HAVE_BAUDBOY
+#ifndef HAVE_LOCKDEV
 
     /* Save real ID:s. */
     realuid = getuid();
@@ -13590,7 +13838,7 @@ priv_ini() {
 	err &= ~1;			/* System V R0 does not save UID */
 #endif /* ATT7300 */
     }
-#endif /* HAVE_BAUDBOY */
+#endif /* HAVE_LOCKDEV */
     return(err);
 }
 
@@ -13668,7 +13916,7 @@ priv_ini() {
  */
 int
 priv_on() {
-#ifndef HAVE_BAUDBOY
+#ifndef HAVE_LOCKDEV
     if (privgid != (GID_T) -1)
       if (switchgid(realgid,privgid))
         return(2);
@@ -13679,7 +13927,7 @@ priv_on() {
 	    switchgid(privgid,realgid);
 	  return(1);
       }
-#endif /* HAVE_BAUDBOY */
+#endif /* HAVE_LOCKDEV */
     return(0);
 }
 
@@ -13695,7 +13943,7 @@ priv_on() {
 int
 priv_off() {
     int err = 0;
-#ifndef HAVE_BAUDBOY
+#ifndef HAVE_LOCKDEV
     if (privuid != (UID_T) -1)
        if (switchuid(privuid,realuid))
 	  err |= 1;
@@ -13703,7 +13951,7 @@ priv_off() {
     if (privgid != (GID_T) -1)
        if (switchgid(privgid,realgid))
 	err |= 2;
-#endif /* HAVE_BAUDBOY */
+#endif /* HAVE_LOCKDEV */
     return(err);
 }
 
@@ -13719,7 +13967,7 @@ priv_off() {
  */
 int
 priv_can() {
-#ifndef HAVE_BAUDBOY
+#ifndef HAVE_LOCKDEV
 #ifdef SETREUID
     int err = 0;
     if (privuid != (UID_T) -1)
@@ -13759,7 +14007,7 @@ priv_can() {
 #endif /* SETREUID */
 #else
     return(0);
-#endif /* HAVE_BAUDBOY */
+#endif /* HAVE_LOCKDEV */
 }
 
 /* P R I V _ O P N  --  For opening protected files or devices. */
@@ -13820,9 +14068,1281 @@ ttimoff() {				/* Turn off any timer interrupts */
     }
 }
 
-/* T T R U N C M D  --  Redirect an external command over the connection. */
+
+int
+tt_is_secure() {	  /* Tells whether the current connection is secure */
+
+    if (ttyfd == -1)
+      return(0);
+
+    if (0
+#ifdef SSHBUILTIN
+	|| IS_SSH()
+#endif /* SSHBUILTIN */
+#ifdef CK_ENCRYPTION
+	|| ck_tn_encrypting() && ck_tn_decrypting()
+#endif /* CK_ENCRYPTION */
+#ifdef CK_SSL
+	|| tls_active_flag || ssl_active_flag
+#endif /* CK_SSL */
+#ifdef RLOGCODE
+#ifdef CK_KERBEROS
+#ifdef CK_ENCRYPTION
+	|| ttnproto == NP_EK4LOGIN || ttnproto == NP_EK5LOGIN
+#endif /* CK_ENCRYPTION */
+#endif /* CK_KERBEROS */
+#endif /* RLOGCODE */
+	)
+      return(1);
+    return(0);
+}
 
 #ifdef CK_REDIR
+  
+/* External protocol handler parameters from ckuus3.c */
+extern int exp_handler, exp_stderr, exp_timo;
+
+#ifdef SELECT
+#ifdef NETPTY
+
+/* The right size is 24576 */
+
+#ifndef PTY_PBUF_SIZE			/* Size of buffer to read from pty */
+#define PTY_PBUF_SIZE 24576		/* and write to net. */
+#endif	/* PTY_PBUF_SIZE */
+
+#ifndef PTY_TBUF_SIZE			/* Size of buffer to read from net */
+#define PTY_TBUF_SIZE 24576		/* and write to pty. */
+#endif	/* PTY_TBUF_SIZE */
+
+#ifdef O_NDELAY				/* Whether to use nonblocking */
+#ifndef PTY_NO_NDELAY			/* reads on the pseudoterminal */
+#ifndef PTY_USE_NDELAY
+#define PTY_USE_NDELAY
+#endif	/* PTY_USE_NDELAY */
+#endif	/* PTY_NO_NDELAY */
+#endif	/* O_NDELAY */
+
+#ifndef HAVE_OPENPTY
+#ifndef USE_CKUPTY_C
+#define USE_CKUPTY_C
+#endif /* USE_CKUPTY_C */
+#endif /* HAVE_OPENPTY */
+
+VOID
+pty_make_raw(fd) int fd; {
+    int x = -23, i;
+
+#ifdef BSD44ORPOSIX			/* POSIX */
+    struct termios tp;
+#else
+#ifdef ATTSV				/* AT&T UNIX */
+#ifdef CK_ANSIC
+    struct termio tp = {0};
+#else
+    struct termio tp;
+#endif	/* CK_ANSIC */
+#else
+    struct sgttyb tp;			/* Traditional */
+#endif /* ATTSV */
+#endif /* BSD44ORPOSIX */
+
+    debug(F101,"pty_make_raw fd","",fd);
+    errno = 0;
+
+#ifdef BSD44ORPOSIX			/* POSIX */
+    x = tcgetattr(fd,&tp);
+    debug(F101,"pty_make_raw tcgetattr","",x);
+#else
+#ifdef ATTSV				/* AT&T UNIX */
+    x = ioctl(fd,TCGETA,&tp);
+    debug(F101,"pty_make_raw TCGETA ioctl","",x);
+#else
+    x = gtty(fd,&tp);
+    debug(F101,"pty_make_raw ttty","",x);
+#endif /* ATTSV */
+#endif /* BSD44ORPOSIX */
+    debug(F101,"pty_make_raw GET errno","",errno);
+
+#ifdef USE_CFMAKERAW
+    errno = 0;
+    cfmakeraw(&tp);
+    debug(F101,"pty_make_raw cfmakeraw errno","",errno);
+#else  /* USE_CFMAKERAW */
+
+#ifdef COMMENT
+
+/* This very simple version recommended by Serg Iakolev doesn't work */
+
+    tp.c_lflag &= ~(ECHO|ICANON|IEXTEN|ISIG);
+    tp.c_iflag &= ~(BRKINT|ICRNL|INPCK|ISTRIP|IXON);
+    tp.c_cflag &= ~(CSIZE|PARENB);
+    tp.c_cflag |= CS8;
+    tp.c_oflag &= ~(OPOST);
+    tp.c_cc[VMIN] = 1;
+    tp.c_cc[VTIME] = 0;
+
+    debug(F101,"pty_make_raw 1 c_cc[] NCCS","",NCCS);
+    debug(F101,"pty_make_raw 1 iflags","",tp.c_iflag);
+    debug(F101,"pty_make_raw 1 oflags","",tp.c_oflag);
+    debug(F101,"pty_make_raw 1 lflags","",tp.c_lflag);
+    debug(F101,"pty_make_raw 1 cflags","",tp.c_cflag);
+
+#else
+#ifdef COMMENT
+/*
+  In this version we unset everything and then set only the
+  bits we know we need.
+*/
+    /* iflags */
+    tp.c_iflag = 0L;
+    tp.c_iflag |= IGNBRK;
+#ifdef IMAXBEL
+    tp.c_iflag |= IMAXBEL;
+#endif /* IMAXBEL */
+
+    /* oflags */
+    tp.c_oflag = 0L;
+
+    /* lflags */
+    tp.c_lflag = 0L;
+#ifdef NOKERNINFO
+    tp.c_lflag |= NOKERNINFO;
+#endif	/* NOKERNINFO */
+
+    /* cflags */
+    tp.c_cflag = 0L;
+    tp.c_cflag |= CS8|CREAD;
+
+    for (i = 0; i < NCCS; i++) {	/* No special characters */
+	tp.c_cc[i] = 0;
+    }
+#ifdef VMIN
+    tp.c_cc[VMIN] = 1;			/* But always wait for input */
+#endif	/* VMIN */
+    debug(F101,"pty_make_raw 2 c_cc[] NCCS","",NCCS);
+    debug(F101,"pty_make_raw 2 iflags","",tp.c_iflag);
+    debug(F101,"pty_make_raw 2 oflags","",tp.c_oflag);
+    debug(F101,"pty_make_raw 2 lflags","",tp.c_lflag);
+    debug(F101,"pty_make_raw 2 cflags","",tp.c_cflag);
+
+#else  /* COMMENT */
+/*
+  In this version we set or unset every single flag explicitly.  It works a
+  bit better than the simple version just above, but it's still far from
+  adequate.
+*/
+    /* iflags */
+    tp.c_iflag &= ~(PARMRK|ISTRIP|BRKINT|INLCR|IGNCR|ICRNL);
+    tp.c_iflag &= ~(INPCK|IGNPAR|IXANY|IXON|IXOFF);
+    tp.c_iflag |= IGNBRK;
+#ifdef IMAXBEL
+#ifdef COMMENT
+    tp.c_iflag |= IMAXBEL;
+#else
+    tp.c_iflag &= ~IMAXBEL;
+#endif /* COMMENT */
+#endif /* IMAXBEL */
+#ifdef IUCLC
+    tp.c_iflag &= ~IUCLC;
+#endif /* IUCLC */
+
+    /* oflags */
+#ifdef BSDLY
+    tp.c_oflag &= ~BSDLY;
+#endif /* BSDLY */
+#ifdef CRDLY
+    tp.c_oflag &= ~CRDLY;
+#endif /* CRDLY */
+#ifdef FFDLY
+    tp.c_oflag &= ~FFDLY;
+#endif /* FFDLY */
+#ifdef NLDLY
+    tp.c_oflag &= ~NLDLY;
+#endif /* NLDLY */
+#ifdef TABDLY
+    tp.c_oflag &= ~TABDLY;
+#endif /* TABDLY */
+#ifdef VTDLY
+    tp.c_oflag &= ~VTDLY;
+#endif /* VTDLY */
+#ifdef OFDEL
+    tp.c_oflag &= ~OFDEL;
+#endif /* OFDEL */
+#ifdef OFILL
+    tp.c_oflag &= ~OFILL;
+#endif /* OFILL */
+#ifdef OLCUC
+    tp.c_oflag &= ~OLCUC;
+#endif /* OLCUC */
+#ifdef CMSPAR
+    tp.c_oflag &= ~CMSPAR;
+#endif /* CMSPAR */
+    tp.c_oflag &= ~OPOST;
+#ifdef OXTABS
+    tp.c_oflag &= ~OXTABS;
+#endif /* OXTABS */
+#ifdef COMMENT
+#ifdef ONOCR
+    tp.c_oflag &= ~ONOCR;		/* Maybe should be |=? */
+    tp.c_oflag |= ONOCR;		/* makes no difference either way */
+#endif /* ONOCR */
+#endif /* COMMENT */
+#ifdef ONOEOT
+    tp.c_oflag &= ~ONOEOT;
+#endif /* ONOEOT */
+#ifdef ONLRET
+    tp.c_oflag &= ~ONLRET;
+#endif /* ONLRET */
+#ifdef ONLCR
+    tp.c_oflag &= ~ONLCR;
+#endif /* ONLCR */
+#ifdef OCRNL
+    tp.c_oflag &= ~OCRNL;
+#endif /* OCRNL */
+
+    /* lflags */
+    tp.c_lflag &= ~ECHO;
+#ifdef ECHOE
+    tp.c_lflag &= ~ECHOE;
+#endif /* ECHOE */
+#ifdef ECHONL
+    tp.c_lflag &= ~ECHONL;
+#endif /* ECHONL */
+#ifdef ECHOPRT
+    tp.c_lflag &= ~ECHOPRT;
+#endif /* ECHOPRT */
+#ifdef ECHOKE
+    tp.c_lflag &= ~ECHOKE;
+#endif /* ECHOKE */
+#ifdef ECHOCTL
+    tp.c_lflag &= ~ECHOCTL;
+#endif /* ECHOCTL */
+#ifdef XCASE
+    tp.c_lflag &= ~XCASE;
+#endif /* XCASE */
+#ifdef ALTWERASE
+    tp.c_lflag &= ~ALTWERASE;
+#endif /* ALTWERASE */
+#ifdef EXTPROC
+    tp.c_lflag &= ~(ICANON|ISIG|IEXTEN|TOSTOP|FLUSHO|PENDIN|EXTPROC);
+#else
+    tp.c_lflag &= ~(ICANON|ISIG|IEXTEN|TOSTOP|FLUSHO|PENDIN);
+#endif	/* EXTPROC */
+#ifdef NOKERNINFO
+    tp.c_lflag |= NOKERNINFO;
+#endif	/* NOKERNINFO */
+#ifndef COMMENT
+    tp.c_lflag &= ~NOFLSH;		/* TRY IT THE OTHER WAY? */
+#else
+    tp.c_lflag |= NOFLSH;		/* No, this way is worse */
+#endif /* COMMENT */
+
+    /* cflags */
+    tp.c_cflag &= ~(CSIZE|PARENB|PARODD);
+    tp.c_cflag |= CS8|CREAD;
+
+#ifdef MDMBUF
+    tp.c_cflag &= ~(MDMBUF);
+#else
+#ifdef CCAR_OFLOW
+    tp.c_cflag &= ~(CCAR_OFLOW);	/* two names for the same thing */
+#endif /* CCAR_OFLOW */
+#endif /* MDMBUF */
+
+#ifdef CCTS_OFLOW
+    tp.c_cflag &= ~(CCTS_OFLOW);
+#endif /* CCTS_OFLOW */
+#ifdef CDSR_OFLOW
+    tp.c_cflag &= ~(CDSR_OFLOW);
+#endif /* CDSR_OFLOW */
+#ifdef CDTR_IFLOW
+    tp.c_cflag &= ~(CDTR_IFLOW);
+#endif /* CDTR_IFLOW */
+#ifdef CRTS_IFLOW
+    tp.c_cflag &= ~(CRTS_IFLOW);
+#endif /* CRTS_IFLOW */
+#ifdef CRTSXOFF
+    tp.c_cflag &= ~(CRTSXOFF);
+#endif /* CRTSXOFF */
+#ifdef CRTSCTS
+    tp.c_cflag &= ~(CRTSCTS);
+#endif /* CRTSCTS */
+#ifdef CLOCAL
+    tp.c_cflag &= ~(CLOCAL);
+#endif /* CLOCAL */
+#ifdef CSTOPB
+    tp.c_cflag &= ~(CSTOPB);
+#endif /* CSTOPB */
+#ifdef HUPCL
+    tp.c_cflag &= ~(HUPCL);
+#endif /* HUPCL */
+
+    for (i = 0; i < NCCS; i++) {	/* No special characters */
+	tp.c_cc[i] = 0;
+    }
+#ifdef VMIN
+    tp.c_cc[VMIN] = 1;			/* But always wait for input */
+#endif	/* VMIN */
+    debug(F101,"pty_make_raw 3 c_cc[] NCCS","",NCCS);
+    debug(F101,"pty_make_raw 3 iflags","",tp.c_iflag);
+    debug(F101,"pty_make_raw 3 oflags","",tp.c_oflag);
+    debug(F101,"pty_make_raw 3 lflags","",tp.c_lflag);
+    debug(F101,"pty_make_raw 3 cflags","",tp.c_cflag);
+#endif /* COMMENT */
+#endif /* COMMENT */
+
+    errno = 0;
+#ifdef BSD44ORPOSIX			/* POSIX */
+    x = tcsetattr(fd,TCSANOW,&tp);
+    debug(F101,"pty_make_raw tcsetattr","",x);
+#else
+#ifdef ATTSV				/* AT&T UNIX */
+    x = ioctl(fd,TCSETA,&tp);
+    debug(F101,"pty_make_raw ioctl","",x);
+#else
+    x = stty(fd,&tp);			/* Traditional */
+    debug(F101,"pty_make_raw stty","",x);
+#endif /* ATTSV */
+#endif /* BSD44ORPOSIX */
+    debug(F101,"pty_make_raw errno","",errno);
+
+#endif /* __NetBSD__ */
+}
+
+static int
+pty_chk(fd) int fd; {
+    int x, n = 0;
+    errno = 0;
+#ifdef FIONREAD
+    x = ioctl(fd, FIONREAD, &n);	/* BSD and most others */
+    ckmakmsg(msgbuf,500,
+	     "pty_chk ioctl FIONREAD errno=",
+	     ckitoa(errno),
+	     " count=",
+	     ckitoa(n));
+    debug(F100,msgbuf,"",0);
+#else
+#ifdef RDCHK
+    n = rdchk(fd);
+    debug(F101,"pty_chk rdchk","",n);
+#else
+    n = 1;
+#endif	/* RDCHK */
+#endif	/* FIONREAD */
+    return((n > -1) ? n : 0);
+}
+
+static int
+pty_get_status(fd,pid) int fd; PID_T pid; {
+    int x, status = -1;
+    PID_T w;
+
+    debug(F101,"pty_get_status fd","",fd);
+    debug(F101,"pty_get_status pid","",pid);
+
+    if (pexitstat > -1)
+      return(pexitstat);
+
+#ifdef COMMENT
+    /* Not only unnecessary but harmful */
+    errno = 0;
+    x = kill(pty_fork_pid,0);
+    debug(F101,"pty_get_status kill value","",x);
+    debug(F101,"pty_get_status kill errno","",errno);
+    if (x > -1 && errno != ESRCH)
+      return(-1);			/* Fork still there */
+    /* Fork seems to be gone */
+#endif	/* COMMENT */
+
+    errno = 0;
+    x = waitpid(pty_fork_pid,&status,WNOHANG);
+    debug(F111,"pty_get_status waitpid",ckitoa(errno),x);
+    if (x <= 0 && errno == 0) {
+	debug(F101,"pty_get_status waitpid return","",-1);
+	return(-1);
+    }
+    if (x > 0) {
+	if (x != pty_fork_pid)
+	  debug(F101,
+		"pty_get_status waitpid pid doesn't match","",pty_fork_pid); 
+	debug(F101,"pty_get_status waitpid status","",status);
+	debug(F101,"pty_get_status waitpid errno","",errno);
+	if (WIFEXITED(status)) {
+	    debug(F100,"pty_get_status WIFEXITED","",0);
+	    status = WEXITSTATUS(status);
+	    debug(F101,"pty_get_status fork exit status","",status);
+#ifdef COMMENT
+	    end_pty();
+#endif	/* COMMENT */
+	    close(fd);
+	    pexitstat = status;
+	} else {
+	    debug(F100,"pty_get_status waitpid unexpected status","",0);
+	}
+    }
+    debug(F101,"pty_get_status return status","",status);
+    return(status);
+}
+
+/* t t p t y c m d  --  Run command on pty and forward to net */
+
+/*
+  Needed for running external protocols on secure connections.
+  For example, if C-Kermit has made an SSL/TLS or Kerberos Telnet
+  connection, and then needs to transfer a file with Zmodem, which is
+  an external program, this routine reads Zmodem's output, encrypts it,
+  and then forwards it out the connection, and reads the encrypted data
+  stream coming in from the connection, decrypts it, and forwards it to
+  Zmodem.
+
+  Works like a TCP/IP port forwarder except one end is a pty rather
+  than a socket, which introduces some complications:
+
+   . On most platforms, select() always indicates the output side of
+     the pty has characters waiting to be read, even when it doesn't,
+     even when the pty process has already exited.
+
+   . Nonblocking reads must be used on the pty, because there is no
+     way on certain platforms (e.g. NetBSD) to find out how many characters
+     are available to be read (the FIONREAD ioctl always says 0).  The code
+     also allows for blocking reads (if O_NDELAY and O_NONBLOCK are not
+     defined, or if PTY_NO_NDELAY is defined), but on some platforms this can
+     result in single-byte reads and writes (NetBSD again).
+
+   . Testing for "EOF" on the pty is problematic.  select() never gives
+     any indication.  After the pty process has exited and the fork has
+     disappeared, read() can still return with 0 bytes read but without an
+     error (NetBSD); no known test on the pty file descriptor will indicate
+     that it is no longer valid.  The process ID of the pty fork can be
+     tested on some platforms (NetBSD, luckily) but not others (Solaris,
+     Linux).
+
+  On the network side, we use ttinc() and ttoc(), which, for network 
+  connections, handle any active security methods.
+
+  Call with s = command.
+  Returns 0 on failure, 1 on success.
+  fdc - December 2006 - August 2007.
+
+  NOTE: This code defaults to nonblocking reads if O_NDELAY or O_NONBLOCK are
+  defined in the header files, which should be true of every recent Unix
+  platform.  If this causes trouble somewhere, define PTY_NO_NDELAY, e.g. when
+  building C-Kermit:
+
+    touch ckutio.c
+    make platformname KFLAGS=-DPTY_NO_NODELAY
+*/
+static int have_pty = 0;		/* Do we have a pty? */
+
+static SIGTYP (*save_sigchld)() = NULL;	/* For catching SIGCHLD */
+
+static VOID
+sigchld_handler(sig) int sig; {
+    have_pty = 0;			/* We don't have a pty */
+#ifdef DEBUG
+    if (save_sigchld) {
+	(VOID) signal(SIGCHLD,save_sigchld);
+	save_sigchld = NULL;
+    }
+    if (deblog) {
+	debug(F100,"**************","",0);
+	debug(F100,"SIGCHLD caught","",0);
+	debug(F100,"**************","",0);
+    }
+#endif	/* DEBUG */
+}
+#define HAVE_IAC 1
+#define HAVE_CR  2
+
+int
+ttptycmd(s) char *s; {
+    CHAR tbuf[PTY_TBUF_SIZE];		/* Read from net, write to pty */
+    int tbuf_avail = 0;			/* Pointers for tbuf */
+    int tbuf_written = 0;
+    static int in_state = 0;		/* For TELNET IAC and NVT in */
+    static int out_prev = 0;		/* Simpler scheme for out */
+
+    CHAR pbuf[PTY_PBUF_SIZE];		/* Read from pty, write to net */
+    CHAR dbuf[PTY_PBUF_SIZE + PTY_PBUF_SIZE + 1]; /* Double-size buffer */
+    int pbuf_avail = 0;			/* Pointers for pbuf */
+    int pbuf_written = 0;
+
+    int ptyfd = -1;			/* Pty file descriptor */
+    int have_net = 0;			/* We have a network connection */
+    int pty_err = 0;			/* Got error on pty */
+    int net_err = 0;			/* Got error on net */
+    int status = -1;			/* Pty process exit status */
+    int rc = 0;				/* Our return code */
+
+    int x1 = 0, x2 = 0;			/* Workers... */
+    int c, n, m, t, x;			/* Workers */
+
+    long seconds_to_wait = 0L;		/* select() timeout */
+    struct timeval tv, *tv2;		/* For select() */
+#ifdef INTSELECT
+    int in, out, err;			/* For select() */
+#else
+    fd_set in, out, err;
+#endif /* INTSELECT */
+    int nfds = 0;			/* For select() */
+
+    int pset = 0, tset = 0, pnotset = 0, tnotset = 0; /* stats/debuggin only */
+    int read_net_bytes = 0;		/* Stats */
+    int write_net_bytes = 0;		/* Stats */
+    int read_pty_bytes = 0;		/* Stats */
+    int write_pty_bytes = 0;		/* Stats */
+    int is_tn = 0;			/* TELNET protocol is active */
+
+    int masterfd = -1;
+    int slavefd = -1;
+#ifndef USE_CKUPTY_C
+    struct termios term;
+    struct winsize twin;
+    struct stringarray * q;
+    char ** args = NULL;
+#endif /* USE_CKUPTY_C */
+
+    in_state = 0;			/* No previous character yet */
+
+    if (ttyfd == -1) {
+	printf("?Sorry, communication channel is not open\n");
+	return(0);
+    } else {
+	have_net = 1;
+    }
+    if (nopush) {
+	debug(F100,"ttptycmd fail: nopush","",0);
+	return(0);
+    }
+    if (!s) s = "";			/* Defense de bogus arguments */
+    if (!*s) return(0);
+    pexitstat = -1;			/* Fork process exit status */
+
+#ifdef TNCODE
+    is_tn = (xlocal && netconn && IS_TELNET()) || /* Telnet protocol active */
+	    (!xlocal && sstelnet);
+#endif /* TNCODE */
+
+    debug(F110,"ttptycmd command",s,0);
+    debug(F101,"ttptycmd ttyfd","",ttyfd);
+    debug(F101,"ttptycmd is_tn","",is_tn);
+    debug(F101,"ttptycmd ckermit pid","",getpid());
+
+#ifdef USE_CKUPTY_C
+    /* Call ckupty.c module to get and set up the pty fork */
+    /* fc 1 == "run an external protocol" */
+    debug(F100,"ttptycmd using ckupty.c","",0);
+    if (do_pty(&ptyfd,s,1) < 0) {	/* Start the command on a pty */
+	debug(F100,"ttptycmd do_pty fails","",0);
+	return(0);
+    }
+    masterfd = ptyfd;
+    pty_master_fd = ptyfd;
+#ifdef COMMENT
+    slavefd = pty_slave_fd;		/* This is not visible to us */
+#endif /* COMMENT */
+    debug(F111,"ttptycmd ptyfd","USE_CKUPTY_C",ptyfd);
+    debug(F111,"ttptycmd masterfd","USE_CKUPTY_C",masterfd);
+    debug(F111,"ttptycmd fork pid","USE_CKUPTY_C",pty_fork_pid);
+#ifndef SOLARIS
+    /* "ioctl inappropriate on device" for pty master */
+    pty_make_raw(masterfd);
+#endif /* SOLARIS */
+
+#else /* USE_CKUPTY_C */
+
+    debug(F100,"ttptycmd OPENPTY","",0);
+    if (tcgetattr(0, &term) == -1) {	/* Get controlling terminal's modes */
+	perror("tcgetattr");
+	return(0);
+    }
+    if (ioctl(0, TIOCGWINSZ, (char *) &twin) == -1) { /* and window size */
+	perror("ioctl TIOCGWINSZ");
+	return(0);
+    }
+    if (openpty(&masterfd, &slavefd, NULL, NULL, NULL) == -1) {
+	debug(F101,"ttptycmd openpty failed errno","",errno);
+	perror("opentpy");
+	return(0);
+    }
+    debug(F101,"ttptycmd openpty masterfd","",masterfd);
+    debug(F101,"ttptycmd openpty slavefd","",slavefd);
+    pty_master_fd = masterfd;
+    pty_slave_fd = slavefd;
+    debug(F101,"ttptycmd openpty pty_master_fd","",pty_master_fd);
+
+    /* Put pty master in raw mode but let forked app control the slave */
+    pty_make_raw(masterfd);
+
+#ifdef COMMENT
+#ifdef TIOCREMOTE
+    /* TIOCREMOTE,0 = disable all termio processing */
+    x = ioctl(masterfd, TIOCREMOTE, 1);
+    debug(F111,"ttptycmd ioctl TIOCREMOTE",ckitoa(x),errno);
+#endif	/* TIOCREMOTE */
+#ifdef TIOCTTY
+    /* TIOCTTY,0 = disable all termio processing */
+    x = ioctl(masterfd, TIOCTTY, 0);
+    debug(F111,"ttptycmd ioctl TIOCTTY",ckitoa(x),errno);
+#endif	/* TIOCTTY */
+#endif /* COMMENT */
+
+    have_pty = 1;			/* We have an open pty */
+    save_sigchld = signal(SIGCHLD, sigchld_handler); /* Catch fork quit */
+
+    pty_fork_pid = fork();		/* Make fork for external protocol */
+    debug(F101,"ttptycmd pty_fork_pid","",pty_fork_pid);
+    if (pty_fork_pid == -1) {
+	perror("fork");
+	return(0);
+    } else if (pty_fork_pid == 0) {	/* In new fork */
+	int x;
+	debug(F101,"ttptycmd new fork pid","",getpid());
+	close(masterfd);		/* Slave quarters no masters allowed */
+	x = setsid();
+	debug(F101,"ttptycmd new fork setsid","",x);
+	if (x == -1) {
+	    perror("ttptycmd setsid");
+	    exit(1);
+	}
+	signal(SIGINT,SIG_IGN);		/* Let upper fork catch this */
+	
+#ifdef COMMENT
+#ifdef TIOCSCTTY
+	/* Make pty the controlling terminal for the process */
+	/* THIS CAUSES AN INFINITE SIGWINCH INTERRUPT LOOP */
+	x = ioctl(slavefd, TIOCSCTTY, NULL);
+	debug(F101,"ttptycmd TIOCSCTTY","",x);
+#endif	/* TIOCSCTTY */
+#endif	/* COMMENT */
+
+	/* Initialize slave pty modes and size to those of our terminal */
+	if (tcsetattr(slavefd, TCSANOW, &term) == -1) {
+	    perror("ttptycmd tcsetattr");
+	    exit(1);
+	}
+	if (ioctl(slavefd, TIOCSWINSZ, &twin) == -1) {
+	    perror("ttptycmd ioctl");
+	    exit(1);
+	}
+#ifdef COMMENT
+#ifdef TIOCNOTTY
+	/* Disassociate this process from its terminal */
+	/* THIS HAS NO EFFECT */
+	x = ioctl(slavefd, TIOCNOTTY, NULL);
+	debug(F101,"ttptycmd TIOCNOTTY","",x);
+#endif	/* TIOCNOTTY */
+#endif	/* COMMENT */
+
+#ifdef COMMENT
+#ifdef SIGTTOU	
+	/* Ignore terminal output interrupts */
+	/* THIS HAS NO EFFECT */
+	debug(F100,"ttptycmd ignoring SIGTTOU","",0);
+	signal(SIGTTOU, SIG_IGN);
+#endif	/* SIGTTOU */
+#ifdef SIGTSTP	
+	/* Ignore terminal output interrupts */
+	/* THIS HAS NO EFFECT */
+	debug(F100,"ttptycmd ignoring SIGTSTP","",0);
+	signal(SIGTSTP, SIG_IGN);
+#endif	/* SIGTSTP */
+#endif	/* COMMENT */
+
+	pty_make_raw(slavefd);		/* Put it in rawmode */
+
+	errno = 0;
+	if (dup2(slavefd, STDIN_FILENO) != STDIN_FILENO ||
+	    dup2(slavefd, STDOUT_FILENO) != STDOUT_FILENO) {
+	    debug(F101,"ttptycmd new fork dup2 error","",errno);
+	    perror("ttptycmd dup2");
+	    exit(1);
+	}
+	debug(F100,"ttptycmd new fork dup2 ok","",0);
+
+	/* Parse external protocol command line */
+	q = cksplit(1,0,s,NULL,"\\%[]&$+-/=*^_@!{}/<>|.#~'`:;?",7,0,0);
+	if (!q) {
+	    debug(F100,"ttptycmd cksplit failed","",0);
+	    exit(1);
+	} else {
+	    int i, n;
+	    debug(F100,"ttptycmd cksplit ok","",0);
+	    n = q->a_size;
+	    args = q->a_head + 1;
+	    for (i = 0; i <= n; i++) {
+		if (!args[i]) {
+		    break;
+		} else {
+		    /* sometimes cksplit() doesn't terminate the list */
+		    if ((i == n) && args[i]) {
+			if ((int)strlen(args[i]) == 0)
+			  makestr(&(args[i]),NULL);
+		    }
+		}
+	    }	    
+	}
+#ifdef COMMENT
+/*
+  Putting the slave pty in rawmode should not be necessary because the
+  external protocol program is supposed to do that itself.  Yet doing this
+  here cuts down on Zmodem binary-file transmission errors by 30-50% but
+  still doesn't eliminate them.
+*/
+	pty_make_raw(STDIN_FILENO);
+	pty_make_raw(STDOUT_FILENO);
+#endif /* COMMENT */
+
+	debug(F100,"ttptycmd execvp'ing external protocol","",0);
+	execvp(args[0],args);
+	perror("execvp failed");
+	debug(F101,"ttptycmd execvp failed","",errno);
+	close(slavefd);
+	exit(1);
+    } 
+    /* (there are better ways to do this...) */
+    msleep(1000);		  /* Make parent wait for child to be ready */
+    ptyfd = masterfd;			/* We talk to the master */
+
+#endif /* USE_CKUPTY_C */
+
+    debug(F101,"ttptycmd ptyfd","",ptyfd);
+    if (ptyfd < 0) {
+	printf("?Failure to get pty\n");
+	return(-9);
+    }
+    have_pty = 1;	      /* We have an open pty or we wouldn't he here */
+
+    debug(F101,"ttptycmd PTY_PBUF_SIZE","",PTY_PBUF_SIZE);
+    debug(F101,"ttptycmd PTY_TBUF_SIZE","",PTY_TBUF_SIZE);
+
+#ifdef PTY_USE_NDELAY
+    /* 
+       NOTE: If select() and ioctl(ptyfd,FIONREAD,&n) return true indications
+       on the pty, we don't need nonblocking reads.  Performance of either
+       method seems to be about the same, so use whatever works.
+    */
+    errno = 0;
+    x = fcntl(ptyfd,F_SETFL,fcntl(ptyfd,F_GETFL, 0)|O_NDELAY);
+    ckmakmsg(msgbuf,500,
+	     "ttptycmd set O_NDELAY errno=",
+	     ckitoa(errno),
+	     " fcntl=",
+	     ckitoa(x));
+    debug(F100,msgbuf,"",0);
+#endif /* PTY_USE_NDELAY */
+
+#ifdef COMMENT
+/* Not necessary, the protocol module already did this */
+
+#ifdef USE_CFMAKERAW
+    if (tcgetattr(ttyfd, &term) > -1) {
+	cfmakeraw(&term);
+	debug(F101,"ttptycmd net cfmakeraw errno","",errno);
+	x tcsetattr(ttyfd, TCSANOW, &term);
+	debug(F101,"ttptycmd net tcsetattr","",x);
+	debug(F101,"ttptycmd net tcsetattr","",errno);
+    }
+#else
+    if (local)				/* Put network connection in */
+      ttpkt(ttspeed,ttflow,ttprty);	/* "packet mode". */
+    else
+      conbin((char)escchr);		/* OR... pty_make_raw(0) */
+#endif /* USE_CFMAKERAW */
+#endif /* COMMENT */
+
+#ifdef TNCODE
+    if (is_tn) {
+      debug(F101,"<<< ttptycmd TELOPT_ME_BINARY","",TELOPT_ME(TELOPT_BINARY));
+      debug(F101,"<<< ttptycmd TELOPT_U_BINARY","",TELOPT_U(TELOPT_BINARY));
+    }
+#endif /* TNCODE */
+
+    debug(F101,"ttptycmd entering loop - seconds_to_wait","",seconds_to_wait);
+
+    while (have_pty || have_net) {
+	FD_ZERO(&in);			/* Initialize select() structs */
+	FD_ZERO(&out);
+	FD_ZERO(&err);			/* (not used because useless) */
+	nfds = -1;
+
+	debug(F101,"ttptycmd loop top have_pty","",have_pty);
+	debug(F101,"ttptycmd loop top have_net","",have_net);
+
+	/* Pty is open and we have room to read from it? */
+	if (have_pty && pbuf_avail < PTY_PBUF_SIZE) {
+	    debug(F100,"ttptycmd FD_SET ptyfd in","",0);
+            FD_SET(ptyfd, &in);
+	    nfds = ptyfd;
+        }
+	/* Network is open and we have room to read from it? */
+        if (have_net && have_pty && tbuf_avail < PTY_TBUF_SIZE) {
+	    debug(F100,"ttptycmd FD_SET ttyfd in","",0);
+            FD_SET(ttyfd, &in);
+	    if (ttyfd > nfds) nfds = ttyfd;
+        }
+	/* Pty is open and we have stuff to write to it? */
+        if (have_pty && tbuf_avail - tbuf_written > 0) {
+	    debug(F100,"ttptycmd FD_SET ptyfd out","",0);
+            FD_SET (ptyfd, &out);
+	    if (ptyfd > nfds) nfds = ptyfd;
+        }
+	/* Net is open and we have stuff to write to it? */
+	debug(F101,"ttptycmd pbuf_avail-pbuf_written","",
+	      pbuf_avail - pbuf_written);
+        if (have_net && pbuf_avail - pbuf_written > 0) {
+	    debug(F100,"ttptycmd FD_SET ttyfd out","",0);
+            FD_SET (ttyfd, &out);
+	    if (ttyfd > nfds) nfds = ttyfd;
+        }
+	/* We don't use err because it's not really for errors, */
+	/* but for out of band data on the TCP socket, which, if it is */
+	/* to be handled at all, is handled in the tt*() routines */
+
+	nfds++;				/* 0-based to 1-based */
+	debug(F101,"ttptycmd nfds","",nfds);
+	if (!nfds) {
+	    debug(F100,"ttptycmd NO FDs set for select","",0);
+	    if (have_pty) {
+		/* This is not right -- sleeping won't accomplish anything */
+		debug(F101,"ttptycmd msleep","",100);
+		msleep(100);	    
+	    } else {
+		debug(F100,"ttptycmd no pty - quitting loop","",0);
+		break;
+	    }
+	}
+	errno = 0;
+
+	if (seconds_to_wait > 0L) {	/* Timeout in case nothing happens */
+	    tv.tv_sec = seconds_to_wait; /* for a long time */
+	    tv.tv_usec = 0L;		
+	    tv2 = &tv;
+        } else {
+            tv2 = NULL;
+	}
+	x = select(nfds, &in, &out, NULL, tv2);
+	debug(F101,"ttptycmd select","",x);
+	if (x < 0) {
+	    if (errno == EINTR)
+	      continue;
+	    debug(F101,"ttptycmd select error","",errno);
+	    break;
+	}
+	if (x == 0) {
+	    debug(F101,"ttptycmd +++ select timeout","",seconds_to_wait); 
+	    if (have_pty) {
+		status = pty_get_status(ptyfd,pty_fork_pid);
+		debug(F101,"ttptycmd pty_get_status A","",status);
+		if (status > -1) pexitstat = status;
+		have_pty = 0;
+	    }
+	    break;
+	}
+	/* We want to handle any pending writes first to make room */
+	/* for new incoming. */
+
+	if (FD_ISSET(ttyfd, &out)) {	/* Can write to net? */
+	    CHAR * s;
+	    s = pbuf + pbuf_written;	/* Current spot for sending */
+#ifdef TNCODE
+	    if (is_tn) {		/* ttol() doesn't double IACs */
+		CHAR c;			/* Rewrite string with IACs doubled */
+		int i;
+		s = pbuf + pbuf_written; /* Source */
+		x = 0;		 	 /* Count */
+		for (i = 0; i < pbuf_avail - pbuf_written; i++) {
+		    c = s[i];		/* Next character */
+		    if (c == IAC) {	/* If it's IAC */
+			dbuf[x++] = c;	/* put another one */
+			debug(F000,">>> QUOTED IAC","",c);
+		    } else if (c != 0x0a && out_prev == 0x0d) {	/* Bare CR */
+			if (!TELOPT_ME(TELOPT_BINARY)) { /* NVT rule */
+			    c = 0x00;
+			    dbuf[x++] = c;
+			    debug(F000,">>> CR-NUL","",c);
+			}			
+		    }
+		    dbuf[x++] = c;	/* Copy and count it */
+		    debug(F000,">>> char",ckitoa(in_state),c);
+		    out_prev = c;
+		}
+		s = dbuf;		/* New source */
+	    } else
+#endif /* TNCODE */
+	      x = pbuf_avail - pbuf_written; /* How much to send */
+
+	    debug(F101,"ttptycmd bytes to send","",x);
+	    x = ttol(s, x);
+	    debug(F101,">>> ttol","",x);
+	    if (x < 0) {
+		net_err++;
+		debug(F111,"ttptycmd ttol error",ckitoa(x),errno);
+		x = 0;
+	    }
+	    write_net_bytes += x;
+	    pbuf_written += x;
+	}
+	if (FD_ISSET(ptyfd, &out)) {	/* Can write to pty? */
+	    debug(F100,"ttptycmd FD_ISSET ptyfd out","",0);
+	    errno = 0;
+#ifndef COMMENT
+	    x = write(ptyfd,tbuf + tbuf_written,tbuf_avail - tbuf_written);
+#else
+	    /* Byte loop to rule out data overruns in the pty */
+	    /* (it makes no difference) */
+	    {
+		char *p = tbuf+tbuf_written;
+		int n = tbuf_avail - tbuf_written;
+		for (x = 0; x < n; x++) {
+		    msleep(10);
+		    if (write(ptyfd,&(p[x]),1) < 0)
+		      break;
+		}
+	    }
+#endif /* COMMENT */
+	    debug(F111,"ttptycmd ptyfd write",ckitoa(errno),x);
+	    if (x > 0) {
+		tbuf_written += x;
+		write_pty_bytes += x;
+	    } else {
+		x = 0;
+		pty_err++;
+		if (pexitstat < 0) {
+		    status = pty_get_status(ptyfd,pty_fork_pid);
+		    debug(F101,"ttptycmd pty_get_status B","",status);
+		    if (status > -1) pexitstat = status;
+		    have_pty = 0;
+		}
+		debug(F100,"ttptycmd +++ ptyfd write error","",0);
+	    }
+	}
+	if (FD_ISSET(ttyfd, &in)) {	/* Can read from net? */
+	    tset++;
+	    debug(F100,"ttptycmd FD_ISSET ttyfd in","",0);
+	    n = in_chk(1,ttyfd);
+	    debug(F101,"ttptycmd in_chk(ttyfd)","",n); 
+	    if (n < 0 || ttyfd == -1) {
+		debug(F101,"ttptycmd +++ ttyfd errno","",errno);
+		net_err++;
+	    } else if (n > 0) {
+		if (n > PTY_TBUF_SIZE - tbuf_avail)
+		  n = PTY_TBUF_SIZE - tbuf_avail;
+		debug(F101,"ttptycmd net read size adjusted","",n); 
+		if (xlocal && netconn) {
+		    /*
+		      We have to use a byte loop here because ttxin()
+		      does not decrypt or, for that matter, handle Telnet.
+		    */
+		    int c;
+		    CHAR * p;
+		    p = tbuf + tbuf_avail;
+		    for (x = 0; x < n; x++) {
+			if ((c = ttinc(0)) < 0)
+			  break;
+			if (!is_tn) {	/* Not Telnet - keep all bytes */
+			    *p++ = (CHAR)c;
+			    debug(F000,"<<< char","",c);
+#ifdef TNCODE
+			} else {	/* Telnet - must handle IAC and NVT */
+			    debug(F000,"<<< char",ckitoa(in_state),c);
+			    switch (c) {
+			      case 0x00: /* NUL */
+				if (in_state == HAVE_CR) {
+				    debug(F000,"<<< SKIP","",c);
+				} else {
+				    *p++ = c;
+				    debug(F000,"<<< Keep","",c);
+				}
+				in_state = 0;
+				break;
+			      case 0x0d: /* CR */
+				if (!TELOPT_U(TELOPT_BINARY))
+				  in_state = HAVE_CR;
+				*p++ = c;
+				debug(F000,"<<< Keep","",c);
+				break;
+#ifdef COMMENT
+			      case 0x0f: /* Ctrl-O */
+			      case 0x16: /* Ctrl-V */
+				*p++ = 0x16;
+				*p++ = c;
+				debug(F000,"<<< QUOT","",c);
+				break;
+#endif /* COMMENT */
+			      case 0xff: /* IAC */
+				if (in_state == HAVE_IAC) {
+				    debug(F000,"<<< KEEP","",c);
+				    *p++ = c;
+				    in_state = 0;
+				} else {
+				    debug(F000,"<<< SKIP","",c);
+				    in_state = HAVE_IAC;
+				}
+				break;
+			      default:	/* All others */
+				if (in_state == HAVE_IAC) {
+#ifdef COMMENT
+/*
+  tn_doop() will consume an unknown number of bytes and we'll overshoot
+  the for-loop.  The only Telnet command I've ever seen arrive here is
+  a Data Mark, which comes when the remote protocol exits and the remote
+  job returns to its shell prompt.  On the assumption it's a 1-byte command,
+  we don't write out the IAC or the command, and we clear the state.  If
+  we called tn_doop() we'd have no way of knowing how many bytes it took
+  from the input stream.
+*/
+				    int xx;
+				    xx = tn_doop((CHAR)c,duplex,ttinc);
+				    debug(F111,"<<< DOOP",ckctoa(c),xx);
+#else
+				    debug(F101,"<<< DOOP","",c);
+#endif	/* COMMENT */
+				    in_state = 0;
+				} else {
+				    *p++ = c;
+				    debug(F000,"<<< keep","",c);
+				    in_state = 0;
+				}
+			    }
+#endif	/* TNCODE */
+			}
+		    }
+		    ckmakmsg(msgbuf,500,
+			     "ttptycmd read net [ttinc loop] errno=",
+			     ckitoa(errno),
+			     " count=",
+			     ckitoa(x));
+		    debug(F100,msgbuf,"",0);
+		} else {
+		    x = ttxin(n,tbuf+tbuf_avail);
+		    debug(F101,"ttptycmd ttxin x","",x); 
+		}
+
+		if (x < 0) {
+		    debug(F101,"ttptycmd read net error","",x);
+		    net_err++;
+		}
+		tbuf_avail += x;
+		read_net_bytes += x;
+	    }
+
+	} else
+	  tnotset++;
+
+	if (FD_ISSET(ptyfd, &in)) {	/* Read from pty? */
+	    pset++;
+	    debug(F100,"ttptycmd FD_ISSET ptyfd in","",0);
+#ifdef PTY_USE_NDELAY
+	    n = PTY_PBUF_SIZE;
+#else
+	    /*
+	      This does not work on nonblocking channels
+	      on certain platforms such as NetBSD.
+	    */
+	    n = pty_chk(ptyfd);
+#endif /* PTY_USE_NDELAY */
+	    debug(F101,"ttptycmd pty_chk() n","",n); 
+
+	    if (n < 0)
+	      n = 0;
+	    if (n > 0) {
+		if (n > PTY_PBUF_SIZE - pbuf_avail)
+		  n = PTY_PBUF_SIZE - pbuf_avail;
+		debug(F101,"ttptycmd pty read size adjusted","",n); 
+		errno = 0;
+		x = read(ptyfd,pbuf+pbuf_avail,n);
+#ifdef DEBUG
+		if (deblog) {
+		    ckmakmsg(msgbuf,500,
+			     "ttptycmd read pty errno=",
+			     ckitoa(errno),
+			     " count=",
+			     ckitoa(x));
+		    debug(F100,msgbuf,"",0);
+		}
+#endif	/* DEBUG */
+
+		if (x < 0 && errno == EAGAIN)
+		  x = 0;
+
+		if (x < 0) {		/* This works on Solaris and Linux */
+		    pty_err++;		/* but not NetBSD */
+		    debug(F100,"TERMINATION TEST A","",0);
+#ifdef COMMENT
+		    if (errno == EIO)
+		      rc = 1;
+#endif	/* COMMENT */
+		    if (pexitstat < 0) {
+			status = pty_get_status(ptyfd,pty_fork_pid);
+			debug(F101,"ttptycmd pty_get_status C","",status);
+			if (status > -1) pexitstat = status;
+		    }
+		    have_pty = 0;
+		    x = 0;
+		}
+		if (x == 0 && !pty_err) { /* This works on NetBSD but */
+		    debug(F100,"TERMINATION TEST B","",0);
+		    status = pexitstat > -1 ? pexitstat :
+			pty_get_status(ptyfd,pty_fork_pid);
+		    debug(F101,"ttptycmd pty_get_status D","",status);
+		    if (status > -1) {
+			pexitstat = status;
+			pty_err++;
+			have_pty = 0;
+		    } else {		/* Select() lied */
+			pty_err = 0;	/* pty still there but has nothing */
+			msleep(100);	/* sleep a bit */
+		    }
+		    x = 0;
+		} 
+		/* Hopefully the next two are no longer needed... */
+		if (!pty_err && (
+#ifndef PTY_USE_NDELAY
+		    x < 1 || errno
+#else
+		    errno != 0 && errno != EAGAIN
+#endif /* PTY_USE_NDELAY */
+		    )) {
+		    debug(F100,"TERMINATION TEST C","",0);
+		    pty_err++;
+		    debug(F101,"ttptycmd SET pty_err","",pty_err);
+		    if (errno == EIO)	/* errno == EIO is like EOF */
+		      rc = 1;
+		    if (x < 0)
+		      x = 0;
+		}
+#ifdef COMMENT
+#ifdef DEBUG
+		if (deblog) {
+		    pbuf[pbuf_avail + x] = '\0';
+		    debug(F111,"ttptycmd added to pty buffer",
+			  pbuf+pbuf_avail,x);
+		}
+#endif	/* DEBUG */
+#endif	/* COMMENT */
+		pbuf_avail += x;
+		read_pty_bytes += x;
+	    } else {			/* n == 0 with blocking reads */
+		debug(F100,
+		      "PTY READ RETURNED ZERO BYTES - SHOULD NOT HAPPEN",
+		      "",0);
+	    }
+	} else
+	  pnotset++;
+
+	/* If writes have caught up to reads, reset the buffers */
+
+	if (pbuf_written == pbuf_avail)
+	  pbuf_written = pbuf_avail = 0;
+	if (tbuf_written == tbuf_avail)
+	  tbuf_written = tbuf_avail = 0;
+
+	/* See if we can exit */
+
+	x1 = pbuf_avail - pbuf_written; 
+	x2 = tbuf_avail - tbuf_written;
+
+	debug(F101,"ttptycmd pty_err LOOP EXIT TEST pty_err","",pty_err);
+	debug(F101,"ttptycmd pty_err LOOP EXIT TEST x1 [write to net]","",x1);
+	debug(F101,"ttptycmd pty_err LOOP EXIT TEST x2 [write to pty]","",x2);
+	debug(F101,"ttptycmd pty_err LOOP EXIT TEST rc","",rc);
+	debug(F101,"ttptycmd pty_err LOOP EXIT TEST status","",status);
+	debug(F101,"ttptycmd pty_err LOOP EXIT TEST pexitstat","",pexitstat);
+
+	if (net_err) {			/* Net error? */
+	    debug(F101,"ttptycmd net_err LOOP EXIT TEST net_err","",net_err);
+	    if (have_net) {
+		if (local) {
+		    ttclos(0);
+		    printf("?Connection closed\n");
+		}
+		have_net = 0;
+	    }
+	    debug(F101,"ttptycmd net_err LOOP EXIT TEST x1","",x1);
+	    if (x1 == 0)
+	      break;
+	}
+	if (pty_err) {			/* Pty error? */
+	    if (have_pty) {
+		if (pexitstat < 0) {		
+		    status = pty_get_status(ptyfd,pty_fork_pid);
+		    debug(F101,"ttptycmd pty_get_status E","",status);
+		    if (status > -1) pexitstat = status;
+		}
+		have_pty = 0;
+	    }
+	    if (x1 == 0 && x2 == 0) {	/* If buffers are caught up */
+		rc = 1;			/* set preliminary return to success */
+		debug(F101,"ttptycmd pty_err LOOP EXIT TEST rc 2","",rc);
+		break;			/* and exit the loop */
+	    }
+	}
+    }
+    debug(F101,"ttptycmd +++ have_pty","",have_pty);
+    if (have_pty) {			/* In case select() failed */
+#ifdef USE_CKUPTY_C
+	end_pty();
+	close(ptyfd);
+#else
+	close(slavefd);
+	close(masterfd);
+#endif /* USE_CKUPTY_C */
+    }
+    pty_master_fd = -1;
+    debug(F101,"ttptycmd +++ pexitstat","",pexitstat);
+    if (pexitstat < 0) {		/* Try one last time to get status */
+	status = pty_get_status(ptyfd,pty_fork_pid);
+	debug(F101,"ttptycmd pty_get_status F","",status);
+	if (status > -1) pexitstat = status;
+    }
+    debug(F101,"ttptycmd +++ final pexitstat","",pexitstat);
+    if (deblog) {			/* Stats for debug log */
+	debug(F101,"ttptycmd +++ pset	","",pset);
+	debug(F101,"ttptycmd +++ pnotset","",pnotset);
+	debug(F101,"ttptycmd +++ tset	","",tset);
+	debug(F101,"ttptycmd +++ tnotset","",tnotset);
+
+	debug(F101,"ttptycmd +++  read_pty_bytes","",read_pty_bytes);
+	debug(F101,"ttptycmd +++ write_net_bytes","",write_net_bytes);
+	debug(F101,"ttptycmd +++  read_net_bytes","",read_net_bytes);
+	debug(F101,"ttptycmd +++ write_pty_bytes","",write_pty_bytes);
+    }
+/*
+  If we got the external protocol's exit status from waitpid(), we use that
+  to set our return code.  If not, we fall back on whatever rc was previously
+  set to, namely 1 (success) if the pty fork seemed to terminate, 0 otherwise.
+*/
+    if (save_sigchld) {			/* Restore this if we changed it */
+	(VOID) signal(SIGCHLD,save_sigchld);
+	save_sigchld = NULL;
+    }
+    msleep(500);
+    x = kill(pty_fork_pid,SIGHUP);	/* In case it's still there */
+    pty_fork_pid = -1;
+    debug(F101,"ttptycmd fork kill SIGHUP","",x);
+    if (pexitstat > -1)
+      rc = (pexitstat == 0 ? 1 : 0);
+    debug(F101,"ttptycmd +++ rc","",rc);
+    if (!local) {			/* If in remote mode */
+	conres();			/* restore console to CBREAK mode */
+	concb((char)escchr);
+    }
+    return(rc);
+}
+#endif	/* NETPTY */
+#endif	/* SELECT */
+
+/* T T R U N C M D  --  Redirect an external command over the connection. */
+
+/*
+  TTRUNCMD is the routine that was originally used for running external
+  protocols.  It is very simple and works fine provided (a) the connection
+  is not encrypted, and (b) the external protocol uses standard i/o
+  (file descriptors 0 and 1) for file transfer.
+*/
+
 int
 ttruncmd(s) char *s; {
     PID_T pid;				/* pid of lower fork */
@@ -13838,6 +15358,36 @@ ttruncmd(s) char *s; {
 	debug(F100,"ttruncmd fail: nopush","",0);
 	return(0);
     }
+
+#ifdef NETPTY
+/***************
+  It might also be necessary to use the pty routine for other reasons,
+  e.g. because the external program does not use stdio.
+*/
+#ifdef NETCONN
+/*
+  If we have a network connection we use a different routine because
+  (a) if the connection is encrypted, the mechanism used here can't deal
+  with it; and (b) it won't handle any network protocols either, e.g.
+  Telnet, Rlogin, K5 U-to-U, etc.  However, this routine works much
+  better (faster, more transparent) on serial connections and when
+  C-Kermit is in remote mode (i.e. is on the far end).
+*/
+    /* For testing always use this */
+    if (netconn)
+      return(ttptycmd(s));
+#endif /* NETCONN */
+
+/***************/
+#else  /* NETPTY */
+    if (tt_is_secure()) {
+	printf("?Sorry, \
+external protocols over secure connections not supported in this OS.\n"
+              );
+        return(0);
+    }
+#endif	/* NETPTY */
+
     conres();				/* Make console normal  */
     pexitstat = -4;
     if ((pid = fork()) == 0) {		/* Make a child fork */
@@ -13875,7 +15425,7 @@ ttruncmd(s) char *s; {
     concb((char)escchr);		/* Restore console to CBREAK mode */
     return(statusp == 0 ? 1 : 0);
 }
-#endif /* CK_REDIR */
+#endif	/* CK_REDIR */
 
 struct tm *
 #ifdef CK_ANSIC
@@ -14186,7 +15736,11 @@ conprint(char *fmt, ...) {
 #ifdef CK_ANSIC
 #include <stdarg.h>
 #else /* CK_ANSIC */
+#ifdef __GNUC__
+#include <stdarg.h>
+#else
 #include <varargs.h>
+#endif	/* __GNUC__ */
 #endif /* CK_ANSIC */
 #ifdef fprintf
 #undef fprintf
@@ -14471,8 +16025,11 @@ ckxperror(str) char * str;
 
 #ifdef MINIX2
 
-/* Minix doesn't have a gettimeofday call. We fake one here using time(2) */
+/* Minix doesn't have a gettimeofday call (but MINIX3 does).
+ * We fake one here using time(2)
+ */
 
+#ifndef MINIX3
 int
 gettimeofday(struct timeval *tp, struct timezone *tzp) {
     tp->tv_usec = 0L;			/* Close enough for horseshoes */
@@ -14480,13 +16037,14 @@ gettimeofday(struct timeval *tp, struct timezone *tzp) {
       return(-1);
     return(0);
 }
+#endif	/* MINIX3 */
 
-/* Minix does not support symbolic links. We implement a version of
-   readlink that always fails */
-
+#ifndef MINIX3
 int
 readlink(const char *path, void *buf, size_t bufsiz) {
     errno = ENOSYS;
     return(-1);
 }
+#endif	/* MINIX3 */
+
 #endif /* MINIX2 */

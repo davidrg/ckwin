@@ -1,8 +1,8 @@
-char *ckcrpv = "Encryption Engine, 8.0.114,  9 Oct 2003";
+char *ckcrpv = "Encryption Engine, 9.0.117, 19 Mar 2010";
 /*
   C K _ C R P . C  -  Cryptography for C-Kermit"
 
-  Copyright (C) 1998, 2004,
+  Copyright (C) 1998, 2010,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -88,6 +88,10 @@ static char * tmpstring = NULL;
 #endif /* CAST_EXPORT_ENCRYPTION */
 #endif /* CAST_OR_EXPORT */
 
+#ifdef MACOSX
+#undef LIBDES
+#endif /* MACOSX */
+
 #ifdef CRYPT_DLL
 int cmd_quoting = 0;
 
@@ -118,7 +122,7 @@ telopt(opt) int opt; {
 #endif /* TELOPT_MACRO */
 
 static int (*p_ttol)(char *,int)=NULL;
-static int (*p_dodebug)(int,char *,char *,long)=NULL;
+static int (*p_dodebug)(int,char *,char *,CK_OFF_T)=NULL;
 static int (*p_dohexdump)(char *,char *,int)=NULL;
 static void (*p_tn_debug)(char *)=NULL;
 static int (*p_vscrnprintf)(char *, ...)=NULL;
@@ -152,7 +156,7 @@ ttol(char * s, int n)
 }
 
 int
-dodebug(int flag, char * s1, char * s2, long n)
+dodebug(int flag, char * s1, char * s2, CK_OFF_T n)
 {
     if ( p_dodebug )
         return(p_dodebug(flag,s1,s2,n));
@@ -279,6 +283,14 @@ extern krb5_context k5_context;
 #endif /* CRYPT_DLL */
 
 #ifdef LIBDES
+#ifdef MACOSX
+#define des_new_random_key            ck_des_new_random_key
+#define des_set_random_generator_seed ck_des_set_random_generator_seed
+#define des_key_sched                 ck_des_key_sched
+#define des_ecb_encrypt               ck_des_ecb_encrypt
+#define des_string_to_key             ck_des_string_to_key
+#define des_fixup_key_parity          ck_des_fixup_key_parity
+#endif /* MACOSX */
 #ifndef UNIX
 #define des_new_random_key            des_random_key
 #define des_set_random_generator_seed des_random_seed
@@ -359,6 +371,7 @@ Block key;
 
 #ifdef UNIX
 #ifdef LIBDES
+#ifndef MACOSX
 /* These functions are not part of Eric Young's DES library */
 /* _unix_time_gmt_unixsec                                  */
 /* _des_set_random_generator_seed                          */
@@ -398,10 +411,15 @@ int
 des_new_random_key(Block B)
 {
     int rc=0;
+    /* WARNING:
+       This might need to have the "rc = " removed because this
+       is VOID in later, and maybe even all, versions.
+    */       
     rc = des_random_key(B);
     return(rc);
 }
 
+#endif /* MACOSX */
 #endif /* LIBDES */
 #endif /* UNIX */
 #endif /* CK_DES */
@@ -467,6 +485,8 @@ des_new_random_key(Block B)
  * These function pointers point to the current routines
  * for encrypting and decrypting data.
  */
+/* NOTE: These next two might need to have the "static " removed */
+
 static VOID     (*encrypt_output) P((unsigned char *, int));
 static int      (*decrypt_input) P((int));
 
@@ -798,7 +818,7 @@ decrypt_ks_hack(buf,cnt) unsigned char *buf; int cnt;
         buf[len] = decrypt_input(buf[len]);
 
 #ifdef DEBUG
-    hexdump("decrypt ks hack", buf, cnt);
+    ckhexdump("decrypt ks hack", buf, cnt);
 #endif
     return 1;
 }
@@ -1057,7 +1077,10 @@ encrypt_support(_typelist, _cnt) unsigned char * _typelist; int _cnt;
     remote_supports_decrypt = 0;
 
     while (cnt-- > 0) {
+	debug(F101,"XXX cnt","",cnt);
         type = *typelist++;
+	debug(F101,"XXX type","",type);
+	debug(F101,"XXX ENCTYPE_ANY","",ENCTYPE_ANY);
         if ( EncryptType == ENCTYPE_ANY ||
              EncryptType == type ) {
 #ifdef DEBUG
@@ -1075,13 +1098,16 @@ encrypt_support(_typelist, _cnt) unsigned char * _typelist; int _cnt;
             }
         }
     }
+    debug(F101,"XXX use_type","",use_type);
     if (use_type) {
         ep = findencryption(use_type);
         if (!ep) {
             debug(F111,"encrypt_support","findencryption == NULL",use_type);
             return(-1);
         }
+	debug(F100,"XXX ep not NULL","",0);
         type = ep->start ? (*ep->start)(DIR_ENCRYPT, 0) : 0;
+	debug(F101,"XXX new type","",type);
 #ifdef DEBUG
         if (encrypt_debug_mode) {
             sprintf(dbgbuf, ">>>(*ep->start)() %s returned %d (%s)\n",
@@ -1497,7 +1523,7 @@ encrypt_send_keyid(dir, keyid, keylen, saveit)
         sprintf(tn_msg,"TELNET SENT SB %s %s ",
                  TELOPT(TELOPT_ENCRYPTION),
                  (dir == DIR_ENCRYPT) ? "ENC-KEYID" : "DEC-KEYID"); /* safe */
-        tn_hex(tn_msg,TN_MSG_LEN,&str_keyid[4],strp-str_keyid-2-4);
+        tn_hex((CHAR *)tn_msg,TN_MSG_LEN,&str_keyid[4],strp-str_keyid-2-4);
         ckstrncat(tn_msg,"IAC SE",TN_MSG_LEN);
         debug(F100,tn_msg,"",0);
         if (tn_deb || debses) tn_debug(tn_msg);
@@ -1598,7 +1624,7 @@ encrypt_start_output(type) int type;
             int i;
             sprintf(tn_msg,"TELNET SENT SB %s START ",
                      TELOPT(TELOPT_ENCRYPTION));                /* safe */
-            tn_hex(tn_msg,TN_MSG_LEN,&str_start[4],p-str_start-2-4);
+            tn_hex((CHAR *)tn_msg,TN_MSG_LEN,&str_start[4],p-str_start-2-4);
             ckstrncat(tn_msg,"IAC SE",TN_MSG_LEN);
             debug(F100,tn_msg,"",0);
             if (tn_deb || debses) tn_debug(tn_msg);
@@ -1721,7 +1747,7 @@ encrypt_send_request_start()
         int i;
         sprintf(tn_msg,"TELNET SENT SB %s REQUEST-START ",
                  TELOPT(TELOPT_ENCRYPTION));                    /* safe */
-        tn_hex(tn_msg,TN_MSG_LEN,&str_start[4],p-str_start-2-4);
+        tn_hex((CHAR *)tn_msg,TN_MSG_LEN,&str_start[4],p-str_start-2-4);
         ckstrncat(tn_msg,"IAC SE",TN_MSG_LEN);
         debug(F100,tn_msg,"",0);
         if (tn_deb || debses) tn_debug(tn_msg);
@@ -2132,8 +2158,9 @@ fb64_start(fbp, dir, server)
             sprintf(tn_msg,
                      "TELNET SENT SB %s IS %s FB64_IV ",
                      TELOPT(fbp->fb_feed[2]),
-                     enctype_names[fbp->fb_feed[4]]);                   /* safe */
-            tn_hex(tn_msg,TN_MSG_LEN,&fbp->fb_feed[6],(p-fbp->fb_feed)-2-6);
+                     enctype_names[fbp->fb_feed[4]]); /* safe */
+            tn_hex((CHAR *)tn_msg,TN_MSG_LEN,&fbp->fb_feed[6],
+		(p-fbp->fb_feed)-2-6);
             ckstrncat(tn_msg,"IAC SE",TN_MSG_LEN);
             debug(F100,tn_msg,"",0);
             if (tn_deb || debses) tn_debug(tn_msg);
@@ -2220,8 +2247,9 @@ fb64_is(data, cnt, fbp)
             sprintf(tn_msg,
                      "TELNET SENT SB %s REPLY %s FB64_IV_OK ",
                      TELOPT(fbp->fb_feed[2]),
-                     enctype_names[fbp->fb_feed[4]]);           /* safe */
-            tn_hex(tn_msg,TN_MSG_LEN,&fbp->fb_feed[6],(p-fbp->fb_feed)-2-6);
+                     enctype_names[fbp->fb_feed[4]]); /* safe */
+            tn_hex((CHAR *)tn_msg,TN_MSG_LEN,&fbp->fb_feed[6],
+		(p-fbp->fb_feed)-2-6);
             ckstrncat(tn_msg,"IAC SE",TN_MSG_LEN);
             debug(F100,tn_msg,"",0);
             if (tn_deb || debses) tn_debug(tn_msg);
@@ -2262,8 +2290,9 @@ fb64_is(data, cnt, fbp)
             sprintf(tn_msg,
                      "TELNET SENT SB %s REPLY %s FB64_IV_BAD ",
                      TELOPT(fbp->fb_feed[2]),
-                     enctype_names[fbp->fb_feed[4]]);           /* safe */
-            tn_hex(tn_msg,TN_MSG_LEN,&fbp->fb_feed[6],(p-fbp->fb_feed)-2-6);
+                     enctype_names[fbp->fb_feed[4]]); /* safe */
+            tn_hex((CHAR *)tn_msg,TN_MSG_LEN,&fbp->fb_feed[6],
+		(p-fbp->fb_feed)-2-6);
             ckstrncat(tn_msg,"IAC SE",TN_MSG_LEN);
             debug(F100,tn_msg,"",0);
             if (tn_deb || debses) tn_debug(tn_msg);
@@ -2381,7 +2410,7 @@ fb64_session(key, server, fbp)
 
     if (!key || key->length < sizeof(Block)) {
         CHAR buf[80];
-        sprintf(buf,"Can't set DES session key (%d < %d)",
+        sprintf((char *)buf,"Can't set DES session key (%d < %d)",
                 key ? key->length : 0, sizeof(Block));          /* safe */
 #ifdef DEBUG
         if (encrypt_debug_mode)
@@ -2433,7 +2462,7 @@ fb64_session(key, server, fbp)
     }
 
     memset(fbp->krbdes_sched,0,sizeof(Schedule));
-    hexdump("fb64_session_key",fbp->krbdes_key,8);
+    ckhexdump("fb64_session_key",fbp->krbdes_key,8);
 
     rc = des_key_sched(fbp->krbdes_key, fbp->krbdes_sched);
     if ( rc == -1 ) {
@@ -2450,7 +2479,7 @@ fb64_session(key, server, fbp)
                "Key Schedule not created by encryption",0);
     }
 
-    hexdump("fb64_session_key schedule",fbp->krbdes_sched,8*16);
+    ckhexdump("fb64_session_key schedule",fbp->krbdes_sched,8*16);
 #endif /* MIT_CURRENT */
     /*
     * Now look to see if krbdes_start() was was waiting for
@@ -2588,7 +2617,7 @@ fb64_stream_iv(seed, stp)
 
     memset(stp->str_sched,0,sizeof(Schedule));
 
-    hexdump("fb64_stream_iv",stp->str_ikey,8);
+    ckhexdump("fb64_stream_iv",stp->str_ikey,8);
 
 #ifndef MIT_CURRENT
     rc = des_key_sched(stp->str_ikey, stp->str_sched);
@@ -2605,7 +2634,7 @@ fb64_stream_iv(seed, stp)
         debug(F110,"fb64_stream_iv",
                "Key Schedule not created by encryption",0);
     }
-    hexdump("fb64_stream_iv schedule",stp->str_sched,8*16);
+    ckhexdump("fb64_stream_iv schedule",stp->str_sched,8*16);
 #endif /* MIT_CURRENT */
 
     stp->str_index = sizeof(Block);
@@ -2631,7 +2660,7 @@ fb64_stream_key(key, stp)
 
     memset(stp->str_sched,0,sizeof(Schedule));
 
-    hexdump("fb64_stream_key",key,8);
+    ckhexdump("fb64_stream_key",key,8);
 
     rc = des_key_sched(key, stp->str_sched);
     if ( rc == -1 ) {
@@ -2647,7 +2676,7 @@ fb64_stream_key(key, stp)
         debug(F110,"fb64_stream_key",
                "Key Schedule not created by encryption",0);
     }
-    hexdump("fb64_stream_key schedule",stp->str_sched,8*16);
+    ckhexdump("fb64_stream_key schedule",stp->str_sched,8*16);
 #endif /* MIT_CURRENT */
 
     memcpy(stp->str_output, stp->str_iv, sizeof(Block));
@@ -2958,8 +2987,9 @@ des3_fb64_start(fbp, dir, server)
             sprintf(tn_msg,
                      "TELNET SENT SB %s IS %s FB64_IV ",
                      TELOPT(fbp->fb_feed[2]),
-                     enctype_names[fbp->fb_feed[4]]);           /* safe */
-            tn_hex(tn_msg,TN_MSG_LEN,&fbp->fb_feed[6],(p-fbp->fb_feed)-2-6);
+                     enctype_names[fbp->fb_feed[4]]); /* safe */
+            tn_hex((CHAR *)tn_msg,TN_MSG_LEN,&fbp->fb_feed[6],
+		(p-fbp->fb_feed)-2-6);
             ckstrncat(tn_msg,"IAC SE",TN_MSG_LEN);
             debug(F100,tn_msg,"",0);
             if (tn_deb || debses) tn_debug(tn_msg);
@@ -3046,8 +3076,9 @@ des3_fb64_is(data, cnt, fbp)
             sprintf(tn_msg,
                      "TELNET SENT SB %s REPLY %s FB64_IV_OK ",
                      TELOPT(fbp->fb_feed[2]),
-                     enctype_names[fbp->fb_feed[4]]);           /* safe */
-            tn_hex(tn_msg,TN_MSG_LEN,&fbp->fb_feed[6],(p-fbp->fb_feed)-2-6);
+                     enctype_names[fbp->fb_feed[4]]); /* safe */
+            tn_hex((CHAR *)tn_msg,TN_MSG_LEN,&fbp->fb_feed[6],
+		(p-fbp->fb_feed)-2-6);
             ckstrncat(tn_msg,"IAC SE",TN_MSG_LEN);
             debug(F100,tn_msg,"",0);
             if (tn_deb || debses) tn_debug(tn_msg);
@@ -3088,8 +3119,9 @@ des3_fb64_is(data, cnt, fbp)
             sprintf(tn_msg,
                      "TELNET SENT SB %s REPLY %s FB64_IV_BAD ",
                      TELOPT(fbp->fb_feed[2]),
-                     enctype_names[fbp->fb_feed[4]]);           /* safe */
-            tn_hex(tn_msg,TN_MSG_LEN,&fbp->fb_feed[6],(p-fbp->fb_feed)-2-6);
+                     enctype_names[fbp->fb_feed[4]]); /* safe */
+            tn_hex((CHAR *)tn_msg,TN_MSG_LEN,&fbp->fb_feed[6],
+		(p-fbp->fb_feed)-2-6);
             ckstrncat(tn_msg,"IAC SE",TN_MSG_LEN);
             debug(F100,tn_msg,"",0);
             if (tn_deb || debses) tn_debug(tn_msg);
@@ -3208,8 +3240,8 @@ des3_fb64_session(key, server, fbp)
     keys2use = key->length / sizeof(Block);
     if (!key || (key->type == SK_DES) || (keys2use < 2)) {
         CHAR buf[80];
-        sprintf(buf,"Can't set 3DES session key (%d < %d)",
-                key ? key->length : 0, 2 * sizeof(Block));      /* safe */
+        sprintf((char *)buf,"Can't set 3DES session key (%d < %d)",
+                key ? key->length : 0, 2 * (int)sizeof(Block));	/* safe */
 #ifdef DEBUG
         if (encrypt_debug_mode)
             printf("%s\r\n",buf);
@@ -3236,8 +3268,8 @@ des3_fb64_session(key, server, fbp)
                  (void *) (key->data + 2*sizeof(Block)), sizeof(Block));
         break;
     }
-    hexdump("des3_session_key key->data",key->data,sizeof(Block));
-    hexdump("des3_session_key fbp->krbdes_key[0]",
+    ckhexdump("des3_session_key key->data",key->data,sizeof(Block));
+    ckhexdump("des3_session_key fbp->krbdes_key[0]",
             fbp->krbdes_key[0],
             sizeof(Block)
             );
@@ -3316,7 +3348,7 @@ des3_fb64_session(key, server, fbp)
             debug(F110,"des3_fb64_stream_iv",
                    "Key Schedule not created by encryption",0);
         }
-        hexdump("des3_fb64_session_key schedule",fbp->krbdes_sched[i],8*16);
+        ckhexdump("des3_fb64_session_key schedule",fbp->krbdes_sched[i],8*16);
     }
     /*
     * Now look to see if krbdes_start() was was waiting for
@@ -3454,7 +3486,7 @@ des3_fb64_stream_iv(seed, stp)
     for ( i=0;i<3;i++ ) {
         memset(stp->str_sched[i],0,sizeof(Schedule));
 
-        hexdump("des3_fb64_stream_iv",stp->str_ikey[i],8);
+        ckhexdump("des3_fb64_stream_iv",stp->str_ikey[i],8);
 
         rc = des_key_sched(stp->str_ikey[i], stp->str_sched[i]);
         if ( rc == -1 ) {
@@ -3470,7 +3502,7 @@ des3_fb64_stream_iv(seed, stp)
             debug(F110,"des3_fb64_stream_iv",
                    "Key Schedule not created by encryption",0);
         }
-        hexdump("des3_fb64_stream_iv schedule",stp->str_sched[i],8*16);
+        ckhexdump("des3_fb64_stream_iv schedule",stp->str_sched[i],8*16);
     }
     stp->str_index = sizeof(Block);
 }
@@ -3487,7 +3519,7 @@ des3_fb64_stream_key(key, stp)
 
         memset(stp->str_sched[i],0,sizeof(Schedule));
 
-        hexdump("des3_fb64_stream_key",key[i],8);
+        ckhexdump("des3_fb64_stream_key",key[i],8);
 
         rc = des_key_sched(key[i], stp->str_sched[i]);
         if ( rc == -1 ) {
@@ -3503,7 +3535,7 @@ des3_fb64_stream_key(key, stp)
             debug(F110,"des3_fb64_stream_key",
                    "Key Schedule not created by encryption",0);
         }
-        hexdump("des3_fb64_stream_key schedule",stp->str_sched[i],8*16);
+        ckhexdump("des3_fb64_stream_key schedule",stp->str_sched[i],8*16);
     }
 
     memcpy(stp->str_output, stp->str_iv, sizeof(Block));
@@ -4298,7 +4330,7 @@ cast_fb64_session(key, server, fbp, fs)
 
     if (!key || key->length < klen) {
         CHAR buf[80];
-        sprintf(buf,"Can't set CAST session key (%d < %d)",
+        sprintf((char *)buf,"Can't set CAST session key (%d < %d)",
                 key ? key->length : 0, klen);                   /* safe */
 #ifdef DEBUG
         if (encrypt_debug_mode)

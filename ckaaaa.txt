@@ -1,38 +1,39 @@
-ckaaaa.txt                                                        10 Apr 2004
+ckaaaa.txt                                                        July 2011
 
-			   C-KERMIT VERSION 8.0.211
-			      OVERVIEW OF FILES
+                           C-KERMIT VERSION 9.0.301
+                              OVERVIEW OF FILES
 
-	       Communications software for UNIX and (Open)VMS.
+               Communications software for UNIX and (Open)VMS.
 
-		       And in former versions also for:
-			  Stratus VOS, AOS/VS, QNX,
-	     Plan 9, OS-9, Apollo Aegis, and the Commodore Amiga.
-		      The Apple Macintosh, the Atari ST.
+                       And in former versions also for:
+                          Stratus VOS, AOS/VS, QNX,
+             Plan 9, OS-9, Apollo Aegis, and the Commodore Amiga.
+                      The Apple Macintosh, the Atari ST.
 
-		  The Kermit Project - Columbia University
+                  The Kermit Project - Columbia University
 
-	    http://www.columbia.edu/kermit/ - kermit@columbia.edu
+              http://kermit.columbia.edu/ - kermit@columbia.edu
 
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2011,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+    BRIEFLY: C-Kermit 9.0 has the OPEN SOURCE 3-clause MODIFIED BSD LICENSE.
 
 
 DOCUMENTATION
 
   C-Kermit is documented in the book "Using C-Kermit", Second Edition, by
   Frank da Cruz and Christine M. Gianone, Digital Press, ISBN 1-55558-164-1,
-  supplementated by Web-based updates for C-Kermit 7.0 and 8.0.
+  supplemented by Web-based updates for C-Kermit 7.0, 8.0, and 9.0.
 
 PLATFORMS
                    Security
    Name            Included   Last Updated
 
-   Unix               Yes     8.0.211  10 Apr 2004
-   (Open)VMS          No      8.0.208  10 Apr 2004
+   Unix               Yes     9.0.300  30 Jun 2011
+   (Open)VMS          Yes     9.0.300  30 Jun 2011
    Windows (K95)      Yes     8.0.208  14 Mar 2003  (K95 2.1)
    OS/2 (K95)         Yes     8.0.208  14 Mar 2003  (K95 2.1)
    DG AOS/VS          No      7.0.196   1 Jan 2000
@@ -69,7 +70,8 @@ C-Kermit for UNIX computers that have a C compiler and 'make' program:
 C-Kermit for VMS:
 
   If you have VMS UNZIP, get the file kermit/archives/ckv211.zip in binary
-  mode, unzip, and build with CKVKER.COM.
+  mode, unzip -aa, and build with CKVKER.COM (@ckvker.com).  Read the comments
+  at the top of CKVKER.COM for details.
 
 Others:  In the kermit/f or kermit/test directories under the appropriate
 prefixes, explained below.
@@ -77,25 +79,18 @@ prefixes, explained below.
 
 INSTALLATION
 
-Installation procedures depend on the system.  Please read the CK?INS.TXT,
-if any, file for your system (?=U for UNIX, V for VMS, etc).  Please note
-the naming and placement for the initialization files:
+Installation procedures depend on the operating system.  Please read the
+CK?INS.TXT, if any, file for your operating system (?=U for UNIX, V for VMS,
+etc).  Please note the naming and placement for the initialization files:
 
   CKERMIT.INI
-    The standard initialization file.  Please leave it as is unless you
-    know what you are doing and (if you are changing it or replacing it
-    for others to use) you are prepared to support it.  Rename this file
-    to .kermrc in UNIX, OS-9, BeBox, or Plan 9.  In Stratus VOS, rename
-    it ckermit.ini (lowercase).  On multiuser systems, it goes either in the
-    (or EACH) user's home (login) directory, or else in a common shared
-    place if C-Kermit has been configured to look in that place (see
-    ckccfg.txt for details).
+    .kermrc in the user's home directory (UNIX).
+    CKERMIT.INI in the user's home directory (other OS's).
+
 
   CKERMOD.INI
-    A *sample* customization file.  On multiuser OS's, a copy of this file
-    goes in each user's home directory, and then each user edits it to suit
-    her needs and preferences; e.g. by defining macros for their common
-    connections.
+    .mykermrc in the user's home directory (UNIX).
+    CKERMOD.INI elsewhere.
 
   DIALING DIRECTORIES
     Dialing directory files can be system-wide, per-group, or per-user, or
@@ -161,7 +156,7 @@ letters shown here.  Subgroups:
   y: (reserved)
   z: (reserved)
   0-3: (reserved)
-  4: IBM AS/400 (reserved)
+  4: IBM AS/400 (reserved but probably never will be used)
   5-8: (reserved)
   9: Microware OS-9
 
@@ -215,11 +210,12 @@ DG AOS/VS-specific files:
   ckd*.cli   - Procedures for building AOS/VS C-Kermit
 
 The following files are of interest mainly to programmers and historians
-(find them at the Kermit ftp site):
+(find them at the Kermit ftp site in the kermit/f directory):
 
   ckcker.ann - Release announcements.
   ckccfg.txt - Configuration information (feature selection), general.
   ckcplm.txt - Program logic manual (for programmers).
+  ckc300.txt - Program update history for edit 212-300 (C-Kermit 9.0).
   ckc211.txt - Program update history for edit 201-211.
   ckc200.txt - Program update history for edit 198-200 (big)
   ckc197.txt - Program update history for edit 195-197 (big)
@@ -233,7 +229,7 @@ BINARIES
 
 If you have FTP access to kermit.columbia.edu (also known as
 kermit.cc.columbia.edu, ftp.cc.columbia.edu), you can also retrieve various
-C-Kermit binaries from the directory kermit/bin/ck*.*, or more conventiently
+C-Kermit binaries from the directory kermit/bin/ck*.*, or more conveniently
 from the web page:
 
   http://www.columbia.edu/kermit/ck80binaries.html
@@ -257,11 +253,11 @@ version, cku211.tar.gz.  To get the binary tar archive:
   password:                      (use your email id as a password)
   cd kermit/archives             (go to the archives directory)
   type binary                    (specify binary file transfer)
-  get cku211.tar.Z               (get the tar archive) (or get cku192.tar.gz)
+  get cku300.tar.Z               (get the tar archive) (or get cku192.tar.gz)
   bye                            (disconnect and exit from ftp)
 
-  uncompress cku211.tar.Z        (at the shell prompt, uncompress the archive)
-  tar xvf cku211.tar             (extract the files from the tar archive)
+  uncompress cku300.tar.Z        (at the shell prompt, uncompress the archive)
+  tar xvf cku300.tar             (extract the files from the tar archive)
   make xxx                       (build C-Kermit for your system)
 
 (where "xxx" is the makefile entry appropriate for your system.)
@@ -285,18 +281,16 @@ Stratus VOS: cklmak.cm
 Minimal source files for building selected versions (these patterns get all
 the files you need, and in some cases maybe a few extra):
 
-   UNIX:   ck[cuw]*.[cwh]  (including QNX, Plan 9, and BeBox)
-   UNIX:   ck[cuw_]*.[cwh] (Unix with security modules)
-   VMS:    ck[cuwv]*.[cwh]
-   Mac:    ck[cuwm]*.[cwhr]
+   UNIX:   ck[cuw]*.[cwh]   (including QNX, Plan 9, and BeBox)
+   UNIX:   ck[cuw_]*.[cwh]  (Unix with security modules)
+   VMS:    ck[cuwv]*.[cwh]  VMS
+   VMS:    ck[cuwv_]*.[cwh] VMS with SSL/TLS
+   Mac:    ck[cuwm]*.[cwhr] Old Mac OS, not Mac OS X, which is UNIX.
    AOS/VS: ck[cuwd]*.[cwh]
    VOS:    ck[cwhl]*.[cwh]
    Amiga:  ck[cuwi]*.[cwh]
    Atari:  ck[cuws]*.[cwh]
    OS-9:   ck[cuw9]*.[cwha]
-
-For a detailed, specific source file list for this C-Kermit release, see the
-file ckcxxx.txt, where xxx is the current C-Kermit edit number, such as 211.
 
 Finally, here is a more detailed description of the C-Kermit file naming
 conventions.  A C-Kermit filename has the form:
@@ -319,6 +313,7 @@ where:
   nr:  Nroff/Troff text formatter source for UNIX "man page"
   mss: Scribe text formatter source
   ps:  Typeset material to be printed on a PostScript printer
+  pdf: An Adobe PDF file
   hlp: A VMS Help topic
 
   ini: Initialization file
@@ -354,13 +349,13 @@ otherwise mistake them for Microsoft Word or Windows Help documents.
   plm: Program Logic Manual
   ker: General C-Kermit definitions, information, documentation
 
-  nnn: Digits: C-Kermit edit number (e.g. cku211.tar.gz)
+  nnn: Digits: C-Kermit edit number (e.g. cku300.tar.gz)
   cmd: Command parsing
   con: CONNECT command
   cns: CONNECT command (UNIX only - version that uses select(), not fork())
   deb: Debug/Transaction Log formats, Typedefs
   dia: Modem/Dialer control
-  fio: System-depdendent File I/O
+  fio: System-dependent File I/O
   fns: Protocol support functions
   fn2: More protocol support functions (and FN3, ...)
   lib: Common library routines module

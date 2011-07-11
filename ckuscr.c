@@ -2,12 +2,12 @@
 
 #ifndef NOICP
 #ifndef NOSCRIPT
-char *loginv = "Script Command, 8.0.032, 20 Dec 2001";
+char *loginv = "Script Command, 9.0.032, 16 Oct 2009";
 
 /*  C K U S C R  --  expect-send script implementation  */
 
 /*
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2009,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
