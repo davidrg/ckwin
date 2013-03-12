@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2010,
+  Copyright (C) 1985, 2013,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -428,6 +428,8 @@ struct stringint {			/* String and (wide) integer */
 #define DIR_TOP 41	/* Top n lines */
 #define DIR_COU 42	/* COUNT:var */
 #define DIR_NOL 43	/* NOLINKS (don't show symlinks at at all) */
+#define DIR_MOD 44	/* Set modification time (used only by TOUCH) */
+#define DIR_SIM 45	/* /SIMULATE (for TOUCH) */
 
 #define DIRS_NM 0       /* Sort directory by NAME */
 #define DIRS_DT 1       /* Sort directory by DATE */

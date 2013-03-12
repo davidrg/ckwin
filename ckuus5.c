@@ -15,7 +15,7 @@ int cmdsrc() { return(0); }
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2011,
+  Copyright (C) 1985, 2013,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -577,7 +577,7 @@ char *m_cautious = "set win 2, set rec pack 512, set prefixing cautious";
 char *m_cautious = "set win 4, set rec pack 1000, set prefixing cautious";
 #endif /* pdp11 */
 char *m_robust = "set win 1, set rec pack 90, set prefixing all, \
-set reliable off, set clearchannel off";
+set reliable off, set clearchannel off, set send timeout 20 fixed";
 #else
 #ifdef BIGBUFOK
 #ifdef IRIX65

@@ -1,6 +1,6 @@
-#define EDITDATE  "20 Aug 2011"		/* Last edit date dd mmm yyyy */
-#define EDITNDATE "20110820"		/* Keep them in sync */
-/* Sat Aug 20 17:20:17 2011 */
+#define EDITDATE  "12 Mar 2013"		/* Last edit date dd mmm yyyy */
+#define EDITNDATE "20130312"		/* Keep them in sync */
+/* Tue Mar 12 11:10:22 2013 */
 
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
@@ -30,7 +30,7 @@
 #endif /* OS2 */
 #endif /* BETATEST */
 
-char * ck_cryear = "2011"; 		/* C-Kermit copyright year */
+char * ck_cryear = "2013"; 		/* C-Kermit copyright year */
 
 #ifndef MAC				/* MAC = Kermit for MAC OS 6, 7, ... */
 /*
@@ -40,8 +40,8 @@ char * ck_cryear = "2011"; 		/* C-Kermit copyright year */
 
 #ifndef BETATEST
 #ifndef OS2                             /* UNIX, VMS, etc... (i.e. C-Kermit) */
-char *ck_s_test = "";			/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "";			/* Test version number or "" */
+char *ck_s_test = "Dev";		/* "Dev","Alpha","Beta","RC", or "" */
+char *ck_s_tver = "03";			/* Test version number or "" */
 #else  /* OS2 */
 char *ck_s_test = "";			/* (i.e. K95) */
 char *ck_s_tver = "";
@@ -64,7 +64,7 @@ char *ck_s_date = EDITDATE;		/* See top */
 char *buildid = EDITNDATE;		/* See top */
 
 #ifdef UNIX
-static char sccsid[] = "@(#)C-Kermit 9.0.302";
+static char sccsid[] = "@(#)C-Kermit 9.0.304";
 #endif /* UNIX */
 
 /*
@@ -78,8 +78,8 @@ static char sccsid[] = "@(#)C-Kermit 9.0.302";
   for future releases.
 */
 
-char *ck_s_ver = "9.0.302";             /* C-Kermit version string */
-long  ck_l_ver =  900302L;              /* C-Kermit version number */
+char *ck_s_ver = "9.0.304";             /* C-Kermit version string */
+long  ck_l_ver =  900304L;              /* C-Kermit version number */
 
 #ifdef OS2
 char *ck_s_xver = "3.0.0";		/* Product-specific version string */
@@ -125,22 +125,35 @@ long vernum, xvernum;                   /* runtime from above.    */
 #include "ckcasc.h"                     /* ASCII character symbols */
 #include "ckcdeb.h"                     /* Debug & other symbols */
 
-char * myname = NULL;                   /* The name I am called by */
+char * myname = NULL;                   /* Name this program is called by */
 #ifndef OS2
 char * exedir = NULL;                   /* Directory I was executed from */
 #endif /* OS2 */
-char * myhome = NULL;			/* Home directory override */
+
+char homedirpath[CKMAXPATH+1] = { NUL, NUL }; /* Home directory path */
+char * myhome = NULL;			/* Home directory override string */
 
 /*  C K C M A I  --  C-Kermit Main program  */
 
 /*
-  Author: Frank da Cruz (fdc@columbia.edu),
-  Columbia University in the city of New York,
-  Computer Center / Center for Computing Activities / Information Technology.
-  I am no longer at Columbia U as of 1 July 2011, but the email address
-  should still work.  The Kermit website http://kermit.columbia.edu should
-  still be available and under my control, as well as the Kermit FTP site,
-  ftp://kermit.columbia.edu/kermit/.
+  Principal Author: Frank da Cruz
+  fdc@kermitproject.org OR fdc@columbia.edu.
+
+  I am no longer at Columbia University as of 1 July 2011.
+  As of September 29, 2011, the new Open Source Kermit Project website
+  is the  definitive source for Kermit software created or updated since
+  that date:
+
+  http://www.kermitproject.org .
+
+  The associated FTP site is:
+
+  ftp://ftp.kermitproject.org/
+
+  Note that Columbia University holds the copyright to this software in
+  perpetuity, but as of C-Kermit 9.0 the license has changed from the
+  previous somewhat restrictive one to the Open Source Modified Berkeley
+  3-clause license, text just below.
 
 COPYRIGHT NOTICE:
 */
@@ -3018,7 +3031,12 @@ main(argc,argv) int argc; char **argv;
     else
       initflg = 1;                      /* Remember we did. */
     debug(F111,"ckcmai myname",myname,howcalled);
-
+    {					/* Get home directory path */
+	char *h;
+        _PROTOTYP( char * homedir, (void) );
+	h = homepath();
+	if (h) ckstrncpy(homedirpath,h,CKMAXPATH);
+    }
 #ifdef UNIX
     getexedir();                        /* Compute exedir variable */
 #endif /* UNIX */

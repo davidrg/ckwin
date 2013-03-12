@@ -2361,7 +2361,8 @@ VOID
 setflow() {
     extern int flow, autoflow, mdmtyp, cxtype, cxflow[];
 #ifndef NODIAL
-    extern int dialcapas, dialfc;
+    extern int dialfc;
+    extern long dialcapas;
     extern MDMINF * modemp[];
     MDMINF * p = NULL;
     long bits = 0;

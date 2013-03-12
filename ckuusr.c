@@ -3,7 +3,7 @@
 #endif /* SSHTEST */
 
 #include "ckcsym.h"
-char *userv = "User Interface 9.0.299, 9 Jun 2011";
+char *userv = "User Interface 9.0.301, 12 March 2013";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 
@@ -1170,9 +1170,13 @@ struct keytab cmdtab[] = {
     { "more",        XXMORE, CM_INV },	/* MORE */
 #endif /* NOFRILLS */
 
+#ifdef OLDMOVE
 #ifndef NOXFER
-    { "move",        XXMOVE, 0 },	/* MOVE  */
+    { "move",        XXMOVE, 0 },	/* MOVE = SEND /DELETE */
 #endif /* NOXFER */
+#else
+    { "move",        XXREN, CM_INV },	/* MOVE = RENAME */
+#endif /* OLDMOVE */
 
 #ifndef NOSPL
     { "mpause",      XXMSL, CM_INV },	/* Millisecond sleep */

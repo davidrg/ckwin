@@ -9,7 +9,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2011,
+  Copyright (C) 1985, 2012,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -87,6 +87,9 @@ extern xx_strp xxstring;
 #ifdef FNFLOAT
 #include <math.h>                       /* Floating-point functions */
 #endif /* FNFLOAT */
+
+int fp_rounding = 0;			/* Nonzero if printf("%f") rounds */
+int fp_digits = 0;		      /* Digits of floating point precision */
 
 extern int quiet, network, xitsta, escape, nopush, xferstat,
   exitonclose, tn_exit, ttnproto, autodl, flow, byteorder, what, lastxfer;
@@ -1202,9 +1205,6 @@ struct keytab disptb[] = {              /* Log file disposition */
 #ifdef CKFLOAT
 
 /* I N I T F L O A T  --  Deduce floating-point precision by inspection */
-
-int fp_rounding = 0;                /* Nonzero if printf("%f") rounds */
-int fp_digits = 0;                  /* Digits of floating point precision */
 
 #ifdef COMMENT
 /* For looking at internal floating-point representations */
@@ -3611,16 +3611,26 @@ doxlate() {
 }
 #endif /* NOCSETS */
 
-static char hompthbuf[CKMAXPATH+1];
+/*
+  Returns path of user's actual home directory (or, if specified, SET CD HOME
+  directory), properly terminated to allow filenames or sub-paths to be
+  appended.
+*/
+static char hompthbuf[CKMAXPATH+1] = { NUL, NUL }; /* Home directory path */
 
 char *
 homepath() {
     int x;
+    extern char hompthbuf[];
     extern char * myhome;
     char * h;
-
+  
+    /* myhome = SET CD HOME; zhome() uses API to get home directory */
     h = myhome ? myhome : zhome();
     hompthbuf[0] = NUL;
+
+/* Ensure it is terminated with appropriate directory or device separator. */
+
 #ifdef UNIXOROSK
     x = ckstrncpy(hompthbuf,h,CKMAXPATH+1);
     if (x <= 0) {

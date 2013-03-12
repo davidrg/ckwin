@@ -8,7 +8,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2011,
+  Copyright (C) 1985, 2013,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -4591,12 +4591,12 @@ static struct keytab dirswtab[] = {     /* DIRECTORY command switches */
     { "/englishdate", DIR_DAT, 0 },
     { "/except",      DIR_EXC, CM_ARG },
     { "/files",       DIR_FIL, 0 },
-    { "/heading",     DIR_HDG, 0 },
-    { "/isodate",     DIR_ISO, 0 },
-    { "/larger-than", DIR_LAR, CM_ARG },
 #ifdef CKSYMLINK
     { "/followlinks", DIR_LNK, 0 },
 #endif /* CKSYMLINK */
+    { "/heading",     DIR_HDG, 0 },
+    { "/isodate",     DIR_ISO, 0 },
+    { "/larger-than", DIR_LAR, CM_ARG },
     { "/message",     DIR_MSG, CM_ARG },
     { "/nobackupfiles",DIR_NOB, 0 },
     { "/nodotfiles",  DIR_NOD, 0 },
@@ -4661,6 +4661,66 @@ static struct keytab dirsort[] = {      /* DIRECTORY /SORT: options */
     { "size",         DIRS_SZ, 0 }
 };
 static int ndirsort = (sizeof(dirsort) / sizeof(struct keytab));
+
+static struct keytab touchswtab[] = {	/* TOUCH command switches */
+    { "/after",       DIR_AFT, CM_ARG },
+    { "/all",         DIR_ALL, 0 },
+    { "/backup",      DIR_BUP, 0 },
+    { "/before",      DIR_BEF, CM_ARG },
+    { "/count",       DIR_COU, CM_ARG },
+    { "/directories", DIR_DIR, 0 },
+    { "/dotfiles",    DIR_DOT, 0 },
+    { "/except",      DIR_EXC, CM_ARG },
+    { "/files",       DIR_FIL, 0 },
+#ifdef CKSYMLINK
+    { "/followlinks", DIR_LNK, 0 },
+#endif /* CKSYMLINK */
+    { "/larger-than", DIR_LAR, CM_ARG },
+    { "/list",        DIR_VRB, 0 },
+    { "/modtime",     DIR_MOD, CM_ARG },
+    { "/nobackupfiles",DIR_NOB, 0 },
+    { "/nodotfiles",  DIR_NOD, 0 },
+#ifdef CKSYMLINK
+    { "/nofollowlinks",DIR_NLK, 0 },
+#endif /* CKSYMLINK */
+#ifdef CKSYMLINK
+    { "/nolinks",     DIR_NOL, 0 },
+#endif /* CKSYMLINK */
+#ifdef CK_TTGWSIZ
+#endif /* CK_TTGWSIZ */
+#ifdef RECURSIVE
+    { "/norecursive", DIR_NOR, 0 },
+#else
+#ifdef VMS
+    { "/norecursive", DIR_NOR, 0 },
+#else
+#ifdef datageneral
+    { "/norecursive", DIR_NOR, 0 },
+#endif /* datageneral */
+#endif /* VMS */
+#endif /* RECURSIVE */
+    { "/not-after",   DIR_NAF, CM_ARG },
+    { "/not-before",  DIR_NBF, CM_ARG },
+    { "/not-since",   DIR_NAF, CM_INV|CM_ARG },
+#ifdef RECURSIVE
+    { "/recursive",   DIR_REC, 0 },
+#else
+#ifdef VMS
+    { "/recursive",   DIR_REC, 0 },
+#else
+#ifdef datageneral
+    { "/recursive",   DIR_REC, 0 },
+#endif /* datageneral */
+#endif /* VMS */
+#endif /* RECURSIVE */
+    { "/simulate",    DIR_SIM, 0 },
+    { "/since",       DIR_AFT, CM_ARG|CM_INV },
+    { "/smaller-than",DIR_SMA, CM_ARG },
+    { "/type",        DIR_BIN, CM_ARG },
+    { "/verbose",     DIR_VRB, CM_INV },
+    { "",0,0 }
+};
+static int ntouchswtab = (sizeof(touchswtab) / sizeof(struct keytab)) - 1;
 
 static int dir_date = -1;               /* Option defaults (-1 means none) */
 static int dir_page = -1;
@@ -4860,9 +4920,11 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
     _PROTOTYP( char * zrelname, (char *,char *) );
     char * cdp = NULL;
 #endif /* VMS */
+    struct zattr xxstruct;
 
     char name[CKMAXPATH+1], outfile[CKMAXPATH+1], *p = NULL, c = NUL;
     char linebuf[CKMAXPATH+256];
+    char modtime[100];
     char * mstr = NULL, * dstr = NULL, * s2 = NULL, * cv = NULL;
     CK_OFF_T len = (CK_OFF_T)0, nbytes = (CK_OFF_T)0;
     CK_OFF_T minsize = (CK_OFF_T)-1, maxsize = (CK_OFF_T)-1;
@@ -4879,6 +4941,7 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
     int dontshowlinks = 0;
     int dontfollowlinks = 0;
     int arrayindex = -1;
+    int simulate = 0;
     struct FDB sw, fi, fl;
     char dbuf[32], xbuf[32];
 
@@ -4901,6 +4964,8 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
     nolinks = 2;                        /* (it should already be 2) */
 #endif	/* COMMENT */
     outfile[0] = NUL;                   /* No output file yet */
+
+    modtime[0] = '\0';			/* Initialize TOUCH /MODTIME */
 
     if (ofp != stdout) {                /* In case of previous interruption */
         if (ofp) fclose(ofp);
@@ -4970,10 +5035,10 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
  file specification, or switch",
            "",                          /* default */
            "",                          /* addtl string data */
-           ndirswtab,                   /* addtl numeric data 1: tbl size */
+           touch ? ntouchswtab : ndirswtab, /* switch table size */
            4,                           /* addtl numeric data 2: 4 = cmswi */
            xxstring,                    /* Processing function */
-           dirswtab,                    /* Keyword table */
+           touch ? touchswtab : dirswtab, /* switch keyword table */
            &fi                          /* Pointer to next FDB */
            );
     cmfdbi(&fi,                         /* 2nd FDB - filespec to match */
@@ -5213,7 +5278,8 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
             break;
 
           case DIR_SUM:
-            summary = 1; break;
+            summary = 1;
+	    break;
 
           case DIR_BIN: {
               extern struct keytab txtbin[];
@@ -5236,6 +5302,17 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
               return(x);
             ckstrncpy(outfile,s,CKMAXPATH+1);
             break;
+
+          case DIR_SIM:			/* TOUCH /SIMULATE */
+	    simulate = 1;
+	    break;
+
+          case DIR_MOD:			/* TOUCH /MODTIME: */
+            if ((x = cmdate("File modification date-time",
+			    "now",&s,0,xxstring)) < 0)
+	      return(x);
+	    ckstrncpy(modtime,brstrip(s),100);
+	    break;
 
           default:
             printf("?Sorry, not implemented yet - \"%s\"\n", atmbuf);
@@ -5276,6 +5353,11 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 	    FILE * fp;
 	    s = brstrip(s);
 	    if (!iswild(s)) {
+		/* Given date-time, if any, else current date-time */
+		dstr = ckcvtdate(modtime[0] ? modtime : "",0);
+		xxstruct.date.val = dstr;
+		xxstruct.date.len = (int)strlen(xxstruct.date.val);
+		xxstruct.lprotect.len = 0;
 #ifdef UNIX
 		if (s[0] == '~')
 		  s = tilde_expand(s);
@@ -5287,6 +5369,11 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 		    goto xdomydir;
 		}
 		fclose(fp);
+		if (zstime(s,&xxstruct,0) < 0) {
+		    printf("?TOUCH %s: %s\n",name,ck_errstr());
+		    rc = -9;
+		    goto xdomydir;
+		}
 		cx = XXDIR;		/* Now maybe list it. */
 		multiple++;		/* Force new directory scan */
 	    }
@@ -5392,7 +5479,7 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 /*
   In case we gave multiple filespecs they are now in {a,b,c} list format.
   Which is a valid wildcard.  We pass it to nzxpand() to get back the list
-  of files that match.  This is fine for DIRECTORY but it's not find for
+  of files that match.  This is fine for DIRECTORY but it's not fine for
   TOUCH because we want TOUCH to see those names so it can create the files.
   So for now at least, if TOUCH is to be used to create files -- as opposed
   to changing the timestamps of existing files -- it can only do one file
@@ -5409,6 +5496,9 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 #endif /* ZXREWIND */
 
 #ifndef NOSPL
+/*
+  TO BE FIXED: in DIR /ARRAY:&a /SORT:xxx, the /SORT switch is ignored.
+*/
     if (array) {
         int n, xx;
         n = (x < 0) ? 0 : x;
@@ -5551,23 +5641,24 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
             nfiles++;
             nbytes += len;
         }
-	dstr = NULL;
+	dstr = NULL;			/* File date-time string */
 	if (cx == XXTOUC) {		/* Command was TOUCH, not DIRECTORY */
-	    char * filename;
-	    struct zattr xx;
-	    dstr = ckcvtdate("",0);
-	    xx.date.val = dstr;
-	    xx.date.len = (int)strlen(xx.date.val);
-	    xx.lprotect.len = 0;
-	    debug(F110,"domydir touch",name,0);
-	    debug(F110,"domydir touch",dstr,0);
-	    if (zstime(name,&xx,0) < 0) {
-		printf("?TOUCH %s: %s\n",name,ck_errstr());
-		rc = -9;
-		goto xdomydir;
+	    /* Given date-time, if any, else current date-time */
+	    dstr = ckcvtdate(modtime[0] ? modtime : "",0);
+	    xxstruct.date.val = dstr;
+	    xxstruct.date.len = (int)strlen(xxstruct.date.val);
+	    xxstruct.lprotect.len = 0;
+	    if (simulate) {
+		printf(" %s (%s)\n",name,dstr);
+	    } else {
+		if (zstime(name,&xxstruct,0) < 0) {
+		    printf("?TOUCH %s: %s\n",name,ck_errstr());
+		    rc = -9;
+		    goto xdomydir;
+		}
 	    }
-	    if (!verbose) {		/* No listing so skip detail */
-		znext(name);
+	    if (!verbose || simulate) {	/* No listing so just go back */
+		znext(name);		/* and do next file. */
 		continue;
 	    }
 	}
@@ -5575,17 +5666,6 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
             znext(name);
             continue;
         }
-
-#ifndef NOSPL
-        if (array) {
-            debug(F111,"domydir array",name,nfiles);
-            if (ap)
-              makestr(&(ap[nmatches]),name);
-            znext(name);
-            continue;
-        }
-#endif /* NOSPL */
-
 /*
   NOTE: The sprintf's in this routine should be safe.  They involve
   permission strings, date/time strings, and filenames, all of which have
@@ -5771,14 +5851,6 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
             }
         }
     }
-#ifndef NOSPL
-    if (array) {
-        if (ap)
-          makestr(&(ap[0]),ckitoa(nmatches));
-        rc = 1;
-        goto xdomydir;
-    }
-#endif /* NOSPL */
     if (xsort) {
 	int namepos;
         skey = 0;
@@ -5810,6 +5882,18 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 	if (dir_top > 0 && dir_top < ndirlist)
 	  ndirlist = dir_top;
         for (i = 0; i < ndirlist; i++) {
+#ifndef NOSPL
+	    /* Storing result filenames in an array... */
+	    if (array) {
+		char * name;
+		name = dirlist[i] + namepos;
+		debug(F111,"domydir array",name,nfiles);
+		if (ap)
+		  makestr(&(ap[i+1]),name);
+		continue;
+	    }
+#endif /* NOSPL */
+	    /* Printing the result filenames, size, date, etc... */
             fprintf(ofp,"%s\n",dirlist[i]);
             if (page && (i < ndirlist -1 || heading)) { /* If /PAGE */
                 if (cmd_cols > 0) {
@@ -5831,6 +5915,14 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 #endif /* CK_TTGWSIZ */
             }
         }
+#ifndef NOSPL
+	if (array) {
+	    if (ap)
+	      makestr(&(ap[0]),ckitoa(ndirlist));
+	    rc = 1;
+	    goto xdomydir;
+	}
+#endif /* NOSPL */
     }
 
     if (heading || summary) {

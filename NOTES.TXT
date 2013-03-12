@@ -3,8 +3,8 @@ C-KERMIT 9.0 CHANGE LOG (Changes since 8.0.207 / K95 2.1.3 January 2003)
   Chronological order.
   Go to the bottom to find the newest edits.
 
-  F. da Cruz, The Kermit Project, Columbia University, NYC.
-  Last update: 28 June 2011.
+  F. da Cruz, The Kermit Project, Bronx, NY.
+  Last update: Tue Mar 12 11:29:33 2013
 
 FTP USER, FTP ACCOUNT, plus the various prompts and switches for FTP username,
 password, and account all neglected to strip quotes, and in most cases quotes
@@ -7655,6 +7655,8 @@ HEIMDAL
     for this option is not complete in C-Kermit 8.0. Anyone interested in
     working on this should contact kermit-support. 
 
+KERBEROS VERSION:
+
 'krb5-config --version' gives the MIT Kerberos 5 version number.
 
 Make a new netbsd+krb5+ssl target based on the combination of the new
@@ -7855,7 +7857,7 @@ Added and successfully used a new solaris9+krb5+ssl target.
 makefile, 8 Aug 2011.
 
 FreeBSD 9 switched from utmp to utmpx, which broke compilation of Kermit on
-that version.  Furthermore, the UUCP lockfile convensions changed in FreeBSD
+that version.  Furthermore, the UUCP lockfile conventions changed in FreeBSD
 8, which did not prevent C-Kermit from compiling, but any attempt to lock a
 terminal or pty device would fail.  Thanks to Alexey Dokuchaev "danfe" for
 finding and patching the problems.  I undid the patches and fixed the code
@@ -7873,9 +7875,181 @@ Changed the version to 9.0.302, ckcmai.c, 20 Aug 2011.
 
 Fixed freebsd+ssl and netbsd+ssl, netbsd+krb5, and netbsd+krb5+ssl targets
 to have CC=$(CC) instead of CC=gcc; ditto for CC2, and adjusted line breaks
-in freebsd and freebsd+ssl targets.  makefile, 21 Aug 2011.
+in freebsd and freebsd+ssl targets for easier patching.  makefile, 21 Aug 2011.
 
 --- 9.0.302 ---
+
+From Edward Berner: C-Kermit 9.0 on OpenBSD on sparc64 gets a "Bus error"
+and dumps core when receiving a file.  Some variables were defined long or
+CK_OFF_T and extern'd as int from other modules.  Edward found and corrected
+all instances of this.  The variables were filcnt, dest, filrej, dialcapas.
+ckcpro.w, ckuusx.c, 23 Aug 2011.
+
+Changed version to 9.0.303.  ckcmai.c, 23 Aug 2011.
+
+Fixed a problem with 'make linux "KFLAGS=-DNOICP -DNOSPL -DNOHELP -DNODEBUG"'
+in which fp_rounding and fp_digits came up undefined.  ckuus4.c,
+28 May 2012.
+
+From Adam Friedlander: OpenSSL version test was preventing C-Kermit from
+starting when the installed OpenSSL version was >= 1.0.0 and there was a
+change in the last letter (e.g. 1.0.0a to 1.0.0b) or to the last number
+(e.g. 1.0.0 to 1.0.1), but these changes do not indicate ABI
+incompatibility.  This was forcing rebuild and reinstallation of C-Kermit
+every time a minor update was made to OpenSSL (e.g. on Ubuntu Linux that has
+preinstalled binaries).  ck_ssl.[ch], ckcmai.c, 28 May 2012.
+
+Changed version to 9.0.304 Dev.01.  ckckmai.c, 28 May 2012.
+
+From Tim Sneddon: http://tim.sneddon.id.au/blog/Posts/C-Kermit_for_Android -
+Adaptation of C-Kermit to Android via the Linux path; required very few
+changes, mainly #ifdef'ing a couple Linux APIs not supported in Android.
+ckcdeb.h, ckufio.c, ckutio.c, 20 Jul 2012.
+
+Vanity herald for Android: ckuver.h, 20 Jul 2012.
+
+From Adam Friedlander: an updated OpenSSL version test obtained after
+consultation with Jeff Altman incorporating the new rules for when the
+OpenSSL 1.x.yz ABI changes.  ck_ssl.[ch], 20 Jul 2012.
+
+From Ian Beckwith (Debian), support for multiarchitecture curses library in
+Linux; also libresolv, libcrypt, liblockdev, libk5crypto, libgssapi_krb5.
+Don't know if these changes work, but at least they don't seem to hurt
+anything.  makefile, 20 Jul 2012.
+
+Built OK on Linux RHEL4 32-bit with:
+"make linux", "make linux+SSL" (OpenSSL 0.9.7a).
+Built OK on Linux RHEL5 64-bit with:
+"make linux", "make linux+krb5", "make linux+SSL -DKFLAGS=-UCK_DES" (0.9.8q).
+Also with "make linux -DKFLAGS=-DANDROID" to see the vanity herald.
+Built OK on Solaris 9 with and without OpenSSL (0.9.8q).
+Built OK on NetBSD 5.1.2 with and without OpenSSL (0.9.9-dev).
+Built on NetBSD 5.1.2 with Kerberos V 1.6.3; lots of warnings but it runs.
+
+Added android.mk (makefile) and android.txt (README) to regular Unix tarball.
+20 Jul 2012.
+
+When uploading files to Unix from K95, it has become increasingly unlikely
+that the filename is shown on the file-transfer display because Unix
+pathnames are growing longer and longer all the time, and the name part
+disappears off the edge.  This can't be fixed in K95 (since nobody has yet
+been able to build it from source code), but it can be ameliorated in
+C-Kermit in many cases by shortening the pathname sent back to K95 when
+receiving files from or under the user's Unix login directory, by replacing
+login directory path prefix with "~/".  This was done within #ifdef UNIX
+.. #endif in ckcpro.w, in the place where the protocol state machine handles
+an F packet.  It could probably also be done in VMS, but probably not worth
+it ("SYS$LOGIN:" is not exactly short).  This could be expanded, with some
+effort, to other people's directories ("~eddie/").  ckcpro.w, ckcmai.c,
+makefile, 2 Nov 2012.
+
+Correction to yesterday's, which didn't account for SET CD HOME.
+ckcpro.w, ckcmai.c, ckuus[454].c, 3 Nov 2012.
+
+The change of Nov 2 still needs work.  Modern Unix servers tend to have
+ever-longer pathnames so even with the previous change we're still seeing
+the truncated pathnames on the file transfer display of the sender which is
+less than helpful when sending a large group of files; you can't see the
+filenames and have no idea how far along the transfer is (because the
+thermometer applies only to the current file, not the whole group).  Why
+should C-Kermit, when receiving files, send back the entire pathname when
+the incoming file is being stored in its current directory?  No reason.
+Added code to chop it off.  ckcpro.w, 11 March 2012.
+
+(Obviously it would be better for the progess indicator to apply to the
+whole transfer than to the current file out of possibly many, but that would
+require a change to the protocol itself, in which the file sender makes a
+pass through the file list to get the total size of all files and then 
+sends a new kind of message to the receiver with this information.  Possibly
+this could be done in the A packet: File #x out of y in a transfer of
+total size z.)
+
+In the 1980s and 90s, before switches were added to Kermit command syntax,
+there was a MOVE command, which meant to send a file and then delete the
+original after it had been sent successfully.  When switches were added in
+C-Kermit 7.0 in 2000, this function was assigned to SEND /DELETE.  The MOVE
+command was left behind for compatibility.  Unfortunately it's so similar to
+the Unix 'mv' that I (for one) keep using it when I mean RENAME.  On the
+supposition that nobody uses MOVE in the SEND /DELETE sense any more (if
+they ever did), I changed it to be a synonym for RENAME.  If you build
+C-Kermit with -DOLDMOVE in KFLAGS, the old behavior is restored.
+ckuus[r2].c, 11 Mar 2013.
+
+The DIRECTORY command has a lot of switches for file selection, sorting of
+results, etc.  These include an /ARRAY: switch that allows the resulting
+filenames to be stored in an array rather than being printed, so they can be
+processed by a script; for example, to do something with the files that were
+selected by the DIRECTORY command switches.  But the array was constructed
+before processing the switches and doing any sorting.  So, for example,
+DIRECTORY /SORT:SIZE /TOP:10 /ARRAY:&a, which you would expect to load the
+array a with the 10 largest files in the current directly in reverse order
+of size, loads all the files in alphabetical order.  Fixed in domydir(),
+ckuus6.c, 11 Mar 2013.
+
+The S-Expression processor sometimes dumped core if an invalid operator
+was given.  Fixed in dosexp(), ckuus3.c, 11 March 2012.
+
+Added note about Raspberry Pi (that it builds normally with any of the Linux
+targets) to the Makefile, 11 Mar 2013.
+
+A large manufacturing company upgraded from MS-DOS Kermit to Kermit 95 
+because new PCs were installed that could no longer us MS-DOS Kermit.  These
+PCs are used to control Cincinnati (now MAG IAS) machines (press brakes,
+composite tape layers, etc), which use their own implementation of Kermit
+protocol to exchange data with the PC.  Where MS-DOS Kermit had been working
+fine in this capacity for some 20 years, K95 failed consistently after the
+13th packet.  The Cincinnati machines are quite old and (from the standpoint
+of their communications) quite primitive, communicating over a serial port
+at 19.2Kbps with no flow control.  When receiving a file, they buffer the
+incoming file data and when the buffer fills, they "turn around" to write
+out the buffer, but this takes a long time.  The difference between MS-DOS
+Kermit and K95 (and C-Kermit for that matter, which runs the same protocol
+code) is that packet timeouts in MS-DOS Kermit are fixed, whereas those in
+C-Kermit/K95 are dynamic, varying according to the characteristics of the
+transfer in progress.  In this case the first 12 ACKs were received promptly
+so K95's timeout reduced itself to an interval shorter than the time needed
+by the machine to write out its buffer.  K95 resent the packet at a time
+when the machine was not prepared to receive it and matters went downhill
+from there.  The resolution was to tell K95 to use a longer timout interval,
+and to make it fixed, not dynamic:
+
+  SET SEND TIMEOUT 20 FIXED
+
+This raised two issues:
+
+ 1. This feature was implemented in C-Kermit 6.0.192 from 1996, and
+    as such is documented in "Using C-Kermit", but not online, so it
+    took me quite a while to find it even though it's my own creation.
+
+ 2. It's not documented in the brake.html page, which discusses how to
+    use Kermit software with Cincinnati CNC machines.
+
+ 3. A long fixed timeout should have been included in the ROBUST command.
+
+I updated the ROBUST command in ckuus5.c, and updated the brake.html page
+on the new Kermit website.  12 Mar 2013. 
+
+Since Oct 2006 C-Kermit has had a very handy TOUCH command, much more useful
+that Unix's because of all the file-selection options (switches) that go
+with it, the same, in fact, as the DIRECTORY command, even though a few of
+them (such as /OUTPUT) don't make much sense with TOUCH.  But one thing that
+Kermit TOUCH can't do that Unix touch can is to set the file's mod time to
+an arbitrary date-time.  Up until now, Kermit TOUCH can only give it the
+current date-time.  To add this capability in a sensible way, I started by
+giving TOUCH its own switch table.  In doing this I also corrected a
+long-standing error in the original DIRECTORY switch table, in which one of
+the keywords, /FOLLOWLINKS, was out of order, which could have resulted in
+spurious parse errors or failures.  ckuusr.h, ckuus6.c, 12 Mar 2013.
+
+Added TOUCH /MODTIME:xxx, allowing a specific date-time to be set; xxx is
+a free-format date and/or time as described by "HELP DATE".  This works both
+for all existing files that are selected by the switches and wildcard
+patterns, or for a single nonexistent file, i.e. to create a new file with
+a given modification date-time.  Also added TOUCH /LIST, which lists the
+files that were touched, and and TOUCH /SIMULATE which lists the files that
+would be touched without actually touching them.  ckuus6.c, 12 Mar 2013.
+
+New HELP TOUCH text. ckuus2.c, 12 Mar 2013.
 
 ---------------------------------
 ***************************

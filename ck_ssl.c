@@ -1,8 +1,8 @@
-char *cksslv = "SSL/TLS support, 9.0.227, 04 Aug 2010";
+char *cksslv = "SSL/TLS support, 9.0.230, 20 Jul 2012";
 /*
   C K _ S S L . C --  OpenSSL Interface for C-Kermit
 
-  Copyright (C) 1985, 2010,
+  Copyright (C) 1985, 2012,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -19,7 +19,7 @@ char *cksslv = "SSL/TLS support, 9.0.227, 04 Aug 2010";
   . Client certificate to user id routine
 
   Note: This code is written to be compatible with OpenSSL 0.9.6[abcdefgh]
-  and 0.9.7 beta 5 (and, presumably, later).
+  and 0.9.7 beta 5 and later, and (since July 2012) 1.0.x.
   It will also compile with version 0.9.5 although that is discouraged
   due to security weaknesses in that release.
 */
@@ -1363,6 +1363,7 @@ ssl_once_init()
     if ( !ck_ssleay_is_installed() )
         return;
 /*
+  Pre-OpenSSL 1.0.0 comment:
   OpenSSL does not provide for ABI compatibility between releases prior
   to version 1.0.0.  If the version does not match, it is not safe to
   assume that any function you call takes the same parameters or does
@@ -1370,6 +1371,20 @@ ssl_once_init()
   release will result in an increase in unexplained or incorrect behaviors.
   The test should be revised once OpenSSL 1.0.0 is released and we see what
   its claims are as to ABI compatibility.
+*/
+/*
+  Post-OpenSSL 1.0.0 comment:
+  OpenSSL does not provide for ABI compatibility between releases prior
+  to version 1.0.0.  After 1.0, the following holds:
+
+  Changes to last letter: security and bugfix only, no new features.
+  E.g.  1.0.0->1.0.0a
+  Changes to last number: new ABI compatible features.
+  E.g. 1.0.0->1.0.1
+  Changes to middle number: major release, ABI compatibility not guaranteed.
+  E.g. 1.0.0->1.1.0
+
+  (per Dr. Stephen Henson)
 */
     debug(F111,"Kermit built for OpenSSL",OPENSSL_VERSION_TEXT,SSLEAY_VERSION_NUMBER);
 #ifndef OS2ONLY
@@ -1380,7 +1395,10 @@ ssl_once_init()
     debug(F110,"OpenSSL Library",SSLeay_version(SSLEAY_PLATFORM),0);
 
     /* The following test is suggested by Richard Levitte */
-    if (((OPENSSL_VERSION_NUMBER ^ SSLeay()) & 0xffffff0f) 
+    /* if (((OPENSSL_VERSION_NUMBER ^ SSLeay()) & 0xffffff0f) */
+    /* Modified by Adam Friedlander for OpenSSL >= 1.0.0 */
+    if (OPENSSL_VERSION_NUMBER > SSLeay()
+         || ((OPENSSL_VERSION_NUMBER ^ SSLeay()) & COMPAT_VERSION_MASK)
 #ifdef OS2
          || ckstrcmp(OPENSSL_VERSION_TEXT,(char *)SSLeay_version(SSLEAY_VERSION),-1,1)
 #endif /* OS2 */
@@ -1391,7 +1409,14 @@ ssl_once_init()
         printf("?OpenSSL libraries do not match required version:\r\n");
         printf("  . C-Kermit built with %s\r\n",OPENSSL_VERSION_TEXT);
         printf("  . Version found  %s\r\n",SSLeay_version(SSLEAY_VERSION));
-        printf("  OpenSSL versions prior to 1.0.0 must be the same.\r\n");    
+#ifdef OPENSSL_100
+	printf("  OpenSSL versions 1.0.0 or newer must be the same\r\n");
+	printf("  major and minor version number, and Kermit may not\r\n");
+	printf("  be used with a version of OpenSSL older than the one\r\n");
+	printf("  supplied at compile time.\r\n");
+#else
+        printf("  OpenSSL versions prior to 1.0.0 must be the same.\r\n");
+#endif /* OPENSSL_100 */
 
 	s = "R";
 #ifdef SOLARIS

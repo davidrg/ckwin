@@ -1,9 +1,8 @@
 /* ckuver.h -- C-Kermit UNIX Version heralds */
 /*
-  Author: Frank da Cruz <fdc@columbia.edu>,
-  Columbia University Academic Information Systems, New York City.
+  Author: Frank da Cruz <fdc@kermitproject.edu>.
 
-  Copyright (C) 1985, 2010,
+  Copyright (C) 1985, 2012,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -779,7 +778,11 @@
 #ifdef RH71
 #define HERALD " Red Hat Linux 7.1"
 #else
+#ifdef ANDROID
+#define HERALD " Android"
+#else
 #define HERALD " Linux"
+#endif /* ANDROID */
 #endif /* RH71 */
 #endif /* RH72 */
 #endif /* RH73 */

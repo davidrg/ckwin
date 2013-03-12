@@ -11,7 +11,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2011,
+  Copyright (C) 1985, 2013,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -197,7 +197,7 @@ char *newstxt[] = {
 #ifdef OS2
 "Welcome to Kermit 95 3.x.x.  Major new features since 2.1.3 include:",
 #else
-"Welcome to C-Kermit 9.0.300.  New features since 8.0.211 include:",
+"Welcome to C-Kermit 9.0.304.  New features since 8.0.211 include:",
 #endif /* OS2 */
 " . Open Source Simplified 3-Clause BSD License",
 " . Full 64-bit memory model on platforms that support it",
@@ -1846,13 +1846,48 @@ static char *hmxxdir[] = {
 #endif /* DOMYDIR */
 ""};
 
-static char *hmxxtouc[] = {
+static char *hmxxtouch[] = {
 "Syntax: TOUCH [ switches ] filespec",
 "  Updates the modification time of the given file or files to the current",
-"  date and time.  If the filespec is the name of a single file that does not",
-"  exist, the file is created.  The optional switches are the same as for",
-"  the DIRECTORY command.  TOUCH operates silently unless the /VERBOSE",
-"  switch is given, in which case it lists each file it affects.",
+"  date and time or to the date and time specified in the /MODTIME: switch.",
+"  If the filespec is the name of a single file that does not exist, the file",
+"  is created.  The following switches can be used to restrict the files",
+"  to be touched according to various criteria:",
+" ",
+"   /FILES           Select files but not directories.",
+"   /DIRECTORIES     Select directories but not files.",
+"   /ALL           + Select both files and directories.",
+"   /AFTER:          Select files modified after the given date",
+"   /BEFORE:         Select files modified before the given date",
+"   /LARGER:         Select files larger than the given size in bytes",
+"   /SMALLER:        Select files smaller than the given size in bytes",
+"   /EXCEPT:         Exclude the given files (list or pattern)",
+#ifdef UNIXOROSK
+"   /DOTFILES        Select files whose names start with dot (period).",
+"   /NODOTFILES    + Don't select files whose names start with dot.",
+"   /FOLLOWLINKS     Follow symbolic links.",
+"   /NOFOLLOWLINKS + Select the link itself, not the file it links to.",
+"   /NOLINKS         Ignore symbolic links at all.",
+"   /BACKUP        + Select backup files (names end with .~n~).",
+"   /NOBACKUPFILES   Don't select backup files.",
+#endif /* UNIXOROSK */
+"   /TYPE:           Select only files of the given type (text or binary).",
+#ifdef RECURSIVE
+"   /RECURSIVE       Descend through subdirectories.",
+"   /NORECURSIVE   + Don't descend through subdirectories.",
+" ",
+" Action switches:",
+" ",
+"   /MODTIME:        Modification time for selected files.",
+"   /SIMULATE        List files that would be touched, but don't touch them.",
+"   /LIST            Show which files are being touched.",
+#endif /* RECURSIVE */
+" ",
+"Factory defaults are marked with +.  Use HELP DATE to learn the date-time",
+"formats usable with /MODTIME:.  If a /MODTIME: switch is not given, each",
+"selected file gets a modification time equal to the current clock time.",
+"You can use the /SIMULATE switch in combination with other switches to see",
+"which files will be affected without actually changing their dates.",
 ""};
 
 #ifndef NOSPL
@@ -5419,7 +5454,11 @@ static char * hmxxren[] = {
 "  this command is equivalent to REMOTE RENAME (RREN).  Otherwise:",
 " ",
 #endif /* LOCUS */
-"Syntax: RENAME [ switches ] name1 [ name2 ]",
+#ifndef OLDMOVE
+"Syntax: RENAME or MOVE or MV [ switches ] name1 [ name2 ]",
+#else
+"Syntax: RENAME or MV [ switches ] name1 [ name2 ]",
+#endif /* OLDMOVE */
 "  Renames the source file (name1) to the target name2.  If name2 is a",
 "  directory, name1 is allowed to contain wildcards, and the file(s) matching",
 "  name1 are moved to directory name2, subject to rules of the underlying",
@@ -6242,7 +6281,7 @@ case XXDIR:                             /* DIRECTORY */
     return(hmsga(hmxxdir));
 
 case XXTOUC:				/* TOUCH */
-    return(hmsga(hmxxtouc));
+    return(hmsga(hmxxtouch));
 
 case XXWDIR:				/* WDIRECTORY */
   return(hmsg("  WDIRECTORY is shorthand for DIRECTORY /SORT:DATE /REVERSE;\n\
@@ -6568,9 +6607,11 @@ case XXRET:
 #ifndef NOXFER
 case XXSEN:
     return(hmsga(hmxxsen));
+#ifdef OLDMOVE
 case XXMOVE:
     return(hmsg("MOVE is exactly like SEND, except each file that is\n\
 sent successfully is deleted after it is sent."));
+#endif /* OLDMOVE */
 #ifndef NORESEND
 case XXRSEN:
     return(hmsg(hmxxrsen));

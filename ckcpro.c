@@ -7,7 +7,7 @@
 char *wartv = "Wart Version 2.14, 10 Nov 1999";
 
 char *protv =                                                     /* -*-C-*- */
-"C-Kermit Protocol Module 8.0.160, 12 Aug 2007";
+"C-Kermit Protocol Module 9.0.162, 11 March 2013";
 
 int kactive = 0;			/* Kermit protocol is active */
 
@@ -18,7 +18,7 @@ int kactive = 0;			/* Kermit protocol is active */
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2007,
+  Copyright (C) 1985, 2013
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -82,7 +82,8 @@ _PROTOTYP(int sndspace,(int));
   extern int timint, rtimo, nfils, hcflg, xflg, flow, mdmtyp, network;
   extern int oopts, omode, oname, opath, nopush, isguest, xcmdsrc, rcdactive;
   extern int rejection, moving, fncact, bye_active, urserver, fatalio;
-  extern int protocol, prefixing, filcnt, carrier, fnspath, interrupted;
+  extern int protocol, prefixing, carrier, fnspath, interrupted;
+  extern long filcnt;
   extern int recursive, inserver, nzxopts, idletmo, srvidl, xfrint;
   extern struct ck_p ptab[];
   extern int remfile, rempipe, xferstat, filestatus, wearealike, fackpath;
@@ -169,11 +170,13 @@ _PROTOTYP( int cmdsrc, (void) );
 #endif /* TCPSOCKET */
 
   extern int cxseen, czseen, server, srvdis, local, displa, bctu, bctr, bctl;
+  extern int bctf;
   extern int quiet, tsecs, parity, backgrd, nakstate, atcapu, wslotn, winlo;
   extern int wslots, success, xitsta, rprintf, discard, cdtimo, keep, fdispla;
   extern int timef, stdinf, rscapu, sendmode, epktflg, epktrcvd, epktsent;
-  extern int binary, fncnv;
-  extern long speed, ffc, crc16, calibrate, dest;
+  extern int binary, fncnv, dest;
+  extern long speed, crc16;
+  CK_OFF_T calibrate, ffc;
 #ifdef COMMENT
   extern char *TYPCMD, *DIRCMD, *DIRCM2;
 #endif /* COMMENT */
@@ -229,8 +232,9 @@ int whereflg = 1;			/* Unset with SET XFER REPORT */
 
 static VOID
 wheremsg() {
-    extern int quiet, filrej;
-    int n;
+    extern int quiet;
+    extern long filrej;
+    long n;
     n = filcnt - filrej;
     debug(F101,"wheremsg n","",n);
 
@@ -268,7 +272,7 @@ wheremsg() {
 	    switch (myjob) {
 	      case 's':
 		if (sfspec) {
-		    printf(" SENT: (%d files)",n);
+		    printf(" SENT: (%ld files)",n);
 		    if (srfspec)
 		      printf(" Last: [%s]",srfspec);
 		    printf(" (%s)\r\n", success ? "OK" : "FAILED");
@@ -277,7 +281,7 @@ wheremsg() {
 	      case 'r':
 	      case 'v':
 		if (rrfspec) {
-		    printf(" RCVD: (%d files)",n);
+		    printf(" RCVD: (%ld files)",n);
 		    if (rfspec)
 		      printf(" Last: [%s]",rfspec);
 		    printf(" (%s)\r\n", success ? "OK" : "FAILED");
@@ -504,17 +508,22 @@ case 11:
     {
     int b1 = 0, b2 = 0;
     if (!data) TINIT;			/* "ABEND" -- Tell other side. */
+
+    if (!bctf) {		     /* Block check 3 forced on all packets */
 #ifndef pdp11
-    if (epktflg) {			/* If because of E-PACKET command */
-	b1 = bctl; b2 = bctu;		/* Save block check type */
-	bctl = bctu = 1;		/* set it to 1 */
-    }
+	if (epktflg) {			/* If because of E-PACKET command */
+	    b1 = bctl; b2 = bctu;	/* Save block check type */
+	    bctl = bctu = 1;		/* set it to 1 */
+	}
 #endif /* pdp11 */
+    }
     errpkt((CHAR *)"User cancelled");	/* Send the packet */
+    if (!bctf) {		     /* Block check 3 forced on all packets */
 #ifndef pdp11
-    if (epktflg) {			/* Restore the block check */
-	epktflg = 0;
-	bctl = b1; bctu = b2;
+	if (epktflg) {			/* Restore the block check */
+	    epktflg = 0;
+	    bctl = b1; bctu = b2;
+	}
     }
 #endif /* pdp11 */
     success = 0;
@@ -945,7 +954,7 @@ case 31:
 		}
 	    }
 	} else {			/* User doesn't want message */
-	    p =zgtdir();
+	    p = zgtdir();
 	    if (!p) p = "";
 	    success = (*p) ? 1 : 0;
 	    ack1((CHAR *)p);
@@ -1129,7 +1138,7 @@ case 37:
 	xxscreen(SCR_TC,0,0L,"");	/* Display */
 	doclean(1);			/* Clean up files, etc */
 #ifdef DEBUG
-	debug(F100,"C-Kermit BYE - Loggin out...","",0);
+	debug(F100,"C-Kermit BYE - Logging out...","",0);
 	zclose(ZDFILE);
 #endif /* DEBUG */
 #ifdef IKSD
@@ -1517,6 +1526,54 @@ case 53:
 	    !fackpath			  /* or F-ACK-PATH OFF */
 	    ) {
 	    zstrip(fspec,&fnp);		/* don't send back full path */
+#ifdef UNIX
+/* 
+  fdc, November 2012.  Unix pathnames are getting longer, causing the full
+  pathname that remote C-Kermit, when receiving a file, sends back to a local
+  Kermit (e.g. K95) to overflow the file transfer display, so the user can't
+  see which file is being transferred.  Here we try to shorten the pathname
+  that is sent from the remote receiver back to the local sender.
+*/
+	} else if (!local) {		/* Try to shorten by using '~' */
+	    extern char homedirpath[];	/* Filled in at startup time */
+	    char *p;
+	    int len = 0, ok = 0;
+/*
+  fdc, March 2013: If the file is being received to Kermit's current 
+  directory, don't send the current-directroy path.
+*/
+	    p = zgtdir();		/* Get current directory */
+	    if (p) if (*p) {		/* If we got one... */
+		len = strlen(p); /* and it matches the filespec path */
+		if (ckindex(p,fspec,0,0,1) == 1 && len > 3) {
+		    fnp = fspec + len;
+		    ok = 1;
+		}
+	    }
+	    if (!ok) {
+/*
+  Nov 2012: If not the current directory then if it is being sent
+  from somewhere in the user's home directory tree, it can be shortened
+  using ~ notation.
+*/
+		p = homedirpath;		/* Get home directory path */
+		if (p) if (*p) {		/* If we got one... */
+		    len = strlen(p);	/* and it matches the filespec path */
+		    if (ckindex(p,fspec,0,0,1) == 1 && len > 3) {
+			int i = 0;
+			char * s;
+			fspec[i++] = '~';	/* ...replace it with "~/" */
+			fspec[i++] = '/';
+			s = (char *)fspec + len;
+			while (*s) {
+			    fspec[i++] = *s++;
+			}
+			fspec[i] = '\0';
+			fnp = fspec;
+		    }
+		}
+	    }
+#endif /* UNIX */
 	}
 	encstr((CHAR *)fnp);
 	if (fackbug)
@@ -1579,7 +1636,7 @@ case 55:
 	ack();				/* If OK, acknowledge */
 #endif /* CK_RESEND */
     } else {				/* Otherwise */
-	extern long fsize;
+	extern CK_OFF_T fsize;
 	char *r;
 	r = getreason(iattr.reply.val);
 	ack1((CHAR *)iattr.reply.val);	/* refuse to accept the file */
@@ -1773,8 +1830,14 @@ case 62:
     {				/* ACK for Send-Init */
     spar(rdatap);			/* set parameters from it */
     cancel = 0;
-    bctu = bctr;			/* switch to agreed-upon block check */
-    bctl = (bctu == 4) ? 2 : bctu;	/* Set block-check length */
+    if (bctf) {
+	bctu = 3;
+	bctl = 3;
+    } else {
+	bctu = bctr;			/* switch to agreed-upon block check */
+	bctl = (bctu == 4) ? 2 : bctu;	/* Set block-check length */
+    }
+
 #ifdef CK_RESEND
     if ((sendmode == SM_RESEND) && (!atcapu || !rscapu)) { /* RESEND */
 	errpkt((CHAR *) "RESEND capabilities not negotiated");
@@ -2926,8 +2989,13 @@ rcv_s_pkt() {
 #endif /* CK_TMPDIR */
 	nakstate = 1;			/* Can send NAKs from here. */
 	rinit(rdatap);			/* Set parameters */
-	bctu = bctr;			/* Switch to agreed-upon block check */
-	bctl = (bctu == 4) ? 2 : bctu;	/* Set block-check length */
+	if (bctf) {
+	    bctu = 3;
+	    bctl = 3;
+	} else {
+	    bctu = bctr;	       /* switch to agreed-upon block check */
+	    bctl = (bctu == 4) ? 2 : bctu; /* Set block-check length */
+	}
 	what = W_RECV;			/* Remember we're receiving */
 	lastxfer = W_RECV;
 	resetc();			/* Reset counters */

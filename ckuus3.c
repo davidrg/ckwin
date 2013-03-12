@@ -13,7 +13,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2011,
+  Copyright (C) 1985, 2013,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -3797,6 +3797,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
         if (x < 0) {
             printf("?Invalid operand - \"%s\"\n",p[1]);
             sexprc++;
+            s2 = NULL;			/* Bad operator, no result */
             goto xdosexp;
         }
         mx = x;
@@ -4614,7 +4615,8 @@ dosexp(s) char *s; {                    /* s = S-Expression */
   xdosexp:
 
     if (!s2) s2 = "";
-    if (!sexprc && s2) {                /* Have a result */
+    debug(F111,"xdosexp s2",s2,sexprc);
+    if (!sexprc && *s2) {		/* Have a result */
         char * sx;
         char * q2 = s2; int xx = 0;
         if (*s2) {
@@ -4659,7 +4661,9 @@ dosexp(s) char *s; {                    /* s = S-Expression */
         }
     }
     debug(F111,sexpdebug("exit"),sxresult[sexpdep],sexprc);
-    return(sxresult[sexpdep--]);
+    s = sxresult[sexpdep--];
+    if (!s) s = "";
+    return(s);
 }
 #endif /* NOSEXP */
 #endif /* NOSPL */
