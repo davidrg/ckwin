@@ -593,7 +593,8 @@ char *m_fast = "set win 30, set rec pack 4000";
 char *m_fast = "set win 4, set rec pack 2200";
 #endif /* BIGBUFOK */
 char *m_cautious = "set win 4, set rec pack 1000";
-char *m_robust = "set win 1, set rec pack 90, set reliable off";
+char *m_robust = "set win 1, set rec pack 90, set reliable off,\
+ set send timeout 20 fixed";";
 #endif /* CK_SPEED */
 
 #ifdef VMS
@@ -7369,9 +7370,11 @@ doshow(x) int x; {
 #endif /* CK_SPEED */
 
       case SHEXI: {
-          extern int exithangup;
+          extern int exithangup, exitmsg;
           printf("\n Exit warning %s\n", xitwarn ?
                  (xitwarn == 1 ? "on" : "always") : "off");
+          printf(" Exit message: %s\n", exitmsg ?
+                 (exitmsg == 1 ? "on" : "stderr") : "off");
           printf(" Exit on-disconnect: %s\n", showoff(exitonclose));
           printf(" Exit hangup: %s\n", showoff(exithangup));
           printf(" Current exit status: %d\n\n", xitsta);

@@ -2599,6 +2599,7 @@ struct stringint {			/* String and (wide) integer */
 #define FN_UNPCT   165			/* \fdecodehex() */
 #define FN_STRINGT 166			/* \fstringtype() */
 #define FN_STRCMP  167			/* \fstrcmp() */
+#define FN_FILEINF 168			/* File information */
 
 #endif /* NOSPL */
 

@@ -1863,15 +1863,15 @@ static char *hmxxtouch[] = {
 "   /SMALLER:        Select files smaller than the given size in bytes",
 "   /EXCEPT:         Exclude the given files (list or pattern)",
 #ifdef UNIXOROSK
-"   /DOTFILES        Select files whose names start with dot (period).",
-"   /NODOTFILES    + Don't select files whose names start with dot.",
-"   /FOLLOWLINKS     Follow symbolic links.",
+"   /DOTFILES        Include files whose names start with dot (period).",
+"   /NODOTFILES    + Don't include files whose names start with dot.",
+"   /FOLLOWLINKS     For symbolic link touch the linked-to file, not the link",
 "   /NOFOLLOWLINKS + Select the link itself, not the file it links to.",
-"   /NOLINKS         Ignore symbolic links at all.",
-"   /BACKUP        + Select backup files (names end with .~n~).",
-"   /NOBACKUPFILES   Don't select backup files.",
+"   /NOLINKS         Skip over symbolic links.",
+"   /BACKUP        + Include backup files (names end with .~n~).",
+"   /NOBACKUPFILES   Don't include backup files.",
 #endif /* UNIXOROSK */
-"   /TYPE:           Select only files of the given type (text or binary).",
+"   /TYPE:           Select only files of the given type, TEXT or BINARY.",
 #ifdef RECURSIVE
 "   /RECURSIVE       Descend through subdirectories.",
 "   /NORECURSIVE   + Don't descend through subdirectories.",
@@ -4655,19 +4655,31 @@ static char *hxxass[] = {
 "  This prints 'goodbye hello'.", "" };
 
 static char *hxxdec[] = {
-"Syntax: DECREMENT variablename [ number ]",
+"Syntax: DECREMENT variablename [ amount ]",
 "  Decrement (subtract one from) the value of a variable if the current value",
-"  is numeric.  If the number argument is given, subtract that number",
-"  instead.",
+"  is numeric.  If an optional amount is specified (as a number, a variable,",
+"  \
+or an arithmetic expression that evaluates to a number, or any combination)",
+"  the variable is decremented by that number instead of 1.  The result is",
+"  always an integer.  If floating-point numbers are given, the result is",
+"  truncated.",
 " ",
-"Examples: DECR \\%a, DECR \\%a 7, DECR \\%a \\%n", "" };
+"Examples: DECR \\%a, DECR days 7, DECR x \\%n, DECR sum \\%x+12",
+""
+};
 
 static char *hxxinc[] = {
 "Syntax: INCREMENT variablename [ number ]",
 "  Increment (add one to) the value of a variable if the current value is",
-"  numeric.  If the number argument is given, add that number instead.",
+"  numeric.  If an optional amount is specified (as a number, a variable,",
+"  \
+or an arithmetic expression that evaluates to a number, or any combination)",
+"  the variable is incremented by that number instead of 1.  The result is",
+"  always an integer.  If floating-point numbers are given, the result is",
+"  truncated.",
 " ",
-"Examples: INCR \\%a, INCR \\%a 7, INCR \\%a \\%n", "" };
+"Examples: INCR \\%a, INCR dollars 100, INCR size \\%n, INCR total \\%x/10",
+"" };
 #endif /* NOSPL */
 
 #ifdef ANYX25
@@ -4856,6 +4868,10 @@ static char *hxyexit[] = {
 "  When ON (which is the default), C-Kermit executes an implicit HANGUP and",
 "  CLOSE command on the communications device or connection when it exits.",
 "  When OFF, Kermit skips this sequence.",
+" ",
+"Syntax: SET EXIT MESSAGE { ON, OFF, STDERR }",
+"  Allows the text (if any) from an EXIT command (see HELP EXIT) to be",
+"  supressed (OFF), printed normally (ON, the default), or sent to STDERR.",
 " ",
 "Syntax: SET EXIT ON-DISCONNECT { ON, OFF }",
 "  When ON, C-Kermit EXITs automatically when a network connection",
@@ -11874,6 +11890,23 @@ represent.\n");
     -1: s1 is lexically less than s2;\n\
      0: s1 and s2 are lexically equal;\n\
      2: s1 is lexically greater than s2.\n");
+        break;
+
+      case FN_FILEINF:
+        printf("\\ffileinfo(s1,&a)\n\
+  s1 = file specification string\n\
+  &a = array designator for results (required)\n\
+  Returns a number:\n\
+     0: File not found or not accessible or bad arguments;\n\
+    >0: The number of attributes returned in the array, normally 7 or 8:\n");
+        printf(" 1. The file's name\n\
+ 2. The full path of the directory where the file resides\n\
+ 3. The file's modification date-time yyyymmdd hh:mm:ss\n\
+ 4. Platform-specific permissions string, e.g. drwxrwxr-x or RWED,RWE,RE,E\n\
+ 5. Platform-specific permissions code, e.g. an octal number like 40775\n\
+ 6. The file's size in bytes\n\
+ 7. Type: 1=regular file; 2=executable; 3=directory; 4=link; 0=unknown.\n\
+ 8. If link, the name of the file linked to.");
         break;
 
       default:

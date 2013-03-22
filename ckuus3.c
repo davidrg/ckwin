@@ -119,6 +119,7 @@ _PROTOTYP(int setrename, (void));
 
 /* Variables */
 
+int exitmsg = 1;
 int cmd_quoting = 1;
 int cmd_err = 1;
 extern int hints, xcmdsrc;
@@ -431,7 +432,7 @@ struct keytab ooatab[] = {              /* On/Off/Auto table */
 
 struct keytab ooetab[] = {              /* On/Off/Stderr table 2010/03/12 */
     "off",       SET_OFF, 0,		/* for SET DEBUG MESSAGES */
-    "on",        SET_ON,  0,
+    "on",        SET_ON,  0,		/* 2013-03-13 and SET EXIT MESSAGE */
     "s",         2,       CM_ABR|CM_INV,
     "st",        2,       CM_ABR|CM_INV,
     "std",       2,       CM_ABR|CM_INV,
@@ -1144,6 +1145,7 @@ int ncdmsg = (sizeof(cdmsg) / sizeof(struct keytab));
 static
 struct keytab xittab[] = {              /* SET EXIT */
     "hangup",        3, 0,              /* ...HANGUP */
+    "message",       4, 0,		/* ...MESSAGE */
     "on-disconnect", 2, 0,              /* ...ON-DISCONNECT */
     "status",        0, 0,              /* ...STATUS */
     "warning",       1, 0               /* ...WARNING */
@@ -10922,13 +10924,19 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
               extern int exithangup;
               return((success = seton(&exithangup)));
           }
+          case 4: {			/* MESSAGE 2013-03-13 */
+            if ((z = cmkey(ooetab,nooetab,"","on",xxstring)) < 0)
+              return(z);
+            if ((y = cmcfm()) < 0) return(y);
+	    exitmsg = z;
+            return(success = 1);
+          }
           default:
             return(-2);
         } /* End of SET EXIT switch() */
       default:
         break;
     }
-
     switch (xx) {
 
       case XYFILE:                      /* SET FILE */

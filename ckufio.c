@@ -3,12 +3,12 @@
 #define CK_NONBLOCK                     /* See zoutdump() */
 
 #ifdef aegis
-char *ckzv = "Aegis File support, 9.0.217, 20 Jul 2012";
+char *ckzv = "Aegis File support, 9.0.218, 14 Mar 2013";
 #else
 #ifdef Plan9
-char *ckzv = "Plan 9 File support, 9.0.217, 20 Jul 2012";
+char *ckzv = "Plan 9 File support, 9.0.218, 14 Mar 2013";
 #else
-char *ckzv = "UNIX File support, 9.0.217, 20 Jul 2012";
+char *ckzv = "UNIX File support, 9.0.218, 14 Mar 2013";
 #endif /* Plan9 */
 #endif /* aegis */
 /*
@@ -18,7 +18,7 @@ char *ckzv = "UNIX File support, 9.0.217, 20 Jul 2012";
   Columbia University Academic Information Systems.  Note: AcIS = Previous
   of Columbia University Information Technology.
 
-  Copyright (C) 1985, 2011,
+  Copyright (C) 1985, 2013,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -2247,7 +2247,7 @@ chkfn(n) int n; {
     -1 if the file size can not be obtained.
   Also (and this is a hack just for UNIX):
     If the argument is the name of a symbolic link,
-    the global variable issymlink is set to 1,
+    the global variable zgfs_link is set to 1,
     and the global buffer linkname[] gets the link value.
     And it sets zgfs_dir to 1 if it's a directory, otherwise 0.
   This lets us avoid numerous redundant calls to stat().
@@ -2396,7 +2396,6 @@ zgetfs(name) char *name; {
     debug(F111,"zgetfs st_size",s,buf.st_size);
     return((size < 0L) ? buf.st_size : size); /* Return the size */
 }
-
 
 /*  Z C H K I  --  Check if input file exists and is readable  */
 
@@ -4395,6 +4394,12 @@ zgperm(f) char *f; {
     if (!f) return("----------");
     if (!*f) return("----------");
 
+#ifdef DTILDE                           /* Built with tilde-expansion? */
+    if (*f == '~') {			/* Starts with tilde? */
+        f = tilde_expand(f);		/* Try to expand it. */
+    }
+#endif /* DTILDE */
+
 #ifdef CKROOT
     debug(F111,"zgperm setroot",ckroot,ckrootset);
     if (ckrootset) if (!zinroot(f)) {
@@ -4432,6 +4437,12 @@ ziperm(f) char * f; {
 
     if (!f) return(NULL);
     if (!*f) return(NULL);
+
+#ifdef DTILDE                           /* Built with tilde-expansion? */
+    if (*f == '~') {			/* Starts with tilde? */
+        f = tilde_expand(f);		/* Try to expand it. */
+    }
+#endif /* DTILDE */
 
     if (diractive && zgfs_mode != 0) {
 	perms = zgfs_mode;		/* zgetfs() already got them */

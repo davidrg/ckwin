@@ -3,7 +3,7 @@
 #endif /* SSHTEST */
 
 #include "ckcsym.h"
-char *userv = "User Interface 9.0.301, 12 March 2013";
+char *userv = "User Interface 9.0.302, 14 March 2013";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 
@@ -9000,9 +9000,14 @@ docmd(cx) int cx; {
 	if (!hupok(0))			/* Check if connection still open */
 	  return(success = 0);
 
-	if (line[0])			/* Print EXIT message if given */
-	  printf("%s\n",(char *)line);
-
+	if (line[0]) {			/* Print EXIT message if given */
+	    extern int exitmsg;
+	    switch (exitmsg) {
+	      case 0: break;
+	      case 1: printf("%s\n",(char *)line); break;
+	      case 2: fprintf(stderr,"%s\n",(char *)line); break;
+	    }
+	}
 	quitting = 1;			/* Flag that we are quitting. */
 
 #ifdef VMS

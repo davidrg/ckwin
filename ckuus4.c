@@ -9,7 +9,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2012,
+  Copyright (C) 1985, 2013,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -1028,6 +1028,7 @@ struct keytab fnctab[] = {              /* Function names */
 #endif /* FN_ERRMSG */
     { "evaluate",   FN_EVA,  0},        /* Evaluate given arith expression */
     { "execute",    FN_EXE,  0},        /* Execute given macro */
+    { "fileinfo",   FN_FILEINF, 0},    /* File information */
     { "files",      FN_FC,   0},        /* File count */
 #ifdef FNFLOAT
     { "fpabsolute", FN_FPABS, 0},       /* Floating-point absolute value */
@@ -8277,6 +8278,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
           case FN_SNAME:
           case FN_LNAME:
 #endif /* NT */
+	  case FN_FILEINF:
             failed = 1;
             p = fnval;
             if (fndiags)
@@ -10106,6 +10108,163 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
             max = 0;
           failed = 0;                   /* Unset failure flag */
           sprintf(fnval,"%d",max);      /* SAFE */
+          goto fnend;
+      }
+      case FN_FILEINF: {		/* File information */
+#ifdef UNIX
+	  /* from zgetfs in ckufio.c */
+	  extern int zgfs_dir, zgfs_link;
+          extern char linkname[];
+#else
+	  int zgfs_dir = 0, zgfs_link = 0;
+#endif /* UNIX */
+          char abuf[16], *s;
+          char ** ap = NULL;
+	  char workbuf[MAXPATHLEN] = { '\0', '\0' };
+	  int attrs = 8;		/* Number of attributes defined */
+	  int k = 0;			/* current attribute index */
+	  int i,j,n;
+	  int dir = -1;			/* 1 = arg is a directory file */
+	  CK_OFF_T z, z2;		/* For file size */
+
+	  if (argn < 2) {		/* An array designator is required */
+	     if (fndiags)
+	      ckmakmsg(fnval,FNVALL,"<ERROR:ARRAY_REQUIRED:\\f",fn,"()>",NULL);
+	     goto fnend;
+	  }
+	  j = ckstrncpy(workbuf,bp[0],MAXPATHLEN); /* Strip any trailing / */
+	  if (workbuf[j-1] == '/') {
+	      workbuf[j-1] = NUL;
+	      makestr(&(bp[0]),workbuf);
+	  }
+	  z = zchki(bp[0]);		/* Check accessibility */
+	  if (z == -1L || z == -3L) {   /* Access denied or whatever */
+	      p = "0";
+	      goto fnend;
+	      /* Note: z > 0 is the file size but only of regular files */
+	      /* Thus the zgetfs call just below */
+	  }
+#ifdef UNIX
+	  if ((z2 = zgetfs(bp[0])) > 0) { /* Get size and some attributes */
+	      z = z2;			/* Have size */
+	      dir = zgfs_dir;		/* File is/isn't a directory */
+	  }
+#endif /* UNIX */
+	  if (dir < 0)			/* Check if file is a a directory */
+	    dir = isdir(bp[0]);		/* if previous clause didn't already */
+
+	  fnval[0] = NUL;		/* Initial return value */
+	  ckstrncpy(abuf,bp[1],16);	/* Get array reference */
+	  s = abuf;
+	  if (*s == CMDQ) s++;
+	  failed = 1;			/* Assume it's bad */
+	  p = fnval;			/* Point to result */
+	  if (fndiags)			/* Default is this error message */
+	    ckmakmsg(fnval,FNVALL,
+		     "<ERROR:ARG_BAD_ARRAY:\\f",fn,"()>",NULL);
+	  if (s[0] != '&')		/* "Address" of array */
+	    goto fnend;
+	  if (s[2])
+	    if (s[2] != '[' || s[3] != ']')
+	      goto fnend;
+	  if (s[1] >= 64 && s[1] < 91) /* Convert upper to lower */
+	    s[1] += 32;
+	  if ((x = dclarray(s[1],attrs)) < 0) /* One element per attribute */
+	    goto fnend;
+	  failed = 0;			/* Unset failure flag */
+	  ap = a_ptr[x];		/* Point to array we just declared */
+	  sprintf(fnval,"%d",k);	/* SAFE */
+
+	  /* Element 1 = filename */
+
+	  s = bp[0];			/* Argument (might include path) */
+	  n = strlen(s);
+	  for (i = n; i > 0; i--) {	/* Get filename without path */
+	      if (ISDIRSEP(s[i-1])) {	/* Platform independent way */
+		  s += i;
+		  break;
+	      }
+	  }
+	  a_ptr[x][++k] = NULL;		/* Filename */
+	  makestr(&(a_ptr[x][k]),s);
+
+	  /* Element 2 - Full pathname */
+
+	  s = workbuf;
+	  zfnqfp(bp[0],FNVALL,s);
+	  n = strlen(s);
+	  for (i = n; i > 0; i--) {	/* Get filename without path */
+	      if (ISDIRSEP(s[i-1])) {	/* Platform independent way */
+		  s[i] = NUL;
+		  break;
+	      }
+	  }
+	  a_ptr[x][++k] = NULL;
+	  makestr(&(a_ptr[x][k]),s);
+
+	  /* Element 3 - Modification date-time */
+
+	  s = zfcdat(bp[0]);
+	  a_ptr[x][++k] = NULL;
+	  makestr(&(a_ptr[x][k]),s);
+
+	  /* Element 4 - Permissions string */
+
+#ifdef UNIX	  
+	  if (zgfs_link)
+	    s = "lrwxrwxrwx";
+	  else
+#endif /* UNIX */
+	    s = ziperm(bp[0]);
+	  a_ptr[x][++k] = NULL;
+	  makestr(&(a_ptr[x][k]),s);
+	  ckstrncpy(workbuf,s,32);	/* Save for later */
+
+	  /* Element 5 - Permissions numeric code */
+
+	  s = zgperm(bp[0]);
+	  a_ptr[x][++k] = NULL;
+	  makestr(&(a_ptr[x][k]),s);
+
+	  /* Element 6 - Size in bytes */
+      
+	  s = zgfs_link ? ckitoa((int)strlen((char *)linkname)) : ckfstoa(z);
+	  a_ptr[x][++k] = NULL;
+	  makestr(&(a_ptr[x][k]),s);
+	  
+	  /* Element 7 - File type */
+
+	  j = 0;
+	  if (dir) j = 3;
+#ifdef UNIX
+	  else if (zgfs_link) j = 4;
+	  else if (ckindex("x",(char *)workbuf,0,0,1)) j = 2;
+	  else if (workbuf[1] != '-') j = 1;
+#else
+#ifdef VMS
+	  else if (ckindex("E",(char *)workbuf,0,0,1)) j = 2;
+	  else j = 1;
+#endif /* VMS */
+#endif /* UNIX */
+	  a_ptr[x][++k] = NULL;
+	  makestr(&(a_ptr[x][k]),ckitoa(j));
+
+#ifdef UNIX
+	  /* Element 8 - Name of linked-to file (if link) */
+	  if (zgfs_link) {
+	      a_ptr[x][++k] = NULL;
+	      makestr(&(a_ptr[x][k]),(char *)linkname);
+	  }
+#endif /* UNIX */
+
+	  /* Element 0 = array size */
+
+	  p = ckitoa(k);
+
+	  a_ptr[x][0] = NULL;		/* Put number of elements in [0] */
+	  makestr(&(a_ptr[x][0]),p);
+	  debug(F101,"FILEINF","",k);
+
           goto fnend;
       }
 

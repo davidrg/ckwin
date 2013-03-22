@@ -5455,7 +5455,7 @@ spar(s) CHAR *s; {			/* Set parameters */
   NOTE:
     If gnfile() returns 0, then the global variable gnferror should be checked
     to find out the most recent gnfile() error, and use that instead of the
-    return code (for reasons to hard to explain).
+    return code (for reasons too hard to explain).
 */
 int
 gnfile() {

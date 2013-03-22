@@ -8051,5 +8051,32 @@ would be touched without actually touching them.  ckuus6.c, 12 Mar 2013.
 
 New HELP TOUCH text. ckuus2.c, 12 Mar 2013.
 
+Fixed HELP INCREMENT and HELP DECREMENT to clarify that the operations use
+integer arithmetic and the result is always an integer.  ckuus2.c, 13 Mar 2013.
+
+Added SET EXIT MESSAGE { ON, OFF, STDOUT, STDERR }, so the text (if any)
+from an EXIT command (e.g. EXIT 1 "File not found") can be supressed,
+printed normally, or sent to stderr.  Added EXIT MESSAGE status to SHOW
+EXIT and updated HELP SET EXIT.  ckuus[235].c, 13 Mar 2013.
+
+ziperm() and zgperm() did not work in Unix for filespecs that used
+tilde notation, e.g. ~/kermit/ckuusr.h.  Fixed in ckufio.c, 14 Mar 2013.
+
+Made a new function \fnfileinfo(name,&a) that populates the specified array
+with 7 or 8 elements:
+
+ 1. the file's name;
+ 2. the full path of the directory where the file resides;
+ 3. the file's modification date-time yyyymmdd hh:mm:ss;
+ 4. platform-specific permissions string, e.g. "drwxrwxr-x" or "RWED,RWE,RE,E";
+ 5. platform-specific permissions code, e.g. an octal number like 40775;
+ 6. the file's size in bytes;
+ 7. file type: 1=regular file; 2=executable; 3=directory; 4=link; 0=unknown.
+ 8. (if filename is link) name of linked-to file.
+
+ckuusr.h, ckuus[24].c, 14 Mar 2013.
+
+>> kermit ftp://foo.bar.com/x.tar.gz gets the file in text mode.
+
 ---------------------------------
 ***************************
