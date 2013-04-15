@@ -2600,6 +2600,7 @@ struct stringint {			/* String and (wide) integer */
 #define FN_STRINGT 166			/* \fstringtype() */
 #define FN_STRCMP  167			/* \fstrcmp() */
 #define FN_FILEINF 168			/* File information */
+#define FN_FILECMP 169			/* File compare */
 
 #endif /* NOSPL */
 

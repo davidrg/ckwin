@@ -153,7 +153,7 @@ static char *tophlp[] = {
 #else
 "DOCUMENTATION: \"Using C-Kermit\" by Frank da Cruz and Christine M. Gianone,",
 "2nd Edition, Digital Press / Butterworth-Heinemann 1997, ISBN 1-55558-164-1,",
-"plus supplements at http://kermit.columbia.edu/ckermit.html#doc.",
+"plus supplements at http://www.kermitproject.org/ckermit.html#doc.",
 #endif /* MAC */
 #endif /* OS2 */
 #ifdef MAC
@@ -187,7 +187,7 @@ static char *tophlpi[] = {              /* Top-level help for IKSD */
 " ",
 "DOCUMENTATION: \"Using C-Kermit\" by Frank da Cruz and Christine M. Gianone,",
 "2nd Edition, Digital Press (1997), ISBN 1-55558-164-1.  More info at the",
-"Kermit Project website, http://kermit.columbia.edu/.",
+"Kermit Project website, http://www.kermitproject.org/.",
 ""
 };
 #endif /* NOIKSD */
@@ -213,27 +213,27 @@ char *newstxt[] = {
 " . Scripting and performance improvements and bug fixes",
 " ",
 "Documentation:",
-" 1. http://kermit.columbia.edu/usingckermit.html",
+" 1. http://www.kermitproject.org/usingckermit.html",
 "    \"Using C-Kermit\", second edition (1997), current with C-Kermit 6.0.",
 " ",
-" 2. http://kermit.columbia.edu/ckermit70.html",
+" 2. http://www.kermitproject.org/ckermit70.html",
 "    which documents the new features of C-Kermit 7.0.",
 " ",
-" 3. http://kermit.columbia.edu/ckermit80.html",
+" 3. http://www.kermitproject.org/ckermit80.html",
 "    which documents the new features of C-Kermit 8.0.",
 " ",
-" 4. http://kermit.columbia.edu/ckermit90.html",
+" 4. http://www.kermitproject.org/ckermit90.html",
 "    which documents the new features of C-Kermit 9.0.",
 " ",
 "If the release date shown by the VERSION command is long past, be sure to",
 "check with the Kermit website to see if there have been updates:",
 " ",
 #ifdef OS2
-"  http://kermit.columbia.edu/k95.html     (Kermit 95 home page)",
+"  http://www.kermitproject.org/k95.html     (Kermit 95 home page)",
 #else
-"  http://kermit.columbia.edu/ckermit.html (C-Kermit home page)",
+"  http://www.kermitproject.org/ckermit.html (C-Kermit home page)",
 #endif	/* OS2 */
-"  http://kermit.columbia.edu/             (Kermit Project home page)",
+"  http://www.kermitproject.org/             (Kermit Project home page)",
 ""
 };
 #endif /* NOHELP */
@@ -536,29 +536,29 @@ Press the key or key-combination shown after \"Command:\" in the status line",
 " ",
 "The manual for C-Kermit is the book \"Using C-Kermit\".  For information",
 "about the manual, visit:",
-"  http://kermit.columbia.edu/usingckermit.html",
+"  http://www.kermitproject.org/usingckermit.html",
 " ",
 #ifdef OS2
 "For a Kermit 95 tutorial, visit:",
-"  http://kermit.columbia.edu/k95tutor.html",
+"  http://www.kermitproject.org/k95tutor.html",
 " ",
 #endif /* OS2 */
 "For an online C-Kermit tutorial, visit:",
-"  http://kermit.columbia.edu/ckututor.html",
+"  http://www.kermitproject.org/ckututor.html",
 " ",
 "To learn about script programming and automation:",
-"  http://kermit.columbia.edu/ckscripts.html",
+"  http://www.kermitproject.org/ckscripts.html",
 " ",
 "For further information about a particular command, type HELP xxx,",
 "where xxx is the name of the command.  For documentation, news of new",
 "releases, and information about other Kermit software, visit the",
 "Kermit Project website:",
 " ",
-"  http://kermit.columbia.edu/",
+"  http://www.kermitproject.org/",
 " ",
 "For information about technical support please visit this page:",
 " ",
-"  http://kermit.columbia.edu/support.html",
+"  http://www.kermitproject.org/support.html",
 ""
 };
 
@@ -4414,6 +4414,7 @@ static char *ifhlp[] = { "Syntax: IF [NOT] condition commandlist",
 "  DEFINED variablename or macroname - The named variable or macro is defined",
 "  DECLARED arrayname                - The named array is declared",
 "  NUMERIC variable or constant      - The variable or constant is numeric",
+"  FUNCTION name                     - The name is of a built-in function",
 "  EXIST filename                    - The named file exists",
 "  ABSOLUTE filename                 - The filename is absolute, not relative",
 #ifdef CK_TMPDIR
@@ -7330,22 +7331,22 @@ static char * supporttext[] = {
 "is Open Source software.  The Kermit website is supposed remain open",
 "indefinitely at:",
 " ",
-"  http://kermit.columbia.edu/",
+"  http://www.kermitproject.org/",
 " ",
 
 #ifdef OS2
 
 "The Kermit 95 page is here:",
 " ",
-"  http://kermit.columbia.edu/k95.html",
+"  http://www.kermitproject.org/k95.html",
 " ",
 "The Kermit 95 manual is here:",
 " ",
-"  http://kermit.columbia.edu/k95manual/",
+"  http://www.kermitproject.org/k95manual/",
 " ",
 "The Kermit 95 Frequently Asked Questions page is here:",
 " ",
-"  http://kermit.columbia.edu/k95faq.html",
+"  http://www.kermitproject.org/k95faq.html",
 " ",
 "and many other resources are listed on the Kermit 95 home page.",
 " ",
@@ -7354,15 +7355,15 @@ static char * supporttext[] = {
 
 "The C-Kermit home page is here:",
 " ",
-"  http://kermit.columbia.edu/ckermit.html",
+"  http://www.kermitproject.org/ckermit.html",
 " ",
 "The documentation for C-Kermit is listed here:",
 " ",
-"  http://kermit.columbia.edu/ckermit.html#doc",
+"  http://www.kermitproject.org/ckermit.html#doc",
 " ",
 "The C-Kermit Frequently Asked Questions page is here:",
 " ",
-"  http://kermit.columbia.edu/ckfaq.html",
+"  http://www.kermitproject.org/ckfaq.html",
 " ",
 "and many other resources are listed on the C-Kermit home page.",
 " ",
@@ -11906,7 +11907,17 @@ represent.\n");
  5. Platform-specific permissions code, e.g. an octal number like 40775\n\
  6. The file's size in bytes\n\
  7. Type: 1=regular file; 2=executable; 3=directory; 4=link; 0=unknown.\n\
- 8. If link, the name of the file linked to.");
+ 8. If link, the name of the file linked to.\n");
+        break;
+
+      case FN_FILECMP:
+        printf("\\ffilecompare(s1,s2)\n\
+  s1 = name of first file\n\
+  s1 = name of second file\n\
+  Returns a number:\n\
+     0: The two files have identical contents and lengths;\n\
+     1: The two files have different content or lengths;\n\
+    -1: Error opening or reading either file.\n");
         break;
 
       default:

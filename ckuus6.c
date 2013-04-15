@@ -513,6 +513,7 @@ int nopn = (sizeof(opntab) / sizeof(struct keytab));
 #define  XXIFGU 56      /* IF GUI */
 #define  XXIFLN 57	/* IF LINK */
 #define  XXIFDB 58	/* IF DEBUG */
+#define  XXIFFU 59	/* IF FUNCTION */
 
 struct keytab iftab[] = {               /* IF commands */
     { "!",          XXIFNO, 0 },
@@ -556,6 +557,7 @@ struct keytab iftab[] = {               /* IF commands */
     { "float",      XXIFFP, 0 },
 #endif /* CKFLOAT */
     { "foreground", XXIFFG, 0 },
+    { "function",   XXIFFU, 0 },
 #ifdef OS2
     { "gui",        XXIFGU, 0 },
 #else
@@ -5362,13 +5364,16 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 		if (s[0] == '~')
 		  s = tilde_expand(s);
 #endif	/* UNIX */
-		fp = fopen(s,"w");	/* Create file */
-		if (!fp) {
-		    printf("?TOUCH %s: %s\n",s,ck_errstr());
-		    rc = -9;
-		    goto xdomydir;
+		/* the IF condition was added 2013-04-15 */
+		if (zchki(s) < 0) {	/* If file doesn't already exist... */
+		    fp = fopen(s,"w");	/* Create it */
+		    if (!fp) {
+			printf("?TOUCH %s: %s\n",s,ck_errstr());
+			rc = -9;
+			goto xdomydir;
+		    }
+		    fclose(fp);
 		}
-		fclose(fp);
 		if (zstime(s,&xxstruct,0) < 0) {
 		    printf("?TOUCH %s: %s\n",name,ck_errstr());
 		    rc = -9;
@@ -5496,9 +5501,6 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 #endif /* ZXREWIND */
 
 #ifndef NOSPL
-/*
-  TO BE FIXED: in DIR /ARRAY:&a /SORT:xxx, the /SORT switch is ignored.
-*/
     if (array) {
         int n, xx;
         n = (x < 0) ? 0 : x;
@@ -10983,7 +10985,14 @@ boolexp(cx) int cx; {
 	      if (i > -1)		/* in the macro table */
 		s = mactab[x].mval;	/* and get its value */
 	      else			/* Otherwise if no such macro */
+#ifdef COMMENT
 		s = "0";		/* evaluate as FALSE. */
+#else
+	      {
+		  printf("?%s: not an IF condition, macro name or number\n");
+		  return(-9);
+	      }
+#endif /* COMMENT */
 	  }
 #ifdef FNFLOAT
         if (isfloat(s,0)) {		/* A floating-point number? */
@@ -11791,6 +11800,37 @@ boolexp(cx) int cx; {
       case XXIFDB: {			/* IF DEBUG - 2010/03/16 */
           extern int debmsg;
           z = debmsg;
+	  break;
+      }
+      case XXIFFU: {			/* IF FUNCTION - 2013/04/15 */
+	  extern struct keytab fnctab[];
+	  extern int nfuncs;
+	  int x, y;
+
+	  y = cmkeyx(fnctab,nfuncs,"Name of function","",NULL);
+	  if (y == -1)			/* Reparse needed */
+	    return(y);
+	  if (y < 0) {			/* Something given but didn't match */
+	      int dummy;
+	      char * p;
+	      for (p = atmbuf; *p; p++) { /* Chop off trailing parens if any */
+		  if (*p == '(') {
+		      *p = NUL;
+		      break;
+		  }
+	      }
+	      /* Chop off leading "\\f" or "\f" or "f" */
+	      p = atmbuf;
+	      if (*p == CMDQ)		/* Allow for \\f... */
+		p++;
+	      if (*p == CMDQ && (*(p+1) == 'f' || *(p+1) == 'F')) { /* or \f */
+		  p += 2;
+	      } else if (*p == 'f' || *p == 'F') { /* or just f */
+		  p++;
+	      }
+	      y = lookup(fnctab,p,nfuncs,&dummy); /* Look up the result */
+	  }
+	  z = (y < 1) ? 0 : 1;
 	  break;
       }
 

@@ -1028,7 +1028,8 @@ struct keytab fnctab[] = {              /* Function names */
 #endif /* FN_ERRMSG */
     { "evaluate",   FN_EVA,  0},        /* Evaluate given arith expression */
     { "execute",    FN_EXE,  0},        /* Execute given macro */
-    { "fileinfo",   FN_FILEINF, 0},    /* File information */
+    { "filecompare",FN_FILECMP, 0},	/* File compare */
+    { "fileinfo",   FN_FILEINF, 0},	/* File information */
     { "files",      FN_FC,   0},        /* File count */
 #ifdef FNFLOAT
     { "fpabsolute", FN_FPABS, 0},       /* Floating-point absolute value */
@@ -7911,6 +7912,149 @@ isaarray(s) char * s; {			/* Is s an associative array element */
     return(0);
 }
 
+/* J P G D A T E  --  Get "date taken" from JPG file Exif data */
+
+/*
+  This routine doesn't follow the Exif spec, it just hunts for 
+  date-time strings in the first 8K of the JPG and keeps the earliest one.
+  Call with file pointer, returns Exif date-time string "yyyy:mm:dd hh:mm:ss"
+  or an empty string if none found.
+*/
+#define JPGYEAR  1
+#define JPGMONTH 2
+#define JPGDAY   3
+#define JPGHOUR  4
+#define JPGMIN   5
+#define JPGSEC   6
+
+#define JPGDATEBUF 8192	   /* Should be more than enough bytes to find date */
+
+static char *
+jpgdate(fp) FILE * fp; {
+    static char datebuf[20];
+    char tmpbuf[20];
+    CHAR buf[JPGDATEBUF+1];
+    CHAR * p;
+    CHAR * z;
+    CHAR c;
+    int i;
+    int k = 0;
+    int n = 0;
+    int count = 0;
+    int state = 0;
+
+    if (fp == NULL)
+      return("");
+    rewind(fp);
+
+    for (i = 0; i < 20; i++) { datebuf[i] = NUL; tmpbuf[i] = NUL; }
+
+    datebuf[0] = NUL;
+    tmpbuf[0] = NUL;
+
+    count = fread(buf,1,JPGDATEBUF,fp); /* Read a buffer */
+    if (count == EOF || count == 0) {
+	return("");
+    }
+    p = (CHAR *) buf;
+    z = p + JPGDATEBUF; 
+
+    while (p < z) {
+	c = *p++;
+	n++;
+	if (c != ' ' && c != ':' && !isdigit(c)) {
+	    state = 0;
+	    k = 0;
+	    continue;
+	}
+	switch (state) {
+	  case 0:
+	    if (c == '1' && *p == '9') state = JPGYEAR;
+	    else if (c == '2' && *p == '0') state = JPGYEAR;
+	    if (state == JPGYEAR) {
+		k = 0;
+		tmpbuf[k++] = c;
+	    }
+	    continue;
+
+	  case JPGYEAR:
+	    if (c == ':' && k == 4) {
+		tmpbuf[k++] = c;
+		state = JPGMONTH;
+		continue;
+	    }
+	    if (k > 3 || !isdigit(c))
+	      state = k = 0;
+	    else
+	      tmpbuf[k++] = c;
+	    continue;
+
+	  case JPGMONTH:
+	    if (c == ':' && k == 7) {
+		tmpbuf[k++] = c;
+		state = JPGDAY;
+		continue;
+	    }
+	    if (k > 6 || !isdigit(c))
+	      state = k = 0;
+	    else
+	      tmpbuf[k++] = c;
+	    continue;
+
+	  case JPGDAY:
+	    if (c == ' ' && k == 10) {
+		tmpbuf[k++] = c;
+		state = JPGHOUR;
+		continue;
+	    }
+	    if (k > 9 || !isdigit(c))
+	      state = k = 0;
+	    else
+	      tmpbuf[k++] = c;
+	    continue;
+
+	  case JPGHOUR:
+	    if (c == ':' && k == 13) {
+		tmpbuf[k++] = c;
+		state = JPGMIN;
+		continue;
+	    }
+	    if (k > 12 || !isdigit(c))
+	      state = k = 0;
+	    else
+	      tmpbuf[k++] = c;
+	    continue;
+
+	  case JPGMIN:
+	    if (c == ':' && k == 16) {
+		tmpbuf[k++] = c;
+		state = JPGSEC;
+		continue;
+	    }
+	    if (k > 15 || !isdigit(c))
+	      state = k = 0;
+	    else
+	      tmpbuf[k++] = c;
+	    continue;
+
+	  case JPGSEC:
+	    if (!isdigit(c) || !isdigit(*p)) {
+		state = k = 0;
+		continue;
+	    }
+	    tmpbuf[k++] = c;
+	    tmpbuf[k++] = *p;
+	    tmpbuf[k] = NUL;
+	}
+        if (!datebuf[0]) {		/* First date */
+	    strncpy(datebuf,tmpbuf,19);
+        } else if (strncmp(tmpbuf,datebuf,19) < 0) { /* Earlier date */
+	    strncpy(datebuf,tmpbuf,19);
+        }
+    }
+    return((char *) datebuf);
+}
+
 static char *                           /* Evaluate builtin functions */
 fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
     int i=0, j=0, k=0, len1=0, len2=0, len3=0, n=0, t=0, x=0, y=0;
@@ -10267,6 +10411,85 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 
           goto fnend;
       }
+      case FN_FILECMP: {		/* File comparison */
+	FILE *fp1 = NULL;
+	FILE *fp2 = NULL;
+        char * s, * s1 = NULL, * s2 = NULL;
+#ifdef UNIX
+	char * tx;			/* For tilde expansion */
+#endif /* UNIX */
+	int c1, c2;
+        int eof1 = 0, eof2 = 0;
+
+	failed = 1;			/* Assume files differ */
+	p[0] = '1';			/* Default return value = differ */
+	p[1] = NUL;
+	if (argn != 2) {		/* Need two args */
+	    if (fndiags)
+	      ckmakmsg(fnval,FNVALL,"<ERROR:ARG_COUNT:\\f",fn,"()>",NULL);
+	    goto fnend;
+	}
+	s1 = bp[0];
+	s2 = bp[1];
+#ifdef UNIX
+	if (*s1 == '~') {		/* Expand any tildes in filenames. */
+	    tx = tilde_expand(bp[0]);	/* We recycle bp[0] and bp[1] */
+	    if (tx) if (*tx) {		/* this way so they will be freed */
+		free(bp[0]);		/* automatically later. */
+		bp[0] = NULL;
+		makestr(&(bp[0]),tx);
+	    }
+	    s1 = bp[0];
+	}
+	if (*s2 == '~') {
+	    tx = tilde_expand(bp[1]);
+	    if (tx) if (*tx) {
+		free(bp[1]);
+		bp[1] = NULL;
+		makestr(&(bp[1]),tx);
+	    }
+	    s2 = bp[1];
+	}
+#endif /* UNIX */
+	fp1 = fopen(s1, "r");		/* Open it first file*/
+	fp2 = fopen(s2, "r");		/* Open it first file*/
+	failed = 0;			/* No failure from here down */
+	if (fp1 == NULL || fp2 == NULL) { /* Open failure */
+	    p[0] = '-';
+	    p[1] = '1';
+	    p[2] = NUL;			/* Return -1 */
+	    if (fp1) fclose(fp1);
+	    if (fp1) fclose(fp2);
+	    goto fnend;
+	}
+	while (1) {
+	    if (!eof1) {
+		c1 = getc(fp1);
+		if (c1 == (unsigned int)EOF) {
+		    eof1++;
+		    fclose(fp1);
+		}
+	    }
+	    if (!eof2) {
+		c2 = getc(fp2);
+		if (c2 == (unsigned int)EOF) {
+		    eof2++;
+		    fclose(fp2);
+		}
+	    }
+	    if (eof1 && eof2) {
+		p[0] = '0';		/* Success */
+		p[1] = NUL;
+		failed = 0;
+		goto fnend;
+	    }
+	    if (eof1 || eof2 || (c1 != c2)) {
+		if (!eof1) fclose(fp1);
+		if (!eof2) fclose(fp2);
+		goto fnend;
+	    }
+	}
+      }
 
     } /* Break up big switch... */
 
@@ -12016,9 +12239,25 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 	unsigned char buf[1024];
 	char abuf[16], * p, * s;
 	char ** ap = NULL;
+#ifdef UNIX
+	char * tx;
+#endif /* UNIX */
 
 	p = fnval;			/* Point to result */
 	failed = 1;			/* Assume failure */
+	s = bp[0];
+#ifdef UNIX
+	if (*s == '~') {
+	    tx = tilde_expand(bp[0]);
+	    if (tx) if (*tx) {
+		free(bp[0]);
+		bp[0] = NULL;
+		makestr(&(bp[0]),tx);
+	    }
+	    s = bp[0];
+	}
+#endif /* UNIX */
+
 	if (argn > 1) {
 	    int xi;
 	    ckstrncpy(abuf,bp[1],16);	/* Get array reference */
@@ -12034,7 +12273,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 		goto fnend;
 	    if (s[1] >= 64 && s[1] < 91) /* Convert upper to lower */
 	      s[1] += 32;
-	    if ((xi = dclarray(s[1],2)) < 0) /* Two elements */
+	    if ((xi = dclarray(s[1],3)) < 0) /* three elements */
 	      goto fnend;
 	    ap = a_ptr[xi];		/* Point to array we just declared */
 	}
@@ -12127,12 +12366,17 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 	    } 
 	}
       picend:
-	fclose(fp);
+
 	if (ap) {
+	    char * s;
 	    makestr(&(ap[0]),"2");
 	    makestr(&(ap[1]),ckitoa(w));
 	    makestr(&(ap[2]),ckitoa(h));
+	    s = jpgdate(fp);
+	    debug(F110,"jpgdate",s,0);
+	    if (s) if (*s) makestr(&(ap[3]),s);
 	}
+	fclose(fp);
 	if (w > 0 && h > 0) {
 	    if (w > h) p[0] = '1';
 	    if (h >= w) p[0] = '2';

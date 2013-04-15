@@ -4,7 +4,7 @@ C-KERMIT 9.0 CHANGE LOG (Changes since 8.0.207 / K95 2.1.3 January 2003)
   Go to the bottom to find the newest edits.
 
   F. da Cruz, The Kermit Project, Bronx, NY.
-  Last update: Tue Mar 12 11:29:33 2013
+  Last update: Tue Apr  9 17:24:56 2013
 
 FTP USER, FTP ACCOUNT, plus the various prompts and switches for FTP username,
 password, and account all neglected to strip quotes, and in most cases quotes
@@ -8054,6 +8054,8 @@ New HELP TOUCH text. ckuus2.c, 12 Mar 2013.
 Fixed HELP INCREMENT and HELP DECREMENT to clarify that the operations use
 integer arithmetic and the result is always an integer.  ckuus2.c, 13 Mar 2013.
 
+---Dev.03---
+
 Added SET EXIT MESSAGE { ON, OFF, STDOUT, STDERR }, so the text (if any)
 from an EXIT command (e.g. EXIT 1 "File not found") can be supressed,
 printed normally, or sent to stderr.  Added EXIT MESSAGE status to SHOW
@@ -8076,7 +8078,75 @@ with 7 or 8 elements:
 
 ckuusr.h, ckuus[24].c, 14 Mar 2013.
 
->> kermit ftp://foo.bar.com/x.tar.gz gets the file in text mode.
+---Dev.04---
+
+Lawrence Woodman reported that with SET TELNET WAIT OFF, if C-Kermit telnets
+to a site that doesn't properly respond to all Telnet negotions, such as
+b4bbs.sampsa.com (running Synchronet BBS software), the initial connection
+works OK (Kermit doesn't wait), but then after escaping back and connecting
+again, TELNET WAIT switches back to ON.  This is evidently because of the
+TELNET KERMIT negotiations, which require waiting.  But it occurs to me that
+nobody is using the TELNET KERMIT option due to lack of support for it, so
+if the user says SET TELNET WAIT OFF, this should not be overriden silently.
+(In fact, C-Kermit said WILL KERMIT, the remote said DONT KERMIT, so I think
+the problem is deeper, because for some reason C-Kermit was sending SB
+REQ_STOP even though the Telnet KERMIT option was not negotiated, but let's
+come back to this if there is ever any reason to.)  I fixed the problem by
+not sending SB_STOP_REQ is SET TELNET WAIT is OFF.  ckctel.c, line 2238, 9
+Apr 2013.
+
+Looking at this in more detail...  C-Kermit says DO KERMIT, WILL KERMIT.
+Remote says WILL KERMIT, DON'T KERMIT.  In other words the remote is saying
+"I will do Kermit, I refuse to negotiate about Kermit".  As soon as C-Kermit
+receives WILL KERMIT, it sends SB KERMIT SOP to tell the remote what its
+Kermit-protocol start-of-packet character is; this is required by RFC2840.
+The remote is required to respond with *its* start-of-packet character, but
+it never does, since its WILL KERMIT was in error.  So upon receiving DONT
+Kermit I turned off the flag that said the other Kermit supports and will
+use the Kermit option.  This allows the connection to be made to the
+Synchronet Telnet server without forcing the user to SET TELNET WAIT OFF
+or (even more obscure) SET TELOPT KERMIT REFUSE REFUSE.  ckctel.c, 12 Apr 2013.
+
+Added a third element to the \fpictureinfo() result array: the "date taken",
+if any, recorded by the camera or scanner.  This is done in the dumbest
+possible way, without attempting to parse the Exif structure; Kermit simply
+scans the first 8K of the JPG file looking for valid date-time strings, and
+keeps the earliest one found.  ckuus4.c, 14 Apr 2013.
+
+Fixed \fpictureinof() to handle Unix filenames with tilde notation.
+Also checked to make sure that no other \functions() had this problem.
+ckuus4.c, 15 Apr 2013.
+
+Discovered that TOUCH /MODTIME could, in some cases, destroy an
+existing file, oops.  Fixed in domydir(), ckuus6.c , 15 Apr 2013.
+
+Added \ffilecompare(file1,file2) function.  Returns 0 if the contents of
+the two files is identical, 1 if they differ, and -1 on any kind of error
+(file not found, etc).  ckuus[24].c, 15 Apr 2013.
+
+Added IF FUNCTION name, to test if the given built-in function is available.
+The name can be entered as name, \fname(), \\fname, or any combination,
+e.g. "if function left", "if func \fleft()", "if func left()", etc.
+ckuus[26].c, 15 Apr 2013.
+
+Here is an incompatible change: Noticed that "if lkjlkjlkj" (where lkjlkjlkj
+is just some gibberish) did not produce an error.  The token following IF is
+supposed to be a keyword, a number, a variable that evaluates to a number,
+or the name of a macro whose value is a number.  A string of gibberish is
+none of these, but the code in this case would treat the gibberish as
+"false" (i.e. as the name of a macro whose value was 0) and proceed to not
+execute the statement (or worse, if there were an ELSE part, it would
+execute it).  I would hope that nobody ever noticed, much less relied on,
+this undocumented misfeature.  Fixed in boolexp(), ckuus6.c, 15 Apr 2013.
+
+Changed references in C-Kermit help text from kermit.columbia.edu to
+www.kermitproject.org.  ckuus2.c, 15 Apr 2013.
+
+Built on NetBSD 5.1.2, Solaris 9, FreeBSD 6.4, SCO OSR6.0.0, 
+Linux Slackware 13.37.0, Linux RHEL5 (64-bit),
+Linux RHEL4 32-bit (with and without OpenSSL), all with no complaints.a
+
+--- Dev.05 ---
 
 ---------------------------------
 ***************************

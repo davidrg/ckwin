@@ -1,4 +1,4 @@
-char *cktelv = "Telnet support, 9.0.274, 16 Mar 2010";
+char *cktelv = "Telnet support, 9.0.277, 12 Apr 2013";
 #define CKCTEL_C
 
 int sstelnet = 0;                       /* Do server-side Telnet negotiation */
@@ -18,7 +18,7 @@ int sstelnet = 0;                       /* Do server-side Telnet negotiation */
     Telnet KERMIT support by Jeffrey Altman
     Other contributions as indicated in the code.
 
-  Copyright (C) 1985, 2010,
+  Copyright (C) 1985, 2013,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -2228,8 +2228,21 @@ iks_wait(sb,flushok) int sb; int flushok;
 {
     int tn_wait_save = tn_wait_flg;
     int x;
+/*
+  Problem noted with the Synchronet Telnet server, e.g. at b4bbs.sampsa.com:
+    TELNET SENT DO KERMIT
+    TELNET SENT WILL KERMIT
+    TELNET RCVD WILL KERMIT             <-- KERMIT option negotiated
+    TELNET SENT SB KERMIT SOP 01 IAC SE <-- This is required
+    TELNET RCVD DONT KERMIT <-- Required SB KERMIT SOP response not received.
 
-    if (TELOPT_U(TELOPT_KERMIT)) {
+  Session hangs waiting for required response.  User SETs TELNET WAIT OFF
+  as a workaround, but session still hangs on next CONNECT command because
+  tn_wait_flg is set here and never restored.  If user SETs TELNET WAIT OFF,
+  it is precisely to avoid such situations, so it should be respected.
+  Fixed by testing tn_wait_flg in the following line.  -fdc, 2013-04-09.
+*/
+    if (tn_wait_flg && TELOPT_U(TELOPT_KERMIT)) {
         switch (sb) {
           case KERMIT_REQ_START:
             debug(F111,
@@ -2237,13 +2250,25 @@ iks_wait(sb,flushok) int sb; int flushok;
                   "u_start",
                   TELOPT_SB(TELOPT_KERMIT).kermit.u_start
                   );
-            tn_siks(KERMIT_REQ_START);
-            tn_wait_flg = 1;            /* Kermit Option MUST wait */
+            tn_siks(KERMIT_REQ_START);	/* SB KERMIT SOP x */
+            tn_wait_flg = 1;            /* MUST wait for response: RFC2840 */
             do {
                 if (flushok)
                   tn_wait_idx = 0;
                 x = tn_wait("iks_wait() me_iks_req_start");
-            } while (x == 0 && flushok && tn_wait_idx == TN_WAIT_BUF_SZ);
+            } while (x == 0 &&
+		     flushok &&
+		     tn_wait_idx == TN_WAIT_BUF_SZ &&
+/*
+  The idea here is that if, while waiting for a response to SB KERMIT SOP,
+  we get a DONT KERMIT, as happens in at least one real-life situation,
+  we break out of the wait loop.  It's not exactly according to spec but
+  it makes sense.  This should work because tn_wait() calls tn_doop(), which
+  calls tn_xdoop(), which will unset TELOPT_ME(TELOPT_KERMIT) if DONT KERMIT
+  arrives.  -fdc, 2013-04-10.
+*/
+		     TELOPT_ME(TELOPT_KERMIT)
+		     );
             tn_wait_flg = tn_wait_save;
             if (flushok)
               tn_wait_idx = 0;
@@ -5049,6 +5074,17 @@ tn_xdoop(z, echo, fn) CHAR z; int echo; int (*fn)();
               case TELOPT_KERMIT:
 #ifdef IKS_OPTION
                 TELOPT_SB(x).kermit.me_start = 0;
+/* Begin section added 2013-04-12 */
+/*
+  The idea here is to nullify any outstanding Telnet Kermit subnegotiations.
+  The first three should do the trick, but they don't.
+  Setting TELOPT_U(TELOPT_KERMIT) to 0, however, does.
+		TELOPT_ME(TELOPT_KERMIT) = 0;
+		TELOPT_SB(TELOPT_KERMIT).kermit.me_req_start = 0;
+		TELOPT_SB(TELOPT_KERMIT).kermit.me_req_stop = 0;
+*/
+		TELOPT_U(TELOPT_KERMIT) = 0;
+/* End section added 2013-04-12 */
 #endif /* IKS_OPTION */
                 break;
               default:
@@ -9004,7 +9040,7 @@ tnsndb(wait) long wait;
     if (TELOPT_ME(TELOPT_COMPORT)) {
         rc  = tnc_set_break_state(1);
         if (rc >= 0) {
-            msleep(wait);                         /* ZZZzzz */
+            msleep(wait);
             rc = tnc_set_break_state(0);
         }
     }
