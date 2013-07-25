@@ -1,12 +1,12 @@
 #define CKUTIO_C
 
 #ifdef aegis
-char *ckxv = "Aegis Communications support, 9.0.327, 20 July 2012";
+char *ckxv = "Aegis Communications support, 9.0.328, 24 July 2013";
 #else
 #ifdef Plan9
-char *ckxv = "Plan 9 Communications support, 9.0.327, 20 July 2012";
+char *ckxv = "Plan 9 Communications support, 9.0.328, 24 July 2013";
 #else
-char *ckxv = "UNIX Communications support, 9.0.327, 20 July 2012";
+char *ckxv = "UNIX Communications support, 9.0.328, 24 July 2013";
 #endif /* Plan9 */
 #endif /* aegis */
 
@@ -15468,6 +15468,54 @@ cmdate2tm(date,gmt) char * date; int gmt;
 
     return(&_tm);
 }
+
+#ifdef HAVE_LOCALE
+#include <langinfo.h>
+#define DAYNAMERESULT 128
+static char daynameresult[DAYNAMERESULT];
+/*
+  day = day-of-week number, 0-6 (0=Su, 1=Mo, 2=Tu, ..., 6=Sa).
+  fc = 0 for full name, 1 for standard abbreviation, e.g. Mon, Tue.
+  Returns: Day name according to current locale on success; NULL on failure.
+  Note: nl_langinfo() items are indexed by numbers that vary from
+  platform to platform (e.g. NetBSD and Solaris are totally different).
+*/
+char *
+locale_dayname(day,fc) int day, fc; {
+    /* date as "yyyymmdd hh:mm:ss" */
+    int n = 0;
+    int x = DAY_1;
+    char * date;
+    char buf[20];
+
+    if (day < 0 || day > 6) return(NULL);
+    n = day + 1;
+    if (fc) x = ABDAY_1;
+    ckstrncpy(daynameresult,nl_langinfo(((nl_item)(n+x))),DAYNAMERESULT);
+    return((char *)daynameresult);
+}
+#define MONTHNAMERESULT 128
+static char monthnameresult[MONTHNAMERESULT];
+/*
+  month = month-of-year number, 0-11 (0=Jan, 1=Feb, 2=Mar, ..., 11=Dec).
+  fc = 0 for full name, 1 for standard abbreviation, e.g. Jan, Feb.
+  Returns: Month name according to current locale on success; NULL on failure.
+*/
+char *
+locale_monthname(month,fc) int month, fc; {
+    int n = 0;
+    int x = MON_1;
+    char * date;
+    char buf[20];
+    char mbuf[4];
+
+    if (month < 0 || month > 11) return(NULL);
+    n = month;				/* 0-based calendar month number */
+    if (fc) x = ABMON_1;
+    ckstrncpy(monthnameresult,nl_langinfo(((nl_item)(n+x))),MONTHNAMERESULT);
+    return((char *)monthnameresult);
+}
+#endif /* HAVE_LOCALE */
 
 #ifdef OXOS
 #undef kill

@@ -4,7 +4,7 @@ C-KERMIT 9.0 CHANGE LOG (Changes since 8.0.207 / K95 2.1.3 January 2003)
   Go to the bottom to find the newest edits.
 
   F. da Cruz, The Kermit Project, Bronx, NY.
-  Last update: Tue Apr  9 17:24:56 2013
+  Last update: Thu Jul 25 21:26:11 2013
 
 FTP USER, FTP ACCOUNT, plus the various prompts and switches for FTP username,
 password, and account all neglected to strip quotes, and in most cases quotes
@@ -8147,6 +8147,189 @@ Linux Slackware 13.37.0, Linux RHEL5 (64-bit),
 Linux RHEL4 32-bit (with and without OpenSSL), all with no complaints.a
 
 --- Dev.05 ---
+
+Sure enough the next day this caught mistakes in TWO of my overnight cron
+job scripts: One was "if not <misspelled variable name>".  The other was
+"if neq ...".  There is no "if neq".  Added IF NEQ, IF LLE, IF LGE, since
+even I expected them to be there.  ckuus[26].c, 16 Apr 2016.
+
+Added a 9th element to the \ffileinfo() result array: analysis of contents 
+of the file, if it is a regular file (not a directory or a link):
+
+  text:7bit      7-bit text (e.g. ASCII, ISO 646)
+  text:utf8      Unicode 8-bit Transformation Format (UTF-8)
+  text:ucs2      Raw Unicode
+  text:8bit      8-bit text (e.g. ISO 8859-1, Windows CP 1252)
+  text:unknown   Text, unknown encoding
+  binary         Binary (e.g. an executable, object, or image file)
+
+This analysis is performed using the same file scanner that is used during
+file transfer to set up text mode versus binary mode, and to set up the
+character-set conversion if possible.  If the file is not a regular file,
+the 9th element is empty.  Suppose the array is \&a[].  Then:
+
+  if equ "\fleft(\&a[9],4)" "text"  (or if equ "\fword(\&a[9],1) "text")
+
+or:
+
+  if neq "\&a[9]" "binary"
+
+the file is a text file, not a binary file, a directory file, or a link.
+This is useful if you don't care about the encoding.  ckuus4.c, 16 Apr 2013.
+
+For convenience, two new IF conditions have been added: IF BINARY filename
+succeeds if the named file is a binary file (meaning that it would be
+transferred in binary mode by Kermit): an executable program, an object
+file, an image file, etc.  IF TEXT filename succeeds if the named file is a
+text file, such as the file you are reading, or program source code, or an
+HTML or XML file, etc, regardless of the character encoding.  If the file is
+a directory, both IF TEXT and IF BINARY fail.  If the file is a link, the
+result reflects the contents of the linked-to file.  ckuus[26].c, 17 Apr 2013.
+
+Looked into making ==, if >, etc, work with strings, as one might expect
+from other languages like Javascript.  Turned out to be unworkable because
+these constructions accept not only numeric constants and numeric-valued
+variables, but also arithmetic expressions.  The idea would have been that
+if either of the two operands was non-numeric once evaluated, lexical
+comparison would be done instead of arithmetic comparison.  The fly in the
+ointment is something like this:
+
+  if > x*(x+1) 2000 ...
+
+When the arithmetic comparison operators are used, Kermit knows
+that the operands must be numbers, so any non-numeric strings like 'x'
+in the example above are automatically treated as macros and evaluated.  But
+if we check first to see if the string is non-numeric, it will be, and the
+same evaluation will not be done, and the the operands will be compared as
+strings, giving a result that could only be right by accident.
+
+Built on Linux RH 5.9 x86_64, 18 Apr 2013.
+
+But when doing the Kerberos+SSL build:
+
+ -L/usr/kerberos/lib -L/usr/local/ssl/
+lib -lssl -ldes425 -lpam -lz -lcrypto -lgssapi_krb5 -lkrb5 -lk5crypto
+-lcom_err -lncurses -lutil -lresolv -lcrypt  -lm
+
+?OpenSSL libraries do not match required version:
+  . C-Kermit built with OpenSSL 1.0.1c 10 May 2012
+  . Version found  OpenSSL 0.9.8e-fips-rhel5 01 Jul 2008
+  OpenSSL versions prior to 1.0.0 must be the same.
+  Set LD_LIBRARY_PATH for OpenSSL 1.0.1c 10 May 2012.
+  Or rebuild C-Kermit from source on this computer to make versions agree.
+  C-Kermit makefile target: linux+krb5+ssl
+  Or if that is what you did then try to find out why
+  the program loader (image activator) is choosing a
+  different OpenSSL library than the one specified in the build.
+
+Added a CHANGE command that's part of the DIRECTORY / TOUCH family, with most
+of the same file-selection switches:
+
+  CHANGE /switches filespec string1 [ string2 ]
+
+Example:
+
+  CHANGE /RECURSIVE ~/web/*.html http://www.oldsite.com http://www.newsite.com
+
+The syntax of the command is a little annoying because Unix users would
+expect the filespec to come last, but the command shares a vast amount of
+parsing and execution code with DIRECTORY and TOUCH, which I didn't want to
+duplicate.
+
+CHANGE-specific switches:
+
+  /CASE:{ON,OFF} - Honor/Ignore alphabetic case when searching for string1
+  /MODTIME:{PRESERVE,UPDATE} - Modtime for changed file
+  /SIMULATE - Say which files would be changed without changing them.
+
+ckuusr.[ch], ckuus6.c, 3 May 2013.
+
+Updated SUPPORT command text.  ckuus2.c, 3 May 2013.
+
+Suppose you want to do something to all the files whose names match a
+certain pattern and that contain a certain string or text that matches a
+certain pattern.  For example, in a website with thousands of html files,
+all the ones that contain links to a site that disappeared.  How to get a
+list of such files?  I added an /ARRAY:&x switch to Kermit's GREP command
+for this.  Then after the GREP command the resulting array can be accessed
+in a loop to process the desired files -- delete, rename, transfer, etc.
+Element 0 of the array tells now many files contained a match and how
+many elements are in the array (1-based).  ckuus6.c, 22 Jul 2013.
+
+Added HELP CHANGE text.  ckuus2.c, 22 Jul 2013.
+
+CHANGE works by copying each file to a temporary directory, making changes
+to the the copy, and then renaming the copy over the original file.  It was
+doing this for all files, even when they weren't actually changed (i.e. did
+not contain string1).  Also if \v(tmpdir) was defined to be a directory that
+did not exist, the CHANGE command didn't try to create it.  Both fixed in
+ckuus6.c, 22 Jul 2013.
+
+Until now there was no straightforward way to extract a field from a
+date-time string.  As a start, I added a new output format, 5, for
+\fcvtdate(), to make the result be numeric with fields delimited by ':', for
+example: 2013:07:22:15:19:43.  Any desired field can be extracted with
+\fword(), for example to get the current year: \fword(\fcvtdate(,5),1), or
+for the current month \fword(\fcvtdate(,5),2).  And so on.  Since each field
+is numeric, it can index into tables of (say) month names or day names in
+the desired language and character-set.  ckucmd.c, 22 Jul 2013.
+
+Added \v(year), which evaluates to the current year, e.g. 2013.  Mainly
+because I keep expecting it to be there.  Also \v(month) (three-letter month
+abbreviation, English) and \v(nmonth) (2-digit month number, 01-12).
+ckuusr.h, ckuus4.c, 22 Jul 2013.
+
+Note that \v(month) and \v(day) are not ideal -- abbreviations, not full
+names, and English only.  I added \v(month) and \v(nmonth) only for symmetry
+with \v(day) and \v(nday).  These shortcomings are remedied in the next items.
+
+Put a locale_dayname() function in ckutio.c.  This is compiled if
+HAVE_LOCALE is defined and NO_LOCALE is not defined.  HAVE_LOCALE is defined
+for BSD44 and POSIX, VMS, OS/2, and Windows.  These definitions can be
+adjusted if necessary in ckcdeb.h and NO_LOCALE can be included on the make
+command line to override in case of trouble.  ckcdeb.h, ckutio.c,
+23 Jul 2013.
+
+Added \fdayname(date,fc), where date can be any free-format date/time
+string, with or without the time, or omitted to give the name of the current
+day.  fc is a function code: 0 to return the name in full, nonzero to
+abbreviate it according to the locale; if fc is omitted, the abbreviated
+form is returned.  The full or abbreviated day name is returned in the
+language and character set specified or implied by the locale if the
+underlying platform is configured for it; otherwise they come out in
+English.  These routines builds upon all of the date-time code that was
+added in 2003, particularly cmcvtdate(), the free-format date parser, and
+mjd(), that calculates a Modifed Julian Date, from which the day of the week
+can be derived by a simple modulus.  This function pretty much supersedes
+\fday() (which returns only the 3-letter English day name), but \fday() 
+remains available for compatibility.  ckuusr.h, ckuus4.c, 24 Jul 2013.
+
+Added locale_monthame(month,fc), like locale_dayame(day,fc) but for months.
+ckutio.c, 24 Jul 2013.
+
+Added \fmonthame(), like \fdayname() but for months.  ckuusr.h, ckuus4.c,
+24 Jul 2013.
+
+Added HELP text for \fmonthame() and \fdayname().  ckuus2.c, 24 Jul 2013.
+
+Developed, built and tested on NetBSD with English, Spanish, and German.
+Built and tested OK on Linux RHEL5 with the same languages.
+Built OK on Solaris 9, which supports the locale APIs, but does not have
+any locales installed except en_US.  24 Jul 2013.
+
+CAUTION: Except where C-Kermit is explicitly dealing with multibyte
+character sets, such as in file transfer and in the terminal emulator, there
+is no special support for multibyte character sets such as UTF-8, Shift-JIS,
+etc.  So while \fupper(), \flower(), and \fcapitalize() can work with
+ISO-8859-1, KOI-8, and other single-byte character sets, they won't work
+with UTF-8 because they are just byte loops, unless the underlying isupper,
+tolower, etc, functions (or macros, or whatever they are) do some magic.
+Ditto for Shift-JIS, Japanese EUC, etc.
+
+A new command-line options, --nolocale, was added to disable use of the
+locale and to force the "C" locale.  Also, if the environment variable
+K_NOLOCALE is set to a nonzero integer value.  ckuusr.h, ckuusy.c, ckcmai.c,
+24 Jul 2013.
 
 ---------------------------------
 ***************************

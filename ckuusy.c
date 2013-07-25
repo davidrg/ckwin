@@ -1695,9 +1695,10 @@ struct keytab xargtab[] = {
 #endif /* KUI */
     { "noescape",    XA_NOESCAPE, CM_PRE },
 #endif /* OS2 */
-    { "nointerrupts",XA_NOIN, CM_PRE },
+    { "nointerrupts",XA_NOIN,     CM_PRE },
+    { "nolocale",    XA_NOLOCALE, CM_PRE },
 #ifdef KUI
-    { "nomenubar",   XA_NOMN, CM_PRE },
+    { "nomenubar",   XA_NOMN,     CM_PRE },
 #endif /* KUI */
     { "noperms",     XA_NPRM, 0 },
 #ifndef NOPUSH
@@ -2050,6 +2051,12 @@ inixopthlp() {
 	    xarghlp[j] = "Username.";
 #endif /* NETCONN */
 	    break;
+#ifdef HAVE_LOCALE
+          case XA_NOLOCALE:
+	    xopthlp[j] = "--nolocale";
+	    xarghlp[j] = "Disable use of locale for messages and strings.";
+	    break;
+#endif /* HAVE_LOCALE */
        }
     }
 }
@@ -2888,6 +2895,11 @@ doxarg(s,pre) char ** s; int pre; {
 #endif /* NOSPL */
 #endif /* NOLOCAL */
 
+      case XA_NOLOCALE: {		/* Don't do locale */
+	  extern int nolocale;
+	  nolocale = 1;
+	  break;
+      }
       default:
         return(-1);
     }

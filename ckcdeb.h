@@ -1,7 +1,7 @@
 /*  C K C D E B . H  */
 
 /*
-Fri Jul 20 15:20:20 2012
+Tue Jul 23 12:47:22 2013
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
   compatible with C preprocessors that support only #ifdef, #else, #endif,
@@ -6548,6 +6548,15 @@ _PROTOTYP( int le_getchar, (CHAR *));
 #endif /* VMS */
 #endif /* CMDATE2TM */
 #endif /* NOCMDATE2TM */
+
+#ifdef BSD44ORPOSIX
+#ifndef NO_NL_LANGINFO
+#ifndef HAVE_LOCALE
+#define HAVE_LOCALE
+#include <locale.h>
+#endif /* HAVE_LOCALE */
+#endif /* NO_NL_LANGINFO */
+#endif /* BSD44ORPOSIX */
 
 #ifdef CMDATE2TM
 _PROTOTYP( struct tm * cmdate2tm, (char *,int));

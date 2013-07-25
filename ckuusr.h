@@ -367,7 +367,8 @@ struct stringint {			/* String and (wide) integer */
 #define XA_CHGD  47                     /* GUI Change Dimensions */
 #define XA_NOCLOSE 48                   /* GUI Disable Close Window */
 #define XA_UNBUF 49			/* UNIX unbuffered console */
-#define XA_MAX  49			/* Highest extended option number */
+#define XA_NOLOCALE 50			/* Don't access or use locale */
+#define XA_MAX  50			/* Highest extended option number */
 #endif /* NOCMDL */
 
 #ifndef NOICP
@@ -769,6 +770,7 @@ struct stringint {			/* String and (wide) integer */
 #define XXLOCU  267	/* LOCUS (for HELP) */
 #define XXPUTE  268     /* PUTENV */
 #define XXXMSG  269     /* XMESSAGE */
+#define XXCHG   270     /* CHANGE */
 
 /* End of Top-Level Commands */
 
@@ -1751,6 +1753,7 @@ struct stringint {			/* String and (wide) integer */
 #define XY_REN   134    /* SET RENAME */
 #define XYEXTRN  135    /* SET EXTERNAL-PROTOCOL */
 #define XYVAREV  136    /* SET VARIABLE-EVALUATION */
+#define XYLOCALE 137    /* SET LOCALE */
 
 /* End of SET commands */
 
@@ -2000,6 +2003,9 @@ struct stringint {			/* String and (wide) integer */
 #define SHOIKS    70                    /* SHOW IKS */
 #define SHOGUI    71			/* SHOW GUI (K95) */
 #define SHOREN    72			/* SHOW RENAME */
+#ifdef HAVE_LOCALE
+#define SHOLOC    73			/* SHOW LOCALE */
+#endif /* HAVE_LOCALE */
 
 /* REMOTE command symbols */
 
@@ -2400,6 +2406,9 @@ struct stringint {			/* String and (wide) integer */
 #define VN_INPMSG   252			/* Msg corresponding to instatus */
 #define VN_VAREVAL  253			/* SET VARIABLE-EVALUATION setting */
 #define VN_PREVCMD  254			/* Previous command */
+#define VN_YEAR     255			/* This year */
+#define VN_MONTH    256			/* This month (name) */
+#define VN_NMONTH   257			/* This month (numeric) */
 #endif /* NOSPL */
 
 /* INPUT status values */
@@ -2601,6 +2610,8 @@ struct stringint {			/* String and (wide) integer */
 #define FN_STRCMP  167			/* \fstrcmp() */
 #define FN_FILEINF 168			/* File information */
 #define FN_FILECMP 169			/* File compare */
+#define FN_DAYNAME 170			/* Day name according to locale */
+#define FN_MONNAME 171			/* Month name according to locale */
 
 #endif /* NOSPL */
 

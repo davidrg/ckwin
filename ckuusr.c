@@ -3,7 +3,7 @@
 #endif /* SSHTEST */
 
 #include "ckcsym.h"
-char *userv = "User Interface 9.0.303, 14 April 2013";
+char *userv = "User Interface 9.0.304, 24 July 2013";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 
@@ -730,6 +730,7 @@ struct keytab cmdtab[] = {
 #endif /* PIPESEND */
 #endif /* NOXFER */
     { "ch",          XXCHK,   CM_INV|CM_ABR },
+    { "change",      XXCHG,   0 },	/* CHANGE strings in file 2013-04-18 */
     { "check",       XXCHK,   0 },	/* CHECK for a feature */
 #ifdef CK_PERMS
 #ifdef UNIX
@@ -2082,6 +2083,9 @@ struct keytab prmtab[] = {
     { "line",             XYLINE,  CM_LOC },
     { "local-echo",	  XYLCLE,  CM_INV|CM_LOC },
 #endif /* NOLOCAL */
+#ifdef HAVE_LOCALE
+    { "locale",           XYLOCALE,0 },
+#endif /* HAVE_LOCALE */
 #ifdef LOCUS
     { "locus",            XYLOCUS, 0 },
 #endif /* LOCUS */
@@ -2972,6 +2976,9 @@ struct keytab shotab[] = {
 #endif /* CK_LABELED */
 #ifndef NOCSETS
     { "languages",    SHLNG, 0 },
+#ifndef NO_LOCALE
+    { "locale",       SHOLOC,0 },
+#endif /* NO_LOCALE */
 #endif /* NOCSETS */
     { "logs",         SHLOG, 0 },
 #ifndef NOSPL
@@ -8681,6 +8688,8 @@ docmd(cx) int cx; {
 #endif /* NOFRILLS */
 
     if (cx == XXTOUC)			/* TOUCH */
+      return(dodir(cx));
+    if (cx == XXCHG)			/* CHANGE */
       return(dodir(cx));
 
     /* DIRECTORY commands */

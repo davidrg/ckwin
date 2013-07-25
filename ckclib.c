@@ -732,9 +732,10 @@ ckindex(s1,s2,t,r,icase) char *s1, *s2; int t, r, icase; {
     if (r == 0) {			/* Index */
 	s = s2 + t;			/* Point to beginning of target */
 	for (i = 0; i <= (j - t); i++) { /* Now compare */
-	    x = ckstrcmp(s1,s++,len1,icase);
+	    x = ckstrcmp(s1,s,len1,icase);
 	    if (!x)
 	      return(i+1+t);
+	    s++;
 	}
     } else {				/* Reverse Index */
         i = len2 - len1;		/* Where to start looking */
@@ -1275,6 +1276,7 @@ ckstrcmp(s1,s2,n,c) char *s1, *s2; register int n, c; {
 	if (!t1) return(t2 ? -1 : 0);
 	if (!t2) return(1);
 	if (!c) {			/* If case doesn't matter */
+
 	    if (isupper(t1)) t1 = tolower(t1); /* Convert case. */
 	    if (isupper(t2)) t2 = tolower(t2);
 	}

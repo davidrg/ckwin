@@ -13408,7 +13408,28 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
 #ifndef NOSPL
       case XYVAREV:			/* SET VARIABLE-EVALUATION */
 	return(setvareval());
-#endif	/* NOSPL */
+#endif /* NOSPL */
+
+#ifdef HAVE_LOCALE
+      case XYLOCALE:
+	if ((x = cmtxt("Locale string","C",&s,xxstring)) < 0)
+	  return(x);
+	setlocale(LC_ALL, "");
+	setlocale(LC_ALL, s);
+	if (!setlocale(LC_ALL,NULL)) {
+	    printf("Warning: setlocale(%s) error: %s\n", s, ck_errstr());
+	}
+
+#ifdef COMMENT
+	if (!setlocale(LC_COLLATE, s))  {perror("COLLATE");return(success=0);}
+	if (!setlocale(LC_CTYPE, s))    {perror("CTYPE");return(success=0);}
+	if (!setlocale(LC_MESSAGES, s)) {perror("MESSAGES");return(success=0);}
+	if (!setlocale(LC_MONETARY, s)) {perror("MONETARY");return(success=0);}
+	if (!setlocale(LC_NUMERIC, s))  {perror("NUMERIC");return(success=0);}
+	if (!setlocale(LC_TIME, s))     {perror("TIME");return(success=0);}
+#endif /* COMMENT */
+	return(success=1); 
+#endif /* HAVE_LOCALE */
 
       default:
          if ((x = cmcfm()) < 0) return(x);

@@ -9,7 +9,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2011,
+  Copyright (C) 1985, 2013,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -1386,11 +1386,11 @@ matchname(filename, local, os) char * filename; int local; int os; {
 
   Returns:
     -1 on failure (to open file or to read from it).
-    Integer, 0..4, on success indicating file type:
+    Integer, 0..5, on success indicating file type:
      0 = 7-bit text (flag = -1)
-     1 = UTF-8 text (flag = -1)
-     2 = UCS-2 text (flag =  0: big-endian; flag = 1: little-endian)
-     3 = 8-bit text (flag =  0: no C1 bytes; flag = 1: includes C1 bytes)
+     1 = 8-bit text (flag =  0: no C1 bytes; flag = 1: includes C1 bytes)
+     2 = UTF-8 text (flag = -1)
+     3 = UCS-2 text (flag =  0: big-endian; flag = 1: little-endian)
      4 = Text       (type unknown)
      5 = binary     (flag = -1)
 

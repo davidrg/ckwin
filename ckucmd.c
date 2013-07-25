@@ -1,6 +1,6 @@
 #include "ckcsym.h"
 
-char *cmdv = "Command package 9.0.168, 12 March 2010";
+char *cmdv = "Command package 9.0.169, 22 July 2013";
 
 /*  C K U C M D  --  Interactive command package for Unix  */
 
@@ -10,7 +10,7 @@ char *cmdv = "Command package 9.0.168, 12 March 2010";
   Author: Frank da Cruz (fdc@columbia.edu),
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2010,
+  Copyright (C) 1985, 2013,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -5411,6 +5411,7 @@ cmdiffdate(d1,d2) char * d1, * d2; {
       2: Reformat date to dd-mmm-yyyy (mmm = English month abbreviation).
       3: Reformat as numeric yyyymmddhhmmss.
       4: Reformat in asctime() format Sat Nov 26 11:10:34 2005
+      5: Reformat as delimited numeric yyyy:mm:dd:hh:mm:ss.
     Returns:
       Pointer to result if args valid, otherwise original arg pointer.
 */
@@ -5425,7 +5426,7 @@ shuffledate(p,opt) char * p; int opt; {
 
     if (!p) p = "";
     if (!*p) p = ckdate();
-    if (opt < 1 || opt > 4)
+    if (opt < 1 || opt > 5)
       return(p);
     len = strlen(p);
     if (len < 8 || len > 31) return(p);
@@ -5475,6 +5476,35 @@ shuffledate(p,opt) char * p; int opt; {
 	obuf[22] = p[2];
 	obuf[23] = p[3];
 	obuf[24] = NUL;
+	return((char *)obuf);
+    }
+    if (opt == 5) {			/* 20130722 All fields delimited */
+	/* yyyymmdd hh:mm:ss */
+	/* 0123456789012345678 */
+	/* yyyy:mm:dd:hh:mm:ss */
+	char sep = ':';
+	int i = 0;
+
+	obuf[i++] = p[0];		/* y */
+	obuf[i++] = p[1];		/* y */
+	obuf[i++] = p[2];		/* y */
+	obuf[i++] = p[3];		/* y */
+	obuf[i++] = sep;		/*  */
+	obuf[i++] = p[4];		/* m */
+	obuf[i++] = p[5];		/* m */
+	obuf[i++] = sep;		/*  */
+	obuf[i++] = p[6];		/* d */
+	obuf[i++] = p[7];		/* d */
+	obuf[i++] = sep;		/*  */
+	obuf[i++] = p[9];		/* h */
+	obuf[i++] = p[10];		/* h */
+	obuf[i++] = sep;		/*  */
+	obuf[i++] = p[12];		/* m */
+	obuf[i++] = p[13];		/* m */
+	obuf[i++] = sep;		/*  */
+	obuf[i++] = p[15];		/* s */
+	obuf[i++] = p[16];		/* s */
+	obuf[i++] = NUL;		/* end */
 	return((char *)obuf);
     }
     if (opt == 3) {

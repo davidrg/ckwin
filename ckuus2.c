@@ -1890,6 +1890,52 @@ static char *hmxxtouch[] = {
 "which files will be affected without actually changing their dates.",
 ""};
 
+static char *hmxxchange[] = {
+"Syntax: CHANGE [ switches ] filespec string1 string2",
+"  Changes all occurences of string1 to string2 in the given file or files.",
+"  Works line by line, does not do multiline or cross-line substitutions.",
+"  To remove strings from files, specify string2 as \"\" or omit string2.",
+"  Temporary files are created in the directory indicated by \\v(tmpdir)",
+"  (show var tmpdir).  If the temporary directory does not exist, an attempt",
+"  is made to create it.  You can select a different temporary directory with",
+"  the SET TEMP-DIRECTORY command.  All temporary files are deleted after use."
+,
+"  Since the CHANGE command works line by line, only text files can be",
+"  changed; C-Kermit automatically skips over binary files.  Before using",
+"  this command, you might want to back up the files that will be affected.",
+" ",
+"  File selection switches (factory defaults are marked with +):",
+" ",
+"   /AFTER:         Select files modified after the given date",
+"   /BEFORE:        Select files modified before the given date",
+"   /LARGER:        Select files larger than the given size in bytes",
+"   /SMALLER:       Select files smaller than the given size in bytes",
+"   /EXCEPT:        Exclude the given files (list or pattern)",
+#ifdef UNIXOROSK
+"   /DOTFILES       Include files whose names start with dot (period).",
+"   /NODOTFILES   + Don't include files whose names start with dot.",
+#endif /* UNIXOROSK */
+#ifdef RECURSIVE
+"   /RECURSIVE      Descend through subdirectories.",
+"   /NORECURSIVE  + Don't descend through subdirectories.",
+#endif /* RECURSIVE */
+" ",
+" String selection switches:", 
+" ",
+"   /CASE:{ON,OFF}  OFF (default) = ignore case in string1; \
+ON = don't ignore",
+" ",
+" Action switches:",
+" ",
+"   /COUNT:name     Set named variable to number of files that were changed.",
+"   /SIMULATE       List files that would be changed, but don't change them.",
+"   /LIST           Show which files are being changed.",
+"   /MODTIME:       Modification time for change files, PRESERVE or UPDATE.",
+" ",
+"You can use the /SIMULATE switch in combination with other switches to see",
+"which files will be affected without actually changing them.",
+""};
+
 #ifndef NOSPL
 static char *hmxxkcd[] = {
 "Syntax: KCD symbolic-directory-name",
@@ -4417,6 +4463,8 @@ static char *ifhlp[] = { "Syntax: IF [NOT] condition commandlist",
 "  FUNCTION name                     - The name is of a built-in function",
 "  EXIST filename                    - The named file exists",
 "  ABSOLUTE filename                 - The filename is absolute, not relative",
+"  BINARY filename                   - The file is a binary regular file",
+"  TEXT filename                     - The file is a text regular file",
 #ifdef CK_TMPDIR
 "  DIRECTORY string                  - The string is the name of a directory",
 #endif /* CK_TMPDIR */
@@ -4433,25 +4481,29 @@ static char *ifhlp[] = { "Syntax: IF [NOT] condition commandlist",
 "  OPEN CONNECTION                   - A connection is open",
 #endif /* NOLOCAL */
 "  KBHIT                             - A key has been pressed",
+"  TRUE                              - always succeeds",
+"  FALSE                             - always fails",
 " ",
 "  VERSION - equivalent to \"if >= \\v(version) ...\"",
-"  COUNT   - subtract one from COUNT, execute the command if the result is",
-"            greater than zero (see SET COUNT)",
 " ",
 "  EQUAL s1 s2 - s1 and s2 (character strings or variables) are equal",
-"  LLT s1 s2   - s1 is lexically (alphabetically) less than s2",
-"  LGT s1 s1   - s1 is lexically (alphabetically) greater than s2",
+"  LLT   s1 s2 - s1 is lexically (alphabetically) less than s2",
+"  LLE   s1 s2 - s1 is lexically less than or equal to s2",
+"  LGT   s1 s2 - s1 is lexically (alphabetically) greater than s2",
+"  LGE   s1 s2 - s1 is lexically greater than or equal to s2",
+"  NEQ   s1 s2 - s1 is not equal to s2",
 " ",
 "  =  n1 n2 - n1 and n2 (numbers or variables containing numbers) are equal",
 "  <  n1 n2 - n1 is arithmetically less than n2",
 "  <= n1 n2 - n1 is arithmetically less than or equal to n2",
 "  >  n1 n2 - n1 is arithmetically greater than n2",
 "  >= n1 n2 - n1 is arithmetically greater than or equal to n2",
+"  != n1 n2 - n1 is not equal to n2",
 " ",
 "  (number by itself) - fails if the number is 0, succeeds otherwise",
 " ",
-"  TRUE     - always succeeds",
-"  FALSE    - always fails",
+"  (variable name)    - If value numeric: succeeds if nonzero, fails if zero",
+"                       NOTE: variable name must not be the same as keyword",
 " ",
 "The IF command may be followed on the next line by an ELSE command. Example:",
 " ",
@@ -4461,6 +4513,20 @@ static char *ifhlp[] = { "Syntax: IF [NOT] condition commandlist",
 "It can also include an ELSE part on the same line if braces are used:",
 " ",
 "  IF < \\%x 10 { ECHO It's less } ELSE { ECHO It's not less }",
+" ",
+"Multiple commands can be enclosed in braces, separated by commas:",
+" ",
+"  IF > \\%n \\m(max) { echo \\%n > old max \\m(max), .max := \\%n }",
+" ",
+"When braces are used the command may split onto multiple lines:",
+" ",
+"  IF > \\%n \\m(max) {",
+"      echo \"\\%n greater than old max \\m(max)\"",
+"      .max := \\%n",
+"  } else if < \\%n \\m(min) {",
+"      echo \"\\%n less than old min \\m(min)\"",
+"      .min := \\%n",
+"  }",
 " ",
 "Also see HELP WILDCARD (for IF MATCH pattern syntax).",
 "" };
@@ -6300,6 +6366,9 @@ case XXDIR:                             /* DIRECTORY */
 case XXTOUC:				/* TOUCH */
     return(hmsga(hmxxtouch));
 
+case XXCHG:				/* CHANGE */
+    return(hmsga(hmxxchange));
+
 case XXWDIR:				/* WDIRECTORY */
   return(hmsg("  WDIRECTORY is shorthand for DIRECTORY /SORT:DATE /REVERSE;\n\
   it produces a listing in reverse chronological order.  See the DIRECTORY\n\
@@ -7328,8 +7397,7 @@ static char * supporttext[] = {
 
 #endif	/* OS2 */
 
-"is Open Source software.  The Kermit website is supposed remain open",
-"indefinitely at:",
+"is Open Source software.  The Kermit project has been moved to:",
 " ",
 "  http://www.kermitproject.org/",
 " ",
@@ -7348,8 +7416,6 @@ static char * supporttext[] = {
 " ",
 "  http://www.kermitproject.org/k95faq.html",
 " ",
-"and many other resources are listed on the Kermit 95 home page.",
-" ",
 
 #else
 
@@ -7364,14 +7430,20 @@ static char * supporttext[] = {
 "The C-Kermit Frequently Asked Questions page is here:",
 " ",
 "  http://www.kermitproject.org/ckfaq.html",
-" ",
-"and many other resources are listed on the C-Kermit home page.",
-" ",
-
 #endif	/* OS2 */
 
-"Time will tell what sort of development and support structures arise",
-"in the Open Source community.",
+" ",
+"and the Kermit Project Technical Support page is here:",
+" ",
+"  http://www.kermitproject.org/support.html",
+"  ",
+"If you have a problem or question that is not addressed on the website",
+"you can send email to:",
+" ",
+"  support@kermitproject.org",
+" ",
+"and as long as anyone is still at that address, it will be answered",
+"on a best-effort basis.",
 ""
 };
 
@@ -11136,6 +11208,7 @@ Assign string words to an array.\n\
   n1 = 2: dd-mmm-yyyy hh:mm:ss (ditto)\n\
   n1 = 3: yyyymmddhhmmss (all numeric)\n\
   n1 = 4: Day Mon dd hh:mm:ss yyyy (asctime)\n\
+  n1 = 5: yyyy:mm:dd:hh:mm:ss (all numeric with all fields delimited)\n\
   Other:  yyyymmdd hh:mm:dd");
         break;
 
@@ -11186,6 +11259,7 @@ Assign string words to an array.\n\
         printf("\\fday([[date][ time]]) - Day of Week.\n");
         printf("Returns day of week of given date as Mon, Tue, etc.\n");
         printf("HELP DATE for info about date-time formats.\n");
+        printf("Also see HELP FUNCTION DAYNAME.\n");
         break;
 
       case FN_NDAY:
@@ -11918,6 +11992,28 @@ represent.\n");
      0: The two files have identical contents and lengths;\n\
      1: The two files have different content or lengths;\n\
     -1: Error opening or reading either file.\n");
+        break;
+
+      case FN_DAYNAME:
+        printf("\\fdayname(s1,n)\n\
+  s1 = free-format date OR day-of-week number 1-7 OR leave blank.\n\
+  n  = function code: 0 to return full name; nonzero to return abbreviation.\n\
+  Returns a string: the name of the weekday for the given date or weekday\n\
+    number or, if s1 was omitted, of the current date, in the language and\n\
+    character-set specified by the locale.  If n is nonzero, the result\n\
+    is abbreviated in the locale-appropriate way.  If given inappropriate\n\
+    arguments, the result is empty and an error message is printed.\n");
+        break;
+
+      case FN_MONNAME:
+        printf("\\fmonthname(s1,n)\n\
+  s1 = free-format date OR month-of-year number 1-12 OR leave blank.\n\
+  n  = function code: 0 to return full name; nonzero to return abbreviation.\n\
+  Returns a string: the name of the month for the given date or month\n\
+    number or, if s1 was omitted, of the current date, in the language and\n\
+    character-set specified by the locale.  If n is nonzero, the result\n\
+    is abbreviated in the locale-appropriate way.  If given inappropriate\n\
+    arguments, the result is empty and an error message is printed.\n");
         break;
 
       default:

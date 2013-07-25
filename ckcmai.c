@@ -1,6 +1,6 @@
-#define EDITDATE  "15 Apr 2014"		/* Last edit date dd mmm yyyy */
-#define EDITNDATE "20130415"		/* Keep them in sync */
-/* Mon Apr 15 10:08:17 2013 */
+#define EDITDATE  "25 Jul 2013"		/* Last edit date dd mmm yyyy */
+#define EDITNDATE "20130725"		/* Keep them in sync */
+/* Thu Jul 25 14:11:23 2013 */
 
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
@@ -41,7 +41,7 @@ char * ck_cryear = "2013"; 		/* C-Kermit copyright year */
 #ifndef BETATEST
 #ifndef OS2                             /* UNIX, VMS, etc... (i.e. C-Kermit) */
 char *ck_s_test = "Dev";		/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "05";			/* Test version number or "" */
+char *ck_s_tver = "06";			/* Test version number or "" */
 #else  /* OS2 */
 char *ck_s_test = "";			/* (i.e. K95) */
 char *ck_s_tver = "";
@@ -815,6 +815,10 @@ int atenci = 1,                         /* Encoding in */
     atsyso = 1;
 
 int dispos = 0;                         /* Disposition */
+
+#ifdef HAVE_LOCALE
+int nolocale = 0;
+#endif /* HAVE_LOCALE */
 
 #ifdef CK_PERMS
 int atlpri = 1,
@@ -3475,12 +3479,37 @@ main(argc,argv) int argc; char **argv;
         argc > 1) {                     /* Command line arguments? */
         sstate = (CHAR) cmdlin();       /* Yes, parse. */
 #ifdef NETCONN
+
+#ifdef COMMENT
+#ifdef HAVE_LOCALE
+	if (nolocale) {		      /* Handle command-line --nolocale opt */
+	    /*
+	      Set LC_* environment variables.  setlocale() does not seem to
+	      have any effect at all, hence the contortions.  Note: putenv()
+	      strings have to be static.
+	    */
+	    debug(F100,"--nolocale: disabling locale","",0);
+	    /* if (putenv(lc_all)) perror(lc_all); */
+#ifdef COMMENT
+	    /* These turn out not to be necessary if LC_ALL is set this way */
+	    if (putenv(lc_time)) perror(lc_time);
+	    if (putenv(lc_messages)) perror(lc_messages);
+	    if (putenv(lc_ctype)) perror(lc_ctype);
+	    if (putenv(lc_collate)) perror(lc_collate);
+	    if (putenv(lc_monetary)) perror(lc_monetary);
+	    if (putenv(lc_numeric)) perror(lc_numeric);
+#endif /* COMMENT */
+	}	
+#endif /* COMMENT */
+#endif /* HAVE_LOCALE */
+
 #ifndef NOURL
         if (haveurl) {                  /* Was a URL given? */
             dourl();                    /* if so, do it. */
         }
 #endif /* NOURL */
 #endif /* NETCONN */
+
 #ifndef NOXFER
         zstate = sstate;                /* Remember sstate around protocol */
         debug(F101,"main zstate","",zstate);
@@ -3544,13 +3573,28 @@ main(argc,argv) int argc; char **argv;
         fatal("?No command-line options given - type 'kermit -h' for help");
     }
 #else                                   /* Neither one! */
-        sstate = 'x';
-        justone = 0;
-        proto();                        /* So go into server mode */
-        doexit(GOOD_EXIT,xitsta);       /* exit with good status */
+    sstate = 'x';
+    justone = 0;
+    proto();				/* So go into server mode */
+    doexit(GOOD_EXIT,xitsta);		/* exit with good status */
 
 #endif /* NOCMDL */
 #else /* not NOICP */
+#ifdef HAVE_LOCALE
+    if (!nolocale) {	
+	/* Can also disable locale processing by setting K_NOLOCALE=1 */
+	char *s = getenv("K_NOLOCALE");	/* environment variable */
+	if (s)
+	  if (rdigits(s))
+	    if (atoi(s) != 0) {
+		nolocale = 1;
+	    }
+	if (!nolocale) {		/* Locale not disabled */
+	    /* this should be done in only one place */
+	    setlocale(LC_ALL, "");	/* Enable using non-C locales */
+	}
+    }
+#endif /* HAVE_LOCALE */
 /*
   If no action requested on command line, or if -S ("stay") was included,
   enter the interactive command parser.

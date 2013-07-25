@@ -27,6 +27,10 @@
 #include "ckuver.h"
 #include "ckcxla.h"                     /* Character sets */
 
+#ifdef HAVE_LOCALE
+#include <locale.h> 
+#endif /* HAVE_LOCALE */
+
 #ifdef CK_AUTHENTICATION
 #include "ckuath.h"
 #endif /* CK_AUTHENTICATION */
@@ -780,6 +784,7 @@ struct keytab vartab[] = {
     { "minput",    VN_MINP,  0},        /* 192 */
     { "model",     VN_MODL,  0},        /* 193 */
     { "modem",     VN_MDM,   0},
+    { "month",     VN_MONTH, 0},	/* 304 */
 #ifndef NOLOCAL
 #ifdef OS2
     { "mousecurx", VN_MOU_X, 0},        /* K95 1.1.14 */
@@ -813,6 +818,7 @@ struct keytab vartab[] = {
     { "ndate",     VN_NDAT,  0},
     { "nday",      VN_NDAY,  0},
     { "newline",   VN_NEWL,  0},
+    { "nmonth",    VN_NMONTH,0},	/* 304 */
     { "ntime",     VN_NTIM,  0},
     { "osname",    VN_OSNAM, 0},        /* 193 */
     { "osrelease", VN_OSREL, 0},        /* 193 */
@@ -937,7 +943,8 @@ struct keytab vartab[] = {
     { "xfer_retransmits",VN_XF_RX, 0},  /* 195 */
 #endif /* NOXFER */
     { "xprogram",  VN_XPROG, 0},        /* 193 */
-    { "xversion",  VN_XVNUM, 0}         /* 192 */
+    { "xversion",  VN_XVNUM, 0},        /* 192 */
+    { "year",      VN_YEAR, 0}		/* 304 */
 };
 int nvars = (sizeof(vartab) / sizeof(struct keytab));
 #endif /* NOSPL */
@@ -997,10 +1004,11 @@ struct keytab fnctab[] = {              /* Function names */
 #ifdef ZFCDAT
     { "date",       FN_FD,   0},        /* File modification/creation date */
 #endif /* ZFCDAT */
-    { "day",        FN_DAY,  0},        /* Day of week */
-    { "dayofyear",  FN_JDATE,0},        /* Date to Day of Year */
-    { "decodehex",  FN_UNPCT, 0},	/* Decode string with hex escapes */
-    { "definition", FN_DEF,  0},        /* Return definition of given macro */
+    { "day",        FN_DAY,    0},      /* Day of week */
+    { "dayname",    FN_DAYNAME,0},      /* Name of day of week */
+    { "dayofyear",  FN_JDATE,  0},      /* Date to Day of Year */
+    { "decodehex",  FN_UNPCT,  0},	/* Decode string with hex escapes */
+    { "definition", FN_DEF,    0},      /* Return definition of given macro */
     { "delta2secs", FN_DELSEC, 0},      /* Delta time to seconds */
     { "deltatosecs", FN_DELSEC, CM_INV}, /* Delta time to seconds */
 #ifndef NODIAL
@@ -1088,9 +1096,10 @@ struct keytab fnctab[] = {              /* Function names */
     { "maximum",    FN_MAX,  0},        /* Return maximum of two arguments */
     { "minimum",    FN_MIN,  0},        /* Return minimum of two arguments */
     { "mjd",        FN_MJD,  0},        /* Date to Modified Julian Date */
-    { "mjd2date",   FN_MJD2, 0},        /* MJD to Date */
-    { "mjdtodate",  FN_MJD2, CM_INV},   /* MJD to Date */
+    { "mjd2date",   FN_MJD2, CM_INV},	/* MJD to Date */
+    { "mjdtodate",  FN_MJD2, 0},	/* MJD to Date */
     { "modulus",    FN_MOD,  0},        /* Return modulus of two arguments */
+    { "monthname",  FN_MONNAME,0},      /* Name of month of year */
 #ifdef COMMENT
     { "msleep",     FN_MSLEEP,0},       /* Sleep for n milliseconds */
 #endif /* COMMENT */
@@ -7607,7 +7616,8 @@ jzdate(date) char * date; {             /* date = yyyyddd */
   Union as the true Julian date minus 2400000.5 days.  The true Julian
   date is the number days since since noon of 1 January 4713 BCE of the
   Julian proleptic calendar.  Conversions between calendar dates and
-  Julian dates, however, assume Gregorian dating.
+  Julian dates, however, assume Gregorian dating.  The day of the week
+  is MJD mod 7: 0=We, 1=Th, 2=Fr, 3=Sa, 4=Su, 5=Mo, 6=Tu.
 */
 long
 mjd(date) char * date; {
@@ -8423,6 +8433,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
           case FN_LNAME:
 #endif /* NT */
 	  case FN_FILEINF:
+	  case FN_FILECMP:
             failed = 1;
             p = fnval;
             if (fndiags)
@@ -9036,7 +9047,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
         }
         goto fnend;
 
-      case FN_UPP:                      /* \fupper(arg1) */
+      case FN_UPP:			/* \fupper(arg1) */
         s = bp[0] ? bp[0] : "";
         p = fnval;
         while (*s) {
@@ -10259,15 +10270,17 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 	  /* from zgetfs in ckufio.c */
 	  extern int zgfs_dir, zgfs_link;
           extern char linkname[];
+	  char * tx;			/* For tilde expansion */
 #else
 	  int zgfs_dir = 0, zgfs_link = 0;
 #endif /* UNIX */
           char abuf[16], *s;
           char ** ap = NULL;
 	  char workbuf[MAXPATHLEN] = { '\0', '\0' };
-	  int attrs = 8;		/* Number of attributes defined */
+	  int attrs = 9;		/* Number of attributes defined */
 	  int k = 0;			/* current attribute index */
 	  int i,j,n;
+          int m;			/* For scanfile() */
 	  int dir = -1;			/* 1 = arg is a directory file */
 	  CK_OFF_T z, z2;		/* For file size */
 
@@ -10276,7 +10289,18 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 	      ckmakmsg(fnval,FNVALL,"<ERROR:ARRAY_REQUIRED:\\f",fn,"()>",NULL);
 	     goto fnend;
 	  }
-	  j = ckstrncpy(workbuf,bp[0],MAXPATHLEN); /* Strip any trailing / */
+#ifdef UNIX
+	  if (*(bp[0]) == '~') {	/* Expand any tildes in filenames. */
+	      tx = tilde_expand(bp[0]);	/* We recycle bp[0] */
+	      if (tx) if (*tx) {	/* this way so they will be freed */
+		  free(bp[0]);		/* automatically later. */
+		  bp[0] = NULL;
+		  makestr(&(bp[0]),tx);
+	      }
+	  }
+#endif /* UNIX */
+
+	  j = ckstrncpy(workbuf,bp[0],MAXPATHLEN); /* Strip any trailing '/' */
 	  if (workbuf[j-1] == '/') {
 	      workbuf[j-1] = NUL;
 	      makestr(&(bp[0]),workbuf);
@@ -10329,8 +10353,8 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 		  break;
 	      }
 	  }
-	  a_ptr[x][++k] = NULL;		/* Filename */
-	  makestr(&(a_ptr[x][k]),s);
+	  a_ptr[x][1] = NULL;		/* Filename */
+	  makestr(&(a_ptr[x][1]),s);
 
 	  /* Element 2 - Full pathname */
 
@@ -10343,14 +10367,14 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 		  break;
 	      }
 	  }
-	  a_ptr[x][++k] = NULL;
-	  makestr(&(a_ptr[x][k]),s);
+	  a_ptr[x][2] = NULL;
+	  makestr(&(a_ptr[x][2]),s);
 
 	  /* Element 3 - Modification date-time */
 
 	  s = zfcdat(bp[0]);
-	  a_ptr[x][++k] = NULL;
-	  makestr(&(a_ptr[x][k]),s);
+	  a_ptr[x][3] = NULL;
+	  makestr(&(a_ptr[x][3]),s);
 
 	  /* Element 4 - Permissions string */
 
@@ -10360,21 +10384,21 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 	  else
 #endif /* UNIX */
 	    s = ziperm(bp[0]);
-	  a_ptr[x][++k] = NULL;
-	  makestr(&(a_ptr[x][k]),s);
+	  a_ptr[x][4] = NULL;
+	  makestr(&(a_ptr[x][4]),s);
 	  ckstrncpy(workbuf,s,32);	/* Save for later */
 
 	  /* Element 5 - Permissions numeric code */
 
 	  s = zgperm(bp[0]);
-	  a_ptr[x][++k] = NULL;
-	  makestr(&(a_ptr[x][k]),s);
+	  a_ptr[x][5] = NULL;
+	  makestr(&(a_ptr[x][5]),s);
 
 	  /* Element 6 - Size in bytes */
       
 	  s = zgfs_link ? ckitoa((int)strlen((char *)linkname)) : ckfstoa(z);
-	  a_ptr[x][++k] = NULL;
-	  makestr(&(a_ptr[x][k]),s);
+	  a_ptr[x][6] = NULL;
+	  makestr(&(a_ptr[x][6]),s);
 	  
 	  /* Element 7 - File type */
 
@@ -10390,25 +10414,58 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 	  else j = 1;
 #endif /* VMS */
 #endif /* UNIX */
-	  a_ptr[x][++k] = NULL;
-	  makestr(&(a_ptr[x][k]),ckitoa(j));
+	  a_ptr[x][7] = NULL;
+	  switch (j) {
+	    case 0: s = "unknown"; break;
+	    case 1: s = "regular"; break;
+	    case 2: s = "executable"; break;
+	    case 3: s = "directory"; break;
+	    case 4: s = "link"; break;
+	    default: s = "unknown";
+	  }
+	  makestr(&(a_ptr[x][7]),s);
+	  k = 7;
 
-#ifdef UNIX
 	  /* Element 8 - Name of linked-to file (if link) */
+
+	  a_ptr[x][8] = NULL;
+#ifdef UNIX
 	  if (zgfs_link) {
-	      a_ptr[x][++k] = NULL;
-	      makestr(&(a_ptr[x][k]),(char *)linkname);
+	      makestr(&(a_ptr[x][8]),(char *)linkname);
+	      k++;
 	  }
 #endif /* UNIX */
 
+	  /* Element 9 - File scan result */
+
+	  if (j == 1 || j == 2) {	/* Regular file */
+	      m = scanfile(bp[0],NULL,nscanfile);
+	      if (m > -1) {
+		  if (k < 8) k = 8;	/* Insert empty element for link */
+		  makestr(&(a_ptr[x][8]),"");
+		  k++;
+		  switch (m) {
+		    case FT_7BIT: s = "text:7bit"; break;
+		    case FT_UTF8: s = "text:utf8"; break;
+		    case FT_UCS2: s = "text:ucs2"; break;
+		    case FT_8BIT: s = "text:8bit"; break;
+		    case FT_TEXT: s = "text:unknown"; break;
+		    case FT_BIN:  s = "binary"; break;
+		    default: s = "unknown";
+		  }
+		  a_ptr[x][9] = NULL;
+		  makestr(&(a_ptr[x][9]),s);
+	      }
+	  }
+	  /* If adding another change attrs declaration to match */
+
 	  /* Element 0 = array size */
 
-	  p = ckitoa(k);
+	  p = ckitoa(k);		/* Number of elements */
 
 	  a_ptr[x][0] = NULL;		/* Put number of elements in [0] */
 	  makestr(&(a_ptr[x][0]),p);
-	  debug(F101,"FILEINF","",k);
-
+	  debug(F101,"FILEINF","",attrs);
           goto fnend;
       }
       case FN_FILECMP: {		/* File comparison */
@@ -12614,6 +12671,111 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 	p = fnval;
 	goto fnend;
     }
+#ifdef HAVE_LOCALE
+/*  \fdayname() - Returns locale-dependent day name string - 2013/07/23 */
+
+    if (cx == FN_DAYNAME) {
+	_PROTOTYP( char * locale_dayname, (int, int) );
+        char *s1, *s2;
+	char buf[3];
+	int fc = 0, day = 999;
+
+	s1 = bp[0];
+	s2 = bp[1];
+	p = fnval;
+	*p = NUL;
+
+	if (!s1) s1 = "";
+	if (!*s1) {
+	    s1 = ckdate();
+	} else if (rdigits(s1) && (int)strlen(s1) < 8) {
+	    day = atoi(s1);
+	    if (day < 1 || day > 7) {
+		ckmakmsg(fnval,FNVALL,"<ERROR:BAD_DAYNUM\\f",fn,"()>",NULL);
+		goto fnend;
+	    }
+	    day--;			/* Adjust to zero-based */
+	} else if (!(s1 = cmcvtdate(s1,1))) {
+	    ckmakmsg(fnval,FNVALL,"<ERROR:BAD_DATE\\f",fn,"()>",NULL);
+	    goto fnend;
+	}
+	if (!s2) s2 = "";		/* Parse function code */
+	if (!*s2) {
+	    fc = 0;
+	} else if (rdigits(s2)) {
+	    fc = atoi(s2);
+	} else {
+            failed = 1;
+	    ckmakmsg(fnval,FNVALL,"<ERROR:FUNCTION_CODE:\\f",fn,"()>",NULL);
+	    goto fnend;
+	}
+	if (day > 6) {			/* Day number was not given */
+	    day = (mjd(s1) % 7) + 2;	/* Get day number */
+	    if (day > 6) day -= 7;	/* Adjust to 0=Sunday */
+	}
+	s1 = locale_dayname(day,fc);	/* Get locale-based day name */
+	if (!s1) {
+            failed = 1;
+	    ckmakmsg(fnval,FNVALL,"<ERROR:NO_RESULT:\\f",fn,"()>",NULL);
+	    goto fnend;
+	}
+	ckstrncpy(fnval,s1,FNVALL);
+	goto fnend;
+    }
+    /* \fmonthname() - Returns locale-dependent month name string 2013/07/24 */
+
+    if (cx == FN_MONNAME) {
+	_PROTOTYP( char * locale_monthname, (int, int) );
+        char *s1, *s2;
+	char buf[3];
+	int fc = 0, month = 999;
+
+	s1 = bp[0];
+	s2 = bp[1];
+	p = fnval;
+	*p = NUL;
+
+	if (!s1) s1 = "";
+	if (!*s1) {
+	    s1 = ckdate();
+	} else if (rdigits(s1) && (int)strlen(s1) < 8) {
+	    month = atoi(s1);
+	    if (month < 1 || month > 12) {
+		ckmakmsg(fnval,FNVALL,"<ERROR:BAD_MONTHNUM\\f",fn,"()>",NULL);
+		goto fnend;
+	    }
+	    month--;			/* Adjust to zero-based */
+	} else if (!(s1 = cmcvtdate(s1,1))) {
+	    ckmakmsg(fnval,FNVALL,"<ERROR:BAD_DATE\\f",fn,"()>",NULL);
+	    goto fnend;
+	}
+	if (month > 12) {
+	    char mn[3];
+	    mn[0] = s1[4];
+	    mn[1] = s1[5];
+	    mn[2] = NUL;
+	    month = atoi((char *)mn) - 1;
+	}
+	if (!s2) s2 = "";		/* Parse function code */
+	if (!*s2) {
+	    fc = 0;
+	} else if (rdigits(s2)) {
+	    fc = atoi(s2);
+	} else {
+            failed = 1;
+	    ckmakmsg(fnval,FNVALL,"<ERROR:FUNCTION_CODE:\\f",fn,"()>",NULL);
+	    goto fnend;
+	}
+	s1 = locale_monthname(month,fc); /* Get locale-based month name */
+	if (!s1) {
+            failed = 1;
+	    ckmakmsg(fnval,FNVALL,"<ERROR:NO_RESULT:\\f",fn,"()>",NULL);
+	    goto fnend;
+	}
+	ckstrncpy(fnval,s1,FNVALL);
+	goto fnend;
+    }
+#endif /* HAVE_LOCALE */
 
 /* Note: when adding new functions remember to update dohfunc in ckuus2.c. */
 
@@ -13013,8 +13175,8 @@ nvlook(s) char *s; {
         sprintf(vvbuf, "%d", cmdlvl);   /* SAFE */
         return(vvbuf);
 
-      case VN_DAY:                      /* Day of week */
-        ztime(&p);
+      case VN_DAY:                      /* Current day of the week */
+        ztime(&p);			/* three-letter abbreviation */
         if (p != NULL && *p != NUL)     /* ztime() succeeded. */
           ckstrncpy(vvbuf,p,4);
         else
@@ -13027,6 +13189,41 @@ nvlook(s) char *s; {
           k = (((int)(z % 7L)) + 3) % 7; /* Get day number */
           sprintf(vvbuf,"%ld",k);       /* SAFE */
           return(vvbuf);
+
+      case VN_MONTH:
+        ztime(&p);			/* three-letter abbreviation */
+        if (p != NULL && *p != NUL)     /* ztime() succeeded. */
+          ckstrncpy(vvbuf,p+4,5);
+        else
+          vvbuf[0] = NUL;               /* ztime() failed. */
+        return(vvbuf);                  /* Return what we got. */
+
+      case VN_NMONTH: {			/* Numeric month (1-12) */
+	  int x;
+	  ztime(&p);			/* asctime three-letter abbreviation */
+	  for (x = 0; x < 12; x++)
+	    if (!strncmp(p+4,months[x],3)) break;
+	  if (x == 12) {
+	      vvbuf[0] = '?';
+	      vvbuf[1] = '?';
+	  } else {
+	      x++;
+	      vvbuf[0] = (char) ((x < 10) ? '0' : '1');
+	      vvbuf[1] = (char) ((x % 10) + 48);
+	  }
+	  vvbuf[2] = NUL;
+	  return(vvbuf);		/* Return what we got. */
+      }
+
+      case VN_YEAR:			/* Current year */
+        ztime(&p);
+        if (p != NULL && *p != NUL)     /* ztime() succeeded. */
+          ckstrncpy(vvbuf,p+20,5);
+        else
+          vvbuf[0] = NUL;               /* ztime() failed. */
+        return(vvbuf);                  /* Return what we got. */
+
+
       }
 
       case VN_LCL:                      /* Local (vs remote) mode */

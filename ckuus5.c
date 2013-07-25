@@ -7999,6 +7999,51 @@ doshow(x) int x; {
 #endif	/* NORENAME */
 #endif	/* NOFRILLS */
 
+#ifdef HAVE_LOCALE
+      case SHOLOC: {
+	char *s;
+	extern int nolocale;
+        printf("\n");
+
+	printf("Locale %s:\n", nolocale ? "disabled" : "enabled");
+
+#ifdef COMMENT
+	s = setlocale(LC_ALL, NULL);
+        if (!s) s = "";
+	printf("LC_ALL=%s\n",s);
+#endif /* COMMENT */
+
+	s = setlocale(LC_COLLATE, NULL);
+        if (!s) s = "";
+	printf("  LC_COLLATE=\"%s\"\n",s);
+
+	s = setlocale(LC_CTYPE, NULL);
+        if (!s) s = "";
+	printf("  LC_CTYPE=\"%s\"\n",s);
+
+	s = setlocale(LC_MONETARY, NULL);
+        if (!s) s = "";
+	printf("  LC_MONETARY=\"%s\"\n",s);
+
+	s = setlocale(LC_MESSAGES, NULL);
+        if (!s) s = "";
+	printf("  LC_MESSAGES=\"%s\"\n",s);
+
+	s = setlocale(LC_NUMERIC, NULL);
+        if (!s) s = "";
+	printf("  LC_NUMERIC=\"%s\"\n",s);
+
+	s = setlocale(LC_TIME, NULL);
+        if (!s) s = "";
+	printf("  LC_TIME=\"%s\"\n",s);
+
+	printf("  LANG=\"%s\"\n",getenv("LANG"));
+        printf("\n");
+
+	break;
+      }
+#endif /* HAVE_LOCALE */
+
       default:
         printf("\nNothing to show...\n");
         return(-2);
