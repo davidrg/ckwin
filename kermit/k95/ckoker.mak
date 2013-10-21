@@ -385,7 +385,7 @@ ibmcd:
 DEFINES = -DOS2 -DDYNAMIC -DKANJI -DNETCONN -DTCPSOCKET \
           -DNPIPE -DOS2MOUSE -DCK_NETBIOS -DHADDRLIST -DPCFONTS \
           -DRLOGCODE -DNETFILE -DONETERMUPD -DZLIB \
-          -DNO_SRP -DBETATEST  -DNO_KERBEROS
+          -DNO_SRP -DBETATEST  -DNO_KERBEROS -DNOCKXYZ
 		  # DECnet (Pathworks32) support: -DDECNET
            
 !else if "$(PLATFORM)" == "NT"
@@ -396,7 +396,7 @@ K95BUILD = K95
 DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH \
           -DDYNAMIC -DNETCONN -DHADDRLIST -DOS2MOUSE -DTCPSOCKET -DRLOGCODE \
           -DNETFILE -DONETERMUPD -DNO_ENCRYPTION -DZLIB \
-          -DNO_SRP -DNO_KERBEROS -DBETATEST
+          -DNO_SRP -DNO_KERBEROS -DBETATEST -DNOCKXYZ
 !else if "$(K95BUILD)" == "UIUC"
 DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH \
           -DDYNAMIC -DNETCONN -DHADDRLIST -DOS2MOUSE -DTCPSOCKET -DRLOGCODE \
@@ -404,19 +404,19 @@ DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH \
           -DNOXFER -DNODIAL -DNOHTTP -DNOFORWARDX -DNOBROWSER -DNOLOGIN \
           -DNOCYRIL -DNOKANJI -DNOHEBREW -DNOGREEK -DNOLOGIN -DNOIKSD -DNOHELP \
           -DNOSOCKS -DNONETCMD -DNO_SRP -DNO_SSL -DNOFTP -DBETATEST \
-          -DNODEBUG -DCK_TAPI -DNOPUSH -DNO_COMPORT -DNOXMIT -DNOSCRIPT -DNO_KERBEROS
+          -DNODEBUG -DCK_TAPI -DNOPUSH -DNO_COMPORT -DNOXMIT -DNOSCRIPT -DNO_KERBEROS DNOCKXYZ
 !else if "$(K95BUILD)" == "IKSD"
 DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH -DONETERMUPD \
           -DDYNAMIC -DKANJI -DNETCONN -DIKSDONLY -DZLIB \
           -DHADDRLIST -DCK_LOGIN \
-          -DNO_SRP -DNO_KERBEROS
+          -DNO_SRP -DNO_KERBEROS -DNOCKXYZ
 		  #-DBETATEST # -DPRE_SRP_1_7_3
 !else
 DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 \
           -DDYNAMIC -DKANJI -DNETCONN \
           -DHADDRLIST -DNPIPE -DOS2MOUSE -DTCPSOCKET -DRLOGCODE -DZLIB \
           -DNETFILE -DONETERMUPD \
-          -DNEWFTP -DNO_SRP -DNO_KERBEROS -DNOSSH
+          -DNEWFTP -DNO_SRP -DNO_KERBEROS -DNOSSH -DNOCKXYZ
 		  # DECnet (Pathworks32) support: -DDECNET
 		  # SuperLAT support: -DSUPERLAT
 		  
@@ -488,10 +488,11 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
 !if "$(PLATFORM)" == "NT"
         cknnbi$(O) \
 !else
-        ckonbi$(O) \
+        ckonbi$(O) 
 !endif /* PLATFORM */
-        ckop$(O) p_callbk$(O) p_global$(O) p_omalloc$(O) p_error$(O) \
-        p_common$(O) p_tl$(O) p_dir$(O)
+# XYZ Modem support
+#        ckop$(O) p_callbk$(O) p_global$(O) p_omalloc$(O) p_error$(O) \
+#        p_common$(O) p_tl$(O) p_dir$(O)
 
 #OUTDIR = \kui\win95
 KUIOBJS = \
@@ -859,7 +860,7 @@ ckotek$(O): ckotek.c ckotek.h ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoke
                 ckokey.h ckokvb.h ckuusr.h ckcnet.h ckctel.h
 ckotio$(O):	ckotio.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckuver.h ckodir.h ckoker.h \
                 ckocon.h ckokey.h ckokvb.h ckuusr.h ckoslp.h ckcsig.h ckop.h \
-                ckcuni.h ckowin.h p.h ckcnet.h ckctel.h \
+                ckcuni.h ckowin.h ckcnet.h ckctel.h \
 !if "$(PLATFORM)" == "NT"
                 ckntap.h cknwin.h  kui\ikui.h
 !else
@@ -886,8 +887,9 @@ ckonbi$(O):     ckonbi.c ckonbi.h ckcdeb.h ckoker.h ckclib.h
 !endif
 ckoslp$(O):     ckoslp.c ckoslp.h ckcdeb.h ckoker.h ckclib.h 
 ckomou$(O):     ckomou.c ckocon.h ckcdeb.h ckoker.h ckclib.h ckokey.h ckokvb.h ckuusr.h
-ckop$(O):       ckop.c ckop.h ckcdeb.h ckoker.h ckclib.h ckcker.h p_global.h p_callbk.h \
+ckop$(O):       ckop.c ckop.h ckcdeb.h ckoker.h ckclib.h ckcker.h \ 
                 ckuusr.h ckcnet.h ckctel.h ckonet.h ckocon.h
+				# XYZMODEM Support: p_global.h p_callbk.h 
 cknsig$(O):	cknsig.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckcsym.h ckcnet.h ckctel.h ckonet.h\
                 ckuusr.h ckonet.h ckcsig.h ckocon.h
 ckusig$(O):	ckusig.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckcsym.h ckcnet.h ckctel.h ckonet.h\
@@ -924,15 +926,16 @@ ck_crp$(O):     ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h c
 #
 #!endif
 
-p_brw$(O):     ckcdeb.h ckoker.h ckclib.h ckocon.h p_brw.c p_type.h p_brw.h
-p_callbk$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_callbk.c p_type.h p.h p_callbk.h p_common.h p_brw.h \
-               p_error.h  p_global.h p_module.h p_omalloc.h
-p_common$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_common.c p_type.h p_common.h p_error.h p_module.h p_global.h
-p_dir$(O):     ckcdeb.h ckoker.h ckclib.h ckocon.h p_dir.c    p_type.h p_dir.h
-p_error$(O):   ckcdeb.h ckoker.h ckclib.h ckocon.h p_error.c  p_type.h p_errmsg.h ckcnet.h ckctel.h ckonet.h
-p_global$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_global.c p_type.h p_tl.h p_brw.h p.h
-p_tl$(O):      ckcdeb.h ckoker.h ckclib.h ckocon.h p_tl.c     p_type.h p_tl.h p_brw.h p.h
-p_omalloc$(O): ckcdeb.h ckoker.h ckclib.h p_omalloc.c p_type.h p_error.h p.h
+# X/Y/Z Modem support (3rd-party proprietary library)
+#p_brw$(O):     ckcdeb.h ckoker.h ckclib.h ckocon.h p_brw.c p_type.h p_brw.h
+#p_callbk$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_callbk.c p_type.h p.h p_callbk.h p_common.h p_brw.h \
+#               p_error.h  p_global.h p_module.h p_omalloc.h
+#p_common$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_common.c p_type.h p_common.h p_error.h p_module.h p_global.h
+#p_dir$(O):     ckcdeb.h ckoker.h ckclib.h ckocon.h p_dir.c    p_type.h p_dir.h
+#p_error$(O):   ckcdeb.h ckoker.h ckclib.h ckocon.h p_error.c  p_type.h p_errmsg.h ckcnet.h ckctel.h ckonet.h
+#p_global$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_global.c p_type.h p_tl.h p_brw.h p.h
+#p_tl$(O):      ckcdeb.h ckoker.h ckclib.h ckocon.h p_tl.c     p_type.h p_tl.h p_brw.h p.h
+#p_omalloc$(O): ckcdeb.h ckoker.h ckclib.h p_omalloc.c p_type.h p_error.h p.h
 
 ckcpro.c:	ckcpro.w ckwart.exe
 #		$(MAKE) -f ckoker.mak ckwart.exe \
