@@ -416,7 +416,7 @@ DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 \
           -DDYNAMIC -DKANJI -DNETCONN \
           -DHADDRLIST -DNPIPE -DOS2MOUSE -DTCPSOCKET -DRLOGCODE -DZLIB \
           -DNETFILE -DONETERMUPD -DLIBDES -DCRYPT_DLL \
-          -DNEWFTP -DNO_SRP -DNO_KERBEROS
+          -DNEWFTP -DNO_SRP -DNO_KERBEROS -DNOSSH
 		  # DECnet (Pathworks32) support: -DDECNET
 		  # SuperLAT support: -DSUPERLAT
 		  
@@ -441,13 +441,15 @@ KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
         advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib \
         rpcrt4.lib rpcns4.lib wsock32.lib \
         winmm.lib vdmdbg.lib comctl32.lib mpr.lib commode.obj \
-        wshload.lib ssh\libssh.lib ssh\openbsd.lib #msvcrt.lib
+        wshload.lib #msvcrt.lib
 		# SRP support: srpstatic.lib 
+		# SSH support: ssh\libssh.lib ssh\openbsd.lib
         #libsrp.lib bigmath.lib
 LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib shell32.lib\
        winmm.lib mpr.lib advapi32.lib winspool.lib commode.obj \
-       wshload.lib ssh\libssh.lib ssh\openbsd.lib #msvcrt.lib  
+       wshload.lib #msvcrt.lib  
 	   # SRP support: srpstatic.lib
+	   # SSH support: ssh\libssh.lib ssh\openbsd.lib
        # libsrp.lib bigmath.lib
 !endif
 !endif /* PLATFORM */
@@ -471,8 +473,9 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
 !else
         ckusig$(O) \
 !endif /* PLATFORM */
-        ckuath$(O) ckoath$(O) ck_ssl$(O) ckossl$(O) ckosslc$(O) ckossh$(O) \
+        ckuath$(O) ckoath$(O) ck_ssl$(O) ckossl$(O) ckosslc$(O) \
         ckosftp$(O) ckozli$(O) \
+		# SSH support: ckossh$(O)
 !if 0
         ck_crp$(O) ck_des$(O) \
 !endif
@@ -903,9 +906,10 @@ ckossl$(O):     ckossl.c ckcdeb.h ckoker.h ck_ssl.h ckossl.h
 ckosslc$(O):    ckosslc.c ckcdeb.h ckoker.h ck_ssl.h ckosslc.h
 ckozli$(O):     ckozli.c ckcdeb.h ckoker.h ckozli.h
 ckosftp$(O):    ckcdeb.h ckoker.h ckclib.h ckosftp.h ckosftp.c
-	$(CC) $(CC2) -Issh -Issh/openbsd-compat $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ckosftp.c
-ckossh$(O):     ckcdeb.h ckoker.h ckclib.h ckossl.h ckoath.h ckosslc.h ckossh.c ckossh.h
-	$(CC) $(CC2) -Issh -Issh/openbsd-compat $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ckossh.c
+	$(CC) $(CC2) $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ckosftp.c
+# SSH support: -Issh -Issh/openbsd-compat
+#ckossh$(O):     ckcdeb.h ckoker.h ckclib.h ckossl.h ckoath.h ckosslc.h ckossh.c ckossh.h
+#	$(CC) $(CC2) -Issh -Issh/openbsd-compat $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ckossh.c
 
 ck_crp$(O):     ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h ck_crp.c
 !if "$(PLATFORM)" == "OS2"
