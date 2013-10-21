@@ -385,7 +385,7 @@ ibmcd:
 DEFINES = -DOS2 -DDYNAMIC -DKANJI -DNETCONN -DDECNET -DTCPSOCKET \
           -DNPIPE -DOS2MOUSE -DCK_NETBIOS -DHADDRLIST -DPCFONTS \
           -DRLOGCODE -DNETFILE -DONETERMUPD -DZLIB \
-           -DLIBDES -DCRYPT_DLL -DPRE_SRP_1_7_3 -DBETATEST 
+           -DLIBDES -DCRYPT_DLL -DNO_SRP -DBETATEST 
            
 !else if "$(PLATFORM)" == "NT"
 !ifndef K95BUILD
@@ -408,13 +408,15 @@ DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH \
 DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH -DONETERMUPD \
           -DDYNAMIC -DKANJI -DNETCONN -DIKSDONLY -DZLIB \
           -DHADDRLIST -DCK_LOGIN -DLIBDES -DCRYPT_DLL \
-          #-DBETATEST # -DPRE_SRP_1_7_3
+          -DNO_SRP 
+		  #-DBETATEST # -DPRE_SRP_1_7_3
 !else
 DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 \
           -DDYNAMIC -DKANJI -DNETCONN -DDECNET -DSUPERLAT \
           -DHADDRLIST -DNPIPE -DOS2MOUSE -DTCPSOCKET -DRLOGCODE -DZLIB \
           -DNETFILE -DONETERMUPD -DLIBDES -DCRYPT_DLL \
-          -DNEWFTP #-DBETATEST -DSFTP_BUILTIN # -DPRE_SRP_1_7_3 -DCK_NETBIOS -DNEW_URL_HIGHLIGHT 
+          -DNEWFTP -DNO_SRP
+		  #-DBETATEST -DSFTP_BUILTIN # -DPRE_SRP_1_7_3 -DCK_NETBIOS -DNEW_URL_HIGHLIGHT 
 !endif
 !endif  /* PLATFORM */
 !else
@@ -423,7 +425,8 @@ DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 \
 
 !ifdef PLATFORM
 !if "$(PLATFORM)" == "OS2"
-LIBS = os2386.lib rexx.lib libsrp.lib bigmath.lib 
+LIBS = os2386.lib rexx.lib bigmath.lib 
+# SRP support: libsrp.lib
 !else if "$(PLATFORM)" == "NT"
 !if "$(K95BUILD)" == "UIUC"
 LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib \
@@ -434,11 +437,13 @@ KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
         advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib \
         rpcrt4.lib rpcns4.lib wsock32.lib \
         winmm.lib vdmdbg.lib comctl32.lib mpr.lib commode.obj \
-        wshload.lib srpstatic.lib  ssh\libssh.lib ssh\openbsd.lib #msvcrt.lib
+        wshload.lib ssh\libssh.lib ssh\openbsd.lib #msvcrt.lib
+		# SRP support: srpstatic.lib 
         #libsrp.lib bigmath.lib
 LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib shell32.lib\
        winmm.lib mpr.lib advapi32.lib winspool.lib commode.obj \
-       srpstatic.lib  wshload.lib ssh\libssh.lib ssh\openbsd.lib #msvcrt.lib  
+       wshload.lib ssh\libssh.lib ssh\openbsd.lib #msvcrt.lib  
+	   # SRP support: srpstatic.lib
        # libsrp.lib bigmath.lib
 !endif
 !endif /* PLATFORM */
@@ -520,10 +525,15 @@ $(PDLLDIR)\pdll_x_global.obj \
 $(PDLLDIR)\pdll_z.obj \
 $(PDLLDIR)\pdll_z_global.obj \
 
-os232: cko32rtl.dll ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe k2crypt.dll  srp-tconf.exe srp-passwd.exe otextps.exe 
+os232: cko32rtl.dll ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe k2crypt.dll otextps.exe 
+# SRP support: srp-tconf.exe srp-passwd.exe
+
 # docs pcfonts.dll cksnval.dll 
 
-win32: cknker.exe wtelnet wrlogin k95d textps k95crypt.dll ctl3dins.exe srp-tconf.exe srp-passwd.exe iksdsvc.exe iksd.exe #wreg
+
+
+win32: cknker.exe wtelnet wrlogin k95d textps k95crypt.dll ctl3dins.exe iksdsvc.exe iksd.exe #wreg
+# SRP support: srp-tconf.exe srp-passwd.exe
 
 win32md: mdnker.exe
 
@@ -709,21 +719,22 @@ ckoclip.exe: ckoclip.obj ckoclip.def ckoker.mak ckoclip.res
 !endif
         dllrname $@ CPPRMI36=CKO32RTL       
 
-srp-tconf.exe: srp-tconf.obj getopt.obj ssh\ckosslc.obj ckoker.mak
-!if "$(PLATFORM)" == "OS2"
-        $(CC) $(CC2) $(DEBUG) srp-tconf.obj getopt.obj ssh\ckosslc.obj ckotel.def $(OUT) $@ $(LIBS)
-        dllrname $@ CPPRMI36=CKO32RTL       
-!else if "$(PLATFORM)" == "NT"
-	link /debug /out:$@ srp-tconf.obj getopt.obj ssh\ckosslc.obj $(LIBS)
-!endif
-        
-srp-passwd.exe: srp-passwd.obj getopt.obj ssh\ckosslc.obj ckoker.mak
-!if "$(PLATFORM)" == "OS2"
-        $(CC) $(CC2) $(DEBUG) srp-passwd.obj getopt.obj ssh\ckosslc.obj ckotel.def $(OUT) $@ $(LIBS)
-        dllrname $@ CPPRMI36=CKO32RTL       
-!else if "$(PLATFORM)" == "NT"
-	link /debug /out:$@ srp-passwd.obj getopt.obj ssh\ckosslc.obj $(LIBS)
-!endif
+# SRP support
+#srp-tconf.exe: srp-tconf.obj getopt.obj ssh\ckosslc.obj ckoker.mak
+#!if "$(PLATFORM)" == "OS2"
+#        $(CC) $(CC2) $(DEBUG) srp-tconf.obj getopt.obj ssh\ckosslc.obj ckotel.def $(OUT) $@ $(LIBS)
+#        dllrname $@ CPPRMI36=CKO32RTL       
+#!else if "$(PLATFORM)" == "NT"
+#	link /debug /out:$@ srp-tconf.obj getopt.obj ssh\ckosslc.obj $(LIBS)
+#!endif
+#        
+#srp-passwd.exe: srp-passwd.obj getopt.obj ssh\ckosslc.obj ckoker.mak
+#!if "$(PLATFORM)" == "OS2"
+#        $(CC) $(CC2) $(DEBUG) srp-passwd.obj getopt.obj ssh\ckosslc.obj ckotel.def $(OUT) $@ $(LIBS)
+#        dllrname $@ CPPRMI36=CKO32RTL       
+#!else if "$(PLATFORM)" == "NT"
+#	link /debug /out:$@ srp-passwd.obj getopt.obj ssh\ckosslc.obj $(LIBS)
+#!endif
         
 iksdsvc.exe: iksdsvc.obj ckoker.mak
 !if "$(PLATFORM)" == "OS2"
@@ -936,9 +947,10 @@ ckwart$(O):     ckwart.c
 
 k95d$(O):  k95d.c
 
-getopt$(O):     getopt.c getopt.h
-srp-tconf$(O):  srp-tconf.c getopt.h 
-srp-passwd$(O): srp-passwd.c getopt.h
+# SRP support
+#getopt$(O):     getopt.c getopt.h
+#srp-tconf$(O):  srp-tconf.c getopt.h 
+#srp-passwd$(O): srp-passwd.c getopt.h
 
 iksdsvc$(O):    iksdsvc.c 
 
