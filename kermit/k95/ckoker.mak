@@ -385,7 +385,7 @@ ibmcd:
 DEFINES = -DOS2 -DDYNAMIC -DKANJI -DNETCONN -DTCPSOCKET \
           -DNPIPE -DOS2MOUSE -DCK_NETBIOS -DHADDRLIST -DPCFONTS \
           -DRLOGCODE -DNETFILE -DONETERMUPD -DZLIB \
-           -DLIBDES -DCRYPT_DLL -DNO_SRP -DBETATEST  -DNO_KERBEROS
+          -DNO_SRP -DBETATEST  -DNO_KERBEROS
 		  # DECnet (Pathworks32) support: -DDECNET
            
 !else if "$(PLATFORM)" == "NT"
@@ -400,7 +400,7 @@ DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH \
 !else if "$(K95BUILD)" == "UIUC"
 DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH \
           -DDYNAMIC -DNETCONN -DHADDRLIST -DOS2MOUSE -DTCPSOCKET -DRLOGCODE \
-          -DNETFILE -DONETERMUPD -DLIBDES -DCRYPT_DLL -DZLIB \
+          -DNETFILE -DONETERMUPD -DZLIB \
           -DNOXFER -DNODIAL -DNOHTTP -DNOFORWARDX -DNOBROWSER -DNOLOGIN \
           -DNOCYRIL -DNOKANJI -DNOHEBREW -DNOGREEK -DNOLOGIN -DNOIKSD -DNOHELP \
           -DNOSOCKS -DNONETCMD -DNO_SRP -DNO_SSL -DNOFTP -DBETATEST \
@@ -408,14 +408,14 @@ DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH \
 !else if "$(K95BUILD)" == "IKSD"
 DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH -DONETERMUPD \
           -DDYNAMIC -DKANJI -DNETCONN -DIKSDONLY -DZLIB \
-          -DHADDRLIST -DCK_LOGIN -DLIBDES -DCRYPT_DLL \
+          -DHADDRLIST -DCK_LOGIN \
           -DNO_SRP -DNO_KERBEROS
 		  #-DBETATEST # -DPRE_SRP_1_7_3
 !else
 DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 \
           -DDYNAMIC -DKANJI -DNETCONN \
           -DHADDRLIST -DNPIPE -DOS2MOUSE -DTCPSOCKET -DRLOGCODE -DZLIB \
-          -DNETFILE -DONETERMUPD -DLIBDES -DCRYPT_DLL \
+          -DNETFILE -DONETERMUPD \
           -DNEWFTP -DNO_SRP -DNO_KERBEROS -DNOSSH
 		  # DECnet (Pathworks32) support: -DDECNET
 		  # SuperLAT support: -DSUPERLAT
@@ -532,15 +532,17 @@ $(PDLLDIR)\pdll_x_global.obj \
 $(PDLLDIR)\pdll_z.obj \
 $(PDLLDIR)\pdll_z_global.obj \
 
-os232: cko32rtl.dll ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe k2crypt.dll otextps.exe 
+os232: cko32rtl.dll ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe otextps.exe 
 # SRP support: srp-tconf.exe srp-passwd.exe
+# Crypto stuff: k2crypt.dll 
 
 # docs pcfonts.dll cksnval.dll 
 
 
 
-win32: cknker.exe wtelnet wrlogin k95d textps k95crypt.dll ctl3dins.exe iksdsvc.exe iksd.exe #wreg
+win32: cknker.exe wtelnet wrlogin k95d textps ctl3dins.exe iksdsvc.exe iksd.exe #wreg
 # SRP support: srp-tconf.exe srp-passwd.exe
+# Crypto stuff: k95crypt.dll
 
 win32md: mdnker.exe
 
@@ -697,13 +699,13 @@ cksnval.dll: cksnval.obj cksnval.def ckoker.mak
 	$(CC) $(CC2) $(DEBUG) $(DLL) cksnval.obj \
         cksnval.def $(OUT) $@ $(LIBS)
 
-k95crypt.dll: ck_crp.obj ck_des.obj ckclib.obj ck_crp.def ckoker.mak
-	link /dll /debug /def:ck_crp.def /out:$@ ck_crp.obj ckclib.obj ck_des.obj libdes.lib
-       
-k2crypt.dll: ck_crp.obj ck_des.obj ckclib.obj k2crypt.def ckoker.mak
-	ilink /nologo /noi /exepack:1 /align:16 /base:0x10000 k2crypt.def \
-            /out:$@ ck_crp.obj ck_des.obj ckclib.obj libdes.lib 
-        dllrname $@ CPPRMI36=CKO32RTL       
+#k95crypt.dll: ck_crp.obj ck_des.obj ckclib.obj ck_crp.def ckoker.mak
+#	link /dll /debug /def:ck_crp.def /out:$@ ck_crp.obj ckclib.obj ck_des.obj libdes.lib
+#       
+#k2crypt.dll: ck_crp.obj ck_des.obj ckclib.obj k2crypt.def ckoker.mak
+#	ilink /nologo /noi /exepack:1 /align:16 /base:0x10000 k2crypt.def \
+#            /out:$@ ck_crp.obj ck_des.obj ckclib.obj libdes.lib 
+#        dllrname $@ CPPRMI36=CKO32RTL       
        
 ckwart.exe: ckwart.obj $(DEF)
 	$(CC) ckwart.obj 
@@ -916,11 +918,11 @@ ck_crp$(O):     ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h c
 	$(CC) $(CC2) $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ck_crp.c
 
 !endif
-ck_des$(O):     ck_des.c
-!if "$(PLATFORM)" == "OS2"
-	$(CC) $(CC2) $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ck_des.c
-
-!endif
+#ck_des$(O):     ck_des.c
+#!if "$(PLATFORM)" == "OS2"
+#	$(CC) $(CC2) $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ck_des.c
+#
+#!endif
 
 p_brw$(O):     ckcdeb.h ckoker.h ckclib.h ckocon.h p_brw.c p_type.h p_brw.h
 p_callbk$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_callbk.c p_type.h p.h p_callbk.h p_common.h p_brw.h \
