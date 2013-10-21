@@ -1,0 +1,156 @@
+def yy if not match {\fcont(\%1)} {\fcont(\%2)} -
+  echo PROBLEM: "\fcont(\%1)" "\fcont(\%2)" SHOULD MATCH
+def nn if match {\fcont(\%1)} {\fcont(\%2)} -
+  echo PROBLEM: "\fcont(\%1)" "\fcont(\%2)" SHOULD NOT MATCH
+set tak echo on
+; forward foo
+yy {} {}
+nn {} x
+yy abc abc
+yy abc ab*
+yy abc a*bc
+yy abc abc*
+yy abc *bc
+yy abc *abc
+nn abc abc*x
+yy abcdefg a*cd*f*g*
+yy abcdefg *f*g*
+yy abcdefg *fg*
+yy abcdefg a*c?*fg*
+yy abcdefg a*c?*f*g*
+nn abcdefg a*c?*f*g*x
+nn abc ab
+yy abc a*c
+nn abc a*b
+nn abc a?b
+yy abc a?c
+nn abc ??
+yy abc ???
+yy abc ???*
+yy abc *bc
+yy abc *abc
+yy abc *??
+yy abc *???
+yy abc *??c
+yy abc *?bc
+yy abc *a?c
+nn abc ????
+yy abc a\\bc
+yy abc [a-z]bc
+yy abc *[a-z]c
+yy abc a[b]c
+yy abc a[abc]c
+yy abc a[a-z]c
+nn abc a[a\\-c]c
+nn abc a[0-9]c
+yy abc a[ab-x]c
+yy abc a[a-xy]c
+nn abc a[xyz]c
+yy abc a[\\b]c
+nn abc a[\\c]c
+yy abc [a-z][a-z][a-z]
+yy abc [a-z][a-z]*
+yy abc [a-z]?[a-z]
+nn abc abcx
+nn abc [a-z][a-z][a-z]x
+nn abc [a-z][a-z][a-z][a-z]
+yy abc a[wxyz\\]abc]c
+yy abc a[c-mw-xyb]c
+nn abc a[c-m-xy]c
+yy abc a[c-m-xyb]c
+yy abc a[a-b-c]c
+yy abcbc a*bc
+yy a/b/cdefg.txt */*/*.txt
+yy abc a*
+yy abc a*c
+yy abc a*?
+yy abc a*?*
+yy abc a*[a-z]
+yy abc [abc]*c
+yy abc [a-z]*[a-z]
+yy abc [abc]*[abc]
+yy abc [abc]*c
+yy abc a*c
+yy abc a**c
+yy abc a*******c
+yy b *
+yy b **
+yy b ?
+yy b b*
+yy b ?*
+yy b *?
+yy abXyz a*X*z
+yy abXyz ab\\Xyz
+yy abXyz ab\\X*z
+yy ab?yz a*\\?yz
+yy abXyz a*\\Xyz
+yy abXyz a*\\X*z
+yy ab*yz a*\\**z
+nn abc a[a[b-x]yz]c
+yy abc ?*?
+yy abbbbbbbbbbbbc ?*?
+yy abbbbbbbbbbbbc ?*
+yy abbbbbbbbbbbbc *?
+yy abbbbbbbbbbbbc ??*
+yy abbbbbbbbbbbbc *??
+yy xa x[ab] 
+yy xa.x x[ab].x 
+yy abc *[a-z]bc
+yy ckcpro.w ck[cu]*.[cwh] 
+yy xablah.x x[ab]*.*
+yy xa.x x[ab]*.* 
+yy xa.x x[ab]*.x 
+nn xcblah.x x[ba]*.*
+nn ckwart.c ck[cu]*.[cwh] 
+nn ckwart.c ck[cu]*.c 
+yy xcblah.x x[abc]*.*
+yy ckwart.c ck[cuw]*.[cwh] 
+yy ckwart.c ck[cuw]*.c 
+yy a*b?c a[*?]*[?*]c
+yy a*b?c a[*?]*[?*]?
+yy a*b?c a[\*\?]*[\?\*]?
+nn a*b?c a[*?]*[?*]x
+yy "a]b" "*[x\\]]b"
+set case off
+yy abc ABC
+set case on
+nn abc ABC
+nn abc ab[c
+yy a]b *]b
+yy abc *
+yy {} *
+:FOO
+yy {abc def xyz} *b*e*y*
+yy Gr³‹e *³*
+yy R n * *
+yy {Gr³‹e aus K÷ln} *³*‹*÷*
+yy abcdefg ab*\\fg
+yy abcde?g ab*\\?g
+yy ckutio.c cku{abc,xxx,zzzzzzz,fio,tio,xio,iox}.c
+yy ckutio.c cku{tio}.c
+yy ckutio.c cku{,tio}.c
+yy ckutio.c cku{tio,}.c
+yy ckutio.c cku{,tio,}.c
+yy ckutio.c cku{,tio,tio}.c
+nn ckutio.c cku{abc,xxx,zzzzzzz,fio,xio,iox}.c
+yy ckutio.c cku{abc,xxx,zzzzzzz,fi,ti,xi,iox}*.c
+yy ckutio.c cku{,fio,t*}.c
+yy ckutio.c ck{xx,uu,u}{xxx,[ft]i*}*c
+yy ckutio.c ck{xx,uu,?}{xxx,[ft]i*}*c
+yy ckutio.c ck{xx,uu,[cuw]}{xxx,[ft]i*}*c
+yy ckutio.c ck{xx,uu,[a-z]}{xxx,[ft]i*}*c
+yy ckutio.c ck{xx,uu,[a-z],blah}{xxx,[ft]i*}*c
+yy ckutio.c ck{xx,uu,u}{xxx,[ft]io}.c
+yy ckutio.c ck{xx,uu,u}{xxx,[ft]i*}.c
+yy ckutio.c {ckutio.c}
+yy ckutio.c {ck[cuw]*.[cwh]}
+yy ckutio.c {{ck[cuw]*.[cwh],makefile}}
+yy ckutio.c {{makefile,ck[cuw]*.[cwh]}}
+xif match a\b a\b { echo YES } else { echo NO }
+xif match a\\b a\\b { echo YES } else { echo NO }
+xif match a\\b a\\\\b { echo YES } else { echo NO }
+xif match a\*b a\*b { echo YES } else { echo NO }
+xif match a\\*b a\\\\*b { echo YES } else { echo NO }
+yy a,b,c a{xyz,\\,b\\,,ooo}c
+
+exit

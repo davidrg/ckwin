@@ -1,0 +1,71 @@
+; LOGIN.KSC
+; V4.3 - January 2000
+; 
+; This is a general-purpose login script for use with Kermit 95.  It should
+; work with any computer or service that gives a "login:" or "Username:" or
+; "User ID:" prompt, and then a password prompt, and then, if you have logged
+; in successfully, eventually a system prompt such as $ or % or ) on the left
+; margin.  Typical examples include UNIX, VMS, and AOS/VS.  Usage:
+;
+;   SET LOGIN USERID <your-user-id>    (required)
+;   SET LOGIN PASSWORD <your-password> (optional)
+;   SET LOGIN PROMPT <system-prompt>   (optional)
+;
+; or:
+;
+;   autologin <your-user-id> [ <your-password> [ <optional-system-prompt> ] ]
+;
+; If the prompt is specified as NONE, the script CONNECTs immediately
+; after sending the password, without waiting for a system prompt.
+; If no prompt is specified, the script tries a selection of commonly
+; used prompts.
+;
+; If no password is specified AND the prompt is NONE, the script exits
+; immediately after supplying the user ID, so you can type the password
+; yourself.
+;
+; V2:   Block structure, allowance for password-only prompt.
+; V3:   ???
+; V4:   Rename to AUTOLOGIN to avoid clash with new LOGIN command.
+; V4.1: output of password to be compatible with K95 dialer
+; V4.2: check for password afer issuance of user name
+; V4.3: support telnet daemons that issue login prompt with username filled
+;       by telnet environment option
+; V4.4: small typo \m(password) instead of \m(passwd)
+
+
+if not defined AUTOLOGIN {
+    define AUTOLOGIN {
+	local passwd \%i
+	if not def \%1 assign \%1 \v(user)
+	if not def \%1 end 1 \%0: ERROR - A user ID is required
+	asg passwd \%2
+	if not def \%3 assign \%3 \v(prompt)
+	if not def \%3 assign \%3 NONE
+	for \%i 1 5 1 {    
+	    minput 5 login: Username: {User ID:} {User Name:} {ssword:}
+	    if success break
+	    output \13
+	}
+	if ( > \%i 5 ) end 1 {No response from host}
+	if ( < \v(minput) 5 ) {		; Have username prompt
+            input 0 {ssword:}
+            if failure {
+              lineout \fcont(\%1)		; Send username
+              if not def passwd if eq "" "\v(password)" end 0
+	      minput 5 {ssword:} {Name?}	; Wait for password prompt
+	      if fail end 1 {No password prompt}
+            }
+	}
+	msleep 100			  ; Pause for safety
+        if def passwd lineout \m(passwd)  ; Send password
+        else lineout \v(password)
+	if eq "\%3" "NONE" end 0	  ; Wait for prompt
+	if def \%3 input 20 \%3
+	else minput 20 {\13\10$ } {\13\10%\32} {\10\13$\32}  {\13\10)\32}
+	if fail end 1 {No system prompt}
+	end 0
+    }
+}
+autologin \%1 \%2 \%3
+end \v(status)

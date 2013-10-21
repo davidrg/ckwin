@@ -1,0 +1,39 @@
+; HOSTTCP.KSC
+;
+; Kermit 95 Host-Mode Listener for Incoming TCP/IP Connections.
+; January 1996
+;
+;   Windows 95 can accept multiple simultaneous connections.
+;   Windows NT 3.51 can accept only one at a time.
+;
+asg _configfile \freplace(\v(startup)scripts/host.cfg,/,\\)
+
+def MAKEVAR2 if def \%2 _assign \%1 \%2, else _assign \%1
+
+def MAKEVAR -
+  if = \findex(=,\%1,1) 0 end, -
+  asg \%9 _\freplace(\%1,=,\32), -
+  makevar2 \%9
+
+open read \m(_configfile)
+if fail forward noconfig
+while true { read \%a, if fail break, makevar \%a }
+
+if not def _hostport stop 1 Fatal - HOSTPORT not defined.
+set network directory	       ; No directory lookups
+set take echo on
+set macro echo on
+
+:LOOP
+set host * \m(_hostport) /tel  ; Wait for a connection on this port
+xif fail { -
+  echo K95 Host Mode - Failure to listen on socket \m(_hostport), -
+  echo Press a key to exit...,-
+  getc \%9,-
+  exit 1 -
+}
+take host.ksc                  ; Execute the host script
+msleep 250                     ; Wait for socket to reset
+goto loop                      ; Go back and wait for another connection
+
+End ; HOSTTCP.KSC

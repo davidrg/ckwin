@@ -1,0 +1,149 @@
+The following is an unordered bullet list of bug fixes and new features
+which have been added to Kermit 95 since the last release from Columbia
+University in January 2003.  For a more complete description of the 
+changes see the Kermit 95 New Bugs file which can be found at
+
+  ftp://ftp.columbia.edu/kermit/k95/newbugs.txt
+
+  * Fixed a bug preventing the execution of macros assigned to keys or
+    mouse events when in terminal mode
+  * added DG4xx Set Cursor Type sequence  <RS> F Q <type>
+  * the dialer did not save the values of menubar, toolbar, statusbar
+    settings on the gui page
+  * a SEND command embedded in a macro and executed as a function with
+    \Fexecute(macro) would cause K95 to crash
+  * timeouts were added to incoming tcp/ip server sockets to prevent
+    denial of service attacks
+  * the passphrase dialog box for private keys accessed during SSL/TLS
+    did not obscure passphrase input
+  * SSH support has been updated to close known security holes
+  * when a HANDLE to a communication device, SET EXIT HANGUP OFF is
+    now the default
+  * Support for Pragma Systems Terminal Server connections were added
+  * ENABLE QUERY command was fixed
+  * Support for using HTTP Proxies to make HTTP connections was added
+  * Corrections to the AnnArbor terminal emulation handling of zSDP
+  * UNC paths now supported for FTP operations
+  * the dialer's QUICK command now supports connections based on
+    templates and includes a SaveAs operation (a poor man's clone)
+  * Linux Character Set handling fixed
+  * Xmodem-CRC checksums fixed
+  * Inadvertent beep produced when setting the title in a terminal
+    session removed
+  * Debug logging of SSH operations added
+  * ADM5 terminal type added
+  * Corrections to START_TLS vs AUTH Telnet Protocol negotiation conflicts
+  * Added SET SSH V2 AUTO-REKEY
+  * SSH URLs did not properly set the window title
+  * extended command line options were not properly processed
+  * new SKERMIT command
+  * a handle leak in the IKSD Service was plugged
+  * new SET FTP BUG USE_SSL_V2 {ON, OFF} command
+  * new SET SSH HEARTBEAT-INTERVAL <seconds> command
+  * new ON_CD macro.  This macro is executed (if defined) whenever a
+    change directory operation occurs.
+  * added FTP MLSD parsing of extended strings
+  * added SET ATTRIBUTES DATE OFF support for XYZmodem transfers
+  * improved algorithm for calculating optimal number of overlapped
+    I/O operations on serial connections
+  * Improvements to Kerberos 5 support
+  * Fixed FTP ASCII sends
+  * added SET TCP HTTP-PROXY /AGENT:<agent>
+  * fixed timeout parameters used on USB Serial devices
+  * SET DIALER BACKSPACE now clears the equivalent SET KEY and SET
+    TERM KEY values
+  * When reading strings from the Windows registry, environment
+    variables are now expanded
+  * fixed the ability to disable reverse dns lookups
+  * fixed code that checks if a name is a directory to work on network
+    mapped file systems which do not provide creation date information
+    for directories.
+  * added missing keymap assignments for IBM 3151 emulation
+  * the dialer did not preserve alternative port numbers for FTP connections
+  * removed a Windows Event Log entry logged before the IKSD.KSC file could
+    be processed to disable all logging
+  * HyperLink Extensions were added to ANSI based terminals allowing URLs and
+    UNCs to be specified within the terminal stream just like HREFs work in
+    HTML
+  * Fixed improper handling of DCS sequences consisting of an intermediary
+    '$' character
+  * Add SET TELNET BUG AUTH-KRB5-DES which defaults to ON.  When OFF, 3DES
+    encryption may be used with KRB5 Telnet authentication.
+  * Replaced C runtime library stat() calls with home grown version to allow
+    for proper processing of UNCs in file transfer operations 
+  * Allow SET TITLE input to be surrounded by braces
+  * Implemented {SEND, RECEIVE} {MOVE-TO, RENAME-TO} for XYZmodem transfers
+  * Fixed SEND /MOVE-TO:directory file transfers
+  * Fixed SET TERMINAL DEBUG ON
+  * Fixed BEEP INFORMATION (and any events that trigger an Informational 
+    audible notification)
+  * Removed restriction of FTP GSSAPI exchanges limiting them to one 
+    round-trip
+  * Rebuilt all binaries with the new Microsoft Visual Studio .NET 2003 
+    compiler.  The primary benefits are optimizations and security 
+    precautions.
+  * Fixed a bug preventing (CSI Z) backtab from being executed.
+  * Add a GUI dialog version of the TYPE command to K95G
+  * SCO SGR Set fg/bg colors hack  (CSI 2;fg;bg m)  The implementation 
+    set the colors to black on black regardless to what was specified
+  * SCO Set Function Key hack (ESC Q fn quote ... quote)
+    If the <fn> character is below '0', don't throw it away; instead
+    push the character back into the input stream and reprocess it.
+  * IBM EDI Services fails randomly due to a "missing tmp rsa export
+    key" error.
+  * Fixed incorrect script generation by the dialer when Transaction
+    Logging was turned on.  The SET TRANSACTION-LOG command was 
+    incompletely generated.
+  * Named Pipe connections (both client and server side) have been added.
+  * Fixed when SET FTP CHARACTER-SET-TRANSLATION ON, output from the FTP DIR
+    and FTP TYPE commands would output as garbage
+  * Fixed the parsing of the FTP FEAT response
+  * Fixed Dialer Generated FTP Connection Scripts to perform login in a
+    script safe manner.
+  * Fixed Dialer Generated FTP Connection Scripts to include commands 
+    specified as part of the Login page textbox
+  * Fixed Unique file name generation when the file system is 8.3 (FAT)
+    restricted and the original filename only contains an extension.
+  * Added SET MSKERMIT FILE-RENAMING {ON, OFF} which enables the use of
+    the MS-DOS Kermit file collision unique name generation algorithm
+    instead of the C-Kermit algorithm.
+  * Applied the SET EXIT STATUS value to the termination of K95G via [x]
+  * Fixed a bug in K95G which prevented proper recognition of mouse drag
+    events when either the Shift or Ctrl keys were pressed.
+  * Fixed FTP SITE HELP to output response text even when verbose and 
+    debug modes are off.
+  * Fixed CVTDATE function to correctly process deltas containing negative
+    months.
+  * Fixed SET PRINTER /CHARACTER-SET:<cs> to assign the specified character
+    set to the printer.  Previously attempts to set the character set would
+    always result in Danish ASCII being assigned instead of the desired 
+    character-set.  Printer output of non-ASCII characters will be output
+    as question marks instead.
+  * Fixed --title: command line option to make the behavior equivalent to
+    the SET TITLE command.
+  * Fixed the dialer to only generate SET LOGIN PROMPT and SET LOGIN 
+    PASSWORD output strings if the user provided a value in the dialer
+    field.
+  * Added --noclose command line option to disable the File->Exit menu
+    item and remove the System Menu Close menu item
+  * Fixed writing to the VTxxx Status Line when the cursor in the display
+    region is located on the right most margin.
+  * Fixed the parsing of \K{verb} to be an alias for \Kverb.  
+  * Fixed processing of VT control character.
+  * Removed restriction on use of auto wrap mode when DECCOLM is set.
+  * OpenSSL has been updated to close known security holes (0.9.8)
+  * Dialer View->FTP option fixed to prevent displaying non-FTP items
+  * -q (quiet) command line option suppresses all startup text allowing
+    the connection to be used for stdio redirection of data over ssh.
+  * SHOW TERMINAL did not display the status of "SET TERM ATTRIBUTE DIM"
+  * DNS SRV record lookups for SSH did not work if a service name was not
+    specified.
+  * Fixed HTTP POST to not insert extra blank line after headers
+  * Fixed parsing of SSH GLOBAL-KNOWN-HOSTS-FILE and USER-KNOWN-HOSTS-FILE
+  * Default terminal type changed to VT220 because Solaris and Linux 
+    variations no longer include definitions for VT320
+  * Dialer Status line only updates the value if it changes.
+
+Kermit 95 includes all modifications made by Columbia University to C-Kermit.
+C-Kermit modifications are usually incorporated into the build the same day
+Columbia University releases them.

@@ -1,0 +1,1127 @@
+; File HOST.KSC - "Host mode" script for K-95.
+;
+; Assumes client is ANSI or VT100 terminal with 24 lines.
+; Protocol operations use APC for automatic up/download,
+; but don't require it.
+;
+;   Works on serial and TCP/IP Telnet connections.
+;   Assumes the connection is already made.  Designed to be
+;   started from HOSTMODE.KSC, which waits for the desired
+;   type of connection to come in.
+;
+; Kermit 95 1.1.3 or later is required.
+;
+; Copyright (C) 1996, 1997, 1998, 1999
+; Trustees of Columbia University in the City of New York.
+; All rights reserved.   Authors:  F. da Cruz, C. Gianone, J. Altman.
+;
+; Version 1.00: February 1996 for 1.1.3.
+; Version 1.01: 8 June 1997 for 1.1.12:
+;  . Add "set transmit echo off".
+;  . Change "clear device-and-input" to "clear input" in GETMENUITEM.
+; Version 1.02:
+;  . Fix problem with requests to send file groups
+; Version 1.03: 9 July 1998 for 1.1.18
+;  . Fix conflict with FAIL command added in 1.1.17
+;  . Fix potential error if _mypriv is non-numeric
+;  . Make sure Autodownload is OFF
+;  . Add SET TELNET REMOTE-ECHO commands
+; Version 1.04 2 September 1999 for 1.1.18
+;  . Disable TELOPT commands
+;  . Add support for Telnet Authentication
+
+def _VERSION 1.04 ; Version of this script
+
+; MACRO DEFINITIONS
+;
+; HOSTLOG writes actions to the screen and to the transaction log.
+; See subsequent redefinitions below.
+;
+def HOSTLOG echo \v(time) - \fcontents(\%1)
+
+; BOXMSG prints an attention-getting message on the console screen.
+;
+def BOXMSG { -
+   asg \%9 \frepeat(=,\flen(\%1)), -
+   ec \%9, ec \%1, ec \%9, -
+   beep -
+}
+
+; LOCK and UNLOCK are for use when updating the user database file,
+; to prevent people from writing over each other's changes.
+;
+def UNLOCK -
+  if not def _locked end 0,-
+  if exist \m(_lockfile) delete \m(_lockfile),-
+  undef _locked,-
+  hostlog {Userfile UNLOCKED},-
+  end 0
+
+def LOCK -
+  if def _locked end 1,-
+  if exist \m(_lockfile) end 1,-
+  open write \m(_lockfile),-
+  if failure end 1,-
+  writeln file \m(_username),-
+  if failure end 1,-
+  close write,-
+  if failure end 1,-
+  def _locked 1,-
+  hostlog {Userfile LOCKED},-
+  end 0
+
+; SPLIT and GETFIELDS are for parsing user database records.
+;
+def SPLIT -
+  asg \%9 \findex(_,\%1),-
+  asg _LEFT \fbreak(\%1,_),-
+  asg _RIGHT \fsubstr(\%1,\%9+1)
+
+def GETFIELDS -
+  split {\%1}, -
+  asg U_ID \m(_LEFT), -
+  split {\m(_RIGHT)}, -
+  asg U_PW \m(_LEFT), -
+  split {\m(_RIGHT)}, -
+  asg U_PR \m(_LEFT), -
+  split {\m(_RIGHT)}, -
+  asg U_NM \m(_LEFT), -
+  split {\m(_RIGHT)}, -
+  asg U_AD \m(_LEFT), -
+  split {\m(_RIGHT)}, -
+  asg U_TP \m(_LEFT), -
+  split {\m(_RIGHT)}, -
+  asg U_EM \m(_LEFT)
+
+; Make a variable: name is first arg, value is second.
+;
+def MAKEVAR2 if def \%2 _assign \%1 \%2, else _assign \%1
+
+; Make a variable from single argument NAME=VALUE
+; Creates variable called "_NAME" with definition "VALUE"
+;
+def MAKEVAR -
+  if = \findex(=,\%1,1) 0 end, -
+  asg \%9 _\freplace(\%1,=,\32), -
+  makevar2 \%9
+
+; FAIL handles fatal errors
+;
+define FAIL hostlog {In \v(cmdfile) at line \v(_line)...},-
+  hostlog {Fatal error \v(errno) \v(errstring) - session closed},-
+  beep, exit
+
+; SAVEUSERDB saves the user database
+;
+define SAVEUSERDB -
+  if exist \fdef(_userbak) del \fdef(_userbak),-
+  rename \fdef(_userfile) \fdef(_userbak),-
+  if failure hostlog {Warning - Failure to back up user database},-
+  open write \fdef(_userfile),-
+  xif failure { hostlog {Can't open \fdef(_userfile)}, UNLOCK, end 1 },-
+  for \%i 1 \&u[0] 1 { -
+    writeln file \&u[\%i], -
+    xif failure { -
+      hostlog {Error writing record \%i to \fdef(_userfile)},-
+      hostlog {Old version preserved as \fdef(_userbak)},-
+      break -
+    },-
+  },-
+  close write,-
+  asg \%9 \v(status),-
+  if not = \%9 0 hostlog {WARNING - Failed to close \fdef(_userfile)},-
+  else hostlog {\fdef(_userfile) saved: \&u[0] records},-
+  UNLOCK,-
+  end \%9
+
+; CONFIGURATION: Defaults in case the config file (HOST.CFG) gets lost...
+;
+asg _maxusers 100			; Maximum number of users in database
+asg _inactivity 1800			; Logged-in inactivity limit (seconds)
+asg _logintime 300			; Inactivity limit while logging in
+asg _anonok 1				; Anonymous logins OK (0 = not OK)
+asg _logging 1				; Logging enabled (0 = skip logging)
+asg _dlincoming 0			; OK to download from INCOMING dir
+asg _msgmax 200				; Longest message size (lines)
+asg _protocol kermit			; Default file transfer protocol
+asg _xfermode binary			; Default file transfer mode
+asg _owner THE PROPRIETOR		; PC owner's name or company
+asg _herald Welcome to K-95 Host Mode	; Main screen title
+asg _public   \v(startup)PUBLIC		; Directory users can get files from
+asg _incoming \v(startup)INCOMING	; Directory that users can send file to
+asg _logdir   \v(startup)LOGS		; Directory for host-mode logs
+asg _usertree \v(startup)USERS		; Root of user directory tree
+asg _tmpdir   \v(tmpdir)		; Directory for temp files
+if not def _tmpdir asg _tmpdir \v(startup)TMP
+asg _userfile \m(_usertree)/USERS.DAT	 ; User database file
+asg _greeting \m(_usertree)/GREETING.TXT ; Message/greeting text filename
+asg _helpfile \m(_usertree)/HOSTMODE.TXT ; Host-mode help file
+asg _msgfile  \m(_usertree)/MESSAGES.TXT ; Messages for proprietor
+
+; Now read the configuration file.
+; Note that the name and subdirectory are hardwired.
+;
+asg _configfile \freplace(\v(startup)scripts/host.cfg,/,\\)
+asg _mypriv 0
+
+if not exist \m(_configfile) forward noconfig
+open read \m(_configfile)
+if failure forward noconfig
+while true { read \%a, if failure break, makevar \%a }
+
+:NOCONFIG
+
+; END OF CONFIGURATION SECTION
+
+dcl \&u[\m(_maxusers)]
+
+if not def _lockfile asg _lockfile \m(_usertree)/USERS.LCK
+
+if not exist \m(_userfile)  -
+  if not eq "\m(_anonok)" "1" -
+    stop 1 Fatal - User database not found and guest logins are disabled.
+
+asg _userbak \freplace(\m(_userfile),.DAT,.BAK)	; Name of backup file
+
+; CD to where the user directories are.
+;
+cd \m(_usertree)
+if failure stop 1 Fatal - Can't change directory to "\m(_usertree)"
+
+; And then CD to its parent.
+;
+cd ..
+if failure stop 1 Fatal - Can't change directory to "\m(_usertree)/.."
+
+asg _startdir \v(dir)			; Host-mode "home" directory.
+
+; Create needed directories if they don't exist.
+;
+if not directory \m(_incoming) mkdir \m(_incoming)
+if not directory \m(_incoming) stop 1 Fatal - no INCOMING directory
+
+if not directory \m(_public) mkdir \m(_public)
+if not directory \m(_public) stop 1 Fatal - no PUBLIC directory
+
+if not directory \m(_usertree) mkdir \m(_usertree)
+if not directory \m(_usertree) stop 1 Fatal - no USERS directory
+
+if not directory \m(_tmpdir) mkdir \m(_tmpdir)
+if not directory \m(_tmpdir) stop 1 Fatal - no TMP directory
+
+if eq "\m(_logging)" "1" -
+  if not dir \m(_logdir) mkdir \m(_logdir) ; Not fatal if this fails
+
+if exist \m(_msgfile) boxmsg {You have messages in \m(_msgfile)!}
+
+; SETTINGS...
+;
+set input echo off			; Keep host PC screen clean
+set exit warning off			; ...
+set file display quiet			; ...
+set case off				; Ignore case in string comparisons 
+set delay 1				; Delay in starting file transfers
+set file type binary			; Transfer mode is binary by default
+set transmit prompt 0			; No line turnaround on TRANSMIT
+set transmit linefeed on		; Keep linefeeds when transmitting
+set transmit echo off                   ; No echo during TRANSMIT
+set file char cp437			; For PC-format text files
+
+set file names converted		; No weird stuff in filenames
+set receive pathnames off		; Strip pathnames from incoming files
+set send pathnames off			; and outbound pathnames too
+set file collision overwrite		; Overwrite incoming files by default
+
+set input autodownload off
+set terminal autodownload off
+if >= \v(xversion) 1118 { set telnet remote-echo off }
+
+if < \v(xversion) 1118 {
+ ; If we are a Telnet server we need to control the echoing ourselves.
+ ;
+ if not = \findex(tcp,\v(connection),1) 1 forward NOTELOPT
+ ;
+ ; Ex-post-facto Telnet "negotiations" to undo whatever might have been
+ ; negotiated already.  K95 normally is a client, but now it's a server.
+ ;
+ telopt will echo			; I must echo
+ if failure do fail			; Make sure this doesn't fail
+ telopt dont echo			; You must not echo
+ telopt will sga			; Suppress Go-Ahead
+ telopt wont ttype			; No terminal type negotiations
+ telopt wont naws			; No screen-size negotiations
+}
+
+:NOTELOPT
+def ERROR msg {\%1}, sleep 2, def _status 1, goto main
+def FATAL msg {Fatal - {\%1}}, sleep 2, fail
+
+hostlog {\v(date) - Start host script \v(cmdfil)}
+hostlog {Current directory: \freplace(\v(dir),\\,/)}
+
+; Macros for screen formatting using VT100/ANSI escape sequences
+
+define clr output \27[H\27[2J, if failure do fail   ; Clear screen
+define cur output \27[\%1;\%2H, if failure do fail  ; Position the cursor
+define atp cur \%1 \%2, out \%3, if failure do fail ; Print text at cursor pos
+define cleol out \27[K, if failure do fail          ; Clear to end of line
+
+; Returns basename of DOS/Windows-format filename argument \%1;
+; that is, the filename stripped of disk letter and/or directory path, if any.
+;
+define BASENAME -
+  asg \%9 \frindex(:,\%1),-
+  asg \%8 \frindex(/,\%1),-
+  asg \%7 \frindex(\\,\%1),-
+  asg \%6 \fmax(\%9,\%8),-
+  asg \%6 \fmax(\%7,\%6),-
+  return \fsubstr(\%1,\%6+1)
+
+; Print message in message area - line \%M column \%C
+define MSG cur \%M \%C, cleol, if def \%1 out \fcont(\%1)
+
+; The next two are used with "Leave a message".
+; \%k is the message line number, global, don't use for anything else.
+;
+def ADDLINE incr \%k, asg \&a[\%k] \fcontents(\%1)
+def NEWSCREEN def \%L 1, clr
+
+; Erases a character on the input line and from the input variable \%n.
+;
+define BS -
+  if not > \flen(\%n) 0 end 0,-
+  asg \%n \fsubstr(\%n,1,\flen(\%n)-1),-
+  decr \%p, out \27[D, cleol, end 0, -
+
+; GETMENUITEM reads a number into \%n, using the echo line, \%L.
+; The argument (\%1) is the label to jump to if the menu needs to be repainted.
+; The minimum value is 1, the maximum value is the second argument, \%2.
+; The prompt is "Enter choice: ".
+;
+define GETMENUITEM -
+  atp \%L \%C {Enter choice: }, -
+:NEW, -
+  asg \%p \feval(\%C+14), -
+  asg \%q \%p, -
+  def \%n, -
+:INLOOP, -
+  clear input, -
+  cur \%L \%p, -
+  cleol, -
+  input \m(_inactivity),-
+  if failure do fail,-
+  if eq "" "\v(inchar)" goto inloop, -
+  asg \%9 \fcode(\v(inchar)), -
+  if  = \%9   9 asg \%9 32, -
+  if  = \%9 127 asg \%9 8, -
+  if = \%9   8 { bs, goto inloop }, -
+  if = \%9  21 { cur \%L \%q, cleol, asg \%p \%q, asg \%n, goto inloop },-
+  if  = \%9   3 goto main, -
+  if  = \%9  12 goto \%1, -
+  if not < \%9 32 forward graphic, -
+  if not def \%n goto inloop, -
+  forward gotit, -
+:GRAPHIC, -
+  atp \%L \%p \v(inchar), -
+  incr \%p, -
+  if eq \%9 32 { if def \%n forward GOTIT, else goto inloop },-
+  if not numeric \v(inchar) { msg {"\v(inchar)" - Not a number}, goto new }, -
+  if not def \%n asg \%n 0, -
+  asg \%n \feval(10 * \%n + \v(inchar)), -
+  msg, -
+  goto inloop, -
+:GOTIT, -
+  msg {Your choice: \%n}, -
+  if not def \%n goto \%1, -
+  if not numeric \%n goto \%1, -
+  if > \%n 0 if not > \%n \%2 end 0, -
+  msg {\%n - Out of range}, -
+  goto new
+
+; INTEXT reads a line of text from user on the input line, \%L, allows editing
+; with Backspace or Del (erase characters), Ctrl-U (erase line), etc.
+; Can be interrupted with Ctrl-C if _ctrlc is defined (it should be defined
+; as a help string to be printed).
+;
+; Terminates on space or any control character except BS, Del, or Ctrl-U.
+; The techniques used for reading and echoing characters are designed to work
+; on both serial and Telnet connections, even whe Telnet echoing is
+; misnegotiated.
+;
+; Argument 1 is the input (echo) line number.
+; Argument 2 is the prompt.
+; Argument 3 is 32 to break on space or less, 31 to break only on control 
+;  chars (use 32 to read a word, use 31 to read a line of text).
+; Argument 4, if included, is the timeout value.
+; Argument 5, if included, is a char to echo in place of what was typed.
+;
+; Returns:
+;   0 on success with \%n set to the text that was input.
+;   1 if Ctrl-C was typed
+;
+define INTEXT -
+  if not def \%3 asg \%3 32,-
+  if not def \%4 asg \%4 \m(_inactivity),-
+  if def \%5 if > \flen(\%5) 1 asg \%5 \fsubstr(\%5,1,1),-
+  def \%n,-
+  asg \%L \%1,-
+  asg \%p \feval(\flen(\%2)+\%C),-
+  asg \%q \%p,-
+  atp \%L \%C {\%2},-
+  if def _ctrlc atp \feval(\%L+1) \%C {\m(_ctrlc)},-
+:INLOOP,-
+  cur \%L \%p, -
+  cleol,-
+  input \%4,-
+  if failure do fail,-
+  if eq "\v(inchar)" "" goto inloop,-
+  asg \%9 \v(inchar),-
+  asg \%8 \fcode(\v(inchar)),-
+  if = \%8 3 if def _ctrlc end 1,-
+  if = \%8   9 { asg \%8 32, asg \%9 \32 },-
+  if = \%8   8 { bs, goto inloop },-
+  if = \%8 127 { bs, goto inloop },-
+  if = \%8  21 { -
+    cur \%L \%q, cleol, asg \%p \%q, asg \%n, goto inloop },-
+  if > \%8 \%3 { asg \%n \fcontents(\%n)\fcontents(\%9),-
+      if def \%5 atp \%L \%p \%5,-
+      else atp \%L \%p \fcont(\%9),-
+      incr \%p,-
+      goto inloop -
+  },-
+  if eq "" "\%n" goto inloop,-
+  end 0
+
+; Displays a text file on the user's screen
+;
+def DISPLAY -
+  hostlog {Typing \%1},-
+  asg \%9 \v(ftype),-
+  set file type text,-
+  output \13\10\10,-
+  transmit \%1,-
+  asg _status \v(status),-
+  set file type \%9,-
+  out \10\13Use scrollback to view any text that scrolled off the screen.,-
+  out \10\13Press any key to continue...,-
+  input \m(_inactivity),-
+  end 0
+
+;+------------------------------------------------------------------------
+; LOGIN procedure
+;
+asg \%C 1     ; Left margin column for login procedure.
+asg \%M 6     ; Row for messages.
+undef _ctrlc  ; Ctrl-C disabled during login process!
+undef _locked
+
+hostlog {Connection from \v(line)}
+clr
+
+atp 1 1 {K-95 Login - Initializing...}
+
+if < \v(xversion) 1118 { 
+  msleep 2000				; Wait for TELNET option replies
+  clear device-buffer			; and then clear them out
+}
+
+hostlog {Auth State = [\v(authstate)]}
+hostlog {Auth Name  = [\v(authname)]}
+hostlog {Auth Type  = [\v(authtype)]}
+hostlog {User name  = [\v(user)]}
+
+if eq "\v(authstate)" "valid" {
+  asg _username \v(user)
+  def ok 0
+  if not exist \m(_userfile) forward AUTHBAD
+  open read \m(_userfile)
+  if failure forward AUTHBAD
+:AUTHLOOP
+  read \%a
+  if failure forward AUTHDONE
+  getfields {\%a}
+  if not eq "\m(U_ID)" "\m(_username)" goto AUTHLOOP
+  def ok 1
+:AUTHDONE
+  close read
+  if > \m(ok) 0 forward AUTHGOOD
+:AUTHBAD
+  hostlog {Access denied "\m(_username)"}
+  undef _password
+  if count goto again
+  msg {Access denied - hanging up}
+  incr \%M
+  msg
+  hostlog {Invalid user - access denied}
+  do fail
+:AUTHGOOD
+  undef _password
+  asg _myname \fdef(U_NM)
+  asg _mypriv \m(U_PR)
+  if not numeric \m(_mypriv) asg _mypriv 0
+  msg {\m(_username) authenticated by \v(authtype)}
+  beep
+  if >= \v(xversion) 1118 { set telnet remote-echo on }
+  undef noecho
+  forward LOGGEDIN
+}
+
+if eq "\v(authstate)" "user" {
+  asg _username \v(user)
+  forward GETPASSWD
+}
+
+set count 3				; Allow three tries to log in
+:AGAIN					; Login retry loop
+clr
+atp 1 1 {K-95 Login}
+if < \v(count) 3 { msg {Access denied}, sleep 3 }
+def \%L 1
+define noecho
+if >= \v(xversion) 1118 { set telnet remote-echo on }
+clear device-buffer			; Don't allow typeahead
+intext 3 {Username: } 32 90
+if failure do fail
+asg _username \%n
+if not eq "\m(_anonok)" "1" forward GETPASSWD
+if not eq "\m(_username)" "guest" forward GETPASSWD
+
+msg					; GUEST user
+asg _myname {Anonymous Guest}
+asg _mypriv 0
+msg
+beep
+if >= \v(xversion) 1118 { set telnet remote-echo on }
+undef noecho
+forward LOGGEDIN
+
+:GETPASSWD
+def noecho on
+if >= \v(xversion) 1118 { set telnet remote-echo off }
+clear device-buffer
+intext 4 {Password: } 32 90 *
+if failure do fail
+asg _password \f.oox(\%n)
+asg \%n
+
+:CHECKPASSWD
+  def ok 0
+  if not exist \m(_userfile) forward BAD
+  open read \m(_userfile)
+  if failure forward BAD
+:PWLOOP
+  read \%a
+  if failure forward PWDONE
+  getfields {\%a}
+  if not eq "\m(U_ID)" "\m(_username)" goto PWLOOP
+  if not eq "\m(U_PW)" "\m(_password)" goto PWLOOP
+  def ok 1
+:PWDONE
+  close read
+  if > \m(ok) 0 forward good
+:BAD
+  hostlog {Access denied "\m(_username)"}
+  undef _password
+  if count goto again
+  msg {Access denied - hanging up}
+  incr \%M
+  msg
+  hostlog {Incorrect password - access denied}
+  do fail
+:GOOD
+  undef _password
+  asg _myname \fdef(U_NM)
+  asg _mypriv \m(U_PR)
+  if not numeric \m(_mypriv) asg _mypriv 0
+  msg
+  beep
+  if >= \v(xversion) 1118 { set telnet remote-echo on }
+  undef noecho
+
+;+------------------------------------------------------------------------+
+; Get here when logged in.
+
+:LOGGEDIN
+
+; Create Transaction log with unique name "<username>_<julian-date>_<time>.log"
+;
+if eq "\m(_logging)" "1" { -
+  log transactions \m(_logdir)/\m(_username)_\v(ndate)_\v(ntime).log, -
+  if failure hostlog {Warning - can't create log file},-
+  else def HOSTLOG { echo \v(time) - \fcont(\%1),-
+    writeln trans \v(time) - \fcont(\%1) } -
+}
+hostlog {Login by \m(_username) (\m(_myname))}
+
+if exist \m(_greeting) display \m(_greeting)
+
+:CHKANON ; Check for anonymous GUEST login
+  if not eq "\m(_username)" "guest" forward USERCD
+  cd \m(_public)
+  asg _current PUBLIC
+  undef _userdir
+  forward START
+
+:USERCD ; Create user's directory if necessary and then CD to it.
+
+asg _userdir \m(_usertree)/\m(_username)
+if not directory \m(_userdir) { -
+  hostlog {Creating \m(_userdir)}, -
+  mkdir \m(_userdir), -
+  if failure fatal {Unable to create your directory} -
+}
+cd \m(_userdir)
+if failure fatal {Unable to access your directory}
+
+asg _current USER
+
+:START
+  dcl \&s[2]            ; Status messages
+  def \&s[0] OK
+  def \&s[1] FAILED
+  def \&s[2] UNKNOWN
+
+  dcl \&p[5]            ; Protocol names
+  def \&p[1] kermit
+  def \&p[2] zmodem
+  def \&p[3] ymodem
+  def \&p[4] ymodem-g
+  def \&p[5] xmodem
+
+  define \%C 20 ; Left margin column for menu
+  hostlog {Enter main menu}
+  undef _csave
+  undef _inmail
+  undef _status
+  set protocol \m(_protocol)
+  set file type \m(_xfermode)
+
+  def _priv_cd  1
+  def _priv_dos 2
+  def _idle_limit (none)
+  if not numeric _inactivity asg _inactivity 1800
+  if > \m(_inactivity) 0 asg _idle_limit \m(_inactivity)
+
+:MAIN
+  if def _locked unlock
+  if def _inmail { hostlog {Message canceled}, undef _inmail }
+  dcl \&a[0]
+  def _ctrlc (Ctrl-C to return to main menu) ; Ctrl-C enabled now
+  if def _csave { asg \%C \m(_csave), def _csave } ; Left margin
+
+clr
+atp  1 \%C {\m(_herald) V\m(_VERSION)}
+atp  3 \%C {Current directory: \freplace(\v(dir),\\,/)}
+atp  4 \%C {Protocol: \v(protocol), Transfer mode: \fcaps(\v(ftype))}
+if exist \m(_usertree)/\m(_username).MSG -
+atp  5 \%C {Message(s) waiting...}
+else atp  5 \%C {Idle limit: \m(_idle_limit) sec -- Choices:}
+atp  7 \%C { 1 - Change protocol}
+atp  8 \%C { 2 - Change transfer mode}
+atp  9 \%C { 3 - Change directory}
+atp 10 \%C { 4 - List files}
+atp 11 \%C { 5 - Download files}
+atp 12 \%C { 6 - Upload files}
+atp 13 \%C { 7 - View a file}
+atp 14 \%C { 8 - Delete files}
+atp 15 \%C { 9 - Read messages}
+atp 16 \%C {10 - Leave a message}
+atp 17 \%C {11 - Change password}
+atp 18 \%C {12 - Help}
+atp 19 \%C {13 - Logout}
+if not > \m(_mypriv) 1 forward NODOS
+atp 20 \%C {14 - Execute a DOS command}
+if def _status -
+atp 24 \%C {Last command: \&s[\m(_status)]}
+asg \%H 14             ; Highest menu item
+asg \%L 22             ; Menu input line
+forward getmenu
+:NODOS                 ; DOS commands not allowed
+if def _status -
+atp 23 \%C {Last command: \&s[\m(_status)]}
+asg \%H 13
+asg \%L 21
+:GETMENU
+asg \%M \feval(\%L+1)  ; Message line
+getmenuitem main \%H   ; Get user's choice
+forward LBL_\%n        ; Go forward and handle it
+
+;+------------------------------------------------------------------------+
+; Host mode actions
+
+:LBL_1 ; PROTOCOL
+clr
+atp  4 \%C {SELECT PROTOCOL}
+atp  6 \%C {Current protocol: \v(protocol)}
+atp  8 \%C {Choices:}
+atp 10 \%C {1 - Kermit}
+atp 11 \%C {2 - ZMODEM}
+atp 12 \%C {3 - YMODEM}
+atp 13 \%C {4 - YMODEM-G}
+atp 14 \%C {5 - XMODEM}
+atp 15 \%C {6 - Return to main menu}
+
+asg \%L 17             ; Menu input line
+asg \%M \feval(\%L+2)  ; Message line
+getmenuitem lbl_1 6
+if not = \%n 6 -
+  set protocol \&p[\%n]
+asg _status \v(status)
+goto main
+
+:LBL_2 ; TRANSFER MODE
+clr
+atp  8 \%C {SELECT TRANSFER MODE}
+atp 10 \%C {Current mode: \v(ftype)}
+atp 12 \%C {Choices:}
+atp 14 \%C {1 - Binary}
+atp 15 \%C {2 - Text}
+atp 16 \%C {3 - Return to main menu}
+
+asg \%L 18             ; Menu input line
+asg \%M \feval(\%L+2)  ; Message line
+getmenuitem lbl_2 3
+if = \%n 1 set file type binary
+else if = \%n 2 set file type text
+asg _status \v(status)
+goto main
+
+:LBL_5 ; DOWNLOAD
+clr
+if > \m(_mypriv) 0 forward DLOK
+if eq "\m(_dlincoming)" "1" forward DLOK
+if not eq "\m(_current)" "INCOMING" forward DLOK
+error {Sorry - Read access to INCOMING directory not allowed.}
+:DLOK
+atp  4 \%C {DOWNLOAD FILES}
+atp  6 \%C {Protocol:      \v(protocol)}
+atp  7 \%C {Transfer mode: \v(ftype)}
+atp  9 \%C {Type a single file specification.}
+if eq "\v(protocol)" "XMODEM" forward DLNAME
+atp 11 \%C {To select multiple files:}
+atp 12 \%C {include * and/or ? in the filename.}
+:DLNAME
+intext \%L {File(s) to download: }
+if failure goto main
+if not def \%n goto main
+asg \%n \fexec(basename \%n)
+if not > \ffiles(\%n) 0 error {\%n - File not found}
+hostlog {Sending \%n}
+if eq "\v(protocol)" "kermit" apc receive
+msg {Please escape back and initiate a \v(protocol) RECEIVE...}
+sleep 1
+send \%n
+asg _status \v(status)
+if = \m(_status) 0 hostlog {Send OK, \v(cps) CPS}
+else hostlog {Send failed}
+goto main
+
+:LBL_6 ; UPLOAD
+clr
+if > \m(_mypriv) 0 forward UPLOADOK
+if not eq "\m(_current)" "PUBLIC" forward UPLOADOK
+atp 4 \%C {Sorry - no uploading to the PUBLIC directory.}
+atp 5 \%C {Please change to the INCOMING directory or to}
+atp 6 \%C {your own home directory prior to uploading.}
+sleep 2
+asg _status 1
+goto main
+:UPLOADOK
+atp 4 \%C {UPLOAD FILES}
+atp 6 \%C {Protocol:      \v(protocol)}
+atp 7 \%C {Transfer mode: \v(ftype)}
+intext \%L {File(s) to upload: }
+if failure goto main
+if not def \%n goto main
+if not eq "\v(protocol)" "kermit" forward XYZMODEM
+apc server
+atp 12 \%C {Please escape back and enter SERVER mode...}
+sleep 1
+beep info
+hostlog {Receiving \%n in \freplace(\v(dir),\\,/)}
+get \%n
+asg _status \v(status)
+if = \m(_status) 0 hostlog {Get OK, \v(cps) CPS}
+else hostlog {Get failed}
+sleep 1
+finish
+goto main
+:XYZMODEM
+atp 12 \%C {Please return to your client software and instruct}
+atp 13 \%C {it to send \%n using \v(protocol) protocol.}
+receive
+asg _status \v(status)
+goto main
+
+:LBL_7 ; TYPE
+clr
+if > \m(_mypriv) 0 forward TYPEOK
+if not eq "\m(_current)" "INCOMING" forward TYPEOK
+if eq "\m(_dlincoming)" "1" forward TYPEOK
+error {Sorry - Read access to the INCOMING directory not allowed.}
+:TYPEOK
+atp 8 \%C {TYPE A FILE}
+intext \%L {File to type: }
+if failure goto main
+asg \%n \fexec(basename \%n)
+if not exist \%n error {\%n - File not found}
+display \%n
+goto main
+
+:LBL_8 ; DELETE
+clr
+
+if > \m(_mypriv) 0 forward DELOK
+if eq "\m(_current)" "USER" forward DELOK
+error {Sorry - You may delete files only in your own directory.}
+:DELOK
+atp 8 \%C {DELETE FILES}
+intext \%L {File(s) to delete: }
+if failure goto main
+asg \%n \fexec(basename \%n)		; Strip disk and directory
+if not > \ffiles(\%n) 0 error {\%n - Not found}
+delete \%n
+asg _status \v(status)
+goto main
+
+:LBL_4 ; DIRECTORY
+clr
+if > \m(_mypriv) 0 forward DIROK
+if eq "\m(_dlincoming)" "1" forward DIROK
+if not eq "\m(_current)" "INCOMING" forward DIROK
+error {Sorry - Read access to the INCOMING directory not allowed.}
+:DIROK
+atp  8 \%C {VIEW DIRECTORY LISTING}
+hostlog {Sending directory listing}
+cur 10 1
+asg _tmpfile \m(_tmpdir)K_\v(ntime).TMP
+run dir > \freplace(\m(_tmpfile),/,\\)
+display \m(_tmpfile)
+delete \m(_tmpfile)
+goto main
+
+:LBL_3 ; CD
+clr
+atp   8 \%C {CHANGE DIRECTORY}
+atp  10 \%C {Current directory: \freplace(\v(dir),\\,/)}
+atp  12 \%C {Choices:}
+atp  14 \%C {1 - My home directory (read/write only by me)}
+atp  15 \%C {2 - The PUBLIC directory (everybody can read it)}
+if eq "\m(_dlincoming)" "1" -
+atp  16 \%C {3 - The INCOMING directory (everybody can read and write)}
+else -
+atp  16 \%C {3 - The INCOMING directory (everybody can write)}
+
+if > \m(_mypriv) 0 -
+atp  17 \%C {4 - A specific directory}
+atp  18 \%C {5 - Return to main menu}
+
+asg \%L 20             ; Menu input line
+asg \%M \feval(\%L+2)  ; Message line
+
+getmenuitem LBL_3 5    ; Repaint menu at LBL_3, 5 items in menu
+forward cd_\%n         ; Dispatch to chosen menu item
+
+:CD_1 ; CD to home directory
+if not def _userdir goto main		; Not for anonymous users
+cd \m(_userdir)				; Real user, CD to own directory
+asg _status \v(status)			; Remember status
+enable send				; Uploads are allowed
+set file collision ov			; OK to overwrite files
+asg _current USER
+goto main
+
+:CD_2 ; CD to PUBLIC directory
+cd \m(_public)				; Everybody can do this
+asg _status \v(status)
+if < \m(_mypriv) 1 disable send		; Sending to here not allowed
+else enable send
+set file collision ov			; Write over files on uploads
+asg _current PUBLIC
+goto main
+
+:CD_3 ; CD to INCOMING directory
+cd \m(_incoming)			; Everone can come here
+asg _status \v(status)
+set file collision ov			; Overwrite files on upload
+asg _current INCOMING
+enable send				; It's always OK to upload
+goto main
+
+; CD to a given directory.
+; Note the use of \fcontents() to prevent overevaluation of backslashes.
+;
+:CD_4 ; CD to a specific directory
+if not > \m(_mypriv) 0 error {Sorry - insufficient privilege}
+intext \%L {Enter directory name: }
+if failure goto LBL_3
+if not def \%n goto LBL_3
+if not dir \fcont(\%n) error {\%n - not a directory}
+cd \fcont(\%n)
+asg _status \v(status)
+if > \m(_status) 0 error {Failure to change directory to "\fcont(\%n)"}
+set file collision backup		; Overwrite would be dangerous here!
+asg _current SPECIAL			; But RENAME is too confusing...
+enable send				; I'm privileged so I can upload.
+goto main
+
+:CD_5
+goto main
+
+:LBL_9 ; CHECK / READ MESSAGES
+clr
+if not exist \m(_usertree)/\m(_username).MSG forward NOMSGS
+display \m(_usertree)/\m(_username).MSG
+
+:MSGDISP
+clr
+atp  8 \%C {MESSAGE DISPOSITION}
+atp 10 \%C {Choices:}
+atp 12 \%C {1 - Redisplay}
+atp 13 \%C {2 - Delete}
+atp 14 \%C {3 - Save in MESSAGES.TXT}
+atp 15 \%C {4 - Download}
+atp 16 \%C {5 - Return to main menu}
+asg \%L 18             ; Menu input line
+asg \%M \feval(\%L+2)  ; Message line
+getmenuitem msgdisp 5
+forward MSG_\%n
+:MSG_1
+  goto lbl_9
+:MSG_2
+  delete \m(_usertree)/\m(_username).MSG
+  asg _status \v(status)
+  goto main
+:MSG_3
+  asg \%9 \freplace(\v(dir),\\,/)
+  cd \m(_usertree)
+  run copy \m(_username)\\MESSAGES.TXT+\m(_username).MSG -
+    \m(_username)\\MESSAGES.TXT
+  asg _status \v(status)
+  cd \%9
+  if = \m(_status) 0 delete \m(_usertree)/\m(_username).MSG
+  goto main
+:MSG_4
+  hostlog {Sending \m(_usertree)/\m(_username).MSG}
+  if eq "\v(protocol)" "kermit" apc receive
+  msg {Please escape back and initiate a \v(protocol) RECEIVE...}
+  asg \%9 \v(ftype)
+  set file type text
+  sleep 1
+  send \m(_usertree)/\m(_username).MSG
+  asg _status \v(status)
+  set file type \%9
+  if = \m(_status) 0 { -
+    hostlog {Send OK, \v(cps) CPS}, -
+    delete \m(_usertree)/\m(_username).MSG -
+  } else { hostlog {Send failed} }
+:MSG_5
+goto main
+
+:NOMSGS
+atp 4 \%C {No messages for \m(_username)}
+sleep 2
+goto main
+
+:LBL_10 ; LEAVE A MESSAGE
+def _inmail 1
+def _ctrlc (Ctrl-C to cancel message)
+dcl \&a[\m(_msgmax)+5]
+def \%k 0 ; Line number of entire message - see addline
+
+clr
+addline {Date: \v(date) \v(time)}
+addline {From: \m(_username) (\m(_myname))}
+atp 4 \%C {LEAVE A MESSAGE FOR \m(_owner)}
+asg _csave \%C
+def \%C 1
+def \%L 6
+intext \%L {Subject: } 31
+if failure goto main
+asg _subject \fcontents(\%n)
+addline {Subject: \fcontents(\%n)}
+addline {}
+cur 7 1
+cleol
+cur 8 1
+cleol
+out {Type the message now.  To make a blank line, enter a space by itself.}
+cur 9 1
+cleol
+out {Maximum lines: \m(_msgmax).  Type a period by itself on a line to finish.}
+def \%L 10
+cur \%L 1
+cleol
+def \%i 0   ; Line number of message body
+set count \m(_msgmax)
+:MSGLOOP
+  if = \%L 22 newscreen
+  incr \%L
+  incr \%i
+  intext \%L {\flpad(\%i,3,0)> } 31
+  if failure goto main
+  addline {\fcontents(\%n)}
+  if eq "\%n" "." forward msgdone
+  if count goto msgloop
+  atp %\L 1 {Maximum lines exceeded}
+:MSGDONE
+incr \%L
+cur \%L 1
+cleol
+incr \%L
+if > \%L 22 newscreen
+asg \%i 999
+
+:MSGCFM ; Confirm the message
+  atp \%L 1 {Type Ctrl-C to cancel or Press space bar to send: }
+  input \m(_inactivity)
+  if failure do fail
+  asg \%i \fcode(\v(inchar))
+  if = \%i 3 goto main
+  if = \%i 32 forward MSGSEND
+  goto MSGCFM
+
+:MSGSEND ; Send the message
+open append \m(_msgfile)
+if failure error {Sorry - messages not available now}
+for \%i 1 \%k 1 { -
+  writeln file \fcontents(\&a[\%i]) -
+}
+close append
+asg _status \v(status)
+if = \m(_status) 0 forward MSGOK
+hostlog {Problem sending message}
+msg {Error sending message}
+sleep 2
+forward MSGEND
+
+:MSGOK
+boxmsg {Message from \m(_username): \m(_subject)}
+
+:MSGEND
+asg \%C \m(_csave)
+undef _csave
+undef _inmail
+goto main
+
+:LBL_11 ; CHANGE PASSWORD
+clr
+asg \%M 2
+;
+; Lock the database.
+;
+hostlog {User \m(_username) changing password...}
+LOCK
+if failure error {Busy - try again later}
+open read \fdef(_userfile)
+if failure error {Error - try again later}
+undef _myrecord
+asg \&u[0] 0
+;
+; Read in the entire database because the whole thing must be written
+; out again when done.  The user's record number is assigned to _myrecord.
+;
+for \%i 1 \m(_maxusers) 1 { -
+  read \&u[\%i], -
+  if failure break, -
+  increment \&u[0], -
+  getfields {\&u[\%i]}, -
+  if eq "\m(U_ID)" "\m(_username)" asg _myrecord \%i -
+}
+close read
+if not def _myrecord error {Lookup failure}
+getfields {\&u[\m(_myrecord)]}
+
+:GETPW
+intext 2 {Old Password:    } 31 \m(_inactivity) *
+if not def \%n goto GETPW
+if not eq "\m(U_PW)" "\f.oox(\%n)" { -
+  unlock,-
+  incr \%M,-
+  error {Sorry.} -
+}
+intext 3 {New Password:    } 31 \m(_inactivity) *
+if failure goto main
+if not def \%n goto GETPW
+asg \%9 \%n
+intext 4 {Retype Password: } 31 \m(_inactivity) *
+if failure goto main
+if eq "\%n" "\%9" forward NEWPWOK
+asg \%M 5
+msg {Passwords do not match - please try again}
+incr \%M
+msg {or use Ctrl-C to return to the main menu.}
+sleep 2
+clr
+goto GETPW
+
+:NEWPWOK
+asg \&u[\m(_myrecord)] -
+\m(U_ID)_\f.oox(\%n)_\m(U_PR)_\m(U_NM)_\m(U_AD)_\m(U_TP)_\m(U_EM)
+saveuserdb
+if success hostlog {Password changed} 
+else error {FAILED - Password not changed}
+sleep 2
+goto main
+
+:LBL_12 ; HELP
+clr
+if not exist \m(_helpfile) error {Sorry - no help available}
+display \m(_helpfile)
+goto main
+
+:LBL_13 ; EXIT
+clr
+hostlog {Close transaction log}
+close transact
+def HOSTLOG echo \v(time) - \%1
+hostlog {Exit host mode}
+atp 2 2 Bye!
+cur 3 1
+cd \m(_startdir)
+hangup
+end 0
+
+:LBL_14 ; DOS command
+clr
+if not > \m(_mypriv) 1 error {Sorry - insufficient privilege}
+atp  2 \%C {EXECUTE A DOS COMMAND}
+atp  4 \%C {Current directory: \freplace(\v(dir),\\,/)}
+atp  6 \%C {CAUTION: Do NOT issue a command that:}
+atp  8 \%C { 1. Might possibly require input from the PC keyboard.}
+atp  9 \%C { 2. Starts a GUI program.}
+atp 10 \%C { 3. Requires any type of interaction at all.}
+atp 12 \%C {If you do, your session will become stuck and you will}
+atp 13 \%C {have to hang up.  Only give commands that print textual}
+atp 14 \%C {information on a DOS screen and then exit immediately.}
+atp 15 \%C {The output will be displayed on your screen unless you}
+atp 16 \%C {redirect it to a file, in which case you can download or}
+atp 17 \%C {type the file afterwards from the main menu.}
+while true { -
+  intext 19 {DOS Command: } 31,-
+  if failure goto main,-
+  if def \%n break -
+}
+hostlog {DOS command "\fcontents(\%n)"}
+if > \findex(>,\%n) 0 forward DOSREDIR
+;
+; Command is not redirected so we redirect it to a temp file
+; and then display the temp file.  Pipes don't work in Windows 95.
+;
+asg _tmpfile \m(_tmpdir)K_\v(ntime).TMP
+run \fcontents(\%n) > \freplace(\m(_tmpfile),/,\\)
+; asg _status \v(status)                ; Doesn't work
+asg _status 2				; Status is unknown
+if exist \m(_tmpfile) { -
+  display \m(_tmpfile),-
+  delete \m(_tmpfile) -
+}
+goto main
+
+:DOSREDIR ; Command is already redirected, just run it.
+run \fcontents(\%n)
+asg _status 2
+goto main
+
+; End of HOST.KSC
+

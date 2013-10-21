@@ -1,0 +1,99 @@
+cp -p $1 $1_SAVE
+
+cat $1 | sed -e s/comport_/tnc_/ > x1
+
+cat x1 | sed -e s/tnc_inbound_flow_control/tnc_iflow/ > x2
+cat x2 | sed -e s/tnc_outbound_flow_control/tnc_oflow/ > x1
+
+cat x1 | sed -e s/tnc_set_inbound_flow_control/tnc_set_iflow/ > x2
+cat x2 | sed -e s/tnc_set_outbound_flow_control/tnc_set_oflow/ > x1
+
+cat x1 | sed -e s/tnc_get_inbound_flow_control/tnc_get_iflow/ > x2
+cat x2 | sed -e s/tnc_get_outbound_flow_control/tnc_get_oflow/ > x1
+
+cat x1 | sed -e s/tnc_send_flow_control_resume/tnc_resume_flow/ > x2
+cat x2 | sed -e s/tnc_send_flow_control_suspend/tnc_suspend_flow/ > x1
+
+cat x1 | sed -e s/tnc_modemstate/tnc_ms/ > x2
+cat x2 | sed -e s/tnc_linestate/tnc_ls/ > x1
+
+cat x1 | sed -e s/tnc_get_modemstate/tnc_get_ms/ > x2
+cat x2 | sed -e s/tnc_set_modemstate/tnc_set_ms/ > x1
+
+cat x1 | sed -e s/tnc_get_linestate/tnc_get_ls/ > x2
+cat x2 | sed -e s/tnc_set_linestate/tnc_set_ls/ > x1
+
+cat x1 | sed -e s/tnc_indexed_baudrate/tnc_bps_index/ > x2
+cat x2 | sed -e s/tnc_baudrate/tnc_bps/ > x1
+
+cat x1 | sed -e s/tnc_flow_control/tnc_flow/ > x2
+cat x2 | sed -e s/COMPORT_/TNC_/ > x1
+
+cat x1 | sed -e s/TNC_BAUDRATE/TNC_BPS/ > x2
+cat x2 | sed -e s/TNC_CONTROL/TNC_CTL/ > x1
+
+cat x1 | sed -e s/TNC_CTL_OUTBOUND_FLOW/TNC_CTL_OFLOW/ > x2
+cat x2 | sed -e s/TNC_CTL_INBOUND_FLOW/TNC_CTL_IFLOW/ > x1
+
+cat x1 | sed -e s/TNC_MODEMSTATE/TNC_MS/ > x2
+cat x2 | sed -e s/TNC_LINESTATE/TNC_MS/ > x1
+
+cat x1 | sed -e s/TNC_SET_MODEMSTATE/TNC_SET_MS/ > x2
+cat x2 | sed -e s/TNC_SET_LINESTATE/TNC_SET_MS/ > x1
+
+cat x1 | sed -e s/TNC_GET_MODEMSTATE/TNC_GET_MS/ > x2
+cat x2 | sed -e s/TNC_GET_LINESTATE/TNC_GET_MS/ > x1
+
+cat x1 | sed -e s/TNC_S2C_FLOWCONTROL_SUSPEND/TNC_S2C_FLOW_SUSPEND/ > x2
+cat x2 | sed -e s/TNC_C2S_FLOWCONTROL_SUSPEND/TNC_C2S_FLOW_SUSPEND/ > x1
+
+cat x1 | sed -e s/TNC_C2S_FLOWCONTROL_RESUME/C2S_FLOW_RESUME/ > x2
+cat x2 | sed -e s/TNC_S2C_FLOWCONTROL_RESUME/TNC_S2C_FLOW_RESUME/ > x1
+
+cat x1 | sed -e s/TNC_C2S_SET_LINESTATE_MASK/TNC_C2S_SET_LS_MASK/ > x2
+cat x2 | sed -e s/TNC_S2C_SET_LINESTATE_MASK/TNC_S2C_SET_LS_MASK/ > x1
+
+cat x1 | sed -e s/TNC_C2S_SET_MODEMSTATE_MASK/TNC_C2S_SET_MS_MASK/ > x2
+cat x2 | sed -e s/TNC_S2C_SET_MODEMSTATE_MASK/TNC_S2C_SET_MS_MASK/ > x1
+
+cat x1 | sed -e s/TNC_C2S_PURGE_DATA/TNC_C2S_PURGE/ > x2
+cat x2 | sed -e s/TNC_S2C_PURGE_DATA/TNC_S2C_PURGE/ > x1
+
+cat x1 | sed -e s/TNC_PURGE_DATA/TNC_PURGE/ > x2
+cat x2 | sed -e s/TNC_MS_DELTA_CTS/TNC_MS_CTS_DELTA/ > x1
+
+cat x1 | sed -e s/TNC_MS_DELTA_DSR/TNC_MS_DSR_DELTA/ > x2
+cat x2 | sed -e s/TNC_MS_DELTA_RLSD/TNC_MS_RLSD_DELTA/ > x1
+
+cat x1 | sed -e s/TNC_MS_FRAMING/TNC_MS_FRAME/ > x2
+cat x2 | sed -e s/TNC_MS_BREAK_DETECT/TNC_MS_BREAK/ > x1
+
+cat x1 | sed -e s/TNC_MS_HOLDING_REGISTER_EMPTY/TNC_MS_HR_EMPTY/ > x2
+cat x2 | sed -e s/TNC_MS_SHIFT_REGISTER_EMPTY/TNC_MS_SR_EMPTY/ > x1
+
+cat x1 | sed -e s/TNC_MS_TRAILING_EDGE_RING_DETECTOR/TNC_MS_EDGE_RING/ > x2
+cat x2 | sed -e s/TNC_MS_RING_INDICATOR/TNC_MS_RI_SIG/ > x1
+
+cat x1 | sed -e s/TNC_MS_TRAILING_EDGE_RING_DETECTOR/TNC_MS_EDGE_RING/ > x2
+cat x2 | sed -e s/TNC_MS_CTS_SIGNAL_STATE/TNC_MS_CTS_SIG/ > x1
+
+cat x1 | sed -e s/TNC_MS_DSR_SIGNAL_STATE/TNC_MS_DSR_SIG/ > x2
+cat x2 | sed -e s/TNC_MS_RLSD_SIGNAL_STATE/TNC_MS_RLSD_SIG/ > x1
+
+cat x1 | sed -e s/TNC_S2C_NOTIFY_LINESTATE/TNC_S2C_SEND_LS/ > x2
+cat x2 | sed -e s/TNC_S2C_NOTIFY_MODEMSTATE/TNC_S2C_SEND_MS/ > x1
+
+cat x1 | sed -e s/TNC_DATASIZE/TNC_DS/ > x2
+cat x2 | sed -e s/TNC_PARITY/TNC_PAR/ > x1
+
+cat x1 | sed -e s/TNC_STOPBIT/TNC_SB/ > x2
+cat x2 | sed -e s/COMPORT_CONTROL/TNC_CTL/ > x1
+
+cat x1 | sed -e s/COMPORT_DATASIZE/TNC_DS/ > x2
+
+# rm -f $1
+mv x2 $1_NEW
+rm -f x1
+ls -l $1_SAVE $1_NEW
+
+# (end)

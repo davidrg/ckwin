@@ -1,0 +1,6 @@
+LIBRARY CKSNVAL
+DESCRIPTION 'Serial Number Validation for Commerical Kermit Products'
+DATA MULTIPLE NONSHARED
+EXPORTS
+ RexxValidateSN = RexxValidateSN 
+

@@ -1,0 +1,8 @@
+REGEDIT4
+
+[HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\PwdProvider\SRPW95PP]
+"ProviderPath"="srpw95pp.dll"
+"Description"="Secure Remote Password"
+"ChangePassword"="PPChangePassword"
+"GetPasswordStatus"="PPGetPasswordStatus"
+

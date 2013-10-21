@@ -1,0 +1,11 @@
+; Sample host mode operation for dialin connections.
+
+:loop
+set modem telebit  ; Replace this appropriately for your configuration
+set port 1         ; ditto
+set speed 38400    ; ditto
+set flow rts/cts   ; ditto
+answer
+take host.ksc
+hangup
+goto loop

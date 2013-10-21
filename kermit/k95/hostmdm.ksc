@@ -1,0 +1,57 @@
+; Kermit 95 host mode listener for dialin connections.
+;
+;   Version 1.0, Feb 1996.
+;   Version 2.0, Jan 1997, avoid undoing prior modem customizations.
+;   Version 3.0, Jun 1997, adds support for TAPI.
+;
+if < \v(xvers) 1112 stop 1 \v(cmdfil): K-95 1.1.12 or higher is required.
+
+local x1 x2 split
+undef x2
+
+asg _configfile \freplace(\v(startup)scripts/host.cfg,/,\\)
+
+def MAKEVAR2 {
+    if def \%2 _assign \%1 \%2 \%3 \%4 \%5 \%6 \%7 \%8 \%9
+    else _assign \%1
+}
+def MAKEVAR {
+    if = \findex(=,\%1,1) 0 end
+    asg \%9 _\freplace(\%1,=,\32)
+    makevar2 \%9
+}
+def SPLIT {
+    asg x1 \%1
+    asg x2 \%2
+}
+open read \m(_configfile)
+if fail forward noconfig
+while true { read \%a, if fail break, makevar {\%a} }
+
+:NOCONFIG
+
+; Don't give a SET MODEM TYPE command if it will not change the
+; current modem type.  If we do, it wipes out any prior customizations.
+
+xif def _modem {
+    xif not equal \v(modem) \m(_modem) {
+        set modem type \m(_modem)
+        if fail stop 1 "\m(_modem)" - Invalid modem type
+    }
+}
+xif def _commport {
+    split \m(_commport)     ; This can be one or two words
+    set port \m(x1) \m(x2)  ; e.g. SET PORT TAPI Name_of_TAPI_Device
+    if fail stop 1 "\m(_commport)" - Invalid port
+}
+xif def _comspeed {
+    set speed \m(_comspeed)
+    if fail stop 1 "\m(_comspeed)" - Invalid speed
+}
+xif not eq "\v(connection)" "serial" {
+    stop 1 "\v(line)" - Inappropriate connection type: "\v(connection)"
+}
+while 1 {
+    answer
+    if success take host.ksc
+}
