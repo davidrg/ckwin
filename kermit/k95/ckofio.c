@@ -5409,7 +5409,12 @@ zfseek(CK_OFF_T pos)
 {
 #ifdef NT
     int rc;
+	/* ** TODO: Restore use of fsetpos (pos is an __int64, fpos_t is a struct. 
+	 * This sort of assignment is not allowed)
+	
     fpos_t fpos = pos;
+	
+	*/
 #endif /* NT */
 
     zincnt = -1 ;               /* must empty the input buffer */
@@ -5421,7 +5426,12 @@ zfseek(CK_OFF_T pos)
         debug(F100,"zfseek FILE_TYPE_PIPE","",0);
         return(-1);
     }
+	/* ** TODO: Restore use of fsetpos
+	
     rc = fsetpos(fp[ZIFILE], &fpos);
+	
+	*/
+	rc = fseek(fp[ZIFILE], pos, 0);
 
     if (rc == 0) {
         debug(F100,"zfseek success","",0);
