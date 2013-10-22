@@ -3668,7 +3668,18 @@ setmodtime(f,t) char * f; time_t t;
     } tp;
 #else
 #ifdef SYSUTIMEH
-    struct utimbuf tp;
+
+/* Visual C++ 6/7: If __STDC__ is defined then we need to use _utimbuf instead. */
+#ifdef _MSC_VER
+#ifndef __STDC__
+	struct utimbuf tp;
+#else /* __STDC__ */
+	struct _utimbuf tp;
+#endif /* __STDC__ */
+#else /* _MSC_VER */
+	struct utimbuf tp;
+#endif /* _MSC_VER */
+
 #else
     struct utimbuf {
         time_t atime;
