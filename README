@@ -1,15 +1,15 @@
 To build the console version of C-Kermit for Windows you will need:
   * Microsoft Visual C++ 6.0 or 7.0  (2002)
     - 7.1 (2003), 8.0 (2005) and 9.0 (2008) *might* work but this is 
-	  currently untested.
-	- 10.0 (2010) does not work. Newer versions probably don't either.
+      currently untested.
+    - 10.0 (2010) does not work. Newer versions probably don't either.
   * While Kerberos support is all disabled some header files are still
     referenced. Kerberos for Windows v2.2-beta2 must still be present under
-	/kerberos/kfw-2.2-beta-2.
+    /kerberos/kfw-2.2-beta-2.
   * SSL support is also currently disabled but still has header files
     being referenced. OpenSSL v0.9.7 needs to live under /openssl/0.9.7. You 
-	might have to build it for the header files to all end up in the right 
-	place.
+    might have to build it for the header files to all end up in the right 
+    place.
 
 Once everything is in place, edit /setenv.bat to point to your source
 directory, CD into /kermit/k95 then run:
@@ -17,7 +17,7 @@ directory, CD into /kermit/k95 then run:
 This will build the console version (cknker.exe) and a few other binaries.
 
 Future stuff to do:
-  * Get the GUI version (k95g.exe) building	
+  * Get the GUI version (k95g.exe) building
   * Port to a compiler from this decade
   * Strip out all licensing code
   * Remove all Kermit 95 branding
@@ -25,9 +25,9 @@ Future stuff to do:
   * Turn long long support back on (remove -DNOLONGLONG in makefile)
   * Re-enable/rewrite features that were disabled to get it building such as:
     - SSH
-	- Kerberos
-	- zlib
-	- OpenSSL
-	- SRP
-	- Z/Y/Z Modem
+    - Kerberos
+    - zlib
+    - OpenSSL
+    - SRP
+    - Z/Y/Z Modem
     This will require upgrading to current versions of the libraries.
