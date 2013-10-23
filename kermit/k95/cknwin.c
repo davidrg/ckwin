@@ -531,6 +531,41 @@ MainWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
    return result ;
 }
 
+// Checks to see if the dialer (k95dial.exe) exists in the executables directory.
+BOOL DialerExists() {
+	char buf[MAX_PATH];
+	extern char exedir[CKMAXPATH];
+	char* lastCharacter;
+	BOOL found;
+	WIN32_FIND_DATA findFileData;
+	HANDLE handle;
+	int exedir_len = strlen(exedir);
+	
+
+	// Buffer is too small to do anything. Give up.
+	if (exedir_len + 12 > MAX_PATH)
+		return FALSE;
+	
+	strncpy(buf, exedir, sizeof(buf));
+	// Find the last real character in the exe dir
+	lastCharacter = strchr(buf, '\0');
+	lastCharacter--;
+
+	if (*lastCharacter != '\\')
+		strcat(buf, "\\");
+	strcat(buf, "k95dial.exe");
+
+	// Go see if the dialer executable exists.
+	handle = FindFirstFile(buf, &findFileData);
+	
+	found = handle != INVALID_HANDLE_VALUE;
+
+	if(found)
+		FindClose(handle);
+
+	return found;
+}
+
 void
 StartDialer(void)
 {

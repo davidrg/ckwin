@@ -11,6 +11,7 @@ int putCmdString( char* );
 void putKeyboardBuffer( BYTE, char* );
 char* getVar( unsigned int idx );
 BOOL isConnected(void);
+BOOL DialerExists();
 void StartDialer(void);
 BOOL isScriptRunning(void);
 void setHwndKUI( HWND hwnd );

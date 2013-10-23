@@ -15,6 +15,7 @@
 #include "ikextern.h"
 #include "ksplash.hxx"
 
+
 const int numButtons = 3;
 const int numBitmaps = 2;
 ToolBitmapDef tbButtons[] = {
@@ -38,6 +39,13 @@ KTerminal::KTerminal( K_GLOBAL* kg )
 {
     client = new KClient( kg, VTERM );
     setClient( client );
+
+	// Disable the dialer button if the dialer is missing.
+	if (!DialerExists()) {
+		BYTE state = tbButtons[1].tbbutton.fsState;
+		state = state & ~TBSTATE_ENABLED;
+		tbButtons[1].tbbutton.fsState = state;
+	}
 }
 
 /*------------------------------------------------------------------------
