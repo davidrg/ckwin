@@ -150,6 +150,10 @@
  */
 #ifndef __cplusplus
 typedef int bool;
+#else
+#ifndef __BOOL_DEFINED
+typedef int bool;
+#endif
 #endif
 
 #ifndef KUI
