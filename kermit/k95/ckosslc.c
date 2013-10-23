@@ -19,7 +19,9 @@
 
 #include "ckcdeb.h"
 #define OPENSSL_ENABLE_OLD_DES_SUPPORT
+#ifdef CK_SSL
 #include "openssl/des.h"
+#endif
 #include "ck_ssl.h"
 
 #ifdef NT
