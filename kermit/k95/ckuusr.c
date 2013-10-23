@@ -13091,7 +13091,10 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 
 #ifdef NT
     if (cx == XXDIALER) {
-        StartDialer();
+		if (DialerExists())
+			StartDialer();
+		else
+			printf("The dialer is not currently installed.\n");
         return(success = 1);
     }
 #endif /* NT */
