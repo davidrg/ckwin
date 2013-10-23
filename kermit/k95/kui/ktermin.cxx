@@ -40,12 +40,18 @@ KTerminal::KTerminal( K_GLOBAL* kg )
     client = new KClient( kg, VTERM );
     setClient( client );
 
-	// Disable the dialer button if the dialer is missing.
+	// Disable toolbar button & menu item for dialer
 	if (!DialerExists()) {
+		// Disable toolbar button
 		BYTE state = tbButtons[1].tbbutton.fsState;
 		state = state & ~TBSTATE_ENABLED;
 		tbButtons[1].tbbutton.fsState = state;
-	}
+
+		// And anything else in the GUI that starts the dialer
+		noDialer = TRUE;
+	} else {
+		noDialer = FALSE;
+	}	
 }
 
 /*------------------------------------------------------------------------
@@ -201,6 +207,9 @@ void KTerminal::initMenu(void)
         menu->setCheck(ID_ACTION_LOCUS);
     else
         menu->unsetCheck(ID_ACTION_LOCUS);
+
+	if (noDialer)
+		getMenu()->enable(ID_CONNECT, FALSE);
 }
 
 void KTerminal::disableMenu( void )

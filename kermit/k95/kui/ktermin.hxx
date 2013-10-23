@@ -44,6 +44,7 @@ public:
     KClient* client;
     Bool menuInitialized;
     int  firstShow;
+    Bool noDialer;
 };
 
 #endif
