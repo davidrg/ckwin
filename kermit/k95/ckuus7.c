@@ -13985,9 +13985,11 @@ sho_auth(cx) int cx; {
           case AUTHTYPE_SSL:
             kv = all ? AUTHTYPE_SRP : 0;
             if (ck_ssleay_is_installed()) {
+                #ifdef CK_SSL
                 printf(" Authentication:      SSL/TLS (%s)\n",
                         SSLeay_version(SSLEAY_VERSION));
                 if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+                #endif
             } else {
                 printf(" Authentication:      SSL/TLS (not installed)\n");
                 if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
