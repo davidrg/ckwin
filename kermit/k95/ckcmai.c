@@ -1,6 +1,6 @@
-#define EDITDATE  "29 Dec 2005"		/* Update these with each edit */
-#define EDITNDATE "20051229"		/* Keep them in sync */
-/* Thu Dec 29 15:49:18 2005 */
+#define EDITDATE  "23 Oct 2013"		/* Update these with each edit */
+#define EDITNDATE "20131023"		/* Keep them in sync */
+/* Wed Oct 23 19:14:00 2013 */
 
 /*
   ckcsym.h is used for for defining symbols that normally would be defined
@@ -43,7 +43,7 @@ char *ck_s_tver = "";
 #endif /* OS2 */
 #else
 char *ck_s_test = "Dev";		/* Development */
-char *ck_s_tver = "10";
+char *ck_s_tver = "1";
 #endif /* BETATEST */
 #else /* MAC */
 char *ck_s_test = "Pre-Alpha";          /* Mac Kermit is always a test... */
@@ -86,7 +86,7 @@ char *ck_s_name = "IKS-NT";
 char *ck_s_name = "IKS-OS/2";
 #endif /* NT */
 #else /* IKSDONLY */
-char *ck_s_name = "Kermit 95";          /* Program name */
+char *ck_s_name = "C-Kermit for Windows";          /* Program name */
 #endif /* IKSDONLY */
 #else
 #ifdef MAC
