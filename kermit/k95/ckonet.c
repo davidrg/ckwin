@@ -867,6 +867,11 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
            PipeName[1] = '\\';
            PipeName[2] = '.';
 
+/* Visual C++ 6 doesn't know about this */
+#ifndef FILE_FLAG_FIRST_PIPE_INSTANCE
+#define FILE_FLAG_FIRST_PIPE_INSTANCE 0x00080000
+#endif           
+           
            OpenMode = PIPE_ACCESS_DUPLEX | 
                       FILE_FLAG_FIRST_PIPE_INSTANCE |
                       FILE_FLAG_WRITE_THROUGH;

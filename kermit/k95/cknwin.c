@@ -25,6 +25,14 @@ char *cknwin = "Win32 GUI Support 8.0.029, 10 March 2004";
 #include "ckosyn.h"
 #include "richedit.h"
 
+/* Visual C++ 6 fixes */
+#ifndef DS_SHELLFONT
+#define DS_SHELLFONT        (DS_SETFONT | DS_FIXEDSYS)
+#endif
+#ifndef DWORD_PTR
+typedef unsigned long DWORD_PTR, *PDWORD_PTR;
+#endif
+
 /* Global variable */
 
 HINSTANCE   hInst = 0 ;

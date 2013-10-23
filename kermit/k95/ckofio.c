@@ -5251,6 +5251,12 @@ isdir(s) char *s; {
     }
 #ifdef NT
     attrs = GetFileAttributes(s);
+    
+/* Visual C++ 6 doesn't know about this */
+#ifndef INVALID_FILE_ATTRIBUTES
+#define INVALID_FILE_ATTRIBUTES -1
+#endif
+    
     if ( attrs == INVALID_FILE_ATTRIBUTES )
         return(0);
     return(attrs & FILE_ATTRIBUTE_DIRECTORY ? 1 : 0);
