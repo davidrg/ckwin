@@ -2292,7 +2292,7 @@ KbdHandlerThread( void * pArgList ) {
         }   /* if ( !islocal ) */
         else {
             c = 0;
-            if ( _read(ttyfd, &c, 1) == 1 ) {
+            if (ttyfd > -1 && _read(ttyfd, &c, 1) == 1 ) {
                 putkey(vmode, c);
             }
             else
