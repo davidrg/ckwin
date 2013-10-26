@@ -1021,7 +1021,9 @@ _PROTOTYP( char * strerror, (int) );
 #else
 #ifdef OS2
 #ifndef NDSYSERRLIST
+#ifndef NT
     extern char *sys_errlist[];
+#endif	
 #endif /* NDSYSERRLIST */
 #ifdef NT
     extern int_sys_nerr;
