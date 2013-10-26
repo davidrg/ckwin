@@ -49,7 +49,7 @@ Bool KCmdUpload::doInitDialog( HWND hwnd )
 	}
 
 	hctrl = GetDlgItem( hWnd, IDC_COMBOTRANSFERCHARACTERSET );
-	for( i = 0; i < ntcs; i++ ) {
+	for(int i = 0; i < ntcs; i++ ) {
 		if( !tcstab[i].flgs )
 			SendMessage( hctrl, CB_ADDSTRING, 0, (LPARAM) (tcstab[i].kwd) );
 	}

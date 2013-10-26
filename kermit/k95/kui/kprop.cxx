@@ -128,7 +128,7 @@ void KProperty::show( Bool bVisible )
 
     // flip to the indicated page
     //
-    for( i = 0; i < numPropPages; i++ )
+    for( int i = 0; i < numPropPages; i++ )
     {
         if( kpropPages[i].command == topPage ) {
             psh.nStartPage = i;

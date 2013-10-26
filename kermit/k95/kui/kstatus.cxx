@@ -370,7 +370,7 @@ Bool KStatus::lButtonUp( long wParam, long x, long y )
             paneArray->insert( (void*)pisave, newpos );
         }
 
-        for( i = 0; i < numParts; i++ )
+        for(int i = 0; i < numParts; i++ )
         {
             pi = (paneInfo*) paneArray->get( i );
             if( !i )
