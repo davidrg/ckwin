@@ -77,7 +77,7 @@ telnet:
     OPT="/Ot /Og /Oi /G4" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" /MD /Ze /GX- /YX /J /DWIN32 /D_WIN32 /D_CONSOLE /D__32BIT__ /W2" \
+    CFLAGS=" /MD /Ze /GX- /YX /J /DWIN32=1 /D_WIN32 /D_CONSOLE /D__32BIT__ /W2" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
@@ -93,7 +93,7 @@ rlogin:
     OPT="/Ot /Og /Oi /G4" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" /MD /Ze /GX- /YX /J /DWIN32 /D_WIN32 /D_CONSOLE /D__32BIT__ /W2" \
+    CFLAGS=" /MD /Ze /GX- /YX /J /DWIN32=1 /D_WIN32 /D_CONSOLE /D__32BIT__ /W2" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
@@ -109,7 +109,7 @@ test:
     OPT="/Ot /Og /Oi /G4" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" /MD /Ze /GX- /YX /J /DWIN32 /D_CONSOLE /D__32BIT__ /W2" \
+    CFLAGS=" /MD /Ze /GX- /YX /J /DWIN32=1 /D_CONSOLE /D__32BIT__ /W2" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
@@ -140,7 +140,7 @@ msvc:
     OPT="/G5 /Ox /GA" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" /MD /Ze /GX- /GF /YX /J /D_WIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    CFLAGS=" /MD /Ze /GX- /GF /YX /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
