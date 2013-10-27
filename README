@@ -12,10 +12,9 @@ or proprietary libraries:
   - LAT
 
 To build C-Kermit for Windows you will need:
-  * Microsoft Visual C++ 6.0 or 7.0  (2002)
-    - 7.1 (2003), 8.0 (2005) and 9.0 (2008) *might* work but this is 
-      currently untested.
-    - 10.0 (2010) does not work. Newer versions probably don't either.
+  * Microsoft Visual C++ 6.0, 7.0 (2002), 7.1 (2003) or 8.0 (2005)
+    - 9.0 (2008) might work but this is currently untested.
+    - 10.0 (2010) does not work. Newer versions might not either.
   * While Kerberos support is all disabled some header files are still
     referenced. Kerberos for Windows v2.2-beta2 must still be present under
     /kerberos/kfw-2.2-beta-2.
@@ -23,10 +22,9 @@ To build C-Kermit for Windows you will need:
 Once everything is in place, edit /setenv.bat to point to your source
 directory. Then:
  1. Open up a console window
- 2. Setup the Visual C++ environment. For Visual C++ 6.0 this will probably be:
-       C:\Program Files\Microsoft Visual Studio\VC98\Bin\VCVARS32.bat
-    For Visual C++ 7.0 (Visual Studio .net 2002) the default is:
-       C:\Program Files\Microsoft Visual Studio .NET\Common7\Tools\vsvars32.bat
+ 2. Setup the Visual C++ environment. You'll want to run vcvars32.bat. This
+    will be where ever you installed your compiler. For example:
+       C:\Program Files\Microsoft Visual Studio 8\VC\bin\vcvars32.bat
  3. CD into your source directory and run the following:
       setenv.bat
       cd kermit/k95
@@ -38,7 +36,9 @@ most interesting being:
   k95g.exe     - Graphical version of C-Kermit for Windows
 
 Future stuff to do:
+  * Remove need for /noBool switch and #defines in kui code.
   * Port to a compiler from this decade
+  * Replace or remove deprecated compiler options
   * Strip out all licensing code
   * Remove all Kermit 95 branding
   * Restore use of fsetpos in ckofio.c (see line 5412)
