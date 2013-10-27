@@ -42,8 +42,6 @@ most interesting being:
 
 Future stuff to do:
   * Remove need for /noBool switch and #defines in kui code.
-  * Port to a compiler from this decade
-  * Replace or remove deprecated compiler options
   * Strip out all licensing code
   * Remove all Kermit 95 branding
   * Restore use of fsetpos in ckofio.c (see line 5412)
