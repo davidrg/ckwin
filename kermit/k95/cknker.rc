@@ -1,6 +1,62 @@
-1 ICON k95g.ico
-"minIcon" ICON k95g.ico
-2 ICON k95f.ico
-3 ICON k95g.ico
-4 ICON k95f.ico
-          
+/////////////////////////////////////////////////////////////////////////////
+// It seems we have to do this otherwise the version information wont work
+// properly on Windows vista/7 (it will work on XP though)
+#define APSTUDIO_READONLY_SYMBOLS
+#include "afxres.h"
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+1                       ICON                    "cknker.ico"
+"MINICON"               ICON                    "cknker.ico"
+2                       ICON                    "cknker.ico"
+3                       ICON                    "k95g.ico"
+4                       ICON                    "k95f.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 2,2,0,0
+ PRODUCTVERSION 2,2,0,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x0L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", "The Kermit Project"
+            VALUE "FileDescription", "C-Kermit for Windows, Console executable"
+            VALUE "FileVersion", "2.2.0.0"
+            VALUE "InternalName", "cknker"
+            VALUE "LegalCopyright", "Portions (C) Copyright 1995-2013 The Trustees of Columbia University in the City of New York. Portions (C) Copyright 2013 The Kermit Project contributors."
+            VALUE "OriginalFilename", "cknker.exe"
+            VALUE "ProductName", "C-Kermit for Windows"
+            VALUE "ProductVersion", "2.2.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END	
+END
+
+
+
+
+
