@@ -351,21 +351,22 @@ BEGIN
                     "Button",BS_AUTORADIOBUTTON,71,122,103,10
 END
 
-IDD_ABOUTBOX DIALOGEX 0, 0, 225, 126
+IDD_ABOUTBOX DIALOGEX 0, 0, 249, 204
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "About"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
-    CTEXT           "C-Kermit for Windows version 2.2.0-Dev",IDC_STATIC,49,12,131,8
-    LTEXT           "Jeffrey Eric Altman, IAM Consulting",IDC_STATIC,60,31,148,8
-    LTEXT           "Frank da Cruz, Columbia University",IDC_STATIC,60,41,148,8
-    LTEXT           "Thomas M. Wu",IDC_STATIC,87,51,50,8
-    CTEXT           "Trustees of Columbia University in the City of New York",
-                    IDC_STATIC,25,69,174,8
-    CTEXT           "Copyright (c) 1995,2003,2013.  All Rights Reserved.",IDC_STATIC,
-                    25,79,175,8
-    DEFPUSHBUTTON   "OK",IDOK,87,100,50,14
-    ICON            IDI_ICONK95,IDC_STATIC,14,17,18,20,SS_REALSIZEIMAGE
+    ICON            IDI_ICONK95,IDC_STATIC,10,10,21,20,SS_REALSIZEIMAGE
+    LTEXT           "C-Kermit for Windows",IDC_STATIC,41,10,198,8
+    LTEXT           "Version 2.2",IDC_STATIC,41,20,198,8
+    CTEXT           "Jeffrey Eric Altman, IAM Consulting",IDC_STATIC,41,52,198,8
+    CTEXT           "Frank da Cruz, The Kermit Project",IDC_STATIC,41,63,198,8
+    CTEXT           "Thomas M. Wu",IDC_STATIC,41,73,198,8
+    LTEXT           "(C) Copyright 1995-2013, The Trustees of Columbia University in the City of New York.",IDC_STATIC,41,31,198,17
+    LTEXT           "This is the free and open source version of the program formerly known as Kermit 95, a commercial product of Columbia University from 1994 to 2011.",IDC_STATIC,41,88,198,26
+    LTEXT           "This version has been released under the 3-clause BSD license and does not include any proprietary components including PATHWORKS and SuperLAT networking and XYZMODEM file transfer. Certain other features may be missing for various reasons.",IDC_STATIC,41,116,198,50
+    LTEXT           "Type SHOW FEATURES at the prompt to see what features are available.",IDC_STATIC,41,160,198,17
+    DEFPUSHBUTTON   "OK",IDOK,189,180,50,14
 END
 
 IDD_SCRIPTOPTIONS DIALOG DISCARDABLE  0, 0, 298, 157
@@ -382,7 +383,7 @@ BEGIN
                     BS_LEFTTEXT | WS_TABSTOP,45,46,52,10
     CONTROL         "Macro Error",IDC_CHECKMACROERROR,"Button",
                     BS_AUTOCHECKBOX | BS_LEFTTEXT | WS_TABSTOP,44,66,53,10
-    CONTROL         "Take Error",IDC_CHECKTAKEERROR,"Button",BS_AUTOCHECKBOX | 
+    CONTROL         "Take Error",IDC_CHECKTAKEERROR,"Button",BS_AUTOCHECKBOX |
                     BS_LEFTTEXT | WS_TABSTOP,48,76,49,10
     CONTROL         "Command Quoting",IDC_CHECKCOMMANDQUOTING,"Button",
                     BS_AUTOCHECKBOX | BS_LEFTTEXT | WS_TABSTOP,24,96,74,10
@@ -901,8 +902,10 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_ICONK95             ICON    DISCARDABLE     "k95f.ico"
-"minIcon"               ICON    DISCARDABLE     "k95f.ico"
+IDI_ICONK95             ICON    DISCARDABLE     "k95a.ico"
+"minIcon"               ICON    DISCARDABLE     "k95a.ico"
+IDI_ICON2				ICON	DISCARDABLE		"k95g.ico"
+IDI_ICON3				ICON	DISCARDABLE		"k95f.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -910,6 +913,45 @@ IDI_ICONK95             ICON    DISCARDABLE     "k95f.ico"
 //
 
 IDC_CURSORPARTDRAG      CURSOR  DISCARDABLE     "partdrag.cur"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 2,2,0,0
+ PRODUCTVERSION 2,2,0,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x0L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", "The Kermit Project"
+            VALUE "FileDescription", "C-Kermit for Windows, Graphical executable"
+            VALUE "FileVersion", "2.2.0.0"
+            VALUE "InternalName", "k95g"
+            VALUE "LegalCopyright", "Portions (C) Copyright 1995-2013 The Trustees of Columbia University in the City of New York. Portions (C) Copyright 2013 The Kermit Project contributors."
+            VALUE "OriginalFilename", "k95g.exe"
+            VALUE "ProductName", "C-Kermit for Windows"
+            VALUE "ProductVersion", "2.2.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END	
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
