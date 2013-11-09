@@ -11,18 +11,15 @@ or proprietary libraries:
   - DECnet
   - LAT
 
-To build C-Kermit for Windows you will need:
-  * A C++ compiler. The following ones are currently supported:
-     - Microsoft Visual C++ 6.0 Service Pack 6
-     - Microsoft Visual C++ .net 2002 (7.0)
-     - Microsoft Visual C++ .net 2003 (7.1)
-     - Microsoft Visual C++ 2005 (8.0)
-     - Microsoft Visual C++ 2010 (10.0) Service Pack 1
-     - Microsoft Visual C++ 2012 (11.0)
-    Visual C++ 2008 and 2013 probably work but this is untested
-  * While Kerberos support is all disabled some header files are still
-    referenced. Kerberos for Windows v2.2-beta2 must still be present under
-    /kerberos/kfw-2.2-beta-2.
+To build C-Kermit for Windows you will need a C++ compiler. The following ones
+are currently supported:
+  - Microsoft Visual C++ 6.0 Service Pack 6
+  - Microsoft Visual C++ .net 2002 (7.0)
+  - Microsoft Visual C++ .net 2003 (7.1)
+  - Microsoft Visual C++ 2005 (8.0)
+  - Microsoft Visual C++ 2010 (10.0) Service Pack 1
+  - Microsoft Visual C++ 2012 (11.0)
+Visual C++ 2008 and 2013 probably work but this is untested
 
 Once everything is in place, edit /setenv.bat to point to your source
 directory. Then:

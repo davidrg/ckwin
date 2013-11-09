@@ -439,7 +439,7 @@ DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -D_CRT_SECURE_NO_DEPRECATE\
           -DDYNAMIC -DKANJI -DNETCONN \
           -DHADDRLIST -DNPIPE -DOS2MOUSE -DTCPSOCKET -DRLOGCODE \
           -DNETFILE -DONETERMUPD -DCRYPT_DLL \
-          -DNEWFTP -DNO_SRP -DNO_KERBEROS -DNOSSH -DNOCKXYZ -DNOLONGLONG -DNO_SSL -DBETATEST
+          -DNEWFTP -DNO_SRP -DNO_KERBEROS -DNOSSH -DNOCKXYZ -DNOLONGLONG -DNO_SSL -DBETATEST -DNO_DNS_SRV
 		  # DECnet (Pathworks32) support: -DDECNET
 		  # SuperLAT support: -DSUPERLAT
 		  # zlib support: -DZLIB
@@ -458,20 +458,22 @@ LIBS = os2386.lib rexx.lib bigmath.lib
 !else if "$(PLATFORM)" == "NT"
 !if "$(K95BUILD)" == "UIUC"
 LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib \
-       winmm.lib mpr.lib advapi32.lib winspool.lib \
-       wshload.lib
+       winmm.lib mpr.lib advapi32.lib winspool.lib 
+       # Kerberos: wshload.lib
 !else
 KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
         advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib \
         rpcrt4.lib rpcns4.lib wsock32.lib \
         winmm.lib vdmdbg.lib comctl32.lib mpr.lib commode.obj \
-        wshload.lib #msvcrt.lib
+        #msvcrt.lib
+        #Kerberos: wshload.lib
 		# SRP support: srpstatic.lib 
 		# SSH support: ssh\libssh.lib ssh\openbsd.lib
         #libsrp.lib bigmath.lib
 LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib shell32.lib\
        winmm.lib mpr.lib advapi32.lib winspool.lib commode.obj \
-       wshload.lib #msvcrt.lib  
+       #msvcrt.lib  
+       # Kerberos: wshload.lib
 	   # SRP support: srpstatic.lib
 	   # SSH support: ssh\libssh.lib ssh\openbsd.lib
        # libsrp.lib bigmath.lib
