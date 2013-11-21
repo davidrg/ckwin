@@ -1882,7 +1882,6 @@ sysinit() {
     SysInited = 1;
 	debug(F100,"sysinit complete","",0);
 
-	chkexp();
     return(0);
 }
 
@@ -9375,13 +9374,6 @@ DisconnectFromPM( void ) {
     return rc;
 }
 #endif /* OS2PM */
-
-int
-chkexp( void )
-{
-    // TODO: delete this function
-return 1;
-}
 
 int
 shoreg( void )
