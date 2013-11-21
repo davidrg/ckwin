@@ -357,9 +357,9 @@ CAPTION "About"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     ICON            IDI_ICONK95,IDC_STATIC,10,10,21,20,SS_REALSIZEIMAGE
-    LTEXT           "C-Kermit for Windows",IDC_STATIC,41,10,198,8
-    LTEXT           "Version 2.2",IDC_STATIC,41,20,198,8
-    CTEXT           "Jeffrey Eric Altman, IAM Consulting",IDC_STATIC,41,52,198,8
+    LTEXT           "Kermit for Windows",IDC_STATIC,41,10,198,8
+    LTEXT           "Version 3.0",IDC_STATIC,41,20,198,8
+    CTEXT           "Jeffrey Eric Altman, Secure Endpoints Inc.",IDC_STATIC,41,52,198,8
     CTEXT           "Frank da Cruz, The Kermit Project",IDC_STATIC,41,63,198,8
     CTEXT           "Thomas M. Wu",IDC_STATIC,41,73,198,8
     LTEXT           "(C) Copyright 1995-2013, The Trustees of Columbia University in the City of New York.",IDC_STATIC,41,31,198,17
