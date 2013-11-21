@@ -12258,15 +12258,11 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	    n++;
 	}
 	printf(" Type COPYRIGHT for copyright and license.\n\n");
-#ifdef OS2
-	shoreg();
-#else
 #ifdef COMMENT
 	hmtopline = n+1;
 	hmsga(copyright);
 	hmtopline = 0;
 #endif /* COMMENT */
-#endif /* OS2 */
 	return(success = 1);
     }
 

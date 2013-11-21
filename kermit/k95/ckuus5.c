@@ -3789,9 +3789,6 @@ herald() {
 #endif /* datageneral */
         printf(" Copyright (C) 1985, 2013,\n");
         printf("  Trustees of Columbia University in the City of New York.\n");
-#ifdef OS2
-       shoreg();
-#endif /* OS2 */
 
         if (!quiet && !backgrd) {
 #ifdef COMMENT

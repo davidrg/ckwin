@@ -584,7 +584,6 @@ _PROTOTYP( APIRET os2ResetFont, (void) ) ;
 _PROTOTYP( char * get_reg_name, (void) ) ;
 _PROTOTYP( char * get_reg_corp, (void) ) ;
 _PROTOTYP( char * get_reg_sn, (void) ) ;
-_PROTOTYP( int shoreg, (VOID) ) ;
 
 _PROTOTYP( int CSisNRC, ( int ) );
 _PROTOTYP( int ltorxlat, ( int, CHAR **));

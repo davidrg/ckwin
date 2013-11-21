@@ -9375,14 +9375,6 @@ DisconnectFromPM( void ) {
 }
 #endif /* OS2PM */
 
-int
-shoreg( void )
-{
-    // TODO: delete this function
-	return 0;
-}
-
-
 long
 getmsec( void ) {
 #ifdef NT
