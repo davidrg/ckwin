@@ -6094,12 +6094,6 @@ extern int OSVer;
 #endif /* OS2 */
 #endif /* BPRINT */
 
-#ifndef SESLIMIT
-#ifdef OS2
-#define SESLIMIT
-#endif /* OS2 */
-#endif /* SESLIMIT */
-
 #ifndef NOTERM
 #ifndef PCTERM
 #ifdef NT

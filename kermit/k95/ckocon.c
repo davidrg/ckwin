@@ -841,38 +841,6 @@ popuperror(int mode, char * msg ) {
 
 int
 popupdemo(int mode, int secsleft ) {
-    videopopup * pPopup = NULL ;
-    char buf[80];
-    extern unsigned char colorhelp ;
-    int color_sav;
-    color_sav = colorhelp;
-    colorhelp = 0xE9;
-
-    sprintf(buf," Time remaining in this session: %2d:%02d",secsleft/60, secsleft%60);
-
-    pPopup = helpstart(57, (ttyfd == -1 || ttyfd == -2) ? 5 : 7, gui_dialog);
-    helpline( pPopup, " This is a trial copy of Kermit 95 to be evaluated for" ) ;
-    helpline( pPopup, " for possible purchase.  It is fully functional and does" );
-    helpline( pPopup, " not expire, but sessions are limited to 15 minutes." );
-    helpline( pPopup, " To register, contact the distributor of this package or" );
-    helpline( pPopup, " visit http://www.columbia.edu/kermit/k95.html." );
-    if ( ttyfd != -1 && ttyfd != -2 ) {
-        helpline( pPopup, " " );
-        helpline( pPopup, buf );
-    }
-    helpend(pPopup);                    /* Write bottom of help panel */
-    bleep(BP_WARN);
-#ifdef KUI
-    if ( pPopup->gui )
-        gui_videopopup_dialog(pPopup, 6);
-    else
-#endif /* KUI */
-    {
-        VscrnSetPopup( mode, pPopup ) ;
-        sleep(6);
-        VscrnResetPopup(mode) ;            /* This frees the Popup structure */
-    }
-    colorhelp = color_sav;
     return(0);
 }
 

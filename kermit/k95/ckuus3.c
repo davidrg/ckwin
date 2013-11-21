@@ -12023,32 +12023,6 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
       }
 #endif /* CK_CTRLZ */
 
-#ifdef SESLIMIT
-      case XYLIMIT: {  /* Session-Limit (length of session in seconds) */
-          extern int seslimit;
-#ifdef OS2
-          extern int downloaded;
-#endif /* OS2 */
-          y = cmnum("Maximum length of session, seconds","0",10,&x,xxstring);
-          if (inserver &&
-#ifdef IKSDCONF
-              iksdcf
-#else
-              1
-#endif /* IKSDCONF */
-#ifdef OS2
-               || downloaded
-#endif /* OS2 */
-              ) {
-              if ((z = cmcfm()) < 0)
-                return(z);
-              printf("?Sorry, command disabled.\r\n");
-              return(success = 0);
-          }
-          return(setnum(&seslimit,x,y,86400));
-      }
-#endif /* SESLIMIT */
-
       case XYRELY: {                    /* SET RELIABLE */
           if ((x = cmkey(ooatab,3,"","automatic",xxstring)) < 0)
             return(x);

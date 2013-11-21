@@ -1523,10 +1523,6 @@ int zobufsize = OBUFSIZE;
 int zofbuffer = 1;
 int zofblock  = 1;
 
-#ifdef SESLIMIT
-int seslimit = 0;
-#endif /* SESLIMIT */
-
 #ifdef CK_AUTHENTICATION
 #include "ckuath.h"
 #endif /* CK_AUTHENTICATION */

@@ -497,11 +497,6 @@ int owwait = FALSE ;
 
 char OS2CmdFile[256] = "";              /* a copy of cmdfile if specified */
 
-#ifdef SESLIMIT
-static time_t start_time = 0;
-static char   warn[4];
-#endif /* SESLIMIT */
-
 #define TT_MODE_NONE 0
 #define TT_MODE_VT   1
 #define TT_MODE_PKT  2
@@ -2787,11 +2782,6 @@ ttopen(char *ttname, int *lcl, int modem, int spare) {
 #ifndef NOTERM
     doreset(1);         /* Soft Reset the terminal - clrscreen && home cursor */
 #endif /* NOTERM */
-
-#ifdef SESLIMIT
-    start_time = time( NULL ) ;
-    warn[0] = warn[1] = warn[2] = warn[3] = 1;
-#endif /* SESLIMIT */
 
 #ifdef NETCONN
 #ifdef TCPSOCKET
@@ -5744,9 +5734,6 @@ ttinc(int timo) {
     int tt, tr, interval;
 #endif /* NT */
     int t ;
-#ifdef SESLIMIT
-    extern int seslimit;
-#endif /* SESLIMIT */
 
     m = (ttprty) ? 0177 : 0377;         /* Parity stripping mask. */
 
@@ -5770,35 +5757,6 @@ ttinc(int timo) {
          || (tttapi && ttyfd == -2)
 #endif /* CK_TAPI */
          ) return(-2);          /* Not open. */
-
-#ifdef SESLIMIT
-    /* Session Limits go here          */
-    /* if time() - start_time > limit  */
-    if ( seslimit ) {
-        time_t t = time(NULL) - start_time;
-        if ( t  > seslimit ) {
-            debug(F111,"ttinc","Session Limit Exceeded",seslimit);
-            return(-3);
-        } 
-#ifndef IKSDONLY
-        else if ( downloaded && IsConnectMode() ) {
-            if ( warn[0] ) {
-                popupdemo(VTERM,seslimit - t);
-                warn[0] = 0;
-            } else if ( warn[1] && t > 300 ) {
-                popupdemo(VTERM,seslimit - t);
-                warn[1] = 0;
-            } else if ( warn[2] && t > 600 ) {
-                popupdemo(VTERM,seslimit - t);
-                warn[2] = 0;
-            } else if ( warn[3] && t > 840 ) {
-                popupdemo(VTERM,seslimit - t);
-                warn[3] = 0;
-            }
-        }
-#endif /* IKSDONLY */
-    }
-#endif /* SESLIMIT */
 
     if ( tt_inpacing )
         msleep(tt_inpacing);
@@ -9421,27 +9379,20 @@ DisconnectFromPM( void ) {
 void
 demoscrn(int vmode)
 {
-#ifndef NOLOCAL
-#ifdef SESLIMIT
-    extern int seslimit;
-
-    if ( !(downloaded && expired) )
-        return;
-
-    popupdemo(vmode, seslimit - (time(NULL) - start_time));
-#endif /* NOLOCAL */
-#endif /* SESLIMIT */
+        // TODO: delete this function
 }
 
 int
 chkexp( void )
 {
+    // TODO: delete this function
 return 1;
 }
 
 int
 shoreg( void )
 {
+    // TODO: delete this function
 	return 0;
 }
 

@@ -2124,12 +2124,6 @@ struct keytab prmtab[] = {
 #ifndef NOSERVER
     { "server",           XYSERV,  0 },
 #endif /* NOSERVER */
-#ifdef SESLIMIT
-#ifndef NOLOCAL
-    { "session-l",        XYSESS,  CM_INV|CM_ABR },
-#endif /* NOLOCAL */
-    { "session-limit",    XYLIMIT, CM_INV|CM_LOC }, /* Session Limit */
-#endif /* SESLIMIT */
 
 #ifndef NOLOCAL
     { "session-log",      XYSESS,  CM_LOC },
