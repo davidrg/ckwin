@@ -136,7 +136,6 @@ extern int tt_scroll;
 #ifndef NOTERM
 extern tt_status[VNUM];
 #endif /* NOTERM */
-int display_demo = 1;
 #include "ckossh.h"
 #ifdef KUI
 #include "ikui.h"

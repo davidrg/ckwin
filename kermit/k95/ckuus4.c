@@ -2056,7 +2056,6 @@ doconect(q,async) int q, async; {
     int qsave;                          /* For remembering "quiet" value */
 #ifdef OS2
     extern int term_io;
-    extern int display_demo;
     int term_io_save;
 #ifdef KUI
     extern int kui_async;
@@ -2096,7 +2095,6 @@ doconect(q,async) int q, async; {
     ksbuf[0] = NUL;                     /* Autodownload packet buffer */
 #endif /* CK_AUTODL */
 #ifdef OS2
-    display_demo = 1;                   /* Remember to display demo */
 #endif /* OS2 */
 
 #ifdef IKS_OPTION

@@ -9376,12 +9376,6 @@ DisconnectFromPM( void ) {
 }
 #endif /* OS2PM */
 
-void
-demoscrn(int vmode)
-{
-        // TODO: delete this function
-}
-
 int
 chkexp( void )
 {

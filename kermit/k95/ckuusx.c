@@ -4598,7 +4598,6 @@ VOID
 doexit(exitstat,code) int exitstat, code; {
     extern int x_logged, quitting;
 #ifdef OS2
-    extern int display_demo;
     extern int SysInited;
 #endif /* OS2 */
 #ifdef CK_KERBEROS
@@ -4691,12 +4690,6 @@ doexit(exitstat,code) int exitstat, code; {
 #endif /* DCMDBUF */
         extern int tt_status[];
         extern int vmode;
-
-        /* If there is a demo screen to be displayed, display it */
-        if (display_demo) {
-            demoscrn(VCMD);
-            display_demo = 0;
-        }
 #ifndef KUI
         /* This is going to be hideous.  If we have a status line */
         /* in the command window turn it off before we exit.      */

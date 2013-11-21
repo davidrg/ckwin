@@ -2975,7 +2975,6 @@ proto() {
 #ifdef OS2
     extern int cursorena[], cursor_save, term_io;
     extern BYTE vmode;
-    extern int display_demo;
     int term_io_save;
 #endif /* OS2 */
 #endif /* NOLOCAL */
@@ -3207,7 +3206,6 @@ proto() {
 #ifdef OS2
     cursorena[vmode] = cursor_save;
     term_io = term_io_save;
-    display_demo = 1;
 #endif /* OS2 */
 #endif /* NOLOCAL */
 }

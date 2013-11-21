@@ -795,15 +795,6 @@ prompt(f) xx_strp f; {
 #ifdef CK_SSL
     extern int ssl_active_flag, tls_active_flag;
 #endif /* CK_SSL */
-#ifdef OS2
-    extern int display_demo;
-
-    /* If there is a demo screen to be displayed, display it */
-    if (display_demo && xcmdsrc == 0) {
-        demoscrn(VCMD);
-        display_demo = 0;
-    }
-#endif /* OS2 */
 
     if (psetf == 0)			/* If no prompt set, set default. */
       cmsetp(dfprom);
