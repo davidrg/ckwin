@@ -7011,11 +7011,11 @@ dobug() {
     printf("\n%s,%s\n Numeric: %ld",versio,ckxsys,vernum);
 #endif /* COMMENT */
     printf(
-"\nBefore requesting technical support from Columbia U., please consult:\n\n"
+"\nTechnical Support is no longer available. Please consult:\n\n"
            );
     n = 7;
 #ifdef OS2
-    printf(" . Your \"Kermit 95\" user manual (use the MANUAL command).\n");
+    printf(" . Your \"Kermit\" user manual (use the MANUAL command).\n");
     printf(" . The technical reference manual, \"Using C-Kermit\".\n");
     n += 2;
 #else
@@ -7027,57 +7027,20 @@ dobug() {
     printf(
 " . The comp.protocols.kermit.misc newsgroup.\n");
     printf(
-" . The Kermit support website, http://www.columbia.edu/kermit/support.html \n"
+" . The Kermit support website, http://kermitproject.org/support.html \n"
            );
     printf(
 
-" . The Kermit FAQ, http://www.columbia.edu/kermit/newfaq.html \n");
+" . The Kermit FAQ, http://kermitproject.org/newfaq.html \n");
 #ifdef OS2
     printf(
-" . The Kermit 95 FAQ, http://www.columbia.edu/kermit/k95faq.html \n");
+" . The Kermit for Windows and OS/2 FAQ, http://kermitproject.org/k95faq.html\n");
     n++;
 #endif /* OS2 */
 
     printf(
-" . The C-Kermit FAQ, http://www.columbia.edu/kermit/ckfaq.html \n");
-    n += 4;
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
-    printf("\n\
-If you still need help or have a bug to report after consulting these sources,"
-           );
-    printf("\nsend e-mail to:\n\n");
-    n += 2;
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
-    printf("  mailto:kermit-support@columbia.edu\n\n");
-    n += 1;
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
-    printf("Or contact us by post:\n\n");
-    printf(
-"  Kermit, Columbia University, 612 W 115 Street, New York NY  10025, USA\n\n"
-           );
-    n += 1;
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
-    printf("Or by fax at +1 (212) 662-6442.\n\n");
-    n += 1;
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
-#ifdef COMMENT
-    printf("Telephone support is available too:\n\n");
-    n += 1;
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
-    printf(
-    "  +1 (212) 854-5126, from anywhere, $25.00 USD per call, MC/Visa\n\n");
-    n += 1;
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
-#endif /* COMMENT */
-#ifndef NOSHOW
-#ifndef NOFRILLS
-    printf(
-"Before reporting problems, please use the SHOW FEATURES command\n");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
-    printf(
-"to get detailed program version and configuration information.\n\n");
-#endif /* NOFRILLS */
-#endif /* NOSHOW */
+" . The C-Kermit FAQ, http://kermitproject.org/ckfaq.html \n");
+
     return(1);
 }
 #endif /* NOFRILLS */

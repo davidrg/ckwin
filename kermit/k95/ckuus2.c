@@ -105,7 +105,7 @@ static char *tophlp[] = {
 "  Type EXIT    to exit.",
 #ifdef OS2
 "  Type INTRO   for a brief introduction to the Kermit Command screen.",
-"  Type LICENSE to see the Kermit 95 license.",
+"  Type LICENSE to see the Kermit license.",
 #else
 "  Type INTRO   for a brief introduction to C-Kermit.",
 "  Type LICENSE to see the C-Kermit license.",
@@ -193,48 +193,48 @@ static char *tophlpi[] = {              /* Top-level help for IKSD */
 #ifndef NOHELP
 char *newstxt[] = {
 #ifdef OS2
-"Welcome to Kermit 95 2.1.3.  Major new features include:",
+"Welcome to Kermit 3.0.0.  Major new features include:",
 #else
 "Welcome to C-Kermit 8.0.206.  Major new features include:",
 #endif /* OS2 */
 #ifdef NT
-#ifdef KUI
-" . Runs in GUI window",
+" . Source Code! The windows edition of Kermit (formerly known as Kermit 95) is",
+"   now available under the 3-clause BSD license.",
 #else
-" . GUI version available",
-#endif /* KUI */
-#endif /* NT */
-#ifdef SSHBUILTIN
-" . New built-in SSH v1 and v2 clients",
-#endif /* SSHBUILTIN */
-#ifdef NEWFTP
-" . A new built-in FTP client",
-#endif /* NEWFTP */
-#ifndef NOHTTP
-" . A new HTTP 1.1 client",
-#endif /* NOHTTP */
-#ifdef TN_COMPORT
-" . Telnet Com Port Option for dialing from Telnet modem servers",
-#endif /* TN_COMPORT */
-" . File scanning for automatic text/binary determination",
-#ifdef CKLEARN
-#ifndef OS2
-" . Learned scripts",
-#endif /* OS2 */
-#endif /* CKLEARN */
-#ifndef NOSPL
-#ifndef NOSEXP
-" . LISP-like S-Expressions and natural floating-point arithmetic",
-#endif /* NOSEXP */
-" . Lots of script programming improvements",
-#endif /* NOSPL */
-" . Performance improvements and bug fixes",
+" . Source Code! The OS/2 edition of Kermit is now available under the",
+"   3-clause BSD license.",
+#endif
+" . Performance improvements and bug fixes",   
+"",
+"The following features have been removed due to their reliance on proprietary",
+"or obsolete libraries:",
+#ifdef NOSSH
+" . SSH client (will return in a future release)",
+#endif
+#ifdef NO_SSL
+" . SSL (will return in a future release)",
+#endif
+#ifdef NO_KERBEROS
+" . Kerberos",
+#endif
+#ifdef NOCKXYZ
+" . X, Y or Z modem",
+#endif
+#ifdef NO_SRP
+" . SRP",
+#endif
+#ifndef DECNET
+" . LAT (via Pathworks or SuperLAT)",
+#endif
+#ifndef SUPERLAT
+" . CTERM (via Pathworks)",
+#endif
 " ",
 "Documentation:",
 " 1. \"Using C-Kermit\", second edition (1997), current with C-Kermit 6.0.",
-" 2. http://www.columbia.edu/kermit/ckermit70.html",
+" 2. http://kermitproject.org/ckermit70.html",
 "    which documents the new features of C-Kermit 7.0.",
-" 3. http://www.columbia.edu/kermit/ckermit80.html",
+" 3. http://kermitproject.org/ckermit80.html",
 "    which documents the new features of C-Kermit 8.0.",
 " ",
 "If the release date shown by the VERSION command is long past, be sure to",
@@ -246,7 +246,7 @@ char *newstxt[] = {
 #ifndef NOHELP
 char *introtxt[] = {
 #ifdef OS2
-"Welcome to K-95, Kermit communications software for:",
+"Welcome to Kermit, communications software for:",
 #else
 #ifdef UNIX
 #ifdef HPUX
@@ -540,8 +540,8 @@ Press the key or key-combination shown after \"Command:\" in the status line",
 #endif /* NOLOCAL */
 " ",
 #ifdef OS2
-"For a Kermit 95 tutorial, visit:",
-"  http://www.columbia.edu/kermit/k95tutor.html",
+"For a Kermit tutorial, visit:",
+"  http://kermitproject.org/k95tutor.html",
 " ",
 #endif /* OS2 */
 "For a C-Kermit tutorial, visit:",
@@ -970,7 +970,7 @@ static char *hmxxtak[] = {
 #ifdef TCPSOCKET
 static char *hmxxfirew[] = {
 #ifdef OS2
-"Firewall Traversal in Kermit 95",
+"Firewall Traversal in Kermit",
 #else
 "Firewall Traversal in C-Kermit",
 #endif
@@ -1051,7 +1051,7 @@ static char *hmxxfirew[] = {
 
 #ifdef OS2
 #ifdef NT
-"Kermit 95 supports SOCKS 4.2.  The SOCKS Server is specified with:",
+"Kermit supports SOCKS 4.2.  The SOCKS Server is specified with:",
 " ",
 "  SET TCP SOCKS-SERVER hostname/ip-address",
 " ",
@@ -1786,8 +1786,8 @@ static char *hmxxkcd[] = {
 ,
 " ",
 #ifdef NT
-"    appdata       Your personal Kermit 95 application data directory",
-"    common        Kermit 95's application data directory for all users",
+"    appdata       Your personal Kermit application data directory",
+"    common        Kermit's application data directory for all users",
 "    desktop       Your Windows desktop",
 #endif /* NT */
 "    download      Your download directory (if any)",
@@ -4252,7 +4252,7 @@ static char *ifhlp[] = { "Syntax: IF [NOT] condition commandlist",
 " ",
 "  MS-KERMIT   - Program is MS-DOS Kermit",
 "  C-KERMIT    - Program is C-Kermit",
-"  K-95        - Program is Kermit 95",
+"  K-95        - Program is Kermit on Windows or OS/2",
 "  GUI         - Program runs in a GUI window",
 " ",
 "  AVAILABLE CRYPTO                  - Encryption is available",
@@ -6201,7 +6201,7 @@ Trustees of Columbia University in the City of New York.\n\n",versio);
 
 case XXINT:
 #ifdef OS2
-    return(hmsg("The INTRO command gives a brief introduction to Kermit 95."));
+    return(hmsg("The INTRO command gives a brief introduction to Kermit."));
 #else
     return(hmsg("The INTRO command gives a brief introduction to C-Kermit."));
 #endif /* OS2 */
@@ -6273,7 +6273,7 @@ case XXNEW:
 
 case XXUPD:
     return(hmsg(
-"  New features are described in the online Kermit 95 manual,\n\
+"  New features are described in the online Kermit manual,\n\
    accessible via the MANUAL command."));
 
 #ifndef NOSPL
@@ -6789,7 +6789,7 @@ case XXMAN:
 #else
 #ifdef OS2
     return(hmsg("Syntax: MANUAL\n\
-  Accesses the Kermit 95 HTML manual using the current browser."));
+  Accesses the Kermit HTML manual using the current browser."));
 #else
     return(hmsg("Syntax: MANUAL [ topic ]\n\
   Runs the \"help\" command on the given topic (default \"kermit\")."));
@@ -7572,7 +7572,7 @@ static char *hxyterm[] = {
 #ifdef OS2
 #ifdef KUI
 "SET TERMINAL FONT <facename> <height>",
-"  Specifies the font to be used in the Kermit 95 window.  The font is",
+"  Specifies the font to be used in the Kermit window.  The font is",
 "  determined by the choice of a facename and a height measured in Points.",
 "  The available facenames are those installed in the Font Control Panel.",
 " ",
@@ -9255,7 +9255,7 @@ static char *hxywin95[] = {
 "  overlapped, from 1 to 30.  Default is ON.",
 " ",
 "SET WIN95 POPUPS { ON, OFF }",
-"  Determines whether or not Kermit 95 uses Popups to query the user for",
+"  Determines whether or not Kermit uses Popups to query the user for",
 "  necessary information such as user IDs or passwords.  Default is ON.",
 " ",
 "SET WIN95 SELECT-BUG { ON, OFF }"

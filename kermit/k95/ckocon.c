@@ -1416,9 +1416,9 @@ popuphelp(int mode, enum helpscreen x) {
 #define HELPSIZE (sizeof(hlpmsg)/sizeof(char *))
 
     char *abouthlpmsg[] = {
-        " By Jeffrey Eric Altman, IAM Consulting",
+        " By Jeffrey Eric Altman, Secure Endpoints Inc.",
         "    Frank da Cruz, Columbia University",
-        " Copyright (C) 1985, 2003",
+        " Copyright (C) 1985, 2013",
         " Trustees of Columbia University in the City of New York.",
         "",
         "  Type INTRO   for a brief introduction to the Kermit Command screen.",
