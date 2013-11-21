@@ -57,7 +57,7 @@ the following:
         cd kermit/k95
         mk.bat
 
-This should leave you with a number of binaries in the dist subdirectory, the
+This should leave you with a number of binaries in the current directory, the
 most interesting being:
 
 * cknker.exe   - Console version of C-Kermit for Windows
