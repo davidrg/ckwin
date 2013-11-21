@@ -784,7 +784,7 @@ SingleInputDialog( HINSTANCE hinst, HWND hwndOwner,
     //-----------------------
     lpw = lpwAlign (lpw); // align DLGITEMTEMPLATE on DWORD boundary
     lpdit = (LPDLGITEMTEMPLATE) lpw;
-    lpdit->style = WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON | WS_TABSTOP | WS_BORDER;
+    lpdit->style = WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON | WS_TABSTOP;
     lpdit->dwExtendedStyle = 0;
     lpdit->x  = (lpdt->cx - 14)/4 - 20; 
     lpdit->y  = 10 + (numlines + 3) * 14;
@@ -806,7 +806,7 @@ SingleInputDialog( HINSTANCE hinst, HWND hwndOwner,
     //-----------------------
     lpw = lpwAlign (lpw); // align DLGITEMTEMPLATE on DWORD boundary
     lpdit = (LPDLGITEMTEMPLATE) lpw;
-    lpdit->style = WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | WS_TABSTOP | WS_BORDER;
+    lpdit->style = WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | WS_TABSTOP;
     lpdit->dwExtendedStyle = 0;
     lpdit->x  = (lpdt->cx - 14)*3/4 - 20; 
     lpdit->y  = 10 + (numlines + 3) * 14;
@@ -1056,7 +1056,7 @@ MultiInputDialog( HINSTANCE hinst, HWND hwndOwner,
     //-----------------------
     lpw = lpwAlign (lpw); // align DLGITEMTEMPLATE on DWORD boundary
     lpdit = (LPDLGITEMTEMPLATE) lpw;
-    lpdit->style = WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON | WS_TABSTOP | WS_BORDER;
+    lpdit->style = WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON | WS_TABSTOP;
     lpdit->dwExtendedStyle = 0;
     lpdit->x  = (lpdt->cx - 14)/4 - 20; 
     lpdit->y  = 10 + (numlines + tb_cnt + 2) * 14;
@@ -1078,7 +1078,7 @@ MultiInputDialog( HINSTANCE hinst, HWND hwndOwner,
     //-----------------------
     lpw = lpwAlign (lpw); // align DLGITEMTEMPLATE on DWORD boundary
     lpdit = (LPDLGITEMTEMPLATE) lpw;
-    lpdit->style = WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | WS_TABSTOP | WS_BORDER;
+    lpdit->style = WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | WS_TABSTOP;
     lpdit->dwExtendedStyle = 0;
     lpdit->x  = (lpdt->cx - 14)*3/4 - 20; 
     lpdit->y  = 10 + (numlines + tb_cnt + 2) * 14;
@@ -1318,7 +1318,7 @@ VideoPopupDialog( HINSTANCE hinst, HWND hwndOwner, videopopup * vp)
     //-----------------------
     lpw = lpwAlign (lpw); // align DLGITEMTEMPLATE on DWORD boundary
     lpdit = (LPDLGITEMTEMPLATE) lpw;
-    lpdit->style = WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON | WS_TABSTOP | WS_BORDER;
+    lpdit->style = WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON | WS_TABSTOP;
     lpdit->dwExtendedStyle = 0;
     lpdit->x  = (lpdt->cx - 14)/4 - 20; 
     lpdit->y  = 10 + (vp->height + 1) * 8;
@@ -1340,7 +1340,7 @@ VideoPopupDialog( HINSTANCE hinst, HWND hwndOwner, videopopup * vp)
     //-----------------------
     lpw = lpwAlign (lpw); // align DLGITEMTEMPLATE on DWORD boundary
     lpdit = (LPDLGITEMTEMPLATE) lpw;
-    lpdit->style = WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | WS_TABSTOP | WS_BORDER;
+    lpdit->style = WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | WS_TABSTOP;
     lpdit->dwExtendedStyle = 0;
     lpdit->x  = (lpdt->cx - 14)*3/4 - 20; 
     lpdit->y  = 10 + (vp->height + 1) * 8;
@@ -1612,7 +1612,7 @@ TextPopupDialog( HINSTANCE hinst, HWND hwndOwner, char * title, int h, int w)
     //-----------------------
     lpw = lpwAlign (lpw); // align DLGITEMTEMPLATE on DWORD boundary
     lpdit = (LPDLGITEMTEMPLATE) lpw;
-    lpdit->style = WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON | WS_TABSTOP | WS_BORDER;
+    lpdit->style = WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON | WS_TABSTOP;
     lpdit->dwExtendedStyle = 0;
     lpdit->x  = 7 + w * 2 - 25; 
     lpdit->y  = 14 + h * font;
