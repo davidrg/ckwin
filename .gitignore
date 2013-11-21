@@ -213,3 +213,13 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+
+#############
+## Build output
+#############
+*.exe
+*.pch
+*.map
+*.res
+*.err
+kermit/k95/dist*
