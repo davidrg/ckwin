@@ -920,8 +920,8 @@ IDC_CURSORPARTDRAG      CURSOR  DISCARDABLE     "partdrag.cur"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,2,0,0
- PRODUCTVERSION 2,2,0,0
+ FILEVERSION 3,0,0,0
+ PRODUCTVERSION 3,0,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -937,13 +937,13 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "The Kermit Project"
-            VALUE "FileDescription", "C-Kermit for Windows, Graphical executable"
-            VALUE "FileVersion", "2.2.0.0"
+            VALUE "FileDescription", "Kermit for Windows, Graphical executable"
+            VALUE "FileVersion", "3.0.0.0"
             VALUE "InternalName", "k95g"
             VALUE "LegalCopyright", "Portions (C) Copyright 1995-2013 The Trustees of Columbia University in the City of New York. Portions (C) Copyright 2013 The Kermit Project contributors."
             VALUE "OriginalFilename", "k95g.exe"
-            VALUE "ProductName", "C-Kermit for Windows"
-            VALUE "ProductVersion", "2.2.0.0"
+            VALUE "ProductName", "Kermit for Windows"
+            VALUE "ProductVersion", "3.0.0.0"
         END
     END
     BLOCK "VarFileInfo"
