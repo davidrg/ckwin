@@ -127,7 +127,6 @@ Bool KCommand::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
             switch( LOWORD(wParam) )
             {
                 case ID_OPTIONS_FONT:
-                case ID_OPTIONS_COLOR:
                 case ID_OPTIONS_CUSTOMIZESTATUSBAR:
                 case ID_HELP_ABOUT:
                 case ID_HELP_HELPONKERMIT:

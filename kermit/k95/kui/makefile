@@ -17,7 +17,7 @@ KUIOBJS = \
     $(OUTDIR)\kcmdprot.obj $(OUTDIR)\kcmdmous.obj $(OUTDIR)\kcmdscri.obj \
     $(OUTDIR)\kcmdup.obj   $(OUTDIR)\kcmddown.obj $(OUTDIR)\kcmdlog.obj  \
     $(OUTDIR)\kcmdcom.obj  $(OUTDIR)\kprop.obj    $(OUTDIR)\kfont.obj    \
-    $(OUTDIR)\kfontdlg.obj $(OUTDIR)\kcolor.obj   $(OUTDIR)\kabout.obj   \
+    $(OUTDIR)\kfontdlg.obj $(OUTDIR)\kabout.obj   \
     $(OUTDIR)\kflname.obj  $(OUTDIR)\kdwnload.obj $(OUTDIR)\kupload.obj  \
     $(OUTDIR)\kuikey.obj   $(OUTDIR)\kclient.obj  \
     $(OUTDIR)\kcliserv.obj $(OUTDIR)\kappwin.obj  $(OUTDIR)\kcserver.obj \
@@ -39,7 +39,6 @@ $(OUTDIR)\kcmdprot.obj: kcmdprot.cxx kcmdprot.hxx kcmdproc.hxx kuidef.h resource
 $(OUTDIR)\kcmdscri.obj: kcmdscri.cxx kcmdscri.hxx kcmdproc.hxx kuidef.h resource.h
 $(OUTDIR)\kcmdterm.obj: kcmdterm.cxx kcmdterm.hxx kcmdproc.hxx kuidef.h resource.h kcmd.h kdefs.h ikcmd.h
 $(OUTDIR)\kcmdup.obj: kcmdup.cxx kcmdup.hxx kcmdproc.hxx kuidef.h resource.h
-$(OUTDIR)\kcolor.obj: kcolor.cxx kcolor.hxx kwin.hxx kuidef.h resource.h
 $(OUTDIR)\KUIKEY.obj: KUIKEY.CXX kuidef.h resource.h
 $(OUTDIR)\kdwnload.obj: kdwnload.cxx kdwnload.hxx kwin.hxx kuidef.h resource.h kprop.hxx kprop.h
 $(OUTDIR)\kflstat.obj: kflstat.cxx kflstat.hxx kwin.hxx kuidef.h resource.h kflstat.h karray.hxx kprogres.hxx
@@ -70,7 +69,7 @@ $(OUTDIR)\Kcustdlg.obj: Kcustdlg.cxx kcustdlg.hxx kwin.hxx kuidef.h resource.h k
 $(OUTDIR)\KPROGRES.obj: KPROGRES.CXX kprogres.hxx kuidef.h resource.h ksysmets.hxx
 $(OUTDIR)\kszpopup.obj: kszpopup.CXX kszpopup.hxx kwin.hxx kuidef.h resource.h kfont.hxx
 $(OUTDIR)\Ikui.obj: Ikui.cxx ikui.h ksplash.hxx kuidef.h resource.h kui.hxx kregedit.hxx ksysmets.hxx khwndset.hxx
-$(OUTDIR)\Kappwin.obj: Kappwin.cxx kappwin.hxx kwin.hxx kuidef.h resource.h kmenu.hxx ktoolbar.hxx kstatus.hxx kclient.hxx kfontdlg.hxx kcolor.hxx kabout.hxx kfont.hxx ksysmets.hxx kszpopup.hxx ikterm.h ikcmd.h kdefs.h
+$(OUTDIR)\Kappwin.obj: Kappwin.cxx kappwin.hxx kwin.hxx kuidef.h resource.h kmenu.hxx ktoolbar.hxx kstatus.hxx kclient.hxx kfontdlg.hxx kabout.hxx kfont.hxx ksysmets.hxx kszpopup.hxx ikterm.h ikcmd.h kdefs.h
 
 $(OUTDIR)\ikterm.obj: ikterm.cxx ikterm.h ikui.h \
     $(KERMITDIR)\ckcdeb.h $(KERMITDIR)\ckcker.h $(KERMITDIR)\ckcasc.h \

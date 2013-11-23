@@ -4,7 +4,6 @@
 #include "kstatus.hxx"
 #include "kclient.hxx"
 #include "kfontdlg.hxx"
-#include "kcolor.hxx"
 #include "kabout.hxx"
 #include "kfont.hxx"
 #include "ksysmets.hxx"
@@ -742,13 +741,6 @@ Bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
                         KFont* newFont = new KFont( &logfont );
                         setKFont( newFont );
                     }
-                    break;
-                }
-            case ID_OPTIONS_COLOR:
-                {
-                    //debug(F111,"KAppWin::message WM_COMMAND","ID_OPTIONS_COLOR",LOWORD(wParam));
-                    KColor color( kglob, this );
-                    color.show();
                     break;
                 }
             case ID_OPTIONS_CUSTOMIZESTATUSBAR:

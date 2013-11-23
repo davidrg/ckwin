@@ -220,7 +220,6 @@
 #define ID_HELP_HELPONKERMIT            40032
 #define ID_HELP_ABOUT                   40033
 #define ID_OPTIONS_FONT                 40034
-#define ID_OPTIONS_COLOR                40035
 #define ID_OPTIONS_MOUSE                40037
 #define ID_BUTTON40038                  40038
 #define ID_BUTTON40039                  40039
