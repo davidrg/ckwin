@@ -4,20 +4,6 @@ char *ckxv = "Win32 Communications I/O, 8.0.229, 29 Dec 2005";
 char *ckxv = "OS/2 Communications I/O, 8.0.229, 29 Dec 2005";
 #endif /* NT */
 
-/* Expiration Information */
-#ifdef BETATEST
-int expyear = 137,       /* years from 1900 */
-    expmon  = 0,         /* 0 = Jan */
-    expday  = 1;        /* 1 - 31 */
-#else
-int expyear = 137,      /* years from 1900 */
-    expmon  = 0,        /* 0 = Jan */
-    expday  = 1;       /* 1 - 31 */
-#endif /* BETATEST */
-
-int  downloaded=0;               /* Is this a downloaded demo? */
-int  expired=0;                  /* Has demo expired? */
-
 /* Define the following symbol to allow setting the title bar... */
 /* Not recommended in OS/2 because the call to do this is undocumented. */
 #define CK_SETTITLE

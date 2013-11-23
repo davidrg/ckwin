@@ -581,10 +581,6 @@ _PROTOTYP( APIRET os2SetFont, (void) ) ;
 _PROTOTYP( APIRET os2ResetFont, (void) ) ;
 #endif /* PCFONTS */
 
-_PROTOTYP( char * get_reg_name, (void) ) ;
-_PROTOTYP( char * get_reg_corp, (void) ) ;
-_PROTOTYP( char * get_reg_sn, (void) ) ;
-
 _PROTOTYP( int CSisNRC, ( int ) );
 _PROTOTYP( int ltorxlat, ( int, CHAR **));
 _PROTOTYP( int rtolxlat, ( int ));

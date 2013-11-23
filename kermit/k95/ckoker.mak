@@ -566,7 +566,7 @@ os232: cko32rtl.dll ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetu
 
 
 
-win32: cknker.exe wtelnet wrlogin k95d textps ctl3dins.exe iksdsvc.exe iksd.exe #wreg
+win32: cknker.exe wtelnet wrlogin k95d textps ctl3dins.exe iksdsvc.exe iksd.exe
 # SRP support: srp-tconf.exe srp-passwd.exe
 # Crypto stuff: k95crypt.dll
 
@@ -587,8 +587,6 @@ wtelnet: telnet.exe
 wrlogin: rlogin.exe
 
 k95d: k95d.exe
-
-wreg: reg.exe
 
 textps: textps.exe
 
@@ -637,11 +635,6 @@ setup.exe: setup.obj settapi.obj $(DEF) ckoker.mak
 test.exe: test.obj $(DEF) ckoker.mak
        link.exe @<< 
        $(LINKFLAGS) /OUT:$@ test.obj cknker.res $(LIBS) 
-<<
-
-reg.exe: reg.obj ckoetc.obj ckcuni.obj ckofio.obj ckuxla.obj $(DEF) ckoker.mak
-       link.exe @<< 
-       $(LINKFLAGS) /OUT:$@ reg.obj ckoetc.obj ckoetc2.obj ckuxla.obj ckcuni.obj ckofio.obj cknker.res $(LIBS) 
 <<
 
 telnet.exe: telnet.obj $(DEF) ckoker.mak
@@ -785,8 +778,6 @@ iksd.exe: iksd.obj ckoker.mak
         
 
 #---------- Dependencies:
-
-reg$(O):    reg.c ckoetc.h 
 
 !if "$(PLATFORM)" == "OS2"
 setup$(O):	setup.c

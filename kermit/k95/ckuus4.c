@@ -546,11 +546,6 @@ extern CHAR (*xlr[MAXTCSETS+1][MAXFCSETS+1])(); /* translation functions. */
 
 struct keytab vartab[] = {
     { "_line",     VN_TFLN,  CM_INV},   /* 192 */
-#ifdef OS2
-    { "_regname",  VN_REGN,  CM_INV},   /* 1.1.12 */
-    { "_regorg",   VN_REGO,  CM_INV},   /* 1.1.12 */
-    { "_regnum",   VN_REGS,  CM_INV},   /* 1.1.12 */
-#endif /* OS2 */
     { "apcactive", VN_APC,   CM_INV},   /* 192 */
 #ifdef NT
     { "appdata",   VN_APPDATA, 0},      /* 201 */
@@ -12655,15 +12650,6 @@ nvlook(s) char *s; {
           return((char *)vvbuf);
       }
 #endif /* NOXFER */
-
-#ifdef OS2
-      case VN_REGN:
-        return(get_reg_name());
-      case VN_REGO:
-        return(get_reg_corp());
-      case VN_REGS:
-        return(get_reg_sn());
-#endif /* OS2 */
     } /* Break up long switch statements... */
 
     switch(y) {

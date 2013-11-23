@@ -2198,9 +2198,6 @@ struct stringint {			/* String and (wide) integer */
 #define VN_P_RPT  103			/* Repeat count prefix */
 #define VN_D_LCP  104			/* DIAL LOCAL-PREFIX */
 #define VN_URL    105			/* Last URL selected */
-#define VN_REGN   106			/* Registration Name */
-#define VN_REGO   107			/* Registration Organization */
-#define VN_REGS   108			/* Registration Serial number */
 #define VN_XPROG  109			/* xprogram (like xversion) */
 #define VN_EDITOR 110			/* Editor */
 #define VN_EDOPT  111			/* Editor options */
