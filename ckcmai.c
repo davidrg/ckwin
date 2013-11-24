@@ -1,6 +1,6 @@
-#define EDITDATE  "25 Jul 2013"		/* Last edit date dd mmm yyyy */
-#define EDITNDATE "20130725"		/* Keep them in sync */
-/* Thu Jul 25 14:11:23 2013 */
+#define EDITDATE  "24 Nov 2013"		/* Last edit date dd mmm yyyy */
+#define EDITNDATE "20131124"		/* Keep them in sync */
+/* Sun Nov 24 11:44:37 2013 */
 
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
@@ -41,7 +41,7 @@ char * ck_cryear = "2013"; 		/* C-Kermit copyright year */
 #ifndef BETATEST
 #ifndef OS2                             /* UNIX, VMS, etc... (i.e. C-Kermit) */
 char *ck_s_test = "Dev";		/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "06";			/* Test version number or "" */
+char *ck_s_tver = "07";			/* Test version number or "" */
 #else  /* OS2 */
 char *ck_s_test = "";			/* (i.e. K95) */
 char *ck_s_tver = "";
@@ -102,7 +102,11 @@ char *ck_s_name = "IKS-NT";
 char *ck_s_name = "IKS-OS/2";
 #endif /* NT */
 #else /* IKSDONLY */
-char *ck_s_name = "Kermit 95";          /* Program name */
+#ifdef COMMENT
+char *ck_s_name = "Kermit 95";          /* Proprietary program name */
+#else
+char *ck_s_name = "C-Kermit";		/* Open Source program name */
+#endif /* COMMENT */
 #endif /* IKSDONLY */
 #else
 #ifdef MAC
@@ -218,7 +222,7 @@ char *copyright[] = {
 #ifndef pdp11
 " ",
 "For further information, visit the Kermit Project website:",
-"http://www.columbia.edu/kermit/ .",
+"http://www.kermitproject.org/ .",
 #endif /* pdp11 */
 ""};
 
@@ -257,7 +261,7 @@ ACKNOWLEDGMENTS:
    Robert Adsett, University of Waterloo, Canada
    Larry Afrin, Clemson U
    Russ Allbery, Stanford U
-   Jeffrey Altman, Columbia University
+   Jeffrey Altman, (formerly of) Columbia University
    Greg Andrews, Telebit Corp
    Barry Archer, U of Missouri
    Robert Andersson, International Systems A/S, Oslo, Norway
@@ -321,11 +325,13 @@ ACKNOWLEDGMENTS:
    Carl Fongheiser, CWRU
    Mike Freeman, Bonneville Power Authority
    Carl Friedberg
+   Adam Frielander
    Marcello Frutig, Catholic University, Sao Paulo, Brazil (X.25 support)
    Hirofumi Fujii, Japan Nat'l Lab for High Energy Physics, Tokyo (Kanji)
    Chuck Fuller, Westinghouse Corporate Computer Services
    Andy Fyfe, Caltech
    Christine M. Gianone, Columbia U
+   David Goodwin, NZ,
    John Gilmore, UC Berkeley
    Madhusudan Giyyarpuram, HP
    Rainer Glaschick, Siemens AG, Paderborn
@@ -491,12 +497,15 @@ ACKNOWLEDGMENTS:
    Kijal Shah
    David Singer, IBM Almaden Research Labs
    David Sizeland, U of London Medical School
+   Bruce Skelly
    Fridrik Skulason, Iceland
    Rick Sladkey (Linux)
    Dave Slate
    Bradley Smith, UCLA
+   Eric Smith
    Fred Smith, Merk / Computrition
    Richard S Smith, Cal State
+   Tim Sneddon
    Ryan Stanisfer, UNT
    Bertil Stenstroem, Stockholm University Computer Centre (QZ), Sweden
    James Sturdevant, CAP GEMENI AMERICA, Minneapolis
@@ -506,6 +515,7 @@ ACKNOWLEDGMENTS:
    Andy Tanenbaum, Vrije U, Amsterdam, Netherlands
    Seth Theriault, Columbia U
    Glen Thobe
+   Jake Thompson
    Markku Toijala, Helsinki U of Technology
    Teemu Torma, Helsinki U of Technology
    Linus Torvalds, Helsinki
@@ -543,6 +553,7 @@ ACKNOWLEDGMENTS:
    Joellen Windsor, U of Arizona
    Patrick Wolfe, Kuck & Associates, Inc.
    Gregg Wonderly, Oklahoma State U (V7 UNIX)
+   Lawrence Woodman
    Farrell Woods, Concurrent (formerly Masscomp)
    Dave Woolley, CAP Communication Systems, London
    Jack Woolley, SCT Corp
@@ -818,6 +829,8 @@ int dispos = 0;                         /* Disposition */
 
 #ifdef HAVE_LOCALE
 int nolocale = 0;
+#else
+int nolocale = 1;
 #endif /* HAVE_LOCALE */
 
 #ifdef CK_PERMS
@@ -1606,6 +1619,12 @@ ckjmpbuf cmjbuf;
 cc_clean();                             /* This can't be right? */
 #endif /* GEMDOS */
 #endif /* NOCCTRAP */
+
+#ifdef TIMEH
+/* This had to be added for NetBSD 6.1 - it might have "effects" elsewhere */
+/* Tue Sep  3 17:03:42 2013 */
+#include <time.h>
+#endif /* TIMEH */
 
 #ifndef NOXFER
 /* Info associated with a system ID */

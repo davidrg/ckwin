@@ -26,7 +26,7 @@ Tue Jul 23 12:47:22 2013
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2010,
+  Copyright (C) 1985, 2013,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -1818,7 +1818,7 @@ int mac_fclose();
 #endif /* NOICP */
 #endif /* CK_TMPDIR */
 
-/* Whether to include <sys/time.h> */
+/* Whether to include <time.h> or <sys/time.h> */
 
 #ifndef NOTIMEH				/* <time.h> */
 #ifndef TIMEH
@@ -2809,7 +2809,7 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #else /* _M_PPC */
 #ifndef NO_SSL
 #define CK_SSL
-#define SSLDLL
+/* #define SSLDLL */ /* OpenSSL included at link time now - [jt] 2013/11/21 */
 #endif /* NO_SSL */
 #endif /* _M_PPC */
 #ifndef NO_KERBEROS
@@ -5371,7 +5371,12 @@ _PROTOTYP( int zxcmd, (int, char *) );
 _PROTOTYP( int zclosf, (int) );
 #endif /* MAC */
 #ifdef NZXPAND
+#ifdef OS2
+/* [jt] 2013/11/21 - CHAR/char conflict between K95 and others */
+_PROTOTYP( int nzxpand, (CHAR *, int) );
+#else
 _PROTOTYP( int nzxpand, (char *, int) );
+#endif /* OS2 */
 #else /* NZXPAND */
 _PROTOTYP( int zxpand, (char *) );
 #endif /* NZXPAND */

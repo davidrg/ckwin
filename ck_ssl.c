@@ -1,8 +1,8 @@
-char *cksslv = "SSL/TLS support, 9.0.230, 20 Jul 2012";
+char *cksslv = "SSL/TLS support, 9.0.231, 21 Nov 2013";
 /*
   C K _ S S L . C --  OpenSSL Interface for C-Kermit
 
-  Copyright (C) 1985, 2012,
+  Copyright (C) 1985, 2013,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -2743,6 +2743,7 @@ ssl_verify_crl(int ok, X509_STORE_CTX *ctx)
 char *
 tls_userid_from_client_cert(ssl) SSL * ssl;
 {
+#ifndef OS2		/* [jt] 2013/11/21 - K-95 doesn't have X509_to_user */
     static char cn[256];
     static char *r = cn;
     int err;
@@ -2759,6 +2760,9 @@ tls_userid_from_client_cert(ssl) SSL * ssl;
     }
     else
         return r = NULL;
+#else
+    return NULL;
+#endif /* OS2 */
 }
 
 unsigned char **
@@ -3062,6 +3066,7 @@ ssl_check_server_name(SSL * ssl, char * hostname)
 int
 tls_is_user_valid(SSL * ssl, const char *user)
 {
+#ifndef OS2		 /* [jt] 2013/11/21 - K-95 doesn't have X509_userok */
     X509 *client_cert;
     int r = 0;
 
@@ -3076,6 +3081,9 @@ tls_is_user_valid(SSL * ssl, const char *user)
 
     X509_free(client_cert);
     return r;
+#else
+    return 0;
+#endif /* OS2 */
 }
 
 int

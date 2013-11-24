@@ -4,7 +4,7 @@
 /*
   Authors:
     Frank da Cruz <fdc@columbia.edu>,
-      The Kermit Project, Columbia University, New York City
+      The Kermit Project, New York City
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
@@ -82,6 +82,7 @@ extern int k95stdout;
 #include "ckntap.h"
 #endif /* NT */
 #include "ckocon.h"
+#include "ckodir.h"			/* [jt] 2013/11/21 - for MAXPATHLEN */
 #endif /* OS2 */
 
 extern long vernum, speed;
@@ -5876,7 +5877,7 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 	    if (chmtopt == CHMT_P) {	/* If preserving file dates */
 		dstr = zfcdat(name);
 		if (!dstr) dstr = "";
-		if (!*dstr) printf("WARNING: can't get date for \%s\n",name);
+		if (!*dstr) printf("WARNING: can't get date for %s\n",name);
 	    }
 	    linebuf = (char *) malloc(linebufsiz+1); /* Malloc a line buffer */
 	    if (!linebuf) {
@@ -5958,12 +5959,13 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 	    fclose(ifp);
 	    fclose(ofp);
 	    free(linebuf);
+	    free(newbuf);
 	    if (simulate) {		/* Simulation run */
 		if (failed) {
 		    printf("Would fail: %s\n",name);
 		} else if (changes) {
 		    printf("Would change: %s\n",name);
-		} else {
+		} else if (verbose) {
 		    printf("Would not change: %s\n",name);
 		}
 		zdelet(tmpfile);
@@ -5988,17 +5990,18 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 				   );
 			    rc = -9;
 			    goto xdomydir;
-
 			}
 		    }
 		    if (verbose)
-		      printf("Changed %s: %s->%s\n",name,string1,string2);
+		      printf("Changed %s: %s -> %s\n",name,string1,string2);
 		} else {
 		    zdelet(tmpfile);	/* delete temporary file */
 		}
 	    }
-            znext(name);
-	    continue;
+            if (znext(name))		/* Get next file */
+	      continue;
+	    success = 1;		/* If none we're finished */
+	    goto xdomydir;
         }
 	if (cx == XXTOUC) {		/* Command was TOUCH, not DIRECTORY */
 	    /* Given date-time, if any, else current date-time */

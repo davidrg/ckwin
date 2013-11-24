@@ -5,11 +5,11 @@
 /*
   Authors:
     Frank da Cruz <fdc@columbia.edu>,
-      The Kermit Project, Columbia University, New York City
+      The Kermit Project, New York City
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2011,
+  Copyright (C) 1985, 2013,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -10034,7 +10034,7 @@ cx_serial(device, cx, sx, shr, flag, gui, special)
 	  "or the UNIX appendix of the manual, \"Using C-Kermit\"\n"
                              );
 		      printf(
-          "or visit http://www.columbia.edu/kermit/ckuins.html \n"
+          "or visit http://www.kermitproject.org/ckuins.html \n"
                              );
 		      printf("*************************\n\n");
 		  }

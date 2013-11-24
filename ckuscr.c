@@ -7,15 +7,14 @@ char *loginv = "Script Command, 9.0.032, 16 Oct 2009";
 /*  C K U S C R  --  expect-send script implementation  */
 
 /*
-  Copyright (C) 1985, 2009,
+  Copyright (C) 1985, 2013,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
   Original (version 1, 1985) author: Herm Fischer, Encino, CA.
   Contributed to Columbia University in 1985 for inclusion in C-Kermit 4.0.
-  Maintained since 1985 by Frank da Cruz, Columbia University,
-  fdc@columbia.edu.
+  Maintained since 1985 by Frank da Cruz, fdc@columbia.edu.
 
   The module takes a UUCP-style script of the "expect send [expect send] ..."
   format.  It is intended to operate similarly to the way the common

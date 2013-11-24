@@ -8327,9 +8327,94 @@ tolower, etc, functions (or macros, or whatever they are) do some magic.
 Ditto for Shift-JIS, Japanese EUC, etc.
 
 A new command-line options, --nolocale, was added to disable use of the
-locale and to force the "C" locale.  Also, if the environment variable
+locale by forcing the "C" locale.  Ditto if the environment variable
 K_NOLOCALE is set to a nonzero integer value.  ckuusr.h, ckuusy.c, ckcmai.c,
 24 Jul 2013.
+
+-- Dev.06 --
+
+The CHANGE command would indicate failure even when there was no error.
+Fixed in ckuus6.c, 4 Aug 2013.
+
+Changed CHANGE /SIMULATE to list files that would NOT be changed only if
+the /VERBOSE switch was included.  ckuus6.c, 4 Aug 2013.
+
+Added clarification to HELP CHANGE about string format.  ckuus2.c, 3 Sep 2013.
+
+NetBSD 6.1, man 3 time: "In NetBSD 6.0 the time_t type was changed to be 64
+bits wide, including on 32-bit machines, making rollover a concern for the
+far distant future only.  Note however that any code making the incorrect
+assumption that time_t is the same as long will fail on 32-bit machines in
+2038."  C-Kermit builds OK but warns:
+
+  ckcmai.c:(.text+0x1e92): warning: warning: reference to compatibility 
+  time(); include <time.h> for correct reference
+
+Did this and all's OK.  But it might have repercussions elsewhere.
+ckcmai.c, 3 Sep 2013.
+
+ckuus5.c:597:29: warning: missing terminating " character <- fixed 3 Sep 2013.
+
+\fpictureinfo() was checking the filename against a pattern and failing on
+no match, sometimes incorrectly.  I took out the filename check, since the
+next thing it does is check the internal structure of the file.  ckuus4.c,
+17 Sep 2013.
+
+Changed CHANGE message to put spaces around the "->" so it doesn't get
+intepreted by the terminal emulator as part of a URL.  ckuus6.c, 11 Oct 2013.
+
+If the CHANGE command was used repeatedly, eventually C-Kermit would get a
+memory allocation error.  A dynamic buffer was not being freed.  Fixed in 
+ckuus6.c, 15 Oct 2013.
+
+\fdayname(\v(nday)) would fail if executed on Sunday because \v(nday)
+numbers days 0 (Sunday) to 6 (Saturday), whereas \fdayname() wants 1
+(Monday) through 7 (Sunday).  Also, \fdayname(,1) would return "Jan" if
+today was Sunday.  Fixed by allowing both 0 and 7 to mean Sunday.  All the
+other day numbers agree.  ckuus4.c, 15 Oct 2013.
+
+The documentation had the sense of the second argument to \fdayname() and
+\fmonthname() backwards.  Fixed in locale.html, 15 Oct 2013.
+
+\fpictureinfo() problem from 17 Sep 2013 was because I was using a tail
+anchor ($) on the pattern but had not set the ckmatch() opts bit saying so.
+Removed the tail anchor.  Also changed the function to return 3 ("square")
+if width == height (so it's kind of like a bit mask).  ckuus4.c, 15 Oct 2013.
+
+Updated HELP FUNCTION PICTUREINFO.  ckuus2.c, 15 Oct 2013.
+
+Android changes from Jake Thompson, 17 Nov 2013:
+ . Disable locales in android.mk
+ . Disable "format string checks" in the ndk-build invocation, android.txt.
+
+Changes to make current C-Kermit source code integrate with Kermit 95
+code, from from Jake Thompson, 21 Nov 2013:
+ . Inconsistent declarations of nzxpand() in Unix and Windows, ckcdeb.h.
+ . Extraneous prototype of ckcgetc() in ckcker.h.
+ . Duplicate definition of __inline int in ckcsig.h.
+ . Similar issues in ckcuni.h.
+ . Windows OpenSSL doesn't have X509_to_user() or X509_userok(), ck_ssl.c.
+ . No longer necessary to #include ckosslc.h and ckossl.h in ck_ssl.c.
+ . zgfs_link and linkname not implemented in K95: ckuus4.c.
+ . Include ckodir.h for MAXPATHLEN in ckuus[46].c.
+ . chkaes() calling sequence is different in K95: ckuusr.h.
+Each change marked with "[jt] 2013/11/21".  24 Nov 2013.
+
+Removed or updated numerous references to Columbia University,
+many modules, 24 Nov 2013.
+
+Changed program name in Windows from "Kermit 95" to "C-Kermit". 
+ckcmai.c, 24 Nov 2013.
+
+Commented out calls to shoreg().  ckuus[r5].c, 24 Nov 2013.
+
+Built OK on NetBSD 6.1.2.  Built OK on RHEL4.  Could not build with SSL on
+NetBSD because "can't open config file: /etc/openssl/openssl.cnf".  Built OK
+on Linux with OpenSSL 0.9.7a but for some reason a ton of "passing arg ...
+from incompatible pointer type" messages came out of DES_*() function
+invocations, which didn't happen before.  Built OK on Solaris 9 without SSL,
+and with OpenSSL 0.9.8q (with no warnings, but this one doesn't have DES).
+24 Nov 2013.
 
 ---------------------------------
 ***************************

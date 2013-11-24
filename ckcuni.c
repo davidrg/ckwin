@@ -7,14 +7,14 @@ char * ckcuni = "Unicode support 9.0.115, 16 Oct 2009";
 /*  C K C U N I . C  --  Unicode/Terminal character-set translations  */
 
 /*
-  Copyright (C) 1999, 2009,
+  Copyright (C) 1999, 2013,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
   Authors:
     Frank da Cruz <fdc@columbia.edu>
-      The Kermit Project, Columbia University, New York City.
+      The Kermit Project, New York City.
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 

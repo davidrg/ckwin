@@ -5,7 +5,7 @@
 /*
   Authors:
     Frank da Cruz <fdc@columbia.edu>,
-      The Kermit Project, Columbia University, New York City
+      The Kermit Project, New York City
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
@@ -62,6 +62,7 @@ _PROTOTYP(int vmsttyfd, (void) );
 #define APIRET ULONG
 #endif /* NT */
 #include "ckocon.h"
+#include "ckodir.h" /* [jt] 2013/11/21 - for MAXPATHLEN */
 #include "ckoetc.h"
 int StartedFromDialer = 0;
 HWND hwndDialer = 0;
@@ -10383,10 +10384,18 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 	    s = "lrwxrwxrwx";
 	  else
 #endif /* UNIX */
+
+/* [jt] 2013/11/21:
+ * K-95 doesn't have ziperm.  However, I have not read through this
+ * code thoroughly, and this needs double checked to see if there are
+ * any side effects of commenting this out.
+ */
+#ifdef CK_PERMS
 	    s = ziperm(bp[0]);
 	  a_ptr[x][4] = NULL;
 	  makestr(&(a_ptr[x][4]),s);
 	  ckstrncpy(workbuf,s,32);	/* Save for later */
+#endif /* CK_PERMS */
 
 	  /* Element 5 - Permissions numeric code */
 
@@ -10396,7 +10405,11 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 
 	  /* Element 6 - Size in bytes */
       
+#ifdef OS2 /* [jt] 2013/11/21 - K-95 doesn't have linkname */
+	  s = ckfstoa(z);
+#else
 	  s = zgfs_link ? ckitoa((int)strlen((char *)linkname)) : ckfstoa(z);
+#endif /* OS2 */
 	  a_ptr[x][6] = NULL;
 	  makestr(&(a_ptr[x][6]),s);
 	  
@@ -12338,8 +12351,11 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 	failed = 0;			/* From here on we don't fail */
 	p[0] = '0';			/* Default return value */
 	p[1] = NUL;
-	if (!ckmatch("*.{jpg,jpeg,gif}$",s,0,1+4)) /* Appropriate name? */
+
+	/* Tail anchor removed 2013-10-15 -fdc */
+	if (!ckmatch("*.{jpg,jpeg,gif}",s,0,1)) /* Appropriate name? */
 	  goto fnend;			/* No, fail */
+
 	fp = fopen(s, "r");		/* Open it */
 	if (fp == NULL) {		/* Can't, fail */
 	    p[0] = '-';
@@ -12435,8 +12451,9 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 	}
 	fclose(fp);
 	if (w > 0 && h > 0) {
-	    if (w > h) p[0] = '1';
-	    if (h >= w) p[0] = '2';
+	    if (w > h) p[0] = '1';	/* Landscape */
+	    else if (h > w) p[0] = '2';	/* Portrait */
+	    else p[0] = '3';		/* Square - 2013-10-05 */
 	}
 	goto fnend;
     }
@@ -12690,6 +12707,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 	    s1 = ckdate();
 	} else if (rdigits(s1) && (int)strlen(s1) < 8) {
 	    day = atoi(s1);
+	    if (day == 0) day = 7;	/* In case \v(nday) used as arg */
 	    if (day < 1 || day > 7) {
 		ckmakmsg(fnval,FNVALL,"<ERROR:BAD_DAYNUM\\f",fn,"()>",NULL);
 		goto fnend;
@@ -12740,6 +12758,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 	    s1 = ckdate();
 	} else if (rdigits(s1) && (int)strlen(s1) < 8) {
 	    month = atoi(s1);
+            if (month == 0) month = 12;
 	    if (month < 1 || month > 12) {
 		ckmakmsg(fnval,FNVALL,"<ERROR:BAD_MONTHNUM\\f",fn,"()>",NULL);
 		goto fnend;

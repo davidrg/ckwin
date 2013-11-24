@@ -11,7 +11,7 @@ int cmdsrc() { return(0); }
 /*
   Authors:
     Frank da Cruz <fdc@columbia.edu>,
-      The Kermit Project, Columbia University, New York City
+      The Kermit Project, New York City
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
@@ -594,7 +594,7 @@ char *m_fast = "set win 4, set rec pack 2200";
 #endif /* BIGBUFOK */
 char *m_cautious = "set win 4, set rec pack 1000";
 char *m_robust = "set win 1, set rec pack 90, set reliable off,\
- set send timeout 20 fixed";";
+ set send timeout 20 fixed";
 #endif /* CK_SPEED */
 
 #ifdef VMS
@@ -3853,9 +3853,11 @@ herald() {
 #endif /* datageneral */
         printf(" Copyright (C) 1985, %s,\n", ck_cryear);
         printf("  Trustees of Columbia University in the City of New York.\n");
+#ifdef COMMENT
 #ifdef OS2
        shoreg();
 #endif /* OS2 */
+#endif /* COMMENT */
 
         if (!quiet && !backgrd) {
 #ifdef COMMENT

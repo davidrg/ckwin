@@ -26,7 +26,7 @@ char *ckptyv = "Pseudoterminal support, 9.0.101, 13 Jun 2011";
   November 1999
 
   Parameterized for pty file descriptor and function code,
-  Frank da Cruz, Columbia University, New York City
+  Frank da Cruz, The Kermit Project, New York City
   Dec 2006 - Sep 2009
 */
 

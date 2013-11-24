@@ -7,7 +7,7 @@
 /*
   Authors:
     Frank da Cruz <fdc@columbia.edu>,
-      The Kermit Project, Columbia University, New York City
+      The Kermit Project, New York City
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
@@ -195,20 +195,43 @@ static char *tophlpi[] = {              /* Top-level help for IKSD */
 #ifndef NOHELP
 char *newstxt[] = {
 #ifdef OS2
-"Welcome to Kermit 95 3.x.x.  Major new features since 2.1.3 include:",
+"Welcome to C-Kermit for Windows, the Open-Source successor to",
+"Columbia University's Kermit 95 package.",
+
+#ifdef BETATEST
+" ",
+"THIS IS A PRERELEASE TEST VERSION NOT SUITABLE FOR PRODUCTION."
+"FOR DETAILS, SEE http://www.kermitproject.org/ckwindows.html",
+#endif /* BETATEST */
+
+" ",
+"Major new features since the final Kermit 95 release include:",
 #else
 "Welcome to C-Kermit 9.0.304.  New features since 8.0.211 include:",
 #endif /* OS2 */
 " . Open Source Simplified 3-Clause BSD License",
+#ifdef OS2
+" . Source code!  The Windows edition of C-Kermit, formerly known",
+"   as Kermit 95 or K-95, is now available under the Revised 3-Clause",
+"   BSD Open Source license.",
+#endif /* OS2 */
+#ifndef OS2
 " . Full 64-bit memory model on platforms that support it",
 " . Large file support (64-bit file size) on most platforms",
 " . Long integer variables and constants in commands and scripts",
+#endif /* OS2 */
 " . Bigger maximum command and macro lengths",
 " . Bigger filename expansion space",
-" . New super-flexible RENAME command",
-" . New COPY and DIRECTORY command options",
-" . New TOUCH command",
+" . New super-flexible RENAME command (HELP RENAME)",
+" . New CHANGE command for changing text files (HELP TOUCH)",
+" . New COPY and DIRECTORY command options (HELP COPY, HELP DIRECTORY)",
+" . New TOUCH command (HELP TOUCH)",
+#ifdef UNIX
+" . Limited Unix Locale support (HELP SET LOCALE)",
+#endif /* UNIX */
+#ifdef CK_SSL
 " . Raw SSL/TLS connections for connecting to POP3 and similar services",
+#endif /* CK_SSL */
 " . At prompt, Ctrl-K recalls most recent filename",
 " . Scripting and performance improvements and bug fixes",
 " ",
@@ -226,7 +249,7 @@ char *newstxt[] = {
 "    which documents the new features of C-Kermit 9.0.",
 " ",
 "If the release date shown by the VERSION command is long past, be sure to",
-"check with the Kermit website to see if there have been updates:",
+"check the Kermit website to see if there have been updates:",
 " ",
 #ifdef OS2
 "  http://www.kermitproject.org/k95.html     (Kermit 95 home page)",
@@ -1900,6 +1923,18 @@ static char *hmxxchange[] = {
 "  is made to create it.  You can select a different temporary directory with",
 "  the SET TEMP-DIRECTORY command.  All temporary files are deleted after use."
 ,
+" ",
+"  String1 and String2 should be enclosed in doublequotes \"\" or braces {} if"
+,
+"  if they contain spaces.  In the event that they already contain braces or",
+"  doublequotes, especially if these are not balanced, some quoting may be",
+"  required.  Or you can assign the strings to variables and then use the",
+"  variable names in the CHANGE command; example:",
+" ",
+"    .a = {value=\"./",
+"    .b = {value=\"../",
+"    change *.html \\m(a) \\m(b)",
+" ",
 "  Since the CHANGE command works line by line, only text files can be",
 "  changed; C-Kermit automatically skips over binary files.  Before using",
 "  this command, you might want to back up the files that will be affected.",
@@ -5447,7 +5482,8 @@ static char * hxxdcl[] = {
 " ",
 "ARRAY COPY array1 array2",
 "  Copies array1 to array2.  If array2 has not been declared, it is created",
-"  automatically.  Range specifiers may be given on one or both arrays.",
+"  automatically.  If it array2 does exist, array1 is copied INTO it, as",
+"  much as will fit.  Range specifiers may be given on one or both arrays.",
 " ",
 "ARRAY LINK array1 arra2",
 "  Makes array1 a link to array2.",
@@ -7426,6 +7462,10 @@ static char * supporttext[] = {
 "The documentation for C-Kermit is listed here:",
 " ",
 "  http://www.kermitproject.org/ckermit.html#doc",
+" ",
+"Z C-Kermit tutorial is here:",
+" ",
+"  http://www.kermitproject.org/ckututor.html",
 " ",
 "The C-Kermit Frequently Asked Questions page is here:",
 " ",
@@ -10637,6 +10677,16 @@ case XYTIMER:
   (such as Windows pathnames) that might contain backslashes."));
 #endif	/* NOSPL */
 
+#ifdef HAVE_LOCALE
+  case XYLOCALE:
+    return(hmsg("Syntax: SET LOCALE [ locale-string ]\n\
+  Changes the locale for language and character-set to the one given.  The\n\
+  local-string is in the format required by your computer, such as\n\
+  en_US.US-ASCII or es_VE.ISO8859-1.  C-Kermit's SET LOCALE command affects\n\
+  C-Kermit itself and any subprocesses, but does not affect the environment\n\
+  from which C-Kermit was invoked."));
+#endif /* HAVE_LOCALE */
+
 default:
     printf("Not available - \"%s\"\n",cmdbuf);
     return(0);
@@ -11882,15 +11932,19 @@ Returns number:\n");
 
       case FN_PICTURE:
         printf("\\fpictureinfo(s[,&a])\n\
-  s  = File specification of a JPG or GIF picture file.\n\
+  s  = File specification of an image file in JPG or GIF format.\n\
   &a = Optional array name.\n\n");
         printf("Returns integer:\n\
   0 if file not found or not recognized;\n\
   1 if orientation is landscape;\n\
-  2 if orientation is portrait.\n\n"); 
-	printf("  If an array name is included, element 1 is filled \
-in with the image width\n\
-  in pixels, and element 2 the image height.\n");
+  2 if orientation is portrait;\n\
+  3 if the image is square.\n"); 
+	printf("\n\
+If an array name is included, and if the function's return value is\n\
+greater than 0, element 1 of the array is filled in with the image\n\
+width in pixels, element 2 the image height, and element 3 is the image's\n\
+'date taken' (if present) in 'yyyy:mm:dd hh:mm:ss' format; for example\n\
+2013:05:17 21:14:12.\n");
 	break;
 
       case FN_PID:

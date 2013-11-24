@@ -15490,6 +15490,7 @@ locale_dayname(day,fc) int day, fc; {
 
     if (day < 0 || day > 6) return(NULL);
     n = day + 1;
+    if (n > 6) n = 0;			/* 2013-10-15 */
     if (fc) x = ABDAY_1;
     ckstrncpy(daynameresult,nl_langinfo(((nl_item)(n+x))),DAYNAMERESULT);
     return((char *)daynameresult);

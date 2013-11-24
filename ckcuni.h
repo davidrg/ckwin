@@ -1,14 +1,14 @@
 /*  C K C U N I . H  --  Unicode/Terminal character-set translations  */
 
 /*
-  Copyright (C) 1999, 2009,
+  Copyright (C) 1999, 2013,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
   Authors:
     Frank da Cruz <fdc@columbia.edu>
-      The Kermit Project, Columbia University, New York City.
+      The Kermit Project, New York City.
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
@@ -225,7 +225,13 @@ extern int (*xl_tx[MAXTXSETS+1])();
 #endif /* CK_ANSIC */
 extern struct x_to_unicode * txrinfo[MAXTXSETS+1];
 
+#ifdef COMMENT
 _PROTOTYP(int isunicode, (void));
+#else
+/* [jt] 2013/11/21 - duplicate definition issue */
+_PROTOTYP(static int isunicode, (void));
+#endif /* COMMENT */
+
 _PROTOTYP(int utf8_to_ucs2, (CHAR, USHORT **));
 _PROTOTYP(int ucs2_to_utf8, (USHORT, CHAR **));
 _PROTOTYP(int tx_cpsub, (USHORT));
@@ -240,7 +246,12 @@ _PROTOTYP(USHORT un_to_sj, (USHORT) );  /* Unicode to Shift-JIS */
 
 #ifdef OS2
 #ifdef NT
+#ifdef COMMENT
 _inline
+#else
+/* [jt] 2013/11/21 - duplicate definition issue */
+static _inline
+#endif /* COMMENT */
 #else
 _Inline
 #endif /* NT */

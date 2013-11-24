@@ -1,7 +1,7 @@
 /*
   C K _ S S L . H --  OpenSSL Interface Header for C-Kermit
 
-  Copyright (C) 1985, 2012,
+  Copyright (C) 1985, 2013,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -152,10 +152,13 @@ _PROTOTYP(int X509_userok,(X509 *,const char *));
 _PROTOTYP(int ck_X509_save_cert_to_user_store,(X509 *));
 /* SMS 2007/02/15 */
 _PROTOTYP(int ssl_check_server_name,(SSL * ssl, char * hostname));
+#ifdef COMMENT
+/* [jt] 2013/11/21 - Kermit 95 is no longer a special case */
 #ifdef OS2
 #include "ckosslc.h"
 #include "ckossl.h"
 #endif /* OS2 */
+#endif /* COMMENT */
 
 #define SSL_CLIENT 0
 #define SSL_SERVER 1

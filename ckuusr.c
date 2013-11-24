@@ -10,7 +10,7 @@ char *userv = "User Interface 9.0.304, 24 July 2013";
 /*
   Authors:
     Frank da Cruz <fdc@columbia.edu>,
-      The Kermit Project, Columbia University, New York City
+      The Kermit Project, New York City
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
@@ -12455,7 +12455,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 #endif	/* CK_64BIT */
 	printf("\n\n");
         printf("Authors:\n");
-	printf(" Frank da Cruz, Columbia University\n");
+	printf(" Frank da Cruz, the Kermit Project\n");
         printf(" Jeffrey Eric Altman, Secure Endpoints, Inc. %s\n",
 	       "<jaltman@secure-endpoints.com>"
 	       );
@@ -12471,7 +12471,9 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	}
 	printf(" Type COPYRIGHT for copyright and license.\n\n");
 #ifdef OS2
+#ifdef COMMENT
 	shoreg();
+#endif /* COMMENT */
 #else
 #ifdef COMMENT
 	hmtopline = n+1;

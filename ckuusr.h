@@ -2768,7 +2768,9 @@ struct stringint {			/* String and (wide) integer */
 _PROTOTYP( int doputenv, ( char *, char * ) );
 #endif	/* UNIX */
 
+#ifndef OS2
 _PROTOTYP( int chkaes, ( char, int ) );
+#endif /* OS2 */
 
 #ifndef NOICP
 _PROTOTYP( int matchname, ( char *, int, int ) );
@@ -2871,7 +2873,10 @@ _PROTOTYP( int setmodem, (void) );
 _PROTOTYP( int setfil, (int) );
 _PROTOTYP( char * homepath, (void) );
 #ifdef OS2
+#ifdef COMMENT
+/* [jt] 2013/11/21 - static/non-static issue */
 _PROTOTYP( int settapi, (void) ) ;
+#endif /* COMMENT */
 #ifdef OS2MOUSE
 _PROTOTYP( int setmou, (void) );
 #endif /* OS2MOUSE */

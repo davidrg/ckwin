@@ -16,10 +16,13 @@ use the following command to build the software for all ABIs:
 
     $ ndk-build NDK_PROJECT_PATH=./ \
                 APP_BUILD_SCRIPT=./android.mk \
-                APP_ABI=all
+                APP_ABI=all \
+                LOCAL_DISABLE_FORMAT_STRING_CHECKS=true
 
     If you have any problems, flames, suggestions, praise, disbelief, etc.
 then please feel free to create an issue on the github page and I will
 follow it up as I get the opportunity.
 
     Tim Sneddon
+
+(with updates from Jake Thompson, 17 Nov 2013)
