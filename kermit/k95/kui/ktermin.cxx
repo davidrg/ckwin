@@ -5,7 +5,6 @@
 #include "kclient.hxx"
 #include "kdwnload.hxx"
 #include "kfont.hxx"
-#include "kflname.hxx"
 #include "ksysmets.hxx"
 #include "ikcmd.h"
 #include "ikterm.h"
