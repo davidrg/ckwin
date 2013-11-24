@@ -10,8 +10,7 @@ const int numButtons = 10;
 const int numBitmaps = 7;
 ToolBitmapDef tbButtonsCS[] = {
  { { 0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0L, 0 }, 0 },
- { { 0, ID_UPLOAD, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0L, 0 }, "Upload" },
- { { 1, ID_DOWNLOAD, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0L, 0 }, "Download" },
+  { { 1, ID_DOWNLOAD, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0L, 0 }, "Download" },
  { { 0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0L, 0 }, 0 },
  { { 2, ID_ACTION_DIRECTORY, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0L, 0 }, "Directory" },
  { { 3, ID_ACTION_CD, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0L, 0 }, "Change Directory" },

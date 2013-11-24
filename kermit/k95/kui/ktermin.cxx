@@ -4,7 +4,6 @@
 #include "kstatus.hxx"
 #include "kclient.hxx"
 #include "kprop.hxx"
-#include "kupload.hxx"
 #include "kdwnload.hxx"
 #include "kfont.hxx"
 #include "kflname.hxx"
@@ -22,7 +21,6 @@ ToolBitmapDef tbButtons[] = {
  { { 0, ID_TOOLBAR_CONNECT, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0L, 0 }, "Switch to K95 Dialer" },
  { { 1, ID_TOOLBAR_EXIT, TBSTATE_ENABLED, TBSTYLE_CHECK, 0L, 0 }, "Switch to/from Command Screen" },
 // { { 0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0L, 0 }, 0 },
-// { { 3, ID_UPLOAD, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0L, 0 }, "Upload Files" },
 // { { 4, ID_DOWNLOAD, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0L, 0 }, "Download Files" },
 // { { 0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0L, 0 }, 0 },
 // { { 5, ID_WINDOW_CLIENTSERVER, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0L, 0 }, "Client Server Window" },
@@ -245,7 +243,6 @@ void KTerminal::disableMenu( void )
     menu->enable(ID_ACTION_RESIZE_FONT, FALSE);
     menu->enable(ID_ACTION_RESIZE_DIMENSION, FALSE);
     menu->enable(ID_ACTION_URL_HIGHLIGHT, FALSE);
-	menu->enable(ID_UPLOAD, FALSE);
 	menu->enable(ID_DOWNLOAD, FALSE);
 #else
     destroyMenu();
@@ -562,21 +559,6 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
                         dokverb(vmode,K_HANGUP);
                     break;
                 }
-            case ID_UPLOAD:
-                debug(F111,"KTerminal::message WM_COMMAND","ID_UPLOAD",LOWORD(wParam));
-                {
-                    KFileName* kfilename = new KFileName();
-                    KUpload upload( kglob, kfilename );
-                    upload.createWin( this );
-
-                    Bool b = upload.showUpload();
-                    if( b && kfilename->numFiles() )
-                        kfilename->executeSend();
-
-                    delete kfilename;
-                    break;
-                }
-
             case ID_DOWNLOAD:
                 debug(F111,"KTerminal::message WM_COMMAND","ID_DOWNLOAD",LOWORD(wParam));
                 {

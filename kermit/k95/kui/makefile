@@ -18,7 +18,7 @@ KUIOBJS = \
     $(OUTDIR)\kcmdup.obj   $(OUTDIR)\kcmddown.obj $(OUTDIR)\kcmdlog.obj  \
     $(OUTDIR)\kcmdcom.obj  $(OUTDIR)\kprop.obj    $(OUTDIR)\kfont.obj    \
     $(OUTDIR)\kfontdlg.obj $(OUTDIR)\kabout.obj   \
-    $(OUTDIR)\kflname.obj  $(OUTDIR)\kdwnload.obj $(OUTDIR)\kupload.obj  \
+    $(OUTDIR)\kflname.obj  $(OUTDIR)\kdwnload.obj \
     $(OUTDIR)\kuikey.obj   $(OUTDIR)\kclient.obj  \
     $(OUTDIR)\kcliserv.obj $(OUTDIR)\kappwin.obj  $(OUTDIR)\kcserver.obj \
     $(OUTDIR)\kcommand.obj $(OUTDIR)\ktermin.obj  $(OUTDIR)\kui.obj
@@ -48,8 +48,7 @@ $(OUTDIR)\kscroll.obj: kscroll.cxx kscroll.hxx kwin.hxx kuidef.h resource.h ikex
 $(OUTDIR)\kstatus.obj: kstatus.cxx kstatus.hxx kwin.hxx kuidef.h resource.h khwndset.hxx ksysmets.hxx kcustdlg.hxx karray.hxx
 $(OUTDIR)\KWIN.obj: KWIN.CXX kwin.hxx kuidef.h resource.h khwndset.hxx
 $(OUTDIR)\kuidef.obj: kuidef.cxx kuidef.h resource.h
-$(OUTDIR)\ktermin.obj: ktermin.cxx ktermin.hxx kappwin.hxx kwin.hxx kuidef.h resource.h kmenu.hxx ktoolbar.hxx kstatus.hxx kclient.hxx kprop.hxx kprop.h kupload.hxx kdwnload.hxx kfont.hxx kflname.hxx ksysmets.hxx ikcmd.h kdefs.h ikterm.h ikui.h
-$(OUTDIR)\kupload.obj: kupload.cxx kupload.hxx kwin.hxx kuidef.h resource.h kprop.hxx kprop.h kflstat.hxx karray.hxx kflname.hxx
+$(OUTDIR)\ktermin.obj: ktermin.cxx ktermin.hxx kappwin.hxx kwin.hxx kuidef.h resource.h kmenu.hxx ktoolbar.hxx kstatus.hxx kclient.hxx kprop.hxx kprop.h kdwnload.hxx kfont.hxx kflname.hxx ksysmets.hxx ikcmd.h kdefs.h ikterm.h ikui.h
 $(OUTDIR)\kcmdproc.obj: kcmdproc.cxx kcmdproc.hxx kuidef.h resource.h karray.hxx ikcmd.h kdefs.h
 $(OUTDIR)\kcliserv.obj: kcliserv.cxx kcliserv.hxx kclient.hxx kwin.hxx kuidef.h resource.h
 $(OUTDIR)\kcserver.obj: kcserver.cxx kcserver.hxx kappwin.hxx kwin.hxx kuidef.h resource.h kcliserv.hxx kclient.hxx kstatus.hxx ktoolbar.hxx kmenu.hxx ksysmets.hxx ikterm.h

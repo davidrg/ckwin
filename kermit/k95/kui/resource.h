@@ -8,7 +8,6 @@
 #define IDC_COMBOCHARSET                104
 #define IDD_PROPERTYLIST                106
 #define IDT_CLIENTTIMER                 107
-#define IDD_UPLOAD                      108
 #define IDR_TERMMENU                    109
 #define IDR_TERMMENU_NOCLOSE            110
 #define IDD_UPLOADPROPERTIES            112
@@ -274,7 +273,6 @@
 #define ID_BUTTON40102                  40102
 #define ID_BUTTON40103                  40103
 #define ID_CONNECT                      40106
-#define ID_UPLOAD                       40107
 #define ID_DOWNLOAD                     40108
 #define ID_FILE_HANGUP                  40109
 #define ID_OPTIONS_CUSTOMIZESTATUSBAR   40111

@@ -532,7 +532,7 @@ KUIOBJS = \
     $(OUTDIR)\kcmdup.obj   $(OUTDIR)\kcmddown.obj $(OUTDIR)\kcmdlog.obj  \
     $(OUTDIR)\kcmdcom.obj  $(OUTDIR)\kprop.obj    $(OUTDIR)\kfont.obj    \
     $(OUTDIR)\kfontdlg.obj $(OUTDIR)\kabout.obj   \
-    $(OUTDIR)\kflname.obj  $(OUTDIR)\kdwnload.obj $(OUTDIR)\kupload.obj  \
+    $(OUTDIR)\kflname.obj  $(OUTDIR)\kdwnload.obj \
     $(OUTDIR)\kuikey.obj   $(OUTDIR)\kclient.obj  \
     $(OUTDIR)\kcliserv.obj $(OUTDIR)\kappwin.obj  $(OUTDIR)\kcserver.obj \
     $(OUTDIR)\kcommand.obj $(OUTDIR)\ktermin.obj  $(OUTDIR)\kui.obj
