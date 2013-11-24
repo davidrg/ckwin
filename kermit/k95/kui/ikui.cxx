@@ -1,4 +1,3 @@
-#include "ksplash.hxx"
 #include "kui.hxx"
 #include "ktermin.hxx"
 //#include "kcommand.hxx"
@@ -19,15 +18,12 @@ extern "C" {
 // the KWin class pointers
 //
 K_GLOBAL* kglob = 0;
-SIZEL splashsize;
 Kui* kui = 0;
 KRegistryEdit* kreg = 0;
-KSplash* splash = 0;
 
 static HANDLE hevKuiInitialized = NULL;
 
 void KuiWindowThread( void* param );
-void ShowSplash( void* hInstance );
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
@@ -98,7 +94,7 @@ int KuiInit( void* hInstance, struct _kui_init * kui_init )
     // kglob->mouseEffect = TERM_MOUSE_CHANGE_DIMENSION;
     // kglob->mouseEffect = TERM_MOUSE_NO_EFFECT;
     // kglob->mouseEffect = TERM_MOUSE_CHANGE_FONT;
-    // _beginthread( ShowSplash, 20000, hInstance );
+
     return TRUE;
 }
 
@@ -270,15 +266,3 @@ void KuiGetProperty( int propid, long param1, long param2 )
     if( kui )
         kui->getProperty( propid, param1, param2 );
 }
-
-/*------------------------------------------------------------------------
-------------------------------------------------------------------------*/
-void ShowSplash( void* hInstance )
-{
-    splash = new KSplash( (HINSTANCE)hInstance );
-    splash->createWin( (int) kglob->settings[Terminal_Left]
-                    , (int) kglob->settings[Terminal_Top] );
-	Sleep(500);
-	delete splash;
-}
-

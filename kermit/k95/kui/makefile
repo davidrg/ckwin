@@ -8,7 +8,7 @@ all: $(OUTDIR)\$(PROJ).exe
 
 KUIOBJS = \
     $(OUTDIR)\kregedit.obj $(OUTDIR)\ksysmets.obj     \
-    $(OUTDIR)\ksplash.obj  $(OUTDIR)\ikui.obj     $(OUTDIR)\kprogres.obj \
+    $(OUTDIR)\ikui.obj     $(OUTDIR)\kprogres.obj \
     $(OUTDIR)\ikterm.obj   $(OUTDIR)\ikcmd.obj    $(OUTDIR)\kuidef.obj   \
     $(OUTDIR)\karray.obj   $(OUTDIR)\khwndset.obj $(OUTDIR)\kwin.obj     \
     $(OUTDIR)\kszpopup.obj $(OUTDIR)\kflstat.obj  $(OUTDIR)\kcustdlg.obj \
@@ -47,7 +47,6 @@ $(OUTDIR)\kprop.obj: kprop.cxx kprop.hxx kprop.h kuidef.h resource.h kwin.hxx kc
 $(OUTDIR)\kscroll.obj: kscroll.cxx kscroll.hxx kwin.hxx kuidef.h resource.h ikextern.h
 $(OUTDIR)\kstatus.obj: kstatus.cxx kstatus.hxx kwin.hxx kuidef.h resource.h khwndset.hxx ksysmets.hxx kcustdlg.hxx karray.hxx
 $(OUTDIR)\KWIN.obj: KWIN.CXX kwin.hxx kuidef.h resource.h khwndset.hxx
-$(OUTDIR)\ksplash.obj: ksplash.cxx ksplash.hxx kuidef.h resource.h kfont.hxx ksysmets.hxx ikterm.h
 $(OUTDIR)\kuidef.obj: kuidef.cxx kuidef.h resource.h
 $(OUTDIR)\ktermin.obj: ktermin.cxx ktermin.hxx kappwin.hxx kwin.hxx kuidef.h resource.h kmenu.hxx ktoolbar.hxx kstatus.hxx kclient.hxx kprop.hxx kprop.h kupload.hxx kdwnload.hxx kfont.hxx kflname.hxx ksysmets.hxx ikcmd.h kdefs.h ikterm.h ikui.h
 $(OUTDIR)\kupload.obj: kupload.cxx kupload.hxx kwin.hxx kuidef.h resource.h kprop.hxx kprop.h kflstat.hxx karray.hxx kflname.hxx
@@ -68,7 +67,7 @@ $(OUTDIR)\Kclient.obj: Kclient.cxx kclient.hxx kwin.hxx kuidef.h resource.h kscr
 $(OUTDIR)\Kcustdlg.obj: Kcustdlg.cxx kcustdlg.hxx kwin.hxx kuidef.h resource.h kstatus.hxx khwndset.hxx kui.hxx ksysmets.hxx
 $(OUTDIR)\KPROGRES.obj: KPROGRES.CXX kprogres.hxx kuidef.h resource.h ksysmets.hxx
 $(OUTDIR)\kszpopup.obj: kszpopup.CXX kszpopup.hxx kwin.hxx kuidef.h resource.h kfont.hxx
-$(OUTDIR)\Ikui.obj: Ikui.cxx ikui.h ksplash.hxx kuidef.h resource.h kui.hxx kregedit.hxx ksysmets.hxx khwndset.hxx
+$(OUTDIR)\Ikui.obj: Ikui.cxx ikui.h kuidef.h resource.h kui.hxx kregedit.hxx ksysmets.hxx khwndset.hxx
 $(OUTDIR)\Kappwin.obj: Kappwin.cxx kappwin.hxx kwin.hxx kuidef.h resource.h kmenu.hxx ktoolbar.hxx kstatus.hxx kclient.hxx kfontdlg.hxx kabout.hxx kfont.hxx ksysmets.hxx kszpopup.hxx ikterm.h ikcmd.h kdefs.h
 
 $(OUTDIR)\ikterm.obj: ikterm.cxx ikterm.h ikui.h \

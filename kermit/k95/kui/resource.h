@@ -25,8 +25,6 @@
 #define IDR_CSMENU                      133
 #define IDD_FONTDIALOG                  134
 #define IDD_CONNECT                     135
-#define IDB_BITMAPKERMIT95              141
-#define IDD_SPLASH                      142
 #define IDB_BITMAP1                     143
 #define IDI_ICONK95                     146
 #define IDD_CUSTOMIZESTATUS             147

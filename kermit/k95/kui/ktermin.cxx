@@ -13,7 +13,6 @@
 #include "ikterm.h"
 #include "ikui.h"
 #include "ikextern.h"
-#include "ksplash.hxx"
 
 
 const int numButtons = 3;
@@ -374,19 +373,6 @@ void KTerminal::createWin( KWin* par )
     if (kglob->noClose) {
         disableClose();
     }
-
-//    ShowWindow( hWnd, SW_SHOWNORMAL );
-//    SetForegroundWindow( hWnd );
-//    client->takeFocus();
-
-//    SetWindowPos( hWnd, splash->hwnd(), 0, 0, 0, 0
-//		, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW );
-
-	// dismiss the splash screen
-	//
-//	DWORD id = GetWindowThreadProcessId( splash->hwnd(), NULL );
-//	PostThreadMessage( id, WM_KILLSPLASHSCREEN, 0, (LPARAM)hWnd );
-
 }
 
 /*------------------------------------------------------------------------

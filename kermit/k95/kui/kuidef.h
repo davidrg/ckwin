@@ -48,7 +48,6 @@ const uint WM_GOTO_CSERVER_WINDOW       = WM_USER + CSERVER_WINDOW;
 const uint WM_GOTO_FILETRANSFER_WINDOW  = WM_USER + FILETRANSFER_WINDOW;
 const uint WM_REQUEST_CLOSE_KERMIT      = WM_USER + 10;
 const uint WM_CLOSE_KERMIT              = WM_USER + 11;
-const uint WM_KILLSPLASHSCREEN			= WM_USER + 12;
 
 typedef struct _K_CREATEINFO {
     const char* classname;      // class name
@@ -76,7 +75,6 @@ enum { Terminal_Left, Terminal_Top,
 #define TERM_MOUSE_CHANGE_FONT      1   // dynamically size font
 #define TERM_MOUSE_CHANGE_DIMENSION 2   // dynamically size terminal
 
-class KSplash;
 class Kui;
 class KHwndSet;
 class KSysMetrics;
@@ -100,6 +98,5 @@ typedef struct _K_GLOBAL {
 
 extern K_GLOBAL* kglob;
 extern Kui* kui;
-extern KSplash* splash;
 
 #endif

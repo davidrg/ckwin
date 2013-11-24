@@ -1655,7 +1655,8 @@ sysinit() {
     settermtype(tt_type,1);
 #endif /* NOLOCAL */
 #ifdef KUI
-    /* This does more than just display the Splash Screen */
+    /* This does more than just display the Splash Screen (which is good as it
+     * doesn't do that anymore)*/
     KuiInit( (void *) hInstance, &kui_init );
     hwndConsole = KuiThreadInit( (void *) hInstance ) ;
 #endif /* KUI */

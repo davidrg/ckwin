@@ -522,7 +522,7 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
 #OUTDIR = \kui\win95
 KUIOBJS = \
     $(OUTDIR)\kregedit.obj $(OUTDIR)\ksysmets.obj     \
-    $(OUTDIR)\ksplash.obj  $(OUTDIR)\ikui.obj     $(OUTDIR)\kprogres.obj \
+    $(OUTDIR)\ikui.obj     $(OUTDIR)\kprogres.obj \
     $(OUTDIR)\ikterm.obj   $(OUTDIR)\ikcmd.obj    $(OUTDIR)\kuidef.obj   \
     $(OUTDIR)\karray.obj   $(OUTDIR)\khwndset.obj $(OUTDIR)\kwin.obj     \
     $(OUTDIR)\kszpopup.obj $(OUTDIR)\kflstat.obj  $(OUTDIR)\kcustdlg.obj \
