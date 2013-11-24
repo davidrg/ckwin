@@ -25,222 +25,6 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 // Dialog
 //
-
-IDD_PROPERTYLIST DIALOG DISCARDABLE  0, 0, 298, 157
-STYLE DS_3DLOOK | WS_CHILD | WS_VISIBLE | WS_BORDER
-FONT 8, "MS Sans Serif"
-BEGIN
-    LISTBOX         IDC_PROPLIST,13,6,117,143,LBS_NOINTEGRALHEIGHT | 
-                    WS_VSCROLL | WS_GROUP | WS_TABSTOP
-    GROUPBOX        "Property Settings",IDC_GROUPSETTINGS,145,4,136,145,
-                    WS_GROUP
-    CONTROL         "one",IDC_PROPRADIO1,"Button",BS_AUTORADIOBUTTON | NOT 
-                    WS_VISIBLE,152,35,100,10
-    CONTROL         "two",IDC_PROPRADIO2,"Button",BS_AUTORADIOBUTTON | NOT 
-                    WS_VISIBLE,152,45,100,10
-    CONTROL         "three",IDC_PROPRADIO3,"Button",BS_AUTORADIOBUTTON | NOT 
-                    WS_VISIBLE,152,55,100,10
-    CONTROL         "four",IDC_PROPRADIO4,"Button",BS_AUTORADIOBUTTON | NOT 
-                    WS_VISIBLE,152,65,100,10
-    CONTROL         "five",IDC_PROPRADIO5,"Button",BS_AUTORADIOBUTTON | NOT 
-                    WS_VISIBLE,152,75,100,10
-    CONTROL         "six",IDC_PROPRADIO6,"Button",BS_AUTORADIOBUTTON | NOT 
-                    WS_VISIBLE,152,85,100,10
-    CONTROL         "seven",IDC_PROPRADIO7,"Button",BS_AUTORADIOBUTTON | NOT 
-                    WS_VISIBLE,152,95,100,10
-    CONTROL         "eight",IDC_PROPRADIO8,"Button",BS_AUTORADIOBUTTON | NOT 
-                    WS_VISIBLE,152,105,100,10
-    EDITTEXT        IDC_PROPEDIT,152,18,123,13,ES_AUTOHSCROLL | NOT 
-                    WS_VISIBLE | WS_GROUP
-    COMBOBOX        IDC_PROPCOMBO,152,18,123,132,CBS_DROPDOWNLIST | 
-                    CBS_AUTOHSCROLL | NOT WS_VISIBLE | WS_VSCROLL | WS_GROUP | 
-                    WS_TABSTOP
-    COMBOBOX        IDC_PROPCOMBO2,206,117,70,75,CBS_DROPDOWNLIST | 
-                    CBS_AUTOHSCROLL | NOT WS_VISIBLE | WS_VSCROLL | 
-                    WS_TABSTOP
-    COMBOBOX        IDC_PROPCOMBO3,206,134,70,75,CBS_DROPDOWNLIST | 
-                    CBS_AUTOHSCROLL | NOT WS_VISIBLE | WS_VSCROLL | 
-                    WS_TABSTOP
-    RTEXT           "static combo 1",IDC_STATICCOMBO1,150,120,51,8,NOT 
-                    WS_VISIBLE
-    RTEXT           "static combo 2",IDC_STATICCOMBO2,150,136,51,8,NOT 
-                    WS_VISIBLE
-    EDITTEXT        IDC_PROPEDIT2,206,117,70,12,ES_AUTOHSCROLL | NOT 
-                    WS_VISIBLE
-    EDITTEXT        IDC_PROPEDIT3,206,134,70,12,ES_AUTOHSCROLL | NOT 
-                    WS_VISIBLE
-END
-
-IDD_UPLOADPROPERTIES DIALOG DISCARDABLE  0, 0, 298, 157
-STYLE WS_POPUP | WS_VISIBLE | WS_BORDER
-FONT 8, "MS Sans Serif"
-BEGIN
-    GROUPBOX        "Transfer Mode",IDC_STATIC,4,7,101,23,WS_GROUP
-    CONTROL         "Binary",IDC_RADIOBINARY,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP,9,16,32,10
-    CONTROL         "Text",IDC_RADIOTEXT,"Button",BS_AUTORADIOBUTTON,43,16,
-                    27,10
-    CONTROL         "Auto",IDC_RADIOAUTO,"Button",BS_AUTORADIOBUTTON,74,16,
-                    28,10
-    LTEXT           "File Character-Set:",IDC_STATIC,5,40,59,8
-    COMBOBOX        IDC_COMBOFILECHARACTERSET,5,50,100,70,CBS_DROPDOWNLIST | 
-                    CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Transfer Character-Set:",IDC_STATIC,5,73,73,8
-    COMBOBOX        IDC_COMBOTRANSFERCHARACTERSET,5,83,100,70,
-                    CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Filename",IDC_STATIC,109,6,121,57,WS_GROUP
-    CONTROL         "Send literally",IDC_RADIOSENDLITERALLY,"Button",
-                    BS_AUTORADIOBUTTON | WS_GROUP,114,16,53,10
-    CONTROL         "Send converted",IDC_RADIOSENDCONVERTED,"Button",
-                    BS_AUTORADIOBUTTON,114,26,65,10
-    CONTROL         "Send as:",IDC_RADIOSENDAS,"Button",BS_AUTORADIOBUTTON,
-                    114,36,42,10
-    EDITTEXT        IDC_EDITSENDAS,114,47,111,12,ES_AUTOHSCROLL | 
-                    WS_DISABLED | WS_GROUP
-    GROUPBOX        "Disk and Directory Name",IDC_STATIC,109,64,121,33,
-                    WS_GROUP
-    CONTROL         "Send with",IDC_RADIOSENDWITH,"Button",
-                    BS_AUTORADIOBUTTON | WS_GROUP,114,74,45,10
-    CONTROL         "Send without",IDC_RADIOSENDWITHOUT,"Button",
-                    BS_AUTORADIOBUTTON,114,84,55,10
-    GROUPBOX        "Disposition",IDC_STATIC,4,97,227,53,WS_GROUP
-    CONTROL         "File",IDC_RADIOFILE,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP,9,108,25,10
-    CONTROL         "E-mail address:",IDC_RADIOEMAILADDRESS,"Button",
-                    BS_AUTORADIOBUTTON,9,121,60,9
-    CONTROL         "Printer:",IDC_RADIOPRINTER,"Button",BS_AUTORADIOBUTTON,
-                    9,135,34,10
-    EDITTEXT        IDC_EDITEMAILADDRESS,70,118,155,13,ES_AUTOHSCROLL | 
-                    WS_DISABLED | WS_GROUP
-    EDITTEXT        IDC_EDITPRINTER,45,132,76,13,ES_AUTOHSCROLL | 
-                    WS_DISABLED | WS_GROUP
-    LTEXT           "Options:",IDC_STATIC,123,135,27,8
-    EDITTEXT        IDC_EDITPRINTEROPTIONS,151,132,74,13,ES_AUTOHSCROLL | 
-                    WS_DISABLED | WS_GROUP
-    GROUPBOX        "Window Size",IDC_STATIC,235,6,57,46,WS_GROUP
-    EDITTEXT        IDC_EDITWINDOWSIZE,241,17,45,14,ES_CENTER | ES_MULTILINE | 
-                    ES_AUTOHSCROLL | WS_GROUP
-    CONTROL         "Slider2",IDC_SLIDERWINDOWSIZE,"msctls_trackbar32",
-                    TBS_TOP | TBS_NOTICKS | WS_GROUP | WS_TABSTOP,237,32,53,
-                    17
-    GROUPBOX        "Prefixing",IDC_STATIC,235,97,57,53,WS_GROUP
-    CONTROL         "minimal",IDC_RADIOMINIMAL,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP,241,107,39,10
-    CONTROL         "cautious",IDC_RADIOCAUTIOUS,"Button",BS_AUTORADIOBUTTON,
-                    241,117,43,10
-    CONTROL         "all",IDC_RADIOALL,"Button",BS_AUTORADIOBUTTON,241,127,
-                    23,10
-    CONTROL         "none",IDC_RADIONONE,"Button",BS_AUTORADIOBUTTON,241,137,
-                    32,10
-END
-
-IDD_LOGFILEPROPERTIES DIALOG DISCARDABLE  0, 0, 298, 157
-STYLE DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_BORDER
-FONT 8, "MS Sans Serif"
-BEGIN
-    GROUPBOX        "Transactions",IDC_STATIC,12,2,271,48,WS_GROUP
-    EDITTEXT        IDC_EDITTRANSACTIONS,19,12,201,14,ES_AUTOHSCROLL
-    PUSHBUTTON      "Browse...",IDC_BUTTONBROWSETRANSACTIONS,225,12,50,15,
-                    WS_GROUP
-    CONTROL         "Append",IDC_RADIOAPPENDTRANSACTIONS,"Button",
-                    BS_AUTORADIOBUTTON | WS_GROUP,113,28,38,10
-    CONTROL         "Overwrite",IDC_RADIOOVERWRITETRANSACTIONS,"Button",
-                    BS_AUTORADIOBUTTON,113,38,44,10
-    CONTROL         "Close after transfer",
-                    IDC_CHECKCLOSEAFTERTRANFERTRANSACTIONS,"Button",
-                    BS_AUTOCHECKBOX | BS_MULTILINE | WS_GROUP | WS_TABSTOP,
-                    174,29,50,16
-    GROUPBOX        "Packets",IDC_STATIC,12,53,271,48,WS_GROUP
-    EDITTEXT        IDC_EDITPACKETS,19,63,201,14,ES_AUTOHSCROLL
-    PUSHBUTTON      "Browse...",IDC_BUTTONBROWSEPACKETS,225,63,50,15,
-                    WS_GROUP
-    CONTROL         "Append",IDC_RADIOAPPENDPACKETS,"Button",
-                    BS_AUTORADIOBUTTON | WS_GROUP,113,79,38,10
-    CONTROL         "Overwrite",IDC_RADIOOVERWRITEPACKETS,"Button",
-                    BS_AUTORADIOBUTTON,113,89,44,10
-    CONTROL         "Close after transfer",IDC_CHECKCLOSEAFTERTRANFERPACKETS,
-                    "Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_GROUP | 
-                    WS_TABSTOP,174,80,50,16
-    GROUPBOX        "Debug",IDC_STATIC,12,104,271,48,WS_GROUP
-    EDITTEXT        IDC_EDITDEBUG,19,114,201,14,ES_AUTOHSCROLL
-    PUSHBUTTON      "Browse...",IDC_BUTTONBROWSEDEBUG,225,114,50,15,WS_GROUP
-    CONTROL         "Append",IDC_RADIOAPPENDDEBUG,"Button",
-                    BS_AUTORADIOBUTTON | WS_GROUP,113,130,38,10
-    CONTROL         "Overwrite",IDC_RADIOOVERWRITEDEBUG,"Button",
-                    BS_AUTORADIOBUTTON,113,140,44,10
-    CONTROL         "Close after transfer",IDC_CHECKCLOSEAFTERTRANFERDEBUG,
-                    "Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_GROUP | 
-                    WS_TABSTOP,174,131,50,16
-END
-
-IDD_DOWNLOADPROPERTIES DIALOG DISCARDABLE  0, 0, 298, 157
-STYLE WS_CHILD | WS_VISIBLE | WS_BORDER
-FONT 8, "MS Sans Serif"
-BEGIN
-    GROUPBOX        "Transfer Mode",IDC_STATIC,4,7,101,23,WS_GROUP
-    CONTROL         "Binary",IDC_RADIOBINARY,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP,9,16,32,10
-    CONTROL         "Text",IDC_RADIOTEXT,"Button",BS_AUTORADIOBUTTON,43,16,
-                    27,10
-    CONTROL         "Auto",IDC_RADIOAUTO,"Button",BS_AUTORADIOBUTTON,74,16,
-                    28,10
-    LTEXT           "File Character-Set:",IDC_STATIC,5,40,59,8
-    COMBOBOX        IDC_COMBOFILECHARACTERSET,5,50,100,70,CBS_DROPDOWNLIST | 
-                    CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Transfer Character-Set:",IDC_STATIC,5,73,73,8
-    COMBOBOX        IDC_COMBOTRANSFERCHARACTERSET,5,83,100,70,
-                    CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Filename",IDC_STATIC,109,6,121,57,WS_GROUP
-    CONTROL         "Store literally",IDC_RADIOSTORELITERALLY,"Button",
-                    BS_AUTORADIOBUTTON | WS_GROUP,114,16,53,10
-    CONTROL         "Store converted",IDC_RADIOSTORECONVERTED,"Button",
-                    BS_AUTORADIOBUTTON,114,26,65,10
-    CONTROL         "Store as:",IDC_RADIOSTOREAS,"Button",BS_AUTORADIOBUTTON,
-                    114,36,42,10
-    EDITTEXT        IDC_EDITSTOREAS,114,47,111,12,ES_AUTOHSCROLL | 
-                    WS_DISABLED | WS_GROUP
-    GROUPBOX        "Path Names",IDC_STATIC,109,64,121,33,WS_GROUP
-    CONTROL         "Discard Path Names",IDC_RADIODISCARDPATHNAMES,"Button",
-                    BS_AUTORADIOBUTTON | WS_GROUP,114,74,80,10
-    CONTROL         "Create Dirs from Path Names",
-                    IDC_RADIOCREATEDIRSFROMPATHNAMES,"Button",
-                    BS_AUTORADIOBUTTON,114,84,108,10
-    CONTROL         "Reject unknown character-set",
-                    IDC_CHECKREJECTUNKOWNCHARSET,"Button",BS_AUTOCHECKBOX | 
-                    WS_GROUP | WS_TABSTOP,13,102,113,10
-    CONTROL         "Keep incomplete files",IDC_CHECKKEEPINCOMPLETEFILES,
-                    "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,133,102,
-                    83,10
-    GROUPBOX        "Filename Collision Action",IDC_STATIC,5,115,225,33,
-                    WS_GROUP
-    CONTROL         "Backup",IDC_RADIOBACKUP,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP,11,125,39,10
-    CONTROL         "Update",IDC_RADIOUPDATE,"Button",BS_AUTORADIOBUTTON,11,
-                    135,35,10
-    CONTROL         "Discard",IDC_RADIODISCARD,"Button",BS_AUTORADIOBUTTON,
-                    86,125,39,10
-    CONTROL         "Overwrite",IDC_RADIOOVERWRITE,"Button",
-                    BS_AUTORADIOBUTTON,86,135,46,10
-    CONTROL         "Rename",IDC_RADIORENAME,"Button",BS_AUTORADIOBUTTON,160,
-                    125,41,10
-    CONTROL         "Append",IDC_RADIOAPPEND,"Button",BS_AUTORADIOBUTTON,160,
-                    135,38,10
-    GROUPBOX        "Window Size",IDC_STATIC,235,6,57,46,WS_GROUP
-    EDITTEXT        IDC_EDITWINDOWSIZE,241,17,45,14,ES_CENTER | ES_MULTILINE | 
-                    ES_AUTOHSCROLL | WS_GROUP
-    CONTROL         "Slider2",IDC_SLIDERWINDOWSIZE,"msctls_trackbar32",
-                    TBS_TOP | TBS_NOTICKS | WS_GROUP | WS_TABSTOP,237,33,53,
-                    17
-    GROUPBOX        "Packet Length",IDC_STATIC,235,57,57,46,WS_GROUP
-    EDITTEXT        IDC_EDITPACKETLENGTH,241,68,45,14,ES_CENTER | 
-                    ES_MULTILINE | ES_AUTOHSCROLL | WS_GROUP
-    CONTROL         "Slider2",IDC_SLIDERPACKETLENGTH,"msctls_trackbar32",
-                    TBS_TOP | TBS_NOTICKS | WS_GROUP | WS_TABSTOP,237,83,53,
-                    17
-END
-
 IDD_FILETRANSFERSTATUS DIALOG DISCARDABLE  0, 0, 292, 190
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "<HOSTNAME> - <COMM/NETTYPE> - Parity: none - File Transfer Status"
@@ -290,47 +74,6 @@ BEGIN
                     161,15
 END
 
-IDD_MOUSEOPTIONS DIALOG DISCARDABLE  0, 0, 298, 156
-STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP
-FONT 8, "MS Sans Serif"
-BEGIN
-    GROUPBOX        "Activate",IDC_STATIC,12,9,40,33,WS_GROUP
-    CONTROL         "on",IDC_RADIOON,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
-                    17,19,24,10
-    CONTROL         "off",IDC_RADIOOFF,"Button",BS_AUTORADIOBUTTON,17,29,24,
-                    10
-    PUSHBUTTON      "Clear All",IDC_BUTTONCLEAR,8,62,50,15,WS_GROUP
-    GROUPBOX        "Definition",IDC_STATIC,65,9,221,83,WS_GROUP
-    GROUPBOX        "Button",IDC_STATIC,83,20,43,44,WS_GROUP
-    CONTROL         "one",IDC_RADIOONE,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP,88,31,28,10
-    CONTROL         "two",IDC_RADIOTWO,"Button",BS_AUTORADIOBUTTON,88,41,27,
-                    10
-    CONTROL         "three",IDC_RADIOTHREE,"Button",BS_AUTORADIOBUTTON,88,51,
-                    32,10
-    GROUPBOX        "Action",IDC_STATIC,141,20,64,44,WS_GROUP
-    CONTROL         "click",IDC_RADIOCLICK,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP,146,31,31,10
-    CONTROL         "drag",IDC_RADIODRAG,"Button",BS_AUTORADIOBUTTON,146,41,
-                    30,10
-    CONTROL         "double-click",IDC_RADIODOUBLECLICK,"Button",
-                    BS_AUTORADIOBUTTON,146,51,54,10
-    GROUPBOX        "Modifier",IDC_STATIC,221,20,43,44,WS_GROUP
-    CONTROL         "alt",IDC_CHECKALT,"Button",BS_AUTOCHECKBOX | WS_GROUP | 
-                    WS_TABSTOP,228,31,23,10
-    CONTROL         "ctrl",IDC_CHECKCTRL,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,228,41,25,10
-    CONTROL         "shift",IDC_CHECKSHIFT,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,228,51,29,10
-    EDITTEXT        IDC_EDITDEFINITION,71,71,209,14,ES_AUTOHSCROLL | 
-                    WS_GROUP
-    GROUPBOX        "Window Resizing",IDC_STATIC,65,100,114,36,WS_GROUP
-    CONTROL         "change font dynamically",IDC_RADIOCHANGEFONT,"Button",
-                    BS_AUTORADIOBUTTON | WS_GROUP,71,111,92,10
-    CONTROL         "change terminal dimensions",IDC_RADIOCHANGETERMINAL,
-                    "Button",BS_AUTORADIOBUTTON,71,122,103,10
-END
-
 IDD_ABOUTBOX DIALOGEX 0, 0, 249, 204
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "About"
@@ -347,41 +90,6 @@ BEGIN
     LTEXT           "This version has been released under the 3-clause BSD license and does not include any proprietary components including PATHWORKS and SuperLAT networking and XYZMODEM file transfer. Certain other features may be missing for various reasons.",IDC_STATIC,41,116,198,50
     LTEXT           "Type SHOW FEATURES at the prompt to see what features are available.",IDC_STATIC,41,160,198,17
     DEFPUSHBUTTON   "OK",IDOK,189,180,50,14
-END
-
-IDD_SCRIPTOPTIONS DIALOG DISCARDABLE  0, 0, 298, 157
-STYLE WS_POPUP | WS_BORDER
-FONT 8, "MS Sans Serif"
-BEGIN
-    GROUPBOX        "on/off",IDC_STATIC,16,16,91,116,BS_RIGHT | WS_GROUP
-    CONTROL         "Script Echo",IDC_CHECKSCRIPTECHO,"Button",
-                    BS_AUTOCHECKBOX | BS_LEFTTEXT | WS_GROUP | WS_TABSTOP,44,
-                    26,53,10
-    CONTROL         "Macro Echo",IDC_CHECKMACROECHO,"Button",BS_AUTOCHECKBOX | 
-                    BS_LEFTTEXT | WS_TABSTOP,42,36,55,10
-    CONTROL         "Take Echo",IDC_CHECKTAKEECHO,"Button",BS_AUTOCHECKBOX | 
-                    BS_LEFTTEXT | WS_TABSTOP,45,46,52,10
-    CONTROL         "Macro Error",IDC_CHECKMACROERROR,"Button",
-                    BS_AUTOCHECKBOX | BS_LEFTTEXT | WS_TABSTOP,44,66,53,10
-    CONTROL         "Take Error",IDC_CHECKTAKEERROR,"Button",BS_AUTOCHECKBOX |
-                    BS_LEFTTEXT | WS_TABSTOP,48,76,49,10
-    CONTROL         "Command Quoting",IDC_CHECKCOMMANDQUOTING,"Button",
-                    BS_AUTOCHECKBOX | BS_LEFTTEXT | WS_TABSTOP,24,96,74,10
-    CONTROL         "Case",IDC_CHECKCASE,"Button",BS_AUTOCHECKBOX | 
-                    BS_LEFTTEXT | WS_TABSTOP,66,116,32,10
-    GROUPBOX        "Login",IDC_STATIC,119,16,164,67,WS_GROUP
-    EDITTEXT        IDC_EDITUSERID,163,28,111,14,ES_AUTOHSCROLL
-    RTEXT           "Userid:",IDC_STATIC,135,31,23,8
-    RTEXT           "Password:",IDC_STATIC,124,47,34,8
-    RTEXT           "Prompt:",IDC_STATIC,133,64,25,8
-    EDITTEXT        IDC_EDITPASSWORD,163,45,111,14,ES_PASSWORD | 
-                    ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDITPROMPT,163,62,111,14,ES_AUTOHSCROLL
-    GROUPBOX        "Output Pacing",IDC_STATIC,120,91,163,42,WS_GROUP
-    EDITTEXT        IDC_EDITOUTPUTPACING,128,108,40,14,ES_CENTER | 
-                    ES_MULTILINE | ES_AUTOHSCROLL
-    CONTROL         "Slider1",IDC_SLIDEROUTPUTPACING,"msctls_trackbar32",
-                    TBS_TOP | TBS_NOTICKS | WS_TABSTOP,172,107,105,17
 END
 
 IDD_FONTDIALOG DIALOG DISCARDABLE  13, 54, 183, 162
@@ -526,7 +234,7 @@ IDR_TERMMENU MENU DISCARDABLE
 BEGIN
     POPUP "File"
     BEGIN
-//        MENUITEM "DOWNLOAD"                    ID_DOWNLOAD
+        MENUITEM "DOWNLOAD"                    ID_DOWNLOAD
         MENUITEM "Connections",                ID_CONNECT
         MENUITEM "Hangup",                     ID_FILE_HANGUP
         MENUITEM SEPARATOR
@@ -599,17 +307,6 @@ BEGIN
         MENUITEM "URL Highlighting",           ID_ACTION_URL_HIGHLIGHT, CHECKED
 
     END
-//    POPUP "Options"
-//    BEGIN
-//        MENUITEM "Mouse",                      ID_OPTIONS_MOUSE
-//        MENUITEM "Upload",                     ID_OPTIONS_UPLOAD
-//        MENUITEM "Download",                   ID_OPTIONS_DOWNLOAD
-//        MENUITEM "Log Files",                  ID_OPTIONS_LOGFILES
-//        MENUITEM "Communications",             ID_OPTIONS_COMMUNICATIONS
-//        MENUITEM "Terminal",                   ID_OPTIONS_TERMINAL
-//        MENUITEM "Protocol",                   ID_OPTIONS_PROTOCOL
-//        MENUITEM "Scripts",                    ID_OPTIONS_SCRIPTS
-//    END
     POPUP "Help"
     BEGIN
         MENUITEM "Context",                    ID_ACTION_HELP
@@ -756,54 +453,14 @@ IDB_BITMAP1             BITMAP  DISCARDABLE     "bitmap1.bmp"
 #ifdef APSTUDIO_INVOKED
 GUIDELINES DESIGNINFO DISCARDABLE 
 BEGIN
-    IDD_PROPERTYLIST, DIALOG
-    BEGIN
-        RIGHTMARGIN, 294
-        BOTTOMMARGIN, 156
-    END
-
-    IDD_UPLOADPROPERTIES, DIALOG
-    BEGIN
-        RIGHTMARGIN, 237
-        BOTTOMMARGIN, 123
-    END
-
-    IDD_LOGFILEPROPERTIES, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 297
-    END
-
-    IDD_DOWNLOADPROPERTIES, DIALOG
-    BEGIN
-        RIGHTMARGIN, 292
-        BOTTOMMARGIN, 148
-    END
-
     IDD_FILETRANSFERSTATUS, DIALOG
     BEGIN
         BOTTOMMARGIN, 189
     END
 
-    IDD_MOUSEOPTIONS, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 291
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 149
-    END
-
     IDD_ABOUTBOX, DIALOG
     BEGIN
         BOTTOMMARGIN, 195
-    END
-
-    IDD_SCRIPTOPTIONS, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 291
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 150
     END
 
     IDD_FONTDIALOG, DIALOG

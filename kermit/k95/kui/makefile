@@ -16,7 +16,7 @@ KUIOBJS = \
     $(OUTDIR)\kscroll.obj  $(OUTDIR)\kcmdproc.obj $(OUTDIR)\kcmdterm.obj \
     $(OUTDIR)\kcmdprot.obj $(OUTDIR)\kcmdmous.obj $(OUTDIR)\kcmdscri.obj \
     $(OUTDIR)\kcmdup.obj   $(OUTDIR)\kcmddown.obj $(OUTDIR)\kcmdlog.obj  \
-    $(OUTDIR)\kcmdcom.obj  $(OUTDIR)\kprop.obj    $(OUTDIR)\kfont.obj    \
+    $(OUTDIR)\kcmdcom.obj  $(OUTDIR)\kfont.obj    \
     $(OUTDIR)\kfontdlg.obj $(OUTDIR)\kabout.obj   \
     $(OUTDIR)\kflname.obj  $(OUTDIR)\kdwnload.obj \
     $(OUTDIR)\kuikey.obj   $(OUTDIR)\kclient.obj  \
@@ -40,15 +40,14 @@ $(OUTDIR)\kcmdscri.obj: kcmdscri.cxx kcmdscri.hxx kcmdproc.hxx kuidef.h resource
 $(OUTDIR)\kcmdterm.obj: kcmdterm.cxx kcmdterm.hxx kcmdproc.hxx kuidef.h resource.h kcmd.h kdefs.h ikcmd.h
 $(OUTDIR)\kcmdup.obj: kcmdup.cxx kcmdup.hxx kcmdproc.hxx kuidef.h resource.h
 $(OUTDIR)\KUIKEY.obj: KUIKEY.CXX kuidef.h resource.h
-$(OUTDIR)\kdwnload.obj: kdwnload.cxx kdwnload.hxx kwin.hxx kuidef.h resource.h kprop.hxx kprop.h
+$(OUTDIR)\kdwnload.obj: kdwnload.cxx kdwnload.hxx kwin.hxx kuidef.h resource.h
 $(OUTDIR)\kflstat.obj: kflstat.cxx kflstat.hxx kwin.hxx kuidef.h resource.h kflstat.h karray.hxx kprogres.hxx
 $(OUTDIR)\kmenu.obj: kmenu.cxx kmenu.hxx kuidef.h resource.h kwin.hxx ksysmets.hxx
-$(OUTDIR)\kprop.obj: kprop.cxx kprop.hxx kprop.h kuidef.h resource.h kwin.hxx kcmdproc.hxx kcmdcom.hxx kcmdup.hxx kcmddown.hxx kcmdlog.hxx kcmdterm.hxx kcmdprot.hxx kcmdmous.hxx kcmdscri.hxx ikterm.h
 $(OUTDIR)\kscroll.obj: kscroll.cxx kscroll.hxx kwin.hxx kuidef.h resource.h ikextern.h
 $(OUTDIR)\kstatus.obj: kstatus.cxx kstatus.hxx kwin.hxx kuidef.h resource.h khwndset.hxx ksysmets.hxx kcustdlg.hxx karray.hxx
 $(OUTDIR)\KWIN.obj: KWIN.CXX kwin.hxx kuidef.h resource.h khwndset.hxx
 $(OUTDIR)\kuidef.obj: kuidef.cxx kuidef.h resource.h
-$(OUTDIR)\ktermin.obj: ktermin.cxx ktermin.hxx kappwin.hxx kwin.hxx kuidef.h resource.h kmenu.hxx ktoolbar.hxx kstatus.hxx kclient.hxx kprop.hxx kprop.h kdwnload.hxx kfont.hxx kflname.hxx ksysmets.hxx ikcmd.h kdefs.h ikterm.h ikui.h
+$(OUTDIR)\ktermin.obj: ktermin.cxx ktermin.hxx kappwin.hxx kwin.hxx kuidef.h resource.h kmenu.hxx ktoolbar.hxx kstatus.hxx kclient.hxx kdwnload.hxx kfont.hxx kflname.hxx ksysmets.hxx ikcmd.h kdefs.h ikterm.h ikui.h
 $(OUTDIR)\kcmdproc.obj: kcmdproc.cxx kcmdproc.hxx kuidef.h resource.h karray.hxx ikcmd.h kdefs.h
 $(OUTDIR)\kcliserv.obj: kcliserv.cxx kcliserv.hxx kclient.hxx kwin.hxx kuidef.h resource.h
 $(OUTDIR)\kcserver.obj: kcserver.cxx kcserver.hxx kappwin.hxx kwin.hxx kuidef.h resource.h kcliserv.hxx kclient.hxx kstatus.hxx ktoolbar.hxx kmenu.hxx ksysmets.hxx ikterm.h

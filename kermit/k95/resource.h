@@ -3,17 +3,11 @@
 // Used by kui.rc
 //
 #define IDC_COMBOTERMINALTYPE           101
-#define IDD_PROPERTYLIST                106
 #define IDT_CLIENTTIMER                 107
 #define IDR_TERMMENU                    109
-#define IDD_UPLOADPROPERTIES            112
-#define IDD_LOGFILEPROPERTIES           113
-#define IDD_DOWNLOADPROPERTIES          115
 #define IDD_FILETRANSFERSTATUS          116
-#define IDD_MOUSEOPTIONS                120
 #define IDR_TOOLBARTERMINAL             121
 #define IDD_ABOUTBOX                    123
-#define IDD_SCRIPTOPTIONS               124
 #define IDR_CMDMENU                     126
 #define IDR_TOOLBARCOMMAND              129
 #define IDR_TOOLBARCS                   130
@@ -203,18 +197,9 @@
 #define ID_WINDOW_FILETRANSFER          40018
 #define ID_WINDOW_TEXTEDIT              40019
 #define ID_WINDOW_CLIPBOARD             40020
-#define ID_OPTIONS_COMMUNICATIONS       40021
-#define ID_OPTIONS_TERMINAL             40022
-#define ID_OPTIONS_UPLOAD               40023
-#define ID_OPTIONS_PROTOCOL             40024
-#define ID_OPTIONS_SCRIPTS              40025
-#define ID_OPTIONS_LOGFILES             40026
-#define ID_OPTIONS_DOWNLOAD             40027
 #define ID_HELP_HELPONKERMIT            40032
 #define ID_HELP_ABOUT                   40033
 #define ID_OPTIONS_FONT                 40034
-#define ID_OPTIONS_COLOR                40035
-#define ID_OPTIONS_MOUSE                40037
 #define ID_BUTTON40038                  40038
 #define ID_BUTTON40039                  40039
 #define ID_BUTTON40040                  40040

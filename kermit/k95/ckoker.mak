@@ -530,7 +530,7 @@ KUIOBJS = \
     $(OUTDIR)\kscroll.obj  $(OUTDIR)\kcmdproc.obj $(OUTDIR)\kcmdterm.obj \
     $(OUTDIR)\kcmdprot.obj $(OUTDIR)\kcmdmous.obj $(OUTDIR)\kcmdscri.obj \
     $(OUTDIR)\kcmdup.obj   $(OUTDIR)\kcmddown.obj $(OUTDIR)\kcmdlog.obj  \
-    $(OUTDIR)\kcmdcom.obj  $(OUTDIR)\kprop.obj    $(OUTDIR)\kfont.obj    \
+    $(OUTDIR)\kcmdcom.obj  $(OUTDIR)\kfont.obj    \
     $(OUTDIR)\kfontdlg.obj $(OUTDIR)\kabout.obj   \
     $(OUTDIR)\kflname.obj  $(OUTDIR)\kdwnload.obj \
     $(OUTDIR)\kuikey.obj   $(OUTDIR)\kclient.obj  \

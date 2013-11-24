@@ -1,5 +1,4 @@
 #include "kdwnload.hxx"
-#include "kprop.hxx"
 #include "commdlg.h"
 #include "ikextern.h"
 #ifndef OPENFILENAME_SIZE_VERSION_400
@@ -244,14 +243,6 @@ Bool KDownLoad::saveAsMsg( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
             done = TRUE;
             return CallWindowProc( getOldProc()
                     , hwnd, msg, MAKEWPARAM(IDOK,0), lParam );
-        }
-        else if( cid == optionID )
-        {
-            KProperty property( kglob );
-            property.createWin( this );
-            property.turnPage( ID_OPTIONS_DOWNLOAD );
-            property.show();
-            done = TRUE;
         }
     }
 

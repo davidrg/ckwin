@@ -3,7 +3,6 @@
 #include "ktoolbar.hxx"
 #include "kstatus.hxx"
 #include "kclient.hxx"
-#include "kprop.hxx"
 #include "kdwnload.hxx"
 #include "kfont.hxx"
 #include "kflname.hxx"
@@ -565,23 +564,6 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
                     KDownLoad download( kglob );
                     download.createWin( this );
                     download.show();
-                    break;
-                }
-
-            case ID_OPTIONS_COMMUNICATIONS:
-            case ID_OPTIONS_TERMINAL:
-            case ID_OPTIONS_UPLOAD:
-            case ID_OPTIONS_DOWNLOAD:
-            case ID_OPTIONS_PROTOCOL:
-            case ID_OPTIONS_LOGFILES:
-            case ID_OPTIONS_SCRIPTS:
-            case ID_OPTIONS_MOUSE:
-                debug(F111,"KTerminal::message WM_COMMAND","ID_OPTIONS_{COMMUNICATIONS,TERMINAL,UPLOAD,DOWNLOAD,PROTOCOL,LOGFILES,SCRIPTS,MOUSE}",LOWORD(wParam));
-                {
-                    KProperty prop( kglob );
-                    prop.createWin( this );
-                    prop.turnPage( LOWORD(wParam) );
-                    prop.show();
                     break;
                 }
             case ID_FILE_EXIT:
