@@ -132,7 +132,6 @@ Bool KCommand::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
                 case ID_HELP_HELPONKERMIT:
                 case ID_WINDOW_TERMINAL:
                 case ID_WINDOW_COMMAND:
-                case ID_WINDOW_CLIENTSERVER:
 				default:
                     KAppWin::message( hwnd, msg, wParam, lParam );
                     break;

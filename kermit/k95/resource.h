@@ -10,8 +10,6 @@
 #define IDD_ABOUTBOX                    123
 #define IDR_CMDMENU                     126
 #define IDR_TOOLBARCOMMAND              129
-#define IDR_TOOLBARCS                   130
-#define IDR_CSMENU                      133
 #define IDD_FONTDIALOG                  134
 #define IDD_CONNECT                     135
 #define IDB_BITMAP1                     143
@@ -192,7 +190,6 @@
 #define ID_FILE_EXIT                    40008
 #define ID_EDIT_BOOKMARK                40014
 #define ID_WINDOW_COMMAND               40015
-#define ID_WINDOW_CLIENTSERVER          40016
 #define ID_WINDOW_DIALER                40017
 #define ID_WINDOW_FILETRANSFER          40018
 #define ID_WINDOW_TEXTEDIT              40019
@@ -233,13 +230,9 @@
 #define ID_BUTTON40069                  40069
 #define ID_BUTTON40070                  40070
 #define ID_FILE_EXITCLIENTSERVERWINDOW  40072
-#define ID_ACTION_DIRECTORY             40073
-#define ID_ACTION_CD                    40074
 #define ID_ACTION_SHOWDIRECTORY         40075
 #define ID_ACTION_HOSTCOMMAND           40076
 #define ID_ACTION_DELETEREMOVE          40077
-#define ID_ACTION_FINISH                40078
-#define ID_ACTION_BYE                   40079
 #define ID_ACTION_INTERRUPT             40080
 #define ID_ACTION_NEXT                  40081
 #define ID_ACTION_PREVIOUS              40082

@@ -234,7 +234,7 @@ IDR_TERMMENU MENU DISCARDABLE
 BEGIN
     POPUP "File"
     BEGIN
-        MENUITEM "DOWNLOAD"                    ID_DOWNLOAD
+//        MENUITEM "DOWNLOAD"                    ID_DOWNLOAD
         MENUITEM "Connections",                ID_CONNECT
         MENUITEM "Hangup",                     ID_FILE_HANGUP
         MENUITEM SEPARATOR
@@ -441,7 +441,6 @@ END
 //
 
 IDR_TOOLBARCOMMAND      BITMAP  DISCARDABLE     "bmp00001.bmp"
-IDR_TOOLBARCS           BITMAP  DISCARDABLE     "bmp00002.bmp"
 IDR_TOOLBARTERMINAL     BITMAP  DISCARDABLE     "toolbar2.bmp"
 IDB_BITMAP1             BITMAP  DISCARDABLE     "bitmap1.bmp"
 

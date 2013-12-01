@@ -777,10 +777,6 @@ Bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 //                debug(F111,"KAppWin::message WM_COMMAND","ID_WINDOW_COMMAND",LOWORD(wParam));
 //                PostMessage( hWnd, WM_GOTO_COMMAND_WINDOW, 0, 0 );
 //                break;
-//            case ID_WINDOW_CLIENTSERVER:
-//                debug(F111,"KAppWin::message WM_COMMAND","ID_WINDOW_CLIENTSERVER",LOWORD(wParam));
-//                PostMessage( hWnd, WM_GOTO_CSERVER_WINDOW, 0, 0 );
-//                break;
             case ID_WINDOW_CLIPBOARD:
                 //debug(F111,"KAppWin::message WM_COMMAND","ID_WINDOW_CLIPBOARD",LOWORD(wParam));
                 ShellExecute( hWnd, "open", "clipbrd.exe", NULL, NULL, SW_SHOW );

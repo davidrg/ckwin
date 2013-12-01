@@ -21,7 +21,6 @@ ToolBitmapDef tbButtons[] = {
 // { { 0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0L, 0 }, 0 },
 // { { 4, ID_DOWNLOAD, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0L, 0 }, "Download Files" },
 // { { 0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0L, 0 }, 0 },
-// { { 5, ID_WINDOW_CLIENTSERVER, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0L, 0 }, "Client Server Window" },
 // { { 6, ID_WINDOW_COMMAND, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0L, 0 }, "Command Window" },
 // { { 0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0L, 0 }, 0 }
 };
@@ -802,7 +801,6 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
             case ID_HELP_HELPONKERMIT:
             case ID_WINDOW_TERMINAL:
             case ID_WINDOW_COMMAND:
-            case ID_WINDOW_CLIENTSERVER:
                 debug(F111,"KTerminal::message WM_COMMAND","ID_OPTIONS_{FONT,COLOR,CUSTOMIZESTATUSBAR},HELP_{ABOUT,HELPONKERMIT},WINDOW_{TERMINAL,COMMAND,CLIENTSERVER}",LOWORD(wParam));
             default:
                 KAppWin::message( hwnd, msg, wParam, lParam );

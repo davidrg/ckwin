@@ -18,7 +18,7 @@ KUIOBJS = \
     $(OUTDIR)\kfontdlg.obj $(OUTDIR)\kabout.obj   \
     $(OUTDIR)\kdwnload.obj \
     $(OUTDIR)\kuikey.obj   $(OUTDIR)\kclient.obj  \
-    $(OUTDIR)\kcliserv.obj $(OUTDIR)\kappwin.obj  $(OUTDIR)\kcserver.obj \
+    $(OUTDIR)\kcliserv.obj $(OUTDIR)\kappwin.obj  \
     $(OUTDIR)\kcommand.obj $(OUTDIR)\ktermin.obj  $(OUTDIR)\kui.obj
 
 RC_DEP = icon1.ico resource.h kui.rc
@@ -39,13 +39,12 @@ $(OUTDIR)\KWIN.obj: KWIN.CXX kwin.hxx kuidef.h resource.h khwndset.hxx
 $(OUTDIR)\kuidef.obj: kuidef.cxx kuidef.h resource.h
 $(OUTDIR)\ktermin.obj: ktermin.cxx ktermin.hxx kappwin.hxx kwin.hxx kuidef.h resource.h kmenu.hxx ktoolbar.hxx kstatus.hxx kclient.hxx kdwnload.hxx kfont.hxx ksysmets.hxx ikcmd.h kdefs.h ikterm.h ikui.h
 $(OUTDIR)\kcliserv.obj: kcliserv.cxx kcliserv.hxx kclient.hxx kwin.hxx kuidef.h resource.h
-$(OUTDIR)\kcserver.obj: kcserver.cxx kcserver.hxx kappwin.hxx kwin.hxx kuidef.h resource.h kcliserv.hxx kclient.hxx kstatus.hxx ktoolbar.hxx kmenu.hxx ksysmets.hxx ikterm.h
 $(OUTDIR)\khwndset.obj: khwndset.cxx khwndset.hxx kuidef.h resource.h karray.hxx
 $(OUTDIR)\KFONTDLG.obj: KFONTDLG.CXX kfontdlg.hxx kwin.hxx kuidef.h resource.h khwndset.hxx
 $(OUTDIR)\kcommand.obj: kcommand.cxx kcommand.hxx kappwin.hxx kwin.hxx kuidef.h resource.h kclient.hxx kstatus.hxx ktoolbar.hxx kmenu.hxx ksysmets.hxx ikterm.h
 $(OUTDIR)\kregedit.obj: kregedit.cxx kregedit.hxx kuidef.h resource.h
 $(OUTDIR)\karray.obj: karray.cxx karray.hxx kuidef.h resource.h
-$(OUTDIR)\Kui.obj: Kui.cxx kui.hxx kuidef.h resource.h ktermin.hxx kappwin.hxx kwin.hxx kcommand.hxx kcserver.hxx kflstat.hxx khwndset.hxx kflstat.h ikui.h ikcmd.h kdefs.h
+$(OUTDIR)\Kui.obj: Kui.cxx kui.hxx kuidef.h resource.h ktermin.hxx kappwin.hxx kwin.hxx kcommand.hxx kflstat.hxx khwndset.hxx kflstat.h ikui.h ikcmd.h kdefs.h
 $(OUTDIR)\kfont.obj: kfont.cxx kfont.hxx kuidef.h resource.h karray.hxx
 $(OUTDIR)\Ksysmets.obj: Ksysmets.cxx ksysmets.hxx kuidef.h resource.h
 $(OUTDIR)\ktoolbar.obj: ktoolbar.cxx ktoolbar.hxx kwin.hxx kuidef.h resource.h khwndset.hxx ikcmd.h kdefs.h

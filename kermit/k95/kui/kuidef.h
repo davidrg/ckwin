@@ -39,12 +39,10 @@ const char CServerTitle[] = "K95 Client Server Window";
 
 const uint TERMINAL_WINDOW      = 1;
 const uint COMMAND_WINDOW       = 2;
-const uint CSERVER_WINDOW       = 3;
 const uint FILETRANSFER_WINDOW  = 4;
 
 const uint WM_GOTO_TERMINAL_WINDOW      = WM_USER + TERMINAL_WINDOW;
 const uint WM_GOTO_COMMAND_WINDOW       = WM_USER + COMMAND_WINDOW;
-const uint WM_GOTO_CSERVER_WINDOW       = WM_USER + CSERVER_WINDOW;
 const uint WM_GOTO_FILETRANSFER_WINDOW  = WM_USER + FILETRANSFER_WINDOW;
 const uint WM_REQUEST_CLOSE_KERMIT      = WM_USER + 10;
 const uint WM_CLOSE_KERMIT              = WM_USER + 11;
