@@ -533,7 +533,7 @@ KUIOBJS = \
     $(OUTDIR)\kdwnload.obj \
     $(OUTDIR)\kuikey.obj   $(OUTDIR)\kclient.obj  \
     $(OUTDIR)\kappwin.obj  \
-    $(OUTDIR)\kcommand.obj $(OUTDIR)\ktermin.obj  $(OUTDIR)\kui.obj
+    $(OUTDIR)\ktermin.obj  $(OUTDIR)\kui.obj
 
 PDLLDIR = pdll
 PDLLOBJS = \

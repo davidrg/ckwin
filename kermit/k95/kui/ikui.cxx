@@ -1,6 +1,5 @@
 #include "kui.hxx"
 #include "ktermin.hxx"
-//#include "kcommand.hxx"
 #include "kregedit.hxx"
 #include "ksysmets.hxx"
 #include "khwndset.hxx"
