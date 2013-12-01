@@ -18,7 +18,7 @@ KUIOBJS = \
     $(OUTDIR)\kfontdlg.obj $(OUTDIR)\kabout.obj   \
     $(OUTDIR)\kdwnload.obj \
     $(OUTDIR)\kuikey.obj   $(OUTDIR)\kclient.obj  \
-    $(OUTDIR)\kcliserv.obj $(OUTDIR)\kappwin.obj  \
+    $(OUTDIR)\kappwin.obj  \
     $(OUTDIR)\kcommand.obj $(OUTDIR)\ktermin.obj  $(OUTDIR)\kui.obj
 
 RC_DEP = icon1.ico resource.h kui.rc
@@ -38,7 +38,6 @@ $(OUTDIR)\kstatus.obj: kstatus.cxx kstatus.hxx kwin.hxx kuidef.h resource.h khwn
 $(OUTDIR)\KWIN.obj: KWIN.CXX kwin.hxx kuidef.h resource.h khwndset.hxx
 $(OUTDIR)\kuidef.obj: kuidef.cxx kuidef.h resource.h
 $(OUTDIR)\ktermin.obj: ktermin.cxx ktermin.hxx kappwin.hxx kwin.hxx kuidef.h resource.h kmenu.hxx ktoolbar.hxx kstatus.hxx kclient.hxx kdwnload.hxx kfont.hxx ksysmets.hxx ikcmd.h kdefs.h ikterm.h ikui.h
-$(OUTDIR)\kcliserv.obj: kcliserv.cxx kcliserv.hxx kclient.hxx kwin.hxx kuidef.h resource.h
 $(OUTDIR)\khwndset.obj: khwndset.cxx khwndset.hxx kuidef.h resource.h karray.hxx
 $(OUTDIR)\KFONTDLG.obj: KFONTDLG.CXX kfontdlg.hxx kwin.hxx kuidef.h resource.h khwndset.hxx
 $(OUTDIR)\kcommand.obj: kcommand.cxx kcommand.hxx kappwin.hxx kwin.hxx kuidef.h resource.h kclient.hxx kstatus.hxx ktoolbar.hxx kmenu.hxx ksysmets.hxx ikterm.h
