@@ -7931,9 +7931,9 @@ docmd(cx) int cx; {
   Originally all commands were handled with a big switch() statement,
   but eventually this started blowing up compilers.  Now we have a series
   of separate if statements and small switches, with the commands that are
-  most commonly executed in scipts and loops coming first, to speed up
+  most commonly executed in scripts and loops coming first, to speed up
   compute-bound scripts.
-  */
+*/
 
 #ifdef DEBUG
     if (cmdstats[0] == -1) {		/* Count commands */

@@ -109,12 +109,11 @@ static char *tophlp[] = {
 #ifndef NOHELP
 "  Type EXIT    to exit.",
 #ifdef OS2
-"  Type INTRO   for a brief introduction to the Kermit Command screen.",
-"  Type LICENSE to see the Kermit 95 license.",
+"  Type INTRO   for a brief introduction to the C-Kermit Command screen.",
 #else
 "  Type INTRO   for a brief introduction to C-Kermit.",
-"  Type LICENSE to see the C-Kermit license.",
 #endif /* OS2 */
+"  Type LICENSE to see the C-Kermit license.",
 "  Type HELP    followed by a command name for help about a specific command.",
 #ifndef NOPUSH
 #ifdef UNIX
@@ -123,11 +122,7 @@ static char *tophlp[] = {
 #ifdef VMS
 "  Type MANUAL  to access the C-Kermit help topic.",
 #else
-#ifdef OS2
-"  Type MANUAL  to access the K95 manual.",
-#else
 "  Type MANUAL  to access the C-Kermit manual.",
-#endif /* OS2 */
 #endif /* VMS */
 #endif /* UNIX */
 #endif /* NOPUSH */
@@ -251,11 +246,7 @@ char *newstxt[] = {
 "If the release date shown by the VERSION command is long past, be sure to",
 "check the Kermit website to see if there have been updates:",
 " ",
-#ifdef OS2
-"  http://www.kermitproject.org/k95.html     (Kermit 95 home page)",
-#else
 "  http://www.kermitproject.org/ckermit.html (C-Kermit home page)",
-#endif	/* OS2 */
 "  http://www.kermitproject.org/             (Kermit Project home page)",
 ""
 };
@@ -264,14 +255,10 @@ char *newstxt[] = {
 #ifndef NOHELP
 char *introtxt[] = {
 #ifdef OS2
-"Welcome to K-95, Kermit communications software for:",
+"Welcome to C-Kermit for Windows, communication software for:",
 #else
 #ifdef UNIX
-#ifdef HPUX
-"Welcome to HP-UX C-Kermit communications software for:",
-#else
 "Welcome to UNIX C-Kermit communications software for:",
-#endif /* HPUX */
 #else
 #ifdef VMS
 "Welcome to VMS C-Kermit communications software for:",
@@ -528,11 +515,11 @@ char *introtxt[] = {
 
 #ifdef NT
 " ",
-"To return from the terminal window to the K-95> prompt:",
+"To return from the terminal window to the C-Kermit> prompt:",
 #else
 #ifdef OS2
 " ",
-"To return from the terminal window to the K/2> prompt:",
+"To return from the terminal window to the C-Kermit> prompt:",
 #else
 " ",
 "To return from a terminal connection to the C-Kermit prompt:",
@@ -561,11 +548,6 @@ Press the key or key-combination shown after \"Command:\" in the status line",
 "about the manual, visit:",
 "  http://www.kermitproject.org/usingckermit.html",
 " ",
-#ifdef OS2
-"For a Kermit 95 tutorial, visit:",
-"  http://www.kermitproject.org/k95tutor.html",
-" ",
-#endif /* OS2 */
 "For an online C-Kermit tutorial, visit:",
 "  http://www.kermitproject.org/ckututor.html",
 " ",
@@ -641,8 +623,8 @@ static char * hmxygui[] = {
 "  re-enabled.", 
 " ",
 "SET GUI WINDOW POSITION x y",
-"  Moves the K95 window to the given X,Y coordinates, pixels from top left.",
-"  (Not yet implemented -- use command-line options to do this.)",
+"  Moves the C-Kermit window to the given X,Y coordinates, pixels from top",
+"  left.  (Not yet implemented -- use command-line options to do this.)",
 " ",
 "SET GUI WINDOW RESIZE-MODE { CHANGE-DIMENSIONS, SCALE-FONT }",
 "  Default is CHANGE-DIMENSIONS.",
@@ -1031,11 +1013,7 @@ static char *hmxxtak[] = {
 
 #ifdef TCPSOCKET
 static char *hmxxfirew[] = {
-#ifdef OS2
-"Firewall Traversal in Kermit 95",
-#else
 "Firewall Traversal in C-Kermit",
-#endif
 " ",
 #ifndef NEWFTP
 #ifndef CKHTTP
@@ -1113,7 +1091,7 @@ static char *hmxxfirew[] = {
 
 #ifdef OS2
 #ifdef NT
-"Kermit 95 supports SOCKS 4.2.  The SOCKS Server is specified with:",
+"C-Kermit for Windows supports SOCKS 4.2. The SOCKS Server is specified with:",
 " ",
 "  SET TCP SOCKS-SERVER hostname/ip-address",
 " ",
@@ -1123,11 +1101,11 @@ static char *hmxxfirew[] = {
 
 #else /* NT */
 
-"Kermit/2 provides support for SOCKS 4.2 servers when using IBM TCP/IP 2.0,",
+"C-Kermit provides support for SOCKS 4.2 servers when using IBM TCP/IP 2.0,",
 "IBM OS/2 WARP, or a compatible protocol stack. SOCKS is one popular means",
 "of implementing a firewall between a private network and the Internet.",
 " ",
-"Kermit/2 shares the same SOCKS environment variables as IBM Gopher. It also",
+"C-Kermit shares the same SOCKS environment variables as IBM Gopher. It also",
 "supports the use of local SOCKS configuration files.",
 " ",
 "To specify the default SOCKS Server, add SET SOCKS_SERVER= to your",
@@ -1160,7 +1138,7 @@ static char *hmxxfirew[] = {
 
 " ",
 
-"Kermit/2 ignores the [*=userlist] and [@=serverlist] fields. Matches are",
+"C-Kermit ignores the [*=userlist] and [@=serverlist] fields. Matches are",
 "determined on a first match not a best match basis. Addresses for which no",
 "match is found default to \"sockd\".",
 
@@ -1981,8 +1959,8 @@ static char *hmxxkcd[] = {
 ,
 " ",
 #ifdef NT
-"    appdata       Your personal Kermit 95 application data directory",
-"    common        Kermit 95's application data directory for all users",
+"    appdata       Your personal C-Kermit Windows application data directory",
+"    common        C-Kermit's application data directory for all users",
 "    desktop       Your Windows desktop",
 #endif /* NT */
 "    download      Your download directory (if any)",
@@ -2258,7 +2236,7 @@ static char *hmxxhttp[] = {
 " ",
 "where <switches> are:",
 "/AGENT:<user-agent>",
-"  Identifies the client to the server; \"C-Kermit\" or \"Kermit-95\"",
+"  Identifies the client to the server; \"C-Kermit\"",
 "  by default.",
 " ",
 "/HEADER:<header-line>",
@@ -4478,7 +4456,7 @@ static char *ifhlp[] = { "Syntax: IF [NOT] condition commandlist",
 " ",
 "  MS-KERMIT   - Program is MS-DOS Kermit",
 "  C-KERMIT    - Program is C-Kermit",
-"  K-95        - Program is Kermit 95",
+"  WINDOWS     - Program is C-Kermit for Windows",
 "  GUI         - Program runs in a GUI window",
 " ",
 "  AVAILABLE CRYPTO                  - Encryption is available",
@@ -4660,13 +4638,12 @@ static char *hxxask[] = {
 #ifdef OS2
 " /POPUP",
 "  The prompt and response dialog takes place in a text-mode popup.",
-"  K95 only; in C-Kermit this switch is ignored.",
+"  C-Kermit for Windows only; in other C-Kermit versions /POPUP is ignored.",
 " ",
 #ifdef KUI
 " /GUI",
 "  The prompt and response dialog takes place in a GUI popup.",
-"  K95 GUI version only; in C-Kermit and the K95 console version,", 
-"  this switch is ignored.",
+"  C-Kermit for Windows only; this switch is ignored elsewhere",
 " ",
 #endif /* KUI */
 #endif /* OS2 */
@@ -4918,7 +4895,7 @@ in which case it",
 "The next group is for use with printers that print only PostScript:",
 " ",
 "/POSTSCRIPT or /PS",
-"  Indicates that K95 should convert all text to PostScript before sending",
+"  Indicates that Kermit should convert all text to PostScript before sending",
 "  it to the printer.  The fixed-pitch Courier-11 font is used.",
 " ",
 "/WIDTH:number",
@@ -4930,7 +4907,7 @@ in which case it",
 "  66 is used.",
 " ",
 "/NOPOSTSCRIPT or /NOPS",
-"  Indicates that K95 should not convert all text to PostScript before",
+"  Indicates that Kermit should not convert all text to PostScript before",
 "  sending it to the printer.",
 " ",
 "The final switch is for use with AutoPrint mode and Screen Dumps",
@@ -5239,7 +5216,7 @@ static char *hxxtapi[] = {
 "TAPI DIALING-PROPERTIES",
 "  Displays the TAPI Dialing Properties (locations) Dialog box.  The",
 "  Dialing rules may be changed and locations created and deleted.",
-"  When the dialog box is closed, K-95 imports the current Dialing",
+"  When the dialog box is closed, C-Kermit imports the current Dialing",
 "  Properties' Location into the Kermit DIAL command settings.",
 ""};
 
@@ -5269,7 +5246,7 @@ static char *hxytapi[] = {
 "  LINE/PORT is a TAPI device and TAPI MODEM-DIALING is ON, OFF otherwise.",
 " ",
 "SET TAPI MODEM-LIGHTS {[ON], OFF}",
-"  Displays a modem lights indicator on the Windows 95 Taskbar.  Does nothing",
+"  Displays a modem lights indicator on the Windows Taskbar.  Does nothing",
 "  in Windows NT 4.0.",
 " ",
 "SET TAPI MANUAL-DIALING {ON, [OFF]}",
@@ -5297,7 +5274,7 @@ static char *hxytapi[] = {
 "SET TAPI USE-WINDOWS-CONFIGURATION {ON, [OFF]}",
 "  Specifies whether the TAPI modem values for speed, parity, stop bits, flow",
 "  control, etc. are used in preference to the current values specified",
-"  within Kermit-95.",
+"  within C-Kermit.",
 " ",
 ""};
 #endif /* CK_TAPI */
@@ -6565,11 +6542,7 @@ Trustees of Columbia University in the City of New York.\n\n",
     }
 
 case XXINT:
-#ifdef OS2
-    return(hmsg("The INTRO command gives a brief introduction to Kermit 95."));
-#else
     return(hmsg("The INTRO command gives a brief introduction to C-Kermit."));
-#endif /* OS2 */
 
 #ifndef NOSPL
 case XXIF:
@@ -6638,7 +6611,7 @@ case XXNEW:
 
 case XXUPD:
     return(hmsg(
-"  New features are described in the online Kermit 95 manual,\n\
+"  New features are described in the online manual,\n\
    accessible via the MANUAL command."));
 
 #ifndef NOSPL
@@ -7170,7 +7143,7 @@ case XXMAN:
 #else
 #ifdef OS2
     return(hmsg("Syntax: MANUAL\n\
-  Accesses the Kermit 95 HTML manual using the current browser."));
+  Accesses the HTML manual using the current browser."));
 #else
     return(hmsg("Syntax: MANUAL [ topic ]\n\
   Runs the \"help\" command on the given topic (default \"kermit\")."));
@@ -7422,39 +7395,11 @@ static char * supporttext[] = {
 
 "Live technical support for Kermit software is no longer available",
 "from Columbia University, as it was from mid-1981 until mid-2011 when",
-
-#ifdef OS2
-
-"the Kermit Project was cancelled.  Beginning with version 3.0, Kermit 95",
-
-#else
-
 "the Kermit Project was cancelled.  Beginning with version 9.0, C-Kermit",
-
-#endif	/* OS2 */
-
 "is Open Source software.  The Kermit project has been moved to:",
 " ",
 "  http://www.kermitproject.org/",
 " ",
-
-#ifdef OS2
-
-"The Kermit 95 page is here:",
-" ",
-"  http://www.kermitproject.org/k95.html",
-" ",
-"The Kermit 95 manual is here:",
-" ",
-"  http://www.kermitproject.org/k95manual/",
-" ",
-"The Kermit 95 Frequently Asked Questions page is here:",
-" ",
-"  http://www.kermitproject.org/k95faq.html",
-" ",
-
-#else
-
 "The C-Kermit home page is here:",
 " ",
 "  http://www.kermitproject.org/ckermit.html",
@@ -7470,8 +7415,6 @@ static char * supporttext[] = {
 "The C-Kermit Frequently Asked Questions page is here:",
 " ",
 "  http://www.kermitproject.org/ckfaq.html",
-#endif	/* OS2 */
-
 " ",
 "and the Kermit Project Technical Support page is here:",
 " ",
@@ -7786,7 +7729,7 @@ static char *hxyterm[] = {
 "  see a complete list.",
 " ",
 "SET TERMINAL ANSWERBACK { OFF, ON }",
-"  Disables/enables the ENQ/Answerback sequence (\"K-95 version term-type\").",
+"  Disables/enables the ENQ/Answerback sequence (Kermit version term-type).",
 " ",
 "SET TERMINAL ANSWERBACK MESSAGE <extension>",
 "  Allows you to specify an extension to the default answerback message.",
@@ -7806,7 +7749,7 @@ static char *hxyterm[] = {
 "SET TERMINAL APC { ON, OFF, NO-INPUT, NO-INPUT-UNCHECKED, UNCHECKED }",
 #ifdef OS2
 "  Controls execution of Application Program Commands sent by the host while",
-"  K-95 is either in CONNECT mode or processing INPUT commands.  ON allows",
+"  Kermit is either in CONNECT mode or processing INPUT commands.  ON allows",
 "  execution of \"safe\" commands and disallows potentially dangerous ones",
 "  such as DELETE, RENAME, OUTPUT, and RUN.  OFF prevents execution of APCs.",
 "  UNCHECKED allows execution of all APCs.  OFF is the default.",
@@ -7825,7 +7768,7 @@ static char *hxyterm[] = {
 "  Sets the mode for the arrow keys during VT terminal emulation.",
 " ",
 "SET TERMINAL ATTRIBUTE { BLINK, DIM, PROTECTED, REVERSE, UNDERLINE }",
-"  Determines how attributes are displayed by Kermit-95.",
+"  Determines how attributes are displayed in the Terminal window.",
 " ",
 "SET TERMINAL ATTRIBUTE { BLINK, DIM, REVERSE, UNDERLINE } { ON, OFF }",
 "  Determines whether real Blinking, Dim, Reverse, and Underline are used in",
@@ -7944,7 +7887,7 @@ static char *hxyterm[] = {
 "  Specifies the character set used by the remote host, <remote-cs>.",
 "  Equivalent to SET TERM REMOTE-CHARACTER-SET <remote-cs> ALL.  For more",
 "  control over the details, use SET TERM REMOTE-CHARACTER-SET and (in",
-"  non-GUI K95 versions) SET TERM LOCAL-CHARACTER-SET; these are explained",
+"  non-GUI Kermit versions) SET TERM LOCAL-CHARACTER-SET; these are explained",
 "  below.  The default TERMINAL CHARACTER-SET is LATIN1 (ISO 8859-1).",
 #else  /* not OS2 */
 "SET TERMINAL CHARACTER-SET <remote-cs> [ <local-cs> ]",
@@ -8052,8 +7995,8 @@ static char *hxyterm[] = {
 #ifdef OS2
 #ifdef KUI
 "SET TERMINAL FONT <facename> <height>",
-"  Specifies the font to be used in the Kermit 95 window.  The font is",
-"  determined by the choice of a facename and a height measured in Points.",
+"  Specifies the font to be used in the C-Kermit terminal window.  The font",
+"  is determined by the choice of a facename and a height measured in Points.",
 "  The available facenames are those installed in the Font Control Panel.",
 " ",
 #else /* KUI */
@@ -8177,7 +8120,7 @@ static char *hxyterm[] = {
 #ifndef NOCSETS
 #ifdef OS2
 "SET TERMINAL LOCAL-CHARACTER-SET <local-cs>",
-"  Specifies the character set used by K-95 locally.  If you don't specify",
+"  Specifies the character set used locally.  If you don't specify",
 #ifdef OS2ONLY
 "  the local character-set, the current TERMINAL FONT is used if you have",
 "  given a SET TERMINAL FONT command; otherwise the current codepage is used.",
@@ -8354,7 +8297,7 @@ static char *hxyterm[] = {
 " ",
 
 "SET TERMINAL TRANSMIT-TIMEOUT <seconds>",
-"  Specifies the maximum amount of time K-95 waits before returning to the",
+"  Specifies the maximum amount of time Kermit waits before returning to the",
 "  prompt if your keystrokes can't be transmitted for some reason, such as a",
 "  flow-control deadlock.",
 " ",
@@ -8371,16 +8314,15 @@ static char *hxyterm[] = {
 
 #ifdef OS2
 "SET TERMINAL URL-HIGHLIGHT { ON <attribute>, OFF }",
-"  Specifies whether K-95 should highlight URLs and which screen attribute",
+"  Specifies whether URLs should be highlighted and which screen attribute",
 "  should be used.  The screen attributes can be one of NORMAL, BLINK, BOLD,",
 "  DIM, INVISIBLE, REVERSE, or UNDERLINE.  The default is ON using the",
 "  BOLD screen attribute.",
 " ",
 "SET TERMINAL VIDEO-CHANGE { DISABLED, ENABLED }",
-"  Specifies whether K-95 should change video modes automatically in response",
+"  Specifies whether video modes should change automatically in response",
 #ifdef NT
-"  to escape sequences from the other computer.  ENABLED by default (except",
-"  on Windows 95).",
+"  to escape sequences from the other computer.  ENABLED by default.",
 #else /* NT */
 "  to escape sequences from the other computer.  ENABLED by default.",
 #endif /* NT */
@@ -9320,15 +9262,11 @@ static char *hxymacr[] = {
 static char *hmxyprm[] = {
 "Syntax: SET PROMPT [ text ]",
 " ",
-#ifdef OS2
-"Prompt text for this program, normally 'K-95>'.  May contain backslash",
-#else
 #ifdef MAC
 "Prompt text for this program, normally 'Mac-Kermit>'.  May contain backslash",
 #else
 "Prompt text for this program, normally 'C-Kermit>'.  May contain backslash",
 #endif /* MAC */
-#endif /* OS2 */
 "codes for special effects.  Surround by { } to preserve leading or trailing",
 #ifdef OS2
 "spaces.  If text omitted, prompt reverts to K-95>.  Prompt can include",

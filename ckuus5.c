@@ -235,11 +235,20 @@ char * ikprompt = "IKSD>";
 #else  /* NOSPL */
 #ifdef OS2
 /* Default prompt for OS/2 and Win32 */
+/* fdc 2013-12-06 - C-Kermit 9.0 and later is just "C-Kermit" */
 #ifdef NT
+#ifdef COMMENT
 char * ckprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] K-95> ";
+#else
+char * ckprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] C-Kermit> ";
+#endif /* COMMENT */
 char * ikprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] IKSD> ";
 #else  /* NT */
+#ifdef COMMENT
 char * ckprompt = "[\\freplace(\\v(dir),/,\\\\)] K-95> ";
+#else
+char * ckprompt = "[\\freplace(\\v(dir),/,\\\\)] C-Kermit> ";
+#endif /* COMMENT */
 char * ikprompt = "[\\freplace(\\v(dir),/,\\\\)] IKSD> ";
 #endif /* NT */
 #else  /* OS2 */
@@ -247,6 +256,7 @@ char * ikprompt = "[\\freplace(\\v(dir),/,\\\\)] IKSD> ";
 char * ckprompt = "\\v(dir) C-Kermit>"; /* Default prompt VMS */
 char * ikprompt = "\\v(dir) IKSD>";
 #else
+/* Note: parens, not brackets, because of ISO646 */
 char * ckprompt = "(\\v(dir)) C-Kermit>"; /* Default prompt for others */
 char * ikprompt = "(\\v(dir)) IKSD>";
 #endif /* VMS */
@@ -3129,6 +3139,7 @@ parser(m) int m; {
                 }
             }
 #endif /* MAC */
+
             switch (zz) {
               case -4:                  /* EOF (e.g. on redirected stdin) */
                 doexit(GOOD_EXIT,xitsta); /* ...exit successfully */
@@ -3145,21 +3156,32 @@ parser(m) int m; {
                 continue;
 
 #endif /* OS2 */
-              case -6:                  /* Invalid command given w/no args */
-              case -2: {		/* Invalid command given w/args */
-		  int x = 0;
-		  char * eol = "";
-		  x = strlen(cmdbuf);	/* Avoid blank line */
-		  if (x > 0) {
-		      if (cmdbuf[x-1] != LF)
-			eol = "\n";
-		      printf("?Invalid: %s%s",
-			     cmddisplay(cmdbuf,xx),eol
-			     );
-		  } else
-		    printf("?Invalid\n");
-	      }
+/*
+  Changed 2013-12-06 fdc: Previously the failing command was echoed only in
+  the -6 and -9 cases.  This made it difficult to know exactly which command
+  had failed when a macro or command file was being executed and the failing
+  command had already issued its own error message and returned -9.  Now we
+  include -9 in the caselist for this code, but we echo the failing command
+  only if Kermit is not at top level.  So now, even though the error message
+  is imprecise about *where* the failing command was, at least it shows the
+  failing command.
+*/
 	      case -9:			/* Bad, error message already done */
+              case -6:                  /* Invalid command given w/no args */
+              case -2:			/* Invalid command given w/args */
+		if (zz == -2 || zz == -6 || (zz == -9 && cmdlvl > 0)) {
+		    int x = 0;
+		    char * eol = "";
+		    x = strlen(cmdbuf);	/* Avoid blank line */
+		    if (x > 0) {
+			if (cmdbuf[x-1] != LF)
+			  eol = "\n";
+			printf("?Invalid: %s%s",
+			       cmddisplay(cmdbuf,xx),eol
+			       );
+		    } else
+		      printf("?Invalid\n");
+		}
 		success = 0;
 		debug(F110,"top-level cmkey failed",cmdbuf,0);
 		/* If in background w/ commands coming stdin, terminate */
@@ -8001,8 +8023,8 @@ doshow(x) int x; {
 #endif	/* NORENAME */
 #endif	/* NOFRILLS */
 
-#ifdef HAVE_LOCALE
       case SHOLOC: {
+#ifdef HAVE_LOCALE
 	char *s;
 	extern int nolocale;
         printf("\n");
@@ -8041,14 +8063,18 @@ doshow(x) int x; {
 
 	printf("  LANG=\"%s\"\n",getenv("LANG"));
         printf("\n");
+#else
+        printf("\n");
+        printf("  Locale support is not included in this version of Kermit\n");
+        printf("\n");
+#endif /* HAVE_LOCALE */
 
 	break;
       }
-#endif /* HAVE_LOCALE */
-
       default:
         printf("\nNothing to show...\n");
         return(-2);
+
     }
     return(success = 1);
 }

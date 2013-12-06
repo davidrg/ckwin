@@ -13973,6 +13973,10 @@ nvlook(s) char *s; {
 
     switch(y) {
       case VN_XPROG:
+#ifndef COMMENT
+/* C-Kermit 9.0 and later for Windows and OS/2 is just C-Kermit */
+        return("C-Kermit");
+#else
 #ifdef OS2
 #ifdef NT
 #ifdef KUI
@@ -13986,6 +13990,7 @@ nvlook(s) char *s; {
 #else
         return("C-Kermit");
 #endif /* OS2 */
+#endif /* COMMENT */
 
       case VN_EDITOR:
 #ifdef NOFRILLS

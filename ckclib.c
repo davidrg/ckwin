@@ -1,4 +1,4 @@
-char * cklibv = "C-Kermit library, 9.0.052, 29 Jun 2011";
+char * cklibv = "C-Kermit library, 9.0.053, 6 Dec 2013";
 
 #define CKCLIB_C
 
@@ -8,7 +8,7 @@ char * cklibv = "C-Kermit library, 9.0.052, 29 Jun 2011";
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1999, 2011,
+  Copyright (C) 1999, 2013,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -1261,10 +1261,18 @@ ckmemcpy(p,s,n) char *p, *s; int n; {
     0 if s1 = s2
    -1 if s1 < s2
   Note: case handling is only as good as isupper() and tolower().
+  Modifed 2013-12-06 to be somewhat locale-aware.
 */
 int
 ckstrcmp(s1,s2,n,c) char *s1, *s2; register int n, c; {
     register CHAR t1, t2;
+#ifdef HAVE_LOCALE
+    int rc;
+    char t1buf[2], t2buf[2];
+    t1buf[1] = NUL;
+    t2buf[1] = NUL;
+#endif /* HAVE_LOCALE */
+
     if (n == 0) return(0);
     if (!s1) s1 = "";			/* Watch out for null pointers. */
     if (!s2) s2 = "";
@@ -1276,12 +1284,21 @@ ckstrcmp(s1,s2,n,c) char *s1, *s2; register int n, c; {
 	if (!t1) return(t2 ? -1 : 0);
 	if (!t2) return(1);
 	if (!c) {			/* If case doesn't matter */
-
 	    if (isupper(t1)) t1 = tolower(t1); /* Convert case. */
 	    if (isupper(t2)) t2 = tolower(t2);
 	}
+#ifdef HAVE_LOCALE
+/*
+  This only works for single-byte character sets but it's better than
+  nothing, because previously this routine worked right only for ASCII.
+*/
+        t1buf[0] = t1; 			/* Convert chars to strings */
+        t2buf[0] = t2;
+	if ((rc = strcoll(t1buf,t2buf))) return(rc);
+#else
 	if (t1 < t2) return(-1);	/* s1 < s2 */
 	if (t1 > t2) return(1);		/* s1 > s2 */
+#endif /* HAVE_LOCALE */
     }
     return(0);				/* They're equal */
 }

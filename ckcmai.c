@@ -1,6 +1,6 @@
-#define EDITDATE  "24 Nov 2013"		/* Last edit date dd mmm yyyy */
-#define EDITNDATE "20131124"		/* Keep them in sync */
-/* Sun Nov 24 11:44:37 2013 */
+#define EDITDATE  "6 Dec 2013"		/* Last edit date dd mmm yyyy */
+#define EDITNDATE "20131206"		/* Keep them in sync */
+/* Fri Dec  6 10:46:18 2013 */
 
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
@@ -41,7 +41,7 @@ char * ck_cryear = "2013"; 		/* C-Kermit copyright year */
 #ifndef BETATEST
 #ifndef OS2                             /* UNIX, VMS, etc... (i.e. C-Kermit) */
 char *ck_s_test = "Dev";		/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "07";			/* Test version number or "" */
+char *ck_s_tver = "08";			/* Test version number or "" */
 #else  /* OS2 */
 char *ck_s_test = "";			/* (i.e. K95) */
 char *ck_s_tver = "";
@@ -82,8 +82,11 @@ char *ck_s_ver = "9.0.304";             /* C-Kermit version string */
 long  ck_l_ver =  900304L;              /* C-Kermit version number */
 
 #ifdef OS2
+#ifdef COMMENT
+/* New Open Source C-Kermit for Windows is just C-Kermit */
 char *ck_s_xver = "3.0.0";		/* Product-specific version string */
 long  ck_l_xver = 3000L;                /* Product-specific version number */
+#endif /* COMMENT */
 #else
 #ifdef MAC
 char *ck_s_xver = "0.995";              /* Product-specific version string */

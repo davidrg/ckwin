@@ -576,7 +576,7 @@ struct keytab iftab[] = {               /* IF commands */
     { "iksd",       XXIFIK, CM_INV },
 #endif /* IKSD */
     { "integer",    XXIFNU, CM_INV },
-    { "k-95",       XXIFK9, 0 },
+    { "k-95",       XXIFK9, CM_INV },
     { "kbhit",      XXIFKB, 0 },
 #ifdef UNIX
     { "kerbang",    XXIFKG, 0 },
@@ -617,6 +617,7 @@ struct keytab iftab[] = {               /* IF commands */
     { "true",       XXIFTR, 0 },
     { "version",    XXIFVE, 0 },
     { "wild",       XXIFWI, 0 },
+    { "windows",    XXIFK9, 0 },
     { "writeable",  XXIFWR, 0 },
     { "||",         XXIFOR, 0 },
     { "", 0, 0 }
@@ -5072,6 +5073,7 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
     int simulate = 0;
     struct FDB sw, fi, fl;
     char dbuf[32], xbuf[32];
+    int reallysort = 0;
 
 #ifndef NOSPL
     char array = NUL;
@@ -5701,7 +5703,9 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
           goto xdomydir;
     }
     nx = x;                             /* Remember how many files */
-    if (nx < 2) xsort = 0;		/* Skip sorting if none or one */
+    reallysort = xsort;
+    if (nx < 2) reallysort = 0;		/* Skip sorting if none or one */
+    xsort = 1;				/* 2013-12-06 but do everything else */
 
     if (msg) {
         makestr(&dirmsg,tmpbuf);
@@ -5778,7 +5782,6 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 
     diractive = 1;
     znext(name);                        /* Get next file */
-    debug(F110,"XXX1",name,0);
     while (name[0]) {                   /* Loop for each file */
         if (fs) if (fileselect(name,
                        dir_aft,dir_bef,dir_naf,dir_nbf,
@@ -6176,7 +6179,7 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
             if (n + dirmsglen + 2 < CKMAXPATH)
               sprintf((char *)(linebuf+n)," %s", dirmsg); /* SAFE */
         }
-        if (xsort) {			/* Sorting - save line */
+        if (xsort) {		/* Sorting - save line */
             i = strlen(linebuf);
             if ((ndirlist >= nx) ||
                 !(dirlist[ndirlist] = (char *)malloc(i+1))) {
@@ -6239,7 +6242,7 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
             }
         }
 #endif /* VMS */
-        sh_sort(dirlist,NULL,ndirlist,skey,reverse,filecase);
+        if (reallysort) sh_sort(dirlist,NULL,ndirlist,skey,reverse,filecase);
 	if (dir_top > 0 && dir_top < ndirlist)
 	  ndirlist = dir_top;
         for (i = 0; i < ndirlist; i++) {
@@ -11261,6 +11264,7 @@ boolexp(cx) int cx; {
 #ifdef OS2
     extern int keymac;
 #endif /* OS2 */
+    char varnam[VNAML+1];
 
     not = 0;                            /* Flag for whether "NOT" was seen */
     z = 0;                              /* Initial IF condition */
@@ -11321,6 +11325,23 @@ boolexp(cx) int cx; {
 	  int i;
 	  char * s;
 	  s = cmresult.sresult;
+
+/* fdc 2013/12/06 - Remember the variable name for error messages */
+	  varnam[0] = NUL;
+	  i = ckindex("if ",cmdbuf,0,0,0);
+          if (i) {
+	      i += 2;
+	      while (cmdbuf[i] == ' ') i++;
+	      if (cmdbuf[i]) {
+		  int j, k;
+		  j = i;
+		  k = 0;
+		  while (cmdbuf[j] && (cmdbuf[j] != ' ')) {
+		      varnam[k++] = cmdbuf[j++];
+		  }
+		  varnam[k] = NUL;
+	      }
+          }
 /*
   C-Kermit 9.0: This allows a macro name to serve as an
   IF condition without having to enclose it in \m(...).
@@ -11337,10 +11358,15 @@ boolexp(cx) int cx; {
 		s = mactab[x].mval;	/* and get its value */
 	      else			/* Otherwise if no such macro */
 #ifdef COMMENT
-		s = "0";		/* evaluate as FALSE. */
+		s = "0";		/* evaluate as FALSE (bad idea) */
 #else
 	      {
-		  printf("?%s: not an IF condition, macro name or number\n");
+		  if (varnam[0])
+		    printf("?Variable %s does not have a numeric value\n",
+			   varnam);
+		  else
+		    printf("?Not an IF condition, macro name or number:\n",
+			   cmresult.sresult);
 		  return(-9);
 	      }
 #endif /* COMMENT */

@@ -1,6 +1,6 @@
 #include "ckcsym.h"
 
-char *cmdv = "Command package 9.0.169, 22 July 2013";
+char *cmdv = "Command package 9.0.170, 6 Dec 2013";
 
 /*  C K U C M D  --  Interactive command package for Unix  */
 
@@ -2868,7 +2868,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 */
 int
 cmfld(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; {
-    int x, xc;
+    int x, xc, isavar = 0;
     char *zq;
 
     inword = 0;				/* Initialize counts & pointers */
@@ -2926,6 +2926,12 @@ cmfld(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; {
 		if ((*f)(*xp,&zq,&atxn) < 0)
 		  return(-2);
 		debug(F111,"cmfld 3",atxbuf,xc);
+		/*
+		  fdc 2013/12/06 - allow a field to be empty if it is
+                  the name of a variable that has no value.
+		*/    
+                isavar = (atmbuf[0] == '\\'); /* Remember if it was a var */
+
 		/* Replace by new value -- for MINPUT only keep all chars */
 		if (setatm(atxbuf,keepallchars ? 3:1) < 0) { /* 16 Mar 2003 */
 		    printf("Value too long\n");
@@ -2939,7 +2945,8 @@ cmfld(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; {
 		    printf("?Default too long\n");
 		    return(-9);
 		}
-		if (**xp == NUL) x = -3; /* If still empty, return -3. */
+		/* If still empty, return -3 unless it was a variable */
+		if (**xp == NUL) x = (isavar ? 0 : -3);	/* fdc 2013/12/06 */
 	    }
 	    debug(F111,"cmfld returns",*xp,x);
 	    return(x);

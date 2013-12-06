@@ -93,7 +93,7 @@ typedef ckjmpbuf * ckjptr;
 #ifdef COMMENT
 __inline int
 #else
-+static __inline int /* duplicate definition issue */
+static __inline int /* duplicate definition issue */
 #endif /* COMMENT */
 
 ck_ih(void) {

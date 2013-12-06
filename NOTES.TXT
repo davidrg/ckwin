@@ -3,8 +3,8 @@ C-KERMIT 9.0 CHANGE LOG (Changes since 8.0.207 / K95 2.1.3 January 2003)
   Chronological order.
   Go to the bottom to find the newest edits.
 
-  F. da Cruz, The Kermit Project, Bronx, NY.
-  Last update: Thu Jul 25 21:26:11 2013
+  Frank da Cruz, The Kermit Project, Bronx, NY.
+  Last update:  Fri Dec  6 19:38:24 2013
 
 FTP USER, FTP ACCOUNT, plus the various prompts and switches for FTP username,
 password, and account all neglected to strip quotes, and in most cases quotes
@@ -8415,6 +8415,98 @@ from incompatible pointer type" messages came out of DES_*() function
 invocations, which didn't happen before.  Built OK on Solaris 9 without SSL,
 and with OpenSSL 0.9.8q (with no warnings, but this one doesn't have DES).
 24 Nov 2013.
+
+-- Dev.07 --
+
+From Jake Thompson: Fixed a typo in applying diffs to ckcsig.h.  Fixed some
+locale-related #ifdefs in ckuusr.h and ckuus5.c.  Also added the ability to
+suppress locale support at compile time via -DNOLOCALE (ckcdeb.h). 6 Dec 2013.
+
+A major annoyance with C-Kermit scripts is that when a command fails, we
+often get no clue about which command it was or where it was.  This happens
+when the command issues its own error message (e.g. "?Text required") and
+returns -9 to the parser to indicate an error message was already printed
+(on the assumption that the user just typed the bad command and so knows
+what it is).  In the cases where the command did not already issue an error
+message, the parser already echoed the command that failed.  I changed the
+parser to do this in the -9 case too.  ckuus5.c, 6 Dec 2013.
+
+(Another problem in this area is just too hard to fix, namely that when the
+parser is executing a script and a command fails, the parser often has no
+idea which line of the script file the failing command came from.  That's
+because when reading a script file, the parser concatenates each {...} block
+into a single line, so when a command within the block fails, the parser
+only knows the line number of the first line of the block.)
+
+Another fundamental change to the parser.  Script writers might have noticed
+that an innocent-looking statement like:
+
+  if equ \%a xx echo "Dos equis"
+
+would work correctly sometimes and others would get a parse error, depending
+on whether the variable (\%a in this case) had a non-empty definition.  The
+normal workaround is to write it like this:
+
+  if equ "\%a" "xx" echo "Dos equis"
+
+but that shouldn't be necessary, since the parser knows that (a) the statement
+does not have a syntax error and (b) it has evaluated a variable that has an
+empty (or no) value, in which case it should simply return an empty string
+instead of a failure code.  I ran several of my huge production scripts with
+this change with no ill effects, and in fact it let me track down several
+long-elusive problems in the scripts.  ckucmd.c, 6 Dec 2013.
+
+In the same vein...  Lazy IF Conditions, in which a variable name can be
+used as an IF condition as long as it evaluates to a number (0 being false,
+nonzero being true)...  The error message given when the variable (or other
+random string) did not have a numeric value, or any value at all, was less
+than informative.  Now it prints the variable name, which is a good trick
+because it had already been wiped out in the act of trying to evaluate it.
+ckuus6.c, 6 Dec 2013.
+
+Changed ckstrcmp(), which is used by the DIRECTORY command, the ARRAY /SORT
+command, the \fstrcmp() function, and who knows what else (this function is
+called from 261 different places in C-Kermit), to use the collating sequence
+of the current locale, which works as long as the the character set is
+single-byte (e.g. ISO-8859-1 or KOI8).  The way I did it is not pretty, but
+there is no standard locale-aware string comparison function that has the
+options that ckstrcmp() has (and uses), and as far as I can tell there is no
+standard way to compare two characters according to the locale, only two
+NUL-terminated strings.  So I turn each character into a string and compare
+them with strcoll().  I can't just compare the strings directly because (a)
+strcoll() doesn't allow the comparison of pieces of strings and (b) there is
+no case-independent version of strcoll().  The new code is within #ifdef
+HAVE_LOCALE..#endif, but some adjustments might be needed if strcoll()
+(circa 1989) is not found everywhere that locales are found.  Anyway, now
+non-ASCII filenames and arrays (except in multibyte character sets like
+UTF8) will sort correctly if the locale has the required collating sequence;
+otherwise they come out as before.  ckclib.c, 6 Dec 2013.
+
+DIR /ARRAY:&a *.jpg doesn't work right if only one file matches: it creates
+the array with dimension 1, but element 1 is empty.  But it works OK if two
+or more files match.  This is because the code to load the array is executed
+only if we sort the result, a step which we cleverly skip if there is only
+one file in the listing.  For that matter, DIR /NOSORT /ARRAY:&a *.* doesn't
+work at all, no matter how many files match.  It turns out a lot of code is
+in the sorting block that doesn't actually have anything to do with sorting.
+So I changed domydir() so it the "xsort" flag (which selects this code) is
+always on, and added a new flag that says whether we actually call the sort
+routine, which was safer than reorganizing a ton of code. ckuus6.c, 6 Dec 2013.
+
+Branding of C-Kermit for Windows...  I removed the special version numbering
+for C-Kermit for Windows (nee K95) so now it should show the regular
+C-Kermit version herald.  Changed \v(program) to always be "C-Kermit", not
+"K-95", "K/2", etc.  Changed default prompt for Windows and OS/2 to [dir]
+C-Kermit>.  Added "IF WINDOWS" and made "IF K-95" an invisible synonym for
+it.  Performed a rather massive edit on the help text module to remove
+references to Kermit 95.  Builds OK in Unix but so far I don't have a way
+to test it in Windows.  ckcmai.c, ckuus2.c, ckuus4.c, ckuus5.c, ckuus6.c,
+6 Dec 2013.
+
+-- Dev.08 --
+
+NOTE: The MANUAL command is going to take some rethinking.  And the naming
+of initialization and customization files.  I didn't do anything about these.
 
 ---------------------------------
 ***************************

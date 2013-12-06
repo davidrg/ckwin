@@ -2003,9 +2003,7 @@ struct stringint {			/* String and (wide) integer */
 #define SHOIKS    70                    /* SHOW IKS */
 #define SHOGUI    71			/* SHOW GUI (K95) */
 #define SHOREN    72			/* SHOW RENAME */
-#ifdef HAVE_LOCALE
 #define SHOLOC    73			/* SHOW LOCALE */
-#endif /* HAVE_LOCALE */
 
 /* REMOTE command symbols */
 

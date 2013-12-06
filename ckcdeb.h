@@ -6554,6 +6554,7 @@ _PROTOTYP( int le_getchar, (CHAR *));
 #endif /* CMDATE2TM */
 #endif /* NOCMDATE2TM */
 
+#ifndef NOLOCALE
 #ifdef BSD44ORPOSIX
 #ifndef NO_NL_LANGINFO
 #ifndef HAVE_LOCALE
@@ -6562,6 +6563,7 @@ _PROTOTYP( int le_getchar, (CHAR *));
 #endif /* HAVE_LOCALE */
 #endif /* NO_NL_LANGINFO */
 #endif /* BSD44ORPOSIX */
+#endif /* NOLOCALE */
 
 #ifdef CMDATE2TM
 _PROTOTYP( struct tm * cmdate2tm, (char *,int));
