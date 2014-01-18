@@ -82,11 +82,9 @@ char *ck_s_ver = "9.0.304";             /* C-Kermit version string */
 long  ck_l_ver =  900304L;              /* C-Kermit version number */
 
 #ifdef OS2
-#ifdef COMMENT
 /* New Open Source C-Kermit for Windows is just C-Kermit */
-char *ck_s_xver = "3.0.0";		/* Product-specific version string */
-long  ck_l_xver = 3000L;                /* Product-specific version number */
-#endif /* COMMENT */
+char *ck_s_xver = "";		        /* Product-specific version string */
+long  ck_l_xver = 0L;                   /* Product-specific version number */
 #else
 #ifdef MAC
 char *ck_s_xver = "0.995";              /* Product-specific version string */
@@ -2638,12 +2636,10 @@ VOID
 makever() {                             /* Make version string from pieces */
     int x, y;
     char * s;
-#ifndef OS2
 #ifndef MAC
     ck_s_xver = ck_s_ver;               /* Fill in C-Kermit version number */
     ck_l_xver = ck_l_ver;               /* for UNIX, VMS, etc. */
 #endif /* MAC */
-#endif /* OS2 */
     x = strlen(ck_s_name);
     y = strlen(ck_s_xver);
     if (y + x + 1 < CKVERLEN) {
