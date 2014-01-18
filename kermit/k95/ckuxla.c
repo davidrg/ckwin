@@ -10,7 +10,7 @@
 #endif /* NOXFER */
 
 #ifndef NOCSETS
-char *xlav = "Character Set Translation 8.0.042, 3 Jul 2000";
+char *xlav = "Character Set Translation 9.0.044, 2 Jun 2011";
 
 /*  C K U X L A  */
 
@@ -19,7 +19,7 @@ char *xlav = "Character Set Translation 8.0.042, 3 Jul 2000";
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2011,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -202,6 +202,23 @@ struct keytab tcstab[] = {		/* Keyword table for */
 #ifdef HEBREW
     "hebrew-iso",    TC_HEBREW,  0,
 #endif /* HEBREW */
+
+#ifdef UNICODE
+    "iso-10646-ucs-2", TC_UCS2,    CM_INV, /* ISO 10646 / Unicode UCS-2 */
+#endif /* UNICODE */
+    "iso-8859-1",    TC_1LATIN,  CM_INV, /* ISO Latin Alphabet 1 */
+    "iso-8859-15",   TC_9LATIN,  CM_INV, /* ISO Latin Alphabet 9 (yes) */
+    "iso-8859-2",    TC_2LATIN,  CM_INV, /* ISO Latin Alphabet 2 */
+#ifdef CYRILLIC
+    "iso-8859-5",    TC_CYRILL,  CM_INV, /* ISO Latin/Cyrillic Alphabet */
+#endif /* CYRILLIC */
+#ifdef GREEK
+    "iso-8859-7",    TC_GREEK,   CM_INV, /* ISO 8859-7 Latin/Greek */
+#endif /* GREEK */
+#ifdef HEBREW
+    "iso-8859-8",    TC_HEBREW,  CM_INV, /* ISO Latin/Hebrew */
+#endif /* HEBREW */
+
 #ifdef KANJI
     "japanese-euc",  TC_JEUC,    CM_INV,
 #endif /* KANJI */
@@ -218,6 +235,11 @@ struct keytab tcstab[] = {		/* Keyword table for */
     "transparent",   TC_TRANSP,  0,
 #ifdef UNICODE
     "ucs2",          TC_UCS2,    0,
+#endif /* UNICODE */
+    "us-ascii",      TC_USASCII, CM_INV,
+    "usascii",       TC_USASCII, CM_INV,
+#ifdef UNICODE
+    "utf-8",         TC_UTF8,    CM_INV,
     "utf8",          TC_UTF8,    0,
 #endif /* UNICODE */
     "", 0, 0
@@ -287,16 +309,18 @@ struct csinfo fcsinfo[] = { /* File character set information... */
 /* Includes 7-bit National Replacement Character Sets of ISO 646 */
 /* Plus ISO Latin-1, DEC Multinational Character Set (MCS), NeXT char set, */
 /* Various PC and Windows code pages, etc. */
+/* As of C-Kermit 9.0 MIME names are included as invisible synomyms for */
+/* those character sets that have MIME names. */
 
 struct keytab fcstab[] = { /* Keyword table for 'set file character-set' */
 /*
   IMPORTANT: This table is replicated below as ttcstab (terminal character
   set table).  The only differences are the addition of TRANSPARENT
-  and the removal of the Kanji sets, which are not supported yet.
-  If you make changes to this table, also change ttcstab.
+  and the removal of the Kanji sets, which are not supported for terminal
+  emulation.  If you make changes to this table, also change ttcstab.
 */
 
-/* Keyword             Value       Flags */
+/* Keyword               Value       Flags */
     "apple-quickdraw",    FC_APPQD,   CM_INV, /* Apple Quickdraw */
     "ascii",              FC_USASCII, 0, /* ASCII */
     "british",            FC_UKASCII, 0, /* British NRC */
@@ -334,6 +358,7 @@ struct keytab fcstab[] = { /* Keyword table for 'set file character-set' */
 #ifdef KANJI
     "dec-kanji",          FC_JDEC,    0, /* Japanese DEC Kanji */
 #endif /* KANJI */
+    "dec-mcs",            FC_DECMCS,  CM_INV, /* DEC multinational char set */
     "dec-multinational",  FC_DECMCS,  0, /* DEC multinational character set */
     "dg-international",   FC_DGMCS,   0, /* Data General multinational */
     "dutch",              FC_DUASCII, 0, /* Dutch NRC */
@@ -362,10 +387,59 @@ struct keytab fcstab[] = { /* Keyword table for 'set file character-set' */
 #endif /* HEBREW */
     "hp-roman8",          FC_HPR8,    0, /* Hewlett Packard Roman8 */
     "hungarian",          FC_HUASCII, 0, /* Hungarian NRC */
+
+    "ibm437",             FC_CP437,   CM_INV, /* PC CP437 */
+    "ibm850",             FC_CP850,   CM_INV, /* PC CP850 (not in MIME) */
+#ifdef LATIN2
+    "ibm852",             FC_CP852,   CM_INV, /* PC CP852 */
+#endif /* LATIN2 */
+#ifdef CYRILLIC
+    "ibm855",             FC_CP855,   CM_INV, /* PC CP855 */
+#endif /* CYRILLIC */
+    "ibm858",             FC_CP858,   CM_INV, /* PC CP858 (not in MIME) */
+#ifdef HEBREW
+    "ibm862",             FC_CP862,   CM_INV, /* PC CP862 (not in MIME) */
+#endif /* HEBREW */
+#ifdef CYRILLIC
+    "ibm866",             FC_CP866,   CM_INV, /* CP866 Cyrillic */
+#endif /* CYRILLIC */
+#ifdef GREEK
+    "ibm869",             FC_CP869,   CM_INV, /* CP869 Greek */
+#endif /* GREEK */
+
+#ifdef UNICODE
+    "iso-10646-ucs-2",    FC_UCS2,    CM_INV, /* ISO 10646 / Unicode UCS-2 */
+#endif /* UNICODE */
+    "iso-8859-1",         FC_1LATIN,  CM_INV, /* ISO Latin Alphabet 1 */
+    "iso-8859-15",        FC_9LATIN,  CM_INV, /* ISO Latin Alphabet 9 (yes) */
+    "iso-8859-2",         FC_2LATIN,  CM_INV, /* ISO Latin Alphabet 2 */
+#ifdef CYRILLIC
+    "iso-8859-5",         FC_CYRILL,  CM_INV, /* ISO Latin/Cyrillic Alphabet */
+#endif /* CYRILLIC */
+#ifdef GREEK
+    "iso-8859-7",         FC_GREEK,   CM_INV, /* ISO 8859-7 Latin/Greek */
+#endif /* GREEK */
+#ifdef HEBREW
+    "iso-8859-8",         FC_HEBREW,  CM_INV, /* ISO Latin/Hebrew */
+#endif /* HEBREW */
 #ifdef KANJI
-    "iso2022jp-kanji",    FC_JIS7,    0, /* Synonym for JIS-7 */
+    "iso2022jp-kanji",    FC_JIS7,    CM_INV, /* Synonym for JIS-7 */
 #endif /* KANJI */
-    "italian",            FC_ITASCII, 0, /* Italian NRC */
+
+    "iso646-gb",          FC_UKASCII, CM_INV, /* British NRC */
+    "iso646-ca",          FC_FCASCII, CM_INV, /* French Canadian NRC */
+    "iso646-de",          FC_GEASCII, CM_INV, /* German NRC */
+    "iso646-dk",          FC_NOASCII, CM_INV, /* Norwegian and Danish NRC */
+    "iso646-es",          FC_SPASCII, CM_INV, /* Spanish NRC */
+    "iso646-fi",          FC_FIASCII, CM_INV, /* Finnish NRC */
+    "iso646-fr",          FC_FRASCII, CM_INV, /* French NRC */
+    "iso646-hu",          FC_HUASCII, CM_INV, /* Hungarian NRC */
+    "iso646-it",          FC_ITASCII, CM_INV, /* Italian NRC */
+    "iso646-no",          FC_NOASCII, CM_INV, /* Norwegian and Danish NRC */
+    "iso646-po",          FC_POASCII, CM_INV, /* Portuguese NRC */
+    "iso646-se",          FC_SWASCII, CM_INV, /* Swedish NRC */
+
+    "italian",            FC_ITASCII, CM_INV, /* Italian NRC */
 #ifdef KANJI
     "japanese-euc",       FC_JEUC,    CM_INV, /* Japanese EUC */
     "jis7-kanji",         FC_JIS7,    0, /* Japanese JIS7 7bit code */
@@ -374,8 +448,12 @@ struct keytab fcstab[] = { /* Keyword table for 'set file character-set' */
     "k",                  FC_KOI8,    CM_ABR|CM_INV,
     "ko",                 FC_KOI8,    CM_ABR|CM_INV,
     "koi",                FC_KOI8,    CM_ABR|CM_INV,
+    "koi7",               FC_KOI7,    0, /* Short KOI Cyrillic */
     "koi8",               FC_KOI8,    0, /* Old KOI-8 Cyrillic */
+    "koi8-e",             FC_KOI8,    CM_INV, /* Old KOI-8 Cyrillic */
     "koi8-cyrillic",      FC_KOI8,    CM_INV,
+    "koi8-r",             FC_KOI8R,   CM_INV, /* KOI8-R RFC1489 */
+    "koi8-u",             FC_KOI8U,   CM_INV, /* KOI8-U RFC2319 */
     "koi8r",              FC_KOI8R,   0, /* KOI8-R RFC1489 */
     "koi8u",              FC_KOI8U,   0, /* KOI8-U RFC2319 */
 #endif /* CYRILLIC */
@@ -398,6 +476,7 @@ struct keytab fcstab[] = { /* Keyword table for 'set file character-set' */
     "portuguese",         FC_POASCII, 0, /* Portuguese NRC */
 #ifdef KANJI
     "shift-jis-kanji",    FC_SHJIS,   0, /* Japanese Kanji Shift-JIS */
+    "shift_jis",          FC_SHJIS,   CM_INV, /* Japanese Kanji Shift-JIS */
 #endif /* KANJI */
 #ifdef CYRILLIC
     "short-koi",          FC_KOI7,    0, /* Short KOI Cyrillic */
@@ -407,8 +486,20 @@ struct keytab fcstab[] = { /* Keyword table for 'set file character-set' */
     "swiss",              FC_CHASCII, 0, /* Swiss NRC */
 #ifdef UNICODE
     "ucs2",               FC_UCS2,    0, /* ISO 10646 / Unicode UCS-2 */
+#endif /* UNICODE */
+    "us-ascii",           FC_USASCII, CM_INV, /* MIME */
+    "usascii",            FC_USASCII, CM_INV,
+#ifdef UNICODE
+    "utf-8",              FC_UTF8,    CM_INV, /* ISO 10646 / Unicode UTF-8 */
     "utf8",               FC_UTF8,    0, /* ISO 10646 / Unicode UTF-8 */
 #endif /* UNICODE */
+#ifdef LATIN2
+    "windows-1250",       FC_CP1250,  CM_INV, /* Windows CP 1250 */
+#endif /* LATIN2 */
+#ifdef CYRILLIC
+    "windows-1251",       FC_CP1251,  CM_INV, /* Windows CP 1251 */
+#endif /* CYRILLIC */
+    "windows-1252",       FC_CP1252,  CM_INV, /* Windows CP 1252 */
     "", 0, 0
 };
 int nfilc = (sizeof(fcstab) / sizeof(struct keytab)) - 1;
@@ -419,7 +510,7 @@ struct keytab ttcstab[] = { /* Keyword table for SET TERMINAL CHARACTER-SET */
   addition of TRANSPARENT and deletion of the Japanese sets.  If you make
   changes to this table, make the corresponding changes to fcstab.
 */
-/* Keyword               Value       Flags */
+/* Keyword             Value       Flags */
     "apple-quickdraw",    FC_APPQD,   CM_INV, /* Apple Quickdraw */
     "ascii",              FC_USASCII, 0, /* ASCII */
     "british",            FC_UKASCII, 0, /* British NRC */
@@ -432,10 +523,10 @@ struct keytab ttcstab[] = { /* Keyword table for SET TERMINAL CHARACTER-SET */
     "cp1251-cyrillic",    FC_CP1251,  0, /* Windows CP 1251 */
 #endif /* CYRILLIC */
     "cp1252",             FC_CP1252,  0, /* Windows CP 1252 */
-    "cp437",              FC_CP437,   0, /* IBM CP437 */
-    "cp850",              FC_CP850,   0, /* IBM CP850 */
+    "cp437",              FC_CP437,   0, /* PC CP437 */
+    "cp850",              FC_CP850,   0, /* PC CP850 */
 #ifdef LATIN2
-    "cp852",              FC_CP852,   0, /* IBM CP852 */
+    "cp852",              FC_CP852,   0, /* PC CP852 */
 #endif /* LATIN2 */
 #ifdef CYRILLIC
     "cp855-cyrillic",     FC_CP855,   0, /* PC CP855 */
@@ -454,11 +545,7 @@ struct keytab ttcstab[] = { /* Keyword table for SET TERMINAL CHARACTER-SET */
     "cyrillic-iso",       FC_CYRILL,  0, /* ISO Latin/Cyrillic Alphabet */
 #endif /* CYRILLIC */
     "danish",             FC_NOASCII, 0, /* Norwegian and Danish NRC */
-#ifdef COMMENT
-#ifdef KANJI
-    "dec-kanji",          FC_JDEC,    0, /* Japanese DEC Kanji */
-#endif /* KANJI */
-#endif /* COMMENT */
+    "dec-mcs",            FC_DECMCS,  CM_INV, /* DEC multinational char set */
     "dec-multinational",  FC_DECMCS,  0, /* DEC multinational character set */
     "dg-international",   FC_DGMCS,   0, /* Data General multinational */
     "dutch",              FC_DUASCII, 0, /* Dutch NRC */
@@ -484,20 +571,67 @@ struct keytab ttcstab[] = { /* Keyword table for SET TERMINAL CHARACTER-SET */
 #endif /* HEBREW */
     "hp-roman8",          FC_HPR8,    0, /* Hewlett Packard Roman8 */
     "hungarian",          FC_HUASCII, 0, /* Hungarian NRC */
-    "italian",            FC_ITASCII, 0, /* Italian NRC */
-#ifdef COMMENT
-/* Kanji terminal character sets not implemented yet */
-#ifdef KANJI
-    "japanese-euc",       FC_JEUC,    0, /* Japanese EUC */
-    "jis7-kanji",         FC_JIS7,    0, /* Japanese JIS7 7bit code */
-#endif /* KANJI */
-#endif /* COMMENT */
+
+    "ibm437",             FC_CP437,   CM_INV, /* PC CP437 */
+    "ibm850",             FC_CP850,   CM_INV, /* PC CP850 (not in MIME) */
+#ifdef LATIN2
+    "ibm852",             FC_CP852,   CM_INV, /* PC CP852 */
+#endif /* LATIN2 */
+#ifdef CYRILLIC
+    "ibm855",             FC_CP855,   CM_INV, /* PC CP855 */
+#endif /* CYRILLIC */
+    "ibm858",             FC_CP858,   CM_INV, /* PC CP858 (not in MIME) */
+#ifdef HEBREW
+    "ibm862",             FC_CP862,   CM_INV, /* PC CP862 (not in MIME) */
+#endif /* HEBREW */
+#ifdef CYRILLIC
+    "ibm866",             FC_CP866,   CM_INV, /* CP866 Cyrillic */
+#endif /* CYRILLIC */
+#ifdef GREEK
+    "ibm869",             FC_CP869,   CM_INV, /* CP869 Greek */
+#endif /* GREEK */
+
+#ifdef UNICODE
+    "iso-10646-ucs-2",    FC_UCS2,    CM_INV, /* ISO 10646 / Unicode UCS-2 */
+#endif /* UNICODE */
+    "iso-8859-1",         FC_1LATIN,  CM_INV, /* ISO Latin Alphabet 1 */
+    "iso-8859-15",        FC_9LATIN,  CM_INV, /* ISO Latin Alphabet 9 (yes) */
+    "iso-8859-2",         FC_2LATIN,  CM_INV, /* ISO Latin Alphabet 2 */
+#ifdef CYRILLIC
+    "iso-8859-5",         FC_CYRILL,  CM_INV, /* ISO Latin/Cyrillic Alphabet */
+#endif /* CYRILLIC */
+#ifdef GREEK
+    "iso-8859-7",         FC_GREEK,   CM_INV, /* ISO 8859-7 Latin/Greek */
+#endif /* GREEK */
+#ifdef HEBREW
+    "iso-8859-8",         FC_HEBREW,  CM_INV, /* ISO Latin/Hebrew */
+#endif /* HEBREW */
+
+    "iso646-gb",          FC_UKASCII, CM_INV, /* British NRC */
+    "iso646-ca",          FC_FCASCII, CM_INV, /* French Canadian NRC */
+    "iso646-de",          FC_GEASCII, CM_INV, /* German NRC */
+    "iso646-dk",          FC_NOASCII, CM_INV, /* Norwegian and Danish NRC */
+    "iso646-es",          FC_SPASCII, CM_INV, /* Spanish NRC */
+    "iso646-fi",          FC_FIASCII, CM_INV, /* Finnish NRC */
+    "iso646-fr",          FC_FRASCII, CM_INV, /* French NRC */
+    "iso646-hu",          FC_HUASCII, CM_INV, /* Hungarian NRC */
+    "iso646-it",          FC_ITASCII, CM_INV, /* Italian NRC */
+    "iso646-no",          FC_NOASCII, CM_INV, /* Norwegian and Danish NRC */
+    "iso646-po",          FC_POASCII, CM_INV, /* Portuguese NRC */
+    "iso646-se",          FC_SWASCII, CM_INV, /* Swedish NRC */
+
+    "italian",            FC_ITASCII, CM_INV, /* Italian NRC */
+
 #ifdef CYRILLIC
     "k",                  FC_KOI8,    CM_ABR|CM_INV,
     "ko",                 FC_KOI8,    CM_ABR|CM_INV,
     "koi",                FC_KOI8,    CM_ABR|CM_INV,
+    "koi7",               FC_KOI7,    0, /* Short KOI Cyrillic */
     "koi8",               FC_KOI8,    0, /* Old KOI-8 Cyrillic */
+    "koi8-e",             FC_KOI8,    CM_INV, /* Old KOI-8 Cyrillic */
     "koi8-cyrillic",      FC_KOI8,    CM_INV,
+    "koi8-r",             FC_KOI8R,   CM_INV, /* KOI8-R RFC1489 */
+    "koi8-u",             FC_KOI8U,   CM_INV, /* KOI8-U RFC2319 */
     "koi8r",              FC_KOI8R,   0, /* KOI8-R RFC1489 */
     "koi8u",              FC_KOI8U,   0, /* KOI8-U RFC2319 */
 #endif /* CYRILLIC */
@@ -511,19 +645,14 @@ struct keytab ttcstab[] = { /* Keyword table for SET TERMINAL CHARACTER-SET */
     "latin2-iso",         FC_2LATIN,  0, /* ISO Latin Alphabet 2 */
 #endif /* LATIN2 */
     "latin9-iso",         FC_9LATIN,  0, /* ISO Latin Alphabet 9 */
-    "macintosh-latin",    FC_APPQD,   0, /* "Extended Mac Latin */
+    "macintosh-latin",    FC_APPQD,   0, /* "Extended Mac Latin" */
 #ifdef LATIN2
     "mazovia-pc",         FC_MAZOVIA, 0, /* Polish Mazovia PC code page */
 #endif /* LATIN2 */
     "next-multinational", FC_NEXT,    0, /* NeXT workstation */
     "norwegian",          FC_NOASCII, 0, /* Norwegian and Danish NRC */
     "portuguese",         FC_POASCII, 0, /* Portuguese NRC */
-#ifdef COMMENT
-/* Kanji terminal character sets not implemented yet. */
-#ifdef KANJI
-    "shift-jis-kanji",    FC_SHJIS,   0, /* Japanese Kanji Shift-JIS */
-#endif /* KANJI */
-#endif /* COMMENT */
+
 #ifdef CYRILLIC
     "short-koi",          FC_KOI7,    0, /* Short KOI Cyrillic */
 #endif /* CYRILLIC */
@@ -532,8 +661,21 @@ struct keytab ttcstab[] = { /* Keyword table for SET TERMINAL CHARACTER-SET */
     "swiss",              FC_CHASCII, 0, /* Swiss NRC */
     "transparent",        FC_TRANSP,  0, /* Transparent */
 #ifdef UNICODE
+    "ucs2",               FC_UCS2,    0, /* ISO 10646 / Unicode UCS-2 */
+#endif /* UNICODE */
+    "us-ascii",           FC_USASCII, CM_INV, /* MIME */
+    "usascii",            FC_USASCII, CM_INV,
+#ifdef UNICODE
+    "utf-8",              FC_UTF8,    CM_INV, /* ISO 10646 / Unicode UTF-8 */
     "utf8",               FC_UTF8,    0, /* ISO 10646 / Unicode UTF-8 */
 #endif /* UNICODE */
+#ifdef LATIN2
+    "windows-1250",       FC_CP1250,  CM_INV, /* Windows CP 1250 */
+#endif /* LATIN2 */
+#ifdef CYRILLIC
+    "windows-1251",       FC_CP1251,  CM_INV, /* Windows CP 1251 */
+#endif /* CYRILLIC */
+    "windows-1252",       FC_CP1252,  CM_INV, /* Windows CP 1252 */
     "", 0, 0
 };
 int ntermc = (sizeof(ttcstab) / sizeof(struct keytab)) - 1;

@@ -1,14 +1,16 @@
 #include "ckcsym.h"
 
-char *cmdv = "Command package 8.0.162, 24 Dec 2005";
+char *cmdv = "Command package 9.0.170, 6 Dec 2013";
 
 /*  C K U C M D  --  Interactive command package for Unix  */
+
+/* (In reality, it's for all platforms, not just Unix) */
 
 /*
   Author: Frank da Cruz (fdc@columbia.edu),
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2013,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -188,7 +190,13 @@ modules would have to be changed...
 #endif /* CK_ANSIC */
 #endif /* OSF13 */
 
+#ifndef HPUXPRE65
 #include <errno.h>			/* Error number symbols */
+#else
+#ifndef ERRNO_INCLUDED
+#include <errno.h>			/* Error number symbols */
+#endif	/* ERRNO_INCLUDED */
+#endif	/* HPUXPRE65 */
 
 #ifdef OS2
 #ifndef NT
@@ -265,6 +273,7 @@ char *cmdbuf = NULL;			/* Command buffer */
 char *savbuf = NULL;			/* Buffer to save copy of command */
 char *atmbuf = NULL;			/* Atom buffer - for current field */
 char *atxbuf = NULL;			/* For expanding the atom buffer */
+char *prevcmd = NULL;
 static char *atybuf = NULL;		/* For copying atom buffer */
 static char *filbuf = NULL;		/* File name buffer */
 static char *cmprom = NULL;		/* Program's prompt */
@@ -297,6 +306,7 @@ char cmdbuf[CMDBL+4];                   /* Command buffer */
 char savbuf[CMDBL+4];                   /* Buffer to save copy of command */
 char atmbuf[ATMBL+4];                   /* Atom buffer */
 char atxbuf[CMDBL+4];                   /* For expanding the atom buffer */
+char prevcmd[CMDBL+4];			/* For displaying the last command */
 static char atybuf[ATMBL+4];		/* For copying atom buffer */
 static char filbuf[ATMBL+4];		/* File name buffer */
 static char cmprom[PROMPTL+1];		/* Program's prompt */
@@ -305,7 +315,7 @@ static char cmprxx[PROMPTL+1];		/* Program's prompt, unevaluated */
 
 /* Command buffer pointers */
 
-#define PPVLEN 24
+#define PPVLEN VNAML			/* 20080305 Wolfram Sang (was 24) */
 char ppvnambuf[PPVLEN+1] = { NUL, NUL };
 
 char * cmbptr = NULL;			/* Current position (for export) */
@@ -586,7 +596,7 @@ kwdhelp(s,n,pat,pre,post,off,xhlp)
     return;
 }
 
-/*  F I L H E L P  --  Given a file list, print names in columns.  */
+/*  X F I L H E L P  --  Given a file list, print names in columns.  */
 /*
   Call with:
     n     - number of entries
@@ -594,6 +604,8 @@ kwdhelp(s,n,pat,pre,post,off,xhlp)
     post  - suffix to add to each filename
     off   - offset on first screenful, allowing room for introductory text
     cmdirflg - 1 if only directory names should be listed, 0 to list all files
+    fs    - call fileselect() to decide whether to include each file.
+    The rest of the args are the same as for fileselect().
 
   Arranges filenames in columns with width based on longest filename.
   Does "more?" prompting at end of screen.
@@ -601,7 +613,22 @@ kwdhelp(s,n,pat,pre,post,off,xhlp)
 */
 
 int
-filhelp(n,pre,post,off,cmdirflg) int n, off; char *pre, *post; int cmdirflg; {
+#ifdef CK_ANSIC
+xfilhelp(
+    int n, char *pre, char *post, int off, int cmdirflag,
+    int fs, char *sa, char *sb, char *sna, char *snb,
+    CK_OFF_T minsiz, CK_OFF_T maxsiz,
+    int nbu, int nxlist,
+    char ** xlist
+)
+#else
+xfilhelp(n,pre,post,off,cmdirflg,
+	 fs,sa,sb,sna,snb,minsiz,maxsiz,nbu,nxlist,xlist)
+    int n, off; char *pre, *post; int cmdirflg;
+    int fs; char *sa,*sb,*sna,*snb; CK_OFF_T minsiz,maxsiz;
+    int nbu,nxlist; char ** xlist;
+#endif	/* CK_ANSIC */
+ {
     char filbuf[CKMAXPATH + 1];		/* Temp buffer for one filename */
     int width = 0;
     int cols, height, i, j, k, lc, n2 = 0, rc = 0, itsadir = 0;
@@ -631,6 +658,11 @@ filhelp(n,pre,post,off,cmdirflg) int n, off; char *pre, *post; int cmdirflg; {
 	    if (cmdirflg && !itsadir)	/* No, listing directories only? */
 	      continue;			/* So skip this one. */
 #endif /* COMMENT */
+	    if (fs) if (fileselect(filbuf,
+			   sa,sb,sna,snb,
+			   minsiz,maxsiz,nbu,nxlist,xlist) < 1) {
+                    continue;
+	    }
 #ifdef VMS
 	    ckstrncpy(filbuf,zrelname(filbuf,cdp),CKMAXPATH);
 #endif /* VMS */
@@ -729,6 +761,17 @@ xfilhelp:
     }
 }
 
+/*
+  Simpler front end for xfilhelp() with shorter arg list when no
+  file selection is needed.
+*/
+int
+filhelp(n,pre,post,off,cmdirflg) int n, off; char *pre, *post; int cmdirflg; {
+    return(xfilhelp(n,pre,post,off,cmdirflg,
+		    0,NULL,NULL,NULL,NULL,
+		    (CK_OFF_T)0,(CK_OFF_T)0,0,0,(char **)NULL));
+}
+
 /*  C M S E T U P  --  Set up command buffers  */
 
 #ifdef DCMDBUF
@@ -737,6 +780,8 @@ cmsetup() {
     if (!(cmdbuf = malloc(CMDBL + 4))) return(-1);
     if (!(savbuf = malloc(CMDBL + 4))) return(-1);
     savbuf[0] = '\0';
+    if (!(prevcmd = malloc(CMDBL + 4))) return(-1);
+    prevcmd[0] = '\0';
     if (!(atmbuf = malloc(ATMBL + 4))) return(-1);
     if (!(atxbuf = malloc(CMDBL + 4))) return(-1);
     if (!(atybuf = malloc(ATMBL + 4))) return(-1);
@@ -2167,7 +2212,8 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 			  printf("?Off Limits: %s\n",sv);
 			else
 #endif /* CKROOT */
-			  printf("?No %s match - %s\n",
+			  if (!quiet)
+			    printf("?No %s match - %s\n",
 				 dirflg ? "directories" : "files", sv);
 		    }
 		    if (sv) free(sv);
@@ -2813,7 +2859,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 */
 int
 cmfld(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; {
-    int x, xc;
+    int x, xc, isavar = 0;
     char *zq;
 
     inword = 0;				/* Initialize counts & pointers */
@@ -2871,6 +2917,12 @@ cmfld(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; {
 		if ((*f)(*xp,&zq,&atxn) < 0)
 		  return(-2);
 		debug(F111,"cmfld 3",atxbuf,xc);
+		/*
+		  fdc 2013/12/06 - allow a field to be empty if it is
+                  the name of a variable that has no value.
+		*/    
+                isavar = (atmbuf[0] == '\\'); /* Remember if it was a var */
+
 		/* Replace by new value -- for MINPUT only keep all chars */
 		if (setatm(atxbuf,keepallchars ? 3:1) < 0) { /* 16 Mar 2003 */
 		    printf("Value too long\n");
@@ -2884,7 +2936,8 @@ cmfld(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; {
 		    printf("?Default too long\n");
 		    return(-9);
 		}
-		if (**xp == NUL) x = -3; /* If still empty, return -3. */
+		/* If still empty, return -3 unless it was a variable */
+		if (**xp == NUL) x = (isavar ? 0 : -3);	/* fdc 2013/12/06 */
 	    }
 	    debug(F111,"cmfld returns",*xp,x);
 	    return(x);
@@ -3118,17 +3171,25 @@ cmtxt(xhlp,xdef,xp,f) char *xhlp; char *xdef; char **xp; xx_strp f; {
    n        --  number of entries in table;
    xhlp     --  pointer to help string;
    xdef     --  pointer to default keyword;
-   f        --  processing function (e.g. to evaluate variables)
+   f        --  string preprocessing function (e.g. to evaluate variables)
    pmsg     --  0 = don't print error messages
                 1 = print error messages
                 2 = include CM_HLP keywords even if invisible
                 3 = 1+2
                 4 = parse a switch (keyword possibly ending in : or =)
+                8 = don't strip comments (used, e.g., for "help #")
  Returns:
    -3       --  no input supplied and no default available
    -2       --  input doesn't uniquely match a keyword in the table
    -1       --  user deleted too much, command reparse required
     n >= 0  --  value associated with keyword
+*/
+
+/*
+  Front ends for cmkey2(): 
+  cmkey()  - The normal keyword parser
+  cmkeyx() - Like cmkey() but suppresses error messages
+  cmswi()  - Switch parser
 */
 int
 cmkey(table,n,xhlp,xdef,f)
@@ -3185,9 +3246,12 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 	    return(-9);
 	}
         rtimer();			 /* Reset timer */
-    } else {
+    } else {				 /* Otherwise get a command word */
         rtimer();			 /* Reset timer */
-        zz = gtword((pmsg == 4) ? 1 : 0);/* Otherwise get a command word */
+	if (pmsg & 8)			 /* 8 is for parsing HELP tokens */
+	  zz = gtword(4);
+	else
+	  zz = gtword((pmsg == 4) ? 1 : 0);
     }
 
     debug(F101,"cmkey table length","",n);
@@ -3202,7 +3266,10 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 	switch (zz) {
 	  case -10:			/* Timeout */
 	    if (gtimer() < timelimit) {
-		zz = gtword((pmsg == 4) ? 1 : 0);
+		if (pmsg & 8)		/* 8 is for parsing HELP tokens */
+		  zz = gtword(4);
+		else
+		  zz = gtword((pmsg == 4) ? 1 : 0);
 		continue;
 	    } else {
 #ifdef IKSD
@@ -3269,6 +3336,7 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 		}
 #endif /* M_UNGW */
 	    }
+#ifdef COMMENT				/* ^^^ */
 	    if (cmswitch && *atmbuf != '/') {
 		if (pmsg & 1) {
 		    bleep(BP_FAIL);
@@ -3277,6 +3345,7 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 		cmflgs = -2;
 		return(-6);
 	    }
+#endif	/* COMMENT */
 	    if (cmswitch) {
 		int i;
 		for (i = 0; i < wordlen; i++) {
@@ -3598,7 +3667,7 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 	    printf("\n%d - Unexpected return code from gtword\n",zz);
 	    return(cmflgs = -2);
 	}
-	zz = gtword((pmsg == 4) ? 1 : 0);
+	zz = (pmsg & 8) ? gtword(4) : gtword((pmsg == 4) ? 1 : 0);
 	debug(F111,"cmkey gtword zz",atmbuf,zz);
     }
 }
@@ -4769,12 +4838,28 @@ cmcvtdate(s,t) char * s; int t; {
 	isgmt++;			/* All dates are GMT from here down */
 	if (zone != 0) {		/* But not this one so make it GMT */
 	    hh += zone;			/* RFC 822 timezone: EST etc */
+	    debug(F101,"cmcvtdate hh + zone","",hh);
 	    if (hh > 23) {		/* Offset crosses date boundary */
+		int i;
 		long jd;
 		jd = mjd(yyyymmdd);	/* Get MJD */
 		jd += hh / 24;		/* Add new day(s) */
 		hh = hh % 24;		/* and convert back to yyyymmdd */
 		ckstrncpy(yyyymmdd,mjd2date(jd),YYYYMMDD);
+		debug(F111,"cmcvtdate zone-adjusted date",yyyymmdd,hh);
+		for (i = 0; i < 4; i++)
+		  yearbuf[i] = yyyymmdd[i];
+		yearbuf[4] = NUL;
+		monbuf[0] = yyyymmdd[4];
+		monbuf[1] = yyyymmdd[5];
+		monbuf[2] = NUL;
+		daybuf[0] = yyyymmdd[6];
+		daybuf[1] = yyyymmdd[7];
+		daybuf[2] = NUL;
+		day = daybuf;
+		nday = atoi(daybuf);
+		month = monbuf;
+		year = yearbuf;
 	    }
 	}
 	p = p3;				/* Put back whatever we poked above */
@@ -4831,7 +4916,7 @@ cmcvtdate(s,t) char * s; int t; {
 	    p++;
 	}
     }
-    debug(F110,"cmcvtdate after timezone",p,0);
+    debug(F110,"cmcvtdate source string after timezone",p,0);
 
     if (*p) {				/* Anything left? */
 	p2 = p;
@@ -5313,6 +5398,7 @@ cmdiffdate(d1,d2) char * d1, * d2; {
     return((char *)result);
 }
 
+#ifndef NOSPL
 /* s h u f f l e d a t e  --  Rearrange date string */
 
 /*
@@ -5323,6 +5409,7 @@ cmdiffdate(d1,d2) char * d1, * d2; {
       2: Reformat date to dd-mmm-yyyy (mmm = English month abbreviation).
       3: Reformat as numeric yyyymmddhhmmss.
       4: Reformat in asctime() format Sat Nov 26 11:10:34 2005
+      5: Reformat as delimited numeric yyyy:mm:dd:hh:mm:ss.
     Returns:
       Pointer to result if args valid, otherwise original arg pointer.
 */
@@ -5337,7 +5424,7 @@ shuffledate(p,opt) char * p; int opt; {
 
     if (!p) p = "";
     if (!*p) p = ckdate();
-    if (opt < 1 || opt > 4)
+    if (opt < 1 || opt > 5)
       return(p);
     len = strlen(p);
     if (len < 8 || len > 31) return(p);
@@ -5389,6 +5476,35 @@ shuffledate(p,opt) char * p; int opt; {
 	obuf[24] = NUL;
 	return((char *)obuf);
     }
+    if (opt == 5) {			/* 20130722 All fields delimited */
+	/* yyyymmdd hh:mm:ss */
+	/* 0123456789012345678 */
+	/* yyyy:mm:dd:hh:mm:ss */
+	char sep = ':';
+	int i = 0;
+
+	obuf[i++] = p[0];		/* y */
+	obuf[i++] = p[1];		/* y */
+	obuf[i++] = p[2];		/* y */
+	obuf[i++] = p[3];		/* y */
+	obuf[i++] = sep;		/*  */
+	obuf[i++] = p[4];		/* m */
+	obuf[i++] = p[5];		/* m */
+	obuf[i++] = sep;		/*  */
+	obuf[i++] = p[6];		/* d */
+	obuf[i++] = p[7];		/* d */
+	obuf[i++] = sep;		/*  */
+	obuf[i++] = p[9];		/* h */
+	obuf[i++] = p[10];		/* h */
+	obuf[i++] = sep;		/*  */
+	obuf[i++] = p[12];		/* m */
+	obuf[i++] = p[13];		/* m */
+	obuf[i++] = sep;		/*  */
+	obuf[i++] = p[15];		/* s */
+	obuf[i++] = p[16];		/* s */
+	obuf[i++] = NUL;		/* end */
+	return((char *)obuf);
+    }
     if (opt == 3) {
 	ckstrncpy(obuf,p,48);
 	/* yyyymmdd hh:mm:ss */
@@ -5438,6 +5554,7 @@ shuffledate(p,opt) char * p; int opt; {
     }
     return((char *)obuf);
 }
+#endif	/* NOSPL */
 
 /*  C K C V T D A T E  --  Like cmcvtdate(), but returns string.  */
 /*  For use by date-related functions */
@@ -6014,6 +6131,7 @@ Usage: retcode = gtword(brk);
   brk = 1 to add ':' and '=' (for parsing switches).  These characters
         act as break characters only if the first character of the field
         is slash ('/'), i.e. switch introducer.
+  brk = 4 to not strip comments (used only for "help #" and "help ;").
 
 Returns:
 -10 Timelimit set and timed out
@@ -6213,7 +6331,11 @@ CMDIRPARSE:
 
 	c = *bp;
         if (!c) {			/* If no char waiting in reparse buf */
-	    if ((dpx || echostars) && (!pushc
+	    if ((dpx
+#ifndef NOSPL
+		 || echostars
+#endif /* NOSPL */
+		 ) && (!pushc
 #ifndef NOSPL
 			|| askflag
 #endif /* NOSPL */
@@ -6357,9 +6479,11 @@ CMDIRPARSE:
 		break;
 	      case ';':			/* Trailing comment */
 	      case '#':
-		if (inword == 0 && quoting) { /* If not in a word */
-		    comment = 1;	/* start a comment. */
-		    cp = bp;		/* remember where it starts. */
+		if (! (brk & 4) ) {	/* If not keeping comments */
+		    if (inword == 0 && quoting) { /* If not in a word */
+			comment = 1;	/* start a comment. */
+			cp = bp;	/* remember where it starts. */
+		    }
 		}
 		break;
 	    }
@@ -6411,7 +6535,8 @@ CMDIRPARSE:
 		  blocklvl--;
             }
 	    if ((c == '=' || c == ':') &&
-		!kstartactive && !comment && brk && (firstnb == '/')
+		/* ^^^ */
+		!kstartactive && !comment && brk /* && (firstnb == '/') */
 		) {
                 *bp++ = (char) c;	/* Switch argument separator */
 		/* debug(F111,"gtword switch argsep",cmdbuf,brk); */
@@ -6431,7 +6556,7 @@ CMDIRPARSE:
 		if ((*pp != lbrace) || (bracelvl == 0)) {
 		    np = bp;
 		    cmbptr = np;
-		    if (setatm(pp,0) < 0) {
+		    if (setatm(pp,2) < 0) { /* ^^^ */
 			printf("?Field too long error 1\n");
 			debug(F111,"gtword too long #1",pp,strlen(pp));
 			return(-9);
@@ -6798,7 +6923,11 @@ CMDIRPARSE:
                 fflush(stderr);
             }
 #else
+#ifdef NOSPL
+            if (echof || chsrc)
+#else
             if (echof || (echostars && chsrc))
+#endif	/* NOSPL */
 	      cmdecho((char) c, 0);	/* Echo what was typed. */
 #endif /* BEBOX */
         } else {			/* This character was quoted. */
@@ -7375,7 +7504,9 @@ cmdnewl(c) char c;
 
 static VOID
 cmdchardel() {				/* Erase a character from the screen */
+#ifndef NOSPL
     if (!echostars)
+#endif	/* NOSPL */
       if (!dpx) return;
 #ifdef datageneral
     /* DG '\b' is EM (^y or \031) */
@@ -7401,11 +7532,15 @@ cmdecho(char c, int quote)
 cmdecho(c,quote) char c; int quote;
 #endif /* CK_ANSIC */
 { /* cmdecho */
+#ifdef NOSPL
+    if (!dpx) return;
+#else
     if (!echostars) {
 	if (!dpx) return;
     } else {
 	c = (char)echostars;
     }
+#endif	/* NOSPL */
     /* Echo tty input character c */
     if (quote) {
 	putchar(BS);

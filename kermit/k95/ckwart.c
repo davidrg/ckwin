@@ -31,7 +31,7 @@ char *wartv = "Wart Version 2.14, 10 Nov 1999";
   Authors: Jeff Damens, Frank da Cruz
   Columbia University Center for Computing Activites.
   First released November 1984.
-  Copyright (C) 1984, 2004,
+  Copyright (C) 1984, 2009,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.

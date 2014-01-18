@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>
   Columbia University Kermit Project, New York City.
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2009,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -295,6 +295,12 @@ _PROTOTYP( char * cmdelta, (int,
 			    int,int,int,int,int,int,int,int,int,int,int,int ));
 _PROTOTYP( char * shuffledate, (char *, int) );
 _PROTOTYP( int filhelp, (int, char *, char *, int, int) );
+_PROTOTYP( int xfilhelp, (int, char *, char *, int, int,
+			  int,
+			  char *, char *, char *, char *,
+			  CK_OFF_T, CK_OFF_T,
+			  int, int,
+			  char **) );
 _PROTOTYP( int delta2sec, (char *, long *) );
 
 #ifdef DCMDBUF

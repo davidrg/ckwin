@@ -1,10 +1,10 @@
 #include "ckcsym.h"
-char *dialv = "Dial Command, 8.0.160, 29 Apr 2002";
+char *dialv = "Dial Command, 9.0.160, 16 Oct 2009";
 
 /*  C K U D I A	 --  Module for automatic modem dialing. */
 
 /*
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2013,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -15,8 +15,7 @@ char *dialv = "Dial Command, 8.0.160, 29 Apr 2002";
 
   Original (version 1, 1985) author: Herm Fischer, Encino, CA.
   Contributed to Columbia University in 1985 for inclusion in C-Kermit 4.0.
-  Author and maintainer since 1985: Frank da Cruz, Columbia University,
-  fdc@columbia.edu.
+  Author and maintainer since 1985: Frank da Cruz, fdc@columbia.edu.
 
   Contributions by many others throughout the years, including: Jeffrey
   Altman, Mark Berryman, Fernando Cabral, John Chmielewski, Joe Doupnik,

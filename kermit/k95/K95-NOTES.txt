@@ -1,0 +1,1396 @@
+KERMIT 95 NOTES
+
+These are my purely random notes about Kermit 95 -- bugs I noticed,
+ideas for improvements, etc.  The encoding of this file is ISO 8859-1.
+
+  Frank da Cruz
+  Wed Jul 20 11:03:41 2011
+
+------------
+Fri Jul  1 12:11:42 2011
+
+If you send .emacs to Kermit 95, it is stored as X.emacs, even though
+"set file names" is "literal", and even though .emacs is a legal file name.
+
+Any new release of K95 will be for Windows XP and later.  Thus there is no
+need to worry about FAT file systems and so on, and we have a greater
+character repertoire for filenames.  So, for example, backup files can
+be named with tildes, a`la EMACS, e.g. foo.bar.~1~ rather than foo.bar.-1-.
+
+------------
+
+http://þorn.info <-- Ctrl-click on this URL doesn't work, even though
+K95 recognizes it as a URL (apparently the web browser receives only
+"http://").
+
+------------
+
+SET KEY \269, SHOW KEY <Enter>, and SET TERM NEWLINE-MODE don't know about
+each other.
+
+------------
+
+K95 doesn't let go of file or directory handles.  If K95 is CD'd to a
+directory, then CDs to another directory, the first directory can't be
+renamed or deleted because it is "in use by another process".  Only exiting
+from K95 clears the problem.
+
+------------
+
+On a certain (memory-starved = 1GB) computer, if I start two K95s, make a
+connection with the first one, then try to make another connection with the
+second one, the second one shrinks to a tiny icon that is only the right end
+of the title bar.  Not always, but about half the time.  I've never seen it
+happen anywhere else.  If I start one and make the connection before
+starting the second one, everything is OK.
+
+------------
+
+On computers A and B, each with K95, one server one client.  Client cd'd to
+root of big directory tree: send /recu * gets a parse error.  Exchange
+client and server: get /recu * works fine.  Most likely it has something to
+do with spaces in in the path.
+
+------------
+
+type /prefix: doesn't work at all in K95 although it works OK in C-Kermit.
+It causes a random charset to be detected.
+
+------------
+
+set command color fore back doesn't change the backround except under
+newly written characters.
+
+------------
+
+VT terminal emulation bug:
+
+Environment: Intel PC, Windows XP w/SP3, Kermit-95 v2.1.3
+
+Terminal Emulations: VT100, VT102, VT220, VT220pc, VT320, VT320pc
+
+Problem: Set Screen Mode to 80x25 escape sequence   <ESC>[=3h
+
+Data source: HP rx2600 Itanium server console messages
+
+If the Screen Mode escape sequence <ESC>[3h (Put screen
+in 80x25 color mode) is received, it causes subsequent
+control characters to be displayed as boxes instead of
+being interpreted.
+
+For example, the strings in example #1 will all appear on
+consecutive lines, but in example #2 they will all appear
+on the top line of the screen.
+
+Example #1 (works OK):
+
+<ESC>[2J<ESC>[01;01HLine #1
+Line #2
+Line #3
+Line #4
+Line #5
+
+Example #2 (appears all on one line):
+
+<ESC>[2J<ESC>[01;01H<ESC>[=3hLine #1
+Line #2
+Line #3
+Line #4
+Line #5
+
+------------
+
+Clicking on K95 inside window frame to bring it to foreground often
+erases the clipboard.  Reason: if the mouse moves even the tiniest bit
+between button down and button up, it does a copy to clipboard.  Workaround:
+change the default assignments
+
+ set mouse button 1 none drag \Kend
+ set mouse button 1 ctrl drag \Kmarkcopyclip
+
+(except the second command doesn't seem to work)
+
+BUG: 
+ set mouse button 1 none drag XXX
+
+assigns XXX to the event OK, but it still does the \Kmarkcopyclip operation.
+
+------------
+
+In CMD.EXE you can't pass args directly to a script:
+
+  x.ksc foo bar baz
+
+You have to do:
+
+  <path>k95g.exe x.ksc = foo bar baz
+
+------------
+
+In Vista, "set file download-directory" doesn't work, and it's not set
+correctly by default either.
+
+new feature: triple-click to select current line
+(or some other event like button-3 shift-click, etc)
+
+In Vista if you try to stretch the window down the status bar replicates
+itself again and again.
+
+\ftime() always returns xxx.999
+
+formatwhy=Both, mainly because the GUI has bugs opening terminal screens
+above a certain number.  I usually have LOTS of screens open and have to
+resort to the console Would love to use the GUI all the time.
+
+wanted=a drop-down menu to select external script files to be run in a
+current TELNET or SSH session
+
+For cash register setups, lockdown isn't good enough.  We need a way to
+completely and totally prevent scrollback.  Even if the scrollbar and
+scrollback keys are disabled, it can still be forced with the mouse, by
+pushing it against the top of the screen.
+
+SET MOUSE ACTIVATE OFF does not work.
+SET MOUSE BUTTON 1 NONE DRAG \Kignore does not work:
+ . The mouse event disappears from the SHOW MOUSE display
+ . But the mouse hitting the top margin still causes scrollback.
+ . "set mouse button 1 none drag \Kendscn" is a good workaround.
+
+Another lockdown issue in cash register applications, where the command
+window should never be seen or accessible: if secure login fails, we come to
+the command screen: When K95 is started with --no-escape, and user makes an
+SSH connection, and then in password dialog enters the wrong password 3x or
+chooses Cancel, Kermit enters the command screen.  Ditto with SET SSH
+STRICT-HOST-KEY-CHECK ASK.
+
+when sending files with Zmodem, at the end of the transfer the transfer
+rate (on the f-t display) resets to 0.
+
+Sometimes Kermit gets stuck really bad in file transfer.  The first
+Ctrl-C is processed but then it hangs forever.  This can happen, for
+example, if it receives an S packet but never receives anything else.
+Subsequent Ctrl-C's do not wake it up.  We need a GUI button to return
+it to Command or Terminal state.
+
+Make a function that takes a kverb as an argument and, if it resolves
+to a string value, returns the string.
+
+Make cp1252 the default terminal character set (instead of Latin-1)
+
+make rsh a synonym for rlogin?
+
+accept "ssh user@hostname".
+
+Put hostname on titlebar of password popup
+
+handle proportional fonts better
+
+Make Alt-h popup help screens less awkward.  Add a Close button.
+
+A way to supply a default to GETOK /GUI
+
+send \v(desktop)<ESC> does something awful
+
+from C-Kermit on host, in vt320 session with autowrap on:
+echo \frepeat(xx,8192) -- takes K95 like 5 minutes to display this, and
+then it's super slow even afterwards.
+
+-> <- button can just say "Command Screen" and "Terminal Screen", without
+having to look like it's up or down.
+
+Status-line "Command:" value should show Alt-keys in preference to
+Ctrl-OEM.Blah.Blah.Blah which doesn't fit anyway.
+If i put \Kexit on Ctrl-period, the status line says it's Ctrl-O.  Actually
+it's trying to say "Ctrl-OEM.US.Period" but it deosn't fit; the help screen
+shows it right.
+
+RESIZE MODE -- the default will surprise many people.  It always surprises
+me.  This should be a setup choice.
+
+"CUSTOMIZE" -> RUN [START] NOTEPAD \v(appdata)K95CUSTOM.INI
+(or put a macro for this in K95CUSTOM.INI)
+
+Fix DECUDK ? (Jeff says it doesn't need fixing)
+
+Symbolic names for keys in SET KEY.
+
+A graphic for the status line that shows the current connection is secure.
+(It would be nice if Unicode had Open and Closed Padlock symbols, but
+although this has been suggested or proposed but I don't think they have
+been adopted unless they are in the Emoji section, which is way up in the
+higher planes.)
+
+Warn about Caps Lock on Password dialog
+
+context sensitive tool tip for cmd/term screen (the two arrow button should
+not only switch between the two, but indicate which one is active).
+
+CD dialog
+Upload dialog
+
+Add \v(clipboard) (Windows clipboard) (\v(select) is Kermit's private one)
+
+Get rid of status line in terminal screen, use the GUI status bar.
+
+-------------------------
+> Kermit 95 is currently used throughout the company I work for. One thing 
+> I've been looking at recently is rolling out software via group policy. I 
+> would be interested to know if the developers of Kermit would consider 
+> packaging into a msi install file. Expensive programs such as installsheild 
+> isn't required. You can use WiX to achieve this. A good tutorial on this can 
+> be found at: http://www.tramontana.co.hu/wix/
+> 
+> Further information and downloads:
+> 
+> http://wix.sourceforge.net/
+> 
+> Useful editor:
+> 
+> http://wixedit.sourceforge.net/
+> 
+> I've used it myself to create a few simple packages for various settings and 
+> shortcuts etc that we like to have installed on our pcs.
+>
+I use WIX and NSIS to develop the install packages for MIT Kerberos for
+Windows and OpenAFS for Windows.  If I were ever to develop another
+release of Kermit 95 for Columbia University to distribute I would in
+fact use WIX to develop an MSI installer for it.
+
+My suggestion for you would be to install K95 on one machine and then
+develop your own installer for it based upon the pieces that were
+installed on your machine.  One of the strong benefits of using MSIs
+are that in addition to automated installation and upgrades via Group
+Policy it is possible to apply organization specific transforms to them
+to ensure that your own custom dialer entries and scripts are installed
+on the machine along with the application.
+
+Jeffrey Altman
+Secure Endpoints Inc.
+-------------------------
+
+Need \kmaximize and \krestore and \kminimize verbs
+
+Doesn't work:
+  send /recu blah*
+where blah* matches blah.html and a subdirectory blah_files
+(as created by IE when saving a website).
+
+Under certain circumstances when you move a K95 window, the screen clears
+
+A SPACE command that works (needs large file support)
+
+Need a DIRECTORY option that lists all subdirectories of the current
+or given directory and tells how much disk usage in each one, recursively
+with an option to show or not show the lower levels, but still showing
+the total disk space.
+
+[C:\fdc\InstallShield\Bulks\] K-95> dir /dir /sort:date /reverse
+?Wildcard matches more than one directory
+[C:\fdc\InstallShield\Bulks\] K-95> dir /sort:date /rev
+<DIR>       2006-07-21 10:20:07  innovapost
+<DIR>       2006-07-05 16:11:52  shannon
+<DIR>       2006-06-05 16:16:18  iup
+<DIR>       2006-06-05 12:29:51  dtx
+
+A new toolbar button that sends whatever the user programs them to send.
+With reasonable defaults: CR, DEL, ^C, whatever.
+Maybe 4 of them.  Call them B1, B2, B3, B4 or whatever.
+Right-click shows definition.
+
+Fix Compose key for masc/fem ordinal -- allow _ first OR last.
+
+SET TERMINAL TYPE NONE should be accepted (= TTY)
+
+set port com1
+(ok)
+set port
+Sorry, access to device denied: 0
+
+Need \ftestpid() to see if a process is still alive.  Ideally we can get
+addtl info about the process, such as the name or path of the application.
+
+TAPI dialing doesn't pick up changes in the modem configuration from the
+control panel until after you reboot.
+
+TAPI dialing doesn't pick up the outside-line prefix from the control panel
+location definition, AT ALL.
+
+Dialer generated scripts should put the K95 version number in the
+comment at the top.
+
+A way to let users supply their own help screens for Alt-h.  If macros on
+keys worked, we could just use getok /gui... (but allow more text).
+(Macros on keys are fixed in the post-K95-2.1.3 sources).
+
+The second toolbar button should follow all terminal/command-screen
+transitions, so it's always depressed when in the terminal screen, sticking
+out when in the command screen, and perhaps grayed during file transfer.
+
+Put connection in bottom status bar too:
+Terminal screen - SESAME.CC.COLUMBIA.EDU, so when you have a crowded screen
+you can use the bottom as well as the top to identify the session.
+
+During print screen operations, put a little printer icon on the status bar
+like the browsers do.
+
+A toolbar button that does "run start \v(filename)"
+
+Make \Kcompose accept nn for n-tilde.
+
+SHOW PRINTER doesn't show all the SET PRINTER items.
+
+Do something about 2-minute delay on startup when phone and modem
+settings not set.  Print message before trying to get them, and/or
+allow a command-line or startup option to suppress the query (e.g.
+when Kermit is only going to be used for networking).
+
+if set port com3 or whatever fails, the message is always just
+"Sorry, can't open connection", no reason is given.  The \v(err*)
+variables don't say either, but the debug log has:
+ttopen CreateFile[GetLastError]=2 and \v(setlinmsg) is "Device open failed".
+Not very informative!
+
+If you autostart > 1 K95G and have it make an SSH connection, the
+two password dialogs fill exactly the same screen space.
+
+In 2.1.3, "show tcp" shows nothing.
+
+A setting to make K95 ignore incoming 8-bit controls, e.g. when its
+term cset is Latin1 but UTF8 comes from the host.  (This is the opposite
+of send-8bit-controls setting, "set term controls 7/8")
+
+Login dialog for SSH or Kerberos always pops up 3 times, there's no
+way to cancel it (Cancel button doesn't work).
+
+Similarly, if you try to connect with SSH and get warnings about host
+identification changed, do you want to continue, and you say No, it still
+tries again.
+
+SEND dialog (auto/text/binary, kermit/zmodem/etc.
+we really need a simple File->Upload dialog.  Choose protocol, maybe mode,
+maybe pathname options, etc.  We already have a RECEIVE dialog.
+When choosing protocol in SEND dialog, include a checkbox to make the
+choice stick.
+
+Put DOWNLOAD and UPLOAD on menu?
+
+It's almost always impossible to remove a directory, because simply by
+referring to it, it becomes mapped.  Example:
+
+  cd c:\fdc\InstallShield
+  delete /tree blah  <-- works OK but doesn't delete the blah directory.
+  rmdir blah         <-- Permission denied.
+
+Not only that, you can't delete the directory from any other application
+either, until you exit from K95.  Maybe add code to the RESET command to
+make it release the handle.  Or maybe just check the DIR code to make sure
+it's really closing the directory.
+
+Maybe a way to let the user define Alt-C (Compose) sequences.
+
+idea: \Kpaus_A ... \Kpaus_Z where A = 1 msec, B = 2msec, C = 4msec, ...
+K = 1024msec = 1 sec, L = 2 sec, M = 4 sec.  Then it would be possible
+to insert almost any pause in a key definition using only a few extra
+Kverbs.  (Not needed once macros on keys work again.)
+
+------------------------------
+Sent to Jeff Mon Nov 17 12:41:04 2003:
+See 213-bugs-jeff-mail.txt for Jeff's responses.
+
+Some K95 glitches that I noticed recently, in case you want to look at
+them...  These notes have been accumulating for a while.  Some are glitches,
+some are ideas for small improvements.  Some of them might be C-Kermit
+things that I could do.
+
+UNCs in SEND commands, etc, as we discussed yesterday.
+
+When starting K95G, if you type a command (in this case a macro that sets
+font, dimensions, and whatnot, and then tries to make a connection) while
+the window is still blank, before K95G has displayed its first text, it
+crashes.  (This happened to me once, might be a fluke, no big deal.)
+
+Zmodem send with transaction-log brief loses the filename:
+  20031108,21:03:33,SEND,,8372,binary,OK,"3.094sec 2705cps"
+
+ftp-format transaction for Zmodem transfers:
+ . says "kermit" rather than "zmodem".
+ . does not put quotes around connection names that contain spaces.
+ . adds a spurious final entry (at least when using a send-list).
+
+Here's an example, in which only one file was sent with Zmodem protocol:
+ Sat Nov 15 15:58:49 2003 3 Courier V.Everything EXT PnP (V90-x2) 8372 -
+  C:/fdc/zirmed/OHcare/28153.txt b _ o r fdc kermit 0 *
+ Sat Nov 15 15:59:13 2003 10 0 2367 -
+  C:/fdc/zirmed/OHcare/OHcare_20031115_57487_event.log a _ o r fdc kermit 0 *
+
+(the second file was not transferred).
+
+Regular verbose format seems to be OK, except nowhere does it say Zmodem.
+
+Zmodem downloads don't respect SET RECEIVE MOVE-TO, etc.
+
+Should choosing a QNX terminal type also choose qnx-console charset?
+
+SHOW TERM doesn't show correct TERM AUTODOWNLOAD value?
+
+SET TITLE doesn't brstrip() its text.
+
+IBM 3151 key assignments (done, I think?)
+
+Change "no encryption" in FEATURES display to "no Telnet encryption"
+because some other kind of encryption might still be supported.
+
+K95G could use a GUI dialog for assigning a value to a key.  (But then
+do what with it, by way of saving for future use?...  At least display
+the generated command so the user can copy and paste it...)
+
+SET HOST _nnn or $nnn should have the same effect as -j _nnn or -j $nnn:
+don't close the socket on exit.
+
+There's no way to specify an already-open "raw socket" on the command line:
+ . -j host:nontelnetport <-- this works now
+ . -j .number (already-open socket) <-- add something like this
+
+See mail from David.deWet@za.rangegate.com in ~fdc/gui/mail.txt about
+-l numeric-arg (with and without underscore).
+
+There's no way to give a TAPI device name to K95 on the command line?
+
+K95 session logs always record the 8th bit, even if PARITY is not NONE
+or TERM BYTE is 7.
+
+SET TERM EDITING-KEYPAD { KERMIT, TERMINAL } -- Actions menu too.
+So Page Up/Down, etc, do what the terminal does, versus what K95 does.
+
+K95 2.1.3 can't overwrite a hidden file.
+
+C-A-S-W doesn't invoke WP keyboard mode (it doesn't do anything), but the
+corresponding command still works.
+
+DELETE /TREE and RMDIR tend not to work because the fact that K95 can
+"see" the directory (e.g. we did a DIR listing on it or had previously CD'd
+to it) makes Windows think the directory is in use.  If you EXIT from K95
+you can delete them in My Computer.
+
+> Couple of K95 related issues: When I shut down my laptop with K95 still
+> running it's asking me to end a program called "Trd ww: C:\Program
+> Files\Kermit95 2.1\..."  <-- I think this was from Vace?
+
+Make SET ATTRIBUTE DATE OFF work with Zmodem too (done?)
+
+Backspace key def on Keyboard Dialer page: allow a user-defined value?
+
+More choices for cursor.  Underline cursor should be thicker.  Maybe
+cursor should be bold.  (Vace).
+
+Kverbs for Grow-Font and Shrink-Font, which can be assigned to Ctrl +/-,
+just like a Web browser.
+
+Pull screen up/down should add lines; pull left/right should add columns;
+corner pull should change font size?
+
+An optional popup for APCs.
+
+An optional popup dialog for host-initiated printing?
+
+Can't display non-Plane 0 Unicode characters.  (This is a big deal, and
+nobody is complaining yet.)
+
+Wyse 370: we can do 64 colors in the GUI version but I think it still
+maps 64 to 16.
+
+Clicking on a kermit: URL doesn't seem to bring up a dialog box so user
+can choose where to save incoming files.
+
+Idea: You can't Ctrl-C out of an IP lookup, but maybe there can be a
+Cancel button on the toolbar?
+
+\kdtr_toggle <-- Kverb to toggle DTR -- from some user:
+"...what I need to do is manually, ie by pressing a key, make DTR
+active/inactive. Unless I've missed it Hyperterminal; doesn't let me do this.
+The DS89C420 has an inbuilt monitor/flash programmer which is activated by a
+certain combination of I/O pins. The app notes use DTR to control this state,
+hence the need to manually control it..."
+
+The above sent to Jeff Mon Nov 17 12:41:04 2003
+-------
+
+k95 needs a "whereis" command to find k95custom.ini, k95.ini, doc files, etc.
+Hmmmm, no it's not necessarily that simple -- different search strategies are
+used for different files.
+
+:  Can't download files named con or con.*** (con.anything)
+:  they are written to the screen. I am guessing it has something to do
+:  with "console" This happens when i use kermit -s file or use kermit
+:  interactively. I am downloading from SunOS 5.8 ckermit to
+:  mskermit. 
+:  
+It's a feature of DOS (and Windows).  The same thing happens with other
+DOS device names: PRN, LPT, etc.
+
+If you were using Kermit 95, you'd get a popup saying:
+
+  con
+  This file name is a reserved device name.
+  Please choose another name.
+
+and a Save As dialog to let you specify a different name (as long as
+FILE AUTODOWNLOAD was set to its default value of ASK).  For unattended
+batch transfers, however, it could be problem.
+
+I believe the only way around this is to have Kermit rename the file
+as part of the transfer process, because you just plain can't have disk
+file called "con" or con-dot-anything.  The renaming can be accomplished
+at either the sending end or the receiving end with as-names, either
+on the command line:
+
+  kermit -s con -a x.con
+
+or in the command language:
+
+  send con x.con
+
+or:
+
+  send /as-name:x.con con
+
+or with templates, which are explained here:
+
+  http://www.columbia.edu/kermit/ckermit70.html#x4.1
+
+Dialer->Quick broken "Can't connect to a template".
+"You don't Connect via Templates, you select a real entry and connect."
+
+If you use FTP to PUT a huge file (e.g. 0.5G), the file name, type, and
+size are missing from the fullscreen display.
+
+Actually it happens with Kermit downloads too and the file need not be so
+huge...  In this case (4M), wet get the size but we don't get the bar or the
+percent.
+
+2.1 Beta 1 Oct: Still get missing chars in MM prompt, etc.
+
+2.1: Toolbar button 2 is NOT an indicator of which screen we're in.
+
+2.1: Disabling toolbar and menu bar still don't work for me <-- check again.
+
+SPACE doesn't show anything above 4G.
+
+------------------------------
+
+Kermit autodownloads work OK now -- files go where the dialog says they should
+go.  When FILE COLLISION is OVERWRITE and a file of the same name exists, you
+get a nice alert -- good.  But it would be nice to have buttons on the dialog
+that say:
+
+ [ OK for all the rest ] <-- go ahead without asking any more.
+ [ Cancel ]              <-- like typing 'E' or 'Z'.
+
+But I realize that would be a big deal in more ways than one...
+
+SET TERM ROLL KEYSTROKES RESTORE works fine, but status line is not fully
+restored upon keystroke (the part on the left -- LEDs and terminal name).
+
+On popup help screens...  Is there a way to label the buttons
+"OK [Space]" and "Cancel [Esc]"?
+
+FTP charset translation works, even the messages SEEM to be OK, but
+FTP DIR (= LIST) always returns some "Chinese" at the beginning and end of
+
+the listing, which is otherwise correct.  I'll have to look at this myself
+I guess...
+
+Make new "banner" screen shot from effects.vt.
+
+A way to disable [x] box in GUI?
+
+Cute idea: SET TERM COLOR TERM green-and-white-striped line-printer paper...
+
+Help -> Context doesn't do what Alt-H does.  For example, if a Compose-key
+sequence is in progress, it still shows the main help screen.
+
+Add SSH "session keepalive" (Putty has it).
+
+Docs; clarify -# switch (# doesn't stand for the number, it's literal).
+
+X followed by combining macron actually displays correctly, why?  But
+then there's an empty space after it (save this for 3.0).
+
+For forms-filling apps, data entry clerks; one or more of the following
+to prevent accidental entry of data into a scrolled back form:
+
+ . A way to remove the scrollbar.
+ . A way to totally disable scrollback.
+ . A way to lock the keyboard automatically when the screen is scrolled back.
+ . A way to jump to the current screen when a key is pressed during scrollback.
+ . A way to give scrolled-back screens a different color.
+
+K95G 2.0.1...  Whenever the cursor is in column 8, the coordinates in
+the status bar blink at about 4 times per second.  If the cursor is in
+any other column, no blinking (doesn't seem to happen in 2.1).
+
+Make a configuration option for No-Command-Screen -- terminal screen only.
+
+GUI file-transfer display.
+
+Handle proportional fonts better -- center the glyphs or something.
+
+[C:\fdc\tmp2\] K-95> copy /append * xxx
+?Sorry, /APPEND can be used only with single files  <-- no good reason for this
+[C:\fdc\tmp2\] K-95> 
+
+We don't have a Compose-key sequence for NBSP <-- now we do: NB.
+
+Change the default for LOGIN USER, at least for K95 -- Windows users rarely
+have the same user ID as they have on the host. <-- Was this done?  SSH blah
+still seems to assume my Windows ID.
+
+Chris_Jones@averydennison.com says
+> For some reason "clear command scrollback" is causing an application error
+> about 6 out of 10 tries and windows terminates it.   I'm going to reboot
+> the computer and see if that helps.  Usually the second or third try it
+> works but this time I've tried it 4 times with the same result.
+
+When clicking on Actions->Capture the first time, it should put up a file
+box.
+
+Bug: TERM AUTODOWNLOAD is OFF.  At host give a GET command; nothing happens.
+Escape back, give a server command.  The GET command was for a file that
+didn't exist.  Try to Ctrl-C out of server mode.  K95 goes into an unstoppable
+loop sending "User canceled" E-packets.
+
+Ann Arbor? (partial)
+
+Jeff added Sun Console (does it have all the Stop-x keys?)
+
+Need new DEFAULT.INI.
+
+Need a way to start a program "in the background", "detached", or whatever.
+Can use RUN START at the prompt, but there's no way for the server to do
+this if you send it a REMOTE HOST command.  REMOTE HOST START BLAH doesn't
+work -- it waits for BLAH to finish.
+
+set gui window resize-mode scale-font <-- needs to go on Dialer GUI page.
+
+Add "if iksd forward custom" to k95.ini to skip around netedit stuff;
+otherwise IKSD gets an error if \v(editor) is not defined.
+
+Add Russian phonetic keymap to distribution.
+
+Add support for duospace fonts, or something smarter for CJK.  See
+~/fonts/duospace.txt.
+
+SET TERM PRINT USER doesn't strip esc sequences (it's not supposed to);
+ok then maybe some new option that will do this.
+
+If you make a connection from the Dialer, then log out and make another
+connection with the same instance of K95G, the title bar still shows the
+original connection.
+
+There's no way to specify an empty or no password to SSH, FTP, ...
+("null passwords are not supported in secure protocols" says Jeff) but
+there's also no way to do it on clear-text connections.
+
+setterm.htm does not include SET TERMINAL PRINT.
+
+Shortcuts created by the dialer shortcut button still have the old icon (?).
+
+When invoked with an ftp: or kermit: URL, pop up a file dialog at the
+beginning of the transfer to specify the download directory (DONE).
+
+Also need a file dialog for Actions->Capture when no log has been opened.
+
+Make Alt-R turn on the cursor (if off), restore its default colors, whatever.
+
+An option in the Dialer to turn off the elapsed-time clock (otherwise it
+never gets swapped out).
+
+add a kverb for mouse-copy, stripping CRs (for wrapped host lines)
+
+There are never horizontal scrollbars?
+
+Make Compose-keys into GUI dialogs, especially because the status line
+input box is not visible in emulations that don't have a status line.
+
+Make SET [TERM] KEY into a GUI dialog
+
+Redo popup help screens to use a normal font, scroll, etc.
+
+Need some equivalent to "set terminal idle-action telnet-nop" for SSH.
+
+If you choose a non-English keyboard (e.g. English International with
+dead keys), does K95 convert correctly?  It doesn't seem to...
+
+------------------------------
+Russian keyboard mode does indeed work (if it was broken before).  There's
+even a new version of EMACS that lets me use it, at least in UTF-8 (haven't
+tried other encodings yet).
+
+Russian keyboard mode uses the Russian layout, which turns English typists
+into fumblefingers, so it would be nice to have a "by sound" layout so we
+could touch-type in Russian. <-- Note, we have this now in a keymap file.
+
+The method described in the manual (cyrillic.htm) for remapping the
+Russian letter keys with SET TERM KEY RUSSIAN is:
+
+  set term key russian <keycode> <cp866-value>
+
+Example: the A key sends Cyrillic F.  To make it send Cyrillic A:
+
+  [C:\fdc\] K-95> sho key
+   Press key:
+   Key code \65 A (russian) => Character: A \65 (self, no translation)
+  [C:\fdc\] K-95> set term key russian \65 \128
+  [C:\fdc\] K-95> sho k
+   Press key:
+   Key code \65 A (russian) => Character: \128
+  [C:\fdc\] K-95>
+
+Note:
+
+ . SHOW KEY for the unmodified key doesn't show what it sends in Russian mode.
+ . SET TERM KEY seems to work, SHOW KEY shows the change.
+
+But pressing Shift-A in the terminal screen after the change still sends
+Cyrillic F.
+------------------------------
+
+For docs:
+  separates the TCP/IP and Telnet Settings to different pages
+  adds SOCKS and HTTP settings
+  new k95[g].exe adds user configurable SOCKS port
+  and SOCKS support to SSH
+  HTTP Proxy support for SSH
+
+> Another minor but unrelated glitch: When you resize the window
+> vertically by dragging, then when you let go of the mouse, the
+> window grows vertically one more line than you wanted (so if you
+> dragged to the bottom of the screen, then the bottom edge of the
+> window goes below the taskbar).
+
+It is not one more line than you want, it is the necessary screen size
+to fit the number of rows that you asked for given the estimates of
+the font size (height x width)
+
+--------------------------------------------------------
+(all below used to create gui-features.txt, 28 Apr 2002)
+
+http://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c <-- for duospace CJK display.
+
+wheel mouse for scrolling?  <-- It works.
+
+A cheap form of IPC:
+ . k95 --parent:<handle> (tell K95 the handle of its parent).
+ . WINMESSAGE <handle> <message>
+ . (Jeff says VB does not have a mechanism for exporting handles).
+
+People seem to want a fullscreen option for the GUI...  How is this different
+from the [ ] box...
+
+Add SOCKS stuff to General dialer page.
+
+SecureCRT Status Line:
+  Ready [ssh2: AES-128][X,Y][rows,cols][termtype][CapsLock][NumLock]
+
+Right-click inside terminal window -- CRT brings up an Edit menu.
+
+Edit menu -- should have Find (up / down / case ...), bookmarks?
+
+View menu: allows hide/view Toolbar, Menu bar, status bar, ...
+
+Dialer: I bring up a settings page from the Dialer, it puts the dialer itself
+in the background and clicking on the dialer without closing the settings page
+doesn't work (good).  BUT...  I can still bring the Dialer to the foreground
+from the task bar, and then I can open another copy of the same settings page.
+I didn't try making changes in both copies of the settings page, but there
+might be an opportunity for some trouble there.
+
+Bug: ? as a wildcard character doesn't match 1 character, it matches 0 or 1.
+Thus "dir ???.*" matches all files that have 3 or less chars before the dot
+instead of exactly three. <-- No, this does not seem to be true.
+
+k95: Mouse-arrow-keys: It should do left first, then up or down.  Think about
+how to make it work better with EMACS.  (Go to left margin, go up or down,
+then go right?)
+
+gui: When choosing font or size, give users choice of whether to save it in
+the registry?
+
+gui: Merge SET {COMMAND,TERM} {HEIGHT,WIDTH}
+
+Add SET CD HOME that says where CD with no arg should go.
+
+A row of buttons to CD to \v(appdata), \v(download), etc etc.
+
+Display full path of last downloaded file in status bar, or have a button
+that says where it went.
+
+SET KEY GUI dialog:
+
+  Press key or Key combination:...
+
+  Keycode:    [ (fill in when they press) ]
+  Definition: ( ) Kverb:     [ scroll list with 1-line definitions? ]
+              ( ) Character: [ code? ]
+              ( ) String:    [       ]
+
+  (  ) For current emulation only
+  (  ) For all emulations
+
+  [ HELP ] [ CANCEL ] [ OK ]
+
+File->Save keymap...
+
+GUI (on XP): Memory residence...  Not sure how to measure this in Windows.
+In XP, every instance of K95G seems to take 33MB of "Total Commit Charge" and
+also of "Page File Usage".  Meanwhile, each new instance seems to reduce
+Available Memory by smaller number, anywhere from 0 to 25MB.  Once you fill
+memory with K95Gs, you can still start new ones.  XP seems to want to keep
+free memory at a minimum of 8MB, so in some sense instances after the first
+are "free".  Still, K95G has more "commit charge" than any IE, Netscape,
+EMACS, the various Photo Editors, or anything else I can find.
+
+On the other hand, the Task Mgr's Processes page shows K95G uses 10MB,
+and a second copy uses 9; cknker uses 7.
+
+Kermit downloads drive the CPU to 45-65%.
+Uploads to 30-45%.
+Ripple to 100%.
+
+GUI: If we can move the status line to the GUI frame, then it can have
+a go-away box.
+
+Add commands for setting file permissions & access -- important for
+WIKSD.
+
+GUI (on Win95): consumption of system resources compared to almost any other
+app: with K95G loaded (and especially with multiple copies loaded) it can take
+forever to switch among windows -- the disk chatters furiously for 20-60
+seconds, window frames are ghosts, etc.  Ditto for dragging a K95G window.
+The only other app I've ever seen that can drag down the system so much is
+Adobe Photo Deluxe.
+
+Need special LICENSE command text for WIKSD.
+
+Install script: ask about fonts, colors, screen dimensions?
+
+Make the Connect box into a mini-dialer, that saves tiny *.ksc files on
+the desktop (or the folder of your choice) containing:
+
+ . font and size
+ . term type (allow user to override negotiation)
+ . term colors
+ . term dimensions
+ . host name/number and connection details
+
+VT320 to Lab, C-Kermit on Lab to watsol, transfer a file between Lab and
+watsol with curses f.t. display...  When it's over, K95's character set has
+switched to German ISO 646 (it doesn't matter which OS is on Lab).
+(SEEMS TO BE FIXED.)
+
+Edit->Paste doesn't do anything.
+
+I totally hung K95G by trying to select text down to the bottom line.
+Nothing would wake it up short of Ctrl-Alt-Del.  And then after I started
+a new K95, the Esc key was grabbed by Windows, and toggled among windows.
+(SEEMS TO BE FIXED)
+
+If you "run timesync" on the bottom line, the "press any key to continue" line
+overwrites the status line (SEEMS TO BE FIXED).
+
+GUI: I think it prevents screen-savers from kicking in.
+
+more? (Y or space-bar for yes, N for no) <-- K95.  Add G for Go, etc. <-- DONE
+
+A customer wants to have a filtering feature for the session log.  The
+particular problem, in this case, is that the host is sending text<LF><CR>
+instead of text<CR><LF>, and he wants us to fix it in the log.  Of course
+this is in k95 where you can't just interpose external filters, so it has to
+be done by Kermit itself.  But obviously we want the feature to more general.
+e.g. a character list (or, more generally, a string list) of targets, each
+with a "replace by" clause.  So "\13" could be replaced by "" and
+"\10" could be replaced by "\13\10".
+
+K95: set ask-timer, getc, doesn't seem to work any more... (trunks script)
+It works fine in C-Kermit.  (well, they work fine in mdm script -- maybe it's
+just the 1-sec business...)
+
+K95... Docs: explain how to find out what the current key map is.
+Make a table of Kverbs -- currently we don't seem to have have one (there
+was one in the original manual but now we just rely on the names to be
+self-evident).  Example: how to map \KdecPrev to PC's Page Up key?
+
+TYPE switches seem to be sticky.  At least in K95, after a while TYPE stops
+working -- acting as if some switches (like COUNT) were given, that never
+were (does this still happen?)  (SEEMS TO BE FIXED)
+
+Add START command for K95, like RUN but doesn't wait (because RUN START waits).
+Or maybe reuse SPAWN.
+
+GUI: When scrolling back with the mouse, there doesn't appear to be any
+way to get back to the bottom with mouse -- you have to use the End key.
+(SEEMS TO BE FIXED)
+
+It seems now that whenever I PUSH from K95G or RUN any program at all,
+it gets very slow.  (SEEMS TO BE FIXED)
+
+edit doesn't wait (so netedit doesn't work).  (SEEMS TO BE FIXED)
+
+K95: Why does "\v(serial) =  8N2" in cknker?  (SEEMS TO BE FIXED)
+
+DOC: If SET PORT COM1 fails it is because K95 cannot be given exclusive
+access to the device OR because the device does not exist.  If you
+issue the following commands
+
+  LOG DEBUG
+  SET PORT COM1
+  CLOSE DEBUG
+
+and send me the resulting debug.log file I can extract the error code
+Windows is providing.  If you are running the Palm Pilot HotSync
+manager then COM1 may very well be in use.
+
+Direct access to DOS device names is not the native method for access
+in Windows.  Windows provides a Telephony API (TAPI) which is used to
+share access to physical devices.  Instead of using DOS device names
+you use
+
+  SET TAPI LINE <tapi-device-name>
+
+where the device names come from the Modems Control Panel.  Serial
+devices which are not used with modems are installed using the
+"Communications cable between two computers" option.
+
+K95: Recognizing URLs that already have been wrapped...
+
+GUI: Stretch window, let go of mouse, and the result is bigger than it was
+stretched to.  (SEEMS TO BE FIXED?)
+
+GUI: SET TERM HEIGHT / COMMAND HEIGHT undo each other (NOT ANY MORE).
+
+GUI: Sometimes clicking on the main screen (e.g. terminal screen, instead of
+the menu bar) when K95G is in the background does not bring it to the
+foreground (but clicking on the menu bar does).  (CAN'T MAKE THIS HAPPEN NOW)
+
+K95: Status line: what does "Cont. Command:" mean?  Maybe we should forget
+about making it say what Alt-x returns to and just put Command:...
+
+k95: send a\?.txt doesn't work (? wildcard) (SEEMS TO BE FIXED).
+
+K95: Learned scripts don't work <-- THIS IS TRUE (see ckcker.2do).
+
+K95: is there some way we can improve on SSH -- e.g. by adding some kind
+of key manager?
+
+GUI: Sometimes when I'm in a GUI app like netscape and then click on K95G's
+"blue screen", it does not bring K95G up front.  Additional clicking doesn't
+help.  However, it appears the clicks are interpreted as mouse-directed-cursor
+events:
+
+  R>next [A
+  ?Not confirmed - "[A"
+  R>next [D
+  ?Not confirmed - "[D"
+  R>next
+
+Note: all of the above happened with K95G in the background (behind
+Netscape).  (SEEMS TO BE FIXED)
+
+doc: The mapping of "telnet:" to an app is performed by an entry in the
+Windows Registry.
+  HKEY_CLASSES_ROOT\telnet\shell\open\command
+This is not set by K95.  It is a poorly documented Windows feature.
+
+Is the Compose key broken again?  Can't send accented Latin-1 chars
+to watsun...  (FIXED)
+
+URL recognizer stops at dollar sign (see amazon.com URL for K95) (FIXED).
+
+Debug mode:
+ . UTF-8 characters are shown as random ASCII chars.
+ . Need some kind of hex display for debugging -- some people want it.
+
+Debug mode and UTF-8 don't mix well.  Better to set a single-byte charset
+for debugging.
+
+GUI: Another thing to display: current command source, and maybe a way to
+expand it to show the command stack?
+
+GUI: Start 3-4 cknkers plus Netscape, and then K95G.  Everything is fine,
+can run this way for days.  Then start MS Photo Editor or NS6.  K95G goes
+into slow mode and stays that way, even after closing other apps.  But
+cknkers remain snappy.
+
+GUI: Suppose you are looking at Latin-1 text but Kermit's TCS is UTF-8.
+It should show illegal UTF-8 sequences as boxes, rather than swallowing
+8-bit chars silently and not showing anything.  Example:
+
+  From: Per A Bl<a-ring>mo  (the a-ring is swallowed)
+
+GUI: Does it have to put up a DOS window when you say RUN?
+
+GUI: Let's think of a way to download and launch (e.g. DOC files).  This
+would be by including some kind of Disposition attribute.
+
+GUI: NOW can we make Ctrl-C out of TCP open work?
+
+GUI: Think about status line versus bottom thing.  Can we get rid of status
+line?  Can we make popups be GUI popups?
+
+GUI: bottom thing: securely authenticated, encrypted.
+
+GUI: Character-set dialog up front.  Maybe display current GR set name
+somewhere. You can't just put up a selection box because of G0/G1/G2/G3/GR/GL.
+
+GUI: Cursor stays in main screen when a popup is active (SO WHAT?)
+
+If you deselect the KUI window and the blinking cursor is visible, it stays
+visible.
+
+HPTERM has "mouse clickable soft keys"?
+
+User configurable toolbar buttons: Any Kverb:
+
+  set toolbar button <number> <kverb> <legend>
+
+GUI: Toolbar button: Status Line On/Off.
+
+GUI: Idea-- use International Code flags for icons (buttons, etc, maybe K for
+desktop), Eldridge p.201.
+
+K95: No connection, "send foo" -- it catches this a bit late in the process,
+with "Bad file descriptor" and a big hint.  It should catch it earlier with
+"You must make a connection first" or somesuch.
+
+GUI: A GUI dialog for CD?
+
+GUI: A GUI dialog for SEND.  Very simple, just a file box, an as-name box,
+and show the autoup/download string and give a chance to change it.
+Maybe also text/binary.
+
+ATDT8512640
+ Dialing: 15:20:00...
+
+CONNECT 50000 V42bis
+ Speed changed to 50000 <---
+ Call complete: 15:20:27.
+[C:\K95\] K-95> sho comm
+
+Communications Parameters:
+ Port: Compaq Presario 56K-DF, speed: 50000, mode: local, modem: tapi
+ Parity: none, stop-bits: (default) (8N1)
+ Duplex: full, flow: none, handshake: none
+ Carrier-watch: auto, close-on-disconnect: off
+
+ Terminal bytesize: 7, escape character: 29 (^])
+ Priority: regular
+
+ Carrier Detect      (CD):  On
+ Dataset Ready       (DSR): On
+ Clear To Send       (CTS): On
+ Ring Indicator      (RI):  Off
+ Data Terminal Ready (DTR): (unknown)
+ Request To Send     (RTS): (unknown)
+
+Type SHOW DIAL to see DIAL-related items.
+Type SHOW MODEM to see modem-related items.
+Type SHOW TAPI to see TAPI-related items.
+
+[C:\K95\] K-95> c
+[C:\K95\] K-95>
+
+GUI: Should come up in 8-bit mode by default (FIXED).
+
+(DONE) GUI: Maybe it should ALWAYS save the font and size (and screen
+position?)  (and screen dimensions?) <-- I don't think so; some people like to
+have one big primary screen and a bunch of smaller extra ones.a
+
+We really do need a wider choice of colors.   I miss the dark blue
+background. (FIXED now but we still need a bigger palette).
+
+GUI: Get rid of the stupid icon.
+
+GUI: F-keys (all keys?  Alt combinations?) Windows/Kermit toggle button.
+
+Toolbar scroll box for common sizes: 24x80 25x132, ...  Dragging the corner
+is nice, but it's not easy to obtain a specific size that way.  Ideally,
+dragging the corner would update the the numbers in the dimension scroll box.
+(ACTUALLY... It already puts up a little dimension window WHILE you're
+stretching it).
+
+K95 on Win 95: SOMETIMES when it's sending a file on a modem connection
+(external even) and CD goes off, the entire PC freezes -- cursor stops
+blinking, mouse doesn't work, nothing moves.  Turning the modem off and on
+fixes everything.
+
+Clear differentiation between things that have GUI controls and 
+things that don't.
+
+GUI: Show current directory on the screen somewhere -- this way when you
+autodownload something, you don't have to escape back anyway just to find out
+where it went.
+
+GUI: scroll bar doesn't work in command screen (FIXED)
+
+GUI: scroll bar in terminal screen makes my PC squeak (NOT ANY MORE)
+
+Selecting bottom screen line -- shouldn't try to scroll.
+
+GUI: Bottom status line: time connected, time idle, ...
+
+Localization...  If we have words on toolbar buttons, rather than pics,
+need a way to relabel in different languages.  Yuk.  So we really need
+pics.
+
+K95... Compose key doesn't work in Command Screen?  How to type special
+chars on US keyboard?  E.g. how to tell K95 FTP client to GET a file that
+has special chars in its name? <-- Use regular keyboard driver.
+
+K95...  FTP URLs -- when we see one highlighted in the K95 screen, is there
+a way to make K95 handle it itself, rather than invoking another copy of K95?
+Also...  Where does the incoming file go?  Currently it's according to the
+regular rules: current directory or download directory.  Other FTP clients
+pop up a file box giving the user a chance to say where to put it.
+
+Make a shim that converts MSK command-line to K95.
+
+K95 when dialing out puts the phone number on the title bar when the
+connection is made but then loses it when it goes into file-transfer mode.
+
+Mouse-directed scrollback buttons on status line like Access:
+
+  [|<] [<] [>] [>|] (first/home, prev, next, last/end)
+
+Change terminal debug mode to use Unicode control-pic glyphs.
+
+Some form of automatic charset switching, e.g. while reading mail.
+ . Triggers based on "Content-Type: text/plain; charset=ISO-8859-1" etc
+   (but triggers are case sensitive, plus they always escape back)
+ . Like file scan
+
+Show term charset in status line
+
+Make default for URL highlighting be underline+bold.
+
+Update NETEDIT macro.
+
+Should the command screen implement some kind of ANSI terminal, so users can
+write scripts that make ANSI boxes, etc?
+
+ANALYZE FONT command -- tells why a certain font can / can't be used.
+
+Big new items for GUI:
+ . APL
+ . FTP server?
+ . Tektronix
+
+(DONE) Alt-H when scrolled back should show the other help screens,
+except it should start with the scrollback one.  Currently it ONLY
+shows the scrollback one, so you can't find out about mouse stuff, etc.
+
+In GUI, a way to show coordinates of cursor.
+
+Why isn't UCS-2 a TERM LOCAL-CHARACTER-SET?
+
+Increase max length of registration name somehow.
+
+Alt-u (hangup) should not pop back to prompt if CARRIER-WATCH is OFF.
+
+Docs: Explain how Ctrl-]x commands are invariant, whereas all the
+others can be mapped all over the place or even mapped away.
+
+Should Alt-R restore character sets?  (Terminal gets garbage that
+makes it switch charsets; Alt-R doesn't switch them back.)
+
+cut and paste -- make normal Windows method the default; make
+them have to select the Kermit method.  Otherwise they think it
+doesn't work.  (Vace, Rob, everybody...)
+
+HP-like key labels on screen.
+
+For WRQ's scripting language and VB interface see:
+  http://www.wrq.com/products/evaluate/download/r124docs.htm
+
+A way to *move* K95 from one PC to another -- they can't just copy it
+because the new PC will have different modems, etc.  We need some kind
+of "resetup" program for this.
+
+Shouldn't SNI-LANGUAGE be German by default?
+
+In Dialer: allow multiple phone numbers to be entered (how?), then
+output them to dialing script as {{n1}{n2}...} (See 2.1.15).
+
+In GUI: add an option (toggle, kverb, toolbar button) to enable
+parse and highlight URLs.  When this option is
+selected, then a single mouse click on a highlighted URL visits it.
+\Khlurl (visit highlighted url).  (think this thru...)
+
+use symbols like keys rather than letters in status line for auth/encry.
+
+keyboard lock: Add a command and/or kverb to lock/unlock the keyboard.
+Add a toolbar button to unlock, and maybe a mouse event.
+
+cute idea: when transferring a file, have a button that shrinks K95
+to an icon that shows the % or a thermometer.  Clicking on the icon
+brings back the regular window.
+
+Toolbar buttons assigned to macros, labeled with macro name.
+Extensibility from the beginning: configurable toolbar,
+user-codable GUI dialogs.
+
+Add an option to make the terminal window smaller than the terminal
+dimensions (e.g. for palmtops with small screen).
+
+Toolbar button for Print Screen.
+
+Make Dialer have user-defineable "directories", like Netscape bookmarks,
+that can be opened & closed, etc.
+
+-------------
+--> Something to bring up the manual!
+
+--> A button to toggle between "stretch changes font size" and "stretch
+    changes screen dimensions".
+
+Ideas for K95G Text GUI
+
+ 1. Restore Alt-h (popups in GUI box with [X], scrollbars, etc?)
+
+ 2. Restore status line?  (But some things can be omitted/changed)
+    Or use bottom bar to display context-dependent status info.
+    
+ 3. How will Compose key work?
+
+ 4. (Obviously...) Make scroll bars & drag corner work.
+
+ 5. Remove splash screen, most items from main menu, etc.
+
+ 6. Avoid GUI dialog boxes as much as possible.
+
+ 7. Add Tek 4014 emulation?  (Probably not -- would need a separate window
+    because of scrollback issues, copy/paste, etc).
+
+------------------------------
+For manual:
+
+Make it clear that passing a file handle to K95 from (say) a VB app only
+works if the app that is starting Kermit opens the device in a way that
+its subprocesses can inherit.
+
+------------------------------
+Menu:
+
+  File:
+    Page setup (choose default printer) <-- If standard dialog box.
+    Print screen
+    Session Log / Capture file <-- Maybe, and only if standard box
+    Exit
+
+  Edit
+    Paste
+    Search Back     (requires dialog)
+    Search Forward  (requires dialog)
+    Bookmark (?)    (requires dialog)
+
+    * Should we also allow Windows-based select/copy ?
+    * Might be more intuitive for Windows users.
+    * In this case we could add "Print selection" to File menu
+
+  Connection
+    Make connection (keep current dialog box) <-- Maybe, maybe not.
+    Send Break
+    Probe / AYT / Ping
+    Hangup / Disconnect
+
+  Help
+    Menu
+    Command Screen
+    Terminal Screen
+    Toolbar
+    K95 Manual
+    About
+
+------------------------------
+Toolbar
+
+  Terminal Type scroll box.
+  Reset-Emulator button
+  Flush/Discard (calls ttflui or just absorbs incoming chars till next pushed)
+  Pause/Unpause (like Scroll Lock)
+  7/8-bit Toggle
+  Backspace key toggle (BS/DEL)
+  Arrow-key mode toggle
+  Numeric-keypad mode toggle
+  Session Log (Capture File) On/Off Toggle
+  Debug Terminal-Screen Toggle
+  Autodownload Toggle
+  Window Toggle (Command/Terminal)
+  Mouse On/Off Toggle (Allow Windows-based select/copy etc)
+
+------------------------------
+During FT (Where to put these? -- Replace toolbar?)
+
+  Cancel File
+  Cancel Batch
+  Send Error Packet
+  Emergency Exit
+
+------------------------------
+Need to put somewhere:
+
+  Font selector box (scroll box like in console window?) ("A" button?)
+  Remote Terminal character set selection (see below)
+
+------------------------------
+Bottom panel:
+
+  Screen dimensions (like 24 x 80)
+  Elapsed time this session (*)
+  Idle time?
+  Current directory?
+  Connection type?
+  Connection status / modem signals
+  "Alt-h for help"
+  VT-100 LEDs
+
+(*) see ckuus3.c: dologshow().
+
+------------------------------
+Terminal character sets -- a simple scroll list isn't sufficient -- we also
+need the G0..G3/GL/GR assignments:
+
+			 G0   G1   G2   G3
+  -----------------------------------------
+  US ASCII               (x)  ( )  ( )  ( )
+  ISO 8859-1 Latin-1          (x)  ( )  ( )
+  ISO 8859-2 Latin-2          ( )  ( )  ( )
+  ISO 8859-15 Latin-9         ( )  ( )  ( )
+  DEC Multinational           ( )  ( )  ( )
+  etc...
+  -----------------------------------------
+  DEC Special Graphics        ( )  (x)  ( )
+  DEC Technical               ( )  ( )  (x)
+  etc...
+  -----------------------------------------
+  Unicode UTF-8          ( )  ( )  ( )  ( )
+  -----------------------------------------
+  British/UK             ( )  ( )  ( )  ( )
+  Canadian French        ( )  ( )  ( )  ( )
+  Dutch                  ( )  ( )  ( )  ( )
+  Finnish                ( )  ( )  ( )  ( )
+  French                 ( )  ( )  ( )  ( )
+  German                 ( )  ( )  ( )  ( )
+  Italian                ( )  ( )  ( )  ( )
+  Norwegian/Danish       ( )  ( )  ( )  ( )
+  Portuguese             ( )  ( )  ( )  ( )
+  Spanish                ( )  ( )  ( )  ( )
+  Swedish                ( )  ( )  ( )  ( )
+  Swiss                  ( )  ( )  ( )  ( )
+  etc...
+  -----------------------------------------
+  Graphics Left  (GL):   (x)  ( )  ( )  ( )
+  Graphics Right (GR):   ( )  (x)  ( )  ( )
+
+This is probably way too much.
+
+---------------------------------

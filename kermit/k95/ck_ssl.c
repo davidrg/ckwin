@@ -1,13 +1,11 @@
-char *cksslv = "SSL/TLS support, 8.0.224, 21 Feb 2007";
+char *cksslv = "SSL/TLS support, 9.0.231, 21 Nov 2013";
 /*
   C K _ S S L . C --  OpenSSL Interface for C-Kermit
 
-  Copyright (C) 1985, 2005,
+  Copyright (C) 1985, 2013,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-
-  Copyright 2006, 2007  Secure Endpoints Inc.
 
     Author:  Jeffrey E Altman (jaltman@secure-endpoints.com)
                Secure Endpoints Inc., New York City
@@ -21,7 +19,7 @@ char *cksslv = "SSL/TLS support, 8.0.224, 21 Feb 2007";
   . Client certificate to user id routine
 
   Note: This code is written to be compatible with OpenSSL 0.9.6[abcdefgh]
-  and 0.9.7 beta 5.
+  and 0.9.7 beta 5 and later, and (since July 2012) 1.0.x.
   It will also compile with version 0.9.5 although that is discouraged
   due to security weaknesses in that release.
 */
@@ -194,6 +192,13 @@ extern char szHostName[], szUserNameRequested[], szUserNameAuthenticated[];
 
 _PROTOTYP(int X509_to_user,(X509 *, char *, int));
 
+static int verbosity = 0;		/* Message control */
+static VOID
+setverbosity() {
+    verbosity = ssl_verbose_flag;
+    if (quiet) verbosity = 0;
+}
+
 int
 #ifdef CK_ANSIC
 ssl_server_verify_callback(int ok, X509_STORE_CTX * ctx)
@@ -210,6 +215,8 @@ X509_STORE_CTX *ctx;
 
     if ( ssl_certsok_flag )
         return(1);
+
+    setverbosity();
 
     error=X509_STORE_CTX_get_error(ctx);
     depth=X509_STORE_CTX_get_error_depth(ctx);
@@ -246,7 +253,7 @@ X509_STORE_CTX *ctx;
         goto return_time;
     }
 
-    if (ssl_verbose_flag && !inserver && depth != ssl_verify_depth) {
+    if (verbosity && !inserver && depth != ssl_verify_depth) {
         printf("[%d] Certificate Subject:\r\n%s\r\n",depth,subject);
         printf("[%d] Certificate Issuer:\r\n%s\r\n",depth,issuer);
         ssl_verify_depth = depth;
@@ -336,6 +343,8 @@ X509_STORE_CTX *ctx;
     int depth, error, len;
     X509 *xs;
 
+    setverbosity();
+
     xs=X509_STORE_CTX_get_current_cert(ctx);
     error=X509_STORE_CTX_get_error(ctx);
     depth=X509_STORE_CTX_get_error_depth(ctx);
@@ -402,7 +411,7 @@ X509_STORE_CTX *ctx;
     }
 #endif /* XN_FLAG_SEP_MULTILINE */
 
-    if (ssl_verbose_flag && depth != ssl_verify_depth) {
+    if (verbosity && depth != ssl_verify_depth) {
         printf("[%d] Certificate Subject:\r\n%s\r\n",depth,subject);
         printf("[%d] Certificate Issuer:\r\n%s\r\n",depth,issuer);
         ssl_verify_depth = depth;
@@ -703,6 +712,8 @@ int ret;
     if (inserver || !ssl_debug_flag)
         return;
 
+    setverbosity();
+
     switch ( where ) {
     case SSL_CB_CONNECT_LOOP:
         printf("SSL_connect:%s %s\r\n",
@@ -761,6 +772,8 @@ ssl_client_cert_callback(s, x509, pkey)
     EVP_PKEY ** pkey;
 #endif /* CK_ANSIC */
 {
+    setverbosity();
+
     if ( ssl_debug_flag ) {
         const char * cipher_list=SSL_get_cipher(s);
         printf("ssl_client_cert_callback called (%s)\r\n",
@@ -1155,9 +1168,9 @@ tls_load_certs(SSL_CTX * ctx, SSL * con, int server)
     if ( !ck_ssleay_is_installed() )
         return(0);
 
-    debug(F111,"tls_load_certs","SSL_CTX",ctx);
-    debug(F111,"tls_load_certs","SSL",con);
-    debug(F111,"tls_load_certs","server",server);
+    debug(F110,"tls_load_certs","SSL_CTX",0);
+    debug(F110,"tls_load_certs","SSL",0);
+    debug(F110,"tls_load_certs","server",0);
 
     if ( con ) {
         if (ssl_rsa_cert_file) {
@@ -1345,10 +1358,34 @@ ssl_once_init()
 #endif /* CK_ANSIC */
 {
     COMP_METHOD * cm;
+    char * s;
 
     if ( !ck_ssleay_is_installed() )
         return;
+/*
+  Pre-OpenSSL 1.0.0 comment:
+  OpenSSL does not provide for ABI compatibility between releases prior
+  to version 1.0.0.  If the version does not match, it is not safe to
+  assume that any function you call takes the same parameters or does
+  the same thing with them.  Removing this test prior to the OpenSSL 1.0.0
+  release will result in an increase in unexplained or incorrect behaviors.
+  The test should be revised once OpenSSL 1.0.0 is released and we see what
+  its claims are as to ABI compatibility.
+*/
+/*
+  Post-OpenSSL 1.0.0 comment:
+  OpenSSL does not provide for ABI compatibility between releases prior
+  to version 1.0.0.  After 1.0, the following holds:
 
+  Changes to last letter: security and bugfix only, no new features.
+  E.g.  1.0.0->1.0.0a
+  Changes to last number: new ABI compatible features.
+  E.g. 1.0.0->1.0.1
+  Changes to middle number: major release, ABI compatibility not guaranteed.
+  E.g. 1.0.0->1.1.0
+
+  (per Dr. Stephen Henson)
+*/
     debug(F111,"Kermit built for OpenSSL",OPENSSL_VERSION_TEXT,SSLEAY_VERSION_NUMBER);
 #ifndef OS2ONLY
     debug(F111,"OpenSSL Library",SSLeay_version(SSLEAY_VERSION),
@@ -1358,7 +1395,10 @@ ssl_once_init()
     debug(F110,"OpenSSL Library",SSLeay_version(SSLEAY_PLATFORM),0);
 
     /* The following test is suggested by Richard Levitte */
-    if (((OPENSSL_VERSION_NUMBER ^ SSLeay()) & 0xffffff0f) 
+    /* if (((OPENSSL_VERSION_NUMBER ^ SSLeay()) & 0xffffff0f) */
+    /* Modified by Adam Friedlander for OpenSSL >= 1.0.0 */
+    if (OPENSSL_VERSION_NUMBER > SSLeay()
+         || ((OPENSSL_VERSION_NUMBER ^ SSLeay()) & COMPAT_VERSION_MASK)
 #ifdef OS2
          || ckstrcmp(OPENSSL_VERSION_TEXT,(char *)SSLeay_version(SSLEAY_VERSION),-1,1)
 #endif /* OS2 */
@@ -1366,8 +1406,56 @@ ssl_once_init()
         ssl_installed = 0;
         debug(F111,"OpenSSL Version does not match.  Built with",
                SSLeay_version(SSLEAY_VERSION),SSLEAY_VERSION_NUMBER);
-        printf("?OpenSSL libraries do not match required version.");
-        printf("  SSL\\TLS support disabled\r\n\r\n");
+        printf("?OpenSSL libraries do not match required version:\r\n");
+        printf("  . C-Kermit built with %s\r\n",OPENSSL_VERSION_TEXT);
+        printf("  . Version found  %s\r\n",SSLeay_version(SSLEAY_VERSION));
+#ifdef OPENSSL_100
+	printf("  OpenSSL versions 1.0.0 or newer must be the same\r\n");
+	printf("  major and minor version number, and Kermit may not\r\n");
+	printf("  be used with a version of OpenSSL older than the one\r\n");
+	printf("  supplied at compile time.\r\n");
+#else
+        printf("  OpenSSL versions prior to 1.0.0 must be the same.\r\n");
+#endif /* OPENSSL_100 */
+
+	s = "R";
+#ifdef SOLARIS
+	printf("  Set CD_LIBRARY_PATH for %s.\r\n",OPENSSL_VERSION_TEXT);
+	s = " Or r";
+#endif	/* SOLARIS */
+
+#ifdef HPUX
+	printf("  Set SHLIB_PATH for %s.\r\n",OPENSSL_VERSION_TEXT);
+	s = " Or r";
+#endif	/* HPUX */
+
+#ifdef AIX
+	printf("  Set LIBPATH for %s.\r\n",OPENSSL_VERSION_TEXT);
+	s = " Or r";
+#endif	/* AIX */
+
+#ifdef LINUX
+	printf("  Set LD_LIBRARY_PATH for %s.\r\n",OPENSSL_VERSION_TEXT);
+	s = " Or r";
+#endif	/* LINUX */
+
+        printf(" %sebuild C-Kermit from source on this computer to make \
+versions agree.\r\n",s);
+
+#ifdef KTARGET
+	{
+	    char * s;
+	    s = KTARGET;
+	    if (!s) s = "";
+	    if (!*s) s = "(unknown)";
+	    printf("  C-Kermit makefile target: %s\r\n",s);
+	}
+#endif	/* KTARGET */
+        printf("  Or if that is what you did then try to find out why\r\n");
+        printf("  the program loader (image activator) is choosing a\r\n");
+        printf("  different OpenSSL library than the one specified in \
+the build.\r\n\r\n");
+        printf("  All SSL/TLS features disabled.\r\n\r\n");
         bleep(BP_FAIL);
 #ifdef SSLDLL
         ck_ssl_unloaddll();
@@ -1378,8 +1466,8 @@ ssl_once_init()
 #endif /* OS2ONLY */
 
     /* init things so we will get meaningful error messages
-    * rather than numbers
-    */
+     * rather than numbers
+     */
     SSL_load_error_strings();
 
 #ifdef SSHBUILTIN
@@ -2392,8 +2480,12 @@ ssl_get_dNSName(ssl) SSL * ssl;
         for (i = 0; i < sk_GENERAL_NAME_num(ialt); i++) {
             gen = sk_GENERAL_NAME_value(ialt, i);
             if (gen->type == GEN_DNS) {
-                if(!gen->d.ia5 || !gen->d.ia5->length)
-                    break;
+                if (!gen->d.ia5 || !gen->d.ia5->length)
+		  break;
+                if (strlen((char *)gen->d.ia5->data) != gen->d.ia5->length) {
+                    /* Ignoring IA5String containing null character */
+                    continue;
+                }
                 dns = malloc(gen->d.ia5->length + 1);
                 if (dns) {
                     memcpy(dns, gen->d.ia5->data, gen->d.ia5->length);
@@ -2411,21 +2503,32 @@ cleanup:
 }
 
 char *
-ssl_get_commonName(ssl) SSL * ssl;
-{
+ssl_get_commonName(ssl) SSL * ssl; {
     static char name[256];
+    int name_text_len;
     int err;
     X509 *server_cert;
 
+    name_text_len = 0;
     if (server_cert = SSL_get_peer_certificate(ssl)) {
-        err = X509_NAME_get_text_by_NID(X509_get_subject_name(server_cert),
-                NID_commonName, name, sizeof(name));
+        name_text_len =
+	    X509_NAME_get_text_by_NID(X509_get_subject_name(server_cert),
+				      NID_commonName, name, sizeof(name));
         X509_free(server_cert);
     }
+    if (name_text_len <= 0) {
+	/* Common Name was empty or not retrieved */
+        err = 0;
+    } else if (strlen(name) != name_text_len) {
+        /* Ignoring Common Name containing null character */
+	err = 0;
+    } else {
+	err = 1;
+    }
     if (err > 0)
-        return name;
+      return name;
     else
-        return NULL;
+      return NULL;
 }
 
 char *
@@ -2640,6 +2743,7 @@ ssl_verify_crl(int ok, X509_STORE_CTX *ctx)
 char *
 tls_userid_from_client_cert(ssl) SSL * ssl;
 {
+#ifndef OS2		/* [jt] 2013/11/21 - K-95 doesn't have X509_to_user */
     static char cn[256];
     static char *r = cn;
     int err;
@@ -2656,6 +2760,9 @@ tls_userid_from_client_cert(ssl) SSL * ssl;
     }
     else
         return r = NULL;
+#else
+    return NULL;
+#endif /* OS2 */
 }
 
 unsigned char **
@@ -2690,8 +2797,12 @@ tls_get_SAN_objs(SSL * ssl, int type)
              * with one and linked to the other we use this hack.
              */
             if ((gen->type | V_ASN1_CONTEXT_SPECIFIC) == (type | V_ASN1_CONTEXT_SPECIFIC)) {
-                if(!gen->d.ia5 || !gen->d.ia5->length)
-                    break;
+                if (!gen->d.ia5 || !gen->d.ia5->length)
+		  break;
+                if (strlen((char *)gen->d.ia5->data) != gen->d.ia5->length) {
+                    /* Ignoring IA5String containing null character */
+                    continue;
+                }
                 objs[j] = malloc(gen->d.ia5->length + 1);
                 if (objs[j]) {
                     memcpy(objs[j], gen->d.ia5->data, gen->d.ia5->length);
@@ -2774,6 +2885,7 @@ show_hostname_warning(char *s1, char *s2)
 {
     char prefix[1024];
     int ok = 1;
+    setverbosity();
     ckmakxmsg(prefix,1024,
               "Warning: Hostname (\"", s1, 
               "\") does not match server's certificate (\"", s2, "\")",
@@ -2782,7 +2894,7 @@ show_hostname_warning(char *s1, char *s2)
         ok = uq_ok(prefix,
                     "Continue? (Y/N) ",
                     3, NULL, 0);
-    else if (ssl_verbose_flag)
+    else if (verbosity)
         printf(prefix);
     return(ok);
 }
@@ -2793,9 +2905,11 @@ show_hostname_warning(char *s1, char *s2)
 #ifndef SCO_OSR505
 #ifndef OpenBSD
 #ifndef FREEBSD4
+#ifndef NETBSD15
 #ifndef LINUX
 #ifndef AIX41
 #ifndef UW7
+#ifndef IRIX65
 #ifndef SOLARIS9
 #ifndef SOLARIS8
 #ifndef SOLARIS7
@@ -2803,6 +2917,8 @@ show_hostname_warning(char *s1, char *s2)
 #ifdef DEC_TCPIP
 #define inet_aton INET_ATON
 #endif /* DEC_TCPIP */
+
+#ifndef NO_DCL_INET_ATON
 static int
 inet_aton(char * ipaddress, struct in_addr * ia) {
     struct stringarray * q;
@@ -2822,13 +2938,17 @@ inet_aton(char * ipaddress, struct in_addr * ia) {
     }
     return(0);
 }
+#endif	/* NO_DCL_INET_ATON */
+
 #endif /* MACOSX */
 #endif /* SOLARIS7 */
 #endif /* SOLARIS8 */
 #endif /* SOLARIS9 */
+#endif /* IRIX65 */
 #endif /* UW7 */
 #endif /* AIX41 */
 #endif /* LINUX */
+#endif /* NETBSD15 */
 #endif /* FREEBSD4 */
 #endif /* OpenBSD */
 #endif /* SCO_OSR505 */
@@ -2846,7 +2966,8 @@ ssl_check_server_name(SSL * ssl, char * hostname)
     struct in_addr ia;
     int rv;
 
-    if (ssl_verbose_flag && !inserver) {
+    setverbosity();
+    if (verbosity && !inserver) {
         if (dNSName = tls_get_SAN_objs(ssl,GEN_DNS)) {
             int i = 0;
             for (i = 0; dNSName[i]; i++) {
@@ -2945,6 +3066,7 @@ ssl_check_server_name(SSL * ssl, char * hostname)
 int
 tls_is_user_valid(SSL * ssl, const char *user)
 {
+#ifndef OS2		 /* [jt] 2013/11/21 - K-95 doesn't have X509_userok */
     X509 *client_cert;
     int r = 0;
 
@@ -2959,6 +3081,9 @@ tls_is_user_valid(SSL * ssl, const char *user)
 
     X509_free(client_cert);
     return r;
+#else
+    return 0;
+#endif /* OS2 */
 }
 
 int
@@ -3095,6 +3220,7 @@ ssl_reply(how,data,cnt) int how; unsigned char *data; int cnt;
 {
     char * str=NULL;
 
+    setverbosity();
     data += 4;                          /* Point to status byte */
     cnt  -= 4;
 
@@ -3107,7 +3233,7 @@ ssl_reply(how,data,cnt) int how; unsigned char *data; int cnt;
     case SSL_ACCEPT:
         if (tn_deb || debses)
             tn_debug("[SSL - handshake starting]");
-        else if ( ssl_verbose_flag )
+        else if ( verbosity )
             printf("[SSL - handshake starting]\r\n");
         debug(F110,"ssl_reply","[SSL - handshake starting]",0);
 
@@ -3116,7 +3242,7 @@ ssl_reply(how,data,cnt) int how; unsigned char *data; int cnt;
             if (ssl_dummy_flag) {
                 if (tn_deb || debses)
                     tn_debug("[SSL - Dummy Connected]");
-                else if ( ssl_verbose_flag ) {
+                else if ( verbosity ) {
                     printf("[SSL - Dummy Connected]\r\n");
                 }
                 debug(F110,"ssl_reply","[SSL - Dummy Connected]",0);
@@ -3133,7 +3259,7 @@ ssl_reply(how,data,cnt) int how; unsigned char *data; int cnt;
                     len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
                     ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
                     printf(ssl_err);
-                } else if ( ssl_verbose_flag ) {
+                } else if ( verbosity ) {
                     printf("[SSL - FAILED]\r\n");
                     ERR_print_errors(bio_err);
                     len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
@@ -3147,13 +3273,13 @@ ssl_reply(how,data,cnt) int how; unsigned char *data; int cnt;
             } else {
                 if (tn_deb || debses)
                     tn_debug("[SSL - OK]");
-                else if ( ssl_verbose_flag ) {
+                else if ( verbosity ) {
                     printf("[SSL - OK]\r\n");
                 }
                 debug(F110,"ssl_reply","[SSL - OK]",0);
 
                 ssl_active_flag = 1;
-                ssl_display_connect_details(ssl_con,0,ssl_verbose_flag);
+                ssl_display_connect_details(ssl_con,0,verbosity);
             }
         }
         auth_finished(AUTH_UNKNOWN);
@@ -3164,7 +3290,7 @@ ssl_reply(how,data,cnt) int how; unsigned char *data; int cnt;
         if (tn_deb || debses) {
             tn_debug(
                  "[SSL - failed to switch on SSL - trying plaintext login]");
-        } else if ( ssl_verbose_flag ) {
+        } else if ( verbosity ) {
             printf("[SSL - failed to switch on SSL]\r\n");
             printf("Trying plaintext login:\r\n");
         }
@@ -3188,6 +3314,7 @@ ssl_is(data,cnt) unsigned char *data; int cnt;
     if ((cnt -= 4) < 1)
         return AUTH_FAILURE;
 
+    setverbosity();
     data += 4;
     switch(*data++) {
     case SSL_START:
@@ -3200,7 +3327,7 @@ ssl_is(data,cnt) unsigned char *data; int cnt;
 
             if (tn_deb || debses)
                 tn_debug("[SSL - handshake starting]");
-            else if ( ssl_verbose_flag )
+            else if ( verbosity )
                 printf("[SSL - handshake starting]\r\n");
             debug(F110,"ssl_is","[SSL - handshake starting]",0);
 
@@ -3211,7 +3338,7 @@ ssl_is(data,cnt) unsigned char *data; int cnt;
             if (ssl_dummy_flag) {
                 if (tn_deb || debses)
                     tn_debug("[SSL - Dummy Connected]");
-                else if ( ssl_verbose_flag ) {
+                else if ( verbosity ) {
                     printf("[SSL - Dummy Connected]\r\n");
                 }
                 debug(F110,"ssl_is","[SSL - Dummy Connected]",0);
@@ -3230,7 +3357,7 @@ ssl_is(data,cnt) unsigned char *data; int cnt;
                     tn_debug(errbuf);
                 else if ( ssl_debug_flag )
                     printf("%s\r\n",errbuf);
-                else if ( ssl_verbose_flag )
+                else if ( verbosity )
                     printf("[SSL - SSL_accept error]\r\n");
 
                 debug(F110,"ssl_is",errbuf,0);
@@ -3242,12 +3369,12 @@ ssl_is(data,cnt) unsigned char *data; int cnt;
 
             if (tn_deb || debses)
                 tn_debug("[SSL - OK]");
-            else if ( ssl_verbose_flag ) {
+            else if ( verbosity ) {
                 printf("[SSL - OK]\r\n");
             }
             debug(F110,"ssl_is","[SSL - OK]",0);
             ssl_active_flag = 1;
-            ssl_display_connect_details(ssl_con,1,ssl_verbose_flag);
+            ssl_display_connect_details(ssl_con,1,verbosity);
 
             /* now check to see that we got exactly what we
             * wanted from the caller ... if a certificate is
@@ -3307,6 +3434,7 @@ ck_tn_tls_negotiate(VOID)
     if ( !ck_ssleay_is_installed() )
         return(-1);
 
+    setverbosity();
     if (sstelnet) {
         /* server starts the TLS stuff now ... */
         if (!tls_only_flag) {
@@ -3317,14 +3445,14 @@ ck_tn_tls_negotiate(VOID)
 
             if (tn_deb || debses)
                 tn_debug("[TLS - handshake starting]");
-            else if ( ssl_verbose_flag )
+            else if ( verbosity )
                 printf("[TLS - handshake starting]\r\n");
             debug(F110,"ck_tn_tls_negotiate","[TLS - handshake starting]",0);
 
             if (ssl_dummy_flag) {
                 if (tn_deb || debses)
                     tn_debug("[TLS - Dummy Connected]");
-                else if ( ssl_verbose_flag ) {
+                else if ( verbosity ) {
                     printf("[TLS - Dummy Connected]\r\n");
                 }
                 debug(F110,"ck_tn_tls_negotiate","[TLS - Dummy Connected]",0);
@@ -3343,7 +3471,7 @@ ck_tn_tls_negotiate(VOID)
                     tn_debug(errbuf);
                 else if ( ssl_debug_flag )
                     printf("%s\r\n",errbuf);
-                else if ( ssl_verbose_flag )
+                else if ( verbosity )
                     printf("[TLS - SSL_accept error]\r\n");
 
                 debug(F110,"ck_tn_tls_negotiate",errbuf,0);
@@ -3353,13 +3481,13 @@ ck_tn_tls_negotiate(VOID)
 
             if (tn_deb || debses)
                 tn_debug("[TLS - OK]");
-            else if ( ssl_verbose_flag ) {
+            else if ( verbosity ) {
                 printf("[TLS - OK]\r\n");
             }
 
             debug(F110,"ck_tn_tls_negotiate","[TLS - OK]",0);
             tls_active_flag = 1;
-            ssl_display_connect_details(tls_con,1,ssl_verbose_flag);
+            ssl_display_connect_details(tls_con,1,verbosity);
 
 
 #ifdef SSL_KRB5
@@ -3421,7 +3549,7 @@ ck_tn_tls_negotiate(VOID)
                                            NID_commonName,str,
                                            256
                                            );
-                if ( ssl_verbose_flag )
+                if ( verbosity )
                     printf("[TLS - commonName=%s]\r\n",str);
 
                 X509_NAME_get_text_by_NID(X509_get_subject_name(peer),
@@ -3433,7 +3561,7 @@ ck_tn_tls_negotiate(VOID)
                                            str,
                                            256
                                            );
-                if ( ssl_verbose_flag )
+                if ( verbosity )
                     printf("[TLS - uniqueIdentifier=%s]\r\n",str);
 
                 /* Try to determine user name */
@@ -3468,7 +3596,7 @@ ck_tn_tls_negotiate(VOID)
 
         if (tn_deb || debses)
             tn_debug("[TLS - handshake starting]");
-        else if ( ssl_verbose_flag )
+        else if ( verbosity )
             printf("[TLS - handshake starting]\r\n");
         debug(F110,"ck_tn_tls_negotiate","[TLS - handshake starting]",0);
 
@@ -3479,7 +3607,7 @@ ck_tn_tls_negotiate(VOID)
             if (ssl_dummy_flag) {
                 if (tn_deb || debses)
                     tn_debug("[TLS - Dummy Connected]");
-                else if ( ssl_verbose_flag ) {
+                else if ( verbosity ) {
                     printf("[TLS - Dummy Connected]\r\n");
                 }
                 debug(F110,"ck_tn_tls_negotiate","[TLS - Dummy Connected]",0);
@@ -3500,7 +3628,7 @@ ck_tn_tls_negotiate(VOID)
                     len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
                     ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
                     printf(ssl_err);
-                } else if ( ssl_verbose_flag ) {
+                } else if ( verbosity ) {
                     printf("[TLS - FAILED]\r\n");
                     ERR_print_errors(bio_err);
                     len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
@@ -3523,7 +3651,7 @@ ck_tn_tls_negotiate(VOID)
                     {
                         if (tn_deb || debses)
                             tn_debug("[TLS - FAILED]");
-                        else if ( ssl_verbose_flag )
+                        else if ( verbosity )
                             printf("[TLS - FAILED]\r\n");
                         debug(F110,"ck_tn_tls_negotiate","[TLS - FAILED]",0);
                         auth_finished(AUTH_REJECT);
@@ -3535,7 +3663,7 @@ ck_tn_tls_negotiate(VOID)
                         if (!ok) {
                             if (tn_deb || debses)
                                 tn_debug("[TLS - FAILED]");
-                            else if ( ssl_verbose_flag )
+                            else if ( verbosity )
                                 printf("[TLS - FAILED]\r\n");
                             debug(F110,
                                    "ck_tn_tls_negotiate","[TLS - FAILED]",0);
@@ -3546,7 +3674,7 @@ ck_tn_tls_negotiate(VOID)
                 } else if (ssl_check_server_name(tls_con, szHostName)) {
                     if (tn_deb || debses)
                         tn_debug("[TLS - FAILED]");
-                    else if ( ssl_verbose_flag )
+                    else if ( verbosity )
                         printf("[TLS - FAILED]\r\n");
                     debug(F110,
                            "ck_tn_tls_negotiate","[TLS - FAILED]",0);
@@ -3582,11 +3710,11 @@ ck_tn_tls_negotiate(VOID)
 
             if (tn_deb || debses)
                 tn_debug("[TLS - OK]");
-            else if ( ssl_verbose_flag )
+            else if ( verbosity )
                 printf("[TLS - OK]\r\n");
             debug(F110,"ck_tn_tls_negotiate","[TLS - OK]",0);
 
-            ssl_display_connect_details(tls_con,0,ssl_verbose_flag);
+            ssl_display_connect_details(tls_con,0,verbosity);
         }
         auth_finished(AUTH_REJECT);
     }
@@ -3606,6 +3734,7 @@ ck_ssl_incoming(fd) int fd;
 
     int timo = 2000;
 
+    setverbosity();
     if ( !ck_ssleay_is_installed() )
         return(-1);
 
@@ -3616,7 +3745,7 @@ ck_ssl_incoming(fd) int fd;
     if (tls_only_flag) {
         if (tn_deb || debses)
             tn_debug("[TLS - handshake starting]");
-        else if ( ssl_verbose_flag )
+        else if ( verbosity )
             printf("[TLS - handshake starting]\r\n");
         debug(F110,"ck_ssl_incoming","[TLS - handshake starting]",0);
 
@@ -3634,7 +3763,7 @@ ck_ssl_incoming(fd) int fd;
                 tn_debug(errbuf);
             else if ( ssl_debug_flag )
                 printf("%s\r\n",errbuf);
-            else if ( ssl_verbose_flag )
+            else if ( verbosity )
                 printf("[TLS - SSL_accept error]\r\n");
 
             debug(F110,"ck_ssl_incoming",errbuf,0);
@@ -3642,7 +3771,7 @@ ck_ssl_incoming(fd) int fd;
         } else {
             if (tn_deb || debses)
                 tn_debug("[TLS - OK]");
-            else if ( ssl_verbose_flag )
+            else if ( verbosity )
                 printf("[TLS - OK]\r\n");
             debug(F110,"ck_ssl_incoming","[TLS - OK]",0);
             tls_active_flag = 1;
@@ -3650,7 +3779,7 @@ ck_ssl_incoming(fd) int fd;
     } else if (ssl_only_flag) {
         if (tn_deb || debses)
             tn_debug("[SSL - handshake starting]");
-        else if ( ssl_verbose_flag )
+        else if ( verbosity )
             printf("[SSL - handshake starting]\r\n");
         debug(F110,"ck_ssl_incoming","[SSL - handshake starting]",0);
 
@@ -3668,7 +3797,7 @@ ck_ssl_incoming(fd) int fd;
                 tn_debug(errbuf);
             else if ( ssl_debug_flag )
                 printf("%s\r\n",errbuf);
-            else if ( ssl_verbose_flag )
+            else if ( verbosity )
                 printf("[SSL - SSL_accept error]\r\n");
 
             debug(F110,"ck_ssl_incoming",errbuf,0);
@@ -3676,7 +3805,7 @@ ck_ssl_incoming(fd) int fd;
         } else {
             if (tn_deb || debses)
                 tn_debug("[SSL - OK]");
-            else if ( ssl_verbose_flag )
+            else if ( verbosity )
             printf("[SSL - OK]\r\n");
             debug(F110,"ssl_is","[SSL - OK]",0);
             ssl_active_flag = 1;
@@ -3770,6 +3899,7 @@ ck_ssl_outgoing(fd) int fd;
 {
     int timo = 2000;
 
+    setverbosity();
     if ( !ck_ssleay_is_installed() )
         return(-1);
 
@@ -3787,7 +3917,7 @@ ck_ssl_outgoing(fd) int fd;
 #endif /* USE_CERT_CB */
         if (tn_deb || debses)
             tn_debug("[TLS - handshake starting]");
-        else if (ssl_verbose_flag)
+        else if (verbosity)
             printf("[TLS - handshake starting]\r\n");
         debug(F110,"ck_ssl_outgoing","[TLS - handshake starting]",0);
         if (SSL_connect(tls_con) <= 0) {
@@ -3803,7 +3933,7 @@ ck_ssl_outgoing(fd) int fd;
 
             if (tn_deb || debses)
                 tn_debug("[TLS - FAILED]");
-            else if ( ssl_verbose_flag )
+            else if ( verbosity )
                 printf("[TLS - FAILED]\r\n");
             debug(F110,"ck_ssl_outgoing","[TLS - FAILED]",0);
             netclos();
@@ -3819,7 +3949,7 @@ ck_ssl_outgoing(fd) int fd;
                     {
                         if (tn_deb || debses)
                             tn_debug("[TLS - FAILED]");
-                        else if ( ssl_verbose_flag )
+                        else if ( verbosity )
                             printf("[TLS - FAILED]\r\n");
                         debug(F110,"ck_tn_tls_negotiate","[TLS - FAILED]",0);
 
@@ -3833,7 +3963,7 @@ ck_ssl_outgoing(fd) int fd;
                         if (!ok) {
                             if (tn_deb || debses)
                                 tn_debug("[TLS - FAILED]");
-                            else if ( ssl_verbose_flag )
+                            else if ( verbosity )
                                 printf("[TLS - FAILED]\r\n");
                             debug(F110,
                                    "ck_tn_tls_negotiate","[TLS - FAILED]",0);
@@ -3844,7 +3974,7 @@ ck_ssl_outgoing(fd) int fd;
                 } else if (ssl_check_server_name(tls_con, szHostName)) {
                     if (tn_deb || debses)
                         tn_debug("[TLS - FAILED]");
-                    else if ( ssl_verbose_flag )
+                    else if ( verbosity )
                         printf("[TLS - FAILED]\r\n");
                     debug(F110,
                            "ck_tn_tls_negotiate","[TLS - FAILED]",0);
@@ -3852,13 +3982,12 @@ ck_ssl_outgoing(fd) int fd;
                     return -1;
                 }
             }
-
             if (tn_deb || debses)
                 tn_debug("[TLS - OK]");
             else if (!quiet)
 		printf("[TLS - OK]\r\n");
             debug(F110,"ck_ssl_outgoing","[TLS - OK]",0);
-            ssl_display_connect_details(tls_con,0,ssl_verbose_flag);
+            ssl_display_connect_details(tls_con,0,verbosity);
         }
     }
     /* if we are doing raw SSL then start it now ... */
@@ -3869,7 +3998,7 @@ ck_ssl_outgoing(fd) int fd;
 #endif /* USE_CERT_CB */
         if (tn_deb || debses)
             tn_debug("[SSL - handshake starting]");
-        else if ( ssl_verbose_flag )
+        else if ( verbosity )
             printf("[SSL - handshake starting]\r\n");
         debug(F110,"ck_ssl_outgoing","[SSL - handshake starting]",0);
         if (SSL_connect(ssl_con) <= 0) {
@@ -3882,7 +4011,7 @@ ck_ssl_outgoing(fd) int fd;
             }
             if (tn_deb || debses)
                 tn_debug("[SSL - FAILED]");
-            else if ( ssl_verbose_flag )
+            else if ( verbosity )
                 printf("[SSL - FAILED]\r\n");
             debug(F110,"ck_ssl_outgoing","[SSL - FAILED]",0);
             return(-1);
@@ -3898,7 +4027,7 @@ ck_ssl_outgoing(fd) int fd;
                     {
                         if (tn_deb || debses)
                             tn_debug("[SSL - FAILED]");
-                        else if ( ssl_verbose_flag )
+                        else if ( verbosity )
                             printf("[SSL - FAILED]\r\n");
                         debug(F110,"ck_tn_tls_negotiate","[SSL - FAILED]",0);
 
@@ -3912,7 +4041,7 @@ ck_ssl_outgoing(fd) int fd;
                         if (!ok) {
                             if (tn_deb || debses)
                                 tn_debug("[SSL - FAILED]");
-                            else if ( ssl_verbose_flag )
+                            else if ( verbosity )
                                 printf("[SSL - FAILED]\r\n");
                             debug(F110,
                                    "ck_tn_tls_negotiate","[SSL - FAILED]",0);
@@ -3923,20 +4052,19 @@ ck_ssl_outgoing(fd) int fd;
                 } else if (ssl_check_server_name(ssl_con, szHostName)) {
                     if (tn_deb || debses)
                         tn_debug("[SSL - FAILED]");
-                    else if ( ssl_verbose_flag )
+                    else if ( verbosity )
                         printf("[SSL - FAILED]\r\n");
                     debug(F110, "ck_tn_tls_negotiate","[SSL - FAILED]",0);
                     auth_finished(AUTH_REJECT);
                     return -1;
                 }
             }
-
             if (tn_deb || debses)
                 tn_debug("[SSL - OK]");
 	    else if (!quiet)
 	        printf("[SSL - OK]\r\n");
             debug(F110,"ck_ssl_outgoing","[SSL - OK]",0);
-            ssl_display_connect_details(ssl_con,0,ssl_verbose_flag);
+            ssl_display_connect_details(ssl_con,0,verbosity);
         }
     }
     return(0);  /* success */
@@ -3951,6 +4079,8 @@ ck_ssl_http_client(fd, hostname) int fd; char * hostname;
     if ( !ck_ssleay_is_installed() )
         return(-1);
 
+    setverbosity();
+
     /* bind in the network descriptor */
     SSL_set_fd(tls_http_con,fd);
 
@@ -3964,7 +4094,7 @@ ck_ssl_http_client(fd, hostname) int fd; char * hostname;
 #endif /* USE_CERT_CB */
         if (tn_deb || debses)
             tn_debug("[TLS - handshake starting]");
-        else if (ssl_verbose_flag)
+        else if (verbosity)
             printf("[TLS - handshake starting]\r\n");
         debug(F110,"ck_ssl_outgoing","[TLS - handshake starting]",0);
         if (SSL_connect(tls_http_con) <= 0) {
@@ -3980,7 +4110,7 @@ ck_ssl_http_client(fd, hostname) int fd; char * hostname;
 
             if (tn_deb || debses)
                 tn_debug("[TLS - FAILED]");
-            else if ( ssl_verbose_flag )
+            else if ( verbosity )
                 printf("[TLS - FAILED]\r\n");
             debug(F110,"ck_ssl_http_client","[TLS - FAILED]",0);
             http_close();
@@ -3996,7 +4126,7 @@ ck_ssl_http_client(fd, hostname) int fd; char * hostname;
                     {
                         if (tn_deb || debses)
                             tn_debug("[TLS - FAILED]");
-                        else if ( ssl_verbose_flag )
+                        else if ( verbosity )
                             printf("[TLS - FAILED]\r\n");
                         debug(F110,"ck_tn_tls_negotiate","[TLS - FAILED]",0);
                         return -1;
@@ -4008,7 +4138,7 @@ ck_ssl_http_client(fd, hostname) int fd; char * hostname;
                         if (!ok) {
                             if (tn_deb || debses)
                                 tn_debug("[TLS - FAILED]");
-                            else if ( ssl_verbose_flag )
+                            else if ( verbosity )
                                 printf("[TLS - FAILED]\r\n");
                             debug(F110,
                                    "ck_tn_tls_negotiate","[TLS - FAILED]",0);
@@ -4018,7 +4148,7 @@ ck_ssl_http_client(fd, hostname) int fd; char * hostname;
                 } else if (ssl_check_server_name(tls_http_con, hostname)) {
                     if (tn_deb || debses)
                         tn_debug("[TLS - FAILED]");
-                    else if ( ssl_verbose_flag )
+                    else if ( verbosity )
                         printf("[TLS - FAILED]\r\n");
                     debug(F110,
                            "ck_tn_tls_negotiate","[TLS - FAILED]",0);
@@ -4030,7 +4160,7 @@ ck_ssl_http_client(fd, hostname) int fd; char * hostname;
             if (tn_deb || debses)
                 tn_debug("[TLS - OK]");
             debug(F110,"ck_ssl_outgoing","[TLS - OK]",0);
-            ssl_display_connect_details(tls_http_con,0,ssl_verbose_flag);
+            ssl_display_connect_details(tls_http_con,0,verbosity);
         }
     }
     return(0);  /* success */
@@ -4159,8 +4289,12 @@ X509_to_user(X509 *peer_cert, char *userid, int len)
     for (i = 0; i < sk_GENERAL_NAME_num(ialt); i++) {
         gen = sk_GENERAL_NAME_value(ialt, i);
         if (gen->type == GEN_DNS) {
-            if(!gen->d.ia5 || !gen->d.ia5->length)
-                break;
+            if (!gen->d.ia5 || !gen->d.ia5->length)
+	      break;
+            if (strlen(gen->d.ia5->data) != gen->d.ia5->length) {
+                /* Ignoring IA5String containing null character */
+                continue;
+            }
             if ( gen->d.ia5->length + 1 > sizeof(email) ) {
                 goto cleanup;
             }

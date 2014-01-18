@@ -1,7 +1,7 @@
 /*
   C K U A T 2 . H  --  Kerberos headers for C-Kermit
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2009,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -274,11 +274,6 @@ void castexp_ofb64_printsub P((unsigned char *, int, unsigned char *, int));
 #ifdef DEBUG
 extern int encrypt_debug_mode;
 #endif
-
-#ifndef CRYPT_DLL
-extern int (*decrypt_input) P((int));
-extern void (*encrypt_output) P((unsigned char *, int));
-#endif /* CRYPT_DLL */
 
 int decrypt_ks_hack(unsigned char *, int);
 

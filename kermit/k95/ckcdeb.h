@@ -1,13 +1,13 @@
 /*  C K C D E B . H  */
 
 /*
-Sat Dec 24 18:25:34 2005
+Tue Jul 23 12:47:22 2013
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
   compatible with C preprocessors that support only #ifdef, #else, #endif,
   #define, and #undef.  Please do not use #if, logical operators, or other
   later-model preprocessor features in any of the portable C-Kermit modules.
-  You can, of course, use these constructions in platform-specific modules 
+  You can, of course, use these constructions in platform-specific modules
   when you know they are supported.
 */
 
@@ -26,7 +26,7 @@ Sat Dec 24 18:25:34 2005
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2005,
+  Copyright (C) 1985, 2013,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -37,7 +37,8 @@ Sat Dec 24 18:25:34 2005
   Header", because originally it contained only the formats (F000-F111) for
   the debug() and tlog() functions.  Since then it has grown to include all
   material required by all other C-Kermit modules, including the non-Kermit
-  specific ones.
+  specific ones.  In other words, this is the one header file that is
+  guaranteed to be included by all C-Kermit source modules.
 */
 
 #ifndef CKCDEB_H			/* Don't include me more than once. */
@@ -98,6 +99,20 @@ Sat Dec 24 18:25:34 2005
 #endif /* ANYSCO */
 #endif /* UNIXWARE */
 
+#ifndef MINIX				/* Minix versions */
+#ifdef MINIX315
+#define MINIX
+#else
+#ifdef MINIX3
+#define MINIX
+#else
+#ifdef MINIX2
+#define MINIX
+#endif	/* MINIX2 */
+#endif	/* MINIX3 */
+#endif	/* MINIX315 */
+#endif	/* MINIX */
+
 #ifdef CK_SCO32V4			/* SCO 3.2v4 */
 #ifndef ANYSCO
 #define ANYSCO
@@ -141,6 +156,12 @@ Sat Dec 24 18:25:34 2005
 #endif /* NOICP */
 
 /* Built-in makefile entries */
+
+#ifdef SOLARIS11			/* Solaris 11 implies 10 */
+#ifndef SOLARIS10
+#define SOLARIS10
+#endif /* SOLARIS10 */
+#endif /* SOLARIS11 */
 
 #ifdef SOLARIS10			/* Solaris 10 implies 9 */
 #ifndef SOLARIS9
@@ -196,6 +217,27 @@ Sat Dec 24 18:25:34 2005
 #define POSIX_CRTSCTS
 #endif /* POSIX_CRTSCTS */
 #endif /* POSIX */
+#ifndef SVR4
+#define SVR4
+#endif	/* SVR4 */
+#ifndef STERMIOX
+#define STERMIOX
+#endif	/* STERMIOX */
+#ifndef SELECT
+#define SELECT
+#endif	/* SELECT */
+#ifndef FNFLOAT
+#define FNFLOAT
+#endif	/* FNFLOAT */
+#ifndef DIRENT
+#define DIRENT
+#endif	/* DIRENT */
+#ifndef BIGBUFOK
+#define BIGBUFOK
+#endif	/* BIGBUFOK */
+#ifndef CK_NEWTERM
+#define CK_NEWTERM
+#endif	/* CK_NEWTERM */
 #endif /* SOLARIS */
 
 #ifdef SUN4S5				/* Sun-4 System V environment */
@@ -625,6 +667,11 @@ Sat Dec 24 18:25:34 2005
 
 #include <stdio.h>			/* Begin by including this. */
 #include <ctype.h>			/* and this. */
+
+#ifdef VMS
+#include <types.h>			/* Ensure off_t. */
+#include "ckvrms.h"			/* Get NAMDEF NAMX_C_MAXRSS. */
+#endif /* def VMS */
 
 /* System-type compilation switches */
 
@@ -1102,10 +1149,10 @@ Sat Dec 24 18:25:34 2005
 #endif /* OSKORUNIX */
 
 #ifdef OS2
-#define CK_ANSIC            /* OS/2 supports ANSIC and more extensions */
+#define CK_ANSIC		 /* OS/2 supports ANSIC and more extensions */
 #endif /* OS2 */
 
-#ifdef OSF50		    /* Newer OSF/1 versions imply older ones */
+#ifdef OSF50			   /* Newer OSF/1 versions imply older ones */
 #ifndef OSF40
 #define OSF40
 #endif /* OSF40 */
@@ -1383,15 +1430,40 @@ _PROTOTYP(int ckxfprintf,(FILE *, const char *, ...));
 #endif /* CK_POSIX_SIG */
 #endif /* QNX */
 
-/* Void type */
-
+/* 
+  void type, normally available only in ANSI compilers.
+  The HP-UX exception (for its "bundled" non-ANSI C compiler)
+  is known to be valid back to HP-UX 6.5.
+  Adjustments might be needed for earlier HP-UX versions.
+*/
 #ifndef VOID				/* Used throughout all C-Kermit */
 #ifdef CK_ANSIC				/* modules... */
 #define VOID void
 #else
+#ifdef HPUX
+#define VOID void
+#else
 #define VOID int
+#endif /* HPUX */
 #endif /* CK_ANSIC */
 #endif /* VOID */
+/*
+  Exactly the same as VOID but for use in contexts where the VOID symbol
+  conflicts some header-file definition.  This is needed for the section
+  of ckuusx.c that provides C-Kermit's curses interface, roughly the
+  second half of ckuusx.c.
+*/
+#ifndef CKVOID
+#ifdef CK_ANSIC
+#define CKVOID void
+#else
+#ifdef HPUX
+#define CKVOID void
+#else
+#define CKVOID int
+#endif /* HPUX */
+#endif /* CK_ANSIC */
+#endif /* CKVOID */
 
 /* Const type */
 
@@ -1746,7 +1818,7 @@ int mac_fclose();
 #endif /* NOICP */
 #endif /* CK_TMPDIR */
 
-/* Whether to include <sys/time.h> */
+/* Whether to include <time.h> or <sys/time.h> */
 
 #ifndef NOTIMEH				/* <time.h> */
 #ifndef TIMEH
@@ -1944,6 +2016,11 @@ _PROTOTYP( void bleep, (short) );
 #ifndef LINUX
 #define LINUX
 #endif /* LINUX */
+#ifdef __ANDROID__
+#ifndef ANDROID
+#define ANDROID
+#endif /* ANDROID */
+#endif /* __ANDROID__ */
 #endif /* __linux__ */
 
 /* Platforms where small size is needed */
@@ -2083,13 +2160,42 @@ _PROTOTYP( void bleep, (short) );
 #ifdef USE_UU_LOCK			/* FreeBSD or other with uu_lock() */
 #define USETTYLOCK
 #else
-#ifdef HAVE_BAUDBOY			/* Red Hat Linux >= 7.2 */
+/*
+  Prior to 8.0.299 Alpha.08 this was HAVE_BAUDBOY which was added for
+  Red Hat 7.2 in May 2003 but which is no longer supported in Debian and
+  OpenSuse (at least).
+*/
+#ifdef HAVE_LOCKDEV
 #define USETTYLOCK
-#endif /* HAVE_BAUDBOY */
+#endif /* HAVE_LOCKDEV */
 #endif /* USE_UU_LOCK */
 #endif /* AIXRS */
 #endif /* USETTYLOCK */
 #endif /* NOTTYLOCK */
+
+#ifndef NO_OPENPTY			/* Can use openpty() */
+#ifndef HAVE_OPENPTY
+#ifdef __linux__
+#define HAVE_OPENPTY
+#else
+#ifdef __FreeBSD__
+#define HAVE_OPENPTY
+#else
+#ifdef __OpenBSD__
+#define HAVE_OPENPTY
+#else
+#ifdef __NetBSD__
+#define HAVE_OPENPTY
+#else
+#ifdef MACOSX10
+#define HAVE_OPENPTY
+#endif	/* MACOSX10 */
+#endif	/* __NetBSD__ */
+#endif	/* __OpenBSD__ */
+#endif	/* __FreeBSD__ */
+#endif	/* __linux__ */
+#endif	/* HAVE_OPENPTY */
+#endif	/* NO_OPENPTY */
 
 /* Kermit feature selection */
 
@@ -2396,7 +2502,7 @@ _PROTOTYP( void bleep, (short) );
 extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #endif /* CKCMAI */
 
-#ifndef NOUNPREFIXZERO			/* Allow unprefixing of  NUL (0) */
+#ifndef NOUNPREFIXZERO			/* Allow unprefixing of NUL (0) */
 #ifndef UNPREFIXZERO			/* in file-transfer packets */
 #define UNPREFIXZERO
 #endif /* UNPREFIXZERO */
@@ -2703,7 +2809,7 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #else /* _M_PPC */
 #ifndef NO_SSL
 #define CK_SSL
-#define SSLDLL
+/* #define SSLDLL */ /* OpenSSL included at link time now - [jt] 2013/11/21 */
 #endif /* NO_SSL */
 #endif /* _M_PPC */
 #ifndef NO_KERBEROS
@@ -4427,14 +4533,22 @@ extern int errno;
 #else
 /*
   The following declaration would cause problems for VMS and OS/2, in which
-  errno is an "extern volatile int noshare"...
+  errno is an "extern volatile int noshare"...  NOTE: by now (2007) the
+  following is an anachronism and should be the execption rather than the
+  rule.
 */
- extern int errno;			/* Needed by most modules. */
+extern int errno;
 #endif /* __GLIBC__ */
 #endif /* OS2 */
 #endif /* VMS */
 #endif /* STRATUS */
 #endif /* _CRAY */
+
+#ifdef UNIX				/* Catch-all so we can have */
+#ifndef ESRCH				/* access to error mnemonics */
+#include <errno.h>			/* in all modules - 2007/08/25 */
+#endif	/* ESRCH */
+#endif	/* UNIX */
 
 #ifdef pdp11				/* Try to make some space on PDP-11 */
 #ifndef NODIAL
@@ -4896,6 +5010,7 @@ typedef unsigned int u_int;
   signed because so many functions return either a file size or a negative
   value to indicate an error.
 */
+#ifndef CK_OFF_T
 #ifdef OS2
 #ifdef NT
 #define CK_OFF_T __int64
@@ -4903,16 +5018,43 @@ typedef unsigned int u_int;
 #define CK_OFF_T long
 #endif  /* NT */
 #endif	/* OS2 */
+#endif	/* CK_OFF_T */
+
+/* FreeBSD and OpenBSD set off_t to the appropriate size unconditionally */
+
+#ifndef CK_OFF_T
+#ifdef __FreeBSD__
+#define CK_OFF_T off_t
+#else
+#ifdef __OpenBSD__
+#define CK_OFF_T off_t
+#endif	/* __OpenBSD__ */
+#endif	/* __FreeBSD__ */
+#endif	/* CK_OFF_T */
 
 /* 32-bit platforms that support long files thru "transitional interface" */
+/* These include Linux, Solaris, NetBSD... */
+
+#ifdef AIXRS
+#ifdef _LARGE_FILES
+#ifndef CK_OFF_T
+#define CK_OFF_T off_t
+#endif	/* CK_OFF_T */
+#endif	/* _LARGE_FILES */
+#endif	/* AIXRS */
 
 #ifdef _LARGEFILE_SOURCE
 #ifndef CK_OFF_T
 #define CK_OFF_T off_t
 #endif	/* CK_OFF_T */
+#ifdef IRIX
+#define CKFSEEK(a,b,c) fseek64(a,b,c)
+#define CKFTELL(a) ftell64(a)
+#else /* IRIX */
 #define CKFSEEK(a,b,c) fseeko(a,b,c)
 #define CKFTELL(a) ftello(a)
-#else
+#endif	/* IRIX */
+#else  /* Not  _LARGEFILE_SOURCE */
 #define CKFSEEK(a,b,c) fseek(a,b,c)
 #define CKFTELL(a) ftell(a)
 /* See below the next section for the catch-all case */
@@ -4976,7 +5118,7 @@ _PROTOTYP(VOID doxlog,(int, char *, CK_OFF_T, int, int, char *));
 #ifndef DEBUG
 /* Compile all the debug() statements away.  Saves a lot of space and time. */
 #define debug(a,b,c,d)
-#define hexdump(a,b,c)
+#define ckhexdump(a,b,c)
 /* Now define the debug() macro. */
 #else /* DEBUG */
 _PROTOTYP(int dodebug,(int,char *,char *,CK_OFF_T));
@@ -4985,21 +5127,22 @@ _PROTOTYP(int dohexdump,(CHAR *,CHAR *,int));
 /* Use this form to avoid function calls: */
 #ifdef COMMENT
 #define debug(a,b,c,d) if (deblog) dodebug(a,b,(char *)(c),(CK_OFF_T)(d))
-#define hexdump(a,b,c) if (deblog) dohexdump((CHAR *)(a),(CHAR *)(b),c)
+#define ckhexdump(a,b,c) if (deblog) dohexdump((CHAR *)(a),(CHAR *)(b),c)
 #else
 #ifdef CK_ANSIC
 #define debug(a,b,c,d) \
 ((void)(deblog?dodebug(a,b,(char *)(c),(CK_OFF_T)(d)):0))
-#define hexdump(a,b,c) ((void)(deblog?dohexdump((CHAR *)(a),(CHAR *)(b),c):0))
+#define ckhexdump(a,b,c) \
+((void)(deblog?dohexdump((CHAR *)(a),(CHAR *)(b),c):0))
 #else
 #define debug(a,b,c,d) (deblog?dodebug(a,b,(char *)(c),(CK_OFF_T)(d)):0)
-#define hexdump(a,b,c) (deblog?dohexdump((CHAR *)(a),(CHAR *)(b),c):0)
+#define ckhexdump(a,b,c) (deblog?dohexdump((CHAR *)(a),(CHAR *)(b),c):0)
 #endif /* CK_ANSIC */
 #endif /* COMMENT */
 #else /* IFDEBUG */
 /* Use this form to save space: */
 #define debug(a,b,c,d) dodebug(a,b,(char *)(c),(CK_OFF_T)(d))
-#define hexdump(a,b,c) dohexdump((CHAR *)(a),(CHAR *)(b),c)
+#define ckhexdump(a,b,c) dohexdump((CHAR *)(a),(CHAR *)(b),c)
 #endif /* IFDEBUG */
 #endif /* DEBUG */
 
@@ -5228,7 +5371,12 @@ _PROTOTYP( int zxcmd, (int, char *) );
 _PROTOTYP( int zclosf, (int) );
 #endif /* MAC */
 #ifdef NZXPAND
+#ifdef OS2
+/* [jt] 2013/11/21 - CHAR/char conflict between K95 and others */
+_PROTOTYP( int nzxpand, (CHAR *, int) );
+#else
 _PROTOTYP( int nzxpand, (char *, int) );
+#endif /* OS2 */
 #else /* NZXPAND */
 _PROTOTYP( int zxpand, (char *) );
 #endif /* NZXPAND */
@@ -5772,7 +5920,9 @@ extern int _flsbuf(char c,FILE *stream);
   and pause.  Otherwise, no prototypes.
 */
 #ifdef VMS
+#include <signal.h>  /* SMS: sleep() for old (V4.0-000) DEC C. */
 #include <unixio.h>
+#include <unixlib.h> /* SMS: getpid() for old (V4.0-000) DEC C. */
 #endif /* VMS */
 
 #ifdef NEXT
@@ -5870,6 +6020,12 @@ _PROTOTYP( long atol, (char *) );
 /* or #define NULL ((void *) 0) */
 #endif /* NULL */
 
+/* Macro to differentiate "" from NULL (to avoid comparisons with literals) */
+
+#ifndef isemptystring
+#define isemptystring(s) ((s?(*s?0:1):0))
+#endif	/* isemptystring */
+
 /* Maximum length for a fully qualified filename, not counting \0 at end. */
 /*
   This is a rough cut, and errs on the side of being too big.  We don't
@@ -5877,40 +6033,40 @@ _PROTOTYP( long atol, (char *) );
   symbols, for fear of introducing unnecessary conflicts.
 */
 #ifndef CKMAXPATH
+#ifdef VMS				/* VMS may have bad (small, ODS2) */
+#define CKMAXPATH NAMX_C_MAXRSS		/* PATH_MAX, so use NAMX_C_MAXRSS. */
+#else /* def VMS */
 #ifdef MAXPATHLEN			/* (it probably isn't) */
 #define CKMAXPATH MAXPATHLEN
 #else
 #ifdef PATH_MAX				/* POSIX */
 #define CKMAXPATH PATH_MAX
-#else
+#else /* def PATH_MAX */
 #ifdef MAC
 #define CKMAXPATH 63
-#else
+#else /* def MAC */
 #ifdef pdp11
 #define CKMAXPATH 255
-#else
+#else /* def pdp11 */
 #ifdef UNIX				/* Even though some are way less... */
 #define CKMAXPATH 1024
-#else
-#ifdef VMS
-#define CKMAXPATH 675			/* (derivation is complicated...) */
-#else
+#else /* def UNIX */
 #ifdef STRATUS
 #define CKMAXPATH 256			/* == $MXPL from PARU.H */
-#else
+#else /* def STRATUS */
 #ifdef datageneral
 #define CKMAXPATH 256			/* == $MXPL from PARU.H */
-#else
+#else /* def datageneral */
 #define CKMAXPATH 255
-#endif /* STRATUS */
-#endif /* datageneral */
-#endif /* VMS */
-#endif /* UNIX */
-#endif /* pdp11 */
-#endif /* MAC */
-#endif /* PATH_MAX */
-#endif /* MAXPATHLEN */
-#endif /* CKMAXPATH */
+#endif /* def STRATUS [else] */
+#endif /* def datageneral [else] */
+#endif /* def UNIX [else] */
+#endif /* def pdp11 [else] */
+#endif /* def MAC [else] */
+#endif /* def PATH_MAX [else] */
+#endif /* def MAXPATHLEN [else] */
+#endif /* def VMS [else] */
+#endif /* ndef CKMAXPATH */
 
 /* Maximum length for the name of a tty device */
 
@@ -6093,6 +6249,12 @@ extern int OSVer;
 #define BPRINT
 #endif /* OS2 */
 #endif /* BPRINT */
+
+#ifndef SESLIMIT
+#ifdef OS2
+#define SESLIMIT
+#endif /* OS2 */
+#endif /* SESLIMIT */
 
 #ifndef NOTERM
 #ifndef PCTERM
@@ -6356,8 +6518,12 @@ struct keytab {				/* Keyword table */
 };
 #endif /* CK_KEYTAB */
 
+#ifdef UNIX
+_PROTOTYP( int isalink, (char *));
+#endif	/* UNIX */
+
 #ifdef NETPTY
-_PROTOTYP( int do_pty, (char *));
+_PROTOTYP( int do_pty, (int *, char *, int));
 _PROTOTYP( VOID end_pty, (void));
 #endif /* NETPTY */
 
@@ -6387,6 +6553,17 @@ _PROTOTYP( int le_getchar, (CHAR *));
 #endif /* VMS */
 #endif /* CMDATE2TM */
 #endif /* NOCMDATE2TM */
+
+#ifndef NOLOCALE
+#ifdef BSD44ORPOSIX
+#ifndef NO_NL_LANGINFO
+#ifndef HAVE_LOCALE
+#define HAVE_LOCALE
+#include <locale.h>
+#endif /* HAVE_LOCALE */
+#endif /* NO_NL_LANGINFO */
+#endif /* BSD44ORPOSIX */
+#endif /* NOLOCALE */
 
 #ifdef CMDATE2TM
 _PROTOTYP( struct tm * cmdate2tm, (char *,int));

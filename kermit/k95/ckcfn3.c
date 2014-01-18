@@ -6,7 +6,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2010,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -1860,7 +1860,7 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
     /* Check space now, because we also need to know the file type */
     /* in case zchkspa() differentiates text and binary (VMS version does) */
 
-    if (atleni) {			/* Length attribute enabled? */
+    if (atleni && !calibrate) {		/* Length attribute enabled? */
 	if (yy->length > (CK_OFF_T)-1) { /* Length-in-bytes attribute rec'd? */
 	    if (!zchkspa(ff,(yy->length))) { /* Check space */
 		retcode = -1;		     /* Not enuf */

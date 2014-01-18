@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2005,
+  Copyright (C) 1985, 2013,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -367,7 +367,8 @@ struct stringint {			/* String and (wide) integer */
 #define XA_CHGD  47                     /* GUI Change Dimensions */
 #define XA_NOCLOSE 48                   /* GUI Disable Close Window */
 #define XA_UNBUF 49			/* UNIX unbuffered console */
-#define XA_MAX  49			/* Highest extended option number */
+#define XA_NOLOCALE 50			/* Don't access or use locale */
+#define XA_MAX  50			/* Highest extended option number */
 #endif /* NOCMDL */
 
 #ifndef NOICP
@@ -425,6 +426,11 @@ struct stringint {			/* String and (wide) integer */
 #define DIR_LNK 38	/* follow symlinks */
 #define DIR_NLK 39	/* don't follow symlinks */
 #define DIR_OUT 40	/* Output file for listing */
+#define DIR_TOP 41	/* Top n lines */
+#define DIR_COU 42	/* COUNT:var */
+#define DIR_NOL 43	/* NOLINKS (don't show symlinks at at all) */
+#define DIR_MOD 44	/* Set modification time (used only by TOUCH) */
+#define DIR_SIM 45	/* /SIMULATE (for TOUCH) */
 
 #define DIRS_NM 0       /* Sort directory by NAME */
 #define DIRS_DT 1       /* Sort directory by DATE */
@@ -758,6 +764,13 @@ struct stringint {			/* String and (wide) integer */
 #define XXNSCR  261	/* NOSCROLL */
 #define XXSFTP  262	/* SFTP */
 #define XXSKRM  263	/* SKERMIT */
+#define XXWDIR  264	/* WDIRECTORY */
+#define XXHDIR  265	/* HDIRECTORY */
+#define XXTOUC  266	/* TOUCH */
+#define XXLOCU  267	/* LOCUS (for HELP) */
+#define XXPUTE  268     /* PUTENV */
+#define XXXMSG  269     /* XMESSAGE */
+#define XXCHG   270     /* CHANGE */
 
 /* End of Top-Level Commands */
 
@@ -842,6 +855,15 @@ struct stringint {			/* String and (wide) integer */
 #define DEL_TYP 24			/* /TYPE: */
 #define DEL_LNK 25			/* /FOLLOWLINKS */
 #define DEL_NLK 26			/* /NOFOLLOWLINKS */
+
+/* RENAME switches that can be used in the same table as the DEL switches */
+
+#define REN_LOW 100			/* Convert to lowercase */
+#define REN_UPP 101			/* Converto to uppercase */
+#define REN_RPL 102			/* String replacement */
+#define REN_OVW 103			/* Overwrite file with same name */
+#define REN_XLA 104			/* Translate character sets */
+#define REN_SPA 105			/* Fix spaces */
 
 /* FILE operations */
 
@@ -1454,7 +1476,7 @@ struct stringint {			/* String and (wide) integer */
 #define XYPRIN 62	/* Print-Command */
 #define XYQUIE 63	/* Quiet */
 #define XYLCLE 64	/* Local-echo */
-#define XYSCRI 65	/* SCRIPT command paramaters */
+#define XYSCRI 65	/* SCRIPT command parameters */
 #define XYMSGS 66       /* MESSAGEs ON/OFF */
 #ifdef TNCODE
 #define XYTEL  67	/* SET TELNET parameters */
@@ -1728,6 +1750,10 @@ struct stringint {			/* String and (wide) integer */
 #define XYANSWER 131    /* SET ANSWER */
 #define XYMATCH  132    /* SET MATCHDOT */
 #define XYSFTP   133    /* SET SFTP */
+#define XY_REN   134    /* SET RENAME */
+#define XYEXTRN  135    /* SET EXTERNAL-PROTOCOL */
+#define XYVAREV  136    /* SET VARIABLE-EVALUATION */
+#define XYLOCALE 137    /* SET LOCALE */
 
 /* End of SET commands */
 
@@ -1975,7 +2001,9 @@ struct stringint {			/* String and (wide) integer */
 #define SHSEXP    68			/* SHOW SEXPRESSIONS */
 #define SHOSSH    69			/* SHOW SSH */
 #define SHOIKS    70                    /* SHOW IKS */
-#define SHOGUI    71			/* SHOW RGB */
+#define SHOGUI    71			/* SHOW GUI (K95) */
+#define SHOREN    72			/* SHOW RENAME */
+#define SHOLOC    73			/* SHOW LOCALE */
 
 /* REMOTE command symbols */
 
@@ -2367,6 +2395,15 @@ struct stringint {			/* String and (wide) integer */
 #define VN_ISCALE   246			/* INPUT scale factor */
 #define VN_BITS     247			/* Bits of this build (16, 32, 64) */
 #define VN_LASTFIL  248			/* Last input filespec */
+#define VN_LASTKWV  249			/* Last \fkeywordvalue() keyword */
+#define VN_DMSG     250			/* Msg corresponding to dialstatus */
+#define VN_HOSTIP   251			/* IP address of remote host */
+#define VN_INPMSG   252			/* Msg corresponding to instatus */
+#define VN_VAREVAL  253			/* SET VARIABLE-EVALUATION setting */
+#define VN_PREVCMD  254			/* Previous command */
+#define VN_YEAR     255			/* This year */
+#define VN_MONTH    256			/* This month (name) */
+#define VN_NMONTH   257			/* This month (numeric) */
 #endif /* NOSPL */
 
 /* INPUT status values */
@@ -2384,6 +2421,7 @@ struct stringint {			/* String and (wide) integer */
 #define INPSW_NOM 1			/* /NOMATCH */
 #define INPSW_CLR 2			/* /CLEAR */
 #define INPSW_NOW 4			/* /NOWRAP */
+#define INPSW_COU 8			/* /COUNT */
 
 #ifndef NOSPL
 /* Symbols for builtin functions */
@@ -2556,6 +2594,19 @@ struct stringint {			/* String and (wide) integer */
 #define FN_UNTAB   156			/* \funtabify() */
 #define FN_LOPX    157			/* \flopx() */
 #define FN_EMAIL   158			/* \femailaddress() */
+#define FN_PICTURE 159			/* \fpictureinfo() */
+#define FN_PID     160			/* \fpidinfo() */
+#define FN_COUNT   161			/* \fcount() */
+#define FN_FUNC    162			/* \ffunction() */
+#define FN_RECURSE 163			/* \frecurse() */
+#define FN_SQUEEZE 164			/* \fsqueeze() */
+#define FN_UNPCT   165			/* \fdecodehex() */
+#define FN_STRINGT 166			/* \fstringtype() */
+#define FN_STRCMP  167			/* \fstrcmp() */
+#define FN_FILEINF 168			/* File information */
+#define FN_FILECMP 169			/* File compare */
+#define FN_DAYNAME 170			/* Day name according to locale */
+#define FN_MONNAME 171			/* Month name according to locale */
 
 #endif /* NOSPL */
 
@@ -2708,6 +2759,14 @@ struct stringint {			/* String and (wide) integer */
 
 /* ANSI-C prototypes for user interface functions */
 
+#ifdef UNIX
+_PROTOTYP( int doputenv, ( char *, char * ) );
+#endif	/* UNIX */
+
+#ifndef OS2
+_PROTOTYP( int chkaes, ( char, int ) );
+#endif /* OS2 */
+
 #ifndef NOICP
 _PROTOTYP( int matchname, ( char *, int, int ) );
 _PROTOTYP( int ck_cls, ( void ) );
@@ -2728,6 +2787,7 @@ _PROTOTYP( char * nvlook, (char *) );
 _PROTOTYP( int xarray, (char *) );
 _PROTOTYP( int arraynam, (char *, int *, int *) );
 _PROTOTYP( int arraybounds, (char *, int *, int *) );
+_PROTOTYP( int boundspair, (char *, char *, int *, int *, char *) );
 _PROTOTYP( int arrayitoa, (int) );
 _PROTOTYP( int arrayatoi, (int) );
 _PROTOTYP( char * bldlen, (char *, char *) );
@@ -2754,7 +2814,7 @@ _PROTOTYP( int dohlp, (int) );
 _PROTOTYP (int doincr, (int) );
 _PROTOTYP( int dohrmt, (int) );
 _PROTOTYP( int doif, (int) );
-_PROTOTYP( int doinput, (int, char *[], int[], int) );
+_PROTOTYP( int doinput, (int, char *[], int[], int, int) );
 _PROTOTYP( int doreinp, (int, char *, int) );
 _PROTOTYP( int dolog, (int) );
 _PROTOTYP( int dologin, (char *) );
@@ -2808,7 +2868,10 @@ _PROTOTYP( int setmodem, (void) );
 _PROTOTYP( int setfil, (int) );
 _PROTOTYP( char * homepath, (void) );
 #ifdef OS2
+#ifdef COMMENT
+/* [jt] 2013/11/21 - static/non-static issue */
 _PROTOTYP( int settapi, (void) ) ;
+#endif /* COMMENT */
 #ifdef OS2MOUSE
 _PROTOTYP( int setmou, (void) );
 #endif /* OS2MOUSE */

@@ -1,10 +1,6 @@
-KERMIT 95 OPEN SOURCE LICENSE
+THE C-KERMIT 9.0 LICENSE
 
-  Sat Oct 19 09:58:54 2013
-
-Copyright (C) 1985, 2013,
-  The Trustees of Columbia University in the City of New York.
-  All rights reserved.
+Fri Jun 24 14:43:35 2011
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions

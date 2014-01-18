@@ -1,24 +1,26 @@
-#define EDITDATE  "21 Nov 2013"		/* Update these with each edit */
-#define EDITNDATE "20131123"		/* Keep them in sync */
-/* Wed Oct 23 19:14:00 2013 */
+#define EDITDATE  "6 Dec 2013"		/* Last edit date dd mmm yyyy */
+#define EDITNDATE "20131206"		/* Keep them in sync */
+/* Fri Dec  6 10:46:18 2013 */
+
+/* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
 /*
   ckcsym.h is used for for defining symbols that normally would be defined
   using -D or -d on the cc command line, for use with compilers that don't
-  support this feature.  Must be before any tests for preprocessor symbols.
+  support this feature.  Must come before any tests for preprocessor symbols.
 */
 #include "ckcsym.h"
 /*
-  Consolidated program version information (for UNIX also see ckuver.h).
-  See makever() below for how they are used.
+  Consolidated program C-Kermit version information for all platforms
+  (but for UNIX also see ckuver.h).  See makever() below for how they are used.
 */
-/* #ifdef COMMENT */                    /* Uncomment this for test version */
-#ifndef OS2
-#ifndef BETATEST
-#define BETATEST
+#ifdef COMMENT                    /* Uncomment this for real K95 version */
+#ifndef OS2				/* OS2 actually means Kermit 95. */
+#ifndef BETATEST			/* It's because Kermit 95 started */
+#define BETATEST			/* out as C-Kermit for OS/2. */
 #endif /* BETATEST */
 #endif /* OS2 */
-/* #endif */ /* COMMENT */
+#endif /* COMMENT */
 
 #ifdef BETATEST
 #ifdef OS2
@@ -28,26 +30,29 @@
 #endif /* OS2 */
 #endif /* BETATEST */
 
-#ifndef MAC
+char * ck_cryear = "2013"; 		/* C-Kermit copyright year */
+
+#ifndef MAC				/* MAC = Kermit for MAC OS 6, 7, ... */
 /*
   Note: initialize ck_s_test to "" if this is not a test version.
   Use (*ck_s_test != '\0') to decide whether to print test-related messages.
 */
+
 #ifndef BETATEST
 #ifndef OS2                             /* UNIX, VMS, etc... (i.e. C-Kermit) */
-char *ck_s_test = "";			/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "";			/* Test version number or "" */
+char *ck_s_test = "Dev";		/* "Dev","Alpha","Beta","RC", or "" */
+char *ck_s_tver = "08";			/* Test version number or "" */
 #else  /* OS2 */
 char *ck_s_test = "";			/* (i.e. K95) */
 char *ck_s_tver = "";
 #endif /* OS2 */
 #else
-char *ck_s_test = "Dev";		/* Development */
-char *ck_s_tver = "-";
+char *ck_s_test = "";			/* Development */
+char *ck_s_tver = "";
 #endif /* BETATEST */
 #else /* MAC */
 char *ck_s_test = "Pre-Alpha";          /* Mac Kermit is always a test... */
-char *ck_s_tver = "";
+char *ck_s_tver = "";			/* (pre Mac OS X 10, that is!) */
 #endif /* MAC */
 
 #ifdef BETADATE                         /* Date of this version or edit */
@@ -59,15 +64,29 @@ char *ck_s_date = EDITDATE;		/* See top */
 char *buildid = EDITNDATE;		/* See top */
 
 #ifdef UNIX
-static char sccsid[] = "@(#)C-Kermit 8.0.212";
+static char sccsid[] = "@(#)C-Kermit 9.0.304";
 #endif /* UNIX */
 
-char *ck_s_ver = "8.0.212";             /* C-Kermit version string */
-long  ck_l_ver =  800212L;              /* C-Kermit version number */
+/*
+  The C-Kermit Version number is major.minor.edit (integers).
+  Major version always goes up.
+  Minor version is historical, hasn't been used since C-Kermit 7.1.
+  Edit is sequential, always goes up, but there can be gaps.
+  For example there might be many edits between releases.
+  If the major goes to 10, some version-number-based feature tests
+  could fail.  It might be better to use the minor version field
+  for future releases.
+*/
+
+char *ck_s_ver = "9.0.304";             /* C-Kermit version string */
+long  ck_l_ver =  900304L;              /* C-Kermit version number */
 
 #ifdef OS2
+#ifdef COMMENT
+/* New Open Source C-Kermit for Windows is just C-Kermit */
 char *ck_s_xver = "3.0.0";		/* Product-specific version string */
 long  ck_l_xver = 3000L;                /* Product-specific version number */
+#endif /* COMMENT */
 #else
 #ifdef MAC
 char *ck_s_xver = "0.995";              /* Product-specific version string */
@@ -86,7 +105,11 @@ char *ck_s_name = "IKS-NT";
 char *ck_s_name = "IKS-OS/2";
 #endif /* NT */
 #else /* IKSDONLY */
-char *ck_s_name = "Kermit";          /* Program name */
+#ifdef COMMENT
+char *ck_s_name = "Kermit 95";          /* Proprietary program name */
+#else
+char *ck_s_name = "C-Kermit";		/* Open Source program name */
+#endif /* COMMENT */
 #endif /* IKSDONLY */
 #else
 #ifdef MAC
@@ -109,22 +132,35 @@ long vernum, xvernum;                   /* runtime from above.    */
 #include "ckcasc.h"                     /* ASCII character symbols */
 #include "ckcdeb.h"                     /* Debug & other symbols */
 
-char * myname = NULL;                   /* The name I am called by */
+char * myname = NULL;                   /* Name this program is called by */
 #ifndef OS2
 char * exedir = NULL;                   /* Directory I was executed from */
 #endif /* OS2 */
-char * myhome = NULL;			/* Home directory override */
+
+char homedirpath[CKMAXPATH+1] = { NUL, NUL }; /* Home directory path */
+char * myhome = NULL;			/* Home directory override string */
 
 /*  C K C M A I  --  C-Kermit Main program  */
 
 /*
-  Author: Frank da Cruz (fdc@columbia.edu),
-  Columbia University Academic Information Systems, New York City.
-  Computer Center / Center for Computing Activities / Information Technology.
-  I am no longer at Columbia U as of 1 July 2011, but the email address
-  should still work.  The Kermit website http://kermit.columbia.edu should
-  still be available and under my control, as well as the Kermit FTP site,
-  ftp://kermit.columbia.edu/kermit/.
+  Principal Author: Frank da Cruz
+  fdc@kermitproject.org OR fdc@columbia.edu.
+
+  I am no longer at Columbia University as of 1 July 2011.
+  As of September 29, 2011, the new Open Source Kermit Project website
+  is the  definitive source for Kermit software created or updated since
+  that date:
+
+  http://www.kermitproject.org .
+
+  The associated FTP site is:
+
+  ftp://ftp.kermitproject.org/
+
+  Note that Columbia University holds the copyright to this software in
+  perpetuity, but as of C-Kermit 9.0 the license has changed from the
+  previous somewhat restrictive one to the Open Source Modified Berkeley
+  3-clause license, text just below.
 
 COPYRIGHT NOTICE:
 */
@@ -185,9 +221,17 @@ char *copyright[] = {
 "Portions Copyright (C) 1997, Stanford University.",
 #endif /* CK_SRP */
 #endif /* CK_AUTHENTICATION */
+
+#ifndef pdp11
+" ",
+"For further information, visit the Kermit Project website:",
+"http://www.kermitproject.org/ .",
+#endif /* pdp11 */
 ""};
 
-char * wiksdcpr = copyright;
+/* Windows IKSD copyright used to be separate */
+char *wiksdcpr = (char *) copyright;
+
 
 /*
 DOCUMENTATION:
@@ -207,9 +251,10 @@ ACKNOWLEDGMENTS:
 
   The Kermit file transfer protocol was developed at the Columbia University
   Center for Computing Activities (CUCCA), which was since renamed to Columbia
-  University Academic Information Systems (AcIS).  Kermit is named after
-  Kermit the Frog, star of the television series THE MUPPET SHOW; the name is
-  used by permission of Henson Associates, Inc.
+  University Academic Information Systems (AcIS) and after that Columbia
+  University Information Technology (CUIT).  Kermit is named after Kermit the
+  Frog, star of the television series THE MUPPET SHOW; the name is used by
+  permission of Henson Associates, Inc.
 
   Thanks to at least the following people for their contributions to this
   program over the years, and apologies to anyone who was inadvertantly
@@ -219,7 +264,7 @@ ACKNOWLEDGMENTS:
    Robert Adsett, University of Waterloo, Canada
    Larry Afrin, Clemson U
    Russ Allbery, Stanford U
-   Jeffrey Altman, Columbia University
+   Jeffrey Altman, (formerly of) Columbia University
    Greg Andrews, Telebit Corp
    Barry Archer, U of Missouri
    Robert Andersson, International Systems A/S, Oslo, Norway
@@ -229,6 +274,7 @@ ACKNOWLEDGMENTS:
    Stan Barber, Rice U
    Jim Barbour, U of Colorado
    Donn Baumgartner, Dell
+   Ian Beckwith, Debian Project
    Nelson Beebe, U of Utah
    Gerry Belanger, Cognitronics
    Karl Berry, UMB
@@ -237,10 +283,12 @@ ACKNOWLEDGMENTS:
    Gary Bilkus
    Peter Binderup, Denmark
    David Bolen, Advanced Networks and Services, Inc.
+   Joop Bonen
    Marc Boucher, U of Montreal
    Charles Brooks, EDN
    Bob Brown
    Mike Brown, Purdue U
+   Rob Brown
    Jack Bryans, California State U at Long Beach
    Mark Buda, DEC (VMS)
    Fernando Cabral, Padrao iX, Brasilia
@@ -256,6 +304,7 @@ ACKNOWLEDGMENTS:
    Howard Chu, U of Michigan
    Bill Coalson, McDonnell Douglas
    Bertie Coopersmith, London
+   Christian Corti
    Chet Creider, U of Western Ontario
    Alan Crosswell, Columbia U
    Jeff Damens, (formerly of) Columbia U
@@ -278,11 +327,14 @@ ACKNOWLEDGMENTS:
    Herm Fischer, Encino, CA (extensive contributions to version 4.0)
    Carl Fongheiser, CWRU
    Mike Freeman, Bonneville Power Authority
+   Carl Friedberg
+   Adam Frielander
    Marcello Frutig, Catholic University, Sao Paulo, Brazil (X.25 support)
    Hirofumi Fujii, Japan Nat'l Lab for High Energy Physics, Tokyo (Kanji)
    Chuck Fuller, Westinghouse Corporate Computer Services
    Andy Fyfe, Caltech
    Christine M. Gianone, Columbia U
+   David Goodwin, NZ,
    John Gilmore, UC Berkeley
    Madhusudan Giyyarpuram, HP
    Rainer Glaschick, Siemens AG, Paderborn
@@ -347,6 +399,7 @@ ACKNOWLEDGMENTS:
    Douglas Kingston, morgan.com
    Lawrence Kirby, Wiltshire, UK
    Tom Kloos, Sequent Computer Systems
+   Guenter Knauf
    Jim Knutson, U of Texas at Austin
    John T. Kohl (BSDI)
    Scott Kramer, SRI International, Menlo Park, CA
@@ -361,6 +414,7 @@ ACKNOWLEDGMENTS:
    Bert Laverman, Groningen U, Netherlands
    Steve Layton
    David Lawyer, UC Irvine
+   Jason Lehr
    David LeVine, National Semiconductor Corporation
    Daniel S. Lewart, UIUC
    S.O. Lidie, Lehigh U
@@ -372,6 +426,7 @@ ACKNOWLEDGMENTS:
    Kevin Lowey, U of Saskatchewan (OS/2)
    Andy Lowry, Columbia U
    James Lummel, Caprica Telecomputing Resources (QNX)
+   Lewis McCarthy
    David MacKenzie, Environmental Defense Fund, U of Maryland
    John Mackin, University of Sidney, Australia
    Martin Maclaren, Bath U, UK
@@ -385,6 +440,7 @@ ACKNOWLEDGMENTS:
    Hellmuth Michaelis, Hanseatischer Computerservice GmbH, Hamburg, Germany
    Leslie Mikesell, American Farm Bureau
    Todd Miller, Courtesan Consulting
+   Gary Mills
    Martin Minow, DEC (VMS)
    Pawan Misra, Bellcore
    Ken Mizialko, IBM, Manassas, VA
@@ -416,6 +472,7 @@ ACKNOWLEDGMENTS:
    Tony Querubin, U of Hawaii
    Jean-Pierre Radley
    Anton Rang
+   Mike Rechtman
    Scott Ribe
    Alan Robiette, Oxford University, UK
    Michel Robitaille, U of Montreal (Mac)
@@ -436,17 +493,22 @@ ACKNOWLEDGMENTS:
    Dan Schullman, DEC (modems, DIAL command, etc)
    John Schultz, 3M
    Steven Schultz, Contel (PDP-11)
+   Steven Schweda
    APPP Scorer, Leeds Polytechnic, UK
    Gordon Scott, Micro Focus, Newbury UK
    Gisbert W. Selke, WIdO, Bonn, Germany
+   Kijal Shah
    David Singer, IBM Almaden Research Labs
    David Sizeland, U of London Medical School
+   Bruce Skelly
    Fridrik Skulason, Iceland
    Rick Sladkey (Linux)
    Dave Slate
    Bradley Smith, UCLA
+   Eric Smith
    Fred Smith, Merk / Computrition
    Richard S Smith, Cal State
+   Tim Sneddon
    Ryan Stanisfer, UNT
    Bertil Stenstroem, Stockholm University Computer Centre (QZ), Sweden
    James Sturdevant, CAP GEMENI AMERICA, Minneapolis
@@ -454,7 +516,9 @@ ACKNOWLEDGMENTS:
    James R. Swenson, Accu-Weather, Inc.
    Ted T'so, MIT (Linux)
    Andy Tanenbaum, Vrije U, Amsterdam, Netherlands
+   Seth Theriault, Columbia U
    Glen Thobe
+   Jake Thompson
    Markku Toijala, Helsinki U of Technology
    Teemu Torma, Helsinki U of Technology
    Linus Torvalds, Helsinki
@@ -472,11 +536,13 @@ ACKNOWLEDGMENTS:
    Paul Vixie, DEC
    Bernie Volz, Process Software
    Eduard Vopicka, Prague University of Economics, Czech Republic
+   Martin Vorlaender
    Dimitri Vulis, CUNY
    Roger Wallace, Raytheon
    Stephen Walton, Calif State U, Northridge (Amiga)
    Jamie Watson, Adasoft, Switzerland (AIX)
    Rick Watson, U of Texas (Macintosh)
+   Eric Weaver, Columbia U
    Scott Weikart (Association for Progressive Communications)
    Robert Weiner, Programming Plus, New York City
    Lauren Weinstein, Vortex Technlogy
@@ -490,6 +556,7 @@ ACKNOWLEDGMENTS:
    Joellen Windsor, U of Arizona
    Patrick Wolfe, Kuck & Associates, Inc.
    Gregg Wonderly, Oklahoma State U (V7 UNIX)
+   Lawrence Woodman
    Farrell Woods, Concurrent (formerly Masscomp)
    Dave Woolley, CAP Communication Systems, London
    Jack Woolley, SCT Corp
@@ -694,6 +761,7 @@ int spsiz = DSPSIZ,                     /* Current packet size to send */
     bctr = DFBCT,                       /* Block check type requested */
     bctu = 1,                           /* Block check type used */
     bctl = 1,                           /* Block check length */
+    bctf = 0,				/* Block check type 3 forced on all */
     c_save = -1,                        /* Block check saving and restoring */
     ss_save = -1,                       /* Slow-start saving and restoring */
     ebq =  MYEBQ,                       /* 8th bit prefix */
@@ -718,6 +786,8 @@ int xfrxla = 0;                         /* Character-set translation */
 #else
 int xfrxla = 1;                         /* enabled or disabled */
 #endif /* NOCSETS */
+
+int havelfs = 0;			/* Large file support available */
 
 #ifndef NOXFER
 int epktflg = 0;                        /* E-PACKET command active */
@@ -759,6 +829,12 @@ int atenci = 1,                         /* Encoding in */
     atsyso = 1;
 
 int dispos = 0;                         /* Disposition */
+
+#ifdef HAVE_LOCALE
+int nolocale = 0;
+#else
+int nolocale = 1;
+#endif /* HAVE_LOCALE */
 
 #ifdef CK_PERMS
 int atlpri = 1,
@@ -1255,6 +1331,7 @@ int deblog = 0,                         /* Debug log is open */
     debxlen = 54,                       /* Default length for debug strings */
     debses = 0,                         /* Flag for DEBUG SESSION */
     debtim = 0,                         /* Include timestamp in debug log */
+    debmsg = 0,                         /* Debug messages on/off */
     pktlog = 0,                         /* Flag for packet logging */
     seslog = 0,                         /* Session logging */
     dialog = 0,                         /* DIAL logging */
@@ -1523,6 +1600,10 @@ int zobufsize = OBUFSIZE;
 int zofbuffer = 1;
 int zofblock  = 1;
 
+#ifdef SESLIMIT
+int seslimit = 0;
+#endif /* SESLIMIT */
+
 #ifdef CK_AUTHENTICATION
 #include "ckuath.h"
 #endif /* CK_AUTHENTICATION */
@@ -1541,6 +1622,12 @@ ckjmpbuf cmjbuf;
 cc_clean();                             /* This can't be right? */
 #endif /* GEMDOS */
 #endif /* NOCCTRAP */
+
+#ifdef TIMEH
+/* This had to be added for NetBSD 6.1 - it might have "effects" elsewhere */
+/* Tue Sep  3 17:03:42 2013 */
+#include <time.h>
+#endif /* TIMEH */
 
 #ifndef NOXFER
 /* Info associated with a system ID */
@@ -1596,6 +1683,8 @@ getsysix(s) char *s; {                  /* Get system-type index */
 
 /* Tell if a pathname is absolute (versus relative) */
 /* This should be parceled out to each of the ck*fio.c modules... */
+/* VMS isabsolute() is now in ckvfio.c. */
+#ifndef VMS
 int
 isabsolute(path) char * path; {
     int rc = 0;
@@ -1606,21 +1695,6 @@ isabsolute(path) char * path; {
       return(0);
     x = (int) strlen(path);
     debug(F111,"isabsolute",path,x);
-#ifdef VMS
-    rc = 0;
-    x = ckindex("[",path,0,0,0);        /* 1-based */
-    if (!x)
-       x = ckindex("<",path,0,0,0);
-    debug(F111,"isabsolute left bracket",path,x);
-    if (!x) {
-        x = ckindex(":",path,-1,1,1);
-        if (x)
-          debug(F111,"isabsolute logical",path,x);
-    }
-    if (x > 0)
-      if (path[x] != '.')               /* 0-based */
-        rc = 1;
-#else
 #ifdef UNIX
     if (*path == '/'
 #ifdef DTILDE
@@ -1628,14 +1702,14 @@ isabsolute(path) char * path; {
 #endif /* DTILDE */
         )
       rc = 1;
-#else
+#else /* def UNIX */
 #ifdef OS2
     if (*path == '/' || *path == '\\')
       rc = 1;
     else if (isalpha(*path) && x > 2)
       if (*(path+1) == ':' && (*(path +2) == '/' || *(path+2) == '\\'))
         rc = 1;
-#else
+#else /* def OS2 */
 #ifdef AMIGA
     if (*path == '/'
 #ifdef DTILDE
@@ -1643,7 +1717,7 @@ isabsolute(path) char * path; {
 #endif /* DTILDE */
         )
       rc = 1;
-#else
+#else /* def AMIGA */
 #ifdef OSK
     if (*path == '/'
 #ifdef DTILDE
@@ -1651,17 +1725,17 @@ isabsolute(path) char * path; {
 #endif /* DTILDE */
         )
       rc = 1;
-#else
+#else /* def OSK */
 #ifdef datageneral
     if (*path == ':')
       rc = 1;
-#else
+#else /* def datageneral */
 #ifdef MAC
     rc = 0;                             /* Fill in later... */
-#else
+#else /* def MAC */
 #ifdef STRATUS
     rc = 0;                             /* Fill in later... */
-#else
+#else /* def STRATUS */
 #ifdef GEMDOS
     if (*path == '/' || *path == '\\')
       rc = 1;
@@ -1676,10 +1750,10 @@ isabsolute(path) char * path; {
 #endif /* AMIGA */
 #endif /* OS2 */
 #endif /* UNIX */
-#endif /* VMS */
     debug(F101,"isabsolute rc","",rc);
     return(rc);
 }
+#endif /* ndef VMS */
 
 /*  See if I have direct access to the keyboard  */
 
@@ -2563,6 +2637,7 @@ setprefix(z) int z; {                   /* Initial control-char prefixing */
 VOID
 makever() {                             /* Make version string from pieces */
     int x, y;
+    char * s;
 #ifndef OS2
 #ifndef MAC
     ck_s_xver = ck_s_ver;               /* Fill in C-Kermit version number */
@@ -2577,6 +2652,14 @@ makever() {                             /* Make version string from pieces */
         ckstrncpy(versio,"C-Kermit",CKVERLEN);
         return;
     }
+    x += y + 1;
+  
+    s = " OPEN SOURCE:";		/* C-Kermit 9.0 and later */
+    y = strlen(s);
+    if (CKVERLEN < x + y + 1)
+      return;
+    ckstrncat(versio,s,CKVERLEN);
+
     x += y + 1;
     if (*ck_s_who) {
         y = strlen(ck_s_who);
@@ -2887,6 +2970,13 @@ main(argc,argv) int argc; char **argv;
 
 /* Do some initialization */
 
+#ifdef VMS
+#ifdef __DECC
+    /* Get some RMS default settings. */
+    get_rms_defaults();
+#endif /* def __DECC */
+#endif /* def VMS */
+
 #ifndef MAC
     xargc = xargs = argc;               /* Make global copies of argc */
     xargv = argv;                       /* ...and argv. */
@@ -2959,12 +3049,20 @@ main(argc,argv) int argc; char **argv;
         byteorder = 0;                  /* Big Endian */
         bigendian = 1;
     }
+    if (sizeof(CK_OFF_T) == 8)		/* Large files and ints? */
+      havelfs = 1;
+
     if (sysinit() < 0)                  /* System-dependent initialization. */
       fatal("Can't initialize!");
     else
       initflg = 1;                      /* Remember we did. */
     debug(F111,"ckcmai myname",myname,howcalled);
-
+    {					/* Get home directory path */
+	char *h;
+        _PROTOTYP( char * homedir, (void) );
+	h = homepath();
+	if (h) ckstrncpy(homedirpath,h,CKMAXPATH);
+    }
 #ifdef UNIX
     getexedir();                        /* Compute exedir variable */
 #endif /* UNIX */
@@ -3403,12 +3501,37 @@ main(argc,argv) int argc; char **argv;
         argc > 1) {                     /* Command line arguments? */
         sstate = (CHAR) cmdlin();       /* Yes, parse. */
 #ifdef NETCONN
+
+#ifdef COMMENT
+#ifdef HAVE_LOCALE
+	if (nolocale) {		      /* Handle command-line --nolocale opt */
+	    /*
+	      Set LC_* environment variables.  setlocale() does not seem to
+	      have any effect at all, hence the contortions.  Note: putenv()
+	      strings have to be static.
+	    */
+	    debug(F100,"--nolocale: disabling locale","",0);
+	    /* if (putenv(lc_all)) perror(lc_all); */
+#ifdef COMMENT
+	    /* These turn out not to be necessary if LC_ALL is set this way */
+	    if (putenv(lc_time)) perror(lc_time);
+	    if (putenv(lc_messages)) perror(lc_messages);
+	    if (putenv(lc_ctype)) perror(lc_ctype);
+	    if (putenv(lc_collate)) perror(lc_collate);
+	    if (putenv(lc_monetary)) perror(lc_monetary);
+	    if (putenv(lc_numeric)) perror(lc_numeric);
+#endif /* COMMENT */
+	}	
+#endif /* COMMENT */
+#endif /* HAVE_LOCALE */
+
 #ifndef NOURL
         if (haveurl) {                  /* Was a URL given? */
             dourl();                    /* if so, do it. */
         }
 #endif /* NOURL */
 #endif /* NETCONN */
+
 #ifndef NOXFER
         zstate = sstate;                /* Remember sstate around protocol */
         debug(F101,"main zstate","",zstate);
@@ -3472,13 +3595,28 @@ main(argc,argv) int argc; char **argv;
         fatal("?No command-line options given - type 'kermit -h' for help");
     }
 #else                                   /* Neither one! */
-        sstate = 'x';
-        justone = 0;
-        proto();                        /* So go into server mode */
-        doexit(GOOD_EXIT,xitsta);       /* exit with good status */
+    sstate = 'x';
+    justone = 0;
+    proto();				/* So go into server mode */
+    doexit(GOOD_EXIT,xitsta);		/* exit with good status */
 
 #endif /* NOCMDL */
 #else /* not NOICP */
+#ifdef HAVE_LOCALE
+    if (!nolocale) {	
+	/* Can also disable locale processing by setting K_NOLOCALE=1 */
+	char *s = getenv("K_NOLOCALE");	/* environment variable */
+	if (s)
+	  if (rdigits(s))
+	    if (atoi(s) != 0) {
+		nolocale = 1;
+	    }
+	if (!nolocale) {		/* Locale not disabled */
+	    /* this should be done in only one place */
+	    setlocale(LC_ALL, "");	/* Enable using non-C locales */
+	}
+    }
+#endif /* HAVE_LOCALE */
 /*
   If no action requested on command line, or if -S ("stay") was included,
   enter the interactive command parser.

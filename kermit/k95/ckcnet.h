@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2005,
+  Copyright (C) 1985, 2009,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -200,6 +200,11 @@ _PROTOTYP( int netinc, (int) );
 _PROTOTYP( int netxin, (int, CHAR *) );
 _PROTOTYP( int nettol, (CHAR *, int) );
 _PROTOTYP( int nettoc, (CHAR) );
+#ifdef TCPSOCKET
+_PROTOTYP( int gettcpport, (void) );
+_PROTOTYP( int gettcpport, (void) );
+#endif	/* TCPSOCKET */
+
 /*
   SunLink X.25 support by Marcello Frutig, Catholic University,
   Rio de Janeiro, Brazil, 1990.
@@ -738,6 +743,16 @@ _PROTOTYP( int x25local_nua, (char *) ); /* find local NUA */
 #endif /* bcopy */
 #endif /* VMS */
 
+#ifdef HPUX6
+/* These are missing in HP-UX 6.xx */
+#ifndef bzero
+#define bzero(s,n) memset(s,0,n)
+#endif /* bzero */
+#ifndef bcopy
+#define bcopy(h,a,l) memcpy(a,h,l)
+#endif /* bcopy */
+#endif /* HPUX6 */
+
 #ifdef UNIX                             /* UNIX section */
 
 #ifdef SVR4
@@ -984,6 +999,9 @@ typedef unsigned int u_int;
 #endif /* IF_DOT_H */
 
 #include <in.h>
+#ifdef VMS
+#include <inet.h>			/* (SMS 2007/02/15) */
+#endif	/* VMS */
 #include <netdb.h>
 #include <socket.h>
 #include "ckvioc.h"
@@ -1168,6 +1186,21 @@ typedef char * caddr_t; /* core address type */
 #endif /* VMS */
 #endif /* UNIX */
 #endif /* TCPSOCKET */
+
+#ifndef NOINADDRX		      /* 301 - Needed for Solaris 10 and 11 */
+#ifdef SOLARIS
+#define NOINADDRX
+#ifdef INADDR_NONE
+#undef INADDR_NONE
+#endif	/* INADDR_NONE */
+#endif	/* SOLARIS */
+#endif	/* NOINADDRX */
+
+#ifdef NOINADDRX
+#ifdef INADDRX
+#undef INADDRX
+#endif	/* INADDRX */
+#endif	/* NOINADDRX */
 
 #ifdef TCPSOCKET
 #ifndef NOHADDRLIST
@@ -1387,6 +1420,10 @@ extern char * tcp_http_proxy_pwd;       /* Password of user */
 
 #ifndef SOCKOPT_T
 #define SOCKOPT_T int
+#ifdef MACOSX10
+#undef SOCKOPT_T
+#define SOCKOPT_T unsigned int
+#else
 #ifdef AIX42
 #undef SOCKOPT_T
 #define SOCKOPT_T unsigned long
@@ -1415,6 +1452,7 @@ extern char * tcp_http_proxy_pwd;       /* Password of user */
 #endif /* NT */
 #endif /* PTX */
 #endif /* AIX42 */
+#endif /* MACOSX10 */
 #endif /* SOCKOPT_T */
 
 /* Ditto for getsockname() */
@@ -1427,6 +1465,10 @@ extern char * tcp_http_proxy_pwd;       /* Password of user */
 
 #ifndef GSOCKNAME_T
 #define GSOCKNAME_T int
+#ifdef MACOSX10
+#undef GSOCKNAME_T
+#define GSOCKNAME_T unsigned int
+#else
 #ifdef PTX
 #undef GSOCKNAME_T
 #define GSOCKNAME_T size_t
@@ -1450,6 +1492,7 @@ extern char * tcp_http_proxy_pwd;       /* Password of user */
 #endif /* UNIXWARE */
 #endif /* AIX41 */
 #endif /* PTX */
+#endif /* MACOSX10 */
 #endif /* GSOCKNAME_T */
 
 #endif /* TCPSOCKET */

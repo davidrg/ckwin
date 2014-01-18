@@ -1,13 +1,13 @@
 #include "ckcsym.h"
 
-char *connv = "CONNECT Command for UNIX:fork(), 8.0.115, 12 Jun 2005";
+char *connv = "CONNECT Command for UNIX:fork(), 9.0.117, 14 Jul 2011";
 
 /*  C K U C O N  --  Terminal connection to remote system, for UNIX  */
 /*
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2005,
+  Copyright (C) 1985, 2011,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -43,7 +43,14 @@ _PROTOTYP( static VOID concld, (void) );
 #endif /* NEXT */
 
 #include <signal.h>			/* Signals */
-#include <errno.h>			/* Error numbers */
+
+#ifndef HPUXPRE65
+#include <errno.h>			/* Error number symbols */
+#else
+#ifndef ERRNO_INCLUDED
+#include <errno.h>			/* Error number symbols */
+#endif	/* ERRNO_INCLUDED */
+#endif	/* HPUXPRE65 */
 
 #ifdef ZILOG				/* Longjumps */
 #include <setret.h>
@@ -235,10 +242,9 @@ static PID_T pid = (PID_T) 0;	/* Process ID of child */
 
 static int unicode = 0;
 
-static int
-  escseq = 0,				/* 1 = Recognizer is active */
-  inesc = 0,				/* State of sequence recognizer */
-  oldesc = -1;				/* Previous state of recognizer */
+static int escseq = 0;			/* 1 = Recognizer is active */
+int inesc = 0;				/* State of sequence recognizer */
+int oldesc = -1;			/* Previous state of recognizer */
 
 #define OUTXBUFSIZ 15
 static CHAR inxbuf[OUTXBUFSIZ+1];	/* Host-to-screen expansion buffer */

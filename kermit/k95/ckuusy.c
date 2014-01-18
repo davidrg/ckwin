@@ -1,18 +1,18 @@
 #include "ckcsym.h"
 #define XFATAL fatal
 
-/*  C K U U S Y --  "User Interface" for Unix Kermit, part Y  */
+/*  C K U U S Y --  "User Interface" for C-Kermit Kermit, part Y  */
 
 /*  Command-Line Argument Parser */
 
 /*
   Authors:
     Frank da Cruz <fdc@columbia.edu>,
-      The Kermit Project, Columbia University, New York City
+      The Kermit Project, New York City
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2005,
+  Copyright (C) 1985, 2009,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -156,6 +156,8 @@ _PROTOTYP(static int dossharg, (char x) );
 int haveftpuid = 0;			/* Have FTP user ID */
 static int have_cx = 0;			/* Have connection */
 
+static char * failmsg = NULL;		/* Failure message */
+
 #ifdef NEWFTP
 extern char * ftp_host;
 #endif /* NEWFTP */
@@ -285,7 +287,7 @@ urlparse(s,url) char *s; struct urldata * url; {
     }
     if (url->nopts) {
         int i;
-        for ( i=0; i<url->nopts && i<MAX_URL_OPTS; i++ ) {
+        for (i = 0; i < url->nopts && i < MAX_URL_OPTS; i++ ) {
             if (url->opt[i].nam) {
                 free(url->opt[i].nam);
                 url->opt[i].nam = NULL;
@@ -297,7 +299,6 @@ urlparse(s,url) char *s; struct urldata * url; {
         }
         url->nopts = 0;
     }
-
     p = urlbuf;				/* Was a service requested? */
     while (*p && *p != ':')		/* Look for colon */
       p++;
@@ -338,6 +339,7 @@ urlparse(s,url) char *s; struct urldata * url; {
 	    debug(F111,"urlparse url->psw",url->usr,url->psw);
 	    debug(F111,"urlparse url->hos",url->usr,url->hos);
 #endif	/* COMMENT */
+
             while (*p != NUL && *p != ':' && *p != '/')	/* Port? */
               p++;
             if (*p == ':') {		/* TCP port */
@@ -1693,9 +1695,10 @@ struct keytab xargtab[] = {
 #endif /* KUI */
     { "noescape",    XA_NOESCAPE, CM_PRE },
 #endif /* OS2 */
-    { "nointerrupts",XA_NOIN, CM_PRE },
+    { "nointerrupts",XA_NOIN,     CM_PRE },
+    { "nolocale",    XA_NOLOCALE, CM_PRE },
 #ifdef KUI
-    { "nomenubar",   XA_NOMN, CM_PRE },
+    { "nomenubar",   XA_NOMN,     CM_PRE },
 #endif /* KUI */
     { "noperms",     XA_NPRM, 0 },
 #ifndef NOPUSH
@@ -2048,6 +2051,12 @@ inixopthlp() {
 	    xarghlp[j] = "Username.";
 #endif /* NETCONN */
 	    break;
+#ifdef HAVE_LOCALE
+          case XA_NOLOCALE:
+	    xopthlp[j] = "--nolocale";
+	    xarghlp[j] = "Disable use of locale for messages and strings.";
+	    break;
+#endif /* HAVE_LOCALE */
        }
     }
 }
@@ -2119,7 +2128,7 @@ iniopthlp() {
             break;
 #ifdef TCPSOCKET
           case 'F':
-            opthlp[i] = "Make a TCP connection";
+            opthlp[i] = "Use an existing TCP connection";
             arghlp[i] = "Numeric file descriptor of open TCP connection";
             break;
 #endif /* TCPSOCKET */
@@ -2604,8 +2613,7 @@ doxarg(s,pre) char ** s; int pre; {
 
 #ifdef UNIX
       case XA_UNBUF:			/* Unbuffered console i/o*/
-	/* This one is handled in ckcmai.c */
-	  break;
+	break;				/* This one is handled in ckcmai.c */
 #endif	/* UNIX */
 
 #ifdef IKSDB
@@ -2774,14 +2782,14 @@ doxarg(s,pre) char ** s; int pre; {
 #endif
         break;
 #ifdef KUI
-    case XA_NOCLOSE:
+      case XA_NOCLOSE:
         kui_init.noclose = 1;
         break;
 #endif /* KUI */
-    case XA_NOSCROLL:
+      case XA_NOSCROLL:
         tt_scroll = 0;
         break;
-    case XA_NOESCAPE:
+      case XA_NOESCAPE:
         tt_escape = 0;
         break;
 #endif /* OS2 */
@@ -2887,6 +2895,11 @@ doxarg(s,pre) char ** s; int pre; {
 #endif /* NOSPL */
 #endif /* NOLOCAL */
 
+      case XA_NOLOCALE: {		/* Don't do locale */
+	  extern int nolocale;
+	  nolocale = 1;
+	  break;
+      }
       default:
         return(-1);
     }
@@ -3580,18 +3593,37 @@ extern char *line, *tmpbuf;             /* Character buffers for anything */
 		      /* or contains wildcard characters matching real files */
 			  fil2snd = 1;
 			  nfils++;
+		      } else {
+			  if (!failmsg)
+			    failmsg = (char *)malloc(2000);
+			  if (failmsg) {
+			      ckmakmsg(failmsg,2000,
+#ifdef VMS
+				       "%CKERMIT-E-SEARCHFAIL "
+#else
+				       "kermit -s "
+#endif	/* VMS */
+				       ,
+				       *xargv,
+				       ": ",
+				       ck_errstr()
+				       );
+			  }
 		      }
 	      }
 	      xargc++, xargv--;		/* Adjust argv/argc */
 	      if (!fil2snd && z == 0) {
+		  if (!failmsg) {
 #ifdef VMS
-		  XFATAL("%CKERMIT-E-SEARCHFAIL, no files for -s");
+		      failmsg = "%CKERMIT-E-SEARCHFAIL, no files for -s";
 #else
-		  XFATAL("No files for -s");
+		      failmsg = "No files for -s";
 #endif /* VMS */
+		  }
+		  XFATAL(failmsg);
 	      }
 	      if (z > 1) {
-		  XFATAL("-s: too many -'s");
+		  XFATAL("kermit -s: too many -'s");
 	      }
 	      if (z == 1 && fil2snd) {
 		  XFATAL("invalid mixture of filenames and '-' in -s");
@@ -4391,19 +4423,19 @@ dotnarg(x) char x;
 	    TELOPT_DEF_C_ME_MODE(TELOPT_AUTHENTICATION) = TN_NG_MU;
 	    break;
 
-        case 'Y':
-              xargv++, xargc--;		/* Skip past argument */
-              break;			/* Action done in prescan */
+	  case 'Y':
+	    xargv++, xargc--;		/* Skip past argument */
+	    break;			/* Action done in prescan */
 
 #ifdef OS2
           case '#':			/* K95 stdio threads */
-              xargv++, xargc--;		/* Skip past argument */
-              break;			/* Action done in prescan */
+	    xargv++, xargc--;		/* Skip past argument */
+	    break;			/* Action done in prescan */
 #endif /* OS2 */
 
           case 'q':	                /* Quiet */
-              quiet = 1;
-              break;
+	    quiet = 1;
+	    break;
 
 	  case 'd':
 #ifdef DEBUG
@@ -4571,16 +4603,16 @@ dorlgarg(x) char x;
 	    break;
 
           case 'Y':
-              xargv++, xargc--;		/* Skip past argument */
-              break;			/* Action done in prescan */
+	    xargv++, xargc--;		/* Skip past argument */
+	    break;			/* Action done in prescan */
 #ifdef OS2
           case '#':			/* K95 stdio threads */
-              xargv++, xargc--;		/* Skip past argument */
-              break;			/* Action done in prescan */
+	    xargv++, xargc--;		/* Skip past argument */
+	    break;			/* Action done in prescan */
 #endif /* OS2 */
           case 'q':	                /* Quiet */
-              quiet = 1;
-              break;
+	    quiet = 1;
+	    break;
 
 	  case 'd':
 #ifdef DEBUG
@@ -4664,16 +4696,16 @@ dossharg(x) char x;
 	    break;
 
           case 'Y':
-              xargv++, xargc--;		/* Skip past argument */
-              break;			/* Action done in prescan */
+	    xargv++, xargc--;		/* Skip past argument */
+	    break;			/* Action done in prescan */
 #ifdef OS2
           case '#':			/* K95 stdio threads */
-              xargv++, xargc--;		/* Skip past argument */
-              break;			/* Action done in prescan */
+	    xargv++, xargc--;		/* Skip past argument */
+	    break;			/* Action done in prescan */
 #endif /* OS2 */
           case 'q':	                /* Quiet */
-              quiet = 1;
-              break;
+	    quiet = 1;
+	    break;
 
 	  case 'd':
 #ifdef DEBUG
@@ -4714,9 +4746,9 @@ dossharg(x) char x;
 
 #else /* No command-line interface... */
 
-extern int xargc;
 int
 cmdlin() {
+    extern int xargc;
     if (xargc > 1) {
         XFATAL("Sorry, command-line options disabled.");
     }

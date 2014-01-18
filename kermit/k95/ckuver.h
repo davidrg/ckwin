@@ -1,9 +1,8 @@
 /* ckuver.h -- C-Kermit UNIX Version heralds */
 /*
-  Author: Frank da Cruz <fdc@columbia.edu>,
-  Columbia University Academic Information Systems, New York City.
+  Author: Frank da Cruz <fdc@kermitproject.edu>.
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2012,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -148,11 +147,7 @@
 
 #ifdef BSD44
 #ifdef MACOSX
-#ifdef MACOSX103
-#define HERALD " Mac OS X 10.3"
-#else
 #define HERALD " Mac OS X"
-#endif /* MACOSX103 */
 #else
 #ifdef __OpenBSD__
 #define HERALD " OpenBSD"
@@ -508,14 +503,37 @@
 #endif /* HPUX5  */
 #endif /* HPUX   */
 
-#ifdef MINIX
+#ifndef MINIX
+#ifdef MINIX315
+#define MINIX
+#endif	/* MINIX315 */
+#endif	/* MINIX */
+
+#ifndef MINIX
 #ifdef MINIX3
+#define MINIX
+#endif	/* MINIX3 */
+#endif	/* MINIX */
+
+#ifdef MINIX
+#ifdef MINIX315
+#define HERALD " Minix 3.1.5"
+#ifndef MINIX3
+#define MINIX3
+#endif	/* MINIX3 */
+#endif	/* MINIX315 */
+#ifdef MINIX3
+#ifndef MINIX2
+#define MINIX2
+#endif	/* MINIX2 */
+#ifndef HERALD
 #define HERALD " Minix 3.0"
+#endif	/* HERALD */
 #else
 #ifdef MINIX2
 #define HERALD " Minix 2.0"
 #else
-#define HERALD " Minix 1.x"
+#define HERALD " Minix 1.0"
 #endif /* MINIX3 */
 #endif /* MINIX2 */
 #endif /* MINIX */
@@ -760,7 +778,11 @@
 #ifdef RH71
 #define HERALD " Red Hat Linux 7.1"
 #else
+#ifdef ANDROID
+#define HERALD " Android"
+#else
 #define HERALD " Linux"
+#endif /* ANDROID */
 #endif /* RH71 */
 #endif /* RH72 */
 #endif /* RH73 */
@@ -776,6 +798,9 @@
 #else
 #ifdef Plan9
 #define HERALD " Plan 9 from Bell Labs"
+#else
+#ifdef SOLARIS11
+#define HERALD " Solaris 11"
 #else
 #ifdef SOLARIS10
 #define HERALD " Solaris 10"
@@ -808,6 +833,7 @@
 #endif /* SOLARIS8 */
 #endif /* SOLARIS9 */
 #endif /* SOLARIS10 */
+#endif /* SOLARIS11 */
 #endif /* Plan9 */
 #endif /* LYNXOS */
 #endif /* _386BSD */

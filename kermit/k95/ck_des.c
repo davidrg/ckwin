@@ -2,7 +2,12 @@
   C K _ D E S . C  -  libDES interface for Kermit 95"
 
   Copyright (C) 1998, 2001, Trustees of Columbia University in the City of New
-  York.
+  York.  The C-Kermit software may not be, in whole or in part, licensed or
+  sold for profit as a software product itself, nor may it be included in or
+  distributed with commercial products or otherwise distributed by commercial
+  concerns to their clients or customers without written permission of the
+  Office of Kermit Development and Distribution, Columbia University.  This
+  copyright notice must not be removed, altered, or obscured.
 
   Author:
   Jeffrey E Altman (jaltman@secure-endpoints.com)
@@ -14,6 +19,7 @@
    re-exported to k95.exe/k2.exe.  This subset of the DES library is needed to
    provide DES based Kerberos authentication.
 */
+
 
 #ifdef LIBDES
 /* The following is specific to my installation, but since I'm the only one */

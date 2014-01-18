@@ -1,4 +1,4 @@
-char *fnsv = "C-Kermit functions, 8.0.227, 22 Dec 2005";
+char *fnsv = "C-Kermit functions, 9.0.233, 3 Jun 2011";
 
 char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 
@@ -10,7 +10,7 @@ char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2005,
+  Copyright (C) 1985, 2011,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -99,12 +99,13 @@ extern int srvcdmsg, srvidl, idletmo;
 extern char * cdmsgfile[];
 extern int spsiz, spmax, rpsiz, timint, srvtim, rtimo, npad, ebq, ebqflg,
  rpt, rptq, rptflg, capas, keep, fncact, pkttim, autopar, spsizr, xitsta;
-extern int pktnum, bctr, bctu, bctl, clfils, sbufnum, protocol,
+extern int pktnum, bctr, bctu, bctf, bctl, clfils, sbufnum, protocol,
  size, osize, spktl, nfils, ckwarn, timef, spsizf, sndtyp, rcvtyp, success;
 extern int parity, turn, network, whatru, fsecs, justone, slostart,
  ckdelay, displa, mypadn, moving, recursive, nettype;
 extern long filcnt;
-CK_OFF_T ffc, tfc, fsize, sendstart, rs_len, flci, flco, tlci, tlco, calibrate;
+extern CK_OFF_T
+ tfc, fsize, sendstart, rs_len, flci, flco, tlci, tlco, calibrate;
 extern long filrej, oldcps, cps, peakcps, ccu, ccp, filestatus;
 extern int fblksiz, frecl, frecfm, forg, fcctrl, fdispla, skipbup;
 extern int spackets, rpackets, timeouts, retrans, crunched, wmax, wcur;
@@ -193,6 +194,8 @@ _PROTOTYP( int lslook, (unsigned int b) ); /* Locking Shift Lookahead */
 _PROTOTYP( int szeof, (CHAR *s) );
 _PROTOTYP( VOID fnlist, (void) );
 #endif /* NOXFER */
+
+extern CK_OFF_T ffc;
 
 /* Character set Translation */
 
@@ -2254,7 +2257,38 @@ xgnbyte(tcs,fcs,fn) int tcs, fcs, (*fn)();
   too soon and so might not have known whether it was a file transfer or a
   local operation.
 */
+/*
+  (Many years later...) In testing this code I noticed that TRANSLATE'ing
+  Russian text from UTF-8 to ISO Latin/Cyrillic produced all question marks.
+  Rereading the previous paragraph it seems to me we are (I am) overloading
+  this function with responsibilites, satisfying the needs of file transfer
+  (local file charset -> transfer charset for outbound packet) and local file
+  conversion.  In the case of TRANSLATE, we call (xgnbyte(), xpnbyte()) in a
+  loop, expecting the xgnbyte() will feed UCS2 to xpnbyte().  But the
+  following code does what xpnbyte() is going to do, returning (in this case)
+  an ISO Latin/Cyrillic byte stream, which xpnbyte() believes to be UCS2, and
+  comes up with nonsense.  Not wanting to rip the whole thing apart and start
+  over, I made the following change that should do no harm, upon observing
+  that if the input character set is UTF-8 or UCS-2, then when we get here it
+  has already been converted to UCS2, so if we are not transferring a file, we
+  don't need to do anything else except put the bytes in the right place to be
+  returned, which is done further along.
+*/
+#ifdef COMMENT
+	  /* Previous code */
 	  xx = (what & W_SEND) ? xut : xuf;
+#else
+	  /* New code 2011-06-03 */
+	  if (what & W_SEND) {
+	      xx = xut;
+	  } else {
+	      if (fcs == FC_UCS2 || fcs == FC_UTF8)
+		xx = NULL;
+	      else
+		xx = xuf;
+	  }
+#endif	/* COMMENT */
+
 	  eolflag = 0;
 	  if (haveuc) {			/* File is Unicode */
 	      /* See Unicode TR13, "Converting to Other Character Sets" */
@@ -3031,7 +3065,11 @@ tinit(flag) int flag; {
     /* This stuff is only for BEFORE S/I/Y negotiation, not after */
 
     if (flag) {
-	bctu = bctl = 1;		/* Reset block check type to 1 */
+	if (bctf) {		      /* Force Block Check 3 on all packets */
+	    bctu = bctl = 3;		/* Set block check type to 3 */
+	} else {
+	    bctu = bctl = 1;		/* Reset block check type to 1 */
+	}
 	myinit[0] = '\0';		/* Haven't sent init string yet */
 	rqf = -1;			/* Reset 8th-bit-quote request flag */
 	ebq = MYEBQ;			/* Reset 8th-bit quoting stuff */
@@ -5154,7 +5192,7 @@ spar(s) CHAR *s; {			/* Set parameters */
     if (biggest >= 8) {
 	if (s[8] == 'B') x = 4;
 	else x = s[8] - '0';
-	if ((x < 1) || (x > 4)) x = 1;
+	if ((x < 1) || (x > 5)) x = 1;	/* "5" 20110605 */
     }
     bctr = x;
 
@@ -5417,7 +5455,7 @@ spar(s) CHAR *s; {			/* Set parameters */
   NOTE:
     If gnfile() returns 0, then the global variable gnferror should be checked
     to find out the most recent gnfile() error, and use that instead of the
-    return code (for reasons to hard to explain).
+    return code (for reasons too hard to explain).
 */
 int
 gnfile() {
@@ -5438,6 +5476,14 @@ gnfile() {
     gnferror = 0;
     fsize = (CK_OFF_T)-1;		/* Initialize file size */
     fullname[0] = NUL;
+
+#ifdef VMS
+    /* 
+      In VMS, zopeni() sets binary 0/1 automatically from the file
+      attributes.  Don't undo it here.
+    */
+    debug(F101,"gnfile VMS binary","",binary);
+#else  /* VMS */
     if (!(what & W_REMO) && (xfermode == XMODE_A)
 #ifndef NOMSEND
 	&& !addlist
@@ -5452,6 +5498,8 @@ gnfile() {
 	    binary = gnf_binary;	/* Restore prevailing transfer mode */
 	debug(F101,"gnfile binary = gnf_binary","",gnf_binary);
     }
+#endif	/* VMS */
+
 #ifdef PIPESEND
     debug(F101,"gnfile pipesend","",pipesend);
     if (pipesend) {			/* First one */
@@ -6281,19 +6329,19 @@ nxtdir(
 	} else {			/* Regular file */
 #ifdef VMS
 	    sprintf((char *)linebuf,
-		    "%-22s%10ld  %s  %s\n", p, len, dstr, name);
+		    "%-22s%10s  %s  %s\n", p, ckfstoa(len), dstr, name);
 #else
 	    if (p)
 	      sprintf((char *)linebuf,
-		      "%10s%10ld  %s  %s%s%s\n",
-		      p, len, dstr, name,
+		      "%10s%10s  %s  %s%s%s\n",
+		      p, ckfstoa(len), dstr, name,
 		      *lnk ? " -> " : "",
 		      lnk
 		      );
 	    else
 	      sprintf((char *)linebuf,
-		      "%10ld  %s  %s%s%s\n",
-		      len, dstr, name,
+		      "%10s  %s  %s%s%s\n",
+		      ckfstoa(len), dstr, name,
 		      *lnk ? " -> " : "",
 		      lnk
 		      );
@@ -6916,6 +6964,10 @@ remset(s) char *s; {
 	    return(1);
 	} else if (*p == 'B') {
 	    bctr = 4;
+	    c_save = -1;
+	    return(1);
+	} else if (*p == '5') {
+	    bctr = 3;
 	    c_save = -1;
 	    return(1);
 	}

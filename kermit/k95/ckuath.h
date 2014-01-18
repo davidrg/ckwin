@@ -4,7 +4,7 @@
   Author: Jeffrey E Altman <jaltman@secure-endpoints.com>,
             Secure Endpoints Inc., New York City.
 
-  Copyright (C) 1999, 2004,
+  Copyright (C) 1999, 2009,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -115,6 +115,13 @@ _PROTOTYP(int SendSSLAuthSB, (int, void *, int));
     /* Kerberos later than KRB5 1.0.5.  Note.  This will not compile   */
     /* successfully in Kermit 95 due to the segmentation of crypto     */
     /* into a separate DLL.                                            */
+
+#ifndef KRB5_INIT_ETS
+/* krb5_init_ets() is a no-op in Kerberos 1.4.x and later */
+/* and in some installations it can't be found so now by default */
+/* we don't use it. */
+#define NO_KRB5_INIT_ETS
+#endif	/* KRB5_INIT_ETS */
 
 #define KRB_DEFTIM 600                  /* Default lifetime (minutes) */
 

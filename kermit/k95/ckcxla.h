@@ -8,7 +8,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   The Kermit Project - Columbia University, New York City.
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2009,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -83,6 +83,9 @@
 #ifdef UNICODE
 #undef UNICODE
 #endif /* UNICODE */
+#ifndef NOUNICODE
+#define NOUNICODE
+#endif	/* NOUNICODE */
 
 #else /* Not NOCSETS - Rest of this file... */
 

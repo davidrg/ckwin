@@ -6,7 +6,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2004,
+  Copyright (C) 1985, 2011,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -219,8 +219,8 @@ extern int autopar;
 
 extern int spsiz, spmax, rpsiz, timint, timef, npad, bestlen, maxsend;
 extern int rpt, rptq, rptflg, capas, spsizf, en_fin, tsecs, flow;
-extern int pktnum, sndtyp, rcvtyp, bctr, bctu, bctl, rsn, rln, maxtry, size;
-extern int osize, maxsize, spktl, rpktl, nfils, stdouf, fsecs;
+extern int pktnum, sndtyp, rcvtyp, bctr, bctu, bctf, bctl, rsn, rln, maxtry;
+extern int size, osize, maxsize, spktl, rpktl, nfils, stdouf, fsecs;
 extern int turn, turnch, displa, pktlog, seslog, xflg, mypadn;
 extern int hcflg, server, cxseen, czseen, discard, slostart;
 extern int nakstate, quiet, success, xitsta, what, filestatus;
@@ -696,6 +696,8 @@ input() {
 #ifdef CK_TIMERS
 		if (rttflg && timint)	/* Dynamic round trip timers? */
 		  getrtt(nakstate, rsn); /* yes, do it. */
+                else                     /* JHD 20100208 */
+                  rcvtimo = timint;      /* JHD 20100208 */
 #endif /* CK_TIMERS */
 		debug(F101,"input rsn=winlo","",rsn);
 		break;
@@ -984,6 +986,8 @@ input() {
 #ifdef CK_TIMERS
 		    if (rttflg && timint) /* If doing dynamic timers */
 		      getrtt(nakstate, rsn); /* call routine to set it. */
+		    else                     /* JHD 20100208 */
+		      rcvtimo = timint;	     /* JHD 20100208 */
 #endif /* CK_TIMERS */
 /*
   NOTE: The following statement frees the buffer of the ACK we just got.
@@ -1102,6 +1106,11 @@ input() {
   would cause needless cycles of repeated packets.  Therefore we flush the
   communications input buffer now to try to get rid of undesired and unneeded
   packets that we have not read yet.
+
+  Actually, the first sentence above is not entirely true: there could be an
+  Error packet waiting to be read.  Flushing an E packet is bad because it
+  will not be resent, and we'll go into a cycle of timing out and
+  retransmitting up to the retry limit.  - fdc 2007/03/02
 */
     if (wslotn == 1			/* (not wslots!) */
 #ifdef STREAMING
@@ -1882,18 +1891,24 @@ resend(n) int n; {			/* Send packet n again. */
   operation (spackets < 63), then we have to resend the ACK to an I or S
   packet, complete with parameters in the data field.  So we take a chance and
   send a copy of the parameters in an ACK packet with block check type 1.
+  (Or 3 if SET BLOCK 5.)
 */
-		int bctlsav;		/* Temporary storage */
-		int bctusav;
-		bctlsav = bctl;		/* Save current block check length */
-		bctusav = bctu;		/* and type */
-		bctu = bctl = 1;	/* Set block check to 1 */
-		x = spack('Y',0,(int)strlen((char *)myinit),(CHAR *)myinit);
-		if (x < 0) return(x);
-		logpkt('#',n,(CHAR *)"<reconstructed>",0); /* Log it */
-		bctu = bctusav;		/* Restore block check type */
-		bctl = bctlsav;		/* and length */
-
+		if (bctf) {		/* Force Type 3 on all packets? */
+		   x = spack('Y',0,(int)strlen((char *)myinit),(CHAR *)myinit);
+		    if (x < 0) return(x);
+		    logpkt('#',n,(CHAR *)"<reconstructed>",0); /* Log it */
+		} else {		/* Regular Kermit protocol */
+		    int bctlsav;	/* Temporary storage */
+		    int bctusav;
+		    bctlsav = bctl;	/* Save current block check length */
+		    bctusav = bctu;	/* and type */
+		    bctu = bctl = 1;	/* Set block check to 1 */
+		   x = spack('Y',0,(int)strlen((char *)myinit),(CHAR *)myinit);
+		    if (x < 0) return(x);
+		    logpkt('#',n,(CHAR *)"<reconstructed>",0); /* Log it */
+		    bctu = bctusav;	/* Restore block check type */
+		    bctl = bctlsav;	/* and length */
+		}
 	    } else {			/* Not the first packet */
 /*
   It's not the first packet of the protocol operation.  It's some other packet
@@ -2642,16 +2657,22 @@ autodown(ch) int ch;
 /*  C H K S P K T  --  Check if buf contains a valid S or I packet  */
 
 int
-chkspkt(buf) char *buf; {
+chkspkt(packet) char *packet; {
+    int i;
     int buflen;
     int len = -1;
     CHAR chk;
     char type = 0;
-    char *s = buf;
+    char *s = NULL;
+    char *buf = NULL;
+    char tmpbuf[100];			/* Longest S/I packet is about 30 */
 
-    if (!buf) return(0);
-    buflen = strlen(buf);
+    if (!packet) return(0);
+    buflen = ckstrncpy(tmpbuf,packet,100); /* Make a pokeable copy */
     if (buflen < 5) return(0);		/* Too short */
+    if (buflen > 100) return(0); 	/* Too long to be an S or I packet */
+    s = buf = tmpbuf;			/* Point to beginning of copy */
+
     if (*s++ != stchr) return(0);	/* SOH */
     len = xunchar(*s++);		/* Length */
     if (len < 0) return(0);
@@ -2662,10 +2683,23 @@ chkspkt(buf) char *buf; {
     if (buflen < len + 2) return(0);
     s += (len - 3);			/* Position of checksum */
     chk = (CHAR) (*s);			/* Checksum */
-    *s = NUL;
-    if (xunchar(chk) != chk1((CHAR *)(buf+1),buflen-2)) /* Check it */
-      return(0);
-    *s = chk;
+    *s = NUL;			   /* Temporarily null-terminate data field */
+    if (xunchar(chk) != chk1((CHAR *)(buf+1),buflen-2)) { /* Check it */
+	/*
+	  In C-Kermit 9.0 and later, an S or I packet can have a 
+	  Type 3 Block check ("help set block-check" for details).
+	*/
+	unsigned crc;			/* Failed... Try Type 3 block check */
+	*s = chk;			/* Replace last byte */
+	s -= 2;				/* Back up two bytes */
+	crc = (xunchar(s[0]) << 12)	/* Convert 3 bytes to numeric CRC */
+	    | (xunchar(s[1]) << 6)
+	    | (xunchar(s[2]));
+	chk = (CHAR)(*s);		/* Copy 1st byte of 3-byte CRC */
+	*s = NUL;			/* Null-terminate data field */
+	if (crc != chk3((CHAR *)(buf+1),strlen(buf+1)))
+	  return(0);
+    }
     return(type == 'S' ? 1 : 2);
 }
 #endif /* CK_AUTODL */
@@ -2947,13 +2981,30 @@ rpack() {
     }
 /*
   Separate the data from the block check, accounting for the case where
-  a packet was retransmitted after the block check switched.
+  a packet was retransmitted after the block check switched.  The "Type 3
+  Forced" business is new to C-Kermit 9.0.
 */
-    if (type == 'I' || type == 'S') {	/* I & S packets always have type 1 */
-	chklen = 1;
-	rln = rln + bctl - 1;
+    if (bctf) { 			/* Type 3 forced on all packets */
+	bctl = chklen = 3;
+    } else if ((type == 'I' || type == 'S')) { /* Otherwise... */
+	if (recpkt[11] == '5') {	/* Sender is forcing Type 3 */
+	    bctf = 1;			/* So we will too */
+	    bctl = chklen = 3;
+	    debug(F100,"RECOGNIZE BLOCK CHECK TYPE 5","",0);
+	} else {			/* Normal case */
+	    /* I & S packets always have type 1 */
+	    chklen = 1;
+	    rln = rln + bctl - 1;
+	}
     } else if (type == 'N') {		/* A NAK packet never has data */
 	chklen = xunchar(recpkt[lp]) - 2;
+	if (chklen < 1 || chklen > 3) {	/* JHD 13 Apr 2010 */
+	    debug(F101,"rpack bad nak chklen","",chklen);
+	    freerbuf(k);
+	    logpkt('r',-1,(CHAR *)"<crunched:chklen>",0);
+	    xxscreen(SCR_PT,'%',(long)pktnum,"(bad nak)");
+	    return('Q');
+	}
 	rln = rln + bctl - chklen;
     } else chklen = bctl;
 #ifdef DEBUG
@@ -3242,13 +3293,11 @@ tstats() {
 	tlog(F101," effective data rate     ","",(long) xx);
     }
 #else
-    tlog(F101," elapsed time (seconds)  ","",(long) tsecs);
-    if (tsecs > 0) {
-	long lx;
-	lx = (tfc / tsecs) * (CK_OFF_T);
-	tlog(F101," effective data rate     ","",lx/10L);
-    }
+    tlog(F101," elapsed time (seconds)  ","",tsecs);
+    if (tsecs > 0)
+      tlog(F101," effective data rate     ","",(tfc / tsecs));
 #endif /* GFTIMER */
+
     tlog(F100,"","",0L);		/* Leave a blank line */
 }
 

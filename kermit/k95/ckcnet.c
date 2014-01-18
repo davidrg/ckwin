@@ -1,15 +1,12 @@
-char *cknetv = "Network support, 8.0.290, 11 Jan 2007";
+char *cknetv = "Network support, 9.0.297, 14 Jul 2011";
 
 /*  C K C N E T  --  Network support  */
 
 /*
-  Copyright (C) 1985, 2005,
+  Copyright (C) 1985, 2011,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-
-  Copyright (C) 2006, 2007  Secure Endpoints Inc.
-
 */
 
 /*
@@ -148,6 +145,7 @@ extern int inserver;
 #endif /* IKSD */
 
 char myipaddr[20] = { '\0' };           /* Global copy of my IP address */
+char hostipaddr[64] = { '\0' };		/* Global copy of remote IP address */
 
 #ifdef NETCONN
 /* Don't need any of this if there is no network support. */
@@ -203,7 +201,9 @@ int tt_push_inited = 0;
 
 #ifdef HPUX
 #ifndef HPUX7                           /* HPUX 7.00 doesn't have it */
+#ifndef HPUX6                           /* HPUX 6.00 doesn't have it */
 #include <arpa/inet.h>                  /* For inet_ntoa() prototype */
+#endif /* HPUX6 */
 #endif /* HPUX7 */
 #endif /* HPUX */
 
@@ -258,7 +258,13 @@ struct timezone {
 #endif /* OSF13 */
 
 #ifndef I386IX
-#include <errno.h>                      /* Already included above */
+#ifndef HPUXPRE65
+#include <errno.h>			/* Error number symbols */
+#else
+#ifndef ERRNO_INCLUDED
+#include <errno.h>			/* Error number symbols */
+#endif	/* ERRNO_INCLUDED */
+#endif	/* HPUXPRE65 */
 #endif /* I386IX */
 
 #include <signal.h>                     /* Everybody needs this */
@@ -601,7 +607,7 @@ le_puts(s,n) CHAR * s; int n;
     int rc = 0;
     int i = 0;
     CHAR * p = (CHAR *)"le_puts";
-    hexdump(p,s,n);
+    ckhexdump(p,s,n);
     for (i = 0; i < n; i++)
       rc = le_putchar((char)s[i]);
     debug(F101,"le_puts","",rc);
@@ -618,7 +624,7 @@ le_putstr(s) CHAR * s;
     CHAR * p;
     int rc = 0;
     p = (CHAR *)"le_putstr";
-    hexdump(p,s,(int)strlen((char *)s));
+    ckhexdump(p,s,(int)strlen((char *)s));
     for (p = s; *p && !rc; p++)
       rc = le_putchar(*p);
     return(rc);
@@ -1300,7 +1306,7 @@ ttbufr() {                              /* TT Buffer Read */
               return(-2);
 #endif /* OS2ONLY */
           } else {                      /* we got out-of-band data */
-              hexdump("ttbufr out-of-band chars",&ttibuf[ttibp+ttibn],count);
+              ckhexdump("ttbufr out-of-band chars",&ttibuf[ttibp+ttibn],count);
 #ifdef BETADEBUG
               bleep(BP_NOTE);
 #endif /* BETADEBUG */
@@ -1582,8 +1588,11 @@ inet_ntoa(in) struct in_addr in; {
 
 int ucx_port_bug = 0;                   /* Explained below */
 
-#ifndef __DECC                          /* VAXC or GCC */
-
+#ifdef OLDIP				/* Very old VAXC or GCC */
+/*
+  Note that my oldest VAX C (V3.1-051) does not need (or want) OLDIP,
+  hence the "Very old" in the comment - SMS, 2010/03/15.
+*/
 #define getservbyname my_getservbyname
 
 #ifdef CK_ANSIC
@@ -1659,9 +1668,15 @@ my_getservbyname (service, proto) char *service, *proto; {
     }
     return &sent;
 }
-#endif /* __DECC */
+#endif /* def OLDIP */
 #endif /* DEC_TCPIP */
 #endif /* EXCELAN */
+
+int
+gettcpport() {
+    return(svcnum);
+}
+
 #endif /* TCPSOCKET */
 
 #ifndef NOTCPOPTS
@@ -2439,10 +2454,17 @@ tcpsocket_open(name,lcl,nett,timo) char * name; int * lcl; int nett; int timo {
 
     netclos();                          /* Close any previous connection. */
     ckstrncpy(namecopy, name, NAMECPYL); /* Copy the hostname. */
+#ifdef COMMENT
+    /* Jeff's version from 30 Dec 2005 doesn't inhibit Telnet */
     if (ttnproto != NP_TCPRAW &&
-	ttnproto != NP_SSLRAW &&
-	ttnproto != NP_TLSRAW)
+	ttnproto != NP_SSL_RAW &&
+	ttnproto != NP_TLS_RAW)
       ttnproto = NP_NONE;               /* No protocol selected yet. */
+#else
+    /* fdc's version from 4 Dec 2005 works ok */
+    if (ttnproto != NP_TCPRAW)
+      ttnproto = NP_NONE;               /* No protocol selected yet. */
+#endif	/* COMMENT */
     debug(F110,"tcpsocket_open namecopy",namecopy,0);
 
     /* Assign the socket number to ttyfd and then fill in tcp structures */
@@ -2548,10 +2570,16 @@ tcpsocket_open(name,lcl,nett,timo) char * name; int * lcl; int nett; int timo {
     else
 #endif /* RLOGCODE */
     /* Assume the service is TELNET. */
-	if (ttnproto != NP_TCPRAW &&
-            ttnproto != NP_SSLRAW &&
-            ttnproto != NP_TLSRAW)
-        ttnproto = NP_TELNET;           /* Yes, set global flag. */
+#ifdef COMMENT
+      /* Jeff's code from 2005/12/30 */
+      if (ttnproto != NP_TCP_RAW &&
+	  ttnproto != NP_SSL_RAW &&
+	  ttnproto != NP_TLS_RAW)
+#else
+      /* fdc's code from 2005/12/04 */
+      if (ttnproto != NP_TCPRAW)
+#endif	/* COMMENT */
+	ttnproto = NP_TELNET;		/* Yes, set global flag. */
 #ifdef CK_SECURITY
     /* Before Initialization Telnet/Rlogin Negotiations Init Kerberos */
     ck_auth_init((tcp_rdns && host && host->h_name && host->h_name[0]) ?
@@ -2619,11 +2647,17 @@ tcpsrv_open(name,lcl,nett,timo) char * name; int * lcl; int nett; int timo; {
 
     netclos();                          /* Close any previous connection. */
     ckstrncpy(namecopy, name, NAMECPYL); /* Copy the hostname. */
-#ifdef COMMENT
     /* Don't do this. */
-    if (ttnproto != NP_TCPRAW &&
-	ttnproto != NP_SSLRAW &&
-	ttnproto != NP_TLSRAW)
+#ifdef COMMENT
+    /* fdc */
+    if (ttnproto != NP_TCPRAW)
+      ttnproto = NP_NONE;               /* No protocol selected yet. */
+#endif	/* COMMENT */
+#ifdef COMMENT
+    /* Jeff */
+    if (ttnproto != NP_TCP_RAW &&
+	ttnproto != NP_SSL_RAW &&
+	ttnproto != NP_TLS_RAW)
       ttnproto = NP_NONE;               /* No protocol selected yet. */
 #endif /* COMMENT */
     debug(F110,"tcpsrv_open namecopy",namecopy,0);
@@ -2826,7 +2860,11 @@ tcpsrv_open(name,lcl,nett,timo) char * name; int * lcl; int nett; int timo; {
 #endif /* HPUX1010 */
 #else
 #ifdef __DECC
+#ifdef INTSELECT
+                       (int *)
+#else /* def INTSELECT */
                        (fd_set *)
+#endif /* def INTSELECT [else] */
 #endif /* __DECC */
 #endif /* HPUX */
                        &rfds, NULL, NULL, &tv) > 0) &&
@@ -2914,12 +2952,17 @@ tcpsrv_open(name,lcl,nett,timo) char * name; int * lcl; int nett; int timo; {
         x = (unsigned short)service->s_port;
         service2 = getservbyname("telnet", "tcp");
         if (service2 && x == service2->s_port) {
-	    if (ttnproto != NP_TCPRAW &&
-		 ttnproto != NP_SSLRAW &&
-		 ttnproto != NP_TLSRAW) /* Yes and if raw port not requested */
-              ttnproto = NP_TELNET;     /* Set protocol to TELNET. */
+#ifdef COMMENT
+	    /* Jeff 2005/12/30 */
+	    if (ttnproto != NP_TCPRAW && /* Yes... */
+		 ttnproto != NP_SSL_RAW &&
+		 ttnproto != NP_TLS_RAW) /* and if raw port not requested */
+#else
+	    /* fdc 2005/12/04 */
+            if (ttnproto != NP_TCPRAW)  /* Yes and if raw port not requested */
+#endif	/*  */
+              ttnproto = NP_TELNET;	/* set protocol to TELNET. */
         }
-
         ckstrncpy(ipaddr,(char *)inet_ntoa(saddr.sin_addr),20);
         if (tcp_rdns) {
             if (!quiet) {
@@ -3118,6 +3161,9 @@ ckgetpeer() {
     static char namebuf[256];
     static struct hostent *host;
     static struct sockaddr_in saddr;
+#ifdef GPEERNAME_T
+    static GPEERNAME_T saddrlen;
+#else
 #ifdef PTX
     static size_t saddrlen;
 #else
@@ -3130,6 +3176,21 @@ ckgetpeer() {
     static size_t saddrlen;
 #else  /* UNIXWARE */
 #ifdef DEC_TCPIP
+/* 2010-03-08 SMS.
+ * Coincidentally, the condition for integer arguments in select(),
+ * which is actually "defined( _DECC_V4_SOURCE)", works for an integer
+ * argument in getpeername().  Sadly, due to a lack of foresight,
+ * "defined( _DECC_V4_SOURCE)" doesn't work with DEC C V4.0, so the
+ * user-specified INTSELECT is used instead.  Most likely, "size_t"
+ * should be used instead of "unsigned int", but I'm a coward.
+ */
+#ifdef INTSELECT
+    static int saddrlen;
+#else /* def INTSELECT */
+    static unsigned int saddrlen;
+#endif /* def INTSELECT [else] */
+#else
+#ifdef MACOSX10
     static unsigned int saddrlen;
 #else
 #ifdef CK_64BIT
@@ -3137,10 +3198,12 @@ ckgetpeer() {
 #else
     static int saddrlen;
 #endif	/* CK_64BIT */
-#endif /* VMS */
+#endif /* MACOSX10 */
+#endif /* DEC_TCPIP */
 #endif /* UNIXWARE */
 #endif /* AIX42 */
 #endif /* PTX */
+#endif	/* GPEERNAME_T */
     saddrlen = sizeof(saddr);
     if (getpeername(ttyfd,(struct sockaddr *)&saddr,&saddrlen) < 0) {
         debug(F111,"ckgetpeer failure",ckitoa(ttyfd),errno);
@@ -3314,7 +3377,13 @@ setnproto(p) char * p;
             break;
 #ifdef CK_SSL
           case 443:
+#ifdef COMMENT
+	    /* Jeff 2005/12/30 */
             ttnproto = NP_SSL_RAW;
+#else
+	    /* fdc 2005/12/04 */
+            ttnproto = NP_SSL;
+#endif	/* COMMENT */
             ssl_only_flag = 1;
             break;
           case 151:
@@ -3458,6 +3527,9 @@ ckgetservice(hostname, servicename, ip, iplen)
   Calling conventions same as ttopen(), except third argument is network
   type rather than modem type.  Designed to be called from within ttopen.
 */
+
+#define XXNAMELEN 256
+static char xxname[XXNAMELEN];
 
 int
 netopen(name, lcl, nett) char *name; int *lcl, nett; {
@@ -4119,7 +4191,7 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
             fflush(stdout);
         }
         if ((host = gethostbyname(namecopy)) != NULL) {
-            debug(F100,"netopen gethostbyname != NULL","",0);
+            debug(F110,"netopen gethostbyname != NULL",namecopy,0);
             host = ck_copyhostent(host);
             dns = 1;                    /* Remember we performed dns lookup */
             r_addr.sin_family = host->h_addrtype;
@@ -4127,13 +4199,25 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
 #ifndef NOHTTP
                  && (tcp_http_proxy == NULL)
 #endif /* NOHTTP */
-                 ) {                   /* Copying into our argument? */
+		) {
+#ifdef COMMENT
+                ckstrncpy(xxname,host->h_name,XXNAMELEN);
+		debug(F110,"netopen xxname[1]",xxname,0);
+                if ((XXNAMELEN - (int)strlen(name)) > ((int)strlen(svcbuf)+1)){
+                    ckstrncat(xxname,":",XXNAMELEN - (int)strlen(xxname));
+                    ckstrncat(xxname,svcbuf,XXNAMELEN - (int)strlen(xxname));
+		    debug(F110,"netopen xxname[2]",xxname,0);
+                }
+		name = (char *)xxname;
+#else
                 ckstrncpy(name,host->h_name,80);  /* Bad Bad Bad */
                 if ( (80-strlen(name)) > (strlen(svcbuf)+1) ) {
                     ckstrncat(name,":",80-strlen(name));
                     ckstrncat(name,svcbuf,80-strlen(name));
                 }
+#endif	/* COMMENT */
             }
+	    debug(F110,"netopen name after lookup",name,0);
 
 #ifdef HADDRLIST
 #ifdef h_addr
@@ -4148,21 +4232,21 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
             bcopy(host->h_addr, (caddr_t)&r_addr.sin_addr, host->h_length);
 #endif /* h_addr */
 #else  /* HADDRLIST */
+#ifdef HPUX6
+	    r_addr.sin_addr.s_addr = (u_long)host->h_addr;
+#else  /* HPUX6 */
             bcopy(host->h_addr, (caddr_t)&r_addr.sin_addr, host->h_length);
+#endif	/* HPUX6 */
 #endif /* HADDRLIST */
-#ifdef COMMENT
-#ifndef EXCELAN
-            debug(F111,"BCOPY","host->h_addr",host->h_addr);
-#endif /* EXCELAN */
-            debug(F111,"BCOPY"," (caddr_t)&r_addr.sin_addr",
-                  (caddr_t)&r_addr.sin_addr);
-            debug(F111,"BCOPY"," r_addr.sin_addr.s_addr",
-                  r_addr.sin_addr.s_addr);
-#endif	/* COMMENT */
+
+#ifndef HPUX6
             debug(F111,"BCOPY","host->h_length",host->h_length);
+#endif	/* HPUX6 */
         }
     }
 #endif /* NOMHHOST */
+
+    debug(F101,"netopen dns","",dns);
 
     if (!dns) {
 #ifdef INADDRX
@@ -4580,8 +4664,14 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
     /* See if the service is TELNET. */
     if (x == TELNET_PORT) {
         /* Yes, so if raw port not requested */
+#ifdef COMMENT
+	/* Jeff 2005/12/30 */
         if (ttnproto != NP_TCPRAW && ttnproto != NP_SSL_RAW && 
 	    ttnproto != NP_TLS_RAW && ttnproto != NP_NONE)
+#else
+	/* fdc 2005/12/04 */
+        if (ttnproto != NP_TCPRAW && ttnproto != NP_NONE)
+#endif	/* COMMENT */
           ttnproto = NP_TELNET;         /* Select TELNET protocol. */
     }
 #ifdef RLOGCODE
@@ -4941,9 +5031,8 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
         || ttnproto == NP_K5LOGIN || ttnproto == NP_EK5LOGIN
 #endif /* CK_KERBEROS */
         ) {                             /* Similar deal for rlogin */
-        if (rlog_ini((CHAR *)((tcp_rdns && host && host->h_name && host->h_name[0]) ?
-			       host->h_name : (namecopy2[0] ? namecopy2 : 
-					       (namecopy[0] ? namecopy : ipaddr))),
+        if (rlog_ini(((tcp_rdns && host && host->h_name && host->h_name[0]) ?
+                      (CHAR *)host->h_name : (CHAR *)ipaddr),
                      service->s_port,
                      &l_addr,&r_addr
                      ) < 0) {
@@ -4974,6 +5063,8 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
 
     debug(F101,"netopen service","",svcnum);
     debug(F110,"netopen name",name,0);
+    debug(F110,"netopen ipaddr",ipaddr,0);
+    ckstrncpy(hostipaddr,ipaddr,63);
 
     if (lcl) if (*lcl < 0)              /* Local mode. */
       *lcl = 1;
@@ -5032,7 +5123,14 @@ netclos() {
 #endif /* VMS */
 #ifdef TNCODE
           if (ttnproto == NP_TELNET) {
-            if (!TELOPT_ME(TELOPT_LOGOUT)) {
+            if (!TELOPT_ME(TELOPT_LOGOUT)
+#ifdef COMMENT
+/* Jeff 2005/12/30 */
+#ifdef CK_SSL
+		 && !ssl_raw_flag && !tls_raw_flag
+#endif	/* CK_SSL */
+#endif	/* COMMENT */
+		) {
 		/* Send LOGOUT option before close */
 		if (tn_sopt(DO,TELOPT_LOGOUT) >= 0) {
 		    TELOPT_UNANSWERED_DO(TELOPT_LOGOUT) = 1;
@@ -5614,12 +5712,12 @@ nettchk() {                             /* for reading from network */
         if (x >= 1) {                   /* Oops, actually got a byte? */
 #ifdef OS2
             /* In OS/2 we read directly into ttibuf[] */
-            hexdump("nettchk got real data",&ttibuf[ttibp+ttibn],x);
+            ckhexdump("nettchk got real data",&ttibuf[ttibp+ttibn],x);
             ttibn += x;
 #else /* OS2 */
 #ifdef CK_SSL
 	    if ( ssl_active_flag || tls_active_flag ) {
-		hexdump("nettchk got real data",&ttibuf[ttibp+ttibn],x);
+		ckhexdump("nettchk got real data",&ttibuf[ttibp+ttibn],x);
 		ttibn += x;
 	    } else 
 #endif /* CK_SSL */
@@ -5774,7 +5872,7 @@ netxin(n,buf) int n; CHAR * buf; {
 #ifdef KRB5
 #ifdef RLOGCODE
     if (ttnproto == NP_EK5LOGIN) {
-        if ((len = krb5_des_read(ttyfd,buf,n,0)) < 0)
+        if ((len = krb5_des_read(ttyfd,(char *)buf,n,0)) < 0)
           return(-1);
         else
           return(len);
@@ -5782,7 +5880,7 @@ netxin(n,buf) int n; CHAR * buf; {
 #endif /* RLOGCODE */
 #ifdef KRB5_U2U
     if (ttnproto == NP_K5U2U) {
-        if ((len = krb5_u2u_read(ttyfd,buf,n)) < 0)
+        if ((len = krb5_u2u_read(ttyfd,(char *)buf,n)) < 0)
           return(-1);
         else
           return(len);
@@ -6036,9 +6134,15 @@ netinc(timo) int timo; {
                 WSASafeToCancel = 1;
 #endif /* NT */
                 rc = select(FD_SETSIZE,
-#ifndef __DECC
+#ifdef __DECC
+#ifdef INTSELECT
+                            (int *)
+#else /* def INTSELECT */
                             (fd_set *)
-#endif /* __DECC */
+#endif /* def INTSELECT [else] */
+#else /* def __DECC */
+                            (fd_set *)
+#endif /* def __DECC [else] */
                             &rfds, NULL, NULL, &tv);
                 if (rc < 0) {
                     int s_errno = socket_errno;
@@ -6190,7 +6294,7 @@ netinc(timo) int timo; {
                     extern int tt_type_mode;
                     if ( !ISVTNT(tt_type_mode) )
 #endif /* OS2 */
-                    hexdump("netinc &ttbuf[ttibp]",&ttibuf[ttibp],ttibn);
+                    ckhexdump("netinc &ttbuf[ttibp]",&ttibuf[ttibp],ttibn);
                 }
 #endif /* BETADEBUG */
             }
@@ -6231,7 +6335,7 @@ nettol(s,n) CHAR *s; int n; {
     }
     debug(F101,"nettol TCPIPLIB ttnet","",ttnet);
 #ifdef COMMENT
-    hexdump("nettol",s,n);
+    ckhexdump("nettol",s,n);
 #endif /* COMMENT */
 
 #ifdef CK_KERBEROS
@@ -6877,6 +6981,7 @@ getlocalipaddr() {
     /* if still not resolved, then try second strategy */
     /* This second strategy does not work on Windows */
 
+    debug(F100,"getlocalipaddr","",0);
     memset(&l_sa,0,slen);
     memset(&r_sa,0,slen);
 
@@ -6937,6 +7042,7 @@ getlocalipaddrs(buf,bufsz,index)
     struct in_addr laddr;
 #endif /* COMMENT */
 
+    debug(F100,"getlocalipaddrs","",0);
     memset(&l_sa,0,slen);
     memset(&r_sa,0,slen);
 
@@ -9845,6 +9951,10 @@ x25dump_prim(primitive)    N_npi_ctl_t *primitive; {
 #endif /* SYSUTIMEH */
 #endif /* OS2 */
 
+#ifdef VMS				/* SMS 2007/02/15 */
+#include "ckvrtl.h"
+#endif /* def VMS */
+
 #ifndef HTTP_VERSION
 #define HTTP_VERSION "HTTP/1.1"
 #endif /* HTTP_VERSION */
@@ -10831,7 +10941,7 @@ http_tol(s,n) CHAR *s; int n; {
     }
     debug(F101,"http_tol TCPIPLIB ttnet","",ttnet);
 #ifdef COMMENT
-    hexdump("http_tol",s,n);
+    ckhexdump("http_tol",s,n);
 #endif /* COMMENT */
 
 #ifdef CK_SSL
@@ -13731,11 +13841,11 @@ fwdx_open_client_channel(channel) int channel; {
 
     env = getenv("DISPLAY");
     if ( !env )
-        env = tn_get_display();
+      env = (char *)tn_get_display();
     if ( env )
-        ckstrncpy(buf,env,256);
+      ckstrncpy(buf,env,256);
     else
-        ckstrncpy(buf,"127.0.0.1:0.0",256);
+      ckstrncpy(buf,"127.0.0.1:0.0",256);
 
     bzero((char *)&saddr,sizeof(saddr));
     saddr.sin_family = AF_INET;
@@ -13873,11 +13983,11 @@ fwdx_server_avail() {
 
     env = getenv("DISPLAY");
     if ( !env )
-        env = tn_get_display();
+      env = (char *)tn_get_display();
     if ( env )
-        ckstrncpy(buf,env,256);
+      ckstrncpy(buf,env,256);
     else
-        ckstrncpy(buf,"127.0.0.1:0.0",256);
+      ckstrncpy(buf,"127.0.0.1:0.0",256);
 
     bzero((char *)&saddr,sizeof(saddr));
     saddr.sin_family = AF_INET;
@@ -14203,7 +14313,7 @@ fwdx_write_data_to_channel(channel, data, len)
 
     sock = TELOPT_SB(TELOPT_FORWARD_X).forward_x.channel[i].fd;
     debug(F111,"fwdx_write_data_to_channel","socket",sock);
-    hexdump("fwdx_write_data_to_channel",data,len);
+    ckhexdump("fwdx_write_data_to_channel",data,len);
 
   fwdx_write_data_to_channel_retry:
 
