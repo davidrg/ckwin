@@ -3423,9 +3423,9 @@ void
 ck_des_ecb_encrypt(Block B1, Block B2, Schedule S, int I)
 {
     if ( I ) {      /* Encrypting */
-        hexdump("des_ecb_encrypt() encrypting",B1,sizeof(Block));
+        ckhexdump("des_ecb_encrypt() encrypting",B1,sizeof(Block));
     } else {        /* Decrypting */
-        hexdump("des_ecb_encrypt() decrypting",B1,sizeof(Block));
+        ckhexdump("des_ecb_encrypt() decrypting",B1,sizeof(Block));
     }
 
 #ifdef LIBDES
@@ -3448,8 +3448,8 @@ ck_des_ecb_encrypt(Block B1, Block B2, Schedule S, int I)
             p_k4_des_ecb_encrypt(B1,B2,S,I);
     }
   exit_des_ecb_encrypt:
-    hexdump("des_ecb_encrypt() B1",B1,sizeof(Block));
-    hexdump("des_ecb_encrypt() B2",B2,sizeof(Block));
+    ckhexdump("des_ecb_encrypt() B1",B1,sizeof(Block));
+    ckhexdump("des_ecb_encrypt() B2",B2,sizeof(Block));
 }
 
 int
@@ -4421,9 +4421,9 @@ ntlm_auth_send() {
     debug(F111,"ntlm_auth_send() InitializeSecurityContext",
            sspi_errstr(ss),ss);
 
-    hexdump("ntlm_auth_send() InitializeSecurityContext Context Requirements",
+    ckhexdump("ntlm_auth_send() InitializeSecurityContext Context Requirements",
            &context_requirements,sizeof(context_requirements));
-    hexdump("ntlm_auth_send() InitializeSecurityContext Context Attributes",
+    ckhexdump("ntlm_auth_send() InitializeSecurityContext Context Attributes",
            &NTLMContextAttrib,sizeof(NTLMContextAttrib));
 
     switch ( ss ) {
@@ -4442,7 +4442,7 @@ ntlm_auth_send() {
            NTLMSecBuf[0].cbBuffer);
     debug(F111,"ntlm_auth_send sending","NTLMSecBuf[0].BufferType",
            NTLMSecBuf[0].BufferType);
-    hexdump("ntlm_auth_send sending NTLMSecBuf[0].pvBuffer",
+    ckhexdump("ntlm_auth_send sending NTLMSecBuf[0].pvBuffer",
              NTLMSecBuf[0].pvBuffer,
              NTLMSecBuf[0].cbBuffer);
 
@@ -4538,7 +4538,7 @@ ntlm_reply(how,data,cnt) int how; unsigned char *data; int cnt;
                NTLMSecBuf[0].cbBuffer);
         debug(F111,"ntlm_reply received","NTLMInSecBuf.BufferType",
                NTLMSecBuf[0].BufferType);
-        hexdump("ntlm_reply received NTLMInSecBuf[0].pvBuffer",
+        ckhexdump("ntlm_reply received NTLMInSecBuf[0].pvBuffer",
                  NTLMInSecBuf.pvBuffer,
                  NTLMInSecBuf.cbBuffer);
 
@@ -4557,9 +4557,9 @@ ntlm_reply(how,data,cnt) int how; unsigned char *data; int cnt;
                 &NTLMTimeStampContext);
         debug(F111,"ntlm_reply InitializeSecurityContext",sspi_errstr(ss),ss);
 
-        hexdump("ntlm_reply() InitializeSecurityContext Context Requirements",
+        ckhexdump("ntlm_reply() InitializeSecurityContext Context Requirements",
                  &context_requirements,sizeof(context_requirements));
-        hexdump("ntlm_reply() InitializeSecurityContext Context Attributes",
+        ckhexdump("ntlm_reply() InitializeSecurityContext Context Attributes",
                  &NTLMContextAttrib,sizeof(NTLMContextAttrib));
 
 
@@ -4589,7 +4589,7 @@ ntlm_reply(how,data,cnt) int how; unsigned char *data; int cnt;
                NTLMSecBuf[0].cbBuffer);
         debug(F111,"ntlm_reply sending","NTLMSecBuf[0].BufferType",
                NTLMSecBuf[0].BufferType);
-        hexdump("ntlm_reply sending NTLMSecBuf[0].pvBuffer",
+        ckhexdump("ntlm_reply sending NTLMSecBuf[0].pvBuffer",
                  NTLMSecBuf[0].pvBuffer,
                  NTLMSecBuf[0].cbBuffer);
 
@@ -4775,7 +4775,7 @@ ntlm_is(data,cnt) unsigned char *data; int cnt;
         cnt -= 4;
         debug(F111,"ntlm_is","NTLMInSecBuf.BufferType",NTLMInSecBuf.BufferType);
 
-        hexdump("ntlm_is received NTLMInSecBuf.pvBuffer",data,cnt);
+        ckhexdump("ntlm_is received NTLMInSecBuf.pvBuffer",data,cnt);
         NTLMInSecBuf.pvBuffer = data;
 
         NTLMSecBufDesc.ulVersion = SECBUFFER_VERSION;
@@ -4830,9 +4830,9 @@ ntlm_is(data,cnt) unsigned char *data; int cnt;
                                    &NTLMContextAttrib,
                                    &NTLMTimeStampContext);
 
-        hexdump("ntlm_is() AcceptSecurityContext Context Requirements",
+        ckhexdump("ntlm_is() AcceptSecurityContext Context Requirements",
                  &context_requirements,sizeof(context_requirements));
-        hexdump("ntlm_is() AcceptSecurityContext Context Attributes",
+        ckhexdump("ntlm_is() AcceptSecurityContext Context Attributes",
                  &NTLMContextAttrib,sizeof(NTLMContextAttrib));
 
         debug(F111,"ntlm_is AcceptSecurityContext",sspi_errstr(ss),ss);
@@ -4858,7 +4858,7 @@ ntlm_is(data,cnt) unsigned char *data; int cnt;
                          NTLMSecBuf[0].BufferType);
                 length = copy_for_net(&buf[7], (char *) &NTLMSecBuf[0],
                                        2*sizeof(ULONG));
-                hexdump("ntlm_is sending NTLMSecBuf[0].pvBuffer",NTLMSecBuf[0].pvBuffer,
+                ckhexdump("ntlm_is sending NTLMSecBuf[0].pvBuffer",NTLMSecBuf[0].pvBuffer,
                                         NTLMSecBuf[0].cbBuffer);
                 length += copy_for_net(&buf[7+length], NTLMSecBuf[0].pvBuffer,
                                         NTLMSecBuf[0].cbBuffer);

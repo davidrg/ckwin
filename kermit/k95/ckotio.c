@@ -3875,7 +3875,7 @@ le_puts( char * s, int n )
     int rc = 0 ;
     int i = 0;
 
-    hexdump("LocalEchoPutChars",s,n);
+    ckhexdump("LocalEchoPutChars",s,n);
     RequestLocalEchoMutex( SEM_INDEFINITE_WAIT ) ;
     for ( i=0 ; i<n ; i++ ) {
         while ( (LocalEchoStart - LocalEchoEnd == 1) ||
@@ -5547,7 +5547,7 @@ ttinl(CHAR *dest, int max, int timo, CHAR eol, CHAR start, int turn) {
             return (-3);         /* i/o error or no connection */
         }
 
-        hexdump("ttinl() ttin?() returned",inxbuf,haveread);
+        ckhexdump("ttinl() ttin?() returned",inxbuf,haveread);
         j = 0;
         while ( j < haveread )
         {
@@ -5664,7 +5664,7 @@ ttinl(CHAR *dest, int max, int timo, CHAR eol, CHAR start, int turn) {
                     sopmask = ttprty;
                     needpchk = 0;
                 }
-                hexdump("ttinl got",inldest,i);
+                ckhexdump("ttinl got",inldest,i);
                 inlret = i ;
                 srvtimer = 0 ;
 
@@ -8407,7 +8407,7 @@ popen(char *cmd, char *mode) {
     else {
         sprintf(args, "/c%c%s%c",' ',cmd,0);
     }
-    hexdump("popen cmd_line",cmd_line,256);
+    ckhexrump("popen cmd_line",cmd_line,256);
 
     rc = DosExecPgm(fail, sizeof(fail), EXEC_ASYNCRESULT,
                   cmd_line, 0, &res, cmd_exe);

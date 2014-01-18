@@ -2483,7 +2483,7 @@ wyseascii( int ch )
                             char buf[80];
                             udkfkeys[keyi] = strdup( keydef ) ;
                             sprintf(buf,"Wyse [Define Key]=%d",keyi);
-                            hexdump(buf,keydef,strlen(keydef));
+                            ckhexdump(buf,keydef,strlen(keydef));
                         } else {
                             udkfkeys[keyi] = wysedefkey( keyi );
                         }
@@ -4710,7 +4710,7 @@ wyseascii( int ch )
                                 char buf[80];
                                 udkfkeys[keyi] = strdup( keydef ) ;
                                 sprintf(buf,"Wyse [Define Key]=%d",keyi);
-                                hexdump(buf,keydef,strlen(keydef));
+                                ckhexdump(buf,keydef,strlen(keydef));
                             } else {
                                 udkfkeys[keyi] = wysedefkey( keyi );
                             }

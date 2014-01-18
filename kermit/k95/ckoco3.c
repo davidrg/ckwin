@@ -10734,7 +10734,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
                 if ( vtnt_index == VTNT_MIN_READ ) {
                     int szchng = 0, h_vtnt, w_vtnt;
 
-                    hexdump("VTNT MIN_READ",vtnt_buf,VTNT_MIN_READ);
+                    ckhexdump("VTNT MIN_READ",vtnt_buf,VTNT_MIN_READ);
 
                     /* Figure out how much more data we need to read */
                     pScrnBufInf = (PCONSOLE_SCREEN_BUFFER_INFO) vtnt_buf;
@@ -10849,7 +10849,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
                     pCharInfo = (PCHAR_INFO) ((PCHAR) pWriteRegion
                                                + sizeof(SMALL_RECT));
 
-                    hexdump("VTNT CharInfo",pCharInfo,vtnt_read-VTNT_MIN_READ);
+                    ckhexdump("VTNT CharInfo",pCharInfo,vtnt_read-VTNT_MIN_READ);
 
                     Row = pWriteRegion->Top;
                     Col = pWriteRegion->Left;

@@ -377,7 +377,7 @@ NetCmdPutChars( char * s, int n )
     int rc = 0 ;
     int i = 0;
 
-    hexdump("NetCmdPutChars",s,n);
+    ckhexdump("NetCmdPutChars",s,n);
     RequestNetCmdMutex( SEM_INDEFINITE_WAIT ) ;
     for ( i=0 ; i<n ; i++ )
       rc = NetCmdPutChar( s[i] ) ;
@@ -2099,7 +2099,7 @@ os2_netxin(int n, CHAR * buf) {
             extern int u_binary, me_binary, tn_b_meu, tn_b_ume ;
             int i,tx;
 
-            hexdump("os2_netxin buf[]",buf,len);
+            ckhexdump("os2_netxin buf[]",buf,len);
 
             for ( i=0;i<len;i++ ) {
 #ifdef CK_ENCRYPTION
@@ -2117,7 +2117,7 @@ os2_netxin(int n, CHAR * buf) {
                         i--;
                         continue;
 #ifdef COMMENT
-                        hexdump("os2_netxin buf[]",buf,len);
+                        ckhexdump("os2_netxin buf[]",buf,len);
 #endif /* COMMENT */
                     }
                     else if ( buf[0] == LF ) {
@@ -2127,7 +2127,7 @@ os2_netxin(int n, CHAR * buf) {
                     else {
                         debug(F111,"os2_netxin","TELNET ERROR - NUL NOT FOUND",buf[0]);
 #ifdef COMMENT
-                        hexdump("os2_netxin buf[]",buf,len);
+                        ckhexdump("os2_netxin buf[]",buf,len);
 #endif /* COMMENT */
                     }
 
@@ -2136,7 +2136,7 @@ os2_netxin(int n, CHAR * buf) {
                 if ( buf[i] == IAC ) {
                     debug(F111,"os2_netxin","TELNET IAC FOUND",i);
 #ifdef COMMENT
-                    hexdump("os2_netxin buf[]",buf,len);
+                    ckhexdump("os2_netxin buf[]",buf,len);
 #endif /* COMMENT */
                     len-- ;             /* take one character out */
                     tngcp = &buf[i];
@@ -2224,7 +2224,7 @@ os2_netxin(int n, CHAR * buf) {
                             len-- ;
                             i--;        /* so that we don't miss an IAC or CR */
 #ifdef COMMENT
-                            hexdump("os2_netxin buf[]",buf,len);
+                            ckhexdump("os2_netxin buf[]",buf,len);
 #endif /* COMMENT */
                         }
                         else if ( buf[i] == LF ) {
@@ -2234,7 +2234,7 @@ os2_netxin(int n, CHAR * buf) {
                         else {
                             debug(F111,"os2_netxin","TELNET ERROR - NUL NOT FOUND",i);
 #ifdef COMMENT
-                            hexdump("os2_netxin buf[]",buf,len);
+                            ckhexdump("os2_netxin buf[]",buf,len);
 #endif /* COMMENT */
                         }
                     }
@@ -5745,7 +5745,7 @@ Rconnect(int socket, struct sockaddr * name, int namelen)
                     return(-1);
                 next += rc ;
             }
-            hexdump("Rconnect response from SOCKS server",request,packetsize);
+            ckhexdump("Rconnect response from SOCKS server",request,packetsize);
             return ( request[1] == SOCKS_SUCCESS ? 0 : -1 );
         }
     }
