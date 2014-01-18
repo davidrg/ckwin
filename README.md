@@ -1,10 +1,13 @@
-Kermit for Windows
-==================
+C-Kermit for Windows
+====================
 
-This is Kermit for Windows. It is a free and open source version of the
-program formerly known as Kermit-95, a commercial product of Columbia 
+This is C-Kermit for Windows. It is a free and open source version of the
+program formerly known as Kermit-95, a commercial product of Columbia
 University from 1994 to 2011. For more information on Kermit, visit the
 Kermit Project website: http://www.kermitproject.org.
+
+This software is currently based on C-Kermit version 9.0.304 Dev.08 of
+8-DEC-2013.
 
 OS/2 support is still present but untested. It should still work if someone can
 get it building with freely available tools.
