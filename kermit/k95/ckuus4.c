@@ -573,11 +573,6 @@ extern CHAR (*xlr[MAXTCSETS+1][MAXFCSETS+1])(); /* translation functions. */
 
 struct keytab vartab[] = {
     { "_line",     VN_TFLN,  CM_INV},   /* 192 */
-#ifdef OS2
-    { "_regname",  VN_REGN,  CM_INV},   /* 1.1.12 */
-    { "_regorg",   VN_REGO,  CM_INV},   /* 1.1.12 */
-    { "_regnum",   VN_REGS,  CM_INV},   /* 1.1.12 */
-#endif /* OS2 */
     { "apcactive", VN_APC,   CM_INV},   /* 192 */
 #ifdef NT
     { "appdata",   VN_APPDATA, 0},      /* 201 */
@@ -2109,7 +2104,6 @@ doconect(q,async) int q, async; {
     int qsave;                          /* For remembering "quiet" value */
 #ifdef OS2
     extern int term_io;
-    extern int display_demo;
     int term_io_save;
 #ifdef KUI
     extern int kui_async;
@@ -2148,9 +2142,6 @@ doconect(q,async) int q, async; {
 #ifdef CK_AUTODL
     ksbuf[0] = NUL;                     /* Autodownload packet buffer */
 #endif /* CK_AUTODL */
-#ifdef OS2
-    display_demo = 1;                   /* Remember to display demo */
-#endif /* OS2 */
 
 #ifdef IKS_OPTION
     if (is_tn && TELOPT_U(TELOPT_KERMIT) && ttchk() >= 0
@@ -13960,15 +13951,6 @@ nvlook(s) char *s; {
           return((char *)vvbuf);
       }
 #endif /* NOXFER */
-
-#ifdef OS2
-      case VN_REGN:
-        return(get_reg_name());
-      case VN_REGO:
-        return(get_reg_corp());
-      case VN_REGS:
-        return(get_reg_sn());
-#endif /* OS2 */
     } /* Break up long switch statements... */
 
     switch(y) {
