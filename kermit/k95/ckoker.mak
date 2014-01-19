@@ -47,10 +47,40 @@ COMMON_CFLAGS = /MD
 OPT_4 = 
 OPT_5 =
 
-!if "$(PLATFORM)" == "NT"
+CMP = 
+COMPILER = unknown
+COMPILER_VERSION = 
+MSC_VER = 0
+TARGET_CPU = x86
+
 # On windows we'll try to detect the Visual C++ version being used and adjust
 # compiler flags accordingly.
+!if "$(PLATFORM)" == "NT"
+!message Attempting to detect compiler...
+
 !include compiler_detect.mak
+!message 	
+!endif
+
+!message ========================================
+!message C-Kermit for Windows Build Configuration
+!message ========================================
+!message  Platform: 		$(PLATFORM)
+!message  Architecture: 		$(TARGET_CPU)
+!message  Compiler: 		$(COMPILER)
+!message  Compiler Version: 	$(COMPILER_VERSION)
+
+!if "$(CMP)" == "VCXX"
+
+!if ($(MSC_VER) < 60)
+!error Unsupported compiler version. Visual C++ 6.0 or newer required.
+!endif
+
+# Check to see if we're using Visual C++ and targeting 64bit x86. If so
+# then tell the linker we're targeting x86-64
+!if "$(TARGET_CPU)" == "x86-64"
+LDFLAGS = $(LDFLAGS) /MACHINE:X64
+!endif
 
 # These flags are deprecated or unsupported from Visual C++ 2005 (v8.0) and up.
 !if ($(MSC_VER) < 140)
