@@ -3,8 +3,8 @@ C-KERMIT 9.0 CHANGE LOG (Changes since 8.0.207 / K95 2.1.3 January 2003)
   Chronological order.
   Go to the bottom to find the newest edits.
 
-  Frank da Cruz, The Kermit Project, Bronx, NY.
-  Last update:  Fri Dec  6 19:38:24 2013
+  Frank da Cruz, The Kermit Project, New York City.
+  Last update:  Tue Dec 17 14:54:33 2013
 
 FTP USER, FTP ACCOUNT, plus the various prompts and switches for FTP username,
 password, and account all neglected to strip quotes, and in most cases quotes
@@ -8505,8 +8505,73 @@ to test it in Windows.  ckcmai.c, ckuus2.c, ckuus4.c, ckuus5.c, ckuus6.c,
 
 -- Dev.08 --
 
-NOTE: The MANUAL command is going to take some rethinking.  And the naming
-of initialization and customization files.  I didn't do anything about these.
+The TOUCH command was dumping core because of a clever optimization I put
+in the code at some point, probably not too long ago or I would have noticed
+it.  Fixed the problem by removing the optimization.  ckuus6.c, 17 Dec 2013.
+
+Reported by Christoph Sievers... the following sequence:
+
+  SET FTP AUTOENCRYPTION ON
+  SET FTP AUTHTYPE TLS
+  SET AUTH TLS VERBOSE ON
+  SET AUTH TLS VERIFY NO
+  ftp open 127.0.0.1 12345 /USER:fu /PASSWORD:bar /NOINIT
+
+is supposed to allow a secure FTP connection to proceed without the question:
+
+  Warning: Server didn't provide a certificate
+  Continue? (Y/N)
+
+but the question was coming out anyway.  Jeff noticed that the
+FTP/SSL code was missing an IF clause that was present in the TELNET/SSL
+code.  Fixed in ckcftp.c, 17 Dec 2013.
+
+For Unix only, changed default prompt to show "~/" instead of the full home
+path, which these days can get ridiculously long.  So now, for example,
+"(/hmt/sirius1/prv0/kd/fdc/) C-Kermit>" becomes "(~/) C-Kermit>".  If I'm
+cd'd to the "src" directory of my home directory, it's "(~/src/) C-Kermit>".
+If my current directory is not in my home tree, its full path is shown as
+before.  ckuus5.c (definition of ckprompt), 17 Dec 2013.
+
+Got rid of the "ok" keyword as an IF condition.  OK was an undocumented
+and invisible synonym for SUCCESS, but this has bitten me too many times,
+when I create a variable named OK and use it as a "lazy IF condition" as in:
+
+    .ok = 0
+    if match \&a[i] img_[0-9][0-9][0-9][0-9].jpg .ok = 1
+    else if match \&a[i] img_[0-9][0-9][0-9][0-9][0-9].jpg .ok = 1
+    else if match \&a[i] dscf[0-9][0-9][0-9][0-9].jpg .ok = 1
+    else if match \&a[i] scan[0-9][0-9][0-9][0-9].jpg .ok = 1
+    if not ok exit 1 "\&a[i]: Not a recognized image file name"
+
+ckuus6.c, 17 Dec 2013.
+
+Corrected HELP SHIFT text, which previously said it affected only arguments
+1..9, but really affects all arguments, no matter how many.  
+ckuus2.c, 17 Dec 2013.
+
+From David Goodwin: Remove all references to K95 registration and 
+time-limited demo versions, and fix a couple minor compilation problems
+for the Windows version.  ckcmai.c, ckcpro.w, ckucmd.c, ckuus[34rx].c,
+ckuusr.h, 20 Jan 2014.
+
+Fixed an aggregrate array initialization (not legal in non-ANSI).
+ckuus4.c, 20 Jan 2014.
+
+Added CHECK LOCALE.  ckuus3.c, 20 Jan 2014.
+
+Various minor touch-ups to HELP, NEWS, VERSION text.  ckuus[r2].c, 20 Jan 2014.
+
+Fixed core dump that happened only in Solaris (as far as I know) with
+"ftp open kermitproject.org" (which should have been "ftp.kermitproject.org").
+The problem was that perror() was being called with a pointer to an empty
+string, which should be OK but apparently is not in Solaris.  ckcftp.c,
+20 January 2014.
+
+Updated version number and date and copyright date.  ckcmai.c and many
+other modules.  20 January 2014.
+
+-- Dev.09 --
 
 ---------------------------------
 ***************************

@@ -1,6 +1,6 @@
 #include "ckcsym.h"
 
-char *cmdv = "Command package 9.0.170, 6 Dec 2013";
+char *cmdv = "Command package 9.0.171, 10 Jan 2014";
 
 /*  C K U C M D  --  Interactive command package for Unix  */
 
@@ -10,7 +10,7 @@ char *cmdv = "Command package 9.0.170, 6 Dec 2013";
   Author: Frank da Cruz (fdc@columbia.edu),
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2013,
+  Copyright (C) 1985, 2014,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -840,15 +840,6 @@ prompt(f) xx_strp f; {
 #ifdef CK_SSL
     extern int ssl_active_flag, tls_active_flag;
 #endif /* CK_SSL */
-#ifdef OS2
-    extern int display_demo;
-
-    /* If there is a demo screen to be displayed, display it */
-    if (display_demo && xcmdsrc == 0) {
-        demoscrn(VCMD);
-        display_demo = 0;
-    }
-#endif /* OS2 */
 
     if (psetf == 0)			/* If no prompt set, set default. */
       cmsetp(dfprom);

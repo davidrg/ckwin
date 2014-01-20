@@ -5406,8 +5406,9 @@ zstime(f,yy,x)
     {
         int i, x = 0, xx, flag = 0;
         char * s;
-#ifdef DEBUG
         char obuf[24];
+#ifdef COMMENT
+#ifdef DEBUG
         if (deblog) {
             debug(F111,"zstime lperms",yy->lprotect.val,yy->lprotect.len);
             debug(F111,"zstime gperms",yy->gprotect.val,yy->gprotect.len);
@@ -5416,6 +5417,7 @@ zstime(f,yy,x)
             debug(F110,"zstime file perms before",obuf,0);
         }
 #endif /* DEBUG */
+#endif /* COMMENT */
 
 #ifdef CK_LOGIN
         debug(F101,"zstime isguest","",isguest);

@@ -3,7 +3,7 @@
 #endif /* SSHTEST */
 
 #include "ckcsym.h"
-char *userv = "User Interface 9.0.304, 24 July 2013";
+char *userv = "User Interface 9.0.306, 20 January 2014";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 
@@ -14,7 +14,7 @@ char *userv = "User Interface 9.0.304, 24 July 2013";
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2013,
+  Copyright (C) 1985, 2014,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -136,7 +136,6 @@ extern int tt_scroll;
 #ifndef NOTERM
 extern tt_status[VNUM];
 #endif /* NOTERM */
-int display_demo = 1;
 #include "ckossh.h"
 #ifdef KUI
 #include "ikui.h"
@@ -12455,7 +12454,9 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 #endif	/* CK_64BIT */
 	printf("\n\n");
         printf("Authors:\n");
-	printf(" Frank da Cruz, the Kermit Project\n");
+	printf(" Frank da Cruz, the Kermit Project %s\n",
+               "<fdc@kermitproject.org>"
+	       );
         printf(" Jeffrey Eric Altman, Secure Endpoints, Inc. %s\n",
 	       "<jaltman@secure-endpoints.com>"
 	       );

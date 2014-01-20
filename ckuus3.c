@@ -13,7 +13,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2013,
+  Copyright (C) 1985, 2014,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -2009,10 +2009,16 @@ struct keytab ftrtab[] = {              /* Feature table */
 #endif /* LATIN2 */
 
 #ifdef CKLEARN
-"learned-scripts",       0, 0,
+"learned-scripts",      0, 0,
 #else
-"learned-scripts",       1, 0,
+"learned-scripts",      1, 0,
 #endif /* CKLEARN */
+
+#ifdef HAVE_LOCALE
+"locale",               0, 0,
+#else
+"locale",               1, 0,
+#endif /* HAVE_LOCALE */
 
 #ifndef NOLOCAL
 "making-connections",   0, 0,
@@ -4678,6 +4684,18 @@ dochk() {
     ckstrncpy(line,atmbuf,LINBUFSIZ);
     if ((y = cmcfm()) < 0)
       return(y);
+#ifdef HAVE_LOCALE
+    if (!ckstrcmp(line,"locale",(int)strlen(line),0)) {
+	extern int nolocale;
+	int ok = 0;
+        ok = (nolocale ? 0 : 1);
+	if (msgflg) 
+          printf(" locale%s available\n", ok ? "" : " not");
+        else if (nolocale && !backgrd)
+          printf(" CHECK: locale not available\n");
+        return(success = ok);
+    }    
+#endif /* HAVE_LOCALE */
 #ifndef NOPUSH
     if (!ckstrcmp(line,"push",(int)strlen(line),0)) {
         if (msgflg)                     /* If at top level... */
@@ -12280,32 +12298,6 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
           return(success = 1);
       }
 #endif /* CK_CTRLZ */
-
-#ifdef SESLIMIT
-      case XYLIMIT: {  /* Session-Limit (length of session in seconds) */
-          extern int seslimit;
-#ifdef OS2
-          extern int downloaded;
-#endif /* OS2 */
-          y = cmnum("Maximum length of session, seconds","0",10,&x,xxstring);
-          if (inserver &&
-#ifdef IKSDCONF
-              iksdcf
-#else
-              1
-#endif /* IKSDCONF */
-#ifdef OS2
-               || downloaded
-#endif /* OS2 */
-              ) {
-              if ((z = cmcfm()) < 0)
-                return(z);
-              printf("?Sorry, command disabled.\r\n");
-              return(success = 0);
-          }
-          return(setnum(&seslimit,x,y,86400));
-      }
-#endif /* SESLIMIT */
 
       case XYRELY: {                    /* SET RELIABLE */
           if ((x = cmkey(ooatab,3,"","automatic",xxstring)) < 0)

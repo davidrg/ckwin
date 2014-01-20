@@ -7,7 +7,7 @@
 char *wartv = "Wart Version 2.14, 10 Nov 1999";
 
 char *protv =                                                     /* -*-C-*- */
-"C-Kermit Protocol Module 9.0.162, 11 March 2013";
+"C-Kermit Protocol Module 9.0.163, 20 January 2014";
 
 int kactive = 0;			/* Kermit protocol is active */
 
@@ -18,7 +18,7 @@ int kactive = 0;			/* Kermit protocol is active */
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2013
+  Copyright (C) 1985, 2014
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -3043,7 +3043,6 @@ proto() {
 #ifdef OS2
     extern int cursorena[], cursor_save, term_io;
     extern BYTE vmode;
-    extern int display_demo;
     int term_io_save;
 #endif /* OS2 */
 #endif /* NOLOCAL */
@@ -3275,7 +3274,6 @@ proto() {
 #ifdef OS2
     cursorena[vmode] = cursor_save;
     term_io = term_io_save;
-    display_demo = 1;
 #endif /* OS2 */
 #endif /* NOLOCAL */
 }

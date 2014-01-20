@@ -9,7 +9,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2013,
+  Copyright (C) 1985, 2014,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -573,11 +573,6 @@ extern CHAR (*xlr[MAXTCSETS+1][MAXFCSETS+1])(); /* translation functions. */
 
 struct keytab vartab[] = {
     { "_line",     VN_TFLN,  CM_INV},   /* 192 */
-#ifdef OS2
-    { "_regname",  VN_REGN,  CM_INV},   /* 1.1.12 */
-    { "_regorg",   VN_REGO,  CM_INV},   /* 1.1.12 */
-    { "_regnum",   VN_REGS,  CM_INV},   /* 1.1.12 */
-#endif /* OS2 */
     { "apcactive", VN_APC,   CM_INV},   /* 192 */
 #ifdef NT
     { "appdata",   VN_APPDATA, 0},      /* 201 */
@@ -2109,7 +2104,6 @@ doconect(q,async) int q, async; {
     int qsave;                          /* For remembering "quiet" value */
 #ifdef OS2
     extern int term_io;
-    extern int display_demo;
     int term_io_save;
 #ifdef KUI
     extern int kui_async;
@@ -10277,7 +10271,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 #endif /* UNIX */
           char abuf[16], *s;
           char ** ap = NULL;
-	  char workbuf[MAXPATHLEN] = { '\0', '\0' };
+	  char workbuf[MAXPATHLEN];
 	  int attrs = 9;		/* Number of attributes defined */
 	  int k = 0;			/* current attribute index */
 	  int i,j,n;
@@ -10285,6 +10279,8 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 	  int dir = -1;			/* 1 = arg is a directory file */
 	  CK_OFF_T z, z2;		/* For file size */
 
+          workbuf[0] = NUL;
+          workbuf[1] = NUL;
 	  if (argn < 2) {		/* An array designator is required */
 	     if (fndiags)
 	      ckmakmsg(fnval,FNVALL,"<ERROR:ARRAY_REQUIRED:\\f",fn,"()>",NULL);
@@ -13961,14 +13957,6 @@ nvlook(s) char *s; {
       }
 #endif /* NOXFER */
 
-#ifdef OS2
-      case VN_REGN:
-        return(get_reg_name());
-      case VN_REGO:
-        return(get_reg_corp());
-      case VN_REGS:
-        return(get_reg_sn());
-#endif /* OS2 */
     } /* Break up long switch statements... */
 
     switch(y) {
