@@ -599,7 +599,7 @@ struct keytab iftab[] = {               /* IF commands */
 #endif /* ZFCDAT */
     { "not",        XXIFNO, 0 },
     { "numeric",    XXIFNU, 0 },
-    { "ok",         XXIFSU, CM_INV },
+/*  { "ok",         XXIFSU, CM_INV }, */
     { "open",       XXIFOP, 0 },
     { "or",         XXIFOR, 0 },
     { "quiet",      XXIFQU, 0 },
@@ -5530,6 +5530,7 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 		  s = tilde_expand(s);
 #endif	/* UNIX */
 		/* the IF condition was added 2013-04-15 */
+
 		if (zchki(s) < 0) {	/* If file doesn't already exist... */
 		    fp = fopen(s,"w");	/* Create it */
 		    if (!fp) {
@@ -5539,12 +5540,14 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 		    }
 		    fclose(fp);
 		}
+		debug(F110,"TOUCH CREATE NONEXISTENT",s,0);
 		if (zstime(s,&xxstruct,0) < 0) {
+		    debug(F110,"TOUCH ZSTIME FAILED",s,0);
 		    printf("?TOUCH %s: %s\n",name,ck_errstr());
 		    rc = -9;
 		    goto xdomydir;
 		}
-		cx = XXDIR;		/* Now maybe list it. */
+		debug(F110,"TOUCH ZSTIME OK",xxstruct.date.val,0);
 		multiple++;		/* Force new directory scan */
 	    }
 	}
@@ -6006,9 +6009,14 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 	    success = 1;		/* If none we're finished */
 	    goto xdomydir;
         }
+
+/* TOUCH command... */
+
 	if (cx == XXTOUC) {		/* Command was TOUCH, not DIRECTORY */
 	    /* Given date-time, if any, else current date-time */
+	    debug(F110,"TOUCH dstr before",dstr,0);
 	    dstr = ckcvtdate(modtime[0] ? modtime : "",0);
+	    debug(F110,"TOUCH dstr after",dstr,0);
 	    xxstruct.date.val = dstr;
 	    xxstruct.date.len = (int)strlen(xxstruct.date.val);
 	    xxstruct.lprotect.len = 0;

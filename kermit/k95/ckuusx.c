@@ -9,7 +9,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2013,
+  Copyright (C) 1985, 2014,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -4984,6 +4984,7 @@ doexit(exitstat,code) int exitstat, code; {
 #endif /* DCMDBUF */
         extern int tt_status[];
         extern int vmode;
+
 #ifndef KUI
         /* This is going to be hideous.  If we have a status line */
         /* in the command window turn it off before we exit.      */

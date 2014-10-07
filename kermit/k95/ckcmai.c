@@ -1,6 +1,6 @@
-#define EDITDATE  "6 Dec 2013"		/* Last edit date dd mmm yyyy */
-#define EDITNDATE "20131206"		/* Keep them in sync */
-/* Fri Dec  6 10:46:18 2013 */
+#define EDITDATE  "20 Jan 2014"		/* Last edit date dd mmm yyyy */
+#define EDITNDATE "20140120"		/* Keep them in sync */
+/* Mon Jan 20 09:53:25 2014 */
 
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
@@ -30,7 +30,7 @@
 #endif /* OS2 */
 #endif /* BETATEST */
 
-char * ck_cryear = "2013"; 		/* C-Kermit copyright year */
+char * ck_cryear = "2014"; 		/* C-Kermit copyright year */
 
 #ifndef MAC				/* MAC = Kermit for MAC OS 6, 7, ... */
 /*
@@ -41,7 +41,7 @@ char * ck_cryear = "2013"; 		/* C-Kermit copyright year */
 #ifndef BETATEST
 #ifndef OS2                             /* UNIX, VMS, etc... (i.e. C-Kermit) */
 char *ck_s_test = "Dev";		/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "08";			/* Test version number or "" */
+char *ck_s_tver = "09";			/* Test version number or "" */
 #else  /* OS2 */
 char *ck_s_test = "";			/* (i.e. K95) */
 char *ck_s_tver = "";
@@ -83,8 +83,8 @@ long  ck_l_ver =  900304L;              /* C-Kermit version number */
 
 #ifdef OS2
 /* New Open Source C-Kermit for Windows is just C-Kermit */
-char *ck_s_xver = "";		        /* Product-specific version string */
-long  ck_l_xver = 0L;                   /* Product-specific version number */
+char *ck_s_xver = "";			/* Product-specific version string */
+long  ck_l_xver = 0L;			/* Product-specific version number */
 #else
 #ifdef MAC
 char *ck_s_xver = "0.995";              /* Product-specific version string */
@@ -2636,10 +2636,12 @@ VOID
 makever() {                             /* Make version string from pieces */
     int x, y;
     char * s;
+#ifndef OS2
 #ifndef MAC
     ck_s_xver = ck_s_ver;               /* Fill in C-Kermit version number */
     ck_l_xver = ck_l_ver;               /* for UNIX, VMS, etc. */
 #endif /* MAC */
+#endif /* OS2 */
     x = strlen(ck_s_name);
     y = strlen(ck_s_xver);
     if (y + x + 1 < CKVERLEN) {

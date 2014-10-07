@@ -11,7 +11,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2013,
+  Copyright (C) 1985, 2014,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -218,7 +218,7 @@ char *newstxt[] = {
 " . Bigger maximum command and macro lengths",
 " . Bigger filename expansion space",
 " . New super-flexible RENAME command (HELP RENAME)",
-" . New CHANGE command for changing text files (HELP TOUCH)",
+" . New CHANGE command for changing text files (HELP CHANGE)",
 " . New COPY and DIRECTORY command options (HELP COPY, HELP DIRECTORY)",
 " . New TOUCH command (HELP TOUCH)",
 #ifdef UNIX
@@ -227,7 +227,7 @@ char *newstxt[] = {
 #ifdef CK_SSL
 " . Raw SSL/TLS connections for connecting to POP3 and similar services",
 #endif /* CK_SSL */
-" . At prompt, Ctrl-K recalls most recent filename",
+" . At the prompt, Ctrl-K recalls most recent filename",
 " . Scripting and performance improvements and bug fixes",
 " ",
 "Documentation:",
@@ -7132,7 +7132,8 @@ case XXASSOC:
 #ifndef NOSPL
 case XXSHIFT:
     return(hmsg("Syntax: SHIFT [ n ]\n\
-  Shifts \\%1..9 variables n places to the left; default n = 1."));
+  Shifts script command line or macro or TAKE file argument variables\n\
+  \\%1..9 or \\&_[1..n] n places to the left; default n = 1."));
 #endif /* NOSPL */
 
 #ifndef NOPUSH

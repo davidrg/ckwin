@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2013,
+  Copyright (C) 1985, 2014,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -2226,6 +2226,12 @@ struct stringint {			/* String and (wide) integer */
 #define VN_P_RPT  103			/* Repeat count prefix */
 #define VN_D_LCP  104			/* DIAL LOCAL-PREFIX */
 #define VN_URL    105			/* Last URL selected */
+#ifdef COMMENT
+/* Not used in Open Source version but should not be recycled */
+#define VN_REGN   106			/* Registration Name */
+#define VN_REGO   107			/* Registration Organization */
+#define VN_REGS   108			/* Registration Serial number */
+#endif /* COMMENT */
 #define VN_XPROG  109			/* xprogram (like xversion) */
 #define VN_EDITOR 110			/* Editor */
 #define VN_EDOPT  111			/* Editor options */

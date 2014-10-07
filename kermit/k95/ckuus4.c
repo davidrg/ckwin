@@ -9,7 +9,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2013,
+  Copyright (C) 1985, 2014,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -10268,7 +10268,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 #endif /* UNIX */
           char abuf[16], *s;
           char ** ap = NULL;
-	  char workbuf[MAXPATHLEN] = { '\0', '\0' };
+	  char workbuf[MAXPATHLEN];
 	  int attrs = 9;		/* Number of attributes defined */
 	  int k = 0;			/* current attribute index */
 	  int i,j,n;
@@ -10276,6 +10276,8 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 	  int dir = -1;			/* 1 = arg is a directory file */
 	  CK_OFF_T z, z2;		/* For file size */
 
+          workbuf[0] = NUL;
+          workbuf[1] = NUL;
 	  if (argn < 2) {		/* An array designator is required */
 	     if (fndiags)
 	      ckmakmsg(fnval,FNVALL,"<ERROR:ARRAY_REQUIRED:\\f",fn,"()>",NULL);
@@ -13951,6 +13953,7 @@ nvlook(s) char *s; {
           return((char *)vvbuf);
       }
 #endif /* NOXFER */
+
     } /* Break up long switch statements... */
 
     switch(y) {

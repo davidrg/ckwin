@@ -2,7 +2,7 @@
 
 /*  C K C F T P  --  FTP Client for C-Kermit  */
 
-char *ckftpv = "FTP Client, 9.0.260, 14 Jul 2011";
+char *ckftpv = "FTP Client, 9.0.262, 20 Jan 2014";
 
 /*
   Authors:
@@ -11,7 +11,7 @@ char *ckftpv = "FTP Client, 9.0.260, 14 Jul 2011";
     Frank da Cruz <fdc@columbia.edu>,
       The Kermit Project, Columbia University.
 
-  Copyright (C) 2000, 2011,
+  Copyright (C) 2000, 2014,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -10428,7 +10428,9 @@ ssl_auth() {
     } else {
         ssl_ftp_active_flag = 1;
 
-        if (!ssl_certsok_flag && !tls_is_krb5(1)) {
+        if (!ssl_certsok_flag &&
+	    (ssl_verify_flag & SSL_VERIFY_PEER) && /* JEA 2013-12-10 */
+	    !tls_is_krb5(1)) {
             char *subject = ssl_get_subject_name(ssl_ftp_con);
 
             if (!subject) {
@@ -13161,7 +13163,7 @@ initconn() {
                               inet_ntoa(hisctladdr.sin_addr)
                               );
                       errno = oerrno;
-                      perror((char *)0);
+                      perror("ftphookup");
                       hp->h_addr_list++;
                       memcpy((char *)&hisctladdr.sin_addr,
                              hp->h_addr_list[0],
@@ -13361,7 +13363,9 @@ ssl_dataconn() {
     } else {
         ssl_ftp_data_active_flag=1;
 
-        if (!ssl_certsok_flag && !tls_is_krb5(2)) {
+        if (!ssl_certsok_flag &&
+	    (ssl_verify_flag & SSL_VERIFY_PEER) && /* JEA 2013-12-10 */
+	    !tls_is_krb5(2)) {
             char *subject = ssl_get_subject_name(ssl_ftp_data_con);
 
             if (!subject) {

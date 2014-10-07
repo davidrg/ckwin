@@ -15,7 +15,7 @@ int cmdsrc() { return(0); }
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2013,
+  Copyright (C) 1985, 2014,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -256,9 +256,16 @@ char * ikprompt = "[\\freplace(\\v(dir),/,\\\\)] IKSD> ";
 char * ckprompt = "\\v(dir) C-Kermit>"; /* Default prompt VMS */
 char * ikprompt = "\\v(dir) IKSD>";
 #else
+#ifdef UNIX
 /* Note: parens, not brackets, because of ISO646 */
+/* Collapse long paths using ~ notation if in home directory tree */
+char * ckprompt = "(\\freplace(\\v(dir),\\fpathname(\\v(home)),~/)) C-Kermit>";
+char * ikprompt = "(\\freplace(\\v(dir),\\fpathname(\\v(home)),~/)) IKSD>";
+#else
+/* Default prompt for other platforms */
 char * ckprompt = "(\\v(dir)) C-Kermit>"; /* Default prompt for others */
 char * ikprompt = "(\\v(dir)) IKSD>";
+#endif /* UNIX */
 #endif /* VMS */
 #endif /* NT */
 #endif /* NOSPL */
@@ -10139,6 +10146,9 @@ initoptlist() {
 #ifdef CK_MKDIR
     makestr(&(optlist[noptlist++]),"CK_MKDIR");
 #endif /* CK_MKDIR */
+#ifdef HAVE_LOCALE
+    makestr(&(optlist[noptlist++]),"HAVE_LOCALE");
+#endif /* HAVE_LOCALE */
 #ifdef NOMKDIR
     makestr(&(optlist[noptlist++]),"NOMKDIR");
 #endif /* NOMKDIR */
