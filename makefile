@@ -1,12 +1,12 @@
 # makefile / Makefile / ckuker.mak / CKUKER.MAK
 #
-# Sun Nov 24 12:38:31 2013
-BUILDID=20131124
+# Sun Feb 23 09:05:44 2014
+BUILDID=20140223
 CKVER= "9.0.304"
 #
 # -- Makefile to build C-Kermit for UNIX and UNIX-like platforms --
 #
-# Copyright (C) 1985, 2013,
+# Copyright (C) 1985, 2014,
 #   Trustees of Columbia University in the City of New York.
 #   All rights reserved.  See the C-Kermit COPYING.TXT file or the
 #   copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -6215,15 +6215,19 @@ linux+krb5:
 		K5CRYPTO='-lk5crypto'; \
         else if ls /usr/lib64/libk5crypto* > /dev/null 2> /dev/null; then \
                 K5CRYPTO='-lk5crypto'; \
-        fi; fi; fi; \
+	        else if ls /usr/lib/$(MULTIARCH)/libk5crypto* > /dev/null 2> /dev/null; then \
+					K5CRYPTO='-lk5crypto'; \
+	fi; fi; fi; fi; \
 	COM_ERR=''; \
 	if ls /lib/libcom_err* > /dev/null 2> /dev/null; then \
 		COM_ERR='-lcom_err'; \
-	fi; \
+	else if ls /lib/$(MULTIARCH)/libcom_err* > /dev/null 2> /dev/null; then \
+		COM_ERR='-lcom_err'; \
+	fi; fi; \
 	GSSAPILIB='-lgssapi'; \
 	if ls /lib/libgssapi_krb5* > /dev/null 2> /dev/null; then \
 		GSSAPILIB='-lgssapi_krb5'; \
-	else if ls /usr/lib/libgssapi_krb5* > /dev/null 2> /dev/null; then \
+	else if ls /usr/lib/$(MULTIARCH)/libgssapi_krb5* > /dev/null 2> /dev/null; then \
 		GSSAPILIB='-lgssapi_krb5'; \
 	else K5DIR=`echo $(K5LIB) | sed 's|-L||'`; \
 		if ls $$K5DIR/libgssapi_krb5* > /dev/null 2> /dev/null; then \

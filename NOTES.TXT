@@ -8573,5 +8573,70 @@ other modules.  20 January 2014.
 
 -- Dev.09 --
 
+From my to-do list....  I noticed a while back that \fsplit(s,&a,,TSV) could
+mess up if the data fields contained grouping characters like parens,
+quotes, brackets, or braces.  \fsplit() and \fword() are handled by
+cksplit(), which is designed to allow grouping, nesting, quoting, recursion,
+and so on (for parsing such things as complex LISP S-expressions and
+Comma-separated lists full of quoting) and I guess some of that code was
+being executed for TSVs.  Rather than mess with the existing code and
+possibly break something else, I added a chunk of new code at the beginning
+of the byte loop in cksplit() to handle TSVs, which are extremely simple,
+and so the new code is too.  And also way more efficient.  Seems to work
+right, and other things like LISP programs still work.  ckclib.c, 31 Jan 2014.
+
+From Ian Beckwith, updates to the Debian Linux MULTIARCH support.  "I've
+checked through the patched makefile, every library is checked in
+/usr/lib/$(MULTIARCH)/, except for libdes425, which isn't in debian."  These
+changes are presently in Debian testing for amd64, armel, armhf, i386,
+kfreebsd-amd64, kfreebsd-i386, mips, mipsel, powerpc, s390x, sparc.
+makefile, 23 Feb 2014.
+
+Documentation for MULTIARCH:
+  https://wiki.debian.org/Multiarch/Implementation
+  https://wiki.ubuntu.com/MultiarchSpec
+  https://wiki.debian.org/Multiarch/HOWTO
+
+From Mark Wooding: add #define _XOPEN_SOURCE 500, #include <stdlib.h> in
+the PTY module, "Needed along with -DHAVE_PTMX for working ptys".  Also fixed
+a debug() statement that had a string argument that should have been an int.
+ckupty.c, 23 Feb 2014.
+
+From Mark Wooding: supply default "(none)" value for \v(dialmsg).
+ckuus4.c, 23 Feb 2014.
+
+From Mark Wooding: Fix inconsistent declarations of a couple variables
+across modules; he actually reported a bunch of them but all the serious
+ones (int vs long or off_t) had been fixed in 2005 with the introduction of
+CK_OFF_T, and the only two that needed fixing were char * vs char []
+(prevcmd and cmdfil).  ckucmd.c, ckuusy.c, 23 Feb 2014.
+
+-- Dev.10 --
+
+The photogallery script documentation contains a hint that didn't work,
+namely that to create a list of the names of all the non-thumbnail,
+non-resized original image files, use:
+
+  directory /brief /except:*-[tr].jpg /output:somefile *.jpg
+
+This did not work; the /EXCEPT switch was ignored whenever the /BRIEF switch
+was included in a DIRECTORY command.  Fixed in domydir() by moving two lines
+of code to where they always should have been.  ckuus6.c, 3 Nov 2014.
+
+I received reports from both Alan Jones and Harold Baldwin around the same
+time that REMOTE commands were getting "?Not confirmed" parse errors in
+C-Kermit 9.0.302 and later.  Incredibly, this was broken long ago in
+remcfm(); see the comment there in ckuus7.c about line 7177.  The problem
+was that I commented out the test for an empty cmtxt() result string.
+Apparently at least 10 years have passed without anybody noticing and
+reporting this (it works right in K95 2.1.3 from 2003).  Fixed in ckuus7.c,
+3 Nov 2014.
+
+Updated HELP SET FILE text to mention that SET FILE COLLISION OVERWRITE
+doesn't work for a server unless it has also been told to ENABLE DELETE.
+ckuus2.c, 3 Nov 2014.
+
+-- Dev.11 --
+
 ---------------------------------
 ***************************

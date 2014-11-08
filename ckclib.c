@@ -1,4 +1,4 @@
-char * cklibv = "C-Kermit library, 9.0.053, 6 Dec 2013";
+char * cklibv = "C-Kermit library, 9.0.054, 31 Jan 2014";
 
 #define CKCLIB_C
 
@@ -8,7 +8,7 @@ char * cklibv = "C-Kermit library, 9.0.053, 6 Dec 2013";
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1999, 2013,
+  Copyright (C) 1999, 2014,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -2895,7 +2895,6 @@ static int nsplitbuf = 0;
 
 /* n4 = 1 to NOT collapse adjacent separators */
 
-
 struct stringarray *
 cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
     int splitting = 0;			/* What I was asked to do */
@@ -2944,40 +2943,16 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
     if (splitting) {			/* If splitting n = word count */
 	n = 0;				/* Initialize it */
     } else {				/* Otherwise */
-#ifdef COMMENT
-	if (n1 < 1) {			/* If 0 (or less) */
-	    ck_sval.a_size = 0;		/* nothing to do. */
-	    return(&ck_sval);
-	}
-#else
 	if (n1 == 0) {			/* If 0 */
 	    ck_sval.a_size = 0;		/* nothing to do. */
 	    return(&ck_sval);
 	}
-#endif	/* COMMENT */
 	n = n1;				/* n = desired word number. */
     }
     slen = 0;				/* Get length of s1 */
     debug(F111,"cksplit",s1,n);
 
     p = s1;
-
-#ifdef COMMENT
-    while (*p++) slen++;		/* Make pokeable copy of s1 */
-    if (!splitbuf || slen > nsplitbuf) { /* Allocate buffer if needed */
-	int xx;
-	if (splitbuf)
-	  free(splitbuf);
-	xx = (slen < 255) ? 255 : xx + (xx / 4);
-	debug(F101,"cksplit splitbuf","",xx);
-	splitbuf = (char *)malloc(xx+1);
-	if (!splitbuf) {		/* Memory allocation failure... */
-	    ck_sval.a_size = -1;
-	    return(&ck_sval);
-	}
-	nsplitbuf = xx;			/* Remember size of buffer */
-    }
-#else
 /*
   The idea is to just copy the string into splitbuf (if it exists).  This
   gives us both the copy and the length so we only need to grovel through the
@@ -3007,8 +2982,6 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
 	p = s1;
 	while ((*s++ = *p++)) ;
     }
-
-#endif /* COMMENT */
     s = splitbuf;
     sep = s2;				/* s2 = break set */
     if (!sep) sep = "";
@@ -3050,8 +3023,40 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
     if (n2 < 0) n2 = 63;		/* n2 = grouping mask */
     grouping = n2;
     p = "";				/* Pointer to current word */
+
+    /* TSV is a special case - no quoting or grouping or recursion */
+    if (tsv) {				/* Tab-separated values list */
+	/* This block: 2014/01/31 - fdc */
+        if (!*sep) sep = "\011";	/* Default separator is Tab */
+	p = s;				/* Point to first element */
+    }
     while (c) {				/* Loop through string */
-	c = *s;
+	c = *s;			  	/* Get next char */
+	if (tsv) {			/* Tab-separated-value list? */
+	    /* This block: 2014/01/31 - fdc */
+	    ss = sep;			/* Get break set */
+	    while (*ss && *ss != c) ss++; /* See if c is in it */
+	    if (*ss == c) {		/* Is this the/a break character? */
+		*s = NUL;		/* Yes, terminate this word */
+		wordnum++;		/* Count it */
+		if (splitting) {	/* fsplit().... */
+		    setword(wordnum,p,len); /* Add a new element */
+		    p = s+1;		/* Point to beginning of next */
+		    len = 0;		/* and reset the length */
+		} else if (wordnum == n) { /* fword() counting from left... */
+		    setword(1,p+1,len);
+		    ck_sval.a_size = 1;
+		    return(&ck_sval);
+		} else 	if (n < 0 && (wordnum + n > -1)) { /* or from right */
+		    char * s = wordarray[wordnum + n + 1];
+		    if (!s) s = "";
+		    setword(1,s,strlen(s));
+		    ck_sval.a_size = 1;
+		    return(&ck_sval);
+		}
+	    } else len++;
+	    goto nextc;
+	}
 	class = 0;
 	if (!csv && !tsv) {		/* fdc 2010-12-30 */
 	    /* In CSV and TSV splitting, backslash is not special */
@@ -3059,7 +3064,6 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
 		cquote++;		/* next one is quoted */
 		goto nextc;		/* go get it */
 	    }
-
 	}
 	if (cquote && c == CMDQ) {	/* Quoted CMDQ is special */
 	    if (state != ST_BW) {	/* because it can still separate */

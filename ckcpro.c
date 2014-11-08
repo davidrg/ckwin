@@ -7,7 +7,7 @@
 char *wartv = "Wart Version 2.14, 10 Nov 1999";
 
 char *protv =                                                     /* -*-C-*- */
-"C-Kermit Protocol Module 9.0.163, 20 January 2014";
+"C-Kermit Protocol Module 9.0.164, 23 February 2014";
 
 int kactive = 0;			/* Kermit protocol is active */
 
@@ -176,7 +176,7 @@ _PROTOTYP( int cmdsrc, (void) );
   extern int timef, stdinf, rscapu, sendmode, epktflg, epktrcvd, epktsent;
   extern int binary, fncnv, dest;
   extern long speed, crc16;
-  CK_OFF_T calibrate, ffc;
+  extern CK_OFF_T calibrate, ffc;
 #ifdef COMMENT
   extern char *TYPCMD, *DIRCMD, *DIRCM2;
 #endif /* COMMENT */

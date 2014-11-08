@@ -1,8 +1,8 @@
-char *ckptyv = "Pseudoterminal support, 9.0.101, 13 Jun 2011";
+char *ckptyv = "Pseudoterminal support, 9.0.102, 23 Feb 2014";
 
 /*  C K U P T Y  --  C-Kermit pseudoterminal control functions for UNIX  */
 
-/* Last update: Mon Jun 13 11:32:52 2011 */
+/* Last update: Sun Feb 23 09:09:36 2014 */
 
 /*
   Copyright 1995 by the Massachusetts Institute of Technology.
@@ -54,6 +54,8 @@ char *ckptyv = "Pseudoterminal support, 9.0.101, 13 Jun 2011";
    . HP-UX 8.00 and earlier (no vhangup or ptsname routines)
 */
 
+#define _XOPEN_SOURCE 500		/* mdw 20140223 */
+#include <stdlib.h>			/* mdw 20140223 */
 #include "ckcsym.h"
 #include "ckcdeb.h"			/* To pick up NETPTY definition */
 
@@ -392,11 +394,9 @@ static int spty = -1;
 
 #endif /* USE_TERMIO */
 
-#ifdef QNX				/* 299 */
-#ifndef IXANY
-#define IXANY 0
-#endif	/* IXANY */
-#endif	/* QNX */
+#ifndef IXANY				/* This was in #ifdef QNX.. */
+#define IXANY 0				/* but because of _XOPEN_SOURCE */
+#endif	/* IXANY */                     /* must be universal - does no harm */
 
 static int msg = 0;
 
@@ -413,7 +413,7 @@ int pty_master_fd = -1;			/* pty master file descriptor */
   copy_termbuf(cp)
   set_termbuf()
 
-  These three routines are used to get and set the "termbuf" structure
+  These three routines are used to get and set the "termbuf" structure
   to and from the kernel.  init_termbuf() gets the current settings.
   copy_termbuf() hands in a new "termbuf" to write to the kernel, and
   set_termbuf() writes the structure into the kernel.
@@ -1949,7 +1949,7 @@ do_pty(fd, cmd, fc) int * fd; char * cmd; int fc; {
             close(syncpipe[0]);
             close(syncpipe[1]);
 
-	    debug(F110,"do_pty cmd",cmd,"");
+	    debug(F110,"do_pty cmd",cmd,0);
             exec_cmd(cmd);
             debug(F111,"do_pty()","exec_cmd() returns - why?",errno);
         }
