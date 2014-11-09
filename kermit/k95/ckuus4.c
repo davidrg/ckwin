@@ -13,6 +13,7 @@
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+    Last update: Sun Feb 23 09:13:42 2014
 */
 
 /*
@@ -13303,7 +13304,9 @@ nvlook(s) char *s; {
 #ifndef NODIAL
       case VN_DMSG:
 #ifdef BIGBUFOK
-	ckstrncpy(vvbuf,dialmsg[dialsta],VVBUFL); /* Safe if src == NULL */
+	ckstrncpy(vvbuf,
+              ((dialsta < 0) ? "(none)" : dialmsg[dialsta]),
+              VVBUFL); /* Safe if src == NULL.. mdw 20140213 */
 #endif	/* BIGBUFOK */
 	return((char *)vvbuf);
 #endif	/* NODIAL */

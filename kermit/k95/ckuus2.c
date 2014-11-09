@@ -4164,7 +4164,8 @@ static char *hmxyf[] = {
 "  an existing file.  The options are:",
 "   BACKUP (default) - Rename the old file to a new, unique name and store",
 "     the incoming file under the name it was sent with.",
-"   OVERWRITE - Overwrite (replace) the existing file.",
+"   OVERWRITE - Overwrite (replace) the existing file; doesn't work for",
+"     a Kermit server unless you also tell it to ENABLE DELETE.",
 "   APPEND - Append the incoming file to the end of the existing file.",
 "   REJECT - Refuse and/or discard the incoming file (= DISCARD).",
 "   RENAME - Give the incoming file a unique name.",
@@ -5050,10 +5051,10 @@ static char *hxxxla[] = {
 "  is displayed on the screen.  An appropriate intermediate character-set",
 "  is chosen automatically, if necessary.  Synonym: XLATE.  Example:",
 " ",
-"    TRANSLATE lasagna.lat latin1 italian lasagna.nrc",
+"    TRANSLATE lasagna.txt latin1 utf8 lasagna-utf8.txt",
 " ",
 "  Multiple files can be translated if file2 is a directory or device name,",
-"  rather than a filename, or if file2 is omitted.",
+"  rather than a filename, or if file2 is omitted.  Note: CONVERT would",
 "" };
 #endif /* NOCSETS */
 
@@ -10746,7 +10747,8 @@ dohfunc(xx) int xx; {
                xx == FN_SEARCH ? "left" : "right",
                xx == FN_SEARCH ? "left" : "right"
         );
-        printf("  See HELP WILDCARDS for info about patterns.\n");
+        printf(
+"  s1 is a \"floating pattern\"; see HELP PATTERNS for details.\n");
         break;
       case FN_LEN:                      /* Length (of string) */
         printf("\\flength(s1)\n\

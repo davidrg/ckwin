@@ -7154,19 +7154,19 @@ static int xzcmd = 0;                   /* Global copy of REMOTE cmd index */
 */
 static int
 remcfm() {
-    int x;
+    int x = 0;
     char *s;
+    char *helptxt = "> filename, | command,\n\
+or type carriage return to confirm the command";
     char c;
 
     remfile = 0;
     rempipe = 0;
     remappd = 0;
 
-    if ((x = cmtxt(
-             "> filename, | command,\n\
-or type carriage return to confirm the command",
-                   "",&s,xxstring)) < 0)
-      return(x);
+    if ((x = cmtxt(helptxt,"",&s,xxstring)) < 0) {
+        return(x);
+    }
     if (remdest) {
         free(remdest);
         remdest = NULL;
@@ -7203,6 +7203,10 @@ or type carriage return to confirm the command",
           return(1);
     }
 #endif	/* COMMENT */
+
+    if (!s) s = "";                     /* 2014-11-03 */
+    if (!*s) return(1);                 /* 2014-11-03 */
+
     c = *s;                             /* We have something */
     if (c != '>' && c != '|') {         /* Is it > or | ? */
         printf("?Not confirmed\n");     /* No */
@@ -7547,6 +7551,8 @@ dormt(xx) int xx;
     remfile = 0;                        /* Clear these */
     rempipe = 0;
     remappd = 0;
+
+    debug(F101,"XXX xxdormt xx","",xx);
 
     if (xx < 0) return(xx);             /* REMOTE what? */
 

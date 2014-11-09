@@ -8,7 +8,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2013,
+  Copyright (C) 1985, 2014,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -5746,6 +5746,9 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
     if (page > -1)                      /* Paging */
       xaskmore = page;
 
+    if (dir_exc)                        /* Have exception list? */
+      makelist(dir_exc,xlist,16);	/* Yes, convert to array */
+
     if (!verbose && !touch && !change) { /* /BRIEF */
         if (outfile[0]) {               /* To file  */
             int k = 0;
@@ -5780,10 +5783,7 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
     ndirs = nfiles = 0L;		/* Initialize counters */
     nbytes = (CK_OFF_T)0;
 
-    if (dir_exc)                        /* Have exception list? */
-      makelist(dir_exc,xlist,16);	/* Yes, convert to array */
-
-    diractive = 1;
+    diractive = 1;                      /* DIRECTORY command is active */
     znext(name);                        /* Get next file */
     while (name[0]) {                   /* Loop for each file */
         if (fs) if (fileselect(name,

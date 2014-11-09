@@ -12,10 +12,13 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2009,
+  Copyright (C) 1985, 2014,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+
+  Most recent update:
+    Sun Feb 23 09:39:28 2014
 */
 #include "ckcdeb.h"
 
@@ -106,7 +109,7 @@ extern int action, cflg, xargc, cnflg, local, quiet, escape, network, mdmtyp,
 
 extern long speed;
 extern char ttname[];
-extern char * pipedata, * cmdfil;
+extern char * pipedata, cmdfil[];
 
 #ifndef NOXFER
 extern char *cmarg, *cmarg2;
