@@ -3,12 +3,12 @@
 #define CK_NONBLOCK                     /* See zoutdump() */
 
 #ifdef aegis
-char *ckzv = "Aegis File support, 9.0.218, 14 Mar 2013";
+char *ckzv = "Aegis File support, 9.0.220, 11 Jan 2015";
 #else
 #ifdef Plan9
-char *ckzv = "Plan 9 File support, 9.0.218, 14 Mar 2013";
+char *ckzv = "Plan 9 File support, 9.0.220, 11 Jan 2015";
 #else
-char *ckzv = "UNIX File support, 9.0.218, 14 Mar 2013";
+char *ckzv = "UNIX File support, 9.0.220, 11 Jan 2015";
 #endif /* Plan9 */
 #endif /* aegis */
 /*
@@ -18,7 +18,7 @@ char *ckzv = "UNIX File support, 9.0.218, 14 Mar 2013";
   Columbia University Academic Information Systems.  Note: AcIS = Previous
   of Columbia University Information Technology.
 
-  Copyright (C) 1985, 2013,
+  Copyright (C) 1985, 2015,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -2595,10 +2595,17 @@ zchko(name) char *name; {
 	} else {
 	    debug(F101,"zchko open errno","",errno); 
 	    x = -1;
+            goto xzchko;                /* fdc 2015/01/12 */
+            /* previously control fell through causing core dumps */
+            /* on builds with -DNOUUCP */
 	}
     }
 #endif	/* NOUUCP */
 #endif	/* UNIX */
+/*
+  The following code gets the name of the containing directory so we
+  can use access() to check if we are allowed to create files in it.
+*/
     for (i = x; i > 0; i--) {           /* Strip filename from right. */
         if (ISDIRSEP(s[i-1])) {
             itsadir = 1;
@@ -2655,7 +2662,7 @@ zchko(name) char *name; {
   doaccess:
 
 #ifdef SW_ACC_ID
-    debug(F100,"zchko swapping ids for access()","",0);
+    debug(F110,"zchko swapping ids for access()",s,0);
     priv_on();
 #endif /* SW_ACC_ID */
 
@@ -2666,6 +2673,7 @@ zchko(name) char *name; {
     debug(F100,"zchko swapped ids restored","",0);
 #endif /* SW_ACC_ID */
 
+  xzchko:                               /* Exit point */
     if (x < 0)
       debug(F111,"zchko access failed:",s,errno);
     else

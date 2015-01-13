@@ -8638,5 +8638,15 @@ ckuus2.c, 3 Nov 2014.
 
 -- Dev.11 --
 
+On QNX 4.25 an FTP GET command always failed with a segmentation fault.  In
+fact, this would happen in any Unix version of C-Kermit that has NOUUCP
+defined, such as Mac OS X.  The code in the #ifdef NOUUCP section of zchko()
+was wrong, clobbering the variable (x) that held the length of filename
+string.  I fixed zchko to not do that.  ckufio.c 9.0.219, 11 Jan 2015.
+
+Updated copyright year to 2015.  ckcmai.c, 11 Jan 2015.
+
+Fixed the previous fix.  ckufio.c 9.0.220, 12 Jan 2015.
+
 ---------------------------------
 ***************************
