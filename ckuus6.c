@@ -68,7 +68,7 @@ extern int zgfs_dir, zgfs_link;
 
 #ifdef OS2
 extern int StartedFromDialer ;
-extern int vmode;
+extern BYTE vmode;
 extern int k95stdout;
 #ifndef NT
 #define INCL_NOPM

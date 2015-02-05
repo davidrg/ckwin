@@ -8648,5 +8648,66 @@ Updated copyright year to 2015.  ckcmai.c, 11 Jan 2015.
 
 Fixed the previous fix.  ckufio.c 9.0.220, 12 Jan 2015.
 
+-- Dev.12 --
+
+SET LOGIN USER xxx did not evaluate xxx if it was a variable.
+If there was ever a reason for this I can't recall it.
+Fixed in ckuus3.c, 5 Feb 2015.
+
+Edward Berner noticed that K95 built with Open Watcom was crashing because
+of "inconsistent extern declarations of vmode".
+vmode is declared BYTE vmode = VCMD; in ckoco2.c
+and referenced as extern BYTE in all but two cko*.c modules,
+but as extern int in all cku*.c modules except cko[tf]io.c.
+BYTE is not a known type to mainline C-Kermit code.
+However, all references to vmode in mainline code are within #ifdef OS2.
+Fixed in ckofio.c, ckotio.c, ckuus3.c, ckuus6.c, ckuus7.c, ckuusx.c,
+5 Feb 2015.
+
+Edward also reported a similar problem with marginbot, but in my sources
+all declarations are consistent (int).  But he is working with 2003
+source code, probably it's fixed.
+
+Changed \fgetpidinfo() to \fpidinfo() to be easier to find, but left the
+original name as an invisible synonym.  ckuusr.c, 5 Feb 2015.
+
+Apropos of the previous item, SHOW FUNCTIONS is not very useful.  It gives a
+list of all the functions, period.  But if I wanted to find only the
+functions that have to do with PIDs, it would be nice to be able to include
+a string to match the function names, as in "show function pid".  Other
+examples include "show func info", "sho func code", "sho fun date", etc.
+This was added doshow() ckuus5.c, with a special function code parameter
+value added to kwdhelp() in ckucmd.c and new HELP FUNCTION text in ckuus2.c.
+It's not really pattern matching, just a substring.  Anything more ambitious
+would have required a rewrite of kwdhelp().  5 Feb 2015.
+
+From Jake Thompson: "ckcftp.c is currently set up to allow only SSL 3.0 by
+default when using AUTH SSL/AUTH TLS, and no later versions
+(SSLv3_client_method).  After the POODLE vulnerability, most sites have
+disabled SSL 3.0, allowing only TLS 1.0 or later.  The attached patch
+changes ckcftp.c to allow TLS 1.0 and later only by default, adding a new
+bug option use-ssl-v3 in order to downgrade to SSL 3.0 if needed.  ck_ssl.c
+looks like it may need similar changes; I haven't looked extensively."
+I applied Jake's patch to ckcftp.c, and the analogous patches to
+ssl_tn_init() and ssl_http_init() in ck_ssl.c, with improved structure
+and debug logging.  5 Feb 2015.
+
+Compiles, links, and runs OK with "make netbsd+ssl" except for these
+warnings:
+
+ck_ssl.c: In function 'ssl_display_connect_details':
+ck_ssl.c:1089:12: warning: assignment discards qualifiers from pointer
+target type
+ck_ssl.c: In function 'tls_is_anon':
+ck_ssl.c:3139:12: warning: assignment discards qualifiers from pointer
+target type
+ck_ssl.c: In function 'tls_is_krb5':
+ck_ssl.c:3189:12: warning: assignment discards qualifiers from pointer
+target type
+
+Resulting binary connects with TLS 1.0 to https://www.google.com.
+
+--- Dev.13 ---
+
 ---------------------------------
 ***************************

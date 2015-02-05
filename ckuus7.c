@@ -13685,7 +13685,7 @@ readtext(prmpt, buffer, bufsiz) char * prmpt; char * buffer; int bufsiz; {
     int rc;
 #ifndef NOLOCAL
 #ifdef OS2
-    extern int vmode;
+    extern BYTE vmode;
     extern int startflags;
     int vmode_sav = vmode;
 
@@ -13770,7 +13770,7 @@ readpass(prmpt, buffer, bufsiz) char * prmpt; char * buffer; int bufsiz; {
     int rc;
 #ifndef NOLOCAL
 #ifdef OS2
-    extern int vmode;
+    extern BYTE vmode;
     extern int startflags;
     int vmode_sav = vmode;
 #endif /* OS2 */

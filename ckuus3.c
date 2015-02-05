@@ -2513,7 +2513,8 @@ getyesno(msg, flags) char * msg; int flags; {
 
 #ifndef NOLOCAL
 #ifdef OS2
-    extern int vmode, win95_popup, startflags;
+    extern BYTE vmode;
+    extern int win95_popup, startflags;
     int vmode_sav = vmode;
 #endif /* OS2 */
 #endif /* NOLOCAL */
@@ -2734,7 +2735,7 @@ uq_txt(preface,prompt,echo,help,buf,buflen,dflt,timer)
 {
 #ifndef NOLOCAL
 #ifdef OS2
-    extern int vmode;
+    extern BYTE vmode;
     extern int startflags;
     extern int win95_popup;
 #endif /* OS2 */
@@ -2801,7 +2802,7 @@ uq_mtxt(preface,help,n,field)
 {
 #ifndef NOLOCAL
 #ifdef OS2
-    extern int vmode;
+    extern BYTE vmode;
     extern int startflags;
     extern int win95_popup;
 #endif /* OS2 */
@@ -12052,7 +12053,7 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
         x = cmdgquo();
         if (z == LOGI_PSW)
           cmdsquo(0);
-        if ((y = cmtxt("text","", &s, NULL)) < 0) {
+        if ((y = cmtxt("text","",&s, (z == LOGI_PSW) ? NULL : xxstring)) < 0) {
             cmdsquo(x);
             return(y);
         }

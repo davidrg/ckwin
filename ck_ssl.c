@@ -1,8 +1,8 @@
-char *cksslv = "SSL/TLS support, 9.0.231, 21 Nov 2013";
+char *cksslv = "SSL/TLS support, 9.0.232, 5 Feb 2015";
 /*
   C K _ S S L . C --  OpenSSL Interface for C-Kermit
 
-  Copyright (C) 1985, 2013,
+  Copyright (C) 1985, 2015,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -1611,20 +1611,35 @@ ssl_tn_init(mode) int mode;
                 last_ssl_mode = -1;
                 return(0);
             }
-#ifndef COMMENT
+            /*
+              TLS 1.0 is the new default as of 5 Feb 2015.
+              Previously this was commented out because 
+              "too many web servers still do not support TLSv1".
+              Now we try TLS 1.0 first, falling back to SSL 2.3
+              and SSL 3.0 in that order.  Maybe there should be
+              an option not to fall back.
+            */ 
             tls_ctx=(SSL_CTX *)SSL_CTX_new(TLSv1_client_method());
-#else /* COMMENT */
-            tls_ctx=(SSL_CTX *)SSL_CTX_new(SSLv23_client_method());
-            /* This can fail because we do not have RSA available */
-            if ( !tls_ctx ) {
-                debug(F110,"ssl_tn_init","SSLv23_client_method failed",0);
-                tls_ctx=(SSL_CTX *)SSL_CTX_new(SSLv3_client_method());
-            }
-#endif /* COMMENT */
-            if ( !tls_ctx ) {
+            if ( tls_ctx ) {
+                debug(F110,"ssl_tn_init","TLSv1_client_method OK",0);
+            } else {
                 debug(F110,"ssl_tn_init","TLSv1_client_method failed",0);
-                last_ssl_mode = -1;
-                return(0);
+                /* This can fail because we do not have RSA available */
+                tls_ctx=(SSL_CTX *)SSL_CTX_new(SSLv23_client_method());
+                if ( !tls_ctx ) {
+                    debug(F110,"ssl_tn_init","SSLv23_client_method OK",0);
+                } else {
+                    debug(F110,"ssl_tn_init","SSLv23_client_method failed",0);
+                    tls_ctx=(SSL_CTX *)SSL_CTX_new(SSLv3_client_method());
+                    if ( !tls_ctx ) {
+                        debug(F110,
+                              "ssl_tn_init","TLSv1_client_method failed",0);
+                        debug(F110,
+                              "ssl_tn_init","All SSL client methods failed",0);
+                        last_ssl_mode = -1;
+                        return(0);
+                    }
+                }
             }
 #ifdef USE_CERT_CB
             SSL_CTX_set_client_cert_cb(ssl_ctx,ssl_client_cert_callback);
@@ -2178,32 +2193,25 @@ ssl_http_init(hostname) char * hostname;
         printf("SSL_DEBUG_FLAG on\r\n");
 
     if (!tls_http_ctx ) {
-#ifdef COMMENT
-        /* too many web servers still do not support TLSv1 */
+        /*
+          TLS 1.0 is the new default as of 5 Feb 2015.
+          Previously this was commented out because 
+          "too many web servers still do not support TLSv1".
+          Now we try TLS 1.0 first, falling back to SSL 2.3
+          and SSL 3.0 in that order.  Maybe there should be
+          an option not to fall back.
+        */ 
         tls_http_ctx=(SSL_CTX *)SSL_CTX_new(TLSv1_client_method());
-#else /* COMMENT */
-        tls_http_ctx=(SSL_CTX *)SSL_CTX_new(SSLv23_client_method());
-        /* This can fail because we do not have RSA available */
-        if ( !tls_http_ctx ) {
-            debug(F110,"ssl_http_init","SSLv23_client_method failed",0);
-            tls_http_ctx=(SSL_CTX *)SSL_CTX_new(SSLv3_client_method());
-        }
-#endif /* COMMENT */
-        if ( !tls_http_ctx ) {
-            debug(F110,"ssl_http_init","TLSv1_client_method failed",0);
-            return(0);
-        }
-#ifdef USE_CERT_CB
-        SSL_CTX_set_client_cert_cb(tls_http_ctx,ssl_client_cert_callback);
-#endif /* USE_CERT_CB */
-    }
+        if ( tls_http_ctx ) {
+            debug(F110,"ssl_http_init","TLSv1_client_method OK",0);
+
 
     SSL_CTX_set_default_passwd_cb(tls_http_ctx,
                                   (pem_password_cb *)ssl_passwd_callback);
 
     /* for SSL switch on all the interoperability and bug
      * workarounds so that we will communicate with people
-     * that cannot read poorly written specs :-)
+     * who cannot read poorly written specs :-)
      * for TLS be sure to prevent use of SSLv2
      */
     SSL_CTX_set_options(tls_http_ctx,

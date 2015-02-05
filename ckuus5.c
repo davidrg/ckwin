@@ -6470,6 +6470,7 @@ doshow(x) int x; {
 #endif /* OS2 */
     extern int srvcdmsg;
     extern char * cdmsgstr, * ckcdpath;
+    char fnbuf[100];
 
 #ifndef NOSETKEY
     if (x == SHKEY) {                   /* SHOW KEY */
@@ -6497,7 +6498,9 @@ doshow(x) int x; {
         if (z == SHKEYDEF)
           z = -1;
 #endif /* OS2 */
+
         if ((y = cmcfm()) < 0) return(y);
+
 #ifdef IKSD
         if (inserver) {
             printf("Sorry, command disabled.\r\n");
@@ -6713,9 +6716,17 @@ doshow(x) int x; {
 #ifndef NOSPL
     if (x != SHBUI && x != SHARR)
 #endif /* NOSPL */
-      if ((y = cmcfm()) < 0)
-        return(y);
-
+      if (x == SHFUN) {                 /* For SHOW FUNCTIONS */
+          int y;
+          if ((y = cmtxt("Match string for function names","",&s,NULL)) < 0)
+            return(y);
+          fnbuf[0] = NUL;
+          if (!s) s = "";
+          if (*s) ckstrncpy(fnbuf,s,100);
+      } else {
+          if ((y = cmcfm()) < 0)
+            return(y);
+      }
 #ifdef COMMENT
     /* This restriction is too general. */
 #ifdef IKSD
@@ -6951,7 +6962,7 @@ doshow(x) int x; {
 
         if (x == SHFUN) {               /* Functions */
             printf("\nThe following functions are available:\n\n");
-            kwdhelp(fnctab,nfuncs,"","\\F","()",3,0);
+            kwdhelp(fnctab,nfuncs,(char *)fnbuf,"\\F","()",3,8);
             printf("\n");
 #ifndef NOHELP
             printf(

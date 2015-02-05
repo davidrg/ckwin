@@ -438,6 +438,7 @@ test(x,m) int x, m; { /*  Returns 1 if any bits from m are on in x, else 0  */
     xhlp  - 1 to print any CM_INV keywords that are not also abbreviations.
             2 to print CM_INV keywords if CM_HLP also set
             4 if it's a switch table (to show ':' if CM_ARG)
+            8 print any keywords that CONTAIN the pattern
 
   Arranges keywords in columns with width based on longest keyword.
   Does "more?" prompting at end of screen.
@@ -471,7 +472,10 @@ kwdhelp(s,n,pat,pre,post,off,xhlp)
     if ((s2 = (char **) malloc(n * sizeof(char *)))) {
 	for (i = 0; i < n; i++) {	/* Find longest keyword */
 	    s2[i] = NULL;
-	    if (ckstrcmp(s[i].kwd,pat,cc,0))
+            if (xhlp & 8) {
+                if (ckindex(pat,s[i].kwd,0,0,0) < 1) /* for SHOW FUNCTIONS */
+                  continue;
+            } else if (ckstrcmp(s[i].kwd,pat,cc,0)) /* for regular keywords */
 	      continue;
 
 	    if (s[i].flgs & CM_PSH	/* NOPUSH or nopush screening */
