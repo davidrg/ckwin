@@ -1057,7 +1057,7 @@ struct keytab fnctab[] = {              /* Function names */
     { "fptangent",  FN_FPTAN, 0},       /* FP tangent */
 #endif /* FNFLOAT */
     { "function",   FN_FUNC, 0 },       /* Test for existence of a function */
-    { "getpidinfo", FN_PID, 0  },       /* Get PID info */
+    { "getpidinfo", FN_PID, CM_INV },   /* Get PID info (synonym for pidnfo) */
     { "hex2ip",     FN_HEX2IP,0},       /* Hex to IP address */
     { "hextoip",    FN_HEX2IP,CM_INV},  /* Hex to IP address */
     { "hex2n",      FN_HEX2N, CM_INV},  /* Hex to decimal number */
@@ -1124,6 +1124,7 @@ struct keytab fnctab[] = {              /* Function names */
 #ifdef SEEK_CUR
     { "pictureinfo",FN_PICTURE, 0 },	/* Picture orientation/dimensions */
 #endif	/* SEEK_CUR */
+    { "pidinfo",    FN_PID, 0  },       /* Get PID info */
     { "radix",      FN_RADIX, 0 },	/* Radix conversion */
 #ifndef NORANDOM
     { "random",     FN_RAND, 0},        /* Random number */

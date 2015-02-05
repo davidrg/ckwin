@@ -2,7 +2,7 @@
 
 /*  C K C F T P  --  FTP Client for C-Kermit  */
 
-char *ckftpv = "FTP Client, 9.0.262, 20 Jan 2014";
+char *ckftpv = "FTP Client, 9.0.263, 5 Feb 2015";
 
 /*
   Authors:
@@ -1092,6 +1092,7 @@ static int                              /* SET FTP values... */
 
 #ifdef CK_SSL
 static int ftp_bug_use_ssl_v2 = 0;      /* use SSLv2 for AUTH SSL */
+static int ftp_bug_use_ssl_v3 = 0;	/* use SSLv3 for AUTH SSL */
 #endif /* CK_SSL */
 
 static int
@@ -1340,9 +1341,12 @@ static int nftpena = (sizeof(ftpenatab) / sizeof(struct keytab)) - 1;
 /* FTP BUGS */
 
 #define FTB_SV2  1                      /* use SSLv2 */
+#define FTB_SV3  2                      /* use SSLv3 */
 
 static struct keytab ftpbugtab[] = {
-    { "use-ssl-v2",     FTB_SV2,        0 }
+    { "use-ssl-v2",     FTB_SV2,        0 },
+    { "use-ssl-v3",	FTB_SV3,	0 }
+
 };
 static int nftpbug = (sizeof(ftpbugtab) / sizeof(struct keytab));
 
@@ -2744,6 +2748,8 @@ dosetftp() {
 #ifdef CK_SSL
           case FTB_SV2:
 	    return seton(&ftp_bug_use_ssl_v2);
+          case FTB_SV3:
+            return seton(&ftp_bug_use_ssl_v3);
 #endif /* CK_SSL */
           default:
 	    return(-2);
@@ -10169,6 +10175,7 @@ int
 ssl_auth() {
     int i;
     char* p;
+    CONST SSL_METHOD *client_method;
 
     if (ssl_debug_flag) {
         fprintf(stderr,"SSL DEBUG ACTIVE\n");
@@ -10195,16 +10202,30 @@ ssl_auth() {
 #ifndef SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
 #define SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS 0L
 #endif
+/*
+  Pick allowed SSL/TLS versions according to enabled bugs.
+  Modified 5 Feb 2015 to default to TLS 1.0 if no bugs are enabled,
+  instead of to SSL 3.0, which has the POODLE vulnerability.
+*/
+    if (ftp_bug_use_ssl_v2) {
+        /* allow SSL 2.0 or later */
+        client_method = SSLv23_client_method();
+    } else if (ftp_bug_use_ssl_v3) {
+        /* allow SSL 3.0 ONLY - previous default */
+        client_method = SSLv3_client_method();
+    } else {
+        /* default - allow TLS 1.0 or later */
+        client_method = TLSv1_client_method();
+    }
     if (auth_type && !strcmp(auth_type,"TLS")) {
-        ssl_ftp_ctx=SSL_CTX_new(SSLv3_client_method());
+        ssl_ftp_ctx=SSL_CTX_new(client_method);
         if (!ssl_ftp_ctx)
           return(0);
         SSL_CTX_set_options(ssl_ftp_ctx,
                             SSL_OP_SINGLE_DH_USE|SSL_OP_EPHEMERAL_RSA
                             );
     } else {
-        ssl_ftp_ctx = SSL_CTX_new(ftp_bug_use_ssl_v2 ? SSLv23_client_method() : 
-                                  SSLv3_client_method());
+        ssl_ftp_ctx = SSL_CTX_new(client_method);
         if (!ssl_ftp_ctx)
           return(0);
         SSL_CTX_set_options(ssl_ftp_ctx,

@@ -4983,7 +4983,7 @@ doexit(exitstat,code) int exitstat, code; {
         extern struct cmdptr cmdstk[];
 #endif /* DCMDBUF */
         extern int tt_status[];
-        extern int vmode;
+        extern BYTE vmode;
 
 #ifndef KUI
         /* This is going to be hideous.  If we have a status line */

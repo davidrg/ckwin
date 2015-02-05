@@ -636,6 +636,34 @@ static char * hmxygui[] = {
 #endif /* KUI */
 #endif /* OS2 */
 
+static char * hmxxfunc[] = {
+"KERMIT FUNCTIONS",
+"   ",
+"  Functions are part of Kermit's programming language used in writing",
+"  scripts.  They are like functions in other programming languages like C",
+"  and Perl; each function has a name and an argument list, and it returns",
+"  (is replaced by) a value.  In a Kermit script, the function name preceded",
+"  by a backslash (\\) and then the letter F; for example:",
+" ",
+"     \\Findex(string1,string2).",
+" ",
+"  The argument list is in parentheses.  In this example the name of the",
+"  function is 'index', the arguments are string1 and string2, and the return",
+"  value is the starting position of string2 in string1; type HELP FUNC INDEX",
+"  for details.",
+" ",
+"  Type SHOW FUNCTIONS to see a list of available functions.",
+" ",
+"  Type HELP FUNCTION xxx more information about specific functions:",
+" ",
+"   . If xxx matches only one function name the documentation for that",
+"     function is printed; example: HELP FUNCTION INDEX.",
+" ",
+"  . If xxx matches more than one function name, a list of all functions",
+"     whose names contain xxx is printed; example: HELP FUNCTION DATE.",
+""
+};
+
 #ifdef ANYSSH
 static char * hmxxssh[] = {
 #ifdef SSHBUILTIN
@@ -10694,13 +10722,7 @@ int
 dohfunc(xx) int xx; {
     /* int x; */
     if (xx == -3) {
-        printf("\n Type SHOW FUNCTIONS to see a list of available functions.\n"
-               );
-        printf(
-        " Type HELP FUNCTION <name> for help on a particular function.\n");
-        printf(
-        " For function settings use HELP SET FUNCTION and SHOW SCRIPTS.\n\n");
-        return(0);
+        return(hmsga(hmxxfunc));
     }
     if (xx == FN_WORD)                  /* Long help message */
         return(hmsga(hmfword));

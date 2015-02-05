@@ -6,8 +6,8 @@ program formerly known as Kermit-95, a commercial product of Columbia
 University from 1994 to 2011. For more information on Kermit, visit the
 Kermit Project website: http://www.kermitproject.org.
 
-This software is currently based on C-Kermit version 9.0.304 Dev.11 of
-03-NOV-2014.
+This software is currently based on C-Kermit version 9.0.304 Dev.13 of
+6-FEB-2015.
 
 OS/2 support is still present but untested. It should still work if someone can
 get it building with freely available tools.

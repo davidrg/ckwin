@@ -3,7 +3,7 @@
 #endif /* SSHTEST */
 
 #include "ckcsym.h"
-char *userv = "User Interface 9.0.308, 3 Nov 2014";
+char *userv = "User Interface 9.0.309, 5 Feb 2015";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 
@@ -14,7 +14,7 @@ char *userv = "User Interface 9.0.308, 3 Nov 2014";
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2014,
+  Copyright (C) 1985, 2015,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -2979,6 +2979,7 @@ struct keytab shotab[] = {
     { "locale",       SHOLOC,0 },
 #endif /* NO_LOCALE */
 #endif /* NOCSETS */
+    { "log",          SHLOG, CM_INV|CM_ABR },
     { "logs",         SHLOG, 0 },
 #ifndef NOSPL
     { "macros",       SHMAC, 0 },

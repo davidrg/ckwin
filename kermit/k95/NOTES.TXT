@@ -8573,5 +8573,141 @@ other modules.  20 January 2014.
 
 -- Dev.09 --
 
+From my to-do list....  I noticed a while back that \fsplit(s,&a,,TSV) could
+mess up if the data fields contained grouping characters like parens,
+quotes, brackets, or braces.  \fsplit() and \fword() are handled by
+cksplit(), which is designed to allow grouping, nesting, quoting, recursion,
+and so on (for parsing such things as complex LISP S-expressions and
+Comma-separated lists full of quoting) and I guess some of that code was
+being executed for TSVs.  Rather than mess with the existing code and
+possibly break something else, I added a chunk of new code at the beginning
+of the byte loop in cksplit() to handle TSVs, which are extremely simple,
+and so the new code is too.  And also way more efficient.  Seems to work
+right, and other things like LISP programs still work.  ckclib.c, 31 Jan 2014.
+
+From Ian Beckwith, updates to the Debian Linux MULTIARCH support.  "I've
+checked through the patched makefile, every library is checked in
+/usr/lib/$(MULTIARCH)/, except for libdes425, which isn't in debian."  These
+changes are presently in Debian testing for amd64, armel, armhf, i386,
+kfreebsd-amd64, kfreebsd-i386, mips, mipsel, powerpc, s390x, sparc.
+makefile, 23 Feb 2014.
+
+Documentation for MULTIARCH:
+  https://wiki.debian.org/Multiarch/Implementation
+  https://wiki.ubuntu.com/MultiarchSpec
+  https://wiki.debian.org/Multiarch/HOWTO
+
+From Mark Wooding: add #define _XOPEN_SOURCE 500, #include <stdlib.h> in
+the PTY module, "Needed along with -DHAVE_PTMX for working ptys".  Also fixed
+a debug() statement that had a string argument that should have been an int.
+ckupty.c, 23 Feb 2014.
+
+From Mark Wooding: supply default "(none)" value for \v(dialmsg).
+ckuus4.c, 23 Feb 2014.
+
+From Mark Wooding: Fix inconsistent declarations of a couple variables
+across modules; he actually reported a bunch of them but all the serious
+ones (int vs long or off_t) had been fixed in 2005 with the introduction of
+CK_OFF_T, and the only two that needed fixing were char * vs char []
+(prevcmd and cmdfil).  ckucmd.c, ckuusy.c, 23 Feb 2014.
+
+-- Dev.10 --
+
+The photogallery script documentation contains a hint that didn't work,
+namely that to create a list of the names of all the non-thumbnail,
+non-resized original image files, use:
+
+  directory /brief /except:*-[tr].jpg /output:somefile *.jpg
+
+This did not work; the /EXCEPT switch was ignored whenever the /BRIEF switch
+was included in a DIRECTORY command.  Fixed in domydir() by moving two lines
+of code to where they always should have been.  ckuus6.c, 3 Nov 2014.
+
+I received reports from both Alan Jones and Harold Baldwin around the same
+time that REMOTE commands were getting "?Not confirmed" parse errors in
+C-Kermit 9.0.302 and later.  Incredibly, this was broken long ago in
+remcfm(); see the comment there in ckuus7.c about line 7177.  The problem
+was that I commented out the test for an empty cmtxt() result string.
+Apparently at least 10 years have passed without anybody noticing and
+reporting this (it works right in K95 2.1.3 from 2003).  Fixed in ckuus7.c,
+3 Nov 2014.
+
+Updated HELP SET FILE text to mention that SET FILE COLLISION OVERWRITE
+doesn't work for a server unless it has also been told to ENABLE DELETE.
+ckuus2.c, 3 Nov 2014.
+
+-- Dev.11 --
+
+On QNX 4.25 an FTP GET command always failed with a segmentation fault.  In
+fact, this would happen in any Unix version of C-Kermit that has NOUUCP
+defined, such as Mac OS X.  The code in the #ifdef NOUUCP section of zchko()
+was wrong, clobbering the variable (x) that held the length of filename
+string.  I fixed zchko to not do that.  ckufio.c 9.0.219, 11 Jan 2015.
+
+Updated copyright year to 2015.  ckcmai.c, 11 Jan 2015.
+
+Fixed the previous fix.  ckufio.c 9.0.220, 12 Jan 2015.
+
+-- Dev.12 --
+
+SET LOGIN USER xxx did not evaluate xxx if it was a variable.
+If there was ever a reason for this I can't recall it.
+Fixed in ckuus3.c, 5 Feb 2015.
+
+Edward Berner noticed that K95 built with Open Watcom was crashing because
+of "inconsistent extern declarations of vmode".
+vmode is declared BYTE vmode = VCMD; in ckoco2.c
+and referenced as extern BYTE in all but two cko*.c modules,
+but as extern int in all cku*.c modules except cko[tf]io.c.
+BYTE is not a known type to mainline C-Kermit code.
+However, all references to vmode in mainline code are within #ifdef OS2.
+Fixed in ckofio.c, ckotio.c, ckuus3.c, ckuus6.c, ckuus7.c, ckuusx.c,
+5 Feb 2015.
+
+Edward also reported a similar problem with marginbot, but in my sources
+all declarations are consistent (int).  But he is working with 2003
+source code, probably it's fixed.
+
+Changed \fgetpidinfo() to \fpidinfo() to be easier to find, but left the
+original name as an invisible synonym.  ckuusr.c, 5 Feb 2015.
+
+Apropos of the previous item, SHOW FUNCTIONS is not very useful.  It gives a
+list of all the functions, period.  But if I wanted to find only the
+functions that have to do with PIDs, it would be nice to be able to include
+a string to match the function names, as in "show function pid".  Other
+examples include "show func info", "sho func code", "sho fun date", etc.
+This was added doshow() ckuus5.c, with a special function code parameter
+value added to kwdhelp() in ckucmd.c and new HELP FUNCTION text in ckuus2.c.
+It's not really pattern matching, just a substring.  Anything more ambitious
+would have required a rewrite of kwdhelp().  5 Feb 2015.
+
+From Jake Thompson: "ckcftp.c is currently set up to allow only SSL 3.0 by
+default when using AUTH SSL/AUTH TLS, and no later versions
+(SSLv3_client_method).  After the POODLE vulnerability, most sites have
+disabled SSL 3.0, allowing only TLS 1.0 or later.  The attached patch
+changes ckcftp.c to allow TLS 1.0 and later only by default, adding a new
+bug option use-ssl-v3 in order to downgrade to SSL 3.0 if needed.  ck_ssl.c
+looks like it may need similar changes; I haven't looked extensively."
+I applied Jake's patch to ckcftp.c, and the analogous patches to
+ssl_tn_init() and ssl_http_init() in ck_ssl.c, with improved structure
+and debug logging.  5 Feb 2015.
+
+Compiles, links, and runs OK with "make netbsd+ssl" except for these
+warnings:
+
+ck_ssl.c: In function 'ssl_display_connect_details':
+ck_ssl.c:1089:12: warning: assignment discards qualifiers from pointer
+target type
+ck_ssl.c: In function 'tls_is_anon':
+ck_ssl.c:3139:12: warning: assignment discards qualifiers from pointer
+target type
+ck_ssl.c: In function 'tls_is_krb5':
+ck_ssl.c:3189:12: warning: assignment discards qualifiers from pointer
+target type
+
+Resulting binary connects with TLS 1.0 to https://www.google.com.
+
+--- Dev.13 ---
+
 ---------------------------------
 ***************************
