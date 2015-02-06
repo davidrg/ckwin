@@ -1,9 +1,14 @@
 #include "kabout.hxx"
 #include "ikextern.h"
+#include <stdio.h>
 
 // there should only be one about box showing at a time.
 //
 static KAbout* kabout = 0;
+
+extern "C" {
+    extern char *ck_s_ver;
+}
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
@@ -53,6 +58,7 @@ void KAbout::show( Bool bVisible )
         , MAKEINTRESOURCE(IDD_ABOUTBOX)
         , parent->hwnd()
         , AboutDlgProc );
+
 }
 
 /*------------------------------------------------------------------------
@@ -65,6 +71,14 @@ Bool KAbout::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         case WM_INITDIALOG:
         {
             hWnd = hwnd;
+
+            // Set the version string
+            #define VERSION_LEN 128
+            char version[VERSION_LEN];
+            _snprintf(version, VERSION_LEN, "Version %s", ck_s_ver);
+
+            SendDlgItemMessage(hWnd, IDC_VERSION, WM_SETTEXT, 0,
+                    (LPARAM) version);
 
             HWND hctrl;
 
