@@ -34,7 +34,7 @@ typedef unsigned long ulong;
 const char KWinClassName[] = "KERMIT95:UI";
 
 const char CmdTitle[] = "K95 Command Window";
-const char TermTitle[] = "K95 Terminal Window";
+const char TermTitle[] = "C-Kermit Terminal Window";
 const char CServerTitle[] = "K95 Client Server Window";
 
 const uint TERMINAL_WINDOW      = 1;

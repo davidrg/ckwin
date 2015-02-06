@@ -9155,24 +9155,24 @@ os2settitle(char *newtitle, int newpriv ) {
     if ( usertitle[0] ) {
         if ( StartedFromDialer ) {
             sprintf( titlebuf, "%d::%s%s%s",KermitDialerID,usertitle,
-                 private ? (inserver ? " - IKS" : " - K-95") : "", 
+                 private ? (inserver ? " - IKS" : " - C-Kermit") : "",
                      videomode
                  );
         }
         else {
             sprintf( titlebuf, "%s%s%s",usertitle,
-                 private ? (inserver ? " - IKS" : " - K-95") : "", videomode
+                 private ? (inserver ? " - IKS" : " - C-Kermit") : "", videomode
                  );
         }
     }
     else if ( StartedFromDialer ) {
         sprintf( titlebuf, "%d::%s%s%s%s",KermitDialerID,title,(*title&&private)?" - ":"",
-                 private ? (inserver ? "IKS" : "K-95") :  "", videomode
+                 private ? (inserver ? "IKS" : "C-Kermit") :  "", videomode
                  );
     }
     else {
         sprintf( titlebuf, "%s%s%s%s",title,(*title&&private)?" - ":"",
-                 private ? (inserver ? "IKS" : "K-95") : "" , videomode
+                 private ? (inserver ? "IKS" : "C-Kermit") : "" , videomode
                  );
     }
 
