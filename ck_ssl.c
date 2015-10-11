@@ -2204,8 +2204,8 @@ ssl_http_init(hostname) char * hostname;
         tls_http_ctx=(SSL_CTX *)SSL_CTX_new(TLSv1_client_method());
         if ( tls_http_ctx ) {
             debug(F110,"ssl_http_init","TLSv1_client_method OK",0);
-
-
+        }
+    }
     SSL_CTX_set_default_passwd_cb(tls_http_ctx,
                                   (pem_password_cb *)ssl_passwd_callback);
 
