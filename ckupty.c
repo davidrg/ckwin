@@ -1,8 +1,8 @@
-char *ckptyv = "Pseudoterminal support, 9.0.102, 23 Feb 2014";
+char *ckptyv = "Pseudoterminal support, 9.0.103, 24 Dec 2015";
 
 /*  C K U P T Y  --  C-Kermit pseudoterminal control functions for UNIX  */
 
-/* Last update: Sun Feb 23 09:09:36 2014 */
+/* Last update: Fri Dec 25 16:47:17 2015 */
 
 /*
   Copyright 1995 by the Massachusetts Institute of Technology.
@@ -54,7 +54,9 @@ char *ckptyv = "Pseudoterminal support, 9.0.102, 23 Feb 2014";
    . HP-UX 8.00 and earlier (no vhangup or ptsname routines)
 */
 
+#ifndef __FreeBSD__			/* bs  20151224 */
 #define _XOPEN_SOURCE 500		/* mdw 20140223 */
+#endif /* __FreeBSD__ */		/* bs  20151224 */
 #include <stdlib.h>			/* mdw 20140223 */
 #include "ckcsym.h"
 #include "ckcdeb.h"			/* To pick up NETPTY definition */

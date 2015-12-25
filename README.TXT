@@ -1,12 +1,13 @@
 C-KERMIT 9.0.304 PRERELEASE TESTING
 
-  Fri Jul 20 19:39:51 2012
+Fri Dec 25 19:17:31 2015
 
-This is C-Kermit 9.0.304 Dev.02, the first public test version
-of C-Kermit since the cancelation of the Kermit Project at Columbia
-University.  C-Kermit is Open Source software, released under the
-modified 3-clause Berkely License.  The changes since version 9.0.302
-are detailed at the bottom of the NOTES.TXT file, but briefly:
+This is C-Kermit 9.0.304 Dev.15, a development (pre-alpha, pre-beta)
+version of the first new release of C-Kermit since the cancelation of
+the Kermit Project at Columbia University.  C-Kermit is Open Source
+software, released under the modified 3-clause Berkely License.  The
+changes since version 9.0.302 are detailed at the bottom of the
+NOTES.TXT file, but briefly:
 
  1. Android support from Tim Sneddon.  This follows the Linux
     path, but has a separate makefile, android.mk.  A brief 
@@ -48,17 +49,20 @@ Problems Fixed:
     libraries.  This was fixed in the linux target of the makefile
     by Ian Beckwith of the Debian Project.
 
-All these need testing.
+All these need testing.  To see a summary of the changes in each
+development version, see:
 
-The test version is packaged as follows:
+  http://www.kermitproject.org/ckdaily.html
+
+The current development version is packaged as follows:
 
  1. In ftp://ftp.kermitproject.org/kermit/test/text/ : 
     
     README.TXT           This file
-    cku304dev02.tar      Unix source code, tar archive
-    cku304dev02.tar.Z    Ditto, compressed
-    cku304dev02.tar.gz   Ditto, gzipped
-    cku304dev02.zip      Unix and VMS source code, Zip archive
+    cku304dev15.tar      Unix source code, tar archive
+    cku304dev15.tar.Z    Ditto, compressed
+    cku304dev15.tar.gz   Ditto, gzipped
+    cku304dev15.zip      Unix and VMS source code, Zip archive
 
  2. In ftp://ftp.kermitproject.org/kermit/test/text/ : 
 
@@ -86,7 +90,9 @@ Unpacking and building instructions are here:
 Briefly: Unpack the archive into a fresh directory and run the build
 procedure.  In Unix do "make linux" (or whatever); in VMS do "@ckvker.com".
 Upon success, the result will be an executable wermit file (WERMIT.EXE
-in VMS) in the same directory.
+in VMS) in the same directory.  It's called wermit instead of kermit
+to avoid overriding any production version that might be in the same
+directory.
 
 Frank da Cruz
-New York City
+Bronx, NY

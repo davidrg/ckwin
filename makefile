@@ -1,7 +1,7 @@
 # makefile / Makefile / ckuker.mak / CKUKER.MAK
 #
-# Thu Feb  5 15:35:58 2015
-BUILDID=20150205
+# Thu Dec 24 09:50:29 2015
+BUILDID=20151224
 CKVER= "9.0.304"
 #
 # -- Makefile to build C-Kermit for UNIX and UNIX-like platforms --
@@ -29,14 +29,14 @@ CKVER= "9.0.304"
 # IRIX 6.x targets, to Seth Theriault for major improvements to the
 # Mac OS X targets, and to Alexey Dokuchaev for FreeBSD 9.0.
 #
-# C-Kermit is written and produced by hand without any automated procedures
-# such as autoconf / automake / configure, although some of the targets below
-# (especially the linux target) inspect the environment and make some
-# decisions in the most portable way possible. The automated tools are not
-# used because (a) C-Kermit predates them, and (b) they are not portable to
-# all the platforms where C-Kermit must be (or once was) built, and (c) to
-# keep C-Kermit as independent as possible from external tools over which
-# we have no control.
+# C-Kermit is written and produced by hand without any external automated
+# procedures such as autoconf / automake / configure, although some of the
+# targets below (especially the linux target) inspect the environment and make
+# some decisions in the most portable way possible. The automated tools are
+# not used because (a) C-Kermit predates them, and (b) they are not portable
+# to all the platforms where C-Kermit must be (or once was) built, and (c) to
+# keep C-Kermit as independent as possible from external tools over which we
+# have no control.
 #
 # Most entries use the "xermit" target, which uses the select()-based CONNECT
 # module, ckucns.c.  The "wermit" target uses the original fork()-based CONNECT
@@ -1781,8 +1781,8 @@ freebsd+ssl freebsd+openssl freebsd50+openssl:
 	   ls $(SSLLIB)/libdes* > /dev/null 2> /dev/null; then \
 	      DES_LIB='-ldes'; \
 	      HAVE_DES='-DCK_DES -DLIBDES'; \
-              echo "HAVE DES"; \
-           else echo "NO DES"; \
+		echo "HAVE DES"; \
+	      else echo "NO DES"; \
 	fi; \
 	$(MAKE) freebsd KTARGET=$${KTARGET:-$(@)} "CC = $(CC)" "CC2 = $(CC2)" \
 	KFLAGS="-DCK_AUTHENTICATION -DCK_SSL $(SSLINC) -DZLIB $$OPENSSLOPTION \
@@ -1835,8 +1835,8 @@ netbsd+ssl netbsd+openssl:
 	   ls $(SSLLIB)/libdes* > /dev/null 2> /dev/null; then \
 	      DES_LIB='-ldes'; \
 	      HAVE_DES='-DCK_DES -DLIBDES'; \
-              echo "HAVE DES"; \
-           else echo "NO DES"; \
+		echo "HAVE DES"; \
+	      else echo "NO DES"; \
 	fi; \
 	$(MAKE) netbsd KTARGET=$${KTARGET:-$(@)} "CC = $(CC)" "CC2 = $(CC2)" \
 	"KFLAGS= -DCK_AUTHENTICATION -DCK_ENCRYPTION -DCK_CAST $$HAVE_DES \
@@ -1863,8 +1863,8 @@ netbsd+krb5:
 	   ls $(SSLLIB)/libdes* > /dev/null 2> /dev/null; then \
 	      DES_LIB='-ldes'; \
 	      HAVE_DES='-DCK_DES -DLIBDES'; \
-              echo "HAVE DES"; \
-           else echo "NO DES"; \
+		echo "HAVE DES"; \
+	      else echo "NO DES"; \
 	fi; \
 	$(MAKE) netbsd KTARGET=$${KTARGET:-$(@)} "CC = $(CC)" "CC2 = $(CC2)" \
 	"KFLAGS= -DCK_AUTHENTICATION -DCK_ENCRYPTION -DCK_KERBEROS -DKRB5 \
@@ -1889,8 +1889,8 @@ netbsd+krb5+ssl netbsd+krb5+openssl+zlib:
 	   ls $(SSLLIB)/libdes* > /dev/null 2> /dev/null; then \
 	      DES_LIB='-ldes'; \
 	      HAVE_DES='-DCK_DES -DLIBDES'; \
-              echo "HAVE DES"; \
-           else echo "NO DES"; \
+		echo "HAVE DES"; \
+	      else echo "NO DES"; \
 	fi; \
 	$(MAKE) netbsd KTARGET=$${KTARGET:-$(@)} "CC = $(CC)" "CC2 = $(CC2)" \
 	"KFLAGS= -DCK_AUTHENTICATION -DCK_ENCRYPTION -DCK_CAST $$HAVE_DES \
@@ -3886,16 +3886,16 @@ solaris9g+krb5+ssl solaris10g+krb5+ssl solaris11g+krb5+ssl:
 	if ls $(SSLLIB)/libdes* > /dev/null 2> /dev/null; then \
 	      DES_LIB='-ldes425'; \
 	      HAVE_DES='-DCK_DES -DLIBDES'; \
-              echo "HAVE DES"; \
-           else echo "NO DES"; \
+		echo "HAVE DES"; \
+	      else echo "NO DES"; \
 	fi; \
 	GSSAPILIB=''; \
 	K5DIR=`echo $(K5LIB) | sed 's|-L||'`; \
 	echo K5DIR=$$K5DIR; \
 	if ls $$K5DIR/libgssapi_krb5* > /dev/null 2> /dev/null; then \
-              GSSAPILIB='-lgssapi_krb5'; \
-          else GSSAPILIB='-lgssapi'; \
-        fi; \
+		GSSAPILIB='-lgssapi_krb5'; \
+		else GSSAPILIB='-lgssapi'; \
+	fi; \
 	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} CC=gcc CC2=gcc \
 	"CFLAGS = -O -Usun -DSVR4 -DSOLARIS9 -DSTERMIOX -DSELECT -DFNFLOAT \
 	-DCK_CURSES -DCK_NEWTERM -DDIRENT -DHDBUUCP -DTCPSOCKET  -DBIGBUFOK \
@@ -3974,8 +3974,8 @@ solaris9+openssl solaris10+openssl solaris11+openssl:
 	if ls $(SSLLIB)/libdes* > /dev/null 2> /dev/null; then \
 	      DES_LIB='-ldes425'; \
 	      HAVE_DES='-DCK_DES -DLIBDES'; \
-              echo "HAVE DES"; \
-           else echo "NO DES"; \
+		echo "HAVE DES"; \
+	      else echo "NO DES"; \
 	fi; \
 	$(MAKE) "MAKE=$(MAKE)" solaris9 KTARGET=$${KTARGET:-$(@)} \
 	"KFLAGS=-DCK_AUTHENTICATION -DCK_SSL -DZLIB $$HAVE_DES \
@@ -4002,8 +4002,8 @@ solaris9g+openssl solaris10g+openssl solaris11g+openssl:
 	if ls $(SSLLIB)/libdes* > /dev/null 2> /dev/null; then \
 	      DES_LIB='-ldes425'; \
 	      HAVE_DES='-DCK_DES -DLIBDES'; \
-              echo "HAVE DES"; \
-           else echo "NO DES"; \
+		echo "HAVE DES"; \
+	      else echo "NO DES"; \
 	fi; \
 	$(MAKE) "MAKE=$(MAKE)" solaris9g KTARGET=$${KTARGET:-$(@)} \
 	"KFLAGS=-DCK_AUTHENTICATION -DCK_SSL -DZLIB $$HAVE_DES \
@@ -6088,11 +6088,10 @@ linuxp:
 #header files; on 32-bit platforms such as i386, this produces a 32-bit build
 #capable of accessing, sending, receiving, and managing long (> 2GB) files.
 #On 64-bit platforms, it does no harm.
-#As of 3 March 2009 we detect automatically if we have curses, ncurses,
-#or no curses at all.
 #Added HAVE_LOCKDEV as openSuSE >= 11.3 uses ttylock directly instead of
 #baudboy 2010/08/23
-#OK: 2011/06/18
+#Fixed 17 Dec 2018 to catch lib[n]curses but no [n]curses.h and also to
+#look for libs in /lib64 as well as /usr/lib64 (as in RHEL6).
 linux:
 	@if test \
 	`grep grantpt /usr/include/*.h /usr/include/sys/*.h | wc -l` -gt 0; \
@@ -6102,24 +6101,30 @@ linux:
 	then HAVE_OPENPTY='-DHAVE_OPENPTY'; \
 	else HAVE_OPENPTY=''; fi ; \
 	HAVE_LIBCURSES=''; \
-	if test -f /usr/lib64/libncurses.so || \
+	if test -f /lib64/libncurses.so.5 || \
+	   test -f /lib64/libncurses.so || \
+	   test -f /lib64/libncurses.a; then \
+	   HAVE_LIBCURSES='-lncurses'; \
+	else if test -f /usr/lib64/libncurses.so || \
 	   test -f /usr/lib/libncurses.a  || \
+	   test -f /usr/lib64/libncurses.so.5 || \
 	   test -f /usr/lib/libncurses.so; then \
-	  HAVE_LIBCURSES='-lncurses'; \
+	   HAVE_LIBCURSES='-lncurses'; \
 	else if test -f /usr/lib/$(MULTIARCH)/libncurses.so || \
 	   test -f /usr/lib/$(MULTIARCH)/libncurses.a  || \
 	   test -f /usr/lib/$(MULTIARCH)/libncurses.so; then \
-	  HAVE_LIBCURSES='-lncurses'; \
+	   HAVE_LIBCURSES='-lncurses'; \
 	else if test -f /usr/lib64/libcurses.so || \
 	   test -f /usr/lib/libcurses.a || \
 	   test -f /usr/lib/libcurses.so; then \
-	     HAVE_LIBCURSES='-lcurses'; fi; fi; fi; \
+	   HAVE_LIBCURSES='-lcurses'; fi; fi; fi; fi; \
 	HAVE_CURSES=''; \
 	if test -n '$$HAVE_LIBCURSES'; then \
 	  if test -f /usr/include/ncurses.h; then \
 	    HAVE_CURSES='-DCK_NCURSES  -I/usr/include/ncurses'; \
 	  else if test -f /usr/include/curses.h; then \
 	    HAVE_CURSES='-DCK_CURSES'; \
+          else HAVE_LIBCURSES=''; \
 	fi; fi; fi; \
 	if test -f /usr/include/baudboy.h || test -f /usr/include/ttylock.h; \
 	then HAVE_LOCKDEV='-DHAVE_LOCKDEV' ; \
@@ -6190,7 +6195,8 @@ linuxso:
 # Use "make linux+krb5 KFLAGS=-DNO_KRB5_INIT_ETS" if necessary.
 #OK 2011/06/16 on Fedora 14 with:
 # make linux+krb5 "LIBS=$LIBS /lib/libk5crypto.so.3 /lib/libcom_err.so.2"
-# On RHEL5: make linux+krb5 -UCK_DES
+# On RHEL5.x: make linux+krb5 -UCK_DES
+# On RHEL6.6: make linux+krb5 "K5LIB=-L /lib64"
 linux+krb5:
 	@echo 'Making C-Kermit $(CKVER) for Linux with Kerberos 5...'
 	@case `openssl version` in \
@@ -6205,29 +6211,25 @@ linux+krb5:
 	   ls $(SSLLIB)/libdes* > /dev/null 2> /dev/null; then \
 	      DES_LIB='-ldes425'; \
 	      HAVE_DES='-DCK_DES -DLIBDES'; \
-              echo "HAVE DES"; \
-           else echo "NO DES"; \
+	      echo "HAVE DES"; \
+	else echo "NO DES"; \
 	fi; \
 	K5CRYPTO=''; \
-        if ls /lib/libk5crypto* > /dev/null 2> /dev/null; then \
-                K5CRYPTO='-lk5crypto'; \
+	if ls /lib/libk5crypto* > /dev/null 2> /dev/null; then \
+		K5CRYPTO='-lk5crypto'; \
 	else if ls /usr/lib/libk5crypto* > /dev/null 2> /dev/null; then \
 		K5CRYPTO='-lk5crypto'; \
-        else if ls /usr/lib64/libk5crypto* > /dev/null 2> /dev/null; then \
-                K5CRYPTO='-lk5crypto'; \
-	        else if ls /usr/lib/$(MULTIARCH)/libk5crypto* > /dev/null 2> /dev/null; then \
-					K5CRYPTO='-lk5crypto'; \
-	fi; fi; fi; fi; \
+	else if ls /usr/lib64/libk5crypto* > /dev/null 2> /dev/null; then \
+	K5CRYPTO='-lk5crypto'; \
+	fi; fi; fi; \
 	COM_ERR=''; \
 	if ls /lib/libcom_err* > /dev/null 2> /dev/null; then \
 		COM_ERR='-lcom_err'; \
-	else if ls /lib/$(MULTIARCH)/libcom_err* > /dev/null 2> /dev/null; then \
-		COM_ERR='-lcom_err'; \
-	fi; fi; \
+	fi; \
 	GSSAPILIB='-lgssapi'; \
 	if ls /lib/libgssapi_krb5* > /dev/null 2> /dev/null; then \
 		GSSAPILIB='-lgssapi_krb5'; \
-	else if ls /usr/lib/$(MULTIARCH)/libgssapi_krb5* > /dev/null 2> /dev/null; then \
+	else if ls /usr/lib/libgssapi_krb5* > /dev/null 2> /dev/null; then \
 		GSSAPILIB='-lgssapi_krb5'; \
 	else K5DIR=`echo $(K5LIB) | sed 's|-L||'`; \
 		if ls $$K5DIR/libgssapi_krb5* > /dev/null 2> /dev/null; then \
@@ -6303,7 +6305,7 @@ linux+ssl linux+openssl linux+openssl+zlib+shadow+pam linux+openssl+shadow:
 # Add -UCK_DES if functions like des_ecb3_encrypt, es_random_seed,
 # come up missing at link time.
 # NOTE: MULTIARCH is defined externally, e.g. in DEB_HOST_MULTIARCH
-
+# On RHEL6.6: make linux+krb5+ssl "K5LIB=-L /lib64"
 linux+krb5+ssl linux+krb5+openssl:
 	@echo 'Making C-Kermit $(CKVER) for Linux with Krb5 and OpenSSL...'
 	@case `openssl version` in \
@@ -6322,13 +6324,13 @@ linux+krb5+ssl linux+krb5+openssl:
 	   else echo "NO DES"; \
 	fi; \
 	K5CRYPTO=''; \
-        if ls /lib/libk5crypto* > /dev/null 2> /dev/null; then \
-                K5CRYPTO='-lk5crypto'; \
+	if ls /lib/libk5crypto* > /dev/null 2> /dev/null; then \
+		K5CRYPTO='-lk5crypto'; \
 	else if ls /usr/lib/libk5crypto* > /dev/null 2> /dev/null; then \
 		K5CRYPTO='-lk5crypto'; \
-        else if ls /usr/lib64/libk5crypto* > /dev/null 2> /dev/null; then \
-                K5CRYPTO='-lk5crypto'; \
-        else if ls /usr/lib/$(MULTIARCH)/libk5crypto* > /dev/null 2> /dev/null; then \
+	else if ls /usr/lib64/libk5crypto* > /dev/null 2> /dev/null; then \
+		K5CRYPTO='-lk5crypto'; \
+	else if ls /usr/lib/$(MULTIARCH)/libk5crypto* > /dev/null 2> /dev/null; then \
 		K5CRYPTO='-lk5crypto'; \
 	fi; fi; fi; fi; \
 	COM_ERR=''; \

@@ -1,6 +1,6 @@
-#define EDITDATE  "10 Oct 2015"		/* Last edit date dd mmm yyyy */
-#define EDITNDATE "20151010"		/* Keep them in sync */
-/* Sat Oct 10 18:47:08 2015 */
+#define EDITDATE  "25 Dec 2015"		/* Last edit date dd mmm yyyy */
+#define EDITNDATE "20151225"		/* Keep them in sync */
+/* Fri Dec 25 16:53:37 2015 */
 
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
@@ -41,7 +41,7 @@ char * ck_cryear = "2015"; 		/* C-Kermit copyright year */
 #ifndef BETATEST
 #ifndef OS2                             /* UNIX, VMS, etc... (i.e. C-Kermit) */
 char *ck_s_test = "Dev";		/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "14";			/* Test version number or "" */
+char *ck_s_tver = "15";			/* Test version number or "" */
 #else  /* OS2 */
 char *ck_s_test = "";			/* (i.e. K95) */
 char *ck_s_tver = "";
@@ -149,16 +149,17 @@ char * myhome = NULL;			/* Home directory override string */
   is the  definitive source for Kermit software created or updated since
   that date:
 
-  http://www.kermitproject.org .
+    http://www.kermitproject.org
 
   The associated FTP site is:
 
-  ftp://ftp.kermitproject.org/
+    ftp://ftp.kermitproject.org/
 
   Note that Columbia University holds the copyright to this software in
   perpetuity, but as of C-Kermit 9.0 the license has changed from the
   previous somewhat restrictive one to the Open Source Modified Berkeley
-  3-clause license, text just below.
+  3-clause license, text just below (where %s is the year current at the
+  last time this code compiled).
 
 COPYRIGHT NOTICE:
 */
@@ -205,7 +206,9 @@ char *copyright[] = {
 
 #ifdef OS2
 "Portions Copyright (C) 2002-2005, Secure Endpoints Inc, New York NY USA.",
+#ifdef CK_XYZ
 "Portions Copyright (C) 1995, Oy Online Solutions Ltd., Jyvaskyla, Finland.",
+#endif /* CK_XYZ */
 #endif /* OS2 */
 
 #ifdef CK_AUTHENTICATION

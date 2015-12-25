@@ -8709,5 +8709,44 @@ Resulting binary connects with TLS 1.0 to https://www.google.com.
 
 --- Dev.13 ---
 
+Two closing braces were missing in ck_ssl.c at line 2207, which
+prevented Dev.13 from being built with OpenSSL support.  10 Oct 2015.
+
+--- Dev.14 ---
+
+Trying to build C-Kermit on Red Hat RHEL6 it failed at link time because it
+couldn't find libncurses.  It was really hard to track this one down because
+all the symptoms were totally misleading.  The real problem was that
+ncurses.h was not installed on the system, and the elaborate checking in the
+linux targe of the makefile didn't allow for the case when the libraries
+were installed but the header file not.  After fixing the makefile it
+compiles and links correctly without curses support.  Also fixed a large
+number rule lines that started with spaces in stead of Tab.
+makefile, 17 Dec 2015.
+
+  NOTE FOR DOCS: If C-Kermit builds silently but the result has no curses 
+  support, it means that lib[n]ncurses is missing OR [n]curses.h is missing.
+  There should be a way to issue a message from the makefile but I couldn't
+  find it (echo, @echo, etc, none of them worked).
+
+Patches from Bernard Spil for LibreSSL: "Currently Kermit fails to build
+when openssl libraries have been built without SSLv3 are used (configure
+--no-ssl2 --nossl3). This has surfaced when building with the latest
+LibreSSL 2.3. In addition, there are issues with LibreSSL as it does not
+support SSL compression nor perl EGD as entropy source.  Attached patches
+address all these issues. These can be improved upon by using only SSLv23_
+methods or even TLS_ methods and setting SSL_CTX_set_options(ctx,
+SSL_OP_NO_SSL2 | SSL_OP_NO_SSL3) but I've tried to make the patches
+minimally intrusive. OpenSSL 1.1.0 will deprecate SSLv23_ methods and
+introduces compatible TLS_ methods."  ckssl.h, ck_ssl.h, ck_ssl.c,
+ckcftp.c, ckupty.c.  Built OK on NetBSD 6.1.5 with OpenSSL 1.0.1e
+and Linux RHEL6.6 with 1.0.1k, and also on both without SSL selected,
+but with some warnings; in functions 'tls_is_anon' and 'tls_is_krb5':
+"assignment discards qualifiers from pointer target type".
+
+Updated dates and Dev number, ckuus5.c, ckcmai.c.
+
+--- Dev.15 ---
+
 ---------------------------------
 ***************************

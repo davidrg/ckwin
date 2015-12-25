@@ -2,7 +2,7 @@
 
 /*  C K C F T P  --  FTP Client for C-Kermit  */
 
-char *ckftpv = "FTP Client, 9.0.263, 5 Feb 2015";
+char *ckftpv = "FTP Client, 9.0.264, 24 Dec 2015";
 
 /*
   Authors:
@@ -11,7 +11,7 @@ char *ckftpv = "FTP Client, 9.0.263, 5 Feb 2015";
     Frank da Cruz <fdc@columbia.edu>,
       The Kermit Project, Columbia University.
 
-  Copyright (C) 2000, 2014,
+  Copyright (C) 2000, 2015,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -10210,9 +10210,11 @@ ssl_auth() {
     if (ftp_bug_use_ssl_v2) {
         /* allow SSL 2.0 or later */
         client_method = SSLv23_client_method();
+#ifndef OPENSSL_NO_SSL3
     } else if (ftp_bug_use_ssl_v3) {
         /* allow SSL 3.0 ONLY - previous default */
         client_method = SSLv3_client_method();
+#endif /* OPENSSL_NO_SSL3 */
     } else {
         /* default - allow TLS 1.0 or later */
         client_method = TLSv1_client_method();

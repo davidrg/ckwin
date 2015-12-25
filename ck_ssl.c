@@ -1,4 +1,4 @@
-char *cksslv = "SSL/TLS support, 9.0.232, 5 Feb 2015";
+char *cksslv = "SSL/TLS support, 9.0.233, 24 Dec 2015";
 /*
   C K _ S S L . C --  OpenSSL Interface for C-Kermit
 
@@ -22,6 +22,8 @@ char *cksslv = "SSL/TLS support, 9.0.232, 5 Feb 2015";
   and 0.9.7 beta 5 and later, and (since July 2012) 1.0.x.
   It will also compile with version 0.9.5 although that is discouraged
   due to security weaknesses in that release.
+
+  Adapted for LibreSSL by Bernard Spil, December 2015 (search "Spil")
 */
 
 #include "ckcsym.h"
@@ -1054,11 +1056,16 @@ ssl_display_comp(SSL * ssl)
     if (ssl == NULL)
         return;
 
+#ifndef OPENSSL_NO_COMP                  /* ifdefs Bernard Spil 12/2015 */
     if (ssl->expand == NULL || ssl->expand->meth == NULL)
+#endif /* OPENSSL_NO_COMP */
         printf("Compression: None\r\n");
+
+#ifndef OPENSSL_NO_COMP                  /* ifdefs Bernard Spil 12/2015 */
     else {
         printf("Compression: %s\r\n",ssl->expand->meth->name);
     }
+#endif /* OPENSSL_NO_COMP */
 }
 
 int
@@ -1508,12 +1515,14 @@ the build.\r\n\r\n");
         }
         debug(F110,"ssl_rnd_file",ssl_rnd_file,0);
 
+#ifndef OPENSSL_NO_EGD                    /* ifdef Bernard Spil 12/2015 */
         rc1 = RAND_egd(ssl_rnd_file);
         debug(F111,"ssl_once_init","RAND_egd()",rc1);
         if ( rc1 <= 0 ) {
             rc2 = RAND_load_file(ssl_rnd_file, -1);
             debug(F111,"ssl_once_init","RAND_load_file()",rc1);
         }
+#endif /* OPENSSL_NO_EGD */
 
         if ( rc1 <= 0 && !rc2 )
         {
@@ -1604,7 +1613,9 @@ ssl_tn_init(mode) int mode;
             /* This can fail because we do not have RSA available */
             if ( !ssl_ctx ) {
                 debug(F110,"ssl_tn_init","SSLv23_client_method failed",0);
+#ifndef OPENSSL_NO_SSL3                  /* ifdef Bernard Spil 12/2015 */
                 ssl_ctx=(SSL_CTX *)SSL_CTX_new(SSLv3_client_method());
+#endif /* OPENSSL_NO_SSL3 */
             }
             if ( !ssl_ctx ) {
                 debug(F110,"ssl_tn_init","SSLv3_client_method failed",0);
@@ -1630,7 +1641,9 @@ ssl_tn_init(mode) int mode;
                     debug(F110,"ssl_tn_init","SSLv23_client_method OK",0);
                 } else {
                     debug(F110,"ssl_tn_init","SSLv23_client_method failed",0);
+#ifndef OPENSSL_NO_SSL3           /* ifdef Bernard Spil 12/2015 */
                     tls_ctx=(SSL_CTX *)SSL_CTX_new(SSLv3_client_method());
+#endif /* OPENSSL_NO_SSL3 */
                     if ( !tls_ctx ) {
                         debug(F110,
                               "ssl_tn_init","TLSv1_client_method failed",0);
@@ -1651,7 +1664,9 @@ ssl_tn_init(mode) int mode;
             /* This can fail because we do not have RSA available */
             if ( !ssl_ctx ) {
                 debug(F110,"ssl_tn_init","SSLv23_server_method failed",0);
+#ifndef OPENSSL_NO_SSL3           /* ifdef Bernard Spil 12/2015 */
                 ssl_ctx=(SSL_CTX *)SSL_CTX_new(SSLv3_server_method());
+#endif /* OPENSSL_NO_SSL3 */
             }
             if ( !ssl_ctx ) {
                 debug(F110,"ssl_tn_init","SSLv3_server_method failed",0);

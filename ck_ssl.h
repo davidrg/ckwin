@@ -1,7 +1,7 @@
 /*
   C K _ S S L . H --  OpenSSL Interface Header for C-Kermit
 
-  Copyright (C) 1985, 2013,
+  Copyright (C) 1985, 2015,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
