@@ -228,7 +228,8 @@ char *newstxt[] = {
 " . Raw SSL/TLS connections for connecting to POP3 and similar services",
 #endif /* CK_SSL */
 " . At the prompt, Ctrl-K recalls most recent filename",
-" . Scripting and performance improvements and bug fixes",
+" . Scripting and performance improvements",
+" . Bug fixes",
 " ",
 "Documentation:",
 " 1. http://www.kermitproject.org/usingckermit.html",
@@ -246,8 +247,9 @@ char *newstxt[] = {
 "If the release date shown by the VERSION command is long past, be sure to",
 "check the Kermit website to see if there have been updates:",
 " ",
-"  http://www.kermitproject.org/ckermit.html (C-Kermit home page)",
 "  http://www.kermitproject.org/             (Kermit Project home page)",
+"  http://www.kermitproject.org/ckermit.html (C-Kermit home page)",
+"  http://www.kermitproject.org/ckdaily.html (C-Kermit development)",
 ""
 };
 #endif /* NOHELP */

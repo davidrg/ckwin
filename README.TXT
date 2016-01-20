@@ -1,53 +1,42 @@
 C-KERMIT 9.0.304 PRERELEASE TESTING
 
-Fri Dec 25 19:17:31 2015
+Mon Jan 18 15:09:40 2016
 
-This is C-Kermit 9.0.304 Dev.15, a development (pre-alpha, pre-beta)
+This is C-Kermit 9.0.304 Dev.16, a development (pre-alpha, pre-beta)
 version of the first new release of C-Kermit since the cancelation of
-the Kermit Project at Columbia University.  C-Kermit is Open Source
-software, released under the modified 3-clause Berkely License.  The
-changes since version 9.0.302 are detailed at the bottom of the
-NOTES.TXT file, but briefly:
+the Kermit Project at Columbia University.  Since 1 July 2011, C-Kermit
+is Open Source software, released under the modified 3-clause Berkeley
+License.  The changes since version 9.0.302 are detailed at the bottom
+of the NOTES.TXT file.
 
- 1. Android support from Tim Sneddon.  This follows the Linux
-    path, but has a separate makefile, android.mk.  A brief 
-    cover note is in the android.txt file, and Tim's story about
-    this came about is here:
+Major New Features:
 
-      http://tim.sneddon.id.au/blog/Posts/C-Kermit_for_Android
-
-    Tim's version is based on 9.0.302, whereas the version here also
-    embodies the other recent changes:
-
- 2. C-Kermit 9.0 already worked with OpenSSL 1.0.0, but it did not
-    react well when OpenSSL was updated; C-Kermit would have to be
-    rebuilt each time, even if it was unnecessary according to the
-    post-1.0.0 OpenSSL rules for ABI compatibility.  C-Kermit
-    9.0.304 has new code from Adam Friedlander to perform the check
-    according to the new rules, which weren't set when C-Kermit 9.0
-    was first released.  This way, users of binary-only
-    distributions like Ubuntu Linux won't have C-Kermit stop working
-    for them suddenly for no good reason.  So now if C-Kermit was
-    compiled against OpenSSL 1.0.0 or greater, it will disable SSL
-    connections only if the installed version has a different major
-    and minor version number *or* the installed version is older
-    than the version C-Kermit was compiled against.  If C-Kermit was
-    compiled against a 0.9.x OpenSSL version, it will disable SSL
-    connections unless the installed version is exactly the same.
-    Thanks to Jeff Altman for help with this fix.
+ . Android support.
+ . The CHANGE command (type "help change" for details).
+ . The TOUCH command (type "help touch" for details).
+ . Locale support for dates, times, error messages, etc.
+ . A way to direct messages to stderr.
+ . A new \ffilecompare() function.
+ . GREP /ARRAY:&x puts the results in the array &x.
 
 Problems Fixed:
 
- 1. Crashes when receiving files with Kermit protocol on certain 64-bit
+ 1. Crash when receiving files with Kermit protocol on certain 64-bit
     platforms such as OpenBSD on Sparc64, caused by conflicting int/long
     declarations.
 
  2. Custom builds using certain combinations of feature-selection flags
     would fail.
 
- 3. Debian Linux builds did not not allow for multiarchitecture
-    libraries.  This was fixed in the linux target of the makefile
-    by Ian Beckwith of the Debian Project.
+ 3. Linux builds becoming increasingly problematic with the neverending
+    proliferation of Linux distributions, each one doing things
+    differently.
+
+ 4. Problems parsing certain REMOTE commands.
+
+ 5. DIRECTORY /BRIEF /EXCEPT:xxx didn't work, now it does.
+
+ 6. Numerous problems with OpenSSL as it changes out from under us.a
 
 All these need testing.  To see a summary of the changes in each
 development version, see:

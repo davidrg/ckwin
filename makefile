@@ -1,12 +1,12 @@
 # makefile / Makefile / ckuker.mak / CKUKER.MAK
 #
-# Thu Dec 24 09:50:29 2015
-BUILDID=20151224
+# Mon Jan 18 15:00:00 2016
+BUILDID=20160118
 CKVER= "9.0.304"
 #
 # -- Makefile to build C-Kermit for UNIX and UNIX-like platforms --
 #
-# Copyright (C) 1985, 2015,
+# Copyright (C) 1985, 2016,
 #   Trustees of Columbia University in the City of New York.
 #   All rights reserved.  See the C-Kermit COPYING.TXT file or the
 #   copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -126,10 +126,13 @@ CKVER= "9.0.304"
 #
 # + "make -f android.mk" (separate makefile) for Android.
 # + "make linux" should work for any version of Linux on any hardware.
+#     Note: new "make linux" (2016) not yet widely tested.
+#     Use "make linux-2015" (the old "make linux")
+#     if "make linux" causes problems.
 # + "make linux+ssl" ditto, with OpenSSL security added.
 # + "make linux+krb5" ditto, with Kerberos 5 security added.
 # + "make linux+krb5+ssl" Linux with OpenSSL and Kerberos 5.
-# + Note: the Linux targets work for Raspberry Pi with Debian 7.0 (Raspbian)
+#     Note: the Linux targets work for Raspberry Pi with Debian 7.0 (Raspbian)
 # + "make netbsd", NetBSD, any version.
 # + "make netbsd+ssl", NetBSD with OpenSSL 0.9.7 or later.
 # + "make netbsd+krb5", NetBSD with Kerberos 5.
@@ -6068,14 +6071,114 @@ linuxp:
 	$(MAKE) linuxa KTARGET=$${KTARGET:-$(@)} "KFLAGS=$(KFLAGS) -pg" \
 	"LIBS=-pg -lcrypt -lresolv"
 
-#Linux.  This entry should work for any Linux distribution on any platform,
+#Linux.  Completely new target: 18 January 2016.
+#No more looking in 100 different places for libraries, let ld do it,
+#since it knows what libraries it's going to use.
+#If this target fails to work somewhere, use the 'linux-2015' target just 
+#below this one. 
+#
+#This entry should work for any Linux distribution on any platform,
 #32-bit or 64-bit, except for extremely ancient ones.  Automatically detects:
 # . curses, ncurses, or no curses
 # . Old versus new pty handling (new == glibc 2.1++)
-# . Presence or absence of libcrypt.a and <crypt.h>
-# . Presence or absence of libresolv.a
+# . Presence or absence of libcrypt and <crypt.h>
+# . Presence or absence of libresolv
+# . Presence of various serial port locking schemes
 # . Transitional Long File API for 32-bit platforms (SUS V2 UNIX 98 LFS).
-#Note: The HAVE_PTMX test was previously "if test -c /dev/ptmx" but this was
+#
+#Long file support for 32-bit builds added in 8.0.212 - if features.h contains
+#__USE_LARGEFILE64 then we set the flags that must be set before reading any
+#header files; on 32-bit platforms such as i386, this produces a 32-bit build
+#capable of accessing, sending, receiving, and managing long (> 2GB) files.
+#On 64-bit platforms, it does no harm.
+#
+linux gnu-linux:
+	@echo "Making C-Kermit for Linux..."; \
+	# Dummy comment \
+	if test \
+	`grep grantpt /usr/include/*.h /usr/include/sys/*.h | wc -l` -gt 0; \
+	  then if test -c /dev/ptmx; \
+	    then HAVE_PTMX='-DHAVE_PTMX'; \
+	    else HAVE_PTMX=''; \
+	  fi; \
+	fi ; \
+	HAVE_OPENPTY=''; \
+	if test `grep openpty /usr/include/pty.h | wc -l` -gt 0; \
+	  then HAVE_OPENPTY='-DHAVE_OPENPTY'; \
+	fi ; \
+	if test -n '$$HAVE_OPENPTY'; \
+	  then if ld -lutil > /dev/null 2> /dev/null; then \
+	    LIB_UTIL='-lutil'; \
+	  else \
+	    LIB_UTIL=''; \
+	  fi; \
+	fi; \
+	HAVE_LIBCURSES=''; \
+	HAVE_CURSES=''; \
+	if ld -lncurses > /dev/null 2> /dev/null; then \
+	  HAVE_LIBCURSES='-lncurses'; \
+	  if test -f /usr/include/ncurses.h; then \
+	    HAVE_CURSES='-DCK_NCURSES  -I/usr/include/ncurses'; \
+	  else \
+	    HAVE_LIBCURSES=''; \
+	  fi; \
+	fi; \
+	if test -z '$$HAVE_LIBCURSES'; then \
+	  if ld -lcurses > /dev/null 2> /dev/null; then \
+	    HAVE_LIBCURSES='-lcurses'; \
+	    if test -f /usr/include/curses.h; then \
+	      HAVE_CURSES='-DCK_CURSES  -I/usr/include/curses'; \
+	    else \
+	      HAVE_LIBCURSES=''; \
+	    fi; \
+	  fi; \
+	fi; \
+	HAVE_RESOLV=''; \
+	if ld -lresolv > /dev/null 2> /dev/null; then \
+	  HAVE_RESOLV='-lresolv'; \
+	fi; \
+	HAVE_CRYPT=''; \
+	HAVE_CRYPT_H=''; \
+	if ld -lcrypt > /dev/null 2> /dev/null; then \
+	  if test -f /usr/include/crypt.h; then \
+	    HAVE_CRYPT_H='-DHAVE_CRYPT_H'; \
+	    HAVE_CRYPT='-lcrypt'; \
+	  fi; \
+	fi; \
+	if test -f /usr/include/baudboy.h ; \
+	  then HAVE_BAUDBOY='-DHAVE_BAUDBOY' ; \
+	  else HAVE_BAUDBOY=''; \
+	fi; \
+	if test -n '$$HAVE_BAUDBOY' || test -f /usr/include/ttylock.h; \
+	  then HAVE_LOCKDEV='-DHAVE_LOCKDEV' ; \
+	  else HAVE_LOCKDEV='' ; \
+	fi ; \
+	if test -n '$$HAVE_LOCKDEV'; then \
+	  if ld -llockdev > /dev/null 2> /dev/null; then \
+	    HAVE_LIBLOCKDEV='-llockdev'; \
+	  else \
+	    HAVE_LOCKDEV=''; \
+	  fi; \
+	fi; \
+	if grep __USE_LARGEFILE64 /usr/include/features.h > /dev/null; \
+	  then HAVE_LARGEFILES='-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64'; \
+	  else HAVE_LARGEFILES=''; \
+	fi; \
+	$(MAKE) KTARGET=$${KTARGET:-$(@)} \
+	"KFLAGS=$$HAVE_CURSES $$HAVE_PTMX $$HAVE_LOCKDEV $$HAVE_CRYPT_H \
+	$$HAVE_BAUDBOY $$HAVE_OPENPTY $$HAVE_LARGEFILES $(KFLAGS)" \
+	"LIBS=$(LIBS) $$LIB_UTIL \
+	  $$HAVE_LIBCURSES $$HAVE_RESOLV $$HAVE_CRYPT $$HAVE_LOCKDEV" \
+	linuxa
+
+#PREVIOUS LINUX TARGET
+#Use this target if you have trouble with the one just above.
+#This is the previous target for Linux, retired at the end of 2015.
+#As you can see the tests for curses/ncurses and other libraries and
+#header files were getting ridiculous and were only going to get worse
+#as Linux versions proliferated.
+#
+#The HAVE_PTMX test was previously "if test -c /dev/ptmx" but this was
 #not sufficient for Debian 2.1, because although it had /dev/ptmx, it did not
 #have grantpt(), unlockpt(), or ptsname(), so has been changed to look for a
 #grantpt() prototype in the header files.  Modified in 8.0.206 to allow for
@@ -6083,16 +6186,10 @@ linuxp:
 #HAVE_BAUDBOY added in 8.0.210 for Red Hat -- it's like AIX ttylock().
 #Modified 17 Aug 2005 to use openpty() if available because the other stuff
 #dumps core in 64-bit ia64 and x86_64 builds.
-#Long file support for 32-bit builds added in 8.0.212 - if features.h contains
-#__USE_LARGEFILE64 then we set the flags that must be set before reading any
-#header files; on 32-bit platforms such as i386, this produces a 32-bit build
-#capable of accessing, sending, receiving, and managing long (> 2GB) files.
-#On 64-bit platforms, it does no harm.
-#Added HAVE_LOCKDEV as openSuSE >= 11.3 uses ttylock directly instead of
-#baudboy 2010/08/23
-#Fixed 17 Dec 2018 to catch lib[n]curses but no [n]curses.h and also to
-#look for libs in /lib64 as well as /usr/lib64 (as in RHEL6).
-linux:
+#
+#Added HAVE_LOCKDEV on openSuSE >= 11.3, which uses ttylock directly instead 
+#of baudboy 2010/08/23
+linux-2015:
 	@if test \
 	`grep grantpt /usr/include/*.h /usr/include/sys/*.h | wc -l` -gt 0; \
 	then if test -c /dev/ptmx; then HAVE_PTMX='-DHAVE_PTMX'; \
@@ -6124,7 +6221,7 @@ linux:
 	    HAVE_CURSES='-DCK_NCURSES  -I/usr/include/ncurses'; \
 	  else if test -f /usr/include/curses.h; then \
 	    HAVE_CURSES='-DCK_CURSES'; \
-          else HAVE_LIBCURSES=''; \
+	  else HAVE_LIBCURSES=''; \
 	fi; fi; fi; \
 	if test -f /usr/include/baudboy.h || test -f /usr/include/ttylock.h; \
 	then HAVE_LOCKDEV='-DHAVE_LOCKDEV' ; \

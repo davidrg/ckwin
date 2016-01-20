@@ -4,7 +4,7 @@ C-KERMIT 9.0 CHANGE LOG (Changes since 8.0.207 / K95 2.1.3 January 2003)
   Go to the bottom to find the newest edits.
 
   Frank da Cruz, The Kermit Project, New York City.
-  Last update:  Tue Dec 17 14:54:33 2013
+  Last update:  Mon Jan 18 16:09:36 2016
 
 FTP USER, FTP ACCOUNT, plus the various prompts and switches for FTP username,
 password, and account all neglected to strip quotes, and in most cases quotes
@@ -8747,6 +8747,28 @@ but with some warnings; in functions 'tls_is_anon' and 'tls_is_krb5':
 Updated dates and Dev number, ckuus5.c, ckcmai.c.
 
 --- Dev.15 ---
+
+Mark Sapiro noticed that "OK" is no longer a valid IF condition (it was a
+synonym for SUCCESS), which is true; I removed it years ago because of some
+conflict but didn't make a note of it, can't remember the reason, but IF OK
+still showed up in HELP IF.  Removed it in ckuus2.c, and put a new version
+of the iftest script in the script library.  31 Dec 2015.
+
+Made a new "linux" target for the makefile.  Kept the previous one available
+as "linux-2015".  The feature tests in the old one looked for libraries
+in specific places, like "if test -f /usr/lib64/libncurses.so.5" which is
+stupid because there are an endless number of places where Linux packagers
+will think up to put them, especially for multiarchitecture distributions.
+Well, who really knows where the libraries are, and what the library search
+path is?  ld, right?  So now instead of looking in 20 different places
+for (say) libncurses under several different name, we just ask ld if it
+can find it and if so -- and if we also can identify the corresponding
+header file (if any) -- then we set the appropriate HAVE_blah feature flags.
+makefile, 18 Jan 2016.
+
+Updated copyright year to 2016.  ckcmai.c, 18 Jan 2016.
+
+--- Dev.16 ---
 
 ---------------------------------
 ***************************
