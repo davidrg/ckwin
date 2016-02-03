@@ -3,12 +3,12 @@
 #define CK_NONBLOCK                     /* See zoutdump() */
 
 #ifdef aegis
-char *ckzv = "Aegis File support, 9.0.220, 11 Jan 2015";
+char *ckzv = "Aegis File support, 9.0.222, 1 Feb 2016";
 #else
 #ifdef Plan9
-char *ckzv = "Plan 9 File support, 9.0.220, 11 Jan 2015";
+char *ckzv = "Plan 9 File support, 9.0.222, 1 Feb 2016";
 #else
-char *ckzv = "UNIX File support, 9.0.220, 11 Jan 2015";
+char *ckzv = "UNIX File support, 9.0.222, 1 Feb 2016";
 #endif /* Plan9 */
 #endif /* aegis */
 /*
@@ -18,7 +18,7 @@ char *ckzv = "UNIX File support, 9.0.220, 11 Jan 2015";
   Columbia University Academic Information Systems.  Note: AcIS = Previous
   of Columbia University Information Technology.
 
-  Copyright (C) 1985, 2015,
+  Copyright (C) 1985, 2016,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -104,8 +104,7 @@ _PROTOTYP( int parser, ( int ) );
   Directory Separator macros, to allow this module to work with both UNIX and
   OS/2: Because of ambiguity with the command line editor escape \ character,
   the directory separator is currently left as / for OS/2 too, because the
-  OS/2 kernel also accepts / as directory separator.  But this is subject to
-  change in future versions to conform to the normal OS/2 style.
+  OS/2 kernel also accepts / as directory separator.
 */
 #ifndef DIRSEP
 #define DIRSEP       '/'
@@ -2602,6 +2601,8 @@ zchko(name) char *name; {
     }
 #endif	/* NOUUCP */
 #endif	/* UNIX */
+
+    if (zchkod) goto doaccess;          /* fdc 20160129 */
 /*
   The following code gets the name of the containing directory so we
   can use access() to check if we are allowed to create files in it.
@@ -2667,6 +2668,7 @@ zchko(name) char *name; {
 #endif /* SW_ACC_ID */
 
     x = access(s,W_OK);                 /* Check access of path. */
+    debug(F110,"zchko access",s,x);
 
 #ifdef SW_ACC_ID
     priv_off();
@@ -5321,6 +5323,9 @@ zlocaltime(gmtstring) char * gmtstring; {
       yy->lprotect.val & yy->gprotect.val are permission/protection values.
  x  = is a function code: 0 means to set the file's attributes as given.
       1 means compare the date in struct yy with the file creation date.
+    IMPORTANT: if you are calling this routine only to set a certain attribute
+      but not others, you MUST set yy->blah.len to 0 for each blah not
+      being set.
  Returns:
  -1 on any kind of error.
   0 if x is 0 and the attributes were set successfully.
@@ -5387,7 +5392,7 @@ zstime(f,yy,x)
 #endif /* CKROOT */
 
     if (yy->date.len == 0) {            /* No date in struct */
-        if (yy->lprotect.len != 0) {    /* So go do permissions */
+        if (yy->lprotect.len > 0) {     /* So go do permissions */
             goto zsperms;
         } else {
             debug(F100,"zstime: nothing to do","",0);
@@ -5485,7 +5490,14 @@ zstime(f,yy,x)
             umask(mask);                /* Put it back */
             mask ^= 0777;               /* Flip the bits */
             debug(F101,"zstime mask 2","",mask);
-            g = xunchar(*(yy->gprotect.val)); /* Decode generic protection */
+            debug(F101,"zstime yy->gprotect.len","",yy->gprotect.len);
+            /* Decode generic protection */
+            if (yy->gprotect.len < 1 || yy->gprotect.len > 99) {
+                g = 0;                  /* protect against bogus value */
+            } else {
+                debug(F110,"zstime yy->gprotect.val",yy->gprotect.val,0);
+                g = xunchar(*(yy->gprotect.val));
+            }
             debug(F101,"zstime gprotect","",g);
 #ifdef S_IRUSR
             debug(F100,"zstime S_IRUSR","",0);
@@ -7413,6 +7425,9 @@ zfseek(pos) CK_OFF_T pos;
   returns the fully qualified filespec for the same file, returning a struct
   that contains the length (len) of the result, a pointer (fpath) to the
   whole result, and a pointer (fname) to where the filename starts.
+  Hint: how to get just the directory path, without the filename, into buf[]:
+    fp = zfnqfp(filename,MAXPATHLEN,buf);
+    if (fp) buf[fp->fname - fp->fpath] = '\0';
 */
 static struct zfnfp fnfp = { 0, NULL, NULL };
 

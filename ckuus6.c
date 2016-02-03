@@ -8,7 +8,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2014,
+  Copyright (C) 1985, 2016,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -162,6 +162,10 @@ int readblock = 4096;                   /* READ buffer size */
 CHAR * readbuf = NULL;                  /* Pointer to read buffer */
 int readsize = 0;                       /* Number of chars actually read */
 int getcmd = 0;                         /* GET-class command was given */
+
+char chgsourcedir[MAXPATHLEN+1] = { 0,0 }; /* Source directory for CHANGE */
+char chgdestdir[MAXPATHLEN+1] = { 0,0 }; /* Destination directory for CHANGE */
+char chgbackupdir[MAXPATHLEN+1] = { 0,0 }; /* Backup directory for CHANGE */
 
 extern int zchkod, zchkid;
 
@@ -4810,9 +4814,11 @@ static int ntouchswtab = (sizeof(touchswtab) / sizeof(struct keytab)) - 1;
 
 static struct keytab changeswtab[] = {	/* CHANGE command switches */
     { "/after",       DIR_AFT, CM_ARG },
+    { "/backup",      DIR_BAK, CM_ARG },
     { "/before",      DIR_BEF, CM_ARG },
     { "/case",           7777, CM_ARG },
     { "/count",       DIR_COU, CM_ARG },
+    { "/destination", DIR_DES, CM_ARG },
     { "/dotfiles",    DIR_DOT, 0 },
     { "/except",      DIR_EXC, CM_ARG },
     { "/larger-than", DIR_LAR, CM_ARG },
@@ -5038,7 +5044,7 @@ setdiropts() {                          /* Set DIRECTORY option defaults */
 
 int
 domydir(cx) int cx; {			/* Internal DIRECTORY command */
-    extern char *months[];
+    extern char *months[], *tempdir;
 #ifdef VMS
     _PROTOTYP( char * zrelname, (char *,char *) );
     char * cdp = NULL;
@@ -5074,6 +5080,8 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
     struct FDB sw, fi, fl;
     char dbuf[32], xbuf[32];
     int reallysort = 0;
+    int changeinplace = 0;
+    int changebackup = 0;
 
 #ifndef NOSPL
     char array = NUL;
@@ -5088,6 +5096,12 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
     char * xlist[16];
 
     debug(F101,"domydir cx","",cx);
+
+    chgsourcedir[0] = NUL;              /* CHANGE source directory */
+    chgdestdir[0] = NUL;                /* CHANGE destination directory */
+    chgbackupdir[0] = NUL;              /* CHANGE backup directory */
+    changeinplace = 1;                  /* CHANGE'ing files in place */
+    changebackup = 0;                   /* Backing up CHANGEd files */
 
     g_matchdot = matchdot;              /* Save global matchdot setting */
 #ifdef COMMENT
@@ -5124,6 +5138,8 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 #endif /* RECURSIVE */
     show      = dir_show > -1 ? dir_show : 3;
 
+    diractive = 1;                      /* This is a DIRECTORY command */
+
     switch (cx) {
       case XXWDIR: 			/* WDIRECTORY */
 	debug(F100,"domydir WDIRECTORY","",0);
@@ -5138,10 +5154,12 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 	sortby = DIRS_SZ;
 	break;
       case XXTOUC:
+        diractive = 0;                  /* This is NOT a DIRECTORY command */
 	touch = 1;
 	verbose = 0;
 	break;
       case XXCHG:			/* CHANGE 2013-04-18 */
+        diractive = 0;                  /* This is NOT a DIRECTORY command */
 	change = 1;
 	verbose = 0;
     }
@@ -5160,7 +5178,6 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 #endif /* OS2 */
 #endif /* CK_TTGWSIZ */
 
-    diractive = 1;
     cmifn1 = nolinks | 1;               /* 1 = files or directories */
     cmifn2 = 0;                         /* 0 = not directories only */
 
@@ -5440,7 +5457,7 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
             ckstrncpy(outfile,s,CKMAXPATH+1);
             break;
 
-          case DIR_SIM:			/* TOUCH /SIMULATE */
+          case DIR_SIM:			/* TOUCH or CHANGE /SIMULATE */
 	    simulate = 1;
 	    break;
 
@@ -5464,6 +5481,49 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 	      return(x);
 	    ckstrncpy(modtime,brstrip(s),100);
 	    break;
+
+          case DIR_DES:                 /* CHANGE /DESTINATION:dirname */
+          case DIR_BAK:                 /* CHANGE /BACKUP:dirname */
+            if (change) {
+                int x;
+                char * whatdir = chgdestdir;
+                char * hmsg = "Directory for changed files";
+
+                if (k == DIR_BAK) {
+                    hmsg = "Directory for backing up original files";
+                    whatdir = chgbackupdir;
+                }
+                x = cmdir(hmsg,"",&s,xxstring);
+                if (x < 0) {
+                      if (x == -3) {
+                        printf("?Parse error\n");
+                        return(-9);
+                    }
+                    return(x);
+                }
+                x = isdir(s);           /* this is overkill but... */
+                if (x < 0) {
+                      if (x == -3) {
+                        printf("?Directory name required\n");
+                        return(-9);
+                    }
+                    return(x);
+                }
+                ckstrncpy(whatdir,s,MAXPATHLEN);
+                if (!isdir(whatdir)) { /* Double overkill */
+                    printf("?%s is not a directory name\n",whatdir);
+                    return(-9);
+                }
+                switch (k) {
+                  case DIR_DES:         /* DESTINATION switch given */
+                    changeinplace = 0;  /* Making new files */
+                    break;
+                  case DIR_BAK:         /* BACKUP switch given */
+                    changebackup = 1;   /* Backup up original files */
+                    break;
+                }
+            }
+            break;
 
           default:
             printf("?Sorry, not implemented yet - \"%s\"\n", atmbuf);
@@ -5491,9 +5551,10 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 
 /* ^^^ END MULTIPLE */
 
-    s = line;
+    ckstrncpy(name,line,MAXPATHLEN);
 
     if (change) {			/* Finish parsing CHANGE command */
+        debug(F110,"CHANGE source file",line,0);
 	x = cmfld("Text to be changed","",&s,xxstring);	
 	if (x < 0) {
 	    if (x == -3) {
@@ -5505,10 +5566,13 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 	}
 	s = brstrip(s);
 	s1len = ckstrncpy(string1,s,1024);
+        debug(F110,"CHANGE string1",string1,0);
+
 	x = cmfld("Text to change it to","",&s2,xxstring);	
 	if (x < 0 && x != -3) return(x);
 	s2 = brstrip(s2);
 	s2len = ckstrncpy(string2,s2,1024);
+        debug(F110,"CHANGE string2",string2,0);
     }
     if ((x = cmcfm()) < 0)              /* Get confirmation */
       return(x);
@@ -5525,6 +5589,7 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 		xxstruct.date.val = dstr;
 		xxstruct.date.len = (int)strlen(xxstruct.date.val);
 		xxstruct.lprotect.len = 0;
+		xxstruct.gprotect.len = 0;
 #ifdef UNIX
 		if (s[0] == '~')
 		  s = tilde_expand(s);
@@ -5783,6 +5848,46 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
     ndirs = nfiles = 0L;		/* Initialize counters */
     nbytes = (CK_OFF_T)0;
 
+    if (change) {                       /* CHANGE - check for conflicts */
+        struct zfnfp * fp;
+        char dbuf[MAXPATHLEN+1];
+        char bbuf[MAXPATHLEN+1];
+
+        fp = zfnqfp(name,TMPBUFSIZ,chgsourcedir); /* Source directory path */
+        if (fp) {
+            chgsourcedir[fp->fname - fp->fpath] = NUL;
+            debug(F110,"CHANGE source directory",chgsourcedir,0);
+            if (chgdestdir[0]) {
+                debug(F110,"CHANGE destination directory",chgdestdir,0);
+                zfnqfp(chgdestdir,TMPBUFSIZ,dbuf);
+                debug(F110,"CHANGE destination directory",dbuf,0);
+                if (!strcmp(dbuf,chgsourcedir)) {
+                    printf(
+                        "?Destination and source directories are the same\n");
+                    success = 0;
+                    goto xdomydir;
+                }
+            }
+            if (chgbackupdir[0]) {
+                debug(F110,"CHANGE backup directory",chgbackupdir,0);
+                zfnqfp(chgbackupdir,TMPBUFSIZ,bbuf);
+                debug(F110,"CHANGE backup directory",bbuf,0);
+                if (!strcmp(bbuf,chgsourcedir)) {
+                    printf("?Backup and source directories are the same\n");
+                    success = 0;
+                    goto xdomydir;
+                }
+            }
+            if (chgbackupdir[0] && chgdestdir[0]) {
+                if (!strcmp(bbuf,dbuf)) {
+                    printf(
+                        "?Backup and destination directories are the same\n");
+                    success = 0;
+                    goto xdomydir;
+                }
+            }
+        }
+    }
     diractive = 1;                      /* DIRECTORY command is active */
     znext(name);                        /* Get next file */
     while (name[0]) {                   /* Loop for each file */
@@ -5815,11 +5920,13 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
         }
 	dstr = NULL;			/* File date-time string */
 
-/* CHANGE command... */
+/* BEGIN CHANGE command */
 
 	if (cx == XXCHG) {		/* Command was CHANGE, not DIRECTORY */
             FILE * ifp = NULL;		/* Input file pointer */
             FILE * ofp = NULL;		/* Output (temporary) file pointer */
+            FILE * bfp = NULL;          /* Backup file pointer */
+            char backupfile[MAXPATHLEN+1]; /* Backup file */
 	    char tmpfile[MAXPATHLEN];	/* Buffer for filename */
 	    char * tdp = tmpfile;	/* Temporary directory path */
 	    int linebufsiz = 24575;	/* Buf size for reading file lines */
@@ -5834,11 +5941,11 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 	    char c1, c2;		/* Char for quick compare */
 	    
 	    switch (scanfile(name,NULL,nscanfile)) { /* Is it a text file? */
-	      case FT_7BIT: k++;
-	      case FT_UTF8: k++;
-	      case FT_UCS2: k++;
-	      case FT_8BIT: k++;
-	      case FT_TEXT: k++;
+	      case FT_7BIT: k++; break;
+	      case FT_UTF8: k++; break;
+	      case FT_UCS2: k++; break;
+	      case FT_8BIT: k++; break;
+	      case FT_TEXT: k++; break;
 	    }
 	    if (!k) {
 		if (verbose)
@@ -5846,168 +5953,261 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 		znext(name);
 		continue;
 	    }
-	    /* (this doesn't have to be done for each file - move it up) */
-	    x = MAXPATHLEN;
-	    tdp = tmpfile;		/* Get directory for temporary files */
-	    zzstring("\\v(tmpdir)",&tdp,&x);
-	    if (!tdp) tdp = "";
-	    if (!tmpfile[0]) {
-		printf(
-"?Temporary directory not defined, use SET TEMP-DIRECTORY to define one\n"
-                );
-		success = 0;
-                goto xdomydir;
-	    }
-	    if (!isdir(tmpfile)) {	/* e.g. /tmp/fdc/ */
-		if (zmkdir(tmpfile) < 0) {
-		    printf("?Can't create: %s: %s\n",
-		       tmpfile,ck_errstr());
-		    success = 0;
-		    goto xdomydir;
-		}
-	    }
-	    ckstrncat(tmpfile,"__x",MAXPATHLEN);
-	    ofp = fopen(tmpfile,"w");	/* Open temporary file */
-	    if (!ofp) {
-		printf("?Can't open temporary file %s: %s\n",
-		       tmpfile,ck_errstr());
-		success = 0;
-                goto xdomydir;
-	    }	    
+            debug(F101,"CHANGE changeinplace","",changeinplace);
+
+            if (changeinplace) {        /* CHANGing in place? */
+                int x = 0;
+                if (!tempdir) {         /* Need a temporary directory */
+                    x++;
+                } else if (!*tempdir) {
+                    x++; 
+                }
+/*
+  It might make more sense to fall back on the current directory, or the
+  directory specified in the filespec, because that one has to be writeable or
+  the files could not be changed.
+*/
+                if (x) {
+                    printf(
+    "?Temporary directory not defined, use SET TEMP-DIRECTORY to define one.\n"
+                    );
+                    success = 0;
+                    goto xdomydir;
+                }
+                ckstrncpy(tmpfile,tempdir,MAXPATHLEN); /* Temp directory */
+                ckstrncat(tmpfile,"__x",MAXPATHLEN); /* Temp filespec */
+                if (simulate) {
+                    printf("Would create temp file %s\n",tmpfile);
+                } else {
+                    ofp = fopen(tmpfile,"w"); /* Open temporary file */
+                    debug(F110,"CHANGE in place tmpfile",tmpfile,0);
+                    if (!ofp) {
+                        printf("?Can't open temporary file %s: %s\n",
+                               tmpfile,ck_errstr());
+                        success = 0;
+                        goto xdomydir;
+                    }
+                }	    
+            } else {                    /* Making a new copy of the file */
+                char * p = name, * p2 = NULL;
+                debug(F110,"CHANGE chgdestdir",chgdestdir,0);
+                ckstrncpy(tmpfile,chgdestdir,MAXPATHLEN);
+                debug(F110,"CHANGE tmpfile",tmpfile,0);
+                while (*p++) { if (ISDIRSEP(*p)) p2 = p; } /* Just the name */
+                if (!p2) {              /* name had no slashes in it */
+                    p2 = name;
+                    ckstrncat(tmpfile,STRDIRSEP,MAXPATHLEN);
+                }
+                debug(F110,"CHANGE name",p2,0);
+                ckstrncat(tmpfile,p2,MAXPATHLEN);
+                debug(F110,"CHANGE final tmpfile",tmpfile,0);
+                if (simulate) {
+                    printf("Would create new file %s\n",tmpfile);
+                } else {
+                    debug(F110,"CHANGE /dest tmpfile",tmpfile,0);
+                    ofp = fopen(tmpfile,"w"); /* Open temporary file */
+                    if (!ofp) {
+                        printf("?Can't open destination file %s: %s\n",
+                               tmpfile,ck_errstr());
+                        success = 0;
+                        goto xdomydir;
+                    }	    
+                }
+            }
+            if (changebackup) {         /* Backing up original file? */
+                char * p = name, * p2 = NULL;
+                ckstrncpy(backupfile,chgbackupdir,MAXPATHLEN);
+                debug(F111,"CHANGE backupfile",backupfile,1);
+                while (*p++) { if (ISDIRSEP(*p)) p2 = p; } /* Just the name */
+                if (!p2) {              /* name had no slashes in it */
+                    p2 = name;
+                    ckstrncat(backupfile,STRDIRSEP,MAXPATHLEN);
+                }
+                debug(F111,"CHANGE backupfile",backupfile,2);
+                ckstrncat(backupfile,p2,MAXPATHLEN);
+                debug(F111,"CHANGE backupfile",backupfile,3);
+                if (simulate) {
+                    printf("Would back up original file to %s\n",
+                           backupfile);
+                } else {
+                    bfp = fopen(backupfile,"w"); /* Open temporary file */
+                    if (!bfp) {
+                        printf("?Can't open backup file %s: %s\n",
+                               backupfile,ck_errstr());
+                        success = 0;
+                        goto xdomydir;
+                    }	    
+                }	    
+            }
             if ((ifp = fopen(name,"r")) == NULL) { /* Open input file */
-		printf("?Can't open file %s: %s\n",s,ck_errstr());
-		fclose(ofp);
-		success = 0;
+                printf("?Can't open file %s: %s\n",s,ck_errstr());
+                fclose(ofp);
+                success = 0;
                 goto xdomydir;
-	    }
-	    if (chmtopt == CHMT_P) {	/* If preserving file dates */
-		dstr = zfcdat(name);
-		if (!dstr) dstr = "";
-		if (!*dstr) printf("WARNING: can't get date for %s\n",name);
-	    }
-	    linebuf = (char *) malloc(linebufsiz+1); /* Malloc a line buffer */
-	    if (!linebuf) {
-		printf("?Memory allocation failure\n");
-		fclose(ofp);
-		fclose(ifp);
-		success = 0;
+            }
+            /* Get timestamp of original file */
+            debug(F101,"CHANGE timestamp changebackup","",changebackup);
+            if (chmtopt == CHMT_P || changebackup) {
+                debug(F110,"CHANGE file timestamp name",name,0);
+                dstr = zfcdat(name);
+                if (!dstr) dstr = "";
+                if (!*dstr) printf("WARNING: can't get date for %s\n",name);
+                debug(F110,"CHANGE file timestamp dstr",dstr,0);
+                xxstruct.date.val = dstr; /* change file's modtime */
+                xxstruct.date.len = (int)strlen(xxstruct.date.val);
+                xxstruct.lprotect.len = 0;
+                xxstruct.gprotect.len = 0;
+            }
+            linebuf = (char *) malloc(linebufsiz+1); /* Malloc a line buffer */
+            if (!linebuf) {
+                printf("?Memory allocation failure\n");
+                fclose(ofp);
+                fclose(ifp);
+                if (bfp) fclose(bfp);
+                success = 0;
                 goto xdomydir;
-	    }
-	    newbuf = (char *) malloc(linebufsiz+1); /* Buffer for copy */
-	    if (!newbuf) {
-		free(linebuf);
-		printf("?Memory allocation failure\n");
-		fclose(ofp);
-		fclose(ifp);
-		success = 0;
-		goto xdomydir;
-	    }
-#ifdef COMMENT
-	    c1 = string1[0];
-	    if (chcase && islower(c1)) c1 = toupper(c1);
-#endif /* COMMENT */
-	    while (fgets(linebuf, linebufsiz, ifp)) { /* Read a line */
-		nbp = newbuf;
-		lbp = linebuf;
-		bufleft = linebufsiz;	/* Space left in newbuf */
-#ifdef COMMENT		
-		c2 = lbp[0];
-		if (chcase && islower(c1)) c2 = toupper(c2);
-		x = 0;
-		if (c1 == c2)
-#endif /* COMMENT */
-		  x = ckindex(string1,lbp,0,0,chcase);
-		if (x == 0) {		/* Nothing to replace */
-		    if (fputs(lbp, ofp) != 0) {
-			printf("?%s: Write failed - %s\n",tmpfile,ck_errstr());
-			failed++;
-			break;
-		    }
-		} else while (1) {	/* One or maybe more occurrences */
-		    changes++;		/* Count this change */
-		    j = x + s2len - 1;	/* Size of addition to newbuf */
-		    bufleft -= j;	/* Remaining space in newbuf after */
-		    if (bufleft > j) {            /* If space enough */
-			char c;
-			c = lbp[x];
-			lbp[x] = NUL;	          /* Terminate for strncpy */
-			strncpy(nbp,lbp,bufleft); /* Copy this piece */
-			lbp[x] = c;
-			nbp += (x - 1);	/* adjust destination pointer */
-			strncpy(nbp,string2,bufleft); /* replacement string */
-			nbp += s2len;	/* and adjust destination pointer */
-		    } else {		/* Otherwise fail. */
-			failed++;
-			printf("?%s: Write failed - %s\n",tmpfile,ck_errstr());
-			break;
-		    }
-		    lbp += x + s1len - 1; /* Adjust source pointer */
-		    x = ckindex(string1,lbp,0,0,chcase); /* Get next */
-		    if (!x) {	    /* No more string1's found in this line */
-			if (fputs(newbuf, ofp) != 0) { /* Write out changes */
-			    printf("?%s: Write failed - %s\n",
-				   tmpfile,ck_errstr());
-			    failed++;
-			    break;
-			}
-			if (*lbp) {	/* And write out last chunk if any */
-			    if (fputs(lbp, ofp) != 0) {
-				printf("?%s: Write failed - %s\n",
-				       tmpfile,ck_errstr());
-				failed++;
-				break;
-			    }
-			}
-			break;
-		    }
-		}
-	    }
-	    fclose(ifp);
-	    fclose(ofp);
-	    free(linebuf);
-	    free(newbuf);
-	    if (simulate) {		/* Simulation run */
-		if (failed) {
-		    printf("Would fail: %s\n",name);
-		} else if (changes) {
-		    printf("Would change: %s\n",name);
-		} else if (verbose) {
-		    printf("Would not change: %s\n",name);
-		}
-		zdelet(tmpfile);
-	    } else if (!failed) {	/* Really changing */
-		if (changes) {		/* If changes were made */
-		    x = zrename(tmpfile,name); /* Replace original file */
-		    if (x < 0) {
-			printf("?Rename temporary file %s to %s failed",
-			       tmpfile, name);
-			zdelet(tmpfile); /* delete temporary file */
-			success = 0;
-			goto xdomydir;
-		    }
-		    if (chmtopt == CHMT_P) { /* If preserving file dates */
-			xxstruct.date.val = dstr; /* change file's modtime */
-			xxstruct.date.len = (int)strlen(xxstruct.date.val);
-			xxstruct.lprotect.len = 0;
-			if (zstime(name,&xxstruct,0) < 0) {
-			    printf("?CHANGE restore date %s: %s\n",
-				   name,
-				   ck_errstr()
-				   );
-			    rc = -9;
-			    goto xdomydir;
-			}
-		    }
-		    if (verbose)
-		      printf("Changed %s: %s -> %s\n",name,string1,string2);
-		} else {
-		    zdelet(tmpfile);	/* delete temporary file */
-		}
-	    }
+            }
+            newbuf = (char *) malloc(linebufsiz+1); /* Buffer for copy */
+            if (!newbuf) {
+                free(linebuf);
+                printf("?Memory allocation failure\n");
+                fclose(ofp);
+                fclose(ifp);
+                if (bfp) fclose(bfp);
+                success = 0;
+                goto xdomydir;
+            }
+            /* Loop through lines of each original file... */
+
+            while (fgets(linebuf, linebufsiz, ifp)) { /* Read a line */
+                if (changebackup && !simulate) {
+                    if (fputs(linebuf, bfp) == EOF) { /* Backing up */
+                        printf("?%s: Write failed - %s\n",
+                               backupfile,ck_errstr());
+                        failed++;
+                        break;
+                    }
+                }
+                nbp = newbuf;
+                lbp = linebuf;
+                bufleft = linebufsiz;	/* Space left in newbuf */
+                x = ckindex(string1,lbp,0,0,chcase);
+                if (x == 0) {		/* Nothing to replace */
+                    if (!simulate) {
+                        if (fputs(lbp, ofp) == EOF) {
+                            printf("?%s: Write failed - %s\n",
+                                   tmpfile,ck_errstr());
+                            failed++;
+                            break;
+                        }
+                    }
+                } else while (1) {      /* One or maybe more occurrences */
+                    changes++;		/* Count this change */
+                    j = x + s2len - 1;	/* Size of addition to newbuf */
+                    bufleft -= j;       /* Remaining space in newbuf after */
+                    if (bufleft > j) {      /* If space enough */
+                        char c;
+                        c = lbp[x];
+                        lbp[x] = NUL;   /* Terminate for strncpy */
+                        strncpy(nbp,lbp,bufleft); /* Copy this piece */
+                        lbp[x] = c;
+                        nbp += (x - 1);	/* adjust destination pointer */
+                        strncpy(nbp,string2,bufleft); /* replacement string */
+                        nbp += s2len;	/* and adjust destination pointer */
+                    } else {		/* Otherwise fail. */
+                        failed++;
+                        printf("?%s: Write failed - %s\n",tmpfile,ck_errstr());
+                        break;
+                    }
+                    lbp += x + s1len - 1; /* Adjust source pointer */
+                    x = ckindex(string1,lbp,0,0,chcase); /* Get next */
+                    if (!x) {	    /* No more string1's found in this line */
+                        if (!simulate) { /* Write changes */
+                            if (fputs(newbuf, ofp) == EOF) {
+                                printf("?%s: Write failed - %s\n",
+                                       tmpfile,ck_errstr());
+                                failed++;
+                                break;
+                            }
+                            if (*lbp) {   /* And write out last chunk if any */
+                                if (fputs(lbp, ofp) == EOF) {
+                                    printf("?%s: Write failed - %s\n",
+                                           tmpfile,ck_errstr());
+                                    failed++;
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+            fclose(ifp);                /* End... close files */
+            if (!simulate) {
+                if (bfp) fclose(bfp);
+                fclose(ofp);
+            }
+            bfp = ifp = ofp = NULL;
+            free(linebuf);              /* and free buffers */
+            free(newbuf);
+            if (simulate) {             /* Simulation run */
+                if (failed) {
+                    printf("Would fail: %s\n",name);
+                } else if (changes) {
+                    printf("Would change: %s\n",name);
+                } else if (verbose) {
+                    printf("Would not change: %s\n",name);
+                }
+                zdelet(tmpfile);
+            } else if (!failed) {       /* Really changing */
+                char * result = name;
+                if (changes) {		/* If changes were made */
+                    if (changeinplace) { /* Changing in place... */
+                        x = zrename(tmpfile,name); /* Replace original file */
+                        if (x < 0) {
+                            printf("?Rename temporary file %s to %s failed",
+                                   tmpfile, name);
+                            zdelet(tmpfile); /* delete temporary file */
+                            success = 0;
+                            goto xdomydir;
+                        }
+                    } else {            /* Making new file... */
+                        result = tmpfile; 
+                    }
+                    if (chmtopt == CHMT_P) { /* If preserving file dates */
+                        debug(F110,"Setting modtime",result,0);
+                        if (zstime(result,&xxstruct,0) < 0) {
+                            printf("?Error preserving original modtime: %s\n",
+                                   result,
+                                   ck_errstr()
+                                   );
+                            rc = -9;
+                            goto xdomydir;
+                        }
+                    }
+                    /* Change modtime of backup file unconditionally */
+                    debug(F111,"CHANGE modtime",backupfile,changebackup);
+                    if (changebackup) {
+                        if (zstime(backupfile,&xxstruct,0) < 0) {
+                            printf("?Modtime error on backup file: %s\n",
+                                   backupfile,
+                                   ck_errstr()
+                                   );
+                            rc = -9;
+                            goto xdomydir;
+                        }
+                    }
+                    if (verbose)
+                      printf("Changed %s: %s -> %s\n",result,string1,string2);
+                } else if (changeinplace) {
+                    zdelet(tmpfile);	/* Delete temporary file */
+                    if (changebackup) zdelet(backupfile); /* and backup */
+                }
+            }
             if (znext(name))		/* Get next file */
-	      continue;
-	    success = 1;		/* If none we're finished */
-	    goto xdomydir;
+              continue;
+            success = 1;                /* If none we're finished */
+            goto xdomydir;
         }
 
 /* TOUCH command... */
@@ -6020,6 +6220,7 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 	    xxstruct.date.val = dstr;
 	    xxstruct.date.len = (int)strlen(xxstruct.date.val);
 	    xxstruct.lprotect.len = 0;
+	    xxstruct.gprotect.len = 0;
 	    if (simulate) {
 		printf(" %s (%s)\n",name,dstr);
 	    } else {
@@ -8623,6 +8824,7 @@ docopy() {
 #endif /* CK_PERMS */
 		    xx.lprotect.val = pstr;
 		    xx.lprotect.len = (int)strlen(pstr);
+                    xx.gprotect.len = 0;
 		    xx.date.val = zfcdat(line);	/* Source file's timestamp */
 		    xx.date.len = (int)strlen(xx.date.val);
 		    if (zstime(nm,&xx,0) < 0) {

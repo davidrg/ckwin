@@ -1,7 +1,7 @@
 /*  C K C D E B . H  */
 
 /*
-Tue Jul 23 12:47:22 2013
+  Wed Feb  3 14:28:17 2016
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
   compatible with C preprocessors that support only #ifdef, #else, #endif,
@@ -4601,7 +4601,7 @@ extern int errno;
 #endif /* mc68000 */
 #endif /* NEXT */
 
-#ifdef LINUX				/* Linux in 1998 should be OK */
+#ifdef LINUX				/* Linux from 1998 on should be OK */
 #ifndef BIGBUFOK
 #define BIGBUFOK
 #endif /* BIGBUFOK */
@@ -4695,7 +4695,11 @@ extern int errno;
 #define MAXWLD 50
 #else
 #ifdef BIGBUFOK
+#ifdef CK_64BIT
+#define MAXWLD 16777216
+#else
 #define MAXWLD 102400
+#endif /* CK_64BIT */
 #else
 #define MAXWLD 1024
 #endif /* BIGBUFOK */
@@ -5079,7 +5083,10 @@ typedef unsigned int u_int;
 #ifdef __alpha				/* Alpha decc (or __ALPHA) */
 #define CK_64BIT
 #else
-#ifdef __amd64				/* AMD x86_64 (or __x86_64) */
+#ifdef __amd64				/* AMD x86_64 */
+#define CK_64BIT
+#else
+#ifdef __x86_64				/* AMD/Intel x86_64 */
 #define CK_64BIT
 #else
 #ifdef __ia64				/* Intel IA64 */
@@ -5087,6 +5094,7 @@ typedef unsigned int u_int;
 #define CK_64BIT
 #endif	/* HPUX */
 #endif	/* __ia64 */
+#endif	/* __x86_64 */
 #endif	/* __amd64 */
 #endif	/* __alpha */
 #endif	/* __arch64__ */
@@ -6080,14 +6088,17 @@ _PROTOTYP( long atol, (char *) );
 #ifndef DIRSEP
 #ifdef UNIX
 #define DIRSEP '/'
+#define STRDIRSEP "/"
 #define ISDIRSEP(c) ((c)=='/')
 #else
 #ifdef OS2
 #define DIRSEP '/'
+#define STRDIRSEP "/"
 #define ISDIRSEP(c) ((c)=='/'||(c)=='\\')
 #else
 #ifdef datageneral
 #define DIRSEP ':'
+#define STRDIRSEP ":"
 #define ISDIRSEP(c) (((c)==':')||((c)=='^')||((c)=='='))
 #else
 #ifdef STRATUS
@@ -6103,14 +6114,16 @@ _PROTOTYP( long atol, (char *) );
 #define ISDIRSEP(c) ((c)==':')
 #else
 #ifdef AMIGA
-#define DIRSEP '/'
+#define STRDIRSEP "/"
 #define ISDIRSEP(c) ((c)=='/'||(c)==':')
 #else
 #ifdef GEMDOS
 #define DIRSEP '\\'
+#define STRDIRSEP "\\"
 #define ISDIRSEP(c) ((c)=='\\'||(c)==':')
 #else
 #define DIRSEP '/'
+#define STRDIRSEP "/"
 #define ISDIRSEP(c) ((c)=='/')
 #endif /* GEMDOS */
 #endif /* AMIGA */

@@ -2,7 +2,7 @@ C-KERMIT 9.0.304 PRERELEASE TESTING
 
 Mon Jan 18 15:09:40 2016
 
-This is C-Kermit 9.0.304 Dev.16, a development (pre-alpha, pre-beta)
+This is C-Kermit 9.0.304 Dev.17, a development (pre-alpha, pre-beta)
 version of the first new release of C-Kermit since the cancelation of
 the Kermit Project at Columbia University.  Since 1 July 2011, C-Kermit
 is Open Source software, released under the modified 3-clause Berkeley
@@ -19,7 +19,7 @@ Major New Features:
  . A new \ffilecompare() function.
  . GREP /ARRAY:&x puts the results in the array &x.
 
-Problems Fixed:
+Major Problems Fixed:
 
  1. Crash when receiving files with Kermit protocol on certain 64-bit
     platforms such as OpenBSD on Sparc64, caused by conflicting int/long
@@ -48,10 +48,10 @@ The current development version is packaged as follows:
  1. In ftp://ftp.kermitproject.org/kermit/test/text/ : 
     
     README.TXT           This file
-    cku304dev15.tar      Unix source code, tar archive
-    cku304dev15.tar.Z    Ditto, compressed
-    cku304dev15.tar.gz   Ditto, gzipped
-    cku304dev15.zip      Unix and VMS source code, Zip archive
+    cku304dev17.tar      Unix source code, tar archive
+    cku304dev17.tar.Z    Ditto, compressed
+    cku304dev17.tar.gz   Ditto, gzipped
+    cku304dev17.zip      Unix and VMS source code, Zip archive
 
  2. In ftp://ftp.kermitproject.org/kermit/test/text/ : 
 
@@ -64,10 +64,10 @@ since they have not changed and remain available in the normal places:
   ftp://ftp.kermitproject.org/kermit/ckermit/   (C-Kermit FTP area)
   ftp://ftp.kermitproject.org/kermit/archives/  (Tar/Zip FTP area)
 
-Executable binaries are not distributed because there is not enough
-space or bandwidth for them on the Kermit Project's new host.
-Binaries prior to October 2011 remain available on the Columbia
-University Kermit website (which is frozen and will not change):
+Executable binaries are not distributed because there is not enough space or
+bandwidth for them on the Kermit Project's new host.  Binaries prior to
+October 2011 remain available on the Columbia University Kermit website
+(which is frozen and will not change):
 
   http://kermit.columbia.edu/                   (CU Kermit home page)
   http://kermit.columbia.edu/ckbinaries.html    (C-Kermit binaries)

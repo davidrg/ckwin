@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2013
+  Copyright (C) 1985, 2016
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -406,7 +406,11 @@ struct ssh_pf {				/* SSH port forwarding */
 #define QBUFL 4095
 #else
 #ifdef BIGBUFOK
+#ifdef CK_64BIT
+#define QBUFL 16383
+#else
 #define QBUFL 4095
+#endif /* CK_64BIT */
 #else
 #define QBUFL 1023
 #endif /* BIGBUFOK */
@@ -416,7 +420,11 @@ struct ssh_pf {				/* SSH port forwarding */
 #ifdef DYNAMIC
 #ifndef SBSIZ
 #ifdef BIGBUFOK				/* If big buffers are safe... */
+#ifdef CK_64BIT                         /* If 64-bit architecture */
+#define SBSIZ 568449			/* Allow for 63 x 9024 */
+#else
 #define SBSIZ 290000			/* Allow for 10 x 9024 or 20 x 4096 */
+#endif /* CK_64BIT */
 #else					/* Otherwise... */
 #ifdef pdp11
 #define SBSIZ 3020
@@ -428,7 +436,11 @@ struct ssh_pf {				/* SSH port forwarding */
 
 #ifndef RBSIZ
 #ifdef BIGBUFOK
-#define RBSIZ 290000
+#ifdef CK_64BIT                         /* If 64-bit architecture */
+#define RBSIZ 568449			/* Allow for 63 x 9024 */
+#else
+#define RBSIZ 290000			/* Allow for 10 x 9024 or 20 x 4096 */
+#endif /* CK_64BIT */
 #else
 #ifdef pdp11
 #define RBSIZ 3020
@@ -560,7 +572,7 @@ struct ssh_pf {				/* SSH port forwarding */
 #define ZWFILE     10           /* Local file for WRITE (out) */
 #define ZMFILE     11		/* Miscellaneous file, e.g. for XLATE */
 #define ZDIFIL     12		/* DIAL log */
-#define ZNFILS     13	    	/* How many defined file numbers */
+#define ZNFILS     13	    	/* How many predefined file numbers (old) */
 
 #ifdef CKCHANNELIO
 
@@ -637,9 +649,14 @@ _PROTOTYP( int scanstring, (char *) );
 #define OBUFSIZE 4096			/* File output buffer size */
 #endif /* DYNAMIC */
 #else /* not STRATUS */
-#ifdef BIGBUFOK				/* Systems where memory is */
-#define INBUFSIZE 32768			/* not a problem... */
+#ifdef BIGBUFOK				/* Systems with some memory */
+#ifdef CK_64BIT                         /* 64-bit architecture */
+#define INBUFSIZE 568449                /* 63 x 9024 for packet buffers */
+#define OBUFSIZE 568449
+#else
+#define INBUFSIZE 32768			/* 32K for packet buffers */
 #define OBUFSIZE 32768
+#endif /* CK_64BIT */
 #else /* Not BIGBUFOK */
 #define INBUFSIZE 1024
 #define OBUFSIZE 1024

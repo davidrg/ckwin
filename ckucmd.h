@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>
   Columbia University Kermit Project, New York City.
 
-  Copyright (C) 1985, 2009,
+  Copyright (C) 1985, 2016,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -89,7 +89,11 @@ int vms_getchar(void);
 
 #ifndef CMDDEP
 #ifdef BIGBUFOK
+#ifdef CK_64BIT
+#define CMDDEP 256			/* Maximum command recursion depth */
+#else
 #define CMDDEP  64			/* Maximum command recursion depth */
+#endif /* CK_64BIT */
 #else
 #define CMDDEP  20
 #endif /* BIGBUFOK */
@@ -98,7 +102,11 @@ int vms_getchar(void);
 #define HLPCW   19			/* Width of ?-help column */
 #define HLPBL  100			/* Help string buffer length */
 #ifdef BIGBUFOK
-#define ATMBL 10238			/* Command atom buffer length*/
+#ifdef CK_64BIT
+#define ATMBL 163808			/* Command atom buffer length */
+#else
+#define ATMBL 10238			/* Command atom buffer length */
+#endif /* CK_64BIT */
 #else
 #ifdef NOSPL
 #define ATMBL  256
@@ -113,7 +121,11 @@ int vms_getchar(void);
 #define CMDBL 608			/* Command buffer length */
 #else
 #ifdef BIGBUFOK
+#ifdef CK_64BIT
+#define CMDBL 8388608
+#else
 #define CMDBL 32763
+#endif /* CK_64BIT */
 #else
 #define CMDBL 4092
 #endif /* OS2 */

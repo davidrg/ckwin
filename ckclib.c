@@ -1,4 +1,4 @@
-char * cklibv = "C-Kermit library, 9.0.054, 31 Jan 2014";
+char * cklibv = "C-Kermit library, 9.0.055, 2 Feb 2016";
 
 #define CKCLIB_C
 
@@ -8,7 +8,7 @@ char * cklibv = "C-Kermit library, 9.0.054, 31 Jan 2014";
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1999, 2014,
+  Copyright (C) 1999, 2016,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -2101,12 +2101,15 @@ ckround(fpnum,places,obuf,obuflen)
     int i, p, len, x, n, digits;
     int carry = 0;
     int minus = 0;
-    char buf[200];
+    char buf[400];
     char * number;
     CKFLOAT value;
     extern int fp_digits;
 
+    /* Should use snprintf() here but it's not portable */
+
     sprintf(buf,"%200.100f",fpnum);	/* Make string version to work with */
+    debug(F110,"ckround buf",buf,0);
     number = (char *) buf;		/* Make pointer to it */
 
     p = places;				/* Precision */

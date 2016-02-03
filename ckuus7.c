@@ -2227,7 +2227,7 @@ setcc(dflt,var) char *dflt; int *var; {
                 return(-9);
             }
         } else {                        /* Something illegal was typed */
-            printf("?Invalid - %s\n", atmbuf);
+            printf("?Not valid here - '%s'\n", atmbuf);
             return(-9);
         }
     }

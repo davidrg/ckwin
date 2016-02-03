@@ -1022,8 +1022,8 @@ struct keytab fnctab[] = {              /* Function names */
     { "directories",FN_DIR,  0},        /* List of directories */
     { "directory",  FN_DIR,  CM_INV},	/* List of directories */
     { "dirname",    FN_DNAM, 0},        /* Directory part of filename */
-    { "dos2unixpath",FN_PC_DU, },       /* DOS to UNIX path */
-    { "dostounixpath",FN_PC_DU, CM_INV}, /* DOS to UNIX path */
+    { "dos2unixpath",FN_PC_DU, CM_INV}, /* DOS to UNIX path */
+    { "dostounixpath",FN_PC_DU, 0},     /* DOS to UNIX path */
     { "doy",        FN_JDATE,CM_INV},   /* Date to Day of Year */
     { "doy2date",   FN_DATEJ,0},        /* Day of Year to date */
     { "doytodate",  FN_DATEJ,CM_INV},   /* Day of Year to date */
@@ -1185,8 +1185,8 @@ struct keytab fnctab[] = {              /* Function names */
     { "todtosecs",  FN_NTIM, CM_INV},   /* Time-of-day-to-secs-since-midnite */
     { "trim",       FN_TRM,  0},        /* Trim */
     { "unhexify",   FN_UNH,  0},        /* Unhexify */
-    { "unix2dospath",FN_PC_UD, 0},      /* UNIX to DOS path */
-    { "unixtodospath",FN_PC_UD, CM_INV}, /* UNIX to DOS path */
+    { "unix2dospath",FN_PC_UD, CM_INV}, /* UNIX to DOS path */
+    { "unixtodospath",FN_PC_UD, 0},     /* UNIX to DOS path */
     { "untabify",   FN_UNTAB,0},        /* Untabify */
     { "upper",      FN_UPP,  0},        /* Return uppercased argument */
     { "utcdate",    FN_TOGMT,0},        /* Date-time to UTC (GMT) */
@@ -13714,9 +13714,18 @@ nvlook(s) char *s; {
         return(vvbuf);
 
       case VN_TEMP:                     /* Temporary directory */
-        if (tempdir) {
-            p = tempdir;
+        if (tempdir) {                  /* This is where SET TEMP-DIRECTORY */
+            p = tempdir;                /* puts it -- just use what's here */
+            ckstrncpy(vvbuf,tempdir,VVBUFL);
         } else {
+            char c;
+/*
+  If tempdir was empty, we have to figure out what the temp directory should
+  be here and then put the result where we should have found it in the first
+  place.  This is done by checking environment variables (or logical names
+  in VMS, same thing from the API point of view), and if that fails using
+  platform-specific conventions, like the /tmp directory in Unix.
+*/
 #ifdef OS2
 #ifdef NT
             p = getenv("K95TMP");
@@ -13738,62 +13747,79 @@ nvlook(s) char *s; {
                     && p[len-1] != '\\'
 #endif /* OS2 */
                      ) {
-                    static char foo[CKMAXPATH];
-                    ckstrncpy(foo,p,CKMAXPATH);
-                    ckstrncat(foo,"/",CKMAXPATH);
-                    p = foo;
+                    ckstrncpy(vvbuf,p,VVBUFL);
+                    if (vvbuf[0]) ckstrncat(vvbuf,"/",CKMAXPATH);
+                    p = vvbuf;
                 }
-            } else
-#else /* OS2ORUNIX */
-            if (!p)
+            }
 #endif /* OS2ORUNIX */
+
+            if (!p) {
 #ifdef UNIX                             /* Systems that have a standard */
-              p = "/tmp/";              /* temporary directory... */
+                p = "/tmp/";            /* temporary directory... */
 #else
 #ifdef datageneral
-              p = ":TMP:";
+                p = ":TMP:";
 #else
-              p = "";
+                p = "";
 #endif /* datageneral */
 #endif /* UNIX */
-        }
-        ckstrncpy(vvbuf,p,VVBUFL);
-        p = vvbuf;
-
-/* This needs generalizing for VOS, AOS/VS, etc... */
-
-        while (*p) {
-#ifdef OS2
-            if (*p == '\\') *p = '/';
+                ckstrncpy(vvbuf,p,VVBUFL);
+                p = vvbuf;
+            }
+/*
+  If the result does not end with a directory separator, tack on the
+  appropriate one.  This way scripts can be written in a platform-independent
+  way, without having to hardwire a particlar OS's directory separator;
+  e.g. \v(tmpfile)foo.bar instead of \v(tmpfile)/foo.bar, which would not be
+  portable to (say) VMS.  In a better world the following code would be in the
+  platform-specific modules, ck?fio.c, but it's too late to go back and redo
+  them all.  Note: Windows and OS/2 use backslash (\) as the directory
+  separate in the user interface, but accept slash(/) in their APIs.
+*/
+            while (*p) {                /* For Windows and OS/2 */
+#ifdef OS2                              /* flip the backslash */
+                if (*p == '\\') *p = '/';
 #endif /* OS2 */
-            p++;
-        }
+                p++;
+            }
+            p = vvbuf;
 #ifndef VMS
-        if (p > vvbuf) {
-            char c =                    /* Directory termination character */
+            if (p > vvbuf) {          /* Directory termination character */
+                  c =
 #ifdef MAC
-              ':'
+                      ':'
 #else
 #ifdef datageneral
-              ':'
+                      ':'
 #else
 #ifdef STRATUS
-              '>'
+                      '>'
 #else
-              '/'
+                      '/'
 #endif /* STRATUS */
 #endif /* datageneral */
 #endif /* MAC */
-                ;
-
-            if (*(p-1) != c) {
-                *p++ = c;
-                *p = NUL;
-            }
+                      ;
+                  if (*(p-1) != c) {    /* Add it to the end of the */
+                      *p++ = c;         /* string if it was not already */
+                      *p = NUL;         /* there */
+                  }
+              }
+#endif /* Not VMS */
+/*
+  But if the result is just the one character, e.g. '/' in Unix, erase it
+  because that's the root directory and obviously can't be used for temporary
+  files.
+*/
+              if (vvbuf[0] == c && vvbuf[1] == NUL) {
+                  vvbuf[0] = NUL;
+              }
         }
-#endif /* VMS */
+        makestr(&tempdir,p); /* Save result where we can find it next time */ 
         return(vvbuf);
-    } /* Break up long switch statements... */
+    }
+    /* Break up long switch statements... */
 
     switch(y) {
       case VN_ERRNO:                    /* Error number */

@@ -4,7 +4,7 @@ C-KERMIT 9.0 CHANGE LOG (Changes since 8.0.207 / K95 2.1.3 January 2003)
   Go to the bottom to find the newest edits.
 
   Frank da Cruz, The Kermit Project, New York City.
-  Last update:  Mon Jan 18 16:09:36 2016
+  Last update:  Wed Feb  3 16:23:55 2016
 
 FTP USER, FTP ACCOUNT, plus the various prompts and switches for FTP username,
 password, and account all neglected to strip quotes, and in most cases quotes
@@ -8757,18 +8757,128 @@ of the iftest script in the script library.  31 Dec 2015.
 Made a new "linux" target for the makefile.  Kept the previous one available
 as "linux-2015".  The feature tests in the old one looked for libraries
 in specific places, like "if test -f /usr/lib64/libncurses.so.5" which is
-stupid because there are an endless number of places where Linux packagers
-will think up to put them, especially for multiarchitecture distributions.
+stupid because there is an endless number of places where Linux packagers
+will dream up to put them, especially for multiarchitecture distributions.
 Well, who really knows where the libraries are, and what the library search
 path is?  ld, right?  So now instead of looking in 20 different places
-for (say) libncurses under several different name, we just ask ld if it
+for (say) libncurses under several different names, we just ask ld if it
 can find it and if so -- and if we also can identify the corresponding
-header file (if any) -- then we set the appropriate HAVE_blah feature flags.
+header file (if any) -- then we set the appropriate HAVE_BLAH feature flags.
 makefile, 18 Jan 2016.
 
 Updated copyright year to 2016.  ckcmai.c, 18 Jan 2016.
 
 --- Dev.16 ---
+
+I discovered that the CHANGE command didn't work on Linux.  This opened
+a whole big can of worms, read on...
+
+CHANGE command failed on platforms like Linux where fputs() did not
+return 0 on success.  Fixed in ckuus6.c, 29 Jan 2016.
+
+But after this fix it still didn't work if I did not have en environment
+variable defined that said what directory to use for temporary files because
+the \v(tmpdir) variable was not falling back correctly.  In Unix, first it
+tried the environment variables CK_TMP, TMPDIR, TEMP, and TMP, in that
+order, and if nothing turned up it tried /tmp/.  Then if the resulting value
+doesn't end in a directory separator, one is tacked on.  There were a couple
+mistakes in the code causing the /tmp/ part to be skipped, and tacking '/'
+onto the null string, thus setting the temporary directory to be the root
+directory, resulting in big trouble when writing temporary files, e.g. in
+the FTP GET command, the CHANGE command, who knows what else.  Fixed in
+ckuus4.c, 29 Jan 2016.
+
+Another problem with this was that the temporary directory might be
+referenced before it was defined, e.g. in an FTP GET command.  Remedied by
+"invoking" \v(tmpdir) before any commands are processed.  ckcmai.c,
+29 Jan 2016.
+
+And Yet Another Problem was that the SET TEMP-DIRECTORY command simply did
+not work.  Plus it didn't store its argument as a full pathname, so it would
+not work after the user CD'd to someplace else.  ckuus3.c, 29 Jan 2016.
+
+A related problem was that IF WRITEABLE didn't work when given a directory
+name.  Fixed in ckufio.c, 29 Jan 2016.
+
+Another problem was that there was no SHOW TEMP-DIRECTORY command.  Every
+SET should have a SHOW.  Fixed in ckuusr.h, ckuusr.c, 29 Jan 2016.
+
+Updated HELP SET TEMP-DIRECTORY text.  ckuus2.c, 29 Jan 2016.
+
+Added TMP-DIRECTORY as an invisible synonym for TEMP-DIRECTORY in the
+SET and SHOW commands.  ckuusr.c, 29 Jan 2016.
+
+Added a /DESTINATION:directory switch for CHANGE.  Some problems I had doing
+this revealed an error in domydir()...  For reasons too hard to explain the
+DIRECTORY command sets a global flag "diractive" to let the command parsing
+routine cmifi2() know that a DIRECTORY command is in progress, and therefore
+to do some special things in that case when a wildcard expansion includes
+directory names.  Later on I added TOUCH and CHANGE commands to domydir(),
+because writing separate routines would have meant duplicating tons of code.
+BUT...  The "diractive" flag should NOT be set when the command is TOUCH or
+CHANGE.  Once that was fixed, the rest was pretty straightforward.
+ckuus6.c, 1 Feb 2016.
+
+Added a /BACKUP:directory switch for CHANGE.  ckuus6.c, 1 Feb 2016.
+
+In adding the /BACKUP switch, something caused a core dump when using
+/MODTIME:PRESERVE, a bad value in the "generic permissions" field of the
+zsattr struct when going to copy the modtime and perms from the original
+file to the backup file.  It's because I wasn't initializing all the struct
+members.  I changed zsattr() to defend itself against out-range-values,
+clarified the calling convenstions for zstime() in the opening comments
+(if you are not setting attribute blah, then set blah.len = 0 in the
+argument struct), and I fixed the struct initializations in the calling
+code.  ckuus6.c, ckufio.c, 2 Feb 2016.
+
+We have always had DIRSEP and ISDIRSEP macros for referring to directory
+separators in the code, e.g. '/' for Unix, ':' for AOS/VS, '>' for VOS, '\'
+for OS-9, etc, but we needed a string version, so I added STRDIRSEP analogs
+for each DIRSEP (like "/" for '/') so we could use them as arguments to
+ckindex(), ckstrncat(), etc.  ckcdeb.h, 2 Feb 2016.
+
+Used STRDIRSEP in the CHANGE code to keep it portable, in case C-Kermit is
+ever built on any non-Unix platform again (WARNING, VMS will still require
+some special code).  ckuus6.c, 2 Feb 2016
+
+Mark Sapiro reported C-Kermit crashing on some platforms but not others when
+evaluating any rounding operation in an S-expression, e.g. (round 1.75).  My
+mistake, I had sprintf() writing into a buffer that was too short.  I know I
+should use snprintf() but it's not portable and it would be a big deal to
+enumerate all the platforms where it's available and where it's not and
+tailor the code accordingly, so I just made the buffer (more than) big enough,
+barring any misbehaving printf() format interpreters.  ckround(): ckclib.c,
+3 Feb 2016.
+
+Mark Sapiro also noticed that the "localarray" stresstest revealed that if
+an array (say \%a[]) was declared as local in a macro, but the same array
+was NOT declared at any higher level, then the array persisted even after
+the macro returned, instead of disappearing as it should.  Fixed in
+popclvl(): ckuus5.c, 3 Feb 2016.
+
+Added __x86_64 to the symbols looked for and displayed by SHOW FEATURES.
+ckuus5.c, 3 Feb 2016.
+
+Added __x86_64 to the symbols looked for when defining CK_64BIT.
+ckcdeb.h, 3 Feb 2016.
+
+Changed definitions of sizes of things (command buffers, packet buffers,
+etc) to be much bigger on 64-bit architectures.  This will allow bigger
+script programs, bigger packet buffers (and thus conceivably faster file
+transfers), more macros, more variables, longer values of variables, etc.
+The bigger sizes are dependent on the symbol CK_64BIT, which is set in
+ckcdeb.h based on what it can figure out from compiler builtins, header
+files, etc, but can also be set on the CC command line in case ckcdeb.h
+doesn't pick it up.  ckcdeb.h, ckcker.h, ckucmd.h, ckuusr.h, 3 Feb 2016.
+
+Removed misleading display of Z_MAXCHAN from SHOW FEATURES because in Unix
+we don't use this symbol; we get the real maximum number of open files
+from sysconf().  ckuus5.c, 3 Feb 2016.
+
+The command "date 29-feb-1996 +1year" failed with "?Base day out of range".
+Fixed in ckucmd.c, 3 Feb 2016.
+
+Added missing "help xmessage" text.  ckuus2.c, 3 Feb 2016.
 
 ---------------------------------
 ***************************

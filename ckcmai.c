@@ -1,6 +1,6 @@
-#define EDITDATE  "18 Jan 2016"		/* Last edit date dd mmm yyyy */
-#define EDITNDATE "20160118"		/* Keep them in sync */
-/* Mon Jan 18 10:54:32 2016 */
+#define EDITDATE  "3 Feb 2016"		/* Last edit date dd mmm yyyy */
+#define EDITNDATE "20160203"		/* Keep them in sync */
+/* Wed Feb  3 16:19:11 2016 */
 
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
@@ -32,7 +32,7 @@
 
 char * ck_cryear = "2016"; 		/* C-Kermit copyright year */
 
-#ifndef MAC				/* MAC = Kermit for MAC OS 6, 7, ... */
+#ifndef MAC /* MAC = Kermit for MAC OS 6, 7, ... i.e. original Macintosh */
 /*
   Note: initialize ck_s_test to "" if this is not a test version.
   Use (*ck_s_test != '\0') to decide whether to print test-related messages.
@@ -41,7 +41,7 @@ char * ck_cryear = "2016"; 		/* C-Kermit copyright year */
 #ifndef BETATEST
 #ifndef OS2                             /* UNIX, VMS, etc... (i.e. C-Kermit) */
 char *ck_s_test = "Dev";		/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "16";			/* Test version number or "" */
+char *ck_s_tver = "17";			/* Test version number or "" */
 #else  /* OS2 */
 char *ck_s_test = "";			/* (i.e. K95) */
 char *ck_s_tver = "";
@@ -3030,6 +3030,16 @@ main(argc,argv) int argc; char **argv;
 #endif /* MAC */
     debug(F101,"MAIN feol","",feol);
     makever();                          /* Put together version strings */
+#ifndef NOSPL
+    {
+        char scratch[TMPBUFSIZ];
+        extern char *tempdir;           /* Initialize temporary directory */
+        char * tp = scratch;
+        int x = TMPBUFSIZ;
+        (void) zzstring("\\v(tmpdir)",&tp,&x); /* Expand builtin var */
+        makestr(&tempdir,scratch);
+    }
+#endif /* NOSPL */
 #ifndef NOSETKEY                        /* Allocate & initialize the keymap */
     /* This code has been moved to before sysinit() for K95G */
     if (!(keymap = (KEY *) malloc(sizeof(KEY)*KMSIZE)))

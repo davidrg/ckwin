@@ -1971,6 +1971,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 #endif /* VMS */
 
 	    debug(F101,"cmifi dirflg","",dirflg);
+	    debug(F101,"cmifi diractive","",diractive);
 	    if (dirflg) {		/* Parsing a directory name? */
 		/* Yes, does it contain wildcards? */
 		if (iswild(*xp) ||
@@ -3820,10 +3821,14 @@ cmdelta(yy, mo, dd, hh, mm, ss, sign, dyy, dmo, ddd, dhh, dmm, dss)
 	debug(F111,"cmdelta",cmdatemsg,-1);
 	return(NULL);
     }
-    if (dd < 1 || dd > mdays[mo]) {
-	makestr(&cmdatemsg,"Base day out of range");
-	debug(F111,"cmdelta",cmdatemsg,-1);
-	return(NULL);
+    {
+        int i = mdays[mo];
+        if (mo == 2) if (isleap(yy)) i++;
+        if (dd < 1 || dd > i) {
+            makestr(&cmdatemsg,"Base day out of range");
+            debug(F111,"cmdelta",cmdatemsg,-1);
+            return(NULL);
+        }
     }
     if (hh < 0 || hh > 23) {
 	makestr(&cmdatemsg,"Base hour out of range");

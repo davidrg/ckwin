@@ -351,7 +351,7 @@ extern int slogts;                      /* Session-log timestamps on/off */
 extern int slognul;			/* Lines null-terminated */
 #endif /* NOLOCAL */
 
-char * tempdir = NULL;
+char * tempdir = NULL;                  /* Temporary directory */
 
 #ifdef VMS
 int vms_msgs = 1;                       /* SET MESSAGES */
@@ -12104,8 +12104,24 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
           s = "";
         else if (x < 0)
           return(x);
+        ckstrncpy(tmpbuf,s,TMPBUFSIZ);
         if ((x = cmcfm()) < 0) return(x);
-        makestr(&tempdir,s);
+#ifdef UNIX
+        if (tmpbuf[0]) {
+            extern int zchkod;
+            char tmpname[MAXPATHLEN+1];
+            char * p = tmpname;
+            int x;
+            zchkod = 1;                 /* Hack for asking zchko() if */
+            x = zchko(tmpbuf);          /* a directory is writeable */
+            zchkod = 0;
+            if (x < 0) printf("WARNING: %s does not appear to be writable\n");
+            zfnqfp(tmpbuf,MAXPATHLEN,p); /* Get and store full pathname */
+            makestr(&tempdir,tmpname);
+        }
+#else  /* No API for getting full pathname in other OS's */
+        makestr(&tempdir,tmpbuf);
+#endif /* UNIX */
         return(tempdir ? 1 : 0);
 
 #ifndef NOXFER

@@ -11,7 +11,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2014,
+  Copyright (C) 1985, 2016,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -1923,12 +1923,11 @@ static char *hmxxtouch[] = {
 
 static char *hmxxchange[] = {
 "Syntax: CHANGE [ switches ] filespec string1 string2",
-"  Changes all occurences of string1 to string2 in the given file or files.",
-"  Works line by line, does not do multiline or cross-line substitutions.",
+"  Changes all occurrences of string1 to string2 in the given file or files.",
+"  Works line by line, does not do multiline or across-line substitutions.",
 "  To remove strings from files, specify string2 as \"\" or omit string2.",
 "  Temporary files are created in the directory indicated by \\v(tmpdir)",
-"  (show var tmpdir).  If the temporary directory does not exist, an attempt",
-"  is made to create it.  You can select a different temporary directory with",
+"  (show var tmpdir).  You can select a different temporary directory with",
 "  the SET TEMP-DIRECTORY command.  All temporary files are deleted after use."
 ,
 " ",
@@ -1944,8 +1943,7 @@ static char *hmxxchange[] = {
 "    change *.html \\m(a) \\m(b)",
 " ",
 "  Since the CHANGE command works line by line, only text files can be",
-"  changed; C-Kermit automatically skips over binary files.  Before using",
-"  this command, you might want to back up the files that will be affected.",
+"  changed; C-Kermit automatically skips over binary files.",
 " ",
 "  File selection switches (factory defaults are marked with +):",
 " ",
@@ -1962,6 +1960,12 @@ static char *hmxxchange[] = {
 "   /RECURSIVE      Descend through subdirectories.",
 "   /NORECURSIVE  + Don't descend through subdirectories.",
 #endif /* RECURSIVE */
+" ",
+" File disposition switches:",
+" ",
+"   /BACKUP:name       Back up original files to named directory.",
+"   /DESTINATION:name  Store resulting changed files in named directory.",
+"   If neither of these options is given, original files are overwritten.",
 " ",
 " String selection switches:", 
 " ",
@@ -6370,6 +6374,13 @@ case XXMSG:
   to stderr if SET DEBUG MESSAGE is STDERR; doesn't print it at all if SET\n\
   DEBUG MESSAGE is OFF.  Synonym: MSG."));
 
+case XXXMSG:
+    return(hmsg("Syntax: XMESSAGE text-to-print-if-debugging\n\
+  Like MESSAGE, except does not include a line terminator at the end.\n\
+  Prints the given text to stdout if SET DEBUG MESSAGE is ON; prints it\n\
+  to stderr if SET DEBUG MESSAGE is STDERR; doesn't print it at all if SET\n\
+  DEBUG MESSAGE is OFF.  Synonym: XMSG."));
+
 #ifndef NOFRILLS
 case XXLDEL:
     return(hmsg(
@@ -10482,7 +10493,12 @@ case XYLOGIN:
 #ifndef NOSPL
 case XYTMPDIR:
     return(hmsg("Syntax: SET TEMP-DIRECTORY [ <directory-name> ]\n\
-  Overrides automatic assignment of \\v(tmpdir) variable."));
+  Tells Kermit to use the given directory for creating temporary files.\n\
+  These are used (for example) in FTP downloads and by the CHANGE command.\n\
+  If you don't issue this command, C-Kermit picks a directory automatically\n\
+  based on the operating system and any environment variables you might have\n\
+  set.  Use SHOW TEMP-DIRECTORY or SHOW VARIABLE \\v(tmpdir) to see Kermit's\n\
+  current temporary directory setting.  Synonym: SET TMP-DIRECTORY."));
 #endif /* NOSPL */
 
 #ifdef OS2

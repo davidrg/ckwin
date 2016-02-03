@@ -3074,7 +3074,7 @@ parser(m) int m; {
 
                   default:
                     if (!quiet && !cmd_err) {
-                        printf("\n?Invalid - \"%s\"\n",
+                        printf("\n?Not a valid command or token - \"%s\"\n",
 			       cmddisplay((char *)cmdbuf,xx)
 			       );
 			cmderr();
@@ -4677,11 +4677,17 @@ popclvl() {                             /* Pop command level, return cmdlvl */
                 aa_ptr[cmdlvl][i] = (char **)NULL;
                 aa_dim[cmdlvl][i] = 0;
             } else if (aa_dim[cmdlvl][i] == -23) { /* Secret code */
-                dclarray((char)(i+ARRAYBASE),-1); /* (see pusharray()) */
+                /*
+                  A local array declared at this level when there was no
+                  array of the same name at any higher level.  See comment
+                  in pusharray().
+                */
+                dclarray((char)(i+ARRAYBASE),-1);
+                a_ptr[i] = (char **)NULL; /* Delete top-level array */
+                a_dim[i] = 0;             /* created by pusharray - Feb 2016 */
                 aa_ptr[cmdlvl][i] = (char **)NULL;
                 aa_dim[cmdlvl][i] = 0;
             }
-
             /* Otherwise do nothing - it is a local array that was declared */
             /* at a level above this one so leave it alone. */
         }
@@ -7699,6 +7705,18 @@ doshow(x) int x; {
         break;
 #endif /* TNCODE */
 
+      case SHOTMPDIR:                   /* TEMPORARY DIRECTORY */
+      {
+          extern char * tempdir;
+          if (!tempdir) {
+              printf(" (none)\n");
+          } else if (!*tempdir) {
+              printf(" (none)\n");
+          } else {
+              printf(" %s\n", tempdir);
+          }
+          break;
+      }
 #ifdef CK_TRIGGER
       case SHTRIG: {
           extern char * tt_trigger[], * triggerval;
@@ -10207,6 +10225,11 @@ initoptlist() {
     sprintf(line,"CKMAXOPEN=%d",CKMAXOPEN); /* SAFE */
     makestr(&(optlist[noptlist++]),line);
 
+#ifndef UNIX
+    /*
+      These aren't actually used... In Unix we get maximum number of open
+      files from sysconf() at runtime.
+    */
     sprintf(line,"Z_MAXCHAN=%d",Z_MAXCHAN); /* SAFE */
     makestr(&(optlist[noptlist++]),line);
 
@@ -10219,6 +10242,7 @@ initoptlist() {
     sprintf(line,"_POSIX_OPEN_MAX=%d",_POSIX_OPEN_MAX); /* SAFE */
     makestr(&(optlist[noptlist++]),line);
 #endif /* _POSIX_OPEN_MAX */
+#endif /* UNIX */
 
 #ifdef CKCHANNELIO
     {
@@ -11292,6 +11316,9 @@ initoptlist() {
 #endif
 #ifdef __x86
     makestr(&(optlist[noptlist++]),"__x86");
+#endif
+#ifdef __x86_64
+    makestr(&(optlist[noptlist++]),"__x86_64");
 #endif
 #ifdef __amd64
     makestr(&(optlist[noptlist++]),"__amd64");

@@ -3,7 +3,7 @@
 #endif /* SSHTEST */
 
 #include "ckcsym.h"
-char *userv = "User Interface 9.0.309, 5 Feb 2015";
+char *userv = "User Interface 9.0.311, 3 Feb 2016";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 
@@ -1815,6 +1815,8 @@ struct keytab cmdtab[] = {
     { "xmit",        XXNOTAV, CM_INV },
 #endif /* NOXMIT */
 
+    { "xmsg",    XXXMSG, CM_INV },	/* Synonym for XMESSAGE */
+
 #ifndef OS2
 #ifndef NOJC
     { "z",           XXSUS, CM_INV|CM_PSH }, /* Synonym for SUSPEND */
@@ -2269,6 +2271,9 @@ struct keytab prmtab[] = {
 #ifdef OS2
     { "title",		  XYTITLE, CM_LOC },
 #endif /* OS2 */
+#ifndef NOSPL
+    { "tmp-directory",    XYTMPDIR,CM_INV },
+#endif /* NOSPL */
 #ifdef TLOG
     { "transaction-log",  XYTLOG,  0 },
 #endif /* TLOG */
@@ -3053,9 +3058,13 @@ struct keytab shotab[] = {
     { "tel",           SHTEL,  CM_INV|CM_ABR },
     { "telnet",        SHTEL,  0 },
     { "telopt",        SHTOPT, 0 },
+    { "temp-directory", SHOTMPDIR, 0 },
 #endif /* TNCODE */
     { "terminal",      SHTER,  CM_LOC },
 #endif /* NOLOCAL */
+#ifndef NOSPL
+    { "tmp-directory", SHOTMPDIR, CM_INV },
+#endif /* NOSPL */
 #ifndef NOXMIT
     { "tr",            SHXMI, CM_INV|CM_ABR },
     { "tra",           SHXMI, CM_INV|CM_ABR },
@@ -9138,9 +9147,8 @@ docmd(cx) int cx; {
 #ifdef CK_RECALL
 	      case '^': x = XXREDO; break;
 #endif	/* CK_RECALL */
-	      case '&': x = XXECH; break; /* (what is this?) */
 	      default:
-		printf("\n?Invalid - %s\n",cmdbuf);
+		printf("\n?Not a valid command or token - %s\n",cmdbuf);
 		x = -2;
 	    }
 	}

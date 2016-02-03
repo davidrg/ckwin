@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2014,
+  Copyright (C) 1985, 2016,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -30,15 +30,25 @@
 #define LOCUS
 #endif /* NOLOCUS */
 
-/* Sizes of things - FNVALL and MAXARGLEN increased from 8K 20050912 */
+/* Sizes of things - FNVALL and MAXARGLEN increased from 8K 2005/09/12 */
+/* Other things increased even more for 64-bit builts 2016/02/03 */
 
 #ifdef BIGBUFOK
+#ifdef CK_64BIT
+#define FNVALL CMDBL			/* Function return value length */
+#define MAXARGLEN CMDBL			/* Max func arg length after eval */
+#define MAXARGLIST 1024			/* Max number of args for a macro */
+#define FSPECL CMDBL			/* Max length for MSEND/GET string */
+#define MSENDMAX 2048			/* Number of filespecs for MSEND */
+#define MAC_MAX 65536			/* Maximum number of macros */
+#else
 #define FNVALL CMDBL			/* Function return value length */
 #define MAXARGLEN CMDBL			/* Max func arg length after eval */
 #define MAXARGLIST 1024			/* Max number of args for a macro */
 #define FSPECL CMDBL			/* Max length for MSEND/GET string */
 #define MSENDMAX 1024			/* Number of filespecs for MSEND */
 #define MAC_MAX 16384			/* Maximum number of macros */
+#endif /* CK_64BIT */
 
 #else  /* Same as above but for smaller builds... */
 
@@ -55,8 +65,13 @@
 #define VNAML 4096			/* Max length for variable name */
 #define ARRAYREFLEN 1024		/* Max length for array reference */
 #define FORDEPTH 32			/* Maximum depth of nested FOR loops */
+#ifdef CK_64BIT
+#define MAXTAKE 256			/* Maximum nesting of TAKE files */
+#define MACLEVEL 512			/* Maximum nesting for macros */
+#else
 #define MAXTAKE 54			/* Maximum nesting of TAKE files */
 #define MACLEVEL 128			/* Maximum nesting for macros */
+#endif /* CK_64BIT */
 #define INPBUFSIZ 4096			/* Size of INPUT buffer */
 #define PROMPTL 1024			/* Max length for prompt */
 #define LBLSIZ 8192			/* Maximum length for a GOTO label */
@@ -431,6 +446,8 @@ struct stringint {			/* String and (wide) integer */
 #define DIR_NOL 43	/* NOLINKS (don't show symlinks at at all) */
 #define DIR_MOD 44	/* Set modification time (used only by TOUCH) */
 #define DIR_SIM 45	/* /SIMULATE (for TOUCH) */
+#define DIR_DES 46      /* /DESTINATION: (for CHANGE) */
+#define DIR_BAK 47      /* /BACKUP: (for CHANGE) */
 
 #define DIRS_NM 0       /* Sort directory by NAME */
 #define DIRS_DT 1       /* Sort directory by DATE */
@@ -2004,6 +2021,7 @@ struct stringint {			/* String and (wide) integer */
 #define SHOGUI    71			/* SHOW GUI (K95) */
 #define SHOREN    72			/* SHOW RENAME */
 #define SHOLOC    73			/* SHOW LOCALE */
+#define SHOTMPDIR 74			/* SHOW TEMP-DIRECTORY */
 
 /* REMOTE command symbols */
 
