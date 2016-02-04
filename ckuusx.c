@@ -9,7 +9,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2014,
+  Copyright (C) 1985, 2016,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -6474,21 +6474,21 @@ ck_termset(x) int x; {
         *bp = NUL;
         debug(F110,"ck_termset calling tgetstr","cl",0);
         if (tgetstr("cl", &bp)) {       /* Get clear-screen code */
-            debug(F110,"ck_termset tgetstr cl",tgsbuf,"");
+            debug(F110,"ck_termset tgetstr cl",tgsbuf,0);
             if ((int)strlen(tgsbuf) < 32)
               ckstrncpy(cur_cls,tgsbuf,32);
         } else
           return;
         bp = tgsbuf;
         if (tgetstr("ce", &bp)) {       /* Get clear-to-end-of-line code */
-            debug(F110,"ck_termset tgetstr ce",tgsbuf,"");
+            debug(F110,"ck_termset tgetstr ce",tgsbuf,0);
             if ((int)strlen(tgsbuf) < 32)
               ckstrncpy(cur_cleol,tgsbuf,32);
         } else
           return;
         bp = tgsbuf;
         if (tgetstr("cm", &bp)) {       /* Get cursor-movement code */
-            debug(F110,"ck_termset tgetstr cm",tgsbuf,"");
+            debug(F110,"ck_termset tgetstr cm",tgsbuf,0);
             if ((int)strlen(tgsbuf) < 64)
               ckstrncpy(cur_cm,tgsbuf,64);
         } else

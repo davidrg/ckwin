@@ -4695,11 +4695,7 @@ extern int errno;
 #define MAXWLD 50
 #else
 #ifdef BIGBUFOK
-#ifdef CK_64BIT
-#define MAXWLD 16777216
-#else
 #define MAXWLD 102400
-#endif /* CK_64BIT */
 #else
 #define MAXWLD 1024
 #endif /* BIGBUFOK */

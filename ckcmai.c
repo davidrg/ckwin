@@ -1,6 +1,6 @@
-#define EDITDATE  "3 Feb 2016"		/* Last edit date dd mmm yyyy */
-#define EDITNDATE "20160203"		/* Keep them in sync */
-/* Wed Feb  3 16:19:11 2016 */
+#define EDITDATE  "4 Feb 2016"		/* Last edit date dd mmm yyyy */
+#define EDITNDATE "20160204"		/* Keep them in sync */
+/* Thu Feb  4 07:54:00 2016 */
 
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
@@ -41,7 +41,7 @@ char * ck_cryear = "2016"; 		/* C-Kermit copyright year */
 #ifndef BETATEST
 #ifndef OS2                             /* UNIX, VMS, etc... (i.e. C-Kermit) */
 char *ck_s_test = "Dev";		/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "17";			/* Test version number or "" */
+char *ck_s_tver = "18";			/* Test version number or "" */
 #else  /* OS2 */
 char *ck_s_test = "";			/* (i.e. K95) */
 char *ck_s_tver = "";

@@ -8880,5 +8880,19 @@ Fixed in ckucmd.c, 3 Feb 2016.
 
 Added missing "help xmessage" text.  ckuus2.c, 3 Feb 2016.
 
+--- Dev.17 ---
+
+Mark Sapiro says Dev.17 segfaults immediately on startup on Ubuntu 15.04.
+Asked him for a debug log.  Meanwhile I checked the tarball, rebuilt from
+it, all OK on 64-bit Linux RHEL6 and on 32-bit NetBSD 6.1.5.  Built on
+NebBSD 7.0 also, no problem there except a few new warnings.  Backed off the
+64-bit size changes.  ckcdeb.h, ckcker.h, ckucmd.h, ckuusr.h, 4 Feb 2016.
+
+Fixed four debug() statements that had a string as the final parameter
+instead of a number, noticed by gcc on NetBSD 7.  ckuusx.c, ckudia.c,
+4 Feb 2016.
+
+--- Dev.18 ---
+
 ---------------------------------
 ***************************
