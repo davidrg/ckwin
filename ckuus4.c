@@ -9,11 +9,11 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2014,
+  Copyright (C) 1985, 2016,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: Sun Feb 23 09:13:42 2014
+    Last update: Fri Feb  5 15:30:06 2016
 */
 
 /*
@@ -12758,7 +12758,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 	    month = atoi(s1);
             if (month == 0) month = 12;
 	    if (month < 1 || month > 12) {
-		ckmakmsg(fnval,FNVALL,"<ERROR:BAD_MONTHNUM\\f",fn,"()>",NULL);
+		ckmakmsg(fnval,FNVALL,"<ERROR:BAD_MONTHNUM:\\f",fn,"()>",NULL);
 		goto fnend;
 	    }
 	    month--;			/* Adjust to zero-based */

@@ -1,6 +1,6 @@
-#define EDITDATE  "4 Feb 2016"		/* Last edit date dd mmm yyyy */
-#define EDITNDATE "20160204"		/* Keep them in sync */
-/* Thu Feb  4 07:54:00 2016 */
+#define EDITDATE  "5 Feb 2016"		/* Last edit date dd mmm yyyy */
+#define EDITNDATE "20160205"		/* Keep them in sync */
+/* Fri Feb  5 14:35:02 2016 */
 
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
@@ -41,7 +41,7 @@ char * ck_cryear = "2016"; 		/* C-Kermit copyright year */
 #ifndef BETATEST
 #ifndef OS2                             /* UNIX, VMS, etc... (i.e. C-Kermit) */
 char *ck_s_test = "Dev";		/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "18";			/* Test version number or "" */
+char *ck_s_tver = "19";			/* Test version number or "" */
 #else  /* OS2 */
 char *ck_s_test = "";			/* (i.e. K95) */
 char *ck_s_tver = "";
@@ -138,6 +138,12 @@ char * exedir = NULL;                   /* Directory I was executed from */
 char homedirpath[CKMAXPATH+1] = { NUL, NUL }; /* Home directory path */
 char * myhome = NULL;			/* Home directory override string */
 
+#ifdef HAVE_LOCALE
+int nolocale = 0;                       /* Use Locale */
+#else
+int nolocale = 1;                       /* Don't use Locale */
+#endif /* HAVE_LOCALE */
+
 /*  C K C M A I  --  C-Kermit Main program  */
 
 /*
@@ -145,9 +151,8 @@ char * myhome = NULL;			/* Home directory override string */
   fdc@kermitproject.org OR fdc@columbia.edu.
 
   I am no longer at Columbia University as of 1 July 2011.
-  As of September 29, 2011, the new Open Source Kermit Project website
-  is the  definitive source for Kermit software created or updated since
-  that date:
+  The new Open Source Kermit Project website is the  definitive
+  source for Kermit software created or updated since that date:
 
     http://www.kermitproject.org
 
@@ -233,20 +238,22 @@ char *copyright[] = {
 /* Windows IKSD copyright used to be separate */
 char *wiksdcpr = (char *) copyright;
 
-
 /*
 DOCUMENTATION:
 
  "Using C-Kermit" by Frank da Cruz and Christine M. Gianone,
   Digital Press / Butterworth-Heinemann, Woburn MA, USA.
   Second edition (1997), ISBN 1-55558-164-1.
-  Order from Digital Press:    +1 (800) 366-2665
-  Or from Columbia University: +1 (212) 854-3703
+  Plus updates on the Kermit website:
+
+    http://www.kermitproject.org/ck90.html#doc
 
 For Kermit 95, also:
 
   "Kermit 95" by Christine M. Gianone and Frank da Cruz,
-  Manning Publications, Greenwich CT, USA (1998) - Online.
+  Manning Publications, Greenwich CT, USA (1998) - Online here:
+
+    http://www.kermitproject.org/k95manual/
 
 ACKNOWLEDGMENTS:
 
@@ -278,6 +285,7 @@ ACKNOWLEDGMENTS:
    Ian Beckwith, Debian Project
    Nelson Beebe, U of Utah
    Gerry Belanger, Cognitronics
+   Edward Berner,
    Karl Berry, UMB
    Mark Berryman, SAIC
    Dean W Bettinger, SUNY
@@ -311,6 +319,7 @@ ACKNOWLEDGMENTS:
    Jeff Damens, (formerly of) Columbia U
    Mark Davies, Bath U, UK
    Sin-itirou Dezawa, Fujifilm, Japan
+   Alexey Dokuchaev (FreeBSD)
    Joe R. Doupnik, Utah State U
    Frank Dreano, Honeywell
    John Dunlap, U of Washington
@@ -329,7 +338,7 @@ ACKNOWLEDGMENTS:
    Carl Fongheiser, CWRU
    Mike Freeman, Bonneville Power Authority
    Carl Friedberg
-   Adam Frielander
+   Adam Friedlander
    Marcello Frutig, Catholic University, Sao Paulo, Brazil (X.25 support)
    Hirofumi Fujii, Japan Nat'l Lab for High Energy Physics, Tokyo (Kanji)
    Chuck Fuller, Westinghouse Corporate Computer Services
@@ -486,6 +495,7 @@ ACKNOWLEDGMENTS:
    Stew Rubenstein, Harvard U (VMS)
    Gerhard Rueckle, FH Darmstadt, Fb. E/Automatisierungstechnik
    John Santos, EG&H
+   Mark Sapiro,
    Bill Schilit, Columbia U
    Ulli Schlueter, RWTH Aachen, Germany (OS-9, etc)
    Michael Schmidt, U of Paderborn, Germany
@@ -510,6 +520,7 @@ ACKNOWLEDGMENTS:
    Fred Smith, Merk / Computrition
    Richard S Smith, Cal State
    Tim Sneddon
+   Bernard Spil,
    Ryan Stanisfer, UNT
    Bertil Stenstroem, Stockholm University Computer Centre (QZ), Sweden
    James Sturdevant, CAP GEMENI AMERICA, Minneapolis
@@ -830,12 +841,6 @@ int atenci = 1,                         /* Encoding in */
     atsyso = 1;
 
 int dispos = 0;                         /* Disposition */
-
-#ifdef HAVE_LOCALE
-int nolocale = 0;
-#else
-int nolocale = 1;
-#endif /* HAVE_LOCALE */
 
 #ifdef CK_PERMS
 int atlpri = 1,
@@ -3067,6 +3072,11 @@ main(argc,argv) int argc; char **argv;
       fatal("Can't initialize!");
     else
       initflg = 1;                      /* Remember we did. */
+
+#ifdef HAVE_LOCALE
+    setlocale(LC_ALL, "");              /* Enable using non-C locales */
+#endif /* HAVE_LOCALE */
+
     debug(F111,"ckcmai myname",myname,howcalled);
     {					/* Get home directory path */
 	char *h;
@@ -3513,27 +3523,10 @@ main(argc,argv) int argc; char **argv;
         sstate = (CHAR) cmdlin();       /* Yes, parse. */
 #ifdef NETCONN
 
-#ifdef COMMENT
 #ifdef HAVE_LOCALE
-	if (nolocale) {		      /* Handle command-line --nolocale opt */
-	    /*
-	      Set LC_* environment variables.  setlocale() does not seem to
-	      have any effect at all, hence the contortions.  Note: putenv()
-	      strings have to be static.
-	    */
-	    debug(F100,"--nolocale: disabling locale","",0);
-	    /* if (putenv(lc_all)) perror(lc_all); */
-#ifdef COMMENT
-	    /* These turn out not to be necessary if LC_ALL is set this way */
-	    if (putenv(lc_time)) perror(lc_time);
-	    if (putenv(lc_messages)) perror(lc_messages);
-	    if (putenv(lc_ctype)) perror(lc_ctype);
-	    if (putenv(lc_collate)) perror(lc_collate);
-	    if (putenv(lc_monetary)) perror(lc_monetary);
-	    if (putenv(lc_numeric)) perror(lc_numeric);
-#endif /* COMMENT */
+	if (nolocale) {                 /* --nolocale option on command line */
+            setlocale(LC_ALL, "C");     /* Restore our locale to default */
 	}	
-#endif /* COMMENT */
 #endif /* HAVE_LOCALE */
 
 #ifndef NOURL
@@ -3623,7 +3616,6 @@ main(argc,argv) int argc; char **argv;
 		nolocale = 1;
 	    }
 	if (!nolocale) {		/* Locale not disabled */
-	    /* this should be done in only one place */
 	    setlocale(LC_ALL, "");	/* Enable using non-C locales */
 	}
     }

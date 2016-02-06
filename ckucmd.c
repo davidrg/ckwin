@@ -1,6 +1,6 @@
 #include "ckcsym.h"
 
-char *cmdv = "Command package 9.0.171, 10 Jan 2014";
+char *cmdv = "Command package 9.0.172, 5 Feb 2016";
 
 /*  C K U C M D  --  Interactive command package for Unix  */
 
@@ -10,7 +10,7 @@ char *cmdv = "Command package 9.0.171, 10 Jan 2014";
   Author: Frank da Cruz (fdc@columbia.edu),
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2014,
+  Copyright (C) 1985, 2016,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -64,6 +64,11 @@ _PROTOTYP( VOID learncmd, (char *) );
 static char *moname[] = {
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+};
+
+static char *fullmonthname[] = {
+    "January", "February", "March",     "April",   "May",      "June",
+    "July",    "August",   "September", "October", "November", "December"
 };
 
 struct keytab cmonths[] = {
@@ -5430,10 +5435,17 @@ shuffledate(p,opt) char * p; int opt; {
     static char obuf[48];
     char c;
     int yy, dd, mm;
+#define MONTHBUFLEN 32
+    char monthbuf[MONTHBUFLEN];
+    char * monthstring = NULL;
+#ifdef HAVE_LOCALE
+    _PROTOTYP( char * locale_monthname, (int, int) );
+    extern int nolocale;
+#endif /* HAVE_LOCALE */
 
     if (!p) p = "";
     if (!*p) p = ckdate();
-    if (opt < 1 || opt > 5)
+    if (opt < 1 || opt > 6)
       return(p);
     len = strlen(p);
     if (len < 8 || len > 31) return(p);
@@ -5529,7 +5541,7 @@ shuffledate(p,opt) char * p; int opt; {
 	return((char *)obuf);
     }
     ckstrncpy(ibuf,p,32);
-    c = ibuf[4];			/* Warning: not Y10K compliant */
+    c = ibuf[4];			/* Warning: not "Y10K compliant" */
     ibuf[4] = NUL;
     if (!rdigits(ibuf))
       return(p);
@@ -5553,13 +5565,43 @@ shuffledate(p,opt) char * p; int opt; {
     ibuf[8] = c;
     if (dd < 1 || mm > 31)
       return(p);
-    /* IGNORE WARNINGS ABOUT moname[] REFS OUT OF RANGE - it's prechecked. */
+
+#ifdef HAVE_LOCALE
+/*
+  We truncate the month name to 3 characters even though some
+  some locales use longer "short month names".  Fixing this will
+  require some redesign which can be done if ever anybody complains.
+*/
+    if (!nolocale) {                        /* If user didn't do --nolocale */
+        char *s = NULL;
+        if (opt == 1 || opt == 2) {             /* Short month name */
+            s = locale_monthname(mm-1,1);       /* Get short month name */
+            if (!s) s = moname[mm-1];           /* Allow for error */
+            ckstrncpy(monthbuf,s,MONTHBUFLEN);  /* Copy it to this buffer */
+            monthbuf[3] = NUL;                  /* Truncate it at 3 */
+        } else {
+            s = locale_monthname(mm-1,0);       /* Get full month name */
+            if (!s) s = fullmonthname[mm-1];    /* Allow for error */
+            ckstrncpy(monthbuf,s,MONTHBUFLEN);
+        }
+        monthstring = monthbuf;             /* Point to it */
+    } else
+#endif /* HAVE_LOCALE */
+      /* Otherwise use old month name table */
+      monthstring = (opt == 6) ? fullmonthname[mm-1] : moname[mm-1];
+
     switch (opt) {
       case 1:
-	sprintf(obuf,"%04d-%s-%02d%s",yy,moname[mm-1],dd,&ibuf[8]);
-	break;
+        sprintf(obuf,"%04d-%s-%02d%s",yy,monthstring,dd,&ibuf[8]);
+        break;
       case 2:
-	sprintf(obuf,"%02d-%s-%04d%s",dd,moname[mm-1],yy,&ibuf[8]);
+        sprintf(obuf,"%02d-%s-%04d%s",dd,monthstring,yy,&ibuf[8]);
+        break;
+      case 6:
+        sprintf(obuf,"%d %s %d%s", dd, monthstring, yy, &ibuf[8]);
+        break;
+      default:
+        return(p);
     }
     return((char *)obuf);
 }

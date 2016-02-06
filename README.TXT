@@ -1,8 +1,8 @@
 C-KERMIT 9.0.304 PRERELEASE TESTING
 
-Mon Jan 18 15:09:40 2016
+Fri Feb  5 20:38:11 2016
 
-This is C-Kermit 9.0.304 Dev.17, a development (pre-alpha, pre-beta)
+This is C-Kermit 9.0.304 Dev.19, a development (pre-alpha, pre-beta)
 version of the first new release of C-Kermit since the cancelation of
 the Kermit Project at Columbia University.  Since 1 July 2011, C-Kermit
 is Open Source software, released under the modified 3-clause Berkeley
@@ -48,10 +48,10 @@ The current development version is packaged as follows:
  1. In ftp://ftp.kermitproject.org/kermit/test/text/ : 
     
     README.TXT           This file
-    cku304dev17.tar      Unix source code, tar archive
-    cku304dev17.tar.Z    Ditto, compressed
-    cku304dev17.tar.gz   Ditto, gzipped
-    cku304dev17.zip      Unix and VMS source code, Zip archive
+    cku304dev19.tar      Unix source code, tar archive
+    cku304dev19.tar.Z    Ditto, compressed
+    cku304dev19.tar.gz   Ditto, gzipped
+    cku304dev19.zip      Unix and VMS source code, Zip archive
 
  2. In ftp://ftp.kermitproject.org/kermit/test/text/ : 
 
