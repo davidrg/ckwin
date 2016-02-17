@@ -3,12 +3,12 @@
 #define CK_NONBLOCK                     /* See zoutdump() */
 
 #ifdef aegis
-char *ckzv = "Aegis File support, 9.0.222, 1 Feb 2016";
+char *ckzv = "Aegis File support, 9.0.223, 16 Feb 2016";
 #else
 #ifdef Plan9
-char *ckzv = "Plan 9 File support, 9.0.222, 1 Feb 2016";
+char *ckzv = "Plan 9 File support, 9.0.223, 16 Feb 2016";
 #else
-char *ckzv = "UNIX File support, 9.0.222, 1 Feb 2016";
+char *ckzv = "UNIX File support, 9.0.223, 16 Feb 2016";
 #endif /* Plan9 */
 #endif /* aegis */
 /*
@@ -1564,21 +1564,23 @@ zopeno(n,name,zz,fcb)
     }
     {
     /* Allow tty devices to opened as output files 2009/10/20 */
-	int fd, mode = 0;
+	int fd, flags = 0;
 	debug(F110,"zopeno attempting to open",name,0);
+        if (!ckstrcmp(name,"/dev/",5,1)) { /* If it's a tty... */
 #ifdef O_NONBLOCK
-	mode = O_NONBLOCK;
+            flags = O_NONBLOCK;
 #else
 #ifdef O_NDELAY
-	mode = O_NDELAY;
+            flags = O_NDELAY;
 #else
 #ifdef FNDELAY
-	mode = FNDELAY;
+            flags = FNDELAY;
 #endif /* FNDELAY */
 #endif	/* O_NDELAY */
 #endif	/* O_NONBLOCK */
-	debug(F111,"zopeno open mode",name,mode);
-	fd = open(name,O_WRONLY,mode);
+        }
+	debug(F111,"zopeno open flags",name,flags);
+	fd = open(name,O_WRONLY|flags,0600);
 	debug(F111,"zopeno open",name,fd); 
 	if (fd > -1) {
 	    if (isatty(fd)) {
@@ -2566,22 +2568,25 @@ zchko(name) char *name; {
 #ifdef NOUUCP
     {					/* 2009/10/20 */
     /* Allow tty devices to opened as output files */
-	int fd, istty = 0, mode = 0;
+	int fd, istty = 0, flags = 0;
 	debug(F110,"zchko attempting to open",name,0);
+        if (!ckstrcmp(name,"/dev/",5,1)) { /* If tty (2016/02/16) */
 	/* Don't block on lack of Carrier or other modem signals */
 #ifdef O_NONBLOCK
-	mode = O_NONBLOCK;
+            flags = O_NONBLOCK;
 #else
 #ifdef O_NDELAY
-	mode = O_NDELAY;
+            flags = O_NDELAY;
 #else
 #ifdef FNDELAY
-	mode = FNDELAY;
+            flags = FNDELAY;
 #endif /* FNDELAY */
 #endif	/* O_NDELAY */
 #endif	/* O_NONBLOCK */
-	debug(F111,"zchko open mode",name,mode);
-	fd = open(name,O_WRONLY,mode);	/* Must attempt to open it */
+        }
+	debug(F111,"zchko open mode",name,flags);
+	/* Must attempt to open it */
+        fd = open(name,O_WRONLY|O_CREAT|flags,0600);
 	debug(F111,"zchko open",name,fd); 
 	if (fd > -1) {			/* to get a file descriptor */
 	    if (isatty(fd))		/* for isatty() */

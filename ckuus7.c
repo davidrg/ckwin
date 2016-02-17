@@ -11615,6 +11615,8 @@ z_open(name, flags) char * name; int flags; {
     z_file[n]->z_flags = 0;		/* In case of failure... */
     z_file[n]->z_fp = NULL;		/* Set file pointer to NULL */
 
+    
+    debug(F110,"fopen mode",mode,0);
     t = fopen(name, mode);              /* Try to open the file. */
     if (!t) {                           /* Failed... */
         debug(F111,"z_open error",name,errno);

@@ -8949,5 +8949,22 @@ ckucmd.c, 5 Feb 2016.
 
 --- Dev.19 ---
 
+I got a report that the photogallery script could not create files in Mac OS
+X.  Sure enough, C-Kermit 9.0.304 got an error every time it tried to create
+a file.  This happened in both zchko() ("check if file can be created") and
+in zopeno() ("open file for output"), whichever was called first, even
+though the code in these routines had not changed, probably in decades.  I
+couldn't take a debug log either because that required opening a file.  The
+user who reported the problem discovered that if she created the desired
+file first outside of Kermit, then Kermit could open it for output.  It
+seems that ever since 1985, I have been calling open() with just O_WRONLY.
+Evidently that's not good enough any more in recent Mac OS X releases;
+experimentation shows I have to use O_WRONLY|O_CREAT, but then I also have
+to put perms, so I put 0600.  I made this change in both zchko() and
+zopeno().  Tests OK in Mac OS X 10.10.5, NetBSD 6.1.5, Solaris 9, and Linux
+RHEL6.6.  ckufio.c, 16 Feb 2016.  
+
+--- Dev.20 ---
+
 ---------------------------------
 ***************************
