@@ -1,19 +1,35 @@
-#define EDITDATE  "16 Feb 2016"		/* Last edit date dd mmm yyyy */
-#define EDITNDATE "20160216"		/* Keep them in sync */
-/* Tue Feb 16 20:48:34 2016 */
-
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
+#define EDITDATE  "21 Apr 2017"		/* Last edit date dd mmm yyyy */
+#define EDITNDATE "20170421"		/* Keep them in sync */
+/* Fri Apr 21 13:04:40 2017 */
+
 /*
-  ckcsym.h is used for for defining symbols that normally would be defined
+FOR A NEW VERSION (development, alpha, beta, release candidate formal release):
+  . Change the 3 dates just above;
+  . Change ck_cryear (copyright year) just below, if necessary;
+  . Define the variables ck_s_test and ck_s_tver (below) appropriately;
+  . Change dates (and version number if necessary) at top of makefile.
+
+If the version number has changed, also:
+  . Change sccsid[] (below);
+  . Change ck_s_ver, ck_l_ver, ck_s_xver, ck_l_xver (below).
+*/
+/*
+  ckcsym.h is used for defining symbols that normally would be defined
   using -D or -d on the cc command line, for use with compilers that don't
   support this feature.  Must come before any tests for preprocessor symbols.
 */
 #include "ckcsym.h"
 /*
-  Consolidated program C-Kermit version information for all platforms
+  Consolidated C-Kermit program version information for all platforms
   (but for UNIX also see ckuver.h).  See makever() below for how they are used.
+  NOTE: The BETATEST macro is not well-named, it really applies only to what
+  were Jeff Altman's areas: Kermit 95 and security.  BETATEST has nothing
+  to do with C-Kermit Beta tests.  K95 developers should define BETATEST
+  when uploading a K95 version for public testing that is not a real release.
 */
+
 #ifdef COMMENT                    /* Uncomment this for real K95 version */
 #ifndef OS2				/* OS2 actually means Kermit 95. */
 #ifndef BETATEST			/* It's because Kermit 95 started */
@@ -30,24 +46,23 @@
 #endif /* OS2 */
 #endif /* BETATEST */
 
-char * ck_cryear = "2016"; 		/* C-Kermit copyright year */
+char * ck_cryear = "2017"; 		/* C-Kermit copyright year */
 
 #ifndef MAC /* MAC = Kermit for MAC OS 6, 7, ... i.e. original Macintosh */
 /*
   Note: initialize ck_s_test to "" if this is not a test version.
   Use (*ck_s_test != '\0') to decide whether to print test-related messages.
 */
-
 #ifndef BETATEST
 #ifndef OS2                             /* UNIX, VMS, etc... (i.e. C-Kermit) */
 char *ck_s_test = "Dev";		/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "20";			/* Test version number or "" */
+char *ck_s_tver = "21";			/* Test version number */
 #else  /* OS2 */
 char *ck_s_test = "";			/* (i.e. K95) */
 char *ck_s_tver = "";
 #endif /* OS2 */
-#else
-char *ck_s_test = "";			/* Development */
+#else /* BETATEST */
+char *ck_s_test = "";			/* Not development */
 char *ck_s_tver = "";
 #endif /* BETATEST */
 #else /* MAC */
@@ -70,9 +85,13 @@ static char sccsid[] = "@(#)C-Kermit 9.0.304";
 /*
   The C-Kermit Version number is major.minor.edit (integers).
   Major version always goes up.
-  Minor version is historical, hasn't been used since C-Kermit 7.1.
-  Edit is sequential, always goes up, but there can be gaps.
+
+  The Minor version is an artifact from the DECSYSTEM-20 versioning 
+  system and hasn't been used since C-Kermit 7.1.
+
+  The Edit number is sequential, always goes up, but there can be gaps.
   For example there might be many edits between releases.
+  
   If the major goes to 10, some version-number-based feature tests
   could fail.  It might be better to use the minor version field
   for future releases.

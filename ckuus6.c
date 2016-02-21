@@ -8,10 +8,13 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2016,
+  Copyright (C) 1985, 2017,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+
+  Last update:
+    Fri Apr 21 13:04:13 2017
 */
 
 /* Includes */
@@ -843,6 +846,10 @@ int asktimedout = 0;
 #define ASK_DEF 5
 #define ASK_ECH 6
 
+#define GETC_CHK 1
+#define GETC_TMO 2
+#define GETC_QUI 3
+
 static struct keytab asktab[] = {
     {  "/default", ASK_DEF, CM_ARG },
     {  "/gui",     ASK_GUI,      
@@ -889,6 +896,14 @@ static struct keytab askqtab[] = {
 };
 static int naskqtab = sizeof(askqtab)/sizeof(struct keytab)-1;
 
+static struct keytab getctab[] = {
+    { "/check",    GETC_CHK, 0 },
+    { "/quiet",    GETC_QUI, 0 },
+    { "/timeout",  GETC_TMO, CM_ARG },
+    { "", 0, 0 }
+};
+static int ngetctab = sizeof(getctab)/sizeof(struct keytab)-1;
+
 int
 doask(cx) int cx; {
     extern int asktimer, timelimit;
@@ -900,6 +915,7 @@ doask(cx) int cx; {
     int guiflg = 0;
     int nomsg = 0;
     int mytimer = 0;
+    int peek = 0;
 #ifdef CK_APC
     extern int apcactive, apcstatus;
 #endif /* CK_APC */
@@ -1013,7 +1029,95 @@ doask(cx) int cx; {
             if ((y = parsevar(vnp,&x,&z)) < 0)
 	      return(y);
         }
-    } else if (cx != XXGOK && cx != XXRDBL) { /* Get variable name */
+    } else if (cx == XXGETC) {          /* GETC */
+        struct FDB sw, fl;
+        int getval;
+        char c;
+        cmfdbi(&sw,                     /* First FDB - command switches */
+               _CMKEY,                  /* fcode */
+               "Variable name or switch",
+               "",                      /* default */
+               "",                      /* addtl string data */
+               ngetctab,                /* Table size */
+               4,                       /* addtl numeric data 2: 4 = cmswi */
+               xxstring,                /* Processing function */
+	       getctab,                 /* Keyword table */
+               &fl                      /* Pointer to next FDB */
+               );
+        cmfdbi(&fl,                     /* Anything that doesn't match */
+               _CMFLD,                  /* fcode */
+               "",                      /* hlpmsg */
+               "",                      /* default */
+               "",                      /* addtl string data */
+               0,                       /* addtl numeric data 1 */
+               0,                       /* addtl numeric data 2 */
+               NULL,
+               NULL,
+               NULL
+               );
+        while (1 && !peek) {            /* Parse 0 or more switches */
+            x = cmfdb(&sw);             /* Parse something */
+            if (x < 0)
+              return(x);
+            if (cmresult.fcode != _CMKEY) /* Break out if not a switch */
+              break;
+            c = cmgbrk();
+            if ((getval = (c == ':' || c == '=')) && !(cmgkwflgs() & CM_ARG)) {
+                printf("?This switch does not take an argument\n");
+                return(-9);
+            }
+            if (!getval && (cmgkwflgs() & CM_ARG)) {
+                printf("?This switch requires an argument\n");
+                return(-9);
+            }
+            switch (cmresult.nresult) {
+	      case GETC_CHK:            /* GETC /CHECK */
+		peek = 1;
+		break;
+	      case GETC_QUI:            /* GETC /QUIET */
+		nomsg = 1;
+		break;
+              case GETC_TMO: {          /* GETC /TIMEOUT:sec */
+                  if ((y = cmnum("seconds","1",10,&x,xxstring)) < 0)
+                    return(y);
+                  if (x < 0)
+                    x = 0;
+                  mytimer = x;
+                  break;
+              }
+              default: return(-2);
+            }
+        }
+        if (peek) {                     /* GETC /CHECK */
+/*
+  This was intended to mean "check how many characters are waiting to be
+  read from standard input".  Conchk() was supposed to do that but it 
+  doesn't when stdin is redirected.  The best I can do is ask isatty(0)
+  whether stdin is a terminal.  If not we'll assume it's redirected stdin.
+  Btw, even if stdin really is a terminal conchk() returns 0, even if 
+  there is typeahead.  - fdc, 21 Apr 2017.
+*/
+            int itsatty = -1;
+            if ((y = cmcfm()) < 0)      /* Get confirmation */
+              return(y);
+            itsatty = isatty(0);        /* Is stdin a tty? */
+            debug(F101,"GETC peek","",peek);
+            debug(F101,"GETC itsatty","",itsatty);
+            return(success = (itsatty > 0) ? 0 : 1);
+        }
+
+        /* Regular GETC... Have variable name, make copy. */
+        ckstrncpy(vnambuf,cmresult.sresult,VNAML);
+        vnp = vnambuf;
+        if (vnambuf[0] == CMDQ &&
+            (vnambuf[1] == '%' || vnambuf[1] == '&'))
+          vnp++;
+        y = 0;
+        if (*vnp == '%' || *vnp == '&') {
+            if ((y = parsevar(vnp,&x,&z)) < 0)
+              return(y);
+        }
+    } else if (cx != XXGOK && cx != XXRDBL && !peek) { /* Get variable name */
         if ((y = cmfld("Variable name","",&s,NULL)) < 0) {
             if (y == -3) {
                 printf("?Variable name required\n");
@@ -1056,7 +1160,7 @@ doask(cx) int cx; {
         }
     }
 
-    /* ASK, ASKQ, GETOK, or GETC */
+    /* ASK, ASKQ, GETOK */
 
     if (cx == XXGOK) {			/* GETOK can take switches */
         struct FDB sw, fl;
@@ -1279,8 +1383,7 @@ reparse:
 #endif /* OS2 */
 #endif /* NOSETKEY */
         {
-            debug(F101,"GETC conchk","",conchk());
-            x = coninc(timelimit);      /* Just read one character */
+            x = coninc(timelimit);      /* Read one character */
             debug(F101,"GETC coninc","",x);
         }
         concb((char)escape);            /* Put keyboard back in cbreak mode */

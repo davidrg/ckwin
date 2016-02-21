@@ -11,7 +11,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2016,
+  Copyright (C) 1985, 2017,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -1686,6 +1686,7 @@ static char *hmxxsexp[] = {
 "  CEILING   Ceiling of floating-point operand      (ceiling 1.25)    2",
 "  FLOOR     Floor of floating-point operand        (floor 1.25)      1",
 "  ROUND     Operand rounded to nearest integer     (round 1.75)      2",
+"  ROUND     ...or to given number of decimals      (round 1.7584 2)  1.76",
 "  SQRT      Square root of 1 operand               (sqrt 2)          1.414..",
 "  EXP       e (2.71828..) to the given power       (exp -1)          0.367..",
 "  SIN       Sine of angle expressed in radians     (sin (/ pi 2))    1.0",
@@ -4695,12 +4696,24 @@ static char *hxxask[] = {
 "  respond within the time limit.",
 ""};
 static char *hxxgetc[] = {
-"Syntax:  GETC variablename [ prompt ]",
+"Syntax:  GETC [ switches] [ variablename [ prompt ] ]",
 "Example: GETC \\%c { Type any character to continue...}",
 "  Issues the prompt and sets the variable to the first character you type.",
 "  Use braces to preserve leading and/or trailing spaces in the prompt.",
 " ",
-"Also see SET ASK-TIMER.",
+"Switches:",
+"  /CHECK",
+"    GETC /CHECK (no variable or prompt is given when /CHECK is used)",
+ "   succeeds if characters are waiting to be read and fails if not.",
+" ",
+"  /QUIET",
+"    In case of errors, no error message is issued.",
+" ",
+"  /TIMEOUT:n",
+"    Gives GETC a time limit of n seconds to wait for a character to appear;",
+"    if no character appears within n seconds, GETC fails and (if a /QUIET",
+"    switch was not given, an error message is printed.",
+/* "Also see SET ASK-TIMER.", */
 ""};
 
 static char *hmxytimer[] = {
@@ -5977,6 +5990,13 @@ static char * hxxf_op[] = {
 " ",
 "/READ",
 "  Open the file for reading.",
+" ",
+#ifdef UNIX
+"/STDIN",
+"  Tells Kermit to read from Standard Input.  In this case you don't specify",
+"  a filename."
+" ",
+#endif  /* UNIX */
 " ",
 "/WRITE",
 "  Open the file for writing.  If /READ was not also specified, this creates",

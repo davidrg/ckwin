@@ -4,7 +4,13 @@ C-KERMIT 9.0 CHANGE LOG (Changes since 8.0.207 / K95 2.1.3 January 2003)
   Go to the bottom to find the newest edits.
 
   Frank da Cruz, The Kermit Project, New York City.
-  Last update:  Fri Feb  5 20:38:03 2016
+  Last update:  Fri Apr 21 13:44:51 2017
+
+These are the changes to C-Kermit since Kermit 95 was last released as
+version 2.1.3, and therefore also the changes that would appear in any new
+release of Kermit 95.
+
+.................................
 
 FTP USER, FTP ACCOUNT, plus the various prompts and switches for FTP username,
 password, and account all neglected to strip quotes, and in most cases quotes
@@ -7799,7 +7805,7 @@ no problems.  ckuus4.c, 24 Jun 2011.
 I had been wanting the S-Expression (ROUND x) to allow a second argument n,
 which, if given, tells where the rounding should occur.  If n is positive,
 the number is rounded to n decimal places.  If zero, it is rounded to the
-nearest integet.  If positive, the number is rounded to the nearest power of
+nearest integer  If negative, the number is rounded to the nearest power of
 10; e.g. -2 means "to the nearest hundred".  If ROUND is used as before,
 with one argument, it works as before.  ckclib.c, ckuus3.c, 25 Jun 2011.
 
@@ -8917,7 +8923,7 @@ Updated locale documentation on the website in locale.html, 5 Feb 2016.
 
 As noted, Dev.17 dumped core immediately upon startup on certain 64-bit
 platforms such as Ubuntu 15.04 and Mac OS X 10.11.  Since I don't have
-access to these programs I asked Mark Sapiro to look at the changes I made
+access to these platforms I asked Mark Sapiro to look at the changes I made
 and try to narrow them down.  He found that these did the trick:
 
 --- cku304.17/ckucmd.h  2016-02-03 11:28:00.000000000 -0800
@@ -8942,7 +8948,7 @@ and try to narrow them down.  He found that these did the trick:
  #endif /* CK_64BIT */
 
 So I put back my changes from to ckcdeb.h, ckcker.h, ckucmd.h, and ckuusr.h, 
-from Feb 3, and then made the adustments just above.  I suspect the segfaults
+from Feb 3, and then made the adjustments just above.  I suspect the segfaults
 occurred when a bunch of these very large buffers were malloc'd in
 cmsetup() upon program startup.  Time will tell if the new values are safe.
 ckucmd.c, 5 Feb 2016.
@@ -8966,5 +8972,155 @@ RHEL6.6.  ckufio.c, 16 Feb 2016.
 
 --- Dev.20 ---
 
+\fcvtdate(string,code)... code is a number or a variable with an integer
+value.  Function args that must be numeric can be given as macro names
+without the \m(xxx) notation, i.e. just xxx, but that didn't work with
+\fcvtcate():
+
+  for i 1 6 1 { echo \m(i). \fcvtdate(,i) }
+
+Now it does.  ckuus4.c, 23 Mar 2016.
+
+Fixed HELP SEXP to also show ROUND with optional second argument.
+ckuus2.c, 24 Apr 2016.
+
+There was no way to print stuff within S-Expression code, so I added an ECHO
+command that takes any number of arguments to be printed in series, but
+unlike the mainline ECHO command, this one evaluates each element in its
+argument list as an S-expression, or if it is not an S-Expression, then as a
+macro.  Literal strings and Kermit backslash items (variables, function
+calls) must be entered as Lisp quoted strings:
+
+  (echo '(\fupper(abcdefg)))
+
+which prints "ABCDEFG".
+
+This example shows how Kermit code can be transformed to all Lisp:
+
+  define a three plus four is  
+  define a 3
+  define b 4
+  echo \m(a) \fsexp(+ b c)
+
+Results in "three plus four is 7".  The more-compact all-Lisp version gives
+the same result:
+
+  (setq b 3 c 4)
+  (echo '(three plus four is) (+ b c))
+
+Thus the main utility of the S-expression ECHO directive is to be able to
+print macro named variables (i.e. variables whose names don't start with
+backslash) without enclosing them in \m().  Or to put it another way, to be
+able to write LISP code that prints results in regular Lisp syntax without
+having to leave the Lisp environment.  ckuus3.c, 25 Apr 2015.
+
+Added UNQUOTE command to deal with Lisp string constants like:
+
+  '(this is a string)
+
+so they can be echoed without the syntax, or exported into Kermit land.
+Also fixed bug where dosexp() could return a previous value if the current
+one was empty.  ckuus3.c, 26 Apr 2016.
+
+....................
+The following notes are from April 27, 2016...  Apparently I was in the
+middle of SEXP work and got distracted.
+....................
+
+Fixed the ECHO command to always do unquoting itself, so UNQUOTE is
+only necessary for things like creating a string valued variable in Lisp
+that can be referenced in the Kermit domain:
+
+  (setq a (unquote '(This is a Lisp string constant)))
+  show macro a
+  This is a Lisp string constant
+
+We still need the inverse of Unquote, say REQUOTE or DOQUOTE or ADDQUOTE or
+IMPORT, whose argument is a variable containing a Kermit string, which
+returns the equivalent Lisp string.  Like QUOTE, but evaluates the operand
+first.
+
+The sexp torture test still runs correctly.
+
+Meanwhile I think there is a lot of redundant or unused code in dosexp().
+
+Explanation for docs:
+
+Everything in an S-Expression is an operator, 
+a variable name, a numerical constant, or a string constant.
+Strings in Lisp are represented as '(contents of string).
+The ECHO operator understands these and outputs them without the
+syntax, but it also understands regular Kermit strings, so you can
+use Kermit variables
+
+Kermit variables that start with backslash like \%a, \v(date), etc,
+don't look like Lisp variables so they have to be quoted:
+(echo '(\%a) '(\v(date)))
+
+Now do we need other string functions like CAR, CADDR, and CONCAT?
+
+(End of April 27, 2016, notes)
+....................
+
+April 19, 2017: Coming back to the code after a year of not touching it.  If
+there are still any C-Kermit users out there, they don't seem to have any
+issues.  Nevertheless, I do believe there are problems with the OpenSSL
+support.  But I'm really not qualified or equipped to deal with them.
+
+Updated Dev version and dates, plus added comments about how to do this.
+ckcmai.c, 27 Apr 2016.
+
+Updated makefile dates.  makefile, 27 Apr 2016.
+
+It was bothering me that in Unix, you can't pipe a command or shell script
+to the kind of Kermit script that is designed to read from a file whose name
+specified on the command line; that is, that has an FOPEN /READ command in
+it.  If FOPEN had a way to "open" standard input, then if no filename was
+given on the command line, FOPEN could accommodate:
+
+  if defined \%1 fopen /read \%c \%1
+  else fopen /stdin \%c
+  if fail ...
+
+So using this code, you can run a script "averages" in either of two ways:
+
+  average list               # The 'list' file contains a list of numbers
+  someprogram | average      # 'someprogram' outputs a list of numbers
+
+To see the C-Kermit changes search for "stdin" (case-independent) in
+ckuus7.c.  It's not super-elegant, codewise, but I didn't want to totally
+redesign the data structures.  Nothing was done for stdout or stderr, but
+they could follow the same path if there's ever a need.  UNIX only for now,
+but could probably be adapted to VMS or Windows without much trouble.
+ckcker.h, ckuus2.c, ckuus7.c, 19 Apr 2017.
+
+Added switches for GETC... GETC /TIMEOUT:sec (so as not to have to SET
+ASK-TIMER before and after), /QUIET (so as not to see "?Timed out" message),
+and GETC /CHECK to see if anything is waiting to be read in the standard
+input stream (what it actually does is checks to see if stdin is a terminal;
+normally it won't have anything waiting if it is, and if it isn't, that
+means stdin is being piped to C-Kermit (or, more usefully, a C-Kermit
+script).  This way a script can be written that can read its input from a
+disk file whose name is given on the command line, or have its input piped
+from another program, and still be able to give a usage message if no
+filename was given and nothing was piped.  ckuus6.c, ckuus2.c, 21 Apr 2017.
+
+Here is sample code for a script:
+
+if defined \%1 {                        # filename given on command line
+    fopen /read \%c \%1
+    if fail exit 1
+} else {                                # No command-line argument given
+    fopen /stdin \%c
+    if fail exit 1                      # Open failed (shouldn't happen)
+    getc /check                         # Check if stdin is redirected.
+    if fail exit 1 \m(usage)            # If not exit with usage message.
+}
+
+For this purpose, it turns out that IF NOT BACKGROUND works just as well as
+GETC /CHECK followed by IF FAIL.  IF BACKGROUND is true not only if the
+program is running in the background, but also if its standard input is a
+pipe.
+
 ---------------------------------
-***************************
+**************************

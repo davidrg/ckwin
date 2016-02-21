@@ -113,14 +113,14 @@ static char rxresult[RXRESULT+1];
   NOTE: This is NOT a replacement for strncpy():
    . strncpy() does not require its source string to be NUL-terminated.
    . strncpy() does not necessarily NUL-terminate its result.
-   . strncpy() right-pads dest with NULs if it is longer than src.
    . strncpy() treats the length argument as the number of bytes to copy.
    . ckstrncpy() treats the length argument as the size of the dest buffer.
    . ckstrncpy() doesn't dump core if given NULL string pointers.
    . ckstrncpy() returns a number.
 
   Use ckstrncpy() when you want to:
-   . Copy an entire string into a buffer without overrun.
+   . Copy a NUL-terminated string into a buffer without overrun, truncating 
+      it if necessary to fit in the buffer, and null-terminating it.
    . Get the length of the string back.
 
   Use strncpy() when you want to:

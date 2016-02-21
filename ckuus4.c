@@ -10620,7 +10620,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
             goto fnend;
         }
         if (argn > 1) {			/* Format code */
-            s = bp[1];
+            s = evalx(bp[1]);
             if (!s) s = "";
             if (!*s) s = "0";
             if (!chknum(s)) {

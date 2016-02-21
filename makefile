@@ -1,12 +1,12 @@
 # makefile / Makefile / ckuker.mak / CKUKER.MAK
 #
-# Mon Jan 18 15:00:00 2016
-BUILDID=20160118
+# Fri Apr 21 13:04:56 2017
+BUILDID=20170421
 CKVER= "9.0.304"
 #
 # -- Makefile to build C-Kermit for UNIX and UNIX-like platforms --
 #
-# Copyright (C) 1985, 2016,
+# Copyright (C) 1985, 2017,
 #   Trustees of Columbia University in the City of New York.
 #   All rights reserved.  See the C-Kermit COPYING.TXT file or the
 #   copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -20,7 +20,8 @@ CKVER= "9.0.304"
 #
 # Note: Author is no longer at Columbia University or at the 115th Street
 # address effective 1 July 2011.  Even so, C-Kermit remains Copyright
-# Columbia U because that is where it was written and further developed.
+# Columbia U because that is where it was first written in 1985 and further
+# developed through mid-2011.
 #
 # Contributions from many others.  Special thanks to Jeff Altman for the
 # secure-build targets, Peter Eichhorn, assyst GmbH, for the consolidated

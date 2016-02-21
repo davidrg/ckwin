@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2016
+  Copyright (C) 1985, 2017
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -574,6 +574,9 @@ struct ssh_pf {				/* SSH port forwarding */
 #define FM_RWB     15			/* Read/Write/Append/Binary mask */
 #define FM_CMD     16			/* Command */
 #define FM_EOF     64			/* (status) At EOF */
+#define FM_STDIN  128                   /* Standard input */
+#define FM_STDOUT 256                   /* Standard output */
+#define FM_STDERR 512                   /* Standard error */
 
 /* File errors */
 

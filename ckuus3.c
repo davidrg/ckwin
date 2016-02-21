@@ -13,7 +13,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2014,
+  Copyright (C) 1985, 2016,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -3334,6 +3334,8 @@ static int sexpmaxdep = 1000;           /* Maximum depth */
 #define SX_DEC 41
 #define SX_QUO 42
 #define SX_STR 43
+#define SX_ECH 44
+#define SX_UNQ 45
 
 /* Operator flags */
 
@@ -3392,8 +3394,9 @@ static struct keytab sexpops[] = {      /* Built-in operators */
     "||",      SX_LOR, 0,
     "&&",      SX_AND, 0,
 
-    "quote",   SX_QUO, SXF_ONE,
+    "quote",   SX_QUO, SXF_ONE,         /* String operators */
     "string",  SX_STR, SXF_ONE,
+    "unquote", SX_UNQ, SXF_ONE,
 
     "eval",    SX_EVA, 0,               /* Assorted commands */
     "abs",     SX_ABS, SXF_ONE,
@@ -3402,6 +3405,7 @@ static struct keytab sexpops[] = {      /* Built-in operators */
     "ceiling", SX_CEI, SXF_ONE|SXF_FLO,
     "floor",   SX_FLR, SXF_ONE|SXF_FLO,
     "float",   SX_FLO, SXF_ONE|SXF_FLO,
+    "echo",    SX_ECH, 0,
 
 #ifdef FNFLOAT
     "sqrt",    SX_SQR, SXF_ONE|SXF_FLO, /* Floating point functions */
@@ -3592,6 +3596,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
         if (!q)
           goto xdosexp;
         n = q->a_size;                  /* Number of items */
+//        printf("XXX cksplit=%d\n",n);
         debug(F101,sexpdebug("split"),"",n);
         if (n < 0 || n > SEXPMAX) {     /* Check for too many */
             printf("?Too many operands: max = %d\n",SEXPMAX);
@@ -3601,9 +3606,23 @@ dosexp(s) char *s; {                    /* s = S-Expression */
         if (n == 0)                     /* None, result is NULL, done. */
           goto xdosexp;
         if (n == 1 && s[0] == '(') {    /* One but it's another SEXP */
+//            printf("XXX s.00=[%s]\n",s);
             s2 = dosexp(s);
+//            printf("XXX s2.00=[%s]\n",s2);
             goto xdosexp;
         }
+        if (n == 1 && s[0] == '\047') { /* One but it's a string constant */
+            int x = (int) strlen(s);
+            s2 = s;
+            if (s2[1] == '(' && s2[x-1] == ')') { /* '(string) */
+                s2[x-1] = NUL;
+                s2 += 2;
+//                printf("XXX s2.2=[%s]\n",s2);
+            }
+            goto xdosexp;
+        }
+        /* More than one */
+
         p2 = q->a_head;                 /* Point to result array. */
         for (i = 1; i <= n; i++) {      /* We must copy it because */
             p[i] = NULL;                /* recursive calls to dosexp() */
@@ -3611,7 +3630,17 @@ dosexp(s) char *s; {                    /* s = S-Expression */
               makestr(&(p[i]),p2[i]);
         }
         if (s[0] == '(') {              /* Operator is an S-Expression */
+//            printf("XXX p[1]=[%s] s=[%s]\n",p[1],s);
             s2 = dosexp(p[1]);          /* Replace it by its value */
+//            printf("XXX s2.1=[%s]\n",s2);
+            if (s2[0] == '\047') {      /* LISP string literal */
+                int x = (int) strlen(s2);
+                if (s2[1] == '(' && s2[x-1] == ')') { /* '(string) */
+                    s2[x-1] = NUL;
+                    s2 += 2;
+                    printf("XXX s2.2=[%s]\n",s2);
+                }
+            }
             makestr(&(p[1]),s2);
         }
         mustfree++;                     /* Remember to free it */
@@ -3793,7 +3822,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
                         goto xdosexp;
                     }
                     macro++;            /* Not an S-Expression */
-                } else {                /* Not found in macro table */
+                } else {
                     printf("?Not defined - \"%s\"\n", p[1]);
                     sexprc++;
                     goto xdosexp;
@@ -4069,17 +4098,53 @@ dosexp(s) char *s; {                    /* s = S-Expression */
             }
             goto xdosexp;
         } else if (x == SX_QUO) {
-#ifndef COMMENT
-            int xx;
+            int k, xx;
             xx = strlen(p[2]);
             p[3] = (char *)malloc(xx+4);
             s2 = p[3];
             ckmakmsg(p[3],xx+4,"'(",p[2],")",NULL);
             n++;
-#else
-            s2 = p[2];
-#endif /* COMMENT */
             goto xdosexp;
+        } else if (x == SX_UNQ) {       /* UNQUOTE */
+            int k, xx = 0;
+            s2 = p[2];
+            if (!s2) s2 = "";
+            xx = strlen(s2);
+//            printf("XXX ENTRY: %s, len=%d\n",s2,xx);
+            if (xx = 0)                 /* Null or empty arg */
+              goto xdosexp;
+
+            /* Case 0 - number */
+            if (isfloat(s2,0))
+              goto xdosexp;
+
+            /* Case 2 - S-expression that evaluates to a quoted string */
+            if (s2[0] == '(' && s2[xx-1] == ')') {
+//                printf("XXX SEXP: %s\n",p[2]);
+                s2 = dosexp(s2);
+//                printf("XXX SEXP EVALUATED: %s\n",p[2]);
+            } else if (s2[0] != '\047') {
+            /* Case 3 - Variable */
+//                printf("XXX MACRO NAME: %s\n",p[2]);
+                if ((k = mxlook(mactab,p[2],nmac)) >= 0) {
+                    s2 = mactab[k].mval;
+//                    printf("XXX MACRO VALUE: %s\n",s2);
+                } else {
+//                    printf("XXX UNDEFINED MACRO: %s\n",p[2]);
+                    s2 = "";
+                }
+            }
+            /* If result is a quoted string, unquote it */
+//            printf("XXX BEFORE UNQUOTING: %s\n",s2);
+            xx = strlen(s2);
+            if (s2[0] == '\047' && s2[1] == '(' && s2[xx-1] == ')') {
+//                printf("XXX HAVE QUOTED STRING: %s\n",s2);
+                s2[xx-1] = NUL;
+                s2 += 2;
+            }
+//            printf("XXX RESULT: %s\n",s2);
+            goto xdosexp;
+
         } else if (x == SX_STR) {
             int xx;
             s2 = dosexp(p[2]);
@@ -4139,12 +4204,25 @@ dosexp(s) char *s; {                    /* s = S-Expression */
               continue;
         }
 #else
-        if (*s2 != '\047') {            /* Is it quoted? */
-            s2 = dosexp(p[i+1]);        /* No, evaluate it */
-            if (sexprc) goto xdosexp;
+        if (*s2 != '\047') {            /* Not quoted */
+//            printf("XXX UNQUOTED ARG %s\n",s2);
+            if (x == SX_ECH && (k = mxlook(mactab,s2,nmac)) > -1) {
+                s2 = mactab[k].mval;
+//                printf("XXX MACRO DEF %s\n",s2);                
+            } else {
+              s2 = dosexp(s2);      /* No, evaluate it */
+//              printf("XXX SEXP VALUE %s\n",s2);                
+            }
+            if (sexprc && x != SX_ECH)
+                goto xdosexp;
             if (!s2) s2 = "";
             if (!macro && x == SX_EVA)
               continue;
+            if (x == SX_ECH) {          /* ECHO */
+                printf("%s ",s2);
+                if (i == n-1) printf("\n");
+                continue;
+            }
         }
         if (*s2 == '\047') {            /* Is result quoted? */
             debug(F110,sexpdebug("'B"),s2,0);
@@ -4161,6 +4239,11 @@ dosexp(s) char *s; {                    /* s = S-Expression */
                 }
             }
             debug(F110,sexpdebug("'C"),s2,0);
+            if (x == SX_ECH) {          /* ECHO */
+                printf("%s ",s2);
+                if (i == n-1) printf("\n");
+                continue;
+            }
         }
 #endif /* COMMENT */
         if (macro) {
@@ -4625,8 +4708,12 @@ dosexp(s) char *s; {                    /* s = S-Expression */
 
     if (!s2) s2 = "";
     debug(F111,"xdosexp s2",s2,sexprc);
-    if (!sexprc && *s2) {		/* Have a result */
-        char * sx;
+//    printf("XXX xdosexp s2=[%s]\n",s2);
+    if (x == SX_ECH) s2 = "";
+    debug(F111,"xdosexp s2 ECHO",s2,sexprc);
+
+    if (!sexprc /* && *s2 */) {	    /* Have a result */
+        char * sx;                  /* Note -- do this even if result empty */
         char * q2 = s2; int xx = 0;
         if (*s2) {
             while (*q2++) xx++;         /* Get length */
@@ -4662,6 +4749,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
             }
         }
     }
+  xxdosexp:
     if (line)                           /* If macro arg buffer allocated */
       free(line);                       /* free it. */
     if (mustfree) {                     /* And free local copy of split list */

@@ -1,5 +1,15 @@
 C-KERMIT 9.0.304 PRERELEASE TESTING
 
+Fri Apr 21 15:37:35 2017
+
+C-Kermit 9.0.304 Dev.21, a development (pre-alpha, pre-beta).  The only
+siginifcant change is a new ability to allow the FOPEN command to "open"
+the standard input stream via a new command FOPEN /STDIN.  This allows 
+Kermit scripts to read the output of another program through a pipe,
+as in Unix, using its regular FREAD command.  There are also some minor
+additions to the S-Expression (LISP) command repertoire.  Dev.20 of
+February 16, 2016, was just a bug fix for Mac OS X.
+
 Fri Feb  5 20:38:11 2016
 
 This is C-Kermit 9.0.304 Dev.19, a development (pre-alpha, pre-beta)

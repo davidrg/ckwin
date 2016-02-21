@@ -9,7 +9,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2013,
+  Copyright (C) 1985, 2017,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -11543,13 +11543,18 @@ z_open(name, flags) char * name; int flags; {
     if (flags & FM_CMD)                 /* Opening pipes not implemented yet */
       return(z_error = FX_NYI);         /* (and not portable either) */
     debug(F101,"z_open nfopnargs","",nfopnargs);
-    if (flags < 0 || flags >= nfopnargs) /* Range check flags */
-      return(z_error = FX_RNG);
-    mode = fopnargs[flags];             /* Get fopen() arg */
-    debug(F111,"z_open fopen args",mode,flags);
-    if (!mode[0])                       /* Check for illegal combinations */
-      return(z_error = FX_BOM);
-    if (!z_inited) {                    /* If file structs not inited */
+
+    if (flags & FM_STDIN) {             /* Read from standard input */
+        mode = "r";
+    } else {                            /* If regular file, not stdin.. */
+        if (flags < 0 || flags >= nfopnargs) /* Range check flags */
+          return(z_error = FX_RNG);
+        mode = fopnargs[flags];         /* Get fopen() arg */
+        debug(F111,"z_open fopen args",mode,flags);
+        if (!mode[0])                   /* Check for illegal combinations */
+          return(z_error = FX_BOM);
+    }
+    if (!z_inited) {                /* If file structs not inited */
         debug(F101,"z_open z_maxchan 1","",z_maxchan);
 #ifdef UNIX
         debug(F101,"z_open ckmaxfiles","",ckmaxfiles);
@@ -11615,8 +11620,19 @@ z_open(name, flags) char * name; int flags; {
     z_file[n]->z_flags = 0;		/* In case of failure... */
     z_file[n]->z_fp = NULL;		/* Set file pointer to NULL */
 
-    
-    debug(F110,"fopen mode",mode,0);
+    debug(F110,"fopen mode",flags,0);
+#ifdef UNIX
+    if (flags & FM_STDIN) {             /* Standard input */
+        t = (FILE *)stdin;              /* We just use the ready-made stream */
+        z_nopen++;                      /* Count it. */
+        z_file[n]->z_fp = t;		/* Stash the file pointer */
+        z_file[n]->z_flags = flags;     /* and the flags */
+        z_file[n]->z_nline = 0;		/* Current line number is 0 */
+        ckstrncpy(z_file[n]->z_name,name,CKMAXPATH); /* "filename" */
+        z_error = 0;                    /* No error so far */
+        return(n);                      /* Return the channel number */
+    }
+#endif /* UNIX */
     t = fopen(name, mode);              /* Try to open the file. */
     if (!t) {                           /* Failed... */
         debug(F111,"z_open error",name,errno);
@@ -11634,6 +11650,7 @@ z_open(name, flags) char * name; int flags; {
       _setmode(_fileno(t),O_SEQUENTIAL);
 #endif /* O_SEQUENTIAL */
 #endif /* NT */
+
     z_nopen++;                          /* Open, count it. */
     z_file[n]->z_fp = t;		/* Stash the file pointer */
     z_file[n]->z_flags = flags;		/* and the flags */
@@ -12200,6 +12217,9 @@ static struct keytab fcswtab[] = {      /* OPEN modes */
     { "/command",   FM_CMD,  0 },       /* Not implemented */
 #endif /* COMMENT */
     { "/read",      FM_REA,  0 },
+#ifdef UNIX                             /* Could be expanded to VMS etc.. */
+    { "/stdin",     FM_STDIN,0 },
+#endif  /* UNIX */
     { "/write",     FM_WRI,  0 }
 };
 static int nfcswtab = (sizeof (fcswtab) / sizeof (struct keytab));
@@ -12387,6 +12407,14 @@ dofile(op) int op; {                    /* Do the FILE command */
         if (!(filmode & FM_RWA))        /* If no access mode specified */
           filmode |= FM_REA;            /* default to /READ. */
 
+#ifdef UNIX
+        if (filmode & FM_STDIN) {       /* If STDIN specified */
+            filmode |= FM_REA;          /* it implies /READ */
+            /* We don't need to parse anything further */
+            s = "(stdin)";
+            goto xdofile;               /* Skip around the following */
+        }
+#endif /* UNIX */
         y = 0;                          /* Now parse the filename */
         if ((filmode & FM_RWA) == FM_WRI) {
 	    x = cmofi("Name of new file","",&s,xxstring);
@@ -12416,6 +12444,8 @@ dofile(op) int op; {                    /* Do the FILE command */
             }
 #endif /* VMS */
         }
+
+      xdofile:
         ckstrncpy(zfilnam,s,CKMAXPATH); /* Is OK - make safe copy */
         if ((x = cmcfm()) < 0)          /* Get confirmation of command */
           return(x);

@@ -3,7 +3,7 @@
 #endif /* SSHTEST */
 
 #include "ckcsym.h"
-char *userv = "User Interface 9.0.311, 3 Feb 2016";
+char *userv = "User Interface 9.0.312, 19 Apr 2017";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 
@@ -8297,7 +8297,8 @@ docmd(cx) int cx; {
 	    if (sexprc == 0) {		/* Success */
 		/* Echo the result if desired */
 		if ((!xcmdsrc && sexpecho != SET_OFF) || sexpecho == SET_ON)
-		  printf(" %s\n",result ? result : "");
+                  if (result) if (*result)
+                    printf(" %s\n",result);
 		makestr(&sexpval,result);
 		success = sexppv > -1 ? sexppv : 1;
 		return(success);

@@ -11744,6 +11744,9 @@ initoptlist() {
     makestr(&(optlist[noptlist++]),"NOLOEARN");
 #endif /* NOLOEARN */
 #endif /* CKLEARN */
+#ifdef BETATEST
+    makestr(&(optlist[noptlist++]),"BETATEST");
+#endif  /* BETATEST */
 
 #ifdef NOFLOAT
     makestr(&(optlist[noptlist++]),"NOFLOAT");
