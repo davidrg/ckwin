@@ -15,7 +15,7 @@ int cmdsrc() { return(0); }
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2016,
+  Copyright (C) 1985, 2017,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -35,6 +35,7 @@ char *tmpbuf;
 char line[LINBUFSIZ+1];
 char tmpbuf[TMPBUFSIZ+1];               /* Temporary buffer */
 #endif /* DCMDBUF */
+char lasttakeline[TMPBUFSIZ+1];        /* Last TAKE-file line */
 
 #ifndef NOICP
 
@@ -485,8 +486,9 @@ extern int maclvl, nmac, mecho, fndiags, fnerror, fnsuccess, nif;
 #endif /* NOSPL */
 
 FILE *tfile[MAXTAKE];                   /* TAKE file stack */
-char *tfnam[MAXTAKE];
-int tfline[MAXTAKE];
+char *tfnam[MAXTAKE];                   /* Name of TAKE file */
+int tfline[MAXTAKE];                    /* Current line number */
+int tfblockstart[MAXTAKE];              /* Current block-start line */
 
 int topcmd = -1;                        /* cmdtab index of current command */
 int havetoken = 0;
@@ -624,7 +626,86 @@ char *m_manual = "browse \\v(exedir)docs/manual/kermit95.htm";
 
 /* Now the multiline macros, defined with addmmac()... */
 
-/* FOR macro for \%i-style loop variables (see dofor()...) */
+/*
+  Kermit's scripting language is so much more powerful than C that it was
+  about a thousand time easier to implement FOR, WHILE, IF, and SWITCH
+  commands as internal Kermit macros.  This was done in 1996 for C-Kermit 6.0.
+
+  The following definitions, down to #ifdef COMMENT, are from C-Kermit
+  9.0.304 Dev.22, April 2017, where the command parser was changed to not
+  evaluate macro arguments on the DO command line, but to defer evaluation
+  until after the arguments had been separated and counted.  This change
+  required subtle modifications to the internal macro templates.
+
+  IMPORTANT: Internal macros must have names that start with '_', followed
+  by three letters, e.g. _whi for WHILE.  The definitions below are just
+  templates for some other code that constructs the actual menu to be
+  executed by filling in the \%x variables.  The generated macros have names
+  like _whil2, _whil3, etc, where the trailing number is the execution stack
+  level.  The reason for the strict naming convention is so internal macros
+  can be parsed differently than regular ones.  See
+  ckuusr.c:isinternalmacro(), which determines the type of macro.
+*/
+
+/*
+ The WHILE macro:
+ \%1 = Loop condition
+ \%2 = Loop body
+*/
+char *whil_def[] = { "_assign _whi\\v(cmdlevel) {_getargs,",
+":_..inc,\\fcontents(\\%1),\\fcontents(\\%2),goto _..inc,:_..bot,_putargs},",
+"_define break goto _..bot, _define continue goto _..inc,",
+"do _whi\\v(cmdlevel),_assign _whi\\v(cmdlevel)",
+""};
+
+/*  
+ FOR macro for \%i-style loop variables (see dofor()...)
+ \%1 = Loop variable
+ \%2 = Initial value (can be an expression)
+ \%3 = Loop exit value
+ \%4 = Loop increment
+ \%5 = > or <
+ \%6 = Loop body
+*/
+char *for_def[] = { "_assign _for\\v(cmdlevel) { _getargs,",
+"define \\\\\\%1 \\feval(\\%2),:_..top,if \\%5 \\\\\\%1 \\%3 goto _..bot,",
+"\\fcontents(\\%6),:_..inc,incr \\\\\\%1 \\%4,goto _..top,:_..bot,_putargs},",
+"define break goto _..bot, define continue goto _..inc,",
+"do _for\\v(cmdlevel) \\\\%1 \\%2 \\%3 \\%4 { \\%5 },_assign _for\\v(cmdlevel)",
+""};
+
+/*
+  FOR macro when the loop variable is itself a macro, with same arguments
+  but slightly different quoting.
+*/
+char *foz_def[] = { "_assign _for\\v(cmdlevel) { _getargs,",
+"def \\%1 \\feval(\\%2),:_..top,if \\%5 \\%1 \\%3 goto _..bot,",
+"\\fcontents(\\%6),:_..inc,incr \\%1 \\%4,goto _..top,:_..bot,_putargs},",
+"def break goto _..bot, def continue goto _..inc,",
+"do _for\\v(cmdlevel) \\%1 \\%2 \\%3 \\%4 { \\%5 },_assign _for\\v(cmdlevel)",
+""};
+
+/*
+ SWITCH macro
+ \%1 = Switch variable
+ \%2 = Switch body
+*/
+char *sw_def[] = { "_assign _sw_\\v(cmdlevel) {_getargs,",
+"_forward {\\fcontents(\\%1)},\\fcontents(\\%2),:default,:_..bot,_putargs},_def break goto _..bot,",
+"do _sw_\\v(cmdlevel),_assign _sw_\\v(cmdlevel)",
+""};
+
+/*
+  IF macro
+  /%1 = Commands to execute (IF part and ELSE part if any)
+*/
+char *xif_def[] = {
+"_assign _if_\\v(cmdlevel) {_getargs,\\fcontents(\\%1),_putargs},",
+"do _if_\\v(cmdlevel),_assign _if\\v(cmdlevel)",
+""};
+
+#ifdef COMMENT
+/* Internal macro definitions for C-Kermit 6.0 through 9.0.302 */
 
 char *for_def[] = { "_assign _for\\v(cmdlevel) { _getargs,",
 "def \\\\\\%1 \\feval(\\%2),:_..top,if \\%5 \\\\\\%1 \\%3 goto _..bot,",
@@ -633,20 +714,11 @@ char *for_def[] = { "_assign _for\\v(cmdlevel) { _getargs,",
 "do _for\\v(cmdlevel) \\%1 \\%2 \\%3 \\%4 { \\%5 },_assign _for\\v(cmdlevel)",
 ""};
 
-/* This is the FOR macro when the loop variable is itself a macro */
-
 char *foz_def[] = { "_assign _for\\v(cmdlevel) { _getargs,",
 "def \\%1 \\feval(\\%2),:_..top,if \\%5 \\%1 \\%3 goto _..bot,",
 "\\%6,:_..inc,incr \\%1 \\%4,goto _..top,:_..bot,_putargs},",
 "def break goto _..bot, def continue goto _..inc,",
 "do _for\\v(cmdlevel) \\%1 \\%2 \\%3 \\%4 { \\%5 },_assign _for\\v(cmdlevel)",
-""};
-
-/* WHILE macro */
-char *whil_def[] = { "_assign _whi\\v(cmdlevel) {_getargs,",
-":_..inc,\\%1,\\%2,goto _..inc,:_..bot,_putargs},",
-"_def break goto _..bot, _def continue goto _..inc,",
-"do _whi\\v(cmdlevel),_assign _whi\\v(cmdlevel)",
 ""};
 
 /* SWITCH macro */
@@ -660,6 +732,8 @@ char *xif_def[] = {
 "_assign _if\\v(cmdlevel) {_getargs,\\%1,_putargs},",
 "do _if\\v(cmdlevel),_assign _if\\v(cmdlevel)",
 ""};
+
+#endif  /* COMMENT */
 
 /*
   Variables declared here for use by other ckuus*.c modules.
@@ -1588,6 +1662,7 @@ extern int ckrooterr;
         ok = 1;
         tlevel = 0;
         tfline[tlevel] = 0;
+        tfblockstart[tlevel] = 1;
         if (tfnam[tlevel] = malloc(strlen(line)+1))
           strcpy(tfnam[tlevel],line);   /* safe */
 #ifndef NOSPL
@@ -1723,6 +1798,7 @@ extern int ckrooterr;
         ok = 1;
         tlevel = 0;
         tfline[tlevel] = 0;
+        tfblockstart[tlevel] = 1;
         if ((tfnam[tlevel] = malloc(strlen(line)+1)))
           strcpy(tfnam[tlevel],line);   /* safe */
 
@@ -1758,6 +1834,7 @@ extern int ckrooterr;
             ok = 1;
             tlevel = 0;
             tfline[tlevel] = 0;
+            tfblockstart[tlevel] = 1;
             if (tfnam[tlevel] = malloc(strlen(line)+1))
               strcpy(tfnam[tlevel],line); /* safe */
 #ifndef NOSPL
@@ -1851,6 +1928,7 @@ doiksdinit() {
     if (tfile[0] != NULL) {
         tlevel = 0;
         tfline[tlevel] = 0;
+        tfblockstart[tlevel] = 1;
 #ifdef OS2
         if (tfnam[tlevel] = malloc(strlen(line)+1))
           strcpy(tfnam[tlevel],line);
@@ -2010,13 +2088,13 @@ getncm(s,n) char *s; int n; {
     *s = NUL;
 #endif /* COMMENT */
     if (*s2 == NUL) {                   /* If nothing was copied, */
-        /* debug(F100,"XXX getncm eom","",0); */
+        /* debug(F100,"getncm eom","",0); */
         popclvl();                      /* pop command level. */
         return(-1);
     } else {                            /* otherwise, tack CR onto end */
         *s++ = CR;
         *s = '\0';
-        /* debug(F110,"XXX getncm OK",s,0); */
+        /* debug(F110,"getncm OK",s,0); */
         if (mecho && pflag)             /* If MACRO ECHO ON, echo the cmd */
           printf("%s\n",s2);
     }
@@ -2093,6 +2171,7 @@ getnct(s,n,f,flag) char *s; int n; FILE *f; int flag; {
     char *lp = NULL, *lpx = NULL, *lp2 = NULL, *lp3 = NULL, *lastcomma = NULL;
     char * prev = NULL;
     int bc = 0;                         /* Block counter */
+    int firstread = 1;
 
     s2 = s;                             /* Remember original pointer */
     prev = s2;				/* Here too */
@@ -2134,7 +2213,10 @@ getnct(s,n,f,flag) char *s; int n; FILE *f; int flag; {
             *s = NUL;                   /* Make destination be empty */
             return(-1);                 /* Return failure code */
         }
-
+        if (firstread) {               /* Beginning of a block or statement */
+            tfblockstart[tlevel] = tfline[tlevel];
+            firstread = 0;
+        }
 #ifndef NODIAL
         if (flag)                       /* Count this line */
           dirline++;
@@ -2149,14 +2231,23 @@ getnct(s,n,f,flag) char *s; int n; FILE *f; int flag; {
         debug(F010,"getnct",lp2,0);
         if (len < 0)
           len = 0;
-        if (techo && pflag)             /* If TAKE ECHO ON, */
-          printf("%3d. %s",             /* echo it this line. */
+        if (techo && pflag) {            /* If TAKE ECHO ON, */
+            if (flag) {
+                printf("%3d. %s",             /* echo it this line. */
 #ifndef NODIAL
-                 flag ? dirline :
+                    flag ? dirline :
 #endif /* NODIAL */
-                 tfline[tlevel],
-                 lp2
-                 );
+                    tfline[tlevel],
+                    lp2
+                    );
+            } else {
+                printf("%3d. %3d. %s",             /* echo it this line. */
+                    tfline[tlevel],
+                    tfblockstart[tlevel],
+                    lp2
+                    );
+            }
+        }
         lp3 = lp2;                      /* Working pointer */
         i = len;                        /* Get first nonwhitespace character */
         while (i > 0 && (*lp3 == SP || *lp3 == HT)) {
@@ -2288,9 +2379,9 @@ getnct(s,n,f,flag) char *s; int n; FILE *f; int flag; {
             ccl != CMDQ &&              /* or line ends with CMDQ */
 #endif /* COMMENT */
             ccl != '-'  &&              /* or line ends with dash */
-            ccl != '{')                 /* or line ends with opening brace */
-          break;                        /* None of those, we're done. */
-
+            ccl != '{') {               /* or line ends with opening brace */
+            break;                      /* None of those, we're done. */
+        }
         if (ccl == '-' || ccl == '{')   /* Continuation character */
           if (ccx == CMDQ)              /* But it's quoted */
             break;                      /* so ignore it */
@@ -2356,6 +2447,28 @@ getnct(s,n,f,flag) char *s; int n; FILE *f; int flag; {
         debug(F010,"CMD(F)",s2,0);
     }
 #endif /* DEBUG */
+    {
+        int i = 0; char *s = s2; char prev = '\0'; char c = '\0';
+        while (*s) {   /* Save beginning of this command for error messages */
+            c = *s++;
+            if (c == '\n' || c == '\r') c = SP;
+            if (c == SP && prev == SP) /* Squeeze spaces */
+              continue;
+            lasttakeline[i++] = c;
+            prev = c;
+            if (i > TMPBUFSIZ-5) {
+                lasttakeline[i++] = '.';
+                lasttakeline[i++] = '.';
+                lasttakeline[i++] = '.';
+                lasttakeline[i++] = NUL;
+                break;
+            }
+        }
+        i = (int)strlen((char *)lasttakeline) - 1;
+        while (i > 0 && lasttakeline[i] == SP) { /* Trim treailing spaces */
+            lasttakeline[i] = NUL;
+            i--;
+        }    }
     free(lpx);                          /* Free temporary storage */
     return(0);                          /* Return success */
 }
@@ -3077,7 +3190,7 @@ parser(m) int m; {
                         printf("\n?Not a valid command or token - \"%s\"\n",
 			       cmddisplay((char *)cmdbuf,xx)
 			       );
-			cmderr();
+			/* cmderr(); */ newerrmsg("");
                     }
                     xx = -2;
                 }
@@ -3180,6 +3293,7 @@ parser(m) int m; {
 		    int x = 0;
 		    char * eol = "";
 		    x = strlen(cmdbuf);	/* Avoid blank line */
+#ifdef COMMENT
 		    if (x > 0) {
 			if (cmdbuf[x-1] != LF)
 			  eol = "\n";
@@ -3188,6 +3302,10 @@ parser(m) int m; {
 			       );
 		    } else
 		      printf("?Invalid\n");
+#else
+                    if (x > 0)
+                      newerrmsg("Syntax error");
+#endif  /* COMMENT */
 		}
 		success = 0;
 		debug(F110,"top-level cmkey failed",cmdbuf,0);
@@ -3227,7 +3345,7 @@ parser(m) int m; {
 		    }
 		} else
 #endif /* CK_RECALL */
-		  cmderr();
+                  /* cmderr(); */ newerrmsg("");
 
 		cmini(ckxech);		/* (fall thru) */
 
@@ -4111,7 +4229,10 @@ mxlook(table,cmd,n) char *cmd; struct mtab table[]; int n; {
             (!ckstrcmp(s,cmd,cmdlen,0))) return(i);
 #else
         w = ckstrcmp(s,cmd,-1,0);
-        if (!w) return(i);
+        if (!w) {
+            debug(F111,"MXLOOK",mactab[i].mval,i);
+            return(i);
+        }
         if (w > 0) return(-1);
 #endif /* COMMENT */
     }
@@ -4236,6 +4357,15 @@ addmmac(nam,s) char *nam, *s[]; {       /* Add a multiline macro definition */
     }
     free(p);                            /* Free the temporary copy. */
     return(y);
+}
+
+static char evalmacrobuf[TMPBUFSIZ];
+int
+evalmacroarg(p) char **p; {
+    char * s = evalmacrobuf;
+    int t = TMPBUFSIZ;
+    (VOID) zzstring(*p,&s,&t);
+    *p = evalmacrobuf;
 }
 
 /* Here is the real addmac routine. */
@@ -4371,7 +4501,6 @@ addmac(nam,def) char *nam, *def; {      /* Add a macro to the macro table */
         if (tra_asg) traceval(nam,p);
         return(0);                      /* Done. */
     }
-
 /* Not a macro argument or a variable, so it's a macro definition */
 
 #ifdef USE_VARLEN
@@ -4430,6 +4559,7 @@ addmac(nam,def) char *nam, *def; {      /* Add a macro to the macro table */
             }
             y = (c < c1) ? lo+1 : lo;
         }
+
         /* Now search linearly from starting location */
         for ( ; y < MAC_MAX && mactab[y].kwd != NULL; y++) {
             c2 = *(mactab[y].kwd);
@@ -6982,7 +7112,7 @@ doshow(x) int x; {
 	    char ** pp;
 	    if (line[0]) {		/* Have something to search for */
 		havearg = 1;		/* Maybe a list of things */
-		q = cksplit(1,0,line,NULL,"_-^$*?[]{}",0,0,0);
+                q = cksplit(1,0,line,NULL,"_-^$*?[]{}",0,0,0,0);
 		if (!q) break;
 		pp = q->a_head;
 	    }
@@ -7071,7 +7201,8 @@ doshow(x) int x; {
         break;
 
       case SHARG: {                     /* Args */
-          char * s1, * s2;
+          char * s, * s1, * s2, * tmpbufp;
+          int t;
           if (maclvl > -1) {
               printf("Macro arguments at level %d (\\v(argc) = %d):\n",
                      maclvl,
@@ -7082,10 +7213,14 @@ doshow(x) int x; {
                   if (!s1) s1 = "(NULL)";
                   s2 = m_xarg[maclvl][y];
                   if (!s2) s2 = "(NULL)";
+#ifdef COMMENT
                   if (y < 10)
                     printf(" \\%%%d = %s\n",y,s1);
                   else
                     printf(" \\&_[%d] = %s\n",y,s2);
+#else
+                  printf(" \\&_[%d] = %s\n",y,s2);
+#endif  /* COMMENT */
               }
           } else {
               printf("Top-level arguments (\\v(argc) = %d):\n", topargc);
@@ -9251,11 +9386,10 @@ incvar(s,x,z) char *s; CK_OFF_T x; int z; {  /* Increment a numeric variable */
   Call with x = macro table index, s = pointer to arguments.
   Returns 0 on failure, 1 on success.
 */
-
 int
 dodo(x,s,flags) int x; char *s; int flags; {
     int y;
-    extern int tra_asg, tra_cmd; int tra_tmp;
+    extern int tra_asg, tra_cmd; int tra_tmp; /* For TRACE */
 #ifndef NOLOCAL
 #ifdef OS2
     extern int term_io;
@@ -9339,7 +9473,7 @@ dodo(x,s,flags) int x; char *s; int flags; {
     }
     tra_asg = tra_tmp;
 
-/* Assign the new args one word per arg, allowing braces to group words */
+/* Break the big "s" string up into macro arguments */
 
     xwords(s,MAXARGLIST,NULL,0);
 
@@ -9466,16 +9600,27 @@ VOID
 xwords(s,max,list,flag) char *s; int max; char *list[]; int flag; {
     char *p;
     int b, i, k, q, y, z;
+    int macro = 0;
+
+    if (!list) {
+        debug(F100," xwords list is NULL","",0);
+        macro = 1;
+    } else {
+        debug(F100," xwords LIST is defined","",0);
+    }
+    debug(F100,"xwords ENTRY","",0);
+
 #ifndef NOSPL
-    int macro;
-    macro = (list == NULL);
-    debug(F010,"xwords",s,0);
+/*
+    debug(F110," xwords macro",(char *)m_xarg[maclvl][0],0);
+*/
+    debug(F101," xwords maclvl","",maclvl);
+    debug(F101," xwords max","",max);
+    debug(F101," xwords flag","",flag);
+    debug(F110," xwords string",s,0);
+    debug(F101," xwords macro","",macro);
 #endif /* NOSPL */
 
-#ifdef XWORDSDEBUG
-    printf("XWORDS string=%s\n",s);
-    printf("XWORDS max=%d\n",max);
-#endif /* XWORDSDEBUG */
     p = s;                              /* Pointer to beginning of string */
     q = 0;                              /* Flag for doublequote removal */
     b = 0;                              /* Flag for outer brace removal */
@@ -9483,45 +9628,97 @@ xwords(s,max,list,flag) char *s; int max; char *list[]; int flag; {
     y = 0;                              /* Brace nesting level */
     z = 0;                              /* "Word" counter, 0 thru max */
 
+    if (!s) s = "";                     /* Nothing to do */
+    if (!*s) return;
     if (list)
       for (i = 0; i <= max; i++)        /* Initialize pointers */
         list[i] = NULL;
 
     if (flag) max--;
 
+#ifndef NOSPL
+    /*
+      Macro arguments at this point are a single string... must split it up.
+      As of C-Kermit 9.0.304 Dev.22, 24 April 2017, we use cksplit() for
+      this instead of tons of messy code in xwords() written decades ago
+      to do what cksplit() does better.
+    */
+    if (macro) {
+        struct stringarray * q = NULL;
+        char **pp = NULL;
+        int n;
+        if (maclvl < 0) {
+            debug(F101," xwords maclvl < 0","",maclvl);
+            newerrmsg("Internal error: maclvl < 0");
+        }
+        debug(F101," xwords splitting macro arguments.. maclvl","",maclvl);
+  
+        /* Space is the only separator; grouping is with "" or {} */
+        q = cksplit(1,0,p," ","ALL",1+2,0,0,1);
+        z = q->a_size;                  /* Number of "words" in string */
+        if (z <= 0) return;
+        pp = q->a_head;
+        if (pp) {
+/*
+  In C-Kermit 9.0.304 Dev.22, April 2017, we have to get the macro arguments
+  from the previous macro level (prev).  Up to now, the macro arguments were
+  evaluated when the DO command was parsed, before dodo() or xwords() were
+  ever called.  Now we're evaluating them after already entering the new macro
+  stack level: evalmacroarg() is just a front end for zzstring(), which is at
+  the heart of all variable-substitution operations.  To evaluate a \%1-9
+  variable, zzstring() looks in the CURRENT macro stack frame.  Rather than
+  mess with zzstring(), I set maclvl back before calling evalmacroarg() and
+  restore it immediately afterward.  It's the only safe way to do this,
+  Because zzstring() has no way of knowing whether (say) \%1 is on the DO
+  command line or in some other context.
+*/
+            debug(F101," xwords macro cksplit items","",z);
+            if (z > max) z = max;
+            for (i = 1; i <= z; i++) {  /* Loop through macro arguments. */
+                p = pp[i];
+                debug(F111," xwords arg i",p,i);
+                maclvl--;               /* Get argument from previous level */
+                evalmacroarg(&p);       /* Evaluate it */
+                maclvl++;               /* Use its value on currentlevel */
+                debug(F111," xwords arg i evaluated",p,i);
+                makestr(&(m_xarg[maclvl][i]),p);
+                if (i < 10) {
+                    varnam[1] = (char) (i + '0'); /* Assign last arg */
+                    addmac(varnam,p);
+                    debug(F111," xwords arg name",varnam,maclvl);
+                    debug(F111," xwords def def ",p,maclvl);
+                }
+            }
+            /* Handle argc and the dimension of the \&_[] arg vector array */
+
+            if (maclvl < 0) {           /* (How can this be?) */
+                a_dim[0] = z;               /* Array dimension is one less */
+                topargc = z + 1;            /* than \v(argc) */
+                debug(F111," xwords a_dim[0]","IMPOSSIBLE",a_dim[0]);
+            } else {
+                macargc[maclvl] = z + 1;    /* Set \v(argc) variable */
+                n_xarg[maclvl] = z + 1;     /* This is the actual number */
+                a_ptr[0] = m_xarg[maclvl];  /* Point \&_[] at the args */
+                a_dim[0] = z;               /* And give it this dimension */
+                debug(F111," xwords a_dim[0]","E",a_dim[0]);
+            }
+        }
+        return;
+    }
+#endif /* NOSPL */
+/*
+  Not macro args, some other kind of list.
+  This whole mess could be a cksplit() call...
+*/
     while (1) {                         /* Go thru word list */
         if (!s || (*s == '\0')) {       /* No more characters? */
             if (k != 0) {               /* Was I in a word? */
                 if (z == max) break;    /* Yes, only go up to max. */
                 z++;                    /* Count this word. */
-#ifdef XWORDSDEBUG
-                printf("1 z++ = %d\n", z);
-#endif /* XWORDSDEBUG */
-#ifndef NOSPL
-                if (macro) {            /* Doing macro args */
-                    if (z < 10) {
-                        varnam[1] = (char) (z + '0'); /* Assign last arg */
-                        addmac(varnam,p);
-                    }
-                    if (z <= max) {
-#ifdef COMMENT
-                        if (maclvl < 0)
-                          addmac(varnam,p);
-                        else
-#endif /* COMMENT */
-                          makestr(&(m_xarg[maclvl][z]),p);
-                    }
-                } else {                /* Not doing macro args */
-#endif /* NOSPL */
-                    list[z] = p;        /* Assign pointer. */
-#ifdef XWORDSDEBUG
-                    printf("[1]LIST[%d]=\"%s\"\n",z,list[z]);
-#endif /* XWORDSDEBUG */
-#ifndef NOSPL
-                }
-#endif /* NOSPL */
-                break;                  /* And get out. */
-            } else break;               /* Was not in a word */
+                list[z] = p;            /* Assign pointer. */
+                debug(F111," xwords list item p z",p,z);
+            }
+            break;                      /* And get out. */
         }
         if (k == 0 && (*s == SP || *s == HT)) { /* Eat leading blanks */
             s++;
@@ -9566,13 +9763,7 @@ xwords(s,max,list,flag) char *s; int max; char *list[]; int flag; {
                 p = s;                  /* Mark the beginning */
                 if (flag && z == max) { /* Want last word to be remainder? */
                     z++;
-#ifdef XWORDSDEBUG
-                    printf("1 z++ = %d\n", z);
-#endif /* XWORDSDEBUG */
                     list[z] = p;        /* Yes, point to it */
-#ifdef XWORDSDEBUG
-                    printf("[4]LIST[%d]=\"%s\"\n",z,list[z]);
-#endif /* XWORDSDEBUG */
                     break;              /* and quit */
                 }
                 k = 1;                  /* Set in-word flag */
@@ -9587,78 +9778,15 @@ xwords(s,max,list,flag) char *s; int max; char *list[]; int flag; {
             y = 0;                      /* start braces off clean again */
             if (z == max) break;        /* Only go up to max. */
             z++;                        /* count this arg */
-#ifdef XWORDSDEBUG
-            printf("1 z++ = %d\n", z);
-#endif /* XWORDSDEBUG */
-
-#ifndef NOSPL
-            if (macro) {
-                if (z < 10) {
-                    varnam[1] = (char) (z + '0'); /* compute its name */
-                    addmac(varnam,p);   /* add it to the macro table */
-                }
-                if (z <= max) {
-#ifdef COMMENT
-                    if (maclvl < 0)
-                      addmac(varnam,p);
-                    else
-#endif /* COMMENT */
-                      makestr(&(m_xarg[maclvl][z]),p);
-                }
-            } else {
-#endif /* NOSPL */
-                list[z] = p;
-#ifdef XWORDSDEBUG
-                printf("[2]LIST[%d]=\"%s\"\n",z,list[z]);
-#endif /* XWORDSDEBUG */
-#ifndef NOSPL
-            }
-#endif /* NOSPL */
+            list[z] = p;
             p = s+1;
         }
         s++;                            /* Point past this character */
     }
     if ((z == 0) && (y > 1)) {          /* Extra closing brace(s) at end */
         z++;
-#ifndef NOSPL
-        if (macro) {
-            if (z < 10) {
-                varnam[1] = z + '0';    /* compute its name */
-                addmac(varnam,p);       /* Add rest of line to last arg */
-            }
-            if (z <= max) {
-#ifdef COMMENT
-                if (maclvl < 0)
-                  addmac(varnam,p);
-                else
-#endif /* COMMENT */
-                  makestr(&(m_xarg[maclvl][z]),p);
-            }
-        } else {
-#endif /* NOSPL */
-            list[z] = p;
-#ifdef XWORDSDEBUG
-            printf("[3]LIST[%d]=\"%s\"\n",z,list[z]);
-#endif /* XWORDSDEBUG */
-#ifndef NOSPL
-        }
-#endif /* NOSPL */
+        list[z] = p;
     }
-#ifndef NOSPL
-    if (macro) {                        /* Macro */
-        if (maclvl < 0) {
-            a_dim[0] = z;               /* Array dimension is one less */
-            topargc = z + 1;            /* than \v(argc) */
-	    debug(F111,"a_dim[0]","D",a_dim[0]);
-        } else {
-            macargc[maclvl] = z + 1;    /* Set \v(argc) variable */
-            n_xarg[maclvl] = z + 1;     /* This is the actual number */
-            a_ptr[0] = m_xarg[maclvl];  /* Point \&_[] at the args */
-            a_dim[0] = z;               /* And give it this dimension */
-	    debug(F111,"a_dim[0]","E",a_dim[0]);
-        }
-    }
-#endif /* NOSPL */
     return;
 }
 
@@ -10178,6 +10306,9 @@ initoptlist() {
 #ifdef HAVE_LOCALE
     makestr(&(optlist[noptlist++]),"HAVE_LOCALE");
 #endif /* HAVE_LOCALE */
+#ifdef HAVE_SNPRINTF
+    makestr(&(optlist[noptlist++]),"HAVE_SNPRINTF");
+#endif /* HAVE_SNPRINTF */
 #ifdef NOMKDIR
     makestr(&(optlist[noptlist++]),"NOMKDIR");
 #endif /* NOMKDIR */

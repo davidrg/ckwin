@@ -1,14 +1,14 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "21 Apr 2017"		/* Last edit date dd mmm yyyy */
-#define EDITNDATE "20170421"		/* Keep them in sync */
-/* Fri Apr 21 13:04:40 2017 */
+#define EDITDATE  "1 May 2017"		/* Last edit date dd mmm yyyy */
+#define EDITNDATE "20170501"		/* Keep them in sync */
+/* Mon May  1 08:43:36 2017 */
 
 /*
 FOR A NEW VERSION (development, alpha, beta, release candidate formal release):
   . Change the 3 dates just above;
   . Change ck_cryear (copyright year) just below, if necessary;
-  . Define the variables ck_s_test and ck_s_tver (below) appropriately;
+  . For test versions change ck_s_test and ck_s_tver (below) appropriately;
   . Change dates (and version number if necessary) at top of makefile.
 
 If the version number has changed, also:
@@ -56,7 +56,7 @@ char * ck_cryear = "2017"; 		/* C-Kermit copyright year */
 #ifndef BETATEST
 #ifndef OS2                             /* UNIX, VMS, etc... (i.e. C-Kermit) */
 char *ck_s_test = "Dev";		/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "21";			/* Test version number */
+char *ck_s_tver = "22";			/* Test version number */
 #else  /* OS2 */
 char *ck_s_test = "";			/* (i.e. K95) */
 char *ck_s_tver = "";

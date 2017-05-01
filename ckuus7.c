@@ -11546,6 +11546,8 @@ z_open(name, flags) char * name; int flags; {
 
     if (flags & FM_STDIN) {             /* Read from standard input */
         mode = "r";
+    } else if (flags & (FM_STDOUT|FM_STDERR)) {
+        mode = "w";
     } else {                            /* If regular file, not stdin.. */
         if (flags < 0 || flags >= nfopnargs) /* Range check flags */
           return(z_error = FX_RNG);
@@ -11586,14 +11588,20 @@ z_open(name, flags) char * name; int flags; {
 #else
 	/* New economical way, allocate storage for each channel as needed */
 	if (!z_file) {
+            debug(F100,"z_file[] is NULL","",0);
+            debug(F101,"sizeof(struct ckz_file *)","",
+                  sizeof(struct ckz_file *));
 	    z_file = (struct ckz_file **)malloc((z_maxchan + 1) *
 						sizeof(struct ckz_file *));
+            debug(F101,"z_open z_maxchan 4","",z_maxchan);
 	    if (!z_file)
 	      return(z_error = FX_NMF);
 	    for (i = 0; i < z_maxchan; i++)
 	      z_file[i] = NULL;
+            debug(F101,"z_open z_maxchan 5","",z_maxchan);
 	}
 #endif	/* COMMENT */
+        debug(F101,"z_open z_maxchan 6","",z_maxchan);
         z_inited = 1;                   /* Remember we initialized */
     }
     for (n = -1, i = 0; i < z_maxchan; i++) { /* Find a free channel */
@@ -11603,6 +11611,7 @@ z_open(name, flags) char * name; int flags; {
             break;
         }
 #else
+        debug(F101,"z_open find-free-channel loop","",i);
         if (!z_file[i]) {
 	    z_file[i] = (struct ckz_file *) malloc(sizeof(struct ckz_file));
 	    if (!z_file[i])
@@ -11613,14 +11622,17 @@ z_open(name, flags) char * name; int flags; {
 #endif	/* COMMENT */
 
     }
+    debug(F101,"z_open found free channel","",n);
     if (n < 0 || n >= z_maxchan)        /* Any free channels? */
       return(z_error = FX_NMF);         /* No, fail. */
+    debug(F100,"z_open check n ok","",0);
     errno = 0;
-
+    debug(F100,"z_open errno ok","",0);
     z_file[n]->z_flags = 0;		/* In case of failure... */
+    debug(F100,"z_open z_file[n] flags ok","",0);
     z_file[n]->z_fp = NULL;		/* Set file pointer to NULL */
+    debug(F100,"z_open z_file[n] fps ok","",0);
 
-    debug(F110,"fopen mode",flags,0);
 #ifdef UNIX
     if (flags & FM_STDIN) {             /* Standard input */
         t = (FILE *)stdin;              /* We just use the ready-made stream */
@@ -11631,6 +11643,26 @@ z_open(name, flags) char * name; int flags; {
         ckstrncpy(z_file[n]->z_name,name,CKMAXPATH); /* "filename" */
         z_error = 0;                    /* No error so far */
         return(n);                      /* Return the channel number */
+    }
+    if (flags & FM_STDOUT) {            /* Standard output */
+        t = (FILE *)stdout;             /* Same deal */
+        z_nopen++;
+        z_file[n]->z_fp = t;
+        z_file[n]->z_flags = flags;
+        z_file[n]->z_nline = 0;
+        ckstrncpy(z_file[n]->z_name,name,CKMAXPATH);
+        z_error = 0;
+        return(n);
+    }
+    if (flags & FM_STDERR) {            /* Standard error */
+        t = (FILE *)stderr;
+        z_nopen++;
+        z_file[n]->z_fp = t;
+        z_file[n]->z_flags = flags;
+        z_file[n]->z_nline = 0;
+        ckstrncpy(z_file[n]->z_name,name,CKMAXPATH);
+        z_error = 0;
+        return(n);
     }
 #endif /* UNIX */
     t = fopen(name, mode);              /* Try to open the file. */
@@ -11673,7 +11705,8 @@ z_close(channel) int channel; {         /* Close file on given channel */
     if (!(t = z_file[channel]->z_fp))    /* Channel wasn't open? */
       return(z_error = FX_NOP);
     errno = 0;                          /* Set errno 0 to get a good reading */
-    x = fclose(t);                      /* Try to close */
+    if (!(z_file[channel]->z_flags & FM_STDM)) /* If not stdin/out/err... */
+      x = fclose(t);                    /* Try to close */
     if (x == EOF)                       /* On failure */
       return(z_error = FX_SYS);         /* indicate system error. */
     z_nopen--;                          /* Closed OK, decrement open count */
@@ -12218,7 +12251,9 @@ static struct keytab fcswtab[] = {      /* OPEN modes */
 #endif /* COMMENT */
     { "/read",      FM_REA,  0 },
 #ifdef UNIX                             /* Could be expanded to VMS etc.. */
+    { "/stderr",    FM_STDERR,0 },
     { "/stdin",     FM_STDIN,0 },
+    { "/stdout",    FM_STDOUT,0 },
 #endif  /* UNIX */
     { "/write",     FM_WRI,  0 }
 };
@@ -12374,13 +12409,24 @@ dofile(op) int op; {                    /* Do the FILE command */
                     return(-9);
                 }
 #ifdef COMMENT
-                /* Uncomment if we add any switches here that take args */
+                /* Uncomment if we add any FOPEN switches that take args */
                 if (!getval && (cmgkwflgs() & CM_ARG)) {
                     printf("?This switch requires an argument\n");
                     return(-9);         /* (none do...) */
                 }
 #endif /* COMMENT */
+                debug(F101,"filmode A","",filmode);
                 filmode |= cmresult.nresult; /* OR in the file mode */
+                debug(F101,"filmode B","",filmode);
+                debug(F101,"filmode & (FM_REA|FM_STDIN)","",
+                      filmode & (FM_REA|FM_STDIN));
+                debug(F101,"filmode & (FM_WRI|FM_STDOUT|FM_STDERR)","",
+                      filmode & (FM_WRI|FM_STDOUT|FM_STDERR));
+                if ((filmode & (FM_REA|FM_STDIN)) &&
+                    (filmode & (FM_WRI|FM_STDOUT|FM_STDERR))) {
+                    printf("?Conflicting file modes\n");
+                    return(-9);
+                }
             } else
               return(-2);
         }
@@ -12412,6 +12458,18 @@ dofile(op) int op; {                    /* Do the FILE command */
             filmode |= FM_REA;          /* it implies /READ */
             /* We don't need to parse anything further */
             s = "(stdin)";
+            goto xdofile;               /* Skip around the following */
+        }
+        if (filmode & FM_STDOUT) {      /* If STDIN specified */
+            filmode |= FM_WRI;          /* it implies /WRITE */
+            /* We don't need to parse anything further */
+            s = "(stdout)";
+            goto xdofile;               /* Skip around the following */
+        }
+        if (filmode & FM_STDIN) {       /* If STDIN specified */
+            filmode |= FM_WRI;          /* it implies /WRITE */
+            /* We don't need to parse anything further */
+            s = "(stderr)";
             goto xdofile;               /* Skip around the following */
         }
 #endif /* UNIX */

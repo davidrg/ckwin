@@ -1,10 +1,11 @@
-C-KERMIT 9.0 CHANGE LOG (Changes since 8.0.207 / K95 2.1.3 January 2003)
+C-KERMIT 9.0 CHANGE LOG
 
-  Chronological order.
+  Changes since 8.0.207 / K95 2.1.3 January 2003
+  In chronological order.
   Go to the bottom to find the newest edits.
 
   Frank da Cruz, The Kermit Project, New York City.
-  Last update:  Fri Apr 21 13:44:51 2017
+  Last update:  Mon May  1 08:42:19 2017
 
 These are the changes to C-Kermit since Kermit 95 was last released as
 version 2.1.3, and therefore also the changes that would appear in any new
@@ -1006,6 +1007,7 @@ ckutio.c, ckuus[45].c, 17 Apr 2004.
 Removed "wermit" from "make clean" (how did it get there?).  makefile.
 
 From Jeff, applied 10 May 2004.
+
  . Rearrange #ifdefs that define OS/2-only features. ckcdeb.h.
  . Fix two strncat()s that should have been ckstrncat()s.  ckuus7.c.
  . Fix two strncat()s that should have been ckstrncat()s.  ckuus4.c.
@@ -1258,7 +1260,7 @@ execute it.  But if the definition contains macro arguments, we have added a
 new level of macro invocation, thus wiping out the current level of args.
 The cure is to expand the variables in the immediate macro in the current
 context, before executing it.  This means simply changing the cmtxt() call
-that reads the immediate macro to specify xxsting as its processing
+that reads the immediate macro to specify zzstring as its processing
 function, rather than NULL, which is used for real macros to defer their
 argument evaluation until after the macro entered.  ckuusr.c, 11 Aug 2005.
 
@@ -1277,12 +1279,12 @@ For docs and/or scriptlib:  Unix C-Kermit can be a stdin/out filter.  The
 trick is to use the ASK, ASKQ, or GETC command for input, specifying no
 prompt, and ECHO or XECHO for output, e.g.:
 
-while true {
-    ask line
-    if fail exit 0
-    echo \freverse(\m(line))
-}
-exit 0
+  while true {
+      ask line
+      if fail exit 0
+      echo \freverse(\m(line))
+  }
+  exit 0
 
 FOPEN didn't do anything with the channel number if the open failed, so any
 subsequent command that tried to reference it would get a parse error it was
@@ -8070,7 +8072,7 @@ EXIT and updated HELP SET EXIT.  ckuus[235].c, 13 Mar 2013.
 ziperm() and zgperm() did not work in Unix for filespecs that used
 tilde notation, e.g. ~/kermit/ckuusr.h.  Fixed in ckufio.c, 14 Mar 2013.
 
-Made a new function \fnfileinfo(name,&a) that populates the specified array
+Made a new function \ffileinfo(name,&a) that populates the specified array
 with 7 or 8 elements:
 
  1. the file's name;
@@ -8998,9 +9000,10 @@ which prints "ABCDEFG".
 This example shows how Kermit code can be transformed to all Lisp:
 
   define a three plus four is  
-  define a 3
-  define b 4
-  echo \m(a) \fsexp(+ b c)
+  define b 3
+  define c 4
+  increment b c
+  echo \m(a) \m(b)
 
 Results in "three plus four is 7".  The more-compact all-Lisp version gives
 the same result:
@@ -9107,20 +9110,185 @@ filename was given and nothing was piped.  ckuus6.c, ckuus2.c, 21 Apr 2017.
 
 Here is sample code for a script:
 
-if defined \%1 {                        # filename given on command line
-    fopen /read \%c \%1
-    if fail exit 1
-} else {                                # No command-line argument given
-    fopen /stdin \%c
-    if fail exit 1                      # Open failed (shouldn't happen)
-    getc /check                         # Check if stdin is redirected.
-    if fail exit 1 \m(usage)            # If not exit with usage message.
-}
+  if defined \%1 {                        # filename given on command line
+      fopen /read \%c \%1
+      if fail exit 1
+  } else {                                # No command-line argument given
+      fopen /stdin \%c
+      if fail exit 1                      # Open failed (shouldn't happen)
+      getc /check                         # Check if stdin is redirected.
+      if fail exit 1 \m(usage)            # If not exit with usage message.
+  }
 
 For this purpose, it turns out that IF NOT BACKGROUND works just as well as
 GETC /CHECK followed by IF FAIL.  IF BACKGROUND is true not only if the
 program is running in the background, but also if its standard input is a
 pipe.
+
+
+--- 9.0.304 Dev.21 ---
+
+Fixed \fcode() to not throw errors if given an empty string (or nothing
+at all) as an argument.  ckuus4.c, 22 Apr 2017.
+
+In the parser for DO command (macro invocation)...  Prior to C-Kermit
+9.0.304 Dev.22, cmtxt() was called in all cases with zzstring.  But this
+fouled up the identification of macro arguments when their values contained
+grouping characters such as doublequotes and braces.  I changed the cmtxt()
+evaluation function pointer from zzstring to NULL, so we get a correct list
+of arguments, and then changed xwords (which was a big mess) to evaluate each
+one.  I made a new evalmacroargument() routine for this, because xwords()
+needed to do this in about five places.  ckuusr.c, ckuus5.c, 24 Apr 2017.
+
+The resulting Kermit program had big problems running production scripts, so
+the next few edits are to aid in tracking them down.
+
+Added HAVE_SPRINTF macro to ckcdeb.h so we can use sprintf() safely
+in conditionals.  True for Linux, Mac OS X, and *BSD but others can be added
+easily.  ckcdeb.h, 25 Apr 2017.
+
+Added a new routine newerrmsg(s); that prints an error message, and if it's
+from a command file, it shows the line number where the command started and
+the first part of the command (hence the need for snprintf(), to make the
+assembled message fit on one line).  While working on xwords() I realized
+that the whole big mess was totally unnecessary now that I have the
+cksplit() C-Kermit library function, so I replaced the mess (or at least the
+"if (macro)" parts of it) with a single ckpslit() call.  ckuusr.c, ckuus5.c,
+25 Apr 2017.
+
+newerrmsg() reveals that that the new "Definition is circular or too deep"
+errors are at the beginning of FOR and WHILE loops, but the loops still sort
+of work.  This almost certainly is because FOR and WHILE are internally
+defined macros that have not been passed through command parser.  Debuggin
+continues...
+
+Fixed a bad debug() statement in the FOPEN (or FREAD?) code that was added
+in Dev.21 that could cause segfaults on certain platforms.
+ckuus7.c, 26 Apr 2017.
+
+Fixed a bug in cksplit(), it wasn't filling the notsep[] string array, which
+could have affected CSV, TSV, or ALL include sets.  ckclib.c, 26 Apr 2017.
+
+When used for macro arguments, cksplit() was using '\' as a quote character,
+and thus variable names were not being recognized.  I added a new cksplit()
+argument for this, and it works, but now cksplit doesn't split the string
+into words.  That was because 'while (c = *ss++ && !flag)' should have been
+'while ((c = *ss++) && !flag)', now it is, all OK, except it didn't set the
+macro arguments.  This goes back to when I decided to allow any number of
+macro args, instead of just 10, and created the macro argument vector \&_[].
+For arguments 1-9, you also have to do addmac() for each argument, which I
+did.  Really there should not be duplicate lists, but that's for another
+day.  ckclib.c, 26 Apr 2017.
+
+The FOR, WHILE, IF, and SWITCH commands are defined in ckuus5.c like this:
+
+  /* WHILE macro */
+  char *whil_def[] = { "_assign _whi\\v(cmdlevel) {_getargs,",
+  ":_..inc,\\%1,\\%2,goto _..inc,:_..bot,_putargs},",
+  "_define break goto _..bot, _define continue goto _..inc,",
+  "do _whi\\v(cmdlevel),_assign _whi\\v(cmdlevel)",
+  ""};
+
+It seemed to me that the easiest way to fix the problem with the built-in
+macros would be parse them the same way they were parsed before.  I moved
+the internal-macro check to a routine, isinternalmacro().  It works by
+checking the macro name.  We have to stick to the discipline that internal
+macros have names starting with '_' followed by 3 unique characters.  For
+WHILE the "master macro" is '_while', and the generated macros are _whi2,
+whi3, etc, where the number indicates the execution stack level (so we can
+have nested loops).  ckuus5.c, ckuusr.c, 27 Apr 2017.
+
+Then in ckuusr.c where the cmtxt() call was changed to not use zzstring, put
+the zzstring call back if it's an internal macro, in theory undoing the
+original change to dodo() but only for internal macros.  After some serious
+juggling of the quoting levels in the internal WHILE macro definition, it
+worked.  At least for my test script, and for the HTML script.  ckuus5.c,
+ckuusr.c, 27 Apr 2017.
+      
+Now to fix the other internal macro definitions...  I fixed foz_def (the
+macro to use when the loop variable is a macro rather than a \%x variable),
+now it works too.  ckuus5.c, 27 Apr 2017.
+
+A problem with FOR was noted where the loop variable disappears inside the
+loop: "for \%i 99 99 1 { echo [\%i] }" printed "[]" instead of "[99]".
+Fixed by adjusting the quoting in for_def.  ckuus5.c, 28 Apr 2017.
+
+The IF command (also implemented as an internal macro) was adjusted the
+same way.  ckuus5.c, 28 Apr 2017.
+
+The next problem comes up when running the text-to-html script on this
+update notes file: it gets errors like "?<ERROR:MISSING_ARG:\farraylook()>".
+This problem was not in Kermit but in the script: \m(line) was being passed
+as an argument to a macro, and the line contained the string
+"\farraylook()".  The argument is seen as \%1 from the macro's point of view
+and therefore evaluated recursively.  The solution is to refer to this
+argument as \fcontents(\%1).  No wonder the Kermit programming never caught
+on!  I forgot about this, even though it was standard advice for (for
+example) passing Windows pathnames as arguments to macros.  Anyway, with
+this change the html script runs without complaint and productes the correct
+result.  April 28, 2017.
+
+But running other long, complex production scripts, a new problem came up:
+when a macro passes one (or more) of its arguments to another macro, the
+other macro gets an empty value for it.  dodo():
+
+ . Makes a new macro level (maclvl) and a new command level (cmdlvl).
+ . Initializes the new cmdlvl stack frame.
+ . Initializes the return value for this level to NULL.
+ . Deletes any old macro arguments (\%1-\%9) at this level.
+ . Calls xwords() to get the new argument list.
+
+Suppose macro A has been called with an argument \%1, and then invokes
+macro B with that same argument.  Macro B gets "\%1" rather than the value
+of \%1, but since it is at a new level, \%1 does not have a value.
+Previously, these variables were evaluated in docmd() case XXDO, before
+dodo() was called, therefore they received the values from level where the
+macro was invoked.  Now they are evaluated after dodo() starts a new macro
+level, but in the new level zzstring() doesn't find any definitions for the
+\%1-9 variables.  The solution is not exactly elegant:
+
+  maclvl--;
+  evalmacroarg(&p);
+  maclvl++;
+
+but it's the only safe way to do it, because it is only in this place that
+we know that (say) \%1 is on the macro invocation's argument list and not
+in some other context.  ckuus5.c, 29 Apr 2017.
+
+The SWITCH command internal macro definition needed another adjustment.
+ckuus5.c, 30 Apr 2017.
+
+In running the suite of script-language torture tests, most of them (the
+ones published on the website) give the same results in previous and new
+C-Kermit.  An incompatibility was noted in the 'demo' script:
+
+  ask \%x { Type 3 numbers separated by spaces or an empty line to quit:  }
+  if not def \%x break
+  smallest \%x
+
+In old Kermit, the 'smallest' macro saw three arguments; the new Kermit sees
+only one.  I think the old behavior was too much magic; the new behavior is
+proper.  From now on, if you want a macro to receive 3 arguments, you'll
+have to call it with three arguments.  Or recode the macro to \fsplit() the
+any compound arguments.
+
+The S-Expression torture test gets errors now that it didn't before, but the
+errors are correct: e.g.
+
+  ?Not defined - "c"
+  ?sexp[37]: "(++ a 1 b 1 c 1 d)": Syntax error' 
+
+  ?Too few operands - "/ 2"
+  ?sexp[110]: "(/ 2) ----} - c a))  t2 t1)..."
+
+  ?Too few operands - "++"
+  ?sexp[189]: "(++)  ate result) f (objective \%1) ..."
+
+Added FOPEN /STDOUT and FOPEN /STDERR.  This allows a Kermit script to be
+fully pipeable.  A minor wrinkle here was to not actually close any of these
+if the script contained an FCLOSE for them. ckcker.h, ckuus[27].c, 30 Apr 2017.
+
+--- 9.0.304 Dev.22 --
 
 ---------------------------------
 **************************

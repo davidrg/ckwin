@@ -1812,7 +1812,7 @@ exec_cmd(s) char * s; {
     if (!s) return;
     if (!*s) return;
 
-    q = cksplit(1,0,s,NULL,"\\%[]&$+-/=*^_@!{}/<>|.#~'`:;?",7,0,0);
+    q = cksplit(1,0,s,NULL,"\\%[]&$+-/=*^_@!{}/<>|.#~'`:;?",7,0,0,0);
     if (!q) return;
 
     args = q->a_head + 1;

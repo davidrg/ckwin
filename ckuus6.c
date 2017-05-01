@@ -7819,7 +7819,9 @@ dofor() {                               /* The FOR command. */
     char *ap, *di;                      /* macro argument pointer */
     int pp = 0;                         /* Paren level */
     int mustquote = 0;
+    char loopvar[8], loopvar2[8];       /* \%x-style loop variable */
 
+    debug(F100,"dofor entry","",0);
     for (i = 0; i < 2; i++) {
         if ((y = cmfld("Variable name","",&s,NULL)) < 0) {
             if (y == -3) {
@@ -7839,6 +7841,7 @@ dofor() {                               /* The FOR command. */
     if (*s == CMDQ)                     /* If loop variable starts with */
       mustquote++;                      /* backslash, mustquote is > 0. */
 #endif /* COMMENT */
+    debug(F111," dofor loop variable mustquote",s,mustquote);
 
     lp = line;                          /* Build a copy of the command */
     ckstrncpy(lp,"_forx ",LINBUFSIZ);
@@ -7853,7 +7856,7 @@ dofor() {                               /* The FOR command. */
         if (y == -3) return(-2);
         else return(y);
     }
-    debug(F101,"dofor fx","",fx);
+    debug(F101," dofor fx","",fx);
     s = atmbuf;                         /* Copy the atom buffer */
 
     if ((int)strlen(s) < 1) goto badfor;
@@ -7872,14 +7875,14 @@ dofor() {                               /* The FOR command. */
     lp--; *lp++ = SP;
 #ifdef DEBUG
     *lp = NUL;
-    debug(F110,"FOR A",line,0);
+    debug(F110," dofor line A",line,0);
 #endif /* DEBUG */
 
     if ((y = cmnum("final value","",10,&fy,xxstring)) < 0) {
         if (y == -3) return(-2);
         else return(y);
     }
-    debug(F101,"dofor fy","",fy);
+    debug(F101," dofor loop exit value","",fy);
     s = atmbuf;                         /* Same deal */
     if ((int)strlen(s) < 1)
       goto badfor;
@@ -7891,13 +7894,14 @@ dofor() {                               /* The FOR command. */
     *lp++ = SP;
 #ifdef DEBUG
     *lp = NUL;
-    debug(F110,"FOR B",line,0);
+    debug(F110," dofor line B",line,0);
 #endif /* DEBUG */
 
     x_ifnum = 1;                        /* Increment or parenthesis */
     di = (fx < fy) ? "1" : "-1";        /* Default increment */
+    debug(F110," dofor default increment",di,0);
     if ((y = cmnum("increment",di,10,&fz,xxstring)) < 0) {
-        debug(F111,"dofor increment",atmbuf,y);
+        debug(F111," dofor increment parse failed",atmbuf,y);
         x_ifnum = 0;
         if (y == -3) {                  /* Premature termination */
             return(-2);
@@ -7910,9 +7914,10 @@ dofor() {                               /* The FOR command. */
               return(y);
         } else                          /* Other error */
           return(y);
+        debug(F101," dofor default increment supplied","",fz);
     } else {                            /* Number */
         x_ifnum = 0;
-        debug(F101,"dofor fz","",fz);
+        debug(F101," dofor parsed increment ok","",fz);
         s = atmbuf;                     /* Use it */
     }
     if ((int)strlen(s) < 1)
@@ -7925,7 +7930,7 @@ dofor() {                               /* The FOR command. */
 
 #ifdef DEBUG
     *lp = NUL;
-    debug(F110,"FOR C",line,0);
+    debug(F110," dofor FOR command C",line,0);
 #endif /* DEBUG */
 
     /* Insert the appropriate comparison operator */
@@ -7937,7 +7942,7 @@ dofor() {                               /* The FOR command. */
 
 #ifdef DEBUG
     *lp = NUL;
-    debug(F110,"FOR D",line,0);
+    debug(F110," dofor FOR command D",line,0);
 #endif /* DEBUG */
 
     if (pp > 0) {                       /* If open paren given parse closing */
@@ -7948,19 +7953,22 @@ dofor() {                               /* The FOR command. */
             return(-9);
         }
     }
-    if ((y = cmtxt("Command to execute","",&s,NULL)) < 0) return(y);
+    if ((y = cmtxt("Command(s) to execute","",&s,NULL)) < 0) return(y);
     if ((y = (int)strlen(s)) < 1) return(-2);
+    debug(F110," doif FOR body A",s,0);
     if (s[0] != '{' && s[y-1] != '}') { /* Supply braces if missing */
         ckmakmsg(tmpbuf,TMPBUFSIZ,"{ ",s," }",NULL);
         s = tmpbuf;
     }
+    debug(F110," doif FOR body B",s,0);
     if (litcmd(&s,&lp,(LINBUFSIZ - (lp - (char *)line) - 2)) < 0) {
         printf("?Unbalanced braces\n");
         return(0);
     }
+
 #ifdef DEBUG
     *lp = NUL;
-    debug(F110,"FOR E",line,0);
+    debug(F110," doif FOR body C",s,0);
 #endif /* DEBUG */
 
 #ifdef COMMENT
@@ -7971,13 +7979,15 @@ dofor() {                               /* The FOR command. */
     }
 #endif /* COMMENT */
 /*
-  In version 8.0 we decided to allow macro names anyplace a numeric-valed
-  variable could appear.  But this caused trouble for the FOR loops because
-  the quoting in for_def[] assumed a \%i-style loop variable.  We account
-  for this here in the if (mustquote)...else logic by invoking separate
-  FOR macro definitions in the two cases.
+  In C-Kermit 8.0 we allow bare macro names anywhere a numeric-valed variable
+  could appear.  But this caused trouble for the FOR loops because the quoting
+  in for_def[] assumed a \%i-style loop variable.  We account for this here in
+  the if (mustquote)...else logic by invoking separate FOR macro definitions
+  in the two cases.
 */
+    debug(F100," dofor choosing FOR macro definition","",0);
     if (mustquote) {                    /* \%i-style loop variable */
+        debug(F101," dofor choosing _forx because mustquote","",mustquote);
         x = mlook(mactab,"_forx",nmac); /* Look up FOR macro definition */
         if (x < 0) {                    /* Not there? */
             addmmac("_forx",for_def);   /* Put it back. */
@@ -7985,8 +7995,10 @@ dofor() {                               /* The FOR command. */
                 printf("?FOR macro definition gone!\n");
                 return(success = 0);
             }
+            debug(F110," dofor loop var is \\%x",for_def[0],0);
         }
     } else {                            /* Loop variable is a macro */
+        debug(F101," dofor choosing _forz because mustquote","",mustquote);
         x = mlook(mactab,"_forz",nmac);
         if (x < 0) {
             addmmac("_forz",foz_def);
@@ -7995,16 +8007,18 @@ dofor() {                               /* The FOR command. */
                 return(success = 0);
             }
         }
+        debug(F110," dofor loop var is macro",foz_def[0],0);
     }
-    debug(F010,"FOR command",line,0);   /* Execute the FOR macro. */
+    debug(F010," dofor final FOR body",line,0); /* Execute the FOR macro. */
+    debug(F100," dofor done, chaining to dodo()...","",0);
     return(success = dodo(x,ap,cmdstk[cmdlvl].ccflgs | CF_IMAC));
 
 badfor:
     printf("?Incomplete FOR command\n");
+    debug(F100," dofoar parse failure","",0);
     return(-2);
 }
 #endif /* NOSPL */
-
 
 #ifndef NOSPL
 
@@ -11131,7 +11145,7 @@ doxget(cx) int cx; {
 /*
   D O G T A  --  Do _GETARGS or _PUTARGS Command.
 
-  Used by XIF, FOR, WHILE, and SWITCH, each of which are implemented as
+  Used by IF, FOR, WHILE, and SWITCH, each of which are implemented as
   2-level macros; the first level defines the macro, the second runs it.
   This routine hides the fact that they are macros by importing the
   macro arguments (if any) from two levels up, to make them available
@@ -11147,14 +11161,14 @@ dogta(cx) int cx; {
     extern int topargc, cmdint;
     extern char ** topxarg;
 
+    debug(F100,"GETARGS: dogta entry cx","",cx);
     if ((y = cmcfm()) < 0)
       return(y);
-    debug(F101,"dogta cx","",cx);
-    debug(F101,"dogta maclvl","",maclvl);
+    debug(F101," dogta maclvl","",maclvl);
     if (cx == XXGTA) {
-        debug(F101,"dogta _GETARGS maclvl","",maclvl);
+        debug(F101," dogta _GETARGS maclvl","",maclvl);
     } else if (cx == XXPTA) {
-        debug(F101,"dogta _PUTARGS maclvl","",maclvl);
+        debug(F101," dogta _PUTARGS maclvl","",maclvl);
     } else {
         return(-2);
     }
@@ -11175,6 +11189,8 @@ dogta(cx) int cx; {
         if (cx == XXGTA) {              /* Get arg from level-minus-2 */
             if (maclvl == 1) p = g_var[c]; /* If at level 1 use globals 0..9 */
             else p = m_arg[maclvl-2][i];   /* Otherwise they're on the stack */
+            debug(F111," dogta _GETARGS m_arg addmac var i",mbuf,i);
+            debug(F111," dogta _GETARGS m_arg addmac def i",p,i);
             addmac(mbuf,p);
 #ifdef COMMENT
             if (maclvl > 1)
@@ -11201,7 +11217,9 @@ dogta(cx) int cx; {
     /* and \v(argc) by just copying the pointers. */
 
     if (cx == XXGTA) {                  /* GETARGS from 2 levels up */
+        debug(F101," dogta _GETARGS m_xarg maclvl","",maclvl);
         if (maclvl == 1) {
+            debug(F100," dogta _GETARGS m_xarg top level","",0);
             a_ptr[0] = topxarg;         /* \&_[] array */
             a_dim[0] = topargc - 1;     /* Dimension doesn't include [0] */
             m_xarg[maclvl] = topxarg;
@@ -11209,13 +11227,13 @@ dogta(cx) int cx; {
             macargc[maclvl] = topargc;
             makestr(&(mrval[maclvl+1]),mrval[0]); /* (see vnlook()) */
         } else {
+            debug(F100," dogta _GETARGS m_xarg in macro","",0);
             a_ptr[0] = m_xarg[maclvl-2];
             a_dim[0] = n_xarg[maclvl-2];
             m_xarg[maclvl] = m_xarg[maclvl-2];
             n_xarg[maclvl] = n_xarg[maclvl-2];
             macargc[maclvl] = n_xarg[maclvl-2];
             makestr(&(mrval[maclvl+1]),mrval[maclvl-1]); /* (see vnlook()) */
-
         }
     } else {                            /* PUTARGS 2 levels up */
         if (maclvl > 1) {
@@ -12759,13 +12777,14 @@ doif(cx) int cx; {
           if (litcmd(&p,&lp,LINBUFSIZ - 2) < 0) { /* Quote object command */
               return(-2);
           }
-          debug(F101,"WHILE body",line,-54);
+          debug(F111,"WHILE body",line,-54);
           if (line[0]) {
               char *p;
               x = mlook(mactab,"_while",nmac); /* index of "_while" macro. */
               if (x < 0) {              /* Not there? */
                   addmmac("_while",whil_def); /* Put it back. */
-                  if (mlook(mactab,"_while",nmac) < 0) { /* Look it up again */
+                  /* Look it up again */
+                  if ((x = mlook(mactab,"_while",nmac)) < 0) {
                       printf("?WHILE macro definition gone!\n");
                       return(success = 0);
                   }
@@ -12774,7 +12793,7 @@ doif(cx) int cx; {
               if (p) {
                   strcpy(p,ifcond);     /* safe (prechecked) */
                   strcat(p,line);       /* safe (prechecked) */
-                  debug(F010,"WHILE dodo",p,0);
+                  debug(F110,"WHILE dodo",p,0);
                   dodo(x,p,cmdstk[cmdlvl].ccflgs | CF_IMAC);
                   free(p);
                   p = NULL;
@@ -12796,6 +12815,7 @@ doif(cx) int cx; {
 int
 dotake(s) char *s; {
 #ifndef NOSPL
+    extern char lasttakeline[];         /* Last TAKE-file line */
     extern int tra_cmd;
 #endif /* NOSPL */
 #ifndef NOLOCAL
@@ -12818,6 +12838,7 @@ dotake(s) char *s; {
         tlevel--;
         return(success = 0);
     } else {
+        lasttakeline[0] = NUL;
         tfline[tlevel] = 0;             /* Line counter */
 #ifdef VMS
         conres();                       /* So Ctrl-C will work */

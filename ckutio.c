@@ -14766,7 +14766,7 @@ ttptycmd(s) char *s; {
 	debug(F100,"ttptycmd new fork dup2 ok","",0);
 
 	/* Parse external protocol command line */
-	q = cksplit(1,0,s,NULL,"\\%[]&$+-/=*^_@!{}/<>|.#~'`:;?",7,0,0);
+	q = cksplit(1,0,s,NULL,"\\%[]&$+-/=*^_@!{}/<>|.#~'`:;?",7,0,0,0);
 	if (!q) {
 	    debug(F100,"ttptycmd cksplit failed","",0);
 	    exit(1);

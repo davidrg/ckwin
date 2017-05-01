@@ -2,7 +2,7 @@ char *cksslv = "SSL/TLS support, 9.0.233, 24 Dec 2015";
 /*
   C K _ S S L . C --  OpenSSL Interface for C-Kermit
 
-  Copyright (C) 1985, 2015,
+  Copyright (C) 1985, 2017,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -2950,7 +2950,7 @@ inet_aton(char * ipaddress, struct in_addr * ia) {
         unsigned char b[4];
     } dummy;
 
-    q = cksplit(1,0,ipaddress,".","0123456789abcdefACDEF",8,0,0);
+    q = cksplit(1,0,ipaddress,".","0123456789abcdefACDEF",8,0,0,0);
     if (q->a_size == 4) {
         dummy.b[0] = atoi(q->a_head[1]);
         dummy.b[1] = atoi(q->a_head[2]);

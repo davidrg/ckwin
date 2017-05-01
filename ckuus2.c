@@ -5991,13 +5991,22 @@ static char * hxxf_op[] = {
 "/READ",
 "  Open the file for reading.",
 " ",
+
 #ifdef UNIX
 "/STDIN",
 "  Tells Kermit to read from Standard Input.  In this case you don't specify",
-"  a filename."
+"  a filename.",
+" ",
+"/STDOUT",
+"  Tells Kermit to write to Standard Output.  In this case you don't specify",
+"  a filename.",
+" ",
+"/STDERR",
+"  Tells Kermit to write to Standard Error.  In this case you don't specify",
+"  a filename.",
 " ",
 #endif  /* UNIX */
-" ",
+
 "/WRITE",
 "  Open the file for writing.  If /READ was not also specified, this creates",
 "  a new file.  If /READ was specified, the existing file is preserved, but",

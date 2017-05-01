@@ -1,7 +1,7 @@
 /*  C K C D E B . H  */
 
 /*
-  Wed Feb  3 14:28:17 2016
+Tue Apr 25 13:39:49 2017
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
   compatible with C preprocessors that support only #ifdef, #else, #endif,
@@ -26,7 +26,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2013,
+  Copyright (C) 1985, 2017,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -2196,6 +2196,13 @@ _PROTOTYP( void bleep, (short) );
 #endif	/* __linux__ */
 #endif	/* HAVE_OPENPTY */
 #endif	/* NO_OPENPTY */
+
+/* This could become more inclusive.. Solaris 10, HP-UX 11, AIX 5.3... */
+#ifndef HAVE_SNPRINTF                   /* Safe to use snprintf() */
+#ifdef HAVE_OPENPTY
+#define HAVE_SNPRINTF
+#endif  /* HAVE_OPENPTY */
+#endif  /* HAVE_SNPRINTF */
 
 /* Kermit feature selection */
 

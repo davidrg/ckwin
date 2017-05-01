@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2016,
+  Copyright (C) 1985, 2017,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -31,7 +31,7 @@
 #endif /* NOLOCUS */
 
 /* Sizes of things - FNVALL and MAXARGLEN increased from 8K 2005/09/12 */
-/* Other things increased even more for 64-bit builts 2016/02/03 */
+/* Other things increased even more for 64-bit builds 2016/02/03 */
 
 #ifdef BIGBUFOK
 #define FNVALL CMDBL			/* Function return value length */
@@ -2768,6 +2768,9 @@ struct stringint {			/* String and (wide) integer */
 #endif /* SFTP_BUILTIN */
 
 /* ANSI-C prototypes for user interface functions */
+
+_PROTOTYP( VOID newerrmsg, (char *) );
+_PROTOTYP( int isinternalmacro, ( int ) );
 
 #ifdef UNIX
 _PROTOTYP( int doputenv, ( char *, char * ) );

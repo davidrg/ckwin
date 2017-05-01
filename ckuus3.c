@@ -3592,7 +3592,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
         }
     } else {
 	nosplit = 0;
-        q = cksplit(1,SEXPMAX,s,NULL,"\\%[]&$+-/=*^_@!{}/<>|.#~'`:;?",8,39,0);
+       q = cksplit(1,SEXPMAX,s,NULL,"\\%[]&$+-/=*^_@!{}/<>|.#~'`:;?",8,39,0,0);
         if (!q)
           goto xdosexp;
         n = q->a_size;                  /* Number of items */

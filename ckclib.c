@@ -1,4 +1,4 @@
-char * cklibv = "C-Kermit library, 9.0.055, 2 Feb 2016";
+char * cklibv = "C-Kermit library, 9.0.056, 26 April 2017";
 
 #define CKCLIB_C
 
@@ -8,7 +8,7 @@ char * cklibv = "C-Kermit library, 9.0.055, 2 Feb 2016";
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1999, 2016,
+  Copyright (C) 1999, 2017,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -2775,10 +2775,11 @@ hextoulong(s,n) char *s; int n; {
          1 = doublequotes,  2 = braces,    4 = apostrophes,
          8 = parens,       16 = brackets, 32 = angle brackets,
         -1 = 63 = all of these.
-    n3 = group quote character, ASCII value, used and tested only for
-         LISP quote, e.g. (a 'b c '(d e f)).
+    n3 = if positive: group quote character, ASCII value,
+         used and tested only for LISP quote, e.g. (a 'b c '(d e f)).
     n4 = 0 to collapse adjacent separators;
          nonzero not to collapse them.
+    n5 - nonzero means '\' is not a quoting character.
 
   Returns:
     Pointer to struct stringarray, with size:
@@ -2899,7 +2900,8 @@ static int nsplitbuf = 0;
 /* n4 = 1 to NOT collapse adjacent separators */
 
 struct stringarray *
-cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
+cksplit(fc,n1,s1,s2,s3,n2,n3,n4,n5)
+    int fc,n1,n2,n3,n4,n5; char *s1, *s2, *s3; {
     int splitting = 0;			/* What I was asked to do */
     int i, k, ko = 0, n, x, max = MAXWORDS; /* Workers */
     char * s = NULL, * ss, * p;		/* Workers */
@@ -2988,7 +2990,9 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
     s = splitbuf;
     sep = s2;				/* s2 = break set */
     if (!sep) sep = "";
+    debug(F110,"cksplit sep",sep,0);
     notsep = s3;			/* s3 = include set */
+    debug(F110,"cksplit notsep",notsep,0);
     if (!notsep) {
 	notsep = "";
     } else if ((all = !ckstrcmp(notsep,"ALL",3,1)) ||
@@ -3001,20 +3005,23 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
 	    all = 1;
 	    collapse = 0;
 	}
-	if (csv || tsv) {
-	    all = 1;
-	    collapse = 0;
-	}
+        debug(F101,"cksplit csv","",csv);
+        debug(F101,"cksplit tsv","",tsv);
+        debug(F101,"cksplit all","",all);
+        debug(F110,"cksplit ss sep",ss,0);
 	for (i = 1; i < 256; i++) {
 	    flag = 0;
 	    ss = sep;
-	    while (c = *ss++ && !flag) {
-		if (c == i) flag++;
+	    while ((c = *ss++) && !flag) {
+		if (c == (CHAR)i) flag++;
 	    }
-	    if (!flag) notsepbuf[n++] = c;
+	    if (!flag) {
+                notsepbuf[n++] = (CHAR)i;
+            }
 	}
 	notsepbuf[n] = NUL;
 	notsep = (char *)notsepbuf;
+	debug(F110,"CKMATCH SEPBUF ALL",sep,0);
 	debug(F110,"CKMATCH NOTSEPBUF ALL",notsep,0);
     }
     if (*s && csv) {			/* For CSV skip leading whitespace */
@@ -3061,7 +3068,7 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4) int fc,n1,n2,n3,n4; char *s1, *s2, *s3; {
 	    goto nextc;
 	}
 	class = 0;
-	if (!csv && !tsv) {		/* fdc 2010-12-30 */
+	if (!csv && !tsv && !n5) {      /* fdc 2010-12-30..2017-04-26 */
 	    /* In CSV and TSV splitting, backslash is not special */
 	    if (!cquote && c == CMDQ) {	/* If CMDQ */
 		cquote++;		/* next one is quoted */

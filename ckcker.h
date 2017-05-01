@@ -577,6 +577,7 @@ struct ssh_pf {				/* SSH port forwarding */
 #define FM_STDIN  128                   /* Standard input */
 #define FM_STDOUT 256                   /* Standard output */
 #define FM_STDERR 512                   /* Standard error */
+#define FM_STDM   896                   /* Standard in/out/err mask */
 
 /* File errors */
 

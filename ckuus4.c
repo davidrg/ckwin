@@ -9,11 +9,11 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2016,
+  Copyright (C) 1985, 2017,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: Fri Feb  5 15:30:06 2016
+    Last update: Sat Apr 22 12:53:49 2017
 */
 
 /*
@@ -90,11 +90,16 @@ extern xx_strp xxstring;
 #include <dcdef>
 #endif /* DEC_TCPIP */
 
+#ifndef NOICP
+extern char *tfnam[];
+extern int tlevel;
+#endif  /* NOICP */
+
 #ifdef FNFLOAT
 #include <math.h>                       /* Floating-point functions */
 #endif /* FNFLOAT */
 
-int fp_rounding = 0;			/* Nonzero if printf("%f") rounds */
+int fp_rounding = 0;                  /* Nonzero if printf("%f") rounds */
 int fp_digits = 0;		      /* Digits of floating point precision */
 
 extern int quiet, network, xitsta, escape, nopush, xferstat,
@@ -128,6 +133,7 @@ extern int batch;
 #endif /* VMS */
 
 extern char cmdfil[], *versio, *ckxsys, **xargv;
+extern char lasttakeline[];
 #ifdef DEBUG
 extern char debfil[];                   /* Debug log file name */
 extern int debtim;
@@ -8325,6 +8331,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 #ifdef DEBUG
     if (deblog) {
         int j;
+        debug(F110,"fneval",fn,0);
         for (j = 0; j < argn; j++) {
             debug(F111,"fneval arg post eval",argp[j],j);
             debug(F111,"fneval evaluated arg",bp[j],j);
@@ -8354,7 +8361,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 
 /*
   From this point on, bp[0..argn-1] are not NULL and all must be freed
-  before returning.
+  before returning.  BUT NOTE: if no arguments were given, bp[0] *is* NULL.
 */
     if (argn < 1) {                     /* Catch required args missing */
         switch (cx) {
@@ -8362,7 +8369,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
           case FN_EVA:
           case FN_EXE:
           case FN_CHR:
-          case FN_COD:
+       /* case FN_COD: */
           case FN_MAX:
           case FN_MIN:
           case FN_MOD:
@@ -8904,12 +8911,20 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
         }
         goto fnend;
 
-      case FN_COD:                      /* \fcode(char) */
-        if ((int)strlen(bp[0]) > 0) {
-            p = fnval;
-            i = *bp[0];
-            sprintf(p,"%d",(i & 0xff)); /* SAFE */
-        } else p = "0";			/* Can't happen */
+      case FN_COD:                      /* \fcode(string) */
+        /*
+          returns decimal character value of first char in string.
+          or 0 if string empty or no string given.
+        */
+        p = "0";
+        if (!bp[0]) goto fnend;         /* No argument given */
+        if ((int)strlen(bp[0]) < 1)     /* Empty argument */
+          goto fnend;
+        i = (int) bp[0][0];
+        debug(F111,"FN_CODE",bp[0],i);
+        p = fnval;
+        sprintf(p,"%d",(i & 0xff)); /* SAFE */
+        debug(F111,"FN_CODE fnval",fnval,i);
         goto fnend;
 
       case FN_LEN:                      /* \flength(arg1) */
@@ -10034,7 +10049,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
           /* Args parsed, now do the work */
 
           debug(F111,"fsplit bp0",bp0,n);
-          q = cksplit(splitting,n,bp0,sep,notsep,grouping,0,nocollapse);
+          q = cksplit(splitting,n,bp0,sep,notsep,grouping,0,nocollapse,0);
 
           wordnum = q ? q->a_size : -1; /* Check result */
           if (wordnum < 0) {
@@ -15034,6 +15049,19 @@ nvlook(s) char *s; {
 }
 #endif /* NOSPL */
 
+/* warning, this won't work for VMS */
+char *
+getbasename(s) char *s; {
+    int n, i;
+    if (!s) s = "";
+    if (!*s) return("");
+    n = (int)strlen(s);
+    for (i = n-2; i >= 0; i--) {
+        if (ISDIRSEP(s[i]))
+          return(s+i+1);
+    }
+    return(s);
+}
 
 /*
   X X S T R I N G  --  Expand variables and backslash codes.
@@ -15070,6 +15098,7 @@ nvlook(s) char *s; {
 int
 zzstring(s,s2,n) char *s; char **s2; int *n; {
     int x,                              /* Current character */
+        xx,                             /* Worker */
         y,                              /* Worker */
         pp,                             /* Paren level */
         kp,                             /* Brace level */
@@ -15126,8 +15155,8 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
 #endif /* NOSPL */
     depth++;                            /* Sink to a new depth */
     if (depth > XXDEPLIM) {             /* Too deep? */
-        printf("?definition is circular or too deep\n");
-        debug(F101,"zzstring fail","",depth);
+        (VOID) newerrmsg("Definition is circular or too deep");
+        debug(F111,"zzstring","Definition is circular or too deep",XXDEPLIM);
         depth = 0;
         *new = NUL;
         return(-1);
@@ -15278,9 +15307,9 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
             }
             if (*s == ']') s++;         /* ...past the closing bracket. */
 
-            x = chkarray(vbi,d);        /* Array is declared? */
+            xx = chkarray(vbi,d);        /* Array is declared? */
             debug(F101,"zzstring chkarray","",x);
-            if (x > -1) {
+            if (xx > -1) {
 #ifdef COMMENT
                 char * s1 = NULL;
 #endif /* COMMENT */
@@ -15492,10 +15521,15 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
                   p++;                    /* as variable name. */
                 if (*p == ')') p++;       /* Skip ahead to the end of it. */
             }
+/* At this point vnambuf contains the macro name from inside the parens */
+
             s = p;                      /* Adjust global source pointer */
             s3 = vnambuf;
             x3 = 0;
-            while (*s3++) x3++;
+            while (*s3++) x3++;         /* Length needed */
+
+/* The following is in case the macro name itself contains variables */
+
             p = malloc(x3 + 1);         /* Make temporary space */
             if (p && !quoting) {	/* If we got the space */
                 vp = vnambuf;           /* Point to original */
@@ -15505,7 +15539,9 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
                 free(p);                /* Free the temporary space */
                 p = NULL;
             }
-            debug(F110,"zzstring vname",vnambuf,0);
+/* At this point vnambuf contains the fully evaluated macro name */
+
+            debug(F110,"zzstring macro name",vnambuf,0);
             q = NULL;
 	    if (x == 'q') {		/* 299 Quoting this string */
 		vp = vnambuf;		/* 299 */
@@ -15539,10 +15575,10 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
                 }
                 if (x == ':') {		/* Variable type (s or :) */
                     vp = vnambuf;
-                } else {
+                } else {                /* Regular macro or associative array*/
 		    y = isaarray(vnambuf) ?
-			mxxlook(mactab,vnambuf,nmac) :
-			mxlook(mactab,vnambuf,nmac);
+			mxxlook(mactab,vnambuf,nmac) : /* Assoc Array */
+			mxlook(mactab,vnambuf,nmac);   /* Macro */
                     if (y > -1) {	/* Got definition */
                         vp = mactab[y].mval;
                     } else {
