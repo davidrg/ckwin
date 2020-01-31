@@ -2084,7 +2084,7 @@ oldmacosx103+secure:
 # on both Power and Intel architectures.  This one uses utmp.h on 10.4 and
 # earlier and utmpx.h on 10.5 onwards.
 # Note: Mac OS X 10.5 and earlier are 32-bit; 10.6 and later 64-bit.
-# Note 2: As of C-Kermit 9.0 -NOUUCP is included by default because
+# Note 2: As of C-Kermit 9.0 -DNOUUCP is included by default because
 # Mac OS X doesn't support UUCP.  To undo this, use KFLAGS=-UNOUUCP.
 #OK: 2011/06/14 (for 10.4.11, 10.5.8, 10.6.7)
 macosx macosx10 macosx10.3.9 macosx10.4 macosx10.5 macosx10.6:

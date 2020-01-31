@@ -2241,6 +2241,9 @@ iks_wait(sb,flushok) int sb; int flushok;
   tn_wait_flg is set here and never restored.  If user SETs TELNET WAIT OFF,
   it is precisely to avoid such situations, so it should be respected.
   Fixed by testing tn_wait_flg in the following line.  -fdc, 2013-04-09.
+
+    printf("*** TN_WAIT_FLG=*** TELOPT_U(TELOPT_KERMIT)=0%d\n",tn_wait_flg);
+    printf("*** TELOPT_U(TELOPT_KERMIT)=%d\n",TELOPT_U(TELOPT_KERMIT));
 */
     if (tn_wait_flg && TELOPT_U(TELOPT_KERMIT)) {
         switch (sb) {

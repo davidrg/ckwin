@@ -2817,11 +2817,20 @@ parser(m) int m; {
         if (epktrcvd) {
             printf(" Transfer canceled by sender.\n");
             printf(" Sender's message: \"%s\"\n",(char *)epktmsg);
+            if (ckindex("not found",(char *)epktmsg,0,0,0) ||
+                ckindex("no such",(char *)epktmsg,0,0,0)) {
+                printf(" Did you spell the filename right?\n");
+                printf(" Is the other Kermit CD'd to the right directory?\n");
+            }
         }
 #ifdef UNIX
         if (errno != 0)
 #endif /* UNIX */
-          printf(" Most recent local error: \"%s\"\n",ck_errstr());
+        {
+             (VOID) ckstrncpy(tmpbuf,ck_errstr(),TMPBUFSIZ);
+             printf(" Most recent local error: \"%s\"\n",tmpbuf);
+        }
+#ifdef COMMENT
         printf(
    "\nHINTS... If the preceding error message%s not explain the failure:\n",
                epktrcvd ? "s do" : " does"
@@ -2868,6 +2877,7 @@ parser(m) int m; {
                " . As a last resort, give a ROBUST command and try again.\n" :
                " . Give a ROBUST command and try again.\n"
                );
+#endif  /* COMMENT */
         printf("Also:\n");
         printf(" . Be sure the target directory has write permission.\n");
         printf(" . Be sure the target disk has sufficient space.\n");

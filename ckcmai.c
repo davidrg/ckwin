@@ -1,8 +1,8 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "1 May 2017"		/* Last edit date dd mmm yyyy */
-#define EDITNDATE "20170501"		/* Keep them in sync */
-/* Mon May  1 08:43:36 2017 */
+#define EDITDATE  "4 Sep 2018"		/* Last edit date dd mmm yyyy */
+#define EDITNDATE "20180904"		/* Keep them in sync */
+/* Tue Sep  4 16:57:47 2018 */
 
 /*
 FOR A NEW VERSION (development, alpha, beta, release candidate formal release):
@@ -46,7 +46,7 @@ If the version number has changed, also:
 #endif /* OS2 */
 #endif /* BETATEST */
 
-char * ck_cryear = "2017"; 		/* C-Kermit copyright year */
+char * ck_cryear = "2018"; 		/* C-Kermit copyright year */
 
 #ifndef MAC /* MAC = Kermit for MAC OS 6, 7, ... i.e. original Macintosh */
 /*
@@ -56,7 +56,7 @@ char * ck_cryear = "2017"; 		/* C-Kermit copyright year */
 #ifndef BETATEST
 #ifndef OS2                             /* UNIX, VMS, etc... (i.e. C-Kermit) */
 char *ck_s_test = "Dev";		/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "22";			/* Test version number */
+char *ck_s_tver = "23";			/* Test version number */
 #else  /* OS2 */
 char *ck_s_test = "";			/* (i.e. K95) */
 char *ck_s_tver = "";

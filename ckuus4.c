@@ -13,7 +13,8 @@
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: Sat Apr 22 12:53:49 2017
+    Last update:
+    Fri Oct  6 16:29:15 2017
 */
 
 /*
@@ -2032,10 +2033,16 @@ prescan(dummy) int dummy; {             /* Arg is ignored. */
   "transfer" character set to use for translating between them.
   The transfer character set number is returned.
 
-  Translation between two file character sets is done, for example,
-  by the CONNECT, TRANSMIT, and TRANSLATE commands.
+  At present this routine is somewhat overloaded.  It's fine for file
+  transfer because it does not assume the Kermit partner understands UTF8.
+  However, for terminal emulation it *should* use UTF8 as the intermediate
+  character set whenever possible so as not to lose characters it might
+  have been able to display; for example on a terminal connection from
+  the Linux console (UTF8) to a BBS that uses CP437 box-drawing characters.
+  This is handled in the CONNECT command code in ckucns.c, which avoids
+  calling this routine if the character-set on either end is UTF8.
 
-  Translation between Kanji character sets is not yet supported.
+  Translation between different Kanji character sets is not yet supported.
 */
 int
 gettcs(cs1,cs2) int cs1, cs2; {
@@ -8068,6 +8075,52 @@ jpgdate(fp) FILE * fp; {
     return((char *) datebuf);
 }
 
+int                                     /* Is character alphnumeric? */
+cisalphanum(ch) CHAR ch; {              /* i.e. a letter, digit, @, $, or _ */
+    /* All 8-bit characters are counted as alphanumeric */
+    int c;
+    c = (int)ch;                        /* Avoid C-language character syntax */
+    if (c == 36) return(1);             /* '$' is alphanumeric */
+    if (c == 95) return(1);             /* '_' is alphanumeric */
+    if (c < 48) return(0);              /* Space, punctuation, math */
+    if (c > 57 && c < 64) return(0);    /* Between '9' and '@' */
+    if (c > 90 && c < 97) return(0);    /* Between 'Z' and 'a' */
+    if (c > 122 && c < 127) return(0);  /* Between 'z' and DEL */
+    return(1);
+}
+
+int                                     /* Is character non-alphanumeric */
+cnonalphanum(ch) CHAR ch; {             /* i.e. not letter, digit, [$@_] */
+    int c;
+    c = (int)ch;                        /* Avoid C-language character syntax */
+    if (c == 36) return(0);             /* '$' is alphanumeric */
+    if (c == 95) return(0);             /* '_' is alphanumeric */
+    if (c < 48) return(1);              /* Space, punctuation, math */
+    if (c > 57 && c < 64) return(1);    /* Between '9' and '@' */
+    if (c > 90 && c < 97) return(1);    /* Between 'Z' and 'a' */
+    if (c > 122 && c < 127) return(1);  /* Between 'z' and DEL */
+    return(0);
+}
+
+/* Tell if a string contains only alphanumeric characters */
+int
+isalphanum(s) char *s; {
+    CHAR c;
+    while ((c = (int)(*s++))) {
+        if (!cisalphanum(c)) return(0);
+    }
+    return(1);
+}
+/* Tell if a string contains only non-alphanumeric characters */
+int
+nonalphanum(s) char *s; {
+    CHAR c;
+    while ((c = (int)(*s++))) {
+        if (!cnonalphanum(c)) return(0);
+    }
+    return(1);
+}
+
 static char *                           /* Evaluate builtin functions */
 fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
     int i=0, j=0, k=0, len1=0, len2=0, len3=0, n=0, t=0, x=0, y=0;
@@ -8721,7 +8774,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
             start = right ? -1 : 0;     /* Default starting position */
             if (argn > 2) {
                 val1 = *(bp[2]) ? evalx(bp[2]) : "1";
-		if (argn > 3) {
+		if (argn > 3) {         /* Occurrence */
 		    val2 = *(bp[3]) ? evalx(bp[3]) : "1";
 		    if (chknum(val2)) desired = atoi(val2);
 		    if (desired * len1 > len2) goto fnend;
@@ -8828,22 +8881,25 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 
       case FN_RPL:                      /* \freplace(s1,s2,s3) */
       /*
-        s = bp[0] = source string
-            bp[1] = match string
-            bp[2] = replacement string
+        s = bp[0] = source string (len1)
+            bp[1] = match string (len2)
+            bp[2] = replacement string (len3)
             bp[3] = which occurrence (default = all);
-        p = fnval = destination (result) string
+            bp[4] = context sensitive ("word mode")  20171005 
+            fnval = p = destination (result) string
       */
         if (argn < 1)                   /* Nothing */
           goto fnend;
-        if (argn < 2) {                 /* Only works if we have 2 or 3 args */
+        if (argn < 2) {                 /* Need at least two args */
             ckstrncpy(p,bp[0],FNVALL);
         } else {
-            int occur = 0, xx = 0, j2;
+            int occur = 0, xx = 0, context = 0, j2;
+            int left = 0, right = 0, ok = 0;
             len1 = (int)strlen(bp[0]);  /* length of string to look in */
             len2 = (int)strlen(bp[1]);  /* length of string to look for */
             len3 = (argn < 3) ? 0 : (int)strlen(bp[2]); /* Len of replacemnt */
-            j = len1 - len2 + 1;
+
+            j = len1 - len2 + 1;        /* source - match + 1  */
             j2 = j;
             if (argn > 3) {
                 if (chknum(bp[3])) {
@@ -8856,27 +8912,107 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
                     goto fnend;
                 }
             }
+/*
+  Context-sensitive "word mode" replace, new for C-Kermit 9.0.304 Dev.23,
+  October 2017.  Can be removed by defining NORPLWORDMODE.
+*/
+#ifdef RPLWORDMODE
+            if (argn > 4) {
+                if (chknum(bp[4])) {
+                    context = atoi(bp[4]);
+                } else {
+                    failed = 1;
+                    if (fndiags)
+                      ckmakmsg(fnval,FNVALL,
+                               "<ERROR:ARG_NOT_NUMERIC:\\f",fn,"()>",NULL);
+                    goto fnend;
+                }
+            }
+#endif  /* RPLWORDMODE */
             /* If args out of whack... */
             if (j < 1 || len1 == 0 || len2 == 0) {
                 ckstrncpy(p,bp[0],FNVALL); /* just return original string */
                 p[FNVALL] = NUL;
             } else {
               ragain:
-                s = bp[0];              /* Point to beginning of string */
-                while (j-- > 0) {       /* For each character */
-                    if (!ckstrcmp(bp[1],s,len2,inpcas[cmdlvl]) &&
-                        (occur == 0 || occur == ++xx)) {
-                        if (len3) {
-                            ckstrncpy(p,bp[2],FNVALL);
-                            p += len3;
+                s = bp[0];           /* Point to beginning of source string */
+                                         
+                xx = 0;       		/* Match counter */
+                while (*s) {            /* For each character in it...*/
+                    /* Compare current segment with target string */
+                    if (!ckstrcmp(bp[1],s,len2,inpcas[cmdlvl])) {
+                        ok = 1;         /* Assume OK to replace */
+#ifdef RPLWORDMODE
+                        if (context) {  /* New 2017-10-05 */
+                            CHAR c;
+                            left = 0;
+                            right = 0;
+                            ok = 0;   /* Mustcheck context before replacing */
+                            if (!strncmp(bp[1],"...",len2)) {
+                                /* Special case for ellipsis */
+                                if (s > bp[0]) { /* Can't begin a line */
+                                    c = *(s-1);   /* Check preceding char */
+                                    if (c != 32 && c != '.')
+                                      left = 1;
+                                }
+                                c = *(s+len2); /* Check following char */ 
+                                if (c != '.' && (c == SP || c == '\0'))
+                                  right = 1;
+                            } else if (isalphanum(bp[1])) {
+                                /* Target string is alphanumeric... */
+                                if (s == bp[0]) { /* At beginning of string */
+                                    left = 1;     /* So left boundary ok */
+                                } else {          /* Otherwise */
+                                    c = *(s-1);   /* Check preceding char */
+                                    if (cnonalphanum(c)) /* If not alphamum */
+                                      left = 2;  /* left boundary ok */
+                                }
+                                c = *(s+len2); /* Check following character */
+                                if (c == '\0') /* If end of string */
+                                  right = 1;   /* Right boundary OK */
+                                else if (cnonalphanum(c))
+                                  right = 2; /* Right boundary OK */
+                            } else if (nonalphanum(bp[1])) {
+                                /* Target is non-salphanumeric */
+                                if (s == bp[0]) { /* At beginning of line */
+                                    left = 1;     /* Left OK */
+                                } else {          /* Otherwise */
+                                    c = *(s-1);   /* Check preceding char */
+                                    if (cisalphanum(c) || c == SP)
+                                      left = 2; /* Left OK */
+                                }
+                                c = *(s+len2); /* Check char after target */
+                                if (c == '\0') { /* At end of string */
+                                    right = 1;   /* Right OK */
+                                } else {         /* Otherwise */
+                                    if (cisalphanum(c) || c <= SP)
+                                      right = 2; /* Right ok */
+                                }
+                            }
+                            /* If none of the above nothing is replaced */
+                            if (left && right) { /* Match accepted */
+                                ok = 1;          /* OK to replace */
+                                xx++;   /* Count this match */
+                            }
+                        } else 
+#endif  /* RPLWORDMODE */
+                          xx++;     /* Straight replace - count every match */
+
+                        if (ok && (occur == 0 || occur == xx)) {
+                            if (len3) {
+                                ckstrncpy(p,bp[2],FNVALL);
+                                p += len3;
+                            }
+                            s += len2;      /* and skip past it. */
+                        } else {            /* matched but not selected */
+                            *p++ = *s++;    /* Just copy this character */
                         }
-                        s += len2;      /* and skip past it. */
-                    } else {            /* No, */
+                    } else {            /* Didn't match */
                         *p++ = *s++;    /* just copy this character */
                     }
                 }
                 *p = NUL;
-                while ((*p++ = *s++));
+                while ((*p++ = *s++));  /* Append the rest */
                 if (occur < 0) {        /* cheap... */
                     occur = xx + occur + 1;
                     xx = 0;
@@ -12312,8 +12448,11 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 
 #ifdef SEEK_CUR
 /*
-   \fpicture():   Get dimensions of GIF or JPG image.
-   fdc June 2006
+   \fpictureinfo():   Get dimensions of GIF or JPG image - fdc June 2006.
+    NOTE: The height and width of a JPG image do not necessarily indicate
+    an image's actual orientation.  This is given by the Exif Orientation
+    tag (0x0122).  But locating it in a JPG file without having a full-blown
+    Exif parser is probably not possible.
 */
     if (cx == FN_PICTURE) {
 	FILE *fp = NULL;
@@ -12392,13 +12531,13 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 	    h = buf[8] + 256 * buf[9];
 	    goto picend;
 	} else if (!ckstrcmp(&s[k-4],".jpg",4,0) || /* JPEG file */
-		   !ckstrcmp(&s[k-5],".jpeg",5,0)) {
-	    if (fread(buf,1,2,fp) != 2) {
+		   !ckstrcmp(&s[k-5],".jpeg",5,0)) { /* (according to name) */
+	    if (fread(buf,1,2,fp) != 2) {            /* Read 1st bytes */
 		fclose(fp);
 		goto fnend;
 	    }
 	    if (buf[0] != 0xff || buf[1] != 0xd8) { /* Check signature */
-		fclose(fp);
+		fclose(fp);                         /* Should be FFD8 */
 		goto fnend;
 	    }
 	    eof = 0;
@@ -12417,7 +12556,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 			    break;
 			}
 			buf[1] = c;
-			if (c == 0xd9)
+			if (c == 0xd9)  /* FFD9 means End of Image */
 			  eof++;
 			if (c >= 0xc0 && c <= 0xfe)
 			  break;

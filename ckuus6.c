@@ -5185,6 +5185,8 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
     int reallysort = 0;
     int changeinplace = 0;
     int changebackup = 0;
+    int changes = 0;                    /* Change counter per file */
+    int totalchanges = 0;               /* Change counter all files */    
 
 #ifndef NOSPL
     char array = NUL;
@@ -5205,6 +5207,8 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
     chgbackupdir[0] = NUL;              /* CHANGE backup directory */
     changeinplace = 1;                  /* CHANGE'ing files in place */
     changebackup = 0;                   /* Backing up CHANGEd files */
+    changes = 0;
+    totalchanges = 0;
 
     g_matchdot = matchdot;              /* Save global matchdot setting */
 #ifdef COMMENT
@@ -6008,6 +6012,7 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
         itsadir = (len == (CK_OFF_T)-2 || isdir(name));
 #endif /* VMSOUNIX */
         debug(F111,"domydir itsadir",name,itsadir);
+        changes = 0;
         if ((itsadir && (show == 1)) || (!itsadir && (show == 2))) {
             znext(name);
             continue;
@@ -6039,9 +6044,9 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 	    char * nbp = NULL;		/* and pointer */
 	    int bufleft = 0;		/* Space left in newbuf */
 	    int i, j, k, x, y;		/* Workers */
-	    int changes = 0;		/* Change counter per file */
 	    int failed = 0;		/* Search string not found */
 	    char c1, c2;		/* Char for quick compare */
+            changes = 0;                /* Change counter */
 	    
 	    switch (scanfile(name,NULL,nscanfile)) { /* Is it a text file? */
 	      case FT_7BIT: k++; break;
@@ -6080,7 +6085,8 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
                 ckstrncpy(tmpfile,tempdir,MAXPATHLEN); /* Temp directory */
                 ckstrncat(tmpfile,"__x",MAXPATHLEN); /* Temp filespec */
                 if (simulate) {
-                    printf("Would create temp file %s\n",tmpfile);
+                    /* Too much */
+                    /* printf("Would create temp file %s\n",tmpfile); */
                 } else {
                     ofp = fopen(tmpfile,"w"); /* Open temporary file */
                     debug(F110,"CHANGE in place tmpfile",tmpfile,0);
@@ -6206,9 +6212,10 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
                     }
                 } else while (1) {      /* One or maybe more occurrences */
                     changes++;		/* Count this change */
+                    totalchanges++;     /* Increment total changes */
                     j = x + s2len - 1;	/* Size of addition to newbuf */
                     bufleft -= j;       /* Remaining space in newbuf after */
-                    if (bufleft > j) {      /* If space enough */
+                    if (bufleft > j) {  /* If space enough */
                         char c;
                         c = lbp[x];
                         lbp[x] = NUL;   /* Terminate for strncpy */
@@ -6626,7 +6633,11 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
   xdomydir:
 #ifndef NOSPL
     if (dir_cou && cv) {                /* /COUNT:var */
-        addmac(cv,ckitoa(nfiles));	/* set the variable */
+        int n;
+        n = totalchanges;               /* Number of changes for CHANGE */
+        if (cx != XXCHG)                /* Number for files for DIRECTORY */
+          n = nfiles;
+        addmac(cv,ckitoa(n));           /* set the variable */
         makestr(&cv,NULL);              /* free this */
     }
     if (ap) {				/* If we have a result array */
@@ -12629,6 +12640,8 @@ doif(cx) int cx; {
 #endif /* OS2 */
 
     debug(F101,"doif cx","",cx);
+
+/* Boolexp() calls the parsing functions: cmkey, cmnum, cmfld */
 
     z = boolexp(cx);                    /* Evaluate the condition(s) */
     debug(F010,"doif cmdbuf",cmdbuf,0);

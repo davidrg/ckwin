@@ -256,6 +256,10 @@ struct stringint {			/* String and (wide) integer */
 
 /* User interface features */
 
+#ifndef NORPLWORDMODE                   /* \freplace() word mode */
+#define RPLWORDMODE
+#endif  /* NORPLWORDMODE */
+
 #ifdef CK_CURSES			/* Thermometer */
 #ifndef NO_PCT_BAR
 #ifndef CK_PCT_BAR

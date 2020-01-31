@@ -3912,7 +3912,6 @@ dosexp(s) char *s; {                    /* s = S-Expression */
 		if (!*q1) q1 = "0";
 		ckstrncpy(buf2,q1,32);
 		q1 = buf2;
-
 		r = ckround(atof(q0),(int)(atof(q1)),sxroundbuf,31);
 		s2 = sxroundbuf;
 		sexprc = 0;

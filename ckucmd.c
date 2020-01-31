@@ -1,6 +1,6 @@
 #include "ckcsym.h"
 
-char *cmdv = "Command package 9.0.172, 5 Feb 2016";
+char *cmdv = "Command package 9.0.174, 4 September 2016";
 
 /*  C K U C M D  --  Interactive command package for Unix  */
 
@@ -16,6 +16,7 @@ char *cmdv = "Command package 9.0.172, 5 Feb 2016";
     copyright text in the ckcmai.c module for disclaimer and permissions.
 */
 
+#define FUNCTIONTEST
 #define TOKPRECHECK
 
 #define DOCHKVAR
@@ -6229,6 +6230,7 @@ unungw() {
 static int
 gtword(brk) int brk; {
     int c;                              /* Current char */
+    int cq = 0;                         /* Next char */
     int quote = 0;                      /* Flag for quote character */
     int echof = 0;                      /* Flag for whether to echo */
     int comment = 0;			/* Flag for in comment */
@@ -6244,6 +6246,16 @@ gtword(brk) int brk; {
     int dq = 0;				/* Doublequote flag */
     int dqn = 0;			/* and count */
     int isesc = 0;
+#ifdef FUNCTIONTEST
+    /*
+      September 2018 - Code to prevent spaces in function argument
+      list to cause a word break during command parsing.  Matching
+      code also added to setatm().
+    */
+    int fndebug = 0;
+    int fnstate = 0;                    /* Function-parsing state */
+    int fnparens = 0;                   /* Parens counter */
+#endif /* FUNCTIONTEST */
 
 #ifdef RTU
     extern int rtu_bug;
@@ -6350,7 +6362,7 @@ gtword(brk) int brk; {
     }
     pp = np;                            /* Start of current field */
 
-#ifdef COMMENT
+#ifdef FUNCTIONTEST
 #ifdef DEBUG
     if (deblog) {
 	debug(F110,"gtword cmdbuf",cmdbuf,0);
@@ -6358,7 +6370,7 @@ gtword(brk) int brk; {
 	debug(F110,"gtword pp",pp,0);
     }
 #endif /* DEBUG */
-#endif /* COMMENT */
+#endif /* FUNCTIONTEST */
     {
 	/* If we are reparsing we have to recount any braces or doublequotes */
 	char * p = pp;
@@ -6381,6 +6393,8 @@ CMDIRPARSE:
 #endif /* BS_DIRSEP */
 
 	c = *bp;
+        cq = *(bp+1);
+        debug(F000,"CHAR C","",c);      /* FUNCTIONTEST */
         if (!c) {			/* If no char waiting in reparse buf */
 	    if ((dpx
 #ifndef NOSPL
@@ -6507,6 +6521,36 @@ CMDIRPARSE:
 	if (c == '"')			/* Count doublequotes */
 	  dqn++;
 
+#ifdef FUNCTIONTEST                     /* gtword() */
+        if (fnstate == 0 && c == '\\') {
+            fnstate = 1;
+            if (fndebug) printf("g%d%c/",fnstate,c);
+        } else if (fnstate == 1 && c == '\\') {
+            /* because gtword doubles the backslash */
+            fnstate = 1;
+            if (fndebug) printf("g%d%c/",fnstate,c);
+        } else if (fnstate == 1) {
+            fnstate = (c == 'f' || c == 'F') ? 2 : 0;
+            if (fndebug) printf("g%d%c/",fnstate,c);
+        } else if (fnstate == 2 && isalpha(c)) {
+            fnstate = 3;
+            if (fndebug) printf("g%d%c/",fnstate,c);
+        } else if (fnstate == 3 && isalpha(c)) {
+            fnstate = 4;
+            if (fndebug) printf("g%d%c/",fnstate,c);
+        } else if (fnstate == 4 && c == '(') {
+            fnstate = 5;
+            fnparens++;
+            if (fndebug) printf("g%d%c/",fnstate,c);
+        } else if (fnstate == 5 && c == ')') {
+            fnparens--;
+            if (fnparens == 0) {
+                fnstate = 0;
+            }
+            if (fndebug) printf("g%d%c/",fnstate,c);
+        }
+#endif /* FUNCTIONTEST */
+
 	if (quote && (c == CR || c == LF)) { /* Enter key following quote */
 	    *bp++ = CMDQ;		/* Double it */
 	    *bp = NUL;
@@ -6541,7 +6585,8 @@ CMDIRPARSE:
 	    if (!kstartactive &&	/* Not in possible Kermit packet */
 		!comment && c == SP) {	/* Space not in comment */
                 *bp++ = (char) c;	/* deposit in buffer if not already */
-		/* debug(F101,"gtword echof 2","",echof); */
+		debug(F101,"gtword SPACE fnstate","",fnstate);
+		debug(F101,"gtword SPACE inword","",inword);
 #ifdef BEBOX
                 if (echof) {
 		    cmdecho((char) c, 0); /* Echo what was typed. */
@@ -6555,13 +6600,23 @@ CMDIRPARSE:
 		      fflush(stdout);
 		}
 #endif /* BEBOX */
-                if (inword == 0) {      /* If leading, gobble it. */
+                if (inword == 0
+#ifdef FUNCTIONTEST
+                    && !fnstate
+#endif  /* FUNCTIONTEST */
+                    ) {      /* If leading, gobble it. */
                     pp++;
                     continue;
-                } else {                /* If terminating, return. */
+                } else {
+#ifdef FUNCTIONTEST
+                    if (fnstate == 5) { /* Space inside function arg list */
+                        debug(F101,"SP in fn arglist fnstate","",fnstate);
+                        continue;
+                    }
+#endif  /* FUNCTIONTEST */
 		    if ((!dq && ((*pp != lbrace) || (bracelvl == 0))) ||
 			(dq && dqn > 1 && *(bp-2) == '"')) {
-			np = bp;
+			np = bp;     /* If field-terminating space, return. */
 			cmbptr = np;
 			if (setatm(pp,0) < 0) {
 			    printf("?Field too long error 1\n");
@@ -6569,6 +6624,11 @@ CMDIRPARSE:
 			    return(-9);
 			}
 			brkchar = c;
+#ifdef FUNCTIONTEST
+                        debug(F110,"XXX atmbuf",atmbuf,0);
+                        debug(F110,"XXX pp",pp,0);
+                        debug(F101,"XXX brkchar","",c);                    
+#endif  /* FUNCTIONTEST */
 			inword = cmflgs = 0;
 			return(0);
 		    }
@@ -6984,6 +7044,7 @@ CMDIRPARSE:
         } else {			/* This character was quoted. */
 	    int qf = 1;
 	    quote = 0;			/* Unset the quote flag. */
+
 	    /* debug(F000,"gtword quote 0","",c); */
 	    /* Quote character at this level is only for SP, ?, and controls */
             /* If anything else was quoted, leave quote in, and let */
@@ -7074,9 +7135,29 @@ static int
 setatm(cp,fcode) char *cp; int fcode; {
     char *ap, *xp, *dqp = NULL, lbrace, rbrace;
     int bracelvl = 0, dq = 0;
+    int c;                              /* current char */
+
+#ifdef FUNCTIONTEST
+    /*
+      September 2018 - Code to prevent spaces in function argument
+      list to cause a word break during command parsing.  Matching
+      code also added to setatm().
+    */
+    int fnstate = 0;                    /* Function-parsing state */
+    int fnparens = 0;                   /* Parens counter */
+    int fndebug = 0;
+#endif /* FUNCTIONTEST */
 
     register char * s;
     register int n = 0;
+
+#ifdef FUNCTIONTEST
+/*
+    printf("---------------------------------\n");
+    printf("SETATM...\n");
+    printf("CP=[%s]\n",cp);
+*/
+#endif /* FUNCTIONTEST */
 
     if (cmfldflgs & 1) {		/* Handle grouping */
 	lbrace = '(';
@@ -7123,6 +7204,32 @@ setatm(cp,fcode) char *cp; int fcode; {
 	dqp = cp;
     }
     while (*cp) {
+        c = *cp;
+#ifdef FUNCTIONTEST                     /* setatm() */
+        if (fnstate == 0 && c == '\\') {
+            fnstate = 1;
+            if (fndebug) printf("s%d%c/",fnstate,c);
+        } else if (fnstate == 1) {
+            fnstate = (c == 'f' || c == 'F') ? 2 : 0;
+            if (fndebug) printf("s%d%c/",fnstate,c);
+        } else if (fnstate == 2 && isalpha(c)) {
+            fnstate = 3;
+            if (fndebug) printf("s%d%c/",fnstate,c);
+        } else if (fnstate == 3 && isalpha(c)) {
+            fnstate = 4;
+            if (fndebug) printf("s%d%c/",fnstate,c);
+        } else if (fnstate == 4 && c == '(') {
+            fnstate = 5;
+            fnparens++;
+            if (fndebug) printf("s%d%c/",fnstate,c);
+        } else if (fnstate == 5 && c == ')') {
+            fnparens--;
+            if (fnparens == 0) {
+                fnstate = 0;
+            }
+            if (fndebug) printf("s%d%c/",fnstate,c);
+        }
+#endif /* FUNCTIONTEST */
         if (*cp == lbrace)
 	  bracelvl++;
         else if (*cp == rbrace)
@@ -7138,8 +7245,12 @@ setatm(cp,fcode) char *cp; int fcode; {
 			}
 		    }
 		}
-	    } else if ((*cp == SP || *cp == HT) && fcode != 1 && fcode != 3)
-	      break;
+	    } else if ((*cp == SP || *cp == HT) && fcode != 1 && fcode != 3) {
+#ifdef FUNCTIONTEST
+                if (fnstate == 0)
+#endif /* FUNCTIONTEST */
+                break;
+            }
 	    if ((fcode == 2) && (*cp == '=' || *cp == ':')) break;
 	    if ((fcode != 3) && (*cp == LF || *cp == CR)) break;
 	}
@@ -7147,6 +7258,9 @@ setatm(cp,fcode) char *cp; int fcode; {
         cc++;
     }
     *ap = NUL;				/* Terminate the string. */
+#ifdef FUNCTIONTEST
+    /* printf("ATMBUF=[%s]\n", atmbuf); */
+#endif /* FUNCTIONTEST */
     /* debug(F111,"setatm result",atmbuf,cc); */
     return(cc);                         /* Return length. */
 }

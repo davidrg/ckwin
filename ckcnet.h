@@ -1239,7 +1239,9 @@ typedef char * caddr_t; /* core address type */
 #ifdef TNCODE                           /* If we're compiling telnet code... */
 #ifndef IKS_OPTION
 #ifndef STRATUS
+#ifndef NOIKSD
 #define IKS_OPTION
+#endif /* NOIKSD */
 #endif /* STRATUS */
 #endif /* IKS_OPTION */
 #include "ckctel.h"

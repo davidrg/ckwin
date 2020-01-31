@@ -5,7 +5,7 @@ C-KERMIT 9.0 CHANGE LOG
   Go to the bottom to find the newest edits.
 
   Frank da Cruz, The Kermit Project, New York City.
-  Last update:  Mon May  1 08:42:19 2017
+  Last update:  19 July 2017
 
 These are the changes to C-Kermit since Kermit 95 was last released as
 version 2.1.3, and therefore also the changes that would appear in any new
@@ -904,10 +904,10 @@ different APIs for different file systems on the same computer, etc.  We'll
 need to confront this soon, but let's get a good stable 8.0.211 release out
 first!  Meanwhile, for future reference, here are a few articles:
 
-General: http://freshmeat.net/articles/view/709/
-Linux:   http://www.ece.utexas.edu/~luo/linux_lfs.html
-HP-UX:   http://devrsrc1.external.hp.com/STK/partner/lg_files.pdf
-Solaris: http://wwws.sun.com/software/whitepapers/wp-largefiles/largefiles.pdf
+ General: http://freshmeat.net/articles/view/709/
+ Linux:   http://www.ece.utexas.edu/~luo/linux_lfs.html
+ HP-UX:   http://devrsrc1.external.hp.com/STK/partner/lg_files.pdf
+ Solaris: http://wwws.sun.com/software/whitepapers/wp-largefiles/largefiles.pdf
 
 Looked into FTP timeouts.  It appears I can just call empty() (which is
 nothing more than a front end for select()) with the desired timeout before
@@ -4659,7 +4659,7 @@ slots and observed the stream of Acks in the reverse direction:
   RECEIVE BUFFERS:
   buffer inuse address length data type seq flag retries
      0     1     29212 9667     0   Y    3     0
-  [%#Y]
+  [^A%#Y]
   ...
   in_chk my_count=8
   ...
@@ -4670,7 +4670,7 @@ slots and observed the stream of Acks in the reverse direction:
   RECEIVE BUFFERS:
   buffer inuse address length data type seq flag retries
      0     1     29212 9667     0   Y    4     0
-  [%$Y]
+  [^A%$Y]
 
 Here we can see that the pushed-back SOH was properly retrieved next time
 around, and the tailgating Ack was not lost.  This scenario repeats itself
@@ -9159,7 +9159,7 @@ cksplit() C-Kermit library function, so I replaced the mess (or at least the
 newerrmsg() reveals that that the new "Definition is circular or too deep"
 errors are at the beginning of FOR and WHILE loops, but the loops still sort
 of work.  This almost certainly is because FOR and WHILE are internally
-defined macros that have not been passed through command parser.  Debuggin
+defined macros that have not been passed through command parser.  Debugging
 continues...
 
 Fixed a bad debug() statement in the FOPEN (or FREAD?) code that was added
@@ -9204,7 +9204,7 @@ original change to dodo() but only for internal macros.  After some serious
 juggling of the quoting levels in the internal WHILE macro definition, it
 worked.  At least for my test script, and for the HTML script.  ckuus5.c,
 ckuusr.c, 27 Apr 2017.
-      
+
 Now to fix the other internal macro definitions...  I fixed foz_def (the
 macro to use when the loop variable is a macro rather than a \%x variable),
 now it works too.  ckuus5.c, 27 Apr 2017.
@@ -9269,7 +9269,7 @@ C-Kermit.  An incompatibility was noted in the 'demo' script:
 In old Kermit, the 'smallest' macro saw three arguments; the new Kermit sees
 only one.  I think the old behavior was too much magic; the new behavior is
 proper.  From now on, if you want a macro to receive 3 arguments, you'll
-have to call it with three arguments.  Or recode the macro to \fsplit() the
+have to call it with three arguments.  Or recode the macro to \fsplit() 
 any compound arguments.
 
 The S-Expression torture test gets errors now that it didn't before, but the
@@ -9289,6 +9289,93 @@ fully pipeable.  A minor wrinkle here was to not actually close any of these
 if the script contained an FCLOSE for them. ckcker.h, ckuus[27].c, 30 Apr 2017.
 
 --- 9.0.304 Dev.22 --
+
+CHANGE /COUNT:variablename always set variable to 0 or 1, where it should
+have set it to the number of changes that it made.  Diagnosis: it was
+sharing too much code with DIRECTORY /COUNT.  Fixed in ckuus6.c, 8 May 2017.
+
+Fixed Lisp (ROUND -5.6666 2), it was losing the minus sign (result 5.67
+instead of -5.67).  ckcklib.c, 19 July 2017.
+
+\fpictureinfo(s[,&a]) apparently never has worked for getting the
+orientation of a JPG that comes straight out of a camera (or certain
+cameras).  The reason I never noticed this is that I almost always run every
+image in a gallery through Photoshop first.  Kermit only looks at the
+ImageLength (i.e. height) and ImageWidth Exif items, but in the camera's
+files they are the same for all orientations; the actual orientation is
+given by the Exif Orientation tag.  Photoshop uses this to orient the
+picture properly when loading it, and sets the width and height correctly 
+on writing it out.
+
+But there is nothing Kermit can do about this; even if I could figure out
+how to find the Orientation tag, what would I do with it?  Eventually it
+dawned on me that the right place to handle this (to fix the problem
+when it occurs in the Photogallery script) was on on the Imagemagick
+command line.  Simply adding -auto-orient did the trick.  Photogallery
+2.14,  21 Jul 2017.  No changes to Kermit.
+
+Added a new option to \freplace(): a 5th argument specifying "word mode",
+meaning that the target string will be replaced only if it's a "word",
+i.e. surrounded by whitespace or punctuation, etc, so as not avoid the case
+where the target word happens to also be a substring of other words.  For
+example, changing the word "a" to the word "the" without changing all the
+other letter a's to "the".  That would be simple enough but I also wanted to
+handle things like replacing "--" by &mdash; and "..." by &hellip; (for the
+html-to-text script).  Added 4 new routines -- isalphanum(string),
+cisalphanum(char), nonalphanum(string), cnonalphanum(string) -- which the
+\freplace() code uses to check the context of the target string.  All of the
+new code is in #ifdef RPLWORDMODE..#endif, so can easily be deselected if
+necessary.  ckuus[24].c, 5-7 Oct 2017.
+
+Simplified "hints" given after a GET command failed.  ckuus5.c, 8 Oct 2017.
+
+CHANGE command: Got rid of the the "Would create temp file" message, 
+it overwhelms all the other feedback.  ckuus6.c, 10 August 2018.
+
+Changed copyright year to 2018.  ckcmai.c, 10 August 2018.
+
+It was annoying me that constructions like:
+
+  if \findex(not rated,\m(line)) {
+    .line := \freplace(\m(line),not rated,sin ranking)
+  }
+
+failed with a message like "?<ERROR:MISSING_ARG:\findex()>".  This has been
+the case forever.  The standard advice was to work around in ways like this:
+
+  .x := \findex(not rated,\m(line))
+  if x .line := \freplace(\m(line),not rated, sin ranking)
+
+or:
+  if \findex(not\32rated,\m(line)) {
+    .line := \freplace(\m(line),not rated, sin ranking)
+  }
+
+or:
+  .notrated = not rated
+  if \findex(\m(notrated),\m(line)) {
+    .line := \freplace(\m(line),not rated, sin ranking)
+  }
+
+The IF command expects a keyword, a symbol, a number, or a "field", and
+therefore breaks on the first space.  This is not a problem only with the IF
+command, nor only with the \findex() function; the same thing happens in any
+context where a "word" is expected and you include a \function() invocation
+that has spaces in its argument list.  A universal fix was required at the
+very deepest level of the command parser: a state machine that recognizes
+function calls and prevents any blanks contained in their argument lists
+from triggering a premature word break.  Now you can write function calls
+consistently in any context, no matter whether they contain spaces or not.
+The new code was added to gtword() and setatm() in ckucmd.c, enclosed in
+#ifdef FUNCTIONTEST..#endif, which is defined at the top of the file.  3-4
+September 2018.  By the way, doing this revealed significant unnecessary
+duplication of effort between gtword() and setatm(), not worth fixing at
+this late date.
+
+.................................
+
+(NOTE: These notes at the bottom, back to "--- 9.0.304 Dev.22 --" apply
+to a version that hasn't been uploaded yet.)
 
 ---------------------------------
 **************************

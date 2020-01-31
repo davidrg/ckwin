@@ -10963,11 +10963,16 @@ dohfunc(xx) int xx; {
   The numeric code of the first character in string s1, or 0 if s1 empty.\n");
         break;
       case FN_RPL:                      /* Replace */
-        printf("\\freplace(s1,s2,s3[,n1])\n\
+        printf("\\freplace(s1,s2,[s3[,n1[,n2]]])\n\
   s1 = original string.\n\
   s2 = match string.\n\
-  s3 = replacement string.\n\
-  n1 = occurrence.\n");
+  s3 = replacement string (may be empty).\n\
+  n1 = occurrence (if omitted or 0 does all occurrences).\n");
+#ifdef RPLWORDMODE
+        printf("  n2 = word mode \
+(0 = ignore context; 1 = only if target is delimited).\n");
+#endif  /* RPLWORDMODE */
+
         printf("Returns string:\n\
   s1 with occurrence number n1 of s2 replaced by s3.\n\
   If n1 = 0 or omitted, all occurrences are replaced.\n\

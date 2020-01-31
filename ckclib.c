@@ -1,4 +1,4 @@
-char * cklibv = "C-Kermit library, 9.0.056, 26 April 2017";
+char * cklibv = "C-Kermit library, 9.0.057, 19 July 2017";
 
 #define CKCLIB_C
 
@@ -2108,7 +2108,7 @@ ckround(fpnum,places,obuf,obuflen)
 
     /* Should use snprintf() here but it's not portable */
 
-    sprintf(buf,"%200.100f",fpnum);	/* Make string version to work with */
+    sprintf(buf,"%200.100f",fpnum);	/* Make string version to work with. */
     debug(F110,"ckround buf",buf,0);
     number = (char *) buf;		/* Make pointer to it */
 
@@ -2181,6 +2181,7 @@ ckround(fpnum,places,obuf,obuflen)
             s--;			/* and back up to next digit */
 	}
     }
+    if (minus) number--;                /* Back up to minus sign, if any. */
 #ifdef __alpha
     sscanf(number,"%f",&value);		/* Convert back to floating point */
 #else
