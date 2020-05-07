@@ -1,6 +1,6 @@
 #include "ckcsym.h"
 
-char *cmdv = "Command package 9.0.174, 4 September 2016";
+char *cmdv = "Command package 9.0.174, 25 April 2020";
 
 /*  C K U C M D  --  Interactive command package for Unix  */
 
@@ -8,9 +8,10 @@ char *cmdv = "Command package 9.0.174, 4 September 2016";
 
 /*
   Author: Frank da Cruz (fdc@columbia.edu),
-  Columbia University Academic Information Systems, New York City.
+  Formerly of Columbia University Academic Information Systems, New York City.
+  Since 1 July 2011, Open Source Kermit Project.
 
-  Copyright (C) 1985, 2016,
+  Copyright (C) 1985, 2020,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -3699,6 +3700,7 @@ chktok(tlist) char *tlist; {
 char cmdatebuf[CMDATEBUF+4] = { NUL, NUL };
 static char * cmdatebp = cmdatebuf;
 char * cmdatemsg = NULL;
+char * cmdatestr = NULL;
 
 static struct keytab timeunits[] = {
     { "days",   TU_DAYS,   0 },
@@ -4102,15 +4104,26 @@ cmcvtdate(s,t) char * s; int t; {
     char yearbuf[5];
     char timbuf[16], *tb, cc;
     char * dp = NULL;			/* Result pointer */
+    char * newdate = NULL;
+    char * datepat = "[12][0-9][0-9][0-9]:[0-9][0-9]:[0-9][0-9]";
 
     if (!s) s = "";
     tmpbuf[0] = NUL;
+    len = strlen(s);
 
     while (*s == SP) s++;		/* Gobble any leading blanks */
+    if (ckmatch(datepat,s,0,4)) {       /* Check for Apache web log format */
+        int i, j = 0;
+	newdate = (char *)malloc((len + 1) * sizeof(char *));
+        for (i = 0; i <= len; i++) {    /* Loop to remove colons */
+            if (s[i] != ':') newdate[j++] = s[i];
+            if (s[i] == NUL) break;
+        }
+        s = newdate;                    /* Replace arg with result */
+    }
     if (isalpha(*s))			/* Remember if 1st char is a letter */
       isletter = 1;
 
-    len = strlen(s);
     debug(F110,"cmcvtdate",s,len);
     if (len == 0) {			/* No arg - return current date-time */
 	dp = ckdate();
@@ -4658,7 +4671,6 @@ cmcvtdate(s,t) char * s; int t; {
    state = 3 = seconds
    state = 4 = fractions of seconds
 */
-
   dotime:
     if (isletter && (s == p)) {
 	makestr(&cmdatemsg,"Unknown date-time word");

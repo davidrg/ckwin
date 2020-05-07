@@ -8,13 +8,13 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2017,
+  Copyright (C) 1985, 2020,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
   Last update:
-    Fri Apr 21 13:04:13 2017
+    Sun Apr 26 13:47:51 2020
 */
 
 /* Includes */
@@ -6047,8 +6047,11 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 	    int failed = 0;		/* Search string not found */
 	    char c1, c2;		/* Char for quick compare */
             changes = 0;                /* Change counter */
-	    
-	    switch (scanfile(name,NULL,nscanfile)) { /* Is it a text file? */
+
+            k = 0;
+            x = scanfile(name,NULL,nscanfile)	    ;
+            debug(F111,"domydir CHANGE scanfile",name,x);
+	    switch (x) {                /* Is it a text file? */
 	      case FT_7BIT: k++; break;
 	      case FT_UTF8: k++; break;
 	      case FT_UCS2: k++; break;

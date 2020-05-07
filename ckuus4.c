@@ -10752,7 +10752,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 	{
 	    char * s;
 	    s = p;
-	    while (*s) {
+	    while (*s) {                /* Strip leading spaces/ctrls */
 		if (*s < 32) {
 		    *s = NUL;
 		    break;
