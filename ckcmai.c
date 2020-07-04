@@ -1,15 +1,16 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "25 Apr 2020"		/* Last edit date dd mmm yyyy */
-#define EDITNDATE "20200425"		/* Keep them in sync */
-/* Sat Apr 25 16:43:48 2020 */
+#define EDITDATE  "24 Jul 2020"         /* Last edit date dd mmm yyyy */
+#define EDITNDATE "20200724"		/* Keep them in sync */
+/* Fri Jul 24 13:24:26 2020 */
 
 /*
 FOR A NEW VERSION (development, alpha, beta, release candidate formal release):
   . Change the 3 dates just above;
   . Change ck_cryear (copyright year) just below, if necessary;
   . For test versions change ck_s_test and ck_s_tver (below) appropriately;
-  . Change dates (and version number if necessary) at top of makefile.
+  . Change makefile CKVER and BUILDID definitions and timestamp at top.
+  . When year changes, change ck_cryear = "xxx";
 
 If the version number has changed, also:
   . Change sccsid[] (below);
@@ -55,8 +56,8 @@ char * ck_cryear = "2020"; 		/* C-Kermit copyright year */
 */
 #ifndef BETATEST
 #ifndef OS2                             /* UNIX, VMS, etc... (i.e. C-Kermit) */
-char *ck_s_test = "Dev";		/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "24";			/* Test version number */
+char *ck_s_test = "Alpha";		/* "Dev","Alpha","Beta","RC", or "" */
+char *ck_s_tver = "01";			/* Test version number */
 #else  /* OS2 */
 char *ck_s_test = "";			/* (i.e. K95) */
 char *ck_s_tver = "";
@@ -79,7 +80,7 @@ char *ck_s_date = EDITDATE;		/* See top */
 char *buildid = EDITNDATE;		/* See top */
 
 #ifdef UNIX
-static char sccsid[] = "@(#)C-Kermit 9.0.304";
+static char sccsid[] = "@(#)C-Kermit 9.0.305";
 #endif /* UNIX */
 
 /*
@@ -97,8 +98,8 @@ static char sccsid[] = "@(#)C-Kermit 9.0.304";
   for future releases.
 */
 
-char *ck_s_ver = "9.0.304";             /* C-Kermit version string */
-long  ck_l_ver =  900304L;              /* C-Kermit version number */
+char *ck_s_ver = "9.0.305";             /* C-Kermit version string */
+long  ck_l_ver =  900305L;              /* C-Kermit version number */
 
 #ifdef OS2
 /* New Open Source C-Kermit for Windows is just C-Kermit */

@@ -1,8 +1,8 @@
 # makefile / Makefile / ckuker.mak / CKUKER.MAK
 #
 # Mon May  1 08:43:05 2017
-BUILDID=20170501
-CKVER= "9.0.304"
+BUILDID=20200724
+CKVER= "9.0.305"
 #
 # -- Makefile to build C-Kermit for UNIX and UNIX-like platforms --
 #
@@ -1808,17 +1808,20 @@ freebsd+ssl freebsd+openssl freebsd50+openssl:
 #disabled on ckcfn2.c ("KFLAGS=-O0") (Letter O Digit Zero).
 #(This could be automated by testing `uname -m` for "sun3".)
 #OK: 2011/06/15 on NetBSD 1.5.2 and 5.1.
-#OK: 2011/08/21 on 5.1.
 #NetBSD 4.1: have to include <time.h>.
+#OK: 2011/08/21 on 5.1.
+#OK: (many more up through NetBSD 7.2.1)
+#OK: NetBSD 8.x
+#OK: 2020/08/24 NetBSD 9.0
 # `uname -r | grep "[6789].[0-9]" > /dev/null && echo '-DTIMEH'`
 
 netbsd netbsd2 netbsd15 netbsd16 old-netbsd:
-	@echo Making C-Kermit $(CKVER) for NetBSD with curses...
+	@echo Making C-Kermit $(CKVER) for NetBSD `uname -r` with curses...
 	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS=`grep fseeko /usr/include/stdio.h > /dev/null && \
 	echo '-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64'` \
 	-DTIMEH	-DBSD44 -DCK_CURSES -DTCPSOCKET -DUSE_STRERROR -DHAVE_OPENPTY \
-	-funsigned-char -DHERALD=\"\\\" NetBSD `uname -r`\\\"\" \
+	-funsigned-char -DHERALD=\"\\\" `uname -s -r`\\\"\" \
 	-DCK_DTRCD -DCK_DTRCTS -DTPUTSARGTYPE=int -DFNFLOAT $(KFLAGS) -O" \
 	"LIBS= -lcurses -lcrypt -lm -lutil $(LIBS)"
 

@@ -1,6 +1,6 @@
 #include "ckcsym.h"
 
-char *cmdv = "Command package 9.0.174, 25 April 2020";
+char *cmdv = "Command package 9.0.175, 24 July 2020";
 
 /*  C K U C M D  --  Interactive command package for Unix  */
 
@@ -7575,7 +7575,11 @@ cmdconchk() {
 
 /* Here we must look inside the stdin buffer - highly platform dependent */
 
-#ifdef _IO_file_flags			/* Linux */
+#ifdef __FILE_defined                   /* glibc 2.28 1 Aug 2018 */
+    x = (int) ((stdin->_IO_read_end) - (stdin->_IO_read_ptr));
+    debug(F101,"cmdconchk __FILE_defined","",x);
+#else /* __FILE_defined */ 
+#ifdef _IO_file_flags              /* Linux (glibc 2.28 removed this symbol */
     x = (int) ((stdin->_IO_read_end) - (stdin->_IO_read_ptr));
     debug(F101,"cmdconchk _IO_file_flags","",x);
 #else  /* _IO_file_flags */
@@ -7612,12 +7616,12 @@ cmdconchk() {
 #endif /* USE_FILE__CNT */
 #endif /* USE_FILE_CNT */
 #endif /* _IO_file_flags */
+#endif /* __FILE_defined */
 #endif /* CMD_CONINC */
 #endif /* OS2 */
     return(x + y);
 }
 /* #endif */ /* USE_ARROWKEYS */
-
 
 static VOID
 cmdclrscn() {				/* Clear the screen */
