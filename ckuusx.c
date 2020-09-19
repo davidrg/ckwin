@@ -9,7 +9,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2016,
+  Copyright (C) 1985, 2020,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -60,8 +60,19 @@
 #else  /* !BSD44 */
 #ifdef linux
 #include <term.h>
+#else  /* !BSD44 */
 #endif /* linux */
 #endif /* NOTERMCAP */
+/*
+  Note, none of the above works on Ubuntu: not curses.h, term.h, termcap.h
+  so...
+*/
+#ifdef __linux__
+int tgetent (char *, const char *);
+int tputs (const char *, int, int (*)(int));
+char * tgetstr (const char *, char **);
+char * tgoto (const char *, int, int);
+#endif /* __linux__ */
 
 #ifdef OS2
 #include <string.h>
@@ -247,6 +258,8 @@ int fspeclen = CMDBL;
 char fspec[CKMAXPATH+4];
 int fspeclen = CKMAXPATH;
 #endif /* NOMSEND */
+
+_PROTOTYP( int getslot, () );
 
 char * rfspec = NULL;			/* Received filespec: local */
 char * prfspec = NULL;			/* Preliminary rfspec */
@@ -5872,12 +5885,12 @@ extern int isvt52;                      /* From CKVTIO.C */
 #endif /* MYCURSES */
 #endif /* VMS */
 
-#ifdef BUG999
+#ifdef NEEDCURSESPROTOTYPES
 _PROTOTYP(int tgetent,(char *, char *));
 _PROTOTYP(char *tgetstr,(char *, char **));
 _PROTOTYP(int tputs,(char *, int, int (*)()));
 _PROTOTYP(char *tgoto,(const char *, int, int));
-#endif	/* BUG999 */
+#endif /* NEEDCURSESPROTOTYPES */
 
 #endif /* CK_CURSES */
 
@@ -9497,6 +9510,7 @@ getslot() {                             /* Find a free slot for us */
     char pidbuf[64], * s;
     int j, k, n, x, rc = -1;
     int lockfd, tries, haveslot = 0;
+    int dummy;
     long lockpid;
     CK_OFF_T i;
     /* char ipbuf[17]; */
@@ -9522,7 +9536,7 @@ getslot() {                             /* Find a free slot for us */
     }
     /* Write my (decimal) PID into the temp file */
 
-    write(lockfd,idstring,(int)strlen(idstring));
+    dummy = write(lockfd,idstring,(int)strlen(idstring));
     if (close(lockfd) < 0) {            /* Close lockfile */
         debug(F101,"getslot error closing temp lockfile", "", errno);
         return(-1);
@@ -9616,7 +9630,7 @@ getslot() {                             /* Find a free slot for us */
 #ifdef COHERENT
             chsize(fileno(dbfp),i);
 #else
-            ftruncate(fileno(dbfp),(CK_OFF_T)i);
+            dummy = ftruncate(fileno(dbfp),(CK_OFF_T)i);
 #endif /* COHERENT */
             x = 0;
             CKFSEEK(dbfp,i,0);

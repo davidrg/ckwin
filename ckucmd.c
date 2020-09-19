@@ -1,6 +1,6 @@
 #include "ckcsym.h"
 
-char *cmdv = "Command package 9.0.175, 24 July 2020";
+char *cmdv = "Command package 9.0.176, 18 September 2020";
 
 /*  C K U C M D  --  Interactive command package for Unix  */
 
@@ -3777,7 +3777,7 @@ static char * atp1 = "[A-Z][a-z][a-z] [A-Z][a-z][a-z] [ 0-9][0-9] [0-9][0-9]:[0-
 static char * atp2 = "[A-Z][a-z][a-z] [A-Z][a-z][a-z] [ 0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] [A-Z][A-Z][A-Z] [0-9][0-9][0-9][0-9]";
 
 #define DATEBUFLEN 127
-#define YYYYMMDD 12
+#define YYYYMMDD 24                     /* Year-month-day buffer */
 
 #define isleap(y) (((y) % 4 == 0 && (y) % 100 != 0) || (y) % 400 == 0)
 static int mdays[13] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
@@ -4093,7 +4093,7 @@ cmcvtdate(s,t) char * s; int t; {
     char * year = NULL, * month = NULL, * day = NULL;
     char * hour = "00", * min = "00", * sec = "00";
     char datesep = 0;
-    char tmpbuf[8];
+    char tmpbuf[16];
     char xbuf[DATEBUFLEN+1];
     char ybuf[DATEBUFLEN+1];
     char zbuf[DATEBUFLEN+1];
@@ -5445,7 +5445,7 @@ shuffledate(p,opt) char * p; int opt; {
     extern char * wkdays[];
     int len;
     char ibuf[32];
-    static char obuf[48];
+    static char obuf[128];
     char c;
     int yy, dd, mm;
 #define MONTHBUFLEN 32

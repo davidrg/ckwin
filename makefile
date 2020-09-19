@@ -1,12 +1,12 @@
 # makefile / Makefile / ckuker.mak / CKUKER.MAK
 #
-# Mon May  1 08:43:05 2017
-BUILDID=20200724
-CKVER= "9.0.305"
+# Sat Sep 19 11:01:20 2020
+BUILDID=20200918
+CKVER= "9.0.305" # Alpha.02
 #
 # -- Makefile to build C-Kermit for UNIX and UNIX-like platforms --
 #
-# Copyright (C) 1985, 2017,
+# Copyright (C) 1985, 2020,
 #   Trustees of Columbia University in the City of New York.
 #   All rights reserved.  See the C-Kermit COPYING.TXT file or the
 #   copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -1820,7 +1820,7 @@ netbsd netbsd2 netbsd15 netbsd16 old-netbsd:
 	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS=`grep fseeko /usr/include/stdio.h > /dev/null && \
 	echo '-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64'` \
-	-DTIMEH	-DBSD44 -DCK_CURSES -DTCPSOCKET -DUSE_STRERROR -DHAVE_OPENPTY \
+	-DTIMEH	-DBSD44 -DCK_CURSES -DTCPSOCKET -DUSE_STRERROR \
 	-funsigned-char -DHERALD=\"\\\" `uname -s -r`\\\"\" \
 	-DCK_DTRCD -DCK_DTRCTS -DTPUTSARGTYPE=int -DFNFLOAT $(KFLAGS) -O" \
 	"LIBS= -lcurses -lcrypt -lm -lutil $(LIBS)"
@@ -1918,7 +1918,7 @@ netbsd+ssl+srp+zlib:
 	@echo Making C-Kermit $(CKVER) for NetBSD with curses...
 	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS= -DBSD44 -DCK_CURSES -DTCPSOCKET -DUSE_STRERROR -DNETBSD15 \
-	-DCK_DTRCD -DCK_DTRCTS -DTPUTSARGTYPE=int -DHAVE_OPENPTY \
+	-DCK_DTRCD -DCK_DTRCTS -DTPUTSARGTYPE=int \
 	-I/usr/include/openssl -I/usr/pkg/include \
 	-DCK_AUTHENTICATION -DCK_SRP -DPRE_SRP_1_4_5 -DCK_ENCRYPTION \
 	-DCK_CAST -DCK_DES -DLIBDES -DCK_SSL -DZLIB -DFNFLOAT $(KFLAGS) -O" \
@@ -1937,7 +1937,7 @@ netbsdn:
 	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS=`grep fseeko /usr/include/stdio.h > /dev/null && \
 	echo '-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64'` \
-	-DBSD44 -DCK_CURSES -DTCPSOCKET -DUSE_STRERROR -DHAVE_OPENPTY \
+	-DBSD44 -DCK_CURSES -DTCPSOCKET -DUSE_STRERROR \
 	-DHERALD=\"\\\" NetBSD `uname -r`\\\"\" \
 	-DCK_DTRCD -DCK_DTRCTS -DTPUTSARGTYPE=int -DFNFLOAT $(KFLAGS) -O" \
 	"LIBS= -L/usr/pkg/lib -lncurses -lcrypt -lm -lutil $(LIBS)"
@@ -6100,16 +6100,16 @@ linux gnu-linux:
 	@echo "Making C-Kermit for Linux..."; \
 	# Dummy comment \
 	if test \
-	`grep grantpt /usr/include/*.h /usr/include/sys/*.h | wc -l` -gt 0; \
+	`grep grantpt /usr/include/*.h /usr/include/*.h | wc -l` -gt 0; \
 	  then if test -c /dev/ptmx; \
 	    then HAVE_PTMX='-DHAVE_PTMX'; \
 	    else HAVE_PTMX=''; \
 	  fi; \
 	fi ; \
-	HAVE_OPENPTY=''; \
-	if test `grep openpty /usr/include/pty.h | wc -l` -gt 0; \
-	  then HAVE_OPENPTY='-DHAVE_OPENPTY'; \
-	fi ; \
+        HAVE_OPENPTY=''; \
+	if test `grep openpty /usr/include/*.h | wc -l` -gt 0; then \
+          HAVE_OPENPTY='-DHAVE_OPENPTY';  \
+        fi; \
 	if test -n '$$HAVE_OPENPTY'; \
 	  then if ld -lutil > /dev/null 2> /dev/null; then \
 	    LIB_UTIL='-lutil'; \
@@ -6164,6 +6164,12 @@ linux gnu-linux:
 	    HAVE_LOCKDEV=''; \
 	  fi; \
 	fi; \
+        NEEDCURSESPROTOTYPES=''; \
+        if -f /etc/issue; then \
+          if egrep "(Ubuntu|Debian)" /etc/issue > /dev/null; then \
+            NEEDCURSESPROTOTYPES='-DNEEDCURSESPROTOTYPES'; \
+          fi; \
+        fi; \
 	if grep __USE_LARGEFILE64 /usr/include/features.h > /dev/null; \
 	  then HAVE_LARGEFILES='-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64'; \
 	  else HAVE_LARGEFILES=''; \
@@ -6341,14 +6347,7 @@ linux+krb5:
 	-DCK_ENCRYPTION $$HAVE_DES $(K5INC) $(K5INC)/krb5 \
 	-I/usr/include/et $(KFLAGS)" "LNKFLAGS = $(LNKFLAGS)" \
 	"LIBS = $(K5LIB) $$DES_LIB -lcrypto $$GSSAPILIB -lkrb5 \
-	$$K5CRYPTO $$COM_ERR $(LIBS)" ; \
-	if [ ! -f ./wermit ] || [ ./ckcmai.o -nt ./wermit ] ; then \
-		echo ""; \
-		echo "If build failed try:"; \
-		echo ""; \
-		echo "  make clean ; make $${KTARGET:-$(@)} KFLAGS=-UCK_DES"; \
-		echo ""; \
-	fi
+	$$K5CRYPTO $$COM_ERR $(LIBS)"
 
 # Linux with Kerberos 5 and Kerberos 4.
 # Use "make linux+krb5 KFLAGS=-DNO_KRB5_INIT_ETS" if necessary.
@@ -6392,14 +6391,7 @@ linux+ssl linux+openssl linux+openssl+zlib+shadow+pam linux+openssl+shadow:
 	"KFLAGS= -DCK_AUTHENTICATION -DCK_ENCRYPTION -DCK_CAST $$HAVE_DES \
 	-DCK_SSL -DCK_PAM -DZLIB -DCK_SHADOW $$OPENSSLOPTION $(SSLINC) \
 	$(KFLAGS)" "LNKFLAGS = $(LNKFLAGS)" \
-	"LIBS = $(SSLLIB) -lssl $$DES_LIB -lcrypto -lpam -ldl -lz $(LIBS)" ; \
-	if [ ! -f ./wermit ] || [ ./ckcmai.o -nt ./wermit ] ; then \
-		echo ""; \
-		echo "If build failed try:"; \
-		echo ""; \
-		echo "  make clean ; make $${KTARGET:-$(@)} KFLAGS=-UCK_DES"; \
-		echo ""; \
-	fi
+	"LIBS = $(SSLLIB) -lssl $$DES_LIB -lcrypto -lpam -ldl -lz $(LIBS)"
 
 # Linux with Kerberos 5 and OpenSSL
 # OK 2011/05/16
@@ -6437,7 +6429,9 @@ linux+krb5+ssl linux+krb5+openssl:
 	COM_ERR=''; \
 	if ls /lib/libcom_err* > /dev/null 2> /dev/null; then \
 		COM_ERR='-lcom_err'; \
-	fi; \
+	else if ls /lib/$(MULTIARCH)/libcom_err* > /dev/null 2> /dev/null; then \
+		COM_ERR='-lcom_err'; \
+	fi; fi; \
 	GSSAPILIB='-lgssapi'; \
 	if ls /lib/libgssapi_krb5* > /dev/null 2> /dev/null; then \
 		GSSAPILIB='-lgssapi_krb5'; \
@@ -6453,14 +6447,7 @@ linux+krb5+ssl linux+krb5+openssl:
 	-DCK_ENCRYPTION $$HAVE_DES $(K5INC) $(K5INC)/krb5 \
 	-I/usr/include/et $(KFLAGS)" "LNKFLAGS = $(LNKFLAGS)" \
 	"LIBS = $(K5LIB) $(SSLLIB) -lssl $$DES_LIB -lpam -lz \
-	-lcrypto $$GSSAPILIB -lkrb5 $$K5CRYPTO $$COM_ERR $(LIBS)" ; \
-	if [ ! -f ./wermit ] || [ ./ckcmai.o -nt ./wermit ] ; then \
-		echo ""; \
-		echo "If build failed try:"; \
-		echo ""; \
-		echo "  make clean ; make $${KTARGET:-$(@)} KFLAGS=-UCK_DES"; \
-		echo ""; \
-	fi
+	-lcrypto $$GSSAPILIB -lkrb5 $$K5CRYPTO $$COM_ERR $(LIBS)"
 
 # ::BEGIN_OLD_LINUX_TARGETS::
 

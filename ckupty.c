@@ -1,8 +1,8 @@
-char *ckptyv = "Pseudoterminal support, 9.0.103, 24 Dec 2015";
+char *ckptyv = "Pseudoterminal support, 9.0.104, 18 Sep 2020";
 
 /*  C K U P T Y  --  C-Kermit pseudoterminal control functions for UNIX  */
 
-/* Last update: Fri Dec 25 16:47:17 2015 */
+/* Last update: Sat Sep 19 15:25:13 2020 */
 
 /*
   Copyright 1995 by the Massachusetts Institute of Technology.
@@ -26,8 +26,9 @@ char *ckptyv = "Pseudoterminal support, 9.0.103, 24 Dec 2015";
   November 1999
 
   Parameterized for pty file descriptor and function code,
+  Dec 2006 - Sep 2009, plus some minor "compliance" nits addressed in 2020.
+  See "HAVE_OPENPTY" section of ckcdeb.h.
   Frank da Cruz, The Kermit Project, New York City
-  Dec 2006 - Sep 2009
 */
 
 /*
@@ -67,7 +68,7 @@ char * ptyver = "No PTY support";
 
 #else  /* (rest of this module...) */
 
-char * ptyver = "PTY support 8.0.016, 22 Aug 2007";
+char * ptyver = "PTY support 8.0.017, 18 Sep 2020";
 
 /* These will no doubt need adjustment... */
 
@@ -527,6 +528,7 @@ set_termbuf(fd) int fd; {		/* Only make the necessary changes. */
 VOID
 ptyint_vhangup() {
 #ifdef CK_VHANGUP
+    _PROTOTYP( int vhangup, (void) );
 #ifdef CK_POSIX_SIG
     struct sigaction sa;
     /* Initialize "sa" structure. */
@@ -1854,6 +1856,7 @@ do_pty(fd, cmd, fc) int * fd; char * cmd; int fc; {
 #ifdef HAVE_PTYTRAP
     int x;
 #endif /* HAVE_PTYTRAP */
+    int dummy;
 
     debug(F101,"CKUPTY.C do_pty fc","",fc);
 
@@ -1947,7 +1950,7 @@ do_pty(fd, cmd, fc) int * fd; char * cmd; int fc; {
 #endif /* WANT_UTMP */
             /* Notify our parent we're ready to continue.*/
             debug(F110,"do_pty()","slave synchronizing",0);
-            write(syncpipe[1],"y",1);
+            dummy = write(syncpipe[1],"y",1);
             close(syncpipe[0]);
             close(syncpipe[1]);
 

@@ -1,3 +1,18 @@
+C-KERMIT 9.0.305 ALPHA TESTING
+
+9.0.305 Alpha.02 19 Sep 2020
+
+No functional changes since last time, but about 30 compile-time warnings
+that were reported by gcc 9.3.0 on Ubuntu 20.04.1 are fixed.  The result
+compiles without warnings there, and also on OpenBSD 9 and Red Hat 6.1.
+
+9.0.305 Alpha.01 24 Jul 2020
+
+Contains to patch to work around the disappearance of the GNU standard I/O
+library symbol "__FILE_defined" from glibc-based Linux distributions such
+as Debian and Ubuntu.  I was not ready to release a new version of C-Kermit
+yet, but this forces the issue.
+
 C-KERMIT 9.0.304 PRERELEASE TESTING
 
 9.0.304 Dev.24 25 Apr 2020

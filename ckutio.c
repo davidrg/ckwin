@@ -1,12 +1,12 @@
 #define CKUTIO_C
 
 #ifdef aegis
-char *ckxv = "Aegis Communications support, 9.0.328, 24 July 2013";
+char *ckxv = "Aegis Communications support, 9.0.329, 18 September 2020";
 #else
 #ifdef Plan9
-char *ckxv = "Plan 9 Communications support, 9.0.328, 24 July 2013";
+char *ckxv = "Plan 9 Communications support, 9.0.329, 18 September 2020";
 #else
-char *ckxv = "UNIX Communications support, 9.0.328, 24 July 2013";
+char *ckxv = "UNIX Communications support, 9.0.329, 18 September 2020";
 #endif /* Plan9 */
 #endif /* aegis */
 
@@ -16,9 +16,9 @@ char *ckxv = "UNIX Communications support, 9.0.328, 24 July 2013";
 
 /*
   Author: Frank da Cruz (fdc@columbia.edu),
-  Columbia University Academic Information Systems, New York City.
+  The Kermit Project, Bronx, NY.
 
-  Copyright (C) 1985, 2011,
+  Copyright (C) 1985, 2020,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -2565,7 +2565,12 @@ ttopen(ttname,lcl,modem,timo) char *ttname; int *lcl, modem, timo; {
 		    close(pipe0[1]);
 		    dup2(pipe1[0], 0);
 		    close(pipe1[0]);
+/*
+  I can't image what this is; system() executes a shell command.
+  ttname holds the name of terminal device, it's not a command.
+  --fdc Fri Sep 18 15:51:18 2020
 		    system(ttname);
+*/
 		    _exit(0);
 		  default:		/* Parent */
 		    close(pipe0[1]);
@@ -5064,6 +5069,7 @@ ttlock(ttdev) char *ttdev; {
     int lockfd;				/* File descriptor for lock file. */
     PID_T pid;				/* Process id of this process. */
     int tries;				/* How many times we've tried... */
+    int dummy;
     struct stat devbuf;			/* For device numbers (SVR4). */
 
 #ifdef PIDSTRING
@@ -5072,7 +5078,8 @@ ttlock(ttdev) char *ttdev; {
 
     char *device, *devname;
 
-#define LFNAML 256			/* Max length for lock file name. */
+/* Note: ridiculously long to prevent gcc complaints when used in sprintf */
+#define LFNAML 5126			/* Max length for lock file name. */
     char lockfil[LFNAML];		/* Lock file name */
 #ifdef RTAIX
     char lklockf[LFNAML];		/* Name for link to lock file  */
@@ -5292,7 +5299,7 @@ ttlock(ttdev) char *ttdev; {
 #endif /* LINUXFSSTND */
 	    (int) pid
 	    );				/* safe */
-    write(lockfd, pid_str, 11);
+    dummy = write(lockfd, pid_str, 11);
     debug(F111,"ttlock hdb pid string",pid_str,(int) pid);
 
 #else /* Not PIDSTRING, use integer PID */
@@ -5309,15 +5316,17 @@ ttlock(ttdev) char *ttdev; {
     chmod(tmpnam,0444);			/* Permission for a valid lock. */
     tries = 0;
     while (!haslock && tries++ < 2) {
-	haslock = (link(tmpnam,flfnam) == 0); /* Create a link to it. */
-	if (haslock) {			      /* If we got the lockfile */
+        haslock = 0;
+        dummy = link(tmpnam,flfnam);    /* Create a link to it. */
+        if (dummy == 0) haslock = 1;
+	if (haslock) {                  /* If we got the lockfile */
 #ifdef RTAIX
 	    link(flfnam,lkflfn);
 #endif /* RTAIX */
 #ifdef CKSYMLINK
 #ifndef LFDEVNO
 	    if (islink && lock2[0])
-	      link(flfnam,lock2);
+	      dummy = link(flfnam,lock2);
 #endif /* LFDEVNO */
 #endif /* CKSYMLINK */
 
@@ -13902,12 +13911,12 @@ priv_ini() {
  * systems that don't fit any of these four cases, we simply can't support
  * set-UID.
  */
+
 #define switchuid(hidden,active)	setuid(active)
 #define switchgid(hidden,active)	setgid(active)
 
 #endif /* SETEUID */
 #endif /* SETREUID */
-
 
 /* P R I V _ O N  --  Turn on the setuid and/or setgid */
 
@@ -13928,7 +13937,8 @@ priv_on() {
     if (privuid != (UID_T) -1)
       if (switchuid(realuid,privuid)) {
 	  if (privgid != (GID_T) -1)
-	    switchgid(privgid,realgid);
+	    if (switchgid(privgid,realgid))
+              return(2);
 	  return(1);
       }
 #endif /* HAVE_LOCKDEV */

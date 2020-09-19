@@ -1,4 +1,4 @@
-char * cklibv = "C-Kermit library, 9.0.057, 19 July 2017";
+char * cklibv = "C-Kermit library, 9.0.058, 18 Sep 2020";
 
 #define CKCLIB_C
 
@@ -8,7 +8,7 @@ char * cklibv = "C-Kermit library, 9.0.057, 19 July 2017";
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1999, 2017,
+  Copyright (C) 1999, 2020,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -2615,7 +2615,7 @@ hhmmss(long x)
 hhmmss(x) long x;
 #endif /* CK_ANSIC */
 /* hhmmss(x) */ {
-    static char buf[10];
+    static char buf[60];
     long s, h, m;
     h = x / 3600L;			/* Hours */
     x = x % 3600L;

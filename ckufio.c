@@ -3,24 +3,22 @@
 #define CK_NONBLOCK                     /* See zoutdump() */
 
 #ifdef aegis
-char *ckzv = "Aegis File support, 9.0.223, 16 Feb 2016";
+char *ckzv = "Aegis File support, 9.0.224, 28 Sep 2020";
 #else
 #ifdef Plan9
-char *ckzv = "Plan 9 File support, 9.0.223, 16 Feb 2016";
+char *ckzv = "Plan 9 File support, 9.0.224, 28 Sep 2020";
 #else
-char *ckzv = "UNIX File support, 9.0.223, 16 Feb 2016";
+char *ckzv = "UNIX File support, 9.0.224, 28 Sep 2020";
 #endif /* Plan9 */
 #endif /* aegis */
 /*
   Author: Frank da Cruz <fdc@columbia.edu>,
-  Columbia University Academic Information Systems, New York City,
-  and others noted in the comments below.  Note: CUCCA = Previous name of
-  Columbia University Academic Information Systems.  Note: AcIS = Previous
-  of Columbia University Information Technology.
+  Columbia University 1974-2011; The Kermit Project 2011-????.
 
-  Copyright (C) 1985, 2016,
+  Copyright (C) 1985, 2020,
     Trustees of Columbia University in the City of New York.
-    All rights reserved.  See the C-Kermit COPYING.TXT file or the
+
+    1767All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 */
 
@@ -138,6 +136,10 @@ _PROTOTYP( int parser, ( int ) );
 #endif /* RTU */
 #endif /* NDIR */
 #endif /* XNDIR */
+
+#ifdef __NetBSD__
+#include <sys/wait.h>
+#endif  /* __NetBSD__ */
 
 #ifdef UNIX                             /* Pointer arg to wait() allowed */
 #define CK_CHILD                        /* Assume this is safe in all UNIX */
@@ -1138,6 +1140,7 @@ logwtmp(line, name, host) char *line, *name, *host;
 /* logwtmp */ {
     struct UTMPSTRUCT ut;
     struct stat buf;
+    int dummy;
     /* time_t time(); */
 
     if (!ckxwtmp)
@@ -1200,7 +1203,8 @@ logwtmp(line, name, host) char *line, *name, *host;
             sizeof(struct UTMPSTRUCT)) {
 #ifndef NOFTRUNCATE
 #ifndef COHERENT
-            ftruncate(wtmpfd, buf.st_size); /* Error, undo any partial write */
+            dummy =
+             ftruncate(wtmpfd, buf.st_size); /* Error, undo partial write */
 #else
             chsize(wtmpfd, buf.st_size); /* Error, undo any partial write */
 #endif /* COHERENT */
@@ -1669,6 +1673,7 @@ zopeno(n,name,zz,fcb)
 int
 zclose(n) int n; {
     int x = 0, x2 = 0;
+    int dummy;
     extern CK_OFF_T ffc;
 
     debug(F101,"zclose file number","",n);
@@ -1764,7 +1769,7 @@ zclose(n) int n; {
                         "*"             /* Ditto */
                         );
                 debug(F110,"zclose iksdmsg",iksdmsg,0);
-                write(xferlog, iksdmsg, (int)strlen(iksdmsg));
+                dummy = write(xferlog, iksdmsg, (int)strlen(iksdmsg));
             }
         }
         debug(F101,"zclose returns","",1);
@@ -8270,6 +8275,7 @@ _PROTOTYP(int initgroups, (const char *, gid_t) );
     int pam_status;
     const char * reply = NULL;
 #endif /* CK_PAM */
+    int dummy;
 
     if (logged_in || askpasswd == 0) {
         return(0);
@@ -8396,10 +8402,10 @@ _PROTOTYP(int initgroups, (const char *, gid_t) );
 #endif /* CK_PAM */
     }
 
-    (VOID) setgid((GID_T)pw->pw_gid);   /* Set group ID */
+    dummy = setgid((GID_T)pw->pw_gid);   /* Set group ID */
 
 #ifndef NOINITGROUPS
-    (VOID) initgroups(pw->pw_name, pw->pw_gid);
+    dummy = initgroups(pw->pw_name, pw->pw_gid);
 #endif /* NOINITGROUPS */
 
     logged_in = 1;

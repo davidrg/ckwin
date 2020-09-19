@@ -1,7 +1,7 @@
 /*  C K C D E B . H  */
 
 /*
-Tue Apr 25 13:39:49 2017
+Sat Sep 19 15:22:06 2020
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
   compatible with C preprocessors that support only #ifdef, #else, #endif,
@@ -26,7 +26,7 @@ Tue Apr 25 13:39:49 2017
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2017,
+  Copyright (C) 1985, 2020,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -2173,30 +2173,6 @@ _PROTOTYP( void bleep, (short) );
 #endif /* USETTYLOCK */
 #endif /* NOTTYLOCK */
 
-#ifndef NO_OPENPTY			/* Can use openpty() */
-#ifndef HAVE_OPENPTY
-#ifdef __linux__
-#define HAVE_OPENPTY
-#else
-#ifdef __FreeBSD__
-#define HAVE_OPENPTY
-#else
-#ifdef __OpenBSD__
-#define HAVE_OPENPTY
-#else
-#ifdef __NetBSD__
-#define HAVE_OPENPTY
-#else
-#ifdef MACOSX10
-#define HAVE_OPENPTY
-#endif	/* MACOSX10 */
-#endif	/* __NetBSD__ */
-#endif	/* __OpenBSD__ */
-#endif	/* __FreeBSD__ */
-#endif	/* __linux__ */
-#endif	/* HAVE_OPENPTY */
-#endif	/* NO_OPENPTY */
-
 /* This could become more inclusive.. Solaris 10, HP-UX 11, AIX 5.3... */
 #ifndef HAVE_SNPRINTF                   /* Safe to use snprintf() */
 #ifdef HAVE_OPENPTY
@@ -2386,6 +2362,62 @@ _PROTOTYP( void bleep, (short) );
 #ifndef NETCMD
 #define NETCMD
 #endif /* NETCMD */
+
+#ifndef NO_OPENPTY			/* Can use openpty() */
+#ifndef HAVE_OPENPTY
+#ifdef __linux__
+#define HAVE_OPENPTY
+#else
+#ifdef __FreeBSD__
+#define HAVE_OPENPTY
+#else
+#ifdef __OpenBSD__
+#define HAVE_OPENPTY
+#else
+#ifdef __NetBSD__
+#define HAVE_OPENPTY
+#include <util.h>
+#else
+#ifdef MACOSX10
+#define HAVE_OPENPTY
+#endif	/* MACOSX10 */
+#endif	/* __NetBSD__ */
+#endif	/* __OpenBSD__ */
+#endif	/* __FreeBSD__ */
+#endif	/* __linux__ */
+#endif	/* HAVE_OPENPTY */
+#endif	/* NO_OPENPTY */
+/*
+  This needs to be expanded and checked.
+  The makefile assumes the library (at least for all linuxes)
+  is always libutil but I've only verified it for a few.
+  If a build fails because
+*/
+#ifdef HAVE_OPENPTY
+#ifdef __linux__
+#include <pty.h>
+#else
+#ifdef __NetBSD__
+#include <util.h>
+#else
+#ifdef __OpenBSD__
+#include <util.h>
+#else
+#ifdef __FreeBSD__
+#include <libutil.h>
+#else
+#ifdef MACOSX
+#include <util.h>
+#else
+#ifdef QNX
+#include <unix.h>
+#endif  /* QNX */
+#endif  /* MACOSX */
+#endif  /* __FreeBSD__ */
+#endif  /* __OpenBSD__ */
+#endif  /* __NetBSD__ */
+#endif  /* __linux__ */
+#endif  /* HAVE_OPENPTY */
 #endif /* NETPTY */
 
 #ifndef CK_UTSNAME			/* Can we call uname()? */

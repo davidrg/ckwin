@@ -9,12 +9,12 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2017,
+  Copyright (C) 1985, 2020,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
     Last update:
-    Fri Oct  6 16:29:15 2017
+    Fri Sep 18 14:54:00 2020
 */
 
 /*
@@ -6704,7 +6704,7 @@ doinput(timo,ms,mp,flags,count)
 
 #ifndef NODEBUG
     if (deblog) {
-        char xbuf[24];
+        char xbuf[100];
         debug(F101,"doinput anychar","",anychar);
         debug(F101,"doinput timo","",timo);
         debug(F101,"doinput echo","",inecho);

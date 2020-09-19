@@ -1,4 +1,4 @@
-char *fnsv = "C-Kermit functions, 9.0.233, 3 Jun 2011";
+char *fnsv = "C-Kermit functions, 9.0.234, 18 September 2020";
 
 char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 
@@ -8,9 +8,10 @@ char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 
 /*
   Author: Frank da Cruz <fdc@columbia.edu>,
-  Columbia University Academic Information Systems, New York City.
+  Columbia University Academic Information Systems, New York City (1974-2011)
+  The Kermit Project, Bronx NY (2011-????)
 
-  Copyright (C) 1985, 2011,
+  Copyright (C) 1985, 2020,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -369,9 +370,9 @@ static int (*funcptr)();
 static char cmdstr[50];			/* System command string. */
 #else
 #ifdef BIGBUFOK
-#define CMDSTRL 1024
+#define CMDSTRL 6144
 #else
-#define CMDSTRL 256
+#define CMDSTRL 1024
 #endif /* BIGBUFOK */
 static char cmdstr[CMDSTRL+1];
 #endif /* pdp11 */

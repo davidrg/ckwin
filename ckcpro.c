@@ -4,7 +4,7 @@
 /* and then run it through Wart to produce a new C source file.     */
 
 /* Wart Version Info: */
-char *wartv = "Wart Version 2.14, 10 Nov 1999";
+char *wartv = "Wart Version 2.15, 18 September 2020 ";
 
 char *protv =                                                     /* -*-C-*- */
 "C-Kermit Protocol Module 9.0.164, 23 February 2014";

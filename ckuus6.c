@@ -14,7 +14,7 @@
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
   Last update:
-    Sun Apr 26 13:47:51 2020
+    Fri Sep 18 14:55:27 2020
 */
 
 /* Includes */
@@ -5156,7 +5156,7 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 
     int chmtopt = CHMT_U;
     char name[CKMAXPATH+1], outfile[CKMAXPATH+1], *p = NULL, c = NUL;
-    char linebuf[CKMAXPATH+256];
+    char linebuf[CKMAXPATH+CKMAXPATH+256];
     char string1[1024], string2[1024]; 	/* For CHANGE */
     char modtime[100];
     char * mstr = NULL, * dstr = NULL, * s2 = NULL, * cv = NULL;
@@ -5181,7 +5181,7 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
     int arrayindex = -1;
     int simulate = 0;
     struct FDB sw, fi, fl;
-    char dbuf[32], xbuf[32];
+    char dbuf[256], xbuf[32];
     int reallysort = 0;
     int changeinplace = 0;
     int changebackup = 0;
@@ -6046,8 +6046,8 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 	    int i, j, k, x, y;		/* Workers */
 	    int failed = 0;		/* Search string not found */
 	    char c1, c2;		/* Char for quick compare */
-            changes = 0;                /* Change counter */
 
+            changes = 0;                /* Change counter */
             k = 0;
             x = scanfile(name,NULL,nscanfile)	    ;
             debug(F111,"domydir CHANGE scanfile",name,x);
