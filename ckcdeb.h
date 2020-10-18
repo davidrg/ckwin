@@ -1,7 +1,7 @@
 /*  C K C D E B . H  */
 
 /*
-Sat Sep 19 15:22:06 2020
+Wed Oct 7 15:22:14 2020
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
   compatible with C preprocessors that support only #ifdef, #else, #endif,
@@ -24,7 +24,8 @@ Sat Sep 19 15:22:06 2020
 
 /*
   Author: Frank da Cruz <fdc@columbia.edu>,
-  Columbia University Academic Information Systems, New York City.
+    Columbia University Academic Information Systems, NYC (1974-2011)
+    The Kermit Project, Bronx NY (2011-present)
 
   Copyright (C) 1985, 2020,
     Trustees of Columbia University in the City of New York.
@@ -36,11 +37,10 @@ Sat Sep 19 15:22:06 2020
   Etymology: The name of this file means "C-Kermit Common-C-Language Debugging
   Header", because originally it contained only the formats (F000-F111) for
   the debug() and tlog() functions.  Since then it has grown to include all
-  material required by all other C-Kermit modules, including the non-Kermit
-  specific ones.  In other words, this is the one header file that is
-  guaranteed to be included by all C-Kermit source modules.
+  material required by all or most of the other C-Kermit modules, including
+  the non-Kermit specific ones.  In other words, this is the one header file
+  that is guaranteed to be included by all C-Kermit source modules.
 */
-
 #ifndef CKCDEB_H			/* Don't include me more than once. */
 #define CKCDEB_H
 
@@ -4571,12 +4571,21 @@ extern int errno;
 #include <errno.h>
 #else
 /*
-  The following declaration would cause problems for VMS and OS/2, in which
-  errno is an "extern volatile int noshare"...  NOTE: by now (2007) the
-  following is an anachronism and should be the execption rather than the
-  rule.
+  It is assumed that if the foregoing code doesn't explicitly include errno.h,
+  that it gets included anyway by some other header file that *is* included.
+  If there is still some platform where the build fails because errno is not
+  defined, add -DDCL_ERRNO to the Cflags for that makefile target.  Also
+  see the new first stanza of the "linux" makefile target for code that
+  that checks for this at 'make' time and adds DCL_ERRNO only if necessary.
+  WARNING: this might break if errno.h does not exist or is not in the
+  the default directory for header files.
+  - fdc, 7-8 October 2020
 */
+#ifdef DCL_ERRNO
 extern int errno;
+#else
+#include <errno.h>
+#endif  /* DCL_ERRNO */
 #endif /* __GLIBC__ */
 #endif /* OS2 */
 #endif /* VMS */

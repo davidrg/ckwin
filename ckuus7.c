@@ -9,7 +9,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2017,
+  Copyright (C) 1985, 2020,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -14436,7 +14436,8 @@ sho_auth(cx) int cx; {
             if (ssl_con == NULL) {
                 SSL_library_init();
                 ssl_ctx = (SSL_CTX *)
-                  SSL_CTX_new((SSL_METHOD *)TLSv1_method());
+/* old...         SSL_CTX_new((SSL_METHOD *)TLSv1_method());  new below: */
+                  SSL_CTX_new((SSL_METHOD *)SSLv23_method());
                 if (ssl_ctx != NULL)
                   ssl_con= (SSL *) SSL_new(ssl_ctx);
             }

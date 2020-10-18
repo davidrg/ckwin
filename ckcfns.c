@@ -1,4 +1,4 @@
-char *fnsv = "C-Kermit functions, 9.0.234, 18 September 2020";
+char *fnsv = "C-Kermit functions, 9.0.235, 8 October 2020";
 
 char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 
@@ -89,10 +89,6 @@ _PROTOTYP( int zzstring, (char *, char **, int *) );
 #include <os2.h>
 #endif /* OS2ONLY */
 #endif /* OS2 */
-
-#ifdef VMS
-#include <errno.h>
-#endif /* VMS */
 
 /* Externals from ckcmai.c */
 

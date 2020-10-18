@@ -1,8 +1,8 @@
 # makefile / Makefile / ckuker.mak / CKUKER.MAK
 #
-# Sat Sep 19 11:01:20 2020
-BUILDID=20200918
-CKVER= "9.0.305" # Alpha.02
+# Wed Oct  7 16:51:19 2020
+BUILDID=20201007
+CKVER= "9.0.305" # Alpha.03
 #
 # -- Makefile to build C-Kermit for UNIX and UNIX-like platforms --
 #
@@ -19,8 +19,8 @@ CKVER= "9.0.305" # Alpha.02
 # FTP:    ftp://ftp.kermitproject.org
 #
 # Note: Author is no longer at Columbia University or at the 115th Street
-# address effective 1 July 2011.  Even so, C-Kermit remains Copyright
-# Columbia U because that is where it was first written in 1985 and further
+# address as of 1 July 2011.  Even so, C-Kermit remains Copyright Columbia
+# University because that is where it was first written in 1985 and further
 # developed through mid-2011.
 #
 # Contributions from many others.  Special thanks to Jeff Altman for the
@@ -35,25 +35,25 @@ CKVER= "9.0.305" # Alpha.02
 # targets below (especially the linux target) inspect the environment and make
 # some decisions in the most portable way possible. The automated tools are
 # not used because (a) C-Kermit predates them, and (b) they are not portable
-# to all the platforms where C-Kermit must be (or once was) built, and (c) to
-# keep C-Kermit as independent as possible from external tools over which we
-# have no control.
+# to all the platforms where C-Kermit must be (or once was) built, (c) the
+# automated tools are always changing, and (d) to keep C-Kermit as independent
+# as possible from external tools over which we have no control.
 #
 # Most entries use the "xermit" target, which uses the select()-based CONNECT
-# module, ckucns.c.  The "wermit" target uses the original fork()-based CONNECT
-# module, ckucon.c, which has some drawbacks but was portable to every Unix
-# variant whether it had TCP/IP or not (select() is part of the TCP/IP
+# module, ckucns.c.  The "wermit" target uses the original fork()-based
+# CONNECT module, ckucon.c, which has some drawbacks but was portable to every
+# Unix variant whether it had TCP/IP or not (select() is part of the TCP/IP
 # library, which was not standard on older Unixes).  If your target still uses
 # the "wermit" target, please try substituting the "xermit" one and if it
-# works, let us know (mailto:kermit-support@columbia.edu).  When changing a
-# target over from wermit to xermit, also remove -DNOLOEARN.
+# works, let us know (mailto:fdc@columbia.edu).  When changing a target over
+# from wermit to xermit, also remove -DNOLOEARN.
 #
 # CAREFUL: Don't put the lowercase word "if", "define", or "end" as the first
 # word after the "#" comment introducer in the makefile, even if it is
 # separated by whitespace.  Some versions of "make" understand these as
 # directives.  Uppercase letters remove the danger, e.g. "# If you have..."
 # 
-# WARNING: This is a huge makefile.  Although this is less likely since the
+# WARNING: This is a huge makefile.  Although it is less likely since the
 # turn of the century, some "make" programs might run out of memory.  If this
 # happens to you, edit away the parts that do not apply to your platform and
 # try again.
@@ -6096,9 +6096,20 @@ linuxp:
 #capable of accessing, sending, receiving, and managing long (> 2GB) files.
 #On 64-bit platforms, it does no harm.
 #
+# The first clause regarding errno is new to 9.0.305 Alpha.03 and is an
+# attempt to aid in the decision to include "extern int errno" in the source
+# files by supplying a symbol DCL_ERRNO if errno is not declared or defined
+# in any header files in the /usr/include tree.
+#
 linux gnu-linux:
 	@echo "Making C-Kermit for Linux..."; \
 	# Dummy comment \
+	DCL_ERRNO='-DDCL_ERRNO';  \
+	if egrep -r \
+	  "(int *errno|\#define *errno|\# *define *errno)" /usr/include/* \
+	  > /dev/null 2> /dev/null; \
+	then DCL_ERRNO=''; \
+	fi ; \
 	if test \
 	`grep grantpt /usr/include/*.h /usr/include/*.h | wc -l` -gt 0; \
 	  then if test -c /dev/ptmx; \

@@ -14,7 +14,7 @@
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
     Last update:
-    Fri Sep 18 14:54:00 2020
+    Thu Oct  8 14:55:30 2020
 */
 
 /*
@@ -425,7 +425,8 @@ extern int
   npad, pkttim, bigrbsiz, bigsbsiz, keep, atcapr, autopar, bctr, bctu,
   crunched, ckdelay, ebq, ebqflg, pktlog, retrans, rpackets, rptflg, rptq,
   rtimo, spackets, spsiz, spsizf, spsizr, timeouts, fncact, fncnv, urpsiz,
-  wmax, wslotn, wslotr, fdispla, spmax, fnrpath, fnspath, crc16;
+  wmax, wslotn, wslotr, fdispla, spmax, fnrpath, fnspath;
+extern long crc16;
 #endif /* NOXFER */
 
 #ifdef OS2

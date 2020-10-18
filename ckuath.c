@@ -1,8 +1,8 @@
-char *ckathv = "Authentication, 9.0.235, 16 Mar 2010";
+char *ckathv = "Authentication, 9.0.236, 8 Oct 2020";
 /*
   C K U A T H . C  --  Authentication for C-Kermit
 
-  Copyright (C) 1999, 2010,
+  Copyright (C) 1999, 2020,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -117,19 +117,6 @@ int accept_complete = 0;
 #include <time.h>
 #include <fcntl.h>
 #include <errno.h>
-#ifndef malloc
-#ifndef VMS
-#ifndef FREEBSD4
-#ifndef OpenBSD
-#ifdef MACOSX
-#include <sys/malloc.h>
-#else /* MACOSX */
-#include <malloc.h>
-#endif /* MACOSX */
-#endif /* OpenBSD */
-#endif /* FREEBSD4 */
-#endif /* VMS */
-#endif /* malloc */
 #ifdef OS2
 #include <io.h>
 #endif /* OS2 */
@@ -149,7 +136,9 @@ int accept_complete = 0;
 #endif /* saveprintf */
 #else /* HEIMDAL */
 #include "krb5.h"
+#ifdef BETATEST
 #include "profile.h"
+#endif
 #include "com_err.h"
 #ifdef KRB5_GET_INIT_CREDS_OPT_TKT_LIFE
 #define KRB5_HAVE_GET_INIT_CREDS
@@ -417,7 +406,6 @@ char des_inbuf[2*RLOG_BUFSIZ];       /* needs to be > largest read size */
 char des_outpkt[2*RLOG_BUFSIZ+4];    /* needs to be > largest write size */
 #ifdef KRB5
 krb5_data desinbuf,desoutbuf;
-krb5_encrypt_block eblock;             /* eblock for encrypt/decrypt */
 static krb5_data encivec_i[2], encivec_o[2];
 
 enum krb5_kcmd_proto {
@@ -3145,8 +3133,13 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
             data.data = k4_session_key;
             data.length = 8;
 
-            code = krb5_c_decrypt(k5_context, &k4_krbkey, 0, 0,
-                                   &encdata, &data);
+            code = krb5_c_decrypt(k5_context,
+#ifdef HEIMDAL
+				  k4_krbkey,
+#else
+				  &k4_krbkey,
+#endif
+				  0, 0, &encdata, &data);
 
             krb5_free_keyblock_contents(k5_context, &random_key);
 
@@ -3162,8 +3155,13 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
             data.data = k4_challenge;
             data.length = 8;
 
-            code = krb5_c_decrypt(k5_context, &k4_krbkey, 0, 0,
-                                   &encdata, &data);
+            code = krb5_c_decrypt(k5_context,
+#ifdef HEIMDAL
+				  k4_krbkey,
+#else
+				  &k4_krbkey,
+#endif
+				  0, 0, &encdata, &data);
 #else /* MIT_CURRENT */
             memset(k4_sched,0,sizeof(Schedule));
             ckhexdump("auth_send",cred.session,8);
@@ -3295,7 +3293,7 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
     case AUTHTYPE_KERBEROS_V5:
         debug(F111,"auth_send KRB5","k5_auth.length",k5_auth.length);
         for ( i=0 ; i<k5_auth.length ; i++ ) {
-            if ( (char *)k5_auth.data[i] == IAC )
+            if ( ((char *)k5_auth.data)[i] == IAC )
                 iaccnt++;
         }
         if ( k5_auth.length + iaccnt + 10 < sizeof(buf) ) {
@@ -4250,8 +4248,13 @@ k4_auth_is(parsedat,end_sub) unsigned char *parsedat; int end_sub;
         kdata.data = k4_challenge;
         kdata.length = 8;
 
-        if (code = krb5_c_decrypt(k5_context, &k4_krbkey, 0, 0,
-                                   &encdata, &kdata)) {
+        if (code = krb5_c_decrypt(k5_context,
+#ifdef HEIMDAL
+				  k4_krbkey,
+#else
+				  &k4_krbkey,
+#endif
+				  0, 0, &encdata, &kdata)) {
             com_err("k4_auth_is", code, "while decrypting challenge");
             auth_finished(AUTH_REJECT);
             return AUTH_FAILURE;
@@ -4752,9 +4755,11 @@ k5_auth_send(how,encrypt,forward) int how; int encrypt; int forward;
         ap_opts |= AP_OPTS_MUTUAL_REQUIRED;
 
 #ifdef HEIMDAL
+#ifdef notdef
     r = krb5_auth_setkeytype(k5_context, auth_context, KEYTYPE_DES);
     if (r)
         com_err(NULL, r, "while setting auth keytype");
+#endif
     r = krb5_auth_con_setaddrs_from_fd(k5_context,auth_context, &ttyfd);
     if (r)
         com_err(NULL, r, "while setting auth addrs");
@@ -4924,7 +4929,6 @@ k5_auth_reply(how,data,cnt) int how; unsigned char *data; int cnt;
                     skey.data = k5_session_key->contents;
 #endif /* HEIMDAL */
                 } else {
-#ifdef HEIMDAL
                     switch ( k5_session_key->keytype ) {
                     case ETYPE_DES_CBC_CRC:
                     case ETYPE_DES_CBC_MD5:
@@ -4934,24 +4938,17 @@ k5_auth_reply(how,data,cnt) int how; unsigned char *data; int cnt;
                         break;
                     default:
                         skey.type = SK_GENERIC;
+#ifdef HEIMDAL
+                        skey.length = k5_session_key->keyvalue.length;
+#else /* HEIMDAL */
                         skey.length = k5_session_key->length;
+#endif /* HEIMDAL */
                         encrypt_dont_support(ENCTYPE_DES_CFB64);
                         encrypt_dont_support(ENCTYPE_DES_OFB64);
                     }
+#ifdef HEIMDAL
                     skey.data = k5_session_key->keyvalue.data;
 #else /* HEIMDAL */
-                    switch ( k5_session_key->enctype ) {
-                    case ENCTYPE_DES_CBC_CRC:
-                    case ENCTYPE_DES_CBC_MD5:
-                    case ENCTYPE_DES_CBC_MD4:
-                        skey.type = SK_DES;
-                        skey.length = 8;
-                    default:
-                        skey.type = SK_GENERIC;
-                        skey.length = k5_session_key->length;
-                        encrypt_dont_support(ENCTYPE_DES_CFB64);
-                        encrypt_dont_support(ENCTYPE_DES_OFB64);
-                    }
                     skey.data = k5_session_key->contents;
 #endif /* HEIMDAL */
                 }
@@ -5038,7 +5035,6 @@ k5_auth_reply(how,data,cnt) int how; unsigned char *data; int cnt;
                     skey.data = k5_session_key->contents;
 #endif /* HEIMDAL */
                 } else {
-#ifdef HEIMDAL
                     switch ( k5_session_key->keytype ) {
                     case ETYPE_DES_CBC_CRC:
                     case ETYPE_DES_CBC_MD5:
@@ -5047,21 +5043,15 @@ k5_auth_reply(how,data,cnt) int how; unsigned char *data; int cnt;
                         skey.length = 8;
                     default:
                         skey.type = SK_GENERIC;
+#ifdef HEIMDAL
+                        skey.length = k5_session_key->keyvalue.length;
+#else /* HEIMDAL */
                         skey.length = k5_session_key->length;
+#endif /* HEIMDAL */
                     }
+#ifdef HEIMDAL
                     skey.data = k5_session_key->keyvalue.data;
 #else /* HEIMDAL */
-                    switch ( k5_session_key->enctype ) {
-                    case ENCTYPE_DES_CBC_CRC:
-                    case ENCTYPE_DES_CBC_MD5:
-                    case ENCTYPE_DES_CBC_MD4:
-                        skey.type = SK_DES;
-                        skey.length = 8;
-                        break;
-                    default:
-                        skey.type = SK_GENERIC;
-                        skey.length = k5_session_key->length;
-                    }
                     skey.data = k5_session_key->contents;
 #endif /* HEIMDAL */
                 }
@@ -5138,7 +5128,11 @@ k5_auth_reply(how,data,cnt) int how; unsigned char *data; int cnt;
             }
             if ( msg.length == 24 && !memcmp(msg.data,tls_verify,24) )
                  krb5_tls_verified = 1;
+#ifdef HEIMDAL
+            krb5_data_free(&msg);
+#else /* HEIMDAL */
             krb5_free_data_contents(k5_context,&msg);
+#endif /* HEIMDAL */
             if (krb5_tls_verified)
                 return(AUTH_SUCCESS);
         }
@@ -5166,7 +5160,7 @@ rd_and_store_for_creds(context, auth_context, inbuf, client)
     krb5_context context;
     krb5_auth_context auth_context;
     krb5_data *inbuf;
-    krb5_const_principal client;
+    krb5_principal client;
 {
     krb5_creds ** creds=NULL;
     krb5_error_code retval;
@@ -5197,7 +5191,7 @@ rd_and_store_for_creds(context, auth_context, inbuf, client)
     if ((retval = krb5_cc_initialize(context, ccache, client)))
         return(retval);
 
-    if ((retval = krb5_rd_cred(context, auth_context, ccache, inbuf)))
+    if ((retval = krb5_rd_cred2(context, auth_context, ccache, inbuf)))
         return(retval);
 #else /* HEIMDAL */
     if ((retval = krb5_rd_cred(context, auth_context, inbuf, &creds, NULL)))
@@ -5472,17 +5466,17 @@ k5_auth_is(how,data,cnt) int how; unsigned char *data; int cnt;
                 goto errout;
             }
             SendK5AuthSB(KRB5_TLS_VERIFY, msg.data, msg.length);
+#ifdef HEIMDAL
+            krb5_data_free(&msg);
+#else
             krb5_free_data_contents(k5_context,&msg);
+#endif
         }
 #endif /* CK_SSL */
         if ((how & AUTH_HOW_MASK) == AUTH_HOW_MUTUAL) {
             /* do ap_rep stuff here */
             if ((r = krb5_mk_rep(k5_context,
-#ifdef HEIMDAL
-                                  &auth_context,
-#else /* HEIMDAL */
                                   auth_context,
-#endif /* HEIMDAL */
                                   &outbuf))) {
                 debug(F111,"k5_auth_is","krb5_mk_rep",r);
                 (void) ckstrncpy(errbuf, "Make reply failed: ",sizeof(errbuf));
@@ -5503,7 +5497,7 @@ k5_auth_is(how,data,cnt) int how; unsigned char *data; int cnt;
             {
                 szUserNameAuthenticated[0] = '\0';
             } else {
-                ckstrncpy(szUserNameAuthenticated,UIDBUFLEN,name);
+                ckstrncpy(szUserNameAuthenticated,name,UIDBUFLEN);
                 free(name);
             }
         }
@@ -9687,6 +9681,7 @@ ck_krb4_initTGT(op,init)
     return(-1);
 }
 
+int
 #ifdef CK_ANSIC
 ck_krb4_destroy(struct krb_op_data * op)
 #else
@@ -11228,7 +11223,12 @@ rcmd_stream_init_krb5(in_keyblock, encrypt_flag, lencheck, am_client,
 
     use_ivecs = 1;
 
-    if (status = krb5_c_block_size(k5_context, k5_session_key->enctype,
+    if (status = krb5_c_block_size(k5_context,
+#ifdef HEIMDAL
+    k5_session_key->keytype,
+#else
+    k5_session_key->enctype,
+#endif
                                    &blocksize)) {
         /* XXX what do I do? */
         printf("fatal kerberos 5 crypto library error\n");
@@ -11309,8 +11309,7 @@ ck_krb_rlogin(hostname, port,
         krb5_ap_rep_enc_part *rep_ret = NULL;
         krb5_data outbuf;
         int rc;
-        krb5_int32 seqno=0;
-        krb5_int32 server_seqno=0;
+        int server_seqno=0;
         char ** realmlist=NULL;
         int buflen;
         char tgt[256];
@@ -11388,7 +11387,11 @@ ck_krb_rlogin(hostname, port,
         }
 
         if (krb5_rlog_ver == KCMD_OLD_PROTOCOL)
+#ifdef HEIMDAL
+            get_cred->session.keytype=ETYPE_DES_CBC_CRC;
+#else
             get_cred->keyblock.enctype=ENCTYPE_DES_CBC_CRC;
+#endif
 
         /* Get ticket from credentials cache or kdc */
         status = krb5_get_credentials(k5_context,
@@ -11429,10 +11432,11 @@ ck_krb_rlogin(hostname, port,
             krb5_boolean is_des;
 
             if (status = krb5_c_enctype_compare( k5_context,
-                                                 ENCTYPE_DES_CBC_CRC,
 #ifdef HEIMDAL
+						 ETYPE_DES_CBC_CRC,
                                                  ret_cred->session.keytype,
 #else /* HEIMDAL */
+                                                 ENCTYPE_DES_CBC_CRC,
                                                  ret_cred->keyblock.enctype,
 #endif /* HEIMDAL */
                                                  &is_des)) {
@@ -11482,7 +11486,11 @@ ck_krb_rlogin(hostname, port,
                                &rep_ret,
                                NULL
                                );
+#ifdef HEIMDAL
+        krb5_data_free(&cksumdat);
+#else
         krb5_free_data_contents(k5_context,&cksumdat);
+#endif
 
         if (status) {
             if ( !quiet )
@@ -11490,12 +11498,17 @@ ck_krb_rlogin(hostname, port,
                         error_message(status));
             if (error) {
                 if ( !quiet ) {
-                    printf("Server returned error code %d (%s)\r\n",
-                        error->error,
-                        error_message(ERROR_TABLE_BASE_krb5 + error->error));
-                    if (error->text.length) {
-                        printf("Error text sent from server: %s\r\n",
-                                error->text.data);
+#ifdef HEIMDAL
+		    int xerror = error->error_code;
+		    char *xtext = *error->e_text;
+#else
+		    int xerror = error->error;
+		    char *xtext = error->text.length ? error->text.data : NULL;
+#endif
+                    printf("Server returned error code %d (%s)\r\n", xerror,
+                        error_message(ERROR_TABLE_BASE_krb5 + xerror));
+                    if (xtext) {
+                        printf("Error text sent from server: %s\r\n", xtext);
                     }
                 }
                 krb5_free_error(k5_context, error);
@@ -11505,7 +11518,11 @@ ck_krb_rlogin(hostname, port,
         }
 
         if (rep_ret) {
+#ifdef HEIMDAL
+            server_seqno = *rep_ret->seq_number;
+#else
             server_seqno = rep_ret->seq_number;
+#endif
             krb5_free_ap_rep_enc_part(k5_context, rep_ret);
         }
 
@@ -11834,7 +11851,11 @@ krb5_des_read(fd, buf, len, secondary)
     rd_len = (rd_len << 8) | c;
 
     if (status = krb5_c_encrypt_length(k5_context, 
+#ifdef HEIMDAL
+                                    k5_session_key->keytype,
+#else
                                     k5_session_key->enctype,
+#endif
                                     use_ivecs ? rd_len + 4 : rd_len,
 				    (size_t *)&net_len)) {
         errno = status;
@@ -11865,9 +11886,15 @@ krb5_des_read(fd, buf, len, secondary)
     plain.length = sizeof(storage);
     plain.data = storage;
 
-    if ( status = krb5_c_decrypt(k5_context, k5_session_key, KCMD_KEYUSAGE,
+    if ( status = krb5_c_decrypt(k5_context,
+#ifdef HEIMDAL
+				 *k5_session_key,
+#else
+				 k5_session_key,
+#endif
+				 KCMD_KEYUSAGE,
                                  use_ivecs ? encivec_i + secondary : 0,
-                                  &cipher,&plain) ) {
+                                 &cipher,&plain) ) {
         /* probably out of sync */
         printf("Cannot decrypt data from network: %s\r\n",
                  error_message(status));
@@ -12759,8 +12786,8 @@ XauFileName ()
 
 static int
 binaryEqual (a, b, len)
-register char   *a, *b;
-register int    len;
+char   *a, *b;
+int    len;
 {
     while (len--)
         if (*a++ != *b++)
