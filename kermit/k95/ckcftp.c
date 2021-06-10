@@ -337,6 +337,7 @@ typedef long fd_mask;
 #ifdef OS2                              /* OS/2 or Win32 */
 #ifdef NT
 #define BSDSELECT
+#define stat _stat
 #else /* NT */
 #define IBMSELECT
 #endif /* NT */
@@ -928,9 +929,8 @@ char * ftp_apw = NULL;			/* Anonymous password */
 
 /* Definitions and typedefs needed for prototypes */
 
-#define sig_t my_sig_t
 #define sigtype SIGTYP
-typedef sigtype (*sig_t)();
+typedef sigtype (*_crt_signal_t)();
 
 /* Static global variables */
 
@@ -940,7 +940,7 @@ static char * fts_sto = NULL;
 
 static int ftpsndret = 0;
 static struct _ftpsnd {
-    sig_t oldintr, oldintp;
+    _crt_signal_t oldintr, oldintp;
     int            reply;
     int            incs,
                    outcs;
@@ -1998,7 +1998,7 @@ static char rfnbuf[RFNBUFSIZ];          /* Remote filename translate buffer */
 static char * xgnbp = NULL;
 
 static int
-strgetc() {                             /* Helper function for xgnbyte() */
+strgetc(void) {                             /* Helper function for xgnbyte() */
     int c;
     if (!xgnbp)
       return(-1);
@@ -3799,11 +3799,7 @@ setmodtime(char * f, time_t t)
 setmodtime(f,t) char * f; time_t t;
 #endif /* CK_ANSIC */
 /* setmodtime */ {
-#ifdef NT
-    struct _stat sb;
-#else /* NT */
     struct stat sb;
-#endif /* NT */
     int x, rc = 0;
 #ifdef BSD44
     struct timeval tp[2];
@@ -3814,11 +3810,7 @@ setmodtime(f,t) char * f; time_t t;
     } tp;
 #else  /* def V7 */
 #ifdef SYSUTIMEH
-#ifdef NT
-    struct _utimbuf tp;
-#else /* NT */
     struct utimbuf tp;
-#endif /* NT */
 #else /* def SYSUTIMEH */
 #ifdef VMS
     struct utimbuf tp;
@@ -3833,7 +3825,7 @@ setmodtime(f,t) char * f; time_t t;
 #endif /* def V7 [else] */
 #endif /* def BSD44 [else] */
 
-    if (stat(f,&sb) < 0) {
+    if (stat(f, &sb) < 0) {
         debug(F111,"setmodtime stat failure",f,errno);
         return(-1);
     }
@@ -9761,7 +9753,7 @@ static int
 ftpcmd(cmd,arg,lcs,rcs,vbm) char * cmd, * arg; int lcs, rcs, vbm; {
     char * s = NULL;
     int r = 0, x = 0, fc = 0, len = 0, cmdlen = 0, q = -1;
-    sig_t oldintr;
+    _crt_signal_t oldintr;
 
     if (ftp_deb)                        /* DEBUG */
       vbm = 1;
@@ -10206,16 +10198,17 @@ ssl_auth() {
   Pick allowed SSL/TLS versions according to enabled bugs.
   Modified 5 Feb 2015 to default to TLS 1.0 if no bugs are enabled,
   instead of to SSL 3.0, which has the POODLE vulnerability.
+  //@@todo - openssl build by default removes SSL2/SSL3 methods.
 */
     if (ftp_bug_use_ssl_v2) {
         /* allow SSL 2.0 or later */
         client_method = SSLv23_client_method();
     } else if (ftp_bug_use_ssl_v3) {
         /* allow SSL 3.0 ONLY - previous default */
-        client_method = SSLv3_client_method();
+        client_method = SSLv23_client_method();
     } else {
         /* default - allow TLS 1.0 or later */
-        client_method = TLSv1_client_method();
+        client_method = TLS_client_method();
     }
     if (auth_type && !strcmp(auth_type,"TLS")) {
         ssl_ftp_ctx=SSL_CTX_new(client_method);
@@ -10907,7 +10900,7 @@ getreply(expecteof,lcs,rcs,vbm,fc) int expecteof, lcs, rcs, vbm, fc; {
     int count = 0;
     int auth = 0;
     int originalcode = 0, continuation = 0;
-    sig_t oldintr;
+    _crt_signal_t oldintr;
     int pflag = 0;
     char *pt = pasv;
     char ibuf[FTP_BUFSIZ], obuf[FTP_BUFSIZ]; /* (these are pretty big...) */
@@ -11412,8 +11405,8 @@ empty(mask, cnt, sec) int * mask, sec;
 #endif /* IBMSELECT */
 #endif /* BSDSELECT */
 
-static sigtype
-cancelsend(sig) int sig; {
+static void
+cancelsend(int sig) {
     havesigint++;
     cancelgroup++;
     cancelfile = 0;
@@ -12163,8 +12156,8 @@ sendrequest(cmd, local, remote, xlate, incs, outcs, restart)
     return(ftpsndret);
 }
 
-static sigtype
-cancelrecv(sig) int sig; {
+static void
+cancelrecv(int sig) {
     havesigint++;
     cancelfile = 0;
     cancelgroup++;
@@ -12187,7 +12180,7 @@ cancelrecv(sig) int sig; {
 /* Argumentless front-end for secure_getc() */
 
 static int
-netgetc() {
+netgetc(void) {
     return(secure_getc(globaldin,0));
 }
 
@@ -12209,7 +12202,8 @@ struct xx_ftprecv {
     int xlate;
     int din;
     int is_retr;
-    sig_t oldintr, oldintp;
+    _crt_signal_t oldintr;
+    _crt_signal_t oldintp;
     char * cmd;
     char * local;
     char * remote;
@@ -12902,11 +12896,7 @@ recvrequest(cmd, local, remote, lmode, printnames, recover, pipename,
     char *cmd, *local, *remote, *lmode, *pipename;
     int printnames, recover, xlate, fcs, rcs;
 {
-#ifdef NT
-    struct _stat stbuf;
-#else /* NT */
     struct stat stbuf;
-#endif /* NT */
 
 #ifdef DEBUG
     if (deblog) {

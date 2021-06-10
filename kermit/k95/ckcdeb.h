@@ -5391,8 +5391,8 @@ _PROTOTYP( int zsattr, (struct zattr *) );
 _PROTOTYP( int zfree, (char *) );
 _PROTOTYP( char * zfcdat, (char *) );
 _PROTOTYP( int zstime, (char *, struct zattr *, int) );
+_PROTOTYP(char* zgperm, (char*));
 #ifdef CK_PERMS
-_PROTOTYP( char * zgperm, (char *) );
 _PROTOTYP( char * ziperm, (char *) );
 #endif /* CK_PERMS */
 _PROTOTYP( int zmail, (char *, char *) );

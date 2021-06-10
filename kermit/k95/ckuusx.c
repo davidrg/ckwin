@@ -9051,7 +9051,7 @@ char *s;        /* a string */
           KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_CP, tfcps);
           if (success) {
               sprintf(msgbuf,
-                      "SUCCESS.  Files: %ld, Bytes: %ld, %ld CPS",
+                      "SUCCESS.  Files: %ld, Bytes: %s, %ld CPS",
                       filcnt - filrej,
                       ckfstoa(fbyt),
                       tfcps

@@ -65,6 +65,7 @@
 #undef putchar
 #endif /* putchar */
 #define putchar(x) conoc(x)
+#define stat _stat
 extern int mskkeys;
 extern int mskrename;
 #endif /* OS2 */
