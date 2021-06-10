@@ -1410,7 +1410,7 @@ spack(pkttyp,n,len,d) char pkttyp; int n, len; CHAR *d;
 	!dontsend &&
 #endif /* STREAMING */
 	((network && ttnproto == NP_TELNET) || (!local && sstelnet))
-	&& seol == CR) {
+	&& seol == XCR) {
         switch (TELOPT_ME(TELOPT_BINARY) ? tn_b_nlm : tn_nlm) {
 	  case TNL_CR:			/* NVT or BINARY */
 	    break;
@@ -2413,7 +2413,7 @@ kstart(ch) CHAR ch;
     if (ch == LF) {
 	debug(F110,"kstart","ch == LF",0);
 	if ((what == W_COMMAND || what == W_INIT || what == W_NOTHING)) {
-	    if (eol == CR) {
+	    if (eol == XCR) {
 		ch = eol;
 		debug(F110,"kstart","ch = CR",0);
 	    }

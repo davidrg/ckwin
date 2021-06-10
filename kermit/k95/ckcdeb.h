@@ -1362,16 +1362,20 @@ extern int mac_getchar (void);
 #endif /* MAC */
 
 #ifdef OS2
+#ifndef CKWART_C
 #define printf Vscrnprintf
 #define fprintf Vscrnfprintf
 extern int Vscrnprintf(const char *, ...);
 extern int Vscrnprintw(const char *, ...);
 extern int Vscrnfprintf(FILE *, const char *, ...);
+extern void Vscrnperror(const char* str);
+
 #ifdef putchar
 #undef putchar
 #endif /* putchar */
 #define putchar(x) Vscrnprintf("%c",x)
 #define perror(x)  Vscrnperror(x)
+#endif
 #endif /* OS2 */
 
 #ifndef CKWART_C
@@ -1577,12 +1581,7 @@ SIGTYP (*ckntsignal(int type, SIGTYP (*)(int)))(int);
 
 /* We want all characters to be unsigned if the compiler supports it */
 
-#ifdef KUI
-#ifdef CHAR
-#undef CHAR
-#endif /* CHAR */
-#define CHAR unsigned char
-#else
+#ifndef KUI
 #ifdef PROVX1
 typedef char CHAR;
 /* typedef long LONG; */
@@ -6616,10 +6615,11 @@ _PROTOTYP(int ck_auth_loaddll, (VOID));
 _PROTOTYP(int ck_auth_unloaddll, (VOID));
 #endif /* OS2 */
 
-#ifdef NT
-_PROTOTYP(DWORD ckGetLongPathname,(LPCSTR lpFileName, 
-                                   LPSTR lpBuffer, DWORD cchBuffer));
-#endif /* NT */
+//@@todo - Not referenced?
+//#ifdef NT
+//_PROTOTYP(DWORD ckGetLongPathname,(LPCSTR lpFileName, 
+//                                   LPSTR lpBuffer, DWORD cchBuffer));
+//#endif /* NT */
 
 
 #include "ckclib.h"

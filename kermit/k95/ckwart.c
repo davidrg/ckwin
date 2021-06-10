@@ -1,7 +1,12 @@
-#include "ckcsym.h"
-char *wartv = "Wart Version 2.14, 10 Nov 1999";
-
+#ifndef CKWART_C
 #define CKWART_C
+#endif
+
+#include "ckcsym.h"
+#include <string.h>
+const char *wartv = "Wart Version 2.14, 10 Nov 1999";
+
+
 
 #ifdef MDEBUG
 /* Use the real ones in this module only */
@@ -106,7 +111,7 @@ char *wartv = "Wart Version 2.14, 10 Nov 1999";
 /* Storage sizes */
 
 #define MAXSTATES 50			/* max number of states */
-#define MAXWORD 50			/* max # of chars/word */
+#define MAXWORDNUM 50			/* max # of chars/word */
 #define SBYTES ((MAXSTATES+6)/8)	/* # of bytes for state bitmask */
 
 /* Name of wart function in generated program */
@@ -171,7 +176,7 @@ int deblog;
 
 static int lines, nstates, nacts;
 
-static char tokval[MAXWORD];
+static char tokval[MAXWORDNUM];
 
 static int tbl[MAXSTATES*96];
 
@@ -204,6 +209,11 @@ char *txt2b = "	if ((actno = tbl[c + state*96]) != -1)\n\
 
 char *txt3 = "\n	    }\n    }\n}\n\n";
 
+
+void
+bleep(short int type) {
+    //debug(F101, "bleep", "", type);
+}
 
 /*
  * turn on the bit associated with the given state
@@ -266,7 +276,7 @@ rdinput(infp,outfp) FILE *infp,*outfp; {
 VOID
 initial(infp,outfp) FILE *infp, *outfp; {
     int c;
-    char wordbuf[MAXWORD];
+    char wordbuf[MAXWORDNUM];
     while ((c = getc(infp)) != EOF) {
 	if (c == '%') {
 	    rdword(infp,wordbuf);
@@ -316,7 +326,7 @@ rdword(fp,buf) FILE *fp; char *buf; {
 VOID
 rdstates(fp,ofp) FILE *fp,*ofp; {
     int c;
-    char wordbuf[MAXWORD];
+    char wordbuf[MAXWORDNUM];
     while ((c = getc(fp)) != EOF && c != '\n') {
 	if (isspace(c) || c == C_L) continue;	/* skip whitespace */
 	ungetc(c,fp);			/* put char back */

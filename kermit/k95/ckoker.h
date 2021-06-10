@@ -11,7 +11,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-typedef unsigned int size_t;
+//typedef unsigned int size_t;
 
 /* Like malloc, but calls fatal() if out of memory. */
 void   *kmalloc(size_t size);

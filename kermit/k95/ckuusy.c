@@ -507,7 +507,7 @@ fatal2(msg1,msg2) char *msg1, *msg2; {
 }
 
 static SIGTYP
-#ifdef CK_ANSI
+#ifdef CK_ANSIC
 cl_int(int dummy)
 #else /* CK_ANSI */
 cl_int(dummy) int dummy;

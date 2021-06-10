@@ -6911,7 +6911,7 @@ void
 ztime(char **s) {
     time_t clock_storage;
 
-    clock_storage = time( (long *) 0 );
+    clock_storage = time( (time_t *) 0 );
     *s = ctime( &clock_storage );
 }
 
@@ -7123,7 +7123,7 @@ coninc(timo) int timo; {
             debug(F111,"coninc","ESC conversion",c);
             c = ESC ;
             break;
-        case KEY_SCAN | CR:
+        case KEY_SCAN | XCR:
 #ifndef NOKVERBS
         case F_KVERB | K_KPENTER:
         case F_KVERB | K_WYENTER:
@@ -7134,7 +7134,7 @@ coninc(timo) int timo; {
         case F_KVERB | K_HPRETURN:
 #endif /* NOKVERBS */
             debug(F111,"coninc","ENTER conversion",c);
-            c = CR ;
+            c = XCR ;
             break;
 #ifndef NOKVERBS
         case F_KVERB | K_KPMINUS:
@@ -7224,7 +7224,7 @@ coninc(timo) int timo; {
             break;
         default: ;
         }
-        if ( c == CR )
+        if ( c == XCR )
             c = NL;
 #ifndef NOKVERBS
         if (c >= 0) {
@@ -7356,7 +7356,7 @@ congks(int timo) {
             free(macrostr);
             macrostr = NULL ;
             s = NULL;
-            ch = CR;
+            ch = XCR;
         }
         else {
             ch = *s++;

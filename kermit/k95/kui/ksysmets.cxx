@@ -19,14 +19,23 @@ KSysMetrics::KSysMetrics()
         _platform = OS_WIN95;
         break;
     case VER_PLATFORM_WIN32_NT:			// Windows NT 
-        if ( verinfo.dwMajorVersion == 5 )
+        switch (verinfo.dwMajorVersion) {
+        case 6:
+            _platform = OS_NT6;
+            break;
+        case 5:
             _platform = OS_NT5;
-        else if( verinfo.dwMajorVersion == 4 )
+            break;
+        case 4:
             _platform = OS_NT4;
-        else if( verinfo.dwMajorVersion == 3 )
+            break;
+        case 3:
             _platform = OS_NT3;
-        else
+            break;
+        default:
             _platform = OS_NOTSUPPORTED;
+            break;
+        }           
         break;
     default:
         _platform = OS_NOTSUPPORTED;

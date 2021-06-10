@@ -30,7 +30,7 @@ extern int tt_cursor_blink;
 extern int tt_scrsize[];	/* Scrollback buffer size */
 extern int tt_status[];
 extern int scrollflag[];
-extern int vmode;
+extern BYTE vmode;
 extern int win32ScrollUp, win32ScrollDown;
 extern int trueblink, trueunderline, trueitalic;
 unsigned char geterasecolor(int);
@@ -813,7 +813,7 @@ void KClient::writeMe()
             ExtTextOutW( hdc(), rect.left, rect.top, 
 			ETO_CLIPPED | ETO_OPAQUE, 
 			&rect,
-			(ushort*) &(textBuffer[ kws->offset ]),
+			(LPCWSTR) &(textBuffer[ kws->offset ]),
 			kws->length,
 			(int*)&interSpace );
         }

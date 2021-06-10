@@ -28,7 +28,7 @@
 #define VT    11        /* Vertical Tab Ctrl-K */
 #define NL   '\n'       /* Newline */
 #define FF    12        /* Formfeed Ctrl-L */
-#define CR    13        /* Carriage Return Ctrl-M */
+#define XCR   13        /* Carriage Return Ctrl-M - Was CR but clashes wih Windows headers*/
 #define SO    14        /* Shift Out Ctrl-N */
 #define SI    15        /* Shift In Ctrl-O */
 #define DLE   16        /* Datalink Escape Ctrl-P */

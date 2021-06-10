@@ -156,7 +156,7 @@ qnxctrl( int ch )
                       (i <= marginright-1));
         }
         if ( i == marginright ) {
-            wrtch(CR);
+            wrtch(XCR);
             wrtch(LF);
         }
         VscrnIsDirty(VTERM);
@@ -177,10 +177,10 @@ qnxctrl( int ch )
         clrscreen(VTERM,SP);
         lgotoxy(VTERM,1,1);       /* and home the cursor */
         break;
-    case CR:
+    case XCR:
         if ( debses )
             break;
-        wrtch(CR);
+        wrtch(XCR);
         break;
     case SO:
         if ( debses )

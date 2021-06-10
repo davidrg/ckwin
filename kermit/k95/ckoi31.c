@@ -46,7 +46,7 @@ extern int tcsl;
 
 int i31_monitor = FALSE ;
 int i31_xprint  = 0;
-int i31_lta     = CR;
+int i31_lta     = XCR;
 
 int
 i31inc(void)
@@ -275,11 +275,11 @@ i31ctrl( int ch )
             break;
         case FF:
             break;
-        case CR:
+        case XCR:
             /* cursor to start of line */
             if ( debses )
                 break;
-            wrtch(CR);
+            wrtch(XCR);
             break;
         case SO:
             /* 3161- Select primary character set */
@@ -2047,7 +2047,7 @@ i31ascii( int ch )
                 /* Cursor to start of next line */
                 if ( debses )
                     break;
-                wrtch(CR);
+                wrtch(XCR);
                 wrtch(LF);
                 break;
             case 'N':

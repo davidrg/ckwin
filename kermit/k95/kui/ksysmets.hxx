@@ -13,7 +13,7 @@
 
 ========================================================================*/
 #include "kuidef.h"
-enum ePlatform { OS_NOTSUPPORTED, OS_NT5, OS_NT4, OS_NT3, OS_WIN95, OS_WIN31 };
+enum ePlatform { OS_NOTSUPPORTED, OS_NT6, OS_NT5, OS_NT4, OS_NT3, OS_WIN95, OS_WIN31 };
 class KSysMetrics
 {
 public:

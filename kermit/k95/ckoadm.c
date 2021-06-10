@@ -140,10 +140,10 @@ admctrl( int ch )
             break;
         cursorright(0);
         break;
-    case CR:
+    case XCR:
         if ( debses )
             break;
-        wrtch((char) CR);
+        wrtch((char) XCR);
         break;
     case SO: /* lock keyboard */
         if ( debses )
@@ -222,7 +222,7 @@ admascii( int ch )
             line  = adminc();
 #ifdef NETCONN
 #ifdef TCPSOCKET
-            if ( network && IS_TELNET() && !TELOPT_U(TELOPT_BINARY) && line == CR ) {
+            if ( network && IS_TELNET() && !TELOPT_U(TELOPT_BINARY) && line == XCR ) {
                 /* Handle TELNET CR-NUL or CR-LF if necessary */
                 int dummy = ttinc(0);
                 debug(F111,"ADM-3A","Addr cursor in page found CR",dummy);

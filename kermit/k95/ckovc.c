@@ -120,10 +120,10 @@ vcctrl( int ch )
         break;
     case FF:
         break;
-    case CR:
+    case XCR:
         if ( debses )
             break;
-        wrtch(CR);
+        wrtch(XCR);
         break;
     case SO:
         /* DIM */

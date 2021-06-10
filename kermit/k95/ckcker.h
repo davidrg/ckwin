@@ -473,7 +473,7 @@ struct ssh_pf {				/* SSH port forwarding */
 
 #define DEFTRN	    0			/* Default line turnaround handshake */
 
-#define MYEOL	    CR			/* Incoming packet terminator. */
+#define MYEOL	    XCR			/* Incoming packet terminator. */
 
 #ifdef NEWDEFAULTS
 #define DRPSIZ	  4095			/* Default incoming packet size. */

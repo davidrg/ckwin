@@ -230,7 +230,7 @@ avatar(void)
                               wherex[VTERM]-1+x ) ;
         break;
     }
-    case CR: {
+    case XCR: {
         /* 4 - initialize area, set current attribute */
         int attr, ch, lines, cols ;
         int x, y ;

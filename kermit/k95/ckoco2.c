@@ -2061,7 +2061,7 @@ VscrnWrtCharStrAtt( BYTE vmode, PCH CharStr, USHORT Length,
                 }
                 Column = 1 ;
                 break;
-            case CR:
+            case XCR:
                 Column = 1 ;
                 break;
             case BS:
@@ -2171,7 +2171,7 @@ VscrnWrtUCS2StrAtt( BYTE vmode, PUSHORT UCS2Str, USHORT Length,
                 }
                 Column = 1 ;
                 break;
-            case CR:
+            case XCR:
                 Column = 1 ;
                 break;
             case BS:

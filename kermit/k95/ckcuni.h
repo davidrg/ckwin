@@ -212,9 +212,11 @@ extern int ntxrtab;
 #define ULONG unsigned long
 #endif /* ULONG */
 
+#ifndef NT
 #ifndef CHAR
 #define CHAR unsigned char
 #endif /* CHAR */
+#endif
 
 #ifdef CK_ANSIC
 extern USHORT (*xl_u[MAXTXSETS+1])(CHAR); /* Blah-to-Unicode functions */

@@ -18,7 +18,7 @@
 
 extern int local, xitwarn, ttyfd;
 extern char ttname[];			/* Communication device name */
-extern int vmode;
+extern BYTE vmode;
 extern int maclvl;                  /* Macro invocation level */
 extern CHAR sstate ;
 #ifdef DCMDBUF
@@ -193,7 +193,7 @@ getVar(unsigned int idx) {
     int type  = (idx & 0x0f000000) >> 24;
     int group = (idx & 0x00ff0000) >> 16;
     int index = (idx & 0x0000ffff);
-    char * s;
+    char * s = NULL;
     int i;
 
     buf[0] = 0;

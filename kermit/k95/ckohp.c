@@ -197,7 +197,7 @@ hpctrl( int ch )
                       (i <= marginright-1));
         }
         if ( i == marginright ) {
-            wrtch(CR);
+            wrtch(XCR);
             wrtch(LF);
         }
         VscrnIsDirty(VTERM);
@@ -218,11 +218,11 @@ hpctrl( int ch )
         if ( debses )
             break;
         break;
-    case CR:
+    case XCR:
         debug(F100,"HPTERM Control: CR","",0);
         if ( debses )
             break;
-        wrtch(CR);
+        wrtch(XCR);
         break;
     case SO:    /* Use alternate character set */
         debug(F110,"HPTERM Control: SO","Use Alternate Character Set",0);
@@ -2446,7 +2446,7 @@ hpascii( int ch )
                 if ( debses )
                     break;
 
-                wrtch(CR);
+                wrtch(XCR);
                 break;
             case 'H':
                 /* Cursor Home Up */
@@ -2480,7 +2480,7 @@ hpascii( int ch )
                               (i <= marginright-1));
                 }
                 if ( i == marginright ) {
-                    wrtch(CR);
+                    wrtch(XCR);
                     wrtch(LF);
                 }
                 VscrnIsDirty(VTERM);
@@ -2700,7 +2700,7 @@ hpascii( int ch )
                 buf[6] = '0';
                 buf[7] = '2';
                 buf[8] = '0';
-                buf[9] =  CR;
+                buf[9] =  XCR;
                 buf[10] = NUL;
                 sendchars(buf,10);
                 break;
@@ -2787,7 +2787,7 @@ hpascii( int ch )
                                 sendchar(SP);
                         }
                     }
-                    sendchar(CR);
+                    sendchar(XCR);
                 }
                 break;
 #ifdef COMMENT

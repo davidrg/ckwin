@@ -11889,7 +11889,7 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
                       }
 #ifdef TNCODE
                       else if (network && IS_TELNET()
-                               && (y == CR ||
+                               && (y == XCR ||
                                    (unsigned) y == (unsigned) 255)) {
                           if (msgflg)
                             printf("Sorry, not on a TELNET connection.\n");

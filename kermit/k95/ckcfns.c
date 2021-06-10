@@ -909,7 +909,7 @@ xpnbyte(a,tcs,fcs,fn) int a, tcs, fcs; int (*fn)();
 	debug(F001,"xpnbyte uc.x_short","[A]",uc.x_short);
 	debug(F101,"xpnbyte feol","",feol);
 	if (what & W_XFER) {		/* If transferring a file */
-	    if (feol && uc.x_short == CR) { /* handle eol conversion. */
+	    if (feol && uc.x_short == XCR) { /* handle eol conversion. */
 		return(0);
 	    } else if (feol && uc.x_short == LF) {
 		uc.x_short = feol;
@@ -1034,7 +1034,7 @@ xpnbyte(a,tcs,fcs,fn) int a, tcs, fcs; int (*fn)();
 		  pnbyte(UNK,fn);
 		if (feol)
 		  return(pnbyte((CHAR)feol,fn));
-		if ((rc = pnbyte((CHAR)CR,fn)) < 0)
+		if ((rc = pnbyte((CHAR)XCR,fn)) < 0)
 		  return(rc);
 		if ((rc = pnbyte((CHAR)LF,fn)) < 0)
 		  return(rc);
@@ -1432,7 +1432,7 @@ decode(buf,fn,xlate) register CHAR *buf; register int (*fn)(); int xlate;
 #ifndef NOCSETS
 	if (!binary) {			/* If in text mode, */
 	    if (tcharset != TC_UCS2) {
-		if (feol && a == CR)	/* Convert CRLF to newline char */
+		if (feol && a == XCR)	/* Convert CRLF to newline char */
 		  continue;
 		if (feol && a == LF)
 		  a = feol;
@@ -1928,7 +1928,7 @@ agnbyte() {				/* Get next byte from array */
 		c = feol;
 	    } else {			/* or CRLF */
 		save = LF;
-		c = CR;
+		c = XCR;
 	    }
 	    p = ap[++i];
 	    return(c & 0xff);
@@ -2323,7 +2323,7 @@ xgnbyte(tcs,fcs,fn) int tcs, fcs, (*fn)();
 		  if (eolflag) {
 		      if (what & W_SEND) {
 			  xlabuf[xlacount++] = LF;
-			  return(CR);
+			  return(XCR);
 		      } else {
 			  return(feol);
 		      }
@@ -2393,7 +2393,7 @@ xgnbyte(tcs,fcs,fn) int tcs, fcs, (*fn)();
 		  if (what & W_SEND) {	/* Convert to CRLF */
 		      xlabuf[k++] = LF;
 		      xlacount = k;
-		      return((unsigned int)CR);
+		      return((unsigned int)XCR);
 #ifdef COMMENT
 		  } else {		/* Or to local line-end */
 		      xlacount = k;
@@ -2426,7 +2426,7 @@ xgnbyte(tcs,fcs,fn) int tcs, fcs, (*fn)();
 	      }
 	      if (eolflag) {		/* We detected EOL in source file */
 		  if (what & W_SEND) {	/* Convert to CRLF */
-		      xlabuf[k++] = CR;
+		      xlabuf[k++] = XCR;
 		      xlabuf[k++] = NUL;
 		      xlabuf[k++] = LF;
 		      xlacount = k;
@@ -2864,12 +2864,12 @@ getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
 		}
 	    }
 #ifdef CK_SPEED
-	    if (ctlp[CR]) {
+	    if (ctlp[XCR]) {
 		*dp++ = myctlq;		/* Insert carriage return directly */
 		*dp++ = 'M';
 		ccp++;
 	    } else {
-		*dp++ = CR;		/* Perhaps literally */
+		*dp++ = XCR;		/* Perhaps literally */
 		ccu++;
 	    }
 #else /* !CK_SPEED */
@@ -5123,8 +5123,8 @@ spar(s) CHAR *s; {			/* Set parameters */
     }
 
 /* Outbound Packet Terminator */
-    seol = (CHAR) (biggest >= 5) ? xunchar(s[5]) : CR;
-    if ((seol < 1) || (seol > 31)) seol = CR;
+    seol = (CHAR) (biggest >= 5) ? xunchar(s[5]) : XCR;
+    if ((seol < 1) || (seol > 31)) seol = XCR;
 
 /* Control prefix that the other Kermit is sending */
     x = (biggest >= 6) ? s[6] : '#';

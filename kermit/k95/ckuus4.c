@@ -2897,8 +2897,8 @@ transmit(s,t,xlate,binary,xxecho) char *s; char t; int xlate, binary, xxecho;
                     if (xmitf)          /* Yes, insert fill if asked. */
                       line[i++] = dopar((char) xmitf);
                 }
-                if (i == 0 || ((char) line[i-1]) != ((char) dopar(CR)))
-                  line[i++] = dopar(CR); /* Terminate it with CR */
+                if (i == 0 || ((char) line[i-1]) != ((char) dopar(XCR)))
+                  line[i++] = dopar(XCR); /* Terminate it with CR */
                 if (xmitl) {
                     stuff = LF;
 #ifdef TNCODE
@@ -2943,7 +2943,7 @@ transmit(s,t,xlate,binary,xxecho) char *s; char t; int xlate, binary, xxecho;
                     if (x == -1) {      /* If more input bytes needed */
                         continue;       /* go back and get them */
                     } else if (x == -2) { /* LS or PS (shouldn't happen) */
-                        outxbuf[0] = CR;
+                        outxbuf[0] = XCR;
                     } else if (x == -9) { /* UTF-8 error */
                         outxbuf[0] = '?'; /* Insert error char */
                         outxbuf[1] = u_to_b2(); /* Insert next char */
@@ -6930,7 +6930,7 @@ doinput(timo,ms,mp,flags,count)
                     waiting -= 2;       /* (not necessarily...) */
                     cr = 0;
                     continue;           /* and autodownload check */
-                  case CR:
+                  case XCR:
                     cr = 1;
                     tx = scriptwrtbuf((USHORT)y);
                     if (tx == 6) {
@@ -9674,7 +9674,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
                       x = 1;             /* EOF - set completion flag */
                       if (cx == FN_CMD) { /* If not "rawcommand" */
                           p--;           /* remove trailing newlines */
-                          while (*p == CR || *p == LF)
+                          while (*p == XCR || *p == LF)
                             p--;
                           p++;
                       }
@@ -12165,7 +12165,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 	k = strlen(s);			/* Strip junk from end */
 	if (k < 1) goto xemail;
 	k--;
-	while (k >= 0 && s[k] == CR || s[k] == LF)
+	while (k >= 0 && s[k] == XCR || s[k] == LF)
 	  s[k--] = NUL;
 	while (k >= 0 && s[k] == SP || s[k] == HT)
 	  s[k--] = NUL;

@@ -16,7 +16,7 @@ extern TID tidTermScrnUpd ;
 extern unsigned char     colorstatus;
 extern unsigned char     colorselect;
 extern unsigned char     colorborder;
-extern int vmode;
+extern BYTE vmode;
 extern int tcsl;
 extern int nt351;
 
@@ -525,7 +525,7 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
              && IsConnectMode() 
 #endif /* NOLOCAL */
              )
-            ttol((unsigned char *)&inpEvt,sizeof(INPUT_RECORD));
+            ttol((char *)&inpEvt,sizeof(INPUT_RECORD));
         else
 #endif /* NOTERM */
         win32KeyEvent( vnum, inpEvt.Event.KeyEvent );
@@ -546,14 +546,14 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
                 keycount = toUnicode( inpEvt.Event.KeyEvent.wVirtualKeyCode,
                         inpEvt.Event.KeyEvent.wVirtualScanCode | (keyDown ? 0x00 : 0x8000),
                         keystate,
-                        (WORD *)wbuf,
+                        (LPWSTR)wbuf,
                         8,
                         FALSE );                         
             else
                 keycount = toUnicodeEx( inpEvt.Event.KeyEvent.wVirtualKeyCode,
                         inpEvt.Event.KeyEvent.wVirtualScanCode | (keyDown ? 0x00 : 0x8000),
                         keystate,
-                        (WORD *)wbuf,
+                        (LPWSTR)wbuf,
                         8,
                         FALSE,
                         GetKeyboardLayout(0) );                         
@@ -590,7 +590,7 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
                  && IsConnectMode() 
 #endif /* NOLOCAL */
                  )
-                ttol((unsigned char *)&inpEvt,sizeof(INPUT_RECORD));
+                ttol((char *)&inpEvt,sizeof(INPUT_RECORD));
             else
 #endif /* NOTERM */
             win32KeyEvent( vnum, inpEvt.Event.KeyEvent );
@@ -603,7 +603,7 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
                  && IsConnectMode() 
 #endif /* NOLOCAL */
                  )
-                ttol((unsigned char *)&inpEvt,sizeof(INPUT_RECORD));
+                ttol((char *)&inpEvt,sizeof(INPUT_RECORD));
             else
 #endif /* NOTERM */
             win32KeyEvent( vnum, inpEvt.Event.KeyEvent );
@@ -617,7 +617,7 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
                  && IsConnectMode() 
 #endif /* NOLOCAL */
                  )
-                ttol((unsigned char *)&inpEvt,sizeof(INPUT_RECORD));
+                ttol((char *)&inpEvt,sizeof(INPUT_RECORD));
             else
 #endif /* NOTERM */
             win32KeyEvent( vnum, inpEvt.Event.KeyEvent );
@@ -630,7 +630,7 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
                  && IsConnectMode() 
 #endif /* NOLOCAL */
                  )
-                ttol((unsigned char *)&inpEvt,sizeof(INPUT_RECORD));
+                ttol((char *)&inpEvt,sizeof(INPUT_RECORD));
             else
 #endif /* NOTERM */
             win32KeyEvent( vnum, inpEvt.Event.KeyEvent );
@@ -642,7 +642,7 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
                  && IsConnectMode() 
 #endif /* NOLOCAL */
                  )
-                ttol((unsigned char *)&inpEvt,sizeof(INPUT_RECORD));
+                ttol((char *)&inpEvt,sizeof(INPUT_RECORD));
             else
 #endif /* NOTERM */
             win32KeyEvent( vnum, inpEvt.Event.KeyEvent );
@@ -679,7 +679,7 @@ BOOL IKTerm::keyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown )
          && IsConnectMode() 
 #endif /* NOLOCAL */
          )
-        ttol((unsigned char *)&inpEvt,sizeof(INPUT_RECORD));
+        ttol((char *)&inpEvt,sizeof(INPUT_RECORD));
     else
 #endif /* NOTERM */
         win32KeyEvent( vnum, inpEvt.Event.KeyEvent );
@@ -714,7 +714,7 @@ BOOL IKTerm::virtkeyEvent( UINT virtkey, LONG lKeyData, UINT keyDown )
          && IsConnectMode() 
 #endif /* NOLOCAL */
          )
-        ttol((unsigned char *)&inpEvt,sizeof(INPUT_RECORD));
+        ttol((char *)&inpEvt,sizeof(INPUT_RECORD));
     else
 #endif /* NOTERM */
         win32KeyEvent( vnum, inpEvt.Event.KeyEvent );

@@ -532,7 +532,7 @@ _PROTOTYP(int  is_aprint,(void));
 _PROTOTYP(int  is_xprint,(void));
 _PROTOTYP(int  is_cprint,(void));
 _PROTOTYP(int  is_uprint,(void));
-_PROTOTYP(void prtchar, (BYTE));
+_PROTOTYP(void prtchar, (char));
 _PROTOTYP(void prtstr, (char *,int));
 _PROTOTYP(void prtscreen, (BYTE,int, int));
 #ifdef BPRINT

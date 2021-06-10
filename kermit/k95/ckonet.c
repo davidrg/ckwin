@@ -2203,7 +2203,7 @@ os2_netxin(int n, CHAR * buf) {
                 }
                 else if ( (!TELOPT_U(TELOPT_BINARY) &&
                             !(TELOPT_ME(TELOPT_BINARY) && tn_b_meu)) &&
-                          buf[i] == CR )
+                          buf[i] == XCR )
                 {
                     debug(F111,"os2_netxin","TELNET CR FOUND",i);
                     debug(F111,"os2_netxin","len",len);
@@ -3219,7 +3219,7 @@ os2_netxout(char *s, int n)
                     len++ ;
                     buf[len] = IAC ;
                 }
-                else if ( s[i] == CR && !TELOPT_ME(TELOPT_BINARY) &&
+                else if ( s[i] == XCR && !TELOPT_ME(TELOPT_BINARY) &&
                           !(TELOPT_U(TELOPT_BINARY) && tn_b_ume) ) {
                     len++ ;
                     buf[len] = NUL ;

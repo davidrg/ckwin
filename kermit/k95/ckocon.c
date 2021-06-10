@@ -916,7 +916,7 @@ popup_readtext(int mode, char * preface, char * prmpt, char * buffer, int buflen
         while ( *p ) {
             if ( *p == LF ) {
                 *p = '\0';
-                if ( *(p-1) == CR )
+                if ( *(p-1) == XCR )
                     *(p-1) = '\0';
                 helpline( pPopup, q );
                 q = p+1;
@@ -932,7 +932,7 @@ popup_readtext(int mode, char * preface, char * prmpt, char * buffer, int buflen
     while ( *p ) {
         if ( *p == LF ) {
             *p = '\0';
-            if ( *(p-1) == CR )
+            if ( *(p-1) == XCR )
                 *(p-1) = '\0';
             helpline( pPopup, q );
             q = p+1;
@@ -973,7 +973,7 @@ popup_readtext(int mode, char * preface, char * prmpt, char * buffer, int buflen
             case K_TVIRETURN:
             case K_HPENTER  :
             case K_HPRETURN :
-                x1 = CR;
+                x1 = XCR;
                 break;
             default:
                 bleep(BP_WARN);
@@ -1016,7 +1016,7 @@ popup_readtext(int mode, char * preface, char * prmpt, char * buffer, int buflen
         {
             buffer[len-1] = '\0' ;
         }
-        else if ( x1 == CR )
+        else if ( x1 == XCR )
         {
             break;
         }
@@ -1119,7 +1119,7 @@ popup_readpass(int mode, char * preface, char * prmpt, char * buffer, int buflen
         while ( *p ) {
             if ( *p == LF ) {
                 *p = '\0';
-                if ( *(p-1) == CR )
+                if ( *(p-1) == XCR )
                     *(p-1) = '\0';
                 helpline( pPopup, q );
                 q = p+1;
@@ -1135,7 +1135,7 @@ popup_readpass(int mode, char * preface, char * prmpt, char * buffer, int buflen
     while ( *p ) {
         if ( *p == LF ) {
             *p = '\0';
-            if ( *(p-1) == CR )
+            if ( *(p-1) == XCR )
                 *(p-1) = '\0';
             helpline( pPopup, q );
             q = p+1;
@@ -1176,7 +1176,7 @@ popup_readpass(int mode, char * preface, char * prmpt, char * buffer, int buflen
             case K_TVIRETURN:
             case K_HPENTER  :
             case K_HPRETURN :
-                x1 = CR;
+                x1 = XCR;
                 break;
             default:
                 bleep(BP_WARN);
@@ -1219,7 +1219,7 @@ popup_readpass(int mode, char * preface, char * prmpt, char * buffer, int buflen
         {
             buffer[len-1] = '\0' ;
         }
-        else if ( x1 == CR )
+        else if ( x1 == XCR )
         {
             break;
         }
@@ -2551,7 +2551,7 @@ con2host(con_event evt)
 
         /* Ordinary character */
 #ifdef CKLEARN
-        if (c == CR)
+        if (c == XCR)
             learnkeyb(evt, LEARN_NEUTRAL);
         else
             learnkeyb(evt, LEARN_KEYBOARD);
@@ -2588,8 +2588,8 @@ con2host(con_event evt)
         if ( !kbdlocked() ) {
 #ifdef CKLEARN
             int len = strlen(evt.macro.string);
-            if (evt.macro.string[len-1] == CR ||
-                evt.macro.string[len-2] == CR && evt.macro.string[len-1] == LF)
+            if (evt.macro.string[len-1] == XCR ||
+                evt.macro.string[len-2] == XCR && evt.macro.string[len-1] == LF)
                 learnkeyb(evt,LEARN_NEUTRAL);
             else
                 learnkeyb(evt, LEARN_KEYBOARD);
@@ -2606,8 +2606,8 @@ con2host(con_event evt)
         if ( !kbdlocked() ) {
 #ifdef CKLEARN
             int len = strlen(evt.literal.string);
-            if (evt.literal.string[len-1] == CR ||
-                evt.literal.string[len-2] == CR && evt.literal.string[len-1] == LF)
+            if (evt.literal.string[len-1] == XCR ||
+                evt.literal.string[len-2] == XCR && evt.literal.string[len-1] == LF)
                 learnkeyb(evt,LEARN_NEUTRAL);
             else
                 learnkeyb(evt, LEARN_KEYBOARD);
@@ -2811,7 +2811,7 @@ extern int holdscreen;
 
 
 void
-isconnect()
+isconnect(void *params)
 {
     /* ResetThreadPrty();   already done */
     while (IsConnectMode()) {
@@ -3347,7 +3347,7 @@ conect(int async) {
     VscrnIsDirty(VCMD);
 
     if ( !async )
-        isconnect();
+        isconnect(NULL);
     else
         _beginthread(isconnect,
 #ifdef OS2ONLY

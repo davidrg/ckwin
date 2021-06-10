@@ -4422,7 +4422,8 @@ zstrdt(date,len) char * date; int len; {
   To do: adapt code from OS-9 Kermit's ck9fio.c zstime function, which
   is more flexible, allowing [yy]yymmdd[ hh:mm[:ss]].
 */
-    long tmx=0, days;
+    time_t tmx = 0;
+    long days;
     int i, n, isleapyear;
                    /*       J  F  M  A   M   J   J   A   S   O   N   D   */
                    /*      31 28 31 30  31  30  31  31  30  31  30  31   */

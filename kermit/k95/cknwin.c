@@ -1761,7 +1761,7 @@ gui_text_popup_append(unsigned short uch)
 
     if ( EditStreamLen < EditStreamMaxLen ) {
         static int found_cr = 0;
-        if ( uch == CR ) {
+        if ( uch == XCR ) {
             found_cr = 1;
             EditStreamBuffer[EditStreamLen++] = 0x2028;
         } else if ( uch == LF ) {

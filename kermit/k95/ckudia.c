@@ -4634,7 +4634,7 @@ ttslow(s,millisec) char *s; int millisec; { /* Output s-l-o-w-l-y */
 	    while (*s2) {
 		scriptwrtbuf((USHORT)*s2++);
 	    }
-	    scriptwrtbuf((USHORT)CR);
+	    scriptwrtbuf((USHORT)XCR);
 	    scriptwrtbuf((USHORT)LF);
 	}
 #endif /* OS2 */
@@ -4642,7 +4642,7 @@ ttslow(s,millisec) char *s; int millisec; { /* Output s-l-o-w-l-y */
     for (; *s; s++) {
 	ttoc(*s);
 #ifdef TCPSOCKET
-	if (*s == CR && network && IS_TELNET()) {
+	if (*s == XCR && network && IS_TELNET()) {
 	    if (!TELOPT_ME(TELOPT_BINARY) && tn_nlm != TNL_CR)
 	      ttoc((char)((tn_nlm == TNL_CRLF) ? LF : NUL));
 	    else if (TELOPT_ME(TELOPT_BINARY) &&
@@ -4671,7 +4671,7 @@ waitfor(s) char *s; {
 	    debug(F000,"dial waitfor got","",x);
 	    if (dialdpy) {
 		if (x != LF) conoc(x);
-		if (x == CR) conoc(LF);
+		if (x == XCR) conoc(LF);
 	    }
 	} while (x != c);
     }
@@ -4741,7 +4741,7 @@ dialoc(c) char c;
 { /* dialoc */				/* Dial Output Character */
     if (dialdpy) {
 	if (c != LF) conoc(c);		/* Don't echo LF */
-	if (c == CR) conoc(LF);		/* Echo CR as CRLF */
+	if (c == XCR) conoc(LF);		/* Echo CR as CRLF */
     }
 }
 
@@ -5909,20 +5909,20 @@ _dodial(threadinfo) VOID * threadinfo;
 */
 		if (mymdmtyp == n_CCITT) {
 		    if (n < 3) continue;
-		    if ((lbuf[n] == CR) && (lbuf[n-1] == LF)) break;
-		    if ((lbuf[n] == LF) && (lbuf[n-1] == CR)) break;
+		    if ((lbuf[n] == XCR) && (lbuf[n-1] == LF)) break;
+		    if ((lbuf[n] == LF) && (lbuf[n-1] == XCR)) break;
 		}
 #ifndef MINIDIAL
 		else if (mymdmtyp == n_DIGITEL) {
-		    if (((lbuf[n] == CR) && (lbuf[n-1] == LF)) ||
-			((lbuf[n] == LF) && (lbuf[n-1] == CR)))
+		    if (((lbuf[n] == XCR) && (lbuf[n-1] == LF)) ||
+			((lbuf[n] == LF) && (lbuf[n-1] == XCR)))
 		      break;
 		    else
 		      continue;
 		}
 #endif /* MINIDIAL */
 	    } else {			/* All others, break on CR or LF */
-		if ( lbuf[n] == CR || lbuf[n] == LF ) break;
+		if ( lbuf[n] == XCR || lbuf[n] == LF ) break;
 	    }
 	}
 	lbuf[++n] = '\0';		/* Terminate response from modem */
@@ -5962,8 +5962,8 @@ _dodial(threadinfo) VOID * threadinfo;
 		    for (n = -1; n < LBUFL-1; ) {
 			lbuf[++n] = c2 = (char) (ddinc(0) & 0177);
 			dialoc(lbuf[n]);
-			if (((lbuf[n] == CR) && (lbuf[n-1] == LF)) ||
-			    ((lbuf[n] == LF) && (lbuf[n-1] == CR)))
+			if (((lbuf[n] == XCR) && (lbuf[n-1] == LF)) ||
+			    ((lbuf[n] == LF) && (lbuf[n-1] == XCR)))
 			  break;
 		    }
 		    mdmstat = CONNECTED; /* Assume we're connected */
@@ -6998,11 +6998,11 @@ dook(threadinfo) VOID * threadinfo ;
 	    debug(F000,"getok:",rbuf,(int) c); /* Log it */
 #endif /* COMMENT */
 	    switch (c) {		/* Interpret it. */
-	      case CR:			/* Got a carriage return. */
+	      case XCR:			/* Got a carriage return. */
 		switch(rbuf[RBUFL-2]) {	/* Look at character before it. */
 		  case '0':		/* 0 = OK numeric response */
 		    if (!okstrict ||
-			rbuf[RBUFL-3] == CR || rbuf[RBUFL-3] == SP) {
+			rbuf[RBUFL-3] == XCR || rbuf[RBUFL-3] == SP) {
 			nonverbal = 1;
 			okstatus = 1;	/* Good response */
 		    }
@@ -7018,7 +7018,7 @@ dook(threadinfo) VOID * threadinfo ;
 		    else
 #endif /* MINIDIAL */
 		      if (!okstrict ||
-			rbuf[RBUFL-3] == CR || rbuf[RBUFL-3] == SP) {
+			rbuf[RBUFL-3] == XCR || rbuf[RBUFL-3] == SP) {
 			nonverbal = 1;
 			okstatus = -1;	/* Bad command */
 		    }
@@ -7180,7 +7180,7 @@ gethrn() {
 	    c = (char) (ddinc(0) & 0x7f);
 	    debug(F000,"SPONGE","",c);
 	    dialoc(c);
-	    if (c == CR) break;
+	    if (c == XCR) break;
 	}
     }
     while (mdmstat == 0) {		/* Read response */
@@ -7194,11 +7194,11 @@ gethrn() {
 	if (!isdigit(c))		/* If not a digit, keep looking. */
 	  continue;
 	nbuf[i++] = c;			/* Got first digit, save it. */
-	while (c != CR && i < 8) {	/* Read chars up to CR */
+	while (c != XCR && i < 8) {	/* Read chars up to CR */
 	    x = ddinc(0) & 0177;	/* Get a character. */
 	    c = (char) x;		/* Got it OK. */
 	    debug(F000,"RESPONSE-C","",c);
-	    if (c != CR)		/* If it's not a carriage return, */
+	    if (c != XCR)		/* If it's not a carriage return, */
 	      nbuf[i++] = c;		/*  save it. */
 	    dialoc(c);			/* Echo it. */
 	}
