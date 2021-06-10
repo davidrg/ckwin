@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{9686200d-a155-4b30-9838-2c877d2c22a2}</ProjectGuid>
+    <RootNamespace>ckwin</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>ckwing</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <EnableASAN>true</EnableASAN>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <IntDir>$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)</TargetName>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <IntDir>$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <VcpkgUseStatic>false</VcpkgUseStatic>
+    <VcpkgTriplet>x86-windows</VcpkgTriplet>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level2</WarningLevel>
+      <SDLCheck>false</SDLCheck>
+      <PreprocessorDefinitions>KUI;K95G;CK_WIN;OS2;USE_STRERROR;DYNAMIC;HADDRLIST;NPIPE;OS2MOUSE;NT;NO_SRP;NO_DNS_SRV;NO_KERBEROS;TCPSOCKET;NOCKXYZ;NOSSH;NO_SSL;BETATEST;NO_SSL_KRB5;NETCONN;RLOGCODE;NETFILE;ONETERMUPD;NEWFTP;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_WIN32_WINNT=0x0600;__32BIT__;WIN32;_WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>false</ConformanceMode>
+      <AdditionalIncludeDirectories>..;..\kui</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <TreatSpecificWarningsAsErrors>%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <StringPooling>true</StringPooling>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>Ws2_32.lib;Winmm.lib;Comctl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NT;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <StringPooling>true</StringPooling>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>KUI;K95G;CK_WIN;OS2;USE_STRERROR;DYNAMIC;HADDRLIST;NPIPE;OS2MOUSE;NT;NO_SRP;NO_DNS_SRV;NO_KERBEROS;TCPSOCKET;NOCKXYZ;NOSSH;NO_SSL;BETATEST;NO_SSL_KRB5;NETCONN;RLOGCODE;NETFILE;ONETERMUPD;NEWFTP;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_WIN32_WINNT=0x0600;__32BIT__;WIN32;_WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <StringPooling>true</StringPooling>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>Ws2_32.lib;Winmm.lib;Comctl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <StringPooling>true</StringPooling>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\ckcb64.c" />
+    <ClCompile Include="..\ckcfn2.c" />
+    <ClCompile Include="..\ckcfn3.c" />
+    <ClCompile Include="..\ckcfns.c" />
+    <ClCompile Include="..\ckcftp.c" />
+    <ClCompile Include="..\ckclib.c" />
+    <ClCompile Include="..\ckcmai.c" />
+    <ClCompile Include="..\ckcmdb.c" />
+    <ClCompile Include="..\ckcnet.c" />
+    <ClCompile Include="..\ckcpro.c" />
+    <ClCompile Include="..\ckctel.c" />
+    <ClCompile Include="..\ckcuni.c" />
+    <ClCompile Include="..\cknalm.c" />
+    <ClCompile Include="..\cknnbi.c" />
+    <ClCompile Include="..\cknprt.c" />
+    <ClCompile Include="..\cknsig.c" />
+    <ClCompile Include="..\ckntap.c" />
+    <ClCompile Include="..\cknwin.c" />
+    <ClCompile Include="..\cko32rt.c" />
+    <ClCompile Include="..\ckoadm.c" />
+    <ClCompile Include="..\ckoath.c" />
+    <ClCompile Include="..\ckoava.c" />
+    <ClCompile Include="..\ckoco2.c" />
+    <ClCompile Include="..\ckoco3.c" />
+    <ClCompile Include="..\ckoco4.c" />
+    <ClCompile Include="..\ckoco5.c" />
+    <ClCompile Include="..\ckocon.c" />
+    <ClCompile Include="..\ckodg.c" />
+    <ClCompile Include="..\ckoetc.c" />
+    <ClCompile Include="..\ckoetc2.c" />
+    <ClCompile Include="..\ckofio.c" />
+    <ClCompile Include="..\ckohp.c">
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">KUI;K95G;CK_WIN;OS2;NT;USE_STRERROR;DYNAMIC;HADDRLIST;NPIPE;OS2MOUSE;NT;NO_SRP;NO_DNS_SRV;NO_KERBEROS;TCPSOCKET;NOCKXYZ;NOSSH;NO_SSL;BETATEST;NO_SSL_KRB5;NETCONN;RLOGCODE;NETFILE;ONETERMUPD;NEWFTP;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_WIN32_WINNT=0x0600;__32BIT__;WIN32;_WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <ClCompile Include="..\ckohzl.c" />
+    <ClCompile Include="..\ckoi31.c" />
+    <ClCompile Include="..\ckokey.c" />
+    <ClCompile Include="..\ckomou.c" />
+    <ClCompile Include="..\ckonet.c" />
+    <ClCompile Include="..\ckopcf.c" />
+    <ClCompile Include="..\ckoqnx.c" />
+    <ClCompile Include="..\ckoreg.c" />
+    <ClCompile Include="..\ckosftp.c" />
+    <ClCompile Include="..\ckoslp.c" />
+    <ClCompile Include="..\ckossh.c" />
+    <ClCompile Include="..\ckossl.c" />
+    <ClCompile Include="..\ckosslc.c" />
+    <ClCompile Include="..\ckosyn.c" />
+    <ClCompile Include="..\ckotek.c" />
+    <ClCompile Include="..\ckothr.c" />
+    <ClCompile Include="..\ckotio.c" />
+    <ClCompile Include="..\ckotvi.c" />
+    <ClCompile Include="..\ckovc.c" />
+    <ClCompile Include="..\ckowys.c" />
+    <ClCompile Include="..\ckozli.c" />
+    <ClCompile Include="..\ckuath.c" />
+    <ClCompile Include="..\ckucmd.c" />
+    <ClCompile Include="..\ckudia.c" />
+    <ClCompile Include="..\ckupty.c" />
+    <ClCompile Include="..\ckuscr.c" />
+    <ClCompile Include="..\ckuus2.c" />
+    <ClCompile Include="..\ckuus3.c" />
+    <ClCompile Include="..\ckuus4.c" />
+    <ClCompile Include="..\ckuus5.c" />
+    <ClCompile Include="..\ckuus6.c" />
+    <ClCompile Include="..\ckuus7.c" />
+    <ClCompile Include="..\ckuusr.c" />
+    <ClCompile Include="..\ckuusx.c" />
+    <ClCompile Include="..\ckuusy.c" />
+    <ClCompile Include="..\ckuxla.c" />
+    <ClCompile Include="..\ck_crp.c" />
+    <ClCompile Include="..\ck_des.c" />
+    <ClCompile Include="..\ck_ssl.c" />
+    <ClCompile Include="..\k95d.c" />
+    <ClCompile Include="..\kui\ikcmd.c" />
+    <ClCompile Include="..\kui\ikterm.cxx" />
+    <ClCompile Include="..\kui\ikui.cxx" />
+    <ClCompile Include="..\kui\kabout.cxx" />
+    <ClCompile Include="..\kui\kappwin.cxx" />
+    <ClCompile Include="..\kui\karray.cxx" />
+    <ClCompile Include="..\kui\kclient.cxx" />
+    <ClCompile Include="..\kui\kcustdlg.cxx" />
+    <ClCompile Include="..\kui\kdwnload.cxx" />
+    <ClCompile Include="..\kui\kflstat.cxx" />
+    <ClCompile Include="..\kui\Kfont.cxx" />
+    <ClCompile Include="..\kui\kfontdlg.cxx" />
+    <ClCompile Include="..\kui\khwndset.cxx" />
+    <ClCompile Include="..\kui\kmenu.cxx" />
+    <ClCompile Include="..\kui\kprogres.cxx" />
+    <ClCompile Include="..\kui\kregedit.cxx" />
+    <ClCompile Include="..\kui\kscroll.cxx" />
+    <ClCompile Include="..\kui\kstatus.cxx" />
+    <ClCompile Include="..\kui\ksysmets.cxx" />
+    <ClCompile Include="..\kui\kszpopup.cxx" />
+    <ClCompile Include="..\kui\ktermin.cxx" />
+    <ClCompile Include="..\kui\ktoolbar.cxx" />
+    <ClCompile Include="..\kui\kui.cxx" />
+    <ClCompile Include="..\kui\kuidef.cxx" />
+    <ClCompile Include="..\kui\kuikey.cxx" />
+    <ClCompile Include="..\kui\kwin.cxx" />
+    <ClCompile Include="..\startk95.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\cknker.def" />
+    <None Include="..\cksnval.def" />
+    <None Include="..\ck_crp.def" />
+    <None Include="..\kui\partdrag.cur" />
+    <None Include="..\osetup.def" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\ckermit.ico" />
+    <Image Include="..\cknker.ico" />
+    <Image Include="..\ck_old.ico" />
+    <Image Include="..\k95dial3.ico" />
+    <Image Include="..\k95f.ico" />
+    <Image Include="..\k95f_os2.ico" />
+    <Image Include="..\k95g.ico" />
+    <Image Include="..\k95g_os2.ico" />
+    <Image Include="..\kui\altx.bmp" />
+    <Image Include="..\kui\bitmap1.bmp" />
+    <Image Include="..\kui\bmp00001.bmp" />
+    <Image Include="..\kui\bmp00003.bmp" />
+    <Image Include="..\kui\dial.bmp" />
+    <Image Include="..\kui\icon1.ico" />
+    <Image Include="..\kui\iconk95.ico" />
+    <Image Include="..\kui\k95.ico" />
+    <Image Include="..\kui\k95a.ico" />
+    <Image Include="..\kui\k95f.ico" />
+    <Image Include="..\kui\k95g.ico" />
+    <Image Include="..\kui\kermit95.bmp" />
+    <Image Include="..\kui\toolbar1.bmp" />
+    <Image Include="..\kui\toolbar2.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\ckcasc.h" />
+    <ClInclude Include="..\ckcdeb.h" />
+    <ClInclude Include="..\ckcfil.h" />
+    <ClInclude Include="..\ckcker.h" />
+    <ClInclude Include="..\ckclib.h" />
+    <ClInclude Include="..\ckcnet.h" />
+    <ClInclude Include="..\ckcsig.h" />
+    <ClInclude Include="..\ckcssl.h" />
+    <ClInclude Include="..\ckcsym.h" />
+    <ClInclude Include="..\ckctel.h" />
+    <ClInclude Include="..\ckcuni.h" />
+    <ClInclude Include="..\ckcvar.h" />
+    <ClInclude Include="..\ckcxla.h" />
+    <ClInclude Include="..\ckcxxx.h" />
+    <ClInclude Include="..\cknalm.h" />
+    <ClInclude Include="..\cknlat.h" />
+    <ClInclude Include="..\ckntap.h" />
+    <ClInclude Include="..\ckntel.h" />
+    <ClInclude Include="..\cknwin.h" />
+    <ClInclude Include="..\ckoadm.h" />
+    <ClInclude Include="..\ckoath.h" />
+    <ClInclude Include="..\ckoava.h" />
+    <ClInclude Include="..\ckoclip.h" />
+    <ClInclude Include="..\ckocon.h" />
+    <ClInclude Include="..\ckodg.h" />
+    <ClInclude Include="..\ckodir.h" />
+    <ClInclude Include="..\ckoetc.h" />
+    <ClInclude Include="..\ckohp.h" />
+    <ClInclude Include="..\ckohzl.h" />
+    <ClInclude Include="..\ckoi31.h" />
+    <ClInclude Include="..\ckoker.h" />
+    <ClInclude Include="..\ckokey.h" />
+    <ClInclude Include="..\ckokvb.h" />
+    <ClInclude Include="..\ckolat.h" />
+    <ClInclude Include="..\ckonbi.h" />
+    <ClInclude Include="..\ckonet.h" />
+    <ClInclude Include="..\ckop.h" />
+    <ClInclude Include="..\ckopcf.h" />
+    <ClInclude Include="..\ckoqnx.h" />
+    <ClInclude Include="..\ckosftp.h" />
+    <ClInclude Include="..\ckoslp.h" />
+    <ClInclude Include="..\ckossh.h" />
+    <ClInclude Include="..\ckossl.h" />
+    <ClInclude Include="..\ckosslc.h" />
+    <ClInclude Include="..\ckosyn.h" />
+    <ClInclude Include="..\ckotcp.h" />
+    <ClInclude Include="..\ckotek.h" />
+    <ClInclude Include="..\ckothr.h" />
+    <ClInclude Include="..\ckotvi.h" />
+    <ClInclude Include="..\ckouni.h" />
+    <ClInclude Include="..\ckovc.h" />
+    <ClInclude Include="..\ckowin.h" />
+    <ClInclude Include="..\ckowys.h" />
+    <ClInclude Include="..\ckozli.h" />
+    <ClInclude Include="..\ckuat2.h" />
+    <ClInclude Include="..\ckuath.h" />
+    <ClInclude Include="..\ckucmd.h" />
+    <ClInclude Include="..\ckupty.h" />
+    <ClInclude Include="..\ckusig.h" />
+    <ClInclude Include="..\ckuusr.h" />
+    <ClInclude Include="..\ckuver.h" />
+    <ClInclude Include="..\ckuxla.h" />
+    <ClInclude Include="..\ck_ssl.h" />
+    <ClInclude Include="..\kui\ckcxxx.h" />
+    <ClInclude Include="..\kui\ikcmd.h" />
+    <ClInclude Include="..\kui\ikextern.h" />
+    <ClInclude Include="..\kui\ikterm.h" />
+    <ClInclude Include="..\kui\ikui.h" />
+    <ClInclude Include="..\kui\kabout.hxx" />
+    <ClInclude Include="..\kui\kappwin.hxx" />
+    <ClInclude Include="..\kui\karray.hxx" />
+    <ClInclude Include="..\kui\kclient.hxx" />
+    <ClInclude Include="..\kui\kcmd.h" />
+    <ClInclude Include="..\kui\kcustdlg.hxx" />
+    <ClInclude Include="..\kui\kdefs.h" />
+    <ClInclude Include="..\kui\kdwnload.hxx" />
+    <ClInclude Include="..\kui\kflstat.h" />
+    <ClInclude Include="..\kui\kflstat.hxx" />
+    <ClInclude Include="..\kui\kfont.hxx" />
+    <ClInclude Include="..\kui\kfontdlg.hxx" />
+    <ClInclude Include="..\kui\khwndset.hxx" />
+    <ClInclude Include="..\kui\kmenu.hxx" />
+    <ClInclude Include="..\kui\kprogres.hxx" />
+    <ClInclude Include="..\kui\kregedit.hxx" />
+    <ClInclude Include="..\kui\kscroll.hxx" />
+    <ClInclude Include="..\kui\kstatus.hxx" />
+    <ClInclude Include="..\kui\ksysmets.hxx" />
+    <ClInclude Include="..\kui\kszpopup.hxx" />
+    <ClInclude Include="..\kui\ktermin.hxx" />
+    <ClInclude Include="..\kui\ktoolbar.hxx" />
+    <ClInclude Include="..\kui\kui.hxx" />
+    <ClInclude Include="..\kui\kuidef.h" />
+    <ClInclude Include="..\kui\kwin.hxx" />
+    <ClInclude Include="..\kui\resource.h" />
+    <ClInclude Include="..\resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\kui\kui.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>
