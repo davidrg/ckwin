@@ -46,6 +46,7 @@ Tue Jul 23 12:47:22 2013
 
 #ifdef OS2
 #include "ckoker.h"
+#include <stdint.h>
 #else /* OS2 */
 /* Unsigned numbers */
 
