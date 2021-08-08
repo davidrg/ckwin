@@ -44,23 +44,12 @@ features have been added. A full list of these is available here:
 Compiling
 ---------
 
-To build Kermit for Windows you will need Microsoft Visual C++ 6.0 SP6 or
-higher. Edit /setenv.bat to point to your source directory then run through
-the following:
+To build Kermit for Windows you will need Microsoft Visual 2019 or
+higher. 
 
-1. Open up a console window
-2. Setup the Visual C++ environment. You'll want to run vcvars32.bat. This
-   will be where ever you installed your compiler. For example:
+To build open the solution <your src directory>kermit\k95\build\ckwin.sln
 
-        C:\Program Files\Microsoft Visual Studio 8\VC\bin\vcvars32.bat
-
-3. CD into your source directory and run the following:
-
-        setenv.bat
-        cd kermit/k95
-        mk.bat
-
-This should leave you with a number of binaries in the current directory, the
+Building this should leave you with a number of binaries in the current directory, the
 most interesting being:
 
 * cknker.exe   - Console version of C-Kermit for Windows
@@ -68,7 +57,6 @@ most interesting being:
 
 Future stuff to do:
 -------------------
-* Remove need for /noBool switch and #defines in kui code.
 * Restore use of fsetpos in ckofio.c (see function zfseek(CK_OFF_T) around
   line 5418)
 * Turn long long support back on (remove -DNOLONGLONG in makefile)
