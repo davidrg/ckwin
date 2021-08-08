@@ -7,7 +7,7 @@
 ------------------------------------------------------------------------*/
 BOOL APIENTRY KFlStatDlgProc( HWND hDlg, UINT message, UINT wParam, LONG lParam )
 {
-    Bool ret = FALSE;
+    bool ret = false;
     if( filestatus )
         ret = filestatus->message( hDlg, message, wParam, lParam );
 
@@ -83,7 +83,7 @@ void KFileStatus::createWin( KWin* par )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-void KFileStatus::show( Bool bVisible )
+void KFileStatus::show( bool bVisible )
 {
     DialogBox( hInst, MAKEINTRESOURCE( IDD_FILETRANSFERSTATUS )
         , parent->hwnd(), KFlStatDlgProc );
@@ -223,9 +223,9 @@ void KFileStatus::close()
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KFileStatus::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+bool KFileStatus::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 {
-    Bool done = FALSE;
+    bool done =false;
     switch( msg )
     {
         case WM_INITDIALOG:

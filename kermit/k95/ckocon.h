@@ -11,7 +11,7 @@
 */
 #ifndef CKOCON_H
 #define CKOCON_H
-
+#include <stdbool.h>
 /*
  * ============================ features =====================================
  */
@@ -101,17 +101,6 @@
 #define MAXTERMCOL MAXSCRNCOL
 #define MAXTERMROW (MAXSCRNROW-1)
 
-
-#ifdef TRUE
-#undef TRUE
-#endif /* TRUE */
-#define TRUE 1
-
-#ifdef FALSE
-#undef FALSE
-#endif /* FALSE */
-#define FALSE 0
-
 #define UPWARD   6                      /* Scroll up */
 #define DOWNWARD 7                      /* Scroll down */
 #define LBUFSIZE roll.bufsize           /* Maximum lines in rollback buffer */
@@ -148,13 +137,6 @@
  *
  * =============================typedefs======================================
  */
-#ifndef __cplusplus
-typedef int bool;
-#else
-#ifndef __BOOL_DEFINED
-typedef int bool;
-#endif
-#endif
 
 #ifndef KUI
 #ifdef OS2ONLY

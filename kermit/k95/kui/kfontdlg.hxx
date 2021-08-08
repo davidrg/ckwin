@@ -23,10 +23,10 @@ public:
     ~KFontDialog();
 
     void show( PLOGFONT );
-    Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
 
 protected:
-    Bool doCommand( HWND hPar, WORD code, WORD idCtrl, HWND hCtrl );
+    bool doCommand( HWND hPar, WORD code, WORD idCtrl, HWND hCtrl );
 };
 
 #endif

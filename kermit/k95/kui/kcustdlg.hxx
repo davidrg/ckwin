@@ -26,14 +26,14 @@ public:
     ~KStatusCustomDlg();
 
     void createWin( KWin* par );
-    Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
 
     void endCustomize();
     WNDPROC getLBProc() { return LBProc; }
 
-    Bool mouseMove( long wParam, long x, long y );
-    Bool rButtonDown( long wParam, long x, long y );
-    Bool rButtonUp( long wParam, long x, long y );
+    bool mouseMove( long wParam, long x, long y );
+    bool rButtonDown( long wParam, long x, long y );
+    bool rButtonUp( long wParam, long x, long y );
 
     void beginPaneMove( long x, long y, long xx, long yy );
     dragPaneInfo* getDragPane() { return &dragPane; }

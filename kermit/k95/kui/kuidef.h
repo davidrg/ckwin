@@ -22,10 +22,6 @@
 char* newstr( char* );      // duplicate the passed string
 int GetGlobalID( void );    // return a unique id for CreateWindowEx
 
-#define TRUE  1
-#define FALSE 0
-
-typedef int Bool;
 typedef unsigned char uchar;
 typedef unsigned short ushort;
 typedef unsigned int uint;

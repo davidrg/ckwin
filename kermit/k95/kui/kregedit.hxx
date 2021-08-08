@@ -20,10 +20,10 @@ public:
     KRegistryEdit();
     ~KRegistryEdit();
 
-    Bool getCoordinates( K_GLOBAL* );
-    Bool setCoordinates( K_GLOBAL* );
-    Bool getFontinfo( K_GLOBAL* );
-    Bool setFontinfo( K_GLOBAL* );
+    bool getCoordinates( K_GLOBAL* );
+    bool setCoordinates( K_GLOBAL* );
+    bool getFontinfo( K_GLOBAL* );
+    bool setFontinfo( K_GLOBAL* );
 
 protected:
     HKEY openSettings();

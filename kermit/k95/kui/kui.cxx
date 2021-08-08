@@ -15,7 +15,7 @@ KFileStatus* filestatus = 0;    // global file status
 extern "C" {
 LRESULT CALLBACK KWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-    Bool ret = kui->message( hwnd, msg, wParam, lParam );
+    bool ret = kui->message( hwnd, msg, wParam, lParam );
     if( !ret )
         return DefWindowProc( hwnd, msg, wParam, lParam );
     return 1L;
@@ -443,9 +443,9 @@ void Kui::getProperty( int propid, long param1, long param2 )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool Kui::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+bool Kui::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 {
-    Bool done = FALSE;
+    bool done = false;
     KWin* win = kglob->hwndset->find( hwnd );
     if( !win )
         return done;
@@ -468,7 +468,7 @@ Bool Kui::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
     case WM_REQUEST_CLOSE_KERMIT:
         {
             // close down ckermit
-            Bool hangupOK = hupok(0);
+            bool hangupOK = hupok(0);
             if( hangupOK ) {
                 if( terminal )
                     terminal->show( FALSE );

@@ -27,15 +27,15 @@ public:
     virtual void getCreateInfo( K_CREATEINFO* info );
     virtual void createWin( KWin* par );
     virtual void size( int width, int height );
-    virtual Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    virtual bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
 
-    virtual void show( Bool bVisible = TRUE );
+    virtual void show( bool bVisible = true );
     virtual void takeFocus();
 
-    virtual Bool paint();
+    virtual bool paint();
 
-    Bool inCreate() { return _inCreate; }
-    void inCreate( Bool b ) { _inCreate = b; }
+    bool inCreate() { return _inCreate; }
+    void inCreate( bool b ) { _inCreate = b; }
 
     HWND hwnd() { return hWnd; }
     void getSize( int& w, int& h );
@@ -50,10 +50,10 @@ public:
     HWND hWnd;
     K_GLOBAL* kglob;
     HINSTANCE hInst;
-    Bool  firstShow;
+    bool  firstShow;
 
 private:
-    Bool _inCreate;
+    bool _inCreate;
 };
 
 // KWin member class function pointer

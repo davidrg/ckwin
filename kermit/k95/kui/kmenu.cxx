@@ -69,17 +69,17 @@ void KMenu::unsetCheck( UINT id )
 /*------------------------------------------------------------------------
     return if the item was checked already
 ------------------------------------------------------------------------*/
-Bool KMenu::toggleCheck( UINT id )
+bool KMenu::toggleCheck( UINT id )
 {
     UINT stat = GetMenuState( hMenu, id, MF_BYCOMMAND );
-    Bool checked;
+    bool checked;
     UINT newstat;    
     if( stat & MF_CHECKED ) {
-        checked = FALSE;
+        checked = false;
         newstat = MF_UNCHECKED | MF_BYCOMMAND;
     }
     else {
-        checked = TRUE;
+        checked = true;
         newstat = MF_CHECKED | MF_BYCOMMAND;
     }
 
@@ -88,7 +88,7 @@ Bool KMenu::toggleCheck( UINT id )
     return checked;
 }
 
-void KMenu::enable( UINT id, Bool on )
+void KMenu::enable( UINT id, bool on )
 {
     EnableMenuItem( hMenu, id, on ? MF_BYCOMMAND | MF_ENABLED : MF_BYCOMMAND | MF_GRAYED );
 }
@@ -100,7 +100,7 @@ void KMenu::remove( UINT id )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-void KMenu::setCopyPaste( Bool textselected, Bool clipboarddata )
+void KMenu::setCopyPaste( bool textselected, bool clipboarddata )
 {
     UINT flags = MF_BYCOMMAND;
     flags |= textselected ? MF_ENABLED : MF_GRAYED;

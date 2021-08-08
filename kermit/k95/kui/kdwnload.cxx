@@ -19,7 +19,7 @@ BOOL APIENTRY KDownDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 ------------------------------------------------------------------------*/
 BOOL APIENTRY KSaveAsDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-    Bool ret = FALSE;
+    bool ret = false;
     if( download ) {
         ret = download->saveAsMsg( hwnd, msg, wParam, lParam );
         if( !ret ) {
@@ -86,7 +86,7 @@ void KDownLoad::setInitialFileName( char * file )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-void KDownLoad::show( Bool bVisible )
+void KDownLoad::show( bool bVisible )
 {
     char szCurrentDir[MAX_PATH];
 
@@ -186,9 +186,9 @@ void KDownLoad::initDialog( HWND hwnd )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KDownLoad::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+bool KDownLoad::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 {
-    Bool done = FALSE;
+    bool done = false;
     switch( msg )
     {
         case WM_INITDIALOG:
@@ -225,9 +225,9 @@ Bool KDownLoad::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KDownLoad::saveAsMsg( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+bool KDownLoad::saveAsMsg( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 {
-    Bool done = FALSE;
+    bool done = false;
     if( msg == WM_COMMAND )
     {
         int cid = LOWORD(wParam);
@@ -240,7 +240,7 @@ Bool KDownLoad::saveAsMsg( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
             // issue the 'recieve' command
             //
 
-            done = TRUE;
+            done = true;
             return CallWindowProc( getOldProc()
                     , hwnd, msg, MAKEWPARAM(IDOK,0), lParam );
         }

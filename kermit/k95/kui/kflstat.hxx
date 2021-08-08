@@ -24,8 +24,8 @@ public:
     ~KFileStatus();
 
     void createWin( KWin* par );
-    Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
-    void show( Bool bVisible = TRUE );
+    bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    void show( bool bVisible = true );
     void close();
 
     void setProperty( UINT propid, LONG value );

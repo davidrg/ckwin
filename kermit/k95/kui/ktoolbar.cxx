@@ -510,9 +510,9 @@ void KToolBar::createFontHeightCombo()
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KToolBar::message( HWND hpar, UINT msg, UINT wParam, LONG lParam )
+bool KToolBar::message( HWND hpar, UINT msg, UINT wParam, LONG lParam )
 {
-    Bool done = FALSE;
+    bool done = false;
     switch( msg )
     {
         case WM_NOTIFY:

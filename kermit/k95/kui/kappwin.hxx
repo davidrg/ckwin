@@ -30,7 +30,7 @@ public:
     KAppWin( K_GLOBAL*, int menuid, int toolbarid );
     ~KAppWin();
     void createWin( KWin* par );
-    Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
 
     void size( int width, int height );
     void getClientCoord( int& x, int& y, int& w, int& h );
@@ -40,7 +40,7 @@ public:
     virtual void setKFont( KFont*f );
     KFont * getKFont() { return client->getFont(); };
     virtual void setFont( char * fnt, int h ) {};
-    Bool sizing( UINT fwSide, LPRECT lpr );
+    bool sizing( UINT fwSide, LPRECT lpr );
     virtual void initMenu(void);
     KMenu * getMenu(void) {return menu;};
     KToolBar* getToolbar(void) { return toolbar; };

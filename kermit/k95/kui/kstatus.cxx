@@ -19,7 +19,7 @@ LRESULT CALLBACK KStatusProc( HWND hWnd, UINT umsg, WPARAM wparam, LPARAM lparam
     if( !win )
         return 0L;
 
-    Bool ret = win->message( hWnd, umsg, wparam, lparam );
+    bool ret = win->message( hWnd, umsg, wparam, lparam );
     if( !ret )
         return CallWindowProc( win->getdefproc(), hWnd, umsg, wparam, lparam );
     return 1;
@@ -169,7 +169,7 @@ void KStatus::customize()
     if( _customize )
         return;
 
-    _customize = TRUE;
+    _customize = true;
 
     if( !customHwnd )
     {
@@ -205,14 +205,14 @@ void KStatus::customize()
 ------------------------------------------------------------------------*/
 void KStatus::endCustomize()
 {
-    _customize = FALSE;
+    _customize = false;
     delete custdlg;
     custdlg = 0;
 }
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KStatus::mouseMove( long wParam, long x, long y )
+bool KStatus::mouseMove( long wParam, long x, long y )
 {
     int w, h;
     getSize( w, h );
@@ -266,18 +266,18 @@ Bool KStatus::mouseMove( long wParam, long x, long y )
             if( checkx > x - edge && checkx < x + 2 * edge ) {
                 SetCursor( LoadCursor( kglob->hInst
                     , MAKEINTRESOURCE(IDC_CURSORPARTDRAG) ) );
-                mouseOverPart = TRUE;
+                mouseOverPart = true;
                 break;  // from for() loop
             }
         }
     }
 
-    return FALSE;
+    return false;
 }
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KStatus::lButtonDown( long wParam, long x, long y )
+bool KStatus::lButtonDown( long wParam, long x, long y )
 {
     SetCapture( hWnd );
 
@@ -300,12 +300,12 @@ Bool KStatus::lButtonDown( long wParam, long x, long y )
     if( partDrag == -1 )
         findDragPane( wParam, x, y );
 
-    return FALSE;
+    return false;
 }
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KStatus::lButtonUp( long wParam, long x, long y )
+bool KStatus::lButtonUp( long wParam, long x, long y )
 {
     ReleaseCapture();
     paneInfo* pi;
@@ -404,12 +404,12 @@ Bool KStatus::lButtonUp( long wParam, long x, long y )
     }
     SendMessage( hWnd, SB_SETPARTS, numParts, (LPARAM)statusWidths );
 
-    return FALSE;
+    return false;
 }
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KStatus::rButtonDown( long wParam, long x, long y )
+bool KStatus::rButtonDown( long wParam, long x, long y )
 {
     if( numParts <= 0 ) // nothing more can be moved from the status bar
         return FALSE;
@@ -432,13 +432,13 @@ Bool KStatus::rButtonDown( long wParam, long x, long y )
     strcpy( custdlg->getDragPane()->text, pi->text );
 
     custdlg->beginPaneMove( x, y, xoff, yoff );
-    return FALSE;
+    return false;
 }
 
 /*------------------------------------------------------------------------
     check to see if the mouse is over a pane
 ------------------------------------------------------------------------*/
-Bool KStatus::findDragPane( long wParam, long x, long y )
+bool KStatus::findDragPane( long wParam, long x, long y )
 {
     int edge = kglob->sysMets->edgeWidth();
     int comp;
@@ -481,18 +481,18 @@ Bool KStatus::findDragPane( long wParam, long x, long y )
             return TRUE;
         }
     }
-    return FALSE;
+    return false;
 }
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KStatus::addPane( long xpos )
+bool KStatus::addPane( long xpos )
 {
     // need to dynamically resize (all?) the panels to make
     // the addition fit
     //
     int newPane = numParts;
-    Bool adjusted = FALSE;
+    bool adjusted = false;
     int i;
     int ew = kglob->sysMets->edgeWidth();
     int iconw = kglob->sysMets->iconWidth();
@@ -530,14 +530,14 @@ Bool KStatus::addPane( long xpos )
             pi = (paneInfo*) paneArray->get( i );
             if( pi->width - iconw >= iconw )
             {
-                adjusted = TRUE;
+                adjusted = true;
                 pi->width -= iconw;
             }
         }
     }
 
-    if( !adjusted && numParts ) // cannot add any more panes to the left or right
-        return FALSE;
+    if (!adjusted && numParts) // cannot add any more panes to the left or right
+        return false;
 
     numParts++;
     pi = new paneInfo;
@@ -545,7 +545,7 @@ Bool KStatus::addPane( long xpos )
     strcpy( pi->text, custdlg->getDragPane()->text );
     paneArray->insert( (void*)pi, newPane );
 
-    Bool done = TRUE;
+    bool done = true;
 
     int w, h;
     getSize( w, h );
@@ -579,12 +579,12 @@ Bool KStatus::addPane( long xpos )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KStatus::removePane()
+bool KStatus::removePane()
 {
     if( numParts <= 0 )
-        return FALSE;
+        return false;
 
-    Bool done = TRUE;
+    bool done = true;
     paneInfo* pi;
 
     int w, h;
@@ -614,9 +614,9 @@ Bool KStatus::removePane()
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KStatus::endPaneMove( eAction action, long xpos )
+bool KStatus::endPaneMove( eAction action, long xpos )
 {
-    Bool done = TRUE;
+    bool done = true;
 
     switch( action )
     {
@@ -657,9 +657,9 @@ Bool KStatus::endPaneMove( eAction action, long xpos )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KStatus::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+bool KStatus::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 {
-    Bool ret = FALSE;
+    bool ret = false;
     switch( msg )
     {    
         case WM_MOUSEMOVE:
@@ -684,7 +684,7 @@ Bool KStatus::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 
         case WM_SETCURSOR:
             if( partDrag != -1 || mouseOverPart )
-                ret = TRUE;
+                ret = true;
             break;
 
         case WM_ERASEBKGND:
@@ -696,7 +696,7 @@ Bool KStatus::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
             //
             LPDRAWITEMSTRUCT draws = (LPDRAWITEMSTRUCT) lParam;
             FillRect( draws->hDC, &draws->rcItem, (HBRUSH) GetStockObject( WHITE_BRUSH ) );
-            ret = TRUE;
+            ret = true;
             break;
         }
 

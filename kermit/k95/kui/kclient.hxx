@@ -32,22 +32,22 @@ public:
     void getCreateInfo( K_CREATEINFO* info );
     void createWin( KWin* par );
     void size( int width, int height );
-    Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
 
-    void setDimensions( Bool sizeparent );
+    void setDimensions( bool sizeparent );
     void setFont( KFont* );
     void clearPaintRgn();
     void setInterSpacing( KFont* );
 
-    Bool getMaxpDim( int& rw, int& rh );
+    bool getMaxpDim( int& rw, int& rh );
     KFont* getFont() { return font; }
     HDC hdc() { return _hdc; }
     HDC hdcScreen() { return _hdcScreen; }
     int margin() { return _margin; }
 
     void writeMe();
-    Bool paint();
-    void endSizing( Bool doAnyway = FALSE );
+    bool paint();
+    void endSizing( bool doAnyway = FALSE );
 
     // scrollbar callbacks
     long vertScroll( long );
@@ -91,8 +91,8 @@ private:    // this section is for performance
     BYTE clientID;
     _K_CLIENT_PAINT* clientPaint;
     _K_WORK_STORE* workStore;
-    Bool  ws_blinking;
-    Bool  cursor_displayed;
+    bool  ws_blinking;
+    bool  cursor_displayed;
 
     HDC _hdc;
     HDC _hdcScreen;
@@ -105,7 +105,7 @@ private:    // this section is for performance
     DWORD savebgcolor;
     int interSpace[MAXNUMCOL];
 
-    Bool _inFocus;
+    bool _inFocus;
     RECT cursorRect;
     int cursorCount;
     int maxCursorCount;
@@ -132,7 +132,7 @@ private:    // this section is for performance
     int _xoffset;       // x and y offsets used by scrolling
     int _yoffset;
 
-    Bool processKey;
+    bool processKey;
     long _msgret;
 };
 

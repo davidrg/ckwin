@@ -21,11 +21,11 @@ public:
     KAbout( K_GLOBAL*, KWin* par );
     ~KAbout();
 
-    void show( Bool bVisible = TRUE );
-    Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    void show( bool bVisible = true );
+    bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
 
 private:
-    Bool anotherIsRunning;
+    bool anotherIsRunning;
 };
 
 #endif

@@ -23,7 +23,7 @@ public:
     ~Kui();
 
     int init();
-    Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
     void start();
     void cleanup();
 

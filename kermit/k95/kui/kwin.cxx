@@ -71,7 +71,7 @@ void KWin::associateHwnd( HWND hwnd )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-void KWin::show( Bool bVisible )
+void KWin::show( bool bVisible )
 {
     ShowWindow( hWnd, bVisible ? SW_SHOW : SW_HIDE );
 }
@@ -111,14 +111,14 @@ void KWin::getPos( int& x, int& y )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+bool KWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 {
-    return FALSE;
+    return false;
 }
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KWin::paint()
+bool KWin::paint()
 {
-    return FALSE;
+    return false;
 }

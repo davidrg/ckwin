@@ -34,7 +34,7 @@ public:
 
     long getInternalLeading();
 
-    Bool tryFont( int w, int h, HDC hdc );
+    bool tryFont( int w, int h, HDC hdc );
 
     void resetFont( HDC hdc );
     void setBold( HDC hdc );

@@ -7,7 +7,7 @@ extern "C" {
 ------------------------------------------------------------------------*/
 UINT APIENTRY KFontDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-    Bool b = FALSE;
+    bool b = false;
 	KFontDialog* fontdlg = (KFontDialog*) kglob->hwndset->find( hwnd );
 	if( fontdlg ) {
 		b= fontdlg->message( hwnd, msg, wParam, lParam );
@@ -98,9 +98,9 @@ void KFontDialog::show( PLOGFONT logfont )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KFontDialog::doCommand( HWND hPar, WORD code, WORD idCtrl, HWND hCtrl )
+bool KFontDialog::doCommand( HWND hPar, WORD code, WORD idCtrl, HWND hCtrl )
 {
-	Bool done = TRUE;
+    bool done = true;;
 	switch( idCtrl )
 	{
 		case IDC_CHECKKERMITFONTS:
@@ -122,7 +122,7 @@ Bool KFontDialog::doCommand( HWND hPar, WORD code, WORD idCtrl, HWND hCtrl )
 		}
 
 		default:
-			done = FALSE;
+            done = false;
 	}
 
 	return done;
@@ -130,9 +130,9 @@ Bool KFontDialog::doCommand( HWND hPar, WORD code, WORD idCtrl, HWND hCtrl )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KFontDialog::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+bool KFontDialog::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 {
-    Bool done = FALSE;
+    bool done = false;
     switch( msg )
     {
     case WM_INITDIALOG:

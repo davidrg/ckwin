@@ -25,8 +25,8 @@ public:
 
     void getCreateInfo( K_CREATEINFO* info );
     void createWin( KWin* par );
-    Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
-    virtual void show( Bool bVisible = TRUE );
+    bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    virtual void show( bool bVisible = true );
 
     void setTermType( char* );
     void setFont( char *, int );
@@ -40,11 +40,11 @@ public:
     void disableClose( void );
 
   private:
-    Bool toolbar_disabled;
+    bool toolbar_disabled;
     KClient* client;
-    Bool menuInitialized;
+    bool menuInitialized;
     int  firstShow;
-    Bool noDialer;
+    bool noDialer;
 };
 
 #endif

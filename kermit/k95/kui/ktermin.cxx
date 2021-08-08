@@ -56,11 +56,11 @@ KTerminal::~KTerminal()
 }
 
 void
-KTerminal::show( Bool bVisible )
+KTerminal::show( bool bVisible )
 {
     if ( firstShow ) {
         ShowWindow( hWnd, kglob->nCmdShow );
-        firstShow = FALSE;
+        firstShow = false;
     } else {
         ShowWindow( hWnd, bVisible ? SW_SHOW : SW_HIDE );
     }
@@ -453,9 +453,9 @@ void KTerminal::browseFile( eFileType filetype )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 {
-    Bool done = FALSE;
+    bool done = false;
     debug(F111,"KTerminal::message","msg",msg);
     switch( msg )
     {                
@@ -464,7 +464,7 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         if ( toolbar && !toolbar_disabled)
             done = toolbar->message( hwnd, msg, wParam, lParam );
         else 
-            done = TRUE;
+            done = true;
         break;
 
 #ifdef COMMENT
@@ -490,7 +490,7 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
     case WM_CLOSE:
         debug(F111,"KTerminal::message","WM_CLOSE",msg);
         PostMessage( hWnd, WM_REQUEST_CLOSE_KERMIT, 0, 0 );
-        done = TRUE;
+        done = true;
         break;
 
     case WM_ACTIVATE:
@@ -506,19 +506,19 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
     case WM_INITMENU:
         if (!menuInitialized) {
             initMenu();
-            menuInitialized = TRUE;
+            menuInitialized = true;
         }
-        done = TRUE;
+        done = true;
         break;
 
     case WM_QUERYENDSESSION:
         debug(F111,"KTerminal::message","WM_QUERYENDSESSION",msg);
-        done = TRUE;
+        done = true;
         if ( lParam & ENDSESSION_LOGOFF ) {
             debug(F100,"ENDSESSION_LOGOFF","",0);
             if ( startflags & 128 ) {
                 debug(F100,"startflags & 128","",0);
-                done = FALSE;
+                done = false;
             }
         }
         break;
@@ -529,7 +529,7 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
             debug(F100,"ENDSESSION_LOGOFF","",0);
             if ( startflags & 128 ) {
                 debug(F100,"startflags & 128","",0);
-                done = TRUE;
+                done = true;
             }
         }
         break;
@@ -579,7 +579,7 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
                 if ( toolbar && !toolbar_disabled )
                     done = toolbar->message( hwnd, msg, wParam, lParam );
                 else {
-                    done = TRUE;
+                    done = true;
                 }
                 break;
 
@@ -806,7 +806,7 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
                 KAppWin::message( hwnd, msg, wParam, lParam );
                 break;
             }   
-            done = TRUE;
+            done = true;
             break;
         }
     }

@@ -22,13 +22,13 @@ public:
     ~KDownLoad();
 
     void createWin( KWin* par );
-    void show( Bool bVisible = TRUE );
-    Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
-    Bool saveAsMsg( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    void show( bool bVisible = true );
+    bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    bool saveAsMsg( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
 
     WNDPROC getOldProc() { return oldSaveAsProc; }
 
-    Bool  wasCancelled() { return (success == FALSE); }
+    bool  wasCancelled() { return (success == false); }
 
     DWORD getErrorCode() { return errorCode; }
 

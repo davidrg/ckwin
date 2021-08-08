@@ -117,7 +117,7 @@ void KAppWin::getClientCoord( int& x, int& y, int& w, int& h )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KAppWin::sizing( UINT fwSide, LPRECT lpr )
+bool KAppWin::sizing( UINT fwSide, LPRECT lpr )
 {
     switch( kglob->mouseEffect )
     {
@@ -407,11 +407,11 @@ void KAppWin::sizeLimit( UINT fwSide, LPRECT lpr )
 ------------------------------------------------------------------------*/
 void KAppWin::initMenu()
 {
-    Bool textselected = FALSE;
+    bool textselected = false;
     // fix-me: determine if any text has been selected
     //
 
-    Bool clipboarddata = FALSE;
+    bool clipboarddata = false;
     // determine if there is any clipboard data to paste
     //
     if( OpenClipboard( hWnd ) ) {
@@ -562,9 +562,9 @@ int KAppWin::readManual(void)
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 {
-    Bool done = FALSE;
+    bool done = false;
     //debug(F111,"KAppWin::message","msg",msg);
     switch( msg )
     {

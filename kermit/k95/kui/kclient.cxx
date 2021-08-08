@@ -192,14 +192,14 @@ KClient::~KClient()
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KClient::getMaxpDim( int& rw, int& rh )
+bool KClient::getMaxpDim( int& rw, int& rh )
 { 
     if( maxpWidth == 0 && maxpHeight == 0 )
         return FALSE;
 
     rw = maxpWidth;
     rh = maxpHeight;
-    return TRUE;
+    return true;
 }
 
 /*------------------------------------------------------------------------
@@ -260,7 +260,7 @@ void KClient::calculateSize( int& w, int& h )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-void KClient::setDimensions( Bool sizeparent )
+void KClient::setDimensions( bool sizeparent )
 {
     if( inCreate() )
         return;
@@ -463,7 +463,7 @@ void KClient::size( int width, int height )
 	to change the size.  If TRUE, means the system is changing
 	the size (in writeMe() ).
 ------------------------------------------------------------------------*/
-void KClient::endSizing( Bool doAnyway )
+void KClient::endSizing( bool doAnyway )
 {
     if( kglob->mouseEffect != TERM_MOUSE_CHANGE_DIMENSION && !doAnyway )
         return;
@@ -541,11 +541,11 @@ void KClient::getEndSize( int& w, int& h )
 /*------------------------------------------------------------------------
     paint the window (not an update of data)
 ------------------------------------------------------------------------*/
-Bool KClient::paint()
+bool KClient::paint()
 {
     clearPaintRgn();
     getDrawInfo();
-    return TRUE;
+    return true;
 }
 
 /*------------------------------------------------------------------------
@@ -575,10 +575,10 @@ void KClient::checkBlink()
 {
     //debug(F100,"KClient::checkBlink()","",0);
 
-    Bool blinkOn = FALSE;
+    bool blinkOn = false;
     if( cursorCount++ < maxCursorCount ) {
         if(cursorCount >= blinkInterval)
-            blinkOn = TRUE;
+            blinkOn = true;
     }
     else
         cursorCount = 0;
@@ -719,11 +719,11 @@ void KClient::writeMe()
     if( wc )
         workStore[wc-1].length = i - workStore[wc-1].offset;
 
-    Bool blinkOn = FALSE;
-    Bool blink = FALSE;
+    bool blinkOn = false;
+    bool blink = false;
     if( cursorCount++ < maxCursorCount ) {
         if( cursorCount >= blinkInterval )
-            blinkOn = TRUE;
+            blinkOn = true;
     }
     else
         cursorCount = 0;
@@ -765,12 +765,12 @@ void KClient::writeMe()
         if( prevEffect != kws->effect )
         {
             prevEffect = kws->effect;
-            Bool normal = (prevEffect == VT_CHAR_ATTR_NORMAL) ? TRUE : FALSE;
-            Bool bold = (prevEffect & VT_CHAR_ATTR_BOLD) ? TRUE : FALSE;
-            Bool dim = (prevEffect & VT_CHAR_ATTR_DIM) ? TRUE : FALSE;
-            Bool underline = trueunderline && ((prevEffect & VT_CHAR_ATTR_UNDERLINE) ? TRUE : FALSE);
-            Bool italic = trueitalic && ((prevEffect & VT_CHAR_ATTR_ITALIC) ? TRUE : FALSE);
-            blink = trueblink && ((prevEffect & VT_CHAR_ATTR_BLINK) ? TRUE : FALSE);
+            bool normal = (prevEffect == VT_CHAR_ATTR_NORMAL) ? true : false;
+            bool bold = (prevEffect & VT_CHAR_ATTR_BOLD) ? true : false;
+            bool dim = (prevEffect & VT_CHAR_ATTR_DIM) ? true : false;
+            bool underline = trueunderline && ((prevEffect & VT_CHAR_ATTR_UNDERLINE) ? true : false);
+            bool italic = trueitalic && ((prevEffect & VT_CHAR_ATTR_ITALIC) ? true : false);
+            blink = trueblink && ((prevEffect & VT_CHAR_ATTR_BLINK) ? true : false);
 
             if( normal )
                 getFont()->resetFont( hdc() );
@@ -830,10 +830,10 @@ void KClient::writeMe()
         if( lattr == VT_LINE_ATTR_NORMAL )
             continue;
 
-        Bool dblWide = lattr & VT_LINE_ATTR_DOUBLE_WIDE ? TRUE : FALSE;
-        Bool dblHigh = lattr & VT_LINE_ATTR_DOUBLE_HIGH ? TRUE : FALSE;
-        Bool upper = lattr & VT_LINE_ATTR_UPPER_HALF ? TRUE : FALSE;
-        Bool lower = lattr & VT_LINE_ATTR_LOWER_HALF ? TRUE : FALSE;
+        bool dblWide = lattr & VT_LINE_ATTR_DOUBLE_WIDE ? true : false;
+        bool dblHigh = lattr & VT_LINE_ATTR_DOUBLE_HIGH ? true : false;
+        bool upper = lattr & VT_LINE_ATTR_UPPER_HALF ? true : false;
+        bool lower = lattr & VT_LINE_ATTR_LOWER_HALF ? true : false;
     
         int destx = 0;
         int desty = i * font->getFontSpacedH();
@@ -945,9 +945,9 @@ void KClient::drawDisabledState( int w, int h )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KClient::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+bool KClient::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 {
-    Bool done = FALSE;
+    bool done = false;
     _msgret = 1;
     //debug(F111,"KClient::message","msg",msg);
     switch( msg )
@@ -959,13 +959,13 @@ Bool KClient::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
             if (BeginPaint( hwnd, &ps ))
                 paint();
             EndPaint( hwnd, &ps );
-            done = TRUE;
+            done = false;
             break;
         }
 
     case WM_ERASEBKGND:
         //debug(F111,"KClient::message","WM_ERASEBKGND",msg);
-        done = TRUE;
+        done = true;
         break;
         
     case WM_LBUTTONDOWN:
@@ -995,12 +995,12 @@ Bool KClient::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 
     case WM_SETFOCUS:
         //debug(F111,"KClient::message","WM_SETFOCUS",msg);
-        _inFocus = TRUE;
+        _inFocus = true;
         break;
 
     case WM_KILLFOCUS:
         //debug(F111,"KClient::message","WM_KILLFOCUS",msg);
-        _inFocus = FALSE;
+        _inFocus = false;
         break;
 
     case WM_VSCROLL:
@@ -1025,10 +1025,10 @@ Bool KClient::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
                 done = TRUE;
                 //if( done )
                 _msgret = 0;
-                processKey = FALSE;
+                processKey = false;
             }
             else
-                processKey = TRUE;
+                processKey = true;
             break;
             }
 
@@ -1040,13 +1040,13 @@ Bool KClient::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
             //
             if( wParam <= VK_SCROLL && keyArray[ wParam ] ) {
                 done = ikterm->virtkeyEvent( wParam, lParam, TRUE );
-                done = TRUE;
+                done = true;
                 //if( done )
                 _msgret = 0;
-                processKey = FALSE;
+                processKey = false;
             }
             else
-                processKey = TRUE;
+                processKey = true;
             break;
         }
 
@@ -1058,7 +1058,7 @@ Bool KClient::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         {
             if( processKey ) {
                 done = ikterm->keyboardEvent( wParam, lParam, TRUE );
-                done = TRUE;
+                done = true;
                 //if( done )
                 _msgret = 0;
                 // processKey = 0;
@@ -1074,7 +1074,7 @@ Bool KClient::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
                 done = ikterm->virtkeyEvent( wParam, lParam, FALSE );
             else if ( processKey )
                 done = ikterm->keyboardEvent( wParam, lParam, FALSE );
-            done = TRUE;
+            done = true;
             break;
         }
 #else /* COMMENT */

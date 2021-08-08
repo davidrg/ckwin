@@ -4032,7 +4032,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
             }
             goto xdosexp;
         } else if (x == SX_IFC) {               /* Conditional expression */
-            int true = 0;
+            bool istrue = false;
             if (n > 4) {
                 printf("?Too many operands: IF - \"%s\"\n",s);
                 sexprc++;
@@ -4049,9 +4049,9 @@ dosexp(s) char *s; {                    /* s = S-Expression */
                 } else {
                     fpj = atof(s2);
                 }
-                true = ((fpj != 0.0) ? 1 : 0);
+                istrue = ((fpj != 0.0) ? true : false);
             }
-            if (!true && n < 4) {
+            if (!istrue && n < 4) {
                 s2 = NULL;
             } else {
                 s2 = dosexp(true ? p[3] : p[4]);

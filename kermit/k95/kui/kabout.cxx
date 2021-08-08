@@ -23,7 +23,7 @@ BOOL CALLBACK AboutDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 ------------------------------------------------------------------------*/
 KAbout::KAbout( K_GLOBAL* kg, KWin* par )
     : KWin( kg )
-    , anotherIsRunning( FALSE )
+    , anotherIsRunning( false )
 {
     // make sure there's only one instance of this object running
     //
@@ -33,7 +33,7 @@ KAbout::KAbout( K_GLOBAL* kg, KWin* par )
     }
     else {
         parent = 0;
-        anotherIsRunning = TRUE;
+        anotherIsRunning = true;
     }
 }
 
@@ -47,7 +47,7 @@ KAbout::~KAbout()
     
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-void KAbout::show( Bool bVisible )
+void KAbout::show( bool bVisible )
 {
     if( anotherIsRunning ) {
         kabout->takeFocus();
@@ -63,9 +63,9 @@ void KAbout::show( Bool bVisible )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KAbout::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+bool KAbout::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 {
-    Bool done = FALSE;
+    bool done = false;
     switch( msg )
     {
         case WM_INITDIALOG:

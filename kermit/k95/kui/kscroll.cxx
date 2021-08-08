@@ -3,7 +3,7 @@
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-KScroll::KScroll( K_GLOBAL* kg, Bool isVertical, Bool thumbtrack )
+KScroll::KScroll( K_GLOBAL* kg, bool isVertical, bool thumbtrack )
     : KWin( kg )
     , vertical( isVertical )
     , thumbTrack( thumbtrack )
@@ -49,7 +49,7 @@ void KScroll::setValues( long line, long page )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-void KScroll::setRange( int max, int viewable, Bool trackPos )
+void KScroll::setRange( int max, int viewable, bool trackPos )
 {
     if ( !parent )
         return;
@@ -95,10 +95,10 @@ void KScroll::setRange( int max, int viewable, Bool trackPos )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KScroll::isVisible()
+bool KScroll::isVisible()
 {
     if ( !parent )
-        return FALSE;
+        return false;
 
     SCROLLINFO info;
     memset( &info, '\0', sizeof(SCROLLINFO) );
@@ -108,10 +108,10 @@ Bool KScroll::isVisible()
                    , vertical ? SB_VERT : SB_HORZ
                    , &info );
 
-    if( !disableNoScroll && info.nPage && (info.nMax <= (int)info.nPage) )
-        return FALSE;
+    if (!disableNoScroll && info.nPage && (info.nMax <= (int)info.nPage))
+        return false;
 
-    return TRUE;
+    return true;
 }
 
 /*------------------------------------------------------------------------
@@ -137,27 +137,27 @@ void KScroll::setPos( long val )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KScroll::track( long val )
+bool KScroll::track( long val )
 {
     setPos( val );
     if( parent && method )
         (parent->*method) ( val );
-    return TRUE;
+    return true;
 }
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KScroll::endScroll( long val )
+bool KScroll::endScroll( long val )
 {
     setPos( val );
     if( parent && method )
         (parent->*method) ( val );
-    return TRUE;
+    return true;
 }
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KScroll::lineDown()
+bool KScroll::lineDown()
 {
     long i = getPos() + lineAmt;
     if( i > maxVal ) {
@@ -167,12 +167,12 @@ Bool KScroll::lineDown()
         i = minVal;
     }
     track( i );
-    return TRUE;
+    return true;
 }
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KScroll::lineUp()
+bool KScroll::lineUp()
 {
     long i = getPos() - lineAmt;
     if( i < minVal ) {
@@ -182,12 +182,12 @@ Bool KScroll::lineUp()
         i = maxVal;
     }
     track( i );
-    return TRUE;
+    return true;
 }
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KScroll::pageDown()
+bool KScroll::pageDown()
 {
     long i = getPos() + pageAmt;
     if( i > maxVal ) {
@@ -197,12 +197,12 @@ Bool KScroll::pageDown()
         i = minVal;
     }
     track( i );
-    return TRUE;
+    return true;
 }
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KScroll::pageUp()
+bool KScroll::pageUp()
 {
     long i = getPos() - pageAmt;
     if( i < minVal ) {
@@ -212,18 +212,18 @@ Bool KScroll::pageUp()
         i = maxVal;
     }
     track( i );
-    return TRUE;
+    return true;
 }
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KScroll::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+bool KScroll::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 {
     int     nScrollCode   = (int)     LOWORD(wParam);
     short   nPos          = (short)   HIWORD(wParam);
 //    HWND    hwndScrollBar = (HWND)    lParam;
 
-    Bool done = FALSE;
+    bool done = false;
     switch( nScrollCode )
     {
         case SB_LINEUP:

@@ -22,9 +22,9 @@ KRegistryEdit::~KRegistryEdit()
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KRegistryEdit::getCoordinates( K_GLOBAL* kglob )
+bool KRegistryEdit::getCoordinates( K_GLOBAL* kglob )
 {
-    Bool done = TRUE;
+    bool done = true;
     HKEY hkey = openSettings();
 
     DWORD type = REG_DWORD;
@@ -64,11 +64,11 @@ Bool KRegistryEdit::getCoordinates( K_GLOBAL* kglob )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KRegistryEdit::setCoordinates( K_GLOBAL* kglob )
+bool KRegistryEdit::setCoordinates( K_GLOBAL* kglob )
 {
     HKEY hkey = openSettings();
-    if( !hkey )
-        return FALSE;
+    if (!hkey)
+        return false;
 
     DWORD data;
     LONG ret = ERROR_SUCCESS;
@@ -80,14 +80,14 @@ Bool KRegistryEdit::setCoordinates( K_GLOBAL* kglob )
     }
 
     RegCloseKey( hkey );
-    return TRUE;
+    return true;
 }
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KRegistryEdit::getFontinfo( K_GLOBAL* kglob )
+bool KRegistryEdit::getFontinfo( K_GLOBAL* kglob )
 {
-    Bool done = TRUE;
+    bool done = true;
     HKEY hkey = openSettings();
 
     DWORD type = REG_SZ;
@@ -123,11 +123,11 @@ Bool KRegistryEdit::getFontinfo( K_GLOBAL* kglob )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KRegistryEdit::setFontinfo( K_GLOBAL* kglob )
+bool KRegistryEdit::setFontinfo( K_GLOBAL* kglob )
 {
     HKEY hkey = openSettings();
     if( !hkey )
-        return FALSE;
+        return false;
 
     LONG ret = ERROR_SUCCESS;
 
@@ -142,7 +142,7 @@ Bool KRegistryEdit::setFontinfo( K_GLOBAL* kglob )
                          , 0, REG_DWORD, (BYTE*) &kglob->fontWidth, sizeof(DWORD) );
 
     RegCloseKey( hkey );
-    return TRUE;
+    return true;
 }
 
 /*------------------------------------------------------------------------

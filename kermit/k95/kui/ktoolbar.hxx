@@ -29,7 +29,7 @@ public:
     void createWin( KWin* par );
     void size( int width, int height );
 
-    Bool message( HWND hpar, UINT msg, UINT wParam, LONG lParam );
+    bool message( HWND hpar, UINT msg, UINT wParam, LONG lParam );
 
     void initButtons( int numbut, int numbit, ToolBitmapDef* );
     void createTermTypeCombo();

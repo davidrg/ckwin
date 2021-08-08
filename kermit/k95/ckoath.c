@@ -3477,6 +3477,7 @@ ck_des_string_to_key(char * p, Block B)
         else
             return(-1);
     }
+    return -1;
 }
 
 void

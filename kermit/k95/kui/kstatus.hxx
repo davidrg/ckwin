@@ -32,21 +32,21 @@ enum eAction { NOACTION, REMOVEPANE, ADDPANE };
     void setText( int part, char* text );
     void customize();
     void endCustomize();
-    Bool endPaneMove( eAction, long xpos );
+    bool endPaneMove( eAction, long xpos );
 
-    Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
     WNDPROC getdefproc() { return defproc; }
     HWND getCustomHwnd() { return customHwnd; }
 
 protected:
-    Bool mouseMove( long wParam, long x, long y );
-    Bool lButtonDown( long wParam, long x, long y );
-    Bool lButtonUp( long wParam, long x, long y );
-    Bool rButtonDown( long wParam, long x, long y );
-    Bool findDragPane( long wParam, long x, long y );
+    bool mouseMove( long wParam, long x, long y );
+    bool lButtonDown( long wParam, long x, long y );
+    bool lButtonUp( long wParam, long x, long y );
+    bool rButtonDown( long wParam, long x, long y );
+    bool findDragPane( long wParam, long x, long y );
 
-    Bool addPane( long xpos );
-    Bool removePane();
+    bool addPane( long xpos );
+    bool removePane();
 
 private:
     WNDPROC defproc;
@@ -55,14 +55,14 @@ private:
     int* offsets;
     int* statusWidths;
 
-    Bool _customize;
+    bool _customize;
     KStatusCustomDlg* custdlg;
     HWND customHwnd;
     long custXOffset;
     long custXWidth;
     int whichPane;
     int partDrag;
-    Bool mouseOverPart;
+    bool mouseOverPart;
 
 };
 

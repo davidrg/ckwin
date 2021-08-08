@@ -18,30 +18,30 @@
 class KScroll : public KWin
 {
 public:
-    KScroll( K_GLOBAL*, Bool isVertical, Bool thumbtrack );
+    KScroll( K_GLOBAL*, bool isVertical, bool thumbtrack );
     ~KScroll();
 
     void createWin( KWin* par );
-    Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
 
-    void setRange( int max, int viewable, Bool trackPos = TRUE );
+    void setRange( int max, int viewable, bool trackPos = TRUE );
     void setValues( long line, long page );
     void setCallback( KWinMethod );
 
-    Bool lineDown();
-    Bool lineUp();
-    Bool pageDown();
-    Bool pageUp();
-    Bool track( long val );
-    Bool endScroll( long val );
+    bool lineDown();
+    bool lineUp();
+    bool pageDown();
+    bool pageUp();
+    bool track( long val );
+    bool endScroll( long val );
 
     void setPos( long val );
     long getPos();
-    Bool isVisible();
+    bool isVisible();
 
 private:
-    Bool vertical;
-    Bool thumbTrack;
+    bool vertical;
+    bool thumbTrack;
     long minVal;
     long maxVal;
     long currentPos;
@@ -50,7 +50,7 @@ private:
     KWinMethod method;
 
     long prevMaxVal;
-    Bool disableNoScroll;
+    bool disableNoScroll;
 };
 
 #endif

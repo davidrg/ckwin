@@ -26,9 +26,9 @@ public:
     void getHeight( int& h );
     void setCheck( UINT id );
     void unsetCheck( UINT id );
-    Bool toggleCheck( UINT id );
-    void setCopyPaste( Bool textselected, Bool clipboarddata );
-    void enable(UINT id, Bool on = TRUE);
+    bool toggleCheck( UINT id );
+    void setCopyPaste( bool textselected, bool clipboarddata );
+    void enable(UINT id, bool on = true);
     void remove(UINT id);
 
 private:

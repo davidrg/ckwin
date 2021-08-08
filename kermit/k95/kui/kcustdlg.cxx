@@ -36,7 +36,7 @@ BOOL APIENTRY CustomizeDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
     if( !win )
         return 0;
 
-    Bool ret = win->message( hwnd, msg, wParam, lParam );
+    bool ret = win->message( hwnd, msg, wParam, lParam );
     return (BOOL) ret;
 }
 
@@ -48,7 +48,7 @@ BOOL APIENTRY CustomizeDragDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
     if( !win )
         return 0;
 
-    Bool ret = win->message( hwnd, msg, wParam, lParam );
+    bool ret = win->message( hwnd, msg, wParam, lParam );
     return (BOOL) ret;
 }
 
@@ -60,7 +60,7 @@ LRESULT CALLBACK PaneListWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     if( !win )
         return CallWindowProc( DefWindowProc, hwnd, msg, wParam, lParam );
 
-    Bool done = FALSE;
+    bool done = false;
     switch( msg )
     {
         case WM_MOUSEMOVE:
@@ -174,9 +174,9 @@ void KStatusCustomDlg::endCustomize()
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KStatusCustomDlg::mouseMove( long wParam, long x, long y )
+bool KStatusCustomDlg::mouseMove( long wParam, long x, long y )
 {
-    Bool done = FALSE;
+    bool done = false;
     if( wParam & MK_RBUTTON ) {  // right mouse button down
         RECT rect;
         GetWindowRect( hList, &rect );
@@ -225,7 +225,7 @@ void KStatusCustomDlg::beginPaneMove( long x, long y, long xx, long yy )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KStatusCustomDlg::rButtonDown( long wParam, long x, long y )
+bool KStatusCustomDlg::rButtonDown( long wParam, long x, long y )
 {
     disposition = TOSTATUSBAR;
 
@@ -237,7 +237,7 @@ Bool KStatusCustomDlg::rButtonDown( long wParam, long x, long y )
     //
     int cursel = (int)SendMessage( hList, LB_GETCURSEL, 0, 0 );
     if( cursel == LB_ERR )
-        return FALSE;
+        return false;
     SendMessage( hList, LB_GETTEXT, (WPARAM)cursel, (LPARAM)dragPane.text );
     SendMessage( customHwnd, SB_SETTEXT, SBT_POPOUT, (LPARAM)dragPane.text );
 
@@ -256,7 +256,7 @@ Bool KStatusCustomDlg::rButtonDown( long wParam, long x, long y )
     SetWindowPos( customHwnd, NULL, 0, -eh, iconw, h + eh
         , SWP_SHOWWINDOW | SWP_NOZORDER );
 
-    return TRUE;
+    return true;
 }
 
 /*------------------------------------------------------------------------
@@ -265,7 +265,7 @@ Bool KStatusCustomDlg::rButtonDown( long wParam, long x, long y )
     1. on top of the listbox (from status bar)
     2. on top of the status bar (from the listbox)
 ------------------------------------------------------------------------*/
-Bool KStatusCustomDlg::rButtonUp( long wParam, long x, long y )
+bool KStatusCustomDlg::rButtonUp( long wParam, long x, long y )
 {
     ReleaseCapture();
     xoff = yoff = 0;
@@ -302,7 +302,7 @@ Bool KStatusCustomDlg::rButtonUp( long wParam, long x, long y )
     {
         MessageBox( hWnd, "Cannot add any more panes!"
             , "Status Bar Error", MB_APPLMODAL | MB_ICONHAND | MB_OK );
-        return TRUE;
+        return true;
     }
 
 
@@ -322,19 +322,19 @@ Bool KStatusCustomDlg::rButtonUp( long wParam, long x, long y )
     }
 
     disposition = NONE;
-    return TRUE;
+    return true;
 }
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KStatusCustomDlg::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+bool KStatusCustomDlg::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 {
-    Bool ret = FALSE;
+    bool ret = false;
     switch( msg )
     {    
         case WM_CLOSE:
             endCustomize();
-            ret = TRUE;
+            ret = true;
             break;
 
         case WM_COMMAND:

@@ -428,16 +428,16 @@ void KFont::setItalic( HDC hdc )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KFont::tryFont( int w, int h, HDC hdc )
+bool KFont::tryFont( int w, int h, HDC hdc )
 {
     if( holder->logfont->lfWidth == w && holder->logfont->lfHeight == h )
-        return FALSE;
+        return false;
 
     holder->logfont->lfWidth = w;
     holder->logfont->lfHeight = h;
     if( hdc )
         setFont( hdc );
-    return TRUE;
+    return true;
 }
 
 void KFont::displayABCwidths( HDC hdc )
