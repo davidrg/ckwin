@@ -9,12 +9,12 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2020,
+  Copyright (C) 1985, 2021,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
     Last update:
-    Thu Oct  8 14:55:30 2020
+    Tue Sep 14 15:09:25 2021
 */
 
 /*
@@ -10537,7 +10537,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 
 /* [jt] 2013/11/21:
  * K-95 doesn't have ziperm.  However, I have not read through this
- * code thoroughly, and this needs double checked to see if there are
+ * code thoroughly, and this needs to be double checked to see if there are
  * any side effects of commenting this out.
  */
 #ifdef CK_PERMS
@@ -10555,11 +10555,11 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 
 	  /* Element 6 - Size in bytes */
       
-#ifdef OS2 /* [jt] 2013/11/21 - K-95 doesn't have linkname */
-	  s = ckfstoa(z);
-#else
+#ifdef UNIX /* [fdc] 2021-09-14 only Unix has file links */
 	  s = zgfs_link ? ckitoa((int)strlen((char *)linkname)) : ckfstoa(z);
-#endif /* OS2 */
+#else
+	  s = ckfstoa(z);
+#endif /* UNIX */
 	  a_ptr[x][6] = NULL;
 	  makestr(&(a_ptr[x][6]),s);
 	  

@@ -1,7 +1,9 @@
 /*  C K C D E B . H  */
 
 /*
-Wed Oct 7 15:22:14 2020
+Tue Sep 14 14:53:30 2021
+
+  For recent additions search below for "2021".
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
   compatible with C preprocessors that support only #ifdef, #else, #endif,
@@ -6120,6 +6122,17 @@ _PROTOTYP( long atol, (char *) );
 #endif /* def VMS [else] */
 #endif /* ndef CKMAXPATH */
 
+/*
+  14 September 2021...
+  This came up undefined for VMS even though it never did before.
+  The maximum file name length in VMS is (or was once) 39, but the full
+  path could be any length at all, so this definition might need some
+  refinement.
+*/  
+#ifndef MAXPATHLEN
+def MAXPATHLEN 1024
+#endif  /* MAXPATHLEN */
+
 /* Maximum length for the name of a tty device */
 
 #ifndef DEVNAMLEN
@@ -6151,13 +6164,16 @@ _PROTOTYP( long atol, (char *) );
 #else
 #ifdef VMS
 #define DIRSEP ']'			/* (not really) */
+#define STRDIRSEP "]"
 #define ISDIRSEP(c) ((c)==']'||(c)==':')
 #else
 #ifdef MAC
 #define DIRSEP ':'
+#define STRDIRSEP ":"
 #define ISDIRSEP(c) ((c)==':')
 #else
 #ifdef AMIGA
+#define DIRSEP '/'
 #define STRDIRSEP "/"
 #define ISDIRSEP(c) ((c)=='/'||(c)==':')
 #else

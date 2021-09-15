@@ -1,4 +1,4 @@
-char * cklibv = "C-Kermit library, 9.0.058, 18 Sep 2020";
+char * cklibv = "C-Kermit library, 9.0.059, 14 Sep 2021";
 
 #define CKCLIB_C
 
@@ -8,7 +8,7 @@ char * cklibv = "C-Kermit library, 9.0.058, 18 Sep 2020";
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1999, 2020,
+  Copyright (C) 1999, 2021,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -3001,7 +3001,7 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4,n5)
 	       (tsv = !ckstrcmp(notsep,"TSV",3,1))) {
 	int i, flag; CHAR c;
 	int n = 0;
-	char * ss;
+	char * ss = sep;
 	if (!all && (csv || tsv)) {
 	    all = 1;
 	    collapse = 0;

@@ -6060,7 +6060,7 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 	    }
 	    if (!k) {
 		if (verbose)
-		  printf("%s: Skipped (not a text file)\n");
+		  printf("%s: Skipped (not a text file)\n", name);
 		znext(name);
 		continue;
 	    }
@@ -6290,7 +6290,8 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
                     if (chmtopt == CHMT_P) { /* If preserving file dates */
                         debug(F110,"Setting modtime",result,0);
                         if (zstime(result,&xxstruct,0) < 0) {
-                            printf("?Error preserving original modtime: %s\n",
+                            printf("?Error \
+preserving original modtime: %s %s\n",
                                    result,
                                    ck_errstr()
                                    );
@@ -11710,7 +11711,7 @@ boolexp(cx) int cx; {
 		    printf("?Variable %s does not have a numeric value\n",
 			   varnam);
 		  else
-		    printf("?Not an IF condition, macro name or number:\n",
+		    printf("?Not an IF condition, macro name or number: %s\n",
 			   cmresult.sresult);
 		  return(-9);
 	      }

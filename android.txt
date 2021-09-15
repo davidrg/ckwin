@@ -1,0 +1,28 @@
+	cka - C-Kermit for Android
+
+    This archive contains the source code for building C-Kermit 9.0.302 for
+Android.  It has been taken from the source code downloaded from:
+
+    ftp://ftp.kermitproject.org/kermit/archives/cku302.zip
+
+    At this point the changes here are not part of the official release.
+all issues related to C-Kermit for Android should be directed at the
+github project, which can be found here:
+
+    http://github.com/tesneddon/cka
+
+    Assuming the Android NDK procedure "ndk-build" is in your PATH, you can
+use the following command to build the software for all ABIs:
+
+    $ ndk-build NDK_PROJECT_PATH=./ \
+                APP_BUILD_SCRIPT=./android.mk \
+                APP_ABI=all \
+                LOCAL_DISABLE_FORMAT_STRING_CHECKS=true
+
+    If you have any problems, flames, suggestions, praise, disbelief, etc.
+then please feel free to create an issue on the github page and I will
+follow it up as I get the opportunity.
+
+    Tim Sneddon
+
+(with updates from Jake Thompson, 17 Nov 2013)

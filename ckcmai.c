@@ -1,16 +1,15 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "8 Oct 2020"         /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20201008"		/* Keep them in sync */
-/* Thu Oct  8 14:09:26 2020 */
+#define EDITDATE  "15 Sep 2021"         /* Last edit date dd mmm yyyy */
+#define EDITNDATE "20210915"		/* Keep them in sync */
+/* Wed Sep 15 11:12:40 2021 */
 
 /*
 FOR A NEW VERSION (development, alpha, beta, release candidate formal release):
   . Change the 3 dates just above;
-  . Change ck_cryear (copyright year) just below, if necessary;
+  . Change ck_cryear = "xxx"; (copyright year) just below, if necessary;
   . For test versions change ck_s_test and ck_s_tver (below) appropriately;
   . Change makefile CKVER and BUILDID definitions and timestamp at top.
-  . When year changes, change ck_cryear = "xxx";
 
 If the version number has changed, also:
   . Change sccsid[] (below);
@@ -47,7 +46,7 @@ If the version number has changed, also:
 #endif /* OS2 */
 #endif /* BETATEST */
 
-char * ck_cryear = "2020"; 		/* C-Kermit copyright year */
+char * ck_cryear = "2021"; 		/* C-Kermit copyright year */
 
 #ifndef MAC /* MAC = Kermit for MAC OS 6, 7, ... i.e. original Macintosh */
 /*
@@ -57,7 +56,7 @@ char * ck_cryear = "2020"; 		/* C-Kermit copyright year */
 #ifndef BETATEST
 #ifndef OS2                             /* UNIX, VMS, etc... (i.e. C-Kermit) */
 char *ck_s_test = "Alpha";		/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "03";			/* Test version number */
+char *ck_s_tver = "04";			/* Test version number */
 #else  /* OS2 */
 char *ck_s_test = "";			/* (i.e. K95) */
 char *ck_s_tver = "";

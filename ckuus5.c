@@ -15,7 +15,7 @@ int cmdsrc() { return(0); }
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2020,
+  Copyright (C) 1985, 2021,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -4370,7 +4370,7 @@ addmmac(nam,s) char *nam, *s[]; {       /* Add a multiline macro definition */
 }
 
 static char evalmacrobuf[TMPBUFSIZ];
-int
+VOID
 evalmacroarg(p) char **p; {
     char * s = evalmacrobuf;
     int t = TMPBUFSIZ;
