@@ -10360,8 +10360,10 @@ initoptlist() {
     makestr(&(optlist[noptlist++]),"INCL_PARAM_H");
 #endif /* INCL_PARAM_H */
 
+#ifdef CKMAXPATH
     sprintf(line,"CKMAXPATH=%d",CKMAXPATH); /* SAFE */
     makestr(&(optlist[noptlist++]),line);
+#endif /* CKMAXPATH */
 
     sprintf(line,"CKMAXOPEN=%d",CKMAXOPEN); /* SAFE */
     makestr(&(optlist[noptlist++]),line);

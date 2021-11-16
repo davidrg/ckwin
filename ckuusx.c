@@ -9,7 +9,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2020,
+  Copyright (C) 1985, 2021,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -19,6 +19,7 @@
   This module contains user interface functions needed by both the interactive
   user interface and the command-line-only user interface, as well as the
   screen-control routines (curses and equivalent).
+  Wed Nov  3 15:23:43 2021
 */
 
 /* Includes */
@@ -29,43 +30,50 @@
 #include "ckuusr.h"
 #include "ckcxla.h"
 
+/*
+  Curses/Termcap function prototypes...
+  Indented for easier reading 3 November 2021
+*/
 #ifndef NOHTERMCAP
-#ifdef NOTERMCAP
-#define NOHTERMCAP
-#else
-#ifndef BSD44
-#define NOHTERMCAP
-#else
-#ifdef __bsdi__
-#define NOHTERMCAP
-#else
-#ifdef OPENBSD
-#define NOHTERMCAP
-#else
-#ifdef MACOSX
-#define NOHTERMCAP
-#endif /* MACOSX */
-#endif /* OPENBSD */
-#endif /* __bsdi__ */
-#endif /* BSD44 */
-#endif /* NOTERMCAP */
+  #ifdef NOTERMCAP
+  #define NOHTERMCAP
+  #else
+  #ifndef BSD44
+    #define NOHTERMCAP
+    #else
+    #ifdef __bsdi__
+      #define NOHTERMCAP
+      #else
+      #ifdef OPENBSD
+        #define NOHTERMCAP
+        #else
+        #ifdef MACOSX
+          #ifndef OLDMACOSX           
+            #include <term.h>           /* macOS after 10.12 */
+            #include <curses.h>
+          #endif /* OLDMACOSX */
+          #define NOHTERMCAP
+          #endif /* MACOSX */
+        #endif /* OPENBSD */
+      #endif /* __bsdi__ */
+    #endif /* BSD44 */
+  #endif /* NOTERMCAP */
 #endif /* NOHTERMCAP */
 
 #ifndef NOTERMCAP
-#ifdef BSD44
-#ifndef NOHTERMCAP
-#include <termcap.h>
-#endif /* NOHTERMCAP */
-#endif /* BSD44 */
+  #ifdef BSD44
+    #ifndef NOHTERMCAP
+    #include <termcap.h>
+    #endif /* NOHTERMCAP */
+  #endif /* BSD44 */
 #else  /* !BSD44 */
-#ifdef linux
-#include <term.h>
-#else  /* !BSD44 */
-#endif /* linux */
+  #ifdef linux
+  #include <term.h>
+  #endif /* linux */
 #endif /* NOTERMCAP */
+
 /*
-  Note, none of the above works on Ubuntu: not curses.h, term.h, termcap.h
-  so...
+  None of the above works on Ubuntu: not curses.h, term.h, termcap.h so...
 */
 #ifdef __linux__
 int tgetent (char *, const char *);
@@ -5884,14 +5892,6 @@ extern int isvt52;                      /* From CKVTIO.C */
 #endif /* CK_NCURSES */
 #endif /* MYCURSES */
 #endif /* VMS */
-
-#ifdef NEEDCURSESPROTOTYPES
-_PROTOTYP(int tgetent,(char *, char *));
-_PROTOTYP(char *tgetstr,(char *, char **));
-_PROTOTYP(int tputs,(char *, int, int (*)()));
-_PROTOTYP(char *tgoto,(const char *, int, int));
-#endif /* NEEDCURSESPROTOTYPES */
-
 #endif /* CK_CURSES */
 
 /*  F X D I N I T  --  File Xfer Display Initialization  */
@@ -8030,7 +8030,11 @@ char *s;        /* a string */
             move(CW_MSG,22);
 	    clrtoeol();
             if (!s) s = "";
+/*
+  30092021: fails to compile on Debian with "-Wformat -Werror=format-security"
             printw(*s ? s : "User interruption or connection lost");
+*/
+            fputs(*s ? s : "User interruption or connection lost", stdout);
 #ifdef KUI
 #ifndef K95G
             KuiSetProperty(KUI_FILE_TRANSFER,

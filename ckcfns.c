@@ -1,4 +1,4 @@
-char *fnsv = "C-Kermit functions, 9.0.235, 8 October 2020";
+char *fnsv = "C-Kermit functions, 9.0.236, 28 October 2021";
 
 char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 
@@ -11,7 +11,7 @@ char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
   Columbia University Academic Information Systems, New York City (1974-2011)
   The Kermit Project, Bronx NY (2011-????)
 
-  Copyright (C) 1985, 2020,
+  Copyright (C) 1985, 2021,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -406,10 +406,10 @@ extern CHAR encbuf[];
 #endif /* COMMENT */
 
 /*
-  Encode packet data from a string in memory rather than from a file.
-  Returns the length of the encoded string on success, -1 if the string
-  could not be completely encoded into the currently negotiated data
-  field length.
+  Encode packet data from a string in memory rather than from a file; thus
+  this routine is used for administrative packets, not with Data packets.
+  Returns the length of the encoded string on success, -1 if the string could
+  not be completely encoded into the currently negotiated data field length.
 */
 int
 #ifdef CK_ANSIC
@@ -419,18 +419,20 @@ encstr(s) CHAR* s;
 #endif /* CK_ANSIC */
 {
 /*
-  Recoded 30 Jul 94 to use the regular data buffer and the negotiated
+  Recoded 30 Jul 1994 to use the regular data buffer and the negotiated
   maximum packet size.  Previously we were limited to the length of encbuf[].
   Also, to return a failure code if the entire encoded string would not fit.
-  Modified 14 Jul 98 to return length of encoded string.
+  Modified 14 Jul 1998 to return length of encoded string.
+  Modified 18 Oct 2021 to not truncate filename in F packet.  
 */
     int m, rc, slen; char *p;
+    /* data is a pointer to send-packet data declared in ckcmai.c */
     if (!data) {			/* Watch out for null pointers. */
 	debug(F100,"SERIOUS ERROR: encstr data == NULL","",0);
 	return(-1);
     }
-    if (!s) s = (CHAR *)"";		/* Ditto. */
-    slen = strlen((char *)s);		/* Length of source string. */
+    if (!s) s = (CHAR *)"";		/* Our argument string */
+    slen = strlen((char *)s);		/* Length of source string */
     debug(F111,"encstr",s,slen);
     rc = 0;				/* Return code. */
     m = memstr; p = memptr;		/* Save these. */
@@ -439,8 +441,23 @@ encstr(s) CHAR* s;
     memstr = 1;				/* Flag memory string as source. */
     first = 1;				/* Initialize character lookahead. */
     *data = NUL;			/* In case s is empty */
+    debug(F101,"encstr pktnum","",pktnum); /* (apparently not reliable) */
     debug(F101,"encstr spsiz","",spsiz);
-    rc = getpkt(spsiz,0);		/* Fill a packet from the string. */
+
+#ifndef COMMENT
+/*
+  28 October 2021: If the user gives a command like SET SEND PACKET-LENGTH 10,
+  the filename will be truncated if it's longer than that.  Now we use the
+  packet size our Kermit partner is willing to accept (rpsiz).  This can
+  still be truncated but much less likely because filenames tend to be
+  shorter then 90 bytes.
+*/
+    debug(F101,"encstr rpsiz","",rpsiz);
+    debug(F101,"encstr urpsiz","",urpsiz);
+    rc = getpkt(rpsiz,0);               /* Fill a packet from the string. */
+#else
+    rc = getpkt(spsiz,0);		/* (this can truncate) */
+#endif /* COMMENT */
     debug(F101,"encstr getpkt rc","",rc);
     if (rc > -1 && memptr < (char *)(s + slen)) { /* Means we didn't encode */
 	rc = -1;			/* the whole string. */
@@ -1558,7 +1575,7 @@ decode(buf,fn,xlate) register CHAR *buf; register int (*fn)(); int xlate;
 
 /*
   Note: Separate Kanji support dates from circa 1991 and now (1999) can most
-  likely be combined with the the Unicode support: the xgnbyte()/xpnbyte()
+  likely be combined with the Unicode support: the xgnbyte()/xpnbyte()
   mechanism works for both Unicode and Kanji.
 */
 #ifdef KANJI
@@ -1659,7 +1676,10 @@ bgetpkt(bufmax) int bufmax; {
     }
     dp = data;				/* Point to packet data buffer */
     size = 0;				/* And initialize its size */
+#ifdef COMMENT
+    /* No - bufmax is a parameter */
     bufmax = maxdata();			/* Get maximum data length */
+#endif
 
 #ifdef DEBUG
     if (deblog)
@@ -2553,6 +2573,10 @@ getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
 
     CHAR xxls, xxdl, xxrc, xxss, xxcq;	/* Pieces of prefixed sequence */
 
+#ifdef COMMENT
+    debug(F000,"getpkt sstate","",sstate); /* It's always NUL - why??? */
+#endif  /* COMMENT */
+
     if (binary) xlate = 0;		/* We don't translate if binary */
 
     if (!data) {
@@ -2567,7 +2591,10 @@ getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
   We also decide optimally whether it is better to use a short-format or
   long-format packet when we're near the borderline.
 */
+#ifdef COMMENT
+    /* bufmax is a parameter - don't override it! */
     bufmax = maxdata();			/* Get maximum data length */
+#endif /* COMMENT */
 
     if (first == 1) {			/* If first character of this file.. */
 #ifdef UNICODE
@@ -3335,6 +3362,7 @@ sipkt(c) char c;
 	debug(F101,"sipkt getsbuf","",k);
     }
     rp = rpar();			/* Get protocol parameters. */
+    debug(F110,"sipkt rpar","",rp);
     if (!rp) rp = (CHAR *)"";
     x = spack(c,pktnum,(int)strlen((char *)rp),rp); /* Send them. */
     return(x);
@@ -4908,7 +4936,16 @@ rpar() {
     int i, x, max;
     extern int sprmlen;
 
+#ifdef COMMENT
     max = maxdata();			/* Biggest data field I can send */
+#else
+    max = 94;
+#endif  /* COMMENT */
+/*
+  sprmlen is for interacting with Kermits that have malfunctioning
+  parameter negotiations, set by user command.
+*/
+    debug(F101, "rpar rpsiz","",rpsiz);
     debug(F101, "rpar max 1","",max);
     debug(F101, "rpar sprmlen","",sprmlen);
     if (sprmlen > 1 && sprmlen < max)	/* User override */

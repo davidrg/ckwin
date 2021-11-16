@@ -3,22 +3,22 @@
 #define CK_NONBLOCK                     /* See zoutdump() */
 
 #ifdef aegis
-char *ckzv = "Aegis File support, 9.0.224, 28 Sep 2020";
+char *ckzv = "Aegis File support, 9.0.225, 06 Nov 2021";
 #else
 #ifdef Plan9
-char *ckzv = "Plan 9 File support, 9.0.224, 28 Sep 2020";
+char *ckzv = "Plan 9 File support, 9.0.225, 06 Nov 2021";
 #else
-char *ckzv = "UNIX File support, 9.0.224, 28 Sep 2020";
+char *ckzv = "UNIX File support, 9.0.225, 06 Nov 2021";
 #endif /* Plan9 */
 #endif /* aegis */
 /*
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University 1974-2011; The Kermit Project 2011-????.
 
-  Copyright (C) 1985, 2020,
+  Copyright (C) 1985, 2021,
     Trustees of Columbia University in the City of New York.
 
-    1767All rights reserved.  See the C-Kermit COPYING.TXT file or the
+    All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 */
 
@@ -816,6 +816,12 @@ pam_cb(num_msg, msg, resp, appdata_ptr)
   functions (e.g. in SVID or POSIX.1) do not tell you how to determine the
   maximum path length in order to allocate a buffer that is the right size.
 */
+
+/* 2021-10-31 SMS.
+ * Hence, use ckcdeb.h:CKMAXPATH, and forget about MAXPATHLEN here.
+ * Considerable tidying here should be possible.
+ */
+
 #ifdef BSD44
 #include <sys/param.h>                  /* For MAXPATHLEN */
 #endif /* BSD44 */
@@ -7436,7 +7442,7 @@ zfseek(pos) CK_OFF_T pos;
   that contains the length (len) of the result, a pointer (fpath) to the
   whole result, and a pointer (fname) to where the filename starts.
   Hint: how to get just the directory path, without the filename, into buf[]:
-    fp = zfnqfp(filename,MAXPATHLEN,buf);
+    fp = zfnqfp(filename,CKMAXPAX,buf);
     if (fp) buf[fp->fname - fp->fpath] = '\0';
 */
 static struct zfnfp fnfp = { 0, NULL, NULL };

@@ -3,7 +3,7 @@
 #endif /* SSHTEST */
 
 #include "ckcsym.h"
-char *userv = "User Interface 9.0.315, 14 Sep 2021";
+char *userv = "User Interface 9.0.316, 06 Nov 2021";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 
@@ -93,6 +93,7 @@ char *userv = "User Interface 9.0.315, 14 Sep 2021";
 #include "ckcnet.h"			/* Network symbols */
 #include "ckuusr.h"
 #include "ckcxla.h"
+#include "ckuath.h"             /*AGN missing Kerberos prototypes 4-Nov-2021*/
 
 int g_fncact = -1;			/* Needed for NOICP builds */
 int noinit = 0;				/* Flag for skipping init file */

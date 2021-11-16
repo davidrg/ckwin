@@ -1,8 +1,8 @@
-char *ckathv = "Authentication, 9.0.236, 8 Oct 2020";
+char *ckathv = "Authentication, 9.0.237, 14 Nov 2022";
 /*
   C K U A T H . C  --  Authentication for C-Kermit
 
-  Copyright (C) 1999, 2020,
+  Copyright (C) 1999, 2021,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -4929,10 +4929,22 @@ k5_auth_reply(how,data,cnt) int how; unsigned char *data; int cnt;
                     skey.data = k5_session_key->contents;
 #endif /* HEIMDAL */
                 } else {
-                    switch ( k5_session_key->keytype ) {
+                    switch (
+#ifdef HEIMDAL
+                             k5_session_key->keytype
+#else /* HEIMDAL */
+                             k5_session_key->enctype
+#endif /* HEIMDAL */
+                           ) {
+#ifdef HEIMDAL
                     case ETYPE_DES_CBC_CRC:
                     case ETYPE_DES_CBC_MD5:
                     case ETYPE_DES_CBC_MD4:
+#else /* HEIMDAL */
+                    case ENCTYPE_DES_CBC_CRC:
+                    case ENCTYPE_DES_CBC_MD5:
+                    case ENCTYPE_DES_CBC_MD4:
+#endif /* HEIMDAL */
                         skey.type = SK_DES;
                         skey.length = 8;
                         break;
@@ -5035,10 +5047,22 @@ k5_auth_reply(how,data,cnt) int how; unsigned char *data; int cnt;
                     skey.data = k5_session_key->contents;
 #endif /* HEIMDAL */
                 } else {
-                    switch ( k5_session_key->keytype ) {
+                    switch (
+#ifdef HEIMDAL
+                             k5_session_key->keytype
+#else /* HEIMDAL */
+                             k5_session_key->enctype
+#endif /* HEIMDAL */
+                           ) {
+#ifdef HEIMDAL
                     case ETYPE_DES_CBC_CRC:
                     case ETYPE_DES_CBC_MD5:
                     case ETYPE_DES_CBC_MD4:
+#else /* HEIMDAL */
+                    case ENCTYPE_DES_CBC_CRC:
+                    case ENCTYPE_DES_CBC_MD5:
+                    case ENCTYPE_DES_CBC_MD4:
+#endif /* HEIMDAL */
                         skey.type = SK_DES;
                         skey.length = 8;
                     default:
@@ -13385,5 +13409,3 @@ ck_krb5_read_message( krb5_context context,
 #endif /* KRB5 */
 #endif /* MACOSX */
 #endif /* CK_SECURITY */
-
-

@@ -6,7 +6,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2011,
+  Copyright (C) 1985, 2021,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -293,7 +293,6 @@ long crctb[16] = { 0L, 010611L, 021422L, 031233L, 043044L,
   Round-trip timer calculations adapted from Tim Kientzle's article,
   "Improving Kermit Performance", Dr Dobb's Journal, February 1996.
 */
-
 
 /*  R T T I N I T  --  Initialize timers at start of transaction  */
 

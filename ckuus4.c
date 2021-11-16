@@ -14,7 +14,7 @@
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
     Last update:
-    Tue Sep 14 15:09:25 2021
+    Sat Nov  6 12:29:26 2021
 */
 
 /*
@@ -51,6 +51,7 @@ extern char * ckvmserrstr(unsigned long);
 _PROTOTYP(int vmsttyfd, (void) );
 #endif /* VMS */
 
+/* This section is only for Kermit 95 for MS Windows and IBM OS/2 */
 #ifdef OS2
 #ifndef NT
 #define INCL_NOPM
@@ -10425,7 +10426,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 #endif /* UNIX */
           char abuf[16], *s;
           char ** ap = NULL;
-	  char workbuf[MAXPATHLEN];
+	  char workbuf[CKMAXPATH];
 	  int attrs = 9;		/* Number of attributes defined */
 	  int k = 0;			/* current attribute index */
 	  int i,j,n;
@@ -10451,7 +10452,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 	  }
 #endif /* UNIX */
 
-	  j = ckstrncpy(workbuf,bp[0],MAXPATHLEN); /* Strip any trailing '/' */
+	  j = ckstrncpy(workbuf,bp[0],CKMAXPATH); /* Strip any trailing '/' */
 	  if (workbuf[j-1] == '/') {
 	      workbuf[j-1] = NUL;
 	      makestr(&(bp[0]),workbuf);
@@ -13961,7 +13962,6 @@ nvlook(s) char *s; {
                       *p = NUL;         /* there */
                   }
               }
-#endif /* Not VMS */
 /*
   But if the result is just the one character, e.g. '/' in Unix, erase it
   because that's the root directory and obviously can't be used for temporary
@@ -13970,6 +13970,7 @@ nvlook(s) char *s; {
               if (vvbuf[0] == c && vvbuf[1] == NUL) {
                   vvbuf[0] = NUL;
               }
+#endif /* Not VMS */
         }
         makestr(&tempdir,p); /* Save result where we can find it next time */ 
         return(vvbuf);
@@ -14062,7 +14063,7 @@ nvlook(s) char *s; {
 
 #ifndef NOXFER
       case VN_CRC16:                    /* CRC-16 of most recent transfer */
-        sprintf(vvbuf,"%d",crc16);      /* SAFE */
+        sprintf(vvbuf,"%ld",crc16);     /* SAFE */
         return(vvbuf);
 #endif /* NOXFER */
 

@@ -2147,6 +2147,65 @@ macosx+krb5+openssl macosx10.5+krb5+openssl macosx10.6+krb5+openssl:
 	-funsigned-char -O $(KFLAGS)" \
 	"LIBS= $$HAVE_KRB5CONFIG -lssl -lcrypto -lpam -lncurses $(LIBS)"
 
+# Additional target "macos" by Tony Nicholson 4-Nov-2021.
+#
+# More recent macOS re-branded releases for Intel (x86_64) Sierra (10,12),
+# High Sierra (10,13), Mojave (10.14), Catalina (10.15), and Intel x86_64/ARM
+# Big Sur (11), Monterey (12)
+#
+# Apple's Clang C compiler reports many warnings that can safely be ignored -
+# so keep reporting the ones that may have not been detected by other
+# compilers by selectively disabling dangling-else, string-compare and
+# parentheses related warnings.
+#
+macos:
+	@MACOSNAME=`/usr/bin/sw_vers -productName`; \
+	MACOSV=`/usr/bin/sw_vers -productVersion`; \
+	echo Making C-Kermit $(CKVER) for $$MACOSNAME $$MACOSV... ; \
+	MACCPU=$$HOSTTYPE; \
+	HAVE_UTMPX=''; \
+	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
+	"CFLAGS=-Wno-dangling-else -Wno-string-compare -Wno-parentheses \
+	-Wno-pointer-sign -Wno-unused-value \
+	-DMACOSX10 -DMACOSX103 -DCK_NCURSES -DTCPSOCKET -DCKHTTP \
+	-DUSE_STRERROR -DUSE_NAMESER_COMPAT -DNOCHECKOVERFLOW -DFNFLOAT \
+	-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 $$HAVE_UTMPX \
+	-funsigned-char -DNODCLINITGROUPS \
+	-DNOUUCP -O -DHERALD=\"\\\" $${MACOSNAME} $${MACOSV}\\\"\" \
+	-DCKCPU=\"\\\"$${MACCPU}\\\"\" \
+	$(KFLAGS)" "LIBS= -lncurses -lresolv $(LIBS)"
+
+# Trialling using the Homebrew install of krb5 and openssl
+# (newer versions of macOS have dropped the Kerberos5 include
+# files and moved to LibreSSL).
+# NB: not yet working  **DON'T USE THIS TARGET**
+#
+macos+krb5+ssl macos+krb5+openssl:
+	@MACOSNAME=`/usr/bin/sw_vers -productName`; \
+	MACOSV=`/usr/bin/sw_vers -productVersion`; \
+	echo Making C-Kermit $(CKVER) for $$MACOSNAME $$MACOSV... ; \
+	MACCPU=$$HOSTTYPE; \
+	HAVE_UTMPX=''; \
+	IS_MACOSX103=''; \
+	HAVE_DES=''; \
+	if test -x ${HOMEBREW_PREFIX}/opt/krb5/bin/krb5-config ; \
+	then HAVE_KRB5CONFIG=`${HOMEBREW_PREFIX}/opt/krb5/bin/krb5-config \
+--libs krb5 gssapi` ; \
+	else HAVE_KRB5CONFIG='-lgssapi_krb5 -lkrb5 -lk5crypto \
+	-lcom_err -lresolv' ; fi; \
+	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
+	"CFLAGS=-Wno-dangling-else -DMACOSX10 $$IS_MACOSX103 -DCK_NCURSES \
+	-DTCPSOCKET -DUSE_STRERROR -DUSE_NAMESER_COMPAT -DNOCHECKOVERFLOW \
+	-DFNFLOAT -DCKHTTP -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 \
+	$$HAVE_UTMPX -DNODCLINITGROUPS -DCK_AUTHENTICATION -DCK_KERBEROS \
+	-DKRB5 -DZLIB -DCK_ENCRYPTION -DCK_CAST -DCK_SSL -DOPENSSL_098 \
+	$$HAVE_DES -DNOUUCP -DHERALD=\"\\\" $${MACOSNAME} $${MACOSV}\\\"\" \
+	-DCKCPU=\"\\\"$${MACCPU}\\\"\" \
+	$${K5INC} $${SSLINC} \
+	-funsigned-char -O $(KFLAGS)" \
+	"LIBS= $$HAVE_KRB5CONFIG $${SSLLIB} \
+-lssl -lcrypto -lpam -lncurses $(LIBS)"
+
 # End of Mac OS X Section
 
 #Acorn RISCiX, based on ...
@@ -6175,12 +6234,6 @@ linux gnu-linux:
 	    HAVE_LOCKDEV=''; \
 	  fi; \
 	fi; \
-        NEEDCURSESPROTOTYPES=''; \
-        if -f /etc/issue; then \
-          if egrep "(Ubuntu|Debian)" /etc/issue > /dev/null; then \
-            NEEDCURSESPROTOTYPES='-DNEEDCURSESPROTOTYPES'; \
-          fi; \
-        fi; \
 	if grep __USE_LARGEFILE64 /usr/include/features.h > /dev/null; \
 	  then HAVE_LARGEFILES='-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64'; \
 	  else HAVE_LARGEFILES=''; \

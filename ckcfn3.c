@@ -242,7 +242,7 @@ extern int fblksiz, frecl, forg, frecfm, fncact, fncsav, fcctrl, lf_opts;
 extern CHAR * srvcmd;
 extern int srvcmdlen;
 
-extern int binary, spsiz;
+extern int binary, spsiz, rpsiz;
 extern int pktnum, cxseen, czseen, nfils, stdinf;
 extern int memstr, stdouf, keep, sndsrc, hcflg;
 extern int server, en_cwd, en_mai, en_pri;
@@ -990,7 +990,17 @@ sattr(xp, flag) int xp, flag; {		/* Send Attributes */
 	initattr(&x);			/* Blank out all the fields. */
 	for (j = 0; j < 95; j++)	/* Init array of completed fields */
 	  done[j] = 0;
+#ifdef COMMENT
+/*
+  28 October 2021: This is an administrative packet, it must not be
+  truncated because of user command SET SEND PACKET-LENGTH 10 or other
+  small number.  (Even though attributes can be sent in multiple packets,
+  any given attribute might be longer than spsiz, e.g. date-time.)
+*/
 	max = maxdata();		/* Get maximum data field length */
+#else
+	max = rpsiz;                    /* Get maximum data field length */
+#endif /* COMMENT */
 	if (notafile || xp == 1) {	/* Is it not a real file? */
 	    extern char * zzndate();
 	    char * p;
@@ -1312,7 +1322,6 @@ sattr(xp, flag) int xp, flag; {		/* Send Attributes */
 	    done[xunchar(c)] = 1;
 	}
     }
-
     /* Finished - send the packet off if we have anything in it */
 
     if (numset) {

@@ -1,10 +1,10 @@
 #include "ckcsym.h"
-char *dialv = "Dial Command, 9.0.161, 4 Feb 2016";
+char *dialv = "Dial Command, 9.0.162, 06 Nov 2021";
 
 /*  C K U D I A	 --  Module for automatic modem dialing. */
 
 /*
-  Copyright (C) 1985, 2016,
+  Copyright (C) 1985, 2021,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -4992,7 +4992,7 @@ dialfail(x) int x; {
 
     case F_MODEM:			/* Modem detected a failure */
          debug(F110,"dialfail()","lbuf",0);
-         if (lbuf && *lbuf) {
+         if (strlen(lbuf) > 0) {        /* was (lbuf && *lbuf)  */
             printf(" \"");
             for (s = lbuf; *s; s++)
                if (isprint(*s))
@@ -6523,7 +6523,7 @@ ckdial(nbr, x1, x2, fc, redial) char *nbr; int x1, x2, fc, redial;
 #ifdef MINIDIAL
       0
 #else
-      mymdmtyp == n_H_ULTRA || mymdmtyp == n_H_ACCURA || n_PPI
+      mymdmtyp == n_H_ULTRA || mymdmtyp == n_H_ACCURA || mymdmtyp == n_PPI
 #endif /* MINIDIAL */
 	;
 
@@ -6531,7 +6531,7 @@ ckdial(nbr, x1, x2, fc, redial) char *nbr; int x1, x2, fc, redial;
 #ifdef MINIDIAL
       0
 #else
-      mymdmtyp == n_SUPRA || mymdmtyp == n_SUPRAX || n_SUPRASON
+      mymdmtyp == n_SUPRA || mymdmtyp == n_SUPRAX || mymdmtyp == n_SUPRASON
 #endif /* MINIDIAL */
 	;
 

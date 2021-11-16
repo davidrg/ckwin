@@ -1,4 +1,4 @@
-char * ckcuni = "Unicode support 9.0.115, 16 Oct 2009";
+char * ckcuni = "Unicode support 9.0.116, 06 Nov 2021";
 
 #ifdef OS2
 #define KERMITFONT
@@ -8269,7 +8269,7 @@ tx_jis0201r(USHORT c)
 tx_jis0201r(c) USHORT c;
 #endif /* CK_ANSIC */
 {
-    if (c && 0xff80)                    /* 7 bits */
+    if (c & 0xff80)                     /* 7 bits */
       return(-1);
     switch (c) {                        /* Like ASCII with */
       case 0x00a5: return(92);          /* two exceptions */

@@ -8,13 +8,13 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2020,
+  Copyright (C) 1985, 2021,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
   Last update:
-    Fri Sep 18 14:55:27 2020
+    Sat Nov  6 13:36:59 2021
 */
 
 /* Includes */
@@ -166,9 +166,9 @@ CHAR * readbuf = NULL;                  /* Pointer to read buffer */
 int readsize = 0;                       /* Number of chars actually read */
 int getcmd = 0;                         /* GET-class command was given */
 
-char chgsourcedir[MAXPATHLEN+1] = { 0,0 }; /* Source directory for CHANGE */
-char chgdestdir[MAXPATHLEN+1] = { 0,0 }; /* Destination directory for CHANGE */
-char chgbackupdir[MAXPATHLEN+1] = { 0,0 }; /* Backup directory for CHANGE */
+char chgsourcedir[CKMAXPATH+1] = { 0,0 }; /* Source directory for CHANGE */
+char chgdestdir[CKMAXPATH+1] = { 0,0 }; /* Destination directory for CHANGE */
+char chgbackupdir[CKMAXPATH+1] = { 0,0 }; /* Backup directory for CHANGE */
 
 extern int zchkod, zchkid;
 
@@ -2459,12 +2459,12 @@ ddcvt(s, f, n) char * s; FILE * f; int n; { /* Dial Directory Convert */
     debug(F111,"ddcvt dialdir[n]",dialdir[n],n);
 #else
     if (zrename(s,s2) < 0) {            /* Not VMS - rename old file */
-        perror(s2);                     /* to new (wierd) name. */
+        perror(s2);                     /* to new (weird) name. */
         goto ddexit;
     }
 #endif /* VMS */
     debug(F110,"ddcvt s2 (old)",s2,0);
-    if ((f = fopen(s2,"r")) == NULL) {  /* Reopen old file with wierd name */
+    if ((f = fopen(s2,"r")) == NULL) {  /* Reopen old file with weird name */
         debug(F110,"ddcvt s2 open error",ck_errstr(),0);
         dirline = 0;                    /* (or in VMS, old version) */
         perror(s2);
@@ -5616,7 +5616,7 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
                     }
                     return(x);
                 }
-                ckstrncpy(whatdir,s,MAXPATHLEN);
+                ckstrncpy(whatdir,s,CKMAXPATH);
                 if (!isdir(whatdir)) { /* Double overkill */
                     printf("?%s is not a directory name\n",whatdir);
                     return(-9);
@@ -5658,7 +5658,7 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 
 /* ^^^ END MULTIPLE */
 
-    ckstrncpy(name,line,MAXPATHLEN);
+    ckstrncpy(name,line,CKMAXPATH);
 
     if (change) {			/* Finish parsing CHANGE command */
         debug(F110,"CHANGE source file",line,0);
@@ -5957,8 +5957,8 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 
     if (change) {                       /* CHANGE - check for conflicts */
         struct zfnfp * fp;
-        char dbuf[MAXPATHLEN+1];
-        char bbuf[MAXPATHLEN+1];
+        char dbuf[CKMAXPATH+1];
+        char bbuf[CKMAXPATH+1];
 
         fp = zfnqfp(name,TMPBUFSIZ,chgsourcedir); /* Source directory path */
         if (fp) {
@@ -6034,8 +6034,8 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
             FILE * ifp = NULL;		/* Input file pointer */
             FILE * ofp = NULL;		/* Output (temporary) file pointer */
             FILE * bfp = NULL;          /* Backup file pointer */
-            char backupfile[MAXPATHLEN+1]; /* Backup file */
-	    char tmpfile[MAXPATHLEN];	/* Buffer for filename */
+            char backupfile[CKMAXPATH+1]; /* Backup file */
+	    char tmpfile[CKMAXPATH];	/* Buffer for filename */
 	    char * tdp = tmpfile;	/* Temporary directory path */
 	    int linebufsiz = 24575;	/* Buf size for reading file lines */
 	    char * linebuf = NULL;	/* Input file buffer */
@@ -6085,8 +6085,8 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
                     success = 0;
                     goto xdomydir;
                 }
-                ckstrncpy(tmpfile,tempdir,MAXPATHLEN); /* Temp directory */
-                ckstrncat(tmpfile,"__x",MAXPATHLEN); /* Temp filespec */
+                ckstrncpy(tmpfile,tempdir,CKMAXPATH); /* Temp directory */
+                ckstrncat(tmpfile,"__x",CKMAXPATH); /* Temp filespec */
                 if (simulate) {
                     /* Too much */
                     /* printf("Would create temp file %s\n",tmpfile); */
@@ -6103,15 +6103,15 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
             } else {                    /* Making a new copy of the file */
                 char * p = name, * p2 = NULL;
                 debug(F110,"CHANGE chgdestdir",chgdestdir,0);
-                ckstrncpy(tmpfile,chgdestdir,MAXPATHLEN);
+                ckstrncpy(tmpfile,chgdestdir,CKMAXPATH);
                 debug(F110,"CHANGE tmpfile",tmpfile,0);
                 while (*p++) { if (ISDIRSEP(*p)) p2 = p; } /* Just the name */
                 if (!p2) {              /* name had no slashes in it */
                     p2 = name;
-                    ckstrncat(tmpfile,STRDIRSEP,MAXPATHLEN);
+                    ckstrncat(tmpfile,STRDIRSEP,CKMAXPATH);
                 }
                 debug(F110,"CHANGE name",p2,0);
-                ckstrncat(tmpfile,p2,MAXPATHLEN);
+                ckstrncat(tmpfile,p2,CKMAXPATH);
                 debug(F110,"CHANGE final tmpfile",tmpfile,0);
                 if (simulate) {
                     printf("Would create new file %s\n",tmpfile);
@@ -6128,15 +6128,15 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
             }
             if (changebackup) {         /* Backing up original file? */
                 char * p = name, * p2 = NULL;
-                ckstrncpy(backupfile,chgbackupdir,MAXPATHLEN);
+                ckstrncpy(backupfile,chgbackupdir,CKMAXPATH);
                 debug(F111,"CHANGE backupfile",backupfile,1);
                 while (*p++) { if (ISDIRSEP(*p)) p2 = p; } /* Just the name */
                 if (!p2) {              /* name had no slashes in it */
                     p2 = name;
-                    ckstrncat(backupfile,STRDIRSEP,MAXPATHLEN);
+                    ckstrncat(backupfile,STRDIRSEP,CKMAXPATH);
                 }
                 debug(F111,"CHANGE backupfile",backupfile,2);
-                ckstrncat(backupfile,p2,MAXPATHLEN);
+                ckstrncat(backupfile,p2,CKMAXPATH);
                 debug(F111,"CHANGE backupfile",backupfile,3);
                 if (simulate) {
                     printf("Would back up original file to %s\n",
@@ -6303,7 +6303,7 @@ preserving original modtime: %s %s\n",
                     debug(F111,"CHANGE modtime",backupfile,changebackup);
                     if (changebackup) {
                         if (zstime(backupfile,&xxstruct,0) < 0) {
-                            printf("?Modtime error on backup file: %s\n",
+                            printf("?Modtime error on backup file %s: %s\n",
                                    backupfile,
                                    ck_errstr()
                                    );

@@ -1464,7 +1464,7 @@ _PROTOTYP(int sndwho,(char *));
 	    int len = 0, ok = 0;
 /*
   fdc, March 2013: If the file is being received to Kermit's current 
-  directory, don't send the current-directroy path.
+  directory, don't send the current-directory path.
 */
 	    p = zgtdir();		/* Get current directory */
 	    if (p) if (*p) {		/* If we got one... */

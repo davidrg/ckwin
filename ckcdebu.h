@@ -1,7 +1,7 @@
 /*  C K C D E B . H  */
 
 /*
-Sat Nov 6 11:14:45 2021
+Wed Oct 13 15:22:05 2021
 
   For recent additions search below for "2021".
 
@@ -4186,11 +4186,6 @@ _PROTOTYP( long * ttspdlist, (void) );
 #endif /* SCO_OSR504 */
 #endif /* NOB_921K */
 
-/*
-  13 October 2021
-  From Elad Lahav:
-  Added support for 1.5MHz (1500000bps) serial speed for Linux and QNX.
-*/
 #ifdef BPS_1500K                        /* Maximum speed defined */
 #define MAX_SPD 1500000L
 #else
@@ -6133,22 +6128,25 @@ _PROTOTYP( long atol, (char *) );
 #endif /* def VMS [else] */
 #endif /* ndef CKMAXPATH */
 
-/* 2021-10-30 SMS (Steven M Schweda)
- * MAXPATHLEN might have come up undefined because all the consumers
- * should be using CKMAXPATH instead of MAXPATHLEN, or PATH_MAX, or
- * whatever.  The idea was to put all the system dependencies into the
- * definition of CKMAXPATH.  Previously, MAXPATHLEN was not used in
- * ckuus4.c or ckuus6.c,
- *
- * Apparently, I failed to make the required change(s) in UNIX
- * modules/sections ckufio.c, ckuus3.c, ckuus5.c.  (But _I_ didn't spell
- * "#define" as "def".)
- *
- * On VMS, PATH_MAX is defined as 256 in <limits.h>, but that is an
- * obsolete value, which is why NAMX_C_MAXRSS is used instead.
- */
+/*
+  13 October 2021
+  From Elad Lahav:
+  Added support for 1.5MHz (1500000bps) serial speed for Linux and QNX.
+*/
+
+/*
+  14 September 2021...
+  This came up undefined for VMS even though it never did before.
+  The maximum file name length in VMS is (or was once) 39, but the full
+  path could be any length at all, so this definition might need some
+  refinement.
+*/  
+#ifndef MAXPATHLEN
+#define MAXPATHLEN 1024
+#endif  /* MAXPATHLEN */
 
 /* Maximum length for the name of a tty device */
+
 #ifndef DEVNAMLEN
 #define DEVNAMLEN CKMAXPATH
 #endif /* DEVNAMLEN */

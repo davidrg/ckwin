@@ -13,7 +13,7 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2020,
+  Copyright (C) 1985, 2021,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -514,6 +514,9 @@ struct keytab spdtab[] = {
 #ifdef BPS_150
   "150",     15,  0,
 #endif /* BPS_150 */
+#ifdef BPS_1500K
+  "1500000", 150000,  0,
+#endif /* BPS_115K */
 #ifdef BPS_1800
   "1800",     180,  0,
 #endif /* BPS_150 */
@@ -12196,14 +12199,14 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
 #ifdef UNIX
         if (tmpbuf[0]) {
             extern int zchkod;
-            char tmpname[MAXPATHLEN+1];
+            char tmpname[CKMAXPATH+1];
             char * p = tmpname;
             int x;
             zchkod = 1;                 /* Hack for asking zchko() if */
             x = zchko(tmpbuf);          /* a directory is writeable */
             zchkod = 0;
             if (x < 0) printf("WARNING: %s does not appear to be writable\n");
-            zfnqfp(tmpbuf,MAXPATHLEN,p); /* Get and store full pathname */
+            zfnqfp(tmpbuf,CKMAXPATH,p); /* Get and store full pathname */
             makestr(&tempdir,tmpname);
         }
 #else  /* No API for getting full pathname in other OS's */

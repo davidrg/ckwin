@@ -1,4 +1,4 @@
-char *cktelv = "Telnet support, 9.0.277, 12 Apr 2013";
+char *cktelv = "Telnet support, 9.0.277, 06 Nov 2021";
 #define CKCTEL_C
 
 int sstelnet = 0;                       /* Do server-side Telnet negotiation */
@@ -18,7 +18,7 @@ int sstelnet = 0;                       /* Do server-side Telnet negotiation */
     Telnet KERMIT support by Jeffrey Altman
     Other contributions as indicated in the code.
 
-  Copyright (C) 1985, 2013,
+  Copyright (C) 1985, 2021,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -2164,8 +2164,8 @@ fwdx_setup_xauth(unsigned char *sp, int len)
     memcpy(xauth.data, sp + 4 + xauth.name_length, xauth.data_length);
 
     /* Setup to always have a local .Xauthority. */
-    fwdx_xauthfile = malloc(MAXPATHLEN+1);
-    snprintf(fwdx_xauthfile, MAXPATHLEN, "/tmp/XauthXXXXXX");
+    fwdx_xauthfile = malloc(CKMAXPATH+1);
+    snprintf(fwdx_xauthfile, CKMAXPATH, "/tmp/XauthXXXXXX");
     if ((xauthfd = mkstemp(fwdx_xauthfile)) != -1)
         /* we change file ownership later, when we know who is to be owner! */
         close(xauthfd);

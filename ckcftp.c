@@ -2,7 +2,7 @@
 
 /*  C K C F T P  --  FTP Client for C-Kermit  */
 
-char *ckftpv = "FTP Client, 9.0.264, 24 Dec 2015";
+char *ckftpv = "FTP Client, 9.0.265, 5 Nov 2021";
 
 /*
   Authors:
@@ -11,7 +11,7 @@ char *ckftpv = "FTP Client, 9.0.264, 24 Dec 2015";
     Frank da Cruz <fdc@columbia.edu>,
       The Kermit Project, Columbia University.
 
-  Copyright (C) 2000, 2015,
+  Copyright (C) 2000, 2021
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -12575,7 +12575,7 @@ Please confirm output file specification or supply an alternative:";
     } else if (!out2screen) {           /* File */
         struct filinfo xx;
         xx.bs = 0; xx.cs = 0; xx.rl = 0; xx.org = 0; xx.cc = 0;
-        xx.typ = 0; xx.os_specific = NUL; xx.lblopts = 0;
+        xx.typ = 0; xx.os_specific = ""; xx.lblopts = 0;
 	/* Append or New */
         xx.dsp = !strcmp(ftprecv.lmode,"ab") ? XYFZ_A : XYFZ_N;
         x = zopeno(ZOFILE,ftprecv.local,NULL,&xx);

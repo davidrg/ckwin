@@ -1,12 +1,12 @@
 #include "ckcsym.h"
-char *connv = "CONNECT Command for UNIX:select(), 9.0.139, 1 Mar 2010";
+char *connv = "CONNECT Command for UNIX:select(), 9.0.140, 6 Nov 2021";
 
 /*  C K U C N S  --  Terminal connection to remote system, for UNIX  */
 /*
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2010,
+  Copyright (C) 1985, 2021,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -469,7 +469,7 @@ printon() {				/* Turn printing on */
     } else {				/* Append to file */
 	struct filinfo xx;
 	xx.bs = 0; xx.cs = 0; xx.rl = 0; xx.org = 0; xx.cc = 0;
-	xx.typ = 0; xx.dsp = XYFZ_A; xx.os_specific = NUL;
+	xx.typ = 0; xx.dsp = XYFZ_A; xx.os_specific = "";
 	xx.lblopts = 0;
 	x = zopeno(ZMFILE,p,NULL,&xx);
     }
