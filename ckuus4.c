@@ -362,6 +362,7 @@ extern char rexxbuf[];
 
 extern int tfline[];
 
+/* This is referenced from other modules so can't be static */
 char *wkdays[] = {
     "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
 };
@@ -500,7 +501,7 @@ extern char *topline;
 #endif /* COMMENT */
 
 extern char *m_arg[MACLEVEL][10]; /* You have to put in the dimensions */
-extern char *g_var[GVARS];        /* for external 2-dimensional arrays. */
+extern char *g_var[GVARS+1];      /* for external 2-dimensional arrays. */
 #ifdef DCMDBUF
 extern int *count, *inpcas;
 #else
@@ -3515,7 +3516,7 @@ doxlate() {
       return(incs);
 
 #ifdef OS2
-    if (isunicode())
+    if (ck_isunicode())
       tocs = "ucs2";
     else
 #endif /* OS2 */
@@ -9796,7 +9797,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
               for (i = 0; i < len; i++) {
                   int pos = i + col;
                   if (pos < line->width) {
-                      if (isunicode())
+                      if (ck_isunicode())
                         fnval[i] = (CHAR) utolxlat(cells[pos].c);
                       else
                         fnval[i] = (CHAR) (cells[pos].c & 0xFF);

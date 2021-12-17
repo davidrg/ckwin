@@ -3599,7 +3599,6 @@ dosexp(s) char *s; {                    /* s = S-Expression */
         if (!q)
           goto xdosexp;
         n = q->a_size;                  /* Number of items */
-//        printf("XXX cksplit=%d\n",n);
         debug(F101,sexpdebug("split"),"",n);
         if (n < 0 || n > SEXPMAX) {     /* Check for too many */
             printf("?Too many operands: max = %d\n",SEXPMAX);
@@ -3609,9 +3608,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
         if (n == 0)                     /* None, result is NULL, done. */
           goto xdosexp;
         if (n == 1 && s[0] == '(') {    /* One but it's another SEXP */
-//            printf("XXX s.00=[%s]\n",s);
             s2 = dosexp(s);
-//            printf("XXX s2.00=[%s]\n",s2);
             goto xdosexp;
         }
         if (n == 1 && s[0] == '\047') { /* One but it's a string constant */
@@ -3620,7 +3617,6 @@ dosexp(s) char *s; {                    /* s = S-Expression */
             if (s2[1] == '(' && s2[x-1] == ')') { /* '(string) */
                 s2[x-1] = NUL;
                 s2 += 2;
-//                printf("XXX s2.2=[%s]\n",s2);
             }
             goto xdosexp;
         }
@@ -3633,9 +3629,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
               makestr(&(p[i]),p2[i]);
         }
         if (s[0] == '(') {              /* Operator is an S-Expression */
-//            printf("XXX p[1]=[%s] s=[%s]\n",p[1],s);
             s2 = dosexp(p[1]);          /* Replace it by its value */
-//            printf("XXX s2.1=[%s]\n",s2);
             if (s2[0] == '\047') {      /* LISP string literal */
                 int x = (int) strlen(s2);
                 if (s2[1] == '(' && s2[x-1] == ')') { /* '(string) */
@@ -4112,7 +4106,6 @@ dosexp(s) char *s; {                    /* s = S-Expression */
             s2 = p[2];
             if (!s2) s2 = "";
             xx = strlen(s2);
-//            printf("XXX ENTRY: %s, len=%d\n",s2,xx);
             if (xx = 0)                 /* Null or empty arg */
               goto xdosexp;
 
@@ -4122,29 +4115,21 @@ dosexp(s) char *s; {                    /* s = S-Expression */
 
             /* Case 2 - S-expression that evaluates to a quoted string */
             if (s2[0] == '(' && s2[xx-1] == ')') {
-//                printf("XXX SEXP: %s\n",p[2]);
                 s2 = dosexp(s2);
-//                printf("XXX SEXP EVALUATED: %s\n",p[2]);
             } else if (s2[0] != '\047') {
             /* Case 3 - Variable */
-//                printf("XXX MACRO NAME: %s\n",p[2]);
                 if ((k = mxlook(mactab,p[2],nmac)) >= 0) {
                     s2 = mactab[k].mval;
-//                    printf("XXX MACRO VALUE: %s\n",s2);
                 } else {
-//                    printf("XXX UNDEFINED MACRO: %s\n",p[2]);
                     s2 = "";
                 }
             }
             /* If result is a quoted string, unquote it */
-//            printf("XXX BEFORE UNQUOTING: %s\n",s2);
             xx = strlen(s2);
             if (s2[0] == '\047' && s2[1] == '(' && s2[xx-1] == ')') {
-//                printf("XXX HAVE QUOTED STRING: %s\n",s2);
                 s2[xx-1] = NUL;
                 s2 += 2;
             }
-//            printf("XXX RESULT: %s\n",s2);
             goto xdosexp;
 
         } else if (x == SX_STR) {
@@ -4207,13 +4192,10 @@ dosexp(s) char *s; {                    /* s = S-Expression */
         }
 #else
         if (*s2 != '\047') {            /* Not quoted */
-//            printf("XXX UNQUOTED ARG %s\n",s2);
             if (x == SX_ECH && (k = mxlook(mactab,s2,nmac)) > -1) {
                 s2 = mactab[k].mval;
-//                printf("XXX MACRO DEF %s\n",s2);                
             } else {
               s2 = dosexp(s2);      /* No, evaluate it */
-//              printf("XXX SEXP VALUE %s\n",s2);                
             }
             if (sexprc && x != SX_ECH)
                 goto xdosexp;
@@ -4710,7 +4692,6 @@ dosexp(s) char *s; {                    /* s = S-Expression */
 
     if (!s2) s2 = "";
     debug(F111,"xdosexp s2",s2,sexprc);
-//    printf("XXX xdosexp s2=[%s]\n",s2);
     if (x == SX_ECH) s2 = "";
     debug(F111,"xdosexp s2 ECHO",s2,sexprc);
 

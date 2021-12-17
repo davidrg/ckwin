@@ -1535,7 +1535,7 @@ cmdlin() {
                   }
             }
         } else if (!haveurl) {		/* No dash where expected */
-	    char xbuf[32];
+	    char xbuf[40];        /* enlarged a bit due to warning 20211209 */
             char buf[128];
 	    int k;
 	    k = ckstrncpy(xbuf,*xargv,40);

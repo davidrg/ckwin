@@ -33,43 +33,45 @@
 /*
   Curses/Termcap function prototypes...
   Indented for easier reading 3 November 2021
+  Un-indented 7 December 2021 because some old C compilers
+  require '#' directives to be on the left margin.
 */
 #ifndef NOHTERMCAP
-  #ifdef NOTERMCAP
-  #define NOHTERMCAP
-  #else
-  #ifndef BSD44
-    #define NOHTERMCAP
-    #else
-    #ifdef __bsdi__
-      #define NOHTERMCAP
-      #else
-      #ifdef OPENBSD
-        #define NOHTERMCAP
-        #else
-        #ifdef MACOSX
-          #ifndef OLDMACOSX           
-            #include <term.h>           /* macOS after 10.12 */
-            #include <curses.h>
-          #endif /* OLDMACOSX */
-          #define NOHTERMCAP
-          #endif /* MACOSX */
-        #endif /* OPENBSD */
-      #endif /* __bsdi__ */
-    #endif /* BSD44 */
-  #endif /* NOTERMCAP */
+#ifdef NOTERMCAP
+#define NOHTERMCAP
+#else
+#ifndef BSD44
+#define NOHTERMCAP
+#else
+#ifdef __bsdi__
+#define NOHTERMCAP
+#else
+#ifdef OPENBSD
+#define NOHTERMCAP
+#else
+#ifdef MACOSX
+#ifndef OLDMACOSX           
+#include <term.h>           /* macOS after 10.12 */
+#include <curses.h>
+#endif /* OLDMACOSX */
+#define NOHTERMCAP
+#endif /* MACOSX */
+#endif /* OPENBSD */
+#endif /* __bsdi__ */
+#endif /* BSD44 */
+#endif /* NOTERMCAP */
 #endif /* NOHTERMCAP */
 
 #ifndef NOTERMCAP
-  #ifdef BSD44
-    #ifndef NOHTERMCAP
-    #include <termcap.h>
-    #endif /* NOHTERMCAP */
-  #endif /* BSD44 */
+#ifdef BSD44
+#ifndef NOHTERMCAP
+#include <termcap.h>
+#endif /* NOHTERMCAP */
+#endif /* BSD44 */
 #else  /* !BSD44 */
-  #ifdef linux
-  #include <term.h>
-  #endif /* linux */
+#ifdef linux
+#include <term.h>
+#endif /* linux */
 #endif /* NOTERMCAP */
 
 /*

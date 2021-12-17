@@ -16150,7 +16150,7 @@ b_to_u(c, buf, buflen, setsize) CHAR c, * buf; int buflen, setsize;
 
 #ifndef OS2
 int
-isunicode(                              /* Tells whether the host we are */
+ck_isunicode(                              /* Tells whether the host we are */
 #ifdef CK_ANSIC                         /* running on supports Unicode */
           void                          /* display */
 #endif /* CK_ANSIC */

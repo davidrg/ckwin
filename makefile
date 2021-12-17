@@ -1,12 +1,12 @@
 # makefile / Makefile / ckuker.mak / CKUKER.MAK
 #
-# Wed Oct  7 16:51:19 2020
-BUILDID=20201007
-CKVER= "9.0.305" # Alpha.03
+# Wed Dec 15 13:45:05 2021
+BUILDID=20211209
+CKVER= "9.0.305" # Alpha.06
 #
 # -- Makefile to build C-Kermit for UNIX and UNIX-like platforms --
 #
-# Copyright (C) 1985, 2020,
+# Copyright (C) 1985, 2021,
 #   Trustees of Columbia University in the City of New York.
 #   All rights reserved.  See the C-Kermit COPYING.TXT file or the
 #   copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -5842,6 +5842,10 @@ hpux0900gcc:
 #to KFLAGS.  These should be harmless in 10.00 and 10.10, if any of examples
 #of those still exist, but I have no way to test this hypothesis.
 #OK: 2009/11/16
+#As of version 9.0305 Alpha.06 we have to add KFLAG "-DNO_PTY_XOPEN_SOURCE" 
+#to "make hpux1000" and "make hpux1000t" because "#define _XOPEN_SOURCE 500"
+#that was added to ckupty.c in 2014 triggers big problems with the HP C
+#compiler in default (i.e. pre-ANSI K&R) mode.
 hpux1000:
 	@$(MAKE) hpux-header
 	@LIBS='-lHcurses' ; \
@@ -5863,6 +5867,12 @@ hpux1000:
 	                ;; \
 	   [AB].11.?*)  KFLAGS='-DHPUX1100 -D__HP_CURSES $(KFLAGS)' ; \
 	                AFLAGS='' ; LIBS='-lcurses' ;; \
+	esac ; \
+	#echo KTARGET="$${KTARGET:-$(@)}" ; \
+	case "$${KTARGET:-$(@)}" in \
+	  hpux1000 | hpux1000t | \
+	  hpux1100 | hpux1100t) \
+	     KFLAGS="$$KFLAGS -DNO_PTY_XOPEN_SOURCE" ;; \
 	esac ; \
 	OFLAGS=$${OFLAGS:-$$AFLAGS} ; \
 	$(MAKE) "SHELL=/usr/bin/sh" xermit KTARGET=$${KTARGET:-$(@)} \
@@ -5915,7 +5925,7 @@ hpux1000tgcc+ssl hpux1000tgcc+openssl:
 	$(MAKE) hpux1000t KTARGET=$${KTARGET:-$(@)}
 
 #HP-9000 HP-UX 10.00 and higher with ANSI prototyping and optimization.
-#PA-RISC only, no Motorola or other hardware is support in HP-UX 10.00++.
+#PA-RISC only, no Motorola or other hardware is supported in HP-UX 10.00++.
 #The unbundled optional compiler is required.
 #Your path should start with /opt/ansic/bin.
 # -Wl,-Fw = Remove stack unwind table (info used by debuggers).

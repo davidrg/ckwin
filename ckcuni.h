@@ -225,12 +225,7 @@ extern int (*xl_tx[MAXTXSETS+1])();
 #endif /* CK_ANSIC */
 extern struct x_to_unicode * txrinfo[MAXTXSETS+1];
 
-#ifdef COMMENT
-_PROTOTYP(int isunicode, (void));
-#else
-/* [jt] 2013/11/21 - duplicate definition issue */
-_PROTOTYP(static int isunicode, (void));
-#endif /* COMMENT */
+_PROTOTYP(int ck_isunicode, (void));
 
 _PROTOTYP(int utf8_to_ucs2, (CHAR, USHORT **));
 _PROTOTYP(int ucs2_to_utf8, (USHORT, CHAR **));
@@ -256,7 +251,7 @@ static _inline
 _Inline
 #endif /* NT */
 int
-isunicode(
+ck_isunicode(
 #ifdef CK_ANSIC
           void
 #endif /* CK_ANSIC */

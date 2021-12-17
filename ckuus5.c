@@ -5606,7 +5606,7 @@ shotcs(csl,csr) int csl, csr; {         /* Show terminal character set */
         else
           printf("     Mode: 8-bit Multinational Mode\n");
     }
-    if ( isunicode() )
+    if ( ck_isunicode() )
         printf("    Local: Unicode display / %s input\n",
                 csl == TX_TRANSP ? "transparent" :
                 csl == TX_UNDEF ? "undefined" : txrinfo[csl]->keywd);
@@ -7361,7 +7361,7 @@ doshow(x) int x; {
         printf(" File character-set:              %s\n",
                fcsinfo[fcharset].keyword);
 #ifdef OS2
-        if ( isunicode() ) {
+        if ( ck_isunicode() ) {
         printf(" Terminal Character (remote):     %s\n",
               tt_utf8 ? "utf-8" : tcsr == TX_TRANSP ? "transparent" :
               tcsr == TX_UNDEF ? "undefined" : txrinfo[tcsr]->keywd);
@@ -12125,7 +12125,7 @@ shofea() {
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
 #endif /* UNICODE */
 #ifdef CKOUNI
-    if (isunicode())
+    if (ck_isunicode())
       printf(" Unicode support for ISO-2022 Terminal Emulation\n");
     else
       printf(" Unicode translation for Terminal Character-Sets\n");

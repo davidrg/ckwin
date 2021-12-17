@@ -1,8 +1,8 @@
-char *ckptyv = "Pseudoterminal support, 9.0.104, 18 Sep 2020";
+char *ckptyv = "Pseudoterminal support, 9.0.105, 07 Dec 2021";
 
 /*  C K U P T Y  --  C-Kermit pseudoterminal control functions for UNIX  */
 
-/* Last update: Sat Sep 19 15:25:13 2020 */
+/* Last update: Tue Dec  7 19:40:13 2021 */
 
 /*
   Copyright 1995 by the Massachusetts Institute of Technology.
@@ -54,10 +54,16 @@ char *ckptyv = "Pseudoterminal support, 9.0.104, 18 Sep 2020";
    . SCO UNIX 3.2v4.2 (compile fails with syntax error in <memory.h>)
    . HP-UX 8.00 and earlier (no vhangup or ptsname routines)
 */
+#ifndef NO_PTY_XOPEN_SOURCE
+#ifdef __FreeBSD__                      /* bs  20151224 */
+#define NO_PTY_XOPEN_SOURCE
+#endif /* __FreeBSD__ */
+#endif /* NO_PTY_XOPEN_SOURCE */
 
-#ifndef __FreeBSD__			/* bs  20151224 */
-#define _XOPEN_SOURCE 500		/* mdw 20140223 */
-#endif /* __FreeBSD__ */		/* bs  20151224 */
+#ifndef NO_PTY_XOPEN_SOURCE             /* fdc 20211207 */
+#define _XOPEN_SOURCE 500               /* mdw 20140223 */
+#endif /* NO_PTY_XOPEN_SOURCE */
+
 #include <stdlib.h>			/* mdw 20140223 */
 #include "ckcsym.h"
 #include "ckcdeb.h"			/* To pick up NETPTY definition */
@@ -416,7 +422,7 @@ int pty_master_fd = -1;			/* pty master file descriptor */
   copy_termbuf(cp)
   set_termbuf()
 
-  These three routines are used to get and set the "termbuf" structure
+  These three routines are used to get and set the "termbuf" structure
   to and from the kernel.  init_termbuf() gets the current settings.
   copy_termbuf() hands in a new "termbuf" to write to the kernel, and
   set_termbuf() writes the structure into the kernel.

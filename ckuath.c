@@ -1,4 +1,4 @@
-char *ckathv = "Authentication, 9.0.237, 14 Nov 2022";
+char *ckathv = "Authentication, 9.0.237, 14 Nov 2021";
 /*
   C K U A T H . C  --  Authentication for C-Kermit
 

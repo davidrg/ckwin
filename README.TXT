@@ -1,6 +1,14 @@
-C-KERMIT 9.0.305 ALPHA TESTING
+C-KERMIT 9.0.306 ALPHA TESTING
 
-9.0.305 Alpha.05 14 Nov 2020
+9.0.305 Alpha.06 15 Dec 2021
+
+At some point since the last real release of C-Kermit (9.0.302 in 2011) some
+ANSI C constructions snuck into the code so pre-ANSI (e.g. K&R) C compilers
+could no longer build C-Kermit.  This has been fixed in Alpha.06, along with
+numerous picky-compiler warnings.  Vielen Dank to Peter Eichhorn of
+Assyst GmbH, Aschheim-Dornach, Germany, "Herr HP-UX C-Kermit".
+
+9.0.305 Alpha.05 14 Dec 2021
 
 New support for 1,500,000bps serial port speed for platforms that offer
 it.  Numerous adjustments to APIs, header files, and C compilers that

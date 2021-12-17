@@ -3,7 +3,7 @@
 #endif /* SSHTEST */
 
 #include "ckcsym.h"
-char *userv = "User Interface 9.0.316, 06 Nov 2021";
+char *userv = "User Interface 9.0.317, 07 Dec 2021";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 
@@ -93,7 +93,10 @@ char *userv = "User Interface 9.0.316, 06 Nov 2021";
 #include "ckcnet.h"			/* Network symbols */
 #include "ckuusr.h"
 #include "ckcxla.h"
-#include "ckuath.h"             /*AGN missing Kerberos prototypes 4-Nov-2021*/
+
+#ifdef CK_AUTHENTICATION      /* fdc - only include this for secure builds  */
+#include "ckuath.h"           /* AGN missing Kerberos prototypes 4-Nov-2021 */
+#endif /* CK_AUTHENTICATION */
 
 int g_fncact = -1;			/* Needed for NOICP builds */
 int noinit = 0;				/* Flag for skipping init file */
@@ -6371,8 +6374,8 @@ clrarray(cx) int cx; {
     return(success = 1);
 }
 
-extern char **aa_ptr[CMDSTKL][28];
-extern int aa_dim[CMDSTKL][28];
+extern char **aa_ptr[CMDSTKL][32];
+extern int aa_dim[CMDSTKL][32];
 
 static int				/* Create symbolic link to an array */
 linkarray() {
@@ -7925,7 +7928,11 @@ hmsgaa(s,s2) char *s[]; char *s2;
 int
 isinternalmacro(x) int x; {          /* Test if macro is internally defined */
     char * m;
-    char * tags[] = { "_whi", "_for", "_sw_", "_if_" };
+    /*
+       7 Dec 2021: "static" added to prevent fatal "Automatic aggregate
+       initialization is an ANSI feature" error in HP-UX 10.00.
+    */
+    static char * tags[] = { "_whi", "_for", "_sw_", "_if_" };
     int i, internal = 0;
 
     m = mactab[x].kwd;

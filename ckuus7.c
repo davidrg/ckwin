@@ -4422,7 +4422,7 @@ settrm() {
               if ((y = cmcfm()) < 0)    /* Confirm the command */
                   return(y);
 #ifdef OS2
-            if ( isunicode() && x == TX_TRANSP ) {
+            if ( ck_isunicode() && x == TX_TRANSP ) {
                 /* If we are in unicode display mode then transparent
                  * only affects the output direction.  We need to know
                  * the actual remote character set in order to perform
@@ -4565,7 +4565,7 @@ settrm() {
               if ((y = cmcfm()) < 0)    /* Confirm the command */
                   return(y);
 #ifdef OS2
-            if ( isunicode() && x == TX_TRANSP ) {
+            if ( ck_isunicode() && x == TX_TRANSP ) {
                 /* If we are in unicode display mode then transparent
                  * only affects the output direction.  We need to know
                  * the actual remote character set in order to perform
