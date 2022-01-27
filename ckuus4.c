@@ -6326,14 +6326,14 @@ dostat(brief) int brief; {
 #endif /* XYZ_INTERNAL */
     n++;
     if (!ftp) {
-        if (!xferstat > 0) {
+        if (xferstat > 0) {             /* Transfer OK - show CRC */
             if (docrc)
               printf(" crc-16 of file(s)      : %ld\n", crc16);
             else
               printf(" crc-16 of file(s)      : (disabled)\n");
             n++;
         }
-        if (!xferstat && *epktmsg) {
+        if ((xferstat == 0) && *epktmsg) { /* Transfer failed */
             printf(" reason                 : %s\n", epktmsg);
             n++;
         }
@@ -11999,7 +11999,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
             r = tp[i];                  /* To construct interpreted arg */
             j = 0;                      /* Output buf pointer */
             state = 0;                  /* Initial state */
-            while (c = *s++) {          /* Loop thru arg chars */
+            while ((c = *s++)) {          /* Loop thru arg chars */
                 if (j > 255)            /* Output buf full */
                   break;
                 switch (state) {

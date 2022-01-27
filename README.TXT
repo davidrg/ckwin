@@ -1,4 +1,19 @@
-C-KERMIT 9.0.306 ALPHA TESTING
+C-KERMIT 9.0.305 ALPHA TESTING
+
+9.0.305 Alpha.07 24 Jan 2022
+
+We have our first successful build with a REAL (not simulated) pre-ANSI K&R
+non-optimizing C compiler (HP-UX 11.11 with Bundled compiler).  Built
+successfuly for the first time in a decade with Kerberos 5; this was on Red
+Hat Linux 6.10.  Also the first successful Solaris build.  "make install"
+was failing because some text file were missing in tar/zip archives.
+Numerous picky compiler warnings silenced.
+
+I'm not sure it makes sense to bundle a lot of long plain-text documentation
+files in tar and zip archives: the installation instructions, the "beware"
+files, the configuration options file, the C-Kermit program logic manual,
+sample initialization files, etc.  They are all available as web pages on
+the Kermit website and most of them haven't changed in a long time.
 
 9.0.305 Alpha.06 15 Dec 2021
 

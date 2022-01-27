@@ -2,11 +2,11 @@
 #
 # Wed Dec 15 13:45:05 2021
 BUILDID=20211209
-CKVER= "9.0.305" # Alpha.06
+CKVER= "9.0.305" # Alpha.07
 #
 # -- Makefile to build C-Kermit for UNIX and UNIX-like platforms --
 #
-# Copyright (C) 1985, 2021,
+# Copyright (C) 1985, 2022,
 #   Trustees of Columbia University in the City of New York.
 #   All rights reserved.  See the C-Kermit COPYING.TXT file or the
 #   copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -16,7 +16,6 @@ CKVER= "9.0.305" # Alpha.06
 # Author: Frank da Cruz (principal author)
 # Email:  fdc@kermitproject.org
 # Web:    http://www.kermitproject.org
-# FTP:    ftp://ftp.kermitproject.org
 #
 # Note: Author is no longer at Columbia University or at the 115th Street
 # address as of 1 July 2011.  Even so, C-Kermit remains Copyright Columbia

@@ -1064,7 +1064,8 @@ input() {
 			errpkt((CHAR *)"Too many retries");
 			break;
 		    } else continue;	/* Resend ok, go read another packet */
-		} else if ((rsn == (pktnum + 1) % 64)) { /* NAK for next pkt */
+
+		} else if (rsn == ((pktnum + 1) % 64)) { /* NAK for next pkt */
 		    if (wslots > 1) {
 			debug( F101,"NAK for next packet, windowing","",rsn);
 			x = resend(winlo); /* Resend window-low */

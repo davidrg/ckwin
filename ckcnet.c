@@ -2969,7 +2969,7 @@ tcpsrv_open(name,lcl,nett,timo) char * name; int * lcl; int nett; int timo; {
                 printf(" Reverse DNS Lookup... ");
                 fflush(stdout);
             }
-            if (host = gethostbyaddr((char *)&saddr.sin_addr,4,PF_INET)) {
+            if ((host = gethostbyaddr((char *)&saddr.sin_addr,4,PF_INET))) {
                 host = ck_copyhostent(host);
                 debug(F100,"tcpsrv_open gethostbyaddr != NULL","",0);
                 if (!quiet) {
@@ -4903,7 +4903,7 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
             printf(" Reverse DNS Lookup... ");
             fflush(stdout);
         }
-        if (host = gethostbyaddr((char *)&r_addr.sin_addr,4,PF_INET)) {
+        if ((host = gethostbyaddr((char *)&r_addr.sin_addr,4,PF_INET))) {
             char * s;
             host = ck_copyhostent(host);
             debug(F100,"netopen gethostbyname != NULL","",0);
@@ -10787,7 +10787,7 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len, agent)
             printf(" Reverse DNS Lookup... ");
             fflush(stdout);
         }
-        if (host = gethostbyaddr((char *)&r_addr.sin_addr,4,PF_INET)) {
+        if ((host = gethostbyaddr((char *)&r_addr.sin_addr,4,PF_INET))) {
             char * s;
             host = ck_copyhostent(host);
             debug(F100,"http_open gethostbyname != NULL","",0);

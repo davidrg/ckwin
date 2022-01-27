@@ -1,4 +1,4 @@
-char *fnsv = "C-Kermit functions, 9.0.237, 9 December 2021";
+char *fnsv = "C-Kermit functions, 9.0.238, 21 December 2021";
 
 char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 
@@ -3362,7 +3362,7 @@ sipkt(c) char c;
 	debug(F101,"sipkt getsbuf","",k);
     }
     rp = rpar();			/* Get protocol parameters. */
-    debug(F110,"sipkt rp","",rpar); /* (args in wrong order fixed 20211209) */
+    debug(F110,"sipkt rp","",rp);     /* "rp" (number), not rpar (function) */
     if (!rp) rp = (CHAR *)"";
     x = spack(c,pktnum,(int)strlen((char *)rp),rp); /* Send them. */
     return(x);

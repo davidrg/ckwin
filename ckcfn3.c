@@ -1483,7 +1483,7 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 	yy->disp.val = dsbuf;
 	yy->disp.len = 1;
     }
-    while (c = *s++) {			/* Get attribute tag */
+    while ((c = *s++)) {                /* Get attribute tag */
 	aln = xunchar(*s++);		/* Length of attribute string */
 	switch (c) {
 #ifdef COMMENT				/* This case combined with '1' below */
@@ -2123,7 +2123,7 @@ opena(f,zz) char *f; struct zattr *zz; {
 	  return(-17);			/* Secret code */
     }
     debug(F111,"opena [file]=mode: ",f,fcb.dsp);
-    if (x = openo(f,zz,&fcb)) {		/* Try to open the file. */
+    if ((x = openo(f,zz,&fcb))) {       /* Try to open the file. */
 #ifdef pdp11
 	tlog(F110," local name:",f,0L);	/* OK, open, record local name. */
 	makestr(&prfspec,f);		/* New preliminary name */

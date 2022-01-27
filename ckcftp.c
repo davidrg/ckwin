@@ -16320,7 +16320,7 @@ secure_getbyte(fd,fc) int fd,fc; {
                                );
                   return(ERR);
               }
-              if ((kerror = looping_read(fd, ucbuf, length)) != length) {
+              if ((kerror = looping_read(fd,(char *)ucbuf,length)) != length) {
                   secure_error("Couldn't read %u byte PROT buffer: %s",
                                length,
                                kerror == -1 ? ck_errstr() : "premature EOF"

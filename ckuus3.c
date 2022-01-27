@@ -10402,7 +10402,7 @@ case XYCARR:                            /* CARRIER-WATCH */
                       apcactive == APC_REMOTE && !(apcstatus & APC_UNCH))
                     return(success = 0);
 #endif /* CK_APC */
-                  ck_tn_enc_start();
+                  ck_tn_enc_start(); /* fdc 2021-12-17 */
                   break;
                 case TN_EN_STOP:
                   if ((z = cmcfm()) < 0)
@@ -10413,7 +10413,7 @@ case XYCARR:                            /* CARRIER-WATCH */
                       apcactive == APC_REMOTE && !(apcstatus & APC_UNCH))
                     return(success = 0);
 #endif /* CK_APC */
-                  ck_tn_enc_stop();
+                  ck_tn_enc_stop(); /* fdc 2021-12-17 */
                   break;
                 default:
                   if ((z = cmcfm()) < 0)

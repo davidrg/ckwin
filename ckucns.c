@@ -1,5 +1,5 @@
 #include "ckcsym.h"
-char *connv = "CONNECT Command for UNIX:select(), 9.0.140, 6 Nov 2021";
+char *connv = "CONNECT Command for UNIX:select(), 9.0.141, 17 Dec 2021";
 
 /*  C K U C N S  --  Terminal connection to remote system, for UNIX  */
 /*
@@ -115,6 +115,10 @@ struct timeval {
 #endif /* HPUX1100 */
 #endif /* HPUX10 */
 #endif /* HPUX */
+
+#ifdef CK_AUTHENTICATION
+#include "ckuath.h"                     /* fdc 2021-12-17 */
+#endif /* CK_AUTHENTICATION */
 
 /* Internal function prototypes */
 

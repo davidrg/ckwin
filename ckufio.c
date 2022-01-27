@@ -992,6 +992,10 @@ extern int ckxlogging;
 #define printf ckxprintf
 #endif /* CKXPRINTF */
 
+#ifdef CK_AUTHENTICATION
+#include "ckuath.h"                     /* fdc 2021-12-17 */
+#endif /* CK_AUTHENTICATION */
+
 int ckxanon = 1;                        /* Anonymous login ok */
 int ckxperms = 0040;                    /* Anonymous file permissions */
 int ckxpriv = 1;			/* Priv'd login ok */
@@ -7553,7 +7557,7 @@ zfnqfp(fname, buflen, buf)  char * fname; int buflen; char * buf; {
         y = 0;
     } else {                            /* Pathname is relative */
         char * p;
-        if (p = zgtdir()) {             /* So get current directory */
+        if ((p = zgtdir())) {           /* So get current directory */
             debug(F110,"zfnqfp zgtdir",p,0);
             x = ckstrncpy(buf,p,len);
             buf[x++] = '/';

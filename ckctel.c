@@ -1,4 +1,4 @@
-char *cktelv = "Telnet support, 9.0.277, 06 Nov 2021";
+char *cktelv = "Telnet support, 9.0.278, 21 Dec 2021";
 #define CKCTEL_C
 
 int sstelnet = 0;                       /* Do server-side Telnet negotiation */
@@ -34,6 +34,14 @@ int sstelnet = 0;                       /* Do server-side Telnet negotiation */
 
 #include "ckcsym.h"
 #include "ckcdeb.h"
+
+#ifdef TIMEH
+#include <time.h>                       /* fdc 2012-12-17 */
+#else
+#ifdef SYSTIMH
+#include <sys/time.h>
+#endif  /* SYSTIMH */
+#endif  /* TIMEH */
 
 #ifdef TNCODE
 #include "ckcker.h"
@@ -4661,7 +4669,7 @@ tn_xdoop(z, echo, fn) CHAR z; int echo; int (*fn)();
 #ifdef CK_ENVIRONMENT
               case TELOPT_NEWENVIRON:   /* SB NEW-ENVIRON SEND */
                 {
-                  char request[6];      /* request it */
+                  CHAR request[6];      /* request it */
                   sprintf(request,"%cUSER",TEL_ENV_VAR);        /* safe */
                   tn_ssbopt(TELOPT_NEWENVIRON,TELQUAL_SEND,request,
                             strlen(request));

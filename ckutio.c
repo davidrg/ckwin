@@ -2288,8 +2288,8 @@ sysinit() {
     {
 	extern char * tn_loc;
 	char *p;
-	if (p = getenv("LOCATION"))
-	  if (tn_loc = (char *)malloc((int)strlen(p)+1))
+	if ((p = getenv("LOCATION")))
+	  if ((tn_loc = (char *)malloc((int)strlen(p)+1)))
 	    strcpy(tn_loc,p);		/* safe */
     }
 #endif /* CK_SNDLOC */

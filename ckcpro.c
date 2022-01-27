@@ -7,7 +7,7 @@
 char *wartv = "Wart Version 2.15, 18 September 2020 ";
 
 char *protv =                                                     /* -*-C-*- */
-"C-Kermit Protocol Module 9.0.164, 23 February 2014";
+"C-Kermit Protocol Module 9.0.165, 17 December 2021";
 
 int kactive = 0;			/* Kermit protocol is active */
 
@@ -37,6 +37,10 @@ int kactive = 0;			/* Kermit protocol is active */
 #endif /* NT */
 #include "ckocon.h"
 #endif /* OS2 */
+
+#ifdef CK_AUTHENTICATION
+#include "ckuath.h"                     /* fdc 2021-12-17 */
+#endif /* CK_AUTHENTICATION */
 
 /*
  Note -- This file may also be preprocessed by the UNIX Lex program, but
@@ -2392,7 +2396,7 @@ rcv_firstdata() {
 		n = (int)strlen(MAILCMD) +    /* Mail command */
 		  (int)strlen(s) +	      /* address */
 		  (int)strlen(ofilnam) + 32;  /* subject */
-		if (tmp = (char *)malloc(n)) {
+		if ((tmp = (char *)malloc(n))) {
 		    ckmakxmsg(tmp,n,
 			      MAILCMD," -s \"",ofilnam,"\" ",s,
 			      NULL,NULL,NULL,NULL,NULL,NULL,NULL);
@@ -2406,7 +2410,7 @@ rcv_firstdata() {
 		int n;
 		extern char *PRINTCMD;
 		n = (int)strlen(PRINTCMD) + (int)strlen(iattr.disp.val+1) + 4;
-		if (tmp = (char *)malloc(n)) {
+		if ((tmp = (char *)malloc(n))) {
 		    sprintf(tmp,	/* safe (prechecked) */
 			    "%s %s", PRINTCMD, iattr.disp.val + 1);
 		    x = openc(ZOFILE,(char *)tmp);
@@ -2976,7 +2980,7 @@ rcv_s_pkt() {
 #ifdef CK_TMPDIR
 	if (dldir && !f_tmpdir) {	/* If they have a download directory */
 	    debug(F110,"receive download dir",dldir,0);
-	    if (s = zgtdir()) {		/* Get current directory */
+	    if ((s = zgtdir())) {		/* Get current directory */
 		debug(F110,"receive current dir",s,0);
 		if (zchdir(dldir)) {	/* Change to download directory */
 		    debug(F100,"receive zchdir ok","",0);
@@ -3181,7 +3185,7 @@ proto() {
 #endif /* IKS_OPTION */
 #ifdef CK_ENCRYPTION
         if (tn_no_encrypt_xfer && !(sstelnet || inserver)) {
-            ck_tn_enc_stop();
+            ck_tn_enc_stop(); /* fdc 2021-12-17 */
         }
 #endif /* CK_ENCRYPTION */
     }
@@ -3199,7 +3203,7 @@ proto() {
 #ifdef TNCODE
 #ifdef CK_ENCRYPTION
         if (tn_no_encrypt_xfer && !(sstelnet || inserver)) {
-            ck_tn_enc_start();
+            ck_tn_enc_start(); /* fdc 2021-12-17 */
         }
 #endif /* CK_ENCRYPTION */
 #ifdef IKS_OPTION
@@ -3470,7 +3474,7 @@ _PROTOTYP( int pxyz, (int) );
 #ifdef CK_TMPDIR
 	if (sstate == 'v') {		/* If receiving and... */
 	    if (dldir && !f_tmpdir) {	/* if they have a download directory */
-		if (s = zgtdir()) {	/* Get current directory */
+                if ((s = zgtdir())) {   /* Get current directory */
 		    if (zchdir(dldir)) { /* Change to download directory */
 			ckstrncpy(savdir,s,TMPDIRLEN);
 			f_tmpdir = 1;	/* Remember that we did this */

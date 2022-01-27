@@ -6252,7 +6252,12 @@ printw(str, a1, a2, a3, a4, a5, a6, a7, a8)
 
 #define CK_CURPOS
 int
-ck_curpos(row, col) {
+#ifdef CK_ANSIC
+ck_curpos(int row, col)
+#else
+ck_curpos(row, col) int row, col;
+#endif  /* CK_ANSIC */
+ {
     debug(F111,"VMS smg ck_curpos",ckitoa(row),col);
     if (!smg_inited || !smg_open) {
         initscr();
@@ -6370,7 +6375,12 @@ ck_cleol() {
 }
 
 int
-ck_curpos(row, col) int row, col; {
+#ifdef CK_ANSIC
+ck_curpos(int row, col)
+#else
+ck_curpos(row, col) int row, col;
+#endif  /* CK_ANSIC */
+ {
     move(row, col);
     return(0);
 }
