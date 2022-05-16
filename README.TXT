@@ -1,21 +1,29 @@
-C-KERMIT 9.0.305 ALPHA TESTING
+C-KERMIT 10.0 DEVELOPMENT
 
-9.0.305 Alpha.07 24 Jan 2022
+For greater detail see https://www.kermitproject.org/ckupdates.html .
 
-We have our first successful build with a REAL (not simulated) pre-ANSI K&R
+C-Kermit 10.0 Beta.01 16 May 2022
+
+Alpha.07 in its basic configuration (e.g. no Kerberos or SSL support) seems
+to have been OK on every platform tested, aside from the ever-increasing
+assortment of picky-compiler warnings.  So after some polishing-up and a
+major version-number promotion, we have the first Beta test.
+
+C-Kermit 9.0.305 Alpha.07 01 Jan 2022
+
+We have our first successful build with a REAL (not simulated) non-ANSI K&R
 non-optimizing C compiler (HP-UX 11.11 with Bundled compiler).  Built
-successfuly for the first time in a decade with Kerberos 5; this was on Red
-Hat Linux 6.10.  Also the first successful Solaris build.  "make install"
-was failing because some text file were missing in tar/zip archives.
-Numerous picky compiler warnings silenced.
+successfuly for the first time in a decade with MIT Kerberos 5.  This was on
+Red Had Linux 6.10.  "make install" was failing because some text file were
+missing in tar/zip archives.  Numerous picky compiler warnings silenced.
 
-I'm not sure it makes sense to bundle a lot of long plain-text documentation
-files in tar and zip archives: the installation instructions, the "beware"
-files, the configuration options file, the C-Kermit program logic manual,
-sample initialization files, etc.  They are all available as web pages on
-the Kermit website and most of them haven't changed in a long time.
+I'm not sure it makes sense to bundle a lot of long plain-text files in
+tar and zip archives: the edit history, installation instruction, the
+"beware" files, the configuration options file, the C-Kermit program logic
+manual, sample initialization files, etc.  They are all available as web
+pages on the Kermit website and most of them haven't changed in a long time.
 
-9.0.305 Alpha.06 15 Dec 2021
+C-Kermit 9.0.305 Alpha.06 15 Dec 2021
 
 At some point since the last real release of C-Kermit (9.0.302 in 2011) some
 ANSI C constructions snuck into the code so pre-ANSI (e.g. K&R) C compilers
@@ -23,7 +31,7 @@ could no longer build C-Kermit.  This has been fixed in Alpha.06, along with
 numerous picky-compiler warnings.  Vielen Dank to Peter Eichhorn of
 Assyst GmbH, Aschheim-Dornach, Germany, "Herr HP-UX C-Kermit".
 
-9.0.305 Alpha.05 14 Dec 2021
+C-Kermit 9.0.305 Alpha.05 14 Dec 2021
 
 New support for 1,500,000bps serial port speed for platforms that offer
 it.  Numerous adjustments to APIs, header files, and C compilers that
@@ -34,7 +42,7 @@ problem was fixed that occured when transferring any file that contained
 successful builds on modern VMS operating system versions on various
 hardware platforms.
 
-9.0.305 Alpha.04 14 Sep 2020
+C-Kermit 9.0.305 Alpha.04 14 Sep 2020
 
 Improvements for VMS builds; most importantly the source-code Zip file 
 was fixed to include no carriage returns; one or more previous versions
@@ -42,23 +50,24 @@ contained a mix of LF and CRLF format files, which was fatal for VMS.  Also
 included: about nine minor changes to address warnings from the VMS build.
 The Zip file for Alpha.04 was created by Zip 3.0 on NetBSD 9.0.
 
-
-9.0.305 Alpha.03 (not published)
+C-Kermit 9.0.305 Alpha.03 (not published)
 
 Some small changes involving errno, SSL ciphers, some declarations, etc.
 
-9.0.305 Alpha.02 19 Sep 2020
+C-Kermit 9.0.305 Alpha.02 19 Sep 2020
 
 No functional changes since last time, but about 30 compile-time warnings
 that were reported by gcc 9.3.0 on Ubuntu 20.04.1 are fixed.  The result
 compiles without warnings there, and also on OpenBSD 9 and Red Hat 6.1.
 
-9.0.305 Alpha.01 24 Jul 2020
+C-Kermit 9.0.305 Alpha.01 24 Jul 2020
 
 Contains to patch to work around the disappearance of the GNU standard I/O
 library symbol "__FILE_defined" from glibc-based Linux distributions such
 as Debian and Ubuntu.  I was not ready to release a new version of C-Kermit
 yet, but this forces the issue.
+
+............................................................................
 
 C-KERMIT 9.0.304 PRERELEASE TESTING
 

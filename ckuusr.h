@@ -4,10 +4,11 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2017,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+    Last update: Thu May 12 12:36:22 2022
 */
 #ifndef CKUUSR_H
 #define CKUUSR_H
@@ -778,6 +779,7 @@ struct stringint {			/* String and (wide) integer */
 #define XXPUTE  268     /* PUTENV */
 #define XXXMSG  269     /* XMESSAGE */
 #define XXCHG   270     /* CHANGE */
+#define XXCSN   271     /* COMPACT-SUBSTRING */
 
 /* End of Top-Level Commands */
 

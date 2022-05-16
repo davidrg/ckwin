@@ -1,5 +1,5 @@
 char *protv =                                                     /* -*-C-*- */
-"C-Kermit Protocol Module 9.0.165, 17 December 2021";
+"C-Kermit Protocol Module 9.0.165, 8 May 2022";
 
 int kactive = 0;			/* Kermit protocol is active */
 
@@ -10,7 +10,7 @@ int kactive = 0;			/* Kermit protocol is active */
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2014
+  Copyright (C) 1985, 2022
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -2315,17 +2315,19 @@ rcv_shortreply() {
 		RESUME;
 		return(-1);
 	    } else {
-		if (rdatap)		/* If we had data */
-		  if (*rdatap)		/* add a line terminator */
-		    if (remfile) {	/* to file */
-			zsoutl(ZOFILE,"");
-		    } else {		/* or to screen. */
+		if (rdatap) {		/* If we had data */
+                    if (*rdatap) {      /* add a line terminator */
+                        if (remfile) {  /* to file */
+                            zsoutl(ZOFILE,"");
+                        } else {        /* or to screen. */
 #ifndef NOICP
-			if (!query || !xcmdsrc)
+                            if (!query || !xcmdsrc)
 #endif /* NOICP */
-			  if (!(quiet && rcdactive))
-			    conoll("");
-		    }
+                              if (!(quiet && rcdactive))
+                                conoll("");
+                        }
+                    }
+                }
 		if (bye_active && network) { /* I sent BYE or REMOTE LOGOUT */
 		    msleep(500);	/* command and got the ACK... */
 		    bye_active = 0;

@@ -1,12 +1,12 @@
 #define CKUTIO_C
 
 #ifdef aegis
-char *ckxv = "Aegis Communications support, 9.0.331, 07 Nov 2021";
+char *ckxv = "Aegis Communications support, 9.0.333, 13 May 2022";
 #else
 #ifdef Plan9
-char *ckxv = "Plan 9 Communications support, 9.0.331, 07 Nov 2021";
+char *ckxv = "Plan 9 Communications support, 9.0.333, 13 May 2022";
 #else
-char *ckxv = "UNIX Communications support, 9.0.331, 07 Nov 2021";
+char *ckxv = "UNIX Communications support, 9.0.333, 13 May 2022";
 #endif /* Plan9 */
 #endif /* aegis */
 
@@ -18,7 +18,7 @@ char *ckxv = "UNIX Communications support, 9.0.331, 07 Nov 2021";
   Author: Frank da Cruz (fdc@columbia.edu),
   The Kermit Project, Bronx, NY.
 
-  Copyright (C) 1985, 2021,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -7659,9 +7659,6 @@ ttsspd(cps) int cps; {
 #ifdef B921600
       case 92160: s = B921600; break;
 #endif /* B921600 */
-#ifdef B1500000
-      case 150000: s = B1500000; break;
-#endif /* B921600 */
 #endif /* HPUX */
       default:
 	ok = 0;				/* Good speed not found, so not ok */
@@ -7970,11 +7967,43 @@ ttspdlist() {
     debug(F101,"ttspdlist B921600","",B921600);
     spdlist[i++] = 921600L;
 #endif /* B921600 */
+
+/* The following are new in C-Kermit 10.0 */
+
+#ifdef B1000000
+    debug(F101,"ttspdlist B1000000","",B1000000);
+    spdlist[i++] = 1000000L;
+#endif /* B1000000 */
+#ifdef B1152000
+    debug(F101,"ttspdlist B1152000","",B1152000);
+    spdlist[i++] = 1152000L;
+#endif /* B1152000 */
 #ifdef B1500000
     debug(F101,"ttspdlist B1500000","",B1500000);
-   spdlist[i++] = 1500000L;
+    spdlist[i++] = 1500000L;
 #endif /* B1500000 */
+#ifdef B2000000
+    debug(F101,"ttspdlist B2000000","",B2000000);
+    spdlist[i++] = 2000000L;
+#endif /* B2000000 */
+#ifdef B2500000
+    debug(F101,"ttspdlist B2500000","",B2500000);
+    spdlist[i++] = 2500000L;
+#endif /* B2500000 */
+#ifdef B3000000
+    debug(F101,"ttspdlist B3000000","",B3000000);
+    spdlist[i++] = 3000000L;
+#endif /* B3000000 */
+#ifdef B3500000
+    debug(F101,"ttspdlist B3500000","",B3500000);
+    spdlist[i++] = 3500000L;
+#endif /* B3500000 */
+#ifdef B4000000
+    debug(F101,"ttspdlist B4000000","",B4000000);
+    spdlist[i++] = 4000000L;
+#endif /* B4000000 */
 #endif /* USETCSETSPEED */
+
     spdlist[0] = i - 1;			/* Return count in 0th element */
     debug(F111,"ttspdlist spdlist","0",spdlist[0]);
     return((long *)spdlist);
@@ -8240,9 +8269,32 @@ ttgspd() {				/* Get current serial device speed */
 #ifdef B921600
       case B921600: ss = 921600L; break;
 #endif /* B921600 */
+
+#ifdef B1000000
+      case B1000000: ss = 1000000L; break;
+#endif /* B1000000 */
+#ifdef B1152000
+      case B1152000: ss = 1152000L; break;
+#endif /* B1152000 */
 #ifdef B1500000
       case B1500000: ss = 1500000L; break;
 #endif /* B1500000 */
+#ifdef B2000000
+      case B2000000: ss = 2000000L; break;
+#endif /* B2000000 */
+#ifdef B2500000
+      case B2500000: ss = 2500000L; break;
+#endif /* B2500000 */
+#ifdef B3000000
+      case B3000000: ss = 3000000L; break;
+#endif /* B3000000 */
+#ifdef B3500000
+      case B3500000: ss = 3500000L; break;
+#endif /* B3500000 */
+#ifdef B4000000
+      case B4000000: ss = 4000000L; break;
+#endif /* B4000000 */
+
       default:
 	ss = -1; break;
     }
@@ -12895,11 +12947,14 @@ coninc(timo) int timo; {
   When this happens, we have to post the read() again.  This is apparently not
   a problem in BSD-based UNIX versions.
 */
-	    if (errno == EINTR)		/* Read interrupted. */
-	      if (conesc)  {		/* If by SIGQUIT, */
- 		 conesc = 0;		/* the conesc variable is set, */
- 		 return(escchr);	/* so return the escape character. */
-	     } else continue;		/* By other signal, try again. */
+	    if (errno == EINTR) {       /* Read interrupted. */
+                if (conesc)  {		/* If by SIGQUIT, */
+                    conesc = 0;		/* the conesc variable is set, */
+                    return(escchr);	/* so return the escape character. */
+                } else {
+                  continue;		/* By other signal, try again. */
+                }
+            }
 #else
 /*
   This might be dangerous, but let's do this on non-System V versions too,

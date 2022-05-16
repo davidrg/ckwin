@@ -9,10 +9,11 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2020,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+    Last update: 12 May 2022
 */
 
 /*
@@ -330,7 +331,10 @@ static struct keytab shtab[] = {        /* SET HOST command options */
     { "/pty",          SL_PTY,    0 },
 #endif /* NETPTY */
     { "/server",       SL_SRV,    0 },
+#ifdef COMMENT
+/* The code implementing this was never written */
     { "/timeout",      SL_TMO,    CM_ARG },
+#endif  /* COMMENT */
     { "/userid",       SL_UID,    CM_ARG },
     { "/wait",         SL_WAIT,   0 },
     { "", 0, 0 }
@@ -3012,8 +3016,9 @@ dopurge() {                             /* Do the PURGE command */
                                minsize,maxsize,0,8,pxlist) < 1) {
             if (listing > 0) {
                 printf(" %s (SKIPPED)\n",namebuf);
-                if (++lines > cmd_rows - 3)
-                  if (!askmore()) goto xpurge; else lines = 0;
+                if (++lines > cmd_rows - 3) {
+                    if (!askmore()) goto xpurge; else lines = 0;
+                }
             }
             continue;
         }

@@ -3,7 +3,7 @@
 #endif /* SSHTEST */
 
 #include "ckcsym.h"
-char *userv = "User Interface 9.0.317, 07 Dec 2021";
+char *userv = "User Interface 9.0.320, 12 May 2022";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 
@@ -14,7 +14,7 @@ char *userv = "User Interface 9.0.317, 07 Dec 2021";
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2021,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -603,16 +603,20 @@ static char c1chars[] = {		/* C1 control chars escept NUL */
 
 #define xsystem(s) zsyscmd(s)
 
-/* Top-Level Interactive Command Keyword Table */
-/* Keywords must be in lowercase and in alphabetical order. */
-
+/*
+  Top-Level Interactive Command Keyword Table.
+  HELP topics go here too, even they aren't commands; they are marked
+  with the CM_HLP attribute.  Commands go to routines that execute them
+  and HELP items go to the big switch statement in ckuus2.c.
+  Entries must be in alphabetical order.
+*/
 struct keytab cmdtab[] = {
 #ifndef NOPUSH
-    { "!",	   XXSHE, CM_INV|CM_PSH }, /* Shell escape */
+    { "!",	     XXSHE, CM_INV|CM_PSH }, /* Shell escape */
 #else
-    { "!",	   XXNOTAV, CM_INV|CM_PSH },
+    { "!",	     XXNOTAV, CM_INV|CM_PSH },
 #endif /* NOPUSH */
-    { "#",    	   XXCOM, CM_INV },	/* Comment */
+    { "#",    	     XXCOM, CM_INV },	/* Comment */
 #ifndef NOSPL
     { "(",           XXSEXP,CM_INV },	/* S-Expression */
     { ".",           XXDEF, CM_INV },	/* Assignment */
@@ -759,6 +763,9 @@ struct keytab cmdtab[] = {
     { "close",	     XXCLO, 0 },	/* CLOSE a log or other file */
     { "cls",         XXCLS, CM_INV },	/* Clear Screen (CLS) */
     { "comment",     XXCOM, CM_INV },	/* Introduce a comment */
+#ifndef NOSPL
+    { "compact-substring", XXCSN, CM_HLP }, /* Compact substring notation */
+#endif  /* NOSPL */
 #ifndef NOLOCAL
     { "connect",     XXCON, CM_LOC },	/* Begin terminal connection */
 #else
@@ -798,7 +805,10 @@ struct keytab cmdtab[] = {
 #ifndef NOSPL
     { "date",        XXDATE,  0 },	/* DATE */
     { "dcl",         XXDCL,   CM_INV },	/* DECLARE an array (see ARRAY) */
+#ifdef COMMENT
+    /* this command never actually did anything */
     { "debug",       XXDEBUG, 0 },	/* Print a debugging msg [9.0]  */
+#endif /* COMMENT */
     { "declare",     XXDCL,   CM_INV },	/* DECLARE an array (see ARRAY) */
     { "decrement",   XXDEC,   0 },	/* DECREMENT a numeric variable */
     { "define",      XXDEF,   0 },	/* DEFINE a macro or variable   */
@@ -1736,6 +1746,8 @@ struct keytab cmdtab[] = {
     { "user",        XXUSER,  CM_INV }, /* (FTP) USER */
 #endif /* NEWFTP */
 
+    { "v",           XXDIR, CM_INV|CM_ABR }, /* Like TOPS-20 VDIRECTORY */
+    { "vdirectory",  XXDIR, CM_INV },        /* Like TOPS-20 VDIRECTORY */
     { "version",     XXVER, 0 },	/* VERSION-number display */
 
 #ifdef OS2
@@ -7915,9 +7927,13 @@ hmsgaa(s,s2) char *s[]; char *s2;
         for (j = 0; j < y; j++)         /* See how many newlines were */
           if (s[i][j] == '\n') k++;     /* in the string... */
         n += k;
-        if (n > (cmd_rows - 3) && *s[i+1]) /* After a screenful, give them */
-          if (!askmore()) return(0);    /* a "more?" prompt. */
-          else n = 0;
+        if (n > (cmd_rows - 3) && *s[i+1]) { /* After a screenful, give them */
+            if (!askmore()) {
+                return(0);    /* a "more?" prompt. */
+            } else {
+                n = 0;
+            }
+        }
     }
     printf("\n");
     return(0);
@@ -13290,14 +13306,17 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
     if (cx == XXGREP)
       return(dogrep());
 
+#ifdef COMMENT
     if (cx == XXDEBUG) {		/* DEBUG */
 #ifndef DEBUG
 	int dummy = 0;
 	return(seton(&dummy));
 #else
+        /* This has been in C-Kermit since 9.0 but doesn't do anything */
 	return(seton(&deblog));
 #endif /* DEBUG */
     }
+#endif /* COMMENT */
     if (cx == XXMSG || cx == XXXMSG) {	/* MESSAGE */
 	extern int debmsg;		/* Script debugging messages */
 	if ((x = cmtxt("Message to print if SET DEBUG MESSAGE is ON or STDERR",
@@ -13481,23 +13500,34 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 
 	for (i = 0; i < 16 && vars[i]; i++) {
 	    printf("%s:\n",legend[i]);
-	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	    if (++n > cmd_rows - 3) {
+                if (!askmore()) {
+                    return(0);
+                } else {
+                    n = 0;
+                }
+            }
 	    ckmakmsg(vbuf,32,"\\v(",vars[i],")",NULL);
 	    printf("  Variable:   %s\n",vbuf);
-	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	    if (++n > cmd_rows - 3) {
+                if (!askmore()) { return(0); } else { n = 0; }}
 	    y = TMPBUFSIZ;
 	    s = tmpbuf;
 	    zzstring(vbuf,&s,&y);
 	    line[0] = NUL;
 	    ckGetLongPathName(tmpbuf,line,LINBUFSIZ);
 	    printf("  Long name:  %s\n",line);
-	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	    if (++n > cmd_rows - 3) {
+                if (!askmore()) { return(0); } else { n = 0; }}
 	    line[0] = NUL;
 	    GetShortPathName(tmpbuf,line,LINBUFSIZ);
 	    printf("  Short name: %s\n",line);
-	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	    if (++n > cmd_rows - 3) {
+                if (!askmore()) { return(0); else n = 0; }
+            }
             printf("\n");
-	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	    if (++n > cmd_rows - 3) {
+                if (!askmore()) { return(0); } else { n = 0; }}
 	}
 #else  /* NT */
 
@@ -13511,17 +13541,21 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 
 	for (i = 0; i < 16 && vars[i]; i++) {
 	    printf("%s:\n",legend[i]);
-	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	    if (++n > cmd_rows - 3) {
+                if (!askmore()) { return(0); } else { n = 0; }}
 	    ckmakmsg(vbuf,32,"\\v(",vars[i],")",NULL);
 	    printf("  Variable: %s\n",vbuf);
-	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	    if (++n > cmd_rows - 3) {
+                if (!askmore()) { return(0); } else { n = 0; }}
 	    y = TMPBUFSIZ;
 	    s = tmpbuf;
 	    zzstring(vbuf,&s,&y);
             printf("  Value:    %s\n",tmpbuf);
-	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	    if (++n > cmd_rows - 3) {
+                if (!askmore()) { return(0); } else { n = 0; }}
             printf("\n");
-	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	    if (++n > cmd_rows - 3) {
+                if (!askmore()) { return(0); } else { n = 0; }}
 	}
 #endif /* NT */
 	return(success = 1);

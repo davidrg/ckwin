@@ -1,9 +1,9 @@
 /*  C K C D E B . H  */
 
 /*
-Sat Nov 6 11:14:45 2021
+Thu May 12 15:33:45 2022
 
-  For recent additions search below for "2021".
+  For recent additions search below for "2021" and "2022".
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
   compatible with C preprocessors that support only #ifdef, #else, #endif,
@@ -29,10 +29,11 @@ Sat Nov 6 11:14:45 2021
     Columbia University Academic Information Systems, NYC (1974-2011)
     The Kermit Project, Bronx NY (2011-present)
 
-  Copyright (C) 1985, 2020,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+    Last update: Thu May 12 15:34:02 2022 (NODEPRECATED)
 */
 
 /*
@@ -45,6 +46,29 @@ Sat Nov 6 11:14:45 2021
 */
 #ifndef CKCDEB_H			/* Don't include me more than once. */
 #define CKCDEB_H
+
+/*
+  Disinclude features that are "deprecated" in 2022;
+  on amd64 this saves about 185K out of 2.48MB, so this is really more
+  about political correctness that saving space.  -fdc 12 May 2022
+*/
+#ifdef NODEPRECATED
+#ifndef NOFTP                           /* No more FTP client */
+#define NOFTP
+#endif  /* NOFTP */
+#ifndef NOTELNET                        /* No more Telnet client */
+#define NOTELNET
+#endif  /* NOTELNET */
+#ifndef NORLOGIN                        /* No more RLOGIN client */
+#define NORLOGIN
+#endif  /* NORLOGIN */
+#ifndef NOWTMP                          /* No more WTMP logging */
+#define NOWTMP
+#endif  /* NOWTMP */
+#ifndef NOARROWKEYS                     /* Arrow keys use a deprecated API */
+#define NOARROWKEYS
+#endif  /* NOARROWKEYS */
+#endif  /* NODEPRECATED */
 
 #ifdef OS2
 #include "ckoker.h"
@@ -101,7 +125,10 @@ Sat Nov 6 11:14:45 2021
 #endif /* ANYSCO */
 #endif /* UNIXWARE */
 
-#ifndef MINIX				/* Minix versions */
+#ifndef MINIX				/* MINIX versions */
+#ifdef MINIX340                         /* TIH 1 Feb 2022 */
+#define MINIX
+#else
 #ifdef MINIX315
 #define MINIX
 #else
@@ -113,6 +140,7 @@ Sat Nov 6 11:14:45 2021
 #endif	/* MINIX2 */
 #endif	/* MINIX3 */
 #endif	/* MINIX315 */
+#endif	/* MINIX340 */
 #endif	/* MINIX */
 
 #ifdef CK_SCO32V4			/* SCO 3.2v4 */

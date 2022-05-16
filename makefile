@@ -1,8 +1,8 @@
 # makefile / Makefile / ckuker.mak / CKUKER.MAK
 #
-# Wed Dec 15 13:45:05 2021
-BUILDID=20211209
-CKVER= "9.0.305" # Alpha.07
+# Mon May 16 07:59:59 2022
+BUILDID=20220514
+CKVER= "10.0 Beta.01"
 #
 # -- Makefile to build C-Kermit for UNIX and UNIX-like platforms --
 #
@@ -50,7 +50,8 @@ CKVER= "9.0.305" # Alpha.07
 # CAREFUL: Don't put the lowercase word "if", "define", or "end" as the first
 # word after the "#" comment introducer in the makefile, even if it is
 # separated by whitespace.  Some versions of "make" understand these as
-# directives.  Uppercase letters remove the danger, e.g. "# If you have..."
+# directives, which older make versions do not understand.  Uppercase letters
+# remove the danger, e.g. "# If you have..."
 # 
 # WARNING: This is a huge makefile.  Although it is less likely since the
 # turn of the century, some "make" programs might run out of memory.  If this
@@ -147,7 +148,11 @@ CKVER= "9.0.305" # Alpha.07
 # + "make openbsd+ssl", OpenBSD 2.3 or later with OpenSSL 0.9.7 or later.
 # + "make mirbsd", MirBSD.
 # + "make mirbsd+ssl", MirBSD with OpenSSL 0.9.7 or later.
-# + "make macosx" should work for any Mac OS X version 10.3.9 or later.
+# More recent macOS re-branded releases for Intel (x86_64) Sierra (10.12),
+# High Sierra (10.13), Mojave (10.14), Catalina (10.15), and Intel x86_64/ARM
+# Big Sur (11), Monterey (12)
+# + "make macos" (without 'x') should be used for 10.12 and later.
+# + "make macosx" should work for any Mac OS X version up until 10.8 or 10.12.
 # + "make macosx+krb5+openssl" Mac OS X 10.3.9 or later + Kerberos V + OpenSSL.
 # + "make aix" should work for any version of AIX 4.2 or later.
 # + "make aixg" should work for any version of AIX 4.2 or later, using gcc.
@@ -978,6 +983,14 @@ CERTDIR =
 
 TEXTFILES = COPYING.TXT ckcbwr.txt ckubwr.txt ckuins.txt ckccfg.txt \
 		ckcplm.txt ckermit.ini ckermod.ini ckermit70.txt ckermit80.txt
+
+# How many targets?
+count:
+	@grep -c '^[^#[:space:]].*:' makefile
+
+# List all argets
+list:
+	@grep '^[^#[:space:]].*:' makefile
 
 ALL = $(WERMIT)
 
@@ -1824,6 +1837,17 @@ netbsd netbsd2 netbsd15 netbsd16 old-netbsd:
 	-DCK_DTRCD -DCK_DTRCTS -DTPUTSARGTYPE=int -DFNFLOAT $(KFLAGS) -O" \
 	"LIBS= -lcurses -lcrypt -lm -lutil $(LIBS)"
 
+# NetBSD with "legacy" and deprecated features removed:
+# FTP, Telnet, Rlogin, Wtmp logging, and arrow keys,
+# which depend on a deprecated API that has no undeprecated replacement.
+netbsd-nodeprecated: \
+	# Dummy comment \
+	@echo 'Making C-Kermit $(CKVER) for Linux without deprecated features'
+	$(MAKE) linux KTARGET=$${KTARGET:-$(@)} \
+	KFLAGS="-DNODEPRECATED $(KFLAGS)" \
+	"LNKFLAGS = $(LNKFLAGS)" \
+	netbsd
+
 #NetBSD 1.4.1 or later with OpenSSL
 #OK: 2011/06/15 on NetBSD 5.1 (but not 1.5.2 with OpenSSL 0.9.5a)
 #OK: 2011/08/21 on 5.1.
@@ -2165,7 +2189,7 @@ macos:
 	HAVE_UTMPX=''; \
 	$(MAKE) CC=$(CC) CC2=$(CC2) xermit KTARGET=$${KTARGET:-$(@)} \
 	"CFLAGS=-Wno-dangling-else -Wno-string-compare -Wno-parentheses \
-	-Wno-pointer-sign -Wno-unused-value \
+	-Wno-pointer-sign -Wno-unused-value -Wdeprecated-declarations \
 	-DMACOSX10 -DMACOSX103 -DCK_NCURSES -DTCPSOCKET -DCKHTTP \
 	-DUSE_STRERROR -DUSE_NAMESER_COMPAT -DNOCHECKOVERFLOW -DFNFLOAT \
 	-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 $$HAVE_UTMPX \
@@ -2174,7 +2198,7 @@ macos:
 	-DCKCPU=\"\\\"$${MACCPU}\\\"\" \
 	$(KFLAGS)" "LIBS= -lncurses -lresolv $(LIBS)"
 
-# Trialling using the Homebrew install of krb5 and openssl
+# Trial using the Homebrew install of krb5 and openssl
 # (newer versions of macOS have dropped the Kerberos5 include
 # files and moved to LibreSSL).
 # NB: not yet working  **DON'T USE THIS TARGET**
@@ -6127,7 +6151,11 @@ android:
 # be used for all builds on all Linux distributions unless you have special
 # requirements, in which case keep reading.  CK_NEWTERM added after 7.0b04
 # due to new complaints about ncurses changing buffering of tty.
-
+#
+# By the way, the trick for testing if a lib exists ("if ld -lncurses ...")
+# might seem crazy but it works everywhere, whereas the more appropriate test
+# ("if locate libncurses") is not necessarily available on all Linuxes.
+#
 linuxa:
 	@echo 'Making C-Kermit $(CKVER) for Linux 1.2 or later...'
 	@echo 'IMPORTANT: Read the comments in the linux section of the'
@@ -6143,11 +6171,10 @@ linuxp:
 	$(MAKE) linuxa KTARGET=$${KTARGET:-$(@)} "KFLAGS=$(KFLAGS) -pg" \
 	"LIBS=-pg -lcrypt -lresolv"
 
-#Linux.  Completely new target: 18 January 2016.
-#No more looking in 100 different places for libraries, let ld do it,
-#since it knows what libraries it's going to use.
-#If this target fails to work somewhere, use the 'linux-2015' target just 
-#below this one. 
+#Linux.  Completely new target: 18 January 2016.  No more looking in 100
+#different places for libraries, let ld do it, since it knows what libraries
+#it's going to use.  If this target fails to work somewhere, use the
+#'linux-2015' target just below this one.
 #
 #This entry should work for any Linux distribution on any platform,
 #32-bit or 64-bit, except for extremely ancient ones.  Automatically detects:
@@ -6170,7 +6197,7 @@ linuxp:
 # in any header files in the /usr/include tree.
 #
 linux gnu-linux:
-	@echo "Making C-Kermit for Linux..."; \
+	@echo "Making C-Kermit for `uname -spm` gcc `gcc -dumpversion`..."; \
 	# Dummy comment \
 	DCL_ERRNO='-DDCL_ERRNO';  \
 	if egrep -r \
@@ -6339,6 +6366,17 @@ linux-2015:
 	|| test -f /usr/lib/liblockdev.so \
 	|| ls /usr/lib/$(MULTIARCH)/liblockdev.* > /dev/null 2> /dev/null; \
 	then echo -llockdev; fi`" \
+	linuxa
+
+# Linux with "legacy" and "deprecated" features removed:
+# FTP, Telnet, Rlogin, Wtmp logging.  And arrow keys, which depend on
+# a deprecated API that as yet has no undeprecated replacement.
+linux-nodeprecated: \
+	# Dummy comment \
+	@echo 'Making C-Kermit $(CKVER) for Linux without deprecated features'
+	$(MAKE) linux KTARGET=$${KTARGET:-$(@)} \
+	KFLAGS="-DNODEPRECATED $(KFLAGS)" \
+	"LNKFLAGS = $(LNKFLAGS)" \
 	linuxa
 
 # Linux + Shadow passwords + PAM
@@ -8707,6 +8745,17 @@ minix315:
 	-DHAVE_OPENPTY -DNO_PARAM_H -DNOSYSLOG -DNOGETUSERSHELL \
 	-DSYSTIMEH -DNOINITGROUPS -DNOFTRUNCATE -DNOARROWKEYS -DNOREALPATH \
 	-DTCPSOCKET -DNOTIMEZONE -DNO_DNS_SRV -DNOFTP -O"
+
+#MINIX340 - MINIX 3.4.0 - January 2022
+minix340:
+	@echo 'Making C-Kermit $(CKVER) for Minix 3.4.0...'
+	$(MAKE) wermit KTARGET=$${KTARGET:-$(@)} \
+	"CFLAGS= -DMINIX340 -DPOSIX -DCK_CURSES \
+	-DCK_TRCD -DCK_TRCTS -DZLIB -DBSD44 -DNOJC \
+	-DNDSYSERRLIST -DNOJC -DHAVE_OPENPTY $(KFLAGS) \
+	-DLOCK_DIR=\\\"/var/spool/uucp\\\" \
+	-DSYSTIMEH -DNOARROWKEYS -DTCPSOCKET -O" \
+	"LIBS= -lcrypt -lcurses -lutil"
 
 #PFU Compact A Series UNIX System V R3, SX/A TISP V10/L50 (Japan)
 #Maybe the -i link option should be removed?

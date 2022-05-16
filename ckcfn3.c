@@ -6,10 +6,11 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2010,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+    Last update: 8 May 2022
 */
 /*
  Note -- if you change this file, please amend the version number and date at
@@ -2179,10 +2180,11 @@ opena(f,zz) char *f; struct zattr *zz; {
     } else {				/* Did not open file OK. */
 
 	rf_err = ck_errstr();		/* Get system error message */
-	if (*rf_err)
-	  xxscreen(SCR_EM,0,0l,rf_err);
-	else
-	  xxscreen(SCR_EM,0,0l,"Can't open output file");
+	if (*rf_err) {
+            xxscreen(SCR_EM,0,0l,rf_err);
+        } else {
+            xxscreen(SCR_EM,0,0l,"Can't open output file");
+        }
         tlog(F110,"Failure to open",f,0L);
         tlog(F110,"Error:",rf_err,0L);
 	debug(F110,"opena error",rf_err,0);

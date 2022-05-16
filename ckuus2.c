@@ -11,10 +11,11 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2017,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+    Last update: 11 May 2022
 
   This module contains HELP command and other long text strings.
 
@@ -1450,6 +1451,19 @@ static char *hxxout[] = {
 " ",
 "Also see SET OUTPUT.",
 "" };
+
+static char *hxxcsn[] = {
+"Compact Substring Notation is a shorthand notation for the built-in",
+"\\fsubstring() function; 'name' is the name of any macro-type variable:",
+"  \\s(name[n:m])",
+"      Substring of \\m(name) starting at position n, length m",
+"  \\s(name[n_m])",
+"      Substring of \\m(name) from position n to position m",
+"  \\s(name[n]) or \\s(name[n:])",
+"      Substring of \\m(name) from position n to the end",
+"  \\s(name[n.])",
+"      The character at position n",
+""};
 #endif /* NOSPL */
 
 static char *hxypari[] = {
@@ -1766,6 +1780,8 @@ static char *hmxxgrep[] = {
 #endif /* UNIXOROSK */
 " ",
 "File selection options:",
+"  /ARRAY:&x",
+"    Returns the results in the specified array.",
 "  /NOBACKUPFILES",
 "    Excludes backup files (like oofa.txt.~3~) from the search.",
 "  /DOTFILES",
@@ -1910,7 +1926,9 @@ static char *hmxxtouch[] = {
 " ",
 " Action switches:",
 " ",
-"   /MODTIME:        Modification time for selected files.",
+"   /MODTIME:        Changes the modification time for the selected files.",
+"                     in numeric yyyy:mm:dd:hh:mm:ss format.",
+"                     if hh:mm:ss omitted time is set to 00:00:00",
 "   /SIMULATE        List files that would be touched, but don't touch them.",
 "   /LIST            Show which files are being touched.",
 #endif /* RECURSIVE */
@@ -5102,6 +5120,7 @@ static char *hxxxla[] = {
 " ",
 "  Multiple files can be translated if file2 is a directory or device name,",
 "  rather than a filename, or if file2 is omitted.  Note: CONVERT would",
+"  would be a better name for this command but it's too late now.",
 "" };
 #endif /* NOCSETS */
 
@@ -6087,7 +6106,7 @@ static char * hxxf_re[] = {
 "  empty, this indicates a NUL byte was read.",
 " ",
 "/TRIM",
-"  Tells Kermit to trim trailing whitespace when used with /LINE.  Ignored",
+"  Trims trailing whitespace from the right when used with /LINE.  Ignored",
 "  if used with /CHAR or /SIZE.",
 " ",
 "/UNTABIFY",
@@ -6235,7 +6254,10 @@ dohlp(xx) int xx; {
     int x,y;
 
     debug(F101,"DOHELP xx","",xx);
-    if (xx < 0) return(xx);
+    if (xx < 0) {
+        printf("Sorry, that is not a help topic\n");
+        return(-9);
+    };
 
 #ifdef NOHELP
     if ((x = cmcfm()) < 0)
@@ -7034,6 +7056,9 @@ Equivalent to GET /COMMAND; see HELP GET for details."));
 #endif /* PIPESEND */
 
 #ifndef NOSPL
+case XXCSN:                             /* Compact Substring Notation */
+  return(hmsga(hxxcsn));
+
 case XXFUNC:
 /*
   Tricky parsing.  We want to let them type the function name in any format
@@ -7454,9 +7479,11 @@ hmsga(s) char *s[]; {                   /* pausing at end of each screen. */
         for (j = 0; j < y; j++)         /* See how many newlines were */
           if (s[i][j] == '\n') k++;     /* in the string... */
         n += k;
-        if (n > (cmd_rows - 3) && *s[i+1]) /* After a screenful, give them */
-          if (!askmore()) return(0);    /* a "more?" prompt. */
-          else n = 0;
+        if (n > (cmd_rows - 3) && *s[i+1]) { /* After a screenful, give them */
+            if (!askmore()) {                /* a "more?" prompt. */
+                return(0);
+            } else { n = 0; }
+        }
     }
     printf("\n");
     return(0);
@@ -7480,7 +7507,7 @@ static char * supporttext[] = {
 " ",
 "  http://www.kermitproject.org/ckermit.html#doc",
 " ",
-"Z C-Kermit tutorial is here:",
+"A C-Kermit tutorial is here:",
 " ",
 "  http://www.kermitproject.org/ckututor.html",
 " ",
@@ -11198,7 +11225,7 @@ dohfunc(xx) int xx; {
 
 #ifdef RECURSIVE
       case FN_DIR:                      /* Recursive directory count */
-        printf("\\fdirectories(f1) - Directory list.\n\
+        printf("\\fdirectories(f1,&a) - Directory list.\n\
   f1 = directory specification, possibly containing wildcards.\n\
   &a = optional name of array to assign directory list to.\n");
         printf("Returns integer:\n\
@@ -11383,9 +11410,8 @@ Assign string words to an array.\n\
         break;
 
       case FN_TLOOK:
-        printf(
-"\\ftablelook(keyword,&a,[c]) - Lookup keyword in keyword table.\n\
-  pattern = String\n");
+        printf("\\ftablelook(keyword,&a,[c]) \
+- Lookup keyword in keyword table.\n");
         printf("  keyword = keyword to look up (can be abbreviated).\n");
         printf("  &a      = array designator, can include range specifier.\n");
         printf("            This array must be in alphabetical order.\n");
@@ -12049,8 +12075,9 @@ represent.\n");
  4. Platform-specific permissions string, e.g. drwxrwxr-x or RWED,RWE,RE,E\n\
  5. Platform-specific permissions code, e.g. an octal number like 40775\n\
  6. The file's size in bytes\n\
- 7. Type: 1=regular file; 2=executable; 3=directory; 4=link; 0=unknown.\n\
- 8. If link, the name of the file linked to.\n");
+ 7. Type: regular file, executable, directory, link, or unknown\n\
+ 8. If link, the name of the file linked to.\n\
+ 9. Transfer mode for file: text or binary\n");
         break;
 
       case FN_FILECMP:

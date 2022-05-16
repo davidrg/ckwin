@@ -8,13 +8,13 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2021,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
   Last update:
-    Sat Nov  6 13:36:59 2021
+    Sun May  8 16:02:07 2022
 */
 
 /* Includes */
@@ -3410,10 +3410,11 @@ Disabling flow control temporarily %s...\n",
   dialfin:
 
     if (cx != XXLOOK) {
-        if (!success)
-          bleep((short) BP_FAIL);
-        else if (!quiet)
-          bleep((short) BP_NOTE);
+        if (!success) {
+            bleep((short) BP_FAIL);
+        } else if (!quiet) {
+            bleep((short) BP_NOTE);
+        }
 #ifdef OS2
         setint();                       /* Fix OS/2 interrupts */
 #endif /* OS2 */

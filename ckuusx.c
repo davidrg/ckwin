@@ -9,10 +9,11 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2021,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+    Last update: 8 May 2022
 */
 
 /*
@@ -980,6 +981,7 @@ _PROTOTYP( char * strerror, (int) );
     if (ckrooterr)
       return("Off limits");
 #endif /* CKROOT */
+    debug(F101,"ck_errstr errno","",errno);
     return(strerror(errno));
 #else  /* !USE_STRERROR */
 #ifdef VMS
@@ -1734,7 +1736,7 @@ scanfile(name,flag,nscanfile) char * name; int * flag, nscanfile; {
 			if (c != ESC && c != SO && c != SI)
 			  c0noniso++;
 		    }
-		    if ((c == '\032')	/* Ctrl-Z */
+		    if (c == '\032'	/* Ctrl-Z */
 #ifdef COMMENT
 			&& eof && (i >= count - 2)
 #endif /* COMMENT */
@@ -2093,8 +2095,7 @@ scanstring(s) char * s; {
 		    if (c != ESC && c != SO && c != SI)
 		      c0noniso++;
 		}
-		if ((c == '\032')	/* Ctrl-Z */
-		    ) {
+		if (c == '\032') {	/* Ctrl-Z */
 		    c0controls--;
 		    c0noniso--;
 		}
@@ -3825,11 +3826,11 @@ chkint() {
         xxscreen(SCR_QE,0,(long)lscapu," locking shifts");
         if (!network)
           xxscreen(SCR_QE,0, speed, " speed");
-        if (what & W_SEND)
-
-          xxscreen(SCR_QE,0,spsiz, " packet length");
-        else if (what & W_RECV || what & W_REMO)
-          xxscreen(SCR_QE,0,urpsiz," packet length");
+        if (what & W_SEND) {
+            xxscreen(SCR_QE,0,spsiz, " packet length");
+        } else if (what & W_RECV || what & W_REMO) {
+            xxscreen(SCR_QE,0,urpsiz," packet length");
+        }
         xxscreen(SCR_QE,0,wslots,  " window slots");
         fdispla = ofd; /* [MF] Restore file display type */
         return(0);
@@ -6378,7 +6379,7 @@ int
 #ifdef CK_ANSIC
 ck_curpos(int row, col)
 #else
-ck_curpos(row, col) int row, col;
+ck_curpos(row, col) int row, int col;
 #endif  /* CK_ANSIC */
  {
     move(row, col);
@@ -9168,7 +9169,14 @@ char *s;        /* a string */
 #ifndef CK_CURPOS
 /* Dummies for when cursor control is not supported */
 int
-ck_curpos(row, col) {
+#ifdef CK_ANSIC
+# fdc 5 May 2022
+ck_curpos(int row, col) {
+#else
+ck_curpos(row, col)
+    int row;
+    int col;
+#endif  /* CK_ANSIC */
     return(-1);
 }
 

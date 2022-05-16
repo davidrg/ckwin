@@ -1,6 +1,6 @@
 #include "ckcsym.h"
 
-char *cmdv = "Command package 9.0.176, 18 September 2020";
+char *cmdv = "Command package 9.0.178, 16 May 2022";
 
 /*  C K U C M D  --  Interactive command package for Unix  */
 
@@ -11,7 +11,7 @@ char *cmdv = "Command package 9.0.176, 18 September 2020";
   Formerly of Columbia University Academic Information Systems, New York City.
   Since 1 July 2011, Open Source Kermit Project.
 
-  Copyright (C) 1985, 2020,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -3671,7 +3671,7 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 		else if (tl > 1)
 		  printf("or one of the tokens: %s\n",ckspread(tok));
 	    }
-	    printf("%s%s", cmprom, cmdbuf);
+	    printf("\n%s%s", cmprom, cmdbuf);
 	    fflush(stdout);
 	    break;
 
@@ -6799,7 +6799,8 @@ CMDIRPARSE:
 #endif /* USE_ARROWKEYS */
                              )
                      ) {		/* A real ESC was typed */
-		    int x;
+		    int x = 0;
+#ifndef NOARROWKEYS
 		    msleep(200);	/* Wait 1/5 sec */
 		    x = cmdconchk();	/* Was it followed by anything? */
 		    debug(F101,"Arrowkey ESC cmdconchk","",x);
@@ -6834,6 +6835,7 @@ CMDIRPARSE:
 			    }
 			}
 		    }
+#endif  /* NOARROWKEYS */
 		}
 
 		switch (c) {

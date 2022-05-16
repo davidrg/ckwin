@@ -2,7 +2,7 @@
 
 /*  C K C F T P  --  FTP Client for C-Kermit  */
 
-char *ckftpv = "FTP Client, 9.0.265, 5 Nov 2021";
+char *ckftpv = "FTP Client, 9.0.266, 8 May 2022";
 
 /*
   Authors:
@@ -11,7 +11,7 @@ char *ckftpv = "FTP Client, 9.0.265, 5 Nov 2021";
     Frank da Cruz <fdc@columbia.edu>,
       The Kermit Project, Columbia University.
 
-  Copyright (C) 2000, 2021
+  Copyright (C) 2000, 2022
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -4470,14 +4470,19 @@ putfile(cx,
 #ifdef TLOG
     if (tralog) {
         if (rc > 0) {
-            if (rc == SKP_XNX)
+          switch (rc) {
+            case SKP_XNX:
               tlog(F100," /simulate: WOULD BE SENT:","no remote file",0);
-            else if (rc == SKP_XUP)
+              break;
+            case SKP_XUP:
               tlog(F100," /simulate: WOULD BE SENT:","remote file older",0);
-            else if (rc == SKP_SIM)
+              break;
+            case SKP_SIM:
               tlog(F100," /simulate: WOULD BE SENT","",0);
-            else
+              break;
+            default:
               tlog(F110," skipped:",gskreason(rc),0);
+            }
         } else if (rc == 0) {
             tlog(F101," complete, size", "", fsize);
         } else if (cancelfile) {
@@ -11200,11 +11205,12 @@ getreply(expecteof,lcs,rcs,vbm,fc) int expecteof, lcs, rcs, vbm, fc; {
             return(getreply(expecteof,lcs,rcs,vbm,auth));
         }
         ibuf[0] = obuf[i] = '\0';
-        if (ftpcode && n == '6')
-          if (ftpcode != 631 && ftpcode != 632 && ftpcode != 633) {
-              printf("Unknown reply: %d %s\n", ftpcode, obuf);
-              n = '5';
-          } else safe = (ftpcode == 631);
+        if (ftpcode && n == '6') {
+            if (ftpcode != 631 && ftpcode != 632 && ftpcode != 633) {
+                printf("Unknown reply: %d %s\n", ftpcode, obuf);
+                n = '5';
+            } else safe = (ftpcode == 631);
+        }
         if (obuf[0]                     /* if there is a string to decode */
 #ifdef CK_SSL
             && !ssl_ftp_active_flag     /* and not SSL/TLS */

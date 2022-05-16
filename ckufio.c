@@ -3,21 +3,21 @@
 #define CK_NONBLOCK                     /* See zoutdump() */
 
 #ifdef aegis
-char *ckzv = "Aegis File support, 9.0.225, 06 Nov 2021";
+char *ckzv = "Aegis File support, 9.0.227, 09 May 2022";
 #else
 #ifdef Plan9
-char *ckzv = "Plan 9 File support, 9.0.225, 06 Nov 2021";
+char *ckzv = "Plan 9 File support, 9.0.227, 09 May 2022";
 #else
-char *ckzv = "UNIX File support, 9.0.225, 06 Nov 2021";
+char *ckzv = "UNIX File support, 9.0.227, 09 May 2022";
 #endif /* Plan9 */
 #endif /* aegis */
 /*
   Author: Frank da Cruz <fdc@columbia.edu>,
-  Columbia University 1974-2011; The Kermit Project 2011-????.
+    Columbia University 1974-2011;
+    the Open Source Kermit Project 2011-2022.
 
-  Copyright (C) 1985, 2021,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
-
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 */
@@ -2461,13 +2461,37 @@ zchki(name) char *name; {
 	return(-1);
     }
 #endif /* CKROOT */
-
+/*
+  In (at least) Mac OS X 10.6, stat(filename) returns 1 even if the file
+  does not exist.  This was causing empty backup files to be created.
+  Now we also double-check by looking at ERRNO.  - fdc 2021-05-07
+*/
+    errno = 0;                          /* Reset errno just to be safe */
     x = stat(s,&buf);
     debug(F101,"STAT","",5);
-    if (x < 0) {
+    debug(F111,"zchki stat return code",s,x);
+    debug(F101,"zchki stat errno","",errno);
+    debug(F110,"zchki stat errmsg",ck_errstr(),"");
+    if (x < 0) {                        /* File doesn't exist */
         debug(F111,"zchki stat fails",s,errno);
         return(-1);
+/*
+   The following is provisional...  On some Mac OS X / OS X / macOS versions,
+   stat() returns 0 ("success") when the filename given does not correspond to
+   an existing file, where every other OS returns -1 ("failure").  In this
+   case, however, errno to a nonzero value, which I would have expected to be
+   ENOENT, but in the case that was reported, it was ENOTTY, which I wouldn't
+   have expected.  There's nothing in Google about this.  - fdc, 8 May 2022.
+*/
+    } else if errno {
+        debug(F111,"zchki stat returns 0 but with a nonzero errno",s,errno);
+        return(-1);
     }
+    /*
+      Another possibility might be to look in the stat buf, but for what?
+      Or to use access() rather that stat().  But all of these approaches
+      have their portability risks.
+    */
     if (S_ISDIR (buf.st_mode))
       itsadir = 1;
 
@@ -2600,19 +2624,28 @@ zchko(name) char *name; {
 #endif	/* O_NONBLOCK */
         }
 	debug(F111,"zchko open mode",name,flags);
-	/* Must attempt to open it */
+	/* Must attempt to open it so isatty() can be used */
         fd = open(name,O_WRONLY|O_CREAT|flags,0600);
 	debug(F111,"zchko open",name,fd); 
 	if (fd > -1) {			/* to get a file descriptor */
 	    if (isatty(fd))		/* for isatty() */
 	      istty++;
 	    debug(F111,"zchko isatty",name,istty);
-	    fd = close(fd);
+            /*
+              Failure to close this file caused creation of
+              spurious backup file when downloading
+            */
+	    fd = close(fd);             /* 2022-05-09 */
+            if (zdelet(name) == 0) {    /* 2022-05-09 */
+                debug(F110,"zchko delete ok",name,0);
+            } else {
+                debug(F111,"zchko delete failed",name,errno);
+            }
 	    if (istty) {
 		goto doaccess;
 	    }
 	} else {
-	    debug(F101,"zchko open errno","",errno); 
+	    debug(F111,"zchko open errno",name,errno);
 	    x = -1;
             goto xzchko;                /* fdc 2015/01/12 */
             /* previously control fell through causing core dumps */

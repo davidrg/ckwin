@@ -11,10 +11,11 @@ char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
   Columbia University Academic Information Systems, New York City (1974-2011)
   The Kermit Project, Bronx NY (2011-????)
 
-  Copyright (C) 1985, 2021,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+    Last update: Thu May  5 15:22:36 2022
 */
 /*
  System-dependent primitives defined in:
@@ -3362,7 +3363,7 @@ sipkt(c) char c;
 	debug(F101,"sipkt getsbuf","",k);
     }
     rp = rpar();			/* Get protocol parameters. */
-    debug(F110,"sipkt rp","",rp);     /* "rp" (number), not rpar (function) */
+    debug(F110,"sipkt rp",rp,0);        /* last 2 args fixed 2022-05-05 */
     if (!rp) rp = (CHAR *)"";
     x = spack(c,pktnum,(int)strlen((char *)rp),rp); /* Send them. */
     return(x);

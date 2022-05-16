@@ -14,8 +14,9 @@ int cmdsrc() { return(0); }
       The Kermit Project, New York City
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
+    Last update: Mon May 16 12:31:56 2022
 
-  Copyright (C) 1985, 2021,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -6869,10 +6870,10 @@ doshow(x) int x; {
           fnbuf[0] = NUL;
           if (!s) s = "";
           if (*s) ckstrncpy(fnbuf,s,100);
-      } else {
-          if ((y = cmcfm()) < 0)
-            return(y);
+      } else if ((y = cmcfm()) < 0) {
+          return(y);
       }
+
 #ifdef COMMENT
     /* This restriction is too general. */
 #ifdef IKSD
@@ -11148,6 +11149,9 @@ initoptlist() {
 #ifdef MINIX315
     makestr(&(optlist[noptlist++]),"MINIX315");
 #endif /* MINIX315 */
+#ifdef MINIX340
+     makestr(&(optlist[noptlist++]),"MINIX340"); /* 2020-02-01 TIH */
+#endif /* MINIX340 */
 #ifdef C70
     makestr(&(optlist[noptlist++]),"C70");
 #endif /* C70 */
@@ -12387,10 +12391,23 @@ shofea() {
     printf(" No built-in FTP client\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
 #endif /* NEWFTP */
+#ifdef NOTELNET
+    printf(" No built-in TELNET client\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+#endif /* NOTELNET */
+#ifdef NORLOGIN
+    printf(" No built-in RLOGIN client\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+#endif /* NORLOGIN */
 #ifdef NOHTTP
     printf(" No built-in HTTP client\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
 #endif /* NOHTTP */
+#ifdef NOARROWKEYS
+    printf(" No arrow-key support\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+#endif /* NOARROWKEYS */
+
 
 #ifdef NODIAL
     printf(" No DIAL command\n");

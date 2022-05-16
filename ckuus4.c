@@ -9,12 +9,12 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2021,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
     Last update:
-    Sat Nov  6 12:29:26 2021
+    Sun May  8 15:50:44 2022
 */
 
 /*
@@ -4776,17 +4776,17 @@ shotcp(n) int n; {
             else
               printf("no timeout\n");
         }
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 #endif /* SO_LINGER */
 
 #ifdef SO_DONTROUTE
         printf(" DontRoute: %s\n", tcp_dontroute ? "on" : "off" );
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 #endif /* SO_DONTROUTE */
 
 #ifdef TCP_NODELAY
         printf(" Nodelay: %s\n", showoff(tcp_nodelay));
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 #endif /* TCP_NODELAY */
 
 #ifdef SO_SNDBUF
@@ -4794,14 +4794,14 @@ shotcp(n) int n; {
           printf(" Send buffer: (default size)\n");
         else
           printf(" Send buffer: %d bytes\n", tcp_sendbuf);
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 #endif /* SO_SNDBUF */
 #ifdef SO_RCVBUF
         if (tcp_recvbuf <= 0)
           printf(" Receive buffer: (default size)\n");
         else
           printf(" Receive buffer: %d bytes\n", tcp_recvbuf);
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 #endif /* SO_RCVBUF */
 #endif /* SOL_SOCKET */
 #endif /* NOTCPOPTS */
@@ -5167,7 +5167,7 @@ shonet() {
         printf("\nNetwork directories:\n");
         for (i = 0; i < nnetdir; i++) {
             printf("%2d. %s\n",i,netdir[i]);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         }
     }
 #endif /* NODIAL */
@@ -5176,7 +5176,7 @@ shonet() {
     {
         extern char * sshcmd;
         printf("SSH COMMAND: %s\n",sshcmd ? sshcmd : "ssh -e none");
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     }
 #endif /* SSHCMD */
 
@@ -5185,7 +5185,7 @@ shonet() {
 #else
     printf("\nSupported networks:\n");
 #endif /* OS2 */
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 
 #ifdef VMS
 
@@ -5230,16 +5230,16 @@ shonet() {
 #endif /* WINTCP */
 #endif /* MULTINET */
 #endif /* TCPWARE */
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 #ifdef TNCODE
     printf(", TELNET protocol\n\n");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     n = shotel(n);
     if (n < 0) return(0);
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 #endif /* TNCODE */
     printf("\n");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     printf("\n");
     n = shotcp(++n);
     if (n < 0) return(0);
@@ -5247,22 +5247,22 @@ shonet() {
 
 #ifdef SUNX25
     printf(" SunLink X.25\n");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 #endif /* SUNX25 */
 
 #ifdef STRATUSX25
     printf(" Stratus VOS X.25\n");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 #endif /* STRATUSX25 */
 
 #ifdef IBMX25
     printf(" IBM AIX X.25\n");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 #endif /* IBMX25 */
 
 #ifdef HPX25
     printf(" HP-UX X.25\n");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 #endif /* HPX25 */
 
 #ifdef SSHBUILTIN
@@ -5279,23 +5279,23 @@ shonet() {
       printf(" DECnet, LAT and CTERM protocols\n");
     else
       printf(" DECnet, LAT and CTERM protocols - not available\n");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 #else /* NT */
     if (dnet_avail)
       printf(" DECnet, LAT protocol\n");
     else
       printf(" DECnet, LAT protocol - not available\n");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 #endif /* NT */
 #else
     printf(" DECnet\n");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 #endif /* OS2 */
 #endif /* DECNET */
 
 #ifdef NPIPE
     printf(" Named Pipes\n");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 #endif /* NPIPE */
 
 #ifdef CK_NETBIOS
@@ -5303,7 +5303,7 @@ shonet() {
       printf(" NETBIOS\n");
     else
       printf(" NETBIOS - not available\n");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 #endif /* CK_NETBIOS */
 
 #ifdef SUPERLAT
@@ -5311,7 +5311,7 @@ shonet() {
       printf(" SuperLAT\n");
     else
       printf(" SuperLAT - not available\n") ;
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 #endif /* SUPERLAT */
 
 #ifdef TCPSOCKET
@@ -5330,7 +5330,7 @@ shonet() {
 #else
             printf(" TCP/IP\n");
 #endif /* OS2ONLY */
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         } else {
             int i = 1;
 #ifdef OS2ONLY
@@ -5338,11 +5338,11 @@ shonet() {
 #else
           printf(" TCP/IP [%16s]\n",ipaddr);
 #endif /* OS2ONLY */
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 
             while (getlocalipaddrs(ipaddr,16,i++) >= 0) {
                 printf("        [%16s]\n",ipaddr);
-                if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+                if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             }
         }
         if (nettype == NET_TCPB) {
@@ -5354,12 +5354,12 @@ shonet() {
             n = shotel(++n);
             if (n < 0) return(0);
 #endif /* TNCODE */
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         }
 #ifdef OS2
     } else {
         printf(" TCP/IP - not available%s\n",tcpname[0] ? tcpname : "" );
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 #endif /* OS2 */
     }
 #endif /* TCPSOCKET */
@@ -5368,14 +5368,14 @@ shonet() {
     if (netbiosAvail && nettype == NET_BIOS) {
        printf("\n") ;
        if ((n = shonb(++n)) < 0) return(0);
-       if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+       if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     }
 #endif /* CK_NETBIOS */
 
 #endif /* VMS */
 
     printf("\nActive network connection:\n");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 
     if (network) {
         printf(" Host: %s",ttname);
@@ -5424,7 +5424,7 @@ shonet() {
     else if ( nettype == NET_DLL )
       printf("dynamic link library\n");
 #endif /* NETDLL */
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 
 #ifdef ANYX25
     if ((nettype == NET_SX25) ||
@@ -5436,7 +5436,7 @@ shonet() {
 #ifdef SSHBUILTIN
     if (nettype == NET_SSH) {
         printf("Secure Shell protocol\n");
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     }
 #endif /* SSHBUILTIN */
 
@@ -5444,45 +5444,45 @@ shonet() {
 #ifdef RLOGCODE
         if (ttnproto == NP_RLOGIN) {
             printf(" LOGIN (rlogin) protocol\n");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         }
 #ifdef CK_KERBEROS
         else if (ttnproto == NP_K4LOGIN) {
             printf(" Kerberos 4 LOGIN (klogin) protocol\n");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         }
         else if (ttnproto == NP_EK4LOGIN) {
             printf(" Encrypted Kerberos 4 LOGIN (eklogin) protocol\n");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         }
         else if (ttnproto == NP_K5LOGIN) {
             printf(" Kerberos 5 LOGIN (klogin) protocol\n");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         }
         else if (ttnproto == NP_EK5LOGIN) {
             printf(" Encrypted Kerberos 5 LOGIN (eklogin) protocol\n");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         }
 #endif /* CK_KERBEROS */
 #endif /* RLOGCODE */
 #ifdef CK_KERBEROS
         if (ttnproto == NP_K5U2U) {
             printf(" Kerberos 5 User to User protocol\n");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         }
 #endif /* CK_KERBEROS */
 
 #ifdef TNCODE
         if (IS_TELNET()) {
             printf(" TELNET protocol\n");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Echoing is currently %s\n",duplex ? "local" : "remote");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         }
 #endif /* TNCODE */
         if (ttnproto == NP_TCPRAW) {
             printf(" Raw TCP socket\n");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         }
     }
     printf("\n");
@@ -5546,17 +5546,17 @@ doshodial() {
     else if (dialmth == XYDM_P) printf("pulse  ");
     else if (dialmth == XYDM_T) printf("tone   ");
     printf("         Dial sort: %s\n",dialsrt ? "on" : "off");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     printf(" Dial hangup:  %s             Dial display: %s\n",
            dialhng ? "on " : "off", dialdpy ? "on" : "off");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     if (dialrtr > 0) {
         printf(" Dial retries: %-12d    Dial interval: %d\n",
                dialrtr, dialint);
     } else {
         printf(" Dial retries: (auto)          Dial interval: %d\n", dialint);
     }
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     printf(" Dial timeout: ");
 #ifdef CK_TAPI
     if (tttapi && !tapipass)
@@ -5568,20 +5568,20 @@ doshodial() {
     else
       printf("0 (auto)");
     printf("        Redial number: %s\n",dialnum ? dialnum : "(none)");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     printf(" Dial confirmation: %s        Dial convert-directory: %s\n",
            dialcnf ? "on " : "off",
            dialcvt ? ((dialcvt == 1) ? "on" : "ask") : "off");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     printf(" Dial ignore-dialtone: %s", dialidt ? "on " : "off");
     printf("     Dial pacing: %d\n",dialpace);
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     printf(
 " Dial prefix:                  %s\n", dialnpr ? dialnpr : "(none)");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     printf(
 " Dial suffix:                  %s\n", dialsfx ? dialsfx : "(none)");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     printf(
 " Dial country-code:            %-12s", diallcc ? diallcc : "(none)");
     printf("Dial connect:  %s", dialcon ? ((dialcon == 1) ? "on" : "auto")
@@ -5591,14 +5591,14 @@ doshodial() {
     printf(
 "\n Dial area-code:               %-12s", diallac ? diallac : "(none)");
     n++;
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     printf("Dial restrict: ");
     if (dialrstr == 5) printf("international\n");
     else if (dialrstr == 4) printf("long-distance\n");
     else if (dialrstr == 2) printf("local\n");
     else if (dialrstr == 6) printf("none\n");
     else printf("?\n");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     printf(" Dial lc-area-codes:           ");
     if (nlocalac == 0)
       printf("(none)");
@@ -5608,25 +5608,25 @@ doshodial() {
     printf(
 "\n Dial lc-prefix:               %s\n", diallcp ? diallcp : "(none)");
     n++;
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     printf(
 " Dial lc-suffix:               %s\n", diallcs ? diallcs : "(none)");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     printf(
 " Dial ld-prefix:               %s\n", dialldp ? dialldp : "(none)");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     printf(
 " Dial ld-suffix:               %s\n", diallds ? diallds : "(none)");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     printf(
 " Dial force-long-distance      %s\n", showoff(dialfld));
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     printf(
 " Dial intl-prefix:             %s\n", dialixp ? dialixp : "(none)");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     printf(
 " Dial intl-suffix:             %s\n", dialixs ? dialixs : "(none)");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     printf(
 " Dial toll-free-area-code:     ");
     if (ntollfree == 0)
@@ -5635,7 +5635,7 @@ doshodial() {
       for (i = 0; i < ntollfree; i++)
         printf("%s ", dialtfc[i]);
     printf("\n");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 
     printf(
 " Dial pulse-countries:         ");
@@ -5645,7 +5645,7 @@ doshodial() {
       for (i = 0; i < ndialpucc; i++)
         printf("%s ", dialpucc[i]);
     printf("\n");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 
     printf(
 " Dial tone-countries:          ");
@@ -5655,14 +5655,14 @@ doshodial() {
       for (i = 0; i < ndialtocc; i++)
         printf("%s ", dialtocc[i]);
     printf("\n");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 
     printf(
 	" Dial toll-free-prefix:        %s\n",
 	dialtfp ? dialtfp :
 	(dialldp ? dialldp : "(none)")
 	);
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     printf(" Dial pbx-exchange:            ");
     if (ndialpxx == 0)
       printf("(none)");
@@ -5671,13 +5671,13 @@ doshodial() {
         printf("%s ", dialpxx[i]);
     printf("\n");
 
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     printf(
 " Dial pbx-inside-prefix:       %s\n", dialpxi ? dialpxi : "(none)");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     printf(
 " Dial pbx-outside-prefix:      %s\n", dialpxo ? dialpxo : "(none)");
-    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
     printf(
 " Dial macro:                   %s\n", dialmac ? dialmac : "(none)");
     return(0);

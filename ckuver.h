@@ -2,7 +2,7 @@
 /*
   Author: Frank da Cruz <fdc@kermitproject.edu>.
 
-  Copyright (C) 1985, 2012,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -504,6 +504,12 @@
 #endif /* HPUX   */
 
 #ifndef MINIX
+#ifdef MINIX340
+#define MINIX
+#endif /* MINIX340 */
+#endif /* MINIX */
+
+#ifndef MINIX
 #ifdef MINIX315
 #define MINIX
 #endif	/* MINIX315 */
@@ -516,6 +522,12 @@
 #endif	/* MINIX */
 
 #ifdef MINIX
+#ifdef MINIX340
+#define HERALD " Minix 3.4.0"
+#ifndef MINIX3
+#define MINIX3
+#endif /* MINIX3 */
+#endif /* MINIX340 */
 #ifdef MINIX315
 #define HERALD " Minix 3.1.5"
 #ifndef MINIX3
