@@ -1,8 +1,8 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "17 May 2022"         /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20220517"		/* Keep them in sync */
-/* Mon May 16 11:30:03 2022 */
+#define EDITDATE  "02 Jun 2022"         /* Last edit date dd mmm yyyy */
+#define EDITNDATE "20220602"		/* Keep them in sync */
+/* Thu Jun  2 09:55:01 2022 */
 
 /*
 FOR A NEW VERSION (development, alpha, beta, release candidate formal release):
@@ -57,7 +57,7 @@ char * ck_cryear = "2022"; 		/* C-Kermit copyright year */
 #ifndef BETATEST
 #ifndef OS2                             /* UNIX, VMS, etc... (i.e. C-Kermit) */
 char *ck_s_test = "Beta";		/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "02";			/* Test version number */
+char *ck_s_tver = "03";			/* Test version number */
 #else  /* OS2 */
 char *ck_s_test = "";			/* (i.e. K95) */
 char *ck_s_tver = "";
@@ -1621,8 +1621,10 @@ extern int tn_deb;
   and zoutdump() in the system-dependent file i/o module (usually ck?fio.c).
 */
 #ifndef DYNAMIC
-/* Now we allocate them dynamically, see getiobs() below. */
+/* Now we allocate them dynamically, see getiobs() at bottom. */
 char zinbuffer[INBUFSIZE], zoutbuffer[OBUFSIZE];
+#else
+char *zinbuffer = NULL, *zoutbuffer = NULL;
 #endif /* DYNAMIC */
 char *zinptr, *zoutptr;
 int zincnt, zoutcnt;
@@ -2032,10 +2034,10 @@ ikslogin() {
 #endif /* IKSD */
         nolocal = 1;                    /* SET LINE/HOST not allowed */
         fdispla = XYFD_N;               /* No file-transfer display */
-#ifdef NETCONN
+#ifdef IKSD
         clienthost = ckgetpeer();       /* Get client's hostname */
         debug(F110,"ikslogin clienthost",clienthost,0);
-#endif /* NETCONN */
+#endif /* IKSD */
         ztime(&s);                      /* Get current date and time */
 
 #ifdef CK_LOGIN
@@ -2313,8 +2315,10 @@ ikslogin() {
 #endif /* NOSPL */
     } /* if (inserver) */
 #else /* CK_LOGIN */
+#ifdef IKSD
     if (inserver)
         srvidl = timelimit = iks_timo;  /* Set idle limits for IKS */
+#endif /* IKSD */
 #endif /* CK_LOGIN */
 #endif /* IKSD */
 }
@@ -2738,6 +2742,7 @@ int bigendian = 1;
 #endif	/* NOSPL */
 
 #ifdef NETCONN
+#ifndef NOTCPIP
 #ifndef NOCMDL
 #ifndef NOURL
 VOID
@@ -2893,9 +2898,10 @@ if not eq {\\v(authstate)} {valid} { remote login ",
         }
     }
 }
-#endif /* NOCMDL */
-#endif /* NETCONN */
 #endif /* NOURL */
+#endif /* NOCMDL */
+#endif /* NOTCPIP */
+#endif /* NETCONN */
 
 /*
   main()...
@@ -3300,6 +3306,7 @@ main(argc,argv) int argc; char **argv;
 #endif /* NOCKSPEED */
 #endif /* NOXFER */
 
+#ifndef NOTCPIP
 #ifndef NOICP
     if (sstelnet
 #ifdef IKSD
@@ -3469,6 +3476,7 @@ main(argc,argv) int argc; char **argv;
 #endif /* TNCODE */
 #endif /* OS2 */
     }
+#endif  /* NOTCPIP */
     debug(F101,"main argc after prescan()","",argc);
 
     /* Now process any relevant environment variables */
@@ -3488,8 +3496,8 @@ main(argc,argv) int argc; char **argv;
 #endif /* NOXFER */
 
 #ifndef NOCMDL
-    ikslogin();                          /* IKSD Login and other stuff */
 #ifdef IKSD
+    ikslogin();                          /* IKSD Login and other stuff */
 #ifdef NT
     if ( inserver )
       setntcreds();
@@ -3549,19 +3557,21 @@ main(argc,argv) int argc; char **argv;
 #endif /* COMMENT */
         argc > 1) {                     /* Command line arguments? */
         sstate = (CHAR) cmdlin();       /* Yes, parse. */
-#ifdef NETCONN
 
+#ifdef NETCONN
 #ifdef HAVE_LOCALE
 	if (nolocale) {                 /* --nolocale option on command line */
             setlocale(LC_ALL, "C");     /* Restore our locale to default */
 	}	
 #endif /* HAVE_LOCALE */
 
+#ifndef NOTCPIP
 #ifndef NOURL
         if (haveurl) {                  /* Was a URL given? */
             dourl();                    /* if so, do it. */
         }
 #endif /* NOURL */
+#endif /* NOTCPIP */
 #endif /* NETCONN */
 
 #ifndef NOXFER
@@ -3673,10 +3683,9 @@ main(argc,argv) int argc; char **argv;
 #endif /* MAINISVOID */
 }
 
+
 #ifdef DYNAMIC
 /* Allocate file i/o buffers */
-
-char *zinbuffer = NULL, *zoutbuffer = NULL;
 
 int
 getiobs() {

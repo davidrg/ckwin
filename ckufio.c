@@ -2483,7 +2483,7 @@ zchki(name) char *name; {
    ENOENT, but in the case that was reported, it was ENOTTY, which I wouldn't
    have expected.  There's nothing in Google about this.  - fdc, 8 May 2022.
 */
-    } else if ( errno ) {
+    } else if errno {
         debug(F111,"zchki stat returns 0 but with a nonzero errno",s,errno);
         return(-1);
     }

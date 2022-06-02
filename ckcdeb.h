@@ -1,7 +1,7 @@
 /*  C K C D E B . H  */
 
 /*
-Thu May 12 15:33:45 2022
+Thu Jun  2 09:49:31 2022
 
   For recent additions search below for "2021" and "2022".
 
@@ -59,6 +59,9 @@ Thu May 12 15:33:45 2022
 #ifndef NOTELNET                        /* No more Telnet client */
 #define NOTELNET
 #endif  /* NOTELNET */
+#ifdef TNCODE
+#undef TNCODE
+#endif /* TNCODE */
 #ifndef NORLOGIN                        /* No more RLOGIN client */
 #define NORLOGIN
 #endif  /* NORLOGIN */
@@ -543,6 +546,18 @@ Thu May 12 15:33:45 2022
 #endif /* NOLOCAL */
 
 #ifdef NONET
+#ifndef NOTCPIP
+#define NOTCPIP
+#endif  /* NOTCPIP */
+#ifndef NONETDIR
+#define NONETDIR
+#endif  /* NONETDIR */
+#ifndef NOIKSD
+#define NOIKSD
+#endif /* NOIKSD */
+#ifdef TNCODE
+#undef TNCODE
+#endif /* TNCODE */
 #ifdef NETCONN
 #undef NETCONN
 #endif /* NETCONN */
@@ -576,18 +591,24 @@ Thu May 12 15:33:45 2022
 #ifdef NETCMD
 #undef NETCMD
 #endif /* NETCMD */
-#ifdef NETPTY
-#undef NETPTY
-#endif /* NETPTY */
+/* Commented out fdc May 2020 to allow external SSH command */
+/* #ifdef NETPTY */
+/* #undef NETPTY */
+/* #endif /* NETPTY */
 #ifdef RLOGCODE
 #undef RLOGCODE
 #endif /* RLOGCODE */
 #ifdef NETDLL
 #undef NETDLL
 #endif /* NETDLL */
-#ifndef NOSSH
-#define NOSSH
-#endif /* NOSSH */
+#ifndef NO_SSL                          /* added May 2020 fdc */
+#define NO_SSL
+#endif  /* NO_SSL */
+/* Commented out fdc May 2020 */
+/* so we can use external ssh client in NONET builds */
+/* #ifndef NOSSH */
+/* #define NOSSH */
+/* #endif */ /* NOSSH */
 #ifndef NOFTP
 #define NOFTP
 #endif /* NOFTP */
@@ -6722,6 +6743,102 @@ _PROTOTYP( int ftpisconnected, (void));
 _PROTOTYP( int ftpisloggedin, (void));
 _PROTOTYP( int ftpissecure, (void));
 #endif /* NEWFTP */
+
+/*
+  -DNOTCPIP = Build with no TCP/IP support,
+   which unexpectedly turned out not to be a major task.
+   - fdc May 2022
+*/
+#ifdef NOTCPIP
+#ifdef TCPSOCKET
+#undef TCPSOCKET
+#endif /* TCPSOCKET */
+#ifndef NOFTP                           /* No TCP means no FTP... */
+#define NOFTP
+#endif /* NOFTP */
+#ifdef NEWFTP
+#undef NEWFTP
+#endif /* NEWFTP */
+#ifdef SYSFTP
+#undef SYSFTP
+#endif /* SYSFTP */
+#ifdef SFTP
+#undef SFTP
+#endif /* SFTP */
+#ifdef SFTP_BUILTIN
+#undef SFTP_BUILTIN
+#endif  /* SFTP_BUILTIN */
+#ifdef TELNET                           /* No Telnet */
+#undef TELNET
+#endif  /* TELNET */
+#ifdef TNCODE
+#undef TNCODE
+#endif  /* TNCODE */
+#ifdef TN_COMPORT                       /* No Telnet terminal server */
+#undef TN_COMPORT
+#endif  /* TN_COMPORT */
+#ifndef NOHTTP                          /* no HTTP... */
+#define NOHTTP
+#endif /* NOHTTP */
+#ifndef NOBROWSER                       /* no Web browser... */
+#define NOBROWSER
+#endif /* NOBROWSER */
+#ifndef NORLOGIN                        /* no Rlogin... */
+#define NORLOGIN
+#endif  /* NORLOGIN */
+#ifdef IKSD                             /* No Internet Kermit Server */
+#undef IKSD
+#endif /* IKSD */
+#ifdef IKSDB
+#undef IKSDB
+#endif /* IKSDB */
+#ifdef IKSDCONF
+#undef IKSDCONF
+#endif /* IKSDCONF */
+#ifndef NOIKSD				/* Internet Kermit Service */
+#define NOIKSD
+#endif /* NOIKSD */
+#ifdef IKS_OPTION
+#undef IKS_OPTION
+#endif /* IKS_OPTION */
+#ifdef CK_LOGIN
+#undef CK_LOGIN
+#endif /* CK_LOGIN */
+#ifdef CKSYSLOG
+#undef CKSYSLOG
+#endif /* CKSYSLOG */
+#ifndef NOWTMP
+#define NOWTMP
+#endif /* NOWTMP */
+#ifdef CKWTMP
+#undef CKWTMP
+#endif /* CKWTMP */
+#ifdef CK_AUTHENTICATION                /* No Internet security protocols */
+#undef CK_AUTHENTICATION
+#endif /* CK_AUTHENTICATION */
+#ifdef CK_ENCRYPTION
+#undef CK_ENCRYPTION
+#endif /* CK_ENCRYPTION */
+#ifdef CK_SSL
+#undef CK_SSL
+#endif /* CK_SSL */
+#ifndef NOSSL
+#define NOSSL
+#endif  /* NOSSL */
+#ifdef CK_SNDLOC
+#undef CK_SNDLOC
+#endif /* CK_SNDLOC */
+#ifdef SSHBUILTIN                       /* No built-in SSH client */
+#undef SSHBUILTIN
+#endif  /* SSHBUILTIN */
+#ifdef SSHTEST
+#undef SSHTEST
+#endif  /* SSHTEST */
+#else
+#ifndef NETCONN
+#define NETCONN
+#endif  /* NETCONN */
+#endif /* NOTCPIP */
 
 _PROTOTYP( int readpass, (char *, char *, int));
 _PROTOTYP( int readtext, (char *, char *, int));

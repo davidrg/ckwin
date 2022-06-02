@@ -1,8 +1,8 @@
 # makefile / Makefile / ckuker.mak / CKUKER.MAK
 #
-# Tue May 17 08:09:29 2022
-BUILDID=20220514
-CKVER= "10.0 Beta.02"
+# Thu Jun  2 10:59:23 2022
+BUILDID=20220602
+CKVER= "10.0 Beta.03"
 #
 # -- Makefile to build C-Kermit for UNIX and UNIX-like platforms --
 #
@@ -988,9 +988,10 @@ TEXTFILES = COPYING.TXT ckcbwr.txt ckubwr.txt ckuins.txt ckccfg.txt \
 count:
 	@grep -c '^[^#[:space:]].*:' makefile
 
-# List all argets
+# List all targets
 list:
-	@grep '^[^#[:space:]].*:' makefile
+	@grep '^[^#[:space:]].*:' makefile | sed 's/:.*$/:/'
+	# @grep '^[^#[:space:]].*:' makefile
 
 ALL = $(WERMIT)
 
@@ -1822,7 +1823,7 @@ freebsd+ssl freebsd+openssl freebsd50+openssl:
 #OK: 2011/06/15 on NetBSD 1.5.2 and 5.1.
 #NetBSD 4.1: have to include <time.h>.
 #OK: 2011/08/21 on 5.1.
-#OK: (many more up through NetBSD 7.2.1)
+#OK: (many more up through NetBSD 9.2)
 #OK: NetBSD 8.x
 #OK: 2020/08/24 NetBSD 9.0
 # `uname -r | grep "[6789].[0-9]" > /dev/null && echo '-DTIMEH'`
@@ -1837,13 +1838,46 @@ netbsd netbsd2 netbsd15 netbsd16 old-netbsd:
 	-DCK_DTRCD -DCK_DTRCTS -DTPUTSARGTYPE=int -DFNFLOAT $(KFLAGS) -O" \
 	"LIBS= -lcurses -lcrypt -lm -lutil $(LIBS)"
 
+netbsdclang:
+	# Dummy comment \
+	@echo 'Making C-Kermit $(CKVER) for Linux with Clang compiler'
+	$(MAKE) CC=clang CC2=clang KTARGET=$${KTARGET:-$(@)} \
+	KFLAGS="-DNODEPRECATED $(KFLAGS)" \
+	"LNKFLAGS = $(LNKFLAGS)" \
+	netbsd
+
+# NetBSD with pedantic warnings (cc is gcc).
+netbsd-pedantic:
+	@echo Making C-Kermit $(CKVER) for NetBSD `uname -r` gcc pedantic...
+	$(MAKE) linux KTARGET=$${KTARGET:-$(@)} \
+	KFLAGS="-Wpedantic $(KFLAGS)" \
+	"LNKFLAGS = $(LNKFLAGS)" \
+	netbsd
+
+# NetBSD with no TCP/IP or any other kind of networking
+# but with the external SSH client
+netbsd-nonet:
+	@echo Making C-Kermit $(CKVER) for NetBSD `uname -r` with no TCP/IP...
+	$(MAKE) KTARGET=$${KTARGET:-$(@)} \
+	KFLAGS="-DNONET -DSSHCMD -DANYSSH $(KFLAGS)" \
+	"LNKFLAGS = $(LNKFLAGS)" \
+	netbsd
+
+# NetBSD with no TCP/IP but with the external SSH client
+netbsd-notcp:
+	@echo Making C-Kermit $(CKVER) for NetBSD `uname -r` with no TCP/IP...
+	$(MAKE) KTARGET=$${KTARGET:-$(@)} \
+	KFLAGS="-DNOTCPIP -DSSHCMD -DANYSSH $(KFLAGS)" \
+	"LNKFLAGS = $(LNKFLAGS)" \
+	netbsd
+
 # NetBSD with "legacy" and deprecated features removed:
 # FTP, Telnet, Rlogin, Wtmp logging, and arrow keys,
 # which depend on a deprecated API that has no undeprecated replacement.
 netbsd-nodeprecated: \
 	# Dummy comment \
 	@echo 'Making C-Kermit $(CKVER) for Linux without deprecated features'
-	$(MAKE) linux KTARGET=$${KTARGET:-$(@)} \
+	$(MAKE) KTARGET=$${KTARGET:-$(@)} \
 	KFLAGS="-DNODEPRECATED $(KFLAGS)" \
 	"LNKFLAGS = $(LNKFLAGS)" \
 	netbsd
@@ -2179,7 +2213,11 @@ macosx+krb5+openssl macosx10.5+krb5+openssl macosx10.6+krb5+openssl:
 # Apple's Clang C compiler reports many warnings that can safely be ignored -
 # so keep reporting the ones that may have not been detected by other
 # compilers by selectively disabling dangling-else, string-compare and
-# parentheses related warnings.
+# parentheses related warnings.  -DNOWTMP added because it always provokes
+# a "deprecated" warning.  Wtmp logging is only for IKSD, so if you're
+# not going to be using macOS C-Kermit as an IKSD server, no worries.
+# If you are, and want the server to make Wtmp log entries, do
+# 'make macos "KFLAGS=-UNOWTMP".
 #
 macos:
 	@MACOSNAME=`/usr/bin/sw_vers -productName`; \
@@ -6160,7 +6198,17 @@ linuxa:
 	@echo 'Making C-Kermit $(CKVER) for Linux 1.2 or later...'
 	@echo 'IMPORTANT: Read the comments in the linux section of the'
 	@echo 'makefile if you have trouble.'
-	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} "CC = gcc" "CC2 = gcc" \
+	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} "CC=$(CC)" "CC2=$(CC)" \
+	"CFLAGS = -O -DLINUX -pipe -funsigned-char -DFNFLOAT -DCK_POSIX_SIG \
+	-DCK_NEWTERM -DTCPSOCKET -DLINUXFSSTND -DNOCOTFMC -DPOSIX \
+	-DUSE_STRERROR $(KFLAGS)" "LNKFLAGS = $(LNKFLAGS)" \
+	"LIBS = $(LIBS) -lm"
+
+linuxuseclang:
+	@echo 'Making C-Kermit $(CKVER) for Linux 1.2 or later...'
+	@echo 'IMPORTANT: Read the comments in the linux section of the'
+	@echo 'makefile if you have trouble.'
+	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} "CC = clang" "CC2 = clang" \
 	"CFLAGS = -O -DLINUX -pipe -funsigned-char -DFNFLOAT -DCK_POSIX_SIG \
 	-DCK_NEWTERM -DTCPSOCKET -DLINUXFSSTND -DNOCOTFMC -DPOSIX \
 	-DUSE_STRERROR $(KFLAGS)" "LNKFLAGS = $(LNKFLAGS)" \
@@ -6196,8 +6244,12 @@ linuxp:
 # files by supplying a symbol DCL_ERRNO if errno is not declared or defined
 # in any header files in the /usr/include tree.
 #
+# This target uses the computer's default C compiler, whatever it is
+# (usually gcc, which sometimes can be invoked as cc).
+#
 linux gnu-linux:
-	@echo "Making C-Kermit for `uname -spm` gcc `gcc -dumpversion`..."; \
+	@echo "Making C-Kermit for `uname -spm` $(CC) \
+`$(CC) -dumpversion`..."; \
 	# Dummy comment \
 	DCL_ERRNO='-DDCL_ERRNO';  \
 	if egrep -r \
@@ -6281,8 +6333,16 @@ linux gnu-linux:
 	  $$HAVE_LIBCURSES $$HAVE_RESOLV $$HAVE_CRYPT $$HAVE_LOCKDEV" \
 	linuxa
 
+# Force compilation with gcc
+linuxgcc:
+	$(MAKE) "CC=gcc" "CC2=gcc" linux
+
+# Force compilation with clang
+linuxclang:
+	$(MAKE) "CC=clang" "CC2=clang" linux
+
 #PREVIOUS LINUX TARGET
-#Use this target if you have trouble with the one just above.
+#Use this target if you have trouble with "make linux".
 #This is the previous target for Linux, retired at the end of 2015.
 #As you can see the tests for curses/ncurses and other libraries and
 #header files were getting ridiculous and were only going to get worse
@@ -6376,8 +6436,28 @@ linux-nodeprecated: \
 	@echo 'Making C-Kermit $(CKVER) for Linux without deprecated features'
 	$(MAKE) linux KTARGET=$${KTARGET:-$(@)} \
 	KFLAGS="-DNODEPRECATED $(KFLAGS)" \
-	"LNKFLAGS = $(LNKFLAGS)" \
-	linuxa
+	"LNKFLAGS = $(LNKFLAGS)"
+
+# Linux with pedantic warnings (force gcc)
+linux-pedantic:
+	@echo Making C-Kermit $(CKVER) for Linux `uname -r` gcc pedantic...
+	$(MAKE) "CC=gcc" "CC2=gcc" linux KTARGET=$${KTARGET:-$(@)} \
+	KFLAGS="-pedantic $(KFLAGS)" \
+	"LNKFLAGS = $(LNKFLAGS)"
+
+# Linux with no TCP/IP support but with the external ssh client
+linux-notcp:
+	@echo Making C-Kermit $(CKVER) for Linux `uname -r` NO TCP/IP...
+	$(MAKE) linux KTARGET=$${KTARGET:-$(@)} \
+	KFLAGS="-DNOTCPIP -DSSHCMD -DANYSSH $(KFLAGS)" \
+	"LNKFLAGS = $(LNKFLAGS)"
+
+# Linux with no TCP/IP support but with the external ssh client
+linux-nonet:
+	@echo Making C-Kermit $(CKVER) for Linux `uname -r` NO NETWORKING...
+	$(MAKE) linux KTARGET=$${KTARGET:-$(@)} \
+	KFLAGS="-DNONET -DNONETDIR -DSSHCMD -DANYSSH $(KFLAGS)" \
+	"LNKFLAGS = $(LNKFLAGS)"
 
 # Linux + Shadow passwords + PAM
 # OK 2011/06/18
@@ -7056,9 +7136,6 @@ linux+krb5+openssl+zlib+shadow+pam:
 	-lm -lncurses -ltermcap -lssl -lcrypto -lgssapi_krb5 \
 	-lkrb5 -lcom_err -lk5crypto -lcrypt -lresolv -lpam -ldl -lz"
 
-linuxnotcp:
-	$(MAKE) linux KTARGET=$${KTARGET:-$(@)} "KFLAGS = -DNONET $(KFLAGS)"
-
 # "make linuxnotcp" with lcc (see http://www.cs.princeton.edu/software/lcc)
 # lcc does not understand various gcc extensions:
 #  "__inline__" -- can be eliminated by adding "-D__inline__="
@@ -7621,7 +7698,7 @@ sco32v500net+ssl:
 #Note: NOSYSLOG required for non-net entries because it requires <socket.h>
 sco32v500gcc:
 	@echo Using gcc...
-	$(MAKE) "MAKE=$(MAKE)" sco32v500CC=gcc CC2=gcc \
+	$(MAKE) "MAKE=$(MAKE)" sco32v500 CC=gcc CC2=gcc \
 	KTARGET=$${KTARGET:-$(@)} "KFLAGS= $(KFLAGS)"
 
 #SCO OpenServer 5.0 with networking, gcc.

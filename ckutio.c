@@ -1,12 +1,12 @@
 #define CKUTIO_C
 
 #ifdef aegis
-char *ckxv = "Aegis Communications support, 9.0.333, 13 May 2022";
+char *ckxv = "Aegis Communications support, 9.0.334, 01 Jun 2022";
 #else
 #ifdef Plan9
-char *ckxv = "Plan 9 Communications support, 9.0.333, 13 May 2022";
+char *ckxv = "Plan 9 Communications support, 9.0.334, 01 Jun 2022";
 #else
-char *ckxv = "UNIX Communications support, 9.0.333, 13 May 2022";
+char *ckxv = "UNIX Communications support, 9.0.334, 01 Jun 2022";
 #endif /* Plan9 */
 #endif /* aegis */
 
@@ -41,6 +41,13 @@ extern int duplex;
 
 #include "ckcsym.h"			/* This must go first   */
 #include "ckcdeb.h"			/* This must go second  */
+
+/* This is for -DNONET builds external SSH client builds */
+#ifndef NETCONN
+#ifdef SSHCMD
+#define NETCONN
+#endif  /* SSHCMD */
+#endif  /* NETCONN */
 
 #ifdef OSF13
 #ifdef CK_ANSIC
@@ -2354,7 +2361,7 @@ syscleanup() {
   nonzero = number of seconds to wait for open() to return before timing out.
 
   Returns:
-    0 on success
+    0 on success (or, in the case of a PTY, the positive process ID)
    -5 if device is in use
    -4 if access to device is denied
    -3 if access to lock directory denied
@@ -2424,6 +2431,7 @@ ttopen(ttname,lcl,modem,timo) char *ttname; int *lcl, modem, timo; {
     ttpipe = 0;				/* Assume it's not a pipe */
     ttpty = 0;				/* or a pty... */
 
+debug(F110,"XXX netopen in ifdef NETCONN...","A",0);
 #ifdef NETCONN
 /*
   This is a bit tricky...  Suppose that previously Kermit had dialed a telnet
@@ -2434,6 +2442,7 @@ ttopen(ttname,lcl,modem,timo) char *ttname; int *lcl, modem, timo; {
   such device or directory".  But the previous connection has left behind some
   clues, so let's use them...
 */
+    debug(F110,"XXX netopen in ifdef NETCONN...OK","A",0);
     if (ttyfd < 0) {			/* Connection is not open */
 	if (!strcmp(ttname,ttnmsv)) {	/* Old and new names the same? */
 	    if (((netconn > 0) && (ttmdm < 0)) ||
@@ -2523,6 +2532,7 @@ ttopen(ttname,lcl,modem,timo) char *ttname; int *lcl, modem, timo; {
                 ttpty = 1;
                 debug(F110,"ttopen PTY",ttname,0);
 		x = do_pty(&ttyfd,ttname,0);
+                debug(F101,"ttopen do_pty return code","",x);
 		if (x > -1) {
 		    ckstrncpy(ttnmsv,ttname,DEVNAMLEN);
 		    xlocal = *lcl = 1;	/* It's local */
@@ -2596,7 +2606,9 @@ ttopen(ttname,lcl,modem,timo) char *ttname; int *lcl, modem, timo; {
 	    }
 #endif /* NETCMD */
 #endif /* NAMEFD */
+            debug(F110,"XXX netopen in ifdef NETCONN...","B",0);
 	    x = netopen(ttname, lcl, modem); /* (see ckcnet.h) */
+            debug(F110,"XXX netopen in ifdef NETCONN...OK","B",0);
 	    if (x > -1) {
 		ckstrncpy(ttnmsv,ttname,DEVNAMLEN);
 	    } else netconn = 0;
@@ -3562,6 +3574,8 @@ ttclos(foo) int foo; {			/* Arg req'd for signal() prototype */
     }
 #endif /* IKSD */
 #ifdef NETCMD
+    debug(F101,"XXX NETCMD ttpipe","",ttpipe);
+
     if (ttpipe) {			/* We've been using a pipe */
 	/* ttpipe = 0; */
 	if (ttpid > 0) {
@@ -3586,6 +3600,7 @@ ttclos(foo) int foo; {			/* Arg req'd for signal() prototype */
     }
 #endif /* NETCMD */
 #ifdef NETPTY
+    debug(F101,"XXX NETPTY ttpty","",ttpty);
     if (ttpty) {
 #ifndef NODOPTY
         end_pty();
@@ -3599,7 +3614,9 @@ ttclos(foo) int foo; {			/* Arg req'd for signal() prototype */
     }
 #endif /* NETPTY */
 
+    debug(F110,"XXX netclos in ifdef NETCONN...","A",0);
 #ifdef	NETCONN
+    debug(F110,"XXX netclos in ifdef NETCONN...OK","A",0);
     if (netconn) {			/* If it's a network connection. */
 	debug(F100,"ttclos closing net","",0);
 	netclos();			/* Let the network module close it. */
@@ -4929,7 +4946,7 @@ char * uucplockdir = LOCK_DIR;
 #else
 char * uucplockdir = "";
 #endif /* LOCK_DIR */
-#else
+#else  /* USETTYLOCK */
 #ifdef LOCK_DIR
 char * uucplockdir = LOCK_DIR;
 #else
@@ -9154,7 +9171,11 @@ ttflui() {
             tnc_send_purge_data(TNC_PURGE_RECEIVE);
 #endif /* TN_COMPORT */
 #endif /* COMMENT */
+#ifndef NOTCPIP
 	return(netflui());
+#else
+	return(-1);
+#endif  /* NOTCPIP */
     }
 #endif /* NETCONN */
 
@@ -11290,7 +11311,9 @@ ttinc(timo) int timo; {
 
         while ((n = read(fd,&ch,1)) == 0) /* Wait for a character. */
         /* Shouldn't have to loop in ver 5A. */
+debug(F110,"XXX netclos in ifdef NETCONN...","B",0);
 #ifdef NETCONN
+debug(F110,"XXX netclos in ifdef NETCONN...OK","B",0);
 	  if (netconn) {		/* Special handling for net */
 	      netclos();		/* If read() returns 0 it means */
 	      netconn = 0;		/* the connection has dropped. */
@@ -11360,7 +11383,9 @@ ttinc(timo) int timo; {
 		alarm(oldalarm);
 	    }
 	}
+debug(F110,"XXX netclos in ifdef NETCONN...","C",0);
 #ifdef NETCONN
+debug(F110,"XXX netclos in ifdef NETCONN...","C",0);
 	if (netconn) {
 	    if (n == -2) {		/* read() returns 0 */
 		netclos();		/* on network read failure */

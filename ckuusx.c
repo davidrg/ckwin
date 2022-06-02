@@ -9175,10 +9175,11 @@ ck_curpos(int row, col) {
 #else
 ck_curpos(row, col)
     int row;
-    int col; {
+    int col;
 #endif  /* CK_ANSIC */
     return(-1);
 }
+
 int
 ck_cls() {
     return(-1);

@@ -33,6 +33,7 @@ $NetBSD: patch-ab,v 1.8 2020/04/08 15:22:07 rhialto Exp $
   Adapted for LibreSSL by Bernard Spil, December 2015 (search "Spil")
 */
 
+#ifndef NOSSL
 #include "ckcsym.h"
 #include "ckcdeb.h"
 
@@ -4585,3 +4586,4 @@ X509_userok(X509 * peer_cert, const char * userid)
 }
 #endif /* OS2 */
 #endif /* CK_SSL */
+#endif /* NOSSL */

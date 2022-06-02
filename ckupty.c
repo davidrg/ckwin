@@ -1,8 +1,8 @@
-char *ckptyv = "Pseudoterminal support, 9.0.105, 07 Dec 2021";
+char *ckptyv = "Pseudoterminal support, 9.0.106, 01 Jun 2022";
 
 /*  C K U P T Y  --  C-Kermit pseudoterminal control functions for UNIX  */
 
-/* Last update: Tue Dec  7 19:40:13 2021 */
+/* Last update: Wed Jun  1 07:51:52 2022 */
 
 /*
   Copyright 1995 by the Massachusetts Institute of Technology.
@@ -1851,6 +1851,7 @@ exec_cmd(s) char * s; {
 
 /* Get a pty, scan input lines. */
 /* fc = 0 for interactive access; fc = 1 for running external protocols */
+/* Returns -1 on failure and the PID (a positive number) on success */
 
 static int pty_fc = -1;			/* Global copy of fc */
 

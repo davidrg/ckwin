@@ -3,7 +3,7 @@
 #endif /* SSHTEST */
 
 #include "ckcsym.h"
-char *userv = "User Interface 9.0.320, 12 May 2022";
+char *userv = "User Interface 9.0.321, 01 June 2022";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 
@@ -605,9 +605,9 @@ static char c1chars[] = {		/* C1 control chars escept NUL */
 
 /*
   Top-Level Interactive Command Keyword Table.
-  HELP topics go here too, even they aren't commands; they are marked
-  with the CM_HLP attribute.  Commands go to routines that execute them
-  and HELP items go to the big switch statement in ckuus2.c.
+  HELP topics go here too, even when they aren't commands; they are marked
+  with the CM_HLP|CM_INV attributes.  Commands go to routines that execute
+  them and HELP items go to the big switch statement in ckuus2.c.
   Entries must be in alphabetical order.
 */
 struct keytab cmdtab[] = {
@@ -764,7 +764,7 @@ struct keytab cmdtab[] = {
     { "cls",         XXCLS, CM_INV },	/* Clear Screen (CLS) */
     { "comment",     XXCOM, CM_INV },	/* Introduce a comment */
 #ifndef NOSPL
-    { "compact-substring", XXCSN, CM_HLP }, /* Compact substring notation */
+    { "compact-substring", XXCSN, CM_INV|CM_HLP }, /* CS notation */
 #endif  /* NOSPL */
 #ifndef NOLOCAL
     { "connect",     XXCON, CM_LOC },	/* Begin terminal connection */
@@ -8196,7 +8196,6 @@ docmd(cx) int cx; {
 	printf("?Connections disabled\n");
 	return(-9);
     }
-
 #ifndef NOSPL
     /* Used in FOR loops */
 
@@ -8236,7 +8235,6 @@ docmd(cx) int cx; {
     if (cx == XXSWIT) {			/* SWITCH */
 	return(doswitch());
     }
-
     /* GOTO, FORWARD, and _FORWARD (used internally by FOR, WHILE, etc) */
 
     if (cx == XXGOTO || cx == XXFWD || cx == XXXFWD) { /* GOTO or FORWARD */
@@ -8410,7 +8408,6 @@ docmd(cx) int cx; {
 	x = addmac(mnamebuf,s);
 	return(dodo(x,NULL,cmdstk[cmdlvl].ccflgs) < 1 ? (success = 0) : 1);
     }
-
     if (cx == XXLBL) {			/* LABEL */
 	if ((x = cmfld("label","",&s,xxstring)) < 0) {
 	    if (x == -3) {
@@ -8512,7 +8509,6 @@ docmd(cx) int cx; {
 	return(-9);
     }
 #endif /* NOSEXP */
-
 #endif /* NOSPL */
 
     if (cx == XXECH || cx == XXXECH || cx == XXVOID
@@ -8654,7 +8650,6 @@ docmd(cx) int cx; {
 	    printf("?No connection - use EXIT to quit.\n");
 	    return(-9);
 	}
-
 #ifdef CK_XYZ
 	if (protocol != PROTO_K) {
 	    printf("?Sorry, BYE only works with Kermit protocol\n");
@@ -8783,7 +8778,6 @@ docmd(cx) int cx; {
 #endif /* IKSD */
 	return(success = docd(cx));
     }
-
     if (cx == XXCHK)			/* CHECK */
       return(success = dochk());
 
@@ -8926,12 +8920,10 @@ docmd(cx) int cx; {
 #endif /* IKSD */
 	return(dodir(cx));
     }
-
 #ifndef NOSPL
     if (cx == XXELS)			/* ELSE */
       return(doelse());
 #endif /* NOSPL */
-
 #ifndef NOSERVER
 #ifndef NOFRILLS
     if (cx == XXENA || cx == XXDIS) {	/* ENABLE, DISABLE */
@@ -9208,7 +9200,6 @@ docmd(cx) int cx; {
 	} else return(success = 0);
 #endif /* MAC */
     }
-
     if (cx == XXQUI || cx == XXEXI) {	/* EXIT, QUIT */
 	extern int quitting;
 
@@ -9670,7 +9661,6 @@ docmd(cx) int cx; {
 	else
 	  return(success = x);
     }
-
     if (cx == XXLOGIN) {		/* (REMOTE) LOGIN */
 #ifdef NEWFTP
 	if ((ftpget == 1) || ((ftpget == 2) && ftpisopen()))
@@ -9714,7 +9704,6 @@ docmd(cx) int cx; {
 #endif /* NOXFER */
 	}
     }
-
 #ifndef NOSCRIPT
     if (cx == XXLOGI) {			/* UUCP-style script */
 	if ((x = cmtxt("expect-send expect-send ...","",&s,xxstring)) < 0)
@@ -10089,7 +10078,6 @@ docmd(cx) int cx; {
 	    return(-9);
 	} else return(y);
     }
-
     if (cx == XXSET) {			/* SET command */
 	x = cmkey(prmtab,nprm,"Parameter","",xxstring);
 	if (x == -3) {
@@ -10389,7 +10377,6 @@ docmd(cx) int cx; {
 #endif /* NOJC */
 	return(0);
     }
-
     if (cx == XXTAK) {			/* TAKE */
 	char * scriptenv = NULL;	
 #ifdef OS2
@@ -10651,12 +10638,12 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	return(y);
     }
 #endif /* PTYORPIPE */
+#endif /* NETCONN */
 
 #ifdef ANYSSH
     if (cx == XXSSH) {			/* SSH (Secure Shell) */
 	extern int netsave;
 #ifdef SSHBUILTIN
-	int k, x, havehost = 0, trips = 0;
         int    tmpver = -1, tmpxfw = -1;
 #ifndef SSHTEST
         extern int sl_ssh_xfw, sl_ssh_xfw_saved;
@@ -10668,13 +10655,14 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
         extern char pwbuf[], * g_pswd;
         extern int pwflg, pwcrypt, g_pflg, g_pcpt, nolocal;
 	struct FDB sw, kw, fl;
-
         if (ssh_tmpstr)
 	  memset(ssh_tmpstr,0,strlen(ssh_tmpstr));
         makestr(&ssh_tmpstr,NULL);
         makestr(&ssh_tmpuid,NULL);
         makestr(&ssh_tmpcmd,NULL);
         makestr(&ssh_tmpport,NULL);
+
+        debug(F101,"SSH external parsing","",0);
 
 	cmfdbi(&kw,			/* 1st FDB - commands */
 	       _CMKEY,			/* fcode */
@@ -10700,6 +10688,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	       );
 
 	x = cmfdb(&kw);
+        debug(F101,"SSH external cmfdb &kw","",x);
 	if (x == -3) {
 	    printf("?ssh what?\n");
 	    return(-9);
@@ -11440,7 +11429,10 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	}
 #else  /* SSHBUILTIN */
 #ifdef SSHCMD
+
 	x = nettype;
+        debug(F101,"SSH external nettype","",nettype);
+        debug(F101,"SSH external calling setlin","",0);
 	if ((y = setlin(XXSSH,0,1)) < 0) {
 	    if (errno)
 	      printf("?%s\n",ck_errstr());
@@ -11451,7 +11443,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (hints)
 	      printf("Hint: Try \"ssh -t %s\"\n",line);
 #else
-	      return(y);
+            return(y);
 #endif /* COMMENT */
 	    nettype = x;		/* Failed, restore net type. */
 	    ttnproto = z;		/* and protocol */
@@ -12104,7 +12096,6 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	return(-9);
 #endif /* RLOGCODE */
     }
-#endif /* NETCONN */
 #endif /* NOLOCAL */
 
 #ifndef NOXMIT

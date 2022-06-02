@@ -6408,6 +6408,7 @@ CMDIRPARSE:
         cq = *(bp+1);
         debug(F000,"CHAR C","",c);      /* FUNCTIONTEST */
         if (!c) {			/* If no char waiting in reparse buf */
+            debug(F100,"XXX gtword no chars waiting","",0);
 	    if ((dpx
 #ifndef NOSPL
 		 || echostars

@@ -2,6 +2,8 @@ C-KERMIT 10.0 DEVELOPMENT
 
 For greater detail see https://www.kermitproject.org/ckupdates.html .
 
+C-Kermit 10.0 Beta.03 02 Jun 2022
+
 C-Kermit 10.0 Beta.02 17 May 2022
 
 Corrects two fatal syntax affecting only non-ANSI-C builds.

@@ -8797,8 +8797,6 @@ cx_fail(msg, text) int msg; char * text; {
     slrestor();				/* Restore LINE/HOST to known state */
     return(msg ? -9 : (success = 0));	/* Return appropriate code */
 }
-
-#ifdef NETCONN
 /* c x _ n e t  --  Make a network connection */
 
 /*
@@ -8841,6 +8839,7 @@ cx_net(net, protocol, xhost, svc,
 
     int i, n, x, msg;
     int _local = -1;
+    int did_ttopen = 0;
 
     extern char pwbuf[], * g_pswd;
     extern int pwflg, pwcrypt, g_pflg, g_pcpt, nolocal;
@@ -8855,12 +8854,13 @@ cx_net(net, protocol, xhost, svc,
     ckstrncpy(host,xhost,HOSTNAMLEN);	/* Avoid buffer confusion */
 
     debug(F110,"cx_net host",host,0);
-    debug(F111,"cx_net service",svc,SRVBUFSIZ);
+    debug(F111,"cx_net service buffer size",svc,SRVBUFSIZ);
     debug(F101,"cx_net network type","",net);
 
     msg = (gui == 0) && msgflg;		/* Whether to print messages */
 
 #ifndef NODIAL
+#ifndef NONETDIR
     debug(F101,"cx_net nnetdir","",nnetdir);
     x = 0;				/* Look up in network directory */
     if (*host == '=') {			/* If number starts with = sign */
@@ -8877,13 +8877,16 @@ cx_net(net, protocol, xhost, svc,
 	  return(cx_fail(msg,"Network directory lookup error"));
 	debug(F111,"cx_net lunet nhcount",host,nhcount);
     }
+#endif /* NONETDIR */
 #endif /* NODIAL */
 
     /* New connection wanted.  Make a copy of the host name/address... */
 
+    debug(F100,"cx_net A","",0);
     if (clskconnx(1) < 0)		/* Close current Kermit connection */
       return(cx_fail(msg,"Error closing previous connection"));
 
+    debug(F100,"cx_net B","",0);
     if (*host) {			/* They gave a hostname */
 	_local = 1;			/* Network connection always local */
 	if (mdmsav < 0)
@@ -8915,7 +8918,10 @@ cx_net(net, protocol, xhost, svc,
       ckstrncpy(line,host,LINBUFSIZ);
     ckstrncpy(hostname,host,HOSTNAMLEN);
     ckstrncpy(srvbuf,svc,SRVBUFSIZ+1);
+    debug(F110,"cx_net hostname",host,0);
+    debug(F110,"cx_net srvbuf",srvbuf,0);
 
+#ifndef NONETDIR
 #ifndef NODIAL
     if ((nhcount > 1) && msg) {
 	int k;
@@ -8945,10 +8951,13 @@ cx_net(net, protocol, xhost, svc,
     n = 1;
     nhcount = 0;
 #endif /* NODIAL */
+    n = 1;
+#endif /* NONETDIR */
 
     for (i = 0; i < n; i++) {		/* Loop for each entry found */
 	debug(F101,"cx_net loop i","",i);
 #ifndef NODIAL
+#ifndef NONETDIR
 	if (nhcount > 0) {		/* If we found at least one entry... */
 	    ckstrncpy(line,nh_p[i],LINBUFSIZ); /* Copy current entry */
 	    if (lookup(netcmd,nh_p2[i],nnets,&x) > -1) { /* Net type */
@@ -9125,8 +9134,12 @@ cx_net(net, protocol, xhost, svc,
 	    }
 	} else
 #endif /* NODIAL */
+#endif /* NONETDIR */
+
 	{				/* No directory entries found. */
 	    ckstrncpy(line,hostname,LINBUFSIZ); /* Put this back... */
+            debug(F110,"cx_net after loop loop",line,0);
+
 	    /* If the user gave a TCP service */
 	    if (net == NET_TCPB || net == NET_SSH)
 	      if (*srvbuf) {		/* Append it to host name/address */
@@ -9597,6 +9610,8 @@ cx_net(net, protocol, xhost, svc,
 	/* Try to open - network */
 	ckstrncpy(ttname,line,TTNAMLEN);
 	y = ttopen(line, &_local, mdmtyp, 0 );
+        did_ttopen++;
+        debug(F101,"cx_net did_ttopen A","",did_ttopen);
 
 #ifndef NOHTTP
 	/*  If the connection failed and we are using an HTTP Proxy
@@ -9641,6 +9656,7 @@ cx_net(net, protocol, xhost, svc,
 
 		    ckstrncpy(ttname,line,TTNAMLEN);
 		    y = ttopen(line, &_local, mdmtyp, 0);
+                    debug(F101,"cx_net did_ttopen B","",did_ttopen);
 		    memset(pwd,0,sizeof(pwd));
 		    tcp_http_proxy_user = proxy_user;
 		    tcp_http_proxy_pwd = proxy_pwd;
@@ -9765,7 +9781,19 @@ cx_net(net, protocol, xhost, svc,
     } /* for-loop */
     s = line;
 
+    debug(F101,"cx_net after for-loop did_ttopen","",did_ttopen);
+    if (did_ttopen == 0) {
+        debug(F100,"cx_net didn't call ttopen - calling it now","",0);
+        y = ttopen(line, &_local, mdmtyp, 0);
+        debug(F101,"cx_net ttopen return code","",y);
+        debug(F101,"cx_net ttopen _local","",_local);
+        did_ttopen++;
+        ckstrncpy(ttname,line,TTNAMLEN);
+        success = 0;
+        if (y > 0) success = 1;
+    }
     debug(F101,"cx_net post ttopen success","",success);
+
     if (!success) {
         local = dfloc;                  /* Go back to normal */
 #ifndef MAC
@@ -9793,7 +9821,11 @@ cx_net(net, protocol, xhost, svc,
     if ((reliable != SET_OFF || !setreliable)) /* Assume not reliable. */
       reliable = SET_OFF;
 #endif /* NOXFER */
-    if (!network || istncomport())	
+    if (!network
+#ifdef NETCOMM
+        || istncomport()
+#endif /* NETCOMM */
+        )
       speed = ttgspd();                 /* Get the current speed. */
     debug(F101,"cx_net local","",local);
     if (network) {
@@ -9846,9 +9878,11 @@ cx_net(net, protocol, xhost, svc,
     setflow();                          /* Set appropriate flow control */
 
     haveline = 1;
+#ifdef NETCONN
 #ifdef CKLOGDIAL
     dolognet();
 #endif /* CKLOGDIAL */
+#endif /* NETCONN */
 
 #ifndef NOSPL
     if (local) {
@@ -9909,7 +9943,6 @@ cx_net(net, protocol, xhost, svc,
 #endif /* LOCUS */
     return(success = 1);
 }
-#endif /* NETCONN */
 
 /* c x _ s e r i a l  --  Make a serial connection */
 
@@ -10317,14 +10350,24 @@ setlin(xx, zz, fc)
 #endif /* NETCONN */
 
     autoflow = 1;                       /* Enable automatic flow setting */
+    debug(F101,"setlin xx","",xx);
 
+#ifdef SSHCMD
+    debug(F100,"setlin SSHCMD","",0);
+#endif /* SSHCMD */
     if (xx == XYHOST) {                 /* SET HOST <hostname> */
+        debug(F100,"setlin XYHOST","",0);
 #ifndef NETCONN
-        makestr(&slmsg,"Network connections not supported");
+#ifndef SSHCMD
+        debug(F100,"setlin XXX","",0);
+        makestr(&slmsg,"Network connections not configured");
         printf("?%s\n",slmsg);
         return(-9);
-#else /* NETCONN */
+#endif  /* SSHCMD */
+#endif  /* NETCONN */
+
 #ifndef NOPUSH
+        debug(F101,"setlin mynet","",mynet); /* NET_CMD = 11, NET_PTY = 15 */
         if ((mynet == NET_CMD || mynet == NET_PTY || dossh) && nopush) {
             makestr(&slmsg,"Access to external commands is disabled");
             printf("?Sorry, access to external commands is disabled\n");
@@ -10332,20 +10375,32 @@ setlin(xx, zz, fc)
         }
 #endif /* NOPUSH */
 
+        debug(F101,"setlin dossh abc","",dossh);
 #ifdef SSHCMD
+        debug(F101,"setlin dossh def","",dossh);
         if (dossh) {                    /* SSH connection via pty */
-            int k;
+            int k, q;
+            int have_host = 0;
 	    extern int ttyfd;		/* 2010/03/01 */
             k = ckstrncpy(line, sshcmd ? sshcmd : defsshcmd, LINBUFSIZ);
             debug(F111,"setlin sshcmd 1",line,k);
             if ((x = cmtxt("Optional switches and hostname","",&s,xxstring))<0)
               return(x);
+            debug(F111,"setlin dossh cmtxt",s,1);
+            debug(F110,"setlin dossh ttname",ttname,0);
+            if (!*s) debug(F111,"setlin dossh cmtxt is EMPTY",s,x);
+            q = (int) strlen(s);
+            debug(F111,"setlin dossh IF strlen(s)",s,q);
+            if (q > 0) have_host = 1;
 
             /* 2010-03-30 */
-	    if (!*s && ttyfd < 0 && !ckstrcmp("ssh ",ttname,4,0)) { 
+	    if ((!q && (ttyfd < 0)) && !ckstrcmp("ssh ",ttname,4,0)) {
 		x = ckstrncpy(line,ttname,LINBUFSIZ);
+                debug(F110,"setlin dossh ttname *s == 0",s,0);
 	    } else {
-		if (!*s) {
+                debug(F111,"setlin dossh ELSE have_host",s,have_host);
+		if (have_host == 0) {
+                    debug(F101,"setlin dossh have_host IS ZERO","",have_host);
 		    printf("?SSH to where?\n");
 		    return(-9);
 		}
@@ -10361,6 +10416,7 @@ setlin(xx, zz, fc)
 		    return(-9);
 		}
 	    }
+            debug(F110,"setlin sshcmd calling cx_net",line,0);
 	    x = cx_net( NET_PTY,                /* network type */
                         0,                      /* protocol (not used) */
                         line,                   /* host */
@@ -10374,6 +10430,7 @@ setlin(xx, zz, fc)
                         zz,                     /* close current? */
                         0);                     /* not gui */
 	    debug(F111,"setlin cx_net",line,x);
+            debug(F101,"setlin cx_net ttyfd","",ttyfd);
 	    return(x);
         }
 #endif /* SSHCMD */
@@ -10391,6 +10448,8 @@ setlin(xx, zz, fc)
 
         confirmed = 0;
         haveswitch = 0;
+
+#ifdef NETCONN
 #ifdef NETFILE
         if (mynet != NET_FILE) {
 #endif /* NETFILE */
@@ -11169,7 +11228,7 @@ setlin(xx, zz, fc)
             makestr(&tmpusrid,NULL);
 	debug(F111,"setlin cx_net",line,x);
 	return(x);
-#endif /* NETCONN */
+#endif  /* NETCONN */
     }
 
 /* Serial tty device, possibly modem, connection... */

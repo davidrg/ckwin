@@ -17,7 +17,7 @@
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: 8 May 2022
+    Last update: 31 May 2022
 */
 
 /*  SET command (but much material has been split off into ckuus7.c). */
@@ -9092,6 +9092,7 @@ case XYPAD:                             /* SET PAD ... */
 #endif /* NOSPL */
 
 #ifdef NETCONN
+#ifndef NONETDIR
       case XYNET: {                     /* SET NETWORK */
 
           struct FDB k1, k2;
@@ -9378,6 +9379,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
               return(success = 1);
           }
       }
+#endif  /* NONETDIR */
 
 #ifndef NOTCPOPTS
 #ifdef TCPSOCKET

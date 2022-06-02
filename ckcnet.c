@@ -1424,14 +1424,6 @@ ttbufr() {                              /* TT Buffer Read */
   C-Kermit network open/close functions for BSD-sockets.
   Much of this code shared by SunLink X.25, which also uses the socket library.
 */
-
-/*  N E T O P N  --  Open a network connection.  */
-/*
-  Call with:
-    name of host (or host:service),
-    lcl - local-mode flag to be set if this function succeeds,
-    network type - value defined in ckunet.h.
-*/
 #ifdef TCPSOCKET
 struct hostent *
 #ifdef CK_ANSIC
@@ -3224,9 +3216,9 @@ ckgetpeer() {
 #endif /* TCPSOCKET */
 }
 
+#ifndef NOTCPIP
 /* Get fully qualified IP hostname */
 
-#ifndef NONET
 char *
 #ifdef CK_ANSIC
 ckgetfqhostname(char * name)
@@ -3521,11 +3513,16 @@ ckgetservice(hostname, servicename, ip, iplen)
     }
     return(service);
 }
+#endif  /* NOTCPIP */
 
 /*  N E T O P E N  --  Open a network connection  */
 /*
   Calling conventions same as ttopen(), except third argument is network
   type rather than modem type.  Designed to be called from within ttopen.
+  Call with:
+    name - name of host (or host:service),
+    lcl  - local-mode flag to be set if this function succeeds,
+    nett - network type (value defined in ckcnet.h)
 */
 
 #define XXNAMELEN 256
@@ -5117,7 +5114,7 @@ netclos() {
 #endif /* OS2 */
       {
 #ifdef VMS
-	  y = 1;                          /* Turn on nonblocking reads */
+	  y = 1;                        /* Turn on nonblocking reads */
 	  z = socket_ioctl(ttyfd,FIONBIO,&y);
 	  debug(F111,"netclos FIONBIO","on",z);
 #endif /* VMS */
@@ -5242,6 +5239,7 @@ netclos() {
     close_in_progress = 0;              /* Remember we are done. */
     return(x);
 }
+#ifndef NOTCPIP
 
 #ifdef OS2
 int
@@ -6936,7 +6934,6 @@ net_read(fd, buf, len)
     return(len2);
 }
 #endif /* CK_KERBEROS */
-#endif /* NONET */
 
 /* getlocalipaddr() attempts to resolve an IP Address for the local machine.
  *   If the host is multi-homed it returns only one address.
@@ -7156,6 +7153,7 @@ rlog_naws() {
       return(-1);
     return(0);
 }
+#endif /* NOTCPIP */
 
 #ifdef OS2ORUNIX
 #define RLOGOUTBUF

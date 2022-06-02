@@ -5532,9 +5532,15 @@ shover() {
     printf(" %s\n",ckomouv);
 #endif /* OS2MOUSE */
 #endif /* OS2 */
+
+#ifndef NOFTP
+#ifndef SYSFTP
 #ifdef NEWFTP
     printf(" %s\n",ckftpv);
 #endif /* NEWFTP */
+#endif /* SYSFTP */
+#endif /* NOFTP */
+
 #ifdef CK_AUTHENTICATION
     printf(" %s\n",ckathv);
 #endif /* CK_AUTHENTICATION */
@@ -7987,9 +7993,11 @@ doshow(x) int x; {
       }
 #endif /* STREAMING */
 
+#ifdef ISKD
       case SHOIKS:
         return(sho_iks());
         break;
+#endif  /* IKSD */
 
 #ifdef CK_AUTHENTICATION
       case SHOAUTH:

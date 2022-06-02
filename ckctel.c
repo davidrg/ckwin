@@ -32,6 +32,8 @@ int sstelnet = 0;                       /* Do server-side Telnet negotiation */
   logical operators, or other preprocessor features in this module.  Also,
   don't use any ANSI C constructs except within #ifdef CK_ANSIC..#endif.
 */
+#ifndef NONET
+#ifndef NOTCPIP
 
 #include "ckcsym.h"
 #include "ckcdeb.h"
@@ -9061,3 +9063,6 @@ tnsndb(wait) long wait;
 }
 #endif /* TN_COMPORT */
 #endif /* TNCODE */
+
+#endif /* NOTCPIP */
+#endif /* NONET */

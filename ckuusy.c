@@ -2478,6 +2478,7 @@ doxarg(s,pre) char ** s; int pre; {
         break;
 #endif /* CKWTMP */
 
+#ifndef NOIKSD
       case XA_ANON:                     /* IKS: Anonymous login allowed */
         y = lookup(oktab,p,noktab,&z);
         if (y < 0) return(-1);
@@ -2493,7 +2494,9 @@ doxarg(s,pre) char ** s; int pre; {
         /* printf("ckxpriv=%d\n",ckxpriv); */
         break;
 #endif /* UNIX */
+#endif  /* NOIKSD */
 
+#ifndef NOIKSD
 #ifdef CK_PERMS
       case XA_PERM:                     /* IKS: Anonymous Upload Permissions */
         y = 0;
@@ -2530,6 +2533,7 @@ doxarg(s,pre) char ** s; int pre; {
         makestr(&anonroot,p);
         /* printf("anonroot=%s\n",anonroot); */
         break;
+#endif /* NOIKSD */
 #endif /* CK_LOGIN */
 
       case XA_CDFI:                     /* CD filename */
