@@ -19,9 +19,8 @@ C-KERMIT UPDATE HISTORY
 
       Versions 9.0-10.0: 2011-2022
 
-   Current development version:   10.0 Beta.01   07 April 2022   (NOT
-   UPLOADED YET -- THIS PAGE IS A PREVIEW)
-   Current released version:   [14]9.0.302   20 August 2011
+   Current development version:   10.0 Beta.02   07 April 2022
+   Current released version:      [14]9.0.302    20 August 2011
 
    [15] DOWNLOAD THE DEVELOPMENT VERSION      [16] SEE TABLE OF RECENT
    DEVELOPMENT BUILDS
@@ -45,9 +44,13 @@ C-KERMIT UPDATE HISTORY
    hand. All changes since July 2020 have been entered directly into this
    page.
 
-C-Kermit 10.0 Beta.01 16 May 2022  (WORK IN PROGRESS - NOT YET UPLOADED)
+C-Kermit 10.0 Beta.01 16 May 2022 and Beta.02 17 May 2022
 
-   [[22]What's new in C-Kermit 10.0]  [[23]Changes since Alpha.07]
+   [[22]Changes since Alpha.07]   [[23]What's new in C-Kermit 10.0]
+
+   Beta.02 corrects two fatal syntax errors in non-ANSI-C builds affecting
+   only HP-UX. The rest of this section applies to both Beta.01 and
+   Beta.02.
 
    The forthcoming new release of C-Kermit, expected "pretty soon" will be
    called 10.0 rather than 9.0.305, not so much because it's radically
@@ -110,7 +113,7 @@ C-Kermit 10.0 Beta.01 16 May 2022  (WORK IN PROGRESS - NOT YET UPLOADED)
           appear in [27]any new release based upon the current C-Kermit
           source code.
 
-C-Kermit 10.0 Beta.01 changes since Alpha.07
+C-Kermit 10.0 Beta.01-02 changes since Alpha.07
 
    Aside from the new version number, the changes since Alpha.07 are
    modest.
@@ -135,6 +138,8 @@ C-Kermit 10.0 Beta.01 changes since Alpha.07
 
 |> Bugs fixed
 
+     * (Beta.02 only) ckuusx.c, ckufio.c: correction of syntax errors
+       affecting only non-ANSIC-C builds.
      * ckufio.c: Bug fixed affecting -DNOUUCP builds (such as Mac OS) when
        receiving a file in which C-Kermit created a bogus empty backup
        file (e.g. bug.txt.~1~). Reported and diagnosed by MacPorts port
@@ -10974,14 +10979,14 @@ References
   13. file:///archive.html
   14. file:///net/u/1/f/fdc/web/ckupdates.html#ck90302
   15. file:///net/u/1/f/fdc/web/ckdaily.html
-  16. file:///net/u/1/f/fdc/web/ck90305table.html
+  16. file:///net/u/1/f/fdc/web/ck10devbuilds.html
   17. http://columbia.edu/~fdc/
   18. http://kermitproject.org/
   19. https://kermitproject.org/ftp/kermit/changelogs/
   20. https://kermitproject.org/ftp/kermit/ckermit/
   21. file:///net/u/1/f/fdc/web/html.html
-  22. file:///net/u/1/f/fdc/web/ckupdates.html#ck10summary
-  23. file:///net/u/1/f/fdc/web/ckupdates.html#ck10changes
+  22. file:///net/u/1/f/fdc/web/ckupdates.html#ck10changes
+  23. file:///net/u/1/f/fdc/web/ckupdates.html#ck10summary
   24. file:///net/u/1/f/fdc/web/ck90305table.html#table
   25. file:///net/u/1/f/fdc/web/ck90tables.html
   26. file:///net/u/1/f/fdc/web/k95.html
