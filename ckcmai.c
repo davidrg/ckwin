@@ -1,8 +1,8 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "02 Jun 2022"         /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20220602"		/* Keep them in sync */
-/* Thu Jun  2 09:55:01 2022 */
+#define EDITDATE  "03 Jun 2022"         /* Last edit date dd mmm yyyy */
+#define EDITNDATE "20220603"		/* Keep them in sync */
+/* Fri Jun  3 06:22:11 2022 */
 
 /*
 FOR A NEW VERSION (development, alpha, beta, release candidate formal release):
@@ -57,7 +57,7 @@ char * ck_cryear = "2022"; 		/* C-Kermit copyright year */
 #ifndef BETATEST
 #ifndef OS2                             /* UNIX, VMS, etc... (i.e. C-Kermit) */
 char *ck_s_test = "Beta";		/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "03";			/* Test version number */
+char *ck_s_tver = "04";			/* Test version number */
 #else  /* OS2 */
 char *ck_s_test = "";			/* (i.e. K95) */
 char *ck_s_tver = "";

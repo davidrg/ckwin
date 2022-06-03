@@ -3,7 +3,7 @@
 #endif /* SSHTEST */
 
 #include "ckcsym.h"
-char *userv = "User Interface 9.0.321, 01 June 2022";
+char *userv = "User Interface 9.0.322, 03 June 2022";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 

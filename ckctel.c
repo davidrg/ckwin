@@ -1,4 +1,4 @@
-char *cktelv = "Telnet support, 9.0.279, 27 Jan 2022";
+char *cktelv = "Telnet support, 9.0.280, 3 Jun 2022";
 #define CKCTEL_C
 
 int sstelnet = 0;                       /* Do server-side Telnet negotiation */
@@ -4674,8 +4674,8 @@ tn_xdoop(z, echo, fn) CHAR z; int echo; int (*fn)();
                 {
                   CHAR request[6];      /* request it */
                   sprintf(request,"%cUSER",TEL_ENV_VAR); /* safe */
-                  tn_ssbopt(TELOPT_NEWENVIRON,TELQUAL_SEND,(CHAR *)request,
-                            strlen((CHAR *)request)); /* 2022-01-27 */
+                  tn_ssbopt(TELOPT_NEWENVIRON,TELQUAL_SEND,request,
+                            strlen((char *)request)); /* SMS 2022-06-03 */
                   TELOPT_UNANSWERED_SB(TELOPT_NEWENVIRON)=1;
                 }
                 break;

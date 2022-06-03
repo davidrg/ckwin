@@ -13,14 +13,14 @@
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: 8 May 2022
+    Last update: 3 Jun 2022
 */
 
 /*
   This module contains user interface functions needed by both the interactive
   user interface and the command-line-only user interface, as well as the
   screen-control routines (curses and equivalent).
-  Wed Nov  3 15:23:43 2021
+  Fri Jun  3 10:54:47 2022
 */
 
 /* Includes */
@@ -6254,9 +6254,9 @@ printw(str, a1, a2, a3, a4, a5, a6, a7, a8)
 #define CK_CURPOS
 int
 #ifdef CK_ANSIC
-ck_curpos(int row, col)
+ck_curpos(int row, int col)
 #else
-ck_curpos(row, col) int row, col;
+ck_curpos(row, col) int row, int col;
 #endif  /* CK_ANSIC */
  {
     debug(F111,"VMS smg ck_curpos",ckitoa(row),col);
@@ -6377,7 +6377,7 @@ ck_cleol() {
 
 int
 #ifdef CK_ANSIC
-ck_curpos(int row, col)
+ck_curpos(int row, int col)
 #else
 ck_curpos(row, col) int row, int col;
 #endif  /* CK_ANSIC */
@@ -6436,7 +6436,7 @@ clrtoeol() {
 
 #define CK_CURPOS
 int
-ck_curpos(row, col) int row, col; {
+ck_curpos(row, col) int row, int col; {
     move(row, col);
     return(0);
 }
@@ -6654,7 +6654,7 @@ ck_cleol() {
 }
 
 int
-ck_curpos(row, col) int row, col; {
+ck_curpos(row, col) int row, int col; {
     printf("\033[%d;%dH", row, col);
     return(0);
 }
@@ -9170,13 +9170,13 @@ char *s;        /* a string */
 /* Dummies for when cursor control is not supported */
 int
 #ifdef CK_ANSIC
-# fdc 5 May 2022
-ck_curpos(int row, col) {
+ck_curpos(int row, int col)
 #else
 ck_curpos(row, col)
     int row;
     int col;
 #endif  /* CK_ANSIC */
+{
     return(-1);
 }
 
