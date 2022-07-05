@@ -988,7 +988,7 @@
 #undef HERALD
 #endif /* HERALD */
 #ifdef NT
-#define HERALD " 32-bit Windows"
+#define HERALD " Windows"
 #else /* NT */
 #define HERALD " 32-bit OS/2"
 #endif /* NT */

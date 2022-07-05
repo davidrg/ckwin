@@ -205,15 +205,15 @@ char *copyright[] = {
 
 #ifdef OS2
 "Portions Copyright (C) 2002-2005, Secure Endpoints Inc, New York NY USA.",
-"Portions Copyright (C) 1995, Oy Online Solutions Ltd., Jyvaskyla, Finland.",
+/*"Portions Copyright (C) 1995, Oy Online Solutions Ltd., Jyvaskyla, Finland.", */ /* XYZModem functionality removed */
 #endif /* OS2 */
 
 #ifdef CK_AUTHENTICATION
 "Portions Copyright (C) 1990, Massachusetts Institute of Technology.",
 #ifdef CK_ENCRYPTION
 "Portions Copyright (C) 1991, 1993 Regents of the University of California.",
-"Portions Copyright (C) 1991, 1992, 1993, 1994, 1995 by AT&T.",
-"Portions Copyright (C) 1995, 1997, Eric Young <eay@cryptosoft.com>.",
+/*"Portions Copyright (C) 1991, 1992, 1993, 1994, 1995 by AT&T.",
+"Portions Copyright (C) 1995, 1997, Eric Young <eay@cryptosoft.com>.",*/ /* SSL/SSH/etc is also gone */
 #endif /* CK_ENCRYPTION */
 #ifdef CK_SRP
 "Portions Copyright (C) 1997, Stanford University.",
@@ -2636,12 +2636,12 @@ VOID
 makever() {                             /* Make version string from pieces */
     int x, y;
     char * s;
-#ifndef OS2
+//#ifndef OS2
 #ifndef MAC
     ck_s_xver = ck_s_ver;               /* Fill in C-Kermit version number */
     ck_l_xver = ck_l_ver;               /* for UNIX, VMS, etc. */
 #endif /* MAC */
-#endif /* OS2 */
+//#endif /* OS2 */
     x = strlen(ck_s_name);
     y = strlen(ck_s_xver);
     if (y + x + 1 < CKVERLEN) {
