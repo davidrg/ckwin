@@ -1266,10 +1266,12 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
             debug(F100,"Stdout pipe creation failed\n","",0);
 
         /* Set a write handle to the pipe to be STDOUT. */
-
+        /* 20220706 DavidG - This only kind of works for the console version
+         * (cknker.exe/k95.exe) - its totally broken on the GUI version (k95g.exe)
         if (! SetStdHandle(STD_OUTPUT_HANDLE, hChildStdoutWr) ||
              ! SetStdHandle(STD_ERROR_HANDLE, hChildStdoutWr) )
             debug(F100,"Redirecting STDOUT/STDERR failed","",0);
+        */
 
         /*
         * The steps for redirecting child's STDIN:
@@ -1287,12 +1289,15 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
             debug(F100,"Stdin pipe creation failed\n","",0);
 
         /* Set a read handle to the pipe to be STDIN. */
-
+        /* 20220706 DavidG - This only kind of works for the console version
+         * (cknker.exe/k95.exe) - its totally broken on the GUI version (k95g.exe)
         if (! SetStdHandle(STD_INPUT_HANDLE, hChildStdinRd))
             debug(F100,"Redirecting Stdin failed","",0);
+        */
 
         /* Duplicate the write handle to the pipe so it is not inherited. */
-
+        /* 20220706 DavidG - This should probably be done with something like:
+         *      SetHandleInformation(hChildStdinWr, HANDLE_FLAG_INHERIT, 0) */
         fSuccess = DuplicateHandle(GetCurrentProcess(), hChildStdinWr,
                                   GetCurrentProcess(), &hChildStdinWrDup, 0,
                                   FALSE,       /* not inherited */
@@ -1361,6 +1366,11 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
 
         memset( &startinfo, 0, sizeof(STARTUPINFO) ) ;
         startinfo.cb = sizeof(STARTUPINFO) ;
+		startinfo.dwFlags |= STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES; 
+		startinfo.wShowWindow = SW_HIDE;
+        startinfo.hStdInput = hChildStdinRd;
+        startinfo.hStdOutput = hChildStdoutWr;
+        startinfo.hStdError = hChildStdoutWr;
 
         fSuccess = CreateProcess( NULL,               /* application name */
                      cmd_line,              /* command line */
