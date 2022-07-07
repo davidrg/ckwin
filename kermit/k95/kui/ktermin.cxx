@@ -777,22 +777,22 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
                 readManual();
                 break;
             case ID_WEB_KERMIT:
-                browse("http://www.kermit-project.org/");
+                browse("http://www.kermitproject.org/");
                 break;
             case ID_WEB_K95:
-                browse("http://www.kermit-project.org/k95.html");
+                browse("http://www.kermitproject.org/k95.html");
                 break;
             case ID_WEB_NEWS:
-                browse("http://www.kermit-project.org/k95news.html");
+                browse("http://www.kermitproject.org/k95news.html");
                 break;
             case ID_WEB_PATCH:
-                browse("http://www.kermit-project.org/k95upgrade.html");
+                browse("http://www.kermitproject.org/k95upgrade.html");
                 break;
             case ID_WEB_SUPPORT:
-                browse("http://www.kermit-project.org/support.html");
+                browse("http://www.kermitproject.org/support.html");
                 break;
             case ID_WEB_FAQ:
-                browse("http://www.kermit-project.org/k95faq.html");
+                browse("http://www.kermitproject.org/k95faq.html");
                 break;
 
             case ID_OPTIONS_FONT:
