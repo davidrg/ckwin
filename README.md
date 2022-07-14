@@ -7,7 +7,7 @@ University from 1994 to 2011. For more information on Kermit, visit the
 Kermit Project website: http://www.kermitproject.org.
 
 This software is currently based on C-Kermit version 9.0.304 Dev.13 of
-6-FEB-2015.
+6-FEB-2015. 
 
 OS/2 support is still present but untested. It should still work if someone can
 get it building with freely available tools.
@@ -18,10 +18,11 @@ includes:
 
 * DECnet (formerly provided by DEC PATHWORKS) 
 * LAT (formerly provided by either SuperLAT or PATHWORKS)
-* X, Y and Z MODEM (formerly provided by a library called 'P' from Oy Online 
-Solutions Ltd).
-* The Dialer (relied on Zinc, a proprietary GUI framework)
-* SSH
+* X, Y and Z MODEM (formerly provided on windows by a custom port of an OS/2 library 
+    called 'P' written by Jyrki Salmi and now owned by [Oy Online Solutions Ltd](https://online.fi)
+* The Dialer (relied on a modified version of Zinc 4.2, a 
+[formerly proprietary GUI framework](http://openzinc.com/))
+* SSH (based on OpenSSH)
 
 A number of other features have been removed as they relied on ancient
 versions of 3rd-party libraries. These are:
@@ -82,3 +83,11 @@ replacements.
   - SRP
   - Z/Y/Z Modem 
   - LAT (port from linux-decnet?)
+
+Shared Codebase
+---------------
+Any files matching the pattern ck[cu]*.[cwh] are shared by
+implementations of C-Kermit for other platforms (UNIX, Linux, VMS, and others)
+and are not specific to the Windows and OS/2 port in this repository. Any changes 
+to these files should be sent to [The Kermit Project](https://www.kermitproject.org/)
+to be included in future C-Kermit releases for other platforms.

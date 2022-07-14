@@ -224,3 +224,15 @@ pip-log.txt
 *.err
 kermit/k95/dist*
 kermit/k95/ckcpro.c
+
+# IntelliJ Project
+.idea
+
+# Dependencies
+openssl/
+redist/
+
+# Misc
+setenv_local.bat
+dst/
+builder/

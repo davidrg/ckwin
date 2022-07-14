@@ -65,15 +65,18 @@ TARGET_CPU = x86
 !message ========================================
 !message C-Kermit for Windows Build Configuration
 !message ========================================
-!message  Platform: 		$(PLATFORM)
-!message  Architecture: 		$(TARGET_CPU)
-!message  Compiler: 		$(COMPILER)
-!message  Compiler Version: 	$(COMPILER_VERSION)
+!message  Platform:                 $(PLATFORM)
+!message  Build:                    $(K95BUILD)
+!message  Architecture:             $(TARGET_CPU)
+!message  Compiler:                 $(COMPILER)
+!message  Compiler Version:         $(COMPILER_VERSION)
+!message  Compiler Target Platform: $(TARGET_PLATFORM)
+!message ========================================
 
 !if "$(CMP)" == "VCXX"
 
 !if ($(MSC_VER) < 60)
-!error Unsupported compiler version. Visual C++ 6.0 or newer required.
+!error Unsupported compiler version. Visual C++ 6.0 SP6 or newer required.
 !endif
 
 # Check to see if we're using Visual C++ and targeting 64bit x86. If so
