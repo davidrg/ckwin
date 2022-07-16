@@ -143,7 +143,7 @@ xlwygrph( CHAR c ) {
     extern struct _vtG *GNOW;
     extern int win95lucida, win95hsl;
 
-    if ( isunicode() ) {
+    if ( ck_isunicode() ) {
         cx = (*xl_u[TX_WYSE60G_N])(c) ;
         if ( win95hsl && cx >= 0x23BA && cx <= 0x23BD )
             cx = tx_hslsub(cx);
@@ -1269,7 +1269,7 @@ wyseascii( int ch )
                             if ( tt_senddata ) {
                                 unsigned char * bytes;
                                 int nbytes;
-                                if ( isunicode() )
+                                if ( ck_isunicode() )
                                     nbytes = utorxlat(ch,&bytes);
                                 else
                                     nbytes = utorxlat(ch,&bytes);
@@ -1317,7 +1317,7 @@ wyseascii( int ch )
                                 if ( tt_senddata ) {
                                     unsigned char * bytes;
                                     int nbytes;
-                                    if ( isunicode() )
+                                    if ( ck_isunicode() )
                                         nbytes = utorxlat(ch,&bytes);
                                     else
                                         nbytes = utorxlat(ch,&bytes);
@@ -1379,7 +1379,7 @@ wyseascii( int ch )
                         if ( tt_senddata ) {
                             unsigned char * bytes;
                             int nbytes;
-                            if ( isunicode() )
+                            if ( ck_isunicode() )
                                 nbytes = utorxlat(ch,&bytes);
                             else
                                 nbytes = utorxlat(ch,&bytes);
@@ -1430,7 +1430,7 @@ wyseascii( int ch )
                             if ( tt_senddata ) {
                                 unsigned char * bytes;
                                 int nbytes;
-                                if ( isunicode() )
+                                if ( ck_isunicode() )
                                     nbytes = utorxlat(ch,&bytes);
                                 else
                                     nbytes = utorxlat(ch,&bytes);
@@ -1846,7 +1846,7 @@ wyseascii( int ch )
                     int nbytes;
                     unsigned short ch = VscrnGetCell( VTERM, wherex[VTERM]-1,
                                        wherey[VTERM]-1 )->c;
-                    if ( isunicode() )
+                    if ( ck_isunicode() )
                         nbytes = utorxlat(ch,&bytes);
                     else
                         nbytes = utorxlat(ch,&bytes);
@@ -1952,7 +1952,7 @@ wyseascii( int ch )
                                 if ( tt_senddata ) {
                                     unsigned char * bytes;
                                     int nbytes;
-                                    if ( isunicode() )
+                                    if ( ck_isunicode() )
                                         nbytes = utorxlat(ch,&bytes);
                                     else
                                         nbytes = utorxlat(ch,&bytes);
@@ -4184,7 +4184,7 @@ wyseascii( int ch )
                             if ( tt_senddata ) {
                                 unsigned char * bytes;
                                 int nbytes;
-                                if ( isunicode() )
+                                if ( ck_isunicode() )
                                     nbytes = utorxlat(ch,&bytes);
                                 else
                                     nbytes = utorxlat(ch,&bytes);

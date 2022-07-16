@@ -445,7 +445,7 @@ VscrnSelect( BYTE vmode, int mode )
                 line->markbeg <= line->markshowend;
                 line->markbeg++ ) {
 #ifdef NT
-                if ( isunicode() ) {
+                if ( ck_isunicode() ) {
                     extern int tcsl;
                     *p = xl_tx[tcsl](line->cells[line->markbeg].c);
                     *pU = line->cells[line->markbeg].c;
@@ -494,7 +494,7 @@ CopyVscrnToKbdBuffer( BYTE vmode, int select_mode ) {
     if ( len == 0 )
         return(0);
 
-    if ( isunicode() ) {
+    if ( ck_isunicode() ) {
         /* Vscrn is in Unicode.  We must perform translations to both */
         /* lcs for keyboard and rcs for sending.  Do not allow        */
         /* sendcharsduplex() to translate.                            */
@@ -558,7 +558,7 @@ CopyClipboardToKbdBuffer( BYTE vmode )
     USHORT * pUClipbrdData = 0;
     BYTE * pClipbrdData = 0 ;
     BYTE * pClipboard ;
-    int use_unicode = (isunicode() && !isWin95());
+    int use_unicode = (ck_isunicode() && !isWin95());
 
 #ifdef NT
     HGLOBAL hClipboard = NULL ;
@@ -714,7 +714,7 @@ CopyVscrnToClipboard( BYTE vmode, int select_mode )
     HGLOBAL hClipboard = NULL ;
 #endif /* NT */
     APIRET rc = 0 ;
-    int use_unicode = (isunicode() && !isWin95());
+    int use_unicode = (ck_isunicode() && !isWin95());
 
     if ( VscrnSelect(vmode, select_mode) )
         return -1 ;

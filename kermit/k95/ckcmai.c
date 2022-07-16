@@ -106,8 +106,8 @@ long  ck_l_ver = 1000000L;              /* C-Kermit version number */
 
 #ifdef OS2
 /* New Open Source C-Kermit for Windows is just C-Kermit */
-char *ck_s_xver = "";			/* Product-specific version string */
-long  ck_l_xver = 0L;			/* Product-specific version number */
+char *ck_s_xver = "3.0.0";			/* Product-specific version string */
+long  ck_l_xver = 300000L;			/* Product-specific version number */
 #else
 #ifdef MAC
 char *ck_s_xver = "0.995";              /* Product-specific version string */

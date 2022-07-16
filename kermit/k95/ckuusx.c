@@ -6436,7 +6436,12 @@ clrtoeol() {
 
 #define CK_CURPOS
 int
-ck_curpos(row, col) int row, int col; {
+#ifdef CK_ANSIC
+ck_curpos(int row, int col)
+#else
+ck_curpos(row, col) int row, int col;
+#endif
+    {
     move(row, col);
     return(0);
 }

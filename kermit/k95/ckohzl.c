@@ -59,7 +59,7 @@ xlhzgrph( CHAR c ) {
     extern int win95lucida;
     extern int win95hsl;
 
-    if ( isunicode() ) {
+    if ( ck_isunicode() ) {
         cx = (*xl_u[TX_HZ1500])(c) ;
         if ( win95hsl && cx >= 0x23BA && cx <= 0x23BD )
             cx = tx_hslsub(cx);

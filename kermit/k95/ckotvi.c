@@ -132,7 +132,7 @@ xltvigrph( CHAR c ) {
     extern int win95lucida, win95hsl;
 
     USHORT cx = 0;
-    if ( isunicode() ) {
+    if ( ck_isunicode() ) {
         cx = (*xl_u[TX_TVIGRAPH])(c);
         if ( win95hsl && cx >= 0x23BA && cx <= 0x23BD )
             cx = tx_hslsub(cx);
@@ -686,7 +686,7 @@ tviascii( int ch )
                             if ( tt_senddata ) {
                                 unsigned char * bytes;
                                 int nbytes;
-                                if ( isunicode() )
+                                if ( ck_isunicode() )
                                     nbytes = utorxlat(ch,&bytes);
                                 else
                                     nbytes = utorxlat(ch,&bytes);
@@ -724,7 +724,7 @@ tviascii( int ch )
                                 if ( tt_senddata ) {
                                     unsigned char * bytes;
                                     int nbytes;
-                                    if ( isunicode() )
+                                    if ( ck_isunicode() )
                                         nbytes = utorxlat(ch,&bytes);
                                     else
                                         nbytes = utorxlat(ch,&bytes);
@@ -779,7 +779,7 @@ tviascii( int ch )
                         if ( tt_senddata ) {
                             unsigned char * bytes;
                             int nbytes;
-                            if ( isunicode() )
+                            if ( ck_isunicode() )
                                 nbytes = utorxlat(ch,&bytes);
                             else
                                 nbytes = utorxlat(ch,&bytes);
@@ -822,7 +822,7 @@ tviascii( int ch )
                             if ( tt_senddata ) {
                                 unsigned char * bytes;
                                 int nbytes;
-                                if ( isunicode() )
+                                if ( ck_isunicode() )
                                     nbytes = utorxlat(ch,&bytes);
                                 else
                                     nbytes = utorxlat(ch,&bytes);
@@ -1279,7 +1279,7 @@ tviascii( int ch )
                                     if ( tt_senddata ) {
                                         unsigned char * bytes;
                                         int nbytes;
-                                        if ( isunicode() )
+                                        if ( ck_isunicode() )
                                             nbytes = utorxlat(ch,&bytes);
                                         else
                                             nbytes = utorxlat(ch,&bytes);
@@ -1778,7 +1778,7 @@ tviascii( int ch )
                                 if ( tt_senddata ) {
                                     unsigned char * bytes;
                                     int nbytes;
-                                    if ( isunicode() )
+                                    if ( ck_isunicode() )
                                         nbytes = utorxlat(ch,&bytes);
                                     else
                                         nbytes = utorxlat(ch,&bytes);

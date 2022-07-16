@@ -2777,7 +2777,7 @@ hpascii( int ch )
                             if ( tt_senddata ) {
                                 unsigned char * bytes;
                                 int nbytes;
-                                if ( isunicode() )
+                                if ( ck_isunicode() )
                                     nbytes = utorxlat(ch,&bytes);
                                 else
                                     nbytes = utorxlat(ch,&bytes);

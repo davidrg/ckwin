@@ -2160,9 +2160,6 @@ doconect(q,async) int q, async; {
 #ifdef CK_AUTODL
     ksbuf[0] = NUL;                     /* Autodownload packet buffer */
 #endif /* CK_AUTODL */
-#ifdef OS2
-    display_demo = 1;                   /* Remember to display demo */
-#endif /* OS2 */
 
 #ifdef IKS_OPTION
     if (is_tn && TELOPT_U(TELOPT_KERMIT) && ttchk() >= 0

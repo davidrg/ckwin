@@ -206,7 +206,7 @@ BOOL IKTerm::getDrawInfo()
                  y <= yo+vscrn[vnum].popup->height-1 ) {
                 int i ;
                 for ( i = 0 ; i < vscrn[vnum].popup->width ; i++ ) {
-                    if ( isunicode() ) {
+                    if ( ck_isunicode() ) {
                         textBuffer[c+xo+i] = 
                             vscrn[vnum].popup->c[y-yo][i] < 32 ?
                                 (*xl_u[TX_IBMC0GRPH])(vscrn[vnum].popup->c[y-yo][i]) : 
@@ -356,7 +356,7 @@ BOOL IKTerm::getDrawInfo()
             char * status = line25(vnum);
 
             for ( x = 0 ; x < xs ; x++ ) {
-                if ( isunicode() ) {
+                if ( ck_isunicode() ) {
                     textBuffer[c] = status[x] < 32 ? 
                         (*xl_u[TX_IBMC0GRPH])(status[x]) : 
                             status[x] >= 128 ? 

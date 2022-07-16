@@ -180,7 +180,7 @@ ReadCellStr( viocell * CellStr, PUSHORT Length, USHORT Row, USHORT Column )
         return 3;
     }
 
-    if ( isunicode() ) {
+    if ( ck_isunicode() ) {
         if ( !wchars || len > charlen )
         {
             if ( wchars )
@@ -305,7 +305,7 @@ OldWin32WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column 
         }
     }
 
-    if ( isunicode() ) {
+    if ( ck_isunicode() ) {
         if ( !wchars || len > charlen )
         {
             if ( wchars )
@@ -437,7 +437,7 @@ WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column )
         }
     }
 
-    if ( isunicode() ) {
+    if ( ck_isunicode() ) {
         for ( i=0; i<Length ; i++ )
         {
             lpBuffer[i].Char.UnicodeChar = CellStr[i].c ;
@@ -625,7 +625,7 @@ WrtNCell( viocell Cell, USHORT Times, USHORT Row, USHORT Column )
         }
     }
 
-    if ( isunicode() ) {
+    if ( ck_isunicode() ) {
         if ( !wchars || Times > charlen )
         {
             if ( wchars )
@@ -757,7 +757,7 @@ WrtCharStrAtt( PCH CharStr, USHORT Length, USHORT Row, USHORT Column,
         }
     }
 
-    if ( isunicode() ) {
+    if ( ck_isunicode() ) {
         if ( !wchars || Length > charlen )
         {
             if ( wchars )
@@ -2029,7 +2029,7 @@ VscrnWrtCharStrAtt( BYTE vmode, PCH CharStr, USHORT Length,
         viocell cell;
 
         if ( CharStr[i] >= ' ' ) {
-            if ( isunicode() ) {
+            if ( ck_isunicode() ) {
                 cell.c = CharStr[i] >= 128 ?
                     (*xl_u[tcsl])(CharStr[i]) : CharStr[i] ;
             }
@@ -2082,7 +2082,7 @@ VscrnWrtCharStrAtt( BYTE vmode, PCH CharStr, USHORT Length,
                 Column += 8-(Column%8) ;
                 break;
             default: {           /* Don't ignore */
-                if ( isunicode() ) {
+                if ( ck_isunicode() ) {
                     cell.c = (*xl_u[TX_IBMC0GRPH])(CharStr[i]);
                 }
                 else
@@ -2131,7 +2131,7 @@ VscrnWrtUCS2StrAtt( BYTE vmode, PUSHORT UCS2Str, USHORT Length,
         viocell cell;
 
         if ( UCS2Str[i] >= ' ' ) {
-            if ( !isunicode() ) {
+            if ( !ck_isunicode() ) {
                 cell.c = UCS2Str[i] >= 128 ?
                     (*xl_tx[tcsl])(UCS2Str[i]) : UCS2Str[i] ;
             }
@@ -2192,7 +2192,7 @@ VscrnWrtUCS2StrAtt( BYTE vmode, PUSHORT UCS2Str, USHORT Length,
                 Column += 8-(Column%8) ;
                 break;
             default:{           /* Don't ignore */
-                if ( isunicode() ) {
+                if ( ck_isunicode() ) {
                     cell.c = (*xl_u[TX_IBMC0GRPH])(UCS2Str[i]);
                 }
                 else
@@ -4126,7 +4126,7 @@ TermScrnUpd( void * threadinfo)
                     y <= yo+vscrn[avm].popup->height-1 ) {
                     int i ;
                     for ( i = 0 ; i < vscrn[avm].popup->width ; i++ ) {
-                        if ( isunicode() ) {
+                        if ( ck_isunicode() ) {
                             thecells[c+xo+i].c =
                                 vscrn[avm].popup->c[y-yo][i] < 32 ?
                                     (*xl_u[TX_IBMC0GRPH])(vscrn[avm].popup->c[y-yo][i]) :
@@ -4374,7 +4374,7 @@ TermScrnUpd( void * threadinfo)
                     y <= yo+vscrn[avm].popup->height-1 ) {
                     int i ;
                     for ( i = 0 ; i < vscrn[avm].popup->width ; i++ ) {
-                        if ( isunicode() ) {
+                        if ( ck_isunicode() ) {
                             thecells[c+xo+i].c =
                                 vscrn[avm].popup->c[y-yo][i] < 32 ?
                                     (*xl_u[TX_IBMC0GRPH])(vscrn[avm].popup->c[y-yo][i]) :
@@ -4438,7 +4438,7 @@ TermScrnUpd( void * threadinfo)
                 status = line25(avm);
 
                 for ( x = 0 ; x < xs ; x++ ) {
-                    if ( isunicode() ) {
+                    if ( ck_isunicode() ) {
                         thecells[c].c = status[x] < 32 ?
                             (*xl_u[TX_IBMC0GRPH])(status[x]) :
                                 status[x] >= 128 ?

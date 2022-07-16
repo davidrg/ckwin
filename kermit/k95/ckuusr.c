@@ -13514,11 +13514,10 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	    GetShortPathName(tmpbuf,line,LINBUFSIZ);
 	    printf("  Short name: %s\n",line);
 	    if (++n > cmd_rows - 3) {
-                if (!askmore()) { return(0); else n = 0; }
-            }
-            printf("\n");
+            if (!askmore()) { return(0); } else { n = 0; }}
+        printf("\n");
 	    if (++n > cmd_rows - 3) {
-                if (!askmore()) { return(0); } else { n = 0; }}
+            if (!askmore()) { return(0); } else { n = 0; }}
 	}
 #else  /* NT */
 

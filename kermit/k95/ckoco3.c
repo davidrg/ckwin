@@ -1097,7 +1097,7 @@ vik_rec vik;
 USHORT
 xldecgrph( CHAR c ) {
 #ifdef COMMENT
-    if ( isunicode() ) {
+    if ( ck_isunicode() ) {
         return(c);
     }
     else {
@@ -1112,7 +1112,7 @@ xldecgrph( CHAR c ) {
     }
 #else /* COMMENT */
     USHORT cx = 0;
-    if ( isunicode() ) {
+    if ( ck_isunicode() ) {
         cx = (*xl_u[TX_DECSPEC])(c);
         if ( win95hsl && cx >= 0x23BA && cx <= 0x23BD )
             cx = tx_hslsub(cx);
@@ -1133,7 +1133,7 @@ xldecgrph( CHAR c ) {
 USHORT
 xldectech( CHAR c ) {
     USHORT cx = 0;
-    if ( isunicode() ) {
+    if ( ck_isunicode() ) {
         cx = (*xl_u[TX_DECTECH])(c);
         if ( win95hsl && cx >= 0x23BA && cx <= 0x23BD )
             cx = tx_hslsub(cx);
@@ -1171,7 +1171,7 @@ xldectech( CHAR c ) {
 USHORT
 xlh19grph( CHAR c ) {
     USHORT cx=0;
-    if ( isunicode() ) {
+    if ( ck_isunicode() ) {
         cx = (*xl_u[TX_H19GRAPH])(c);
         if ( win95hsl && cx >= 0x23BA && cx <= 0x23BD )
             cx = tx_hslsub(cx);
@@ -2389,7 +2389,7 @@ prtline(int line, unsigned short achar) {
         memcpy(cells,VscrnGetCells(VTERM,line-1),n);
 
         for (j = 0; j < VscrnGetWidth(VTERM); j++) {    /* Strip away the attribute bytes */
-            if ( isunicode() )
+            if ( ck_isunicode() )
             {
                 if (GNOW->itol )
                     outbuf[j] = (*GNOW->itol)(cells[j].c);
@@ -2448,7 +2448,7 @@ prtscreen(BYTE vmode, int top, int bot) {
               memcpy(cells,VscrnGetCells(vmode,i),n);
 
             for (j = 0; j < VscrnGetWidth(vmode); j++) { /* Strip away the attribute bytes */
-                if ( isunicode() )
+                if ( ck_isunicode() )
                 {
                     ch = (xl_tx[prncs])(cells[j].c);
                 }
@@ -3869,7 +3869,7 @@ savscrbk(mode,name,disp) int mode; char * name; int disp; {
             memcpy(cells,VscrnGetCells(mode,i-top),n);
 
             for (j = 0; j < VscrnGetWidth(mode); j++) { /* Strip away the attribute bytes */
-                if ( isunicode() )
+                if ( ck_isunicode() )
                 {
                     if (GNOW->itol )
                         outbuf[j] = (*GNOW->itol)(cells[j].c);
@@ -5684,7 +5684,7 @@ SNI_bitmode(int bits) {
                         G[i].c1 = TRUE ;
                         G[i].national = CSisNRC(dec_nrc);
                         G[i].rtoi = xl_u[dec_nrc];
-                        if ( isunicode() ) {
+                        if ( ck_isunicode() ) {
                                 G[i].itol = NULL ;
                                 G[i].ltoi = NULL ;
                         }
@@ -5717,7 +5717,7 @@ SNI_bitmode(int bits) {
             G[i].c1 = TRUE ;
             G[i].national = CSisNRC(cs);
             G[i].rtoi = xl_u[cs];
-            if ( isunicode() ) {
+            if ( ck_isunicode() ) {
                 G[i].itol = NULL ;
                 G[i].ltoi = NULL ;
             }
@@ -5754,7 +5754,7 @@ SNI_chcode( int state ) {
                 for (y = 0; y < h; y++) {
                     for ( x = 0 ; x < w; x++ ) {
                         ch = VscrnGetCell( VTERM, x, y )->c;
-                        if ( !isunicode() )
+                        if ( !ck_isunicode() )
                             ch = xl_u[tcsl](ch);
                         switch ( ch ) {
                         case 0xA7: ch = '@'; break;
@@ -5773,7 +5773,7 @@ SNI_chcode( int state ) {
                 }
                 for ( x = 0 ; x < w; x++ ) {
                     ch = VscrnGetCell( VSTATUS, x, 0 )->c;
-                    if ( !isunicode() )
+                    if ( !ck_isunicode() )
                         ch = xl_u[tcsl](ch);
                     switch ( ch ) {
                     case 0xA7: ch = '@'; break;
@@ -5801,7 +5801,7 @@ SNI_chcode( int state ) {
                 for (y = 0; y < h; y++) {
                     for ( x = 0 ; x < w; x++ ) {
                         ch = VscrnGetCell( VTERM, x, y )->c;
-                        if ( !isunicode() )
+                        if ( !ck_isunicode() )
                             ch = xl_u[tcsl](ch);
                         switch ( ch ) {
                         case '@': ch = 0xA7; break;
@@ -5815,7 +5815,7 @@ SNI_chcode( int state ) {
                         default:
                             continue;
                         }
-                        if ( !isunicode() ) {
+                        if ( !ck_isunicode() ) {
                             ch = xl_tx[tcsl](ch);
                         }
                         VscrnGetCell( VTERM, x, y )->c = ch;
@@ -5823,7 +5823,7 @@ SNI_chcode( int state ) {
                 }
                 for ( x = 0 ; x < w; x++ ) {
                     ch = VscrnGetCell( VSTATUS, x, 0 )->c;
-                    if ( !isunicode() )
+                    if ( !ck_isunicode() )
                         ch = xl_u[tcsl](ch);
                     switch ( ch ) {
                     case '@': ch = 0xA7; break;
@@ -5837,7 +5837,7 @@ SNI_chcode( int state ) {
                     default:
                         continue;
                     }
-                    if ( !isunicode() ) {
+                    if ( !ck_isunicode() ) {
                         ch = xl_tx[tcsl](ch);
                     }
                     VscrnGetCell( VSTATUS, x, 0 )->c = ch;
@@ -6592,7 +6592,7 @@ rtolxlat( int c )
         if ( sni_bitmode == 8 && c > 127 ) {
             /* 8-bit mode uses Latin-1 */
             cx = xl_u[TX_8859_1](c);
-            if ( !isunicode() )
+            if ( !ck_isunicode() )
                 cx = xl_tx[tcsl](cx);
             debug(F101,"rtolxlat return 1","",cx);
             return(cx);
@@ -6629,7 +6629,7 @@ rtolxlat( int c )
         if ( !(GNOW == GL && c < 32) ) {
             if (GNOW->rtoi)
                 c = (*GNOW->rtoi)(c);
-            if ( !isunicode() )
+            if ( !ck_isunicode() )
             {
                 if (GNOW->itol )
                     c = (*GNOW->itol)(c);
@@ -6814,7 +6814,7 @@ pushed:
                     f_pushed = 1;
                     c_pushed = LF;
                 }
-                if ( isunicode() ) {
+                if ( ck_isunicode() ) {
                     if ( win95hsl && c >= 0x23BA && c <= 0x23BD )
                         c = tx_hslsub(c);
                     else if ( c >= 0xE000 && c <= 0xF8FF )
@@ -10857,7 +10857,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
                             (Row < pWriteRegion->Bottom ||
                             Row == pWriteRegion->Bottom &&
                               Col <= pWriteRegion->Right)) {
-                        if ( isunicode() )
+                        if ( ck_isunicode() )
                         {
                             vio.c = pCharInfo->Char.UnicodeChar;
                         }
@@ -11386,7 +11386,7 @@ wrtch(unsigned short ch) {
         if (attrib.invisible)
           ch = SP;
 
-        if ( isunicode() && crm && ch < SP ) {
+        if ( ck_isunicode() && crm && ch < SP ) {
             if ( ISANSI(tt_type_mode) )
                 ch = (*xl_u[TX_IBMC0GRPH])(ch) ;
             else
@@ -14155,7 +14155,7 @@ vtcsi(void)
                                     G[i].c1   = G[0].def_c1 ;
                                     G[i].national = G[0].national;
                                     G[i].rtoi = xl_u[G[0].def_designation];
-                                    if ( isunicode() ) {
+                                    if ( ck_isunicode() ) {
                                         G[i].itol = NULL ;
                                         G[i].ltoi = NULL ;
                                     }
@@ -14173,7 +14173,7 @@ vtcsi(void)
                                     G[i].c1 = TRUE ;
                                     G[i].national = CSisNRC(G[i].designation);
                                     G[i].rtoi = xl_u[TX_ASCII];
-                                    if ( isunicode() ) {
+                                    if ( ck_isunicode() ) {
                                         G[i].itol = NULL ;
                                         G[i].ltoi = NULL ;
                                     }
@@ -14191,7 +14191,7 @@ vtcsi(void)
                                 G[i].c1 = TRUE ;
                                 G[i].national = CSisNRC(dec_nrc);
                                 G[i].rtoi = xl_u[dec_nrc];
-                                if ( isunicode() ) {
+                                if ( ck_isunicode() ) {
                                     G[i].itol = NULL ;
                                     G[i].ltoi = NULL ;
                                 }
@@ -14715,7 +14715,7 @@ vtcsi(void)
                                    }
                                    else {
                                        G[i].rtoi = xl_u[G[i].def_designation];
-                                       if ( isunicode() ) {
+                                       if ( ck_isunicode() ) {
                                            G[i].itol = NULL ;
                                            G[i].ltoi = NULL;
                                        }
@@ -15166,7 +15166,7 @@ vtcsi(void)
                             if ( tt_senddata ) {
                                     unsigned char * bytes;
                                 int nbytes;
-                                if ( isunicode() )
+                                if ( ck_isunicode() )
                                     nbytes = utorxlat(ch,&bytes);
                                 else
                                     nbytes = utorxlat(ch,&bytes);
@@ -18337,7 +18337,7 @@ vtescape( void )
                               }
                               else {
                                   G[i].rtoi = xl_u[G[i].def_designation];
-                                  if ( isunicode() ) {
+                                  if ( ck_isunicode() ) {
                                       G[i].itol = NULL ;
                                       G[i].ltoi = NULL;
                                   }
