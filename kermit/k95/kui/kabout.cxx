@@ -8,7 +8,6 @@ static KAbout* kabout = 0;
 
 extern "C" {
     extern char *ck_s_ver;
-    extern char *ck_s_xver;
 }
 
 /*------------------------------------------------------------------------
@@ -76,7 +75,7 @@ Bool KAbout::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
             // Set the version string
             #define VERSION_LEN 128
             char version[VERSION_LEN];
-            _snprintf(version, VERSION_LEN, "Version %s, based on C-Kermit %s", ck_s_xver, ck_s_ver);
+            _snprintf(version, VERSION_LEN, "Version %s", ck_s_ver);
 
             SendDlgItemMessage(hWnd, IDC_VERSION, WM_SETTEXT, 0,
                     (LPARAM) version);
