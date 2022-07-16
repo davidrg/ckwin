@@ -6,10 +6,11 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2010,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+    Last update: 8 May 2022
 */
 /*
  Note -- if you change this file, please amend the version number and date at
@@ -242,7 +243,7 @@ extern int fblksiz, frecl, forg, frecfm, fncact, fncsav, fcctrl, lf_opts;
 extern CHAR * srvcmd;
 extern int srvcmdlen;
 
-extern int binary, spsiz;
+extern int binary, spsiz, rpsiz;
 extern int pktnum, cxseen, czseen, nfils, stdinf;
 extern int memstr, stdouf, keep, sndsrc, hcflg;
 extern int server, en_cwd, en_mai, en_pri;
@@ -990,7 +991,17 @@ sattr(xp, flag) int xp, flag; {		/* Send Attributes */
 	initattr(&x);			/* Blank out all the fields. */
 	for (j = 0; j < 95; j++)	/* Init array of completed fields */
 	  done[j] = 0;
+#ifdef COMMENT
+/*
+  28 October 2021: This is an administrative packet, it must not be
+  truncated because of user command SET SEND PACKET-LENGTH 10 or other
+  small number.  (Even though attributes can be sent in multiple packets,
+  any given attribute might be longer than spsiz, e.g. date-time.)
+*/
 	max = maxdata();		/* Get maximum data field length */
+#else
+	max = rpsiz;                    /* Get maximum data field length */
+#endif /* COMMENT */
 	if (notafile || xp == 1) {	/* Is it not a real file? */
 	    extern char * zzndate();
 	    char * p;
@@ -1312,7 +1323,6 @@ sattr(xp, flag) int xp, flag; {		/* Send Attributes */
 	    done[xunchar(c)] = 1;
 	}
     }
-
     /* Finished - send the packet off if we have anything in it */
 
     if (numset) {
@@ -1474,7 +1484,7 @@ gattr(s, yy) CHAR *s; struct zattr *yy; { /* Read incoming attribute packet */
 	yy->disp.val = dsbuf;
 	yy->disp.len = 1;
     }
-    while (c = *s++) {			/* Get attribute tag */
+    while ((c = *s++)) {                /* Get attribute tag */
 	aln = xunchar(*s++);		/* Length of attribute string */
 	switch (c) {
 #ifdef COMMENT				/* This case combined with '1' below */
@@ -2114,7 +2124,7 @@ opena(f,zz) char *f; struct zattr *zz; {
 	  return(-17);			/* Secret code */
     }
     debug(F111,"opena [file]=mode: ",f,fcb.dsp);
-    if (x = openo(f,zz,&fcb)) {		/* Try to open the file. */
+    if ((x = openo(f,zz,&fcb))) {       /* Try to open the file. */
 #ifdef pdp11
 	tlog(F110," local name:",f,0L);	/* OK, open, record local name. */
 	makestr(&prfspec,f);		/* New preliminary name */
@@ -2170,10 +2180,11 @@ opena(f,zz) char *f; struct zattr *zz; {
     } else {				/* Did not open file OK. */
 
 	rf_err = ck_errstr();		/* Get system error message */
-	if (*rf_err)
-	  xxscreen(SCR_EM,0,0l,rf_err);
-	else
-	  xxscreen(SCR_EM,0,0l,"Can't open output file");
+	if (*rf_err) {
+            xxscreen(SCR_EM,0,0l,rf_err);
+        } else {
+            xxscreen(SCR_EM,0,0l,"Can't open output file");
+        }
         tlog(F110,"Failure to open",f,0L);
         tlog(F110,"Error:",rf_err,0L);
 	debug(F110,"opena error",rf_err,0);

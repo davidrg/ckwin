@@ -4,10 +4,11 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2014,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+    Last update: Thu May 12 12:36:22 2022
 */
 #ifndef CKUUSR_H
 #define CKUUSR_H
@@ -30,7 +31,8 @@
 #define LOCUS
 #endif /* NOLOCUS */
 
-/* Sizes of things - FNVALL and MAXARGLEN increased from 8K 20050912 */
+/* Sizes of things - FNVALL and MAXARGLEN increased from 8K 2005/09/12 */
+/* Other things increased even more for 64-bit builds 2016/02/03 */
 
 #ifdef BIGBUFOK
 #define FNVALL CMDBL			/* Function return value length */
@@ -255,6 +257,10 @@ struct stringint {			/* String and (wide) integer */
 
 /* User interface features */
 
+#ifndef NORPLWORDMODE                   /* \freplace() word mode */
+#define RPLWORDMODE
+#endif  /* NORPLWORDMODE */
+
 #ifdef CK_CURSES			/* Thermometer */
 #ifndef NO_PCT_BAR
 #ifndef CK_PCT_BAR
@@ -431,6 +437,8 @@ struct stringint {			/* String and (wide) integer */
 #define DIR_NOL 43	/* NOLINKS (don't show symlinks at at all) */
 #define DIR_MOD 44	/* Set modification time (used only by TOUCH) */
 #define DIR_SIM 45	/* /SIMULATE (for TOUCH) */
+#define DIR_DES 46      /* /DESTINATION: (for CHANGE) */
+#define DIR_BAK 47      /* /BACKUP: (for CHANGE) */
 
 #define DIRS_NM 0       /* Sort directory by NAME */
 #define DIRS_DT 1       /* Sort directory by DATE */
@@ -771,6 +779,7 @@ struct stringint {			/* String and (wide) integer */
 #define XXPUTE  268     /* PUTENV */
 #define XXXMSG  269     /* XMESSAGE */
 #define XXCHG   270     /* CHANGE */
+#define XXCSN   271     /* COMPACT-SUBSTRING */
 
 /* End of Top-Level Commands */
 
@@ -2004,6 +2013,7 @@ struct stringint {			/* String and (wide) integer */
 #define SHOGUI    71			/* SHOW GUI (K95) */
 #define SHOREN    72			/* SHOW RENAME */
 #define SHOLOC    73			/* SHOW LOCALE */
+#define SHOTMPDIR 74			/* SHOW TEMP-DIRECTORY */
 
 /* REMOTE command symbols */
 
@@ -2764,6 +2774,9 @@ struct stringint {			/* String and (wide) integer */
 #endif /* SFTP_BUILTIN */
 
 /* ANSI-C prototypes for user interface functions */
+
+_PROTOTYP( VOID newerrmsg, (char *) );
+_PROTOTYP( int isinternalmacro, ( int ) );
 
 #ifdef UNIX
 _PROTOTYP( int doputenv, ( char *, char * ) );

@@ -1,5 +1,5 @@
 #include "ckcsym.h"
-char *wartv = "Wart Version 2.14, 10 Nov 1999";
+char *wartv = "Wart Version 2.15, 18 September 2020 ";
 
 #define CKWART_C
 
@@ -492,42 +492,17 @@ warray(fp,nam,cont,siz,typ) FILE *fp; char *nam; int cont[],siz; char *typ; {
     }
     fprintf(fp,"%2d\n};\n",cont[siz-1]);
 }
-
-#ifndef STRATUS
-#ifdef MAINTYPE
 /*
-  If you get complaints about "main: return type is not blah",
-  define MAINTYPE on the CC command line, e.g. "CFLAGS=-DMAINTYPE=int".
+  There was an #ifdef rat's next here here regarding main's return type.
+  The following should be equivalnt and is much simpler.  OS2 actually
+  means IBM OS/2 or MS Windows, but OS/2 itself is long gone.
+  -fdc, Fri Sep 18 19:42:48 2020
 */
-MAINTYPE
+#ifdef OS2
+void
 #else
-#ifdef CK_SCOV5
 int
-#else
-#ifdef __DECC
-#ifdef __ALPHA
-int
-#else
-VOID
-#endif /* __ALPHA */
-#else
-#ifdef STRATUS
-int
-#ifdef __GNUC__
-int
-#else
-/*
-  The default case should be int, not VOID, but it's been this way for
-  years (no doubt for a reason) and who knows how many builds would break
-  if I changed it.
-*/
-VOID
-#endif /* __GNUC__ */
-#endif /* STRATUS */
-#endif /* __DECC */
-#endif /* CK_SCOV5 */
-#endif /* MAINTYPE */
-#endif /* STRATUS */
+#endif  /* OS2 */
 main(argc,argv) int argc; char **argv; {
     trans head;
     int state,c;

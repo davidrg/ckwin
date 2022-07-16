@@ -98,8 +98,8 @@ _PROTOTYP(int ck_tn_sb_encrypt, (char *, int));
 _PROTOTYP(int ck_tn_auth_request, (VOID));
 _PROTOTYP(void ck_tn_encrypt, (char *, int));
 _PROTOTYP(void ck_tn_decrypt, (char *, int));
-_PROTOTYP(void ck_tn_encrypt_start, (VOID));
-_PROTOTYP(void ck_tn_encrypt_stop, (VOID));
+_PROTOTYP(void ck_tn_enc_start, (VOID));
+_PROTOTYP(void ck_tn_enc_stop, (VOID));
 _PROTOTYP(int ck_tn_authenticated, (VOID));
 #ifdef CK_ENCRYPTION
 _PROTOTYP(int ck_tn_encrypting, (VOID));

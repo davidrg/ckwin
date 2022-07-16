@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2013
+  Copyright (C) 1985, 2017
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -428,7 +428,7 @@ struct ssh_pf {				/* SSH port forwarding */
 
 #ifndef RBSIZ
 #ifdef BIGBUFOK
-#define RBSIZ 290000
+#define RBSIZ 290000			/* Allow for 10 x 9024 or 20 x 4096 */
 #else
 #ifdef pdp11
 #define RBSIZ 3020
@@ -560,7 +560,7 @@ struct ssh_pf {				/* SSH port forwarding */
 #define ZWFILE     10           /* Local file for WRITE (out) */
 #define ZMFILE     11		/* Miscellaneous file, e.g. for XLATE */
 #define ZDIFIL     12		/* DIAL log */
-#define ZNFILS     13	    	/* How many defined file numbers */
+#define ZNFILS     13	    	/* How many predefined file numbers (old) */
 
 #ifdef CKCHANNELIO
 
@@ -574,6 +574,10 @@ struct ssh_pf {				/* SSH port forwarding */
 #define FM_RWB     15			/* Read/Write/Append/Binary mask */
 #define FM_CMD     16			/* Command */
 #define FM_EOF     64			/* (status) At EOF */
+#define FM_STDIN  128                   /* Standard input */
+#define FM_STDOUT 256                   /* Standard output */
+#define FM_STDERR 512                   /* Standard error */
+#define FM_STDM   896                   /* Standard in/out/err mask */
 
 /* File errors */
 
@@ -637,8 +641,8 @@ _PROTOTYP( int scanstring, (char *) );
 #define OBUFSIZE 4096			/* File output buffer size */
 #endif /* DYNAMIC */
 #else /* not STRATUS */
-#ifdef BIGBUFOK				/* Systems where memory is */
-#define INBUFSIZE 32768			/* not a problem... */
+#ifdef BIGBUFOK				/* Systems with some memory */
+#define INBUFSIZE 32768			/* 32K for packet buffers */
 #define OBUFSIZE 32768
 #else /* Not BIGBUFOK */
 #define INBUFSIZE 1024

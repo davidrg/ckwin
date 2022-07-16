@@ -1,19 +1,36 @@
-#define EDITDATE  "5 Feb 2015"		/* Last edit date dd mmm yyyy */
-#define EDITNDATE "20150205"		/* Keep them in sync */
-/* Thu Feb  5 13:19:07 2015 */
-
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
+#define EDITDATE  "03 Jun 2022"         /* Last edit date dd mmm yyyy */
+#define EDITNDATE "20220603"		/* Keep them in sync */
+/* Fri Jun  3 06:22:11 2022 */
+
 /*
-  ckcsym.h is used for for defining symbols that normally would be defined
+FOR A NEW VERSION (development, alpha, beta, release candidate formal release):
+  . Change the 3 dates just above;
+  . Change ck_cryear = "xxx"; (copyright year) just below, if necessary;
+  . For test versions change ck_s_test and ck_s_tver (below) appropriately;
+  . Change makefile CKVER and BUILDID definitions and timestamp at top.
+
+If the version number has changed, also:
+  . Change sccsid[] (below);
+  . Change ck_s_ver, ck_l_ver, ck_s_xver, ck_l_xver (below).
+    (these are version numbers without Dev, Alpha, or Beta test ID)
+*/
+/*
+  ckcsym.h is used for defining symbols that normally would be defined
   using -D or -d on the cc command line, for use with compilers that don't
   support this feature.  Must come before any tests for preprocessor symbols.
 */
 #include "ckcsym.h"
 /*
-  Consolidated program C-Kermit version information for all platforms
+  Consolidated C-Kermit program version information for all platforms
   (but for UNIX also see ckuver.h).  See makever() below for how they are used.
+  NOTE: The BETATEST macro is not well-named, it really applies only to what
+  were Jeff Altman's areas: Kermit 95 and security.  BETATEST has nothing
+  to do with C-Kermit Beta tests.  K95 developers should define BETATEST
+  when uploading a K95 version for public testing that is not a real release.
 */
+
 #ifdef COMMENT                    /* Uncomment this for real K95 version */
 #ifndef OS2				/* OS2 actually means Kermit 95. */
 #ifndef BETATEST			/* It's because Kermit 95 started */
@@ -30,24 +47,23 @@
 #endif /* OS2 */
 #endif /* BETATEST */
 
-char * ck_cryear = "2015"; 		/* C-Kermit copyright year */
+char * ck_cryear = "2022"; 		/* C-Kermit copyright year */
 
-#ifndef MAC				/* MAC = Kermit for MAC OS 6, 7, ... */
+#ifndef MAC /* MAC = Kermit for MAC OS 6, 7, ... i.e. original Macintosh */
 /*
   Note: initialize ck_s_test to "" if this is not a test version.
   Use (*ck_s_test != '\0') to decide whether to print test-related messages.
 */
-
 #ifndef BETATEST
 #ifndef OS2                             /* UNIX, VMS, etc... (i.e. C-Kermit) */
-char *ck_s_test = "Dev";		/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "13";			/* Test version number or "" */
+char *ck_s_test = "Beta";		/* "Dev","Alpha","Beta","RC", or "" */
+char *ck_s_tver = "04";			/* Test version number */
 #else  /* OS2 */
 char *ck_s_test = "";			/* (i.e. K95) */
 char *ck_s_tver = "";
 #endif /* OS2 */
-#else
-char *ck_s_test = "";			/* Development */
+#else /* BETATEST */
+char *ck_s_test = "";			/* Not development */
 char *ck_s_tver = "";
 #endif /* BETATEST */
 #else /* MAC */
@@ -64,22 +80,29 @@ char *ck_s_date = EDITDATE;		/* See top */
 char *buildid = EDITNDATE;		/* See top */
 
 #ifdef UNIX
-static char sccsid[] = "@(#)C-Kermit 9.0.304";
+static char sccsid[] = "@(#)C-Kermit 10.0";
 #endif /* UNIX */
 
 /*
+  As of C-Kermit 10.0, we no longer use major.minor.edit version number,
+  just major.minor.
+
   The C-Kermit Version number is major.minor.edit (integers).
   Major version always goes up.
-  Minor version is historical, hasn't been used since C-Kermit 7.1.
-  Edit is sequential, always goes up, but there can be gaps.
+
+  The Minor version is an artifact from the DECSYSTEM-20 versioning 
+  system and hasn't been used since C-Kermit 7.1.
+
+  The Edit number is sequential, always goes up, but there can be gaps.
   For example there might be many edits between releases.
+  
   If the major goes to 10, some version-number-based feature tests
   could fail.  It might be better to use the minor version field
   for future releases.
 */
 
-char *ck_s_ver = "9.0.304";             /* C-Kermit version string */
-long  ck_l_ver =  900304L;              /* C-Kermit version number */
+char *ck_s_ver = "10.0";             /* C-Kermit version string */
+long  ck_l_ver = 1000000L;              /* C-Kermit version number */
 
 #ifdef OS2
 /* New Open Source C-Kermit for Windows is just C-Kermit */
@@ -138,27 +161,34 @@ char * exedir = NULL;                   /* Directory I was executed from */
 char homedirpath[CKMAXPATH+1] = { NUL, NUL }; /* Home directory path */
 char * myhome = NULL;			/* Home directory override string */
 
+#ifdef HAVE_LOCALE
+int nolocale = 0;                       /* Use Locale */
+#else
+int nolocale = 1;                       /* Don't use Locale */
+#endif /* HAVE_LOCALE */
+
 /*  C K C M A I  --  C-Kermit Main program  */
 
 /*
   Principal Author: Frank da Cruz
-  fdc@kermitproject.org OR fdc@columbia.edu.
+    Columbia University 1974-2011;
+    the Open Source Kermit Project 2011-2022.
+    fdc@kermitproject.org OR fdc@columbia.edu.
 
   I am no longer at Columbia University as of 1 July 2011.
-  As of September 29, 2011, the new Open Source Kermit Project website
-  is the  definitive source for Kermit software created or updated since
-  that date:
+  The new Open Source Kermit Project website is the  definitive
+  source for Kermit software created or updated since that date:
 
-  http://www.kermitproject.org .
+    https://www.kermitproject.org
 
-  The associated FTP site is:
-
-  ftp://ftp.kermitproject.org/
+  The associated FTP site was ftp://ftp.kermitproject.org/ but FTP has been
+  "deprecated" since 2021 so all downloads are now done by HTTP(S) links.
 
   Note that Columbia University holds the copyright to this software in
   perpetuity, but as of C-Kermit 9.0 the license has changed from the
   previous somewhat restrictive one to the Open Source Modified Berkeley
-  3-clause license, text just below.
+  3-clause license, text just below (where %s is the year current at the
+  last time this code compiled).
 
 COPYRIGHT NOTICE:
 */
@@ -205,15 +235,17 @@ char *copyright[] = {
 
 #ifdef OS2
 "Portions Copyright (C) 2002-2005, Secure Endpoints Inc, New York NY USA.",
-/*"Portions Copyright (C) 1995, Oy Online Solutions Ltd., Jyvaskyla, Finland.", */ /* XYZModem functionality removed */
+#ifdef CK_XYZ
+"Portions Copyright (C) 1995, Oy Online Solutions Ltd., Jyvaskyla, Finland.",
+#endif /* CK_XYZ */
 #endif /* OS2 */
 
 #ifdef CK_AUTHENTICATION
 "Portions Copyright (C) 1990, Massachusetts Institute of Technology.",
 #ifdef CK_ENCRYPTION
 "Portions Copyright (C) 1991, 1993 Regents of the University of California.",
-/*"Portions Copyright (C) 1991, 1992, 1993, 1994, 1995 by AT&T.",
-"Portions Copyright (C) 1995, 1997, Eric Young <eay@cryptosoft.com>.",*/ /* SSL/SSH/etc is also gone */
+"Portions Copyright (C) 1991, 1992, 1993, 1994, 1995 by AT&T.",
+"Portions Copyright (C) 1995, 1997, Eric Young <eay@cryptosoft.com>.",
 #endif /* CK_ENCRYPTION */
 #ifdef CK_SRP
 "Portions Copyright (C) 1997, Stanford University.",
@@ -230,20 +262,22 @@ char *copyright[] = {
 /* Windows IKSD copyright used to be separate */
 char *wiksdcpr = (char *) copyright;
 
-
 /*
 DOCUMENTATION:
 
  "Using C-Kermit" by Frank da Cruz and Christine M. Gianone,
   Digital Press / Butterworth-Heinemann, Woburn MA, USA.
   Second edition (1997), ISBN 1-55558-164-1.
-  Order from Digital Press:    +1 (800) 366-2665
-  Or from Columbia University: +1 (212) 854-3703
+  Plus updates on the Kermit website:
+
+    http://www.kermitproject.org/ck90.html#doc
 
 For Kermit 95, also:
 
   "Kermit 95" by Christine M. Gianone and Frank da Cruz,
-  Manning Publications, Greenwich CT, USA (1998) - Online.
+  Manning Publications, Greenwich CT, USA (1998) - Online here:
+
+    http://www.kermitproject.org/k95manual/
 
 ACKNOWLEDGMENTS:
 
@@ -275,6 +309,7 @@ ACKNOWLEDGMENTS:
    Ian Beckwith, Debian Project
    Nelson Beebe, U of Utah
    Gerry Belanger, Cognitronics
+   Edward Berner,
    Karl Berry, UMB
    Mark Berryman, SAIC
    Dean W Bettinger, SUNY
@@ -308,6 +343,7 @@ ACKNOWLEDGMENTS:
    Jeff Damens, (formerly of) Columbia U
    Mark Davies, Bath U, UK
    Sin-itirou Dezawa, Fujifilm, Japan
+   Alexey Dokuchaev (FreeBSD)
    Joe R. Doupnik, Utah State U
    Frank Dreano, Honeywell
    John Dunlap, U of Washington
@@ -326,7 +362,7 @@ ACKNOWLEDGMENTS:
    Carl Fongheiser, CWRU
    Mike Freeman, Bonneville Power Authority
    Carl Friedberg
-   Adam Frielander
+   Adam Friedlander
    Marcello Frutig, Catholic University, Sao Paulo, Brazil (X.25 support)
    Hirofumi Fujii, Japan Nat'l Lab for High Energy Physics, Tokyo (Kanji)
    Chuck Fuller, Westinghouse Corporate Computer Services
@@ -483,6 +519,7 @@ ACKNOWLEDGMENTS:
    Stew Rubenstein, Harvard U (VMS)
    Gerhard Rueckle, FH Darmstadt, Fb. E/Automatisierungstechnik
    John Santos, EG&H
+   Mark Sapiro,
    Bill Schilit, Columbia U
    Ulli Schlueter, RWTH Aachen, Germany (OS-9, etc)
    Michael Schmidt, U of Paderborn, Germany
@@ -507,6 +544,7 @@ ACKNOWLEDGMENTS:
    Fred Smith, Merk / Computrition
    Richard S Smith, Cal State
    Tim Sneddon
+   Bernard Spil,
    Ryan Stanisfer, UNT
    Bertil Stenstroem, Stockholm University Computer Centre (QZ), Sweden
    James Sturdevant, CAP GEMENI AMERICA, Minneapolis
@@ -827,12 +865,6 @@ int atenci = 1,                         /* Encoding in */
     atsyso = 1;
 
 int dispos = 0;                         /* Disposition */
-
-#ifdef HAVE_LOCALE
-int nolocale = 0;
-#else
-int nolocale = 1;
-#endif /* HAVE_LOCALE */
 
 #ifdef CK_PERMS
 int atlpri = 1,
@@ -1589,8 +1621,10 @@ extern int tn_deb;
   and zoutdump() in the system-dependent file i/o module (usually ck?fio.c).
 */
 #ifndef DYNAMIC
-/* Now we allocate them dynamically, see getiobs() below. */
+/* Now we allocate them dynamically, see getiobs() at bottom. */
 char zinbuffer[INBUFSIZE], zoutbuffer[OBUFSIZE];
+#else
+char *zinbuffer = NULL, *zoutbuffer = NULL;
 #endif /* DYNAMIC */
 char *zinptr, *zoutptr;
 int zincnt, zoutcnt;
@@ -1622,9 +1656,16 @@ cc_clean();                             /* This can't be right? */
 #endif /* NOCCTRAP */
 
 #ifdef TIMEH
+#ifdef MULTINET /*AGN 27-Oct-2021 time.h and Multinet clash*/
+/*    Under Multinet, the 5th parameter to select() */
+/*    is a "void" and not a "struct timeval", so */
+/*    use the Multinet include file instead */
+#include "multinet_root:[multinet.include.sys]time.h"
+#else
 /* This had to be added for NetBSD 6.1 - it might have "effects" elsewhere */
 /* Tue Sep  3 17:03:42 2013 */
 #include <time.h>
+#endif /* MULTINET */
 #endif /* TIMEH */
 
 #ifndef NOXFER
@@ -1993,10 +2034,10 @@ ikslogin() {
 #endif /* IKSD */
         nolocal = 1;                    /* SET LINE/HOST not allowed */
         fdispla = XYFD_N;               /* No file-transfer display */
-#ifdef NETCONN
+#ifdef IKSD
         clienthost = ckgetpeer();       /* Get client's hostname */
         debug(F110,"ikslogin clienthost",clienthost,0);
-#endif /* NETCONN */
+#endif /* IKSD */
         ztime(&s);                      /* Get current date and time */
 
 #ifdef CK_LOGIN
@@ -2274,8 +2315,10 @@ ikslogin() {
 #endif /* NOSPL */
     } /* if (inserver) */
 #else /* CK_LOGIN */
+#ifdef IKSD
     if (inserver)
         srvidl = timelimit = iks_timo;  /* Set idle limits for IKS */
+#endif /* IKSD */
 #endif /* CK_LOGIN */
 #endif /* IKSD */
 }
@@ -2636,12 +2679,12 @@ VOID
 makever() {                             /* Make version string from pieces */
     int x, y;
     char * s;
-//#ifndef OS2
+#ifndef OS2
 #ifndef MAC
     ck_s_xver = ck_s_ver;               /* Fill in C-Kermit version number */
     ck_l_xver = ck_l_ver;               /* for UNIX, VMS, etc. */
 #endif /* MAC */
-//#endif /* OS2 */
+#endif /* OS2 */
     x = strlen(ck_s_name);
     y = strlen(ck_s_xver);
     if (y + x + 1 < CKVERLEN) {
@@ -2699,6 +2742,7 @@ int bigendian = 1;
 #endif	/* NOSPL */
 
 #ifdef NETCONN
+#ifndef NOTCPIP
 #ifndef NOCMDL
 #ifndef NOURL
 VOID
@@ -2854,9 +2898,10 @@ if not eq {\\v(authstate)} {valid} { remote login ",
         }
     }
 }
-#endif /* NOCMDL */
-#endif /* NETCONN */
 #endif /* NOURL */
+#endif /* NOCMDL */
+#endif /* NOTCPIP */
+#endif /* NETCONN */
 
 /*
   main()...
@@ -3027,6 +3072,16 @@ main(argc,argv) int argc; char **argv;
 #endif /* MAC */
     debug(F101,"MAIN feol","",feol);
     makever();                          /* Put together version strings */
+#ifndef NOSPL
+    {
+        char scratch[TMPBUFSIZ];
+        extern char *tempdir;           /* Initialize temporary directory */
+        char * tp = scratch;
+        int x = TMPBUFSIZ;
+        (void) zzstring("\\v(tmpdir)",&tp,&x); /* Expand builtin var */
+        makestr(&tempdir,scratch);
+    }
+#endif /* NOSPL */
 #ifndef NOSETKEY                        /* Allocate & initialize the keymap */
     /* This code has been moved to before sysinit() for K95G */
     if (!(keymap = (KEY *) malloc(sizeof(KEY)*KMSIZE)))
@@ -3054,6 +3109,11 @@ main(argc,argv) int argc; char **argv;
       fatal("Can't initialize!");
     else
       initflg = 1;                      /* Remember we did. */
+
+#ifdef HAVE_LOCALE
+    setlocale(LC_ALL, "");              /* Enable using non-C locales */
+#endif /* HAVE_LOCALE */
+
     debug(F111,"ckcmai myname",myname,howcalled);
     {					/* Get home directory path */
 	char *h;
@@ -3197,11 +3257,8 @@ main(argc,argv) int argc; char **argv;
         char stackdata[256];
         unsigned int c = 1234, n;
         /* try to make a random unsigned int to feed srand() */
-#ifndef VMS
-	/* time.h and MultiNet do not get along */
-        c = time(NULL);
-#endif /* VMS */
-        c *= getpid();
+        c = time(NULL);                 /* Get current time */
+        c *= getpid();                  /* multiply it by our PID */
 	/* Referenced before set... DELIBERATELY */
         for (n = 0; n < sizeof(stackdata); n++) /* IGNORE WARNING */
 	  c += stackdata[n];		/* DELIBERATELY USED BEFORE SET */
@@ -3249,6 +3306,7 @@ main(argc,argv) int argc; char **argv;
 #endif /* NOCKSPEED */
 #endif /* NOXFER */
 
+#ifndef NOTCPIP
 #ifndef NOICP
     if (sstelnet
 #ifdef IKSD
@@ -3418,6 +3476,7 @@ main(argc,argv) int argc; char **argv;
 #endif /* TNCODE */
 #endif /* OS2 */
     }
+#endif  /* NOTCPIP */
     debug(F101,"main argc after prescan()","",argc);
 
     /* Now process any relevant environment variables */
@@ -3437,8 +3496,8 @@ main(argc,argv) int argc; char **argv;
 #endif /* NOXFER */
 
 #ifndef NOCMDL
-    ikslogin();                          /* IKSD Login and other stuff */
 #ifdef IKSD
+    ikslogin();                          /* IKSD Login and other stuff */
 #ifdef NT
     if ( inserver )
       setntcreds();
@@ -3498,36 +3557,21 @@ main(argc,argv) int argc; char **argv;
 #endif /* COMMENT */
         argc > 1) {                     /* Command line arguments? */
         sstate = (CHAR) cmdlin();       /* Yes, parse. */
-#ifdef NETCONN
 
-#ifdef COMMENT
+#ifdef NETCONN
 #ifdef HAVE_LOCALE
-	if (nolocale) {		      /* Handle command-line --nolocale opt */
-	    /*
-	      Set LC_* environment variables.  setlocale() does not seem to
-	      have any effect at all, hence the contortions.  Note: putenv()
-	      strings have to be static.
-	    */
-	    debug(F100,"--nolocale: disabling locale","",0);
-	    /* if (putenv(lc_all)) perror(lc_all); */
-#ifdef COMMENT
-	    /* These turn out not to be necessary if LC_ALL is set this way */
-	    if (putenv(lc_time)) perror(lc_time);
-	    if (putenv(lc_messages)) perror(lc_messages);
-	    if (putenv(lc_ctype)) perror(lc_ctype);
-	    if (putenv(lc_collate)) perror(lc_collate);
-	    if (putenv(lc_monetary)) perror(lc_monetary);
-	    if (putenv(lc_numeric)) perror(lc_numeric);
-#endif /* COMMENT */
+	if (nolocale) {                 /* --nolocale option on command line */
+            setlocale(LC_ALL, "C");     /* Restore our locale to default */
 	}	
-#endif /* COMMENT */
 #endif /* HAVE_LOCALE */
 
+#ifndef NOTCPIP
 #ifndef NOURL
         if (haveurl) {                  /* Was a URL given? */
             dourl();                    /* if so, do it. */
         }
 #endif /* NOURL */
+#endif /* NOTCPIP */
 #endif /* NETCONN */
 
 #ifndef NOXFER
@@ -3610,7 +3654,6 @@ main(argc,argv) int argc; char **argv;
 		nolocale = 1;
 	    }
 	if (!nolocale) {		/* Locale not disabled */
-	    /* this should be done in only one place */
 	    setlocale(LC_ALL, "");	/* Enable using non-C locales */
 	}
     }
@@ -3640,10 +3683,9 @@ main(argc,argv) int argc; char **argv;
 #endif /* MAINISVOID */
 }
 
+
 #ifdef DYNAMIC
 /* Allocate file i/o buffers */
-
-char *zinbuffer = NULL, *zoutbuffer = NULL;
 
 int
 getiobs() {

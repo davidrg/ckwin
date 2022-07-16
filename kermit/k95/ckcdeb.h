@@ -1,7 +1,9 @@
 /*  C K C D E B . H  */
 
 /*
-Tue Jul 23 12:47:22 2013
+Thu Jun  2 09:49:31 2022
+
+  For recent additions search below for "2021" and "2022".
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
   compatible with C preprocessors that support only #ifdef, #else, #endif,
@@ -24,25 +26,52 @@ Tue Jul 23 12:47:22 2013
 
 /*
   Author: Frank da Cruz <fdc@columbia.edu>,
-  Columbia University Academic Information Systems, New York City.
+    Columbia University Academic Information Systems, NYC (1974-2011)
+    The Kermit Project, Bronx NY (2011-present)
 
-  Copyright (C) 1985, 2013,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+    Last update: Thu May 12 15:34:02 2022 (NODEPRECATED)
 */
 
 /*
   Etymology: The name of this file means "C-Kermit Common-C-Language Debugging
   Header", because originally it contained only the formats (F000-F111) for
   the debug() and tlog() functions.  Since then it has grown to include all
-  material required by all other C-Kermit modules, including the non-Kermit
-  specific ones.  In other words, this is the one header file that is
-  guaranteed to be included by all C-Kermit source modules.
+  material required by all or most of the other C-Kermit modules, including
+  the non-Kermit specific ones.  In other words, this is the one header file
+  that is guaranteed to be included by all C-Kermit source modules.
 */
-
 #ifndef CKCDEB_H			/* Don't include me more than once. */
 #define CKCDEB_H
+
+/*
+  Disinclude features that are "deprecated" in 2022;
+  on amd64 this saves about 185K out of 2.48MB, so this is really more
+  about political correctness that saving space.  -fdc 12 May 2022
+*/
+#ifdef NODEPRECATED 
+#ifndef NOFTP                           /* No more FTP client */
+#define NOFTP
+#endif  /* NOFTP */
+#ifndef NOTELNET                        /* No more Telnet client */
+#define NOTELNET
+#endif  /* NOTELNET */
+#ifdef TNCODE
+#undef TNCODE
+#endif /* TNCODE */
+#ifndef NORLOGIN                        /* No more RLOGIN client */
+#define NORLOGIN
+#endif  /* NORLOGIN */
+#ifndef NOWTMP                          /* No more WTMP logging */
+#define NOWTMP
+#endif  /* NOWTMP */
+#ifndef NOARROWKEYS                     /* Arrow keys use a deprecated API */
+#define NOARROWKEYS
+#endif  /* NOARROWKEYS */
+#endif  /* NODEPRECATED */
 
 #ifdef OS2
 #include "ckoker.h"
@@ -99,7 +128,10 @@ Tue Jul 23 12:47:22 2013
 #endif /* ANYSCO */
 #endif /* UNIXWARE */
 
-#ifndef MINIX				/* Minix versions */
+#ifndef MINIX				/* MINIX versions */
+#ifdef MINIX340                         /* TIH 1 Feb 2022 */
+#define MINIX
+#else
 #ifdef MINIX315
 #define MINIX
 #else
@@ -111,6 +143,7 @@ Tue Jul 23 12:47:22 2013
 #endif	/* MINIX2 */
 #endif	/* MINIX3 */
 #endif	/* MINIX315 */
+#endif	/* MINIX340 */
 #endif	/* MINIX */
 
 #ifdef CK_SCO32V4			/* SCO 3.2v4 */
@@ -513,6 +546,18 @@ Tue Jul 23 12:47:22 2013
 #endif /* NOLOCAL */
 
 #ifdef NONET
+#ifndef NOTCPIP
+#define NOTCPIP
+#endif  /* NOTCPIP */
+#ifndef NONETDIR
+#define NONETDIR
+#endif  /* NONETDIR */
+#ifndef NOIKSD
+#define NOIKSD
+#endif /* NOIKSD */
+#ifdef TNCODE
+#undef TNCODE
+#endif /* TNCODE */
 #ifdef NETCONN
 #undef NETCONN
 #endif /* NETCONN */
@@ -546,18 +591,24 @@ Tue Jul 23 12:47:22 2013
 #ifdef NETCMD
 #undef NETCMD
 #endif /* NETCMD */
-#ifdef NETPTY
-#undef NETPTY
-#endif /* NETPTY */
+/* Commented out fdc May 2020 to allow external SSH command */
+/* #ifdef NETPTY */
+/* #undef NETPTY */
+/* #endif /* NETPTY */
 #ifdef RLOGCODE
 #undef RLOGCODE
 #endif /* RLOGCODE */
 #ifdef NETDLL
 #undef NETDLL
 #endif /* NETDLL */
-#ifndef NOSSH
-#define NOSSH
-#endif /* NOSSH */
+#ifndef NO_SSL                          /* added May 2020 fdc */
+#define NO_SSL
+#endif  /* NO_SSL */
+/* Commented out fdc May 2020 */
+/* so we can use external ssh client in NONET builds */
+/* #ifndef NOSSH */
+/* #define NOSSH */
+/* #endif */ /* NOSSH */
 #ifndef NOFTP
 #define NOFTP
 #endif /* NOFTP */
@@ -2173,29 +2224,12 @@ _PROTOTYP( void bleep, (short) );
 #endif /* USETTYLOCK */
 #endif /* NOTTYLOCK */
 
-#ifndef NO_OPENPTY			/* Can use openpty() */
-#ifndef HAVE_OPENPTY
-#ifdef __linux__
-#define HAVE_OPENPTY
-#else
-#ifdef __FreeBSD__
-#define HAVE_OPENPTY
-#else
-#ifdef __OpenBSD__
-#define HAVE_OPENPTY
-#else
-#ifdef __NetBSD__
-#define HAVE_OPENPTY
-#else
-#ifdef MACOSX10
-#define HAVE_OPENPTY
-#endif	/* MACOSX10 */
-#endif	/* __NetBSD__ */
-#endif	/* __OpenBSD__ */
-#endif	/* __FreeBSD__ */
-#endif	/* __linux__ */
-#endif	/* HAVE_OPENPTY */
-#endif	/* NO_OPENPTY */
+/* This could become more inclusive.. Solaris 10, HP-UX 11, AIX 5.3... */
+#ifndef HAVE_SNPRINTF                   /* Safe to use snprintf() */
+#ifdef HAVE_OPENPTY
+#define HAVE_SNPRINTF
+#endif  /* HAVE_OPENPTY */
+#endif  /* HAVE_SNPRINTF */
 
 /* Kermit feature selection */
 
@@ -2379,6 +2413,62 @@ _PROTOTYP( void bleep, (short) );
 #ifndef NETCMD
 #define NETCMD
 #endif /* NETCMD */
+
+#ifndef NO_OPENPTY			/* Can use openpty() */
+#ifndef HAVE_OPENPTY
+#ifdef __linux__
+#define HAVE_OPENPTY
+#else
+#ifdef __FreeBSD__
+#define HAVE_OPENPTY
+#else
+#ifdef __OpenBSD__
+#define HAVE_OPENPTY
+#else
+#ifdef __NetBSD__
+#define HAVE_OPENPTY
+#include <util.h>
+#else
+#ifdef MACOSX10
+#define HAVE_OPENPTY
+#endif	/* MACOSX10 */
+#endif	/* __NetBSD__ */
+#endif	/* __OpenBSD__ */
+#endif	/* __FreeBSD__ */
+#endif	/* __linux__ */
+#endif	/* HAVE_OPENPTY */
+#endif	/* NO_OPENPTY */
+/*
+  This needs to be expanded and checked.
+  The makefile assumes the library (at least for all linuxes)
+  is always libutil but I've only verified it for a few.
+  If a build fails because
+*/
+#ifdef HAVE_OPENPTY
+#ifdef __linux__
+#include <pty.h>
+#else
+#ifdef __NetBSD__
+#include <util.h>
+#else
+#ifdef __OpenBSD__
+#include <util.h>
+#else
+#ifdef __FreeBSD__
+#include <libutil.h>
+#else
+#ifdef MACOSX
+#include <util.h>
+#else
+#ifdef QNX
+#include <unix.h>
+#endif  /* QNX */
+#endif  /* MACOSX */
+#endif  /* __FreeBSD__ */
+#endif  /* __OpenBSD__ */
+#endif  /* __NetBSD__ */
+#endif  /* __linux__ */
+#endif  /* HAVE_OPENPTY */
 #endif /* NETPTY */
 
 #ifndef CK_UTSNAME			/* Can we call uname()? */
@@ -4051,12 +4141,14 @@ _PROTOTYP( long * ttspdlist, (void) );
 #else
 #ifdef QNX
 #define BPS_115K
+#define BPS_1500K
 #else
 #ifdef HPUX
 #define BPS_115K
 #else
 #ifdef __linux__
 #define BPS_115K
+#define BPS_1500K
 #else
 #ifdef __386BSD__
 #define BPS_115K
@@ -4143,7 +4235,15 @@ _PROTOTYP( long * ttspdlist, (void) );
 #endif /* SCO_OSR504 */
 #endif /* NOB_921K */
 
-#ifdef BPS_921K				/* Maximum speed defined */
+/*
+  13 October 2021
+  From Elad Lahav:
+  Added support for 1.5MHz (1500000bps) serial speed for Linux and QNX.
+*/
+#ifdef BPS_1500K                        /* Maximum speed defined */
+#define MAX_SPD 1500000L
+#else
+#ifdef BPS_921K
 #define MAX_SPD 921600L
 #else
 #ifdef BPS_460K
@@ -4174,6 +4274,7 @@ _PROTOTYP( long * ttspdlist, (void) );
 #define MAX_SPD 14400L
 #else
 #define MAX_SPD 9600L
+#endif
 #endif
 #endif
 #endif
@@ -4532,12 +4633,21 @@ extern int errno;
 #include <errno.h>
 #else
 /*
-  The following declaration would cause problems for VMS and OS/2, in which
-  errno is an "extern volatile int noshare"...  NOTE: by now (2007) the
-  following is an anachronism and should be the execption rather than the
-  rule.
+  It is assumed that if the foregoing code doesn't explicitly include errno.h,
+  that it gets included anyway by some other header file that *is* included.
+  If there is still some platform where the build fails because errno is not
+  defined, add -DDCL_ERRNO to the Cflags for that makefile target.  Also
+  see the new first stanza of the "linux" makefile target for code that
+  that checks for this at 'make' time and adds DCL_ERRNO only if necessary.
+  WARNING: this might break if errno.h does not exist or is not in the
+  the default directory for header files.
+  - fdc, 7-8 October 2020
 */
+#ifdef DCL_ERRNO
 extern int errno;
+#else
+#include <errno.h>
+#endif  /* DCL_ERRNO */
 #endif /* __GLIBC__ */
 #endif /* OS2 */
 #endif /* VMS */
@@ -4601,7 +4711,7 @@ extern int errno;
 #endif /* mc68000 */
 #endif /* NEXT */
 
-#ifdef LINUX				/* Linux in 1998 should be OK */
+#ifdef LINUX				/* Linux from 1998 on should be OK */
 #ifndef BIGBUFOK
 #define BIGBUFOK
 #endif /* BIGBUFOK */
@@ -5079,7 +5189,10 @@ typedef unsigned int u_int;
 #ifdef __alpha				/* Alpha decc (or __ALPHA) */
 #define CK_64BIT
 #else
-#ifdef __amd64				/* AMD x86_64 (or __x86_64) */
+#ifdef __amd64				/* AMD x86_64 */
+#define CK_64BIT
+#else
+#ifdef __x86_64				/* AMD/Intel x86_64 */
 #define CK_64BIT
 #else
 #ifdef __ia64				/* Intel IA64 */
@@ -5087,6 +5200,7 @@ typedef unsigned int u_int;
 #define CK_64BIT
 #endif	/* HPUX */
 #endif	/* __ia64 */
+#endif	/* __x86_64 */
 #endif	/* __amd64 */
 #endif	/* __alpha */
 #endif	/* __arch64__ */
@@ -6068,8 +6182,22 @@ _PROTOTYP( long atol, (char *) );
 #endif /* def VMS [else] */
 #endif /* ndef CKMAXPATH */
 
-/* Maximum length for the name of a tty device */
+/* 2021-10-30 SMS (Steven M Schweda)
+ * MAXPATHLEN might have come up undefined because all the consumers
+ * should be using CKMAXPATH instead of MAXPATHLEN, or PATH_MAX, or
+ * whatever.  The idea was to put all the system dependencies into the
+ * definition of CKMAXPATH.  Previously, MAXPATHLEN was not used in
+ * ckuus4.c or ckuus6.c,
+ *
+ * Apparently, I failed to make the required change(s) in UNIX
+ * modules/sections ckufio.c, ckuus3.c, ckuus5.c.  (But _I_ didn't spell
+ * "#define" as "def".)
+ *
+ * On VMS, PATH_MAX is defined as 256 in <limits.h>, but that is an
+ * obsolete value, which is why NAMX_C_MAXRSS is used instead.
+ */
 
+/* Maximum length for the name of a tty device */
 #ifndef DEVNAMLEN
 #define DEVNAMLEN CKMAXPATH
 #endif /* DEVNAMLEN */
@@ -6080,14 +6208,17 @@ _PROTOTYP( long atol, (char *) );
 #ifndef DIRSEP
 #ifdef UNIX
 #define DIRSEP '/'
+#define STRDIRSEP "/"
 #define ISDIRSEP(c) ((c)=='/')
 #else
 #ifdef OS2
 #define DIRSEP '/'
+#define STRDIRSEP "/"
 #define ISDIRSEP(c) ((c)=='/'||(c)=='\\')
 #else
 #ifdef datageneral
 #define DIRSEP ':'
+#define STRDIRSEP ":"
 #define ISDIRSEP(c) (((c)==':')||((c)=='^')||((c)=='='))
 #else
 #ifdef STRATUS
@@ -6096,21 +6227,26 @@ _PROTOTYP( long atol, (char *) );
 #else
 #ifdef VMS
 #define DIRSEP ']'			/* (not really) */
+#define STRDIRSEP "]"
 #define ISDIRSEP(c) ((c)==']'||(c)==':')
 #else
 #ifdef MAC
 #define DIRSEP ':'
+#define STRDIRSEP ":"
 #define ISDIRSEP(c) ((c)==':')
 #else
 #ifdef AMIGA
 #define DIRSEP '/'
+#define STRDIRSEP "/"
 #define ISDIRSEP(c) ((c)=='/'||(c)==':')
 #else
 #ifdef GEMDOS
 #define DIRSEP '\\'
+#define STRDIRSEP "\\"
 #define ISDIRSEP(c) ((c)=='\\'||(c)==':')
 #else
 #define DIRSEP '/'
+#define STRDIRSEP "/"
 #define ISDIRSEP(c) ((c)=='/')
 #endif /* GEMDOS */
 #endif /* AMIGA */
@@ -6607,6 +6743,102 @@ _PROTOTYP( int ftpisconnected, (void));
 _PROTOTYP( int ftpisloggedin, (void));
 _PROTOTYP( int ftpissecure, (void));
 #endif /* NEWFTP */
+
+/* 
+  -DNOTCPIP = Build with no TCP/IP support,
+   which unexpectedly turned out not to be a major task.
+   - fdc May 2022
+*/
+#ifdef NOTCPIP
+#ifdef TCPSOCKET
+#undef TCPSOCKET
+#endif /* TCPSOCKET */
+#ifndef NOFTP                           /* No TCP means no FTP... */
+#define NOFTP
+#endif /* NOFTP */
+#ifdef NEWFTP
+#undef NEWFTP
+#endif /* NEWFTP */
+#ifdef SYSFTP
+#undef SYSFTP
+#endif /* SYSFTP */
+#ifdef SFTP
+#undef SFTP
+#endif /* SFTP */
+#ifdef SFTP_BUILTIN
+#undef SFTP_BUILTIN
+#endif  /* SFTP_BUILTIN */
+#ifdef TELNET                           /* No Telnet */
+#undef TELNET
+#endif  /* TELNET */
+#ifdef TNCODE
+#undef TNCODE
+#endif  /* TNCODE */
+#ifdef TN_COMPORT                       /* No Telnet terminal server */
+#undef TN_COMPORT
+#endif  /* TN_COMPORT */
+#ifndef NOHTTP                          /* no HTTP... */
+#define NOHTTP
+#endif /* NOHTTP */
+#ifndef NOBROWSER                       /* no Web browser... */
+#define NOBROWSER
+#endif /* NOBROWSER */
+#ifndef NORLOGIN                        /* no Rlogin... */
+#define NORLOGIN
+#endif  /* NORLOGIN */
+#ifdef IKSD                             /* No Internet Kermit Server */
+#undef IKSD
+#endif /* IKSD */
+#ifdef IKSDB
+#undef IKSDB
+#endif /* IKSDB */
+#ifdef IKSDCONF
+#undef IKSDCONF
+#endif /* IKSDCONF */
+#ifndef NOIKSD				/* Internet Kermit Service */
+#define NOIKSD
+#endif /* NOIKSD */
+#ifdef IKS_OPTION
+#undef IKS_OPTION
+#endif /* IKS_OPTION */
+#ifdef CK_LOGIN
+#undef CK_LOGIN
+#endif /* CK_LOGIN */
+#ifdef CKSYSLOG
+#undef CKSYSLOG
+#endif /* CKSYSLOG */
+#ifndef NOWTMP
+#define NOWTMP
+#endif /* NOWTMP */
+#ifdef CKWTMP
+#undef CKWTMP
+#endif /* CKWTMP */
+#ifdef CK_AUTHENTICATION                /* No Internet security protocols */
+#undef CK_AUTHENTICATION
+#endif /* CK_AUTHENTICATION */
+#ifdef CK_ENCRYPTION
+#undef CK_ENCRYPTION
+#endif /* CK_ENCRYPTION */
+#ifdef CK_SSL
+#undef CK_SSL
+#endif /* CK_SSL */
+#ifndef NOSSL
+#define NOSSL
+#endif  /* NOSSL */
+#ifdef CK_SNDLOC
+#undef CK_SNDLOC
+#endif /* CK_SNDLOC */
+#ifdef SSHBUILTIN                       /* No built-in SSH client */
+#undef SSHBUILTIN
+#endif  /* SSHBUILTIN */
+#ifdef SSHTEST
+#undef SSHTEST
+#endif  /* SSHTEST */
+#else
+#ifndef NETCONN
+#define NETCONN
+#endif  /* NETCONN */
+#endif /* NOTCPIP */
 
 _PROTOTYP( int readpass, (char *, char *, int));
 _PROTOTYP( int readtext, (char *, char *, int));

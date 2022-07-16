@@ -3,7 +3,7 @@
 #endif /* SSHTEST */
 
 #include "ckcsym.h"
-char *userv = "User Interface 9.0.309, 5 Feb 2015";
+char *userv = "User Interface 9.0.322, 03 June 2022";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 
@@ -14,7 +14,7 @@ char *userv = "User Interface 9.0.309, 5 Feb 2015";
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2015,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -34,7 +34,7 @@ char *userv = "User Interface 9.0.309, 5 Feb 2015";
   fopen, fgets, feof, (f)printf, argv/argc, etc.  Other functions that are
   likely to vary among different platforms -- like setting terminal modes or
   interrupts -- are invoked via calls to functions that are defined in the
-  system- dependent modules, ck?[ft]io.c.  The command line parser processes
+  platform-dependent modules, ck?[ft]io.c.  The command line parser processes
   any arguments found on the command line, as passed to main() via argv/argc.
   The interactive parser uses the facilities of the cmd package (developed for
   this program, but usable by any program).  Any command parser may be
@@ -93,6 +93,10 @@ char *userv = "User Interface 9.0.309, 5 Feb 2015";
 #include "ckcnet.h"			/* Network symbols */
 #include "ckuusr.h"
 #include "ckcxla.h"
+
+#ifdef CK_AUTHENTICATION      /* fdc - only include this for secure builds  */
+#include "ckuath.h"           /* AGN missing Kerberos prototypes 4-Nov-2021 */
+#endif /* CK_AUTHENTICATION */
 
 int g_fncact = -1;			/* Needed for NOICP builds */
 int noinit = 0;				/* Flag for skipping init file */
@@ -161,6 +165,8 @@ extern int batch;
 #endif /* datageneral */
 
 extern int xcmdsrc, hints, cmflgs, whyclosed;
+
+int isinternal = 0;                     /* Flag for internally-defined macro */
 
 char * hlptok = NULL;
 
@@ -597,16 +603,20 @@ static char c1chars[] = {		/* C1 control chars escept NUL */
 
 #define xsystem(s) zsyscmd(s)
 
-/* Top-Level Interactive Command Keyword Table */
-/* Keywords must be in lowercase and in alphabetical order. */
-
+/*
+  Top-Level Interactive Command Keyword Table.
+  HELP topics go here too, even when they aren't commands; they are marked
+  with the CM_HLP|CM_INV attributes.  Commands go to routines that execute 
+  them and HELP items go to the big switch statement in ckuus2.c.
+  Entries must be in alphabetical order.
+*/
 struct keytab cmdtab[] = {
 #ifndef NOPUSH
-    { "!",	   XXSHE, CM_INV|CM_PSH }, /* Shell escape */
+    { "!",	     XXSHE, CM_INV|CM_PSH }, /* Shell escape */
 #else
-    { "!",	   XXNOTAV, CM_INV|CM_PSH },
+    { "!",	     XXNOTAV, CM_INV|CM_PSH },
 #endif /* NOPUSH */
-    { "#",    	   XXCOM, CM_INV },	/* Comment */
+    { "#",    	     XXCOM, CM_INV },	/* Comment */
 #ifndef NOSPL
     { "(",           XXSEXP,CM_INV },	/* S-Expression */
     { ".",           XXDEF, CM_INV },	/* Assignment */
@@ -753,6 +763,9 @@ struct keytab cmdtab[] = {
     { "close",	     XXCLO, 0 },	/* CLOSE a log or other file */
     { "cls",         XXCLS, CM_INV },	/* Clear Screen (CLS) */
     { "comment",     XXCOM, CM_INV },	/* Introduce a comment */
+#ifndef NOSPL
+    { "compact-substring", XXCSN, CM_INV|CM_HLP }, /* CS notation */
+#endif  /* NOSPL */
 #ifndef NOLOCAL
     { "connect",     XXCON, CM_LOC },	/* Begin terminal connection */
 #else
@@ -792,7 +805,10 @@ struct keytab cmdtab[] = {
 #ifndef NOSPL
     { "date",        XXDATE,  0 },	/* DATE */
     { "dcl",         XXDCL,   CM_INV },	/* DECLARE an array (see ARRAY) */
+#ifdef COMMENT
+    /* this command never actually did anything */
     { "debug",       XXDEBUG, 0 },	/* Print a debugging msg [9.0]  */
+#endif /* COMMENT */
     { "declare",     XXDCL,   CM_INV },	/* DECLARE an array (see ARRAY) */
     { "decrement",   XXDEC,   0 },	/* DECREMENT a numeric variable */
     { "define",      XXDEF,   0 },	/* DEFINE a macro or variable   */
@@ -1730,6 +1746,8 @@ struct keytab cmdtab[] = {
     { "user",        XXUSER,  CM_INV }, /* (FTP) USER */
 #endif /* NEWFTP */
 
+    { "v",           XXDIR, CM_INV|CM_ABR }, /* Like TOPS-20 VDIRECTORY */
+    { "vdirectory",  XXDIR, CM_INV },        /* Like TOPS-20 VDIRECTORY */
     { "version",     XXVER, 0 },	/* VERSION-number display */
 
 #ifdef OS2
@@ -1814,6 +1832,8 @@ struct keytab cmdtab[] = {
 #else
     { "xmit",        XXNOTAV, CM_INV },
 #endif /* NOXMIT */
+
+    { "xmsg",    XXXMSG, CM_INV },	/* Synonym for XMESSAGE */
 
 #ifndef OS2
 #ifndef NOJC
@@ -2269,6 +2289,9 @@ struct keytab prmtab[] = {
 #ifdef OS2
     { "title",		  XYTITLE, CM_LOC },
 #endif /* OS2 */
+#ifndef NOSPL
+    { "tmp-directory",    XYTMPDIR,CM_INV },
+#endif /* NOSPL */
 #ifdef TLOG
     { "transaction-log",  XYTLOG,  0 },
 #endif /* TLOG */
@@ -3053,9 +3076,13 @@ struct keytab shotab[] = {
     { "tel",           SHTEL,  CM_INV|CM_ABR },
     { "telnet",        SHTEL,  0 },
     { "telopt",        SHTOPT, 0 },
+    { "temp-directory", SHOTMPDIR, 0 },
 #endif /* TNCODE */
     { "terminal",      SHTER,  CM_LOC },
 #endif /* NOLOCAL */
+#ifndef NOSPL
+    { "tmp-directory", SHOTMPDIR, CM_INV },
+#endif /* NOSPL */
 #ifndef NOXMIT
     { "tr",            SHXMI, CM_INV|CM_ABR },
     { "tra",           SHXMI, CM_INV|CM_ABR },
@@ -3601,6 +3628,8 @@ settypopts() {				/* Set TYPE option defaults */
     if (xp > -1) typ_page = xp;		/* Confirmed, save defaults */
     return(success = 1);
 }
+
+_PROTOTYP (char * getbasename, ( char * ) );
 
 /* Forward declarations of functions local to this module */
 
@@ -6357,8 +6386,8 @@ clrarray(cx) int cx; {
     return(success = 1);
 }
 
-extern char **aa_ptr[CMDSTKL][28];
-extern int aa_dim[CMDSTKL][28];
+extern char **aa_ptr[CMDSTKL][32];
+extern int aa_dim[CMDSTKL][32];
 
 static int				/* Create symbolic link to an array */
 linkarray() {
@@ -7898,12 +7927,180 @@ hmsgaa(s,s2) char *s[]; char *s2;
         for (j = 0; j < y; j++)         /* See how many newlines were */
           if (s[i][j] == '\n') k++;     /* in the string... */
         n += k;
-        if (n > (cmd_rows - 3) && *s[i+1]) /* After a screenful, give them */
-          if (!askmore()) return(0);    /* a "more?" prompt. */
-          else n = 0;
+        if (n > (cmd_rows - 3) && *s[i+1]) { /* After a screenful, give them */
+            if (!askmore()) {
+                return(0);    /* a "more?" prompt. */
+            } else {
+                n = 0;
+            }
+        }
     }
     printf("\n");
     return(0);
+}
+
+/*  I S I N T E R N A L M A C R O  -- April 2017  */
+
+int
+isinternalmacro(x) int x; {          /* Test if macro is internally defined */
+    char * m;
+    /*
+       7 Dec 2021: "static" added to prevent fatal "Automatic aggregate
+       initialization is an ANSI feature" error in HP-UX 10.00.
+    */
+    static char * tags[] = { "_whi", "_for", "_sw_", "_if_" };
+    int i, internal = 0;
+
+    m = mactab[x].kwd;
+
+#ifdef COMMENT
+    /* Good idea but this flag is not set for _whi2, etc */
+    internal = ((cmdstk[cmdlvl].ccflgs & CF_IMAC) ? 1 : 0);
+    debug(F111,"isinternalmacro",m,internal);
+    return(internal);
+#endif  /* COMMENT */
+
+    debug(F101,"isinternalmacro x","",x);
+    if (*m != '_') {
+        debug(F110," not internal",m,0);
+        return(0);
+    }
+    if (!m) m = "";
+    if (*m) {
+        debug(F110," macro name",m,0);
+        internal = ckindex(m,"|_while|_forx|_forz|_xif|_switx|",0,0,0);
+        debug(F111," internal macro","A",internal);
+        if (!internal) {
+            int i, j, n, len = 0;
+            n = -1;
+            for (i = 0; i < sizeof(* tags); i++) {
+                if (ckindex(tags[i],m,0,0,0)) {
+                    n = i;
+                    break;
+                }
+            }
+            debug(F111," tags index",tags[n],n);
+            if (n > -1) {
+                char * tag = tags[i];
+                len = (int)strlen(tag);
+                debug(F111," tag len",tag,len);
+                for (i = len; m[i]; i++) {
+                    debug(F101," loop i","",i);
+                    debug(F000," char","",m[i]);
+                    if (!isdigit(m[i])) {
+                        internal = 0;
+                        break;
+                    } else {
+                        internal = 1;
+                    }
+                }
+            } 
+            debug(F101," internal macro","B",internal);
+        }
+    }
+    return(internal);
+}
+
+/*  N E W E R R M S G  -- New error message routine, April 2017  */
+
+#define ERRMSGBUFSIZ 320
+static char errmsgbuf[ERRMSGBUFSIZ] = { '\0' };
+
+VOID newerrmsg(s) char *s; {
+    char * tmperrbuf[ERRMSGBUFSIZ];
+
+    extern char lasttakeline[];
+    extern char *tfnam[];
+    extern int tfblockstart[];
+    extern int tlevel;
+    int len1, len2, len3, len4, len5;
+    char * buf = errmsgbuf;
+    char * takefile = getbasename(tfnam[tlevel]);
+    char nbuf[20];
+    char * lineno = nbuf;
+    int x;
+
+    debug(F110,"newerrmsg",s,0);
+    ckstrncpy(nbuf,ckitoa(tfblockstart[tlevel]),20);
+    lineno = (char *)nbuf;
+
+    if (!s) s = "";
+    if (!*s) s = "Syntax error";
+
+    if (tlevel < 0) {
+        printf("?%s\n",s);
+        return;
+    }
+    len1 = (int)strlen(s);
+    len2 = (int)strlen(takefile);
+    len3 = (int)strlen(lineno);
+    len4 = (int)strlen((char *)lasttakeline);
+    len5 = len1 + len2 + len3 + 12;
+
+    x = 80 - len5;         /* Free space for beginning of offending command */
+    if (x > len4) {        /* Free space is greater than command length */
+#ifdef HAVE_SNPRINTF
+        snprintf((char *)tmperrbuf,ERRMSGBUFSIZ,"?%s[%s]: \"%s\": %s\n",
+               takefile,
+               lineno,
+               (char *)lasttakeline,
+               s
+               );
+#else
+        sprintf((char *)tmperrbuf,"?%s[%s]: \"%s\": %s\n",
+               takefile,
+               lineno,
+               (char *)lasttakeline,
+               s
+               );
+#endif  /* HAVE_SNPRINTF */
+
+    } else if (x > 40) {
+        char c;
+        c = lasttakeline[x];
+        lasttakeline[x] = NUL;
+#ifdef HAVE_SNPRINTF
+        snprintf((char *)tmperrbuf,ERRMSGBUFSIZ,"?%s[%s]: \"%s...\": %s\n",
+               takefile, lineno, (char *)lasttakeline, s);
+#else
+        sprintf((char *)tmperrbuf,"?%s[%s]: \"%s...\": %s\n",
+               takefile, lineno, (char *)lasttakeline, s);
+#endif  /* HAVE_SNPRINTF */
+        lasttakeline[x] = c;
+    } else {
+        char c;
+        if (len4 > 74) {
+            x = 74 - (len2 + len3 + 8);
+            c = lasttakeline[x];
+            lasttakeline[x] = NUL;
+#ifdef HAVE_SNPRINTF
+            snprintf((char *)tmperrbuf,ERRMSGBUFSIZ,
+                "?%s[%s]: \"%s...\":\n Error: %s\n",
+                takefile, lineno, (char *)lasttakeline, s);
+#else
+            sprintf((char *)tmperrbuf,"?%s[%s]: \"%s...\":\n Error: %s\n",
+                   takefile, lineno, (char *)lasttakeline, s);
+
+#endif  /* HAVE_SNPRINTF */
+            lasttakeline[x] = c;
+        } else {
+#ifdef HAVE_SNPRINTF
+            snprintf((char *)tmperrbuf,ERRMSGBUFSIZ,
+                     "?%s[%s]: \"%s\":\n %s\n",
+                     takefile, lineno, (char *)lasttakeline, s);
+#else
+            sprintf((char *)tmperrbuf,"?%s[%s]: \"%s\":\n %s\n",
+                   takefile, lineno, (char *)lasttakeline, s);
+#endif  /* HAVE_SNPRINTF */
+        }
+    }
+  xnewerrmsg:
+    /* Print the message only if it's not the same as the last one */
+    if (ckstrcmp((char *)errmsgbuf,(char *)tmperrbuf,ERRMSGBUFSIZ,1)) {
+        ckstrncpy((char *)errmsgbuf,(char *)tmperrbuf,ERRMSGBUFSIZ);
+        printf("%s",(char *)errmsgbuf);
+    }
+    return;
 }
 
 /*  D O C M D  --  Do a command  */
@@ -7999,7 +8196,6 @@ docmd(cx) int cx; {
 	printf("?Connections disabled\n");
 	return(-9);
     }
-
 #ifndef NOSPL
     /* Used in FOR loops */
 
@@ -8039,7 +8235,6 @@ docmd(cx) int cx; {
     if (cx == XXSWIT) {			/* SWITCH */
 	return(doswitch());
     }
-
     /* GOTO, FORWARD, and _FORWARD (used internally by FOR, WHILE, etc) */
 
     if (cx == XXGOTO || cx == XXFWD || cx == XXXFWD) { /* GOTO or FORWARD */
@@ -8130,9 +8325,24 @@ docmd(cx) int cx; {
 		mtchanged = 0;		/* Mark state of macro table */
 		makestr(&macroname,mactab[mx].kwd); /* Save name */
 
-		if ((y = cmtxt("optional arguments","",&s,xxstring)) < 0)
-		  return(y);		/* Get macro args */
-
+/*
+  Prior to C-Kermit 9.0.304 Dev.22, April 23, 2017, cmtxt() was called in
+  all cases with zzstring.  But this fouled up the identification of macro
+  arguments when their values contained grouping characters such as
+  doublequotes and braces.  Now we defer the evaluation of the macro
+  arguments until after the arguments themselves have been correctly
+  identified.  An exception is made for the internal macros that implement
+  the FOR, WHILE, IF, and SWITCH commands.
+*/
+                if (isinternalmacro(x)) {
+                    debug(F100,"DO parser internal macro","",0);
+                    if ((y = cmtxt("optional arguments","",&s,zzstring)) < 0)
+                      return(y);		/* Get macro args */
+                } else {
+                    debug(F100,"DO parser normal macro","",0);
+                    if ((y = cmtxt("optional arguments","",&s,NULL)) < 0)
+                      return(y);		/* Get macro args */
+                }
 		if (mtchanged) {	/* Macro table changed? */
 		    mx = mlook(mactab,macroname,nmac); /* Look up name again */
 		}
@@ -8198,7 +8408,6 @@ docmd(cx) int cx; {
 	x = addmac(mnamebuf,s);
 	return(dodo(x,NULL,cmdstk[cmdlvl].ccflgs) < 1 ? (success = 0) : 1);
     }
-
     if (cx == XXLBL) {			/* LABEL */
 	if ((x = cmfld("label","",&s,xxstring)) < 0) {
 	    if (x == -3) {
@@ -8277,7 +8486,7 @@ docmd(cx) int cx; {
 	}
 	s = tmpbuf;
 	makestr(&lastsexp,s);
-	q = cksplit(1,SEXPMAX,s,NULL,NULL,8,0,0); /* Precheck for > 1 SEXP */
+	q = cksplit(1,SEXPMAX,s,NULL,NULL,8,0,0,0); /* Precheck for > 1 SEXP */
 	debug(F101,"sexp split","",q->a_size);
 
 	if (q->a_size == 1) {		/* We should get exactly one back */
@@ -8288,7 +8497,8 @@ docmd(cx) int cx; {
 	    if (sexprc == 0) {		/* Success */
 		/* Echo the result if desired */
 		if ((!xcmdsrc && sexpecho != SET_OFF) || sexpecho == SET_ON)
-		  printf(" %s\n",result ? result : "");
+                  if (result) if (*result)
+                    printf(" %s\n",result);
 		makestr(&sexpval,result);
 		success = sexppv > -1 ? sexppv : 1;
 		return(success);
@@ -8299,7 +8509,6 @@ docmd(cx) int cx; {
 	return(-9);
     }
 #endif /* NOSEXP */
-
 #endif /* NOSPL */
 
     if (cx == XXECH || cx == XXXECH || cx == XXVOID
@@ -8441,7 +8650,6 @@ docmd(cx) int cx; {
 	    printf("?No connection - use EXIT to quit.\n");
 	    return(-9);
 	}
-
 #ifdef CK_XYZ
 	if (protocol != PROTO_K) {
 	    printf("?Sorry, BYE only works with Kermit protocol\n");
@@ -8570,7 +8778,6 @@ docmd(cx) int cx; {
 #endif /* IKSD */
 	return(success = docd(cx));
     }
-
     if (cx == XXCHK)			/* CHECK */
       return(success = dochk());
 
@@ -8713,12 +8920,10 @@ docmd(cx) int cx; {
 #endif /* IKSD */
 	return(dodir(cx));
     }
-
 #ifndef NOSPL
     if (cx == XXELS)			/* ELSE */
       return(doelse());
 #endif /* NOSPL */
-
 #ifndef NOSERVER
 #ifndef NOFRILLS
     if (cx == XXENA || cx == XXDIS) {	/* ENABLE, DISABLE */
@@ -8995,7 +9200,6 @@ docmd(cx) int cx; {
 	} else return(success = 0);
 #endif /* MAC */
     }
-
     if (cx == XXQUI || cx == XXEXI) {	/* EXIT, QUIT */
 	extern int quitting;
 
@@ -9138,9 +9342,8 @@ docmd(cx) int cx; {
 #ifdef CK_RECALL
 	      case '^': x = XXREDO; break;
 #endif	/* CK_RECALL */
-	      case '&': x = XXECH; break; /* (what is this?) */
 	      default:
-		printf("\n?Invalid - %s\n",cmdbuf);
+		printf("\n?Not a valid command or token - %s\n",cmdbuf);
 		x = -2;
 	    }
 	}
@@ -9377,7 +9580,7 @@ docmd(cx) int cx; {
 		}
 		debug(F111,"MINPUT field",s,k);
 		if (isjoin) {
-		    if ((q = cksplit(1,0,s," ",(char *)c1chars,3,0,0))) {
+		    if ((q = cksplit(1,0,s," ",(char *)c1chars,3,0,0,0))) {
 			char ** ap = q->a_head;
 			n = q->a_size;
 			debug(F101,"minput cksplit size","",n);
@@ -9458,7 +9661,6 @@ docmd(cx) int cx; {
 	else
 	  return(success = x);
     }
-
     if (cx == XXLOGIN) {		/* (REMOTE) LOGIN */
 #ifdef NEWFTP
 	if ((ftpget == 1) || ((ftpget == 2) && ftpisopen()))
@@ -9502,7 +9704,6 @@ docmd(cx) int cx; {
 #endif /* NOXFER */
 	}
     }
-
 #ifndef NOSCRIPT
     if (cx == XXLOGI) {			/* UUCP-style script */
 	if ((x = cmtxt("expect-send expect-send ...","",&s,xxstring)) < 0)
@@ -9877,7 +10078,6 @@ docmd(cx) int cx; {
 	    return(-9);
 	} else return(y);
     }
-
     if (cx == XXSET) {			/* SET command */
 	x = cmkey(prmtab,nprm,"Parameter","",xxstring);
 	if (x == -3) {
@@ -10177,7 +10377,6 @@ docmd(cx) int cx; {
 #endif /* NOJC */
 	return(0);
     }
-
     if (cx == XXTAK) {			/* TAKE */
 	char * scriptenv = NULL;	
 #ifdef OS2
@@ -10439,12 +10638,12 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	return(y);
     }
 #endif /* PTYORPIPE */
+#endif /* NETCONN */
 
 #ifdef ANYSSH
     if (cx == XXSSH) {			/* SSH (Secure Shell) */
 	extern int netsave;
 #ifdef SSHBUILTIN
-	int k, x, havehost = 0, trips = 0;
         int    tmpver = -1, tmpxfw = -1;
 #ifndef SSHTEST
         extern int sl_ssh_xfw, sl_ssh_xfw_saved;
@@ -10456,13 +10655,14 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
         extern char pwbuf[], * g_pswd;
         extern int pwflg, pwcrypt, g_pflg, g_pcpt, nolocal;
 	struct FDB sw, kw, fl;
-
         if (ssh_tmpstr)
 	  memset(ssh_tmpstr,0,strlen(ssh_tmpstr));
         makestr(&ssh_tmpstr,NULL);
         makestr(&ssh_tmpuid,NULL);
         makestr(&ssh_tmpcmd,NULL);
         makestr(&ssh_tmpport,NULL);
+
+        debug(F101,"SSH external parsing","",0);
 
 	cmfdbi(&kw,			/* 1st FDB - commands */
 	       _CMKEY,			/* fcode */
@@ -10488,6 +10688,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	       );
 
 	x = cmfdb(&kw);
+        debug(F101,"SSH external cmfdb &kw","",x);
 	if (x == -3) {
 	    printf("?ssh what?\n");
 	    return(-9);
@@ -11228,7 +11429,10 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	}
 #else  /* SSHBUILTIN */
 #ifdef SSHCMD
+
 	x = nettype;
+        debug(F101,"SSH external nettype","",nettype);
+        debug(F101,"SSH external calling setlin","",0);
 	if ((y = setlin(XXSSH,0,1)) < 0) {
 	    if (errno)
 	      printf("?%s\n",ck_errstr());
@@ -11239,7 +11443,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (hints)
 	      printf("Hint: Try \"ssh -t %s\"\n",line);
 #else
-	      return(y);
+            return(y);
 #endif /* COMMENT */
 	    nettype = x;		/* Failed, restore net type. */
 	    ttnproto = z;		/* and protocol */
@@ -11892,7 +12096,6 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	return(-9);
 #endif /* RLOGCODE */
     }
-#endif /* NETCONN */
 #endif /* NOLOCAL */
 
 #ifndef NOXMIT
@@ -13094,14 +13297,17 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
     if (cx == XXGREP)
       return(dogrep());
 
+#ifdef COMMENT
     if (cx == XXDEBUG) {		/* DEBUG */
 #ifndef DEBUG
 	int dummy = 0;
 	return(seton(&dummy));
 #else
+        /* This has been in C-Kermit since 9.0 but doesn't do anything */
 	return(seton(&deblog));
 #endif /* DEBUG */
     }
+#endif /* COMMENT */ 
     if (cx == XXMSG || cx == XXXMSG) {	/* MESSAGE */
 	extern int debmsg;		/* Script debugging messages */
 	if ((x = cmtxt("Message to print if SET DEBUG MESSAGE is ON or STDERR",
@@ -13285,23 +13491,34 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 
 	for (i = 0; i < 16 && vars[i]; i++) {
 	    printf("%s:\n",legend[i]);
-	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	    if (++n > cmd_rows - 3) {
+                if (!askmore()) {
+                    return(0); 
+                } else {
+                    n = 0;
+                }
+            }
 	    ckmakmsg(vbuf,32,"\\v(",vars[i],")",NULL);
 	    printf("  Variable:   %s\n",vbuf);
-	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	    if (++n > cmd_rows - 3) {
+                if (!askmore()) { return(0); } else { n = 0; }}
 	    y = TMPBUFSIZ;
 	    s = tmpbuf;
 	    zzstring(vbuf,&s,&y);
 	    line[0] = NUL;
 	    ckGetLongPathName(tmpbuf,line,LINBUFSIZ);
 	    printf("  Long name:  %s\n",line);
-	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	    if (++n > cmd_rows - 3) {
+                if (!askmore()) { return(0); } else { n = 0; }}
 	    line[0] = NUL;
 	    GetShortPathName(tmpbuf,line,LINBUFSIZ);
 	    printf("  Short name: %s\n",line);
-	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	    if (++n > cmd_rows - 3) {
+                if (!askmore()) { return(0); else n = 0; }
+            }
             printf("\n");
-	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	    if (++n > cmd_rows - 3) {
+                if (!askmore()) { return(0); } else { n = 0; }}
 	}
 #else  /* NT */
 
@@ -13315,17 +13532,21 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 
 	for (i = 0; i < 16 && vars[i]; i++) {
 	    printf("%s:\n",legend[i]);
-	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	    if (++n > cmd_rows - 3) {
+                if (!askmore()) { return(0); } else { n = 0; }}
 	    ckmakmsg(vbuf,32,"\\v(",vars[i],")",NULL);
 	    printf("  Variable: %s\n",vbuf);
-	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	    if (++n > cmd_rows - 3) {
+                if (!askmore()) { return(0); } else { n = 0; }}
 	    y = TMPBUFSIZ;
 	    s = tmpbuf;
 	    zzstring(vbuf,&s,&y);
             printf("  Value:    %s\n",tmpbuf);
-	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	    if (++n > cmd_rows - 3) {
+                if (!askmore()) { return(0); } else { n = 0; }}
             printf("\n");
-	    if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+	    if (++n > cmd_rows - 3) {
+                if (!askmore()) { return(0); } else { n = 0; }}
 	}
 #endif /* NT */
 	return(success = 1);

@@ -11,10 +11,11 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2014,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+    Last update: 11 May 2022
 
   This module contains HELP command and other long text strings.
 
@@ -228,7 +229,8 @@ char *newstxt[] = {
 " . Raw SSL/TLS connections for connecting to POP3 and similar services",
 #endif /* CK_SSL */
 " . At the prompt, Ctrl-K recalls most recent filename",
-" . Scripting and performance improvements and bug fixes",
+" . Scripting and performance improvements",
+" . Bug fixes",
 " ",
 "Documentation:",
 " 1. http://www.kermitproject.org/usingckermit.html",
@@ -246,8 +248,9 @@ char *newstxt[] = {
 "If the release date shown by the VERSION command is long past, be sure to",
 "check the Kermit website to see if there have been updates:",
 " ",
-"  http://www.kermitproject.org/ckermit.html (C-Kermit home page)",
 "  http://www.kermitproject.org/             (Kermit Project home page)",
+"  http://www.kermitproject.org/ckermit.html (C-Kermit home page)",
+"  http://www.kermitproject.org/ckdaily.html (C-Kermit development)",
 ""
 };
 #endif /* NOHELP */
@@ -1448,6 +1451,19 @@ static char *hxxout[] = {
 " ",
 "Also see SET OUTPUT.",
 "" };
+
+static char *hxxcsn[] = {
+"Compact Substring Notation is a shorthand notation for the built-in",
+"\\fsubstring() function; 'name' is the name of any macro-type variable:",
+"  \\s(name[n:m])",
+"      Substring of \\m(name) starting at position n, length m",
+"  \\s(name[n_m])",
+"      Substring of \\m(name) from position n to position m",
+"  \\s(name[n]) or \\s(name[n:])",
+"      Substring of \\m(name) from position n to the end",
+"  \\s(name[n.])",
+"      The character at position n",
+""};
 #endif /* NOSPL */
 
 static char *hxypari[] = {
@@ -1684,6 +1700,7 @@ static char *hmxxsexp[] = {
 "  CEILING   Ceiling of floating-point operand      (ceiling 1.25)    2",
 "  FLOOR     Floor of floating-point operand        (floor 1.25)      1",
 "  ROUND     Operand rounded to nearest integer     (round 1.75)      2",
+"  ROUND     ...or to given number of decimals      (round 1.7584 2)  1.76",
 "  SQRT      Square root of 1 operand               (sqrt 2)          1.414..",
 "  EXP       e (2.71828..) to the given power       (exp -1)          0.367..",
 "  SIN       Sine of angle expressed in radians     (sin (/ pi 2))    1.0",
@@ -1763,6 +1780,8 @@ static char *hmxxgrep[] = {
 #endif /* UNIXOROSK */
 " ",
 "File selection options:",
+"  /ARRAY:&x",
+"    Returns the results in the specified array.",
 "  /NOBACKUPFILES",
 "    Excludes backup files (like oofa.txt.~3~) from the search.",
 "  /DOTFILES",
@@ -1907,7 +1926,9 @@ static char *hmxxtouch[] = {
 " ",
 " Action switches:",
 " ",
-"   /MODTIME:        Modification time for selected files.",
+"   /MODTIME:        Changes the modification time for the selected files.",
+"                     in numeric yyyy:mm:dd:hh:mm:ss format.",
+"                     if hh:mm:ss omitted time is set to 00:00:00",
 "   /SIMULATE        List files that would be touched, but don't touch them.",
 "   /LIST            Show which files are being touched.",
 #endif /* RECURSIVE */
@@ -1921,12 +1942,11 @@ static char *hmxxtouch[] = {
 
 static char *hmxxchange[] = {
 "Syntax: CHANGE [ switches ] filespec string1 string2",
-"  Changes all occurences of string1 to string2 in the given file or files.",
-"  Works line by line, does not do multiline or cross-line substitutions.",
+"  Changes all occurrences of string1 to string2 in the given file or files.",
+"  Works line by line, does not do multiline or across-line substitutions.",
 "  To remove strings from files, specify string2 as \"\" or omit string2.",
 "  Temporary files are created in the directory indicated by \\v(tmpdir)",
-"  (show var tmpdir).  If the temporary directory does not exist, an attempt",
-"  is made to create it.  You can select a different temporary directory with",
+"  (show var tmpdir).  You can select a different temporary directory with",
 "  the SET TEMP-DIRECTORY command.  All temporary files are deleted after use."
 ,
 " ",
@@ -1942,8 +1962,7 @@ static char *hmxxchange[] = {
 "    change *.html \\m(a) \\m(b)",
 " ",
 "  Since the CHANGE command works line by line, only text files can be",
-"  changed; C-Kermit automatically skips over binary files.  Before using",
-"  this command, you might want to back up the files that will be affected.",
+"  changed; C-Kermit automatically skips over binary files.",
 " ",
 "  File selection switches (factory defaults are marked with +):",
 " ",
@@ -1960,6 +1979,12 @@ static char *hmxxchange[] = {
 "   /RECURSIVE      Descend through subdirectories.",
 "   /NORECURSIVE  + Don't descend through subdirectories.",
 #endif /* RECURSIVE */
+" ",
+" File disposition switches:",
+" ",
+"   /BACKUP:name       Back up original files to named directory.",
+"   /DESTINATION:name  Store resulting changed files in named directory.",
+"   If neither of these options is given, original files are overwritten.",
 " ",
 " String selection switches:", 
 " ",
@@ -4689,12 +4714,24 @@ static char *hxxask[] = {
 "  respond within the time limit.",
 ""};
 static char *hxxgetc[] = {
-"Syntax:  GETC variablename [ prompt ]",
+"Syntax:  GETC [ switches] [ variablename [ prompt ] ]",
 "Example: GETC \\%c { Type any character to continue...}",
 "  Issues the prompt and sets the variable to the first character you type.",
 "  Use braces to preserve leading and/or trailing spaces in the prompt.",
 " ",
-"Also see SET ASK-TIMER.",
+"Switches:",
+"  /CHECK",
+"    GETC /CHECK (no variable or prompt is given when /CHECK is used)",
+ "   succeeds if characters are waiting to be read and fails if not.",
+" ",
+"  /QUIET",
+"    In case of errors, no error message is issued.",
+" ",
+"  /TIMEOUT:n",
+"    Gives GETC a time limit of n seconds to wait for a character to appear;",
+"    if no character appears within n seconds, GETC fails and (if a /QUIET",
+"    switch was not given, an error message is printed.",
+/* "Also see SET ASK-TIMER.", */
 ""};
 
 static char *hmxytimer[] = {
@@ -5083,6 +5120,7 @@ static char *hxxxla[] = {
 " ",
 "  Multiple files can be translated if file2 is a directory or device name,",
 "  rather than a filename, or if file2 is omitted.  Note: CONVERT would",
+"  would be a better name for this command but it's too late now.",
 "" };
 #endif /* NOCSETS */
 
@@ -5972,6 +6010,22 @@ static char * hxxf_op[] = {
 "/READ",
 "  Open the file for reading.",
 " ",
+
+#ifdef UNIX
+"/STDIN",
+"  Tells Kermit to read from Standard Input.  In this case you don't specify",
+"  a filename.",
+" ",
+"/STDOUT",
+"  Tells Kermit to write to Standard Output.  In this case you don't specify",
+"  a filename.",
+" ",
+"/STDERR",
+"  Tells Kermit to write to Standard Error.  In this case you don't specify",
+"  a filename.",
+" ",
+#endif  /* UNIX */
+
 "/WRITE",
 "  Open the file for writing.  If /READ was not also specified, this creates",
 "  a new file.  If /READ was specified, the existing file is preserved, but",
@@ -6052,7 +6106,7 @@ static char * hxxf_re[] = {
 "  empty, this indicates a NUL byte was read.",
 " ",
 "/TRIM",
-"  Tells Kermit to trim trailing whitespace when used with /LINE.  Ignored",
+"  Trims trailing whitespace from the right when used with /LINE.  Ignored", 
 "  if used with /CHAR or /SIZE.",
 " ",
 "/UNTABIFY",
@@ -6200,7 +6254,10 @@ dohlp(xx) int xx; {
     int x,y;
 
     debug(F101,"DOHELP xx","",xx);
-    if (xx < 0) return(xx);
+    if (xx < 0) {
+        printf("Sorry, that is not a help topic\n");
+        return(-9);
+    };
 
 #ifdef NOHELP
     if ((x = cmcfm()) < 0)
@@ -6367,6 +6424,13 @@ case XXMSG:
   Prints the given text to stdout if SET DEBUG MESSAGE is ON; prints it\n\
   to stderr if SET DEBUG MESSAGE is STDERR; doesn't print it at all if SET\n\
   DEBUG MESSAGE is OFF.  Synonym: MSG."));
+
+case XXXMSG:
+    return(hmsg("Syntax: XMESSAGE text-to-print-if-debugging\n\
+  Like MESSAGE, except does not include a line terminator at the end.\n\
+  Prints the given text to stdout if SET DEBUG MESSAGE is ON; prints it\n\
+  to stderr if SET DEBUG MESSAGE is STDERR; doesn't print it at all if SET\n\
+  DEBUG MESSAGE is OFF.  Synonym: XMSG."));
 
 #ifndef NOFRILLS
 case XXLDEL:
@@ -6992,6 +7056,9 @@ Equivalent to GET /COMMAND; see HELP GET for details."));
 #endif /* PIPESEND */
 
 #ifndef NOSPL
+case XXCSN:                             /* Compact Substring Notation */
+  return(hmsga(hxxcsn));
+
 case XXFUNC:
 /*
   Tricky parsing.  We want to let them type the function name in any format
@@ -7412,9 +7479,11 @@ hmsga(s) char *s[]; {                   /* pausing at end of each screen. */
         for (j = 0; j < y; j++)         /* See how many newlines were */
           if (s[i][j] == '\n') k++;     /* in the string... */
         n += k;
-        if (n > (cmd_rows - 3) && *s[i+1]) /* After a screenful, give them */
-          if (!askmore()) return(0);    /* a "more?" prompt. */
-          else n = 0;
+        if (n > (cmd_rows - 3) && *s[i+1]) { /* After a screenful, give them */
+            if (!askmore()) {                /* a "more?" prompt. */
+                return(0); 
+            } else { n = 0; }
+        }
     }
     printf("\n");
     return(0);
@@ -7438,7 +7507,7 @@ static char * supporttext[] = {
 " ",
 "  http://www.kermitproject.org/ckermit.html#doc",
 " ",
-"Z C-Kermit tutorial is here:",
+"A C-Kermit tutorial is here:",
 " ",
 "  http://www.kermitproject.org/ckututor.html",
 " ",
@@ -10480,7 +10549,12 @@ case XYLOGIN:
 #ifndef NOSPL
 case XYTMPDIR:
     return(hmsg("Syntax: SET TEMP-DIRECTORY [ <directory-name> ]\n\
-  Overrides automatic assignment of \\v(tmpdir) variable."));
+  Tells Kermit to use the given directory for creating temporary files.\n\
+  These are used (for example) in FTP downloads and by the CHANGE command.\n\
+  If you don't issue this command, C-Kermit picks a directory automatically\n\
+  based on the operating system and any environment variables you might have\n\
+  set.  Use SHOW TEMP-DIRECTORY or SHOW VARIABLE \\v(tmpdir) to see Kermit's\n\
+  current temporary directory setting.  Synonym: SET TMP-DIRECTORY."));
 #endif /* NOSPL */
 
 #ifdef OS2
@@ -10916,11 +10990,16 @@ dohfunc(xx) int xx; {
   The numeric code of the first character in string s1, or 0 if s1 empty.\n");
         break;
       case FN_RPL:                      /* Replace */
-        printf("\\freplace(s1,s2,s3[,n1])\n\
+        printf("\\freplace(s1,s2,[s3[,n1[,n2]]])\n\
   s1 = original string.\n\
   s2 = match string.\n\
-  s3 = replacement string.\n\
-  n1 = occurrence.\n");
+  s3 = replacement string (may be empty).\n\
+  n1 = occurrence (if omitted or 0 does all occurrences).\n");
+#ifdef RPLWORDMODE
+        printf("  n2 = word mode \
+(0 = ignore context; 1 = only if target is delimited).\n");
+#endif  /* RPLWORDMODE */
+
         printf("Returns string:\n\
   s1 with occurrence number n1 of s2 replaced by s3.\n\
   If n1 = 0 or omitted, all occurrences are replaced.\n\
@@ -11146,7 +11225,7 @@ dohfunc(xx) int xx; {
 
 #ifdef RECURSIVE
       case FN_DIR:                      /* Recursive directory count */
-        printf("\\fdirectories(f1) - Directory list.\n\
+        printf("\\fdirectories(f1,&a) - Directory list.\n\
   f1 = directory specification, possibly containing wildcards.\n\
   &a = optional name of array to assign directory list to.\n");
         printf("Returns integer:\n\
@@ -11331,9 +11410,8 @@ Assign string words to an array.\n\
         break;
 
       case FN_TLOOK:
-        printf(
-"\\ftablelook(keyword,&a,[c]) - Lookup keyword in keyword table.\n\
-  pattern = String\n");
+        printf("\\ftablelook(keyword,&a,[c]) \
+- Lookup keyword in keyword table.\n");
         printf("  keyword = keyword to look up (can be abbreviated).\n");
         printf("  &a      = array designator, can include range specifier.\n");
         printf("            This array must be in alphabetical order.\n");
@@ -11997,8 +12075,9 @@ represent.\n");
  4. Platform-specific permissions string, e.g. drwxrwxr-x or RWED,RWE,RE,E\n\
  5. Platform-specific permissions code, e.g. an octal number like 40775\n\
  6. The file's size in bytes\n\
- 7. Type: 1=regular file; 2=executable; 3=directory; 4=link; 0=unknown.\n\
- 8. If link, the name of the file linked to.\n");
+ 7. Type: regular file, executable, directory, link, or unknown\n\
+ 8. If link, the name of the file linked to.\n\
+ 9. Transfer mode for file: text or binary\n");
         break;
 
       case FN_FILECMP:

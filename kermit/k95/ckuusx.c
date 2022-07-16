@@ -9,16 +9,18 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2014,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+    Last update: 3 Jun 2022
 */
 
 /*
   This module contains user interface functions needed by both the interactive
   user interface and the command-line-only user interface, as well as the
   screen-control routines (curses and equivalent).
+  Fri Jun  3 10:54:47 2022
 */
 
 /* Includes */
@@ -29,6 +31,12 @@
 #include "ckuusr.h"
 #include "ckcxla.h"
 
+/*
+  Curses/Termcap function prototypes...
+  Indented for easier reading 3 November 2021
+  Un-indented 7 December 2021 because some old C compilers
+  require '#' directives to be on the left margin.
+*/
 #ifndef NOHTERMCAP
 #ifdef NOTERMCAP
 #define NOHTERMCAP
@@ -43,6 +51,10 @@
 #define NOHTERMCAP
 #else
 #ifdef MACOSX
+#ifndef OLDMACOSX           
+#include <term.h>           /* macOS after 10.12 */
+#include <curses.h>
+#endif /* OLDMACOSX */
 #define NOHTERMCAP
 #endif /* MACOSX */
 #endif /* OPENBSD */
@@ -62,6 +74,16 @@
 #include <term.h>
 #endif /* linux */
 #endif /* NOTERMCAP */
+
+/*
+  None of the above works on Ubuntu: not curses.h, term.h, termcap.h so...
+*/
+#ifdef __linux__
+int tgetent (char *, const char *);
+int tputs (const char *, int, int (*)(int));
+char * tgetstr (const char *, char **);
+char * tgoto (const char *, int, int);
+#endif /* __linux__ */
 
 #ifdef OS2
 #include <string.h>
@@ -247,6 +269,8 @@ int fspeclen = CMDBL;
 char fspec[CKMAXPATH+4];
 int fspeclen = CKMAXPATH;
 #endif /* NOMSEND */
+
+_PROTOTYP( int getslot, () );
 
 char * rfspec = NULL;			/* Received filespec: local */
 char * prfspec = NULL;			/* Preliminary rfspec */
@@ -957,6 +981,7 @@ _PROTOTYP( char * strerror, (int) );
     if (ckrooterr)
       return("Off limits");
 #endif /* CKROOT */
+    debug(F101,"ck_errstr errno","",errno);
     return(strerror(errno));
 #else  /* !USE_STRERROR */
 #ifdef VMS
@@ -1711,7 +1736,7 @@ scanfile(name,flag,nscanfile) char * name; int * flag, nscanfile; {
 			if (c != ESC && c != SO && c != SI)
 			  c0noniso++;
 		    }
-		    if ((c == '\032')	/* Ctrl-Z */
+		    if (c == '\032'	/* Ctrl-Z */
 #ifdef COMMENT
 			&& eof && (i >= count - 2)
 #endif /* COMMENT */
@@ -2070,8 +2095,7 @@ scanstring(s) char * s; {
 		    if (c != ESC && c != SO && c != SI)
 		      c0noniso++;
 		}
-		if ((c == '\032')	/* Ctrl-Z */
-		    ) {
+		if (c == '\032') {	/* Ctrl-Z */
 		    c0controls--;
 		    c0noniso--;
 		}
@@ -3802,11 +3826,11 @@ chkint() {
         xxscreen(SCR_QE,0,(long)lscapu," locking shifts");
         if (!network)
           xxscreen(SCR_QE,0, speed, " speed");
-        if (what & W_SEND)
-
-          xxscreen(SCR_QE,0,spsiz, " packet length");
-        else if (what & W_RECV || what & W_REMO)
-          xxscreen(SCR_QE,0,urpsiz," packet length");
+        if (what & W_SEND) {
+            xxscreen(SCR_QE,0,spsiz, " packet length");
+        } else if (what & W_RECV || what & W_REMO) {
+            xxscreen(SCR_QE,0,urpsiz," packet length");
+        }
         xxscreen(SCR_QE,0,wslots,  " window slots");
         fdispla = ofd; /* [MF] Restore file display type */
         return(0);
@@ -5871,14 +5895,6 @@ extern int isvt52;                      /* From CKVTIO.C */
 #endif /* CK_NCURSES */
 #endif /* MYCURSES */
 #endif /* VMS */
-
-#ifdef BUG999
-_PROTOTYP(int tgetent,(char *, char *));
-_PROTOTYP(char *tgetstr,(char *, char **));
-_PROTOTYP(int tputs,(char *, int, int (*)()));
-_PROTOTYP(char *tgoto,(const char *, int, int));
-#endif	/* BUG999 */
-
 #endif /* CK_CURSES */
 
 /*  F X D I N I T  --  File Xfer Display Initialization  */
@@ -6237,7 +6253,12 @@ printw(str, a1, a2, a3, a4, a5, a6, a7, a8)
 
 #define CK_CURPOS
 int
-ck_curpos(row, col) {
+#ifdef CK_ANSIC
+ck_curpos(int row, int col)
+#else
+ck_curpos(row, col) int row, int col;
+#endif  /* CK_ANSIC */
+ {
     debug(F111,"VMS smg ck_curpos",ckitoa(row),col);
     if (!smg_inited || !smg_open) {
         initscr();
@@ -6355,7 +6376,12 @@ ck_cleol() {
 }
 
 int
-ck_curpos(row, col) int row, col; {
+#ifdef CK_ANSIC
+ck_curpos(int row, int col)
+#else
+ck_curpos(row, col) int row, int col;
+#endif  /* CK_ANSIC */
+ {
     move(row, col);
     return(0);
 }
@@ -6410,7 +6436,7 @@ clrtoeol() {
 
 #define CK_CURPOS
 int
-ck_curpos(row, col) int row, col; {
+ck_curpos(row, col) int row, int col; {
     move(row, col);
     return(0);
 }
@@ -6474,21 +6500,21 @@ ck_termset(x) int x; {
         *bp = NUL;
         debug(F110,"ck_termset calling tgetstr","cl",0);
         if (tgetstr("cl", &bp)) {       /* Get clear-screen code */
-            debug(F110,"ck_termset tgetstr cl",tgsbuf,"");
+            debug(F110,"ck_termset tgetstr cl",tgsbuf,0);
             if ((int)strlen(tgsbuf) < 32)
               ckstrncpy(cur_cls,tgsbuf,32);
         } else
           return;
         bp = tgsbuf;
         if (tgetstr("ce", &bp)) {       /* Get clear-to-end-of-line code */
-            debug(F110,"ck_termset tgetstr ce",tgsbuf,"");
+            debug(F110,"ck_termset tgetstr ce",tgsbuf,0);
             if ((int)strlen(tgsbuf) < 32)
               ckstrncpy(cur_cleol,tgsbuf,32);
         } else
           return;
         bp = tgsbuf;
         if (tgetstr("cm", &bp)) {       /* Get cursor-movement code */
-            debug(F110,"ck_termset tgetstr cm",tgsbuf,"");
+            debug(F110,"ck_termset tgetstr cm",tgsbuf,0);
             if ((int)strlen(tgsbuf) < 64)
               ckstrncpy(cur_cm,tgsbuf,64);
         } else
@@ -6628,7 +6654,7 @@ ck_cleol() {
 }
 
 int
-ck_curpos(row, col) int row, col; {
+ck_curpos(row, col) int row, int col; {
     printf("\033[%d;%dH", row, col);
     return(0);
 }
@@ -8017,7 +8043,11 @@ char *s;        /* a string */
             move(CW_MSG,22);
 	    clrtoeol();
             if (!s) s = "";
+/*
+  30092021: fails to compile on Debian with "-Wformat -Werror=format-security"
             printw(*s ? s : "User interruption or connection lost");
+*/
+            fputs(*s ? s : "User interruption or connection lost", stdout);
 #ifdef KUI
 #ifndef K95G
             KuiSetProperty(KUI_FILE_TRANSFER,
@@ -9139,7 +9169,14 @@ char *s;        /* a string */
 #ifndef CK_CURPOS
 /* Dummies for when cursor control is not supported */
 int
-ck_curpos(row, col) {
+#ifdef CK_ANSIC
+ck_curpos(int row, int col)
+#else
+ck_curpos(row, col)
+    int row;
+    int col;
+#endif  /* CK_ANSIC */
+{    
     return(-1);
 }
 
@@ -9497,6 +9534,7 @@ getslot() {                             /* Find a free slot for us */
     char pidbuf[64], * s;
     int j, k, n, x, rc = -1;
     int lockfd, tries, haveslot = 0;
+    int dummy;
     long lockpid;
     CK_OFF_T i;
     /* char ipbuf[17]; */
@@ -9522,7 +9560,7 @@ getslot() {                             /* Find a free slot for us */
     }
     /* Write my (decimal) PID into the temp file */
 
-    write(lockfd,idstring,(int)strlen(idstring));
+    dummy = write(lockfd,idstring,(int)strlen(idstring));
     if (close(lockfd) < 0) {            /* Close lockfile */
         debug(F101,"getslot error closing temp lockfile", "", errno);
         return(-1);
@@ -9616,7 +9654,7 @@ getslot() {                             /* Find a free slot for us */
 #ifdef COHERENT
             chsize(fileno(dbfp),i);
 #else
-            ftruncate(fileno(dbfp),(CK_OFF_T)i);
+            dummy = ftruncate(fileno(dbfp),(CK_OFF_T)i);
 #endif /* COHERENT */
             x = 0;
             CKFSEEK(dbfp,i,0);

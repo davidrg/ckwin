@@ -2,7 +2,7 @@
 
 /*  C K C F T P  --  FTP Client for C-Kermit  */
 
-char *ckftpv = "FTP Client, 9.0.263, 5 Feb 2015";
+char *ckftpv = "FTP Client, 9.0.266, 8 May 2022";
 
 /*
   Authors:
@@ -11,7 +11,7 @@ char *ckftpv = "FTP Client, 9.0.263, 5 Feb 2015";
     Frank da Cruz <fdc@columbia.edu>,
       The Kermit Project, Columbia University.
 
-  Copyright (C) 2000, 2014,
+  Copyright (C) 2000, 2022
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -4470,14 +4470,19 @@ putfile(cx,
 #ifdef TLOG
     if (tralog) {
         if (rc > 0) {
-            if (rc == SKP_XNX)
+          switch (rc) {
+            case SKP_XNX:
               tlog(F100," /simulate: WOULD BE SENT:","no remote file",0);
-            else if (rc == SKP_XUP)
+              break;
+            case SKP_XUP:
               tlog(F100," /simulate: WOULD BE SENT:","remote file older",0);
-            else if (rc == SKP_SIM)
+              break;
+            case SKP_SIM:
               tlog(F100," /simulate: WOULD BE SENT","",0);
-            else
+              break;
+            default:
               tlog(F110," skipped:",gskreason(rc),0);
+            }
         } else if (rc == 0) {
             tlog(F101," complete, size", "", fsize);
         } else if (cancelfile) {
@@ -10210,9 +10215,11 @@ ssl_auth() {
     if (ftp_bug_use_ssl_v2) {
         /* allow SSL 2.0 or later */
         client_method = SSLv23_client_method();
+#ifndef OPENSSL_NO_SSL3
     } else if (ftp_bug_use_ssl_v3) {
         /* allow SSL 3.0 ONLY - previous default */
         client_method = SSLv3_client_method();
+#endif /* OPENSSL_NO_SSL3 */
     } else {
         /* default - allow TLS 1.0 or later */
         client_method = TLSv1_client_method();
@@ -11198,11 +11205,12 @@ getreply(expecteof,lcs,rcs,vbm,fc) int expecteof, lcs, rcs, vbm, fc; {
             return(getreply(expecteof,lcs,rcs,vbm,auth));
         }
         ibuf[0] = obuf[i] = '\0';
-        if (ftpcode && n == '6')
-          if (ftpcode != 631 && ftpcode != 632 && ftpcode != 633) {
-              printf("Unknown reply: %d %s\n", ftpcode, obuf);
-              n = '5';
-          } else safe = (ftpcode == 631);
+        if (ftpcode && n == '6') {
+            if (ftpcode != 631 && ftpcode != 632 && ftpcode != 633) {
+                printf("Unknown reply: %d %s\n", ftpcode, obuf);
+                n = '5';
+            } else safe = (ftpcode == 631);
+        }
         if (obuf[0]                     /* if there is a string to decode */
 #ifdef CK_SSL
             && !ssl_ftp_active_flag     /* and not SSL/TLS */
@@ -12573,7 +12581,7 @@ Please confirm output file specification or supply an alternative:";
     } else if (!out2screen) {           /* File */
         struct filinfo xx;
         xx.bs = 0; xx.cs = 0; xx.rl = 0; xx.org = 0; xx.cc = 0;
-        xx.typ = 0; xx.os_specific = NUL; xx.lblopts = 0;
+        xx.typ = 0; xx.os_specific = ""; xx.lblopts = 0;
 	/* Append or New */
         xx.dsp = !strcmp(ftprecv.lmode,"ab") ? XYFZ_A : XYFZ_N;
         x = zopeno(ZOFILE,ftprecv.local,NULL,&xx);
@@ -16318,7 +16326,7 @@ secure_getbyte(fd,fc) int fd,fc; {
                                );
                   return(ERR);
               }
-              if ((kerror = looping_read(fd, ucbuf, length)) != length) {
+              if ((kerror = looping_read(fd,(char *)ucbuf,length)) != length) {
                   secure_error("Couldn't read %u byte PROT buffer: %s",
                                length,
                                kerror == -1 ? ck_errstr() : "premature EOF"

@@ -1,8 +1,8 @@
-char *ckptyv = "Pseudoterminal support, 9.0.102, 23 Feb 2014";
+char *ckptyv = "Pseudoterminal support, 9.0.106, 01 Jun 2022";
 
 /*  C K U P T Y  --  C-Kermit pseudoterminal control functions for UNIX  */
 
-/* Last update: Sun Feb 23 09:09:36 2014 */
+/* Last update: Wed Jun  1 07:51:52 2022 */
 
 /*
   Copyright 1995 by the Massachusetts Institute of Technology.
@@ -26,8 +26,9 @@ char *ckptyv = "Pseudoterminal support, 9.0.102, 23 Feb 2014";
   November 1999
 
   Parameterized for pty file descriptor and function code,
+  Dec 2006 - Sep 2009, plus some minor "compliance" nits addressed in 2020.
+  See "HAVE_OPENPTY" section of ckcdeb.h.
   Frank da Cruz, The Kermit Project, New York City
-  Dec 2006 - Sep 2009
 */
 
 /*
@@ -53,8 +54,16 @@ char *ckptyv = "Pseudoterminal support, 9.0.102, 23 Feb 2014";
    . SCO UNIX 3.2v4.2 (compile fails with syntax error in <memory.h>)
    . HP-UX 8.00 and earlier (no vhangup or ptsname routines)
 */
+#ifndef NO_PTY_XOPEN_SOURCE
+#ifdef __FreeBSD__                      /* bs  20151224 */
+#define NO_PTY_XOPEN_SOURCE
+#endif /* __FreeBSD__ */
+#endif /* NO_PTY_XOPEN_SOURCE */
 
-#define _XOPEN_SOURCE 500		/* mdw 20140223 */
+#ifndef NO_PTY_XOPEN_SOURCE             /* fdc 20211207 */
+#define _XOPEN_SOURCE 500               /* mdw 20140223 */
+#endif /* NO_PTY_XOPEN_SOURCE */
+
 #include <stdlib.h>			/* mdw 20140223 */
 #include "ckcsym.h"
 #include "ckcdeb.h"			/* To pick up NETPTY definition */
@@ -65,7 +74,7 @@ char * ptyver = "No PTY support";
 
 #else  /* (rest of this module...) */
 
-char * ptyver = "PTY support 8.0.016, 22 Aug 2007";
+char * ptyver = "PTY support 8.0.017, 18 Sep 2020";
 
 /* These will no doubt need adjustment... */
 
@@ -413,7 +422,7 @@ int pty_master_fd = -1;			/* pty master file descriptor */
   copy_termbuf(cp)
   set_termbuf()
 
-  These three routines are used to get and set the "termbuf" structure
+  These three routines are used to get and set the "termbuf" structure
   to and from the kernel.  init_termbuf() gets the current settings.
   copy_termbuf() hands in a new "termbuf" to write to the kernel, and
   set_termbuf() writes the structure into the kernel.
@@ -525,6 +534,7 @@ set_termbuf(fd) int fd; {		/* Only make the necessary changes. */
 VOID
 ptyint_vhangup() {
 #ifdef CK_VHANGUP
+    _PROTOTYP( int vhangup, (void) );
 #ifdef CK_POSIX_SIG
     struct sigaction sa;
     /* Initialize "sa" structure. */
@@ -1810,7 +1820,7 @@ exec_cmd(s) char * s; {
     if (!s) return;
     if (!*s) return;
 
-    q = cksplit(1,0,s,NULL,"\\%[]&$+-/=*^_@!{}/<>|.#~'`:;?",7,0,0);
+    q = cksplit(1,0,s,NULL,"\\%[]&$+-/=*^_@!{}/<>|.#~'`:;?",7,0,0,0);
     if (!q) return;
 
     args = q->a_head + 1;
@@ -1841,6 +1851,7 @@ exec_cmd(s) char * s; {
 
 /* Get a pty, scan input lines. */
 /* fc = 0 for interactive access; fc = 1 for running external protocols */
+/* Returns -1 on failure and the PID (a positive number) on success */
 
 static int pty_fc = -1;			/* Global copy of fc */
 
@@ -1852,6 +1863,7 @@ do_pty(fd, cmd, fc) int * fd; char * cmd; int fc; {
 #ifdef HAVE_PTYTRAP
     int x;
 #endif /* HAVE_PTYTRAP */
+    int dummy;
 
     debug(F101,"CKUPTY.C do_pty fc","",fc);
 
@@ -1945,7 +1957,7 @@ do_pty(fd, cmd, fc) int * fd; char * cmd; int fc; {
 #endif /* WANT_UTMP */
             /* Notify our parent we're ready to continue.*/
             debug(F110,"do_pty()","slave synchronizing",0);
-            write(syncpipe[1],"y",1);
+            dummy = write(syncpipe[1],"y",1);
             close(syncpipe[0]);
             close(syncpipe[1]);
 

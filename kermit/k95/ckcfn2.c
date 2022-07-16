@@ -6,10 +6,11 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2011,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+    Last update: 8 May 2022
 */
 /*
  Note -- if you change this file, please amend the version number and date at
@@ -293,7 +294,6 @@ long crctb[16] = { 0L, 010611L, 021422L, 031233L, 043044L,
   Round-trip timer calculations adapted from Tim Kientzle's article,
   "Improving Kermit Performance", Dr Dobb's Journal, February 1996.
 */
-
 
 /*  R T T I N I T  --  Initialize timers at start of transaction  */
 
@@ -1065,7 +1065,8 @@ input() {
 			errpkt((CHAR *)"Too many retries");
 			break;
 		    } else continue;	/* Resend ok, go read another packet */
-		} else if ((rsn == (pktnum + 1) % 64)) { /* NAK for next pkt */
+
+		} else if (rsn == ((pktnum + 1) % 64)) { /* NAK for next pkt */
 		    if (wslots > 1) {
 			debug( F101,"NAK for next packet, windowing","",rsn);
 			x = resend(winlo); /* Resend window-low */
@@ -2870,10 +2871,11 @@ rpack() {
 		}
 		return(j);
 	    }
-	    if (nakstate)		/* j == -1 is a read timeout */
-	      xxscreen(SCR_PT,'T',(long)winlo,"");
-	    else
-	      xxscreen(SCR_PT,'T',(long)pktnum,"");
+	    if (nakstate) {		/* j == -1 is a read timeout */
+                xxscreen(SCR_PT,'T',(long)winlo,"");
+	    } else {
+                xxscreen(SCR_PT,'T',(long)pktnum,"");
+            }
 	    logpkt('r',-1,(CHAR *)"<timeout>",0);
 	    if (flow == 1) ttoc(XON);	/* In case of Xoff blockage. */
 	    return('T');

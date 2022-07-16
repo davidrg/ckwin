@@ -9,10 +9,11 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2013,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+    Last update: 12 May 2022
 */
 
 /*
@@ -330,7 +331,10 @@ static struct keytab shtab[] = {        /* SET HOST command options */
     { "/pty",          SL_PTY,    0 },
 #endif /* NETPTY */
     { "/server",       SL_SRV,    0 },
+#ifdef COMMENT
+/* The code implementing this was never written */
     { "/timeout",      SL_TMO,    CM_ARG },
+#endif  /* COMMENT */
     { "/userid",       SL_UID,    CM_ARG },
     { "/wait",         SL_WAIT,   0 },
     { "", 0, 0 }
@@ -2227,7 +2231,7 @@ setcc(dflt,var) char *dflt; int *var; {
                 return(-9);
             }
         } else {                        /* Something illegal was typed */
-            printf("?Invalid - %s\n", atmbuf);
+            printf("?Not valid here - '%s'\n", atmbuf);
             return(-9);
         }
     }
@@ -3012,8 +3016,9 @@ dopurge() {                             /* Do the PURGE command */
                                minsize,maxsize,0,8,pxlist) < 1) {
             if (listing > 0) {
                 printf(" %s (SKIPPED)\n",namebuf);
-                if (++lines > cmd_rows - 3)
-                  if (!askmore()) goto xpurge; else lines = 0;
+                if (++lines > cmd_rows - 3) {
+                    if (!askmore()) goto xpurge; else lines = 0;
+                }
             }
             continue;
         }
@@ -4422,7 +4427,7 @@ settrm() {
               if ((y = cmcfm()) < 0)    /* Confirm the command */
                   return(y);
 #ifdef OS2
-            if ( isunicode() && x == TX_TRANSP ) {
+            if ( ck_isunicode() && x == TX_TRANSP ) {
                 /* If we are in unicode display mode then transparent
                  * only affects the output direction.  We need to know
                  * the actual remote character set in order to perform
@@ -4565,7 +4570,7 @@ settrm() {
               if ((y = cmcfm()) < 0)    /* Confirm the command */
                   return(y);
 #ifdef OS2
-            if ( isunicode() && x == TX_TRANSP ) {
+            if ( ck_isunicode() && x == TX_TRANSP ) {
                 /* If we are in unicode display mode then transparent
                  * only affects the output direction.  We need to know
                  * the actual remote character set in order to perform
@@ -8792,8 +8797,6 @@ cx_fail(msg, text) int msg; char * text; {
     slrestor();				/* Restore LINE/HOST to known state */
     return(msg ? -9 : (success = 0));	/* Return appropriate code */
 }
-
-#ifdef NETCONN
 /* c x _ n e t  --  Make a network connection */
 
 /*
@@ -8836,6 +8839,7 @@ cx_net(net, protocol, xhost, svc,
 
     int i, n, x, msg;
     int _local = -1;
+    int did_ttopen = 0;
 
     extern char pwbuf[], * g_pswd;
     extern int pwflg, pwcrypt, g_pflg, g_pcpt, nolocal;
@@ -8850,12 +8854,13 @@ cx_net(net, protocol, xhost, svc,
     ckstrncpy(host,xhost,HOSTNAMLEN);	/* Avoid buffer confusion */
 
     debug(F110,"cx_net host",host,0);
-    debug(F111,"cx_net service",svc,SRVBUFSIZ);
+    debug(F111,"cx_net service buffer size",svc,SRVBUFSIZ);
     debug(F101,"cx_net network type","",net);
 
     msg = (gui == 0) && msgflg;		/* Whether to print messages */
 
 #ifndef NODIAL
+#ifndef NONETDIR
     debug(F101,"cx_net nnetdir","",nnetdir);
     x = 0;				/* Look up in network directory */
     if (*host == '=') {			/* If number starts with = sign */
@@ -8872,13 +8877,16 @@ cx_net(net, protocol, xhost, svc,
 	  return(cx_fail(msg,"Network directory lookup error"));
 	debug(F111,"cx_net lunet nhcount",host,nhcount);
     }
+#endif /* NONETDIR */
 #endif /* NODIAL */
 
     /* New connection wanted.  Make a copy of the host name/address... */
 
+    debug(F100,"cx_net A","",0);
     if (clskconnx(1) < 0)		/* Close current Kermit connection */
       return(cx_fail(msg,"Error closing previous connection"));
 
+    debug(F100,"cx_net B","",0);
     if (*host) {			/* They gave a hostname */
 	_local = 1;			/* Network connection always local */
 	if (mdmsav < 0)
@@ -8910,7 +8918,10 @@ cx_net(net, protocol, xhost, svc,
       ckstrncpy(line,host,LINBUFSIZ);
     ckstrncpy(hostname,host,HOSTNAMLEN);
     ckstrncpy(srvbuf,svc,SRVBUFSIZ+1);
+    debug(F110,"cx_net hostname",host,0);
+    debug(F110,"cx_net srvbuf",srvbuf,0);
 
+#ifndef NONETDIR
 #ifndef NODIAL
     if ((nhcount > 1) && msg) {
 	int k;
@@ -8940,10 +8951,13 @@ cx_net(net, protocol, xhost, svc,
     n = 1;
     nhcount = 0;
 #endif /* NODIAL */
+    n = 1;
+#endif /* NONETDIR */
 
     for (i = 0; i < n; i++) {		/* Loop for each entry found */
 	debug(F101,"cx_net loop i","",i);
 #ifndef NODIAL
+#ifndef NONETDIR
 	if (nhcount > 0) {		/* If we found at least one entry... */
 	    ckstrncpy(line,nh_p[i],LINBUFSIZ); /* Copy current entry */
 	    if (lookup(netcmd,nh_p2[i],nnets,&x) > -1) { /* Net type */
@@ -9120,8 +9134,12 @@ cx_net(net, protocol, xhost, svc,
 	    }
 	} else
 #endif /* NODIAL */
+#endif /* NONETDIR */
+
 	{				/* No directory entries found. */
 	    ckstrncpy(line,hostname,LINBUFSIZ); /* Put this back... */
+            debug(F110,"cx_net after loop loop",line,0);
+
 	    /* If the user gave a TCP service */
 	    if (net == NET_TCPB || net == NET_SSH)
 	      if (*srvbuf) {		/* Append it to host name/address */
@@ -9592,6 +9610,8 @@ cx_net(net, protocol, xhost, svc,
 	/* Try to open - network */
 	ckstrncpy(ttname,line,TTNAMLEN);
 	y = ttopen(line, &_local, mdmtyp, 0 );
+        did_ttopen++;
+        debug(F101,"cx_net did_ttopen A","",did_ttopen);
 
 #ifndef NOHTTP
 	/*  If the connection failed and we are using an HTTP Proxy
@@ -9636,6 +9656,7 @@ cx_net(net, protocol, xhost, svc,
 
 		    ckstrncpy(ttname,line,TTNAMLEN);
 		    y = ttopen(line, &_local, mdmtyp, 0);
+                    debug(F101,"cx_net did_ttopen B","",did_ttopen);
 		    memset(pwd,0,sizeof(pwd));
 		    tcp_http_proxy_user = proxy_user;
 		    tcp_http_proxy_pwd = proxy_pwd;
@@ -9760,7 +9781,19 @@ cx_net(net, protocol, xhost, svc,
     } /* for-loop */
     s = line;
 
+    debug(F101,"cx_net after for-loop did_ttopen","",did_ttopen);
+    if (did_ttopen == 0) {
+        debug(F100,"cx_net didn't call ttopen - calling it now","",0);
+        y = ttopen(line, &_local, mdmtyp, 0);
+        debug(F101,"cx_net ttopen return code","",y);
+        debug(F101,"cx_net ttopen _local","",_local);
+        did_ttopen++;
+        ckstrncpy(ttname,line,TTNAMLEN);
+        success = 0;
+        if (y > 0) success = 1;
+    }
     debug(F101,"cx_net post ttopen success","",success);
+
     if (!success) {
         local = dfloc;                  /* Go back to normal */
 #ifndef MAC
@@ -9788,7 +9821,11 @@ cx_net(net, protocol, xhost, svc,
     if ((reliable != SET_OFF || !setreliable)) /* Assume not reliable. */
       reliable = SET_OFF;
 #endif /* NOXFER */
-    if (!network || istncomport())	
+    if (!network 
+#ifdef NETCOMM
+        || istncomport()
+#endif /* NETCOMM */
+        )
       speed = ttgspd();                 /* Get the current speed. */
     debug(F101,"cx_net local","",local);
     if (network) {
@@ -9841,9 +9878,11 @@ cx_net(net, protocol, xhost, svc,
     setflow();                          /* Set appropriate flow control */
 
     haveline = 1;
+#ifdef NETCONN
 #ifdef CKLOGDIAL
     dolognet();
 #endif /* CKLOGDIAL */
+#endif /* NETCONN */
 
 #ifndef NOSPL
     if (local) {
@@ -9904,7 +9943,6 @@ cx_net(net, protocol, xhost, svc,
 #endif /* LOCUS */
     return(success = 1);
 }
-#endif /* NETCONN */
 
 /* c x _ s e r i a l  --  Make a serial connection */
 
@@ -10312,14 +10350,24 @@ setlin(xx, zz, fc)
 #endif /* NETCONN */
 
     autoflow = 1;                       /* Enable automatic flow setting */
+    debug(F101,"setlin xx","",xx);
 
+#ifdef SSHCMD
+    debug(F100,"setlin SSHCMD","",0);
+#endif /* SSHCMD */
     if (xx == XYHOST) {                 /* SET HOST <hostname> */
+        debug(F100,"setlin XYHOST","",0);
 #ifndef NETCONN
-        makestr(&slmsg,"Network connections not supported");
+#ifndef SSHCMD
+        debug(F100,"setlin XXX","",0);
+        makestr(&slmsg,"Network connections not configured");
         printf("?%s\n",slmsg);
         return(-9);
-#else /* NETCONN */
+#endif  /* SSHCMD */
+#endif  /* NETCONN */
+
 #ifndef NOPUSH
+        debug(F101,"setlin mynet","",mynet); /* NET_CMD = 11, NET_PTY = 15 */
         if ((mynet == NET_CMD || mynet == NET_PTY || dossh) && nopush) {
             makestr(&slmsg,"Access to external commands is disabled");
             printf("?Sorry, access to external commands is disabled\n");
@@ -10327,20 +10375,32 @@ setlin(xx, zz, fc)
         }
 #endif /* NOPUSH */
 
+        debug(F101,"setlin dossh abc","",dossh);
 #ifdef SSHCMD
+        debug(F101,"setlin dossh def","",dossh);
         if (dossh) {                    /* SSH connection via pty */
-            int k;
+            int k, q;
+            int have_host = 0;
 	    extern int ttyfd;		/* 2010/03/01 */
             k = ckstrncpy(line, sshcmd ? sshcmd : defsshcmd, LINBUFSIZ);
             debug(F111,"setlin sshcmd 1",line,k);
             if ((x = cmtxt("Optional switches and hostname","",&s,xxstring))<0)
               return(x);
+            debug(F111,"setlin dossh cmtxt",s,1);
+            debug(F110,"setlin dossh ttname",ttname,0);
+            if (!*s) debug(F111,"setlin dossh cmtxt is EMPTY",s,x);
+            q = (int) strlen(s);
+            debug(F111,"setlin dossh IF strlen(s)",s,q);
+            if (q > 0) have_host = 1;
 
             /* 2010-03-30 */
-	    if (!*s && ttyfd < 0 && !ckstrcmp("ssh ",ttname,4,0)) { 
+	    if ((!q && (ttyfd < 0)) && !ckstrcmp("ssh ",ttname,4,0)) { 
 		x = ckstrncpy(line,ttname,LINBUFSIZ);
+                debug(F110,"setlin dossh ttname *s == 0",s,0);
 	    } else {
-		if (!*s) {
+                debug(F111,"setlin dossh ELSE have_host",s,have_host);
+		if (have_host == 0) {
+                    debug(F101,"setlin dossh have_host IS ZERO","",have_host);
 		    printf("?SSH to where?\n");
 		    return(-9);
 		}
@@ -10356,6 +10416,7 @@ setlin(xx, zz, fc)
 		    return(-9);
 		}
 	    }
+            debug(F110,"setlin sshcmd calling cx_net",line,0);
 	    x = cx_net( NET_PTY,                /* network type */
                         0,                      /* protocol (not used) */
                         line,                   /* host */
@@ -10369,6 +10430,7 @@ setlin(xx, zz, fc)
                         zz,                     /* close current? */
                         0);                     /* not gui */
 	    debug(F111,"setlin cx_net",line,x);
+            debug(F101,"setlin cx_net ttyfd","",ttyfd);
 	    return(x);
         }
 #endif /* SSHCMD */
@@ -10386,6 +10448,8 @@ setlin(xx, zz, fc)
 
         confirmed = 0;
         haveswitch = 0;
+
+#ifdef NETCONN
 #ifdef NETFILE
         if (mynet != NET_FILE) {
 #endif /* NETFILE */
@@ -11164,7 +11228,7 @@ setlin(xx, zz, fc)
             makestr(&tmpusrid,NULL);
 	debug(F111,"setlin cx_net",line,x);
 	return(x);
-#endif /* NETCONN */
+#endif  /* NETCONN */
     }
 
 /* Serial tty device, possibly modem, connection... */
@@ -11543,13 +11607,20 @@ z_open(name, flags) char * name; int flags; {
     if (flags & FM_CMD)                 /* Opening pipes not implemented yet */
       return(z_error = FX_NYI);         /* (and not portable either) */
     debug(F101,"z_open nfopnargs","",nfopnargs);
-    if (flags < 0 || flags >= nfopnargs) /* Range check flags */
-      return(z_error = FX_RNG);
-    mode = fopnargs[flags];             /* Get fopen() arg */
-    debug(F111,"z_open fopen args",mode,flags);
-    if (!mode[0])                       /* Check for illegal combinations */
-      return(z_error = FX_BOM);
-    if (!z_inited) {                    /* If file structs not inited */
+
+    if (flags & FM_STDIN) {             /* Read from standard input */
+        mode = "r";
+    } else if (flags & (FM_STDOUT|FM_STDERR)) {
+        mode = "w";
+    } else {                            /* If regular file, not stdin.. */
+        if (flags < 0 || flags >= nfopnargs) /* Range check flags */
+          return(z_error = FX_RNG);
+        mode = fopnargs[flags];         /* Get fopen() arg */
+        debug(F111,"z_open fopen args",mode,flags);
+        if (!mode[0])                   /* Check for illegal combinations */
+          return(z_error = FX_BOM);
+    }
+    if (!z_inited) {                /* If file structs not inited */
         debug(F101,"z_open z_maxchan 1","",z_maxchan);
 #ifdef UNIX
         debug(F101,"z_open ckmaxfiles","",ckmaxfiles);
@@ -11581,14 +11652,20 @@ z_open(name, flags) char * name; int flags; {
 #else
 	/* New economical way, allocate storage for each channel as needed */
 	if (!z_file) {
+            debug(F100,"z_file[] is NULL","",0);
+            debug(F101,"sizeof(struct ckz_file *)","",
+                  sizeof(struct ckz_file *));
 	    z_file = (struct ckz_file **)malloc((z_maxchan + 1) *
 						sizeof(struct ckz_file *));
+            debug(F101,"z_open z_maxchan 4","",z_maxchan);
 	    if (!z_file)
 	      return(z_error = FX_NMF);
 	    for (i = 0; i < z_maxchan; i++)
 	      z_file[i] = NULL;
+            debug(F101,"z_open z_maxchan 5","",z_maxchan);
 	}
 #endif	/* COMMENT */
+        debug(F101,"z_open z_maxchan 6","",z_maxchan);
         z_inited = 1;                   /* Remember we initialized */
     }
     for (n = -1, i = 0; i < z_maxchan; i++) { /* Find a free channel */
@@ -11598,6 +11675,7 @@ z_open(name, flags) char * name; int flags; {
             break;
         }
 #else
+        debug(F101,"z_open find-free-channel loop","",i);
         if (!z_file[i]) {
 	    z_file[i] = (struct ckz_file *) malloc(sizeof(struct ckz_file));
 	    if (!z_file[i])
@@ -11608,13 +11686,49 @@ z_open(name, flags) char * name; int flags; {
 #endif	/* COMMENT */
 
     }
+    debug(F101,"z_open found free channel","",n);
     if (n < 0 || n >= z_maxchan)        /* Any free channels? */
       return(z_error = FX_NMF);         /* No, fail. */
+    debug(F100,"z_open check n ok","",0);
     errno = 0;
-
+    debug(F100,"z_open errno ok","",0);
     z_file[n]->z_flags = 0;		/* In case of failure... */
+    debug(F100,"z_open z_file[n] flags ok","",0);
     z_file[n]->z_fp = NULL;		/* Set file pointer to NULL */
+    debug(F100,"z_open z_file[n] fps ok","",0);
 
+#ifdef UNIX
+    if (flags & FM_STDIN) {             /* Standard input */
+        t = (FILE *)stdin;              /* We just use the ready-made stream */
+        z_nopen++;                      /* Count it. */
+        z_file[n]->z_fp = t;		/* Stash the file pointer */
+        z_file[n]->z_flags = flags;     /* and the flags */
+        z_file[n]->z_nline = 0;		/* Current line number is 0 */
+        ckstrncpy(z_file[n]->z_name,name,CKMAXPATH); /* "filename" */
+        z_error = 0;                    /* No error so far */
+        return(n);                      /* Return the channel number */
+    }
+    if (flags & FM_STDOUT) {            /* Standard output */
+        t = (FILE *)stdout;             /* Same deal */
+        z_nopen++;
+        z_file[n]->z_fp = t;
+        z_file[n]->z_flags = flags;
+        z_file[n]->z_nline = 0;
+        ckstrncpy(z_file[n]->z_name,name,CKMAXPATH);
+        z_error = 0;
+        return(n);
+    }
+    if (flags & FM_STDERR) {            /* Standard error */
+        t = (FILE *)stderr;
+        z_nopen++;
+        z_file[n]->z_fp = t;
+        z_file[n]->z_flags = flags;
+        z_file[n]->z_nline = 0;
+        ckstrncpy(z_file[n]->z_name,name,CKMAXPATH);
+        z_error = 0;
+        return(n);
+    }
+#endif /* UNIX */
     t = fopen(name, mode);              /* Try to open the file. */
     if (!t) {                           /* Failed... */
         debug(F111,"z_open error",name,errno);
@@ -11632,6 +11746,7 @@ z_open(name, flags) char * name; int flags; {
       _setmode(_fileno(t),O_SEQUENTIAL);
 #endif /* O_SEQUENTIAL */
 #endif /* NT */
+
     z_nopen++;                          /* Open, count it. */
     z_file[n]->z_fp = t;		/* Stash the file pointer */
     z_file[n]->z_flags = flags;		/* and the flags */
@@ -11654,7 +11769,8 @@ z_close(channel) int channel; {         /* Close file on given channel */
     if (!(t = z_file[channel]->z_fp))    /* Channel wasn't open? */
       return(z_error = FX_NOP);
     errno = 0;                          /* Set errno 0 to get a good reading */
-    x = fclose(t);                      /* Try to close */
+    if (!(z_file[channel]->z_flags & FM_STDM)) /* If not stdin/out/err... */
+      x = fclose(t);                    /* Try to close */
     if (x == EOF)                       /* On failure */
       return(z_error = FX_SYS);         /* indicate system error. */
     z_nopen--;                          /* Closed OK, decrement open count */
@@ -12198,6 +12314,11 @@ static struct keytab fcswtab[] = {      /* OPEN modes */
     { "/command",   FM_CMD,  0 },       /* Not implemented */
 #endif /* COMMENT */
     { "/read",      FM_REA,  0 },
+#ifdef UNIX                             /* Could be expanded to VMS etc.. */
+    { "/stderr",    FM_STDERR,0 },
+    { "/stdin",     FM_STDIN,0 },
+    { "/stdout",    FM_STDOUT,0 },
+#endif  /* UNIX */
     { "/write",     FM_WRI,  0 }
 };
 static int nfcswtab = (sizeof (fcswtab) / sizeof (struct keytab));
@@ -12352,13 +12473,24 @@ dofile(op) int op; {                    /* Do the FILE command */
                     return(-9);
                 }
 #ifdef COMMENT
-                /* Uncomment if we add any switches here that take args */
+                /* Uncomment if we add any FOPEN switches that take args */
                 if (!getval && (cmgkwflgs() & CM_ARG)) {
                     printf("?This switch requires an argument\n");
                     return(-9);         /* (none do...) */
                 }
 #endif /* COMMENT */
+                debug(F101,"filmode A","",filmode);
                 filmode |= cmresult.nresult; /* OR in the file mode */
+                debug(F101,"filmode B","",filmode);
+                debug(F101,"filmode & (FM_REA|FM_STDIN)","",
+                      filmode & (FM_REA|FM_STDIN));
+                debug(F101,"filmode & (FM_WRI|FM_STDOUT|FM_STDERR)","",
+                      filmode & (FM_WRI|FM_STDOUT|FM_STDERR));
+                if ((filmode & (FM_REA|FM_STDIN)) &&
+                    (filmode & (FM_WRI|FM_STDOUT|FM_STDERR))) {
+                    printf("?Conflicting file modes\n");
+                    return(-9);
+                }
             } else
               return(-2);
         }
@@ -12385,6 +12517,26 @@ dofile(op) int op; {                    /* Do the FILE command */
         if (!(filmode & FM_RWA))        /* If no access mode specified */
           filmode |= FM_REA;            /* default to /READ. */
 
+#ifdef UNIX
+        if (filmode & FM_STDIN) {       /* If STDIN specified */
+            filmode |= FM_REA;          /* it implies /READ */
+            /* We don't need to parse anything further */
+            s = "(stdin)";
+            goto xdofile;               /* Skip around the following */
+        }
+        if (filmode & FM_STDOUT) {      /* If STDIN specified */
+            filmode |= FM_WRI;          /* it implies /WRITE */
+            /* We don't need to parse anything further */
+            s = "(stdout)";
+            goto xdofile;               /* Skip around the following */
+        }
+        if (filmode & FM_STDIN) {       /* If STDIN specified */
+            filmode |= FM_WRI;          /* it implies /WRITE */
+            /* We don't need to parse anything further */
+            s = "(stderr)";
+            goto xdofile;               /* Skip around the following */
+        }
+#endif /* UNIX */
         y = 0;                          /* Now parse the filename */
         if ((filmode & FM_RWA) == FM_WRI) {
 	    x = cmofi("Name of new file","",&s,xxstring);
@@ -12414,6 +12566,8 @@ dofile(op) int op; {                    /* Do the FILE command */
             }
 #endif /* VMS */
         }
+
+      xdofile:
         ckstrncpy(zfilnam,s,CKMAXPATH); /* Is OK - make safe copy */
         if ((x = cmcfm()) < 0)          /* Get confirmation of command */
           return(x);
@@ -14346,7 +14500,8 @@ sho_auth(cx) int cx; {
             if (ssl_con == NULL) {
                 SSL_library_init();
                 ssl_ctx = (SSL_CTX *)
-                  SSL_CTX_new((SSL_METHOD *)TLSv1_method());
+/* old...         SSL_CTX_new((SSL_METHOD *)TLSv1_method());  new below: */
+                  SSL_CTX_new((SSL_METHOD *)SSLv23_method());
                 if (ssl_ctx != NULL)
                   ssl_con= (SSL *) SSL_new(ssl_ctx);
             }

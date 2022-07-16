@@ -1,5 +1,5 @@
 char *protv =                                                     /* -*-C-*- */
-"C-Kermit Protocol Module 9.0.164, 23 February 2014";
+"C-Kermit Protocol Module 9.0.165, 8 May 2022";
 
 int kactive = 0;			/* Kermit protocol is active */
 
@@ -10,7 +10,7 @@ int kactive = 0;			/* Kermit protocol is active */
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2014
+  Copyright (C) 1985, 2022
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -29,6 +29,10 @@ int kactive = 0;			/* Kermit protocol is active */
 #endif /* NT */
 #include "ckocon.h"
 #endif /* OS2 */
+
+#ifdef CK_AUTHENTICATION
+#include "ckuath.h"                     /* fdc 2021-12-17 */
+#endif /* CK_AUTHENTICATION */
 
 /*
  Note -- This file may also be preprocessed by the UNIX Lex program, but
@@ -1464,7 +1468,7 @@ _PROTOTYP(int sndwho,(char *));
 	    int len = 0, ok = 0;
 /*
   fdc, March 2013: If the file is being received to Kermit's current 
-  directory, don't send the current-directroy path.
+  directory, don't send the current-directory path.
 */
 	    p = zgtdir();		/* Get current directory */
 	    if (p) if (*p) {		/* If we got one... */
@@ -2194,7 +2198,7 @@ rcv_firstdata() {
 		n = (int)strlen(MAILCMD) +    /* Mail command */
 		  (int)strlen(s) +	      /* address */
 		  (int)strlen(ofilnam) + 32;  /* subject */
-		if (tmp = (char *)malloc(n)) {
+		if ((tmp = (char *)malloc(n))) {
 		    ckmakxmsg(tmp,n,
 			      MAILCMD," -s \"",ofilnam,"\" ",s,
 			      NULL,NULL,NULL,NULL,NULL,NULL,NULL);
@@ -2208,7 +2212,7 @@ rcv_firstdata() {
 		int n;
 		extern char *PRINTCMD;
 		n = (int)strlen(PRINTCMD) + (int)strlen(iattr.disp.val+1) + 4;
-		if (tmp = (char *)malloc(n)) {
+		if ((tmp = (char *)malloc(n))) {
 		    sprintf(tmp,	/* safe (prechecked) */
 			    "%s %s", PRINTCMD, iattr.disp.val + 1);
 		    x = openc(ZOFILE,(char *)tmp);
@@ -2311,17 +2315,19 @@ rcv_shortreply() {
 		RESUME;
 		return(-1);
 	    } else {
-		if (rdatap)		/* If we had data */
-		  if (*rdatap)		/* add a line terminator */
-		    if (remfile) {	/* to file */
-			zsoutl(ZOFILE,"");
-		    } else {		/* or to screen. */
+		if (rdatap) {		/* If we had data */
+                    if (*rdatap) {      /* add a line terminator */
+                        if (remfile) {  /* to file */
+                            zsoutl(ZOFILE,"");
+                        } else {        /* or to screen. */
 #ifndef NOICP
-			if (!query || !xcmdsrc)
+                            if (!query || !xcmdsrc)
 #endif /* NOICP */
-			  if (!(quiet && rcdactive))
-			    conoll("");
-		    }
+                              if (!(quiet && rcdactive))
+                                conoll("");
+                        }
+                    }
+                }
 		if (bye_active && network) { /* I sent BYE or REMOTE LOGOUT */
 		    msleep(500);	/* command and got the ACK... */
 		    bye_active = 0;
@@ -2778,7 +2784,7 @@ rcv_s_pkt() {
 #ifdef CK_TMPDIR
 	if (dldir && !f_tmpdir) {	/* If they have a download directory */
 	    debug(F110,"receive download dir",dldir,0);
-	    if (s = zgtdir()) {		/* Get current directory */
+	    if ((s = zgtdir())) {		/* Get current directory */
 		debug(F110,"receive current dir",s,0);
 		if (zchdir(dldir)) {	/* Change to download directory */
 		    debug(F100,"receive zchdir ok","",0);
@@ -2983,7 +2989,7 @@ proto() {
 #endif /* IKS_OPTION */
 #ifdef CK_ENCRYPTION
         if (tn_no_encrypt_xfer && !(sstelnet || inserver)) {
-            ck_tn_enc_stop();
+            ck_tn_enc_stop(); /* fdc 2021-12-17 */
         }
 #endif /* CK_ENCRYPTION */
     }
@@ -3001,7 +3007,7 @@ proto() {
 #ifdef TNCODE
 #ifdef CK_ENCRYPTION
         if (tn_no_encrypt_xfer && !(sstelnet || inserver)) {
-            ck_tn_enc_start();
+            ck_tn_enc_start(); /* fdc 2021-12-17 */
         }
 #endif /* CK_ENCRYPTION */
 #ifdef IKS_OPTION
@@ -3272,7 +3278,7 @@ _PROTOTYP( int pxyz, (int) );
 #ifdef CK_TMPDIR
 	if (sstate == 'v') {		/* If receiving and... */
 	    if (dldir && !f_tmpdir) {	/* if they have a download directory */
-		if (s = zgtdir()) {	/* Get current directory */
+                if ((s = zgtdir())) {   /* Get current directory */
 		    if (zchdir(dldir)) { /* Change to download directory */
 			ckstrncpy(savdir,s,TMPDIRLEN);
 			f_tmpdir = 1;	/* Remember that we did this */

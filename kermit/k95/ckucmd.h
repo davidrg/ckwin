@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>
   Columbia University Kermit Project, New York City.
 
-  Copyright (C) 1985, 2009,
+  Copyright (C) 1985, 2016,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -98,7 +98,7 @@ int vms_getchar(void);
 #define HLPCW   19			/* Width of ?-help column */
 #define HLPBL  100			/* Help string buffer length */
 #ifdef BIGBUFOK
-#define ATMBL 10238			/* Command atom buffer length*/
+#define ATMBL 10238			/* Command atom buffer length */
 #else
 #ifdef NOSPL
 #define ATMBL  256

@@ -98,7 +98,7 @@ _PROTOTYP( VOID rset, (char *, char *, int, int) );
 _PROTOTYP( char * ulongtohex, (unsigned long, int) );
 _PROTOTYP( long hextoulong, (char *, int) );
 _PROTOTYP( struct stringarray * cksplit, (int,int,
-                                          char *,char *,char *,int,int,int) );
+   char *,char *,char *,int,int,int,int) );
 
 _PROTOTYP( int ckhexbytetoint, (char *) );
 #endif /* CKCLIB_H */

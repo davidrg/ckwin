@@ -1,4 +1,4 @@
-char *cktelv = "Telnet support, 9.0.277, 12 Apr 2013";
+char *cktelv = "Telnet support, 9.0.280, 3 Jun 2022";
 #define CKCTEL_C
 
 int sstelnet = 0;                       /* Do server-side Telnet negotiation */
@@ -18,10 +18,11 @@ int sstelnet = 0;                       /* Do server-side Telnet negotiation */
     Telnet KERMIT support by Jeffrey Altman
     Other contributions as indicated in the code.
 
-  Copyright (C) 1985, 2013,
+  Copyright (C) 1985, 2021,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+    Latest update: 27 Jan 2022
 */
 
 /*
@@ -31,9 +32,19 @@ int sstelnet = 0;                       /* Do server-side Telnet negotiation */
   logical operators, or other preprocessor features in this module.  Also,
   don't use any ANSI C constructs except within #ifdef CK_ANSIC..#endif.
 */
+#ifndef NONET
+#ifndef NOTCPIP
 
 #include "ckcsym.h"
 #include "ckcdeb.h"
+
+#ifdef TIMEH
+#include <time.h>                       /* fdc 2012-12-17 */
+#else
+#ifdef SYSTIMH
+#include <sys/time.h>
+#endif  /* SYSTIMH */
+#endif  /* TIMEH */
 
 #ifdef TNCODE
 #include "ckcker.h"
@@ -2164,8 +2175,8 @@ fwdx_setup_xauth(unsigned char *sp, int len)
     memcpy(xauth.data, sp + 4 + xauth.name_length, xauth.data_length);
 
     /* Setup to always have a local .Xauthority. */
-    fwdx_xauthfile = malloc(MAXPATHLEN+1);
-    snprintf(fwdx_xauthfile, MAXPATHLEN, "/tmp/XauthXXXXXX");
+    fwdx_xauthfile = malloc(CKMAXPATH+1);
+    snprintf(fwdx_xauthfile, CKMAXPATH, "/tmp/XauthXXXXXX");
     if ((xauthfd = mkstemp(fwdx_xauthfile)) != -1)
         /* we change file ownership later, when we know who is to be owner! */
         close(xauthfd);
@@ -2241,6 +2252,9 @@ iks_wait(sb,flushok) int sb; int flushok;
   tn_wait_flg is set here and never restored.  If user SETs TELNET WAIT OFF,
   it is precisely to avoid such situations, so it should be respected.
   Fixed by testing tn_wait_flg in the following line.  -fdc, 2013-04-09.
+
+    printf("*** TN_WAIT_FLG=*** TELOPT_U(TELOPT_KERMIT)=0%d\n",tn_wait_flg);
+    printf("*** TELOPT_U(TELOPT_KERMIT)=%d\n",TELOPT_U(TELOPT_KERMIT));
 */
     if (tn_wait_flg && TELOPT_U(TELOPT_KERMIT)) {
         switch (sb) {
@@ -4658,10 +4672,10 @@ tn_xdoop(z, echo, fn) CHAR z; int echo; int (*fn)();
 #ifdef CK_ENVIRONMENT
               case TELOPT_NEWENVIRON:   /* SB NEW-ENVIRON SEND */
                 {
-                  char request[6];      /* request it */
-                  sprintf(request,"%cUSER",TEL_ENV_VAR);        /* safe */
+                  CHAR request[6];      /* request it */
+                  sprintf(request,"%cUSER",TEL_ENV_VAR); /* safe */
                   tn_ssbopt(TELOPT_NEWENVIRON,TELQUAL_SEND,request,
-                            strlen(request));
+                            strlen((char *)request)); /* SMS 2022-06-03 */
                   TELOPT_UNANSWERED_SB(TELOPT_NEWENVIRON)=1;
                 }
                 break;
@@ -9049,3 +9063,6 @@ tnsndb(wait) long wait;
 }
 #endif /* TN_COMPORT */
 #endif /* TNCODE */
+
+#endif /* NOTCPIP */
+#endif /* NONET */

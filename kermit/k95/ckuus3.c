@@ -13,10 +13,11 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2014,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+    Last update: 31 May 2022
 */
 
 /*  SET command (but much material has been split off into ckuus7.c). */
@@ -351,7 +352,7 @@ extern int slogts;                      /* Session-log timestamps on/off */
 extern int slognul;			/* Lines null-terminated */
 #endif /* NOLOCAL */
 
-char * tempdir = NULL;
+char * tempdir = NULL;                  /* Temporary directory */
 
 #ifdef VMS
 int vms_msgs = 1;                       /* SET MESSAGES */
@@ -514,6 +515,9 @@ struct keytab spdtab[] = {
 #ifdef BPS_150
   "150",     15,  0,
 #endif /* BPS_150 */
+#ifdef BPS_1500K
+  "1500000", 150000,  0,
+#endif /* BPS_115K */
 #ifdef BPS_1800
   "1800",     180,  0,
 #endif /* BPS_150 */
@@ -3334,6 +3338,8 @@ static int sexpmaxdep = 1000;           /* Maximum depth */
 #define SX_DEC 41
 #define SX_QUO 42
 #define SX_STR 43
+#define SX_ECH 44
+#define SX_UNQ 45
 
 /* Operator flags */
 
@@ -3392,8 +3398,9 @@ static struct keytab sexpops[] = {      /* Built-in operators */
     "||",      SX_LOR, 0,
     "&&",      SX_AND, 0,
 
-    "quote",   SX_QUO, SXF_ONE,
+    "quote",   SX_QUO, SXF_ONE,         /* String operators */
     "string",  SX_STR, SXF_ONE,
+    "unquote", SX_UNQ, SXF_ONE,
 
     "eval",    SX_EVA, 0,               /* Assorted commands */
     "abs",     SX_ABS, SXF_ONE,
@@ -3402,6 +3409,7 @@ static struct keytab sexpops[] = {      /* Built-in operators */
     "ceiling", SX_CEI, SXF_ONE|SXF_FLO,
     "floor",   SX_FLR, SXF_ONE|SXF_FLO,
     "float",   SX_FLO, SXF_ONE|SXF_FLO,
+    "echo",    SX_ECH, 0,
 
 #ifdef FNFLOAT
     "sqrt",    SX_SQR, SXF_ONE|SXF_FLO, /* Floating point functions */
@@ -3588,7 +3596,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
         }
     } else {
 	nosplit = 0;
-        q = cksplit(1,SEXPMAX,s,NULL,"\\%[]&$+-/=*^_@!{}/<>|.#~'`:;?",8,39,0);
+       q = cksplit(1,SEXPMAX,s,NULL,"\\%[]&$+-/=*^_@!{}/<>|.#~'`:;?",8,39,0,0);
         if (!q)
           goto xdosexp;
         n = q->a_size;                  /* Number of items */
@@ -3604,6 +3612,17 @@ dosexp(s) char *s; {                    /* s = S-Expression */
             s2 = dosexp(s);
             goto xdosexp;
         }
+        if (n == 1 && s[0] == '\047') { /* One but it's a string constant */
+            int x = (int) strlen(s);
+            s2 = s;
+            if (s2[1] == '(' && s2[x-1] == ')') { /* '(string) */
+                s2[x-1] = NUL;
+                s2 += 2;
+            }
+            goto xdosexp;
+        }
+        /* More than one */
+
         p2 = q->a_head;                 /* Point to result array. */
         for (i = 1; i <= n; i++) {      /* We must copy it because */
             p[i] = NULL;                /* recursive calls to dosexp() */
@@ -3612,6 +3631,14 @@ dosexp(s) char *s; {                    /* s = S-Expression */
         }
         if (s[0] == '(') {              /* Operator is an S-Expression */
             s2 = dosexp(p[1]);          /* Replace it by its value */
+            if (s2[0] == '\047') {      /* LISP string literal */
+                int x = (int) strlen(s2);
+                if (s2[1] == '(' && s2[x-1] == ')') { /* '(string) */
+                    s2[x-1] = NUL;
+                    s2 += 2;
+                    printf("XXX s2.2=[%s]\n",s2);
+                }
+            }
             makestr(&(p[1]),s2);
         }
         mustfree++;                     /* Remember to free it */
@@ -3793,7 +3820,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
                         goto xdosexp;
                     }
                     macro++;            /* Not an S-Expression */
-                } else {                /* Not found in macro table */
+                } else {
                     printf("?Not defined - \"%s\"\n", p[1]);
                     sexprc++;
                     goto xdosexp;
@@ -3883,7 +3910,6 @@ dosexp(s) char *s; {                    /* s = S-Expression */
 		if (!*q1) q1 = "0";
 		ckstrncpy(buf2,q1,32);
 		q1 = buf2;
-
 		r = ckround(atof(q0),(int)(atof(q1)),sxroundbuf,31);
 		s2 = sxroundbuf;
 		sexprc = 0;
@@ -4069,17 +4095,44 @@ dosexp(s) char *s; {                    /* s = S-Expression */
             }
             goto xdosexp;
         } else if (x == SX_QUO) {
-#ifndef COMMENT
-            int xx;
+            int k, xx;
             xx = strlen(p[2]);
             p[3] = (char *)malloc(xx+4);
             s2 = p[3];
             ckmakmsg(p[3],xx+4,"'(",p[2],")",NULL);
             n++;
-#else
-            s2 = p[2];
-#endif /* COMMENT */
             goto xdosexp;
+        } else if (x == SX_UNQ) {       /* UNQUOTE */
+            int k, xx = 0;
+            s2 = p[2];
+            if (!s2) s2 = "";
+            xx = strlen(s2);
+            if (xx == 0)                /* Null or empty arg */
+              goto xdosexp;
+
+            /* Case 0 - number */
+            if (isfloat(s2,0))
+              goto xdosexp;
+
+            /* Case 2 - S-expression that evaluates to a quoted string */
+            if (s2[0] == '(' && s2[xx-1] == ')') {
+                s2 = dosexp(s2);
+            } else if (s2[0] != '\047') {
+            /* Case 3 - Variable */
+                if ((k = mxlook(mactab,p[2],nmac)) >= 0) {
+                    s2 = mactab[k].mval;
+                } else {
+                    s2 = "";
+                }
+            }
+            /* If result is a quoted string, unquote it */
+            xx = strlen(s2);
+            if (s2[0] == '\047' && s2[1] == '(' && s2[xx-1] == ')') {
+                s2[xx-1] = NUL;
+                s2 += 2;
+            }
+            goto xdosexp;
+
         } else if (x == SX_STR) {
             int xx;
             s2 = dosexp(p[2]);
@@ -4139,12 +4192,22 @@ dosexp(s) char *s; {                    /* s = S-Expression */
               continue;
         }
 #else
-        if (*s2 != '\047') {            /* Is it quoted? */
-            s2 = dosexp(p[i+1]);        /* No, evaluate it */
-            if (sexprc) goto xdosexp;
+        if (*s2 != '\047') {            /* Not quoted */
+            if (x == SX_ECH && (k = mxlook(mactab,s2,nmac)) > -1) {
+                s2 = mactab[k].mval;
+            } else {
+              s2 = dosexp(s2);      /* No, evaluate it */
+            }
+            if (sexprc && x != SX_ECH)
+                goto xdosexp;
             if (!s2) s2 = "";
             if (!macro && x == SX_EVA)
               continue;
+            if (x == SX_ECH) {          /* ECHO */
+                printf("%s ",s2);
+                if (i == n-1) printf("\n");
+                continue;
+            }
         }
         if (*s2 == '\047') {            /* Is result quoted? */
             debug(F110,sexpdebug("'B"),s2,0);
@@ -4161,6 +4224,11 @@ dosexp(s) char *s; {                    /* s = S-Expression */
                 }
             }
             debug(F110,sexpdebug("'C"),s2,0);
+            if (x == SX_ECH) {          /* ECHO */
+                printf("%s ",s2);
+                if (i == n-1) printf("\n");
+                continue;
+            }
         }
 #endif /* COMMENT */
         if (macro) {
@@ -4625,8 +4693,11 @@ dosexp(s) char *s; {                    /* s = S-Expression */
 
     if (!s2) s2 = "";
     debug(F111,"xdosexp s2",s2,sexprc);
-    if (!sexprc && *s2) {		/* Have a result */
-        char * sx;
+    if (x == SX_ECH) s2 = "";
+    debug(F111,"xdosexp s2 ECHO",s2,sexprc);
+
+    if (!sexprc /* && *s2 */) {	    /* Have a result */
+        char * sx;                  /* Note -- do this even if result empty */
         char * q2 = s2; int xx = 0;
         if (*s2) {
             while (*q2++) xx++;         /* Get length */
@@ -4662,6 +4733,7 @@ dosexp(s) char *s; {                    /* s = S-Expression */
             }
         }
     }
+  xxdosexp:
     if (line)                           /* If macro arg buffer allocated */
       free(line);                       /* free it. */
     if (mustfree) {                     /* And free local copy of split list */
@@ -6088,75 +6160,75 @@ shomodem() {
         printf(" %c Dial-mode-string:     ", dialmstr ? ' ' : '*' );
         shods(dialmstr ? dialmstr : p->dmode_str);
         n = local ? 19 : 20;
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         printf(" %c Dial-mode-prompt:     ", dialmprmt ? ' ' : '*' );
         shods(dialmprmt ? dialmprmt : p->dmode_prompt);
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         printf(" %c Dial-command:         ", dialcmd ? ' ' : '*' );
         shods(dialcmd ? dialcmd : p->dial_str);
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         printf(" %c Compression on:       ", dialdcon ? ' ' : '*' );
         if (!dialdcon)
           debug(F110,"dialdcon","(null)",0);
         else
           debug(F110,"dialdcon",dialdcon,0);
         shods(dialdcon ? dialdcon : p->dc_on_str);
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         printf(" %c Compression off:      ", dialdcoff ? ' ' : '*' );
         shods(dialdcoff ? dialdcoff : p->dc_off_str);
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         printf(" %c Error-correction on:  ", dialecon ? ' ' : '*' );
         shods(dialecon ? dialecon : p->ec_on_str);
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         printf(" %c Error-correction off: ", dialecoff ? ' ' : '*' );
         shods(dialecoff ? dialecoff : p->ec_off_str);
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         printf(" %c Autoanswer on:        ", dialaaon ? ' ' : '*' );
         shods(dialaaon ? dialaaon : p->aa_on_str);
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         printf(" %c Autoanswer off:       ", dialaaoff ? ' ' : '*' );
         shods(dialaaoff ? dialaaoff : p->aa_off_str);
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 
         printf(" %c Speaker on:           ", dialspon ? ' ' : '*' );
         shods(dialspon ? dialspon : p->sp_on_str);
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         printf(" %c Speaker off:          ", dialspoff ? ' ' : '*' );
         shods(dialspoff ? dialspoff : p->sp_off_str);
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         printf(" %c Volume low:           ", dialvol1 ? ' ' : '*' );
         shods(dialvol1 ? dialvol1 : p->vol1_str);
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         printf(" %c Volume medium:        ", dialvol2 ? ' ' : '*' );
         shods(dialvol2 ? dialvol2 : p->vol2_str);
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         printf(" %c Volume high:          ", dialvol3 ? ' ' : '*' );
         shods(dialvol3 ? dialvol3 : p->vol3_str);
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 
         printf(" %c Hangup-command:       ", dialhcmd ? ' ' : '*' );
         shods(dialhcmd ? dialhcmd : p->hup_str);
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         printf(" %c Hardware-flow:        ", dialhwfc ? ' ' : '*' );
         shods(dialhwfc ? dialhwfc : p->hwfc_str);
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         printf(" %c Software-flow:        ", dialswfc ? ' ' : '*' );
         shods(dialswfc ? dialswfc : p->swfc_str);
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         printf(" %c No-flow-control:      ", dialnofc ? ' ' : '*' );
         shods(dialnofc ? dialnofc : p->nofc_str);
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         printf(" %c Pulse:                ", dialpulse ? ' ' : '*');
         shods(dialpulse ? dialpulse : p->pulse);
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         printf(" %c Tone:                 ", dialtone ? ' ' : '*');
         shods(dialtone ? dialtone : p->tone);
 
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         printf(" %c Ignore-dialtone:      ", dialx3 ? ' ' : '*');
         shods(dialx3 ? dialx3 : p->ignoredt);
 
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
         printf(" %c Predial-init:         ", dialini2 ? ' ' : '*');
         shods(dialini2 ? dialini2 : p->ini2);
 
@@ -9020,6 +9092,7 @@ case XYPAD:                             /* SET PAD ... */
 #endif /* NOSPL */
 
 #ifdef NETCONN
+#ifndef NONETDIR
       case XYNET: {                     /* SET NETWORK */
 
           struct FDB k1, k2;
@@ -9306,6 +9379,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
               return(success = 1);
           }
       }
+#endif  /* NONETDIR */
 
 #ifndef NOTCPOPTS
 #ifdef TCPSOCKET
@@ -10331,7 +10405,7 @@ case XYCARR:                            /* CARRIER-WATCH */
                       apcactive == APC_REMOTE && !(apcstatus & APC_UNCH))
                     return(success = 0);
 #endif /* CK_APC */
-                  ck_tn_enc_start();
+                  ck_tn_enc_start(); /* fdc 2021-12-17 */
                   break;
                 case TN_EN_STOP:
                   if ((z = cmcfm()) < 0)
@@ -10342,7 +10416,7 @@ case XYCARR:                            /* CARRIER-WATCH */
                       apcactive == APC_REMOTE && !(apcstatus & APC_UNCH))
                     return(success = 0);
 #endif /* CK_APC */
-                  ck_tn_enc_stop();
+                  ck_tn_enc_stop(); /* fdc 2021-12-17 */
                   break;
                 default:
                   if ((z = cmcfm()) < 0)
@@ -12104,8 +12178,24 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
           s = "";
         else if (x < 0)
           return(x);
+        ckstrncpy(tmpbuf,s,TMPBUFSIZ);
         if ((x = cmcfm()) < 0) return(x);
-        makestr(&tempdir,s);
+#ifdef UNIX
+        if (tmpbuf[0]) {
+            extern int zchkod;
+            char tmpname[CKMAXPATH+1];
+            char * p = tmpname;
+            int x;
+            zchkod = 1;                 /* Hack for asking zchko() if */
+            x = zchko(tmpbuf);          /* a directory is writeable */
+            zchkod = 0;
+            if (x < 0) printf("WARNING: %s does not appear to be writable\n");
+            zfnqfp(tmpbuf,CKMAXPATH,p); /* Get and store full pathname */
+            makestr(&tempdir,tmpname);
+        }
+#else  /* No API for getting full pathname in other OS's */
+        makestr(&tempdir,tmpbuf);
+#endif /* UNIX */
         return(tempdir ? 1 : 0);
 
 #ifndef NOXFER
@@ -13053,7 +13143,9 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
                       if (ssl_con == NULL) {
                           SSL_library_init();
                           ssl_ctx = (SSL_CTX *)
-                            SSL_CTX_new((SSL_METHOD *)TLSv1_method());
+/* Changed in 9.0.305 Alpha.03 from NetBSD 'rhialto' */
+/* from: SSL_CTX_new((SSL_METHOD *)TLSv1_method()); to:...*/
+                            SSL_CTX_new((SSL_METHOD *)SSLv23_method());
                           if (ssl_ctx != NULL)
                             ssl_con= (SSL *) SSL_new(ssl_ctx);
                       }
