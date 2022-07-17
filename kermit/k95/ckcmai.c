@@ -2679,12 +2679,12 @@ VOID
 makever() {                             /* Make version string from pieces */
     int x, y;
     char * s;
-#ifndef OS2
+/*#ifndef OS2*/
 #ifndef MAC
     ck_s_xver = ck_s_ver;               /* Fill in C-Kermit version number */
     ck_l_xver = ck_l_ver;               /* for UNIX, VMS, etc. */
 #endif /* MAC */
-#endif /* OS2 */
+/*#endif*/ /* OS2 */
     x = strlen(ck_s_name);
     y = strlen(ck_s_xver);
     if (y + x + 1 < CKVERLEN) {
