@@ -527,7 +527,7 @@ int KAppWin::readManual(void)
     /* before starting the manual.  Otherwise, Netscape may   */
     /* be unable to find the referential links.               */
 
-    ckmakmsg(manpath,512, exedir, "DOCS\\MANUAL\\KERMIT95.HTM", NULL, NULL);
+    ckmakmsg(manpath,512, exedir, "DOCS\\MANUAL\\CKWIN.HTM", NULL, NULL);
     for ( i=strlen(manpath); i > 0 && manpath[i] != '\\'; i-- )
         if (manpath[i] == '/')
             manpath[i] = '\\';

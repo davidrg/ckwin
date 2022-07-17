@@ -311,16 +311,16 @@ BEGIN
     BEGIN
         MENUITEM "Context",                    ID_ACTION_HELP
         MENUITEM SEPARATOR
-        MENUITEM "Kermit 95 Manual",           ID_HELP_K95MANUAL
+        MENUITEM "Manual",           ID_HELP_K95MANUAL
         MENUITEM SEPARATOR
         POPUP "Via the Web"
         BEGIN
                 MENUITEM "The Kermit Project"  ID_WEB_KERMIT
-                MENUITEM "The Kermit 95 Website" ID_WEB_K95
-                MENUITEM "Kermit 95 News"      ID_WEB_NEWS
-                MENUITEM "Kermit 95 Patches"   ID_WEB_PATCH
-                MENUITEM "Kermit 95 Support"   ID_WEB_SUPPORT
-                MENUITEM "Kermit 95 Technical FAQ" ID_WEB_FAQ
+                MENUITEM "C-Kermit for Windows Website" ID_WEB_K95
+                MENUITEM "News"      ID_WEB_NEWS
+//                MENUITEM "Kermit 95 Patches"   ID_WEB_PATCH
+                MENUITEM "Technical Support"   ID_WEB_SUPPORT
+                MENUITEM "FAQ" ID_WEB_FAQ
         END
         MENUITEM SEPARATOR
         MENUITEM "About",                      ID_HELP_ABOUT
@@ -418,16 +418,16 @@ BEGIN
     BEGIN
         MENUITEM "Context",                    ID_ACTION_HELP
         MENUITEM SEPARATOR
-        MENUITEM "Kermit 95 Manual",           ID_HELP_K95MANUAL
+        MENUITEM "Manual",           ID_HELP_K95MANUAL
         MENUITEM SEPARATOR
         POPUP "Via the Web"
         BEGIN
                 MENUITEM "The Kermit Project"  ID_WEB_KERMIT
-                MENUITEM "The Kermit 95 Website" ID_WEB_K95
-                MENUITEM "Kermit 95 News"      ID_WEB_NEWS
-                MENUITEM "Kermit 95 Patches"   ID_WEB_PATCH
-                MENUITEM "Kermit 95 Support"   ID_WEB_SUPPORT
-                MENUITEM "Kermit 95 Technical FAQ" ID_WEB_FAQ
+                MENUITEM "C-Kermit for Windows Website" ID_WEB_K95
+                MENUITEM "News"      ID_WEB_NEWS
+//                MENUITEM "Kermit 95 Patches"   ID_WEB_PATCH
+                MENUITEM "Technical Support"   ID_WEB_SUPPORT
+                MENUITEM "FAQ" ID_WEB_FAQ
         END
         MENUITEM SEPARATOR
         MENUITEM "About",                      ID_HELP_ABOUT
