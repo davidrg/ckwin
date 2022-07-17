@@ -242,14 +242,14 @@ char * ikprompt = "IKSD>";
 #ifdef COMMENT
 char * ckprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] K-95> ";
 #else
-char * ckprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] C-Kermit> ";
+char * ckprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] CKW> ";
 #endif /* COMMENT */
 char * ikprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] IKSD> ";
 #else  /* NT */
 #ifdef COMMENT
 char * ckprompt = "[\\freplace(\\v(dir),/,\\\\)] K-95> ";
 #else
-char * ckprompt = "[\\freplace(\\v(dir),/,\\\\)] C-Kermit> ";
+char * ckprompt = "[\\freplace(\\v(dir),/,\\\\)] CKW> ";
 #endif /* COMMENT */
 char * ikprompt = "[\\freplace(\\v(dir),/,\\\\)] IKSD> ";
 #endif /* NT */
