@@ -2093,7 +2093,7 @@ getncm(s,n) char *s; int n; {
         popclvl();                      /* pop command level. */
         return(-1);
     } else {                            /* otherwise, tack CR onto end */
-        *s++ = CR;
+        *s++ = CK_CR;
         *s = '\0';
         /* debug(F110,"getncm OK",s,0); */
         if (mecho && pflag)             /* If MACRO ECHO ON, echo the cmd */
@@ -2262,7 +2262,7 @@ getnct(s,n,f,flag) char *s; int n; FILE *f; int flag; {
 
         c = lp2[len];                   /* Value of line terminator */
         /* debug(F101,"getnct terminator","",c); */
-        if (c < LF || c > CR) {         /* It's not a terminator */
+        if (c < LF || c > CK_CR) {         /* It's not a terminator */
             /* debug(F111,"getnct bad line",lp2,c); */
             if (feof(f) && len > 0 && len < n) {
                 /* Kludge Alert... */
@@ -8335,7 +8335,7 @@ shomac(s1, s2) char *s1, *s2; {
             x = '\n';
         }
         if (inserver && (x == '\n'))    /* Send CR before LF */
-          putchar(CR);
+          putchar(CK_CR);
         putchar((CHAR)x);               /* Output the character */
         if (x == '\n') {                /* If it was a newline */
 #ifdef UNIX
@@ -8350,7 +8350,7 @@ shomac(s1, s2) char *s1, *s2; {
         } else if (++n > (cmd_cols - 1)) { /* If line is too wide */
             putchar('-');               /* output a dash */
             if (inserver)
-              putchar(CR);              /* and a carriage return */
+              putchar(CK_CR);              /* and a carriage return */
             putchar(NL);                /* and a newline */
 #ifdef UNIX
 #ifdef NOSETBUF
@@ -8367,7 +8367,7 @@ shomac(s1, s2) char *s1, *s2; {
         }
     }
     if (inserver)
-      putchar(CR);
+      putchar(CK_CR);
     putchar(NL);                        /* End of definition */
     if (++slc > (cmd_rows - 3)) {
         if (!askmore()) return(-1);

@@ -25,6 +25,15 @@ char *cknwin = "Win32 GUI Support 8.0.029, 10 March 2004";
 #include "ckosyn.h"
 #include "richedit.h"
 
+#ifdef _MSC_VER
+#if _MSC_VER >= 1400
+/* Enable visual styles - requires Visual C++ 2005 or newer */
+#pragma comment(linker,"\"/manifestdependency:type='win32' \
+name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
+processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#endif /* _MSC_VER >= 1400 */
+#endif /* _MSC_VER */
+
 /* Visual C++ 6 fixes */
 #ifndef DS_SHELLFONT
 #define DS_SHELLFONT        (DS_SETFONT | DS_FIXEDSYS)
@@ -1761,7 +1770,7 @@ gui_text_popup_append(unsigned short uch)
 
     if ( EditStreamLen < EditStreamMaxLen ) {
         static int found_cr = 0;
-        if ( uch == CR ) {
+        if ( uch == CK_CR ) {
             found_cr = 1;
             EditStreamBuffer[EditStreamLen++] = 0x2028;
         } else if ( uch == LF ) {

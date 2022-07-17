@@ -7100,7 +7100,7 @@ case XXFUNC:
         return(-9);
     }
     x = cmgbrk();                       /* Find out how user terminated */
-    if (x == LF || x == CR)             /* if with CR or LF */
+    if (x == LF || x == CK_CR)             /* if with CR or LF */
       cmflgs = 1;                       /* restore cmflgs to say so */
     if ((x = cmcfm()) < 0)              /* And THEN confirm so command will */
       return(x);                        /* get into recall buffer. */
@@ -7151,7 +7151,7 @@ case XXKVRB: {
         return(-9);
     }
     x = cmgbrk();                       /* Find out how user terminated */
-    if (x == LF || x == CR)             /* if with CR or LF */
+    if (x == LF || x == CK_CR)             /* if with CR or LF */
       cmflgs = 1;                       /* restore cmflgs to say so */
     if ((x = cmcfm()) < 0)              /* And THEN confirm so command will */
       return(x);                        /* get into recall buffer. */

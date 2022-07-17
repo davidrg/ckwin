@@ -1731,7 +1731,7 @@ scanfile(name,flag,nscanfile) char * name; int * flag, nscanfile; {
 		}
 #endif /* UNICODE */
 		if (c < ' ') {		/* Check for CO controls */
-		    if (c != LF && c != CR && c != HT && c != FF) {
+		    if (c != LF && c != CK_CR && c != HT && c != FF) {
 			c0controls++;
 			if (c != ESC && c != SO && c != SI)
 			  c0noniso++;
@@ -2090,7 +2090,7 @@ scanstring(s) char * s; {
 	    }
 #endif /* UNICODE */
 	    if (c < ' ') {		/* Check for CO controls */
-		if (c != LF && c != CR && c != HT && c != FF) {
+		if (c != LF && c != CK_CR && c != HT && c != FF) {
 		    c0controls++;
 		    if (c != ESC && c != SO && c != SI)
 		      c0noniso++;
@@ -4219,9 +4219,9 @@ showpkt(c) char c;
 	/* These sprintfs should be safe until we have 32-digit numbers */
 
         if (pd > -1L)
-          sprintf(buffer, "%c%9s%5ld%%%8ld%8ld ", CR,ckfstoa(howfar),pd,tp,ps);
+          sprintf(buffer, "%c%9s%5ld%%%8ld%8ld ", CK_CR,ckfstoa(howfar),pd,tp,ps);
         else
-          sprintf(buffer, "%c%9s      %8ld%8ld ", CR,ckfstoa(howfar),tp,ps);
+          sprintf(buffer, "%c%9s      %8ld%8ld ", CK_CR,ckfstoa(howfar),tp,ps);
         conol(buffer);
         hpos = 31;
     } else if (fdispla == XYFD_R) {     /* SERIAL */
@@ -5420,7 +5420,7 @@ dodebug(f,s1,s2,n) int f; char *s1, *s2; CK_OFF_T n;
 		  pbuf[i++] = 'F';
 		  pbuf[i++] = '>';
 		  continue;
-	      } else if (*p == CR) {
+	      } else if (*p == CK_CR) {
 		  if (i >= m-4)
 		    break;
 		  pbuf[i++] = '<';

@@ -11758,7 +11758,7 @@ http_get(agent, hdrlist, user, pwd, array, local, remote, stdio)
                 if ( stdio )
                     conoc((CHAR)ch);
             }
-            if ((ch = http_inc(0)) != CR)
+            if ((ch = http_inc(0)) != CK_CR)
                 break;
             if ((ch = http_inc(0)) != LF)
                 break;
@@ -12225,7 +12225,7 @@ http_index(agent, hdrlist, user, pwd, array, local, remote, stdio)
                 if ( stdio )
                     conoc((CHAR)ch);
             }
-            if ((ch = http_inc(0)) != CR)
+            if ((ch = http_inc(0)) != CK_CR)
                 break;
             if ((ch = http_inc(0)) != LF)
                 break;
@@ -12530,7 +12530,7 @@ http_put(agent, hdrlist, mime, user, pwd, array, local, remote, dest, stdio)
                     if ( stdio )
                         conoc((CHAR)ch);
                 }
-                if ((ch = http_inc(0)) != CR)
+                if ((ch = http_inc(0)) != CK_CR)
                     break;
                 if ((ch = http_inc(0)) != LF)
                     break;
@@ -12776,7 +12776,7 @@ http_delete(agent, hdrlist, user, pwd, array, remote)
                 len--;
                 conoc((CHAR)ch);
             }
-            if ((ch = http_inc(0)) != CR)
+            if ((ch = http_inc(0)) != CK_CR)
                 break;
             if ((ch = http_inc(0)) != LF)
                 break;
@@ -13059,7 +13059,7 @@ http_post(agent, hdrlist, mime, user, pwd, array, local, remote, dest,
                     if ( stdio )
                         conoc((CHAR)ch);
                 }
-                if ((ch = http_inc(0)) != CR)
+                if ((ch = http_inc(0)) != CK_CR)
                     break;
                 if ((ch = http_inc(0)) != LF)
                     break;

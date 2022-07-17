@@ -10811,7 +10811,7 @@ parsefeat(s) char * s; {		/* Parse a FEATURE response */
 	  break;
 	kwbuf[i] = s[i];
     }
-    if (s[i] && s[i] != SP && s[i] != CR && s[i] != LF)
+    if (s[i] && s[i] != SP && s[i] != CK_CR && s[i] != LF)
       return;
     kwbuf[i] = NUL;
     /* xlookup requires a full (but case independent) match */
@@ -11795,7 +11795,7 @@ doftpsend2(threadinfo) VOID * threadinfo;
                 sendstart = sendstart * 10 + (int)(*p - '0');
                 p++;
             }
-            if (*p && *p != CR) {       /* Bad number */
+            if (*p && *p != CK_CR) {       /* Bad number */
                 debug(F110,"doftpsend2 bad size",ftp_reply_str,0);
                 sendstart = (CK_OFF_T)0;
             } else if (sendstart > fsize) { /* Remote file bigger than local */
@@ -13020,7 +13020,7 @@ recvrequest(cmd, local, remote, lmode, printnames, recover, pipename,
       return(proxtrans(cmd, local ? local : remote, remote));
 #endif /* FTP_PROXY */
 
-    ftprecv.tcrflag = (feol != CR) && ftprecv.is_retr;
+    ftprecv.tcrflag = (feol != CK_CR) && ftprecv.is_retr;
 
     ftprecv.reply = 0;
     ftprecv.fcs = fcs;

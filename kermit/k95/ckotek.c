@@ -157,7 +157,7 @@ tekctrl( int ch )
     case FF:
         /* Erase screen, Home cursor */
         break;
-    case CR:
+    case CK_CR:
         /* move cursor to column 1 */
         if ( debses )
             break;

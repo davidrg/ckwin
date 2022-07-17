@@ -9,6 +9,7 @@
 /* Installs CTL3D32.DLL and MSVCRT.DLL into the proper directory */
 
 #include <windows.h>
+#include <stdio.h>
 
 void
 DisplayHelp( char * name )

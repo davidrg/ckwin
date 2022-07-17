@@ -157,10 +157,10 @@ hzlctrl( int ch )
     case FF:
         debug(F111,"Hazeltine 1500","unused Ctrl",ch);
         break;
-    case CR:
+    case CK_CR:
         if ( debses )
             break;
-        wrtch((char) CR);
+        wrtch((char) CK_CR);
         break;
     case SO:
     case SI:
@@ -284,7 +284,7 @@ hzlascii( int ch )
                 break;
             buf[0] = wherex[VTERM] < SP ? wherex[VTERM] + '`' : wherex[VTERM] ;
             buf[1] = wherey[VTERM] < SP ? wherey[VTERM] + '`' : wherey[VTERM] ;
-            buf[2] = CR ;
+            buf[2] = CK_CR ;
             buf[3] = NUL ;
             sendchars(buf,3);
             break;
@@ -295,7 +295,7 @@ hzlascii( int ch )
             col  = hzlinc();
 #ifdef NETCONN
 #ifdef TCPSOCKET
-            if ( network && IS_TELNET() && !TELOPT_U(TELOPT_BINARY) && col == CR ) {
+            if ( network && IS_TELNET() && !TELOPT_U(TELOPT_BINARY) && col == CK_CR ) {
                 /* Handle TELNET CR-NUL or CR-LF if necessary */
                 int dummy = ttinc(0);
                 debug(F111,"Hazeltine 1500","Addr cursor in page found CR",dummy);
@@ -310,7 +310,7 @@ hzlascii( int ch )
         /* we know that the sequence is complete?                                       */
 #ifdef NETCONN
 #ifdef TCPSOCKET
-            if ( network && IS_TELNET() && !TELOPT_U(TELOPT_BINARY) && line == CR ) {
+            if ( network && IS_TELNET() && !TELOPT_U(TELOPT_BINARY) && line == CK_CR ) {
                 /* Handle TELNET CR-NUL or CR-LF if necessary */
                 int dummy = ttinc(0);
                 debug(F111,"Hazeltine 1500","Addr cursor in page found CR",dummy);

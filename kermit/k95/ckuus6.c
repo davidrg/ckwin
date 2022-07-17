@@ -3843,7 +3843,7 @@ typegetline(incs, outcs, buf, n) int incs, outcs, n; char * buf; {
                 }
 #else
                 if (a == LF) {
-                    if (s[len] == CR) { /* This probably won't happen */
+                    if (s[len] == CK_CR) { /* This probably won't happen */
                         s[len] = NUL;
                         s--;
                         len--;
@@ -4215,7 +4215,7 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
             unsigned short * uch = (unsigned short *)buf;
             for ( i=0; i<len/2; i++)
                 gui_text_popup_append(uch[i]);
-			gui_text_popup_append(CR);
+			gui_text_popup_append(CK_CR);
 			gui_text_popup_append(LF);
         } 
         else

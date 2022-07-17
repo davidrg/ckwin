@@ -927,7 +927,18 @@ main(argc, argv) int argc; char *argv[]; {
     }
 #ifdef OS2NTDOS
 #ifdef NT
+#ifdef _MSC_VER
+#if _MSC_VER < 1900
+    /* Visual C++ 2013 or older */
     if (_isatty(stdin->_file))
+#else /* else _MSC_VER >= 1900 */
+    /* Visual C++ 2015 or newer */
+    if (isatty(fileno(stdin)))
+#endif /* if _MSC_VER < 1900 */
+#else
+    /* Not Visual C++ - assume it behaves like old Visual C++ */
+    if (_isatty(stdin->_file))
+#endif
 #else
 	if (isatty(fileno(stdin)))
 #endif /* NT */

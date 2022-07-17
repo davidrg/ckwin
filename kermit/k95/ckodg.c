@@ -328,7 +328,7 @@ dgctrl( int ch )
             }
             else if ( autoscroll ||
                       wherey[VTERM] < VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0) ) {
-                wrtch((CHAR)CR);
+                wrtch((CHAR)CK_CR);
                 wrtch((CHAR)LF);
             }
             else { /* Home Cursor */
@@ -352,11 +352,11 @@ dgctrl( int ch )
             attrib.reversed = FALSE;
             attrib.dim = FALSE;
             break;
-        case CR:
+        case CK_CR:
             debug(F110,"Data General","CR",0);
             if ( debses )
                 break;
-            wrtch((char) CR);
+            wrtch((char) CK_CR);
             break;
         case SO:
             debug(F110,"Data General","SO",0);
@@ -383,7 +383,7 @@ dgctrl( int ch )
             col  = dginc();
 #ifdef NETCONN
 #ifdef TCPSOCKET
-            if ( network && IS_TELNET() && !TELOPT_U(TELOPT_BINARY) && col == CR ) {
+            if ( network && IS_TELNET() && !TELOPT_U(TELOPT_BINARY) && col == CK_CR ) {
                 /* Handle TELNET CR-NUL or CR-LF if necessary */
                 int dummy = ttinc(0);
                 debug(F111,"Data General","Addr cursor in page found CR",dummy);
@@ -396,7 +396,7 @@ dgctrl( int ch )
 #ifdef COMMENT
 #ifdef NETCONN
 #ifdef TCPSOCKET
-            if ( network && IS_TELNET() && !TELOPT_U(TELOPT_BINARY) && line == CR ) {
+            if ( network && IS_TELNET() && !TELOPT_U(TELOPT_BINARY) && line == CK_CR ) {
                 /* Handle TELNET CR-NUL or CR-LF if necessary */
                 int dummy = ttinc(0);
                 debug(F111,"Data General","Addr cursor in page found CR",dummy);

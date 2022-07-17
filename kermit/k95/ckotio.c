@@ -7165,7 +7165,7 @@ coninc(timo) int timo; {
             debug(F111,"coninc","ESC conversion",c);
             c = ESC ;
             break;
-        case KEY_SCAN | CR:
+        case KEY_SCAN | CK_CR:
 #ifndef NOKVERBS
         case F_KVERB | K_KPENTER:
         case F_KVERB | K_WYENTER:
@@ -7176,7 +7176,7 @@ coninc(timo) int timo; {
         case F_KVERB | K_HPRETURN:
 #endif /* NOKVERBS */
             debug(F111,"coninc","ENTER conversion",c);
-            c = CR ;
+            c = CK_CR ;
             break;
 #ifndef NOKVERBS
         case F_KVERB | K_KPMINUS:
@@ -7266,7 +7266,7 @@ coninc(timo) int timo; {
             break;
         default: ;
         }
-        if ( c == CR )
+        if ( c == CK_CR )
             c = NL;
 #ifndef NOKVERBS
         if (c >= 0) {
@@ -7398,7 +7398,7 @@ congks(int timo) {
             free(macrostr);
             macrostr = NULL ;
             s = NULL;
-            ch = CR;
+            ch = CK_CR;
         }
         else {
             ch = *s++;

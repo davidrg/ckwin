@@ -1322,7 +1322,7 @@ learnkeyb(con_event evt, int state) {   /* Learned script keyboard character */
 
                 /* Later account for prompts that end with a newline? */
 
-                if (cc == CR && j > 0) {
+                if (cc == CK_CR && j > 0) {
                     if (nbuf[j-1] != LF)
                       j = 0;
                 }
@@ -1629,7 +1629,7 @@ clearbuf() {                            /* Clear line buffer */
 void
 doprolog() {                            /* Output the PostScript prolog */
     int i;
-    CHAR crlf[2] = { CR, LF };
+    CHAR crlf[2] = { CK_CR, LF };
 
     for (i = 0; *prolog[i]; i++) {
 #ifdef NT
@@ -3079,7 +3079,7 @@ sendcharduplex(unsigned char key, int no_xlate ) {
         }
 
         key = key & cmask & pmask; /* Apply Kermit-to-host mask now. */
-        if (key == CR) {            /* Handle TERMINAL NEWLINE */
+        if (key == CK_CR) {            /* Handle TERMINAL NEWLINE */
             int stuff = -1, stuff2 = -1;
             if (tnlm) {                     /* TERMINAL NEWLINE ON */
                 stuff = LF;                 /* Stuff LF */
@@ -3176,9 +3176,9 @@ sendcharduplex(unsigned char key, int no_xlate ) {
                 }
             }
             else if (tt_crd && duplex) {    /* CR-DISPLAY CRLF & local echo */
-                le_putchar(CR);
+                le_putchar(CK_CR);
                 csave = LF;
-                key = CR;                   /* ... but only send a CR */
+                key = CK_CR;                   /* ... but only send a CR */
             }
         }
 #ifdef TNCODE
@@ -3386,7 +3386,7 @@ sendcharsduplex(unsigned char * s, int len, int no_xlate ) {
 
     /* count number of CRs that might require stuffing of LFs */
     for ( i=0,n=0 ;i<len;i++ ) {
-        if ( s[i] == CR ) {
+        if ( s[i] == CK_CR ) {
             n++;
         }
     }
@@ -3459,7 +3459,7 @@ sendcharsduplex(unsigned char * s, int len, int no_xlate ) {
        if (duplex && !wy_block) {
            le_putchar(*bufptr) ;
        }
-       if (*bufptr == CR) {             /* Handle TERMINAL NEWLINE */
+       if (*bufptr == CK_CR) {             /* Handle TERMINAL NEWLINE */
            if (tnlm) {                  /* TERMINAL NEWLINE ON */
                *(++stuffptr) = LF;                      /* Stuff LF */
            }
@@ -3610,13 +3610,13 @@ cursornextline() {
             }
             lgotoxy(VTERM, 1, margintop);
         } else if (ISVT100(tt_type_mode) || ISANSI(tt_type_mode)) {
-            wrtch(CR);
+            wrtch(CK_CR);
             wrtch(LF);
         }
     }
     else if ( (ISWYSE(tt_type_mode) || ISTVI(tt_type_mode)) && autoscroll
               && !protect ){
-        wrtch(CR);
+        wrtch(CK_CR);
         wrtch(LF);
     }
 
@@ -6755,7 +6755,7 @@ pushed:
                 }
                 else return(0); /* Unknown, get next char */
                 break;
-            case CR:
+            case CK_CR:
                 got_cr = 1;
                 break;
             case NUL:
@@ -6810,7 +6810,7 @@ pushed:
                     c = *ucs2;
 
                 if (c == 0x2028 || c == 0x2029) { /* LS or PS */
-                    c = CR;
+                    c = CK_CR;
                     f_pushed = 1;
                     c_pushed = LF;
                 }
@@ -6868,9 +6868,9 @@ pushed:
             if ((!debses) &&
                  ((tnlm &&              /* NEWLINE-MODE? */
                     (c == LF || c == FF || c == 11)) ||
-                   (c == CR && tt_crd ) /* CR-DISPLAY CRLF ? */
+                   (c == CK_CR && tt_crd ) /* CR-DISPLAY CRLF ? */
                    )) {
-                cwrite((USHORT) CR);    /* Yes, output CR */
+                cwrite((USHORT) CK_CR);    /* Yes, output CR */
                 c = LF;                 /* and insert a linefeed */
             }
             cwrite((USHORT) c);
@@ -9991,7 +9991,7 @@ vt100key(int key) {
         sendcharduplex((char) key,FALSE);/* just send it, */
         if (tt_pacing > 0)              /* taking care of pacing */
             msleep(tt_pacing);
-        if (key == CR && tnlm) {        /* and newline mode */
+        if (key == CK_CR && tnlm) {        /* and newline mode */
             if (tt_pacing > 0)          /* and pacing */
                 msleep(tt_pacing);
         }
@@ -10584,9 +10584,9 @@ debugses( unsigned char ch )
             wrtch(ch8);
         }
         if (deb_wrap ||
-             ch8 == LF && old_c == CR) { /* Break lines for readability */
+             ch8 == LF && old_c == CK_CR) { /* Break lines for readability */
             attribute = defaultattribute;
-            wrtch(CR);
+            wrtch(CK_CR);
             wrtch(LF);
         }
         old_c = ch8;                    /* Remember this character */
@@ -11584,7 +11584,7 @@ wrtch(unsigned short ch) {
                 }
             }
             break;
-        case CR:
+        case CK_CR:
             if ( (IS97801(tt_type_mode) || ISHP(tt_type_mode)) &&
                  vmode == VTERM )
                 wherex[vmode] = marginleft;
@@ -15176,7 +15176,7 @@ vtcsi(void)
                                 sendchar(SP);
                             }   
                         if ( y < ye ) {
-                            sendchar(CR);
+                            sendchar(CK_CR);
                             sendchar(LF);
                         }
                     }
@@ -19595,7 +19595,7 @@ vt100(unsigned short vtch) {
          case VT:                       /* Vertical tab */
              wrtch((char) LF);
              break;
-         case CR:                       /* Carriage return */
+         case CK_CR:                       /* Carriage return */
              wrtch((char) achar);
              break;
          case SO:                       /* SO */
@@ -19700,11 +19700,11 @@ vt100(unsigned short vtch) {
                 if (wrapit) {   /* Time to wrap?  */
                     if (literal_ch) {
                         literal_ch = 0;
-                        wrtch(CR);
+                        wrtch(CK_CR);
                         wrtch(LF);
                         literal_ch = 1;
                     } else {
-                        wrtch(CR);
+                        wrtch(CK_CR);
                         wrtch(LF);
                     }
                     wrtch(vtch);        /* Now write the character */
@@ -19724,7 +19724,7 @@ vt100(unsigned short vtch) {
                         if ( IS97801(tt_type_mode) ) {
                             if ( wherey[vmode] == marginbot ) {
                                 if ( !sni_pagemode ) {
-                                    wrtch(CR);
+                                    wrtch(CK_CR);
                                     wrtch(LF);
                                 }
                                 else {  /* Page Mode */
@@ -19732,7 +19732,7 @@ vt100(unsigned short vtch) {
                                 }
                             }
                             else {
-                                wrtch(CR);
+                                wrtch(CK_CR);
                                 wrtch(LF);
                             }
                         } else /* if ( !deccolm ) */ {
@@ -19747,7 +19747,7 @@ vt100(unsigned short vtch) {
                                   !ISHFT(tt_type_mode))
                                 wrapit = TRUE ; /* need to wrap next time */
                             else {
-                                wrtch(CR);
+                                wrtch(CK_CR);
                                 wrtch(LF);
                             }
                         }
