@@ -6,6 +6,7 @@ copy ..\..\doc\manual\ckwin.htm dist\docs\manual\
 move *.exe dist
 move *.manifest dist
 copy k95.ini dist
+copy k95d.cfg dist
 ren dist\cknker.exe k95.exe
 ren dist\cknker.exe.manifest k95.exe.manifest
 del dist\ckwart.exe
