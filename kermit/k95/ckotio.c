@@ -1298,12 +1298,54 @@ sysinit() {
                  osverinfo.szCSDVersion && osverinfo.szCSDVersion[0] ? " " : "",
                  osverinfo.szCSDVersion ? osverinfo.szCSDVersion : "");
 #ifdef CK_UTSNAME
-        sprintf(unm_nam,
-                 ( osverinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS ?
-                   (osverinfo.dwMinorVersion == 0 ? "Windows 95" : "Windows 98")  :
-                   osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT ?
-                   (osverinfo.dwMajorVersion < 5 ? "Windows NT" : "Windows 2000/XP") :
-                   "Windows Unknown" ));
+        if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) {
+            /* Windows 95 / 98 / ME */
+            sprintf(unm_nam, osverinfo.dwMinorVersion == 0 ? "Windows 95" :
+                osverinfo.dwMinorVersion == 1 ? "Windows 98" :
+                    osverinfo.dwMinorVersion == 9 ? "Windows ME" :
+                        "Windows - unknown");
+        } else if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT) {
+            /* Windows NT */
+            if (osverinfo.dwMajorVersion < 5) {
+                sprintf(unm_nam, "Windows NT");
+            } else if (osverinfo.dwMajorVersion == 5) {
+                /* Windows 2000 / XP / 2003 */
+                if (osverinfo.dwMinorVersion == 0) {
+                    sprintf(unm_nam, "Windows 2000" );
+                } else if (osverinfo.dwMinorVersion == 1) {
+                    sprintf(unm_nam, "Windows XP" );
+                } else if (osverinfo.dwMinorVersion == 2) {
+                    sprintf(unm_nam, "Windows XP x64 Edition / Server 2003");
+                } else {
+                    sprintf(unm_nam, "Windows NT 5.x - unknown" );
+                }
+            } else if (osverinfo.dwMajorVersion == 6) {
+                /* Windows Vista / 7 / 8 / 8.1 */
+                if (osverinfo.dwMinorVersion == 0) {
+                    sprintf(unm_nam, "Windows Vista / Server 2008" );
+                } else if (osverinfo.dwMinorVersion == 1) {
+                    sprintf(unm_nam, "Windows 7 / Server 2008 R2" );
+                } else if (osverinfo.dwMinorVersion == 2) {
+                    sprintf(unm_nam, "Windows 8 / Server 2012");
+                } else if (osverinfo.dwMinorVersion == 3) {
+                    sprintf(unm_nam, "Windows 8.1 / Server 2012 R2");
+                } else  {
+                    sprintf(unm_nam, "Windows NT 6.x - unknown" );
+                }
+            } else {
+                /* TODO: If building with a new enough Platform SDK version,
+                 *      use the Version Helper functions:
+                 *      https://docs.microsoft.com/en-us/windows/win32/sysinfo/version-helper-apis
+                 */
+
+                /* Don't know */
+                sprintf(unm_nam, "Windows NT - unknown" );
+            }
+        } else {
+            /* Unknown */
+            sprintf(unm_nam, "Windows NT - unknown" );
+        }
+
         sprintf(unm_rel,"%1d.%02d",
                  osverinfo.dwMajorVersion,
                  osverinfo.dwMinorVersion);
@@ -9155,24 +9197,24 @@ os2settitle(char *newtitle, int newpriv ) {
     if ( usertitle[0] ) {
         if ( StartedFromDialer ) {
             sprintf( titlebuf, "%d::%s%s%s",KermitDialerID,usertitle,
-                 private ? (inserver ? " - IKS" : " - C-Kermit") : "",
+                 private ? (inserver ? " - IKS" : " - C-Kermit for Windows") : "",
                      videomode
                  );
         }
         else {
             sprintf( titlebuf, "%s%s%s",usertitle,
-                 private ? (inserver ? " - IKS" : " - C-Kermit") : "", videomode
+                 private ? (inserver ? " - IKS" : " - C-Kermit for Windows") : "", videomode
                  );
         }
     }
     else if ( StartedFromDialer ) {
         sprintf( titlebuf, "%d::%s%s%s%s",KermitDialerID,title,(*title&&private)?" - ":"",
-                 private ? (inserver ? "IKS" : "C-Kermit") :  "", videomode
+                 private ? (inserver ? "IKS" : "C-Kermit for Windows") :  "", videomode
                  );
     }
     else {
         sprintf( titlebuf, "%s%s%s%s",title,(*title&&private)?" - ":"",
-                 private ? (inserver ? "IKS" : "C-Kermit") : "" , videomode
+                 private ? (inserver ? "IKS" : "C-Kermit for Windows") : "" , videomode
                  );
     }
 
