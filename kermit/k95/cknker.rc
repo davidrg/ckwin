@@ -2,7 +2,7 @@
 // It seems we have to do this otherwise the version information wont work
 // properly on Windows vista/7 (it will work on XP though)
 #define APSTUDIO_READONLY_SYMBOLS
-#include "afxres.h"
+//#include "afxres.h"
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////

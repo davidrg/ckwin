@@ -7,14 +7,22 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "afxres.h"
+
+#include <winuser.h>
+#include <commctrl.h>
+
+// These come from the MFC headers which don't come with any free
+// windows compiler
+//#include "afxres.h"
+#define LANG_ENGLISH       0x09
+#define SUBLANG_ENGLISH_US 0x01
+#define IDC_STATIC         (-1)
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
 // English (U.S.) resources
-
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 #ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US

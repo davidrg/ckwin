@@ -1,7 +1,12 @@
 #include "kmenu.hxx"
 #include "kwin.hxx"
 #include "ksysmets.hxx"
-#include "afxres.h"
+//#include "afxres.h"
+
+// These are normally defined in afxres.h but that's part of MFC which is
+// not available in any free windows compiler.
+#define ID_EDIT_COPY     0xE122
+#define ID_EDIT_PASTE    0xE125
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/

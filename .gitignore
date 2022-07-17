@@ -222,6 +222,7 @@ pip-log.txt
 *.map
 *.res
 *.err
+*.manifest
 kermit/k95/dist*
 kermit/k95/ckcpro.c
 
