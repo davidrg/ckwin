@@ -10457,8 +10457,9 @@ setlin(xx, zz, fc)
               "Command, or switch" :
                 (mynet == NET_TCPA || mynet == NET_TCPB
                   || mynet == NET_SSH) ?
-                  "Hostname, ip-address, or switch" :
-                    "Host or switch";
+                  "Hostname, ip-address, or switch" : (mynet == NET_DLL) ?
+                        "Parameters, or switch" :
+                            "Host or switch";
             if (fc) {
                 if (mynet == NET_TCPB &&
                     (ttnproto == NP_TELNET || ttnproto == NP_KERMIT)) {
@@ -10495,6 +10496,10 @@ setlin(xx, zz, fc)
         } else if (mynet == NET_CMD || mynet == NET_PTY) {
             cmfdbi(&nx,_CMTXT,"Command","","",0,0,xxstring,NULL,NULL);
 #endif /* PTYORPIPE */
+#ifdef NETDLL
+        } else if (mynet == NET_DLL) {
+            cmfdbi(&nx,_CMTXT,"Parameters","","",0,0,xxstring,NULL,NULL);
+#endif /* NETFILE */
         } else {
             cmfdbi(&nx,_CMTXT,"Host","","",0,0,xxstring,NULL,NULL);
         }
@@ -10761,6 +10766,44 @@ setlin(xx, zz, fc)
                         );
         }
 #endif /* NETCMD */
+
+#ifdef NETDLL
+        if (mynet == NET_DLL) {
+            char *p = NULL;
+            if (!confirmed) {
+                if ((x = cmtxt("Rest of command","",&s,xxstring)) < 0) {
+                  return(x);
+                }
+
+                if (*s) {
+                    ckstrncat(line," ",LINBUFSIZ);
+                    ckstrncat(line,s,LINBUFSIZ);
+                }
+                s = line;
+            }
+            /* s == line - so we must protect the line buffer */
+            s = brstrip(s);
+            makestr(&p,s);
+            ckstrncpy(line,p,LINBUFSIZ);
+            makestr(&p,NULL);
+
+            x = cx_net( mynet,                  /* nettype */
+                        0,                      /* protocol (not used) */
+                        line,                   /* host */
+                        "",                     /* port */
+                        NULL,                   /* alternate username */
+                        NULL,                   /* password */
+                        NULL,                   /* command to execute */
+                        0,                      /* param1 */
+                        0,                      /* param2 */
+                        0,                      /* param3 */
+                        cx,                     /* enter CONNECT mode */
+                        sx,                     /* enter SERVER mode */
+                        zz,                     /* close connection if open */
+                        0                       /* gui */
+                        );
+        }
+#endif /* NETDLL */
 
 #ifdef NPIPE                            /* Named pipe */
         if (mynet == NET_PIPE) {        /* Needs backslash twiddling */
