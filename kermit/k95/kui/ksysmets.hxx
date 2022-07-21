@@ -13,7 +13,6 @@
 
 ========================================================================*/
 #include "kuidef.h"
-enum ePlatform { OS_NOTSUPPORTED, OS_NT5, OS_NT4, OS_NT3, OS_WIN95, OS_WIN31 };
 class KSysMetrics
 {
 public:
@@ -36,7 +35,6 @@ public:
     int borderWidth() { return _borderWidth; }
     int iconHeight() { return _iconHeight; }
     int iconWidth() { return _iconWidth; }
-	ePlatform platform() { return _platform; }
 
 private:
     int _screenWidth;
@@ -53,7 +51,6 @@ private:
     int _borderWidth;
     int _iconHeight;
     int _iconWidth;
-	ePlatform _platform;
 };
 
 #endif
