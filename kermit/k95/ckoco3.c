@@ -11007,10 +11007,18 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             escbuffer[0] = _CSI;         /* Save in case we have to replay it */
             esclast = 1;                /* Reset buffer pointer, but */
             escbuffer[1] = '[';         /* But translate for vtescape() */
-        } else if (ch != NUL) {
-            wrtch(ch);
         }
-        return;
+
+        if (!(ch == BEL && oscrecv)) {
+            /* Only return here on BEL if we're not receiving an OSC string
+             * as that signals end of string. If BEL is in fact not the string
+             * terminator then that could be a problem but not as big a problem
+             * as if it is and we miss it. */
+            if (ch != NUL) {
+                wrtch(ch);
+            }
+            return;
+        }
     }
 /*
   Put this character in the escape sequence buffer.
@@ -11196,8 +11204,19 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
         if (ch == ESC)                  /* ESC may be 1st char of terminator */
           escstate = ES_TERMIN;         /* Change state to find out. */
 #ifdef CK_APC
-        else if ( ch == BEL && ISAIXTERM(tt_type_mode) && oscrecv ) {
-            /* BEL terminates an OSC string in AIXTERM */
+        else if ( ch == BEL /*&& ISAIXTERM(tt_type_mode)*/ && oscrecv ) {
+            /* BEL terminates an OSC string in AIXTERM
+             *
+             * DavidG 2022-07-21 - And also in the windows 10 console (ConPTY)
+             *   K-95 used to only do this for AIXTERM but the result if an
+             *   unexpected BEL string terminator is missed is pretty bad - data
+             *   is accumulated into apcbuf forever and the user sees no
+             *   output.
+             *
+             *   So while it is non-standard K-95 will now always accept
+             *   BEL as a string terminator. This is also what XTerm does:
+             *      https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands
+             * */
             escstate = ES_NORMAL;       /* If so, back to NORMAL */
             if (savefiletext[0]) {              /* Fix status line */
                 ckstrncpy(filetext,savefiletext,sizeof(filetext));
