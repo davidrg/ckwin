@@ -11250,9 +11250,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
         break;                          /* Absorb all other characters. */
 
     case ES_TERMIN:                     /* May have a string terminator */
-        debug(F100,"ES-TERMIN maybe terminate OSC? ","",0);
         if (ch == '\\') {               /* which must be backslash */
-            debug(F100,"OSC TERM by ESC \\ ","",0);
             escstate = ES_NORMAL;       /* If so, back to NORMAL */
             if (savefiletext[0]) {              /* Fix status line */
                 ckstrncpy(filetext,savefiletext,sizeof(filetext));
@@ -11262,9 +11260,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
 #ifdef CK_APC
             if (apcrecv && apclength > 0)/* If it was an APC string, */
             {
-
                 apcbuf[apclength] = NUL; /* terminate it */
-                debug(F100,"OSC was APC string ",apcbuf,0);
                 if ((apcstatus & APC_ON) && !debses) {
                     apc_command(APC_REMOTE,apcbuf);
                     return;             /* with the apcactive flag still set */
@@ -11273,9 +11269,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             }
             else if ( dcsrecv ) /* it was a DCS string, */
             {
-
                 apcbuf[apclength] = NUL; /* terminate it */
-                debug(F100,"OSC was DCS string ",apcbuf,0);
                 if ( tt_type_mode >= TT_VT320 && /* and if we are a VT320 */
                      tt_type_mode <= TT_WY370 )
                 {                            /* process it */
@@ -11286,9 +11280,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             }
             else if ( pu1recv ) /* it was a PU1 string, */
             {
-
                 apcbuf[apclength] = NUL; /* terminate it */
-                debug(F100,"OSC was PU1 string ",apcbuf,0);
                 if ( IS97801(tt_type_mode) )
                 {                            /* process it */
                     if (!debses)
@@ -11298,9 +11290,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             }
             else if ( pu2recv ) /* it was a PU2 string, */
             {
-
                 apcbuf[apclength] = NUL; /* terminate it */
-                debug(F100,"OSC was PU2 string ",apcbuf,0);
                 if ( IS97801(tt_type_mode) )
                 {                            /* process it */
                     if (!debses)
@@ -11310,9 +11300,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             }
             else if ( oscrecv ) /* it was a OSC string, */
             {
-
                 apcbuf[apclength] = NUL; /* terminate it */
-                debug(F100,"OSC was OSC string",apcbuf,0);
                 if ( tt_type_mode >= TT_VT320 && /* and if we are a VT320 */
                      tt_type_mode <= TT_WY370 )
                 {                            /* process it */
@@ -11325,7 +11313,6 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
         } else {
 #ifdef CK_APC
             if ( dcsrecv ) {
-                debug(F100,"cwrite dcsrecv OSC term","",0);
                 dcsrecv = FALSE ;
                 apcbuf[0] = NUL ;
                 apclength = 0 ;
@@ -11339,13 +11326,10 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             }
             else {
 #endif /* CK_APC */
-                if ( ch >= SP ) {         /* Just a stray Esc character. */
+                if ( ch >= SP )         /* Just a stray Esc character. */
                     escstate = ES_STRING;       /* Return to string absorption. */
-                    debug(F100,"cwrite stray esc - remaining in string absorb","",0);
-                    }
 #ifdef CK_APC
                 if (apcrecv) {
-                    debug(F100,"cwrite in apc string, depositing ESC and this char too","",0);
                     if (apclength+1 < apcbuflen) { /* In APC string, */
                         apcbuf[apclength++] = ESC;   /* deposit the Esc character */
                         apcbuf[apclength++] = ch;    /* and this character too */
