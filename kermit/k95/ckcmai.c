@@ -620,7 +620,11 @@ ACKNOWLEDGMENTS:
 
 #ifdef NT
 #include <windows.h>
+#ifdef __WATCOMC__
+#include "ow\tapi.h"
+#else
 #include <tapi.h>
+#endif
 #include "ckntap.h"
 #endif /* NT */
 
