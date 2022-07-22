@@ -491,6 +491,14 @@ DEFINES = -DNT -DWINVER=0x0400 -DOS2 -D_CRT_SECURE_NO_DEPRECATE -DUSE_STRERROR\
 ! ERROR Macro named PLATFORM undefined
 !endif
 
+!if "$(CMP)" == "OWCL"
+# Watcom was the full path to commode.obj - its not enough for it to
+# be on the library path.
+COMMODE_OBJ = $(WATCOM)\lib386\nt\commode.obj
+!else
+COMMODE_OBJ = commode.obj
+!endif
+
 !ifdef PLATFORM
 !if "$(PLATFORM)" == "OS2"
 LIBS = os2386.lib rexx.lib bigmath.lib 
@@ -504,14 +512,14 @@ LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib \
 KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
         advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib \
         rpcrt4.lib rpcns4.lib wsock32.lib \
-        winmm.lib vdmdbg.lib comctl32.lib mpr.lib commode.obj \
+        winmm.lib vdmdbg.lib comctl32.lib mpr.lib $(COMMODE_OBJ) \
         #msvcrt.lib
         #Kerberos: wshload.lib
 		# SRP support: srpstatic.lib 
 		# SSH support: ssh\libssh.lib ssh\openbsd.lib
         #libsrp.lib bigmath.lib
 LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib shell32.lib\
-       winmm.lib mpr.lib advapi32.lib winspool.lib commode.obj \
+       winmm.lib mpr.lib advapi32.lib winspool.lib $(COMMODE_OBJ) \
        #msvcrt.lib  
        # Kerberos: wshload.lib
 	   # SRP support: srpstatic.lib
