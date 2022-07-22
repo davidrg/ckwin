@@ -12994,7 +12994,9 @@ char *
 ckgetpid() {                            /* Return pid as string */
 #ifdef CK_PID
 #ifdef OS2
+#ifndef __WATCOMC__
 #define getpid _getpid
+#endif /* __WATCOMC__ */
     unsigned long zz;
 #else
     long zz;

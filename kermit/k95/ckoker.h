@@ -42,12 +42,12 @@ char   *kstrdup(const char *str);
 #define fileno _fileno
 #define fstat _fstat
 #define ftime _ftime
-#endif
+#define getpid _getpid
+#endif /* __WATCOMC__ */
 #define sys_errlist _sys_errlist
 #define unlink _unlink
 #define write _write
 #define creat _creat
-#define getpid _getpid
 #define utime _utime
 #define mktemp _mktemp
 #define strnicmp _strnicmp
