@@ -5802,7 +5802,11 @@ typedef CHAR * MACRO;
 #endif /* __32BIT__ */
 #include <sys/timeb.h>
 #else /* __EMX__ */
+#ifndef __WATCOMC__
+/* Watcom direct.h definition incompatible with the
+ * implementation in ckodir.h and ckotio.c */
 #include <direct.h>
+#endif /* __WATCOMC__ */
 #undef SIGALRM
 #ifndef SIGUSR1
 #ifndef __WATCOMC__
