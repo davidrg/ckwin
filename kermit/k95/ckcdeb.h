@@ -5805,7 +5805,9 @@ typedef CHAR * MACRO;
 #include <direct.h>
 #undef SIGALRM
 #ifndef SIGUSR1
+#ifndef __WATCOMC__
 #define SIGUSR1 7
+#endif
 #endif /* SIGUSR1 */
 #define SIGALRM SIGUSR1
 _PROTOTYP( unsigned alarm, (unsigned) );
