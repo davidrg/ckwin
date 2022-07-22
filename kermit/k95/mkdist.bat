@@ -14,3 +14,4 @@ del dist\ckwart.exe
 @echo Copy runtime libraries
 if defined WATCOM copy %WATCOM%\binnt\mt7r*.dll dist
 if defined WATCOM copy %WATCOM%\binnt\clbr*.dll dist
+if defined WATCOM copy %WATCOM%\binnt\plbr*.dll dist
