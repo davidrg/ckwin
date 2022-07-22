@@ -46,17 +46,22 @@ features have been added. A full list of these is available here:
 Compiling
 ---------
 
-To build C-Kermit for Windows you will need Microsoft Visual C++ 6.0 SP6 or newer
-(Visual C++ 2022 is the newest tested version). Edit `/setenv.bat` to point to your 
-source directory then run through the following:
+To build C-Kermit for Windows you will need either Microsoft Visual C++ 6.0 SP6 or newer 
+(Visual C++ 2022 is the newest tested version), or OpenWatcom 1.9 (other versions are untested but may work).
 
+Edit `/setenv.bat` and change `set root=` to point to your source directory then run through the following:
+ 
 1. Open up a console window
-2. Setup the Visual C++ environment. You'll want to run vcvars32.bat. This
-   will be where ever you installed your compiler. For example:
+2. Setup the environment for your compiler. For Visual C++ you'll want to run `vcvars32.bat` or `vcvarsall.bat`
+   (depending on your compiler version) or `owsetenv.bat` for OpenWatcom. This will be where ever you installed your compiler. For example:
 
         C:\Program Files\Microsoft Visual Studio 8\VC\bin\vcvars32.bat
 
-3. CD into your source directory and run the following:
+   For OpenWatcom, it will be `owsetenv.bat`:
+
+        C:\WATCOM\owsetenv.bat
+
+4. CD into your source directory and run the following:
 
         setenv.bat
         cd kermit/k95
