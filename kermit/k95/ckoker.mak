@@ -14,7 +14,7 @@
 # define them as environment variables and then run NMAKE with the /E switch.
 
 # which operating system
-PLATFORM= NT
+PLATFORM = NT
 
 # IBM VisualAge Libs
 VISUALAGE = C:\IBMCXX0
@@ -42,15 +42,38 @@ LWP30INC    = $(LWP30DIR)\inc20
 
 COMMON_CFLAGS = /MD
 
-# Newer compilers don't support /G4 and /G5 so these will only be set when
-# we're compiling on one that does support them.
-OPT_4 = ""
-OPT_5 = ""
+# These options are used for all Windows .exe targets
+COMMON_OPTS = /GA /Ox
+# These are:
+# /GA     Optimise for Windows Application (ignored by OpenWatcom)
+# /Ox     Maximum Opts (= /Ogityb2 /Gs in VC6/7.0)
 
-CMP = 
+# If Visual C++ <= 2003 or OpenWatcom:
+#   /G5     Optimise for Pentium
+
+# These may be good to add at some point
+#   /GS         Buffer Security Check   (since VC 2022, maybe earlier versions)
+#   /guard:cf   Control Flow Guard      (since VC 2017, maybe earlier versions)
+
+# Formerly, the following options were used:
+# Option    Targets     Description
+# /G4       A           Optimise for 486
+# /Ot       A           Favor code speed
+# /Og       A           Enable global optimisations  (included in /Ox)
+# /Oi       A, msvcp    Enable intrinsic functions   (included in /Ox)
+# /Ox       B           Maximum Opts
+# /G5       B, msvcp    Optimise for Pentium
+# /GA       B, msvcp    Optimise for Windows Application
+# /Ob1      msvcp       Inline expansion (default n=0)
+# Where:
+# A = winsetup, test, rlogin, telnet
+# B = k95g, kui, msvc-iksd, msvc
+
+
+CMP = VCXX
 COMPILER = unknown
-COMPILER_VERSION = 
-MSC_VER = 0
+COMPILER_VERSION = assuming Visual C++ 1.0
+MSC_VER = 80
 TARGET_CPU = x86
 
 # On windows we'll try to detect the Visual C++ version being used and adjust
@@ -74,10 +97,11 @@ TARGET_CPU = x86
 !message ========================================
 
 !if "$(CMP)" == "OWCL"
-INCLUDE = $(INCLUDE);ow\;
-!endif
 
-!if "$(CMP)" == "VCXX"
+# Standard windows headers from MinGW that don't come with OpenWatcom:
+INCLUDE = $(INCLUDE);ow\;
+
+!endif
 
 !if ($(MSC_VER) < 60)
 !error Unsupported compiler version. Visual C++ 6.0 SP6 or newer required.
@@ -89,17 +113,23 @@ INCLUDE = $(INCLUDE);ow\;
 LDFLAGS = $(LDFLAGS) /MACHINE:X64
 !endif
 
-# These flags are deprecated or unsupported from Visual C++ 2005 (v8.0) and up.
 !if ($(MSC_VER) < 140)
+# These flags and options are deprecated or unsupported
+# from Visual C++ 2005 (v8.0) and up.
+
 COMMON_CFLAGS = $(COMMON_CFLAGS) /Ze /GX- /YX
-OPT_4 = /G4
-OPT_5 = /G5
+# These are:    /Ze     Enable extensions (default)
+#               /GX-    Enable C++ Exception handling (same as /EHs /EHc)
+#               /YX     Automatic .PCH
+
+# Optimise for Pentium
+COMMON_OPTS = $(COMMON_OPTS) /G5
+
 !else
-# /EHs-c- replaces /GX-
 COMMON_CFLAGS = $(COMMON_CFLAGS) /EHs-c-
+# These are:    /EHs-c-     Enable C++ Exception handling (replaces /GX-)
 !endif
 
-!endif
 
 #---------- Compiler targets:
 #
@@ -134,7 +164,7 @@ telnet:
 	CC="cl /nologo" \
     CC2="" \
     OUT="-Fe" O=".obj" \
-    OPT="/Ot /Og /Oi $(OPT_4)" \
+    OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
     CFLAGS=" $(COMMON_CFLAGS) /J /DWIN32=1 /D_WIN32 /D_CONSOLE /D__32BIT__ /W2" \
@@ -150,7 +180,7 @@ rlogin:
 	CC="cl /nologo" \
     CC2="" \
     OUT="-Fe" O=".obj" \
-    OPT="/Ot /Og /Oi $(OPT_4)" \
+    OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
     CFLAGS=" $(COMMON_CFLAGS) /J /DWIN32=1 /D_WIN32 /D_CONSOLE /D__32BIT__ /W2" \
@@ -166,7 +196,7 @@ test:
 	CC="cl /nologo" \
     CC2="" \
     OUT="-Fe" O=".obj" \
-    OPT="/Ot /Og /Oi $(OPT_4)" \
+    OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
     CFLAGS=" $(COMMON_CFLAGS) /J /DWIN32=1 /D_CONSOLE /D__32BIT__ /W2" \
@@ -181,7 +211,7 @@ winsetup:
 	CC="cl /nologo" \
     CC2="" \
     OUT="-Fe" O=".obj" \
-    OPT="/Ot /Og /Oi $(OPT_4)" \
+    OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
     CFLAGS=" $(COMMON_CFLAGS) /J /D_WIN32 /DOS2 /DNT /D_CONSOLE /D__32BIT__ /W2 /D_WIN32_WINNT=0x0400" \
@@ -197,7 +227,7 @@ msvc:
 	CC="cl /nologo" \
     CC2="" \
     OUT="-Fe" O=".obj" \
-    OPT="$(OPT_5) /Ox /GA" \
+    OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
     CFLAGS=" $(COMMON_CFLAGS) /GF /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
@@ -212,7 +242,7 @@ msvc-iksd:
 	CC="cl /nologo" \
     CC2="" \
     OUT="-Fe" O=".obj" \
-    OPT="$(OPT_5) /Ox /GA" \
+    OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
     CFLAGS=" $(COMMON_CFLAGS) /GF /J /DWIN32 /D_WIN32_WINNT=0x0400  /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
@@ -275,7 +305,7 @@ msvcp:
 	CC="cl /nologo" \
     CC2="" \
     OUT="-Fe" O=".obj" \
-    OPT="$(OPT_5) /Ob1 /Oi /GA" \
+    OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
     CFLAGS=" $(COMMON_CFLAGS) /J /DWIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
@@ -306,7 +336,7 @@ kui:
 	CC="cl /nologo" \
     CC2="" \
     OUT="-Fe" O=".obj" \
-    OPT="$(OPT_5) /Ox /GA" \
+    OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
 	CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DCK_WIN /DWIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 /I." \
@@ -337,7 +367,7 @@ k95g:
 	CC="cl /nologo" \
     CC2="" \
     OUT="-Fe" O=".obj" \
-    OPT="$(OPT_5) /Ox /GA" \
+    OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
 	CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DK95G /DCK_WIN /DWIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 /I." \
