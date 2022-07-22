@@ -762,6 +762,11 @@ zopeno(n,name,zz,fcb)
         ckstrncat(p,"b",8);
     }
 
+#ifdef NT
+    if ( n == ZOFILE )      /* optimise caching for sequential access */
+        ckstrncat(p,"S",8); /* S is also known as _O_SEQUENTIAL */
+#endif /* NT */
+
     if (xferlog
 #ifdef CKSYSLOG
         || ckxsyslog >= SYSLG_FC && ckxlogging
@@ -834,10 +839,6 @@ zopeno(n,name,zz,fcb)
         }
 #endif /* CKSYSLOG */
     } else {                            /* Succeeded */
-#ifdef NT
-        if ( n == ZOFILE )
-            _setmode(_fileno(fp[n]),_O_SEQUENTIAL);
-#endif /* NT */
         if (n == ZDFILE ||              /* If it's the debug log */
             n == ZTFILE )               /* or the transaction log */
           setbuf(fp[n],NULL);           /* make it unbuffered */
