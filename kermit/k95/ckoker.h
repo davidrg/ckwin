@@ -37,8 +37,11 @@ char   *kstrdup(const char *str);
 #define sopen _sopen
 #define strupr _strupr
 #define close _close
+#ifndef __WATCOMC__
 #define stat _stat
 #define fileno _fileno
+#define fstat _fstat
+#endif
 #define sys_errlist _sys_errlist
 #define unlink _unlink
 #define write _write
@@ -52,10 +55,11 @@ char   *kstrdup(const char *str);
 #define access _access
 #define wcsdup _wcsdup
 #define chmod _chmod
-#define fstat _fstat
 #define ftime _ftime
 #endif /* __STDC__ */
+#ifndef __WATCOMC__
 #define isascii __isascii
+#endif
 #endif /* NT */
 
 #define NOJC
