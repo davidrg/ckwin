@@ -628,10 +628,8 @@ zopeni(n,name) int n; char *name; {
         ckstrncpy( os2filename, name, MAXPATH ) ;
         errno = 0;
 #ifdef NT
-        fp[n] = _fsopen(name,"rb",_SH_DENYWR);          /* Binary mode */
-        if (fp[n])
-            _setmode(_fileno(fp[n]),_O_SEQUENTIAL);
-        else {
+        fp[n] = _fsopen(name,"rbS",_SH_DENYWR);          /* Binary mode */
+        if (!fp[n]) {
             debug(F111,"zopeni ZI/ZR _fsopen failed","GetLastError",GetLastError());
         }
 #else
@@ -653,10 +651,8 @@ zopeni(n,name) int n; char *name; {
 #endif /* CK_LABELED */
     } else {
 #ifdef NT
-        fp[n] = _fsopen(name,"rb",_SH_DENYWR); /* Real file, open it. */
-        if (fp[n])
-            _setmode(_fileno(fp[n]),_O_SEQUENTIAL);
-        else {
+        fp[n] = _fsopen(name,"rbS",_SH_DENYWR); /* Real file, open it. */
+        if (!fp[n]) {
             debug(F111,"zopeni _fsopen failed","GetLastError",GetLastError());
         }
 #else
