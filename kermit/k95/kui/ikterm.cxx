@@ -546,14 +546,14 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
                 keycount = toUnicode( inpEvt.Event.KeyEvent.wVirtualKeyCode,
                         inpEvt.Event.KeyEvent.wVirtualScanCode | (keyDown ? 0x00 : 0x8000),
                         keystate,
-                        (WORD *)wbuf,
+                        (LPWSTR)wbuf,
                         8,
                         FALSE );                         
             else
                 keycount = toUnicodeEx( inpEvt.Event.KeyEvent.wVirtualKeyCode,
                         inpEvt.Event.KeyEvent.wVirtualScanCode | (keyDown ? 0x00 : 0x8000),
                         keystate,
-                        (WORD *)wbuf,
+                        (LPWSTR)wbuf,
                         8,
                         FALSE,
                         GetKeyboardLayout(0) );                         
@@ -563,7 +563,7 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
             keycount = ToAsciiEx( inpEvt.Event.KeyEvent.wVirtualKeyCode,
                         inpEvt.Event.KeyEvent.wVirtualScanCode | (keyDown ? 0x00 : 0x8000),
                         keystate,
-                        (WORD *)buf,
+                        (LPWORD)buf,
                         FALSE,
                         GetKeyboardLayout(0) );                         
         }
