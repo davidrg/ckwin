@@ -130,9 +130,11 @@ extern int pclose(FILE *);
 #endif
 
 #ifdef NT
+#ifndef __WATCOMC__
 #define timezone _timezone
-#define write _write
 #define fileno _fileno
+#endif /* __WATCOMC__ */
+#define write _write
 #define stricmp _stricmp
 #define setmode _setmode
 #define access _access
