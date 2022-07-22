@@ -44,8 +44,8 @@ COMMON_CFLAGS = /MD
 
 # Newer compilers don't support /G4 and /G5 so these will only be set when
 # we're compiling on one that does support them.
-OPT_4 = 
-OPT_5 =
+OPT_4 = ""
+OPT_5 = ""
 
 CMP = 
 COMPILER = unknown
