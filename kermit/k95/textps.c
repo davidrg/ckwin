@@ -927,6 +927,9 @@ main(argc, argv) int argc; char *argv[]; {
     }
 #ifdef OS2NTDOS
 #ifdef NT
+#ifdef __WATCOMC__
+    if (_isatty(stdin->_handle))
+#else
 #ifdef _MSC_VER
 #if _MSC_VER < 1900
     /* Visual C++ 2013 or older */
@@ -939,6 +942,7 @@ main(argc, argv) int argc; char *argv[]; {
     /* Not Visual C++ - assume it behaves like old Visual C++ */
     if (_isatty(stdin->_file))
 #endif
+#endif /* __WATCOMC__ */
 #else
 	if (isatty(fileno(stdin)))
 #endif /* NT */
