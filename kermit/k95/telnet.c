@@ -12,6 +12,13 @@
 #include <string.h>
 #include <process.h>
 
+/* OpenWatcom 1.9 defines P_WAIT instead of _P_WAIT */
+#ifdef __WATCOMC__
+#ifndef _P_WAIT
+#define _P_WAIT P_WAIT
+#endif
+#endif
+
 char * tn_port = NULL,
      * hostname = NULL;
 char ckermitcmd[1024]="";
