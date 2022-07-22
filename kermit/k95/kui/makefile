@@ -23,8 +23,6 @@ KUIOBJS = \
 
 RC_DEP = icon1.ico resource.h kui.rc
 
-KERMITDIR = \kui\kermit
-
 #--------------------------------------------------------------------------
 # Dependencies
 
