@@ -1,0 +1,46 @@
+name: Full Build
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  Build-VisualCxx14:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Prepare environment
+      run: |
+        cd ${{ github.workspace }}
+        sed -i 's/C:\\root/${{ github.workspace }}/g' setenv.bat
+      shell: cmd
+    - name: Full Build
+      run: |
+        cd ${{ github.workspace }}
+        call setenv.bat
+        cd kermit
+        cd k95
+        mk.bat
+        mkdist.bat
+      shell: cmd
+    - name: Prepare Artifact
+      run: |
+        cd ${{ github.workspace }}
+        cd kermit
+        cd k95
+        ren dist ckwin
+        7z a -tzip "ckwin-vc14x.zip" ckwin
+        move ckwin-vc14x.zip ${{ github.workspace }}
+      shell: cmd
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v2.2.4
+      with:
+        name: ckwin-vc14x
+        path: ckwin-vc14x.zip
+        if-no-files-found: error
+        retention-days: 7
