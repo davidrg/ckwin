@@ -73,6 +73,12 @@ TARGET_CPU = x86
 !message  Compiler Target Platform: $(TARGET_PLATFORM)
 !message ========================================
 
+!message Include: $(INCLUDE)
+
+!if "$(CMP)" == "OWCL"
+INCLUDE = $(INCLUDE);ow\;
+!endif
+
 !if "$(CMP)" == "VCXX"
 
 !if ($(MSC_VER) < 60)
