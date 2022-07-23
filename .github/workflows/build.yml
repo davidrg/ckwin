@@ -34,9 +34,9 @@ jobs:
       run: sed -i 's/C:\\root//g' setenv.bat
     - name: Full Build
       run: |
-        ..\..\setenv.bat
-        mk.bat
-        mkdist.bat
+        call ..\..\setenv.bat
+        call mk.bat
+        call mkdist.bat
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95
       env:
