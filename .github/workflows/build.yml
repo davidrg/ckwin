@@ -62,6 +62,7 @@ jobs:
         cd watcom
         wget https://github.com/open-watcom/open-watcom-1.9/releases/download/ow1.9/open-watcom-c-win32-1.9.exe
         7z x open-watcom-c-win32-1.9.exe
+      shell: cmd
     - name: Full Build
       run: |
         SET PATH=%WATCOM%\BINW;%PATH%
