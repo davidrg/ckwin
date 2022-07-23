@@ -51,6 +51,6 @@ jobs:
       uses: actions/upload-artifact@v2.2.4
       with:
         name: ckwin-vc${{ matrix.toolset }}-${{ matrix.arch }}
-        path: ${{ github.workspace }}\ckwin-vc${{ matrix.toolset }}-${{ matrix.arch }}.zip"
+        path: ${{ github.workspace }}\ckwin-vc${{ matrix.toolset }}-${{ matrix.arch }}.zip
         if-no-files-found: error
         retention-days: 7
