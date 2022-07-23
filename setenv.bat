@@ -1,7 +1,7 @@
 @echo off
 
-REM Set this to where your source code lives
-set root=C:\src
+REM Uncomment this and set it to where your source code lives
+REM set root=C:\src
 
 set include=%include%;%root%\kermit\k95
 set include=%include%;%root%\kermit\k95\kui
