@@ -33,14 +33,14 @@ jobs:
       shell: cmd
       run: sed -i 's/C:\\root//g' setenv.bat
     - name: Full Build
-      shell: cmd
-      working-directory: ${{ github.workspace }}\kermit\k95
-      env:
-        ROOT: ${{ github.workspace }}
       run: |
         ..\..\setenv.bat
         mk.bat
         mkdist.bat
+      shell: cmd
+      working-directory: ${{ github.workspace }}\kermit\k95
+      env:
+        ROOT: ${{ github.workspace }}
     - name: Prepare Artifact
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95
