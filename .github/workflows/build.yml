@@ -31,11 +31,13 @@ jobs:
         #spectre: # set true to use VC libraries with sepctre mitigations
     - name: Adjust setenv.bat
       run: |
+        dir
         cd ${{ github.workspace }}
         sed -i 's/C:\\root//g' setenv.bat
       shell: cmd
     - name: Full Build
       run: |
+        dir
         cd ${{ github.workspace }}
         set root=${{ github.workspace }}
         setenv.bat
