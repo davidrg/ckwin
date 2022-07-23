@@ -529,10 +529,11 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_ICONK95             ICON    DISCARDABLE     "k95a.ico"
-"minIcon"               ICON    DISCARDABLE     "k95a.ico"
-IDI_ICON2				ICON	DISCARDABLE		"k95g.ico"
-IDI_ICON3				ICON	DISCARDABLE		"k95f.ico"
+1                       ICON    DISCARDABLE     "k95a.ico"
+"MINICON"               ICON    DISCARDABLE     "k95a.ico"
+2				        ICON	DISCARDABLE		"k95g.ico"
+3				        ICON	DISCARDABLE		"k95f.ico"
+4                       ICON    DISCARDABLE     "k95a.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
