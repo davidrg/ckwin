@@ -32,33 +32,25 @@ jobs:
     - name: Adjust setenv.bat
       shell: cmd
       run: sed -i 's/C:\\root//g' setenv.bat
-    - name: Setup environment
-      shell: cmd
-      working-directory: ${{ github.workspace }}
-      env:
-        ROOT: ${{ github.workspace }}
-      run: setenv.bat
     - name: Full Build
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95
-      run: mk.bat
-    - name: Make dist
+      env:
+        ROOT: ${{ github.workspace }}
+      run: |
+        ..\..\setenv.bat
+        mk.bat
+        mkdist.bat
+    - name: Prepare Artifact
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95
-      run: mkdist.bat
-    - name: Prepare Artifact
       run: |
-        cd ${{ github.workspace }}
-        cd kermit
-        cd k95
         ren dist ckwin
         7z a -tzip "ckwin-vc${{ matrix.toolset }}-${{ matrix.arch }}.zip" ckwin
-        move ckwin-vc${{ matrix.toolset }}-${{ matrix.arch }}.zip" ${{ github.workspace }}
-      shell: cmd
     - name: Upload Artifact
       uses: actions/upload-artifact@v2.2.4
       with:
         name: ckwin-vc${{ matrix.toolset }}-${{ matrix.arch }}
-        path: ckwin-vc${{ matrix.toolset }}-${{ matrix.arch }}.zip"
+        path: ${{ github.workspace }}\kermit\k95\ckwin-vc${{ matrix.toolset }}-${{ matrix.arch }}.zip"
         if-no-files-found: error
         retention-days: 7
