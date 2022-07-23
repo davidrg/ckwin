@@ -46,11 +46,11 @@ jobs:
       working-directory: ${{ github.workspace }}\kermit\k95
       run: |
         ren dist ckwin
-        7z a -tzip "ckwin-vc${{ matrix.toolset }}-${{ matrix.arch }}.zip" ckwin
+        7z a -tzip "${{ github.workspace }}\ckwin-vc${{ matrix.toolset }}-${{ matrix.arch }}.zip" ckwin
     - name: Upload Artifact
       uses: actions/upload-artifact@v2.2.4
       with:
         name: ckwin-vc${{ matrix.toolset }}-${{ matrix.arch }}
-        path: ${{ github.workspace }}\kermit\k95\ckwin-vc${{ matrix.toolset }}-${{ matrix.arch }}.zip"
+        path: ${{ github.workspace }}\ckwin-vc${{ matrix.toolset }}-${{ matrix.arch }}.zip"
         if-no-files-found: error
         retention-days: 7
