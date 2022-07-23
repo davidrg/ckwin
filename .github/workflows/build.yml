@@ -30,18 +30,22 @@ jobs:
         #sdk:   # use the latest
         #spectre: # set true to use VC libraries with sepctre mitigations
     - name: Adjust setenv.bat
-      run: |
-        cd ${{ github.workspace }}
-        sed -i 's/C:\\root//g' setenv.bat
       shell: cmd
+      run: sed -i 's/C:\\root//g' setenv.bat
+    - name: Setup environment
+      shell: cmd
+      working-directory: ${{ github.workspace }}
+      env:
+        ROOT: ${{ github.workspace }}
+      run: setenv.bat
     - name: Full Build
-      run: |
-        set root=${{ github.workspace }}
-        setenv.bat
-        cd %root%\kermit\k95
-        mk.bat
-        mkdist.bat
       shell: cmd
+      working-directory: ${{ github.workspace }}\kermit\k95
+      run: mk.bat
+    - name: Make dist
+      shell: cmd
+      working-directory: ${{ github.workspace }}\kermit\k95
+      run: mkdist.bat
     - name: Prepare Artifact
       run: |
         cd ${{ github.workspace }}
