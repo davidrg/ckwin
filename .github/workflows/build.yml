@@ -29,9 +29,6 @@ jobs:
         toolset: ${{ matrix.toolset }}
         #sdk:   # use the latest
         #spectre: # set true to use VC libraries with sepctre mitigations
-    - name: Adjust setenv.bat
-      shell: cmd
-      run: sed -i 's/C:\\root//g' setenv.bat
     - name: Full Build
       run: |
         call ..\..\setenv.bat
