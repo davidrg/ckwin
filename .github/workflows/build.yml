@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         arch:
-          - amd64_x86
+          - x86
         toolset:
           - 14.0
           - 14.3
@@ -29,15 +29,15 @@ jobs:
         toolset: ${{ matrix.toolset }}
         #sdk:   # use the latest
         #spectre: # set true to use VC libraries with sepctre mitigations
-    - name: Prepare environment
+    - name: Adjust setenv.bat
       run: |
         cd ${{ github.workspace }}
-        sed -i 's|C:\\root|${{ github.workspace }}|g' setenv.bat
-        type setenv.bat
+        sed -i 's/C:\\root//g' setenv.bat
       shell: cmd
     - name: Full Build
       run: |
         cd ${{ github.workspace }}
+        set root=${{ github.workspace }}
         setenv.bat
         cd kermit
         cd k95
@@ -50,13 +50,13 @@ jobs:
         cd kermit
         cd k95
         ren dist ckwin
-        7z a -tzip "ckwin-vc14x.zip" ckwin
-        move ckwin-vc14x.zip ${{ github.workspace }}
+        7z a -tzip "ckwin-vc${{ matrix.toolset }}-${{ matrix.arch }}.zip" ckwin
+        move ckwin-vc${{ matrix.toolset }}-${{ matrix.arch }}.zip" ${{ github.workspace }}
       shell: cmd
     - name: Upload Artifact
       uses: actions/upload-artifact@v2.2.4
       with:
-        name: ckwin-vc14x
-        path: ckwin-vc14x.zip
+        name: ckwin-vc${{ matrix.toolset }}-${{ matrix.arch }}
+        path: ckwin-vc${{ matrix.toolset }}-${{ matrix.arch }}.zip"
         if-no-files-found: error
         retention-days: 7
