@@ -171,6 +171,7 @@ _PROTOTYP( char * ckgetfqhostname,(char *));
 #include "ckntap.h"
 #else /* NT */
 #define INCL_VIO
+#define INCL_WINERRORS
 #include <os2.h>
 #endif /* NT */
 #ifdef COMMENT                          /* Would you believe */
