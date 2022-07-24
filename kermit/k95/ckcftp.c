@@ -193,6 +193,14 @@ extern int TlsIndex;
 #endif	/* ERRNO_INCLUDED */
 #endif	/* HPUXPRE65 */
 
+#ifdef OS2
+#ifndef NT
+#ifdef __WATCOMC__
+#include <sys/time.h>
+#endif /* __WATCOMC__ */
+#endif /* NT */
+#endif /* OS2 */
+
 #ifndef NOTIMEH
 #include <time.h>
 #endif /* NOTIMEH */
