@@ -1871,10 +1871,17 @@ sysinit() {
     {
         printf("Warning: TZ environment variable not set.  Using EST5EDT.\n\n");
         bleep(BP_WARN);
+#ifdef __WATCOMC__
+        timezone = 18000;
+        daylight = 1;
+        tzname[0] = "EST";
+        tzname[1] = "EDT";
+#else
         _timezone = 18000;
         _daylight = 1;
         _tzname[0] = "EST";
         _tzname[1] = "EDT";
+#endif
     }
     else
 #endif /* OS2ONLY */
