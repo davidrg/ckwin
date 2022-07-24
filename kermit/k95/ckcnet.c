@@ -363,6 +363,7 @@ _PROTOTYP( int rlog_naws, (void) );
 #ifdef OS2                              /* For terminal type name string */
 #include "ckuusr.h"
 #ifndef NT
+#define INCL_DOSSEMAPHORES
 #include <os2.h>
 #undef COMMENT
 #endif /* NT */

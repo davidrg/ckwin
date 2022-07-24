@@ -77,15 +77,17 @@ int accept_complete = 0;
 #ifndef LIBDES
 #define LIBDES
 #endif /* LIBDES */
+#endif /* CRYPT_DLL */
+
 #ifdef OS2
 #ifdef NT
 #include <windows.h>
 #else /* NT */
 #define INCL_DOSMODULEMGR
+#define INCL_DOSSEMAPHORES
 #include <os2.h>
 #endif /* NT */
 #endif /* OS2 */
-#endif /* CRYPT_DLL */
 
 #ifdef NT
 #define KRB5_AUTOCONF__
