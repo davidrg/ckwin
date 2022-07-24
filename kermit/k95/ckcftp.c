@@ -310,6 +310,14 @@ struct timezone {
 #endif /* SELECT_H */
 #endif /* SCO_OSR504 */
 
+#ifdef OS2
+#ifndef NT
+#ifdef __WATCOMC__
+#include <types.h>
+#endif /* __WATCOMC__ */
+#endif /* NT */
+#endif /* OS2 */
+
 #ifndef INADDR_NONE			/* 2010-03-29 */
 #define INADDR_NONE -1
 #endif	/* INADDR_NONE */
