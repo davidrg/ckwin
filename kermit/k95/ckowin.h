@@ -44,7 +44,11 @@ DialerSend(UINT message, LONG lparam)
         SendMessage( hwndDialer, message, KermitDialerID, lparam ) ;
 }
 #else
+#ifdef __WATCOMC__
+inline void
+#else
 _Inline void
+#endif
 DialerSend(UINT message, LONG lparam)
 {
     debug(F111,"DialerSend","message",message);
