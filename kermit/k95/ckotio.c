@@ -179,6 +179,23 @@ int p_avail = 1 ;      /* No DLL to load - built-in */
 #endif /* XYZ_DLL */
 #endif /* CK_XYZ */
 
+#ifdef OS2
+#ifndef NT
+#ifdef __WATCOMC__
+/* Watcom C headers don't know what these are. I don't have
+ * access to any IBM development tools for OS/2 so I can't
+ * look in the heades to see what the values are. The values
+ * here come from:
+ *      OS/2 Debugging Handbook - Volume IV -
+ *      System Diagnostic Reference
+ *      February 1996
+ */
+#define NP_WMESG 0x0400
+#define NP_RMESG 0x0100
+#endif
+#endif
+#endif
+
 HKBD KbdHandle = 0 ;
 TID tidKbdHandler = (TID) 0,
     tidRdComWrtScr   = (TID) 0,
