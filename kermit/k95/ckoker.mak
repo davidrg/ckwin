@@ -15,10 +15,13 @@
 
 # which operating system
 PLATFORM = NT
+K95BUILD = K95
 
 # IBM VisualAge Libs
 VISUALAGE = C:\IBMCXX0
 
+# Base flags for all versions of Visual C++ (and OpenWatcom
+# pretending to be Visual C++)
 COMMON_CFLAGS = /MD
 
 # These options are used for all Windows .exe targets
@@ -61,7 +64,25 @@ TARGET_CPU = x86
 !message Attempting to detect compiler...
 
 !include compiler_detect.mak
-!message 	
+!message
+!else
+# On OS/2 we'll just assume OpenWatcom for now. I don't have access to the
+# IBM compiler to find a way to tell it apart from watcom like we do for
+# Visual C++.
+CMP = OWCL386
+COMPILER = OpenWatcom WCL386
+COMPILER_VERSION = OpenWatcom
+
+# wcl386 doesn't pretend to be Visual C++ and doesn't take the same
+# command line arguments.
+MSC_VER = 0
+
+# Nothing supports PowerPC OS/2.
+TARGET_CPU = x86
+TARGET_PLATFORM = OS/2
+
+# Override CL so we don't end up running the Visual C++ clone cl.
+CL = wcl386
 !endif
 
 !message ========================================
@@ -75,6 +96,10 @@ TARGET_CPU = x86
 !message  Compiler Target Platform: $(TARGET_PLATFORM)
 !message ========================================
 
+
+# NT: Adjust compiler flags for different versions of Visual C++ and
+# OpenWatcom.
+!if "$(PLATFORM)" == "NT"
 !if "$(CMP)" == "OWCL"
 
 # Standard windows headers from MinGW that don't come with OpenWatcom:
@@ -108,7 +133,7 @@ COMMON_OPTS = $(COMMON_OPTS) /G5
 COMMON_CFLAGS = $(COMMON_CFLAGS) /EHs-c-
 # These are:    /EHs-c-     Enable C++ Exception handling (replaces /GX-)
 !endif
-
+!endif
 
 #---------- Compiler targets:
 #
@@ -138,6 +163,7 @@ unknown:
 # CKOKER.MSB, or the DDE4.MSG file must be copied into the current directory.
 # It is normally found in IBMCPP\HELP.
 
+################### WINDOWS TARGETS ###################
 telnet:
 	$(MAKE) -f ckoker.mak wtelnet \
 	CC="cl /nologo" \
@@ -356,11 +382,52 @@ k95g:
     LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:windows" \
 	DEF="cknker.def"
 
+################### OS/2 TARGETS ###################
+
+# Watcom C targeting OS/2
+wcos2:
+	$(MAKE) -f ckoker.mak os232 \
+	    CMP="OWCL386" \
+	    CC="wcl386" \
+        CC2="-Fh" \
+        OUT="-Fe=" O=".obj" \
+	    OPT="-ox " \
+        DEBUG="-DNDEBUG" \
+        DLL="-br" \
+	    CFLAGS="-q -zp=1 -bm -bt=os2 -aa" \
+        LDFLAGS="" \
+        PLATFORM="OS2" \
+        NOLINK="-c" \
+!ifdef WARP
+        WARP="YES" \
+!endif
+        LINKFLAGS="-l=os2v2 -x" \
+	    DEF=""  # ckoker32.def
+
+# Flags are:
+#   --aa            Allows non-const initializers for local aggregates or unions.
+#                   Required to fix initialisation of viocell with geterasecolor()
+#                   in a few places.
+#   -Fh=<file>      Use precompiled headers where available. Equivalent to -Si+
+#                   on the IBM compiler.
+#   -zp=1           Struct packing align. Equivalent to -Sp1 on the IBM compiler.
+#   -bm             Build multithreaded application. Should be the same as -Gm on
+#                   the IBM compiler.
+#   -Fe=<file>      Output executable filename
+#   -ox             Maximum optimisation
+#   -br             Build with dll runtime library - maybe equivalent to /Ge- on the
+#                   IBM compiler.
+#   -q              Operate quietly
+#   -bt=os2         Compile for OS/2 (rather than DOS/NetWare/Windows/QNX/whatever)
+#   -c              Compile only, don't link
+#   -l=os2v2        Link for 32bit OS/2
+#   -x              Make names case sensitive
 
 # release version
 #         CC2="-Fi+ -Si+ -Gi+ -Gl+" \
 #         add /Gn+ back to hide the default library info after I figure out how to build the runtime library dll
 
+# Targets for the IBM compiler
 ibmc:
 	$(MAKE) -f ckoker.mak os232 \
 	CC="icc -q" \
@@ -453,9 +520,14 @@ ibmcd:
 !if "$(PLATFORM)" == "OS2"
 DEFINES = -DOS2 -DDYNAMIC -DKANJI -DNETCONN -DTCPSOCKET \
           -DNPIPE -DOS2MOUSE -DCK_NETBIOS -DHADDRLIST -DPCFONTS \
-          -DRLOGCODE -DNETFILE -DONETERMUPD -DZLIB \
-          -DNO_SRP -DBETATEST  -DNO_KERBEROS -DNOCKXYZ
-		  # DECnet (Pathworks32) support: -DDECNET
+          -DRLOGCODE -DNETFILE -DONETERMUPD \
+          -DNO_SRP -DBETATEST  -DNO_KERBEROS \
+          -DNOCKXYZ -DNO_SSL -DNO_ENCRYPTION \
+!if "$(CMP)" == "OWCL386"
+          -D__32BIT__
+!endif
+# zlib support:  -DZLIB
+# DECnet (Pathworks32) support: -DDECNET
            
 !else if "$(PLATFORM)" == "NT"
 !ifndef K95BUILD
@@ -510,7 +582,11 @@ COMMODE_OBJ = commode.obj
 
 !ifdef PLATFORM
 !if "$(PLATFORM)" == "OS2"
-LIBS = os2386.lib rexx.lib bigmath.lib 
+LIBS = os2386.lib rexx.lib \
+!if "$(CMP)" != "OWCL"
+       bigmath.lib
+!endif
+# OpenWatcom doesn't have bigmath.lib
 # SRP support: libsrp.lib
 !else if "$(PLATFORM)" == "NT"
 !if "$(K95BUILD)" == "UIUC"
@@ -613,7 +689,10 @@ $(PDLLDIR)\pdll_x_global.obj \
 $(PDLLDIR)\pdll_z.obj \
 $(PDLLDIR)\pdll_z_global.obj \
 
-os232: cko32rtl.dll ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe otextps.exe 
+os232: ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe otextps.exe \
+!if "$(CMP)" != "OWCL386"
+       cko32rtl.dll     # IBM compiler only.
+!endif
 # SRP support: srp-tconf.exe srp-passwd.exe
 # Crypto stuff: k2crypt.dll 
 
@@ -651,7 +730,8 @@ textps: textps.exe
 # FTP Software PC/TCP 1.3 - cko32i13.dll 
 # Novell LWP OS/2 3.0     - cko32n30.dll 
 
-tcp32: cko32i20.dll cko32i12.dll cko32f13.dll 
+tcp32: cko32i20.dll
+# cko32i12.dll cko32f13.dll
 # cko32n30.dll
 
 cknker.exe: $(OBJS) cknker.res $(DEF) ckoker.mak 
@@ -723,18 +803,22 @@ textps.exe: textps.obj $(DEF) ckoker.mak
        $(LINKFLAGS) /OUT:$@ textps.obj $(LIBS) 
 <<
 
-ckoker32.exe: $(OBJS) $(DEF) ckoker.msb ckoker.res ckoker.mak 
+ckoker32.exe: $(OBJS) $(DEF) ckoker.msb ckoker.res ckoker.mak
+!if "$(CMP)" == "OWCL386"
+        $(CC) $(CC2) $(LINKFLAGS) $(DEBUG) $(OBJS) $(DEF) $(OUT)$@ $(LIBS) $(LDFLAGS)
+!else
         $(CC) $(CC2) /B"$(LINKFLAGS)" $(DEBUG) $(OBJS) $(DEF) $(OUT) $@ $(LIBS) $(LDFLAGS)
 !ifdef WARP
        rc -p -x2 ckoker.res $@
 !else
        rc -p -x1 ckoker.res $@
 !endif
-       dllrname $@ CPPRMI36=CKO32RTL       
+       dllrname $@ CPPRMI36=CKO32RTL
+!endif
 
-cko32rtl.dll: 
+cko32rtl.dll:
         copy $(VISUALAGE)\RUNTIME\CPPRMI36.DLL cko32rtl.dll
-        dllrname $@ CPPRMI36=CKO32RTL       
+        dllrname $@ CPPRMI36=CKO32RTL
 
 cko32rtl.lib: cko32rtl.dll cko32rt.def cko32rt.c
         ILIB /GI cko32rt.dll
