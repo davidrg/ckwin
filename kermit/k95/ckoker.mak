@@ -20,6 +20,27 @@ K95BUILD = K95
 # IBM VisualAge Libs
 VISUALAGE = C:\IBMCXX0
 
+# for IBM TCP/IP 1.2.1
+IBM12DIR  = C:\TCPIP
+IBM12LIBS = $(IBM12DIR)\lib\tcpipdll.lib
+IBM12INC  = $(IBM12DIR)\include
+
+# for IBM TCP/IP 2.0
+IBM20DIR  = C:\TCPIP
+IBM20LIBS = $(IBM20DIR)\lib\tcp32dll.lib $(IBM20DIR)\lib\so32dll.lib
+IBM20INC  = $(IBM20DIR)\include
+
+# for FTP PC/TCP 1.3
+FTP13DIR  = C:\DEVKIT
+FTP13LIBS32 = $(FTP13DIR)\lib\socket32.lib
+FTP13LIBS16 = $(FTP13DIR)\lib\socket16.lib
+FTP13INC  = $(FTP13DIR)\include
+
+# for Novell LAN Workplace 3.0
+LWP30DIR  = C:\LANWP\TOOLKIT
+LWP30LIBS32 = $(LWP30DIR)\os2lib20\socklib.lib
+LWP30INC    = $(LWP30DIR)\inc20
+
 # Base flags for all versions of Visual C++ (and OpenWatcom
 # pretending to be Visual C++)
 COMMON_CFLAGS = /MD
