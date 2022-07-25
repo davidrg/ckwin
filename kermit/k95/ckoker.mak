@@ -804,10 +804,18 @@ rlogin.exe: rlogin.obj $(DEF) ckoker.mak
 <<
 
 orlogin.exe: rlogin.obj $(DEF) ckoker.mak
+!if "$(CMP)" == "OWCL386"
+        $(CC) $(CC2) $(LINKFLAGS) rlogin.obj $(OUT)$@ $(LDFLAGS) $(LIBS)
+!else
       	$(CC) $(CC2) /B"$(LINKFLAGS)" rlogin.obj $(OUT) $@ $(LDFLAGS) $(LIBS)
+!endif
 
 otextps.exe: textps.obj $(DEF) ckoker.mak
+!if "$(CMP)" == "OWCL386"
+        $(CC) $(CC2) $(LINKFLAGS) textps.obj $(OUT)$@ $(LDFLAGS) $(LIBS)
+!else
       	$(CC) $(CC2) /B"$(LINKFLAGS)" textps.obj $(OUT) $@ $(LDFLAGS) $(LIBS)
+!endif
 
 k95d.exe: k95d.obj $(DEF) ckoker.mak
        link.exe @<< 
@@ -893,21 +901,36 @@ ckwart.exe: ckwart.obj $(DEF)
 
 docs:   ckermit.inf
 
-otelnet.exe: ckotel.obj ckotel.def ckoker.mak 
+# ckotel.def
+otelnet.exe: ckotel.obj ckoker.mak
+!if "$(CMP)" == "OWCL386"
+        $(CC) $(CC2) $(DEBUG) ckotel.obj $(LINKFLAGS) $(OUT)$@ $(LIBS)
+!else
         $(CC) $(CC2) $(DEBUG) ckotel.obj ckotel.def $(OUT) $@ $(LIBS)
-        dllrname $@ CPPRMI36=CKO32RTL       
+        dllrname $@ CPPRMI36=CKO32RTL
+!endif
 
-osetup.exe: setup.obj osetup.def ckoker.mak 
-        $(CC) $(DEBUG) setup.obj osetup.def $(OUT) $@ 
+osetup.exe: setup.obj osetup.def ckoker.mak
+!if "$(CMP)" == "OWCL386"
+        $(CC) $(DEBUG) setup.obj $(LINKFLAGS) $(OUT)$@
+!else
+        $(CC) $(DEBUG) setup.obj osetup.def $(OUT) $@
+!endif
 
-ckoclip.exe: ckoclip.obj ckoclip.def ckoker.mak ckoclip.res 
+# ckoclip.def
+ckoclip.exe: ckoclip.obj ckoker.mak ckoclip.res
+!if "$(CMP)" == "OWCL386"
+        $(CC) $(CC2) $(LINKFLAGS) $(DEBUG) ckoclip.obj $(OUT)$@ $(LIBS)
+        wrc -q -bt=os2 ckoclip.res $@
+!else
         $(CC) $(CC2) $(DEBUG) ckoclip.obj ckoclip.def $(OUT) $@ $(LIBS)
 !ifdef WARP
        rc -p -x2 ckoclip.res $@
 !else
        rc -p -x1 ckoclip.res $@
 !endif
-        dllrname $@ CPPRMI36=CKO32RTL       
+        dllrname $@ CPPRMI36=CKO32RTL
+!endif
 
 # SRP support
 #srp-tconf.exe: srp-tconf.obj getopt.obj ssh\ckosslc.obj ckoker.mak
@@ -1197,7 +1220,11 @@ ckopcf.res: ckopcf.rc ckopcf.h
         rc -r ckopcf.rc
 
 ckoclip.res: ckoclip.rc ckoclip.h ckoclip.ico
+!if "$(CMP)" == "OWCL386"
+        wrc -r -bt=os2 ckoclip.rc
+!else
         rc -r ckoclip.rc
+!endif
 
 ckermit.inf:    ckermit.ipf cker01.ipf cker02.ipf cker03.ipf cker04.ipf \
                 cker05.ipf cker06.ipf ckermit.bmp
