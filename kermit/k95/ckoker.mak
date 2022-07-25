@@ -807,6 +807,7 @@ textps.exe: textps.obj $(DEF) ckoker.mak
 ckoker32.exe: $(OBJS) $(DEF) ckoker.res ckoker.mak
 !if "$(CMP)" == "OWCL386"
         $(CC) $(CC2) $(LINKFLAGS) $(DEBUG) $(OBJS) $(DEF) $(OUT)$@ $(LIBS) $(LDFLAGS)
+        wrc -q -bt=os2 ckoker.res $@
 !else
         $(CC) $(CC2) /B"$(LINKFLAGS)" $(DEBUG) $(OBJS) $(DEF) $(OUT) $@ $(LIBS) $(LDFLAGS)
 !ifdef WARP
@@ -1162,7 +1163,11 @@ cksnval$(O):  ckoetc.c
     ren ckoetc.o ckoetc.obj
 
 ckoker.res: ckoker.rc
-        rc -r ckoker.rc 
+!if "$(CMP)" == "OWCL386"
+        wrc -r -bt=os2 ckoker.rc
+!else
+        rc -r ckoker.rc
+!endif
 
 cknker.res: cknker.rc cknker.ico
         rc /fo cknker.res cknker.rc
