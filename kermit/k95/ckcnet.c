@@ -257,6 +257,7 @@ struct timezone {
 #endif /* CK_ANSIC */
 #endif /* OSF13 */
 
+#ifndef OS2
 #ifndef I386IX
 #ifndef HPUXPRE65
 #include <errno.h>			/* Error number symbols */
@@ -266,6 +267,20 @@ struct timezone {
 #endif	/* ERRNO_INCLUDED */
 #endif	/* HPUXPRE65 */
 #endif /* I386IX */
+#endif /* OS2 */
+
+#ifdef OS2
+#ifdef NT
+#include <errno.h>			/* Error number symbols */
+#else /* OS/2 */
+#ifdef __WATCOMC__
+/* WatcomC doesn't need errno.h (definitions conflict with some previous definition */
+//#include <errno.h>
+#else
+#include <errno.h>			/* Error number symbols */
+#endif
+#endif /* NT */
+#endif /* OS2 */
 
 #include <signal.h>                     /* Everybody needs this */
 
