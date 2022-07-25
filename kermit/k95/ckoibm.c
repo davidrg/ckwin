@@ -59,6 +59,11 @@
 #include <sys/time.h>
 #include <sys/select.h>
 
+#ifdef __WATCOMC__
+#include <tcpustd.h>
+#include <arpa/inet.h>
+#endif
+
 #define CK_DLL
 #include "ckotcp.h"
 
