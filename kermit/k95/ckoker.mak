@@ -855,10 +855,16 @@ cko32rtl.lib: cko32rtl.dll cko32rt.def cko32rt.c
         ILIB /GI cko32rt.dll
         ILIB /NOBR /OUT:cko32rt.lib $(VISUALAGE)\LIB\CPPRNO36.LIB
 
-cko32i20.dll: ckoi20.obj cko32i20.def ckoker.mak
+# cko32i20.def
+cko32i20.dll: ckoi20.obj ckoker.mak
+!if "$(CMP)" == "OWCL386"
+    $(CC) $(CC2) $(DEBUG) $(DLL) ckoi20.obj $(OUT)$@ \
+	 $(LINKFLAGS) tcpip32.lib $(LIBS)
+!else
 	$(CC) $(CC2) $(DEBUG) $(DLL) ckoi20.obj cko32i20.def $(OUT) $@ \
 	/B"/noe /noi" $(IBM20LIBS) $(LIBS)
-        dllrname $@ CPPRMI36=CKO32RTL       
+        dllrname $@ CPPRMI36=CKO32RTL
+!endif
 
 cko32i12.dll: ckoi12.obj cko32i12.def ckoker.mak
 	$(CC) $(CC2) $(DEBUG) $(DLL) ckoi12.obj cko32i12.def $(OUT) $@ \
@@ -1180,8 +1186,13 @@ ckof13.obj: ckoftp.c ckotcp.h
 ckoi20.obj: ckoibm.c ckotcp.h
         @echo > ckoi20.obj
         del ckoi20.obj
+!if "$(CMP)" == "OWCL386"
+	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DEFINES) -D__SOCKET_32H $(DLL) -c ckoibm.c
+	# Watcom lacks the headers to support -DSOCKS_ENABLED
+!else
 	$(CC) $(CC2) $(CFLAGS) -I$(IBM20INC) \
            $(DEBUG) $(OPT) $(DEFINES) -DSOCKS_ENABLED $(DLL) -c ckoibm.c
+!endif
         ren ckoibm.obj ckoi20.obj
 
 ckoi12.obj: ckoibm.c ckotcp.h
