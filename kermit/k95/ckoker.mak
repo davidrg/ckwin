@@ -803,7 +803,8 @@ textps.exe: textps.obj $(DEF) ckoker.mak
        $(LINKFLAGS) /OUT:$@ textps.obj $(LIBS) 
 <<
 
-ckoker32.exe: $(OBJS) $(DEF) ckoker.msb ckoker.res ckoker.mak
+#       ckoker.msb  -- no idea what this is
+ckoker32.exe: $(OBJS) $(DEF) ckoker.res ckoker.mak
 !if "$(CMP)" == "OWCL386"
         $(CC) $(CC2) $(LINKFLAGS) $(DEBUG) $(OBJS) $(DEF) $(OUT)$@ $(LIBS) $(LDFLAGS)
 !else
