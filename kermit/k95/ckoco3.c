@@ -10030,6 +10030,12 @@ vt100key(int key) {
 /*         sequence of apclength in apcbuf                            */
 /* ------------------------------------------------------------------ */
 
+/* This buffer was originally 31 characters for some reason. This is
+ * pretty short and the os2settitle functions buffer is 128 so titles
+ * of up to 64 chars seems more reasonable.
+ */
+#define APC_TITLE_BUF_LEN 64
+
 void
 doosc( void ) {
 /* at current we only process two SET WINDOW TITLE and SET ICON TITLE */
@@ -10043,9 +10049,11 @@ doosc( void ) {
     switch ( apcbuf[0] ) {
     case '0': { /* XTERM */
         /* the rest of the apcbuffer is the Window Title */
-        char wtitle[31] ;
+        char wtitle[APC_TITLE_BUF_LEN] ;
         int i ;
-        for ( i=0;i<=30 && i+2 < apclength; i++ )
+
+        /* Take 1 off to leave room for the NUL at the end */
+        for ( i=0;i < APC_TITLE_BUF_LEN - 1 && i+2 < apclength; i++ )
             wtitle[i] = apcbuf[i+2] ;
         if ( i > 0 && apcbuf[i-1] == 0x07 ) {
             /* XTERMs may append a Beep indicator at the end */
@@ -10068,9 +10076,10 @@ doosc( void ) {
             break;
         case '1': {     /* SET WINDOW TITLE - DECSWT */
             /* the rest of the apcbuffer is the Window Title */
-            char wtitle[31] ;
+            char wtitle[APC_TITLE_BUF_LEN] ;
             int i ;
-            for ( i=0;i<=30 && i+3<=apclength; i++ )
+            /* Take one of the title buffer length to leave room for the NUL */
+            for ( i=0;i < APC_TITLE_BUF_LEN - 1 && i+3<=apclength; i++ )
                 wtitle[i] = apcbuf[i+3] ;
             wtitle[i] = NUL ;
 
