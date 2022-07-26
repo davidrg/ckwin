@@ -1251,7 +1251,10 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
         int argslen;
         COORD size;
         HRESULT result;
+
+#ifdef CK_CONPTY
         STARTUPINFOEX startinfoex;
+#endif
 
 #ifdef NT
         hSaveStdOut = GetStdHandle( STD_OUTPUT_HANDLE ) ;
