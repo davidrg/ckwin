@@ -1249,107 +1249,9 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
     if ( nettype == NET_CMD ) {
         char cmd_line[256], *cmd_exe, *args, *p;
         int argslen;
-        COORD size;
         HRESULT result;
 
-#ifdef CK_CONPTY
-        STARTUPINFOEX startinfoex;
-#endif
-
 #ifdef NT
-        hSaveStdOut = GetStdHandle( STD_OUTPUT_HANDLE ) ;
-        hSaveStdIn  = GetStdHandle( STD_INPUT_HANDLE ) ;
-        hSaveStdErr = GetStdHandle( STD_ERROR_HANDLE ) ;
-
-        /* Set the bInheritHandle flag so pipe handles are inherited. */
-
-        saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
-        saAttr.bInheritHandle = TRUE;
-        saAttr.lpSecurityDescriptor = NULL;
-
-        /*
-        * The steps for redirecting child's STDOUT:
-        *     1.  Save current STDOUT, to be restored later.
-        *     2.  Create anonymous pipe to be STDOUT for child.
-        *     3.  Set STDOUT of parent to be write handle of pipe, so
-        *         it is inherited by child.
-        */
-
-        /* Create a pipe for the child's STDOUT. */
-
-        if (! CreatePipe(&hChildStdoutRd, &hChildStdoutWr, &saAttr, 65535))
-            debug(F101,"Stdout pipe creation failed\n","",0);
-
-        /* Set a write handle to the pipe to be STDOUT. */
-        /* 20220706 DavidG - This only kind of works for the console version
-         * (cknker.exe/k95.exe) - its totally broken on the GUI version (k95g.exe)
-        if (! SetStdHandle(STD_OUTPUT_HANDLE, hChildStdoutWr) ||
-             ! SetStdHandle(STD_ERROR_HANDLE, hChildStdoutWr) )
-            debug(F100,"Redirecting STDOUT/STDERR failed","",0);
-        */
-
-        /*
-        * The steps for redirecting child's STDIN:
-        *     1.  Save current STDIN, to be restored later.
-        *     2.  Create anonymous pipe to be STDIN for child.
-        *     3.  Set STDIN of parent to be read handle of pipe, so
-        *         it is inherited by child.
-        *     4.  Create a noninheritable duplicate of write handle,
-        *         and close the inheritable write handle.
-        */
-
-        /* Create a pipe for the child's STDIN. */
-
-        if (! CreatePipe(&hChildStdinRd, &hChildStdinWr, &saAttr, 65535))
-            debug(F100,"Stdin pipe creation failed\n","",0);
-
-        /* Set a read handle to the pipe to be STDIN. */
-        /* 20220706 DavidG - This only kind of works for the console version
-         * (cknker.exe/k95.exe) - its totally broken on the GUI version (k95g.exe)
-        if (! SetStdHandle(STD_INPUT_HANDLE, hChildStdinRd))
-            debug(F100,"Redirecting Stdin failed","",0);
-        */
-
-        /* Duplicate the write handle to the pipe so it is not inherited. */
-        /* 20220706 DavidG - This should probably be done with something like:
-         *      SetHandleInformation(hChildStdinWr, HANDLE_FLAG_INHERIT, 0) */
-        fSuccess = DuplicateHandle(GetCurrentProcess(), hChildStdinWr,
-                                  GetCurrentProcess(), &hChildStdinWrDup, 0,
-                                  FALSE,       /* not inherited */
-                                  DUPLICATE_SAME_ACCESS);
-        if (! fSuccess) {
-            debug(F100,"DuplicateHandle failed","",0);
-
-            SetStdHandle( STD_OUTPUT_HANDLE, hSaveStdOut );
-            SetStdHandle( STD_INPUT_HANDLE, hSaveStdIn );
-            SetStdHandle( STD_ERROR_HANDLE, hSaveStdErr );
-
-            CloseHandle(hChildStdoutRd);  hChildStdoutRd = NULL;
-            CloseHandle(hChildStdoutWr);  hChildStdoutWr = NULL;
-            CloseHandle(hChildStdinRd);  hChildStdinRd = NULL;
-            CloseHandle(hChildStdinWr);  hChildStdinWr = NULL;
-        }
-
-        fSuccess = DuplicateHandle(GetCurrentProcess(), hChildStdoutRd,
-                                    GetCurrentProcess(), &hChildStdoutRdDup, 0,
-                                    FALSE,       /* not inherited */
-                                    DUPLICATE_SAME_ACCESS);
-        if (! fSuccess) {
-            debug(F100,"DuplicateHandle failed","",0);
-
-            SetStdHandle( STD_OUTPUT_HANDLE, hSaveStdOut );
-            SetStdHandle( STD_INPUT_HANDLE, hSaveStdIn );
-            SetStdHandle( STD_ERROR_HANDLE, hSaveStdErr );
-
-            CloseHandle(hChildStdoutRd);  hChildStdoutRd = NULL;
-            CloseHandle(hChildStdoutWr);  hChildStdoutWr = NULL;
-            CloseHandle(hChildStdinRd);  hChildStdinRd = NULL;
-            CloseHandle(hChildStdinWr);  hChildStdinWr = NULL;
-        }
-
-        CloseHandle(hChildStdinWr);
-        hChildStdinWr = NULL;
-
         cmd_line[0] = '\0' ;
         /* Now create the child process. */
 
@@ -1382,52 +1284,111 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
 #ifdef CK_CONPTY
         if (pseudo_console_available()) {
             extern int tt_rows[], tt_cols[];
+            COORD size;
 
             size.X = tt_cols[VTERM];
             size.Y = tt_rows[VTERM];
-            result = open_pseudo_console(size, hChildStdinRd, hChildStdoutWr);
 
-            conpty_open = !FAILED(result);
-
-            if (!conpty_open) {
-                debug(F101, "ConPTY open failed with result", "", result);
-            } else {
-                debug(F100, "ConPTY open.", "", 0);
+            if (start_subprocess_in_pty(
+                    size, cmd_line, &procinfo, &hChildStdinWrDup, &hChildStdoutRdDup)) {
+                conpty_open = TRUE;
+                fSuccess = TRUE;
             }
-
-            memset(&startinfoex, 0, sizeof(STARTUPINFOEX));
-            result = prepare_startup_info(&startinfoex);
-
-            if (FAILED(result)) {
-                /* Can't launch the suprocess without a suitably prepared
-                 * STARTUPINFOEX - give up and just run a regular subprocess
-                 * using pipes. It may be better than nothing. */
-                debug(F101, "Closing PTY; Prepare startup info failed with result", "", result);
-                conpty_open = FALSE;
-                close_pseudo_console();
-            }
-        }
-
-        if (conpty_open) {
-            ZeroMemory(&procinfo, sizeof(procinfo));
-            fSuccess = CreateProcess(
-                     NULL,                  /* application name */
-                     cmd_line,              /* command line */
-                     NULL,                  /* process security attributes */
-                     NULL,                  /* primary thread security attrs */
-                     FALSE,                 /* inherit handles */
-                     EXTENDED_STARTUPINFO_PRESENT, /* creation flags */
-                     NULL,                  /* use parent's environment */
-                     NULL,                  /* use parent's current directory */
-                     &startinfoex.StartupInfo,            /* startup info */
-                     &procinfo ) ;           /* process info */
-             if ( !fSuccess ) {
-                 conpty_open = FALSE;
-                 close_pseudo_console();
-             }
-
         } else {
 #endif /* CK_CONPTY */
+            hSaveStdOut = GetStdHandle( STD_OUTPUT_HANDLE ) ;
+            hSaveStdIn  = GetStdHandle( STD_INPUT_HANDLE ) ;
+            hSaveStdErr = GetStdHandle( STD_ERROR_HANDLE ) ;
+
+            /* Set the bInheritHandle flag so pipe handles are inherited. */
+
+            saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+            saAttr.bInheritHandle = TRUE;
+            saAttr.lpSecurityDescriptor = NULL;
+
+            /*
+            * The steps for redirecting child's STDOUT:
+            *     1.  Save current STDOUT, to be restored later.
+            *     2.  Create anonymous pipe to be STDOUT for child.
+            *     3.  Set STDOUT of parent to be write handle of pipe, so
+            *         it is inherited by child.
+            */
+
+            /* Create a pipe for the child's STDOUT. */
+
+            if (! CreatePipe(&hChildStdoutRd, &hChildStdoutWr, &saAttr, 65535))
+                debug(F101,"Stdout pipe creation failed\n","",0);
+
+            /* Set a write handle to the pipe to be STDOUT. */
+            /* 20220706 DavidG - This only kind of works for the console version
+             * (cknker.exe/k95.exe) - its totally broken on the GUI version (k95g.exe)
+            if (! SetStdHandle(STD_OUTPUT_HANDLE, hChildStdoutWr) ||
+                 ! SetStdHandle(STD_ERROR_HANDLE, hChildStdoutWr) )
+                debug(F100,"Redirecting STDOUT/STDERR failed","",0);
+            */
+
+            /*
+            * The steps for redirecting child's STDIN:
+            *     1.  Save current STDIN, to be restored later.
+            *     2.  Create anonymous pipe to be STDIN for child.
+            *     3.  Set STDIN of parent to be read handle of pipe, so
+            *         it is inherited by child.
+            *     4.  Create a noninheritable duplicate of write handle,
+            *         and close the inheritable write handle.
+            */
+
+            /* Create a pipe for the child's STDIN. */
+
+            if (! CreatePipe(&hChildStdinRd, &hChildStdinWr, &saAttr, 65535))
+                debug(F100,"Stdin pipe creation failed\n","",0);
+
+            /* Set a read handle to the pipe to be STDIN. */
+            /* 20220706 DavidG - This only kind of works for the console version
+             * (cknker.exe/k95.exe) - its totally broken on the GUI version (k95g.exe)
+            if (! SetStdHandle(STD_INPUT_HANDLE, hChildStdinRd))
+                debug(F100,"Redirecting Stdin failed","",0);
+            */
+
+            /* Duplicate the write handle to the pipe so it is not inherited. */
+            /* 20220706 DavidG - This should probably be done with something like:
+             *      SetHandleInformation(hChildStdinWr, HANDLE_FLAG_INHERIT, 0) */
+            fSuccess = DuplicateHandle(GetCurrentProcess(), hChildStdinWr,
+                                      GetCurrentProcess(), &hChildStdinWrDup, 0,
+                                      FALSE,       /* not inherited */
+                                      DUPLICATE_SAME_ACCESS);
+            if (! fSuccess) {
+                debug(F100,"DuplicateHandle failed","",0);
+
+                SetStdHandle( STD_OUTPUT_HANDLE, hSaveStdOut );
+                SetStdHandle( STD_INPUT_HANDLE, hSaveStdIn );
+                SetStdHandle( STD_ERROR_HANDLE, hSaveStdErr );
+
+                CloseHandle(hChildStdoutRd);  hChildStdoutRd = NULL;
+                CloseHandle(hChildStdoutWr);  hChildStdoutWr = NULL;
+                CloseHandle(hChildStdinRd);  hChildStdinRd = NULL;
+                CloseHandle(hChildStdinWr);  hChildStdinWr = NULL;
+            }
+
+            fSuccess = DuplicateHandle(GetCurrentProcess(), hChildStdoutRd,
+                                        GetCurrentProcess(), &hChildStdoutRdDup, 0,
+                                        FALSE,       /* not inherited */
+                                        DUPLICATE_SAME_ACCESS);
+            if (! fSuccess) {
+                debug(F100,"DuplicateHandle failed","",0);
+
+                SetStdHandle( STD_OUTPUT_HANDLE, hSaveStdOut );
+                SetStdHandle( STD_INPUT_HANDLE, hSaveStdIn );
+                SetStdHandle( STD_ERROR_HANDLE, hSaveStdErr );
+
+                CloseHandle(hChildStdoutRd);  hChildStdoutRd = NULL;
+                CloseHandle(hChildStdoutWr);  hChildStdoutWr = NULL;
+                CloseHandle(hChildStdinRd);  hChildStdinRd = NULL;
+                CloseHandle(hChildStdinWr);  hChildStdinWr = NULL;
+            }
+
+            CloseHandle(hChildStdinWr);
+            hChildStdinWr = NULL;
+
             memset( &startinfo, 0, sizeof(STARTUPINFO) ) ;
             startinfo.cb = sizeof(STARTUPINFO) ;
             startinfo.dwFlags |= STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
@@ -1452,20 +1413,26 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
         if ( !fSuccess )
             debug(F111,"os2_netopen unable to start process",cmd_line,GetLastError());
 
-        CloseHandle(procinfo.hProcess);
-        CloseHandle(procinfo.hThread);
+#ifdef CK_CONPTY
+        if (!conpty_open) {
+#endif
+            CloseHandle(procinfo.hProcess);
+            CloseHandle(procinfo.hThread);
 
-        if ( !SetStdHandle( STD_OUTPUT_HANDLE, hSaveStdOut ) ||
-             !SetStdHandle( STD_INPUT_HANDLE, hSaveStdIn ) ||
-             !SetStdHandle( STD_ERROR_HANDLE, hSaveStdErr ) )
-        {
-            debug( F101,"os2_netopen Unable to restore standard handles","",GetLastError() ) ;
-            CloseHandle(hChildStdoutRd);  hChildStdoutRd = NULL;
-            CloseHandle(hChildStdoutWr);  hChildStdoutWr = NULL;
-            CloseHandle(hChildStdinRd);  hChildStdinRd = NULL;
-            CloseHandle(hChildStdinWrDup);  hChildStdinWrDup = NULL;
-            return -1;
+            if ( !SetStdHandle( STD_OUTPUT_HANDLE, hSaveStdOut ) ||
+                 !SetStdHandle( STD_INPUT_HANDLE, hSaveStdIn ) ||
+                 !SetStdHandle( STD_ERROR_HANDLE, hSaveStdErr ) )
+            {
+                debug( F101,"os2_netopen Unable to restore standard handles","",GetLastError() ) ;
+                CloseHandle(hChildStdoutRd);  hChildStdoutRd = NULL;
+                CloseHandle(hChildStdoutWr);  hChildStdoutWr = NULL;
+                CloseHandle(hChildStdinRd);  hChildStdinRd = NULL;
+                CloseHandle(hChildStdinWrDup);  hChildStdinWrDup = NULL;
+                return -1;
+            }
+#ifdef CK_CONPTY
         }
+#endif
 
         if ( !fSuccess ) {
             CloseHandle(hChildStdoutRd);  hChildStdoutRd = NULL;
@@ -1777,8 +1744,8 @@ os2_netclos() {
 
 #ifdef CK_CONPTY
         if (conpty_open) {
-            conpty_open = FALSE;
             close_pseudo_console();
+            conpty_open = FALSE;
             /* Closing the PTY will terminate the subprocess. We can't close
              * the pipes here though - we need to keep reading from them until
              * the subprocess finishes terminating and closes them itself. If

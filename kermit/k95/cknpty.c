@@ -37,7 +37,7 @@
 #endif
 
 #include "cknpty.h"
-
+#include "ckcdeb.h"
 
 #ifdef NT
 
@@ -76,6 +76,28 @@ BOOL pseudo_console_available() {
 #endif
 }
 
+BOOL create_pipes(PHANDLE inputReader, PHANDLE inputWriter,
+                  PHANDLE outputReader, PHANDLE outputWriter) {
+    if (!CreatePipe(inputReader, inputWriter, NULL, 0))
+    {
+        // Create pipe failed!
+        CloseHandle(inputReader); inputReader = NULL;
+        CloseHandle(inputWriter); inputWriter = NULL;
+        return FALSE;
+    }
+
+    if (!CreatePipe(outputReader, outputWriter, NULL, 0))
+    {
+        // Create pipe failed!
+        CloseHandle(inputReader); inputReader = NULL;
+        CloseHandle(inputWriter); inputWriter = NULL;
+        CloseHandle(outputReader); outputReader = NULL;
+        CloseHandle(outputWriter); outputWriter = NULL;
+        return FALSE;
+    }
+
+    return TRUE;
+}
 
 HRESULT open_pseudo_console(COORD size, HANDLE input_pipe, HANDLE output_pipe)
 {
@@ -131,6 +153,70 @@ HRESULT prepare_startup_info(STARTUPINFOEX * psi)
     return S_OK;
 }
 #endif
+
+BOOL start_subprocess_in_pty(COORD size, LPSTR lpCommandLine,
+                             LPPROCESS_INFORMATION lpProcessInformation,
+                             PHANDLE hInputWriter, PHANDLE hOutputReader ) {
+    HANDLE hInputReader, hOutputWriter;
+    STARTUPINFOEX startupInfo;
+    BOOL result;
+    HRESULT hResult;
+
+    result = create_pipes(&hInputReader, hInputWriter,
+                           hOutputReader, &hOutputWriter);
+    if (!result) {
+        debug(F100, "Failed to create I/O pipes!", "", 0);
+        return FALSE;
+    }
+
+    hResult = open_pseudo_console(size, hInputReader, hOutputWriter);
+
+    // These are no longer required
+    CloseHandle(hInputReader); hInputReader = NULL;
+    CloseHandle(hOutputWriter); hOutputWriter = NULL;
+
+    if (FAILED(hResult)) {
+        debug(F101, "ConPTY open failed with result", "", result);
+        CloseHandle(hInputWriter); hInputWriter = NULL;
+        CloseHandle(hOutputReader); hOutputReader = NULL;
+        return FALSE;
+    }
+
+    memset(&startupInfo, 0, sizeof(STARTUPINFOEX));
+    hResult = prepare_startup_info(&startupInfo);
+
+    if (FAILED(hResult)) {
+        debug(F101, "Closing PTY; Prepare startup info failed with result", "", result);
+        close_pseudo_console();
+        CloseHandle(hInputWriter); hInputWriter = NULL;
+        CloseHandle(hOutputReader); hOutputReader = NULL;
+        return FALSE;
+    }
+
+    result = CreateProcess(
+                     NULL,                         /* application name */
+                     lpCommandLine,                /* command line */
+                     NULL,                         /* process security attributes */
+                     NULL,                         /* primary thread security attrs */
+                     FALSE,                        /* inherit handles */
+                     EXTENDED_STARTUPINFO_PRESENT, /* creation flags */
+                     NULL,                         /* use parent's environment */
+                     NULL,                         /* use parent's current directory */
+                     &startupInfo.StartupInfo,     /* startup info */
+                     lpProcessInformation ) ;      /* process info */
+
+   if (!result) {
+        debug(F100, "Create process failed", "", 0);
+        close_pseudo_console();
+        CloseHandle(hInputWriter); hInputWriter = NULL;
+        CloseHandle(hOutputReader); hOutputReader = NULL;
+        return FALSE;
+   }
+
+   debug(F100, "Subprocess started successfully", "", 0);
+
+   return TRUE;
+}
 
 void resize_pseudo_console(COORD new_size) {
 #ifdef CK_CONPTY

@@ -43,6 +43,18 @@
  */
 BOOL pseudo_console_available();
 
+/** Creates pipes for communicating with the PTY.
+ *
+ * inputReader and outputWriter should be assigned to the pseudo
+ * console (as input_pipe and output_pipe) then closed.
+ *
+ * inputWriter can be written to to send data to the subprocess
+ * and outputReader can be read from to get output from the
+ * subprocess.
+ */
+BOOL create_pipes(PHANDLE inputReader, PHANDLE inputWriter,
+                  PHANDLE outputReader, PHANDLE outputWriter);
+
 /** Creates a pseudo console of the specified size using the supplied
  * pipes for communication
  *
@@ -62,6 +74,21 @@ HRESULT open_pseudo_console(COORD size, HANDLE input_pipe, HANDLE output_pipe);
  */
 HRESULT prepare_startup_info(STARTUPINFOEX * psi);
 #endif
+
+/** Starts a subprocess in a pseudoconsole of the specified size
+ * and provides handles to communicate with it.
+ *
+ * size                  IN     Size of the pseudo console
+ * lpCommandLine         IN     Command line to execute (command+parameters)
+ * lpProcessInformation  OUT    Process information
+ * hInputWriter          OUT    Handle to send input to the subprocess
+ * hOutputReader         OUT    Handle to read output from the subprocess
+ *
+ * Returns: TRUE on success, FALSE on failure.
+ */
+BOOL start_subprocess_in_pty(COORD size, LPSTR lpCommandLine,
+                             LPPROCESS_INFORMATION lpProcessInformation,
+                             PHANDLE hInputWriter, PHANDLE hOutputReader );
 
 /** Changes the pseudo consoles size to that specified
  *
