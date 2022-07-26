@@ -226,7 +226,9 @@ EXTERN int ENTRY ck_gethostname(char *, int);
 #define SIZEOF_SHORT    2
 #define SIZEOF_LONG     4
 
+#ifndef __WATCOMC__
 #define getpid _getpid
+#endif /* __WATCOMC__ */
 #endif /* CK_DLL */
 
 /* end of ckotcp.h */

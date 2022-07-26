@@ -11,7 +11,9 @@
  */
 
 #ifdef NT
+#ifndef __WATCOMC__
 typedef unsigned short ino_t ;
+#endif /* __WATCOMC__ */
 #endif
 
 

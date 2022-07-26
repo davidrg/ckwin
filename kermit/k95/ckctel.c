@@ -72,7 +72,9 @@ int sstelnet = 0;                       /* Do server-side Telnet negotiation */
 #include <os2.h>
 #undef COMMENT
 #else
+#ifndef __WATCOMC__
 #define isascii __isascii
+#endif /* __WATCOMC__ */
 #endif /* NT */
 #include "ckocon.h"
 extern int tt_type, max_tt;

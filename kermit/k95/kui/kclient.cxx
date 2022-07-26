@@ -813,7 +813,7 @@ void KClient::writeMe()
             ExtTextOutW( hdc(), rect.left, rect.top, 
 			ETO_CLIPPED | ETO_OPAQUE, 
 			&rect,
-			(ushort*) &(textBuffer[ kws->offset ]),
+			(wchar_t*) &(textBuffer[ kws->offset ]),
 			kws->length,
 			(int*)&interSpace );
         }

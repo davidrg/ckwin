@@ -88,7 +88,9 @@ char * tgoto (const char *, int, int);
 #ifdef OS2
 #include <string.h>
 _PROTOTYP(char * os2_gethostname, (void));
+#ifndef __WATCOMC__
 #define getpid _getpid
+#endif /* __WATCOMC__ */
 #endif /* OS2 */
 #ifdef BSD44
 #include <errno.h>

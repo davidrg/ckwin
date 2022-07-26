@@ -130,9 +130,11 @@ extern int pclose(FILE *);
 #endif
 
 #ifdef NT
+#ifndef __WATCOMC__
 #define timezone _timezone
-#define write _write
 #define fileno _fileno
+#endif /* __WATCOMC__ */
+#define write _write
 #define stricmp _stricmp
 #define setmode _setmode
 #define access _access
@@ -626,10 +628,8 @@ zopeni(n,name) int n; char *name; {
         ckstrncpy( os2filename, name, MAXPATH ) ;
         errno = 0;
 #ifdef NT
-        fp[n] = _fsopen(name,"rb",_SH_DENYWR);          /* Binary mode */
-        if (fp[n])
-            _setmode(_fileno(fp[n]),_O_SEQUENTIAL);
-        else {
+        fp[n] = _fsopen(name,"rbS",_SH_DENYWR);          /* Binary mode */
+        if (!fp[n]) {
             debug(F111,"zopeni ZI/ZR _fsopen failed","GetLastError",GetLastError());
         }
 #else
@@ -651,10 +651,8 @@ zopeni(n,name) int n; char *name; {
 #endif /* CK_LABELED */
     } else {
 #ifdef NT
-        fp[n] = _fsopen(name,"rb",_SH_DENYWR); /* Real file, open it. */
-        if (fp[n])
-            _setmode(_fileno(fp[n]),_O_SEQUENTIAL);
-        else {
+        fp[n] = _fsopen(name,"rbS",_SH_DENYWR); /* Real file, open it. */
+        if (!fp[n]) {
             debug(F111,"zopeni _fsopen failed","GetLastError",GetLastError());
         }
 #else
@@ -762,6 +760,11 @@ zopeno(n,name,zz,fcb)
         ckstrncat(p,"b",8);
     }
 
+#ifdef NT
+    if ( n == ZOFILE )      /* optimise caching for sequential access */
+        ckstrncat(p,"S",8); /* S is also known as _O_SEQUENTIAL */
+#endif /* NT */
+
     if (xferlog
 #ifdef CKSYSLOG
         || ckxsyslog >= SYSLG_FC && ckxlogging
@@ -834,10 +837,6 @@ zopeno(n,name,zz,fcb)
         }
 #endif /* CKSYSLOG */
     } else {                            /* Succeeded */
-#ifdef NT
-        if ( n == ZOFILE )
-            _setmode(_fileno(fp[n]),_O_SEQUENTIAL);
-#endif /* NT */
         if (n == ZDFILE ||              /* If it's the debug log */
             n == ZTFILE )               /* or the transaction log */
           setbuf(fp[n],NULL);           /* make it unbuffered */
@@ -4431,11 +4430,16 @@ zstrdt(date,len) char * date; int len; {
     char s[5];
     struct tm *time_stamp;
 
+#ifdef __WATCOMC__
+/* Watcom provides utimbuf instead of _utimbuf */
+struct utimbuf tp;
+#else
 #ifdef NT
 struct _utimbuf tp;
 #else /* NT */
 struct utimbuf tp;
 #endif /* NT */
+#endif /* __WATCOMC__
 
 #ifdef ANYBSD
     long timezone = 0L;

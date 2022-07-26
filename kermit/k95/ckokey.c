@@ -937,6 +937,13 @@ getshiftstate( void ) {
    protected by a Mutual Exclusion Semaphore
 */
 
+#ifdef __WATCOMC__
+/* Watcom reserves the symbol '_end' making a global variable
+ * named 'end' forbidden. Rename it to something else.
+ */
+#define end end_
+#endif
+
 #define KEY_BUF_SIZE (65536 / sizeof(con_event))
 con_event Keystroke[VNUM][KEY_BUF_SIZE] ;
 int start[VNUM]={0,0,0}, end[VNUM]={0,0,0} ;

@@ -1,0 +1,99 @@
+name: Full Build
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  Build-VisualCxx:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        arch:
+          - x86
+        toolset:
+          - 14.0
+          - 14.3
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Enable Developer Command Prompt
+      # You may pin to the exact commit or the version.
+      # uses: ilammy/msvc-dev-cmd@d8610e2b41c6d0f0c3b4c46dad8df0fd826c68e1
+      uses: ilammy/msvc-dev-cmd@v1.10.0
+      with:
+        arch: ${{ matrix.arch }}
+        toolset: ${{ matrix.toolset }}
+        #sdk:   # use the latest
+        #spectre: # set true to use VC libraries with sepctre mitigations
+    - name: Full Build
+      run: |
+        call ..\..\setenv.bat
+        call mk.bat
+        call mkdist.bat
+      shell: cmd
+      working-directory: ${{ github.workspace }}\kermit\k95
+      env:
+        ROOT: ${{ github.workspace }}
+    - name: Prepare Artifact
+      shell: cmd
+      working-directory: ${{ github.workspace }}\kermit\k95
+      run: |
+        move dist ${{ github.workspace }}\ckwin
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v2.2.4
+      with:
+        name: ckwin-vc${{ matrix.toolset }}-${{ matrix.arch }}
+        path: ${{ github.workspace }}\ckwin
+        if-no-files-found: error
+        retention-days: 7
+        
+  Build-OpenWatcom19-Win32:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Get OpenWatcom 1.9
+      run: |
+        mkdir watcom
+        cd watcom
+        wget https://github.com/open-watcom/open-watcom-1.9/releases/download/ow1.9/open-watcom-c-win32-1.9.exe -outfile open-watcom-c-win32-1.9.exe
+        7z x open-watcom-c-win32-1.9.exe
+      shell: powershell
+    - name: Full Build
+      run: |
+        SET PATH=%WATCOM%\BINW;%PATH%
+        SET PATH=%WATCOM%\BINNT;%PATH%
+        SET INCLUDE=%WATCOM%\H\NT;%INCLUDE%
+        SET INCLUDE=%WATCOM%\H\NT;%INCLUDE%
+        SET INCLUDE=%INCLUDE%;C:\WATCOM\H\NT\DIRECTX
+        SET INCLUDE=%INCLUDE%;C:\WATCOM\H\NT\DDK
+        SET INCLUDE=%WATCOM%\H;%INCLUDE%
+        SET EDPATH=%WATCOM%\EDDAT
+        SET WHTMLHELP=%WATCOM%\BINNT\HELP
+        SET WIPFC=%WATCOM%\WIPFC
+
+        call ..\..\setenv.bat
+        call mk.bat
+        call mkdist.bat
+      shell: cmd
+      working-directory: ${{ github.workspace }}\kermit\k95
+      env:
+        ROOT: ${{ github.workspace }}
+        WATCOM: ${{ github.workspace }}\watcom
+    - name: Prepare Artifact
+      shell: cmd
+      working-directory: ${{ github.workspace }}\kermit\k95
+      run: |
+        move dist ${{ github.workspace }}\ckwin
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v2.2.4
+      with:
+        name: ckwin-ow19-x86
+        path: ${{ github.workspace }}\ckwin
+        if-no-files-found: error
+        retention-days: 7

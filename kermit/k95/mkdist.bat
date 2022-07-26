@@ -10,3 +10,8 @@ copy k95d.cfg dist
 ren dist\cknker.exe k95.exe
 ren dist\cknker.exe.manifest k95.exe.manifest
 del dist\ckwart.exe
+
+@echo Copy runtime libraries
+if defined WATCOM copy %WATCOM%\binnt\mt7r*.dll dist
+if defined WATCOM copy %WATCOM%\binnt\clbr*.dll dist
+if defined WATCOM copy %WATCOM%\binnt\plbr*.dll dist

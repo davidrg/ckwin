@@ -9,8 +9,10 @@ Kermit Project website: http://www.kermitproject.org.
 This software is currently based on C-Kermit version 10.0 Beta.04 of
 3-JUN-2022. 
 
-OS/2 support is still present but untested. It should still work if someone can
-get it building with freely available tools.
+OS/2 support is still present but untested. It was last built with the
+IBM VisualAge compiler but has not been tested in a long time. Future 
+OS/2 support should probably be achieved using OpenWatcom which can
+currently build the Windows version fine.
 
 This version has been released under the 3-clause BSD license and does not
 include any features which rely on proprietary libraries or SDKs. This
@@ -45,18 +47,17 @@ features have been added. A full list of these is available here:
 Compiling
 ---------
 
-To build C-Kermit for Windows you will need Microsoft Visual C++ 6.0 SP6, 2002,
-2003, or 2005 (newer may have file transfer issues). 
-Edit /setenv.bat to point to your source directory then run through
-the following:
+To build C-Kermit for Windows you will need either Microsoft Visual C++ 6.0 SP6 or newer 
+(Visual C++ 2022 is the newest tested version), or OpenWatcom 1.9 (other versions are untested but may work).
 
+Edit `/setenv.bat` and change `set root=` to point to your source directory then run through the following:
+ 
 1. Open up a console window
-2. Setup the Visual C++ environment. You'll want to run vcvars32.bat. This
-   will be where ever you installed your compiler. For example:
+2. Setup the environment for your compiler. For Visual C++ you'll want to run `vcvars32.bat`, `vsvars32.bat` or `vcvarsall.bat`
+   (depending on your compiler version) or `owsetenv.bat` for OpenWatcom. This will be where ever you installed your compiler. For example:
 
         C:\Program Files\Microsoft Visual Studio 8\VC\bin\vcvars32.bat
-
-3. CD into your source directory and run the following:
+4. CD into your source directory and run the following:
 
         setenv.bat
         cd kermit/k95
@@ -74,6 +75,7 @@ Future stuff to do:
 * Remove need for /noBool switch and #defines in kui code.
 * Restore use of fsetpos in ckofio.c (see function zfseek(CK_OFF_T) around
   line 5418)
+* Revive the OS/2 version of C-Kermit using OpenWatcom
 * Re-enable/rewrite features that were disabled due to missing or obsolete
 dependencies. This will require upgrading to current versions or finding/writing
 replacements.
