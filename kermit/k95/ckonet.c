@@ -129,6 +129,15 @@ extern char pipename[PIPENAML+1];
 #include "ckuath.h"
 #endif /* CK_AUTHENTICATION */
 
+#ifdef CK_CONPTY
+#ifdef NT
+#include "cknpty.h"
+static BOOL conpty_open = FALSE;
+#else
+#undef CK_CONPTY
+#endif /* NT */
+#endif /* CK_CONPTY */
+
 extern int ttnproto, tn_deb;
 #ifndef NOTERM
 extern int tt_type;
@@ -1240,6 +1249,9 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
     if ( nettype == NET_CMD ) {
         char cmd_line[256], *cmd_exe, *args, *p;
         int argslen;
+        COORD size;
+        HRESULT result;
+        STARTUPINFOEX startinfoex;
 
 #ifdef NT
         hSaveStdOut = GetStdHandle( STD_OUTPUT_HANDLE ) ;
@@ -1263,7 +1275,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
         /* Create a pipe for the child's STDOUT. */
 
         if (! CreatePipe(&hChildStdoutRd, &hChildStdoutWr, &saAttr, 65535))
-            debug(F100,"Stdout pipe creation failed\n","",0);
+            debug(F101,"Stdout pipe creation failed\n","",0);
 
         /* Set a write handle to the pipe to be STDOUT. */
         /* 20220706 DavidG - This only kind of works for the console version
@@ -1364,25 +1376,76 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
         }
         debug(F110,"os2_netopen NET_CMD args",args,0);
 
-        memset( &startinfo, 0, sizeof(STARTUPINFO) ) ;
-        startinfo.cb = sizeof(STARTUPINFO) ;
-		startinfo.dwFlags |= STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES; 
-		startinfo.wShowWindow = SW_HIDE;
-        startinfo.hStdInput = hChildStdinRd;
-        startinfo.hStdOutput = hChildStdoutWr;
-        startinfo.hStdError = hChildStdoutWr;
+#ifdef CK_CONPTY
+        if (pseudo_console_available()) {
+            extern int tt_rows[], tt_cols[];
 
-        fSuccess = CreateProcess( NULL,               /* application name */
+            size.X = tt_cols[VTERM];
+            size.Y = tt_rows[VTERM];
+            result = open_pseudo_console(size, hChildStdinRd, hChildStdoutWr);
+
+            conpty_open = !FAILED(result);
+
+            if (!conpty_open) {
+                debug(F101, "ConPTY open failed with result", "", result);
+            } else {
+                debug(F100, "ConPTY open.", "", 0);
+            }
+
+            memset(&startinfoex, 0, sizeof(STARTUPINFOEX));
+            result = prepare_startup_info(&startinfoex);
+
+            if (FAILED(result)) {
+                /* Can't launch the suprocess without a suitably prepared
+                 * STARTUPINFOEX - give up and just run a regular subprocess
+                 * using pipes. It may be better than nothing. */
+                debug(F101, "Closing PTY; Prepare startup info failed with result", "", result);
+                conpty_open = FALSE;
+                close_pseudo_console();
+            }
+        }
+
+        if (conpty_open) {
+            ZeroMemory(&procinfo, sizeof(procinfo));
+            fSuccess = CreateProcess(
+                     NULL,                  /* application name */
                      cmd_line,              /* command line */
                      NULL,                  /* process security attributes */
                      NULL,                  /* primary thread security attrs */
-                     TRUE,                  /* inherit handles */
-                     NORMAL_PRIORITY_CLASS, /* creation flags */
+                     FALSE,                 /* inherit handles */
+                     EXTENDED_STARTUPINFO_PRESENT, /* creation flags */
                      NULL,                  /* use parent's environment */
                      NULL,                  /* use parent's current directory */
-                     &startinfo,            /* startup info */
-                     &procinfo ) ;          /* proc info returned */
+                     &startinfoex.StartupInfo,            /* startup info */
+                     &procinfo ) ;           /* process info */
+             if ( !fSuccess ) {
+                 conpty_open = FALSE;
+                 close_pseudo_console();
+             }
 
+        } else {
+#endif /* CK_CONPTY */
+            memset( &startinfo, 0, sizeof(STARTUPINFO) ) ;
+            startinfo.cb = sizeof(STARTUPINFO) ;
+            startinfo.dwFlags |= STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
+            startinfo.wShowWindow = SW_HIDE;
+            startinfo.hStdInput = hChildStdinRd;
+            startinfo.hStdOutput = hChildStdoutWr;
+            startinfo.hStdError = hChildStdoutWr;
+
+            fSuccess = CreateProcess( NULL,               /* application name */
+                         cmd_line,              /* command line */
+                         NULL,                  /* process security attributes */
+                         NULL,                  /* primary thread security attrs */
+                         TRUE,                  /* inherit handles */
+                         NORMAL_PRIORITY_CLASS, /* creation flags */
+                         NULL,                  /* use parent's environment */
+                         NULL,                  /* use parent's current directory */
+                         &startinfo,            /* startup info */
+                         &procinfo ) ;          /* proc info returned */
+#ifdef CK_CONPTY
+        }
+#endif /* CK_CONPTY */
         if ( !fSuccess )
             debug(F111,"os2_netopen unable to start process",cmd_line,GetLastError());
 
@@ -1709,32 +1772,48 @@ os2_netclos() {
 #ifdef NT
         DWORD exitcode=1;
 
-        if (WaitForSingleObject(procinfo.hProcess, 0L) == WAIT_OBJECT_0)
-            GetExitCodeProcess(procinfo.hProcess, &exitcode);
-        else if (!TerminateProcess(procinfo.hProcess,exitcode)) {
-            int gle = GetLastError();
-            debug(F111,"net_clos NET_CMD","unable to TerminateProcess",gle);
-        }
-        else {
-            if (WaitForSingleObject(procinfo.hProcess, 5000) == WAIT_OBJECT_0) {
+#ifdef CK_CONPTY
+        if (conpty_open) {
+            conpty_open = FALSE;
+            close_pseudo_console();
+            /* Closing the PTY will terminate the subprocess. We can't close
+             * the pipes here though - we need to keep reading from them until
+             * the subprocess finishes terminating and closes them itself. If
+             * the pipes are closed with input still waiting to be read it could
+             * result in a deadlock according to the docs.
+             **/
+        } else {
+#endif
+            if (WaitForSingleObject(procinfo.hProcess, 0L) == WAIT_OBJECT_0)
                 GetExitCodeProcess(procinfo.hProcess, &exitcode);
-                debug(F111,"os2_netclos NET_CMD","exitcode",exitcode);
-            } else {
-                printf("!ERROR: Unable to terminate network command!\n");
-                debug(F110,"os2_netclose NET_CMD",
-                       "unable to termiate network command",0);
+            else if (!TerminateProcess(procinfo.hProcess,exitcode)) {
+                int gle = GetLastError();
+                debug(F111,"net_clos NET_CMD","unable to TerminateProcess",gle);
             }
+            else {
+                if (WaitForSingleObject(procinfo.hProcess, 5000) == WAIT_OBJECT_0) {
+                    GetExitCodeProcess(procinfo.hProcess, &exitcode);
+                    debug(F111,"os2_netclos NET_CMD","exitcode",exitcode);
+                } else {
+                    printf("!ERROR: Unable to terminate network command!\n");
+                    debug(F110,"os2_netclose NET_CMD",
+                           "unable to termiate network command",0);
+                }
+            }
+
+            /* Close the pipe handle so the child stops reading. */
+            CloseHandle(hChildStdoutRd);    hChildStdoutRd = NULL;
+            CloseHandle(hChildStdoutWr);    hChildStdoutWr = NULL;
+            CloseHandle(hChildStdinRd);     hChildStdinRd = NULL;
+            CloseHandle(hChildStdinWrDup);  hChildStdinWrDup = NULL;
+            CloseHandle(hChildStdoutRdDup); hChildStdoutRdDup = NULL;
+
+            CloseHandle( procinfo.hProcess ) ;
+            CloseHandle( procinfo.hThread ) ;
+#ifdef CK_CONPTY
         }
+#endif
 
-        /* Close the pipe handle so the child stops reading. */
-        CloseHandle(hChildStdoutRd);    hChildStdoutRd = NULL;
-        CloseHandle(hChildStdoutWr);    hChildStdoutWr = NULL;
-        CloseHandle(hChildStdinRd);     hChildStdinRd = NULL;
-        CloseHandle(hChildStdinWrDup);  hChildStdinWrDup = NULL;
-        CloseHandle(hChildStdoutRdDup); hChildStdoutRdDup = NULL;
-
-        CloseHandle( procinfo.hProcess ) ;
-        CloseHandle( procinfo.hThread ) ;
 #else /* NT */
         ULONG exitcode=STILL_ACTIVE;
         RESULTCODES res;

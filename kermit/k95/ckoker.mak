@@ -87,21 +87,28 @@ TARGET_CPU = x86
 
 WIN32_VERSION=0x0400
 
-ENABLED_FEATURES =
+ENABLED_FEATURES = Network-Connections
+ENABLED_FEATURE_DEFS = -DNETCONN
 
-F_CONPTY = NO
+DISABLED_FEATURES = Kerberos SSH XYZMODEM SSL SRP
+DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNOSSH -DNOCKXYZ -DNO_SSL -DNO_SRP
 
+!if "$(PLATFORM)" == "NT"
 !if ($(MSC_VER) >= 192)
-F_CONPTY = YES
+# ConPTY on Windows 10+ requires a Platform SDK from late 2018 or newer.
+# So we'll limit this feature to when building with Visual C++ 2019 or
+# later.
 ENABLED_FEATURES = $(ENABLED_FEATURES) ConPTY
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_CONPTY
 
 # Needed for STARTUPINFOEX
 WIN32_VERSION=0x0600
 !endif
+!endif
 
 
 !message ========================================
-!message C-Kermit for Windows Build Configuration
+!message C-Kermit Build Configuration
 !message ========================================
 !message  Platform:                 $(PLATFORM)
 !message  Build:                    $(K95BUILD)
@@ -109,7 +116,8 @@ WIN32_VERSION=0x0600
 !message  Compiler:                 $(COMPILER)
 !message  Compiler Version:         $(COMPILER_VERSION)
 !message  Compiler Target Platform: $(TARGET_PLATFORM)
-!message  Enabled Features:        $(ENABLED_FEATURES)
+!message  Enabled Features:         $(ENABLED_FEATURES)
+!message  Disabled Features:        $(DISABLED_FEATURES)
 !message ========================================
 
 !if "$(CMP)" == "OWCL"
@@ -519,13 +527,10 @@ DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH -DONETERMUPD -DUSE_STRER
 		  #-DBETATEST # -DPRE_SRP_1_7_3
 !else
 DEFINES = -DNT -DWINVER=0x0400 -DOS2 -D_CRT_SECURE_NO_DEPRECATE -DUSE_STRERROR\
-          -DDYNAMIC -DKANJI -DNETCONN \
+          -DDYNAMIC -DKANJI -DNEWFTP\
           -DHADDRLIST -DNPIPE -DOS2MOUSE -DTCPSOCKET -DRLOGCODE \
-          -DNETFILE -DONETERMUPD -DCRYPT_DLL \
-          -DNEWFTP -DNO_SRP -DNO_KERBEROS -DNOSSH -DNOCKXYZ -DNO_SSL -DBETATEST -DNO_DNS_SRV \
-!if "$(F_CONPTY)" == "YES"
-          -DCK_CONPTY \
-!endif          
+          -DNETFILE -DONETERMUPD -DCRYPT_DLL -DBETATEST -DNO_DNS_SRV \
+          $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS) \
 !if "$(CMP)" != "OWCL"
           -D__STDC__ \
 !endif
