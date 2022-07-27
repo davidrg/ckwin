@@ -2273,7 +2273,7 @@ os2_netxin(int n, CHAR * buf) {
             return(-1);
     }
 #endif /* NETDLL */
-#ifdef NETCMDO
+#ifdef NETCMD
     if (nettype == NET_CMD) {
         int copysize = n;
         len = os2_nettchk();
