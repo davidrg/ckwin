@@ -2322,6 +2322,27 @@ os2_netxin(int n, CHAR * buf) {
             return(-1);
     }
 #endif /* NETDLL */
+#ifdef NETCMD
+    if (nettype == NET_CMD) {
+        int copysize = n;
+        len = os2_nettchk();
+        rc = 0;
+        if (n > len) {
+            copysize = len;
+        }
+        for (int i = 0; i < copysize; i++) {
+            char c = NULL;
+            int x = NetCmdGetChar(&c);
+            if (x > 0) {
+                rc += x;
+                buf[i] = c;
+            } else {
+                break; /* Run out of characters to read. */
+            }
+        }
+        return rc;
+    }
+#endif
 
     if ( pos == size ) {
         if ( (rc = os2_netinc(0)) < 0 )
