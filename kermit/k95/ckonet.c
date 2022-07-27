@@ -132,7 +132,7 @@ extern char pipename[PIPENAML+1];
 #ifdef CK_CONPTY
 #ifdef NT
 #include "cknpty.h"
-static BOOL conpty_open = FALSE;
+BOOL conpty_open = FALSE;
 #else
 #undef CK_CONPTY
 #endif /* NT */

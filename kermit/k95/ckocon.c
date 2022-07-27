@@ -98,6 +98,11 @@ char *connv = "OS/2 CONNECT command 8.0.232, 20 Oct 2003";
 extern UCHAR NetBiosRemote[] ;
 #endif /* CK_NETBIOS */
 
+#ifdef NETCMD
+#ifdef CK_CONPTY
+#include "cknpty.h"
+#endif /* CK_CONPTY */
+#endif /* NETCMD */
 
 /*
  *
@@ -3586,16 +3591,7 @@ StopConnectThreads( int wait4ever )
  * values for tt_status.
  */
 
-#ifdef KUI
-int
-kui_setheightwidth(int x, int y)
-{
-    tt_szchng[VTERM] = (tt_status[VTERM]?2:1);
-    tt_rows[VTERM] = y - (tt_status[VTERM]?1:0);
-    tt_cols[VTERM] = x;
-    tt_cols_usr = x;
-    VscrnSetWidth( VTERM, x);
-    VscrnInit( VTERM );         /* Height set here */
+void term_dimensions_changed(int x, int y) {
 #ifdef TNCODE
     if (TELOPT_ME(TELOPT_NAWS))
         tn_snaws();
@@ -3607,6 +3603,41 @@ kui_setheightwidth(int x, int y)
 #ifdef SSHBUILTIN
     ssh_snaws();
 #endif /* SSHBUILTIN */
+#ifdef NETCMD
+#ifdef CK_CONPTY
+    if (nettype == NET_CMD && pseudo_console_available()) {
+        extern BOOL conpty_open;
+        if (conpty_open) {
+            COORD size;
+            size.X = x;
+            size.Y = y;
+            resize_pseudo_console(size);
+        }
+    }
+#endif /* CK_CONPTY */
+#endif /* NETCMD */
+#ifdef NETDLL
+    if ( nettype == NET_DLL) {
+        extern char * (*net_dll_terminfo)(char*, int, int);
+        if (net_dll_terminfo) {
+            /* TODO:  terminfo *should* be passed the termtype too */
+            net_dll_terminfo(NULL, y, x);
+        }
+    }
+#endif
+}
+
+#ifdef KUI
+int
+kui_setheightwidth(int x, int y)
+{
+    tt_szchng[VTERM] = (tt_status[VTERM]?2:1);
+    tt_rows[VTERM] = y - (tt_status[VTERM]?1:0);
+    tt_cols[VTERM] = x;
+    tt_cols_usr = x;
+    VscrnSetWidth( VTERM, x);
+    VscrnInit( VTERM );         /* Height set here */
+    term_dimensions_changed(x, y - (tt_status[VTERM]?1:0));
 
     tt_szchng[VCMD] = (tt_status[VCMD]?2:1);
     tt_rows[VCMD] = cmd_rows = y - (tt_status[VCMD]?1:0);
@@ -3663,17 +3694,8 @@ os2_settermwidth(int x)
     tt_cols_usr = x;
     if (SysInited) {
         VscrnSetWidth( VTERM, x);
-#ifdef TNCODE
-        if (TELOPT_ME(TELOPT_NAWS))
-            tn_snaws();
-#endif /* TNCODE */
-#ifdef RLOGCODE
-        if (TELOPT_ME(TELOPT_NAWS))
-            rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-        ssh_snaws();
-#endif /* SSHBUILTIN */
+
+        term_dimensions_changed(x, tt_rows[VTERM]);
     }
 /*
    We do not set tt_szchng here because that would result in the screen buffer
@@ -3701,17 +3723,7 @@ os2_settermheight(int x)
     tt_rows[VTERM] = x;
     if (SysInited) {
         VscrnInit( VTERM );             /* Height set here */
-#ifdef TNCODE
-        if (TELOPT_ME(TELOPT_NAWS))
-            tn_snaws();
-#endif /* TNCODE */
-#ifdef RLOGCODE
-        if (TELOPT_ME(TELOPT_NAWS))
-            rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-        ssh_snaws();
-#endif /* SSHBUILTIN */
+        term_dimensions_changed(tt_cols[VTERM], x);
     }
     return(1);
 #endif /* KUI */
