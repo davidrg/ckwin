@@ -2325,12 +2325,13 @@ os2_netxin(int n, CHAR * buf) {
 #ifdef NETCMD
     if (nettype == NET_CMD) {
         int copysize = n;
+        int i;
         len = os2_nettchk();
         rc = 0;
         if (n > len) {
             copysize = len;
         }
-        for (int i = 0; i < copysize; i++) {
+        for (i = 0; i < copysize; i++) {
             char c = 0;
             int x = NetCmdGetChar(&c);
             if (x > 0) {
