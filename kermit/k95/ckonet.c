@@ -2331,7 +2331,7 @@ os2_netxin(int n, CHAR * buf) {
             copysize = len;
         }
         for (int i = 0; i < copysize; i++) {
-            char c = NULL;
+            char c = 0;
             int x = NetCmdGetChar(&c);
             if (x > 0) {
                 rc += x;

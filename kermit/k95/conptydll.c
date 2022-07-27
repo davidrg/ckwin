@@ -610,43 +610,6 @@ int netclos() {
 
     close_pseudo_console();
 
-
-    // We shouldn't close the pipes here as we need to keep reading until
-    // the subprocess has finished terminating or run the risk of deadlock.
-    // So we'll leave them be and let windows clean up for us.
-
-    // TODO: Don't think we need to do any of this - closing the PTY
-    //      will kill the subprocess.
-    /*DWORD exitcode=1;
-
-    if (WaitForSingleObject(procinfo.hProcess, 0L) == WAIT_OBJECT_0)
-        GetExitCodeProcess(procinfo.hProcess, &exitcode);
-    else if (!TerminateProcess(procinfo.hProcess,exitcode)) {
-        int gle = GetLastError();
-        debug(F111,"net_clos NET_CMD","unable to TerminateProcess",gle);
-    }
-    else {
-        if (WaitForSingleObject(procinfo.hProcess, 5000) == WAIT_OBJECT_0) {
-            GetExitCodeProcess(procinfo.hProcess, &exitcode);
-            debug(F111,"os2_netclos NET_CMD","exitcode",exitcode);
-        } else {
-            printf("!ERROR: Unable to terminate network command!\n");
-            debug(F110,"os2_netclose NET_CMD",
-                  "unable to termiate network command",0);
-        }
-    }*/
-
-    // TODO: Do we need to? Closing the PTY should kill the process
-    //      closing the pipes in the process.
-    // Close the pipe handle so the child stops reading.
-//    CloseHandle(outputReader);    outputReader = NULL;
-//    CloseHandle(inputWriter);    inputWriter = NULL;
-
-    // TODO: Do we need to? Closing the PTY should kill the process
-//    CloseHandle( procinfo.hProcess ) ;
-//    CloseHandle( procinfo.hThread ) ;
-
-
     close_log();
     return 0; // Success
 }
@@ -687,27 +650,23 @@ int netinc(int timeout) {
 }
 
 int netxin(int count, char * buffer) {
-    int len;
-    int rc ;
-
-    if ( pos == size ) {
-        if ( (rc = netinc(0)) < 0 )
-            return(rc);
-        pos-- ;         /* move it back one position */
+    int len = nettchk();
+    int rc = 0;
+    int copysize = count;
+    if (copysize > len) {
+        copysize = len;
     }
-    len = size - pos ;
-    if (len <= count) {
-        memcpy(buffer, &inbuf[pos], len );
-        log("--> netxin(%i, out \"%s\")\n", count, buffer);
-        pos = size ;
-        return(len);
+    for (int i = 0; i < copysize; i++) {
+        char c = 0;
+        int x = NetCmdGetChar(&c);
+        if (x > 0) {
+            rc += x;
+            buffer[i] = c;
+        } else {
+            break; /* Run out of characters to read. */
+        }
     }
-    else {
-        memcpy(buffer, &inbuf[pos], count ) ;
-        log("--> netxin(%i, out \"%s\")\n", count, buffer);
-        pos += count ;
-        return(count);
-    }
+    return rc;
 }
 
 int nettoc(int c) {
