@@ -10644,6 +10644,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
     if (cx == XXSSH) {			/* SSH (Secure Shell) */
 	extern int netsave;
 #ifdef SSHBUILTIN
+        int k, havehost = 0, trips = 0;
         int    tmpver = -1, tmpxfw = -1;
 #ifndef SSHTEST
         extern int sl_ssh_xfw, sl_ssh_xfw_saved;

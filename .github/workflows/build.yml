@@ -7,6 +7,15 @@ on:
     branches: [ "master" ]
   workflow_dispatch:
 
+env:
+  # Expected filename: https://zlib.net/zlib-${{env.ZLIB_VERSION}}.tar.gz
+  ZLIB_VERSION: 1.2.12
+  # Expected filename: https://www.openssl.org/source/openssl-${{env.OPENSSL_VERSION}}.tar.gz
+  OPENSSL_VERSION: 1.1.1q
+  # Exoected filename: ${{env.LIBSSH_SOURCE}}libssh-${{env.LIBSSH_VERSION}}.tar.xz
+  LIBSSH_SOURCE: https://www.libssh.org/files/0.9/
+  LIBSSH_VERSION: 0.9.6
+
 jobs:
   Build-VisualCxx:
     runs-on: windows-latest
@@ -17,6 +26,11 @@ jobs:
         toolset:
           - 14.0
           - 14.3
+        # no-crypto=yes: builds version with all crypto disabled
+        # no-crypto=no: builds version with all crypto enabled (where required dependencies are available)
+        no_crypto:
+          - no
+        #  - yes
 
     steps:
     - uses: actions/checkout@v3
@@ -29,6 +43,106 @@ jobs:
         toolset: ${{ matrix.toolset }}
         #sdk:   # use the latest
         #spectre: # set true to use VC libraries with sepctre mitigations
+
+      ##########################################################################
+      # Build optional dependencies (zlib, openssl, libssh)                    #
+      ##########################################################################
+    - name: Cache Optional Dependencies
+      uses: actions/cache@v3.0.5
+      id: cache-optional-dependencies
+      with:
+        path: |
+          ${{github.workspace}}\zlib 
+          ${{github.workspace}}\openssl 
+          ${{github.workspace}}\libssh 
+          ${{github.workspace}}\tools
+        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+libssh-${{env.LIBSSH_VERSION}}+nasm
+
+    - name: Get dependencies
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+      run: |
+        # Get and unpack zlib
+        mkdir zlib
+        cd zlib
+        wget https://zlib.net/zlib-${{env.ZLIB_VERSION}}.tar.gz -outfile zlib-${{env.ZLIB_VERSION}}.tar.gz
+        7z x zlib-${{env.ZLIB_VERSION}}.tar.gz
+        7z x zlib-${{env.ZLIB_VERSION}}.tar
+        ren zlib-${{env.ZLIB_VERSION}} ${{env.ZLIB_VERSION}}
+        del *.tar 
+        del *.gz
+        cd ..
+        
+        # Get and unpack openssl
+        mkdir openssl
+        cd openssl
+        wget https://www.openssl.org/source/openssl-${{env.OPENSSL_VERSION}}.tar.gz -outfile openssl-${{env.OPENSSL_VERSION}}.tar.gz
+        7z x openssl-${{env.OPENSSL_VERSION}}.tar.gz
+        7z x openssl-${{env.OPENSSL_VERSION}}.tar
+        ren openssl-${{env.OPENSSL_VERSION}} ${{env.OPENSSL_VERSION}}
+        del *.tar 
+        del *.gz
+        cd ..
+        
+        # Get and unpack libssh
+        mkdir libssh
+        cd libssh
+        wget ${{env.LIBSSH_SOURCE}}libssh-${{env.LIBSSH_VERSION}}.tar.xz -outfile libssh-${{env.LIBSSH_VERSION}}.tar.xz
+        7z x libssh-${{env.LIBSSH_VERSION}}.tar.xz
+        7z x libssh-${{env.LIBSSH_VERSION}}.tar
+        ren libssh-${{env.LIBSSH_VERSION}} ${{env.LIBSSH_VERSION}}
+        del *.tar 
+        del *.xz
+        cd ${{env.LIBSSH_VERSION}}
+        mkdir build
+        cd ..
+        cd ..
+        
+        # Get and unpack nasm
+        mkdir tools
+        cd tools
+        wget https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/win32/nasm-2.15.05-win32.zip -outfile nasm-2.15.05-win32.zip
+        7z x nasm-2.15.05-win32.zip
+        ren nasm-2.15.05 nasm
+        del *.zip
+        dir
+        cd nasm
+        dir
+        cd ..
+        cd ..          
+        
+        # Install perl modules required by OpenSSL build
+        cpan -i Text::Template
+      shell: powershell
+
+    - name: Build zlib
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+      shell: cmd
+      run: |
+        cd zlib\${{env.ZLIB_VERSION}}
+        cmake .
+        nmake -f win32\Makefile.msc
+
+    - name: Build openssl
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+      shell: powershell
+      run: |
+        cd openssl\${{env.OPENSSL_VERSION}}
+        $env:Path += ";${{github.workspace}}\tools\nasm"
+        $env:Path
+        perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}        
+        nmake
+
+    - name: Build libssh
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+      shell: powershell
+      run: |
+        cd libssh\${{env.LIBSSH_VERSION}}\build
+        cmake .. -G "NMake Makefiles" -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}\
+        nmake
+
+      ##########################################################################
+      # Build K95, K95G and other bits for redistribution                      #
+      ##########################################################################
     - name: Full Build
       run: |
         call ..\..\setenv.bat
@@ -38,6 +152,10 @@ jobs:
       working-directory: ${{ github.workspace }}\kermit\k95
       env:
         ROOT: ${{ github.workspace }}
+        # CKF_NO_CRYPTO=yes causes all crypto features to be excluded from the
+        # build. Undefined or CKF_NO_CRYPTO=no leaves crypto features enabled
+        # where the required dependencies exist.
+        CKF_NO_CRYPTO: ${{ matrix.no_crypto }}
     - name: Prepare Artifact
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95
@@ -56,8 +174,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    
+
+      # Cache OpenWatcom because it takes quite a while to download and
+      # decompress.
+    - name: Cache OpenWatcom
+      uses: actions/cache@v3.0.5
+      id: cache-watcom
+      with:
+        path: |
+          ${{github.workspace}}\watcom
+        key: watcom-1.9
     - name: Get OpenWatcom 1.9
+      if: steps.cache-watcom.outputs.cache-hit != 'true'
       run: |
         mkdir watcom
         cd watcom

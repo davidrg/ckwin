@@ -24,7 +24,6 @@ includes:
     called 'P' written by Jyrki Salmi and now owned by [Oy Online Solutions Ltd](https://online.fi)
 * The Dialer (relied on a modified version of Zinc 4.2, a 
 [formerly proprietary GUI framework](http://openzinc.com/))
-* SSH (based on OpenSSH)
 
 A number of other features have been removed as they relied on ancient
 versions of 3rd-party libraries. These are:
@@ -43,6 +42,17 @@ final K95 release (2.1.3) a number of bugs have been fixed and a few new
 features have been added. A full list of these is available here:
 
   http://www.kermitproject.org/k95-fixes-since-213.txt
+
+SSH Support
+-----------
+Support for SSH connections has been added back in based on the free (LGPL)
+libssh. The command syntax is the same as in Kermit 95 though not all commands,
+ settings and features (such as tunneling) are supported at this time.
+
+To build with SSH support, follow the instructions in
+[Building Optional Dependencies](doc/optional-dependencies.md) to get libssh
+and all the other required bits set up, then follow the regular build
+instructions below.
 
 Compiling
 ---------
@@ -65,7 +75,7 @@ Edit `/setenv.bat` and change `set root=` to point to your source directory then
         mkdist.bat
 
 This should leave you with a number of bits in the dist subdirectory, the most
-most interesting being:
+interesting being:
 
 * k95.exe      - Console version of C-Kermit for Windows
 * k95g.exe     - Graphical version of C-Kermit for Windows
@@ -79,10 +89,8 @@ Future stuff to do:
 * Re-enable/rewrite features that were disabled due to missing or obsolete
 dependencies. This will require upgrading to current versions or finding/writing
 replacements.
-  - SSH
   - Kerberos (use Heimdal instead of MIT Kerberos for Windows)
-  - zlib
-  - SSL (upgrade to current OpenSSL release)
+  - SSL - re-enable and get building with a current release of OpenSSL 
   - SRP
   - Z/Y/Z Modem (Ask Oy Online Solutions Ltd for a relicensed library?)
   - LAT (port from linux-decnet? Ask [VSI](https://vmssoftware.com/) for the pathworks SDK?)

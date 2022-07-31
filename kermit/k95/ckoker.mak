@@ -82,20 +82,125 @@ TARGET_CPU = x86
 !message Attempting to detect compiler...
 
 !include compiler_detect.mak
-!message 	
+!message
+!else
+# No built-in SSH support for OS/2 (yet)
+CKF_SSH=no
 !endif
 
-!message ========================================
-!message C-Kermit for Windows Build Configuration
-!message ========================================
+!if "$(CMP)" == "OWCL"
+# No built-in SSH support for OpenWatcom (yet)
+CKF_SSH=no
+!endif
+
+# Network Connections are always supported. We only put it here because
+# the Watcom nmake clone can't handle empty macros so we need *something* here.
+ENABLED_FEATURES = Network-Connections
+ENABLED_FEATURE_DEFS = -DNETCONN
+
+DISABLED_FEATURES = SuperLAT DECnet Kerberos SRP XYZMODEM
+DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNOCKXYZ -DNO_SRP
+
+# SFTP:
+#   Turn on with -DSFTP_BUILTIN
+#   Requires: reimplementing with libssl
+# XYZMODEM:
+#   Turn on with: uncommenting the necessary build steps
+#   Turn off with: -DNOCKXYZ
+#   Requires: A currently proprietary library ('P')
+# Kerberos:
+#   Turn off with: -DNO_KERBEROS
+#   Requires: An antique version of MIT Kerberos for Windows. Should be
+#             converted to using Heimdal Kerberos
+# NetBIOS:
+#   Turn on with: -DCK_NETBIOS
+#   Requires: ?
+# SRP:
+#   Turn off with: -DNO_SRP
+#   Optionally: -DPRE_SRP_1_7_3
+# SuperLAT:
+#   Turn on with: -DSUPERLAT
+#   Requires: The SuperLAT SDK
+# DECnet:
+#   Turn on with: -DDECNET
+#   Requires: The Pathworks32 SDK
+# New URL Highlight:
+#   Turn on with: -DNEW_URL_HIGHLIGHT
+#   This does: no idea.
+
+!if "$(CKF_NO_CRYPTO)" == "yes"
+# A No-crypto build has been requested regardless of what libraries may have
+# been found. Disable all crypto-related features
+CKF_SSH=no
+CKF_SSL=no
+!endif
+
+# Force SSL off - it doesn't build currently.
+CKF_SSL=no
+
+# ZLIB:
+#   Turn on with: -DZLIB
+#   Requires: zlib
+#             And also some stuff fixed
+!if "$(CKF_ZLIB)" == "yes"
+!message CKF_ZLIB set - turning ZLIB on.
+ENABLED_FEATURES = $(ENABLED_FEATURES) ZLIB
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DZLIB
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) ZLIB
+!endif
+
+# SSL:
+#   Turn off with: -DNO_SSL
+#   Requires: OpenSSL
+#             And also some stuff fixed
+!if "$(CKF_SSL)" == "yes"
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) SSL
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_SSL
+!endif
+
+# Built-in SSH support (libssh)
+#   Turn on with: -DSSHBUILTIN
+#   Turn off with: -DNOSSH
+#   Requires: libssh
+!if "$(CKF_SSH)" == "yes"
+!message CKF_SSH set - turning built-in SSH on.
+ENABLED_FEATURES = $(ENABLED_FEATURES) SSH
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DSSHBUILTIN
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) SSH
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOSSH
+!endif
+
+# Produce a build with no cryptography support at all
+#  - probably doesn't work at the moment.
+#!if "$(CKF_NO_CRYPTO)" == "yes"
+#DISABLED_FEATURES = $(DISABLED_FEATURES) Encryption
+#DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_ENCRYPTION
+#!endif
+
+# If beta-test mode hasn't been explicitly turned off then assume its on.
+!if "$(CKF_BETATEST)" != "no"
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DBETATEST
+!endif
+
+!message
+!message
+!message ===============================================================================
+!message C-Kermit Build Configuration
+!message ===============================================================================
 !message  Platform:                 $(PLATFORM)
 !message  Build:                    $(K95BUILD)
 !message  Architecture:             $(TARGET_CPU)
 !message  Compiler:                 $(COMPILER)
 !message  Compiler Version:         $(COMPILER_VERSION)
 !message  Compiler Target Platform: $(TARGET_PLATFORM)
-!message ========================================
-
+!message  Enabled Features:         $(ENABLED_FEATURES)
+!message  Disabled Features:        $(DISABLED_FEATURES)
+!message ===============================================================================
+!message
+!message
 !if "$(CMP)" == "OWCL"
 
 # Standard windows headers from MinGW that don't come with OpenWatcom:
@@ -503,18 +608,14 @@ DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH -DONETERMUPD -DUSE_STRER
 		  #-DBETATEST # -DPRE_SRP_1_7_3
 !else
 DEFINES = -DNT -DWINVER=0x0400 -DOS2 -D_CRT_SECURE_NO_DEPRECATE -DUSE_STRERROR\
-          -DDYNAMIC -DKANJI -DNETCONN \
+          -DDYNAMIC -DKANJI \
           -DHADDRLIST -DNPIPE -DOS2MOUSE -DTCPSOCKET -DRLOGCODE \
           -DNETFILE -DONETERMUPD -DCRYPT_DLL \
-          -DNEWFTP -DNO_SRP -DNO_KERBEROS -DNOSSH -DNOCKXYZ -DNO_SSL -DBETATEST -DNO_DNS_SRV \
+          -DNEWFTP -DBETATEST -DNO_DNS_SRV \
+          $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS) \
 !if "$(CMP)" != "OWCL"
           -D__STDC__ \
 !endif
-		  # DECnet (Pathworks32) support: -DDECNET
-		  # SuperLAT support: -DSUPERLAT
-		  # zlib support: -DZLIB
-		  
-		  #-DBETATEST -DSFTP_BUILTIN # -DPRE_SRP_1_7_3 -DCK_NETBIOS -DNEW_URL_HIGHLIGHT 
 !endif
 !endif  /* PLATFORM */
 !else
@@ -543,17 +644,27 @@ KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
         advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib \
         rpcrt4.lib rpcns4.lib wsock32.lib \
         winmm.lib vdmdbg.lib comctl32.lib mpr.lib $(COMMODE_OBJ) \
+!if "$(CKF_SSH)" == "yes"
+       ssh.lib \
+!endif
+!if "$(CKF_SSL)" == "yes"
+       libssl.lib libcrypto.lib \
+!endif
         #msvcrt.lib
         #Kerberos: wshload.lib
-		# SRP support: srpstatic.lib 
-		# SSH support: ssh\libssh.lib ssh\openbsd.lib
+		# SRP support: srpstatic.lib
         #libsrp.lib bigmath.lib
 LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib shell32.lib\
        winmm.lib mpr.lib advapi32.lib winspool.lib $(COMMODE_OBJ) \
+!if "$(CKF_SSH)" == "yes"
+       ssh.lib \
+!endif
+!if "$(CKF_SSL)" == "yes"
+       libssl.lib libcrypto.lib \
+!endif
        #msvcrt.lib  
        # Kerberos: wshload.lib
 	   # SRP support: srpstatic.lib
-	   # SSH support: ssh\libssh.lib ssh\openbsd.lib
        # libsrp.lib bigmath.lib
 !endif
 !endif /* PLATFORM */
@@ -581,6 +692,9 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
         ckosftp$(O) ckozli$(O) \
 !if 0
         ck_crp$(O) ck_des$(O) \
+!endif
+!if ("$(CKF_SSH)" == "yes")
+        ckossh$(O) \
 !endif
         ckocon$(O) ckoco2$(O) ckoco3$(O) ckoco4$(O) ckoco5$(O) \
         ckoetc$(O) ckoetc2$(O) ckokey$(O) ckomou$(O) ckoreg$(O) \
@@ -1001,11 +1115,13 @@ ck_ssl$(O):     ck_ssl.c ckcdeb.h ckoker.h ckclib.h ckctel.h ck_ssl.h ckosslc.h 
 ckossl$(O):     ckossl.c ckcdeb.h ckoker.h ck_ssl.h ckossl.h
 ckosslc$(O):    ckosslc.c ckcdeb.h ckoker.h ck_ssl.h ckosslc.h
 ckozli$(O):     ckozli.c ckcdeb.h ckoker.h ckozli.h
+
+!if ("$(CKF_SSH)" == "yes")
+ckossh$(O):     ckcdeb.h ckoker.h ckclib.h ckossl.h ckoath.h ckosslc.h ckossh.c ckossh.h
+!endif
+
 ckosftp$(O):    ckcdeb.h ckoker.h ckclib.h ckosftp.h ckosftp.c
 	$(CC) $(CC2) $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ckosftp.c
-# SSH support: -Issh -Issh/openbsd-compat
-#ckossh$(O):     ckcdeb.h ckoker.h ckclib.h ckossl.h ckoath.h ckosslc.h ckossh.c ckossh.h
-#	$(CC) $(CC2) -Issh -Issh/openbsd-compat $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ckossh.c
 
 ck_crp$(O):     ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h ck_crp.c
 !if "$(PLATFORM)" == "OS2"
