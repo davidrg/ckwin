@@ -80,21 +80,6 @@ interesting being:
 * k95.exe      - Console version of C-Kermit for Windows
 * k95g.exe     - Graphical version of C-Kermit for Windows
 
-Future stuff to do:
--------------------
-* Remove need for /noBool switch and #defines in kui code.
-* Restore use of fsetpos in ckofio.c (see function zfseek(CK_OFF_T) around
-  line 5418)
-* Revive the OS/2 version of C-Kermit using OpenWatcom
-* Re-enable/rewrite features that were disabled due to missing or obsolete
-dependencies. This will require upgrading to current versions or finding/writing
-replacements.
-  - Kerberos (use Heimdal instead of MIT Kerberos for Windows)
-  - SSL - re-enable and get building with a current release of OpenSSL 
-  - SRP
-  - Z/Y/Z Modem (Ask Oy Online Solutions Ltd for a relicensed library?)
-  - LAT (port from linux-decnet? Ask [VSI](https://vmssoftware.com/) for the pathworks SDK?)
-
 Shared Codebase
 ---------------
 Any files matching the pattern ck[cu]*.[cwh] are shared by
