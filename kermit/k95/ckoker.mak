@@ -85,8 +85,30 @@ TARGET_CPU = x86
 !message 	
 !endif
 
+WIN32_VERSION=0x0400
+
+ENABLED_FEATURES = Network-Connections
+ENABLED_FEATURE_DEFS = -DNETCONN
+
+DISABLED_FEATURES = Kerberos SSH XYZMODEM SSL SRP
+DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNOSSH -DNOCKXYZ -DNO_SSL -DNO_SRP
+
+!if "$(PLATFORM)" == "NT"
+!if ($(MSC_VER) >= 192)
+# ConPTY on Windows 10+ requires a Platform SDK from late 2018 or newer.
+# So we'll limit this feature to when building with Visual C++ 2019 or
+# later.
+ENABLED_FEATURES = $(ENABLED_FEATURES) ConPTY
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_CONPTY
+
+# Needed for STARTUPINFOEX
+WIN32_VERSION=0x0600
+!endif
+!endif
+
+
 !message ========================================
-!message C-Kermit for Windows Build Configuration
+!message C-Kermit Build Configuration
 !message ========================================
 !message  Platform:                 $(PLATFORM)
 !message  Build:                    $(K95BUILD)
@@ -94,6 +116,8 @@ TARGET_CPU = x86
 !message  Compiler:                 $(COMPILER)
 !message  Compiler Version:         $(COMPILER_VERSION)
 !message  Compiler Target Platform: $(TARGET_PLATFORM)
+!message  Enabled Features:         $(ENABLED_FEATURES)
+!message  Disabled Features:        $(DISABLED_FEATURES)
 !message ========================================
 
 !if "$(CMP)" == "OWCL"
@@ -214,7 +238,7 @@ winsetup:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /J /D_WIN32 /DOS2 /DNT /D_CONSOLE /D__32BIT__ /W2 /D_WIN32_WINNT=0x0400" \
+    CFLAGS=" $(COMMON_CFLAGS) /J /D_WIN32 /DOS2 /DNT /D_CONSOLE /D__32BIT__ /W2 /D_WIN32_WINNT=$(WIN32_VERSION)" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
@@ -230,7 +254,7 @@ msvc:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /GF /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    CFLAGS=" $(COMMON_CFLAGS) /GF /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -245,7 +269,7 @@ msvc-iksd:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /GF /J /DWIN32 /D_WIN32_WINNT=0x0400  /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    CFLAGS=" $(COMMON_CFLAGS) /GF /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION)  /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -260,7 +284,7 @@ msvcd:
 	OPT="" \
     DEBUG="/Zi /Odi /Ge " \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /GF /GZ /J /DWIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 /F65536" \
+	CFLAGS=" $(COMMON_CFLAGS) /GF /GZ /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -276,7 +300,7 @@ msvcd-iksd:
 	OPT="" \
     DEBUG="/Zi /Odi /Ge " \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /GF /GZ /J /DWIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 /F65536" \
+	CFLAGS=" $(COMMON_CFLAGS) /GF /GZ /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -292,7 +316,7 @@ msvcmd:
 	OPT="" \
     DEBUG="/Zi /Odi /Ge -Dmalloc=dmalloc -Dfree=dfree -DMDEBUG" \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /J /DWIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 /F65536" \
+	CFLAGS=" $(COMMON_CFLAGS) /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -308,7 +332,7 @@ msvcp:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /J /DWIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    CFLAGS=" $(COMMON_CFLAGS) /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -324,7 +348,7 @@ kuid:
 	OPT="" \
     DEBUG="/Zi /Odi" \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /GF /J /DKUI /DCK_WIN /DWIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 -I." \
+    CFLAGS=" $(COMMON_CFLAGS) /GF /J /DKUI /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 -I." \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
@@ -339,7 +363,7 @@ kui:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DCK_WIN /DWIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 /I." \
+	CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /I." \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
@@ -355,7 +379,7 @@ k95gd:
 	OPT="" \
     DEBUG="/Zi /Odi" \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DK95G /DCK_WIN /DWIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 -I." \
+    CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DK95G /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 -I." \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
@@ -370,7 +394,7 @@ k95g:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DK95G /DCK_WIN /DWIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 /I." \
+	CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DK95G /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /I." \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
@@ -503,10 +527,10 @@ DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH -DONETERMUPD -DUSE_STRER
 		  #-DBETATEST # -DPRE_SRP_1_7_3
 !else
 DEFINES = -DNT -DWINVER=0x0400 -DOS2 -D_CRT_SECURE_NO_DEPRECATE -DUSE_STRERROR\
-          -DDYNAMIC -DKANJI -DNETCONN \
+          -DDYNAMIC -DKANJI -DNEWFTP\
           -DHADDRLIST -DNPIPE -DOS2MOUSE -DTCPSOCKET -DRLOGCODE \
-          -DNETFILE -DONETERMUPD -DCRYPT_DLL \
-          -DNEWFTP -DNO_SRP -DNO_KERBEROS -DNOSSH -DNOCKXYZ -DNO_SSL -DBETATEST -DNO_DNS_SRV \
+          -DNETFILE -DONETERMUPD -DCRYPT_DLL -DBETATEST -DNO_DNS_SRV \
+          $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS) \
 !if "$(CMP)" != "OWCL"
           -D__STDC__ \
 !endif
@@ -573,7 +597,7 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
         ckuus3$(O) ckuus4$(O) ckuus5$(O) ckuus6$(O) ckuus7$(O) ckuusx$(O) \
         ckuusy$(O) ckuxla$(O) ckclib$(O) ckctel$(O) ckcuni$(O) ckcftp$(O) \
 !if "$(PLATFORM)" == "NT"
-        cknsig$(O) cknalm$(O) ckntap$(O) cknwin$(O) cknprt$(O)\
+        cknsig$(O) cknalm$(O) ckntap$(O) cknwin$(O) cknprt$(O) cknpty$(O) \
 !else
         ckusig$(O) \
 !endif /* PLATFORM */
@@ -976,6 +1000,9 @@ ckonet$(O):	ckonet.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckoker.h ckcnet.h ckcte
 cknnbi$(O):     cknnbi.c ckonbi.h ckcdeb.h ckoker.h ckclib.h 
 !else
 ckonbi$(O):     ckonbi.c ckonbi.h ckcdeb.h ckoker.h ckclib.h 
+!endif
+!if "$(PLATFORM)" == "NT"
+cknpty$(O):     cknpty.c cknpty.h
 !endif
 ckoslp$(O):     ckoslp.c ckoslp.h ckcdeb.h ckoker.h ckclib.h 
 ckomou$(O):     ckomou.c ckocon.h ckcdeb.h ckoker.h ckclib.h ckokey.h ckokvb.h ckuusr.h
