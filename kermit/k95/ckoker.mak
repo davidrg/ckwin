@@ -94,13 +94,22 @@ CKF_SSH=no
 CKF_SSH=no
 !endif
 
+!if "$(PLATFORM)" == "NT"
+!if ($(MSC_VER) >= 192)
+# ConPTY on Windows 10+ requires a Platform SDK from late 2018 or newer.
+# So we'll only turn this on automatically when building with Visual C++ 2019 or
+# later.
+CKF_CONPTY=yes
+!endif
+!endif
+
 # Network Connections are always supported. We only put it here because
 # the Watcom nmake clone can't handle empty macros so we need *something* here.
 ENABLED_FEATURES = Network-Connections
 ENABLED_FEATURE_DEFS = -DNETCONN
 
-DISABLED_FEATURES = SuperLAT DECnet Kerberos SRP XYZMODEM
-DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNOCKXYZ -DNO_SRP
+DISABLED_FEATURES = SuperLAT DECnet Kerberos SRP XYZMODEM Telnet-Encryption CryptDLL
+DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNOCKXYZ -DNO_SRP -DNO_ENCRYPTION
 
 # SFTP:
 #   Turn on with -DSFTP_BUILTIN
@@ -128,6 +137,10 @@ DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNOCKXYZ -DNO_SRP
 # New URL Highlight:
 #   Turn on with: -DNEW_URL_HIGHLIGHT
 #   This does: no idea.
+# Encryption (DES, CAST and some others)
+#   Turn on with: -DCRYPT_DLL
+#       and optionally: -DCK_ENCRYPTION
+#   Turn off with: -DNO_ENCRYPTION
 
 !if "$(CKF_NO_CRYPTO)" == "yes"
 # A No-crypto build has been requested regardless of what libraries may have
@@ -174,17 +187,13 @@ DISABLED_FEATURES = $(DISABLED_FEATURES) SSH
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOSSH
 !endif
 
-!if "$(PLATFORM)" == "NT"
-!if ($(MSC_VER) >= 192)
-# ConPTY on Windows 10+ requires a Platform SDK from late 2018 or newer.
-# So we'll limit this feature to when building with Visual C++ 2019 or
-# later.
+!if "$(CKF_CONPTY)" == "yes"
 ENABLED_FEATURES = $(ENABLED_FEATURES) ConPTY
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_CONPTY
-
 # Needed for STARTUPINFOEX
 WIN32_VERSION=0x0600
-!endif
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) ConPTY
 !endif
 
 # Produce a build with no cryptography support at all
@@ -624,7 +633,7 @@ DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH -DONETERMUPD -DUSE_STRER
 DEFINES = -DNT -DWINVER=0x0400 -DOS2 -D_CRT_SECURE_NO_DEPRECATE -DUSE_STRERROR\
           -DDYNAMIC -DKANJI \
           -DHADDRLIST -DNPIPE -DOS2MOUSE -DTCPSOCKET -DRLOGCODE \
-          -DNETFILE -DONETERMUPD -DCRYPT_DLL \
+          -DNETFILE -DONETERMUPD  \
           -DNEWFTP -DBETATEST -DNO_DNS_SRV \
           $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS) \
 !if "$(CMP)" != "OWCL"
