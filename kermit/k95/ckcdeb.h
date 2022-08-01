@@ -2384,6 +2384,15 @@ _PROTOTYP( void bleep, (short) );
 #else
 #ifdef LINUX				/* Linux */
 #define NETPTY
+#else
+#ifdef NT                   /* Windows NT */
+/* NT only gets PTY support when built with CK_CONPTY as it requires
+ * a sufficiently new Platform SDK and compiler. */
+#ifdef CK_CONPTY
+#define NETPTY
+#endif /* CK_CONPTY */
+
+#endif /* NT */
 #endif /* LINUX */
 #endif /* AIX41 */
 #endif /* SUNOS41 */

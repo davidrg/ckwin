@@ -11942,6 +11942,9 @@ initoptlist() {
     makestr(&(optlist[noptlist++]),line);
 #endif	/* OPENSSL_VERSION_TEXT */
 #endif /* CK_SSL */
+#ifdef CK_CONPTY
+    makestr(&(optlist[noptlist++]),"CK_CONPTY");
+#endif
     debug(F101,"initoptlist noptlist","",noptlist);
     sh_sort(optlist,NULL,noptlist,0,0,0);
 }
@@ -12200,6 +12203,11 @@ shofea() {
 #endif /* CK_LOGIN */
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
 #endif /* IKSD */
+
+#ifdef CK_CONPTY
+    printf(" Windows PTY support (Windows 10+)\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+#endif /* CK_CONPTY */
 
     printf("\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }

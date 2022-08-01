@@ -7193,6 +7193,16 @@ Makes a connection through the program whose command line is given. Example:\n\
 \n pipe rlogin xyzcorp.com"));
 #endif /* NETCMD */
 
+#ifdef NETPTY
+#ifdef NT
+case XXPTY:
+    /* For windows ConPTY support - run any windows text mode app inside CKW */
+    return(hmsg("Syntax: PTY [ command ]\n\
+Runs the specified command in a pseudoterminal. Example:\n\
+\n pty cmd.exe"));
+#endif
+#endif
+
 case XXSTATUS:
     return(hmsg(
 "STATUS is the same as SHOW STATUS; prints SUCCESS or FAILURE for the\n\
