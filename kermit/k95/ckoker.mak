@@ -111,6 +111,18 @@ ENABLED_FEATURE_DEFS = -DNETCONN
 DISABLED_FEATURES = SuperLAT DECnet Kerberos SRP XYZMODEM Telnet-Encryption CryptDLL
 DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNOCKXYZ -DNO_SRP -DNO_ENCRYPTION
 
+# Feature Flags:
+# CKF_ZLIB        ZLIB support
+# CKF_SSL         SSL support
+# CKF_SSH         libssh support (built-in SSH)
+# CKF_CONPTY      Windows PTY support
+# CKF_DEBUG       Debug logging - on by default
+# CKF_BETATEST    Set to no to do a release build
+# CKF_NO_CRYPTO   Disable all cryptography
+
+# Other features that should one day be turned on via feature flags once we
+# figure out how Fto build them and get any dependencies sorted out.
+#
 # SFTP:
 #   Turn on with -DSFTP_BUILTIN
 #   Requires: reimplementing with libssl
@@ -149,7 +161,8 @@ CKF_SSH=no
 CKF_SSL=no
 !endif
 
-# Force SSL off - it doesn't build currently.
+# Force SSL off - it doesn't build currently (the OS/2 and NT bits need
+# upgrading to at least OpenSSL 1.1.1 if not 3.0)
 CKF_SSL=no
 
 # ZLIB:
@@ -181,12 +194,15 @@ DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_SSL
 !if "$(CKF_SSH)" == "yes"
 !message CKF_SSH set - turning built-in SSH on.
 ENABLED_FEATURES = $(ENABLED_FEATURES) SSH
-ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DSSHBUILTIN
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS)
 !else
 DISABLED_FEATURES = $(DISABLED_FEATURES) SSH
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOSSH
 !endif
 
+# Windows Pseudoterminal Support (ConPTY)
+#   Turn on with: -DCK_CONPTY
+#   Requires: Visual C++ 2019 or newer
 !if "$(CKF_CONPTY)" == "yes"
 ENABLED_FEATURES = $(ENABLED_FEATURES) ConPTY
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_CONPTY
@@ -206,6 +222,11 @@ DISABLED_FEATURES = $(DISABLED_FEATURES) ConPTY
 # If beta-test mode hasn't been explicitly turned off then assume its on.
 !if "$(CKF_BETATEST)" != "no"
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DBETATEST
+!endif
+
+!if "$(CKF_DEBUG")" == "no"
+DISABLED_FEATURES = $(DISABLED_FEATURES) Debug
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNODEBUG
 !endif
 
 !message
