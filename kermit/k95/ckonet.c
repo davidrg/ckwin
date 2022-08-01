@@ -1246,7 +1246,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
 #endif /* NETFILE */
 
 #ifdef NETCMD
-    if ( nettype == NET_CMD ) {
+    if ( nettype == NET_CMD  || nettype == NET_PTY ) {
         char cmd_line[256], *cmd_exe, *args, *p;
         int argslen;
         HRESULT result;
@@ -1255,6 +1255,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
         cmd_line[0] = '\0' ;
         /* Now create the child process. */
 
+#ifdef COMMENT
         cmd_exe = getenv("SHELL");
         if ( !cmd_exe )
             cmd_exe = getenv("COMSPEC");
@@ -1280,9 +1281,29 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
             ckstrncat(args, name,argslen);
         }
         debug(F110,"os2_netopen NET_CMD args",args,0);
+#else
+        /* Just run the command directly rather than via the shell otherwise
+         * things can act up.
+         **/
+        ckstrncat(cmd_line, name, 256);
+#endif
+
+#ifdef NETPTY
+        if (nettype == NET_PTY) {
+#ifdef CK_CONPTY
+            if (!pseudo_console_available()) {
+                printf("Sorry, PTY suport is not available on this version of Windows\n");
+                return -1;
+            }
+#else
+            printf("Sorry, PTY support is not configured in this version of Kermit.\n");
+            return -1;
+#endif
+        }
+#endif
 
 #ifdef CK_CONPTY
-        if (pseudo_console_available()) {
+        if (nettype == NET_PTY) {
             extern int tt_rows[], tt_cols[];
             COORD size;
 
@@ -1295,6 +1316,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
                 fSuccess = TRUE;
             }
         } else {
+            conpty_open = FALSE;
 #endif /* CK_CONPTY */
             hSaveStdOut = GetStdHandle( STD_OUTPUT_HANDLE ) ;
             hSaveStdIn  = GetStdHandle( STD_INPUT_HANDLE ) ;
@@ -1416,8 +1438,15 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
 #ifdef CK_CONPTY
         if (!conpty_open) {
 #endif
+            /* If: We're doing NET_CMD or (we're doing NET_PTY and it failed) */
+
+            /* Doing this prevents us from seeing when the subprocess ends when
+             * running in a pipe (NET_CMD). For NET_PTY we only come in here if
+             * we failed to start the subprocess so it doesn't matter.
+             * So not sure why this was here previously.
             CloseHandle(procinfo.hProcess);
             CloseHandle(procinfo.hThread);
+             */
 
             if ( !SetStdHandle( STD_OUTPUT_HANDLE, hSaveStdOut ) ||
                  !SetStdHandle( STD_INPUT_HANDLE, hSaveStdIn ) ||
@@ -1431,7 +1460,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
                 return -1;
             }
 #ifdef CK_CONPTY
-        }
+       }
 #endif
 
         if ( !fSuccess ) {
@@ -1737,52 +1766,52 @@ os2_netclos() {
     }
 #endif /* NETFILE */
 
+#ifdef NETPTY
+#ifdef CK_CONPTY
+    if (nettype == NET_PTY && conpty_open) {
+        close_pseudo_console();
+        conpty_open = FALSE;
+        /* Closing the PTY will terminate the subprocess. We can't close
+         * the pipes here though - we need to keep reading from them until
+         * the subprocess finishes terminating and closes them itself. If
+         * the pipes are closed with input still waiting to be read it could
+         * result in a deadlock according to the docs.
+         **/
+    }
+#endif
+#endif
+
 #ifdef NETCMD
     if ( nettype == NET_CMD ) {
 #ifdef NT
         DWORD exitcode=1;
 
-#ifdef CK_CONPTY
-        if (conpty_open) {
-            close_pseudo_console();
-            conpty_open = FALSE;
-            /* Closing the PTY will terminate the subprocess. We can't close
-             * the pipes here though - we need to keep reading from them until
-             * the subprocess finishes terminating and closes them itself. If
-             * the pipes are closed with input still waiting to be read it could
-             * result in a deadlock according to the docs.
-             **/
-        } else {
-#endif
-            if (WaitForSingleObject(procinfo.hProcess, 0L) == WAIT_OBJECT_0)
-                GetExitCodeProcess(procinfo.hProcess, &exitcode);
-            else if (!TerminateProcess(procinfo.hProcess,exitcode)) {
-                int gle = GetLastError();
-                debug(F111,"net_clos NET_CMD","unable to TerminateProcess",gle);
-            }
-            else {
-                if (WaitForSingleObject(procinfo.hProcess, 5000) == WAIT_OBJECT_0) {
-                    GetExitCodeProcess(procinfo.hProcess, &exitcode);
-                    debug(F111,"os2_netclos NET_CMD","exitcode",exitcode);
-                } else {
-                    printf("!ERROR: Unable to terminate network command!\n");
-                    debug(F110,"os2_netclose NET_CMD",
-                           "unable to termiate network command",0);
-                }
-            }
-
-            /* Close the pipe handle so the child stops reading. */
-            CloseHandle(hChildStdoutRd);    hChildStdoutRd = NULL;
-            CloseHandle(hChildStdoutWr);    hChildStdoutWr = NULL;
-            CloseHandle(hChildStdinRd);     hChildStdinRd = NULL;
-            CloseHandle(hChildStdinWrDup);  hChildStdinWrDup = NULL;
-            CloseHandle(hChildStdoutRdDup); hChildStdoutRdDup = NULL;
-
-            CloseHandle( procinfo.hProcess ) ;
-            CloseHandle( procinfo.hThread ) ;
-#ifdef CK_CONPTY
+        if (WaitForSingleObject(procinfo.hProcess, 0L) == WAIT_OBJECT_0)
+            GetExitCodeProcess(procinfo.hProcess, &exitcode);
+        else if (!TerminateProcess(procinfo.hProcess,exitcode)) {
+            int gle = GetLastError();
+            debug(F111,"net_clos NET_CMD","unable to TerminateProcess",gle);
         }
-#endif
+        else {
+            if (WaitForSingleObject(procinfo.hProcess, 5000) == WAIT_OBJECT_0) {
+                GetExitCodeProcess(procinfo.hProcess, &exitcode);
+                debug(F111,"os2_netclos NET_CMD","exitcode",exitcode);
+            } else {
+                printf("!ERROR: Unable to terminate network command!\n");
+                debug(F110,"os2_netclose NET_CMD",
+                       "unable to termiate network command",0);
+            }
+        }
+
+        /* Close the pipe handle so the child stops reading. */
+        CloseHandle(hChildStdoutRd);    hChildStdoutRd = NULL;
+        CloseHandle(hChildStdoutWr);    hChildStdoutWr = NULL;
+        CloseHandle(hChildStdinRd);     hChildStdinRd = NULL;
+        CloseHandle(hChildStdinWrDup);  hChildStdinWrDup = NULL;
+        CloseHandle(hChildStdoutRdDup); hChildStdoutRdDup = NULL;
+
+        CloseHandle( procinfo.hProcess ) ;
+        CloseHandle( procinfo.hThread ) ;
 
 #else /* NT */
         ULONG exitcode=STILL_ACTIVE;
@@ -2063,7 +2092,7 @@ os2_nettchk() {                         /* for reading from network */
 #endif /* NETFILE */
 
 #ifdef NETCMD
-    if ( nettype == NET_CMD ) {
+    if ( nettype == NET_CMD || nettype == NET_PTY ) {
 #ifdef NT
         if (WaitForSingleObject(procinfo.hProcess, 0L) == WAIT_OBJECT_0) {
             ttclos(0);
@@ -2323,7 +2352,7 @@ os2_netxin(int n, CHAR * buf) {
     }
 #endif /* NETDLL */
 #ifdef NETCMD
-    if (nettype == NET_CMD) {
+    if (nettype == NET_CMD || nettype == NET_PTY ) {
         int copysize = n;
         int i;
         len = os2_nettchk();
@@ -2897,7 +2926,7 @@ os2_netinc(timo) int timo; {
 #endif /* NETFILE */
 
 #ifdef NETCMD
-    if ( nettype == NET_CMD ) {
+    if ( nettype == NET_CMD || nettype == NET_PTY ) {
         CHAR  c ;
 
         if ( !WaitNetCmdAvailSem(timo<0?-timo:timo*1000) ) {
@@ -3225,7 +3254,7 @@ os2_nettoc(c) int c; {
 #endif /* NETFILE */
 
 #ifdef NETCMD
-    if ( nettype == NET_CMD ) {
+    if ( nettype == NET_CMD || nettype == NET_PTY ) {
 #ifdef NT
         ULONG byteswritten=0;
         if ( !WriteFile( hChildStdinWrDup, &c, 1, &byteswritten, NULL ) )
@@ -3604,7 +3633,7 @@ os2_nettol(s,n) char *s; int n; {
 #endif /* NETFILE */
 
 #ifdef NETCMD
-    if ( nettype == NET_CMD ) {
+    if ( nettype == NET_CMD || nettype == NET_PTY ) {
 #ifdef NT
         ULONG byteswritten=0;
         if ( !WriteFile( hChildStdinWrDup, s, n, &byteswritten, NULL ) )
@@ -3695,7 +3724,7 @@ os2_netflui() {
 #endif /* NETFILE */
 
 #ifdef NETCMD
-    if ( nettype == NET_CMD ) {
+    if ( nettype == NET_CMD || nettype == NET_PTY ) {
         return(0);
     }
 #endif /* NETCMD */
@@ -3788,7 +3817,7 @@ os2_netbreak() {
 #endif /* NETFILE */
 
 #ifdef NETCMD
-    if ( nettype == NET_CMD ) {
+    if ( nettype == NET_CMD || nettype == NET_PTY ) {
         return(-1);
     }
 #endif /* NETCMD */

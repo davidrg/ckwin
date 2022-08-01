@@ -3605,7 +3605,7 @@ void term_dimensions_changed(int x, int y) {
 #endif /* SSHBUILTIN */
 #ifdef NETCMD
 #ifdef CK_CONPTY
-    if (nettype == NET_CMD && pseudo_console_available()) {
+    if (nettype == NET_PTY && pseudo_console_available()) {
         extern BOOL conpty_open;
         if (conpty_open) {
             COORD size;

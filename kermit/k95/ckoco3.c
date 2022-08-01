@@ -2700,6 +2700,9 @@ protoString(void)
         case NET_FILE:
             ckstrncpy(buf, "FILE",sizeof(buf));
             break;
+        case NET_PTY:
+            ckstrncpy(buf, "PTY",sizeof(buf));
+            break;
         case NET_CMD:
             ckstrncpy(buf, "COMMAND",sizeof(buf));
             break;
