@@ -108,14 +108,14 @@ HRESULT open_pseudo_console(COORD size, HANDLE input_pipe, HANDLE output_pipe)
     return hr;
 }
 
-#if _MSC_VER >= 1900
+#ifdef CK_CONPTY
 HRESULT prepare_startup_info(STARTUPINFOEX * psi)
 {
     // Prepare Startup Information structure
     STARTUPINFOEX si;
     ZeroMemory(&si, sizeof(si));
     si.StartupInfo.cb = sizeof(STARTUPINFOEX);
-#ifdef CK_CONPTY
+
     // Discover the size required for the list
     size_t bytesRequired;
     InitializeProcThreadAttributeList(NULL, 1, 0, &bytesRequired);
@@ -147,7 +147,7 @@ HRESULT prepare_startup_info(STARTUPINFOEX * psi)
         HeapFree(GetProcessHeap(), 0, si.lpAttributeList);
         return HRESULT_FROM_WIN32(GetLastError());
     }
-#endif
+
     *psi = si;
 
     return S_OK;
@@ -157,6 +157,7 @@ HRESULT prepare_startup_info(STARTUPINFOEX * psi)
 BOOL start_subprocess_in_pty(COORD size, LPSTR lpCommandLine,
                              LPPROCESS_INFORMATION lpProcessInformation,
                              PHANDLE hInputWriter, PHANDLE hOutputReader ) {
+#ifdef CK_CONPTY
     HANDLE hInputReader, hOutputWriter;
     STARTUPINFOEX startupInfo;
     BOOL result;
@@ -216,6 +217,9 @@ BOOL start_subprocess_in_pty(COORD size, LPSTR lpCommandLine,
    debug(F100, "Subprocess started successfully", "", 0);
 
    return TRUE;
+#else
+   return FALSE;
+#endif
 }
 
 void resize_pseudo_console(COORD new_size) {

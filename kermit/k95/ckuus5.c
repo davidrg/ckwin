@@ -12578,6 +12578,11 @@ shofea() {
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
     flag = 1;
 #endif /* IKSD */
+#ifdef CK_CONPTY
+    printf(" No Windows PTY support (Windows 10+)\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+    flag = 1;
+#endif /* CK_CONPTY */
 
     if (flag == 0) {
         printf(" None\n");

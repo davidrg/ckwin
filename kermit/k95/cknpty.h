@@ -66,7 +66,7 @@ BOOL create_pipes(PHANDLE inputReader, PHANDLE inputWriter,
  */
 HRESULT open_pseudo_console(COORD size, HANDLE input_pipe, HANDLE output_pipe);
 
-#if _MSC_VER >= 1900
+#ifdef CK_CONPTY
 /** Prepares the supplied STARTUPINFOEX for use with
  * the already crated PTY (call open_pseudo_console first)
  *
