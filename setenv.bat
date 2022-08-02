@@ -3,6 +3,14 @@
 REM Uncomment this and set it to where your source code lives
 REM set root=C:\src
 
+REM Optional Features
+REM -----------------
+REM You can uncomment these to turn things on (or off). Other features are
+REM turned on automatically when the required dependencies are built.
+
+REM debug logging ("log debug" command)
+REM set CKF_DEBUG=no
+
 REM Optional Dependencies - zlib, openssl, libssh.
 REM ----------------------------------------------
 REM If you've built or installed these, uncomment and set a few more paths to

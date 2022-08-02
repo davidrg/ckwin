@@ -84,150 +84,11 @@ WIN32_VERSION=0x0400
 
 !include compiler_detect.mak
 !message
-!else
-# No built-in SSH support for OS/2 (yet)
-CKF_SSH=no
 !endif
 
-!if "$(CMP)" == "OWCL"
-# No built-in SSH support for OpenWatcom (yet)
-CKF_SSH=no
-!endif
-
-!if "$(PLATFORM)" == "NT"
-!if ($(MSC_VER) >= 192)
-# ConPTY on Windows 10+ requires a Platform SDK from late 2018 or newer.
-# So we'll only turn this on automatically when building with Visual C++ 2019 or
-# later.
-CKF_CONPTY=yes
-!endif
-!endif
-
-# Network Connections are always supported. We only put it here because
-# the Watcom nmake clone can't handle empty macros so we need *something* here.
-ENABLED_FEATURES = Network-Connections
-ENABLED_FEATURE_DEFS = -DNETCONN
-
-DISABLED_FEATURES = SuperLAT DECnet Kerberos SRP XYZMODEM Telnet-Encryption CryptDLL
-DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNOCKXYZ -DNO_SRP -DNO_ENCRYPTION
-
-# Feature Flags:
-# CKF_ZLIB        ZLIB support
-# CKF_SSL         SSL support
-# CKF_SSH         libssh support (built-in SSH)
-# CKF_CONPTY      Windows PTY support
-# CKF_DEBUG       Debug logging - on by default
-# CKF_BETATEST    Set to no to do a release build
-# CKF_NO_CRYPTO   Disable all cryptography
-
-# Other features that should one day be turned on via feature flags once we
-# figure out how Fto build them and get any dependencies sorted out.
-#
-# SFTP:
-#   Turn on with -DSFTP_BUILTIN
-#   Requires: reimplementing with libssl
-# XYZMODEM:
-#   Turn on with: uncommenting the necessary build steps
-#   Turn off with: -DNOCKXYZ
-#   Requires: A currently proprietary library ('P')
-# Kerberos:
-#   Turn off with: -DNO_KERBEROS
-#   Requires: An antique version of MIT Kerberos for Windows. Should be
-#             converted to using Heimdal Kerberos
-# NetBIOS:
-#   Turn on with: -DCK_NETBIOS
-#   Requires: ?
-# SRP:
-#   Turn off with: -DNO_SRP
-#   Optionally: -DPRE_SRP_1_7_3
-# SuperLAT:
-#   Turn on with: -DSUPERLAT
-#   Requires: The SuperLAT SDK
-# DECnet:
-#   Turn on with: -DDECNET
-#   Requires: The Pathworks32 SDK
-# New URL Highlight:
-#   Turn on with: -DNEW_URL_HIGHLIGHT
-#   This does: no idea.
-# Encryption (DES, CAST and some others)
-#   Turn on with: -DCRYPT_DLL
-#       and optionally: -DCK_ENCRYPTION
-#   Turn off with: -DNO_ENCRYPTION
-
-!if "$(CKF_NO_CRYPTO)" == "yes"
-# A No-crypto build has been requested regardless of what libraries may have
-# been found. Disable all crypto-related features
-CKF_SSH=no
-CKF_SSL=no
-!endif
-
-# Force SSL off - it doesn't build currently (the OS/2 and NT bits need
-# upgrading to at least OpenSSL 1.1.1 if not 3.0)
-CKF_SSL=no
-
-# ZLIB:
-#   Turn on with: -DZLIB
-#   Requires: zlib
-#             And also some stuff fixed
-!if "$(CKF_ZLIB)" == "yes"
-!message CKF_ZLIB set - turning ZLIB on.
-ENABLED_FEATURES = $(ENABLED_FEATURES) ZLIB
-ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DZLIB
-!else
-DISABLED_FEATURES = $(DISABLED_FEATURES) ZLIB
-!endif
-
-# SSL:
-#   Turn off with: -DNO_SSL
-#   Requires: OpenSSL
-#             And also some stuff fixed
-!if "$(CKF_SSL)" == "yes"
-!else
-DISABLED_FEATURES = $(DISABLED_FEATURES) SSL
-DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_SSL
-!endif
-
-# Built-in SSH support (libssh)
-#   Turn on with: -DSSHBUILTIN
-#   Turn off with: -DNOSSH
-#   Requires: libssh
-!if "$(CKF_SSH)" == "yes"
-!message CKF_SSH set - turning built-in SSH on.
-ENABLED_FEATURES = $(ENABLED_FEATURES) SSH
-ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS)
-!else
-DISABLED_FEATURES = $(DISABLED_FEATURES) SSH
-DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOSSH
-!endif
-
-# Windows Pseudoterminal Support (ConPTY)
-#   Turn on with: -DCK_CONPTY
-#   Requires: Visual C++ 2019 or newer
-!if "$(CKF_CONPTY)" == "yes"
-ENABLED_FEATURES = $(ENABLED_FEATURES) ConPTY
-ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_CONPTY
-# Needed for STARTUPINFOEX
-WIN32_VERSION=0x0600
-!else
-DISABLED_FEATURES = $(DISABLED_FEATURES) ConPTY
-!endif
-
-# Produce a build with no cryptography support at all
-#  - probably doesn't work at the moment.
-#!if "$(CKF_NO_CRYPTO)" == "yes"
-#DISABLED_FEATURES = $(DISABLED_FEATURES) Encryption
-#DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_ENCRYPTION
-#!endif
-
-# If beta-test mode hasn't been explicitly turned off then assume its on.
-!if "$(CKF_BETATEST)" != "no"
-ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DBETATEST
-!endif
-
-!if "$(CKF_DEBUG)" == "no"
-DISABLED_FEATURES = $(DISABLED_FEATURES) Debug
-DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNODEBUG
-!endif
+# This turns features on and off based on set feature flags (CKF_*), the
+# platform being targeted, and the compiler currently in use.
+!include feature_flags.mak
 
 !message
 !message
@@ -255,6 +116,9 @@ INCLUDE = $(INCLUDE);ow\;
 !if ($(MSC_VER) < 60)
 !error Unsupported compiler version. Visual C++ 6.0 SP6 or newer required.
 !endif
+
+# TODO: Much of this compiler flag work should be applied to the KUI Makefile
+#       too
 
 # Check to see if we're using Visual C++ and targeting 64bit x86. If so
 # then tell the linker we're targeting x86-64
@@ -749,11 +613,13 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
 !if "$(PLATFORM)" == "NT"
         cknnbi$(O) \
 !else
-        ckonbi$(O) 
+        ckonbi$(O) \
 !endif /* PLATFORM */
-# XYZ Modem support
-#        ckop$(O) p_callbk$(O) p_global$(O) p_omalloc$(O) p_error$(O) \
-#        p_common$(O) p_tl$(O) p_dir$(O)
+!if ("$(CKF_XYZ)" == "yes")
+        ckop$(O) p_callbk$(O) p_global$(O) p_omalloc$(O) p_error$(O) \
+        p_common$(O) p_tl$(O) p_dir$(O)
+!endif
+
 
 #OUTDIR = \kui\win95
 KUIOBJS = \
@@ -1141,8 +1007,10 @@ cknpty$(O):     cknpty.c cknpty.h
 ckoslp$(O):     ckoslp.c ckoslp.h ckcdeb.h ckoker.h ckclib.h 
 ckomou$(O):     ckomou.c ckocon.h ckcdeb.h ckoker.h ckclib.h ckokey.h ckokvb.h ckuusr.h
 ckop$(O):       ckop.c ckop.h ckcdeb.h ckoker.h ckclib.h ckcker.h \ 
-                ckuusr.h ckcnet.h ckctel.h ckonet.h ckocon.h
-				# XYZMODEM Support: p_global.h p_callbk.h 
+                ckuusr.h ckcnet.h ckctel.h ckonet.h ckocon.h \
+!if "$(CKF_XYZ)" == "yes"
+				p_global.h p_callbk.h
+!endif
 cknsig$(O):	cknsig.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckcsym.h ckcnet.h ckctel.h ckonet.h\
                 ckuusr.h ckonet.h ckcsig.h ckocon.h
 ckusig$(O):	ckusig.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckcsym.h ckcnet.h ckctel.h ckonet.h\
@@ -1181,16 +1049,18 @@ ck_crp$(O):     ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h c
 #
 #!endif
 
-# X/Y/Z Modem support (3rd-party proprietary library)
-#p_brw$(O):     ckcdeb.h ckoker.h ckclib.h ckocon.h p_brw.c p_type.h p_brw.h
-#p_callbk$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_callbk.c p_type.h p.h p_callbk.h p_common.h p_brw.h \
-#               p_error.h  p_global.h p_module.h p_omalloc.h
-#p_common$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_common.c p_type.h p_common.h p_error.h p_module.h p_global.h
-#p_dir$(O):     ckcdeb.h ckoker.h ckclib.h ckocon.h p_dir.c    p_type.h p_dir.h
-#p_error$(O):   ckcdeb.h ckoker.h ckclib.h ckocon.h p_error.c  p_type.h p_errmsg.h ckcnet.h ckctel.h ckonet.h
-#p_global$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_global.c p_type.h p_tl.h p_brw.h p.h
-#p_tl$(O):      ckcdeb.h ckoker.h ckclib.h ckocon.h p_tl.c     p_type.h p_tl.h p_brw.h p.h
-#p_omalloc$(O): ckcdeb.h ckoker.h ckclib.h p_omalloc.c p_type.h p_error.h p.h
+# X/Y/Z Modem support (3rd-party library)
+!if "$(CKF_XYZ)" == "yes"
+p_brw$(O):     ckcdeb.h ckoker.h ckclib.h ckocon.h p_brw.c p_type.h p_brw.h
+p_callbk$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_callbk.c p_type.h p.h p_callbk.h p_common.h p_brw.h \
+               p_error.h  p_global.h p_module.h p_omalloc.h
+p_common$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_common.c p_type.h p_common.h p_error.h p_module.h p_global.h
+p_dir$(O):     ckcdeb.h ckoker.h ckclib.h ckocon.h p_dir.c    p_type.h p_dir.h
+p_error$(O):   ckcdeb.h ckoker.h ckclib.h ckocon.h p_error.c  p_type.h p_errmsg.h ckcnet.h ckctel.h ckonet.h
+p_global$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_global.c p_type.h p_tl.h p_brw.h p.h
+p_tl$(O):      ckcdeb.h ckoker.h ckclib.h ckocon.h p_tl.c     p_type.h p_tl.h p_brw.h p.h
+p_omalloc$(O): ckcdeb.h ckoker.h ckclib.h p_omalloc.c p_type.h p_error.h p.h
+!endif
 
 ckcpro.c:	ckcpro.w ckwart.exe
 #		$(MAKE) -f ckoker.mak ckwart.exe \
