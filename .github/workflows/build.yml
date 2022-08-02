@@ -207,7 +207,13 @@ jobs:
 
         call ..\..\setenv.bat
         call mk.bat
-        call mkdist.bat
+      shell: cmd
+      working-directory: ${{ github.workspace }}\kermit\k95
+      env:
+        ROOT: ${{ github.workspace }}
+        WATCOM: ${{ github.workspace }}\watcom
+    - name: Make Distribution
+      run: mkdist.bat
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95
       env:
