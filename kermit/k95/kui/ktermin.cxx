@@ -35,7 +35,7 @@ KTerminal::KTerminal( K_GLOBAL* kg )
     setClient( client );
 
 	// Disable toolbar button & menu item for dialer
-	if (!DialerExists()) {
+	if (!DialerExists() && toolbar) {
 		// Disable toolbar button
 		BYTE state = tbButtons[1].tbbutton.fsState;
 		state = state & ~TBSTATE_ENABLED;

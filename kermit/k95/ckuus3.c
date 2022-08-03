@@ -8667,7 +8667,9 @@ static struct keytab guitab[] = {
     { "font",        GUI_FON,  0 },
     { "menubar",     GUI_MNB,  0 },
     { "rgbcolor",    GUI_RGB,  0 },
+#ifndef NOTOOLBAR
     { "toolbar",     GUI_TLB,  0 },
+#endif
     { "window",      GUI_WIN,  0 },
     { "", 0, 0}
 };

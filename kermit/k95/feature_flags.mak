@@ -176,6 +176,16 @@ ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) XYZMODEM
 !else
 DISABLED_FEATURES = $(DISABLED_FEATURES) XYZMODEM
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOCKXYZ
+!endif
+
+# KUI Toolbar:
+#   Turn off with: -DNOTOOLBAR
+# Removes the toolbar in K95G which requires features unavailable in the version
+# of comctl32.dll shipped prior to NT 3.51.
+!if "$(CKF_TOOLBAR)" == "no"
+DISABLED_FEATURES = $(DISABLED_FEATURES) Toolbar
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOTOOLBAR
+!endif
 
 # Login:
 #   Turn off with: -DNOLOGIN

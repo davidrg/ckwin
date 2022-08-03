@@ -110,6 +110,7 @@ void KToolBar::initButtons( int numbut, int numbit, ToolBitmapDef* def )
 ------------------------------------------------------------------------*/
 void KToolBar::createWin( KWin* par )
 {
+#ifndef NOTOOLBAR
     parent = par;
 
     TBBUTTON* tb = new TBBUTTON [numButtons];
@@ -136,6 +137,7 @@ void KToolBar::createWin( KWin* par )
                 , sizeof(TBBUTTON) );       // structure size
 
     delete tb;
+#endif
 }
 
 
