@@ -4948,7 +4948,9 @@ ntlm_is(data,cnt) unsigned char *data; int cnt;
         SecPkgContext_SessionKey skey;
         SecPkgContext_PackageInfo pkginf;
 #ifdef IKSD
+#ifdef CK_LOGIN
         extern CHAR * pReferenceDomainName;
+#endif
         extern int inserver;
 #endif /* IKSD */
 
@@ -4964,8 +4966,8 @@ ntlm_is(data,cnt) unsigned char *data; int cnt;
         p_SSPI_Func->QueryContextAttributes(&hNTLMContext,SECPKG_ATTR_PASSWORD_EXPIRY,&pwd);
         p_SSPI_Func->QueryContextAttributes(&hNTLMContext,SECPKG_ATTR_SESSION_KEY,&skey);
         p_SSPI_Func->QueryContextAttributes(&hNTLMContext,SECPKG_ATTR_PACKAGE_INFO,&pkginf);
-
 #ifdef IKSD
+#ifdef CK_LOGIN
         /* Format of sUserName is HOST\user or DOMAIN\user */
         if ( !inserver ) {
             p = names.sUserName + strlen(names.sUserName);
@@ -4980,6 +4982,7 @@ ntlm_is(data,cnt) unsigned char *data; int cnt;
                 p--;
             }
         } else
+#endif
 #endif /* IKSD */
         {
             /* Let the Reference Domain Name be extracted by zvuser() */

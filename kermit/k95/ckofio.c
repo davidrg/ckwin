@@ -2323,7 +2323,11 @@ zchdir(dirnam) char *dirnam; {
         extern int ikdbopen;
         if (inserver && ikdbopen) {
 #ifdef CKROOT
+#ifdef CK_LOGIN
             slotdir(isguest ? anonroot : "", zgtdir());
+#else
+            slotdir("", zgtdir());
+#endif /* CK_LOGIN */
 #else
             slotdir("", zgtdir());
 #endif /* CKROOT */

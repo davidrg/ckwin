@@ -14261,9 +14261,9 @@ sho_iks() {
 #endif /* CK_LOGIN */
     printf("  Server-only:         %d\r\n",arg_x);
     printf("  Syslog:              %d\r\n",ckxsyslog);
+#ifdef CK_LOGIN
     printf("  Timeout (seconds):   %d\r\n",logintimo);
     printf("  Userfile:            %s\r\n",userfile?userfile:"<none>");
-#ifdef CK_LOGIN
 #ifdef CKWTMP
     printf("  Wtmplog:             %d\r\n",ckxwtmp);
     printf("  Wtmpfile:            %s\r\n",wtmpfile?wtmpfile:"<none>");

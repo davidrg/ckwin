@@ -3496,6 +3496,7 @@ main(argc,argv) int argc; char **argv;
 #endif /* NOXFER */
 
 #ifndef NOCMDL
+#ifdef CK_LOGIN
 #ifdef IKSD
     ikslogin();                          /* IKSD Login and other stuff */
 #ifdef NT
@@ -3503,6 +3504,7 @@ main(argc,argv) int argc; char **argv;
       setntcreds();
 #endif /* NT */
 #endif /* IKSD */
+#endif /* CK_LOGIN */
 #endif /* NOCMDL */
 
     if (howcalled == I_AM_SSHSUB) {

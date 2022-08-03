@@ -8959,8 +8959,11 @@ docmd(cx) int cx; {
 #ifdef IKSDCONF
             iksdcf &&
 #endif /* IKSDCONF */
-            (x == EN_HOS || x == EN_PRI || x == EN_MAI || x == EN_WHO ||
-              isguest))
+            (x == EN_HOS || x == EN_PRI || x == EN_MAI || x == EN_WHO
+#ifdef CK_LOGIN
+            || isguest
+#endif
+              ))
             return(success = 0);
 #endif /* IKSD */
 	return(doenable(y,x));
