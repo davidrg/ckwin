@@ -32,6 +32,7 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  */
 
 #include <libssh/libssh.h>
+#include <libssh/callbacks.h>
 
 #include "ckcdeb.h"
 #include "ckossh.h"
@@ -178,35 +179,34 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
 
 /* Features libssh provides that might be nice to support in the future:
  *   * Acting as a server (let iksd run over ssh rather than telnet)
- *   * SCP
  */
 
 /* More TODO:
- *  - TODO: fix "linux" term type - running top or nano messes with the encoding
- *          - seems fine on weatherctl
- *          - term=xterm works fine
- *          - Perhaps its a problem with the termcap config on modern debian?
- *  - TODO: Banner isn't working
- *  - TODO: Sort out makefile situation
- *  - TODO: More Authentication options
- *      - https://api.libssh.org/stable/libssh_tutor_authentication.html
- *  - TODO: Settings
- *  - TODO: X11 Forwarding
+ *  - TODO: Fix occasional random disconnect. Perhaps a threading issue? Maybe
+ *          everything here interacting with libssh needs to be moved to a
+ *          dedicated thread.
+ *  - TODO: Fix keyboard interactive authentication
+ *          - Answering correctly results in the loop going around again with
+ *            SSH_AUTH_INFO but no prompts. Returning at that point falls
+ *            through to password auth and, if thats unsuccessful, disconnect.
+ *            So for now keyboard interactive is disabled.
+ *  - TODO: Other Settings
  *  - TODO: Sort out host verification
  *          - it is working. So just needs tidying.
  *  - TODO: How do we know /command: has finished? EOF?
- *  - TODO: deal with changing terminal type after connect ? (K95 doesn't)
- *  - TODO: Deal with flush
- *  - TODO: Deal with break
  *  - TODO: fix UI prompt look&feel (weird inset buttons)
- *  - TODO: test /subsystem qualifier somehow (setup kermit as a subsystem?)
- *  - TODO: SFTP
- *      -DSFTP_BUILTIN
+ *  - TODO: Kermit subsystem (/subsystem:kermit) doesn't work
  *  - TODO: Build libssh with GSSAPI, pthreads and kerberos
  *          https://github.com/jwinarske/pthreads4w
- *  - TODO: Kermit subsystem
+ *  - TODO: X11 Forwarding    | Forwarding likely requires moving libssh to a
+ *  - TODO: Other forwarding  | different thread .
+ *  - TODO: Deal with flush
+ *  - TODO: Deal with break
+ *  - TODO: SFTP
+ *      -DSFTP_BUILTIN
  *  - TODO: HTTP Proxying - this was something the previous implementaiton could
  *          handle?
+  *  - TODO: deal with changing terminal type after connect ? (K95 doesn't)
  */
 
 /* Settings that can't be set */
@@ -229,6 +229,7 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
 #define SSH_ERR_UNSUPPORTED_VERSION -12 /* Unsupported SSH version */
 #define SSH_ERR_OPENSSH_CONFIG_ERR -13  /* Error parsing OpenSSH Config */
 #define SSH_ERR_NOT_IMPLEMENTED -14     /* Feature not implemented yet */
+#define SSH_ERR_ACCESS_DENIED -15       /* Login failed */
 
 /* SSH Strict Host Key Checking options */
 #define SSH_SHK_NO 0                    /* Trust everything implicitly */
@@ -243,6 +244,7 @@ extern char uidbuf[];                   /* User ID set via /user: */
 extern char pwbuf[];                    /* Password set via /password: */
 extern int  pwflg;                      /* Password has been set */
 int ssh_sock;   // TODO: get rid of this
+int auth_canceled;                      /* User canceled authentication */
 
 /* Local variables */
 static ssh_session session = NULL;      /* Current SSH session (if any) */
@@ -349,6 +351,67 @@ static void logging_callback(int priority, const char *function,
 }
 
 
+/** SSH Authentication callback for password and publickey auth
+ *
+ * @param prompt Prompt to be displayed
+ * @param buf Buffer to save the password. Should be null terminated.
+ * @param len Length of the buffer.
+ * @param echo Enable or disable the echo of what you type
+ * @param verify Should the password be verified?
+ * @param userdata Userdata to be passed to the callback function
+ */
+static int auth_prompt(const char* prompt, char* buf, size_t len, int echo,
+                       int verify, void* userdata) {
+
+    debug(F110, "ssh auth_prompt", prompt, 0);
+    debug(F111, "ssh auth_prompt", "echo", echo);
+    debug(F111, "ssh auth_prompt", "verify", verify);
+    debug(F111, "ssh auth_prompt", "len", len);
+
+    if (verify) {
+        struct txtbox tb[2];
+        char *verifyBuf;
+        static char again[10] = "Again:";
+        int rc;
+
+        verifyBuf = malloc(len * sizeof(char));
+
+        tb[0].t_buf = buf;
+        tb[0].t_len = len;
+        tb[0].t_lbl = NULL;
+        tb[0].t_dflt = NULL;
+        tb[0].t_echo = echo ? 1 : 2;
+
+        tb[1].t_buf = verifyBuf;
+        tb[1].t_len = len;
+        tb[1].t_lbl = again;
+        tb[1].t_dflt = NULL;
+        tb[1].t_echo = echo ? 1 : 2;
+
+        rc = uq_mtxt(prompt, NULL, 2, tb);
+        if (rc == 0) {
+            debug(F100, "auth_prompt - user canceled", "", 0);
+            rc = -1; /* failed */
+        } else {
+            if (strncmp(buf, verifyBuf, len) == 0) {
+                rc = 0; /* Success */
+            } else {
+                debug(F100, "auth_prompt - verify failed", "", 0);
+                rc = -1; /* error */
+            }
+        }
+
+        free(verifyBuf);
+        return rc;
+    } else {
+        int rc;
+        rc = uq_txt(NULL, prompt, echo ? 1 : 2, NULL, buf, len, NULL,
+                    DEFAULT_UQ_TIMEOUT);
+        if (rc == 1) return 0; /* 1 == success */
+        debug(F100, "auth_prompt - user canceled", "", 0);
+        return -1; /* 0 = error - user canceled */
+    }
+}
 
 int log_verbosity() {
     /* ssh_vrb is set via "set ssh verbose" and has a range of 0-7
@@ -564,13 +627,13 @@ int password_authenticate() {
     int rc = 0;
     int ok = FALSE;
 
+    debug(F110, "Attempting password authentication for user", user, 0);
+
     rc = ssh_options_get(session, SSH_OPTIONS_USER, &user);
     if (rc != SSH_OK) {
         debug(F100, "SSH - Failed to get user ID", "rc", rc);
         return rc;
     }
-
-    debug(F110, "Attempting password authentication for user", user, 0);
 
     for (i = 0; i < SSH_MAX_PASSWORD_PROMPTS; i++) {
         if (i == 0 && pwbuf[0] && pwflg) {
@@ -591,7 +654,8 @@ int password_authenticate() {
             /* User canceled */
             debug(F100, "User canceled password login", "", 0);
             ssh_string_free_char(user);
-            return SSH_ERR_USER_CANCELED;
+            auth_canceled = TRUE;
+            return SSH_AUTH_DENIED;
         }
 
         rc = ssh_userauth_password(session, NULL, password);
@@ -599,17 +663,17 @@ int password_authenticate() {
         if (rc == SSH_AUTH_SUCCESS) {
             debug(F100, "Password login succeeded", "", 0);
             ssh_string_free_char(user);
-            return SSH_ERR_NO_ERROR;
+            return rc;
         } else if (rc == SSH_AUTH_ERROR) {
             debug(F111, "SSH Auth Error - password login failed", "rc", rc);
             /* A serious error has occurred.  */
             ssh_string_free_char(user);
-            return SSH_ERR_AUTH_ERROR;
+            return rc;
         } else if (rc == SSH_AUTH_PARTIAL) {
             debug(F100, "SSH Partial authentication - "
                         "more authentication needed", "", 0);
             ssh_string_free_char(user);
-            return SSH_ERR_MORE_AUTH_NEEDED;
+            return rc;
         }
         /* Else: SSH_AUTH_DENIED - try again. */
         debug(F100, "SSH Password auth failed - access denied", "", 0);
@@ -618,6 +682,258 @@ int password_authenticate() {
     ssh_string_free_char(user);
     return rc;
 }
+
+
+/** Attempt keyboard interactive authentication
+ *
+ * @return SSH_AUTH_SUCCESS on success, SSH_AUTH_DENIED on failure,
+ *         SSH_AUTH_ERROR on serious failure.
+ */
+int kbd_interactive_authenticate() {
+    int rc;
+
+    debug(F100, "kbd_interactive_authenticate", "", 0);
+
+    rc = ssh_userauth_kbdint(session, NULL, NULL);
+
+    while (rc == SSH_AUTH_INFO) {
+        const char* name, *instructions;
+        int nprompts, i, combined_text_len;
+        struct txtbox *tb = NULL;
+        char** responses = NULL;
+        char* combined_instructions = NULL;
+        BOOL failed = FALSE;
+
+        name = ssh_userauth_kbdint_getname(session);
+        instructions = ssh_userauth_kbdint_getinstruction(session);
+        nprompts = ssh_userauth_kbdint_getnprompts(session);
+
+        debug(F110, "kbd_int_auth name", name, 0);
+        debug(F110, "kbd_int_auth instructions", instructions, 0);
+        debug(F101, "kbd_int_auth prompts", "", nprompts);
+
+        if (nprompts == 0) {
+            debug(F100, "No more prompts! Unable to continue interrogating user.", "nprompts", nprompts);
+            break;
+        }
+
+        /* TODO: if nprompts == 1, use uq_txt instead of uq_mtxt. It looks a
+         *       lot less weird than uq_mtxt with only one field and no other
+         *       text.
+         */
+
+        combined_text_len = 0;
+        if (name) combined_text_len += strlen(name);
+        if (instructions) combined_text_len += strlen(instructions);
+
+        if (combined_text_len > 0) {
+            /* Only prepare instructions if the server sent us at least a name
+             * or instructions. If both were null then we'll skip this
+             * entirely.*/
+            combined_instructions += 100;
+
+            combined_instructions = malloc(combined_text_len * sizeof(char));
+            if (combined_instructions == NULL) {
+                debug(F100, "kbd_interactive_authenticate - failed to malloc for instructions", "", 0);
+                return SSH_AUTH_ERROR;
+            }
+            snprintf(combined_instructions,
+                     combined_text_len,
+                     "--- %s ---\n%s",
+                     name,
+                     instructions
+            );
+        }
+
+        if (nprompts == 1) {
+            /*
+             * If there is only one prompt then we'll use the single field
+             * uq_txt instead of the multi-field uq_mtxt as it looks a whole lot
+             * less wierd - especially when there is no instruction text.
+             */
+            char echo;
+            char buffer[128];
+            const char *prompt = ssh_userauth_kbdint_getprompt(session, i, &echo);
+
+            debug(F110, "kdbint auth - single prompt mode - prompt:", prompt, 0);
+
+            rc = uq_txt(combined_instructions, prompt, echo ? 1 : 2, NULL,
+                        buffer, sizeof(buffer), NULL, DEFAULT_UQ_TIMEOUT);
+            if (rc == 1) {
+                rc = ssh_userauth_kbdint_setanswer(session, 0, buffer);
+                debug(F111, "ssh_userauth_kbdint says", "rc", rc);
+                if (rc < 0) {
+                    /* An error of some kind occurred. Don't bother feeding
+                     * in any further responses. We'll only keep going around
+                     * the loop to clean up the response array */
+                    failed = TRUE;
+                    debug(F101, "prompt rejected", "", i);
+                }
+            } else {
+                debug(F100, "kdbint auth - user canceled", "", 0);
+                failed = TRUE;
+            }
+        } else {
+            /*
+             * More than one prompt this time around. We'll use uq_mtxt and ask
+             * for all of them in one go.
+             */
+
+            /* Allocate an array of textboxes to hold the prompts */
+            tb = (struct txtbox *) malloc(sizeof(struct txtbox) * nprompts);
+            if (tb == NULL) {
+                debug(F100, "kbd_interactive_authenticate - textbox malloc failed", "", 0);
+                return SSH_AUTH_ERROR;
+            }
+            memset(tb, 0, sizeof(struct txtbox) * nprompts);
+
+            /* Allocate an array to hold all the responses. */
+            responses = malloc(sizeof(char *) * nprompts);
+            if (responses == NULL) {
+                debug(F100, "kbd_interactive_authenticate - response array malloc failed", "", 0);
+                return SSH_AUTH_ERROR;
+            }
+
+            /* Build up an array of text boxes to show the user */
+            for (i = 0; i < nprompts; i++) {
+                char echo;
+                const char *prompt = ssh_userauth_kbdint_getprompt(session, i, &echo);
+                responses[i] = malloc(128 * sizeof(char));
+
+                debug(F111, "kdb_interactive_authenticate prompt", prompt, i);
+
+                if (responses[i] == NULL) {
+                    debug(F111, "kbd_interactive_authenticate - response buffer "
+                                "malloc failed", "response", i);
+                    return SSH_AUTH_ERROR;
+                }
+
+                memset(responses[i], 0, sizeof(responses[i]));
+
+                tb[i].t_buf = responses[i];
+                tb[i].t_len = 128;
+                tb[i].t_lbl = prompt;
+                tb[i].t_dflt = NULL;
+                tb[i].t_echo = echo ? 1 /* yes */ : 2; /* no - asterisks */
+            }
+
+            /* Ask the user all the prompts in one go  */
+            rc = uq_mtxt(combined_instructions, NULL, nprompts, tb);
+
+            if (rc == 0) { /* 0 = no/cancel, 1 = yes/ok */
+                debug(F100, "kdbint auth - user canceled", "", 0);
+                failed = TRUE;
+            }
+
+            /* Then process the responses freeing buffers as we go */
+            for (i = 0; i < nprompts; i++) {
+                debug(F101, "processing prompt", "", i);
+                if (!failed) {
+                    /* User hasn't canceled and haven't hit an error yet. Ask the
+                     * server what it thinks of an answer.*/
+                    rc = ssh_userauth_kbdint_setanswer(session, i, responses[i]);
+                    debug(F111, "ssh_userauth_kbdint says", "rc", rc);
+                    if (rc < 0) {
+                        /* An error of some kind occurred. Don't bother feeding
+                         * in any further responses. We'll only keep going around
+                         * the loop to clean up the response array */
+                        failed = TRUE;
+                        debug(F101, "prompt rejected", "", i);
+                    }
+                }
+                memset(responses[i], 0, sizeof(responses[i]));
+                if (responses[i]) {
+                    free(responses[i]);
+                    responses[i] = NULL;
+                }
+            }
+            if (responses) {
+                free(responses);
+                responses = NULL;
+            }
+            if (tb) {
+                free(tb);
+                tb = NULL;
+            }
+        }
+        if (combined_instructions) {
+            free(combined_instructions);
+            combined_instructions = NULL;
+        }
+        if (failed) {
+            /* Now that all the resources have been cleaned up we can finally
+             * act on that failure */
+            return SSH_AUTH_ERROR;
+        }
+
+        /* See if we need to go round again and ask *more* questions */
+        rc = ssh_userauth_kbdint(session, NULL, NULL);
+        if (rc == SSH_AUTH_INFO) debug(F101, "ssh_userauth_kbdint says SSH_AUTH_INFO", "", rc);
+    }
+
+    debug(F111, "ssh kbdint finished with", "rc", rc);
+
+    return rc;
+}
+
+
+/** Attempt to authenticate the user using one of the methods supported by
+ * the server.
+ *
+ * @returns SSH_AUTH_SUCCESS on success, SSH_AUTH_DENIED on denied,
+ *          SSH_AUTH_ERROR on a serious error.
+ */
+int authenticate() {
+    int methods, rc;
+
+    /* If the user cancels anytime during the authentication process this will
+     * be set and we'll know not to attempt any further authentication methods
+     */
+    auth_canceled = FALSE;
+
+    rc = ssh_userauth_none(session, NULL);
+    if (rc == SSH_AUTH_SUCCESS) {
+        /* Authenticated anonymously!? */
+        return SSH_ERR_NO_ERROR;
+    } else if (rc == SSH_AUTH_ERROR) {
+        /* A serious error of some kind happened. We can not proceed */
+        return SSH_ERR_AUTH_ERROR;
+    }
+
+    /* Get a list of available auth methods. We'll try them one after another
+     * until the server is satisfied */
+    methods = ssh_userauth_list(session, NULL);
+
+    if (methods & SSH_AUTH_METHOD_NONE && !auth_canceled) {
+        rc = ssh_userauth_none(session, NULL);
+        if (rc == SSH_AUTH_SUCCESS) return rc;
+    }
+    if (methods & SSH_AUTH_METHOD_PUBLICKEY && !auth_canceled) {
+        rc = ssh_userauth_publickey_auto(session, NULL, NULL);
+        if (rc == SSH_AUTH_SUCCESS) return rc;
+    }
+    /* TODO: Not working quite right at the moment.
+     *    After answering all prompts ssh_userauth_kbdint still gives
+     *    SSH_AUTH_INFO indicating more answers are required - even though there
+     *    are no more prompts to answer.
+     *
+     *    Probably need to test a simpler example just in case its something
+     *    like threading causing problems.
+     *
+    if (methods & SSH_AUTH_METHOD_INTERACTIVE && !auth_canceled) {
+        rc = kbd_interactive_authenticate();
+        if (rc == SSH_AUTH_SUCCESS) return rc;
+    } */
+    if (methods & SSH_AUTH_METHOD_PASSWORD && !auth_canceled) {
+        rc = password_authenticate();
+        if (rc == SSH_AUTH_SUCCESS) return rc;
+    }
+
+    /* TODO: ssh_userauth_gssapi() */
+
+    return rc;
+}
+
 
 /** Opens the TTY channel and nothing else.
  *
@@ -758,6 +1074,10 @@ int ssh_open() {
     int verbosity = SSH_LOG_PROTOCOL;
     int rc = 0;
     char* banner = NULL;
+    static struct ssh_callbacks_struct cb = {
+            .auth_function = auth_prompt
+    };
+    ssh_callbacks_init(&cb);
 
     debug(F100, "ssh_open()", "", 0);
     //debug_params("ssh_open");
@@ -786,6 +1106,7 @@ int ssh_open() {
     debug(F100, "Configure session...", "", 0);
     verbosity = log_verbosity();
     ssh_options_set(session, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
+    ssh_set_callbacks(session, &cb);
     ssh_options_set(session, SSH_OPTIONS_HOST, ssh_hst);
     ssh_options_set(session, SSH_OPTIONS_GSSAPI_DELEGATE_CREDENTIALS, &ssh_gsd);
     ssh_options_set(session, SSH_OPTIONS_PROCESS_CONFIG, &ssh_cfg);
@@ -841,7 +1162,12 @@ int ssh_open() {
         return rc;
     }
 
-    /* TODO: This isn't working for some reason */
+    /* This is apparently required for some reason in order for
+     * get_issue_banner to work */
+    rc = ssh_userauth_none(session, NULL);
+    if (rc == SSH_AUTH_ERROR)
+        return rc;
+
     banner = ssh_get_issue_banner(session);
     if (banner) {
         printf(banner);
@@ -850,17 +1176,22 @@ int ssh_open() {
     }
 
     /* Authenticate! */
-    rc = password_authenticate();
-    if (rc != SSH_ERR_NO_ERROR ) {
-        /* TODO: Handle SSH_ERR_MORE_AUTH_NEEDED - partially authenticated */
+    rc = authenticate();
+    if (rc != SSH_AUTH_SUCCESS ) {
         debug(F111, "Authentication failed - disconnecting", "rc", rc);
+        printf("Authentication failed - disconnecting.\n");
         ssh_disconnect(session);
         ssh_free(session);
         session = NULL;
+
+        if (rc == SSH_AUTH_ERROR) return SSH_ERR_AUTH_ERROR;
+        if (rc == SSH_AUTH_PARTIAL) return SSH_ERR_AUTH_ERROR;
+        if (rc == SSH_AUTH_DENIED) return SSH_ERR_ACCESS_DENIED;
+
         return rc;
     }
 
-    printf("Authenticated - starting session\n");
+    debug(F100, "Authenticated - starting session", "", 0);
 
     /* TODO: Setup session (shell, port forwarding, etc) */
     debug(F100, "Authentication succeeded - starting session", "", 0);
@@ -1192,6 +1523,8 @@ const char * ssh_errorstr(int error) {
             return "Error parsing OpenSSH Configuration File";
         case SSH_ERR_NOT_IMPLEMENTED:
             return "Feature not implemented";
+        case SSH_ERR_ACCESS_DENIED:
+            return "Access denied";
         default:
             return "Unknown error";
     }
@@ -1285,7 +1618,7 @@ int sshkey_v1_change_comment(char * filename, char * comment, char * pp) {
 }
 
 char * sshkey_default_file(int a) {
-    return SSH_ERR_NOT_IMPLEMENTED; /* TODO */
+    return NULL; /* TODO */
 }
 
 int ssh_fwd_local_port(int a, char *b, int c) {
