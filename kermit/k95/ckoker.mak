@@ -40,7 +40,12 @@ LWP30DIR  = C:\LANWP\TOOLKIT
 LWP30LIBS32 = $(LWP30DIR)\os2lib20\socklib.lib 
 LWP30INC    = $(LWP30DIR)\inc20
 
+!if "$(CKB_STATIC_CRT)"=="yes"
+!message Building with statically linked native CRT as requested.
+COMMON_CFLAGS = /MT
+!else
 COMMON_CFLAGS = /MD
+!endif
 
 # These options are used for all Windows .exe targets
 COMMON_OPTS = /GA /Ox
