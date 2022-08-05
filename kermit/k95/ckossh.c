@@ -209,6 +209,40 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
   *  - TODO: deal with changing terminal type after connect ? (K95 doesn't)
  */
 
+/* ==== LibSSH Settings ====
+ *
+ * Settings we could use now:
+ *  SSH_OPTIONS_ADD_IDENTITY        Add new identity file to the identity list
+ *  SSH_OPTIONS_STRICTHOSTKEYCHECK  Strict host key check
+ *      -> Command exists, just don't know how it lines up with this setting.
+ *
+ * Settings we could use with UI changes (new commands or updated options):
+ *  SSH_OPTIONS_SSH_DIR             Directory where know_hosts and identity files live
+ *  SSH_OPTIONS_COMPRESSION_LEVEL   Compression level
+ *  SSH_OPTIONS_HMAC_C_S            Set message authentication code algo client to server
+ *  SSH_OPTIONS_HMAC_S_C            Set message authentication code algo server to client
+ *  SSH_OPTIONS_CIPHERS_*           Set client to server and server to client ciphers
+ *      -> command exists, list of algorithms is out of date
+ *  SSH_OPTIONS_KEY_EXCHANGE        Set key exchange methods
+ *  SSH_OPTIONS_HOSTKEYS            Set preferred host key types
+ *      -> command exists, list of algorithms is out of date
+ *  SSH_OPTIONS_PASSWORD_AUTH, SSH_OPTIONS_PUBKEY_AUTH, SSH_OPTIONS_KBDINT_AUTH, SSH_OPTIONS_GSSAPI_AUTH
+ *      -> command exists, list of options needs updating
+ *
+ * Settings we probably don't care about:
+ *  SSH_OPTIONS_FD                  To supply our own socket if we want
+ *  SSH_OPTIONS_BINDADDR            Bind address
+ *  SSH_OPTIONS_TIMEOUT             Set connection timeout in seconds
+ *  SSH_OPTIONS_PUBLICKEY_ACCEPTED_TYPES    Set preferred public key algorithms
+ *  SSH_OPTIONS_PROXYCOMMAND        Set the commend to be executed to connect to server
+ *  SSH_OPTIONS_GSSAPI_SERVER_IDENTITY
+ *  SSH_OPTIONS_GSSAPI_CLIENT_IDENTITY
+ *  SSH_OPTIONS_GSSAPI_DELEGATE_CREDENTIALS
+ *  SSH_OPTIONS_NODELAY
+ *  SSH_OPTIONS_REKEY_DATA
+ *  SSH_OPTIONS_REKEY_TIME
+ */
+
 /* Settings that can't be set */
 #define SSH_MAX_PASSWORD_PROMPTS 3      /* Number of times you can retry password auth */
 
@@ -1633,6 +1667,10 @@ void ssh_v2_rekey() {
     /* TODO */
 }
 
+/** Return the current protocol version. For now we only support SSH-2.0.
+ *
+ * @return "SSH-2.0"
+ */
 char * ssh_proto_ver() {
     static char buf[16];
     snprintf(buf, sizeof buf, "SSH-2.0");
