@@ -619,7 +619,11 @@ StartDialer(void)
             DialerSend(OPT_KERMIT_HWND2, (unsigned long)hwndGUI);
             DialerSend(OPT_KERMIT_PID,  GetCurrentProcessId());
         }
+#if _MSC_VER > 900
         ShowWindowAsync(hwndDialer,SW_SHOWNORMAL);
+#else
+        ShowWindow(hwndDialer,SW_SHOWNORMAL);
+#endif
         SetForegroundWindow(hwndDialer);
     } else if (_hwndDialer = FindWindow(NULL, "Kermit-95 Dialer")) {
         StartedFromDialer = 1;
@@ -630,7 +634,11 @@ StartDialer(void)
             DialerSend(OPT_KERMIT_HWND2, (unsigned long)hwndGUI);
             DialerSend(OPT_KERMIT_PID,  GetCurrentProcessId());
         }
+#if _MSC_VER > 900
         ShowWindowAsync(hwndDialer,SW_SHOWNORMAL);
+#else
+        ShowWindow(hwndDialer,SW_SHOWNORMAL);
+#endif
         SetForegroundWindow(hwndDialer);
         StartedFromDialer = 0;
     } else {
@@ -1014,7 +1022,11 @@ MultiInputDialogProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
             }
             /* fallthrough */
         case IDCANCEL:
+#if _MSC_VER > 900
             ShowWindowAsync(hwndConsole,SW_SHOWNORMAL);
+#else
+            ShowWindow(hwndConsole,SW_SHOWNORMAL);
+#endif
             SetForegroundWindow(hwndConsole);
             EndDialog(hwndDlg, LOWORD(wParam));
             return TRUE;
