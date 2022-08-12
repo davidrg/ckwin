@@ -445,7 +445,13 @@ MainWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     case WM_QUERYENDSESSION:
         debug(F111,"MainWndProc","WM_QUERYENDSESSION",msg);
         result = TRUE;
+#if _MSC_VER > 1000
         if ( lparam & ENDSESSION_LOGOFF ) {
+#else
+        /* Visual C++ <= 4.0: lparam == TRUE on logoff, FALSE on shutdown
+         * (on Windows 95 only according to the docs) */
+        if (lparam) {
+#endif
             debug(F100,"ENDSESSION_LOGOFF","",0);
             if ( startflags & 128 ) {
                 debug(F100,"startflags & 128","",0);
@@ -455,8 +461,14 @@ MainWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         break;
 
     case WM_ENDSESSION:
-        debug(F111,"MainWndProc","WM_QUERYENDSESSION",msg);
+        debug(F111,"MainWndProc","WM_ENDSESSION",msg);
+#if _MSC_VER > 1000
         if ( wparam && (lparam & ENDSESSION_LOGOFF) ) {
+#else
+        /* Visual C++ <= 4.0: lparam == TRUE on logoff, FALSE on shutdown
+        * (on Windows 95 only according to the docs) */
+        if (wparam && lparam) {
+#endif
             debug(F100,"ENDSESSION_LOGOFF","",0);
             if ( startflags & 128 ) {
                 debug(F100,"startflags & 128","",0);
@@ -1719,6 +1731,17 @@ EditStreamCallback(DWORD_PTR dwCookie,
 }
 
 static EDITSTREAM EditStream = { 0, 0, EditStreamCallback };
+
+#if _MSC_VER <= 1000
+/* Visual C++ 4.0 and earlier don't know about these. They require Rich Edit
+ * 2.0 or newer */
+#ifndef EM_AUTOURLDETECT
+#define EM_AUTOURLDETECT (WM_USER+91)
+#endif
+#ifndef SF_UNICODE
+#define SF_UNICODE 0x0010
+#endif
+#endif
 
 int
 gui_text_popup_create(char * title, int h, int w)

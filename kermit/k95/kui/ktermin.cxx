@@ -514,7 +514,13 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
     case WM_QUERYENDSESSION:
         debug(F111,"KTerminal::message","WM_QUERYENDSESSION",msg);
         done = TRUE;
+#if _MSC_VER > 1000
         if ( lParam & ENDSESSION_LOGOFF ) {
+#else
+        /* Visual C++ <= 4.0: lparam == TRUE on logoff, FALSE on shutdown
+         * (on Windows 95 only according to the docs) */
+        if (lParam) {
+#endif
             debug(F100,"ENDSESSION_LOGOFF","",0);
             if ( startflags & 128 ) {
                 debug(F100,"startflags & 128","",0);
@@ -525,7 +531,13 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 
     case WM_ENDSESSION:
         debug(F111,"KTerminal::message","WM_QUERYENDSESSION",msg);
+#if _MSC_VER > 1000
         if ( wParam && (lParam & ENDSESSION_LOGOFF) ) {
+#else
+        /* Visual C++ <= 4.0: lparam == TRUE on logoff, FALSE on shutdown
+         * (on Windows 95 only according to the docs) */
+        if (lParam) {
+#endif
             debug(F100,"ENDSESSION_LOGOFF","",0);
             if ( startflags & 128 ) {
                 debug(F100,"startflags & 128","",0);

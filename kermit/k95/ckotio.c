@@ -4472,6 +4472,11 @@ getOverlappedIndex( int serial ) {
     return ow ;
 }
 
+#if _MSC_VER <= 1000
+/* Visual C++ 4.0 and earlier lack this macro */
+#define HasOverlappedIoCompleted(lpOverlapped) ((lpOverlapped)->Internal != STATUS_PENDING)
+#endif
+
 int
 freeOverlappedComplete( int serial ) {
     int ow, rc = -1 ;

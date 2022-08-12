@@ -108,8 +108,8 @@ MAPFILE   = /map:$(OUTDIR)\$(PROJ).map
 !IF ($(MSC_VER) == 80)
 # We don't do 16bit
 !ERROR *** 16bit windows is not supported
-!ELSEIF ($(MSC_VER) < 110)
-!ERROR *** Visual C++ 4.0 and earlier are not supported
+!ELSEIF ($(MSC_VER) < 100)
+!ERROR *** Visual C++ 2.0 and earlier are not supported
 !ELSEIF ($(MSC_VER) < 131)
 # Visual C++ 6.0 and 7.0
 CFLAGS = $(CFLAGS) /noBool
