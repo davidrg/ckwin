@@ -40,7 +40,11 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 /* Visual C++ 6 fixes */
 #ifndef DS_SHELLFONT
+#if _MSC_VER > 900
 #define DS_SHELLFONT        (DS_SETFONT | DS_FIXEDSYS)
+#else
+#define DS_SHELLFONT        DS_SETFONT
+#endif
 #endif
 #ifndef DWORD_PTR
 typedef unsigned long DWORD_PTR, *PDWORD_PTR;
@@ -822,9 +826,13 @@ SingleInputDialog( HINSTANCE hinst, HWND hwndOwner,
     // Define a dialog box.
  
     lpdt->style = WS_POPUP | WS_BORDER | WS_SYSMENU
-                   | DS_MODALFRAME | WS_CAPTION | DS_CENTER 
-                   | DS_SETFOREGROUND | DS_3DLOOK
-                   | DS_SHELLFONT | DS_NOFAILCREATE;
+                   | DS_MODALFRAME | WS_CAPTION
+                   | DS_SETFOREGROUND
+                   | DS_SHELLFONT
+#if _MSC_VER > 900
+                   | DS_3DLOOK | DS_CENTER | DS_NOFAILCREATE
+#endif
+                   ;
     lpdt->cdit = numlines + 4;  // number of controls
     lpdt->x  = 10;  
     lpdt->y  = 10;
@@ -1100,9 +1108,12 @@ MultiInputDialog( HINSTANCE hinst, HWND hwndOwner,
     // Define a dialog box.
  
     lpdt->style = WS_POPUP | WS_BORDER | WS_SYSMENU
-                   | DS_MODALFRAME | WS_CAPTION | DS_CENTER 
-                   | DS_SETFOREGROUND | DS_3DLOOK
-                   | DS_SHELLFONT | DS_NOFAILCREATE;
+                   | DS_MODALFRAME | WS_CAPTION
+                   | DS_SETFOREGROUND | DS_SHELLFONT
+#if _MSC_VER > 900
+                   | DS_3DLOOK | DS_CENTER | DS_NOFAILCREATE
+#endif
+                   ;
     lpdt->cdit = numlines + (2 * tb_cnt) + 2;  // number of controls
     lpdt->x  = 10;  
     lpdt->y  = 10;
@@ -1362,9 +1373,12 @@ VideoPopupDialog( HINSTANCE hinst, HWND hwndOwner, videopopup * vp)
     // Define a dialog box.
  
     lpdt->style = WS_POPUP | WS_BORDER | WS_SYSMENU
-                   | DS_MODALFRAME | WS_CAPTION | DS_CENTER 
-                   | DS_SETFOREGROUND | DS_3DLOOK
-                   | DS_SETFONT | DS_NOFAILCREATE;
+                   | DS_MODALFRAME | WS_CAPTION
+                   | DS_SETFOREGROUND | DS_SETFONT
+#if _MSC_VER > 900
+                   | DS_3DLOOK | DS_CENTER | DS_NOFAILCREATE
+#endif
+                   ;
     lpdt->cdit = vp->height + 2;  // number of controls
     lpdt->x  = 10;  
     lpdt->y  = 10;
