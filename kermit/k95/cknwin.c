@@ -25,7 +25,9 @@ char *cknwin = "Win32 GUI Support 8.0.029, 10 March 2004";
 #include "ckokey.h"
 #include "ckokvb.h"
 #include "ckosyn.h"
+#ifndef NORICHEDIT
 #include "richedit.h"
+#endif
 
 #ifdef _MSC_VER
 #if _MSC_VER >= 1400
@@ -1509,7 +1511,7 @@ get_gui_resize_mode(void)
     return KuiGetTerminalResizeMode();
 }
 
-
+#ifndef NORICHEDIT
 static HWND hwndRichEdit = INVALID_HANDLE_VALUE;
 static HWND hwndTextDlg  = INVALID_HANDLE_VALUE;
 static HANDLE hRichEditLib = INVALID_HANDLE_VALUE;
@@ -1841,4 +1843,5 @@ gui_text_popup_wait(int seconds)
     }
     return -1;
 }
+#endif /* NORICHEDIT */
 #endif /* KUI */

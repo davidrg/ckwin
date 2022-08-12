@@ -4212,6 +4212,7 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
               n += x;                   /* This assumes terminal will wrap */
         }
 #ifdef KUI
+#ifndef NORICHEDIT
         if ( gui ) {
             int i;
             unsigned short * uch = (unsigned short *)buf;
@@ -4221,6 +4222,7 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
 			gui_text_popup_append(LF);
         } 
         else
+#endif /* NORICHEDIT */
 #endif /* KUI */
         typeline(buf,len,outcs,ofp);    /* Print line, length based */
 #ifdef CK_TTGWSIZ
@@ -4325,8 +4327,10 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
 #endif /* UNICODE */
 
 #ifdef KUI
+#ifndef NORICHEDIT
     if ( gui )
         gui_text_popup_wait(-1);        /* Wait for user to close the dialog */
+#endif
 #endif /* KUI */
     return(rc);
 }

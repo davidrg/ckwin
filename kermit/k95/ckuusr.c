@@ -12623,6 +12623,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	if (count) paging = -1;
 	debug(F111,"type",line,paging);
 #ifdef KUI
+#ifndef NORICHEDIT
 	if ( gui ) {
 	    s = (char *)1;    /* ok, its an ugly hack */
 	    if (gui_text_popup_create(gui_title ?
@@ -12633,6 +12634,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	    }
 	    width = 0;
 	} else
+#endif /* NORICHEDIT */
 #endif /* KUI */
 	  s = outfile;
 	success =
