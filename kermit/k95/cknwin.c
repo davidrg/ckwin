@@ -343,6 +343,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
 }
 #endif
 
+#if _MSC_VER > 900
 BOOL InitApplication(hinstance)
 HINSTANCE hinstance;
 {
@@ -380,6 +381,39 @@ HINSTANCE hinstance;
 
     return RegisterClassEx(&wcx);
 }
+#else
+/* Visual C++ 2.0 and earlier don't support WNDCLASSEX or its associated
+ * functions */
+BOOL InitApplication(hinstance)
+        HINSTANCE hinstance;
+{
+    WNDCLASS wc;
+
+    /*
+     * Fill in the window class structure with parameters
+     * that describe the main window.
+     */
+
+    wc.style = CS_HREDRAW |
+                CS_VREDRAW;                    /* redraw if size changes */
+    wc.lpfnWndProc = MainWndProc;     /* points to window proc. */
+    wc.cbClsExtra = 0;                /* no extra class memory  */
+    wc.cbWndExtra = 0;                /* no extra window memory */
+    wc.hInstance = hinstance;         /* handle of instance     */
+    wc.hIcon = LoadIcon(NULL,
+                         MAKEINTRESOURCE(1));           /* kermit 95 icon   */
+    wc.hCursor = LoadCursor(NULL,
+                             IDC_ARROW);                    /* predefined arrow       */
+    wc.hbrBackground = GetStockObject(
+            WHITE_BRUSH);                  /* white background brush */
+    wc.lpszMenuName =  "CkMainMenu";    /* name of menu resource  */
+    wc.lpszClassName = "CkMainWClass";  /* name of window class   */
+
+    /* Register the window class. */
+
+    return RegisterClass(&wc);
+}
+#endif
 
 BOOL
 InitInstance(hinstance, nCmdShow)
