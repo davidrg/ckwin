@@ -67,6 +67,7 @@ void KScroll::setRange( int max, int viewable, Bool trackPos )
     }
     prevMaxVal = maxVal;
 
+#if _MSC_VER > 900
     UINT mask = SIF_PAGE | SIF_RANGE | SIF_POS;
     if( vertical ) {
         mask |= SIF_DISABLENOSCROLL;
@@ -88,6 +89,10 @@ void KScroll::setRange( int max, int viewable, Bool trackPos )
         , vertical ? SB_VERT : SB_HORZ
         , &info
         , TRUE );
+#else
+    SendMessage(parent->hwnd(), SBM_SETRANGE, minVal, maxVal);
+    SendMessage(parent->hwnd(), SBM_SETPOS, currentPos, TRUE);
+#endif
 
     if( trackPos )
         track( currentPos );
@@ -100,6 +105,7 @@ Bool KScroll::isVisible()
     if ( !parent )
         return FALSE;
 
+#if _MSC_VER > 900
     SCROLLINFO info;
     memset( &info, '\0', sizeof(SCROLLINFO) );
     info.cbSize = sizeof(SCROLLINFO);
@@ -110,6 +116,8 @@ Bool KScroll::isVisible()
 
     if( !disableNoScroll && info.nPage && (info.nMax <= (int)info.nPage) )
         return FALSE;
+    /* TODO: Else do the equivalent of the above */
+#endif
 
     return TRUE;
 }

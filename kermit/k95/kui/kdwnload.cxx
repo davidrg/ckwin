@@ -109,7 +109,10 @@ void KDownLoad::show( Bool bVisible )
     OpenFileName.lCustData         = 0;
 
     OpenFileName.Flags = OFN_CREATEPROMPT | OFN_PATHMUSTEXIST 
-        | OFN_HIDEREADONLY | OFN_ENABLEHOOK | OFN_EXPLORER
+        | OFN_HIDEREADONLY | OFN_ENABLEHOOK
+#if _MSC_VER > 900
+        | OFN_EXPLORER
+#endif
         | OFN_NOCHANGEDIR | OFN_NOTESTFILECREATE | OFN_OVERWRITEPROMPT 
         | OFN_SHAREAWARE ;
 //        | OFN_ENABLETEMPLATE ;

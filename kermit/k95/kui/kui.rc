@@ -18,6 +18,28 @@
 #define SUBLANG_ENGLISH_US 0x01
 #define IDC_STATIC         (-1)
 
+#ifndef DS_3DLOOK
+#define DS_3DLOOK 0x0004L
+#endif
+
+#ifndef SS_REALSIZEIMAGE
+#define SS_REALSIZEIMAGE 0x00000800L
+#endif
+
+#ifndef DS_CENTER
+#define DS_CENTER 0x0800L
+#endif
+
+/*
+#ifndef WS_EX_TOOLWINDOW
+#define WS_EX_TOOLWINDOW 0x00000080L
+#endif
+
+#ifndef WS_EX_CONTROLPARENT
+#define WS_EX_CONTROLPARENT 0x00010000L
+#endif
+ */
+
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
@@ -85,7 +107,7 @@ END
 IDD_ABOUTBOX DIALOGEX 0, 0, 249, 204
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "About"
-FONT 8, "MS Sans Serif", 0, 0, 0x1
+FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_ICONK95,IDC_STATIC,10,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "C-Kermit for Windows",IDC_STATIC,41,10,198,8
@@ -159,6 +181,7 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,207,120,50,14
 END
 
+#if _MSC_VER > 900
 IDD_CUSTOMIZESTATUS DIALOGEX 0, 0, 288, 95
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_NOPARENTNOTIFY | WS_EX_TOOLWINDOW | WS_EX_CONTROLPARENT
@@ -205,7 +228,7 @@ BEGIN
     COMBOBOX        IDC_COMBOG3,64,60,60,100,CBS_DROPDOWNLIST | 
                     CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
 END
-
+#endif
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////

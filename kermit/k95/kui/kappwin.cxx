@@ -206,6 +206,7 @@ int KAppWin::sizeFont( LPRECT lpr, int force )
 ------------------------------------------------------------------------*/
 void KAppWin::sizeFontSetDim( UINT fwSide, LPRECT lpr )
 {
+#if _MSC_VER > 900
     if (!sizeFont(lpr,0))
         return;
 
@@ -247,6 +248,7 @@ void KAppWin::sizeFontSetDim( UINT fwSide, LPRECT lpr )
                   lpr->right - lpr->left, lpr->bottom - lpr->top, 
                   SWP_NOZORDER );
     client->paint();
+#endif
 }
 
 
@@ -256,6 +258,7 @@ void KAppWin::sizeFontSetDim( UINT fwSide, LPRECT lpr )
 ------------------------------------------------------------------------*/
 void KAppWin::sizeFixed( UINT fwSide, LPRECT lpr )
 {
+#if _MSC_VER > 900
     int maxw = 0, maxh = 0;
     if( !client || !client->getMaxpDim( maxw, maxh ) )
         return;
@@ -320,6 +323,7 @@ void KAppWin::sizeFixed( UINT fwSide, LPRECT lpr )
             }
             break;
     }
+#endif
 }
 
 /*------------------------------------------------------------------------
@@ -327,6 +331,7 @@ void KAppWin::sizeFixed( UINT fwSide, LPRECT lpr )
 ------------------------------------------------------------------------*/
 void KAppWin::sizeLimit( UINT fwSide, LPRECT lpr )
 {
+#if _MSC_VER > 900
     int maxw = 0, maxh = 0;
     if( !client || !client->getMaxpDim( maxw, maxh ) )
         return;
@@ -391,6 +396,7 @@ void KAppWin::sizeLimit( UINT fwSide, LPRECT lpr )
             }
             break;
     }
+#endif
 }
 
 /*------------------------------------------------------------------------
@@ -580,6 +586,7 @@ Bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         }
         break;
 
+#if _MSC_VER > 900
     case WM_SIZING:{
         LPRECT lpRect = (LPRECT)lParam;
         //printf("KAppWin WM_SIZING wParam=%d top=%d bottom=%d left=%d right=%d\n",
@@ -603,6 +610,7 @@ Bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         kglob->mouseEffect = save;
         break;
     }
+#endif
 
     case WM_SIZE:
         //printf("KAppWin WM_SIZE wParam=%d height=%d width=%d\n",
@@ -672,6 +680,9 @@ Bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         wmSize = wParam;
         break;
 
+#if _MSC_VER > 900
+        /* TODO - On Visual C++ 2.0 and older (NT 3.50 and older?) the work
+         *          this is doing probably needs to be done some other way */
     case WM_EXITSIZEMOVE: {
         //printf("KAppWin WM_EXITSIZEMOVE\n");
         //debug(F111,"KAppWin::message","WM_EXITSIZEMOVE",msg);
@@ -695,6 +706,7 @@ Bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         kglob->mouseEffect = save;
         break;
     }
+#endif
     case WM_GETMINMAXINFO:
         //printf("KAppWin WM_GETMINMAXINFO\n");
         //debug(F111,"KAppWin::message","WM_GETMINMAXINFO",msg);

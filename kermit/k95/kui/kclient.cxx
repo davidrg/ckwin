@@ -293,7 +293,9 @@ void KClient::setDimensions( Bool sizeparent )
 void KClient::getCreateInfo( K_CREATEINFO* info )
 {
     info->classname = KWinClassName;
+#if _MSC_VER > 900
     info->exStyle = WS_EX_CLIENTEDGE;
+#endif
     info->style = WS_CHILD | WS_VISIBLE 
         | WS_HSCROLL | WS_VSCROLL | WS_CLIPSIBLINGS;
 }

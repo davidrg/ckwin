@@ -23,11 +23,20 @@ void KSysMetrics::reset()
     _vscrollWidth = GetSystemMetrics( SM_CXVSCROLL );
     _hscrollHeight = GetSystemMetrics( SM_CYHSCROLL );
 
+#if _MSC_VER > 900
     _edgeWidth = GetSystemMetrics( SM_CXEDGE );
     _edgeHeight = GetSystemMetrics( SM_CYEDGE );
 
     _sizeframeWidth = GetSystemMetrics( SM_CXSIZEFRAME );
     _sizeframeHeight = GetSystemMetrics( SM_CYSIZEFRAME );
+#else
+    /* SM_CXEDGE, SMCYEDGE, SM_CXSIZEFRAME, and SM_CYSIZEFRAME were introduced
+     * in Windows 95 and are not known to Visual C++ 2.0 and earlier */
+    _edgeWidth = 0;
+    _edgeHeight = 0;
+    _sizeframeWidth = 0;
+    _sizeframeHeight = 0;
+#endif
 
     _menuHeight = GetSystemMetrics( SM_CYMENU );
     _captionHeight = GetSystemMetrics( SM_CYCAPTION );
