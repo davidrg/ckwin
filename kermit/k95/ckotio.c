@@ -1125,10 +1125,12 @@ Win95DisplayLocale( void )
     HKL     KBLayout=0;
     CHAR    lpLayoutName[KL_NAMELENGTH]="";
 
+#if _MSC_VER > 900
+    /* Visual C++ 2.0 and earlier don't know about GetKeyboardLayout() */
     KBLayout = GetKeyboardLayout(0);
     GetKeyboardLayoutName(lpLayoutName);
     printf("Keyboard Layout = %s [%u]\n",lpLayoutName,(unsigned short)KBLayout);
-
+#endif
 
     printf("Locale Information:\n");
     for ( LCType=0 ; LCType<= 0x5A ; LCType++ ) {
@@ -1512,6 +1514,10 @@ sysinit() {
     hInstance = GetModuleHandle(NULL) ;
     debug(F101,"hInstance","",hInstance);
     hwndConsole = GetConsoleHwnd() ;
+
+#if _MSC_VER > 900
+    /* MENUITEMINFO and related bits are new to Windows 95 and not known to
+     * Visual C++ 2.0 and older. */
     if ( isWin95() )
     {
         MENUITEMINFO info;
@@ -1523,6 +1529,7 @@ sysinit() {
         DrawMenuBar(hwndConsole);
         CloseHandle(hMenu);
     }
+#endif /* _MSC_VER > 900 */
 #endif /* KUI */
     WinThreadInit = WindowThreadInit( (void *) hInstance );
 #endif /* NT */

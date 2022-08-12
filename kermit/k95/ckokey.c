@@ -1591,6 +1591,7 @@ getKeycodeFromKeyRec( KEY_EVENT_RECORD * pkeyrec, WORD * buf, int chcount )
     debug(F111,"win32keyrec","keyrec.uChar.AsciiChar",keyrec.uChar.AsciiChar);
     debug(F111,"win32keyrec","keyrec.dwControlKeyState",keyrec.dwControlKeyState);
 
+#if _MSC_VER > 900
     if ( isWin95() ) {
         /* This code should work but ActivateKeyboardLayout() appears to have no */
         /* effect on Win95 Console programs.  So instead we use a combination of */
@@ -1815,6 +1816,7 @@ getKeycodeFromKeyRec( KEY_EVENT_RECORD * pkeyrec, WORD * buf, int chcount )
             }
         }
     } /* end of Win95 processing */
+#endif /* _MSC_VER > 90 */
 #endif /* KUI */
 
     if ( keyrec.bKeyDown &&
