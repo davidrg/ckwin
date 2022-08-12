@@ -11864,6 +11864,9 @@ initoptlist() {
 #ifdef NOHTTP
     makestr(&(optlist[noptlist++]),"NOHTTP");
 #endif /* NOHTTP */
+#ifdef NONTLM
+    makestr(&(optlist[noptlist++]),"NONTLM");
+#endif
 #ifdef CKROOT
     makestr(&(optlist[noptlist++]),"CKROOT");
 #endif /* CKROOT */

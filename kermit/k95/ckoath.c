@@ -50,7 +50,9 @@
 
 #ifdef NT
 #define KRB5_AUTOCONF__
+#ifndef NONTLM
 #define NTLM
+#endif
 #endif /* NT */
 
 #ifndef CK_KERBEROS

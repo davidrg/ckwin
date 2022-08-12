@@ -9444,9 +9444,12 @@ cx_net(net, protocol, xhost, svc,
 		if (!ck_ntlm_is_installed()) {
 		    return(cx_fail(msg,
 		   "Required authentication method (NTLM) is not installed"));
-		} else if (line[0] != '*' && !ck_ntlm_is_valid(0)) {
+		}
+#ifdef NTLM
+        else if (line[0] != '*' && !ck_ntlm_is_valid(0)) {
 		    return(cx_fail(msg,"NTLM: Credentials are unavailable."));
 		}
+#endif
 	    }
 #endif /* NT */
 #ifdef CK_SSL
