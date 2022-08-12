@@ -620,8 +620,10 @@ ACKNOWLEDGMENTS:
 
 #ifdef NT
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"
+#endif
 #endif /* NT */
 
 #ifndef NOSERVER

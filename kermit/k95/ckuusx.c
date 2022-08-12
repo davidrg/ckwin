@@ -167,8 +167,10 @@ _PROTOTYP( char * ckgetfqhostname,(char *));
 #ifdef OS2
 #ifdef NT
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"
+#endif
 #else /* NT */
 #define INCL_VIO
 #include <os2.h>

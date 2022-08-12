@@ -71,8 +71,10 @@ extern char startupdir[], exedir[];
 extern int tt_modechg;
 #ifdef NT
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"                     /* Microsoft TAPI */
+#endif
 #endif /* NT */
 #endif /* OS2 */
 

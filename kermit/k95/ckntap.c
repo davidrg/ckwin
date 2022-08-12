@@ -20,9 +20,11 @@
 #include <string.h>
 
 #include <windows.h>
+#ifndef NODIAL
 #define TAPI_CURRENT_VERSION 0x00010004
 #include <tapi.h>
 #include <mcx.h>
+#endif
 /* all functions in this module return TRUE to indicate success */
 /* or FALSE to indicate failure */
 #include "ckntap.h"             /* Kermit Telephony */

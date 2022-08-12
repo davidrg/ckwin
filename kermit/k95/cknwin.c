@@ -10,7 +10,9 @@ char *cknwin = "Win32 GUI Support 8.0.029, 10 March 2004";
 */
 
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
+#endif
 #include <commctrl.h>
 #include "ckcdeb.h"
 #include "ckcker.h"

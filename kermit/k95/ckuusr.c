@@ -127,9 +127,11 @@ int autolocus = 1;			/* Automatic LOCUS switching enabled */
 #else
 #define APIRET ULONG
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
-#include "cknwin.h"
 #include "ckntap.h"			/* CK_TAPI definition */
+#endif
+#include "cknwin.h"
 #endif /* NT */
 #include "ckowin.h"
 #include "ckocon.h"

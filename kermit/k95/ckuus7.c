@@ -49,9 +49,11 @@
 #else /* NT */
 #define APIRET ULONG
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
-#include "cknwin.h"
 #include "ckntap.h"
+#endif
+#include "cknwin.h"
 #endif /* NT */
 #include "ckowin.h"
 #include "ckocon.h"
