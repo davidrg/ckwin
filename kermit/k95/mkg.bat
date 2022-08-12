@@ -4,7 +4,7 @@ SET KERMITDIR=..
 SET OUTDIR=.\win95
 SET NODEBUG=1
 cd kui
-nmake /e
+nmake /e || exit /B %errorlevel%
 cd ..
 UNSET NODEBUG
 SET OUTDIR=.\kui\win95
