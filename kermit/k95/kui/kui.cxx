@@ -414,18 +414,22 @@ void Kui::setProperty( int propid, long param1, long param2 )
                 terminal->setStatusText(STATUS_LOCUS,"Locus: Local");
                 if ( menu )
                     menu->setCheck(ID_ACTION_LOCUS);
+#ifndef NOTOOLBAR
                 if ( toolbar )
                     SendMessage(toolbar->hwnd(),
                              TB_CHECKBUTTON, ID_ACTION_LOCUS, 
                              MAKELONG(1,0));
+#endif
             } else {
                 terminal->setStatusText(STATUS_LOCUS,"Locus: Remote");
                 if ( menu )
                     menu->unsetCheck(ID_ACTION_LOCUS);
+#ifndef NOTOOLBAR
                 if ( toolbar )
                     SendMessage(toolbar->hwnd(),
                              TB_CHECKBUTTON, ID_ACTION_LOCUS, 
                              MAKELONG(0,0));
+#endif
             }
         }
         break;

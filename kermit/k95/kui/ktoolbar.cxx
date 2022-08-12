@@ -6,6 +6,8 @@
 #include "ikcmd.h"
 #include "ikextern.h"
 
+#ifndef NOTOOLBAR
+
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
 LRESULT CALLBACK TBComboWndProc( HWND hWnd, UINT umsg, WPARAM wparam, LPARAM lparam )
@@ -634,3 +636,5 @@ Bool KToolBar::message( HWND hpar, UINT msg, UINT wParam, LONG lParam )
 
     return done;
 }
+
+#endif

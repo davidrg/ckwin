@@ -514,13 +514,13 @@ END
 //
 // Toolbar
 //
-
+#ifndef NOTOOLBAR
 IDR_TOOLBARTERMINAL TOOLBAR DISCARDABLE  16, 16
 BEGIN
     BUTTON      ID_BUTTON40100
     BUTTON      ID_BUTTON40102
 END
-
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 //
