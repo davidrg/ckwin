@@ -35,6 +35,16 @@
 #   mkg.bat
 #------------------------------------------------------------------------------
 
+# Network Connections are always supported. We only put it here because
+# the Watcom nmake clone can't handle empty macros so we need *something* here.
+ENABLED_FEATURES = Network-Connections
+ENABLED_FEATURE_DEFS = -DNETCONN
+
+DISABLED_FEATURES = SuperLAT DECnet Kerberos SRP Telnet-Encryption CryptDLL
+DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNO_SRP -DNO_ENCRYPTION
+
+
+
 !if "$(PLATFORM)" != "NT"
 # No built-in SSH support for OS/2 (yet)
 CKF_SSH=no
@@ -60,16 +70,17 @@ CKF_CONPTY=yes
 CKF_LOGIN=no
 CKF_NTLM=no
 !endif
+
+!if ($(MSC_VER) < 100)
+# The Platform SDK shipped with Visual C++ 2.0 and earlier doesn't include
+# tapi.h, the rich edit control, or the toolbar control.
+CKF_TAPI=no
+CKF_RICHEDIT=no
+CKF_TOOLBAR=no
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DVINTAGEVC
 !endif
 
-
-# Network Connections are always supported. We only put it here because
-# the Watcom nmake clone can't handle empty macros so we need *something* here.
-ENABLED_FEATURES = Network-Connections
-ENABLED_FEATURE_DEFS = -DNETCONN
-
-DISABLED_FEATURES = SuperLAT DECnet Kerberos SRP Telnet-Encryption CryptDLL
-DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNO_SRP -DNO_ENCRYPTION
+!endif
 
 
 # Other features that should one day be turned on via feature flags once we
