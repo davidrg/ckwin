@@ -27,6 +27,8 @@
 #   CKF_SSH     Turned off when targeting OS/2 or when building with OpenWatcom
 #   CKF_CONPTY  Turned on when building with MSC >= 192
 #   CKF_SSL     Turned off always (SSL support doesn't currently build)
+#   CKF_LOGIN   Turned off when building with Visual C++ 5.0 or older
+#   CKF_NTLM    Turned off when building with Visual C++ 5.0 or older
 #
 # All other flags should be set prior to starting the build, for example:
 #   set CKF_DEBUG=no
@@ -49,6 +51,14 @@ CKF_SSH=no
 # So we'll only turn this on automatically when building with Visual C++ 2019 or
 # later.
 CKF_CONPTY=yes
+!endif
+
+!if ($(MSC_VER) <= 110)
+# The Platform SDK shipped with Visual C++ 5.0 (Visual Studio 97) and earlier
+# doesn't include the necessary headers (security.h, ntsecapi.h, etc) for this
+# feature.
+CKF_LOGIN=no
+CKF_NTLM=no
 !endif
 !endif
 
@@ -193,4 +203,11 @@ DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOTOOLBAR
 !if "$(CKF_LOGIN)" == "no"
 DISABLED_FEATURES = $(DISABLED_FEATURES) Login
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOLOGIN
+!endif
+
+# NTLM:
+#   Turn off with: -DNONTLM
+!if "$(CKF_NTLM)" == "no"
+DISABLED_FEATURES = $(DISABLED_FEATURES) NTLM
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNONTLM
 !endif

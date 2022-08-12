@@ -57,8 +57,8 @@ instructions below.
 Compiling
 ---------
 
-To build C-Kermit for Windows you will need either Microsoft Visual C++ 6.0 SP6 or newer 
-(Visual C++ 2022 is the newest tested version), or OpenWatcom 1.9 (other versions are untested but may work).
+To build C-Kermit for Windows you will need either Microsoft Visual C++ 5.0, 6.0 SP6 or any newer
+version (Visual C++ 2022 is the newest tested), or OpenWatcom 1.9 (other versions are untested but may work).
 
 Edit `/setenv.bat` and change `set root=` to point to your source directory then run through the following:
  
