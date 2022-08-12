@@ -832,6 +832,7 @@ getcpu( void )
    char numstr[32] ;
    memset( &si, 0, sizeof(si) ) ;
    GetSystemInfo( &si ) ;
+#if _MSC_VER > 900
    if ( isWin95() && !si.wProcessorLevel )
    {
       switch ( si.dwProcessorType ) {
@@ -915,11 +916,44 @@ getcpu( void )
             ckstrncat( buffer, numstr, 64 );
          }
          break;
+
       case PROCESSOR_ARCHITECTURE_UNKNOWN:
          ckstrncpy( buffer, "unknown", 64 ) ;
          break;
       }
-   }
+  }
+#else
+    /* The Platform SDK that comes with Visual C++ 2.0 and earlier has a
+     * different definition for SYSTEM_INFO that does not include the
+     * wProcessorLevel field or related architecture definitions. Instead we
+     * can do this: */
+    switch ( si.dwProcessorType ) {
+    case PROCESSOR_INTEL_386:
+        ckstrncpy( buffer, "intel-386", 64 ) ;
+        break;
+    case PROCESSOR_INTEL_486:
+        ckstrncpy( buffer, "intel-486", 64 ) ;
+        break;
+    case PROCESSOR_INTEL_PENTIUM:
+        ckstrncpy( buffer, "intel-pentium", 64 ) ;
+        break;
+    case PROCESSOR_INTEL_860:
+        ckstrncpy( buffer, "intel-860", 64 ) ;
+        break;
+    case PROCESSOR_MIPS_R2000:
+        ckstrncpy( buffer, "mips-r2000", 64 ) ;
+        break;
+    case PROCESSOR_MIPS_R3000:
+        ckstrncpy( buffer, "mips-r3000", 64 ) ;
+        break;
+    case PROCESSOR_MIPS_R4000:
+        ckstrncpy( buffer, "mips-r4000", 64 ) ;
+        break;
+    case PROCESSOR_ALPHA_21064:
+        ckstrncpy( buffer, "alpha-21064", 64 ) ;
+        break;
+    }
+#endif
 #else /* NT */
    ckstrncpy( buffer, CKCPU, 64 ) ;
 #endif
