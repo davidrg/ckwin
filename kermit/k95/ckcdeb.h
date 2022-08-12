@@ -6393,6 +6393,10 @@ _PROTOTYP( int vosprtf, (char *fmt, ...) );
 #endif /* STRATUS */
 
 #ifdef NT
+#ifndef VER_PLATFORM_WIN32_WINDOWS
+/* Visual C++ 2.0 and older don't define this (Win95 wasn't released yet) */
+#define VER_PLATFORM_WIN32_WINDOWS      1
+#endif
 extern int OSVer;
 #define isWin95() (OSVer==VER_PLATFORM_WIN32_WINDOWS)
 #else

@@ -2659,7 +2659,11 @@ uq_ok(preface,prompt,mask,help,dflt)
                          text ? text : prompt,
                          prompt,
                          MB_OK | MB_ICONINFORMATION | MB_TASKMODAL);
+#ifndef VINTAGEVC
         ShowWindowAsync(hwndConsole,SW_SHOWNORMAL);
+#else
+        ShowWindow(hwndConsole, SW_SHOWNORMAL);
+#endif
         SetForegroundWindow(hwndConsole);
         if (text)
 	  free(text);
@@ -2689,7 +2693,11 @@ uq_ok(preface,prompt,mask,help,dflt)
                          prompt,
                          MB_YESNO | MB_ICONINFORMATION | MB_TASKMODAL | 
                          (dflt == 2 ? MB_DEFBUTTON2 : MB_DEFBUTTON1));
+#ifndef VINTAGEVC
         ShowWindowAsync(hwndConsole,SW_SHOWNORMAL);
+#else
+        ShowWindow(hwndConsole,SW_SHOWNORMAL);
+#endif
         SetForegroundWindow(hwndConsole);
         if (text)
 	  free(text);
