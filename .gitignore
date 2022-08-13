@@ -225,7 +225,6 @@ pip-log.txt
 *.dll
 *.exp
 *.lib
-*.manifest
 kermit/k95/dist*
 kermit/k95/ckcpro.c
 
