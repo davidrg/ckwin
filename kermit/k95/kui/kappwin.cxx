@@ -617,6 +617,7 @@ Bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         //        wParam, HIWORD(lParam), LOWORD(lParam));
         //debug(F111,"KAppWin::message","WM_SIZE",msg);
         size( LOWORD(lParam), HIWORD(lParam) );
+#if _MSC_VER > 900
         switch ( wParam ) {
         case SIZE_RESTORED:
             if ( wmSize == SIZE_MAXIMIZED ) {
@@ -677,6 +678,48 @@ Bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         default:
             break;
         }
+#else
+        /* Windows NT 3.1 and 3.50 don't support WM_SIZING and WM_EXITSIZEMOVE,
+         * so we've got to do the work they would have done here. */
+        switch ( wParam ) {
+            case SIZE_MINIMIZED:
+            case SIZE_MAXSHOW:
+            case SIZE_MAXHIDE:
+                break;
+            case SIZE_RESTORED:
+            case SIZE_MAXIMIZED:
+            default:
+                if (!inCreate()) {
+                    RECT rect;
+                    rect.top = 0;
+                    rect.left = 0;
+                    rect.bottom = HIWORD(lParam);
+                    rect.right = LOWORD(lParam);
+                    switch (kglob->mouseEffect) {
+                        case TERM_MOUSE_CHANGE_FONT:
+                            /* This doesn't work very well. Ideally we should
+                             * clip the window size to whatever is appropriate
+                             * for the selected font size like happens on
+                             * newer versions of windows. Currently if the
+                             * window size is too big for the current font you
+                             * end up with black bars to the right and/or
+                             * bottom. */
+                            sizeFont(&rect, 1);
+                            client->paint();
+                            break;
+                        case TERM_MOUSE_CHANGE_DIMENSION:
+                            if (sizepop)
+                                sizepop->show(FALSE);
+                            client->endSizing();
+                            break;
+                        case TERM_MOUSE_NO_EFFECT:
+                            client->endSizing();
+                            break;
+                    }
+                }
+                break;
+        }
+#endif
         wmSize = wParam;
         break;
 
