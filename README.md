@@ -73,8 +73,6 @@ most interesting being:
 Future stuff to do:
 -------------------
 * Remove need for /noBool switch and #defines in kui code.
-* Restore use of fsetpos in ckofio.c (see function zfseek(CK_OFF_T) around
-  line 5418)
 * Revive the OS/2 version of C-Kermit using OpenWatcom
 * Re-enable/rewrite features that were disabled due to missing or obsolete
 dependencies. This will require upgrading to current versions or finding/writing
