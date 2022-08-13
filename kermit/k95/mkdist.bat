@@ -4,7 +4,7 @@ if not exist dist\docs\NUL mkdir dist\docs
 if not exist dist\docs\manual\NUL mkdir dist\docs\manual
 copy ..\..\doc\manual\ckwin.htm dist\docs\manual\
 move *.exe dist
-move *.manifest dist
+copy *.manifest dist
 copy k95.ini dist
 copy k95d.cfg dist
 ren dist\cknker.exe k95.exe
