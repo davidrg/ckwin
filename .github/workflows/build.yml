@@ -172,7 +172,13 @@ jobs:
         path: ${{ github.workspace }}\ckwin
         if-no-files-found: error
         retention-days: 7
-        
+
+
+  ##############################################################################
+  # Build with OpenWatcom 1.9 which allows targeting older versions of Windows #
+  ##############################################################################
+  # It is also likely to be upset by the same sorts of things as Visual C++ 6
+  # which reduces the liklihood of accidentally breaking that compiler.
   Build-OpenWatcom19-Win32:
     runs-on: windows-latest
 
@@ -235,3 +241,86 @@ jobs:
         path: ${{ github.workspace }}\ckwin
         if-no-files-found: error
         retention-days: 7
+
+  ##############################################################################
+  # Build with Visual C++ 2003 Toolkit + Windows Server 2003 SP1 Platform SDK  #
+  ##############################################################################
+  # This is the oldest freely available compiler from Microsoft. The bits come
+  # from the Visual C++ 2003 Toolkit, the Windows Server 2003 SP1 Platform SDK
+  # as described here:
+  # https://epics.anl.gov/base/msvctk.php
+  Build-VCT2003-PSDK2003:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      # We need this only to get cvtres.exe which didn't come with either the
+      # Visual C++ 2003 Toolkit or the Windows Server 2003 SP1 Platform SDK.
+      - name: Enable Developer Command Prompt
+        # You may pin to the exact commit or the version.
+        # uses: ilammy/msvc-dev-cmd@d8610e2b41c6d0f0c3b4c46dad8df0fd826c68e1
+        uses: ilammy/msvc-dev-cmd@v1.10.0
+        with:
+          arch: x86
+          toolset: 14.0
+
+        # Cache the Visual C++ 2003 Toolkit & Platform SDK because it takes
+        # quite a while to download and decompress and I don't want my FTP
+        # server being hit constantly to download this whenever a build runs.
+      - name: Cache VCT2003
+        uses: actions/cache@v3.0.5
+        id: cache-vct2003
+        with:
+          path: |
+            ${{github.workspace}}\vct2003
+          key: vct2003+psdk2003sp1
+      - name: Get Visual C++ 2003 Toolkit + Platform SDK 2003
+        if: steps.cache-vct2003.outputs.cache-hit != 'true'
+        run: |
+          wget https://ftp.zx.net.nz/pub/dev/VC2003Toolkit/VCT2003+PSDK2003+cvtres.7z -outfile VCT2003+PSDK2003+cvtres.7z
+          7z x VCT2003+PSDK2003+cvtres.7z
+          Rename-Item -Path "Microsoft Platform SDK 2003SP1" -NewName "VCT2003"
+          Remove-Item VCT2003+PSDK2003+cvtres.7z
+          Remove-Item VCT2003\Bin\Cvtres.exe
+        shell: powershell
+      - name: Full Build
+        run: |
+          Set PATH=%VCT2003%\bin;%PATH%
+          
+          REM Don't want to pick up headers or libraries from Visual C++ 14.0
+          REM which is also on here - we only want it for cvtres.exe.
+          Set INCLUDE=%VCT2003%\include
+          Set LIB=%VCT2003%\lib
+  
+          call ..\..\setenv.bat
+          
+          REM The Visual C++ 2003 Toolkit can only statically link the C Runtime
+          REM (though apparently you can get the required import library for
+          REM dynamic linking from the .NET SDK 1.1)
+          set CKB_STATIC_CRT=yes
+          
+          call mk.bat
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95
+        env:
+          ROOT: ${{ github.workspace }}
+          VCT2003: ${{ github.workspace }}\VCT2003
+      - name: Make Distribution
+        run: mkdist.bat
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95
+        env:
+          ROOT: ${{ github.workspace }}
+      - name: Prepare Artifact
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95
+        run: |
+          move dist ${{ github.workspace }}\ckwin
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2.2.4
+        with:
+          name: ckwin-vct2003
+          path: ${{ github.workspace }}\ckwin
+          if-no-files-found: error
+          retention-days: 7

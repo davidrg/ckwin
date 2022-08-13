@@ -1,6 +1,7 @@
 //Microsoft Developer Studio generated resource script.
 //
 #include "resource.h"
+#include "cknver.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
@@ -10,6 +11,7 @@
 
 #include <winuser.h>
 #include <commctrl.h>
+#include <winver.h>
 
 // These come from the MFC headers which don't come with any free
 // windows compiler
@@ -529,10 +531,12 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-1                       ICON    DISCARDABLE     "k95a.ico"
+IDI_ICONK95             ICON    DISCARDABLE     "k95a.ico"
 "MINICON"               ICON    DISCARDABLE     "k95a.ico"
-2				        ICON	DISCARDABLE		"k95g.ico"
-3				        ICON	DISCARDABLE		"k95f.ico"
+#ifndef COMPILER_OWCL
+IDI_ICON2   	        ICON	DISCARDABLE		"k95g.ico"
+IDI_ICON3		        ICON	DISCARDABLE		"k95f.ico"
+#endif
 4                       ICON    DISCARDABLE     "k95a.ico"
 
 /////////////////////////////////////////////////////////////////////////////
@@ -548,8 +552,8 @@ IDC_CURSORPARTDRAG      CURSOR  DISCARDABLE     "partdrag.cur"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,0,0,0
- PRODUCTVERSION 3,0,0,0
+ FILEVERSION RC_FILE_VERSION
+ PRODUCTVERSION RC_PROD_VERSION
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -557,7 +561,7 @@ VS_VERSION_INFO VERSIONINFO
  FILEFLAGS 0x0L
 #endif
  FILEOS 0x40004L
- FILETYPE 0x0L
+ FILETYPE 0x1L
  FILESUBTYPE 0x0L
 BEGIN
     BLOCK "StringFileInfo"
@@ -566,12 +570,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "The Kermit Project"
             VALUE "FileDescription", "C-Kermit for Windows, Graphical executable"
-            VALUE "FileVersion", "3.0.0.0"
+            VALUE "FileVersion", RC_FILE_VERSION_STR
             VALUE "InternalName", "k95g"
-            VALUE "LegalCopyright", "Portions (C) Copyright 1995-2013 The Trustees of Columbia University in the City of New York. Portions (C) Copyright 2013 The Kermit Project contributors."
+            VALUE "LegalCopyright", "Portions (C) Copyright 1995-2013 The Trustees of Columbia University in the City of New York. Portions (C) Copyright 2013-2022 The Kermit Project contributors."
             VALUE "OriginalFilename", "k95g.exe"
             VALUE "ProductName", "C-Kermit for Windows"
-            VALUE "ProductVersion", "3.0.0.0"
+            VALUE "ProductVersion", RC_PROD_VERSION_STR
         END
     END
     BLOCK "VarFileInfo"

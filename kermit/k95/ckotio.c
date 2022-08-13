@@ -115,6 +115,26 @@ _PROTOTYP( void DisplayCommProperties, (HANDLE));
 #define pclose _pclose
 #endif /* NT */
 
+
+#ifndef _WIN32_WINNT_WIN10
+#define _WIN32_WINNT_WIN10 0x0A00
+#endif /* _WIN32_WINNT_WIN10 */
+#ifndef _WIN32_WINNT_WINBLUE
+#define _WIN32_WINNT_WINBLUE 0x0603
+#endif /* _WIN32_WINNT_WINBLUE */
+
+#if _MSC_VER >= 1800
+/* Visual C++ 2013 and the Windows 8.1 Platform SDK introduce this header and
+ * though the Win32 APIs it relies on have been around since Windows 2000 */
+#include <VersionHelpers.h>
+#define CKWIsWinVerOrGreater(ver) (IsWindowsVersionOrGreater(HIBYTE(ver),LOBYTE(ver),0))
+#else
+/* Anything older than Visual C++ we won't bother trying to detect Windows 8.1
+ * or newer - if you're building for a modern version of windows you really
+ * should be using a modern compiler. */
+#define CKWIsWinVerOrGreater(ver) (FALSE)
+#endif
+
 /* Version herald(s) */
 
 #include "ckuver.h"
@@ -1308,40 +1328,54 @@ sysinit() {
                         "Windows - unknown");
         } else if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT) {
             /* Windows NT */
-            if (osverinfo.dwMajorVersion < 5) {
-                sprintf(unm_nam, "Windows NT");
-            } else if (osverinfo.dwMajorVersion == 5) {
-                /* Windows 2000 / XP / 2003 */
-                if (osverinfo.dwMinorVersion == 0) {
-                    sprintf(unm_nam, "Windows 2000" );
-                } else if (osverinfo.dwMinorVersion == 1) {
-                    sprintf(unm_nam, "Windows XP" );
-                } else if (osverinfo.dwMinorVersion == 2) {
-                    sprintf(unm_nam, "Windows XP x64 Edition / Server 2003");
-                } else {
-                    sprintf(unm_nam, "Windows NT 5.x - unknown" );
-                }
-            } else if (osverinfo.dwMajorVersion == 6) {
-                /* Windows Vista / 7 / 8 / 8.1 */
-                if (osverinfo.dwMinorVersion == 0) {
-                    sprintf(unm_nam, "Windows Vista / Server 2008" );
-                } else if (osverinfo.dwMinorVersion == 1) {
-                    sprintf(unm_nam, "Windows 7 / Server 2008 R2" );
-                } else if (osverinfo.dwMinorVersion == 2) {
-                    sprintf(unm_nam, "Windows 8 / Server 2012");
-                } else if (osverinfo.dwMinorVersion == 3) {
-                    sprintf(unm_nam, "Windows 8.1 / Server 2012 R2");
-                } else  {
-                    sprintf(unm_nam, "Windows NT 6.x - unknown" );
-                }
-            } else {
-                /* TODO: If building with a new enough Platform SDK version,
-                 *      use the Version Helper functions:
-                 *      https://docs.microsoft.com/en-us/windows/win32/sysinfo/version-helper-apis
-                 */
 
-                /* Don't know */
-                sprintf(unm_nam, "Windows NT - unknown" );
+            if (CKWIsWinVerOrGreater(_WIN32_WINNT_WIN10)) {
+                /* Windows 10 or newer. There is currently no constant
+                 * for Windows 11 defined so this is the best we can
+                 * do. */
+                sprintf(unm_nam, "Windows 10 / Server 2016 or newer");
+            } else if (CKWIsWinVerOrGreater(_WIN32_WINNT_WINBLUE)) {
+                sprintf(unm_nam, "Windows 8.1 / Server 2012 R2");
+            } else {
+                if (osverinfo.dwMajorVersion < 5) {
+                    sprintf(unm_nam, "Windows NT");
+                } else if (osverinfo.dwMajorVersion == 5) {
+                    /* Windows 2000 / XP / 2003 */
+                    if (osverinfo.dwMinorVersion == 0) {
+                        sprintf(unm_nam, "Windows 2000" );
+                    } else if (osverinfo.dwMinorVersion == 1) {
+                        sprintf(unm_nam, "Windows XP" );
+                    } else if (osverinfo.dwMinorVersion == 2) {
+                        sprintf(unm_nam, "Windows XP x64 Edition / Server 2003");
+                    } else {
+                        sprintf(unm_nam, "Windows NT 5.x - unknown" );
+                    }
+                } else if (osverinfo.dwMajorVersion == 6) {
+                    /* Windows Vista / 7 / 8 / 8.1 */
+                    if (osverinfo.dwMinorVersion == 0) {
+                        sprintf(unm_nam, "Windows Vista / Server 2008" );
+                    } else if (osverinfo.dwMinorVersion == 1) {
+                        sprintf(unm_nam, "Windows 7 / Server 2008 R2" );
+                    } else if (osverinfo.dwMinorVersion == 2) {
+                        sprintf(unm_nam, "Windows 8 / Server 2012 !!");
+                    } else if (osverinfo.dwMinorVersion == 3) {
+                        sprintf(unm_nam, "Windows 8.1 / Server 2012 R2");
+                    } else  {
+                        sprintf(unm_nam, "Windows NT 6.x - unknown" );
+                    }
+                } else if (osverinfo.dwMajorVersion == 10) {
+                    /* With the right stuff in the manifest, GetVersionEx should
+                     * tell the truth even when the executable has been built
+                     * with an older compiler. When built with Visual C++
+                     * 2013 or newer we won't ever get this far - Windows 10+
+                     * should be detected earlier on. */
+
+                    sprintf(unm_nam, "Windows 10 / Server 2016 or newer");
+
+                } else {
+                    /* Don't know */
+                    sprintf(unm_nam, "Windows NT - unknown" );
+                }
             }
         } else {
             /* Unknown */
