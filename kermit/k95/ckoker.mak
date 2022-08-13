@@ -558,7 +558,7 @@ KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
         rpcrt4.lib rpcns4.lib wsock32.lib \
         winmm.lib vdmdbg.lib comctl32.lib mpr.lib $(COMMODE_OBJ) \
 !if "$(CKF_SSH)" == "yes"
-       ssh.lib \
+       ssh.lib ws2_32.lib \
 !endif
 !if "$(CKF_SSL)" == "yes"
        libssl.lib libcrypto.lib \
@@ -570,7 +570,7 @@ KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
 LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib shell32.lib\
        winmm.lib mpr.lib advapi32.lib winspool.lib $(COMMODE_OBJ) \
 !if "$(CKF_SSH)" == "yes"
-       ssh.lib \
+       ssh.lib ws2_32.lib \
 !endif
 !if "$(CKF_SSL)" == "yes"
        libssl.lib libcrypto.lib \
@@ -607,7 +607,7 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
         ck_crp$(O) ck_des$(O) \
 !endif
 !if ("$(CKF_SSH)" == "yes")
-        ckossh$(O) \
+        ckossh$(O) ckorbf$(O) ckoshs$(O) \
 !endif
         ckocon$(O) ckoco2$(O) ckoco3$(O) ckoco4$(O) ckoco5$(O) \
         ckoetc$(O) ckoetc2$(O) ckokey$(O) ckomou$(O) ckoreg$(O) \
@@ -1036,9 +1036,10 @@ ckossl$(O):     ckossl.c ckcdeb.h ckoker.h ck_ssl.h ckossl.h
 ckosslc$(O):    ckosslc.c ckcdeb.h ckoker.h ck_ssl.h ckosslc.h
 ckozli$(O):     ckozli.c ckcdeb.h ckoker.h ckozli.h
 
-!if ("$(CKF_SSH)" == "yes")
-ckossh$(O):     ckcdeb.h ckoker.h ckclib.h ckossl.h ckoath.h ckosslc.h ckossh.c ckossh.h
-!endif
+ckossh$(O):     ckoshs.h ckoshs.h ckorbf.h ckcdeb.h ckoker.h ckclib.h ckosslc.h ckossh.c ckossh.h
+ckoshs(O):      ckoshs.c ckoshs.h ckorbf.h ckcdeb.h ckcker.h ckocon.h
+ckorbf(O):      ckorbf.c ckorbf.h ckcdeb.h
+
 
 ckosftp$(O):    ckcdeb.h ckoker.h ckclib.h ckosftp.h ckosftp.c
 	$(CC) $(CC2) $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ckosftp.c

@@ -1,6 +1,6 @@
 char *cksshv = "SSH support, 10.0.0,  28 July 2022";
 /*
- *  C K O S S H . C --  libssh Interface for C-Kermit
+ *  C K O S S H . C --  SSH Subsystem Interface for C-Kermit
  *
  * Copyright (C) 2022, David Goodwin <david@zx.net.nz>
  *
@@ -31,15 +31,22 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <libssh/libssh.h>
-#include <libssh/callbacks.h>
+/*
+ * This is the interface between the SSH Subsystem and the rest of C-Kermit.
+ * The SSH Subsystem lives off on its own thread because it's not usefully
+ * thread safe. So the code here just interacts with the SSH Subsystem via
+ * a pair of ring buffers, a mutex, and a collection of events.
+ *
+ * The interface is described in ckoshs.h and the actual implementation
+ * where all the work is done (using libssh) lives in ckoshs.c.
+ */
+
 
 #include "ckcdeb.h"
 #include "ckossh.h"
 #include "ckcker.h"
 
-/* Only so we can get a definition for VTERM and VNUM */
-#include "ckocon.h"
+#include "ckoshs.h"
 
 /* Global Variables:
  *   These are all declared in ckuus3.c around like 8040
@@ -185,6 +192,11 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *  - TODO: Fix occasional random disconnect. Perhaps a threading issue? Maybe
  *          everything here interacting with libssh needs to be moved to a
  *          dedicated thread.
+ *  - TODO: Figure out why nano doesn't correctly resume after being suspended
+ *          - Possibly a terminal emulation issue. It works fine when emulating
+ *            a VT220. Htop doesn't quite resume properly either - doesn't redraw
+ *            the entire screen like it should which is probably the same issue
+ *            just exposed differently.
  *  - TODO: Fix keyboard interactive authentication
  *          - Answering correctly results in the loop going around again with
  *            SSH_AUTH_INFO but no prompts. Returning at that point falls
@@ -196,10 +208,10 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *  - TODO: How do we know /command: has finished? EOF?
  *  - TODO: fix UI prompt look&feel (weird inset buttons)
  *  - TODO: Kermit subsystem (/subsystem:kermit) doesn't work
+ *  - TODO: X11 Forwarding
+ *  - TODO: Other forwarding
  *  - TODO: Build libssh with GSSAPI, pthreads and kerberos
  *          https://github.com/jwinarske/pthreads4w
- *  - TODO: X11 Forwarding    | Forwarding likely requires moving libssh to a
- *  - TODO: Other forwarding  | different thread .
  *  - TODO: Deal with flush
  *  - TODO: Deal with break
  *  - TODO: SFTP
@@ -243,50 +255,22 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *  SSH_OPTIONS_REKEY_TIME
  */
 
-/* Settings that can't be set */
-#define SSH_MAX_PASSWORD_PROMPTS 3      /* Number of times you can retry password auth */
-
-/* Errors we can return */
-#define SSH_ERR_MORE_AUTH_NEEDED 1      /* Partial auth succeeded, more auth needed with different methods */
-#define SSH_ERR_NO_ERROR 0              /* Everything is OK */
-#define SSH_ERR_UNSPECIFIED -1          /* Unspecified error */
-#define SSH_ERR_NEW_SESSION_FAILED -2   /* Failed to create new SSH session */
-#define SSH_ERR_HOST_NOT_SPECIFIED -3   /* Hostname was null */
-#define SSH_ERR_SSH_ERROR -4            /* Libssh error, call ssh_get_error(session) */
-#define SSH_ERR_HOST_VERIFICATION_FAILED -5 /* Verification of remote host failed */
-#define SSH_ERR_AUTH_ERROR -6           /* Serious auth error */
-#define SSH_ERR_EOF -7                  /* Remote has sent EOF */
-#define SSH_ERR_CHANNEL_CLOSED -8       /* Channel is closed */
-#define SSH_ERR_BUFFER_ERROR -9         /* Buffer overflow */
-#define SSH_ERR_USER_CANCELED -10       /* User canceled */
-#define SSH_ERR_SESSION_CLOSED -11      /* No session (session is null) */
-#define SSH_ERR_UNSUPPORTED_VERSION -12 /* Unsupported SSH version */
-#define SSH_ERR_OPENSSH_CONFIG_ERR -13  /* Error parsing OpenSSH Config */
-#define SSH_ERR_NOT_IMPLEMENTED -14     /* Feature not implemented yet */
-#define SSH_ERR_ACCESS_DENIED -15       /* Login failed */
-
-/* SSH Strict Host Key Checking options */
-#define SSH_SHK_NO 0                    /* Trust everything implicitly */
-#define SSH_SHK_YES 1                   /* Don't trust anything unexpected */
-#define SSH_SHK_ASK 2                   /* Ask the user */
 
 /* Global variables */
-extern int tt_rows[];                   /* Screen rows */
-extern int tt_cols[];                   /* Screen columns */
-extern int tt_status[VNUM];             /* Terminal status line displayed */
 extern char uidbuf[];                   /* User ID set via /user: */
 extern char pwbuf[];                    /* Password set via /password: */
 extern int  pwflg;                      /* Password has been set */
-int ssh_sock;   // TODO: get rid of this
-int auth_canceled;                      /* User canceled authentication */
+int ssh_sock;   /* TODO: get rid of this (unless its needed for connecting
+                 *      through a proxy server?) */
 
 /* Local variables */
-static ssh_session session = NULL;      /* Current SSH session (if any) */
-static ssh_channel channel = NULL;      /* The tty channel - shell or command */
-static int pty_height, pty_width;       /* Dimensions of the pty */
+ssh_client_t *ssh_client = NULL;  /* Interface to the ssh subsystem */
+HANDLE hSSHClientThread = NULL;   /* SSH subsystem thread */
 
-/* Similar to "show ssh" */
-void debug_params(const char* function) {
+
+/* Similar to "show ssh"
+ * TODO: Delete this once all the not-implemented functions are implemented */
+static void debug_params(const char* function) {
     if (function) printf("Function: %s\n", function);
     printf("Integer params:\n");
     printf("\t  Agent forwarding: %d\t       X-11 forwarding: %d\n", ssh_afw, ssh_xfw);
@@ -353,129 +337,12 @@ void debug_params(const char* function) {
     debug(F100, "/end SSH connection parameters", "", 0);
 }
 
-/** LibSSH logging callback. Forwards all libssh logging on to the C-Kermit
- * logging infrastructure.
- *
- * @param priority Priority - smaller is more important
- * @param function Function that produced the log message
- * @param buffer   Log message
- * @param userdata User data.
- */
-static void logging_callback(int priority, const char *function,
-                             const char *buffer, void *userdata)
-{
-    char* buf;
-    char timebuf[100];
-    int msglen = 1; /* Need at least 1 for null termination */
-    time_t now = time (0);
-
-    (void)userdata; /* Don't care about this */
-
-    strftime(timebuf, 100, "%Y-%m-%d %H:%M:%S", localtime (&now));
-
-    msglen += strlen(function) + strlen(buffer) + strlen(timebuf) + 100;
-    buf = malloc(msglen);
-
-    snprintf(buf, msglen, "[%s, %d] %s: %s",
-             timebuf, priority, function, buffer);
-
-    debug(F100, buf, "", 0);
-
-    free(buf);
-}
-
-
-/** SSH Authentication callback for password and publickey auth
- *
- * @param prompt Prompt to be displayed
- * @param buf Buffer to save the password. Should be null terminated.
- * @param len Length of the buffer.
- * @param echo Enable or disable the echo of what you type
- * @param verify Should the password be verified?
- * @param userdata Userdata to be passed to the callback function
- */
-static int auth_prompt(const char* prompt, char* buf, size_t len, int echo,
-                       int verify, void* userdata) {
-
-    debug(F110, "ssh auth_prompt", prompt, 0);
-    debug(F111, "ssh auth_prompt", "echo", echo);
-    debug(F111, "ssh auth_prompt", "verify", verify);
-    debug(F111, "ssh auth_prompt", "len", len);
-
-    if (verify) {
-        struct txtbox tb[2];
-        char *verifyBuf;
-        static char again[10] = "Again:";
-        int rc;
-
-        verifyBuf = malloc(len * sizeof(char));
-
-        tb[0].t_buf = buf;
-        tb[0].t_len = len;
-        tb[0].t_lbl = NULL;
-        tb[0].t_dflt = NULL;
-        tb[0].t_echo = echo ? 1 : 2;
-
-        tb[1].t_buf = verifyBuf;
-        tb[1].t_len = len;
-        tb[1].t_lbl = again;
-        tb[1].t_dflt = NULL;
-        tb[1].t_echo = echo ? 1 : 2;
-
-        rc = uq_mtxt(prompt, NULL, 2, tb);
-        if (rc == 0) {
-            debug(F100, "auth_prompt - user canceled", "", 0);
-            rc = -1; /* failed */
-        } else {
-            if (strncmp(buf, verifyBuf, len) == 0) {
-                rc = 0; /* Success */
-            } else {
-                debug(F100, "auth_prompt - verify failed", "", 0);
-                rc = -1; /* error */
-            }
-        }
-
-        free(verifyBuf);
-        return rc;
-    } else {
-        int rc;
-        rc = uq_txt(NULL, prompt, echo ? 1 : 2, NULL, buf, len, NULL,
-                    DEFAULT_UQ_TIMEOUT);
-        if (rc == 1) return 0; /* 1 == success */
-        debug(F100, "auth_prompt - user canceled", "", 0);
-        return -1; /* 0 = error - user canceled */
-    }
-}
-
-int log_verbosity() {
-    /* ssh_vrb is set via "set ssh verbose" and has a range of 0-7
-     * libssh only has 5 logging verbosity levels so 5/6/7 are unused
-     * and treated the same as 4 (max verbosity)
-     * */
-    switch (ssh_vrb) {
-        case 0:
-            return SSH_LOG_NOLOG;
-        case 1:
-            return SSH_LOG_WARNING;
-        case 2:
-            return SSH_LOG_PROTOCOL;
-        case 3:
-            return SSH_LOG_PACKET;
-        case 4:
-            return SSH_LOG_FUNCTIONS;
-        case 5: /* not used */
-        case 6: /* not used */
-        case 7: /* not used */
-        default:
-            return SSH_LOG_FUNCTIONS;
-    }
-}
 
 /** Returns the current terminal type as a static string
  *
  * @return terminal type
  */
-char* get_current_terminal_type() {
+static char* get_current_terminal_type() {
     static char term_type[64];
     extern int tt_type, max_tt;
     extern struct tt_info_rec tt_info[];
@@ -506,769 +373,205 @@ char* get_current_terminal_type() {
     return(term_type);
 }
 
-void get_current_terminal_dimensions(int* rows, int* cols) {
-    /* TODO: Elsewhere in K95 one is taken off the row count if the status line
-     *       is on. But this seems to produce incorrect results - it looks like
-     *       the tt_rows value already accounts for the status line.
-     **/
-    *rows = tt_rows[VTERM];/* - (tt_status[VTERM]?1:0); */
-    *cols = tt_cols[VTERM];
-}
 
-/** Checks to see if the host being connected to is known.
+/** Checks that the SSH thread is alive and has not reported an error.
  *
- * TODO: Overhaul this function.
- *
- * @return An error code (0 = success)
+ * @return Error status or 0 if everything is ok.
  */
-int verify_known_host() {
-    int rc = 0;
-    ssh_key server_pubkey = NULL;
-    unsigned char* hash = NULL;
-    size_t hash_length = 0;
-    enum ssh_known_hosts_e state;
-    char *hexa;
-    char msg[1024];
+static int get_ssh_error() {
+    int error = SSH_ERR_UNSPECIFIED;
 
-    rc = ssh_get_server_publickey(session, &server_pubkey);
-    if (rc != SSH_OK) {
-        printf("Failed to get public key\n");
-        return SSH_ERR_SSH_ERROR;
+    /* If there is no ssh_client instance then the client is absolutely not
+     * running (or we're about to crash) */
+    if (ssh_client == NULL) {
+        return SSH_ERR_NO_INSTANCE;
     }
 
-    rc = ssh_get_publickey_hash(server_pubkey,
-                                SSH_PUBLICKEY_HASH_SHA256,
-                                &hash,
-                                &hash_length);
-    ssh_key_free(server_pubkey);
-    if (rc != SSH_OK) {
-        printf("Failed to get public key hash\n");
-        return SSH_ERR_SSH_ERROR;
-    }
-
-    state = ssh_session_is_known_server(session);
-    /* TODO: Redo all of this properly. */
-    switch (state) {
-        case SSH_KNOWN_HOSTS_OK:
-            /* Cool! */
-            printf("Host verified!\n");
-            break;
-        case SSH_KNOWN_HOSTS_CHANGED:
-            /* Previously:
-                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                "@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\n"
-                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                "IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!\n"
-                "Someone could be eavesdropping on you right now (man-in-the-middle attack)!\n"
-                "It is also possible that the ", type, " host key has just been changed.\n"
-                "The fingerprint for the ", type, " key sent by the remote host is\n",
-                fp, "\nPlease contact your system administrator.\n"
-                "Add correct host key in ", (char*)user_hostfile, " to get rid of this message.\n"
-                "Offending key in ", (char *)host_file, ":", ckitoa(host_line));
-             *
-             * If strict host key checking then display a message saying can't connect
-             * If set to ask, ask user if continue or not.
-             * If not requested, allow without password auth, agent forwarding,
-             *      X11 forwarding and port forwarding.
-             */
-            printf("WARNING! The server key has changed. "
-                   "This may indicate a possible attack.\n");
-            hexa = ssh_get_hexa(hash, hash_length);
-            printf("Public key hash: %s\n", hexa);
-            ssh_string_free_char(hexa);
-            ssh_clean_pubkey_hash(&hash);
-            return SSH_ERR_HOST_VERIFICATION_FAILED;
-        case SSH_KNOWN_HOSTS_OTHER:
-            /* Previously: If IP status == HOST_NEW then msg = "is unknown"
-             *             If IP status == HOST_OK then msg = "is unchanged"
-             * Message:
-               "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-               "@       WARNING: POSSIBLE DNS SPOOFING DETECTED!          @\n"
-               "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-               "The ", type, " host key for ", host, " has changed,\n"
-               "and the key for the according IP address ", ip, "\n",
-               msg, ". This could either mean that\n",
-               "DNS SPOOFING is happening or the IP address for the host\n"
-               "and its host key have changed at the same time.\n",
-             */
-            printf("Warning: Server key type has changed. An attacker may change the "
-                   "server key type to confuse clients into thinking the key does "
-                   "not exist.\n");
-            ssh_clean_pubkey_hash(&hash);
-            return SSH_ERR_HOST_VERIFICATION_FAILED;
-        case SSH_KNOWN_HOSTS_NOT_FOUND:
-            printf("Could not find the known hosts file. If you accept the key here "
-                   "it will be created automatically.\n");
-        case SSH_KNOWN_HOSTS_UNKNOWN:
-            /*
-             * The server is unknown. The user must confirm the public key hash is
-             * correct.
-             */
-            if (ssh_shk == SSH_SHK_YES) {
-                snprintf(msg, sizeof(msg),
-                         "No host key is known for %s and\n"
-                         "you have requested strict host checking.\n"
-                         "If you wish to make an untrusted connection,\n"
-                         "SET SSH STRICT-HOST-KEY-CHECK OFF and try again.",
-                         ssh_hst);
-                printf(msg);
-#ifdef KUI
-                uq_ok(NULL, msg, 1, NULL, 0);
-#endif /* KUI */
-            } else if (ssh_shk = SSH_SHK_ASK) {
-                hexa = ssh_get_hexa(hash, hash_length);
-                snprintf(msg, sizeof(msg),
-                         "The authenticity of host '%s' can't be established.\n"
-                         "The key fingerprint is %s.\n",
-                         ssh_hst,  hexa);
-                ssh_string_free_char(hexa);
-                ssh_clean_pubkey_hash(&hash);
-
-                if (!uq_ok(msg, "Are you sure you want to continue "
-                                "connecting (yes/no)? ", 3, NULL, -1)) {
-                    printf("Aborted by user!");
-                    ssh_clean_pubkey_hash(&hash);
-                    return SSH_ERR_HOST_VERIFICATION_FAILED;
-                }
-            } else if (ssh_shk != SSH_SHK_NO) {
-                printf("Invalid Strict Host Key Check value!");
-                ssh_clean_pubkey_hash(&hash);
-                return SSH_ERR_HOST_VERIFICATION_FAILED;
-            }
-
-            rc = ssh_session_update_known_hosts(session);
-            if (rc < 0) {
-                printf("Error %s\n", strerror(errno));
-                ssh_clean_pubkey_hash(&hash);
-                return SSH_ERR_SSH_ERROR;
-            }
-            break;
-        case SSH_KNOWN_HOSTS_ERROR:
-            printf("Error %s", ssh_get_error(session));
-            ssh_clean_pubkey_hash(&hash);
-            return SSH_ERR_SSH_ERROR;
-    }
-
-    ssh_clean_pubkey_hash(&hash);
-    return SSH_ERR_NO_ERROR;
-}
-
-int password_authenticate() {
-    char *user = NULL;
-    char password[256] = "";
-    char prompt[1024] = "";
-    int i = 0;
-    int rc = 0;
-    int ok = FALSE;
-
-    debug(F110, "Attempting password authentication for user", user, 0);
-
-    rc = ssh_options_get(session, SSH_OPTIONS_USER, &user);
-    if (rc != SSH_OK) {
-        debug(F100, "SSH - Failed to get user ID", "rc", rc);
-        return rc;
-    }
-
-    for (i = 0; i < SSH_MAX_PASSWORD_PROMPTS; i++) {
-        if (i == 0 && pwbuf[0] && pwflg) {
-            /* Password has already been supplied. Try that */
-            debug(F100, "Using pre-entered password", "", 0);
-            ckstrncpy(password,pwbuf,sizeof(password));
-            ok = TRUE;
-        } else {
-            snprintf(prompt, sizeof(prompt), "%s%.30s@%.128s's password: ",
-                     i == 0 ? "" : "Permission denied, please try again.\n",
-                     user, ssh_hst);
-            /* Prompt user for password */
-            ok = uq_txt(prompt,"Password: ",2,NULL,password, sizeof(password),NULL,
-                        DEFAULT_UQ_TIMEOUT);
-        }
-
-        if (!ok || strcmp(password, "") == 0) {
-            /* User canceled */
-            debug(F100, "User canceled password login", "", 0);
-            ssh_string_free_char(user);
-            auth_canceled = TRUE;
-            return SSH_AUTH_DENIED;
-        }
-
-        rc = ssh_userauth_password(session, NULL, password);
-        memset(password, 0, strlen(password));
-        if (rc == SSH_AUTH_SUCCESS) {
-            debug(F100, "Password login succeeded", "", 0);
-            ssh_string_free_char(user);
-            return rc;
-        } else if (rc == SSH_AUTH_ERROR) {
-            debug(F111, "SSH Auth Error - password login failed", "rc", rc);
-            /* A serious error has occurred.  */
-            ssh_string_free_char(user);
-            return rc;
-        } else if (rc == SSH_AUTH_PARTIAL) {
-            debug(F100, "SSH Partial authentication - "
-                        "more authentication needed", "", 0);
-            ssh_string_free_char(user);
-            return rc;
-        }
-        /* Else: SSH_AUTH_DENIED - try again. */
-        debug(F100, "SSH Password auth failed - access denied", "", 0);
-    }
-
-    ssh_string_free_char(user);
-    return rc;
-}
-
-
-/** Attempt keyboard interactive authentication
- *
- * @return SSH_AUTH_SUCCESS on success, SSH_AUTH_DENIED on failure,
- *         SSH_AUTH_ERROR on serious failure.
- */
-int kbd_interactive_authenticate() {
-    int rc;
-
-    debug(F100, "kbd_interactive_authenticate", "", 0);
-
-    rc = ssh_userauth_kbdint(session, NULL, NULL);
-
-    while (rc == SSH_AUTH_INFO) {
-        const char* name, *instructions;
-        int nprompts, i, combined_text_len;
-        struct txtbox *tb = NULL;
-        char** responses = NULL;
-        char* combined_instructions = NULL;
-        BOOL failed = FALSE;
-
-        name = ssh_userauth_kbdint_getname(session);
-        instructions = ssh_userauth_kbdint_getinstruction(session);
-        nprompts = ssh_userauth_kbdint_getnprompts(session);
-
-        debug(F110, "kbd_int_auth name", name, 0);
-        debug(F110, "kbd_int_auth instructions", instructions, 0);
-        debug(F101, "kbd_int_auth prompts", "", nprompts);
-
-        if (nprompts == 0) {
-            debug(F100, "No more prompts! Unable to continue interrogating user.", "nprompts", nprompts);
-            break;
-        }
-
-        /* TODO: if nprompts == 1, use uq_txt instead of uq_mtxt. It looks a
-         *       lot less weird than uq_mtxt with only one field and no other
-         *       text.
+    /* Check if the client thread is alive. If not we're disconnected, and we
+     * can just return whatever its error state is */
+    if (WaitForSingleObject(hSSHClientThread, 0) == WAIT_OBJECT_0) {
+        /* Thread is not running - send back whatever status it set when it
+         * stopped. No need to acquire the mutex.
          */
 
-        combined_text_len = 0;
-        if (name) combined_text_len += strlen(name);
-        if (instructions) combined_text_len += strlen(instructions);
+        int client_error, rc;
 
-        if (combined_text_len > 0) {
-            /* Only prepare instructions if the server sent us at least a name
-             * or instructions. If both were null then we'll skip this
-             * entirely.*/
-            combined_instructions += 100;
-
-            combined_instructions = malloc(combined_text_len * sizeof(char));
-            if (combined_instructions == NULL) {
-                debug(F100, "kbd_interactive_authenticate - failed to malloc for instructions", "", 0);
-                return SSH_AUTH_ERROR;
-            }
-            snprintf(combined_instructions,
-                     combined_text_len,
-                     "--- %s ---\n%s",
-                     name,
-                     instructions
-            );
+        debug(F100, "get_ssh_error() - SSH subsystem thread has terminated. Closing session", "", 0);
+        client_error = ssh_client->error;
+        rc = ssh_clos();
+        if (rc != SSH_ERR_OK) {
+            debug(F111, "get_ssh_error() - Error closing connection", "rc", rc);
+            debug(F101, "get_ssh_error() - Thread error state is", "", ssh_client->error);
+            return rc;
         }
 
-        if (nprompts == 1) {
-            /*
-             * If there is only one prompt then we'll use the single field
-             * uq_txt instead of the multi-field uq_mtxt as it looks a whole lot
-             * less wierd - especially when there is no instruction text.
-             */
-            char echo;
-            char buffer[128];
-            const char *prompt = ssh_userauth_kbdint_getprompt(session, i, &echo);
-
-            debug(F110, "kdbint auth - single prompt mode - prompt:", prompt, 0);
-
-            rc = uq_txt(combined_instructions, prompt, echo ? 1 : 2, NULL,
-                        buffer, sizeof(buffer), NULL, DEFAULT_UQ_TIMEOUT);
-            if (rc == 1) {
-                rc = ssh_userauth_kbdint_setanswer(session, 0, buffer);
-                debug(F111, "ssh_userauth_kbdint says", "rc", rc);
-                if (rc < 0) {
-                    /* An error of some kind occurred. Don't bother feeding
-                     * in any further responses. We'll only keep going around
-                     * the loop to clean up the response array */
-                    failed = TRUE;
-                    debug(F101, "prompt rejected", "", i);
-                }
-            } else {
-                debug(F100, "kdbint auth - user canceled", "", 0);
-                failed = TRUE;
-            }
-        } else {
-            /*
-             * More than one prompt this time around. We'll use uq_mtxt and ask
-             * for all of them in one go.
-             */
-
-            /* Allocate an array of textboxes to hold the prompts */
-            tb = (struct txtbox *) malloc(sizeof(struct txtbox) * nprompts);
-            if (tb == NULL) {
-                debug(F100, "kbd_interactive_authenticate - textbox malloc failed", "", 0);
-                return SSH_AUTH_ERROR;
-            }
-            memset(tb, 0, sizeof(struct txtbox) * nprompts);
-
-            /* Allocate an array to hold all the responses. */
-            responses = malloc(sizeof(char *) * nprompts);
-            if (responses == NULL) {
-                debug(F100, "kbd_interactive_authenticate - response array malloc failed", "", 0);
-                return SSH_AUTH_ERROR;
-            }
-
-            /* Build up an array of text boxes to show the user */
-            for (i = 0; i < nprompts; i++) {
-                char echo;
-                const char *prompt = ssh_userauth_kbdint_getprompt(session, i, &echo);
-                responses[i] = malloc(128 * sizeof(char));
-
-                debug(F111, "kdb_interactive_authenticate prompt", prompt, i);
-
-                if (responses[i] == NULL) {
-                    debug(F111, "kbd_interactive_authenticate - response buffer "
-                                "malloc failed", "response", i);
-                    return SSH_AUTH_ERROR;
-                }
-
-                memset(responses[i], 0, sizeof(responses[i]));
-
-                tb[i].t_buf = responses[i];
-                tb[i].t_len = 128;
-                tb[i].t_lbl = prompt;
-                tb[i].t_dflt = NULL;
-                tb[i].t_echo = echo ? 1 /* yes */ : 2; /* no - asterisks */
-            }
-
-            /* Ask the user all the prompts in one go  */
-            rc = uq_mtxt(combined_instructions, NULL, nprompts, tb);
-
-            if (rc == 0) { /* 0 = no/cancel, 1 = yes/ok */
-                debug(F100, "kdbint auth - user canceled", "", 0);
-                failed = TRUE;
-            }
-
-            /* Then process the responses freeing buffers as we go */
-            for (i = 0; i < nprompts; i++) {
-                debug(F101, "processing prompt", "", i);
-                if (!failed) {
-                    /* User hasn't canceled and haven't hit an error yet. Ask the
-                     * server what it thinks of an answer.*/
-                    rc = ssh_userauth_kbdint_setanswer(session, i, responses[i]);
-                    debug(F111, "ssh_userauth_kbdint says", "rc", rc);
-                    if (rc < 0) {
-                        /* An error of some kind occurred. Don't bother feeding
-                         * in any further responses. We'll only keep going around
-                         * the loop to clean up the response array */
-                        failed = TRUE;
-                        debug(F101, "prompt rejected", "", i);
-                    }
-                }
-                memset(responses[i], 0, sizeof(responses[i]));
-                if (responses[i]) {
-                    free(responses[i]);
-                    responses[i] = NULL;
-                }
-            }
-            if (responses) {
-                free(responses);
-                responses = NULL;
-            }
-            if (tb) {
-                free(tb);
-                tb = NULL;
-            }
-        }
-        if (combined_instructions) {
-            free(combined_instructions);
-            combined_instructions = NULL;
-        }
-        if (failed) {
-            /* Now that all the resources have been cleaned up we can finally
-             * act on that failure */
-            return SSH_AUTH_ERROR;
-        }
-
-        /* See if we need to go round again and ask *more* questions */
-        rc = ssh_userauth_kbdint(session, NULL, NULL);
-        if (rc == SSH_AUTH_INFO) debug(F101, "ssh_userauth_kbdint says SSH_AUTH_INFO", "", rc);
+        return client_error;
     }
 
-    debug(F111, "ssh kbdint finished with", "rc", rc);
+    /* Thread is alive though its possible it may have signalled an error and
+     * is waiting to be told to disconnect. */
+    if (acquire_mutex(ssh_client->mutex, INFINITE)) {
+        error = ssh_client->error;
+        ReleaseMutex(ssh_client->mutex);
+    }
 
-    return rc;
+    return error;
 }
 
 
-/** Attempt to authenticate the user using one of the methods supported by
- * the server.
- *
- * @returns SSH_AUTH_SUCCESS on success, SSH_AUTH_DENIED on denied,
- *          SSH_AUTH_ERROR on a serious error.
- */
-int authenticate() {
-    int methods, rc;
-
-    /* If the user cancels anytime during the authentication process this will
-     * be set and we'll know not to attempt any further authentication methods
-     */
-    auth_canceled = FALSE;
-
-    rc = ssh_userauth_none(session, NULL);
-    if (rc == SSH_AUTH_SUCCESS) {
-        /* Authenticated anonymously!? */
-        return SSH_ERR_NO_ERROR;
-    } else if (rc == SSH_AUTH_ERROR) {
-        /* A serious error of some kind happened. We can not proceed */
-        return SSH_ERR_AUTH_ERROR;
-    }
-
-    /* Get a list of available auth methods. We'll try them one after another
-     * until the server is satisfied */
-    methods = ssh_userauth_list(session, NULL);
-
-    if (methods & SSH_AUTH_METHOD_NONE && !auth_canceled) {
-        rc = ssh_userauth_none(session, NULL);
-        if (rc == SSH_AUTH_SUCCESS) return rc;
-    }
-    if (methods & SSH_AUTH_METHOD_PUBLICKEY && !auth_canceled) {
-        rc = ssh_userauth_publickey_auto(session, NULL, NULL);
-        if (rc == SSH_AUTH_SUCCESS) return rc;
-    }
-    /* TODO: Not working quite right at the moment.
-     *    After answering all prompts ssh_userauth_kbdint still gives
-     *    SSH_AUTH_INFO indicating more answers are required - even though there
-     *    are no more prompts to answer.
-     *
-     *    Probably need to test a simpler example just in case its something
-     *    like threading causing problems.
-     *
-    if (methods & SSH_AUTH_METHOD_INTERACTIVE && !auth_canceled) {
-        rc = kbd_interactive_authenticate();
-        if (rc == SSH_AUTH_SUCCESS) return rc;
-    } */
-    if (methods & SSH_AUTH_METHOD_PASSWORD && !auth_canceled) {
-        rc = password_authenticate();
-        if (rc == SSH_AUTH_SUCCESS) return rc;
-    }
-
-    /* TODO: ssh_userauth_gssapi() */
-
-    return rc;
-}
-
-
-/** Opens the TTY channel and nothing else.
- *
- * @return SSH_OK on success, else an error
- */
-int open_tty_channel() {
-    int rc = 0;
-
-    debug(F100, "Opening SSH tty channel", "", 0);
-
-    channel = ssh_channel_new(session);
-    if (channel == NULL) {
-        debug(F100, "Failed to create channel", "", 0);
-        return SSH_ERR_SSH_ERROR;
-    }
-
-    rc = ssh_channel_open_session(channel);
-    if (rc != SSH_OK) {
-        debug(F111, "Channel open failed", "rc", rc);
-        ssh_channel_free(channel);
-        channel = NULL;
-    }
-
-    return rc;
-}
-
-/** Closes the tty channel if its currently open.
- *
- */
-void close_tty_channel() {
-    if (channel) {
-        debug(F100, "Closing ssh tty channel", "", 0);
-        ssh_channel_close(channel);
-        ssh_channel_send_eof(channel);
-        ssh_channel_free(channel);
-        channel = NULL;
-    }
-}
-
-/** Run a command on the remote host then disconnect.
- *
- * @param command Command to run
- * @return SSH_OK on success, or an error
- */
-int ssh_rexec(const char* command) {
-    int rc;
-
-    debug(F110,"ssh running command", command, 0);
-
-    rc = open_tty_channel();
-    if (rc != SSH_OK) {
-        return rc;
-    }
-
-    rc = ssh_channel_request_exec(channel, command);
-    if (rc != SSH_OK) {
-        debug(F111, "SSH exec failed", "rc", rc);
-        close_tty_channel();
-        return rc;
-    }
-
-    debug(F100, "SSH exec succeeded", "", 0);
-
-    return rc;
-}
-
-int ssh_subsystem(const char* subsystem) {
-    int rc;
-
-    /* TODO: Not working? */
-
-    debug(F110,"ssh requesting subsystem", subsystem, 0);
-
-    rc = open_tty_channel();
-    if (rc != SSH_OK) {
-        return rc;
-    }
-
-    rc = ssh_channel_request_subsystem(channel, subsystem);
-    if (rc != SSH_OK) {
-        debug(F111, "SSH subsystem request failed", "rc", rc);
-        close_tty_channel();
-        return rc;
-    }
-
-    debug(F100, "SSH subsystem request succeeded", "", 0);
-
-    return rc;
-}
-
-
-/** Opens the tty channel for a shell. This also sets up a PTY.
- *
- * @return SSH_OK on success, or an error.
- */
-int open_shell() {
-    int rc;
-    char* termtype;
-
-    debug(F100, "SSH open shell", "", 0);
-
-    get_current_terminal_dimensions(&pty_height, &pty_width);
-    termtype = get_current_terminal_type();
-    debug(F111, "SSH pty request", "rows", pty_height);
-    debug(F111, "SSH pty request", "cols", pty_width);
-    debug(F111, "SSH pty request - termtype: ", termtype, 0);
-
-    rc = open_tty_channel();
-    if (rc != SSH_OK) {
-        debug(F111, "open tty channel failed", "rc", rc);
-        return rc;
-    }
-
-    rc = ssh_channel_request_pty_size(channel, termtype, pty_width, pty_height);
-    if (rc != SSH_OK) {
-        debug(F111, "PTY request failed", "rc", rc);
-        return rc;
-    }
-
-    rc = ssh_channel_request_shell(channel);
-    if (rc != SSH_OK) {
-        debug(F111, "Shell request failed", "rc", rc);
-        return rc;
-    }
-
-    return rc;
-}
-
-/** Opens an SSH connection. Connection parameters are passed through the
- * following global variables:
- *   int   ssh_vrb    Logging verbosity
- *   char* ssh_hst    Hostname
- *
+/** Opens an SSH connection. Connection parameters are passed through global
+ * variables
  *
  * @return An error code (0 = success)
  */
 int ssh_open() {
-    int verbosity = SSH_LOG_PROTOCOL;
-    int rc = 0;
-    char* banner = NULL;
-    static struct ssh_callbacks_struct cb = {
-            .auth_function = auth_prompt
-    };
-    ssh_callbacks_init(&cb);
+    ssh_parameters_t* parameters;
+    int pty_height, pty_width;
+    int rc;
 
     debug(F100, "ssh_open()", "", 0);
-    //debug_params("ssh_open");
 
     if (ssh_ver == 1) {
-        /* libssh doesn't support SSH-1 anymore so we don't either */
+        /* libssh doesn't support SSH-1 anymore, so we don't either */
+        debug(F100, "ssh_open() - unsupported SSH version", "ssh_ver", ssh_ver);
         printf("SSH-1 is not supported - please use SSH-2\n");
         return SSH_ERR_UNSUPPORTED_VERSION;
     }
 
-    ssh_set_log_callback(logging_callback);
-
     /* Need a hostname to connect to a host... */
     if (ssh_hst == NULL) {
+        debug(F100, "ssh_open() - error - hostname not specified", "", 0);
         debug(F100, "Error - host not specified (ssh_hst is null)", "", 0);
         return SSH_ERR_HOST_NOT_SPECIFIED;
     }
 
-    session = ssh_new();
-    if (session == NULL) {
-        debug(F100, "Failed to create SSH session", "", 0);
-        return SSH_ERR_NEW_SESSION_FAILED;
+    if (strlen(uidbuf) == 0) {
+        debug(F100, "ssh_open() - error - username not specified", "", 0);
+        debug(F100, "Error - username not specified (uidbuf is null)", "", 0);
+        return SSH_ERR_USER_NOT_SPECIFIED;
     }
 
-    /* Set options */
-    debug(F100, "Configure session...", "", 0);
-    verbosity = log_verbosity();
-    ssh_options_set(session, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
-    ssh_set_callbacks(session, &cb);
-    ssh_options_set(session, SSH_OPTIONS_HOST, ssh_hst);
-    ssh_options_set(session, SSH_OPTIONS_GSSAPI_DELEGATE_CREDENTIALS, &ssh_gsd);
-    ssh_options_set(session, SSH_OPTIONS_PROCESS_CONFIG, &ssh_cfg);
-    if (!ssh_cmp) {
-        ssh_options_set(session, SSH_OPTIONS_COMPRESSION_C_S, "no");
-        ssh_options_set(session, SSH_OPTIONS_COMPRESSION_S_C, "no");
-    }
-
-    if (ssh_prt)
-        ssh_options_set(session, SSH_ERR_BUFFER_ERROR, ssh_prt);
-    if (uidbuf[0])
-        ssh_options_set(session, SSH_OPTIONS_USER, uidbuf);
-    if (ssh2_unh)
-        ssh_options_set(session, SSH_OPTIONS_KNOWNHOSTS, ssh2_unh);
-    if (ssh2_gnh)
-        ssh_options_set(session, SSH_OPTIONS_GLOBAL_KNOWNHOSTS, ssh2_gnh);
-    // TODO: Set SSH_OPTIONS_SSH_DIR to where the known_hosts and keys live
-    // TODO: SSH_OPTIONS_STRICTHOSTKEYCHECK ?
-
-    // identity fiels (set ssh identity-file)
-    // stored in ssh_idf[32]
-    // add with SSH_OPTIONS_ADD_IDENTITY
-
-    if (ssh_cfg) {
-        /* Parse OpenSSH Config */
-        rc = ssh_options_parse_config(session,
-                                      NULL);  /* Use default filename */
-        if (rc < 0) {
-            return SSH_ERR_OPENSSH_CONFIG_ERR;
-        }
-    }
-
-    /* Connect! */
-    debug(F100, "SSH Connect...", "", 0);
-    rc = ssh_connect(session);
-    if (rc != SSH_OK) {
-        debug(F111,"Error connecting to host", ssh_get_error(session), rc);
-        ssh_free(session); // TODO: This probably makes the error message unavailable.
-                           //       check if K95 will call ssh_clos() after fetching
-                           //       the error message. If it does we don't need to
-                           //       clean up here.
-        return SSH_ERR_SSH_ERROR;
-    }
-
-    /* Check the hosts key is valid */
-    rc = verify_known_host();
-    if (rc != SSH_ERR_NO_ERROR) {
-        debug(F111, "Host verification failed", "rc", rc);
-        printf("Host verification failed.\n");
-        ssh_disconnect(session);
-        ssh_free(session);
-        session = NULL;
-        return rc;
-    }
-
-    /* This is apparently required for some reason in order for
-     * get_issue_banner to work */
-    rc = ssh_userauth_none(session, NULL);
-    if (rc == SSH_AUTH_ERROR)
-        return rc;
-
-    banner = ssh_get_issue_banner(session);
-    if (banner) {
-        printf(banner);
-        ssh_string_free_char(banner);
-        banner = NULL;
-    }
-
-    /* Authenticate! */
-    rc = authenticate();
-    if (rc != SSH_AUTH_SUCCESS ) {
-        debug(F111, "Authentication failed - disconnecting", "rc", rc);
-        printf("Authentication failed - disconnecting.\n");
-        ssh_disconnect(session);
-        ssh_free(session);
-        session = NULL;
-
-        if (rc == SSH_AUTH_ERROR) return SSH_ERR_AUTH_ERROR;
-        if (rc == SSH_AUTH_PARTIAL) return SSH_ERR_AUTH_ERROR;
-        if (rc == SSH_AUTH_DENIED) return SSH_ERR_ACCESS_DENIED;
-
-        return rc;
-    }
-
-    debug(F100, "Authenticated - starting session", "", 0);
-
-    /* TODO: Setup session (shell, port forwarding, etc) */
-    debug(F100, "Authentication succeeded - starting session", "", 0);
-    if (ssh_cmd && *ssh_cmd) {
-        if (ssh_cas) {
-            /* User has supplied the /SUBSYSTEM: qualifier */
-            rc = ssh_subsystem(ssh_cmd);
+    /* Check if the client thread is alive. If it is we'll need a successful
+     * disconnect before we can proceed. */
+    if (hSSHClientThread) {
+        debug(F100, "ssh_open() - client thread handle exists - checking state", "", 0);
+        if (WaitForSingleObject(hSSHClientThread, 0) != WAIT_OBJECT_0) {
+            /* Client is still connected - disconnect */
+            debug(F100, "ssh_open() - client thread is alive. Requesting disconnect.", "", 0);
+            rc = ssh_clos();
+            if (rc != SSH_ERR_NO_ERROR) {
+                /* Failed to close the existing connection. Can't start a new one.*/
+                return rc;
+            }
         } else {
-            /* User has supplied the /COMMAND: qualifier. */
-            rc = ssh_rexec(ssh_cmd);
+            /* Not running - close the handle */
+            CloseHandle(hSSHClientThread);
+            hSSHClientThread = NULL;
         }
-    } else {
-        /* Open a shell */
-        rc = open_shell();
     }
 
-    if (rc != SSH_OK) {
-        debug(F111, "Session start failed - disconnecting", "rc", rc);
-        ssh_disconnect(session);
-        ssh_free(session);
-        session = NULL;
-        return SSH_ERR_SSH_ERROR;
+    debug(F100, "ssh_open() - get terminal dimensions", "", 0);
+    get_current_terminal_dimensions(&pty_height, &pty_width);
+    debug(F111, "ssh_open() - get terminal dimensions", "height", pty_height);
+    debug(F111, "ssh_open() - get terminal dimensions", "width", pty_width);
+
+
+    /* The SSH Subsystem will take ownership of this and handle cleaning it up
+     * on disconnect */
+    debug(F100, "ssh_open() - construct parameters", "", 0);
+    parameters = ssh_parameters_new(
+            ssh_hst,  /* Hostname */
+            ssh_prt,  /* Port or Service Name */
+            ssh_vrb,  /* Log verbosity */
+            ssh_cmd,  /* Command or subsystem name */
+            ssh_cas,  /* Subsystem, not command */
+            ssh_cmp,  /* Use compression? */
+            ssh_cfg,  /* Read openssh configuration */
+            ssh_gsd,  /* GSSAPI Delegate Credentials */
+            ssh_shk,  /* Strict Host Key Checking */
+            ssh2_unh, /* User known hosts file */
+            ssh2_gnh, /* Global known hosts file*/
+            uidbuf,   /* Username */
+            pwflg ? pwbuf : NULL, /* Password (if supplied) */
+            get_current_terminal_type(),
+            pty_width,
+            pty_height
+            );
+    if (parameters == NULL) {
+        debug(F100, "ssh_open() - failed to construct parameters struct", "", 0);
+        return SSH_ERR_MALLOC_FAILED;
     }
 
-    printf("Connection open!");
-    debug(F100, "SSH connected.", "", 0);
-    return SSH_ERR_NO_ERROR;
+    /* This will be used to communicate with the SSH subsystem. It has
+     * ring buffers, mutexes, semaphores, et. *WE* own this and must free it
+     * on disconnect. */
+    ssh_client = ssh_client_new();
+    if (ssh_client == NULL) {
+        debug(F100, "ssh_open() - failed to construct client struct", "", 0);
+        ssh_parameters_free(parameters);
+        return SSH_ERR_MALLOC_FAILED;
+    }
+
+    debug(F100, "ssh_open() - start SSH subsystem", "", 0);
+    return start_ssh_subsystem(parameters, ssh_client, &hSSHClientThread);
 }
 
-/** Closes any existing SSH Session
+
+/** Closes any existing SSH Session.
  *
  * @return  0 on success, < 0 on failure.
  */
 int ssh_clos() {
+    BOOL success;
+    DWORD result;
     debug(F100, "ssh_clos()", "", 0);
-    if (session) {
-        close_tty_channel();
-        ssh_disconnect(session);
-        ssh_free(session);
-        session = NULL;
+
+    if (ssh_client == NULL)
+        return SSH_ERR_NO_ERROR; /* Nothing to close */
+
+    /* Signal the SSH thread we'd like it to disconnect and terminate please. */
+    debug(F100, "ssh_clos() - requesting disconnect", "", 0);
+    success = SetEvent(ssh_client->disconnectEvent);
+
+    /* The SSH subsystem should signal the clientStopped event on disconnect,
+     * but we'll check if the thread is still alive instead as that's more
+     * important. The clientStopped event is really more so we can detect if
+     * the thread failed to start in the first place (started, hit an error,
+     * and stopped).
+     */
+
+    if (success) {
+        /* Wait up to 30 seconds for the thread to terminate which really is
+         * extremely generous. If it takes longer than a second something has
+         * probably gone seriously wrong. */
+        debug(F100, "ssh_clos() - waiting for thread terminate...", "", 0);
+        result = WaitForSingleObject(hSSHClientThread, 30000);
+        if (result == WAIT_TIMEOUT) {
+            /* SSH Client thread didn't terminate in a reasonable time. */
+            debug(F100, "Warning: SSH thread did not terminate on disconnect "
+                        "request within the allocated time. SSH thread is "
+                        "still live!", "", 0);
+            return SSH_ERR_ZOMBIE_THREAD;
+        } else if (result == WAIT_FAILED) {
+            debug(F110, "Warning: failed to wait for SSH thread terminate.",
+                        "error", GetLastError(), 0);
+            return SSH_ERR_UNSPECIFIED;
+        } else {
+            debug(F100, "ssh_clos() - thread terminated. Cleaning up...", "", 0);
+            /* SSH Client thread has stopped. It should have already cleaned up
+             * all the things it was responsible for, now it's our turn. */
+            CloseHandle(hSSHClientThread);
+            hSSHClientThread = NULL;
+            ssh_client_free(ssh_client);
+            ssh_client = NULL;
+            return SSH_ERR_NO_ERROR;
+        }
+    } else {
+        debug(F100, "Warning: Failed to signal SSH thread to disconnect", "", 0);
+        return SSH_ERR_DISCONNECT_FAILED;
     }
-    return SSH_ERR_NO_ERROR;
 }
+
 
 /** Network I/O Check. This function is polled by K95 to get the status
  * of the connection and find out how many bytes are waiting to be
@@ -1280,49 +583,44 @@ int ssh_clos() {
 int ssh_tchk() {
     int rc = 0;
 
-    if (ssh_channel_is_closed(channel)) {
-        /* Channel is closed */
-        debug(F100, "ssh_tchk() - channel is closed", "", 0);
-        return SSH_ERR_CHANNEL_CLOSED;
+    if (ssh_client == NULL)
+        return SSH_ERR_NO_INSTANCE;
+
+    /* If the client is connected then the number of bytes waiting to be read
+     * is whatever is in the threads output buffer */
+
+    if (ring_buffer_lock(ssh_client->outputBuffer, 0)) {
+        rc = ring_buffer_length(ssh_client->outputBuffer);
+        ring_buffer_unlock(ssh_client->outputBuffer);
     }
 
-    rc = ssh_channel_poll(channel, 0);
-    if (rc == SSH_EOF) {
-        debug(F111, "ssh_tchk() - channel is EOF", "rc", rc);
-        return SSH_ERR_EOF;
-    } else if (rc == SSH_ERROR) {
-        debug(F111,"ssh_tchk() - channel poll error", ssh_get_error(session), rc);
-        return SSH_ERR_SSH_ERROR;
+    if (rc == 0) {
+        /* No data. Check the thread is alive, client is connected, and there
+         * isn't any error status. Zero is all ok which is also the number of
+         * bytes we got back, so we're fine to just return this. */
+        rc = get_ssh_error();
     }
 
     return rc;
 }
+
 
 /** Flush input
  *
  * @return 0 on success, < 0 on error
  */
 int ssh_flui() {
-    int rc = 0;
-    debug(F100, "ssh_flui()", "", 0);
-    //debug_params("ssh_flui");
-    /* TODO: Call ssh_channel_flush(session) ? */
+    if (ssh_client == NULL)
+        return SSH_ERR_NO_INSTANCE;
 
-    if (ssh_channel_is_closed(channel)) {
-        debug(F100, "ssh_flui() - channel is closed", "", 0);
-        return SSH_ERR_CHANNEL_CLOSED;
+    if (!SetEvent(ssh_client->flushEvent)) {
+        debug(F100, "ssh_flui() - failed to signal flush event!", "", 0);
+        return SSH_ERR_EVENT_SIGNAL_FAILED;
     }
-
-    /* TODO: Is this correct ?
-     *   NO, it is not - ssh_channel_flush does not exist (its internal/private)
-     * */
-    /*rc = ssh_channel_flush(session);
-    if (rc != SSH_OK) {
-        return SSH_ERR_SSH_ERROR;
-    }*/
 
     return SSH_ERR_NO_ERROR;
 }
+
 
 /** Network Break - send a break signal to the remote process.
  * This may or may not do anything. Supported on SSH V2 only.
@@ -1330,81 +628,67 @@ int ssh_flui() {
  * @return
  */
 int ssh_break() {
-    debug(F100, "ssh_break()", "", 0);
-    if (ssh_channel_is_closed(channel)) {
-        debug(F100, "ssh_break() - channel is closed", "", 0);
-        return SSH_ERR_CHANNEL_CLOSED;
+    if (ssh_client == NULL)
+        return SSH_ERR_NO_INSTANCE;
+
+    if (!SetEvent(ssh_client->breakEvent)) {
+        debug(F100, "ssh_break() - failed to signal break event!", "", 0);
+        return SSH_ERR_EVENT_SIGNAL_FAILED;
     }
 
-    /* TODO: Is this correct? The old implementation didn't seem to
-     *       do breaks */
-    ssh_channel_request_send_break(
-            channel,
-            5);  /* TODO" Break length in milliseconds */
-
-    return SSH_ERR_UNSPECIFIED; /* TODO */
+    return SSH_ERR_NO_ERROR;
 }
 
 
 /** Input Character. Reads one character from the input queue
  *
- * @param timeout 0 for none, positive for seconds, negative for milliseconds
+ * @param timeout 0 for none (block until there is a character to read),
+ *                positive for seconds, negative for milliseconds
  * @return -1 for timeout, >= 0 is a valid character, < -1 is a fatal error
  */
 int ssh_inc(int timeout) {
     int timeout_ms;
-    char buffer;
     int rc;
+    char buffer;
+
+    if (ssh_client == NULL)
+        return SSH_ERR_NO_INSTANCE;
 
     if (timeout == 0) {
-        timeout_ms = -1; /* Infinite timeout */
+        timeout_ms = INFINITE; /* Infinite timeout */
     } else if (timeout < 0) {
         timeout_ms = timeout * -1; /* timeout is in milliseconds already */
     } else {
         timeout_ms = timeout * 1000; /* timeout is in seconds - convert */
     }
 
-    if (ssh_channel_is_closed(channel)) {
-        debug(F100, "ssh_inc() - channel is closed", "", 0);
-        return SSH_ERR_CHANNEL_CLOSED;
-    } else if (ssh_channel_is_eof(channel)) {
-        debug(F100, "ssh_inc() - channel is EOF", "", 0);
-        return SSH_ERR_EOF;
-    }
+    /* If an infinite timeout was requested then repeat the call until we get
+     * a value other than try again */
+    do {
+        rc = ring_buffer_get_blocking(ssh_client->outputBuffer, &buffer, timeout_ms);
+    } while (timeout == 0 && rc == RING_BUFFER_TRY_AGAIN);
 
-    rc = ssh_channel_read_timeout(
-            channel,        /* Channel to read from */
-            &buffer,        /* Buffer to read into */
-            1,              /* bytes to read */
-            0,              /* read from stderr rather than stdout */
-            timeout_ms);    /* Timeout in milliseconds */
-
-    if (rc == 1) {
-        /* One byte read - good */
+    if (rc == RING_BUFFER_SUCCESS) {
+        if (!SetEvent(ssh_client->dataConsumedEvent)) {
+            debug(F100, "ssh_inc - failed to signal data consumed event!",
+                  "", 0);
+        }
         return buffer;
-    } else if (rc > 1) {
-        /* Oops! We read multiple bytes into a buffer one byte long. */
-        debug(F111, "ssh_inc() ERROR: buffer overflow - expecting 1 char, got ", "count", rc);
-        return SSH_ERR_BUFFER_ERROR;
-    } else if (rc == 0) {
-        /* No bytes read - assumed timeout */
-        debug(F100, "ssh_inc() timeout ", "", 0);
+    } else if (rc == RING_BUFFER_TIMEOUT || rc == RING_BUFFER_LOCK_ERROR) {
+        /* Treat a lock error as a timeout rather than returning it has a
+         * character (as it has a positive value) or as an error (which
+         * may conflict with values set via ring_buffer_signal_error) */
         return -1;
-    } else if (rc == SSH_ERROR) {
-        /* Error of some kind */
-        debug(F111,"ssh_inc() - channel read error", ssh_get_error(session), rc);
-        return SSH_ERR_SSH_ERROR;
     }
 
-    debug(F111, "ssh_inc() unexpected result", "rc", rc);
-
-    /* Unexpected error of some kind */
-    return SSH_ERR_UNSPECIFIED;
+    /* Else some error occurred */
+    return rc;
 }
+
 
 /** Extended Input - reads multiple characters from the network. This
  * will never be called requesting more characters than previously
- * reported as available by ssh_tchk(). We are'nt required to return
+ * reported as available by ssh_tchk(). We aren't required to return
  * the number of characters requested but we must not return more (this
  * is the size of the buffer allocated)
  *
@@ -1414,40 +698,29 @@ int ssh_inc(int timeout) {
  */
 int ssh_xin(int count, char * buffer) {
     int rc = 0;
-    if (ssh_channel_is_closed(channel)) {
-        debug(F100, "ssh_xin() - channel is closed", "", 0);
-        return SSH_ERR_CHANNEL_CLOSED;
+
+    if (ssh_client == NULL)
+        return SSH_ERR_NO_INSTANCE;
+
+    if(ring_buffer_lock(ssh_client->outputBuffer, 0)) {
+        BOOL full = ring_buffer_is_full(ssh_client->outputBuffer);
+        rc = ring_buffer_read(ssh_client->outputBuffer, buffer, count);
+        ring_buffer_unlock(ssh_client->outputBuffer);
+
+        if (full) {
+            /* Let the SSH thread know there is free space in the output buffer
+             * again in case it has data waiting to be read from the network */
+            if (!SetEvent(ssh_client->dataConsumedEvent)) {
+                debug(F100, "ssh_xin - failed to signal data consumed event!",
+                      "", 0);
+            }
+        }
     }
-    if (ssh_channel_is_eof(channel)) {
-        debug(F100, "ssh_xin() - channel is EOF", "", 0);
-        return SSH_ERR_EOF;
-    }
-
-    debug(F111, "ssh_xin() read", "count", count);
-
-    /* This function does not block - it may return less than the number
-     * of characters requested */
-    rc = ssh_channel_read_nonblocking(
-            channel,    /* Channel to read from */
-            buffer,     /* Buffer to read into */
-            count,      /* Number of bytes to be read */
-            0           /* Read from stderr instead of stdout */
-            );
-
-    if (rc == 0) {
-        debug(F100, "ssh_xin() - nothing available", "", 0);
-        return 0;
-    } else if (rc < 0) {
-        debug(F111,"ssh_xin() - read error ", ssh_get_error(session), rc);
-        return SSH_ERR_SSH_ERROR;
-    }
-
-    debug(F111, "ssh_xin() read", "chars", rc);
-
-    return rc; /* Number of characters read */
+    return rc;
 }
 
-/** Terminal Output Character - send a single character.
+/** Terminal Output Character - send a single character. Blocks until the
+ * character has been handled.
  *
  * @param c character to send
  * @return 0 for success, <0 for error
@@ -1455,15 +728,33 @@ int ssh_xin(int count, char * buffer) {
 int ssh_toc(int c) {
     int rc;
 
-    rc = ssh_channel_write(channel,
-                           &c,
-                           1);
-    if (rc == 1) return 0; /* Success */
+    if (ssh_client == NULL)
+        return SSH_ERR_NO_INSTANCE;
 
-    debug(F111,"ssh_toc() - channel write error", ssh_get_error(session), rc);
+    /* Repeat the call until we get a value other than try again */
+    do {
+        rc = ring_buffer_put_blocking(ssh_client->inputBuffer, c, INFINITE);
+    } while (rc == RING_BUFFER_TRY_AGAIN);
 
-    return SSH_ERR_SSH_ERROR; /* Failure */
+    if (rc == RING_BUFFER_SUCCESS) {
+        /* Let the SSH client know there is data to transmit */
+        if (!SetEvent(ssh_client->dataArrivedEvent)) {
+            debug(F100, "ssh_toc - failed to signal data arrived event!", "", 0);
+        }
+
+        return SSH_ERR_NO_ERROR;
+    } else if (rc == RING_BUFFER_TIMEOUT) {
+        /* This should never happen */
+        debug(F100, "ssh_toc() unexpected timeout on infinite timeout put",
+              "", 0);
+        return rc;
+    }
+
+    /* Else an error occurred */
+    debug(F111, "ssh_toc() call to blocking ringbuf put failed", "error", rc);
+    return rc;
 }
+
 
 /** Terminal Output Line - send multiple characters.
  *
@@ -1472,19 +763,23 @@ int ssh_toc(int c) {
  * @return  >= 0 for number of characters sent, <0 for a fatal error.
  */
 int ssh_tol(char * buffer, int count) {
-    int rc;
+    int rc = 0;
 
-    debug(F111,"ssh_tol() - write ", "count", count);
+    if (ssh_client == NULL)
+        return SSH_ERR_NO_INSTANCE;
 
-    rc = ssh_channel_write(channel,
-                           buffer,
-                           count);
-    if (rc == count) return rc; /* Success */
+    if (ring_buffer_lock(ssh_client->inputBuffer, 0)) {
+        rc = ring_buffer_write(ssh_client->inputBuffer, buffer, count);
+        ring_buffer_unlock(ssh_client->inputBuffer);
+        if (!SetEvent(ssh_client->dataArrivedEvent)) {
+            debug(F100, "ssh_tol - failed to signal data arrived event!", "", 0);
+        }
+    } /* Else couldn't get a lock immediately. Report zero bytes written - the
+       * caller can try again */
 
-    debug(F111,"ssh_tol() - channel write error", ssh_get_error(session), rc);
-
-    return SSH_ERR_SSH_ERROR; /* Failure */
+    return rc;
 }
+
 
 /** Terminal information - called whenever the terminal type or dimensions
  * change.
@@ -1494,32 +789,27 @@ int ssh_tol(char * buffer, int count) {
  * @param width  width (columns)
  */
 void ssh_terminfo(char * termtype, int height, int width) {
-    int rc;
 
-    debug(F100, "ssh_terminfo() - termtype", termtype, 0);
-    debug(F100, "ssh_terminfo()", "height", height);
-    debug(F100, "ssh_terminfo()", "width", width);
+    if (ssh_client == NULL)
+        return SSH_ERR_NO_INSTANCE;
 
-    if (!session) return;
-    if (channel_is_closed(channel)) return;
-    if (channel_is_eof(channel)) return;
-
-    if (height != pty_height || width != pty_width) {
-        pty_height = height;
-        pty_width = width;
-
-        rc = ssh_channel_change_pty_size(channel, width, height);
-        if (rc != SSH_OK) {
-            debug(F111,"ssh_terminfo() - failed to change pty size", ssh_get_error(session), rc);
+    if (acquire_mutex(ssh_client->mutex, INFINITE)) {
+        ssh_client->pty_height = height;
+        ssh_client->pty_width = width;
+        ReleaseMutex(ssh_client->mutex);
+        if (!SetEvent(ssh_client->ptySizeChangedEvent)) {
+            debug(F100, "ssh_terminfo - failed to signal pty size changed "
+                        "event!", "", 0);
         }
     }
 
     /* Can we set the terminal type after the PTY has already been created?
      * libssh doesn't seem to provide an API to do it. A quick test with
-     * Kermit 95 v2.1.2 suggests it doesn't do this so I don't think we'd be
-     * required to either. But it would be nice if its possible.
+     * Kermit 95 v2.1.2 suggests it doesn't do this, so I don't think we'd be
+     * required to either. But it would be nice if it's possible.
      **/
 }
+
 
 /** Turn an error number into a string
  *
@@ -1533,8 +823,8 @@ const char * ssh_errorstr(int error) {
         case SSH_ERR_HOST_NOT_SPECIFIED:
             return "Remote host not specified";
         case SSH_ERR_SSH_ERROR:
-            if (session) {
-                return ssh_get_error(session);
+            if (ssh_client && ssh_client->error_message) {
+                return ssh_client->error_message;
             }
             return "SSH Error (no session available)";
         case SSH_ERR_HOST_VERIFICATION_FAILED:
@@ -1545,24 +835,42 @@ const char * ssh_errorstr(int error) {
             return "End Of File received";
         case SSH_ERR_CHANNEL_CLOSED:
             return "Channel closed";
-        case SSH_ERR_BUFFER_ERROR:
-            return "Potential buffer overflow (should never occur)";
+        case SSH_ERR_WAIT_FAILED:
+            return "SSH Thread wait failed";
         case SSH_ERR_USER_CANCELED:
             return "User canceled";
-        case SSH_ERR_SESSION_CLOSED:
-            return "No SSH session";
         case SSH_ERR_UNSUPPORTED_VERSION:
             return "Unsupported SSH Version";
-        case SSH_ERR_OPENSSH_CONFIG_ERR:
-            return "Error parsing OpenSSH Configuration File";
         case SSH_ERR_NOT_IMPLEMENTED:
             return "Feature not implemented";
         case SSH_ERR_ACCESS_DENIED:
             return "Access denied";
+        case SSH_ERR_USER_NOT_SPECIFIED:
+            return "Username not specified";
+        case SSH_ERR_STATE_MALLOC_FAILED:
+            return "SSH state malloc failed";
+        case SSH_ERR_NO_INSTANCE:
+            return "No SSH client instance";
+        case SSH_ERR_MALLOC_FAILED:
+            return "SSH Malloc failed";
+        case SSH_ERR_ZOMBIE_THREAD:
+            return "SSH thread survived disconnect attempt.";
+        case SSH_ERR_DISCONNECT_FAILED:
+            return "Failed to signal SSH thread to disconnect";
+        case SSH_ERR_EVENT_SIGNAL_FAILED:
+            return "Failed to signal event to SSH thread";
+        case SSH_ERR_BUFFER_CONSUME_FAILED:
+            return "Buffer consume failed";
+        case SSH_ERR_BUFFER_WRITE_FAILED:
+            return "Buffer write failed";
+        case SSH_ERR_THREAD_STATE_UNKNOWN:
+            return "SSH thread did not complete startup in expected time; "
+                   "state is unknown";
         default:
             return "Unknown error";
     }
 }
+
 
 /** Switching from terminal to VT mode. The CONNECT or DIAL commands might
  * be about to send printable text or escape sequences.
@@ -1570,14 +878,13 @@ const char * ssh_errorstr(int error) {
  * @return 0 on success, < 0 on error.
  */
 int ssh_ttvt() {
-    /* We don't really care about this for SSH. Just return 0 if we're
-     * connected or an error otherwise. */
-    if (!session) return SSH_ERR_SESSION_CLOSED;
-    if (channel_is_closed(channel)) return SSH_ERR_CHANNEL_CLOSED;
-    if (channel_is_eof(channel)) return SSH_ERR_EOF;
-
+    /* Just report success here. Returning any kind of error just results
+     * in a weird message to the user like
+     * "Sorry, Can't condition communication line" which is pretty meaningless
+     * for an SSH connection */
     return 0;
 }
+
 
 /** About to switch from terminal to packet mode. A file transfer operation is
  * about to start.
@@ -1585,28 +892,20 @@ int ssh_ttvt() {
  * @return 0 on success, < 0 otherwise.
  */
 int ssh_ttpkt() {
-    /* We don't really care about this for SSH. Just return 0 if we're
-     * connected or an error otherwise. */
-    if (!session) return SSH_ERR_SESSION_CLOSED;
-    if (channel_is_closed(channel)) return SSH_ERR_CHANNEL_CLOSED;
-    if (channel_is_eof(channel)) return SSH_ERR_EOF;
-
-    return 0;
+    /* Nothing much to do here. Just return an error if we have one. */
+    return get_ssh_error();
 }
+
 
 /** Terminal restore mode. Restore to default settings.
  *
  * @return 0 on success, < 0 on failure.
  */
 int ssh_ttres() {
-    /* We don't really care about this for SSH. Just return 0 if we're
-     * connected or an error otherwise. */
-    if (!session) return SSH_ERR_SESSION_CLOSED;
-    if (channel_is_closed(channel)) return SSH_ERR_CHANNEL_CLOSED;
-    if (channel_is_eof(channel)) return SSH_ERR_EOF;
-
-    return 0;
+    /* Nothing much to do here. Just return an error if we have one. */
+    return get_ssh_error();
 }
+
 
 /** Negotiate About Window Size. Let the remote host know the window dimensions
  * and terminal type if these have changed.
@@ -1616,11 +915,15 @@ int ssh_snaws() {
     int rows, cols;
     debug(F100, "ssh_snaws()", "", 0);
 
+    if (ssh_client == NULL)
+        return 0;
+
     get_current_terminal_dimensions(&rows, &cols);
     ssh_terminfo(get_current_terminal_type(), rows, cols);
 
     return 0;
 }
+
 
 int ssh_fwd_remote_port(int port, char * host, int host_port)
 {
