@@ -5419,8 +5419,6 @@ zfseek(CK_OFF_T pos)
 {
 #ifdef NT
     int rc;
-	/* ** TODO: Restore use of fsetpos (pos is an __int64, fpos_t is a struct.
-	 * This sort of assignment is not allowed) */
 
     /* Previously K95 just assumed fpos_t is an integer type of some kind and
      * that it could just do this then pass the result into fsetpos:
