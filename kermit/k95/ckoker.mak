@@ -148,6 +148,7 @@ COMMON_CFLAGS = $(COMMON_CFLAGS) /EHs-c-
 # These are:    /EHs-c-     Enable C++ Exception handling (replaces /GX-)
 !endif
 
+RCDEFINES=/dCOMPILER_$(CMP)
 
 #---------- Compiler targets:
 #
@@ -1140,7 +1141,7 @@ ckoker.res: ckoker.rc
         rc -r ckoker.rc 
 
 cknker.res: cknker.rc cknker.ico
-        rc /fo cknker.res cknker.rc
+        rc $(RCDEFINES) /fo cknker.res cknker.rc
 
 ckopcf.res: ckopcf.rc ckopcf.h
         rc -r ckopcf.rc
