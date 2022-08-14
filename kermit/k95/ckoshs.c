@@ -213,8 +213,8 @@ static ssh_client_state_t* ssh_client_state_new(ssh_parameters_t* parameters) {
 
     state = malloc(sizeof(ssh_client_state_t));
     state->parameters = parameters;
-    state->pty_width = 80;
-    state->pty_height = 25;
+    state->pty_width = parameters->pty_width;
+    state->pty_height = parameters->pty_height;
     state->session = NULL;
     state->ttyChannel = NULL;
 
@@ -1327,15 +1327,11 @@ void ssh_thread(ssh_thread_params_t *parameters) {
 
     client = parameters->ssh_client;
 
-    state = malloc(sizeof(ssh_client_state_t));
+    state = ssh_client_state_new(parameters->parameters);
     if (state == NULL) {
         ssh_client_close(NULL, client, SSH_ERR_STATE_MALLOC_FAILED);
         return;
     }
-
-    state->parameters = parameters->parameters;
-    state->pty_height = state->parameters->pty_height;
-    state->pty_width = state->parameters->pty_width;
 
     free(parameters); /* Don't need it anymore */
 
