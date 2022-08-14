@@ -866,13 +866,13 @@ static int authenticate(ssh_client_state_t * state, BOOL *canceled) {
     if (methods & SSH_AUTH_METHOD_INTERACTIVE && !*canceled) {
         rc = kbd_interactive_authenticate(state, canceled);
         if (rc == SSH_AUTH_SUCCESS) return rc;
-    } */
+    }*/
     if (methods & SSH_AUTH_METHOD_PASSWORD && !*canceled) {
         rc = password_authenticate(state, canceled);
         if (rc == SSH_AUTH_SUCCESS) return rc;
     }
 
-    if (canceled) {
+    if (*canceled) {
         return SSH_ERR_USER_CANCELED;
     }
 
