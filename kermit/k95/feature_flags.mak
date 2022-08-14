@@ -72,14 +72,27 @@ CKF_NTLM=no
 !endif
 
 !if ($(MSC_VER) < 100)
-# The Platform SDK shipped with Visual C++ 2.0 and earlier doesn't include
-# tapi.h, the rich edit control, or the toolbar control.
+# The Platform SDK shipped with Visual C++ 2.0 lacks quite a lot of stuff
+# compared to Visual C++ 4.0 so there is a special target for this level of
+# windows.
+CKT_NT350=yes
+!endif
+
+!if ($(MSC_VER) < 90)
+# Visual C++ 1.0 (32-bit edition) and the Win32 SDK only support the APIs
+# provided in Windows NT 3.1
+CKT_NT31=yes
+!endif
+
+!endif
+
+
+!if "$(CKT_NT350)" == "yes"
+# These features are not available on Windows NT 3.50
 CKF_TAPI=no
 CKF_RICHEDIT=no
 CKF_TOOLBAR=no
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DVINTAGEVC
-!endif
-
 !endif
 
 
