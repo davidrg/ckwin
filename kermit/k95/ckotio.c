@@ -852,7 +852,7 @@ getcpu( void )
    char numstr[32] ;
    memset( &si, 0, sizeof(si) ) ;
    GetSystemInfo( &si ) ;
-#if _MSC_VER > 900
+#ifndef CKT_NT31
    if ( isWin95() && !si.wProcessorLevel )
    {
       switch ( si.dwProcessorType ) {
@@ -983,7 +983,7 @@ getcpu( void )
         ckstrncpy( buffer, "alpha-21064", 64 ) ;
         break;
     }
-#endif
+#endif /* CKT_NT31 */
 #else /* NT */
    ckstrncpy( buffer, CKCPU, 64 ) ;
 #endif
@@ -1155,7 +1155,7 @@ Win95DisplayLocale( void )
     HKL     KBLayout=0;
     CHAR    lpLayoutName[KL_NAMELENGTH]="";
 
-#if _MSC_VER > 900
+#ifndef CKT_NT31
     /* Visual C++ 2.0 and earlier don't know about GetKeyboardLayout() */
     KBLayout = GetKeyboardLayout(0);
     GetKeyboardLayoutName(lpLayoutName);
@@ -1559,7 +1559,7 @@ sysinit() {
     debug(F101,"hInstance","",hInstance);
     hwndConsole = GetConsoleHwnd() ;
 
-#if _MSC_VER > 900
+#ifndef CKT_NT31
     /* MENUITEMINFO and related bits are new to Windows 95 and not known to
      * Visual C++ 2.0 and older. */
     if ( isWin95() )

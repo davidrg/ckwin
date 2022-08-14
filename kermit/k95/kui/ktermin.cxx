@@ -430,7 +430,7 @@ void KTerminal::browseFile( eFileType filetype )
 
     OpenFileName.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST 
         | OFN_HIDEREADONLY
-#if _MSC_VER > 900
+#ifndef CKT_NT31
         | OFN_EXPLORER
 #endif
         ;
@@ -511,7 +511,7 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         done = TRUE;
         break;
 
-#if _MSC_VER > 900
+#ifndef CKT_NT31
     case WM_SIZING:
     case WM_EXITSIZEMOVE:
 #endif

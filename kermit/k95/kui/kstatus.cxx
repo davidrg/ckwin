@@ -76,7 +76,7 @@ void KStatus::getCreateInfo( K_CREATEINFO* info )
     info->classname = STATUSCLASSNAME;
     info->objId = ::GetGlobalID();
     info->style = WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | SBT_NOBORDERS
-#if _MSC_VER > 900
+#ifndef CKT_NT31
             | SBS_SIZEGRIP
 #endif
             ; // | WS_BORDER | CCS_BOTTOM;

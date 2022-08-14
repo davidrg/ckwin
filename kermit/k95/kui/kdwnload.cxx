@@ -110,7 +110,7 @@ void KDownLoad::show( Bool bVisible )
 
     OpenFileName.Flags = OFN_CREATEPROMPT | OFN_PATHMUSTEXIST 
         | OFN_HIDEREADONLY | OFN_ENABLEHOOK
-#if _MSC_VER > 900
+#ifndef CKT_NT31
         | OFN_EXPLORER
 #endif
         | OFN_NOCHANGEDIR | OFN_NOTESTFILECREATE | OFN_OVERWRITEPROMPT 

@@ -35,6 +35,8 @@
 #   mkg.bat
 #------------------------------------------------------------------------------
 
+!message Processing feature flags...
+
 # Network Connections are always supported. We only put it here because
 # the Watcom nmake clone can't handle empty macros so we need *something* here.
 ENABLED_FEATURES = Network-Connections
@@ -43,7 +45,7 @@ ENABLED_FEATURE_DEFS = -DNETCONN
 DISABLED_FEATURES = SuperLAT DECnet Kerberos SRP Telnet-Encryption CryptDLL
 DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNO_SRP -DNO_ENCRYPTION
 
-
+RC_FEATURE_DEFS = /dCOMPILER_$(CMP)
 
 !if "$(PLATFORM)" != "NT"
 # No built-in SSH support for OS/2 (yet)
@@ -55,7 +57,6 @@ CKF_SSH=no
 CKF_SSH=no
 !endif
 
-!if "$(PLATFORM)" == "NT"
 !if ($(MSC_VER) >= 192)
 # ConPTY on Windows 10+ requires a Platform SDK from late 2018 or newer.
 # So we'll only turn this on automatically when building with Visual C++ 2019 or
@@ -75,6 +76,8 @@ CKF_NTLM=no
 # The Platform SDK shipped with Visual C++ 2.0 lacks quite a lot of stuff
 # compared to Visual C++ 4.0 so there is a special target for this level of
 # windows.
+!message Visual C++ 2.0: setting target to Windows NT 3.50 API level.
+CKT_NT31=yes
 CKT_NT350=yes
 !endif
 
@@ -84,15 +87,27 @@ CKT_NT350=yes
 CKT_NT31=yes
 !endif
 
-!endif
-
+# For all versions of windows *EXCEPT* Windows NT 3.1 and 3.50, the target
+# minimum version is defined as whatever the compiler happens to support.
+# For Windows NT 3.1 and 3.50 the API differences are enough missing APIs
+# to require a special macro to exclude references to them. This allows
+# NT 3.50 and 3.1 to be targeted with both Visual C++ and OpenWatcom.
 
 !if "$(CKT_NT350)" == "yes"
+# These features are available on NT 3.50 but not on NT 3.1
+# -> These may appear if/when work to port to NT 3.1 is done.
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT350
+!endif
+
+!if "$(CKT_NT31)" == "yes"
 # These features are not available on Windows NT 3.50
 CKF_TAPI=no
 CKF_RICHEDIT=no
 CKF_TOOLBAR=no
-ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DVINTAGEVC
+CKF_LOGIN=no
+CKF_NTLM=no
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT31
+RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) /dCKT_NT31
 !endif
 
 

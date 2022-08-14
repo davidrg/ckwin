@@ -11774,6 +11774,9 @@ initoptlist() {
 #ifdef CK_RTSCTS
     makestr(&(optlist[noptlist++]),"CK_RTSCTS");
 #endif /* CK_RTSCTS */
+#ifdef CKT_NT31
+    makestr(&(optlist[noptlist++]),"CKT_NT31");
+#endif /* CKT_NT31 */
 #ifdef POSIX_CRTSCTS
     makestr(&(optlist[noptlist++]),"POSIX_CRTSCTS");
 #endif /* POSIX_CRTSCTS */

@@ -31,11 +31,11 @@ char *cknwin = "Win32 GUI Support 8.0.029, 10 March 2004";
 
 /* Visual C++ 6 fixes */
 #ifndef DS_SHELLFONT
-#if _MSC_VER > 900
+#ifndef CKT_NT31
 #define DS_SHELLFONT        (DS_SETFONT | DS_FIXEDSYS)
 #else
 #define DS_SHELLFONT        DS_SETFONT
-#endif
+#endif /* CKT_NT31 */
 #endif
 #ifndef DWORD_PTR
 typedef unsigned long DWORD_PTR, *PDWORD_PTR;
@@ -338,7 +338,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
 }
 #endif
 
-#if _MSC_VER > 900
+#ifndef CKT_NT31
 BOOL InitApplication(hinstance)
 HINSTANCE hinstance;
 {
@@ -408,7 +408,7 @@ BOOL InitApplication(hinstance)
 
     return RegisterClass(&wc);
 }
-#endif
+#endif /* CKT_NT31 */
 
 BOOL
 InitInstance(hinstance, nCmdShow)
@@ -648,7 +648,7 @@ StartDialer(void)
             DialerSend(OPT_KERMIT_HWND2, (unsigned long)hwndGUI);
             DialerSend(OPT_KERMIT_PID,  GetCurrentProcessId());
         }
-#if _MSC_VER > 900
+#ifndef CKT_NT31
         ShowWindowAsync(hwndDialer,SW_SHOWNORMAL);
 #else
         ShowWindow(hwndDialer,SW_SHOWNORMAL);
@@ -663,7 +663,7 @@ StartDialer(void)
             DialerSend(OPT_KERMIT_HWND2, (unsigned long)hwndGUI);
             DialerSend(OPT_KERMIT_PID,  GetCurrentProcessId());
         }
-#if _MSC_VER > 900
+#ifndef CKT_NT31
         ShowWindowAsync(hwndDialer,SW_SHOWNORMAL);
 #else
         ShowWindow(hwndDialer,SW_SHOWNORMAL);
@@ -820,7 +820,7 @@ SingleInputDialog( HINSTANCE hinst, HWND hwndOwner,
                    | DS_MODALFRAME | WS_CAPTION
                    | DS_SETFOREGROUND
                    | DS_SHELLFONT
-#if _MSC_VER > 900
+#ifndef CKT_NT31
                    | DS_3DLOOK | DS_CENTER | DS_NOFAILCREATE
 #endif
                    ;
@@ -1055,7 +1055,7 @@ MultiInputDialogProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
             }
             /* fallthrough */
         case IDCANCEL:
-#if _MSC_VER > 900
+#ifndef CKT_NT31
             ShowWindowAsync(hwndConsole,SW_SHOWNORMAL);
 #else
             ShowWindow(hwndConsole,SW_SHOWNORMAL);
@@ -1101,7 +1101,7 @@ MultiInputDialog( HINSTANCE hinst, HWND hwndOwner,
     lpdt->style = WS_POPUP | WS_BORDER | WS_SYSMENU
                    | DS_MODALFRAME | WS_CAPTION
                    | DS_SETFOREGROUND | DS_SHELLFONT
-#if _MSC_VER > 900
+#ifndef CKT_NT31
                    | DS_3DLOOK | DS_CENTER | DS_NOFAILCREATE
 #endif
                    ;
@@ -1366,7 +1366,7 @@ VideoPopupDialog( HINSTANCE hinst, HWND hwndOwner, videopopup * vp)
     lpdt->style = WS_POPUP | WS_BORDER | WS_SYSMENU
                    | DS_MODALFRAME | WS_CAPTION
                    | DS_SETFOREGROUND | DS_SETFONT
-#if _MSC_VER > 900
+#ifndef CKT_NT31
                    | DS_3DLOOK | DS_CENTER | DS_NOFAILCREATE
 #endif
                    ;

@@ -23,7 +23,7 @@ void KSysMetrics::reset()
     _vscrollWidth = GetSystemMetrics( SM_CXVSCROLL );
     _hscrollHeight = GetSystemMetrics( SM_CYHSCROLL );
 
-#if _MSC_VER > 900
+#ifndef CKT_NT31
     _edgeWidth = GetSystemMetrics( SM_CXEDGE );
     _edgeHeight = GetSystemMetrics( SM_CYEDGE );
 
@@ -36,7 +36,7 @@ void KSysMetrics::reset()
     _edgeHeight = 0;
     _sizeframeWidth = 0;
     _sizeframeHeight = 0;
-#endif
+#endif /* CKT_NT31 */
 
     _menuHeight = GetSystemMetrics( SM_CYMENU );
     _captionHeight = GetSystemMetrics( SM_CYCAPTION );

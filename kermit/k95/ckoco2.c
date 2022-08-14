@@ -5325,7 +5325,7 @@ EnumFontFamProc( ENUMLOGFONT *lpelfe,    // logical-font data
     return(font_list->count);
 }
 
-#if _MSC_VER > 900
+#ifndef CKT_NT31
 static int CALLBACK
 EnumFontFamExProc( ENUMLOGFONTEX *lpelfe,    // logical-font data
                    NEWTEXTMETRICEX *lpntme,  // physical-font data
@@ -5364,7 +5364,7 @@ EnumFontFamExProc( ENUMLOGFONTEX *lpelfe,    // logical-font data
     font_list->name[font_list->count++] = strdup(name);
     return(font_list->count);
 }
-#endif
+#endif /* CKT_NT31 */
 
 static int
 EnumerateFonts()
@@ -5396,7 +5396,7 @@ EnumerateFonts()
         lf.lfFaceName[0] = '\0';
         lf.lfPitchAndFamily = 0;
 
-#if _MSC_VER > 900
+#ifndef CKT_NT31
         if ( nt351 )
             rc = EnumFontFamilies( (HDC) hdc, NULL,
                                      (FONTENUMPROC) EnumFontFamProc,

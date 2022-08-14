@@ -148,7 +148,7 @@ COMMON_CFLAGS = $(COMMON_CFLAGS) /EHs-c-
 # These are:    /EHs-c-     Enable C++ Exception handling (replaces /GX-)
 !endif
 
-RCDEFINES=/dCOMPILER_$(CMP)
+RCDEFINES=$(RC_FEATURE_DEFS)
 
 #---------- Compiler targets:
 #
