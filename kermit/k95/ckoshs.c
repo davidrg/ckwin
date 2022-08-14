@@ -153,8 +153,8 @@ void ssh_parameters_free(ssh_parameters_t* parameters) {
 
 ssh_client_t * ssh_client_new() {
     ssh_client_t *client = malloc(sizeof(ssh_client_t));
-    client->outputBuffer = ring_buffer_new(1024);
-    client->inputBuffer = ring_buffer_new(1024);
+    client->outputBuffer = ring_buffer_new(1024*1024);
+    client->inputBuffer = ring_buffer_new(1024*1024);
     client->error = SSH_ERR_NO_ERROR;
     client->error_message = NULL;
     client->mutex = CreateMutex(
@@ -163,8 +163,8 @@ ssh_client_t * ssh_client_new() {
             NULL);  /* unnamed */
     client->disconnectEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
     client->ptySizeChangedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-    client->flushEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-    client->breakEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+    client->flushEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
+    client->breakEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
     client->dataArrivedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
     client->dataConsumedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
@@ -213,8 +213,8 @@ static ssh_client_state_t* ssh_client_state_new(ssh_parameters_t* parameters) {
 
     state = malloc(sizeof(ssh_client_state_t));
     state->parameters = parameters;
-    state->pty_width = 80;
-    state->pty_height = 25;
+    state->pty_width = parameters->pty_width;
+    state->pty_height = parameters->pty_height;
     state->session = NULL;
     state->ttyChannel = NULL;
 
@@ -306,7 +306,7 @@ static void logging_callback(int priority, const char *function,
     msglen += strlen(function) + strlen(buffer) + strlen(timebuf) + 100;
     buf = malloc(msglen);
 
-    snprintf(buf, msglen, "[%s, %d] %s: %s",
+    snprintf(buf, msglen, "sshsubsys - libssh - [%s, %d] %s: %s",
              timebuf, priority, function, buffer);
 
     debug(F100, buf, "", 0);
@@ -327,10 +327,10 @@ static void logging_callback(int priority, const char *function,
 static int auth_prompt(const char* prompt, char* buf, size_t len, int echo,
                        int verify, void* userdata) {
 
-    debug(F110, "ssh auth_prompt", prompt, 0);
-    debug(F111, "ssh auth_prompt", "echo", echo);
-    debug(F111, "ssh auth_prompt", "verify", verify);
-    debug(F111, "ssh auth_prompt", "len", len);
+    debug(F110, "sshsubsys - ssh auth_prompt", prompt, 0);
+    debug(F111, "sshsubsys - ssh auth_prompt", "echo", echo);
+    debug(F111, "sshsubsys - ssh auth_prompt", "verify", verify);
+    debug(F111, "sshsubsys - ssh auth_prompt", "len", len);
 
     if (verify) {
         struct txtbox tb[2];
@@ -354,13 +354,13 @@ static int auth_prompt(const char* prompt, char* buf, size_t len, int echo,
 
         rc = uq_mtxt(prompt, NULL, 2, tb);
         if (rc == 0) {
-            debug(F100, "auth_prompt - user canceled", "", 0);
+            debug(F100, "sshsubsys - auth_prompt - user canceled", "", 0);
             rc = -1; /* failed */
         } else {
             if (strncmp(buf, verifyBuf, len) == 0) {
                 rc = 0; /* Success */
             } else {
-                debug(F100, "auth_prompt - verify failed", "", 0);
+                debug(F100, "sshsubsys - auth_prompt - verify failed", "", 0);
                 rc = -1; /* error */
             }
         }
@@ -372,7 +372,7 @@ static int auth_prompt(const char* prompt, char* buf, size_t len, int echo,
         rc = uq_txt(NULL, prompt, echo ? 1 : 2, NULL, buf, len, NULL,
                     DEFAULT_UQ_TIMEOUT);
         if (rc == 1) return 0; /* 1 == success */
-        debug(F100, "auth_prompt - user canceled", "", 0);
+        debug(F100, "sshsubsys - auth_prompt - user canceled", "", 0);
         return -1; /* 0 = error - user canceled */
     }
 }
@@ -562,18 +562,18 @@ static int password_authenticate(ssh_client_state_t * state, BOOL *canceled) {
     int rc = 0;
     int ok = FALSE;
 
-    debug(F110, "Attempting password authentication for user", user, 0);
+    debug(F110, "sshsubsys - Attempting password authentication for user", user, 0);
 
     rc = ssh_options_get(state->session, SSH_OPTIONS_USER, &user);
     if (rc != SSH_OK) {
-        debug(F100, "SSH - Failed to get user ID", "rc", rc);
+        debug(F100, "sshsubsys - SSH - Failed to get user ID", "rc", rc);
         return rc;
     }
 
     for (i = 0; i < SSH_MAX_PASSWORD_PROMPTS; i++) {
         if (i == 0 && state->parameters->password) {
             /* Password has already been supplied. Try that */
-            debug(F100, "Using pre-entered password", "", 0);
+            debug(F100, "sshsubsys - Using pre-entered password", "", 0);
             ckstrncpy(password,state->parameters->password,sizeof(password));
             ok = TRUE;
         } else {
@@ -587,7 +587,7 @@ static int password_authenticate(ssh_client_state_t * state, BOOL *canceled) {
 
         if (!ok || strcmp(password, "") == 0) {
             /* User canceled */
-            debug(F100, "User canceled password login", "", 0);
+            debug(F100, "sshsubsys - User canceled password login", "", 0);
             ssh_string_free_char(user);
             *canceled = TRUE;
             return SSH_AUTH_DENIED;
@@ -596,22 +596,22 @@ static int password_authenticate(ssh_client_state_t * state, BOOL *canceled) {
         rc = ssh_userauth_password(state->session, NULL, password);
         memset(password, 0, strlen(password));
         if (rc == SSH_AUTH_SUCCESS) {
-            debug(F100, "Password login succeeded", "", 0);
+            debug(F100, "sshsubsys - Password login succeeded", "", 0);
             ssh_string_free_char(user);
             return rc;
         } else if (rc == SSH_AUTH_ERROR) {
-            debug(F111, "SSH Auth Error - password login failed", "rc", rc);
+            debug(F111, "sshsubsys - SSH Auth Error - password login failed", "rc", rc);
             /* A serious error has occurred.  */
             ssh_string_free_char(user);
             return rc;
         } else if (rc == SSH_AUTH_PARTIAL) {
-            debug(F100, "SSH Partial authentication - "
+            debug(F100, "sshsubsys - SSH Partial authentication - "
                         "more authentication needed", "", 0);
             ssh_string_free_char(user);
             return rc;
         }
         /* Else: SSH_AUTH_DENIED - try again. */
-        debug(F100, "SSH Password auth failed - access denied", "", 0);
+        debug(F100, "sshsubsys - SSH Password auth failed - access denied", "", 0);
     }
 
     ssh_string_free_char(user);
@@ -629,7 +629,7 @@ static int password_authenticate(ssh_client_state_t * state, BOOL *canceled) {
 static int kbd_interactive_authenticate(ssh_client_state_t * state, BOOL *canceled) {
     int rc;
 
-    debug(F100, "kbd_interactive_authenticate", "", 0);
+    debug(F100, "sshsubsys - kbd_interactive_authenticate", "", 0);
 
     rc = ssh_userauth_kbdint(state->session, NULL, NULL);
 
@@ -645,13 +645,13 @@ static int kbd_interactive_authenticate(ssh_client_state_t * state, BOOL *cancel
         instructions = ssh_userauth_kbdint_getinstruction(state->session);
         nprompts = ssh_userauth_kbdint_getnprompts(state->session);
 
-        debug(F110, "kbd_int_auth name", name, 0);
-        debug(F110, "kbd_int_auth instructions", instructions, 0);
-        debug(F101, "kbd_int_auth prompts", "", nprompts);
+        debug(F110, "sshsubsys - kbd_int_auth name", name, 0);
+        debug(F110, "sshsubsys - kbd_int_auth instructions", instructions, 0);
+        debug(F101, "sshsubsys - kbd_int_auth prompts", "", nprompts);
 
         if (nprompts == 0) {
-            debug(F100, "No more prompts! Unable to continue interrogating "
-                        "user.", "nprompts", nprompts);
+            debug(F100, "sshsubsys - No more prompts! Unable to continue "
+                        "interrogating user.", "nprompts", nprompts);
             break;
         }
 
@@ -667,8 +667,8 @@ static int kbd_interactive_authenticate(ssh_client_state_t * state, BOOL *cancel
 
             combined_instructions = malloc(combined_text_len * sizeof(char));
             if (combined_instructions == NULL) {
-                debug(F100, "kbd_interactive_authenticate - failed to malloc "
-                            "for instructions", "", 0);
+                debug(F100, "sshsubsys - kbd_interactive_authenticate - failed "
+                            "to malloc for instructions", "", 0);
                 return SSH_AUTH_ERROR;
             }
             snprintf(combined_instructions,
@@ -690,23 +690,24 @@ static int kbd_interactive_authenticate(ssh_client_state_t * state, BOOL *cancel
             const char *prompt = ssh_userauth_kbdint_getprompt(
                     state->session, i, &echo);
 
-            debug(F110, "kdbint auth - single prompt mode - prompt:", prompt, 0);
+            debug(F110, "sshsubsys - kdbint auth - single prompt mode - prompt:",
+                  prompt, 0);
 
             rc = uq_txt(combined_instructions, prompt, echo ? 1 : 2, NULL,
                         buffer, sizeof(buffer), NULL, DEFAULT_UQ_TIMEOUT);
             if (rc == 1) {
                 rc = ssh_userauth_kbdint_setanswer(
                         state->session, 0, buffer);
-                debug(F111, "ssh_userauth_kbdint says", "rc", rc);
+                debug(F111, "sshsubsys - ssh_userauth_kbdint says", "rc", rc);
                 if (rc < 0) {
                     /* An error of some kind occurred. Don't bother feeding
                      * in any further responses. We'll only keep going around
                      * the loop to clean up the response array */
                     failed = TRUE;
-                    debug(F101, "prompt rejected", "", i);
+                    debug(F101, "sshsubsys - prompt rejected", "", i);
                 }
             } else {
-                debug(F100, "kdbint auth - user canceled", "", 0);
+                debug(F100, "sshsubsys - kdbint auth - user canceled", "", 0);
                 failed = TRUE;
                 *canceled = TRUE;
             }
@@ -719,7 +720,7 @@ static int kbd_interactive_authenticate(ssh_client_state_t * state, BOOL *cancel
             /* Allocate an array of textboxes to hold the prompts */
             tb = (struct txtbox *) malloc(sizeof(struct txtbox) * nprompts);
             if (tb == NULL) {
-                debug(F100, "kbd_interactive_authenticate - textbox malloc failed", "", 0);
+                debug(F100, "sshsubsys - kbd_interactive_authenticate - textbox malloc failed", "", 0);
                 return SSH_AUTH_ERROR;
             }
             memset(tb, 0, sizeof(struct txtbox) * nprompts);
@@ -727,7 +728,7 @@ static int kbd_interactive_authenticate(ssh_client_state_t * state, BOOL *cancel
             /* Allocate an array to hold all the responses. */
             responses = malloc(sizeof(char *) * nprompts);
             if (responses == NULL) {
-                debug(F100, "kbd_interactive_authenticate - response array malloc failed", "", 0);
+                debug(F100, "sshsubsys - kbd_interactive_authenticate - response array malloc failed", "", 0);
                 return SSH_AUTH_ERROR;
             }
 
@@ -738,10 +739,10 @@ static int kbd_interactive_authenticate(ssh_client_state_t * state, BOOL *cancel
                         state->session, i, &echo);
                 responses[i] = malloc(128 * sizeof(char));
 
-                debug(F111, "kdb_interactive_authenticate prompt", prompt, i);
+                debug(F111, "sshsubsys - kdb_interactive_authenticate prompt", prompt, i);
 
                 if (responses[i] == NULL) {
-                    debug(F111, "kbd_interactive_authenticate - response buffer "
+                    debug(F111, "sshsubsys - kbd_interactive_authenticate - response buffer "
                                 "malloc failed", "response", i);
                     return SSH_AUTH_ERROR;
                 }
@@ -759,26 +760,26 @@ static int kbd_interactive_authenticate(ssh_client_state_t * state, BOOL *cancel
             rc = uq_mtxt(combined_instructions, NULL, nprompts, tb);
 
             if (rc == 0) { /* 0 = no/cancel, 1 = yes/ok */
-                debug(F100, "kdbint auth - user canceled", "", 0);
+                debug(F100, "sshsubsys - kdbint auth - user canceled", "", 0);
                 failed = TRUE;
                 *canceled = TRUE;
             }
 
             /* Then process the responses freeing buffers as we go */
             for (i = 0; i < nprompts; i++) {
-                debug(F101, "processing prompt", "", i);
+                debug(F101, "sshsubsys - processing prompt", "", i);
                 if (!failed) {
                     /* User hasn't canceled and haven't hit an error yet. Ask the
                      * server what it thinks of an answer.*/
                     rc = ssh_userauth_kbdint_setanswer(
                             state->session, i, responses[i]);
-                    debug(F111, "ssh_userauth_kbdint says", "rc", rc);
+                    debug(F111, "sshsubsys - ssh_userauth_kbdint says", "rc", rc);
                     if (rc < 0) {
                         /* An error of some kind occurred. Don't bother feeding
                          * in any further responses. We'll only keep going around
                          * the loop to clean up the response array */
                         failed = TRUE;
-                        debug(F101, "prompt rejected", "", i);
+                        debug(F101, "sshsubsys - prompt rejected", "", i);
                     }
                 }
                 memset(responses[i], 0, sizeof(responses[i]));
@@ -809,10 +810,10 @@ static int kbd_interactive_authenticate(ssh_client_state_t * state, BOOL *cancel
         /* See if we need to go round again and ask *more* questions */
         rc = ssh_userauth_kbdint(
                 state->session, NULL, NULL);
-        if (rc == SSH_AUTH_INFO) debug(F101, "ssh_userauth_kbdint says SSH_AUTH_INFO", "", rc);
+        if (rc == SSH_AUTH_INFO) debug(F101, "sshsubsys - ssh_userauth_kbdint says SSH_AUTH_INFO", "", rc);
     }
 
-    debug(F111, "ssh kbdint finished with", "rc", rc);
+    debug(F111, "sshsubsys - ssh kbdint finished with", "rc", rc);
 
     return rc;
 }
@@ -866,13 +867,13 @@ static int authenticate(ssh_client_state_t * state, BOOL *canceled) {
     if (methods & SSH_AUTH_METHOD_INTERACTIVE && !*canceled) {
         rc = kbd_interactive_authenticate(state, canceled);
         if (rc == SSH_AUTH_SUCCESS) return rc;
-    } */
+    }*/
     if (methods & SSH_AUTH_METHOD_PASSWORD && !*canceled) {
         rc = password_authenticate(state, canceled);
         if (rc == SSH_AUTH_SUCCESS) return rc;
     }
 
-    if (canceled) {
+    if (*canceled) {
         return SSH_ERR_USER_CANCELED;
     }
 
@@ -890,17 +891,17 @@ static int authenticate(ssh_client_state_t * state, BOOL *canceled) {
 static int open_tty_channel(ssh_client_state_t * state) {
     int rc = 0;
 
-    debug(F100, "Opening SSH tty channel", "", 0);
+    debug(F100, "sshsubsys - Opening SSH tty channel", "", 0);
 
     state->ttyChannel = ssh_channel_new(state->session);
     if (state->ttyChannel == NULL) {
-        debug(F100, "Failed to create channel", "", 0);
+        debug(F100, "sshsubsys - Failed to create channel", "", 0);
         return SSH_ERR_SSH_ERROR;
     }
 
     rc = ssh_channel_open_session(state->ttyChannel);
     if (rc != SSH_OK) {
-        debug(F111, "Channel open failed", "rc", rc);
+        debug(F111, "sshsubsys - Channel open failed", "rc", rc);
         ssh_channel_free(state->ttyChannel);
         state->ttyChannel = NULL;
     }
@@ -934,7 +935,7 @@ static void close_tty_channel(ssh_client_state_t * state) {
 static int ssh_rexec(ssh_client_state_t * state, const char* command) {
     int rc;
 
-    debug(F110,"ssh running command", command, 0);
+    debug(F110,"sshsubsys - ssh running command", command, 0);
 
     rc = open_tty_channel(state);
     if (rc != SSH_OK) {
@@ -943,12 +944,12 @@ static int ssh_rexec(ssh_client_state_t * state, const char* command) {
 
     rc = ssh_channel_request_exec(state->ttyChannel, command);
     if (rc != SSH_OK) {
-        debug(F111, "SSH exec failed", "rc", rc);
+        debug(F111, "sshsubsys - SSH exec failed", "rc", rc);
         close_tty_channel(state);
         return rc;
     }
 
-    debug(F100, "SSH exec succeeded", "", 0);
+    debug(F100, "sshsubsys - SSH exec succeeded", "", 0);
 
     return rc;
 }
@@ -965,7 +966,7 @@ static int ssh_subsystem(ssh_client_state_t * state, const char* subsystem) {
 
     /* TODO: Not working? */
 
-    debug(F110,"ssh requesting subsystem", subsystem, 0);
+    debug(F110,"sshsubsys - ssh requesting subsystem", subsystem, 0);
 
     rc = open_tty_channel(state);
     if (rc != SSH_OK) {
@@ -974,12 +975,12 @@ static int ssh_subsystem(ssh_client_state_t * state, const char* subsystem) {
 
     rc = ssh_channel_request_subsystem(state->ttyChannel, subsystem);
     if (rc != SSH_OK) {
-        debug(F111, "SSH subsystem request failed", "rc", rc);
+        debug(F111, "sshsubsys - SSH subsystem request failed", "rc", rc);
         close_tty_channel(state);
         return rc;
     }
 
-    debug(F100, "SSH subsystem request succeeded", "", 0);
+    debug(F100, "sshsubsys - SSH subsystem request succeeded", "", 0);
 
     return rc;
 }
@@ -993,16 +994,16 @@ static int ssh_subsystem(ssh_client_state_t * state, const char* subsystem) {
 static int open_shell(ssh_client_state_t * state) {
     int rc;
 
-    debug(F100, "SSH open shell", "", 0);
+    debug(F100, "sshsubsys - SSH open shell", "", 0);
 
-    debug(F111, "SSH pty request", "rows", state->pty_height);
-    debug(F111, "SSH pty request", "cols", state->pty_width);
-    debug(F111, "SSH pty request - termtype: ",
+    debug(F111, "sshsubsys - SSH pty request", "rows", state->pty_height);
+    debug(F111, "sshsubsys - SSH pty request", "cols", state->pty_width);
+    debug(F111, "sshsubsys - SSH pty request - termtype: ",
           state->parameters->terminal_type, 0);
 
     rc = open_tty_channel(state);
     if (rc != SSH_OK) {
-        debug(F111, "open tty channel failed", "rc", rc);
+        debug(F111, "sshsubsys - open tty channel failed", "rc", rc);
         return rc;
     }
 
@@ -1011,13 +1012,13 @@ static int open_shell(ssh_client_state_t * state) {
                                       state->pty_width,
                                       state->pty_height);
     if (rc != SSH_OK) {
-        debug(F111, "PTY request failed", "rc", rc);
+        debug(F111, "sshsubsys - PTY request failed", "rc", rc);
         return rc;
     }
 
     rc = ssh_channel_request_shell(state->ttyChannel);
     if (rc != SSH_OK) {
-        debug(F111, "Shell request failed", "rc", rc);
+        debug(F111, "sshsubsys - Shell request failed", "rc", rc);
         return rc;
     }
 
@@ -1041,7 +1042,7 @@ static int configure_session(ssh_client_state_t * state) {
     ssh_callbacks_init(&cb);
 
     /* Set options */
-    debug(F100, "Configure session...", "", 0);
+    debug(F100, "sshsubsys - Configure session...", "", 0);
     verbosity = log_verbosity(state->parameters->log_verbosity);
     ssh_options_set(state->session, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
     ssh_set_callbacks(state->session, &cb);
@@ -1089,15 +1090,30 @@ static int configure_session(ssh_client_state_t * state) {
  * @returns An error code on failure
  */
 static int ssh_tty_read(ssh_client_state_t* state, ssh_client_t *client) {
-    int rc;
+    int rc = 0, net_available;
+    char* buf = NULL;
+
+    /* Check if there is actually anything to do before we go acquiring locks
+     * on buffers */
+    net_available = ssh_channel_poll(state->ttyChannel, 0);
+    if (net_available == 0) {
+        debug(F100, "sshsubsys - tty-read - nothing to read", "", 0);
+        return SSH_ERR_OK;
+    } else if (net_available < 0) {
+        debug(F111, "sshsubsys - tty-read - error on poll", "rc", rc);
+        return rc;
+    }
+
+    debug(F100, "sshsubsys - tty-read", "", 0);
 
     /* Read from the TTY channel into the output buffer */
     if (ring_buffer_lock(client->outputBuffer, INFINITE)) {
-        char* buf;
-        int space_available;
+        int space_available, space_used;
 
         space_available = ring_buffer_free_space(client->outputBuffer);
+        space_used = ring_buffer_length(client->outputBuffer);
 
+        debug(F101, "sshsubsys - tty-read - buffer space used", "", space_used);
         debug(F101, "sshsubsys - tty-read - buffer space available", "", space_available);
 
         if (space_available > 0) {
@@ -1118,7 +1134,7 @@ static int ssh_tty_read(ssh_client_state_t* state, ssh_client_t *client) {
 
                     if (written < rc) {
                         debug(F111,
-                              "ERROR: fewer bytes written to output buffer "
+                              "sshsubsys - ERROR: fewer bytes written to output buffer "
                               "than available free space", "free",
                               space_available);
 
@@ -1127,13 +1143,16 @@ static int ssh_tty_read(ssh_client_state_t* state, ssh_client_t *client) {
                          *       it did!)*/
                         rc = SSH_ERR_BUFFER_WRITE_FAILED;
                     }
+                } else {
+                    debug(F100, "sshsubsys - tty-read - error reading from network", "", 0);
                 }
-
-                free(buf);
             }
         }
-
         ring_buffer_unlock(client->outputBuffer);
+    }
+
+    if (buf != NULL) {
+        free(buf);
     }
 
     if (rc >= 0) {
@@ -1179,7 +1198,7 @@ int ssh_tty_write(ssh_client_state_t* state, ssh_client_t *client) {
                             client->inputBuffer, rc);
 
                     if (!result) {
-                        debug(F111, "SSH - Failed to consume bytes from "
+                        debug(F111, "sshsubsys - SSH - Failed to consume bytes from "
                                     "the input ring buffer", "bytes",
                               rc);
                         /* This should never happen and there is not much
@@ -1216,7 +1235,7 @@ static int connect_ssh(ssh_client_state_t* state) {
     char* banner = NULL;
 
     /* Connect! */
-    debug(F100, "SSH Connect...", "", 0);
+    debug(F100, "sshsubsys - SSH Connect...", "", 0);
 
     /* Apply configuration to the SSH session */
     rc = configure_session(state);
@@ -1226,7 +1245,7 @@ static int connect_ssh(ssh_client_state_t* state) {
 
     rc = ssh_connect(state->session);
     if (rc != SSH_OK) {
-        debug(F111,"Error connecting to host",
+        debug(F111,"sshsubsys - Error connecting to host",
               ssh_get_error(state->session), rc);
         return rc;
     }
@@ -1234,7 +1253,7 @@ static int connect_ssh(ssh_client_state_t* state) {
     /* Check the hosts key is valid */
     rc = verify_known_host(state);
     if (rc != SSH_ERR_NO_ERROR) {
-        debug(F111, "Host verification failed", "rc", rc);
+        debug(F111, "sshsubsys - Host verification failed", "rc", rc);
         printf("Host verification failed.\n");
         return rc;
     }
@@ -1256,7 +1275,7 @@ static int connect_ssh(ssh_client_state_t* state) {
     /* Authenticate! */
     rc = authenticate(state, &user_canceled);
     if (rc != SSH_AUTH_SUCCESS ) {
-        debug(F111, "Authentication failed - disconnecting", "rc", rc);
+        debug(F111, "sshsubsys - Authentication failed - disconnecting", "rc", rc);
         printf("Authentication failed - disconnecting.\n");
 
         if (rc == SSH_AUTH_ERROR) rc = SSH_ERR_AUTH_ERROR;
@@ -1266,9 +1285,9 @@ static int connect_ssh(ssh_client_state_t* state) {
         return rc;
     }
 
-    debug(F100, "Authenticated - starting session", "", 0);
+    debug(F100, "sshsubsys - Authenticated - starting session", "", 0);
 
-    debug(F100, "Authentication succeeded - starting session", "", 0);
+    debug(F100, "sshsubsys - Authentication succeeded - starting session", "", 0);
 
     if (state->parameters->session_type == SESSION_TYPE_SUBSYSTEM) {
         /* User has supplied the /SUBSYSTEM: qualifier */
@@ -1304,19 +1323,15 @@ void ssh_thread(ssh_thread_params_t *parameters) {
     HANDLE events[7];
 
 
-    debug(F100, "ssh thread started", "", 0);
+    debug(F100, "sshsubsys - SSH Subsystem starting up...", "", 0);
 
     client = parameters->ssh_client;
 
-    state = malloc(sizeof(ssh_client_state_t));
+    state = ssh_client_state_new(parameters->parameters);
     if (state == NULL) {
         ssh_client_close(NULL, client, SSH_ERR_STATE_MALLOC_FAILED);
         return;
     }
-
-    state->parameters = parameters->parameters;
-    state->pty_height = state->parameters->pty_height;
-    state->pty_width = state->parameters->pty_width;
 
     free(parameters); /* Don't need it anymore */
 
@@ -1324,7 +1339,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
 
     state->session = ssh_new();
     if (state->session == NULL) {
-        debug(F100, "Failed to create SSH session", "", 0);
+        debug(F100, "sshsubsys - Failed to create SSH session", "", 0);
         ssh_client_close(state, client, SSH_ERR_NEW_SESSION_FAILED);
         return;
     }
@@ -1332,15 +1347,14 @@ void ssh_thread(ssh_thread_params_t *parameters) {
     rc = connect_ssh(state);
 
     if (rc != SSH_OK) {
-        debug(F111, "Session start failed - disconnecting", "rc", rc);
+        debug(F111, "sshsubsys - Session start failed - disconnecting", "rc", rc);
         ssh_client_close(state, client, rc);
         return;
     }
 
     /* TODO: Setup port forwarding, etc */
 
-    printf("Connection open!");
-    debug(F100, "SSH connected.", "", 0);
+    debug(F100, "sshsubsys - SSH connected.", "", 0);
 
     SetEvent(client->clientStarted);
 
@@ -1357,7 +1371,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
 
     rc = SSH_ERR_WAIT_FAILED;
 
-    debug(F100, "sshsubsys - starting client loop", "", 0);
+    debug(F100, "sshsubsys - entering client loop", "", 0);
 
     /* Now wait until we've got something to do */
     while(TRUE) {
@@ -1369,7 +1383,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
                 7, /* Number of events */
                 events, /* Array of events to wait on */
                 FALSE, /* Return when *any* event is signalled, rather than all */
-                WSA_INFINITE, /* Wait forever */
+                1000, /* Wait for up to 1s */
                 TRUE /* Place thread in alertable wait state to allow execution of
                   * I/O completion routines. */
         );
@@ -1406,31 +1420,25 @@ void ssh_thread(ssh_thread_params_t *parameters) {
 
         rc = SSH_ERR_OK;
 
+        /* Check for errors */
         if (ssh_channel_is_closed(state->ttyChannel)) {
-            debug(F100, "tty channel is closed - ending session", "", 0);
+            debug(F100, "sshsubsys - tty channel is closed - ending session", "", 0);
             rc = SSH_ERR_CHANNEL_CLOSED;
             break;
         }
 
         if (ssh_channel_is_eof(state->ttyChannel)) {
-            debug(F100, "tty channel is EOF - ending session", "", 0);
+            debug(F100, "sshsubsys - tty channel is EOF - ending session", "", 0);
             rc = SSH_ERR_EOF;
             break;
         }
 
+        /* See if there is any network data available.    */
         if (WaitForSingleObjectEx(events[0], 0, TRUE) != WAIT_TIMEOUT) {
-            debug(F100, "sshsubsys - network event", "", 0);
             WSAResetEvent(events[0]);
-            rc = ssh_tty_read(state, client);
-            if (rc != SSH_ERR_OK) {
-                break; /* Read error - fail */
-            }
-
-            rc = ssh_tty_write(state, client);
-            if (rc != SSH_ERR_OK) {
-                break; /* Write error - fail */
-            }
+            debug(F100, "sshsubsys - network event", "", 0);
         }
+
 
         /* Check for disconnect event */
         if (WaitForSingleObjectEx(client->disconnectEvent, 0, TRUE) != WAIT_TIMEOUT) {
@@ -1456,7 +1464,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
                         state->pty_width = client->pty_width;
                         state->pty_height = client->pty_height;
                     } else {
-                        debug(F111, "ssh thread - failed to change pty size",
+                        debug(F111, "sshsubsys - failed to change pty size",
                               ssh_get_error(state->session), rc);
                         /* Not really an error serious enough to warrant
                          * killing the connection - if everything else is still
@@ -1492,11 +1500,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
 
         if (WaitForSingleObjectEx(client->dataArrivedEvent, 0, TRUE) != WAIT_TIMEOUT) {
             debug(F100, "sshsubsys - data arrived event", "", 0);
-            rc = ssh_tty_write(state, client);
             ResetEvent(client->dataArrivedEvent);
-            if (rc != SSH_ERR_OK) {
-                break;
-            }
         }
 
         /* Data has been consumed from a full output buffer. If we stopped
@@ -1504,11 +1508,22 @@ void ssh_thread(ssh_thread_params_t *parameters) {
          * writing.*/
         if (WaitForSingleObjectEx(client->dataConsumedEvent, 0, TRUE) != WAIT_TIMEOUT) {
             debug(F100, "sshsubsys - data consumed event", "", 0);
-            rc = ssh_tty_read(state, client);
             ResetEvent(client->dataConsumedEvent);
-            if (rc != SSH_ERR_OK) {
-                break;
-            }
+        }
+
+        /* We process the send and receive buffers every time around even if
+         * there haven't been any related events as it significantly reduces
+         * or eliminates a certain race condition that was breaking file
+         * transfers. Its perhaps not the correct solution but it works and
+         * doesn't really have much of a downside. */
+        rc = ssh_tty_write(state, client);
+        if (rc != SSH_ERR_OK) {
+            break;
+        }
+
+        rc = ssh_tty_read(state, client);
+        if (rc != SSH_ERR_OK) {
+            break;
         }
     }
 

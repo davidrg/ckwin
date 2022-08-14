@@ -553,7 +553,7 @@ int ssh_clos() {
                         "still live!", "", 0);
             return SSH_ERR_ZOMBIE_THREAD;
         } else if (result == WAIT_FAILED) {
-            debug(F110, "Warning: failed to wait for SSH thread terminate.",
+            debug(F110, "Warning: failed to wait for SSH thread terminate. "
                         "error", GetLastError(), 0);
             return SSH_ERR_UNSPECIFIED;
         } else {
@@ -583,8 +583,10 @@ int ssh_clos() {
 int ssh_tchk() {
     int rc = 0;
 
-    if (ssh_client == NULL)
+    if (ssh_client == NULL) {
+        debug(F100, "ssh_tchk - error: no instance!", "", 0);
         return SSH_ERR_NO_INSTANCE;
+    }
 
     /* If the client is connected then the number of bytes waiting to be read
      * is whatever is in the threads output buffer */
@@ -592,6 +594,8 @@ int ssh_tchk() {
     if (ring_buffer_lock(ssh_client->outputBuffer, 0)) {
         rc = ring_buffer_length(ssh_client->outputBuffer);
         ring_buffer_unlock(ssh_client->outputBuffer);
+    } else {
+        debug(F100, "ssh_tchk - failed to get lock on output buffer", "", 0);
     }
 
     if (rc == 0) {
@@ -599,8 +603,26 @@ int ssh_tchk() {
          * isn't any error status. Zero is all ok which is also the number of
          * bytes we got back, so we're fine to just return this. */
         rc = get_ssh_error();
+        debug(F111, "ssh_tchk - checked for subsystem error, got this", "rc", rc);
     }
 
+    if (rc == 0) {
+        debug(F100, "ssh_tchk - no data, no error - poking subsystem", "", 0);
+
+        /* No errors either. Just no data. Give the SSH thread a poke to let it
+         * know we're ready for data if there is any.
+         *
+         * This is only necessary because the SSH Thread can't currently monitor
+         * the SSH connection for data arrival. Ideally we'd do a select
+         * equivalent on the TTY channel but there seems to be no way of waiting
+         * on both the SSH connection *and* events coming from CKWIN - its one
+         * or the other.
+         **/
+        if (!SetEvent(ssh_client->dataConsumedEvent)) {
+            debug(F100, "ssh_tchk - failed to signal data consumed event!",
+                  "", 0);
+        }
+    }
     return rc;
 }
 
@@ -698,24 +720,34 @@ int ssh_inc(int timeout) {
  */
 int ssh_xin(int count, char * buffer) {
     int rc = 0;
+    int buffer_length;
 
-    if (ssh_client == NULL)
+    debug(F111, "ssh_xin", "count", count);
+
+    if (ssh_client == NULL) {
+        debug(F100, "ssh_xin - no instance", "", 0);
         return SSH_ERR_NO_INSTANCE;
+    }
 
     if(ring_buffer_lock(ssh_client->outputBuffer, 0)) {
-        BOOL full = ring_buffer_is_full(ssh_client->outputBuffer);
+        buffer_length = ring_buffer_length(ssh_client->outputBuffer);
+        debug(F101, "ssh_xin - bytes available", "", buffer_length);
         rc = ring_buffer_read(ssh_client->outputBuffer, buffer, count);
         ring_buffer_unlock(ssh_client->outputBuffer);
 
-        if (full) {
-            /* Let the SSH thread know there is free space in the output buffer
-             * again in case it has data waiting to be read from the network */
-            if (!SetEvent(ssh_client->dataConsumedEvent)) {
-                debug(F100, "ssh_xin - failed to signal data consumed event!",
-                      "", 0);
-            }
+        /* Let the SSH thread know there is free space in the output buffer
+         * again in case it has data waiting to be read from the network */
+        if (!SetEvent(ssh_client->dataConsumedEvent)) {
+            debug(F100, "ssh_xin - failed to signal data consumed event!",
+                  "", 0);
         }
+
+        debug(F111, "ssh_xin - bytes read", "rc", rc);
+        buffer_length = ring_buffer_length(ssh_client->outputBuffer);
+    } else {
+        debug(F100, "ssh_xin - failed to get lock on output buffer", "", 0);
     }
+
     return rc;
 }
 
@@ -791,7 +823,7 @@ int ssh_tol(char * buffer, int count) {
 void ssh_terminfo(char * termtype, int height, int width) {
 
     if (ssh_client == NULL)
-        return SSH_ERR_NO_INSTANCE;
+        return;
 
     if (acquire_mutex(ssh_client->mutex, INFINITE)) {
         ssh_client->pty_height = height;
