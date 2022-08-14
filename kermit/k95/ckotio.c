@@ -957,15 +957,25 @@ getcpu( void )
     case PROCESSOR_INTEL_PENTIUM:
         ckstrncpy( buffer, "intel-pentium", 64 ) ;
         break;
+    /* These three processors (i860, MIPS R2000 and R3000) are not supported
+     * by any released version of Windows (they were supported early on in its
+     * development) so may not appear in headers shipped with non-microsoft
+     * compilers. */
+#ifdef PROCESSOR_INTEL_860
     case PROCESSOR_INTEL_860:
         ckstrncpy( buffer, "intel-860", 64 ) ;
         break;
+#endif
+#ifdef PROCESSOR_MIPS_R2000
     case PROCESSOR_MIPS_R2000:
         ckstrncpy( buffer, "mips-r2000", 64 ) ;
         break;
+#endif
+#ifdef PROCESSOR_MIPS_R3000
     case PROCESSOR_MIPS_R3000:
         ckstrncpy( buffer, "mips-r3000", 64 ) ;
         break;
+#endif
     case PROCESSOR_MIPS_R4000:
         ckstrncpy( buffer, "mips-r4000", 64 ) ;
         break;
@@ -4549,10 +4559,12 @@ getOverlappedIndex( int serial ) {
     return ow ;
 }
 
+#ifndef __WATCOMC__
 #if _MSC_VER <= 1000
 /* Visual C++ 4.0 and earlier lack this macro */
 #define HasOverlappedIoCompleted(lpOverlapped) ((lpOverlapped)->Internal != STATUS_PENDING)
-#endif
+#endif /* _MSC_VER <= 1000 */
+#endif /* __WATCOM__ */
 
 int
 freeOverlappedComplete( int serial ) {
