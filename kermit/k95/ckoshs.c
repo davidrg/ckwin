@@ -1382,7 +1382,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
         WSANETWORKEVENTS  netEvents;
         DWORD waitResult;
 
-        debug(F110, "sshsubsys - waiting...", timebuf, 0);
+        debug(F100, "sshsubsys - waiting...", "", 0);
         waitResult = WSAWaitForMultipleEvents(
                 7, /* Number of events */
                 events, /* Array of events to wait on */
