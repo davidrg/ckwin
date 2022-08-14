@@ -11696,6 +11696,10 @@ initoptlist() {
 #ifdef __WATCOMC__
     makestr(&(optlist[noptlist++]),"__WATCOMC__");
 #endif
+#ifdef _MSC_VER
+    sprintf(line,"_MSC_VER=%d",_MSC_VER); /* SAFE */
+    makestr(&(optlist[noptlist++]),line);
+#endif
 #ifdef CK_ANSIC
     makestr(&(optlist[noptlist++]),"CK_ANSIC");
 #endif
