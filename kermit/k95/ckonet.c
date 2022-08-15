@@ -2329,12 +2329,15 @@ os2_netxin(int n, CHAR * buf) {
                 }
             }
         }
-        else
+        else {
 #endif /* TNCODE */
 #ifdef CK_ENCRYPTION
             if ( TELOPT_U(TELOPT_ENCRYPTION) )
                 ck_tn_decrypt(buf,len);
 #endif /* CK_ENCRYPTION */
+#ifdef TNCODE
+        }
+#endif /* TNCODE */
         return len;
     }
 #endif /* TCPSOCKET */

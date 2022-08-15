@@ -40,7 +40,9 @@ _PROTOTYP( int cktapiConvertPhoneNumber, (char * source, char ** converted));
 _PROTOTYP( int cktapiCallInProgress, (void));
 _PROTOTYP( int tapi_open, ( char * ) ) ;
 _PROTOTYP( int tapi_clos, ( void ) ) ;
+#ifndef NODIAL
 _PROTOTYP( HANDLE GetModemHandleFromLine, ( HLINE ) );
+#endif
 _PROTOTYP( struct mdminf * cktapiGetModemInf, (DWORD,HANDLE) );
 _PROTOTYP( void DisplayCommProperties, (HANDLE));
 _PROTOTYP( void cktapiDisplayRegistryModemInfo, (LPCSTR));
@@ -149,7 +151,8 @@ This registry key could then be opened using this function:
 RegOpenKey(HKEY_LOCAL_MACHINE, pszDevSpecificRegKey, &phkResult)
 #endif
 
+#ifndef NODIAL
 int cktapiGetModemSettings(LPDEVCFG *, LPMODEMSETTINGS *, LPCOMMCONFIG *, DCB **);
 int cktapiDisplayModemSettings(LPDEVCFG, LPMODEMSETTINGS, LPCOMMCONFIG, DCB *);
 int cktapiSetModemSettings(LPDEVCFG,LPCOMMCONFIG);
-
+#endif

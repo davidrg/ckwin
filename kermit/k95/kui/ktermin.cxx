@@ -12,6 +12,7 @@
 #include "ikextern.h"
 
 
+#ifndef NOTOOLBAR
 const int numButtons = 3;
 const int numBitmaps = 2;
 ToolBitmapDef tbButtons[] = {
@@ -24,6 +25,7 @@ ToolBitmapDef tbButtons[] = {
 // { { 6, ID_WINDOW_COMMAND, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0L, 0 }, "Command Window" },
 // { { 0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0L, 0 }, 0 }
 };
+#endif
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
@@ -35,7 +37,8 @@ KTerminal::KTerminal( K_GLOBAL* kg )
     setClient( client );
 
 	// Disable toolbar button & menu item for dialer
-	if (!DialerExists()) {
+	if (!DialerExists() && toolbar) {
+#ifndef NOTOOLBAR
 		// Disable toolbar button
 		BYTE state = tbButtons[1].tbbutton.fsState;
 		state = state & ~TBSTATE_ENABLED;
@@ -43,6 +46,7 @@ KTerminal::KTerminal( K_GLOBAL* kg )
 
 		// And anything else in the GUI that starts the dialer
 		noDialer = TRUE;
+#endif
 	} else {
 		noDialer = FALSE;
 	}	
@@ -70,22 +74,28 @@ KTerminal::show( Bool bVisible )
 ------------------------------------------------------------------------*/
 void KTerminal::setTermType( char* tt )
 {
+#ifndef NOTOOLBAR
     if ( toolbar )
         toolbar->setTermType( tt );
+#endif
 }
 
 void KTerminal::setRemoteCharset( char* cs )
 {
+#ifndef NOTOOLBAR
     if ( toolbar )
         toolbar->setCharset( cs );
+#endif
 }
 
 void KTerminal::setFont( char* fnt, int h )
 {
+#ifndef NOTOOLBAR
     if ( toolbar ) {
         toolbar->setFontName( fnt );
         toolbar->setFontHeight( h );
     }
+#endif
     kglob->fontHeight = h;
 }
 
@@ -330,6 +340,7 @@ void KTerminal::createWin( KWin* par )
     }
 
     int tbwid=0, tbhi=0;
+#ifndef NOTOOLBAR
     if ( toolbar ) {
         toolbar->initButtons( numButtons, numBitmaps, &(*tbButtons) );
         toolbar->createWin( this );
@@ -339,6 +350,7 @@ void KTerminal::createWin( KWin* par )
         toolbar->createCharsetCombo();
         toolbar->getSize( tbwid, tbhi );
     }
+#endif
 
     int cwid=0, chi=0;
     client->getSize( cwid, chi );
@@ -458,7 +470,8 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
     Bool done = FALSE;
     debug(F111,"KTerminal::message","msg",msg);
     switch( msg )
-    {                
+    {
+#ifndef NOTOOLBAR
     case WM_NOTIFY:
         debug(F111,"KTerminal::message","WM_NOTIFY",msg);
         if ( toolbar && !toolbar_disabled)
@@ -466,6 +479,7 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         else 
             done = TRUE;
         break;
+#endif
 
 #ifdef COMMENT
     case WM_MENUSELECT:
@@ -514,7 +528,13 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
     case WM_QUERYENDSESSION:
         debug(F111,"KTerminal::message","WM_QUERYENDSESSION",msg);
         done = TRUE;
+#if _MSC_VER > 1000
         if ( lParam & ENDSESSION_LOGOFF ) {
+#else
+        /* Visual C++ <= 4.0: lparam == TRUE on logoff, FALSE on shutdown
+         * (on Windows 95 only according to the docs) */
+        if (lParam) {
+#endif
             debug(F100,"ENDSESSION_LOGOFF","",0);
             if ( startflags & 128 ) {
                 debug(F100,"startflags & 128","",0);
@@ -525,7 +545,13 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 
     case WM_ENDSESSION:
         debug(F111,"KTerminal::message","WM_QUERYENDSESSION",msg);
+#if _MSC_VER > 1000
         if ( wParam && (lParam & ENDSESSION_LOGOFF) ) {
+#else
+        /* Visual C++ <= 4.0: lparam == TRUE on logoff, FALSE on shutdown
+         * (on Windows 95 only according to the docs) */
+        if (lParam) {
+#endif
             debug(F100,"ENDSESSION_LOGOFF","",0);
             if ( startflags & 128 ) {
                 debug(F100,"startflags & 128","",0);

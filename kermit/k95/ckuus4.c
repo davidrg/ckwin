@@ -60,8 +60,10 @@ _PROTOTYP(int vmsttyfd, (void) );
 #undef COMMENT
 #else
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"
+#endif
 #define APIRET ULONG
 #endif /* NT */
 #include "ckocon.h"

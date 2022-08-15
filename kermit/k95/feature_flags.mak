@@ -27,11 +27,23 @@
 #   CKF_SSH     Turned off when targeting OS/2 or when building with OpenWatcom
 #   CKF_CONPTY  Turned on when building with MSC >= 192
 #   CKF_SSL     Turned off always (SSL support doesn't currently build)
+#   CKF_LOGIN   Turned off when building with Visual C++ 5.0 or older
+#   CKF_NTLM    Turned off when building with Visual C++ 5.0 or older
 #
 # All other flags should be set prior to starting the build, for example:
 #   set CKF_DEBUG=no
 #   mkg.bat
 #------------------------------------------------------------------------------
+
+# Network Connections are always supported. We only put it here because
+# the Watcom nmake clone can't handle empty macros so we need *something* here.
+ENABLED_FEATURES = Network-Connections
+ENABLED_FEATURE_DEFS = -DNETCONN
+
+DISABLED_FEATURES = SuperLAT DECnet Kerberos SRP Telnet-Encryption CryptDLL
+DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNO_SRP -DNO_ENCRYPTION
+
+
 
 !if "$(PLATFORM)" != "NT"
 # No built-in SSH support for OS/2 (yet)
@@ -50,16 +62,25 @@ CKF_SSH=no
 # later.
 CKF_CONPTY=yes
 !endif
+
+!if ($(MSC_VER) <= 110)
+# The Platform SDK shipped with Visual C++ 5.0 (Visual Studio 97) and earlier
+# doesn't include the necessary headers (security.h, ntsecapi.h, etc) for this
+# feature.
+CKF_LOGIN=no
+CKF_NTLM=no
 !endif
 
+!if ($(MSC_VER) < 100)
+# The Platform SDK shipped with Visual C++ 2.0 and earlier doesn't include
+# tapi.h, the rich edit control, or the toolbar control.
+CKF_TAPI=no
+CKF_RICHEDIT=no
+CKF_TOOLBAR=no
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DVINTAGEVC
+!endif
 
-# Network Connections are always supported. We only put it here because
-# the Watcom nmake clone can't handle empty macros so we need *something* here.
-ENABLED_FEATURES = Network-Connections
-ENABLED_FEATURE_DEFS = -DNETCONN
-
-DISABLED_FEATURES = SuperLAT DECnet Kerberos SRP Telnet-Encryption CryptDLL
-DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNO_SRP -DNO_ENCRYPTION
+!endif
 
 
 # Other features that should one day be turned on via feature flags once we
@@ -176,4 +197,44 @@ ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) XYZMODEM
 !else
 DISABLED_FEATURES = $(DISABLED_FEATURES) XYZMODEM
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOCKXYZ
+!endif
+
+# KUI Toolbar:
+#   Turn off with: -DNOTOOLBAR
+# Removes the toolbar in K95G which requires features unavailable in the version
+# of comctl32.dll shipped prior to NT 3.51.
+!if "$(CKF_TOOLBAR)" == "no"
+DISABLED_FEATURES = $(DISABLED_FEATURES) Toolbar
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOTOOLBAR
+!endif
+
+# Login:
+#   Turn off with: -DNOLOGIN
+# Turns authentication for IKS which requires APIs unavailable before NT 3.51.
+!if "$(CKF_LOGIN)" == "no"
+DISABLED_FEATURES = $(DISABLED_FEATURES) Login
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOLOGIN
+!endif
+
+# NTLM:
+#   Turn off with: -DNONTLM
+!if "$(CKF_NTLM)" == "no"
+DISABLED_FEATURES = $(DISABLED_FEATURES) NTLM
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNONTLM
+!endif
+
+# TAPI
+#   Turn off with -DNODIAL
+# Turns off telephony support
+!if "$(CKF_TAPI)" == "no"
+DISABLED_FEATURES = $(DISABLED_FEATURES) TAPI
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNODIAL
+!endif
+
+# Rich Edit control
+#   Turn off with -DNORICHEDIT
+# Turns off features relying on the Rich Edit control
+!if "$(CKF_RICHEDIT)" == "no"
+DISABLED_FEATURES = $(DISABLED_FEATURES) RichEdit
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNORICHEDIT
 !endif

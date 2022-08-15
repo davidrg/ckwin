@@ -2323,7 +2323,11 @@ zchdir(dirnam) char *dirnam; {
         extern int ikdbopen;
         if (inserver && ikdbopen) {
 #ifdef CKROOT
+#ifdef CK_LOGIN
             slotdir(isguest ? anonroot : "", zgtdir());
+#else
+            slotdir("", zgtdir());
+#endif /* CK_LOGIN */
 #else
             slotdir("", zgtdir());
 #endif /* CKROOT */
@@ -3975,7 +3979,16 @@ zcopy(source,destination) char *source, *destination; {
     BOOL bCancel = 0;
     static BOOL (WINAPI * p_CopyFileExA)(LPCSTR lpExistingFileName,
                                           LPCSTR lpNewFileName,
+#if _MSC_VER > 1000
                                           LPPROGRESS_ROUTINE lpProgressRoutine OPTIONAL,
+#else
+                              /* The Platform SDK included in Visual C++ 4.0
+                               * and earlier doesn't include CopyFileExA so
+                               * no defninition for LPPROGRESS_ROUTINE. We never
+                               * pass a value other than NULL so its real type
+                               * is probably irrelevant.*/
+                                          LPVOID lpProgressRoutine OPTIONAL,
+#endif
                                           LPVOID lpData OPTIONAL,
                                           LPBOOL pbCancel OPTIONAL,
                                           DWORD dwCopyFlags

@@ -127,9 +127,11 @@ int autolocus = 1;			/* Automatic LOCUS switching enabled */
 #else
 #define APIRET ULONG
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
-#include "cknwin.h"
 #include "ckntap.h"			/* CK_TAPI definition */
+#endif
+#include "cknwin.h"
 #endif /* NT */
 #include "ckowin.h"
 #include "ckocon.h"
@@ -8959,8 +8961,11 @@ docmd(cx) int cx; {
 #ifdef IKSDCONF
             iksdcf &&
 #endif /* IKSDCONF */
-            (x == EN_HOS || x == EN_PRI || x == EN_MAI || x == EN_WHO ||
-              isguest))
+            (x == EN_HOS || x == EN_PRI || x == EN_MAI || x == EN_WHO
+#ifdef CK_LOGIN
+            || isguest
+#endif
+              ))
             return(success = 0);
 #endif /* IKSD */
 	return(doenable(y,x));
@@ -12618,6 +12623,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	if (count) paging = -1;
 	debug(F111,"type",line,paging);
 #ifdef KUI
+#ifndef NORICHEDIT
 	if ( gui ) {
 	    s = (char *)1;    /* ok, its an ugly hack */
 	    if (gui_text_popup_create(gui_title ?
@@ -12628,6 +12634,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	    }
 	    width = 0;
 	} else
+#endif /* NORICHEDIT */
 #endif /* KUI */
 	  s = outfile;
 	success =

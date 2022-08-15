@@ -1,63 +1,11 @@
 # Building C-Kermit for Windows from Source
 
-Building C-Kermit for Windows is easy! All you need is a compiler for Windows
-(Visual C++ 6.0SP6 or newer, or OpenWatcom 1.9). The compiler you choose will
-determine what features are available and the minimum version of windows your
-build of CKW will support. You can use the two tables below to help choose
-the compiler that best meets your needs.
-
-<table>
-<tr>
-<th>Feature</th>
-<th>Minimum Compiler</th>
-</tr>
-<tr>
-<td>ConPTY</td>
-<td>Visual C++ 2019+</td>
-</tr>
-<tr>
-<td>SSH</td>
-<td>Visual C++ 2015+ (hasn't been tested on older compilers but may work)</td>
-</tr>
-<tr>
-<td>Everything else</td>
-<td>Visual C++ 6.0 SP6, OpenWatcom 1.9</td>
-</tr>
-</table>
-
-<table>
-<tr>
-<th>Windows Version</th>
-<th>Maximum Compiler</th>
-</tr>
-<tr>
-<td>Windows 95</td>
-<td>Visual C++ 2003 (toolkit + 2003 Platform SDK is free)</td>
-</tr>
-<tr>
-<td>Windows 98/ME</td>
-<td>Visual C++ 2005</td>
-</tr>
-<tr>
-<td>Windows NT 3.51</td>
-<td>Visual C++ 6.0 SP6</td>
-</tr>
-<tr>
-<td>Windows NT 4.0</td>
-<td>Visual C++ 2005</td>
-</tr>
-<tr>
-<td>Windows 2000</td>
-<td>Visual C++ 2008</td>
-</tr>
-<tr>
-<td>Windows XP SP3</td>
-<td>Visual C++ 2019</td>
-</tr>
-</table>
-
-OpenWatcom 1.9 has no minimum Windows version it can target but C-Kermit won't
-work on any version of Windows older than NT 3.51 / Windows 95 at this time.
+Building C-Kermit for Windows is easy! All you need is 
+[a compiler for Windows](compilers.md) (Visual C++ 2022 Community Edition 
+recommended). The compiler you choose will determine what features are 
+available and the minimum version of windows your build of CKW will support. 
+You can use the linked table to help choose the compiler that best meets your
+needs if you're looking to run on versions of Windows older than Vista.
 
 ## Build Process
 

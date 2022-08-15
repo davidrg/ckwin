@@ -95,10 +95,12 @@ char *ckxv = "OS/2 Communications I/O, 8.0.229, 29 Dec 2005";
 #ifdef NT
 #include <windows.h>
 #include <commctrl.h>
+#ifndef NODIAL
 #include <tapi.h>
 #include <mcx.h>
-#include "cknwin.h"
 #include "ckntap.h"
+#endif
+#include "cknwin.h"
 #ifdef CK_TAPI
 int TAPIAvail = 0 ;   /* is TAPI Installed */
 extern int tttapi ;   /* is Line TAPI? */
@@ -4505,6 +4507,13 @@ getOverlappedIndex( int serial ) {
     debug(F111,"GetOverlappedIndex","available ow",ow);
     return ow ;
 }
+
+#ifndef __WATCOMC__
+#if _MSC_VER <= 1000
+/* Visual C++ 4.0 and earlier lack this macro */
+#define HasOverlappedIoCompleted(lpOverlapped) ((lpOverlapped)->Internal != STATUS_PENDING)
+#endif
+#endif
 
 int
 freeOverlappedComplete( int serial ) {
@@ -9460,7 +9469,9 @@ void
 DisplayCommProperties(HANDLE h)
 {
     COMMPROP *     lpCommProp = NULL;
+#ifndef NODIAL
     LPMODEMDEVCAPS lpModemDevCaps = NULL;
+#endif
     int rc=0;
 
     /* leave enough room for provider specific information */
@@ -9612,6 +9623,7 @@ DisplayCommProperties(HANDLE h)
     printf("  Current Tx Queue   = %d (bytes)\n",lpCommProp->dwCurrentTxQueue);
     printf("  Current Rx Queue   = %d (bytes)\n",lpCommProp->dwCurrentRxQueue);
 
+#ifndef NODIAL
     if ( lpCommProp->dwProvSubType == PST_MODEM && lpCommProp->wcProvChar[0]) {
         lpModemDevCaps = (LPMODEMDEVCAPS) lpCommProp->wcProvChar;
         printf("Modem Device Capabilities:\n");
@@ -9725,6 +9737,7 @@ DisplayCommProperties(HANDLE h)
         printf("  Max DCE Rate           = %d (bits/second)\n",
                 lpModemDevCaps->dwMaxDCERate);
     }
+#endif /* NODIAL */
     printf("\n");
     free(lpCommProp);
     return;

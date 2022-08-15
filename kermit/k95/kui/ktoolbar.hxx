@@ -16,7 +16,9 @@
 #include "kwin.hxx"
 
 typedef struct _ToolBitmapDef {
+#ifndef NOTOOLBAR
     TBBUTTON tbbutton;
+#endif
     char* helptext;
 } ToolBitmapDef;
 

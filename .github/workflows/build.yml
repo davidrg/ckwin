@@ -25,6 +25,7 @@ jobs:
           - x86
         toolset:
           - 14.0
+          - 14.2
           - 14.3
         # no-crypto=yes: builds version with all crypto disabled
         # no-crypto=no: builds version with all crypto enabled (where required dependencies are available)

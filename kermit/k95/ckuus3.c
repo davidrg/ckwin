@@ -71,8 +71,10 @@ extern char startupdir[], exedir[];
 extern int tt_modechg;
 #ifdef NT
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"                     /* Microsoft TAPI */
+#endif
 #endif /* NT */
 #endif /* OS2 */
 
@@ -2657,7 +2659,11 @@ uq_ok(preface,prompt,mask,help,dflt)
                          text ? text : prompt,
                          prompt,
                          MB_OK | MB_ICONINFORMATION | MB_TASKMODAL);
+#ifndef VINTAGEVC
         ShowWindowAsync(hwndConsole,SW_SHOWNORMAL);
+#else
+        ShowWindow(hwndConsole, SW_SHOWNORMAL);
+#endif
         SetForegroundWindow(hwndConsole);
         if (text)
 	  free(text);
@@ -2687,7 +2693,11 @@ uq_ok(preface,prompt,mask,help,dflt)
                          prompt,
                          MB_YESNO | MB_ICONINFORMATION | MB_TASKMODAL | 
                          (dflt == 2 ? MB_DEFBUTTON2 : MB_DEFBUTTON1));
+#ifndef VINTAGEVC
         ShowWindowAsync(hwndConsole,SW_SHOWNORMAL);
+#else
+        ShowWindow(hwndConsole,SW_SHOWNORMAL);
+#endif
         SetForegroundWindow(hwndConsole);
         if (text)
 	  free(text);
@@ -8667,7 +8677,9 @@ static struct keytab guitab[] = {
     { "font",        GUI_FON,  0 },
     { "menubar",     GUI_MNB,  0 },
     { "rgbcolor",    GUI_RGB,  0 },
+#ifndef NOTOOLBAR
     { "toolbar",     GUI_TLB,  0 },
+#endif
     { "window",      GUI_WIN,  0 },
     { "", 0, 0}
 };
