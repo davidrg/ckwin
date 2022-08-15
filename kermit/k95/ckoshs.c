@@ -136,6 +136,15 @@ ssh_parameters_t* ssh_parameters_new(
     params->allow_kbdint_auth = TRUE;
     params->allow_gssapi_auth = TRUE;
 
+    /* TODO: Keyboard interactive authentication doesn't seem to be working at
+     *       the moment. Testing against OpenSSH 8.4p1 Debian-5deb11u1, after
+     *       answering all prompts ssh_userauth_kbdint still gives SSH_AUTH_INFO
+     *       indicating more answers are required - even though there are no
+     *       more prompts to answer.
+     **/
+    params->allow_kbdint_auth = FALSE;
+
+
     /* If the user has supplied a list of authentication types then only those
      * types specified will be allowed.*/
     if (auth_methods) {
@@ -790,7 +799,7 @@ static int kbd_interactive_authenticate(ssh_client_state_t * state, BOOL *cancel
             char echo;
             char buffer[128];
             const char *prompt = ssh_userauth_kbdint_getprompt(
-                    state->session, i, &echo);
+                    state->session, 0, &echo);
 
             debug(F110, "sshsubsys - kdbint auth - single prompt mode - prompt:",
                   prompt, 0);
@@ -965,19 +974,11 @@ static int authenticate(ssh_client_state_t * state, BOOL *canceled) {
         rc = ssh_userauth_publickey_auto(state->session, NULL, NULL);
         if (rc == SSH_AUTH_SUCCESS) return rc;
     }
-    /* TODO: Not working quite right at the moment.
-     *    After answering all prompts ssh_userauth_kbdint still gives
-     *    SSH_AUTH_INFO indicating more answers are required - even though there
-     *    are no more prompts to answer.
-     *
-     *    Probably need to test a simpler example just in case its something
-     *    like threading causing problems.
-     *
     if (methods & SSH_AUTH_METHOD_INTERACTIVE
             && state->parameters->allow_kbdint_auth && !*canceled) {
         rc = kbd_interactive_authenticate(state, canceled);
         if (rc == SSH_AUTH_SUCCESS) return rc;
-    }*/
+    }
     if (methods & SSH_AUTH_METHOD_PASSWORD
             && state->parameters->allow_password_auth && !*canceled) {
         rc = password_authenticate(state, canceled);
