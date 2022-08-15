@@ -25,15 +25,6 @@ char *cknwin = "Win32 GUI Support 8.0.029, 10 March 2004";
 #include "ckosyn.h"
 #include "richedit.h"
 
-#ifdef _MSC_VER
-#if _MSC_VER >= 1400
-/* Enable visual styles - requires Visual C++ 2005 or newer */
-#pragma comment(linker,"\"/manifestdependency:type='win32' \
-name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
-processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
-#endif /* _MSC_VER >= 1400 */
-#endif /* _MSC_VER */
-
 /* Visual C++ 6 fixes */
 #ifndef DS_SHELLFONT
 #define DS_SHELLFONT        (DS_SETFONT | DS_FIXEDSYS)

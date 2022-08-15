@@ -1,4 +1,4 @@
-/*  C K O S S H   --  Kermit interface to OpenSSH Header */
+/*  C K O S S H   --  Kermit interface to libssh Header */
 
 /*
   Author:  Jeffrey E Altman (jaltman@secure-endpoints.com),
@@ -28,14 +28,13 @@ extern int                              /* SET SSH variables */
   ssh_k5tgt,                            /* k5 tgt passing */
   ssh_shk,                              /* Strict host key */
   ssh2_ark,                             /* Auto re-key */
-  ssh_cas,                              /* command as subsys */
   ssh_cfg,                              /* use OpenSSH config */
   ssh_gkx,                              /* gssapi key exchange */
   ssh_k5_is_k4,                         /* some OpenSSH use same codes */
   ssh_hbt,                              /* heartbeat */
   ssh_dummy;                            /* bottom of list */
 
-char                                    /* The following are to be malloc'd */
+char                             /* The following are to be malloc'd */
   * ssh1_cif,                           /* v1 cipher */
   * ssh2_cif,                           /* v2 cipher list */
   * ssh2_mac,                           /* v2 mac list */
@@ -71,12 +70,12 @@ _PROTOTYP(int ssh_xin,(int,char *));
 _PROTOTYP(int ssh_toc,(int));
 _PROTOTYP(int ssh_tol,(char *,int));
 _PROTOTYP(VOID ssh_terminfo,(char *,int, int));
-_PROTOTYP(CONST char * ssh_version,(VOID));
 _PROTOTYP(CONST char * ssh_errorstr,(int));
 _PROTOTYP(int ssh_ttvt,(VOID));
 _PROTOTYP(int ssh_ttpkt,(VOID));
 _PROTOTYP(int ssh_ttres,(VOID));
-_PROTOTYP(VOID ssh_usage,(VOID));
+_PROTOTYP(int ssh_snaws, (void));
+_PROTOTYP(int ssh_fwd_remote_port, (int port, char * host, int host_port));
 _PROTOTYP(int sshkey_create,(char * filename, int bits, char * pp,
                    int type, char * cmd_comment));
 _PROTOTYP(int sshkey_display_fingerprint,(char * filename, int babble));

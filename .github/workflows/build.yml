@@ -7,6 +7,15 @@ on:
     branches: [ "master" ]
   workflow_dispatch:
 
+env:
+  # Expected filename: https://zlib.net/zlib-${{env.ZLIB_VERSION}}.tar.gz
+  ZLIB_VERSION: 1.2.12
+  # Expected filename: https://www.openssl.org/source/openssl-${{env.OPENSSL_VERSION}}.tar.gz
+  OPENSSL_VERSION: 1.1.1q
+  # Exoected filename: ${{env.LIBSSH_SOURCE}}libssh-${{env.LIBSSH_VERSION}}.tar.xz
+  LIBSSH_SOURCE: https://www.libssh.org/files/0.9/
+  LIBSSH_VERSION: 0.9.6
+
 jobs:
   Build-VisualCxx:
     runs-on: windows-latest
@@ -17,6 +26,11 @@ jobs:
         toolset:
           - 14.0
           - 14.3
+        # no-crypto=yes: builds version with all crypto disabled
+        # no-crypto=no: builds version with all crypto enabled (where required dependencies are available)
+        no_crypto:
+          - no
+        #  - yes
 
     steps:
     - uses: actions/checkout@v3
@@ -29,6 +43,106 @@ jobs:
         toolset: ${{ matrix.toolset }}
         #sdk:   # use the latest
         #spectre: # set true to use VC libraries with sepctre mitigations
+
+      ##########################################################################
+      # Build optional dependencies (zlib, openssl, libssh)                    #
+      ##########################################################################
+    - name: Cache Optional Dependencies
+      uses: actions/cache@v3.0.5
+      id: cache-optional-dependencies
+      with:
+        path: |
+          ${{github.workspace}}\zlib 
+          ${{github.workspace}}\openssl 
+          ${{github.workspace}}\libssh 
+          ${{github.workspace}}\tools
+        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+libssh-${{env.LIBSSH_VERSION}}+nasm
+
+    - name: Get dependencies
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+      run: |
+        # Get and unpack zlib
+        mkdir zlib
+        cd zlib
+        wget https://zlib.net/zlib-${{env.ZLIB_VERSION}}.tar.gz -outfile zlib-${{env.ZLIB_VERSION}}.tar.gz
+        7z x zlib-${{env.ZLIB_VERSION}}.tar.gz
+        7z x zlib-${{env.ZLIB_VERSION}}.tar
+        ren zlib-${{env.ZLIB_VERSION}} ${{env.ZLIB_VERSION}}
+        del *.tar 
+        del *.gz
+        cd ..
+        
+        # Get and unpack openssl
+        mkdir openssl
+        cd openssl
+        wget https://www.openssl.org/source/openssl-${{env.OPENSSL_VERSION}}.tar.gz -outfile openssl-${{env.OPENSSL_VERSION}}.tar.gz
+        7z x openssl-${{env.OPENSSL_VERSION}}.tar.gz
+        7z x openssl-${{env.OPENSSL_VERSION}}.tar
+        ren openssl-${{env.OPENSSL_VERSION}} ${{env.OPENSSL_VERSION}}
+        del *.tar 
+        del *.gz
+        cd ..
+        
+        # Get and unpack libssh
+        mkdir libssh
+        cd libssh
+        wget ${{env.LIBSSH_SOURCE}}libssh-${{env.LIBSSH_VERSION}}.tar.xz -outfile libssh-${{env.LIBSSH_VERSION}}.tar.xz
+        7z x libssh-${{env.LIBSSH_VERSION}}.tar.xz
+        7z x libssh-${{env.LIBSSH_VERSION}}.tar
+        ren libssh-${{env.LIBSSH_VERSION}} ${{env.LIBSSH_VERSION}}
+        del *.tar 
+        del *.xz
+        cd ${{env.LIBSSH_VERSION}}
+        mkdir build
+        cd ..
+        cd ..
+        
+        # Get and unpack nasm
+        mkdir tools
+        cd tools
+        wget https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/win32/nasm-2.15.05-win32.zip -outfile nasm-2.15.05-win32.zip
+        7z x nasm-2.15.05-win32.zip
+        ren nasm-2.15.05 nasm
+        del *.zip
+        dir
+        cd nasm
+        dir
+        cd ..
+        cd ..          
+        
+        # Install perl modules required by OpenSSL build
+        cpan -i Text::Template
+      shell: powershell
+
+    - name: Build zlib
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+      shell: cmd
+      run: |
+        cd zlib\${{env.ZLIB_VERSION}}
+        cmake .
+        nmake -f win32\Makefile.msc
+
+    - name: Build openssl
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+      shell: powershell
+      run: |
+        cd openssl\${{env.OPENSSL_VERSION}}
+        $env:Path += ";${{github.workspace}}\tools\nasm"
+        $env:Path
+        perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}        
+        nmake
+
+    - name: Build libssh
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+      shell: powershell
+      run: |
+        cd libssh\${{env.LIBSSH_VERSION}}\build
+        cmake .. -G "NMake Makefiles" -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}\
+        nmake
+
+      ##########################################################################
+      # Build K95, K95G and other bits for redistribution                      #
+      ##########################################################################
     - name: Full Build
       run: |
         call ..\..\setenv.bat
@@ -38,6 +152,14 @@ jobs:
       working-directory: ${{ github.workspace }}\kermit\k95
       env:
         ROOT: ${{ github.workspace }}
+        # CKF_NO_CRYPTO=yes causes all crypto features to be excluded from the
+        # build. Undefined or CKF_NO_CRYPTO=no leaves crypto features enabled
+        # where the required dependencies exist.
+        CKF_NO_CRYPTO: ${{ matrix.no_crypto }}
+    - name: Make Distribution
+      run: mkdist.bat
+      shell: cmd
+      working-directory: ${{ github.workspace }}\kermit\k95
     - name: Prepare Artifact
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95
@@ -50,14 +172,30 @@ jobs:
         path: ${{ github.workspace }}\ckwin
         if-no-files-found: error
         retention-days: 7
-        
+
+
+  ##############################################################################
+  # Build with OpenWatcom 1.9 which allows targeting older versions of Windows #
+  ##############################################################################
+  # It is also likely to be upset by the same sorts of things as Visual C++ 6
+  # which reduces the liklihood of accidentally breaking that compiler.
   Build-OpenWatcom19-Win32:
     runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v3
-    
+
+      # Cache OpenWatcom because it takes quite a while to download and
+      # decompress.
+    - name: Cache OpenWatcom
+      uses: actions/cache@v3.0.5
+      id: cache-watcom
+      with:
+        path: |
+          ${{github.workspace}}\watcom
+        key: watcom-1.9
     - name: Get OpenWatcom 1.9
+      if: steps.cache-watcom.outputs.cache-hit != 'true'
       run: |
         mkdir watcom
         cd watcom
@@ -79,7 +217,13 @@ jobs:
 
         call ..\..\setenv.bat
         call mk.bat
-        call mkdist.bat
+      shell: cmd
+      working-directory: ${{ github.workspace }}\kermit\k95
+      env:
+        ROOT: ${{ github.workspace }}
+        WATCOM: ${{ github.workspace }}\watcom
+    - name: Make Distribution
+      run: mkdist.bat
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95
       env:
@@ -97,3 +241,86 @@ jobs:
         path: ${{ github.workspace }}\ckwin
         if-no-files-found: error
         retention-days: 7
+
+  ##############################################################################
+  # Build with Visual C++ 2003 Toolkit + Windows Server 2003 SP1 Platform SDK  #
+  ##############################################################################
+  # This is the oldest freely available compiler from Microsoft. The bits come
+  # from the Visual C++ 2003 Toolkit, the Windows Server 2003 SP1 Platform SDK
+  # as described here:
+  # https://epics.anl.gov/base/msvctk.php
+  Build-VCT2003-PSDK2003:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      # We need this only to get cvtres.exe which didn't come with either the
+      # Visual C++ 2003 Toolkit or the Windows Server 2003 SP1 Platform SDK.
+      - name: Enable Developer Command Prompt
+        # You may pin to the exact commit or the version.
+        # uses: ilammy/msvc-dev-cmd@d8610e2b41c6d0f0c3b4c46dad8df0fd826c68e1
+        uses: ilammy/msvc-dev-cmd@v1.10.0
+        with:
+          arch: x86
+          toolset: 14.0
+
+        # Cache the Visual C++ 2003 Toolkit & Platform SDK because it takes
+        # quite a while to download and decompress and I don't want my FTP
+        # server being hit constantly to download this whenever a build runs.
+      - name: Cache VCT2003
+        uses: actions/cache@v3.0.5
+        id: cache-vct2003
+        with:
+          path: |
+            ${{github.workspace}}\vct2003
+          key: vct2003+psdk2003sp1
+      - name: Get Visual C++ 2003 Toolkit + Platform SDK 2003
+        if: steps.cache-vct2003.outputs.cache-hit != 'true'
+        run: |
+          wget https://ftp.zx.net.nz/pub/dev/VC2003Toolkit/VCT2003+PSDK2003+cvtres.7z -outfile VCT2003+PSDK2003+cvtres.7z
+          7z x VCT2003+PSDK2003+cvtres.7z
+          Rename-Item -Path "Microsoft Platform SDK 2003SP1" -NewName "VCT2003"
+          Remove-Item VCT2003+PSDK2003+cvtres.7z
+          Remove-Item VCT2003\Bin\Cvtres.exe
+        shell: powershell
+      - name: Full Build
+        run: |
+          Set PATH=%VCT2003%\bin;%PATH%
+          
+          REM Don't want to pick up headers or libraries from Visual C++ 14.0
+          REM which is also on here - we only want it for cvtres.exe.
+          Set INCLUDE=%VCT2003%\include
+          Set LIB=%VCT2003%\lib
+  
+          call ..\..\setenv.bat
+          
+          REM The Visual C++ 2003 Toolkit can only statically link the C Runtime
+          REM (though apparently you can get the required import library for
+          REM dynamic linking from the .NET SDK 1.1)
+          set CKB_STATIC_CRT=yes
+          
+          call mk.bat
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95
+        env:
+          ROOT: ${{ github.workspace }}
+          VCT2003: ${{ github.workspace }}\VCT2003
+      - name: Make Distribution
+        run: mkdist.bat
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95
+        env:
+          ROOT: ${{ github.workspace }}
+      - name: Prepare Artifact
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95
+        run: |
+          move dist ${{ github.workspace }}\ckwin
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2.2.4
+        with:
+          name: ckwin-vct2003
+          path: ${{ github.workspace }}\ckwin
+          if-no-files-found: error
+          retention-days: 7

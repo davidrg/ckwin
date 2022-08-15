@@ -2982,6 +2982,9 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
   Then, if either SSHBUILTIN or SSHCMD is defined, ANYSSH is also defined.
 */
 
+#ifdef COMMENT
+Built-in SSH no longer depends on SSL support. Built-in SSH is now provided by
+a library (libssh, ssh.dll) which is itself linked against OpenSSL.
 #ifndef NOSSH
 #ifndef NO_SSL
 #ifdef OS2ONLY
@@ -2996,6 +2999,7 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #define NOSSH
 #endif /* NO_SSL */
 #endif /* NOSSH */
+#endif /* COMMENT */
 
 #ifdef NOSSH				/* NOSSH */
 #ifdef SSHBUILTIN			/* undefines any SSH selctors */

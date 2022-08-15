@@ -40,7 +40,12 @@ LWP30DIR  = C:\LANWP\TOOLKIT
 LWP30LIBS32 = $(LWP30DIR)\os2lib20\socklib.lib 
 LWP30INC    = $(LWP30DIR)\inc20
 
+!if "$(CKB_STATIC_CRT)"=="yes"
+!message Building with statically linked native CRT as requested.
+COMMON_CFLAGS = /MT
+!else
 COMMON_CFLAGS = /MD
+!endif
 
 # These options are used for all Windows .exe targets
 COMMON_OPTS = /GA /Ox
@@ -75,6 +80,7 @@ COMPILER = unknown
 COMPILER_VERSION = assuming Visual C++ 1.0
 MSC_VER = 80
 TARGET_CPU = x86
+WIN32_VERSION=0x0400
 
 # On windows we'll try to detect the Visual C++ version being used and adjust
 # compiler flags accordingly.
@@ -82,34 +88,18 @@ TARGET_CPU = x86
 !message Attempting to detect compiler...
 
 !include compiler_detect.mak
-!message 	
+!message
 !endif
 
-WIN32_VERSION=0x0400
+# This turns features on and off based on set feature flags (CKF_*), the
+# platform being targeted, and the compiler currently in use.
+!include feature_flags.mak
 
-ENABLED_FEATURES = Network-Connections
-ENABLED_FEATURE_DEFS = -DNETCONN
-
-DISABLED_FEATURES = Kerberos SSH XYZMODEM SSL SRP
-DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNOSSH -DNOCKXYZ -DNO_SSL -DNO_SRP
-
-!if "$(PLATFORM)" == "NT"
-!if ($(MSC_VER) >= 192)
-# ConPTY on Windows 10+ requires a Platform SDK from late 2018 or newer.
-# So we'll limit this feature to when building with Visual C++ 2019 or
-# later.
-ENABLED_FEATURES = $(ENABLED_FEATURES) ConPTY
-ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_CONPTY
-
-# Needed for STARTUPINFOEX
-WIN32_VERSION=0x0600
-!endif
-!endif
-
-
-!message ========================================
+!message
+!message
+!message ===============================================================================
 !message C-Kermit Build Configuration
-!message ========================================
+!message ===============================================================================
 !message  Platform:                 $(PLATFORM)
 !message  Build:                    $(K95BUILD)
 !message  Architecture:             $(TARGET_CPU)
@@ -118,8 +108,9 @@ WIN32_VERSION=0x0600
 !message  Compiler Target Platform: $(TARGET_PLATFORM)
 !message  Enabled Features:         $(ENABLED_FEATURES)
 !message  Disabled Features:        $(DISABLED_FEATURES)
-!message ========================================
-
+!message ===============================================================================
+!message
+!message
 !if "$(CMP)" == "OWCL"
 
 # Standard windows headers from MinGW that don't come with OpenWatcom:
@@ -130,6 +121,9 @@ INCLUDE = $(INCLUDE);ow\;
 !if ($(MSC_VER) < 60)
 !error Unsupported compiler version. Visual C++ 6.0 SP6 or newer required.
 !endif
+
+# TODO: Much of this compiler flag work should be applied to the KUI Makefile
+#       too
 
 # Check to see if we're using Visual C++ and targeting 64bit x86. If so
 # then tell the linker we're targeting x86-64
@@ -528,18 +522,14 @@ DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH -DONETERMUPD -DUSE_STRER
 		  #-DBETATEST # -DPRE_SRP_1_7_3
 !else
 DEFINES = -DNT -DWINVER=0x0400 -DOS2 -D_CRT_SECURE_NO_DEPRECATE -DUSE_STRERROR\
-          -DDYNAMIC -DKANJI -DNEWFTP\
+          -DDYNAMIC -DKANJI \
           -DHADDRLIST -DNPIPE -DOS2MOUSE -DTCPSOCKET -DRLOGCODE \
-          -DNETFILE -DONETERMUPD -DCRYPT_DLL -DBETATEST -DNO_DNS_SRV \
+          -DNETFILE -DONETERMUPD  \
+          -DNEWFTP -DBETATEST -DNO_DNS_SRV \
           $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS) \
 !if "$(CMP)" != "OWCL"
           -D__STDC__ \
 !endif
-		  # DECnet (Pathworks32) support: -DDECNET
-		  # SuperLAT support: -DSUPERLAT
-		  # zlib support: -DZLIB
-		  
-		  #-DBETATEST -DSFTP_BUILTIN # -DPRE_SRP_1_7_3 -DCK_NETBIOS -DNEW_URL_HIGHLIGHT 
 !endif
 !endif  /* PLATFORM */
 !else
@@ -568,17 +558,27 @@ KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
         advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib \
         rpcrt4.lib rpcns4.lib wsock32.lib \
         winmm.lib vdmdbg.lib comctl32.lib mpr.lib $(COMMODE_OBJ) \
+!if "$(CKF_SSH)" == "yes"
+       ssh.lib ws2_32.lib \
+!endif
+!if "$(CKF_SSL)" == "yes"
+       libssl.lib libcrypto.lib \
+!endif
         #msvcrt.lib
         #Kerberos: wshload.lib
-		# SRP support: srpstatic.lib 
-		# SSH support: ssh\libssh.lib ssh\openbsd.lib
+		# SRP support: srpstatic.lib
         #libsrp.lib bigmath.lib
 LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib shell32.lib\
        winmm.lib mpr.lib advapi32.lib winspool.lib $(COMMODE_OBJ) \
+!if "$(CKF_SSH)" == "yes"
+       ssh.lib ws2_32.lib \
+!endif
+!if "$(CKF_SSL)" == "yes"
+       libssl.lib libcrypto.lib \
+!endif
        #msvcrt.lib  
        # Kerberos: wshload.lib
 	   # SRP support: srpstatic.lib
-	   # SSH support: ssh\libssh.lib ssh\openbsd.lib
        # libsrp.lib bigmath.lib
 !endif
 !endif /* PLATFORM */
@@ -607,6 +607,9 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
 !if 0
         ck_crp$(O) ck_des$(O) \
 !endif
+!if ("$(CKF_SSH)" == "yes")
+        ckossh$(O) ckorbf$(O) ckoshs$(O) \
+!endif
         ckocon$(O) ckoco2$(O) ckoco3$(O) ckoco4$(O) ckoco5$(O) \
         ckoetc$(O) ckoetc2$(O) ckokey$(O) ckomou$(O) ckoreg$(O) \
         ckonet$(O) \
@@ -616,11 +619,13 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
 !if "$(PLATFORM)" == "NT"
         cknnbi$(O) \
 !else
-        ckonbi$(O) 
+        ckonbi$(O) \
 !endif /* PLATFORM */
-# XYZ Modem support
-#        ckop$(O) p_callbk$(O) p_global$(O) p_omalloc$(O) p_error$(O) \
-#        p_common$(O) p_tl$(O) p_dir$(O)
+!if ("$(CKF_XYZ)" == "yes")
+        ckop$(O) p_callbk$(O) p_global$(O) p_omalloc$(O) p_error$(O) \
+        p_common$(O) p_tl$(O) p_dir$(O)
+!endif
+
 
 #OUTDIR = \kui\win95
 KUIOBJS = \
@@ -1008,8 +1013,10 @@ cknpty$(O):     cknpty.c cknpty.h
 ckoslp$(O):     ckoslp.c ckoslp.h ckcdeb.h ckoker.h ckclib.h 
 ckomou$(O):     ckomou.c ckocon.h ckcdeb.h ckoker.h ckclib.h ckokey.h ckokvb.h ckuusr.h
 ckop$(O):       ckop.c ckop.h ckcdeb.h ckoker.h ckclib.h ckcker.h \ 
-                ckuusr.h ckcnet.h ckctel.h ckonet.h ckocon.h
-				# XYZMODEM Support: p_global.h p_callbk.h 
+                ckuusr.h ckcnet.h ckctel.h ckonet.h ckocon.h \
+!if "$(CKF_XYZ)" == "yes"
+				p_global.h p_callbk.h
+!endif
 cknsig$(O):	cknsig.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckcsym.h ckcnet.h ckctel.h ckonet.h\
                 ckuusr.h ckonet.h ckcsig.h ckocon.h
 ckusig$(O):	ckusig.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckcsym.h ckcnet.h ckctel.h ckonet.h\
@@ -1029,11 +1036,14 @@ ck_ssl$(O):     ck_ssl.c ckcdeb.h ckoker.h ckclib.h ckctel.h ck_ssl.h ckosslc.h 
 ckossl$(O):     ckossl.c ckcdeb.h ckoker.h ck_ssl.h ckossl.h
 ckosslc$(O):    ckosslc.c ckcdeb.h ckoker.h ck_ssl.h ckosslc.h
 ckozli$(O):     ckozli.c ckcdeb.h ckoker.h ckozli.h
+
+ckossh$(O):     ckoshs.h ckoshs.h ckorbf.h ckcdeb.h ckoker.h ckclib.h ckosslc.h ckossh.c ckossh.h
+ckoshs(O):      ckoshs.c ckoshs.h ckorbf.h ckcdeb.h ckcker.h ckocon.h
+ckorbf(O):      ckorbf.c ckorbf.h ckcdeb.h
+
+
 ckosftp$(O):    ckcdeb.h ckoker.h ckclib.h ckosftp.h ckosftp.c
 	$(CC) $(CC2) $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ckosftp.c
-# SSH support: -Issh -Issh/openbsd-compat
-#ckossh$(O):     ckcdeb.h ckoker.h ckclib.h ckossl.h ckoath.h ckosslc.h ckossh.c ckossh.h
-#	$(CC) $(CC2) -Issh -Issh/openbsd-compat $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ckossh.c
 
 ck_crp$(O):     ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h ck_crp.c
 !if "$(PLATFORM)" == "OS2"
@@ -1046,16 +1056,18 @@ ck_crp$(O):     ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h c
 #
 #!endif
 
-# X/Y/Z Modem support (3rd-party proprietary library)
-#p_brw$(O):     ckcdeb.h ckoker.h ckclib.h ckocon.h p_brw.c p_type.h p_brw.h
-#p_callbk$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_callbk.c p_type.h p.h p_callbk.h p_common.h p_brw.h \
-#               p_error.h  p_global.h p_module.h p_omalloc.h
-#p_common$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_common.c p_type.h p_common.h p_error.h p_module.h p_global.h
-#p_dir$(O):     ckcdeb.h ckoker.h ckclib.h ckocon.h p_dir.c    p_type.h p_dir.h
-#p_error$(O):   ckcdeb.h ckoker.h ckclib.h ckocon.h p_error.c  p_type.h p_errmsg.h ckcnet.h ckctel.h ckonet.h
-#p_global$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_global.c p_type.h p_tl.h p_brw.h p.h
-#p_tl$(O):      ckcdeb.h ckoker.h ckclib.h ckocon.h p_tl.c     p_type.h p_tl.h p_brw.h p.h
-#p_omalloc$(O): ckcdeb.h ckoker.h ckclib.h p_omalloc.c p_type.h p_error.h p.h
+# X/Y/Z Modem support (3rd-party library)
+!if "$(CKF_XYZ)" == "yes"
+p_brw$(O):     ckcdeb.h ckoker.h ckclib.h ckocon.h p_brw.c p_type.h p_brw.h
+p_callbk$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_callbk.c p_type.h p.h p_callbk.h p_common.h p_brw.h \
+               p_error.h  p_global.h p_module.h p_omalloc.h
+p_common$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_common.c p_type.h p_common.h p_error.h p_module.h p_global.h
+p_dir$(O):     ckcdeb.h ckoker.h ckclib.h ckocon.h p_dir.c    p_type.h p_dir.h
+p_error$(O):   ckcdeb.h ckoker.h ckclib.h ckocon.h p_error.c  p_type.h p_errmsg.h ckcnet.h ckctel.h ckonet.h
+p_global$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_global.c p_type.h p_tl.h p_brw.h p.h
+p_tl$(O):      ckcdeb.h ckoker.h ckclib.h ckocon.h p_tl.c     p_type.h p_tl.h p_brw.h p.h
+p_omalloc$(O): ckcdeb.h ckoker.h ckclib.h p_omalloc.c p_type.h p_error.h p.h
+!endif
 
 ckcpro.c:	ckcpro.w ckwart.exe
 #		$(MAKE) -f ckoker.mak ckwart.exe \

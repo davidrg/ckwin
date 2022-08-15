@@ -11985,10 +11985,9 @@ line25(int vmode) {
 }
 
 /* CHSTR  --  Make a printable string out of a character  */
-
 char*
 chstr(int c) {
-    char s[8];
+    static char s[8];
     char *cp = s;
 
     if (c < SP || c == DEL)
