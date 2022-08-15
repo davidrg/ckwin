@@ -88,7 +88,7 @@ ssh_parameters_t* ssh_parameters_new(
         BOOL gssapi_delegate_credentials, int host_key_checking_mode,
         char* user_known_hosts_file, char* global_known_hosts_file,
         char* username, char* password, char* terminal_type, int pty_width,
-        int pty_height) {
+        int pty_height, char* auth_methods) {
     ssh_parameters_t* params;
 
     params = malloc(sizeof(ssh_parameters_t));
@@ -135,6 +135,37 @@ ssh_parameters_t* ssh_parameters_new(
     params->allow_pubkey_auth = TRUE;
     params->allow_kbdint_auth = TRUE;
     params->allow_gssapi_auth = TRUE;
+
+    /* If the user has supplied a list of authentication types then only those
+     * types specified will be allowed.*/
+    if (auth_methods) {
+        params->allow_password_auth = FALSE;
+        params->allow_pubkey_auth = FALSE;
+        params->allow_kbdint_auth = FALSE;
+        params->allow_gssapi_auth = FALSE;
+
+        if (strstr(auth_methods, "external-keyx")) {
+            /* Not supported */
+        }
+        if (strstr(auth_methods, "gssapi")) {
+            params->allow_gssapi_auth = TRUE;
+        }
+        if (strstr(auth_methods, "hostbased")) {
+            /* Not supported */
+        }
+        if (strstr(auth_methods, "keyboard-interactive")) {
+            params->allow_kbdint_auth = TRUE;
+        }
+        if (strstr(auth_methods, "password")) {
+            params->allow_password_auth = TRUE;
+        }
+        if (strstr(auth_methods, "publickey")) {
+            params->allow_pubkey_auth = TRUE;
+        }
+        if (strstr(auth_methods, "srp-gex-sha1")) {
+            /* Not supported */
+        }
+    }
 
     return params;
 }
