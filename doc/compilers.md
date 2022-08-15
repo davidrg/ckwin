@@ -5,19 +5,17 @@ different compilers capable of targeting different versions of the
 operating system.
 
 This table outlines Which compilers you can use to target which
-versions of Windows, and what features you loose in the process.
+versions of Windows, and what features you loose (or gain) in the process.
 
 For the best security, always use the most recent compiler you 
 can. Support for older compilers remains for those wishing to build
 C-Kermit for vintage Windows systems, the security situation of which
 is well known. C-Kermit for Windows, when built with the right compiler, 
-supports Windows NT 3.51+ and Windows 95+. Windows NT 3.1, 3.50 and Win32s 
-are unsupported at this time.
+supports Windows NT 3.51+ and Windows 95+. Windows NT 3.1 and 3.50 are 
+unsupported at this time.
 
-The CI system is setup to do builds with Visual C++ 2022, 
+The CI system is set-up to do builds with Visual C++ 2022, 
 Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
-
-
 
 <table>
 <tr>
@@ -42,6 +40,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td></td> <!-- Notes -->
 </tr>
 <tr>
     <td>Visual C++ 2019</td>
@@ -53,6 +52,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td></td> <!-- Notes -->
 </tr>
 <tr>
     <td>Visual C++ 2017</td>
@@ -64,17 +64,19 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td></td> <!-- Notes -->
 </tr>
 <tr>
     <td>Visual C++ 2015</td>
     <td>Windows XP</td>
     <td>✅</td> <!-- Free -->
     <td>❌</td> <!-- PTY -->
-    <td>❔</td> <!-- SSH -->
+    <td>✅</td> <!-- SSH -->
     <td>✅</td> <!-- NTLM/Auth -->
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td></td> <!-- Notes -->
 </tr>
 <tr>
     <td>Visual C++ 2013</td>
@@ -86,6 +88,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td></td> <!-- Notes -->
 </tr>
 <tr>
     <td>Visual C++ 2012</td>
@@ -97,6 +100,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td></td> <!-- Notes -->
 </tr>
 <tr>
     <td>Visual C++ 2010</td>
@@ -108,6 +112,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td></td> <!-- Notes -->
 </tr>
 <tr>
     <td>Visual C++ 2008</td>
@@ -119,6 +124,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td></td> <!-- Notes -->
 </tr>
 <tr>
     <td>Visual C++ 2005</td>
@@ -159,6 +165,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td></td> <!-- Notes -->
 </tr>
 <tr>
     <td>Visual C++ 6.0 SP6</td>
@@ -171,6 +178,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td></td> <!-- Notes -->
 </tr>
 <tr>
     <td>Visual C++ 5.0 (Visual Studio 97)</td>
@@ -183,6 +191,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td></td> <!-- Notes -->
 </tr>
 <tr>
     <td>Visual C++ 4.0</td>
@@ -196,6 +205,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td></td> <!-- Notes -->
 </tr>
 <tr>
     <td>OpenWatcom 1.9</td>
@@ -208,5 +218,6 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td></td> <!-- Notes -->
 </tr>
 </table>
