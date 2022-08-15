@@ -154,7 +154,7 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *      TODO: KERBEROS5 TGT-PASSING {ON,OFF}    -- delete
  *      TODO: PRIVILEGED-PORT {ON,OFF}
  *      TODO: QUIET {ON,OFF}
- *      TODO: STRICT-HOST-KEY-CHECK {ASK, ON, OFF}
+ *      STRICT-HOST-KEY-CHECK {ASK, ON, OFF}
  *      USE-OPENSSH-CONFIG {ON,OFF}
  *          Value is stored in ssh_cfg
  *      V1 CIPHER {3DES, BLOWFISH, DES}

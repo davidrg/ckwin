@@ -93,6 +93,17 @@ typedef struct {
     char* password;                             /* pwbuf if pwflg */
     int pty_height, pty_width;                  /* Terminal dimensions */
     char* terminal_type;                        /* Terminal type */
+
+    /* Allowed authentication types */
+    BOOL allow_password_auth;
+    BOOL allow_pubkey_auth;
+    BOOL allow_kbdint_auth;
+    BOOL allow_gssapi_auth;
+
+    /* TODO: When agent, X11, and other port forwarding is added
+     *      all forwarding should be forced off/cleared when host key
+     *      verification fails and strict host key checking is set to no.
+     */
 } ssh_parameters_t;
 
 

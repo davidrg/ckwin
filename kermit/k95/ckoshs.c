@@ -39,6 +39,9 @@
 
 #include "ckoshs.h"
 
+#ifdef KUI
+extern HWND hwndConsole;
+#endif
 
 /* SSH Strict Host Key Checking options */
 #define SSH_SHK_NO 0                    /* Trust everything implicitly */
@@ -126,6 +129,12 @@ ssh_parameters_t* ssh_parameters_new(
     params->host_key_checking_mode = host_key_checking_mode;
     params->pty_width = pty_width;
     params->pty_height = pty_height;
+
+    /* All authentication types allowed by default */
+    params->allow_password_auth = TRUE;
+    params->allow_pubkey_auth = TRUE;
+    params->allow_kbdint_auth = TRUE;
+    params->allow_gssapi_auth = TRUE;
 
     return params;
 }
@@ -409,8 +418,6 @@ static int log_verbosity(int verbosity) {
 
 /** Checks to see if the host being connected to is known.
  *
- * TODO: Overhaul this function.
- *
  * @param state SSH Client State
  * @return An error code (0 = success)
  */
@@ -420,14 +427,18 @@ static int verify_known_host(ssh_client_state_t * state) {
     unsigned char* hash = NULL;
     size_t hash_length = 0;
     enum ssh_known_hosts_e host_state;
-    char *hexa;
-    char msg[1024];
+    char* key_type;
+    char* hexa;
+    char msg[2048], msg2[2048];;
+    char* error_msg;
 
     rc = ssh_get_server_publickey(state->session, &server_pubkey);
     if (rc != SSH_OK) {
-        printf("Failed to get public key\n");
+        debug(F100, "Failed to get public key", "", 0);
         return SSH_ERR_SSH_ERROR;
     }
+
+    key_type = ssh_key_type_to_char(ssh_key_type(server_pubkey));
 
     rc = ssh_get_publickey_hash(server_pubkey,
                                 SSH_PUBLICKEY_HASH_SHA256,
@@ -435,60 +446,118 @@ static int verify_known_host(ssh_client_state_t * state) {
                                 &hash_length);
     ssh_key_free(server_pubkey);
     if (rc != SSH_OK) {
-        printf("Failed to get public key hash\n");
+        debug(F100, "Failed to get public key hash", "", 0);
         return SSH_ERR_SSH_ERROR;
     }
 
     host_state = ssh_session_is_known_server(state->session);
-    /* TODO: Redo all of this properly. */
+
+    /*
+     * TODO: Can we check for simultaneous IP and host key change (DNS Spoofing)
+     *       like openssh does?
+     *
+     * TODO: We should also include the servers IP *and* hostname in some
+     *       messages rather than only the user-supplied hostname-or-ip.
+     */
+
     switch (host_state) {
         case SSH_KNOWN_HOSTS_OK:
             /* Cool! */
-            printf("Host verified!\n");
             break;
         case SSH_KNOWN_HOSTS_CHANGED:
-            /* Previously:
-                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                "@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\n"
-                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                "IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!\n"
-                "Someone could be eavesdropping on you right now (man-in-the-middle attack)!\n"
-                "It is also possible that the ", type, " host key has just been changed.\n"
-                "The fingerprint for the ", type, " key sent by the remote host is\n",
-                fp, "\nPlease contact your system administrator.\n"
-                "Add correct host key in ", (char*)user_hostfile, " to get rid of this message.\n"
-                "Offending key in ", (char *)host_file, ":", ckitoa(host_line));
-             *
-             * If strict host key checking then display a message saying can't connect
-             * If set to ask, ask user if continue or not.
-             * If not requested, allow without password auth, agent forwarding,
-             *      X11 forwarding and port forwarding.
-             */
-            printf("WARNING! The server key has changed. "
-                   "This may indicate a possible attack.\n");
+            char* user_knownhosts_file;
+
             hexa = ssh_get_hexa(hash, hash_length);
-            printf("Public key hash: %s\n", hexa);
+
+            ssh_options_get(state->session, SSH_OPTIONS_KNOWNHOSTS,
+                            &user_knownhosts_file);
+
+            hexa = ssh_get_hexa(hash, hash_length);
+
+            rc = SSH_ERR_HOST_VERIFICATION_FAILED;
+
+            snprintf(msg, sizeof(msg),
+                      "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
+                      "@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\n"
+                      "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+            printf(msg);
+            snprintf(msg, sizeof(msg),
+                      "IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!\n"
+                      "Someone could be eavesdropping on you right now (man-in-the-middle attack)!\n"
+                      "It is also possible that a host key has just been changed.\n"
+                      "The fingerprint for the %s key sent by the remote host is\n"
+                      "%s\nPlease contact your system administrator.\n"
+                      "Add correct host key in %s to get rid of this message.\n",
+                      key_type, hexa, user_knownhosts_file);
+
+            ssh_string_free_char(user_knownhosts_file);
+
+            /* TODO: Ideally we'd output the file they key was found in and the
+             *       line the key was on. But there is currently no easy way to
+             *       get this information out of libssh */
+
+            if (state->parameters->host_key_checking_mode == SSH_SHK_YES) {
+                snprintf(msg2, sizeof(msg2),
+                         "\n%s host key for '%s' has changed and you have "
+                         "requested strict checking.\nHost key verification "
+                         "failed.\n", state->parameters->hostname, key_type);
+                strncat(msg, msg2, sizeof(msg) - strlen(msg2) - 1);
+            } else if (state->parameters->host_key_checking_mode == SSH_SHK_NO) {
+                if (state->parameters->allow_password_auth) {
+                    strncat(msg, "Password authentication is disabled to avoid trojan horses.\n",
+                            sizeof(msg) - strlen(msg) - 1);
+                    state->parameters->allow_password_auth = FALSE;
+                }
+
+                /* Otherwise we allow connection to proceed */
+                rc = SSH_ERR_NO_ERROR;
+            } else if (state->parameters->host_key_checking_mode != SSH_SHK_ASK) {
+                printf("Invalid strict host key check value!\n");
+            }
+
+            printf(msg);
+#ifdef KUI
+            snprintf(msg2, sizeof(msg2), "REMOTE HOST IDENTIFICATION HAS CHANGED! \n\n%s", msg);
+            MessageBox(hwndConsole,
+                         msg2,
+                         "WARNING - POTENTIAL SECURITY BREACH",
+                         MB_OK | MB_ICONEXCLAMATION | MB_TASKMODAL);
+#endif
+
+            if (state->parameters->host_key_checking_mode == SSH_SHK_ASK) {
+                snprintf(msg, sizeof(msg),
+                         "The authenticity of host '%.200s' can't be established.\n"
+                         "%s key fingerprint is %s\n",
+                         state->parameters->hostname, key_type, hexa );
+                if (uq_ok(msg,
+                             "Are you sure you want to continue connecting (yes/no)? ",
+                            3, NULL, -1)) {
+                    rc = SSH_ERR_NO_ERROR;
+                } else {
+                    printf("Aborted by user!\n");
+                }
+            }
+
             ssh_string_free_char(hexa);
             ssh_clean_pubkey_hash(&hash);
-            return SSH_ERR_HOST_VERIFICATION_FAILED;
+
+            return rc;
         case SSH_KNOWN_HOSTS_OTHER:
-            /* Previously: If IP status == HOST_NEW then msg = "is unknown"
-             *             If IP status == HOST_OK then msg = "is unchanged"
-             * Message:
-               "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-               "@       WARNING: POSSIBLE DNS SPOOFING DETECTED!          @\n"
-               "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-               "The ", type, " host key for ", host, " has changed,\n"
-               "and the key for the according IP address ", ip, "\n",
-               msg, ". This could either mean that\n",
-               "DNS SPOOFING is happening or the IP address for the host\n"
-               "and its host key have changed at the same time.\n",
-             */
-            printf("Warning: Server key type has changed. An attacker may change the "
-                   "server key type to confuse clients into thinking the key does "
-                   "not exist.\n");
+            rc = SSH_ERR_NO_ERROR;
+
+            snprintf(msg, sizeof(msg),
+                     "Warning: Server key type has changed. An attacker may change the "
+                     "server key type to confuse clients into thinking the key does "
+                     "not exist.\n" );
+            if (!uq_ok(msg,
+                         "Are you sure you want to continue connecting (yes/no)? ",
+                            3, NULL, -1)) {
+                printf("Aborted by user!\n");
+                rc = SSH_ERR_HOST_VERIFICATION_FAILED;
+            }
+
             ssh_clean_pubkey_hash(&hash);
-            return SSH_ERR_HOST_VERIFICATION_FAILED;
+            return rc;
         case SSH_KNOWN_HOSTS_NOT_FOUND:
             printf("Could not find the known hosts file. If you accept the key here "
                    "it will be created automatically.\n");
@@ -508,6 +577,8 @@ static int verify_known_host(ssh_client_state_t * state) {
 
                 uq_ok(NULL, msg, 1, NULL, 0);
 
+                ssh_clean_pubkey_hash(&hash);
+                return SSH_ERR_HOST_VERIFICATION_FAILED;
             } else if (state->parameters->host_key_checking_mode = SSH_SHK_ASK) {
                 hexa = ssh_get_hexa(hash, hash_length);
                 snprintf(msg, sizeof(msg),
@@ -848,11 +919,18 @@ static int authenticate(ssh_client_state_t * state, BOOL *canceled) {
      * until the server is satisfied */
     methods = ssh_userauth_list(state->session, NULL);
 
-    if (methods & SSH_AUTH_METHOD_NONE && !*canceled) {
+    if (methods & SSH_AUTH_METHOD_NONE &&!*canceled) {
         rc = ssh_userauth_none(state->session, NULL);
         if (rc == SSH_AUTH_SUCCESS) return rc;
     }
-    if (methods & SSH_AUTH_METHOD_PUBLICKEY && !*canceled) {
+    /* TODO: GSS API
+    if (methods & SSH_AUTH_METHOD_GSSAPI
+            && state->parameters->allow_gssapi_auth && !*canceled) {
+        // TODO: rc = ssh_userauth_gssapi(...);
+        if (rc == SSH_AUTH_SUCCESS) return rc;
+    }   */
+    if (methods & SSH_AUTH_METHOD_PUBLICKEY
+            && state->parameters->allow_pubkey_auth && !*canceled) {
         rc = ssh_userauth_publickey_auto(state->session, NULL, NULL);
         if (rc == SSH_AUTH_SUCCESS) return rc;
     }
@@ -864,11 +942,13 @@ static int authenticate(ssh_client_state_t * state, BOOL *canceled) {
      *    Probably need to test a simpler example just in case its something
      *    like threading causing problems.
      *
-    if (methods & SSH_AUTH_METHOD_INTERACTIVE && !*canceled) {
+    if (methods & SSH_AUTH_METHOD_INTERACTIVE
+            && state->parameters->allow_kbdint_auth && !*canceled) {
         rc = kbd_interactive_authenticate(state, canceled);
         if (rc == SSH_AUTH_SUCCESS) return rc;
     }*/
-    if (methods & SSH_AUTH_METHOD_PASSWORD && !*canceled) {
+    if (methods & SSH_AUTH_METHOD_PASSWORD
+            && state->parameters->allow_password_auth && !*canceled) {
         rc = password_authenticate(state, canceled);
         if (rc == SSH_AUTH_SUCCESS) return rc;
     }
@@ -877,7 +957,7 @@ static int authenticate(ssh_client_state_t * state, BOOL *canceled) {
         return SSH_ERR_USER_CANCELED;
     }
 
-    /* TODO: ssh_userauth_gssapi() */
+
 
     return rc;
 }
