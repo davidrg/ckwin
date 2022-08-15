@@ -20,7 +20,7 @@ New Features
 
 SSH Support is back in a limited way. Interactive sessions and file transfers
 work but forwarding and some of the `set ssh` commands have not yet been
-implemented. You can SSH places with the `ssh` command.
+implemented. For more details, see the [SSH Readme](doc/ssh-readme.md).
 
 PTYs are also supported on Windows 10+ now via the `pty` command. For example,
 `pty cmd.exe` will open the Windows shell inside C-Kermit and from there you can
