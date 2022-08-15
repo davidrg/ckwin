@@ -221,5 +221,6 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td>To target NT 3.50, <tt>set CKT_NT31=yes</tt> before building</td>
 </tr>
 </table>
