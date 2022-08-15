@@ -71,13 +71,14 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *   int   pwflg      0       Password has been supplied (/password:)
  *   char* pwbuf      "\0"    Supplied password
  *   char* uidbuf     ""      Supplied username (if any)
+ *   char* ssh2_auth  NULL    Comma-separated list of allowed auth methods
  *
  * Unused Global Variables:
  *   ssh_afw, ssh_xfw, ssh_prp, ssh_shh, ssh_chkip,
  *   ssh_gwp, ssh_dyf, ssh_k4tgt, ssh_k5tgt, ssh2_ark,
  *   ssh_gkx, ssh_k5_is_k4, ssh_hbt, ssh_dummy
  *
- *   ssh2_cif, ssh2_mac, ssh2_auth, ssh_xal, ssh2_hka, xxx_dummy
+ *   ssh2_cif, ssh2_mac, ssh_xal, ssh2_hka, xxx_dummy
  *
  * Obsolete or not used:
  *    char* ssh1_cif    SSH-1 Not supported     SSH-1 Cipher.
@@ -154,7 +155,7 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *      TODO: KERBEROS5 TGT-PASSING {ON,OFF}    -- delete
  *      TODO: PRIVILEGED-PORT {ON,OFF}
  *      TODO: QUIET {ON,OFF}
- *      TODO: STRICT-HOST-KEY-CHECK {ASK, ON, OFF}
+ *      STRICT-HOST-KEY-CHECK {ASK, ON, OFF}
  *      USE-OPENSSH-CONFIG {ON,OFF}
  *          Value is stored in ssh_cfg
  *      V1 CIPHER {3DES, BLOWFISH, DES}
@@ -163,7 +164,12 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *          Ignored (SSH-1 not supported)
  *      V1 USER-KNOWN-HOSTS-FILE filename
  *          Ignored (SSH-1 not supported)
- *      TODO: V2 AUTHENTICATION {EXTERNAL-KEYX, GSSAPI, HOSTBASED, KEYBOARD-INTERACTIVE, PASSWORD, PUBKEY, SRP-GEX-SHA1}
+ *      V2 AUTHENTICATION {EXTERNAL-KEYX, GSSAPI, HOSTBASED, KEYBOARD-INTERACTIVE, PASSWORD, PUBKEY, SRP-GEX-SHA1}
+ *          Value stored in ssh2_auth as a comma-separated list
+ *          We can support (eventually in some cases):
+ *              GSSAPI, KEYBOARD-INTERACTIVE, PASSWORD, PUBKEY
+ *          Not supported by libssh:
+ *              EXTERNAL-KEYX, HOSTBASED, SRP-GEX-SHA1
  *      TODO: V2 CIPHERS {3DES-CBC, AES128-CBC, AES192-CBC, AES256-CBC, ARCFOUR, BLOWFISH-CBC, CAST128-CBC, RIJNDAEL128-CBC, RIJNDAEL192-CBC, RIJNDAEL256-CBC}
  *                 libssh:3des-cbc, aes128-cbc, aes192-cbc, aes256-cbc, chachae20-poly1305, aes256-gcm@openssh.com, aes128-gcm@openssh.com, aes256-ctr, aes192-ctr, aes128-ctr,
  *                 -> will require changes to ckuus3.c
@@ -189,9 +195,6 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  */
 
 /* More TODO:
- *  - TODO: Fix occasional random disconnect. Perhaps a threading issue? Maybe
- *          everything here interacting with libssh needs to be moved to a
- *          dedicated thread.
  *  - TODO: Figure out why nano doesn't correctly resume after being suspended
  *          - Possibly a terminal emulation issue. It works fine when emulating
  *            a VT220. Htop doesn't quite resume properly either - doesn't redraw
@@ -203,8 +206,6 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *            through to password auth and, if thats unsuccessful, disconnect.
  *            So for now keyboard interactive is disabled.
  *  - TODO: Other Settings
- *  - TODO: Sort out host verification
- *          - it is working. So just needs tidying.
  *  - TODO: How do we know /command: has finished? EOF?
  *  - TODO: fix UI prompt look&feel (weird inset buttons)
  *  - TODO: Kermit subsystem (/subsystem:kermit) doesn't work
@@ -218,7 +219,7 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *      -DSFTP_BUILTIN
  *  - TODO: HTTP Proxying - this was something the previous implementaiton could
  *          handle?
-  *  - TODO: deal with changing terminal type after connect ? (K95 doesn't)
+  * - TODO: deal with changing terminal type after connect ? (K95 doesn't)
  */
 
 /* ==== LibSSH Settings ====
@@ -495,7 +496,8 @@ int ssh_open() {
             pwflg ? pwbuf : NULL, /* Password (if supplied) */
             get_current_terminal_type(),
             pty_width,
-            pty_height
+            pty_height,
+            ssh2_auth   /* Allowed authentication methods */
             );
     if (parameters == NULL) {
         debug(F100, "ssh_open() - failed to construct parameters struct", "", 0);

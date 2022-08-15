@@ -93,6 +93,17 @@ typedef struct {
     char* password;                             /* pwbuf if pwflg */
     int pty_height, pty_width;                  /* Terminal dimensions */
     char* terminal_type;                        /* Terminal type */
+
+    /* Allowed authentication types */
+    BOOL allow_password_auth;
+    BOOL allow_pubkey_auth;
+    BOOL allow_kbdint_auth;
+    BOOL allow_gssapi_auth;
+
+    /* TODO: When agent, X11, and other port forwarding is added
+     *      all forwarding should be forced off/cleared when host key
+     *      verification fails and strict host key checking is set to no.
+     */
 } ssh_parameters_t;
 
 
@@ -159,6 +170,7 @@ void get_current_terminal_dimensions(int* rows, int* cols);
  * @param terminal_type Terminal emulation type
  * @param pty_width Current terminal width
  * @param pty_height Current terminal height
+ * @param auth_methods Comma-separated list of allowed authentication methods
  * @return A new ssh_parameters_t instance.
  */
 ssh_parameters_t* ssh_parameters_new(
@@ -167,7 +179,7 @@ ssh_parameters_t* ssh_parameters_new(
         BOOL gssapi_delegate_credentials, int host_key_checking_mode,
         char* user_known_hosts_file, char* global_known_hosts_file,
         char* username, char* password, char* terminal_type, int pty_width,
-        int pty_height);
+        int pty_height, char* auth_methods);
 
 /** Frees the ssh_parameters_t struct and all its members.
  *
