@@ -13,6 +13,7 @@ copy k95.ini dist
 copy k95d.cfg dist
 ren dist\cknker.exe k95.exe
 ren dist\cknker.exe.manifest k95.exe.manifest
+del dist\cknker.exe.manifest
 move dist\ckwart.exe .\
 
 @echo Copy manual...
