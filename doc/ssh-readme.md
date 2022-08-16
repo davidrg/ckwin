@@ -27,7 +27,11 @@ automatically by C-Kermit.
 * The keyboard interactive authentication method doesn't seem to work so it's 
   disabled by default for now. See the *Supported Authentication Methods*
   section for more details.
-
+* Connecting through proxy servers is not currently supported
+* If no authentication methods are supported (eg, server only accepts public
+  key authentication and no key has been setup) you get the rather unhelpful
+  error message "Authentication failed - disconnecting" with no prompts or other
+  information.
 
 ## Supported Commands
 Only the following commands are implemented at this time. More will come in
