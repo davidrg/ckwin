@@ -225,6 +225,7 @@ pip-log.txt
 *.dll
 *.exp
 *.lib
+*.obn
 kermit/k95/dist*
 kermit/k95/ckcpro.c
 
@@ -236,6 +237,7 @@ openssl/
 zlib/
 libssh/
 redist/
+zinc/
 
 # Misc
 setenv_local.bat
