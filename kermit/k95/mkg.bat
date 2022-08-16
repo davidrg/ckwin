@@ -14,7 +14,6 @@ move kui\win95\ck*.obj . > nul
 move kui\win95\p_*.obj . > nul
 del ckcmai.obj ckuus5.obj
 nmake /nologo /e /f ckoker.mak k95g
-set BLD_ERR_LVL=%errorlevel%
 move *.obj kui\win95 > nul
 
 REM OpenWatcom 1.9s nmake clone doesn't seem to set errorlevel when the build
@@ -34,6 +33,6 @@ echo.
 set errorlevel=1
 
 :end
-exit /B %BLD_ERR_LVL%
+
 
 

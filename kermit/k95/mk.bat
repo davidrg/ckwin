@@ -1,12 +1,13 @@
 @echo Full build...
 @call mknt.bat
-if %errorlevel% neq 0 goto :failed
 @call mkg.bat
-if %errorlevel% neq 0 goto :failed
-goto :end
 
-:failed
-echo Build failed
-exit /b %errorlevel%
-
-:end
+if not exist cknker.exe exit 1
+if not exist iksd.exe exit 1
+if not exist iksdsvc.exe exit 1
+if not exist k95d.exe exit 1
+if not exist rlogin.exe exit 1
+if not exist telnet.exe exit 1
+if not exist textps.exe exit 1
+if not exist ctl3dins.exe exit 1
+if not exist k95g.exe exit 1
