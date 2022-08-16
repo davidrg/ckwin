@@ -74,7 +74,9 @@ Thu Jun  2 09:49:31 2022
 #endif  /* NODEPRECATED */
 
 #ifdef OS2
+#ifndef CKODIALER
 #include "ckoker.h"
+#endif /* CKODIALER */
 #else /* OS2 */
 /* Unsigned numbers */
 
