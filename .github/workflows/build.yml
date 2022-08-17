@@ -138,7 +138,7 @@ jobs:
       shell: powershell
       run: |
         cd libssh\${{env.LIBSSH_VERSION}}\build
-        cmake .. -G "NMake Makefiles" -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}\
+        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}\
         nmake
 
       ##########################################################################
