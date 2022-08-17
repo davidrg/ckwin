@@ -63,9 +63,32 @@ typedef void (WINAPI *ResizePseudoConsole_t)(
     _In_ COORD size
 );
 
+typedef BOOL (WINAPI *InitializeProcThreadAttributeList_t)(
+    _Out_writes_bytes_to_opt_(*lpSize,*lpSize) LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList,
+    _In_ DWORD dwAttributeCount,
+    _Reserved_ DWORD dwFlags,
+    _When_(lpAttributeList == nullptr,_Out_) _When_(lpAttributeList != nullptr,_Inout_) PSIZE_T lpSize
+);
+
+
+typedef BOOL (WINAPI *UpdateProcThreadAttribute_t) (
+    _Inout_ LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList,
+    _In_ DWORD dwFlags,
+    _In_ DWORD_PTR Attribute,
+    _In_reads_bytes_opt_(cbSize) PVOID lpValue,
+    _In_ SIZE_T cbSize,
+    _Out_writes_bytes_opt_(cbSize) PVOID lpPreviousValue,
+    _In_opt_ PSIZE_T lpReturnSize
+);
+
+/* These require at least Windows 10 version 1809 */
 CreatePseudoConsole_t p_CreatePseudoConsole;
 ClosePseudoConsole_t p_ClosePseudoConsole;
 ResizePseudoConsole_t p_ResizePseudoConsole;
+
+/* And these require at least Windows Vista */
+InitializeProcThreadAttributeList_t p_InitializeProcThreadAttributeList;
+UpdateProcThreadAttribute_t p_UpdateProcThreadAttribute;
 
 void load_conpty() {
     FARPROC p;
@@ -84,8 +107,14 @@ void load_conpty() {
     p = GetProcAddress(hkernel, "ClosePseudoConsole");
     p_ClosePseudoConsole = (ClosePseudoConsole_t)p;
 
-        p = GetProcAddress(hkernel, "ResizePseudoConsole");
+    p = GetProcAddress(hkernel, "ResizePseudoConsole");
     p_ResizePseudoConsole = (ResizePseudoConsole_t)p;
+
+    p = GetProcAddress(hkernel, "InitializeProcThreadAttributeList");
+    p_InitializeProcThreadAttributeList = (InitializeProcThreadAttributeList_t)p;
+
+    p = GetProcAddress(hkernel, "UpdateProcThreadAttribute");
+    p_UpdateProcThreadAttribute = (UpdateProcThreadAttribute_t)p;
 
     conPtyAvailable = TRUE;
 }
@@ -145,7 +174,7 @@ HRESULT prepare_startup_info(STARTUPINFOEX * psi)
 
     // Discover the size required for the list
     size_t bytesRequired;
-    InitializeProcThreadAttributeList(NULL, 1, 0, &bytesRequired);
+    p_InitializeProcThreadAttributeList(NULL, 1, 0, &bytesRequired);
 
     // Allocate memory to represent the list
     si.lpAttributeList = (PPROC_THREAD_ATTRIBUTE_LIST)HeapAlloc(
@@ -156,14 +185,14 @@ HRESULT prepare_startup_info(STARTUPINFOEX * psi)
     }
 
     // Initialize the list memory location
-    if (!InitializeProcThreadAttributeList(si.lpAttributeList, 1, 0, &bytesRequired))
+    if (!p_InitializeProcThreadAttributeList(si.lpAttributeList, 1, 0, &bytesRequired))
     {
         HeapFree(GetProcessHeap(), 0, si.lpAttributeList);
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
     // Set the pseudoconsole information into the list
-    if (!UpdateProcThreadAttribute(si.lpAttributeList,
+    if (!p_UpdateProcThreadAttribute(si.lpAttributeList,
                                    0,
                                    PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE,
                                    hPc,
