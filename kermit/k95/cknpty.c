@@ -44,32 +44,59 @@
 #ifdef CK_CONPTY
 static HPCON hPc = NULL;
 static BOOL conPtyAvailable = FALSE, conPtyChecked = FALSE;
+static HINSTANCE hkernel=NULL;
+
+typedef HRESULT (WINAPI *CreatePseudoConsole_t)(
+    _In_ COORD size,
+    _In_ HANDLE hInput,
+    _In_ HANDLE hOutput,
+    _In_ DWORD dwFlags,
+    _Out_ HPCON* phPC
+);
+
+typedef void (WINAPI *ClosePseudoConsole_t)(
+    _In_ HPCON hPC
+);
+
+typedef void (WINAPI *ResizePseudoConsole_t)(
+    _In_ HPCON hPC,
+    _In_ COORD size
+);
+
+CreatePseudoConsole_t p_CreatePseudoConsole;
+ClosePseudoConsole_t p_ClosePseudoConsole;
+ResizePseudoConsole_t p_ResizePseudoConsole;
+
+void load_conpty() {
+    FARPROC p;
+    /* Only bother doing this load library business once */
+    conPtyChecked = TRUE;
+
+    hkernel = LoadLibrary("kernel32.dll");
+
+    p = GetProcAddress(hkernel, "CreatePseudoConsole");
+    if (p == NULL) {
+        conPtyAvailable = FALSE;
+        return;
+    }
+    p_CreatePseudoConsole = (CreatePseudoConsole_t)p;
+
+    p = GetProcAddress(hkernel, "ClosePseudoConsole");
+    p_ClosePseudoConsole = (ClosePseudoConsole_t)p;
+
+        p = GetProcAddress(hkernel, "ResizePseudoConsole");
+    p_ResizePseudoConsole = (ResizePseudoConsole_t)p;
+
+    conPtyAvailable = TRUE;
+}
+
 #endif
 
 BOOL pseudo_console_available() {
 #ifdef CK_CONPTY
-    HINSTANCE hLib;
-    FARPROC procAddress;
-
-    if (conPtyChecked) {
-        return conPtyAvailable;
+    if (!conPtyChecked) {
+        load_conpty();
     }
-
-    /* Only bother doing this load library business once */
-    conPtyChecked = TRUE;
-
-    hLib = LoadLibrary(TEXT("Kernel32.dll"));
-
-    if (hLib == NULL) {
-        return FALSE; /* Failed to load library - not available */
-    }
-
-    procAddress = (FARPROC) GetProcAddress(hLib, "CreatePseudoConsole");
-
-    conPtyAvailable = NULL != procAddress;
-
-    FreeLibrary(hLib);
-
     return conPtyAvailable;
 #else
     return FALSE;
@@ -103,7 +130,7 @@ HRESULT open_pseudo_console(COORD size, HANDLE input_pipe, HANDLE output_pipe)
 {
     HRESULT hr = S_OK;
 #ifdef CK_CONPTY
-    hr = CreatePseudoConsole(size, input_pipe, output_pipe, 0, &hPc);
+    hr = p_CreatePseudoConsole(size, input_pipe, output_pipe, 0, &hPc);
 #endif
     return hr;
 }
@@ -224,14 +251,14 @@ BOOL start_subprocess_in_pty(COORD size, LPSTR lpCommandLine,
 
 void resize_pseudo_console(COORD new_size) {
 #ifdef CK_CONPTY
-    ResizePseudoConsole(hPc, new_size);
+    p_ResizePseudoConsole(hPc, new_size);
 #endif
 }
 
 void close_pseudo_console() {
 #ifdef CK_CONPTY
 
-    ClosePseudoConsole(hPc);
+    p_ClosePseudoConsole(hPc);
 
 #endif
 }
