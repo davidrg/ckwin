@@ -14,6 +14,7 @@ copy k95d.cfg dist
 ren dist\cknker.exe k95.exe
 ren dist\cknker.exe.manifest k95.exe.manifest
 del dist\cknker.exe.manifest
+del dist\ctl3dins.exe
 move dist\ckwart.exe .\
 
 @echo Copy manual...
