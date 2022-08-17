@@ -1,14 +1,16 @@
-# CKOKER.MAK, Version 6.00
+# CKOKER.MAK, Version 10.0
 # See CKOMAK.HLP for further information.
 # Authors: 
 #   Jeffrey Altman, Frank da Cruz, Columbia University, New York City, USA
+#   David Goodwin <david@zx.net.nz>
 #
 # Last update: 
 #
-# -- Makefile to build C-Kermit 5A(192) for OS/2 and Windows NT --
+# -- Makefile to build C-Kermit 10.0 for OS/2 and Windows NT --
 #
 # The result is a runnable program called CKOKER32.EXE (OS/2) or CKNKER.EXE
-# (NT) in the current directory.  Or if you "make winsetup", SETUP.EXE.
+# (NT), or K95G (NT, GUI) in the current directory.  Or if you "make winsetup",
+# SETUP.EXE.
 #
 # To override the following definitions without having to edit this file,
 # define them as environment variables and then run NMAKE with the /E switch.
@@ -82,6 +84,10 @@ MSC_VER = 80
 TARGET_CPU = x86
 WIN32_VERSION=0x0400
 
+# So that we can set the minimum subsystem version when needed
+SUBSYSTEM_CONSOLE=console
+SUBSYSTEM_WIN32=windows
+
 # On windows we'll try to detect the Visual C++ version being used and adjust
 # compiler flags accordingly.
 !if "$(PLATFORM)" == "NT"
@@ -129,6 +135,16 @@ INCLUDE = $(INCLUDE);ow\;
 # then tell the linker we're targeting x86-64
 !if "$(TARGET_CPU)" == "x86-64"
 LDFLAGS = $(LDFLAGS) /MACHINE:X64
+!endif
+
+!if ($(MSC_VER) >= 170) && ($(MSC_VER) <= 192)
+# Starting with Visual C++ 2012, the default subsystem version is set to 6.0
+# which makes the generated binaries invalid on anything older than Windows
+# Vista (you get the "is not a valid win32 application" error). Visual C++ 2012
+# through to 2019 are capable of targeting Windows XP so we set the subsystem
+# version to 5.1 so the generated binaries are compatible.
+SUBSYSTEM_CONSOLE=console,5.1
+SUBSYSTEM_WIN32=windows,5.1
 !endif
 
 !if ($(MSC_VER) < 140)
@@ -190,7 +206,7 @@ telnet:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:console" \
+    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_CONSOLE)" \
 	DEF="wtelnet.def"
 
 
@@ -206,7 +222,7 @@ rlogin:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:console" \
+    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_CONSOLE)" \
 	DEF="wrlogin.def"
 
 # release version
@@ -222,7 +238,7 @@ test:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:console" \
+    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_CONSOLE)" \
 	DEF="wtest.def"
 
 winsetup:
@@ -237,7 +253,7 @@ winsetup:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:console /OPT:REF" \
+    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /OPT:REF" \
 	DEF="wsetup.def"
 
 # release version
@@ -253,7 +269,7 @@ msvc:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:console /MAP /OPT:REF" DEF="cknker.def" 
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /OPT:REF" DEF="cknker.def"
 
 # release version
 msvc-iksd:
@@ -268,7 +284,7 @@ msvc-iksd:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:console /MAP /OPT:REF" DEF="cknker.def"
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /OPT:REF" DEF="cknker.def"
 
 # debug version
 msvcd:
@@ -283,7 +299,7 @@ msvcd:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:console /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
 	DEF="cknker.def"
 
 # debug version
@@ -299,7 +315,7 @@ msvcd-iksd:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:console /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
 	DEF="cknker.def"
 
 # memory debug version
@@ -315,7 +331,7 @@ msvcmd:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:console /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE" \
 	DEF="cknker.def"
 
 # profile version
@@ -331,7 +347,7 @@ msvcp:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:console /MAP /FIXED:NO /PROFILE" \
+    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /FIXED:NO /PROFILE" \
 	DEF="cknker.def"
 
 # kui debug version
@@ -347,7 +363,7 @@ kuid:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /DEBUG:full /SUBSYSTEM:windows" \
+    LINKFLAGS="/nologo /align:0x1000 /DEBUG:full /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
 	DEF="cknker.def"
 
 kui:
@@ -362,7 +378,7 @@ kui:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:windows" \
+    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
 	DEF="cknker.def"
 
 # k95g debug version
@@ -378,7 +394,7 @@ k95gd:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /MAP /DEBUG:full /SUBSYSTEM:windows" \
+    LINKFLAGS="/nologo /align:0x1000 /MAP /DEBUG:full /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
 	DEF="cknker.def"
 
 k95g:
@@ -393,7 +409,7 @@ k95g:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:windows" \
+    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
 	DEF="cknker.def"
 
 
