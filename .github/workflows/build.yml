@@ -57,7 +57,7 @@ jobs:
           ${{github.workspace}}\openssl 
           ${{github.workspace}}\libssh 
           ${{github.workspace}}\tools
-        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+libssh-${{env.LIBSSH_VERSION}}rel+nasm
+        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+libssh-${{env.LIBSSH_VERSION}}rel+nasm+ver01
 
     - name: Get dependencies
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
@@ -130,7 +130,7 @@ jobs:
         cd openssl\${{env.OPENSSL_VERSION}}
         $env:Path += ";${{github.workspace}}\tools\nasm"
         $env:Path
-        perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}        
+        perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}} -D_WIN32_WINNT=0x501        
         nmake
 
     - name: Build libssh
