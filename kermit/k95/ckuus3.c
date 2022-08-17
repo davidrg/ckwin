@@ -9116,13 +9116,8 @@ case XYPAD:                             /* SET PAD ... */
           for (z = 0; z < nnets; z++) {
               if (netcmd[z].kwval == NET_TCPB && tcp_avail == 0)
                 netcmd[z].flgs =  CM_INV;
-#ifdef SSHBUILTIN
-              if (netcmd[z].kwval == NET_SSH &&
-                   !ck_ssleay_is_installed())
-                netcmd[z].flgs =  CM_INV;
-#endif /* SSHBUILTIN */
 #ifdef DECNET
-              else if (netcmd[z].kwval == NET_DEC  && dnet_avail == 0)
+              if (netcmd[z].kwval == NET_DEC  && dnet_avail == 0)
                 netcmd[z].flgs =  CM_INV;
 #endif /* DECNET */
 #ifdef CK_NETBIOS
@@ -9205,11 +9200,6 @@ case XYPAD:                             /* SET PAD ... */
 "\n?Sorry, either TCP/IP is not available on this system or\n\
 necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
               return(-9);
-#ifdef SSHBUILTIN
-          } else if (z == NET_SSH && !ck_ssleay_is_installed()) {
-            printf("\n?Sorry, SSH is not available on this system.\n") ;
-            return(-9);
-#endif /* SSHBUILTIN */
 #ifdef CK_NETBIOS
           } else if (z == NET_BIOS && netbiosAvail == 0) {
               printf("\n?Sorry, NETBIOS is not available on this system.\n") ;
