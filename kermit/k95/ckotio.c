@@ -4331,7 +4331,7 @@ getOverlappedIndex( int serial ) {
         ow = -1;
         while(!GetOverlappedResult( (HANDLE) ttyfd,
                                     &overlapped_write[++ow],
-                                    &nActuallyWritten, owwait ))
+                                    (LPDWORD)&nActuallyWritten, owwait ))
         {
             DWORD error = GetLastError() ;
             if ( error == ERROR_IO_INCOMPLETE ) {
@@ -4534,7 +4534,7 @@ freeOverlappedComplete( int serial ) {
 
             if ( GetOverlappedResult( (HANDLE) ttyfd,
                                       &overlapped_write[ow],
-                                      &nActuallyWritten, owwait ) )
+                                      (LPDWORD)&nActuallyWritten, owwait ) )
             {
                 debug(F111,"freeOverlappedIndex COMPLETE","ow",ow);
                 debug(F111,"freeOverlappedIndex COMPLETE",ow_ptr[ow],ow);
@@ -4688,8 +4688,8 @@ OverlappedWrite( int serial, char * chars, int charsleft )
     ResetEvent( overlapped_write[ow].hEvent ) ;
     nActuallyWritten = 0 ;
 
-    if ( !WriteFile( (HANDLE) ttyfd, ow_ptr[ow], charsleft, &nActuallyWritten,
-                     &overlapped_write[ow]) )
+    if ( !WriteFile( (HANDLE) ttyfd, ow_ptr[ow], charsleft, (LPDWORD)
+                     &nActuallyWritten, &overlapped_write[ow]) )
     {
         DWORD error = GetLastError() ;
         if ( error != ERROR_IO_PENDING )
@@ -6323,7 +6323,7 @@ rdch(int timo /* ms */) {
              !ReadFile((HANDLE) ttyfd,
                        rdchbuf.buffer,
                        sizeof(rdchbuf.buffer),
-                       &nActuallyRead,
+                       (LPDWORD)&nActuallyRead,
                          &overlapped_read[0])
             ) {
             DWORD error = GetLastError() ;
@@ -6334,7 +6334,7 @@ rdch(int timo /* ms */) {
 #endif /* COMMENT */
                 while(!GetOverlappedResult( (HANDLE) ttyfd,
                                             &overlapped_read[0],
-                                            &nActuallyRead,
+                                            (LPDWORD)&nActuallyRead,
                                             FALSE )
                        ) {
                     DWORD error = GetLastError() ;

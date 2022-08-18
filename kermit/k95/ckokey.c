@@ -1116,8 +1116,9 @@ struct kverb_call {
 };
 
 static void
-kverb_thread(struct kverb_call *kc)
+kverb_thread(void* param)
 {
+    struct kverb_call *kc = (struct kverb_call *)param;
     if ( kc ) {
         kbdCallsKverb = 1;
         dokverb( kc->kmode, kc->km );

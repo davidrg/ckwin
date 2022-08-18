@@ -73,7 +73,7 @@ Compiling
 ---------
 
 To build C-Kermit for Windows, see the [Build Instructions](doc/building.md).
-You'll need at least Visual C++ 4.0 or newer, or OpenWatcom 1.9. To build
+You'll need at least Visual C++ 4.0 or newer, or OpenWatcom 1.9+. To build
 with ConPTY and SSH support you'll need to use Visual C++ 2019 or newer.
 
 Making Changes

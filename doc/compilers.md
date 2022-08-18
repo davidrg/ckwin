@@ -220,4 +220,17 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- Console -->
     <td></td> <!-- Notes -->
 </tr>
+<tr>
+    <td>OpenWatcom 2.0</td>
+    <td>Windows NT 3.51, 
+        Windows 95</td>
+    <td>✅</td> <!-- Free -->
+    <td>❌</td> <!-- PTY -->
+    <td>❌</td> <!-- SSH -->
+    <td>✅</td> <!-- NTLM/Auth -->
+    <td>✅</td> <!-- TAPI -->
+    <td>✅</td> <!-- GUI -->
+    <td>✅</td> <!-- Console -->
+    <td>2022-08-01 build tested, targeting 32bit win32</td> <!-- Notes -->
+</tr>
 </table>
