@@ -15,6 +15,8 @@ features have been added. A full list of these is available here:
 
 http://www.kermitproject.org/k95-fixes-since-213.txt
 
+![Screenshot](doc/screenshot-w10.png)
+
 New Features
 ------------
 
