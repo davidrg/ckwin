@@ -44,12 +44,6 @@ DISABLED_FEATURES = SuperLAT DECnet Kerberos SRP Telnet-Encryption CryptDLL
 DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNO_SRP -DNO_ENCRYPTION
 
 
-
-!if "$(PLATFORM)" != "NT"
-# No built-in SSH support for OS/2 (yet)
-CKF_SSH=no
-!endif
-
 !if "$(CMP)" == "OWCL"
 # No built-in SSH support for OpenWatcom (yet)
 CKF_SSH=no
@@ -80,6 +74,12 @@ CKF_TOOLBAR=no
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DVINTAGEVC
 !endif
 
+!else
+!if "$(CKF_SSH)" == "yes"
+!message Target platform is OS/2 - forcing SSH off (not supported)
+# No built-in SSH support for OS/2 (yet)
+CKF_SSH=no
+!endif
 !endif
 
 
