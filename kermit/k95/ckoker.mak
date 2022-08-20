@@ -405,6 +405,34 @@ k95g:
 
 ################### OS/2 TARGETS ###################
 
+# Old IBMC parameters - http://www.edm2.com/index.php/Icc.exe
+#         ICC     WCC386
+# CC2:    -Fi+    ?             Generate Precompiled Headers
+#         -Si+    -Fh=<file>    Use precompiled headers where available
+#         -Gi+    ?             Generate fast integer code
+# OUT:    -Fe     ?             Specify the name of the executable file (/Fe<name>)
+# OPT:    -O      ?             Optimize generated code
+#         -Oi25   -Oe=<num>     Set the threshold for auto-inlining to <value> intermediate code instructions
+# DEBUG:  -Gs     ?             Suppress stack probes in function prologs
+# DLL:    -Gt-    ?             Store variables so that they do not cross 64K boundaries. Default: /Gt-
+#         /Ge-    ? -br         Use the version of the runtime library that assumes a DLL is being
+#                               built. Default: /Ge+
+# CFLAGS: -Sp1    -zp=1         /Sp<[1]|2|4|8|16> : Pack aggregate members on specified alignment. Default: /Sp4
+#         -Sm     ?             Ignore migration keywords. Default: /Sm-
+#         -Gm     ? -bm         Link with multithread runtime libraries. Default: /Gm-
+#         -G5     ?             /G5: Generate code optimized for use on a Pentium processor.
+#         -Gt     ?             Store variables so that they do not cross 64K boundaries. Default: /Gt-
+#         -Gd     ?             /Gd+: Use the version of the runtime library that is dynamically linked.
+#         -J      N/A (uchar is default)          /J+: Make default char type unsigned. Default: /J+
+#                 -bt=os2v2     Compile for target OS
+# NOLINK: -c        /C+: Perform compile only, no link.
+# LINKFLAGS: /nologo
+#            /noi
+#            /align:16
+#            /base:0x10000
+#                           -l=os2v2
+#                           -x
+
 # Watcom C targeting OS/2
 wcos2:
 	$(MAKE) -f ckoker.mak os232 \
