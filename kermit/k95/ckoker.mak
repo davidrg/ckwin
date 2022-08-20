@@ -623,19 +623,17 @@ ibmcd:
 # lines and comment out the previous set:
 !ifdef PLATFORM
 !if "$(PLATFORM)" == "OS2"
-DEFINES = -DOS2 -DDYNAMIC -DKANJI -DNETCONN -DTCPSOCKET \
+DEFINES = -DOS2 -DDYNAMIC -DKANJI -DTCPSOCKET \
           -DNPIPE -DOS2MOUSE -DHADDRLIST -DPCFONTS \
           -DRLOGCODE -DNETFILE -DONETERMUPD \
-          -DNO_SRP -DBETATEST  -DNO_KERBEROS \
-          -DNOCKXYZ -DNO_SSL -DNO_ENCRYPTION \
           $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS) \
 !if "$(CMP)" == "OWCL386"
           -D__32BIT__
-!else
-# NetBIOS doesn't currently work on OpenWatcom builds for some unknown reason;
-# they just crash on startup at ckonbi.c:152 when its enabled.
-    #      -DCK_NETBIOS
 !endif
+# OpenWatcom doesn't define __32BIT__ by default which upsets a lot of OS/2
+# code. Maybe there is some compiler flag thats missing though it seems to be
+# producing 32bit OS/2 binaries fine as-is.
+
 # zlib support:  -DZLIB
 # DECnet (Pathworks32) support: -DDECNET
            
