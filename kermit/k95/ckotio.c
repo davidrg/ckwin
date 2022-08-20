@@ -9196,7 +9196,7 @@ os2settitle(char *newtitle, int newpriv ) {
     char titlebuf[128] ;
     extern enum markmodes markmodeflag[];
     extern bool scrollflag[] ;
-    extern int vmode;
+    extern BYTE vmode;
     extern int inserver;
     char * videomode = "";
 
@@ -9282,7 +9282,7 @@ os2gettitle(char *buffer, int size) {
 #ifndef NOLOCAL
     extern enum markmodes markmodeflag[];
     extern bool scrollflag[] ;
-    extern int vmode;
+    extern BYTE vmode;
     int len;
 #ifdef OS2ONLY
     HSWITCH hSwitch;

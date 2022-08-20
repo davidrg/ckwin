@@ -16,7 +16,7 @@ extern TID tidTermScrnUpd ;
 extern unsigned char     colorstatus;
 extern unsigned char     colorselect;
 extern unsigned char     colorborder;
-extern int vmode;
+extern BYTE vmode;
 extern int tcsl;
 extern int nt351;
 
