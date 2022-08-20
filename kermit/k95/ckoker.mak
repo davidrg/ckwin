@@ -434,13 +434,15 @@ k95g:
 #                           -x
 
 # Watcom C targeting OS/2
+# TODO: Fix buiding with OPT="-ox " (currently this causes it to crash on
+# startup with trap 001 )
 wcos2:
 	$(MAKE) -f ckoker.mak os232 \
 	    CMP="OWCL386" \
 	    CC="wcl386" \
         CC2="-Fh" \
         OUT="-Fe=" O=".obj" \
-	    OPT="-ox " \
+	    OPT=" " \
         DEBUG="-DNDEBUG" \
         DLL="-br" \
 	    CFLAGS="-q -zp=1 -bm -bt=os2 -aa" \
@@ -596,7 +598,7 @@ DEFINES = -DOS2 -DDYNAMIC -DKANJI -DNETCONN -DTCPSOCKET \
 !else
 # NetBIOS doesn't currently work on OpenWatcom builds for some unknown reason;
 # they just crash on startup at ckonbi.c:152 when its enabled.
-          -DCK_NETBIOS
+    #      -DCK_NETBIOS
 !endif
 # zlib support:  -DZLIB
 # DECnet (Pathworks32) support: -DDECNET
