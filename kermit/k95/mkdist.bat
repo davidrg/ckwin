@@ -9,8 +9,6 @@ if not exist dist\docs\manual\NUL mkdir dist\docs\manual
 @echo Move build outputs...
 move *.exe dist
 copy *.manifest dist
-copy k95.ini dist
-copy k95d.cfg dist
 ren dist\cknker.exe k95.exe
 ren dist\cknker.exe.manifest k95.exe.manifest
 del dist\cknker.exe.manifest
