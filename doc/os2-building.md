@@ -22,19 +22,19 @@ libssh) does not support OpenWatcom.
 3. Setup the C-Kermit build environment by running `setenv.bat`
 4. CD into `kermit\k95`
 5. run `mkos2.bat` for a release build or `mkos2d.bat` for a debug build
+6. run `mkdist-os2.bat` to collect everything into the dist-os2 subdirectory
 
 This should leave you with a collection of 32-bit OS/2 executables in the
-current directory:
+dist-os2 subdirectory:
 
-| Executable   | Description                                     |
-|--------------|-------------------------------------------------|
-| ckoker32.exe | C-Kermit for OS/2 executable - rename to k2.exe |
-| cko32i20.dll | TCP/IP Library                                  |
-| ckoclip.exe  | PM Clipboard server?                            |
-| otextps.exe  | Convert plain text to PostScript                |
-| osetup.exe   | Setup program?                                  |
-| otelnet.exe  | Telnet stub - rename to telnet.exe              |
-| orlogin.exe  | RLogin stub - rename to rlogin.exe              |
+| Executable   | Description                                      |
+|--------------|--------------------------------------------------|
+| k2.exe       | C-Kermit for OS/2 executable                     |
+| cko32i20.dll | TCP/IP Library                                   |
+| k2clip.exe   | PM Clipboard server                              |
+| textps.exe   | Convert plain text to PostScript                 |
+| telnet.exe   | Telnet stub (launches k2.exe as a telnet client) |
+| rlogin.exe   | RLogin stub (launches k2.exe as a rlogin client) |
 
  
 
