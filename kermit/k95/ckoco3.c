@@ -253,7 +253,7 @@ int trueitalic    = TRUE ;
 int trueitalic    = FALSE ;
 #endif /* KUI */
 
-extern enum markmodes markmodeflag[VNUM] = {notmarking, notmarking,
+enum markmodes markmodeflag[VNUM] = {notmarking, notmarking,
                                                 notmarking, notmarking} ;
 
 extern int tn_bold;                     /* TELNET negotiation bold */
