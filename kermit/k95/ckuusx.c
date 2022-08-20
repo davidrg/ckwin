@@ -167,8 +167,10 @@ _PROTOTYP( char * ckgetfqhostname,(char *));
 #ifdef OS2
 #ifdef NT
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"
+#endif
 #else /* NT */
 #define INCL_VIO
 #define INCL_WINERRORS
@@ -3327,6 +3329,12 @@ trap(sig) int sig;
 #endif /* UNIX */
 
 #ifdef NETPTY
+#ifdef NT
+    /* Do nothing - PTYs on Windows NT have more in common with NET_CMD than
+     * anything else. No special handling beyond what is already being done
+     * elsewhere in this function.
+     * */
+#else
     /* Clean up Ctrl-C out of REDIRECT or external protocol */
     {
 	extern PID_T pty_fork_pid;
@@ -3370,6 +3378,7 @@ trap(sig) int sig;
 	    pty_fork_pid = -1;
 	}
     }
+#endif /* NT */
 #endif	/* NETPTY */
 
 #ifdef OSK

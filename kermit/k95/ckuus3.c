@@ -71,8 +71,10 @@ extern char startupdir[], exedir[];
 extern int tt_modechg;
 #ifdef NT
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"                     /* Microsoft TAPI */
+#endif
 #endif /* NT */
 #endif /* OS2 */
 
@@ -2657,7 +2659,11 @@ uq_ok(preface,prompt,mask,help,dflt)
                          text ? text : prompt,
                          prompt,
                          MB_OK | MB_ICONINFORMATION | MB_TASKMODAL);
+#ifndef VINTAGEVC
         ShowWindowAsync(hwndConsole,SW_SHOWNORMAL);
+#else
+        ShowWindow(hwndConsole, SW_SHOWNORMAL);
+#endif
         SetForegroundWindow(hwndConsole);
         if (text)
 	  free(text);
@@ -2687,7 +2693,11 @@ uq_ok(preface,prompt,mask,help,dflt)
                          prompt,
                          MB_YESNO | MB_ICONINFORMATION | MB_TASKMODAL | 
                          (dflt == 2 ? MB_DEFBUTTON2 : MB_DEFBUTTON1));
+#ifndef VINTAGEVC
         ShowWindowAsync(hwndConsole,SW_SHOWNORMAL);
+#else
+        ShowWindow(hwndConsole,SW_SHOWNORMAL);
+#endif
         SetForegroundWindow(hwndConsole);
         if (text)
 	  free(text);
@@ -8667,7 +8677,9 @@ static struct keytab guitab[] = {
     { "font",        GUI_FON,  0 },
     { "menubar",     GUI_MNB,  0 },
     { "rgbcolor",    GUI_RGB,  0 },
+#ifndef NOTOOLBAR
     { "toolbar",     GUI_TLB,  0 },
+#endif
     { "window",      GUI_WIN,  0 },
     { "", 0, 0}
 };
@@ -9104,13 +9116,8 @@ case XYPAD:                             /* SET PAD ... */
           for (z = 0; z < nnets; z++) {
               if (netcmd[z].kwval == NET_TCPB && tcp_avail == 0)
                 netcmd[z].flgs =  CM_INV;
-#ifdef SSHBUILTIN
-              if (netcmd[z].kwval == NET_SSH &&
-                   !ck_ssleay_is_installed())
-                netcmd[z].flgs =  CM_INV;
-#endif /* SSHBUILTIN */
 #ifdef DECNET
-              else if (netcmd[z].kwval == NET_DEC  && dnet_avail == 0)
+              if (netcmd[z].kwval == NET_DEC  && dnet_avail == 0)
                 netcmd[z].flgs =  CM_INV;
 #endif /* DECNET */
 #ifdef CK_NETBIOS
@@ -9193,11 +9200,6 @@ case XYPAD:                             /* SET PAD ... */
 "\n?Sorry, either TCP/IP is not available on this system or\n\
 necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
               return(-9);
-#ifdef SSHBUILTIN
-          } else if (z == NET_SSH && !ck_ssleay_is_installed()) {
-            printf("\n?Sorry, SSH is not available on this system.\n") ;
-            return(-9);
-#endif /* SSHBUILTIN */
 #ifdef CK_NETBIOS
           } else if (z == NET_BIOS && netbiosAvail == 0) {
               printf("\n?Sorry, NETBIOS is not available on this system.\n") ;

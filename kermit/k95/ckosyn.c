@@ -20,9 +20,11 @@
 
 #ifdef NT
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
-#include "cknalm.h"
 #include "ckntap.h"
+#endif
+#include "cknalm.h"
 
 #include "ckocon.h"
 

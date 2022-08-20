@@ -3,6 +3,13 @@ PROJ = kui
 OUTDIR = .\win95
 
 !include ..\compiler_detect.mak
+!include ..\feature_flags.mak
+
+!if "$(CKB_STATIC_CRT)"=="yes"
+RTFLAG = /MT
+!else
+RTFLAG = /MD
+!endif
 
 all: $(OUTDIR)\$(PROJ).exe 
 
@@ -68,13 +75,14 @@ $(OUTDIR)\ikcmd.obj: ikcmd.c ikcmd.h kdefs.h \
 
 !MESSAGE 32-bit Non-debugging build
 
-CFLAGS    = /c /W3 /MD /Ox /GA /J /nologo /Fo$(OUTDIR)\ /I$(KERMITDIR)
+CFLAGS    = /c /W3 $(RTFLAG) /Ox /GA /J /nologo /Fo$(OUTDIR)\ /I$(KERMITDIR)
 CDEFINES  = /D_MT /DSTRICT /D_X86_ /DNDEBUG /D_WINDOWS /DWIN32 /DWIN32_LEAN_AND_MEAN \
                 -DNT -DOS2 -DDYNAMIC -DKANJI -DNETCONN -DTCPSOCKET \
-                -DHADDRLIST -DSCRIPTTERM -DOS2MOUSE -DCK_XYZ -DOS2TEST -DKUI
+                -DHADDRLIST -DSCRIPTTERM -DOS2MOUSE -DOS2TEST -DKUI \
+                $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS)
 LFLAGS    = /NOD /NOLOGO /SUBSYSTEM:windows
 RCFLAGS   = /r
-RCDEFINES = /dNDEBUG /dWIN32
+RCDEFINES = /dNDEBUG /dWIN32 /dCOMPILER_$(CMP)
 MAPFILE   =
 
 # /G5 is only valid on 7.1 and earlier
@@ -92,11 +100,12 @@ CFLAGS    = /c /W3 /MD /Od /Zi /J /Fd$(OUTDIR)\$(PROJ).pdb /nologo \
 CDEFINES  = /D_MT /D_X86_ /DSTRICT /D_DEBUG /D_WINDOWS /DWIN32 /DWIN32_LEAN_AND_MEAN \
                 -DNT -DOS2 -DDYNAMIC -DKANJI -DNETCONN -DTCPSOCKET -DSUPERLAT\
                 -DHADDRLIST -DSCRIPTTERM -DOS2MOUSE -DRLOGCODE \
-                -DNETFILE -DONETERMUPD -DKUI
+                -DNETFILE -DONETERMUPD -DKUI \
+                $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS)
 
 LFLAGS    = /NOD /NOLOGO /DEBUG:full /DEBUGTYPE:cv /SUBSYSTEM:windows
 RCFLAGS   = /r
-RCDEFINES = /d_DEBUG /dWIN32
+RCDEFINES = /d_DEBUG /dWIN32 /dCOMPILER_$(CMP)
 MAPFILE   = /map:$(OUTDIR)\$(PROJ).map
 
 !endif
@@ -105,8 +114,8 @@ MAPFILE   = /map:$(OUTDIR)\$(PROJ).map
 !IF ($(MSC_VER) == 80)
 # We don't do 16bit
 !ERROR *** 16bit windows is not supported
-!ELSEIF ($(MSC_VER) < 120)
-!ERROR *** Visual C++ 5.0 and earlier are not supported
+!ELSEIF ($(MSC_VER) < 100)
+!ERROR *** Visual C++ 2.0 and earlier are not supported
 !ELSEIF ($(MSC_VER) < 131)
 # Visual C++ 6.0 and 7.0
 CFLAGS = $(CFLAGS) /noBool

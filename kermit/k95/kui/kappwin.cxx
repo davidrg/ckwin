@@ -32,8 +32,10 @@ KAppWin::KAppWin( K_GLOBAL* kg, int menuid, int toolbarid )
 {
     if ( !kg->noMenuBar )
         createMenu();
+#ifndef NOTOOLBAR
     if ( !kg->noToolBar )
         toolbar = new KToolBar( kg, toolbarid );
+#endif
     if ( !kg->noStatus )
         status = new KStatus( kg );
     client = 0;

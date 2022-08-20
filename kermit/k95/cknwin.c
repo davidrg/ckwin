@@ -10,7 +10,9 @@ char *cknwin = "Win32 GUI Support 8.0.029, 10 March 2004";
 */
 
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
+#endif
 #include <commctrl.h>
 #include "ckcdeb.h"
 #include "ckcker.h"
@@ -23,16 +25,9 @@ char *cknwin = "Win32 GUI Support 8.0.029, 10 March 2004";
 #include "ckokey.h"
 #include "ckokvb.h"
 #include "ckosyn.h"
+#ifndef NORICHEDIT
 #include "richedit.h"
-
-#ifdef _MSC_VER
-#if _MSC_VER >= 1400
-/* Enable visual styles - requires Visual C++ 2005 or newer */
-#pragma comment(linker,"\"/manifestdependency:type='win32' \
-name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
-processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
-#endif /* _MSC_VER >= 1400 */
-#endif /* _MSC_VER */
+#endif
 
 /* Visual C++ 6 fixes */
 #ifndef DS_SHELLFONT
@@ -445,7 +440,13 @@ MainWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     case WM_QUERYENDSESSION:
         debug(F111,"MainWndProc","WM_QUERYENDSESSION",msg);
         result = TRUE;
+#if _MSC_VER > 1000
         if ( lparam & ENDSESSION_LOGOFF ) {
+#else
+        /* Visual C++ <= 4.0: lparam == TRUE on logoff, FALSE on shutdown
+         * (on Windows 95 only according to the docs) */
+        if (lparam) {
+#endif
             debug(F100,"ENDSESSION_LOGOFF","",0);
             if ( startflags & 128 ) {
                 debug(F100,"startflags & 128","",0);
@@ -455,8 +456,14 @@ MainWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         break;
 
     case WM_ENDSESSION:
-        debug(F111,"MainWndProc","WM_QUERYENDSESSION",msg);
+        debug(F111,"MainWndProc","WM_ENDSESSION",msg);
+#if _MSC_VER > 1000
         if ( wparam && (lparam & ENDSESSION_LOGOFF) ) {
+#else
+        /* Visual C++ <= 4.0: lparam == TRUE on logoff, FALSE on shutdown
+        * (on Windows 95 only according to the docs) */
+        if (wparam && lparam) {
+#endif
             debug(F100,"ENDSESSION_LOGOFF","",0);
             if ( startflags & 128 ) {
                 debug(F100,"startflags & 128","",0);
@@ -1495,7 +1502,7 @@ get_gui_resize_mode(void)
     return KuiGetTerminalResizeMode();
 }
 
-
+#ifndef NORICHEDIT
 static HWND hwndRichEdit = INVALID_HANDLE_VALUE;
 static HWND hwndTextDlg  = INVALID_HANDLE_VALUE;
 static HANDLE hRichEditLib = INVALID_HANDLE_VALUE;
@@ -1720,6 +1727,17 @@ EditStreamCallback(DWORD_PTR dwCookie,
 
 static EDITSTREAM EditStream = { 0, 0, EditStreamCallback };
 
+#if _MSC_VER <= 1000
+/* Visual C++ 4.0 and earlier don't know about these. They require Rich Edit
+ * 2.0 or newer */
+#ifndef EM_AUTOURLDETECT
+#define EM_AUTOURLDETECT (WM_USER+91)
+#endif
+#ifndef SF_UNICODE
+#define SF_UNICODE 0x0010
+#endif
+#endif
+
 int
 gui_text_popup_create(char * title, int h, int w)
 {
@@ -1816,4 +1834,5 @@ gui_text_popup_wait(int seconds)
     }
     return -1;
 }
+#endif /* NORICHEDIT */
 #endif /* KUI */

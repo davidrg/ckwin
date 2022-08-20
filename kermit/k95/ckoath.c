@@ -39,6 +39,10 @@
 #ifndef NTLMSP_NAME_A
 #define NTLMSP_NAME_A "NTLM"
 #endif /* NTLMSP_NAME_A */
+
+#else /* NT */
+#define INCL_DOSMODULEMGR
+#include <os2.h>
 #endif /* NT */
 #endif /* OS2 */
 #endif /* CRYPT_DLL */
@@ -54,8 +58,16 @@
 
 #ifdef NT
 #define KRB5_AUTOCONF__
+#ifndef NONTLM
 #define NTLM
+#endif
 #endif /* NT */
+
+#ifdef NTLM
+#ifndef NTLMSP_NAME_A
+#define NTLMSP_NAME_A "NTLM"
+#endif /* NTLMSP_NAME_A */
+#endif
 
 #ifndef CK_KERBEROS
 #ifdef KRB4
@@ -4952,7 +4964,9 @@ ntlm_is(data,cnt) unsigned char *data; int cnt;
         SecPkgContext_SessionKey skey;
         SecPkgContext_PackageInfo pkginf;
 #ifdef IKSD
+#ifdef CK_LOGIN
         extern CHAR * pReferenceDomainName;
+#endif
         extern int inserver;
 #endif /* IKSD */
 
@@ -4968,8 +4982,8 @@ ntlm_is(data,cnt) unsigned char *data; int cnt;
         p_SSPI_Func->QueryContextAttributes(&hNTLMContext,SECPKG_ATTR_PASSWORD_EXPIRY,&pwd);
         p_SSPI_Func->QueryContextAttributes(&hNTLMContext,SECPKG_ATTR_SESSION_KEY,&skey);
         p_SSPI_Func->QueryContextAttributes(&hNTLMContext,SECPKG_ATTR_PACKAGE_INFO,&pkginf);
-
 #ifdef IKSD
+#ifdef CK_LOGIN
         /* Format of sUserName is HOST\user or DOMAIN\user */
         if ( !inserver ) {
             p = names.sUserName + strlen(names.sUserName);
@@ -4984,6 +4998,7 @@ ntlm_is(data,cnt) unsigned char *data; int cnt;
                 p--;
             }
         } else
+#endif
 #endif /* IKSD */
         {
             /* Let the Reference Domain Name be extracted by zvuser() */

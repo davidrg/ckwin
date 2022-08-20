@@ -91,7 +91,9 @@ int accept_complete = 0;
 
 #ifdef NT
 #define KRB5_AUTOCONF__
+#ifndef NONTLM
 #define NTLM
+#endif
 #endif /* NT */
 
 #ifdef CK_KERBEROS
@@ -764,7 +766,11 @@ int
 ck_ntlm_is_installed()
 {
 #ifdef NT
+#ifndef NTLM
+    return(0);
+#else
     return(hSSPI != NULL);
+#endif
 #else /* NT */
     return(0);
 #endif /* NT */

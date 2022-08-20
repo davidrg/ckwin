@@ -2323,7 +2323,11 @@ zchdir(dirnam) char *dirnam; {
         extern int ikdbopen;
         if (inserver && ikdbopen) {
 #ifdef CKROOT
+#ifdef CK_LOGIN
             slotdir(isguest ? anonroot : "", zgtdir());
+#else
+            slotdir("", zgtdir());
+#endif /* CK_LOGIN */
 #else
             slotdir("", zgtdir());
 #endif /* CKROOT */
@@ -3975,7 +3979,16 @@ zcopy(source,destination) char *source, *destination; {
     BOOL bCancel = 0;
     static BOOL (WINAPI * p_CopyFileExA)(LPCSTR lpExistingFileName,
                                           LPCSTR lpNewFileName,
+#if _MSC_VER > 1000
                                           LPPROGRESS_ROUTINE lpProgressRoutine OPTIONAL,
+#else
+                              /* The Platform SDK included in Visual C++ 4.0
+                               * and earlier doesn't include CopyFileExA so
+                               * no defninition for LPPROGRESS_ROUTINE. We never
+                               * pass a value other than NULL so its real type
+                               * is probably irrelevant.*/
+                                          LPVOID lpProgressRoutine OPTIONAL,
+#endif
                                           LPVOID lpData OPTIONAL,
                                           LPBOOL pbCancel OPTIONAL,
                                           DWORD dwCopyFlags
@@ -5419,12 +5432,19 @@ zfseek(CK_OFF_T pos)
 {
 #ifdef NT
     int rc;
-	/* ** TODO: Restore use of fsetpos (pos is an __int64, fpos_t is a struct. 
-	 * This sort of assignment is not allowed)
-	
+
+    /* Previously K95 just assumed fpos_t is an integer type of some kind and
+     * that it could just do this then pass the result into fsetpos:
     fpos_t fpos = pos;
-	
-	*/
+     *
+     * Problem is fpos_t is an opaque type so we really can't just go doing
+     * that. It clearly does work on some versions of Visual C++ but not all
+     * of them.
+     */
+
+    LARGE_INTEGER li;
+    li.QuadPart = pos;
+
 #endif /* NT */
 
     zincnt = -1 ;               /* must empty the input buffer */
@@ -5436,12 +5456,16 @@ zfseek(CK_OFF_T pos)
         debug(F100,"zfseek FILE_TYPE_PIPE","",0);
         return(-1);
     }
-	/* ** TODO: Restore use of fsetpos
-	
+	/* The reason why fsetpos was being used was for seeking in long files.
+	 * The correct way to do this on Windows is to use SetFilePointer, though
+	 * some later versions of Visual C++ (since 2005?) do have an
+	 * implementation of fseek that accepts 64bit positions.
     rc = fsetpos(fp[ZIFILE], &fpos);
-	
-	*/
-	rc = fseek(fp[ZIFILE], pos, 0);
+     */
+
+    rc = SetFilePointer((HANDLE)_get_osfhandle(_fileno(fp[ZIFILE])),
+                        li.LowPart, &li.HighPart, FILE_BEGIN);
+
 
     if (rc == 0) {
         debug(F100,"zfseek success","",0);

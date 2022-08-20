@@ -161,6 +161,9 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     ikterm = new IKTerm( vmode /* clientID */, clientPaint );
     wc = 0;
     vscrollpos = hscrollpos = 0;
+
+    /* Save initial window size so we can tell when it changes */
+    getEndSize(previousWidth, previousHeight);
 }
 
 /*------------------------------------------------------------------------
@@ -473,6 +476,16 @@ void KClient::endSizing( Bool doAnyway )
 
     int w, h;
     getEndSize( w, h );
+
+    if (w == previousWidth && h == previousHeight
+            && saveTermWidth == w && saveTermHeight == h){
+
+        debug(F100, "endSizing: size not changed - doing nothing", "", 0);
+        return;
+    }
+
+    previousWidth = w;
+    previousHeight = h;
 
     if (kglob->mouseEffect == TERM_MOUSE_CHANGE_DIMENSION ) {
         kui_setheightwidth(w,h);

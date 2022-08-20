@@ -6,7 +6,6 @@
 @del %src_base%\*.pch
 @del %src_base%\*.ilk
 @del %src_base%\*.pdb
-@del %src_base%\*.manifest
 @del %src_base%\*.obj
 @del /Q %src_base%\nt\*.*
 @del /Q %src_base%\ntd\*.*

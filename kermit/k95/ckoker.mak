@@ -1,14 +1,16 @@
-# CKOKER.MAK, Version 6.00
+# CKOKER.MAK, Version 10.0
 # See CKOMAK.HLP for further information.
 # Authors: 
 #   Jeffrey Altman, Frank da Cruz, Columbia University, New York City, USA
+#   David Goodwin <david@zx.net.nz>
 #
 # Last update: 
 #
-# -- Makefile to build C-Kermit 5A(192) for OS/2 and Windows NT --
+# -- Makefile to build C-Kermit 10.0 for OS/2 and Windows NT --
 #
 # The result is a runnable program called CKOKER32.EXE (OS/2) or CKNKER.EXE
-# (NT) in the current directory.  Or if you "make winsetup", SETUP.EXE.
+# (NT), or K95G (NT, GUI) in the current directory.  Or if you "make winsetup",
+# SETUP.EXE.
 #
 # To override the following definitions without having to edit this file,
 # define them as environment variables and then run NMAKE with the /E switch.
@@ -43,7 +45,12 @@ LWP30INC    = $(LWP30DIR)\inc20
 
 # Base flags for all versions of Visual C++ (and OpenWatcom
 # pretending to be Visual C++)
+!if "$(CKB_STATIC_CRT)"=="yes"
+!message Building with statically linked native CRT as requested.
+COMMON_CFLAGS = /MT
+!else
 COMMON_CFLAGS = /MD
+!endif
 
 # These options are used for all Windows .exe targets
 COMMON_OPTS = /GA /Ox
@@ -78,6 +85,11 @@ COMPILER = unknown
 COMPILER_VERSION = assuming Visual C++ 1.0
 MSC_VER = 80
 TARGET_CPU = x86
+WIN32_VERSION=0x0400
+
+# So that we can set the minimum subsystem version when needed
+SUBSYSTEM_CONSOLE=console
+SUBSYSTEM_WIN32=windows
 
 # On windows we'll try to detect the Visual C++ version being used and adjust
 # compiler flags accordingly.
@@ -106,20 +118,27 @@ TARGET_PLATFORM = OS/2
 CL = wcl386
 !endif
 
-!message ========================================
-!message C-Kermit for Windows Build Configuration
-!message ========================================
+# This turns features on and off based on set feature flags (CKF_*), the
+# platform being targeted, and the compiler currently in use.
+!include feature_flags.mak
+
+!message
+!message
+!message ===============================================================================
+!message C-Kermit Build Configuration
+!message ===============================================================================
 !message  Platform:                 $(PLATFORM)
 !message  Build:                    $(K95BUILD)
 !message  Architecture:             $(TARGET_CPU)
 !message  Compiler:                 $(COMPILER)
 !message  Compiler Version:         $(COMPILER_VERSION)
 !message  Compiler Target Platform: $(TARGET_PLATFORM)
-!message ========================================
+!message  Enabled Features:         $(ENABLED_FEATURES)
+!message  Disabled Features:        $(DISABLED_FEATURES)
+!message ===============================================================================
+!message
+!message
 
-
-# NT: Adjust compiler flags for different versions of Visual C++ and
-# OpenWatcom.
 !if "$(PLATFORM)" == "NT"
 !if "$(CMP)" == "OWCL"
 
@@ -132,10 +151,23 @@ INCLUDE = $(INCLUDE);ow\;
 !error Unsupported compiler version. Visual C++ 6.0 SP6 or newer required.
 !endif
 
+# TODO: Much of this compiler flag work should be applied to the KUI Makefile
+#       too
+
 # Check to see if we're using Visual C++ and targeting 64bit x86. If so
 # then tell the linker we're targeting x86-64
 !if "$(TARGET_CPU)" == "x86-64"
 LDFLAGS = $(LDFLAGS) /MACHINE:X64
+!endif
+
+!if ($(MSC_VER) >= 170) && ($(MSC_VER) <= 192)
+# Starting with Visual C++ 2012, the default subsystem version is set to 6.0
+# which makes the generated binaries invalid on anything older than Windows
+# Vista (you get the "is not a valid win32 application" error). Visual C++ 2012
+# through to 2019 are capable of targeting Windows XP so we set the subsystem
+# version to 5.1 so the generated binaries are compatible.
+SUBSYSTEM_CONSOLE=console,5.1
+SUBSYSTEM_WIN32=windows,5.1
 !endif
 
 !if ($(MSC_VER) < 140)
@@ -154,7 +186,10 @@ COMMON_OPTS = $(COMMON_OPTS) /G5
 COMMON_CFLAGS = $(COMMON_CFLAGS) /EHs-c-
 # These are:    /EHs-c-     Enable C++ Exception handling (replaces /GX-)
 !endif
+
 !endif
+
+RCDEFINES=/dCOMPILER_$(CMP)
 
 #---------- Compiler targets:
 #
@@ -197,7 +232,7 @@ telnet:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:console" \
+    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_CONSOLE)" \
 	DEF="wtelnet.def"
 
 
@@ -213,7 +248,7 @@ rlogin:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:console" \
+    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_CONSOLE)" \
 	DEF="wrlogin.def"
 
 # release version
@@ -229,7 +264,7 @@ test:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:console" \
+    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_CONSOLE)" \
 	DEF="wtest.def"
 
 winsetup:
@@ -240,11 +275,11 @@ winsetup:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /J /D_WIN32 /DOS2 /DNT /D_CONSOLE /D__32BIT__ /W2 /D_WIN32_WINNT=0x0400" \
+    CFLAGS=" $(COMMON_CFLAGS) /J /D_WIN32 /DOS2 /DNT /D_CONSOLE /D__32BIT__ /W2 /D_WIN32_WINNT=$(WIN32_VERSION)" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:console /OPT:REF" \
+    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /OPT:REF" \
 	DEF="wsetup.def"
 
 # release version
@@ -256,11 +291,11 @@ msvc:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /GF /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    CFLAGS=" $(COMMON_CFLAGS) /GF /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:console /MAP /OPT:REF" DEF="cknker.def" 
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /OPT:REF" DEF="cknker.def"
 
 # release version
 msvc-iksd:
@@ -271,11 +306,11 @@ msvc-iksd:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /GF /J /DWIN32 /D_WIN32_WINNT=0x0400  /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    CFLAGS=" $(COMMON_CFLAGS) /GF /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION)  /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:console /MAP /OPT:REF" DEF="cknker.def"
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /OPT:REF" DEF="cknker.def"
 
 # debug version
 msvcd:
@@ -286,11 +321,11 @@ msvcd:
 	OPT="" \
     DEBUG="/Zi /Odi /Ge " \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /GF /GZ /J /DWIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 /F65536" \
+	CFLAGS=" $(COMMON_CFLAGS) /GF /GZ /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:console /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
 	DEF="cknker.def"
 
 # debug version
@@ -302,11 +337,11 @@ msvcd-iksd:
 	OPT="" \
     DEBUG="/Zi /Odi /Ge " \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /GF /GZ /J /DWIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 /F65536" \
+	CFLAGS=" $(COMMON_CFLAGS) /GF /GZ /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:console /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
 	DEF="cknker.def"
 
 # memory debug version
@@ -318,11 +353,11 @@ msvcmd:
 	OPT="" \
     DEBUG="/Zi /Odi /Ge -Dmalloc=dmalloc -Dfree=dfree -DMDEBUG" \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /J /DWIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 /F65536" \
+	CFLAGS=" $(COMMON_CFLAGS) /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:console /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE" \
 	DEF="cknker.def"
 
 # profile version
@@ -334,11 +369,11 @@ msvcp:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /J /DWIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    CFLAGS=" $(COMMON_CFLAGS) /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:console /MAP /FIXED:NO /PROFILE" \
+    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /FIXED:NO /PROFILE" \
 	DEF="cknker.def"
 
 # kui debug version
@@ -350,11 +385,11 @@ kuid:
 	OPT="" \
     DEBUG="/Zi /Odi" \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /GF /J /DKUI /DCK_WIN /DWIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 -I." \
+    CFLAGS=" $(COMMON_CFLAGS) /GF /J /DKUI /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 -I." \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /DEBUG:full /SUBSYSTEM:windows" \
+    LINKFLAGS="/nologo /align:0x1000 /DEBUG:full /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
 	DEF="cknker.def"
 
 kui:
@@ -365,11 +400,11 @@ kui:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DCK_WIN /DWIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 /I." \
+	CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /I." \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:windows" \
+    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
 	DEF="cknker.def"
 
 # k95g debug version
@@ -381,11 +416,11 @@ k95gd:
 	OPT="" \
     DEBUG="/Zi /Odi" \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DK95G /DCK_WIN /DWIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 -I." \
+    CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DK95G /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 -I." \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /MAP /DEBUG:full /SUBSYSTEM:windows" \
+    LINKFLAGS="/nologo /align:0x1000 /MAP /DEBUG:full /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
 	DEF="cknker.def"
 
 k95g:
@@ -396,11 +431,11 @@ k95g:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DK95G /DCK_WIN /DWIN32 /D_WIN32_WINNT=0x0400 /D_CONSOLE /D__32BIT__ /W2 /I." \
+	CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DK95G /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /I." \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:windows" \
+    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
 	DEF="cknker.def"
 
 ################### OS/2 TARGETS ###################
@@ -628,18 +663,14 @@ DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH -DONETERMUPD -DUSE_STRER
 		  #-DBETATEST # -DPRE_SRP_1_7_3
 !else
 DEFINES = -DNT -DWINVER=0x0400 -DOS2 -D_CRT_SECURE_NO_DEPRECATE -DUSE_STRERROR\
-          -DDYNAMIC -DKANJI -DNETCONN \
+          -DDYNAMIC -DKANJI \
           -DHADDRLIST -DNPIPE -DOS2MOUSE -DTCPSOCKET -DRLOGCODE \
-          -DNETFILE -DONETERMUPD -DCRYPT_DLL \
-          -DNEWFTP -DNO_SRP -DNO_KERBEROS -DNOSSH -DNOCKXYZ -DNO_SSL -DBETATEST -DNO_DNS_SRV \
+          -DNETFILE -DONETERMUPD  \
+          -DNEWFTP -DBETATEST -DNO_DNS_SRV \
+          $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS) \
 !if "$(CMP)" != "OWCL"
           -D__STDC__ \
 !endif
-		  # DECnet (Pathworks32) support: -DDECNET
-		  # SuperLAT support: -DSUPERLAT
-		  # zlib support: -DZLIB
-		  
-		  #-DBETATEST -DSFTP_BUILTIN # -DPRE_SRP_1_7_3 -DCK_NETBIOS -DNEW_URL_HIGHLIGHT 
 !endif
 !endif  /* PLATFORM */
 !else
@@ -672,17 +703,27 @@ KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
         advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib \
         rpcrt4.lib rpcns4.lib wsock32.lib \
         winmm.lib vdmdbg.lib comctl32.lib mpr.lib $(COMMODE_OBJ) \
+!if "$(CKF_SSH)" == "yes"
+       ssh.lib ws2_32.lib \
+!endif
+!if "$(CKF_SSL)" == "yes"
+       libssl.lib libcrypto.lib \
+!endif
         #msvcrt.lib
         #Kerberos: wshload.lib
-		# SRP support: srpstatic.lib 
-		# SSH support: ssh\libssh.lib ssh\openbsd.lib
+		# SRP support: srpstatic.lib
         #libsrp.lib bigmath.lib
 LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib shell32.lib\
        winmm.lib mpr.lib advapi32.lib winspool.lib $(COMMODE_OBJ) \
+!if "$(CKF_SSH)" == "yes"
+       ssh.lib ws2_32.lib \
+!endif
+!if "$(CKF_SSL)" == "yes"
+       libssl.lib libcrypto.lib \
+!endif
        #msvcrt.lib  
        # Kerberos: wshload.lib
 	   # SRP support: srpstatic.lib
-	   # SSH support: ssh\libssh.lib ssh\openbsd.lib
        # libsrp.lib bigmath.lib
 !endif
 !endif /* PLATFORM */
@@ -702,7 +743,7 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
         ckuus3$(O) ckuus4$(O) ckuus5$(O) ckuus6$(O) ckuus7$(O) ckuusx$(O) \
         ckuusy$(O) ckuxla$(O) ckclib$(O) ckctel$(O) ckcuni$(O) ckcftp$(O) \
 !if "$(PLATFORM)" == "NT"
-        cknsig$(O) cknalm$(O) ckntap$(O) cknwin$(O) cknprt$(O)\
+        cknsig$(O) cknalm$(O) ckntap$(O) cknwin$(O) cknprt$(O) cknpty$(O) \
 !else
         ckusig$(O) \
 !endif /* PLATFORM */
@@ -710,6 +751,9 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
         ckosftp$(O) ckozli$(O) \
 !if 0
         ck_crp$(O) ck_des$(O) \
+!endif
+!if ("$(CKF_SSH)" == "yes")
+        ckossh$(O) ckorbf$(O) ckoshs$(O) \
 !endif
         ckocon$(O) ckoco2$(O) ckoco3$(O) ckoco4$(O) ckoco5$(O) \
         ckoetc$(O) ckoetc2$(O) ckokey$(O) ckomou$(O) ckoreg$(O) \
@@ -720,11 +764,13 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
 !if "$(PLATFORM)" == "NT"
         cknnbi$(O) \
 !else
-        ckonbi$(O) 
+        ckonbi$(O) \
 !endif /* PLATFORM */
-# XYZ Modem support
-#        ckop$(O) p_callbk$(O) p_global$(O) p_omalloc$(O) p_error$(O) \
-#        p_common$(O) p_tl$(O) p_dir$(O)
+!if ("$(CKF_XYZ)" == "yes")
+        ckop$(O) p_callbk$(O) p_global$(O) p_omalloc$(O) p_error$(O) \
+        p_common$(O) p_tl$(O) p_dir$(O)
+!endif
+
 
 #OUTDIR = \kui\win95
 KUIOBJS = \
@@ -1145,11 +1191,16 @@ cknnbi$(O):     cknnbi.c ckonbi.h ckcdeb.h ckoker.h ckclib.h
 !else
 ckonbi$(O):     ckonbi.c ckonbi.h ckcdeb.h ckoker.h ckclib.h 
 !endif
+!if "$(PLATFORM)" == "NT"
+cknpty$(O):     cknpty.c cknpty.h
+!endif
 ckoslp$(O):     ckoslp.c ckoslp.h ckcdeb.h ckoker.h ckclib.h 
 ckomou$(O):     ckomou.c ckocon.h ckcdeb.h ckoker.h ckclib.h ckokey.h ckokvb.h ckuusr.h
 ckop$(O):       ckop.c ckop.h ckcdeb.h ckoker.h ckclib.h ckcker.h \ 
-                ckuusr.h ckcnet.h ckctel.h ckonet.h ckocon.h
-				# XYZMODEM Support: p_global.h p_callbk.h 
+                ckuusr.h ckcnet.h ckctel.h ckonet.h ckocon.h \
+!if "$(CKF_XYZ)" == "yes"
+				p_global.h p_callbk.h
+!endif
 cknsig$(O):	cknsig.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckcsym.h ckcnet.h ckctel.h ckonet.h\
                 ckuusr.h ckonet.h ckcsig.h ckocon.h
 ckusig$(O):	ckusig.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckcsym.h ckcnet.h ckctel.h ckonet.h\
@@ -1169,11 +1220,14 @@ ck_ssl$(O):     ck_ssl.c ckcdeb.h ckoker.h ckclib.h ckctel.h ck_ssl.h ckosslc.h 
 ckossl$(O):     ckossl.c ckcdeb.h ckoker.h ck_ssl.h ckossl.h
 ckosslc$(O):    ckosslc.c ckcdeb.h ckoker.h ck_ssl.h ckosslc.h
 ckozli$(O):     ckozli.c ckcdeb.h ckoker.h ckozli.h
+
+ckossh$(O):     ckoshs.h ckoshs.h ckorbf.h ckcdeb.h ckoker.h ckclib.h ckosslc.h ckossh.c ckossh.h
+ckoshs(O):      ckoshs.c ckoshs.h ckorbf.h ckcdeb.h ckcker.h ckocon.h
+ckorbf(O):      ckorbf.c ckorbf.h ckcdeb.h
+
+
 ckosftp$(O):    ckcdeb.h ckoker.h ckclib.h ckosftp.h ckosftp.c
 	$(CC) $(CC2) $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ckosftp.c
-# SSH support: -Issh -Issh/openbsd-compat
-#ckossh$(O):     ckcdeb.h ckoker.h ckclib.h ckossl.h ckoath.h ckosslc.h ckossh.c ckossh.h
-#	$(CC) $(CC2) -Issh -Issh/openbsd-compat $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ckossh.c
 
 ck_crp$(O):     ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h ck_crp.c
 !if "$(PLATFORM)" == "OS2"
@@ -1186,16 +1240,18 @@ ck_crp$(O):     ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h c
 #
 #!endif
 
-# X/Y/Z Modem support (3rd-party proprietary library)
-#p_brw$(O):     ckcdeb.h ckoker.h ckclib.h ckocon.h p_brw.c p_type.h p_brw.h
-#p_callbk$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_callbk.c p_type.h p.h p_callbk.h p_common.h p_brw.h \
-#               p_error.h  p_global.h p_module.h p_omalloc.h
-#p_common$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_common.c p_type.h p_common.h p_error.h p_module.h p_global.h
-#p_dir$(O):     ckcdeb.h ckoker.h ckclib.h ckocon.h p_dir.c    p_type.h p_dir.h
-#p_error$(O):   ckcdeb.h ckoker.h ckclib.h ckocon.h p_error.c  p_type.h p_errmsg.h ckcnet.h ckctel.h ckonet.h
-#p_global$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_global.c p_type.h p_tl.h p_brw.h p.h
-#p_tl$(O):      ckcdeb.h ckoker.h ckclib.h ckocon.h p_tl.c     p_type.h p_tl.h p_brw.h p.h
-#p_omalloc$(O): ckcdeb.h ckoker.h ckclib.h p_omalloc.c p_type.h p_error.h p.h
+# X/Y/Z Modem support (3rd-party library)
+!if "$(CKF_XYZ)" == "yes"
+p_brw$(O):     ckcdeb.h ckoker.h ckclib.h ckocon.h p_brw.c p_type.h p_brw.h
+p_callbk$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_callbk.c p_type.h p.h p_callbk.h p_common.h p_brw.h \
+               p_error.h  p_global.h p_module.h p_omalloc.h
+p_common$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_common.c p_type.h p_common.h p_error.h p_module.h p_global.h
+p_dir$(O):     ckcdeb.h ckoker.h ckclib.h ckocon.h p_dir.c    p_type.h p_dir.h
+p_error$(O):   ckcdeb.h ckoker.h ckclib.h ckocon.h p_error.c  p_type.h p_errmsg.h ckcnet.h ckctel.h ckonet.h
+p_global$(O):  ckcdeb.h ckoker.h ckclib.h ckocon.h p_global.c p_type.h p_tl.h p_brw.h p.h
+p_tl$(O):      ckcdeb.h ckoker.h ckclib.h ckocon.h p_tl.c     p_type.h p_tl.h p_brw.h p.h
+p_omalloc$(O): ckcdeb.h ckoker.h ckclib.h p_omalloc.c p_type.h p_error.h p.h
+!endif
 
 ckcpro.c:	ckcpro.w ckwart.exe
 #		$(MAKE) -f ckoker.mak ckwart.exe \
@@ -1278,7 +1334,7 @@ ckoker.res: ckoker.rc
 !endif
 
 cknker.res: cknker.rc cknker.ico
-        rc /fo cknker.res cknker.rc
+        rc $(RCDEFINES) /fo cknker.res cknker.rc
 
 ckopcf.res: ckopcf.rc ckopcf.h
         rc -r ckopcf.rc

@@ -50,9 +50,11 @@
 #else /* NT */
 #define APIRET ULONG
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
-#include "cknwin.h"
 #include "ckntap.h"
+#endif
+#include "cknwin.h"
 #endif /* NT */
 #include "ckowin.h"
 #include "ckocon.h"
@@ -9445,9 +9447,12 @@ cx_net(net, protocol, xhost, svc,
 		if (!ck_ntlm_is_installed()) {
 		    return(cx_fail(msg,
 		   "Required authentication method (NTLM) is not installed"));
-		} else if (line[0] != '*' && !ck_ntlm_is_valid(0)) {
+		}
+#ifdef NTLM
+        else if (line[0] != '*' && !ck_ntlm_is_valid(0)) {
 		    return(cx_fail(msg,"NTLM: Credentials are unavailable."));
 		}
+#endif
 	    }
 #endif /* NT */
 #ifdef CK_SSL
@@ -14262,9 +14267,9 @@ sho_iks() {
 #endif /* CK_LOGIN */
     printf("  Server-only:         %d\r\n",arg_x);
     printf("  Syslog:              %d\r\n",ckxsyslog);
+#ifdef CK_LOGIN
     printf("  Timeout (seconds):   %d\r\n",logintimo);
     printf("  Userfile:            %s\r\n",userfile?userfile:"<none>");
-#ifdef CK_LOGIN
 #ifdef CKWTMP
     printf("  Wtmplog:             %d\r\n",ckxwtmp);
     printf("  Wtmpfile:            %s\r\n",wtmpfile?wtmpfile:"<none>");

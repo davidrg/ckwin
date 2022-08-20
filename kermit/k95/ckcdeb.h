@@ -2384,6 +2384,15 @@ _PROTOTYP( void bleep, (short) );
 #else
 #ifdef LINUX				/* Linux */
 #define NETPTY
+#else
+#ifdef NT                   /* Windows NT */
+/* NT only gets PTY support when built with CK_CONPTY as it requires
+ * a sufficiently new Platform SDK and compiler. */
+#ifdef CK_CONPTY
+#define NETPTY
+#endif /* CK_CONPTY */
+
+#endif /* NT */
 #endif /* LINUX */
 #endif /* AIX41 */
 #endif /* SUNOS41 */
@@ -2973,6 +2982,9 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
   Then, if either SSHBUILTIN or SSHCMD is defined, ANYSSH is also defined.
 */
 
+#ifdef COMMENT
+Built-in SSH no longer depends on SSL support. Built-in SSH is now provided by
+a library (libssh, ssh.dll) which is itself linked against OpenSSL.
 #ifndef NOSSH
 #ifndef NO_SSL
 #ifdef OS2ONLY
@@ -2987,6 +2999,7 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #define NOSSH
 #endif /* NO_SSL */
 #endif /* NOSSH */
+#endif /* COMMENT */
 
 #ifdef NOSSH				/* NOSSH */
 #ifdef SSHBUILTIN			/* undefines any SSH selctors */
@@ -6380,6 +6393,10 @@ _PROTOTYP( int vosprtf, (char *fmt, ...) );
 #endif /* STRATUS */
 
 #ifdef NT
+#ifndef VER_PLATFORM_WIN32_WINDOWS
+/* Visual C++ 2.0 and older don't define this (Win95 wasn't released yet) */
+#define VER_PLATFORM_WIN32_WINDOWS      1
+#endif
 extern int OSVer;
 #define isWin95() (OSVer==VER_PLATFORM_WIN32_WINDOWS)
 #else

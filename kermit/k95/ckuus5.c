@@ -62,10 +62,12 @@ extern char * ck_cryear;       /* (ckcmai.c) Latest C-Kermit copyright year */
 #undef COMMENT
 #else /* NT */
 #include <windows.h>
+#ifndef NODIAL
 #define TAPI_CURRENT_VERSION 0x00010004
 #include <tapi.h>
 #include <mcx.h>
 #include "ckntap.h"
+#endif
 #define APIRET ULONG
 extern int DialerHandle;
 extern int StartedFromDialer;
@@ -11696,6 +11698,10 @@ initoptlist() {
 #ifdef __WATCOMC__
     makestr(&(optlist[noptlist++]),"__WATCOMC__");
 #endif
+#ifdef _MSC_VER
+    sprintf(line,"_MSC_VER=%d",_MSC_VER); /* SAFE */
+    makestr(&(optlist[noptlist++]),line);
+#endif
 #ifdef CK_ANSIC
     makestr(&(optlist[noptlist++]),"CK_ANSIC");
 #endif
@@ -11864,6 +11870,9 @@ initoptlist() {
 #ifdef NOHTTP
     makestr(&(optlist[noptlist++]),"NOHTTP");
 #endif /* NOHTTP */
+#ifdef NONTLM
+    makestr(&(optlist[noptlist++]),"NONTLM");
+#endif
 #ifdef CKROOT
     makestr(&(optlist[noptlist++]),"CKROOT");
 #endif /* CKROOT */
@@ -11942,6 +11951,9 @@ initoptlist() {
     makestr(&(optlist[noptlist++]),line);
 #endif	/* OPENSSL_VERSION_TEXT */
 #endif /* CK_SSL */
+#ifdef CK_CONPTY
+    makestr(&(optlist[noptlist++]),"CK_CONPTY");
+#endif
     debug(F101,"initoptlist noptlist","",noptlist);
     sh_sort(optlist,NULL,noptlist,0,0,0);
 }
