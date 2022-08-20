@@ -8997,6 +8997,8 @@ conkbg(void) {
 
     *p = '\0';
 
+/* TODO: This doesn't build on openwatcom currently*/
+#ifndef __WATCOMC__
     memset( &kbID, 0, sizeof(kbID) ) ;
 
     kbID.cb = sizeof(kbID);
@@ -9021,6 +9023,8 @@ conkbg(void) {
         sprintf(p,"%d",x);              /* use its "name" */
     else                                /* otherwise */
         sprintf(p,"%04X",(int) kbID.idKbd); /* use the hex code */
+#endif
+
 #endif /* NT */
 
     return(p);                          /* Return string pointer */
