@@ -425,6 +425,25 @@ wcos2:
         LINKFLAGS="-l=os2v2 -x" \
 	    DEF=""  # ckoker32.def
 
+wcos2d:
+	$(MAKE) -f ckoker.mak os232 \
+	    CMP="OWCL386" \
+	    CC="wcl386" \
+        CC2="-Fh -d3" \
+        OUT="-Fe=" O=".obj" \
+	    OPT=" " \
+        DEBUG="-DNDEBUG" \
+        DLL="-br" \
+	    CFLAGS="-q -zp=1 -bm -bt=os2 -aa" \
+        LDFLAGS="" \
+        PLATFORM="OS2" \
+        NOLINK="-c" \
+!ifdef WARP
+        WARP="YES" \
+!endif
+        LINKFLAGS="-l=os2v2 -x" \
+	    DEF=""  # ckoker32.def
+
 # Flags are:
 #   --aa            Allows non-const initializers for local aggregates or unions.
 #                   Required to fix initialisation of viocell with geterasecolor()
@@ -540,12 +559,16 @@ ibmcd:
 !ifdef PLATFORM
 !if "$(PLATFORM)" == "OS2"
 DEFINES = -DOS2 -DDYNAMIC -DKANJI -DNETCONN -DTCPSOCKET \
-          -DNPIPE -DOS2MOUSE -DCK_NETBIOS -DHADDRLIST -DPCFONTS \
+          -DNPIPE -DOS2MOUSE -DHADDRLIST -DPCFONTS \
           -DRLOGCODE -DNETFILE -DONETERMUPD \
           -DNO_SRP -DBETATEST  -DNO_KERBEROS \
           -DNOCKXYZ -DNO_SSL -DNO_ENCRYPTION \
 !if "$(CMP)" == "OWCL386"
           -D__32BIT__
+!else
+# NetBIOS doesn't currently work on OpenWatcom builds for some unknown reason;
+# they just crash on startup at ckonbi.c:152 when its enabled.
+          -DCK_NETBIOS
 !endif
 # zlib support:  -DZLIB
 # DECnet (Pathworks32) support: -DDECNET
