@@ -1,7 +1,7 @@
-C-Kermit for Windows
+C-Kermit for Windows and OS/2
 ====================
 
-This is C-Kermit for Windows. It is a free and open source version of the
+This is C-Kermit for Windows and OS/2. It is a free and open source version of the
 program formerly known as Kermit-95, a commercial product of Columbia
 University from 1994 to 2011. For more information on Kermit, visit the
 Kermit Project website: http://www.kermitproject.org.
@@ -40,6 +40,11 @@ remote host is already trusted, and you use public key authentication.
 Network DLLs are also fixed. You can now add support for additional protocols
 via custom DLLs which are loaded with the `set network type dll` command.
 
+Limited OS/2 Support is back. No network support and its now being built with
+a totally different compiler, OpenWatcom, so bugs are very likely. As with
+Kermit 95, the OS/2 version doesn't have a GUI - it runs in an OS/2 Console
+Window.
+
 Features Expected to Return Soon
 --------------------------------
 
@@ -55,8 +60,6 @@ obsolete 3rd party libraries, cryptography export regulations, or unavailability
 of the required tools. Some of these may return someday, others likely will not.
 This includes:
 
-* OS/2 support (the code is still there but requires the IBM VisualAge compiler 
-  to build at the moment)
 * DECnet (formerly provided by DEC PATHWORKS) 
 * LAT (formerly provided by either SuperLAT or PATHWORKS)
 * Kerberos (provided by a very old version of MIT Kerberos for Windows)
@@ -77,6 +80,8 @@ Compiling
 To build C-Kermit for Windows, see the [Build Instructions](doc/building.md).
 You'll need at least Visual C++ 4.0 or newer, or OpenWatcom 1.9+. To build
 with ConPTY and SSH support you'll need to use Visual C++ 2019 or newer.
+
+To build C-Kermit for OS/2, see the [OS/2 Build Instructions](doc/os2-building.md).
 
 Making Changes
 ---------------
