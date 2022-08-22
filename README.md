@@ -1,4 +1,4 @@
-C-Kermit for Windows and OS/2
+C-Kermit for Windows
 ====================
 
 This is C-Kermit for Windows and OS/2. It is a free and open source version of the
@@ -43,7 +43,8 @@ via custom DLLs which are loaded with the `set network type dll` command.
 Limited OS/2 Support is back. No network support and its now being built with
 a totally different compiler, OpenWatcom, so bugs are very likely. As with
 Kermit 95, the OS/2 version doesn't have a GUI - it runs in an OS/2 Console
-Window.
+Window. If you know anything about OS/2 programming, assistance in fixing the
+remaining OS/2 issues would be most welcome.
 
 Features Expected to Return Soon
 --------------------------------
