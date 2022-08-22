@@ -191,7 +191,11 @@ static char *tophlpi[] = {              /* Top-level help for IKSD */
 #ifndef NOHELP
 char *newstxt[] = {
 #ifdef OS2
+#ifdef NT
 "Welcome to C-Kermit for Windows, the Open-Source successor to",
+#else
+"Welcome to C-Kermit for OS/2, the Open-Source successor to",
+#endif
 "Columbia University's Kermit 95 package.",
 
 #ifdef BETATEST
@@ -258,7 +262,11 @@ char *newstxt[] = {
 #ifndef NOHELP
 char *introtxt[] = {
 #ifdef OS2
+#ifdef NT
 "Welcome to C-Kermit for Windows, communication software for:",
+#else
+"Welcome to C-Kermit for OS/2, communication software for:",
+#endif
 #else
 #ifdef UNIX
 "Welcome to UNIX C-Kermit communications software for:",
