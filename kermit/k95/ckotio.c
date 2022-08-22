@@ -9230,6 +9230,11 @@ os2rexxinit()
 #endif /* CK_REXX */
 
 #define TITLEBUF_LEN 128
+#ifdef NT
+#define TITLE_PLATFORM "Windows"
+#else
+#define TITLE_PLATFORM "OS/2"
+#endif
 int
 os2settitle(char *newtitle, int newpriv ) {
 #ifndef NOLOCAL
@@ -9269,24 +9274,24 @@ os2settitle(char *newtitle, int newpriv ) {
     if ( usertitle[0] ) {
         if ( StartedFromDialer ) {
             _snprintf( titlebuf, TITLEBUF_LEN, "%d::%s%s%s",KermitDialerID,usertitle,
-                 private ? (inserver ? " - IKS" : " - C-Kermit for Windows") : "",
+                 private ? (inserver ? " - IKS" : " - C-Kermit for " TITLE_PLATFORM) : "",
                      videomode
                  );
         }
         else {
             _snprintf( titlebuf, TITLEBUF_LEN, "%s%s%s",usertitle,
-                 private ? (inserver ? " - IKS" : " - C-Kermit for Windows") : "", videomode
+                 private ? (inserver ? " - IKS" : " - C-Kermit for " TITLE_PLATFORM) : "", videomode
                  );
         }
     }
     else if ( StartedFromDialer ) {
         _snprintf( titlebuf, TITLEBUF_LEN, "%d::%s%s%s%s",KermitDialerID,title,(*title&&private)?" - ":"",
-                 private ? (inserver ? "IKS" : "C-Kermit for Windows") :  "", videomode
+                 private ? (inserver ? "IKS" : "C-Kermit for " TITLE_PLATFORM) :  "", videomode
                  );
     }
     else {
         _snprintf( titlebuf, TITLEBUF_LEN, "%s%s%s%s",title,(*title&&private)?" - ":"",
-                 private ? (inserver ? "IKS" : "C-Kermit for Windows") : "" , videomode
+                 private ? (inserver ? "IKS" : "C-Kermit for " TITLE_PLATFORM) : "" , videomode
                  );
     }
 
