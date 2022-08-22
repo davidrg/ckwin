@@ -173,6 +173,7 @@ _PROTOTYP( char * ckgetfqhostname,(char *));
 #endif
 #else /* NT */
 #define INCL_VIO
+#define INCL_WINERRORS
 #include <os2.h>
 #endif /* NT */
 #ifdef COMMENT                          /* Would you believe */

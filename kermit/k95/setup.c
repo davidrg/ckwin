@@ -78,7 +78,10 @@
 #include <sys\types.h>
 #include <sys\stat.h>
 #include <io.h>
+/* Watcom defines it and it does so differently */
+#ifndef __WATCOMC__
 #define S_IFMT 0xF000
+#endif
 #endif /* NT */
 #endif /* OS2 */
 

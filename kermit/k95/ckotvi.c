@@ -13,6 +13,8 @@
 #ifdef NT
 #include <windows.h>
 #else /* NT */
+/* so that we get SEM_INDEFINITE_WAIT from the watcom OS/2 headers */
+#define INCL_DOSSEMAPHORES
 #include <os2.h>
 #undef COMMENT
 #endif /* NT */

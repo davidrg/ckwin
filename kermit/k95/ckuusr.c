@@ -122,6 +122,7 @@ int autolocus = 1;			/* Automatic LOCUS switching enabled */
 #ifndef NT
 #define INCL_NOPM
 #define INCL_VIO			/* Needed for ckocon.h */
+#define INCL_WINERRORS
 #include <os2.h>
 #undef COMMENT
 #else

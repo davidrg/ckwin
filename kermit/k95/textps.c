@@ -850,9 +850,15 @@ gcharset() {
 #ifdef __EMX__
     ULONG CpList[3], CpSize, rc;
     rc = DosQueryCp(sizeof(CpList), CpList, &CpSize);
+#else /* Watcom or MSC */
+#ifdef __WATCOMC__
+    /* Same as EMX */
+    ULONG CpList[3], CpSize, rc;
+    rc = DosQueryCp(sizeof(CpList), CpList, &CpSize);
 #else /* MSC */
     USHORT CpList[3], CpSize, rc;
     rc = DosGetCp(sizeof(CpList), CpList, &CpSize);
+#endif
 #endif /* __EMX__ */
     i = (int) CpList[0];
 #else /* MSDOS */

@@ -251,7 +251,7 @@ char * ikprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] IKSD> ";
 #ifdef COMMENT
 char * ckprompt = "[\\freplace(\\v(dir),/,\\\\)] K-95> ";
 #else
-char * ckprompt = "[\\freplace(\\v(dir),/,\\\\)] CKW> ";
+char * ckprompt = "[\\freplace(\\v(dir),/,\\\\)] C-KERMIT> ";
 #endif /* COMMENT */
 char * ikprompt = "[\\freplace(\\v(dir),/,\\\\)] IKSD> ";
 #endif /* NT */

@@ -36,6 +36,9 @@
 #include <windows.h>
 #define SECURITY_WIN32
 #include <security.h>
+#ifndef NTLMSP_NAME_A
+#define NTLMSP_NAME_A "NTLM"
+#endif /* NTLMSP_NAME_A */
 
 #else /* NT */
 #define INCL_DOSMODULEMGR
@@ -43,6 +46,13 @@
 #endif /* NT */
 #endif /* OS2 */
 #endif /* CRYPT_DLL */
+
+#ifdef OS2
+#ifndef NT
+#define INCL_DOSMODULEMGR
+#include <os2.h>
+#endif
+#endif
 
 #include "ckosyn.h"
 

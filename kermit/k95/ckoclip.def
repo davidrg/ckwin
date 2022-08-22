@@ -1,0 +1,9 @@
+NAME           CKCLPSRV WINDOWAPI
+DESCRIPTION    'OS/2 C-Kermit PM Clipboard Server'
+PROTMODE
+HEAPSIZE       12288
+STACKSIZE      20480
+
+EXPORTS
+    ClientWndProc
+

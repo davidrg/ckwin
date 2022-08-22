@@ -44,12 +44,6 @@ DISABLED_FEATURES = SuperLAT DECnet Kerberos SRP Telnet-Encryption CryptDLL
 DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNO_SRP -DNO_ENCRYPTION
 
 
-
-!if "$(PLATFORM)" != "NT"
-# No built-in SSH support for OS/2 (yet)
-CKF_SSH=no
-!endif
-
 !if "$(CMP)" == "OWCL"
 # No built-in SSH support for OpenWatcom (yet)
 CKF_SSH=no
@@ -80,6 +74,23 @@ CKF_TOOLBAR=no
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DVINTAGEVC
 !endif
 
+!else
+
+# OS/2 gets NetBIOS support!
+CKF_NETBIOS=yes
+
+!if ("$(CMP)" == "OWCL") || ("$(CMP)" == "OWCL386")
+# But not when building with OpenWatcom. At the moment it causes Kermit/2 to
+# crash on startup at ckonbi.c:152
+!message Turning NetBIOS support off - OpenWatcom builds just crash with it enabled.
+CKF_NETBIOS=no
+!endif
+
+!if "$(CKF_SSH)" == "yes"
+!message Target platform is OS/2 - forcing SSH off (not supported)
+# No built-in SSH support for OS/2 (yet)
+CKF_SSH=no
+!endif
 !endif
 
 
@@ -237,4 +248,16 @@ DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNODIAL
 !if "$(CKF_RICHEDIT)" == "no"
 DISABLED_FEATURES = $(DISABLED_FEATURES) RichEdit
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNORICHEDIT
+!endif
+
+
+# NetBIOS (for OS/2 only)
+#   Turn on with -DCK_NETBIOS
+!if ("$(PLATFORM)" == "OS2")
+!if ("$(CKF_NETBIOS)" == "yes")
+ENABLED_FEATURES = $(ENABLED_FEATURES) NetBIOS
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_NETBIOS
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) NetBIOS
+!endif
 !endif
