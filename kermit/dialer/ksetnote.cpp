@@ -473,7 +473,7 @@ K_SETTINGS_NOTEBOOK(void)
     directoryService = _serviceManager->Get(ID_DIRECTORY_SERVICE);
     windowManager->Center(this) ;
 
-    Information( I_SET_TEXT, "Kermit 95 Connection Entry" ) ;
+    Information( I_SET_TEXT, "C-Kermit Connection Entry" ) ;
 
     _ip[0] = _lat[0] = _phone[0] = '\0';
 
@@ -1400,7 +1400,7 @@ K_SETTINGS_NOTEBOOK( KD_LIST_ITEM * entry, enum ENTRYMODE mode )
     directoryService = _serviceManager->Get(ID_DIRECTORY_SERVICE);
     windowManager->Center(this) ;
 
-    Information( I_SET_TEXT, "Kermit 95 Connection Entry" ) ;
+    Information( I_SET_TEXT, "C-Kermit Connection Entry" ) ;
 
     K_MODEM * modem = connector->FindModem( entry->_modem );
 

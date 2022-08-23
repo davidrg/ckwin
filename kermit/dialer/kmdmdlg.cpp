@@ -7192,9 +7192,9 @@ K_MODEM_DIALOG::K_MODEM_DIALOG( UI_LIST * ModemList )
     }
 
 #ifdef WIN32
-    Information( I_SET_TEXT, "Kermit 95 Modem Definitions" ) ;
+    Information( I_SET_TEXT, "C-Kermit for Windows Modem Definitions" ) ;
 #else
-    Information( I_SET_TEXT, "Kermit 95 for OS/2 Modem Definitions" ) ;
+    Information( I_SET_TEXT, "C-Kermit for OS/2 Modem Definitions" ) ;
 #ifdef COMMENT
     UIW_ICON * icon = (UIW_ICON *) Get( ICON_K95 ) ;
     *this - icon ;

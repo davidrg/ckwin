@@ -4158,7 +4158,7 @@ GenerateScript( KD_LIST_ITEM * entry, KD_CONFIG * config,
     ZIL_ICHAR *p;
     K_LOCATION * location = (K_LOCATION *) _location_list.Current();
 
-    sprintf(buf,"; Kermit 95 Dialer Generated Script - Version %d.%d\n",
+    sprintf(buf,"; C-Kermit for Windows Dialer Generated Script - Version %d.%d\n",
              kd_major,kd_minor);
     OUTFILE(buf);
 
@@ -7816,7 +7816,7 @@ void K_CONNECTOR::UpdateStatusLine( ZIL_UINT32 UpdateName )
 #define SHORTCUTDEBUG
 
 #define K95_APPID "Kermit.Script"
-#define K95_APPID_DEFAULT "Columbia University Kermit 95 Script"
+#define K95_APPID_DEFAULT "C-Kermit for Windows Script"
 #define K95_MIME  "application/kermit"
 #define K95_MIME_PATH  "MIME\\Database\\Content Type\\application/kermit"
 

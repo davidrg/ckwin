@@ -16,9 +16,9 @@ K_NETWORK_DIR::K_NETWORK_DIR( KD_CONFIG * config)
    : ZAF_DIALOG_WINDOW("WINDOW_NETWORK_DIR_FILES",defaultStorage),_config(config)
 { 
 #ifdef WIN32
-    Information( I_SET_TEXT, "Kermit 95 Network Directory Files" ) ;
+    Information( I_SET_TEXT, "C-Kermit for Windows Network Directory Files" ) ;
 #else
-    Information( I_SET_TEXT, "Kermit 95 for OS/2 Network Directory Files" ) ;
+    Information( I_SET_TEXT, "C-Kermit for OS/2 Network Directory Files" ) ;
 #ifdef COMMENT
     UIW_ICON * icon = (UIW_ICON *) Get( ICON_K95 ) ;
     *this - icon ;

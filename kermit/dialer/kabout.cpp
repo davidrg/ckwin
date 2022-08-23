@@ -20,7 +20,7 @@ K_ABOUT::K_ABOUT()
 #ifdef WIN32
     Information( I_SET_TEXT, "About C-Kermit for Windows" ) ;
 #else
-    Information( I_SET_TEXT, "About Kermit 95 for OS/2" ) ;
+    Information( I_SET_TEXT, "About C-Kermit for OS/2" ) ;
 #ifdef COMMENT
     UIW_ICON * icon = (UIW_ICON *) Get( ICON_K95 ) ;
     *this - icon ;

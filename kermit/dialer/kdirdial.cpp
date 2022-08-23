@@ -17,9 +17,9 @@ K_DIAL_DIR::K_DIAL_DIR( KD_CONFIG * config)
    :ZAF_DIALOG_WINDOW("WINDOW_DIAL_DIR_FILES",defaultStorage), _config(config)
 { 
 #ifdef WIN32
-    Information( I_SET_TEXT, "Kermit 95 Dialing Directory Files" ) ;
+    Information( I_SET_TEXT, "C-Kermit for Windows Dialing Directory Files" ) ;
 #else
-    Information( I_SET_TEXT, "Kermit 95 for OS/2 Dialing Directory Files" ) ;
+    Information( I_SET_TEXT, "C-Kermit for OS/2 Dialing Directory Files" ) ;
 #ifdef COMMENT
     UIW_ICON * icon = (UIW_ICON *) Get( ICON_K95 ) ;
     *this - icon ;
