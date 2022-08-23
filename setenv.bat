@@ -55,7 +55,7 @@ set CKF_SSH=no
 
 set CK_DIST_DLLS=
 
-if not defined vcpkg_installed goto :end
+if not defined vcpkg_installed goto :end_vcpkg
 
 REM Look for dependencies in the vcpkg folders
 
@@ -73,7 +73,7 @@ REM     if exist %vcpkg_installed%\bin\zlib1.dll set CK_DIST_DLLS=%CK_DIST_DLLS%
 if exist %vcpkg_installed%\lib\ssh.lib set CKF_SSH=yes
 if exist %vcpkg_installed%\bin\ssh.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %vcpkg_installed%\bin\ssh.dll %vcpkg_installed%\bin\pthreadVC3.dll
 
-:end
+:end_vcpkg
 
 REM Look for optional dependencies
 
