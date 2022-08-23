@@ -1,0 +1,11 @@
+CKERMIT.INI=d:\kermit\ckermit.ini
+ComSpec=D:\4\nt\4NT.EXE
+INCLUDE=e:\visual~1\vc98\atl\include;e:\visual~1\vc98\include;e:\visual~1\vc98\mfc\include;d:\kermit\src;e:\ssl\openssl-0.9.5a\inc32;e:\srp\srp-1.5.0\include;d:\pwsdk\inc32;e:\kerberos\pismere\athena\wshelper\include;d:\superlat\include;e:\kerberos\pismere\athena\auth\krb5\src\include;d:\kermit\src\kui;d:\zinc\include;
+K95.INI=d:\kermit\ckermit.ini
+LIB=e:\VISUAL~1\VC98\LIB;e:\VISUAL~1\VC98\MFC\LIB;e:\kerberos\pismere\target\lib\i386\rel;d:\zinc\lib\mvcpp500;
+Path=e:\perl\bin;J:\Program Files\Resource Kit\;d:\ssleay;d:\kermit;e:\kerberos\pismere\bin;e:\perl\bin;d:\hamilton\bin;d:\gnu\bin;d:\rse;d:\rse\nt;d:\4\nt;e:\mks\mksnt;d:\kermit;d:\patch50;;e:\TEMP;e:\InterAccess;e:\InterAccess\Companion;e:\VISUAL~1\common\msdev98\BIN;e:\VISUAL~1\VC98\BIN;e:\VISUAL~1\common\TOOLS\WINNT;e:\VISUAL~1\common\TOOLS;d:\ssleay;e:\kerberos\pismere\bin;
+SSLEAY_CONF=d:\ssleay\ssleay.cnf
+SSL_CERT_AREA=d:/ssleay
+SSL_CERT_DIR=d:/ssleay/certs
+SSL_PRIVATE_DIR=d:/ssleay/private
+TZ=EST5EDT

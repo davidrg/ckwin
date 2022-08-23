@@ -1,0 +1,10 @@
+directory D:\tmp3
+modem telebit
+port com1
+speed 38400
+country 1
+area 212
+ldprefix 1
+tfprefix 1
+tfarea 800
+intlprefix 011
