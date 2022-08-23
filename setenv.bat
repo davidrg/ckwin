@@ -97,13 +97,185 @@ if exist %libssh_build%\src\ssh.lib set lib=%lib%;%libssh_build%\src
 if exist %libssh_build%\src\ssh.lib set CKF_SSH=yes
 if exist %libssh_build%\src\ssh.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %libssh_build%\src\ssh.dll
 
+REM Now figure out what compiler we're using - we need to find this out so we'll
+REM know where to look for OpenZinc and if we're able to build it if it can't be
+REM found (not all supported compilers have OpenZinc makefiles available)
+set CK_COMPILER_NAME=unknown
+set ZINCBUILD=
+set CKF_ZINC=no
+set BUILD_ZINC=no
+
+REM We can't look at OpenWatcoms help output for a version number because it
+REM waits for input ("Press any key to continue:"), so we'll just detect it by
+REM the presence of its environment variables.
+if exist %WATCOM%\binnt\wcl386.exe goto :watcomc
+cl 2>&1 | findstr /C:"Version 19.3" > nul
+if %errorlevel% == 0 goto :vc143
+cl 2>&1 | findstr /C:"Version 19.2" > nul
+if %errorlevel% == 0 goto :vc142
+cl 2>&1 | findstr /C:"Version 19.1" > nul
+if %errorlevel% == 0 goto :vc141
+cl 2>&1 | findstr /C:"Version 19.0" > nul
+if %errorlevel% == 0 goto :vc140
+cl 2>&1 | findstr /C:"Version 18.0" > nul
+if %errorlevel% == 0 goto :vc12
+cl 2>&1 | findstr /C:"Version 17.0" > nul
+if %errorlevel% == 0 goto :vc11
+cl 2>&1 | findstr /C:"Version 16.0" > nul
+if %errorlevel% == 0 goto :vc10
+cl 2>&1 | findstr /C:"Version 15.0" > nul
+if %errorlevel% == 0 goto :vc9
+cl 2>&1 | findstr /C:"Version 14.0" > nul
+if %errorlevel% == 0 goto :vc8
+cl 2>&1 | findstr /C:"Version 13.1" > nul
+if %errorlevel% == 0 goto :vc71
+cl 2>&1 | findstr /C:"Version 13.0" > nul
+if %errorlevel% == 0 goto :vc7
+cl 2>&1 | findstr /C:"Version 12.0" > nul
+if %errorlevel% == 0 goto :vc6
+cl 2>&1 | findstr /C:"Version 11.0" > nul
+if %errorlevel% == 0 goto :vc5
+cl 2>&1 | findstr /C:"Version 10.0" > nul
+if %errorlevel% == 0 goto :vc4
+cl 2>&1 | findstr /C:"Version 9.0" > nul
+if %errorlevel% == 0 goto :vc2
+cl 2>&1 | findstr /R /C:"32-bit.*Version 8\.0" > nul
+if %errorlevel% == 0 goto :vc1
+cl 2>&1 | findstr /C:"Version 8.00" > nul
+if %errorlevel% == 0 goto :vc116
+
+goto :unsupported
+
+:watcomc
+set CK_COMPILER_NAME=OpenWatcom
+goto :cvcdone
+
+:vc116
+set CK_COMPILER_NAME=Visual C++ 1.0 (16-bit)
+goto :unsupported
+
+:vc1
+set CK_COMPILER_NAME=Visual C++ 1.0 32-bit Edition
+goto :unsupported
+
+:vc2
+set CK_COMPILER_NAME=Visual C++ 2.0
+goto :unsupported
+
+:vc4
+set CK_COMPILER_NAME=Visual C++ 4.0
+set ZINCBUILD=mvcpp400mt
+goto :cvcdone
+
+:vc5
+set CK_COMPILER_NAME=Visual C++ 5.0 (Visual Studio 97)
+set ZINCBUILD=mvcpp500mt
+goto :cvcdone
+
+:vc6
+set CK_COMPILER_NAME=Visual C++ 6.0 (Visual Studio 6)
+set ZINCBUILD=mvcpp600mt
+goto :cvcdone
+
+:vc7
+set CK_COMPILER_NAME=Visual C++ 2002 (7.0)
+set ZINCBUILD=mvcpp700mt
+goto :cvcdone
+
+:vc71
+set CK_COMPILER_NAME=Visual C++ 2003 (7.1)
+goto :cvcdone
+
+:vc8
+set CK_COMPILER_NAME=Visual C++ 2005 (8.0)
+goto :cvcdone
+
+:vc9
+set CK_COMPILER_NAME=Visual C++ 2008 (9.0)
+goto :cvcdone
+
+:vc10
+set CK_COMPILER_NAME=Visual C++ 2010 (10.0)
+set ZINCBUILD=mvcpp10
+goto :cvcdone
+
+:vc11
+set CK_COMPILER_NAME=Visual C++ 2012 (11.0)
+goto :cvcdone
+
+:vc12
+set CK_COMPILER_NAME=Visual C++ 2013 (12.0)
+goto :cvcdone
+
+:vc140
+set CK_COMPILER_NAME=Visual C++ 2015 (14.0)
+goto :cvcdone
+
+:vc141
+set CK_COMPILER_NAME=Visual C++ 2017 (14.1)
+goto :cvcdone
+
+:vc142
+set CK_COMPILER_NAME=Visual C++ 2019 (14.2)
+goto :cvcdone
+
+:vc143
+set CK_COMPILER_NAME=Visual C++ 2022 (14.3)
+goto :cvcdone
+
+:unsupported
+echo.
+echo -- Unsupported compiler: %CK_COMPILER_NAME% --
+echo C-Kermit for Windows has not been tested with this compiler and may not build.
+echo.
+goto :cvcend
+
+:cvcdone
+echo Compiler: %CK_COMPILER_NAME%
+if "%ZINCBUILD%" == "" echo Can not setup Zinc for this compiler
+if "%ZINCBUILD%" NEQ "" goto :check_zinc
+
+goto :cvcend
+
+:check_zinc
+REM Zinc is supported for this compiler so add it to the include and lib path
+set lib=%lib%;%root%\zinc\lib\%ZINCBUILD%
+set include=%include%;%root%\zinc\include
+
+REM Then check to see if its already built.
+if exist %root%\zinc\lib\%ZINCBUILD%\wnt_zil.lib goto :have_zinc
+
+REM It is not built, but it can be!
+set BUILD_ZINC=yes
+goto :cvcend
+
+:have_zinc
+REM Looks like we've got a suitable compiled copy of OpenZinc.
+set CKF_ZINC=yes
+set BUILD_ZINC=no
+echo OpenZinc found!
+goto :cvcend
+
+:cvcend
+
+echo -----------------------------
+echo.
 echo Include path set to:
 echo    %include%
 echo.
 echo Library path set to:
 echo    %lib%
 echo.
+echo Compiler: %CK_COMPILER_NAME%
+echo.
 echo Optional Dependencies Found:
 echo    zlib: %CKF_ZLIB%
 echo OpenSSL: %CKF_SSL%
 echo  libssh: %CKF_SSH%
+echo    zinc: %CKF_ZINC%
+echo.
+if "%BUILD_ZINC%" == "yes" echo OpenZinc is required for building the dialer. You can build it by extracting
+if "%BUILD_ZINC%" == "yes" echo the OpenZinc distribution to %root%\zinc and running
+if "%BUILD_ZINC%" == "yes" echo %root%\mkzinc.bat
+if "%BUILD_ZINC%" == "yes" echo.
+:end
