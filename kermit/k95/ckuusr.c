@@ -2434,14 +2434,16 @@ static struct keytab sshkey[] = {	/* SET SSH KEY command table */
     { "change-passphrase",  SSHK_PASS, 0 },
     { "create",             SSHK_CREA, 0 },
     { "display",            SSHK_DISP, 0 },
-    { "v1",                 SSHK_V1,   0 },
+    /*{ "v1",                 SSHK_V1,   0 },*/
     { "", 0, 0 }
 };
 static int nsshkey = (sizeof(sshkey) / sizeof(struct keytab)) - 1;
 
+#ifdef COMMENT
 static struct keytab sshkv1[] = {	/* SET SSH KEY V1 command table */
     { "set-comment",  1, 0 }
 };
+#endif
 
 static struct keytab sshkpsw[] = {	/* SET SSH KEY PASSPHRASE table */
     { "/new-passphrase",  2, CM_ARG },
@@ -11409,6 +11411,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 #endif /* SSHTEST */
 	      return(success = (x == 0));
 	    }
+#ifdef COMMENT
 	    case SSHK_V1:		/* SSH KEY V1 SET-COMMENT */
 	      if ((x = cmkey(sshkv1,1,"","set-comment", xxstring)) < 0)
 		return(x);
@@ -11430,6 +11433,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 #endif /* SSHTEST */
 	      success = (x == 0);
 	      return(success);
+#endif /* COMMENT - SSH KEY V1 SET-COMMENT*/
 	  }
 	  default:
 	    return(-2);

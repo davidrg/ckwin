@@ -7883,7 +7883,7 @@ static struct keytab sshtab[] = {       /* SET SSH command table */
     { "quiet",                   SSH_SHH,  0 },
     { "strict-host-key-check",   SSH_SHK,  0 },
     { "use-openssh-config",      SSH_CFG,  0 },
-    { "v1",                      SSH_V1,   0 },
+    /* "v1",                      SSH_V1,   0 },*/
     { "v2",                      SSH_V2,   0 },
     { "verbose",                 SSH_VRB,  0 },
     { "version",                 SSH_VER,  0 },
@@ -7900,7 +7900,7 @@ static int nsshtab = (sizeof(sshtab) / sizeof(struct keytab)) - 1;
 
 #ifdef SSHBUILTIN
 static struct keytab sshver[] = {       /* SET SSH VERSION command table */
-    { "1",          1,  0 },
+    /*{ "1",          1,  0 },*/
     { "2",          2,  0 },
     { "automatic",  0,  0 }
 };
@@ -7954,6 +7954,7 @@ static int naddfwd = (sizeof(addfwd) / sizeof(struct keytab)) - 1;
 #define SSH2_MAC   6
 #define SSH2_AUT   7
 
+#ifdef COMMENT
 static struct keytab sshv1tab[] = {     /* SET SSH V1 command table */
     { "cipher",                  SSH1_CIF, 0 },
     { "global-known-hosts-file", SSH1_GNH, 0 },
@@ -7962,6 +7963,7 @@ static struct keytab sshv1tab[] = {     /* SET SSH V1 command table */
     { "", 0, 0 }
 };
 static int nsshv1tab = (sizeof(sshv1tab) / sizeof(struct keytab)) - 1;
+#endif
 
 static struct keytab sshv2tab[] = {     /* SET SSH V2 command table */
     { "authentication",          SSH2_AUT, 0 },
@@ -7975,7 +7977,7 @@ static struct keytab sshv2tab[] = {     /* SET SSH V2 command table */
 };
 static int nsshv2tab = (sizeof(sshv2tab) / sizeof(struct keytab)) - 1;
 
-#define SSHC_3DES 1                     /* 3DES */
+/*#define SSHC_3DES 1*/                     /* 3DES */
 #define SSHC_3CBC 2                     /* 3DES-CBC */
 #define SSHC_A128 3                     /* AES128-CBC */
 #define SSHC_A192 4                     /* AES192-CBC */
@@ -7992,16 +7994,18 @@ static int nsshv2tab = (sizeof(sshv2tab) / sizeof(struct keytab)) - 1;
 #define SSHC_A19C 15                    /* aes192-ctr */
 #define SSHC_A25C 16                    /* aes256-ctr */
 
+#ifdef COMMENT
 static struct keytab ssh1ciphers[] = {
     { "3des",         SSHC_3DES, 0 },
-    /*{ "blowfish",     SSHC_FISH, 0 },
-    { "des",          SSHC_1DES, 0 },*/
+    { "blowfish",     SSHC_FISH, 0 },
+    { "des",          SSHC_1DES, 0 },
     { "", 0, 0 }
 };
 static int nssh1ciphers = (sizeof(ssh1ciphers) / sizeof(struct keytab)) - 1;
+#endif
 
 static struct keytab ssh2ciphers[] = {  /* SET SSH V2 CIPHERS command table */
-    { "3des-cbc",        SSHC_3DES, 0 },
+    { "3des-cbc",        SSHC_3CBC, 0 },
     { "aes128-cbc",      SSHC_A128, 0 },
     { "aes192-cbc",      SSHC_A192, 0 },
     { "aes256-cbc",      SSHC_A256, 0 },
@@ -8084,7 +8088,7 @@ int                                     /* SET SSH variables */
   ssh_dummy = 0;                        /* bottom of list */
 
 char                                    /* The following are to be malloc'd */
-  * ssh1_cif = NULL,                    /* v1 cipher */
+  /* * ssh1_cif = NULL, */                    /* v1 cipher */
   * ssh2_cif = NULL,                    /* v2 cipher list */
   * ssh2_mac = NULL,                    /* v2 mac list */
   * ssh2_auth = NULL,                   /* v2 authentication list */
@@ -8092,8 +8096,10 @@ char                                    /* The following are to be malloc'd */
   * ssh_prt = NULL,                     /* port/service */
   * ssh_cmd = NULL,                     /* command to execute */
   * ssh_xal = NULL,                     /* xauth-location */
+#ifdef COMMENT
   * ssh1_gnh = NULL,                    /* v1 global known hosts file */
   * ssh1_unh = NULL,                    /* v1 user known hosts file */
+#endif
   * ssh2_gnh = NULL,                    /* v2 global known hosts file */
   * ssh2_unh = NULL,                    /* v2 user known hosts file */
   * ssh2_hka = NULL,                    /* Host Key Algorithms */
@@ -8178,10 +8184,12 @@ shossh() {
            );
     printf(" ssh x11-forwarding:              %s\n",showooa(ssh_xfw));
     printf(" ssh xauth-location:              %s\n",showstring(ssh_xal));
+#ifdef COMMENT
     printf("\n");
     printf(" ssh v1 cipher:                   %s\n",showstring(ssh1_cif));
     printf(" ssh v1 global-known-hosts-file:  %s\n",showstring(ssh1_gnh));
     printf(" ssh v1 user-known-hosts-file:    %s\n",showstring(ssh1_unh));
+#endif
     printf("\n");
     printf(" ssh v2 authentication:           %s\n",showstring(ssh2_auth));
     printf(" ssh v2 auto-rekey:               %s\n",showoff(ssh2_ark));
@@ -8300,6 +8308,8 @@ dosetssh() {
 	ssh_hbt = z;
 	return(success = 1);
 
+#ifdef COMMENT
+      /* SSH V2 is no longer supported */
       case SSH_V1:                      /* SSH V1 */
         if ((y = cmkey(sshv1tab,nsshv1tab,"","", xxstring)) < 0)
           return(y);
@@ -8339,6 +8349,7 @@ dosetssh() {
             }
             return(1);
         }
+#endif
 
       case SSH_V2:                      /* SSH V2 */
         if ((y = cmkey(sshv2tab,nsshv2tab,"","", xxstring)) < 0)
@@ -8572,7 +8583,7 @@ dosetssh() {
         return(setnum(&ssh_vrb,x,y,7));
 
       case SSH_VER:                     /* Version */
-        if ((y = cmkey(sshver,3,"","auto", xxstring)) < 0)
+        if ((y = cmkey(sshver,2,"","auto", xxstring)) < 0)
           return(y);
         if ((x = cmcfm()) < 0)
           return(x);

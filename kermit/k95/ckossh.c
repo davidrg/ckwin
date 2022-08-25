@@ -81,11 +81,6 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *
  *   ssh2_mac, ssh_xal, ssh2_hka, xxx_dummy
  *
- * Obsolete or not used:
- *    char* ssh1_cif    SSH-1 Not supported     SSH-1 Cipher.
- *    char* ssh1_gnh    SSH-1 Not supported     SSH-1 Global Knownhosts file
- *    char* ssh1_unh    SSH-1 Not supported     SSH-1 User Knownhosts file
- *
  * SSH Logging ("set ssh verbose x", ssh_vrb) levels:
  *  0   SSH_LOG_NOLOG       No logging at all
  *  1   SSH_LOG_WARNING     Only warnings
@@ -126,22 +121,22 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *      TODO: CLEAR
  *          TODO: LOCAL-PORT-FORWARD
  *          TODO: REMOTE-PORT-FORWARD
- *      TODO: KEY
- *          TODO: CHANGE-PASSPHRASE
- *              TODO: /NEW-PASSPHRASE:passphrase
- *              TODO: /OLD-PASSPHRASE:passphrase
- *              TODO: filename
- *          TODO: CREATE
- *              TODO: /BITS:bits
- *              TODO: /PASSPHRASE: passphrase
- *              TODO: /TYPE:{V1-RSA,V2-DSA,V2-RSA}
- *              TODO: /V1-RSA-COMMENT: comment
- *              TODO: filename
- *          TODO: DISPLAY
- *              TODO: /FORMAT:{fingerprint, ietf,openssh,ssh.com}
- *              TODO: filename
- *          TODO: V1 SET-COMMENT filename comment
- *          TODO: V2 REKEY
+ *   TODO: SSH KEY
+ *      TODO: CHANGE-PASSPHRASE
+ *          TODO: /NEW-PASSPHRASE:passphrase
+ *          TODO: /OLD-PASSPHRASE:passphrase
+ *          TODO: filename
+ *      TODO: CREATE
+ *          TODO: /BITS:bits
+ *          TODO: /PASSPHRASE: passphrase
+ *          TODO: /TYPE:{V1-RSA,V2-DSA,V2-RSA}
+ *          TODO: /V1-RSA-COMMENT: comment
+ *          TODO: filename
+ *      TODO: DISPLAY
+ *          TODO: /FORMAT:{fingerprint, ietf,openssh,ssh.com}
+ *          TODO: filename
+ *      TODO: V1 SET-COMMENT filename comment
+ *      TODO: V2 REKEY
  *   SET SSH
  *      TODO: AGENT-FORWARDING {ON,OFF}
  *      TODO: CHECK-HOST-IP {ON,OFF}
@@ -159,12 +154,6 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *      STRICT-HOST-KEY-CHECK {ASK, ON, OFF}
  *      USE-OPENSSH-CONFIG {ON,OFF}
  *          Value is stored in ssh_cfg
- *      V1 CIPHER {3DES, BLOWFISH, DES}
- *          Ignored (SSH-1 not supported)
- *      V1 GLOBAL-KNOWN-HOSTS-FILE filename
- *          Ignored (SSH-1 not supported)
- *      V1 USER-KNOWN-HOSTS-FILE filename
- *          Ignored (SSH-1 not supported)
  *      V2 AUTHENTICATION {EXTERNAL-KEYX, GSSAPI, HOSTBASED, KEYBOARD-INTERACTIVE, PASSWORD, PUBKEY, SRP-GEX-SHA1}
  *          Value stored in ssh2_auth as a comma-separated list
  *          We can support (eventually in some cases):
@@ -181,8 +170,7 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *          Stored in ssh2_unh
  *      VERBOSE level
  *          Report Errors - Verbosity Level. Range 0-7. Value stored in ssh_vrb
- *      SSH VERSION {1, 2, AUTOMATIC}
- *          Just reports an error if version is 1 (SSH-1 not supported)
+ *      SSH VERSION {2, AUTOMATIC}
  *          value is saved in ssh_ver. 0=auto.
  *      TODO: SSH X11-FORWARDING {ON, OFF}
  *          SET TELNET ENV DISPLAY is used to set the DISPLAY value
