@@ -7980,16 +7980,22 @@ static int nsshv2tab = (sizeof(sshv2tab) / sizeof(struct keytab)) - 1;
 #define SSHC_A128 3                     /* AES128-CBC */
 #define SSHC_A192 4                     /* AES192-CBC */
 #define SSHC_A256 5                     /* AES256-CBC */
-#define SSHC_ARC4 6                     /* ARCFOUR */
-#define SSHC_FISH 7                     /* BLOWFISH */
-#define SSHC_BCBC 9                     /* BLOWFISH-CBC */
-#define SSHC_C128 8                     /* CAST128-CBC */
-#define SSHC_1DES 10                    /* DES */
+/*#define SSHC_ARC4 6*/                     /* ARCFOUR */
+/*#define SSHC_FISH 7*/                     /* BLOWFISH */
+/*#define SSHC_BCBC 9*/                     /* BLOWFISH-CBC */
+/*#define SSHC_C128 8*/                     /* CAST128-CBC */
+/*#define SSHC_1DES 10*/                    /* DES */
+#define SSHC_CHPO 11                    /* chachae20-poly1305 */
+#define SSHC_A1GC 12                    /* aes128-gcm@openssh.com */
+#define SSHC_A2GC 13                    /* aes256-gcm@openssh.com */
+#define SSHC_A12C 14                    /* aes128-ctr */
+#define SSHC_A19C 15                    /* aes192-ctr */
+#define SSHC_A25C 16                    /* aes256-ctr */
 
 static struct keytab ssh1ciphers[] = {
     { "3des",         SSHC_3DES, 0 },
-    { "blowfish",     SSHC_FISH, 0 },
-    { "des",          SSHC_1DES, 0 },
+    /*{ "blowfish",     SSHC_FISH, 0 },
+    { "des",          SSHC_1DES, 0 },*/
     { "", 0, 0 }
 };
 static int nssh1ciphers = (sizeof(ssh1ciphers) / sizeof(struct keytab)) - 1;
@@ -7999,12 +8005,18 @@ static struct keytab ssh2ciphers[] = {  /* SET SSH V2 CIPHERS command table */
     { "aes128-cbc",      SSHC_A128, 0 },
     { "aes192-cbc",      SSHC_A192, 0 },
     { "aes256-cbc",      SSHC_A256, 0 },
-    { "arcfour",         SSHC_ARC4, 0 },
+    /*{ "arcfour",         SSHC_ARC4, 0 },
     { "blowfish-cbc",    SSHC_FISH, 0 },
     { "cast128-cbc",     SSHC_C128, 0 },
     { "rijndael128-cbc", SSHC_A128, 0 },
     { "rijndael192-cbc", SSHC_A192, 0 },
-    { "rijndael256-cbc", SSHC_A256, 0 },
+    { "rijndael256-cbc", SSHC_A256, 0 },*/
+    { "aes128-ctr", SSHC_A12C, 0 },
+    { "aes192-ctr", SSHC_A19C, 0 },
+    { "aes256-ctr", SSHC_A25C, 0 },
+    { "aes128-gcm@openssh.com", SSHC_A1GC, 0 },
+    { "aes256-gcm@openssh.com", SSHC_A2GC, 0 },
+    { "chachae20-poly1305", SSHC_CHPO, 0 },
     { "", 0, 0 }
 };
 static int nssh2ciphers = (sizeof(ssh2ciphers) / sizeof(struct keytab)) - 1;

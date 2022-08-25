@@ -88,7 +88,7 @@ ssh_parameters_t* ssh_parameters_new(
         BOOL gssapi_delegate_credentials, int host_key_checking_mode,
         char* user_known_hosts_file, char* global_known_hosts_file,
         char* username, char* password, char* terminal_type, int pty_width,
-        int pty_height, char* auth_methods) {
+        int pty_height, char* auth_methods, char* ciphers) {
     ssh_parameters_t* params;
 
     params = malloc(sizeof(ssh_parameters_t));
@@ -101,6 +101,7 @@ ssh_parameters_t* ssh_parameters_new(
     params->username = NULL;
     params->password = NULL;
     params->terminal_type = NULL;
+    params->allowed_ciphers = NULL;
 
     /* Copy hostname and port*/
     params->hostname = _strdup(hostname);
@@ -121,6 +122,7 @@ ssh_parameters_t* ssh_parameters_new(
     if (username) params->username = _strdup(username);
     if (password) params->password = _strdup(password);
     if (terminal_type) params->terminal_type = _strdup(terminal_type);
+    if (ciphers) params->allowed_ciphers = _strdup(ciphers);
 
     params->log_verbosity = verbosity;
     params->compression = compression;
@@ -195,6 +197,8 @@ void ssh_parameters_free(ssh_parameters_t* parameters) {
         free(parameters->password);
     if (parameters->terminal_type)
         free(parameters->terminal_type);
+    if (parameters->allowed_ciphers)
+        free(parameters->allowed_ciphers);
 
     free(parameters);
 }
@@ -1168,6 +1172,13 @@ static int configure_session(ssh_client_state_t * state) {
         ssh_options_set(state->session, SSH_OPTIONS_COMPRESSION_S_C, "no");
     }
 
+    if (state->parameters->allowed_ciphers) {
+        ssh_options_set(state->session, SSH_OPTIONS_CIPHERS_C_S,
+                        state->parameters->allowed_ciphers);
+        ssh_options_set(state->session, SSH_OPTIONS_CIPHERS_S_C,
+                        state->parameters->allowed_ciphers);
+    }
+
     if (state->parameters->port)
         ssh_options_set(state->session, SSH_OPTIONS_PORT_STR, state->parameters->port);
     ssh_options_set(state->session, SSH_OPTIONS_USER, state->parameters->username);
@@ -1637,6 +1648,10 @@ void ssh_thread(ssh_thread_params_t *parameters) {
         if (rc != SSH_ERR_OK) {
             break;
         }
+
+        /* Then send some data the server should just ignore. This should keep
+         * the connection alive and prevent timeouts */
+//        ssh_send_ignore(state->session, "KeepAlive");
     }
 
     /* We've either been asked to disconnect or hit an error. Clean up and end

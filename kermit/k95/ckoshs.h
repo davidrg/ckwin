@@ -93,6 +93,8 @@ typedef struct {
     char* password;                             /* pwbuf if pwflg */
     int pty_height, pty_width;                  /* Terminal dimensions */
     char* terminal_type;                        /* Terminal type */
+    char* allowed_ciphers;                      /* Comma separated list of
+                                                 * allowed ciphers */
 
     /* Allowed authentication types */
     BOOL allow_password_auth;
@@ -171,6 +173,7 @@ void get_current_terminal_dimensions(int* rows, int* cols);
  * @param pty_width Current terminal width
  * @param pty_height Current terminal height
  * @param auth_methods Comma-separated list of allowed authentication methods
+ * @param ciphers Comma-separated list of allowed ciphers
  * @return A new ssh_parameters_t instance.
  */
 ssh_parameters_t* ssh_parameters_new(
@@ -179,7 +182,7 @@ ssh_parameters_t* ssh_parameters_new(
         BOOL gssapi_delegate_credentials, int host_key_checking_mode,
         char* user_known_hosts_file, char* global_known_hosts_file,
         char* username, char* password, char* terminal_type, int pty_width,
-        int pty_height, char* auth_methods);
+        int pty_height, char* auth_methods, char* ciphers);
 
 /** Frees the ssh_parameters_t struct and all its members.
  *

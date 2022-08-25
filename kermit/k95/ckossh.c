@@ -72,13 +72,14 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *   char* pwbuf      "\0"    Supplied password
  *   char* uidbuf     ""      Supplied username (if any)
  *   char* ssh2_auth  NULL    Comma-separated list of allowed auth methods
+ *   char* ssh2_cif   NULL    Comma-separated list of SSH v2 ciphers allowed
  *
  * Unused Global Variables:
  *   ssh_afw, ssh_xfw, ssh_prp, ssh_shh, ssh_chkip,
  *   ssh_gwp, ssh_dyf, ssh_k4tgt, ssh_k5tgt, ssh2_ark,
  *   ssh_gkx, ssh_k5_is_k4, ssh_hbt, ssh_dummy
  *
- *   ssh2_cif, ssh2_mac, ssh_xal, ssh2_hka, xxx_dummy
+ *   ssh2_mac, ssh_xal, ssh2_hka, xxx_dummy
  *
  * Obsolete or not used:
  *    char* ssh1_cif    SSH-1 Not supported     SSH-1 Cipher.
@@ -170,9 +171,7 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *              GSSAPI, KEYBOARD-INTERACTIVE, PASSWORD, PUBKEY
  *          Not supported by libssh:
  *              EXTERNAL-KEYX, HOSTBASED, SRP-GEX-SHA1
- *      TODO: V2 CIPHERS {3DES-CBC, AES128-CBC, AES192-CBC, AES256-CBC, ARCFOUR, BLOWFISH-CBC, CAST128-CBC, RIJNDAEL128-CBC, RIJNDAEL192-CBC, RIJNDAEL256-CBC}
- *                 libssh:3des-cbc, aes128-cbc, aes192-cbc, aes256-cbc, chachae20-poly1305, aes256-gcm@openssh.com, aes128-gcm@openssh.com, aes256-ctr, aes192-ctr, aes128-ctr,
- *                 -> will require changes to ckuus3.c
+ *      V2 CIPHERS {3des-cbc, aes128-cbc, aes192-cbc, aes256-cbc, chachae20-poly1305, aes256-gcm@openssh.com, aes128-gcm@openssh.com, aes256-ctr, aes192-ctr, aes128-ctr}
  *      V2 GLOBAL-KNOWN-HOSTS-FILE filename
  *          Stored in ssh2_gnh
  *      TODO: V2 HOSTKEY-ALGORITHMS {SSH-DSA, SSH-RSA}
@@ -234,13 +233,9 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *  SSH_OPTIONS_COMPRESSION_LEVEL   Compression level
  *  SSH_OPTIONS_HMAC_C_S            Set message authentication code algo client to server
  *  SSH_OPTIONS_HMAC_S_C            Set message authentication code algo server to client
- *  SSH_OPTIONS_CIPHERS_*           Set client to server and server to client ciphers
- *      -> command exists, list of algorithms is out of date
  *  SSH_OPTIONS_KEY_EXCHANGE        Set key exchange methods
  *  SSH_OPTIONS_HOSTKEYS            Set preferred host key types
  *      -> command exists, list of algorithms is out of date
- *  SSH_OPTIONS_PASSWORD_AUTH, SSH_OPTIONS_PUBKEY_AUTH, SSH_OPTIONS_KBDINT_AUTH, SSH_OPTIONS_GSSAPI_AUTH
- *      -> command exists, list of options needs updating
  *
  * Settings we probably don't care about:
  *  SSH_OPTIONS_FD                  To supply our own socket if we want
@@ -497,7 +492,8 @@ int ssh_open() {
             get_current_terminal_type(),
             pty_width,
             pty_height,
-            ssh2_auth   /* Allowed authentication methods */
+            ssh2_auth,  /* Allowed authentication methods */
+            ssh2_cif
             );
     if (parameters == NULL) {
         debug(F100, "ssh_open() - failed to construct parameters struct", "", 0);
