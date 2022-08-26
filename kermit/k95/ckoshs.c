@@ -102,6 +102,7 @@ ssh_parameters_t* ssh_parameters_new(
     params->password = NULL;
     params->terminal_type = NULL;
     params->allowed_ciphers = NULL;
+    params->keepalive_seconds = 60; /* TODO: add something like "set ssh keepalive 60" */
 
     /* Copy hostname and port*/
     params->hostname = _strdup(hostname);
@@ -1443,8 +1444,8 @@ void ssh_thread(ssh_thread_params_t *parameters) {
     ssh_client_state_t* state = NULL;
     ssh_client_t *client;
     socket_t socket;
-    HANDLE events[7];
-
+    HANDLE events[8];
+    LARGE_INTEGER keepaliveDueTime;
 
     debug(F100, "sshsubsys - SSH Subsystem starting up...", "", 0);
 
@@ -1485,12 +1486,26 @@ void ssh_thread(ssh_thread_params_t *parameters) {
     events[0] = WSACreateEvent();
     WSAEventSelect(socket, events[0], FD_READ | FD_WRITE);
     // TODO: The above puts the socket in nonblocking mode. Will libssh mind?
-    events[1] = client->disconnectEvent;
-    events[2] = client->ptySizeChangedEvent;
-    events[3] = client->flushEvent;
-    events[4] = client->breakEvent;
-    events[5] = client->dataArrivedEvent;
-    events[6] = client->dataConsumedEvent;
+    events[1] = CreateWaitableTimerW(NULL, TRUE, NULL); /* Keepalive timer */
+    events[2] = client->disconnectEvent;
+    events[3] = client->ptySizeChangedEvent;
+    events[4] = client->flushEvent;
+    events[5] = client->breakEvent;
+    events[6] = client->dataArrivedEvent;
+    events[7] = client->dataConsumedEvent;
+
+    /* Setup keepalive timer (if enabled) */
+    if (state->parameters->keepalive_seconds > 0) {
+        /* Value is in 100 nanosecond intervals, negative for relative time */
+        keepaliveDueTime.QuadPart =
+                state->parameters->keepalive_seconds * (-10000000LL);
+
+        if (!SetWaitableTimer(events[1], &keepaliveDueTime, 0, NULL, NULL, 0))
+        {
+            debug(F111, "sshsubsys - failed to set keepalive timer",
+                  "interval", state->parameters->keepalive_seconds);
+        }
+    }
 
     rc = SSH_ERR_WAIT_FAILED;
 
@@ -1503,7 +1518,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
 
         debug(F100, "sshsubsys - waiting...", "", 0);
         waitResult = WSAWaitForMultipleEvents(
-                7, /* Number of events */
+                8, /* Number of events */
                 events, /* Array of events to wait on */
                 FALSE, /* Return when *any* event is signalled, rather than all */
                 1000, /* Wait for up to 1s */
@@ -1550,6 +1565,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
             break;
         }
 
+        /* Check for EOF */
         if (ssh_channel_is_eof(state->ttyChannel)) {
             debug(F100, "sshsubsys - tty channel is EOF - ending session", "", 0);
             rc = SSH_ERR_EOF;
@@ -1561,7 +1577,6 @@ void ssh_thread(ssh_thread_params_t *parameters) {
             WSAResetEvent(events[0]);
             debug(F100, "sshsubsys - network event", "", 0);
         }
-
 
         /* Check for disconnect event */
         if (WaitForSingleObjectEx(client->disconnectEvent, 0, TRUE) != WAIT_TIMEOUT) {
@@ -1610,6 +1625,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
             ResetEvent(client->breakEvent);
         }
 
+        /* Check for flush event */
         if (WaitForSingleObjectEx(client->flushEvent, 0, TRUE) != WAIT_TIMEOUT) {
             debug(F100, "sshsubsys - flush event", "", 0);
             // TODO: Should we sit in a loop until everything has been written
@@ -1621,6 +1637,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
             }
         }
 
+        /* Check for data ready to be sent */
         if (WaitForSingleObjectEx(client->dataArrivedEvent, 0, TRUE) != WAIT_TIMEOUT) {
             debug(F100, "sshsubsys - data arrived event", "", 0);
             ResetEvent(client->dataArrivedEvent);
@@ -1634,8 +1651,25 @@ void ssh_thread(ssh_thread_params_t *parameters) {
             ResetEvent(client->dataConsumedEvent);
         }
 
+        /* Check if it's time to send a keepalive packet */
+        if (WaitForSingleObjectEx(events[1], 0, TRUE) != WAIT_TIMEOUT) {
+            /* Then send some data the server should just ignore. This should
+             * keep the connection alive and prevent timeouts */
+            ssh_send_ignore(state->session, "\0");
+
+            debug(F100, "sshsubsys - sent keepalive packet", NULL, 0);
+
+            /* Reset the timer for the next keepalive packet */
+            if (!SetWaitableTimer(events[1], &keepaliveDueTime, 0, NULL, NULL, 0))
+            {
+                debug(F111, "sshsubsys - failed to set keepalive timer after "
+                            "timer was signaled", "interval",
+                            state->parameters->keepalive_seconds);
+            }
+        }
+
         /* We process the send and receive buffers every time around even if
-         * there haven't been any related events as it significantly reduces
+         * there haven't been anyN related events as it significantly reduces
          * or eliminates a certain race condition that was breaking file
          * transfers. Its perhaps not the correct solution but it works and
          * doesn't really have much of a downside. */
@@ -1648,15 +1682,12 @@ void ssh_thread(ssh_thread_params_t *parameters) {
         if (rc != SSH_ERR_OK) {
             break;
         }
-
-        /* Then send some data the server should just ignore. This should keep
-         * the connection alive and prevent timeouts */
-//        ssh_send_ignore(state->session, "KeepAlive");
     }
 
     /* We've either been asked to disconnect or hit an error. Clean up and end
      * the thread. */
     WSACloseEvent(events[0]); /* Close the socket event created earlier */
+    CloseHandle(events[1]); /* Close the keepalive timer */
     ssh_client_close(state, client, rc);
     debug(F100, "sshsubsys - thread terminate", "", 0);
     return;

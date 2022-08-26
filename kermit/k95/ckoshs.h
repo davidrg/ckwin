@@ -95,6 +95,8 @@ typedef struct {
     char* terminal_type;                        /* Terminal type */
     char* allowed_ciphers;                      /* Comma separated list of
                                                  * allowed ciphers */
+    int keepalive_seconds;                      /* Keepalive interval in
+                                                 * seconds, 0 disables. */
 
     /* Allowed authentication types */
     BOOL allow_password_auth;
