@@ -2420,6 +2420,7 @@ struct stringint {			/* String and (wide) integer */
 #define VN_YEAR     255			/* This year */
 #define VN_MONTH    256			/* This month (name) */
 #define VN_NMONTH   257			/* This month (numeric) */
+#define VN_FULLVER  258			/* Full version number */
 #endif /* NOSPL */
 
 /* INPUT status values */

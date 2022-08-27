@@ -1,8 +1,6 @@
 /*  C K C D E B . H  */
 
 /*
-Thu Jun  2 09:49:31 2022
-
   For recent additions search below for "2021" and "2022".
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
@@ -33,7 +31,7 @@ Thu Jun  2 09:49:31 2022
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: Thu May 12 15:34:02 2022 (NODEPRECATED)
+    Last update: Tue Aug 23 07:11:45 2022
 */
 
 /*
@@ -46,6 +44,12 @@ Thu Jun  2 09:49:31 2022
 */
 #ifndef CKCDEB_H			/* Don't include me more than once. */
 #define CKCDEB_H
+
+/* 22 Aug 2022 - TYPE command new /INTERPRET switch enabled by default */
+
+#ifndef NOTYPEINTERPRET
+#define TYPEINTERPRET
+#endif  /* NOTYPEINTERPRET */
 
 /*
   Disinclude features that are "deprecated" in 2022;

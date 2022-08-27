@@ -112,6 +112,10 @@ int autolocus = 2;			/* Automatic LOCUS switching: ASK */
 int autolocus = 1;			/* Automatic LOCUS switching enabled */
 #endif /* OS2 */
 
+#ifdef TYPEINTERPRET
+int type_int = 0;
+#endif  /* TYPEINTERPRET */
+
 #ifndef NOICP
 #ifdef CKLEARN
 #ifdef VMS
@@ -3460,6 +3464,7 @@ int npagetab = sizeof(pagetab)/sizeof(struct keytab);
 #define TYP_HIG 13			/* /HEIGHT:rows */
 #endif /* KUI */
 #define TYP_NUM 14			/* /NUMBER */
+#define TYP_INT 15                      /* /INTERPRET (kermit / escapes) */
 
 static struct keytab typetab[] = {	/* TYPE command switches */
     { "/count",          TYP_COU, 0 },
@@ -3473,6 +3478,9 @@ static struct keytab typetab[] = {	/* TYPE command switches */
 #ifdef KUI
     { "/height",         TYP_HIG, CM_ARG },
 #endif /* KUI */
+#ifdef TYPEINTERPRET
+    { "/interpret",      TYP_INT, 0 },  /* New 2022-08-22 */
+#endif  /* TYPEINTERPRET */
     { "/match",          TYP_PAT, CM_ARG },
 #ifdef CK_TTGWSIZ
     { "/more",           TYP_PAG, CM_INV },
@@ -12477,6 +12485,12 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 		    outcs = -1;
 		    break;
 
+#ifdef TYPEINTERPRET
+		  case TYP_INT:         /* /INTERPRET */
+                    type_int = 1;
+		    break;
+#endif  /* TYPEINTERPRET */
+
 		  case TYP_XIN:		/* /CHARACTER-SET: */
 		    if (!getval && (cmgkwflgs() & CM_ARG)) {
 			printf("?This switch requires an argument\n");
@@ -12668,7 +12682,6 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
         printf(" David Goodwin %s\n",
                "<david@zx.net.nz>"
         );
-#endif
 	printf(" Contributions from many others.\n");
 	n = 7;
 	if (*ck_s_test) {

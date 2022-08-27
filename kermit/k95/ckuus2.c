@@ -15,7 +15,7 @@
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: 11 May 2022
+    Last update: 22 August 2022 (HELP TYPE adds /INTERPRET switch).
 
   This module contains HELP command and other long text strings.
 
@@ -3162,6 +3162,11 @@ static char * hmxxtyp[] = {
 "  /TRANSPARENT",
 "     Inhibits character-set translation.",
 #endif /* UNICODE */
+#ifdef TYPEINTERPRET
+"  /INTERPRET",
+"     Shows the file with Kermit backslash escapes interpreted.",
+#endif  /* TYPEINTERPRET */
+
 "  /OUTPUT:name",
 "     Sends results to the given file.  If this switch is omitted, the",
 "     results appear on your screen.  This switch overrides any express or",
