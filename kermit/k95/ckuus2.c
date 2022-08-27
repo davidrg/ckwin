@@ -200,7 +200,7 @@ char *newstxt[] = {
 
 #ifdef BETATEST
 " ",
-"THIS IS A PRERELEASE TEST VERSION NOT SUITABLE FOR PRODUCTION."
+"THIS IS A PRERELEASE TEST VERSION NOT SUITABLE FOR PRODUCTION.",
 "FOR DETAILS, SEE http://www.kermitproject.org/ckwindows.html",
 #endif /* BETATEST */
 
@@ -214,6 +214,9 @@ char *newstxt[] = {
 " . Source code!  The Windows edition of C-Kermit, formerly known",
 "   as Kermit 95 or K-95, is now available under the Revised 3-Clause",
 "   BSD Open Source license.",
+" . Up-to-date fully exportable SSH v2 client",
+" . Mouse wheel support, customizable with SET MOUSE WHEEL (see HELP SET MOUSE",
+"   for details)",
 #endif /* OS2 */
 #ifndef OS2
 " . Full 64-bit memory model on platforms that support it",
@@ -237,24 +240,26 @@ char *newstxt[] = {
 " . Bug fixes",
 " ",
 "Documentation:",
-" 1. http://www.kermitproject.org/usingckermit.html",
-"    \"Using C-Kermit\", second edition (1997), current with C-Kermit 6.0.",
+" 1. https://www.kermitproject.org/ckbindex.html",
+"    Online index to C-Kermit documentation.",
 " ",
-" 2. http://www.kermitproject.org/ckermit70.html",
-"    which documents the new features of C-Kermit 7.0.",
+" 2. https://kermitproject.org/k95manual/index.html",
+"    The Kermit 95 manual from 1995-2003.",
 " ",
-" 3. http://www.kermitproject.org/ckermit80.html",
-"    which documents the new features of C-Kermit 8.0.",
-" ",
-" 4. http://www.kermitproject.org/ckermit90.html",
-"    which documents the new features of C-Kermit 9.0.",
+" 3. https://www.kermitproject.org/ckututor.html",
+"    C-Kermit tutorial.",
 " ",
 "If the release date shown by the VERSION command is long past, be sure to",
 "check the Kermit website to see if there have been updates:",
 " ",
-"  http://www.kermitproject.org/             (Kermit Project home page)",
-"  http://www.kermitproject.org/ckermit.html (C-Kermit home page)",
-"  http://www.kermitproject.org/ckdaily.html (C-Kermit development)",
+"  https://www.kermitproject.org/             (Kermit Project home page)",
+"  https://www.kermitproject.org/ckermit.html (C-Kermit home page)",
+#ifdef OS2
+" ",
+"If the Kermit Project website is gone, look on Github:",
+" ",
+"  https://github.com/search?q=c-kermit+windows",
+#endif
 ""
 };
 #endif /* NOHELP */
