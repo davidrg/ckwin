@@ -96,6 +96,7 @@ typedef struct {
     char* allowed_ciphers;                      /* Comma separated list of
                                                  * allowed ciphers */
     char* allowed_hostkey_algorithms;           /* Comma separated list */
+    char* macs;                                 /* Comma separated list */
     int keepalive_seconds;                      /* Keepalive interval in
                                                  * seconds, 0 disables. */
 
@@ -178,6 +179,7 @@ void get_current_terminal_dimensions(int* rows, int* cols);
  * @param auth_methods Comma-separated list of allowed authentication methods
  * @param ciphers Comma-separated list of allowed ciphers
  * @param hostkey_algorithms Comma-separated list of allowed hostkey algorithms
+ * @param macs Comma-separated list of allowed macs
  * @return A new ssh_parameters_t instance.
  */
 ssh_parameters_t* ssh_parameters_new(
@@ -187,7 +189,7 @@ ssh_parameters_t* ssh_parameters_new(
         char* user_known_hosts_file, char* global_known_hosts_file,
         char* username, char* password, char* terminal_type, int pty_width,
         int pty_height, char* auth_methods, char* ciphers,
-        char* hostkey_algorithms);
+        char* hostkey_algorithms, char* macs);
 
 /** Frees the ssh_parameters_t struct and all its members.
  *

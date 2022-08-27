@@ -74,13 +74,14 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *   char* ssh2_auth  NULL    Comma-separated list of allowed auth methods
  *   char* ssh2_cif   NULL    Comma-separated list of SSH v2 ciphers allowed
  *   char* ssh2_hka   NULL    Comma-separated list of host key algorithms
+ *   char* ssh2_mac   NULL    Comma-separated list of MACs
  *
  * Unused Global Variables:
  *   ssh_afw, ssh_xfw, ssh_prp, ssh_shh, ssh_chkip,
  *   ssh_gwp, ssh_dyf, ssh_k4tgt, ssh_k5tgt, ssh2_ark,
- *   ssh_gkx, ssh_k5_is_k4, ssh_hbt, ssh_dummy
+ *   ssh_gkx, ssh_k5_is_k4, ssh_hbt
  *
- *   ssh2_mac, ssh_xal, xxx_dummy
+ *   ssh_xal (xauth location)
  *
  * SSH Logging ("set ssh verbose x", ssh_vrb) levels:
  *  0   SSH_LOG_NOLOG       No logging at all
@@ -167,8 +168,8 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *          Stored in ssh2_gnh
  *      V2 HOSTKEY-ALGORITHMS {ssh-ed25519, ecdsa-sha2-nistp256, ecdsa-sha2-nistp384, ecdsa-sha2-nistp521, ssh-rsa, rsa-sha2-512, rsa-sha2-256,ssh-ds}
  *           Stored in ssh2_hka
- *      TODO: V2 MACS {HMAC-SHA1, HMAC-MD5, HMAC-MD5-96, HMAC-RIPEMD160, HMAC-SHA1-96}
- *              libssh:hmac-sha1, hmac-sha2-256-etm@openssh.com, hmac-sha2-512-etm@openssh.com, hmac-sha1-etm@openssh.com, hmac-sha2-512, hmac-sha2-256,  none
+ *      V2 MACS {hmac-sha1, hmac-sha2-256-etm@openssh.com, hmac-sha2-512-etm@openssh.com, hmac-sha1-etm@openssh.com, hmac-sha2-512, hmac-sha2-256,  none}
+ *          Stored in ssh2_mac
  *      V2 USER-KNOWN-HOSTS-FILE filename
  *          Stored in ssh2_unh
  *      VERBOSE level
@@ -483,7 +484,8 @@ int ssh_open() {
             pty_height,
             ssh2_auth,  /* Allowed authentication methods */
             ssh2_cif,   /* Allowed ciphers */
-            ssh2_hka    /* Allowed host key algorithms */
+            ssh2_hka,   /* Allowed host key algorithms */
+            ssh2_mac    /* Allowed MACs*/
             );
     if (parameters == NULL) {
         debug(F100, "ssh_open() - failed to construct parameters struct", "", 0);

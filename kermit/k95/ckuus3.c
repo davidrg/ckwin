@@ -8026,17 +8026,32 @@ static struct keytab ssh2ciphers[] = {  /* SET SSH V2 CIPHERS command table */
 static int nssh2ciphers = (sizeof(ssh2ciphers) / sizeof(struct keytab)) - 1;
 
 #define SSHM_SHA        1               /* HMAC-SHA1 */
+#ifdef COMMENT
 #define SSHM_SHA_96     2               /* HMAC-SHA1-96 */
 #define SSHM_MD5        3               /* HMAC-MD5 */
 #define SSHM_MD5_96     4               /* HMAC-MD5-96 */
 #define SSHM_RIPE       5               /* HMAC-RIPEMD160 */
+#endif
+#define SSHM_SHA1_ETM   6               /* hmac-sha1-etm@openssh.com */
+#define SSHM_SHA2_256   7               /* hmac-sha2-256 */
+#define SSHM_SHA2_2ETM  8               /* hmac-sha2-256-etm@openssh.com */
+#define SSHM_SHA2_512   9               /* hmac-sha2-512 */
+#define SSHM_SHA2_5ETM  10              /* hmac-sha2-512-etm@openssh.com */
+#define SSHM_NONE       11              /* none */
 
 static struct keytab ssh2macs[] = {     /* SET SSH V2 MACS command table */
+   /*
     { "hmac-md5",       SSHM_MD5,    0 },
     { "hmac-md5-96",    SSHM_MD5_96, 0 },
-    { "hmac-ripemd160", SSHM_RIPE,   0 },
+    { "hmac-ripemd160", SSHM_RIPE,   0 },*/
     { "hmac-sha1",      SSHM_SHA,    0 },
-    { "hmac-sha1-96",   SSHM_SHA_96, 0 },
+    /*{ "hmac-sha1-96",   SSHM_SHA_96, 0 },*/
+    { "hmac-sha1-etm@openssh.com",      SSHM_SHA1_ETM,    0 },
+    { "hmac-sha2-256",                  SSHM_SHA2_256,    0 },
+    { "hmac-sha2-256-etm@openssh.com",  SSHM_SHA2_2ETM,    0 },
+    { "hmac-sha2-512",                  SSHM_SHA2_512,    0 },
+    { "hmac-sha2-512-etm@openssh.com",  SSHM_SHA2_5ETM,    0 },
+    { "none",                           SSHM_NONE,    0 },
     { "", 0, 0 }
 };
 static int nssh2macs = (sizeof(ssh2macs) / sizeof(struct keytab)) - 1;
