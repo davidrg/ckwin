@@ -100,6 +100,7 @@ typedef struct {
     char* key_exchange_methods;                 /* Comma separated list */
     int keepalive_seconds;                      /* Keepalive interval in
                                                  * seconds, 0 disables. */
+    int nodelay;                                /* Set to disable nagles agorithm */
 
     /* Allowed authentication types */
     BOOL allow_password_auth;
@@ -183,6 +184,7 @@ void get_current_terminal_dimensions(int* rows, int* cols);
  * @param hostkey_algorithms Comma-separated list of allowed hostkey algorithms
  * @param macs Comma-separated list of allowed macs
  * @param key_exchange_methods Comma-separated list of key exchange methods
+ * @param nodelay Set to disable Nagle's algorithm
  * @return A new ssh_parameters_t instance.
  */
 ssh_parameters_t* ssh_parameters_new(
@@ -192,7 +194,8 @@ ssh_parameters_t* ssh_parameters_new(
         char* user_known_hosts_file, char* global_known_hosts_file,
         char* username, char* password, char* terminal_type, int pty_width,
         int pty_height, char* auth_methods, char* ciphers, int heartbeat,
-        char* hostkey_algorithms, char* macs, char* key_exchange_methods);
+        char* hostkey_algorithms, char* macs, char* key_exchange_methods,
+        int nodelay);
 
 /** Frees the ssh_parameters_t struct and all its members.
  *

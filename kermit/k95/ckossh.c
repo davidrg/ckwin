@@ -70,6 +70,7 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *   char* ssh2_gnh   NULL    SSH-2 Global Known Hosts file
  *   int   pwflg      0       Password has been supplied (/password:)
  *   int   ssh_hbt    0       Heartbeat (keepalive) setting
+ *   int   tcp_nodelay 0      Enable/disable nagle algorithm
  *   char* pwbuf      "\0"    Supplied password
  *   char* uidbuf     ""      Supplied username (if any)
  *   char* ssh2_auth  NULL    Comma-separated list of allowed auth methods
@@ -250,6 +251,7 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
 extern char uidbuf[];                   /* User ID set via /user: */
 extern char pwbuf[];                    /* Password set via /password: */
 extern int  pwflg;                      /* Password has been set */
+extern int tcp_nodelay;                 /* Enable/disable Nagle's algorithm */
 int ssh_sock;   /* TODO: get rid of this (unless its needed for connecting
                  *      through a proxy server?) */
 
@@ -491,7 +493,8 @@ int ssh_open() {
             ssh_hbt,    /* Heartbeat in seconds */
             ssh2_hka,   /* Allowed host key algorithms */
             ssh2_mac,   /* Allowed MACs */
-            ssh2_kex    /* Key exchange methods */
+            ssh2_kex,   /* Key exchange methods */
+            tcp_nodelay /* Enable/disable Nagle's algorithm */
             );
     if (parameters == NULL) {
         debug(F100, "ssh_open() - failed to construct parameters struct", "", 0);

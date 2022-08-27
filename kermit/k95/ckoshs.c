@@ -89,7 +89,8 @@ ssh_parameters_t* ssh_parameters_new(
         char* user_known_hosts_file, char* global_known_hosts_file,
         char* username, char* password, char* terminal_type, int pty_width,
         int pty_height, char* auth_methods, char* ciphers, int heartbeat,
-        char* hostkey_algorithms, char* macs, char* key_exchange_methods) {
+        char* hostkey_algorithms, char* macs, char* key_exchange_methods,
+        int nodelay) {
     ssh_parameters_t* params;
 
     params = malloc(sizeof(ssh_parameters_t));
@@ -107,6 +108,7 @@ ssh_parameters_t* ssh_parameters_new(
     params->macs = NULL;
     params->key_exchange_methods = NULL;
     params->keepalive_seconds = heartbeat;
+    params->nodelay = nodelay;
 
     /* Copy hostname and port*/
     params->hostname = _strdup(hostname);
@@ -1185,6 +1187,8 @@ static int configure_session(ssh_client_state_t * state) {
                     &state->parameters->gssapi_delegate_credentials);
     ssh_options_set(state->session, SSH_OPTIONS_PROCESS_CONFIG,
                     &state->parameters->use_openssh_config);
+    ssh_options_set(state->session, SSH_OPTIONS_NODELAY,
+                    &state->parameters->nodelay);
     if (!state->parameters->compression) {
         ssh_options_set(state->session, SSH_OPTIONS_COMPRESSION_C_S, "no");
         ssh_options_set(state->session, SSH_OPTIONS_COMPRESSION_S_C, "no");
