@@ -964,6 +964,7 @@ static int kbd_interactive_authenticate(ssh_client_state_t * state, BOOL *cancel
  */
 static int authenticate(ssh_client_state_t * state, BOOL *canceled) {
     int methods, rc;
+    BOOL no_auth_methods = TRUE;
 
     /* If the user cancels anytime during the authentication process this will
      * be set, and we'll know not to attempt any further authentication methods
@@ -984,6 +985,7 @@ static int authenticate(ssh_client_state_t * state, BOOL *canceled) {
     methods = ssh_userauth_list(state->session, NULL);
 
     if (methods & SSH_AUTH_METHOD_NONE &&!*canceled) {
+        no_auth_methods = FALSE;
         rc = ssh_userauth_none(state->session, NULL);
         if (rc == SSH_AUTH_SUCCESS) return rc;
     }
@@ -995,25 +997,36 @@ static int authenticate(ssh_client_state_t * state, BOOL *canceled) {
     }   */
     if (methods & SSH_AUTH_METHOD_PUBLICKEY
             && state->parameters->allow_pubkey_auth && !*canceled) {
+        no_auth_methods = FALSE;
         rc = ssh_userauth_publickey_auto(state->session, NULL, NULL);
         if (rc == SSH_AUTH_SUCCESS) return rc;
     }
     if (methods & SSH_AUTH_METHOD_INTERACTIVE
             && state->parameters->allow_kbdint_auth && !*canceled) {
+        no_auth_methods = FALSE;
         rc = kbd_interactive_authenticate(state, canceled);
         if (rc == SSH_AUTH_SUCCESS) return rc;
     }
     if (methods & SSH_AUTH_METHOD_PASSWORD
             && state->parameters->allow_password_auth && !*canceled) {
+        no_auth_methods = FALSE;
         rc = password_authenticate(state, canceled);
         if (rc == SSH_AUTH_SUCCESS) return rc;
     }
 
     if (*canceled) {
+        printf("User canceled.\n");
         return SSH_ERR_USER_CANCELED;
     }
 
-
+    if (no_auth_methods) {
+        printf("No supported authentication methods!\n");
+        printf("The server supports: ");
+        if (methods & SSH_AUTH_METHOD_PUBLICKEY) printf("publickey ");
+        if (methods & SSH_AUTH_METHOD_INTERACTIVE) printf("keyboard-interactive ");
+        if (methods & SSH_AUTH_METHOD_PASSWORD) printf("password ");
+        printf("\n");
+    }
 
     return rc;
 }
