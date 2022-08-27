@@ -55,7 +55,7 @@ char * ck_cryear = "2022"; 		/* C-Kermit copyright year */
   Note: initialize ck_s_test to "" if this is not a test version.
   Use (*ck_s_test != '\0') to decide whether to print test-related messages.
 */
-#ifndef BETATEST
+#ifdef BETATEST
 char *ck_s_test = "Beta";		/* "Dev","Alpha","Beta","RC", or "" */
 char *ck_s_tver = "04";			/* Test version number */
 #else /* BETATEST */
