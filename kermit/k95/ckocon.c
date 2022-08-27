@@ -65,8 +65,10 @@ char *connv = "OS/2 CONNECT command 8.0.232, 20 Oct 2003";
 
 #ifdef NT
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"
+#endif
 #include "cknwin.h"
 #ifdef KUI
 #include "kui/ikui.h"
@@ -98,6 +100,11 @@ char *connv = "OS/2 CONNECT command 8.0.232, 20 Oct 2003";
 extern UCHAR NetBiosRemote[] ;
 #endif /* CK_NETBIOS */
 
+#ifdef NETCMD
+#ifdef CK_CONPTY
+#include "cknpty.h"
+#endif /* CK_CONPTY */
+#endif /* NETCMD */
 
 /*
  *
@@ -276,7 +283,7 @@ extern int tt_timelimit;
 static time_t keypress_t=0;             /* Time of last keypress */
 static time_t idlesnd_t=0;              /* Time of last idle send */
 int escstate ;
-USHORT marginbot;                       /* Bottom of same, 1-based */
+int marginbot;                       /* Bottom of same, 1-based */
 int tt_async = 0;                       /* asynchronous connect mode? */
 int col_init = 0, row_init = 0;
 /*
@@ -916,7 +923,7 @@ popup_readtext(int mode, char * preface, char * prmpt, char * buffer, int buflen
         while ( *p ) {
             if ( *p == LF ) {
                 *p = '\0';
-                if ( *(p-1) == CR )
+                if ( *(p-1) == CK_CR )
                     *(p-1) = '\0';
                 helpline( pPopup, q );
                 q = p+1;
@@ -932,7 +939,7 @@ popup_readtext(int mode, char * preface, char * prmpt, char * buffer, int buflen
     while ( *p ) {
         if ( *p == LF ) {
             *p = '\0';
-            if ( *(p-1) == CR )
+            if ( *(p-1) == CK_CR )
                 *(p-1) = '\0';
             helpline( pPopup, q );
             q = p+1;
@@ -973,7 +980,7 @@ popup_readtext(int mode, char * preface, char * prmpt, char * buffer, int buflen
             case K_TVIRETURN:
             case K_HPENTER  :
             case K_HPRETURN :
-                x1 = CR;
+                x1 = CK_CR;
                 break;
             default:
                 bleep(BP_WARN);
@@ -1016,7 +1023,7 @@ popup_readtext(int mode, char * preface, char * prmpt, char * buffer, int buflen
         {
             buffer[len-1] = '\0' ;
         }
-        else if ( x1 == CR )
+        else if ( x1 == CK_CR )
         {
             break;
         }
@@ -1119,7 +1126,7 @@ popup_readpass(int mode, char * preface, char * prmpt, char * buffer, int buflen
         while ( *p ) {
             if ( *p == LF ) {
                 *p = '\0';
-                if ( *(p-1) == CR )
+                if ( *(p-1) == CK_CR )
                     *(p-1) = '\0';
                 helpline( pPopup, q );
                 q = p+1;
@@ -1135,7 +1142,7 @@ popup_readpass(int mode, char * preface, char * prmpt, char * buffer, int buflen
     while ( *p ) {
         if ( *p == LF ) {
             *p = '\0';
-            if ( *(p-1) == CR )
+            if ( *(p-1) == CK_CR )
                 *(p-1) = '\0';
             helpline( pPopup, q );
             q = p+1;
@@ -1176,7 +1183,7 @@ popup_readpass(int mode, char * preface, char * prmpt, char * buffer, int buflen
             case K_TVIRETURN:
             case K_HPENTER  :
             case K_HPRETURN :
-                x1 = CR;
+                x1 = CK_CR;
                 break;
             default:
                 bleep(BP_WARN);
@@ -1219,7 +1226,7 @@ popup_readpass(int mode, char * preface, char * prmpt, char * buffer, int buflen
         {
             buffer[len-1] = '\0' ;
         }
-        else if ( x1 == CR )
+        else if ( x1 == CK_CR )
         {
             break;
         }
@@ -2551,7 +2558,7 @@ con2host(con_event evt)
 
         /* Ordinary character */
 #ifdef CKLEARN
-        if (c == CR)
+        if (c == CK_CR)
             learnkeyb(evt, LEARN_NEUTRAL);
         else
             learnkeyb(evt, LEARN_KEYBOARD);
@@ -2588,8 +2595,8 @@ con2host(con_event evt)
         if ( !kbdlocked() ) {
 #ifdef CKLEARN
             int len = strlen(evt.macro.string);
-            if (evt.macro.string[len-1] == CR ||
-                evt.macro.string[len-2] == CR && evt.macro.string[len-1] == LF)
+            if (evt.macro.string[len-1] == CK_CR ||
+                evt.macro.string[len-2] == CK_CR && evt.macro.string[len-1] == LF)
                 learnkeyb(evt,LEARN_NEUTRAL);
             else
                 learnkeyb(evt, LEARN_KEYBOARD);
@@ -2606,8 +2613,8 @@ con2host(con_event evt)
         if ( !kbdlocked() ) {
 #ifdef CKLEARN
             int len = strlen(evt.literal.string);
-            if (evt.literal.string[len-1] == CR ||
-                evt.literal.string[len-2] == CR && evt.literal.string[len-1] == LF)
+            if (evt.literal.string[len-1] == CK_CR ||
+                evt.literal.string[len-2] == CK_CR && evt.literal.string[len-1] == LF)
                 learnkeyb(evt,LEARN_NEUTRAL);
             else
                 learnkeyb(evt, LEARN_KEYBOARD);
@@ -3586,16 +3593,7 @@ StopConnectThreads( int wait4ever )
  * values for tt_status.
  */
 
-#ifdef KUI
-int
-kui_setheightwidth(int x, int y)
-{
-    tt_szchng[VTERM] = (tt_status[VTERM]?2:1);
-    tt_rows[VTERM] = y - (tt_status[VTERM]?1:0);
-    tt_cols[VTERM] = x;
-    tt_cols_usr = x;
-    VscrnSetWidth( VTERM, x);
-    VscrnInit( VTERM );         /* Height set here */
+void term_dimensions_changed(int x, int y) {
 #ifdef TNCODE
     if (TELOPT_ME(TELOPT_NAWS))
         tn_snaws();
@@ -3607,6 +3605,41 @@ kui_setheightwidth(int x, int y)
 #ifdef SSHBUILTIN
     ssh_snaws();
 #endif /* SSHBUILTIN */
+#ifdef NETCMD
+#ifdef CK_CONPTY
+    if (nettype == NET_PTY && pseudo_console_available()) {
+        extern BOOL conpty_open;
+        if (conpty_open) {
+            COORD size;
+            size.X = x;
+            size.Y = y;
+            resize_pseudo_console(size);
+        }
+    }
+#endif /* CK_CONPTY */
+#endif /* NETCMD */
+#ifdef NETDLL
+    if ( nettype == NET_DLL) {
+        extern char * (*net_dll_terminfo)(char*, int, int);
+        if (net_dll_terminfo) {
+            /* TODO:  terminfo *should* be passed the termtype too */
+            net_dll_terminfo(NULL, y, x);
+        }
+    }
+#endif
+}
+
+#ifdef KUI
+int
+kui_setheightwidth(int x, int y)
+{
+    tt_szchng[VTERM] = (tt_status[VTERM]?2:1);
+    tt_rows[VTERM] = y - (tt_status[VTERM]?1:0);
+    tt_cols[VTERM] = x;
+    tt_cols_usr = x;
+    VscrnSetWidth( VTERM, x);
+    VscrnInit( VTERM );         /* Height set here */
+    term_dimensions_changed(x, y - (tt_status[VTERM]?1:0));
 
     tt_szchng[VCMD] = (tt_status[VCMD]?2:1);
     tt_rows[VCMD] = cmd_rows = y - (tt_status[VCMD]?1:0);
@@ -3663,17 +3696,8 @@ os2_settermwidth(int x)
     tt_cols_usr = x;
     if (SysInited) {
         VscrnSetWidth( VTERM, x);
-#ifdef TNCODE
-        if (TELOPT_ME(TELOPT_NAWS))
-            tn_snaws();
-#endif /* TNCODE */
-#ifdef RLOGCODE
-        if (TELOPT_ME(TELOPT_NAWS))
-            rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-        ssh_snaws();
-#endif /* SSHBUILTIN */
+
+        term_dimensions_changed(x, tt_rows[VTERM]);
     }
 /*
    We do not set tt_szchng here because that would result in the screen buffer
@@ -3701,17 +3725,7 @@ os2_settermheight(int x)
     tt_rows[VTERM] = x;
     if (SysInited) {
         VscrnInit( VTERM );             /* Height set here */
-#ifdef TNCODE
-        if (TELOPT_ME(TELOPT_NAWS))
-            tn_snaws();
-#endif /* TNCODE */
-#ifdef RLOGCODE
-        if (TELOPT_ME(TELOPT_NAWS))
-            rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-        ssh_snaws();
-#endif /* SSHBUILTIN */
+        term_dimensions_changed(tt_cols[VTERM], x);
     }
     return(1);
 #endif /* KUI */

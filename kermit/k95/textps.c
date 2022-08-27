@@ -850,9 +850,15 @@ gcharset() {
 #ifdef __EMX__
     ULONG CpList[3], CpSize, rc;
     rc = DosQueryCp(sizeof(CpList), CpList, &CpSize);
+#else /* Watcom or MSC */
+#ifdef __WATCOMC__
+    /* Same as EMX */
+    ULONG CpList[3], CpSize, rc;
+    rc = DosQueryCp(sizeof(CpList), CpList, &CpSize);
 #else /* MSC */
     USHORT CpList[3], CpSize, rc;
     rc = DosGetCp(sizeof(CpList), CpList, &CpSize);
+#endif
 #endif /* __EMX__ */
     i = (int) CpList[0];
 #else /* MSDOS */
@@ -927,7 +933,22 @@ main(argc, argv) int argc; char *argv[]; {
     }
 #ifdef OS2NTDOS
 #ifdef NT
+#ifdef __WATCOMC__
+    if (_isatty(stdin->_handle))
+#else
+#ifdef _MSC_VER
+#if _MSC_VER < 1900
+    /* Visual C++ 2013 or older */
     if (_isatty(stdin->_file))
+#else /* else _MSC_VER >= 1900 */
+    /* Visual C++ 2015 or newer */
+    if (isatty(fileno(stdin)))
+#endif /* if _MSC_VER < 1900 */
+#else
+    /* Not Visual C++ - assume it behaves like old Visual C++ */
+    if (_isatty(stdin->_file))
+#endif
+#endif /* __WATCOMC__ */
 #else
 	if (isatty(fileno(stdin)))
 #endif /* NT */

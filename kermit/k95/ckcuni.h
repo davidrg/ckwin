@@ -248,7 +248,11 @@ _inline
 static _inline
 #endif /* COMMENT */
 #else
+#ifdef __WATCOMC__
+inline
+#else
 _Inline
+#endif
 #endif /* NT */
 int
 ck_isunicode(

@@ -30,7 +30,7 @@ extern int tt_cursor_blink;
 extern int tt_scrsize[];	/* Scrollback buffer size */
 extern int tt_status[];
 extern int scrollflag[];
-extern int vmode;
+extern BYTE vmode;
 extern int win32ScrollUp, win32ScrollDown;
 extern int trueblink, trueunderline, trueitalic;
 unsigned char geterasecolor(int);
@@ -161,6 +161,9 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     ikterm = new IKTerm( vmode /* clientID */, clientPaint );
     wc = 0;
     vscrollpos = hscrollpos = 0;
+
+    /* Save initial window size so we can tell when it changes */
+    getEndSize(previousWidth, previousHeight);
 }
 
 /*------------------------------------------------------------------------
@@ -473,6 +476,16 @@ void KClient::endSizing( Bool doAnyway )
 
     int w, h;
     getEndSize( w, h );
+
+    if (w == previousWidth && h == previousHeight
+            && saveTermWidth == w && saveTermHeight == h){
+
+        debug(F100, "endSizing: size not changed - doing nothing", "", 0);
+        return;
+    }
+
+    previousWidth = w;
+    previousHeight = h;
 
     if (kglob->mouseEffect == TERM_MOUSE_CHANGE_DIMENSION ) {
         kui_setheightwidth(w,h);
@@ -813,7 +826,7 @@ void KClient::writeMe()
             ExtTextOutW( hdc(), rect.left, rect.top, 
 			ETO_CLIPPED | ETO_OPAQUE, 
 			&rect,
-			(ushort*) &(textBuffer[ kws->offset ]),
+			(wchar_t*) &(textBuffer[ kws->offset ]),
 			kws->length,
 			(int*)&interSpace );
         }
@@ -976,6 +989,9 @@ Bool KClient::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         // NOTE: FALL THROUGH !!!
         //
 
+#ifdef WM_MOUSEWHEEL
+    case WM_MOUSEWHEEL:
+#endif
     case WM_LBUTTONUP:
     case WM_RBUTTONUP:
     case WM_MBUTTONUP:
@@ -992,6 +1008,38 @@ Bool KClient::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
             ikterm->mouseEvent( hwnd, msg, wParam, x, y );
             break;
         }
+
+#ifdef COMMENT
+    /* This is the obvious, simple and easy way to do it and this does work. But
+     * I decided to instead pretend scrolling up one notch is one click of the
+     * 4th mouse button, and scrolling down one notch is one click of the 5th
+     * mouse button, plus some UI changes to treat buttons 4 and 5 specially
+     * so you can't configure the click type (click, doubleclick, drag) for
+     * them. This way scroll events can be mapped just like any button click.
+     * Leaving this here in case the complicated way turns out to be broken
+     * horribly.
+     * */
+    case WM_MOUSEWHEEL: {
+          int zDelta = GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA;
+          debug(F111, "WM_MOUSEWHEEL", "zDelta", zDelta);
+          if (zDelta > 0) {
+            do {
+                //if (!scrollflag[vmode]) break;
+                ::scrollback( vmode /* clientID */, K_UPONE );
+                zDelta--;
+            } while (zDelta > 0);
+          } else {
+            do {
+              if (!scrollflag[vmode]) break;
+              ::scrollback( vmode /* clientID */, K_DNONE );
+              zDelta++;
+            } while (zDelta < 0);
+          }
+          paint();
+          done=1;
+          break;
+      }
+#endif
 
     case WM_SETFOCUS:
         //debug(F111,"KClient::message","WM_SETFOCUS",msg);

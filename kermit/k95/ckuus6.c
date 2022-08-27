@@ -81,8 +81,10 @@ extern int k95stdout;
 #else
 #define APIRET ULONG
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"
+#endif
 #endif /* NT */
 #include "ckocon.h"
 #include "ckodir.h"			/* [jt] 2013/11/21 - for MAXPATHLEN */
@@ -3847,7 +3849,7 @@ typegetline(incs, outcs, buf, n) int incs, outcs, n; char * buf; {
                 }
 #else
                 if (a == LF) {
-                    if (s[len] == CR) { /* This probably won't happen */
+                    if (s[len] == CK_CR) { /* This probably won't happen */
                         s[len] = NUL;
                         s--;
                         len--;
@@ -4234,15 +4236,17 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
               n += x;                   /* This assumes terminal will wrap */
         }
 #ifdef KUI
+#ifndef NORICHEDIT
         if ( gui ) {
             int i;
             unsigned short * uch = (unsigned short *)buf;
             for ( i=0; i<len/2; i++)
                 gui_text_popup_append(uch[i]);
-			gui_text_popup_append(CR);
+			gui_text_popup_append(CK_CR);
 			gui_text_popup_append(LF);
         } 
         else
+#endif /* NORICHEDIT */
 #endif /* KUI */
         typeline(buf,len,outcs,ofp);    /* Print line, length based */
 #ifdef CK_TTGWSIZ
@@ -4347,8 +4351,10 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
 #endif /* UNICODE */
 
 #ifdef KUI
+#ifndef NORICHEDIT
     if ( gui )
         gui_text_popup_wait(-1);        /* Wait for user to close the dialog */
+#endif
 #endif /* KUI */
     return(rc);
 }

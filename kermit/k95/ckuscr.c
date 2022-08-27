@@ -179,7 +179,7 @@ sequenc() {
 	    s++;
 	    switch (c = *s) {
 		case 'n':  seq_buf[i++] = LF; break;
-		case 'r':  seq_buf[i++] = CR; break;
+		case 'r':  seq_buf[i++] = CK_CR; break;
 		case 't':  seq_buf[i++] = '\t'; break;
 		case 'b':  seq_buf[i++] = '\b'; break;
 		case 'q':  seq_buf[i++] = '?';  break;
@@ -469,7 +469,7 @@ dooseq(threadinfo) VOID * threadinfo;
 	      logstr(seq_buf,strlen(seq_buf));
 	}
 	if (!no_cr) {
-	    ttoc( dopar(CR) );
+	    ttoc( dopar(CK_CR) );
 #ifdef TCPSOCKET
 	    if (is_tn) {
 		if (!TELOPT_ME(TELOPT_BINARY) && tn_nlm != TNL_CR)
@@ -482,7 +482,7 @@ dooseq(threadinfo) VOID * threadinfo;
 	    }
 #endif /* TCPSOCKET */
 	    if (seslog && duplex)
-	      logchar(dopar(CR));
+	      logchar(dopar(CK_CR));
 	}
     }
 #ifdef NTSIG

@@ -222,6 +222,9 @@ pip-log.txt
 *.map
 *.res
 *.err
+*.dll
+*.exp
+*.lib
 kermit/k95/dist*
 kermit/k95/ckcpro.c
 
@@ -230,9 +233,12 @@ kermit/k95/ckcpro.c
 
 # Dependencies
 openssl/
+zlib/
+libssh/
 redist/
 
 # Misc
 setenv_local.bat
 dst/
 builder/
+*.dll

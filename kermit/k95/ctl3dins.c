@@ -9,6 +9,7 @@
 /* Installs CTL3D32.DLL and MSVCRT.DLL into the proper directory */
 
 #include <windows.h>
+#include <stdio.h>
 
 void
 DisplayHelp( char * name )
@@ -39,8 +40,8 @@ InstallFile(char * prgname, char * srcfile, char * destfile, int forceinstall) {
                                destfile,
                                windir,
                                curdir,
-                               curpath, &curlen,
-                               destpath, &destlen );
+                               curpath, (PUINT)&curlen,
+                               destpath, (PUINT)&destlen );
     if ( vff_bitmask & VFF_CURNEDEST ) {
         printf("%s is installed but in the wrong directory\n",destfile);
         printf("Currently in \"%s\" but should be in \"%s\"\n",
@@ -61,7 +62,7 @@ InstallFile(char * prgname, char * srcfile, char * destfile, int forceinstall) {
                                   destpath,
                                   curpath,
                                   tmpfile,
-                                  &tmplen);
+                                  (PUINT)&tmplen);
 
     if ( vif_bitmask & VIF_TEMPFILE ) {
         printf("The temporary copy of the new file is in \"%s\".\n\n",

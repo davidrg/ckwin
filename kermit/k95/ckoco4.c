@@ -507,7 +507,7 @@ CopyVscrnToKbdBuffer( BYTE vmode, int select_mode ) {
             while ( nbytes-- > 0 )
                 sendcharduplex(*bytes++,TRUE);
             for ( i=1; i<len; i++ ) {
-                if ( Uselection[i-1] != CR || Uselection[i] != LF ) {
+                if ( Uselection[i-1] != CK_CR || Uselection[i] != LF ) {
                     nbytes = utorxlat(Uselection[i], &bytes);
                     while ( nbytes-- > 0 )
                         sendcharduplex(*bytes++,TRUE);
@@ -520,7 +520,7 @@ CopyVscrnToKbdBuffer( BYTE vmode, int select_mode ) {
 
             pData[0] = utolxlat(Uselection[0]);
             for ( i=1, j=1 ; i<len ; i++ )
-                if ( Uselection[i-1] != CR || Uselection[i] != LF )
+                if ( Uselection[i-1] != CK_CR || Uselection[i] != LF )
                     pData[j++] = utolxlat(selection[i]);
             pData[j] = '\0';
             putkeystr( vmode, pData );
@@ -535,7 +535,7 @@ CopyVscrnToKbdBuffer( BYTE vmode, int select_mode ) {
 
         pData[0] = selection[0];
         for ( i=1, j=1 ; i<len ; i++ )
-            if ( selection[i-1] != CR || selection[i] != LF )
+            if ( selection[i-1] != CK_CR || selection[i] != LF )
                 pData[j++] = selection[i] ;
         pData[j] = '\0';
 
@@ -626,7 +626,7 @@ CopyClipboardToKbdBuffer( BYTE vmode )
                 if ( nbytes > 0 )
                     bytecount = nbytes;
                 for ( i=1; i<len; i++ ) {
-                    if ( pUClipbrdData[i-1] != CR || pUClipbrdData[i] != LF ) {
+                    if ( pUClipbrdData[i-1] != CK_CR || pUClipbrdData[i] != LF ) {
                         nbytes = utorxlat(pUClipbrdData[i], &bytes);
                         if ( nbytes > 0 )
                             bytecount += nbytes;
@@ -639,7 +639,7 @@ CopyClipboardToKbdBuffer( BYTE vmode )
                 while ( nbytes-- > 0 )
                     buf[j++] = *bytes++;
                 for ( i=1; i<len; i++ ) {
-                    if ( pUClipbrdData[i-1] != CR || pUClipbrdData[i] != LF ) {
+                    if ( pUClipbrdData[i-1] != CK_CR || pUClipbrdData[i] != LF ) {
                         nbytes = utorxlat(pUClipbrdData[i], &bytes);
                         while ( nbytes-- > 0 )
                             buf[j++] = *bytes++;
@@ -655,7 +655,7 @@ CopyClipboardToKbdBuffer( BYTE vmode )
                 if ( pData != NULL ) {
                     pData[0] = utolxlat(pUClipbrdData[0]);
                     for ( i=1, j=1 ; i<len ; i++ )
-                        if ( pUClipbrdData[i-1] != CR || pUClipbrdData[i] != LF )
+                        if ( pUClipbrdData[i-1] != CK_CR || pUClipbrdData[i] != LF )
                             pData[j++] = utolxlat(pUClipbrdData[i]);
                     pData[j] = '\0';
                     debug(F111,"Clipboard","pData length",j);
@@ -681,7 +681,7 @@ CopyClipboardToKbdBuffer( BYTE vmode )
             if ( pData != NULL ) {
                 pData[0] = pClipbrdData[0];
                 for ( i=1, j=1 ; i<len ; i++ )
-                    if ( pClipbrdData[i-1] != CR || pClipbrdData[i] != LF )
+                    if ( pClipbrdData[i-1] != CK_CR || pClipbrdData[i] != LF )
                         pData[j++] = pClipbrdData[i] ;
                 pData[j] = '\0';
                 debug(F111,"Clipboard","pData length",j);

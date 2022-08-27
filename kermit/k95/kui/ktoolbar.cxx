@@ -6,6 +6,8 @@
 #include "ikcmd.h"
 #include "ikextern.h"
 
+#ifndef NOTOOLBAR
+
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
 LRESULT CALLBACK TBComboWndProc( HWND hWnd, UINT umsg, WPARAM wparam, LPARAM lparam )
@@ -110,6 +112,7 @@ void KToolBar::initButtons( int numbut, int numbit, ToolBitmapDef* def )
 ------------------------------------------------------------------------*/
 void KToolBar::createWin( KWin* par )
 {
+#ifndef NOTOOLBAR
     parent = par;
 
     TBBUTTON* tb = new TBBUTTON [numButtons];
@@ -136,6 +139,7 @@ void KToolBar::createWin( KWin* par )
                 , sizeof(TBBUTTON) );       // structure size
 
     delete tb;
+#endif
 }
 
 
@@ -632,3 +636,5 @@ Bool KToolBar::message( HWND hpar, UINT msg, UINT wParam, LONG lParam )
 
     return done;
 }
+
+#endif

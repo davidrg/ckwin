@@ -13,6 +13,8 @@
 #ifdef NT
 #include <windows.h>
 #else /* NT */
+/* so that we get SEM_INDEFINITE_WAIT from the watcom OS/2 headers */
+#define INCL_DOSSEMAPHORES
 #include <os2.h>
 #undef COMMENT
 #endif /* NT */
@@ -70,7 +72,7 @@ CHAR tvi_send_field[3] = { XFS, NUL, NUL };
 CHAR tvi_send_line[3] = { US, NUL, NUL };
 CHAR tvi_send_start_protected_field[3] = { ESC, ')', NUL };
 CHAR tvi_send_end_protected_field[3] = { ESC, '(', NUL } ;
-CHAR tvi_send_end_of_text[3] = { CR, NUL, NUL };
+CHAR tvi_send_end_of_text[3] = { CK_CR, NUL, NUL };
 
 int tvigraphics = FALSE;
 
@@ -216,10 +218,10 @@ tvictrl( int ch )
             break;
         cursorright(0) ;
         break;
-    case CR:
+    case CK_CR:
         if ( debses )
             break;
-        wrtch((char) CR);
+        wrtch((char) CK_CR);
         break;
     case SO:
         if ( debses )
@@ -306,7 +308,7 @@ tvictrl( int ch )
         if ( debses )
             break;
         if (autoscroll && !protect) {
-            wrtch((CHAR)CR);
+            wrtch((CHAR)CK_CR);
             wrtch((CHAR)LF);
         }
         break;
@@ -589,7 +591,7 @@ tviascii( int ch )
                          buf[0] = 0;
                          buf[1] = wherey[VTERM]+31 ;
                          buf[2] = wherex[VTERM]+31 ;
-                         buf[3] = CR ;
+                         buf[3] = CK_CR ;
                          buf[4] = NUL ;
 
                          sendchars( buf, 4 ) ;
@@ -954,7 +956,7 @@ tviascii( int ch )
                     char buf[4] ;
                     buf[0] = (char)(wherey[VTERM]+31) ;
                     buf[1] = (char)(wherex[VTERM]+31) ;
-                    buf[2] = CR ;
+                    buf[2] = CK_CR ;
                     buf[3] = NUL ;
                     sendchars(buf,3) ;
                 }
@@ -1628,13 +1630,13 @@ tviascii( int ch )
                      ISTVI950(tt_type_mode) ) {
                     if (debses) {
                         while ( i < w &&
-                                tviinc() != CR ) {
+                                tviinc() != CK_CR ) {
                             i++;
                         }
                     }
                     else {
                         while ( i < w &&
-                                (tviuserline[i]=tviinc()) != CR ) {
+                                (tviuserline[i]=tviinc()) != CK_CR ) {
                             i++;
                         }
                         while ( i < MAXTERMCOL )

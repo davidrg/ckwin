@@ -1302,8 +1302,10 @@ ck_des_is_weak_key(Block B);
 
 #ifdef MAP_NTLM
 #ifdef NT
+#ifdef NTLM
 #define SECURITY_WIN32
 #include <security.h>
+#endif
 #ifdef NTLM
 extern SecBuffer     NTLMSecBuf[1];
 extern HINSTANCE hSSPI;

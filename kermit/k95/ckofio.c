@@ -130,9 +130,11 @@ extern int pclose(FILE *);
 #endif
 
 #ifdef NT
+#ifndef __WATCOMC__
 #define timezone _timezone
-#define write _write
 #define fileno _fileno
+#endif /* __WATCOMC__ */
+#define write _write
 #define stricmp _stricmp
 #define setmode _setmode
 #define access _access
@@ -626,10 +628,8 @@ zopeni(n,name) int n; char *name; {
         ckstrncpy( os2filename, name, MAXPATH ) ;
         errno = 0;
 #ifdef NT
-        fp[n] = _fsopen(name,"rb",_SH_DENYWR);          /* Binary mode */
-        if (fp[n])
-            _setmode(_fileno(fp[n]),_O_SEQUENTIAL);
-        else {
+        fp[n] = _fsopen(name,"rbS",_SH_DENYWR);          /* Binary mode */
+        if (!fp[n]) {
             debug(F111,"zopeni ZI/ZR _fsopen failed","GetLastError",GetLastError());
         }
 #else
@@ -651,10 +651,8 @@ zopeni(n,name) int n; char *name; {
 #endif /* CK_LABELED */
     } else {
 #ifdef NT
-        fp[n] = _fsopen(name,"rb",_SH_DENYWR); /* Real file, open it. */
-        if (fp[n])
-            _setmode(_fileno(fp[n]),_O_SEQUENTIAL);
-        else {
+        fp[n] = _fsopen(name,"rbS",_SH_DENYWR); /* Real file, open it. */
+        if (!fp[n]) {
             debug(F111,"zopeni _fsopen failed","GetLastError",GetLastError());
         }
 #else
@@ -762,6 +760,11 @@ zopeno(n,name,zz,fcb)
         ckstrncat(p,"b",8);
     }
 
+#ifdef NT
+    if ( n == ZOFILE )      /* optimise caching for sequential access */
+        ckstrncat(p,"S",8); /* S is also known as _O_SEQUENTIAL */
+#endif /* NT */
+
     if (xferlog
 #ifdef CKSYSLOG
         || ckxsyslog >= SYSLG_FC && ckxlogging
@@ -834,10 +837,6 @@ zopeno(n,name,zz,fcb)
         }
 #endif /* CKSYSLOG */
     } else {                            /* Succeeded */
-#ifdef NT
-        if ( n == ZOFILE )
-            _setmode(_fileno(fp[n]),_O_SEQUENTIAL);
-#endif /* NT */
         if (n == ZDFILE ||              /* If it's the debug log */
             n == ZTFILE )               /* or the transaction log */
           setbuf(fp[n],NULL);           /* make it unbuffered */
@@ -2324,7 +2323,11 @@ zchdir(dirnam) char *dirnam; {
         extern int ikdbopen;
         if (inserver && ikdbopen) {
 #ifdef CKROOT
+#ifdef CK_LOGIN
             slotdir(isguest ? anonroot : "", zgtdir());
+#else
+            slotdir("", zgtdir());
+#endif /* CK_LOGIN */
 #else
             slotdir("", zgtdir());
 #endif /* CKROOT */
@@ -3976,7 +3979,16 @@ zcopy(source,destination) char *source, *destination; {
     BOOL bCancel = 0;
     static BOOL (WINAPI * p_CopyFileExA)(LPCSTR lpExistingFileName,
                                           LPCSTR lpNewFileName,
+#if _MSC_VER > 1000
                                           LPPROGRESS_ROUTINE lpProgressRoutine OPTIONAL,
+#else
+                              /* The Platform SDK included in Visual C++ 4.0
+                               * and earlier doesn't include CopyFileExA so
+                               * no defninition for LPPROGRESS_ROUTINE. We never
+                               * pass a value other than NULL so its real type
+                               * is probably irrelevant.*/
+                                          LPVOID lpProgressRoutine OPTIONAL,
+#endif
                                           LPVOID lpData OPTIONAL,
                                           LPBOOL pbCancel OPTIONAL,
                                           DWORD dwCopyFlags
@@ -4431,11 +4443,16 @@ zstrdt(date,len) char * date; int len; {
     char s[5];
     struct tm *time_stamp;
 
+#ifdef __WATCOMC__
+/* Watcom provides utimbuf instead of _utimbuf */
+struct utimbuf tp;
+#else
 #ifdef NT
 struct _utimbuf tp;
 #else /* NT */
 struct utimbuf tp;
 #endif /* NT */
+#endif /* __WATCOMC__
 
 #ifdef ANYBSD
     long timezone = 0L;
@@ -5058,7 +5075,7 @@ tilde_expand(dirname) char *dirname; {
 int
 zsyscmd(s) char *s; {
 #ifndef NOPUSH
-    extern int vmode;
+    extern BYTE vmode;
 
 /*
   We must set the priority back to normal.  Otherwise all of children
@@ -5135,7 +5152,7 @@ _zshcmd(s,wait) char *s; int wait; {
     SIGTYP (* savint)(int);
 #endif /* NT */
     char *shell = getenv("SHELL");
-    extern int vmode;
+    extern BYTE vmode;
 
     if ( !shell )
        shell = getenv("COMSPEC");
@@ -5415,12 +5432,19 @@ zfseek(CK_OFF_T pos)
 {
 #ifdef NT
     int rc;
-	/* ** TODO: Restore use of fsetpos (pos is an __int64, fpos_t is a struct. 
-	 * This sort of assignment is not allowed)
-	
+
+    /* Previously K95 just assumed fpos_t is an integer type of some kind and
+     * that it could just do this then pass the result into fsetpos:
     fpos_t fpos = pos;
-	
-	*/
+     *
+     * Problem is fpos_t is an opaque type so we really can't just go doing
+     * that. It clearly does work on some versions of Visual C++ but not all
+     * of them.
+     */
+
+    LARGE_INTEGER li;
+    li.QuadPart = pos;
+
 #endif /* NT */
 
     zincnt = -1 ;               /* must empty the input buffer */
@@ -5432,12 +5456,16 @@ zfseek(CK_OFF_T pos)
         debug(F100,"zfseek FILE_TYPE_PIPE","",0);
         return(-1);
     }
-	/* ** TODO: Restore use of fsetpos
-	
+	/* The reason why fsetpos was being used was for seeking in long files.
+	 * The correct way to do this on Windows is to use SetFilePointer, though
+	 * some later versions of Visual C++ (since 2005?) do have an
+	 * implementation of fseek that accepts 64bit positions.
     rc = fsetpos(fp[ZIFILE], &fpos);
-	
-	*/
-	rc = fseek(fp[ZIFILE], pos, 0);
+     */
+
+    rc = SetFilePointer((HANDLE)_get_osfhandle(_fileno(fp[ZIFILE])),
+                        li.LowPart, &li.HighPart, FILE_BEGIN);
+
 
     if (rc == 0) {
         debug(F100,"zfseek success","",0);

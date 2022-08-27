@@ -44,14 +44,17 @@
 #define INCL_NOPM
 #define INCL_VIO                        /* Needed for ckocon.h */
 #define INCL_DOSMODULEMGR
+#define INCL_WINERRORS
 #include <os2.h>
 #undef COMMENT
 #else /* NT */
 #define APIRET ULONG
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
-#include "cknwin.h"
 #include "ckntap.h"
+#endif
+#include "cknwin.h"
 #endif /* NT */
 #include "ckowin.h"
 #include "ckocon.h"
@@ -1717,7 +1720,10 @@ struct keytab mousetab[] = {            /* Mouse items */
     { "activate", XYM_ON,     0 },
     { "button",   XYM_BUTTON, 0 },
     { "clear",    XYM_CLEAR,  0 },
-    { "debug",    XYM_DEBUG,  0 }
+    { "debug",    XYM_DEBUG,  0 },
+#ifndef NOSCROLLWHEEL
+    { "wheel",    XYM_WHEEL,  0 }
+#endif
 };
 int nmtab = (sizeof(mousetab)/sizeof(struct keytab));
 
@@ -1730,6 +1736,12 @@ struct keytab mousebuttontab[] = {      /* event button */
     { "two",           XYM_B2, CM_INV }
 };
 int nmbtab = (sizeof(mousebuttontab) / sizeof(struct keytab));
+
+struct keytab mousewheeltab[] = {      /* event direction */
+    { "down",    XYM_WHEEL_DN, 0 },
+    { "up",      XYM_WHEEL_UP, 0 }
+};
+int nmousewheeltab = (sizeof(mousewheeltab) / sizeof(struct keytab));
 
 struct keytab mousemodtab[] = {         /* event button key modifier */
     { "alt",              XYM_ALT,   0 },
@@ -6340,6 +6352,7 @@ setmou(
     extern int initvik;
     int button = 0, event = 0;
     char * p;
+    BOOL isWheelNotButton;
 
     if ((y = cmkey(mousetab,nmtab,"","",xxstring)) < 0)
       return(y);
@@ -6377,17 +6390,26 @@ setmou(
         initvik = 1;                    /* Update VIK Table */
         return 1;
     }
-    if (y != XYM_BUTTON) {              /* Shouldn't happen. */
+    if (y != XYM_BUTTON && y != XYM_WHEEL) {           /* Shouldn't happen. */
         printf("Internal parsing error\n");
         return(-9);
     }
 
     /* MOUSE EVENT ... */
 
-    if ((button = cmkey(mousebuttontab,nmbtab,
-                        "Button number","1",
-                        xxstring)) < 0)
-      return(button);
+    if (y == XYM_BUTTON) {
+        if ((button = cmkey(mousebuttontab,nmbtab,
+                            "Button number","1",
+                            xxstring)) < 0)
+          return(button);
+        isWheelNotButton = FALSE;
+    } else {
+        if ((button = cmkey(mousewheeltab,nmousewheeltab,
+                            "Mouse wheel direction","up",
+                            xxstring)) < 0)
+          return(button);
+        isWheelNotButton = TRUE;
+    }
 
     if ((y =  cmkey(mousemodtab,nmmtab,
                     "Keyboard modifier","none",
@@ -6396,8 +6418,12 @@ setmou(
 
     event |= y;                         /* OR in the bits */
 
-    if ((y =  cmkey(mclicktab,nmctab,"","click",xxstring)) < 0)
-      return(y);
+    if (!isWheelNotButton) {
+        if ((y = cmkey(mclicktab,nmctab,"","click",xxstring)) < 0)
+          return(y);
+    } else {
+        y = XYM_C1; /* mouse wheel is always a single click. */
+    }
 
     /* Two bits are assigned, if neither are set then it is button one */
 
@@ -9444,9 +9470,12 @@ cx_net(net, protocol, xhost, svc,
 		if (!ck_ntlm_is_installed()) {
 		    return(cx_fail(msg,
 		   "Required authentication method (NTLM) is not installed"));
-		} else if (line[0] != '*' && !ck_ntlm_is_valid(0)) {
+		}
+#ifdef NTLM
+        else if (line[0] != '*' && !ck_ntlm_is_valid(0)) {
 		    return(cx_fail(msg,"NTLM: Credentials are unavailable."));
 		}
+#endif
 	    }
 #endif /* NT */
 #ifdef CK_SSL
@@ -10457,8 +10486,9 @@ setlin(xx, zz, fc)
               "Command, or switch" :
                 (mynet == NET_TCPA || mynet == NET_TCPB
                   || mynet == NET_SSH) ?
-                  "Hostname, ip-address, or switch" :
-                    "Host or switch";
+                  "Hostname, ip-address, or switch" : (mynet == NET_DLL) ?
+                        "Parameters, or switch" :
+                            "Host or switch";
             if (fc) {
                 if (mynet == NET_TCPB &&
                     (ttnproto == NP_TELNET || ttnproto == NP_KERMIT)) {
@@ -10495,6 +10525,10 @@ setlin(xx, zz, fc)
         } else if (mynet == NET_CMD || mynet == NET_PTY) {
             cmfdbi(&nx,_CMTXT,"Command","","",0,0,xxstring,NULL,NULL);
 #endif /* PTYORPIPE */
+#ifdef NETDLL
+        } else if (mynet == NET_DLL) {
+            cmfdbi(&nx,_CMTXT,"Parameters","","",0,0,xxstring,NULL,NULL);
+#endif /* NETFILE */
         } else {
             cmfdbi(&nx,_CMTXT,"Host","","",0,0,xxstring,NULL,NULL);
         }
@@ -10761,6 +10795,44 @@ setlin(xx, zz, fc)
                         );
         }
 #endif /* NETCMD */
+
+#ifdef NETDLL
+        if (mynet == NET_DLL) {
+            char *p = NULL;
+            if (!confirmed) {
+                if ((x = cmtxt("Rest of command","",&s,xxstring)) < 0) {
+                  return(x);
+                }
+
+                if (*s) {
+                    ckstrncat(line," ",LINBUFSIZ);
+                    ckstrncat(line,s,LINBUFSIZ);
+                }
+                s = line;
+            }
+            /* s == line - so we must protect the line buffer */
+            s = brstrip(s);
+            makestr(&p,s);
+            ckstrncpy(line,p,LINBUFSIZ);
+            makestr(&p,NULL);
+
+            x = cx_net( mynet,                  /* nettype */
+                        0,                      /* protocol (not used) */
+                        line,                   /* host */
+                        "",                     /* port */
+                        NULL,                   /* alternate username */
+                        NULL,                   /* password */
+                        NULL,                   /* command to execute */
+                        0,                      /* param1 */
+                        0,                      /* param2 */
+                        0,                      /* param3 */
+                        cx,                     /* enter CONNECT mode */
+                        sx,                     /* enter SERVER mode */
+                        zz,                     /* close connection if open */
+                        0                       /* gui */
+                        );
+        }
+#endif /* NETDLL */
 
 #ifdef NPIPE                            /* Named pipe */
         if (mynet == NET_PIPE) {        /* Needs backslash twiddling */
@@ -14218,9 +14290,9 @@ sho_iks() {
 #endif /* CK_LOGIN */
     printf("  Server-only:         %d\r\n",arg_x);
     printf("  Syslog:              %d\r\n",ckxsyslog);
+#ifdef CK_LOGIN
     printf("  Timeout (seconds):   %d\r\n",logintimo);
     printf("  Userfile:            %s\r\n",userfile?userfile:"<none>");
-#ifdef CK_LOGIN
 #ifdef CKWTMP
     printf("  Wtmplog:             %d\r\n",ckxwtmp);
     printf("  Wtmpfile:            %s\r\n",wtmpfile?wtmpfile:"<none>");

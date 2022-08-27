@@ -20,9 +20,11 @@
 
 #ifdef NT
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
-#include "cknalm.h"
 #include "ckntap.h"
+#endif
+#include "cknalm.h"
 
 #include "ckocon.h"
 
@@ -160,6 +162,10 @@ HMUX hmuxVscrnUpdate[VNUM] = {(HMUX) 0,(HMUX) 0,(HMUX) 0} ;
 HMUX hmuxCtrlC[4]    = { (HMUX) 0,(HMUX) 0,(HMUX) 0,(HMUX) 0 } ;
 HMUX hmuxAlarmSig[4] = { (HMUX) 0,(HMUX) 0,(HMUX) 0,(HMUX) 0 } ;
 HMUX hmuxCtrlCAlarmSig = (HMUX) 0 ;
+
+HEV hevRichEditInit = (HEV) 0;
+HEV hevRichEditClose = (HEV) 0;
+HMTX hmtxRichEdit = (HMTX) 0 ;
 #endif /* NT */
 
 int CtrlCCount = -1 ;

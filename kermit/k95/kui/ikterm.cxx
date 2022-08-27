@@ -16,9 +16,15 @@ extern TID tidTermScrnUpd ;
 extern unsigned char     colorstatus;
 extern unsigned char     colorselect;
 extern unsigned char     colorborder;
-extern int vmode;
+extern BYTE vmode;
 extern int tcsl;
 extern int nt351;
+
+#ifndef NOSCROLLWHEEL
+#ifndef GET_WHEEL_DELTA_WPARAM
+#define GET_WHEEL_DELTA_WPARAM(wParam)  ((short)HIWORD(wParam))
+#endif /* GET_WHEEL_DELTA_WPARAM */
+#endif /* NOSCROLLWHEEL */
 
 extern void
 win32KeyEvent( int mode, KEY_EVENT_RECORD key );
@@ -546,14 +552,14 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
                 keycount = toUnicode( inpEvt.Event.KeyEvent.wVirtualKeyCode,
                         inpEvt.Event.KeyEvent.wVirtualScanCode | (keyDown ? 0x00 : 0x8000),
                         keystate,
-                        (WORD *)wbuf,
+                        (LPWSTR)wbuf,
                         8,
                         FALSE );                         
             else
                 keycount = toUnicodeEx( inpEvt.Event.KeyEvent.wVirtualKeyCode,
                         inpEvt.Event.KeyEvent.wVirtualScanCode | (keyDown ? 0x00 : 0x8000),
                         keystate,
-                        (WORD *)wbuf,
+                        (LPWSTR)wbuf,
                         8,
                         FALSE,
                         GetKeyboardLayout(0) );                         
@@ -563,7 +569,7 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
             keycount = ToAsciiEx( inpEvt.Event.KeyEvent.wVirtualKeyCode,
                         inpEvt.Event.KeyEvent.wVirtualScanCode | (keyDown ? 0x00 : 0x8000),
                         keystate,
-                        (WORD *)buf,
+                        (LPWORD)buf,
                         FALSE,
                         GetKeyboardLayout(0) );                         
         }
@@ -752,6 +758,24 @@ void IKTerm::mouseEvent( HWND hwnd, UINT msg, WPARAM wParam, int x, int y )
             inpEvt.Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
             break;
         }
+
+#ifndef NOSCROLLWHEEL
+        case WM_MOUSEWHEEL: {
+            signed char zDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+            char button;
+            if( wParam & MK_LBUTTON )
+                button = FROM_LEFT_1ST_BUTTON_PRESSED;
+            else if( wParam & MK_RBUTTON )
+                button = RIGHTMOST_BUTTON_PRESSED;
+            else if( wParam & MK_MBUTTON )
+                button = FROM_LEFT_2ND_BUTTON_PRESSED;
+
+            inpEvt.Event.MouseEvent.dwEventFlags = MOUSE_WHEELED;
+            inpEvt.Event.MouseEvent.dwButtonState = MAKELPARAM(button, zDelta);
+
+            break;
+        }
+#endif
 
         case WM_LBUTTONDOWN:
             //debug(F110,"IKTerm::MouseEvent","WM_LBUTTONDOWN",0);

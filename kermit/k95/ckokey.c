@@ -937,6 +937,13 @@ getshiftstate( void ) {
    protected by a Mutual Exclusion Semaphore
 */
 
+#ifdef __WATCOMC__
+/* Watcom reserves the symbol '_end' making a global variable
+ * named 'end' forbidden. Rename it to something else.
+ */
+#define end end_
+#endif
+
 #define KEY_BUF_SIZE (65536 / sizeof(con_event))
 con_event Keystroke[VNUM][KEY_BUF_SIZE] ;
 int start[VNUM]={0,0,0}, end[VNUM]={0,0,0} ;
@@ -1109,8 +1116,9 @@ struct kverb_call {
 };
 
 static void
-kverb_thread(struct kverb_call *kc)
+kverb_thread(void* param)
 {
+    struct kverb_call *kc = (struct kverb_call *)param;
     if ( kc ) {
         kbdCallsKverb = 1;
         dokverb( kc->kmode, kc->km );
@@ -4704,7 +4712,7 @@ defbasekm( int tt )
     insertkeymap( tt, KEY_SCAN | KEY_SHIFT | 9, mkkeyevt(8)) || /* Shift-Tab return Backtab return Backspace */
     insertkeymap( tt, KEY_SHIFT | 27, mkkeyevt(27)) ||    /* Shift-Escape return Escape */
 
-    insertkeymap( tt, KEY_SCAN | 13, mkkeyevt(CR) ) ||               /* Enter sends CR */
+    insertkeymap( tt, KEY_SCAN | 13, mkkeyevt(CK_CR) ) ||             /* Enter sends CR */
     insertkeymap( tt, KEY_SCAN | 8, mkkeyevt(DEL) ) ||               /* Backspace sends DEL */
     insertkeymap( tt, KEY_SCAN | KEY_SHIFT | 8, mkkeyevt(DEL) ) ||   /* Shift-Backspace sends DEL */
     insertkeymap( tt, KEY_SCAN | KEY_ALT | 8, mkkeyevt(BS)) ||        /* Alt-Backspace return Backspace */
@@ -4725,7 +4733,7 @@ defbasekm( int tt )
     insertkeymap( tt, KEY_SCAN | 40               , mkkeyevt(F_KVERB | K_DNARR)) ||     /* Down Arrow  Numeric */
 
     /* Prep the keypad key values */
-    insertkeymap( tt, 4365, mkkeyevt(CR) ) || /* Gray-Enter sends CR */
+    insertkeymap( tt, 4365, mkkeyevt(CK_CR) ) || /* Gray-Enter sends CR */
     insertkeymap( tt, 363, mkkeyevt('+') ) || /* Add sends '+' */
     insertkeymap( tt, 365, mkkeyevt('-') ) || /* Subtract sends '-' */
     insertkeymap( tt, 362, mkkeyevt('*') ) || /* Multiply sends '*' */
@@ -4915,7 +4923,7 @@ defwpkm( int tt )
     insertkeymap( tt, 362, mkkeyevt('*'));
     insertkeymap( tt, 365, mkkeyevt('-'));
     insertkeymap( tt, 363, mkkeyevt('+'));
-    insertkeymap( tt, 4365, mkkeyevt(CR));
+    insertkeymap( tt, 4365, mkkeyevt(CK_CR));
     /* End of Pete Hickey additions */
 
 

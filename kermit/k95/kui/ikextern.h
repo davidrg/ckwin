@@ -70,7 +70,8 @@ int hupok(int);
 void setexitwarn(int);
 void setguidialog(int);
 
-extern int vmode, autodl, adl_ask, cmask, tt_url_hilite, locus, autolocus;
+extern BYTE vmode;
+extern int autodl, adl_ask, cmask, tt_url_hilite, locus, autolocus;
 extern int xitwarn, gui_dialog, xitsta;
 
 #ifdef __cplusplus

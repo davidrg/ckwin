@@ -125,6 +125,11 @@ _PROTOTYP( FILE * win95popen, (const char *cmd, const char *mode) );
 _PROTOTYP( int win95pclose, (FILE *pipe) );
 #define popen _popen
 #define pclose _pclose
+#else
+#ifdef __WATCOMC__
+#define popen _popen
+#define pclose _pclose
+#endif
 #endif /* NT */
 
 #ifdef COMMENT
@@ -248,7 +253,7 @@ int trueitalic    = TRUE ;
 int trueitalic    = FALSE ;
 #endif /* KUI */
 
-extern enum markmodes markmodeflag[VNUM] = {notmarking, notmarking,
+enum markmodes markmodeflag[VNUM] = {notmarking, notmarking,
                                                 notmarking, notmarking} ;
 
 extern int tn_bold;                     /* TELNET negotiation bold */
@@ -1322,7 +1327,7 @@ learnkeyb(con_event evt, int state) {   /* Learned script keyboard character */
 
                 /* Later account for prompts that end with a newline? */
 
-                if (cc == CR && j > 0) {
+                if (cc == CK_CR && j > 0) {
                     if (nbuf[j-1] != LF)
                       j = 0;
                 }
@@ -1629,7 +1634,7 @@ clearbuf() {                            /* Clear line buffer */
 void
 doprolog() {                            /* Output the PostScript prolog */
     int i;
-    CHAR crlf[2] = { CR, LF };
+    CHAR crlf[2] = { CK_CR, LF };
 
     for (i = 0; *prolog[i]; i++) {
 #ifdef NT
@@ -2700,6 +2705,9 @@ protoString(void)
         case NET_FILE:
             ckstrncpy(buf, "FILE",sizeof(buf));
             break;
+        case NET_PTY:
+            ckstrncpy(buf, "PTY",sizeof(buf));
+            break;
         case NET_CMD:
             ckstrncpy(buf, "COMMAND",sizeof(buf));
             break;
@@ -3079,7 +3087,7 @@ sendcharduplex(unsigned char key, int no_xlate ) {
         }
 
         key = key & cmask & pmask; /* Apply Kermit-to-host mask now. */
-        if (key == CR) {            /* Handle TERMINAL NEWLINE */
+        if (key == CK_CR) {            /* Handle TERMINAL NEWLINE */
             int stuff = -1, stuff2 = -1;
             if (tnlm) {                     /* TERMINAL NEWLINE ON */
                 stuff = LF;                 /* Stuff LF */
@@ -3176,9 +3184,9 @@ sendcharduplex(unsigned char key, int no_xlate ) {
                 }
             }
             else if (tt_crd && duplex) {    /* CR-DISPLAY CRLF & local echo */
-                le_putchar(CR);
+                le_putchar(CK_CR);
                 csave = LF;
-                key = CR;                   /* ... but only send a CR */
+                key = CK_CR;                   /* ... but only send a CR */
             }
         }
 #ifdef TNCODE
@@ -3386,7 +3394,7 @@ sendcharsduplex(unsigned char * s, int len, int no_xlate ) {
 
     /* count number of CRs that might require stuffing of LFs */
     for ( i=0,n=0 ;i<len;i++ ) {
-        if ( s[i] == CR ) {
+        if ( s[i] == CK_CR ) {
             n++;
         }
     }
@@ -3459,7 +3467,7 @@ sendcharsduplex(unsigned char * s, int len, int no_xlate ) {
        if (duplex && !wy_block) {
            le_putchar(*bufptr) ;
        }
-       if (*bufptr == CR) {             /* Handle TERMINAL NEWLINE */
+       if (*bufptr == CK_CR) {             /* Handle TERMINAL NEWLINE */
            if (tnlm) {                  /* TERMINAL NEWLINE ON */
                *(++stuffptr) = LF;                      /* Stuff LF */
            }
@@ -3610,13 +3618,13 @@ cursornextline() {
             }
             lgotoxy(VTERM, 1, margintop);
         } else if (ISVT100(tt_type_mode) || ISANSI(tt_type_mode)) {
-            wrtch(CR);
+            wrtch(CK_CR);
             wrtch(LF);
         }
     }
     else if ( (ISWYSE(tt_type_mode) || ISTVI(tt_type_mode)) && autoscroll
               && !protect ){
-        wrtch(CR);
+        wrtch(CK_CR);
         wrtch(LF);
     }
 
@@ -6755,7 +6763,7 @@ pushed:
                 }
                 else return(0); /* Unknown, get next char */
                 break;
-            case CR:
+            case CK_CR:
                 got_cr = 1;
                 break;
             case NUL:
@@ -6810,7 +6818,7 @@ pushed:
                     c = *ucs2;
 
                 if (c == 0x2028 || c == 0x2029) { /* LS or PS */
-                    c = CR;
+                    c = CK_CR;
                     f_pushed = 1;
                     c_pushed = LF;
                 }
@@ -6868,9 +6876,9 @@ pushed:
             if ((!debses) &&
                  ((tnlm &&              /* NEWLINE-MODE? */
                     (c == LF || c == FF || c == 11)) ||
-                   (c == CR && tt_crd ) /* CR-DISPLAY CRLF ? */
+                   (c == CK_CR && tt_crd ) /* CR-DISPLAY CRLF ? */
                    )) {
-                cwrite((USHORT) CR);    /* Yes, output CR */
+                cwrite((USHORT) CK_CR);    /* Yes, output CR */
                 c = LF;                 /* and insert a linefeed */
             }
             cwrite((USHORT) c);
@@ -9991,7 +9999,7 @@ vt100key(int key) {
         sendcharduplex((char) key,FALSE);/* just send it, */
         if (tt_pacing > 0)              /* taking care of pacing */
             msleep(tt_pacing);
-        if (key == CR && tnlm) {        /* and newline mode */
+        if (key == CK_CR && tnlm) {        /* and newline mode */
             if (tt_pacing > 0)          /* and pacing */
                 msleep(tt_pacing);
         }
@@ -10030,6 +10038,12 @@ vt100key(int key) {
 /*         sequence of apclength in apcbuf                            */
 /* ------------------------------------------------------------------ */
 
+/* This buffer was originally 31 characters for some reason. This is
+ * pretty short and the os2settitle functions buffer is 128 so titles
+ * of up to 64 chars seems more reasonable.
+ */
+#define APC_TITLE_BUF_LEN 64
+
 void
 doosc( void ) {
 /* at current we only process two SET WINDOW TITLE and SET ICON TITLE */
@@ -10043,9 +10057,11 @@ doosc( void ) {
     switch ( apcbuf[0] ) {
     case '0': { /* XTERM */
         /* the rest of the apcbuffer is the Window Title */
-        char wtitle[31] ;
+        char wtitle[APC_TITLE_BUF_LEN] ;
         int i ;
-        for ( i=0;i<=30 && i+2 < apclength; i++ )
+
+        /* Take 1 off to leave room for the NUL at the end */
+        for ( i=0;i < APC_TITLE_BUF_LEN - 1 && i+2 < apclength; i++ )
             wtitle[i] = apcbuf[i+2] ;
         if ( i > 0 && apcbuf[i-1] == 0x07 ) {
             /* XTERMs may append a Beep indicator at the end */
@@ -10068,9 +10084,10 @@ doosc( void ) {
             break;
         case '1': {     /* SET WINDOW TITLE - DECSWT */
             /* the rest of the apcbuffer is the Window Title */
-            char wtitle[31] ;
+            char wtitle[APC_TITLE_BUF_LEN] ;
             int i ;
-            for ( i=0;i<=30 && i+3<=apclength; i++ )
+            /* Take one of the title buffer length to leave room for the NUL */
+            for ( i=0;i < APC_TITLE_BUF_LEN - 1 && i+3<=apclength; i++ )
                 wtitle[i] = apcbuf[i+3] ;
             wtitle[i] = NUL ;
 
@@ -10584,9 +10601,9 @@ debugses( unsigned char ch )
             wrtch(ch8);
         }
         if (deb_wrap ||
-             ch8 == LF && old_c == CR) { /* Break lines for readability */
+             ch8 == LF && old_c == CK_CR) { /* Break lines for readability */
             attribute = defaultattribute;
-            wrtch(CR);
+            wrtch(CK_CR);
             wrtch(LF);
         }
         old_c = ch8;                    /* Remember this character */
@@ -11007,10 +11024,18 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             escbuffer[0] = _CSI;         /* Save in case we have to replay it */
             esclast = 1;                /* Reset buffer pointer, but */
             escbuffer[1] = '[';         /* But translate for vtescape() */
-        } else if (ch != NUL) {
-            wrtch(ch);
         }
-        return;
+
+        if (!(ch == BEL && oscrecv)) {
+            /* Only return here on BEL if we're not receiving an OSC string
+             * as that signals end of string. If BEL is in fact not the string
+             * terminator then that could be a problem but not as big a problem
+             * as if it is and we miss it. */
+            if (ch != NUL) {
+                wrtch(ch);
+            }
+            return;
+        }
     }
 /*
   Put this character in the escape sequence buffer.
@@ -11196,8 +11221,19 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
         if (ch == ESC)                  /* ESC may be 1st char of terminator */
           escstate = ES_TERMIN;         /* Change state to find out. */
 #ifdef CK_APC
-        else if ( ch == BEL && ISAIXTERM(tt_type_mode) && oscrecv ) {
-            /* BEL terminates an OSC string in AIXTERM */
+        else if ( ch == BEL /*&& ISAIXTERM(tt_type_mode)*/ && oscrecv ) {
+            /* BEL terminates an OSC string in AIXTERM
+             *
+             * DavidG 2022-07-21 - And also in the windows 10 console (ConPTY)
+             *   K-95 used to only do this for AIXTERM but the result if an
+             *   unexpected BEL string terminator is missed is pretty bad - data
+             *   is accumulated into apcbuf forever and the user sees no
+             *   output.
+             *
+             *   So while it is non-standard K-95 will now always accept
+             *   BEL as a string terminator. This is also what XTerm does:
+             *      https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands
+             * */
             escstate = ES_NORMAL;       /* If so, back to NORMAL */
             if (savefiletext[0]) {              /* Fix status line */
                 ckstrncpy(filetext,savefiletext,sizeof(filetext));
@@ -11584,7 +11620,7 @@ wrtch(unsigned short ch) {
                 }
             }
             break;
-        case CR:
+        case CK_CR:
             if ( (IS97801(tt_type_mode) || ISHP(tt_type_mode)) &&
                  vmode == VTERM )
                 wherex[vmode] = marginleft;
@@ -11954,10 +11990,9 @@ line25(int vmode) {
 }
 
 /* CHSTR  --  Make a printable string out of a character  */
-
 char*
 chstr(int c) {
-    char s[8];
+    static char s[8];
     char *cp = s;
 
     if (c < SP || c == DEL)
@@ -15176,7 +15211,7 @@ vtcsi(void)
                                 sendchar(SP);
                             }   
                         if ( y < ye ) {
-                            sendchar(CR);
+                            sendchar(CK_CR);
                             sendchar(LF);
                         }
                     }
@@ -19595,7 +19630,7 @@ vt100(unsigned short vtch) {
          case VT:                       /* Vertical tab */
              wrtch((char) LF);
              break;
-         case CR:                       /* Carriage return */
+         case CK_CR:                       /* Carriage return */
              wrtch((char) achar);
              break;
          case SO:                       /* SO */
@@ -19700,11 +19735,11 @@ vt100(unsigned short vtch) {
                 if (wrapit) {   /* Time to wrap?  */
                     if (literal_ch) {
                         literal_ch = 0;
-                        wrtch(CR);
+                        wrtch(CK_CR);
                         wrtch(LF);
                         literal_ch = 1;
                     } else {
-                        wrtch(CR);
+                        wrtch(CK_CR);
                         wrtch(LF);
                     }
                     wrtch(vtch);        /* Now write the character */
@@ -19724,7 +19759,7 @@ vt100(unsigned short vtch) {
                         if ( IS97801(tt_type_mode) ) {
                             if ( wherey[vmode] == marginbot ) {
                                 if ( !sni_pagemode ) {
-                                    wrtch(CR);
+                                    wrtch(CK_CR);
                                     wrtch(LF);
                                 }
                                 else {  /* Page Mode */
@@ -19732,7 +19767,7 @@ vt100(unsigned short vtch) {
                                 }
                             }
                             else {
-                                wrtch(CR);
+                                wrtch(CK_CR);
                                 wrtch(LF);
                             }
                         } else /* if ( !deccolm ) */ {
@@ -19747,7 +19782,7 @@ vt100(unsigned short vtch) {
                                   !ISHFT(tt_type_mode))
                                 wrapit = TRUE ; /* need to wrap next time */
                             else {
-                                wrtch(CR);
+                                wrtch(CK_CR);
                                 wrtch(LF);
                             }
                         }

@@ -122,6 +122,11 @@ private:    // this section is for performance
     double saveLineSpacing;
     int saveHorzIsV;
 
+    /* So that we can tell when the size has been changed and the vterm, etc,
+     * needs updating */
+    int previousHeight;
+    int previousWidth;
+
     int maxpHeight;     // max parent window height
     int maxpWidth;      // max parent window width
     int maxHeight;      // max client window height

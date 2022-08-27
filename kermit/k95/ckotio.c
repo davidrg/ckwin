@@ -95,10 +95,12 @@ char *ckxv = "OS/2 Communications I/O, 8.0.229, 29 Dec 2005";
 #ifdef NT
 #include <windows.h>
 #include <commctrl.h>
+#ifndef NODIAL
 #include <tapi.h>
 #include <mcx.h>
-#include "cknwin.h"
 #include "ckntap.h"
+#endif
+#include "cknwin.h"
 #ifdef CK_TAPI
 int TAPIAvail = 0 ;   /* is TAPI Installed */
 extern int tttapi ;   /* is Line TAPI? */
@@ -112,6 +114,26 @@ _PROTOTYP( void DisplayCommProperties, (HANDLE));
 #define popen _popen
 #define pclose _pclose
 #endif /* NT */
+
+
+#ifndef _WIN32_WINNT_WIN10
+#define _WIN32_WINNT_WIN10 0x0A00
+#endif /* _WIN32_WINNT_WIN10 */
+#ifndef _WIN32_WINNT_WINBLUE
+#define _WIN32_WINNT_WINBLUE 0x0603
+#endif /* _WIN32_WINNT_WINBLUE */
+
+#if _MSC_VER >= 1800
+/* Visual C++ 2013 and the Windows 8.1 Platform SDK introduce this header and
+ * though the Win32 APIs it relies on have been around since Windows 2000 */
+#include <VersionHelpers.h>
+#define CKWIsWinVerOrGreater(ver) (IsWindowsVersionOrGreater(HIBYTE(ver),LOBYTE(ver),0))
+#else
+/* Anything older than Visual C++ we won't bother trying to detect Windows 8.1
+ * or newer - if you're building for a modern version of windows you really
+ * should be using a modern compiler. */
+#define CKWIsWinVerOrGreater(ver) (FALSE)
+#endif
 
 /* Version herald(s) */
 
@@ -178,6 +200,23 @@ int p_avail = 0 ;      /* Must load the DLL */
 int p_avail = 1 ;      /* No DLL to load - built-in */
 #endif /* XYZ_DLL */
 #endif /* CK_XYZ */
+
+#ifdef OS2
+#ifndef NT
+#ifdef __WATCOMC__
+/* Watcom C headers don't know what these are. I don't have
+ * access to any IBM development tools for OS/2 so I can't
+ * look in the heades to see what the values are. The values
+ * here come from:
+ *      OS/2 Debugging Handbook - Volume IV -
+ *      System Diagnostic Reference
+ *      February 1996
+ */
+#define NP_WMESG 0x0400
+#define NP_RMESG 0x0100
+#endif
+#endif
+#endif
 
 HKBD KbdHandle = 0 ;
 TID tidKbdHandler = (TID) 0,
@@ -1306,40 +1345,54 @@ sysinit() {
                         "Windows - unknown");
         } else if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT) {
             /* Windows NT */
-            if (osverinfo.dwMajorVersion < 5) {
-                sprintf(unm_nam, "Windows NT");
-            } else if (osverinfo.dwMajorVersion == 5) {
-                /* Windows 2000 / XP / 2003 */
-                if (osverinfo.dwMinorVersion == 0) {
-                    sprintf(unm_nam, "Windows 2000" );
-                } else if (osverinfo.dwMinorVersion == 1) {
-                    sprintf(unm_nam, "Windows XP" );
-                } else if (osverinfo.dwMinorVersion == 2) {
-                    sprintf(unm_nam, "Windows XP x64 Edition / Server 2003");
-                } else {
-                    sprintf(unm_nam, "Windows NT 5.x - unknown" );
-                }
-            } else if (osverinfo.dwMajorVersion == 6) {
-                /* Windows Vista / 7 / 8 / 8.1 */
-                if (osverinfo.dwMinorVersion == 0) {
-                    sprintf(unm_nam, "Windows Vista / Server 2008" );
-                } else if (osverinfo.dwMinorVersion == 1) {
-                    sprintf(unm_nam, "Windows 7 / Server 2008 R2" );
-                } else if (osverinfo.dwMinorVersion == 2) {
-                    sprintf(unm_nam, "Windows 8 / Server 2012");
-                } else if (osverinfo.dwMinorVersion == 3) {
-                    sprintf(unm_nam, "Windows 8.1 / Server 2012 R2");
-                } else  {
-                    sprintf(unm_nam, "Windows NT 6.x - unknown" );
-                }
-            } else {
-                /* TODO: If building with a new enough Platform SDK version,
-                 *      use the Version Helper functions:
-                 *      https://docs.microsoft.com/en-us/windows/win32/sysinfo/version-helper-apis
-                 */
 
-                /* Don't know */
-                sprintf(unm_nam, "Windows NT - unknown" );
+            if (CKWIsWinVerOrGreater(_WIN32_WINNT_WIN10)) {
+                /* Windows 10 or newer. There is currently no constant
+                 * for Windows 11 defined so this is the best we can
+                 * do. */
+                sprintf(unm_nam, "Windows 10 / Server 2016 or newer");
+            } else if (CKWIsWinVerOrGreater(_WIN32_WINNT_WINBLUE)) {
+                sprintf(unm_nam, "Windows 8.1 / Server 2012 R2");
+            } else {
+                if (osverinfo.dwMajorVersion < 5) {
+                    sprintf(unm_nam, "Windows NT");
+                } else if (osverinfo.dwMajorVersion == 5) {
+                    /* Windows 2000 / XP / 2003 */
+                    if (osverinfo.dwMinorVersion == 0) {
+                        sprintf(unm_nam, "Windows 2000" );
+                    } else if (osverinfo.dwMinorVersion == 1) {
+                        sprintf(unm_nam, "Windows XP" );
+                    } else if (osverinfo.dwMinorVersion == 2) {
+                        sprintf(unm_nam, "Windows XP x64 Edition / Server 2003");
+                    } else {
+                        sprintf(unm_nam, "Windows NT 5.x - unknown" );
+                    }
+                } else if (osverinfo.dwMajorVersion == 6) {
+                    /* Windows Vista / 7 / 8 / 8.1 */
+                    if (osverinfo.dwMinorVersion == 0) {
+                        sprintf(unm_nam, "Windows Vista / Server 2008" );
+                    } else if (osverinfo.dwMinorVersion == 1) {
+                        sprintf(unm_nam, "Windows 7 / Server 2008 R2" );
+                    } else if (osverinfo.dwMinorVersion == 2) {
+                        sprintf(unm_nam, "Windows 8 / Server 2012 !!");
+                    } else if (osverinfo.dwMinorVersion == 3) {
+                        sprintf(unm_nam, "Windows 8.1 / Server 2012 R2");
+                    } else  {
+                        sprintf(unm_nam, "Windows NT 6.x - unknown" );
+                    }
+                } else if (osverinfo.dwMajorVersion == 10) {
+                    /* With the right stuff in the manifest, GetVersionEx should
+                     * tell the truth even when the executable has been built
+                     * with an older compiler. When built with Visual C++
+                     * 2013 or newer we won't ever get this far - Windows 10+
+                     * should be detected earlier on. */
+
+                    sprintf(unm_nam, "Windows 10 / Server 2016 or newer");
+
+                } else {
+                    /* Don't know */
+                    sprintf(unm_nam, "Windows NT - unknown" );
+                }
             }
         } else {
             /* Unknown */
@@ -1854,10 +1907,17 @@ sysinit() {
     {
         printf("Warning: TZ environment variable not set.  Using EST5EDT.\n\n");
         bleep(BP_WARN);
+#ifdef __WATCOMC__
+        timezone = 18000;
+        daylight = 1;
+        tzname[0] = "EST";
+        tzname[1] = "EDT";
+#else
         _timezone = 18000;
         _daylight = 1;
         _tzname[0] = "EST";
         _tzname[1] = "EDT";
+#endif
     }
     else
 #endif /* OS2ONLY */
@@ -4295,7 +4355,7 @@ getOverlappedIndex( int serial ) {
         ow = -1;
         while(!GetOverlappedResult( (HANDLE) ttyfd,
                                     &overlapped_write[++ow],
-                                    &nActuallyWritten, owwait ))
+                                    (LPDWORD)&nActuallyWritten, owwait ))
         {
             DWORD error = GetLastError() ;
             if ( error == ERROR_IO_INCOMPLETE ) {
@@ -4472,6 +4532,13 @@ getOverlappedIndex( int serial ) {
     return ow ;
 }
 
+#ifndef __WATCOMC__
+#if _MSC_VER <= 1000
+/* Visual C++ 4.0 and earlier lack this macro */
+#define HasOverlappedIoCompleted(lpOverlapped) ((lpOverlapped)->Internal != STATUS_PENDING)
+#endif
+#endif
+
 int
 freeOverlappedComplete( int serial ) {
     int ow, rc = -1 ;
@@ -4491,7 +4558,7 @@ freeOverlappedComplete( int serial ) {
 
             if ( GetOverlappedResult( (HANDLE) ttyfd,
                                       &overlapped_write[ow],
-                                      &nActuallyWritten, owwait ) )
+                                      (LPDWORD)&nActuallyWritten, owwait ) )
             {
                 debug(F111,"freeOverlappedIndex COMPLETE","ow",ow);
                 debug(F111,"freeOverlappedIndex COMPLETE",ow_ptr[ow],ow);
@@ -4645,8 +4712,8 @@ OverlappedWrite( int serial, char * chars, int charsleft )
     ResetEvent( overlapped_write[ow].hEvent ) ;
     nActuallyWritten = 0 ;
 
-    if ( !WriteFile( (HANDLE) ttyfd, ow_ptr[ow], charsleft, &nActuallyWritten,
-                     &overlapped_write[ow]) )
+    if ( !WriteFile( (HANDLE) ttyfd, ow_ptr[ow], charsleft, (LPDWORD)
+                     &nActuallyWritten, &overlapped_write[ow]) )
     {
         DWORD error = GetLastError() ;
         if ( error != ERROR_IO_PENDING )
@@ -6280,7 +6347,7 @@ rdch(int timo /* ms */) {
              !ReadFile((HANDLE) ttyfd,
                        rdchbuf.buffer,
                        sizeof(rdchbuf.buffer),
-                       &nActuallyRead,
+                       (LPDWORD)&nActuallyRead,
                          &overlapped_read[0])
             ) {
             DWORD error = GetLastError() ;
@@ -6291,7 +6358,7 @@ rdch(int timo /* ms */) {
 #endif /* COMMENT */
                 while(!GetOverlappedResult( (HANDLE) ttyfd,
                                             &overlapped_read[0],
-                                            &nActuallyRead,
+                                            (LPDWORD)&nActuallyRead,
                                             FALSE )
                        ) {
                     DWORD error = GetLastError() ;
@@ -7165,7 +7232,7 @@ coninc(timo) int timo; {
             debug(F111,"coninc","ESC conversion",c);
             c = ESC ;
             break;
-        case KEY_SCAN | CR:
+        case KEY_SCAN | CK_CR:
 #ifndef NOKVERBS
         case F_KVERB | K_KPENTER:
         case F_KVERB | K_WYENTER:
@@ -7176,7 +7243,7 @@ coninc(timo) int timo; {
         case F_KVERB | K_HPRETURN:
 #endif /* NOKVERBS */
             debug(F111,"coninc","ENTER conversion",c);
-            c = CR ;
+            c = CK_CR ;
             break;
 #ifndef NOKVERBS
         case F_KVERB | K_KPMINUS:
@@ -7266,7 +7333,7 @@ coninc(timo) int timo; {
             break;
         default: ;
         }
-        if ( c == CR )
+        if ( c == CK_CR )
             c = NL;
 #ifndef NOKVERBS
         if (c >= 0) {
@@ -7398,7 +7465,7 @@ congks(int timo) {
             free(macrostr);
             macrostr = NULL ;
             s = NULL;
-            ch = CR;
+            ch = CK_CR;
         }
         else {
             ch = *s++;
@@ -8973,6 +9040,8 @@ conkbg(void) {
 
     *p = '\0';
 
+/* TODO: This doesn't build on openwatcom currently*/
+#ifndef __WATCOMC__
     memset( &kbID, 0, sizeof(kbID) ) ;
 
     kbID.cb = sizeof(kbID);
@@ -8997,6 +9066,8 @@ conkbg(void) {
         sprintf(p,"%d",x);              /* use its "name" */
     else                                /* otherwise */
         sprintf(p,"%04X",(int) kbID.idKbd); /* use the hex code */
+#endif
+
 #endif /* NT */
 
     return(p);                          /* Return string pointer */
@@ -9158,6 +9229,12 @@ os2rexxinit()
 
 #endif /* CK_REXX */
 
+#define TITLEBUF_LEN 128
+#ifdef NT
+#define TITLE_PLATFORM "Windows"
+#else
+#define TITLE_PLATFORM "OS/2"
+#endif
 int
 os2settitle(char *newtitle, int newpriv ) {
 #ifndef NOLOCAL
@@ -9169,10 +9246,10 @@ os2settitle(char *newtitle, int newpriv ) {
 #endif /* NT */
     static char title[80]="not yet set";
     static int  private = 1;
-    char titlebuf[128] ;
+    char titlebuf[TITLEBUF_LEN] ;
     extern enum markmodes markmodeflag[];
     extern bool scrollflag[] ;
-    extern int vmode;
+    extern BYTE vmode;
     extern int inserver;
     char * videomode = "";
 
@@ -9196,25 +9273,25 @@ os2settitle(char *newtitle, int newpriv ) {
 
     if ( usertitle[0] ) {
         if ( StartedFromDialer ) {
-            sprintf( titlebuf, "%d::%s%s%s",KermitDialerID,usertitle,
-                 private ? (inserver ? " - IKS" : " - C-Kermit for Windows") : "",
+            _snprintf( titlebuf, TITLEBUF_LEN, "%d::%s%s%s",KermitDialerID,usertitle,
+                 private ? (inserver ? " - IKS" : " - C-Kermit for " TITLE_PLATFORM) : "",
                      videomode
                  );
         }
         else {
-            sprintf( titlebuf, "%s%s%s",usertitle,
-                 private ? (inserver ? " - IKS" : " - C-Kermit for Windows") : "", videomode
+            _snprintf( titlebuf, TITLEBUF_LEN, "%s%s%s",usertitle,
+                 private ? (inserver ? " - IKS" : " - C-Kermit for " TITLE_PLATFORM) : "", videomode
                  );
         }
     }
     else if ( StartedFromDialer ) {
-        sprintf( titlebuf, "%d::%s%s%s%s",KermitDialerID,title,(*title&&private)?" - ":"",
-                 private ? (inserver ? "IKS" : "C-Kermit for Windows") :  "", videomode
+        _snprintf( titlebuf, TITLEBUF_LEN, "%d::%s%s%s%s",KermitDialerID,title,(*title&&private)?" - ":"",
+                 private ? (inserver ? "IKS" : "C-Kermit for " TITLE_PLATFORM) :  "", videomode
                  );
     }
     else {
-        sprintf( titlebuf, "%s%s%s%s",title,(*title&&private)?" - ":"",
-                 private ? (inserver ? "IKS" : "C-Kermit for Windows") : "" , videomode
+        _snprintf( titlebuf, TITLEBUF_LEN, "%s%s%s%s",title,(*title&&private)?" - ":"",
+                 private ? (inserver ? "IKS" : "C-Kermit for " TITLE_PLATFORM) : "" , videomode
                  );
     }
 
@@ -9258,7 +9335,7 @@ os2gettitle(char *buffer, int size) {
 #ifndef NOLOCAL
     extern enum markmodes markmodeflag[];
     extern bool scrollflag[] ;
-    extern int vmode;
+    extern BYTE vmode;
     int len;
 #ifdef OS2ONLY
     HSWITCH hSwitch;
@@ -9425,7 +9502,9 @@ void
 DisplayCommProperties(HANDLE h)
 {
     COMMPROP *     lpCommProp = NULL;
+#ifndef NODIAL
     LPMODEMDEVCAPS lpModemDevCaps = NULL;
+#endif
     int rc=0;
 
     /* leave enough room for provider specific information */
@@ -9577,6 +9656,7 @@ DisplayCommProperties(HANDLE h)
     printf("  Current Tx Queue   = %d (bytes)\n",lpCommProp->dwCurrentTxQueue);
     printf("  Current Rx Queue   = %d (bytes)\n",lpCommProp->dwCurrentRxQueue);
 
+#ifndef NODIAL
     if ( lpCommProp->dwProvSubType == PST_MODEM && lpCommProp->wcProvChar[0]) {
         lpModemDevCaps = (LPMODEMDEVCAPS) lpCommProp->wcProvChar;
         printf("Modem Device Capabilities:\n");
@@ -9690,6 +9770,7 @@ DisplayCommProperties(HANDLE h)
         printf("  Max DCE Rate           = %d (bits/second)\n",
                 lpModemDevCaps->dwMaxDCERate);
     }
+#endif /* NODIAL */
     printf("\n");
     free(lpCommProp);
     return;

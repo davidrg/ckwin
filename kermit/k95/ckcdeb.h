@@ -2388,6 +2388,15 @@ _PROTOTYP( void bleep, (short) );
 #else
 #ifdef LINUX				/* Linux */
 #define NETPTY
+#else
+#ifdef NT                   /* Windows NT */
+/* NT only gets PTY support when built with CK_CONPTY as it requires
+ * a sufficiently new Platform SDK and compiler. */
+#ifdef CK_CONPTY
+#define NETPTY
+#endif /* CK_CONPTY */
+
+#endif /* NT */
 #endif /* LINUX */
 #endif /* AIX41 */
 #endif /* SUNOS41 */
@@ -2977,6 +2986,10 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
   Then, if either SSHBUILTIN or SSHCMD is defined, ANYSSH is also defined.
 */
 
+#undef COMMENT /* The OS/2 headers define this for some insane reason */
+#ifdef COMMENT
+Built-in SSH no longer depends on SSL support. Built-in SSH is now provided by
+a library (libssh, ssh.dll) which is itself linked against OpenSSL.
 #ifndef NOSSH
 #ifndef NO_SSL
 #ifdef OS2ONLY
@@ -2984,13 +2997,14 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #endif /* OS2ONLY */
 #ifdef NT
 #ifndef CK_SSL
-#define NOSSH
+#define NOSSHN
 #endif /* CK_SSL */
 #endif /* NT */
 #else /* NO_SSL */
 #define NOSSH
 #endif /* NO_SSL */
 #endif /* NOSSH */
+#endif /* COMMENT */
 
 #ifdef NOSSH				/* NOSSH */
 #ifdef SSHBUILTIN			/* undefines any SSH selctors */
@@ -5806,10 +5820,16 @@ typedef CHAR * MACRO;
 #endif /* __32BIT__ */
 #include <sys/timeb.h>
 #else /* __EMX__ */
+#ifndef __WATCOMC__
+/* Watcom direct.h definition incompatible with the
+ * implementation in ckodir.h and ckotio.c */
 #include <direct.h>
+#endif /* __WATCOMC__ */
 #undef SIGALRM
 #ifndef SIGUSR1
+#ifndef __WATCOMC__
 #define SIGUSR1 7
+#endif
 #endif /* SIGUSR1 */
 #define SIGALRM SIGUSR1
 _PROTOTYP( unsigned alarm, (unsigned) );
@@ -6378,6 +6398,10 @@ _PROTOTYP( int vosprtf, (char *fmt, ...) );
 #endif /* STRATUS */
 
 #ifdef NT
+#ifndef VER_PLATFORM_WIN32_WINDOWS
+/* Visual C++ 2.0 and older don't define this (Win95 wasn't released yet) */
+#define VER_PLATFORM_WIN32_WINDOWS      1
+#endif
 extern int OSVer;
 #define isWin95() (OSVer==VER_PLATFORM_WIN32_WINDOWS)
 #else

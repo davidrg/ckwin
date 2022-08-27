@@ -5,6 +5,12 @@
 #define OPENFILENAME_SIZE_VERSION_400 sizeof(OPENFILENAME);
 #endif
 
+extern "C" {
+    /* This is declared in ckotio.c and set to 1 when we're on NT 3.51
+     * (and 3.50 and 3.1) */
+    extern int nt351;
+}
+
 KDownLoad* download;
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
@@ -109,12 +115,18 @@ void KDownLoad::show( Bool bVisible )
     OpenFileName.lCustData         = 0;
 
     OpenFileName.Flags = OFN_CREATEPROMPT | OFN_PATHMUSTEXIST 
-        | OFN_HIDEREADONLY | OFN_ENABLEHOOK | OFN_EXPLORER
+        | OFN_HIDEREADONLY
         | OFN_NOCHANGEDIR | OFN_NOTESTFILECREATE | OFN_OVERWRITEPROMPT 
         | OFN_SHAREAWARE ;
 //        | OFN_ENABLETEMPLATE ;
 
-    OpenFileName.lpfnHook = (LPOFNHOOKPROC)KDownDlgProc;
+    OpenFileName.lpfnHook = 0;
+    if (!nt351) {
+        /* NT 3.51 and earlier don't support OFNHOOKPROC */
+        OpenFileName.Flags = OpenFileName.Flags | OFN_ENABLEHOOK | OFN_EXPLORER;
+        OpenFileName.lpfnHook = (LPOFNHOOKPROC)KDownDlgProc;
+    }
+
 //    OpenFileName.lpTemplateName = (LPTSTR)MAKEINTRESOURCE(IDD_DOWNLOAD);
 
     GetCurrentDirectory(sizeof(szCurrentDir),szCurrentDir);

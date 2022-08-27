@@ -152,7 +152,9 @@
 typedef int bool;
 #else
 #ifndef __BOOL_DEFINED
+#ifndef __WATCOMC__
 typedef int bool;
+#endif
 #endif
 #endif
 
@@ -746,7 +748,11 @@ extern int ConnectMode;
 #ifdef NT
 _inline
 #else
+#ifdef __WATCOMC__
+inline
+#else
 _Inline
+#endif
 #endif
 BOOL
 IsConnectMode( void ) {

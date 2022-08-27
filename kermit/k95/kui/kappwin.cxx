@@ -13,8 +13,9 @@
 #include <stdlib.h>
 #include <process.h>
 #include <sys/stat.h>
+#include <direct.h>
 extern "C" {
-    extern int vmode;
+    extern BYTE vmode;
     extern char exedir[];
     extern int  tt_status[];
 };
@@ -31,8 +32,10 @@ KAppWin::KAppWin( K_GLOBAL* kg, int menuid, int toolbarid )
 {
     if ( !kg->noMenuBar )
         createMenu();
+#ifndef NOTOOLBAR
     if ( !kg->noToolBar )
         toolbar = new KToolBar( kg, toolbarid );
+#endif
     if ( !kg->noStatus )
         status = new KStatus( kg );
     client = 0;

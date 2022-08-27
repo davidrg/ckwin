@@ -1,94 +1,98 @@
 C-Kermit for Windows
 ====================
 
-This is C-Kermit for Windows. It is a free and open source version of the
+This is C-Kermit for Windows and OS/2. It is a free and open source version of the
 program formerly known as Kermit-95, a commercial product of Columbia
 University from 1994 to 2011. For more information on Kermit, visit the
 Kermit Project website: http://www.kermitproject.org.
 
 This software is currently based on C-Kermit version 10.0 Beta.04 of
-3-JUN-2022. 
+3-JUN-2022 and is available under the 3-clause BSD license.
 
-OS/2 support is still present but untested. It should still work if someone can
-get it building with freely available tools.
+This code is based on what was going to be Kermit 95 v2.2. Compared to the
+final K95 release (2.1.3) a number of bugs have been fixed and a few new
+features have been added. A full list of these is available here:
 
-This version has been released under the 3-clause BSD license and does not
-include any features which rely on proprietary libraries or SDKs. This
-includes:
+http://www.kermitproject.org/k95-fixes-since-213.txt
+
+![Screenshot](doc/screenshot-w10.png)
+
+New Features
+------------
+
+SSH Support is back in a limited way. Interactive sessions and file transfers
+work but forwarding and some of the `set ssh` commands have not yet been
+implemented. For more details, see the [SSH Readme](doc/ssh-readme.md).
+
+PTYs are also supported on Windows 10+ now via the `pty` command. For example,
+`pty cmd.exe` will open the Windows shell inside C-Kermit and from there you can
+run any windows console tool. Note that Kermit file transfers are not supported
+via this mechanism as Windows PTYs are not transparent. There may also be some
+minor terminal emulation glitches as windows slots a terminal emulator in 
+between the subprocess and CKW (Windows PTYs are not transparent).
+
+The `pipe` command has also been fixed and kermit file transfers *are* supported
+via this mechanism. Applications relying on the special Windows terminal APIs
+won't work properly but anything that just outputs standard ANSI escape
+sequences should work interactively. PuTTYs plink tool works as long as the
+remote host is already trusted, and you use public key authentication.
+
+Network DLLs are also fixed. You can now add support for additional protocols
+via custom DLLs which are loaded with the `set network type dll` command.
+
+Limited OS/2 Support is back. No network support and its now being built with
+a totally different compiler, OpenWatcom, so bugs are very likely. As with
+Kermit 95, the OS/2 version doesn't have a GUI - it runs in an OS/2 Console
+Window. If you know anything about OS/2 programming, assistance in fixing the
+remaining OS/2 issues would be most welcome.
+
+Features Expected to Return Soon
+--------------------------------
+
+* The Dialer - it builds fine with OpenZinc so it just needs tidying up for
+  open-sourcing (removing the registration code, etc).
+* X/Y/Z Modem support - the author of the 3rd party library Kermit 95 used has
+  OKd its open-sourcing so once that happens it will return.
+
+Missing Kermit 95 Features
+--------------------------
+When Kermit 95 was open-sourced a number of features were disabled due to
+obsolete 3rd party libraries, cryptography export regulations, or unavailability
+of the required tools. Some of these may return someday, others likely will not.
+This includes:
 
 * DECnet (formerly provided by DEC PATHWORKS) 
 * LAT (formerly provided by either SuperLAT or PATHWORKS)
-* X, Y and Z MODEM (formerly provided on windows by a custom port of an OS/2 library 
-    called 'P' written by Jyrki Salmi and now owned by [Oy Online Solutions Ltd](https://online.fi)
-* The Dialer (relied on a modified version of Zinc 4.2, a 
-[formerly proprietary GUI framework](http://openzinc.com/))
-* SSH (based on OpenSSH)
-
-A number of other features have been removed as they relied on ancient
-versions of 3rd-party libraries. These are:
-
-* Kerberos
-* SSL
-* SRP
+* Kerberos (provided by a very old version of MIT Kerberos for Windows)
+* SRP (provided by the Stanford SRP distribution, unmaintained for over a decade now)
+* SSL (OpenSSL 0.9.7)
 
 Other features may be missing as a result of the above features being disabled.
 For a full list of features available, type the following at the Kermit prompt:
 
         SHOW FEATURES
 
-This code is based on what was going to be Kermit 95 v2.2. Compared to the
-final K95 release (2.1.3) a number of bugs have been fixed and a few new
-features have been added. A full list of these is available here:
-
-  http://www.kermitproject.org/k95-fixes-since-213.txt
+Note that this may lie about some features being available due to them not being
+disabled cleanly.
 
 Compiling
 ---------
 
-To build C-Kermit for Windows you will need Microsoft Visual C++ 6.0 SP6, 2002,
-2003, or 2005 (newer may have file transfer issues). 
-Edit /setenv.bat to point to your source directory then run through
-the following:
+To build C-Kermit for Windows, see the [Build Instructions](doc/building.md).
+You'll need at least Visual C++ 4.0 or newer, or OpenWatcom 1.9+. To build
+with ConPTY and SSH support you'll need to use Visual C++ 2019 or newer.
 
-1. Open up a console window
-2. Setup the Visual C++ environment. You'll want to run vcvars32.bat. This
-   will be where ever you installed your compiler. For example:
+To build C-Kermit for OS/2, see the [OS/2 Build Instructions](doc/os2-building.md).
 
-        C:\Program Files\Microsoft Visual Studio 8\VC\bin\vcvars32.bat
-
-3. CD into your source directory and run the following:
-
-        setenv.bat
-        cd kermit/k95
-        mk.bat
-        mkdist.bat
-
-This should leave you with a number of bits in the dist subdirectory, the most
-most interesting being:
-
-* k95.exe      - Console version of C-Kermit for Windows
-* k95g.exe     - Graphical version of C-Kermit for Windows
-
-Future stuff to do:
--------------------
-* Remove need for /noBool switch and #defines in kui code.
-* Restore use of fsetpos in ckofio.c (see function zfseek(CK_OFF_T) around
-  line 5418)
-* Re-enable/rewrite features that were disabled due to missing or obsolete
-dependencies. This will require upgrading to current versions or finding/writing
-replacements.
-  - SSH
-  - Kerberos (use Heimdal instead of MIT Kerberos for Windows)
-  - zlib
-  - SSL (upgrade to current OpenSSL release)
-  - SRP
-  - Z/Y/Z Modem (Ask Oy Online Solutions Ltd for a relicensed library?)
-  - LAT (port from linux-decnet? Ask [VSI](https://vmssoftware.com/) for the pathworks SDK?)
-
-Shared Codebase
+Making Changes
 ---------------
-Any files matching the pattern ck[cu]*.[cwh] are shared by
-implementations of C-Kermit for other platforms (UNIX, Linux, VMS, and others)
-and are not specific to the Windows and OS/2 port in this repository. Any changes 
-to these files should be sent to [The Kermit Project](https://www.kermitproject.org/)
-to be included in future C-Kermit releases for other platforms.
+Any files matching the pattern ck[cu]*.[cwh] are shared by implementations of 
+C-Kermit for other platforms (UNIX, Linux, VMS, and others) and are not 
+specific to the Windows and OS/2 port in this repository. Any changes to these 
+files should be sent to [The Kermit Project](https://www.kermitproject.org/)
+to be included in future C-Kermit releases for other platforms. If your changes
+are not intended to affect other platforms, make sure they're ifdef'd for either
+OS2 (OS/2+Windows) or NT (Windows only).
+
+Files matching starting with ck[on]*.* can be safely modified as they are only
+used by the OS/2 and Windows targets.

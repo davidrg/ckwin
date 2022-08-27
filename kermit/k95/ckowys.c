@@ -24,6 +24,7 @@
 #ifdef NT
 #include <windows.h>
 #else /* NT */
+#define INCL_DOSSEMAPHORES
 #include <os2.h>
 #undef COMMENT
 #endif /* NT */
@@ -391,11 +392,11 @@ wysectrl( int ch )
             break;
         cursorright(0) ;
         break;
-    case CR:
+    case CK_CR:
         debug(F110,"Wyse Ctrl","Carriage Return",0);
         if ( debses )
             break;
-        wrtch((char) CR);
+        wrtch((char) CK_CR);
         break;
     case SO:
         debug(F110,"Wyse Ctrl","keylock off",0);
@@ -520,7 +521,7 @@ wysectrl( int ch )
         if ( debses )
             break;
         if (autoscroll && !protect) {
-            wrtch((CHAR)CR);
+            wrtch((CHAR)CK_CR);
             wrtch((CHAR)LF);
         }
         break;
@@ -1217,7 +1218,7 @@ wyseascii( int ch )
                 buf[0] = 0;
                 buf[1] = wherey[VTERM]+31 ;
                 buf[2] = wherex[VTERM]+31 ;
-                buf[3] = CR ;
+                buf[3] = CK_CR ;
                 buf[4] = NUL ;
 
                 sendchars( buf, 4 ) ;
@@ -1290,7 +1291,7 @@ wyseascii( int ch )
                     sendchar(ETX);
                     break;
                 case EOB_US_CR:
-                    sendchar(CR);
+                    sendchar(CK_CR);
                     break;
                 }
                 break;
@@ -1335,7 +1336,7 @@ wyseascii( int ch )
                     if ( y < wherey[VTERM]-1 ) {
                         switch ( wy_blockend ) {
                         case EOB_CRLF_ETX:
-                            sendchar(CR);
+                            sendchar(CK_CR);
                             sendchar(LF);
                             break;
                         case EOB_US_CR:
@@ -1349,7 +1350,7 @@ wyseascii( int ch )
                     sendchar(ETX);
                     break;
                 case EOB_US_CR:
-                    sendchar(CR);
+                    sendchar(CK_CR);
                     break;
                 }
                 break;
@@ -1394,7 +1395,7 @@ wyseascii( int ch )
                     sendchar(ETX);
                     break;
                 case EOB_US_CR:
-                    sendchar(CR);
+                    sendchar(CK_CR);
                     break;
                 }
                 break;
@@ -1443,7 +1444,7 @@ wyseascii( int ch )
                     if ( y < wherey[VTERM]-1 ) {
                         switch ( wy_blockend ) {
                         case EOB_CRLF_ETX:
-                            sendchar(CR);
+                            sendchar(CK_CR);
                             sendchar(LF);
                             break;
                         case EOB_US_CR:
@@ -1457,7 +1458,7 @@ wyseascii( int ch )
                     sendchar(ETX);
                     break;
                 case EOB_US_CR:
-                    sendchar(CR);
+                    sendchar(CK_CR);
                     break;
                 }
                 break;
@@ -1559,7 +1560,7 @@ wyseascii( int ch )
                     char buf[4] ;
                     buf[0] = (char)(wherey[VTERM]+31) ;
                     buf[1] = (char)(wherex[VTERM]+31) ;
-                    buf[2] = CR ;
+                    buf[2] = CK_CR ;
                     buf[3] = NUL ;
                     sendchars(buf,3) ;
                 }
@@ -1672,7 +1673,7 @@ wyseascii( int ch )
                 for ( ; n < ((VscrnGetWidth(VTERM)<=80)?46:100); n++ )
                 {
                     buf[n] = wyinc();
-                    if ( buf[n] == CR )
+                    if ( buf[n] == CK_CR )
                         break;
                 }
                 buf[n] = '\0';
@@ -1970,7 +1971,7 @@ wyseascii( int ch )
                     if ( y < ye ) {
                         switch ( wy_blockend ) {
                         case EOB_CRLF_ETX:
-                            sendchar(CR);
+                            sendchar(CK_CR);
                             sendchar(LF);
                             break;
                         case EOB_US_CR:
@@ -1984,7 +1985,7 @@ wyseascii( int ch )
                     sendchar(ETX);
                     break;
                 case EOB_US_CR:
-                    sendchar(CR);
+                    sendchar(CK_CR);
                     break;
                 }
                 break;
@@ -4027,13 +4028,13 @@ wyseascii( int ch )
 
                 debug(F110,"Wyse Escape","Program and display computer message on label line",0);
                 if ( debses ) {
-                    while ( i < width && wyinc() != CR ) {
+                    while ( i < width && wyinc() != CK_CR ) {
                         i++;
                     }
                 }
                 else {
                     while ( i < width &&
-                            (wy_labelmsg[i]=wyinc()) != CR ) {
+                            (wy_labelmsg[i]=wyinc()) != CK_CR ) {
                         i++;
                     }
                     wy_labelmsg[i] = NUL ;
@@ -4197,7 +4198,7 @@ wyseascii( int ch )
                     if ( y < ye ) {
                         switch ( wy_blockend ) {
                         case EOB_CRLF_ETX:
-                            sendchar(CR);
+                            sendchar(CK_CR);
                             sendchar(LF);
                             break;
                         case EOB_US_CR:
@@ -4211,7 +4212,7 @@ wyseascii( int ch )
                     sendchar(ETX);
                     break;
                 case EOB_US_CR:
-                    sendchar(CR);
+                    sendchar(CK_CR);
                     break;
                 }
                 break;
@@ -4472,7 +4473,7 @@ wyseascii( int ch )
                     if ( debses )
                         break;
                     while ( (keydef[i]=wyinc()) != DEL &&
-                                (keydef[i] != CR))
+                                (keydef[i] != CK_CR))
                         i++;
                     keydef[i] = NUL ;
 
@@ -4488,13 +4489,13 @@ wyseascii( int ch )
 
                     if ( debses ) {
                         while ( i < MAXTERMCOL &&
-                                wyinc() != CR ) {
+                                wyinc() != CK_CR ) {
                             i++;
                         }
                     }
                     else {
                         while ( i < MAXTERMCOL &&
-                                (wy_labelline[i]=wyinc()) != CR ) {
+                                (wy_labelline[i]=wyinc()) != CK_CR ) {
                             i++;
                         }
                         wy_labelline[i] = NUL ;
@@ -4509,20 +4510,20 @@ wyseascii( int ch )
                     debug(F110,"Wyse Escape","Program/display/clear shifted label line",0);
                     if ( debses ) {
                         while ( i < MAXTERMCOL &&
-                                wyinc() != CR ) {
+                                wyinc() != CK_CR ) {
                             i++;
                         }
                     }
                     else {
                         while ( i < MAXTERMCOL &&
-                                (wy_shiftlabelline[i]=wyinc()) != CR ) {
+                                (wy_shiftlabelline[i]=wyinc()) != CK_CR ) {
                             i++;
                         }
                         wy_shiftlabelline[i] = NUL ;
                     }
                 }
                 else if ( ISWY60(tt_type_mode) &&
-                          key == 'P' && wyinc() == CR ) {
+                          key == 'P' && wyinc() == CK_CR ) {
                     /* ESC z P CR       Display shifted label line */
                     debug(F110,"Wyse Escape","Display Shifted label line",0);
                     if ( debses )
@@ -4534,7 +4535,7 @@ wyseascii( int ch )
 
                     while ( i < 255 &&
                             (((keydef[i]=wyinc()) != DEL) || label) &&
-                            ((keydef[i] != CR) || !label) )
+                            ((keydef[i] != CK_CR) || !label) )
                         i++;
                     keydef[i] = NUL ;
 

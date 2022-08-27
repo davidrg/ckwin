@@ -257,6 +257,7 @@ struct timezone {
 #endif /* CK_ANSIC */
 #endif /* OSF13 */
 
+#ifndef OS2
 #ifndef I386IX
 #ifndef HPUXPRE65
 #include <errno.h>			/* Error number symbols */
@@ -266,6 +267,20 @@ struct timezone {
 #endif	/* ERRNO_INCLUDED */
 #endif	/* HPUXPRE65 */
 #endif /* I386IX */
+#endif /* OS2 */
+
+#ifdef OS2
+#ifdef NT
+#include <errno.h>			/* Error number symbols */
+#else /* OS/2 */
+#ifdef __WATCOMC__
+/* WatcomC doesn't need errno.h (definitions conflict with some previous definition */
+//#include <errno.h>
+#else
+#include <errno.h>			/* Error number symbols */
+#endif
+#endif /* NT */
+#endif /* OS2 */
 
 #include <signal.h>                     /* Everybody needs this */
 
@@ -363,6 +378,7 @@ _PROTOTYP( int rlog_naws, (void) );
 #ifdef OS2                              /* For terminal type name string */
 #include "ckuusr.h"
 #ifndef NT
+#define INCL_DOSSEMAPHORES
 #include <os2.h>
 #undef COMMENT
 #endif /* NT */
@@ -11758,7 +11774,7 @@ http_get(agent, hdrlist, user, pwd, array, local, remote, stdio)
                 if ( stdio )
                     conoc((CHAR)ch);
             }
-            if ((ch = http_inc(0)) != CR)
+            if ((ch = http_inc(0)) != CK_CR)
                 break;
             if ((ch = http_inc(0)) != LF)
                 break;
@@ -12225,7 +12241,7 @@ http_index(agent, hdrlist, user, pwd, array, local, remote, stdio)
                 if ( stdio )
                     conoc((CHAR)ch);
             }
-            if ((ch = http_inc(0)) != CR)
+            if ((ch = http_inc(0)) != CK_CR)
                 break;
             if ((ch = http_inc(0)) != LF)
                 break;
@@ -12530,7 +12546,7 @@ http_put(agent, hdrlist, mime, user, pwd, array, local, remote, dest, stdio)
                     if ( stdio )
                         conoc((CHAR)ch);
                 }
-                if ((ch = http_inc(0)) != CR)
+                if ((ch = http_inc(0)) != CK_CR)
                     break;
                 if ((ch = http_inc(0)) != LF)
                     break;
@@ -12776,7 +12792,7 @@ http_delete(agent, hdrlist, user, pwd, array, remote)
                 len--;
                 conoc((CHAR)ch);
             }
-            if ((ch = http_inc(0)) != CR)
+            if ((ch = http_inc(0)) != CK_CR)
                 break;
             if ((ch = http_inc(0)) != LF)
                 break;
@@ -13059,7 +13075,7 @@ http_post(agent, hdrlist, mime, user, pwd, array, local, remote, dest,
                     if ( stdio )
                         conoc((CHAR)ch);
                 }
-                if ((ch = http_inc(0)) != CR)
+                if ((ch = http_inc(0)) != CK_CR)
                     break;
                 if ((ch = http_inc(0)) != LF)
                     break;

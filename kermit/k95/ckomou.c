@@ -35,6 +35,14 @@ char *ckomouv = "Mouse Support 8.0.093, 20 Oct 2002";
 #include "ckocon.h"
 #include "ckokey.h"
 
+#ifdef NT
+#ifndef NOSCROLLWHEEL
+#ifndef GET_WHEEL_DELTA_WPARAM
+#define GET_WHEEL_DELTA_WPARAM(wParam)  ((short)HIWORD(wParam))
+#endif /* GET_WHEEL_DELTA_WPARAM */
+#endif /* NOSCROLLWHEEL */
+#endif /* NT */
+
 static BOOL SelectionValid = 0 ;
 con_event mousemap[MMBUTTONMAX][MMSIZE] ;
 #ifdef NT
@@ -103,12 +111,16 @@ mousename( int button, int event )
     char temp[17] ;
 
     mousename[0] = '\0' ;
-    strcpy(mousename, "Button ") ;
+    if (button == MMB4 || button == MMB5) {
+        strcpy(mousename, "Wheel");
+    } else {
+        strcpy(mousename, "Button ") ;
 #ifdef NT
-    ckstrncat(mousename, _itoa(button+1,temp,10), sizeof(mousename) ) ;
+        ckstrncat(mousename, _itoa(button+1,temp,10), sizeof(mousename) ) ;
 #else /* NT */
-    ckstrncat(mousename, itoa(button+1,temp,10), sizeof(mousename) ) ;
+        ckstrncat(mousename, itoa(button+1,temp,10), sizeof(mousename) ) ;
 #endif /* NT */
+    }
 
     ckstrncat(mousename, " ", sizeof(mousename) ) ;
     if ( event & MMCTRL )
@@ -121,7 +133,23 @@ mousename( int button, int event )
         ckstrncat( mousename, "Drag", sizeof(mousename) ) ;
     else if ( event & MMDBL )
         ckstrncat( mousename, "Double-Click", sizeof(mousename) ) ;
-    else ckstrncat (mousename, "Click", sizeof(mousename) ) ;
+    else if (button != MMB4 && button != MMB5) {
+        /* For the purposes of the mouse event system, we pretend the mouse
+         * wheel is a pair of buttons. One notch away from the user is one click
+         * of button 4, and one notch towards the user is one click of button 5.
+         * But the user isn't clicking and we don't provide other non-click
+         * options (dragging the wheel makes no sense) so we don't do this for
+         * buttons 4 and 5. */
+        ckstrncat (mousename, "Click", sizeof(mousename) ) ;
+    }
+
+    if (button == MMB4) {
+        /* Mouse wheel up */
+        ckstrncat(mousename, "Up", sizeof(mousename) );
+    } else if (button == MMB5) {
+        /* Mouse wheel down */
+        ckstrncat(mousename, "Down", sizeof(mousename) );
+    }
 
     return mousename ;
 }
@@ -138,13 +166,39 @@ mousemapinit( int button, int event )
     if ( resetall )
         for ( x = 0 ; x < MMBUTTONMAX ; x++ ) {
            for ( y = 0 ; y < MMSIZE ; y++ )
-              if ( y == MMCLICK )
+              if ( y == MMCLICK ) /* MMCLICK AKA MMWHEEL */
               {
                  mousemap[x][y].type = kverb ;
                  mousemap[x][y].kverb.id = F_KVERB | K_IGNORE ;
               }
               else mousemap[x][y].type = error ;
         }
+
+#ifndef NOSCROLLWHEEL
+    if ( resetall || button == MMB4 && event == MMWHEEL) {
+        /* Assign wheel up event */
+        mousemap[MMB4][MMWHEEL].type = kverb ;
+        mousemap[MMB4][MMWHEEL].kverb.id = F_KVERB | K_UPONE ;
+    }
+
+    if ( resetall || button == MMB5 && event == MMWHEEL) {
+        /* Assign wheel down event */
+        mousemap[MMB5][MMWHEEL].type = kverb ;
+        mousemap[MMB5][MMWHEEL].kverb.id = F_KVERB | K_DNONE ;
+    }
+
+    if ( resetall || button == MMB4 && event == MMCTRL | MMWHEEL) {
+        /* Assign wheel ctrl+up event */
+        mousemap[MMB4][MMCTRL | MMWHEEL].type = kverb ;
+        mousemap[MMB4][MMCTRL | MMWHEEL].kverb.id = F_KVERB | K_UPSCN ;
+    }
+
+    if ( resetall || button == MMB5 && event == MMCTRL | MMWHEEL) {
+        /* Assign wheel ctrl+down event */
+        mousemap[MMB5][MMCTRL | MMWHEEL].type = kverb ;
+        mousemap[MMB5][MMCTRL | MMWHEEL].kverb.id = F_KVERB | K_DNSCN ;
+    }
+#endif
 
     if ( resetall || button == MMB1 && event == MMDBL ) {
         /* Assign Cursor Positioning */
@@ -227,7 +281,7 @@ mousemapinit( int button, int event )
     }
 
     if ( !resetall ) {
-       if ( event == MMCLICK )
+       if ( event == MMCLICK ) /* AKA MMWHEEL */
        {
            mousemap[button][event].type = kverb ;
            mousemap[button][event].kverb.id = F_KVERB | K_IGNORE ;
@@ -571,16 +625,31 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                     needcomma = 1;
                 }
             }
+#ifndef NOSCROLLWHEEL
 #ifdef MOUSE_WHEELED
             if ( r.dwEventFlags & MOUSE_WHEELED ) {
-                if ( needcomma )
-                    printf("-Wheel");
-                else {
-                    printf(" Wheel");
-                    needcomma = 1;
+                int zDelta = GET_WHEEL_DELTA_WPARAM(r.dwButtonState) / WHEEL_DELTA;
+
+                debug(F111, "MOUSE_WHEELED", "zdelta", zDelta);
+
+                if (zDelta > 0) {
+                    if ( needcomma )
+                        printf("-Wheel FW");
+                    else {
+                        printf(" Wheel FW");
+                        needcomma = 1;
+                    }
+                } else {
+                    if ( needcomma )
+                        printf("-Wheel BW");
+                    else {
+                        printf(" Wheel BW");
+                        needcomma = 1;
+                    }
                 }
             }
 #endif /* MOUSE_WHEELED */
+#endif /* NOSCROLLWHEEL */
         }
         printf("\n");
         return;
@@ -728,6 +797,32 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                             r.dwMousePosition.X, TRUE ) ;
            }
        }
+
+#ifndef NOSCROLLWHEEL
+       if (r.dwEventFlags & MOUSE_WHEELED) {
+           int zDelta = GET_WHEEL_DELTA_WPARAM(r.dwButtonState) / WHEEL_DELTA;
+           int button;
+
+           /* Rolling the wheel is always a click - never a double click or a
+            * a drag because that wouldn't make much sense */
+           Event |= MMWHEEL ;
+
+           if (zDelta > 0) {
+               /* Positive is foreward / up scroll */
+               button = MMB4;
+           } else {
+               /* Negative is backward/ down scroll */
+               button = MMB5;
+               zDelta = zDelta * -1;
+           }
+
+           do {
+               putevent( mode, mousemap[button][Event] ) ;
+               zDelta--;
+           } while (zDelta > 0);
+           putkverb( mode, F_KVERB | K_MARK_CANCEL ) ;
+       }
+#endif /* NOSCROLLWHEEL */
 
        if ( !(r.dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) ) {
            /* button 1 may have been released */

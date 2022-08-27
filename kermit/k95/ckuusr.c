@@ -126,14 +126,17 @@ int type_int = 0;
 #ifndef NT
 #define INCL_NOPM
 #define INCL_VIO			/* Needed for ckocon.h */
+#define INCL_WINERRORS
 #include <os2.h>
 #undef COMMENT
 #else
 #define APIRET ULONG
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
-#include "cknwin.h"
 #include "ckntap.h"			/* CK_TAPI definition */
+#endif
+#include "cknwin.h"
 #endif /* NT */
 #include "ckowin.h"
 #include "ckocon.h"
@@ -2435,14 +2438,16 @@ static struct keytab sshkey[] = {	/* SET SSH KEY command table */
     { "change-passphrase",  SSHK_PASS, 0 },
     { "create",             SSHK_CREA, 0 },
     { "display",            SSHK_DISP, 0 },
-    { "v1",                 SSHK_V1,   0 },
+    /*{ "v1",                 SSHK_V1,   0 },*/
     { "", 0, 0 }
 };
 static int nsshkey = (sizeof(sshkey) / sizeof(struct keytab)) - 1;
 
+#ifdef COMMENT
 static struct keytab sshkv1[] = {	/* SET SSH KEY V1 command table */
     { "set-comment",  1, 0 }
 };
+#endif
 
 static struct keytab sshkpsw[] = {	/* SET SSH KEY PASSPHRASE table */
     { "/new-passphrase",  2, CM_ARG },
@@ -8967,8 +8972,11 @@ docmd(cx) int cx; {
 #ifdef IKSDCONF
             iksdcf &&
 #endif /* IKSDCONF */
-            (x == EN_HOS || x == EN_PRI || x == EN_MAI || x == EN_WHO ||
-              isguest))
+            (x == EN_HOS || x == EN_PRI || x == EN_MAI || x == EN_WHO
+#ifdef CK_LOGIN
+            || isguest
+#endif
+              ))
             return(success = 0);
 #endif /* IKSD */
 	return(doenable(y,x));
@@ -10652,6 +10660,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
     if (cx == XXSSH) {			/* SSH (Secure Shell) */
 	extern int netsave;
 #ifdef SSHBUILTIN
+        int k, havehost = 0, trips = 0;
         int    tmpver = -1, tmpxfw = -1;
 #ifndef SSHTEST
         extern int sl_ssh_xfw, sl_ssh_xfw_saved;
@@ -10711,11 +10720,43 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	}
 	switch (cmresult.nresult) {	/* SSH keyword */
 	  case XSSH_OPN:		/* SSH OPEN */
+        char tmpline[LINBUFSIZ], tmpline2[LINBUFSIZ];
+        char* token;
+
 	    if (!havehost) {
-		if ((x = cmfld("Host","",&s,xxstring)) < 0)
-		  return(x);
-		ckstrncpy(line,s,LINBUFSIZ);
+		  if ((x = cmfld("Host","",&s,xxstring)) < 0)
+		    return(x);
+		  ckstrncpy(line,s,LINBUFSIZ);
 	    }
+
+        /* Try to handle username@hostname syntax */
+        ckstrncpy(tmpline,line,LINBUFSIZ);
+        token = strtok(tmpline, "@");
+        if (token != NULL) {
+          /* First part is the username */
+	      makestr(&ssh_tmpuid,brstrip(token));
+
+          debug(F110, "Found username in the hostname!", ssh_tmpuid, 0);
+
+          token = strtok(NULL, "@");
+          if (token != NULL) {
+            /* Second part is the hostname */
+            debug(F110, "Found hostname", token, 0);
+            ckstrncpy(tmpline2,token,LINBUFSIZ);
+            token = strtok(NULL, "@");
+            if (token != NULL) {
+              /* Error - there should not be a third part. Give up */
+              debug(F110, "Error - found third token. Giving up.", token, 0);
+              makestr(&ssh_tmpuid,NULL);
+            } else {
+              ckstrncpy(line,tmpline2,LINBUFSIZ);
+            }
+          } else {
+              /* No second part - give up. */
+              makestr(&ssh_tmpuid,NULL);
+          }
+        }
+
 	    /* Parse [ port ] [ switches ] */
 	    cmfdbi(&kw,			/* Switches */
 		   _CMKEY,
@@ -11410,6 +11451,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 #endif /* SSHTEST */
 	      return(success = (x == 0));
 	    }
+#ifdef COMMENT
 	    case SSHK_V1:		/* SSH KEY V1 SET-COMMENT */
 	      if ((x = cmkey(sshkv1,1,"","set-comment", xxstring)) < 0)
 		return(x);
@@ -11431,6 +11473,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 #endif /* SSHTEST */
 	      success = (x == 0);
 	      return(success);
+#endif /* COMMENT - SSH KEY V1 SET-COMMENT*/
 	  }
 	  default:
 	    return(-2);
@@ -12631,6 +12674,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	if (count) paging = -1;
 	debug(F111,"type",line,paging);
 #ifdef KUI
+#ifndef NORICHEDIT
 	if ( gui ) {
 	    s = (char *)1;    /* ok, its an ugly hack */
 	    if (gui_text_popup_create(gui_title ?
@@ -12641,6 +12685,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	    }
 	    width = 0;
 	} else
+#endif /* NORICHEDIT */
 #endif /* KUI */
 	  s = outfile;
 	success =

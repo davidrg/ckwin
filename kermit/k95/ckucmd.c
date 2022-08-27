@@ -197,6 +197,7 @@ modules would have to be changed...
 #endif /* CK_ANSIC */
 #endif /* OSF13 */
 
+#ifndef OS2
 #ifndef HPUXPRE65
 #include <errno.h>			/* Error number symbols */
 #else
@@ -204,6 +205,19 @@ modules would have to be changed...
 #include <errno.h>			/* Error number symbols */
 #endif	/* ERRNO_INCLUDED */
 #endif	/* HPUXPRE65 */
+#endif /* OS2 */
+
+/* Error number symbols - any compiler targeting Windows
+ * and non-watcom compilers targeting OS/2. */
+#ifdef OS2
+#ifdef NT
+#include <errno.h>
+#else /* NT */
+#ifndef __WATCOMC__
+#include <errno.h>
+#endif /* __WATCOMC__ */
+#endif /* NT */
+#endif /* OS2 */
 
 #ifdef OS2
 #ifndef NT
@@ -883,7 +897,7 @@ prompt(f) xx_strp f; {
 #else
 #ifdef IKSD
     if (inserver) {			/* Print the prompt. */
-        ttoc(CR);			/* If TELNET Server */
+        ttoc(CK_CR);		/* If TELNET Server */
         ttoc(NUL);			/* must folloW CR by NUL */
         printf("%s",sx);
     } else
@@ -5467,7 +5481,7 @@ shuffledate(p,opt) char * p; int opt; {
 	long z; int k;
 	ckstrncpy(ibuf,p,31);
 	k = len;
-	while (k >= 0 && ibuf[k] == CR || ibuf[k] == LF)
+	while (k >= 0 && ibuf[k] == CK_CR || ibuf[k] == LF)
 	  ibuf[k--] = NUL;
 	while (k >= 0 && ibuf[k] == SP || ibuf[k] == HT)
 	  ibuf[k--] = NUL;
@@ -6564,7 +6578,7 @@ CMDIRPARSE:
         }
 #endif /* FUNCTIONTEST */
 
-	if (quote && (c == CR || c == LF)) { /* Enter key following quote */
+	if (quote && (c == CK_CR || c == LF)) { /* Enter key following quote */
 	    *bp++ = CMDQ;		/* Double it */
 	    *bp = NUL;
 	    quote = 0;
@@ -6690,7 +6704,7 @@ CMDIRPARSE:
 		    return(4);
 		}
             }
-            if (c == LF || c == CR) {	/* CR or LF. */
+            if (c == LF || c == CK_CR) {	/* CR or LF. */
 		if (echof) {
                     cmdnewl((char)c);	/* echo it. */
 #ifdef BEBOX
@@ -7078,11 +7092,11 @@ CMDIRPARSE:
   we stuff the carriage return back in again, and go back and process it,
   this time with the quote flag off.
 */
-	    } else if (dirnamflg && (c == CR || c == LF || c == SP)) {
+	    } else if (dirnamflg && (c == CK_CR || c == LF || c == SP)) {
 		/* debug(F000,"gtword quote 2","",c); */
 		*bp++ = CMDQ;
 		linebegin = 0;		/* Not at beginning of line */
-		*bp = (c == SP ? SP : CR);
+		*bp = (c == SP ? SP : CK_CR);
 		goto CMDIRPARSE;
 #endif /* BS_DIRSEP */
 	    }
@@ -7267,7 +7281,7 @@ setatm(cp,fcode) char *cp; int fcode; {
                 break;
             }
 	    if ((fcode == 2) && (*cp == '=' || *cp == ':')) break;
-	    if ((fcode != 3) && (*cp == LF || *cp == CR)) break;
+	    if ((fcode != 3) && (*cp == LF || *cp == CK_CR)) break;
 	}
         *ap++ = *cp++;
         cc++;
@@ -7426,7 +7440,7 @@ cmdgetc(timelimit) int timelimit; {	/* Get a character from the tty. */
                     got_cr = 0;
                     break;
 #else /* COMMENT */
-                  case CR:
+                  case CK_CR:
                     if ( !TELOPT_U(TELOPT_BINARY) && got_cr ) {
                         /* This means the sender is violating Telnet   */
                         /* protocol because we received two CRs in a   */
@@ -7642,14 +7656,14 @@ cmdnewl(c) char c;
 #ifdef IKSD
     extern int inserver;
     if (inserver && c == LF)
-      putchar(CR);
+      putchar(CK_CR);
 #endif /* IKSD */
 #endif /* OS2 */
 
     putchar(c);				/* c is the terminating character */
 
 #ifdef WINTCP				/* what is this doing here? */
-    if (c == CR) putchar(NL);
+    if (c == CK_CR) putchar(NL);
 #endif /* WINTCP */
 
 /*
@@ -7659,30 +7673,30 @@ cmdnewl(c) char c;
   it is also very likely to result in unwanted blank lines.
 */
 #ifdef BSD44
-    if (c == CR) putchar(NL);
+    if (c == CK_CR) putchar(NL);
 #endif /* BSD44 */
 
 #ifdef COMMENT
     /* OS2 no longer needs this as all CR are converted to NL in coninc() */
     /* This eliminates the ugly extra blank lines discussed above.        */
 #ifdef OS2
-    if (c == CR) putchar(NL);
+    if (c == CK_CR) putchar(NL);
 #endif /* OS2 */
 #endif /* COMMENT */
 #ifdef aegis
-    if (c == CR) putchar(NL);
+    if (c == CK_CR) putchar(NL);
 #endif /* aegis */
 #ifdef AMIGA
-    if (c == CR) putchar(NL);
+    if (c == CK_CR) putchar(NL);
 #endif /* AMIGA */
 #ifdef datageneral
-    if (c == CR) putchar(NL);
+    if (c == CK_CR) putchar(NL);
 #endif /* datageneral */
 #ifdef GEMDOS
-    if (c == CR) putchar(NL);
+    if (c == CK_CR) putchar(NL);
 #endif /* GEMDOS */
 #ifdef STRATUS
-    if (c == CR) putchar(NL);
+    if (c == CK_CR) putchar(NL);
 #endif /* STRATUS */
 }
 
@@ -7739,7 +7753,7 @@ cmdecho(c,quote) char c; int quote;
 	putchar(c);
     }
 #ifdef OS2
-    if (quote==1 && c==CR) putchar((CHAR) NL);
+    if (quote==1 && c==CK_CR) putchar((CHAR) NL);
 #endif /* OS2 */
     if (timelimit)
       fflush(stdout);

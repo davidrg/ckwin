@@ -580,8 +580,10 @@ ACKNOWLEDGMENTS:
 
 #ifdef NT
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"
+#endif
 #endif /* NT */
 
 #ifndef NOSERVER
@@ -2578,12 +2580,12 @@ setprefix(z) int z; {                   /* Initial control-char prefixing */
         ctlp[(unsigned)255] = val;
         if (z == PX_NON) {              /* These are never safe */
             if (network) {              /* Assume network = telnet or rlogin */
-                ctlp[CR] = 1;           /* Prefix CR because of NVT rules */
+                ctlp[CK_CR] = 1;        /* Prefix CR because of NVT rules */
                 ctlp[XON] = ctlp[XOFF] = 1; /* Because of Telnet server */
                 ctlp[127] = ctlp[255] = 1;  /* Telnet IAC */
                 ctlp[mystch] = ctlp[mystch+128] = 1; /* Kermit packet start */
             } else {
-                ctlp[CR] = ctlp[255] = ctlp[mystch] = ctlp[mystch+128] = 1;
+                ctlp[CK_CR] = ctlp[255] = ctlp[mystch] = ctlp[mystch+128] = 1;
                 if (flow == FLO_XONX)       /* Xon/Xoff forces prefixing */
                   ctlp[XON] = ctlp[XOFF] = ctlp[XON+128] = ctlp[XOFF+128] = 1;
             }
@@ -3454,6 +3456,7 @@ main(argc,argv) int argc; char **argv;
 #endif /* NOXFER */
 
 #ifndef NOCMDL
+#ifdef CK_LOGIN
 #ifdef IKSD
     ikslogin();                          /* IKSD Login and other stuff */
 #ifdef NT
@@ -3461,6 +3464,7 @@ main(argc,argv) int argc; char **argv;
       setntcreds();
 #endif /* NT */
 #endif /* IKSD */
+#endif /* CK_LOGIN */
 #endif /* NOCMDL */
 
     if (howcalled == I_AM_SSHSUB) {

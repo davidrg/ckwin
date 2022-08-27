@@ -69,10 +69,13 @@ int sstelnet = 0;                       /* Do server-side Telnet negotiation */
 #ifdef OS2                              /* For terminal type name string */
 #include "ckuusr.h"
 #ifndef NT
+#define INCL_DOSSEMAPHORES
 #include <os2.h>
 #undef COMMENT
 #else
+#ifndef __WATCOMC__
 #define isascii __isascii
+#endif /* __WATCOMC__ */
 #endif /* NT */
 #include "ckocon.h"
 extern int tt_type, max_tt;

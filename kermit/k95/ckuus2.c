@@ -191,7 +191,11 @@ static char *tophlpi[] = {              /* Top-level help for IKSD */
 #ifndef NOHELP
 char *newstxt[] = {
 #ifdef OS2
+#ifdef NT
 "Welcome to C-Kermit for Windows, the Open-Source successor to",
+#else
+"Welcome to C-Kermit for OS/2, the Open-Source successor to",
+#endif
 "Columbia University's Kermit 95 package.",
 
 #ifdef BETATEST
@@ -258,7 +262,11 @@ char *newstxt[] = {
 #ifndef NOHELP
 char *introtxt[] = {
 #ifdef OS2
+#ifdef NT
 "Welcome to C-Kermit for Windows, communication software for:",
+#else
+"Welcome to C-Kermit for OS/2, communication software for:",
+#endif
 #else
 #ifdef UNIX
 "Welcome to UNIX C-Kermit communications software for:",
@@ -828,6 +836,7 @@ static char *hmxyssh[] = {
 "    \\v(appdata)ssh/id_rsa        V2 RSA",
 "    \\v(appdata)ssh/id_dsa        V2 DSA",
 " ",
+#ifdef COMMENT
 "SET SSH KERBEROS4 TGT-PASSING { ON, OFF }",
 "  Specifies whether Kermit should forward Kerberos 4 TGTs to the host.",
 "  The default is OFF.",
@@ -836,6 +845,7 @@ static char *hmxyssh[] = {
 "  Specifies whether Kermit should forward Kerberos 5 TGTs to to the",
 "  host.  The default is OFF.",
 " ",
+#endif
 "SET SSH PRIVILEGED-PORT { ON, OFF }",
 "  Specifies whether a privileged port (less than 1024) should be used",
 "  when connecting to the host.  Privileged ports are not required except",
@@ -863,6 +873,7 @@ static char *hmxyssh[] = {
 "  after applying Kermit's SET SSH commands.  The configuration file",
 "  would be located at \\v(home)ssh/ssh_config.  The default is OFF.",
 " ",
+#ifdef COMMENT
 "SET SSH V1 CIPHER { 3DES, BLOWFISH, DES }",
 "  Specifies which cipher should be used to protect SSH version 1",
 "  connections.  The default is 3DES.",
@@ -879,6 +890,7 @@ static char *hmxyssh[] = {
 " ",
 "    \\v(appdata)ssh/known_hosts",
 " ",
+#endif
 "SET SSH V2 AUTHENTICATION { EXTERNAL-KEYX, GSSAPI, HOSTBASED, ",
 "    KEYBOARD-INTERACTIVE, PASSWORD, PUBKEY, SRP-GEX-SHA1 } [ ... ]",
 "  Specifies an ordered list of SSH version 2 authentication methods to",
@@ -891,16 +903,14 @@ static char *hmxyssh[] = {
 "  Specifies whether Kermit automatically issues rekeying requests",
 "  once an hour when SSH version 2 in in use.  The default is ON.",
 " ",
-"SET SSH V2 CIPHERS { 3DES-CBC, AES128-CBC AES192-CBC AES256-CBC",
-"     ARCFOUR BLOWFISH-CBC CAST128-CBC RIJNDAEL128-CBC RIJNDAEL192-CBC",
-"     RIJNDAEL256-CBC }",
+"SET SSH V2 CIPHERS { 3DES-CBC, AES128-CBC, AES192-CBC, AES256-CBC, ",
+"     AES128-CTR, AES192-CTR, AES256-CTR, AES128-GCM@OPENSSH.COM, ",
+"     AES256-GCM@OPENSSH.COM, CHACHAE20-POLY1305 }",
 "  Specifies an ordered list of SSH version ciphers to be used to encrypt",
 "  the established connection.  The default list is:",
 " ",
-"    aes128-cbc 3des-cbc blowfish-cbc cast128-cbc arcfour aes192-cbc",
-"    aes256-cbc",
-" ",
-"  \"rijndael\" is an alias for \"aes\".",
+"    aes256-gcm@openssh.com aes128-gcm@openssh.com aes256-ctr aes192-ctr",
+"    aes128-ctr aes256-cbc aes192-cbc aes128-cbc 3des-cbc",
 " ",
 "SET SSH V2 GLOBAL-KNOWN-HOSTS-FILE filename",
 "  Specifies the location of the system-wide known-hosts file.  The default",
@@ -908,19 +918,40 @@ static char *hmxyssh[] = {
 " ",
 "    \\v(common)ssh/known_hosts2",
 " ",
-"SET SSH V2 HOSTKEY-ALGORITHMS { SSH-DSS, SSH-RSA }",
+"SET SSH V2 HOSTKEY-ALGORITHMS { ECDSA-SHA2-NISTP256, ECDSA-SHA2-NISTP384, ",
+"     ECDSA-SHA2-NISTP521, RSA-SHA2-256, RSA-SHA2-512, SSH-DSS, SSH-ED25519, ",
+"     SSH-RSA }",
 "  Specifies an ordered list of hostkey algorithms to be used to verify",
 "  the identity of the host.  The default list is",
 " ",
-"    ssh-rsa ssh-dss",
+"    ssh-ed25519 ecdsa-sha2-nistp521 ecdsa-sha2-nistp384 ecdsa-sha2-nistp256",
+"    rsa-sha2-512 rsa-sha2-256 ssh-rsa",
 " ",
-"SET SSH V2 MACS { HMAC-MD5 HMAC-MD5-96 HMAC-RIPEMD160 HMAC-SHA1",
-"     HMAC-SHA1-96 }",
+"SET SSH V2 KEY-EXCHANGE-METHODS { CURVE25519-SHA256, ",
+"     CURVE25519-SHA256@LIBSSH.ORG, DIFFIE-HELLMAN-GROUP1-SHA1, ",
+"     DIFFIE-HELLMAN-GROUP14-SHA1, DIFFIE-HELLMAN-GROUP14-SHA256, ",
+"     DIFFIE-HELLMAN-GROUP16-SHA512, DIFFIE-HELLMAN-GROUP18-SHA512, ",
+"     DIFFIE-HELLMAN-GROUP-EXCHANGE-SHA1, ",
+"     DIFFIE-HELLMAN-GROUP-EXCHANGE-SHA256, ECDH-SHA2-NISTP256, ",
+"     ECDH-SHA2-NISTP384, ECDH-SHA2-NISTP521 }",
+"  Specifies an ordered list of Key Exchange Methods to be used to generate ",
+"  per-connection keys. The default list is:",
+" ",
+"    curve25519-sha256 curve25519-sha256@libssh.org ecdh-sha2-nistp256 ",
+"    ecdh-sha2-nistp384 ecdh-sha2-nistp521 diffie-hellman-group18-sha512",
+"    diffie-hellman-group16-sha512 diffie-hellman-group-exchange-sha256",
+"    diffie-hellman-group14-sha256 diffie-hellman-group14-sha1 ",
+"    diffie-hellman-group1-sha1 ext-info-c",
+" ",
+"SET SSH V2 MACS { HMAC-MD5, HMAC-SHA1-ETM@OPENSSH.COM, HMAC-SHA2-256, ",
+"     HMAC-SHA2-256-ETM@OPENSSH.COM, HMAC-SHA2-512, ",
+"     HMAC-SHA2-512-ETM@OPENSSH.COM, NONE }",
 "  Specifies an ordered list of Message Authentication Code algorithms to",
 "  be used for integrity  protection of the established connection.  The",
 "  default list is:",
 " ",
-"    hmac-md5 hmac-sha1 hmac-ripemd160 hmac-sha1-96 hmac-md5-96",
+"    hmac-sha2-256-etm@openssh.com hmac-sha2-512-etm@openssh.com ",
+"    hmac-sha1-etm@openssh.com hmac-sha2-256 hmac-sha2-512 hmac-sha1",
 " ",
 "SET SSH V2 USER-KNOWN-HOSTS-FILE filename",
 "  Specifies the location of the user-known-hosts file.  The default",
@@ -932,10 +963,9 @@ static char *hmxyssh[] = {
 "  Specifies how many messages should be generated by the OpenSSH engine.",
 "  The level can range from 0 to 7.  The default value is 2.",
 " ",
-"SET SSH VERSION { 1, 2, AUTOMATIC }",
-"  Specifies which SSH version should be negotiated.  The default is",
-"  AUTOMATIC which means use version 2 if supported; otherwise to fall",
-"  back to version 1.",
+"SET SSH VERSION { 2, AUTOMATIC }",
+"  Obsolete: retained only for backwards compatibility. Only SSH Version 2",
+"  is supported now.",
 " ",
 "SET SSH X11-FORWARDING { ON, OFF }",
 "  Specifies whether X Windows System Data is to be forwarded across the",
@@ -7105,7 +7135,7 @@ case XXFUNC:
         return(-9);
     }
     x = cmgbrk();                       /* Find out how user terminated */
-    if (x == LF || x == CR)             /* if with CR or LF */
+    if (x == LF || x == CK_CR)             /* if with CR or LF */
       cmflgs = 1;                       /* restore cmflgs to say so */
     if ((x = cmcfm()) < 0)              /* And THEN confirm so command will */
       return(x);                        /* get into recall buffer. */
@@ -7156,7 +7186,7 @@ case XXKVRB: {
         return(-9);
     }
     x = cmgbrk();                       /* Find out how user terminated */
-    if (x == LF || x == CR)             /* if with CR or LF */
+    if (x == LF || x == CK_CR)             /* if with CR or LF */
       cmflgs = 1;                       /* restore cmflgs to say so */
     if ((x = cmcfm()) < 0)              /* And THEN confirm so command will */
       return(x);                        /* get into recall buffer. */
@@ -7197,6 +7227,16 @@ case XXPIPE:
 Makes a connection through the program whose command line is given. Example:\n\
 \n pipe rlogin xyzcorp.com"));
 #endif /* NETCMD */
+
+#ifdef NETPTY
+#ifdef NT
+case XXPTY:
+    /* For windows ConPTY support - run any windows text mode app inside CKW */
+    return(hmsg("Syntax: PTY [ command ]\n\
+Runs the specified command in a pseudoterminal. Example:\n\
+\n pty cmd.exe"));
+#endif
+#endif
 
 case XXSTATUS:
     return(hmsg(
@@ -7821,6 +7861,28 @@ static char *hxymouse[] = {
 "   Button 2 Drag = Kverb: \\Kmarkcopyhost",
 "   Button 2 Alt-Drag = Kverb: \\Kmarkcopyhost_noeol     ",    
 "   Button 3 Double-Click = Kverb: \\Kpaste",
+#ifndef NOSCROLLWHEEL
+"   Wheel Up = Kverb: \\Kupone",
+"   Wheel Ctrl+Up = Kverb: \\Kupscn",
+"   Wheel Down = Kverb: \\Kdnone",
+"   Wheel Ctrl+Down = Kverb: \\Kdnscn",
+" ",
+"Syntax: SET MOUSE WHEEL <direction> <key-modifier> [ <text> ]",
+" where:",
+"  <direction> is the scrolling direction - UP for scrolling away from you,",
+"   DOWN for scrolling towards you;",
+"  <key-modifier> denotes modifier keys held down during the mouse event:",
+"   ALT, ALT-SHIFT, CTRL, CTRL-ALT CTRL-ALT-SHIFT, CTRL-SHIFT, SHIFT, NONE.",
+" ",
+" The <text> has exactly the same properties as the <text> from the SET KEY",
+" command -- it can be a character, a string, one or more Kverbs, a macro",
+" invoked as a Kverb, or any combination of these.  Thus, anything that can",
+" be assigned to a key can also be assigned to the mouse -- and vice versa.",
+" If the <text> is omitted, the action will be ignored.  Examples:",
+" ",
+"   SET MOUSE WHEEL UP CTRL \\Kupscn",
+"   SET MOUSE WHEEL DOWN ALT \\Kdnarr",
+#endif
 ""};
 #endif /* OS2MOUSE */
 

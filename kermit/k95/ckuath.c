@@ -77,19 +77,23 @@ int accept_complete = 0;
 #ifndef LIBDES
 #define LIBDES
 #endif /* LIBDES */
+#endif /* CRYPT_DLL */
+
 #ifdef OS2
 #ifdef NT
 #include <windows.h>
 #else /* NT */
 #define INCL_DOSMODULEMGR
+#define INCL_DOSSEMAPHORES
 #include <os2.h>
 #endif /* NT */
 #endif /* OS2 */
-#endif /* CRYPT_DLL */
 
 #ifdef NT
 #define KRB5_AUTOCONF__
+#ifndef NONTLM
 #define NTLM
+#endif
 #endif /* NT */
 
 #ifdef CK_KERBEROS
@@ -116,9 +120,23 @@ int accept_complete = 0;
 #include <stdio.h>
 #include <time.h>
 #include <fcntl.h>
+#ifndef OS2
+/* Not OS/2 or NT */
 #include <errno.h>
+#endif
+
 #ifdef OS2
 #include <io.h>
+#ifdef NT
+/* Win32 gets errno.h */
+#include <errno.h>
+#else /* NT */
+/* OS2 gets errno.h only if we're not compiling with Watcom C as
+ * the definitions in its errno.h conflict with those in os2.h */
+#ifndef __WATCOMC__
+#include <errno.h>
+#endif /* __WATCOMC__ */
+#endif /* NT */
 #endif /* OS2 */
 
 #ifdef KRB5
@@ -748,7 +766,11 @@ int
 ck_ntlm_is_installed()
 {
 #ifdef NT
+#ifndef NTLM
+    return(0);
+#else
     return(hSSPI != NULL);
+#endif
 #else /* NT */
     return(0);
 #endif /* NT */

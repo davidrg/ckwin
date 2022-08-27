@@ -69,6 +69,7 @@ static int ssl_installed = 1;
 int
 ck_ssh_is_installed()
 {
+#ifdef CK_SSL
 #ifdef SSHBUILTIN
 #ifdef SSLDLL
 #ifdef NT
@@ -83,6 +84,7 @@ ck_ssh_is_installed()
 #endif /* SSLDLL */
 #else
     return 0;
+#endif
 #endif
 }
 
