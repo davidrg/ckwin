@@ -53,18 +53,24 @@ SSH [OPEN] host [port]
 	   Implemented though doesn't appear to be working at the moment
 SET SSH			
    COMPRESSION {ON,OFF}
-	   Value stored in ssh_cmp
+   HEARTBEAT-INTERVAL interval
+       Off by default, set this to some interval in seconds to prevent idle timeouts
    STRICT-HOST-KEY-CHECK {ASK, ON, OFF}
    USE-OPENSSH-CONFIG {ON,OFF}
-   V2 AUTHENTICATION {EXTERNAL-KEYX, GSSAPI, HOSTBASED, KEYBOARD-INTERACTIVE, PASSWORD, PUBKEY, SRP-GEX-SHA1}
+   V2 AUTHENTICATION {GSSAPI, KEYBOARD-INTERACTIVE, PASSWORD, PUBKEY }
 	   The following values are implemented: KEYBOARD-INTERACTIVE, PASSWORD, PUBKEY
-	   The following are ignored: EXTERNAL-KEYX, GSSAPI, SRP-GEX-SHA1
 	       (GSSAPI is processed but GSSAPI Auth isn't implemented yet)
+   V2 CIPHERS {3des-cbc, aes128-cbc, aes192-cbc, aes256-cbc, chachae20-poly1305, 
+        aes256-gcm@openssh.com, aes128-gcm@openssh.com, aes256-ctr, aes192-ctr, 
+        aes128-ctr}
    V2 GLOBAL-KNOWN-HOSTS-FILE filename
+   V2 HOSTKEY-ALGORITHMS {ssh-ed25519, ecdsa-sha2-nistp256, ecdsa-sha2-nistp384, 
+        ecdsa-sha2-nistp521, ssh-rsa, rsa-sha2-512, rsa-sha2-256,ssh-ds}
+   V2 KEY-EXCHANGE-METHODS {...}
    V2 USER-KNOWN-HOSTS-FILE filename
    VERBOSE level
 	   Report Errors - Verbosity Level. Range 0-7. Value stored in ssh_vrb
-   SSH VERSION {1, 2, AUTOMATIC}
+   SSH VERSION {2, AUTOMATIC}
 	   Just reports an error if version is 1 (SSH-1 not supported)
 SHOW SSH
     Shows ssh settings
