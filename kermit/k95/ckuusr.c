@@ -10712,11 +10712,40 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	}
 	switch (cmresult.nresult) {	/* SSH keyword */
 	  case XSSH_OPN:		/* SSH OPEN */
+        char tmpline[LINBUFSIZ], tmpline2[LINBUFSIZ];
+        char* token;
+
 	    if (!havehost) {
-		if ((x = cmfld("Host","",&s,xxstring)) < 0)
-		  return(x);
-		ckstrncpy(line,s,LINBUFSIZ);
+		  if ((x = cmfld("Host","",&s,xxstring)) < 0)
+		    return(x);
+		  ckstrncpy(line,s,LINBUFSIZ);
 	    }
+
+        /* Try to handle username@hostname syntax */
+        ckstrncpy(tmpline,line,LINBUFSIZ);
+        token = strtok(tmpline, "@");
+        if (token != NULL) {
+          /* First part is the username */
+	      makestr(&ssh_tmpuid,brstrip(token));
+
+          debug(F110, "Found username in the hostname!", ssh_tmpuid, 0);
+
+          token = strtok(NULL, "@");
+          if (token != NULL) {
+            /* Second part is the hostname */
+            debug(F110, "Found hostname", token, 0);
+            ckstrncpy(tmpline2,token,LINBUFSIZ);
+            token = strtok(NULL, "@");
+            if (token != NULL) {
+              /* Error - there should not be a third part. Give up */
+              debug(F110, "Error - found third token. Giving up.", token, 0);
+              makestr(&ssh_tmpuid,NULL);
+            } else {
+              ckstrncpy(line,tmpline2,LINBUFSIZ);
+            }
+          }
+        }
+
 	    /* Parse [ port ] [ switches ] */
 	    cmfdbi(&kw,			/* Switches */
 		   _CMKEY,
