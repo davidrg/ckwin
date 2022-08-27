@@ -7854,6 +7854,28 @@ static char *hxymouse[] = {
 "   Button 2 Drag = Kverb: \\Kmarkcopyhost",
 "   Button 2 Alt-Drag = Kverb: \\Kmarkcopyhost_noeol     ",    
 "   Button 3 Double-Click = Kverb: \\Kpaste",
+#ifndef NOSCROLLWHEEL
+"   Wheel Up = Kverb: \\Kupone",
+"   Wheel Ctrl+Up = Kverb: \\Kupscn",
+"   Wheel Down = Kverb: \\Kdnone",
+"   Wheel Ctrl+Down = Kverb: \\Kdnscn",
+" ",
+"Syntax: SET MOUSE WHEEL <direction> <key-modifier> [ <text> ]",
+" where:",
+"  <direction> is the scrolling direction - UP for scrolling away from you,",
+"   DOWN for scrolling towards you;",
+"  <key-modifier> denotes modifier keys held down during the mouse event:",
+"   ALT, ALT-SHIFT, CTRL, CTRL-ALT CTRL-ALT-SHIFT, CTRL-SHIFT, SHIFT, NONE.",
+" ",
+" The <text> has exactly the same properties as the <text> from the SET KEY",
+" command -- it can be a character, a string, one or more Kverbs, a macro",
+" invoked as a Kverb, or any combination of these.  Thus, anything that can",
+" be assigned to a key can also be assigned to the mouse -- and vice versa.",
+" If the <text> is omitted, the action will be ignored.  Examples:",
+" ",
+"   SET MOUSE WHEEL UP CTRL \\Kupscn",
+"   SET MOUSE WHEEL DOWN ALT \\Kdnarr",
+#endif
 ""};
 #endif /* OS2MOUSE */
 

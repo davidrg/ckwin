@@ -1560,10 +1560,13 @@ struct stringint {			/* String and (wide) integer */
 #define  XYM_BUTTON 1   /* Define Mouse Events */
 #define  XYM_CLEAR  2   /* Clear Mouse Events  */
 #define  XYM_DEBUG  3   /* Debug Mode ON/OFF */
+#define  XYM_WHEEL  4   /* Mouse wheel events */
 /* These must match similar definitions in ckokey.h */
 #define   XYM_B1 0      /* Mouse Button One */
 #define   XYM_B2 1      /* Mouse Button Two */
 #define   XYM_B3 2      /* Mouse Button Three */
+#define   XYM_WHEEL_UP 3 /* Mouse wheel up / forewards / away from user */
+#define   XYM_WHEEL_DN 4 /* Mouse wheel down / backwards / towards user */
 #define   XYM_ALT   1     /* Alt */
 #define   XYM_CTRL  2     /* Ctrl */
 #define   XYM_SHIFT 4     /* Shift */

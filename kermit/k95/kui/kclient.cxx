@@ -989,6 +989,9 @@ Bool KClient::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         // NOTE: FALL THROUGH !!!
         //
 
+#ifdef WM_MOUSEWHEEL
+    case WM_MOUSEWHEEL:
+#endif
     case WM_LBUTTONUP:
     case WM_RBUTTONUP:
     case WM_MBUTTONUP:
@@ -1005,6 +1008,38 @@ Bool KClient::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
             ikterm->mouseEvent( hwnd, msg, wParam, x, y );
             break;
         }
+
+#ifdef COMMENT
+    /* This is the obvious, simple and easy way to do it and this does work. But
+     * I decided to instead pretend scrolling up one notch is one click of the
+     * 4th mouse button, and scrolling down one notch is one click of the 5th
+     * mouse button, plus some UI changes to treat buttons 4 and 5 specially
+     * so you can't configure the click type (click, doubleclick, drag) for
+     * them. This way scroll events can be mapped just like any button click.
+     * Leaving this here in case the complicated way turns out to be broken
+     * horribly.
+     * */
+    case WM_MOUSEWHEEL: {
+          int zDelta = GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA;
+          debug(F111, "WM_MOUSEWHEEL", "zDelta", zDelta);
+          if (zDelta > 0) {
+            do {
+                //if (!scrollflag[vmode]) break;
+                ::scrollback( vmode /* clientID */, K_UPONE );
+                zDelta--;
+            } while (zDelta > 0);
+          } else {
+            do {
+              if (!scrollflag[vmode]) break;
+              ::scrollback( vmode /* clientID */, K_DNONE );
+              zDelta++;
+            } while (zDelta < 0);
+          }
+          paint();
+          done=1;
+          break;
+      }
+#endif
 
     case WM_SETFOCUS:
         //debug(F111,"KClient::message","WM_SETFOCUS",msg);
