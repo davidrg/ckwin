@@ -76,6 +76,7 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *   char* ssh2_cif   NULL    Comma-separated list of SSH v2 ciphers allowed
  *   char* ssh2_hka   NULL    Comma-separated list of host key algorithms
  *   char* ssh2_mac   NULL    Comma-separated list of MACs
+ *   char* ssh2_kex   NULL    Comma-separated list of key exchange methods
  *
  * Unused Global Variables:
  *   ssh_afw, ssh_xfw, ssh_prp, ssh_shh, ssh_chkip,
@@ -170,6 +171,7 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *          Stored in ssh2_gnh
  *      V2 HOSTKEY-ALGORITHMS {ssh-ed25519, ecdsa-sha2-nistp256, ecdsa-sha2-nistp384, ecdsa-sha2-nistp521, ssh-rsa, rsa-sha2-512, rsa-sha2-256,ssh-ds}
  *           Stored in ssh2_hka
+ *      V2 KEY-EXCHANGE-METHODS {...}
  *      V2 MACS {hmac-sha1, hmac-sha2-256-etm@openssh.com, hmac-sha2-512-etm@openssh.com, hmac-sha1-etm@openssh.com, hmac-sha2-512, hmac-sha2-256,  none}
  *          Stored in ssh2_mac
  *      V2 USER-KNOWN-HOSTS-FILE filename
@@ -488,7 +490,8 @@ int ssh_open() {
             ssh2_cif,   /* Allowed ciphers */
             ssh_hbt,    /* Heartbeat in seconds */
             ssh2_hka,   /* Allowed host key algorithms */
-            ssh2_mac    /* Allowed MACs*/
+            ssh2_mac,   /* Allowed MACs */
+            ssh2_kex    /* Key exchange methods */
             );
     if (parameters == NULL) {
         debug(F100, "ssh_open() - failed to construct parameters struct", "", 0);

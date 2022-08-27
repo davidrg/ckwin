@@ -7953,6 +7953,7 @@ static int naddfwd = (sizeof(addfwd) / sizeof(struct keytab)) - 1;
 #define SSH2_HKA   5
 #define SSH2_MAC   6
 #define SSH2_AUT   7
+#define SSH2_KEX   8
 
 #ifdef COMMENT
 static struct keytab sshv1tab[] = {     /* SET SSH V1 command table */
@@ -7971,6 +7972,7 @@ static struct keytab sshv2tab[] = {     /* SET SSH V2 command table */
     { "ciphers",                 SSH2_CIF, 0 },
     { "global-known-hosts-file", SSH2_GNH, 0 },
     { "hostkey-algorithms",      SSH2_HKA, 0 },
+    { "key-exchange-methods",    SSH2_KEX, 0 },
     { "macs",                    SSH2_MAC, 0 },
     { "user-known-hosts-file",   SSH2_UNH, 0 },
     { "", 0, 0 }
@@ -8091,6 +8093,25 @@ static struct keytab hkatab[] = {
 };
 static int nhkatab = (sizeof(hkatab) / sizeof(struct keytab)) - 1;
 
+
+static struct keytab sshkextab[] = {
+    { "curve25519-sha256",              1, 0, },
+    { "curve25519-sha256@libssh.org",   2, 0, },
+    { "diffie-hellman-group1-sha1",     3, 0, },
+    { "diffie-hellman-group14-sha1",    4, 0, },
+    { "diffie-hellman-group14-sha256",  5, 0, },
+    { "diffie-hellman-group16-sha512",  6, 0, },
+    { "diffie-hellman-group18-sha512",  7, 0, },
+    { "diffie-hellman-group-exchange-sha1",   8, 0, },
+    { "diffie-hellman-group-exchange-sha256", 9, 0, },
+    { "ecdh-sha2-nistp256",             10, 0, },
+    { "ecdh-sha2-nistp384",             11, 0, },
+    { "ecdh-sha2-nistp521",             12, 0, },
+    /*{ "ext-info-c",                     13, 0, },*/
+    { "", 0, 0 }
+};
+static int nsshkextab = (sizeof(sshkextab) / sizeof(struct keytab)) - 1;
+
 int                                     /* SET SSH variables */
   ssh_afw = 0,                          /* agent forwarding */
   ssh_xfw = 0,                          /* x11 forwarding   */
@@ -8130,6 +8151,7 @@ char                                    /* The following are to be malloc'd */
   * ssh2_gnh = NULL,                    /* v2 global known hosts file */
   * ssh2_unh = NULL,                    /* v2 user known hosts file */
   * ssh2_hka = NULL,                    /* Host Key Algorithms */
+  * ssh2_kex = NULL,                    /* Key Exchange Methods */
   * xxx_dummy = NULL;
 
 char * ssh_idf[32] = {                  /* Identity file list */
@@ -8193,7 +8215,7 @@ shossh() {
       printf(" ssh forward-remote-port:        (none)\n");
     printf(" ssh gateway-ports:               %s\n",showoff(ssh_gwp));
     printf(" ssh gssapi delegate-credentials: %s\n",showoff(ssh_gsd));
-    printf(" ssh gssapi key-exchange        : %s\n",showoff(ssh_gkx));
+    printf(" ssh gssapi key-exchange:         %s\n",showoff(ssh_gkx));
     printf(" ssh identity-file:               %d\n",ssh_idf_n);
     for (i = 0; i < ssh_idf_n; i++)
       printf("  %2d. %s\n",i+1,showstring(ssh_idf[i]));
@@ -8224,6 +8246,7 @@ shossh() {
     printf(" ssh v2 command-as-subsystem:     %s\n",showoff(ssh_cas));
     printf(" ssh v2 global-known-hosts-file:  %s\n",showstring(ssh2_gnh));
     printf(" ssh v2 hostkey-algorithms:       %s\n",showstring(ssh2_hka));
+    printf(" ssh v2 key-exchange-methods:     %s\n",showstring(ssh2_kex));
     printf(" ssh v2 mac:                      %s\n",showstring(ssh2_mac));
     printf(" ssh v2 user-known-hosts-file:    %s\n",showstring(ssh2_unh));
 #else
@@ -8579,6 +8602,57 @@ dosetssh() {
                     ckstrncat(ssh2_hka,hkatab[x].kwd,len);
                     if (j < i - 1)
                       ckstrncat(ssh2_hka,",",len);
+                }
+            }
+            return(success = 1);
+#undef TMPCNT
+          }
+          case SSH2_KEX: {
+#define TMPCNT 24
+            int i, j, tmp[TMPCNT];
+            for (i = 0; i < TMPCNT; i++)
+              tmp[i] = 0;
+
+            for (i = 0; i < TMPCNT; i++) {
+                if ((y = cmkey(sshkextab,nsshkextab,
+                               "","", xxstring)) < 0) {
+                    if (y == -3)
+                      break;
+                    return(y);
+                }
+                for (j = 0; j < i; j++) {
+                    if (tmp[j] == y) {
+                        printf("\r\n?Choice has already been used.\r\n");
+                        return(-9);
+                    }
+                }
+                tmp[i] = y;
+            }
+            if ((z = cmcfm()) < 0)
+              return(z);
+
+            if (ssh2_kex) {
+                free(ssh2_kex);
+                ssh2_kex = NULL;
+            }
+            if (i > 0) {
+                int len = 0;
+                for (j=0; j < i; j++) {
+                    for (x = 0; x < nsshkextab; x++)
+                      if (sshkextab[x].kwval == tmp[j] &&
+                          !sshkextab[x].flgs)
+                        break;
+                    len += strlen(sshkextab[x].kwd) + 1;
+                }
+                ssh2_kex = malloc(len);
+                ssh2_kex[0] = '\0';
+                for (j = 0; j < i; j++) {
+                  for (x = 0; x < nsshkextab; x++)
+                    if (sshkextab[x].kwval == tmp[j] && !sshkextab[x].flgs)
+                      break;
+                    ckstrncat(ssh2_kex,sshkextab[x].kwd,len);
+                    if (j < i - 1)
+                      ckstrncat(ssh2_kex,",",len);
                 }
             }
             return(success = 1);

@@ -89,7 +89,7 @@ ssh_parameters_t* ssh_parameters_new(
         char* user_known_hosts_file, char* global_known_hosts_file,
         char* username, char* password, char* terminal_type, int pty_width,
         int pty_height, char* auth_methods, char* ciphers, int heartbeat,
-        char* hostkey_algorithms, char* macs) {
+        char* hostkey_algorithms, char* macs, char* key_exchange_methods) {
     ssh_parameters_t* params;
 
     params = malloc(sizeof(ssh_parameters_t));
@@ -105,6 +105,7 @@ ssh_parameters_t* ssh_parameters_new(
     params->allowed_ciphers = NULL;
     params->allowed_hostkey_algorithms = NULL;
     params->macs = NULL;
+    params->key_exchange_methods = NULL;
     params->keepalive_seconds = heartbeat;
 
     /* Copy hostname and port*/
@@ -130,6 +131,8 @@ ssh_parameters_t* ssh_parameters_new(
     if (hostkey_algorithms)
         params->allowed_hostkey_algorithms = _strdup(hostkey_algorithms);
     if (macs) params->macs = _strdup(macs);
+    if (key_exchange_methods)
+        params->key_exchange_methods = _strdup(key_exchange_methods);
 
     params->log_verbosity = verbosity;
     params->compression = compression;
@@ -157,6 +160,8 @@ ssh_parameters_t* ssh_parameters_new(
     /* If the user has supplied a list of authentication types then only those
      * types specified will be allowed.*/
     if (auth_methods) {
+        /* TODO: This should be an ordered list to control which order the auth
+         *       methods are attempted in */
         params->allow_password_auth = FALSE;
         params->allow_pubkey_auth = FALSE;
         params->allow_kbdint_auth = FALSE;
@@ -210,6 +215,8 @@ void ssh_parameters_free(ssh_parameters_t* parameters) {
         free(parameters->allowed_hostkey_algorithms);
     if (parameters->macs)
         free(parameters->macs);
+    if (parameters->key_exchange_methods)
+        free(parameters->key_exchange_methods);
 
     free(parameters);
 }
@@ -1199,6 +1206,10 @@ static int configure_session(ssh_client_state_t * state) {
                         state->parameters->macs);
         ssh_options_set(state->session, SSH_OPTIONS_HMAC_S_C,
                         state->parameters->macs);
+    }
+    if (state->parameters->key_exchange_methods) {
+        ssh_options_set(state->session, SSH_OPTIONS_KEY_EXCHANGE,
+                        state->parameters->key_exchange_methods);
     }
 
     if (state->parameters->port)
