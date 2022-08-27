@@ -8056,9 +8056,21 @@ static int ngssapitab = (sizeof(gssapitab) / sizeof(struct keytab)) - 1;
 
 #define HKA_RSA 1
 #define HKA_DSS 2
+#define HKA_EC2 3
+#define HKA_EC3 4
+#define HKA_EC5 5
+#define HKA_ED2 6
+#define HKA_S22 7
+#define HKA_S25 8
 
 static struct keytab hkatab[] = {
+    { "ecdsa-sha2-nistp256", HKA_EC2, 0, },
+    { "ecdsa-sha2-nistp384", HKA_EC3, 0, },
+    { "ecdsa-sha2-nistp521", HKA_EC5, 0, },
+    { "rsa-sha2-256", HKA_S22, 0, },
+    { "rsa-sha2-512", HKA_S25, 0, },
     { "ssh-dss", HKA_DSS, 0, },
+    { "ssh-ed25519", HKA_ED2, 0, },
     { "ssh-rsa", HKA_RSA, 0, },
     { "", 0, 0 }
 };

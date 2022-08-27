@@ -88,7 +88,8 @@ ssh_parameters_t* ssh_parameters_new(
         BOOL gssapi_delegate_credentials, int host_key_checking_mode,
         char* user_known_hosts_file, char* global_known_hosts_file,
         char* username, char* password, char* terminal_type, int pty_width,
-        int pty_height, char* auth_methods, char* ciphers) {
+        int pty_height, char* auth_methods, char* ciphers,
+        char* hostkey_algorithms) {
     ssh_parameters_t* params;
 
     params = malloc(sizeof(ssh_parameters_t));
@@ -102,6 +103,7 @@ ssh_parameters_t* ssh_parameters_new(
     params->password = NULL;
     params->terminal_type = NULL;
     params->allowed_ciphers = NULL;
+    params->allowed_hostkey_algorithms = NULL;
     params->keepalive_seconds = 60; /* TODO: add something like "set ssh keepalive 60" */
 
     /* Copy hostname and port*/
@@ -124,6 +126,8 @@ ssh_parameters_t* ssh_parameters_new(
     if (password) params->password = _strdup(password);
     if (terminal_type) params->terminal_type = _strdup(terminal_type);
     if (ciphers) params->allowed_ciphers = _strdup(ciphers);
+    if (hostkey_algorithms)
+        params->allowed_hostkey_algorithms = _strdup(hostkey_algorithms);
 
     params->log_verbosity = verbosity;
     params->compression = compression;
@@ -200,6 +204,8 @@ void ssh_parameters_free(ssh_parameters_t* parameters) {
         free(parameters->terminal_type);
     if (parameters->allowed_ciphers)
         free(parameters->allowed_ciphers);
+    if (parameters->allowed_hostkey_algorithms)
+        free(parameters->allowed_hostkey_algorithms);
 
     free(parameters);
 }
@@ -1178,6 +1184,11 @@ static int configure_session(ssh_client_state_t * state) {
                         state->parameters->allowed_ciphers);
         ssh_options_set(state->session, SSH_OPTIONS_CIPHERS_S_C,
                         state->parameters->allowed_ciphers);
+    }
+
+    if (state->parameters->allowed_hostkey_algorithms) {
+        ssh_options_set(state->session, SSH_OPTIONS_HOSTKEYS,
+                        state->parameters->allowed_hostkey_algorithms);
     }
 
     if (state->parameters->port)
