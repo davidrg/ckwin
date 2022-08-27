@@ -69,7 +69,7 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *   char* ssh2_unh   NULL    SSH-2 User Known Hosts file
  *   char* ssh2_gnh   NULL    SSH-2 Global Known Hosts file
  *   int   pwflg      0       Password has been supplied (/password:)
- *   int   ssh_hbt    60      Heartbeat (keepalive) setting
+ *   int   ssh_hbt    0       Heartbeat (keepalive) setting
  *   char* pwbuf      "\0"    Supplied password
  *   char* uidbuf     ""      Supplied username (if any)
  *   char* ssh2_auth  NULL    Comma-separated list of allowed auth methods
