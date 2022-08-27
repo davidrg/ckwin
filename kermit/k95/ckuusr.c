@@ -10743,6 +10743,9 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             } else {
               ckstrncpy(line,tmpline2,LINBUFSIZ);
             }
+          } else {
+              /* No second part - give up. */
+              makestr(&ssh_tmpuid,NULL);
           }
         }
 
