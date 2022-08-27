@@ -7920,13 +7920,13 @@ static struct keytab sshver[] = {       /* SET SSH VERSION command table */
 #define SSHA_SRP  13
 
 static struct keytab ssh2aut[] = {      /* SET SSH V2 AUTH command table */
-    { "external-keyx",      SSHA_EXT, 0 },
+    /*{ "external-keyx",      SSHA_EXT, 0 },*/
     { "gssapi",             SSHA_GSS, 0 },
-    { "hostbased",          SSHA_HOS, 0 },
+    /*{ "hostbased",          SSHA_HOS, 0 },*/
     { "keyboard-interactive",  SSHA_KBD, 0 },
     { "password",           SSHA_PSW, 0 },
     { "publickey",          SSHA_PK,  0 },
-    { "srp-gex-sha1",       SSHA_SRP, 0 },
+    /*{ "srp-gex-sha1",       SSHA_SRP, 0 },*/
     { "", 0, 0 }
 };
 static int nssh2aut = (sizeof(ssh2aut) / sizeof(struct keytab)) - 1;
