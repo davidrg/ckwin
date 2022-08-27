@@ -69,6 +69,7 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *   char* ssh2_unh   NULL    SSH-2 User Known Hosts file
  *   char* ssh2_gnh   NULL    SSH-2 Global Known Hosts file
  *   int   pwflg      0       Password has been supplied (/password:)
+ *   int   ssh_hbt    60      Heartbeat (keepalive) setting
  *   char* pwbuf      "\0"    Supplied password
  *   char* uidbuf     ""      Supplied username (if any)
  *   char* ssh2_auth  NULL    Comma-separated list of allowed auth methods
@@ -79,7 +80,7 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  * Unused Global Variables:
  *   ssh_afw, ssh_xfw, ssh_prp, ssh_shh, ssh_chkip,
  *   ssh_gwp, ssh_dyf, ssh_k4tgt, ssh_k5tgt, ssh2_ark,
- *   ssh_gkx, ssh_k5_is_k4, ssh_hbt
+ *   ssh_gkx, ssh_k5_is_k4
  *
  *   ssh_xal (xauth location)
  *
@@ -148,6 +149,7 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *      TODO: GATEWAY-PORTS {ON,OFF}
  *      GSSAPI DELEGATE-CREDENTIALS {ON,OFF}
  *          Value is stored in ssh_gsd
+ *      HEARTBEAT-INTERVAL interval
  *      TODO: IDENTITY-FILE filename
  *      TODO: KERBEROS4 TGT-PASSING {ON,OFF}    -- delete
  *      TODO: KERBEROS5 TGT-PASSING {ON,OFF}    -- delete
@@ -484,6 +486,7 @@ int ssh_open() {
             pty_height,
             ssh2_auth,  /* Allowed authentication methods */
             ssh2_cif,   /* Allowed ciphers */
+            ssh_hbt,    /* Heartbeat in seconds */
             ssh2_hka,   /* Allowed host key algorithms */
             ssh2_mac    /* Allowed MACs*/
             );

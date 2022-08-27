@@ -88,7 +88,7 @@ ssh_parameters_t* ssh_parameters_new(
         BOOL gssapi_delegate_credentials, int host_key_checking_mode,
         char* user_known_hosts_file, char* global_known_hosts_file,
         char* username, char* password, char* terminal_type, int pty_width,
-        int pty_height, char* auth_methods, char* ciphers,
+        int pty_height, char* auth_methods, char* ciphers, int heartbeat,
         char* hostkey_algorithms, char* macs) {
     ssh_parameters_t* params;
 
@@ -105,7 +105,7 @@ ssh_parameters_t* ssh_parameters_new(
     params->allowed_ciphers = NULL;
     params->allowed_hostkey_algorithms = NULL;
     params->macs = NULL;
-    params->keepalive_seconds = 60; /* TODO: add something like "set ssh keepalive 60" */
+    params->keepalive_seconds = heartbeat;
 
     /* Copy hostname and port*/
     params->hostname = _strdup(hostname);

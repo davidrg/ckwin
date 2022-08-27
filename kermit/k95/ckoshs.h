@@ -178,6 +178,7 @@ void get_current_terminal_dimensions(int* rows, int* cols);
  * @param pty_height Current terminal height
  * @param auth_methods Comma-separated list of allowed authentication methods
  * @param ciphers Comma-separated list of allowed ciphers
+ * @param heartbeat Heartbeat interval in seconds
  * @param hostkey_algorithms Comma-separated list of allowed hostkey algorithms
  * @param macs Comma-separated list of allowed macs
  * @return A new ssh_parameters_t instance.
@@ -188,7 +189,7 @@ ssh_parameters_t* ssh_parameters_new(
         BOOL gssapi_delegate_credentials, int host_key_checking_mode,
         char* user_known_hosts_file, char* global_known_hosts_file,
         char* username, char* password, char* terminal_type, int pty_width,
-        int pty_height, char* auth_methods, char* ciphers,
+        int pty_height, char* auth_methods, char* ciphers, int heartbeat,
         char* hostkey_algorithms, char* macs);
 
 /** Frees the ssh_parameters_t struct and all its members.
