@@ -140,7 +140,6 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *      TODO: DISPLAY
  *          TODO: /FORMAT:{fingerprint, ietf,openssh,ssh.com}
  *          TODO: filename
- *      TODO: V1 SET-COMMENT filename comment
  *      TODO: V2 REKEY
  *   SET SSH
  *      TODO: AGENT-FORWARDING {ON,OFF}

@@ -7873,12 +7873,12 @@ static struct keytab sshtab[] = {       /* SET SSH command table */
 #ifdef COMMENT
     { "kbd-interactive-devices", SSH_KBD,  0 },
 #endif /* COMMENT */
-    { "k4",                      SSH_K4, CM_INV },
+    /*{ "k4",                      SSH_K4, CM_INV },
     { "k5",                      SSH_K5, CM_INV },
     { "kerberos4",               SSH_K4,   0 },
     { "kerberos5",               SSH_K5,   0 },
     { "krb4",                    SSH_K4, CM_INV },
-    { "krb5",                    SSH_K5, CM_INV },
+    { "krb5",                    SSH_K5, CM_INV },*/
     { "privileged-port",         SSH_PRP,  0 },
     { "quiet",                   SSH_SHH,  0 },
     { "strict-host-key-check",   SSH_SHK,  0 },

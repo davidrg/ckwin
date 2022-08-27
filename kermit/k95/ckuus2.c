@@ -836,6 +836,7 @@ static char *hmxyssh[] = {
 "    \\v(appdata)ssh/id_rsa        V2 RSA",
 "    \\v(appdata)ssh/id_dsa        V2 DSA",
 " ",
+#ifdef COMMENT
 "SET SSH KERBEROS4 TGT-PASSING { ON, OFF }",
 "  Specifies whether Kermit should forward Kerberos 4 TGTs to the host.",
 "  The default is OFF.",
@@ -844,6 +845,7 @@ static char *hmxyssh[] = {
 "  Specifies whether Kermit should forward Kerberos 5 TGTs to to the",
 "  host.  The default is OFF.",
 " ",
+#endif
 "SET SSH PRIVILEGED-PORT { ON, OFF }",
 "  Specifies whether a privileged port (less than 1024) should be used",
 "  when connecting to the host.  Privileged ports are not required except",
