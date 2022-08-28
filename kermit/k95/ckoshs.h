@@ -101,6 +101,7 @@ typedef struct {
     int keepalive_seconds;                      /* Keepalive interval in
                                                  * seconds, 0 disables. */
     int nodelay;                                /* Set to disable nagles agorithm */
+    char* proxy_command;                        /* Command to execute to connect to the server */
 
     /* Allowed authentication types */
     BOOL allow_password_auth;
@@ -185,6 +186,7 @@ void get_current_terminal_dimensions(int* rows, int* cols);
  * @param macs Comma-separated list of allowed macs
  * @param key_exchange_methods Comma-separated list of key exchange methods
  * @param nodelay Set to disable Nagle's algorithm
+ * @param proxy_command Set the command to be executed in order to connect to server
  * @return A new ssh_parameters_t instance.
  */
 ssh_parameters_t* ssh_parameters_new(
@@ -195,7 +197,7 @@ ssh_parameters_t* ssh_parameters_new(
         char* username, char* password, char* terminal_type, int pty_width,
         int pty_height, char* auth_methods, char* ciphers, int heartbeat,
         char* hostkey_algorithms, char* macs, char* key_exchange_methods,
-        int nodelay);
+        int nodelay, char* proxy_command);
 
 /** Frees the ssh_parameters_t struct and all its members.
  *

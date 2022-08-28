@@ -90,7 +90,7 @@ ssh_parameters_t* ssh_parameters_new(
         char* username, char* password, char* terminal_type, int pty_width,
         int pty_height, char* auth_methods, char* ciphers, int heartbeat,
         char* hostkey_algorithms, char* macs, char* key_exchange_methods,
-        int nodelay) {
+        int nodelay, char* proxy_command) {
     ssh_parameters_t* params;
 
     params = malloc(sizeof(ssh_parameters_t));
@@ -109,6 +109,7 @@ ssh_parameters_t* ssh_parameters_new(
     params->key_exchange_methods = NULL;
     params->keepalive_seconds = heartbeat;
     params->nodelay = nodelay;
+    params->proxy_command = NULL;
 
     /* Copy hostname and port*/
     params->hostname = _strdup(hostname);
@@ -135,6 +136,7 @@ ssh_parameters_t* ssh_parameters_new(
     if (macs) params->macs = _strdup(macs);
     if (key_exchange_methods)
         params->key_exchange_methods = _strdup(key_exchange_methods);
+    if (proxy_command) params->proxy_command = _strdup(proxy_command);
 
     params->log_verbosity = verbosity;
     params->compression = compression;
@@ -219,6 +221,8 @@ void ssh_parameters_free(ssh_parameters_t* parameters) {
         free(parameters->macs);
     if (parameters->key_exchange_methods)
         free(parameters->key_exchange_methods);
+    if (parameters->proxy_command)
+        free(parameters->proxy_command);
 
     free(parameters);
 }
@@ -1227,6 +1231,10 @@ static int configure_session(ssh_client_state_t * state) {
     if (state->parameters->key_exchange_methods) {
         ssh_options_set(state->session, SSH_OPTIONS_KEY_EXCHANGE,
                         state->parameters->key_exchange_methods);
+    }
+    if (state->parameters->proxy_command) {
+        ssh_options_set(state->session, SSH_OPTIONS_PROXYCOMMAND,
+                        state->parameters->proxy_command);
     }
 
     if (state->parameters->port)

@@ -7858,6 +7858,7 @@ setprinter(xx) int xx; {
 #define SSH_IDF 21                      /* Identity File */
 #define SSH_CFG 22                      /* Use OpenSSH Config */
 #define SSH_HBT 23                      /* Heartbeat Interval */
+#define SSH_PXC 24                      /* Proxy Command */
 #endif /* SSHBUILTIN */
 
 static struct keytab sshtab[] = {       /* SET SSH command table */
@@ -7880,6 +7881,8 @@ static struct keytab sshtab[] = {       /* SET SSH command table */
     { "krb4",                    SSH_K4, CM_INV },
     { "krb5",                    SSH_K5, CM_INV },*/
     { "privileged-port",         SSH_PRP,  0 },
+    /* Libssh doesn't support the proxy command setting on windows yet
+     * { "proxy-command",           SSH_PXC,  0 },*/
     { "quiet",                   SSH_SHH,  0 },
     { "strict-host-key-check",   SSH_SHK,  0 },
     { "use-openssh-config",      SSH_CFG,  0 },
@@ -8152,6 +8155,7 @@ char                                    /* The following are to be malloc'd */
   * ssh2_unh = NULL,                    /* v2 user known hosts file */
   * ssh2_hka = NULL,                    /* Host Key Algorithms */
   * ssh2_kex = NULL,                    /* Key Exchange Methods */
+  * ssh_pxc = NULL,                     /* Proxy command */
   * xxx_dummy = NULL;
 
 char * ssh_idf[32] = {                  /* Identity file list */
@@ -8224,6 +8228,7 @@ shossh() {
     printf(" ssh k5 tgt-passing:              %s\n",showoff(ssh_k5tgt));
 
     printf(" ssh privileged-port:             %s\n",showooa(ssh_prp));
+    /*printf(" ssh proxy command:               %s\n",showstring(ssh_pxc));*/
     printf(" ssh quiet:                       %s\n",showoff(ssh_shh));
     printf(" ssh strict-host-key-check:       %d\n",ssh_shk);
     printf(" ssh use-openssh-config:          %s\n",showoff(ssh_cfg));
@@ -8744,6 +8749,12 @@ dosetssh() {
         s = (x == -3) ? NULL : line;
         if ((x = cmcfm()) < 0) return(x);
         makestr(&ssh_xal,s);
+        return(success = 1);
+
+      case SSH_PXC:                     /* SSH Proxy Command */
+        if ((y = cmtxt("title text","",&s,xxstring)) < 0)
+          return(y);
+        makestr(&ssh_pxc,s);
         return(success = 1);
 
       case SSH_CFG:                     /* Use OpenSSH Config */

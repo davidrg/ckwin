@@ -857,6 +857,12 @@ static char *hmxyssh[] = {
 "  when using SSH V1 with Rhosts or RhostsRSA authorization.  The default",
 "  is OFF.",
 " ",
+#ifdef COMMENT
+"SET SSH PROXY-COMMAND [ command ]",
+"  Specifies the command to be executed in order to connect to the remote",
+"  host. ",
+" ",
+#endif
 "SET SSH QUIET { ON, OFF }",
 "  Specifies whether all messages generated in conjunction with SSH",
 "  protocols should be suppressed.  The default is OFF.",

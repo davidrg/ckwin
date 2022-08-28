@@ -78,6 +78,7 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *   char* ssh2_hka   NULL    Comma-separated list of host key algorithms
  *   char* ssh2_mac   NULL    Comma-separated list of MACs
  *   char* ssh2_kex   NULL    Comma-separated list of key exchange methods
+ *   char* ssh_pxc    NULL    Proxy Command
  *
  * Unused Global Variables:
  *   ssh_afw, ssh_xfw, ssh_prp, ssh_shh, ssh_chkip,
@@ -493,7 +494,8 @@ int ssh_open() {
             ssh2_hka,   /* Allowed host key algorithms */
             ssh2_mac,   /* Allowed MACs */
             ssh2_kex,   /* Key exchange methods */
-            tcp_nodelay /* Enable/disable Nagle's algorithm */
+            tcp_nodelay,/* Enable/disable Nagle's algorithm */
+            ssh_pxc     /* Proxy Command */
             );
     if (parameters == NULL) {
         debug(F100, "ssh_open() - failed to construct parameters struct", "", 0);
