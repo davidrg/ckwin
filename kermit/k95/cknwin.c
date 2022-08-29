@@ -1471,7 +1471,7 @@ int
 gui_saveas_dialog(char * preface, char * prompt, int fc,
                   char * def, char * result, int rlength)
 {
-    return KuiDownloadDialog(prompt,def,result,rlength);
+    return KuiDownloadDialog(prompt,def,result,rlength, fc != 5);
 }
 
 int 

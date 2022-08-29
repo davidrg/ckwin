@@ -18,7 +18,7 @@
 class KDownLoad : public KWin
 {
 public:
-    KDownLoad( K_GLOBAL* );
+    KDownLoad( K_GLOBAL*, BOOL );
     ~KDownLoad();
 
     void createWin( KWin* par );
@@ -47,6 +47,7 @@ private:
     HWND hwndpar;
     HWND hdownload;
     WNDPROC oldSaveAsProc;
+    BOOL downloadButton;
 
     int downloadID;
     int optionID;

@@ -8519,7 +8519,7 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
 #ifdef KUI
                     char logfile[MAX_PATH+1];
                     if ( !KuiDownloadDialog("Create Session Log ...","session.log",
-                                            logfile,MAX_PATH+1) )
+                                            logfile,MAX_PATH+1,FALSE) )
                         return;
                     setseslog(sesopn( logfile, 0));
 #else /* KUI */

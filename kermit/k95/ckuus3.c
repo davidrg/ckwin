@@ -2874,6 +2874,7 @@ uq_mtxt(preface,help,n,field)
 	       2 = existing directory 
 	       3 = create new output file
 	       4 = output file allowing append access
+	       5 = same as 3, but don't label the GUI save button "Download"
     help:    Help text (array of strings or NULL) [not used by parser].
     dflt:    Default response.
     result:  Pointer to result buffer.
@@ -2929,6 +2930,7 @@ uq_file(preface,fprompt,fc,help,dflt,result,rlength)
         return rc;
     }
 #endif /* KUI */
+    if (fc == 5) fc = 3;
 
 #ifdef CK_RECALL
     on_recall = 0;

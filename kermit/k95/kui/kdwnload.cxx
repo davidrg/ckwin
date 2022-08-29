@@ -38,11 +38,12 @@ BOOL APIENTRY KSaveAsDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-KDownLoad::KDownLoad( K_GLOBAL* kg )
+KDownLoad::KDownLoad( K_GLOBAL* kg, BOOL dlButton )
     : KWin( kg )
     , hdownload( 0 )
     , downloadID( 999 )     // unique identifier for download button
     , optionID( 0x40E )     // it's not IDHELP!
+    , downloadButton(dlButton)
 {
     oldSaveAsProc = (WNDPROC)0;
     download = this;
@@ -204,8 +205,10 @@ Bool KDownLoad::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
     switch( msg )
     {
         case WM_INITDIALOG:
-            initDialog( hwnd );
-            done = TRUE;
+            if (downloadButton) {
+                initDialog( hwnd );
+                done = TRUE;
+            }
             break;
 
 //        case WM_NOTIFY:
