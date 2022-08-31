@@ -122,7 +122,7 @@ void KDownLoad::show( Bool bVisible )
 //        | OFN_ENABLETEMPLATE ;
 
     OpenFileName.lpfnHook = 0;
-    if (!nt351) {
+    if (!nt351 && downloadButton) {
         /* NT 3.51 and earlier don't support OFNHOOKPROC */
         OpenFileName.Flags = OpenFileName.Flags | OFN_ENABLEHOOK | OFN_EXPLORER;
         OpenFileName.lpfnHook = (LPOFNHOOKPROC)KDownDlgProc;
@@ -205,10 +205,8 @@ Bool KDownLoad::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
     switch( msg )
     {
         case WM_INITDIALOG:
-            if (downloadButton) {
-                initDialog( hwnd );
-                done = TRUE;
-            }
+            initDialog( hwnd );
+            done = TRUE;
             break;
 
 //        case WM_NOTIFY:
