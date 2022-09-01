@@ -45,6 +45,8 @@ KDownLoad::KDownLoad( K_GLOBAL* kg, BOOL dlButton )
     , optionID( 0x40E )     // it's not IDHELP!
     , downloadButton(dlButton)
 {
+    OSVERSIONINFO osverinfo ;
+
     oldSaveAsProc = (WNDPROC)0;
     download = this;
     memset( &OpenFileName, '\0', sizeof(OPENFILENAME) );
@@ -54,6 +56,21 @@ KDownLoad::KDownLoad( K_GLOBAL* kg, BOOL dlButton )
     strcpy(szTitle,"Save File As ...");
     success = FALSE;
     errorCode = 0;
+
+
+    osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
+    GetVersionEx( &osverinfo ) ;
+
+    if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS && osverinfo.dwMinorVersion == 90) {
+        /* Windows ME - this supports modern file dialogs */
+        downloadButton = FALSE;
+    } else if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT && osverinfo.dwMajorVersion != 4) {
+        /* Windows NT version 3.x OR Windows 2000 or newer
+         * Windows 2000+ supports modern file dialogs, while NT 3.51 does not
+         * support customisable file dialogs (at least, not in the way we're
+         * custominsing it) */
+        downloadButton = FALSE;
+    }
 }
 
 /*------------------------------------------------------------------------
