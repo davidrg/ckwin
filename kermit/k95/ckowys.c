@@ -24,6 +24,7 @@
 #ifdef NT
 #include <windows.h>
 #else /* NT */
+#define INCL_DOSSEMAPHORES
 #include <os2.h>
 #undef COMMENT
 #endif /* NT */

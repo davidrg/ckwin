@@ -241,3 +241,4 @@ redist/
 setenv_local.bat
 dst/
 builder/
+*.dll

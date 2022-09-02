@@ -125,6 +125,11 @@ _PROTOTYP( FILE * win95popen, (const char *cmd, const char *mode) );
 _PROTOTYP( int win95pclose, (FILE *pipe) );
 #define popen _popen
 #define pclose _pclose
+#else
+#ifdef __WATCOMC__
+#define popen _popen
+#define pclose _pclose
+#endif
 #endif /* NT */
 
 #ifdef COMMENT
@@ -248,7 +253,7 @@ int trueitalic    = TRUE ;
 int trueitalic    = FALSE ;
 #endif /* KUI */
 
-extern enum markmodes markmodeflag[VNUM] = {notmarking, notmarking,
+enum markmodes markmodeflag[VNUM] = {notmarking, notmarking,
                                                 notmarking, notmarking} ;
 
 extern int tn_bold;                     /* TELNET negotiation bold */
@@ -8514,7 +8519,7 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
 #ifdef KUI
                     char logfile[MAX_PATH+1];
                     if ( !KuiDownloadDialog("Create Session Log ...","session.log",
-                                            logfile,MAX_PATH+1) )
+                                            logfile,MAX_PATH+1,FALSE) )
                         return;
                     setseslog(sesopn( logfile, 0));
 #else /* KUI */

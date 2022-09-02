@@ -39,6 +39,9 @@
 
 #include "ckoshs.h"
 
+#ifdef KUI
+extern HWND hwndConsole;
+#endif
 
 /* SSH Strict Host Key Checking options */
 #define SSH_SHK_NO 0                    /* Trust everything implicitly */
@@ -85,7 +88,9 @@ ssh_parameters_t* ssh_parameters_new(
         BOOL gssapi_delegate_credentials, int host_key_checking_mode,
         char* user_known_hosts_file, char* global_known_hosts_file,
         char* username, char* password, char* terminal_type, int pty_width,
-        int pty_height) {
+        int pty_height, char* auth_methods, char* ciphers, int heartbeat,
+        char* hostkey_algorithms, char* macs, char* key_exchange_methods,
+        int nodelay, char* proxy_command) {
     ssh_parameters_t* params;
 
     params = malloc(sizeof(ssh_parameters_t));
@@ -98,6 +103,13 @@ ssh_parameters_t* ssh_parameters_new(
     params->username = NULL;
     params->password = NULL;
     params->terminal_type = NULL;
+    params->allowed_ciphers = NULL;
+    params->allowed_hostkey_algorithms = NULL;
+    params->macs = NULL;
+    params->key_exchange_methods = NULL;
+    params->keepalive_seconds = heartbeat;
+    params->nodelay = nodelay;
+    params->proxy_command = NULL;
 
     /* Copy hostname and port*/
     params->hostname = _strdup(hostname);
@@ -118,6 +130,13 @@ ssh_parameters_t* ssh_parameters_new(
     if (username) params->username = _strdup(username);
     if (password) params->password = _strdup(password);
     if (terminal_type) params->terminal_type = _strdup(terminal_type);
+    if (ciphers) params->allowed_ciphers = _strdup(ciphers);
+    if (hostkey_algorithms)
+        params->allowed_hostkey_algorithms = _strdup(hostkey_algorithms);
+    if (macs) params->macs = _strdup(macs);
+    if (key_exchange_methods)
+        params->key_exchange_methods = _strdup(key_exchange_methods);
+    if (proxy_command) params->proxy_command = _strdup(proxy_command);
 
     params->log_verbosity = verbosity;
     params->compression = compression;
@@ -126,6 +145,54 @@ ssh_parameters_t* ssh_parameters_new(
     params->host_key_checking_mode = host_key_checking_mode;
     params->pty_width = pty_width;
     params->pty_height = pty_height;
+
+    /* All authentication types allowed by default */
+    params->allow_password_auth = TRUE;
+    params->allow_pubkey_auth = TRUE;
+    params->allow_kbdint_auth = TRUE;
+    params->allow_gssapi_auth = TRUE;
+
+    /* TODO: Keyboard interactive authentication doesn't seem to be working at
+     *       the moment. Testing against OpenSSH 8.4p1 Debian-5deb11u1, after
+     *       answering all prompts ssh_userauth_kbdint still gives SSH_AUTH_INFO
+     *       indicating more answers are required - even though there are no
+     *       more prompts to answer.
+     **/
+    params->allow_kbdint_auth = FALSE;
+
+
+    /* If the user has supplied a list of authentication types then only those
+     * types specified will be allowed.*/
+    if (auth_methods) {
+        /* TODO: This should be an ordered list to control which order the auth
+         *       methods are attempted in */
+        params->allow_password_auth = FALSE;
+        params->allow_pubkey_auth = FALSE;
+        params->allow_kbdint_auth = FALSE;
+        params->allow_gssapi_auth = FALSE;
+
+        if (strstr(auth_methods, "external-keyx")) {
+            /* Not supported */
+        }
+        if (strstr(auth_methods, "gssapi")) {
+            params->allow_gssapi_auth = TRUE;
+        }
+        if (strstr(auth_methods, "hostbased")) {
+            /* Not supported */
+        }
+        if (strstr(auth_methods, "keyboard-interactive")) {
+            params->allow_kbdint_auth = TRUE;
+        }
+        if (strstr(auth_methods, "password")) {
+            params->allow_password_auth = TRUE;
+        }
+        if (strstr(auth_methods, "publickey")) {
+            params->allow_pubkey_auth = TRUE;
+        }
+        if (strstr(auth_methods, "srp-gex-sha1")) {
+            /* Not supported */
+        }
+    }
 
     return params;
 }
@@ -146,6 +213,16 @@ void ssh_parameters_free(ssh_parameters_t* parameters) {
         free(parameters->password);
     if (parameters->terminal_type)
         free(parameters->terminal_type);
+    if (parameters->allowed_ciphers)
+        free(parameters->allowed_ciphers);
+    if (parameters->allowed_hostkey_algorithms)
+        free(parameters->allowed_hostkey_algorithms);
+    if (parameters->macs)
+        free(parameters->macs);
+    if (parameters->key_exchange_methods)
+        free(parameters->key_exchange_methods);
+    if (parameters->proxy_command)
+        free(parameters->proxy_command);
 
     free(parameters);
 }
@@ -409,8 +486,6 @@ static int log_verbosity(int verbosity) {
 
 /** Checks to see if the host being connected to is known.
  *
- * TODO: Overhaul this function.
- *
  * @param state SSH Client State
  * @return An error code (0 = success)
  */
@@ -420,14 +495,18 @@ static int verify_known_host(ssh_client_state_t * state) {
     unsigned char* hash = NULL;
     size_t hash_length = 0;
     enum ssh_known_hosts_e host_state;
-    char *hexa;
-    char msg[1024];
+    char* key_type;
+    char* hexa;
+    char msg[2048], msg2[2048];;
+    char* error_msg;
 
     rc = ssh_get_server_publickey(state->session, &server_pubkey);
     if (rc != SSH_OK) {
-        printf("Failed to get public key\n");
+        debug(F100, "Failed to get public key", "", 0);
         return SSH_ERR_SSH_ERROR;
     }
+
+    key_type = ssh_key_type_to_char(ssh_key_type(server_pubkey));
 
     rc = ssh_get_publickey_hash(server_pubkey,
                                 SSH_PUBLICKEY_HASH_SHA256,
@@ -435,60 +514,118 @@ static int verify_known_host(ssh_client_state_t * state) {
                                 &hash_length);
     ssh_key_free(server_pubkey);
     if (rc != SSH_OK) {
-        printf("Failed to get public key hash\n");
+        debug(F100, "Failed to get public key hash", "", 0);
         return SSH_ERR_SSH_ERROR;
     }
 
     host_state = ssh_session_is_known_server(state->session);
-    /* TODO: Redo all of this properly. */
+
+    /*
+     * TODO: Can we check for simultaneous IP and host key change (DNS Spoofing)
+     *       like openssh does?
+     *
+     * TODO: We should also include the servers IP *and* hostname in some
+     *       messages rather than only the user-supplied hostname-or-ip.
+     */
+
     switch (host_state) {
         case SSH_KNOWN_HOSTS_OK:
             /* Cool! */
-            printf("Host verified!\n");
             break;
         case SSH_KNOWN_HOSTS_CHANGED:
-            /* Previously:
-                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                "@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\n"
-                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                "IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!\n"
-                "Someone could be eavesdropping on you right now (man-in-the-middle attack)!\n"
-                "It is also possible that the ", type, " host key has just been changed.\n"
-                "The fingerprint for the ", type, " key sent by the remote host is\n",
-                fp, "\nPlease contact your system administrator.\n"
-                "Add correct host key in ", (char*)user_hostfile, " to get rid of this message.\n"
-                "Offending key in ", (char *)host_file, ":", ckitoa(host_line));
-             *
-             * If strict host key checking then display a message saying can't connect
-             * If set to ask, ask user if continue or not.
-             * If not requested, allow without password auth, agent forwarding,
-             *      X11 forwarding and port forwarding.
-             */
-            printf("WARNING! The server key has changed. "
-                   "This may indicate a possible attack.\n");
+            char* user_knownhosts_file;
+
             hexa = ssh_get_hexa(hash, hash_length);
-            printf("Public key hash: %s\n", hexa);
+
+            ssh_options_get(state->session, SSH_OPTIONS_KNOWNHOSTS,
+                            &user_knownhosts_file);
+
+            hexa = ssh_get_hexa(hash, hash_length);
+
+            rc = SSH_ERR_HOST_VERIFICATION_FAILED;
+
+            snprintf(msg, sizeof(msg),
+                      "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
+                      "@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\n"
+                      "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+            printf(msg);
+            snprintf(msg, sizeof(msg),
+                      "IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!\n"
+                      "Someone could be eavesdropping on you right now (man-in-the-middle attack)!\n"
+                      "It is also possible that a host key has just been changed.\n"
+                      "The fingerprint for the %s key sent by the remote host is\n"
+                      "%s\nPlease contact your system administrator.\n"
+                      "Add correct host key in %s to get rid of this message.\n",
+                      key_type, hexa, user_knownhosts_file);
+
+            ssh_string_free_char(user_knownhosts_file);
+
+            /* TODO: Ideally we'd output the file they key was found in and the
+             *       line the key was on. But there is currently no easy way to
+             *       get this information out of libssh */
+
+            if (state->parameters->host_key_checking_mode == SSH_SHK_YES) {
+                snprintf(msg2, sizeof(msg2),
+                         "\n%s host key for '%s' has changed and you have "
+                         "requested strict checking.\nHost key verification "
+                         "failed.\n", state->parameters->hostname, key_type);
+                strncat(msg, msg2, sizeof(msg) - strlen(msg2) - 1);
+            } else if (state->parameters->host_key_checking_mode == SSH_SHK_NO) {
+                if (state->parameters->allow_password_auth) {
+                    strncat(msg, "Password authentication is disabled to avoid trojan horses.\n",
+                            sizeof(msg) - strlen(msg) - 1);
+                    state->parameters->allow_password_auth = FALSE;
+                }
+
+                /* Otherwise we allow connection to proceed */
+                rc = SSH_ERR_NO_ERROR;
+            } else if (state->parameters->host_key_checking_mode != SSH_SHK_ASK) {
+                printf("Invalid strict host key check value!\n");
+            }
+
+            printf(msg);
+#ifdef KUI
+            snprintf(msg2, sizeof(msg2), "REMOTE HOST IDENTIFICATION HAS CHANGED! \n\n%s", msg);
+            MessageBox(hwndConsole,
+                         msg2,
+                         "WARNING - POTENTIAL SECURITY BREACH",
+                         MB_OK | MB_ICONEXCLAMATION | MB_TASKMODAL);
+#endif
+
+            if (state->parameters->host_key_checking_mode == SSH_SHK_ASK) {
+                snprintf(msg, sizeof(msg),
+                         "The authenticity of host '%.200s' can't be established.\n"
+                         "%s key fingerprint is %s\n",
+                         state->parameters->hostname, key_type, hexa );
+                if (uq_ok(msg,
+                             "Are you sure you want to continue connecting (yes/no)? ",
+                            3, NULL, -1)) {
+                    rc = SSH_ERR_NO_ERROR;
+                } else {
+                    printf("Aborted by user!\n");
+                }
+            }
+
             ssh_string_free_char(hexa);
             ssh_clean_pubkey_hash(&hash);
-            return SSH_ERR_HOST_VERIFICATION_FAILED;
+
+            return rc;
         case SSH_KNOWN_HOSTS_OTHER:
-            /* Previously: If IP status == HOST_NEW then msg = "is unknown"
-             *             If IP status == HOST_OK then msg = "is unchanged"
-             * Message:
-               "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-               "@       WARNING: POSSIBLE DNS SPOOFING DETECTED!          @\n"
-               "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-               "The ", type, " host key for ", host, " has changed,\n"
-               "and the key for the according IP address ", ip, "\n",
-               msg, ". This could either mean that\n",
-               "DNS SPOOFING is happening or the IP address for the host\n"
-               "and its host key have changed at the same time.\n",
-             */
-            printf("Warning: Server key type has changed. An attacker may change the "
-                   "server key type to confuse clients into thinking the key does "
-                   "not exist.\n");
+            rc = SSH_ERR_NO_ERROR;
+
+            snprintf(msg, sizeof(msg),
+                     "Warning: Server key type has changed. An attacker may change the "
+                     "server key type to confuse clients into thinking the key does "
+                     "not exist.\n" );
+            if (!uq_ok(msg,
+                         "Are you sure you want to continue connecting (yes/no)? ",
+                            3, NULL, -1)) {
+                printf("Aborted by user!\n");
+                rc = SSH_ERR_HOST_VERIFICATION_FAILED;
+            }
+
             ssh_clean_pubkey_hash(&hash);
-            return SSH_ERR_HOST_VERIFICATION_FAILED;
+            return rc;
         case SSH_KNOWN_HOSTS_NOT_FOUND:
             printf("Could not find the known hosts file. If you accept the key here "
                    "it will be created automatically.\n");
@@ -508,6 +645,8 @@ static int verify_known_host(ssh_client_state_t * state) {
 
                 uq_ok(NULL, msg, 1, NULL, 0);
 
+                ssh_clean_pubkey_hash(&hash);
+                return SSH_ERR_HOST_VERIFICATION_FAILED;
             } else if (state->parameters->host_key_checking_mode = SSH_SHK_ASK) {
                 hexa = ssh_get_hexa(hash, hash_length);
                 snprintf(msg, sizeof(msg),
@@ -688,7 +827,7 @@ static int kbd_interactive_authenticate(ssh_client_state_t * state, BOOL *cancel
             char echo;
             char buffer[128];
             const char *prompt = ssh_userauth_kbdint_getprompt(
-                    state->session, i, &echo);
+                    state->session, 0, &echo);
 
             debug(F110, "sshsubsys - kdbint auth - single prompt mode - prompt:",
                   prompt, 0);
@@ -829,6 +968,7 @@ static int kbd_interactive_authenticate(ssh_client_state_t * state, BOOL *cancel
  */
 static int authenticate(ssh_client_state_t * state, BOOL *canceled) {
     int methods, rc;
+    BOOL no_auth_methods = TRUE;
 
     /* If the user cancels anytime during the authentication process this will
      * be set, and we'll know not to attempt any further authentication methods
@@ -848,36 +988,49 @@ static int authenticate(ssh_client_state_t * state, BOOL *canceled) {
      * until the server is satisfied */
     methods = ssh_userauth_list(state->session, NULL);
 
-    if (methods & SSH_AUTH_METHOD_NONE && !*canceled) {
+    if (methods & SSH_AUTH_METHOD_NONE &&!*canceled) {
+        no_auth_methods = FALSE;
         rc = ssh_userauth_none(state->session, NULL);
         if (rc == SSH_AUTH_SUCCESS) return rc;
     }
-    if (methods & SSH_AUTH_METHOD_PUBLICKEY && !*canceled) {
+    /* TODO: GSS API
+    if (methods & SSH_AUTH_METHOD_GSSAPI
+            && state->parameters->allow_gssapi_auth && !*canceled) {
+        // TODO: rc = ssh_userauth_gssapi(...);
+        if (rc == SSH_AUTH_SUCCESS) return rc;
+    }   */
+    if (methods & SSH_AUTH_METHOD_PUBLICKEY
+            && state->parameters->allow_pubkey_auth && !*canceled) {
+        no_auth_methods = FALSE;
         rc = ssh_userauth_publickey_auto(state->session, NULL, NULL);
         if (rc == SSH_AUTH_SUCCESS) return rc;
     }
-    /* TODO: Not working quite right at the moment.
-     *    After answering all prompts ssh_userauth_kbdint still gives
-     *    SSH_AUTH_INFO indicating more answers are required - even though there
-     *    are no more prompts to answer.
-     *
-     *    Probably need to test a simpler example just in case its something
-     *    like threading causing problems.
-     *
-    if (methods & SSH_AUTH_METHOD_INTERACTIVE && !*canceled) {
+    if (methods & SSH_AUTH_METHOD_INTERACTIVE
+            && state->parameters->allow_kbdint_auth && !*canceled) {
+        no_auth_methods = FALSE;
         rc = kbd_interactive_authenticate(state, canceled);
         if (rc == SSH_AUTH_SUCCESS) return rc;
-    }*/
-    if (methods & SSH_AUTH_METHOD_PASSWORD && !*canceled) {
+    }
+    if (methods & SSH_AUTH_METHOD_PASSWORD
+            && state->parameters->allow_password_auth && !*canceled) {
+        no_auth_methods = FALSE;
         rc = password_authenticate(state, canceled);
         if (rc == SSH_AUTH_SUCCESS) return rc;
     }
 
     if (*canceled) {
+        printf("User canceled.\n");
         return SSH_ERR_USER_CANCELED;
     }
 
-    /* TODO: ssh_userauth_gssapi() */
+    if (no_auth_methods) {
+        printf("No supported authentication methods!\n");
+        printf("The server supports: ");
+        if (methods & SSH_AUTH_METHOD_PUBLICKEY) printf("publickey ");
+        if (methods & SSH_AUTH_METHOD_INTERACTIVE) printf("keyboard-interactive ");
+        if (methods & SSH_AUTH_METHOD_PASSWORD) printf("password ");
+        printf("\n");
+    }
 
     return rc;
 }
@@ -1051,9 +1204,37 @@ static int configure_session(ssh_client_state_t * state) {
                     &state->parameters->gssapi_delegate_credentials);
     ssh_options_set(state->session, SSH_OPTIONS_PROCESS_CONFIG,
                     &state->parameters->use_openssh_config);
+    ssh_options_set(state->session, SSH_OPTIONS_NODELAY,
+                    &state->parameters->nodelay);
     if (!state->parameters->compression) {
         ssh_options_set(state->session, SSH_OPTIONS_COMPRESSION_C_S, "no");
         ssh_options_set(state->session, SSH_OPTIONS_COMPRESSION_S_C, "no");
+    }
+
+    if (state->parameters->allowed_ciphers) {
+        ssh_options_set(state->session, SSH_OPTIONS_CIPHERS_C_S,
+                        state->parameters->allowed_ciphers);
+        ssh_options_set(state->session, SSH_OPTIONS_CIPHERS_S_C,
+                        state->parameters->allowed_ciphers);
+    }
+
+    if (state->parameters->allowed_hostkey_algorithms) {
+        ssh_options_set(state->session, SSH_OPTIONS_HOSTKEYS,
+                        state->parameters->allowed_hostkey_algorithms);
+    }
+    if (state->parameters->macs) {
+        ssh_options_set(state->session, SSH_OPTIONS_HMAC_C_S,
+                        state->parameters->macs);
+        ssh_options_set(state->session, SSH_OPTIONS_HMAC_S_C,
+                        state->parameters->macs);
+    }
+    if (state->parameters->key_exchange_methods) {
+        ssh_options_set(state->session, SSH_OPTIONS_KEY_EXCHANGE,
+                        state->parameters->key_exchange_methods);
+    }
+    if (state->parameters->proxy_command) {
+        ssh_options_set(state->session, SSH_OPTIONS_PROXYCOMMAND,
+                        state->parameters->proxy_command);
     }
 
     if (state->parameters->port)
@@ -1320,8 +1501,8 @@ void ssh_thread(ssh_thread_params_t *parameters) {
     ssh_client_state_t* state = NULL;
     ssh_client_t *client;
     socket_t socket;
-    HANDLE events[7];
-
+    HANDLE events[8];
+    LARGE_INTEGER keepaliveDueTime;
 
     debug(F100, "sshsubsys - SSH Subsystem starting up...", "", 0);
 
@@ -1362,12 +1543,26 @@ void ssh_thread(ssh_thread_params_t *parameters) {
     events[0] = WSACreateEvent();
     WSAEventSelect(socket, events[0], FD_READ | FD_WRITE);
     // TODO: The above puts the socket in nonblocking mode. Will libssh mind?
-    events[1] = client->disconnectEvent;
-    events[2] = client->ptySizeChangedEvent;
-    events[3] = client->flushEvent;
-    events[4] = client->breakEvent;
-    events[5] = client->dataArrivedEvent;
-    events[6] = client->dataConsumedEvent;
+    events[1] = CreateWaitableTimerW(NULL, TRUE, NULL); /* Keepalive timer */
+    events[2] = client->disconnectEvent;
+    events[3] = client->ptySizeChangedEvent;
+    events[4] = client->flushEvent;
+    events[5] = client->breakEvent;
+    events[6] = client->dataArrivedEvent;
+    events[7] = client->dataConsumedEvent;
+
+    /* Setup keepalive timer (if enabled) */
+    if (state->parameters->keepalive_seconds > 0) {
+        /* Value is in 100 nanosecond intervals, negative for relative time */
+        keepaliveDueTime.QuadPart =
+                state->parameters->keepalive_seconds * (-10000000LL);
+
+        if (!SetWaitableTimer(events[1], &keepaliveDueTime, 0, NULL, NULL, 0))
+        {
+            debug(F111, "sshsubsys - failed to set keepalive timer",
+                  "interval", state->parameters->keepalive_seconds);
+        }
+    }
 
     rc = SSH_ERR_WAIT_FAILED;
 
@@ -1380,7 +1575,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
 
         debug(F100, "sshsubsys - waiting...", "", 0);
         waitResult = WSAWaitForMultipleEvents(
-                7, /* Number of events */
+                8, /* Number of events */
                 events, /* Array of events to wait on */
                 FALSE, /* Return when *any* event is signalled, rather than all */
                 1000, /* Wait for up to 1s */
@@ -1427,6 +1622,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
             break;
         }
 
+        /* Check for EOF */
         if (ssh_channel_is_eof(state->ttyChannel)) {
             debug(F100, "sshsubsys - tty channel is EOF - ending session", "", 0);
             rc = SSH_ERR_EOF;
@@ -1438,7 +1634,6 @@ void ssh_thread(ssh_thread_params_t *parameters) {
             WSAResetEvent(events[0]);
             debug(F100, "sshsubsys - network event", "", 0);
         }
-
 
         /* Check for disconnect event */
         if (WaitForSingleObjectEx(client->disconnectEvent, 0, TRUE) != WAIT_TIMEOUT) {
@@ -1487,6 +1682,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
             ResetEvent(client->breakEvent);
         }
 
+        /* Check for flush event */
         if (WaitForSingleObjectEx(client->flushEvent, 0, TRUE) != WAIT_TIMEOUT) {
             debug(F100, "sshsubsys - flush event", "", 0);
             // TODO: Should we sit in a loop until everything has been written
@@ -1498,6 +1694,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
             }
         }
 
+        /* Check for data ready to be sent */
         if (WaitForSingleObjectEx(client->dataArrivedEvent, 0, TRUE) != WAIT_TIMEOUT) {
             debug(F100, "sshsubsys - data arrived event", "", 0);
             ResetEvent(client->dataArrivedEvent);
@@ -1511,8 +1708,25 @@ void ssh_thread(ssh_thread_params_t *parameters) {
             ResetEvent(client->dataConsumedEvent);
         }
 
+        /* Check if it's time to send a keepalive packet */
+        if (WaitForSingleObjectEx(events[1], 0, TRUE) != WAIT_TIMEOUT) {
+            /* Then send some data the server should just ignore. This should
+             * keep the connection alive and prevent timeouts */
+            ssh_send_ignore(state->session, "\0");
+
+            debug(F100, "sshsubsys - sent keepalive packet", NULL, 0);
+
+            /* Reset the timer for the next keepalive packet */
+            if (!SetWaitableTimer(events[1], &keepaliveDueTime, 0, NULL, NULL, 0))
+            {
+                debug(F111, "sshsubsys - failed to set keepalive timer after "
+                            "timer was signaled", "interval",
+                            state->parameters->keepalive_seconds);
+            }
+        }
+
         /* We process the send and receive buffers every time around even if
-         * there haven't been any related events as it significantly reduces
+         * there haven't been anyN related events as it significantly reduces
          * or eliminates a certain race condition that was breaking file
          * transfers. Its perhaps not the correct solution but it works and
          * doesn't really have much of a downside. */
@@ -1530,6 +1744,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
     /* We've either been asked to disconnect or hit an error. Clean up and end
      * the thread. */
     WSACloseEvent(events[0]); /* Close the socket event created earlier */
+    CloseHandle(events[1]); /* Close the keepalive timer */
     ssh_client_close(state, client, rc);
     debug(F100, "sshsubsys - thread terminate", "", 0);
     return;

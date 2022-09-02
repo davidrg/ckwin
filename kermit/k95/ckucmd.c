@@ -197,6 +197,7 @@ modules would have to be changed...
 #endif /* CK_ANSIC */
 #endif /* OSF13 */
 
+#ifndef OS2
 #ifndef HPUXPRE65
 #include <errno.h>			/* Error number symbols */
 #else
@@ -204,6 +205,19 @@ modules would have to be changed...
 #include <errno.h>			/* Error number symbols */
 #endif	/* ERRNO_INCLUDED */
 #endif	/* HPUXPRE65 */
+#endif /* OS2 */
+
+/* Error number symbols - any compiler targeting Windows
+ * and non-watcom compilers targeting OS/2. */
+#ifdef OS2
+#ifdef NT
+#include <errno.h>
+#else /* NT */
+#ifndef __WATCOMC__
+#include <errno.h>
+#endif /* __WATCOMC__ */
+#endif /* NT */
+#endif /* OS2 */
 
 #ifdef OS2
 #ifndef NT

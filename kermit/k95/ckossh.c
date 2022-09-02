@@ -41,12 +41,14 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  * where all the work is done (using libssh) lives in ckoshs.c.
  */
 
+#include <libssh/libssh.h>
 
 #include "ckcdeb.h"
 #include "ckossh.h"
 #include "ckcker.h"
-
+#include "ckuusr.h"
 #include "ckoshs.h"
+
 
 /* Global Variables:
  *   These are all declared in ckuus3.c around like 8040
@@ -69,20 +71,23 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *   char* ssh2_unh   NULL    SSH-2 User Known Hosts file
  *   char* ssh2_gnh   NULL    SSH-2 Global Known Hosts file
  *   int   pwflg      0       Password has been supplied (/password:)
+ *   int   ssh_hbt    0       Heartbeat (keepalive) setting
+ *   int   tcp_nodelay 0      Enable/disable nagle algorithm
  *   char* pwbuf      "\0"    Supplied password
  *   char* uidbuf     ""      Supplied username (if any)
+ *   char* ssh2_auth  NULL    Comma-separated list of allowed auth methods
+ *   char* ssh2_cif   NULL    Comma-separated list of SSH v2 ciphers allowed
+ *   char* ssh2_hka   NULL    Comma-separated list of host key algorithms
+ *   char* ssh2_mac   NULL    Comma-separated list of MACs
+ *   char* ssh2_kex   NULL    Comma-separated list of key exchange methods
+ *   char* ssh_pxc    NULL    Proxy Command
  *
  * Unused Global Variables:
  *   ssh_afw, ssh_xfw, ssh_prp, ssh_shh, ssh_chkip,
  *   ssh_gwp, ssh_dyf, ssh_k4tgt, ssh_k5tgt, ssh2_ark,
- *   ssh_gkx, ssh_k5_is_k4, ssh_hbt, ssh_dummy
+ *   ssh_gkx, ssh_k5_is_k4
  *
- *   ssh2_cif, ssh2_mac, ssh2_auth, ssh_xal, ssh2_hka, xxx_dummy
- *
- * Obsolete or not used:
- *    char* ssh1_cif    SSH-1 Not supported     SSH-1 Cipher.
- *    char* ssh1_gnh    SSH-1 Not supported     SSH-1 Global Knownhosts file
- *    char* ssh1_unh    SSH-1 Not supported     SSH-1 User Knownhosts file
+ *   ssh_xal (xauth location)
  *
  * SSH Logging ("set ssh verbose x", ssh_vrb) levels:
  *  0   SSH_LOG_NOLOG       No logging at all
@@ -124,22 +129,20 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *      TODO: CLEAR
  *          TODO: LOCAL-PORT-FORWARD
  *          TODO: REMOTE-PORT-FORWARD
- *      TODO: KEY
- *          TODO: CHANGE-PASSPHRASE
- *              TODO: /NEW-PASSPHRASE:passphrase
- *              TODO: /OLD-PASSPHRASE:passphrase
- *              TODO: filename
- *          TODO: CREATE
- *              TODO: /BITS:bits
- *              TODO: /PASSPHRASE: passphrase
- *              TODO: /TYPE:{V1-RSA,V2-DSA,V2-RSA}
- *              TODO: /V1-RSA-COMMENT: comment
- *              TODO: filename
- *          TODO: DISPLAY
- *              TODO: /FORMAT:{fingerprint, ietf,openssh,ssh.com}
- *              TODO: filename
- *          TODO: V1 SET-COMMENT filename comment
- *          TODO: V2 REKEY
+ *   TODO: SSH KEY
+ *      TODO: CHANGE-PASSPHRASE
+ *          TODO: /NEW-PASSPHRASE:passphrase
+ *          TODO: /OLD-PASSPHRASE:passphrase
+ *          TODO: filename
+ *      CREATE
+ *          /BITS:bits
+ *          /PASSPHRASE: passphrase
+ *          /TYPE:{ DSS, ECDSA, ED25519, RSA  }
+ *          filename
+ *      TODO: DISPLAY
+ *          TODO: /FORMAT:{fingerprint, ietf,openssh,ssh.com}
+ *          TODO: filename
+ *      TODO: V2 REKEY
  *   SET SSH
  *      TODO: AGENT-FORWARDING {ON,OFF}
  *      TODO: CHECK-HOST-IP {ON,OFF}
@@ -149,35 +152,36 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *      TODO: GATEWAY-PORTS {ON,OFF}
  *      GSSAPI DELEGATE-CREDENTIALS {ON,OFF}
  *          Value is stored in ssh_gsd
+ *      HEARTBEAT-INTERVAL interval
  *      TODO: IDENTITY-FILE filename
  *      TODO: KERBEROS4 TGT-PASSING {ON,OFF}    -- delete
  *      TODO: KERBEROS5 TGT-PASSING {ON,OFF}    -- delete
  *      TODO: PRIVILEGED-PORT {ON,OFF}
  *      TODO: QUIET {ON,OFF}
- *      TODO: STRICT-HOST-KEY-CHECK {ASK, ON, OFF}
+ *          -> This should suppress all printfs
+ *      STRICT-HOST-KEY-CHECK {ASK, ON, OFF}
  *      USE-OPENSSH-CONFIG {ON,OFF}
  *          Value is stored in ssh_cfg
- *      V1 CIPHER {3DES, BLOWFISH, DES}
- *          Ignored (SSH-1 not supported)
- *      V1 GLOBAL-KNOWN-HOSTS-FILE filename
- *          Ignored (SSH-1 not supported)
- *      V1 USER-KNOWN-HOSTS-FILE filename
- *          Ignored (SSH-1 not supported)
- *      TODO: V2 AUTHENTICATION {EXTERNAL-KEYX, GSSAPI, HOSTBASED, KEYBOARD-INTERACTIVE, PASSWORD, PUBKEY, SRP-GEX-SHA1}
- *      TODO: V2 CIPHERS {3DES-CBC, AES128-CBC, AES192-CBC, AES256-CBC, ARCFOUR, BLOWFISH-CBC, CAST128-CBC, RIJNDAEL128-CBC, RIJNDAEL192-CBC, RIJNDAEL256-CBC}
- *                 libssh:3des-cbc, aes128-cbc, aes192-cbc, aes256-cbc, chachae20-poly1305, aes256-gcm@openssh.com, aes128-gcm@openssh.com, aes256-ctr, aes192-ctr, aes128-ctr,
- *                 -> will require changes to ckuus3.c
+ *      V2 AUTHENTICATION {EXTERNAL-KEYX, GSSAPI, HOSTBASED, KEYBOARD-INTERACTIVE, PASSWORD, PUBKEY, SRP-GEX-SHA1}
+ *          Value stored in ssh2_auth as a comma-separated list
+ *          We can support (eventually in some cases):
+ *              GSSAPI, KEYBOARD-INTERACTIVE, PASSWORD, PUBKEY
+ *          Not supported by libssh:
+ *              EXTERNAL-KEYX, HOSTBASED, SRP-GEX-SHA1
+ *      TODO: V2 Auto-rekey {on, off}
+ *      V2 CIPHERS {3des-cbc, aes128-cbc, aes192-cbc, aes256-cbc, chachae20-poly1305, aes256-gcm@openssh.com, aes128-gcm@openssh.com, aes256-ctr, aes192-ctr, aes128-ctr}
  *      V2 GLOBAL-KNOWN-HOSTS-FILE filename
  *          Stored in ssh2_gnh
- *      TODO: V2 HOSTKEY-ALGORITHMS {SSH-DSA, SSH-RSA}
- *      TODO: V2 MACS {HMAC-SHA1, HMAC-MD5, HMAC-MD5-96, HMAC-RIPEMD160, HMAC-SHA1-96}
- *              libssh:hmac-sha1, hmac-sha2-256-etm@openssh.com, hmac-sha2-512-etm@openssh.com, hmac-sha1-etm@openssh.com, hmac-sha2-512, hmac-sha2-256,  none
+ *      V2 HOSTKEY-ALGORITHMS {ssh-ed25519, ecdsa-sha2-nistp256, ecdsa-sha2-nistp384, ecdsa-sha2-nistp521, ssh-rsa, rsa-sha2-512, rsa-sha2-256,ssh-ds}
+ *           Stored in ssh2_hka
+ *      V2 KEY-EXCHANGE-METHODS {...}
+ *      V2 MACS {hmac-sha1, hmac-sha2-256-etm@openssh.com, hmac-sha2-512-etm@openssh.com, hmac-sha1-etm@openssh.com, hmac-sha2-512, hmac-sha2-256,  none}
+ *          Stored in ssh2_mac
  *      V2 USER-KNOWN-HOSTS-FILE filename
  *          Stored in ssh2_unh
  *      VERBOSE level
  *          Report Errors - Verbosity Level. Range 0-7. Value stored in ssh_vrb
- *      SSH VERSION {1, 2, AUTOMATIC}
- *          Just reports an error if version is 1 (SSH-1 not supported)
+ *      SSH VERSION {2, AUTOMATIC}
  *          value is saved in ssh_ver. 0=auto.
  *      TODO: SSH X11-FORWARDING {ON, OFF}
  *          SET TELNET ENV DISPLAY is used to set the DISPLAY value
@@ -189,9 +193,6 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  */
 
 /* More TODO:
- *  - TODO: Fix occasional random disconnect. Perhaps a threading issue? Maybe
- *          everything here interacting with libssh needs to be moved to a
- *          dedicated thread.
  *  - TODO: Figure out why nano doesn't correctly resume after being suspended
  *          - Possibly a terminal emulation issue. It works fine when emulating
  *            a VT220. Htop doesn't quite resume properly either - doesn't redraw
@@ -203,8 +204,6 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *            through to password auth and, if thats unsuccessful, disconnect.
  *            So for now keyboard interactive is disabled.
  *  - TODO: Other Settings
- *  - TODO: Sort out host verification
- *          - it is working. So just needs tidying.
  *  - TODO: How do we know /command: has finished? EOF?
  *  - TODO: fix UI prompt look&feel (weird inset buttons)
  *  - TODO: Kermit subsystem (/subsystem:kermit) doesn't work
@@ -218,7 +217,7 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *      -DSFTP_BUILTIN
  *  - TODO: HTTP Proxying - this was something the previous implementaiton could
  *          handle?
-  *  - TODO: deal with changing terminal type after connect ? (K95 doesn't)
+  * - TODO: deal with changing terminal type after connect ? (K95 doesn't)
  */
 
 /* ==== LibSSH Settings ====
@@ -233,13 +232,7 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *  SSH_OPTIONS_COMPRESSION_LEVEL   Compression level
  *  SSH_OPTIONS_HMAC_C_S            Set message authentication code algo client to server
  *  SSH_OPTIONS_HMAC_S_C            Set message authentication code algo server to client
- *  SSH_OPTIONS_CIPHERS_*           Set client to server and server to client ciphers
- *      -> command exists, list of algorithms is out of date
  *  SSH_OPTIONS_KEY_EXCHANGE        Set key exchange methods
- *  SSH_OPTIONS_HOSTKEYS            Set preferred host key types
- *      -> command exists, list of algorithms is out of date
- *  SSH_OPTIONS_PASSWORD_AUTH, SSH_OPTIONS_PUBKEY_AUTH, SSH_OPTIONS_KBDINT_AUTH, SSH_OPTIONS_GSSAPI_AUTH
- *      -> command exists, list of options needs updating
  *
  * Settings we probably don't care about:
  *  SSH_OPTIONS_FD                  To supply our own socket if we want
@@ -260,6 +253,7 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
 extern char uidbuf[];                   /* User ID set via /user: */
 extern char pwbuf[];                    /* Password set via /password: */
 extern int  pwflg;                      /* Password has been set */
+extern int tcp_nodelay;                 /* Enable/disable Nagle's algorithm */
 int ssh_sock;   /* TODO: get rid of this (unless its needed for connecting
                  *      through a proxy server?) */
 
@@ -495,7 +489,15 @@ int ssh_open() {
             pwflg ? pwbuf : NULL, /* Password (if supplied) */
             get_current_terminal_type(),
             pty_width,
-            pty_height
+            pty_height,
+            ssh2_auth,  /* Allowed authentication methods */
+            ssh2_cif,   /* Allowed ciphers */
+            ssh_hbt,    /* Heartbeat in seconds */
+            ssh2_hka,   /* Allowed host key algorithms */
+            ssh2_mac,   /* Allowed MACs */
+            ssh2_kex,   /* Key exchange methods */
+            tcp_nodelay,/* Enable/disable Nagle's algorithm */
+            ssh_pxc     /* Proxy Command */
             );
     if (parameters == NULL) {
         debug(F100, "ssh_open() - failed to construct parameters struct", "", 0);
@@ -962,8 +964,225 @@ int ssh_fwd_remote_port(int port, char * host, int host_port)
     return SSH_ERR_NOT_IMPLEMENTED; /* TODO */
 }
 
+/* These live in ckoreg.c */
+char* GetHomePath();
+char* GetHomeDrive();
+
+/** Creates a
+ *
+ * @param filename File to write the private key to
+ * @param bits Length of the key in bits. Valid options vary by key type
+ * @param pp Passphrase
+ * @param type Key type
+ * @param cmd_comment SSH V1 RSA Comment (obsolete)
+ * @return
+ */
 int sshkey_create(char * filename, int bits, char * pp, int type, char * cmd_comment) {
-    return SSH_ERR_NOT_IMPLEMENTED; /* TODO */
+    enum ssh_keytypes_e ktype;
+    char *output_filename = NULL, *pubkey_output_filename = NULL,
+         *passphrase = NULL, *default_filename = NULL;
+    ssh_key key = NULL;
+    int rc;
+
+    debug(F100, "sshkey_create", "", 0);
+
+    /* By default, openssh searches for id_rsa, id_ecdsa, id_ecdsa_sk,
+     * id_ed25519, id_ed25519_sk and id_dsa */
+    switch(type) {
+        case SSHKT_DSS:
+            default_filename = "id_dsa";
+            ktype = SSH_KEYTYPE_DSS;
+            if (bits == 0) bits = 1024;
+            if (bits != 1024 && bits != 2048) {
+                printf("Invalid key length %d - valid options are: 1024, 2048\n");
+            }
+            break;
+        case SSHKT_RSA:
+            default_filename = "id_rsa";
+            ktype = SSH_KEYTYPE_RSA;
+            if (bits == 0) bits = 3072;
+            if (bits != 1024 && bits != 2048 && bits != 3072 &&
+                    bits != 2048 && bits != 8192) {
+                printf("Invalid key length %d - valid options are: 1024, 2048, 3072, 4096, 8192\n");
+                return SSH_ERR_UNSPECIFIED;
+            }
+            break;
+        case SSHKT_RSA1:
+            default_filename = NULL;
+            ktype = SSH_KEYTYPE_RSA1;
+            if (bits == 0) bits = 3072;
+            if (bits != 1024 && bits != 2048 && bits != 3072 &&
+                bits != 2048 && bits != 8192) {
+                printf("Invalid key length %d - valid options are: 1024, 2048, 3072, 4096, 8192\n");
+                return SSH_ERR_UNSPECIFIED;
+            }
+            break;
+        case SSHKT_ECDSA:
+            default_filename = "id_ecdsa";
+            ktype = SSH_KEYTYPE_ECDSA;
+            if (bits == 0) bits = 256;
+            if (bits != 256 && bits != 384 && bits != 521) {
+                printf("Invalid key length %d - valid options are: 256, 384, 521\n");
+                return SSH_ERR_UNSPECIFIED;
+            }
+            break;
+        case SSHKT_ED25519:
+            default_filename = "id_ed25519";
+            ktype = SSH_KEYTYPE_ED25519;
+            bits = 0; /* No bits */
+            break;
+        case SSHKT_DSS_CERT01:
+            default_filename = NULL;
+            ktype = SSH_KEYTYPE_DSS_CERT01;
+            break;
+        case SSHKT_RSA_CERT01:
+            default_filename = NULL;
+            ktype = SSH_KEYTYPE_RSA_CERT01;
+            break;
+        case SSHKT_ECDSA_P256:
+            default_filename = NULL;
+            ktype = SSH_KEYTYPE_ECDSA_P256;
+            break;
+        case SSHKT_ECDSA_P384:
+            default_filename = NULL;
+            ktype = SSH_KEYTYPE_ECDSA_P384;
+            break;
+        case SSHKT_ECDSA_P521:
+            default_filename = NULL;
+            ktype = SSH_KEYTYPE_ECDSA_P521;
+            break;
+        case SSHKT_ECDSA_P256_CERT01:
+            default_filename = NULL;
+            ktype = SSH_KEYTYPE_ECDSA_P256_CERT01;
+            break;
+        case SSHKT_ECDSA_P384_CERT01:
+            default_filename = NULL;
+            ktype = SSH_KEYTYPE_ECDSA_P384_CERT01;
+            break;
+        case SSHKT_ECDSA_P521_CERT01:
+            default_filename = NULL;
+            ktype = SSH_KEYTYPE_ECDSA_P521_CERT01;
+            break;
+        case SSHKT_ED25519_CERT01:
+            default_filename = NULL;
+            ktype = SSH_KEYTYPE_ED25519_CERT01;
+            break;
+        default:
+            printf("Unrecognised or unsupported key type\n");
+            return SSH_ERR_UNSPECIFIED;
+    }
+
+    printf("Bits: %d\n", bits);
+
+    if (filename) {
+        output_filename = _strdup(filename);
+    } else {
+        char* default_pathname;
+        output_filename = malloc(MAX_PATH * sizeof(char));
+        default_pathname = malloc(MAX_PATH * sizeof(char));
+
+        /* We'll suggest the user save in %USERPROFILE%\.ssh by default as thats
+         * where both C-Kermit and the windows builds of OpenSSH look */
+        snprintf(default_pathname, MAX_PATH, "%s%s.ssh/%s",
+                 GetHomeDrive(), GetHomePath(), default_filename);
+#ifdef CK_MKDIR
+        /* Make the .ssh directory if it doesn't already exist */
+        zmkdir(default_pathname);
+#endif
+
+        /* GetHomePath gives unix-style directory separators which the windows
+         * file dialog doesn't seem to like. So convert to DOS separators */
+        for (int i = 0; i < MAX_PATH; i++) {
+            if (default_pathname[i] == '\0') break;
+            if (default_pathname[i] == '/') default_pathname[i] = '\\';
+        }
+
+        int rc = uq_file(
+                "Enter a filename to save the generated keys to:", /* Text mode only, text above the prompt */
+                "Save As",  /* file dialog title or text-mode prompt*/
+                5, /* New file, don't append */
+                NULL, /* Help text - not used */
+                default_pathname,
+                output_filename,
+                MAX_PATH
+                );
+        free(default_pathname);
+
+        if (rc == 0) {
+            free(output_filename);
+            return SSH_ERR_USER_CANCELED;
+        } else if (rc < 0 ) {
+            free(output_filename);
+            return SSH_ERR_UNSPECIFIED;
+        }
+    }
+
+    if (pp) {
+        passphrase = _strdup(pp);
+    }
+    else {
+        /* Prompt for passphrase. Two fields to get confirmation. */
+        char pp1[250], pp2[250];
+        struct txtbox fields[2];
+
+        fields[0].t_buf = pp1;
+        fields[0].t_len = sizeof(pp1);
+        fields[0].t_lbl = "New passphrase: ";
+        fields[0].t_dflt = NULL;
+        fields[0].t_echo = 2;
+
+        fields[1].t_buf = pp2;
+        fields[1].t_len = sizeof(pp2);
+        fields[1].t_lbl = "New passphrase (again): ";
+        fields[1].t_dflt = NULL;
+        fields[1].t_echo = 2;
+
+        rc = uq_mtxt("Enter SSH Key passphrase. Leave both fields empty empty "
+                     "for no passphrase.",
+                     NULL, 2, fields);
+
+        if ( !rc ) {
+            printf("User cancelled\n");
+            free(output_filename);
+            return(SSH_ERR_USER_CANCELED);
+        }
+
+        if (strcmp(pp1, pp2) != 0) {
+            printf("Passphrase mismatch, no action taken\n");
+            free(output_filename);
+            return(SSH_ERR_UNSPECIFIED);
+        }
+
+        if (strlen(pp1) > 0) {
+            passphrase = _strdup(pp1);
+        }
+    }
+
+    printf("Generating private key...\n");
+    rc = ssh_pki_generate(ktype, bits, &key);
+    if (rc != SSH_OK) {
+        printf("Failed to generate private key\n");
+        return SSH_ERR_UNSPECIFIED;
+    }
+
+    rc = ssh_pki_export_privkey_file(key, passphrase, NULL, NULL, output_filename);
+    if (rc != SSH_OK) {
+        printf("Failed to write private key to %s - error %d\n", output_filename, rc);
+    } else {
+        pubkey_output_filename = malloc(MAX_PATH);
+
+        snprintf(pubkey_output_filename, MAX_PATH, "%s.pub", output_filename);
+        rc = ssh_pki_export_pubkey_file(key, pubkey_output_filename);
+        if (rc != SSH_OK) {
+            printf("Failed to write public key to %s\n", pubkey_output_filename);
+        }
+
+        free(pubkey_output_filename);
+    }
+
+    free(output_filename);
+    free(passphrase);
+    return SSH_ERR_NO_ERROR;
 }
 
 int sshkey_display_fingerprint(char * filename, int babble) {

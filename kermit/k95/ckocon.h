@@ -748,7 +748,11 @@ extern int ConnectMode;
 #ifdef NT
 _inline
 #else
+#ifdef __WATCOMC__
+inline
+#else
 _Inline
+#endif
 #endif
 BOOL
 IsConnectMode( void ) {

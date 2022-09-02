@@ -1,8 +1,6 @@
 /*  C K C D E B . H  */
 
 /*
-Thu Jun  2 09:49:31 2022
-
   For recent additions search below for "2021" and "2022".
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
@@ -33,7 +31,7 @@ Thu Jun  2 09:49:31 2022
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: Thu May 12 15:34:02 2022 (NODEPRECATED)
+    Last update: Tue Aug 23 07:11:45 2022
 */
 
 /*
@@ -46,6 +44,12 @@ Thu Jun  2 09:49:31 2022
 */
 #ifndef CKCDEB_H			/* Don't include me more than once. */
 #define CKCDEB_H
+
+/* 22 Aug 2022 - TYPE command new /INTERPRET switch enabled by default */
+
+#ifndef NOTYPEINTERPRET
+#define TYPEINTERPRET
+#endif  /* NOTYPEINTERPRET */
 
 /*
   Disinclude features that are "deprecated" in 2022;
@@ -2982,6 +2986,7 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
   Then, if either SSHBUILTIN or SSHCMD is defined, ANYSSH is also defined.
 */
 
+#undef COMMENT /* The OS/2 headers define this for some insane reason */
 #ifdef COMMENT
 Built-in SSH no longer depends on SSL support. Built-in SSH is now provided by
 a library (libssh, ssh.dll) which is itself linked against OpenSSL.
@@ -2992,7 +2997,7 @@ a library (libssh, ssh.dll) which is itself linked against OpenSSL.
 #endif /* OS2ONLY */
 #ifdef NT
 #ifndef CK_SSL
-#define NOSSH
+#define NOSSHN
 #endif /* CK_SSL */
 #endif /* NT */
 #else /* NO_SSL */

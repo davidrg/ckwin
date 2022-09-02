@@ -1,20 +1,23 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "03 Jun 2022"         /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20220603"		/* Keep them in sync */
-/* Fri Jun  3 06:22:11 2022 */
+#define EDITDATE  "23 Aug 2022"         /* Last edit date dd mmm yyyy */
+#define EDITNDATE "20220823"		/* Keep them in sync */
+/* Tue Aug 23 07:24:08 2022 */
 
 /*
-FOR A NEW VERSION (development, alpha, beta, release candidate formal release):
+FOR NEW VERSION (development, alpha, beta, release candidate, formal release):
   . Change the 3 dates just above;
-  . Change ck_cryear = "xxx"; (copyright year) just below, if necessary;
-  . For test versions change ck_s_test and ck_s_tver (below) appropriately;
+  . Change ck_cryear = "xxxx"; (copyright year) just below, if necessary;
+  . For test versions change ck_s_test and ck_s_tver (below) appropriately:
+     Dev, Alpha, Beta, or RC (Release Candidate);
   . Change makefile CKVER and BUILDID definitions and timestamp at top.
 
 If the version number has changed, also:
   . Change sccsid[] (below);
-  . Change ck_s_ver, ck_l_ver, ck_s_xver, ck_l_xver (below).
+  . Change ck_s_ver, ck_l_ver (below).
     (these are version numbers without Dev, Alpha, or Beta test ID)
+  . Increment ck_s_edit -- Must be larger than previous release.
+  . Update the edit number in ck_s_xver to agree with ck_s_edit
 */
 /*
   ckcsym.h is used for defining symbols that normally would be defined
@@ -48,28 +51,17 @@ If the version number has changed, also:
 #endif /* BETATEST */
 
 char * ck_cryear = "2022"; 		/* C-Kermit copyright year */
-
-#ifndef MAC /* MAC = Kermit for MAC OS 6, 7, ... i.e. original Macintosh */
 /*
   Note: initialize ck_s_test to "" if this is not a test version.
   Use (*ck_s_test != '\0') to decide whether to print test-related messages.
 */
-#ifndef BETATEST
-#ifndef OS2                             /* UNIX, VMS, etc... (i.e. C-Kermit) */
+#ifdef BETATEST
 char *ck_s_test = "Beta";		/* "Dev","Alpha","Beta","RC", or "" */
 char *ck_s_tver = "04";			/* Test version number */
-#else  /* OS2 */
-char *ck_s_test = "";			/* (i.e. K95) */
-char *ck_s_tver = "";
-#endif /* OS2 */
 #else /* BETATEST */
 char *ck_s_test = "";			/* Not development */
 char *ck_s_tver = "";
 #endif /* BETATEST */
-#else /* MAC */
-char *ck_s_test = "Pre-Alpha";          /* Mac Kermit is always a test... */
-char *ck_s_tver = "";			/* (pre Mac OS X 10, that is!) */
-#endif /* MAC */
 
 #ifdef BETADATE                         /* Date of this version or edit */
 char *ck_s_date = __DATE__;             /* Compilation date */
@@ -94,59 +86,27 @@ static char sccsid[] = "@(#)C-Kermit 10.0";
   system and hasn't been used since C-Kermit 7.1.
 
   The Edit number is sequential, always goes up, but there can be gaps.
-  For example there might be many edits between releases.
+  For example there might be many edits between releases.  The edit number
+  is no longer shown as of C-Kermit 10.0, but we still need to keep it,
+  and it should always be incremented, for the benefit of packagers like
+  Debian who depend on it.
   
-  If the major goes to 10, some version-number-based feature tests
-  could fail.  It might be better to use the minor version field
-  for future releases.
+  Also the custom-format version numbers for OS/2, Windows, and the
+  original 1980s Macintosh are gone.  There are no more Kermit-2,
+  Kermit 95, and Mac Kermit, just C-Kermit for each platform.
 */
-
-char *ck_s_ver = "10.0";             /* C-Kermit version string */
+char *ck_s_ver = "10.0";                /* C-Kermit version string */
+char *ck_s_edit = "400";                /* Edit number (for Debian package) */
+char *ck_s_xver = "10.0.400";           /* eXtended version string */
 long  ck_l_ver = 1000000L;              /* C-Kermit version number */
-
-#ifdef OS2
-/* New Open Source C-Kermit for Windows is just C-Kermit */
-char *ck_s_xver = "";			/* Product-specific version string */
-long  ck_l_xver = 0L;			/* Product-specific version number */
-#else
-#ifdef MAC
-char *ck_s_xver = "0.995";              /* Product-specific version string */
-long  ck_l_xver = 995L;                 /* Product-specific version number */
-#else
-char *ck_s_xver = "";                   /* Don't touch these... */
-long  ck_l_xver = 0L;                   /* they are computed at runtime */
-#endif /* MAC */
-#endif /* OS2 */
-
-#ifdef OS2
-#ifdef IKSDONLY
-#ifdef NT
-char *ck_s_name = "IKS-NT";
-#else /* NT */
-char *ck_s_name = "IKS-OS/2";
-#endif /* NT */
-#else /* IKSDONLY */
-#ifdef COMMENT
-char *ck_s_name = "Kermit 95";          /* Proprietary program name */
-#else
-char *ck_s_name = "C-Kermit";		/* Open Source program name */
-#endif /* COMMENT */
-#endif /* IKSDONLY */
-#else
-#ifdef MAC
-char *ck_s_name = "Mac Kermit";
-#else
-char *ck_s_name = "C-Kermit";
-#endif /* MAC */
-#endif /* OS2 */
-
+char *ck_s_name = "C-Kermit";           /* Name of this program */
 char *ck_s_who = "";                    /* Where customized, "" = not. */
 char *ck_patch = "";                    /* Patch info, if any. */
 
 #define CKVERLEN 128
 char versiox[CKVERLEN];                 /* Version string buffer  */
 char *versio = versiox;                 /* These are filled in at */
-long vernum, xvernum;                   /* runtime from above.    */
+long vernum;                            /* runtime from above.    */
 
 #define CKCMAI
 
@@ -2681,23 +2641,22 @@ VOID
 makever() {                             /* Make version string from pieces */
     int x, y;
     char * s;
-/*#ifndef OS2*/
-#ifndef MAC
-    ck_s_xver = ck_s_ver;               /* Fill in C-Kermit version number */
-    ck_l_xver = ck_l_ver;               /* for UNIX, VMS, etc. */
-#endif /* MAC */
-/*#endif*/ /* OS2 */
+
     x = strlen(ck_s_name);
-    y = strlen(ck_s_xver);
+    y = strlen(ck_s_ver);
     if (y + x + 1 < CKVERLEN) {
-        ckmakmsg(versio,CKVERLEN,ck_s_name," ",ck_s_xver,NULL);
+        ckmakmsg(versio,CKVERLEN,ck_s_name," ",ck_s_ver,NULL);
     } else {
         ckstrncpy(versio,"C-Kermit",CKVERLEN);
         return;
     }
     x += y + 1;
   
-    s = " OPEN SOURCE:";		/* C-Kermit 9.0 and later */
+    if (strlen(ck_s_test) > 0) {
+        s = " OPEN SOURCE:";		/* C-Kermit 9.0 and later */
+    } else {
+        s = " OPEN SOURCE";		/* C-Kermit 9.0 and later */
+    }
     y = strlen(s);
     if (CKVERLEN < x + y + 1)
       return;
@@ -2730,7 +2689,6 @@ makever() {                             /* Make version string from pieces */
         ckstrncat(versio,ck_s_date,CKVERLEN);
     }
     vernum = ck_l_ver;
-    xvernum = ck_l_xver;
     debug(F110,"Kermit version",versio,0);
 }
 

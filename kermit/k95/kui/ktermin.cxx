@@ -591,7 +591,7 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
             case ID_DOWNLOAD:
                 debug(F111,"KTerminal::message WM_COMMAND","ID_DOWNLOAD",LOWORD(wParam));
                 {
-                    KDownLoad download( kglob );
+                    KDownLoad download( kglob, TRUE );
                     download.createWin( this );
                     download.show();
                     break;

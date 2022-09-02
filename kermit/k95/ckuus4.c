@@ -14,7 +14,7 @@
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
     Last update:
-    Sun May  8 15:50:44 2022
+    Tue Aug 23 06:39:29 2022
 */
 
 /*
@@ -458,7 +458,7 @@ extern int frecl;
 #endif /* VMS */
 
 extern CK_OFF_T ffc, tfc, tlci, tlco;
-extern long filcnt, rptn, speed,  ccu, ccp, vernum, xvernum;
+extern long filcnt, rptn, speed,  ccu, ccp, vernum;
 
 #ifndef NOSPL
 extern char fspec[], myhost[];
@@ -712,7 +712,8 @@ struct keytab vartab[] = {
     { "ftp_server",       VN_FTP_S, 0}, /* 199 */
 #endif /* SYSFTP */
 #endif /* NOFTP */
-    { "ftype",     VN_MODE,  0},        /* 190 */
+    { "ftype",        VN_MODE,  0},     /* 190 */
+    { "fullversion",  VN_FULLVER, 0},   /* 400 */
 #ifdef KUI
     { "gui_fontname", VN_GUI_FNM, 0},	/* 205 */
     { "gui_fontsize", VN_GUI_FSZ, 0},	/* 205 */
@@ -13217,10 +13218,23 @@ nvlook(s) char *s; {
         sprintf(vvbuf,"%ld",vernum);    /* SAFE */
         return(vvbuf);
 
+      /* C-Kermit 10.0... no more product-specific version numbers */
       case VN_XVNUM:                    /* Product-specific version number */
-        sprintf(vvbuf,"%ld",xvernum);   /* SAFE */
+        sprintf(vvbuf,"%ld",vernum);    /* SAFE */
         return(vvbuf);
 
+      case VN_FULLVER:                  /* Full version number (edit 400) */
+      { 
+          extern char *ck_s_ver, *ck_s_edit, *ck_s_test, *ck_s_tver; 
+          if (x > strlen(ck_s_test)) {
+              sprintf(vvbuf,"%s.%s %s.%s",
+                      ck_s_ver, ck_s_edit, ck_s_test, ck_s_tver); /* SAFE */
+          } else {
+              sprintf(vvbuf,"%s.%s",
+                      ck_s_ver, ck_s_edit); /* SAFE */
+          }
+          return(vvbuf);
+      }
       case VN_HOME:                     /* Home directory */
         return(homepath());
 
@@ -15214,7 +15228,7 @@ getbasename(s) char *s; {
   Expands \ escapes via recursive descent.
   Argument s is a pointer to string to expand (source).
   Argument s2 is the address of where to put result (destination).
-  Argument n is the length of the destination string (to prevent overruns).
+  Argument n is the length of the destination string buffer.
   Returns -1 on failure, 0 on success,
     with destination string null-terminated and s2 pointing to the
     terminating null, so that subsequent characters can be added.
@@ -15288,9 +15302,6 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
 #endif	/* COMMENT */
 
     new = *s2;                          /* for one less level of indirection */
-#ifdef COMMENT
-    old = new;
-#endif /* COMMENT */
 
 #ifndef NOSPL
     itsapattern = 0;			/* For \fpattern() */
@@ -15341,7 +15352,7 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
         if (x != CMDQ) {                /* Is it the command-quote char? */
             *new++ = *s++;              /* No, normal char, just copy */
             if (--n2 < 0) {             /* and count it, careful of overflow */
-                debug(F101,"zzstring overflow 1","",depth);
+                debug(F101,"^^^ zzstring overflow 1","",depth);
                 depth = 0;
 #ifdef DVNAMBUF
                 if (vnambuf) free(vnambuf);
@@ -15427,7 +15438,6 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
             } else {
                 debug(F110,"zzstring %n vp","(NULL)",0);
                 n2 = nx;
-                new = old;
                 *new = NUL;
             }
 #endif /* COMMENT */
@@ -15490,7 +15500,6 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
 			}
 
                     } else {
-                        /* old = new; */
                         n2 = nx;
                     }
                 }
@@ -15904,12 +15913,11 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
         }
     }
     *new = NUL;                         /* Terminate the new string */
-    debug(F010,"zzstring while exit",*s2,0);
-
     depth--;                            /* Adjust stack depth gauge */
     *s2 = new;                          /* Copy results back into */
+    debug(F111,"^^^ 2 (n2) zzstring while exit *s2",*s2,n2);
     *n = n2;                            /* the argument addresses */
-    debug(F101,"zzstring ok","",depth);
+    debug(F111,"zzstring ok s2 n2",*s2,n2);
 #ifdef DVNAMBUF
     if (vnambuf) free(vnambuf);
 #endif /* DVNAMBUF */

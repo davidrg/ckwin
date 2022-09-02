@@ -14,7 +14,7 @@
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
   Last update:
-    Sun May  8 16:02:07 2022
+    Mon Aug 22 20:11:01 2022 (for TYPE /INTERPRET)
 */
 
 /* Includes */
@@ -143,6 +143,10 @@ extern char cmdbuf[], atmbuf[];         /* Command buffers */
 #endif /* DCMDBUF */
 
 extern int nopush;
+
+#ifdef TYPEINTERPRET
+extern int type_int;                    /* TYPE /INTERPRET */
+#endif  /* TYPEINTERPRET */
 
 #ifndef NOSPL
 int askflag = 0;                        /* ASK-class command active */
@@ -3861,9 +3865,26 @@ typegetline(incs, outcs, buf, n) int incs, outcs, n; char * buf; {
         *s = '\0';                      /* Terminate the string */
     }
 #endif /* COMMENT */
+
+#ifdef TYPEINTERPRET
+    if ( type_int )  {                  /* TYPE /INTERPRET (new 2022-08-22) */
+        int zzrc = 0;                   /* Returncode for zzstring */
+        int tmplen = TMPBUFSIZ;
+        char * newbuf = tmpbuf;         /* New string to create */
+
+/* It's working now but result lines are truncated */
+
+        debug(F101,"^^^ 0 typegetline tmplen","",tmplen); 
+        debug(F110,"^^^ 1 typegetline buf",buf,0); 
+        zzrc = zzstring(buf, &newbuf, &tmplen); /* Interpret the string */
+        debug(F111,"^^^ 2 typegetline buf, tmplen",buf,tmplen); 
+        debug(F111,"^^^ 2 typegetline tmpbuf, zzrc",tmpbuf,zzrc); 
+        len = ckstrncpy(buf, tmpbuf, TYPBUFL);  /* Replace original string */
+        debug(F111,"^^^ 3 typegetline buf len",buf,len);
+    } 
+#endif  /* TYPEINTERPRET */
     return(x < 0 ? -1 : len);
 }
-
 
 #ifndef MAC
 SIGTYP
@@ -3887,6 +3908,9 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
     char * file, * pat, * prefix; int paging, first, head, width, incs, outcs;
     char * outfile; int z;
 /* dotype */ {
+#ifdef TYPEINTERPRET 
+    extern int type_int;
+#endif  /* TYPEINTERPRET  */
     extern CK_OFF_T ffc;
     char buf[TYPBUFL+2];
     char * s = NULL;
@@ -4088,7 +4112,7 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
          (len = typegetline(incs,outcs,buf,TYPBUFL)) > -1;
          lines++
          ) {
-        debug(F011,"dotype line",buf,len);
+        debug(F111,"^^^ dotype line",buf,len);
 #ifndef MAC
         if (typ_int) {                  /* Interrupted? */
             typ_int = 0;

@@ -22,6 +22,7 @@
 #   CKF_BETATEST   yes        Set to no to do a release build
 #   CKF_NO_CRYPTO  no         Disable all cryptography
 #   CKF_XYZ        no         X/Y/Z MODEM (Relies on the 'P' library)
+#   CKF_MOUSEWHEEL yes        Support for the the mouse wheel
 #
 # The following flags are set automatically:
 #   CKF_SSH     Turned off when targeting OS/2 or when building with OpenWatcom
@@ -45,12 +46,8 @@ ENABLED_FEATURE_DEFS = -DNETCONN
 DISABLED_FEATURES = SuperLAT DECnet Kerberos SRP Telnet-Encryption CryptDLL
 DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNO_SRP -DNO_ENCRYPTION
 
-RC_FEATURE_DEFS = /dCOMPILER_$(CMP)
-
-!if "$(PLATFORM)" != "NT"
-# No built-in SSH support for OS/2 (yet)
-CKF_SSH=no
-!endif
+!if "$(PLATFORM)" == "NT"
+WIN32_VERSION=0x0400
 
 !if "$(CMP)" == "OWCL"
 # No built-in SSH support for OpenWatcom (yet)
@@ -70,6 +67,10 @@ CKF_CONPTY=yes
 # feature.
 CKF_LOGIN=no
 CKF_NTLM=no
+
+# Or for scroll wheel support
+CKF_MOUSEWHEEL=no
+
 !endif
 
 !if ($(MSC_VER) < 100)
@@ -108,6 +109,28 @@ CKF_LOGIN=no
 CKF_NTLM=no
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT31
 RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) /dCKT_NT31
+!endif
+
+!else
+
+# OS/2 gets NetBIOS support!
+CKF_NETBIOS=yes
+
+# And does not get mouse wheel support (not implemented)
+CKF_MOUSEWHEEL=no
+
+!if ("$(CMP)" == "OWCL") || ("$(CMP)" == "OWCL386")
+# But not when building with OpenWatcom. At the moment it causes Kermit/2 to
+# crash on startup at ckonbi.c:152
+!message Turning NetBIOS support off - OpenWatcom builds just crash with it enabled.
+CKF_NETBIOS=no
+!endif
+
+!if "$(CKF_SSH)" == "yes"
+!message Target platform is OS/2 - forcing SSH off (not supported)
+# No built-in SSH support for OS/2 (yet)
+CKF_SSH=no
+!endif
 !endif
 
 
@@ -265,4 +288,25 @@ DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNODIAL
 !if "$(CKF_RICHEDIT)" == "no"
 DISABLED_FEATURES = $(DISABLED_FEATURES) RichEdit
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNORICHEDIT
+!endif
+
+
+# NetBIOS (for OS/2 only)
+#   Turn on with -DCK_NETBIOS
+!if ("$(PLATFORM)" == "OS2")
+!if ("$(CKF_NETBIOS)" == "yes")
+ENABLED_FEATURES = $(ENABLED_FEATURES) NetBIOS
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_NETBIOS
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) NetBIOS
+!endif
+!endif
+
+# Mouse Wheel support
+#   Turn off with -DNOSCROLLWHEEL
+# Turns off "set mouse wheel" command along with the ability to scroll
+# the terminal or do other things with the mouse wheel
+!if "$(CKF_MOUSEWHEEL)" == "no"
+DISABLED_FEATURES = $(DISABLED_FEATURES) Mouse-Wheel
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOSCROLLWHEEL
 !endif

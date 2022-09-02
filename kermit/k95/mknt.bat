@@ -6,11 +6,12 @@ if not exist nt\NUL mkdir nt
 move nt\*.obj . > nul
 del ckcmai.obj ckuus5.obj
 nmake /nologo /e /f ckoker.mak msvc
-set BLD_ERR_LVL=%errorlevel%
 move *.obj nt  > nul
 
 REM OpenWatcom 1.9s nmake clone doesn't seem to set errorlevel when the build
-REM fails. So we'll check the expected outputs were produced too:
+REM fails. And VC5 nmake often seems to complete successfully but report an
+REM error of 1 even though we're not supplying the /K flag. So we'll check the
+REM expected outputs were produced to detect failure instead:
 if not exist cknker.exe goto :missingoutputs
 if not exist iksd.exe goto :missingoutputs
 if not exist iksdsvc.exe goto :missingoutputs
@@ -31,7 +32,6 @@ echo Expected: cknker.exe, iksd.exe, iksdsvc.exe, k95d.exe, rlogin.exe,
 echo           telnet.exe, testps.exe, ctl3dins.exe
 echo.
 echo.
-set errorlevel=1
+exit /B 1
 
 :end
-exit /B %BLD_ERR_LVL%

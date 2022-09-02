@@ -198,7 +198,14 @@ struct keynode {
 #define MMB1      XYM_B1
 #define MMB2      XYM_B2
 #define MMB3      XYM_B3
+/* These two are mouse wheel up and down and always have the event MMCLICK */
+#define MMB4      XYM_WHEEL_UP
+#define MMB5      XYM_WHEEL_DN
+#ifndef NOSCROLLWHEEL
+#define MMBUTTONMAX  5
+#else
 #define MMBUTTONMAX  3
+#endif
 
 #define MMALT     XYM_ALT
 #define MMCTRL    XYM_CTRL
@@ -206,6 +213,7 @@ struct keynode {
 #define MMCLICK   XYM_C1
 #define MMDBL     XYM_C2
 #define MMDRAG    XYM_DRAG
+#define MMWHEEL   MMCLICK
 #define MMEVENTSIZE (MMDRAG * 2)
 #define MMSIZE (MMBUTTONMAX * MMEVENTSIZE)               /* Mouse Map Size */
 

@@ -15,7 +15,7 @@
 #include <sys/stat.h>
 #include <direct.h>
 extern "C" {
-    extern int vmode;
+    extern BYTE vmode;
     extern char exedir[];
     extern int  tt_status[];
 };

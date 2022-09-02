@@ -5075,7 +5075,7 @@ tilde_expand(dirname) char *dirname; {
 int
 zsyscmd(s) char *s; {
 #ifndef NOPUSH
-    extern int vmode;
+    extern BYTE vmode;
 
 /*
   We must set the priority back to normal.  Otherwise all of children
@@ -5152,7 +5152,7 @@ _zshcmd(s,wait) char *s; int wait; {
     SIGTYP (* savint)(int);
 #endif /* NT */
     char *shell = getenv("SHELL");
-    extern int vmode;
+    extern BYTE vmode;
 
     if ( !shell )
        shell = getenv("COMSPEC");

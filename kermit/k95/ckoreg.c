@@ -679,8 +679,9 @@ GetFtpCommand( void )
 #ifdef BROWSER
 #ifdef NT
 void
-Real_Win32ShellExecute( char * object )
+Real_Win32ShellExecute( void* param )
 {
+    char * object;
     extern HWND hwndConsole;
     extern int priority;
 #ifdef COMMENT
@@ -688,6 +689,8 @@ Real_Win32ShellExecute( char * object )
     BOOL  rc;
 #endif
     HINSTANCE error;
+
+    object = (char*)param;
 
     SetThreadPrty(priority,isWin95() ? 3 : 11);
 

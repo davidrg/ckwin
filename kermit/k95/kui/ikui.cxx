@@ -231,10 +231,10 @@ KuiSetTerminalRunMode(int x)
 }
 
 int
-KuiDownloadDialog(char * title, char * def, char * result, int rlen)
+KuiDownloadDialog(char * title, char * def, char * result, int rlen, BOOL downloadButton)
 {
     if ( kui ) {
-        KDownLoad download( kglob );
+        KDownLoad download( kglob, downloadButton );
         download.setTitle(title);
         download.setInitialFileName(def);
         download.createWin( kui->getTerminal() );

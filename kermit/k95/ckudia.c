@@ -109,6 +109,7 @@ The remaining steps are in this module:
 
 #ifdef OS2ONLY
 #define INCL_VIO			/* Needed for ckocon.h */
+#define INCL_WINERRORS      /* Needed for WinGetLastError() */
 #include <os2.h>
 #undef COMMENT
 #include "ckocon.h"

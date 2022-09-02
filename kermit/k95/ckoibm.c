@@ -59,6 +59,11 @@
 #include <sys/time.h>
 #include <sys/select.h>
 
+#ifdef __WATCOMC__
+#include <tcpustd.h>
+#include <arpa/inet.h>
+#endif
+
 #define CK_DLL
 #include "ckotcp.h"
 
@@ -988,7 +993,12 @@ int ENTRY ck_getsockname( int socket, struct ck_sockaddr * name, int * namelen )
 int ENTRY ck_addsockettolist( int socket )
 {
     int rc = 0 ;
+#ifdef __WATCOMC__
+    /* Watcom C defines this with no return value */
+    addsockettolist( socket ) ;
+#else
     rc = addsockettolist( socket ) ;
+#endif
     return rc;
 }
 #endif

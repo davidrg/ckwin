@@ -43,9 +43,14 @@ set libssh_build=%libssh_root%\build
 
 REM ================== No changes required beyond this point ===================
 
-REM base include path
-set include=%include%;%root%\kermit\k95
-set include=%include%;%root%\kermit\k95\kui
+REM base include path - this is required for both Windows and OS/2
+set ckinclude=%root%\kermit\k95
+
+REM This and everything else is windows-specific.
+set ckwinclude=%ckinclude%;%root%\kermit\k95\kui
+
+REM Set include path for targeting Windows.
+set include=%include%;%ckwinclude%
 
 REM Add on any optional dependencies
 

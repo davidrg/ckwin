@@ -5,6 +5,12 @@
 #define OPENFILENAME_SIZE_VERSION_400 sizeof(OPENFILENAME);
 #endif
 
+extern "C" {
+    /* This is declared in ckotio.c and set to 1 when we're on NT 3.51
+     * (and 3.50 and 3.1) */
+    extern int nt351;
+}
+
 KDownLoad* download;
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
@@ -32,12 +38,15 @@ BOOL APIENTRY KSaveAsDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-KDownLoad::KDownLoad( K_GLOBAL* kg )
+KDownLoad::KDownLoad( K_GLOBAL* kg, BOOL dlButton )
     : KWin( kg )
     , hdownload( 0 )
     , downloadID( 999 )     // unique identifier for download button
     , optionID( 0x40E )     // it's not IDHELP!
+    , downloadButton(dlButton)
 {
+    OSVERSIONINFO osverinfo ;
+
     oldSaveAsProc = (WNDPROC)0;
     download = this;
     memset( &OpenFileName, '\0', sizeof(OPENFILENAME) );
@@ -47,6 +56,21 @@ KDownLoad::KDownLoad( K_GLOBAL* kg )
     strcpy(szTitle,"Save File As ...");
     success = FALSE;
     errorCode = 0;
+
+
+    osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
+    GetVersionEx( &osverinfo ) ;
+
+    if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS && osverinfo.dwMinorVersion == 90) {
+        /* Windows ME - this supports modern file dialogs */
+        downloadButton = FALSE;
+    } else if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT && osverinfo.dwMajorVersion != 4) {
+        /* Windows NT version 3.x OR Windows 2000 or newer
+         * Windows 2000+ supports modern file dialogs, while NT 3.51 does not
+         * support customisable file dialogs (at least, not in the way we're
+         * custominsing it) */
+        downloadButton = FALSE;
+    }
 }
 
 /*------------------------------------------------------------------------
@@ -109,15 +133,22 @@ void KDownLoad::show( Bool bVisible )
     OpenFileName.lCustData         = 0;
 
     OpenFileName.Flags = OFN_CREATEPROMPT | OFN_PATHMUSTEXIST 
-        | OFN_HIDEREADONLY | OFN_ENABLEHOOK
-#ifndef CKT_NT31
-        | OFN_EXPLORER
-#endif
+        | OFN_HIDEREADONLY
         | OFN_NOCHANGEDIR | OFN_NOTESTFILECREATE | OFN_OVERWRITEPROMPT 
         | OFN_SHAREAWARE ;
 //        | OFN_ENABLETEMPLATE ;
 
-    OpenFileName.lpfnHook = (LPOFNHOOKPROC)KDownDlgProc;
+    OpenFileName.lpfnHook = 0;
+    if (!nt351 && downloadButton) {
+        /* NT 3.51 and earlier don't support OFNHOOKPROC */
+        OpenFileName.Flags = OpenFileName.Flags | OFN_ENABLEHOOK
+#ifndef CKT_NT31
+            | OFN_EXPLORER
+#endif
+            ;
+        OpenFileName.lpfnHook = (LPOFNHOOKPROC)KDownDlgProc;
+    }
+
 //    OpenFileName.lpTemplateName = (LPTSTR)MAKEINTRESOURCE(IDD_DOWNLOAD);
 
     GetCurrentDirectory(sizeof(szCurrentDir),szCurrentDir);

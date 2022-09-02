@@ -283,7 +283,7 @@ extern int tt_timelimit;
 static time_t keypress_t=0;             /* Time of last keypress */
 static time_t idlesnd_t=0;              /* Time of last idle send */
 int escstate ;
-USHORT marginbot;                       /* Bottom of same, 1-based */
+int marginbot;                       /* Bottom of same, 1-based */
 int tt_async = 0;                       /* asynchronous connect mode? */
 int col_init = 0, row_init = 0;
 /*

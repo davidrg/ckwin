@@ -158,6 +158,7 @@ char *ckftpv = "FTP Client, 9.0.266, 8 May 2022";
 #include <signal.h>
 #ifdef OS2
 #ifdef OS2ONLY
+#define INCL_WINERRORS
 #include <os2.h>
 #endif /* OS2ONLY */
 #include "ckowin.h"
@@ -191,6 +192,14 @@ extern int TlsIndex;
 #include <errno.h>			/* Error number symbols */
 #endif	/* ERRNO_INCLUDED */
 #endif	/* HPUXPRE65 */
+
+#ifdef OS2
+#ifndef NT
+#ifdef __WATCOMC__
+#include <sys/time.h>
+#endif /* __WATCOMC__ */
+#endif /* NT */
+#endif /* OS2 */
 
 #ifndef NOTIMEH
 #include <time.h>
@@ -308,6 +317,14 @@ struct timezone {
 #include <sys/select.h>
 #endif /* SELECT_H */
 #endif /* SCO_OSR504 */
+
+#ifdef OS2
+#ifndef NT
+#ifdef __WATCOMC__
+#include <types.h>
+#endif /* __WATCOMC__ */
+#endif /* NT */
+#endif /* OS2 */
 
 #ifndef INADDR_NONE			/* 2010-03-29 */
 #define INADDR_NONE -1
