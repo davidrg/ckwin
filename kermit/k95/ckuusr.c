@@ -113,7 +113,7 @@ int autolocus = 1;			/* Automatic LOCUS switching enabled */
 #endif /* OS2 */
 
 #ifdef TYPEINTERPRET
-int type_int = 0;
+int type_intrp = 0;
 #endif  /* TYPEINTERPRET */
 
 #ifndef NOICP
@@ -12544,7 +12544,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 
 #ifdef TYPEINTERPRET
 		  case TYP_INT:         /* /INTERPRET */
-                    type_int = 1;
+                    type_intrp = 1;
 		    break;
 #endif  /* TYPEINTERPRET */
 

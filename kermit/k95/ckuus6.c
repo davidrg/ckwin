@@ -15,6 +15,7 @@
 
   Last update:
     Mon Aug 22 20:11:01 2022 (for TYPE /INTERPRET)
+    Wed Aug 31 15:46:35 2022 (for TYPE /INTERPRET in Windows)
 */
 
 /* Includes */
@@ -81,10 +82,8 @@ extern int k95stdout;
 #else
 #define APIRET ULONG
 #include <windows.h>
-#ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"
-#endif
 #endif /* NT */
 #include "ckocon.h"
 #include "ckodir.h"			/* [jt] 2013/11/21 - for MAXPATHLEN */
@@ -145,7 +144,7 @@ extern char cmdbuf[], atmbuf[];         /* Command buffers */
 extern int nopush;
 
 #ifdef TYPEINTERPRET
-extern int type_int;                    /* TYPE /INTERPRET */
+extern int type_intrp;                  /* TYPE /INTERPRET */
 #endif  /* TYPEINTERPRET */
 
 #ifndef NOSPL
@@ -3867,21 +3866,16 @@ typegetline(incs, outcs, buf, n) int incs, outcs, n; char * buf; {
 #endif /* COMMENT */
 
 #ifdef TYPEINTERPRET
-    if ( type_int )  {                  /* TYPE /INTERPRET (new 2022-08-22) */
+#ifndef NT                              /* (or should this be OS2?) */
+  dointerpret:
+    if ( type_intrp )  {                /* TYPE /INTERPRET (2022-08-22 fdc) */
         int zzrc = 0;                   /* Returncode for zzstring */
         int tmplen = TMPBUFSIZ;
         char * newbuf = tmpbuf;         /* New string to create */
-
-/* It's working now but result lines are truncated */
-
-        debug(F101,"^^^ 0 typegetline tmplen","",tmplen); 
-        debug(F110,"^^^ 1 typegetline buf",buf,0); 
         zzrc = zzstring(buf, &newbuf, &tmplen); /* Interpret the string */
-        debug(F111,"^^^ 2 typegetline buf, tmplen",buf,tmplen); 
-        debug(F111,"^^^ 2 typegetline tmpbuf, zzrc",tmpbuf,zzrc); 
         len = ckstrncpy(buf, tmpbuf, TYPBUFL);  /* Replace original string */
-        debug(F111,"^^^ 3 typegetline buf len",buf,len);
     } 
+#endif  /* NT */
 #endif  /* TYPEINTERPRET */
     return(x < 0 ? -1 : len);
 }
@@ -3903,14 +3897,14 @@ tytrap(foo) int foo;
 }
 #endif /* MAC */
 
+_PROTOTYP(char * cvtstring,(char*,int,int));
+
 int
 dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
     char * file, * pat, * prefix; int paging, first, head, width, incs, outcs;
     char * outfile; int z;
 /* dotype */ {
-#ifdef TYPEINTERPRET 
-    extern int type_int;
-#endif  /* TYPEINTERPRET  */
+
     extern CK_OFF_T ffc;
     char buf[TYPBUFL+2];
     char * s = NULL;
@@ -4044,6 +4038,7 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
           rc = 0;
         goto xdotype;
     }
+/*  printf("%s: %d\n","DOTYPE tlevel BEFORE open:",tlevel); */
     if (!zopeni(ZIFILE, file)) {        /* Not a directory, open it */
         debug(F111,"dotype zopeni failure",file,0);
         if (xcmdsrc == 0) {
@@ -4053,6 +4048,7 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
           rc = 0;
         goto xdotype;
     }
+/*  printf("%s: %d\n","DOTYPE tlevel AFTER open:",tlevel); */
 
 #ifndef AMIGA
 #ifndef MAC
@@ -4112,8 +4108,34 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
          (len = typegetline(incs,outcs,buf,TYPBUFL)) > -1;
          lines++
          ) {
-        debug(F111,"^^^ dotype line",buf,len);
-#ifndef MAC
+        debug(F111,"dotype line",buf,len);
+
+#ifdef TYPEINTERPRET                    /* 2022-08-31 fdc */
+#ifdef NT                               /* Or should this be OS2? */
+        if (type_intrp) {               /* TYPE /INTERPRET? */
+            int zzrc = 0, tmplen = 0;   /* Return code for zzstring */
+            char * cvtbuf;              /* Pointer to conversion buffer */
+            char * newbuf = malloc(TYPBUFL+3); /* Buffer for zzstring result */
+            char * resultbuf;
+
+            /*
+  The line has been returned to us as UCS-2 but we need to feed it to
+  zzstring() to interpret all the backslash escapes, but zzstring doesn't
+  understand UCS-2.  So we have to convert it from UCS2 (outcs) back to incs;
+  feed it to zzstring(), and then convert it back to UCS2 (outcs).
+*/
+            cvtbuf = cvtstring(buf,outcs,incs); /* UCS2->original cset */
+            debug(F110,"dotype interpret cvtbuf",cvtbuf,0);
+            zzstring(cvtbuf, &newbuf, &tmplen);  /* Evaluate it */
+            resultbuf = cvtstring(newbuf,incs,outcs); /* Convert back to UCS2 */
+            ckstrncpy(buf, resultbuf, TYPBUFL+3);
+            debug(F110,"dotype interpret zzstring result buf",buf,0);
+            free(newbuf);
+        }
+#endif /* NT */
+#endif /* TYPEINTERPRET */
+
+#ifndef MAC                             /*  */
         if (typ_int) {                  /* Interrupted? */
             typ_int = 0;
             debug(F101,"type interrupted line","",lines);
@@ -4236,7 +4258,6 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
               n += x;                   /* This assumes terminal will wrap */
         }
 #ifdef KUI
-#ifndef NORICHEDIT
         if ( gui ) {
             int i;
             unsigned short * uch = (unsigned short *)buf;
@@ -4246,7 +4267,6 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
 			gui_text_popup_append(LF);
         } 
         else
-#endif /* NORICHEDIT */
 #endif /* KUI */
         typeline(buf,len,outcs,ofp);    /* Print line, length based */
 #ifdef CK_TTGWSIZ
@@ -4351,10 +4371,8 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
 #endif /* UNICODE */
 
 #ifdef KUI
-#ifndef NORICHEDIT
     if ( gui )
         gui_text_popup_wait(-1);        /* Wait for user to close the dialog */
-#endif
 #endif /* KUI */
     return(rc);
 }
@@ -9242,7 +9260,12 @@ cvtfnout(c) char c;
 /* Convert a string from any charset to any other charset */
 
 char *
-cvtstring(s,csin,csout) char * s; int csin, csout; {
+#ifdef CK_ANSIC
+cvtstring(char* s,int csin,int csout)
+#else
+cvtstring(s,csin,csout) char * s; int csin, csout;
+#endif
+{
     int c;
     extern CK_OFF_T ffc;
 
