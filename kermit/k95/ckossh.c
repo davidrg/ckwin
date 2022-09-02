@@ -968,7 +968,7 @@ int ssh_fwd_remote_port(int port, char * host, int host_port)
 char* GetHomePath();
 char* GetHomeDrive();
 
-/** Creates a
+/** Creates an SSH key pair
  *
  * @param filename File to write the private key to
  * @param bits Length of the key in bits. Valid options vary by key type
@@ -1072,8 +1072,6 @@ int sshkey_create(char * filename, int bits, char * pp, int type, char * cmd_com
             return SSH_ERR_UNSPECIFIED;
     }
 
-    printf("Bits: %d\n", bits);
-
     if (filename) {
         output_filename = _strdup(filename);
     } else {
@@ -1169,19 +1167,42 @@ int sshkey_create(char * filename, int bits, char * pp, int type, char * cmd_com
     if (rc != SSH_OK) {
         printf("Failed to write private key to %s - error %d\n", output_filename, rc);
     } else {
+        printf("Your identification has been saved in %s\n", output_filename);
         pubkey_output_filename = malloc(MAX_PATH);
 
         snprintf(pubkey_output_filename, MAX_PATH, "%s.pub", output_filename);
         rc = ssh_pki_export_pubkey_file(key, pubkey_output_filename);
         if (rc != SSH_OK) {
             printf("Failed to write public key to %s\n", pubkey_output_filename);
+        } else {
+            unsigned char *hash = NULL;
+            size_t hlen = 0;
+            char* fingerprint = NULL;
+
+            printf("Your public key has been saved in %s\n", pubkey_output_filename);
+            rc = ssh_get_publickey_hash(key, SSH_PUBLICKEY_HASH_SHA256, &hash, &hlen);
+            if (rc != SSH_OK) {
+                printf("Failed to get key fingerprint\n");
+            } else {
+                fingerprint = ssh_get_fingerprint_hash(
+                        SSH_PUBLICKEY_HASH_SHA256, hash, hlen);
+                if (fingerprint != NULL) {
+                    printf("The key fingerprint is:\n%s\n", fingerprint);
+                    ssh_string_free_char(fingerprint);
+                } else {
+                    printf("Failed to get the key fingerprint\n");
+                }
+                ssh_clean_pubkey_hash(&hash);
+            }
         }
 
         free(pubkey_output_filename);
     }
 
+
     free(output_filename);
     free(passphrase);
+    ssh_key_free(key);
     return SSH_ERR_NO_ERROR;
 }
 
