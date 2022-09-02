@@ -83,7 +83,7 @@ CDEFINES  = /D_MT /DSTRICT /D_X86_ /DNDEBUG /D_WINDOWS /DWIN32 /DWIN32_LEAN_AND_
                 $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS)
 LFLAGS    = /NOD /NOLOGO /SUBSYSTEM:windows
 RCFLAGS   = /r
-RCDEFINES = /dNDEBUG /dWIN32 /dCOMPILER_$(CMP)
+RCDEFINES = /dNDEBUG /dWIN32 $(RC_FEATURE_DEFS)
 MAPFILE   =
 
 # /G5 is only valid on 7.1 and earlier
@@ -107,17 +107,24 @@ CDEFINES  = /D_MT /D_X86_ /DSTRICT /D_DEBUG /D_WINDOWS /DWIN32 /DWIN32_LEAN_AND_
 
 LFLAGS    = /NOD /NOLOGO /DEBUG:full /DEBUGTYPE:cv /SUBSYSTEM:windows
 RCFLAGS   = /r
-RCDEFINES = /d_DEBUG /dWIN32 /dCOMPILER_$(CMP)
+RCDEFINES = /d_DEBUG /dWIN32 /dCOMPILER_$(CMP) \
+!if "$(CKT_NT31)" == "yes"
+			/dCKT_NT31
+!endif
 MAPFILE   = /map:$(OUTDIR)\$(PROJ).map
 
+!endif
+
+!if "$(CKF_TOOLBAR)" == "no"
+RCDEFINES = $(RCDEFINES) /dNOTOOLBAR
 !endif
 
 # Customise for the compiler version we're using
 !IF ($(MSC_VER) == 80)
 # We don't do 16bit
 !ERROR *** 16bit windows is not supported
-!ELSEIF ($(MSC_VER) < 100)
-!ERROR *** Visual C++ 2.0 and earlier are not supported
+!ELSEIF ($(MSC_VER) < 90)
+!ERROR *** Visual C++ 1.0 and earlier are not supported
 !ELSEIF ($(MSC_VER) < 131)
 # Visual C++ 6.0 and 7.0
 CFLAGS = $(CFLAGS) /noBool

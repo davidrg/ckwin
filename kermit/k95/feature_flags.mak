@@ -36,6 +36,8 @@
 #   mkg.bat
 #------------------------------------------------------------------------------
 
+!message Processing feature flags...
+
 # Network Connections are always supported. We only put it here because
 # the Watcom nmake clone can't handle empty macros so we need *something* here.
 ENABLED_FEATURES = Network-Connections
@@ -44,6 +46,7 @@ ENABLED_FEATURE_DEFS = -DNETCONN
 DISABLED_FEATURES = SuperLAT DECnet Kerberos SRP Telnet-Encryption CryptDLL
 DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNO_SRP -DNO_ENCRYPTION
 
+!if "$(PLATFORM)" == "NT"
 WIN32_VERSION=0x0400
 
 !if "$(CMP)" == "OWCL"
@@ -51,7 +54,6 @@ WIN32_VERSION=0x0400
 CKF_SSH=no
 !endif
 
-!if "$(PLATFORM)" == "NT"
 !if ($(MSC_VER) >= 192)
 # ConPTY on Windows 10+ requires a Platform SDK from late 2018 or newer.
 # So we'll only turn this on automatically when building with Visual C++ 2019 or
@@ -72,12 +74,41 @@ CKF_MOUSEWHEEL=no
 !endif
 
 !if ($(MSC_VER) < 100)
-# The Platform SDK shipped with Visual C++ 2.0 and earlier doesn't include
-# tapi.h, the rich edit control, or the toolbar control.
+# The Platform SDK shipped with Visual C++ 2.0 lacks quite a lot of stuff
+# compared to Visual C++ 4.0 so there is a special target for this level of
+# windows.
+!message Visual C++ 2.0: setting target to Windows NT 3.50 API level.
+CKT_NT31=yes
+CKT_NT350=yes
+!endif
+
+!if ($(MSC_VER) < 90)
+# Visual C++ 1.0 (32-bit edition) and the Win32 SDK only support the APIs
+# provided in Windows NT 3.1
+CKT_NT31=yes
+!endif
+
+# For all versions of windows *EXCEPT* Windows NT 3.1 and 3.50, the target
+# minimum version is defined as whatever the compiler happens to support.
+# For Windows NT 3.1 and 3.50 the API differences are enough missing APIs
+# to require a special macro to exclude references to them. This allows
+# NT 3.50 and 3.1 to be targeted with both Visual C++ and OpenWatcom.
+
+!if "$(CKT_NT350)" == "yes"
+# These features are available on NT 3.50 but not on NT 3.1
+# -> These may appear if/when work to port to NT 3.1 is done.
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT350
+!endif
+
+!if "$(CKT_NT31)" == "yes"
+# These features are not available on Windows NT 3.50
 CKF_TAPI=no
 CKF_RICHEDIT=no
 CKF_TOOLBAR=no
-ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DVINTAGEVC
+CKF_LOGIN=no
+CKF_NTLM=no
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT31
+RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) /dCKT_NT31
 !endif
 
 !else

@@ -141,7 +141,11 @@ void KDownLoad::show( Bool bVisible )
     OpenFileName.lpfnHook = 0;
     if (!nt351 && downloadButton) {
         /* NT 3.51 and earlier don't support OFNHOOKPROC */
-        OpenFileName.Flags = OpenFileName.Flags | OFN_ENABLEHOOK | OFN_EXPLORER;
+        OpenFileName.Flags = OpenFileName.Flags | OFN_ENABLEHOOK
+#ifndef CKT_NT31
+            | OFN_EXPLORER
+#endif
+            ;
         OpenFileName.lpfnHook = (LPOFNHOOKPROC)KDownDlgProc;
     }
 

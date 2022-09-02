@@ -189,7 +189,7 @@ COMMON_CFLAGS = $(COMMON_CFLAGS) /EHs-c-
 
 !endif
 
-RCDEFINES=/dCOMPILER_$(CMP)
+RCDEFINES=$(RC_FEATURE_DEFS) /dCOMPILER_$(CMP)
 
 #---------- Compiler targets:
 #

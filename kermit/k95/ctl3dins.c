@@ -11,6 +11,11 @@
 #include <windows.h>
 #include <stdio.h>
 
+#ifndef VER_PLATFORM_WIN32_WINDOWS
+/* Visual C++ 2.0 and older don't define this (Win95 wasn't released yet) */
+#define VER_PLATFORM_WIN32_WINDOWS      1
+#endif
+
 void
 DisplayHelp( char * name )
 {

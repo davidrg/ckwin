@@ -62,6 +62,12 @@
 #include <process.h>
 #define strdup _strdup
 #define ltoa   _ltoa
+
+#ifndef VER_PLATFORM_WIN32_WINDOWS
+/* Visual C++ 2.0 and older don't define this (Win95 wasn't released yet) */
+#define VER_PLATFORM_WIN32_WINDOWS      1
+#endif
+
 #endif
 #define CONFIG_FILE "iksd.cfg"
 

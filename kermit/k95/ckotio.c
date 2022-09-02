@@ -869,6 +869,7 @@ getcpu( void )
    char numstr[32] ;
    memset( &si, 0, sizeof(si) ) ;
    GetSystemInfo( &si ) ;
+#ifndef CKT_NT31
    if ( isWin95() && !si.wProcessorLevel )
    {
       switch ( si.dwProcessorType ) {
@@ -952,11 +953,54 @@ getcpu( void )
             ckstrncat( buffer, numstr, 64 );
          }
          break;
+
       case PROCESSOR_ARCHITECTURE_UNKNOWN:
          ckstrncpy( buffer, "unknown", 64 ) ;
          break;
       }
-   }
+  }
+#else
+    /* The Platform SDK that comes with Visual C++ 2.0 and earlier has a
+     * different definition for SYSTEM_INFO that does not include the
+     * wProcessorLevel field or related architecture definitions. Instead we
+     * can do this: */
+    switch ( si.dwProcessorType ) {
+    case PROCESSOR_INTEL_386:
+        ckstrncpy( buffer, "intel-386", 64 ) ;
+        break;
+    case PROCESSOR_INTEL_486:
+        ckstrncpy( buffer, "intel-486", 64 ) ;
+        break;
+    case PROCESSOR_INTEL_PENTIUM:
+        ckstrncpy( buffer, "intel-pentium", 64 ) ;
+        break;
+    /* These three processors (i860, MIPS R2000 and R3000) are not supported
+     * by any released version of Windows (they were supported early on in its
+     * development) so may not appear in headers shipped with non-microsoft
+     * compilers. */
+#ifdef PROCESSOR_INTEL_860
+    case PROCESSOR_INTEL_860:
+        ckstrncpy( buffer, "intel-860", 64 ) ;
+        break;
+#endif
+#ifdef PROCESSOR_MIPS_R2000
+    case PROCESSOR_MIPS_R2000:
+        ckstrncpy( buffer, "mips-r2000", 64 ) ;
+        break;
+#endif
+#ifdef PROCESSOR_MIPS_R3000
+    case PROCESSOR_MIPS_R3000:
+        ckstrncpy( buffer, "mips-r3000", 64 ) ;
+        break;
+#endif
+    case PROCESSOR_MIPS_R4000:
+        ckstrncpy( buffer, "mips-r4000", 64 ) ;
+        break;
+    case PROCESSOR_ALPHA_21064:
+        ckstrncpy( buffer, "alpha-21064", 64 ) ;
+        break;
+    }
+#endif /* CKT_NT31 */
 #else /* NT */
    ckstrncpy( buffer, CKCPU, 64 ) ;
 #endif
@@ -1128,10 +1172,12 @@ Win95DisplayLocale( void )
     HKL     KBLayout=0;
     CHAR    lpLayoutName[KL_NAMELENGTH]="";
 
+#ifndef CKT_NT31
+    /* Visual C++ 2.0 and earlier don't know about GetKeyboardLayout() */
     KBLayout = GetKeyboardLayout(0);
     GetKeyboardLayoutName(lpLayoutName);
     printf("Keyboard Layout = %s [%u]\n",lpLayoutName,(unsigned short)KBLayout);
-
+#endif
 
     printf("Locale Information:\n");
     for ( LCType=0 ; LCType<= 0x5A ; LCType++ ) {
@@ -1529,6 +1575,10 @@ sysinit() {
     hInstance = GetModuleHandle(NULL) ;
     debug(F101,"hInstance","",hInstance);
     hwndConsole = GetConsoleHwnd() ;
+
+#ifndef CKT_NT31
+    /* MENUITEMINFO and related bits are new to Windows 95 and not known to
+     * Visual C++ 2.0 and older. */
     if ( isWin95() )
     {
         MENUITEMINFO info;
@@ -1540,6 +1590,7 @@ sysinit() {
         DrawMenuBar(hwndConsole);
         CloseHandle(hMenu);
     }
+#endif /* _MSC_VER > 900 */
 #endif /* KUI */
     WinThreadInit = WindowThreadInit( (void *) hInstance );
 #endif /* NT */
@@ -4536,8 +4587,8 @@ getOverlappedIndex( int serial ) {
 #if _MSC_VER <= 1000
 /* Visual C++ 4.0 and earlier lack this macro */
 #define HasOverlappedIoCompleted(lpOverlapped) ((lpOverlapped)->Internal != STATUS_PENDING)
-#endif
-#endif
+#endif /* _MSC_VER <= 1000 */
+#endif /* __WATCOM__ */
 
 int
 freeOverlappedComplete( int serial ) {

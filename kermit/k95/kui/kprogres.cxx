@@ -85,8 +85,13 @@ void KProgress::paint( int p )
     FillRect( hMemDC, &rect1, backBrush );
 
     SetTextColor( hMemDC, back );
+#ifndef CKT_NT31
     DrawTextEx( hMemDC, c, -1, &rect1
         , DT_VCENTER | DT_SINGLELINE | DT_CENTER, NULL );
+#else
+    DrawText( hMemDC, c, -1, &rect1
+            , DT_VCENTER | DT_SINGLELINE | DT_CENTER );
+#endif
 
     RECT rect2;
     rect2.top = rect1.bottom + 10;
@@ -96,8 +101,13 @@ void KProgress::paint( int p )
     FillRect( hMemDC, &rect2, fillBrush );
 
     SetTextColor( hMemDC, fore );
+#ifndef CKT_NT31
     DrawTextEx( hMemDC, c, -1, &rect2
         , DT_VCENTER | DT_SINGLELINE | DT_CENTER, NULL );
+#else
+    DrawText( hMemDC, c, -1, &rect2
+            , DT_VCENTER | DT_SINGLELINE | DT_CENTER );
+#endif
 
     //combine images
     //

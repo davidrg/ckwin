@@ -18,7 +18,7 @@ move *.obj kui\win95 > nul
 
 REM OpenWatcom 1.9s nmake clone doesn't seem to set errorlevel when the build
 REM fails. So we'll check the expected outputs were produced too:
-if not exist k95g.exe set goto :missingoutputs
+if not exist k95g.exe goto :missingoutputs
 
 goto :end
 

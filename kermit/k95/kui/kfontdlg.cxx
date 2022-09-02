@@ -61,7 +61,10 @@ void KFontDialog::show( PLOGFONT logfont )
         | CF_NOSCRIPTSEL | CF_ENABLEHOOK | CF_ENABLETEMPLATE;
 #else
     chf.Flags = CF_SCALABLEONLY | CF_SCREENFONTS | CF_INITTOLOGFONTSTRUCT
-        | CF_NOSCRIPTSEL | CF_ENABLEHOOK | CF_ENABLETEMPLATE;
+#ifndef CKT_NT31
+        | CF_NOSCRIPTSEL
+#endif
+        | CF_ENABLEHOOK | CF_ENABLETEMPLATE;
 #endif 
     chf.lCustData = (LPARAM)this;
     chf.lpfnHook = KFontDlgProc;
@@ -95,6 +98,15 @@ void KFontDialog::show( PLOGFONT logfont )
         printf("Swiss\n");
 #endif /* FONT_DEBUG */
 }
+
+/* These are new to Windows 95 and Visual C++ 4.0 */
+#ifndef BST_CHECKED
+#define BST_CHECKED 1
+#endif
+
+#ifndef BST_UNCHECKED
+#define BST_UNCHECKED 0
+#endif
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/

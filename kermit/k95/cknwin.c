@@ -31,7 +31,11 @@ char *cknwin = "Win32 GUI Support 8.0.029, 10 March 2004";
 
 /* Visual C++ 6 fixes */
 #ifndef DS_SHELLFONT
+#ifndef CKT_NT31
 #define DS_SHELLFONT        (DS_SETFONT | DS_FIXEDSYS)
+#else
+#define DS_SHELLFONT        DS_SETFONT
+#endif /* CKT_NT31 */
 #endif
 #ifndef DWORD_PTR
 typedef unsigned long DWORD_PTR, *PDWORD_PTR;
@@ -334,6 +338,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
 }
 #endif
 
+#ifndef CKT_NT31
 BOOL InitApplication(hinstance)
 HINSTANCE hinstance;
 {
@@ -371,6 +376,39 @@ HINSTANCE hinstance;
 
     return RegisterClassEx(&wcx);
 }
+#else
+/* Visual C++ 2.0 and earlier don't support WNDCLASSEX or its associated
+ * functions */
+BOOL InitApplication(hinstance)
+        HINSTANCE hinstance;
+{
+    WNDCLASS wc;
+
+    /*
+     * Fill in the window class structure with parameters
+     * that describe the main window.
+     */
+
+    wc.style = CS_HREDRAW |
+                CS_VREDRAW;                    /* redraw if size changes */
+    wc.lpfnWndProc = MainWndProc;     /* points to window proc. */
+    wc.cbClsExtra = 0;                /* no extra class memory  */
+    wc.cbWndExtra = 0;                /* no extra window memory */
+    wc.hInstance = hinstance;         /* handle of instance     */
+    wc.hIcon = LoadIcon(NULL,
+                         MAKEINTRESOURCE(1));           /* kermit 95 icon   */
+    wc.hCursor = LoadCursor(NULL,
+                             IDC_ARROW);                    /* predefined arrow       */
+    wc.hbrBackground = GetStockObject(
+            WHITE_BRUSH);                  /* white background brush */
+    wc.lpszMenuName =  "CkMainMenu";    /* name of menu resource  */
+    wc.lpszClassName = "CkMainWClass";  /* name of window class   */
+
+    /* Register the window class. */
+
+    return RegisterClass(&wc);
+}
+#endif /* CKT_NT31 */
 
 BOOL
 InitInstance(hinstance, nCmdShow)
@@ -610,7 +648,11 @@ StartDialer(void)
             DialerSend(OPT_KERMIT_HWND2, (unsigned long)hwndGUI);
             DialerSend(OPT_KERMIT_PID,  GetCurrentProcessId());
         }
+#ifndef CKT_NT31
         ShowWindowAsync(hwndDialer,SW_SHOWNORMAL);
+#else
+        ShowWindow(hwndDialer,SW_SHOWNORMAL);
+#endif
         SetForegroundWindow(hwndDialer);
     } else if (_hwndDialer = FindWindow(NULL, "Kermit-95 Dialer")) {
         StartedFromDialer = 1;
@@ -621,7 +663,11 @@ StartDialer(void)
             DialerSend(OPT_KERMIT_HWND2, (unsigned long)hwndGUI);
             DialerSend(OPT_KERMIT_PID,  GetCurrentProcessId());
         }
+#ifndef CKT_NT31
         ShowWindowAsync(hwndDialer,SW_SHOWNORMAL);
+#else
+        ShowWindow(hwndDialer,SW_SHOWNORMAL);
+#endif
         SetForegroundWindow(hwndDialer);
         StartedFromDialer = 0;
     } else {
@@ -771,9 +817,13 @@ SingleInputDialog( HINSTANCE hinst, HWND hwndOwner,
     // Define a dialog box.
  
     lpdt->style = WS_POPUP | WS_BORDER | WS_SYSMENU
-                   | DS_MODALFRAME | WS_CAPTION | DS_CENTER 
-                   | DS_SETFOREGROUND | DS_3DLOOK
-                   | DS_SHELLFONT | DS_NOFAILCREATE;
+                   | DS_MODALFRAME | WS_CAPTION
+                   | DS_SETFOREGROUND
+                   | DS_SHELLFONT
+#ifndef CKT_NT31
+                   | DS_3DLOOK | DS_CENTER | DS_NOFAILCREATE
+#endif
+                   ;
     lpdt->cdit = numlines + 4;  // number of controls
     lpdt->x  = 10;  
     lpdt->y  = 10;
@@ -1005,7 +1055,11 @@ MultiInputDialogProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
             }
             /* fallthrough */
         case IDCANCEL:
+#ifndef CKT_NT31
             ShowWindowAsync(hwndConsole,SW_SHOWNORMAL);
+#else
+            ShowWindow(hwndConsole,SW_SHOWNORMAL);
+#endif
             SetForegroundWindow(hwndConsole);
             EndDialog(hwndDlg, LOWORD(wParam));
             return TRUE;
@@ -1045,9 +1099,12 @@ MultiInputDialog( HINSTANCE hinst, HWND hwndOwner,
     // Define a dialog box.
  
     lpdt->style = WS_POPUP | WS_BORDER | WS_SYSMENU
-                   | DS_MODALFRAME | WS_CAPTION | DS_CENTER 
-                   | DS_SETFOREGROUND | DS_3DLOOK
-                   | DS_SHELLFONT | DS_NOFAILCREATE;
+                   | DS_MODALFRAME | WS_CAPTION
+                   | DS_SETFOREGROUND | DS_SHELLFONT
+#ifndef CKT_NT31
+                   | DS_3DLOOK | DS_CENTER | DS_NOFAILCREATE
+#endif
+                   ;
     lpdt->cdit = numlines + (2 * tb_cnt) + 2;  // number of controls
     lpdt->x  = 10;  
     lpdt->y  = 10;
@@ -1307,9 +1364,12 @@ VideoPopupDialog( HINSTANCE hinst, HWND hwndOwner, videopopup * vp)
     // Define a dialog box.
  
     lpdt->style = WS_POPUP | WS_BORDER | WS_SYSMENU
-                   | DS_MODALFRAME | WS_CAPTION | DS_CENTER 
-                   | DS_SETFOREGROUND | DS_3DLOOK
-                   | DS_SETFONT | DS_NOFAILCREATE;
+                   | DS_MODALFRAME | WS_CAPTION
+                   | DS_SETFOREGROUND | DS_SETFONT
+#ifndef CKT_NT31
+                   | DS_3DLOOK | DS_CENTER | DS_NOFAILCREATE
+#endif
+                   ;
     lpdt->cdit = vp->height + 2;  // number of controls
     lpdt->x  = 10;  
     lpdt->y  = 10;

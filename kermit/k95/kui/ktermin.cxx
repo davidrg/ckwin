@@ -429,7 +429,11 @@ void KTerminal::browseFile( eFileType filetype )
     OpenFileName.lCustData         = 0;
 
     OpenFileName.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST 
-        | OFN_HIDEREADONLY | OFN_EXPLORER;
+        | OFN_HIDEREADONLY
+#ifndef CKT_NT31
+        | OFN_EXPLORER
+#endif
+        ;
 
     if( GetOpenFileName( &OpenFileName ) )
     {
@@ -507,10 +511,12 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         done = TRUE;
         break;
 
-    case WM_ACTIVATE:
+#ifndef CKT_NT31
     case WM_SIZING:
-    case WM_SIZE:
     case WM_EXITSIZEMOVE:
+#endif
+    case WM_ACTIVATE:
+    case WM_SIZE:
     case WM_GETMINMAXINFO:
     case WM_DRAWITEM:
         debug(F111,"KTerminal::message","WM_{ACTIVATE,SIZING,EXITSIZEMOVE,GETMINMAXINFO,DRAWITEM,INITMENU}",msg);
