@@ -13,8 +13,8 @@ env:
   # Expected filename: https://www.openssl.org/source/openssl-${{env.OPENSSL_VERSION}}.tar.gz
   OPENSSL_VERSION: 1.1.1q
   # Exoected filename: ${{env.LIBSSH_SOURCE}}libssh-${{env.LIBSSH_VERSION}}.tar.xz
-  LIBSSH_SOURCE: https://www.libssh.org/files/0.9/
-  LIBSSH_VERSION: 0.9.6
+  LIBSSH_SOURCE: https://www.libssh.org/files/0.10/
+  LIBSSH_VERSION: 0.10.1
 
 jobs:
   Build-VisualCxx:
