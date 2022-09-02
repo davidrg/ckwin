@@ -21,6 +21,7 @@ if exist dist\ssh.dll copy ..\..\doc\ssh-readme.md dist\ssh-readme.txt
 
 @echo Copy resources...
 copy k95.ini dist
+copy k95custom.ini dist
 copy k95d.cfg dist
 
 @echo Copy runtime libraries
