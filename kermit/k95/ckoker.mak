@@ -819,7 +819,7 @@ os232: ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe otextps
 
 
 
-win32: cknker.exe wtelnet wrlogin k95d textps ctl3dins.exe iksdsvc.exe iksd.exe
+win32: cknker.exe wtelnet wrlogin k95d textps ctl3dins.exe iksdsvc.exe iksd.exe se.exe
 # SRP support: srp-tconf.exe srp-passwd.exe
 # Crypto stuff: k95crypt.dll
 
@@ -899,6 +899,11 @@ telnet.exe: telnet.obj $(DEF) ckoker.mak
 rlogin.exe: rlogin.obj $(DEF) ckoker.mak
        link.exe @<< 
        $(LINKFLAGS) /OUT:$@ rlogin.obj $(LIBS) 
+<<
+
+se.exe: se.obj $(DEF) ckoker.mak
+       link.exe @<<
+       $(LINKFLAGS) /OUT:$@ se.obj $(LIBS)
 <<
 
 orlogin.exe: rlogin.obj $(DEF) ckoker.mak
