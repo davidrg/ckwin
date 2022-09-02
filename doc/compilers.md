@@ -11,8 +11,9 @@ For the best security, always use the most recent compiler you
 can. Support for older compilers remains for those wishing to build
 C-Kermit for vintage Windows systems, the security situation of which
 is well known. C-Kermit for Windows, when built with the right compiler, 
-supports Windows NT 3.50+ and Windows 95+. Windows NT 3.1 and Win32s 
-are unsupported at this time.
+supports Windows NT 3.50+ and Windows 95+. Windows NT 3.1 is unsupported at 
+this time though that may change in the future. Win32s (Win32 on Windows 3.x)
+can not be supported due to the lack of support for threading.
 
 The CI system is set-up to do builds with Visual C++ 2022, 
 Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
