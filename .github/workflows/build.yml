@@ -243,6 +243,72 @@ jobs:
         if-no-files-found: error
         retention-days: 7
 
+  Build-OpenWatcom19-Win32-NT-legacy:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+        # Cache OpenWatcom because it takes quite a while to download and
+        # decompress.
+      - name: Cache OpenWatcom
+        uses: actions/cache@v3.0.5
+        id: cache-watcom
+        with:
+          path: |
+            ${{github.workspace}}\watcom
+          key: watcom-1.9
+      - name: Get OpenWatcom 1.9
+        if: steps.cache-watcom.outputs.cache-hit != 'true'
+        run: |
+          mkdir watcom
+          cd watcom
+          wget https://github.com/open-watcom/open-watcom-1.9/releases/download/ow1.9/open-watcom-c-win32-1.9.exe -outfile open-watcom-c-win32-1.9.exe
+          7z x open-watcom-c-win32-1.9.exe
+        shell: powershell
+      - name: Full Build
+        run: |
+          SET PATH=%WATCOM%\BINW;%PATH%
+          SET PATH=%WATCOM%\BINNT;%PATH%
+          SET INCLUDE=%WATCOM%\H\NT;%INCLUDE%
+          SET INCLUDE=%WATCOM%\H\NT;%INCLUDE%
+          SET INCLUDE=%INCLUDE%;C:\WATCOM\H\NT\DIRECTX
+          SET INCLUDE=%INCLUDE%;C:\WATCOM\H\NT\DDK
+          SET INCLUDE=%WATCOM%\H;%INCLUDE%
+          SET EDPATH=%WATCOM%\EDDAT
+          SET WHTMLHELP=%WATCOM%\BINNT\HELP
+          SET WIPFC=%WATCOM%\WIPFC
+          
+          REM Build for Windows NT 3.50 (and, someday, NT 3.1)
+          set CKT_NT31=yes
+          
+          call ..\..\setenv.bat
+          call mk.bat
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95
+        env:
+          ROOT: ${{ github.workspace }}
+          WATCOM: ${{ github.workspace }}\watcom
+      - name: Make Distribution
+        run: mkdist.bat
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95
+        env:
+          ROOT: ${{ github.workspace }}
+          WATCOM: ${{ github.workspace }}\watcom
+      - name: Prepare Artifact
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95
+        run: |
+          move dist ${{ github.workspace }}\ckwin
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2.2.4
+        with:
+          name: ckwin-ow1.9-x86-nt350
+          path: ${{ github.workspace }}\ckwin
+          if-no-files-found: error
+          retention-days: 7
+
   ##############################################################################
   # Build C-Kermit for OS/2 with OpenWatcom 1.9 which can cross-compile        #
   ##############################################################################
