@@ -41,12 +41,14 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  * where all the work is done (using libssh) lives in ckoshs.c.
  */
 
+#include <libssh/libssh.h>
 
 #include "ckcdeb.h"
 #include "ckossh.h"
 #include "ckcker.h"
-
+#include "ckuusr.h"
 #include "ckoshs.h"
+
 
 /* Global Variables:
  *   These are all declared in ckuus3.c around like 8040
@@ -132,12 +134,11 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *          TODO: /NEW-PASSPHRASE:passphrase
  *          TODO: /OLD-PASSPHRASE:passphrase
  *          TODO: filename
- *      TODO: CREATE
- *          TODO: /BITS:bits
- *          TODO: /PASSPHRASE: passphrase
- *          TODO: /TYPE:{V1-RSA,V2-DSA,V2-RSA}
- *          TODO: /V1-RSA-COMMENT: comment
- *          TODO: filename
+ *      CREATE
+ *          /BITS:bits
+ *          /PASSPHRASE: passphrase
+ *          /TYPE:{ DSS, ECDSA, ED25519, RSA  }
+ *          filename
  *      TODO: DISPLAY
  *          TODO: /FORMAT:{fingerprint, ietf,openssh,ssh.com}
  *          TODO: filename
@@ -157,6 +158,7 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *      TODO: KERBEROS5 TGT-PASSING {ON,OFF}    -- delete
  *      TODO: PRIVILEGED-PORT {ON,OFF}
  *      TODO: QUIET {ON,OFF}
+ *          -> This should suppress all printfs
  *      STRICT-HOST-KEY-CHECK {ASK, ON, OFF}
  *      USE-OPENSSH-CONFIG {ON,OFF}
  *          Value is stored in ssh_cfg
@@ -962,8 +964,225 @@ int ssh_fwd_remote_port(int port, char * host, int host_port)
     return SSH_ERR_NOT_IMPLEMENTED; /* TODO */
 }
 
+/* These live in ckoreg.c */
+char* GetHomePath();
+char* GetHomeDrive();
+
+/** Creates a
+ *
+ * @param filename File to write the private key to
+ * @param bits Length of the key in bits. Valid options vary by key type
+ * @param pp Passphrase
+ * @param type Key type
+ * @param cmd_comment SSH V1 RSA Comment (obsolete)
+ * @return
+ */
 int sshkey_create(char * filename, int bits, char * pp, int type, char * cmd_comment) {
-    return SSH_ERR_NOT_IMPLEMENTED; /* TODO */
+    enum ssh_keytypes_e ktype;
+    char *output_filename = NULL, *pubkey_output_filename = NULL,
+         *passphrase = NULL, *default_filename = NULL;
+    ssh_key key = NULL;
+    int rc;
+
+    debug(F100, "sshkey_create", "", 0);
+
+    /* By default, openssh searches for id_rsa, id_ecdsa, id_ecdsa_sk,
+     * id_ed25519, id_ed25519_sk and id_dsa */
+    switch(type) {
+        case SSHKT_DSS:
+            default_filename = "id_dsa";
+            ktype = SSH_KEYTYPE_DSS;
+            if (bits == 0) bits = 1024;
+            if (bits != 1024 && bits != 2048) {
+                printf("Invalid key length %d - valid options are: 1024, 2048\n");
+            }
+            break;
+        case SSHKT_RSA:
+            default_filename = "id_rsa";
+            ktype = SSH_KEYTYPE_RSA;
+            if (bits == 0) bits = 3072;
+            if (bits != 1024 && bits != 2048 && bits != 3072 &&
+                    bits != 2048 && bits != 8192) {
+                printf("Invalid key length %d - valid options are: 1024, 2048, 3072, 4096, 8192\n");
+                return SSH_ERR_UNSPECIFIED;
+            }
+            break;
+        case SSHKT_RSA1:
+            default_filename = NULL;
+            ktype = SSH_KEYTYPE_RSA1;
+            if (bits == 0) bits = 3072;
+            if (bits != 1024 && bits != 2048 && bits != 3072 &&
+                bits != 2048 && bits != 8192) {
+                printf("Invalid key length %d - valid options are: 1024, 2048, 3072, 4096, 8192\n");
+                return SSH_ERR_UNSPECIFIED;
+            }
+            break;
+        case SSHKT_ECDSA:
+            default_filename = "id_ecdsa";
+            ktype = SSH_KEYTYPE_ECDSA;
+            if (bits == 0) bits = 256;
+            if (bits != 256 && bits != 384 && bits != 521) {
+                printf("Invalid key length %d - valid options are: 256, 384, 521\n");
+                return SSH_ERR_UNSPECIFIED;
+            }
+            break;
+        case SSHKT_ED25519:
+            default_filename = "id_ed25519";
+            ktype = SSH_KEYTYPE_ED25519;
+            bits = 0; /* No bits */
+            break;
+        case SSHKT_DSS_CERT01:
+            default_filename = NULL;
+            ktype = SSH_KEYTYPE_DSS_CERT01;
+            break;
+        case SSHKT_RSA_CERT01:
+            default_filename = NULL;
+            ktype = SSH_KEYTYPE_RSA_CERT01;
+            break;
+        case SSHKT_ECDSA_P256:
+            default_filename = NULL;
+            ktype = SSH_KEYTYPE_ECDSA_P256;
+            break;
+        case SSHKT_ECDSA_P384:
+            default_filename = NULL;
+            ktype = SSH_KEYTYPE_ECDSA_P384;
+            break;
+        case SSHKT_ECDSA_P521:
+            default_filename = NULL;
+            ktype = SSH_KEYTYPE_ECDSA_P521;
+            break;
+        case SSHKT_ECDSA_P256_CERT01:
+            default_filename = NULL;
+            ktype = SSH_KEYTYPE_ECDSA_P256_CERT01;
+            break;
+        case SSHKT_ECDSA_P384_CERT01:
+            default_filename = NULL;
+            ktype = SSH_KEYTYPE_ECDSA_P384_CERT01;
+            break;
+        case SSHKT_ECDSA_P521_CERT01:
+            default_filename = NULL;
+            ktype = SSH_KEYTYPE_ECDSA_P521_CERT01;
+            break;
+        case SSHKT_ED25519_CERT01:
+            default_filename = NULL;
+            ktype = SSH_KEYTYPE_ED25519_CERT01;
+            break;
+        default:
+            printf("Unrecognised or unsupported key type\n");
+            return SSH_ERR_UNSPECIFIED;
+    }
+
+    printf("Bits: %d\n", bits);
+
+    if (filename) {
+        output_filename = _strdup(filename);
+    } else {
+        char* default_pathname;
+        output_filename = malloc(MAX_PATH * sizeof(char));
+        default_pathname = malloc(MAX_PATH * sizeof(char));
+
+        /* We'll suggest the user save in %USERPROFILE%\.ssh by default as thats
+         * where both C-Kermit and the windows builds of OpenSSH look */
+        snprintf(default_pathname, MAX_PATH, "%s%s.ssh/%s",
+                 GetHomeDrive(), GetHomePath(), default_filename);
+#ifdef CK_MKDIR
+        /* Make the .ssh directory if it doesn't already exist */
+        zmkdir(default_pathname);
+#endif
+
+        /* GetHomePath gives unix-style directory separators which the windows
+         * file dialog doesn't seem to like. So convert to DOS separators */
+        for (int i = 0; i < MAX_PATH; i++) {
+            if (default_pathname[i] == '\0') break;
+            if (default_pathname[i] == '/') default_pathname[i] = '\\';
+        }
+
+        int rc = uq_file(
+                "Enter a filename to save the generated keys to:", /* Text mode only, text above the prompt */
+                "Save As",  /* file dialog title or text-mode prompt*/
+                5, /* New file, don't append */
+                NULL, /* Help text - not used */
+                default_pathname,
+                output_filename,
+                MAX_PATH
+                );
+        free(default_pathname);
+
+        if (rc == 0) {
+            free(output_filename);
+            return SSH_ERR_USER_CANCELED;
+        } else if (rc < 0 ) {
+            free(output_filename);
+            return SSH_ERR_UNSPECIFIED;
+        }
+    }
+
+    if (pp) {
+        passphrase = _strdup(pp);
+    }
+    else {
+        /* Prompt for passphrase. Two fields to get confirmation. */
+        char pp1[250], pp2[250];
+        struct txtbox fields[2];
+
+        fields[0].t_buf = pp1;
+        fields[0].t_len = sizeof(pp1);
+        fields[0].t_lbl = "New passphrase: ";
+        fields[0].t_dflt = NULL;
+        fields[0].t_echo = 2;
+
+        fields[1].t_buf = pp2;
+        fields[1].t_len = sizeof(pp2);
+        fields[1].t_lbl = "New passphrase (again): ";
+        fields[1].t_dflt = NULL;
+        fields[1].t_echo = 2;
+
+        rc = uq_mtxt("Enter SSH Key passphrase. Leave both fields empty empty "
+                     "for no passphrase.",
+                     NULL, 2, fields);
+
+        if ( !rc ) {
+            printf("User cancelled\n");
+            free(output_filename);
+            return(SSH_ERR_USER_CANCELED);
+        }
+
+        if (strcmp(pp1, pp2) != 0) {
+            printf("Passphrase mismatch, no action taken\n");
+            free(output_filename);
+            return(SSH_ERR_UNSPECIFIED);
+        }
+
+        if (strlen(pp1) > 0) {
+            passphrase = _strdup(pp1);
+        }
+    }
+
+    printf("Generating private key...\n");
+    rc = ssh_pki_generate(ktype, bits, &key);
+    if (rc != SSH_OK) {
+        printf("Failed to generate private key\n");
+        return SSH_ERR_UNSPECIFIED;
+    }
+
+    rc = ssh_pki_export_privkey_file(key, passphrase, NULL, NULL, output_filename);
+    if (rc != SSH_OK) {
+        printf("Failed to write private key to %s - error %d\n", output_filename, rc);
+    } else {
+        pubkey_output_filename = malloc(MAX_PATH);
+
+        snprintf(pubkey_output_filename, MAX_PATH, "%s.pub", output_filename);
+        rc = ssh_pki_export_pubkey_file(key, pubkey_output_filename);
+        if (rc != SSH_OK) {
+            printf("Failed to write public key to %s\n", pubkey_output_filename);
+        }
+
+        free(pubkey_output_filename);
+    }
+
+    free(output_filename);
+    free(passphrase);
+    return SSH_ERR_NO_ERROR;
 }
 
 int sshkey_display_fingerprint(char * filename, int babble) {

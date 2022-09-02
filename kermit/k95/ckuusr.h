@@ -2709,10 +2709,30 @@ struct stringint {			/* String and (wide) integer */
 #define XSSH_CLR 7
 #define XSSH_AGT 8
 
+#ifdef COMMENT
 #define SSHKT_1R   0			/* SSH KEY TYPE symbols */
 #define SSHKT_2R   1                    /* must match ssh/key.h values */
 #define SSHKT_2D   2
 #define SSHKT_SRP  3
+#endif
+#define SSHKT_DSS               0
+#define SSHKT_RSA               1
+#define SSHKT_RSA1              2
+#define SSHKT_ECDSA             3   /* deprecated */
+#define SSHKT_ED25519           4
+#define SSHKT_DSS_CERT01        5
+#define SSHKT_RSA_CERT01        6
+#define SSHKT_ECDSA_P256        7
+#define SSHKT_ECDSA_P384        8
+#define SSHKT_ECDSA_P521        9
+#define SSHKT_ECDSA_P256_CERT01 10
+#define SSHKT_ECDSA_P384_CERT01 11
+#define SSHKT_ECDSA_P521_CERT01 12
+#define SSHKT_ED25519_CERT01    13
+#define SSHKT_SK_ECDSA          14
+#define SSHKT_SK_ECDSA_CERT01   15
+#define SSHKT_SK_ED25519        16
+#define SSHKT_SK_ED25519_CERT01 17
 
 #define SSHKD_IN   1			/* SSH KEY DISPLAY /IN-FORMAT */
 #define SSHKD_OUT  2			/* SSH KEY DISPLAY /OUT-FORMAT */

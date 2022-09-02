@@ -2362,7 +2362,7 @@ char * ssh_tmpuid = NULL, *ssh_tmpcmd = NULL, *ssh_tmpport = NULL,
      * ssh_tmpstr = NULL;
 
 int
- sshk_type = SSHKT_2D,			/* SSH KEY CREATE /TYPE:x */
+ sshk_type = SSHKT_ED25519,			/* SSH KEY CREATE /TYPE:x */
  sshk_bits = 1024,			/* SSH KEY CREATE /BITS:n */
  sshk_din  = SKDF_OSSH,			/* SSH KEY DISPLAY /IN-FORMAT: */
  sshk_dout = SKDF_OSSH;			/* SSH KEY DISPLAY /OUT-FORMAT: */
@@ -2458,15 +2458,33 @@ static struct keytab sshkcrea[] = {	/* SSH KEY CREATE table */
     { "/bits",           SSHKC_BI, CM_ARG },
     { "/passphrase",     SSHKC_PP, CM_ARG },
     { "/type",           SSHKC_TY, CM_ARG },
-    { "/v1-rsa-comment", SSHKC_1R, CM_ARG }
+    /*{ "/v1-rsa-comment", SSHKC_1R, CM_ARG }*/
 };
 static int nsshkcrea = (sizeof(sshkcrea) / sizeof(struct keytab));
 
 static struct keytab sshkcty[] = {	/* SSH KEY CREATE /TYPE:xxx */
-    { "srp",    SSHKT_SRP, 0 },
+    /*{ "srp",    SSHKT_SRP, 0 },
     { "v1-rsa", SSHKT_1R, 0 },
     { "v2-dsa", SSHKT_2D, 0 },
-    { "v2-rsa", SSHKT_2R, 0 }
+    { "v2-rsa", SSHKT_2R, 0 }*/
+    {"dss",					SSHKT_DSS,				0 },
+    {"dss-cert01",			SSHKT_DSS_CERT01,		CM_INV },
+    {"ecdsa",				SSHKT_ECDSA,			0 }, /* deprecated */
+    {"ecdsa-p256",			SSHKT_ECDSA_P256,		CM_INV },
+    {"ecdsa-p256-cert01",	SSHKT_ECDSA_P256_CERT01,CM_INV },
+    {"ecdsa-p384",			SSHKT_ECDSA_P384,		CM_INV },
+    {"ecdsa-p384-cert01",	SSHKT_ECDSA_P384_CERT01,CM_INV },
+    {"ecdsa-p521",			SSHKT_ECDSA_P521,		CM_INV },
+    {"ecdsa-p521-cert01",	SSHKT_ECDSA_P521_CERT01,CM_INV },
+    {"ed25519",				SSHKT_ED25519,			0 },
+    {"ed25519-cert01",		SSHKT_ED25519_CERT01,	CM_INV },
+    {"rsa",					SSHKT_RSA,				0 },
+    {"rsa1",				SSHKT_RSA1,				CM_INV },
+    {"rsa-cert01",			SSHKT_RSA_CERT01,		CM_INV },
+    {"sk-ecdsa",			SSHKT_SK_ECDSA,			CM_INV },
+    {"sk-ecdsa-cert01",		SSHKT_SK_ECDSA_CERT01,	CM_INV },
+    {"sk-ed25519",			SSHKT_SK_ED25519,		CM_INV },
+    {"sk-ed25519-cert01",	SSHKT_SK_ED25519_CERT01,CM_INV }
 };
 static int nsshkcty = (sizeof(sshkcty) / sizeof(struct keytab));
 
@@ -11268,7 +11286,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	      return(success);
 	    }
 	    case SSHK_CREA: {	/* SSH KEY CREATE /switches... */
-	      int bits = 1024, keytype = SSHKT_2R;
+	      int bits = 0, keytype = SSHKT_ED25519;
 	      char * pass = NULL, * comment = NULL;
 	      struct FDB df, sw;
 
@@ -11316,12 +11334,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 		  }
 		  switch (cmresult.nresult) {
 		    case SSHKC_BI:	/* /BITS:n */
-		      if ((y = cmnum("","1024",10,&z,xxstring)) < 0)
-			return(y);
-		      if (z < 512 || z > 4096) {
-			  printf("?Out range - min: 512, max: 4096\n");
-			  return(-9);
-		      }
+		      if ((y = cmnum("","0",10,&z,xxstring)) < 0)
+			    return(y);
 		      bits = z;
 		      break;
 		    case SSHKC_PP:	/* /PASSPHRASE:blah */
@@ -11331,7 +11345,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 		      break;
 		    case SSHKC_TY:	/* /TYPE:keyword */
 		      if ((y = cmkey(sshkcty,nsshkcty,"",
-				     "v2-rsa",xxstring)) < 0)
+				     "ed25519",xxstring)) < 0)
 			return(y);
 		      keytype = y;
 		      break;

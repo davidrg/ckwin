@@ -49,6 +49,8 @@ SSH [OPEN] host [port]
 	   Just reports an error if version is 1 (SSH-1 not supported)
    /SUBSYSTEM:name
 	   Implemented though doesn't appear to be working at the moment
+SSH KEY CREATE [ /BITS:bits /PASSPHRASE:passphrase /TYPE:{ DSS, ECDSA, ED25519, RSA } ] filename
+   Creates an SSH key pair
 SET SSH			
    COMPRESSION {ON,OFF}
    HEARTBEAT-INTERVAL interval
