@@ -66,7 +66,8 @@ K_DIALOG_GENERAL_SETTINGS(void)
     *combo + button ;
 
 #ifdef WIN32
-    if ( !connector->_libeay_avail ) {
+    if ( !connector->_ssh_avail ) {
+        /* TODO: This isn't working currently */
         button = (UIW_BUTTON *) Get( RADIO_SSH );
         button->woFlags |= WOF_NON_SELECTABLE ;
         button->Information(I_CHANGED_FLAGS,NULL) ;
@@ -341,7 +342,7 @@ K_DIALOG_GENERAL_SETTINGS( KD_LIST_ITEM * entry, enum ENTRYMODE mode )
     }
 
 #ifdef WIN32
-    if ( !connector->_libeay_avail ) {
+    if ( !connector->_ssh_avail ) {
         button = (UIW_BUTTON *) Get( RADIO_SSH );
         button->woFlags |= WOF_NON_SELECTABLE ;
         button->Information(I_CHANGED_FLAGS,NULL) ;
@@ -635,14 +636,18 @@ EVENT_TYPE K_DIALOG_GENERAL_SETTINGS::Event( const UI_EVENT & event )
     }
 
     case OPT_SSH: {
-        if ( _transport == SSH )
+        printf("OPT_SSH\n");
+        if ( _transport == SSH ) {
+            printf("Already SSH - give up\n");
             break;
+        }
 
         UIW_PROMPT * prompt = (UIW_PROMPT *) Get( PROMPT_ADDRESS );
         prompt->DataSet("Hostname or IP Address:");
 
         string = (UIW_STRING *) Get( ENTRY_ADDRESS ) ;
         string2 = (UIW_STRING *) Get( ENTRY_IPPORT );
+        printf("Switch...\n");
         switch ( _transport ) {
         case PHONE:
             strncpy( _phone, string->DataGet(), 256 );
@@ -669,12 +674,14 @@ EVENT_TYPE K_DIALOG_GENERAL_SETTINGS::Event( const UI_EVENT & event )
         string2->woFlags &= ~WOF_NON_SELECTABLE ;
         string2->Information(I_CHANGED_FLAGS, NULL);
 
+        printf("InitSSHProtoList...\n");
         InitSSHProtoList();
         combo = (UIW_COMBO_BOX *) Get( COMBO_TCP_PROTOCOL );
         combo->woFlags &= ~WOF_NON_SELECTABLE;
         combo->Information(I_CHANGED_FLAGS,NULL) ;
         button = FindSSHButton(_sshproto);
         *combo + button;
+        printf("Done!");
         break;
     }
 
@@ -818,6 +825,7 @@ EVENT_TYPE K_DIALOG_GENERAL_SETTINGS::Event( const UI_EVENT & event )
         // fallthrough to default
 
     default:
+        printf("Fallthrough\n");
        retval = UIW_WINDOW::Event(event);
    }	
 
@@ -998,9 +1006,9 @@ InitSSHProtoList()
     button = new UIW_BUTTON( 0,0,0,"v2",BTF_NO_3D, WOF_NO_FLAGS );
     button->StringID(button->DataGet());
     *list + button;
-    button = new UIW_BUTTON( 0,0,0,"v1",BTF_NO_3D, WOF_NO_FLAGS );
+    /*button = new UIW_BUTTON( 0,0,0,"v1",BTF_NO_3D, WOF_NO_FLAGS );
     button->StringID(button->DataGet());
-    *list + button;
+    *list + button;*/
 }
 
 UIW_BUTTON * K_DIALOG_GENERAL_SETTINGS::

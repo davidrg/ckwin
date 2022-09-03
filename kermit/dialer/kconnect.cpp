@@ -933,6 +933,13 @@ K_CONNECTOR::K_CONNECTOR(void)
         // FreeLibrary(hLib);
     } else
         _libeay_avail = 0;
+
+    HINSTANCE hSSH = LoadLibrary("ssh");
+    if ( hSSH ) {
+        _ssh_avail = 1;
+         FreeLibrary(hSSH);
+    } else
+        hSSH = 0;
 #else
     char *exe_path;
     char * dllname = "SSLEAY2";

@@ -77,6 +77,7 @@ class ZIL_EXPORT_CLASS K_CONNECTOR : public UIW_WINDOW
    ZIL_UINT8      _krb5_avail;
    ZIL_UINT8      _krb4_avail;
    ZIL_UINT8      _libeay_avail;
+   ZIL_UINT8      _ssh_avail;
 
 #ifdef WIN32
    HWND          _hwndNextConnect;
