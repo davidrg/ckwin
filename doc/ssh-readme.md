@@ -49,8 +49,13 @@ SSH [OPEN] host [port]
 	   Just reports an error if version is 1 (SSH-1 not supported)
    /SUBSYSTEM:name
 	   Implemented though doesn't appear to be working at the moment
-SSH KEY CREATE [ /BITS:bits /PASSPHRASE:passphrase /TYPE:{ DSS, ECDSA, ED25519, RSA } ] filename
-   Creates an SSH key pair
+SSH KEY 
+  CREATE [ /BITS:bits /PASSPHRASE:passphrase /TYPE:{ DSS, ECDSA, ED25519, RSA } ] filename
+    Creates an SSH key pair
+  CHANGE-PASSPHRASE [ /NEW-PASSPHRASE:passphrase /OLD-PASSPHRASE:passphrase ] filename
+    Change the passphrase for an existing key
+  DISPLAY [ /FORMAT:{FINGERPRINT,OPENSSH,SSH.COM} ] filename
+    Display the SSH key fingerprint or public key.
 SET SSH			
    COMPRESSION {ON,OFF}
    HEARTBEAT-INTERVAL interval

@@ -772,9 +772,9 @@ static char * hmxxssh[] = {
 "  The default format is OPENSSH.",
 " ",
 #endif
-"SSH KEY DISPLAY [ /FORMAT:{FINGERPRINT,OPENSSH} ] filename",
+"SSH KEY DISPLAY [ /FORMAT:{FINGERPRINT,OPENSSH,SSH.COM} ] filename",
 "  This command displays the fingerprint or public key for the specified key.",
-"  .",
+"  Default action is to show the fingerprint.",
 " ",
 #ifdef COMMENT
 "SSH KEY V1 SET-COMMENT filename comment",

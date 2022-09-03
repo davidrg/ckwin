@@ -130,10 +130,10 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *          TODO: LOCAL-PORT-FORWARD
  *          TODO: REMOTE-PORT-FORWARD
  *   TODO: SSH KEY
- *      TODO: CHANGE-PASSPHRASE
- *          TODO: /NEW-PASSPHRASE:passphrase
- *          TODO: /OLD-PASSPHRASE:passphrase
- *          TODO: filename
+ *      CHANGE-PASSPHRASE
+ *          /NEW-PASSPHRASE:passphrase
+ *          /OLD-PASSPHRASE:passphrase
+ *          filename
  *      CREATE
  *          /BITS:bits
  *          /PASSPHRASE: passphrase
@@ -1349,6 +1349,11 @@ int sshkey_display_public(char * filename, char *identity_passphrase) {
     return SSH_ERR_OK;
 }
 
+/** Like sshkey_display_public but puts some extra cruft around the output.
+ *
+ * @param filename key file - will be prompted if not specified
+ * @param identity_passphrase key passphrase - will be prompted if not specified
+ */
 int sshkey_display_public_as_ssh2(char * filename,char *identity_passphrase) {
     /* ssh key display /format:ssh.com id_rsa */
 
@@ -1421,11 +1426,104 @@ int sshkey_display_public_as_ssh2(char * filename,char *identity_passphrase) {
 }
 
 int sshkey_change_passphrase(char * filename, char * oldpp, char * newpp) {
-    return SSH_ERR_NOT_IMPLEMENTED; /* TODO */
+    ssh_key key = NULL;
+    int rc;
+    char* fn = NULL;
+    char* pp = NULL;
+
+    if (filename == NULL) {
+        fn = malloc(MAX_PATH);
+        rc = uq_file(
+                /* Text mode only, text above the prompt */
+                "Enter the filename of the key to display the fingerprint for:",
+                "Open Key File",  /* file dialog title or text-mode prompt*/
+                1,    /* existing file */
+                NULL, /* Help text - not used */
+                "id_rsa",
+                fn,
+                MAX_PATH
+        );
+        if (rc == 0) {
+            free(fn);
+            return SSH_ERR_USER_CANCELED;
+        }
+    } else {
+        fn = _strdup(filename);
+    }
+
+    /* Open the key with the old passphrase */
+    rc = ssh_pki_import_privkey_file(fn, oldpp, auth_prompt, NULL, &key);
+    if (rc != SSH_OK) {
+        if (rc == SSH_EOF) {
+            printf("Failed to open private key file: %s - file not found "
+                   "or permission denied\n", fn);
+        } else {
+            printf("Failed to open private key file: %s\n", fn);
+        }
+        free(fn); fn = NULL;
+        return SSH_ERR_UNSPECIFIED;
+    }
+
+    /* Make sure we have a new passphrase */
+    if (newpp) {
+        pp = _strdup(newpp);
+    }
+    else {
+        /* Prompt for passphrase. Two fields to get confirmation. */
+        char pp1[250], pp2[250];
+        struct txtbox fields[2];
+
+        fields[0].t_buf = pp1;
+        fields[0].t_len = sizeof(pp1);
+        fields[0].t_lbl = "New passphrase: ";
+        fields[0].t_dflt = NULL;
+        fields[0].t_echo = 2;
+
+        fields[1].t_buf = pp2;
+        fields[1].t_len = sizeof(pp2);
+        fields[1].t_lbl = "New passphrase (again): ";
+        fields[1].t_dflt = NULL;
+        fields[1].t_echo = 2;
+
+        rc = uq_mtxt("Enter SSH Key passphrase. Leave both fields empty empty "
+                     "for no passphrase.",
+                     NULL, 2, fields);
+
+        if ( !rc ) {
+            printf("User cancelled\n");
+            free(fn);
+            ssh_key_free(key);
+            return(SSH_ERR_USER_CANCELED);
+        }
+
+        if (strcmp(pp1, pp2) != 0) {
+            printf("Passphrase mismatch, no action taken\n");
+            free(fn);
+            ssh_key_free(key);
+            return(SSH_ERR_UNSPECIFIED);
+        }
+
+        if (strlen(pp1) > 0) {
+            pp = _strdup(pp1);
+        }
+    }
+
+    /* Write out with new passphrase */
+    rc = ssh_pki_export_privkey_file(key, pp, NULL, NULL, fn);
+    if (rc != SSH_OK) {
+        printf("Failed to write private key to %s - error %d\n", fn, rc);
+    } else {
+        printf("Your identification has been saved with the new passphrase.\n");
+    }
+
+    free(pp);
+    free(fn);
+    ssh_key_free(key);
+    return SSH_ERR_OK;
 }
 
 int sshkey_v1_change_comment(char * filename, char * comment, char * pp) {
-    return SSH_ERR_NOT_IMPLEMENTED; /* TODO */
+    return SSH_ERR_NOT_IMPLEMENTED;
 }
 
 char * sshkey_default_file(int a) {
