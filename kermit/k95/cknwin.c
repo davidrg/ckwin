@@ -1528,10 +1528,10 @@ gui_win_run_mode(int x)
 }
 
 int
-gui_saveas_dialog(char * preface, char * prompt, int fc,
-                  char * def, char * result, int rlength)
+gui_file_dialog(char * preface, char * prompt, int fc,
+                char * def, char * result, int rlength)
 {
-    return KuiDownloadDialog(prompt,def,result,rlength, fc != 5);
+    return KuiFileDialog(prompt,def,result,rlength, fc != 5, fc == 1);
 }
 
 int 

@@ -38,12 +38,13 @@ BOOL APIENTRY KSaveAsDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-KDownLoad::KDownLoad( K_GLOBAL* kg, BOOL dlButton )
+KDownLoad::KDownLoad( K_GLOBAL* kg, BOOL dlButton, BOOL openExisting )
     : KWin( kg )
     , hdownload( 0 )
     , downloadID( 999 )     // unique identifier for download button
     , optionID( 0x40E )     // it's not IDHELP!
     , downloadButton(dlButton)
+    , openFile(openExisting)
 {
     OSVERSIONINFO osverinfo ;
 
@@ -69,6 +70,10 @@ KDownLoad::KDownLoad( K_GLOBAL* kg, BOOL dlButton )
          * Windows 2000+ supports modern file dialogs, while NT 3.51 does not
          * support customisable file dialogs (at least, not in the way we're
          * custominsing it) */
+        downloadButton = FALSE;
+    }
+
+    if (openExisting) {
         downloadButton = FALSE;
     }
 }
@@ -132,11 +137,14 @@ void KDownLoad::show( Bool bVisible )
     OpenFileName.lpstrDefExt       = 0;
     OpenFileName.lCustData         = 0;
 
-    OpenFileName.Flags = OFN_CREATEPROMPT | OFN_PATHMUSTEXIST 
-        | OFN_HIDEREADONLY
-        | OFN_NOCHANGEDIR | OFN_NOTESTFILECREATE | OFN_OVERWRITEPROMPT 
-        | OFN_SHAREAWARE ;
-//        | OFN_ENABLETEMPLATE ;
+    OpenFileName.Flags =  OFN_PATHMUSTEXIST | OFN_HIDEREADONLY
+            | OFN_NOCHANGEDIR | OFN_SHAREAWARE ;
+
+    if (!openFile) {
+        OpenFileName.Flags = OpenFileName.Flags | OFN_CREATEPROMPT
+                | OFN_OVERWRITEPROMPT | OFN_NOTESTFILECREATE;
+    }
+
 
     OpenFileName.lpfnHook = 0;
     if (!nt351 && downloadButton) {
@@ -153,7 +161,11 @@ void KDownLoad::show( Bool bVisible )
 
     GetCurrentDirectory(sizeof(szCurrentDir),szCurrentDir);
 
-    success = GetSaveFileName( &OpenFileName );
+    if (openFile) {
+        success = GetOpenFileName(&OpenFileName);
+    } else {
+        success = GetSaveFileName(&OpenFileName);
+    }
     errorCode = GetLastError();
     SetCurrentDirectory(szCurrentDir);
 }

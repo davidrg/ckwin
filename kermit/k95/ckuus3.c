@@ -2609,7 +2609,7 @@ _PROTOTYP(int gui_mtxt_dialog,(char *,int,struct txtbox []));
 _PROTOTYP(int gui_position,(int, int));
 _PROTOTYP(int gui_resize_mode,(int));
 _PROTOTYP(int gui_win_run_mode,(int));
-_PROTOTYP(int gui_saveas_dialog,(char *,char *, int, char *, char *, int));
+_PROTOTYP(int gui_file_dialog,(char *,char *, int, char *, char *, int));
 extern int gui_dialog;
 #endif /* KUI */
 
@@ -2926,7 +2926,7 @@ uq_file(preface,fprompt,fc,help,dflt,result,rlength)
 
 #ifdef KUI
     if ( gui_dialog ) {
-        rc = gui_saveas_dialog(preface,fprompt,fc,dflt,result,rlength);
+        rc = gui_file_dialog(preface,fprompt,fc,dflt,result,rlength);
         return rc;
     }
 #endif /* KUI */

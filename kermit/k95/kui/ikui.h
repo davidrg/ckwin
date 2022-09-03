@@ -72,4 +72,4 @@ void KuiSetTerminalRunMode(int);
 #define STATUS_CURPOS     3
 #define STATUS_HW         4
 
-int KuiDownloadDialog(char *, char *, char *, int, BOOL);
+int KuiFileDialog(char *, char *, char *, int, BOOL, BOOL);
