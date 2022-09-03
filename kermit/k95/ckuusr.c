@@ -2503,9 +2503,11 @@ static int nsshdifmt = (sizeof(sshdifmt) / sizeof(struct keytab));
 
 static struct keytab sshdofmt[] = {	/* SSH KEY DISPLAY /IN-FORMAT: */
     { "fingerprint", SKDF_FING, 0 },
-    { "ietf",        SKDF_IETF, 0 },
-    { "openssh",     SKDF_OSSH, 0 },
-    { "ssh.com",     SKDF_SSHC, 0 }
+    /* "bubblebabble" representation not supported by libssh
+     * { "ietf",        SKDF_IETF, 0 },
+     */
+     { "openssh",     SKDF_OSSH, 0 },
+     { "ssh.com",     SKDF_SSHC, 0 }
 };
 static int nsshdofmt = (sizeof(sshdofmt) / sizeof(struct keytab));
 
@@ -11377,7 +11379,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	    }
 	    case SSHK_DISP: {	/* SSH KEY DISPLAY /switches... */
 	      char c;
-	      int infmt = 0, outfmt = 0;
+	      int infmt = 0, outfmt = SKDF_FING;
 	      struct FDB df, sw;
 	      cmfdbi(&sw,
 		     _CMKEY,		/* fcode */

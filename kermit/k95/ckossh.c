@@ -139,9 +139,9 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *          /PASSPHRASE: passphrase
  *          /TYPE:{ DSS, ECDSA, ED25519, RSA  }
  *          filename
- *      TODO: DISPLAY
- *          TODO: /FORMAT:{fingerprint, ietf,openssh,ssh.com}
- *          TODO: filename
+ *      DISPLAY
+ *          /FORMAT:{fingerprint, openssh, ssh.com}
+ *          filename
  *      TODO: V2 REKEY
  *   SET SSH
  *      TODO: AGENT-FORWARDING {ON,OFF}
@@ -1163,6 +1163,7 @@ int sshkey_create(char * filename, int bits, char * pp, int type, char * cmd_com
         return SSH_ERR_UNSPECIFIED;
     }
 
+    /* TODO: use auth_prompt instead of the above here \|/ */
     rc = ssh_pki_export_privkey_file(key, passphrase, NULL, NULL, output_filename);
     if (rc != SSH_OK) {
         printf("Failed to write private key to %s - error %d\n", output_filename, rc);
@@ -1188,6 +1189,7 @@ int sshkey_create(char * filename, int bits, char * pp, int type, char * cmd_com
                         SSH_PUBLICKEY_HASH_SHA256, hash, hlen);
                 if (fingerprint != NULL) {
                     printf("The key fingerprint is:\n%s\n", fingerprint);
+                    /* TODO: We should output the comment if there is one too */
                     ssh_string_free_char(fingerprint);
                 } else {
                     printf("Failed to get the key fingerprint\n");
@@ -1206,16 +1208,216 @@ int sshkey_create(char * filename, int bits, char * pp, int type, char * cmd_com
     return SSH_ERR_NO_ERROR;
 }
 
+/** Displays the fingerprint for the specified public key
+ *
+ * @param filename Key file to display the fingerprint for. If not supplied, one
+ *                 will be prompted for
+ * @param babble 0 - fingerprint, 1 - IETF (ignored)
+ * @return 0
+ */
 int sshkey_display_fingerprint(char * filename, int babble) {
-    return SSH_ERR_NOT_IMPLEMENTED; /* TODO */
+    ssh_key key = NULL;
+    int rc;
+    unsigned char *hash = NULL;
+    size_t hlen = 0;
+    char* fingerprint = NULL;
+    char* fn = NULL;
+
+    /* We get here via one of the following:
+     * ssh key display /format:fingerprint filename
+     * ssh key display /format:ietf filename
+     * babble 1 = /format:ietf
+     * babble 0 = /format:fingerprint
+     *
+     * For the "fingerprint" format Kermit95 used to use the MD5 hash output in
+     * the hex representation and for the "ietf" format the SHA1 has was used
+     * in the "bubblebabble" representation.
+     *
+     * Libssh has deprecated the MD5 hash and doesn't support the "bubblebabble"
+     * representation. So we always use the SHA256 hash output in the base64
+     * representation here.
+     */
+
+/*    printf("sshkey_display_fingerprint\nFilename: %s\nBabble: %d\n", filename, babble);*/
+
+    if (filename == NULL) {
+        fn = malloc(MAX_PATH);
+        int rc = uq_file(
+                /* Text mode only, text above the prompt */
+                "Enter the filename of the key to display the fingerprint for:",
+                "Open Key File",  /* file dialog title or text-mode prompt*/
+                1,    /* existing file */
+                NULL, /* Help text - not used */
+                "id_rsa",
+                fn,
+                MAX_PATH
+        );
+        if (rc == 0) {
+            free(fn);
+            return SSH_ERR_USER_CANCELED;
+        }
+    } else {
+        fn = _strdup(filename);
+    }
+
+    rc = ssh_pki_import_pubkey_file (fn, &key);
+    if (rc != SSH_OK) {
+        printf("Failed to open key: %s\n", fn);
+        free(fn);
+        return SSH_ERR_UNSPECIFIED;
+    }
+    free(fn);
+
+    rc = ssh_get_publickey_hash(key, SSH_PUBLICKEY_HASH_SHA256, &hash, &hlen);
+    if (rc != SSH_OK) {
+        printf("Failed to get key fingerprint\n");
+    } else {
+        fingerprint = ssh_get_fingerprint_hash(
+                SSH_PUBLICKEY_HASH_SHA256, hash, hlen);
+        if (fingerprint != NULL) {
+            printf("%s\n", fingerprint);
+            /* TODO: We should output the comment if there is one too */
+            ssh_string_free_char(fingerprint);
+        } else {
+            printf("Failed to get the key fingerprint\n");
+        }
+        ssh_clean_pubkey_hash(&hash);
+    }
+
+    ssh_key_free(key);
+
+    return SSH_ERR_OK;
 }
 
+/** Outputs the public key for the specified private key - same as what you'd
+ * put in authorized_keys.
+ * @param filename key file - will be prompted if not specified
+ * @param passphrase key passphrase - will be prompted if not specified
+ */
 int sshkey_display_public(char * filename, char *identity_passphrase) {
-    return SSH_ERR_NOT_IMPLEMENTED; /* TODO */
+    ssh_key key = NULL;
+    int rc;
+    char* fn = NULL, * blob;
+
+    /* We get here with the following:
+     * ssh key display /format:openssh id_rsa
+     */
+
+    if (filename == NULL) {
+        fn = malloc(MAX_PATH);
+        rc = uq_file(
+                /* Text mode only, text above the prompt */
+                "Enter the filename of the key to display the fingerprint for:",
+                "Open Key File",  /* file dialog title or text-mode prompt*/
+                1,    /* existing file */
+                NULL, /* Help text - not used */
+                "id_rsa",
+                fn,
+                MAX_PATH
+        );
+        if (rc == 0) {
+            free(fn);
+            return SSH_ERR_USER_CANCELED;
+        }
+    } else {
+        fn = _strdup(filename);
+    }
+
+    rc = ssh_pki_import_privkey_file(fn, identity_passphrase, auth_prompt,
+                                     NULL, &key);
+    free(fn); fn = NULL;
+
+    if (rc != SSH_OK) {
+        if (rc == SSH_EOF) {
+            printf("Failed to open private key file: %s - file not found "
+                   "or permission denied\n", fn);
+        } else {
+            printf("Failed to open private key file: %s\n", fn);
+        }
+        return SSH_ERR_UNSPECIFIED;
+    }
+
+    rc = ssh_pki_export_pubkey_base64(key, &blob);
+    if (rc != SSH_OK) {
+        printf("Failed to export public key\n");
+        return SSH_ERR_UNSPECIFIED;
+    }
+    printf("%s %s\n", ssh_key_type_to_char(ssh_key_type(key)), blob);
+    ssh_string_free_char(blob);
+    ssh_key_free(key);
+
+    return SSH_ERR_OK;
 }
 
 int sshkey_display_public_as_ssh2(char * filename,char *identity_passphrase) {
-    return SSH_ERR_NOT_IMPLEMENTED; /* TODO */
+    /* ssh key display /format:ssh.com id_rsa */
+
+
+    ssh_key key = NULL;
+    int rc;
+    char* fn = NULL, * blob;
+
+    /* We get here with the following:
+     * ssh key display /format:openssh id_rsa
+     */
+
+    if (filename == NULL) {
+        fn = malloc(MAX_PATH);
+        rc = uq_file(
+                /* Text mode only, text above the prompt */
+                "Enter the filename of the key to display the fingerprint for:",
+                "Open Key File",  /* file dialog title or text-mode prompt*/
+                1,    /* existing file */
+                NULL, /* Help text - not used */
+                "id_rsa",
+                fn,
+                MAX_PATH
+        );
+        if (rc == 0) {
+            free(fn);
+            return SSH_ERR_USER_CANCELED;
+        }
+    } else {
+        fn = _strdup(filename);
+    }
+
+    rc = ssh_pki_import_privkey_file(fn, identity_passphrase, auth_prompt,
+                                     NULL, &key);
+    free(fn); fn = NULL;
+
+    if (rc != SSH_OK) {
+        if (rc == SSH_EOF) {
+            printf("Failed to open private key file: %s - file not found "
+                   "or permission denied\n", fn);
+        } else {
+            printf("Failed to open private key file: %s\n", fn);
+        }
+        return SSH_ERR_UNSPECIFIED;
+    }
+
+    /*
+     * Here we should display the public key in a format something like:
+     * ---- BEGIN SSH2 PUBLIC KEY ----
+     * Comment: "1024-bit RSA, converted from OpenSSH by david@LAPTOP-TBIBQL8D"
+     * AAAAB3NzaC1yc2EAAAABIwAAAIEA0N7KNPaqX7j2bJJu31n9RmnTpmJpRzog+9sTwgzV+l
+     * WgTa973gL29zso/8dlRXgzmD9xgZyiJUvlgsd/QBQt5iYlOwreEIRRFanJi2jgWTT/vNpO
+     * 9n6tCpFIeve724NQtp86JY6bsIW+BGB/FG0rJQhAg7pVQ1vvZg92N6hPmtU=
+     * ---- END SSH2 PUBLIC KEY ----
+     *
+     * We don't have any actual of getting the comment so its just being used
+     * for the key type at the moment.
+     */
+    rc = ssh_pki_export_pubkey_base64(key, &blob);
+    if (rc != SSH_OK) {
+        printf("Failed to export public key\n");
+        return SSH_ERR_UNSPECIFIED;
+    }
+    printf("---- BEGIN SSH2 PUBLIC KEY ----\nComment: \"%s\"\n%s\n---- END SSH2 PUBLIC KEY ----\n",
+           ssh_key_type_to_char(ssh_key_type(key)), blob);
+    ssh_string_free_char(blob);
+    ssh_key_free(key);
+
+    return SSH_ERR_OK;
 }
 
 int sshkey_change_passphrase(char * filename, char * oldpp, char * newpp) {

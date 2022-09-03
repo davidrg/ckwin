@@ -766,9 +766,15 @@ static char * hmxxssh[] = {
 "  ED25519 does not support being given a key length and any value supplied",
 "  via /BITS: will be ignored.",
 " ",
+#ifdef COMMENT
 "SSH KEY DISPLAY [ /FORMAT:{FINGERPRINT,IETF,OPENSSH,SSH.COM} ] filename",
 "  This command displays the contents of a public or private key file.",
 "  The default format is OPENSSH.",
+" ",
+#endif
+"SSH KEY DISPLAY [ /FORMAT:{FINGERPRINT,OPENSSH} ] filename",
+"  This command displays the fingerprint or public key for the specified key.",
+"  .",
 " ",
 #ifdef COMMENT
 "SSH KEY V1 SET-COMMENT filename comment",

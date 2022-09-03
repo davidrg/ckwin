@@ -240,4 +240,9 @@ int start_ssh_subsystem(ssh_parameters_t* parameters, ssh_client_t *ssh_client,
  */
 BOOL acquire_mutex(HANDLE mutex, DWORD msTimeout);
 
+/** Libssh ssh_auth_callback implementation
+ */
+int auth_prompt(const char* prompt, char* buf, size_t len, int echo,
+                int verify, void* userdata);
+
 #endif /* CKWIN_SSHSUBSYS_H */

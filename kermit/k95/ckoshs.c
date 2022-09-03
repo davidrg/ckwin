@@ -401,7 +401,7 @@ static void logging_callback(int priority, const char *function,
  * @param verify Should the password be verified?
  * @param userdata Userdata to be passed to the callback function
  */
-static int auth_prompt(const char* prompt, char* buf, size_t len, int echo,
+int auth_prompt(const char* prompt, char* buf, size_t len, int echo,
                        int verify, void* userdata) {
 
     debug(F110, "sshsubsys - ssh auth_prompt", prompt, 0);
