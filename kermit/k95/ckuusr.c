@@ -2402,13 +2402,13 @@ static struct keytab sshkwtab[] = {
     { "forward-remote-port", XSSH_FRP, CM_INV },
     { "key",                 XSSH_KEY, 0 },
     { "open",                XSSH_OPN, 0 },
-    { "v2",                  XSSH_V2,  0 },
+    /*{ "v2",                  XSSH_V2,  0 },*/
     { "", 0, 0 }
 };
 static int nsshcmd = (sizeof(sshkwtab) / sizeof(struct keytab)) - 1;
 
 static struct keytab ssh2tab[] = {
-    { "rekey", XSSH2_RKE, 0 },
+    { "rekey", XSSH2_RKE, 0 }, /* Not supported by libssh */
     { "", 0, 0 }
 };
 static int nssh2tab = (sizeof(ssh2tab) / sizeof(struct keytab));

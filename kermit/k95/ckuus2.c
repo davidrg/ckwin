@@ -797,8 +797,10 @@ static char * hmxxssh[] = {
 "  An example of a /COMMAND to execute C-Kermit in SERVER mode is:",
 "     SSH OPEN hostname /COMMAND:{kermit -x -l 0}",
 " ",
+#ifdef COMMENT
 "SSH V2 REKEY",
 "  Requests that an existing SSH V2 connection generate new session keys.",
+#endif
 #else  /* SSHBUILTIN */
 "Syntax: SSH [ options ] <hostname> [ command ]",
 "  Makes an SSH connection using the external ssh program via the SET SSH",

@@ -142,7 +142,6 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *      DISPLAY
  *          /FORMAT:{fingerprint, openssh, ssh.com}
  *          filename
- *      TODO: V2 REKEY
  *   SET SSH
  *      TODO: AGENT-FORWARDING {ON,OFF}
  *      TODO: CHECK-HOST-IP {ON,OFF}
