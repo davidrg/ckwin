@@ -122,14 +122,15 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *   TODO: SSH ADD
  *      TODO: LOCAL-PORT-FORWARD local-port host port
  *      TODO: REMOTE-PORT-FORWARD remote-port host port
- *      TODO: AGENT ADD identity-file
- *      TODO: AGENT DELETE identity-file
- *      TODO: AGENT LIST
+ *   TODO: SSH AGENT
+ *      TODO: ADD identity-file
+ *      TODO: DELETE identity-file
+ *      TODO: LIST
  *          TODO: /FINGERPRINT
- *      TODO: CLEAR
- *          TODO: LOCAL-PORT-FORWARD
- *          TODO: REMOTE-PORT-FORWARD
- *   TODO: SSH KEY
+ *  TODO: SSH CLEAR
+ *      TODO: LOCAL-PORT-FORWARD
+ *      TODO: REMOTE-PORT-FORWARD
+ *   SSH KEY
  *      CHANGE-PASSPHRASE
  *          /NEW-PASSPHRASE:passphrase
  *          /OLD-PASSPHRASE:passphrase
@@ -153,8 +154,6 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *          Value is stored in ssh_gsd
  *      HEARTBEAT-INTERVAL interval
  *      TODO: IDENTITY-FILE filename
- *      TODO: KERBEROS4 TGT-PASSING {ON,OFF}    -- delete
- *      TODO: KERBEROS5 TGT-PASSING {ON,OFF}    -- delete
  *      TODO: PRIVILEGED-PORT {ON,OFF}
  *      TODO: QUIET {ON,OFF}
  *          -> This should suppress all printfs
@@ -180,9 +179,9 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *          Stored in ssh2_unh
  *      VERBOSE level
  *          Report Errors - Verbosity Level. Range 0-7. Value stored in ssh_vrb
- *      SSH VERSION {2, AUTOMATIC}
+ *      VERSION {2, AUTOMATIC}
  *          value is saved in ssh_ver. 0=auto.
- *      TODO: SSH X11-FORWARDING {ON, OFF}
+ *      TODO: X11-FORWARDING {ON, OFF}
  *          SET TELNET ENV DISPLAY is used to set the DISPLAY value
  *      TODO: XAUTH-LOCATION filename
  */
