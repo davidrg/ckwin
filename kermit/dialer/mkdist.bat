@@ -4,9 +4,9 @@
 @echo Create directories...
 if not exist dist\NUL mkdir dist
 
-move *.exe dist
+move nk95dial.exe dist\k95dial.exe
 copy *.manifest dist
 copy dialer.dat dist
 copy p_servic.znc dist
 copy p_direct.znc dist
-ren dist\nk95dial.exe dist\k95dial.exe
+copy %root%\zinc\COPYING.LESSOR.txt dist
