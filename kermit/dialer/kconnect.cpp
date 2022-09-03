@@ -2862,25 +2862,25 @@ Event( const UI_EVENT & event )
        break;
 
    case OPT_MENU_HELP_WEB_PROJECT:
-       Browse("http://www.kermit-project.org/");
+       Browse("http://www.kermitproject.org/");
        break;
    case OPT_MENU_HELP_WEB_K95:
-       Browse("http://www.kermit-project.org/k95.html");
+       Browse("http://www.kermitproject.org/k95.html");
        break;
    case OPT_MENU_HELP_WEB_NEWS:
-       Browse("http://www.kermit-project.org/k95news.html");
+       Browse("http://www.kermitproject.org/k95news.html");
        break;
    case OPT_MENU_HELP_WEB_PATCH:
-       Browse("http://www.kermit-project.org/k95patch.html");
+       Browse("http://www.kermitproject.org/k95patch.html");
        break;
    case OPT_MENU_HELP_WEB_TECHFAQ:
-       Browse("http://www.kermit-project.org/k95support.html");
+       Browse("http://www.kermitproject.org/k95support.html");
        break;
    case OPT_MENU_HELP_MANUAL:
        ReadManual();
        break;
    case OPT_MENU_REGISTER_WEB:
-       Browse("http://www.kermit-project.org/k95reg.html");
+       Browse("http://www.kermitproject.org/k95reg.html");
        break;
    case OPT_MENU_REGISTER_PRINT:
        break;
