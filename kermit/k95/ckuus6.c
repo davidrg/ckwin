@@ -4373,8 +4373,10 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
 #endif /* UNICODE */
 
 #ifdef KUI
+#ifndef NORICHEDIT
     if ( gui )
         gui_text_popup_wait(-1);        /* Wait for user to close the dialog */
+#endif /* NORICHEDIT */
 #endif /* KUI */
     return(rc);
 }
