@@ -89,12 +89,21 @@ if exist %zlib_root%\zlib.lib set CKF_ZLIB=yes
 REM Not currently required -
 REM     if exist %zlib_root%\zlib1.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %zlib_root%\zlib1.dll
 
-REM OpenSSL:
+REM OpenSSL
 if exist %openssl_root%\include\NUL set include=%include%;%openssl_root%\include
+
+REM OpenSSL 1.1.1:
 if exist %openssl_root%\libssl.lib set lib=%lib%;%openssl_root%
 if exist %openssl_root%\libssl.lib set CKF_SSL=yes
+if exist %openssl_root%\libssl.lib set CKF_SSL_LIBS=libssl.lib libcrypto.lib
 if exist %openssl_root%\libcrypto-1_1.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %openssl_root%\libcrypto-1_1.dll
 REM libcrypto is only needed for libssh
+
+REM OpenSSL 0.9.8, 1.0.0:
+if exist %openssl_root%\out32dll\ssleay32.lib set lib=%lib%;%openssl_root%\out32dll
+if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL=yes
+if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL_LIBS=ssleay32.lib libeay32.lib
+if exist %openssl_root%\out32dll\ssleay32.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %openssl_root%\out32dll\ssleay32.dll %openssl_root%\out32dll\libeay32.dll
 
 REM libssh:
 if exist %libssh_root%\include\NUL set include=%include%;%libssh_root%\include;%libssh_build%\include

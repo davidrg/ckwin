@@ -192,6 +192,17 @@ DISABLED_FEATURES = $(DISABLED_FEATURES) ZLIB
 #   Requires: OpenSSL
 #             And also some stuff fixed
 !if "$(CKF_SSL)" == "yes"
+
+#ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DOPENSSL_097
+
+# No ZLIB? No OpenSSL Compression.
+!if "$(CKF_ZLIB)" != "yes"
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DOPENSSL_NO_COMP
+!endif
+
+#SSL_LIBS=libssl.lib libcrypto.lib
+SSL_LIBS=ssleay32.lib libeay32.lib
+
 !else
 DISABLED_FEATURES = $(DISABLED_FEATURES) SSL
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_SSL
