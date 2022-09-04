@@ -52,6 +52,8 @@ static int deblog = 0;
 #endif
 static int ssl_finished_messages = 0;
 static unsigned long startflags = 0;
+#else
+extern int ssl_finished_messages;
 #endif /* NOT_KERMIT */
 
 int     (*p_SSL_get_error)(SSL *ssl,int num)=NULL;

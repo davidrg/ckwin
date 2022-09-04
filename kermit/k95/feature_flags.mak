@@ -173,7 +173,7 @@ CKF_SSL=no
 
 # Force SSL off - it doesn't build currently (the OS/2 and NT bits need
 # upgrading to at least OpenSSL 1.1.1 if not 3.0)
-CKF_SSL=no
+#CKF_SSL=no
 
 # ZLIB:
 #   Turn on with: -DZLIB
@@ -193,15 +193,18 @@ DISABLED_FEATURES = $(DISABLED_FEATURES) ZLIB
 #             And also some stuff fixed
 !if "$(CKF_SSL)" == "yes"
 
-#ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DOPENSSL_097
+# You can optionally do this to have SSL support loaded at runtime when
+# SSLEAY32.DLL can be found. This is not compatible with OpenSSL 1.0.0 or newer
+# at this time however - STACK is not defined causing the build to fail in
+# ckosslc.c, line 173: void (*p_sk_free)(STACK *)=NULL;
+#ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DSSLDLL
 
 # No ZLIB? No OpenSSL Compression.
 !if "$(CKF_ZLIB)" != "yes"
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DOPENSSL_NO_COMP
 !endif
 
-#SSL_LIBS=libssl.lib libcrypto.lib
-SSL_LIBS=ssleay32.lib libeay32.lib
+SSL_LIBS=$(CKF_SSL_LIBS)
 
 !else
 DISABLED_FEATURES = $(DISABLED_FEATURES) SSL
