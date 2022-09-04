@@ -193,6 +193,8 @@ DISABLED_FEATURES = $(DISABLED_FEATURES) ZLIB
 #             And also some stuff fixed
 !if "$(CKF_SSL)" == "yes"
 
+ENABLED_FEATURES = $(ENABLED_FEATURES) SSL
+
 # You can optionally do this to have SSL support loaded at runtime when
 # SSLEAY32.DLL can be found. This is not compatible with OpenSSL 1.0.0 or newer
 # at this time however - STACK is not defined causing the build to fail in
@@ -203,6 +205,8 @@ DISABLED_FEATURES = $(DISABLED_FEATURES) ZLIB
 !if "$(CKF_ZLIB)" != "yes"
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DOPENSSL_NO_COMP
 !endif
+
+#ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DOPENSSL_100
 
 SSL_LIBS=$(CKF_SSL_LIBS)
 

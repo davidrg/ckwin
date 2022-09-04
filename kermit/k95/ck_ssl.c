@@ -1157,6 +1157,10 @@ int keylength;
 static void
 ssl_display_comp(SSL * ssl)
 {
+    #ifndef OPENSSL_NO_COMP
+    const COMP_METHOD *method;
+    #endif
+
     if ( quiet )			/* fdc - Mon Nov 28 11:44:15 2005 */
         return;
 
@@ -1167,7 +1171,7 @@ ssl_display_comp(SSL * ssl)
         return;
 
 #ifndef OPENSSL_NO_COMP                  /* ifdefs Bernard Spil 12/2015 */
-    const COMP_METHOD *method = SSL_get_current_compression(ssl);
+    method = SSL_get_current_compression(ssl);
     if (method == NULL)
 #endif /* OPENSSL_NO_COMP */
         printf("Compression: None\r\n");
