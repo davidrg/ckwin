@@ -5835,7 +5835,7 @@ typedef CHAR * MACRO;
 _PROTOTYP( unsigned alarm, (unsigned) );
 _PROTOTYP( unsigned sleep, (unsigned) );
 #endif /* __EMX__ */
-_PROTOTYP( unsigned long zdskspace, (int) );
+_PROTOTYP( CK_OFF_T zdskspace, (int) );
 _PROTOTYP( int zchdsk, (int) );
 _PROTOTYP( int conincraw, (int) );
 _PROTOTYP( int ttiscom, (int f) );

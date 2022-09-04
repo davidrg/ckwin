@@ -13691,7 +13691,7 @@ nvlook(s) char *s; {
 
 #ifdef OS2
       case VN_SPA: {
-          unsigned long space = zdskspace(0);
+          CK_OFF_T space = zdskspace(0);
           if (space > 0 && space < 1024)
             sprintf(vvbuf,"-1");
           else

@@ -1872,7 +1872,7 @@ IsFileNameValid(char *name)
     return rc;
 }
 
-unsigned long
+CK_OFF_T
 zdskspace(int drive) {
 #ifdef NT
     DWORD spc, bps, fc, c ;
@@ -1909,8 +1909,9 @@ zdskspace(int drive) {
                 debug(F111,"zdskspace() failure","lastError",gle);
                 return (1) ;
             }
-            return(i64FreeBytesToCaller.HighPart ? (unsigned long)-1 :
-                    i64FreeBytesToCaller.LowPart);
+            /*return(i64FreeBytesToCaller.HighPart ? (unsigned long)-1 :
+                    i64FreeBytesToCaller.LowPart);*/
+            return i64FreeBytesToCaller.QuadPart;
         } else {
             debug(F110,"zdskspace()","GetDiskFreeSpace",0);
             if ( !GetDiskFreeSpace( rootpath, &spc, &bps, &fc, &c )) {
@@ -1935,14 +1936,16 @@ zdskspace(int drive) {
                 debug(F111,"zdskspace() failure","lastError",gle);
                 return (1) ;
             }
-            return(i64FreeBytesToCaller.HighPart  ? (unsigned long)-1 :
-                    i64FreeBytesToCaller.LowPart);
+            /*return(i64FreeBytesToCaller.HighPart  ? (unsigned long)-1 :
+                    i64FreeBytesToCaller.LowPart);*/
+            return i64FreeBytesToCaller.QuadPart;
         } else {
             debug(F110,"zdskspace()","GetDiskFreeSpace",0);
-            if ( !GetDiskFreeSpace( NULL, &spc, &bps, &fc, &c ))
+            if ( !GetDiskFreeSpace( NULL, &spc, &bps, &fc, &c )) {
                 gle = GetLastError();
                 debug(F111,"zdskspace() failure","lastError",gle);
                 return (1) ;
+            }
         }
         return spc * bps * fc ;
     }
@@ -3649,7 +3652,7 @@ int
 zchkspa(char *f, CK_OFF_T n)
 {
 /* OS/2 gives us an easy way to do this. */
-    unsigned long x, filesize = 0L;
+    CK_OFF_T x, filesize = 0L;
     debug(F111,"zchkspa",f,n);
     if (isalpha(f[0]) && f[1] == ':') {
         x = zdskspace(toupper(f[0]) - 'A' + 1);

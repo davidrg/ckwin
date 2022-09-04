@@ -6734,7 +6734,7 @@ int
 sndspace(drive) int drive; {
 #ifndef NOSERVER
     static char spctext[64];
-    unsigned long space;
+    CK_OFF_T space;
 
     if (drive) {
 	space = zdskspace(drive - 'A' + 1);

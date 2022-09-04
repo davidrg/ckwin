@@ -10322,14 +10322,14 @@ docmd(cx) int cx; {
  or specify a disk letter like A:","",&s,xxstring)) < 0)
 	  return(x);
 	if (*s == NUL) {		/* Current disk */
-            unsigned long space = zdskspace(0);
+            CK_OFF_T space = zdskspace(0);
             if (space > 0 && space < 1024)
               printf(" Free space: unknown\n");
             else
 	      printf(" Free space: %ldK\n", space/1024L);
 	} else {
 	    int drive = toupper(*s);
-            unsigned long space = zdskspace(drive - 'A' + 1);
+            CK_OFF_T space = zdskspace(drive - 'A' + 1);
             if (space > 0 && space < 1024)
               printf(" Drive %c: unknown free\n");
             else
