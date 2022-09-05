@@ -31,3 +31,12 @@ if defined WATCOM copy %WATCOM%\binnt\plbr*.dll dist
 
 @echo Copy enabled optional dependencies
 for %%I in (%CK_DIST_DLLS%) do copy %%I dist\
+
+@echo Copy licenses
+copy ..\..\COPYING dist
+if exist dist\ssh.dll copy %libssh_root%\COPYING dist\COPYING.libssh
+if not exist dist\openssl.exe goto :nossl
+REM OpenSSL License was renamed in 3.0.0 to LICENSE.txt
+if exist %openssl_root%\LICENSE.txt copy %openssl_root%\LICENSE.txt dist\COPYING.openssl
+if exist %openssl_root%\LICENSE copy %openssl_root%\LICENSE dist\COPYING.openssl
+:nossl
