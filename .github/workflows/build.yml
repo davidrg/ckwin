@@ -148,6 +148,7 @@ jobs:
       run: |
         call ..\..\setenv.bat
         call mk.bat
+        call mkdist.bat
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95
       env:
@@ -156,10 +157,6 @@ jobs:
         # build. Undefined or CKF_NO_CRYPTO=no leaves crypto features enabled
         # where the required dependencies exist.
         CKF_NO_CRYPTO: ${{ matrix.no_crypto }}
-    - name: Make Distribution
-      run: mkdist.bat
-      shell: cmd
-      working-directory: ${{ github.workspace }}\kermit\k95
     - name: Fetch CA Certs bundle
       run: |
         wget https://curl.se/ca/cacert.pem -outfile ca_certs.pem
