@@ -2941,7 +2941,15 @@ ssl_verify_crl(int ok, X509_STORE_CTX *ctx)
 char *
 tls_userid_from_client_cert(ssl) SSL * ssl;
 {
-#ifndef OS2		/* [jt] 2013/11/21 - K-95 doesn't have X509_to_user */
+    /* DavidG 2022-09-05: On Windows and OS/2, X509_to_user is expected to be
+     * provided by a user-supplied DLL as described here:
+     *   http://www.columbia.edu/kermit/security70.html#x3.1.4
+     * This DLL would normally be loaded in ckossl.c (search for X5092UID) but
+     * at the moment that only happens when CKW is built with SSLDLL. SSLDLL is
+     * only compatible with OpenSSL 0.9.x so in practice X509_to_user is never
+     * available. It wouldn't be hard to make it work without SSLDLL if needed.
+     */
+#ifndef HAVE_X509_TO_USER /* [jt] 2013/11/21 - K-95 doesn't have X509_to_user */
     static char cn[256];
     static char *r = cn;
     int err;
