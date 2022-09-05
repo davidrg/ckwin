@@ -90,16 +90,23 @@ REM Not currently required -
 REM     if exist %zlib_root%\zlib1.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %zlib_root%\zlib1.dll
 
 REM OpenSSL
-if exist %openssl_root%\include\NUL set include=%include%;%openssl_root%\include
+REM OpenSSL 0.9.8, 1.0.0, 1.1.0, 1.1.1 and 3.0.x use this:
+if exist %openssl_root%\include\openssl\NUL set include=%include%;%openssl_root%\include
+REM OpenSSL 1.0.1 and 1.0.2 uses this:
+if exist %openssl_root%\inc32\openssl\NUL set include=%include%;%openssl_root%\inc32
 
-REM OpenSSL 1.1.1:
+REM OpenSSL 1.1.x, 3.0.x
 if exist %openssl_root%\libssl.lib set lib=%lib%;%openssl_root%
 if exist %openssl_root%\libssl.lib set CKF_SSL=yes
 if exist %openssl_root%\libssl.lib set CKF_SSL_LIBS=libssl.lib libcrypto.lib
-if exist %openssl_root%\libcrypto-1_1.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %openssl_root%\libcrypto-1_1.dll
-REM libcrypto is only needed for libssh
 
-REM OpenSSL 0.9.8, 1.0.0:
+REM OpenSSL 3.0.x
+if exist %openssl_root%\libcrypto-3.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %openssl_root%\libcrypto-3.dll %openssl_root%\libssl-3.dll
+
+REM OpenSSL 1.1.x
+if exist %openssl_root%\libcrypto-1_1.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %openssl_root%\libcrypto-1_1.dll %openssl_root%\libssl-1_1.dll
+
+REM OpenSSL 0.9.8, 1.0.x:
 if exist %openssl_root%\out32dll\ssleay32.lib set lib=%lib%;%openssl_root%\out32dll
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL=yes
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL_LIBS=ssleay32.lib libeay32.lib
