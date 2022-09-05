@@ -125,6 +125,9 @@ echo.
 echo Library path set to:
 echo    %lib%
 echo.
+echo Dist files set to:
+echo    %CK_DIST_DLLS%
+echo.
 echo Optional Dependencies Found:
 echo    zlib: %CKF_ZLIB%
 echo OpenSSL: %CKF_SSL%
