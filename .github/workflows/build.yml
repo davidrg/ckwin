@@ -165,7 +165,8 @@ jobs:
         wget https://curl.se/ca/cacert.pem -outfile ca_certs.pem
         wget https://www.mozilla.org/media/MPL/2.0/index.815ca599c9df.txt -outfile ca_certs.license
         
-        @readme = @"ca_certs.pem was exported from the Mozilla CA Certificate Store and is licensed
+        @readme = @"
+        ca_certs.pem was exported from the Mozilla CA Certificate Store and is licensed
         under the MPL version 2.0.
         
         For more information and updates, see: https://curl.se/docs/caextract.html
