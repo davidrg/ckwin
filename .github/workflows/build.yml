@@ -170,7 +170,7 @@ jobs:
         under the MPL version 2.0.
         
         For more information and updates, see: https://curl.se/docs/caextract.html
-        "
+        "@
         
         New-Item ca_certs.readme
         Set-Content ca_certs.readme $readme
