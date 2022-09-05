@@ -2949,7 +2949,7 @@ tls_userid_from_client_cert(ssl) SSL * ssl;
      * only compatible with OpenSSL 0.9.x so in practice X509_to_user is never
      * available. It wouldn't be hard to make it work without SSLDLL if needed.
      */
-#ifndef HAVE_X509_TO_USER /* [jt] 2013/11/21 - K-95 doesn't have X509_to_user */
+#ifndef OS2 /* [jt] 2013/11/21 - K-95 doesn't have X509_to_user */
     static char cn[256];
     static char *r = cn;
     int err;
