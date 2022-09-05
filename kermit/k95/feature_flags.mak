@@ -203,6 +203,7 @@ ENABLED_FEATURES = $(ENABLED_FEATURES) SSL
 
 # No ZLIB? No OpenSSL Compression.
 !if "$(CKF_ZLIB)" != "yes"
+!message Building without SSL Compression
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DOPENSSL_NO_COMP
 !endif
 

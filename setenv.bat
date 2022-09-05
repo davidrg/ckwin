@@ -86,8 +86,7 @@ REM zlib:
 if exist %zlib_root%\zlib.h set include=%include%;%zlib_root%
 if exist %zlib_root%\zlib.lib set lib=%lib%;%zlib_root%
 if exist %zlib_root%\zlib.lib set CKF_ZLIB=yes
-REM Not currently required -
-REM     if exist %zlib_root%\zlib1.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %zlib_root%\zlib1.dll
+if exist %zlib_root%\zlib1.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %zlib_root%\zlib1.dll
 
 REM OpenSSL
 REM OpenSSL 0.9.8, 1.0.0, 1.1.0, 1.1.1 and 3.0.x use this:
@@ -99,6 +98,7 @@ REM OpenSSL 1.1.x, 3.0.x
 if exist %openssl_root%\libssl.lib set lib=%lib%;%openssl_root%
 if exist %openssl_root%\libssl.lib set CKF_SSL=yes
 if exist %openssl_root%\libssl.lib set CKF_SSL_LIBS=libssl.lib libcrypto.lib
+if exist %openssl_root%\apps\openssl.exe set CK_DIST_DLLS=%CK_DIST_DLLS% %openssl_root%\apps\openssl.exe
 
 REM OpenSSL 3.0.x
 if exist %openssl_root%\libcrypto-3.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %openssl_root%\libcrypto-3.dll %openssl_root%\libssl-3.dll
@@ -111,6 +111,7 @@ if exist %openssl_root%\out32dll\ssleay32.lib set lib=%lib%;%openssl_root%\out32
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL=yes
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL_LIBS=ssleay32.lib libeay32.lib
 if exist %openssl_root%\out32dll\ssleay32.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %openssl_root%\out32dll\ssleay32.dll %openssl_root%\out32dll\libeay32.dll
+if exist %openssl_root%\out32dll\openssl.exe set CK_DIST_DLLS=%CK_DIST_DLLS% %openssl_root%\out32dll\openssl.exe
 
 REM libssh:
 if exist %libssh_root%\include\NUL set include=%include%;%libssh_root%\include;%libssh_build%\include
