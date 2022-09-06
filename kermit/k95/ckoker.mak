@@ -706,7 +706,7 @@ KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
        ssh.lib ws2_32.lib \
 !endif
 !if "$(CKF_SSL)" == "yes"
-       libssl.lib libcrypto.lib \
+       $(SSL_LIBS) \
 !endif
         #msvcrt.lib
         #Kerberos: wshload.lib
@@ -718,7 +718,7 @@ LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib shell32.lib\
        ssh.lib ws2_32.lib \
 !endif
 !if "$(CKF_SSL)" == "yes"
-       libssl.lib libcrypto.lib \
+       $(SSL_LIBS) \
 !endif
        #msvcrt.lib  
        # Kerberos: wshload.lib

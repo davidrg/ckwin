@@ -2912,7 +2912,7 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #else /* _M_PPC */
 #ifndef NO_SSL
 #define CK_SSL
-/* #define SSLDLL */ /* OpenSSL included at link time now - [jt] 2013/11/21 */
+/*#define SSLDLL*/  /* OpenSSL included at link time now - [jt] 2013/11/21 */
 #endif /* NO_SSL */
 #endif /* _M_PPC */
 #ifndef NO_KERBEROS

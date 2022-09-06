@@ -9547,8 +9547,10 @@ ck_security_loaddll( void )
 #endif /* CK_KERBEROS */
 
 #ifdef CK_SSL
+#ifdef SSLDLL
     ck_crypto_loaddll();
     ck_ssl_loaddll();
+#endif
 #endif /* CK_SSL */
 
 #ifdef ZLIB
@@ -9572,8 +9574,10 @@ ck_security_unloaddll( void )
     ck_krb5_loaddll_eh();
 
 #ifdef CK_SSL
+#ifdef SSLDLL
     ck_ssl_unloaddll();
     ck_crypto_unloaddll();
+#endif
 #endif /* CK_SSL */
 
 #ifdef ZLIB

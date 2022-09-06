@@ -57,7 +57,7 @@ jobs:
           ${{github.workspace}}\openssl 
           ${{github.workspace}}\libssh 
           ${{github.workspace}}\tools
-        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+libssh-${{env.LIBSSH_VERSION}}rel+nasm
+        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+libssh-${{env.LIBSSH_VERSION}}rel+nasm+xp
 
     - name: Get dependencies
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
@@ -130,7 +130,7 @@ jobs:
         cd openssl\${{env.OPENSSL_VERSION}}
         $env:Path += ";${{github.workspace}}\tools\nasm"
         $env:Path
-        perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}     
+        perl Configure VC-WIN32 -D"_WIN32_WINNT=0x502" zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}     
         nmake
 
     - name: Build libssh
@@ -157,10 +157,22 @@ jobs:
         # build. Undefined or CKF_NO_CRYPTO=no leaves crypto features enabled
         # where the required dependencies exist.
         CKF_NO_CRYPTO: ${{ matrix.no_crypto }}
-    - name: Make Distribution
-      run: mkdist.bat
-      shell: cmd
-      working-directory: ${{ github.workspace }}\kermit\k95
+    - name: Fetch CA Certs bundle
+      run: |
+        wget https://curl.se/ca/cacert.pem -outfile ca_certs.pem
+        wget https://www.mozilla.org/media/MPL/2.0/index.815ca599c9df.txt -outfile ca_certs.license
+        
+        $readme = @"
+        ca_certs.pem was exported from the Mozilla CA Certificate Store and is licensed
+        under the MPL version 2.0.
+        
+        For more information and updates, see: https://curl.se/docs/caextract.html
+        "@
+        
+        New-Item ca_certs.readme
+        Set-Content ca_certs.readme $readme
+      shell: powershell
+      working-directory: ${{ github.workspace }}\kermit\k95\dist
     - name: Prepare Artifact
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95

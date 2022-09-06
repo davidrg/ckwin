@@ -32,7 +32,9 @@
 #endif /* OS2 */
 
 #ifdef ZLIB
+#ifndef OPENSSL_NO_COMP
 #include <openssl/comp.h>
+#endif
 #endif /* ZLIB */
 /* We place the following to avoid loading openssl/mdc2.h since it 
  * relies on the OpenSSL des.h.  Since we do not need the MDC2 
