@@ -1,11 +1,11 @@
 # Building C-Kermit for Windows from Source
 
 Building C-Kermit for Windows is easy! All you need is 
-[a compiler for Windows](compilers.md) (Visual C++ 2022 Community Edition 
+[a compiler for Windows](compilers.md) (Visual C++ 2019 Community Edition 
 recommended). The compiler you choose will determine what features are 
 available and the minimum version of windows your build of CKW will support. 
 You can use the linked table to help choose the compiler that best meets your
-needs if you're looking to run on versions of Windows older than Vista.
+needs if you're looking to run on versions of Windows older than XP.
 
 ## Build Process
 
