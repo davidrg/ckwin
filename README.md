@@ -46,6 +46,9 @@ Kermit 95, the OS/2 version doesn't have a GUI - it runs in an OS/2 Console
 Window. If you know anything about OS/2 programming, assistance in fixing the
 remaining OS/2 issues would be most welcome.
 
+SSL support is back and and updated to support the latest versions of OpenSSL
+and TLS.
+
 Features Expected to Return Soon
 --------------------------------
 
