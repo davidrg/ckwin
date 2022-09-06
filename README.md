@@ -68,7 +68,6 @@ This includes:
 * LAT (formerly provided by either SuperLAT or PATHWORKS)
 * Kerberos (provided by a very old version of MIT Kerberos for Windows)
 * SRP (provided by the Stanford SRP distribution, unmaintained for over a decade now)
-* SSL (OpenSSL 0.9.7)
 
 Other features may be missing as a result of the above features being disabled.
 For a full list of features available, type the following at the Kermit prompt:
