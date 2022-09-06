@@ -29,7 +29,7 @@ This has been tested against the following versions:
 * libssh 0.9.6, 0.10.1
 
 And to build it all the following tools should work:
-* Visual C++ (2022 community edition works)
+* Visual C++ (2022 community edition works, or for Windows XP compatibility use 2019)
 * cmake - required for zlib and libssh (version 3.22 tested)
 * [NASM](https://www.nasm.us/) - required for OpenSSL (2.15.05 tested)
 * Perl ([StarwBerry Perl](https://strawberryperl.com/) 5.32.1.1 tested) - required for OpenSSL
