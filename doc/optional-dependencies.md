@@ -92,6 +92,9 @@ nmake
 cd ..\..\
 ```
 
+If you want OpenSSL to work on versions of windows older than Vista, add the
+`-D"_WIN32_WINNT=0x502"` parameter to the Configure step.
+
 ### 3. Building libssh
 
 For libssh you need to the following specifying the correct OPENSSL_ROOT_DIR and ZLIB_ROOT:
