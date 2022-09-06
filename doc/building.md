@@ -48,8 +48,8 @@ need to edit `setenv.bat` any further for this.
 REM Visual C++ 2008:
 C:\Program Files\Microsoft Visual Studio 8\VC\bin\vcvars32.bat
 
-REM Visual C++ 2022:
-"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64_x86 -vcvars_ver=14.3
+REM Visual C++ 2019:
+"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64_x86 -vcvars_ver=14.2
 
 REM OpenWatcom:
 C:\watcom\owsetenv.bat
