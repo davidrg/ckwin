@@ -1479,7 +1479,9 @@ ssl_once_init(void)
 ssl_once_init()
 #endif /* CK_ANSIC */
 {
+#ifndef OPENSSL_NO_COMP
     COMP_METHOD * cm;
+#endif
     char * s;
 
     if ( !ck_ssleay_is_installed() )
@@ -1602,6 +1604,7 @@ the build.\r\n\r\n");
     SSL_library_init();
 #endif /* SSHBUILTIN */
 
+#ifndef OPENSSL_NO_COMP
 #ifdef ZLIB
     cm = COMP_zlib();
 #if OPENSSL_VERSION_NUMBER >= 0x10100005L
@@ -1621,6 +1624,7 @@ the build.\r\n\r\n");
 #endif
         SSL_COMP_add_compression_method(0xe1, cm); /* EAY's RLE ID */
 #endif /* NID_rle_compression */
+#endif /* OPENSSL_NO_COMP */
 
     /* Ensure the Random number generator has enough entropy */
     if ( !RAND_status() ) {
@@ -2330,10 +2334,27 @@ ssl_http_init(hostname) char * hostname;
           Now we try TLS 1.0 first, falling back to SSL 2.3
           and SSL 3.0 in that order.  Maybe there should be
           an option not to fall back.
-        */ 
+
+          2022-09-06: 7+ years later and TLS 1.0/1.1 are now deprecated and
+            usually disabled for security reasons. Use TLS_client_method where
+            available as this negotiates the newest version of TLS supported by
+            both ends. Else use TLS 1.2 or 1.0.
+        */
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+        /* OpenSSL >= 1.1.0: Negotiate the best TLS version possible */
+        tls_http_ctx=(SSL_CTX *)SSL_CTX_new(TLS_client_method());
+#else /* OPENSSL_VERSION_NUMBER < 0x10100000L */
+#if OPENSSL_VERSION_NUMBER >= 0x10001000L
+        /* OpenSSL >= 1.0.1: Use TLS 1.2 - not yet deprecated as of 2022-09-06 */
+        tls_http_ctx=(SSL_CTX *)SSL_CTX_new(TLSv1_2_client_method());
+#else
+        /* OpenSSL 0.9.8 and 1.0.0 can't handle anything newer than TSL 1.0 */
         tls_http_ctx=(SSL_CTX *)SSL_CTX_new(TLSv1_client_method());
+#endif /* OPENSSL_VERSION_NUMBER >= 0x10001000L */
+#endif /* OPENSSL_VERSION_NUMBER >= 0x10100000L */
         if ( tls_http_ctx ) {
-            debug(F110,"ssl_http_init","TLSv1_client_method OK",0);
+            debug(F110,"ssl_http_init","TLS_client_method OK",0);
         }
     }
     SSL_CTX_set_default_passwd_cb(tls_http_ctx,

@@ -5,17 +5,15 @@ these but if you don't have them some features (like built-in SSH) will be
 unavailable. These are:
 
 * [zlib](https://zlib.net/)
-* [OpenSSL](https://www.openssl.org/) 0.9.8 - 1.1.1
+* [OpenSSL](https://www.openssl.org/) 0.9.8 - 3.0.x
 * [libssh](https://www.libssh.org/) 0.9.x, 0.10.x
 
-For SSH support all three are required and the openssl version should be 1.1.1 
-(though apparently 1.0.2 and 1.1.0 also work). 
-
-OpenSSL 3.0.x is not currently supported.
+For SSH support all three are required and the openssl version should be >=1.1.1 
+(though apparently 1.0.2 and 1.1.0 also work but have known security issues). 
 
 You may also want a CA certificates bundle. A convenient source is here:
-https://curl.se/docs/caextract.html. Save the file as `ca_certs.pem` in the CKW directory and it should be picked up
-automatically.
+https://curl.se/docs/caextract.html. Save the file as `ca_certs.pem` in the CKW 
+directory and it should be picked up automatically.
 
 ## Building with SSH Support
 
