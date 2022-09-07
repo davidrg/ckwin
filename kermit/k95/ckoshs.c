@@ -1117,8 +1117,6 @@ static int ssh_rexec(ssh_client_state_t * state, const char* command) {
 static int ssh_subsystem(ssh_client_state_t * state, const char* subsystem) {
     int rc;
 
-    /* TODO: Not working? */
-
     debug(F110,"sshsubsys - ssh requesting subsystem", subsystem, 0);
 
     rc = open_tty_channel(state);
