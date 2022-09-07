@@ -35,7 +35,7 @@ REM live.
 set openssl_root=%root%\openssl\1.1.1q
 
 REM libssh - set to the folder where the include directory lives.
-set libssh_root=%root%\libssh\0.10.1
+set libssh_root=%root%\libssh\0.10.3
 
 REM libssh - set to where you built libssh. This should have a subdirectory
 REM called 'src' containing ssh.dll and ssh.lib

@@ -14,7 +14,7 @@ env:
   OPENSSL_VERSION: 1.1.1q
   # Exoected filename: ${{env.LIBSSH_SOURCE}}libssh-${{env.LIBSSH_VERSION}}.tar.xz
   LIBSSH_SOURCE: https://www.libssh.org/files/0.10/
-  LIBSSH_VERSION: 0.10.1
+  LIBSSH_VERSION: 0.10.3
 
 jobs:
   Build-VisualCxx:

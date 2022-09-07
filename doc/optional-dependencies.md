@@ -26,7 +26,7 @@ instructions should do the job.
 This has been tested against the following versions:
 * zlib 1.2.12
 * OpenSSL 1.1.1q
-* libssh 0.9.6, 0.10.1
+* libssh 0.9.6, 0.10.1, 0.10.3
 
 And to build it all the following tools should work:
 * Visual C++ (2022 community edition works, or for Windows XP compatibility use 2019)
