@@ -1752,12 +1752,29 @@ ssl_tn_init(mode) int mode;
               Now we try TLS 1.0 first, falling back to SSL 2.3
               and SSL 3.0 in that order.  Maybe there should be
               an option not to fall back.
-            */ 
+
+              2022-09-06: 7+ years later and TLS 1.0/1.1 are now deprecated and
+                usually disabled for security reasons. Use TLS_client_method
+                where available as this negotiates the newest version of TLS
+                supported by both ends. Else use TLS 1.2 or 1.0.
+        */
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+            /* OpenSSL >= 1.1.0: Negotiate the best TLS version possible */
+            tls_ctx=(SSL_CTX *)SSL_CTX_new(TLS_client_method());
+#else /* OPENSSL_VERSION_NUMBER < 0x10100000L */
+#if OPENSSL_VERSION_NUMBER >= 0x10001000L
+            /* OpenSSL >= 1.0.1: Use TLS 1.2 - not yet deprecated as of 2022-09-06 */
+            tls_ctx=(SSL_CTX *)SSL_CTX_new(TLSv1_2_client_method());
+#else
+            /* OpenSSL 0.9.8 and 1.0.0 can't handle anything newer than TSL 1.0 */
             tls_ctx=(SSL_CTX *)SSL_CTX_new(TLSv1_client_method());
+#endif /* OPENSSL_VERSION_NUMBER >= 0x10001000L */
+#endif /* OPENSSL_VERSION_NUMBER >= 0x10100000L */
             if ( tls_ctx ) {
-                debug(F110,"ssl_tn_init","TLSv1_client_method OK",0);
+                debug(F110,"ssl_tn_init","TLS_client_method OK",0);
             } else {
-                debug(F110,"ssl_tn_init","TLSv1_client_method failed",0);
+                debug(F110,"ssl_tn_init","TLS_client_method failed",0);
                 /* This can fail because we do not have RSA available */
                 tls_ctx=(SSL_CTX *)SSL_CTX_new(SSLv23_client_method());
                 if ( !tls_ctx ) {
@@ -1769,7 +1786,7 @@ ssl_tn_init(mode) int mode;
 #endif /* OPENSSL_NO_SSL3 */
                     if ( !tls_ctx ) {
                         debug(F110,
-                              "ssl_tn_init","TLSv1_client_method failed",0);
+                              "ssl_tn_init","TLS_client_method failed",0);
                         debug(F110,
                               "ssl_tn_init","All SSL client methods failed",0);
                         last_ssl_mode = -1;

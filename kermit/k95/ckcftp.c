@@ -10228,6 +10228,8 @@ ssl_auth() {
   Pick allowed SSL/TLS versions according to enabled bugs.
   Modified 5 Feb 2015 to default to TLS 1.0 if no bugs are enabled,
   instead of to SSL 3.0, which has the POODLE vulnerability.
+
+  Modified 7 sep 2022 to use the best version of TLS available
 */
     if (ftp_bug_use_ssl_v2) {
         /* allow SSL 2.0 or later */
@@ -10238,8 +10240,20 @@ ssl_auth() {
         client_method = SSLv3_client_method();
 #endif /* OPENSSL_NO_SSL3 */
     } else {
-        /* default - allow TLS 1.0 or later */
+        /* default - use the best version of TLS we can */
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+        /* OpenSSL >= 1.1.0: Negotiate the best TLS version possible */
+        client_method = TLS_client_method();
+#else /* OPENSSL_VERSION_NUMBER < 0x10100000L */
+#if OPENSSL_VERSION_NUMBER >= 0x10001000L
+        /* OpenSSL >= 1.0.1: Use TLS 1.2 - not yet deprecated as of 2022-09-06 */
+        client_method = TLSv1_2_client_method();
+#else
+        /* OpenSSL 0.9.8 and 1.0.0 can't handle anything newer than TSL 1.0 */
         client_method = TLSv1_client_method();
+#endif /* OPENSSL_VERSION_NUMBER >= 0x10001000L */
+#endif /* OPENSSL_VERSION_NUMBER >= 0x10100000L */
     }
     if (auth_type && !strcmp(auth_type,"TLS")) {
         ssl_ftp_ctx=SSL_CTX_new(client_method);
