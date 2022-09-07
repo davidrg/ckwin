@@ -6,14 +6,18 @@ program formerly known as Kermit-95, a commercial product of Columbia
 University from 1994 to 2011. For more information on Kermit, visit the
 Kermit Project website: http://www.kermitproject.org.
 
+Major features include:
+ * More than 40 terminal emulations
+ * Virtual Terminal connections over SSH, Telnet (including TLS support), 
+   rlogin, modem, serial port and pty
+ * Scriptable file transfer via Kermit, HTTP, HTTPS, FTP and FTPS protocols
+ * International character set translation
+
+Windows XP or newer is required for SSH, secure telnet, https and ftps support.
+Windows 10 version 1809 is required for PTY support. 
+
 This software is currently based on C-Kermit version 10.0 Beta.04 of
 3-JUN-2022 and is available under the 3-clause BSD license.
-
-This code is based on what was going to be Kermit 95 v2.2. Compared to the
-final K95 release (2.1.3) a number of bugs have been fixed and a few new
-features have been added. A full list of these is available here:
-
-http://www.kermitproject.org/k95-fixes-since-213.txt
 
 ![Screenshot](doc/screenshot-w10.png)
 
@@ -46,7 +50,7 @@ Kermit 95, the OS/2 version doesn't have a GUI - it runs in an OS/2 Console
 Window. If you know anything about OS/2 programming, assistance in fixing the
 remaining OS/2 issues would be most welcome.
 
-SSL support is back and and updated to support the latest versions of OpenSSL
+SSL support is back and updated to support the latest versions of OpenSSL
 and TLS.
 
 Features Expected to Return Soon
@@ -57,14 +61,43 @@ Features Expected to Return Soon
 * X/Y/Z Modem support - the author of the 3rd party library Kermit 95 used has
   OKd its open-sourcing so once that happens it will return.
 
-Missing Kermit 95 Features
---------------------------
+Compiling
+---------
+
+To build C-Kermit for Windows, see the [Build Instructions](doc/building.md).
+You'll need at least Visual C++ 2.0 or newer, or OpenWatcom 1.9+. To build
+with ConPTY and SSH support you'll need to use Visual C++ 2019 or newer.
+
+To build C-Kermit for OS/2, see the [OS/2 Build Instructions](doc/os2-building.md).
+
+### Making Changes
+Any files matching the pattern ck[cu]*.[cwh] are shared by implementations of 
+C-Kermit for other platforms (UNIX, Linux, VMS, and others) and are not 
+specific to the Windows and OS/2 port in this repository. Any changes to these 
+files should be sent to [The Kermit Project](https://www.kermitproject.org/)
+to be included in future C-Kermit releases for other platforms. If your changes
+are not intended to affect other platforms, make sure they're ifdef'd for either
+OS2 (OS/2+Windows) or NT (Windows only).
+
+Files matching starting with ck[on]*.* can be safely modified as they are only
+used by the OS/2 and Windows targets.
+
+
+History
+-------
+C-Kermit for Windows is based on what was going to be Kermit 95 v2.2. Compared 
+to the final K95 release (2.1.3) a number of bugs have been fixed and a few new
+features were added for 2.2. A full list of these is available here:
+
+http://www.kermitproject.org/k95-fixes-since-213.txt
+
+### Missing Kermit 95 Features
 When Kermit 95 was open-sourced a number of features were disabled due to
 obsolete 3rd party libraries, cryptography export regulations, or unavailability
 of the required tools. Some of these may return someday, others likely will not.
 This includes:
 
-* DECnet (formerly provided by DEC PATHWORKS) 
+* DECnet (formerly provided by DEC PATHWORKS)
 * LAT (formerly provided by either SuperLAT or PATHWORKS)
 * Kerberos (provided by a very old version of MIT Kerberos for Windows)
 * SRP (provided by the Stanford SRP distribution, unmaintained for over a decade now)
@@ -76,25 +109,3 @@ For a full list of features available, type the following at the Kermit prompt:
 
 Note that this may lie about some features being available due to them not being
 disabled cleanly.
-
-Compiling
----------
-
-To build C-Kermit for Windows, see the [Build Instructions](doc/building.md).
-You'll need at least Visual C++ 2.0 or newer, or OpenWatcom 1.9+. To build
-with ConPTY and SSH support you'll need to use Visual C++ 2019 or newer.
-
-To build C-Kermit for OS/2, see the [OS/2 Build Instructions](doc/os2-building.md).
-
-Making Changes
----------------
-Any files matching the pattern ck[cu]*.[cwh] are shared by implementations of 
-C-Kermit for other platforms (UNIX, Linux, VMS, and others) and are not 
-specific to the Windows and OS/2 port in this repository. Any changes to these 
-files should be sent to [The Kermit Project](https://www.kermitproject.org/)
-to be included in future C-Kermit releases for other platforms. If your changes
-are not intended to affect other platforms, make sure they're ifdef'd for either
-OS2 (OS/2+Windows) or NT (Windows only).
-
-Files matching starting with ck[on]*.* can be safely modified as they are only
-used by the OS/2 and Windows targets.
