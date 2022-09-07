@@ -1126,6 +1126,15 @@ static int ssh_subsystem(ssh_client_state_t * state, const char* subsystem) {
         return rc;
     }
 
+    rc = ssh_channel_request_pty_size(state->ttyChannel,
+                                      state->parameters->terminal_type,
+                                      state->pty_width,
+                                      state->pty_height);
+    if (rc != SSH_OK) {
+        debug(F111, "sshsubsys - PTY request failed", "rc", rc);
+        return rc;
+    }
+
     rc = ssh_channel_request_subsystem(state->ttyChannel, subsystem);
     if (rc != SSH_OK) {
         debug(F111, "sshsubsys - SSH subsystem request failed", "rc", rc);
