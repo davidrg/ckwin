@@ -43,18 +43,13 @@
 #define OPENSSL_NO_MDC2
 #ifdef OPENSSL_100
 #define OPENSSL_098
-
-/* Different major/minor version or development version of OpenSSL
- * means ABI may break compatibility.
- * Modified by Adam Friedlander for OpenSSL >= 1.0.0
- */
-#define COMPAT_VERSION_MASK 0xffff000f
+#define COMPAT_VERSION_MASK 0xfff0000f  /* MNN0000S, major+minor+status */
 #else
 /* Different major/minor/fix/development (not patch) version of OpenSSL
  * means ABI may break compatibility. */
-#define COMPAT_VERSION_MASK 0xffffff0f
-
+#define COMPAT_VERSION_MASK 0xfffff00f  /* MNNFF00S, major+minor+fix+status */
 #endif	/* OPENSSL_100 */
+
 #ifdef OPENSSL_098
 #define OPENSSL_097
 #endif /* OPENSSL_098 */
