@@ -8,6 +8,13 @@
              Secure Endpoints Inc., New York City
 */
 
+#ifdef __WATCOMC__
+/* zlib.h pulls in unistd.h which, in OpenWatcom, contains a definition of
+ * sleep that is incompatible with the definition in ckcdeb.h. If unistd.h
+ * doesn't get included first Watcom gives an error */
+#include <zlib.h>
+#endif
+
 #include "ckcdeb.h"
 
 #ifdef NT
