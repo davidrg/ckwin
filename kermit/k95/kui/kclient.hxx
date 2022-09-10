@@ -68,6 +68,9 @@ public:
     KScroll* getVertSB(void) { return vert; }
     KScroll* getHorzSB(void) { return horz; }
 
+    void stopTimer();
+    void startTimer();
+
 private:    // this section is for performance
     uchar* workTemp;
     size_t workTempSize;
