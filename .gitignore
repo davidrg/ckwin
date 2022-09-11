@@ -242,3 +242,4 @@ setenv_local.bat
 dst/
 builder/
 *.dll
+.vs/
