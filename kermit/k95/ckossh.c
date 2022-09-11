@@ -196,15 +196,8 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  *            a VT220. Htop doesn't quite resume properly either - doesn't redraw
  *            the entire screen like it should which is probably the same issue
  *            just exposed differently.
- *  - TODO: Fix keyboard interactive authentication
- *          - Answering correctly results in the loop going around again with
- *            SSH_AUTH_INFO but no prompts. Returning at that point falls
- *            through to password auth and, if thats unsuccessful, disconnect.
- *            So for now keyboard interactive is disabled.
  *  - TODO: Other Settings
  *  - TODO: How do we know /command: has finished? EOF?
- *  - TODO: fix UI prompt look&feel (weird inset buttons)
- *  - TODO: Kermit subsystem (/subsystem:kermit) doesn't work
  *  - TODO: X11 Forwarding
  *  - TODO: Other forwarding
  *  - TODO: Build libssh with GSSAPI, pthreads and kerberos

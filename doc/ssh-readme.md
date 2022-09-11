@@ -25,14 +25,11 @@ automatically by C-Kermit.
   set term type linux
   set term remote utf8
   ```
-  For convenience, you can create a file called `k95custom.ini` in the same
-  directory as k95g.exe and place these commands there so that they're run
-  automatically every time you start C-Kermit.
+  For convenience, you can just uncomment these lines in the default
+  `k95custom.ini` file included in the CKW distribution so that they're run 
+  every time you start C-Kermit.
 * If you find your session disconnecting when left idle, try enabling the
   heartbeat feature with the `set ssh heartbeat-interval` command.
-* The keyboard interactive authentication method doesn't seem to work so it's 
-  disabled by default for now. See the *Supported Authentication Methods*
-  section for more details.
 * Connecting through proxy servers is not currently supported
 
 ## Differences From Kermit 95
@@ -127,14 +124,11 @@ SET SSH
 
 ## Supported Authentication Methods
 
-At this time password and public key authentication are implemented and work.
+At this time password, public key and keyboard interactive authentication are 
+implemented and work.
 
-Keyboard interactive authentication is also implemented but didn't work when
-tested against OpenSSH 8.4p1 Debian-5deb11u1. If you want to try it out anyway,
-you can enable *only* keyboard interactive authentication by entering
-`set ssh v2 auth keyb` at the kermit prompt before starting your session.
-
-If you want to enable keyboard interactive authentication alongside password
-and public key, enter `set ssh v2 auth keyb pass pub` instead.
+There is not yet support for using ssh agents or GSSAPI (Kerberos)
+authentication but as both of these are supported by the ssh backend use by
+C-Kermit support for these may appear in a future release.
 
 [^1]: https://libssh.org

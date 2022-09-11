@@ -151,14 +151,7 @@ ssh_parameters_t* ssh_parameters_new(
     params->allow_pubkey_auth = TRUE;
     params->allow_kbdint_auth = TRUE;
     params->allow_gssapi_auth = TRUE;
-
-    /* TODO: Keyboard interactive authentication doesn't seem to be working at
-     *       the moment. Testing against OpenSSH 8.4p1 Debian-5deb11u1, after
-     *       answering all prompts ssh_userauth_kbdint still gives SSH_AUTH_INFO
-     *       indicating more answers are required - even though there are no
-     *       more prompts to answer.
-     **/
-    params->allow_kbdint_auth = FALSE;
+    params->allow_kbdint_auth = TRUE;
 
 
     /* If the user has supplied a list of authentication types then only those
@@ -791,6 +784,20 @@ static int kbd_interactive_authenticate(ssh_client_state_t * state, BOOL *cancel
         if (nprompts == 0) {
             debug(F100, "sshsubsys - No more prompts! Unable to continue "
                         "interrogating user.", "nprompts", nprompts);
+
+            /* Some SSH servers send an empty query at the end of the exchange
+             * for some reason. Check if the server is really sure there are
+             * more prompts... */
+
+            rc = ssh_userauth_kbdint(
+                    state->session, NULL, NULL);
+            if (rc == SSH_AUTH_INFO)
+                debug(F101, "sshsubsys - ssh_userauth_kbdint still insists "
+                            "there are more prompts than it originally "
+                            "reported. Giving up.", "", rc);
+            else debug(F101, "sshsubsys - ssh_userauth_kbdint has decided "
+                             "actually there are no more prompts. We're done. ",
+                             "", rc);
             break;
         }
 
