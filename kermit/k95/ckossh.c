@@ -191,11 +191,6 @@ char *cksshv = "SSH support, 10.0.0,  28 July 2022";
  */
 
 /* More TODO:
- *  - TODO: Figure out why nano doesn't correctly resume after being suspended
- *          - Possibly a terminal emulation issue. It works fine when emulating
- *            a VT220. Htop doesn't quite resume properly either - doesn't redraw
- *            the entire screen like it should which is probably the same issue
- *            just exposed differently.
  *  - TODO: Other Settings
  *  - TODO: How do we know /command: has finished? EOF?
  *  - TODO: X11 Forwarding
