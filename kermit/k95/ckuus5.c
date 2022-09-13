@@ -3985,6 +3985,7 @@ herald() {
     ssl = "";
     krb4 = "";
     krb5 = "";
+#ifndef OS2
 #ifdef CK_AUTHENTICATION
 #ifdef CK_SSL    
     ssl = "+SSL";
@@ -3996,6 +3997,7 @@ herald() {
     krb5 = "+KRB5";
 #endif	/* KRB5 */
 #endif	/* CK_AUTHENTICATION */
+#endif /* OS2 */
 
     if (x == 0) {
 #ifdef datageneral
