@@ -20,9 +20,16 @@
 #   CKF_CONPTY     no         Windows PTY support.
 #   CKF_DEBUG      yes        Debug logging - on by default
 #   CKF_BETATEST   yes        Set to no to do a release build
-#   CKF_NO_CRYPTO  no         Disable all cryptography
+#   CKF_NO_CRYPTO  no         Disable all cryptography (SSL, SSH, Crypt DLL)
 #   CKF_XYZ        no         X/Y/Z MODEM (Relies on the 'P' library)
 #   CKF_MOUSEWHEEL yes        Support for the the mouse wheel
+#   CKF_NTLM       yes        Windows NTLM support
+#   CKF_LOGIN      yes
+#   CKT_NT31       no         Target NT 3.1 (Watcom, Visual C++ 1.0/2.0)
+#   CKT_NT350      no         Target NT 3.50 (Watcom, Visual C++ 2.0)
+#   CKF_TAPI       yes        Modem dialing support
+#   CKF_RICHEDIT   yes        Rich Edit control support
+#   CKF_TOOLBAR    yes        Include the toolbar
 #
 # The following flags are set automatically:
 #   CKF_SSH     Turned off when targeting OS/2 or when building with OpenWatcom
@@ -43,8 +50,8 @@
 ENABLED_FEATURES = Network-Connections
 ENABLED_FEATURE_DEFS = -DNETCONN
 
-DISABLED_FEATURES = SuperLAT DECnet Kerberos SRP Telnet-Encryption CryptDLL
-DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNO_SRP -DNO_ENCRYPTION
+DISABLED_FEATURES = SuperLAT DECnet Kerberos SRP
+DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNO_SRP
 
 # type /interpret doesn't work on windows currently.
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOTYPEINTERPRET
@@ -138,40 +145,39 @@ CKF_SSH=no
 
 
 # Other features that should one day be turned on via feature flags once we
-# figure out how Fto build them and get any dependencies sorted out.
+# figure out how to build them and get any dependencies sorted out.
 #
 # SFTP:
 #   Turn on with -DSFTP_BUILTIN
-#   Requires: reimplementing with libssl
+#   Requires: reimplementing with libssl (existing implementation relies on the
+#             missing OpenSSL bits)
 # Kerberos:
 #   Turn off with: -DNO_KERBEROS
-#   Requires: An antique version of MIT Kerberos for Windows. Should be
-#             converted to using Heimdal Kerberos
-# NetBIOS:
-#   Turn on with: -DCK_NETBIOS
-#   Requires: ?
+#   Requires: An antique version of MIT Kerberos for Windows.
+#      OR: Rework this to use Heimdal Kerberos
 # SRP:
 #   Turn off with: -DNO_SRP
 #   Optionally: -DPRE_SRP_1_7_3
+#   Requires: Some version of Stanford SRP (ancient)
+#      OR: Reimplementing using SRP support in OpenSSL
+#          (libssh has no SRP support and the SRP patches for OpenSSH are a
+#           decade or two out of date making this not very useful)
 # SuperLAT:
 #   Turn on with: -DSUPERLAT
 #   Requires: The SuperLAT SDK
+#      OR: Reimplementing with code from the DECnet-Linux userspace LAT package
 # DECnet:
 #   Turn on with: -DDECNET
 #   Requires: The Pathworks32 SDK
-# New URL Highlight:
-#   Turn on with: -DNEW_URL_HIGHLIGHT
-#   This does: no idea.
-# Encryption (DES, CAST and some others)
-#   Turn on with: -DCRYPT_DLL
-#       and optionally: -DCK_ENCRYPTION
-#   Turn off with: -DNO_ENCRYPTION
+#      OR: Reimplement in userspace using pcap? Though probably not due to the
+#          whole changing MAC address thing.
 
 !if "$(CKF_NO_CRYPTO)" == "yes"
 # A No-crypto build has been requested regardless of what libraries may have
 # been found. Disable all crypto-related features
 CKF_SSH=no
 CKF_SSL=no
+CKF_TELNET_ENCRYPTION=no
 !endif
 
 # Force SSL off - it doesn't build currently (the OS/2 and NT bits need
@@ -243,12 +249,19 @@ WIN32_VERSION=0x0600
 DISABLED_FEATURES = $(DISABLED_FEATURES) ConPTY
 !endif
 
-# Produce a build with no cryptography support at all
-#  - probably doesn't work at the moment.
-#!if "$(CKF_NO_CRYPTO)" == "yes"
-#DISABLED_FEATURES = $(DISABLED_FEATURES) Encryption
-#DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_ENCRYPTION
-#!endif
+
+# Telnet encryption option (DES, CAST)
+#   Turn on with: -DCRYPT_DLL
+#   Requires: libdes
+#     OR: reworking to use OpenSSL instead
+#   Turn off with: -DNO_ENCRYPTION
+!if "$(CKF_TELNET_ENCRYPTION)" == "yes"
+ENABLED_FEATURES = $(ENABLED_FEATURES) TelnetEncryptionOption CryptDLL
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCRYPT_DLL
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) TelnetEncryptionOption CryptDLL
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_ENCRYPTION
+!endif
 
 # If beta-test mode hasn't been explicitly turned off then assume its on.
 !if "$(CKF_BETATEST)" != "no"
