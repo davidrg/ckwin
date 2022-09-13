@@ -56,8 +56,16 @@ char * ck_cryear = "2022"; 		/* C-Kermit copyright year */
   Use (*ck_s_test != '\0') to decide whether to print test-related messages.
 */
 #ifdef BETATEST
+#ifdef OS2
+/* Temporary: the Windows version is currently seeing monthly beta releases
+
+/* We are currently on the third windows beta of C-Kermit 10.0 Beta.04 */
+char *ck_s_test = "Beta";
+char *ck_s_tver = "04/Windows-03";
+#else
 char *ck_s_test = "Beta";		/* "Dev","Alpha","Beta","RC", or "" */
 char *ck_s_tver = "04";			/* Test version number */
+#endif
 #else /* BETATEST */
 char *ck_s_test = "";			/* Not development */
 char *ck_s_tver = "";
