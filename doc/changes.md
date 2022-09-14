@@ -1,6 +1,102 @@
 # Change Log
-This document covers whats changed in each release of C-Kermit for Windows (formerly known as Kermit 95).
-For a more in-depth look at whats changed, check the git commit log.
+This document covers what has changed in each release of C-Kermit for Windows 
+(formerly known as Kermit 95). For a more in-depth look at what has changed, 
+check the git commit log.
+
+## C-Kermit for Windows 10.0b4 beta 3 - 14 September 2022
+This release focused on improving SSH support, returning SSL support, minor
+enhancements, porting to new platforms (NT 3.50, OS/2) and new compilers
+(Visual C++ 2.0, OpenWatcom 2.0, OpenWatcom 1.9 for OS/2)
+
+### New Features:
+* Idle SSH sessions can now be prevented from timing out by supplying some
+  interval to the "set ssh heartbeat" command, for example: set ssh heartbeat 60
+* Added support for "user@host" syntax to SSH command. "ssh root@myhost" should
+  do the same as "ssh myhost /user:root" now. The implementation is pretty basic
+  and may not handle weird input well but when it works it should be less
+  confusing to new users.
+* Added mouse wheel support. By default, it scrolls one line at a time, or one
+  screen at a time when holding Ctrl. You can remap this to whatever you like
+  via the new "set mouse wheel" command which works like "set mouse button".
+* File save dialogs are now the modern (normal) type on Windows ME, 2000 and
+  newer. Windows 95, 98 and NT4 retain the old Windows 95-look file dialogs as
+  before.
+* The Shell Execute utility, se.exe, is back. Documentation is here:
+  https://kermitproject.org/k95manual/url.html#urlsexe
+* SSL and TLS support has returned. The http command can now make https
+  connections, secure telnet (telnet-ssl) works again, as does ftps
+* SSH is now supported on Windows XP (for now - it will probably disappear in a
+  year or so when OpenSSL drops XP support)
+* The screen update interval is no longer fixed at 100ms - you can now change it
+  with the "set terminal screen-update fast" command. Smaller intervals will
+  feel smoother. If the interval is too small for your computer elements that
+  are supposed to blink (such as the cursor if noblink is not set) may not
+  blink or may not blink consistently.
+* The /subsystem qualifier now works on the SSH command, as does the "skermit"
+  command allowing you to use kermit as an SSH subsytem. Documentation:
+  https://kermitproject.org/skermit.html
+* SSH Keyboard Interactive authentication is now supported
+* New SSH-related command: set ssh v2 key-exchange-methods
+* "set tcp nodelay" should affect SSH sessions now too
+* Implemented these SSH-related commands:
+  * set ssh v2 ciphers
+  * set ssh v2 hostkey-algorithms. New options: ecdsa-sha2-nistp256,
+    ecdsa-sha2-nistp384, ecdsa-sha2-nistp521, rsa-sha2-256, rsa-sha2-512,
+    ssh-ed25519
+  * set ssh v2 macs. New options: hmac-sha1-etm@openssh.com, hmac-sha2-256,
+    hmac-sha2-256-etm@openssh.com, hmac-sha2-512,
+    hmac-sha2-512-etm@openssh.com, none
+  * set ssh heartbeat-interval
+  * ssh key create
+  * ssh key display
+  * ssh key change-passphrase
+
+### Fixed Bugs:
+* Fixed bug where some applications (eg, nano, htop) wouldn't come back properly
+  after being suspended with Ctrl+Z and restored with `fg` when using the linux
+  terminal type.
+* Fixed terminal being cleared the first time you move the K95G window and
+  possibly the other random occurrences of this happening
+* Fixed terminal scrolling bug in OpenWatcom! Builds done with OpenWatcom are
+  now functionally equivalent to Visual C++ 6 in platform support and features
+  and have no known issues unique to that compiler.
+* Fixed auto-download "ask" setting not working on Windows NT 3.51
+* Receiving large files (>4GB) no longer fails with "Refused, size"
+* Fixed the "space" command never reporting more than 4GB of available free
+  space
+* Fixed incorrect (too narrow) window size on first run
+
+### Minor Enhancements and other changes:
+* Improved error message when no authentication methods supported by the SSH
+  server are enabled
+* Upgraded to libssh 0.10.3
+* Adjusted how the cursor is drawn so it blinks more nicely in the GUI version
+  of CKW
+* Removed these SSH commands as they are obsolete and will never be supported by
+  libssh, the SSH backend used by CKW:
+  * set ssh v1
+  * set ssh version 1
+  * set ssh v2 authentication {external-keyex, hostbased, srp-gex-sha1}
+  * set ssh v2 ciphers {arcfour, blowfish-cbc, cast128-cbc, rijndael128-cbc,
+    rijndael192-cbc, rijndael256-cbc}
+  * set ssh v2 macs {hmac-md5, hmac-md5-96, hmac-ripemd160, hmac-sha1-96}
+  * set ssh {kerberos4, kerberos5, krb4, kerb5, k4, k5}
+  * ssh key v1
+  * ssh key display /format:ietf
+  * ssh v2 rekey
+
+### Source Changes:
+* Fixed compatibility with the OpenWatcom 2.0 fork
+* Added support for building with Visual C++ 2.0
+* Added support for targeting Windows NT 3.50 with either OpenWatcom 1.9 or
+  Visual C++ 2.0
+* Now builds on OS/2 with OpenWatcom 1.9. Only minimal testing has been done.
+  Networking does not work and the builds are done without optimisations.
+  Further work is required, likely by someone with OS/2 development knowledge,
+  to get it back to the Kermit-95 level of functionality.
+* OpenSSL 0.9.8 - 3.0.5 (the latest version) now works
+* Added support for TLS 1.1, 1.2 and 1.3 when built with sufficiently new
+  versions of OpenSSL
 
 
 ## C-Kermit for Windows 10.0b4 beta 2 - 17 August 2022
