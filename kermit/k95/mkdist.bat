@@ -9,11 +9,10 @@ if not exist dist\docs\manual\NUL mkdir dist\docs\manual
 @echo Move build outputs...
 move *.exe dist
 copy *.manifest dist
-copy k95.ini dist
-copy k95d.cfg dist
 ren dist\cknker.exe k95.exe
 ren dist\cknker.exe.manifest k95.exe.manifest
 del dist\cknker.exe.manifest
+del dist\ctl3dins.exe
 move dist\ckwart.exe .\
 
 @echo Copy manual...
@@ -22,6 +21,7 @@ if exist dist\ssh.dll copy ..\..\doc\ssh-readme.md dist\ssh-readme.txt
 
 @echo Copy resources...
 copy k95.ini dist
+copy k95custom.ini dist
 copy k95d.cfg dist
 
 @echo Copy runtime libraries
@@ -31,3 +31,12 @@ if defined WATCOM copy %WATCOM%\binnt\plbr*.dll dist
 
 @echo Copy enabled optional dependencies
 for %%I in (%CK_DIST_DLLS%) do copy %%I dist\
+
+@echo Copy licenses
+copy ..\..\COPYING dist
+if exist dist\ssh.dll copy %libssh_root%\COPYING dist\COPYING.libssh
+if not exist dist\openssl.exe goto :nossl
+REM OpenSSL License was renamed in 3.0.0 to LICENSE.txt
+if exist %openssl_root%\LICENSE.txt copy %openssl_root%\LICENSE.txt dist\COPYING.openssl
+if exist %openssl_root%\LICENSE copy %openssl_root%\LICENSE dist\COPYING.openssl
+:nossl

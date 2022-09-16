@@ -125,6 +125,11 @@ _PROTOTYP( FILE * win95popen, (const char *cmd, const char *mode) );
 _PROTOTYP( int win95pclose, (FILE *pipe) );
 #define popen _popen
 #define pclose _pclose
+#else
+#ifdef __WATCOMC__
+#define popen _popen
+#define pclose _pclose
+#endif
 #endif /* NT */
 
 #ifdef COMMENT
@@ -248,7 +253,7 @@ int trueitalic    = TRUE ;
 int trueitalic    = FALSE ;
 #endif /* KUI */
 
-extern enum markmodes markmodeflag[VNUM] = {notmarking, notmarking,
+enum markmodes markmodeflag[VNUM] = {notmarking, notmarking,
                                                 notmarking, notmarking} ;
 
 extern int tn_bold;                     /* TELNET negotiation bold */
@@ -8513,8 +8518,8 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
                 else {
 #ifdef KUI
                     char logfile[MAX_PATH+1];
-                    if ( !KuiDownloadDialog("Create Session Log ...","session.log",
-                                            logfile,MAX_PATH+1) )
+                    if ( !KuiFileDialog("Create Session Log ...","session.log",
+                                            logfile,MAX_PATH+1,FALSE, FALSE) )
                         return;
                     setseslog(sesopn( logfile, 0));
 #else /* KUI */
@@ -11215,6 +11220,43 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
     case ES_STRING:                     /* Inside a string */
         if (ch == ESC)                  /* ESC may be 1st char of terminator */
           escstate = ES_TERMIN;         /* Change state to find out. */
+        else if (ISLINUX(tt_type_mode) && oscrecv && apclength == 0
+            && (ch == 'R' || ch == 'P')) {
+            /* Linux console palette escape sequences start with an OSC but
+             * aren't terminated at all. If we let them be handled by the
+             * normal OSC processing code it may cause the terminal to appear
+             * to hang.
+             * ESC ] R           Reset Palette
+             * ESC ] P nrrggbb   Set  Palette
+             *
+             * From the man page console_codes(4), bugs section:
+             * Linux "private mode" sequences do not follow the rules in ECMA-48
+             * for private mode control sequences.  In particular, those ending
+             * with ] do not use a standard terminating character.  The OSC (set
+             * palette) sequence is a greater problem, since xterm(1) may
+             * interpret this as a control sequence which requires a string
+             * terminator (ST).  Unlike the setterm(1) sequences which will be
+             * ignored (since they are invalid control sequences), the palette
+             * sequence will make xterm(1) appear to hang (though pressing the
+             * return-key will fix that).  To accommodate applications which
+             * have been hardcoded to use Linux control sequences, set the
+             * xterm(1) resource brokenLinuxOSC to true.
+             *
+             */
+            if (ch == 'R') {
+                /* Reset Palette */
+                debug(F100, "Bad linux OSC - reset palette", "", 0);
+
+                /* TODO: If we wanted to handle the linux reset palette
+                 *       private mode sequence, this is where we'd do it */
+
+                escstate = ES_NORMAL;
+                oscrecv = FALSE;
+            } else {
+                /* We need to absorb 7 characters */
+                escstate = ES_BADLINUXOSC;
+            }
+        }
 #ifdef CK_APC
         else if ( ch == BEL /*&& ISAIXTERM(tt_type_mode)*/ && oscrecv ) {
             /* BEL terminates an OSC string in AIXTERM
@@ -11260,6 +11302,30 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
         }
 #endif /* CK_APC */
         break;                          /* Absorb all other characters. */
+
+    case ES_BADLINUXOSC:
+        /*
+         * Handle the linux ESC ] P nrrggbb sequence to set the Palette
+         */
+        if (apclength < 7) {
+            apcbuf[apclength++] = ch;
+        }
+
+        if (apclength >= 7) {
+            /* Set Palette */
+            apcbuf[apclength++] = 0;
+            debug(F110, "Bad linux OSC - reset palette", apcbuf, 0);
+
+            /* TODO: If we wanted to handle the linux set palette private mode
+             *       sequence, this is where we'd do it */
+
+            escstate = ES_NORMAL;
+            oscrecv = FALSE;
+            apclength = 0;
+            apcbuf[0] = 0;
+        }
+
+        break;
 
     case ES_TERMIN:                     /* May have a string terminator */
         if (ch == '\\') {               /* which must be backslash */

@@ -35,7 +35,7 @@ REM live.
 set openssl_root=%root%\openssl\1.1.1q
 
 REM libssh - set to the folder where the include directory lives.
-set libssh_root=%root%\libssh\0.9.6
+set libssh_root=%root%\libssh\0.10.3
 
 REM libssh - set to where you built libssh. This should have a subdirectory
 REM called 'src' containing ssh.dll and ssh.lib
@@ -43,9 +43,14 @@ set libssh_build=%libssh_root%\build
 
 REM ================== No changes required beyond this point ===================
 
-REM base include path
-set include=%include%;%root%\kermit\k95
-set include=%include%;%root%\kermit\k95\kui
+REM base include path - this is required for both Windows and OS/2
+set ckinclude=%root%\kermit\k95
+
+REM This and everything else is windows-specific.
+set ckwinclude=%ckinclude%;%root%\kermit\k95\kui
+
+REM Set include path for targeting Windows.
+set include=%include%;%ckwinclude%
 
 REM Add on any optional dependencies
 
@@ -81,15 +86,32 @@ REM zlib:
 if exist %zlib_root%\zlib.h set include=%include%;%zlib_root%
 if exist %zlib_root%\zlib.lib set lib=%lib%;%zlib_root%
 if exist %zlib_root%\zlib.lib set CKF_ZLIB=yes
-REM Not currently required -
-REM     if exist %zlib_root%\zlib1.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %zlib_root%\zlib1.dll
+if exist %zlib_root%\zlib1.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %zlib_root%\zlib1.dll
 
-REM OpenSSL:
-if exist %openssl_root%\include\NUL set include=%include%;%openssl_root%\include
+REM OpenSSL
+REM OpenSSL 0.9.8, 1.0.0, 1.1.0, 1.1.1 and 3.0.x use this:
+if exist %openssl_root%\include\openssl\NUL set include=%include%;%openssl_root%\include
+REM OpenSSL 1.0.1 and 1.0.2 uses this:
+if exist %openssl_root%\inc32\openssl\NUL set include=%include%;%openssl_root%\inc32
+
+REM OpenSSL 1.1.x, 3.0.x
 if exist %openssl_root%\libssl.lib set lib=%lib%;%openssl_root%
 if exist %openssl_root%\libssl.lib set CKF_SSL=yes
-if exist %openssl_root%\libcrypto-1_1.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %openssl_root%\libcrypto-1_1.dll
-REM libcrypto is only needed for libssh
+if exist %openssl_root%\libssl.lib set CKF_SSL_LIBS=libssl.lib libcrypto.lib
+if exist %openssl_root%\apps\openssl.exe set CK_DIST_DLLS=%CK_DIST_DLLS% %openssl_root%\apps\openssl.exe
+
+REM OpenSSL 3.0.x
+if exist %openssl_root%\libcrypto-3.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %openssl_root%\libcrypto-3.dll %openssl_root%\libssl-3.dll
+
+REM OpenSSL 1.1.x
+if exist %openssl_root%\libcrypto-1_1.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %openssl_root%\libcrypto-1_1.dll %openssl_root%\libssl-1_1.dll
+
+REM OpenSSL 0.9.8, 1.0.x:
+if exist %openssl_root%\out32dll\ssleay32.lib set lib=%lib%;%openssl_root%\out32dll
+if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL=yes
+if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL_LIBS=ssleay32.lib libeay32.lib
+if exist %openssl_root%\out32dll\ssleay32.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %openssl_root%\out32dll\ssleay32.dll %openssl_root%\out32dll\libeay32.dll
+if exist %openssl_root%\out32dll\openssl.exe set CK_DIST_DLLS=%CK_DIST_DLLS% %openssl_root%\out32dll\openssl.exe
 
 REM libssh:
 if exist %libssh_root%\include\NUL set include=%include%;%libssh_root%\include;%libssh_build%\include
@@ -267,6 +289,9 @@ echo Library path set to:
 echo    %lib%
 echo.
 echo Compiler: %CK_COMPILER_NAME%
+echo.
+echo Dist files set to:
+echo    %CK_DIST_DLLS%
 echo.
 echo Optional Dependencies Found:
 echo    zlib: %CKF_ZLIB%

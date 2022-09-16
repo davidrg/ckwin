@@ -1,5 +1,6 @@
 //SE.CPP
 #include <windows.h>
+#include <stdio.h>
 /*
 typedef struct _SHELLEXECUTEINFO {    
     DWORD cbSize;     
@@ -42,9 +43,11 @@ main( int argc, char * argv[] )
         case ERROR_BAD_FORMAT:
             printf("The .EXE file is invalid (non-Win32 .EXE or error in .EXE image).\n");
             break;
+#ifdef SE_ERR_ACCESSDENIED
         case SE_ERR_ACCESSDENIED:
             printf("The operating system denied access to the specified file.\n");
             break;
+#endif
         case SE_ERR_ASSOCINCOMPLETE:
             printf("The filename association is incomplete or invalid.\n");
             break;
@@ -57,21 +60,29 @@ main( int argc, char * argv[] )
         case SE_ERR_DDETIMEOUT:
             printf("The DDE transaction could not be completed because the request timed out.\n");
             break;
+#ifdef SE_ERR_DLLNOTFOUND
         case SE_ERR_DLLNOTFOUND:
             printf("The specified dynamic-link library was not found.\n");
             break;
+#endif
+#ifdef SE_ERR_FNF
         case SE_ERR_FNF:
             printf("The specified file was not found.\n");
             break;
+#endif
         case SE_ERR_NOASSOC:
             printf("There is no application associated with the given filename extension.\n");
             break;
+#ifdef SE_ERR_OOM
         case SE_ERR_OOM:
             printf("There was not enough memory to complete the operation.\n");
             break;
+#endif
+#ifdef SE_ERR_PNF
         case SE_ERR_PNF:
             printf("The specified path was not found.\n");
             break;
+#endif
         case SE_ERR_SHARE:
             printf("A sharing violation occurred.\n");
             break;

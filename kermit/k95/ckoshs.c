@@ -88,7 +88,9 @@ ssh_parameters_t* ssh_parameters_new(
         BOOL gssapi_delegate_credentials, int host_key_checking_mode,
         char* user_known_hosts_file, char* global_known_hosts_file,
         char* username, char* password, char* terminal_type, int pty_width,
-        int pty_height, char* auth_methods) {
+        int pty_height, char* auth_methods, char* ciphers, int heartbeat,
+        char* hostkey_algorithms, char* macs, char* key_exchange_methods,
+        int nodelay, char* proxy_command) {
     ssh_parameters_t* params;
 
     params = malloc(sizeof(ssh_parameters_t));
@@ -101,6 +103,13 @@ ssh_parameters_t* ssh_parameters_new(
     params->username = NULL;
     params->password = NULL;
     params->terminal_type = NULL;
+    params->allowed_ciphers = NULL;
+    params->allowed_hostkey_algorithms = NULL;
+    params->macs = NULL;
+    params->key_exchange_methods = NULL;
+    params->keepalive_seconds = heartbeat;
+    params->nodelay = nodelay;
+    params->proxy_command = NULL;
 
     /* Copy hostname and port*/
     params->hostname = _strdup(hostname);
@@ -121,6 +130,13 @@ ssh_parameters_t* ssh_parameters_new(
     if (username) params->username = _strdup(username);
     if (password) params->password = _strdup(password);
     if (terminal_type) params->terminal_type = _strdup(terminal_type);
+    if (ciphers) params->allowed_ciphers = _strdup(ciphers);
+    if (hostkey_algorithms)
+        params->allowed_hostkey_algorithms = _strdup(hostkey_algorithms);
+    if (macs) params->macs = _strdup(macs);
+    if (key_exchange_methods)
+        params->key_exchange_methods = _strdup(key_exchange_methods);
+    if (proxy_command) params->proxy_command = _strdup(proxy_command);
 
     params->log_verbosity = verbosity;
     params->compression = compression;
@@ -135,19 +151,14 @@ ssh_parameters_t* ssh_parameters_new(
     params->allow_pubkey_auth = TRUE;
     params->allow_kbdint_auth = TRUE;
     params->allow_gssapi_auth = TRUE;
-
-    /* TODO: Keyboard interactive authentication doesn't seem to be working at
-     *       the moment. Testing against OpenSSH 8.4p1 Debian-5deb11u1, after
-     *       answering all prompts ssh_userauth_kbdint still gives SSH_AUTH_INFO
-     *       indicating more answers are required - even though there are no
-     *       more prompts to answer.
-     **/
-    params->allow_kbdint_auth = FALSE;
+    params->allow_kbdint_auth = TRUE;
 
 
     /* If the user has supplied a list of authentication types then only those
      * types specified will be allowed.*/
     if (auth_methods) {
+        /* TODO: This should be an ordered list to control which order the auth
+         *       methods are attempted in */
         params->allow_password_auth = FALSE;
         params->allow_pubkey_auth = FALSE;
         params->allow_kbdint_auth = FALSE;
@@ -195,6 +206,16 @@ void ssh_parameters_free(ssh_parameters_t* parameters) {
         free(parameters->password);
     if (parameters->terminal_type)
         free(parameters->terminal_type);
+    if (parameters->allowed_ciphers)
+        free(parameters->allowed_ciphers);
+    if (parameters->allowed_hostkey_algorithms)
+        free(parameters->allowed_hostkey_algorithms);
+    if (parameters->macs)
+        free(parameters->macs);
+    if (parameters->key_exchange_methods)
+        free(parameters->key_exchange_methods);
+    if (parameters->proxy_command)
+        free(parameters->proxy_command);
 
     free(parameters);
 }
@@ -373,7 +394,7 @@ static void logging_callback(int priority, const char *function,
  * @param verify Should the password be verified?
  * @param userdata Userdata to be passed to the callback function
  */
-static int auth_prompt(const char* prompt, char* buf, size_t len, int echo,
+int auth_prompt(const char* prompt, char* buf, size_t len, int echo,
                        int verify, void* userdata) {
 
     debug(F110, "sshsubsys - ssh auth_prompt", prompt, 0);
@@ -763,6 +784,20 @@ static int kbd_interactive_authenticate(ssh_client_state_t * state, BOOL *cancel
         if (nprompts == 0) {
             debug(F100, "sshsubsys - No more prompts! Unable to continue "
                         "interrogating user.", "nprompts", nprompts);
+
+            /* Some SSH servers send an empty query at the end of the exchange
+             * for some reason. Check if the server is really sure there are
+             * more prompts... */
+
+            rc = ssh_userauth_kbdint(
+                    state->session, NULL, NULL);
+            if (rc == SSH_AUTH_INFO)
+                debug(F101, "sshsubsys - ssh_userauth_kbdint still insists "
+                            "there are more prompts than it originally "
+                            "reported. Giving up.", "", rc);
+            else debug(F101, "sshsubsys - ssh_userauth_kbdint has decided "
+                             "actually there are no more prompts. We're done. ",
+                             "", rc);
             break;
         }
 
@@ -940,6 +975,7 @@ static int kbd_interactive_authenticate(ssh_client_state_t * state, BOOL *cancel
  */
 static int authenticate(ssh_client_state_t * state, BOOL *canceled) {
     int methods, rc;
+    BOOL no_auth_methods = TRUE;
 
     /* If the user cancels anytime during the authentication process this will
      * be set, and we'll know not to attempt any further authentication methods
@@ -960,6 +996,7 @@ static int authenticate(ssh_client_state_t * state, BOOL *canceled) {
     methods = ssh_userauth_list(state->session, NULL);
 
     if (methods & SSH_AUTH_METHOD_NONE &&!*canceled) {
+        no_auth_methods = FALSE;
         rc = ssh_userauth_none(state->session, NULL);
         if (rc == SSH_AUTH_SUCCESS) return rc;
     }
@@ -971,25 +1008,36 @@ static int authenticate(ssh_client_state_t * state, BOOL *canceled) {
     }   */
     if (methods & SSH_AUTH_METHOD_PUBLICKEY
             && state->parameters->allow_pubkey_auth && !*canceled) {
+        no_auth_methods = FALSE;
         rc = ssh_userauth_publickey_auto(state->session, NULL, NULL);
         if (rc == SSH_AUTH_SUCCESS) return rc;
     }
     if (methods & SSH_AUTH_METHOD_INTERACTIVE
             && state->parameters->allow_kbdint_auth && !*canceled) {
+        no_auth_methods = FALSE;
         rc = kbd_interactive_authenticate(state, canceled);
         if (rc == SSH_AUTH_SUCCESS) return rc;
     }
     if (methods & SSH_AUTH_METHOD_PASSWORD
             && state->parameters->allow_password_auth && !*canceled) {
+        no_auth_methods = FALSE;
         rc = password_authenticate(state, canceled);
         if (rc == SSH_AUTH_SUCCESS) return rc;
     }
 
     if (*canceled) {
+        printf("User canceled.\n");
         return SSH_ERR_USER_CANCELED;
     }
 
-
+    if (no_auth_methods) {
+        printf("No supported authentication methods!\n");
+        printf("The server supports: ");
+        if (methods & SSH_AUTH_METHOD_PUBLICKEY) printf("publickey ");
+        if (methods & SSH_AUTH_METHOD_INTERACTIVE) printf("keyboard-interactive ");
+        if (methods & SSH_AUTH_METHOD_PASSWORD) printf("password ");
+        printf("\n");
+    }
 
     return rc;
 }
@@ -1076,12 +1124,19 @@ static int ssh_rexec(ssh_client_state_t * state, const char* command) {
 static int ssh_subsystem(ssh_client_state_t * state, const char* subsystem) {
     int rc;
 
-    /* TODO: Not working? */
-
     debug(F110,"sshsubsys - ssh requesting subsystem", subsystem, 0);
 
     rc = open_tty_channel(state);
     if (rc != SSH_OK) {
+        return rc;
+    }
+
+    rc = ssh_channel_request_pty_size(state->ttyChannel,
+                                      state->parameters->terminal_type,
+                                      state->pty_width,
+                                      state->pty_height);
+    if (rc != SSH_OK) {
+        debug(F111, "sshsubsys - PTY request failed", "rc", rc);
         return rc;
     }
 
@@ -1163,9 +1218,37 @@ static int configure_session(ssh_client_state_t * state) {
                     &state->parameters->gssapi_delegate_credentials);
     ssh_options_set(state->session, SSH_OPTIONS_PROCESS_CONFIG,
                     &state->parameters->use_openssh_config);
+    ssh_options_set(state->session, SSH_OPTIONS_NODELAY,
+                    &state->parameters->nodelay);
     if (!state->parameters->compression) {
         ssh_options_set(state->session, SSH_OPTIONS_COMPRESSION_C_S, "no");
         ssh_options_set(state->session, SSH_OPTIONS_COMPRESSION_S_C, "no");
+    }
+
+    if (state->parameters->allowed_ciphers) {
+        ssh_options_set(state->session, SSH_OPTIONS_CIPHERS_C_S,
+                        state->parameters->allowed_ciphers);
+        ssh_options_set(state->session, SSH_OPTIONS_CIPHERS_S_C,
+                        state->parameters->allowed_ciphers);
+    }
+
+    if (state->parameters->allowed_hostkey_algorithms) {
+        ssh_options_set(state->session, SSH_OPTIONS_HOSTKEYS,
+                        state->parameters->allowed_hostkey_algorithms);
+    }
+    if (state->parameters->macs) {
+        ssh_options_set(state->session, SSH_OPTIONS_HMAC_C_S,
+                        state->parameters->macs);
+        ssh_options_set(state->session, SSH_OPTIONS_HMAC_S_C,
+                        state->parameters->macs);
+    }
+    if (state->parameters->key_exchange_methods) {
+        ssh_options_set(state->session, SSH_OPTIONS_KEY_EXCHANGE,
+                        state->parameters->key_exchange_methods);
+    }
+    if (state->parameters->proxy_command) {
+        ssh_options_set(state->session, SSH_OPTIONS_PROXYCOMMAND,
+                        state->parameters->proxy_command);
     }
 
     if (state->parameters->port)
@@ -1432,8 +1515,8 @@ void ssh_thread(ssh_thread_params_t *parameters) {
     ssh_client_state_t* state = NULL;
     ssh_client_t *client;
     socket_t socket;
-    HANDLE events[7];
-
+    HANDLE events[8];
+    LARGE_INTEGER keepaliveDueTime;
 
     debug(F100, "sshsubsys - SSH Subsystem starting up...", "", 0);
 
@@ -1474,12 +1557,26 @@ void ssh_thread(ssh_thread_params_t *parameters) {
     events[0] = WSACreateEvent();
     WSAEventSelect(socket, events[0], FD_READ | FD_WRITE);
     // TODO: The above puts the socket in nonblocking mode. Will libssh mind?
-    events[1] = client->disconnectEvent;
-    events[2] = client->ptySizeChangedEvent;
-    events[3] = client->flushEvent;
-    events[4] = client->breakEvent;
-    events[5] = client->dataArrivedEvent;
-    events[6] = client->dataConsumedEvent;
+    events[1] = CreateWaitableTimerW(NULL, TRUE, NULL); /* Keepalive timer */
+    events[2] = client->disconnectEvent;
+    events[3] = client->ptySizeChangedEvent;
+    events[4] = client->flushEvent;
+    events[5] = client->breakEvent;
+    events[6] = client->dataArrivedEvent;
+    events[7] = client->dataConsumedEvent;
+
+    /* Setup keepalive timer (if enabled) */
+    if (state->parameters->keepalive_seconds > 0) {
+        /* Value is in 100 nanosecond intervals, negative for relative time */
+        keepaliveDueTime.QuadPart =
+                state->parameters->keepalive_seconds * (-10000000LL);
+
+        if (!SetWaitableTimer(events[1], &keepaliveDueTime, 0, NULL, NULL, 0))
+        {
+            debug(F111, "sshsubsys - failed to set keepalive timer",
+                  "interval", state->parameters->keepalive_seconds);
+        }
+    }
 
     rc = SSH_ERR_WAIT_FAILED;
 
@@ -1492,7 +1589,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
 
         debug(F100, "sshsubsys - waiting...", "", 0);
         waitResult = WSAWaitForMultipleEvents(
-                7, /* Number of events */
+                8, /* Number of events */
                 events, /* Array of events to wait on */
                 FALSE, /* Return when *any* event is signalled, rather than all */
                 1000, /* Wait for up to 1s */
@@ -1539,6 +1636,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
             break;
         }
 
+        /* Check for EOF */
         if (ssh_channel_is_eof(state->ttyChannel)) {
             debug(F100, "sshsubsys - tty channel is EOF - ending session", "", 0);
             rc = SSH_ERR_EOF;
@@ -1550,7 +1648,6 @@ void ssh_thread(ssh_thread_params_t *parameters) {
             WSAResetEvent(events[0]);
             debug(F100, "sshsubsys - network event", "", 0);
         }
-
 
         /* Check for disconnect event */
         if (WaitForSingleObjectEx(client->disconnectEvent, 0, TRUE) != WAIT_TIMEOUT) {
@@ -1599,6 +1696,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
             ResetEvent(client->breakEvent);
         }
 
+        /* Check for flush event */
         if (WaitForSingleObjectEx(client->flushEvent, 0, TRUE) != WAIT_TIMEOUT) {
             debug(F100, "sshsubsys - flush event", "", 0);
             // TODO: Should we sit in a loop until everything has been written
@@ -1610,6 +1708,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
             }
         }
 
+        /* Check for data ready to be sent */
         if (WaitForSingleObjectEx(client->dataArrivedEvent, 0, TRUE) != WAIT_TIMEOUT) {
             debug(F100, "sshsubsys - data arrived event", "", 0);
             ResetEvent(client->dataArrivedEvent);
@@ -1623,8 +1722,25 @@ void ssh_thread(ssh_thread_params_t *parameters) {
             ResetEvent(client->dataConsumedEvent);
         }
 
+        /* Check if it's time to send a keepalive packet */
+        if (WaitForSingleObjectEx(events[1], 0, TRUE) != WAIT_TIMEOUT) {
+            /* Then send some data the server should just ignore. This should
+             * keep the connection alive and prevent timeouts */
+            ssh_send_ignore(state->session, "\0");
+
+            debug(F100, "sshsubsys - sent keepalive packet", NULL, 0);
+
+            /* Reset the timer for the next keepalive packet */
+            if (!SetWaitableTimer(events[1], &keepaliveDueTime, 0, NULL, NULL, 0))
+            {
+                debug(F111, "sshsubsys - failed to set keepalive timer after "
+                            "timer was signaled", "interval",
+                            state->parameters->keepalive_seconds);
+            }
+        }
+
         /* We process the send and receive buffers every time around even if
-         * there haven't been any related events as it significantly reduces
+         * there haven't been anyN related events as it significantly reduces
          * or eliminates a certain race condition that was breaking file
          * transfers. Its perhaps not the correct solution but it works and
          * doesn't really have much of a downside. */
@@ -1642,6 +1758,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
     /* We've either been asked to disconnect or hit an error. Clean up and end
      * the thread. */
     WSACloseEvent(events[0]); /* Close the socket event created earlier */
+    CloseHandle(events[1]); /* Close the keepalive timer */
     ssh_client_close(state, client, rc);
     debug(F100, "sshsubsys - thread terminate", "", 0);
     return;

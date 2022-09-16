@@ -3,12 +3,12 @@
 SET KERMITDIR=..
 SET OUTDIR=.\win95
 SET NODEBUG=1
+SET PLATFORM=NT
 cd kui
 nmake /e || exit /B %errorlevel%
 cd ..
 UNSET NODEBUG
 SET OUTDIR=.\kui\win95
-SET PLATFORM=NT
 SET K95BUILD=K95
 move kui\win95\ck*.obj . > nul
 move kui\win95\p_*.obj . > nul
@@ -18,7 +18,7 @@ move *.obj kui\win95 > nul
 
 REM OpenWatcom 1.9s nmake clone doesn't seem to set errorlevel when the build
 REM fails. So we'll check the expected outputs were produced too:
-if not exist k95g.exe set goto :missingoutputs
+if not exist k95g.exe goto :missingoutputs
 
 goto :end
 

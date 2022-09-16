@@ -11,8 +11,9 @@ For the best security, always use the most recent compiler you
 can. Support for older compilers remains for those wishing to build
 C-Kermit for vintage Windows systems, the security situation of which
 is well known. C-Kermit for Windows, when built with the right compiler, 
-supports Windows NT 3.51+ and Windows 95+. Windows NT 3.1 and 3.50 are 
-unsupported at this time.
+supports Windows NT 3.50+ and Windows 95+. Windows NT 3.1 is unsupported at 
+this time though that may change in the future. Win32s (Win32 on Windows 3.x)
+can not be supported due to the lack of support for threading.
 
 The CI system is set-up to do builds with Visual C++ 2022, 
 Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
@@ -208,6 +209,19 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td></td> <!-- Notes -->
 </tr>
 <tr>
+    <td>Visual C++ 2.0</td>
+    <td>Windows NT 3.1, Win32s 1.2</td>
+    <td>❌</td> <!-- Free -->
+    <td>❌</td> <!-- PTY -->
+    <td>❌</td> <!-- SSH -->
+    <td>❌</td> <!-- NTLM/Auth -->
+    <td>❌</td> <!-- TAPI -->
+    <td>✅*</td> <!-- GUI -->
+    <td>✅</td> <!-- Console -->
+    <td>No toolbar or some GUI dialogs, window resizing scales font doesn't
+        currently work well.</td>
+</tr>
+<tr>
     <td>OpenWatcom 1.9</td>
     <td>Windows NT 3.51, 
         Windows 95</td>
@@ -218,6 +232,19 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
-    <td></td> <!-- Notes -->
+    <td>To target NT 3.50, <tt>set CKT_NT31=yes</tt> before building</td>
+</tr>
+<tr>
+    <td>OpenWatcom 2.0</td>
+    <td>Windows NT 3.51, 
+        Windows 95</td>
+    <td>✅</td> <!-- Free -->
+    <td>❌</td> <!-- PTY -->
+    <td>❌</td> <!-- SSH -->
+    <td>✅</td> <!-- NTLM/Auth -->
+    <td>✅</td> <!-- TAPI -->
+    <td>✅</td> <!-- GUI -->
+    <td>✅</td> <!-- Console -->
+    <td>2022-08-01 build tested, targeting 32bit win32</td> <!-- Notes -->
 </tr>
 </table>

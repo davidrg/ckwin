@@ -1,11 +1,15 @@
 # SSH Support in C-Kermit for Windows
 
-C-Kermit for Windows now includes limited built-in SSH support based on 
-libssh[^1]. The code is currently very new and likely still has bugs - if you 
-find one please report it!
+C-Kermit for Windows now includes built-in SSH support based on libssh[^1]. This
+is still a work-in progress so not all SSH commands supported by Kermit 95 are
+available in CKW at this time and bugs are likely. If you find a bug, please
+report it!
 
 To get started, type `help ssh` at the kermit prompt but note that not all
-commands are implemented yet!
+commands are implemented yet! Full documentation for the built-in SSH client
+as delivered in Kermit 95 v2.1.3 is available here: 
+https://kermitproject.org/k95manual/sshclien.html - SSH differences between
+Kermit 95 and C-Kermit for Windows are discussed later in this document.
 
 For convenience C-Kermit currently looks for the known_hosts file as well as 
 your public and private keys in `%USERPROFILE%\.ssh`. This directory is also
@@ -21,65 +25,110 @@ automatically by C-Kermit.
   set term type linux
   set term remote utf8
   ```
-  For convenience, you can create a file called `k95custom.ini` in the same
-  directory as k95g.exe and place these commands there so that they're run
-  automatically every time you start C-Kermit.
-* The keyboard interactive authentication method doesn't seem to work so it's 
-  disabled by default for now. See the *Supported Authentication Methods*
-  section for more details.
+  For convenience, you can just uncomment these lines in the default
+  `k95custom.ini` file included in the CKW distribution so that they're run 
+  every time you start C-Kermit.
+* If you find your session disconnecting when left idle, try enabling the
+  heartbeat feature with the `set ssh heartbeat-interval` command.
 * Connecting through proxy servers is not currently supported
-* If no authentication methods are supported (eg, server only accepts public
-  key authentication and no key has been setup) you get the rather unhelpful
-  error message "Authentication failed - disconnecting" with no prompts or other
-  information.
 
-## Supported Commands
-Only the following commands are implemented at this time. More will come in
-the future. Commands not listed below either do nothing or return an error
-at this time.
+## Differences From Kermit 95
+
+The `set ssh v2 authentication` command only works to turn methods on or off at 
+this time, it does not affect the order in which authentication methods are 
+attempted. This may be corrected in a future release.
+
+The GUI dialogs for the `ssh key` commands have also been adjusted a little. 
+When GUI dialogs are enabled, these commands will use a standard Windows file
+dialog rather than having you type in a full pathname if a filename was not
+specified as part of the command.
+
+### New Command Options
+These commands are unchanged aside from having some new options. Some options
+that were supported in Kermit 95 may have been removed.
 
 ```
-SSH [OPEN] host [port]
-   host: hostname or IP to connect to
-   port: port name or number to connect on.
-   /COMMAND:command
-	   Command to execute instead of your default shell
-   /USER:user
-	   Defaults to \v(userid)
-   /PASSWORD:pass
-   /VERSION:{1,2}
-	   Just reports an error if version is 1 (SSH-1 not supported)
-   /SUBSYSTEM:name
-	   Implemented though doesn't appear to be working at the moment
-SET SSH			
-   COMPRESSION {ON,OFF}
-	   Value stored in ssh_cmp
-   STRICT-HOST-KEY-CHECK {ASK, ON, OFF}
-   USE-OPENSSH-CONFIG {ON,OFF}
-   V2 AUTHENTICATION {EXTERNAL-KEYX, GSSAPI, HOSTBASED, KEYBOARD-INTERACTIVE, PASSWORD, PUBKEY, SRP-GEX-SHA1}
-	   The following values are implemented: KEYBOARD-INTERACTIVE, PASSWORD, PUBKEY
-	   The following are ignored: EXTERNAL-KEYX, GSSAPI, SRP-GEX-SHA1
-	       (GSSAPI is processed but GSSAPI Auth isn't implemented yet)
-   V2 GLOBAL-KNOWN-HOSTS-FILE filename
-   V2 USER-KNOWN-HOSTS-FILE filename
-   VERBOSE level
-	   Report Errors - Verbosity Level. Range 0-7. Value stored in ssh_vrb
-   SSH VERSION {1, 2, AUTOMATIC}
-	   Just reports an error if version is 1 (SSH-1 not supported)
-SHOW SSH
-    Shows ssh settings
+set ssh v2 hostkey-algorithms {ecdsa-sha2-nistp256, ecdsa-sha2-nistp384, ecdsa-sha2-nistp521, rsa-sha2-256, rsa-sha2-512, ssh-ed25519}
+set ssh v2 macs {hmac-sha1-etm@openssh.com, hmac-sha2-256, hmac-sha2-256-etm@openssh.com, hmac-sha2-512, hmac-sha2-512-etm@openssh.com, none}
+```
+
+### New Commands
+The following commands are new to C-Kermit for Windows and so not documented in
+the Kermit 95 manual.
+
+```
+set ssh v2 key-exchange-methods {CURVE25519-SHA256,
+     CURVE25519-SHA256@LIBSSH.ORG, DIFFIE-HELLMAN-GROUP1-SHA1,
+     DIFFIE-HELLMAN-GROUP14-SHA1, DIFFIE-HELLMAN-GROUP14-SHA256,
+     DIFFIE-HELLMAN-GROUP16-SHA512, DIFFIE-HELLMAN-GROUP18-SHA512,
+     DIFFIE-HELLMAN-GROUP-EXCHANGE-SHA1,
+     DIFFIE-HELLMAN-GROUP-EXCHANGE-SHA256, ECDH-SHA2-NISTP256,
+     ECDH-SHA2-NISTP384, ECDH-SHA2-NISTP521 }
+  Specifies an ordered list of Key Exchange Methods to be used to generate
+  per-connection keys. The default list is:
+
+    curve25519-sha256 curve25519-sha256@libssh.org ecdh-sha2-nistp256
+    ecdh-sha2-nistp384 ecdh-sha2-nistp521 diffie-hellman-group18-sha512
+    diffie-hellman-group16-sha512 diffie-hellman-group-exchange-sha256
+    diffie-hellman-group14-sha256 diffie-hellman-group14-sha1
+    diffie-hellman-group1-sha1 ext-info-c}
+```
+
+### Removed Commands and Options
+The following SSH commands and options have been removed because they are
+obsolete and not supported by libssh:
+
+```
+set ssh version 1
+set ssh {kerberos4, kerberos5, krb4, kerb5, k4, k5}
+set ssh v1
+set ssh v2 authentication {external-keyex, hostbased, srp-gex-sha1}
+set ssh v2 ciphers {arcfour, blowfish-cbc, cast128-cbc, rijndael128-cbc, rijndael192-cbc, rijndael256-cbc}
+set ssh v2 macs {hmac-md5, hmac-md5-96, hmac-ripemd160, hmac-sha1-96}
+ssh key v1
+ssh key display /format:ietf
+ssh v2 rekey
+```
+
+### Not Yet Implemented (or removed)
+The following commands have not been implemented _yet_. The intention is to
+eventually implement as many of these as possible but this comes down to what
+libssh will or will not support. Some will likely be removed entirely in future
+releases. At this time all of these commands just return an error or do nothing.
+
+```
+SSH [OPEN] /X11-FORWARDING: {on,off}
+SSH ADD
+    LOCAL-PORT-FORWARD local-port host port
+    REMOTE-PORT-FORWARD remote-port host port
+SSH AGENT    
+    ADD identity-file
+    DELETE identity-file
+    LIST
+        /FINGERPRINT
+SSH CLEAR
+    LOCAL-PORT-FORWARD
+    REMOTE-PORT-FORWARD
+SET SSH
+    AGENT-FORWARDING {ON,OFF}
+    CHECK-HOST-IP {ON,OFF}
+    DYNAMIC-FORWARDING {ON,OFF}
+    GATEWAY-PORTS {ON,OFF}
+    IDENTITY-FILE filename
+    PRIVILEGED-PORT {ON,OFF}
+    QUIET {ON,OFF}
+    V2 AUTO-REKEY {ON,OFF}
+    X11-FORWARDING {ON, OFF}
+    XAUTH-LOCATION filename
 ```
 
 ## Supported Authentication Methods
 
-At this time password and public key authentication are implemented and work.
+At this time password, public key and keyboard interactive authentication are 
+implemented and work.
 
-Keyboard interactive authentication is also implemented but didn't work when
-tested against OpenSSH 8.4p1 Debian-5deb11u1. If you want to try it out anyway,
-you can enable *only* keyboard interactive authentication by entering
-`set ssh v2 auth keyb` at the kermit prompt before starting your session.
-
-If you want to enable keyboard interactive authentication alongside password
-and public key, enter `set ssh v2 auth keyb pass pub` instead.
+There is not yet support for using ssh agents or GSSAPI (Kerberos)
+authentication but as both of these are supported by the ssh backend use by
+C-Kermit support for these may appear in a future release.
 
 [^1]: https://libssh.org

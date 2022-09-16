@@ -11,6 +11,11 @@
 #include <windows.h>
 #include <stdio.h>
 
+#ifndef VER_PLATFORM_WIN32_WINDOWS
+/* Visual C++ 2.0 and older don't define this (Win95 wasn't released yet) */
+#define VER_PLATFORM_WIN32_WINDOWS      1
+#endif
+
 void
 DisplayHelp( char * name )
 {
@@ -40,8 +45,8 @@ InstallFile(char * prgname, char * srcfile, char * destfile, int forceinstall) {
                                destfile,
                                windir,
                                curdir,
-                               curpath, &curlen,
-                               destpath, &destlen );
+                               curpath, (PUINT)&curlen,
+                               destpath, (PUINT)&destlen );
     if ( vff_bitmask & VFF_CURNEDEST ) {
         printf("%s is installed but in the wrong directory\n",destfile);
         printf("Currently in \"%s\" but should be in \"%s\"\n",
@@ -62,7 +67,7 @@ InstallFile(char * prgname, char * srcfile, char * destfile, int forceinstall) {
                                   destpath,
                                   curpath,
                                   tmpfile,
-                                  &tmplen);
+                                  (PUINT)&tmplen);
 
     if ( vif_bitmask & VIF_TEMPFILE ) {
         printf("The temporary copy of the new file is in \"%s\".\n\n",

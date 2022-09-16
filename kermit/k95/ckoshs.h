@@ -93,6 +93,15 @@ typedef struct {
     char* password;                             /* pwbuf if pwflg */
     int pty_height, pty_width;                  /* Terminal dimensions */
     char* terminal_type;                        /* Terminal type */
+    char* allowed_ciphers;                      /* Comma separated list of
+                                                 * allowed ciphers */
+    char* allowed_hostkey_algorithms;           /* Comma separated list */
+    char* macs;                                 /* Comma separated list */
+    char* key_exchange_methods;                 /* Comma separated list */
+    int keepalive_seconds;                      /* Keepalive interval in
+                                                 * seconds, 0 disables. */
+    int nodelay;                                /* Set to disable nagles agorithm */
+    char* proxy_command;                        /* Command to execute to connect to the server */
 
     /* Allowed authentication types */
     BOOL allow_password_auth;
@@ -171,6 +180,13 @@ void get_current_terminal_dimensions(int* rows, int* cols);
  * @param pty_width Current terminal width
  * @param pty_height Current terminal height
  * @param auth_methods Comma-separated list of allowed authentication methods
+ * @param ciphers Comma-separated list of allowed ciphers
+ * @param heartbeat Heartbeat interval in seconds
+ * @param hostkey_algorithms Comma-separated list of allowed hostkey algorithms
+ * @param macs Comma-separated list of allowed macs
+ * @param key_exchange_methods Comma-separated list of key exchange methods
+ * @param nodelay Set to disable Nagle's algorithm
+ * @param proxy_command Set the command to be executed in order to connect to server
  * @return A new ssh_parameters_t instance.
  */
 ssh_parameters_t* ssh_parameters_new(
@@ -179,7 +195,9 @@ ssh_parameters_t* ssh_parameters_new(
         BOOL gssapi_delegate_credentials, int host_key_checking_mode,
         char* user_known_hosts_file, char* global_known_hosts_file,
         char* username, char* password, char* terminal_type, int pty_width,
-        int pty_height, char* auth_methods);
+        int pty_height, char* auth_methods, char* ciphers, int heartbeat,
+        char* hostkey_algorithms, char* macs, char* key_exchange_methods,
+        int nodelay, char* proxy_command);
 
 /** Frees the ssh_parameters_t struct and all its members.
  *
@@ -221,5 +239,10 @@ int start_ssh_subsystem(ssh_parameters_t* parameters, ssh_client_t *ssh_client,
  * @return TRUE if the mutex was acquired or FALSE on timeout or error.
  */
 BOOL acquire_mutex(HANDLE mutex, DWORD msTimeout);
+
+/** Libssh ssh_auth_callback implementation
+ */
+int auth_prompt(const char* prompt, char* buf, size_t len, int echo,
+                int verify, void* userdata);
 
 #endif /* CKWIN_SSHSUBSYS_H */

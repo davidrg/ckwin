@@ -13,8 +13,8 @@ env:
   # Expected filename: https://www.openssl.org/source/openssl-${{env.OPENSSL_VERSION}}.tar.gz
   OPENSSL_VERSION: 1.1.1q
   # Exoected filename: ${{env.LIBSSH_SOURCE}}libssh-${{env.LIBSSH_VERSION}}.tar.xz
-  LIBSSH_SOURCE: https://www.libssh.org/files/0.9/
-  LIBSSH_VERSION: 0.9.6
+  LIBSSH_SOURCE: https://www.libssh.org/files/0.10/
+  LIBSSH_VERSION: 0.10.3
 
 jobs:
   Build-VisualCxx:
@@ -57,7 +57,7 @@ jobs:
           ${{github.workspace}}\openssl 
           ${{github.workspace}}\libssh 
           ${{github.workspace}}\tools
-        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+libssh-${{env.LIBSSH_VERSION}}+nasm
+        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+libssh-${{env.LIBSSH_VERSION}}rel+nasm+xp
 
     - name: Get dependencies
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
@@ -130,7 +130,7 @@ jobs:
         cd openssl\${{env.OPENSSL_VERSION}}
         $env:Path += ";${{github.workspace}}\tools\nasm"
         $env:Path
-        perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}        
+        perl Configure VC-WIN32 -D"_WIN32_WINNT=0x502" zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}     
         nmake
 
     - name: Build libssh
@@ -138,7 +138,7 @@ jobs:
       shell: powershell
       run: |
         cd libssh\${{env.LIBSSH_VERSION}}\build
-        cmake .. -G "NMake Makefiles" -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}\
+        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}\
         nmake
 
       ##########################################################################
@@ -157,10 +157,22 @@ jobs:
         # build. Undefined or CKF_NO_CRYPTO=no leaves crypto features enabled
         # where the required dependencies exist.
         CKF_NO_CRYPTO: ${{ matrix.no_crypto }}
-    - name: Make Distribution
-      run: mkdist.bat
-      shell: cmd
-      working-directory: ${{ github.workspace }}\kermit\k95
+    - name: Fetch CA Certs bundle
+      run: |
+        wget https://curl.se/ca/cacert.pem -outfile ca_certs.pem
+        wget https://www.mozilla.org/media/MPL/2.0/index.815ca599c9df.txt -outfile ca_certs.license
+        
+        $readme = @"
+        ca_certs.pem was exported from the Mozilla CA Certificate Store and is licensed
+        under the MPL version 2.0.
+        
+        For more information and updates, see: https://curl.se/docs/caextract.html
+        "@
+        
+        New-Item ca_certs.readme
+        Set-Content ca_certs.readme $readme
+      shell: powershell
+      working-directory: ${{ github.workspace }}\kermit\k95\dist
     - name: Prepare Artifact
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95
@@ -238,10 +250,138 @@ jobs:
     - name: Upload Artifact
       uses: actions/upload-artifact@v2.2.4
       with:
-        name: ckwin-ow19-x86
+        name: ckwin-ow1.9-x86
         path: ${{ github.workspace }}\ckwin
         if-no-files-found: error
         retention-days: 7
+
+  Build-OpenWatcom19-Win32-NT-legacy:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+        # Cache OpenWatcom because it takes quite a while to download and
+        # decompress.
+      - name: Cache OpenWatcom
+        uses: actions/cache@v3.0.5
+        id: cache-watcom
+        with:
+          path: |
+            ${{github.workspace}}\watcom
+          key: watcom-1.9
+      - name: Get OpenWatcom 1.9
+        if: steps.cache-watcom.outputs.cache-hit != 'true'
+        run: |
+          mkdir watcom
+          cd watcom
+          wget https://github.com/open-watcom/open-watcom-1.9/releases/download/ow1.9/open-watcom-c-win32-1.9.exe -outfile open-watcom-c-win32-1.9.exe
+          7z x open-watcom-c-win32-1.9.exe
+        shell: powershell
+      - name: Full Build
+        run: |
+          SET PATH=%WATCOM%\BINW;%PATH%
+          SET PATH=%WATCOM%\BINNT;%PATH%
+          SET INCLUDE=%WATCOM%\H\NT;%INCLUDE%
+          SET INCLUDE=%WATCOM%\H\NT;%INCLUDE%
+          SET INCLUDE=%INCLUDE%;C:\WATCOM\H\NT\DIRECTX
+          SET INCLUDE=%INCLUDE%;C:\WATCOM\H\NT\DDK
+          SET INCLUDE=%WATCOM%\H;%INCLUDE%
+          SET EDPATH=%WATCOM%\EDDAT
+          SET WHTMLHELP=%WATCOM%\BINNT\HELP
+          SET WIPFC=%WATCOM%\WIPFC
+          
+          REM Build for Windows NT 3.50 (and, someday, NT 3.1)
+          set CKT_NT31=yes
+          
+          call ..\..\setenv.bat
+          call mk.bat
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95
+        env:
+          ROOT: ${{ github.workspace }}
+          WATCOM: ${{ github.workspace }}\watcom
+      - name: Make Distribution
+        run: mkdist.bat
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95
+        env:
+          ROOT: ${{ github.workspace }}
+          WATCOM: ${{ github.workspace }}\watcom
+      - name: Prepare Artifact
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95
+        run: |
+          move dist ${{ github.workspace }}\ckwin
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2.2.4
+        with:
+          name: ckwin-ow1.9-x86-nt350
+          path: ${{ github.workspace }}\ckwin
+          if-no-files-found: error
+          retention-days: 7
+
+  ##############################################################################
+  # Build C-Kermit for OS/2 with OpenWatcom 1.9 which can cross-compile        #
+  ##############################################################################
+  Build-OpenWatcom19-OS2:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+        # Cache OpenWatcom because it takes quite a while to download and
+        # decompress.
+      - name: Cache OpenWatcom
+        uses: actions/cache@v3.0.5
+        id: cache-watcom
+        with:
+          path: |
+            ${{github.workspace}}\watcom
+          key: watcom-1.9
+      - name: Get OpenWatcom 1.9
+        if: steps.cache-watcom.outputs.cache-hit != 'true'
+        run: |
+          mkdir watcom
+          cd watcom
+          wget https://github.com/open-watcom/open-watcom-1.9/releases/download/ow1.9/open-watcom-c-win32-1.9.exe -outfile open-watcom-c-win32-1.9.exe
+          7z x open-watcom-c-win32-1.9.exe
+        shell: powershell
+      - name: Full Build
+        run: |
+          SET PATH=%WATCOM%\BINW;%PATH%
+          SET PATH=%WATCOM%\BINNT;%PATH%
+          SET INCLUDE=%WATCOM%\H;%INCLUDE%
+          SET EDPATH=%WATCOM%\EDDAT
+          SET WHTMLHELP=%WATCOM%\BINNT\HELP
+          SET WIPFC=%WATCOM%\WIPFC
+          
+          call ..\..\setenv.bat
+          call mkos2.bat
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95
+        env:
+          ROOT: ${{ github.workspace }}
+          WATCOM: ${{ github.workspace }}\watcom
+      - name: Make Distribution
+        run: mkdist-os2.bat
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95
+        env:
+          ROOT: ${{ github.workspace }}
+          WATCOM: ${{ github.workspace }}\watcom
+      - name: Prepare Artifact
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95
+        run: |
+          move dist-os2 ${{ github.workspace }}\ckos2
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2.2.4
+        with:
+          name: ckos2-ow1.9-x86
+          path: ${{ github.workspace }}\ckos2
+          if-no-files-found: error
+          retention-days: 7
 
   ##############################################################################
   # Build with Visual C++ 2003 Toolkit + Windows Server 2003 SP1 Platform SDK  #
@@ -321,7 +461,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v2.2.4
         with:
-          name: ckwin-vct2003
+          name: ckwin-vc7.1-x86
           path: ${{ github.workspace }}\ckwin
           if-no-files-found: error
           retention-days: 7

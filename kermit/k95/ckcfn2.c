@@ -10,7 +10,7 @@
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: 8 May 2022
+    Last update: 14 September 2022
 */
 /*
  Note -- if you change this file, please amend the version number and date at
@@ -1279,6 +1279,7 @@ spack(pkttyp,n,len,d) char pkttyp; int n, len; CHAR *d;
 #endif /* CK_ANSIC */
 /* spack */ {
     register int i;
+    extern int lpcapu;                  /* Long packet capability negotiated */
     int ix, j, k, x, lp, longpkt, copy, loglen;
 
 #ifdef GFTIMER
@@ -1292,26 +1293,44 @@ spack(pkttyp,n,len,d) char pkttyp; int n, len; CHAR *d;
 
 #ifdef DEBUG
     if (deblog) {			/* Save lots of function calls! */
-	debug(F101,"spack n","",n);
+	debug(F101,"SPACK n","",n);
 #ifdef COMMENT
 	if (pkttyp != 'D') {		/* Data packets would be too long */
-	    debug(F111,"spack data",data,data);
-	    debug(F111,"spack d",d,d);
+	    debug(F111,"SPACK data",data,data);
+	    debug(F111,"SPACK d",d,d);
 	}
 #endif	/* COMMENT */
-	debug(F101,"spack len","",len);
-	debug(F101,"spack copy","",copy);
+	debug(F101,"SPACK data len","",len);
+	debug(F101,"SPACK copy","",copy);
     }
 #endif /* DEBUG */
+/*
+  Decide whether to send as a long packet.
+  Fixed to check negotiation result before doing this.
+  Otherwise there's a border case where the sent packet is one byte
+  too long because of extra control fields in a long packet.
+  - fdc 13 September 2022
+*/
+    debug(F101,"SPACK LP decision lpcapu","",lpcapu);
+    debug(F101,"SPACK LP decision len","",len);
+    debug(F101,"SPACK LP decision bctl","",bctl);
+    debug(F101,"SPACK LP decision len+bctl","",len+bctl);
 
-    longpkt = (len + bctl + 2) > 94;	/* Decide whether it's a long packet */
+    longpkt = 0;
+    if (lpcapu > 0) { /* Only if long packet capability has been negotiated */
+        longpkt = (len + bctl + 2) > 96; 
+        /* Len + Seq + Type + Data + Blockcheck */
+        /*  1     1     2      n       1-3      */
+    }
+    debug(F101,"SPACK LP decision longpkt","",longpkt);
+
     mydata = data - 7 + (longpkt ? 0 : 3); /* Starting position of header */
     k = sseqtbl[n];			/* Packet structure info for pkt n */
 #ifdef COMMENT
 #ifdef DEBUG
     if (deblog) {			/* Save 2 more function calls... */
-	debug(F101,"spack mydata","",mydata);
-	debug(F101,"spack sseqtbl[n]","",k);
+	debug(F101,"SPACK mydata","",mydata);
+	debug(F101,"SPACK sseqtbl[n]","",k);
 	if (k < 0) {
 #ifdef STREAMING
 	    if (!streaming)
@@ -1337,11 +1356,16 @@ spack(pkttyp,n,len,d) char pkttyp; int n, len; CHAR *d;
     mydata[i++] = tochar(n);		/* SEQ field */
     mydata[i++] = pkttyp;		/* TYPE field */
     j = len + bctl;			/* Length of data + block check */
+    debug(F101,"SPACK len","",len);
+    debug(F101,"SPACK bctl","",bctl);
+    debug(F101,"SPACK j","",j);
+    debug(F101,"SPACK longpkt","",longpkt);
     if (longpkt) {			/* Long packet? */
 	int x;				/* Yes, work around SCO Xenix/286 */
 #ifdef CKTUNING
 	unsigned int chk;
 #endif /* CKTUNING */
+        debug(F100,"SPACK doing long packet","",0);
 	x = j / 95;			/* compiler bug... */
         mydata[lp] = tochar(0);		/* Set LEN to zero */
         mydata[i++] = tochar(x);	/* Extended length, high byte */
@@ -1358,7 +1382,11 @@ spack(pkttyp,n,len,d) char pkttyp; int n, len; CHAR *d;
         mydata[i] = '\0';		/* Terminate for header checksum */
         mydata[i++] = tochar(chk1(mydata+lp,5));
 #endif /* CKTUNING */
-    } else mydata[lp] = tochar(j+2);	/* Normal LEN */
+    } else {                            /* Short packets */
+        mydata[lp] = tochar(j+2);       /* LEN includes Seq and Type */
+        debug(F101,"SPACK j+2","",j+2);
+        debug(F101,"SPACK j+2 encoded","",tochar(j+2));
+    }
 /*
   When sending a file, the data is already in the right place.  If it weren't,
   it might make sense to optimize this section by using memcpy or bcopy
@@ -1506,8 +1534,8 @@ spack(pkttyp,n,len,d) char pkttyp; int n, len; CHAR *d;
 #ifdef STREAMING
     if (!dontsend) {
 #endif /* STREAMING */
-	debug(F101,"spack spktl","",spktl);
-	debug(F101,"spack ttol returns","",x);
+	debug(F101,"SPACK spktl","",spktl);
+	debug(F101,"SPACK ttol returns","",x);
 	if (x < 0) {			/* Failed. */
 	    if (local && x < -1) {
 		xxscreen(SCR_ST,ST_ERR,0L,"FAILED: Connection lost");
@@ -1525,7 +1553,7 @@ spack(pkttyp,n,len,d) char pkttyp; int n, len; CHAR *d;
 #ifdef GFTIMER
 	if (deblog)  {			/* Log elapsed time for write() */
 	    t2 = gftimer();
-	    debug(F101,"spack ttol msec","",(long)((t2-t1)*1000.0));
+	    debug(F101,"SPACK ttol msec","",(long)((t2-t1)*1000.0));
 	}
 #endif /* GFTIMER */
 #endif /* DEBUG */
@@ -1542,7 +1570,7 @@ spack(pkttyp,n,len,d) char pkttyp; int n, len; CHAR *d;
 #ifdef DEBUG
 	if (deblog) {			/* Save two function calls! */
 	    dumpsbuf();			/* Dump send buffers to debug log */
-	    debug(F111,"spack calling screen, mydata=",mydata,n);
+	    debug(F111,"SPACK calling screen, mydata=",mydata,n);
 	}
 #endif /* DEBUG */
     }
@@ -1576,7 +1604,7 @@ chk1(pkt,len) register CHAR *pkt; register int len; {
     chk = chk2(pkt,len);
 #endif /* CKTUNING */
     chk = (((chk & 0300) >> 6) + chk) & 077;
-    debug(F101,"chk1","",chk);
+    debug(F111,"chk1","1-byte block check encoded code",chk);
     return((int) chk);
 }
 

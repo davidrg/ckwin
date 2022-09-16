@@ -1,0 +1,58 @@
+# Building C-Kermit for OS/2 from Source
+
+To build C-Kermit for OS/2 you need OpenWatcom version 1.9. The OpenWatcom 2.0
+fork may work but has not been tested. 
+
+## Cross-compiling from Windows
+This is the recommended method for building C-Kermit for OS/2.
+
+### Build Process
+
+Firstly put the source code somewhere convenient. Where ever you put it, you
+need to edit `setenv.bat` in the root of the folder to point to your source
+code location. Uncomment the line `REM set root=C:\src` near the top of the
+file and set the value to where your source code lives, for example
+`set root=C:\dev\ckwin`, then save the file.
+
+There are no further dependencies you need to build as OpenSSL (and therefore 
+libssh) does not support OpenWatcom.
+
+### Build C-Kermit for OS/2
+
+1. Open a console and change directory to where the source code is located
+2. OpenWatcom build environment by running `owsetenv.bat` (in `C:\WATCOM` by default)
+3. Setup the C-Kermit build environment by running `setenv.bat`
+4. CD into `kermit\k95`
+5. run `mkos2.bat` for a release build or `mkos2d.bat` for a debug build
+6. run `mkdist-os2.bat` to collect everything into the dist-os2 subdirectory
+
+This should leave you with a collection of 32-bit OS/2 executables in the
+dist-os2 subdirectory:
+
+| Executable   | Description                                      |
+|--------------|--------------------------------------------------|
+| k2.exe       | C-Kermit for OS/2 executable                     |
+| cko32i20.dll | TCP/IP Library                                   |
+| k2clip.exe   | PM Clipboard server                              |
+| textps.exe   | Convert plain text to PostScript                 |
+| telnet.exe   | Telnet stub (launches k2.exe as a telnet client) |
+| rlogin.exe   | RLogin stub (launches k2.exe as a rlogin client) |
+
+
+## Building on OS/2
+
+The recommended method is to cross-compile from Windows as this is the only
+method that is tested regularly. Doing builds *on* OS/2 is really only supported
+for debugging purposes at this time.
+
+The build process on OS/2 is much the same as on Windows, the only real
+difference is there is no mkdist-os2 script; you've got to collect and rename 
+the build outputs yourself.
+
+Firstly, edit `setenv.cmd`, uncomment the line `REM set root=C:\src` near the
+top of the file and set the value to where your source code lives then save the
+file. For example, `set root=C:\dev\ckwin`.
+
+Next, run `C:\watcom\owsetenv.cmd` followed by the C-Kermit `setenv.cmd` script.
+You should end up in `\kermit\k95`. To build, run either `mkos2.cmd` for a
+release build or `mkos2d.cmd` for a debug build.

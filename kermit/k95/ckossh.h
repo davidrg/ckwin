@@ -48,6 +48,8 @@ char                             /* The following are to be malloc'd */
   * ssh1_unh,                           /* v1 user known hosts file */
   * ssh2_gnh,                           /* v2 global known hosts file */
   * ssh2_unh,                           /* v2 user known hosts file */
+  * ssh2_kex,                           /* V2 key exchange methods */
+  * ssh_pxc,                            /* Proxy Command */
   * xxx_dummy;
 
 extern char * ssh_idf[32];              /* identity files */

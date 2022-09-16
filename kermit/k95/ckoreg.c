@@ -679,8 +679,9 @@ GetFtpCommand( void )
 #ifdef BROWSER
 #ifdef NT
 void
-Real_Win32ShellExecute( char * object )
+Real_Win32ShellExecute( void* param )
 {
+    char * object;
     extern HWND hwndConsole;
     extern int priority;
 #ifdef COMMENT
@@ -688,6 +689,8 @@ Real_Win32ShellExecute( char * object )
     BOOL  rc;
 #endif
     HINSTANCE error;
+
+    object = (char*)param;
 
     SetThreadPrty(priority,isWin95() ? 3 : 11);
 
@@ -715,9 +718,11 @@ Real_Win32ShellExecute( char * object )
         case ERROR_BAD_FORMAT:
             debug(F110,"Win32 ShellExecute","The .EXE file is invalid (non-Win32 .EXE or error in .EXE image).",0);
             break;
+#ifdef SE_ERR_ACCESSDENIED
         case SE_ERR_ACCESSDENIED:
             debug(F110,"Win32 ShellExecute","The operating system denied access to the specified file.",0);
             break;
+#endif
         case SE_ERR_ASSOCINCOMPLETE:
             debug(F110,"Win32 ShellExecute","The filename association is incomplete or invalid.",0);
             break;
@@ -730,21 +735,29 @@ Real_Win32ShellExecute( char * object )
         case SE_ERR_DDETIMEOUT:
             debug(F110,"Win32 ShellExecute","The DDE transaction could not be completed because the request timed out.",0);
             break;
+#ifdef SE_ERR_DLLNOTFOUND
         case SE_ERR_DLLNOTFOUND:
             debug(F110,"Win32 ShellExecute","The specified dynamic-link library was not found.",0);
             break;
+#endif
+#ifdef SE_ERR_FNF
         case SE_ERR_FNF:
             debug(F110,"Win32 ShellExecute","The specified file was not found.",0);
             break;
+#endif
         case SE_ERR_NOASSOC:
             debug(F110,"Win32 ShellExecute","There is no application associated with the given filename extension.",0);
             break;
+#ifdef SE_ERR_OOM
         case SE_ERR_OOM:
             debug(F110,"Win32 ShellExecute","There was not enough memory to complete the operation.",0);
             break;
+#endif
+#ifdef SE_ERR_PNF
         case SE_ERR_PNF:
             debug(F110,"Win32 ShellExecute","The specified path was not found.",0);
             break;
+#endif
         case SE_ERR_SHARE:
             debug(F110,"Win32 ShellExecute","A sharing violation occurred.",0);
             break;

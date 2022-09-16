@@ -29,11 +29,13 @@ extern int cursorena[];
 extern int tt_cursor_blink;
 extern int tt_scrsize[];	/* Scrollback buffer size */
 extern int tt_status[];
+extern int tt_update;
 extern int scrollflag[];
-extern int vmode;
+extern BYTE vmode;
 extern int win32ScrollUp, win32ScrollDown;
 extern int trueblink, trueunderline, trueitalic;
 unsigned char geterasecolor(int);
+int tt_old_update;
 
 extern DWORD VscrnClean( int vmode );
 extern void scrollback( BYTE, int );
@@ -72,7 +74,6 @@ LRESULT CALLBACK KClientWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-#define TIMER_PROC_MSEC 100
 VOID CALLBACK KTimerProc( HWND hwnd, UINT msg, UINT id, DWORD dwtime )
 {
     // debug(F111,"KTimerProc()","msg",msg);
@@ -92,6 +93,11 @@ VOID CALLBACK KTimerProc( HWND hwnd, UINT msg, UINT id, DWORD dwtime )
         putkverb(vmode, F_KVERB | K_DNONE);
     }
 #endif /* NOKVERBS */
+
+    if ( tt_update != tt_old_update ) {
+        // Interval has changed, restart the timer.
+        client->startTimer();
+    }
 }
 
 }   // end of extern "C"
@@ -155,12 +161,15 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     memset( &cursorRect, '\0', sizeof(RECT) );
     cursorCount = 0;
 
-    maxCursorCount = 11;
-    blinkInterval  = 6;
+    maxCursorCount = 1100;
+    blinkInterval  = 600;
 
     ikterm = new IKTerm( vmode /* clientID */, clientPaint );
     wc = 0;
     vscrollpos = hscrollpos = 0;
+
+    /* Save initial window size so we can tell when it changes */
+    getEndSize(previousWidth, previousHeight);
 }
 
 /*------------------------------------------------------------------------
@@ -188,6 +197,18 @@ KClient::~KClient()
     delete workTemp;
 
     delete ikterm;
+}
+
+void KClient::stopTimer() {
+    if( timerID )
+        KillTimer( hWnd, timerID );
+    timerID = NULL;
+}
+
+void KClient::startTimer() {
+    stopTimer();
+    tt_old_update = tt_update;
+    timerID = SetTimer( hWnd, IDT_CLIENTTIMER, tt_update, KTimerProc );
 }
 
 /*------------------------------------------------------------------------
@@ -293,7 +314,9 @@ void KClient::setDimensions( Bool sizeparent )
 void KClient::getCreateInfo( K_CREATEINFO* info )
 {
     info->classname = KWinClassName;
+#ifndef CKT_NT31
     info->exStyle = WS_EX_CLIENTEDGE;
+#endif
     info->style = WS_CHILD | WS_VISIBLE 
         | WS_HSCROLL | WS_VSCROLL | WS_CLIPSIBLINGS;
 }
@@ -363,9 +386,11 @@ void KClient::createWin( KWin* par )
 
     SetWindowPos( hWnd, 0, 0, 0, width, height, SWP_NOZORDER );
 
-    /* This constant determines how frequently we attempt to update the screen */
-    /* The original value was 10 */
-    timerID = SetTimer( hWnd, IDT_CLIENTTIMER, TIMER_PROC_MSEC, KTimerProc );
+    /* This timer determines how frequently we attempt to update the screen */
+    /* At some point this was every 10ms but in K95 2.1.3 at least it was fixed
+     * to once every 100ms which wasn't very nice. Now the interval is
+     * configurable via set terminal screen-update */
+    startTimer();
 
     inCreate( FALSE );
 }
@@ -474,6 +499,16 @@ void KClient::endSizing( Bool doAnyway )
     int w, h;
     getEndSize( w, h );
 
+    if (w == previousWidth && h == previousHeight
+            && saveTermWidth == w && saveTermHeight == h){
+
+        debug(F100, "endSizing: size not changed - doing nothing", "", 0);
+        return;
+    }
+
+    previousWidth = w;
+    previousHeight = h;
+
     if (kglob->mouseEffect == TERM_MOUSE_CHANGE_DIMENSION ) {
         kui_setheightwidth(w,h);
     } else if (kglob->mouseEffect == TERM_MOUSE_CHANGE_FONT ) {
@@ -560,13 +595,28 @@ void KClient::getDrawInfo()
 
 void KClient::ToggleCursor( HDC hdc, LPRECT lpRect )
 {
+    /* Draw the cursor in the scratch hdc rather than directly on the screen
+     * like we used to - this makes it blink nicer. No more wiping in and out
+     * from top to bottom. */
+    BitBlt(_hdcScratch,
+           lpRect->left, lpRect->top,
+           lpRect->right, lpRect->bottom,
+           hdc,
+           lpRect->left, lpRect->top,
+           SRCCOPY);
     for (int y = lpRect->top; y < lpRect->bottom; y++) {
         for ( int x = lpRect->left ; x < lpRect->right ; x++ ) {
-            COLORREF color = GetPixel(hdc, x, y);
+            COLORREF color = GetPixel(_hdcScratch, x, y);
 
-            SetPixel(hdc, x, y, color^0x00808080);
+            SetPixel(_hdcScratch, x, y, color^0x00808080);
         }
     }
+    BitBlt(hdc,
+           lpRect->left, lpRect->top,
+           lpRect->right, lpRect->bottom,
+           _hdcScratch,
+           lpRect->left, lpRect->top,
+           SRCCOPY);
 }
 
 /*------------------------------------------------------------------------
@@ -576,7 +626,9 @@ void KClient::checkBlink()
     //debug(F100,"KClient::checkBlink()","",0);
 
     Bool blinkOn = FALSE;
-    if( cursorCount++ < maxCursorCount ) {
+
+    if( cursorCount < maxCursorCount ) {
+        cursorCount += tt_update;
         if(cursorCount >= blinkInterval)
             blinkOn = TRUE;
     }
@@ -586,7 +638,7 @@ void KClient::checkBlink()
     if (ws_blinking && ((blinkOn && cursorCount == blinkInterval) || (cursorCount == 0)) )
         writeMe();
 
-    else if (cursorCount%3 == 0) {
+    else if (cursorCount%300 == 0) {
         if (ikterm->getCursorPos() && (_inFocus || (!_inFocus && cursor_displayed)))
         {
             int adjustedH = font->getFontH();
@@ -976,6 +1028,9 @@ Bool KClient::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         // NOTE: FALL THROUGH !!!
         //
 
+#ifdef WM_MOUSEWHEEL
+    case WM_MOUSEWHEEL:
+#endif
     case WM_LBUTTONUP:
     case WM_RBUTTONUP:
     case WM_MBUTTONUP:
@@ -992,6 +1047,38 @@ Bool KClient::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
             ikterm->mouseEvent( hwnd, msg, wParam, x, y );
             break;
         }
+
+#ifdef COMMENT
+    /* This is the obvious, simple and easy way to do it and this does work. But
+     * I decided to instead pretend scrolling up one notch is one click of the
+     * 4th mouse button, and scrolling down one notch is one click of the 5th
+     * mouse button, plus some UI changes to treat buttons 4 and 5 specially
+     * so you can't configure the click type (click, doubleclick, drag) for
+     * them. This way scroll events can be mapped just like any button click.
+     * Leaving this here in case the complicated way turns out to be broken
+     * horribly.
+     * */
+    case WM_MOUSEWHEEL: {
+          int zDelta = GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA;
+          debug(F111, "WM_MOUSEWHEEL", "zDelta", zDelta);
+          if (zDelta > 0) {
+            do {
+                //if (!scrollflag[vmode]) break;
+                ::scrollback( vmode /* clientID */, K_UPONE );
+                zDelta--;
+            } while (zDelta > 0);
+          } else {
+            do {
+              if (!scrollflag[vmode]) break;
+              ::scrollback( vmode /* clientID */, K_DNONE );
+              zDelta++;
+            } while (zDelta < 0);
+          }
+          paint();
+          done=1;
+          break;
+      }
+#endif
 
     case WM_SETFOCUS:
         //debug(F111,"KClient::message","WM_SETFOCUS",msg);

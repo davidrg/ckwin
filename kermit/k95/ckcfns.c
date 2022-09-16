@@ -1,4 +1,4 @@
-char *fnsv = "C-Kermit functions, 9.0.238, 21 December 2021";
+char *fnsv = "C-Kermit functions, 9.0.240, 14 September 2022";
 
 char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 
@@ -15,7 +15,7 @@ char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: Thu May  5 15:22:36 2022
+    Last update: Wed Sep 14 11:16:15 2022
 */
 /*
  System-dependent primitives defined in:
@@ -4755,7 +4755,16 @@ sdata() {
 	    debug(F101,"sdata parity","",parity);
 	}
 #endif /* DEBUG */
+        /*
+          This avoids some edge cases where a longer block check
+          or other factors might push the packet over the edge,
+          causing (for example) the LEN field of a short packet
+          to be out of range. - fdc, 14 September 2022
+        */
+        if (spsiz <= 94 && spsiz > 90) spsiz = 90;
+
 #ifdef CKTUNING
+
 	if (binary && !parity && !memstr && !funcstr)
 	  len = bgetpkt(spsiz);
 	else
@@ -4927,7 +4936,7 @@ seot() {
 int q8flag = 0;
 
 CHAR dada[32];				/* Use this instead of data[]. */
-					/* To avoid some kind of wierd */
+					/* To avoid some kind of weird */
 					/* addressing foulup in spack()... */
 					/* (which might be fixed now...) */
 
@@ -5104,6 +5113,10 @@ rpar() {
     return(dada);			/* Return pointer to string. */
 }
 
+/*
+  S P A R -- Set my sending parameters from the data field of the other
+  Kermit's S or I packet, or its ACK to my S or I packet.
+*/
 int
 spar(s) CHAR *s; {			/* Set parameters */
     int x, y, lpsiz, biggest;
@@ -5259,7 +5272,7 @@ spar(s) CHAR *s; {			/* Set parameters */
     if (lscapu != 2) lscapu = 0;	/* Assume no LS unless forced. */
     y = 11;				/* Position of next field, if any */
     if (biggest >= 10) {
-        x = xunchar(s[10]);
+        x = xunchar(s[10]);             /* s[10] is the CAPAS bitmask */
 	debug(F101,"spar capas","",x);
         atcapu = (x & atcapb) && atcapr; /* Attributes */
 	lpcapu = (x & lpcapb) && lpcapr; /* Long packets */
@@ -5443,7 +5456,7 @@ spar(s) CHAR *s; {			/* Set parameters */
 	char * p;
 	p = sysidlist[sysindex].sid_name;
 	tlog(F110,"Remote system type: ",p,0L);
-	if (sysindex > 0) {		/* If partnet's system type known */
+	if (sysindex > 0) {		/* If partner's system type known */
 	    whoarewe();			/* see if we are a match. */
 #ifdef CK_SPEED
 /* Never unprefix XON and XOFF when sending to VMS */
@@ -6734,7 +6747,7 @@ int
 sndspace(drive) int drive; {
 #ifndef NOSERVER
     static char spctext[64];
-    unsigned long space;
+    CK_OFF_T space;
 
     if (drive) {
 	space = zdskspace(drive - 'A' + 1);

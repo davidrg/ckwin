@@ -68,6 +68,9 @@ public:
     KScroll* getVertSB(void) { return vert; }
     KScroll* getHorzSB(void) { return horz; }
 
+    void stopTimer();
+    void startTimer();
+
 private:    // this section is for performance
     uchar* workTemp;
     size_t workTempSize;
@@ -121,6 +124,11 @@ private:    // this section is for performance
     int saveTermWidth;
     double saveLineSpacing;
     int saveHorzIsV;
+
+    /* So that we can tell when the size has been changed and the vterm, etc,
+     * needs updating */
+    int previousHeight;
+    int previousWidth;
 
     int maxpHeight;     // max parent window height
     int maxpWidth;      // max parent window width

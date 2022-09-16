@@ -14,7 +14,8 @@
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
   Last update:
-    Sun May  8 16:02:07 2022
+    Mon Aug 22 20:11:01 2022 (for TYPE /INTERPRET)
+    Wed Aug 31 15:46:35 2022 (for TYPE /INTERPRET in Windows)
 */
 
 /* Includes */
@@ -143,6 +144,10 @@ extern char cmdbuf[], atmbuf[];         /* Command buffers */
 #endif /* DCMDBUF */
 
 extern int nopush;
+
+#ifdef TYPEINTERPRET
+extern int type_intrp;                  /* TYPE /INTERPRET */
+#endif  /* TYPEINTERPRET */
 
 #ifndef NOSPL
 int askflag = 0;                        /* ASK-class command active */
@@ -3861,9 +3866,21 @@ typegetline(incs, outcs, buf, n) int incs, outcs, n; char * buf; {
         *s = '\0';                      /* Terminate the string */
     }
 #endif /* COMMENT */
+
+#ifdef TYPEINTERPRET
+#ifndef NT                              /* (or should this be OS2?) */
+  dointerpret:
+    if ( type_intrp )  {                /* TYPE /INTERPRET (2022-08-22 fdc) */
+        int zzrc = 0;                   /* Returncode for zzstring */
+        int tmplen = TMPBUFSIZ;
+        char * newbuf = tmpbuf;         /* New string to create */
+        zzrc = zzstring(buf, &newbuf, &tmplen); /* Interpret the string */
+        len = ckstrncpy(buf, tmpbuf, TYPBUFL);  /* Replace original string */
+    } 
+#endif  /* NT */
+#endif  /* TYPEINTERPRET */
     return(x < 0 ? -1 : len);
 }
-
 
 #ifndef MAC
 SIGTYP
@@ -3882,11 +3899,14 @@ tytrap(foo) int foo;
 }
 #endif /* MAC */
 
+_PROTOTYP(char * cvtstring,(char*,int,int));
+
 int
 dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
     char * file, * pat, * prefix; int paging, first, head, width, incs, outcs;
     char * outfile; int z;
 /* dotype */ {
+
     extern CK_OFF_T ffc;
     char buf[TYPBUFL+2];
     char * s = NULL;
@@ -4020,6 +4040,7 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
           rc = 0;
         goto xdotype;
     }
+/*  printf("%s: %d\n","DOTYPE tlevel BEFORE open:",tlevel); */
     if (!zopeni(ZIFILE, file)) {        /* Not a directory, open it */
         debug(F111,"dotype zopeni failure",file,0);
         if (xcmdsrc == 0) {
@@ -4029,6 +4050,7 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
           rc = 0;
         goto xdotype;
     }
+/*  printf("%s: %d\n","DOTYPE tlevel AFTER open:",tlevel); */
 
 #ifndef AMIGA
 #ifndef MAC
@@ -4088,8 +4110,34 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
          (len = typegetline(incs,outcs,buf,TYPBUFL)) > -1;
          lines++
          ) {
-        debug(F011,"dotype line",buf,len);
-#ifndef MAC
+        debug(F111,"dotype line",buf,len);
+
+#ifdef TYPEINTERPRET                    /* 2022-08-31 fdc */
+#ifdef NT                               /* Or should this be OS2? */
+        if (type_intrp) {               /* TYPE /INTERPRET? */
+            int zzrc = 0, tmplen = 0;   /* Return code for zzstring */
+            char * cvtbuf;              /* Pointer to conversion buffer */
+            char * newbuf = malloc(TYPBUFL+3); /* Buffer for zzstring result */
+            char * resultbuf;
+
+            /*
+  The line has been returned to us as UCS-2 but we need to feed it to
+  zzstring() to interpret all the backslash escapes, but zzstring doesn't
+  understand UCS-2.  So we have to convert it from UCS2 (outcs) back to incs;
+  feed it to zzstring(), and then convert it back to UCS2 (outcs).
+*/
+            cvtbuf = cvtstring(buf,outcs,incs); /* UCS2->original cset */
+            debug(F110,"dotype interpret cvtbuf",cvtbuf,0);
+            zzstring(cvtbuf, &newbuf, &tmplen);  /* Evaluate it */
+            resultbuf = cvtstring(newbuf,incs,outcs); /* Convert back to UCS2 */
+            ckstrncpy(buf, resultbuf, TYPBUFL+3);
+            debug(F110,"dotype interpret zzstring result buf",buf,0);
+            free(newbuf);
+        }
+#endif /* NT */
+#endif /* TYPEINTERPRET */
+
+#ifndef MAC                             /*  */
         if (typ_int) {                  /* Interrupted? */
             typ_int = 0;
             debug(F101,"type interrupted line","",lines);
@@ -4330,7 +4378,7 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
 #ifndef NORICHEDIT
     if ( gui )
         gui_text_popup_wait(-1);        /* Wait for user to close the dialog */
-#endif
+#endif /* NORICHEDIT */
 #endif /* KUI */
     return(rc);
 }
@@ -9218,7 +9266,12 @@ cvtfnout(c) char c;
 /* Convert a string from any charset to any other charset */
 
 char *
-cvtstring(s,csin,csout) char * s; int csin, csout; {
+#ifdef CK_ANSIC
+cvtstring(char* s,int csin,int csout)
+#else
+cvtstring(s,csin,csout) char * s; int csin, csout;
+#endif
+{
     int c;
     extern CK_OFF_T ffc;
 

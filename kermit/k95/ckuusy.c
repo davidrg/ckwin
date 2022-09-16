@@ -2653,10 +2653,8 @@ doxarg(s,pre) char ** s; int pre; {
 #endif /* IKSDB */
 
       case XA_VERS: {
-	  extern char * ck_s_ver, * ck_s_xver;
+	  extern char * ck_s_ver;
 	  printf("%s",ck_s_ver);
-	  if (*ck_s_xver)
-	    printf(" [%s]\n",ck_s_xver);
 	  printf("\n");
 	  if (stayflg || what == W_COMMAND)
 	    break;

@@ -201,6 +201,23 @@ int p_avail = 1 ;      /* No DLL to load - built-in */
 #endif /* XYZ_DLL */
 #endif /* CK_XYZ */
 
+#ifdef OS2
+#ifndef NT
+#ifdef __WATCOMC__
+/* Watcom C headers don't know what these are. I don't have
+ * access to any IBM development tools for OS/2 so I can't
+ * look in the heades to see what the values are. The values
+ * here come from:
+ *      OS/2 Debugging Handbook - Volume IV -
+ *      System Diagnostic Reference
+ *      February 1996
+ */
+#define NP_WMESG 0x0400
+#define NP_RMESG 0x0100
+#endif
+#endif
+#endif
+
 HKBD KbdHandle = 0 ;
 TID tidKbdHandler = (TID) 0,
     tidRdComWrtScr   = (TID) 0,
@@ -852,6 +869,7 @@ getcpu( void )
    char numstr[32] ;
    memset( &si, 0, sizeof(si) ) ;
    GetSystemInfo( &si ) ;
+#ifndef CKT_NT31
    if ( isWin95() && !si.wProcessorLevel )
    {
       switch ( si.dwProcessorType ) {
@@ -935,11 +953,54 @@ getcpu( void )
             ckstrncat( buffer, numstr, 64 );
          }
          break;
+
       case PROCESSOR_ARCHITECTURE_UNKNOWN:
          ckstrncpy( buffer, "unknown", 64 ) ;
          break;
       }
-   }
+  }
+#else
+    /* The Platform SDK that comes with Visual C++ 2.0 and earlier has a
+     * different definition for SYSTEM_INFO that does not include the
+     * wProcessorLevel field or related architecture definitions. Instead we
+     * can do this: */
+    switch ( si.dwProcessorType ) {
+    case PROCESSOR_INTEL_386:
+        ckstrncpy( buffer, "intel-386", 64 ) ;
+        break;
+    case PROCESSOR_INTEL_486:
+        ckstrncpy( buffer, "intel-486", 64 ) ;
+        break;
+    case PROCESSOR_INTEL_PENTIUM:
+        ckstrncpy( buffer, "intel-pentium", 64 ) ;
+        break;
+    /* These three processors (i860, MIPS R2000 and R3000) are not supported
+     * by any released version of Windows (they were supported early on in its
+     * development) so may not appear in headers shipped with non-microsoft
+     * compilers. */
+#ifdef PROCESSOR_INTEL_860
+    case PROCESSOR_INTEL_860:
+        ckstrncpy( buffer, "intel-860", 64 ) ;
+        break;
+#endif
+#ifdef PROCESSOR_MIPS_R2000
+    case PROCESSOR_MIPS_R2000:
+        ckstrncpy( buffer, "mips-r2000", 64 ) ;
+        break;
+#endif
+#ifdef PROCESSOR_MIPS_R3000
+    case PROCESSOR_MIPS_R3000:
+        ckstrncpy( buffer, "mips-r3000", 64 ) ;
+        break;
+#endif
+    case PROCESSOR_MIPS_R4000:
+        ckstrncpy( buffer, "mips-r4000", 64 ) ;
+        break;
+    case PROCESSOR_ALPHA_21064:
+        ckstrncpy( buffer, "alpha-21064", 64 ) ;
+        break;
+    }
+#endif /* CKT_NT31 */
 #else /* NT */
    ckstrncpy( buffer, CKCPU, 64 ) ;
 #endif
@@ -1111,10 +1172,12 @@ Win95DisplayLocale( void )
     HKL     KBLayout=0;
     CHAR    lpLayoutName[KL_NAMELENGTH]="";
 
+#ifndef CKT_NT31
+    /* Visual C++ 2.0 and earlier don't know about GetKeyboardLayout() */
     KBLayout = GetKeyboardLayout(0);
     GetKeyboardLayoutName(lpLayoutName);
     printf("Keyboard Layout = %s [%u]\n",lpLayoutName,(unsigned short)KBLayout);
-
+#endif
 
     printf("Locale Information:\n");
     for ( LCType=0 ; LCType<= 0x5A ; LCType++ ) {
@@ -1512,6 +1575,10 @@ sysinit() {
     hInstance = GetModuleHandle(NULL) ;
     debug(F101,"hInstance","",hInstance);
     hwndConsole = GetConsoleHwnd() ;
+
+#ifndef CKT_NT31
+    /* MENUITEMINFO and related bits are new to Windows 95 and not known to
+     * Visual C++ 2.0 and older. */
     if ( isWin95() )
     {
         MENUITEMINFO info;
@@ -1523,6 +1590,7 @@ sysinit() {
         DrawMenuBar(hwndConsole);
         CloseHandle(hMenu);
     }
+#endif /* _MSC_VER > 900 */
 #endif /* KUI */
     WinThreadInit = WindowThreadInit( (void *) hInstance );
 #endif /* NT */
@@ -1890,10 +1958,17 @@ sysinit() {
     {
         printf("Warning: TZ environment variable not set.  Using EST5EDT.\n\n");
         bleep(BP_WARN);
+#ifdef __WATCOMC__
+        timezone = 18000;
+        daylight = 1;
+        tzname[0] = "EST";
+        tzname[1] = "EDT";
+#else
         _timezone = 18000;
         _daylight = 1;
         _tzname[0] = "EST";
         _tzname[1] = "EDT";
+#endif
     }
     else
 #endif /* OS2ONLY */
@@ -4331,7 +4406,7 @@ getOverlappedIndex( int serial ) {
         ow = -1;
         while(!GetOverlappedResult( (HANDLE) ttyfd,
                                     &overlapped_write[++ow],
-                                    &nActuallyWritten, owwait ))
+                                    (LPDWORD)&nActuallyWritten, owwait ))
         {
             DWORD error = GetLastError() ;
             if ( error == ERROR_IO_INCOMPLETE ) {
@@ -4512,8 +4587,8 @@ getOverlappedIndex( int serial ) {
 #if _MSC_VER <= 1000
 /* Visual C++ 4.0 and earlier lack this macro */
 #define HasOverlappedIoCompleted(lpOverlapped) ((lpOverlapped)->Internal != STATUS_PENDING)
-#endif
-#endif
+#endif /* _MSC_VER <= 1000 */
+#endif /* __WATCOM__ */
 
 int
 freeOverlappedComplete( int serial ) {
@@ -4534,7 +4609,7 @@ freeOverlappedComplete( int serial ) {
 
             if ( GetOverlappedResult( (HANDLE) ttyfd,
                                       &overlapped_write[ow],
-                                      &nActuallyWritten, owwait ) )
+                                      (LPDWORD)&nActuallyWritten, owwait ) )
             {
                 debug(F111,"freeOverlappedIndex COMPLETE","ow",ow);
                 debug(F111,"freeOverlappedIndex COMPLETE",ow_ptr[ow],ow);
@@ -4688,8 +4763,8 @@ OverlappedWrite( int serial, char * chars, int charsleft )
     ResetEvent( overlapped_write[ow].hEvent ) ;
     nActuallyWritten = 0 ;
 
-    if ( !WriteFile( (HANDLE) ttyfd, ow_ptr[ow], charsleft, &nActuallyWritten,
-                     &overlapped_write[ow]) )
+    if ( !WriteFile( (HANDLE) ttyfd, ow_ptr[ow], charsleft, (LPDWORD)
+                     &nActuallyWritten, &overlapped_write[ow]) )
     {
         DWORD error = GetLastError() ;
         if ( error != ERROR_IO_PENDING )
@@ -6323,7 +6398,7 @@ rdch(int timo /* ms */) {
              !ReadFile((HANDLE) ttyfd,
                        rdchbuf.buffer,
                        sizeof(rdchbuf.buffer),
-                       &nActuallyRead,
+                       (LPDWORD)&nActuallyRead,
                          &overlapped_read[0])
             ) {
             DWORD error = GetLastError() ;
@@ -6334,7 +6409,7 @@ rdch(int timo /* ms */) {
 #endif /* COMMENT */
                 while(!GetOverlappedResult( (HANDLE) ttyfd,
                                             &overlapped_read[0],
-                                            &nActuallyRead,
+                                            (LPDWORD)&nActuallyRead,
                                             FALSE )
                        ) {
                     DWORD error = GetLastError() ;
@@ -9016,6 +9091,8 @@ conkbg(void) {
 
     *p = '\0';
 
+/* TODO: This doesn't build on openwatcom currently*/
+#ifndef __WATCOMC__
     memset( &kbID, 0, sizeof(kbID) ) ;
 
     kbID.cb = sizeof(kbID);
@@ -9040,6 +9117,8 @@ conkbg(void) {
         sprintf(p,"%d",x);              /* use its "name" */
     else                                /* otherwise */
         sprintf(p,"%04X",(int) kbID.idKbd); /* use the hex code */
+#endif
+
 #endif /* NT */
 
     return(p);                          /* Return string pointer */
@@ -9202,6 +9281,11 @@ os2rexxinit()
 #endif /* CK_REXX */
 
 #define TITLEBUF_LEN 128
+#ifdef NT
+#define TITLE_PLATFORM "Windows"
+#else
+#define TITLE_PLATFORM "OS/2"
+#endif
 int
 os2settitle(char *newtitle, int newpriv ) {
 #ifndef NOLOCAL
@@ -9216,7 +9300,7 @@ os2settitle(char *newtitle, int newpriv ) {
     char titlebuf[TITLEBUF_LEN] ;
     extern enum markmodes markmodeflag[];
     extern bool scrollflag[] ;
-    extern int vmode;
+    extern BYTE vmode;
     extern int inserver;
     char * videomode = "";
 
@@ -9241,24 +9325,24 @@ os2settitle(char *newtitle, int newpriv ) {
     if ( usertitle[0] ) {
         if ( StartedFromDialer ) {
             _snprintf( titlebuf, TITLEBUF_LEN, "%d::%s%s%s",KermitDialerID,usertitle,
-                 private ? (inserver ? " - IKS" : " - C-Kermit for Windows") : "",
+                 private ? (inserver ? " - IKS" : " - C-Kermit for " TITLE_PLATFORM) : "",
                      videomode
                  );
         }
         else {
             _snprintf( titlebuf, TITLEBUF_LEN, "%s%s%s",usertitle,
-                 private ? (inserver ? " - IKS" : " - C-Kermit for Windows") : "", videomode
+                 private ? (inserver ? " - IKS" : " - C-Kermit for " TITLE_PLATFORM) : "", videomode
                  );
         }
     }
     else if ( StartedFromDialer ) {
         _snprintf( titlebuf, TITLEBUF_LEN, "%d::%s%s%s%s",KermitDialerID,title,(*title&&private)?" - ":"",
-                 private ? (inserver ? "IKS" : "C-Kermit for Windows") :  "", videomode
+                 private ? (inserver ? "IKS" : "C-Kermit for " TITLE_PLATFORM) :  "", videomode
                  );
     }
     else {
         _snprintf( titlebuf, TITLEBUF_LEN, "%s%s%s%s",title,(*title&&private)?" - ":"",
-                 private ? (inserver ? "IKS" : "C-Kermit for Windows") : "" , videomode
+                 private ? (inserver ? "IKS" : "C-Kermit for " TITLE_PLATFORM) : "" , videomode
                  );
     }
 
@@ -9302,7 +9386,7 @@ os2gettitle(char *buffer, int size) {
 #ifndef NOLOCAL
     extern enum markmodes markmodeflag[];
     extern bool scrollflag[] ;
-    extern int vmode;
+    extern BYTE vmode;
     int len;
 #ifdef OS2ONLY
     HSWITCH hSwitch;

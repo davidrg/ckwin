@@ -319,6 +319,7 @@ typedef struct videobuffer_struct {
 #define ES_TERMIN   5                   /* 1st char of string terminator */
 #define ES_GOTTILDE 6                   /* Beginning of HZ sequence */
 #define ES_TILDESEQ 7
+#define ES_BADLINUXOSC 8                /* Broken linux OSC */
 
 #define ESCBUFLEN 128
 
@@ -748,7 +749,11 @@ extern int ConnectMode;
 #ifdef NT
 _inline
 #else
+#ifdef __WATCOMC__
+inline
+#else
 _Inline
+#endif
 #endif
 BOOL
 IsConnectMode( void ) {

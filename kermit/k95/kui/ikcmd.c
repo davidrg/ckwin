@@ -18,7 +18,7 @@
 
 extern int local, xitwarn, ttyfd;
 extern char ttname[];			/* Communication device name */
-extern int vmode;
+extern BYTE vmode;
 extern int maclvl;                  /* Macro invocation level */
 extern CHAR sstate ;
 #ifdef DCMDBUF

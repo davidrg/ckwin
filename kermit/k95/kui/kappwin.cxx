@@ -15,7 +15,7 @@
 #include <sys/stat.h>
 #include <direct.h>
 extern "C" {
-    extern int vmode;
+    extern BYTE vmode;
     extern char exedir[];
     extern int  tt_status[];
 };
@@ -206,6 +206,8 @@ int KAppWin::sizeFont( LPRECT lpr, int force )
 ------------------------------------------------------------------------*/
 void KAppWin::sizeFontSetDim( UINT fwSide, LPRECT lpr )
 {
+    /* TODO: None of this works on NT 3.50 - needs to be redone some other way there */
+#ifndef CKT_NT31
     if (!sizeFont(lpr,0))
         return;
 
@@ -247,6 +249,7 @@ void KAppWin::sizeFontSetDim( UINT fwSide, LPRECT lpr )
                   lpr->right - lpr->left, lpr->bottom - lpr->top, 
                   SWP_NOZORDER );
     client->paint();
+#endif /* CKT_NT31 */
 }
 
 
@@ -256,6 +259,8 @@ void KAppWin::sizeFontSetDim( UINT fwSide, LPRECT lpr )
 ------------------------------------------------------------------------*/
 void KAppWin::sizeFixed( UINT fwSide, LPRECT lpr )
 {
+    /* TODO: None of this works on NT 3.50 - needs to be done some other way there */
+#ifndef CKT_NT31
     int maxw = 0, maxh = 0;
     if( !client || !client->getMaxpDim( maxw, maxh ) )
         return;
@@ -320,6 +325,7 @@ void KAppWin::sizeFixed( UINT fwSide, LPRECT lpr )
             }
             break;
     }
+#endif /* CKT_NT31 */
 }
 
 /*------------------------------------------------------------------------
@@ -327,6 +333,8 @@ void KAppWin::sizeFixed( UINT fwSide, LPRECT lpr )
 ------------------------------------------------------------------------*/
 void KAppWin::sizeLimit( UINT fwSide, LPRECT lpr )
 {
+    /* TODO: None of this works on NT 3.50 - needs to be done some other way there */
+#ifndef CKT_NT31
     int maxw = 0, maxh = 0;
     if( !client || !client->getMaxpDim( maxw, maxh ) )
         return;
@@ -391,6 +399,7 @@ void KAppWin::sizeLimit( UINT fwSide, LPRECT lpr )
             }
             break;
     }
+#endif /* CKT_NT31 */
 }
 
 /*------------------------------------------------------------------------
@@ -580,6 +589,7 @@ Bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         }
         break;
 
+#ifndef CKT_NT31
     case WM_SIZING:{
         LPRECT lpRect = (LPRECT)lParam;
         //printf("KAppWin WM_SIZING wParam=%d top=%d bottom=%d left=%d right=%d\n",
@@ -603,12 +613,14 @@ Bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         kglob->mouseEffect = save;
         break;
     }
+#endif /* CKT_NT31 */
 
     case WM_SIZE:
         //printf("KAppWin WM_SIZE wParam=%d height=%d width=%d\n",
         //        wParam, HIWORD(lParam), LOWORD(lParam));
         //debug(F111,"KAppWin::message","WM_SIZE",msg);
         size( LOWORD(lParam), HIWORD(lParam) );
+#ifndef CKT_NT31
         switch ( wParam ) {
         case SIZE_RESTORED:
             if ( wmSize == SIZE_MAXIMIZED ) {
@@ -669,9 +681,54 @@ Bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         default:
             break;
         }
+#else
+        /* Windows NT 3.1 and 3.50 don't support WM_SIZING and WM_EXITSIZEMOVE,
+         * so we've got to do the work they would have done here. */
+        switch ( wParam ) {
+            case SIZE_MINIMIZED:
+            case SIZE_MAXSHOW:
+            case SIZE_MAXHIDE:
+                break;
+            case SIZE_RESTORED:
+            case SIZE_MAXIMIZED:
+            default:
+                if (!inCreate()) {
+                    RECT rect;
+                    rect.top = 0;
+                    rect.left = 0;
+                    rect.bottom = HIWORD(lParam);
+                    rect.right = LOWORD(lParam);
+                    switch (kglob->mouseEffect) {
+                        case TERM_MOUSE_CHANGE_FONT:
+                            /* This doesn't work very well. Ideally we should
+                             * clip the window size to whatever is appropriate
+                             * for the selected font size like happens on
+                             * newer versions of windows. Currently if the
+                             * window size is too big for the current font you
+                             * end up with black bars to the right and/or
+                             * bottom. */
+                            sizeFont(&rect, 1);
+                            client->paint();
+                            break;
+                        case TERM_MOUSE_CHANGE_DIMENSION:
+                            if (sizepop)
+                                sizepop->show(FALSE);
+                            client->endSizing();
+                            break;
+                        case TERM_MOUSE_NO_EFFECT:
+                            client->endSizing();
+                            break;
+                    }
+                }
+                break;
+        }
+#endif /* CKT_NT31 */
         wmSize = wParam;
         break;
 
+#ifndef CKT_NT31
+        /* TODO - On Visual C++ 2.0 and older (NT 3.50 and older?) the work
+         *          this is doing probably needs to be done some other way */
     case WM_EXITSIZEMOVE: {
         //printf("KAppWin WM_EXITSIZEMOVE\n");
         //debug(F111,"KAppWin::message","WM_EXITSIZEMOVE",msg);
@@ -695,6 +752,7 @@ Bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         kglob->mouseEffect = save;
         break;
     }
+#endif /* CKT_NT31 */
     case WM_GETMINMAXINFO:
         //printf("KAppWin WM_GETMINMAXINFO\n");
         //debug(F111,"KAppWin::message","WM_GETMINMAXINFO",msg);

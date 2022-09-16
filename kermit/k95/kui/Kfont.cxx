@@ -44,7 +44,7 @@ KFont::KFont( PLOGFONT plog )
 //        logfont->lfWidth = 0;
         HDC hDC = CreateDC("DISPLAY",NULL,NULL,NULL);
         logfont->lfWidth = 
-            -MulDiv(8, GetDeviceCaps(hDC, LOGPIXELSX), 72 * 2);
+            -MulDiv(0, GetDeviceCaps(hDC, LOGPIXELSX), 72 * 2);
         logfont->lfHeight = 
             -MulDiv(12, GetDeviceCaps(hDC, LOGPIXELSY), 72);
         DeleteDC(hDC);

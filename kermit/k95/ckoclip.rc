@@ -1,0 +1,29 @@
+/*
+  Author: Frank da Cruz  (fdc@columbia.edu, FDCCU@CUVMA.BITNET),
+          Jeffrey Altman (jaltman@columbia.edu),
+  Columbia University Academic Information Systems, New York City.
+*/
+
+#define INCL_WIN
+#include <os2.h>
+#include "ckoclip.h"
+
+ICON RS_ICON ckoclip.ico
+
+MENU RS_MENU
+{
+    SUBMENU "~File" , MN_FILE
+    {
+        MENUITEM "E~xit", MN_EXIT
+    }
+}
+
+STRINGTABLE
+{
+    ST_CLASSNAME, "CKCLPSRV"
+    ST_WINDOWTITLE, "OS/2 C-Kermit PM Clipboard Server"
+    ST_CREATION_ERROR, "OS/2 C-Kermit PM Clipboard Server \
+Unable to create shared semaphores; \
+Close other C-Kermit processes and try again"
+}
+

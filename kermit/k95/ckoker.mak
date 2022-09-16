@@ -1,20 +1,23 @@
-# CKOKER.MAK, Version 6.00
+# CKOKER.MAK, Version 10.0
 # See CKOMAK.HLP for further information.
 # Authors: 
 #   Jeffrey Altman, Frank da Cruz, Columbia University, New York City, USA
+#   David Goodwin <david@zx.net.nz>
 #
 # Last update: 
 #
-# -- Makefile to build C-Kermit 5A(192) for OS/2 and Windows NT --
+# -- Makefile to build C-Kermit 10.0 for OS/2 and Windows NT --
 #
 # The result is a runnable program called CKOKER32.EXE (OS/2) or CKNKER.EXE
-# (NT) in the current directory.  Or if you "make winsetup", SETUP.EXE.
+# (NT), or K95G (NT, GUI) in the current directory.  Or if you "make winsetup",
+# SETUP.EXE.
 #
 # To override the following definitions without having to edit this file,
 # define them as environment variables and then run NMAKE with the /E switch.
 
 # which operating system
 PLATFORM = NT
+K95BUILD = K95
 
 # IBM VisualAge Libs
 VISUALAGE = C:\IBMCXX0
@@ -37,9 +40,11 @@ FTP13INC  = $(FTP13DIR)\include
 
 # for Novell LAN Workplace 3.0
 LWP30DIR  = C:\LANWP\TOOLKIT
-LWP30LIBS32 = $(LWP30DIR)\os2lib20\socklib.lib 
+LWP30LIBS32 = $(LWP30DIR)\os2lib20\socklib.lib
 LWP30INC    = $(LWP30DIR)\inc20
 
+# Base flags for all versions of Visual C++ (and OpenWatcom
+# pretending to be Visual C++)
 !if "$(CKB_STATIC_CRT)"=="yes"
 !message Building with statically linked native CRT as requested.
 COMMON_CFLAGS = /MT
@@ -82,6 +87,10 @@ MSC_VER = 80
 TARGET_CPU = x86
 WIN32_VERSION=0x0400
 
+# So that we can set the minimum subsystem version when needed
+SUBSYSTEM_CONSOLE=console
+SUBSYSTEM_WIN32=windows
+
 # On windows we'll try to detect the Visual C++ version being used and adjust
 # compiler flags accordingly.
 !if "$(PLATFORM)" == "NT"
@@ -89,6 +98,24 @@ WIN32_VERSION=0x0400
 
 !include compiler_detect.mak
 !message
+!else
+# On OS/2 we'll just assume OpenWatcom for now. I don't have access to the
+# IBM compiler to find a way to tell it apart from watcom like we do for
+# Visual C++.
+CMP = OWCL386
+COMPILER = OpenWatcom WCL386
+COMPILER_VERSION = OpenWatcom
+
+# wcl386 doesn't pretend to be Visual C++ and doesn't take the same
+# command line arguments.
+MSC_VER = 0
+
+# Nothing supports PowerPC OS/2.
+TARGET_CPU = x86
+TARGET_PLATFORM = OS/2
+
+# Override CL so we don't end up running the Visual C++ clone cl.
+CL = wcl386
 !endif
 
 # This turns features on and off based on set feature flags (CKF_*), the
@@ -111,6 +138,8 @@ WIN32_VERSION=0x0400
 !message ===============================================================================
 !message
 !message
+
+!if "$(PLATFORM)" == "NT"
 !if "$(CMP)" == "OWCL"
 
 # Standard windows headers from MinGW that don't come with OpenWatcom:
@@ -131,6 +160,16 @@ INCLUDE = $(INCLUDE);ow\;
 LDFLAGS = $(LDFLAGS) /MACHINE:X64
 !endif
 
+!if ($(MSC_VER) >= 170) && ($(MSC_VER) <= 192)
+# Starting with Visual C++ 2012, the default subsystem version is set to 6.0
+# which makes the generated binaries invalid on anything older than Windows
+# Vista (you get the "is not a valid win32 application" error). Visual C++ 2012
+# through to 2019 are capable of targeting Windows XP so we set the subsystem
+# version to 5.1 so the generated binaries are compatible.
+SUBSYSTEM_CONSOLE=console,5.1
+SUBSYSTEM_WIN32=windows,5.1
+!endif
+
 !if ($(MSC_VER) < 140)
 # These flags and options are deprecated or unsupported
 # from Visual C++ 2005 (v8.0) and up.
@@ -148,7 +187,9 @@ COMMON_CFLAGS = $(COMMON_CFLAGS) /EHs-c-
 # These are:    /EHs-c-     Enable C++ Exception handling (replaces /GX-)
 !endif
 
-RCDEFINES=/dCOMPILER_$(CMP)
+!endif
+
+RCDEFINES=$(RC_FEATURE_DEFS) /dCOMPILER_$(CMP)
 
 #---------- Compiler targets:
 #
@@ -178,6 +219,7 @@ unknown:
 # CKOKER.MSB, or the DDE4.MSG file must be copied into the current directory.
 # It is normally found in IBMCPP\HELP.
 
+################### WINDOWS TARGETS ###################
 telnet:
 	$(MAKE) -f ckoker.mak wtelnet \
 	CC="cl /nologo" \
@@ -190,7 +232,7 @@ telnet:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:console" \
+    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_CONSOLE)" \
 	DEF="wtelnet.def"
 
 
@@ -206,7 +248,7 @@ rlogin:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:console" \
+    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_CONSOLE)" \
 	DEF="wrlogin.def"
 
 # release version
@@ -222,7 +264,7 @@ test:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:console" \
+    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_CONSOLE)" \
 	DEF="wtest.def"
 
 winsetup:
@@ -237,7 +279,7 @@ winsetup:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:console /OPT:REF" \
+    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /OPT:REF" \
 	DEF="wsetup.def"
 
 # release version
@@ -253,7 +295,7 @@ msvc:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:console /MAP /OPT:REF" DEF="cknker.def" 
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /OPT:REF" DEF="cknker.def"
 
 # release version
 msvc-iksd:
@@ -268,7 +310,7 @@ msvc-iksd:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:console /MAP /OPT:REF" DEF="cknker.def"
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /OPT:REF" DEF="cknker.def"
 
 # debug version
 msvcd:
@@ -283,7 +325,7 @@ msvcd:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:console /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
 	DEF="cknker.def"
 
 # debug version
@@ -299,7 +341,7 @@ msvcd-iksd:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:console /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
 	DEF="cknker.def"
 
 # memory debug version
@@ -315,7 +357,7 @@ msvcmd:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:console /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE" \
 	DEF="cknker.def"
 
 # profile version
@@ -331,7 +373,7 @@ msvcp:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:console /MAP /FIXED:NO /PROFILE" \
+    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /FIXED:NO /PROFILE" \
 	DEF="cknker.def"
 
 # kui debug version
@@ -347,7 +389,7 @@ kuid:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /DEBUG:full /SUBSYSTEM:windows" \
+    LINKFLAGS="/nologo /align:0x1000 /DEBUG:full /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
 	DEF="cknker.def"
 
 kui:
@@ -362,7 +404,7 @@ kui:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:windows" \
+    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
 	DEF="cknker.def"
 
 # k95g debug version
@@ -378,7 +420,7 @@ k95gd:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /MAP /DEBUG:full /SUBSYSTEM:windows" \
+    LINKFLAGS="/nologo /align:0x1000 /MAP /DEBUG:full /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
 	DEF="cknker.def"
 
 k95g:
@@ -393,14 +435,104 @@ k95g:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:windows" \
+    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
 	DEF="cknker.def"
 
+################### OS/2 TARGETS ###################
+
+# Old IBMC parameters - http://www.edm2.com/index.php/Icc.exe
+#         ICC     WCC386
+# CC2:    -Fi+    ?             Generate Precompiled Headers
+#         -Si+    -Fh=<file>    Use precompiled headers where available
+#         -Gi+    ?             Generate fast integer code
+# OUT:    -Fe     ?             Specify the name of the executable file (/Fe<name>)
+# OPT:    -O      ?             Optimize generated code
+#         -Oi25   -Oe=<num>     Set the threshold for auto-inlining to <value> intermediate code instructions
+# DEBUG:  -Gs     ?             Suppress stack probes in function prologs
+# DLL:    -Gt-    ?             Store variables so that they do not cross 64K boundaries. Default: /Gt-
+#         /Ge-    ? -br         Use the version of the runtime library that assumes a DLL is being
+#                               built. Default: /Ge+
+# CFLAGS: -Sp1    -zp=1         /Sp<[1]|2|4|8|16> : Pack aggregate members on specified alignment. Default: /Sp4
+#         -Sm     ?             Ignore migration keywords. Default: /Sm-
+#         -Gm     ? -bm         Link with multithread runtime libraries. Default: /Gm-
+#         -G5     ?             /G5: Generate code optimized for use on a Pentium processor.
+#         -Gt     ?             Store variables so that they do not cross 64K boundaries. Default: /Gt-
+#         -Gd     ?             /Gd+: Use the version of the runtime library that is dynamically linked.
+#         -J      N/A (uchar is default)          /J+: Make default char type unsigned. Default: /J+
+#                 -bt=os2v2     Compile for target OS
+# NOLINK: -c        /C+: Perform compile only, no link.
+# LINKFLAGS: /nologo
+#            /noi
+#            /align:16
+#            /base:0x10000
+#                           -l=os2v2
+#                           -x
+
+# Watcom C targeting OS/2
+# TODO: Fix buiding with OPT="-ox " (currently this causes it to crash on
+# startup with trap 001 )
+wcos2:
+	$(MAKE) -f ckoker.mak os232 \
+	    CMP="OWCL386" \
+	    CC="wcl386" \
+        CC2="-Fh" \
+        OUT="-Fe=" O=".obj" \
+	    OPT=" " \
+        DEBUG="-DNDEBUG" \
+        DLL="-br" \
+	    CFLAGS="-q -zp=1 -bm -bt=os2 -aa" \
+        LDFLAGS="" \
+        PLATFORM="OS2" \
+        NOLINK="-c" \
+!ifdef WARP
+        WARP="YES" \
+!endif
+        LINKFLAGS="-l=os2v2 -x" \
+	    DEF=""  # ckoker32.def
+
+wcos2d:
+	$(MAKE) -f ckoker.mak os232 \
+	    CMP="OWCL386" \
+	    CC="wcl386" \
+        CC2="-Fh -d3" \
+        OUT="-Fe=" O=".obj" \
+	    OPT=" " \
+        DEBUG="-DNDEBUG" \
+        DLL="-br" \
+	    CFLAGS="-q -zp=1 -bm -bt=os2 -aa" \
+        LDFLAGS="" \
+        PLATFORM="OS2" \
+        NOLINK="-c" \
+!ifdef WARP
+        WARP="YES" \
+!endif
+        LINKFLAGS="-l=os2v2 -x" \
+	    DEF=""  # ckoker32.def
+
+# Flags are:
+#   --aa            Allows non-const initializers for local aggregates or unions.
+#                   Required to fix initialisation of viocell with geterasecolor()
+#                   in a few places.
+#   -Fh=<file>      Use precompiled headers where available. Equivalent to -Si+
+#                   on the IBM compiler.
+#   -zp=1           Struct packing align. Equivalent to -Sp1 on the IBM compiler.
+#   -bm             Build multithreaded application. Should be the same as -Gm on
+#                   the IBM compiler.
+#   -Fe=<file>      Output executable filename
+#   -ox             Maximum optimisation
+#   -br             Build with dll runtime library - maybe equivalent to /Ge- on the
+#                   IBM compiler.
+#   -q              Operate quietly
+#   -bt=os2         Compile for OS/2 (rather than DOS/NetWare/Windows/QNX/whatever)
+#   -c              Compile only, don't link
+#   -l=os2v2        Link for 32bit OS/2
+#   -x              Make names case sensitive
 
 # release version
 #         CC2="-Fi+ -Si+ -Gi+ -Gl+" \
 #         add /Gn+ back to hide the default library info after I figure out how to build the runtime library dll
 
+# Targets for the IBM compiler
 ibmc:
 	$(MAKE) -f ckoker.mak os232 \
 	CC="icc -q" \
@@ -491,11 +623,19 @@ ibmcd:
 # lines and comment out the previous set:
 !ifdef PLATFORM
 !if "$(PLATFORM)" == "OS2"
-DEFINES = -DOS2 -DDYNAMIC -DKANJI -DNETCONN -DTCPSOCKET \
-          -DNPIPE -DOS2MOUSE -DCK_NETBIOS -DHADDRLIST -DPCFONTS \
-          -DRLOGCODE -DNETFILE -DONETERMUPD -DZLIB \
-          -DNO_SRP -DBETATEST  -DNO_KERBEROS -DNOCKXYZ
-		  # DECnet (Pathworks32) support: -DDECNET
+DEFINES = -DOS2 -DDYNAMIC -DKANJI -DTCPSOCKET \
+          -DNPIPE -DOS2MOUSE -DHADDRLIST -DPCFONTS \
+          -DRLOGCODE -DNETFILE -DONETERMUPD \
+          $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS) \
+!if "$(CMP)" == "OWCL386"
+          -D__32BIT__
+!endif
+# OpenWatcom doesn't define __32BIT__ by default which upsets a lot of OS/2
+# code. Maybe there is some compiler flag thats missing though it seems to be
+# producing 32bit OS/2 binaries fine as-is.
+
+# zlib support:  -DZLIB
+# DECnet (Pathworks32) support: -DDECNET
            
 !else if "$(PLATFORM)" == "NT"
 !ifndef K95BUILD
@@ -546,7 +686,11 @@ COMMODE_OBJ = commode.obj
 
 !ifdef PLATFORM
 !if "$(PLATFORM)" == "OS2"
-LIBS = os2386.lib rexx.lib bigmath.lib 
+LIBS = os2386.lib rexx.lib \
+!if "$(CMP)" != "OWCL"
+       bigmath.lib
+!endif
+# OpenWatcom doesn't have bigmath.lib
 # SRP support: libsrp.lib
 !else if "$(PLATFORM)" == "NT"
 !if "$(K95BUILD)" == "UIUC"
@@ -562,7 +706,7 @@ KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
        ssh.lib ws2_32.lib \
 !endif
 !if "$(CKF_SSL)" == "yes"
-       libssl.lib libcrypto.lib \
+       $(SSL_LIBS) \
 !endif
         #msvcrt.lib
         #Kerberos: wshload.lib
@@ -574,7 +718,7 @@ LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib shell32.lib\
        ssh.lib ws2_32.lib \
 !endif
 !if "$(CKF_SSL)" == "yes"
-       libssl.lib libcrypto.lib \
+       $(SSL_LIBS) \
 !endif
        #msvcrt.lib  
        # Kerberos: wshload.lib
@@ -664,7 +808,10 @@ $(PDLLDIR)\pdll_x_global.obj \
 $(PDLLDIR)\pdll_z.obj \
 $(PDLLDIR)\pdll_z_global.obj \
 
-os232: cko32rtl.dll ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe otextps.exe 
+os232: ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe otextps.exe \
+!if "$(CMP)" != "OWCL386"
+       cko32rtl.dll     # IBM compiler only.
+!endif
 # SRP support: srp-tconf.exe srp-passwd.exe
 # Crypto stuff: k2crypt.dll 
 
@@ -672,7 +819,7 @@ os232: cko32rtl.dll ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetu
 
 
 
-win32: cknker.exe wtelnet wrlogin k95d textps ctl3dins.exe iksdsvc.exe iksd.exe
+win32: cknker.exe wtelnet wrlogin k95d textps ctl3dins.exe iksdsvc.exe iksd.exe se.exe
 # SRP support: srp-tconf.exe srp-passwd.exe
 # Crypto stuff: k95crypt.dll
 
@@ -702,7 +849,8 @@ textps: textps.exe
 # FTP Software PC/TCP 1.3 - cko32i13.dll 
 # Novell LWP OS/2 3.0     - cko32n30.dll 
 
-tcp32: cko32i20.dll cko32i12.dll cko32f13.dll 
+tcp32: cko32i20.dll
+# cko32i12.dll cko32f13.dll
 # cko32n30.dll
 
 cknker.exe: $(OBJS) cknker.res $(DEF) ckoker.mak 
@@ -753,11 +901,24 @@ rlogin.exe: rlogin.obj $(DEF) ckoker.mak
        $(LINKFLAGS) /OUT:$@ rlogin.obj $(LIBS) 
 <<
 
+se.exe: se.obj $(DEF) ckoker.mak
+       link.exe @<<
+       $(LINKFLAGS) /OUT:$@ se.obj $(LIBS)
+<<
+
 orlogin.exe: rlogin.obj $(DEF) ckoker.mak
+!if "$(CMP)" == "OWCL386"
+        $(CC) $(CC2) $(LINKFLAGS) rlogin.obj $(OUT)$@ $(LDFLAGS) $(LIBS)
+!else
       	$(CC) $(CC2) /B"$(LINKFLAGS)" rlogin.obj $(OUT) $@ $(LDFLAGS) $(LIBS)
+!endif
 
 otextps.exe: textps.obj $(DEF) ckoker.mak
+!if "$(CMP)" == "OWCL386"
+        $(CC) $(CC2) $(LINKFLAGS) textps.obj $(OUT)$@ $(LDFLAGS) $(LIBS)
+!else
       	$(CC) $(CC2) /B"$(LINKFLAGS)" textps.obj $(OUT) $@ $(LDFLAGS) $(LIBS)
+!endif
 
 k95d.exe: k95d.obj $(DEF) ckoker.mak
        link.exe @<< 
@@ -774,27 +935,39 @@ textps.exe: textps.obj $(DEF) ckoker.mak
        $(LINKFLAGS) /OUT:$@ textps.obj $(LIBS) 
 <<
 
-ckoker32.exe: $(OBJS) $(DEF) ckoker.msb ckoker.res ckoker.mak 
+#       ckoker.msb  -- no idea what this is
+ckoker32.exe: $(OBJS) $(DEF) ckoker.res ckoker.mak
+!if "$(CMP)" == "OWCL386"
+        $(CC) $(CC2) $(LINKFLAGS) $(DEBUG) $(OBJS) $(DEF) $(OUT)$@ $(LIBS) $(LDFLAGS)
+        wrc -q -bt=os2 ckoker.res $@
+!else
         $(CC) $(CC2) /B"$(LINKFLAGS)" $(DEBUG) $(OBJS) $(DEF) $(OUT) $@ $(LIBS) $(LDFLAGS)
 !ifdef WARP
        rc -p -x2 ckoker.res $@
 !else
        rc -p -x1 ckoker.res $@
 !endif
-       dllrname $@ CPPRMI36=CKO32RTL       
+       dllrname $@ CPPRMI36=CKO32RTL
+!endif
 
-cko32rtl.dll: 
+cko32rtl.dll:
         copy $(VISUALAGE)\RUNTIME\CPPRMI36.DLL cko32rtl.dll
-        dllrname $@ CPPRMI36=CKO32RTL       
+        dllrname $@ CPPRMI36=CKO32RTL
 
 cko32rtl.lib: cko32rtl.dll cko32rt.def cko32rt.c
         ILIB /GI cko32rt.dll
         ILIB /NOBR /OUT:cko32rt.lib $(VISUALAGE)\LIB\CPPRNO36.LIB
 
-cko32i20.dll: ckoi20.obj cko32i20.def ckoker.mak
+# cko32i20.def
+cko32i20.dll: ckoi20.obj ckoker.mak
+!if "$(CMP)" == "OWCL386"
+    $(CC) $(CC2) $(DEBUG) $(DLL) ckoi20.obj $(OUT)$@ \
+	 $(LINKFLAGS) tcpip32.lib $(LIBS)
+!else
 	$(CC) $(CC2) $(DEBUG) $(DLL) ckoi20.obj cko32i20.def $(OUT) $@ \
 	/B"/noe /noi" $(IBM20LIBS) $(LIBS)
-        dllrname $@ CPPRMI36=CKO32RTL       
+        dllrname $@ CPPRMI36=CKO32RTL
+!endif
 
 cko32i12.dll: ckoi12.obj cko32i12.def ckoker.mak
 	$(CC) $(CC2) $(DEBUG) $(DLL) ckoi12.obj cko32i12.def $(OUT) $@ \
@@ -837,21 +1010,36 @@ ckwart.exe: ckwart.obj $(DEF)
 
 docs:   ckermit.inf
 
-otelnet.exe: ckotel.obj ckotel.def ckoker.mak 
+# ckotel.def
+otelnet.exe: ckotel.obj ckoker.mak
+!if "$(CMP)" == "OWCL386"
+        $(CC) $(CC2) $(DEBUG) ckotel.obj $(LINKFLAGS) $(OUT)$@ $(LIBS)
+!else
         $(CC) $(CC2) $(DEBUG) ckotel.obj ckotel.def $(OUT) $@ $(LIBS)
-        dllrname $@ CPPRMI36=CKO32RTL       
+        dllrname $@ CPPRMI36=CKO32RTL
+!endif
 
-osetup.exe: setup.obj osetup.def ckoker.mak 
-        $(CC) $(DEBUG) setup.obj osetup.def $(OUT) $@ 
+osetup.exe: setup.obj osetup.def ckoker.mak
+!if "$(CMP)" == "OWCL386"
+        $(CC) $(DEBUG) setup.obj $(LINKFLAGS) $(OUT)$@
+!else
+        $(CC) $(DEBUG) setup.obj osetup.def $(OUT) $@
+!endif
 
-ckoclip.exe: ckoclip.obj ckoclip.def ckoker.mak ckoclip.res 
+# ckoclip.def
+ckoclip.exe: ckoclip.obj ckoker.mak ckoclip.res
+!if "$(CMP)" == "OWCL386"
+        $(CC) $(CC2) $(LINKFLAGS) $(DEBUG) ckoclip.obj $(OUT)$@ $(LIBS)
+        wrc -q -bt=os2 ckoclip.res $@
+!else
         $(CC) $(CC2) $(DEBUG) ckoclip.obj ckoclip.def $(OUT) $@ $(LIBS)
 !ifdef WARP
        rc -p -x2 ckoclip.res $@
 !else
        rc -p -x1 ckoclip.res $@
 !endif
-        dllrname $@ CPPRMI36=CKO32RTL       
+        dllrname $@ CPPRMI36=CKO32RTL
+!endif
 
 # SRP support
 #srp-tconf.exe: srp-tconf.obj getopt.obj ssh\ckosslc.obj ckoker.mak
@@ -1111,8 +1299,13 @@ ckof13.obj: ckoftp.c ckotcp.h
 ckoi20.obj: ckoibm.c ckotcp.h
         @echo > ckoi20.obj
         del ckoi20.obj
+!if "$(CMP)" == "OWCL386"
+	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DEFINES) -D__SOCKET_32H $(DLL) -c ckoibm.c
+	# Watcom lacks the headers to support -DSOCKS_ENABLED
+!else
 	$(CC) $(CC2) $(CFLAGS) -I$(IBM20INC) \
            $(DEBUG) $(OPT) $(DEFINES) -DSOCKS_ENABLED $(DLL) -c ckoibm.c
+!endif
         ren ckoibm.obj ckoi20.obj
 
 ckoi12.obj: ckoibm.c ckotcp.h
@@ -1138,7 +1331,11 @@ cksnval$(O):  ckoetc.c
     ren ckoetc.o ckoetc.obj
 
 ckoker.res: ckoker.rc
-        rc -r ckoker.rc 
+!if "$(CMP)" == "OWCL386"
+        wrc -r -bt=os2 ckoker.rc
+!else
+        rc -r ckoker.rc
+!endif
 
 cknker.res: cknker.rc cknker.ico
         rc $(RCDEFINES) /fo cknker.res cknker.rc
@@ -1147,7 +1344,11 @@ ckopcf.res: ckopcf.rc ckopcf.h
         rc -r ckopcf.rc
 
 ckoclip.res: ckoclip.rc ckoclip.h ckoclip.ico
+!if "$(CMP)" == "OWCL386"
+        wrc -r -bt=os2 ckoclip.rc
+!else
         rc -r ckoclip.rc
+!endif
 
 ckermit.inf:    ckermit.ipf cker01.ipf cker02.ipf cker03.ipf cker04.ipf \
                 cker05.ipf cker06.ipf ckermit.bmp

@@ -251,7 +251,7 @@ char * ikprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] IKSD> ";
 #ifdef COMMENT
 char * ckprompt = "[\\freplace(\\v(dir),/,\\\\)] K-95> ";
 #else
-char * ckprompt = "[\\freplace(\\v(dir),/,\\\\)] CKW> ";
+char * ckprompt = "[\\freplace(\\v(dir),/,\\\\)] C-KERMIT> ";
 #endif /* COMMENT */
 char * ikprompt = "[\\freplace(\\v(dir),/,\\\\)] IKSD> ";
 #endif /* NT */
@@ -3985,6 +3985,7 @@ herald() {
     ssl = "";
     krb4 = "";
     krb5 = "";
+#ifndef OS2
 #ifdef CK_AUTHENTICATION
 #ifdef CK_SSL    
     ssl = "+SSL";
@@ -3996,6 +3997,7 @@ herald() {
     krb5 = "+KRB5";
 #endif	/* KRB5 */
 #endif	/* CK_AUTHENTICATION */
+#endif /* OS2 */
 
     if (x == 0) {
 #ifdef datageneral
@@ -11774,6 +11776,9 @@ initoptlist() {
 #ifdef CK_RTSCTS
     makestr(&(optlist[noptlist++]),"CK_RTSCTS");
 #endif /* CK_RTSCTS */
+#ifdef CKT_NT31
+    makestr(&(optlist[noptlist++]),"CKT_NT31");
+#endif /* CKT_NT31 */
 #ifdef POSIX_CRTSCTS
     makestr(&(optlist[noptlist++]),"POSIX_CRTSCTS");
 #endif /* POSIX_CRTSCTS */
