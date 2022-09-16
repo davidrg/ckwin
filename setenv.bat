@@ -11,6 +11,10 @@ REM turned on automatically when the required dependencies are built.
 REM debug logging ("log debug" command)
 REM set CKF_DEBUG=no
 
+REM Target NT 3.50 when building with OpenWatcom (this is automatic when building
+REM with Visual C++ 2.0)
+REM set CKT_NT31=yes
+
 REM Optional Dependencies - zlib, openssl, libssh.
 REM ----------------------------------------------
 REM If you've built or installed these, uncomment and set a few more paths to
@@ -41,7 +45,9 @@ REM libssh - set to where you built libssh. This should have a subdirectory
 REM called 'src' containing ssh.dll and ssh.lib
 set libssh_build=%libssh_root%\build
 
+REM ============================================================================
 REM ================== No changes required beyond this point ===================
+REM ============================================================================
 
 REM base include path - this is required for both Windows and OS/2
 set ckinclude=%root%\kermit\k95
@@ -62,31 +68,34 @@ set CK_DIST_DLLS=
 
 if not defined vcpkg_installed goto :end_vcpkg
 
+REM ------------------------------------------
 REM Look for dependencies in the vcpkg folders
-
+REM ------------------------------------------
 set include=%include%;%vcpkg_installed%\include
 set lib=%lib%;%vcpkg_installed%\lib
 
 if exist %vcpkg_installed%\lib\zlib.lib set CKF_ZLIB=yes
-REM Not currently required -
-REM     if exist %vcpkg_installed%\bin\zlib1.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %vcpkg_installed%\bin\zlib1.dll
+if exist %vcpkg_installed%\bin\zlib1.dll set CK_ZLIB_DIST_DLLS=%vcpkg_installed%\bin\zlib1.dll
 
 if exist %vcpkg_installed%\lib\libssl.lib set CKF_SSL=yes
-REM Not currently required -
-REM     if exist %vcpkg_installed%\bin\zlib1.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %vcpkg_installed%\bin\libssl3.dll
+if exist %vcpkg_installed%\bin\libcrypto-3.dll set CK_SSL_DIST_DLLS=%vcpkg_installed%\bin\libcrypto-3.dll %vcpkg_installed%\bin\libssl-3.dll
+if exist %vcpkg_installed%\bin\libcrypto-1_1.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\libcrypto-1_1.dll %openssl_root%\libssl-1_1.dll
+if exist %vcpkg_installed%\tools\openssl\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\tools\openssl\openssl.exe
 
 if exist %vcpkg_installed%\lib\ssh.lib set CKF_SSH=yes
-if exist %vcpkg_installed%\bin\ssh.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %vcpkg_installed%\bin\ssh.dll %vcpkg_installed%\bin\pthreadVC3.dll
+if exist %vcpkg_installed%\bin\ssh.dll set CK_SSH_DIST_DLLS=%CK_DIST_DLLS% %vcpkg_installed%\bin\ssh.dll %vcpkg_installed%\bin\pthreadVC3.dll
 
 :end_vcpkg
 
-REM Look for optional dependencies
+REM ------------------------------------------------------------
+REM Look for optional dependencies in the manual-build locations
+REM ------------------------------------------------------------
 
 REM zlib:
 if exist %zlib_root%\zlib.h set include=%include%;%zlib_root%
 if exist %zlib_root%\zlib.lib set lib=%lib%;%zlib_root%
 if exist %zlib_root%\zlib.lib set CKF_ZLIB=yes
-if exist %zlib_root%\zlib1.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %zlib_root%\zlib1.dll
+if exist %zlib_root%\zlib1.dll set CK_ZLIB_DIST_DLLS=%zlib_root%\zlib1.dll
 
 REM OpenSSL
 REM OpenSSL 0.9.8, 1.0.0, 1.1.0, 1.1.1 and 3.0.x use this:
@@ -98,26 +107,31 @@ REM OpenSSL 1.1.x, 3.0.x
 if exist %openssl_root%\libssl.lib set lib=%lib%;%openssl_root%
 if exist %openssl_root%\libssl.lib set CKF_SSL=yes
 if exist %openssl_root%\libssl.lib set CKF_SSL_LIBS=libssl.lib libcrypto.lib
-if exist %openssl_root%\apps\openssl.exe set CK_DIST_DLLS=%CK_DIST_DLLS% %openssl_root%\apps\openssl.exe
+if exist %openssl_root%\apps\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\apps\openssl.exe
 
 REM OpenSSL 3.0.x
-if exist %openssl_root%\libcrypto-3.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %openssl_root%\libcrypto-3.dll %openssl_root%\libssl-3.dll
+if exist %openssl_root%\libcrypto-3.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\libcrypto-3.dll %openssl_root%\libssl-3.dll
 
 REM OpenSSL 1.1.x
-if exist %openssl_root%\libcrypto-1_1.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %openssl_root%\libcrypto-1_1.dll %openssl_root%\libssl-1_1.dll
+if exist %openssl_root%\libcrypto-1_1.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\libcrypto-1_1.dll %openssl_root%\libssl-1_1.dll
 
 REM OpenSSL 0.9.8, 1.0.x:
 if exist %openssl_root%\out32dll\ssleay32.lib set lib=%lib%;%openssl_root%\out32dll
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL=yes
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL_LIBS=ssleay32.lib libeay32.lib
-if exist %openssl_root%\out32dll\ssleay32.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %openssl_root%\out32dll\ssleay32.dll %openssl_root%\out32dll\libeay32.dll
-if exist %openssl_root%\out32dll\openssl.exe set CK_DIST_DLLS=%CK_DIST_DLLS% %openssl_root%\out32dll\openssl.exe
+if exist %openssl_root%\out32dll\ssleay32.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\out32dll\ssleay32.dll %openssl_root%\out32dll\libeay32.dll
+if exist %openssl_root%\out32dll\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\out32dll\openssl.exe
 
 REM libssh:
 if exist %libssh_root%\include\NUL set include=%include%;%libssh_root%\include;%libssh_build%\include
 if exist %libssh_build%\src\ssh.lib set lib=%lib%;%libssh_build%\src
 if exist %libssh_build%\src\ssh.lib set CKF_SSH=yes
-if exist %libssh_build%\src\ssh.dll set CK_DIST_DLLS=%CK_DIST_DLLS% %libssh_build%\src\ssh.dll
+if exist %libssh_build%\src\ssh.dll set CK_SSH_DIST_DLLS=%libssh_build%\src\ssh.dll
+
+
+REM --------------------------------------------------------------
+REM Detect compiler so the OpenZinc build environment can be setup 
+REM --------------------------------------------------------------
 
 REM Now figure out what compiler we're using - we need to find this out so we'll
 REM know where to look for OpenZinc and if we're able to build it if it can't be
@@ -182,7 +196,8 @@ goto :unsupported
 
 :vc2
 set CK_COMPILER_NAME=Visual C++ 2.0
-goto :unsupported
+REM TODO - try to find msvcrt20.dll and add it to distdlls
+goto :cvcdone
 
 :vc4
 set CK_COMPILER_NAME=Visual C++ 4.0
@@ -253,6 +268,8 @@ echo.
 goto :cvcend
 
 :cvcdone
+REM Compiler detection finished. If Zinc is supported for this compiler,
+REM go set it up.
 echo Compiler: %CK_COMPILER_NAME%
 if "%ZINCBUILD%" == "" echo Can not setup Zinc for this compiler
 if "%ZINCBUILD%" NEQ "" goto :check_zinc
@@ -279,6 +296,11 @@ echo OpenZinc found!
 goto :cvcend
 
 :cvcend
+
+REM TODO - if we're using an old compiler, force things like SSH off
+REM        and remove their dist files.
+
+set CK_DIST_DLLS=%CK_ZLIB_DIST_DLLS% %CK_SSL_DIST_DLLS% %CK_SSH_DIST_DLLS%
 
 echo -----------------------------
 echo.
