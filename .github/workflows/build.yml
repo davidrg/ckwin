@@ -283,7 +283,7 @@ jobs:
       working-directory: ${{ github.workspace }}\kermit\k95
       run: |
         move dist ${{ github.workspace }}\ckwin
-        move ..\dist ${{ github.workspace }}\dialer
+        move ..\dialer\dist ${{ github.workspace }}\dialer
     - name: Upload CKW Artifact
       uses: actions/upload-artifact@v2.2.4
       with:
