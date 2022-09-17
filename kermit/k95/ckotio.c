@@ -1872,12 +1872,10 @@ sysinit() {
 #endif /* KUI */
 #endif /* NT */
 
-#ifndef KUI
 #ifdef OS2MOUSE
     if (tt_mouse)
         os2_mouseon() ;
 #endif /* OS2MOUSE */
-#endif /* KUI */
 
     if ( quitonbreak )
         signal(SIGBREAK,term_signal);

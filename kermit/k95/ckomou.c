@@ -341,6 +341,21 @@ os2_mouseon( void )
     APIRET rc = 0 ;
 
 #ifdef NT
+#ifdef KUI
+    /* GUI version of CKW */
+    int buttonCount;
+
+    buttonCount = GetSystemMetrics(SM_CMOUSEBUTTONS);
+
+    debug(F101,"os2_mouseon Button Count","", buttonCount) ;
+
+    if (buttonCount == 0) return rc; /* No mouse installed */
+
+    ThreeButton = (buttonCount > 2);
+    mouseon = TRUE;
+    debug(F100, "Mouse ON", "", 0);
+#else
+    /* Console version of CKW */
     extern HANDLE KbdHandle ;
     DWORD mode=0, count=0 ;
 
@@ -356,7 +371,7 @@ os2_mouseon( void )
     rc = SetConsoleMode( KbdHandle, mode ) ;
     mouseon = TRUE ;
     debug(F111,"os2_mouseon SetConsoleMode","rc",rc) ;
-
+#endif /* KUI */
 #else /* NT */
 PTRLOC    PtrPos ;
 NOPTRRECT PtrArea ;
@@ -562,6 +577,8 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
 #endif /* NT */
     position   * ppos ;
     char buffer[1024] ;
+
+    if (!mouseon) return; /* The mouse is disabled */
 
     if ( MouseDebug ) {
         int needcomma = 0;
