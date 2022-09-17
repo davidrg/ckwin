@@ -15,6 +15,10 @@ env:
   # Exoected filename: ${{env.LIBSSH_SOURCE}}libssh-${{env.LIBSSH_VERSION}}.tar.xz
   LIBSSH_SOURCE: https://www.libssh.org/files/0.10/
   LIBSSH_VERSION: 0.10.3
+  # OpenZinc is available from http://openzinc.com/Downloads/OZ1.zip
+  # But we don't want to waste the resources of the generous OpenZinc developer,
+  # so we grab it from a mirror
+  OPENZINC: https://ftp.zx.net.nz/pub/dev/openzinc/oz1/OZ1.zip
 
 jobs:
   Build-VisualCxx:
@@ -200,21 +204,30 @@ jobs:
 
       # Cache OpenWatcom because it takes quite a while to download and
       # decompress.
-    - name: Cache OpenWatcom
+    - name: Cache OpenWatcom and Dependencies
       uses: actions/cache@v3.0.5
       id: cache-watcom
       with:
         path: |
           ${{github.workspace}}\watcom
-        key: watcom-1.9
-    - name: Get OpenWatcom 1.9
+        key: watcom-1.9-openzinc1
+
+    - name: Get OpenWatcom 1.9 and Dependencies
       if: steps.cache-watcom.outputs.cache-hit != 'true'
       run: |
         mkdir watcom
         cd watcom
         wget https://github.com/open-watcom/open-watcom-1.9/releases/download/ow1.9/open-watcom-c-win32-1.9.exe -outfile open-watcom-c-win32-1.9.exe
         7z x open-watcom-c-win32-1.9.exe
+        cd ..
+        
+        mkdir zinc
+        cd zinc
+        wget ${{ env.OPENZINC }} -outfile OZ1.zip
+        7z x OZ1.zip
+        cd ..
       shell: powershell
+
     - name: Full Build
       run: |
         SET PATH=%WATCOM%\BINW;%PATH%
@@ -228,10 +241,33 @@ jobs:
         SET WHTMLHELP=%WATCOM%\BINNT\HELP
         SET WIPFC=%WATCOM%\WIPFC
 
-        call ..\..\setenv.bat
+        call setenv.bat
+        cd kermit\k95
         call mk.bat
       shell: cmd
-      working-directory: ${{ github.workspace }}\kermit\k95
+      working-directory: ${{ github.workspace }}
+      env:
+        ROOT: ${{ github.workspace }}
+        WATCOM: ${{ github.workspace }}\watcom
+    - name: Dialer Build
+      run: |
+        SET PATH=%WATCOM%\BINW;%PATH%
+        SET PATH=%WATCOM%\BINNT;%PATH%
+        SET INCLUDE=%WATCOM%\H\NT;%INCLUDE%
+        SET INCLUDE=%WATCOM%\H\NT;%INCLUDE%
+        SET INCLUDE=%INCLUDE%;C:\WATCOM\H\NT\DIRECTX
+        SET INCLUDE=%INCLUDE%;C:\WATCOM\H\NT\DDK
+        SET INCLUDE=%WATCOM%\H;%INCLUDE%
+        SET EDPATH=%WATCOM%\EDDAT
+        SET WHTMLHELP=%WATCOM%\BINNT\HELP
+        SET WIPFC=%WATCOM%\WIPFC
+
+        call setenv.bat
+        cd kermit\dialer
+        call mk.bat
+        call mkdist.bat
+      shell: cmd
+      working-directory: ${{ github.workspace }}
       env:
         ROOT: ${{ github.workspace }}
         WATCOM: ${{ github.workspace }}\watcom
@@ -242,16 +278,24 @@ jobs:
       env:
         ROOT: ${{ github.workspace }}
         WATCOM: ${{ github.workspace }}\watcom
-    - name: Prepare Artifact
+    - name: Prepare Artifacts
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95
       run: |
         move dist ${{ github.workspace }}\ckwin
-    - name: Upload Artifact
+        move ..\dist ${{ github.workspace }}\dialer
+    - name: Upload CKW Artifact
       uses: actions/upload-artifact@v2.2.4
       with:
         name: ckwin-ow1.9-x86
         path: ${{ github.workspace }}\ckwin
+        if-no-files-found: error
+        retention-days: 7
+    - name: Upload Dialer Artifact
+      uses: actions/upload-artifact@v2.2.4
+      with:
+        name: dialer-ow1.9-x86
+        path: ${{ github.workspace }}\dialer
         if-no-files-found: error
         retention-days: 7
 
