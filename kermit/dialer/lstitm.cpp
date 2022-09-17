@@ -1014,9 +1014,10 @@ EVENT_TYPE KD_LIST_ITEM::DrawItem(const UI_EVENT &, EVENT_TYPE ccode)
 		left = region.left + display->cellWidth * 30 - display->TextWidth(_location, screenID, font);
 	display->Text(screenID, left, region.top + display->preSpace, _location,
 		palette, -1, FALSE, FALSE, &clip);
-#endif 
+#endif
 
-	for(UI_WINDOW_OBJECT *object = this; object && FlagSet(object->woStatus, WOS_CURRENT);
+    UI_WINDOW_OBJECT *object = this;
+	for(; object && FlagSet(object->woStatus, WOS_CURRENT);
              object = object->parent)
             ;
 	if (!object)

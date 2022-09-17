@@ -183,7 +183,13 @@ if %errorlevel% == 0 goto :vc116
 goto :unsupported
 
 :watcomc
+REM TODO - ideally we should try and detect the version of OpenWatcom - at least 1.9 vs 2.0
 set CK_COMPILER_NAME=OpenWatcom
+set ZINCBUILD=ow19
+
+REM OpenWatcom doesn't include TAPI headers to we bundle them with CKW. Add them to the include
+REM path so the dialer can find them.
+set include=%include%;%root%\kermit\k95\ow
 goto :cvcdone
 
 :vc116
