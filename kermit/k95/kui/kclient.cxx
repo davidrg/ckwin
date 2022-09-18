@@ -1028,9 +1028,6 @@ Bool KClient::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         // NOTE: FALL THROUGH !!!
         //
 
-#ifdef WM_MOUSEWHEEL
-    case WM_MOUSEWHEEL:
-#endif
     case WM_LBUTTONUP:
     case WM_RBUTTONUP:
     case WM_MBUTTONUP:
@@ -1047,6 +1044,22 @@ Bool KClient::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
             ikterm->mouseEvent( hwnd, msg, wParam, x, y );
             break;
         }
+
+#ifdef WM_MOUSEWHEEL
+    case WM_MOUSEWHEEL:
+        {
+            POINT pt;
+            pt.x = LOWORD(lParam);
+            pt.y = HIWORD(lParam);
+            ScreenToClient(hwnd, &pt);
+
+            debug(F111,"KClient::message","WM_MOUSEWHEEL",msg);
+            int x = pt.x > 0 ? pt.x / font->getFontW() : 0;
+            int y = pt.y > 0 ? pt.y / font->getFontSpacedH() : 0;
+            ikterm->mouseEvent( hwnd, msg, wParam, x, y );
+            break;
+        }
+#endif
 
 #ifdef COMMENT
     /* This is the obvious, simple and easy way to do it and this does work. But
