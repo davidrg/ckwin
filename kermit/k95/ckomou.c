@@ -569,12 +569,18 @@ mousecurpos( int mode, USHORT orow, USHORT ocol, USHORT nrow, USHORT ncol, BOOL 
 }
 
 #ifdef  NT
+
+/* Some handy macros to figure out of a particular mouse event is bound to
+ * something other than \Kignore */
+#define MOUSE_EVENT_IGNORED(button, event) \
+                (mousemap[button][event].type == kverb && \
+                (mousemap[button][event].kverb.id & ~(F_KVERB)) == K_IGNORE)
+#define MOUSE_DRAG_EVENT_IGNORED(button, event) (MOUSE_EVENT_IGNORED(button, event | MMDRAG))
+
 void
 win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
 {
-#ifdef NT
     extern int win32ScrollUp, win32ScrollDown;
-#endif /* NT */
     position   * ppos ;
     char buffer[1024] ;
 
@@ -724,21 +730,26 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
        }
        else if ( (r.dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) && (r.dwEventFlags & MOUSE_MOVED) ) {
            debug( F100, "mouse B1 drag", "", 0 ) ;
-           if ( b1.state == 1 && !SelectionValid && (MouseCurY != b1.row || MouseCurX != b1.col)) {
-               SelectionValid = 1 ;
-               RequestKeyStrokeMutex( mode, SEM_INDEFINITE_WAIT);
-               putkverb( mode, F_KVERB | K_MARK_START ) ;
-               mousecurpos( mode, Vrow, Vcol, b1.row, b1.col, TRUE ) ;
-               putkverb( mode, F_KVERB | K_MARK_START ) ;
-               mousecurpos( mode, b1.row, b1.col, MouseCurY, MouseCurX, TRUE );
-               ReleaseKeyStrokeMutex(mode) ;
-           }
-           else if ( b1.state == 1 && SelectionValid &&
-                     ( lastrow != r.dwMousePosition.Y ||
-                       lastcol != r.dwMousePosition.X )
-                     ) {
-               mousecurpos( mode, lastrow, lastcol, r.dwMousePosition.Y,
-                            r.dwMousePosition.X, TRUE ) ;
+
+           /* Only start the drag event if we've actually got something bound
+            * to it */
+           if (!MOUSE_DRAG_EVENT_IGNORED(MMB1, Event)) {
+               if ( b1.state == 1 && !SelectionValid && (MouseCurY != b1.row || MouseCurX != b1.col)) {
+                   SelectionValid = 1 ;
+                   RequestKeyStrokeMutex( mode, SEM_INDEFINITE_WAIT);
+                   putkverb( mode, F_KVERB | K_MARK_START ) ;
+                   mousecurpos( mode, Vrow, Vcol, b1.row, b1.col, TRUE ) ;
+                   putkverb( mode, F_KVERB | K_MARK_START ) ;
+                   mousecurpos( mode, b1.row, b1.col, MouseCurY, MouseCurX, TRUE );
+                   ReleaseKeyStrokeMutex(mode) ;
+               }
+               else if ( b1.state == 1 && SelectionValid &&
+                         ( lastrow != r.dwMousePosition.Y ||
+                           lastcol != r.dwMousePosition.X )
+                         ) {
+                   mousecurpos( mode, lastrow, lastcol, r.dwMousePosition.Y,
+                                r.dwMousePosition.X, TRUE ) ;
+               }
            }
        }
 
@@ -762,21 +773,26 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
        else if ( (r.dwButtonState & (ThreeButton ? FROM_LEFT_2ND_BUTTON_PRESSED : RIGHTMOST_BUTTON_PRESSED)) &&
                  (r.dwEventFlags & MOUSE_MOVED)) {
            debug( F100, "mouse B2 drag", "", 0 ) ;
-           if ( b2.state == 1 && !SelectionValid && (MouseCurY != b2.row || MouseCurX != b2.col) ) {
-               SelectionValid = 1 ;
-               RequestKeyStrokeMutex( mode, SEM_INDEFINITE_WAIT);
-               putkverb( mode, F_KVERB | K_MARK_START ) ;
-               mousecurpos( mode, Vrow, Vcol, b2.row, b2.col, TRUE ) ;
-               putkverb( mode, F_KVERB | K_MARK_START ) ;
-               mousecurpos( mode, b2.row, b2.col, MouseCurY, MouseCurX, TRUE );
-               ReleaseKeyStrokeMutex(mode) ;
-           }
-           else if ( b2.state == 1 && SelectionValid &&
-                     ( lastrow != r.dwMousePosition.Y ||
-                       lastcol != r.dwMousePosition.X )
-                     ) {
-               mousecurpos( mode, lastrow, lastcol, r.dwMousePosition.Y,
-                            r.dwMousePosition.X, TRUE ) ;
+
+           /* Only start the drag event if we've actually got something bound
+            * to it */
+           if (!MOUSE_DRAG_EVENT_IGNORED(MMB2, Event)) {
+               if ( b2.state == 1 && !SelectionValid && (MouseCurY != b2.row || MouseCurX != b2.col) ) {
+                   SelectionValid = 1 ;
+                   RequestKeyStrokeMutex( mode, SEM_INDEFINITE_WAIT);
+                   putkverb( mode, F_KVERB | K_MARK_START ) ;
+                   mousecurpos( mode, Vrow, Vcol, b2.row, b2.col, TRUE ) ;
+                   putkverb( mode, F_KVERB | K_MARK_START ) ;
+                   mousecurpos( mode, b2.row, b2.col, MouseCurY, MouseCurX, TRUE );
+                   ReleaseKeyStrokeMutex(mode) ;
+               }
+               else if ( b2.state == 1 && SelectionValid &&
+                         ( lastrow != r.dwMousePosition.Y ||
+                           lastcol != r.dwMousePosition.X )
+                         ) {
+                   mousecurpos( mode, lastrow, lastcol, r.dwMousePosition.Y,
+                                r.dwMousePosition.X, TRUE ) ;
+               }
            }
        }
 
@@ -797,21 +813,26 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
        }
        else if ( (r.dwButtonState & (ThreeButton ? RIGHTMOST_BUTTON_PRESSED : 0)) && (r.dwEventFlags & MOUSE_MOVED) ) {
            debug( F100, "mouse B3 drag","",0) ;
-           if ( b3.state == 1 && !SelectionValid && (MouseCurY != b3.row || MouseCurX != b3.col) ) {
-               SelectionValid = 1 ;
-               RequestKeyStrokeMutex( mode, SEM_INDEFINITE_WAIT);
-               putkverb( mode, F_KVERB | K_MARK_START ) ;
-               mousecurpos( mode, Vrow, Vcol, b3.row, b3.col, TRUE ) ;
-               putkverb( mode, F_KVERB | K_MARK_START ) ;
-               mousecurpos( mode, b3.row, b3.col, MouseCurY, MouseCurX, TRUE );
-               ReleaseKeyStrokeMutex(mode) ;
-           }
-           else if ( b3.state == 1 && SelectionValid &&
-                     ( lastrow != r.dwMousePosition.Y ||
-                       lastcol != r.dwMousePosition.X )
-                     ) {
-               mousecurpos( mode, lastrow, lastcol, r.dwMousePosition.Y,
-                            r.dwMousePosition.X, TRUE ) ;
+
+           /* Only start the drag event if we've actually got something bound
+            * to it */
+           if (!MOUSE_DRAG_EVENT_IGNORED(MMB3, Event)) {
+               if ( b3.state == 1 && !SelectionValid && (MouseCurY != b3.row || MouseCurX != b3.col) ) {
+                   SelectionValid = 1 ;
+                   RequestKeyStrokeMutex( mode, SEM_INDEFINITE_WAIT);
+                   putkverb( mode, F_KVERB | K_MARK_START ) ;
+                   mousecurpos( mode, Vrow, Vcol, b3.row, b3.col, TRUE ) ;
+                   putkverb( mode, F_KVERB | K_MARK_START ) ;
+                   mousecurpos( mode, b3.row, b3.col, MouseCurY, MouseCurX, TRUE );
+                   ReleaseKeyStrokeMutex(mode) ;
+               }
+               else if ( b3.state == 1 && SelectionValid &&
+                         ( lastrow != r.dwMousePosition.Y ||
+                           lastcol != r.dwMousePosition.X )
+                         ) {
+                   mousecurpos( mode, lastrow, lastcol, r.dwMousePosition.Y,
+                                r.dwMousePosition.X, TRUE ) ;
+               }
            }
        }
 
