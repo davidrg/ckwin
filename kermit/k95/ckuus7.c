@@ -1721,6 +1721,10 @@ struct keytab mousetab[] = {            /* Mouse items */
     { "button",   XYM_BUTTON, 0 },
     { "clear",    XYM_CLEAR,  0 },
     { "debug",    XYM_DEBUG,  0 },
+#ifdef NT
+    /* Not implemented for OS/2 yet */
+    { "reporting", XYM_REPORTING, 0 },
+#endif
 #ifndef NOSCROLLWHEEL
     { "wheel",    XYM_WHEEL,  0 }
 #endif
@@ -1742,6 +1746,13 @@ struct keytab mousewheeltab[] = {      /* event direction */
     { "up",      XYM_WHEEL_UP, 0 }
 };
 int nmousewheeltab = (sizeof(mousewheeltab) / sizeof(struct keytab));
+
+struct keytab mousereportingtab[] = {      /* event direction */
+    { "disabled",    XYM_REPORTING_DISABLED, 0 },
+    { "enabled",     XYM_REPORTING_ENABLED, 0 },
+    { "override",    XYM_REPORTING_OVERRIDE, 0 }
+};
+int nmousereportingtab = (sizeof(mousereportingtab) / sizeof(struct keytab));
 
 struct keytab mousemodtab[] = {         /* event button key modifier */
     { "alt",              XYM_ALT,   0 },
@@ -6390,6 +6401,37 @@ setmou(
         initvik = 1;                    /* Update VIK Table */
         return 1;
     }
+
+    if (y == XYM_REPORTING) {
+        extern int mouse_reporting_mode;
+        extern BOOL mouse_reporting_override;
+        int setting = cmkey(mousereportingtab,nmousereportingtab,
+                            "Mouse reporting behavior","enabled",
+                            xxstring);
+        if (setting < 0) return setting;
+
+        switch(setting) {
+            case XYM_REPORTING_DISABLED:
+                mouse_reporting_mode = MOUSEREPORTING_DISABLE;
+                mouse_reporting_override = FALSE;
+                break;
+            case XYM_REPORTING_ENABLED:
+                /* If mouse reporting isn't currently disabled do nothing
+                 * otherwise we might accidentally deactivate it if the mode
+                 * isn't already _NONE */
+                if (mouse_reporting_mode == MOUSEREPORTING_DISABLE)
+                    mouse_reporting_mode = MOUSEREPORTING_NONE;
+                mouse_reporting_override = FALSE;
+                break;
+            case XYM_REPORTING_OVERRIDE:
+                if (mouse_reporting_mode == MOUSEREPORTING_DISABLE)
+                    mouse_reporting_mode = MOUSEREPORTING_NONE;
+                mouse_reporting_override = TRUE;
+                break;
+        }
+        return 1;
+    }
+
     if (y != XYM_BUTTON && y != XYM_WHEEL) {           /* Shouldn't happen. */
         printf("Internal parsing error\n");
         return(-9);

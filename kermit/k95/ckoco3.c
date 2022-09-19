@@ -165,6 +165,9 @@ extern int tttapi;
 #ifdef KUI
 extern CKFLOAT  tt_linespacing[VNUM];
 #endif /* KUI */
+#ifdef OS2MOUSE
+extern int      mouse_reporting_mode;
+#endif /* OS2MOUSE */
 extern long     speed, vernum;
 extern int      local, escape, duplex, parity, flow, seslog, pmask,
                 cmdmsk, cmask, sosi, xitsta, debses, mdmtyp, carrier, what;
@@ -14207,6 +14210,18 @@ vtcsi(void)
                             break;
                         case 9: /* DECINLM - Interlace */
                             /* XTERM - Send Mouse X & Y on button press */
+#ifdef OS2MOUSE
+                            if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode)) {
+                                /* The linux console terminal, as well as many
+                                 * other terminal emulators, implement XTERM
+                                 * mouse tracking */
+
+                                if (mouse_reporting_mode != MOUSEREPORTING_DISABLE) {
+                                    debug(F100, "X10 mouse tracking now ON", "", 0);
+                                    mouse_reporting_mode = MOUSEREPORTING_X10;
+                                }
+                            }
+#endif
                             break;
                         case 10:        /* DECEDM - Block Mode On */
                             break;
@@ -14406,6 +14421,12 @@ vtcsi(void)
                             break;
                         case 1000:
                             /* XTERM - Send Mouse X&Y on button press and release */
+#ifdef OS2MOUSE
+                            if (mouse_reporting_mode != MOUSEREPORTING_DISABLE) {
+                                debug(F100, "X11 (xterm) mouse tracking now ON", "", 0);
+                                mouse_reporting_mode = MOUSEREPORTING_X11;
+                            }
+#endif
                             break;
                         case 1001:
                             /* XTERM - Use Hilite Mouse Tracking */
@@ -14762,6 +14783,18 @@ vtcsi(void)
                                break;
                            case 9: /* DECINLM - Interlace */
                                /* XTERM - Don't Send Mouse X&Y on button press */
+#ifdef OS2MOUSE
+                               if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode)) {
+                                   /* The linux console terminal, as well as many
+                                    * other terminal emulators, implement XTERM
+                                    * mouse tracking */
+
+                                   if (mouse_reporting_mode != MOUSEREPORTING_DISABLE) {
+                                       debug(F100, "X10 mouse tracking now OFF", "", 0);
+                                       mouse_reporting_mode = MOUSEREPORTING_NONE;
+                                   }
+                               }
+#endif
                                break;
                            case 10:        /* DECEDM - Block mode off */
                                break;
@@ -14930,6 +14963,12 @@ vtcsi(void)
                                break;
                            case 1000:
                                /* XTERM - Don't Send Mouse X&Y on button press and release */
+#ifdef OS2MOUSE
+                               if (mouse_reporting_mode != MOUSEREPORTING_DISABLE) {
+                                   debug(F100, "X11 mouse tracking now OFF", "", 0);
+                                   mouse_reporting_mode = MOUSEREPORTING_NONE;
+                               }
+#endif
                                break;
                            case 1001:
                                /* XTERM - Don't use Hilite Mouse Tracking */

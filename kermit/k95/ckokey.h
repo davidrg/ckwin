@@ -218,6 +218,13 @@ struct keynode {
 #define MMSIZE (MMBUTTONMAX * MMEVENTSIZE)               /* Mouse Map Size */
 
 extern con_event mousemap[MMBUTTONMAX][MMSIZE] ;
+
+/* Mouse tracking modes */
+#define MOUSEREPORTING_NONE 0
+#define MOUSEREPORTING_X10 1
+#define MOUSEREPORTING_X11 2
+#define MOUSEREPORTING_DISABLE 3
+#define MOUSE_REPORTING_ACTIVE(x, vmode) ((x == MOUSEREPORTING_X10 || x == MOUSEREPORTING_X11) && vmode == VTERM)
 #endif /* OS2MOUSE */
 
 #define KEY_SCAN      0x0100

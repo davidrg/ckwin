@@ -5771,10 +5771,19 @@ VOID
 shomou() {
     int button, event, id, i;
     char * name = "";
+    extern int mouse_reporting_mode;
+    extern BOOL mouse_reporting_override;
 
     printf("Mouse settings:\n");
     printf("   Button Count:   %d\n",mousebuttoncount());
-    printf("   Active:         %s\n\n",showoff(tt_mouse));
+    printf("   Active:         %s\n",showoff(tt_mouse));
+    printf("   Reporting:      %s %s\n\n",
+           mouse_reporting_mode == MOUSEREPORTING_DISABLE ? "Disabled" :
+                (mouse_reporting_override ? "Override" : "Enabled"),
+            mouse_reporting_mode == MOUSEREPORTING_X10 ? "(Active - X10)" :
+            mouse_reporting_mode == MOUSEREPORTING_X11 ? "(Active - Normal)" :
+            ""
+           );
 
     for (button = 0; button < MMBUTTONMAX; button++)
       for (event = 0; event < MMEVENTSIZE; event++)

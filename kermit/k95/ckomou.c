@@ -69,6 +69,25 @@ extern vik_rec vik;                     /* Very Important Keys    */
 int MouseCurX, MouseCurY;
 int MouseDebug = 0;
 
+/* Terminal Mouse Tracking Mode, one of:
+ * MOUSEREPORTING_NONE       No mouse tracking
+ * MOUSEREPORTING_X10        X10 mouse tracking - send position on press
+ * MOUSEREPORTING_X11        X11 (xterm) mouse tracking - send position and
+ *                          modifiers on mouse press and mouse release
+ * MOUSEREPORTING_DISABLE    Don't allow the remote host to turn mouse tracking
+ *                          on.
+ **/
+int      mouse_reporting_mode = MOUSEREPORTING_NONE;
+
+/* TRUE - send reports *instead* of any action defined for that mouse button and
+ *        modifier combination (CKW doesn't handle any mouse input).
+ * FALSE - mouse reports are only sent if no other action is mapped for that
+ *         mouse button and modifier combination. For example, if right-click
+ *         is set to \Kpaste then right-clicks will not be sent to the remote
+ *         application.
+ */
+BOOL     mouse_reporting_override = FALSE;
+
 /*
 Potential mouse events:
    MOUSE_MOTION
@@ -568,6 +587,108 @@ mousecurpos( int mode, USHORT orow, USHORT ocol, USHORT nrow, USHORT ncol, BOOL 
     ReleaseKeyStrokeMutex(mode) ;
 }
 
+void mouse_report(int x_coord, int y_coord, int button, BOOL ctrl, BOOL shift, BOOL meta,
+                  BOOL pressed) {
+    /* b, x, and y are all sent as (value+32) to ensure its a printable
+     * character. C-Kermit coordinates are 0-based, mouse report cordinates
+     * are 1-based (1,1 is the top left corner) */
+    extern BYTE vmode;
+    char x = x_coord + 1 + 32;
+    char y = y_coord + 1 + 32;
+    char b = '\0';
+    char report[6] = "\033[M   ";
+
+    if (!MOUSE_REPORTING_ACTIVE(mouse_reporting_mode, vmode)) {
+        return; /* Mouse tracking isn't on - nothing to do. */
+    }
+
+    /* TODO: Support UTF-8 extended coordinate protocol */
+    if (x_coord > 223 || y_coord > 223) {
+        if (x_coord > 223)
+            debug(F111, "Not sending mouse report - X coordinate out of range", "X", x_coord);
+        if (y_coord > 223)
+            debug(F111, "Not sending mouse report - Y coordinate out of range", "Y", x_coord);
+        return;
+    }
+
+    if (mouse_reporting_mode == MOUSEREPORTING_X10) {
+        /* X10 mouse tracking only sends a report on mouse down */
+        if (!pressed) return;
+        if (button > 3) return; /* Unsupported mouse button */
+
+        /* Send:
+         *   ESC [ M bxy
+         * Where:
+         *   b = (button-1) + 32
+         *   x = x_coord + 32
+         *   y = y + 32
+         */
+
+        b = (button - 1) + 32;
+    } else if (mouse_reporting_mode == MOUSEREPORTING_X11) {
+        /* Send:
+         *   ESC [ M bxy
+         * Where:
+         *   b = more complicated (see below)
+         *   x = x_coord + 32
+         *   y = y_coord + 32
+         */
+
+        /* b:
+         * ---
+         *  | 7 6 5 4 3 2 |    1 0 |
+         *  | modifiers   | button |
+         *
+         *  Where modifiers the following added together:
+         *    shift - 0x04
+         *    meta  - 0x08
+         *    ctrl  - 0x10
+         *  And button is:
+         *    0 - LMB
+         *    1 - Middle (3 button mouse) or RMB (2 button mouse)
+         *    2 - RMB (3 button mouse)
+         *    3 - button released
+         *  For buttons 4 and 5, add 64
+         */
+
+        char modifiers = 0;
+        char offset = 0;
+        if (shift) modifiers += 0x04;
+        if (meta) modifiers += 0x08;
+        if (ctrl) modifiers += 0x10;
+
+        if (pressed) {
+            b = button - 1;
+            if (b > 2) {
+                /* Buttons 4 and 5 are send as buttons 1 and 2 with 64 added
+                 * to the event code */
+                offset = 64;
+                b -= 3;
+            }
+        } else {
+            b = 3;
+        }
+
+        if (modifiers > 0) {
+            b |= modifiers;
+        }
+
+        b += offset; /* For handling wheel buttons (4 and 5) */
+
+        b += 32;
+    }
+
+    /* Write: ESC [ M bxy */
+    report[3] = b;
+    report[4] = x;
+    report[5] = y;
+
+    if (mouse_reporting_mode == MOUSEREPORTING_X10
+        || mouse_reporting_mode == MOUSEREPORTING_X11) {
+        sendcharsduplex(report,6,TRUE);
+    }
+}
+
 #ifdef  NT
 
 /* Some handy macros to figure out of a particular mouse event is bound to
@@ -581,6 +702,7 @@ void
 win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
 {
     extern int win32ScrollUp, win32ScrollDown;
+    extern BYTE vmode;
     position   * ppos ;
     char buffer[1024] ;
 
@@ -682,15 +804,78 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
     MouseCurX = r.dwMousePosition.X;
     MouseCurY = r.dwMousePosition.Y;
 
+    Event = 0 ;
+    if ( r.dwControlKeyState & SHIFT )
+        Event |= MMSHIFT ;
+    if ( r.dwControlKeyState & ALT )
+        Event |= MMALT ;
+    if ( r.dwControlKeyState & CONTROL )
+        Event |= MMCTRL ;
+
+    if (mouse_reporting_override && MOUSE_REPORTING_ACTIVE(mouse_reporting_mode, vmode)) {
+        /* Mouse reporting is currently active and we're set to forward *all*
+         * mouse events to the remote host regardless of what that input may be
+         * mapped to within CKW.*/
+
+        int button = 0;
+
+        if (r.dwEventFlags & MOUSE_WHEELED) {
+            /*
+             * xterm sends mouse wheel events as buttons 4 and 5. Each click is
+             * one press without a release.
+             */
+            int zDelta = GET_WHEEL_DELTA_WPARAM(r.dwButtonState) / WHEEL_DELTA;
+
+            if (zDelta > 0) {
+                /* Positive is foreward / up scroll */
+                button = 4;
+            } else {
+                /* Negative is backward/ down scroll */
+                button = 5;
+                zDelta = zDelta * -1;
+            }
+
+            do {
+                mouse_report(r.dwMousePosition.X,
+                             r.dwMousePosition.Y,
+                             button,
+                             r.dwControlKeyState & CONTROL,
+                             r.dwControlKeyState & SHIFT,
+                             r.dwControlKeyState & ALT,
+                             TRUE);
+                zDelta--;
+            } while (zDelta > 0);
+        } else {
+
+
+            /* Figure out which button was pressed (if any) */
+            if (r.dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) button = 1;
+            if (r.dwButtonState & (ThreeButton ? FROM_LEFT_2ND_BUTTON_PRESSED :
+                                     RIGHTMOST_BUTTON_PRESSED)) button = 2;
+            if (r.dwButtonState & (ThreeButton ? RIGHTMOST_BUTTON_PRESSED : 0))
+                button = 3;
+
+            /* If button == 0 that means whatever mouse button was pressed before
+             * has been released (on button release the X11 mouse reports don't send
+             * a button number, only that the button was released, so it doesn't
+             * matter that we supply a button of zero here). */
+            mouse_report(r.dwMousePosition.X,
+                         r.dwMousePosition.Y,
+                         button,
+                         r.dwControlKeyState & CONTROL,
+                         r.dwControlKeyState & SHIFT,
+                         r.dwControlKeyState & ALT,
+                         button != 0);
+        }
+
+        return;
+    }
+
    if ( TRUE )
    {
-       Event = 0 ;
-       if ( r.dwControlKeyState & SHIFT )
-           Event |= MMSHIFT ;
-       if ( r.dwControlKeyState & ALT )
-           Event |= MMALT ;
-       if ( r.dwControlKeyState & CONTROL )
-           Event |= MMCTRL ;
+       /* Details for mouse reporting (if active) */
+       int mr_button = -1;
+       int mr_event = Event;
 
        sprintf(buffer, "  Event: fs:%3x row:%3d col:%3d",
                 r.dwButtonState,
@@ -727,9 +912,15 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                b1.col = r.dwMousePosition.X ;
                debug( F100, "mouse B1 single click", "", 0 ) ;
            }
+
+           mr_button = MMB1;
+           mr_event |= (b1.state == 1 ? MMCLICK : MMDBL);
        }
        else if ( (r.dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) && (r.dwEventFlags & MOUSE_MOVED) ) {
            debug( F100, "mouse B1 drag", "", 0 ) ;
+
+           mr_button = MMB1;
+           mr_event |= MMDRAG;
 
            /* Only start the drag event if we've actually got something bound
             * to it */
@@ -769,10 +960,16 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                b2.col = r.dwMousePosition.X ;
                debug( F100, "mouse B2 single click", "", 0 ) ;
            }
+
+           mr_button = MMB2;
+           mr_event |= (b2.state == 1 ? MMCLICK : MMDBL);
        }
        else if ( (r.dwButtonState & (ThreeButton ? FROM_LEFT_2ND_BUTTON_PRESSED : RIGHTMOST_BUTTON_PRESSED)) &&
                  (r.dwEventFlags & MOUSE_MOVED)) {
            debug( F100, "mouse B2 drag", "", 0 ) ;
+
+           mr_button = MMB2;
+           mr_event |= MMDRAG;
 
            /* Only start the drag event if we've actually got something bound
             * to it */
@@ -810,9 +1007,15 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                b3.col = r.dwMousePosition.X ;
                debug( F100, "mouse B3 single click","",0) ;
            }
+
+           mr_button = MMB3;
+           mr_event |= (b3.state == 1 ? MMCLICK : MMDBL);
        }
        else if ( (r.dwButtonState & (ThreeButton ? RIGHTMOST_BUTTON_PRESSED : 0)) && (r.dwEventFlags & MOUSE_MOVED) ) {
            debug( F100, "mouse B3 drag","",0) ;
+
+           mr_button = MMB3;
+           mr_event |= MMDRAG;
 
            /* Only start the drag event if we've actually got something bound
             * to it */
@@ -836,6 +1039,45 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
            }
        }
 
+       if (!mouse_reporting_override && mr_button != -1 &&
+           MOUSE_EVENT_IGNORED(mr_button, mr_event)) {
+
+           /* Mouse button press */
+
+           /* Nothing is mapped for this mouse event - send a mouse report
+            * if reporting is active */
+           mouse_report(r.dwMousePosition.X,
+                        r.dwMousePosition.Y,
+                        mr_button + 1, /* CKW buttons start at 0 */
+                        r.dwControlKeyState & CONTROL,
+                        r.dwControlKeyState & SHIFT,
+                        r.dwControlKeyState & ALT,
+                        TRUE); /* button pressed */
+
+           if (mr_event & MMDBL) {
+               /* Double Click - send as to press/release events (the release
+                * for the second press will come later when the user actually
+                * releases the button) */
+               mouse_report(r.dwMousePosition.X,
+                        r.dwMousePosition.Y,
+                        mr_button + 1, /* CKW buttons start at 0 */
+                        r.dwControlKeyState & CONTROL,
+                        r.dwControlKeyState & SHIFT,
+                        r.dwControlKeyState & ALT,
+                        FALSE); /* button released */
+
+               mouse_report(r.dwMousePosition.X,
+                        r.dwMousePosition.Y,
+                        mr_button + 1, /* CKW buttons start at 0 */
+                        r.dwControlKeyState & CONTROL,
+                        r.dwControlKeyState & SHIFT,
+                        r.dwControlKeyState & ALT,
+                        TRUE); /* button pressed */
+           }
+       }
+       mr_button = -1;
+       mr_event = Event;
+
 #ifndef NOSCROLLWHEEL
        if (r.dwEventFlags & MOUSE_WHEELED) {
            int zDelta = GET_WHEEL_DELTA_WPARAM(r.dwButtonState) / WHEEL_DELTA;
@@ -855,7 +1097,17 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
            }
 
            do {
-               putevent( mode, mousemap[button][Event] ) ;
+               if (!mouse_reporting_override && MOUSE_EVENT_IGNORED(button, Event)) {
+                   mouse_report(r.dwMousePosition.X,
+                         r.dwMousePosition.Y,
+                         button + 1,
+                         r.dwControlKeyState & CONTROL,
+                         r.dwControlKeyState & SHIFT,
+                         r.dwControlKeyState & ALT,
+                         TRUE);
+               } else {
+                   putevent( mode, mousemap[button][Event] ) ;
+               }
                zDelta--;
            } while (zDelta > 0);
            putkverb( mode, F_KVERB | K_MARK_CANCEL ) ;
@@ -870,6 +1122,9 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                if ( SelectionValid ) {
                    Event |= MMDRAG ;
                }
+
+               mr_button = MMB1;
+               mr_event |= MMCLICK;
 
                /* Handle special Mouse Kverbs */
                if ( mousemap[MMB1][Event].type == kverb ) {
@@ -919,6 +1174,9 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                debug( F100, "mouse B1 double click released", "" , 0 );
                Event |= MMDBL ;
 
+               mr_button = MMB1;
+               mr_event |= MMDBL;
+
                /* Handle special Mouse Kverbs */
                if ( mousemap[MMB1][Event].type == kverb)
                {
@@ -959,6 +1217,9 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                if ( SelectionValid ) {
                    Event |= MMDRAG ;
                }
+
+               mr_button = MMB2;
+               mr_event |= MMCLICK;
 
                /* Handle special Mouse Kverbs */
                if ( mousemap[MMB2][Event].type == kverb)
@@ -1009,6 +1270,9 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                debug( F100, "mouse B2 double click released", "" , 0 );
                Event |= MMDBL ;
 
+               mr_button = MMB2;
+               mr_event |= MMDBL;
+
                /* Handle special Mouse Kverbs */
                if ( mousemap[MMB2][Event].type == kverb ) {
                    switch (mousemap[MMB2][Event].kverb.id & ~(F_KVERB)) {
@@ -1048,6 +1312,9 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                 if ( SelectionValid ) {
                     Event |= MMDRAG ;
                 }
+
+                mr_button = MMB3;
+                mr_event |= MMCLICK;
 
                 /* Handle special Mouse Kverbs */
                 if ( mousemap[MMB3][Event].type == kverb ) {
@@ -1097,6 +1364,9 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                 debug( F100, "mouse B3 double click released", "" , 0 );
                 Event |= MMDBL ;
 
+                mr_button = MMB3;
+                mr_event |= MMDBL;
+
                /* Handle special Mouse Kverbs */
                 if ( mousemap[MMB3][Event].type == kverb ) {
                switch (mousemap[MMB3][Event].kverb.id & ~(F_KVERB)) {
@@ -1127,6 +1397,31 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
 #endif /* NT */
             }
        }
+
+       debug(F111, "Report MB Release?", "mr_button", mr_button);
+       debug(F111, "Report MB Release?", "!mouse_reporting_override", !mouse_reporting_override);
+       debug(F111, "Report MB Release?", "mr_button != -1", mr_button != -1);
+       debug(F111, "Report MB Release?", "MOUSE_EVENT_IGNORED(mr_button, mr_event)", MOUSE_EVENT_IGNORED(mr_button, mr_event));
+
+       if (!mouse_reporting_override && mr_button != -1 &&
+           MOUSE_EVENT_IGNORED(mr_button, mr_event)) {
+
+           debug(F100, "Reporting MB Release.", "", 0);
+
+           /* Mouse button release. If this is for a double click, the remote
+            * host has already received a press, a release, and a second press*/
+
+           /* Nothing is mapped for this mouse event - send a mouse report
+            * if reporting is active */
+           mouse_report(r.dwMousePosition.X,
+                        r.dwMousePosition.Y,
+                        mr_button + 1, /* CKW buttons start at 0 */
+                        r.dwControlKeyState & CONTROL,
+                        r.dwControlKeyState & SHIFT,
+                        r.dwControlKeyState & ALT,
+                        FALSE); /* button released */
+       }
+
        lastrow = r.dwMousePosition.Y ;
        lastcol = r.dwMousePosition.X ;
    }
