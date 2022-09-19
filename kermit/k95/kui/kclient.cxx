@@ -635,6 +635,8 @@ void KClient::checkBlink()
     else
         cursorCount = 0;
 
+    /* ws_blinking indicates if the screen currently contains blinking elements
+     * besides the cursor.*/
     if (ws_blinking && ((blinkOn && cursorCount == blinkInterval) || (cursorCount == 0)) )
         writeMe();
 
@@ -773,14 +775,15 @@ void KClient::writeMe()
 
     Bool blinkOn = FALSE;
     Bool blink = FALSE;
-    if( cursorCount++ < maxCursorCount ) {
+    if( cursorCount < maxCursorCount ) {
+        cursorCount += tt_update;
         if( cursorCount >= blinkInterval )
             blinkOn = TRUE;
     }
     else
         cursorCount = 0;
 
-    if (cursorCount%3 == 0) {
+    if (cursorCount%300 == 0) {
         if (ikterm->getCursorPos() && (_inFocus || (!_inFocus && cursor_displayed)))
         {
             if ( cursorena[vmode] ) {
