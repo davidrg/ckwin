@@ -6412,20 +6412,17 @@ setmou(
 
         switch(setting) {
             case XYM_REPORTING_DISABLED:
-                mouse_reporting_mode = MOUSEREPORTING_DISABLE;
-                mouse_reporting_override = FALSE;
+                mouse_reporting_mode |= MOUSEREPORTING_DISABLE;
                 break;
             case XYM_REPORTING_ENABLED:
                 /* If mouse reporting isn't currently disabled do nothing
                  * otherwise we might accidentally deactivate it if the mode
                  * isn't already _NONE */
-                if (mouse_reporting_mode == MOUSEREPORTING_DISABLE)
-                    mouse_reporting_mode = MOUSEREPORTING_NONE;
+                mouse_reporting_mode &= ~MOUSEREPORTING_DISABLE;
                 mouse_reporting_override = FALSE;
                 break;
             case XYM_REPORTING_OVERRIDE:
-                if (mouse_reporting_mode == MOUSEREPORTING_DISABLE)
-                    mouse_reporting_mode = MOUSEREPORTING_NONE;
+                mouse_reporting_mode &= ~MOUSEREPORTING_DISABLE;
                 mouse_reporting_override = TRUE;
                 break;
         }

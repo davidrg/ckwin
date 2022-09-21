@@ -6236,6 +6236,9 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     vtnt_index = 0;
     vtnt_read  = VTNT_MIN_READ;
 
+    /* Disable y active mouse reporting modes */
+    mouse_reporting_mode &= ~(MOUSEREPORTING_ACTIVE | MOUSEREPORTING_UNSUPPORTED);
+
     dokverb(VTERM,K_ENDSCN);
     dokverb(VTERM,K_MARK_CANCEL);
 
@@ -14216,10 +14219,8 @@ vtcsi(void)
                                  * other terminal emulators, implement XTERM
                                  * mouse tracking */
 
-                                if (mouse_reporting_mode != MOUSEREPORTING_DISABLE) {
-                                    debug(F100, "X10 mouse tracking now ON", "", 0);
-                                    mouse_reporting_mode = MOUSEREPORTING_X10;
-                                }
+                                debug(F100, "X10 mouse tracking now ON", "", 0);
+                                mouse_reporting_mode |= MOUSEREPORTING_X10;
                             }
 #endif
                             break;
@@ -14422,14 +14423,55 @@ vtcsi(void)
                         case 1000:
                             /* XTERM - Send Mouse X&Y on button press and release */
 #ifdef OS2MOUSE
-                            if (mouse_reporting_mode != MOUSEREPORTING_DISABLE) {
-                                debug(F100, "X11 (xterm) mouse tracking now ON", "", 0);
-                                mouse_reporting_mode = MOUSEREPORTING_X11;
-                            }
+                            debug(F100, "X11 (xterm) mouse tracking now ON", "", 0);
+                            mouse_reporting_mode |= MOUSEREPORTING_X11;
 #endif
                             break;
                         case 1001:
                             /* XTERM - Use Hilite Mouse Tracking */
+                            break;
+                        case 1002:
+                            /* XTERM - Cell Motion Mouse Tracking */
+#ifdef OS2MOUSE
+                            debug(F100, "Button-event mouse tracking now ON", "", 0);
+                            mouse_reporting_mode |= MOUSEREPORTING_BTNEVENT;
+#endif
+                            break;
+                        case 1003:
+                            /* XTERM - All Motion Mouse Tracking */
+#ifdef OS2MOUSE
+                            debug(F100, "Any-event mouse tracking now ON", "", 0);
+                            mouse_reporting_mode |= MOUSEREPORTING_ANYEVENT;
+#endif
+                            break;
+                        case 1004:
+                            /* XTERM - Send FocusIn/FocusOut events*/
+                            break;
+                        case 1005:
+                            /* XTERM - Enable UTF-8 Mouse Mode */
+                            break;
+                        case 1006:
+                            /* XTERM - Enable SGR Mouse Mode */
+#ifdef OS2MOUSE
+                           debug(F100, "SGR mouse tracking now ON", "", 0);
+                           mouse_reporting_mode |= MOUSEREPORTING_SGR;
+#endif
+                            break;
+                        case 1007:
+                            /* XTERM - Enable Alternate Scroll Mode */
+                            break;
+                        case 1010:
+                            /* RXVT - Scroll to bottom on tty output */
+                            break;
+                        case 1011:
+                            /* RXVT - Scroll to bottom on key press */
+                            break;
+                        case 1015:
+                            /* URXVT - Enable URXVT Mosue Mode */
+#ifdef OS2MOUSE
+                           debug(F100, "URXVT mouse tracking now OFF", "", 0);
+                           mouse_reporting_mode |= MOUSEREPORTING_URXVT;
+#endif
                             break;
                         default:
                             break;
@@ -14789,10 +14831,8 @@ vtcsi(void)
                                     * other terminal emulators, implement XTERM
                                     * mouse tracking */
 
-                                   if (mouse_reporting_mode != MOUSEREPORTING_DISABLE) {
-                                       debug(F100, "X10 mouse tracking now OFF", "", 0);
-                                       mouse_reporting_mode = MOUSEREPORTING_NONE;
-                                   }
+                                   debug(F100, "X10 mouse tracking now OFF", "", 0);
+                                   mouse_reporting_mode &= ~MOUSEREPORTING_X10;
                                }
 #endif
                                break;
@@ -14964,14 +15004,55 @@ vtcsi(void)
                            case 1000:
                                /* XTERM - Don't Send Mouse X&Y on button press and release */
 #ifdef OS2MOUSE
-                               if (mouse_reporting_mode != MOUSEREPORTING_DISABLE) {
-                                   debug(F100, "X11 mouse tracking now OFF", "", 0);
-                                   mouse_reporting_mode = MOUSEREPORTING_NONE;
-                               }
+                               debug(F100, "X11 mouse tracking now OFF", "", 0);
+                               mouse_reporting_mode &= ~MOUSEREPORTING_X11;
 #endif
                                break;
                            case 1001:
                                /* XTERM - Don't use Hilite Mouse Tracking */
+                               break;
+                           case 1002:
+                               /* XTERM - Cell Motion Mouse Tracking */
+#ifdef OS2MOUSE
+                               debug(F100, "Button-event mouse tracking now OFF", "", 0);
+                               mouse_reporting_mode &= ~MOUSEREPORTING_BTNEVENT;
+#endif
+                               break;
+                           case 1003:
+                               /* XTERM - All Motion Mouse Tracking */
+#ifdef OS2MOUSE
+                               debug(F100, "Any-event mouse tracking now OFF", "", 0);
+                               mouse_reporting_mode &= ~MOUSEREPORTING_ANYEVENT;
+#endif
+                               break;
+                           case 1004:
+                               /* XTERM - Send FocusIn/FocusOut events*/
+                               break;
+                           case 1005:
+                               /* XTERM - UTF-8 Mouse Mode */
+                               break;
+                           case 1006:
+                               /* XTERM - Disable SGR Mouse Mode */
+#ifdef OS2MOUSE
+                               debug(F100, "SGR mouse tracking now OFF", "", 0);
+                               mouse_reporting_mode &= ~MOUSEREPORTING_SGR;
+#endif
+                               break;
+                           case 1007:
+                               /* XTERM - Alternate Scroll Mode */
+                               break;
+                           case 1010:
+                               /* RXVT - Scroll to bottom on tty output */
+                               break;
+                           case 1011:
+                               /* RXVT - Scroll to bottom on key press */
+                               break;
+                           case 1015:
+                               /* URXVT - Disable URXVT Mosue Mode */
+#ifdef OS2MOUSE
+                               debug(F100, "URXVT mouse tracking now OFF", "", 0);
+                               mouse_reporting_mode &= ~MOUSEREPORTING_URXVT;
+#endif
                                break;
                            default:
                                break;
