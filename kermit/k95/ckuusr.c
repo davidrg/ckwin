@@ -3,7 +3,7 @@
 #endif /* SSHTEST */
 
 #include "ckcsym.h"
-char *userv = "User Interface 9.0.322, 03 June 2022";
+char *userv = "User Interface 9.0.324, 20 September 2022";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 
@@ -12350,6 +12350,9 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	struct FDB sf, sw;
 	char * pat = NULL;
 	int incs = 0, outcs = 0, cset = -1, number = 0;
+#ifdef TYPEINTERPRET
+        type_intrp = 0;                 /* Always start with this off */
+#endif  /* TYPEINTERPRET */
 #ifdef UNICODE
         char * tocs = "";
 	extern int fileorder;

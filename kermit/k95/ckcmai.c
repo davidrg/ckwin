@@ -1,8 +1,8 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "23 Aug 2022"         /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20220823"		/* Keep them in sync */
-/* Tue Aug 23 07:24:08 2022 */
+#define EDITDATE  "20 Sep 2022"         /* Last edit date dd mmm yyyy */
+#define EDITNDATE "20220920"		/* Keep them in sync */
+/* Tue Sep 20 10:57:40 2022 */
 
 /*
 FOR NEW VERSION (development, alpha, beta, release candidate, formal release):
@@ -725,6 +725,7 @@ int spsiz = DSPSIZ,                     /* Current packet size to send */
     spsizr = DSPSIZ,                    /* Send-packet size requested */
     spsizf = 0,                         /* Flag to override size negotiation */
     rpsiz = DRPSIZ,                     /* Biggest we want to receive */
+    rpsizf = 0,                         /* Flag to override size negotiation */
     urpsiz = DRPSIZ,                    /* User-requested receive pkt size */
     maxrps = MAXRP,                     /* Maximum incoming long packet size */
     maxsps = MAXSP,                     /* Maximum outbound l.p. size */
@@ -1661,7 +1662,7 @@ struct sysdata sysidlist[] = {          /* Add others as needed... */
   { "U1", "UNIX",         1, '/',  0, 3, 2 },
   { "U8", "MS-DOS",       1, '\\', 1, 0, 3 },
   { "UD", "OS-9",         1, '/',  0, 3, 2 },
-  { "UN", "Windows-32",   1, '\\', 1, 2, 3 },
+  { "UN", "MS-Windows",   1, '\\', 1, 2, 3 },
   { "UO", "OS/2",         1, '\\', 1, 2, 3 }
 };
 static int nxxsysids = (sizeof(sysidlist) / sizeof(struct sysdata));

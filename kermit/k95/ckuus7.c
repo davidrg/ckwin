@@ -150,7 +150,8 @@ extern int protocol, remfile, rempipe, remappd, reliable, xreliable, fmask,
   bctr, npad, timef, timint, spsizr, spsizf, maxsps, spmax, nfils, displa,
   atcapr, pkttim, rtimo, fncact, mypadn, fdispla, f_save, pktpaus, setreliable,
   fnrpath, fnspath, atenci, atenco, atdati, atdato, atleni, atleno, atblki,
-  atblko, attypi, attypo, atsidi, atsido, atsysi, atsyso, atdisi, atdiso;
+  atblko, attypi, attypo, atsidi, atsido, atsysi, atsyso, atdisi, atdiso,
+  rpsizf;
 
 extern int stathack;
 
@@ -6601,6 +6602,7 @@ setsr(xx, rmsflg) int xx; int rmsflg; {
                 if (protocol == PROTO_K) {
                     if (z > MAXRP) z = MAXRP;
                     y = adjpkl(z,wslotr,bigrbsiz);
+                    rpsizf = 1;   /* Packet-size override flag fdc 20220917 */
                     if (y != z) {
                         urpsiz = y;
                         if (!xcmdsrc)
@@ -12596,7 +12598,7 @@ dofile(op) int op; {                    /* Do the FILE command */
             s = "(stdin)";
             goto xdofile;               /* Skip around the following */
         }
-        if (filmode & FM_STDOUT) {      /* If STDIN specified */
+        if (filmode & FM_STDOUT) {      /* If STDOUT specified */
             filmode |= FM_WRI;          /* it implies /WRITE */
             /* We don't need to parse anything further */
             s = "(stdout)";

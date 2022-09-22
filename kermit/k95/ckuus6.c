@@ -13,9 +13,10 @@
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
-  Last update:
+  Last updates:
     Mon Aug 22 20:11:01 2022 (for TYPE /INTERPRET)
-    Wed Aug 31 15:46:35 2022 (for TYPE /INTERPRET in Windows)
+    Wed Aug 31 15:46:35 2022 (to disable TYPE /INTERPRET in Windows)
+    Tue Sep 20 15:40:49 2022 (for COPY /TOSCREEN and /INTERPRET)
 */
 
 /* Includes */
@@ -283,12 +284,27 @@ static struct keytab r_collision[] = {
     { "skip",      RENX_SKIP, 0 }
 };
 static int nr_collision = sizeof(r_collision)/sizeof(struct keytab);
-
+/*
+  This started out being a clone of the DELETE command parser, but
+  now it has some unique switches of its own with numeric IDs instead
+  of DEL_xxx.  Census:
+    999 swap-bytes
+    998 append
+    997 fromb64
+    996 tob64
+    995 preserve
+    994 overwrite
+    993 toscreen
+    992 interpret
+*/
 struct keytab copytab[] = {
     { "/append",      998,      0 },
 #ifndef NOSPL
     { "/fromb64",     997,      0 },
 #endif /* NOSPL */
+#ifdef COPYINTERPRET
+    { "/interpret",   992,      0 },    /* fdc 20 Sep 2022 */
+#endif  /* COPYINTERPRET */
     { "/l",           DEL_LIS,  CM_INV|CM_ABR },
     { "/list",        DEL_LIS,  0 },
     { "/log",         DEL_LIS,  CM_INV },
@@ -304,6 +320,7 @@ struct keytab copytab[] = {
 #ifndef NOSPL
     { "/tob64",       996,      0 },
 #endif /* NOSPL */
+    { "/toscreen",    993,      0 },
     { "/verbose",     DEL_VRB,  CM_INV }
 };
 int ncopytab = sizeof(copytab)/sizeof(struct keytab);
@@ -8670,6 +8687,8 @@ docopy() {
     int swapping = 0;
     int fromb64 = 0;
     int tob64 = 0;
+    int toscreen = 0;
+    int interpret = 0;
     int wild = 0;
     int rc = 1;
 
@@ -8751,6 +8770,15 @@ docopy() {
                 tob64 = 1;
                 break;
 #endif /* NOSPL */
+#ifdef COPYINTERPRET
+              case 992:
+                interpret = 1;
+                break;
+#endif  /* COPYINTERPRET */
+
+              case 993:
+                toscreen = 1;
+                break;
             }
             break;
           case _CMIFI:
@@ -8767,17 +8795,18 @@ docopy() {
     p = tmpbuf;                         /* Place for new name */
 
     /* Get destination name */
-    if ((x = cmofi("destination name and/or directory",
-#ifdef UNIX
-                   "."
-#else
-                   ""
-#endif /* UNIX */
-                   ,&s,xxstring)) < 0) {
-        if (x == -3) {
-            printf("?Name for destination file required\n");
-            return(-9);
-        } else return(x);
+    /*
+      Previously the default in Unix was "." but that was (literally!)
+      self-destructive: it destroyed the source file!  - fdc, 20 Sep 2022
+    */
+    if (!toscreen) {
+        x = cmofi("destination name and/or directory","",&s,xxstring);
+        if (x < 0) { 
+            if (x == -3) {
+                printf("?Name for destination file required\n");
+                return(-9);
+            } else return(x);
+        }
     }
     ckstrncpy(p,s,TMPBUFSIZ);           /* Safe copy of destination name */
     if ((y = cmcfm()) < 0) return(y);
@@ -8795,44 +8824,46 @@ docopy() {
         return(-9);
     }
 #endif /* COMMENT */
-    targetisdir = isdir(p);
-    x = strlen(p);
-    if (targetisdir) {
+
+    if (toscreen == 0) {
+        targetisdir = isdir(p);
+        x = strlen(p);
+        if (targetisdir) {
 #ifdef UNIXOROSK
-        if (p[x-1] != '/') {
-            ckstrncat(p,"/",TMPBUFSIZ);
-            x++;
-        }
+            if (p[x-1] != '/') {
+                ckstrncat(p,"/",TMPBUFSIZ);
+                x++;
+            }
 #else
 #ifdef OS2
-        if (p[x-1] != '/') {
-            ckstrncat(p,"/",TMPBUFSIZ);
-            x++;
-        }
+            if (p[x-1] != '/') {
+                ckstrncat(p,"/",TMPBUFSIZ);
+                x++;
+            }
 #else
 #ifdef STRATUS
-        if (p[x-1] != '>') {
-            ckstrncat(p,">",TMPBUFSIZ);
-            x++;
-        }
+            if (p[x-1] != '>') {
+                ckstrncat(p,">",TMPBUFSIZ);
+                x++;
+            }
 #else
 #ifdef datageneral
-        if (p[x-1] != ':') {
-            ckstrncat(p,":",TMPBUFSIZ);
-            x++;
-        }
+            if (p[x-1] != ':') {
+                ckstrncat(p,":",TMPBUFSIZ);
+                x++;
+            }
 #else
-        if (p[x-1] != '/') {
-            ckstrncat(p,"/",TMPBUFSIZ);
-            x++;
-        }
+            if (p[x-1] != '/') {
+                ckstrncat(p,"/",TMPBUFSIZ);
+                x++;
+            }
 #endif /* datageneral */
 #endif /* STRATUS */
 #endif /* OS2 */
 #endif /* UNIXOROSK */
+        }
+        targetlen = x;
     }
-    targetlen = x;
-
     if (!appending) {			/* If /APPEND not given */
 	if (wild && !targetisdir) {	/* No wildcards allowed */
 	    printf(			/* if target is not a directory */
@@ -8937,9 +8968,9 @@ docopy() {
         if (listing) printf("%s => %s ",line,nm);
 
         /* Straight copy */
-        if (!swapping && !appending && !fromb64 && !tob64) {
+        if (!swapping && !appending && !fromb64 && !tob64
+            && !toscreen && !interpret) {
             debug(F110,"COPY zcopy",line,0);
-
             if ((x = zcopy(line,p)) < 0) { /* Let zcopy() do it. */
 		debug(F111,"COPY not OK",line,x);
                 switch (x) {
@@ -9033,6 +9064,8 @@ docopy() {
             FILE * in = NULL;
             FILE * out = NULL;
 
+            if (toscreen) out = (FILE *)stdout;
+
             if ((in = fopen(line,"r")) == NULL) { /* Open input file */
                 if (listing)
 		  printf("(FAILED: %s)\n",ck_errstr());
@@ -9041,31 +9074,35 @@ docopy() {
                 rc = 0;
                 continue;
             }
-            if (targetisdir) {          /* Target is directory */
-                char * buf = NULL;      /* so append this filename to it */
-                zstrip(line,&buf);
-                p[targetlen] = NUL;
-                if (buf)
-                  ckstrncat(p,buf,TMPBUFSIZ);
-            }
+            if (toscreen == 0) {
+                if (targetisdir) {      /* Target is directory */
+                    char * buf = NULL;  /* so append this filename to it */
+                    zstrip(line,&buf);
+                    p[targetlen] = NUL;
+                    if (buf)
+                      ckstrncat(p,buf,TMPBUFSIZ);
+                }
 #ifdef OS2ORUNIX
-            if (zcmpfn(line,p)) {       /* Input and output are same file? */
-                if (listing)
-                  printf("(FAILED: Source and destination identical)\n");
-		else if (!nolist)
-                  printf("?Source and destination identical - %s\n", line); 
-                rc = 0;
-                continue;
-            }
+                if (zcmpfn(line,p)) {   /* Input and output are same file? */
+                    if (listing)
+                      printf("(FAILED: Source and destination identical)\n");
+                    else if (!nolist)
+                      printf("?Source and destination identical - %s\n", line); 
+                    rc = 0;
+                    continue;
+                }
 #endif /* OS2ORUNIX */
-            if ((out = fopen(p, (appending ? "a" : "w"))) == NULL) {
-                fclose(in);
-                if (listing)
-		  printf("(FAILED: %s - %s)\n",p,ck_errstr());
-		else if (!nolist)
-		  printf("?%s - %s\n",p,ck_errstr());
-                rc = 0;
-                continue;
+            }
+            if (toscreen == 0) {
+                if ((out = fopen(p, (appending ? "a" : "w"))) == NULL) {
+                    fclose(in);
+                    if (listing)
+                      printf("(FAILED: %s - %s)\n",p,ck_errstr());
+                    else if (!nolist)
+                      printf("?%s - %s\n",p,ck_errstr());
+                    rc = 0;
+                    continue;
+                }
             }
 #ifndef NOSPL
             if (tob64) {                /* Converting to Base-64 */
@@ -9117,14 +9154,16 @@ docopy() {
 
                 debug(F110,"COPY fromb64",line,0);
 
-                if ((out = fopen(p,appending ? "a" : "w")) == NULL) {
-                    fclose(in);
-                    if (listing)
-		      printf("(FAILED: %s - %s)\n",p,ck_errstr());
-		    else if (!nolist)
-		      printf("?%s - %s\n",p,ck_errstr());
-                    rc = 0;
-                    continue;
+                if (toscreen == 0) {
+                    if ((out = fopen(p,appending ? "a" : "w")) == NULL) {
+                        fclose(in);
+                        if (listing)
+                          printf("(FAILED: %s - %s)\n",p,ck_errstr());
+                        else if (!nolist)
+                          printf("?%s - %s\n",p,ck_errstr());
+                        rc = 0;
+                        continue;
+                    }
                 }
                 x = 1;
                 while (x) {
@@ -9219,8 +9258,59 @@ docopy() {
                         break;
                     }
                 }
+            } else if (toscreen || interpret) { /* fdc - 20220920 */
+                int i,x;
+                int p = 0;
+                int linebufsize = 2000;
+                char prev = NUL;
+                char *linebuf;
+                linebuf = malloc(linebufsize + 2);
+/*
+  This is the only portable way I can think of to read a line at a time.
+  getline() isn't portable.  It has to be line by line so Kermit backslash
+  escapes aren't broken across lines for COPY /INTEPRET.
+*/
+                while (!feof(in)) {
+                    if (fread(&c,1,1,in) < 1) {
+                        break;
+                    }
+                    /* worry about LF vs CRLF... */
+                    if (c == '\013' || c == '\012') {
+                        if (p == 0 && c == '\012' && prev == '\013')
+                          continue;     /* Leftover LF from CRLF */
+                        linebuf[p] = 0; /* Null-terminate the line */
+#ifdef COPYINTERPRET 
+                        /* copy /INTERPRET - fdc 20220920 */
+                        if (interpret) {
+                            int zzrc = 0; /* Return code for zzstring */
+                            int tmplen = TMPBUFSIZ;
+                            char * newbuf = tmpbuf; /* New string to create */
+                            zzrc = zzstring(linebuf, &newbuf, &tmplen); 
+                            /* Replace original string */
+                            (void) ckstrncpy(linebuf, tmpbuf, linebufsize);
+                        }
+#endif  /* COPYINTERPRET  */
+                        if (toscreen) { /* Write this line out to screen */
+                            printf("%s\n",linebuf);
+                        } else {        /* or disk file */
+                            fprintf(out,"%s\n",linebuf);
+                        }
+                        for (i = 1; i < 100; i++) { /* Clear buffer */
+                            linebuf[i] = NUL;
+                        }
+                        p = 0;          /* Reset buffer pointer */
+                    } else {            /* Normal case, accumulate the line */
+                        linebuf[p++] = c;
+                        prev = c;
+                        if (p > linebufsize) { /* line too long */
+                            rc = -1;
+                            break;
+                        }
+                    }
+                }
+                free(linebuf);
             }
-            if (out) fclose(out);
+            if (!toscreen) if (out) fclose(out);
             if (in) fclose(in);
         }
 #ifdef VMSORUNIX

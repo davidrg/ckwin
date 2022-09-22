@@ -15,7 +15,8 @@
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: 22 August 2022 (HELP TYPE adds /INTERPRET switch).
+    Last updates: 22 Aug 2022 (HELP TYPE adds /INTERPRET switch).
+                  20 Sep 2022 (HELP COPY adds /INTERPRET, /TOSCREEN switches).
 
   This module contains HELP command and other long text strings.
 
@@ -5637,6 +5638,9 @@ static char * hmxxcpy[] = {
 "  is a directory, file1 can contain wildcards to denote a group of files to",
 "  be copied to the given directory.  Switches:",
 " ",
+"  /TOSCREEN",
+"    Displays the file on the screen rather than copying to another file.",
+" ",
 "  /LIST",
 "    Print the filenames and status while copying.  Synonyms: /LOG, /VERBOSE.",
 " ",
@@ -5667,6 +5671,13 @@ static char * hmxxcpy[] = {
 " ",
 "  /TOB64",
 "    Convert to Base64 encoding while copying.",
+" ",
+"  /INTERPRET",
+"    If the file contains Kermit backslash escapes like \\v(date), \\v(time),",
+"    \\%1, \\%2, \\m(fast), etc, they are interpreted in the new copy of the",
+"    file or in the screen version, if used in combination with /TOSCREEN.",
+"    This option is not compatible most of the other options.",
+"  ",
 #endif /* NOSPL */
 ""
 };

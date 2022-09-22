@@ -45,12 +45,24 @@
 #ifndef CKCDEB_H			/* Don't include me more than once. */
 #define CKCDEB_H
 
-/* 22 Aug 2022 - TYPE command new /INTERPRET switch enabled by default */
+/* 14 Sep 2022 - TYPE command new /INTERPRET switch enabled by default */
 
+#ifdef NT
 #ifndef NOTYPEINTERPRET
+#define NOTYPEINTERPRET
+#endif  /* NOTYPEINTERPRET */
+#endif  /* NT */
+
+#ifndef NOSPL
+#ifndef NOTYPEINTERPRET                 /* 23 August - TYPE /INTERPRET */
 #define TYPEINTERPRET
 #endif  /* NOTYPEINTERPRET */
-
+#ifndef NOCOPYINTERPRET                 /* 20 Sep 2022 - COPY /INTERPRET */
+#ifndef COPYINTERPRET
+#define COPYINTERPRET
+#endif  /* COPYINTERPRET */
+#endif  /* NOCOPYINTERPRET */
+#endif /* NOSPL */
 /*
   Disinclude features that are "deprecated" in 2022;
   on amd64 this saves about 185K out of 2.48MB, so this is really more
