@@ -36,7 +36,7 @@ char *tmpbuf;
 char line[LINBUFSIZ+1];
 char tmpbuf[TMPBUFSIZ+1];               /* Temporary buffer */
 #endif /* DCMDBUF */
-char lasttakeline[TMPBUFSIZ+1];        /* Last TAKE-file line */
+char lasttakeline[TMPBUFSIZ+1];         /* Last TAKE-file line */
 
 #ifndef NOICP
 
@@ -251,7 +251,7 @@ char * ikprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] IKSD> ";
 #ifdef COMMENT
 char * ckprompt = "[\\freplace(\\v(dir),/,\\\\)] K-95> ";
 #else
-char * ckprompt = "[\\freplace(\\v(dir),/,\\\\)] C-KERMIT> ";
+char * ckprompt = "[\\freplace(\\v(dir),/,\\\\)] C-Kermit> ";
 #endif /* COMMENT */
 char * ikprompt = "[\\freplace(\\v(dir),/,\\\\)] IKSD> ";
 #endif /* NT */

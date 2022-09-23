@@ -1,4 +1,4 @@
-char *fnsv = "C-Kermit functions, 9.0.240, 14 September 2022";
+char *fnsv = "C-Kermit functions, 9.0.241, 17 September 2022";
 
 char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 
@@ -15,7 +15,8 @@ char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: Wed Sep 14 11:16:15 2022
+    Last update: Sat Sep 17 16:07:41 2022
+
 */
 /*
  System-dependent primitives defined in:
@@ -101,6 +102,7 @@ extern int pktnum, bctr, bctu, bctf, bctl, clfils, sbufnum, protocol,
  size, osize, spktl, nfils, ckwarn, timef, spsizf, sndtyp, rcvtyp, success;
 extern int parity, turn, network, whatru, fsecs, justone, slostart,
  ckdelay, displa, mypadn, moving, recursive, nettype;
+extern int rpsizf;
 extern long filcnt;
 extern CK_OFF_T
  tfc, fsize, sendstart, rs_len, flci, flco, tlci, tlco, calibrate;
@@ -5285,21 +5287,53 @@ spar(s) CHAR *s; {			/* Set parameters */
 	debug(F101,"spar swcapr","",swcapr);
 	debug(F101,"spar swcapu","",swcapu);
 	debug(F101,"spar lscapu","",lscapu);
+        /*
+           Check whether there are additional CAPAS bytes.  If so, this code
+           doesn't know what's in them so it just skips past them to the next
+           byte (if any), which should be the Window Slots field.  CAPAS byte
+           is continued if its low-order bit is 1.
+        */
 	for (y = 10; (xunchar(s[y]) & 1) && (biggest >= y); y++);
-	debug(F101,"spar y","",y);
+	debug(F101,"spar y","",y);      /* Position of WSLOTS byte */
     }
-
-/* Long Packets */
-    debug(F101,"spar lpcapu","",lpcapu);
-    if (lpcapu) {
-        if (biggest > y+1) {
-	    x = xunchar(s[y+2]) * 95 + xunchar(s[y+3]);
-	    debug(F101,"spar lp len","",x);
+    /* 
+       Now we have read and decoded the CAPAS byte; amend the maximum
+       outbound packet size if a long-format max packet length given.
+    */
+    debug(F101,">>> spar spsizf","",spsizf);   /* SET RECEIVE PACKET-LENGTH */
+    debug(F101,">>> spar urpsiz","",urpsiz);   /* value specified by user */
+    debug(F101,">>> spar biggest","",biggest); /* Position of last parameter */
+    debug(F101,">>> spar lpcapu","",lpcapu);   /* Long-packet capability */
+    if (lpcapu) {                 /* If long packets have been negotiated.. */
+        int lpspsiz = spsiz;      /* Max short packet size negotiated above */
+        debug(F101,">>> spar lpspsiz","",lpspsiz);
+        if (biggest > y+1) {            /* If MAXLX1-2 bytes are present */
+	    x = xunchar(s[y+2]) * 95 + xunchar(s[y+3]); /* Extended length */
+	    debug(F101,">>> spar extended packet max length","",x);
+            x -= 2;            /* fdc 20220917 Safety margin for edge cases */
+	    debug(F101,">>> spar previous with safety margin","",x);
 	    if (spsizf) {		/* If overriding negotiations */
 		spsiz = (x < lpsiz) ? x : lpsiz; /* do this, */
 	    } else {			         /* otherwise */
 		spsiz = (x > MAXSP) ? MAXSP : x; /* do this. */
 	    }
+/*
+  If a SET RECEIVE PACKET LENGTH x command was given, and: the size x is
+  greater than what the receiver requested, then: the size becomes the
+  receiver's requested size - 1, and: lpcapu (Long Packet capability was
+  negotiated) is set to zero.  - fdc 17 September 2022
+*/
+            if (rpsizf) {               /* SET RECEIVE PACKET-LEN given? */
+                if (spsiz > urpsiz) {   /* This packet > requested size? */
+                    spsiz = urpsiz - 1; /* Set it to requested length */
+                    debug(F101,">>> spar spsiz set to URPSIZ", "", spsiz);
+                    if (spsiz < 96) {   /* If shorter than SP/LP cutoff */
+                        lpcapu = 0;     /* unset LP flag */
+                        debug(F101,">>> spar lpcapu set to zero", "", lpcapu);
+                    }
+                }
+            }
+	    debug(F101,">>> spar adjusted according to spsizf","",spsiz);
 	    if (spsiz < 10) spsiz = 80;	/* Be defensive... */
 	}
     }

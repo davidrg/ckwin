@@ -13431,16 +13431,19 @@ nvlook(s) char *s; {
         return(vvbuf);
 
       case VN_CMDF:                     /* Current command file name */
+/* printf("ENTERING VN_CMDF; tlevel=%d...\n",tlevel); */
 #ifdef COMMENT                          /* (see comments above) */
         if (tfnam[tlevel]) {            /* (near dblbs declaration) */
             dblbs(tfnam[tlevel],vvbuf,VVBUFL);
             return(vvbuf);
         } else return("");
 #else
-        if (tlevel < 0)
-          return("");
-        else
-          return(tfnam[tlevel] ? tfnam[tlevel] : "");
+        if (tlevel < 0) {
+            return("");
+        } else {
+/* printf("FN_CMDF tlevel:cmdfile:%d:[%s]\n",tlevel,tfnam[tlevel]); */
+            return(tfnam[tlevel] ? tfnam[tlevel] : "");
+        }
 #endif /* COMMENT */
 
       case VN_MAC:                      /* Current macro name */
@@ -15352,7 +15355,7 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
         if (x != CMDQ) {                /* Is it the command-quote char? */
             *new++ = *s++;              /* No, normal char, just copy */
             if (--n2 < 0) {             /* and count it, careful of overflow */
-                debug(F101,"^^^ zzstring overflow 1","",depth);
+                debug(F101,"zzstring overflow 1","",depth);
                 depth = 0;
 #ifdef DVNAMBUF
                 if (vnambuf) free(vnambuf);
@@ -15915,7 +15918,6 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
     *new = NUL;                         /* Terminate the new string */
     depth--;                            /* Adjust stack depth gauge */
     *s2 = new;                          /* Copy results back into */
-    debug(F111,"^^^ 2 (n2) zzstring while exit *s2",*s2,n2);
     *n = n2;                            /* the argument addresses */
     debug(F111,"zzstring ok s2 n2",*s2,n2);
 #ifdef DVNAMBUF

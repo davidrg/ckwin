@@ -59,12 +59,13 @@ char * ck_cryear = "2022"; 		/* C-Kermit copyright year */
 #ifdef OS2
 /* Temporary: the Windows version is currently seeing monthly beta releases
 
-/* We are currently on the third windows beta of C-Kermit 10.0 Beta.04 */
-char *ck_s_test = "Beta";
-char *ck_s_tver = "04/Windows-03";
+/* We are currently on the fourth windows beta, which is based on
+ * C-Kermit 10.0 Beta.05 */
+char *ck_s_test = "Pre-Beta";
+char *ck_s_tver = "05/Windows-04";
 #else
-char *ck_s_test = "Beta";		/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "04";			/* Test version number */
+char *ck_s_test = "Pre-Beta";		/* "Dev","Alpha","Beta","RC", or "" */
+char *ck_s_tver = "05";			/* Test version number */
 #endif
 #else /* BETATEST */
 char *ck_s_test = "";			/* Not development */
@@ -106,7 +107,7 @@ static char sccsid[] = "@(#)C-Kermit 10.0";
 char *ck_s_ver = "10.0";                /* C-Kermit version string */
 char *ck_s_edit = "400";                /* Edit number (for Debian package) */
 char *ck_s_xver = "10.0.400";           /* eXtended version string */
-long  ck_l_ver = 1000000L;              /* C-Kermit version number */
+long  ck_l_ver = 1000400L;              /* C-Kermit version number */
 char *ck_s_name = "C-Kermit";           /* Name of this program */
 char *ck_s_who = "";                    /* Where customized, "" = not. */
 char *ck_patch = "";                    /* Patch info, if any. */

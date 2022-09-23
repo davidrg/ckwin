@@ -3009,7 +3009,7 @@ a library (libssh, ssh.dll) which is itself linked against OpenSSL.
 #endif /* OS2ONLY */
 #ifdef NT
 #ifndef CK_SSL
-#define NOSSHN
+#define NOSSH
 #endif /* CK_SSL */
 #endif /* NT */
 #else /* NO_SSL */
