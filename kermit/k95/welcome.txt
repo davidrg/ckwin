@@ -1,0 +1,13 @@
+
+-------------------------------------------------------------------------------
+Welcome to \v(herald) (CKW)!
+
+This message is coming to you from your CKW initialization file:
+  \flongpathname(\v(cmdfile))
+
+Which presently just prints this message.  You can edit this file to remove the
+welcome message and replace it with key definitions or macros, font and color
+selections, any desired customizations or settings.  It is a plain-text file;
+you can edit it on Windows with Notepad or with any other plain-text editor.
+-------------------------------------------------------------------------------
+
