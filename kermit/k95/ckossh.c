@@ -1538,6 +1538,12 @@ char * ssh_proto_ver() {
     return buf;
 }
 
+/** Return the current SSH backend/implementation version.
+ */
+const char * ssh_impl_ver() {
+    return ssh_version(0);
+}
+
 int ssh_agent_delete_file(const char *filename) {
     return SSH_ERR_NOT_IMPLEMENTED; /* TODO */
 }

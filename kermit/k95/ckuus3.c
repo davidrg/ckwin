@@ -8194,8 +8194,8 @@ shossh() {
 #ifdef SSHBUILTIN
     int i, n = 0;                       /* ADD askmore()! */
 
-    printf("\nSSH is built in:\n\n");
-
+    printf("\nSSH is built in (libssh %s):\n\n", ssh_impl_ver());
+    /*printf(" libssh version:                  %s\n", ssh_impl_ver());*/
     printf(" ssh host:                        %s\n",showstring(ssh_hst));
     printf(" ssh port:                        %s\n",showstring(ssh_prt));
     printf(" ssh command:                     %s\n",showstring(ssh_cmd));
@@ -8210,7 +8210,7 @@ shossh() {
         printf("                       :          %d %s %d\n",
                ssh_pf_lcl[n].p1, ssh_pf_lcl[n].host, ssh_pf_lcl[n].p2);
     } else
-      printf(" ssh forward-local-port:         (none)\n");
+      printf(" ssh forward-local-port:          (none)\n");
     if (ssh_pf_rmt[0].p1 && ssh_pf_rmt[0].host && ssh_pf_rmt[0].p2) {
       printf(" ssh forward-remote-port:         %d %s %d\n",
              ssh_pf_rmt[0].p1, ssh_pf_rmt[0].host, ssh_pf_rmt[0].p2);
@@ -8218,7 +8218,7 @@ shossh() {
         printf("                        :         %d %s %d\n",
                ssh_pf_rmt[n].p1, ssh_pf_rmt[n].host, ssh_pf_rmt[n].p2);
     } else
-      printf(" ssh forward-remote-port:        (none)\n");
+      printf(" ssh forward-remote-port:         (none)\n");
     printf(" ssh gateway-ports:               %s\n",showoff(ssh_gwp));
     printf(" ssh gssapi delegate-credentials: %s\n",showoff(ssh_gsd));
     printf(" ssh gssapi key-exchange:         %s\n",showoff(ssh_gkx));

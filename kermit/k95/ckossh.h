@@ -90,6 +90,7 @@ _PROTOTYP(int ssh_fwd_local_port,(int,char *,int));
 _PROTOTYP(int ssh_few_remote_port,(int,char *,int));
 _PROTOTYP(void ssh_v2_rekey,(void));
 _PROTOTYP(char * ssh_proto_ver,(void));
+_PROTOTYP(const char * ssh_impl_ver,(void));
 
 _PROTOTYP(int ssh_agent_delete_file,(const char *filename));
 _PROTOTYP(int ssh_agent_delete_all, (void));
