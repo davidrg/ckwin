@@ -1,12 +1,12 @@
 #include "ckcsym.h"
-char *connv = "CONNECT Command for UNIX:select(), 9.0.141, 17 Dec 2021";
+char *connv = "CONNECT Command for UNIX:select(), 10.0.142, 23 Sep 2022";
 
 /*  C K U C N S  --  Terminal connection to remote system, for UNIX  */
 /*
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2021,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -1032,7 +1032,7 @@ learnchar(c) int c; {			/* Learned script keyboard character */
 
 		/* Later account for prompts that end with a newline? */
 
-		if (cc == CR && j > 0) {
+		if (cc == CK_CR && j > 0) {
 		    if (buf[j-1] != LF)
 		      j = 0;
 		}
@@ -1780,7 +1780,7 @@ conect() {
 	    csave = c;			/* Save it before translation */
 	    				/* for local echoing. */
 #ifdef CKLEARN
-	    crflag = (c == CR);		/* Remember if it was CR. */
+	    crflag = (c == CK_CR);      /* Remember if it was CR. */
 #endif /* CKLEARN */
 
 #ifndef NOCSETS
@@ -1887,7 +1887,7 @@ conect() {
 #ifdef CKLEARN
 		    if (learning) {	/* Learned script active */
 			if (crflag) {	/* User typed CR */
-			    learnchar(CR); /* Handle CR */
+			    learnchar(CK_CR); /* Handle CR */
 			    learnst = 0;   /* Shift to Neutral */
 			} else {
 			    learnchar(c);  /* Not CR */
@@ -1952,7 +1952,7 @@ conect() {
 #ifdef TNCODE
 	    tx = 0;
 	    if ((c == NUL) && network && IS_TELNET()) {
-		if (prev == CR) {    /* Discard <NUL> of <CR><NUL> if peer */
+		if (prev == CK_CR) {  /* Discard <NUL> of <CR><NUL> if peer */
 		    if (!TELOPT_U(TELOPT_BINARY)) {  /* not in binary mode */
 			debug(F111,"CONNECT NUL",ckitoa(prev),c);
 			ckcputf();	/* Flush screen output buffer */
@@ -2213,7 +2213,7 @@ conect() {
 			if (x == -1)
 			  continue;
 			else if (x == -2) { /* LS or PS */
-			    inxbuf[0] = CR;
+			    inxbuf[0] = CK_CR;
 			    inxbuf[1] = LF;
 			    inxcount = 2;
 			} else if (x == -9) { /* UTF-8 error */
@@ -2283,14 +2283,15 @@ conect() {
 
 			/* Handle bare carriage returns and linefeeds */
 
-			if (c == CR && tt_crd) { /* SET TERM CR-DISPLA CRLF? */
+                        /* SET TERM CR-DISPLAY CRLF? */
+			if (c == CK_CR && tt_crd) { 
 			    ckcputc(c);	/* Yes, output CR */
 			    if (seslog && !sessft) LOGCHAR((char)c);
 			    c = LF;	/* and insert a linefeed */
 			}
 			if (c == LF && tt_lfd) { /* SET TERM CR-DISPLA CRLF? */
-			    ckcputc(CR); /* Yes, output CR */
-			    if (seslog && !sessft) LOGCHAR((char)CR);
+			    ckcputc(CK_CR); /* Yes, output CR */
+			    if (seslog && !sessft) LOGCHAR((char)CK_CR);
 			}
 #ifndef NOESCSEQ
 			if (dontprint)	{ /* Do transparent printing. */

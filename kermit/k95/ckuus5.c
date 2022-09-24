@@ -14,7 +14,7 @@ int cmdsrc() { return(0); }
       The Kermit Project, New York City
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
-    Last update: Mon May 16 12:31:56 2022
+    Last update: Fri Sep 23 16:35:07 2022
 
   Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
@@ -67,7 +67,7 @@ extern char * ck_cryear;       /* (ckcmai.c) Latest C-Kermit copyright year */
 #include <tapi.h>
 #include <mcx.h>
 #include "ckntap.h"
-#endif
+#endif  /* NODIAL */
 #define APIRET ULONG
 extern int DialerHandle;
 extern int StartedFromDialer;
@@ -2236,7 +2236,7 @@ getnct(s,n,f,flag) char *s; int n; FILE *f; int flag; {
           len = 0;
         if (techo && pflag) {            /* If TAKE ECHO ON, */
             if (flag) {
-                printf("%3d. %s",             /* echo it this line. */
+                printf("%3d. %s",
 #ifndef NODIAL
                     flag ? dirline :
 #endif /* NODIAL */
@@ -2244,7 +2244,7 @@ getnct(s,n,f,flag) char *s; int n; FILE *f; int flag; {
                     lp2
                     );
             } else {
-                printf("%3d. %3d. %s",             /* echo it this line. */
+                printf("%3d. %3d. %s",
                     tfline[tlevel],
                     tfblockstart[tlevel],
                     lp2
@@ -2262,9 +2262,9 @@ getnct(s,n,f,flag) char *s; int n; FILE *f; int flag; {
 
         /* Isolate, remove, and check terminator */
 
-        c = lp2[len];                   /* Value of line terminator */
+        c = lp2[len];              /* Value of line terminator */
         /* debug(F101,"getnct terminator","",c); */
-        if (c < LF || c > CK_CR) {         /* It's not a terminator */
+        if (c < LF || c > CK_CR) {  /* It's not a terminator */
             /* debug(F111,"getnct bad line",lp2,c); */
             if (feof(f) && len > 0 && len < n) {
                 /* Kludge Alert... */
@@ -4015,6 +4015,7 @@ herald() {
 #endif /* datageneral */
         printf(" Copyright (C) 1985, %s,\n", ck_cryear);
         printf("  Trustees of Columbia University in the City of New York.\n");
+        printf("  OPEN SOURCE since 2011; License: 3-clause BSD.\n");
 #ifdef COMMENT
 #ifdef OS2
        shoreg();
@@ -5779,17 +5780,22 @@ shomou() {
     printf("   Active:         %s\n",showoff(tt_mouse));
 
     printf("   Reporting:      ");
-    if (MOUSE_REPORTING_TEST_FLAG(mouse_reporting_mode, MOUSEREPORTING_DISABLE)) {
+    if (MOUSE_REPORTING_TEST_FLAG(mouse_reporting_mode,
+                                  MOUSEREPORTING_DISABLE)) {
         printf("Disabled");
     } else {
         printf("%s ", mouse_reporting_override ? "Override" : "Enabled");
-        if (MOUSE_REPORTING_TEST_FLAG(mouse_reporting_mode, MOUSEREPORTING_SGR)) {
+        if (MOUSE_REPORTING_TEST_FLAG(mouse_reporting_mode,
+                                      MOUSEREPORTING_SGR)) {
             printf("(SGR)");
-        } else if (MOUSE_REPORTING_TEST_FLAG(mouse_reporting_mode, MOUSEREPORTING_URXVT)) {
+        } else if (MOUSE_REPORTING_TEST_FLAG(mouse_reporting_mode,
+                                             MOUSEREPORTING_URXVT)) {
             printf("(URXVT)");
-        } else if (MOUSE_REPORTING_TEST_FLAG(mouse_reporting_mode, MOUSEREPORTING_X11)) {
+        } else if (MOUSE_REPORTING_TEST_FLAG(mouse_reporting_mode,
+                                             MOUSEREPORTING_X11)) {
             printf("(X11)");
-        } else if (MOUSE_REPORTING_TEST_FLAG(mouse_reporting_mode, MOUSEREPORTING_X10)) {
+        } else if (MOUSE_REPORTING_TEST_FLAG(mouse_reporting_mode,
+                                             MOUSEREPORTING_X10)) {
             printf("(X10)");
         }
     }
@@ -8373,7 +8379,7 @@ shomac(s1, s2) char *s1, *s2; {
         } else if (++n > (cmd_cols - 1)) { /* If line is too wide */
             putchar('-');               /* output a dash */
             if (inserver)
-              putchar(CK_CR);              /* and a carriage return */
+              putchar(CK_CR);           /* and a carriage return */
             putchar(NL);                /* and a newline */
 #ifdef UNIX
 #ifdef NOSETBUF
@@ -11977,7 +11983,7 @@ initoptlist() {
 #endif /* CK_SSL */
 #ifdef CK_CONPTY
     makestr(&(optlist[noptlist++]),"CK_CONPTY");
-#endif
+#endif  /* CK_CONPTY */
     debug(F101,"initoptlist noptlist","",noptlist);
     sh_sort(optlist,NULL,noptlist,0,0,0);
 }

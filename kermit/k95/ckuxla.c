@@ -10,7 +10,7 @@
 #endif /* NOXFER */
 
 #ifndef NOCSETS
-char *xlav = "Character Set Translation 9.0.044, 2 Jun 2011";
+char *xlav = "Character Set Translation 10.0.044, 23 Sep 2022";
 
 /*  C K U X L A  */
 
@@ -19,10 +19,13 @@ char *xlav = "Character Set Translation 9.0.044, 2 Jun 2011";
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2011,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+
+  Note: the date and version number changed in 2022 but the code hasn't
+  been touched since 2011 - fdc, Fri Sep 23 20:15:40 2022
 */
 
 /* Character set translation data and functions */

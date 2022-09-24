@@ -1,4 +1,4 @@
-char *fnsv = "C-Kermit functions, 9.0.241, 17 September 2022";
+char *fnsv = "C-Kermit functions, 10.0.243, 23 Sep 2022";
 
 char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 
@@ -15,7 +15,8 @@ char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: Sat Sep 17 16:07:41 2022
+    Last update: Fri Sep 23 15:27:55 2022
+    (CR -> CK_CR and space unsigned long -> CK_OFF_T)
 
 */
 /*

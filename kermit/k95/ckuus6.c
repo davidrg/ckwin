@@ -17,6 +17,7 @@
     Mon Aug 22 20:11:01 2022 (for TYPE /INTERPRET)
     Wed Aug 31 15:46:35 2022 (to disable TYPE /INTERPRET in Windows)
     Tue Sep 20 15:40:49 2022 (for COPY /TOSCREEN and /INTERPRET)
+    Fri Sep 23 16:40:42 2022 (corrections from David Goodwin)
 */
 
 /* Includes */
@@ -86,7 +87,7 @@ extern int k95stdout;
 #ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"
-#endif
+#endif  /* NODIAL */
 #endif /* NT */
 #include "ckocon.h"
 #include "ckodir.h"			/* [jt] 2013/11/21 - for MAXPATHLEN */
@@ -4136,8 +4137,7 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
             char * cvtbuf;              /* Pointer to conversion buffer */
             char * newbuf = malloc(TYPBUFL+3); /* Buffer for zzstring result */
             char * resultbuf;
-
-            /*
+/*
   The line has been returned to us as UCS-2 but we need to feed it to
   zzstring() to interpret all the backslash escapes, but zzstring doesn't
   understand UCS-2.  So we have to convert it from UCS2 (outcs) back to incs;
@@ -4146,7 +4146,7 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
             cvtbuf = cvtstring(buf,outcs,incs); /* UCS2->original cset */
             debug(F110,"dotype interpret cvtbuf",cvtbuf,0);
             zzstring(cvtbuf, &newbuf, &tmplen);  /* Evaluate it */
-            resultbuf = cvtstring(newbuf,incs,outcs); /* Convert back to UCS2 */
+            resultbuf = cvtstring(newbuf,incs,outcs); /* Back to UCS2 */
             ckstrncpy(buf, resultbuf, TYPBUFL+3);
             debug(F110,"dotype interpret zzstring result buf",buf,0);
             free(newbuf);
@@ -9268,7 +9268,7 @@ docopy() {
 /*
   This is the only portable way I can think of to read a line at a time.
   getline() isn't portable.  It has to be line by line so Kermit backslash
-  escapes aren't broken across lines for COPY /INTEPRET.
+  escapes aren't broken across lines for COPY /INTERPRET.
 */
                 while (!feof(in)) {
                     if (fread(&c,1,1,in) < 1) {
@@ -9301,6 +9301,7 @@ docopy() {
                         p = 0;          /* Reset buffer pointer */
                     } else {            /* Normal case, accumulate the line */
                         linebuf[p++] = c;
+                        linebuf[p] = NUL;
                         prev = c;
                         if (p > linebufsize) { /* line too long */
                             rc = -1;

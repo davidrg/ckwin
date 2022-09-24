@@ -1,4 +1,4 @@
-char * ckcuni = "Unicode support 9.0.116, 06 Nov 2021";
+char * ckcuni = "Unicode support 10.0.116, 23 Sep 2022";
 
 #ifdef OS2
 #define KERMITFONT

@@ -1,9 +1,9 @@
-char *cknetv = "Network support, 9.0.297, 14 Jul 2011";
+char *cknetv = "Network support, 10.0.298, 23 Sep 2022";
 
 /*  C K C N E T  --  Network support  */
 
 /*
-  Copyright (C) 1985, 2011,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -14459,5 +14459,3 @@ fwdx_thread( VOID * dummy )
 #endif /* CK_FORWARD_X */
 #endif /* TNCODE */
 #endif /* NETCONN */
-
-

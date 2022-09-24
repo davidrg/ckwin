@@ -1,7 +1,3 @@
-#ifdef SSHTEST
-#define SSHBUILTIN
-#endif /* SSHTEST */
-
 #include "ckcsym.h"                     /* Symbol definitions */
 
 /*  C K U U S 3 --  "User Interface" for C-Kermit, part 3  */
@@ -12,12 +8,13 @@
       The Kermit Project, New York City
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
+    David Goodwin, New Zealand
 
   Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: 31 May 2022
+    Last update: 23 September 2022
 */
 
 /*  SET command (but much material has been split off into ckuus7.c). */

@@ -31,7 +31,8 @@
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: Tue Aug 23 07:11:45 2022
+    Last update: Fri Sep 23 15:20:51 2022
+    (changes from David Goodwin for Windows and OS/2)
 */
 
 /*
@@ -2407,7 +2408,6 @@ _PROTOTYP( void bleep, (short) );
 #ifdef CK_CONPTY
 #define NETPTY
 #endif /* CK_CONPTY */
-
 #endif /* NT */
 #endif /* LINUX */
 #endif /* AIX41 */
@@ -2994,14 +2994,18 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 /*
   SSH section.  NOSSH disables any form of SSH support.
   If NOSSH is not defined (or implied by NONET, NOLOCAL, etc)
-  then SSHBUILTIN is defined for K95 and SSHCMD is defined for UNIX.
+  then SSHBUILTIN is defined for K95/CKW and SSHCMD is defined for UNIX.
   Then, if either SSHBUILTIN or SSHCMD is defined, ANYSSH is also defined.
 */
-
-#undef COMMENT /* The OS/2 headers define this for some insane reason */
 #ifdef COMMENT
-Built-in SSH no longer depends on SSL support. Built-in SSH is now provided by
-a library (libssh, ssh.dll) which is itself linked against OpenSSL.
+#undef COMMENT /* The OS/2 headers define this for some insane reason */
+#endif /* COMMENT */
+
+#ifdef COMMENT
+/*
+  Built-in SSH no longer depends on SSL support. Built-in SSH is now provided 
+  by a library (libssh, ssh.dll) which is itself linked against OpenSSL.
+*/
 #ifndef NOSSH
 #ifndef NO_SSL
 #ifdef OS2ONLY
@@ -3031,7 +3035,9 @@ a library (libssh, ssh.dll) which is itself linked against OpenSSL.
 #ifdef ANYSSH
 #undef ANYSSH
 #endif /* ANYSSH */
+
 #else  /* Not NOSSH */
+
 #ifndef NOLOCAL
 #ifdef OS2
 #ifndef SSHBUILTIN
@@ -3048,6 +3054,7 @@ a library (libssh, ssh.dll) which is itself linked against OpenSSL.
 #endif /* SSHCMD */
 #endif /* UNIX */
 #endif /* OS2 */
+
 #ifndef ANYSSH
 #ifdef SSHBUILTIN
 #define ANYSSH
@@ -5841,7 +5848,7 @@ typedef CHAR * MACRO;
 #ifndef SIGUSR1
 #ifndef __WATCOMC__
 #define SIGUSR1 7
-#endif
+#endif /* __WATCOMC__ */
 #endif /* SIGUSR1 */
 #define SIGALRM SIGUSR1
 _PROTOTYP( unsigned alarm, (unsigned) );

@@ -1,8 +1,12 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "20 Sep 2022"         /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20220920"		/* Keep them in sync */
-/* Tue Sep 20 10:57:40 2022 */
+#define EDITDATE  "23 Sep 2022"         /* Last edit date dd mmm yyyy */
+#define EDITNDATE "20220923"		/* Keep them in sync */
+/* Fri Sep 23 15:43:18 2022 */
+
+#ifndef BETATEST                        /* This *IS* a Beta test... */
+#define BETATEST
+#endif  /* BETATEST */
 
 /*
 FOR NEW VERSION (development, alpha, beta, release candidate, formal release):
@@ -26,22 +30,9 @@ If the version number has changed, also:
 */
 #include "ckcsym.h"
 /*
-  Consolidated C-Kermit program version information for all platforms
-  (but for UNIX also see ckuver.h).  See makever() below for how they are used.
-  NOTE: The BETATEST macro is not well-named, it really applies only to what
-  were Jeff Altman's areas: Kermit 95 and security.  BETATEST has nothing
-  to do with C-Kermit Beta tests.  K95 developers should define BETATEST
-  when uploading a K95 version for public testing that is not a real release.
+  Consolidated C-Kermit program version information for all platforms (but for
+  UNIX also see ckuver.h).  See makever() below for how they are used.
 */
-
-#ifdef COMMENT                    /* Uncomment this for real K95 version */
-#ifndef OS2				/* OS2 actually means Kermit 95. */
-#ifndef BETATEST			/* It's because Kermit 95 started */
-#define BETATEST			/* out as C-Kermit for OS/2. */
-#endif /* BETATEST */
-#endif /* OS2 */
-#endif /* COMMENT */
-
 #ifdef BETATEST
 #ifdef OS2
 #ifdef __DATE__
@@ -159,9 +150,11 @@ int nolocale = 1;                       /* Don't use Locale */
   3-clause license, text just below (where %s is the year current at the
   last time this code compiled).
 
+  If you're looking for the program start herald, it's in ckuus5.c,
+  function herald().
+
 COPYRIGHT NOTICE:
 */
-
 char *copyright[] = {
 
 #ifdef pdp11
@@ -592,7 +585,7 @@ ACKNOWLEDGMENTS:
 #ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"
-#endif
+#endif /* NODIAL */
 #endif /* NT */
 
 #ifndef NOSERVER
@@ -2662,12 +2655,15 @@ makever() {                             /* Make version string from pieces */
     }
     x += y + 1;
   
+#ifdef COMMENT
     if (strlen(ck_s_test) > 0) {
         s = " OPEN SOURCE:";		/* C-Kermit 9.0 and later */
     } else {
         s = " OPEN SOURCE";		/* C-Kermit 9.0 and later */
     }
     y = strlen(s);
+#endif  /* COMMENT */
+
     if (CKVERLEN < x + y + 1)
       return;
     ckstrncat(versio,s,CKVERLEN);
@@ -3634,8 +3630,10 @@ main(argc,argv) int argc; char **argv;
   If no action requested on command line, or if -S ("stay") was included,
   enter the interactive command parser.
 */
-    if (!clcmds)
-      herald();                         /* Display program herald. */
+    if (!clcmds) {
+        printf("%s %s", ck_s_name, ck_s_ver);
+        herald();                       /* Display program herald. */
+    }
 
 #ifdef NOCCTRAP
     debug(F100,"main NOCCTRAP setting interrupt trap","",0);

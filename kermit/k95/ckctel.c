@@ -1,4 +1,4 @@
-char *cktelv = "Telnet support, 9.0.280, 3 Jun 2022";
+char *cktelv = "Telnet support, 10.0.281, 23 Sep 2022";
 #define CKCTEL_C
 
 int sstelnet = 0;                       /* Do server-side Telnet negotiation */

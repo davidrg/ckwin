@@ -1,6 +1,6 @@
 #include "ckcsym.h"
 
-char *cmdv = "Command package 9.0.178, 16 May 2022";
+char *cmdv = "Command package 10.0.179, 23 Sep 2022";
 
 /*  C K U C M D  --  Interactive command package for Unix  */
 
@@ -897,7 +897,7 @@ prompt(f) xx_strp f; {
 #else
 #ifdef IKSD
     if (inserver) {			/* Print the prompt. */
-        ttoc(CK_CR);		/* If TELNET Server */
+        ttoc(CK_CR);			/* If TELNET Server */
         ttoc(NUL);			/* must folloW CR by NUL */
         printf("%s",sx);
     } else

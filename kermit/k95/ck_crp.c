@@ -1,8 +1,8 @@
-char *ckcrpv = "Encryption Engine, 9.0.117, 19 Mar 2010";
+char *ckcrpv = "Encryption Engine, 10.0.119, 23 Sep 2022";
 /*
   C K _ C R P . C  -  Cryptography for C-Kermit"
 
-  Copyright (C) 1998, 2010,
+  Copyright (C) 1998, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.

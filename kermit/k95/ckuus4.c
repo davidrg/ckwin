@@ -14,7 +14,7 @@
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
     Last update:
-    Tue Aug 23 06:39:29 2022
+    Fri Sep 23 16:29:47 2022
 */
 
 /*
@@ -63,7 +63,7 @@ _PROTOTYP(int vmsttyfd, (void) );
 #ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"
-#endif
+#endif  /* NODIAL */
 #define APIRET ULONG
 #endif /* NT */
 #include "ckocon.h"
@@ -6888,7 +6888,7 @@ doinput(timo,ms,mp,flags,count)
                       default:
 			continue;
                     }
-                  case CR:
+                  case CK_CR:
                     cr = 1;
                     break;
                   case NUL:

@@ -1,7 +1,3 @@
-#ifdef SSHTEST
-#define SSHBUILTIN
-#endif /* SSHTEST */
-
 /*  C K U U S 2  --  User interface strings & help text module for C-Kermit  */
 
 /*
@@ -10,6 +6,7 @@
       The Kermit Project, New York City
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
+    David Goodwin, New Zealand.
 
   Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
@@ -200,6 +197,7 @@ char *newstxt[] = {
 "Columbia University's Kermit 95 package.",
 
 #ifdef BETATEST
+/* THIS PART NEEDS FIXING... */
 " ",
 "THIS IS A PRERELEASE TEST VERSION NOT SUITABLE FOR PRODUCTION.",
 "FOR DETAILS, SEE http://www.kermitproject.org/ckwindows.html",
@@ -208,7 +206,7 @@ char *newstxt[] = {
 " ",
 "Major new features since the final Kermit 95 release include:",
 #else
-"Welcome to C-Kermit 9.0.304.  New features since 8.0.211 include:",
+"Welcome to C-Kermit 10.0.  New features since 9.0.304 include:",
 #endif /* OS2 */
 " . Open Source Simplified 3-Clause BSD License",
 #ifdef OS2
