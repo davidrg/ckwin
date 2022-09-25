@@ -1,5 +1,5 @@
 #include "ckcsym.h"
-char *userv = "User Interface 10.0.325, 23 September 2022";
+char *userv = "User Interface 10.0.326, 24 September 2022";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 
@@ -13585,15 +13585,18 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	    ckGetLongPathName(tmpbuf,line,LINBUFSIZ);
 	    printf("  Long name:  %s\n",line);
 	    if (++n > cmd_rows - 3) {
-                if (!askmore()) { return(0); } else { n = 0; }}
+                if (!askmore()) { return(0); } else { n = 0; }
+            }
 	    line[0] = NUL;
 	    GetShortPathName(tmpbuf,line,LINBUFSIZ);
 	    printf("  Short name: %s\n",line);
 	    if (++n > cmd_rows - 3) {
-            if (!askmore()) { return(0); } else { n = 0; }}
-        printf("\n");
-        if (++n > cmd_rows - 3) {
-            if (!askmore()) { return(0); } else { n = 0; }}
+            if (!askmore()) { return(0); } else { n = 0; }
+            }
+            printf("\n");
+            if (++n > cmd_rows - 3) {
+                if (!askmore()) { return(0); } else { n = 0; }
+            }
 	}
 #else  /* NT */
 

@@ -1,4 +1,4 @@
-char *cksslv = "SSL/TLS support, 10.0.235, 23 Sep 2022";
+char *cksslv = "SSL/TLS support, 10.0.236, 24 Sep 2022";
 /*
   C K _ S S L . C --  OpenSSL Interface for C-Kermit
 
@@ -7,8 +7,9 @@ char *cksslv = "SSL/TLS support, 10.0.235, 23 Sep 2022";
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
-    Author:  Jeffrey E Altman (jaltman@secure-endpoints.com)
+    Authors:  Jeffrey E Altman (jaltman@secure-endpoints.com)
                Secure Endpoints Inc., New York City
+              David Goodwin, New Zealand
 
   Provides:
 

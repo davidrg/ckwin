@@ -1,9 +1,10 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "23 Sep 2022"         /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20220923"		/* Keep them in sync */
-/* Fri Sep 23 15:43:18 2022 */
+#define EDITDATE  "24 Sep 2022"         /* Last edit date dd mmm yyyy */
+#define EDITNDATE "20220924"		/* Keep them in sync */
+/* Sat Sep 24 13:37:42 2022 */
 
+/* Remove this after Beta test! */
 #ifndef BETATEST                        /* This *IS* a Beta test... */
 #define BETATEST
 #endif  /* BETATEST */

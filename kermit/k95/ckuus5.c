@@ -20,6 +20,8 @@ int cmdsrc() { return(0); }
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+
+  Last update: Sat Sep 24 16:41:30 2022 (set \v(herald) in herald() - fdc).
 */
 
 /* Includes */
@@ -3934,6 +3936,9 @@ outerr:                                 /* OUTPUT command error handler */
 
 /* Display version herald and initial prompt */
 
+#define MAXHERALDLEN 200
+char myherald[MAXHERALDLEN+2];          /* for \v(herald) */
+
 VOID
 herald() {
     int x = 0, i;
@@ -3942,6 +3947,7 @@ herald() {
     char * ssl;
     char * krb4;
     char * krb5;
+    char * b64;
 
 #ifndef NOCMDL
     extern char * bannerfile;
@@ -3985,6 +3991,7 @@ herald() {
     ssl = "";
     krb4 = "";
     krb5 = "";
+    b64 = "";
 #ifndef OS2
 #ifdef CK_AUTHENTICATION
 #ifdef CK_SSL    
@@ -4000,22 +4007,33 @@ herald() {
 #endif /* OS2 */
 
     if (x == 0) {
+        extern char *ck_s_name;
+        extern char *ck_s_ver;
 #ifdef datageneral
         printf("%s, for%s\n",versio,ckxsys);
 #else
 #ifdef OSK
         printf("%s, for%s\n",versio,ckxsys);
+        ckstrncat(myherald,versio,MAXHERALDLEN);
+        ckstrncat(myherald,"for ",MAXHERALDLEN);
+        ckstrncat(myherald,ckxsys,MAXHERALDLEN);
 #else
-#ifdef CK_64BIT
         printf("%s, for%s%s%s%s (64-bit)\n\r",versio,ckxsys,ssl,krb4,krb5);
-#else
-        printf("%s, for%s%s%s%s\n\r",versio,ckxsys,ssl,krb4,krb5);
+        ckmakxmsg(myherald,             /* for \v(herald) */
+                  MAXHERALDLEN,
+                  ck_s_name, " ", ck_s_ver, 
+                  versio,
+                  ", for",
+                  ckxsys, ssl, krb4, krb5, "", "", "");
+#ifdef CK_64BIT
+        ckstrncat(myherald," (64-bit)",MAXHERALDLEN);
 #endif/* CK_64BIT */
 #endif /* OSK */
 #endif /* datageneral */
+
         printf(" Copyright (C) 1985, %s,\n", ck_cryear);
         printf("  Trustees of Columbia University in the City of New York.\n");
-        printf("  OPEN SOURCE since 2011; License: 3-clause BSD.\n");
+        printf("  Open Source since 2011; License: 3-clause BSD.\n");
 #ifdef COMMENT
 #ifdef OS2
        shoreg();

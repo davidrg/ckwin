@@ -5825,7 +5825,8 @@ shofil() {
 #endif /* CK_CTRLZ */
 #ifndef NOXFER
 #ifdef CK_TMPDIR
-    printf(" File download-directory: %s\n", dldir ? dldir : "(none)");
+    printf(" File download-directory: %s\n",
+           dldir ? dldir : "(your current directory)");
     if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
 #ifdef COMMENT
     i = 256;
@@ -14253,8 +14254,11 @@ nvlook(s) char *s; {
           return(browsurl[0] ? (char *)browsurl : "");
       }
 #endif /* BROWSER */
-      case VN_HERALD:
-        return((char *)versio);
+      case VN_HERALD: {
+            extern char myherald[];
+            sprintf(vvbuf,"%s",myherald);
+          }
+        return((char *)vvbuf);
 
       case VN_TEST: {                   /* test */
           extern char * ck_s_test, * ck_s_tver;

@@ -1,13 +1,20 @@
-/*  C K U C M D . H  --  Header file for Unix cmd package  */
+/*  C K U C M D . H  --  Header file for interactive command parser  */
 
 /*
   Author: Frank da Cruz <fdc@columbia.edu>
   Columbia University Kermit Project, New York City.
 
-  Copyright (C) 1985, 2016,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+
+  Note: the name of these files really should be ckccmd.h and ckccmd.c
+    because they are for all platforms, not just Unix.  But "don't fix
+    what ain't broke".
+
+  Last update: Sat Sep 24 14:05:17 2022 -fdc
+    Removed redundant arrow-key #ifdefs (they only need to be in ckcdeb.h)
 */
 
 #ifndef CKUCMD_H
@@ -48,12 +55,6 @@
 #ifdef CK_RECALL
 #undef CK_RECALL
 #endif /* CK_RECALL */
-#endif /* NORECALL */
-
-#ifdef NORECALL
-#ifndef NOARROWKEYS
-#define NOARROWKEYS
-#endif /* NOARROWKEYS */
 #endif /* NORECALL */
 
 /* Special getchars */

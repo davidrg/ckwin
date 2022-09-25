@@ -6,8 +6,10 @@
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
-    Author:  Jeffrey E Altman (jaltman@secure-endpoints.com)
+    Authors:  Jeffrey E Altman (jaltman@secure-endpoints.com)
                Secure Endpoints Inc., New York City
+              David Goodwin, New Zealand
+    Last update: Sat Sep 24 13:25:27 2022
 */
 
 #ifdef CK_SSL
@@ -34,7 +36,7 @@
 #ifdef ZLIB
 #ifndef OPENSSL_NO_COMP
 #include <openssl/comp.h>
-#endif
+#endif /* OPENSSL_NO_COMP */
 #endif /* ZLIB */
 /* We place the following to avoid loading openssl/mdc2.h since it 
  * relies on the OpenSSL des.h.  Since we do not need the MDC2 

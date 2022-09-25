@@ -9261,6 +9261,7 @@ docopy() {
             } else if (toscreen || interpret) { /* fdc - 20220920 */
                 int i,x;
                 int p = 0;
+                int n = 0;
                 int linebufsize = 2000;
                 char prev = NUL;
                 char *linebuf;
@@ -9270,6 +9271,7 @@ docopy() {
   getline() isn't portable.  It has to be line by line so Kermit backslash
   escapes aren't broken across lines for COPY /INTERPRET.
 */
+                n = 0;
                 while (!feof(in)) {
                     if (fread(&c,1,1,in) < 1) {
                         break;
@@ -9290,7 +9292,18 @@ docopy() {
                             (void) ckstrncpy(linebuf, tmpbuf, linebufsize);
                         }
 #endif  /* COPYINTERPRET  */
+                        n++;
                         if (toscreen) { /* Write this line out to screen */
+#ifdef CK_TTGWSIZ
+                            if (n > (cmd_rows - 3)) { /* Do more-prompting */
+                                if (!askmore()) {
+                                    rc = 0;
+                                    goto xdocopy;
+                                } else
+                                  n = 0;
+                            }
+#endif /* CK_TTGWSIZ */
+
                             printf("%s\n",linebuf);
                         } else {        /* or disk file */
                             fprintf(out,"%s\n",linebuf);
@@ -9309,6 +9322,7 @@ docopy() {
                         }
                     }
                 }
+              xdocopy:
                 free(linebuf);
             }
             if (!toscreen) if (out) fclose(out);
