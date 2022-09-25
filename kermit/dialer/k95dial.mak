@@ -7,6 +7,25 @@
 #    set INCLUDE=.;C:\ZINC\INCLUDE;C:\MSVC\INCLUDE
 #    set LIB=.;C:\ZINC\LIB\MVCPP400;C:\MSVC\LIB
 
+# TODO: We should only do this on Windows.
+#!if "$(PLATFORM)" == "NT"
+!message Attempting to detect compiler...
+!include ..\k95\compiler_detect.mak
+#!endif
+
+!message
+!message
+!message ===============================================================================
+!message C-Kermit Dialer Build Configuration
+!message ===============================================================================
+!message  Architecture:             $(TARGET_CPU)
+!message  Compiler:                 $(COMPILER)
+!message  Compiler Version:         $(COMPILER_VERSION)
+!message  Compiler Target Platform: $(TARGET_PLATFORM)
+!message ===============================================================================
+!message
+!message
+
 # ----- Windows NT compiler options -----------------------------------------
 # for debug:    add /Zi to CPP_OPTS
 #               add /DEBUG:MAPPED,FULL /DEBUGTYPE:CV to LINK_OPTS
@@ -16,7 +35,7 @@ WNT_LIBRARIAN=lib
 
 WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -DCKODIALER -I..\k95 -noBool
 
-!if "$(CK_COMPILER_NAME)" == "OpenWatcom"
+!if "$(CMP)" == "OWCL"
 # The OpenWatcom 1.9 linker fails with an internal error using the normal linker options.
 WNT_LINK_OPTS=-subsystem:windows /MAP
 !else
@@ -28,7 +47,14 @@ WNT_CON_LINK_OPTS=-align:0x1000 -subsystem:console -entry:mainCRTStartup
 WNT_LIB_OPTS=/machine:i386 /subsystem:WINDOWS
 
 WNT_OBJS=
-WNT_LIBS=libcmt.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib wnt_zil.lib ndirect.lib nservice.lib nstorage.lib oldnames.lib ctl3d32.lib shell32.lib ole32.lib uuid.lib advapi32.lib # compmgr.lib
+WNT_LIBS=libcmt.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib wnt_zil.lib ndirect.lib nservice.lib nstorage.lib oldnames.lib shell32.lib ole32.lib uuid.lib advapi32.lib # compmgr.lib
+
+!if $(MSC_VER) < 130
+!message Using ctl3d32
+# CTL3D32 is only available on Visual C++ 6.0 and earlier. Visual C++ 2002 and
+# OpenWatcom (which we pretend is VC++ 2002) do not have it.
+WNT_LIBS=$(WNT_LIBS) ctl3d32.lib
+!endif
 
 WNT_CON_LIBS=libc.lib kernel32.lib w32_zil.lib ndirect.lib nservice.lib nstorage.lib oldnames.lib
 .cpp.obn:
