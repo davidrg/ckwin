@@ -51,26 +51,29 @@ Event( const UI_EVENT & event )
         success = DeleteAssociations();
         break;
     case DIALER_SHORTCUT:
-        success = CreateShortcut("Kermit 95 Dialer","k95dial.exe",1,0,1,0);
+        success = CreateShortcut("C-Kermit Dialer","k95dial.exe",1,0,1,0);
         break;
     case K95_SHORTCUT:
-        success = CreateShortcut("Kermit 95","k95.exe",1,0,1,0);
+        success = CreateShortcut("C-Kermit","k95g.exe",1,0,1,0);
         break;
     case DIALER_START_MENU:
-        success = CreateShortcut("Kermit 95 Dialer","k95dial.exe",0,1,1,0);
+        success = CreateShortcut("C-Kermit Dialer","k95dial.exe",0,1,1,0);
         break;
     case K95_START_MENU:
-        success = CreateShortcut("Kermit 95","k95.exe",0,1,1,0);
+        success = CreateShortcut("C-Kermit","k95g.exe",0,1,1,0);
+        success &= CreateShortcut("C-Kermit (console)","k95.exe",1,0,1,0);
         break;
     case DOCS_START_MENU:
         success = CreateDocAssociations();
-        success &= CreateShortcut("Kermit 95 Hyperlink Manual",
-                                   "docs\\manual\\kermit95.htm",0,2,0,0);
+        success &= CreateShortcut("C-Kermit for Windows Manual",
+                                   "docs\\manual\\ckwin.htm",0,2,0,0);
+        /*
         success &= CreateShortcut("Read Me!","docs\\manual\\readme.htm",0,2,0,0);
         success &= CreateShortcut("Known Bugs","docs\\manual\\k95bugs.htm",0,2,0,0);
         success &= CreateShortcut("Updates to Using C-Kermit 2nd Edition",
                         "docs\\manual\\ckermit2.htm",0,2,0,0);
         success &= CreateShortcut("Updates to Kermit-95","docs\\manual\\updates.htm",0,2,0,0);
+         */
         break;
     default:
         return UIW_WINDOW::Event(event);
@@ -165,7 +168,7 @@ CreateLink(LPSTR lpszPathObj, LPSTR lpszPathLink, LPSTR lpszDesc,
 }
 
 #define K95_APPID "Kermit.Script"
-#define K95_APPID_DEFAULT "Columbia University Kermit 95 Script"
+#define K95_APPID_DEFAULT "C-Kermit Script"
 #define K95_MIME  "application/kermit"
 #define K95_MIME_PATH  "MIME\\Database\\Content Type\\application/kermit"
 
@@ -444,7 +447,7 @@ CreateAssociations( void )
             K95Path[i+1] = '\0' ;
             break;;
 	}
-    strcat((char*)K95Path,"k95.exe");
+    strcat((char*)K95Path,"k95g.exe");
 
     /* .KSC */
     if ( RegOpenKeyEx(HKEY_CLASSES_ROOT,
@@ -769,7 +772,7 @@ CreateShortcut( ZIL_ICHAR * username, ZIL_ICHAR * exename,
         }
         RegCloseKey( hkCommandKey );
 
-        strcat(lpszStartMenu,"\\Kermit 95");
+        strcat(lpszStartMenu,"\\C-Kermit");
         mkdir(lpszStartMenu);
         if ( StartMenu == 2 ) {
             strcat(lpszStartMenu,"\\Documentation");
