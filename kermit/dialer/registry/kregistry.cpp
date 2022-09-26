@@ -126,7 +126,7 @@ CreateLink(LPSTR lpszPathObj, LPSTR lpszPathLink, LPSTR lpszDesc,
         psl->SetIconLocation(lpszIcon,IconIndex);
         hres = psl->QueryInterface(IID_IPersistFile, (void **)&ppf);
         if (SUCCEEDED(hres)) {
-            WORD wsz[MAX_PATH];
+            wchar_t wsz[MAX_PATH];
             MultiByteToWideChar(CP_ACP, 0, lpszPathLink, -1, wsz, MAX_PATH);
             hres = ppf->Save(wsz, TRUE);
 #ifdef SHORTCUTDEBUG
