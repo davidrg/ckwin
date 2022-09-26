@@ -206,14 +206,14 @@ jobs:
       # decompress.
     - name: Cache OpenWatcom and Dependencies
       uses: actions/cache@v3.0.5
-      id: cache-watcom
+      id: cache-watcom-zinc
       with:
         path: |
           ${{github.workspace}}\watcom
         key: watcom-1.9-openzinc1
 
     - name: Get OpenWatcom 1.9 and Dependencies
-      if: steps.cache-watcom.outputs.cache-hit != 'true'
+      if: steps.cache-watcom-zinc.outputs.cache-hit != 'true'
       run: |
         mkdir watcom
         cd watcom
