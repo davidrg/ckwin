@@ -210,7 +210,7 @@ jobs:
       with:
         path: |
           ${{github.workspace}}\watcom
-        key: watcom-1.9-openzinc1
+        key: watcom-1.9+openzinc1
 
     - name: Get OpenWatcom 1.9 and Dependencies
       if: steps.cache-watcom-zinc.outputs.cache-hit != 'true'
