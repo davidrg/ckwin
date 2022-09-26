@@ -210,7 +210,7 @@ jobs:
       with:
         path: |
           ${{github.workspace}}\watcom
-        key: watcom-1.9+openzinc1
+        key: w32-watcom-1.9+openzinc1
 
     - name: Get OpenWatcom 1.9 and Dependencies
       if: steps.cache-watcom-zinc.outputs.cache-hit != 'true'
@@ -313,7 +313,7 @@ jobs:
         with:
           path: |
             ${{github.workspace}}\watcom
-          key: openwatcom-1.9
+          key: nt-watcom-1.9
       - name: Get OpenWatcom 1.9
         if: steps.cache-watcom.outputs.cache-hit != 'true'
         run: |
@@ -382,7 +382,7 @@ jobs:
         with:
           path: |
             ${{github.workspace}}\watcom
-          key: openwatcom-1.9
+          key: os2-watcom-1.9
       - name: Get OpenWatcom 1.9
         if: steps.cache-watcom.outputs.cache-hit != 'true'
         run: |
