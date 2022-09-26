@@ -1,24 +1,24 @@
-The Kermit 95 Registration Tool (K95REGTL) is a new GUI utility distributed
-for Windows NT 4.0 and Windows 95 with Kermit 95 1.1.15 and later to:
+The C-Kermit Registration Tool (K95REGTL) is a GUI utility distributed
+for Windows NT 4.0 and Windows 9x with C-Kermit to:
 
- 1. Associate Kermit 95 with Kermit Script (.KSC) files in the Windows
+ 1. Associate C-Kermit with Kermit Script (.KSC) files in the Windows
     Registry.
 
- 2. Create shortcuts for Kermit 95 and/or the Dialer on your desktop.
+ 2. Create shortcuts for C-Kermit and/or the Dialer on your desktop.
 
- 3. Create entries for Kermit 95 and/or the Dialer in the Start Menu.
+ 3. Create entries for C-Kermit and/or the Dialer in the Start Menu.
 
 REGISTRY
 
 The Registry functions are on the first page of the K95REGTL screen.  It
-allows you to associate your copy K95.EXE with any file whose name ends in
-".KSC"; thus double-clicking on such a file launches Kermit 95, telling it to
+allows you to associate your copy K95G.EXE with any file whose name ends in
+".KSC"; thus double-clicking on such a file launches C-Kermit, telling it to
 execute the commands that are in it.
 
-You can also register Kermit 95 as the default Telnet application for your Web
+You can also register C-Kermit as the default Telnet application for your Web
 Browser.  This should work with any browser.
 
-You can also use this page to remove all references to Kermit 95 from the
+You can also use this page to remove all references to C-Kermit from the
 Registry.
 
 DESKTOP TOOLS
@@ -31,7 +31,6 @@ by dragging them to the trash / recycle bin / shredder.
 
 STARTUP MENU
 
-This page allows you to add entries to your Startup menu for K95, the K95
-Dialer, and various online documentation files such as UPDATES.TXT and
-BUGS.TXT.
+This page allows you to add entries to your Startup menu for K95G, the Dialer,
+and various online documentation files.
 
