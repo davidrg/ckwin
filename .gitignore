@@ -226,6 +226,7 @@ pip-log.txt
 *.exp
 *.lib
 *.obn
+*.obw
 kermit/k95/dist*
 kermit/k95/ckcpro.c
 

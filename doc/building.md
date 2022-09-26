@@ -144,3 +144,38 @@ following files:
 | p_servic.znc         | ?                                                              |
 
 All files are required for the dialer to work normally.
+
+## Build k95cinit.exe (*very* optional)
+
+Historically Kermit 95 was, since v1.1.10, distributed with a utility called
+k95cinit.exe. This tool is only required to correct an issue relating to COM
+port devices on Windows 95 versions prior to OSR2 
+[described here](https://kermitproject.org/k95bugs.html#b79).
+
+It's pretty unlikely anyone will ever run into the issue this tool solves in the
+2020s so building it is highly optional - C-Kermit for Windows will work just
+fine on modern systems without it.
+
+If you'd like to build this utility anyway, Visual C++ 1.5 is required along 
+with OpenZinc 1.0.
+
+To build it, open a command prompt and run something like the following from the
+root of your C-Kermit source directory (eg, C:\src):
+```
+C:\src> C:\msvc\bin\msvcvars.bat
+C:\src> setenv.bat
+OpenZinc found!
+
+Your compiler is: Visual C++ 1.0 (16-bit)
+This compiler is only supported for building the k95cinit.exe utility.
+You can build that now by running mk.bat
+C:\src\kermit\dialer\init> mk.bat
+```
+The CKW setenv.bat script will detect your environment is set up for the 16bit
+Visual C++ 1.x compiler (due to running `msvcvars.bat`) and will configure the
+environment specially for building k95cinit.exe. All you have to do from there
+is run mk.bat to do the build, and optionally mkdist.bat to copy all the
+required files to `\kermit\dialer\dist`
+
+If you don't have OpenZinc installed you may see a different message instructing
+you to build OpenZinc first - this will leave the current directory unchanged.

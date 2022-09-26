@@ -24,6 +24,8 @@ lack ctl3d32 - without this the application tends to look a little like
 something from Windows 3.1. Compilers newer than 2002 may work but OpenZinc is
 known to be incompatible with Visual C++ 14.x at this time.
 
+The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
+
 <table>
 <tr>
     <th>Compiler</th>
@@ -243,6 +245,35 @@ known to be incompatible with Visual C++ 14.x at this time.
     <td>No toolbar or some GUI dialogs, window resizing scales font doesn't
         currently work well. Dialer builds but is largely untested and some
         non-functional TAPI/modem-dialing stuff may be visible.
+    </td>
+</tr>
+<tr>
+    <td>Visual C++ 1.5x</td>
+    <td>Windows 3.x</td>
+    <td>❌</td> <!-- Free -->
+    <td>❌</td> <!-- PTY -->
+    <td>❌</td> <!-- SSH -->
+    <td>❌</td> <!-- NTLM/Auth -->
+    <td>❌</td> <!-- TAPI -->
+    <td>❌</td> <!-- GUI -->
+    <td>❌</td> <!-- Console -->
+    <td>❌</td> <!-- Dialer -->
+    <td>This compiler is supported for building the k95cinit.exe utility only.
+    </td>
+</tr>
+<tr>
+    <td>Visual C++ 1.0 32-bit Edition</td>
+    <td>Windows NT 3.1, Win32s 1.1</td>
+    <td>❌</td> <!-- Free -->
+    <td>❌</td> <!-- PTY -->
+    <td>❌</td> <!-- SSH -->
+    <td>❌</td> <!-- NTLM/Auth -->
+    <td>❌</td> <!-- TAPI -->
+    <td>❌</td> <!-- GUI -->
+    <td>❌</td> <!-- Console -->
+    <td>❌</td> <!-- Dialer -->
+    <td>
+        This compiler does not work currently
     </td>
 </tr>
 <tr>
