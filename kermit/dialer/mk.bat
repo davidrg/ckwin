@@ -2,6 +2,9 @@
 if "%CKF_ZINC%" == "no" goto :nozinc
 
 nmake -f k95dial.mak winnt
+cd registry
+nmake -f registry.mak winnt
+cd ..
 
 goto :end
 
