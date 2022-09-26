@@ -906,9 +906,9 @@ EnumFontFamProc( ENUMLOGFONT *lpelfe,    // logical-font data
     GetVersionEx( &osverinfo ) ;
     if ( osverinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS ) {
         if ( FontType == 4 /* True Type */ )
-            name = lpelfe->elfFullName;
+            name = (char *)lpelfe->elfFullName;
         else
-            name = lpelfe->elfLogFont.lfFaceName;
+            name = (char *)lpelfe->elfLogFont.lfFaceName;
     } else
 #endif /* CKT_NT31 */
         name = (char *)lpelfe->elfFullName;
