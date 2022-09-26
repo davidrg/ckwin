@@ -194,7 +194,8 @@ goto :cvcdone
 
 :vc116
 set CK_COMPILER_NAME=Visual C++ 1.0 (16-bit)
-goto :unsupported
+set ZINCBUILD=mvcpp150
+goto :semisupported
 
 :vc1
 set CK_COMPILER_NAME=Visual C++ 1.0 32-bit Edition
@@ -274,6 +275,14 @@ echo C-Kermit for Windows has not been tested with this compiler and may not bui
 echo.
 goto :cvcend
 
+:semisupported
+REM This compiler is only supported for building k95cinit.exe, a utility which
+REM requires Zinc for Windows 3.x
+
+set CK_K95CINIT=yes
+
+goto :check_zinc16
+
 :cvcdone
 REM Compiler detection finished. If Zinc is supported for this compiler,
 REM go set it up.
@@ -295,6 +304,18 @@ REM It is not built, but it can be!
 set BUILD_ZINC=yes
 goto :cvcend
 
+:check_zinc16
+REM 16bit Zinc is supported for this compiler so add it to the include and lib path
+set lib=%lib%;%root%\zinc\lib\%ZINCBUILD%
+set include=%include%;%root%\zinc\include
+
+REM Then check to see if its already built.
+if exist %root%\zinc\lib\%ZINCBUILD%\win_zil.lib goto :have_zinc
+
+REM It is not built, but it can be!
+set BUILD_ZINC=yes
+goto :cvcend
+
 :have_zinc
 REM Looks like we've got a suitable compiled copy of OpenZinc.
 set CKF_ZINC=yes
@@ -303,6 +324,8 @@ echo OpenZinc found!
 goto :cvcend
 
 :cvcend
+
+if "%CK_K95CINIT%" == "yes" goto :build_k95cinit
 
 REM TODO - if we're using an old compiler, force things like SSH off
 REM        and remove their dist files.
@@ -332,4 +355,27 @@ if "%BUILD_ZINC%" == "yes" echo OpenZinc is required for building the dialer. Yo
 if "%BUILD_ZINC%" == "yes" echo the OpenZinc distribution to %root%\zinc and running
 if "%BUILD_ZINC%" == "yes" echo %root%\mkzinc.bat
 if "%BUILD_ZINC%" == "yes" echo.
+goto :end
+
+:build_k95cinit
+echo.
+echo Your compiler is: %CK_COMPILER_NAME%
+echo This compiler is only supported for building the k95cinit.exe utility.
+
+cd %root%\kermit\dialer\init
+if "%BUILD_ZINC%" == "yes" goto :build_zinc_k95cinit
+
+echo You can build that now by running mk.bat
+echo.
+
+goto :end
+
+:build_zinc_k95cinit
+echo Zinc is required to build this utility. You can build Zinc now by running
+echo %root%\mkzinc.bat
+echo.
+echo Once Zinc has been built for your compiler, you can build k95cinit.exe by
+echo running mk.bat in %root%\kermit\dialer\init\
+echo.
+
 :end
