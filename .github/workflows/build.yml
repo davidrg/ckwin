@@ -206,7 +206,7 @@ jobs:
       # decompress.
     - name: Cache OpenWatcom and Dependencies
       uses: actions/cache@v3.0.5
-      id: cache-watcom-zinc
+      id: cache-watcom
       with:
         path: |
           ${{github.workspace}}\watcom
@@ -309,11 +309,11 @@ jobs:
         # decompress.
       - name: Cache OpenWatcom
         uses: actions/cache@v3.0.5
-        id: cache-watcom-19
+        id: cache-watcom
         with:
           path: |
             ${{github.workspace}}\watcom
-          key: watcom-1.9
+          key: openwatcom-1.9
       - name: Get OpenWatcom 1.9
         if: steps.cache-watcom.outputs.cache-hit != 'true'
         run: |
@@ -378,11 +378,11 @@ jobs:
         # decompress.
       - name: Cache OpenWatcom
         uses: actions/cache@v3.0.5
-        id: cache-watcom-19
+        id: cache-watcom
         with:
           path: |
             ${{github.workspace}}\watcom
-          key: watcom-1.9
+          key: openwatcom-1.9
       - name: Get OpenWatcom 1.9
         if: steps.cache-watcom.outputs.cache-hit != 'true'
         run: |
