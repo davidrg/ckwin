@@ -53,11 +53,12 @@ remaining OS/2 issues would be most welcome.
 SSL support is back and updated to support the latest versions of OpenSSL
 and TLS.
 
+The old Kermit 95 Dialer is back and rebranded as the C-Kermit for Windows
+Dialer. Otherwise, it's the same old app for better or worse.
+
 Features Expected to Return Soon
 --------------------------------
 
-* The Dialer - it builds fine with OpenZinc so it just needs tidying up for
-  open-sourcing (removing the registration code, etc).
 * X/Y/Z Modem support - the author of the 3rd party library Kermit 95 used has
   OKd its open-sourcing so once that happens it will return.
 
