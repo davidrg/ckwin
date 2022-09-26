@@ -14,7 +14,7 @@
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
     Last update:
-    Sun May  8 15:50:44 2022
+    Fri Sep 23 16:29:47 2022
 */
 
 /*
@@ -60,8 +60,10 @@ _PROTOTYP(int vmsttyfd, (void) );
 #undef COMMENT
 #else
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"
+#endif  /* NODIAL */
 #define APIRET ULONG
 #endif /* NT */
 #include "ckocon.h"
@@ -456,7 +458,7 @@ extern int frecl;
 #endif /* VMS */
 
 extern CK_OFF_T ffc, tfc, tlci, tlco;
-extern long filcnt, rptn, speed,  ccu, ccp, vernum, xvernum;
+extern long filcnt, rptn, speed,  ccu, ccp, vernum;
 
 #ifndef NOSPL
 extern char fspec[], myhost[];
@@ -710,7 +712,8 @@ struct keytab vartab[] = {
     { "ftp_server",       VN_FTP_S, 0}, /* 199 */
 #endif /* SYSFTP */
 #endif /* NOFTP */
-    { "ftype",     VN_MODE,  0},        /* 190 */
+    { "ftype",        VN_MODE,  0},     /* 190 */
+    { "fullversion",  VN_FULLVER, 0},   /* 400 */
 #ifdef KUI
     { "gui_fontname", VN_GUI_FNM, 0},	/* 205 */
     { "gui_fontsize", VN_GUI_FSZ, 0},	/* 205 */
@@ -2160,9 +2163,6 @@ doconect(q,async) int q, async; {
 #ifdef CK_AUTODL
     ksbuf[0] = NUL;                     /* Autodownload packet buffer */
 #endif /* CK_AUTODL */
-#ifdef OS2
-    display_demo = 1;                   /* Remember to display demo */
-#endif /* OS2 */
 
 #ifdef IKS_OPTION
     if (is_tn && TELOPT_U(TELOPT_KERMIT) && ttchk() >= 0
@@ -2916,8 +2916,8 @@ transmit(s,t,xlate,binary,xxecho) char *s; char t; int xlate, binary, xxecho;
                     if (xmitf)          /* Yes, insert fill if asked. */
                       line[i++] = dopar((char) xmitf);
                 }
-                if (i == 0 || ((char) line[i-1]) != ((char) dopar(CR)))
-                  line[i++] = dopar(CR); /* Terminate it with CR */
+                if (i == 0 || ((char) line[i-1]) != ((char) dopar(CK_CR)))
+                  line[i++] = dopar(CK_CR); /* Terminate it with CR */
                 if (xmitl) {
                     stuff = LF;
 #ifdef TNCODE
@@ -2962,7 +2962,7 @@ transmit(s,t,xlate,binary,xxecho) char *s; char t; int xlate, binary, xxecho;
                     if (x == -1) {      /* If more input bytes needed */
                         continue;       /* go back and get them */
                     } else if (x == -2) { /* LS or PS (shouldn't happen) */
-                        outxbuf[0] = CR;
+                        outxbuf[0] = CK_CR;
                     } else if (x == -9) { /* UTF-8 error */
                         outxbuf[0] = '?'; /* Insert error char */
                         outxbuf[1] = u_to_b2(); /* Insert next char */
@@ -4334,7 +4334,7 @@ shox25(n) int n; {
         printf("SunLink X.25 V%d.%d",x25ver / 10,x25ver % 10);
         if (ttnproto == NP_X3) printf(", PAD X.3, X.28, X.29 protocol,");
         printf("\n");
-        if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
         printf(" Reverse charge call %s",
                revcall ? "selected" : "not selected");
         printf (", Closed user group ");
@@ -4343,13 +4343,13 @@ shox25(n) int n; {
         else
           printf ("not selected");
         printf("\n");
-        if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
         printf(" Call user data %s.\n", cudata ? udata : "not selected");
-        if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     } else if (nettype == NET_VX25) {
         if (ttnproto == NP_X3) printf(", PAD X.3, X.28, X.29 protocol,");
         printf("\n");
-        if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
         printf(" Reverse charge call %s",
                revcall ? "selected" : "not selected");
         printf (", Closed user group [unsupported]");
@@ -4359,12 +4359,12 @@ shox25(n) int n; {
           printf ("not selected");
         printf (",");
         printf("\n");
-        if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
         printf(" Call user data %s.\n", cudata ? udata : "not selected");
-        if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     } else if (nettype == NET_IX25) {
         printf("AIX NPI X.25\n");
-        if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
         printf("\n Reverse charge call %s",
                revcall ? "selected" : "not selected");
         printf (", Closed user group [unsupported]");
@@ -4383,11 +4383,11 @@ int
 shopad(n) int n; {
     int i;
     printf("\nX.3 PAD Parameters:\n");
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     for (i = 0; i < npadx3; i++) {
         printf(" [%d] %s %d\n",padx3tab[i].kwval,padx3tab[i].kwd,
                padparms[padx3tab[i].kwval]);
-        if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     }
     return(n);
 }
@@ -4752,20 +4752,20 @@ shotcp(n) int n; {
 #ifdef TCPSOCKET
     if (nettype == NET_TCPA || nettype == NET_TCPB) {
         printf("SET TCP parameters:\n");
-        if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
         printf(" Reverse DNS lookup: %s\n", showooa(tcp_rdns));
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) {return(0);} else {n = 0;}}
 
 #ifdef CK_DNS_SRV
         printf(" DNS Service Records lookup: %s\n", showooa(tcp_dns_srv));
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) {return(0);} else {n = 0;}}
 #endif /* CK_DNS_SRV */
 
 #ifndef NOTCPOPTS
 #ifdef SOL_SOCKET
 #ifdef SO_KEEPALIVE
         printf(" Keepalive: %s\n", showoff(tcp_keepalive));
-        if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) {return(0);} else {n = 0;}}
 #endif /* SO_KEEPALIVE */
 
 #ifdef SO_LINGER
@@ -4806,19 +4806,19 @@ shotcp(n) int n; {
 #endif /* SOL_SOCKET */
 #endif /* NOTCPOPTS */
         printf(" address: %s\n",tcp_address ? tcp_address : "(none)");
-        if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
 #ifndef NOHTTP
         printf(" http-proxy: %s\n",tcp_http_proxy ? tcp_http_proxy : "(none)");
-        if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
 #endif /* NOHTTP */
 #ifdef NT
 #ifdef CK_SOCKS
         printf(" socks-server: %s\n",tcp_socks_svr ? tcp_socks_svr : "(none)");
-        if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
 #ifdef CK_SOCKS_NS
         printf(" socks-name-server: %s\n",
                tcp_socks_ns ? tcp_socks_ns : "(none)");
-        if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
 #endif /* CK_SOCKS_NS */
 #endif /* CK_SOCKS */
 #endif /* NT */
@@ -4836,7 +4836,7 @@ shotopt(n) int n; {
            "Telnet Option","Me (client)","U (client)",
            "Me (server)","U (server)");
     n += 2;
-    if (n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (n > cmd_rows - 3) { if (!askmore()) {return(-1);} else {n = 0;}}
 
     for ( opt = TELOPT_FIRST; opt <= TELOPT_LAST; opt++) {
         switch (opt) {
@@ -4870,7 +4870,7 @@ shotopt(n) int n; {
                TELOPT_MODE(TELOPT_DEF_S_U_MODE(opt))
                );
 
-        if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
         if (sstelnet)
           printf("%21s %12s %12s %12s %12s\n",
                  "",
@@ -4887,7 +4887,7 @@ shotopt(n) int n; {
                  "",
                  ""
                  );
-        if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     }
     return(n);
 }
@@ -4915,7 +4915,7 @@ shotel(n) int n; {
       case TNL_CR:    printf("%s\n","raw (cr)"); break;
       case TNL_LF:    printf("%s\n","(lf)"); break;
     }
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
 #ifdef CK_AUTHENTICATION
     {
         int type = ck_tn_authenticated();
@@ -4940,14 +4940,14 @@ shotel(n) int n; {
         else
 #endif /* CK_SSL */
           printf("   in use: %s\n",AUTHTYPE_NAME(type));
-        if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
         if (forward_flag)
           printf("  credentials forwarding requested %s\n",
                  forwarded_tickets ? "and completed" :
                  "but not completed");
         else
           printf("  credentials forwarding disabled\n");
-        if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     }
 #endif /* CK_AUTHENTICATION */
 #ifdef CK_ENCRYPTION
@@ -4991,7 +4991,7 @@ shotel(n) int n; {
             break;
         }
         printf("\n");
-        if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     }
 #endif /* CK_ENCRYPTION */
 #ifdef IKS_OPTION
@@ -5025,7 +5025,7 @@ shotel(n) int n; {
     else
       printf(" me, n/a;");
     printf("\n");
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
 #endif /* IKS_OPTION */
     printf(" BINARY newline-mode: ");
     switch (tn_b_nlm) {
@@ -5034,7 +5034,7 @@ shotel(n) int n; {
       case TNL_CR:    printf("%s\n","raw (cr)"); break;
       case TNL_LF:    printf("%s\n","(lf)"); break;
     }
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     printf(" binary-mode: ");
     switch (TELOPT_U_MODE(TELOPT_BINARY)) {
       case TN_NG_AC: printf( "u, accepted;  " ); break;
@@ -5052,17 +5052,17 @@ shotel(n) int n; {
            TELOPT_U(TELOPT_BINARY) ? "BINARY" : "NVT",
            TELOPT_ME(TELOPT_BINARY) ? "BINARY" : "NVT"
            );
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     printf(" binary-transfer-mode: %s\n",showoff(tn_b_xfer));
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     printf(" bug binary-me-means-u-too: %s\n",showoff(tn_b_meu));
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     printf(" bug binary-u-means-me-too: %s\n",showoff(tn_b_ume));
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     printf(" bug sb-implies-will-do: %s\n",showoff(tn_sb_bug));
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     printf(" bug auth-krb5-des: %s\n",showoff(tn_auth_krb5_des_bug));
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     printf(" terminal-type: ");
     if (tn_term) {
         printf("%s\n",tn_term);
@@ -5079,41 +5079,41 @@ shotel(n) int n; {
           printf("none (%s will be used)\n",p);
         else printf("none\n");
     }
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
 #ifdef CK_ENVIRONMENT
     printf(" environment: %s\n", showoff(tn_env_flg));
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     printf("   ACCOUNT: %s\n",tn_env_acct);
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     printf("   DISPLAY: %s\n",(char *)tn_get_display() ?
             (char *)tn_get_display() : "");
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     printf("   JOB    : %s\n",tn_env_job);
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     printf("   PRINTER: %s\n",tn_env_prnt);
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
 #ifndef NOSPL
     printf("   USER   : %s\n",uidbuf);
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
 #endif /* NOSPL */
     printf("   SYSTEM : %s\n",tn_env_sys);
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     for (x = 0; x < 8; x++) {
         if (tn_env_uservar[x][0] && tn_env_uservar[x][1]) {
             printf("   %-7s: %s\n",tn_env_uservar[x][0],
                    tn_env_uservar[x][1]);
-            if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
         }
     }
 #endif /* CK_ENVIRONMENT */
 #ifdef CK_SNDLOC
     printf("  LOCATION: %s\n", tn_loc ? tn_loc : "");
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
 #endif /* CK_SNDLOC */
 #ifdef CK_FORWARD_X
     printf(" .Xauthority-file: %s\n", (char *)XauFileName() ?
             (char *)XauFileName() : "(none)");
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
 #endif /* CK_FORWARD_X */
     return(n);
 }
@@ -5123,22 +5123,22 @@ shotel(n) int n; {
 static int
 shonb(n) int n; {
     printf("NETBIOS parameters:\n");
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     printf(" API       : %s\n",
            NetbeuiAPI ?
            "NETAPI.DLL - IBM Extended Services or Novell Netware Requester"
            : "ACSNETB.DLL - IBM Network Transport Services/2" ) ;
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     printf(" Local Name: [%s]\n", NetBiosName);
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     printf(" Adapter   : %d\n", NetBiosAdapter);
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     if (NetBiosLSN > 0xFF) {
         printf(" Session   : %d\n", NetBiosLSN);
     } else {
         printf(" Session   : none active\n");
     }
-    if (++n > cmd_rows - 3) if (!askmore()) return(-1); else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return(-1);} else {n = 0;}}
     return(n);
 }
 #endif /* CK_NETBIOS */
@@ -5745,7 +5745,7 @@ shofil() {
       printf(" File scan:               on %d\n", nscanfile);
     else
       printf(" File scan:               off\n");
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
     if (xfermode == XMODE_A)
       printf(" Default file type:       %s\n",shoxm());
     else
@@ -5776,35 +5776,35 @@ shofil() {
     for (i = 0; i < ncolx; i++)
       if (colxtab[i].kwval == fncact) break;
     printf("%s\n", (i == ncolx) ? "unknown" : colxtab[i].kwd);
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
     printf(" File destination:        %s\n",
            (dest == DEST_D) ? "disk" :
            ((dest == DEST_S) ? "screen" :
             ((dest == DEST_N) ? "nowhere" :
             "printer"))
            );
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
     s = (keep >= 0 && keep <= 2) ? ifdnam[keep] : "keep";
     printf(" File incomplete:         %s\n",s);
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
     printf(" File bytesize:           %d\n",(fmask == 0177) ? 7 : 8);
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
 #ifndef NOCSETS
     printf(" File character-set:      %s\n",fcsinfo[fcharset].keyword);
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
     printf(" File default 7-bit:      %s\n",fcsinfo[dcset7].keyword);
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
     printf(" File default 8-bit:      %s\n",fcsinfo[dcset8].keyword);
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
 #ifdef UNICODE
     printf(" File UCS bom:            %s\n",showoff(ucsbom));
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
     printf(" File UCS byte-order:     %s-endian\n",
            ucsorder ? "little" : "big");
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
     printf(" Computer byteorder:      %s-endian\n",
            byteorder ? "little" : "big");
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
 #endif /* UNICODE */
 #endif /* NOCSETS */
 
@@ -5816,46 +5816,47 @@ shofil() {
       case XYFA_2: printf("%s\n","crlf"); break;
       default: printf("%d\n",i);
     }
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
 #endif /* NOXFER */
 
 #ifdef CK_CTRLZ
     printf(" File eof:                %s\n", eofmethod ? "ctrl-z" : "length");
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
 #endif /* CK_CTRLZ */
 #ifndef NOXFER
 #ifdef CK_TMPDIR
-    printf(" File download-directory: %s\n", dldir ? dldir : "(none)");
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    printf(" File download-directory: %s\n",
+           dldir ? dldir : "(your current directory)");
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
 #ifdef COMMENT
     i = 256;
     s = line;
     zzstring("\\v(tmpdir)",&s,&i);
     printf(" Temporary directory:     %s\n", line);
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
 #endif /* COMMENT */
 #endif /* CK_TMPDIR */
 #ifdef VMS
     {
         extern int vmssversions, vmsrversions;
         printf(" Send version-numbers:    %s\n",showoff(vmssversions));
-        if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
         printf(" Receive version-numbers: %s\n",showoff(vmsrversions));
-        if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
     }
 #endif /* VMS */
     printf(" Send move-to:            %s\n",
            snd_move ? snd_move : "(none)");
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
     printf(" Send rename-to:          %s\n",
            snd_rename ? snd_rename : "(none)");
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
     printf(" Receive move-to:         %s\n",
            rcv_move ? rcv_move : "(none)");
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
     printf(" Receive rename-to:       %s\n",
            rcv_rename ? rcv_rename : "(none)");
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
 #endif /* NOXFER */
 #ifdef KERMRC
     printf(" Initialization file:     %s\n", noinit ? "(none)" :
@@ -5866,11 +5867,11 @@ shofil() {
 #endif /* CK_SYSINI */
            );
 #endif /* KERMRC */
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
 
     if (k_info_dir) {
         printf(" Kermit doc files:        %s\n", k_info_dir);
-        if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
     }
 
 #ifdef CKROOT
@@ -5884,28 +5885,28 @@ shofil() {
            zofbuffer ? "buffered" : "unbuffered",
            zofblock ? "blocking" : "nonblocking"
            );
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
 #ifdef DYNAMIC
     printf(" Stringspace:             %d\n", zsetfil(0,2));
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
     printf(" Listsize:                %d\n", zsetfil(0,4));
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
 #endif /* DYNAMIC */
 #endif /* UNIX */
 #ifdef OS2ORUNIX
     printf(" Longest filename:        %d\n", maxnam);
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
     printf(" Longest pathname:        %d\n", maxpath);
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
 #endif /* OS2ORUNIX */
 
     printf(" Last file sent:          %s\n", sfspec ? sfspec : "(none)");
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
     printf(" Last file received:      %s\n", rfspec ? rfspec : "(none)");
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
     printf("\n Also see:\n");
     n++;
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
     printf(" SHOW PROTOCOL, SHOW XFER");
 #ifdef CK_LABELED
     printf(", SHOW LABELED");
@@ -6249,13 +6250,13 @@ showassoc() {
         if (!s) s = "";
         if (!*s) s = "(none)";
         printf(" %-25s%s\n",tcsinfo[i].keyword,s);
-        if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
     }
     printf("\nFor outbound files:\n\n");
     n += 2;
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
     printf("File Character-Set       Transfer Character-Set\n");
-    if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+    if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
     for (i = 0; i <= MAXFCSETS; i++) {
         k = afcset[i];
         if (k < 0 || k > MAXTCSETS)
@@ -6265,7 +6266,7 @@ showassoc() {
         if (!s) s = "";
         if (!*s) s = "(none)";
         printf(" %-25s%s\n",fcsinfo[i].keyword,s);
-        if (++n > cmd_rows - 3) if (!askmore()) return; else n = 0;
+        if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
     }
 }
 #endif /* NOCSETS */
@@ -6888,7 +6889,7 @@ doinput(timo,ms,mp,flags,count)
                       default:
 			continue;
                     }
-                  case CR:
+                  case CK_CR:
                     cr = 1;
                     break;
                   case NUL:
@@ -6949,7 +6950,7 @@ doinput(timo,ms,mp,flags,count)
                     waiting -= 2;       /* (not necessarily...) */
                     cr = 0;
                     continue;           /* and autodownload check */
-                  case CR:
+                  case CK_CR:
                     cr = 1;
                     tx = scriptwrtbuf((USHORT)y);
                     if (tx == 6) {
@@ -9831,7 +9832,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
                       x = 1;             /* EOF - set completion flag */
                       if (cx == FN_CMD) { /* If not "rawcommand" */
                           p--;           /* remove trailing newlines */
-                          while (*p == CR || *p == LF)
+                          while (*p == CK_CR || *p == LF)
                             p--;
                           p++;
                       }
@@ -12322,7 +12323,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 	k = strlen(s);			/* Strip junk from end */
 	if (k < 1) goto xemail;
 	k--;
-	while (k >= 0 && s[k] == CR || s[k] == LF)
+	while (k >= 0 && s[k] == CK_CR || s[k] == LF)
 	  s[k--] = NUL;
 	while (k >= 0 && s[k] == SP || s[k] == HT)
 	  s[k--] = NUL;
@@ -12997,7 +12998,9 @@ char *
 ckgetpid() {                            /* Return pid as string */
 #ifdef CK_PID
 #ifdef OS2
+#ifndef __WATCOMC__
 #define getpid _getpid
+#endif /* __WATCOMC__ */
     unsigned long zz;
 #else
     long zz;
@@ -13216,10 +13219,23 @@ nvlook(s) char *s; {
         sprintf(vvbuf,"%ld",vernum);    /* SAFE */
         return(vvbuf);
 
+      /* C-Kermit 10.0... no more product-specific version numbers */
       case VN_XVNUM:                    /* Product-specific version number */
-        sprintf(vvbuf,"%ld",xvernum);   /* SAFE */
+        sprintf(vvbuf,"%ld",vernum);    /* SAFE */
         return(vvbuf);
 
+      case VN_FULLVER:                  /* Full version number (edit 400) */
+      {
+          extern char *ck_s_ver, *ck_s_edit, *ck_s_test, *ck_s_tver;
+          if (x > strlen(ck_s_test)) {
+              sprintf(vvbuf,"%s.%s %s.%s",
+                      ck_s_ver, ck_s_edit, ck_s_test, ck_s_tver); /* SAFE */
+          } else {
+              sprintf(vvbuf,"%s.%s",
+                      ck_s_ver, ck_s_edit); /* SAFE */
+          }
+          return(vvbuf);
+      }
       case VN_HOME:                     /* Home directory */
         return(homepath());
 
@@ -13416,16 +13432,19 @@ nvlook(s) char *s; {
         return(vvbuf);
 
       case VN_CMDF:                     /* Current command file name */
+/* printf("ENTERING VN_CMDF; tlevel=%d...\n",tlevel); */
 #ifdef COMMENT                          /* (see comments above) */
         if (tfnam[tlevel]) {            /* (near dblbs declaration) */
             dblbs(tfnam[tlevel],vvbuf,VVBUFL);
             return(vvbuf);
         } else return("");
 #else
-        if (tlevel < 0)
-          return("");
-        else
-          return(tfnam[tlevel] ? tfnam[tlevel] : "");
+        if (tlevel < 0) {
+            return("");
+        } else {
+/* printf("FN_CMDF tlevel:cmdfile:%d:[%s]\n",tlevel,tfnam[tlevel]); */
+            return(tfnam[tlevel] ? tfnam[tlevel] : "");
+        }
 #endif /* COMMENT */
 
       case VN_MAC:                      /* Current macro name */
@@ -13676,7 +13695,7 @@ nvlook(s) char *s; {
 
 #ifdef OS2
       case VN_SPA: {
-          unsigned long space = zdskspace(0);
+          CK_OFF_T space = zdskspace(0);
           if (space > 0 && space < 1024)
             sprintf(vvbuf,"-1");
           else
@@ -14235,8 +14254,11 @@ nvlook(s) char *s; {
           return(browsurl[0] ? (char *)browsurl : "");
       }
 #endif /* BROWSER */
-      case VN_HERALD:
-        return((char *)versio);
+      case VN_HERALD: {
+            extern char myherald[];
+            sprintf(vvbuf,"%s",myherald);
+          }
+        return((char *)vvbuf);
 
       case VN_TEST: {                   /* test */
           extern char * ck_s_test, * ck_s_tver;
@@ -15213,7 +15235,7 @@ getbasename(s) char *s; {
   Expands \ escapes via recursive descent.
   Argument s is a pointer to string to expand (source).
   Argument s2 is the address of where to put result (destination).
-  Argument n is the length of the destination string (to prevent overruns).
+  Argument n is the length of the destination string buffer.
   Returns -1 on failure, 0 on success,
     with destination string null-terminated and s2 pointing to the
     terminating null, so that subsequent characters can be added.
@@ -15287,9 +15309,6 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
 #endif	/* COMMENT */
 
     new = *s2;                          /* for one less level of indirection */
-#ifdef COMMENT
-    old = new;
-#endif /* COMMENT */
 
 #ifndef NOSPL
     itsapattern = 0;			/* For \fpattern() */
@@ -15426,7 +15445,6 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
             } else {
                 debug(F110,"zzstring %n vp","(NULL)",0);
                 n2 = nx;
-                new = old;
                 *new = NUL;
             }
 #endif /* COMMENT */
@@ -15489,7 +15507,6 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
 			}
 
                     } else {
-                        /* old = new; */
                         n2 = nx;
                     }
                 }
@@ -15903,12 +15920,10 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
         }
     }
     *new = NUL;                         /* Terminate the new string */
-    debug(F010,"zzstring while exit",*s2,0);
-
     depth--;                            /* Adjust stack depth gauge */
     *s2 = new;                          /* Copy results back into */
     *n = n2;                            /* the argument addresses */
-    debug(F101,"zzstring ok","",depth);
+    debug(F111,"zzstring ok s2 n2",*s2,n2);
 #ifdef DVNAMBUF
     if (vnambuf) free(vnambuf);
 #endif /* DVNAMBUF */

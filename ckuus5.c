@@ -14,12 +14,14 @@ int cmdsrc() { return(0); }
       The Kermit Project, New York City
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
-    Last update: Mon May 16 12:31:56 2022
+    Last update: Fri Sep 23 16:35:07 2022
 
   Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+
+  Last update: Sat Sep 24 16:41:30 2022 (set \v(herald) in herald() - fdc).
 */
 
 /* Includes */
@@ -36,7 +38,7 @@ char *tmpbuf;
 char line[LINBUFSIZ+1];
 char tmpbuf[TMPBUFSIZ+1];               /* Temporary buffer */
 #endif /* DCMDBUF */
-char lasttakeline[TMPBUFSIZ+1];        /* Last TAKE-file line */
+char lasttakeline[TMPBUFSIZ+1];         /* Last TAKE-file line */
 
 #ifndef NOICP
 
@@ -62,10 +64,12 @@ extern char * ck_cryear;       /* (ckcmai.c) Latest C-Kermit copyright year */
 #undef COMMENT
 #else /* NT */
 #include <windows.h>
+#ifndef NODIAL
 #define TAPI_CURRENT_VERSION 0x00010004
 #include <tapi.h>
 #include <mcx.h>
 #include "ckntap.h"
+#endif  /* NODIAL */
 #define APIRET ULONG
 extern int DialerHandle;
 extern int StartedFromDialer;
@@ -242,7 +246,7 @@ char * ikprompt = "IKSD>";
 #ifdef COMMENT
 char * ckprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] K-95> ";
 #else
-char * ckprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] C-Kermit> ";
+char * ckprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] CKW> ";
 #endif /* COMMENT */
 char * ikprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] IKSD> ";
 #else  /* NT */
@@ -502,7 +506,7 @@ char kermrcb[KERMRCL];
 char *kermrc = kermrcb;
 #endif /* DCMDBUF */
 
-int noherald = 0;
+int noherald = 0;         /* Whether to print the program herald on startup */
 int cm_retry = 1;                       /* Command retry enabled */
 xx_strp xxstring = zzstring;
 
@@ -2093,7 +2097,7 @@ getncm(s,n) char *s; int n; {
         popclvl();                      /* pop command level. */
         return(-1);
     } else {                            /* otherwise, tack CR onto end */
-        *s++ = CR;
+        *s++ = CK_CR;
         *s = '\0';
         /* debug(F110,"getncm OK",s,0); */
         if (mecho && pflag)             /* If MACRO ECHO ON, echo the cmd */
@@ -2234,7 +2238,7 @@ getnct(s,n,f,flag) char *s; int n; FILE *f; int flag; {
           len = 0;
         if (techo && pflag) {            /* If TAKE ECHO ON, */
             if (flag) {
-                printf("%3d. %s",             /* echo it this line. */
+                printf("%3d. %s",
 #ifndef NODIAL
                     flag ? dirline :
 #endif /* NODIAL */
@@ -2242,7 +2246,7 @@ getnct(s,n,f,flag) char *s; int n; FILE *f; int flag; {
                     lp2
                     );
             } else {
-                printf("%3d. %3d. %s",             /* echo it this line. */
+                printf("%3d. %3d. %s",
                     tfline[tlevel],
                     tfblockstart[tlevel],
                     lp2
@@ -2260,9 +2264,9 @@ getnct(s,n,f,flag) char *s; int n; FILE *f; int flag; {
 
         /* Isolate, remove, and check terminator */
 
-        c = lp2[len];                   /* Value of line terminator */
+        c = lp2[len];              /* Value of line terminator */
         /* debug(F101,"getnct terminator","",c); */
-        if (c < LF || c > CR) {         /* It's not a terminator */
+        if (c < LF || c > CK_CR) {  /* It's not a terminator */
             /* debug(F111,"getnct bad line",lp2,c); */
             if (feof(f) && len > 0 && len < n) {
                 /* Kludge Alert... */
@@ -3930,16 +3934,14 @@ outerr:                                 /* OUTPUT command error handler */
 }
 #endif /* NOSPL */
 
-/* Display version herald and initial prompt */
+/* Display version herald */
 
 VOID
 herald() {
-    int x = 0, i;
-    extern int srvcdmsg;
+    extern char myherald[];
     extern char * cdmsgfile[];
-    char * ssl;
-    char * krb4;
-    char * krb5;
+    extern int srvcdmsg;
+    int x = 0, i;
 
 #ifndef NOCMDL
     extern char * bannerfile;
@@ -3964,78 +3966,12 @@ herald() {
     }
 #endif /* NOCMDL */
 
-#ifdef COMMENT
-    /* The following generates bad code in SCO compilers. */
-    /* Observed in both OSR5 and Unixware 2 -- after executing this */
-    /* statement when all conditions are false, x has a value of -32. */
-    if (noherald || quiet || bgset > 0 || (bgset != 0 && backgrd != 0))
-      x = 1;
-#else
-    x = 0;
-    if (noherald || quiet)
-      x = 1;
-    else if (bgset > 0)
-      x = 1;
-    else if (bgset < 0 && backgrd > 0)
-      x = 1;
-#endif /* COMMENT */
-
-    ssl = "";
-    krb4 = "";
-    krb5 = "";
-#ifdef CK_AUTHENTICATION
-#ifdef CK_SSL    
-    ssl = "+SSL";
-#endif	/* CK_SSL */
-#ifdef KRB4
-    krb4 = "+KRB4";
-#endif	/* KRB4 */
-#ifdef KRB5
-    krb5 = "+KRB5";
-#endif	/* KRB5 */
-#endif	/* CK_AUTHENTICATION */
-
-    if (x == 0) {
-#ifdef datageneral
-        printf("%s, for%s\n",versio,ckxsys);
-#else
-#ifdef OSK
-        printf("%s, for%s\n",versio,ckxsys);
-#else
-#ifdef CK_64BIT
-        printf("%s, for%s%s%s%s (64-bit)\n\r",versio,ckxsys,ssl,krb4,krb5);
-#else
-        printf("%s, for%s%s%s%s\n\r",versio,ckxsys,ssl,krb4,krb5);
-#endif/* CK_64BIT */
-#endif /* OSK */
-#endif /* datageneral */
+    if (!noherald) {
+        printf("%s\n",myherald);
         printf(" Copyright (C) 1985, %s,\n", ck_cryear);
         printf("  Trustees of Columbia University in the City of New York.\n");
-#ifdef COMMENT
-#ifdef OS2
-       shoreg();
-#endif /* OS2 */
-#endif /* COMMENT */
-
-        if (!quiet && !backgrd) {
-#ifdef COMMENT
-/* "Default file-transfer mode is AUTOMATIC" is useless information... */
-            char * s;
-            extern int xfermode;
-#ifdef VMS
-            s = "AUTOMATIC";
-#else
-            if (xfermode == XMODE_A) {
-                s = "AUTOMATIC";
-            } else {
-                s = gfmode(binary,1);
-            }
-            if (!s) s = "";
-#endif /* VMS */
-            if (*s)
-              printf("Default file-transfer mode is %s\n", s);
-#endif /* COMMENT */
-
+        printf("  Open Source since 2011; License: 3-clause BSD.\n");
+        if (!quiet && !backgrd ) {
             debug(F111,"herald","srvcdmsg",srvcdmsg);
             if (srvcdmsg) {
                 for (i = 0; i < 8; i++) {
@@ -5767,10 +5703,34 @@ VOID
 shomou() {
     int button, event, id, i;
     char * name = "";
+    extern int mouse_reporting_mode;
+    extern BOOL mouse_reporting_override;
 
     printf("Mouse settings:\n");
     printf("   Button Count:   %d\n",mousebuttoncount());
-    printf("   Active:         %s\n\n",showoff(tt_mouse));
+    printf("   Active:         %s\n",showoff(tt_mouse));
+
+    printf("   Reporting:      ");
+    if (MOUSE_REPORTING_TEST_FLAG(mouse_reporting_mode,
+                                  MOUSEREPORTING_DISABLE)) {
+        printf("Disabled");
+    } else {
+        printf("%s ", mouse_reporting_override ? "Override" : "Enabled");
+        if (MOUSE_REPORTING_TEST_FLAG(mouse_reporting_mode,
+                                      MOUSEREPORTING_SGR)) {
+            printf("(SGR)");
+        } else if (MOUSE_REPORTING_TEST_FLAG(mouse_reporting_mode,
+                                             MOUSEREPORTING_URXVT)) {
+            printf("(URXVT)");
+        } else if (MOUSE_REPORTING_TEST_FLAG(mouse_reporting_mode,
+                                             MOUSEREPORTING_X11)) {
+            printf("(X11)");
+        } else if (MOUSE_REPORTING_TEST_FLAG(mouse_reporting_mode,
+                                             MOUSEREPORTING_X10)) {
+            printf("(X10)");
+        }
+    }
+    printf("\n\n");
 
     for (button = 0; button < MMBUTTONMAX; button++)
       for (event = 0; event < MMEVENTSIZE; event++)
@@ -6871,13 +6831,17 @@ doshow(x) int x; {
 #endif /* NOSPL */
       if (x == SHFUN) {                 /* For SHOW FUNCTIONS */
           int y;
-          if ((y = cmtxt("Match string for function names","",&s,NULL)) < 0)
-            return(y);
+          if ((y = cmtxt("Match string for function names","",&s,NULL)) < 0) {
+              return(y);
+          }
           fnbuf[0] = NUL;
-          if (!s) s = "";
-          if (*s) ckstrncpy(fnbuf,s,100);
-      } else if ((y = cmcfm()) < 0) {
-          return(y);
+          if (!s) { s = ""; }
+          if (*s) { ckstrncpy(fnbuf,s,100); }
+      } else {
+          y = cmcfm();
+          if (y < 0) {
+              return(y);
+          }
       }
 
 #ifdef COMMENT
@@ -8070,7 +8034,7 @@ doshow(x) int x; {
           printf(" --bannerfile=%s\n",bannerfile ? bannerfile : "(null)");
           printf(" --cdfile:%s\n",cdmsgstr ? cdmsgstr : "(null)");
           printf(" --cdmessage:%d\n",srvcdmsg);
-          printf(" --helpfile:%d\n",helpfile);
+          printf(" --helpfile:%s\n",helpfile);
           if (inserver) {
               printf("\n");
               break;
@@ -8335,7 +8299,7 @@ shomac(s1, s2) char *s1, *s2; {
             x = '\n';
         }
         if (inserver && (x == '\n'))    /* Send CR before LF */
-          putchar(CR);
+          putchar(CK_CR);
         putchar((CHAR)x);               /* Output the character */
         if (x == '\n') {                /* If it was a newline */
 #ifdef UNIX
@@ -8350,7 +8314,7 @@ shomac(s1, s2) char *s1, *s2; {
         } else if (++n > (cmd_cols - 1)) { /* If line is too wide */
             putchar('-');               /* output a dash */
             if (inserver)
-              putchar(CR);              /* and a carriage return */
+              putchar(CK_CR);           /* and a carriage return */
             putchar(NL);                /* and a newline */
 #ifdef UNIX
 #ifdef NOSETBUF
@@ -8367,7 +8331,7 @@ shomac(s1, s2) char *s1, *s2; {
         }
     }
     if (inserver)
-      putchar(CR);
+      putchar(CK_CR);
     putchar(NL);                        /* End of definition */
     if (++slc > (cmd_rows - 3)) {
         if (!askmore()) return(-1);
@@ -11696,6 +11660,10 @@ initoptlist() {
 #ifdef __WATCOMC__
     makestr(&(optlist[noptlist++]),"__WATCOMC__");
 #endif
+#ifdef _MSC_VER
+    sprintf(line,"_MSC_VER=%d",_MSC_VER); /* SAFE */
+    makestr(&(optlist[noptlist++]),line);
+#endif
 #ifdef CK_ANSIC
     makestr(&(optlist[noptlist++]),"CK_ANSIC");
 #endif
@@ -11768,6 +11736,9 @@ initoptlist() {
 #ifdef CK_RTSCTS
     makestr(&(optlist[noptlist++]),"CK_RTSCTS");
 #endif /* CK_RTSCTS */
+#ifdef CKT_NT31
+    makestr(&(optlist[noptlist++]),"CKT_NT31");
+#endif /* CKT_NT31 */
 #ifdef POSIX_CRTSCTS
     makestr(&(optlist[noptlist++]),"POSIX_CRTSCTS");
 #endif /* POSIX_CRTSCTS */
@@ -11864,6 +11835,9 @@ initoptlist() {
 #ifdef NOHTTP
     makestr(&(optlist[noptlist++]),"NOHTTP");
 #endif /* NOHTTP */
+#ifdef NONTLM
+    makestr(&(optlist[noptlist++]),"NONTLM");
+#endif
 #ifdef CKROOT
     makestr(&(optlist[noptlist++]),"CKROOT");
 #endif /* CKROOT */
@@ -11942,6 +11916,9 @@ initoptlist() {
     makestr(&(optlist[noptlist++]),line);
 #endif	/* OPENSSL_VERSION_TEXT */
 #endif /* CK_SSL */
+#ifdef CK_CONPTY
+    makestr(&(optlist[noptlist++]),"CK_CONPTY");
+#endif  /* CK_CONPTY */
     debug(F101,"initoptlist noptlist","",noptlist);
     sh_sort(optlist,NULL,noptlist,0,0,0);
 }

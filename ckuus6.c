@@ -13,8 +13,11 @@
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
-  Last update:
-    Sun May  8 16:02:07 2022
+  Last updates:
+    Mon Aug 22 20:11:01 2022 (for TYPE /INTERPRET)
+    Wed Aug 31 15:46:35 2022 (to disable TYPE /INTERPRET in Windows)
+    Tue Sep 20 15:40:49 2022 (for COPY /TOSCREEN and /INTERPRET)
+    Fri Sep 23 16:40:42 2022 (corrections from David Goodwin)
 */
 
 /* Includes */
@@ -81,8 +84,10 @@ extern int k95stdout;
 #else
 #define APIRET ULONG
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"
+#endif  /* NODIAL */
 #endif /* NT */
 #include "ckocon.h"
 #include "ckodir.h"			/* [jt] 2013/11/21 - for MAXPATHLEN */
@@ -141,6 +146,10 @@ extern char cmdbuf[], atmbuf[];         /* Command buffers */
 #endif /* DCMDBUF */
 
 extern int nopush;
+
+#ifdef TYPEINTERPRET
+extern int type_intrp;                  /* TYPE /INTERPRET */
+#endif  /* TYPEINTERPRET */
 
 #ifndef NOSPL
 int askflag = 0;                        /* ASK-class command active */
@@ -276,12 +285,27 @@ static struct keytab r_collision[] = {
     { "skip",      RENX_SKIP, 0 }
 };
 static int nr_collision = sizeof(r_collision)/sizeof(struct keytab);
-
+/*
+  This started out being a clone of the DELETE command parser, but
+  now it has some unique switches of its own with numeric IDs instead
+  of DEL_xxx.  Census:
+    999 swap-bytes
+    998 append
+    997 fromb64
+    996 tob64
+    995 preserve
+    994 overwrite
+    993 toscreen
+    992 interpret
+*/
 struct keytab copytab[] = {
     { "/append",      998,      0 },
 #ifndef NOSPL
     { "/fromb64",     997,      0 },
 #endif /* NOSPL */
+#ifdef COPYINTERPRET
+    { "/interpret",   992,      0 },    /* fdc 20 Sep 2022 */
+#endif  /* COPYINTERPRET */
     { "/l",           DEL_LIS,  CM_INV|CM_ABR },
     { "/list",        DEL_LIS,  0 },
     { "/log",         DEL_LIS,  CM_INV },
@@ -297,6 +321,7 @@ struct keytab copytab[] = {
 #ifndef NOSPL
     { "/tob64",       996,      0 },
 #endif /* NOSPL */
+    { "/toscreen",    993,      0 },
     { "/verbose",     DEL_VRB,  CM_INV }
 };
 int ncopytab = sizeof(copytab)/sizeof(struct keytab);
@@ -3843,7 +3868,7 @@ typegetline(incs, outcs, buf, n) int incs, outcs, n; char * buf; {
                 }
 #else
                 if (a == LF) {
-                    if (s[len] == CR) { /* This probably won't happen */
+                    if (s[len] == CK_CR) { /* This probably won't happen */
                         s[len] = NUL;
                         s--;
                         len--;
@@ -3859,9 +3884,21 @@ typegetline(incs, outcs, buf, n) int incs, outcs, n; char * buf; {
         *s = '\0';                      /* Terminate the string */
     }
 #endif /* COMMENT */
+
+#ifdef TYPEINTERPRET
+#ifndef NT                              /* (or should this be OS2?) */
+  dointerpret:
+    if ( type_intrp )  {                /* TYPE /INTERPRET (2022-08-22 fdc) */
+        int zzrc = 0;                   /* Returncode for zzstring */
+        int tmplen = TMPBUFSIZ;
+        char * newbuf = tmpbuf;         /* New string to create */
+        zzrc = zzstring(buf, &newbuf, &tmplen); /* Interpret the string */
+        len = ckstrncpy(buf, tmpbuf, TYPBUFL);  /* Replace original string */
+    }
+#endif  /* NT */
+#endif  /* TYPEINTERPRET */
     return(x < 0 ? -1 : len);
 }
-
 
 #ifndef MAC
 SIGTYP
@@ -3880,11 +3917,14 @@ tytrap(foo) int foo;
 }
 #endif /* MAC */
 
+_PROTOTYP(char * cvtstring,(char*,int,int));
+
 int
 dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
     char * file, * pat, * prefix; int paging, first, head, width, incs, outcs;
     char * outfile; int z;
 /* dotype */ {
+
     extern CK_OFF_T ffc;
     char buf[TYPBUFL+2];
     char * s = NULL;
@@ -4018,6 +4058,7 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
           rc = 0;
         goto xdotype;
     }
+/*  printf("%s: %d\n","DOTYPE tlevel BEFORE open:",tlevel); */
     if (!zopeni(ZIFILE, file)) {        /* Not a directory, open it */
         debug(F111,"dotype zopeni failure",file,0);
         if (xcmdsrc == 0) {
@@ -4027,6 +4068,7 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
           rc = 0;
         goto xdotype;
     }
+/*  printf("%s: %d\n","DOTYPE tlevel AFTER open:",tlevel); */
 
 #ifndef AMIGA
 #ifndef MAC
@@ -4086,8 +4128,33 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
          (len = typegetline(incs,outcs,buf,TYPBUFL)) > -1;
          lines++
          ) {
-        debug(F011,"dotype line",buf,len);
-#ifndef MAC
+        debug(F111,"dotype line",buf,len);
+
+#ifdef TYPEINTERPRET                    /* 2022-08-31 fdc */
+#ifdef NT                               /* Or should this be OS2? */
+        if (type_intrp) {               /* TYPE /INTERPRET? */
+            int zzrc = 0, tmplen = 0;   /* Return code for zzstring */
+            char * cvtbuf;              /* Pointer to conversion buffer */
+            char * newbuf = malloc(TYPBUFL+3); /* Buffer for zzstring result */
+            char * resultbuf;
+/*
+  The line has been returned to us as UCS-2 but we need to feed it to
+  zzstring() to interpret all the backslash escapes, but zzstring doesn't
+  understand UCS-2.  So we have to convert it from UCS2 (outcs) back to incs;
+  feed it to zzstring(), and then convert it back to UCS2 (outcs).
+*/
+            cvtbuf = cvtstring(buf,outcs,incs); /* UCS2->original cset */
+            debug(F110,"dotype interpret cvtbuf",cvtbuf,0);
+            zzstring(cvtbuf, &newbuf, &tmplen);  /* Evaluate it */
+            resultbuf = cvtstring(newbuf,incs,outcs); /* Back to UCS2 */
+            ckstrncpy(buf, resultbuf, TYPBUFL+3);
+            debug(F110,"dotype interpret zzstring result buf",buf,0);
+            free(newbuf);
+        }
+#endif /* NT */
+#endif /* TYPEINTERPRET */
+
+#ifndef MAC                             /*  */
         if (typ_int) {                  /* Interrupted? */
             typ_int = 0;
             debug(F101,"type interrupted line","",lines);
@@ -4210,15 +4277,17 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
               n += x;                   /* This assumes terminal will wrap */
         }
 #ifdef KUI
+#ifndef NORICHEDIT
         if ( gui ) {
             int i;
             unsigned short * uch = (unsigned short *)buf;
             for ( i=0; i<len/2; i++)
                 gui_text_popup_append(uch[i]);
-			gui_text_popup_append(CR);
+			gui_text_popup_append(CK_CR);
 			gui_text_popup_append(LF);
         } 
         else
+#endif /* NORICHEDIT */
 #endif /* KUI */
         typeline(buf,len,outcs,ofp);    /* Print line, length based */
 #ifdef CK_TTGWSIZ
@@ -4226,10 +4295,11 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
         if (paging > 0 && ofp == stdout) { /* Pause at end of screen */
             if (cmd_rows > 0 && cmd_cols > 0) {
                 if (n > cmd_rows - 3) {
-                    if (!askmore())
+                    if (!askmore()) {
                       goto xdotype;
-                    else
+                    } else {
                       n = 0;
+                    }
                 }
             }
         }
@@ -4277,10 +4347,11 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
             if (paging && ofp == stdout) { /* Pause at end of screen */
                 if (cmd_rows > 0 && cmd_cols > 0) {
                     if (n > cmd_rows - 3) {
-                        if (!askmore())
-                          break;
-                        else
-                          n = 0;
+                        if (!askmore()) {
+                            break;
+                        } else {
+                            n = 0;
+                        }
                     }
                 }
             }
@@ -4323,8 +4394,10 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
 #endif /* UNICODE */
 
 #ifdef KUI
+#ifndef NORICHEDIT
     if ( gui )
         gui_text_popup_wait(-1);        /* Wait for user to close the dialog */
+#endif /* NORICHEDIT */
 #endif /* KUI */
     return(rc);
 }
@@ -4706,7 +4779,7 @@ dogrep() {
                   sline += (len / cmd_cols) + 1;
                 fprintf(ofp,"%s\n",line); /* Print the line. */
                 if (sline > cmd_rows - 3) {
-                    if (!askmore()) goto xgrep; else sline = 0;
+                    if (!askmore()) { goto xgrep; } else { sline = 0; }
                 }
             }
         }
@@ -4727,7 +4800,7 @@ dogrep() {
             }
             if (x > 0) {
                 if (++sline > cmd_rows - 3) {
-                    if (!askmore()) goto xgrep; else sline = 0;
+                    if (!askmore()) { goto xgrep; } else { sline = 0; }
                 }
             }
         }
@@ -6532,8 +6605,9 @@ preserving original modtime: %s %s\n",
                     if (!askmore()) {
                         rc = 0;
                         goto xdomydir;
-                    } else
-                      n = 0;
+                    } else {
+                        n = 0;
+                    }
                 }
 #endif /* CK_TTGWSIZ */
             }
@@ -6597,8 +6671,9 @@ preserving original modtime: %s %s\n",
                     if (!askmore()) {
                         rc = 0;
                         goto xdomydir;
-                    } else
-                      n = 0;
+                    } else {
+                        n = 0;
+                    }
                 }
 #endif /* CK_TTGWSIZ */
             }
@@ -7552,7 +7627,7 @@ dodel() {                               /* DELETE */
                         printf(" %s (SKIPPED)\n",tmpbuf);
 #ifdef CK_TTGWSIZ
                         if (++n > cmd_rows - 3)
-                          if (!askmore()) goto xdelete; else n = 0;
+                          if (!askmore()) { goto xdelete; } else { n = 0; }
 #endif /* CK_TTGWSIZ */
                     }
 #endif /* COMMENT */
@@ -7580,8 +7655,9 @@ dodel() {                               /* DELETE */
                         if (x_lis > 0) {
                             lines++;
                             printf(" %s (OK)\n",tmpbuf);
-                            if (++n > cmd_rows - 3)
-                              if (!askmore()) goto xdelete; else n = 0;
+                            if (++n > cmd_rows - 3) {
+                              if (!askmore()) { goto xdelete; } else { n = 0; }
+                            }
                         }
                     } else {
                         bad++;
@@ -7589,8 +7665,9 @@ dodel() {                               /* DELETE */
                         if (x_lis > 0) {
                             lines++;
                             printf(" %s (FAILED: %s)\n",tmpbuf,ck_errstr());
-                            if (++n > cmd_rows - 3)
-                              if (!askmore()) goto xdelete; else n = 0;
+                            if (++n > cmd_rows - 3) {
+                              if (!askmore()) { goto xdelete; } else { n = 0; }
+                            }
                         }
                     }
                 } else if (/* pass > 0 && */ deldirs && itsadir) {
@@ -7600,8 +7677,9 @@ dodel() {                               /* DELETE */
                         if (x_lis > 0) {
                             lines++;
                             printf(" %s (OK)\n",tmpbuf);
-                            if (++n > cmd_rows - 3)
-                              if (!askmore()) goto xdelete; else n = 0;
+                            if (++n > cmd_rows - 3) {
+                              if (!askmore()) { goto xdelete; } else { n = 0; }
+                            }
                         }
                     } else {
                         success = 0;
@@ -7610,8 +7688,9 @@ dodel() {                               /* DELETE */
                             printf(" %s (FAILED: %s)\n",
                                    tmpbuf,
                                    ck_errstr());
-                            if (++n > cmd_rows - 3)
-                              if (!askmore()) goto xdelete; else n = 0;
+                            if (++n > cmd_rows - 3) {
+                              if (!askmore()) { goto xdelete; } else { n = 0; }
+                            }
                         }
                     }
                 } else if (x_lis > 0) {
@@ -7620,15 +7699,17 @@ dodel() {                               /* DELETE */
                       printf(" %s (FAILED: directory)\n",tmpbuf);
                     else
                       printf(" %s (FAILED: not a regular file)\n",tmpbuf);
-                    if (++n > cmd_rows - 3)
-                      if (!askmore()) goto xdelete; else n = 0;
+                    if (++n > cmd_rows - 3) {
+                        if (!askmore()) { goto xdelete; } else { n = 0; }
+                    }
                 }
             }
             if (x_hdg > 0) {
                 if (lines > 0)
                   printf("\n");
-                if (++n > cmd_rows - 3)
-                  if (!askmore()) goto xdelete; else n = 0;
+                if (++n > cmd_rows - 3) {
+                  if (!askmore()) { goto xdelete; } else { n = 0; }
+                }
                 printf("%d file%s %sdeleted, %d byte%s %sfreed%s\n",
                        count,
                        count != 1 ? "s" : "",
@@ -8616,6 +8697,8 @@ docopy() {
     int swapping = 0;
     int fromb64 = 0;
     int tob64 = 0;
+    int toscreen = 0;
+    int interpret = 0;
     int wild = 0;
     int rc = 1;
 
@@ -8697,6 +8780,15 @@ docopy() {
                 tob64 = 1;
                 break;
 #endif /* NOSPL */
+#ifdef COPYINTERPRET
+              case 992:
+                interpret = 1;
+                break;
+#endif  /* COPYINTERPRET */
+
+              case 993:
+                toscreen = 1;
+                break;
             }
             break;
           case _CMIFI:
@@ -8713,17 +8805,18 @@ docopy() {
     p = tmpbuf;                         /* Place for new name */
 
     /* Get destination name */
-    if ((x = cmofi("destination name and/or directory",
-#ifdef UNIX
-                   "."
-#else
-                   ""
-#endif /* UNIX */
-                   ,&s,xxstring)) < 0) {
-        if (x == -3) {
-            printf("?Name for destination file required\n");
-            return(-9);
-        } else return(x);
+    /*
+      Previously the default in Unix was "." but that was (literally!)
+      self-destructive: it destroyed the source file!  - fdc, 20 Sep 2022
+    */
+    if (!toscreen) {
+        x = cmofi("destination name and/or directory","",&s,xxstring);
+        if (x < 0) {
+            if (x == -3) {
+                printf("?Name for destination file required\n");
+                return(-9);
+            } else return(x);
+        }
     }
     ckstrncpy(p,s,TMPBUFSIZ);           /* Safe copy of destination name */
     if ((y = cmcfm()) < 0) return(y);
@@ -8741,44 +8834,46 @@ docopy() {
         return(-9);
     }
 #endif /* COMMENT */
-    targetisdir = isdir(p);
-    x = strlen(p);
-    if (targetisdir) {
+
+    if (toscreen == 0) {
+        targetisdir = isdir(p);
+        x = strlen(p);
+        if (targetisdir) {
 #ifdef UNIXOROSK
-        if (p[x-1] != '/') {
-            ckstrncat(p,"/",TMPBUFSIZ);
-            x++;
-        }
+            if (p[x-1] != '/') {
+                ckstrncat(p,"/",TMPBUFSIZ);
+                x++;
+            }
 #else
 #ifdef OS2
-        if (p[x-1] != '/') {
-            ckstrncat(p,"/",TMPBUFSIZ);
-            x++;
-        }
+            if (p[x-1] != '/') {
+                ckstrncat(p,"/",TMPBUFSIZ);
+                x++;
+            }
 #else
 #ifdef STRATUS
-        if (p[x-1] != '>') {
-            ckstrncat(p,">",TMPBUFSIZ);
-            x++;
-        }
+            if (p[x-1] != '>') {
+                ckstrncat(p,">",TMPBUFSIZ);
+                x++;
+            }
 #else
 #ifdef datageneral
-        if (p[x-1] != ':') {
-            ckstrncat(p,":",TMPBUFSIZ);
-            x++;
-        }
+            if (p[x-1] != ':') {
+                ckstrncat(p,":",TMPBUFSIZ);
+                x++;
+            }
 #else
-        if (p[x-1] != '/') {
-            ckstrncat(p,"/",TMPBUFSIZ);
-            x++;
-        }
+            if (p[x-1] != '/') {
+                ckstrncat(p,"/",TMPBUFSIZ);
+                x++;
+            }
 #endif /* datageneral */
 #endif /* STRATUS */
 #endif /* OS2 */
 #endif /* UNIXOROSK */
+        }
+        targetlen = x;
     }
-    targetlen = x;
-
     if (!appending) {			/* If /APPEND not given */
 	if (wild && !targetisdir) {	/* No wildcards allowed */
 	    printf(			/* if target is not a directory */
@@ -8883,9 +8978,9 @@ docopy() {
         if (listing) printf("%s => %s ",line,nm);
 
         /* Straight copy */
-        if (!swapping && !appending && !fromb64 && !tob64) {
+        if (!swapping && !appending && !fromb64 && !tob64
+            && !toscreen && !interpret) {
             debug(F110,"COPY zcopy",line,0);
-
             if ((x = zcopy(line,p)) < 0) { /* Let zcopy() do it. */
 		debug(F111,"COPY not OK",line,x);
                 switch (x) {
@@ -8979,6 +9074,8 @@ docopy() {
             FILE * in = NULL;
             FILE * out = NULL;
 
+            if (toscreen) out = (FILE *)stdout;
+
             if ((in = fopen(line,"r")) == NULL) { /* Open input file */
                 if (listing)
 		  printf("(FAILED: %s)\n",ck_errstr());
@@ -8987,31 +9084,35 @@ docopy() {
                 rc = 0;
                 continue;
             }
-            if (targetisdir) {          /* Target is directory */
-                char * buf = NULL;      /* so append this filename to it */
-                zstrip(line,&buf);
-                p[targetlen] = NUL;
-                if (buf)
-                  ckstrncat(p,buf,TMPBUFSIZ);
-            }
+            if (toscreen == 0) {
+                if (targetisdir) {      /* Target is directory */
+                    char * buf = NULL;  /* so append this filename to it */
+                    zstrip(line,&buf);
+                    p[targetlen] = NUL;
+                    if (buf)
+                      ckstrncat(p,buf,TMPBUFSIZ);
+                }
 #ifdef OS2ORUNIX
-            if (zcmpfn(line,p)) {       /* Input and output are same file? */
-                if (listing)
-                  printf("(FAILED: Source and destination identical)\n");
-		else if (!nolist)
-                  printf("?Source and destination identical - %s\n", line); 
-                rc = 0;
-                continue;
-            }
+                if (zcmpfn(line,p)) {   /* Input and output are same file? */
+                    if (listing)
+                      printf("(FAILED: Source and destination identical)\n");
+                    else if (!nolist)
+                      printf("?Source and destination identical - %s\n", line);
+                    rc = 0;
+                    continue;
+                }
 #endif /* OS2ORUNIX */
-            if ((out = fopen(p, (appending ? "a" : "w"))) == NULL) {
-                fclose(in);
-                if (listing)
-		  printf("(FAILED: %s - %s)\n",p,ck_errstr());
-		else if (!nolist)
-		  printf("?%s - %s\n",p,ck_errstr());
-                rc = 0;
-                continue;
+            }
+            if (toscreen == 0) {
+                if ((out = fopen(p, (appending ? "a" : "w"))) == NULL) {
+                    fclose(in);
+                    if (listing)
+                      printf("(FAILED: %s - %s)\n",p,ck_errstr());
+                    else if (!nolist)
+                      printf("?%s - %s\n",p,ck_errstr());
+                    rc = 0;
+                    continue;
+                }
             }
 #ifndef NOSPL
             if (tob64) {                /* Converting to Base-64 */
@@ -9063,14 +9164,16 @@ docopy() {
 
                 debug(F110,"COPY fromb64",line,0);
 
-                if ((out = fopen(p,appending ? "a" : "w")) == NULL) {
-                    fclose(in);
-                    if (listing)
-		      printf("(FAILED: %s - %s)\n",p,ck_errstr());
-		    else if (!nolist)
-		      printf("?%s - %s\n",p,ck_errstr());
-                    rc = 0;
-                    continue;
+                if (toscreen == 0) {
+                    if ((out = fopen(p,appending ? "a" : "w")) == NULL) {
+                        fclose(in);
+                        if (listing)
+                          printf("(FAILED: %s - %s)\n",p,ck_errstr());
+                        else if (!nolist)
+                          printf("?%s - %s\n",p,ck_errstr());
+                        rc = 0;
+                        continue;
+                    }
                 }
                 x = 1;
                 while (x) {
@@ -9165,8 +9268,75 @@ docopy() {
                         break;
                     }
                 }
+            } else if (toscreen || interpret) { /* fdc - 20220920 */
+                int i,x;
+                int p = 0;
+                int n = 0;
+                int linebufsize = 2000;
+                char prev = NUL;
+                char *linebuf;
+                linebuf = malloc(linebufsize + 2);
+/*
+  This is the only portable way I can think of to read a line at a time.
+  getline() isn't portable.  It has to be line by line so Kermit backslash
+  escapes aren't broken across lines for COPY /INTERPRET.
+*/
+                n = 0;
+                while (!feof(in)) {
+                    if (fread(&c,1,1,in) < 1) {
+                        break;
+                    }
+                    /* worry about LF vs CRLF... */
+                    if (c == '\013' || c == '\012') {
+                        if (p == 0 && c == '\012' && prev == '\013')
+                          continue;     /* Leftover LF from CRLF */
+                        linebuf[p] = 0; /* Null-terminate the line */
+#ifdef COPYINTERPRET
+                        /* copy /INTERPRET - fdc 20220920 */
+                        if (interpret) {
+                            int zzrc = 0; /* Return code for zzstring */
+                            int tmplen = TMPBUFSIZ;
+                            char * newbuf = tmpbuf; /* New string to create */
+                            zzrc = zzstring(linebuf, &newbuf, &tmplen);
+                            /* Replace original string */
+                            (void) ckstrncpy(linebuf, tmpbuf, linebufsize);
+                        }
+#endif  /* COPYINTERPRET  */
+                        n++;
+                        if (toscreen) { /* Write this line out to screen */
+#ifdef CK_TTGWSIZ
+                            if (n > (cmd_rows - 3)) { /* Do more-prompting */
+                                if (!askmore()) {
+                                    rc = 0;
+                                    goto xdocopy;
+                                } else {
+                                    n = 0;
+                                }
+                            }
+#endif /* CK_TTGWSIZ */
+
+                            printf("%s\n",linebuf);
+                        } else {        /* or disk file */
+                            fprintf(out,"%s\n",linebuf);
+                        }
+                        for (i = 1; i < 100; i++) { /* Clear buffer */
+                            linebuf[i] = NUL;
+                        }
+                        p = 0;          /* Reset buffer pointer */
+                    } else {            /* Normal case, accumulate the line */
+                        linebuf[p++] = c;
+                        linebuf[p] = NUL;
+                        prev = c;
+                        if (p > linebufsize) { /* line too long */
+                            rc = -1;
+                            break;
+                        }
+                    }
+                }
+              xdocopy:
+                free(linebuf);
             }
-            if (out) fclose(out);
+            if (!toscreen) if (out) fclose(out);
             if (in) fclose(in);
         }
 #ifdef VMSORUNIX
@@ -9212,7 +9382,12 @@ cvtfnout(c) char c;
 /* Convert a string from any charset to any other charset */
 
 char *
-cvtstring(s,csin,csout) char * s; int csin, csout; {
+#ifdef CK_ANSIC
+cvtstring(char* s,int csin,int csout)
+#else
+cvtstring(s,csin,csout) char * s; int csin, csout;
+#endif
+{
     int c;
     extern CK_OFF_T ffc;
 
@@ -9818,13 +9993,16 @@ dorenam() {
 		break;
 
 	      case REN_SPA:		/* /FIXSPACES: */
-		if (!noarg)
+		if (!noarg) {
 		  if ((x = cmfld("Character or string to replace spaces with",
-				 "_",&s,xxstring)) < 0)
-		    if (x == -3)
-		      s = "_";
-		    else
-		      return(x);
+				 "_",&s,xxstring)) < 0) {
+                      if (x == -3) {
+                          s = "_";
+                      } else {
+                          return(x);
+                      }
+                  }
+                }
 		makestr(&(ren_sub[0])," ");
 		makestr(&(ren_sub[1]),noarg ? "_" : brstrip(s));
 		makestr(&(ren_sub[3]),NULL);

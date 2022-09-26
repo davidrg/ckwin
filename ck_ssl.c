@@ -1,14 +1,15 @@
-char *cksslv = "SSL/TLS support, 9.0.234, 8 Oct 2020";
+char *cksslv = "SSL/TLS support, 10.0.236, 24 Sep 2022";
 /*
   C K _ S S L . C --  OpenSSL Interface for C-Kermit
 
-  Copyright (C) 1985, 2020,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
-    Author:  Jeffrey E Altman (jaltman@secure-endpoints.com)
+    Authors:  Jeffrey E Altman (jaltman@secure-endpoints.com)
                Secure Endpoints Inc., New York City
+              David Goodwin, New Zealand
 
   Provides:
 
@@ -69,6 +70,7 @@ static int ssl_installed = 1;
 int
 ck_ssh_is_installed()
 {
+#ifdef CK_SSL
 #ifdef SSHBUILTIN
 #ifdef SSLDLL
 #ifdef NT
@@ -81,9 +83,11 @@ ck_ssh_is_installed()
 #else /* SSLDLL */
     return(ssl_installed);
 #endif /* SSLDLL */
-#else
-    return 0;
-#endif
+#else  /* SSHBUILTIN */
+    return(0);
+#endif /* SSHBUILTIN */
+#endif /* CK_SSL */
+    return(0);
 }
 
 int
@@ -1155,6 +1159,10 @@ int keylength;
 static void
 ssl_display_comp(SSL * ssl)
 {
+    #ifndef OPENSSL_NO_COMP
+    const COMP_METHOD *method;
+    #endif
+
     if ( quiet )			/* fdc - Mon Nov 28 11:44:15 2005 */
         return;
 
@@ -1165,7 +1173,7 @@ ssl_display_comp(SSL * ssl)
         return;
 
 #ifndef OPENSSL_NO_COMP                  /* ifdefs Bernard Spil 12/2015 */
-    const COMP_METHOD *method = SSL_get_current_compression(ssl);
+    method = SSL_get_current_compression(ssl);
     if (method == NULL)
 #endif /* OPENSSL_NO_COMP */
         printf("Compression: None\r\n");
@@ -1473,7 +1481,9 @@ ssl_once_init(void)
 ssl_once_init()
 #endif /* CK_ANSIC */
 {
+#ifndef OPENSSL_NO_COMP
     COMP_METHOD * cm;
+#endif
     char * s;
 
     if ( !ck_ssleay_is_installed() )
@@ -1596,6 +1606,7 @@ the build.\r\n\r\n");
     SSL_library_init();
 #endif /* SSHBUILTIN */
 
+#ifndef OPENSSL_NO_COMP
 #ifdef ZLIB
     cm = COMP_zlib();
 #if OPENSSL_VERSION_NUMBER >= 0x10100005L
@@ -1615,6 +1626,7 @@ the build.\r\n\r\n");
 #endif
         SSL_COMP_add_compression_method(0xe1, cm); /* EAY's RLE ID */
 #endif /* NID_rle_compression */
+#endif /* OPENSSL_NO_COMP */
 
     /* Ensure the Random number generator has enough entropy */
     if ( !RAND_status() ) {
@@ -1742,12 +1754,29 @@ ssl_tn_init(mode) int mode;
               Now we try TLS 1.0 first, falling back to SSL 2.3
               and SSL 3.0 in that order.  Maybe there should be
               an option not to fall back.
-            */ 
+
+              2022-09-06: 7+ years later and TLS 1.0/1.1 are now deprecated and
+                usually disabled for security reasons. Use TLS_client_method
+                where available as this negotiates the newest version of TLS
+                supported by both ends. Else use TLS 1.2 or 1.0.
+        */
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+            /* OpenSSL >= 1.1.0: Negotiate the best TLS version possible */
+            tls_ctx=(SSL_CTX *)SSL_CTX_new(TLS_client_method());
+#else /* OPENSSL_VERSION_NUMBER < 0x10100000L */
+#if OPENSSL_VERSION_NUMBER >= 0x10001000L
+            /* OpenSSL >= 1.0.1: Use TLS 1.2 - not yet deprecated as of 2022-09-06 */
+            tls_ctx=(SSL_CTX *)SSL_CTX_new(TLSv1_2_client_method());
+#else
+            /* OpenSSL 0.9.8 and 1.0.0 can't handle anything newer than TSL 1.0 */
             tls_ctx=(SSL_CTX *)SSL_CTX_new(TLSv1_client_method());
+#endif /* OPENSSL_VERSION_NUMBER >= 0x10001000L */
+#endif /* OPENSSL_VERSION_NUMBER >= 0x10100000L */
             if ( tls_ctx ) {
-                debug(F110,"ssl_tn_init","TLSv1_client_method OK",0);
+                debug(F110,"ssl_tn_init","TLS_client_method OK",0);
             } else {
-                debug(F110,"ssl_tn_init","TLSv1_client_method failed",0);
+                debug(F110,"ssl_tn_init","TLS_client_method failed",0);
                 /* This can fail because we do not have RSA available */
                 tls_ctx=(SSL_CTX *)SSL_CTX_new(SSLv23_client_method());
                 if ( !tls_ctx ) {
@@ -1759,7 +1788,7 @@ ssl_tn_init(mode) int mode;
 #endif /* OPENSSL_NO_SSL3 */
                     if ( !tls_ctx ) {
                         debug(F110,
-                              "ssl_tn_init","TLSv1_client_method failed",0);
+                              "ssl_tn_init","TLS_client_method failed",0);
                         debug(F110,
                               "ssl_tn_init","All SSL client methods failed",0);
                         last_ssl_mode = -1;
@@ -2324,10 +2353,27 @@ ssl_http_init(hostname) char * hostname;
           Now we try TLS 1.0 first, falling back to SSL 2.3
           and SSL 3.0 in that order.  Maybe there should be
           an option not to fall back.
-        */ 
+
+          2022-09-06: 7+ years later and TLS 1.0/1.1 are now deprecated and
+            usually disabled for security reasons. Use TLS_client_method where
+            available as this negotiates the newest version of TLS supported by
+            both ends. Else use TLS 1.2 or 1.0.
+        */
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+        /* OpenSSL >= 1.1.0: Negotiate the best TLS version possible */
+        tls_http_ctx=(SSL_CTX *)SSL_CTX_new(TLS_client_method());
+#else /* OPENSSL_VERSION_NUMBER < 0x10100000L */
+#if OPENSSL_VERSION_NUMBER >= 0x10001000L
+        /* OpenSSL >= 1.0.1: Use TLS 1.2 - not yet deprecated as of 2022-09-06 */
+        tls_http_ctx=(SSL_CTX *)SSL_CTX_new(TLSv1_2_client_method());
+#else
+        /* OpenSSL 0.9.8 and 1.0.0 can't handle anything newer than TSL 1.0 */
         tls_http_ctx=(SSL_CTX *)SSL_CTX_new(TLSv1_client_method());
+#endif /* OPENSSL_VERSION_NUMBER >= 0x10001000L */
+#endif /* OPENSSL_VERSION_NUMBER >= 0x10100000L */
         if ( tls_http_ctx ) {
-            debug(F110,"ssl_http_init","TLSv1_client_method OK",0);
+            debug(F110,"ssl_http_init","TLS_client_method OK",0);
         }
     }
     SSL_CTX_set_default_passwd_cb(tls_http_ctx,
@@ -2839,7 +2885,11 @@ ssl_verify_crl(int ok, X509_STORE_CTX *ctx)
         /*
          * Check date of CRL to make sure it's not expired
          */
+#if OPENSSL_VERSION_NUMBER >= 0x10100005L
         i = X509_cmp_current_time(X509_CRL_get0_nextUpdate(crl));
+#else
+        i = X509_cmp_current_time(X509_CRL_get_nextUpdate(crl));
+#endif
         if (i == 0) {
             fprintf(stderr, "Found CRL has invalid nextUpdate field.\n");
             X509_STORE_CTX_set_error(ctx,
@@ -2931,7 +2981,15 @@ ssl_verify_crl(int ok, X509_STORE_CTX *ctx)
 char *
 tls_userid_from_client_cert(ssl) SSL * ssl;
 {
-#ifndef OS2		/* [jt] 2013/11/21 - K-95 doesn't have X509_to_user */
+    /* DavidG 2022-09-05: On Windows and OS/2, X509_to_user is expected to be
+     * provided by a user-supplied DLL as described here:
+     *   http://www.columbia.edu/kermit/security70.html#x3.1.4
+     * This DLL would normally be loaded in ckossl.c (search for X5092UID) but
+     * at the moment that only happens when CKW is built with SSLDLL. SSLDLL is
+     * only compatible with OpenSSL 0.9.x so in practice X509_to_user is never
+     * available. It wouldn't be hard to make it work without SSLDLL if needed.
+     */
+#ifndef OS2 /* [jt] 2013/11/21 - K-95 doesn't have X509_to_user */
     static char cn[256];
     static char *r = cn;
     int err;

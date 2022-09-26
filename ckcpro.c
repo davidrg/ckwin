@@ -7,7 +7,7 @@
 char *wartv = "Wart Version 2.15, 18 September 2020 ";
 
 char *protv =                                                     /* -*-C-*- */
-"C-Kermit Protocol Module 9.0.165, 8 May 2022";
+"C-Kermit Protocol Module 10.0.166, 23 Sep 2022";
 
 int kactive = 0;			/* Kermit protocol is active */
 
@@ -3343,7 +3343,7 @@ _PROTOTYP( int pxyz, (int) );
 #ifdef NETCONN
 #ifdef CK_SPEED
     if (is_tn) {
-	ctlp[(unsigned)255] = ctlp[CR] = 1;
+	ctlp[(unsigned)255] = ctlp[CK_CR] = 1;
 	if (parity == 'e' || parity == 'm') ctlp[127] = 1;
 	if (flow == FLO_XONX) {		/* Also watch out for Xon/Xoff */
 	    ctlp[17] = ctlp[19] = 1;

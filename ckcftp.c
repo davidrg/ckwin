@@ -2,7 +2,7 @@
 
 /*  C K C F T P  --  FTP Client for C-Kermit  */
 
-char *ckftpv = "FTP Client, 9.0.266, 8 May 2022";
+char *ckftpv = "FTP Client, 10.0.267, 23 Sep 2022";
 
 /*
   Authors:
@@ -10,6 +10,7 @@ char *ckftpv = "FTP Client, 9.0.266, 8 May 2022";
       Secure Endpoints Inc., New York City
     Frank da Cruz <fdc@columbia.edu>,
       The Kermit Project, Columbia University.
+    David Goodwin, New Zealand
 
   Copyright (C) 2000, 2022
     Trustees of Columbia University in the City of New York.
@@ -158,6 +159,7 @@ char *ckftpv = "FTP Client, 9.0.266, 8 May 2022";
 #include <signal.h>
 #ifdef OS2
 #ifdef OS2ONLY
+#define INCL_WINERRORS
 #include <os2.h>
 #endif /* OS2ONLY */
 #include "ckowin.h"
@@ -191,6 +193,14 @@ extern int TlsIndex;
 #include <errno.h>			/* Error number symbols */
 #endif	/* ERRNO_INCLUDED */
 #endif	/* HPUXPRE65 */
+
+#ifdef OS2
+#ifndef NT
+#ifdef __WATCOMC__
+#include <sys/time.h>
+#endif /* __WATCOMC__ */
+#endif /* NT */
+#endif /* OS2 */
 
 #ifndef NOTIMEH
 #include <time.h>
@@ -308,6 +318,14 @@ struct timezone {
 #include <sys/select.h>
 #endif /* SELECT_H */
 #endif /* SCO_OSR504 */
+
+#ifdef OS2
+#ifndef NT
+#ifdef __WATCOMC__
+#include <types.h>
+#endif /* __WATCOMC__ */
+#endif /* NT */
+#endif /* OS2 */
 
 #ifndef INADDR_NONE			/* 2010-03-29 */
 #define INADDR_NONE -1
@@ -10211,6 +10229,8 @@ ssl_auth() {
   Pick allowed SSL/TLS versions according to enabled bugs.
   Modified 5 Feb 2015 to default to TLS 1.0 if no bugs are enabled,
   instead of to SSL 3.0, which has the POODLE vulnerability.
+
+  Modified 7 Sep 2022 to use the best version of TLS available (DG)
 */
     if (ftp_bug_use_ssl_v2) {
         /* allow SSL 2.0 or later */
@@ -10221,8 +10241,20 @@ ssl_auth() {
         client_method = SSLv3_client_method();
 #endif /* OPENSSL_NO_SSL3 */
     } else {
-        /* default - allow TLS 1.0 or later */
+        /* default - use the best version of TLS we can */
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+        /* OpenSSL >= 1.1.0: Negotiate the best TLS version possible */
+        client_method = TLS_client_method();
+#else /* OPENSSL_VERSION_NUMBER < 0x10100000L */
+#if OPENSSL_VERSION_NUMBER >= 0x10001000L
+        /* OpenSSL >= 1.0.1: Use TLS 1.2 - not yet deprecated as of 2022-09-06 */
+        client_method = TLSv1_2_client_method();
+#else
+        /* OpenSSL 0.9.8 and 1.0.0 can't handle anything newer than TSL 1.0 */
         client_method = TLSv1_client_method();
+#endif /* OPENSSL_VERSION_NUMBER >= 0x10001000L */
+#endif /* OPENSSL_VERSION_NUMBER >= 0x10100000L */
     }
     if (auth_type && !strcmp(auth_type,"TLS")) {
         ssl_ftp_ctx=SSL_CTX_new(client_method);
@@ -10811,7 +10843,7 @@ parsefeat(s) char * s; {		/* Parse a FEATURE response */
 	  break;
 	kwbuf[i] = s[i];
     }
-    if (s[i] && s[i] != SP && s[i] != CR && s[i] != LF)
+    if (s[i] && s[i] != SP && s[i] != CK_CR && s[i] != LF)
       return;
     kwbuf[i] = NUL;
     /* xlookup requires a full (but case independent) match */
@@ -11795,7 +11827,7 @@ doftpsend2(threadinfo) VOID * threadinfo;
                 sendstart = sendstart * 10 + (int)(*p - '0');
                 p++;
             }
-            if (*p && *p != CR) {       /* Bad number */
+            if (*p && *p != CK_CR) {    /* Bad number */
                 debug(F110,"doftpsend2 bad size",ftp_reply_str,0);
                 sendstart = (CK_OFF_T)0;
             } else if (sendstart > fsize) { /* Remote file bigger than local */
@@ -13020,7 +13052,7 @@ recvrequest(cmd, local, remote, lmode, printnames, recover, pipename,
       return(proxtrans(cmd, local ? local : remote, remote));
 #endif /* FTP_PROXY */
 
-    ftprecv.tcrflag = (feol != CR) && ftprecv.is_retr;
+    ftprecv.tcrflag = (feol != CK_CR) && ftprecv.is_retr;
 
     ftprecv.reply = 0;
     ftprecv.fcs = fcs;

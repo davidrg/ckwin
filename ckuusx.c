@@ -13,7 +13,7 @@
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: 3 Jun 2022
+    Last update: 23 September 2022
 */
 
 /*
@@ -88,8 +88,17 @@ char * tgoto (const char *, int, int);
 #ifdef OS2
 #include <string.h>
 _PROTOTYP(char * os2_gethostname, (void));
+#ifndef __WATCOMC__
 #define getpid _getpid
+#endif /* __WATCOMC__ */
 #endif /* OS2 */
+
+/* fdc 26 Sep 2022 */
+#ifdef CK_ENCRYPTION
+_PROTOTYP(int ck_tn_encrypting, (void));
+_PROTOTYP(int ck_tn_decrypting, (void));
+#endif /* CK_ENCRYPTION */
+
 #ifdef BSD44
 #include <errno.h>
 #endif /* BSD44 */
@@ -165,10 +174,13 @@ _PROTOTYP( char * ckgetfqhostname,(char *));
 #ifdef OS2
 #ifdef NT
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"
+#endif /* NODIAL */
 #else /* NT */
 #define INCL_VIO
+#define INCL_WINERRORS
 #include <os2.h>
 #endif /* NT */
 #ifdef COMMENT                          /* Would you believe */
@@ -1731,7 +1743,7 @@ scanfile(name,flag,nscanfile) char * name; int * flag, nscanfile; {
 		}
 #endif /* UNICODE */
 		if (c < ' ') {		/* Check for CO controls */
-		    if (c != LF && c != CR && c != HT && c != FF) {
+		    if (c != LF && c != CK_CR && c != HT && c != FF) {
 			c0controls++;
 			if (c != ESC && c != SO && c != SI)
 			  c0noniso++;
@@ -2090,7 +2102,7 @@ scanstring(s) char * s; {
 	    }
 #endif /* UNICODE */
 	    if (c < ' ') {		/* Check for CO controls */
-		if (c != LF && c != CR && c != HT && c != FF) {
+		if (c != LF && c != CK_CR && c != HT && c != FF) {
 		    c0controls++;
 		    if (c != ESC && c != SO && c != SI)
 		      c0noniso++;
@@ -3324,6 +3336,12 @@ trap(sig) int sig;
 #endif /* UNIX */
 
 #ifdef NETPTY
+#ifdef NT
+    /* Do nothing - PTYs on Windows NT have more in common with NET_CMD than
+     * anything else. No special handling beyond what is already being done
+     * elsewhere in this function.
+     * */
+#else
     /* Clean up Ctrl-C out of REDIRECT or external protocol */
     {
 	extern PID_T pty_fork_pid;
@@ -3367,6 +3385,7 @@ trap(sig) int sig;
 	    pty_fork_pid = -1;
 	}
     }
+#endif /* NT */
 #endif	/* NETPTY */
 
 #ifdef OSK
@@ -4219,9 +4238,11 @@ showpkt(c) char c;
 	/* These sprintfs should be safe until we have 32-digit numbers */
 
         if (pd > -1L)
-          sprintf(buffer, "%c%9s%5ld%%%8ld%8ld ", CR,ckfstoa(howfar),pd,tp,ps);
+          sprintf(buffer, "%c%9s%5ld%%%8ld%8ld ",
+                  CK_CR,ckfstoa(howfar),pd,tp,ps);
         else
-          sprintf(buffer, "%c%9s      %8ld%8ld ", CR,ckfstoa(howfar),tp,ps);
+          sprintf(buffer, "%c%9s      %8ld%8ld ",
+                  CK_CR,ckfstoa(howfar),tp,ps);
         conol(buffer);
         hpos = 31;
     } else if (fdispla == XYFD_R) {     /* SERIAL */
@@ -5420,7 +5441,7 @@ dodebug(f,s1,s2,n) int f; char *s1, *s2; CK_OFF_T n;
 		  pbuf[i++] = 'F';
 		  pbuf[i++] = '>';
 		  continue;
-	      } else if (*p == CR) {
+	      } else if (*p == CK_CR) {
 		  if (i >= m-4)
 		    break;
 		  pbuf[i++] = '<';
@@ -6436,7 +6457,12 @@ clrtoeol() {
 
 #define CK_CURPOS
 int
-ck_curpos(row, col) int row, int col; {
+#ifdef CK_ANSIC
+ck_curpos(int row, int col)
+#else
+ck_curpos(row, col) int row, int col;
+#endif
+    {
     move(row, col);
     return(0);
 }

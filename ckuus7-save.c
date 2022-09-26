@@ -13,7 +13,7 @@
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: 23 September 2022
+    Last update: 12 May 2022
 */
 
 /*
@@ -44,17 +44,14 @@
 #define INCL_NOPM
 #define INCL_VIO                        /* Needed for ckocon.h */
 #define INCL_DOSMODULEMGR
-#define INCL_WINERRORS
 #include <os2.h>
 #undef COMMENT
 #else /* NT */
 #define APIRET ULONG
 #include <windows.h>
-#ifndef NODIAL
 #include <tapi.h>
-#include "ckntap.h"
-#endif
 #include "cknwin.h"
+#include "ckntap.h"
 #endif /* NT */
 #include "ckowin.h"
 #include "ckocon.h"
@@ -150,8 +147,7 @@ extern int protocol, remfile, rempipe, remappd, reliable, xreliable, fmask,
   bctr, npad, timef, timint, spsizr, spsizf, maxsps, spmax, nfils, displa,
   atcapr, pkttim, rtimo, fncact, mypadn, fdispla, f_save, pktpaus, setreliable,
   fnrpath, fnspath, atenci, atenco, atdati, atdato, atleni, atleno, atblki,
-  atblko, attypi, attypo, atsidi, atsido, atsysi, atsyso, atdisi, atdiso,
-  rpsizf;
+  atblko, attypi, attypo, atsidi, atsido, atsysi, atsyso, atdisi, atdiso;
 
 extern int stathack;
 
@@ -1721,14 +1717,7 @@ struct keytab mousetab[] = {            /* Mouse items */
     { "activate", XYM_ON,     0 },
     { "button",   XYM_BUTTON, 0 },
     { "clear",    XYM_CLEAR,  0 },
-    { "debug",    XYM_DEBUG,  0 },
-#ifdef NT
-    /* Not implemented for OS/2 yet */
-    { "reporting", XYM_REPORTING, 0 },
-#endif
-#ifndef NOSCROLLWHEEL
-    { "wheel",    XYM_WHEEL,  0 }
-#endif
+    { "debug",    XYM_DEBUG,  0 }
 };
 int nmtab = (sizeof(mousetab)/sizeof(struct keytab));
 
@@ -1741,19 +1730,6 @@ struct keytab mousebuttontab[] = {      /* event button */
     { "two",           XYM_B2, CM_INV }
 };
 int nmbtab = (sizeof(mousebuttontab) / sizeof(struct keytab));
-
-struct keytab mousewheeltab[] = {      /* event direction */
-    { "down",    XYM_WHEEL_DN, 0 },
-    { "up",      XYM_WHEEL_UP, 0 }
-};
-int nmousewheeltab = (sizeof(mousewheeltab) / sizeof(struct keytab));
-
-struct keytab mousereportingtab[] = {      /* event direction */
-    { "disabled",    XYM_REPORTING_DISABLED, 0 },
-    { "enabled",     XYM_REPORTING_ENABLED, 0 },
-    { "override",    XYM_REPORTING_OVERRIDE, 0 }
-};
-int nmousereportingtab = (sizeof(mousereportingtab) / sizeof(struct keytab));
 
 struct keytab mousemodtab[] = {         /* event button key modifier */
     { "alt",              XYM_ALT,   0 },
@@ -1838,7 +1814,7 @@ static struct keytab fdtab[] = {        /* SET FILE DISPLAY options */
 #endif /* CK_CURSES */
 #ifdef KUI
     { "gui",    XYFD_G, 0 },            /* GUI */
-#endif /* KUI */        
+#endif /* KUI */
     { "none",   XYFD_N, 0      },       /* No display */
     { "off",    XYFD_N, CM_INV },       /* Ditto */
     { "on",     XYFD_R, CM_INV },       /* On = Serial */
@@ -4195,7 +4171,7 @@ setcmask(x) int x; {
         cmask = 0377;
         parity = 0;
     }
-#ifdef KUI      
+#ifdef KUI
     KuiSetProperty(KUI_TERM_CMASK,x,0);
 #endif /* KUI */
 }
@@ -4205,7 +4181,7 @@ VOID
 setautodl(x,y) int x,y; {
     autodl = x;
     adl_ask = y;
-#ifdef KUI      
+#ifdef KUI
     KuiSetProperty(KUI_TERM_AUTODOWNLOAD,x?(y?2:1):0,0);
 #endif /* KUI */
 }
@@ -4215,7 +4191,7 @@ setautodl(x,y) int x,y; {
 VOID
 seturlhl(int x) {
     tt_url_hilite = x;
-#ifdef KUI      
+#ifdef KUI
     KuiSetProperty(KUI_TERM_URL_HIGHLIGHT,x,0);
 #endif /* KUI */
 }
@@ -6364,7 +6340,6 @@ setmou(
     extern int initvik;
     int button = 0, event = 0;
     char * p;
-    BOOL isWheelNotButton;
 
     if ((y = cmkey(mousetab,nmtab,"","",xxstring)) < 0)
       return(y);
@@ -6402,53 +6377,17 @@ setmou(
         initvik = 1;                    /* Update VIK Table */
         return 1;
     }
-
-    if (y == XYM_REPORTING) {
-        extern int mouse_reporting_mode;
-        extern BOOL mouse_reporting_override;
-        int setting = cmkey(mousereportingtab,nmousereportingtab,
-                            "Mouse reporting behavior","enabled",
-                            xxstring);
-        if (setting < 0) return setting;
-
-        switch(setting) {
-            case XYM_REPORTING_DISABLED:
-                mouse_reporting_mode |= MOUSEREPORTING_DISABLE;
-                break;
-            case XYM_REPORTING_ENABLED:
-                /* If mouse reporting isn't currently disabled do nothing
-                 * otherwise we might accidentally deactivate it if the mode
-                 * isn't already _NONE */
-                mouse_reporting_mode &= ~MOUSEREPORTING_DISABLE;
-                mouse_reporting_override = FALSE;
-                break;
-            case XYM_REPORTING_OVERRIDE:
-                mouse_reporting_mode &= ~MOUSEREPORTING_DISABLE;
-                mouse_reporting_override = TRUE;
-                break;
-        }
-        return 1;
-    }
-    if (y != XYM_BUTTON && y != XYM_WHEEL) {           /* Shouldn't happen. */
+    if (y != XYM_BUTTON) {              /* Shouldn't happen. */
         printf("Internal parsing error\n");
         return(-9);
     }
 
     /* MOUSE EVENT ... */
 
-    if (y == XYM_BUTTON) {
-        if ((button = cmkey(mousebuttontab,nmbtab,
-                            "Button number","1",
-                            xxstring)) < 0)
-          return(button);
-        isWheelNotButton = FALSE;
-    } else {
-        if ((button = cmkey(mousewheeltab,nmousewheeltab,
-                            "Mouse wheel direction","up",
-                            xxstring)) < 0)
-          return(button);
-        isWheelNotButton = TRUE;
-    }
+    if ((button = cmkey(mousebuttontab,nmbtab,
+                        "Button number","1",
+                        xxstring)) < 0)
+      return(button);
 
     if ((y =  cmkey(mousemodtab,nmmtab,
                     "Keyboard modifier","none",
@@ -6457,12 +6396,8 @@ setmou(
 
     event |= y;                         /* OR in the bits */
 
-    if (!isWheelNotButton) {
-        if ((y = cmkey(mclicktab,nmctab,"","click",xxstring)) < 0)
-          return(y);
-    } else {
-        y = XYM_C1; /* mouse wheel is always a single click. */
-    }
+    if ((y =  cmkey(mclicktab,nmctab,"","click",xxstring)) < 0)
+      return(y);
 
     /* Two bits are assigned, if neither are set then it is button one */
 
@@ -6640,7 +6575,6 @@ setsr(xx, rmsflg) int xx; int rmsflg; {
                 if (protocol == PROTO_K) {
                     if (z > MAXRP) z = MAXRP;
                     y = adjpkl(z,wslotr,bigrbsiz);
-                    rpsizf = 1;   /* Packet-size override flag fdc 20220917 */
                     if (y != z) {
                         urpsiz = y;
                         if (!xcmdsrc)
@@ -7060,7 +6994,7 @@ Make sure your timeout interval is long enough for %d-byte packets.\n",z);
         if ((x = cmcfm()) < 0)
           return(x);
 #endif /* COMMENT */
-	
+
 	/* Check directory existence if absolute */
 	/* THIS MEANS IT CAN'T INCLUDE ANY DEFERRED VARIABLES! */
 	if (s) if (*s) {
@@ -7245,7 +7179,7 @@ or type carriage return to confirm the command";
     debug(F101,"remcfm local","",local);
     debug(F110,"remcfm s",s,0);
     debug(F101,"remcfm cmd","",xzcmd);
-/* 
+/*
   This check was added in C-Kermit 6.0 or 7.0 but it turns out to be
   unhelpful in the situation where the remote is running a script that sends
   REMOTE commands to the local workstation.  What happens is, the local
@@ -8891,15 +8825,15 @@ cx_fail(msg, text) int msg; char * text; {
 */
 int
 #ifdef CK_ANSIC
-cx_net( int net, int protocol, char * xhost, char * svc, 
+cx_net( int net, int protocol, char * xhost, char * svc,
         char * username, char * password, char * command,
         int param1, int param2, int param3, int cx, int sx, int flag, int gui)
 #else /* CK_ANSIC */
 cx_net(net, protocol, xhost, svc,
        username, password, command,
        param1, param2, param3, cx, sx, flag, gui)
-    char * xhost, * svc, * username, *password, *command; 
-    int net, protocol, cx, sx, flag, param1, param2, param3, gui; 
+    char * xhost, * svc, * username, *password, *command;
+    int net, protocol, cx, sx, flag, param1, param2, param3, gui;
 #endif /* CK_ANSIC */
 /* cx_net */ {
 
@@ -8976,7 +8910,7 @@ cx_net(net, protocol, xhost, svc,
             /* XXX - Is this right? */
 	    /* Should we be returning without doing anything ? */
 	    /* Yes it's right -- we closed the old connection just above. */
-	    return(success = 1);        
+	    return(success = 1);
 	}
     }
     success = 0;
@@ -9510,12 +9444,9 @@ cx_net(net, protocol, xhost, svc,
 		if (!ck_ntlm_is_installed()) {
 		    return(cx_fail(msg,
 		   "Required authentication method (NTLM) is not installed"));
-		}
-#ifdef NTLM
-        else if (line[0] != '*' && !ck_ntlm_is_valid(0)) {
+		} else if (line[0] != '*' && !ck_ntlm_is_valid(0)) {
 		    return(cx_fail(msg,"NTLM: Credentials are unavailable."));
 		}
-#endif  /* NTLM */
 	    }
 #endif /* NT */
 #ifdef CK_SSL
@@ -9595,7 +9526,7 @@ cx_net(net, protocol, xhost, svc,
 	    char * realm;
 
 	    /* We don't have the full hostname at yet so  */
-	    /* we do a DNS lookup before calling ttopen() */ 
+	    /* we do a DNS lookup before calling ttopen() */
 
 	    realm = ck_krb4_realmofhost(ckgetfqhostname(hostname));
 	    ckmakmsg(tgt,256,"krbtgt.",realm,"@",realm);
@@ -10036,11 +9967,11 @@ cx_net(net, protocol, xhost, svc,
 
 int
 #ifdef CK_ANSIC
-cx_serial(char *device, 
+cx_serial(char *device,
           int cx, int sx, int shr, int flag, int gui, int special)
 #else /* CK_ANSIC */
 cx_serial(device, cx, sx, shr, flag, gui, special)
-    char * device; int cx, sx, shr, flag, gui, special; 
+    char * device; int cx, sx, shr, flag, gui, special;
 #endif /* CK_ANSIC */
 /* cx_serial */ {
     int i, n, x, y, msg;
@@ -10084,7 +10015,7 @@ cx_serial(device, cx, sx, shr, flag, gui, special)
     debug(F110,"OS2 SET PORT final s",s,"");
 #endif /* OS2 */
 
-    /* Open the new line */        
+    /* Open the new line */
 
     ckstrncpy(ttname,s,TTNAMLEN);
     if ((y = ttopen(s,&_local,mdmtyp,cdtimo)) > -1) {
@@ -10322,8 +10253,8 @@ cx_serial(device, cx, sx, shr, flag, gui, special)
     fc == 0 to just make the connection, 1 to also CONNECT (e.g. "telnet").
 */
 int
-setlin(xx, zz, fc) 
-    int xx, zz, fc; 
+setlin(xx, zz, fc)
+    int xx, zz, fc;
 {
     extern char pwbuf[], * g_pswd;
     extern int pwflg, pwcrypt, g_pflg, g_pcpt, nolocal;
@@ -10526,9 +10457,8 @@ setlin(xx, zz, fc)
               "Command, or switch" :
                 (mynet == NET_TCPA || mynet == NET_TCPB
                   || mynet == NET_SSH) ?
-                  "Hostname, ip-address, or switch" :(mynet == NET_DLL) ?
-                        "Parameters, or switch" :
-                            "Host or switch";
+                  "Hostname, ip-address, or switch" :
+                    "Host or switch";
             if (fc) {
                 if (mynet == NET_TCPB &&
                     (ttnproto == NP_TELNET || ttnproto == NP_KERMIT)) {
@@ -10565,10 +10495,6 @@ setlin(xx, zz, fc)
         } else if (mynet == NET_CMD || mynet == NET_PTY) {
             cmfdbi(&nx,_CMTXT,"Command","","",0,0,xxstring,NULL,NULL);
 #endif /* PTYORPIPE */
-#ifdef NETDLL
-        } else if (mynet == NET_DLL) {
-            cmfdbi(&nx,_CMTXT,"Parameters","","",0,0,xxstring,NULL,NULL);
-#endif /* NETFILE */
         } else {
             cmfdbi(&nx,_CMTXT,"Host","","",0,0,xxstring,NULL,NULL);
         }
@@ -10836,53 +10762,15 @@ setlin(xx, zz, fc)
         }
 #endif /* NETCMD */
 
-#ifdef NETDLL
-        if (mynet == NET_DLL) {
-            char *p = NULL;
-            if (!confirmed) {
-                if ((x = cmtxt("Rest of command","",&s,xxstring)) < 0) {
-                  return(x);
-                }
-
-                if (*s) {
-                    ckstrncat(line," ",LINBUFSIZ);
-                    ckstrncat(line,s,LINBUFSIZ);
-                }
-                s = line;
-            }
-            /* s == line - so we must protect the line buffer */
-            s = brstrip(s);
-            makestr(&p,s);
-            ckstrncpy(line,p,LINBUFSIZ);
-            makestr(&p,NULL);
-
-            x = cx_net( mynet,                  /* nettype */
-                        0,                      /* protocol (not used) */
-                        line,                   /* host */
-                        "",                     /* port */
-                        NULL,                   /* alternate username */
-                        NULL,                   /* password */
-                        NULL,                   /* command to execute */
-                        0,                      /* param1 */
-                        0,                      /* param2 */
-                        0,                      /* param3 */
-                        cx,                     /* enter CONNECT mode */
-                        sx,                     /* enter SERVER mode */
-                        zz,                     /* close connection if open */
-                        0                       /* gui */
-                        );
-        }
-#endif /* NETDLL */
-
 #ifdef NPIPE                            /* Named pipe */
         if (mynet == NET_PIPE) {        /* Needs backslash twiddling */
             if (line[0]) {
                 if (strcmp(line,"*")) {    /* If remote, begin with */
                     char * p = NULL;
-                    makestr(&p,line);      
+                    makestr(&p,line);
                     ckstrncpy(line,"\\\\",LINBUFSIZ); /* server name */
                     ckstrncat(line,p,LINBUFSIZ);
-                    makestr(&p,NULL);      
+                    makestr(&p,NULL);
                 } else {
                     line[0]='\0';
                 }
@@ -10943,7 +10831,7 @@ setlin(xx, zz, fc)
 #endif /* SUPERLAT */
 
 #ifdef DECNET
-        if (mynet == NET_DEC) {  
+        if (mynet == NET_DEC) {
             if (!line[0]) {                   /* If they gave a host name... */
                 printf("?hostname required\n");
                 return(-3);
@@ -12636,7 +12524,7 @@ dofile(op) int op; {                    /* Do the FILE command */
             s = "(stdin)";
             goto xdofile;               /* Skip around the following */
         }
-        if (filmode & FM_STDOUT) {      /* If STDOUT specified */
+        if (filmode & FM_STDOUT) {      /* If STDIN specified */
             filmode |= FM_WRI;          /* it implies /WRITE */
             /* We don't need to parse anything further */
             s = "(stdout)";
@@ -13108,7 +12996,7 @@ dofile(op) int op; {                    /* Do the FILE command */
             if (listing < 0)
               listing = !xcmdsrc;
             if (listing)
-              printf(" %d %s%s\n",
+              printf(" %ld %s%s\n",
                      z_filcount,
                      ((rsize == RD_CHAR) ? "byte" : "line"),
                      ((z_filcount == 1L) ? "" : "s")
@@ -14330,9 +14218,9 @@ sho_iks() {
 #endif /* CK_LOGIN */
     printf("  Server-only:         %d\r\n",arg_x);
     printf("  Syslog:              %d\r\n",ckxsyslog);
-#ifdef CK_LOGIN
     printf("  Timeout (seconds):   %d\r\n",logintimo);
     printf("  Userfile:            %s\r\n",userfile?userfile:"<none>");
+#ifdef CK_LOGIN
 #ifdef CKWTMP
     printf("  Wtmplog:             %d\r\n",ckxwtmp);
     printf("  Wtmpfile:            %s\r\n",wtmpfile?wtmpfile:"<none>");
@@ -14606,7 +14494,7 @@ sho_auth(cx) int cx; {
             printf(" Verify dir: %s\n",ssl_verify_dir?
                   ssl_verify_dir:"(none)");
             if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
-            printf(" Cipher list: %s\n",ssl_cipher_list ? ssl_cipher_list : 
+            printf(" Cipher list: %s\n",ssl_cipher_list ? ssl_cipher_list :
 		    DEFAULT_CIPHER_LIST);
             if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
             if (ssl_con == NULL) {

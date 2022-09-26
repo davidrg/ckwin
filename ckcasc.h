@@ -6,7 +6,7 @@
   Author: Frank da Cruz (fdc@columbia.edu).
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2009,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -14,7 +14,7 @@
 #ifndef CKCASC_H
 #define CKCASC_H
 
-#define NUL  '\0'       /* Null Ctrl-@*/
+#define NUL  '\0'       /* Null Ctrl-@ */
 #define SOH    1        /* Start of header Ctrl-A */
 #define STX    2        /* Ctrl-B */
 #define ETX    3        /* Ctrl-C */
@@ -28,7 +28,7 @@
 #define VT    11        /* Vertical Tab Ctrl-K */
 #define NL   '\n'       /* Newline */
 #define FF    12        /* Formfeed Ctrl-L */
-#define CR    13        /* Carriage Return Ctrl-M */
+#define CK_CR 13        /* Carriage Return Ctrl-M (CR Windows conflict) */
 #define SO    14        /* Shift Out Ctrl-N */
 #define SI    15        /* Shift In Ctrl-O */
 #define DLE   16        /* Datalink Escape Ctrl-P */

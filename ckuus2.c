@@ -1,7 +1,3 @@
-#ifdef SSHTEST
-#define SSHBUILTIN
-#endif /* SSHTEST */
-
 /*  C K U U S 2  --  User interface strings & help text module for C-Kermit  */
 
 /*
@@ -10,12 +6,14 @@
       The Kermit Project, New York City
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
+    David Goodwin, New Zealand.
 
   Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: 11 May 2022
+    Last updates: 22 Aug 2022 (HELP TYPE adds /INTERPRET switch).
+                  20 Sep 2022 (HELP COPY adds /INTERPRET, /TOSCREEN switches).
 
   This module contains HELP command and other long text strings.
 
@@ -191,31 +189,55 @@ static char *tophlpi[] = {              /* Top-level help for IKSD */
 #ifndef NOHELP
 char *newstxt[] = {
 #ifdef OS2
+#ifdef NT
 "Welcome to C-Kermit for Windows, the Open-Source successor to",
+#else
+"Welcome to C-Kermit for OS/2, the Open-Source successor to",
+#endif
 "Columbia University's Kermit 95 package.",
 
 #ifdef BETATEST
 " ",
-"THIS IS A PRERELEASE TEST VERSION NOT SUITABLE FOR PRODUCTION."
-"FOR DETAILS, SEE http://www.kermitproject.org/ckwindows.html",
+"THIS IS A PRERELEASE TEST VERSION NOT YES SUITABLE FOR PRODUCTION USE.",
+"FOR DETAILS, SEE http://www.kermitproject.org/ckw10beta.html",
 #endif /* BETATEST */
 
 " ",
 "Major new features since the final Kermit 95 release include:",
-#else
-"Welcome to C-Kermit 9.0.304.  New features since 8.0.211 include:",
-#endif /* OS2 */
 " . Open Source Simplified 3-Clause BSD License",
+#else
+"Welcome to C-Kermit 10.0.",
+"New features since version 9.0 of 2011 include:",
+#endif /* OS2 */
 #ifdef OS2
 " . Source code!  The Windows edition of C-Kermit, formerly known",
 "   as Kermit 95 or K-95, is now available under the Revised 3-Clause",
 "   BSD Open Source license.",
+" . Up-to-date fully exportable SSH v2 client",
+" . Mouse wheel support, customizable with SET MOUSE WHEEL",
+"    (see HELP SET MOUSE for details)",
 #endif /* OS2 */
 #ifndef OS2
+#ifdef COMMENT
 " . Full 64-bit memory model on platforms that support it",
 " . Large file support (64-bit file size) on most platforms",
 " . Long integer variables and constants in commands and scripts",
+#endif  /* COMMENT */
+/* For 10.0 */
+" . Updated for longevity... Adapted to 2020s compilers and OS's without",
+"    sacrificing compatability with older platforms going back to the 1970s",
+"    and 1980s; at least that's the intention.",
+" . The first new C-Kermit release for Windows in 20 years.",
+" . A simpler version number: 10.0.",
+" . Updated OpenSSL support.",
+" . New serial port speeds up to 4000000 bps.",
+" . New functions and built-in variables for the scripting language.",
+" . New ability of Kermit scripts to run in a Unix pipelines.",
+" . New CHANGE command for changing strings in external text files.",
+" . Lots more; see https://kermitproject.org/updates.html",
 #endif /* OS2 */
+#ifdef COMMENT
+/* These were for 9.0 */
 " . Bigger maximum command and macro lengths",
 " . Bigger filename expansion space",
 " . New super-flexible RENAME command (HELP RENAME)",
@@ -230,27 +252,33 @@ char *newstxt[] = {
 #endif /* CK_SSL */
 " . At the prompt, Ctrl-K recalls most recent filename",
 " . Scripting and performance improvements",
-" . Bug fixes",
+#endif /* COMMENT */
 " ",
 "Documentation:",
-" 1. http://www.kermitproject.org/usingckermit.html",
-"    \"Using C-Kermit\", second edition (1997), current with C-Kermit 6.0.",
-" ",
-" 2. http://www.kermitproject.org/ckermit70.html",
-"    which documents the new features of C-Kermit 7.0.",
-" ",
-" 3. http://www.kermitproject.org/ckermit80.html",
-"    which documents the new features of C-Kermit 8.0.",
-" ",
-" 4. http://www.kermitproject.org/ckermit90.html",
-"    which documents the new features of C-Kermit 9.0.",
+" . https://www.kermitproject.org/ckbindex.html",
+"    Online index to C-Kermit documentation.",
+#ifdef OS2
+" . https://kermitproject.org/k95manual/index.html",
+"    The Kermit 95 manual from 1995-2003.",
+#endif /* OS2 */
+" . https://www.kermitproject.org/ckututor.html",
+"    C-Kermit tutorial.",
 " ",
 "If the release date shown by the VERSION command is long past, be sure to",
 "check the Kermit website to see if there have been updates:",
 " ",
-"  http://www.kermitproject.org/             (Kermit Project home page)",
-"  http://www.kermitproject.org/ckermit.html (C-Kermit home page)",
-"  http://www.kermitproject.org/ckdaily.html (C-Kermit development)",
+"  https://www.kermitproject.org/ (Kermit Project home page)",
+"  https://www.kermitproject.org/ckermit.html (C-Kermit home page)",
+#ifdef BETATEST
+"  https://www.kermitproject.org/ckupdates.html (Beta test progress)",
+"  https://www.kermitproject.org/ck10devbuilds.html (Beta test builds table)",
+#endif /* BETATEST */
+#ifdef OS2
+" ",
+"If the Kermit Project website is gone, look on Github:",
+" ",
+"  https://github.com/search?q=c-kermit+windows",
+#endif /* OS2 */
 ""
 };
 #endif /* NOHELP */
@@ -258,7 +286,11 @@ char *newstxt[] = {
 #ifndef NOHELP
 char *introtxt[] = {
 #ifdef OS2
+#ifdef NT
 "Welcome to C-Kermit for Windows, communication software for:",
+#else
+"Welcome to C-Kermit for OS/2, communication software for:",
+#endif
 #else
 #ifdef UNIX
 "Welcome to UNIX C-Kermit communications software for:",
@@ -711,13 +743,14 @@ static char * hmxxssh[] = {
 " ",
 "SSH KEY commands:",
 "  The SSH KEY commands create and manage public and private key pairs",
-"  (identities).  There are three forms of SSH keys.  Each key pair is",
+"  (identities).  There are four forms of SSH keys.  Each key pair is",
 "  stored in its own set of files:",
 " ",
 "   Key Type      Private Key File           Public Key File",
-"    v1 RSA keys   \\v(appdata)ssh/identity   \\v(appdata)ssh/identity.pub",
-"    v2 RSA keys   \\v(appdata)ssh/id_rsa     \\v(appdata)ssh/id_rsa.pub",
-"    v2 DSA keys   \\v(appdata)ssh/id_dsa     \\v(appdata)ssh/id_dsa.pub",
+"    RSA keys      \\v(home).ssh/id_rsa       \\v(home).ssh/id_rsa.pub",
+"    DSA keys      \\v(home).ssh/id_dsa       \\v(home).ssh/id_dsa.pub",
+"    ECDSA keys    \\v(home).ssh/id_ecdsa     \\v(home).ssh/id_ecdsa.pub",
+"    ED25519 keys  \\v(home).ssh/id_ed25519   \\v(home).ssh/id_ed25519.pub",
 " ",
 "  Keys are stored using the OpenSSH keyfile format.  The private key",
 "  files can be (optionally) protected by specifying a passphrase.  A",
@@ -738,21 +771,35 @@ static char * hmxxssh[] = {
 "  not provided Kermit prompts your for them.",
 " ",
 "SSH KEY CREATE [ /BITS:bits /PASSPHRASE:passphrase",
-"    /TYPE:{ V1-RSA, V2-DSA, V2-RSA } /V1-RSA-COMMENT:comment ] filename",
-"  This command creates a new private/public key pair.  The defaults are:",
-"  BITS:1024 and TYPE:V2-RSA.  The filename is the name of the private",
-"  key file.  The public key is created with the same name with .pub",
-"  appended to it.  If a filename is not specified Kermit prompts you for",
-"  it.  V1 RSA key files may have an optional comment, which is ignored",
-"  for other key types.",
+"    /TYPE:{ DSS, ECDSA, ED25519, RSA } ] filename",
+"  This command creates a new private/public key pair.  The defaults is",
+"  TYPE:ED25519.  The filename is the name of the private key file.  The",
+"  The public key is created with the same name with .pub appended to it.",
+"  If a filename is not specified Kermit prompts you for it. Key length ",
+"  options (/BITS:) depends on the key type:",
 " ",
+"    ECDSA: 256 (default), 384, 521",
+"    RSA: 1024, 2048, 3072 (default), 4096, 8192",
+"    DSS: 1024 (default), 2048",
+" ",
+"  ED25519 does not support being given a key length and any value supplied",
+"  via /BITS: will be ignored.",
+" ",
+#ifdef COMMENT
 "SSH KEY DISPLAY [ /FORMAT:{FINGERPRINT,IETF,OPENSSH,SSH.COM} ] filename",
 "  This command displays the contents of a public or private key file.",
 "  The default format is OPENSSH.",
 " ",
+#endif
+"SSH KEY DISPLAY [ /FORMAT:{FINGERPRINT,OPENSSH,SSH.COM} ] filename",
+"  This command displays the fingerprint or public key for the specified key.",
+"  Default action is to show the fingerprint.",
+" ",
+#ifdef COMMENT
 "SSH KEY V1 SET-COMMENT filename comment",
 "  This command replaces the comment associated with a V1 RSA key file.",
 " ",
+#endif
 "SSH [ OPEN ] host [ port ] [ /COMMAND:command /USER:username",
 "      /PASSWORD:pwd /VERSION:{ 1, 2 } /X11-FORWARDING:{ ON, OFF } ]",
 "  This command establishes a new connection using SSH version 1 or",
@@ -769,8 +816,10 @@ static char * hmxxssh[] = {
 "  An example of a /COMMAND to execute C-Kermit in SERVER mode is:",
 "     SSH OPEN hostname /COMMAND:{kermit -x -l 0}",
 " ",
+#ifdef COMMENT
 "SSH V2 REKEY",
 "  Requests that an existing SSH V2 connection generate new session keys.",
+#endif
 #else  /* SSHBUILTIN */
 "Syntax: SSH [ options ] <hostname> [ command ]",
 "  Makes an SSH connection using the external ssh program via the SET SSH",
@@ -828,6 +877,7 @@ static char *hmxyssh[] = {
 "    \\v(appdata)ssh/id_rsa        V2 RSA",
 "    \\v(appdata)ssh/id_dsa        V2 DSA",
 " ",
+#ifdef COMMENT
 "SET SSH KERBEROS4 TGT-PASSING { ON, OFF }",
 "  Specifies whether Kermit should forward Kerberos 4 TGTs to the host.",
 "  The default is OFF.",
@@ -836,12 +886,19 @@ static char *hmxyssh[] = {
 "  Specifies whether Kermit should forward Kerberos 5 TGTs to to the",
 "  host.  The default is OFF.",
 " ",
+#endif
 "SET SSH PRIVILEGED-PORT { ON, OFF }",
 "  Specifies whether a privileged port (less than 1024) should be used",
 "  when connecting to the host.  Privileged ports are not required except",
 "  when using SSH V1 with Rhosts or RhostsRSA authorization.  The default",
 "  is OFF.",
 " ",
+#ifdef COMMENT
+"SET SSH PROXY-COMMAND [ command ]",
+"  Specifies the command to be executed in order to connect to the remote",
+"  host. ",
+" ",
+#endif
 "SET SSH QUIET { ON, OFF }",
 "  Specifies whether all messages generated in conjunction with SSH",
 "  protocols should be suppressed.  The default is OFF.",
@@ -863,6 +920,7 @@ static char *hmxyssh[] = {
 "  after applying Kermit's SET SSH commands.  The configuration file",
 "  would be located at \\v(home)ssh/ssh_config.  The default is OFF.",
 " ",
+#ifdef COMMENT
 "SET SSH V1 CIPHER { 3DES, BLOWFISH, DES }",
 "  Specifies which cipher should be used to protect SSH version 1",
 "  connections.  The default is 3DES.",
@@ -879,28 +937,26 @@ static char *hmxyssh[] = {
 " ",
 "    \\v(appdata)ssh/known_hosts",
 " ",
-"SET SSH V2 AUTHENTICATION { EXTERNAL-KEYX, GSSAPI, HOSTBASED, ",
-"    KEYBOARD-INTERACTIVE, PASSWORD, PUBKEY, SRP-GEX-SHA1 } [ ... ]",
-"  Specifies an ordered list of SSH version 2 authentication methods to",
+#endif
+"SET SSH V2 AUTHENTICATION { GSSAPI,  KEYBOARD-INTERACTIVE, PASSWORD, ",
+"    PUBKEY } [ ... ]",
+"  Specifies an unordered list of SSH version 2 authentication methods to",
 "  be used when connecting to the remote host.  The default list is:",
 " ",
-"    external-keyx gssapi hostbased publickey srp-gex-sha1 publickey",
-"    keyboard-interactive password none",
+"    publickey keyboard-interactive password none",
 " ",
 "SET SSH V2 AUTO-REKEY { ON, OFF }",
 "  Specifies whether Kermit automatically issues rekeying requests",
 "  once an hour when SSH version 2 in in use.  The default is ON.",
 " ",
-"SET SSH V2 CIPHERS { 3DES-CBC, AES128-CBC AES192-CBC AES256-CBC",
-"     ARCFOUR BLOWFISH-CBC CAST128-CBC RIJNDAEL128-CBC RIJNDAEL192-CBC",
-"     RIJNDAEL256-CBC }",
+"SET SSH V2 CIPHERS { 3DES-CBC, AES128-CBC, AES192-CBC, AES256-CBC, ",
+"     AES128-CTR, AES192-CTR, AES256-CTR, AES128-GCM@OPENSSH.COM, ",
+"     AES256-GCM@OPENSSH.COM, CHACHAE20-POLY1305 }",
 "  Specifies an ordered list of SSH version ciphers to be used to encrypt",
 "  the established connection.  The default list is:",
 " ",
-"    aes128-cbc 3des-cbc blowfish-cbc cast128-cbc arcfour aes192-cbc",
-"    aes256-cbc",
-" ",
-"  \"rijndael\" is an alias for \"aes\".",
+"    aes256-gcm@openssh.com aes128-gcm@openssh.com aes256-ctr aes192-ctr",
+"    aes128-ctr aes256-cbc aes192-cbc aes128-cbc 3des-cbc",
 " ",
 "SET SSH V2 GLOBAL-KNOWN-HOSTS-FILE filename",
 "  Specifies the location of the system-wide known-hosts file.  The default",
@@ -908,19 +964,40 @@ static char *hmxyssh[] = {
 " ",
 "    \\v(common)ssh/known_hosts2",
 " ",
-"SET SSH V2 HOSTKEY-ALGORITHMS { SSH-DSS, SSH-RSA }",
+"SET SSH V2 HOSTKEY-ALGORITHMS { ECDSA-SHA2-NISTP256, ECDSA-SHA2-NISTP384, ",
+"     ECDSA-SHA2-NISTP521, RSA-SHA2-256, RSA-SHA2-512, SSH-DSS, SSH-ED25519, ",
+"     SSH-RSA }",
 "  Specifies an ordered list of hostkey algorithms to be used to verify",
 "  the identity of the host.  The default list is",
 " ",
-"    ssh-rsa ssh-dss",
+"    ssh-ed25519 ecdsa-sha2-nistp521 ecdsa-sha2-nistp384 ecdsa-sha2-nistp256",
+"    rsa-sha2-512 rsa-sha2-256 ssh-rsa",
 " ",
-"SET SSH V2 MACS { HMAC-MD5 HMAC-MD5-96 HMAC-RIPEMD160 HMAC-SHA1",
-"     HMAC-SHA1-96 }",
+"SET SSH V2 KEY-EXCHANGE-METHODS { CURVE25519-SHA256, ",
+"     CURVE25519-SHA256@LIBSSH.ORG, DIFFIE-HELLMAN-GROUP1-SHA1, ",
+"     DIFFIE-HELLMAN-GROUP14-SHA1, DIFFIE-HELLMAN-GROUP14-SHA256, ",
+"     DIFFIE-HELLMAN-GROUP16-SHA512, DIFFIE-HELLMAN-GROUP18-SHA512, ",
+"     DIFFIE-HELLMAN-GROUP-EXCHANGE-SHA1, ",
+"     DIFFIE-HELLMAN-GROUP-EXCHANGE-SHA256, ECDH-SHA2-NISTP256, ",
+"     ECDH-SHA2-NISTP384, ECDH-SHA2-NISTP521 }",
+"  Specifies an ordered list of Key Exchange Methods to be used to generate ",
+"  per-connection keys. The default list is:",
+" ",
+"    curve25519-sha256 curve25519-sha256@libssh.org ecdh-sha2-nistp256 ",
+"    ecdh-sha2-nistp384 ecdh-sha2-nistp521 diffie-hellman-group18-sha512",
+"    diffie-hellman-group16-sha512 diffie-hellman-group-exchange-sha256",
+"    diffie-hellman-group14-sha256 diffie-hellman-group14-sha1 ",
+"    diffie-hellman-group1-sha1 ext-info-c",
+" ",
+"SET SSH V2 MACS { HMAC-MD5, HMAC-SHA1-ETM@OPENSSH.COM, HMAC-SHA2-256, ",
+"     HMAC-SHA2-256-ETM@OPENSSH.COM, HMAC-SHA2-512, ",
+"     HMAC-SHA2-512-ETM@OPENSSH.COM, NONE }",
 "  Specifies an ordered list of Message Authentication Code algorithms to",
 "  be used for integrity  protection of the established connection.  The",
 "  default list is:",
 " ",
-"    hmac-md5 hmac-sha1 hmac-ripemd160 hmac-sha1-96 hmac-md5-96",
+"    hmac-sha2-256-etm@openssh.com hmac-sha2-512-etm@openssh.com ",
+"    hmac-sha1-etm@openssh.com hmac-sha2-256 hmac-sha2-512 hmac-sha1",
 " ",
 "SET SSH V2 USER-KNOWN-HOSTS-FILE filename",
 "  Specifies the location of the user-known-hosts file.  The default",
@@ -932,10 +1009,9 @@ static char *hmxyssh[] = {
 "  Specifies how many messages should be generated by the OpenSSH engine.",
 "  The level can range from 0 to 7.  The default value is 2.",
 " ",
-"SET SSH VERSION { 1, 2, AUTOMATIC }",
-"  Specifies which SSH version should be negotiated.  The default is",
-"  AUTOMATIC which means use version 2 if supported; otherwise to fall",
-"  back to version 1.",
+"SET SSH VERSION { 2, AUTOMATIC }",
+"  Obsolete: retained only for backwards compatibility. Only SSH Version 2",
+"  is supported now.",
 " ",
 "SET SSH X11-FORWARDING { ON, OFF }",
 "  Specifies whether X Windows System Data is to be forwarded across the",
@@ -3148,7 +3224,8 @@ static char * hmxxtyp[] = {
 "  /HEIGHT:number",
 "     When combined with /GUI specifies the height of the dialog box.",
 "  /GUI:string",
-"     Specifies the title to use for the dialog box.",
+"     Displays the contents of the file in a new scrollable GUI window.",
+"     The string (require) is the title for the window.",
 #endif /* KUI */
 "  /COUNT",
 "     Count lines (and matches) and print the count(s) but not the lines.",
@@ -3162,6 +3239,11 @@ static char * hmxxtyp[] = {
 "  /TRANSPARENT",
 "     Inhibits character-set translation.",
 #endif /* UNICODE */
+#ifdef TYPEINTERPRET
+"  /INTERPRET",
+"     Shows the file with Kermit backslash escapes interpreted.",
+#endif  /* TYPEINTERPRET */
+
 "  /OUTPUT:name",
 "     Sends results to the given file.  If this switch is omitted, the",
 "     results appear on your screen.  This switch overrides any express or",
@@ -3251,7 +3333,7 @@ static char * hmxxdate[] = {
 "    a local time in that timezone, to GMT which is then converted to the",
 "    local time at the host.  If no timezone is given, the date-time is local."
 ,"    To convert local time (or a time in a specified timezone) to UTC (GMT),",
-"    use the function \futcdate().",
+"    use the function \\futcdate().",
 " ",
 "  Delta times are given as {+,-}[number date-units][hh[:mm[:ss]]]",
 "    A date in the future/past relative to the date-time; date-units may be",
@@ -5575,6 +5657,9 @@ static char * hmxxcpy[] = {
 "  is a directory, file1 can contain wildcards to denote a group of files to",
 "  be copied to the given directory.  Switches:",
 " ",
+"  /TOSCREEN",
+"    Displays the file on the screen rather than copying to another file.",
+" ",
 "  /LIST",
 "    Print the filenames and status while copying.  Synonyms: /LOG, /VERBOSE.",
 " ",
@@ -5605,6 +5690,13 @@ static char * hmxxcpy[] = {
 " ",
 "  /TOB64",
 "    Convert to Base64 encoding while copying.",
+" ",
+"  /INTERPRET",
+"    If the file contains Kermit backslash escapes like \\v(date), \\v(time),",
+"    \\%1, \\%2, \\m(fast), etc, they are interpreted in the new copy of the",
+"    file or in the screen version, if used in combination with /TOSCREEN.",
+"    This option is not compatible most of the other options.",
+"  ",
 #endif /* NOSPL */
 ""
 };
@@ -7100,7 +7192,7 @@ case XXFUNC:
         return(-9);
     }
     x = cmgbrk();                       /* Find out how user terminated */
-    if (x == LF || x == CR)             /* if with CR or LF */
+    if (x == LF || x == CK_CR)             /* if with CR or LF */
       cmflgs = 1;                       /* restore cmflgs to say so */
     if ((x = cmcfm()) < 0)              /* And THEN confirm so command will */
       return(x);                        /* get into recall buffer. */
@@ -7151,7 +7243,7 @@ case XXKVRB: {
         return(-9);
     }
     x = cmgbrk();                       /* Find out how user terminated */
-    if (x == LF || x == CR)             /* if with CR or LF */
+    if (x == LF || x == CK_CR)             /* if with CR or LF */
       cmflgs = 1;                       /* restore cmflgs to say so */
     if ((x = cmcfm()) < 0)              /* And THEN confirm so command will */
       return(x);                        /* get into recall buffer. */
@@ -7192,6 +7284,16 @@ case XXPIPE:
 Makes a connection through the program whose command line is given. Example:\n\
 \n pipe rlogin xyzcorp.com"));
 #endif /* NETCMD */
+
+#ifdef NETPTY
+#ifdef NT
+case XXPTY:
+    /* For windows ConPTY support - run any windows text mode app inside CKW */
+    return(hmsg("Syntax: PTY [ command ]\n\
+Runs the specified command in a pseudoterminal. Example:\n\
+\n pty cmd.exe"));
+#endif
+#endif
 
 case XXSTATUS:
     return(hmsg(
@@ -7816,6 +7918,48 @@ static char *hxymouse[] = {
 "   Button 2 Drag = Kverb: \\Kmarkcopyhost",
 "   Button 2 Alt-Drag = Kverb: \\Kmarkcopyhost_noeol     ",    
 "   Button 3 Double-Click = Kverb: \\Kpaste",
+#ifndef NOSCROLLWHEEL
+"   Wheel Up = Kverb: \\Kupone",
+"   Wheel Ctrl+Up = Kverb: \\Kupscn",
+"   Wheel Down = Kverb: \\Kdnone",
+"   Wheel Ctrl+Down = Kverb: \\Kdnscn",
+#endif
+" ",
+"Syntax: SET MOUSE REPORTING { DISABLED, ENABLED, OVERRIDE }",
+" Configures sending of mouse reports to the remote host when an application",
+" requests them. The options are:",
+"   Disabled: Applications can not request mouse reports and reports will not",
+"             be sent.",
+"    Enabled: Applications can request mouse reports. Reports will only be ",
+"             sent for mouse events that have no action in C-Kermit. To ",
+"             allow an event (eg, Ctrl+Click) to be reported, map it to ",
+"             \\Kignore. For example: set mouse button 1 ctrl click \\Kignore",
+"   Override: Applications can request mouse reports. All mouse events will",
+"             be sent to the remote application regardless of what action it",
+"             is set to perform in C-Kermit. For example, if right mouse",
+"             click is set to \\Kpaste this won't occur when an application",
+"             requests mouse reporting - instead the right click will be sent",
+"             to the application.",
+" ",
+" The default setting is Enabled",
+" ",
+#ifndef NOSCROLLWHEEL
+"Syntax: SET MOUSE WHEEL <direction> <key-modifier> [ <text> ]",
+" where:",
+"  <direction> is the scrolling direction - UP for scrolling away from you,",
+"   DOWN for scrolling towards you;",
+"  <key-modifier> denotes modifier keys held down during the mouse event:",
+"   ALT, ALT-SHIFT, CTRL, CTRL-ALT CTRL-ALT-SHIFT, CTRL-SHIFT, SHIFT, NONE.",
+" ",
+" The <text> has exactly the same properties as the <text> from the SET KEY",
+" command -- it can be a character, a string, one or more Kverbs, a macro",
+" invoked as a Kverb, or any combination of these.  Thus, anything that can",
+" be assigned to a key can also be assigned to the mouse -- and vice versa.",
+" If the <text> is omitted, the action will be ignored.  Examples:",
+" ",
+"   SET MOUSE WHEEL UP CTRL \\Kupscn",
+"   SET MOUSE WHEEL DOWN ALT \\Kdnarr",
+#endif
 ""};
 #endif /* OS2MOUSE */
 
@@ -10887,7 +11031,7 @@ dohfunc(xx) int xx; {
         break;
       case FN_EVA:                      /* Eval (evaluate arith expression) */
         printf("\\fevaluate(e)\n\
-  e = arithmetic expression.\n");
+  e = arithmetic expression in ordinary algebraic notation.\n");
         printf("Returns integer:\n\
   The result of evaluating the expression.\n");
         break;
@@ -11301,7 +11445,9 @@ Assign string words to an array.\n\
   n1 = 3: yyyymmddhhmmss (all numeric)\n\
   n1 = 4: Day Mon dd hh:mm:ss yyyy (asctime)\n\
   n1 = 5: yyyy:mm:dd:hh:mm:ss (all numeric with all fields delimited)\n\
-  Other:  yyyymmdd hh:mm:dd");
+  n1 = 6: dd month-spelled-out yyyy hh:mm:ss\n\
+  Other:  yyyymmdd hh:mm:dd\n\
+  If n1 is negative (-1 to -6), the result is date only.");
         break;
 
       case FN_JDATE:                    /* DOY */

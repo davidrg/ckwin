@@ -2,12 +2,12 @@
 
 #ifndef NOICP
 #ifndef NOSCRIPT
-char *loginv = "Script Command, 9.0.032, 16 Oct 2009";
+char *loginv = "Script Command, 10.0.032, 23 Sep 2022";
 
 /*  C K U S C R  --  expect-send script implementation  */
 
 /*
-  Copyright (C) 1985, 2013,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -179,7 +179,7 @@ sequenc() {
 	    s++;
 	    switch (c = *s) {
 		case 'n':  seq_buf[i++] = LF; break;
-		case 'r':  seq_buf[i++] = CR; break;
+		case 'r':  seq_buf[i++] = CK_CR; break;
 		case 't':  seq_buf[i++] = '\t'; break;
 		case 'b':  seq_buf[i++] = '\b'; break;
 		case 'q':  seq_buf[i++] = '?';  break;
@@ -469,7 +469,7 @@ dooseq(threadinfo) VOID * threadinfo;
 	      logstr(seq_buf,strlen(seq_buf));
 	}
 	if (!no_cr) {
-	    ttoc( dopar(CR) );
+	    ttoc( dopar(CK_CR) );
 #ifdef TCPSOCKET
 	    if (is_tn) {
 		if (!TELOPT_ME(TELOPT_BINARY) && tn_nlm != TNL_CR)
@@ -482,7 +482,7 @@ dooseq(threadinfo) VOID * threadinfo;
 	    }
 #endif /* TCPSOCKET */
 	    if (seslog && duplex)
-	      logchar(dopar(CR));
+	      logchar(dopar(CK_CR));
 	}
     }
 #ifdef NTSIG

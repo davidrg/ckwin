@@ -1,9 +1,5 @@
-#ifdef SSHTEST
-#define SSHBUILTIN
-#endif /* SSHTEST */
-
 #include "ckcsym.h"
-char *userv = "User Interface 9.0.322, 03 June 2022";
+char *userv = "User Interface 10.0.327, 26 September 2022";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 
@@ -26,7 +22,7 @@ char *userv = "User Interface 9.0.322, 03 June 2022";
   ckuus7.c.  ckuus2.c contains the HELP command parser and help-text strings;
   ckuusy.c contains the UNIX-style command-line interface; ckuusx.c contains
   routines needed by both the command-line interface and the interactive
-  command parser.
+  command parser.  ckuusy.c handles command-line arguments.
 */
 
 /*
@@ -112,6 +108,10 @@ int autolocus = 2;			/* Automatic LOCUS switching: ASK */
 int autolocus = 1;			/* Automatic LOCUS switching enabled */
 #endif /* OS2 */
 
+#ifdef TYPEINTERPRET
+int type_intrp = 0;
+#endif  /* TYPEINTERPRET */
+
 #ifndef NOICP
 #ifdef CKLEARN
 #ifdef VMS
@@ -122,14 +122,17 @@ int autolocus = 1;			/* Automatic LOCUS switching enabled */
 #ifndef NT
 #define INCL_NOPM
 #define INCL_VIO			/* Needed for ckocon.h */
+#define INCL_WINERRORS
 #include <os2.h>
 #undef COMMENT
 #else
 #define APIRET ULONG
 #include <windows.h>
+#ifndef NODIAL
 #include <tapi.h>
-#include "cknwin.h"
 #include "ckntap.h"			/* CK_TAPI definition */
+#endif
+#include "cknwin.h"
 #endif /* NT */
 #include "ckowin.h"
 #include "ckocon.h"
@@ -2355,7 +2358,7 @@ char * ssh_tmpuid = NULL, *ssh_tmpcmd = NULL, *ssh_tmpport = NULL,
      * ssh_tmpstr = NULL;
 
 int
- sshk_type = SSHKT_2D,			/* SSH KEY CREATE /TYPE:x */
+ sshk_type = SSHKT_ED25519,			/* SSH KEY CREATE /TYPE:x */
  sshk_bits = 1024,			/* SSH KEY CREATE /BITS:n */
  sshk_din  = SKDF_OSSH,			/* SSH KEY DISPLAY /IN-FORMAT: */
  sshk_dout = SKDF_OSSH;			/* SSH KEY DISPLAY /OUT-FORMAT: */
@@ -2395,13 +2398,13 @@ static struct keytab sshkwtab[] = {
     { "forward-remote-port", XSSH_FRP, CM_INV },
     { "key",                 XSSH_KEY, 0 },
     { "open",                XSSH_OPN, 0 },
-    { "v2",                  XSSH_V2,  0 },
+    /*{ "v2",                  XSSH_V2,  0 },*/
     { "", 0, 0 }
 };
 static int nsshcmd = (sizeof(sshkwtab) / sizeof(struct keytab)) - 1;
 
 static struct keytab ssh2tab[] = {
-    { "rekey", XSSH2_RKE, 0 },
+    { "rekey", XSSH2_RKE, 0 }, /* Not supported by libssh */
     { "", 0, 0 }
 };
 static int nssh2tab = (sizeof(ssh2tab) / sizeof(struct keytab));
@@ -2431,14 +2434,16 @@ static struct keytab sshkey[] = {	/* SET SSH KEY command table */
     { "change-passphrase",  SSHK_PASS, 0 },
     { "create",             SSHK_CREA, 0 },
     { "display",            SSHK_DISP, 0 },
-    { "v1",                 SSHK_V1,   0 },
+    /*{ "v1",                 SSHK_V1,   0 },*/
     { "", 0, 0 }
 };
 static int nsshkey = (sizeof(sshkey) / sizeof(struct keytab)) - 1;
 
+#ifdef COMMENT
 static struct keytab sshkv1[] = {	/* SET SSH KEY V1 command table */
     { "set-comment",  1, 0 }
 };
+#endif /* COMMENT */
 
 static struct keytab sshkpsw[] = {	/* SET SSH KEY PASSPHRASE table */
     { "/new-passphrase",  2, CM_ARG },
@@ -2449,15 +2454,33 @@ static struct keytab sshkcrea[] = {	/* SSH KEY CREATE table */
     { "/bits",           SSHKC_BI, CM_ARG },
     { "/passphrase",     SSHKC_PP, CM_ARG },
     { "/type",           SSHKC_TY, CM_ARG },
-    { "/v1-rsa-comment", SSHKC_1R, CM_ARG }
+    /*{ "/v1-rsa-comment", SSHKC_1R, CM_ARG }*/
 };
 static int nsshkcrea = (sizeof(sshkcrea) / sizeof(struct keytab));
 
 static struct keytab sshkcty[] = {	/* SSH KEY CREATE /TYPE:xxx */
-    { "srp",    SSHKT_SRP, 0 },
+    /*{ "srp",  SSHKT_SRP, 0 },
     { "v1-rsa", SSHKT_1R, 0 },
     { "v2-dsa", SSHKT_2D, 0 },
-    { "v2-rsa", SSHKT_2R, 0 }
+    { "v2-rsa", SSHKT_2R, 0 }*/
+    {"dss",               SSHKT_DSS,			0 },
+    {"dss-cert01",        SSHKT_DSS_CERT01,	   CM_INV },
+    {"ecdsa",             SSHKT_ECDSA,		        0 }, /* deprecated */
+    {"ecdsa-p256",        SSHKT_ECDSA_P256,	   CM_INV },
+    {"ecdsa-p256-cert01", SSHKT_ECDSA_P256_CERT01, CM_INV },
+    {"ecdsa-p384",        SSHKT_ECDSA_P384,	   CM_INV },
+    {"ecdsa-p384-cert01", SSHKT_ECDSA_P384_CERT01, CM_INV },
+    {"ecdsa-p521",        SSHKT_ECDSA_P521,	   CM_INV },
+    {"ecdsa-p521-cert01", SSHKT_ECDSA_P521_CERT01, CM_INV },
+    {"ed25519",           SSHKT_ED25519,	       	0 },
+    {"ed25519-cert01",    SSHKT_ED25519_CERT01,	   CM_INV },
+    {"rsa",               SSHKT_RSA,			0 },
+    {"rsa1",              SSHKT_RSA1,		   CM_INV },
+    {"rsa-cert01",        SSHKT_RSA_CERT01,	   CM_INV },
+    {"sk-ecdsa",          SSHKT_SK_ECDSA,	   CM_INV },
+    {"sk-ecdsa-cert01",   SSHKT_SK_ECDSA_CERT01,   CM_INV },
+    {"sk-ed25519",        SSHKT_SK_ED25519,	   CM_INV },
+    {"sk-ed25519-cert01", SSHKT_SK_ED25519_CERT01, CM_INV }
 };
 static int nsshkcty = (sizeof(sshkcty) / sizeof(struct keytab));
 
@@ -2476,7 +2499,9 @@ static int nsshdifmt = (sizeof(sshdifmt) / sizeof(struct keytab));
 
 static struct keytab sshdofmt[] = {	/* SSH KEY DISPLAY /IN-FORMAT: */
     { "fingerprint", SKDF_FING, 0 },
-    { "ietf",        SKDF_IETF, 0 },
+    /* "bubblebabble" representation not supported by libssh
+     * { "ietf",        SKDF_IETF, 0 },
+     */
     { "openssh",     SKDF_OSSH, 0 },
     { "ssh.com",     SKDF_SSHC, 0 }
 };
@@ -3460,6 +3485,7 @@ int npagetab = sizeof(pagetab)/sizeof(struct keytab);
 #define TYP_HIG 13			/* /HEIGHT:rows */
 #endif /* KUI */
 #define TYP_NUM 14			/* /NUMBER */
+#define TYP_INT 15                      /* /INTERPRET (kermit / escapes) */
 
 static struct keytab typetab[] = {	/* TYPE command switches */
     { "/count",          TYP_COU, 0 },
@@ -3473,6 +3499,9 @@ static struct keytab typetab[] = {	/* TYPE command switches */
 #ifdef KUI
     { "/height",         TYP_HIG, CM_ARG },
 #endif /* KUI */
+#ifdef TYPEINTERPRET
+    { "/interpret",      TYP_INT, 0 },  /* New 2022-08-22 */
+#endif  /* TYPEINTERPRET */
     { "/match",          TYP_PAT, CM_ARG },
 #ifdef CK_TTGWSIZ
     { "/more",           TYP_PAG, CM_INV },
@@ -8959,8 +8988,11 @@ docmd(cx) int cx; {
 #ifdef IKSDCONF
             iksdcf &&
 #endif /* IKSDCONF */
-            (x == EN_HOS || x == EN_PRI || x == EN_MAI || x == EN_WHO ||
-              isguest))
+            (x == EN_HOS || x == EN_PRI || x == EN_MAI || x == EN_WHO
+#ifdef CK_LOGIN
+            || isguest
+#endif /* CK_LOGIN */
+            ))
             return(success = 0);
 #endif /* IKSD */
 	return(doenable(y,x));
@@ -10286,14 +10318,14 @@ docmd(cx) int cx; {
  or specify a disk letter like A:","",&s,xxstring)) < 0)
 	  return(x);
 	if (*s == NUL) {		/* Current disk */
-            unsigned long space = zdskspace(0);
+            CK_OFF_T space = zdskspace(0);
             if (space > 0 && space < 1024)
               printf(" Free space: unknown\n");
             else
 	      printf(" Free space: %ldK\n", space/1024L);
 	} else {
 	    int drive = toupper(*s);
-            unsigned long space = zdskspace(drive - 'A' + 1);
+            CK_OFF_T space = zdskspace(drive - 'A' + 1);
             if (space > 0 && space < 1024)
               printf(" Drive %c: unknown free\n");
             else
@@ -10644,6 +10676,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
     if (cx == XXSSH) {			/* SSH (Secure Shell) */
 	extern int netsave;
 #ifdef SSHBUILTIN
+        int k, havehost = 0, trips = 0;
         int    tmpver = -1, tmpxfw = -1;
 #ifndef SSHTEST
         extern int sl_ssh_xfw, sl_ssh_xfw_saved;
@@ -10703,11 +10736,40 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	}
 	switch (cmresult.nresult) {	/* SSH keyword */
 	  case XSSH_OPN:		/* SSH OPEN */
+            char tmpline[LINBUFSIZ], tmpline2[LINBUFSIZ];
+            char* token;
 	    if (!havehost) {
 		if ((x = cmfld("Host","",&s,xxstring)) < 0)
 		  return(x);
 		ckstrncpy(line,s,LINBUFSIZ);
 	    }
+            /* Try to handle username@hostname syntax */
+            ckstrncpy(tmpline,line,LINBUFSIZ);
+            token = strtok(tmpline, "@");
+            if (token != NULL) {
+                /* First part is the username */
+                makestr(&ssh_tmpuid,brstrip(token));
+                debug(F110, "Found username in the hostname!", ssh_tmpuid, 0);
+                token = strtok(NULL, "@");
+                if (token != NULL) {
+                    /* Second part is the hostname */
+                    debug(F110, "Found hostname", token, 0);
+                    ckstrncpy(tmpline2,token,LINBUFSIZ);
+                    token = strtok(NULL, "@");
+                    if (token != NULL) {
+                        /* Error - there should not be a third part. Give up */
+                        debug(F110,
+                              "Error - found third token. Giving up.",
+                              token, 0);
+                        makestr(&ssh_tmpuid,NULL);
+                    } else {
+                        ckstrncpy(line,tmpline2,LINBUFSIZ);
+                    }
+                } else {
+                    /* No second part - give up. */
+                    makestr(&ssh_tmpuid,NULL);
+                }
+            }
 	    /* Parse [ port ] [ switches ] */
 	    cmfdbi(&kw,			/* Switches */
 		   _CMKEY,
@@ -11219,7 +11281,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	      return(success);
 	    }
 	    case SSHK_CREA: {	/* SSH KEY CREATE /switches... */
-	      int bits = 1024, keytype = SSHKT_2R;
+	      int bits = 0, keytype = SSHKT_ED25519;
 	      char * pass = NULL, * comment = NULL;
 	      struct FDB df, sw;
 
@@ -11267,12 +11329,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 		  }
 		  switch (cmresult.nresult) {
 		    case SSHKC_BI:	/* /BITS:n */
-		      if ((y = cmnum("","1024",10,&z,xxstring)) < 0)
+		      if ((y = cmnum("","0",10,&z,xxstring)) < 0)
 			return(y);
-		      if (z < 512 || z > 4096) {
-			  printf("?Out range - min: 512, max: 4096\n");
-			  return(-9);
-		      }
 		      bits = z;
 		      break;
 		    case SSHKC_PP:	/* /PASSPHRASE:blah */
@@ -11282,7 +11340,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 		      break;
 		    case SSHKC_TY:	/* /TYPE:keyword */
 		      if ((y = cmkey(sshkcty,nsshkcty,"",
-				     "v2-rsa",xxstring)) < 0)
+				     "ed25519",xxstring)) < 0)
 			return(y);
 		      keytype = y;
 		      break;
@@ -11314,7 +11372,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	    }
 	    case SSHK_DISP: {	/* SSH KEY DISPLAY /switches... */
 	      char c;
-	      int infmt = 0, outfmt = 0;
+	      int infmt = 0, outfmt = SKDF_FING;
 	      struct FDB df, sw;
 	      cmfdbi(&sw,
 		     _CMKEY,		/* fcode */
@@ -11402,6 +11460,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 #endif /* SSHTEST */
 	      return(success = (x == 0));
 	    }
+#ifdef COMMENT
 	    case SSHK_V1:		/* SSH KEY V1 SET-COMMENT */
 	      if ((x = cmkey(sshkv1,1,"","set-comment", xxstring)) < 0)
 		return(x);
@@ -11423,6 +11482,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 #endif /* SSHTEST */
 	      success = (x == 0);
 	      return(success);
+#endif /* COMMENT - SSH KEY V1 SET-COMMENT */
 	  }
 	  default:
 	    return(-2);
@@ -12283,6 +12343,9 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	struct FDB sf, sw;
 	char * pat = NULL;
 	int incs = 0, outcs = 0, cset = -1, number = 0;
+#ifdef TYPEINTERPRET
+        type_intrp = 0;                 /* Always start with this off */
+#endif  /* TYPEINTERPRET */
 #ifdef UNICODE
         char * tocs = "";
 	extern int fileorder;
@@ -12477,6 +12540,12 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 		    outcs = -1;
 		    break;
 
+#ifdef TYPEINTERPRET
+		  case TYP_INT:         /* /INTERPRET */
+                    type_intrp = 1;
+		    break;
+#endif  /* TYPEINTERPRET */
+
 		  case TYP_XIN:		/* /CHARACTER-SET: */
 		    if (!getval && (cmgkwflgs() & CM_ARG)) {
 			printf("?This switch requires an argument\n");
@@ -12617,6 +12686,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	if (count) paging = -1;
 	debug(F111,"type",line,paging);
 #ifdef KUI
+#ifndef NORICHEDIT
 	if ( gui ) {
 	    s = (char *)1;    /* ok, its an ugly hack */
 	    if (gui_text_popup_create(gui_title ?
@@ -12627,6 +12697,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	    }
 	    width = 0;
 	} else
+#endif /* NORICHEDIT */
 #endif /* KUI */
 	  s = outfile;
 	success =
@@ -12664,6 +12735,9 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
         printf(" Jeffrey Eric Altman, Secure Endpoints, Inc. %s\n",
 	       "<jaltman@secure-endpoints.com>"
 	       );
+        printf(" David Goodwin %s\n",
+               "<david@zx.net.nz>"
+        );
 	printf(" Contributions from many others.\n");
 	n = 7;
 	if (*ck_s_test) {
@@ -13509,16 +13583,18 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	    ckGetLongPathName(tmpbuf,line,LINBUFSIZ);
 	    printf("  Long name:  %s\n",line);
 	    if (++n > cmd_rows - 3) {
-                if (!askmore()) { return(0); } else { n = 0; }}
+                if (!askmore()) { return(0); } else { n = 0; }
+            }
 	    line[0] = NUL;
 	    GetShortPathName(tmpbuf,line,LINBUFSIZ);
 	    printf("  Short name: %s\n",line);
 	    if (++n > cmd_rows - 3) {
-                if (!askmore()) { return(0); else n = 0; }
+            if (!askmore()) { return(0); } else { n = 0; }
             }
             printf("\n");
-	    if (++n > cmd_rows - 3) {
-                if (!askmore()) { return(0); } else { n = 0; }}
+            if (++n > cmd_rows - 3) {
+                if (!askmore()) { return(0); } else { n = 0; }
+            }
 	}
 #else  /* NT */
 
@@ -13585,7 +13661,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	char * s1 = NULL, * s2 = NULL;
 	if ((x = cmfld("Variable name","",&s,xxstring)) < 0)
           return(x);
-	if (s) if (s == "") s = NULL;
+	if (s) if (s == (char *)0) s = NULL;
 	(VOID) makestr(&s1,s);
 	if (s && !s1) {
 	    printf("?PUTENV - memory allocation failure\n");
@@ -13593,7 +13669,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	}
 	if ((x = cmtxt("Value","",&s,xxstring)) < 0)
 	  return(x);
-	if (s) if (s == "") s = NULL;
+	if (s) if (s == (char *)0) s = NULL;
 	(VOID) makestr(&s2,s);
 	success = doputenv(s1,s2);
 	(VOID) makestr(&s1,NULL);

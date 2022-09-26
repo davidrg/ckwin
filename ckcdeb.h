@@ -1,8 +1,6 @@
 /*  C K C D E B . H  */
 
 /*
-Thu Jun  2 09:49:31 2022
-
   For recent additions search below for "2021" and "2022".
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
@@ -28,12 +26,13 @@ Thu Jun  2 09:49:31 2022
   Author: Frank da Cruz <fdc@columbia.edu>,
     Columbia University Academic Information Systems, NYC (1974-2011)
     The Kermit Project, Bronx NY (2011-present)
+    Changes from David Goodwin for Windows and OS/2 (2022)
 
   Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: Thu May 12 15:34:02 2022 (NODEPRECATED)
+    Last update: Tue Sep 27 11:09:55 2022
 */
 
 /*
@@ -47,6 +46,30 @@ Thu Jun  2 09:49:31 2022
 #ifndef CKCDEB_H			/* Don't include me more than once. */
 #define CKCDEB_H
 
+/* Moved here from ckcmai.c... REMOVE THIS AFTER BETA TEST! */
+#ifndef BETATEST
+#define BETATEST
+#endif  /* BETATEST */
+/*
+   14 Sep 2022 - TYPE command new /INTERPRET switch enabled by default
+   except in Windows where it doesn't work because of character-set issues.
+*/
+#ifdef NT
+#ifndef NOTYPEINTERPRET
+#define NOTYPEINTERPRET
+#endif  /* NOTYPEINTERPRET */
+#endif  /* NT */
+
+#ifndef NOSPL
+#ifndef NOTYPEINTERPRET                 /* 23 August - TYPE /INTERPRET */
+#define TYPEINTERPRET
+#endif  /* NOTYPEINTERPRET */
+#ifndef NOCOPYINTERPRET                 /* 20 Sep 2022 - COPY /INTERPRET */
+#ifndef COPYINTERPRET
+#define COPYINTERPRET
+#endif  /* COPYINTERPRET */
+#endif  /* NOCOPYINTERPRET */
+#endif /* NOSPL */
 /*
   Disinclude features that are "deprecated" in 2022;
   on amd64 this saves about 185K out of 2.48MB, so this is really more
@@ -68,10 +91,21 @@ Thu Jun  2 09:49:31 2022
 #ifndef NOWTMP                          /* No more WTMP logging */
 #define NOWTMP
 #endif  /* NOWTMP */
-#ifndef NOARROWKEYS                     /* Arrow keys use a deprecated API */
-#define NOARROWKEYS
-#endif  /* NOARROWKEYS */
+#ifndef NOSYSLOG                        /* No more syslog */
+#define NOSYSLOG
+#endif  /* NOSYSLOG */
+
 #endif  /* NODEPRECATED */
+/*
+  As of 26 September 2022, the Arrow-key feature is included only if
+  explicitly requested because the API is disappearing not only in glibc
+  but also other libcs like musl and whatever Android uses.
+*/
+#ifndef DOARROWKEYS
+#ifndef NOARROWKEYS                     /* Arrow keys use a deprecated API */
+#define NOARROWKEYS                     /* (at least in glibc) */
+#endif /* NOARROWKEYS */
+#endif /* DOARROWKEYS */
 
 #ifdef OS2
 #include "ckoker.h"
@@ -2384,6 +2418,14 @@ _PROTOTYP( void bleep, (short) );
 #else
 #ifdef LINUX				/* Linux */
 #define NETPTY
+#else
+#ifdef NT                   /* Windows NT */
+/* NT only gets PTY support when built with CK_CONPTY as it requires
+ * a sufficiently new Platform SDK and compiler. */
+#ifdef CK_CONPTY
+#define NETPTY
+#endif /* CK_CONPTY */
+#endif /* NT */
 #endif /* LINUX */
 #endif /* AIX41 */
 #endif /* SUNOS41 */
@@ -2899,7 +2941,7 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #else /* _M_PPC */
 #ifndef NO_SSL
 #define CK_SSL
-/* #define SSLDLL */ /* OpenSSL included at link time now - [jt] 2013/11/21 */
+/*#define SSLDLL*/  /* OpenSSL included at link time now - [jt] 2013/11/21 */
 #endif /* NO_SSL */
 #endif /* _M_PPC */
 #ifndef NO_KERBEROS
@@ -2969,10 +3011,18 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 /*
   SSH section.  NOSSH disables any form of SSH support.
   If NOSSH is not defined (or implied by NONET, NOLOCAL, etc)
-  then SSHBUILTIN is defined for K95 and SSHCMD is defined for UNIX.
+  then SSHBUILTIN is defined for K95/CKW and SSHCMD is defined for UNIX.
   Then, if either SSHBUILTIN or SSHCMD is defined, ANYSSH is also defined.
 */
+#ifdef COMMENT
+#undef COMMENT /* The OS/2 headers define this for some insane reason */
+#endif /* COMMENT */
 
+#ifdef COMMENT
+/*
+  Built-in SSH no longer depends on SSL support. Built-in SSH is now provided
+  by a library (libssh, ssh.dll) which is itself linked against OpenSSL.
+*/
 #ifndef NOSSH
 #ifndef NO_SSL
 #ifdef OS2ONLY
@@ -2987,6 +3037,7 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #define NOSSH
 #endif /* NO_SSL */
 #endif /* NOSSH */
+#endif /* COMMENT */
 
 #ifdef NOSSH				/* NOSSH */
 #ifdef SSHBUILTIN			/* undefines any SSH selctors */
@@ -3001,7 +3052,9 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #ifdef ANYSSH
 #undef ANYSSH
 #endif /* ANYSSH */
+
 #else  /* Not NOSSH */
+
 #ifndef NOLOCAL
 #ifdef OS2
 #ifndef SSHBUILTIN
@@ -3018,6 +3071,7 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #endif /* SSHCMD */
 #endif /* UNIX */
 #endif /* OS2 */
+
 #ifndef ANYSSH
 #ifdef SSHBUILTIN
 #define ANYSSH
@@ -5802,16 +5856,22 @@ typedef CHAR * MACRO;
 #endif /* __32BIT__ */
 #include <sys/timeb.h>
 #else /* __EMX__ */
+#ifndef __WATCOMC__
+/* Watcom direct.h definition incompatible with the
+ * implementation in ckodir.h and ckotio.c */
 #include <direct.h>
+#endif /* __WATCOMC__ */
 #undef SIGALRM
 #ifndef SIGUSR1
+#ifndef __WATCOMC__
 #define SIGUSR1 7
+#endif /* __WATCOMC__ */
 #endif /* SIGUSR1 */
 #define SIGALRM SIGUSR1
 _PROTOTYP( unsigned alarm, (unsigned) );
 _PROTOTYP( unsigned sleep, (unsigned) );
 #endif /* __EMX__ */
-_PROTOTYP( unsigned long zdskspace, (int) );
+_PROTOTYP( CK_OFF_T zdskspace, (int) );
 _PROTOTYP( int zchdsk, (int) );
 _PROTOTYP( int conincraw, (int) );
 _PROTOTYP( int ttiscom, (int f) );
@@ -6374,6 +6434,10 @@ _PROTOTYP( int vosprtf, (char *fmt, ...) );
 #endif /* STRATUS */
 
 #ifdef NT
+#ifndef VER_PLATFORM_WIN32_WINDOWS
+/* Visual C++ 2.0 and older don't define this (Win95 wasn't released yet) */
+#define VER_PLATFORM_WIN32_WINDOWS      1
+#endif
 extern int OSVer;
 #define isWin95() (OSVer==VER_PLATFORM_WIN32_WINDOWS)
 #else

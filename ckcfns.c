@@ -1,4 +1,4 @@
-char *fnsv = "C-Kermit functions, 9.0.238, 21 December 2021";
+char *fnsv = "C-Kermit functions, 10.0.243, 23 Sep 2022";
 
 char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 
@@ -15,7 +15,9 @@ char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: Thu May  5 15:22:36 2022
+    Last update: Fri Sep 23 15:27:55 2022
+    (CR -> CK_CR and space unsigned long -> CK_OFF_T)
+
 */
 /*
  System-dependent primitives defined in:
@@ -101,6 +103,7 @@ extern int pktnum, bctr, bctu, bctf, bctl, clfils, sbufnum, protocol,
  size, osize, spktl, nfils, ckwarn, timef, spsizf, sndtyp, rcvtyp, success;
 extern int parity, turn, network, whatru, fsecs, justone, slostart,
  ckdelay, displa, mypadn, moving, recursive, nettype;
+extern int rpsizf;
 extern long filcnt;
 extern CK_OFF_T
  tfc, fsize, sendstart, rs_len, flci, flco, tlci, tlco, calibrate;
@@ -924,7 +927,7 @@ xpnbyte(a,tcs,fcs,fn) int a, tcs, fcs; int (*fn)();
 	debug(F001,"xpnbyte uc.x_short","[A]",uc.x_short);
 	debug(F101,"xpnbyte feol","",feol);
 	if (what & W_XFER) {		/* If transferring a file */
-	    if (feol && uc.x_short == CR) { /* handle eol conversion. */
+	    if (feol && uc.x_short == CK_CR) { /* handle eol conversion. */
 		return(0);
 	    } else if (feol && uc.x_short == LF) {
 		uc.x_short = feol;
@@ -1049,7 +1052,7 @@ xpnbyte(a,tcs,fcs,fn) int a, tcs, fcs; int (*fn)();
 		  pnbyte(UNK,fn);
 		if (feol)
 		  return(pnbyte((CHAR)feol,fn));
-		if ((rc = pnbyte((CHAR)CR,fn)) < 0)
+		if ((rc = pnbyte((CHAR)CK_CR,fn)) < 0)
 		  return(rc);
 		if ((rc = pnbyte((CHAR)LF,fn)) < 0)
 		  return(rc);
@@ -1447,7 +1450,7 @@ decode(buf,fn,xlate) register CHAR *buf; register int (*fn)(); int xlate;
 #ifndef NOCSETS
 	if (!binary) {			/* If in text mode, */
 	    if (tcharset != TC_UCS2) {
-		if (feol && a == CR)	/* Convert CRLF to newline char */
+		if (feol && a == CK_CR)	/* Convert CRLF to newline char */
 		  continue;
 		if (feol && a == LF)
 		  a = feol;
@@ -1946,7 +1949,7 @@ agnbyte() {				/* Get next byte from array */
 		c = feol;
 	    } else {			/* or CRLF */
 		save = LF;
-		c = CR;
+		c = CK_CR;
 	    }
 	    p = ap[++i];
 	    return(c & 0xff);
@@ -2341,7 +2344,7 @@ xgnbyte(tcs,fcs,fn) int tcs, fcs, (*fn)();
 		  if (eolflag) {
 		      if (what & W_SEND) {
 			  xlabuf[xlacount++] = LF;
-			  return(CR);
+			  return(CK_CR);
 		      } else {
 			  return(feol);
 		      }
@@ -2411,7 +2414,7 @@ xgnbyte(tcs,fcs,fn) int tcs, fcs, (*fn)();
 		  if (what & W_SEND) {	/* Convert to CRLF */
 		      xlabuf[k++] = LF;
 		      xlacount = k;
-		      return((unsigned int)CR);
+		      return((unsigned int)CK_CR);
 #ifdef COMMENT
 		  } else {		/* Or to local line-end */
 		      xlacount = k;
@@ -2444,7 +2447,7 @@ xgnbyte(tcs,fcs,fn) int tcs, fcs, (*fn)();
 	      }
 	      if (eolflag) {		/* We detected EOL in source file */
 		  if (what & W_SEND) {	/* Convert to CRLF */
-		      xlabuf[k++] = CR;
+		      xlabuf[k++] = CK_CR;
 		      xlabuf[k++] = NUL;
 		      xlabuf[k++] = LF;
 		      xlacount = k;
@@ -2889,12 +2892,12 @@ getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
 		}
 	    }
 #ifdef CK_SPEED
-	    if (ctlp[CR]) {
+	    if (ctlp[CK_CR]) {
 		*dp++ = myctlq;		/* Insert carriage return directly */
 		*dp++ = 'M';
 		ccp++;
 	    } else {
-		*dp++ = CR;		/* Perhaps literally */
+		*dp++ = CK_CR;		/* Perhaps literally */
 		ccu++;
 	    }
 #else /* !CK_SPEED */
@@ -4755,7 +4758,16 @@ sdata() {
 	    debug(F101,"sdata parity","",parity);
 	}
 #endif /* DEBUG */
+        /*
+          This avoids some edge cases where a longer block check
+          or other factors might push the packet over the edge,
+          causing (for example) the LEN field of a short packet
+          to be out of range. - fdc, 14 September 2022
+        */
+        if (spsiz <= 94 && spsiz > 90) spsiz = 90;
+
 #ifdef CKTUNING
+
 	if (binary && !parity && !memstr && !funcstr)
 	  len = bgetpkt(spsiz);
 	else
@@ -4927,7 +4939,7 @@ seot() {
 int q8flag = 0;
 
 CHAR dada[32];				/* Use this instead of data[]. */
-					/* To avoid some kind of wierd */
+					/* To avoid some kind of weird */
 					/* addressing foulup in spack()... */
 					/* (which might be fixed now...) */
 
@@ -5104,6 +5116,10 @@ rpar() {
     return(dada);			/* Return pointer to string. */
 }
 
+/*
+  S P A R -- Set my sending parameters from the data field of the other
+  Kermit's S or I packet, or its ACK to my S or I packet.
+*/
 int
 spar(s) CHAR *s; {			/* Set parameters */
     int x, y, lpsiz, biggest;
@@ -5158,8 +5174,8 @@ spar(s) CHAR *s; {			/* Set parameters */
     }
 
 /* Outbound Packet Terminator */
-    seol = (CHAR) (biggest >= 5) ? xunchar(s[5]) : CR;
-    if ((seol < 1) || (seol > 31)) seol = CR;
+    seol = (CHAR) (biggest >= 5) ? xunchar(s[5]) : CK_CR;
+    if ((seol < 1) || (seol > 31)) seol = CK_CR;
 
 /* Control prefix that the other Kermit is sending */
     x = (biggest >= 6) ? s[6] : '#';
@@ -5259,7 +5275,7 @@ spar(s) CHAR *s; {			/* Set parameters */
     if (lscapu != 2) lscapu = 0;	/* Assume no LS unless forced. */
     y = 11;				/* Position of next field, if any */
     if (biggest >= 10) {
-        x = xunchar(s[10]);
+        x = xunchar(s[10]);             /* s[10] is the CAPAS bitmask */
 	debug(F101,"spar capas","",x);
         atcapu = (x & atcapb) && atcapr; /* Attributes */
 	lpcapu = (x & lpcapb) && lpcapr; /* Long packets */
@@ -5272,21 +5288,53 @@ spar(s) CHAR *s; {			/* Set parameters */
 	debug(F101,"spar swcapr","",swcapr);
 	debug(F101,"spar swcapu","",swcapu);
 	debug(F101,"spar lscapu","",lscapu);
+        /*
+           Check whether there are additional CAPAS bytes.  If so, this code
+           doesn't know what's in them so it just skips past them to the next
+           byte (if any), which should be the Window Slots field.  CAPAS byte
+           is continued if its low-order bit is 1.
+        */
 	for (y = 10; (xunchar(s[y]) & 1) && (biggest >= y); y++);
-	debug(F101,"spar y","",y);
+	debug(F101,"spar y","",y);      /* Position of WSLOTS byte */
     }
-
-/* Long Packets */
-    debug(F101,"spar lpcapu","",lpcapu);
-    if (lpcapu) {
-        if (biggest > y+1) {
-	    x = xunchar(s[y+2]) * 95 + xunchar(s[y+3]);
-	    debug(F101,"spar lp len","",x);
+    /*
+       Now we have read and decoded the CAPAS byte; amend the maximum
+       outbound packet size if a long-format max packet length given.
+    */
+    debug(F101,">>> spar spsizf","",spsizf);   /* SET RECEIVE PACKET-LENGTH */
+    debug(F101,">>> spar urpsiz","",urpsiz);   /* value specified by user */
+    debug(F101,">>> spar biggest","",biggest); /* Position of last parameter */
+    debug(F101,">>> spar lpcapu","",lpcapu);   /* Long-packet capability */
+    if (lpcapu) {                 /* If long packets have been negotiated.. */
+        int lpspsiz = spsiz;      /* Max short packet size negotiated above */
+        debug(F101,">>> spar lpspsiz","",lpspsiz);
+        if (biggest > y+1) {            /* If MAXLX1-2 bytes are present */
+	    x = xunchar(s[y+2]) * 95 + xunchar(s[y+3]); /* Extended length */
+	    debug(F101,">>> spar extended packet max length","",x);
+            x -= 2;            /* fdc 20220917 Safety margin for edge cases */
+	    debug(F101,">>> spar previous with safety margin","",x);
 	    if (spsizf) {		/* If overriding negotiations */
 		spsiz = (x < lpsiz) ? x : lpsiz; /* do this, */
 	    } else {			         /* otherwise */
 		spsiz = (x > MAXSP) ? MAXSP : x; /* do this. */
 	    }
+/*
+  If a SET RECEIVE PACKET LENGTH x command was given, and: the size x is
+  greater than what the receiver requested, then: the size becomes the
+  receiver's requested size - 1, and: lpcapu (Long Packet capability was
+  negotiated) is set to zero.  - fdc 17 September 2022
+*/
+            if (rpsizf) {               /* SET RECEIVE PACKET-LEN given? */
+                if (spsiz > urpsiz) {   /* This packet > requested size? */
+                    spsiz = urpsiz - 1; /* Set it to requested length */
+                    debug(F101,">>> spar spsiz set to URPSIZ", "", spsiz);
+                    if (spsiz < 96) {   /* If shorter than SP/LP cutoff */
+                        lpcapu = 0;     /* unset LP flag */
+                        debug(F101,">>> spar lpcapu set to zero", "", lpcapu);
+                    }
+                }
+            }
+	    debug(F101,">>> spar adjusted according to spsizf","",spsiz);
 	    if (spsiz < 10) spsiz = 80;	/* Be defensive... */
 	}
     }
@@ -5443,7 +5491,7 @@ spar(s) CHAR *s; {			/* Set parameters */
 	char * p;
 	p = sysidlist[sysindex].sid_name;
 	tlog(F110,"Remote system type: ",p,0L);
-	if (sysindex > 0) {		/* If partnet's system type known */
+	if (sysindex > 0) {		/* If partner's system type known */
 	    whoarewe();			/* see if we are a match. */
 #ifdef CK_SPEED
 /* Never unprefix XON and XOFF when sending to VMS */
@@ -6734,7 +6782,7 @@ int
 sndspace(drive) int drive; {
 #ifndef NOSERVER
     static char spctext[64];
-    unsigned long space;
+    CK_OFF_T space;
 
     if (drive) {
 	space = zdskspace(drive - 'A' + 1);

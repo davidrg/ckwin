@@ -1,4 +1,4 @@
-char *cktelv = "Telnet support, 9.0.280, 3 Jun 2022";
+char *cktelv = "Telnet support, 10.0.281, 23 Sep 2022";
 #define CKCTEL_C
 
 int sstelnet = 0;                       /* Do server-side Telnet negotiation */
@@ -69,10 +69,13 @@ int sstelnet = 0;                       /* Do server-side Telnet negotiation */
 #ifdef OS2                              /* For terminal type name string */
 #include "ckuusr.h"
 #ifndef NT
+#define INCL_DOSSEMAPHORES
 #include <os2.h>
 #undef COMMENT
 #else
+#ifndef __WATCOMC__
 #define isascii __isascii
+#endif /* __WATCOMC__ */
 #endif /* NT */
 #include "ckocon.h"
 extern int tt_type, max_tt;
@@ -4672,9 +4675,10 @@ tn_xdoop(z, echo, fn) CHAR z; int echo; int (*fn)();
 #ifdef CK_ENVIRONMENT
               case TELOPT_NEWENVIRON:   /* SB NEW-ENVIRON SEND */
                 {
-                  CHAR request[6];      /* request it */
+                  CHAR requestbuf[6];   /* Was CHAR but Clang hollers */
+                  char * request = (char *)requestbuf;
                   sprintf(request,"%cUSER",TEL_ENV_VAR); /* safe */
-                  tn_ssbopt(TELOPT_NEWENVIRON,TELQUAL_SEND,request,
+                  tn_ssbopt(TELOPT_NEWENVIRON,TELQUAL_SEND,(CHAR *)requestbuf,
                             strlen((char *)request)); /* SMS 2022-06-03 */
                   TELOPT_UNANSWERED_SB(TELOPT_NEWENVIRON)=1;
                 }
@@ -6007,7 +6011,7 @@ tn_snenv(sb, len) CHAR * sb; int len;
 
         /* Send a return packet with no variables so that the host */
         /* may continue with additional negotiations               */
-        if (tn_ssbopt(TELOPT_NEWENVIRON,TELQUAL_IS,"",0) < 0)
+        if (tn_ssbopt(TELOPT_NEWENVIRON,TELQUAL_IS,(CHAR *)"",0) < 0)
           return(-1);
         return(0);
     }
@@ -6214,7 +6218,7 @@ tn_snenv(sb, len) CHAR * sb; int len;
             varname[j++] = sb[i];
         }
     }
-    if (tn_ssbopt(TELOPT_NEWENVIRON,TELQUAL_IS,reply,n) < 0) {
+    if (tn_ssbopt(TELOPT_NEWENVIRON,TELQUAL_IS,(CHAR *)reply,n) < 0) {
         free(reply);
         return(-1);
     }

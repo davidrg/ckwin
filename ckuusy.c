@@ -2653,10 +2653,8 @@ doxarg(s,pre) char ** s; int pre; {
 #endif /* IKSDB */
 
       case XA_VERS: {
-	  extern char * ck_s_ver, * ck_s_xver;
+	  extern char * ck_s_ver;
 	  printf("%s",ck_s_ver);
-	  if (*ck_s_xver)
-	    printf(" [%s]\n",ck_s_xver);
 	  printf("\n");
 	  if (stayflg || what == W_COMMAND)
 	    break;
@@ -3171,8 +3169,9 @@ setiks() {				/* SET IKS */
           s = tmpbuf;
         if ((x = cmcfm()) < 0) return(x);
         if (iksdcf) return(success = 0);
-        if (*s)
-	  makestr(&anonfile,s);
+#ifdef CK_LOGIN
+        if (*s) makestr(&anonfile,s);
+#endif  /* CK_LOGIN */
         break;
       case IKS_USFI:
         if ((z = cmifi("Filename","",&s,&x,xxstring)) < 0)
@@ -3185,8 +3184,9 @@ setiks() {				/* SET IKS */
           s = tmpbuf;
         if ((x = cmcfm()) < 0) return(x);
         if (iksdcf) return(success = 0);
-        if (*s)
-	  makestr(&userfile,s);
+#ifdef CK_LOGIN
+        if (*s) makestr(&userfile,s);
+#endif  /* CK_LOGIN */
         break;
       case IKS_IKFI:
         if ((z = cmifi("Filename","",&s,&x,xxstring)) < 0)

@@ -3,12 +3,12 @@
 #define CK_NONBLOCK                     /* See zoutdump() */
 
 #ifdef aegis
-char *ckzv = "Aegis File support, 9.0.227, 09 May 2022";
+char *ckzv = "Aegis File support, 10.0.229, 25 Sep 2022";
 #else
 #ifdef Plan9
-char *ckzv = "Plan 9 File support, 9.0.227, 09 May 2022";
+char *ckzv = "Plan 9 File support, 10.0.229, 25 Sep 2022";
 #else
-char *ckzv = "UNIX File support, 9.0.227, 09 May 2022";
+char *ckzv = "UNIX File support, 9.0.229, 25 Sep 2022";
 #endif /* Plan9 */
 #endif /* aegis */
 /*
@@ -1823,8 +1823,8 @@ zchin(n,c) int n; int *c; {
 /*  Z S I N L  --  Read a line from a file  */
 
 /*
-  Writes the line into the address provided by the caller.
-  n is the Kermit "channel number".
+  Writes the line into the address (*s) provided by the caller,
+  maximum length x.  n is the Kermit "channel number".
   Writing terminates when newline is encountered, newline is not copied.
   Writing also terminates upon EOF or if length x is exhausted.
   Returns 0 on success, -1 on EOF or error.
@@ -2471,7 +2471,7 @@ zchki(name) char *name; {
     debug(F101,"STAT","",5);
     debug(F111,"zchki stat return code",s,x);
     debug(F101,"zchki stat errno","",errno);
-    debug(F110,"zchki stat errmsg",ck_errstr(),"");
+    debug(F110,"zchki stat errmsg",ck_errstr(),0);
     if (x < 0) {                        /* File doesn't exist */
         debug(F111,"zchki stat fails",s,errno);
         return(-1);
@@ -2483,7 +2483,7 @@ zchki(name) char *name; {
    ENOENT, but in the case that was reported, it was ENOTTY, which I wouldn't
    have expected.  There's nothing in Google about this.  - fdc, 8 May 2022.
 */
-    } else if errno {
+    } else if ( errno ) {
         debug(F111,"zchki stat returns 0 but with a nonzero errno",s,errno);
         return(-1);
     }

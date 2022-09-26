@@ -1,9 +1,9 @@
-char *cknetv = "Network support, 10.0.299, 26 Sep 2022";
+char *cknetv = "Network support, 9.0.297, 14 Jul 2011";
 
 /*  C K C N E T  --  Network support  */
 
 /*
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2011,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -24,7 +24,7 @@ char *cknetv = "Network support, 10.0.299, 26 Sep 2022";
 
   Frank da Cruz (fdc@columbia.edu),
     Columbia University Academic Information Systems, New York City.
-  Jeffrey E Altman (jaltman@secure-endpoints.com) -- Primary 
+  Jeffrey E Altman (jaltman@secure-endpoints.com) -- Primary
     maintainer/developer since about 1996.
   netopen() routine for TCP/IP originally by Ken Yap, Rochester University
     (ken@cs.rochester.edu) (no longer at that address).
@@ -47,12 +47,6 @@ char *cknetv = "Network support, 10.0.299, 26 Sep 2022";
     Stephen Riehm added support for IBM AIX X.25 in April 1998.
   Other contributions as indicated in the code.
 */
-#ifdef NORLOGIN
-#ifdef RLOGCODE
-#undef RLOGCODE
-#endif  /* RLOGCODE */
-#endif  /* NORLOGIN */
-
 #define CKCNET_C
 #include "ckcsym.h"
 #include "ckcdeb.h"
@@ -263,7 +257,6 @@ struct timezone {
 #endif /* CK_ANSIC */
 #endif /* OSF13 */
 
-#ifndef OS2
 #ifndef I386IX
 #ifndef HPUXPRE65
 #include <errno.h>			/* Error number symbols */
@@ -273,23 +266,6 @@ struct timezone {
 #endif	/* ERRNO_INCLUDED */
 #endif	/* HPUXPRE65 */
 #endif /* I386IX */
-#endif /* OS2 */
-
-#ifdef OS2
-#ifdef NT
-#include <errno.h>			/* Error number symbols */
-#else /* OS/2 */
-#ifdef __WATCOMC__
-/*
-  WatcomC doesn't need errno.h
-  (definitions conflict with some previous definition
-  #include <errno.h>
-*/
-#else
-#include <errno.h>			/* Error number symbols */
-#endif
-#endif /* NT */
-#endif /* OS2 */
 
 #include <signal.h>                     /* Everybody needs this */
 
@@ -387,7 +363,6 @@ _PROTOTYP( int rlog_naws, (void) );
 #ifdef OS2                              /* For terminal type name string */
 #include "ckuusr.h"
 #ifndef NT
-#define INCL_DOSSEMAPHORES
 #include <os2.h>
 #undef COMMENT
 #endif /* NT */
@@ -1184,7 +1159,7 @@ ttbufr() {                              /* TT Buffer Read */
                   len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
                   ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
                   debug(F110,"ttbufr SSL_ERROR_SSL",ssl_err,0);
-                  if (ssl_debug_flag)                  
+                  if (ssl_debug_flag)
                       printf(ssl_err);
               } else if (ssl_debug_flag) {
                   debug(F100,"ttbufr SSL_ERROR_SSL","",0);
@@ -1338,7 +1313,7 @@ ttbufr() {                              /* TT Buffer Read */
 #ifdef RLOGCODE                         /* blah */
               if (ttnproto == NP_RLOGIN  ||
                   ttnproto == NP_K4LOGIN || ttnproto == NP_EK4LOGIN ||
-                  ((ttnproto == NP_K5LOGIN || ttnproto == NP_EK5LOGIN) && 
+                  ((ttnproto == NP_K5LOGIN || ttnproto == NP_EK5LOGIN) &&
                   !rlog_inband)
                    )
               {
@@ -4688,7 +4663,7 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
         /* Yes, so if raw port not requested */
 #ifdef COMMENT
 	/* Jeff 2005/12/30 */
-        if (ttnproto != NP_TCPRAW && ttnproto != NP_SSL_RAW && 
+        if (ttnproto != NP_TCPRAW && ttnproto != NP_SSL_RAW &&
 	    ttnproto != NP_TLS_RAW && ttnproto != NP_NONE)
 #else
 	/* fdc 2005/12/04 */
@@ -5003,7 +4978,7 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
                  tcp_http_proxy ? proxycopy :
 #endif /* NOHTTP */
                  (tcp_rdns && host && host->h_name && host->h_name[0]) ?
-                 (char *)host->h_name : (namecopy2[0] ? namecopy2 : 
+                 (char *)host->h_name : (namecopy2[0] ? namecopy2 :
                                         (namecopy[0] ? namecopy : ipaddr)),
                  ipaddr,
                  uidbuf,
@@ -5742,7 +5717,7 @@ nettchk() {                             /* for reading from network */
 	    if ( ssl_active_flag || tls_active_flag ) {
 		ckhexdump("nettchk got real data",&ttibuf[ttibp+ttibn],x);
 		ttibn += x;
-	    } else 
+	    } else
 #endif /* CK_SSL */
 	    {
 		debug(F101,"nettchk socket_read char","",c);
@@ -6640,7 +6615,7 @@ nettoc(c) CHAR c;
             debug(F111,"nettoc","SSL_write",len);
             return(len == 1 ? 0 : -1);
           case SSL_ERROR_WANT_WRITE:
-  	  case SSL_ERROR_WANT_READ:
+	  case SSL_ERROR_WANT_READ:
             return(-1);
           case SSL_ERROR_SYSCALL:
               if ( len == 0 ) { /* EOF */
@@ -7138,7 +7113,6 @@ getlocalipaddrs(buf,bufsz,index)
 }
 
 #ifdef RLOGCODE                 /* TCP/IP RLOGIN protocol support code */
-#ifdef CK_NAWS
 int
 rlog_naws() {
     struct rlog_naws {
@@ -7179,10 +7153,8 @@ rlog_naws() {
       return(-1);
     return(0);
 }
-#endif /* CK_NAWS */
 #endif /* NOTCPIP */
 
-#ifndef NORLOGIN
 #ifdef OS2ORUNIX
 #define RLOGOUTBUF
 #endif /* OS2 */
@@ -7441,6 +7413,7 @@ rlog_ini(hostname, port, l_addr, r_addr)
     }
     return(0);
 }
+
 /* two control messages are defined:
 
    a double flag byte of 'o' indicates a one-byte message which is
@@ -7451,7 +7424,7 @@ rlog_ini(hostname, port, l_addr, r_addr)
    quote rule so that binary data from the server does not confuse the
    client.  */
 
-int 
+int
 rlog_ctrl(cp, n)
      unsigned char *cp;
      int n;
@@ -7567,7 +7540,6 @@ rlogoobh(sig) int sig; {
 }
 #endif /* TCPIPLIB */
 #endif /* RLOGCODE */
-#endif /* NORLOGIN */
 
 /* Send network BREAK */
 /*
@@ -10222,8 +10194,7 @@ http_security()
         const char *cipher_list;
         static char buf[128];
         buf[0] = NUL;
-        /* cast added by fdc 26 September 2022 */
-        cipher = (SSL_CIPHER *)SSL_get_current_cipher(tls_http_con);
+        cipher = SSL_get_current_cipher(tls_http_con);
         cipher_list = SSL_CIPHER_get_name(cipher);
         SSL_CIPHER_description(cipher,buf,sizeof(buf));
         return(buf);
@@ -10323,7 +10294,7 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len, agent)
     if (!svcname) svcname = "";
     if (!*hostname || !*svcname) return(-1);
 
-    
+
     service = ckgetservice(hostname,svcname,http_ip,20);
 
     if (service == NULL) {
@@ -10377,15 +10348,15 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len, agent)
             return(-1);
         }
 
-        /* copy the proxyname and remove the service if any so we can use 
-         * it as the hostname 
+        /* copy the proxyname and remove the service if any so we can use
+         * it as the hostname
          */
         ckstrncpy(namecopy,tcp_http_proxy,NAMECPYL);
         p = namecopy;                       /* Was a service requested? */
         while (*p != '\0' && *p != ':') p++; /* Look for colon */
         if (*p == ':') {                    /* Have a colon */
             *p = '\0';                      /* terminate string */
-        }        
+        }
         hostname = namecopy;                /* use proxy as hostname */
     }
 
@@ -10690,10 +10661,10 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len, agent)
 
     if ( tcp_http_proxy ) {
 #ifdef OS2
-        if (!agent) 
+        if (!agent)
 	  agent = "Kermit 95";	/* Default user agent */
 #else
-        if (!agent) 
+        if (!agent)
 	  agent = "C-Kermit";
 #endif /* OS2 */
 
@@ -11146,7 +11117,7 @@ http_inc(timo) int timo; {
     if (httpfd == -1) {
 #ifdef HTTP_BUFFERING
 	http_count = 0;
-  	http_bufp = 0;
+	http_bufp = 0;
 #endif	/* HTTP_BUFFERING */
         debug(F100,"http_inc socket is closed","",0);
         return(-2);
@@ -11498,7 +11469,7 @@ http_inc(timo) int timo; {
 	    savefd = ttyfd;
 	    ttyfd = httpfd;
 	    x = nettchk();
-	    ttyfd = savefd;		
+	    ttyfd = savefd;
 	    debug(F101,"http_inc nettchk","",x);
 	    if (x > HTTP_INBUFLEN)
 	      x = HTTP_INBUFLEN;
@@ -11787,7 +11758,7 @@ http_get(agent, hdrlist, user, pwd, array, local, remote, stdio)
                 if ( stdio )
                     conoc((CHAR)ch);
             }
-            if ((ch = http_inc(0)) != CK_CR)
+            if ((ch = http_inc(0)) != CR)
                 break;
             if ((ch = http_inc(0)) != LF)
                 break;
@@ -12254,7 +12225,7 @@ http_index(agent, hdrlist, user, pwd, array, local, remote, stdio)
                 if ( stdio )
                     conoc((CHAR)ch);
             }
-            if ((ch = http_inc(0)) != CK_CR)
+            if ((ch = http_inc(0)) != CR)
                 break;
             if ((ch = http_inc(0)) != LF)
                 break;
@@ -12559,7 +12530,7 @@ http_put(agent, hdrlist, mime, user, pwd, array, local, remote, dest, stdio)
                     if ( stdio )
                         conoc((CHAR)ch);
                 }
-                if ((ch = http_inc(0)) != CK_CR)
+                if ((ch = http_inc(0)) != CR)
                     break;
                 if ((ch = http_inc(0)) != LF)
                     break;
@@ -12805,7 +12776,7 @@ http_delete(agent, hdrlist, user, pwd, array, remote)
                 len--;
                 conoc((CHAR)ch);
             }
-            if ((ch = http_inc(0)) != CK_CR)
+            if ((ch = http_inc(0)) != CR)
                 break;
             if ((ch = http_inc(0)) != LF)
                 break;
@@ -13088,7 +13059,7 @@ http_post(agent, hdrlist, mime, user, pwd, array, local, remote, dest,
                     if ( stdio )
                         conoc((CHAR)ch);
                 }
-                if ((ch = http_inc(0)) != CK_CR)
+                if ((ch = http_inc(0)) != CR)
                     break;
                 if ((ch = http_inc(0)) != LF)
                     break;

@@ -1,12 +1,12 @@
 #define CKUTIO_C
 
 #ifdef aegis
-char *ckxv = "Aegis Communications support, 9.0.334, 01 Jun 2022";
+char *ckxv = "Aegis Communications support, 10.0.334, 23 Sep 2022";
 #else
 #ifdef Plan9
-char *ckxv = "Plan 9 Communications support, 9.0.334, 01 Jun 2022";
+char *ckxv = "Plan 9 Communications support, 10.0.334, 23 Sep 2022";
 #else
-char *ckxv = "UNIX Communications support, 9.0.334, 01 Jun 2022";
+char *ckxv = "UNIX Communications support, 10.0.334, 23 Sep 2022";
 #endif /* Plan9 */
 #endif /* aegis */
 
