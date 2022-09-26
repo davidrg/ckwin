@@ -86,7 +86,7 @@
 #define NOWTMP
 #endif  /* NOWTMP */
 #ifndef NOARROWKEYS                     /* Arrow keys use a deprecated API */
-#define NOARROWKEYS
+#define NOARROWKEYS                     /* (at least in glibc) */
 #endif  /* NOARROWKEYS */
 #endif  /* NODEPRECATED */
 

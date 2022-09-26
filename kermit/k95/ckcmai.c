@@ -1,8 +1,8 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "24 Sep 2022"         /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20220924"		/* Keep them in sync */
-/* Sat Sep 24 13:37:42 2022 */
+#define EDITDATE  "25 Sep 2022"         /* Last edit date dd mmm yyyy */
+#define EDITNDATE "20220925"		/* Keep them in sync */
+/* Sun Sep 25 16:52:39 2022 */
 
 /* Remove this after Beta test! */
 #ifndef BETATEST                        /* This *IS* a Beta test... */
@@ -58,7 +58,7 @@ char *ck_s_tver = "05/Windows-04";
 #else
 char *ck_s_test = "Pre-Beta";		/* "Dev","Alpha","Beta","RC", or "" */
 char *ck_s_tver = "05";			/* Test version number */
-#endif
+#endif /* OS2 */
 #else /* BETATEST */
 char *ck_s_test = "";			/* Not development */
 char *ck_s_tver = "";
@@ -2663,11 +2663,10 @@ makever() {                             /* Make version string from pieces */
         s = " OPEN SOURCE";		/* C-Kermit 9.0 and later */
     }
     y = strlen(s);
-#endif  /* COMMENT */
-
     if (CKVERLEN < x + y + 1)
       return;
     ckstrncat(versio,s,CKVERLEN);
+#endif  /* COMMENT */
 
     x += y + 1;
     if (*ck_s_who) {
@@ -2696,7 +2695,7 @@ makever() {                             /* Make version string from pieces */
         ckstrncat(versio,ck_s_date,CKVERLEN);
     }
     vernum = ck_l_ver;
-    debug(F110,"Kermit version",versio,0);
+    debug(F110,"makever Kermit version",versio,0);
 }
 
 union ck_short shortbytes;              /* For determining byte order */
@@ -3050,7 +3049,7 @@ main(argc,argv) int argc; char **argv;
     }
 #endif /* NOSPL */
 #ifndef NOSETKEY                        /* Allocate & initialize the keymap */
-    /* This code has been moved to before sysinit() for K95G */
+    /* This code was moved to before sysinit() for K95G */
     if (!(keymap = (KEY *) malloc(sizeof(KEY)*KMSIZE)))
       fatal("main: no memory for keymap");
     if (!(macrotab = (MACRO *) malloc(sizeof(MACRO)*KMSIZE)))
@@ -3632,7 +3631,6 @@ main(argc,argv) int argc; char **argv;
   enter the interactive command parser.
 */
     if (!clcmds) {
-        printf("%s %s", ck_s_name, ck_s_ver);
         herald();                       /* Display program herald. */
     }
 

@@ -6169,79 +6169,79 @@ shomodem() {
         printf(" %c Dial-mode-string:     ", dialmstr ? ' ' : '*' );
         shods(dialmstr ? dialmstr : p->dmode_str);
         n = local ? 19 : 20;
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Dial-mode-prompt:     ", dialmprmt ? ' ' : '*' );
         shods(dialmprmt ? dialmprmt : p->dmode_prompt);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Dial-command:         ", dialcmd ? ' ' : '*' );
         shods(dialcmd ? dialcmd : p->dial_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Compression on:       ", dialdcon ? ' ' : '*' );
         if (!dialdcon)
           debug(F110,"dialdcon","(null)",0);
         else
           debug(F110,"dialdcon",dialdcon,0);
         shods(dialdcon ? dialdcon : p->dc_on_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Compression off:      ", dialdcoff ? ' ' : '*' );
         shods(dialdcoff ? dialdcoff : p->dc_off_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Error-correction on:  ", dialecon ? ' ' : '*' );
         shods(dialecon ? dialecon : p->ec_on_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Error-correction off: ", dialecoff ? ' ' : '*' );
         shods(dialecoff ? dialecoff : p->ec_off_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Autoanswer on:        ", dialaaon ? ' ' : '*' );
         shods(dialaaon ? dialaaon : p->aa_on_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Autoanswer off:       ", dialaaoff ? ' ' : '*' );
         shods(dialaaoff ? dialaaoff : p->aa_off_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
 
         printf(" %c Speaker on:           ", dialspon ? ' ' : '*' );
         shods(dialspon ? dialspon : p->sp_on_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Speaker off:          ", dialspoff ? ' ' : '*' );
         shods(dialspoff ? dialspoff : p->sp_off_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Volume low:           ", dialvol1 ? ' ' : '*' );
         shods(dialvol1 ? dialvol1 : p->vol1_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Volume medium:        ", dialvol2 ? ' ' : '*' );
         shods(dialvol2 ? dialvol2 : p->vol2_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Volume high:          ", dialvol3 ? ' ' : '*' );
         shods(dialvol3 ? dialvol3 : p->vol3_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
 
         printf(" %c Hangup-command:       ", dialhcmd ? ' ' : '*' );
         shods(dialhcmd ? dialhcmd : p->hup_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Hardware-flow:        ", dialhwfc ? ' ' : '*' );
         shods(dialhwfc ? dialhwfc : p->hwfc_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Software-flow:        ", dialswfc ? ' ' : '*' );
         shods(dialswfc ? dialswfc : p->swfc_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c No-flow-control:      ", dialnofc ? ' ' : '*' );
         shods(dialnofc ? dialnofc : p->nofc_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Pulse:                ", dialpulse ? ' ' : '*');
         shods(dialpulse ? dialpulse : p->pulse);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Tone:                 ", dialtone ? ' ' : '*');
         shods(dialtone ? dialtone : p->tone);
 
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Ignore-dialtone:      ", dialx3 ? ' ' : '*');
         shods(dialx3 ? dialx3 : p->ignoredt);
 
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Predial-init:         ", dialini2 ? ' ' : '*');
         shods(dialini2 ? dialini2 : p->ini2);
 
-        if (++n > cmd_rows - 4) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 4) { if (!askmore()) { return(0);} else {n = 0;}}
         printf("\n For more info: SHOW DIAL and SHOW COMMUNICATIONS\n");
 
     } else if (mdm > 0) {

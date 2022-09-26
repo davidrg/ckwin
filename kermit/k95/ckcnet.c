@@ -47,6 +47,12 @@ char *cknetv = "Network support, 10.0.298, 23 Sep 2022";
     Stephen Riehm added support for IBM AIX X.25 in April 1998.
   Other contributions as indicated in the code.
 */
+#ifdef NORLOGIN
+#ifdef RLOGCODE
+#undef RLOGCODE
+#endif  /* RLOGCODE */
+#endif  /* NORLOGIN */
+
 #define CKCNET_C
 #include "ckcsym.h"
 #include "ckcdeb.h"
@@ -7129,6 +7135,7 @@ getlocalipaddrs(buf,bufsz,index)
 }
 
 #ifdef RLOGCODE                 /* TCP/IP RLOGIN protocol support code */
+#ifdef CK_NAWS
 int
 rlog_naws() {
     struct rlog_naws {
@@ -7169,6 +7176,7 @@ rlog_naws() {
       return(-1);
     return(0);
 }
+#endif /* CK_NAWS */
 #endif /* NOTCPIP */
 
 #ifdef OS2ORUNIX

@@ -13663,7 +13663,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	char * s1 = NULL, * s2 = NULL;
 	if ((x = cmfld("Variable name","",&s,xxstring)) < 0)
           return(x);
-	if (s) if (s == "") s = NULL;
+	if (s) if (s == (char *)0) s = NULL;
 	(VOID) makestr(&s1,s);
 	if (s && !s1) {
 	    printf("?PUTENV - memory allocation failure\n");
@@ -13671,7 +13671,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	}
 	if ((x = cmtxt("Value","",&s,xxstring)) < 0)
 	  return(x);
-	if (s) if (s == "") s = NULL;
+	if (s) if (s == (char *)0) s = NULL;
 	(VOID) makestr(&s2,s);
 	success = doputenv(s1,s2);
 	(VOID) makestr(&s1,NULL);

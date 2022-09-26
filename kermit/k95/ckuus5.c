@@ -3991,7 +3991,13 @@ herald() {
     ssl = "";
     krb4 = "";
     krb5 = "";
+
+#ifdef CK_64BIT
+    b64 = " (64-bit)";
+#else
     b64 = "";
+#endif  /* CK_64BIT */
+
 #ifndef OS2
 #ifdef CK_AUTHENTICATION
 #ifdef CK_SSL    
@@ -4018,19 +4024,14 @@ herald() {
         ckstrncat(myherald,"for ",MAXHERALDLEN);
         ckstrncat(myherald,ckxsys,MAXHERALDLEN);
 #else
-        printf("%s, for%s%s%s%s (64-bit)\n\r",versio,ckxsys,ssl,krb4,krb5);
+        printf("%s, for%s%s%s%s%s\n\r",versio,ckxsys,ssl,krb4,krb5,b64);
         ckmakxmsg(myherald,             /* for \v(herald) */
                   MAXHERALDLEN,
-                  ck_s_name, " ", ck_s_ver, 
                   versio,
                   ", for",
-                  ckxsys, ssl, krb4, krb5, "", "", "");
-#ifdef CK_64BIT
-        ckstrncat(myherald," (64-bit)",MAXHERALDLEN);
-#endif/* CK_64BIT */
+                  ckxsys, ssl, krb4, krb5, b64, "", "", "", "", "");
 #endif /* OSK */
 #endif /* datageneral */
-
         printf(" Copyright (C) 1985, %s,\n", ck_cryear);
         printf("  Trustees of Columbia University in the City of New York.\n");
         printf("  Open Source since 2011; License: 3-clause BSD.\n");
@@ -6918,13 +6919,17 @@ doshow(x) int x; {
 #endif /* NOSPL */
       if (x == SHFUN) {                 /* For SHOW FUNCTIONS */
           int y;
-          if ((y = cmtxt("Match string for function names","",&s,NULL)) < 0)
-            return(y);
+          if ((y = cmtxt("Match string for function names","",&s,NULL)) < 0) {
+              return(y);
+          }
           fnbuf[0] = NUL;
-          if (!s) s = "";
-          if (*s) ckstrncpy(fnbuf,s,100);
-      } else if ((y = cmcfm()) < 0) {
-          return(y);
+          if (!s) { s = ""; }
+          if (*s) { ckstrncpy(fnbuf,s,100); }
+      } else {
+          y = cmcfm();
+          if (y < 0) {
+              return(y);
+          }
       }
 
 #ifdef COMMENT
