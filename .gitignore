@@ -243,3 +243,9 @@ dst/
 builder/
 *.dll
 .vs/
+
+# These files belong to C-Kermit for UNIX so we don't want to accidentally
+# commit them when we're updating shared code.
+ckufio.c
+ckutio.c
+kermit/k95/makefile
