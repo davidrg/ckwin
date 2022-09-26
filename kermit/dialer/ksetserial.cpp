@@ -22,12 +22,14 @@ extern "C" {
 #undef printf
 #undef fprintf
 #include <windows.h>            	/* Windows Definitions */
+#ifndef NODIAL
 #define TAPI_CURRENT_VERSION 0x00010004
 #include <tapi.h>
 #include <mcx.h>
 #include "ktapi.h"
     extern struct keytab * tapilinetab, * _tapilinetab;
     extern int ntapiline;
+#endif /* NODIAL */
 }
 #endif /* WIN32 */
 
@@ -1077,6 +1079,7 @@ InitLineList( ZIL_UINT8 _templates )
     }
 
 #ifdef WIN32
+#ifndef NODIAL
     if ( TapiAvail )
     {
 	cktapiBuildLineTable( &tapilinetab, &_tapilinetab, &ntapiline );
@@ -1085,6 +1088,7 @@ InitLineList( ZIL_UINT8 _templates )
 				   WOF_NO_FLAGS,ZIL_NULLF(ZIL_USER_FUNCTION), 
 				   OPT_LINE_DEVICE_IS_TAPI ) ;
     }
+#endif /* NODIAL */
 #endif /* WIN32 */
 }
 

@@ -881,6 +881,48 @@ static struct _font_list {
 } * font_list = NULL;
 
 static int CALLBACK
+EnumFontFamProc( ENUMLOGFONT *lpelfe,    // logical-font data
+                 NEWTEXTMETRIC *lpntme,  // physical-font data
+                 DWORD FontType,           // type of font
+                 LPARAM lParam             // application-defined data
+                 )
+{
+    int i;
+    char * name;
+
+    if ( font_list == NULL) {
+        return(0);
+    }
+
+    if (font_list->count == MAXFNTS ) {
+        return(MAXFNTS);
+    }
+
+#ifndef CKT_NT31
+    /* Windows 95/98 handles the font names different than NT/2000 */
+    /* Why?  You know better than to ask that question.            */
+    OSVERSIONINFO osverinfo ;
+    osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
+    GetVersionEx( &osverinfo ) ;
+    if ( osverinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS ) {
+        if ( FontType == 4 /* True Type */ )
+            name = lpelfe->elfFullName;
+        else
+            name = lpelfe->elfLogFont.lfFaceName;
+    } else
+#endif /* CKT_NT31 */
+        name = (char *)lpelfe->elfFullName;
+
+    for ( i=0; i < font_list->count; i++ ) {
+        if ( !strcmp(name,font_list->name[i]) )
+            return(font_list->count);
+    }
+    font_list->name[font_list->count++] = strdup(name);
+    return(font_list->count);
+}
+
+#ifndef CKT_NT31
+static int CALLBACK
 EnumFontFamExProc( ENUMLOGFONTEX *lpelfe,    // logical-font data
                    NEWTEXTMETRICEX *lpntme,  // physical-font data
                    DWORD FontType,           // type of font
@@ -916,6 +958,7 @@ EnumFontFamExProc( ENUMLOGFONTEX *lpelfe,    // logical-font data
     font_list->name[font_list->count++] = strdup(name);
     return(font_list->count);
 }
+#endif
 
 static int
 EnumerateFonts()
@@ -939,13 +982,32 @@ EnumerateFonts()
 
     hdc = CreateDC("DISPLAY",NULL,NULL,NULL);
     if ( hdc ) {
+        OSVERSIONINFO osverinfo ;
+        int nt351;
+
+        osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
+        GetVersionEx( &osverinfo ) ;
+        if ( osverinfo.dwMajorVersion < 4 )
+            nt351 = 1;
+
         lf.lfCharSet = DEFAULT_CHARSET;
         lf.lfFaceName[0] = '\0';
         lf.lfPitchAndFamily = 0;
 
-        rc = EnumFontFamiliesEx( (HDC) hdc, (LPLOGFONT)&lf,
+#ifndef CKT_NT31
+        if ( nt351 )
+            rc = EnumFontFamilies( (HDC) hdc, NULL,
+                                     (FONTENUMPROC) EnumFontFamProc,
+                                     0);
+        else
+            rc = EnumFontFamiliesEx( (HDC) hdc, (LPLOGFONT)&lf,
                                  (FONTENUMPROC) EnumFontFamExProc,
                                  0, 0);
+#else
+        rc = EnumFontFamilies( (HDC) hdc, NULL,
+                                     (FONTENUMPROC) EnumFontFamProc,
+                                     0);
+#endif
         DeleteDC(hdc);
     }
     return rc;

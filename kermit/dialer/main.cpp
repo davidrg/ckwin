@@ -19,10 +19,12 @@ extern "C" {
 #define NT  
 #include "ckcdeb.h"
 #include "ckoetc.h"
+#ifndef NODIAL
 #define TAPI_CURRENT_VERSION 0x00010004
 #include <tapi.h>
 #include <mcx.h>
 #include "ktapi.h"
+#endif /* NODIAL */
 extern HWND hwndConsole;
 #ifdef printf
 #undef printf
@@ -267,13 +269,15 @@ int UI_APPLICATION::Main(void)
 
 
 #ifdef WIN32
+#ifndef NODIAL
     printf("Checking TAPI\n");
     if (TapiAvail = cktapiinit(hInstance)) {
         printf("TAPI available\n");
         cktapiopen();
         printf("TAPI Open\n");
     }
-#endif
+#endif /* NODIAL */
+#endif /* WIN32 */
 
     printf("Creating connector\n");
     connector = new K_CONNECTOR ;
@@ -297,9 +301,11 @@ int UI_APPLICATION::Main(void)
     *windowManager + connector ;
     windowManager->screenID = connector->screenID ;
 #ifdef WIN32
+#ifndef NODIAL
     if (TapiAvail) {
         hwndConsole = connector->screenID;
     }
+#endif
 #endif
 
     // Process user responses.
@@ -307,11 +313,13 @@ int UI_APPLICATION::Main(void)
     UI_APPLICATION::Control();
 
 #ifdef WIN32
+#ifndef NODIAL
     if ( TapiAvail ) {
         printf("Closing TAPI\n");
         cktapiclose();
     }
-#endif
+#endif /* NODIAL */
+#endif /* WIN32 */
 
     // Clean up and return success.
     delete UI_WINDOW_OBJECT::defaultStorage;

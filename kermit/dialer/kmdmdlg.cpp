@@ -19,6 +19,7 @@ extern "C" {
 #include "ckucmd.h"
 #if defined(WIN32)
 #include <windows.h>            	/* Windows Definitions */
+#ifndef NODIAL
 #define TAPI_CURRENT_VERSION 0x00010004
 #include <tapi.h>
 #include <mcx.h>
@@ -26,6 +27,7 @@ extern "C" {
     extern int ntapiline;
 
 #include "ktapi.h"
+#endif /* NODIAL */
 #endif
 #include "kmdminf.h"
     /* BEGIN MDMINF STRUCT DEFINITIONS */
@@ -7745,11 +7747,13 @@ InitTapiPortList()
     UIW_COMBO_BOX * combo = (UIW_COMBO_BOX *) Get( COMBO_PORT );
     list->Destroy();
 
+#ifndef NODIAL
     if ( TapiAvail ) {
 	cktapiBuildLineTable( &tapilinetab, &_tapilinetab, &ntapiline );
 	for ( int i=0 ; i<ntapiline ; i++ )
 	    *list + new UIW_BUTTON( 0,0,0,_tapilinetab[i].kwd, BTF_NO_3D ) ;
     }
+#endif /* NODIAL */
     UI_EVENT ReDisplay(S_REDISPLAY) ;
     UI_EVENT Create(S_CREATE) ;
     combo->Event( Create );

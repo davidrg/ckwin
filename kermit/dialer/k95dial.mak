@@ -34,6 +34,10 @@ WNT_LINK=link
 WNT_LIBRARIAN=lib
 
 WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -DCKODIALER -I..\k95 -noBool
+!if $(MSC_VER) < 100
+# Visual C++ 2.0 or older
+WNT_CPP_OPTS=$(WNT_CPP_OPTS) -DNODIAL -DCKT_NT31
+!endif
 
 !if "$(CMP)" == "OWCL"
 # The OpenWatcom 1.9 linker fails with an internal error using the normal linker options.

@@ -20,10 +20,12 @@ extern "C" {
 #undef printf
 #undef fprintf
 #include <windows.h>            	/* Windows Definitions */
+#ifndef NODIAL
 #define TAPI_CURRENT_VERSION 0x00010004
 #include <tapi.h>
 #include <mcx.h>
 #include "ktapi.h"
+#endif
 }
 #endif 
 
@@ -441,9 +443,10 @@ K_DIAL_OPTIONS::ApplyChanges( void )
 	if ( item == newCurrent ) {
 	    SourceList->SetCurrent( item );
 #if defined(WIN32)
+#ifndef NODIAL
 	    if ( item->_is_tapi )
 		cktapiSetCurrentLocationID( item->_tapi_location_id );
-
+#endif
 #endif
 	}
     }

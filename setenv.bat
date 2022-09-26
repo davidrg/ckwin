@@ -203,6 +203,7 @@ goto :unsupported
 :vc2
 set CK_COMPILER_NAME=Visual C++ 2.0
 REM TODO - try to find msvcrt20.dll and add it to distdlls
+set ZINCBUILD=mvcpp200mt
 goto :cvcdone
 
 :vc4

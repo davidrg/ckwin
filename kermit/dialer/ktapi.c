@@ -26,12 +26,14 @@
 #include <stdio.h>
 
 #include <windows.h>            	/* Windows Definitions */
+#ifndef NODIAL
 #define TAPI_CURRENT_VERSION 0x00010004
 #include <tapi.h>
 #include <mcx.h>
 /* all functions in this module return TRUE to indicate success */
 /* or FALSE to indicate failure */
 #include "ktapi.h"
+#endif /* NODIAL */
 #include "cknwin.h"
 
 #undef debug

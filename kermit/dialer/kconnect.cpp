@@ -17,8 +17,10 @@
 #define USE_WINDOW_PASSWORD
 #ifdef WIN32
 #include <shellapi.h>
+#ifndef CKT_NT31
 #include <shlguid.h>
 #include <shlobj.h>
+#endif /* CKT_NT31 */
 #include <objbase.h>
 #endif /* WIN32 */
 #include <time.h>
@@ -85,6 +87,7 @@ extern ZIL_UINT8 kd_major, kd_minor;
 #ifdef WIN32
 extern "C" {
 #include <windows.h>            	/* Windows Definitions */
+#ifndef NODIAL
 #define TAPI_CURRENT_VERSION 0x00010004
 #include <tapi.h>
 #include <mcx.h>
@@ -98,6 +101,7 @@ extern "C" {
         connector->LoadTapiLocations();
         connector->UpdateLocationMenuItems();
     }
+#endif
 }
 #endif /* WIN32 */
 
@@ -492,7 +496,7 @@ GetHomeDrive(void)
 
         dwSize = sizeof(lpszKeyValue);
         lpszValueName = (CHAR *)"HOMEDRIVE";
-        if ( RegQueryValueEx( hkShellKey, (const char *)lpszValueName, NULL, &dwType,
+        if ( RegQueryValueEx( hkShellKey, (char *)lpszValueName, NULL, &dwType,
                               (CHAR *)lpszKeyValue, &dwSize ))
         {
             RegCloseKey( hkShellKey );
@@ -525,7 +529,7 @@ GetHomePath(void)
 
         dwSize = sizeof(lpszKeyValue);
         lpszValueName = (CHAR *)"HOMEPATH";
-        if ( RegQueryValueEx( hkShellKey, (const char *)lpszValueName, NULL, &dwType,
+        if ( RegQueryValueEx( hkShellKey, (char *)lpszValueName, NULL, &dwType,
                               (CHAR *)lpszKeyValue, &dwSize ))
         {
             RegCloseKey( hkShellKey );
@@ -566,7 +570,7 @@ GetPersonal(void)
 
     dwSize = sizeof(lpszKeyValue);
     lpszValueName = (CHAR *)"Personal";
-    if ( RegQueryValueEx( hkShellKey, (const char *)lpszValueName, NULL, &dwType,
+    if ( RegQueryValueEx( hkShellKey, (char *)lpszValueName, NULL, &dwType,
                           (CHAR *)lpszKeyValue, &dwSize ))
     {
         RegCloseKey( hkShellKey );
@@ -849,11 +853,15 @@ K_CONNECTOR::K_CONNECTOR(void)
         GenerateDefaultLocationFromConfig();
     LoadLocations();
 #if defined(WIN32)
+#ifndef NODIAL
     LoadTapiLocations();
+#endif /* NODIAL */
 #endif
     LoadModems();
 #if defined(WIN32)
+#ifndef NODIAL
     LoadTapiModems();
+#endif /* NODIAL */
 #endif
     /* Make sure there is at least one modem */
     if ( _modem_list.Count() == 0 ) {
@@ -1099,8 +1107,10 @@ KLocationMenuUser( UI_WINDOW_OBJECT * obj, UI_EVENT & event,
             if ( !strcmp( location->_name, item->DataGet()) ) {
                 connector->_location_list.SetCurrent( location );
 #if defined(WIN32)
+#ifndef NODIAL
                 if ( TapiAvail && location->_is_tapi )
                     cktapiSetCurrentLocationID( location->_tapi_location_id );
+#endif
 #endif  
                 break;
             }
@@ -1153,6 +1163,7 @@ K_CONNECTOR::UpdateLocationMenuItems( void )
 }
 
 #ifdef WIN32
+#ifndef NODIAL
 void
 K_CONNECTOR::LoadTapiModems( void )
 {
@@ -1584,6 +1595,7 @@ KTapiLineConfigMenuUser( UI_WINDOW_OBJECT * obj, UI_EVENT & event,
     }
     return 0;
 }
+#endif /* NODIAL */
 
 void
 K_CONNECTOR::UpdateTapiLineConfigMenuItems( void )
@@ -1599,6 +1611,9 @@ K_CONNECTOR::UpdateTapiLineConfigMenuItems( void )
 	delete popup;
     }
 
+#ifdef NODIAL
+    return;
+#else
     if ( !TapiAvail )
         return;
 
@@ -1612,6 +1627,7 @@ K_CONNECTOR::UpdateTapiLineConfigMenuItems( void )
 	if ( popup )
 	    *menu + popup;
     }
+#endif /* NODIAL */
 }
 #endif
 
@@ -2413,7 +2429,11 @@ Event( const UI_EVENT & event )
            break;
        case OPT_KERMIT_FG:
 #ifdef WIN32
+#ifndef CKT_NT31
            ShowWindowAsync(event.message.hwnd,SW_SHOWNORMAL);
+#else
+           ShowWindow(event.message.hwnd,SW_SHOWNORMAL);
+#endif /* CKT_NT31 */
            SetForegroundWindow(event.message.hwnd);
 #endif /* WIN32 */
            break;
@@ -2806,6 +2826,7 @@ Event( const UI_EVENT & event )
        break;
 
 #if defined(WIN32)
+#ifndef NODIAL
    case OPT_DIAL_TAPI_PASS:
        if ( FlagSet(Get(MENU_OPTIONS_DIAL_TAPI_PASS)->woStatus, WOS_SELECTED) )
        {
@@ -2830,11 +2851,11 @@ Event( const UI_EVENT & event )
        SaveConfig() ;
        break;
 
-
    case OPT_MENU_TAPI_DIALING:
        if ( TapiAvail )
 	   cktapiDialingProp();
        break;
+#endif /* NODIAL */
 #endif
 
    case OPT_MENU_SHORTCUT_DESKTOP:
@@ -8108,6 +8129,7 @@ VerifyAssociations( void )
     return TRUE;
 }
 
+#ifndef CKT_NT31
 HRESULT
 CreateLink(LPSTR lpszPathObj, LPSTR lpszPathLink, LPSTR lpszDesc,
             LPSTR lpszWorkDir, LPSTR lpszIcon, ZIL_UINT8 IconIndex)
@@ -8188,6 +8210,7 @@ CreateLink(LPSTR lpszPathObj, LPSTR lpszPathLink, LPSTR lpszDesc,
     CoUninitialize();
     return(hres);
 }
+#endif /* CKT_NT31 */
 #else /* WIN32 */
 HOBJECT
 CreateShadow( ZIL_ICHAR * ScriptFile )
@@ -8603,6 +8626,7 @@ CreateShortcut( KD_LIST_ITEM * entry, KD_CONFIG * config, KD_LIST_ITEM * def_ent
     }
 
 #ifdef WIN32
+#ifndef CKT_NT31
     if ( _config->_shortcut_desktop && Desktop ) {
         HKEY hkCommandKey=0;
         HKEY hkSubKey=0;
@@ -8692,6 +8716,7 @@ CreateShortcut( KD_LIST_ITEM * entry, KD_CONFIG * config, KD_LIST_ITEM * def_ent
                     K95ExeDir,              /* Work Directory */
                     K95Icon,3);
     }
+#endif /* CKT_NT31 */
 #else /* WIN32 */
     if ( _config->_shortcut_desktop && Desktop ) {
         CreateShadow( StartKermitFileName );
@@ -8903,7 +8928,7 @@ GetEditorCommand( void )
     static ZIL_ICHAR lpszKeyValue[256];
     DWORD dwType=0;
     DWORD dwSize=0;
-    const char *lpszValueName=NULL;
+    char *lpszValueName=NULL;
 
     if ( RegOpenKeyEx(HKEY_CLASSES_ROOT, 
                        "txtfile\\shell\\open\\command", 0,
@@ -8912,7 +8937,7 @@ GetEditorCommand( void )
 
     dwSize = sizeof(lpszKeyValue);
     lpszValueName = NULL ;
-    if ( RegQueryValueEx( hkCommandKey, lpszValueName, NULL, &dwType, 
+    if ( RegQueryValueEx( hkCommandKey, lpszValueName, NULL, &dwType,
 			   (CHAR *)lpszKeyValue, &dwSize ))
     {
         RegCloseKey( hkCommandKey );
@@ -8946,7 +8971,7 @@ GetBrowserCommand( void )
     static ZIL_ICHAR  lpszKeyValue[256];
     DWORD dwType=0;
     DWORD dwSize=0;
-    const char *lpszValueName=NULL;
+    char *lpszValueName=NULL;
 
     if ( RegOpenKeyEx(HKEY_CLASSES_ROOT, 
                        "http\\shell\\open\\command", 0,
@@ -9001,7 +9026,7 @@ GetFtpCommand( void )
     static ZIL_ICHAR lpszKeyValue[256];
     DWORD dwType=0;
     DWORD dwSize=0;
-    const char *lpszValueName=NULL;
+    char *lpszValueName=NULL;
 
     if ( RegOpenKeyEx(HKEY_CLASSES_ROOT, 
                        "ftp\\shell\\open\\command", 0,
@@ -9075,9 +9100,11 @@ Real_Win32ShellExecute( void * _object )
         case ERROR_BAD_FORMAT:
             printf("%s %s %d","Win32 ShellExecute","The .EXE file is invalid (non-Win32 .EXE or error in .EXE image).",0);
             break;
+#ifdef SE_ERR_ACCESSDENIED
         case SE_ERR_ACCESSDENIED:
             printf("%s %s %d","Win32 ShellExecute","The operating system denied access to the specified file.",0);
             break;
+#endif
         case SE_ERR_ASSOCINCOMPLETE:
             printf("%s %s %d","Win32 ShellExecute","The filename association is incomplete or invalid.",0);
             break;
@@ -9090,21 +9117,29 @@ Real_Win32ShellExecute( void * _object )
         case SE_ERR_DDETIMEOUT:
             printf("%s %s %d","Win32 ShellExecute","The DDE transaction could not be completed because the request timed out.",0);
             break;
+#ifdef SE_ERR_DLLNOTFOUND
         case SE_ERR_DLLNOTFOUND:
             printf("%s %s %d","Win32 ShellExecute","The specified dynamic-link library was not found.",0);
             break;
+#endif
+#ifdef SE_ERR_FNF
         case SE_ERR_FNF:
             printf("%s %s %d","Win32 ShellExecute","The specified file was not found.",0);
             break;
+#endif
         case SE_ERR_NOASSOC:
             printf("%s %s %d","Win32 ShellExecute","There is no application associated with the given filename extension.",0);
             break;
+#ifdef SE_ERR_OOM
         case SE_ERR_OOM:
             printf("%s %s %d","Win32 ShellExecute","There was not enough memory to complete the operation.",0);
             break;
+#endif
+#ifdef SE_ERR_PNF
         case SE_ERR_PNF:
             printf("%s %s %d","Win32 ShellExecute","The specified path was not found.",0);
             break;
+#endif
         case SE_ERR_SHARE:
             printf("%s %s %d","Win32 ShellExecute","A sharing violation occurred.",0);
             break;
