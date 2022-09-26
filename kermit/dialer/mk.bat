@@ -2,6 +2,11 @@
 if "%CKF_ZINC%" == "no" goto :nozinc
 
 nmake -f k95dial.mak winnt
+
+REM The registry tool isn't useful on NT 3.x so don't build it for compilers
+REM that only support NT 3.x
+if "%ZINCBUILD%" == "mvcpp200mt" goto :end
+
 cd registry
 nmake -f registry.mak winnt
 cd ..
