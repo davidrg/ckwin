@@ -93,6 +93,12 @@ _PROTOTYP(char * os2_gethostname, (void));
 #endif /* __WATCOMC__ */
 #endif /* OS2 */
 
+/* fdc 26 Sep 2022 */
+#ifdef CK_ENCRYPTION
+_PROTOTYP(int ck_tn_encrypting, (void));
+_PROTOTYP(int ck_tn_decrypting, (void));
+#endif /* CK_ENCRYPTION */
+
 #ifdef BSD44
 #include <errno.h>
 #endif /* BSD44 */

@@ -1,5 +1,5 @@
 #include "ckcsym.h"
-char *userv = "User Interface 10.0.326, 24 September 2022";
+char *userv = "User Interface 10.0.327, 26 September 2022";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 
@@ -22,7 +22,7 @@ char *userv = "User Interface 10.0.326, 24 September 2022";
   ckuus7.c.  ckuus2.c contains the HELP command parser and help-text strings;
   ckuusy.c contains the UNIX-style command-line interface; ckuusx.c contains
   routines needed by both the command-line interface and the interactive
-  command parser.
+  command parser.  ckuusy.c handles command-line arguments.
 */
 
 /*

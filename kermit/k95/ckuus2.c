@@ -244,13 +244,15 @@ char *newstxt[] = {
 #endif /* COMMENT */
 " ",
 "Documentation:",
-" 1. https://www.kermitproject.org/ckbindex.html",
+" . https://www.kermitproject.org/ckbindex.html",
 "    Online index to C-Kermit documentation.",
 " ",
-" 2. https://kermitproject.org/k95manual/index.html",
+#ifdef OS2
+" . https://kermitproject.org/k95manual/index.html",
 "    The Kermit 95 manual from 1995-2003.",
 " ",
-" 3. https://www.kermitproject.org/ckututor.html",
+#endif /* OS2 */
+" . https://www.kermitproject.org/ckututor.html",
 "    C-Kermit tutorial.",
 " ",
 "If the release date shown by the VERSION command is long past, be sure to",
@@ -263,7 +265,7 @@ char *newstxt[] = {
 "If the Kermit Project website is gone, look on Github:",
 " ",
 "  https://github.com/search?q=c-kermit+windows",
-#endif
+#endif /* OS2 */
 ""
 };
 #endif /* NOHELP */

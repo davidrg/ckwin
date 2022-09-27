@@ -1365,6 +1365,12 @@ ck_tn_auth_request()
 }
 
 #ifdef CK_ENCRYPTION
+_PROTOTYP(int encrypt_is_decrypting,(void));
+_PROTOTYP(int  encrypt_request_start, (void));
+_PROTOTYP(int encrypt_request_end, (void));
+_PROTOTYP(int get_crypt_table,(struct keytab **, int *));
+/* The four above added fdc 26 September 2022 */
+
 VOID
 ck_tn_enc_start()
 {

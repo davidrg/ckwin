@@ -506,7 +506,7 @@ char kermrcb[KERMRCL];
 char *kermrc = kermrcb;
 #endif /* DCMDBUF */
 
-int noherald = 0;
+int noherald = 0;         /* Whether to print the program herald on startup */
 int cm_retry = 1;                       /* Command retry enabled */
 xx_strp xxstring = zzstring;
 
@@ -3934,20 +3934,14 @@ outerr:                                 /* OUTPUT command error handler */
 }
 #endif /* NOSPL */
 
-/* Display version herald and initial prompt */
-
-#define MAXHERALDLEN 200
-char myherald[MAXHERALDLEN+2];          /* for \v(herald) */
+/* Display version herald */
 
 VOID
 herald() {
-    int x = 0, i;
-    extern int srvcdmsg;
+    extern char myherald[];
     extern char * cdmsgfile[];
-    char * ssl;
-    char * krb4;
-    char * krb5;
-    char * b64;
+    extern int srvcdmsg;
+    int x = 0, i;
 
 #ifndef NOCMDL
     extern char * bannerfile;
@@ -3972,94 +3966,12 @@ herald() {
     }
 #endif /* NOCMDL */
 
-#ifdef COMMENT
-    /* The following generates bad code in SCO compilers. */
-    /* Observed in both OSR5 and Unixware 2 -- after executing this */
-    /* statement when all conditions are false, x has a value of -32. */
-    if (noherald || quiet || bgset > 0 || (bgset != 0 && backgrd != 0))
-      x = 1;
-#else
-    x = 0;
-    if (noherald || quiet)
-      x = 1;
-    else if (bgset > 0)
-      x = 1;
-    else if (bgset < 0 && backgrd > 0)
-      x = 1;
-#endif /* COMMENT */
-
-    ssl = "";
-    krb4 = "";
-    krb5 = "";
-
-#ifdef CK_64BIT
-    b64 = " (64-bit)";
-#else
-    b64 = "";
-#endif  /* CK_64BIT */
-
-#ifndef OS2
-#ifdef CK_AUTHENTICATION
-#ifdef CK_SSL    
-    ssl = "+SSL";
-#endif	/* CK_SSL */
-#ifdef KRB4
-    krb4 = "+KRB4";
-#endif	/* KRB4 */
-#ifdef KRB5
-    krb5 = "+KRB5";
-#endif	/* KRB5 */
-#endif	/* CK_AUTHENTICATION */
-#endif /* OS2 */
-
-    if (x == 0) {
-        extern char *ck_s_name;
-        extern char *ck_s_ver;
-#ifdef datageneral
-        printf("%s, for%s\n",versio,ckxsys);
-#else
-#ifdef OSK
-        printf("%s, for%s\n",versio,ckxsys);
-        ckstrncat(myherald,versio,MAXHERALDLEN);
-        ckstrncat(myherald,"for ",MAXHERALDLEN);
-        ckstrncat(myherald,ckxsys,MAXHERALDLEN);
-#else
-        printf("%s, for%s%s%s%s%s\n\r",versio,ckxsys,ssl,krb4,krb5,b64);
-        ckmakxmsg(myherald,             /* for \v(herald) */
-                  MAXHERALDLEN,
-                  versio,
-                  ", for",
-                  ckxsys, ssl, krb4, krb5, b64, "", "", "", "", "");
-#endif /* OSK */
-#endif /* datageneral */
+    if (!noherald) {
+        printf("%s\n",myherald);
         printf(" Copyright (C) 1985, %s,\n", ck_cryear);
         printf("  Trustees of Columbia University in the City of New York.\n");
         printf("  Open Source since 2011; License: 3-clause BSD.\n");
-#ifdef COMMENT
-#ifdef OS2
-       shoreg();
-#endif /* OS2 */
-#endif /* COMMENT */
-
-        if (!quiet && !backgrd) {
-#ifdef COMMENT
-/* "Default file-transfer mode is AUTOMATIC" is useless information... */
-            char * s;
-            extern int xfermode;
-#ifdef VMS
-            s = "AUTOMATIC";
-#else
-            if (xfermode == XMODE_A) {
-                s = "AUTOMATIC";
-            } else {
-                s = gfmode(binary,1);
-            }
-            if (!s) s = "";
-#endif /* VMS */
-            if (*s)
-              printf("Default file-transfer mode is %s\n", s);
-#endif /* COMMENT */
-
+        if (!quiet && !backgrd ) {
             debug(F111,"herald","srvcdmsg",srvcdmsg);
             if (srvcdmsg) {
                 for (i = 0; i < 8; i++) {

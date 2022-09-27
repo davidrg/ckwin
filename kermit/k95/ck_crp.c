@@ -1,4 +1,4 @@
-char *ckcrpv = "Encryption Engine, 10.0.119, 23 Sep 2022";
+char *ckcrpv = "Encryption Engine, 10.0.120, 26 Sep 2022";
 /*
   C K _ C R P . C  -  Cryptography for C-Kermit"
 
@@ -496,7 +496,7 @@ static int encrypt_verbose = 1;
 #else
 static int encrypt_verbose = 1;
 static int encrypt_debug_mode = 0;
-#endif
+#endif /* DEBUG */
 
 static char dbgbuf [16384];
 
@@ -3872,8 +3872,6 @@ extern void ck_cast_ecb_encrypt P((uint8 *, uint8 *, CastKeySched *, int));
 extern void ck_cast_ecb_crypt P((uint32 *, CastKeySched *, int));
 
 #endif /* CAST_H */
-
-extern encrypt_debug_mode;
 
 #define CFB_40  0
 #define OFB_40  1

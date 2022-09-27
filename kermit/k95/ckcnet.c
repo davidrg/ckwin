@@ -1,4 +1,4 @@
-char *cknetv = "Network support, 10.0.298, 23 Sep 2022";
+char *cknetv = "Network support, 10.0.299, 26 Sep 2022";
 
 /*  C K C N E T  --  Network support  */
 
@@ -7179,6 +7179,7 @@ rlog_naws() {
 #endif /* CK_NAWS */
 #endif /* NOTCPIP */
 
+#ifndef NORLOGIN
 #ifdef OS2ORUNIX
 #define RLOGOUTBUF
 #endif /* OS2 */
@@ -7437,7 +7438,6 @@ rlog_ini(hostname, port, l_addr, r_addr)
     }
     return(0);
 }
-
 /* two control messages are defined:
 
    a double flag byte of 'o' indicates a one-byte message which is
@@ -7564,6 +7564,7 @@ rlogoobh(sig) int sig; {
 }
 #endif /* TCPIPLIB */
 #endif /* RLOGCODE */
+#endif /* NORLOGIN */
 
 /* Send network BREAK */
 /*
@@ -10218,7 +10219,8 @@ http_security()
         const char *cipher_list;
         static char buf[128];
         buf[0] = NUL;
-        cipher = SSL_get_current_cipher(tls_http_con);
+        /* cast added by fdc 26 September 2022 */
+        cipher = (SSL_CIPHER *)SSL_get_current_cipher(tls_http_con);
         cipher_list = SSL_CIPHER_get_name(cipher);
         SSL_CIPHER_description(cipher,buf,sizeof(buf));
         return(buf);

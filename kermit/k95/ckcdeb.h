@@ -85,10 +85,17 @@
 #ifndef NOWTMP                          /* No more WTMP logging */
 #define NOWTMP
 #endif  /* NOWTMP */
+#endif  /* NODEPRECATED */
+/*
+  As of 26 September 2022, the Arrow-key feature is included only if 
+  explicitly requested because the API is disappearing not only in glibc
+  but also some other libcs like musl and whatever Android uses.
+*/
+#ifndef DOARROWKEYS
 #ifndef NOARROWKEYS                     /* Arrow keys use a deprecated API */
 #define NOARROWKEYS                     /* (at least in glibc) */
-#endif  /* NOARROWKEYS */
-#endif  /* NODEPRECATED */
+#endif /* NOARROWKEYS */
+#endif /* DOARROWKEYS */
 
 #ifdef OS2
 #include "ckoker.h"

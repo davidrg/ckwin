@@ -1,8 +1,8 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "25 Sep 2022"         /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20220925"		/* Keep them in sync */
-/* Sun Sep 25 16:52:39 2022 */
+#define EDITDATE  "26 Sep 2022"       /* Last edit date dd mmm yyyy */
+#define EDITNDATE "20220926"          /* Keep them in sync */
+/* Mon Sep 26 09:29:27 2022 */
 
 /* Remove this after Beta test! */
 #ifndef BETATEST                        /* This *IS* a Beta test... */
@@ -1450,6 +1450,7 @@ _PROTOTYP( VOID iniopthlp, (void) );    /* Command-line help initializer */
 #endif /* NOCMDL */
 #endif /* NOHELP */
 
+_PROTOTYP( VOID makever, (void) );
 _PROTOTYP( VOID getexedir, (void) );
 _PROTOTYP( int putnothing, (char) );
 
@@ -2457,8 +2458,6 @@ doicp(threadinfo) VOID * threadinfo;
 #endif /* NTSIG */
             }
         }
-        debug(F100,"doicp calling herald","",0);
-        herald();
     }
 #endif /* NOSPL */
     while(1) {                          /* Loop getting commands. */
@@ -2641,10 +2640,20 @@ setprefix(z) int z; {                   /* Initial control-char prefixing */
 }
 #endif /* NOXFER */
 
+#define MAXHERALDLEN 200
+char myherald[MAXHERALDLEN+2];          /* for \v(herald) */
+char myoptions[MAXHERALDLEN];           /* and extra bits like SSL etc */
+
 VOID
 makever() {                             /* Make version string from pieces */
+    extern int noherald, backgrd;
+    extern char * ckxsys;
     int x, y;
     char * s;
+    char * ssl;                         /* These moved from herald() */
+    char * krb4;
+    char * krb5;
+    char * b64;
 
     x = strlen(ck_s_name);
     y = strlen(ck_s_ver);
@@ -2656,19 +2665,6 @@ makever() {                             /* Make version string from pieces */
     }
     x += y + 1;
   
-#ifdef COMMENT
-    if (strlen(ck_s_test) > 0) {
-        s = " OPEN SOURCE:";		/* C-Kermit 9.0 and later */
-    } else {
-        s = " OPEN SOURCE";		/* C-Kermit 9.0 and later */
-    }
-    y = strlen(s);
-    if (CKVERLEN < x + y + 1)
-      return;
-    ckstrncat(versio,s,CKVERLEN);
-#endif  /* COMMENT */
-
-    x += y + 1;
     if (*ck_s_who) {
         y = strlen(ck_s_who);
         if (CKVERLEN < x + y + 1)
@@ -2696,6 +2692,57 @@ makever() {                             /* Make version string from pieces */
     }
     vernum = ck_l_ver;
     debug(F110,"makever Kermit version",versio,0);
+
+#ifdef COMMENT
+    /* The following generates bad code in SCO compilers. */
+    /* Observed in both OSR5 and Unixware 2 -- after executing this */
+    /* statement when all conditions are false, x has a value of -32. */
+    if (noherald || quiet || bgset > 0 || (bgset != 0 && backgrd != 0))
+      x = 1;
+#else
+    x = 0;
+    if (noherald || quiet)
+      x = 1;
+    else if (bgset > 0)
+      x = 1;
+    else if (bgset < 0 && backgrd > 0)
+      x = 1;
+#endif /* COMMENT */
+
+    ssl = "";
+    krb4 = "";
+    krb5 = "";
+
+#ifdef CK_64BIT
+    b64 = " (64-bit)";
+#else
+    b64 = "";
+#endif  /* CK_64BIT */
+
+#ifndef OS2
+#ifdef CK_AUTHENTICATION
+#ifdef CK_SSL    
+    ssl = "+SSL";
+#endif	/* CK_SSL */
+#ifdef KRB4
+    krb4 = "+KRB4";
+#endif	/* KRB4 */
+#ifdef KRB5
+    krb5 = "+KRB5";
+#endif	/* KRB5 */
+#endif	/* CK_AUTHENTICATION */
+#endif /* OS2 */
+
+    if (x == 0) {
+        extern char *ck_s_name;
+        extern char *ck_s_ver;
+        ckmakxmsg(myherald,             /* for \v(herald) */
+                  MAXHERALDLEN,
+                  versio,
+                  ", for",
+                  ckxsys, ssl, krb4, krb5, b64, "", "", "", "", "");
+
+    }
 }
 
 union ck_short shortbytes;              /* For determining byte order */
@@ -3044,7 +3091,7 @@ main(argc,argv) int argc; char **argv;
         extern char *tempdir;           /* Initialize temporary directory */
         char * tp = scratch;
         int x = TMPBUFSIZ;
-        (void) zzstring("\\v(tmpdir)",&tp,&x); /* Expand builtin var */
+        (void) zzstring("\\v(tmpdir)",&tp,&x); /* Expand builtin variable */
         makestr(&tempdir,scratch);
     }
 #endif /* NOSPL */
@@ -3626,14 +3673,12 @@ main(argc,argv) int argc; char **argv;
 	}
     }
 #endif /* HAVE_LOCALE */
+
+    herald();                           /* Display program herald (maybe) */
 /*
   If no action requested on command line, or if -S ("stay") was included,
   enter the interactive command parser.
 */
-    if (!clcmds) {
-        herald();                       /* Display program herald. */
-    }
-
 #ifdef NOCCTRAP
     debug(F100,"main NOCCTRAP setting interrupt trap","",0);
     setint();                           /* Set up command interrupt traps */

@@ -83,10 +83,11 @@ ck_ssh_is_installed()
 #else /* SSLDLL */
     return(ssl_installed);
 #endif /* SSLDLL */
-#else
-    return 0;
-#endif
-#endif
+#else  /* SSHBUILTIN */
+    return(0);
+#endif /* SSHBUILTIN */
+#endif /* CK_SSL */
+    return(0);
 }
 
 int
