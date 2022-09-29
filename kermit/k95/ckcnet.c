@@ -280,8 +280,11 @@ struct timezone {
 #include <errno.h>			/* Error number symbols */
 #else /* OS/2 */
 #ifdef __WATCOMC__
-/* WatcomC doesn't need errno.h (definitions conflict with some previous definition */
-//#include <errno.h>
+/*
+  WatcomC doesn't need errno.h
+  (definitions conflict with some previous definition
+  #include <errno.h>
+*/
 #else
 #include <errno.h>			/* Error number symbols */
 #endif

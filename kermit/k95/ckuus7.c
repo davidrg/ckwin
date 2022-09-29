@@ -13108,7 +13108,7 @@ dofile(op) int op; {                    /* Do the FILE command */
             if (listing < 0)
               listing = !xcmdsrc;
             if (listing)
-              printf(" %ld %s%s\n",
+              printf(" %d %s%s\n",
                      z_filcount,
                      ((rsize == RD_CHAR) ? "byte" : "line"),
                      ((z_filcount == 1L) ? "" : "s")

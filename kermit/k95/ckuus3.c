@@ -12325,7 +12325,8 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
             zchkod = 1;                 /* Hack for asking zchko() if */
             x = zchko(tmpbuf);          /* a directory is writeable */
             zchkod = 0;
-            if (x < 0) printf("WARNING: %s does not appear to be writable\n");
+            if (x < 0)
+              printf("WARNING: %s does not appear to be writable\n",tmpbuf);
             zfnqfp(tmpbuf,CKMAXPATH,p); /* Get and store full pathname */
             makestr(&tempdir,tmpname);
         }

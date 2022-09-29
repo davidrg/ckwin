@@ -1,13 +1,13 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "26 Sep 2022"       /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20220926"          /* Keep them in sync */
-/* Mon Sep 26 09:29:27 2022 */
+#define EDITDATE  "27 Sep 2022"       /* Last edit date dd mmm yyyy */
+#define EDITNDATE "20220927"          /* Keep them in sync */
+/* Tue Sep 27 06:43:13 2022 */
 
-/* Remove this after Beta test! */
-#ifndef BETATEST                        /* This *IS* a Beta test... */
-#define BETATEST
-#endif  /* BETATEST */
+/*
+ IMPORTANT: as of 27 September 2022 BETATEST is defined
+ in ckcdeb.h, not here, because it is used in other modules.
+*/
 
 /*
 FOR NEW VERSION (development, alpha, beta, release candidate, formal release):
@@ -30,33 +30,38 @@ If the version number has changed, also:
   support this feature.  Must come before any tests for preprocessor symbols.
 */
 #include "ckcsym.h"
+
 /*
-  Consolidated C-Kermit program version information for all platforms (but for
-  UNIX also see ckuver.h).  See makever() below for how they are used.
+  This was moved up here from further down so BETATEST definition
+  will take effect before it is used.  Previously BETATEST was defined
+  in this module but since it was also used in other modules, it needed
+  to be in ckcdeb.h, which, despite its name, has evolved into the
+  principal C-Kermit header file, the only one that all modules #include.
+  - fdc, 27 September 2022
 */
-#ifdef BETATEST
-#ifdef OS2
-#ifdef __DATE__
-#define BETADATE
-#endif /* __DATE__ */
-#endif /* OS2 */
-#endif /* BETATEST */
+#include "ckcdeb.h"                     /* Debug & other symbols */
 
 char * ck_cryear = "2022"; 		/* C-Kermit copyright year */
 /*
   Note: initialize ck_s_test to "" if this is not a test version.
   Use (*ck_s_test != '\0') to decide whether to print test-related messages.
 */
+
 #ifdef BETATEST
 #ifdef OS2
-/* Temporary: the Windows version is currently seeing monthly beta releases
-
-/* We are currently on the fourth windows beta, which is based on
- * C-Kermit 10.0 Beta.05 */
+#ifdef __DATE__
+#define BETADATE
+#endif /* __DATE__ */
+/*
+   Temporary from July 2022...
+   the Windows version is currently seeing monthly beta releases.
+   As 27 September 2022 the Windows Beta is based on C-Kermit 10.0 Beta.05.
+   The Windows and non-Windows Betas happen at different times.
+*/
 char *ck_s_test = "Pre-Beta";
 char *ck_s_tver = "05/Windows-04";
 #else
-char *ck_s_test = "Pre-Beta";		/* "Dev","Alpha","Beta","RC", or "" */
+char *ck_s_test = "Beta";		/* "Dev","Alpha","Beta","RC", or "" */
 char *ck_s_tver = "05";			/* Test version number */
 #endif /* OS2 */
 #else /* BETATEST */
@@ -112,7 +117,6 @@ long vernum;                            /* runtime from above.    */
 #define CKCMAI
 
 #include "ckcasc.h"                     /* ASCII character symbols */
-#include "ckcdeb.h"                     /* Debug & other symbols */
 
 char * myname = NULL;                   /* Name this program is called by */
 #ifndef OS2

@@ -12735,11 +12735,9 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
         printf(" Jeffrey Eric Altman, Secure Endpoints, Inc. %s\n",
 	       "<jaltman@secure-endpoints.com>"
 	       );
-#ifdef NT
         printf(" David Goodwin %s\n",
                "<david@zx.net.nz>"
         );
-#endif  /* NT */
 	printf(" Contributions from many others.\n");
 	n = 7;
 	if (*ck_s_test) {

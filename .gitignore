@@ -248,4 +248,8 @@ builder/
 # commit them when we're updating shared code.
 ckufio.c
 ckutio.c
+ckcdebu.h
+ckuker.nr
+ckustr.sed
+ckutiox.c
 kermit/k95/makefile

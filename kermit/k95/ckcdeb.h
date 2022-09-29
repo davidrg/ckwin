@@ -26,13 +26,13 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
     Columbia University Academic Information Systems, NYC (1974-2011)
     The Kermit Project, Bronx NY (2011-present)
+    Changes from David Goodwin for Windows and OS/2 (2022)
 
   Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: Fri Sep 23 15:20:51 2022
-    (changes from David Goodwin for Windows and OS/2)
+    Last update: Tue Sep 27 11:09:55 2022
 */
 
 /*
@@ -46,8 +46,14 @@
 #ifndef CKCDEB_H			/* Don't include me more than once. */
 #define CKCDEB_H
 
-/* 14 Sep 2022 - TYPE command new /INTERPRET switch enabled by default */
-
+/* Moved here from ckcmai.c... REMOVE THIS AFTER BETA TEST! */
+#ifndef BETATEST
+#define BETATEST
+#endif  /* BETATEST */
+/* 
+   14 Sep 2022 - TYPE command new /INTERPRET switch enabled by default
+   except in Windows where it doesn't work because of character-set issues.
+*/
 #ifdef NT
 #ifndef NOTYPEINTERPRET
 #define NOTYPEINTERPRET
@@ -85,11 +91,15 @@
 #ifndef NOWTMP                          /* No more WTMP logging */
 #define NOWTMP
 #endif  /* NOWTMP */
+#ifndef NOSYSLOG                        /* No more syslog */
+#define NOSYSLOG
+#endif  /* NOSYSLOG */
+
 #endif  /* NODEPRECATED */
 /*
   As of 26 September 2022, the Arrow-key feature is included only if 
   explicitly requested because the API is disappearing not only in glibc
-  but also some other libcs like musl and whatever Android uses.
+  but also other libcs like musl and whatever Android uses.
 */
 #ifndef DOARROWKEYS
 #ifndef NOARROWKEYS                     /* Arrow keys use a deprecated API */

@@ -8034,7 +8034,7 @@ doshow(x) int x; {
           printf(" --bannerfile=%s\n",bannerfile ? bannerfile : "(null)");
           printf(" --cdfile:%s\n",cdmsgstr ? cdmsgstr : "(null)");
           printf(" --cdmessage:%d\n",srvcdmsg);
-          printf(" --helpfile:%d\n",helpfile);
+          printf(" --helpfile:%s\n",helpfile);
           if (inserver) {
               printf("\n");
               break;

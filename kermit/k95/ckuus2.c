@@ -223,7 +223,18 @@ char *newstxt[] = {
 " . Large file support (64-bit file size) on most platforms",
 " . Long integer variables and constants in commands and scripts",
 #endif  /* COMMENT */
-" (to be filled in...)",
+/* For 10.0 */
+" . Updated for longevity... Adapted to 2020s compilers and OS's without",
+"    sacrificing compatability with older platforms going back to the 1970s",
+"    and 1980s; at least that's the intention.",
+" . The first new C-Kermit release for Windows in 20 years.",
+" . A simpler version number: 10.0.",
+" . Updated OpenSSL support.",
+" . New serial port speeds up to 4000000 bps.",
+" . New functions and built-in variables for the scripting language.",
+" . New ability of Kermit scripts to run in a Unix pipelines.",
+" . New CHANGE command for changing strings in external text files.",
+" . Lots more; see https://kermitproject.org/updates.html",
 #endif /* OS2 */
 #ifdef COMMENT
 /* These were for 9.0 */
@@ -246,11 +257,9 @@ char *newstxt[] = {
 "Documentation:",
 " . https://www.kermitproject.org/ckbindex.html",
 "    Online index to C-Kermit documentation.",
-" ",
 #ifdef OS2
 " . https://kermitproject.org/k95manual/index.html",
 "    The Kermit 95 manual from 1995-2003.",
-" ",
 #endif /* OS2 */
 " . https://www.kermitproject.org/ckututor.html",
 "    C-Kermit tutorial.",
@@ -258,8 +267,12 @@ char *newstxt[] = {
 "If the release date shown by the VERSION command is long past, be sure to",
 "check the Kermit website to see if there have been updates:",
 " ",
-"  https://www.kermitproject.org/             (Kermit Project home page)",
+"  https://www.kermitproject.org/ (Kermit Project home page)",
 "  https://www.kermitproject.org/ckermit.html (C-Kermit home page)",
+#ifdef BETATEST
+"  https://www.kermitproject.org/ckupdates.html (Beta test progress)",
+"  https://www.kermitproject.org/ck10devbuilds.html (Beta test builds table)",
+#endif /* BETATEST */
 #ifdef OS2
 " ",
 "If the Kermit Project website is gone, look on Github:",
