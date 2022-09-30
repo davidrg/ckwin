@@ -58,7 +58,7 @@ char * ck_cryear = "2022"; 		/* C-Kermit copyright year */
    As 27 September 2022 the Windows Beta is based on C-Kermit 10.0 Beta.05.
    The Windows and non-Windows Betas happen at different times.
 */
-char *ck_s_test = "Pre-Beta";
+char *ck_s_test = "Beta";
 char *ck_s_tver = "05/Windows-04";
 #else
 char *ck_s_test = "Beta";		/* "Dev","Alpha","Beta","RC", or "" */
