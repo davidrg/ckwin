@@ -1,4 +1,4 @@
-char * ckcuni = "Unicode support 9.0.116, 06 Nov 2021";
+char * ckcuni = "Unicode support 10.0.116, 23 Sep 2022";
 
 #ifdef OS2
 #define KERMITFONT
@@ -7,7 +7,7 @@ char * ckcuni = "Unicode support 9.0.116, 06 Nov 2021";
 /*  C K C U N I . C  --  Unicode/Terminal character-set translations  */
 
 /*
-  Copyright (C) 1999, 2013,
+  Copyright (C) 1999, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -325,6 +325,7 @@ struct keytab txrtab[] = {
 #ifdef COMMENT
     "utf7",             TX_UTF7,       0,
 #endif /* COMMENT */
+    "utf-8",            TX_UTF8,       CM_INV,
     "utf8",             TX_UTF8,       0,
     "", 0, 0
 };

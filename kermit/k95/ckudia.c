@@ -1,10 +1,10 @@
 #include "ckcsym.h"
-char *dialv = "Dial Command, 9.0.162, 06 Nov 2021";
+char *dialv = "Dial Command, 10.0.162, 23 Sep 2022";
 
 /*  C K U D I A	 --  Module for automatic modem dialing. */
 
 /*
-  Copyright (C) 1985, 2021,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -109,7 +109,7 @@ The remaining steps are in this module:
 
 #ifdef OS2ONLY
 #define INCL_VIO			/* Needed for ckocon.h */
-#define INCL_WINERRORS      /* Needed for WinGetLastError() */
+#define INCL_WINERRORS                  /* Needed for WinGetLastError() */
 #include <os2.h>
 #undef COMMENT
 #include "ckocon.h"
@@ -4742,7 +4742,7 @@ dialoc(c) char c;
 { /* dialoc */				/* Dial Output Character */
     if (dialdpy) {
 	if (c != LF) conoc(c);		/* Don't echo LF */
-	if (c == CK_CR) conoc(LF);		/* Echo CR as CRLF */
+	if (c == CK_CR) conoc(LF);      /* Echo CR as CRLF */
     }
 }
 
@@ -6999,7 +6999,7 @@ dook(threadinfo) VOID * threadinfo ;
 	    debug(F000,"getok:",rbuf,(int) c); /* Log it */
 #endif /* COMMENT */
 	    switch (c) {		/* Interpret it. */
-	      case CK_CR:			/* Got a carriage return. */
+	      case CK_CR:               /* Got a carriage return. */
 		switch(rbuf[RBUFL-2]) {	/* Look at character before it. */
 		  case '0':		/* 0 = OK numeric response */
 		    if (!okstrict ||

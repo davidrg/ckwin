@@ -855,6 +855,7 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
          * mouse events to the remote host regardless of what that input may be
          * mapped to within CKW.*/
 
+#ifndef NOSCROLLWHEEL
         if (r.dwEventFlags & MOUSE_WHEELED) {
             /*
              * xterm sends mouse wheel events as buttons 4 and 5. Each click is
@@ -882,7 +883,9 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                              TRUE);
                 zDelta--;
             } while (zDelta > 0);
-        } else {
+        } else
+#endif
+        {
             static int button = 0;
             int previous_button = button;
 

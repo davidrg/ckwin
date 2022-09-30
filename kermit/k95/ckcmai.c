@@ -1,8 +1,13 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "20 Sep 2022"         /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20220920"		/* Keep them in sync */
-/* Tue Sep 20 10:57:40 2022 */
+#define EDITDATE  "27 Sep 2022"       /* Last edit date dd mmm yyyy */
+#define EDITNDATE "20220927"          /* Keep them in sync */
+/* Tue Sep 27 06:43:13 2022 */
+
+/*
+ IMPORTANT: as of 27 September 2022 BETATEST is defined
+ in ckcdeb.h, not here, because it is used in other modules.
+*/
 
 /*
 FOR NEW VERSION (development, alpha, beta, release candidate, formal release):
@@ -25,47 +30,40 @@ If the version number has changed, also:
   support this feature.  Must come before any tests for preprocessor symbols.
 */
 #include "ckcsym.h"
+
 /*
-  Consolidated C-Kermit program version information for all platforms
-  (but for UNIX also see ckuver.h).  See makever() below for how they are used.
-  NOTE: The BETATEST macro is not well-named, it really applies only to what
-  were Jeff Altman's areas: Kermit 95 and security.  BETATEST has nothing
-  to do with C-Kermit Beta tests.  K95 developers should define BETATEST
-  when uploading a K95 version for public testing that is not a real release.
+  This was moved up here from further down so BETATEST definition
+  will take effect before it is used.  Previously BETATEST was defined
+  in this module but since it was also used in other modules, it needed
+  to be in ckcdeb.h, which, despite its name, has evolved into the
+  principal C-Kermit header file, the only one that all modules #include.
+  - fdc, 27 September 2022
 */
-
-#ifdef COMMENT                    /* Uncomment this for real K95 version */
-#ifndef OS2				/* OS2 actually means Kermit 95. */
-#ifndef BETATEST			/* It's because Kermit 95 started */
-#define BETATEST			/* out as C-Kermit for OS/2. */
-#endif /* BETATEST */
-#endif /* OS2 */
-#endif /* COMMENT */
-
-#ifdef BETATEST
-#ifdef OS2
-#ifdef __DATE__
-#define BETADATE
-#endif /* __DATE__ */
-#endif /* OS2 */
-#endif /* BETATEST */
+#include "ckcdeb.h"                     /* Debug & other symbols */
 
 char * ck_cryear = "2022"; 		/* C-Kermit copyright year */
 /*
   Note: initialize ck_s_test to "" if this is not a test version.
   Use (*ck_s_test != '\0') to decide whether to print test-related messages.
 */
+
 #ifdef BETATEST
 #ifdef OS2
-/* Temporary: the Windows version is currently seeing monthly beta releases
-
-/* We are currently on the third windows beta of C-Kermit 10.0 Beta.04 */
+#ifdef __DATE__
+#define BETADATE
+#endif /* __DATE__ */
+/*
+   Temporary from July 2022...
+   the Windows version is currently seeing monthly beta releases.
+   As 27 September 2022 the Windows Beta is based on C-Kermit 10.0 Beta.05.
+   The Windows and non-Windows Betas happen at different times.
+*/
 char *ck_s_test = "Beta";
-char *ck_s_tver = "04/Windows-03";
+char *ck_s_tver = "05/Windows-04";
 #else
 char *ck_s_test = "Beta";		/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "04";			/* Test version number */
-#endif
+char *ck_s_tver = "05";			/* Test version number */
+#endif /* OS2 */
 #else /* BETATEST */
 char *ck_s_test = "";			/* Not development */
 char *ck_s_tver = "";
@@ -106,7 +104,7 @@ static char sccsid[] = "@(#)C-Kermit 10.0";
 char *ck_s_ver = "10.0";                /* C-Kermit version string */
 char *ck_s_edit = "400";                /* Edit number (for Debian package) */
 char *ck_s_xver = "10.0.400";           /* eXtended version string */
-long  ck_l_ver = 1000000L;              /* C-Kermit version number */
+long  ck_l_ver = 1000400L;              /* C-Kermit version number */
 char *ck_s_name = "C-Kermit";           /* Name of this program */
 char *ck_s_who = "";                    /* Where customized, "" = not. */
 char *ck_patch = "";                    /* Patch info, if any. */
@@ -119,7 +117,6 @@ long vernum;                            /* runtime from above.    */
 #define CKCMAI
 
 #include "ckcasc.h"                     /* ASCII character symbols */
-#include "ckcdeb.h"                     /* Debug & other symbols */
 
 char * myname = NULL;                   /* Name this program is called by */
 #ifndef OS2
@@ -158,9 +155,11 @@ int nolocale = 1;                       /* Don't use Locale */
   3-clause license, text just below (where %s is the year current at the
   last time this code compiled).
 
+  If you're looking for the program start herald, it's in ckuus5.c,
+  function herald().
+
 COPYRIGHT NOTICE:
 */
-
 char *copyright[] = {
 
 #ifdef pdp11
@@ -591,7 +590,7 @@ ACKNOWLEDGMENTS:
 #ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"
-#endif
+#endif /* NODIAL */
 #endif /* NT */
 
 #ifndef NOSERVER
@@ -1455,6 +1454,7 @@ _PROTOTYP( VOID iniopthlp, (void) );    /* Command-line help initializer */
 #endif /* NOCMDL */
 #endif /* NOHELP */
 
+_PROTOTYP( VOID makever, (void) );
 _PROTOTYP( VOID getexedir, (void) );
 _PROTOTYP( int putnothing, (char) );
 
@@ -2462,8 +2462,6 @@ doicp(threadinfo) VOID * threadinfo;
 #endif /* NTSIG */
             }
         }
-        debug(F100,"doicp calling herald","",0);
-        herald();
     }
 #endif /* NOSPL */
     while(1) {                          /* Loop getting commands. */
@@ -2646,10 +2644,20 @@ setprefix(z) int z; {                   /* Initial control-char prefixing */
 }
 #endif /* NOXFER */
 
+#define MAXHERALDLEN 200
+char myherald[MAXHERALDLEN+2];          /* for \v(herald) */
+char myoptions[MAXHERALDLEN];           /* and extra bits like SSL etc */
+
 VOID
 makever() {                             /* Make version string from pieces */
+    extern int noherald, backgrd;
+    extern char * ckxsys;
     int x, y;
     char * s;
+    char * ssl;                         /* These moved from herald() */
+    char * krb4;
+    char * krb5;
+    char * b64;
 
     x = strlen(ck_s_name);
     y = strlen(ck_s_ver);
@@ -2661,17 +2669,6 @@ makever() {                             /* Make version string from pieces */
     }
     x += y + 1;
   
-    if (strlen(ck_s_test) > 0) {
-        s = " OPEN SOURCE:";		/* C-Kermit 9.0 and later */
-    } else {
-        s = " OPEN SOURCE";		/* C-Kermit 9.0 and later */
-    }
-    y = strlen(s);
-    if (CKVERLEN < x + y + 1)
-      return;
-    ckstrncat(versio,s,CKVERLEN);
-
-    x += y + 1;
     if (*ck_s_who) {
         y = strlen(ck_s_who);
         if (CKVERLEN < x + y + 1)
@@ -2698,7 +2695,58 @@ makever() {                             /* Make version string from pieces */
         ckstrncat(versio,ck_s_date,CKVERLEN);
     }
     vernum = ck_l_ver;
-    debug(F110,"Kermit version",versio,0);
+    debug(F110,"makever Kermit version",versio,0);
+
+#ifdef COMMENT
+    /* The following generates bad code in SCO compilers. */
+    /* Observed in both OSR5 and Unixware 2 -- after executing this */
+    /* statement when all conditions are false, x has a value of -32. */
+    if (noherald || quiet || bgset > 0 || (bgset != 0 && backgrd != 0))
+      x = 1;
+#else
+    x = 0;
+    if (noherald || quiet)
+      x = 1;
+    else if (bgset > 0)
+      x = 1;
+    else if (bgset < 0 && backgrd > 0)
+      x = 1;
+#endif /* COMMENT */
+
+    ssl = "";
+    krb4 = "";
+    krb5 = "";
+
+#ifdef CK_64BIT
+    b64 = " (64-bit)";
+#else
+    b64 = "";
+#endif  /* CK_64BIT */
+
+#ifndef OS2
+#ifdef CK_AUTHENTICATION
+#ifdef CK_SSL    
+    ssl = "+SSL";
+#endif	/* CK_SSL */
+#ifdef KRB4
+    krb4 = "+KRB4";
+#endif	/* KRB4 */
+#ifdef KRB5
+    krb5 = "+KRB5";
+#endif	/* KRB5 */
+#endif	/* CK_AUTHENTICATION */
+#endif /* OS2 */
+
+    if (x == 0) {
+        extern char *ck_s_name;
+        extern char *ck_s_ver;
+        ckmakxmsg(myherald,             /* for \v(herald) */
+                  MAXHERALDLEN,
+                  versio,
+                  ", for",
+                  ckxsys, ssl, krb4, krb5, b64, "", "", "", "", "");
+
+    }
 }
 
 union ck_short shortbytes;              /* For determining byte order */
@@ -3047,12 +3095,12 @@ main(argc,argv) int argc; char **argv;
         extern char *tempdir;           /* Initialize temporary directory */
         char * tp = scratch;
         int x = TMPBUFSIZ;
-        (void) zzstring("\\v(tmpdir)",&tp,&x); /* Expand builtin var */
+        (void) zzstring("\\v(tmpdir)",&tp,&x); /* Expand builtin variable */
         makestr(&tempdir,scratch);
     }
 #endif /* NOSPL */
 #ifndef NOSETKEY                        /* Allocate & initialize the keymap */
-    /* This code has been moved to before sysinit() for K95G */
+    /* This code was moved to before sysinit() for K95G */
     if (!(keymap = (KEY *) malloc(sizeof(KEY)*KMSIZE)))
       fatal("main: no memory for keymap");
     if (!(macrotab = (MACRO *) malloc(sizeof(MACRO)*KMSIZE)))
@@ -3629,13 +3677,12 @@ main(argc,argv) int argc; char **argv;
 	}
     }
 #endif /* HAVE_LOCALE */
+
+    herald();                           /* Display program herald (maybe) */
 /*
   If no action requested on command line, or if -S ("stay") was included,
   enter the interactive command parser.
 */
-    if (!clcmds)
-      herald();                         /* Display program herald. */
-
 #ifdef NOCCTRAP
     debug(F100,"main NOCCTRAP setting interrupt trap","",0);
     setint();                           /* Set up command interrupt traps */

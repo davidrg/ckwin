@@ -1,14 +1,15 @@
-char *cksslv = "SSL/TLS support, 9.0.234, 8 Oct 2020";
+char *cksslv = "SSL/TLS support, 10.0.236, 24 Sep 2022";
 /*
   C K _ S S L . C --  OpenSSL Interface for C-Kermit
 
-  Copyright (C) 1985, 2020,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
-    Author:  Jeffrey E Altman (jaltman@secure-endpoints.com)
+    Authors:  Jeffrey E Altman (jaltman@secure-endpoints.com)
                Secure Endpoints Inc., New York City
+              David Goodwin, New Zealand
 
   Provides:
 
@@ -82,10 +83,11 @@ ck_ssh_is_installed()
 #else /* SSLDLL */
     return(ssl_installed);
 #endif /* SSLDLL */
-#else
-    return 0;
-#endif
-#endif
+#else  /* SSHBUILTIN */
+    return(0);
+#endif /* SSHBUILTIN */
+#endif /* CK_SSL */
+    return(0);
 }
 
 int

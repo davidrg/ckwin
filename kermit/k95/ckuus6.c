@@ -17,6 +17,7 @@
     Mon Aug 22 20:11:01 2022 (for TYPE /INTERPRET)
     Wed Aug 31 15:46:35 2022 (to disable TYPE /INTERPRET in Windows)
     Tue Sep 20 15:40:49 2022 (for COPY /TOSCREEN and /INTERPRET)
+    Fri Sep 23 16:40:42 2022 (corrections from David Goodwin)
 */
 
 /* Includes */
@@ -86,7 +87,7 @@ extern int k95stdout;
 #ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"
-#endif
+#endif  /* NODIAL */
 #endif /* NT */
 #include "ckocon.h"
 #include "ckodir.h"			/* [jt] 2013/11/21 - for MAXPATHLEN */
@@ -4136,8 +4137,7 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
             char * cvtbuf;              /* Pointer to conversion buffer */
             char * newbuf = malloc(TYPBUFL+3); /* Buffer for zzstring result */
             char * resultbuf;
-
-            /*
+/*
   The line has been returned to us as UCS-2 but we need to feed it to
   zzstring() to interpret all the backslash escapes, but zzstring doesn't
   understand UCS-2.  So we have to convert it from UCS2 (outcs) back to incs;
@@ -4146,7 +4146,7 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
             cvtbuf = cvtstring(buf,outcs,incs); /* UCS2->original cset */
             debug(F110,"dotype interpret cvtbuf",cvtbuf,0);
             zzstring(cvtbuf, &newbuf, &tmplen);  /* Evaluate it */
-            resultbuf = cvtstring(newbuf,incs,outcs); /* Convert back to UCS2 */
+            resultbuf = cvtstring(newbuf,incs,outcs); /* Back to UCS2 */
             ckstrncpy(buf, resultbuf, TYPBUFL+3);
             debug(F110,"dotype interpret zzstring result buf",buf,0);
             free(newbuf);
@@ -4295,10 +4295,11 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
         if (paging > 0 && ofp == stdout) { /* Pause at end of screen */
             if (cmd_rows > 0 && cmd_cols > 0) {
                 if (n > cmd_rows - 3) {
-                    if (!askmore())
+                    if (!askmore()) {
                       goto xdotype;
-                    else
+                    } else {
                       n = 0;
+                    }
                 }
             }
         }
@@ -4346,10 +4347,11 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
             if (paging && ofp == stdout) { /* Pause at end of screen */
                 if (cmd_rows > 0 && cmd_cols > 0) {
                     if (n > cmd_rows - 3) {
-                        if (!askmore())
-                          break;
-                        else
-                          n = 0;
+                        if (!askmore()) {
+                            break;
+                        } else {
+                            n = 0;
+                        }
                     }
                 }
             }
@@ -4777,7 +4779,7 @@ dogrep() {
                   sline += (len / cmd_cols) + 1;
                 fprintf(ofp,"%s\n",line); /* Print the line. */
                 if (sline > cmd_rows - 3) {
-                    if (!askmore()) goto xgrep; else sline = 0;
+                    if (!askmore()) { goto xgrep; } else { sline = 0; }
                 }
             }
         }
@@ -4798,7 +4800,7 @@ dogrep() {
             }
             if (x > 0) {
                 if (++sline > cmd_rows - 3) {
-                    if (!askmore()) goto xgrep; else sline = 0;
+                    if (!askmore()) { goto xgrep; } else { sline = 0; }
                 }
             }
         }
@@ -6603,8 +6605,9 @@ preserving original modtime: %s %s\n",
                     if (!askmore()) {
                         rc = 0;
                         goto xdomydir;
-                    } else
-                      n = 0;
+                    } else {
+                        n = 0;
+                    }
                 }
 #endif /* CK_TTGWSIZ */
             }
@@ -6668,8 +6671,9 @@ preserving original modtime: %s %s\n",
                     if (!askmore()) {
                         rc = 0;
                         goto xdomydir;
-                    } else
-                      n = 0;
+                    } else {
+                        n = 0;
+                    }
                 }
 #endif /* CK_TTGWSIZ */
             }
@@ -7623,7 +7627,7 @@ dodel() {                               /* DELETE */
                         printf(" %s (SKIPPED)\n",tmpbuf);
 #ifdef CK_TTGWSIZ
                         if (++n > cmd_rows - 3)
-                          if (!askmore()) goto xdelete; else n = 0;
+                          if (!askmore()) { goto xdelete; } else { n = 0; }
 #endif /* CK_TTGWSIZ */
                     }
 #endif /* COMMENT */
@@ -7651,8 +7655,9 @@ dodel() {                               /* DELETE */
                         if (x_lis > 0) {
                             lines++;
                             printf(" %s (OK)\n",tmpbuf);
-                            if (++n > cmd_rows - 3)
-                              if (!askmore()) goto xdelete; else n = 0;
+                            if (++n > cmd_rows - 3) {
+                              if (!askmore()) { goto xdelete; } else { n = 0; }
+                            }
                         }
                     } else {
                         bad++;
@@ -7660,8 +7665,9 @@ dodel() {                               /* DELETE */
                         if (x_lis > 0) {
                             lines++;
                             printf(" %s (FAILED: %s)\n",tmpbuf,ck_errstr());
-                            if (++n > cmd_rows - 3)
-                              if (!askmore()) goto xdelete; else n = 0;
+                            if (++n > cmd_rows - 3) {
+                              if (!askmore()) { goto xdelete; } else { n = 0; }
+                            }
                         }
                     }
                 } else if (/* pass > 0 && */ deldirs && itsadir) {
@@ -7671,8 +7677,9 @@ dodel() {                               /* DELETE */
                         if (x_lis > 0) {
                             lines++;
                             printf(" %s (OK)\n",tmpbuf);
-                            if (++n > cmd_rows - 3)
-                              if (!askmore()) goto xdelete; else n = 0;
+                            if (++n > cmd_rows - 3) {
+                              if (!askmore()) { goto xdelete; } else { n = 0; }
+                            }
                         }
                     } else {
                         success = 0;
@@ -7681,8 +7688,9 @@ dodel() {                               /* DELETE */
                             printf(" %s (FAILED: %s)\n",
                                    tmpbuf,
                                    ck_errstr());
-                            if (++n > cmd_rows - 3)
-                              if (!askmore()) goto xdelete; else n = 0;
+                            if (++n > cmd_rows - 3) {
+                              if (!askmore()) { goto xdelete; } else { n = 0; }
+                            }
                         }
                     }
                 } else if (x_lis > 0) {
@@ -7691,15 +7699,17 @@ dodel() {                               /* DELETE */
                       printf(" %s (FAILED: directory)\n",tmpbuf);
                     else
                       printf(" %s (FAILED: not a regular file)\n",tmpbuf);
-                    if (++n > cmd_rows - 3)
-                      if (!askmore()) goto xdelete; else n = 0;
+                    if (++n > cmd_rows - 3) {
+                        if (!askmore()) { goto xdelete; } else { n = 0; }
+                    }
                 }
             }
             if (x_hdg > 0) {
                 if (lines > 0)
                   printf("\n");
-                if (++n > cmd_rows - 3)
-                  if (!askmore()) goto xdelete; else n = 0;
+                if (++n > cmd_rows - 3) {
+                  if (!askmore()) { goto xdelete; } else { n = 0; }
+                }
                 printf("%d file%s %sdeleted, %d byte%s %sfreed%s\n",
                        count,
                        count != 1 ? "s" : "",
@@ -9261,6 +9271,7 @@ docopy() {
             } else if (toscreen || interpret) { /* fdc - 20220920 */
                 int i,x;
                 int p = 0;
+                int n = 0;
                 int linebufsize = 2000;
                 char prev = NUL;
                 char *linebuf;
@@ -9268,8 +9279,9 @@ docopy() {
 /*
   This is the only portable way I can think of to read a line at a time.
   getline() isn't portable.  It has to be line by line so Kermit backslash
-  escapes aren't broken across lines for COPY /INTEPRET.
+  escapes aren't broken across lines for COPY /INTERPRET.
 */
+                n = 0;
                 while (!feof(in)) {
                     if (fread(&c,1,1,in) < 1) {
                         break;
@@ -9290,7 +9302,19 @@ docopy() {
                             (void) ckstrncpy(linebuf, tmpbuf, linebufsize);
                         }
 #endif  /* COPYINTERPRET  */
+                        n++;
                         if (toscreen) { /* Write this line out to screen */
+#ifdef CK_TTGWSIZ
+                            if (n > (cmd_rows - 3)) { /* Do more-prompting */
+                                if (!askmore()) {
+                                    rc = 0;
+                                    goto xdocopy;
+                                } else {
+                                    n = 0;
+                                }
+                            }
+#endif /* CK_TTGWSIZ */
+
                             printf("%s\n",linebuf);
                         } else {        /* or disk file */
                             fprintf(out,"%s\n",linebuf);
@@ -9301,6 +9325,7 @@ docopy() {
                         p = 0;          /* Reset buffer pointer */
                     } else {            /* Normal case, accumulate the line */
                         linebuf[p++] = c;
+                        linebuf[p] = NUL;
                         prev = c;
                         if (p > linebufsize) { /* line too long */
                             rc = -1;
@@ -9308,6 +9333,7 @@ docopy() {
                         }
                     }
                 }
+              xdocopy:
                 free(linebuf);
             }
             if (!toscreen) if (out) fclose(out);
@@ -9967,13 +9993,16 @@ dorenam() {
 		break;
 
 	      case REN_SPA:		/* /FIXSPACES: */
-		if (!noarg)
+		if (!noarg) {
 		  if ((x = cmfld("Character or string to replace spaces with",
-				 "_",&s,xxstring)) < 0)
-		    if (x == -3)
-		      s = "_";
-		    else
-		      return(x);
+				 "_",&s,xxstring)) < 0) {
+                      if (x == -3) {
+                          s = "_";
+                      } else {
+                          return(x);
+                      }
+                  }
+                }
 		makestr(&(ren_sub[0])," ");
 		makestr(&(ren_sub[1]),noarg ? "_" : brstrip(s));
 		makestr(&(ren_sub[3]),NULL);

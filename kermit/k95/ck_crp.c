@@ -1,8 +1,8 @@
-char *ckcrpv = "Encryption Engine, 9.0.117, 19 Mar 2010";
+char *ckcrpv = "Encryption Engine, 10.0.120, 26 Sep 2022";
 /*
   C K _ C R P . C  -  Cryptography for C-Kermit"
 
-  Copyright (C) 1998, 2010,
+  Copyright (C) 1998, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -496,7 +496,7 @@ static int encrypt_verbose = 1;
 #else
 static int encrypt_verbose = 1;
 static int encrypt_debug_mode = 0;
-#endif
+#endif /* DEBUG */
 
 static char dbgbuf [16384];
 
@@ -3872,8 +3872,6 @@ extern void ck_cast_ecb_encrypt P((uint8 *, uint8 *, CastKeySched *, int));
 extern void ck_cast_ecb_crypt P((uint32 *, CastKeySched *, int));
 
 #endif /* CAST_H */
-
-extern encrypt_debug_mode;
 
 #define CFB_40  0
 #define OFB_40  1

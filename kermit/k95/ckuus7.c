@@ -13,7 +13,7 @@
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: 12 May 2022
+    Last update: 23 September 2022
 */
 
 /*
@@ -6429,7 +6429,6 @@ setmou(
         }
         return 1;
     }
-
     if (y != XYM_BUTTON && y != XYM_WHEEL) {           /* Shouldn't happen. */
         printf("Internal parsing error\n");
         return(-9);
@@ -9516,7 +9515,7 @@ cx_net(net, protocol, xhost, svc,
         else if (line[0] != '*' && !ck_ntlm_is_valid(0)) {
 		    return(cx_fail(msg,"NTLM: Credentials are unavailable."));
 		}
-#endif
+#endif  /* NTLM */
 	    }
 #endif /* NT */
 #ifdef CK_SSL
@@ -10527,7 +10526,7 @@ setlin(xx, zz, fc)
               "Command, or switch" :
                 (mynet == NET_TCPA || mynet == NET_TCPB
                   || mynet == NET_SSH) ?
-                  "Hostname, ip-address, or switch" : (mynet == NET_DLL) ?
+                  "Hostname, ip-address, or switch" :(mynet == NET_DLL) ?
                         "Parameters, or switch" :
                             "Host or switch";
             if (fc) {
@@ -13109,7 +13108,7 @@ dofile(op) int op; {                    /* Do the FILE command */
             if (listing < 0)
               listing = !xcmdsrc;
             if (listing)
-              printf(" %ld %s%s\n",
+              printf(" %d %s%s\n",
                      z_filcount,
                      ((rsize == RD_CHAR) ? "byte" : "line"),
                      ((z_filcount == 1L) ? "" : "s")

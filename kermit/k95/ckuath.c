@@ -1,4 +1,4 @@
-char *ckathv = "Authentication, 9.0.237, 14 Nov 2021";
+char *ckathv = "Authentication, 10.0.238, 23 Sep 2022";
 /*
   C K U A T H . C  --  Authentication for C-Kermit
 
@@ -93,7 +93,7 @@ int accept_complete = 0;
 #define KRB5_AUTOCONF__
 #ifndef NONTLM
 #define NTLM
-#endif
+#endif /* NONTLM */
 #endif /* NT */
 
 #ifdef CK_KERBEROS
@@ -123,7 +123,7 @@ int accept_complete = 0;
 #ifndef OS2
 /* Not OS/2 or NT */
 #include <errno.h>
-#endif
+#endif  /* OS2 */
 
 #ifdef OS2
 #include <io.h>
@@ -1365,6 +1365,12 @@ ck_tn_auth_request()
 }
 
 #ifdef CK_ENCRYPTION
+_PROTOTYP(int encrypt_is_decrypting,(void));
+_PROTOTYP(int  encrypt_request_start, (void));
+_PROTOTYP(int encrypt_request_end, (void));
+_PROTOTYP(int get_crypt_table,(struct keytab **, int *));
+/* The four above added fdc 26 September 2022 */
+
 VOID
 ck_tn_enc_start()
 {

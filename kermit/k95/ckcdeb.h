@@ -26,12 +26,13 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
     Columbia University Academic Information Systems, NYC (1974-2011)
     The Kermit Project, Bronx NY (2011-present)
+    Changes from David Goodwin for Windows and OS/2 (2022)
 
   Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: Tue Aug 23 07:11:45 2022
+    Last update: Tue Sep 27 11:09:55 2022
 */
 
 /*
@@ -45,8 +46,14 @@
 #ifndef CKCDEB_H			/* Don't include me more than once. */
 #define CKCDEB_H
 
-/* 14 Sep 2022 - TYPE command new /INTERPRET switch enabled by default */
-
+/* Moved here from ckcmai.c... REMOVE THIS AFTER BETA TEST! */
+#ifndef BETATEST
+#define BETATEST
+#endif  /* BETATEST */
+/* 
+   14 Sep 2022 - TYPE command new /INTERPRET switch enabled by default
+   except in Windows where it doesn't work because of character-set issues.
+*/
 #ifdef NT
 #ifndef NOTYPEINTERPRET
 #define NOTYPEINTERPRET
@@ -84,10 +91,21 @@
 #ifndef NOWTMP                          /* No more WTMP logging */
 #define NOWTMP
 #endif  /* NOWTMP */
-#ifndef NOARROWKEYS                     /* Arrow keys use a deprecated API */
-#define NOARROWKEYS
-#endif  /* NOARROWKEYS */
+#ifndef NOSYSLOG                        /* No more syslog */
+#define NOSYSLOG
+#endif  /* NOSYSLOG */
+
 #endif  /* NODEPRECATED */
+/*
+  As of 26 September 2022, the Arrow-key feature is included only if 
+  explicitly requested because the API is disappearing not only in glibc
+  but also other libcs like musl and whatever Android uses.
+*/
+#ifndef DOARROWKEYS
+#ifndef NOARROWKEYS                     /* Arrow keys use a deprecated API */
+#define NOARROWKEYS                     /* (at least in glibc) */
+#endif /* NOARROWKEYS */
+#endif /* DOARROWKEYS */
 
 #ifdef OS2
 #include "ckoker.h"
@@ -2407,7 +2425,6 @@ _PROTOTYP( void bleep, (short) );
 #ifdef CK_CONPTY
 #define NETPTY
 #endif /* CK_CONPTY */
-
 #endif /* NT */
 #endif /* LINUX */
 #endif /* AIX41 */
@@ -2994,14 +3011,18 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 /*
   SSH section.  NOSSH disables any form of SSH support.
   If NOSSH is not defined (or implied by NONET, NOLOCAL, etc)
-  then SSHBUILTIN is defined for K95 and SSHCMD is defined for UNIX.
+  then SSHBUILTIN is defined for K95/CKW and SSHCMD is defined for UNIX.
   Then, if either SSHBUILTIN or SSHCMD is defined, ANYSSH is also defined.
 */
-
-#undef COMMENT /* The OS/2 headers define this for some insane reason */
 #ifdef COMMENT
-Built-in SSH no longer depends on SSL support. Built-in SSH is now provided by
-a library (libssh, ssh.dll) which is itself linked against OpenSSL.
+#undef COMMENT /* The OS/2 headers define this for some insane reason */
+#endif /* COMMENT */
+
+#ifdef COMMENT
+/*
+  Built-in SSH no longer depends on SSL support. Built-in SSH is now provided 
+  by a library (libssh, ssh.dll) which is itself linked against OpenSSL.
+*/
 #ifndef NOSSH
 #ifndef NO_SSL
 #ifdef OS2ONLY
@@ -3009,7 +3030,7 @@ a library (libssh, ssh.dll) which is itself linked against OpenSSL.
 #endif /* OS2ONLY */
 #ifdef NT
 #ifndef CK_SSL
-#define NOSSHN
+#define NOSSH
 #endif /* CK_SSL */
 #endif /* NT */
 #else /* NO_SSL */
@@ -3031,7 +3052,9 @@ a library (libssh, ssh.dll) which is itself linked against OpenSSL.
 #ifdef ANYSSH
 #undef ANYSSH
 #endif /* ANYSSH */
+
 #else  /* Not NOSSH */
+
 #ifndef NOLOCAL
 #ifdef OS2
 #ifndef SSHBUILTIN
@@ -3048,6 +3071,7 @@ a library (libssh, ssh.dll) which is itself linked against OpenSSL.
 #endif /* SSHCMD */
 #endif /* UNIX */
 #endif /* OS2 */
+
 #ifndef ANYSSH
 #ifdef SSHBUILTIN
 #define ANYSSH
@@ -5841,7 +5865,7 @@ typedef CHAR * MACRO;
 #ifndef SIGUSR1
 #ifndef __WATCOMC__
 #define SIGUSR1 7
-#endif
+#endif /* __WATCOMC__ */
 #endif /* SIGUSR1 */
 #define SIGALRM SIGUSR1
 _PROTOTYP( unsigned alarm, (unsigned) );

@@ -1,7 +1,3 @@
-#ifdef SSHTEST
-#define SSHBUILTIN
-#endif /* SSHTEST */
-
 /*  C K U U S 2  --  User interface strings & help text module for C-Kermit  */
 
 /*
@@ -10,6 +6,7 @@
       The Kermit Project, New York City
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
+    David Goodwin, New Zealand.
 
   Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
@@ -201,29 +198,46 @@ char *newstxt[] = {
 
 #ifdef BETATEST
 " ",
-"THIS IS A PRERELEASE TEST VERSION NOT SUITABLE FOR PRODUCTION.",
-"FOR DETAILS, SEE http://www.kermitproject.org/ckwindows.html",
+"THIS IS A PRERELEASE TEST VERSION NOT YES SUITABLE FOR PRODUCTION USE.",
+"FOR DETAILS, SEE http://www.kermitproject.org/ckw10beta.html",
 #endif /* BETATEST */
 
 " ",
 "Major new features since the final Kermit 95 release include:",
-#else
-"Welcome to C-Kermit 9.0.304.  New features since 8.0.211 include:",
-#endif /* OS2 */
 " . Open Source Simplified 3-Clause BSD License",
+#else
+"Welcome to C-Kermit 10.0.",
+"New features since version 9.0 of 2011 include:",
+#endif /* OS2 */
 #ifdef OS2
 " . Source code!  The Windows edition of C-Kermit, formerly known",
 "   as Kermit 95 or K-95, is now available under the Revised 3-Clause",
 "   BSD Open Source license.",
 " . Up-to-date fully exportable SSH v2 client",
-" . Mouse wheel support, customizable with SET MOUSE WHEEL (see HELP SET MOUSE",
-"   for details)",
+" . Mouse wheel support, customizable with SET MOUSE WHEEL",
+"    (see HELP SET MOUSE for details)",
 #endif /* OS2 */
 #ifndef OS2
+#ifdef COMMENT
 " . Full 64-bit memory model on platforms that support it",
 " . Large file support (64-bit file size) on most platforms",
 " . Long integer variables and constants in commands and scripts",
+#endif  /* COMMENT */
+/* For 10.0 */
+" . Updated for longevity... Adapted to 2020s compilers and OS's without",
+"    sacrificing compatability with older platforms going back to the 1970s",
+"    and 1980s; at least that's the intention.",
+" . The first new C-Kermit release for Windows in 20 years.",
+" . A simpler version number: 10.0.",
+" . Updated OpenSSL support.",
+" . New serial port speeds up to 4000000 bps.",
+" . New functions and built-in variables for the scripting language.",
+" . New ability of Kermit scripts to run in a Unix pipelines.",
+" . New CHANGE command for changing strings in external text files.",
+" . Lots more; see https://kermitproject.org/updates.html",
 #endif /* OS2 */
+#ifdef COMMENT
+/* These were for 9.0 */
 " . Bigger maximum command and macro lengths",
 " . Bigger filename expansion space",
 " . New super-flexible RENAME command (HELP RENAME)",
@@ -238,29 +252,33 @@ char *newstxt[] = {
 #endif /* CK_SSL */
 " . At the prompt, Ctrl-K recalls most recent filename",
 " . Scripting and performance improvements",
-" . Bug fixes",
+#endif /* COMMENT */
 " ",
 "Documentation:",
-" 1. https://www.kermitproject.org/ckbindex.html",
+" . https://www.kermitproject.org/ckbindex.html",
 "    Online index to C-Kermit documentation.",
-" ",
-" 2. https://kermitproject.org/k95manual/index.html",
+#ifdef OS2
+" . https://kermitproject.org/k95manual/index.html",
 "    The Kermit 95 manual from 1995-2003.",
-" ",
-" 3. https://www.kermitproject.org/ckututor.html",
+#endif /* OS2 */
+" . https://www.kermitproject.org/ckututor.html",
 "    C-Kermit tutorial.",
 " ",
 "If the release date shown by the VERSION command is long past, be sure to",
 "check the Kermit website to see if there have been updates:",
 " ",
-"  https://www.kermitproject.org/             (Kermit Project home page)",
+"  https://www.kermitproject.org/ (Kermit Project home page)",
 "  https://www.kermitproject.org/ckermit.html (C-Kermit home page)",
+#ifdef BETATEST
+"  https://www.kermitproject.org/ckupdates.html (Beta test progress)",
+"  https://www.kermitproject.org/ck10devbuilds.html (Beta test builds table)",
+#endif /* BETATEST */
 #ifdef OS2
 " ",
 "If the Kermit Project website is gone, look on Github:",
 " ",
 "  https://github.com/search?q=c-kermit+windows",
-#endif
+#endif /* OS2 */
 ""
 };
 #endif /* NOHELP */
@@ -3206,7 +3224,8 @@ static char * hmxxtyp[] = {
 "  /HEIGHT:number",
 "     When combined with /GUI specifies the height of the dialog box.",
 "  /GUI:string",
-"     Specifies the title to use for the dialog box.",
+"     Displays the contents of the file in a new scrollable GUI window.",
+"     The string (require) is the title for the window.",
 #endif /* KUI */
 "  /COUNT",
 "     Count lines (and matches) and print the count(s) but not the lines.",
@@ -3314,7 +3333,7 @@ static char * hmxxdate[] = {
 "    a local time in that timezone, to GMT which is then converted to the",
 "    local time at the host.  If no timezone is given, the date-time is local."
 ,"    To convert local time (or a time in a specified timezone) to UTC (GMT),",
-"    use the function \futcdate().",
+"    use the function \\futcdate().",
 " ",
 "  Delta times are given as {+,-}[number date-units][hh[:mm[:ss]]]",
 "    A date in the future/past relative to the date-time; date-units may be",
@@ -11012,7 +11031,7 @@ dohfunc(xx) int xx; {
         break;
       case FN_EVA:                      /* Eval (evaluate arith expression) */
         printf("\\fevaluate(e)\n\
-  e = arithmetic expression.\n");
+  e = arithmetic expression in ordinary algebraic notation.\n");
         printf("Returns integer:\n\
   The result of evaluating the expression.\n");
         break;
@@ -11426,7 +11445,9 @@ Assign string words to an array.\n\
   n1 = 3: yyyymmddhhmmss (all numeric)\n\
   n1 = 4: Day Mon dd hh:mm:ss yyyy (asctime)\n\
   n1 = 5: yyyy:mm:dd:hh:mm:ss (all numeric with all fields delimited)\n\
-  Other:  yyyymmdd hh:mm:dd");
+  n1 = 6: dd month-spelled-out yyyy hh:mm:ss\n\
+  Other:  yyyymmdd hh:mm:dd\n\
+  If n1 is negative (-1 to -6), the result is date only.");
         break;
 
       case FN_JDATE:                    /* DOY */

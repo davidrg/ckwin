@@ -1,8 +1,8 @@
-char *ckptyv = "Pseudoterminal support, 9.0.106, 01 Jun 2022";
+char *ckptyv = "Pseudoterminal support, 10.0.106, 23 Sep 2022";
 
 /*  C K U P T Y  --  C-Kermit pseudoterminal control functions for UNIX  */
 
-/* Last update: Wed Jun  1 07:51:52 2022 */
+/* Last update: Fri Sep 23 20:11:41 2022 */
 
 /*
   Copyright 1995 by the Massachusetts Institute of Technology.

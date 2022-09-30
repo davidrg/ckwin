@@ -1,9 +1,5 @@
-#ifdef SSHTEST
-#define SSHBUILTIN
-#endif /* SSHTEST */
-
 #include "ckcsym.h"
-char *userv = "User Interface 9.0.324, 20 September 2022";
+char *userv = "User Interface 10.0.327, 26 September 2022";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 
@@ -26,7 +22,7 @@ char *userv = "User Interface 9.0.324, 20 September 2022";
   ckuus7.c.  ckuus2.c contains the HELP command parser and help-text strings;
   ckuusy.c contains the UNIX-style command-line interface; ckuusx.c contains
   routines needed by both the command-line interface and the interactive
-  command parser.
+  command parser.  ckuusy.c handles command-line arguments.
 */
 
 /*
@@ -2447,7 +2443,7 @@ static int nsshkey = (sizeof(sshkey) / sizeof(struct keytab)) - 1;
 static struct keytab sshkv1[] = {	/* SET SSH KEY V1 command table */
     { "set-comment",  1, 0 }
 };
-#endif
+#endif /* COMMENT */
 
 static struct keytab sshkpsw[] = {	/* SET SSH KEY PASSPHRASE table */
     { "/new-passphrase",  2, CM_ARG },
@@ -2463,28 +2459,28 @@ static struct keytab sshkcrea[] = {	/* SSH KEY CREATE table */
 static int nsshkcrea = (sizeof(sshkcrea) / sizeof(struct keytab));
 
 static struct keytab sshkcty[] = {	/* SSH KEY CREATE /TYPE:xxx */
-    /*{ "srp",    SSHKT_SRP, 0 },
+    /*{ "srp",  SSHKT_SRP, 0 },
     { "v1-rsa", SSHKT_1R, 0 },
     { "v2-dsa", SSHKT_2D, 0 },
     { "v2-rsa", SSHKT_2R, 0 }*/
-    {"dss",					SSHKT_DSS,				0 },
-    {"dss-cert01",			SSHKT_DSS_CERT01,		CM_INV },
-    {"ecdsa",				SSHKT_ECDSA,			0 }, /* deprecated */
-    {"ecdsa-p256",			SSHKT_ECDSA_P256,		CM_INV },
-    {"ecdsa-p256-cert01",	SSHKT_ECDSA_P256_CERT01,CM_INV },
-    {"ecdsa-p384",			SSHKT_ECDSA_P384,		CM_INV },
-    {"ecdsa-p384-cert01",	SSHKT_ECDSA_P384_CERT01,CM_INV },
-    {"ecdsa-p521",			SSHKT_ECDSA_P521,		CM_INV },
-    {"ecdsa-p521-cert01",	SSHKT_ECDSA_P521_CERT01,CM_INV },
-    {"ed25519",				SSHKT_ED25519,			0 },
-    {"ed25519-cert01",		SSHKT_ED25519_CERT01,	CM_INV },
-    {"rsa",					SSHKT_RSA,				0 },
-    {"rsa1",				SSHKT_RSA1,				CM_INV },
-    {"rsa-cert01",			SSHKT_RSA_CERT01,		CM_INV },
-    {"sk-ecdsa",			SSHKT_SK_ECDSA,			CM_INV },
-    {"sk-ecdsa-cert01",		SSHKT_SK_ECDSA_CERT01,	CM_INV },
-    {"sk-ed25519",			SSHKT_SK_ED25519,		CM_INV },
-    {"sk-ed25519-cert01",	SSHKT_SK_ED25519_CERT01,CM_INV }
+    {"dss",               SSHKT_DSS,			0 },
+    {"dss-cert01",        SSHKT_DSS_CERT01,	   CM_INV },
+    {"ecdsa",             SSHKT_ECDSA,		        0 }, /* deprecated */
+    {"ecdsa-p256",        SSHKT_ECDSA_P256,	   CM_INV },
+    {"ecdsa-p256-cert01", SSHKT_ECDSA_P256_CERT01, CM_INV },
+    {"ecdsa-p384",        SSHKT_ECDSA_P384,	   CM_INV },
+    {"ecdsa-p384-cert01", SSHKT_ECDSA_P384_CERT01, CM_INV },
+    {"ecdsa-p521",        SSHKT_ECDSA_P521,	   CM_INV },
+    {"ecdsa-p521-cert01", SSHKT_ECDSA_P521_CERT01, CM_INV },
+    {"ed25519",           SSHKT_ED25519,	       	0 },
+    {"ed25519-cert01",    SSHKT_ED25519_CERT01,	   CM_INV },
+    {"rsa",               SSHKT_RSA,			0 },
+    {"rsa1",              SSHKT_RSA1,		   CM_INV },
+    {"rsa-cert01",        SSHKT_RSA_CERT01,	   CM_INV },
+    {"sk-ecdsa",          SSHKT_SK_ECDSA,	   CM_INV },
+    {"sk-ecdsa-cert01",   SSHKT_SK_ECDSA_CERT01,   CM_INV },
+    {"sk-ed25519",        SSHKT_SK_ED25519,	   CM_INV },
+    {"sk-ed25519-cert01", SSHKT_SK_ED25519_CERT01, CM_INV }
 };
 static int nsshkcty = (sizeof(sshkcty) / sizeof(struct keytab));
 
@@ -2506,8 +2502,8 @@ static struct keytab sshdofmt[] = {	/* SSH KEY DISPLAY /IN-FORMAT: */
     /* "bubblebabble" representation not supported by libssh
      * { "ietf",        SKDF_IETF, 0 },
      */
-     { "openssh",     SKDF_OSSH, 0 },
-     { "ssh.com",     SKDF_SSHC, 0 }
+    { "openssh",     SKDF_OSSH, 0 },
+    { "ssh.com",     SKDF_SSHC, 0 }
 };
 static int nsshdofmt = (sizeof(sshdofmt) / sizeof(struct keytab));
 
@@ -8995,8 +8991,8 @@ docmd(cx) int cx; {
             (x == EN_HOS || x == EN_PRI || x == EN_MAI || x == EN_WHO
 #ifdef CK_LOGIN
             || isguest
-#endif
-              ))
+#endif /* CK_LOGIN */
+            ))
             return(success = 0);
 #endif /* IKSD */
 	return(doenable(y,x));
@@ -10740,43 +10736,40 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	}
 	switch (cmresult.nresult) {	/* SSH keyword */
 	  case XSSH_OPN:		/* SSH OPEN */
-        char tmpline[LINBUFSIZ], tmpline2[LINBUFSIZ];
-        char* token;
-
+            char tmpline[LINBUFSIZ], tmpline2[LINBUFSIZ];
+            char* token;
 	    if (!havehost) {
-		  if ((x = cmfld("Host","",&s,xxstring)) < 0)
-		    return(x);
-		  ckstrncpy(line,s,LINBUFSIZ);
+		if ((x = cmfld("Host","",&s,xxstring)) < 0)
+		  return(x);
+		ckstrncpy(line,s,LINBUFSIZ);
 	    }
-
-        /* Try to handle username@hostname syntax */
-        ckstrncpy(tmpline,line,LINBUFSIZ);
-        token = strtok(tmpline, "@");
-        if (token != NULL) {
-          /* First part is the username */
-	      makestr(&ssh_tmpuid,brstrip(token));
-
-          debug(F110, "Found username in the hostname!", ssh_tmpuid, 0);
-
-          token = strtok(NULL, "@");
-          if (token != NULL) {
-            /* Second part is the hostname */
-            debug(F110, "Found hostname", token, 0);
-            ckstrncpy(tmpline2,token,LINBUFSIZ);
-            token = strtok(NULL, "@");
+            /* Try to handle username@hostname syntax */
+            ckstrncpy(tmpline,line,LINBUFSIZ);
+            token = strtok(tmpline, "@");
             if (token != NULL) {
-              /* Error - there should not be a third part. Give up */
-              debug(F110, "Error - found third token. Giving up.", token, 0);
-              makestr(&ssh_tmpuid,NULL);
-            } else {
-              ckstrncpy(line,tmpline2,LINBUFSIZ);
+                /* First part is the username */
+                makestr(&ssh_tmpuid,brstrip(token));
+                debug(F110, "Found username in the hostname!", ssh_tmpuid, 0);
+                token = strtok(NULL, "@");
+                if (token != NULL) {
+                    /* Second part is the hostname */
+                    debug(F110, "Found hostname", token, 0);
+                    ckstrncpy(tmpline2,token,LINBUFSIZ);
+                    token = strtok(NULL, "@");
+                    if (token != NULL) {
+                        /* Error - there should not be a third part. Give up */
+                        debug(F110,
+                              "Error - found third token. Giving up.",
+                              token, 0);
+                        makestr(&ssh_tmpuid,NULL);
+                    } else {
+                        ckstrncpy(line,tmpline2,LINBUFSIZ);
+                    }
+                } else {
+                    /* No second part - give up. */
+                    makestr(&ssh_tmpuid,NULL);
+                }
             }
-          } else {
-              /* No second part - give up. */
-              makestr(&ssh_tmpuid,NULL);
-          }
-        }
-
 	    /* Parse [ port ] [ switches ] */
 	    cmfdbi(&kw,			/* Switches */
 		   _CMKEY,
@@ -11337,7 +11330,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 		  switch (cmresult.nresult) {
 		    case SSHKC_BI:	/* /BITS:n */
 		      if ((y = cmnum("","0",10,&z,xxstring)) < 0)
-			    return(y);
+			return(y);
 		      bits = z;
 		      break;
 		    case SSHKC_PP:	/* /PASSPHRASE:blah */
@@ -11489,7 +11482,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 #endif /* SSHTEST */
 	      success = (x == 0);
 	      return(success);
-#endif /* COMMENT - SSH KEY V1 SET-COMMENT*/
+#endif /* COMMENT - SSH KEY V1 SET-COMMENT */
 	  }
 	  default:
 	    return(-2);
@@ -12742,11 +12735,9 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
         printf(" Jeffrey Eric Altman, Secure Endpoints, Inc. %s\n",
 	       "<jaltman@secure-endpoints.com>"
 	       );
-#ifdef NT
         printf(" David Goodwin %s\n",
                "<david@zx.net.nz>"
         );
-#endif
 	printf(" Contributions from many others.\n");
 	n = 7;
 	if (*ck_s_test) {
@@ -13592,15 +13583,18 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	    ckGetLongPathName(tmpbuf,line,LINBUFSIZ);
 	    printf("  Long name:  %s\n",line);
 	    if (++n > cmd_rows - 3) {
-                if (!askmore()) { return(0); } else { n = 0; }}
+                if (!askmore()) { return(0); } else { n = 0; }
+            }
 	    line[0] = NUL;
 	    GetShortPathName(tmpbuf,line,LINBUFSIZ);
 	    printf("  Short name: %s\n",line);
 	    if (++n > cmd_rows - 3) {
-            if (!askmore()) { return(0); } else { n = 0; }}
-        printf("\n");
-	    if (++n > cmd_rows - 3) {
-            if (!askmore()) { return(0); } else { n = 0; }}
+            if (!askmore()) { return(0); } else { n = 0; }
+            }
+            printf("\n");
+            if (++n > cmd_rows - 3) {
+                if (!askmore()) { return(0); } else { n = 0; }
+            }
 	}
 #else  /* NT */
 
@@ -13667,7 +13661,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	char * s1 = NULL, * s2 = NULL;
 	if ((x = cmfld("Variable name","",&s,xxstring)) < 0)
           return(x);
-	if (s) if (s == "") s = NULL;
+	if (s) if (s == (char *)0) s = NULL;
 	(VOID) makestr(&s1,s);
 	if (s && !s1) {
 	    printf("?PUTENV - memory allocation failure\n");
@@ -13675,7 +13669,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	}
 	if ((x = cmtxt("Value","",&s,xxstring)) < 0)
 	  return(x);
-	if (s) if (s == "") s = NULL;
+	if (s) if (s == (char *)0) s = NULL;
 	(VOID) makestr(&s2,s);
 	success = doputenv(s1,s2);
 	(VOID) makestr(&s1,NULL);

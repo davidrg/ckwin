@@ -13,7 +13,7 @@
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: 3 Jun 2022
+    Last update: 23 September 2022
 */
 
 /*
@@ -92,6 +92,13 @@ _PROTOTYP(char * os2_gethostname, (void));
 #define getpid _getpid
 #endif /* __WATCOMC__ */
 #endif /* OS2 */
+
+/* fdc 26 Sep 2022 */
+#ifdef CK_ENCRYPTION
+_PROTOTYP(int ck_tn_encrypting, (void));
+_PROTOTYP(int ck_tn_decrypting, (void));
+#endif /* CK_ENCRYPTION */
+
 #ifdef BSD44
 #include <errno.h>
 #endif /* BSD44 */
@@ -170,7 +177,7 @@ _PROTOTYP( char * ckgetfqhostname,(char *));
 #ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"
-#endif
+#endif /* NODIAL */
 #else /* NT */
 #define INCL_VIO
 #define INCL_WINERRORS
@@ -4231,9 +4238,11 @@ showpkt(c) char c;
 	/* These sprintfs should be safe until we have 32-digit numbers */
 
         if (pd > -1L)
-          sprintf(buffer, "%c%9s%5ld%%%8ld%8ld ", CK_CR,ckfstoa(howfar),pd,tp,ps);
+          sprintf(buffer, "%c%9s%5ld%%%8ld%8ld ",
+                  CK_CR,ckfstoa(howfar),pd,tp,ps);
         else
-          sprintf(buffer, "%c%9s      %8ld%8ld ", CK_CR,ckfstoa(howfar),tp,ps);
+          sprintf(buffer, "%c%9s      %8ld%8ld ",
+                  CK_CR,ckfstoa(howfar),tp,ps);
         conol(buffer);
         hpos = 31;
     } else if (fdispla == XYFD_R) {     /* SERIAL */

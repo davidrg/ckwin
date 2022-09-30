@@ -10,7 +10,7 @@
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: 14 September 2022
+    Last update: Fri Sep 23 15:23:24 2022 (CR -> CK_CR)
 */
 /*
  Note -- if you change this file, please amend the version number and date at
@@ -3191,7 +3191,19 @@ rpack() {
 /*  L O G P K T  --  Log packet number n, pointed to by s.  */
 
 /* c = 's' (send) or 'r' (receive) */
-
+/*
+  Packet log entry format:
+  Byte 1: r or s
+  Byte 2: hyphen
+  Bytes 3-4: packet number
+  Byte 5: hyphen
+  Bytes 6-7: seconds elapsed since last packet
+  Bytes 8-9: Start char, usually Ctrl-A, expressed as printable ^ and A
+  Byte 10 The packet itself
+  Last byte: Start char, usually Ctrl-M, expressed as printable ^ and M
+  Example:
+  s-00-01-^A9 S~/ @-#Y3~^>J)0___J"U1@C
+*/
 VOID
 #ifdef CK_ANSIC
 logpkt(char c,int n, CHAR *s, int len)
