@@ -2,7 +2,7 @@
 
 /*  C K C F T P  --  FTP Client for C-Kermit  */
 
-char *ckftpv = "FTP Client, 9.0.266, 8 May 2022";
+char *ckftpv = "FTP Client, 10.0.267, 23 Sep 2022";
 
 /*
   Authors:
@@ -10,6 +10,7 @@ char *ckftpv = "FTP Client, 9.0.266, 8 May 2022";
       Secure Endpoints Inc., New York City
     Frank da Cruz <fdc@columbia.edu>,
       The Kermit Project, Columbia University.
+    David Goodwin, New Zealand
 
   Copyright (C) 2000, 2022
     Trustees of Columbia University in the City of New York.
@@ -10229,7 +10230,7 @@ ssl_auth() {
   Modified 5 Feb 2015 to default to TLS 1.0 if no bugs are enabled,
   instead of to SSL 3.0, which has the POODLE vulnerability.
 
-  Modified 7 sep 2022 to use the best version of TLS available
+  Modified 7 Sep 2022 to use the best version of TLS available (DG)
 */
     if (ftp_bug_use_ssl_v2) {
         /* allow SSL 2.0 or later */
@@ -11826,7 +11827,7 @@ doftpsend2(threadinfo) VOID * threadinfo;
                 sendstart = sendstart * 10 + (int)(*p - '0');
                 p++;
             }
-            if (*p && *p != CK_CR) {       /* Bad number */
+            if (*p && *p != CK_CR) {    /* Bad number */
                 debug(F110,"doftpsend2 bad size",ftp_reply_str,0);
                 sendstart = (CK_OFF_T)0;
             } else if (sendstart > fsize) { /* Remote file bigger than local */

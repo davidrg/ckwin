@@ -1,7 +1,7 @@
 /*  C K C U N I . H  --  Unicode/Terminal character-set translations  */
 
 /*
-  Copyright (C) 1999, 2013,
+  Copyright (C) 1999, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -11,7 +11,6 @@
       The Kermit Project, New York City.
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
-
 */
 
 /* Terminal character sets */
@@ -252,7 +251,7 @@ static _inline
 inline
 #else
 _Inline
-#endif
+#endif /* __WATCOMC__ */
 #endif /* NT */
 int
 ck_isunicode(

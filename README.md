@@ -16,8 +16,8 @@ Major features include:
 Windows XP or newer is required for SSH, secure telnet, https and ftps support.
 Windows 10 version 1809 is required for PTY support. 
 
-This software is currently based on C-Kermit version 10.0 Beta.04 of
-3-JUN-2022 and is available under the 3-clause BSD license.
+This software is currently based on C-Kermit version 10.0 Beta.05 of
+27-SEP-2022 and is available under the 3-clause BSD license.
 
 ![Screenshot](doc/screenshot-w10.png)
 

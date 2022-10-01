@@ -107,7 +107,9 @@ nmake
 cd ..\..\..\
 ```
 
-Note that this does not build libssh with GSSAPI support.
+Note that this does not build libssh with GSSAPI support. If you're building
+libssh 0.10.x and want DSA support (ssh-dss), add `-DWITH_DSA=ON` to the end
+of the cmake command.
 
 ## Building with Older OpenSSL Versions
 If you want to build with older **_INSECURE_** versions of OpenSSL for some

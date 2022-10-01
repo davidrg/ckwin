@@ -69,6 +69,25 @@ extern vik_rec vik;                     /* Very Important Keys    */
 int MouseCurX, MouseCurY;
 int MouseDebug = 0;
 
+/* Terminal Mouse Tracking Mode, one of:
+ * MOUSEREPORTING_NONE       No mouse tracking
+ * MOUSEREPORTING_X10        X10 mouse tracking - send position on press
+ * MOUSEREPORTING_X11        X11 (xterm) mouse tracking - send position and
+ *                          modifiers on mouse press and mouse release
+ * MOUSEREPORTING_DISABLE    Don't allow the remote host to turn mouse tracking
+ *                          on.
+ **/
+int      mouse_reporting_mode = MOUSEREPORTING_NONE;
+
+/* TRUE - send reports *instead* of any action defined for that mouse button and
+ *        modifier combination (CKW doesn't handle any mouse input).
+ * FALSE - mouse reports are only sent if no other action is mapped for that
+ *         mouse button and modifier combination. For example, if right-click
+ *         is set to \Kpaste then right-clicks will not be sent to the remote
+ *         application.
+ */
+BOOL     mouse_reporting_override = FALSE;
+
 /*
 Potential mouse events:
    MOUSE_MOTION
@@ -341,6 +360,21 @@ os2_mouseon( void )
     APIRET rc = 0 ;
 
 #ifdef NT
+#ifdef KUI
+    /* GUI version of CKW */
+    int buttonCount;
+
+    buttonCount = GetSystemMetrics(SM_CMOUSEBUTTONS);
+
+    debug(F101,"os2_mouseon Button Count","", buttonCount) ;
+
+    if (buttonCount == 0) return rc; /* No mouse installed */
+
+    ThreeButton = (buttonCount > 2);
+    mouseon = TRUE;
+    debug(F100, "Mouse ON", "", 0);
+#else
+    /* Console version of CKW */
     extern HANDLE KbdHandle ;
     DWORD mode=0, count=0 ;
 
@@ -356,7 +390,7 @@ os2_mouseon( void )
     rc = SetConsoleMode( KbdHandle, mode ) ;
     mouseon = TRUE ;
     debug(F111,"os2_mouseon SetConsoleMode","rc",rc) ;
-
+#endif /* KUI */
 #else /* NT */
 PTRLOC    PtrPos ;
 NOPTRRECT PtrArea ;
@@ -553,15 +587,164 @@ mousecurpos( int mode, USHORT orow, USHORT ocol, USHORT nrow, USHORT ncol, BOOL 
     ReleaseKeyStrokeMutex(mode) ;
 }
 
+void mouse_report(int x_coord, int y_coord, int button, BOOL ctrl, BOOL shift, BOOL meta,
+                  BOOL pressed) {
+    /* b, x, and y are all sent as (value+32) to ensure its a printable
+     * character. C-Kermit coordinates are 0-based, mouse report cordinates
+     * are 1-based (1,1 is the top left corner) */
+    extern BYTE vmode;
+    char x = x_coord + 1;
+    char y = y_coord + 1;
+    char b = '\0';
+    char report[32] = "\033[M   \0";
+    char modifiers = 0;
+    int len;
+
+    if (!MOUSE_REPORTING_ACTIVE(mouse_reporting_mode, vmode)) {
+        return; /* Mouse tracking isn't on - nothing to do. */
+    }
+
+    /* CKW numbers buttons from 1, but we need to send buttons numbered from 0 */
+    b = button - 1;
+
+    if (b > 2) {
+        /* Buttons 4 and 5 are send as buttons 1 and 2 with 64 added
+         * to the event code */
+        b -= 3;
+        b += 64;
+    }
+
+    if (shift) modifiers += 0x04;
+    if (meta) modifiers += 0x08;
+    if (ctrl) modifiers += 0x10;
+
+    if (MOUSE_REPORTING_TEST_FLAG(mouse_reporting_mode,
+                                  MOUSEREPORTING_SGR)) {
+        if (b > 2) {
+          /*  b += 64;*/
+        }
+
+        b += modifiers;
+
+        len = sprintf(report, "\033[<%d;%d;%d%c", b, x, y, pressed ? 'M' : 'm');
+        sendcharsduplex(report,len,TRUE);
+        return;
+    }
+
+
+
+    if (MOUSE_REPORTING_TEST_FLAG(mouse_reporting_mode,
+                                  MOUSEREPORTING_URXVT)) {
+
+        if (!pressed) {
+            b = 3;
+        }
+
+        b += modifiers + 32;
+
+        len = sprintf(report, "\033[%d;%d;%dM", b, x, y);
+        sendcharsduplex(report,len,TRUE);
+        return;
+    }
+
+    /* The X11 and X10 protocols send the coordinates as printable characters
+     * so we've got to add 32 */
+    x += 32;
+    y += 32;
+
+    if (MOUSE_REPORTING_TEST_FLAG(mouse_reporting_mode,
+                                  MOUSEREPORTING_X11)) {
+
+        if (x_coord > 223 || y_coord > 223) {
+            if (x_coord > 223)
+                debug(F111, "Not sending mouse report - X coordinate out of range", "X", x_coord);
+            if (y_coord > 223)
+                debug(F111, "Not sending mouse report - Y coordinate out of range", "Y", x_coord);
+            return;
+        }
+
+        /* Send:
+         *   ESC [ M bxy
+         * Where:
+         *   b = more complicated (see below)
+         *   x = x_coord + 32
+         *   y = y_coord + 32
+         */
+
+        /* b:
+         * ---
+         *  | 7 6 5 4 3 2 |    1 0 |
+         *  | modifiers   | button |
+         *
+         *  Where modifiers the following added together:
+         *    shift - 0x04
+         *    meta  - 0x08
+         *    ctrl  - 0x10
+         *  And button is:
+         *    0 - LMB
+         *    1 - Middle (3 button mouse) or RMB (2 button mouse)
+         *    2 - RMB (3 button mouse)
+         *    3 - button released
+         *  For buttons 4 and 5, add 64
+         */
+
+        if (!pressed) {
+            b = 3;
+        }
+
+        if (modifiers > 0) {
+            b |= modifiers;
+        }
+    } else if (MOUSE_REPORTING_TEST_FLAG(mouse_reporting_mode, MOUSEREPORTING_X10)) {
+        /* X10 mouse tracking only sends a report on mouse down */
+        if (!pressed) return;
+        if (button > 3) return; /* Unsupported mouse button */
+
+        if (x_coord > 223 || y_coord > 223) {
+            if (x_coord > 223)
+                debug(F111, "Not sending mouse report - X coordinate out of range", "X", x_coord);
+            if (y_coord > 223)
+                debug(F111, "Not sending mouse report - Y coordinate out of range", "Y", x_coord);
+            return;
+        }
+
+        /* Send:
+         *   ESC [ M bxy
+         * Where:
+         *   b = (button-1) + 32
+         *   x = x_coord + 32
+         *   y = y + 32
+         */
+    }
+
+    b += 32;
+
+    /* Write: ESC [ M bxy */
+    report[3] = b;
+    report[4] = x;
+    report[5] = y;
+
+    sendcharsduplex(report,6,TRUE);
+}
+
 #ifdef  NT
+
+/* Some handy macros to figure out of a particular mouse event is bound to
+ * something other than \Kignore */
+#define MOUSE_EVENT_IGNORED(button, event) \
+                (mousemap[button][event].type == kverb && \
+                (mousemap[button][event].kverb.id & ~(F_KVERB)) == K_IGNORE)
+#define MOUSE_DRAG_EVENT_IGNORED(button, event) (MOUSE_EVENT_IGNORED(button, event | MMDRAG))
+
 void
 win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
 {
-#ifdef NT
     extern int win32ScrollUp, win32ScrollDown;
-#endif /* NT */
+    extern BYTE vmode;
     position   * ppos ;
     char buffer[1024] ;
+
+    if (!mouseon) return; /* The mouse is disabled */
 
     if ( MouseDebug ) {
         int needcomma = 0;
@@ -659,15 +842,80 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
     MouseCurX = r.dwMousePosition.X;
     MouseCurY = r.dwMousePosition.Y;
 
+    Event = 0 ;
+    if ( r.dwControlKeyState & SHIFT )
+        Event |= MMSHIFT ;
+    if ( r.dwControlKeyState & ALT )
+        Event |= MMALT ;
+    if ( r.dwControlKeyState & CONTROL )
+        Event |= MMCTRL ;
+
+    if (mouse_reporting_override && MOUSE_REPORTING_ACTIVE(mouse_reporting_mode, vmode)) {
+        /* Mouse reporting is currently active and we're set to forward *all*
+         * mouse events to the remote host regardless of what that input may be
+         * mapped to within CKW.*/
+
+#ifndef NOSCROLLWHEEL
+        if (r.dwEventFlags & MOUSE_WHEELED) {
+            /*
+             * xterm sends mouse wheel events as buttons 4 and 5. Each click is
+             * one press without a release.
+             */
+            int button;
+            int zDelta = GET_WHEEL_DELTA_WPARAM(r.dwButtonState) / WHEEL_DELTA;
+
+            if (zDelta > 0) {
+                /* Positive is foreward / up scroll */
+                button = 4;
+            } else {
+                /* Negative is backward/ down scroll */
+                button = 5;
+                zDelta = zDelta * -1;
+            }
+
+            do {
+                mouse_report(r.dwMousePosition.X,
+                             r.dwMousePosition.Y,
+                             button,
+                             r.dwControlKeyState & CONTROL,
+                             r.dwControlKeyState & SHIFT,
+                             r.dwControlKeyState & ALT,
+                             TRUE);
+                zDelta--;
+            } while (zDelta > 0);
+        } else
+#endif
+        {
+            static int button = 0;
+            int previous_button = button;
+
+            /* Figure out which button was pressed (if any) */
+            button = 0;
+            if (r.dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) button = 1;
+            if (r.dwButtonState & (ThreeButton ? FROM_LEFT_2ND_BUTTON_PRESSED :
+                                     RIGHTMOST_BUTTON_PRESSED)) button = 2;
+            if (r.dwButtonState & (ThreeButton ? RIGHTMOST_BUTTON_PRESSED : 0))
+                button = 3;
+
+            /* If button == 0 that means whatever mouse button was pressed before
+             * has been released. */
+            mouse_report(r.dwMousePosition.X,
+                         r.dwMousePosition.Y,
+                         button == 0 ? previous_button : button,
+                         r.dwControlKeyState & CONTROL,
+                         r.dwControlKeyState & SHIFT,
+                         r.dwControlKeyState & ALT,
+                         button != 0);
+        }
+
+        return;
+    }
+
    if ( TRUE )
    {
-       Event = 0 ;
-       if ( r.dwControlKeyState & SHIFT )
-           Event |= MMSHIFT ;
-       if ( r.dwControlKeyState & ALT )
-           Event |= MMALT ;
-       if ( r.dwControlKeyState & CONTROL )
-           Event |= MMCTRL ;
+       /* Details for mouse reporting (if active) */
+       int mr_button = -1;
+       int mr_event = Event;
 
        sprintf(buffer, "  Event: fs:%3x row:%3d col:%3d",
                 r.dwButtonState,
@@ -704,24 +952,35 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                b1.col = r.dwMousePosition.X ;
                debug( F100, "mouse B1 single click", "", 0 ) ;
            }
+
+           mr_button = MMB1;
+           mr_event |= (b1.state == 1 ? MMCLICK : MMDBL);
        }
        else if ( (r.dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) && (r.dwEventFlags & MOUSE_MOVED) ) {
            debug( F100, "mouse B1 drag", "", 0 ) ;
-           if ( b1.state == 1 && !SelectionValid && (MouseCurY != b1.row || MouseCurX != b1.col)) {
-               SelectionValid = 1 ;
-               RequestKeyStrokeMutex( mode, SEM_INDEFINITE_WAIT);
-               putkverb( mode, F_KVERB | K_MARK_START ) ;
-               mousecurpos( mode, Vrow, Vcol, b1.row, b1.col, TRUE ) ;
-               putkverb( mode, F_KVERB | K_MARK_START ) ;
-               mousecurpos( mode, b1.row, b1.col, MouseCurY, MouseCurX, TRUE );
-               ReleaseKeyStrokeMutex(mode) ;
-           }
-           else if ( b1.state == 1 && SelectionValid &&
-                     ( lastrow != r.dwMousePosition.Y ||
-                       lastcol != r.dwMousePosition.X )
-                     ) {
-               mousecurpos( mode, lastrow, lastcol, r.dwMousePosition.Y,
-                            r.dwMousePosition.X, TRUE ) ;
+
+           mr_button = MMB1;
+           mr_event |= MMDRAG;
+
+           /* Only start the drag event if we've actually got something bound
+            * to it */
+           if (!MOUSE_DRAG_EVENT_IGNORED(MMB1, Event)) {
+               if ( b1.state == 1 && !SelectionValid && (MouseCurY != b1.row || MouseCurX != b1.col)) {
+                   SelectionValid = 1 ;
+                   RequestKeyStrokeMutex( mode, SEM_INDEFINITE_WAIT);
+                   putkverb( mode, F_KVERB | K_MARK_START ) ;
+                   mousecurpos( mode, Vrow, Vcol, b1.row, b1.col, TRUE ) ;
+                   putkverb( mode, F_KVERB | K_MARK_START ) ;
+                   mousecurpos( mode, b1.row, b1.col, MouseCurY, MouseCurX, TRUE );
+                   ReleaseKeyStrokeMutex(mode) ;
+               }
+               else if ( b1.state == 1 && SelectionValid &&
+                         ( lastrow != r.dwMousePosition.Y ||
+                           lastcol != r.dwMousePosition.X )
+                         ) {
+                   mousecurpos( mode, lastrow, lastcol, r.dwMousePosition.Y,
+                                r.dwMousePosition.X, TRUE ) ;
+               }
            }
        }
 
@@ -741,25 +1000,36 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                b2.col = r.dwMousePosition.X ;
                debug( F100, "mouse B2 single click", "", 0 ) ;
            }
+
+           mr_button = MMB2;
+           mr_event |= (b2.state == 1 ? MMCLICK : MMDBL);
        }
        else if ( (r.dwButtonState & (ThreeButton ? FROM_LEFT_2ND_BUTTON_PRESSED : RIGHTMOST_BUTTON_PRESSED)) &&
                  (r.dwEventFlags & MOUSE_MOVED)) {
            debug( F100, "mouse B2 drag", "", 0 ) ;
-           if ( b2.state == 1 && !SelectionValid && (MouseCurY != b2.row || MouseCurX != b2.col) ) {
-               SelectionValid = 1 ;
-               RequestKeyStrokeMutex( mode, SEM_INDEFINITE_WAIT);
-               putkverb( mode, F_KVERB | K_MARK_START ) ;
-               mousecurpos( mode, Vrow, Vcol, b2.row, b2.col, TRUE ) ;
-               putkverb( mode, F_KVERB | K_MARK_START ) ;
-               mousecurpos( mode, b2.row, b2.col, MouseCurY, MouseCurX, TRUE );
-               ReleaseKeyStrokeMutex(mode) ;
-           }
-           else if ( b2.state == 1 && SelectionValid &&
-                     ( lastrow != r.dwMousePosition.Y ||
-                       lastcol != r.dwMousePosition.X )
-                     ) {
-               mousecurpos( mode, lastrow, lastcol, r.dwMousePosition.Y,
-                            r.dwMousePosition.X, TRUE ) ;
+
+           mr_button = MMB2;
+           mr_event |= MMDRAG;
+
+           /* Only start the drag event if we've actually got something bound
+            * to it */
+           if (!MOUSE_DRAG_EVENT_IGNORED(MMB2, Event)) {
+               if ( b2.state == 1 && !SelectionValid && (MouseCurY != b2.row || MouseCurX != b2.col) ) {
+                   SelectionValid = 1 ;
+                   RequestKeyStrokeMutex( mode, SEM_INDEFINITE_WAIT);
+                   putkverb( mode, F_KVERB | K_MARK_START ) ;
+                   mousecurpos( mode, Vrow, Vcol, b2.row, b2.col, TRUE ) ;
+                   putkverb( mode, F_KVERB | K_MARK_START ) ;
+                   mousecurpos( mode, b2.row, b2.col, MouseCurY, MouseCurX, TRUE );
+                   ReleaseKeyStrokeMutex(mode) ;
+               }
+               else if ( b2.state == 1 && SelectionValid &&
+                         ( lastrow != r.dwMousePosition.Y ||
+                           lastcol != r.dwMousePosition.X )
+                         ) {
+                   mousecurpos( mode, lastrow, lastcol, r.dwMousePosition.Y,
+                                r.dwMousePosition.X, TRUE ) ;
+               }
            }
        }
 
@@ -777,26 +1047,76 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                b3.col = r.dwMousePosition.X ;
                debug( F100, "mouse B3 single click","",0) ;
            }
+
+           mr_button = MMB3;
+           mr_event |= (b3.state == 1 ? MMCLICK : MMDBL);
        }
        else if ( (r.dwButtonState & (ThreeButton ? RIGHTMOST_BUTTON_PRESSED : 0)) && (r.dwEventFlags & MOUSE_MOVED) ) {
            debug( F100, "mouse B3 drag","",0) ;
-           if ( b3.state == 1 && !SelectionValid && (MouseCurY != b3.row || MouseCurX != b3.col) ) {
-               SelectionValid = 1 ;
-               RequestKeyStrokeMutex( mode, SEM_INDEFINITE_WAIT);
-               putkverb( mode, F_KVERB | K_MARK_START ) ;
-               mousecurpos( mode, Vrow, Vcol, b3.row, b3.col, TRUE ) ;
-               putkverb( mode, F_KVERB | K_MARK_START ) ;
-               mousecurpos( mode, b3.row, b3.col, MouseCurY, MouseCurX, TRUE );
-               ReleaseKeyStrokeMutex(mode) ;
-           }
-           else if ( b3.state == 1 && SelectionValid &&
-                     ( lastrow != r.dwMousePosition.Y ||
-                       lastcol != r.dwMousePosition.X )
-                     ) {
-               mousecurpos( mode, lastrow, lastcol, r.dwMousePosition.Y,
-                            r.dwMousePosition.X, TRUE ) ;
+
+           mr_button = MMB3;
+           mr_event |= MMDRAG;
+
+           /* Only start the drag event if we've actually got something bound
+            * to it */
+           if (!MOUSE_DRAG_EVENT_IGNORED(MMB3, Event)) {
+               if ( b3.state == 1 && !SelectionValid && (MouseCurY != b3.row || MouseCurX != b3.col) ) {
+                   SelectionValid = 1 ;
+                   RequestKeyStrokeMutex( mode, SEM_INDEFINITE_WAIT);
+                   putkverb( mode, F_KVERB | K_MARK_START ) ;
+                   mousecurpos( mode, Vrow, Vcol, b3.row, b3.col, TRUE ) ;
+                   putkverb( mode, F_KVERB | K_MARK_START ) ;
+                   mousecurpos( mode, b3.row, b3.col, MouseCurY, MouseCurX, TRUE );
+                   ReleaseKeyStrokeMutex(mode) ;
+               }
+               else if ( b3.state == 1 && SelectionValid &&
+                         ( lastrow != r.dwMousePosition.Y ||
+                           lastcol != r.dwMousePosition.X )
+                         ) {
+                   mousecurpos( mode, lastrow, lastcol, r.dwMousePosition.Y,
+                                r.dwMousePosition.X, TRUE ) ;
+               }
            }
        }
+
+       if (!mouse_reporting_override && mr_button != -1 &&
+           MOUSE_EVENT_IGNORED(mr_button, mr_event)) {
+
+           /* Mouse button press */
+
+           /* Nothing is mapped for this mouse event - send a mouse report
+            * if reporting is active */
+           mouse_report(r.dwMousePosition.X,
+                        r.dwMousePosition.Y,
+                        mr_button + 1, /* CKW buttons start at 0 */
+                        r.dwControlKeyState & CONTROL,
+                        r.dwControlKeyState & SHIFT,
+                        r.dwControlKeyState & ALT,
+                        TRUE); /* button pressed */
+
+           if (mr_event & MMDBL) {
+               /* Double Click - send as to press/release events (the release
+                * for the second press will come later when the user actually
+                * releases the button) */
+               mouse_report(r.dwMousePosition.X,
+                        r.dwMousePosition.Y,
+                        mr_button + 1, /* CKW buttons start at 0 */
+                        r.dwControlKeyState & CONTROL,
+                        r.dwControlKeyState & SHIFT,
+                        r.dwControlKeyState & ALT,
+                        FALSE); /* button released */
+
+               mouse_report(r.dwMousePosition.X,
+                        r.dwMousePosition.Y,
+                        mr_button + 1, /* CKW buttons start at 0 */
+                        r.dwControlKeyState & CONTROL,
+                        r.dwControlKeyState & SHIFT,
+                        r.dwControlKeyState & ALT,
+                        TRUE); /* button pressed */
+           }
+       }
+       mr_button = -1;
+       mr_event = Event;
 
 #ifndef NOSCROLLWHEEL
        if (r.dwEventFlags & MOUSE_WHEELED) {
@@ -817,7 +1137,17 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
            }
 
            do {
-               putevent( mode, mousemap[button][Event] ) ;
+               if (!mouse_reporting_override && MOUSE_EVENT_IGNORED(button, Event)) {
+                   mouse_report(r.dwMousePosition.X,
+                         r.dwMousePosition.Y,
+                         button + 1,
+                         r.dwControlKeyState & CONTROL,
+                         r.dwControlKeyState & SHIFT,
+                         r.dwControlKeyState & ALT,
+                         TRUE);
+               } else {
+                   putevent( mode, mousemap[button][Event] ) ;
+               }
                zDelta--;
            } while (zDelta > 0);
            putkverb( mode, F_KVERB | K_MARK_CANCEL ) ;
@@ -832,6 +1162,9 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                if ( SelectionValid ) {
                    Event |= MMDRAG ;
                }
+
+               mr_button = MMB1;
+               mr_event |= MMCLICK;
 
                /* Handle special Mouse Kverbs */
                if ( mousemap[MMB1][Event].type == kverb ) {
@@ -881,6 +1214,9 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                debug( F100, "mouse B1 double click released", "" , 0 );
                Event |= MMDBL ;
 
+               mr_button = MMB1;
+               mr_event |= MMDBL;
+
                /* Handle special Mouse Kverbs */
                if ( mousemap[MMB1][Event].type == kverb)
                {
@@ -921,6 +1257,9 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                if ( SelectionValid ) {
                    Event |= MMDRAG ;
                }
+
+               mr_button = MMB2;
+               mr_event |= MMCLICK;
 
                /* Handle special Mouse Kverbs */
                if ( mousemap[MMB2][Event].type == kverb)
@@ -971,6 +1310,9 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                debug( F100, "mouse B2 double click released", "" , 0 );
                Event |= MMDBL ;
 
+               mr_button = MMB2;
+               mr_event |= MMDBL;
+
                /* Handle special Mouse Kverbs */
                if ( mousemap[MMB2][Event].type == kverb ) {
                    switch (mousemap[MMB2][Event].kverb.id & ~(F_KVERB)) {
@@ -1010,6 +1352,9 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                 if ( SelectionValid ) {
                     Event |= MMDRAG ;
                 }
+
+                mr_button = MMB3;
+                mr_event |= MMCLICK;
 
                 /* Handle special Mouse Kverbs */
                 if ( mousemap[MMB3][Event].type == kverb ) {
@@ -1059,6 +1404,9 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                 debug( F100, "mouse B3 double click released", "" , 0 );
                 Event |= MMDBL ;
 
+                mr_button = MMB3;
+                mr_event |= MMDBL;
+
                /* Handle special Mouse Kverbs */
                 if ( mousemap[MMB3][Event].type == kverb ) {
                switch (mousemap[MMB3][Event].kverb.id & ~(F_KVERB)) {
@@ -1089,6 +1437,26 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
 #endif /* NT */
             }
        }
+
+       if (!mouse_reporting_override && mr_button != -1 &&
+           MOUSE_EVENT_IGNORED(mr_button, mr_event)) {
+
+           debug(F100, "Reporting MB Release.", "", 0);
+
+           /* Mouse button release. If this is for a double click, the remote
+            * host has already received a press, a release, and a second press*/
+
+           /* Nothing is mapped for this mouse event - send a mouse report
+            * if reporting is active */
+           mouse_report(r.dwMousePosition.X,
+                        r.dwMousePosition.Y,
+                        mr_button + 1, /* CKW buttons start at 0 */
+                        r.dwControlKeyState & CONTROL,
+                        r.dwControlKeyState & SHIFT,
+                        r.dwControlKeyState & ALT,
+                        FALSE); /* button released */
+       }
+
        lastrow = r.dwMousePosition.Y ;
        lastcol = r.dwMousePosition.X ;
    }

@@ -218,6 +218,56 @@ struct keynode {
 #define MMSIZE (MMBUTTONMAX * MMEVENTSIZE)               /* Mouse Map Size */
 
 extern con_event mousemap[MMBUTTONMAX][MMSIZE] ;
+
+/* Mouse tracking modes */
+#ifdef COMMENT
+#define MOUSEREPORTING_NONE 0
+#define MOUSEREPORTING_X10 1
+#define MOUSEREPORTING_X11 2
+#define MOUSEREPORTING_SGR 3
+#define MOUSEREPORTING_URXVT 4
+#define MOUSEREPORTING_DISABLE 5
+#define MOUSE_REPORTING_ACTIVE(x, vmode) ((x == MOUSEREPORTING_X10 || \
+    x == MOUSEREPORTING_X11 || x == MOUSEREPORTING_SGR || \
+    x == MOUSEREPORTING_URXVT) && vmode == VTERM)
+
+#else
+
+#define MOUSEREPORTING_NONE     0x00
+#define MOUSEREPORTING_DISABLE  0x01
+#define MOUSEREPORTING_X10      0x02
+#define MOUSEREPORTING_X11      0x04
+#define MOUSEREPORTING_SGR      0x08
+#define MOUSEREPORTING_URXVT    0x10
+
+/* These are not currently implemented (yet).
+ * Docs: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Button-event-tracking
+ * To implement, something along the lines of the following will need to be
+ * done:
+ *   - Update MOUSEREPORTING_ACTIVE and MOUSEREPORTING_UNSUPPORTED below
+ *   - Adjust the mouse_report function in ckomou.c to support sending motion
+ *     events
+ *   - Call mouse_report on mouse move when motion events are active.
+ *   - update the shomou function in ckuus5.c to report the new reporting
+ *     protocols when they're active
+ **/
+#define MOUSEREPORTING_BTNEVENT 0x11
+#define MOUSEREPORTING_ANYEVENT 0x12
+
+
+/* These are the active mouse reporting modes. If any of these are set, mouse
+ * reports will be sent if the disable bit is not setan*/
+#define MOUSEREPORTING_ACTIVE (MOUSEREPORTING_X10 | MOUSEREPORTING_X11 | \
+    MOUSEREPORTING_SGR | MOUSEREPORTING_URXVT)
+
+#define MOUSEREPORTING_UNSUPPORTED (MOUSEREPORTING_BTNEVENT | MOUSEREPORTING_ANYEVENT)
+
+#define MOUSE_REPORTING_TEST_FLAG(x, flg) (x & flg)
+
+#define MOUSE_REPORTING_ACTIVE(x, vmode) (vmode == VTERM && \
+    MOUSE_REPORTING_TEST_FLAG(x, MOUSEREPORTING_ACTIVE) &&   \
+    !MOUSE_REPORTING_TEST_FLAG(x, MOUSEREPORTING_DISABLE))
+#endif
 #endif /* OS2MOUSE */
 
 #define KEY_SCAN      0x0100

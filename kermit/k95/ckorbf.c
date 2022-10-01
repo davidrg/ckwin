@@ -146,7 +146,7 @@ size_t ring_buffer_length(ring_buffer_handle_t buf) {
 }
 
 
-BOOL ring_buffer_put(ring_buffer_handle_t buf, char data) {
+BOOL ring_buffer_put_noset(ring_buffer_handle_t buf, char data) {
     if (ring_buffer_is_full(buf)) {
         /* Buffer is full - can not put without overwriting data. Put fails. */
         return FALSE;
@@ -167,6 +167,14 @@ BOOL ring_buffer_put(ring_buffer_handle_t buf, char data) {
 
     buf->full = buf->head == buf->tail;
 
+    return TRUE;
+}
+
+/** Sets buffer writeReady and readReady events
+ *
+ * @param buf Buffer to set events for
+ */
+void ring_buffer_set_events(ring_buffer_handle_t buf) {
     if (buf->full) {
         /* Buffer is now full - no longer ready to write */
         ResetEvent(buf->writeReady);
@@ -176,10 +184,25 @@ BOOL ring_buffer_put(ring_buffer_handle_t buf, char data) {
         SetEvent(buf->writeReady);
     }
 
-    /* If anyone was waiting for data to read, data is now available */
-    SetEvent(buf->readReady);
+    if (ring_buffer_is_empty(buf)) {
+        /* Buffer is empty - not ready for reading */
+        ResetEvent(buf->readReady);
+    } else {
+        /* If anyone was waiting for data to read, data is now available */
+        SetEvent(buf->readReady);
+    }
+}
 
-    return TRUE;
+
+BOOL ring_buffer_put(ring_buffer_handle_t buf, char data) {
+    BOOL result;
+
+    result = ring_buffer_put_noset(buf, data);
+    if (!result) return result;
+
+    ring_buffer_set_events(buf);
+
+    return result;
 }
 
 
@@ -220,8 +243,7 @@ int ring_buffer_put_blocking(ring_buffer_handle_t buf, char data, int timeout) {
     return RING_BUFFER_SUCCESS;
 }
 
-
-BOOL ring_buffer_get(ring_buffer_handle_t buf, char *data) {
+BOOL ring_buffer_get_noset(ring_buffer_handle_t buf, char *data) {
     if (ring_buffer_is_empty(buf)) {
         /* Buffer is empty - nothing to get. Get fails. */
         ResetEvent(buf->readReady);
@@ -238,6 +260,18 @@ BOOL ring_buffer_get(ring_buffer_handle_t buf, char *data) {
 
     /* If it was full before it is no longer. Ready to write! */
     buf->full = FALSE;
+
+    return TRUE;
+}
+
+BOOL ring_buffer_get(ring_buffer_handle_t buf, char *data) {
+    BOOL result;
+
+    result = ring_buffer_get_noset(buf, data);
+
+    if (!result) return result;
+
+#ifdef COMMENT
     SetEvent(buf->writeReady);
 
     if (ring_buffer_is_empty(buf)) {
@@ -245,8 +279,11 @@ BOOL ring_buffer_get(ring_buffer_handle_t buf, char *data) {
          * ready for reading */
         ResetEvent(buf->readReady);
     }
+#endif
 
-    return TRUE;
+    ring_buffer_set_events(buf);
+
+    return result;
 }
 
 
@@ -291,15 +328,18 @@ int ring_buffer_get_blocking(ring_buffer_handle_t buf, char *data, int timeout) 
 size_t ring_buffer_write(ring_buffer_handle_t buf, char* data, size_t length) {
     size_t written = 0;
     while (written < length) {
-        BOOL result = ring_buffer_put(buf, data[written]);
+        BOOL result = ring_buffer_put_noset(buf, data[written]);
         if (!result) {
             /* Put failed - buffer full? No more will be written. We are done.
              * The caller will have to try again with the rest of the data
              * later.*/
+            ring_buffer_set_events(buf);
             return written;
         }
         written++;
     }
+
+    ring_buffer_set_events(buf);
     return written;
 }
 
@@ -324,14 +364,16 @@ size_t ring_buffer_read(ring_buffer_handle_t buf, char* data, size_t max_length)
     memset(data, 0, max_length);
     while (bytes_read < max_length) {
         char c;
-        BOOL result = ring_buffer_get(buf, &c);
+        BOOL result = ring_buffer_get_noset(buf, &c);
         if (!result) {
             /* Get failed - ring buffer is probably empty. */
+            ring_buffer_set_events(buf);
             return bytes_read;
         }
         data[bytes_read] = c;
         bytes_read++;
     }
+    ring_buffer_set_events(buf);
     return bytes_read;
 }
 

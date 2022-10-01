@@ -13,7 +13,7 @@
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: 12 May 2022
+    Last update: 23 September 2022
 */
 
 /*
@@ -150,7 +150,8 @@ extern int protocol, remfile, rempipe, remappd, reliable, xreliable, fmask,
   bctr, npad, timef, timint, spsizr, spsizf, maxsps, spmax, nfils, displa,
   atcapr, pkttim, rtimo, fncact, mypadn, fdispla, f_save, pktpaus, setreliable,
   fnrpath, fnspath, atenci, atenco, atdati, atdato, atleni, atleno, atblki,
-  atblko, attypi, attypo, atsidi, atsido, atsysi, atsyso, atdisi, atdiso;
+  atblko, attypi, attypo, atsidi, atsido, atsysi, atsyso, atdisi, atdiso,
+  rpsizf;
 
 extern int stathack;
 
@@ -1721,6 +1722,10 @@ struct keytab mousetab[] = {            /* Mouse items */
     { "button",   XYM_BUTTON, 0 },
     { "clear",    XYM_CLEAR,  0 },
     { "debug",    XYM_DEBUG,  0 },
+#ifdef NT
+    /* Not implemented for OS/2 yet */
+    { "reporting", XYM_REPORTING, 0 },
+#endif
 #ifndef NOSCROLLWHEEL
     { "wheel",    XYM_WHEEL,  0 }
 #endif
@@ -1742,6 +1747,13 @@ struct keytab mousewheeltab[] = {      /* event direction */
     { "up",      XYM_WHEEL_UP, 0 }
 };
 int nmousewheeltab = (sizeof(mousewheeltab) / sizeof(struct keytab));
+
+struct keytab mousereportingtab[] = {      /* event direction */
+    { "disabled",    XYM_REPORTING_DISABLED, 0 },
+    { "enabled",     XYM_REPORTING_ENABLED, 0 },
+    { "override",    XYM_REPORTING_OVERRIDE, 0 }
+};
+int nmousereportingtab = (sizeof(mousereportingtab) / sizeof(struct keytab));
 
 struct keytab mousemodtab[] = {         /* event button key modifier */
     { "alt",              XYM_ALT,   0 },
@@ -6390,6 +6402,33 @@ setmou(
         initvik = 1;                    /* Update VIK Table */
         return 1;
     }
+
+    if (y == XYM_REPORTING) {
+        extern int mouse_reporting_mode;
+        extern BOOL mouse_reporting_override;
+        int setting = cmkey(mousereportingtab,nmousereportingtab,
+                            "Mouse reporting behavior","enabled",
+                            xxstring);
+        if (setting < 0) return setting;
+
+        switch(setting) {
+            case XYM_REPORTING_DISABLED:
+                mouse_reporting_mode |= MOUSEREPORTING_DISABLE;
+                break;
+            case XYM_REPORTING_ENABLED:
+                /* If mouse reporting isn't currently disabled do nothing
+                 * otherwise we might accidentally deactivate it if the mode
+                 * isn't already _NONE */
+                mouse_reporting_mode &= ~MOUSEREPORTING_DISABLE;
+                mouse_reporting_override = FALSE;
+                break;
+            case XYM_REPORTING_OVERRIDE:
+                mouse_reporting_mode &= ~MOUSEREPORTING_DISABLE;
+                mouse_reporting_override = TRUE;
+                break;
+        }
+        return 1;
+    }
     if (y != XYM_BUTTON && y != XYM_WHEEL) {           /* Shouldn't happen. */
         printf("Internal parsing error\n");
         return(-9);
@@ -6601,6 +6640,7 @@ setsr(xx, rmsflg) int xx; int rmsflg; {
                 if (protocol == PROTO_K) {
                     if (z > MAXRP) z = MAXRP;
                     y = adjpkl(z,wslotr,bigrbsiz);
+                    rpsizf = 1;   /* Packet-size override flag fdc 20220917 */
                     if (y != z) {
                         urpsiz = y;
                         if (!xcmdsrc)
@@ -9475,7 +9515,7 @@ cx_net(net, protocol, xhost, svc,
         else if (line[0] != '*' && !ck_ntlm_is_valid(0)) {
 		    return(cx_fail(msg,"NTLM: Credentials are unavailable."));
 		}
-#endif
+#endif  /* NTLM */
 	    }
 #endif /* NT */
 #ifdef CK_SSL
@@ -10486,7 +10526,7 @@ setlin(xx, zz, fc)
               "Command, or switch" :
                 (mynet == NET_TCPA || mynet == NET_TCPB
                   || mynet == NET_SSH) ?
-                  "Hostname, ip-address, or switch" : (mynet == NET_DLL) ?
+                  "Hostname, ip-address, or switch" :(mynet == NET_DLL) ?
                         "Parameters, or switch" :
                             "Host or switch";
             if (fc) {
@@ -12596,7 +12636,7 @@ dofile(op) int op; {                    /* Do the FILE command */
             s = "(stdin)";
             goto xdofile;               /* Skip around the following */
         }
-        if (filmode & FM_STDOUT) {      /* If STDIN specified */
+        if (filmode & FM_STDOUT) {      /* If STDOUT specified */
             filmode |= FM_WRI;          /* it implies /WRITE */
             /* We don't need to parse anything further */
             s = "(stdout)";
@@ -13068,7 +13108,7 @@ dofile(op) int op; {                    /* Do the FILE command */
             if (listing < 0)
               listing = !xcmdsrc;
             if (listing)
-              printf(" %ld %s%s\n",
+              printf(" %d %s%s\n",
                      z_filcount,
                      ((rsize == RD_CHAR) ? "byte" : "line"),
                      ((z_filcount == 1L) ? "" : "s")

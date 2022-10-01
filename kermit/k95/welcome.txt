@@ -1,0 +1,15 @@
+
+-------------------------------------------------------------------------------
+Welcome to \v(herald)
+  \fpathname(\fcontents(\%0))
+
+This message is coming to you from your Kermit initialization file:
+  \fpathname(\v(cmdfile))
+
+which presently just prints this message.  You can edit this file to
+remove the welcome message and replace it with key definitions or
+macros, font and color selections, any desired customizations or
+settings.  It is a plain-text file; you can edit it on Windows with
+Notepad or with any other plain-text editor.
+-------------------------------------------------------------------------------
+

@@ -1,6 +1,6 @@
 #include "ckcsym.h"
 
-char *cmdv = "Command package 9.0.178, 16 May 2022";
+char *cmdv = "Command package 10.0.179, 23 Sep 2022";
 
 /*  C K U C M D  --  Interactive command package for Unix  */
 
@@ -15,6 +15,10 @@ char *cmdv = "Command package 9.0.178, 16 May 2022";
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
+
+  Note: the name of these files really should be ckccmd.h and ckccmd.c
+    because they are for all platforms, not just Unix.  But "don't fix
+    what ain't broke".
 */
 
 #define FUNCTIONTEST
@@ -897,7 +901,7 @@ prompt(f) xx_strp f; {
 #else
 #ifdef IKSD
     if (inserver) {			/* Print the prompt. */
-        ttoc(CK_CR);		/* If TELNET Server */
+        ttoc(CK_CR);			/* If TELNET Server */
         ttoc(NUL);			/* must folloW CR by NUL */
         printf("%s",sx);
     } else
@@ -4081,8 +4085,20 @@ delta2sec(s,result) char * s; long * result; {
     *result = zz;
     return(0);
 }
+/*
+  C M C V T D A T E
 
-
+  cmcvtdate(date-time-string, format-selector)
+  Converts the given free-format date-time (s) to various formats (t):
+  t = 1: yyyy-mmm-dd hh:mm:ss (mmm = English 3-letter month abbreviation)
+  t = 2: dd-mmm-yyyy hh:mm:ss (ditto)
+  t = 3: yyyymmddhhmmss (all numeric)
+  t = 4: Day Mon dd hh:mm:ss yyyy (asctime)
+  t = 5: yyyy:mm:dd:hh:mm:ss (all numeric with all fields delimited)
+  t = 6: dd month-spelled-out yyyy hh:mm:ss
+  Other:  yyyymmdd hh:mm:dd
+  If t is negative (-1 through -6) result is date only.
+*/
 char *
 cmcvtdate(s,t) char * s; int t; {
     int x, i, j, k, hh, mm, ss, ff, pmflag = 0, nodate = 0, len, dow;
@@ -5453,6 +5469,8 @@ cmdiffdate(d1,d2) char * d1, * d2; {
       5: Reformat as delimited numeric yyyy:mm:dd:hh:mm:ss.
     Returns:
       Pointer to result if args valid, otherwise original arg pointer.
+      Result is normally date and time in the given format but
+      if called with a negative opt (-1 through -6) result is date only.
 */
 char *
 shuffledate(p,opt) char * p; int opt; {
@@ -5469,13 +5487,19 @@ shuffledate(p,opt) char * p; int opt; {
     _PROTOTYP( char * locale_monthname, (int, int) );
     extern int nolocale;
 #endif /* HAVE_LOCALE */
+    int notime = 0;
 
     if (!p) p = "";
     if (!*p) p = ckdate();
+    if (opt < 0) {                      /* Negative opt means no time */
+        notime = 1;
+        opt = -opt;
+    }
     if (opt < 1 || opt > 6)
       return(p);
     len = strlen(p);
     if (len < 8 || len > 31) return(p);
+
     if (opt == 4) {			/* Asctime format (26 Nov 2005) */
 	char c, * s;
 	long z; int k;
@@ -5515,13 +5539,21 @@ shuffledate(p,opt) char * p; int opt; {
 	else
 	  obuf[8] = p[6];
         obuf[9] = p[7];
-	ckstrncpy(&obuf[10],&p[8],10);	/* Time */
-        obuf[19] = SP;			/* Space */
-	obuf[20] = p[0];		/* Year */
-	obuf[21] = p[1];
-	obuf[22] = p[2];
-	obuf[23] = p[3];
-	obuf[24] = NUL;
+        if (notime) {                   /* Just the date */
+            obuf[10] = p[0];		/* Year */
+            obuf[11] = p[1];
+            obuf[12] = p[2];
+            obuf[13] = p[3];
+            obuf[14] = NUL;
+        } else {                           /* Date and time */
+            ckstrncpy(&obuf[10],&p[8],10); /* Time */
+            obuf[19] = SP;                 /* Space */
+            obuf[20] = p[0];               /* Year */
+            obuf[21] = p[1];
+            obuf[22] = p[2];
+            obuf[23] = p[3];
+            obuf[24] = NUL;
+        }
 	return((char *)obuf);
     }
     if (opt == 5) {			/* 20130722 All fields delimited */
@@ -5541,16 +5573,20 @@ shuffledate(p,opt) char * p; int opt; {
 	obuf[i++] = sep;		/*  */
 	obuf[i++] = p[6];		/* d */
 	obuf[i++] = p[7];		/* d */
-	obuf[i++] = sep;		/*  */
-	obuf[i++] = p[9];		/* h */
-	obuf[i++] = p[10];		/* h */
-	obuf[i++] = sep;		/*  */
-	obuf[i++] = p[12];		/* m */
-	obuf[i++] = p[13];		/* m */
-	obuf[i++] = sep;		/*  */
-	obuf[i++] = p[15];		/* s */
-	obuf[i++] = p[16];		/* s */
-	obuf[i++] = NUL;		/* end */
+        if (notime) {
+            obuf[i++] = NUL;
+        } else {
+            obuf[i++] = sep;		/*  */
+            obuf[i++] = p[9];		/* h */
+            obuf[i++] = p[10];		/* h */
+            obuf[i++] = sep;		/*  */
+            obuf[i++] = p[12];		/* m */
+            obuf[i++] = p[13];		/* m */
+            obuf[i++] = sep;		/*  */
+            obuf[i++] = p[15];		/* s */
+            obuf[i++] = p[16];		/* s */
+            obuf[i++] = NUL;		/* end */
+        }
 	return((char *)obuf);
     }
     if (opt == 3) {
@@ -5559,12 +5595,17 @@ shuffledate(p,opt) char * p; int opt; {
 	/* 01234567890123456 */
 	/* yyyymmddhhmmss    */
 	obuf[8] = obuf[9];
-	obuf[9] = obuf[10];
-	obuf[10] = obuf[12];
-	obuf[11] = obuf[13];
-	obuf[12] = obuf[15];
-	obuf[13] = obuf[16];
-	obuf[14] = NUL;
+
+        if (notime) {
+            obuf[9] = NUL;
+        } else {
+            obuf[9] = obuf[10];
+            obuf[10] = obuf[12];
+            obuf[11] = obuf[13];
+            obuf[12] = obuf[15];
+            obuf[13] = obuf[16];
+            obuf[14] = NUL;
+        }
 	return((char *)obuf);
     }
     ckstrncpy(ibuf,p,32);
@@ -5620,12 +5661,19 @@ shuffledate(p,opt) char * p; int opt; {
     switch (opt) {
       case 1:
         sprintf(obuf,"%04d-%s-%02d%s",yy,monthstring,dd,&ibuf[8]);
+        if (notime) obuf[11] = NUL;
         break;
       case 2:
         sprintf(obuf,"%02d-%s-%04d%s",dd,monthstring,yy,&ibuf[8]);
+        if (notime) obuf[11] = NUL;
         break;
       case 6:
         sprintf(obuf,"%d %s %d%s", dd, monthstring, yy, &ibuf[8]);
+        if (notime) {
+            int tmp;
+            tmp = (int)strlen(obuf) - 9;
+            obuf[tmp] = NUL;
+        }
         break;
       default:
         return(p);
@@ -7609,7 +7657,7 @@ cmdconchk() {
     debug(F101,"cmdconchk NOARROWKEYS x","",0);
 #else
     debug(F101,"cmdconchk stdin->_cnt","",stdin->_cnt);
-    x = stdin->_cnt;
+    x = stdin->_cnt;                    /* THIS BLOWS UP IN GLIBC >= 2.28 */
 #endif /* NOARROWKEYS */
 #endif /* VMS */
     if (x == 0) x = conchk();

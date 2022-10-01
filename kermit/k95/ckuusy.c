@@ -3171,7 +3171,7 @@ setiks() {				/* SET IKS */
         if (iksdcf) return(success = 0);
 #ifdef CK_LOGIN
         if (*s) makestr(&anonfile,s);
-#endif
+#endif  /* CK_LOGIN */
         break;
       case IKS_USFI:
         if ((z = cmifi("Filename","",&s,&x,xxstring)) < 0)
@@ -3186,7 +3186,7 @@ setiks() {				/* SET IKS */
         if (iksdcf) return(success = 0);
 #ifdef CK_LOGIN
         if (*s) makestr(&userfile,s);
-#endif
+#endif  /* CK_LOGIN */
         break;
       case IKS_IKFI:
         if ((z = cmifi("Filename","",&s,&x,xxstring)) < 0)

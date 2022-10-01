@@ -1,7 +1,3 @@
-#ifdef SSHTEST
-#define SSHBUILTIN
-#endif /* SSHTEST */
-
 #include "ckcsym.h"                     /* Symbol definitions */
 
 /*  C K U U S 3 --  "User Interface" for C-Kermit, part 3  */
@@ -12,12 +8,13 @@
       The Kermit Project, New York City
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
+    David Goodwin, New Zealand
 
   Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: 31 May 2022
+    Last update: 23 September 2022
 */
 
 /*  SET command (but much material has been split off into ckuus7.c). */
@@ -6172,79 +6169,79 @@ shomodem() {
         printf(" %c Dial-mode-string:     ", dialmstr ? ' ' : '*' );
         shods(dialmstr ? dialmstr : p->dmode_str);
         n = local ? 19 : 20;
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Dial-mode-prompt:     ", dialmprmt ? ' ' : '*' );
         shods(dialmprmt ? dialmprmt : p->dmode_prompt);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Dial-command:         ", dialcmd ? ' ' : '*' );
         shods(dialcmd ? dialcmd : p->dial_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Compression on:       ", dialdcon ? ' ' : '*' );
         if (!dialdcon)
           debug(F110,"dialdcon","(null)",0);
         else
           debug(F110,"dialdcon",dialdcon,0);
         shods(dialdcon ? dialdcon : p->dc_on_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Compression off:      ", dialdcoff ? ' ' : '*' );
         shods(dialdcoff ? dialdcoff : p->dc_off_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Error-correction on:  ", dialecon ? ' ' : '*' );
         shods(dialecon ? dialecon : p->ec_on_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Error-correction off: ", dialecoff ? ' ' : '*' );
         shods(dialecoff ? dialecoff : p->ec_off_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Autoanswer on:        ", dialaaon ? ' ' : '*' );
         shods(dialaaon ? dialaaon : p->aa_on_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Autoanswer off:       ", dialaaoff ? ' ' : '*' );
         shods(dialaaoff ? dialaaoff : p->aa_off_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
 
         printf(" %c Speaker on:           ", dialspon ? ' ' : '*' );
         shods(dialspon ? dialspon : p->sp_on_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Speaker off:          ", dialspoff ? ' ' : '*' );
         shods(dialspoff ? dialspoff : p->sp_off_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Volume low:           ", dialvol1 ? ' ' : '*' );
         shods(dialvol1 ? dialvol1 : p->vol1_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Volume medium:        ", dialvol2 ? ' ' : '*' );
         shods(dialvol2 ? dialvol2 : p->vol2_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Volume high:          ", dialvol3 ? ' ' : '*' );
         shods(dialvol3 ? dialvol3 : p->vol3_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
 
         printf(" %c Hangup-command:       ", dialhcmd ? ' ' : '*' );
         shods(dialhcmd ? dialhcmd : p->hup_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Hardware-flow:        ", dialhwfc ? ' ' : '*' );
         shods(dialhwfc ? dialhwfc : p->hwfc_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Software-flow:        ", dialswfc ? ' ' : '*' );
         shods(dialswfc ? dialswfc : p->swfc_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c No-flow-control:      ", dialnofc ? ' ' : '*' );
         shods(dialnofc ? dialnofc : p->nofc_str);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Pulse:                ", dialpulse ? ' ' : '*');
         shods(dialpulse ? dialpulse : p->pulse);
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Tone:                 ", dialtone ? ' ' : '*');
         shods(dialtone ? dialtone : p->tone);
 
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Ignore-dialtone:      ", dialx3 ? ' ' : '*');
         shods(dialx3 ? dialx3 : p->ignoredt);
 
-        if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
+        if (++n > cmd_rows - 3) {if (!askmore()) { return(0);} else {n = 0;}}
         printf(" %c Predial-init:         ", dialini2 ? ' ' : '*');
         shods(dialini2 ? dialini2 : p->ini2);
 
-        if (++n > cmd_rows - 4) if (!askmore()) return(0); else n = 0;
+        if (++n > cmd_rows - 4) { if (!askmore()) { return(0);} else {n = 0;}}
         printf("\n For more info: SHOW DIAL and SHOW COMMUNICATIONS\n");
 
     } else if (mdm > 0) {
@@ -8194,8 +8191,8 @@ shossh() {
 #ifdef SSHBUILTIN
     int i, n = 0;                       /* ADD askmore()! */
 
-    printf("\nSSH is built in:\n\n");
-
+    printf("\nSSH is built in (libssh %s):\n\n", ssh_impl_ver());
+    /*printf(" libssh version:                  %s\n", ssh_impl_ver());*/
     printf(" ssh host:                        %s\n",showstring(ssh_hst));
     printf(" ssh port:                        %s\n",showstring(ssh_prt));
     printf(" ssh command:                     %s\n",showstring(ssh_cmd));
@@ -8210,7 +8207,7 @@ shossh() {
         printf("                       :          %d %s %d\n",
                ssh_pf_lcl[n].p1, ssh_pf_lcl[n].host, ssh_pf_lcl[n].p2);
     } else
-      printf(" ssh forward-local-port:         (none)\n");
+      printf(" ssh forward-local-port:          (none)\n");
     if (ssh_pf_rmt[0].p1 && ssh_pf_rmt[0].host && ssh_pf_rmt[0].p2) {
       printf(" ssh forward-remote-port:         %d %s %d\n",
              ssh_pf_rmt[0].p1, ssh_pf_rmt[0].host, ssh_pf_rmt[0].p2);
@@ -8218,7 +8215,7 @@ shossh() {
         printf("                        :         %d %s %d\n",
                ssh_pf_rmt[n].p1, ssh_pf_rmt[n].host, ssh_pf_rmt[n].p2);
     } else
-      printf(" ssh forward-remote-port:        (none)\n");
+      printf(" ssh forward-remote-port:         (none)\n");
     printf(" ssh gateway-ports:               %s\n",showoff(ssh_gwp));
     printf(" ssh gssapi delegate-credentials: %s\n",showoff(ssh_gsd));
     printf(" ssh gssapi key-exchange:         %s\n",showoff(ssh_gkx));
@@ -12328,7 +12325,8 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
             zchkod = 1;                 /* Hack for asking zchko() if */
             x = zchko(tmpbuf);          /* a directory is writeable */
             zchkod = 0;
-            if (x < 0) printf("WARNING: %s does not appear to be writable\n");
+            if (x < 0)
+              printf("WARNING: %s does not appear to be writable\n",tmpbuf);
             zfnqfp(tmpbuf,CKMAXPATH,p); /* Get and store full pathname */
             makestr(&tempdir,tmpname);
         }

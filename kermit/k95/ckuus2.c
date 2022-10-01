@@ -1,7 +1,3 @@
-#ifdef SSHTEST
-#define SSHBUILTIN
-#endif /* SSHTEST */
-
 /*  C K U U S 2  --  User interface strings & help text module for C-Kermit  */
 
 /*
@@ -10,12 +6,14 @@
       The Kermit Project, New York City
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
+    David Goodwin, New Zealand.
 
   Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: 22 August 2022 (HELP TYPE adds /INTERPRET switch).
+    Last updates: 22 Aug 2022 (HELP TYPE adds /INTERPRET switch).
+                  20 Sep 2022 (HELP COPY adds /INTERPRET, /TOSCREEN switches).
 
   This module contains HELP command and other long text strings.
 
@@ -200,29 +198,46 @@ char *newstxt[] = {
 
 #ifdef BETATEST
 " ",
-"THIS IS A PRERELEASE TEST VERSION NOT SUITABLE FOR PRODUCTION.",
-"FOR DETAILS, SEE http://www.kermitproject.org/ckwindows.html",
+"THIS IS A PRERELEASE TEST VERSION NOT YES SUITABLE FOR PRODUCTION USE.",
+"FOR DETAILS, SEE http://www.kermitproject.org/ckw10beta.html",
 #endif /* BETATEST */
 
 " ",
 "Major new features since the final Kermit 95 release include:",
-#else
-"Welcome to C-Kermit 9.0.304.  New features since 8.0.211 include:",
-#endif /* OS2 */
 " . Open Source Simplified 3-Clause BSD License",
+#else
+"Welcome to C-Kermit 10.0.",
+"New features since version 9.0 of 2011 include:",
+#endif /* OS2 */
 #ifdef OS2
 " . Source code!  The Windows edition of C-Kermit, formerly known",
 "   as Kermit 95 or K-95, is now available under the Revised 3-Clause",
 "   BSD Open Source license.",
 " . Up-to-date fully exportable SSH v2 client",
-" . Mouse wheel support, customizable with SET MOUSE WHEEL (see HELP SET MOUSE",
-"   for details)",
+" . Mouse wheel support, customizable with SET MOUSE WHEEL",
+"    (see HELP SET MOUSE for details)",
 #endif /* OS2 */
 #ifndef OS2
+#ifdef COMMENT
 " . Full 64-bit memory model on platforms that support it",
 " . Large file support (64-bit file size) on most platforms",
 " . Long integer variables and constants in commands and scripts",
+#endif  /* COMMENT */
+/* For 10.0 */
+" . Updated for longevity... Adapted to 2020s compilers and OS's without",
+"    sacrificing compatability with older platforms going back to the 1970s",
+"    and 1980s; at least that's the intention.",
+" . The first new C-Kermit release for Windows in 20 years.",
+" . A simpler version number: 10.0.",
+" . Updated OpenSSL support.",
+" . New serial port speeds up to 4000000 bps.",
+" . New functions and built-in variables for the scripting language.",
+" . New ability of Kermit scripts to run in a Unix pipelines.",
+" . New CHANGE command for changing strings in external text files.",
+" . Lots more; see https://kermitproject.org/updates.html",
 #endif /* OS2 */
+#ifdef COMMENT
+/* These were for 9.0 */
 " . Bigger maximum command and macro lengths",
 " . Bigger filename expansion space",
 " . New super-flexible RENAME command (HELP RENAME)",
@@ -237,29 +252,33 @@ char *newstxt[] = {
 #endif /* CK_SSL */
 " . At the prompt, Ctrl-K recalls most recent filename",
 " . Scripting and performance improvements",
-" . Bug fixes",
+#endif /* COMMENT */
 " ",
 "Documentation:",
-" 1. https://www.kermitproject.org/ckbindex.html",
+" . https://www.kermitproject.org/ckbindex.html",
 "    Online index to C-Kermit documentation.",
-" ",
-" 2. https://kermitproject.org/k95manual/index.html",
+#ifdef OS2
+" . https://kermitproject.org/k95manual/index.html",
 "    The Kermit 95 manual from 1995-2003.",
-" ",
-" 3. https://www.kermitproject.org/ckututor.html",
+#endif /* OS2 */
+" . https://www.kermitproject.org/ckututor.html",
 "    C-Kermit tutorial.",
 " ",
 "If the release date shown by the VERSION command is long past, be sure to",
 "check the Kermit website to see if there have been updates:",
 " ",
-"  https://www.kermitproject.org/             (Kermit Project home page)",
+"  https://www.kermitproject.org/ (Kermit Project home page)",
 "  https://www.kermitproject.org/ckermit.html (C-Kermit home page)",
+#ifdef BETATEST
+"  https://www.kermitproject.org/ckupdates.html (Beta test progress)",
+"  https://www.kermitproject.org/ck10devbuilds.html (Beta test builds table)",
+#endif /* BETATEST */
 #ifdef OS2
 " ",
 "If the Kermit Project website is gone, look on Github:",
 " ",
 "  https://github.com/search?q=c-kermit+windows",
-#endif
+#endif /* OS2 */
 ""
 };
 #endif /* NOHELP */
@@ -3205,7 +3224,8 @@ static char * hmxxtyp[] = {
 "  /HEIGHT:number",
 "     When combined with /GUI specifies the height of the dialog box.",
 "  /GUI:string",
-"     Specifies the title to use for the dialog box.",
+"     Displays the contents of the file in a new scrollable GUI window.",
+"     The string (require) is the title for the window.",
 #endif /* KUI */
 "  /COUNT",
 "     Count lines (and matches) and print the count(s) but not the lines.",
@@ -3313,7 +3333,7 @@ static char * hmxxdate[] = {
 "    a local time in that timezone, to GMT which is then converted to the",
 "    local time at the host.  If no timezone is given, the date-time is local."
 ,"    To convert local time (or a time in a specified timezone) to UTC (GMT),",
-"    use the function \futcdate().",
+"    use the function \\futcdate().",
 " ",
 "  Delta times are given as {+,-}[number date-units][hh[:mm[:ss]]]",
 "    A date in the future/past relative to the date-time; date-units may be",
@@ -5637,6 +5657,9 @@ static char * hmxxcpy[] = {
 "  is a directory, file1 can contain wildcards to denote a group of files to",
 "  be copied to the given directory.  Switches:",
 " ",
+"  /TOSCREEN",
+"    Displays the file on the screen rather than copying to another file.",
+" ",
 "  /LIST",
 "    Print the filenames and status while copying.  Synonyms: /LOG, /VERBOSE.",
 " ",
@@ -5667,6 +5690,13 @@ static char * hmxxcpy[] = {
 " ",
 "  /TOB64",
 "    Convert to Base64 encoding while copying.",
+" ",
+"  /INTERPRET",
+"    If the file contains Kermit backslash escapes like \\v(date), \\v(time),",
+"    \\%1, \\%2, \\m(fast), etc, they are interpreted in the new copy of the",
+"    file or in the screen version, if used in combination with /TOSCREEN.",
+"    This option is not compatible most of the other options.",
+"  ",
 #endif /* NOSPL */
 ""
 };
@@ -7893,7 +7923,27 @@ static char *hxymouse[] = {
 "   Wheel Ctrl+Up = Kverb: \\Kupscn",
 "   Wheel Down = Kverb: \\Kdnone",
 "   Wheel Ctrl+Down = Kverb: \\Kdnscn",
+#endif
 " ",
+"Syntax: SET MOUSE REPORTING { DISABLED, ENABLED, OVERRIDE }",
+" Configures sending of mouse reports to the remote host when an application",
+" requests them. The options are:",
+"   Disabled: Applications can not request mouse reports and reports will not",
+"             be sent.",
+"    Enabled: Applications can request mouse reports. Reports will only be ",
+"             sent for mouse events that have no action in C-Kermit. To ",
+"             allow an event (eg, Ctrl+Click) to be reported, map it to ",
+"             \\Kignore. For example: set mouse button 1 ctrl click \\Kignore",
+"   Override: Applications can request mouse reports. All mouse events will",
+"             be sent to the remote application regardless of what action it",
+"             is set to perform in C-Kermit. For example, if right mouse",
+"             click is set to \\Kpaste this won't occur when an application",
+"             requests mouse reporting - instead the right click will be sent",
+"             to the application.",
+" ",
+" The default setting is Enabled",
+" ",
+#ifndef NOSCROLLWHEEL
 "Syntax: SET MOUSE WHEEL <direction> <key-modifier> [ <text> ]",
 " where:",
 "  <direction> is the scrolling direction - UP for scrolling away from you,",
@@ -10981,7 +11031,7 @@ dohfunc(xx) int xx; {
         break;
       case FN_EVA:                      /* Eval (evaluate arith expression) */
         printf("\\fevaluate(e)\n\
-  e = arithmetic expression.\n");
+  e = arithmetic expression in ordinary algebraic notation.\n");
         printf("Returns integer:\n\
   The result of evaluating the expression.\n");
         break;
@@ -11395,7 +11445,9 @@ Assign string words to an array.\n\
   n1 = 3: yyyymmddhhmmss (all numeric)\n\
   n1 = 4: Day Mon dd hh:mm:ss yyyy (asctime)\n\
   n1 = 5: yyyy:mm:dd:hh:mm:ss (all numeric with all fields delimited)\n\
-  Other:  yyyymmdd hh:mm:dd");
+  n1 = 6: dd month-spelled-out yyyy hh:mm:ss\n\
+  Other:  yyyymmdd hh:mm:dd\n\
+  If n1 is negative (-1 to -6), the result is date only.");
         break;
 
       case FN_JDATE:                    /* DOY */
