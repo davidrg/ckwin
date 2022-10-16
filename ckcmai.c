@@ -1,12 +1,12 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "27 Sep 2022"       /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20220927"          /* Keep them in sync */
-/* Tue Sep 27 06:43:13 2022 */
+#define EDITDATE  "14 Oct 2022"       /* Last edit date dd mmm yyyy */
+#define EDITNDATE "20221014"          /* Keep them in sync */
+/* Fri Oct 14 15:56:49 2022 */
 
 /*
- IMPORTANT: as of 27 September 2022 BETATEST is defined
- in ckcdeb.h, not here, because it is used in other modules.
+  IMPORTANT: as of 27 September 2022 BETATEST is defined in ckcdeb.h,
+  not here, because it's also used in other modules.
 */
 
 /*
@@ -32,10 +32,10 @@ If the version number has changed, also:
 #include "ckcsym.h"
 
 /*
-  This was moved up here from further down so BETATEST definition
-  will take effect before it is used.  Previously BETATEST was defined
-  in this module but since it was also used in other modules, it needed
-  to be in ckcdeb.h, which, despite its name, has evolved into the
+  The ckcdeb.h include was moved up here from further down so BETATEST
+  definition will take effect before it is used.  Previously BETATEST was
+  defined in this module but since it was also used in other modules, it
+  needed to be in ckcdeb.h, which, despite its name, has evolved into the
   principal C-Kermit header file, the only one that all modules #include.
   - fdc, 27 September 2022
 */
@@ -59,10 +59,10 @@ char * ck_cryear = "2022"; 		/* C-Kermit copyright year */
    The Windows and non-Windows Betas happen at different times.
 */
 char *ck_s_test = "Pre-Beta";
-char *ck_s_tver = "05/Windows-04";
+char *ck_s_tver = "06/Windows-04";
 #else
 char *ck_s_test = "Beta";		/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "05";			/* Test version number */
+char *ck_s_tver = "06";			/* Test version number */
 #endif /* OS2 */
 #else /* BETATEST */
 char *ck_s_test = "";			/* Not development */

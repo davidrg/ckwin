@@ -229,11 +229,14 @@ char *newstxt[] = {
 "    and 1980s; at least that's the intention.",
 " . The first new C-Kermit release for Windows in 20 years.",
 " . A simpler version number: 10.0.",
-" . Updated OpenSSL support.",
+" . Updated OpenSSL support for built-in HTTP, FTP, and Telnet clients.",
 " . New serial port speeds up to 4000000 bps.",
+" . 'set speed ?' now lists serial speeds in numerical order.",
 " . New functions and built-in variables for the scripting language.",
 " . New ability of Kermit scripts to run in a Unix pipelines.",
 " . New CHANGE command for changing strings in external text files.",
+" . DIRECTORY command fixed to once again allow multiple filespecs.",
+" . TOUCH command fixed after being broken in C-Kermit 9.0.",
 " . Lots more; see https://kermitproject.org/updates.html",
 #endif /* OS2 */
 #ifdef COMMENT
@@ -273,10 +276,11 @@ char *newstxt[] = {
 "  https://www.kermitproject.org/ckupdates.html (Beta test progress)",
 "  https://www.kermitproject.org/ck10devbuilds.html (Beta test builds table)",
 #endif /* BETATEST */
-#ifdef OS2
 " ",
 "If the Kermit Project website is gone, look on Github:",
 " ",
+"  https://github.com/KermitProject",
+#ifdef OS2
 "  https://github.com/search?q=c-kermit+windows",
 #endif /* OS2 */
 ""
@@ -10602,16 +10606,17 @@ case XYSESS:
 
 case XYSPEE:
 #ifdef OS2
-
     return(hmsg("Syntax: SET SPEED number\n\
   Speed for serial-port communication device specified in most recent\n\
   SET PORT command, in bits per second.  Type SET SPEED ? for a list of\n\
-  possible speeds."));
+  possible speeds.  Some of the speeds shown might not be supported on\n\
+  the computer you are using."));
 #else
     return(hmsg("Syntax: SET SPEED number\n\
   Speed for serial-port communication device specified in most recent\n\
   SET LINE command, in bits per second.  Type SET SPEED ? for a list of\n\
-  possible speeds.  Has no effect on job's controlling terminal."));
+  possible speeds.  Some of the speeds shown might not be supported on the\n\
+  computer you are using.  Has no effect on job's controlling terminal."));
 #endif /* OS2 */
 #endif /* NOLOCAL */
 

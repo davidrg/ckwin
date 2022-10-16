@@ -1,8 +1,8 @@
 # makefile / Makefile / ckuker.mak / CKUKER.MAK
 #
-# Mon Sep 26 15:52:58 2022
-BUILDID=20220926
-CKVER= "10.0 Beta.05"
+# Fri Oct 14 15:56:49 2022
+BUILDID=20221014
+CKVER= "10.0 Beta.06"
 #
 # -- Makefile to build C-Kermit for UNIX and UNIX-like platforms --
 #
@@ -822,9 +822,12 @@ CKVER= "10.0 Beta.05"
 # If the secure headers and libraries are not on your computer, you have
 # to download and install them, for example from http://www.openssl.org .
 #
-# The following symbols are used to specify library and header file locations:
+# The following symbols are used to specify library and header file locations.
+# prefix statement changed in 10.0 Beta.06 to allow prefix to specified
+# from the make command line e.g. $ env PREFIX=/usr/pkg make install.
+# October 2022.
 # 
-prefix  = /usr/local
+prefix  = $${PREFIX:-/usr/local}
 srproot = $(prefix)
 sslroot = $(prefix)
 manroot = $(prefix)
@@ -6465,7 +6468,7 @@ linuxns:
 # Linux-script-only:
 # A minimum-size version for Linux that does only scripting and
 # serial communication -- no networks, no file transfer, no security.
-# OK 2011/06/18
+# OK 2011/06/18 // 2022/10/14: compiles but various commands don't work.
 linuxso:
 	$(MAKE) xermit KTARGET=$${KTARGET:-$(@)} "CC = gcc" "CC2 = gcc" \
 	"CFLAGS = -O -DLINUX -pipe -funsigned-char -DPOSIX -DCK_POSIX_SIG \

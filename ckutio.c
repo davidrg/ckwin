@@ -1,12 +1,12 @@
 #define CKUTIO_C
 
 #ifdef aegis
-char *ckxv = "Aegis Communications support, 10.0.334, 23 Sep 2022";
+char *ckxv = "Aegis Communications support, 10.0.336, 09 Oct 2022";
 #else
 #ifdef Plan9
-char *ckxv = "Plan 9 Communications support, 10.0.334, 23 Sep 2022";
+char *ckxv = "Plan 9 Communications support, 10.0.336, 09 Oct 2022";
 #else
-char *ckxv = "UNIX Communications support, 10.0.334, 23 Sep 2022";
+char *ckxv = "UNIX Communications support, 10.0.336, 09 Oct 2022";
 #endif /* Plan9 */
 #endif /* aegis */
 
@@ -499,7 +499,7 @@ char unm_ver[CK_SYSNMLN+1] = { '\0', '\0' };
 #define LOCK_DIR "/var/spool/locks"
 #else
 #ifdef LINUXFSSTND
-#define LOCK_DIR "/var/lock";
+#define LOCK_DIR "/var/lock"
 #else
 #define LOCK_DIR "/usr/spool/locks"
 #endif /* LINUXFSSTND */
@@ -7570,9 +7570,11 @@ ttsspd(cps) int cps; {
 
     x = tcsetattr(ttyfd,TCSADRAIN,&ttcur); /* Set the speed */
     debug(F101,"ttsspd tcsetattr","",x);
-    if (x < 0)
-      return(-1);
-
+    if (x < 0) {
+        return(-1);
+    } else {
+        return(1);
+    }
 #else  /* Not USETCSETSPEED */
 
     /* First check that the given speed is valid. */
@@ -7673,9 +7675,42 @@ ttsspd(cps) int cps; {
 #ifdef B460800
       case 46080: s = B460800; break;
 #endif /* 460800 */
+#ifdef B500000
+      case 50000: s = B500000; break;
+#endif /* B500000 */
+#ifdef B576000
+      case 57600: s = B576000; break;
+#endif /* B576000 */
+#ifdef B614400
+      case 61440: s = B614400; break;
+#endif /* B614400 */
 #ifdef B921600
       case 92160: s = B921600; break;
 #endif /* B921600 */
+#ifdef B1000000
+      case 100000: s = B1000000; break;
+#endif /* B1000000 */
+#ifdef B1152000
+      case 115200: s = B1152000; break;
+#endif /* B1152000 */
+#ifdef B1500000
+      case 150000: s = B1500000; break;
+#endif /* B1500000 */
+#ifdef B2000000
+      case 200000: s = B2000000; break;
+#endif /* B2000000 */
+#ifdef B2500000
+      case 250000: s = B2500000; break;
+#endif /* B2500000 */
+#ifdef B3000000
+      case 300000: s = B3000000; break;
+#endif /* B3000000 */
+#ifdef B3500000
+      case 350000: s = B3500000; break;
+#endif /* B3500000 */
+#ifdef B4000000
+      case 400000: s = B4000000; break;
+#endif /* B4000000 */
 #endif /* HPUX */
       default:
 	ok = 0;				/* Good speed not found, so not ok */

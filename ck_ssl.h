@@ -1,7 +1,7 @@
 /*
   C K _ S S L . H --  OpenSSL Interface Header for C-Kermit
 
-  Copyright (C) 1985, 2015,
+  Copyright (C) 1985, 2020,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -9,7 +9,8 @@
     Authors:  Jeffrey E Altman (jaltman@secure-endpoints.com)
                Secure Endpoints Inc., New York City
               David Goodwin, New Zealand
-    Last update: Sat Sep 24 13:25:27 2022
+              SMS
+    Last update: Tue Oct  4 16:01:53 2022
 */
 
 #ifdef CK_SSL
@@ -49,12 +50,13 @@
 /* Different major/minor version or development version of OpenSSL
  * means ABI may break compatibility.
  * Modified by Adam Friedlander for OpenSSL >= 1.0.0
+ * (See <openssl/opensslv.h> for OpenSSL version encoding details.)
  */
-#define COMPAT_VERSION_MASK 0xffff000f
+#define COMPAT_VERSION_MASK 0xfff0000f  /* MNNffppS, major+minor+status */
 #else
 /* Different major/minor/fix/development (not patch) version of OpenSSL
  * means ABI may break compatibility. */
-#define COMPAT_VERSION_MASK 0xfffff00f  /* MNNFF00S, major+minor+fix+status */
+#define COMPAT_VERSION_MASK 0xfffff00f  /* MNNFFppS, major+minor+fix+status */
 #endif	/* OPENSSL_100 */
 
 #ifdef OPENSSL_098

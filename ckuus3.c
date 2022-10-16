@@ -484,11 +484,11 @@ int nspd = 0;
 
 #else
 /*
-  Note, the values are encoded in cps rather than bps because 19200 and higher
-  are too big for some ints.  All but 75bps are multiples of ten.  Result of
-  lookup in this table must be multiplied by 10 to get actual speed in bps.
-  If this number is 70, it must be changed to 75.  If it is 888, this means
-  75/1200 split speed.
+  Note, the values are encoded in cps rather than bps because 19200 and
+  higher are too big for some ints.  All but 75bps 134.5bps are multiples of
+  ten.  Result of lookup in this table must be multiplied by 10 to get actual
+  speed in bps.  If this number is 70, it must be changed to 75.  If it is
+  888, this means 75/1200 split speed.
 
   The values are generic, rather than specific to UNIX.  We can't use B75,
   B1200, B9600, etc, because non-UNIX versions of C-Kermit will not
@@ -11612,12 +11612,12 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
                    LINBUFSIZ,
                    "Transmission rate for ",
                    ttname,
-                   " (bits per second)",
+                   " (bps)",
                    NULL
                    );
         } else {
           ckstrncpy(lp,
-                    "Serial-port speed (bits per second)",
+                    "Serial-port speed (bps)",
                     LINBUFSIZ
                     );
         }
@@ -11628,7 +11628,13 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
           x = cmkey(tnspdtab,ntnspd,line,"",xxstring);
         else
 #endif /* TN_COMPORT */
+#ifdef NOSORTSPEEDS
           x = cmkey(spdtab,nspd,line,"",xxstring);
+#else
+        /* Negative number of table entries means its a numeric table */
+          x = cmkey(spdtab,-nspd,line,"",xxstring);
+#endif /* NOSORTSPEEDS */
+
         if (x < 0) {
             if (x == -3) printf("?value required\n");
 #ifdef USETCSETSPEED

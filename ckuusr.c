@@ -1,5 +1,5 @@
 #include "ckcsym.h"
-char *userv = "User Interface 10.0.327, 26 September 2022";
+char *userv = "User Interface 10.0.328, 10 October 2022";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 
@@ -12343,9 +12343,6 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	struct FDB sf, sw;
 	char * pat = NULL;
 	int incs = 0, outcs = 0, cset = -1, number = 0;
-#ifdef TYPEINTERPRET
-        type_intrp = 0;                 /* Always start with this off */
-#endif  /* TYPEINTERPRET */
 #ifdef UNICODE
         char * tocs = "";
 	extern int fileorder;
@@ -12359,6 +12356,10 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 #endif /* NOCSETS */
 #endif /* OS2 */
 #endif /* UNICODE */
+
+#ifdef TYPEINTERPRET
+        type_intrp = 0;                 /* Always start with this off */
+#endif  /* TYPEINTERPRET */
 
 	outfile[0] = NUL;
 

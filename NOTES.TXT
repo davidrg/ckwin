@@ -20,30 +20,35 @@ C-KERMIT UPDATE HISTORY
 
       Versions 9.0-10.0: 2011-2022
 
-   Current development version:   10.0 Beta.04   02 June 2022
-   Current released version:      [15]9.0.302    20 August 2011
+     [15]Frank da Cruz
+     [16]The Kermit Project, Bronx NY.
+     Last update: Fri Oct 14 15:46:03 2022 New York time
 
-   [16] DOWNLOAD BETA.04 SOURCE CODE      [17] SEE TABLE OF RECENT
-   DEVELOPMENT BUILDS
+   Current development version:   10.0 Beta.05   27 September 2022
+   &#x1f844; New
+   Current released version:   [17]9.0.302   20 August 2011
+
+   [18] DOWNLOAD SOURCE CODE      [19] SEE TABLE OF RECENT DEVELOPMENT
+   BUILDS
    NEW 15 September 2022: Third Beta test of C-Kermit 10.0 for Windows now
-   with SSH and SSL/TLS support.   [18]CLICK HERE to read about it and
+   with SSH and SSL/TLS support.   [20]CLICK HERE to read about it and
    download it for testing if you wish.
 
-   If you have a hardware/OS platform where Beta.04 hasn't been built yet,
-   please try to build it and then [19]send me the data for an entry in
-   the [20]C-Kermit 10.0 builds table.  Thanks!
+   If you have a hardware/OS platform where hasn't been built yet, please
+   try to build it and then [21]send me the data for an entry in the
+   [22]C-Kermit 10.0 builds table.  Thanks!
+
+   In-between-Beta versions are uploaded from time to time, and can be
+   downloaded from [23]HERE. The changes are described in the "not
+   released yet" section just below.
 
    Changes since version 8.0.207 1 January 2003
    Now in reverse chronological order (newest first)
 
-     [21]Frank da Cruz
-     [22]The Kermit Project, Bronx NY.
-     Last update: Mon Sep 26 07:24:52 2022 New York time
-
    Also see:
-     * [23]Index to all C-Kermit documentation (new July 2019)
-     * [24]Change logs for C-Kermit releases 1985-2011  (plain text)
-     * [25]Announcements of older C-Kermit releases  (plain text)
+     * [24]Index to all C-Kermit documentation (new July 2019)
+     * [25]Change logs for C-Kermit releases 1985-2011  (plain text)
+     * [26]Announcements of older C-Kermit releases  (plain text)
 
    Grüße aus Bronx  <- (pay no attention, this is to make sure that EMACS
    didn't mess up this page's UTF-8 encoding)
@@ -51,50 +56,278 @@ C-KERMIT UPDATE HISTORY
    This page, which as of May 2022 would be about 200 pages long if
    printed, was originally a plain-text change log in chronological order
    (newest entries at the bottom). In May 2017 it was converted to HTML
-   with a [26]text-to-html Kermit script, and as of 27 July 2020 it has
+   with a [27]text-to-html Kermit script, and as of 27 July 2020 it has
    been rearranged so the latest information is at the top and the oldest
    at the bottom, and the formatting was improved by makeshift scripts and
    by hand. All changes since July 2020 have been entered directly into
    this page.
 
-C-Kermit 10.0 Beta.05  (in development - not released yet)
+   For the new Microsoft Windows version of C-Kermit, see [28]David
+   Goodwin's notes (updated almost every day). Betas for the Windows
+   version follow an independent schedule. Watch [29]THIS PAGE for news.
 
-     * To download recent C-Kermit builds (pre-Beta.05) for Unix and VMS,
-       visit [27]THIS PAGE.
-     * For the new Microsoft Windows version of C-Kermit, see [28]David
-       Goodwin's notes (updated almost every day).
+C-Kermit 10.0   (in development - not released yet)
+
+   Apparently rumors of FTP's death have been greatly exaggerated and --
+   more to the point -- that of [30]Secure FTP (FTPS). It is still
+   required, for example, by EDI providers such as [31]BOLD VAN, so
+   C-Kermit's OpenSSL support is a priority after all*. At this point,
+   builds work on most platforms where it has been tried (Ubuntu, Debian,
+   Red Hat, Fedora, Hurd, NetBSD, FreeBSD, and OpenVMS). In one case on
+   Ubuntu, however, it failed with "openssl/comp.h: No such file or
+   directory - #include <openssl/comp.h>". According to a report I found
+   in Google, this is fixable by "sudo apt-get install libssl-dev". See
+   [32]this OpenSSL.org page about SSL and TLS, which explains that
+   currently, SSL is really TLS (in OpenSSL, "After SSLv3, SSL was renamed
+   to TLS"; also see [33]RFC 7568). Note: FTPS is not to be confused with
+   SFTP, which is SSH. [34]A number of FTPS servers are available, both
+   commericial and free. For example, the free FTPS server for Ubuntu is
+   is called [35]vsftpd and can be installed with "sudo apt install
+   vsftpd". An example of a commercial FTPS server is [36]Cerberus FTP
+   Server 12.
+   * EDI = Electronic Data Interchange; VAN = Value Added Network; SSL =
+   Secure Sockets Layer; TLS = Transport Layer Security.
+
+   Changes since Beta.05 (newest first)...
+
+          14 October 2022:
+
+   A change to "make install" in the makefile to allow the target
+          directory for the Kermit binary to be specified on the 'make'
+          command line, e.g. "env PREFIX=/usr/pkg make install" (Peter
+          Eichhorn, Greg Troxel).
+
+          Listing the speeds in numeric order rather than "alphabetic"
+          when '?' was typed (Oct 10) was the easy part. Making a numeric
+          keyword table behave the same as an alphabetic one during
+          interactive command entry -- notably keyword completion when Esc
+          or Tab was typed -- was a major production. ckucmd.c now has a
+          new routine, nlookup(), parallel to lookup(), plus a lot of new
+          code in cmkey() to account for the differences between the two
+          formats. A side benefit is that if more numeric tables are ever
+          needed, adding adding them will be straightforward.
+
+          11 October 2022:
+
+   A fix to yesterday's item from SMS for Compaq C V6.4-005 on OpenVMS VAX
+          V7.3, which doesn't tolerate array declarations with
+          non-constant dimensions (these are a new feature of [37]C99 from
+          2000.)
+          10 October 2022:
+
+   With the addition of so many new serial speeds, the result of
+          "set speed ?" was a random pile of numbers:
+
+C-Kermit>set speed ? Serial-port speed (bits per second), one of the following:
+ 1000000  134.5    1800     230400   300      4000000  57600    921600
+ 110      14400    19200    2400     3000000  460800   600      9600
+ 115200   150      200      2500000  3500000  4800     75
+ 1200     1500000  2000000  28800    38400    50       76800
+
+          Now it makes more sense:
+
+C-Kermit>set speed ? Serial-port speed (bits per second), one of the following:
+ 50       150      1200     9600     38400    230400   1500000  3500000
+ 75       200      1800     14400    57600    460800   2000000  4000000
+ 110      300      2400     19200    76800    921600   2500000
+ 134.5    600      4800     28800    115200   1000000  3000000
+
+          The new code is in ckuus5.c, lines 1241-1278. If it causes
+          trouble, it can be deselected at 'make' time with
+          KFLAGS=-DNOSORTSPEEDS.
+
+          6 October 2022:
+
+   ckutio.c changes from Pali Rohár to get at the higher serial speeds
+          supported by newer UARTs.
+
+          + ckutio.c ttsspd() was missing the new high-speed baud rates
+            (thus they could be recognized by the command parser but not
+            actually used). The new speeds are 500000, 576000, 614400,
+            921600, 1000000, 1152000, 1500000, 2000000, 2500000, 3000000,
+            and 4000000.
+          + Supplied a missing "return(1);" statement in the USETCSETSPEED
+            case in ttsspd().
+
+          Pali said "I need to transfer files over UART with highest
+          possible speed. I'm developing software which is running on
+          embedded devices and for transferring software I can use only
+          UART (bootstrapping and debugging). My hardware supports
+          baudrates up to 6000000 baud and also I have USB <-> UART cables
+          which support such high speeds. Modern hardware now supports
+          UART at really high baudrates, so why not to use it for
+          decreasing final transfer time? Bootloader U-Boot has support
+          for kermit protocol and can receive files over UART at arbitrary
+          baudrate supported by HW. So the only thing which I need is
+          software on my computer which can configure UART tty device to
+          higher speed and then send over it files via kermit protocol."
+
+          He also removed an extraneous semicolon from ckutio.c line 501:
+          #define LOCK_DIR "/var/spool/locks";
+
+          5 October 2022:
+
+          + The ability of C-Kermit's DIRECTORY command to handle multiple
+            file specifications, e.g.:
+
+dir makefile README ck[cuvw_]*.[cwh]
+
+            has been broken since C-Kermit 9.0 from 2011. Fixed now.
+          + C-Kermit's TOUCH command (which has many options) has been
+            totally nonfunctional since the same date. Also fixed now.
+
+          3 October 2022:
+
+   Patch from SMS for OpenSLL (ck_ssl.c):
+
+***************
+*** 49,60 ****
+  /* Different major/minor version or development version of OpenSSL
+   * means ABI may break compatibility.
+   * Modified by Adam Friedlander for OpenSSL >= 1.0.0
+   */
+! #define COMPAT_VERSION_MASK 0xffff000f
+  #else
+  /* Different major/minor/fix/development (not patch) version of OpenSSL
+   * means ABI may break compatibility. */
+! #define COMPAT_VERSION_MASK 0xfffff00f  /* MNNFF00S,
+major+minor+fix+status */
+  #endif        /* OPENSSL_100 */
+
+  #ifdef OPENSSL_098
+--- 49,61 ----
+  /* Different major/minor version or development version of OpenSSL
+   * means ABI may break compatibility.
+   * Modified by Adam Friedlander for OpenSSL >= 1.0.0
++  * (See opensslv.h> for OpenSSL version encoding details.)
+   */
+! #define COMPAT_VERSION_MASK 0xfff0000f  /* MNNffppS, major+minor+status */
+  #else
+  /* Different major/minor/fix/development (not patch) version of OpenSSL
+   * means ABI may break compatibility. */
+! #define COMPAT_VERSION_MASK 0xfffff00f  /* MNNFFppS, major+minor+fix+status */
+  #endif        /* OPENSSL_100 */
+
+          29 September 2022:
+
+   Patches from Greg Troxel (most of these were for packagers, not me):
+
+          + ckuath.c at about line 5530:
+
+             if ((r = krb5_mk_rep(k5_context,
++#ifdef HEIMDAL
++                                  &auth_context,
++#else /* HEIMDAL */
+                                   auth_context,
++#endif /* HEIMDAL */
+                                   &outbuf))) {
+
+          + ckupty.c at about line 91:
+
+     Always use termios, never sgtty.h.
+     \todo Explain this more clearly.
+
+     This patch appears to be regularizing the use of TERMIO, following
+     the package's inclusion of mk/termcap.buildlink3.mk. This is
+     contrary to upstream's approach which uses each systems's native
+     libs. Therefore, this patch should not be submitted to upstream.
+            and then a lot of "#define USE_TERMIO" directives removed.
+            Since I don't understand this patch, instead of removing the
+            directives I put them within "#ifndef TERMIO_PATCH..#endif,
+            which is not defined, but can be if needed.
+          + ckuusx.c at about line 100: "This patch needs an explanation,
+            and perhaps trying to build without it." Pending an
+            explanation, I made it conditional on
+            "#ifndef NO_INCLUDE_BSD44_ERRNO..#endif, which is not defined,
+            but can be if needed.
+          + A *big*, complicated patch for the makefile:
+               o Don't override DESTDIR
+               o Don't override prefix
+               o Don't install the mysterious kermit-sshsub
+               o Don't install kermit.ini in bindir, because it doesn't
+                 belong there and because (yay!) it is empty, and people
+                 don't need empty templates
+               o Use DESTDIR harder when installing
+               o Get K5LIB, K5INC, SSLLIB and SSLINC from pkgsrc.
+            And some other assorted patches:
+               o s/-lgssapi/-lgssapi_krb5/ on netbsd+krb5*
+               o Add $(LIBS) to link command on
+                 solaris2xg+openssl+zlib+pam+shadow
+               o s@$(K5INC)/krb5@$(K5INC)/kerberosv5/ on
+                 solaris9g+krb5+ssl
+               o On linux get HAVE_LIBCURSES and HAVE_CURSES from pkgsrc
+                 (with the curses include and library pathes coming from
+                 BUILDLINK_*FLAGS).
+            This one is one is still in the in-basket.
+
+          Greg's patches can be seen here:
+          [38]https://www.kermitproject.org/ckpatches/filelist.html
+          28 September 2022:
+
+   A fatal compilation error, evident (so far) only on HP-UX 10: in
+          ckuusr.c at line 12345, see this code:
+
+#ifdef TYPEINTERPRET
+        type_intrp = 0;                 /* Always start with this off */
+#endif  /* TYPEINTERPRET */
+
+     Move it down about 13 lines, below "#endif /* UNICODE */".
+
+          This assignment statement is in the middle of a variable
+          declaration list in the docmd() function. This should be an
+          error everywhere but this code compiled cleanly on 25 different
+          builds on other platforms, some of them with the strictest
+          modern C compilers including clang and gcc -Wpedantic.
+
+C-Kermit 10.0 Beta.05 (27 September 2022)
+
+          27 September 2022:
+
+    1. Moved BETATEST symbol definition from ckcmai.c to ckcdeb.h so it
+       can be referenced in all C-Kermit modules, and moved
+       #include ckcdeb.h higher up in in ckcmai.c, above the first
+       #ifdef BETATEST reference.
+    2. ckcdeb.h: Added NOSYSLOG to NODEPRECATED list (syslog is
+       "deprecated" too).
+    3. Updated the NEWS command.
+    4. Changed version designation from Pre-Beta to Beta and version date
+       to 27 September 2022.
+    5. ckuus3.c 12328, printf %s missing an argument.
+    6. ckuus5.c 8037, corrected printf %d to be %s.
+    7. ckuus7.c 13110, corrected printf %ld to be %d.
 
    26 September 2022:
 
-    1. ckcdeb.h: Removed the arrow-key feature from all platforms. Support
-       for the API that detected arrow-key strokes is disappearing from
-       one libc after another, so I might as well do it now for everybody.
-       This was done near the top of ckcdeb.h, which (despite its name) is
-       C-Kermit primary header file. I removed -DNOARROWKEYS from all the
-       makefile targets that include it because it happens automatically
-       now. If your platform (e.g. perhaps NetBSD or VMS) supports the API
-       and you want the feature back, build C-Kermit with
-       KFLAGS=-DDOARROWKEYS.
+    1. ckcdeb.h: Removed the arrow-key feature from all platforms except
+       Windows. Support for the API that detected arrow-key strokes is
+       disappearing from one libc after another, so I might as well do it
+       now for everybody. It's a small change near the top of ckcdeb.h,
+       which (despite its name) is C-Kermit's primary header file. I
+       removed -DNOARROWKEYS from all the makefile targets (and
+       android.mk) that included it because now it happens automatically.
+       If your platform (e.g. NetBSD or VMS) supports the API and you want
+       the feature back, build C-Kermit with KFLAGS=-DDOARROWKEYS.
     2. ckcmai.c: Straightened out some confusion with the program herald.
        There are two routines: makever() in ckcmai.c, and herald() in
        ckuus5.c. makever() creates PART of the version string but doesn't
        print anything. herald() creates another part of the version string
        and then prints both parts and some other stuff, and it also
        defines the builtin \v(herald) variable. For a hard-to-explain
-       reason, we needed to have the herald text defined BEFORE the
-       initialization file was executed, but then not printed until AFTER
-       the command-line arguments were processed so "kermit -H" (skip
-       printing the herald) still worked. This required moving chunks of
-       code from herald() to makever(). Modules changed:  ckcmai.c,
-       ckuus5.c, and ckuusy.c.
+       reason, we needed to have the herald text and \v(herald) defined
+       BEFORE the initialization file was executed, but then not printed
+       until AFTER the command-line arguments were processed so
+       "kermit -H" (skip printing the herald) still worked. This required
+       moving chunks of code from herald() to makever(). Modules changed:
+       ckcmai.c, ckuus5.c, and ckuusy.c.
     3. ckcnet.c: "make xxx -DNORLOGIN" generated tons of errors. All the
-       rlogin-related functions needed to protected by
+       rlogin-related functions needed to be protected by
        #ifndef NORLOGIN..#endif. Lines 7180-7567: rlog_ini(), rlog_ctrl(),
        rlog_oob(), rlogoobh().
     4. ckuusx.c line 96: added prototypes for ck_tn_encrypting() and
        ck_tn_decrypting().
-    5. ck_ssl.c: add "return(0);" outside the #ifdefs to squelch "non-void
-       function does not return a value" Clang warning.
+    5. ck_ssl.c ck_ssh_is_installed(): Added "return(0);" outside the
+       #ifdefs to squelch "non-void function does not return a value"
+       Clang warning.
     6. ckcnet.c: in http_security(), cipher =
        SSL_get_current_cipher(tls_http_con); needed to be:
        cipher = (SSL_CIPHER *)SSL_get_current_cipher(tls_http_con);
@@ -110,7 +343,6 @@ C-Kermit 10.0 Beta.05  (in development - not released yet)
    generated in OpenSSL 1.1.f 31 Mar 2020 on NetBSD 9.2. In all three
    cases compilation and linking succeed and a C-Kermit executable is
    produced.
-
    25 September 2022:
 
      * ckufio.c line 2486 "} else if errno {" should have been
@@ -123,10 +355,10 @@ C-Kermit 10.0 Beta.05  (in development - not released yet)
        directive?). This was also a problem in VMS.
      * ckuusr.c: changed 'if (s == "")' to 'if (s == (char *)0)' to
        silence Clang warnings.
-     * ckuus3.c SHOW DIAL: suppressed "dangling else" warnings for Clang.
+     * ckuus3.c SHOW DIAL: suppressed "dangling else" warnings from Clang.
      * ckuus4.c in SHOW X25, SHOW PAD, SHOW TCP, SHOW TELNET, SHOW
        NETBIOS, SHOW NETWORK, etc etc: suppressed 155 "dangling else"
-       warnings for Clang.
+       warnings from Clang.
      * ckuus5.c at line 6915 is "} else {" and Clang insists this is a
        dangling else. I just don't see it. This was the only Clang warning
        in ckuus5.c.
@@ -134,10 +366,10 @@ C-Kermit 10.0 Beta.05  (in development - not released yet)
        else" was not a crime when C-Kermit was first written. The
        structure and symantics of the IF statement were clearly spelled
        out by Kernighan and Ritchie. What good is a programming language
-       that changes out from under its installed base of software?)  With
-       all this C-Kermit compiles with gcc -Wpedantic with no errors or
+       that changes out from under its installed software base?)  With all
+       this C-Kermit compiles with gcc -Wpedantic with no errors or
        wanings and with Clang 10.0.1 without errors and almost without
-       warnings (there is still [29]this one but really, so what?).
+       warnings (there is still [39]this one but really, so what?).
 
    24 September 2022:
 
@@ -149,8 +381,8 @@ C-Kermit 10.0 Beta.05  (in development - not released yet)
        ckuus6.c, ckuus7.c, ckuusr.c, ckuusr.h, ckuusx.c, ckuusy.c,
        ckuver.h. The changes are listed on David's change log, which is
        here:
-       [30]http://www.ext.zx.net.nz/software/notes/kermit95/#updates.
-     * [31]Arrow-key support... The C-Kermit command parser has a
+       [40]http://www.ext.zx.net.nz/software/notes/kermit95/#updates.
+     * [41]Arrow-key support... The C-Kermit command parser has a
        scrollback buffer, and at the C-Kermit prompt you could always (and
        still can) use Ctrl-P to scroll up (to recall previous commands)
        and Ctrl-N to scroll back down. In C-Kermit 8.0 (2004) I added the
@@ -179,7 +411,7 @@ C-Kermit 10.0 Beta.05  (in development - not released yet)
           + If you want to build for Linux *with* arrow-key support, do
             "make linux KFLAGS=-DOARROWKEYS".
           + Added -DNOARROWKEYS to android.mk.
-     * ALPINE LINUX HELP NEEDED: A user of [32]Alpine Linux ([33]musl
+     * ALPINE LINUX HELP NEEDED: A user of [42]Alpine Linux (with [43]musl
        libc) reports that this C-Kermit version, although it builds
        normally ("make linux") and without complaint, does not work right:
        command keystrokes are not echoed until the Enter key is pressed.
@@ -188,7 +420,7 @@ C-Kermit 10.0 Beta.05  (in development - not released yet)
        hand?
      * Added comments to ckucmd.[ch] about its misnomer (it's really for
        all platforms, not just Unix).
-     * Added askmore() (more prompting) to COPY /TOSCREEN.
+     * Added askmore() (more-prompting) to COPY /TOSCREEN.
      * SHOW FILE command: if download directory not defined, say "(your
        current directory)" instead of "(none)" (ckuusr.c).
      * Checked what happens if I give CK a SET SEND PACKET 10 command and
@@ -198,9 +430,8 @@ C-Kermit 10.0 Beta.05  (in development - not released yet)
      * \v(herald) was wrong, I fixed it, ckuus5.c: herald() routine.
      * ckcfn2.c: logpkt() - added a comment explaining the packet-log
        format.
-     * Made \v(fullversion) = "10.0.400 Beta.05"
+     * New builtin variable \v(fullversion) = "10.0.400 Beta.05"
      * Added discriptive comment heading to ckuus5.c: cmcvtdate()
-     * Made a timeless cvtdate() using negative format arguments.
      * Adjusted \fcvtdate() to report date only if format arg is negative.
      * Adjusted HELP FUNC CVTDATE accordingly.
      * Corrected a glitch in HELP DATE text: ckuus2.c.
@@ -211,58 +442,51 @@ C-Kermit 10.0 Beta.05  (in development - not released yet)
      * Added new options to the COPY command: /TOSCREEN and /INTERPRET.
        Used together they do what TYPE /INTERPRET does everywhere except
        Windows: it displays a file on the screen with all its Kermit
-       backslash-escapes replaced by their values. The code is mainly in
-       ckuus6.c docopy().
+       backslash-escapes replaced by their values, and it works in
+       Windows. The code is mainly in ckuus6.c docopy().
      * I also fixed TYPE /INTERPRET so it clears the intepret bit after it
        finishes. Previously every subsequent TYPE command would act like
        it included an /INTERPRET switch.
      * Not C-Kermit specifically but I wrote a new document that updates
        the old and scattered information about Kermit packets: types,
        formats, encodings, block checks, short vs long, etc, everything in
-       one place: [34]https://www.kermitproject.org/kpackets.html.
+       one place: [44]https://www.kermitproject.org/kpackets.html.
 
    17 September 2022:
 
    ckcfns.c sdata():
-
-         1. Even after the previous change, C-Kermit could send a
-            long-format packet that was one byte too long; fixed in the
-            obvious way.
-         2. In tracking down this problem I also noticed that if I gave a
-            SET RECEIVE PACKET-LENGTH or SET SEND PACKET-LENGTH command,
-            this too could result in overlong packets in some cases. Fixed
-            now.
+    1. Even after the previous change, C-Kermit could send a long-format
+       packet that was one byte too long; fixed in the obvious way.
+    2. In tracking down this problem I also noticed that if I gave a SET
+       RECEIVE PACKET-LENGTH or SET SEND PACKET-LENGTH command, this too
+       could result in overlong packets in some cases. Fixed now.
 
    14 September 2022:
 
    ckcfns.c sdata():
-
-         1. Reduced maximum send-packet data size (spsiz) for short
-            packets from 94 to 90 to avoid edge cases which could cause
-            the encoded packet length to be out of range, i.e. not a
-            printable 7-bit US-ASCII character.
+    1. Reduced maximum send-packet data size (spsiz) for short packets
+       from 94 to 90 to avoid edge cases which could cause the encoded
+       packet length to be out of range, i.e. not a printable 7-bit
+       US-ASCII character.
 
    ckcfn2.c spack():
+    1. Added code to check whether Long Packet capability had been
+       negotiated before deciding to build a long packet.
+    2. Corrected an off-by-two error in calculating whether the packet
+       would be have to be in long format.
 
-         1. Added code to check whether Long Packet capability had been
-            negotiated before deciding to build a long packet.
-         2. Corrected an off-by-two error in calculating whether the
-            packet would be have to be in long format.
-
-          Before the previous two changes, file transfers from C-Kermit
-          10.0 (and some of the earlier 9.0.305 developement versions) to
-          E-Kermit would fail. With the changes, they succeed. Also:
+   Before the previous two changes, file transfers from C-Kermit 10.0 (and
+   some of the earlier 9.0.305 developement versions) to E-Kermit could
+   fail. With the changes, they succeed. Also:
 
    ckcdeb.h:
-
-         1. Disabled TYPE /INTERPRET on Windows until we can figure out
-            how to make it work.
+    1. Disabled TYPE /INTERPRET on Windows until we can figure out how to
+       make it work.
 
    ckcmai.c:
-
-         1. Changed the numeric version number from 1000000 to 1000400,
-            where the last three digits reflect the monotonically
-            increasing edit number.
+    1. Changed the numeric version number from 1000000 to 1000400, where
+       the last three digits reflect the monotonically increasing edit
+       number.
 
    23 August 2022:
      * I added a new option to the TYPE command: /INTERPRET. "type
@@ -295,9 +519,9 @@ This message is coming to you from your C-Kermit initialization file:
        Furthermore, the filenames of the tar and zip archives will be
        cku400.*, not cku10.0.* as they have been since 10.0 Beta.01, for
        conformity with all previous releases when they were cku300,
-       cku301, cku302, etc; see [35]this page). Of course "400" could be
+       cku301, cku302, etc; see [45]this page). Of course "400" could be
        "401" or any higher number as development progresses. Also the tar
-       and zip archive filenames will include the edit number, [36]as they
+       and zip archive filenames will include the edit number, [46]as they
        did before the first C-Kermit 10.0 Beta test.
      * A bug that prevented C-Kermit for Windows (CKW) from including the
        Beta-test in the program herald (\v(herald)) was corrected.
@@ -310,9 +534,9 @@ This message is coming to you from your C-Kermit initialization file:
      C-Kermit 10.0 OPEN SOURCE: Beta.05, 19 Aug 2022, for NetBSD 9.2
      (64-bit)
 
-   17 August 2022: The [37]second Beta test of C-Kermit for Windows
+   17 August 2022: The [47]second Beta test of C-Kermit for Windows
    (formerly known as Kermit 95) was released. This work was done by
-   [38]David Goodwin in New Zealand, and any changes he had to make to the
+   [48]David Goodwin in New Zealand, and any changes he had to make to the
    non-Windows-specific modules will be incorporated into Beta.05.
 
    Meanwhile more Beta.04 builds on platforms where it was tested
@@ -321,9 +545,9 @@ This message is coming to you from your C-Kermit initialization file:
    where it has not yet been tested at all: FreeBSD, OpenBSD, AIX, plus
    any discontinued OS's that are still running somewhere: IRIX,
    Tru64/Digital Unix, 4.xBSD, NeXTSTEP, System V, DG/UX, SCO, QNX, SINIX,
-   SunOS, Xenix, [39]etc etc).
+   SunOS, Xenix, [49]etc etc).
 
-C-Kermit 10.0 Beta.04  (3 June 2022)
+  C-Kermit 10.0 Beta.04  (3 June 2022)
 
    In the (now) time-honored tradition of releasing a second Beta just
    hours after the first, here is Beta.04 (the curse of the odd-numbered
@@ -372,7 +596,7 @@ ck_curpos(int row, int col) {
 
    I also have a report that constructions like "*s++;" generates "Result
    unused" warnings in Clang, e.g. in ckclib.c about line 3190, but I
-   don't believe that these are a problem. As [40]Brian Kernighan said in
+   don't believe that these are a problem. As [50]Brian Kernighan said in
    1974, "The '*s' returns a character; the '++' increments the pointer so
    we'll get the next character next time around. As you can see, as we
    make things more efficient, we also make them less clear. But '*s++' is
@@ -382,7 +606,7 @@ ck_curpos(int row, int col) {
    The are countless instances of this usage in the code and I doubt that
    the risk of changing them is worth the benefit.
 
-C-Kermit 10.0 Beta.03
+  C-Kermit 10.0 Beta.03
 
    C-Kermit is loaded with TCP/IP support code: Telnet, Rlogin, and FTP
    clients, Internet security methods including Kerberos and SSL, and on
@@ -445,11 +669,11 @@ C-Kermit 10.0 Beta.03
    "mkdir -p" -- which isn't portable -- but not until after Beta.03.
 
    Finally Beta.03 includes a new CKVKER.COM build procedure for VMS that
-   Adds support for the [41]VSI SSL3 product (from SMS).
+   Adds support for the [51]VSI SSL3 product (from SMS).
 
 C-Kermit 10.0 Beta.01 16 May 2022 and Beta.02 17 May 2022
 
-   [[42]Changes since Alpha.07]   [[43]What's new in C-Kermit 10.0]
+   [[52]Changes since Alpha.07]   [[53]What's new in C-Kermit 10.0]
 
    Beta.02 corrects two fatal syntax errors in non-ANSI-C builds affecting
    only HP-UX. The rest of this section applies to both Beta.01 and
@@ -462,7 +686,7 @@ C-Kermit 10.0 Beta.01 16 May 2022 and Beta.02 17 May 2022
    be further developed (or not) by the public via Github or whatever
    other collaborative Open-Source development methods supplant it.
    Meanwhile the previous test release, 9.0.305 Alpha.07, has proven to be
-   [44]quite stable. The new release should function normally on most
+   [54]quite stable. The new release should function normally on most
    modern Unix variations (and hopefully older ones as well), and also on
    VMS versions 5.4 through 8.4. I realize there are some as-yet
    unresolved issues on Solaris but there's nothing I can do about them
@@ -472,7 +696,7 @@ C-Kermit 10.0 Beta.01 16 May 2022 and Beta.02 17 May 2022
           I have an infinitely long To-Do list for C-Kermit but I think
           it's a good idea to release this version ASAP, simply because
           the last formal release (9.0.302) fails to build on so many
-          platforms where it was [45]perfectly OK eleven years ago, due to
+          platforms where it was [55]perfectly OK eleven years ago, due to
           changes in the underlying APIs, shuffling around of header files
           on different platforms and OS distributions, and changes in the
           C language and/or compilers. In fact, previous releases WILL NOT
@@ -484,16 +708,16 @@ C-Kermit 10.0 Beta.01 16 May 2022 and Beta.02 17 May 2022
 
    ABOUT TEST BUILDS:
           During (and for decades prior to) the C-Kermit 9.0 development
-          cycle in 2010-2011, I had direct access to over [46]200
-          different Unix platforms for development and test builds, not to
-          mention the other OS families. Now I have access to exactly
-          three: NetBSD, Red Hat Linux, and Ubuntu Linux. Before a proper
-          new C-Kermit release can be made, I'll need help from users of
-          the other Linux distributions, and of Mac OS X, FreeBSD,
-          OpenBSD, Minix, Android, and whatever other Unix varieties are
-          still viable in the 2020s, plus (Open)VMS, as well OpenSSL and
-          Kerberos (especially Heimdal) programmers if those security
-          methods are to be carried forward.
+          cycle in 2010-2011, I had direct access to over [56]200
+          different Unix and VMS platforms for development and test
+          builds, not to mention the other OS families. Now I have access
+          to exactly three: NetBSD, Red Hat Linux, and Ubuntu Linux.
+          Before a proper new C-Kermit release can be made, I'll need help
+          from users of the other Linux distributions, and of Mac OS X,
+          FreeBSD, OpenBSD, Minix, Android, and whatever other Unix
+          varieties are still viable in the 2020s, plus (Open)VMS, as well
+          OpenSSL and Kerberos (especially Heimdal) programmers if those
+          security methods are to be carried forward.
 
    THE C-KERMIT MAKEFILE:
           The makefile has evolved from a single target (4.2BSD) in 1985
@@ -509,27 +733,27 @@ C-Kermit 10.0 Beta.01 16 May 2022 and Beta.02 17 May 2022
 
    ABOUT KERMIT 95:
           Almost all the changes noted in this document were made after
-          the still-current release of [47]Kermit 95 for Windows, 2.1.3 of
+          the still-current release of [57]Kermit 95 for Windows, 2.1.3 of
           1 January 2011, which is based on C-Kermit; in fact it is the
           Windows version of C-Kermit, similar the Unix version and VMS
           version. Thus all the fixes and improvements described here are
           missing from K95 2.1.3 of 1 January 2011, but will magically
-          appear in [48]any new release based upon the current C-Kermit
+          appear in [58]any new release based upon the current C-Kermit
           source code.
 
-C-Kermit 10.0 Beta.01-02 changes since Alpha.07 [49]DOWNLOAD
+    C-Kermit 10.0 Beta.01-02 changes since Alpha.07 [59]DOWNLOAD
 
    Aside from the new version number, the changes since Alpha.07 are
    modest.
 
-|> New features
+    |> New features
 
      * Serial-port speed selections for 1000000, 2000000, 2500000,
        3000000, 3500000, and 4000000 bps, suggested by Pali Rohár. The new
        high speeds have not been tested because I no longer have a
        computer with serial port.
      * New VDIRECTORY command with 1-letter synonym V, a convenient alias
-       for the DIRECTORY command (and a familiar one to old [50]DEC-20
+       for the DIRECTORY command (and a familiar one to old [60]DEC-20
        hands) (the very first Kermit program was written on the DEC-20 in
        1981).
      * New HELP COMPACT-SUBSTRING command to show the syntax for the
@@ -542,7 +766,7 @@ C-Kermit 10.0 Beta.01-02 changes since Alpha.07 [49]DOWNLOAD
      * New Makefile targets: New "list" target to list all targets and
        "count" target to show how many targets there are.
 
-|> Bugs fixed
+    |> Bugs fixed
 
      * (Beta.02 only) ckuusx.c, ckufio.c: correction of syntax errors
        affecting only non-ANSIC-C builds.
@@ -552,10 +776,10 @@ C-Kermit 10.0 Beta.01-02 changes since Alpha.07 [49]DOWNLOAD
        maintainer Lin Dongyu.
      * ckcfns.c, ckcfn2.c, ckcfn3.c, ckcpro.w: SET SEND PACKET-LENGTH
        applied to all packets when it should have applied only to Data
-       packets, now it does [51]details here.
+       packets, now it does [61]details here.
      * ckuus3.c: Bug fixed in S-Expression parser; "if (xx = 0)" should
        have been "if (xx == 0)" (did you know that C-Kermit had a
-       [52]mini-LISP iterpreter built in?...  [53]What day is Easter in
+       [62]mini-LISP iterpreter built in?...  [63]What day is Easter in
        2033?)
      * ckcfns.c: The 'debug(F110,"sipkt rp","",rp);' statement in sipkt()
        had a bad argument list all these years.
@@ -565,7 +789,7 @@ C-Kermit 10.0 Beta.01-02 changes since Alpha.07 [49]DOWNLOAD
      * Top-level DEBUG command that was added in C-Kermit 9.0 was removed
        because it never did anything and there was no help text for it.
 
-|> Compiler warnings hushed
+    |> Compiler warnings hushed
 
    ... most of them issued only by the very picky Mac OS Clang compiler:
      * ckcftp.c: changed a long if-else-if.. (dangling else) sequence to a
@@ -606,25 +830,25 @@ tn_ssbopt(TELOPT_NEWENVIRON,TELQUAL_SEND,(CHAR *)request,
    under all the millions of programs that have already been written in
    it.
 
-C-Kermit 10.0: Brief summary of new features since 9.0.302
+  C-Kermit 10.0: Brief summary of new features since 9.0.302
 
-     * An [54]essential adaptation to a change in Glibc 2.28 that broke
+     * An [64]essential adaptation to a change in Glibc 2.28 that broke
        C-Kermit and caused several major Linux distributions to drop it.
      * SET SPEED 1000000, 1500000, 2000000, 2500000, 3000000, 3500000, and
        4000000 for high serial-port speeds on platforms that support them.
      * Numerous updates for VMS/OpenVMS operating systems from 5.4 to 8.4,
        so it is not orphaned.
-     * Adaptation to Android ([55]note) ([56]build)
-     * [57]Unix only: New ability to run Kermit scripts in a pipeline, and
+     * Adaptation to Android ([65]note) ([66]build)
+     * [67]Unix only: New ability to run Kermit scripts in a pipeline, and
        to otherwise behave as a typical stdin/stdout/stderr program
-       (example: the [58]html script).
-     * New [59]CHANGE command for changing strings in external files. Like
+       (example: the [68]html script).
+     * New [69]CHANGE command for changing strings in external files. Like
        when you have a website with hundreds of pages in a whole directory
        tree that link to another website whose URL changed.
      * Unix makefile: new target make linux-nodeprecated to build C-Kermit
        without "deprecated" features such as FTP, Telnet, Rlogin, Wtmp
-       logging, and ([60]explained below) arrow-key support.
-     * And... the [61]guts of the command processor were almost totally
+       logging, and ([70]explained below) arrow-key support.
+     * And... the [71]guts of the command processor were almost totally
        rewritten to allow IF-command and function arguments to be entered
        in a natural way. Sounds scary but I tested the result by using it
        heavily over 17 months.
@@ -637,7 +861,7 @@ C-Kermit 10.0: Brief summary of new features since 9.0.302
        messages, currency notaion, sorting and collation behavior, etc,
        plus the new functions \fdayname() and \fmonthname() that return
        the full name of the given day or month in the locale's language:
-       [62]locale.html, [63]remind.html.
+       [72]locale.html, [73]remind.html.
      * New variables: \v(year) = current year, \v(month) = current month
        (three letters), and \v(nmonth) = current month (numeric) to
        complete the set that already included \v(date), \v(day), and
@@ -645,33 +869,33 @@ C-Kermit 10.0: Brief summary of new features since 9.0.302
        to locale.
      * New IF conditions: NEQ, LLE, LGE, BINARY, TEXT.
      * Parsing of some REMOTE commands were broken, now fixed.
-     * New (ECHO xxx) command for use within [64]LISP S-expressions.
+     * New (ECHO xxx) command for use within [74]LISP S-expressions.
      * New \ffileinfo() function to get all the information available
-       about a given file, used by the [65]Photogallery script.
-     * DIRECTORY /BRIEF /EXCEPT:xxx fixed (required for [66]Photogallery),
+       about a given file, used by the [75]Photogallery script.
+     * DIRECTORY /BRIEF /EXCEPT:xxx fixed (required for [76]Photogallery),
        e.g. "dir /brief /except:*-[tr].jpg /output:IMAGES *.jpg"
      * New \ffilecompare() function (tells whether two files are identical
-       or differ, used in the [67]renamejpgs script).
-     * Some new date formats for \fcvtdate(): [68]photogallery.html,
-       [69]remind.html.
+       or differ, used in the [77]renamejpgs script).
+     * Some new date formats for \fcvtdate(): [78]photogallery.html,
+       [79]remind.html.
      * In response to Unix full path names getting longer and longer all
        the time: Improved fullscreen file-transfer display to show user's
        login directory as ~/ and to truncate too-long lines from the left
        rather than the right.
      * The current directory shown in C-Kermit's default prompt now also
        uses ~/ notation to save space.
-     * Numerous code changes to integrate with [70]Kermit 95 source, a
+     * Numerous code changes to integrate with [80]Kermit 95 source, a
        project that was active in 2013 but never completed. If you would
        like to have C-Kermit for Windows (previously known as Kermit 95 =
-       K95) and you are a Windows programmer please ([71]CLICK HERE) to
+       K95) and you are a Windows programmer please ([81]CLICK HERE) to
        see how you can help.
      * Numerous adaptations to newer OpenSSL versions, but more work is
        needed if anyone is actually going to make SSL connections with
        C-Kermit.
      * Countless fixes and adaptations to newer Unix platforms, libraries,
-       and C compilers. Described below from [72]HERE to [73]HERE... about
-       2000 lines of text. And also in the [74]abbreviated edit history
-       found in the no-longer-appropriately named [75]C-Kermit Daily
+       and C compilers. Described below from [82]HERE to [83]HERE... about
+       2000 lines of text. And also in the [84]abbreviated edit history
+       found in the no-longer-appropriately named [85]C-Kermit Daily
        Source Archive page. This type of pointless busy work will never
        end.
 
@@ -679,7 +903,7 @@ C-Kermit 10.0: Brief summary of new features since 9.0.302
    HELP FUNCTION name command, e.g. "help function cvtdate" (or more
    briefly, "h fun cvtd").
 
-Current and pending issues
+    Current and pending issues
 
    Version number
           The new version number, 10.0, is a change in format. Previous
@@ -715,7 +939,7 @@ if < \v(version) 900300 exit 1 "FATAL - C-Kermit 9.0.300 or later required."
           uses the buffered fopen()/getc() interface for less context
           switching than the bare metal open()/read() interface for each
           character. Kermit's approach was fine until I added support for
-          [76]arrow keys in version 8.0 in 2003. Arrow keys are different
+          [86]arrow keys in version 8.0 in 2003. Arrow keys are different
           from regular keys in that they generate multiple bytes instead
           of a single byte. So when there is a keyboard event Kermit has
           to peek ahead in the keyboard buffer to tell the difference, and
@@ -738,7 +962,7 @@ if < \v(version) 900300 exit 1 "FATAL - C-Kermit 9.0.300 or later required."
          1. Give up on arrow keys and rebuild C-Kermit with -DNOARROWKEYS
             (this has always been possible) or by adding -DNOARROWKEYS to
             the CFLAGS of any makefile target where glibc is used (e.g.
-            [77]Linux, Hurd, and perhaps FreeBSD and NetBSD).
+            [87]Linux, Hurd, and perhaps FreeBSD and NetBSD).
          2. Change thousands of lines of code to do single-byte instead of
             buffered reads as the Gnu people suggest, which will kill
             performance on old and slow platforms;
@@ -751,8 +975,8 @@ if < \v(version) 900300 exit 1 "FATAL - C-Kermit 9.0.300 or later required."
           important, but who really knows? And then what happens when they
           change something else? The Gnu folks have a very narrow view.
           C-Kermit is not just a Linux program; in fact it predates Linux
-          by six years. C-Kermit is portable among at least [78]nine
-          different operating system families and at least [79]190
+          by six years. C-Kermit is portable among at least [88]nine
+          different operating system families and at least [89]190
           different Unix varieties, the vast majority of which do not have
           Glibc. How can a total rewrite of C-Kermit's terminal i/o be
           tested on all those platforms? C-Kermit's code has been
@@ -817,7 +1041,7 @@ make linux-nodeprecated
           Apparently WTMP logging was "deprecated" in Macintosh OS at some
           point after C-Kermit 9.0 was released, resulting in "deprecated"
           warnings in ckufio.c. WTMP logging is (was) done when C-Kermit
-          is running as a [80]Kermit Internet Service Daemon (IKSD,
+          is running as a [90]Kermit Internet Service Daemon (IKSD,
           similar to an FTP server but better) to log the sessions it
           hosted. Presumably WTMP will disappear some day and then
           C-Kermit builds will get fatal errors and compile time or link
@@ -834,7 +1058,7 @@ make linux-nodeprecated
           It could be revived using the external ssh client on the end
           that makes the connection (e.g. "ssh somehost.org 1649"), and an
           ssh server on TCP port 1649 that starts C-Kermit with the
-          [81]appropriate command-line options and with its stdin/out/err
+          [91]appropriate command-line options and with its stdin/out/err
           redirected to the ssh connection.
 
    Terminal emulation
@@ -851,7 +1075,7 @@ make linux-nodeprecated
           connected to a different computer than the one where C-Kermit is
           running, or (b) there is no reliable and portable Unix API for
           obtaining key events and scan codes. C-Kermit does, however,
-          have a SET KEY command, but it works only with [82]ASCII keys
+          have a SET KEY command, but it works only with [92]ASCII keys
           (printable and control-characters).
 
           Unlike all the other C-Kermit versions (Unix, VMS, etc) C-Kermit
@@ -860,7 +1084,7 @@ make linux-nodeprecated
           computer your keyboard and screen are connected to, so it can
           capture keycodes and write to video. Let's hope C-Kermit for
           Windows (CKW) can be released some day soon; if you're a Windows
-          C programmer and would like to help out, [83]CLICK HERE.
+          C programmer and would like to help out, [93]CLICK HERE.
 
    Error messages
           C-Kermit's runtime error messages, especially those emanating
@@ -893,7 +1117,7 @@ This line is not.
           For historical reasons all \%x variables and \&x[] arrays are
           evaluated recursively. This is almost never desired and can
           wreak havoc when a value is a DOS or Windows pathname in which
-          the directory separator is backslash. A "[84]set
+          the directory separator is backslash. A "[94]set
           variable-evaluation" command was added in C-Kermit 9.0, with
           choices "recursive" (default) and "simple". The default can
           never be changed to "simple" because that could break countless
@@ -922,7 +1146,7 @@ Returns the result of evaluating the variable recursively.
           formats, only numeric yyyy:mm:dd:hh:mm:ss or yyyy:mm:dd. The
           HELP TOUCH text was updated to say this.
 
-C-Kermit 9.0.305 Alpha.07 24 January 2022
+    C-Kermit 9.0.305 Alpha.07 24 January 2022
 
    Only some minor changes this time, mainly to eliminate warnings from
    increasingly picky C compilers, e.g. "using the result of an assignment
@@ -943,7 +1167,7 @@ C-Kermit 9.0.305 Alpha.07 24 January 2022
    work, and fails to build at all on others. Anyone who cares about this
    and can rectify the situation is welcome to pitch in!
 
-C-Kermit 9.0.305 Alpha.06 15 December 2021
+    C-Kermit 9.0.305 Alpha.06 15 December 2021
 
    C-Kermit was first written in 1987 in the version of C that was
    specified in the then-current first edition of The C Programming
@@ -1077,9 +1301,9 @@ static char * tags[] = { "_whi", "_for", "_sw_", "_if_" };
        C-Kermit make a connection to a local application, such as Bash or
        EMACS.)
 
-C-Kermit 9.0.305 Alpha.05 14 November 2021
+    C-Kermit 9.0.305 Alpha.05 14 November 2021
 
-   As of December 6, 2021, 56 builds are listed in [85]this table; 48 of
+   As of December 6, 2021, 56 builds are listed in [95]this table; 48 of
    them successful, 8 of them failed.
 
      * 16 Nov 2021:
@@ -1209,7 +1433,7 @@ C-Kermit 9.0.305 Alpha.05 14 November 2021
             95 for MS Windows and IBM OS/2 and didn't change it because
             OS/2-specific modules probably still use MAXPATHLEN rather
             than CKMAXPATH but we can deal with that if ever
-            [86]development on K95 resumes. Also, two references to
+            [96]development on K95 resumes. Also, two references to
             MAXPATHLEN around line 10420 were changed to CKMAXPATH. A
             misplaced #endif matching #ifndef VMS at line 13942 was moved
             two statements down, where it should have been.
@@ -1320,7 +1544,7 @@ def MAXPATHLEN 1024
        10.12?): in ckuusx.c in the termcap-related #ifdefs starting around
        line 30, #include <term.h>.
 
-C-Kermit 9.0.305 Alpha.04 14 September 2021
+    C-Kermit 9.0.305 Alpha.04 14 September 2021
 
    The following C-Kermit source files specific to the VMS version:
 
@@ -1368,7 +1592,7 @@ ckvioc.c
 
    Updated version and date info in ckcmai.c. 14 Sep 2021
 
-C-Kermit 9.0.305 Alpha.03  (THIS ONE WASN'T UPLOADED)
+    C-Kermit 9.0.305 Alpha.03  (THIS ONE WASN'T UPLOADED)
 
      * The "extern int errno;" declaration included by default for many
        non-Glibc Unixes has become a big problem. So I added a symbol
@@ -1409,7 +1633,7 @@ C-Kermit 9.0.305 Alpha.03  (THIS ONE WASN'T UPLOADED)
        module. 8 Oct 2020.
      * Updated C-Kermit's date and Alpha level. ckcmai.c, 8 Oct 2020.
 
-C-Kermit 9.0.305 Alpha.02 19 September 2020
+    C-Kermit 9.0.305 Alpha.02 19 September 2020
 
    From Sébastien Villemot (Debian): Remove clauses from the linux+krb5,
    linux+ssl, and linux+krb5+ssl makefile targets that tested to see if an
@@ -1438,7 +1662,7 @@ C-Kermit 9.0.305 Alpha.02 19 September 2020
     4. Same thing for dbuf[] in function domydir(). ckuus6.c, 18 Sep 2020.
     5. Complaints about implicit definitions of tgetent(), tgetstr(),
        tputs(), and tgoto() in the curses-related routines fxdinit(),
-       ck_termset(), ck_curpos(). [87]See notes below. I had the
+       ck_termset(), ck_curpos(). [97]See notes below. I had the
        prototypes commented out because they caused problems on some
        platforms. Uncommenting causes disaster on Red Hat, NetBSD, etc. I
        had to add a clause to the linux target that looks in /etc/issue
@@ -1490,7 +1714,7 @@ C-Kermit 9.0.305 Alpha.02 19 September 2020
    OpenSSL 1.1, which is not compatible with 1.0 (which, as I recall, was
    supposed to have an API that would be stable for all eternity).
 
-9.0.305 Alpha.01 24 Jul 2020
+    9.0.305 Alpha.01 24 Jul 2020
 
    Alpha test for an emergency C-Kermit release because GNU removed the
    symbol "__FILE_defined" (which Kermit uses on glibc systems for stdin
@@ -1523,7 +1747,7 @@ C-Kermit 9.0.305 Alpha.02 19 September 2020
    Debian repositories because it needs to get manually approved, since it
    is a package reintroduction. Further updates will be much faster."
 
-9.0.304 Dev.24 25 Apr 2020
+    9.0.304 Dev.24 25 Apr 2020
 
    Under certain circumstances, the CHANGE command could cause a
    segmentation fault. Diagnosis: a variable (k) was incremented before it
@@ -1541,7 +1765,7 @@ C-Kermit 9.0.305 Alpha.02 19 September 2020
    its argument and strip the colons from any dates in this format before
    proceeding. ckucmd.c, ckcmai.c, 25 Apr 2020.
 
-9.0.304 Dev.23 4 Sep 2018 (announced 31 Jan 2020)
+    9.0.304 Dev.23 4 Sep 2018 (announced 31 Jan 2020)
 
    It was annoying me that constructions like:
 
@@ -1557,11 +1781,13 @@ if \findex(not rated,\m(line)) {
 if x .line := \freplace(\m(line),not rated, sin ranking)
 
    or:
+
 if \findex(not\32rated,\m(line)) {
     .line := \freplace(\m(line),not rated, sin ranking)
 }
 
    or:
+
 .notrated = not rated
 if \findex(\m(notrated),\m(line)) {
     .line := \freplace(\m(line),not rated, sin ranking)
@@ -1606,7 +1832,7 @@ if \findex(\m(notrated),\m(line)) {
    But there is nothing Kermit can do about this; even if I could figure
    out how to find the Orientation tag, what would I do with it?
    Eventually it dawned on me that the right place to handle this (to fix
-   the problem when it occurs in the [88]Photogallery script) was on the
+   the problem when it occurs in the [98]Photogallery script) was on the
    Imagemagick command line. Simply adding -auto-orient did the trick.
    Photogallery 2.14, 21 Jul 2017. No changes to Kermit. But if there were
    an EXIF library for Unix...
@@ -1636,7 +1862,7 @@ if \findex(\m(notrated),\m(line)) {
    Red Hat Linux, finally installed it on the FTP server and announced it.
    31 January 2020
 
-9.0.304 Dev.22
+    9.0.304 Dev.22
 
    Fixed \fcode() to not throw errors if given an empty string (or nothing
    at all) as an argument. ckuus4.c, 22 Apr 2017.
@@ -1695,6 +1921,7 @@ if \findex(\m(notrated),\m(line)) {
 
    The FOR, WHILE, IF, and SWITCH commands are defined in ckuus5.c like
    this:
+
 /* WHILE macro */
 char *whil_def[] = { "_assign _whi\\v(cmdlevel) {_getargs,",
 ":_..inc,\\%1,\\%2,goto _..inc,:_..bot,_putargs},",
@@ -1806,7 +2033,7 @@ smallest \%x
    The SWITCH command internal macro definition needed another adjustment.
    ckuus5.c, 30 Apr 2017.
 
-9.0.304 Dev.21
+    9.0.304 Dev.21
 
    April 19, 2017: Coming back to the code after a year of not touching
    it. If there are still any C-Kermit users out there, they don't seem to
@@ -1853,6 +2080,7 @@ someprogram | average      # 'someprogram' outputs a list of numbers
 
    Here's how to write a script that reads from a file if a filename was
    given or, if not, reads from stdin:
+
   if defined \%1 {                # filename given on command line
       fopen /read \%c \%1
       if fail exit 1
@@ -1873,7 +2101,7 @@ someprogram | average      # 'someprogram' outputs a list of numbers
    Updated Dev version and dates, plus added comments about how to do
    this. ckcmai.c, 27 Apr 2016.
 
-LISP subsystem changes in April 2017
+    LISP subsystem changes in April 2017
 
    Fixed the LISP ECHO command to always do unquoting itself, so UNQUOTE
    is only necessary for things like creating a string valued variable in
@@ -1963,7 +2191,7 @@ for i 1 6 1 { echo \m(i). \fcvtdate(,i) }
    Fixed HELP SEXP to also show ROUND with optional second argument.
    ckuus2.c, 24 Apr 2016.
 
-Dev.20
+    Dev.20
 
    I got a report that the photogallery script could not create files in
    Mac OS X. Sure enough, C-Kermit 9.0.304 got an error every time it
@@ -1981,7 +2209,7 @@ Dev.20
    Tests OK in Mac OS X 10.10.5, NetBSD 6.1.5, Solaris 9, and Linux
    RHEL6.6. ckufio.c, 16 Feb 2016.
 
-Dev.19
+    Dev.19
 
    As noted, Dev.17 dumped core immediately upon startup on certain 64-bit
    platforms such as Ubuntu 15.04 and Mac OS X 10.11. Since I don't have
@@ -2042,7 +2270,7 @@ Dev.19
    dates in the same format are always the same length. ckucmd.c, 5 Feb
    2016.
 
-Dev.18
+    Dev.18
 
    Fixed four debug() statements that had a string as the final parameter
    instead of a number, noticed by gcc on NetBSD 7. ckuusx.c, ckudia.c, 4
@@ -2055,7 +2283,7 @@ Dev.18
    warnings. Backed off the 64-bit size changes. ckcdeb.h, ckcker.h,
    ckucmd.h, ckuusr.h, 4 Feb 2016.
 
-Dev.17
+    Dev.17
 
    Added missing "help xmessage" text. ckuus2.c, 3 Feb 2016.
 
@@ -2171,7 +2399,7 @@ Dev.17
    Added TMP-DIRECTORY as an invisible synonym for TEMP-DIRECTORY in the
    SET and SHOW commands. ckuusr.c, 29 Jan 2016.
 
-Dev.16
+    Dev.16
 
    Updated copyright year to 2016. ckcmai.c, 18 Jan 2016.
 
@@ -2195,7 +2423,7 @@ Dev.16
    and put a new version of the iftest script in the script library. 31
    Dec 2015.
 
-Dev.15
+    Dev.15
 
    Patches from Bernard Spil for LibreSSL: "Currently Kermit fails to
    build when openssl libraries have been built without SSLv3 are used
@@ -2230,15 +2458,16 @@ Dev.15
   There should be a way to issue a message from the makefile but I couldn't
   find it (echo, @echo, etc, none of them worked).
 
-Dev.14
+    Dev.14
 
    Two closing braces were missing in ck_ssl.c at line 2207, which
    prevented Dev.13 from being built with OpenSSL support. 10 Oct 2015.
 
-Dev.13
+    Dev.13
 
    Compiles, links, and runs OK with "make netbsd+ssl" except for these
    warnings:
+
 
 ck_ssl.c: In function 'ssl_display_connect_details':
 ck_ssl.c:1089:12: warning: assignment discards qualifiers from pointer target ty
@@ -2295,7 +2524,7 @@ pe
    was ever a reason for this I can't recall it. Fixed in ckuus3.c, 5 Feb
    2015.
 
-Dev.12
+    Dev.12
 
    Fixed the previous fix. ckufio.c 9.0.220, 12 Jan 2015.
 
@@ -2308,7 +2537,7 @@ Dev.12
    of filename string. I fixed zchko to not do that. ckufio.c 9.0.219, 11
    Jan 2015.
 
-Dev.11
+    Dev.11
 
    I received reports from both Alan Jones and Harold Baldwin around the
    same time that REMOTE commands were getting "?Not confirmed" parse
@@ -2334,7 +2563,7 @@ directory /brief /except:*-[tr].jpg /output:somefile *.jpg
    moving two lines of code to where they always should have been.
    ckuus6.c, 3 Nov 2014.
 
-Dev.10
+    Dev.10
 
    From Mark Wooding: Fix inconsistent declarations of a couple variables
    across modules; he actually reported a bunch of them but all the
@@ -2358,9 +2587,10 @@ Dev.10
    sparc. makefile, 23 Feb 2014.
 
    Documentation for MULTIARCH:
-   [89]https://wiki.debian.org/Multiarch/Implementation
-   [90]https://wiki.ubuntu.com/MultiarchSpec
-   [91]https://wiki.debian.org/Multiarch/HOWTO
+
+   [99]https://wiki.debian.org/Multiarch/Implementation
+   [100]https://wiki.ubuntu.com/MultiarchSpec
+   [101]https://wiki.debian.org/Multiarch/HOWTO
 
    From my to-do list.... I noticed a while back that \fsplit(s,&a,,TSV)
    could mess up if the data fields contained grouping characters like
@@ -2375,7 +2605,7 @@ Dev.10
    more efficient. Seems to work right, and other things like LISP
    programs still work. ckclib.c, 31 Jan 2014.
 
-Dev.09
+    Dev.09
 
    Updated version number and date and copyright date. ckcmai.c and many
    other modules. 20 January 2014.
@@ -2407,6 +2637,7 @@ Dev.09
    and invisible synonym for SUCCESS, but this has bitten me too many
    times, when I create a variable named OK and use it as a "lazy IF
    condition" as in:
+
 .ok = 0
 if match \&a[i] img_[0-9][0-9][0-9][0-9].jpg .ok = 1
 else if match \&a[i] img_[0-9][0-9][0-9][0-9][0-9].jpg .ok = 1
@@ -2447,7 +2678,7 @@ Continue? (Y/N)
    have noticed it. Fixed the problem by removing the optimization.
    ckuus6.c, 17 Dec 2013.
 
-Dev.08
+    Dev.08
 
    Branding of C-Kermit for Windows... I removed the special version
    numbering for C-Kermit for Windows (nee K95) so now it should show the
@@ -2541,7 +2772,7 @@ if equ "\%a" "xx" echo "Dos equis"
    ability to suppress locale support at compile time via -DNOLOCALE
    (ckcdeb.h). 6 Dec 2013.
 
-Dev.07
+    Dev.07
 
    Built OK on NetBSD 6.1.2. Built OK on RHEL4. Could not build with SSL
    on NetBSD because "can't open config file: /etc/openssl/openssl.cnf".
@@ -2618,6 +2849,7 @@ Dev.07
    concern for the far distant future only. Note however that any code
    making the incorrect assumption that time_t is the same as long will
    fail on 32-bit machines in 2038." C-Kermit builds OK but warns:
+
 ckcmai.c:(.text+0x1e92): warning: warning: reference to compatibility
 time(); include <time.h> for correct reference
 
@@ -2634,7 +2866,7 @@ time(); include <time.h> for correct reference
    The CHANGE command would indicate failure even when there was no error.
    Fixed in ckuus6.c, 4 Aug 2013.
 
-Dev.06
+    Dev.06
 
    A new command-line options, --nolocale, was added to disable use of the
    locale by forcing the "C" locale. Ditto if the environment variable
@@ -2830,7 +3062,7 @@ if neq "\&a[9]" "binary"
    other was "if neq ...". There is no "if neq". Added IF NEQ, IF LLE, IF
    LGE, since even I expected them to be there. ckuus[26].c, 16 Apr 2016.
 
-Dev.05
+    Dev.05
 
    Built on NetBSD 5.1.2, Solaris 9, FreeBSD 6.4, SCO OSR6.0.0, Linux
    Slackware 13.37.0, Linux RHEL5 (64-bit), Linux RHEL4 32-bit (with and
@@ -2902,7 +3134,7 @@ Dev.05
    problem by not sending SB_STOP_REQ is SET TELNET WAIT is OFF. ckctel.c,
    line 2238, 9 Apr 2013.
 
-Dev.04
+    Dev.04
 
    Made a new function \ffileinfo(name,&a) that populates the specified
    array with 7 or 8 elements:
@@ -2927,7 +3159,7 @@ Dev.04
    status to SHOW EXIT and updated HELP SET EXIT. ckuus[235].c, 13 Mar
    2013.
 
-Dev.03
+    Dev.03
 
    Since Oct 2006 C-Kermit has had a very handy TOUCH command, much more
    useful that Unix's because of all the file-selection options (switches)
@@ -3083,7 +3315,7 @@ SET SEND TIMEOUT 20 FIXED
    Vanity herald for Android: ckuver.h, 20 Jul 2012.
 
    From Tim Sneddon:
-   [92]http://tim.sneddon.id.au/blog/Posts/C-Kermit_for_Android -
+   [102]http://tim.sneddon.id.au/blog/Posts/C-Kermit_for_Android -
    Adaptation of C-Kermit to Android via the Linux path; required very few
    changes, mainly #ifdef'ing a couple Linux APIs not supported in
    Android. ckcdeb.h, ckufio.c, ckutio.c, 20 Jul 2012.
@@ -3116,7 +3348,7 @@ SET SEND TIMEOUT 20 FIXED
    line breaks in freebsd and freebsd+ssl targets for easier patching.
    makefile, 21 Aug 2011.
 
-9.0.302
+    9.0.302
 
    Changed the version to 9.0.302, ckcmai.c, 20 Aug 2011. Released and
    announced the same day.
@@ -3154,11 +3386,11 @@ SET SEND TIMEOUT 20 FIXED
    happening in other header files, not in Kermit). makefile, ckucmd.c,
    ckucon.c, ckutio.c, ckufio.c, ckcnet.c, ckcftp.c, 14 July 2011.
 
-C-Kermit 9.0.301
+    C-Kermit 9.0.301
 
    Updated version text and date. ckcmai.c, makefile, 11 July 2011.
 
-C-Kermit 9.0.301 Beta.01
+    C-Kermit 9.0.301 Beta.01
 
    Built and tested on Solaris 9, Solaris 10, and RHEL5. 6 July 2011.
 
@@ -3175,7 +3407,7 @@ C-Kermit 9.0.301 Beta.01
    the symbols are not defined in Solaris 9 or earlier, and they should
    not be used in Solaris 10 or 11. ckcnet.h, 6 July 2011.
 
-C-Kermit 9.0.300
+    C-Kermit 9.0.300
 
    Removed solaris9_64 target from makefile. It builds but it doesn't work
    at all. 30 Jun 2011.
@@ -3305,9 +3537,10 @@ export PATH=/usr/bin:$PATH
    dumbest (and therefore most portable) way to squelch the warnings.
    ckuus5.c, 17 Jun 2011.
 
-C-Kermit 9.0.299 Beta.01
+    C-Kermit 9.0.299 Beta.01
 
    16 June 2011 builds (Beta.01):
+
 NetBSD 5.1 i386   32/64  netbsd+krb5+ssl   2451757 OpenSSL 0.9.9 MIT Krb5 1.6.3
 Solaris 9  sparc  32/64  solaris9+krb5     2543036 MIT Kerberos 5 1.7.1
 Solaris 9  sparc  32/64  solaris9+ssl      5021544 OpenSSL 0.9.8q (gcc)
@@ -3345,6 +3578,7 @@ Fedora 14  i386   32/64  linux+krb5+ssl    2539891 MIT Krb5 + OpenSSL 0.9.8r
 
    15 June 2011 builds (Beta.01):
 
+
 AIX 5.3                 ppc    32/64   aix+ssl        3283846 OpenSSL 0.9.8m
 NetBSD 5.1              i386   32/64   netbsd         2159863
 NetBSD 5.1              i386   32/64   netbsd+ssl     2350274 OpenSSL 0.9.9-dev
@@ -3375,6 +3609,7 @@ IRIX 6.5                R10000 32/64   irix65         2869704
    Tried building on NetBSD 5.1 with Heimdal Kerberos using:
 
    make netbsd+krb5 \
+
  "KFLAGS=-DHEIMDAL" \
  "K5INC=-I/usr/include" \
  "K5LIB=-L/usr/lib"
@@ -3421,6 +3656,7 @@ HEIMDAL
    Tried to build on SCO Open Server 5.0.7 but it fails at link time
    because it can't find rdchk(). But it's supposed to be there! Come back
    to this later...
+
 Red Hat 6.1             i386   32/64   linux          2332545
 Red Hat 7.1             i386   32/64   linux          2368528
 Red Hat EL4             i386   32/74   linux          2363067
@@ -3442,6 +3678,7 @@ SCO Unixware 2.1.3      i386    32     uw213          2242176
 SCO OSR6.0.0            i386   32/64   sco_osr600     2368300
 
    More builds, 14 June 2011:
+
 VMS 6.2                 alpha   32     make mn        2556928 No TCP/IP
 VMS 6.2                 alpha   32     make m         3112960 UCX 4.0
 Solaris 11              i386   32/64   solaris11      2823860
@@ -3475,6 +3712,7 @@ Linux Fedora 14         i386   32/64   linux+krb      2449614 (*)
    not OK, same error as with 0.9.5a:
 
    ckuath.c In file included from ck_ssl.h:48,
+
 from ckuath.c:225:
 
 /usr/include/openssl/des.h:77: warning: redefinition of `Block'
@@ -3490,6 +3728,7 @@ ckuat2.h:90: warning: `Schedule' previously declared here
    but it still fails:
 
    In file included from /usr/include/openssl/evp.h:89,
+
 from /usr/include/openssl/x509.h:67,
 from /usr/include/openssl/ssl.h:69,
 from ck_ssl.h:51,
@@ -3773,7 +4012,7 @@ make linux+ssl KFLAGS=-UCK_SSL
    what useful purpose is served by throwing an error in this case?
    ckuus4.c, 30 Dec 2010.
 
-Alpha.09
+    Alpha.09
 
    A couple minor changes to the tru64-51b makefile targets from Steven
    Schweda but there still are some problems with the Tru64 Unix builds.
@@ -3797,7 +4036,7 @@ Alpha.09
 
    makefile, ckcmai.c, 21 Sep 2010.
 
-Alpha.08
+    Alpha.08
 
    From Joop Boonen 26 Juli 2010: "Added HAVE_LOCKDEV as openSuSE >= 11.3
    uses lockdev but not baudboy. They use ttylock directly. The program
@@ -3823,7 +4062,7 @@ Mohammad "The Greatest" Ali
    tab-separated list, and vice versa (which is not a simple matter of
    changing commas to tabs or vice versa). ckuus4.c, 12 Aug 2010.
 
-Alpha.07
+    Alpha.07
 
    The CSV feature of Alpha.06 had a subtle flaw, namely that if the last
    item in a comma separated list was enclosed within doublequotes with a
@@ -3848,12 +4087,14 @@ Alpha.07
    2010.
 
    From Lewis McCarthy:
+
   Based on code inspection, C-Kermit appears to have an SSL-related security
   vulnerability analogous to that identified as CVE-2009-3767 (see e.g.
-   [93]http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-3767).
+   [103]http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-3767).
 
   I'm attaching a patch for this issue relative to the revision of ck_ssl.c
-  obtained from a copy of  [94]http://www.columbia.edu/kermit/ftp/test/tar/x.zip
+  obtained from a copy of  [104]http://www.columbia.edu/kermit/ftp/test/tar/x.zi
+p
   downloaded on 2010/07/30, which I believe is the latest.
 
   When this flaw was first widely publicized at last year's Black Hat
@@ -3861,8 +4102,8 @@ Alpha.07
   indeed issued certificates that could be used to exploit this class of
   vulnerability. As far as I know they have not revealed specifically which
   public CA(s) had been found issuing such certificates.
-  Some references:  [95]http://www.mseclab.com/?p=180
-   [96]http://www.theregister.co.uk/2009/07/30/universal_ssl_certificate/
+  Some references:  [105]http://www.mseclab.com/?p=180
+   [106]http://www.theregister.co.uk/2009/07/30/universal_ssl_certificate/
 
    Patches added to ck_ssl.c, 4 Aug 2010.
 
@@ -3890,7 +4131,7 @@ Alpha.07
    Couldn't get a debug log this time. ckcmai.c, ckvfio.c, ckvrms.h,
    ckvker.com. 8 Apr 2010.
 
-C-Kermit 9.0 Alpha.06
+    C-Kermit 9.0 Alpha.06
 
    Implemented a new \fsplit() option for parsing CSV files, which turns
    out to be a little complicated, because the separator is not just a
@@ -3902,7 +4143,7 @@ C-Kermit 9.0 Alpha.06
    too-long names are caught and recovered from correctly. ckuusr.h, 6 Apr
    2010.
 
-C-Kermit 9.0 Alpha.05
+    C-Kermit 9.0 Alpha.05
 
    Did a few builds to make sure there were no booboos. Solaris 9, NetBSD
    5.01, Linux RHEL4, HP-UX 10.20 (non-ANSI compiler and ANSI optimizing
@@ -3972,7 +4213,7 @@ C-Kermit 9.0 Alpha.05
    mass search and replace is not without risks. ckcdeb.h, ckuusx.c, 30
    Mar 2010.
 
-C-Kermit 9.0 Alpha.04
+    C-Kermit 9.0 Alpha.04
 
 11:23:10.722 ftp_hookup[kermit.columbia.edu]=21
 11:23:10.722 ftp hookup A[kermit.columbia.edu]
@@ -4032,6 +4273,7 @@ if (hisctladdr.sin_addr.s_addr != (unsigned long) -1)
    2009). 29 Mar 2010.
 
    "make hpux1000o+ssl" files with: /usr/ccs/bin/ld: Unsatisfied symbols:
+
 __umoddi3 (code)
 __udivdi3 (code)
 __eprintf (code)
@@ -4051,7 +4293,7 @@ __eprintf (code)
    all have void datatype and changed the definition of VOID to void in
    those cases. ckcdeb.h, 29 Mar 2010.
 
-C-Kermit 9.0 Alpha.03
+    C-Kermit 9.0 Alpha.03
 
    Changed hexdump() to ckhexdump() in ck_crp.c, which I missed before. 19
    Mar 2010.
@@ -4225,7 +4467,7 @@ ATLAS::C-Kermit>( ^ 2 62)
    (included by termios.h) which also declares these structs. But you need
    both includes.')
 
-C-Kermit 9.0 Alpha.02
+    C-Kermit 9.0 Alpha.02
 
    Built OK on Minix, Linux, Mac OS X, Solaris 9, NetBSD 5.0.1... 1 Feb
    2010.
@@ -4407,7 +4649,7 @@ SSL DEBUG ACTIVE
    From Steven Schweda (SMS), the real solution for the VMS closing brace
    problem, it wasn't a DECC bug, it was a me bug. ckuusy.c, 20 Nov 2009.
 
-Kermit 9.0 Alpha.01
+    Kermit 9.0 Alpha.01
 
    I found a VMS 6.2 system... Takes a loooong time to build there. In
    ckuusy.c, DEC C didn't like the prototypes and declarations of
@@ -4530,8 +4772,8 @@ for \%i 128 255 1 {
    ckucns.c, 22 Oct 2009.
 
    I made -DNOUUCP the default for Mac OS X, since everybody winds up
-   building it that way anyhow. To undo this, do "make macosx
-   KFLAGS=-UNOUUCP". makefile, 21 Oct 2009.
+   building it that way anyhow. To undo this, do
+   "make macosx KFLAGS=-UNOUUCP". makefile, 21 Oct 2009.
 
    Need to make LOG SESSION log to a tty. Right now "log session
    /dev/ttyKeySerial1" says "Write permission denied" even though the
@@ -4622,6 +4864,7 @@ set line /dev/ttyKeySerial1
    when will I learn?). ckcftp.c, 13 Oct 2009.
 
    Next issue:
+
 In file included from ckutio.c:15674:
 /usr/lib/gcc/i386-redhat-linux/3.4.6/include/varargs.h:4:2: #error "GCC no
  longer implements <varargs.h>."
@@ -4785,7 +5028,7 @@ In file included from ckutio.c:15674:
 make solaris9+openssl "SSLINC=-I/opt/openssl-0.9.8k/include" \
    "SSLLIB=-L/opt/openssl-0.9.8k/lib"
 
-   makefile, [97]http://kermit.columbia.edu/security.html, 25 Sep 2009.
+   makefile, [107]http://kermit.columbia.edu/security.html, 25 Sep 2009.
 
    Added or fixed some missing prototypes in ckctel.h:
    fwdx_send_xauth_to_xserver(), fwdx_parse_displayname. 25 Sep 2009.
@@ -5570,6 +5813,7 @@ Without TIOCSCTTY: exactly the same.
    errors)
 
    zrb no-IAC test pattern, short blocks:
+
  1. S/5 (success with 5 screens of errors.
  2. S/7
  3. S/7
@@ -5925,6 +6169,7 @@ notify <peter.crowley@alumni.utexas.net>
    different from SET FTP TYPE { ASCII, BINARY }, which set the *default*
    transfer mode when automatic switching fails for a given file.
    ckuusr.c, ckcftp.c, 12 Aug 2007.
+
  (notify: Matt <mlist@cmcflex.com>)
 
    Even though the code hasn't changed, suddenly we're getting:
@@ -6077,9 +6322,10 @@ sz: cannot open finished.: No such file or directory
    Kermit always does at least some minimal encoding of C0/C1 control
    characters such NUL and DEL and IAC, and I doubt that Zmodem does.
 
-   [98]http://zssh.sourceforge.net/ says:
+   [108]http://zssh.sourceforge.net/ says:
 
    If file transfer is initiated but never completes, e.g. a line like:
+
 Bytes Sent:      0/    513   BPS:0        ETA 00:00  Retry 0: Got ZCAN
 
    can be seen, but transfer never completes), chances are the pty/tty on
@@ -6279,6 +6525,7 @@ zrb: Not OK -- got the cutoff at 224 again "Persistent CRC or other ERROR"
    good: text/binary up/down. The "halting problem" is solved by SIGCHLD,
    which catches fork termination instantly and lets ttptycmd() know there
    is no more pty. Zmodem:
+
 zst: OK
 zsb: OKzrt:
  OK
@@ -6616,6 +6863,7 @@ GET gkermit (text) (-1 bytes)---> TYPE A
    But "put /binary gkermit.;1" results in a 0-length GKERMIT file being
    sent. Here's the debug log:
 
+
 FTP PUT gnfile[DISK$MSA4:[C.FDC.NET]gkermit.;1]=1
 ftp putfile flg[DISK$MSA4:[C.FDC.NET]gkermit.;1]=0
 zltor fncnv[DISK$MSA4:[C.FDC.NET]gkermit.;1]=-1
@@ -6679,6 +6927,7 @@ doftpsend2 ok=0
    sent) but nothing appears on the far side.
 
    SUMMARY:
+
   To download a text file: GET /ASCII blah.txt    (/ASCII is optional)
   To download a binary file: GET /BINARY blah.bin (/BINARY is required)
   To upload a text file: PUT blah.txt             (/ASCII switch not needed)
@@ -6931,6 +7180,7 @@ doftpsend2 ok=0
 
    Theoretically we should be able to test these by using different sz
    switches:
+
 -q:    quiet (should always use this)
 -e:    escape all control characters
 -B n:  Buffer n bytes (rather than whole file)
@@ -6991,6 +7241,7 @@ doftpsend2 ok=0
    on its init file. The good news, at least, is that select() doesn't
    report report that the pty is ready to be read. Clearly the file
    descriptors aren't being assigned as expected, or as before.
+
 
    In ckupty.c getptyslave() dup2's the slave fd to 0 and 1. The new code
    does exactly the same thing. Debug log makes it look like the forked
@@ -7385,6 +7636,7 @@ do xx
   cp ckupty.h-20070109 ckupty.h
 
    Comparing Monday's and Tuesday's pty-related code, the differences are:
+
  1. Passing of function code to and among pty modules.
  2. Skipping the TIOCSCTTY ioctl and the open("/dev/tty") test.
  3. Attempting to put pty in TIOCTTY or TIOCREMOTE mode.
@@ -7928,14 +8180,14 @@ termbuf.c_lflag &= ~(ECHO|ECHOE|ECHOK);
    works fine and wasn't especially slow either; a good sign. ckcdeb.h,
    ckutio.c, ckupty.c, 22 Dec 2006.
 
-Dev.27
+    Dev.27
 
    Built on VMS 7.3-2/Alpha. Had to squelch a couple compiler warnings by
    changing some ints in the new \fpictureinfo() code from unsigned to
    signed, and fix a typo in the prototype for the new gettcpport()
    function. ckcnet.h, ckuus4.c, 22 Dec 2006.
 
-Dev.26
+    Dev.26
 
    Built on Mac OS X 10.4.8 and NetBSD 3.1_RC3, all OK. 19 Dec 2006.
 
@@ -7966,7 +8218,7 @@ Dev.26
    Some casts for the 3 interior args of the new select() call in ckcftp.c
    for HP-UX 9. 14 Dec 2006.
 
-Dev.25
+    Dev.25
 
    Removed a debug() statement from zsattr() that suddenly started making
    some version of gcc complain, reported by Gerry Belanger. ckufio.c, 13
@@ -7980,7 +8232,7 @@ Dev.25
    initializing the array, and (b) ignoring any search strings if /COUNT:
    was given. ckuusr.c, 13 Dec 2006.
 
-Dev.24
+    Dev.24
 
    This morning the Columbia FTP server was malfunctioning in a perfect
    way for me to implement and test an FTP timeout mechanism. The server
@@ -8038,7 +8290,7 @@ Dev.24
    strings (if the test succeeded) were turned into null pointers, and
    then fed to strlen(). Fixed in ckuus3.c, 5 Dec 2006.
 
-Dev.23
+    Dev.23
 
    Added COPY /OVERWRITE:{ALWAYS,NEVER,OLDER,NEWER} to control name
    collisions when copying across directories. ckuus[26].c, 1 Dec 2006.
@@ -8172,7 +8424,7 @@ switch \%1 {
    Built OK on Red Hat Linux AS4 with both "make linux" and "make
    linuxnc". 15 Oct 2006.
 
-Dev.22
+    Dev.22
 
    PeterE noticed that if you FOPEN a file, do some seeks or reads, then
    FCLOSE it, then FOPEN it again (or open a different one), some of the
@@ -8206,7 +8458,7 @@ Dev.22
    0.9.7d) except with some warnings in ck_crp.c. Connects and logs in OK
    to a secure site. 10 Oct 2006.
 
-Dev.21
+    Dev.21
 
    Built on Solaris9/Sparc; FreeBSD 6.2/AMD64; NetBSD 3.0/i386; HP-UX 11i
    v2; SCO OSR6.00.
@@ -8274,7 +8526,7 @@ Dev.21
    on Motorola choked on the SEEK_CUR reference without it. ckuus4.c, 10
    Jul 2006.
 
-Dev.20
+    Dev.20
 
    Added \v(lastkwval) so we can retrieve programmatically the keyword
    most recently processed by \fkeywordval(). ckuusr.h, ckuus4.c, 9 Jul
@@ -8416,13 +8668,14 @@ Dev.20
    Added a new function for dealing with JPGs and GIFs:
 
    \fpicture(filename,&a)
+
   returns 0 if file not recognized or can't be opened;
   returns 1 if landscape, 2 if portrait or square.
   If array given, element 1 is width, element 2 is height.
 
    ckuusr.h, ckuus4.c, 19 Jun 2006.
 
-Dev.19
+    Dev.19
 
    Scott Kasten noted that the estimated-time-remaining calculation would
    go bonkers on LFS systems when RESENDing a large file. It looks like
@@ -8458,7 +8711,7 @@ Dev.19
    picked up where it left off. But before the 2G boundary was crossed the
    disk filled up. Inconclusive. 14 May 2006.
 
-Dev.18
+    Dev.18
 
    Built on VMS 7.2-1, tested new RENAME command there; seems to be OK. 13
    May 2006.
@@ -8629,7 +8882,7 @@ Dev.18
    ("KFLAGS=-O0"). Result supports 64-bit ints and, presumably, large
    files. uname -p = "m68k", -m = "sun3". 29 Mar 2006.
 
-Dev.17
+    Dev.17
 
    Added large file/integer support to SHOW FEATURES. ckuus5.c, 27 Mar
    2006.
@@ -8671,7 +8924,7 @@ struct {
    Patches from Mark Sapiro to suppress getsockopt() and getsockname()
    warnings in Mac OS X. ckcnet.[ch], 18 Mar 2006.
 
-Dev.16
+    Dev.16
 
    Got access to AIX 5.3, built there, all OK, including large files. 13
    Mar 2006.
@@ -8698,7 +8951,7 @@ Dev.16
    (hpux1000o+openssl-nozlib) for no Zlib since these boxes did not have
    it installed. makefile, 9 Mar 2006.
 
-Dev.14
+    Dev.14
 
    The reason Kermit was looping on directories in IRIX was a classic
    "double-ended break". The makefile targets failed to define DIRENT so
@@ -8732,7 +8985,7 @@ Dev.14
    new path into the guts of the parser, since comments are normally
    stripped at a very low level. ckuus[r2].c, ckucmd.c, 24 Feb 2006.
 
-Dev.14
+    Dev.14
 
    Changed the new NetBSD target names to be consistent with the
    conventions used in most other targets:
@@ -8752,15 +9005,18 @@ Dev.14
    /kermit/incoming. The file name is "jsk-patch-for-cku211.diff". I have
    also included the patch as ASCII text in this email below. This patch
    may be applied to the cku211.tar.gz source code via:
+
 cd cku211, patch -p1 <../jsk-patch-for-cku211.diff
 
    The patch adds 4 new build targets:
+
   netbsdwoc - a stripped no curses target for iksd used.
   netbsdse  - security enhanced target with srp, ssl, and zlib.
   irix65gcc - build on SGI Irix 6.5 platform using gcc.
   irix65se  - security enhanced target with srp, ssl, and zlib.
 
    The patch fixes one build target:
+
   irix64gcc - The "-s" option is not supported by gcc under Irix.
 
    I thank all of you in the Kermit Project for such a fine utility. I
@@ -8775,7 +9031,7 @@ cd cku211, patch -p1 <../jsk-patch-for-cku211.diff
    Further attempts at SSL/TLS message suppression when QUIET is ON.
    ck_ssl.c, 16 Feb 2006.
 
-Dev.13
+    Dev.13
 
    Satisfied myself that LFS is OK on Solaris 10 i386, and I'm going to
    assume it's also OK on Solaris 9. Made LFS standard for all Solaris 9
@@ -8789,7 +9045,7 @@ Dev.13
    Fixed a signed/unsigned char warning in the new boundspair() calling
    code in the compact substring notation handler. ckuus4.c, 9 Feb 2006.
 
-Dev.12
+    Dev.12
 
    Built OK on FreeBSD 6.1 on AMD64. Adjusted some copyrights and date
    stamps. ckcmai.c, makefile, 8 Feb 2006.
@@ -8861,7 +9117,7 @@ Dev.12
    like long integers in switch expressions. Changed three examples of
    these in the S-expression code. ckuus3.c, 10 Jan 2006.
 
-Dev.11
+    Dev.11
 
    Made a pure 32-bit build on SCO UnixWare 7.1.4, all OK. Found that this
    version also supports LFS, added it to the uw7 target. makefile, 9 Jan
@@ -9050,7 +9306,7 @@ while ( open connection && not flag ) {
    ck_ssl.h, ckcdeb.h, ckcftp.c, ckcmai.c, ckcnet.c, ckcnet.h, ckctel.c,
    ckuat2.h, ckuus4.c, ckuus7.c, ckuusr.c, 30 Dec 2005.
 
-Dev.10
+    Dev.10
 
    Built and tested on Red Hat AS4 AMD X86_64, used it to upload new
    sources to FreeBSD 4.11. Built on FreeBSD 4.11/i386. Here's another one
@@ -9258,7 +9514,7 @@ if (result != fpresult) fpflag++;
    course, is a big deal, so for now I just don't define HTTP_BUFFERING
    for Windows. ckcnet.c, 15 Dec 2005.
 
-Dev.09
+    Dev.09
 
    The problem with HTTP downloads is that Kermit always does
    single-character read() or socket_read() calls (or the SSL equivalent);
@@ -9297,7 +9553,7 @@ Dev.09
    Fixed a typo in the non-ANSIC definition of ckfstoa(). ckclib.c, 7 Dec
    2005.
 
-Dev.08
+    Dev.08
 
    Added another debug() statement in FTP secure_getbyte() to see what's
    going on with Muhamad Taufiq Tajuddin's 205-byte-per-second FTP/SSL
@@ -9329,7 +9585,7 @@ Dev.08
    original netbsd target was ancient. Renamed it to netbsd-old. makefile,
    3 Dec 2005.
 
-Dev.07
+    Dev.07
 
    Built OK on VMS 7.2-1 with MultiNet 4.4. Built with and without OpenSSL
    on Linux OK, ditto Solaris 9. Built OK on RH Linux AS4 on X86_64
@@ -9465,13 +9721,13 @@ if flag (handle success)
    resolve to whatever each platform uses for file sizes and offsets.
    ckcdeb.h, 17 Nov 2005.
 
-Dev.06
+    Dev.06
 
    Added a debug() statement in FTP secure_getbyte() to see what's going
    on with Muhamad Taufiq Tajuddin's 205-byte-per-second FTP/SSL
    downloads.
 
-Dev.05
+    Dev.05
 
    Added NOLONGLONG for SV68. ckcdeb.h, 11 Nov 2005.
 
@@ -9512,7 +9768,7 @@ Dev.05
    Dev.04 didn't actually contain Jeff's data-type changes to shofeat(), I
    think I saved the wrong buffer in EMACS... Fixed now. 27 Oct 2005.
 
-Dev.04
+    Dev.04
 
    Testing revealed there was still a problem with SWITCH case labels that
    were variables that expanded into long strings. Turns out that I was
@@ -9555,7 +9811,7 @@ Dev.04
    Fixed a compiler warning in a debug() statement in zzstring() by adding
    parens. ckuus4.c, 24 Oct 2005.
 
-Dev.03
+    Dev.03
 
    Found and corrected some misplaced #ifdefs in shofeat(), ckuus5.c, 23
    Oct 2005.
@@ -9758,7 +10014,7 @@ if match T01011-00856-21-632-073 *[a-z] { echo GOOD } else { echo BAD }
      * Be sure to suppress herald if started with -q, ckuus7.c.
      * Fix ssh command-line switches, ckuusy.c.
 
-Dev.02: 27 Aug 2005
+    Dev.02: 27 Aug 2005
 
    Discovered that VMS C-Kermit on Alpha and IA64 is a 32-bit application;
    sizeof(long) == sizeof(char *) == 4. Tried adding /POINTER_SIZE=64 to
@@ -9799,6 +10055,7 @@ Dev.02: 27 Aug 2005
    definition section. ckcdeb.h, 27 Aug 2005.
 
    Now to check the effects on other builds...
+
   Linux on AMD64: ok.
   Linux on IA64: ok.
   Linux on i386: ok.
@@ -10336,7 +10593,7 @@ xx one two three four
 
    Removed "wermit" from "make clean" (how did it get there?). makefile.
 
-8.0.211
+    8.0.211
 
    Removed Beta designation, released as 8.0.211, 10 Apr 2004.
 
@@ -10448,10 +10705,10 @@ xx one two three four
    soon, but let's get a good stable 8.0.211 release out first! Meanwhile,
    for future reference, here are a few articles:
 
- General:  [99]http://freshmeat.net/articles/view/709/
- Linux:    [100]http://www.ece.utexas.edu/~luo/linux_lfs.html
- HP-UX:    [101]http://devrsrc1.external.hp.com/STK/partner/lg_files.pdf
- Solaris:  [102]http://wwws.sun.com/software/whitepapers/wp-largefiles/largefile
+ General:  [109]http://freshmeat.net/articles/view/709/
+ Linux:    [110]http://www.ece.utexas.edu/~luo/linux_lfs.html
+ HP-UX:    [111]http://devrsrc1.external.hp.com/STK/partner/lg_files.pdf
+ Solaris:  [112]http://wwws.sun.com/software/whitepapers/wp-largefiles/largefile
 s.pdf
 
    From Jeff, 14 Mar 2004:
@@ -10974,7 +11231,7 @@ s.pdf
    Unix, VMS, WIndows, and OS/2.
 
    The FTP file facts fix came from first exposure to the new OpenBSD FTP
-   server: [103]ftp://ftp7.usa.openbsd.org/pub/os/OpenBSD/3.3/i386/ The
+   server: [113]ftp://ftp7.usa.openbsd.org/pub/os/OpenBSD/3.3/i386/ The
    period in "UNIX.mode" caused an erroneous word break, adding junk to
    the filename.
 
@@ -11013,6 +11270,7 @@ s.pdf
    statements.
 
    Files of mine that Jeff hadn't picked up:
+
   ckuver.h ckcftp.c ckutio.c ckuusx.c (just minor changes for last build-all)
 
    On 4 Jan 2003, SET RECEIVE MOVE-TO was changed to convert its argument
@@ -11040,7 +11298,7 @@ s.pdf
    From Mark Sapiro, a fix for the March 17th doublequote fix, getncm():
    ckuus5.c, 4 Apr 2003.
 
-8.0.209
+    8.0.209
 
    Changed since 208: makefile ckuver.h ckcmai.c ckclib.c ckcftp.c
    ckucmd.c ckuus*.c ckutio.c.
@@ -11187,7 +11445,7 @@ s.pdf
      * freebsd50+openssl target: makefile.
      * FTP PUT /PERMISSIONS error message for K95: ckcftp.c.
 
-8.0.208
+    8.0.208
 
    C-Kermit 8.0.208 dated 14 March 2003 released on 10 March 2003.
 
@@ -11206,6 +11464,7 @@ s.pdf
 while ((n--) && xx_inc(2) > -1) ;
 
    to:
+
 while ((n--) && xx_inc(2) >= 0) ;
 
    to suppress the "...is being compared with a relational operator to a
@@ -11394,7 +11653,7 @@ while ((n--) && xx_inc(2) >= 0) ;
    ---------------------------------
    **************************
 
-   [[104]Go to top]
+   [[114]Go to top]
      __________________________________________________________________
 
    Updates to C-Kermit, versions 8.0, 9.0, and 10.0
@@ -11415,93 +11674,103 @@ References
   12. file:///whatsnew.html
   13. file:///about.html
   14. file:///archive.html
-  15. file:///net/u/1/f/fdc/web/ckupdates.html#ck90302
-  16. file:///net/u/1/f/fdc/web/ckdaily.html
-  17. file:///net/u/1/f/fdc/web/ck10devbuilds.html
-  18. file:///net/u/1/f/fdc/web/ckw10beta.html
-  19. mailto:fdc@columbia.edu
-  20. file:///net/u/1/f/fdc/web/ck10devbuilds.html#buildstable
-  21. http://columbia.edu/~fdc/
-  22. http://kermitproject.org/
-  23. file:///net/u/1/f/fdc/web/ckbindex
-  24. https://kermitproject.org/ftp/kermit/changelogs/
-  25. https://kermitproject.org/ftp/kermit/ckermit/
-  26. file:///net/u/1/f/fdc/web/html.html
-  27. file:///net/u/1/f/fdc/web/ftp/kermit/pretest/
+  15. http://columbia.edu/~fdc/
+  16. http://kermitproject.org/
+  17. file:///net/u/1/f/fdc/web/ckupdates.html#ck90302
+  18. file:///net/u/1/f/fdc/web/ckdaily.html
+  19. file:///net/u/1/f/fdc/web/ck10devbuilds.html
+  20. file:///net/u/1/f/fdc/web/ckw10beta.html
+  21. mailto:fdc@columbia.edu
+  22. file:///net/u/1/f/fdc/web/ck10devbuilds.html#buildstable
+  23. https://kermitproject.org/ftp/kermit/pretest/
+  24. file:///net/u/1/f/fdc/web/ckbindex
+  25. https://kermitproject.org/ftp/kermit/changelogs/
+  26. https://kermitproject.org/ftp/kermit/ckermit/
+  27. file:///net/u/1/f/fdc/web/html.html
   28. http://www.ext.zx.net.nz/software/notes/kermit95/#updates"
-  29. file:///net/u/1/f/fdc/web/ckupdates.html#star_s_plus_plus
-  30. http://www.ext.zx.net.nz/software/notes/kermit95/#updates
-  31. file:///net/u/1/f/fdc/web/ckupdates.html#glibcconflicts
-  32. https://www.alpinelinux.org/
-  33. https://musl.libc.org/
-  34. https://www.kermitproject.org/kpackets.html
-  35. https://www.kermitproject.org/ftp/kermit/test/tar/
-  36. https://www.kermitproject.org/ftp/kermit/test/tar/
-  37. file:///net/u/1/f/fdc/web/ckw10beta.html
-  38. http://zx.net.nz/
-  39. file:///net/u/1/f/fdc/web/unix.html
-  40. https://www.lysator.liu.se/c/bwk-tutor.html
-  41. https://vmssoftware.com/products/ssl3/
-  42. file:///net/u/1/f/fdc/web/ckupdates.html#ck10changes
-  43. file:///net/u/1/f/fdc/web/ckupdates.html#ck10summary
-  44. file:///net/u/1/f/fdc/web/ck10devbuilds.html#ck90305a07
-  45. file:///net/u/1/f/fdc/web/ck90tables.html
-  46. file:///net/u/1/f/fdc/web/ck90tables.html
-  47. file:///net/u/1/f/fdc/web/k95.html
-  48. file:///net/u/1/f/fdc/web/k95sourcecode.html
-  49. https://kermitproject.org/ckdaily.html
-  50. http://www.columbia.edu/cu/computinghistory/cudec20.html
-  51. file:///net/u/1/f/fdc/web/ckupdates.html#sendpacketlen
-  52. file:///net/u/1/f/fdc/web/ckermit80.html#x9
-  53. https://www.kermitproject.org/ftp/kermit/scripts/easter2
-  54. file:///net/u/1/f/fdc/web/ckupdates.html#alpha01
-  55. https://www.kermitproject.org/ftp/kermit/ckermit/android.txt
-  56. https://www.kermitproject.org/ftp/kermit/ckermit/android.mk
-  57. file:///net/u/1/f/fdc/web/unix.html
-  58. file:///net/u/1/f/fdc/web/html.html
-  59. file:///net/u/1/f/fdc/web/change.html
-  60. file:///net/u/1/f/fdc/web/ckupdates.html#pendingissues
-  61. file:///net/u/1/f/fdc/web/ckupdates.html#dev23
-  62. file:///net/u/1/f/fdc/web/locale.html
-  63. file:///net/u/1/f/fdc/web/remind.html
-  64. file:///net/u/1/f/fdc/web/ckermit80.html#x9
-  65. file:///net/u/1/f/fdc/web/photogallery.html
-  66. file:///net/u/1/f/fdc/web/photogallery.html
-  67. https://kermitproject.org/ftp/kermit/scripts/renamejpgs
-  68. file:///net/u/1/f/fdc/web/photogallery.html
-  69. file:///net/u/1/f/fdc/web/remind.html
-  70. file:///net/u/1/f/fdc/web/k95.html
-  71. file:///net/u/1/f/fdc/web/k95sourcecode.html
-  72. file:///net/u/1/f/fdc/web/ckupdates.html#dev24
-  73. file:///net/u/1/f/fdc/web/ckupdates.html#ck90302
-  74. file:///net/u/1/f/fdc/web/ckdaily.html#changelog
-  75. file:///net/u/1/f/fdc/web/ckdaily.html
-  76. https://kermitproject.org/ckermit80.html#x6.6
-  77. https://en.wikipedia.org/wiki/Glibc
-  78. file:///net/u/1/f/fdc/web/ck70.html
-  79. file:///net/u/1/f/fdc/web/unix.html
-  80. file:///net/u/1/f/fdc/web/iksd.html
-  81. https://www.kermitproject.org/uiksd.html#x4.1
-  82. file:///net/u/1/f/fdc/web/ascii.html
-  83. file:///net/u/1/f/fdc/web/k95sourcecode.html
-  84. file:///net/u/1/f/fdc/web/ckermit90.html#Vareval
-  85. https://www.kermitproject.org/ck90305table.html
-  86. file:///net/u/1/f/fdc/web/k95sourcecode.html
-  87. file:///net/u/1/f/fdc/web/ckupdates.html#tgetent
-  88. file:///net/u/1/f/fdc/web/photogallery.html
-  89. https://wiki.debian.org/Multiarch/Implementation
-  90. https://wiki.ubuntu.com/MultiarchSpec
-  91. https://wiki.debian.org/Multiarch/HOWTO
-  92. http://tim.sneddon.id.au/blog/Posts/C-Kermit_for_Android
-  93. http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-3767)
-  94. http://www.columbia.edu/kermit/ftp/test/tar/x.zip
-  95. http://www.mseclab.com/?p=180
-  96. http://www.theregister.co.uk/2009/07/30/universal_ssl_certificate/
-  97. http://kermit.columbia.edu/security.html
-  98. http://zssh.sourceforge.net/
-  99. http://freshmeat.net/articles/view/709/
- 100. http://www.ece.utexas.edu/~luo/linux_lfs.html
- 101. http://devrsrc1.external.hp.com/STK/partner/lg_files.pdf
- 102. http://wwws.sun.com/software/whitepapers/wp-largefiles/largefiles.pdf
- 103. ftp://ftp7.usa.openbsd.org/pub/os/OpenBSD/3.3/i386/
- 104. file:///net/u/1/f/fdc/web/ckupdates.html#top
+  29. file:///net/u/1/f/fdc/web/ckw10beta.html
+  30. https://en.wikipedia.org/wiki/FTPS
+  31. https://boldvan.com/
+  32. https://wiki.openssl.org/index.php/SSL_and_TLS_Protocols
+  33. https://www.rfc-editor.org/rfc/rfc7568
+  34. http://www.google.com/search?q=sftp+servers
+  35. https://ubuntu.com/server/docs/service-ftp
+  36. https://www.cerberusftp.com/
+  37. https://en.wikipedia.org/wiki/C99
+  38. https://www.kermitproject.org/ckpatches/filelist.html
+  39. file:///net/u/1/f/fdc/web/ckupdates.html#star_s_plus_plus
+  40. http://www.ext.zx.net.nz/software/notes/kermit95/#updates
+  41. file:///net/u/1/f/fdc/web/ckupdates.html#glibcconflicts
+  42. https://www.alpinelinux.org/
+  43. https://musl.libc.org/
+  44. https://www.kermitproject.org/kpackets.html
+  45. https://www.kermitproject.org/ftp/kermit/test/tar/
+  46. https://www.kermitproject.org/ftp/kermit/test/tar/
+  47. file:///net/u/1/f/fdc/web/ckw10beta.html
+  48. http://zx.net.nz/
+  49. file:///net/u/1/f/fdc/web/unix.html
+  50. https://www.lysator.liu.se/c/bwk-tutor.html
+  51. https://vmssoftware.com/products/ssl3/
+  52. file:///net/u/1/f/fdc/web/ckupdates.html#ck10changes
+  53. file:///net/u/1/f/fdc/web/ckupdates.html#ck10summary
+  54. file:///net/u/1/f/fdc/web/ck10devbuilds.html#ck90305a07
+  55. file:///net/u/1/f/fdc/web/ck90tables.html
+  56. file:///net/u/1/f/fdc/web/ck90tables.html
+  57. file:///net/u/1/f/fdc/web/k95.html
+  58. file:///net/u/1/f/fdc/web/k95sourcecode.html
+  59. https://kermitproject.org/ckdaily.html
+  60. http://www.columbia.edu/cu/computinghistory/cudec20.html
+  61. file:///net/u/1/f/fdc/web/ckupdates.html#sendpacketlen
+  62. file:///net/u/1/f/fdc/web/ckermit80.html#x9
+  63. https://www.kermitproject.org/ftp/kermit/scripts/easter2
+  64. file:///net/u/1/f/fdc/web/ckupdates.html#alpha01
+  65. https://www.kermitproject.org/ftp/kermit/ckermit/android.txt
+  66. https://www.kermitproject.org/ftp/kermit/ckermit/android.mk
+  67. file:///net/u/1/f/fdc/web/unix.html
+  68. file:///net/u/1/f/fdc/web/html.html
+  69. file:///net/u/1/f/fdc/web/change.html
+  70. file:///net/u/1/f/fdc/web/ckupdates.html#pendingissues
+  71. file:///net/u/1/f/fdc/web/ckupdates.html#dev23
+  72. file:///net/u/1/f/fdc/web/locale.html
+  73. file:///net/u/1/f/fdc/web/remind.html
+  74. file:///net/u/1/f/fdc/web/ckermit80.html#x9
+  75. file:///net/u/1/f/fdc/web/photogallery.html
+  76. file:///net/u/1/f/fdc/web/photogallery.html
+  77. https://kermitproject.org/ftp/kermit/scripts/renamejpgs
+  78. file:///net/u/1/f/fdc/web/photogallery.html
+  79. file:///net/u/1/f/fdc/web/remind.html
+  80. file:///net/u/1/f/fdc/web/k95.html
+  81. file:///net/u/1/f/fdc/web/k95sourcecode.html
+  82. file:///net/u/1/f/fdc/web/ckupdates.html#dev24
+  83. file:///net/u/1/f/fdc/web/ckupdates.html#ck90302
+  84. file:///net/u/1/f/fdc/web/ckdaily.html#changelog
+  85. file:///net/u/1/f/fdc/web/ckdaily.html
+  86. https://kermitproject.org/ckermit80.html#x6.6
+  87. https://en.wikipedia.org/wiki/Glibc
+  88. file:///net/u/1/f/fdc/web/ck70.html
+  89. file:///net/u/1/f/fdc/web/unix.html
+  90. file:///net/u/1/f/fdc/web/iksd.html
+  91. https://www.kermitproject.org/uiksd.html#x4.1
+  92. file:///net/u/1/f/fdc/web/ascii.html
+  93. file:///net/u/1/f/fdc/web/k95sourcecode.html
+  94. file:///net/u/1/f/fdc/web/ckermit90.html#Vareval
+  95. https://www.kermitproject.org/ck90305table.html
+  96. file:///net/u/1/f/fdc/web/k95sourcecode.html
+  97. file:///net/u/1/f/fdc/web/ckupdates.html#tgetent
+  98. file:///net/u/1/f/fdc/web/photogallery.html
+  99. https://wiki.debian.org/Multiarch/Implementation
+ 100. https://wiki.ubuntu.com/MultiarchSpec
+ 101. https://wiki.debian.org/Multiarch/HOWTO
+ 102. http://tim.sneddon.id.au/blog/Posts/C-Kermit_for_Android
+ 103. http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-3767)
+ 104. http://www.columbia.edu/kermit/ftp/test/tar/x.zip
+ 105. http://www.mseclab.com/?p=180
+ 106. http://www.theregister.co.uk/2009/07/30/universal_ssl_certificate/
+ 107. http://kermit.columbia.edu/security.html
+ 108. http://zssh.sourceforge.net/
+ 109. http://freshmeat.net/articles/view/709/
+ 110. http://www.ece.utexas.edu/~luo/linux_lfs.html
+ 111. http://devrsrc1.external.hp.com/STK/partner/lg_files.pdf
+ 112. http://wwws.sun.com/software/whitepapers/wp-largefiles/largefiles.pdf
+ 113. ftp://ftp7.usa.openbsd.org/pub/os/OpenBSD/3.3/i386/
+ 114. file:///net/u/1/f/fdc/web/ckupdates.html#top
