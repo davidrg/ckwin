@@ -9,7 +9,7 @@ on:
 
 env:
   # Expected filename: https://zlib.net/zlib-${{env.ZLIB_VERSION}}.tar.gz
-  ZLIB_VERSION: 1.2.12
+  ZLIB_VERSION: 1.2.13
   # Expected filename: https://www.openssl.org/source/openssl-${{env.OPENSSL_VERSION}}.tar.gz
   OPENSSL_VERSION: 1.1.1q
   # Exoected filename: ${{env.LIBSSH_SOURCE}}libssh-${{env.LIBSSH_VERSION}}.tar.xz
