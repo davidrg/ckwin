@@ -18,6 +18,7 @@
     Wed Aug 31 15:46:35 2022 (to disable TYPE /INTERPRET in Windows)
     Tue Sep 20 15:40:49 2022 (for COPY /TOSCREEN and /INTERPRET)
     Fri Sep 23 16:40:42 2022 (corrections from David Goodwin)
+    Wed Oct  5 14:44:10 2022 (fixed "dir filespec1 filespec2 filespec3.." -fdc)
 */
 
 /* Includes */
@@ -5761,6 +5762,8 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
   Command is TOUCH and file doesn't exist.
 */
     if (touch) {			/* TOUCH */
+        s = line;                       /* fdc - 5 October 2022 */
+
 	if ((cmresult.fcode == _CMIFI && zchki(s) == (CK_OFF_T)-1)) {
 	    FILE * fp;
 	    s = brstrip(s);
@@ -5798,13 +5801,13 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 	    }
 	}
     } else
-
     if (cmresult.fcode != _CMIFI) {     /* Nothing matched */
 	/*
 	  Note - this never gets executed because after the "begin
 	  multiple" hack above, the result is always _CMIFI).
 	*/
         char * m;
+
 	if (*s == '/')
 #ifdef UNIXOROSK
 	  m = "does not match switch or name of accessible file";
@@ -5828,7 +5831,7 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
 #else
     wild = 0;
 #endif	/* COMMENT */
-
+    debug(F111,"domydir cmifi2",s,wild);
     if (outfile[0]) {			/* If an output file was specified */
         ofp = fopen(outfile,"w");       /* open it */
         if (!ofp) {
@@ -5904,12 +5907,14 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
   to changing the timestamps of existing files -- it can only do one file
   at a time.
 */
+        if (!touch && !change) s = name; /* fdc - 5 October 2022 */
 	nzxopts = (show == ZX_DIRONLY) ? ZX_DIRONLY :
 	  (show == ZX_FILONLY ? ZX_FILONLY : 0);
 	if (matchdot)  nzxopts |= ZX_MATCHDOT;
 	if (recursive) nzxopts |= ZX_RECURSE;
 	x = nzxpand(s,nzxopts);             /* Expand file list */
 	debug(F111,"domydir nzxpand",s,x);
+	debug(F111,"999 domydir nzxpand result",s,x);
 #ifdef ZXREWIND
     }
 #endif /* ZXREWIND */
