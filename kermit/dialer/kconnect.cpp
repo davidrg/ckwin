@@ -2422,6 +2422,87 @@ Event( const UI_EVENT & event )
 	   retval = UIW_WINDOW::Event( event ) ;
            break;
        }
+#ifdef WM_CONTEXTMENU
+       /* 2022-11-06 DavidG
+        * For some reason the context menu broke sometime after Kermit 95
+        * v2.1.2. The code I'm starting with *should* be what was used to build
+        * the final commercial release of Kermit 95 but perhaps its not 100%
+        * identical and a bug crept in?
+        *
+        * Or perhaps its an OpenZinc issue. The Dialer was previously built with
+        * Zinc 4.2 - maybe OpenZinc 1.0 changed something which broke
+        * WM_RBUTTONDOWN events being forwarded to list items? I diffed all the
+        * OpenZinc 1.0 code against the Zinc 4.2 code previously used to build
+        * the dialer and I don't see anything significant.
+        *
+        * So I have *no idea* why it stopped working. But fine, WM_RBUTTONDOWN
+        * is the wrong event to be listening for to trigger a context menu on
+        * 32bit windows anyway - WM_CONTEXTMENU is what we should be doing. So
+        * thats why all this code here:
+        */
+
+/* These *should* come from the windows header but for whatever reason that
+ * isn't guaranteed. */
+#ifndef GET_X_LPARAM
+#define GET_X_LPARAM(lp) ((int)(short)LOWORD(lp))
+#endif
+#ifndef GET_Y_LPARAM
+#define GET_Y_LPARAM(lp) ((int)(short)HIWORD(lp))
+#endif
+       case WM_CONTEXTMENU: {
+           UIW_VT_LIST * list = (UIW_VT_LIST *) Get( LIST_ENTRIES ) ;
+
+           POINT p = {
+               GET_X_LPARAM(event.message.lParam),
+               GET_Y_LPARAM(event.message.lParam)
+           };
+           ScreenToClient(list->screenID, &p);
+           UI_POSITION position = { p.x, p.y };
+
+           for (KD_LIST_ITEM *item = (KD_LIST_ITEM*)list->First(); item; item = (KD_LIST_ITEM*)item->Next())
+           {
+               int idx = list->Index(item);
+
+               // After a context menu is opened for the first time, the
+               // trueRegion value gets corrupted for every list item preventing
+               // item->trueRegion.Overlap(position) from working. I've spent
+               // a bunch of time and I have absolutely no idea why it's broken
+               // or what the correct solution is. But at the end of the day
+               // there is a Win32 list box under the UIW_VT_LIST object (on
+               // windows) so we'll just get the correct coordinates from
+               // Windows and fix up Zincs numbers so that the context menu
+               // works more than once:
+               RECT rect;
+               SendMessage(list->screenID, LB_GETITEMRECT, idx, (LPARAM)&rect);
+               item->trueRegion.left = rect.left;
+               item->trueRegion.top = rect.top;
+               item->trueRegion.right = rect.right;
+               item->trueRegion.bottom = rect.bottom;
+
+               if (item->trueRegion.Overlap(position) &&
+                    !FlagSet(item->woFlags, WOF_NON_SELECTABLE))
+               {
+                   // Before we show the context menu, the list item we're doing
+                   // a context menu for must be selected. In Zinc, we do this:
+                   list->SetCurrent(item);
+
+                   // Problem is, that won't take effect until *after* the
+                   // context menu is displayed and the user either selects an
+                   // option or dismisses it. Its kind fo weird having the list
+                   // item appear selected *after* the context menu, so we'll
+                   // reach around and tell Windows to go ahead and do the
+                   // select right now so it appears selected when the context
+                   // menu appears:
+                   SendMessage(list->screenID, LB_SETCURSEL, idx, NULL);
+
+                   item->ShowContextMenu(GET_X_LPARAM(event.message.lParam),
+                                           GET_Y_LPARAM(event.message.lParam));
+                   retval = UIW_WINDOW::Event( event ) ;
+                   break;
+               }
+           }
+       }
+#endif /* WM_CONTEXTMENU */
 #endif /* WIN32 */
        case OPT_KERMIT_SUCCESS:
 	   break;
@@ -2911,6 +2992,7 @@ Event( const UI_EVENT & event )
        break;
 
    default:
+       printf("fallthrough %d\n", event.type);
        retval = UIW_WINDOW::Event(event) ;
    }	
     return retval ; 

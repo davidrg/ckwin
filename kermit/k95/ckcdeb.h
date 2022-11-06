@@ -1449,6 +1449,7 @@ extern int mac_getchar (void);
 #endif /* MAC */
 
 #ifdef OS2
+#ifndef CKODIALER
 #define printf Vscrnprintf
 #define fprintf Vscrnfprintf
 extern int Vscrnprintf(const char *, ...);
@@ -1459,6 +1460,7 @@ extern int Vscrnfprintf(FILE *, const char *, ...);
 #endif /* putchar */
 #define putchar(x) Vscrnprintf("%c",x)
 #define perror(x)  Vscrnperror(x)
+#endif /* CKODIALER */
 #endif /* OS2 */
 
 #ifndef CKWART_C

@@ -280,6 +280,8 @@ public:
 
    void ConvertModemInfo(void);
 
+   void ShowContextMenu(int left, int top);
+
    // --- Window object members ---
    virtual ZIL_ICHAR *ClassName(void) { return (_className); }
 

@@ -17,6 +17,13 @@
 #undef COMMENT
 #endif
 
+#ifndef GET_X_LPARAM
+#define GET_X_LPARAM(lp) ((int)(short)LOWORD(lp))
+#endif
+#ifndef GET_Y_LPARAM
+#define GET_Y_LPARAM(lp) ((int)(short)HIWORD(lp))
+#endif
+
 extern "C" {
 #include "ckcdeb.h"             /* Typedefs, debug formats, etc */
 #include "ckucmd.h"
@@ -3233,185 +3240,42 @@ KD_LIST_ITEM :: Event( const UI_EVENT & event )
     switch ( event.type ) {
 #ifdef WIN32
     case E_MSWINDOWS:
-	if ( event.message.message == WM_RBUTTONDOWN ) {
+        /* 2022-11-06 DavidG:
+         *   This no longer appears to work. The WM_RBUTTONDOWN never gets this
+         *   far anymore. Don't know if its a bug in OpenZinc 1.0, or some
+         *   change elsewhere in the Dialer made between the final commercial
+         *   Kermit 95 release and the dialers open-sourcing. Whatever the
+         *   cause, this code appears dead now. The context menu is now
+         *   triggered in response to WM_CONTEXTMENU in kconnect.cpp, function:
+         *   EVENT_TYPE K_CONNECTOR::
+         *   Event( const UI_EVENT & event ).
+         */
+	if ( event.message.message == WM_RBUTTONDOWN || event.message.message == WM_CONTEXTMENU) {
 #ifndef COMMENT
             UIW_VT_LIST * list = (UIW_VT_LIST *) connector->Get( LIST_ENTRIES ) ; 
             list->SetCurrent( this );
 
             UI_WINDOW_OBJECT * obj = this;
-            int left = event.position.column + trueRegion.left;
-            int top = event.position.line;
-            for (; obj->parent ; obj = obj->parent );
-			left += obj->trueRegion.left;
-			top += obj->trueRegion.top;
- 
-            UI_WINDOW_OBJECT * obj2 = obj->Get( MENU );
-			top += obj2->relative.bottom - obj2->relative.top;
-            UI_WINDOW_OBJECT * obj3 = obj->Get( TOOL_BAR );
-			top += obj3->relative.bottom - obj3->relative.top;
-            UI_WINDOW_OBJECT * obj4 = obj->Get( STATUS_BAR );
-			top += obj4->relative.bottom - obj4->relative.top;
+            int left, top;
+            if (event.message.message == WM_CONTEXTMENU) {
+                left = GET_X_LPARAM(event.message.lParam);
+                top = GET_Y_LPARAM(event.message.lParam);
+            } else {
+                left = event.position.column + trueRegion.left;
+                top = event.position.line;
+                for (; obj->parent ; obj = obj->parent );
+                left += obj->trueRegion.left;
+                top += obj->trueRegion.top;
 
-            UIW_POP_UP_MENU *popup;
-            UIW_POP_UP_ITEM *edit, *generate, *item;
-            popup = new UIW_POP_UP_MENU(left, top, WNF_NO_FLAGS, WOF_NO_FLAGS, WOAF_NO_FLAGS);
-            popup->woStatus |= WOS_GRAPHICS;
-            popup->woAdvancedFlags |= WOAF_TEMPORARY;
+                UI_WINDOW_OBJECT * obj2 = obj->Get( MENU );
+                top += obj2->relative.bottom - obj2->relative.top;
+                UI_WINDOW_OBJECT * obj3 = obj->Get( TOOL_BAR );
+                top += obj3->relative.bottom - obj3->relative.top;
+                UI_WINDOW_OBJECT * obj4 = obj->Get( STATUS_BAR );
+                top += obj4->relative.bottom - obj4->relative.top;
+            }
 
-            popup->Add(item = new UIW_POP_UP_ITEM("Add", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                            WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
-                                            10000));
-            popup->Add(item = new UIW_POP_UP_ITEM("Clone", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                            WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
-                                            10001));
-            if ( !_template ) {
-                popup->Add(item = new UIW_POP_UP_ITEM("Connect", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                            WNF_NO_FLAGS, 
-                                            (ZIL_USER_FUNCTION) NULL,
-                                            10003));
-                //item->woFlags |= _template ? WOF_NON_SELECTABLE : 0;
-                //item->Information( I_CHANGED_FLAGS, NULL ) ;
-            }
-            edit = new UIW_POP_UP_ITEM("Edit", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                        WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
-                                        10008);
-            edit->Add(item = new UIW_POP_UP_ITEM("General", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                            WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
-                                            10138));
-            edit->Add(item = new UIW_POP_UP_ITEM("Terminal", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                            WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
-                                            10139));
-            edit->Add(item = new UIW_POP_UP_ITEM("File Transfer", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                            WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
-                                            10140));
-            if ( !(_access != PHONE && _access != DIRECT) ) {
-                edit->Add(item = new UIW_POP_UP_ITEM("Serial", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                                      WNF_NO_FLAGS, 
-                                                      (ZIL_USER_FUNCTION) NULL,
-                                                      10141));
-                // item->woFlags |= (_access != PHONE && _access != DIRECT) ? WOF_NON_SELECTABLE : 0;
-                // item->Information( I_CHANGED_FLAGS, NULL ) ;
-            }
-            if ( !(_access == PHONE || _access == SUPERLAT || _access == DIRECT || _access == SSH 
-                    || _access == SSH) ) {
-                edit->Add(item = new UIW_POP_UP_ITEM("Telnet", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                                      WNF_NO_FLAGS, 
-                                                      (ZIL_USER_FUNCTION) NULL,
-                                                      10142));
-                // item->woFlags |= (_access == PHONE || _access == SUPERLAT || _access == DIRECT) ? 
-                // WOF_NON_SELECTABLE : 0;
-                //item->Information( I_CHANGED_FLAGS, NULL ) ;
-            }
-            if ( _access == FTP ) {
-                edit->Add(item = new UIW_POP_UP_ITEM("FTP", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                           WNF_NO_FLAGS, 
-                                           (ZIL_USER_FUNCTION) NULL,
-                                           10170));
-                // item->woFlags |= _access != FTP ? WOF_NON_SELECTABLE : 0;
-                // item->Information( I_CHANGED_FLAGS, NULL ) ;
-            }
-            if ( _access == SSH && connector->_libeay_avail ) {
-                edit->Add(item = new UIW_POP_UP_ITEM("SSH", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                            WNF_NO_FLAGS, 
-                                           (ZIL_USER_FUNCTION) NULL,
-                                            10149));
-                // item->woFlags |= _access != SSH ? WOF_NON_SELECTABLE : 0;
-                // item->Information( I_CHANGED_FLAGS, NULL ) ;
-            }
-            if ( !(_access == PHONE || _access == SUPERLAT || _access == DIRECT) ) {
-                edit->Add(item = new UIW_POP_UP_ITEM("TCP/IP", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                                      WNF_NO_FLAGS, 
-                                                      (ZIL_USER_FUNCTION) NULL,
-                                                      10173));
-                // item->woFlags |= (_access == PHONE || _access == SUPERLAT || _access == DIRECT) ? 
-                // WOF_NON_SELECTABLE : 0;
-                //item->Information( I_CHANGED_FLAGS, NULL ) ;
-            }
-            if ( !(_access == PHONE || _access == SUPERLAT || _access == DIRECT) &&
-                 (connector->_krb5_avail || connector->_krb4_avail)) {
-                edit->Add(item = new UIW_POP_UP_ITEM("Kerberos", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                            WNF_NO_FLAGS, 
-                                           (ZIL_USER_FUNCTION) NULL,
-                                            10143));
-                // item->woFlags |=  (_access == PHONE || _access == SUPERLAT || _access == DIRECT) ? 
-                //     WOF_NON_SELECTABLE : 0;
-                // item->Information( I_CHANGED_FLAGS, NULL ) ;
-            }
-            if ( !(_access == PHONE || _access == SUPERLAT || _access == DIRECT) &&
-                 connector->_libeay_avail ) {
-                edit->Add(item = new UIW_POP_UP_ITEM("SSL/TLS", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                            WNF_NO_FLAGS, 
-                                           (ZIL_USER_FUNCTION) NULL,
-                                            10144));
-                // item->woFlags |=  (_access == PHONE || _access == SUPERLAT || _access == DIRECT) ? 
-                //   WOF_NON_SELECTABLE : 0;
-                // item->Information( I_CHANGED_FLAGS, NULL ) ;
-            }
-            edit->Add(item = new UIW_POP_UP_ITEM("Keyboard", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                            WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
-                                            10145));
-            edit->Add(item = new UIW_POP_UP_ITEM("Login", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                            WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
-                                            10146));
-            edit->Add(item = new UIW_POP_UP_ITEM("Printer", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                            WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
-                                            10147));
-            edit->Add(item = new UIW_POP_UP_ITEM("Logs", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                            WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
-                                            10148));
-#ifdef WIN32
-            edit->Add(item = new UIW_POP_UP_ITEM("GUI", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                           WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
-                                           10154));
-#endif /* WIN32 */
-            // item->woFlags = WOF_NON_SELECTABLE;
-            // item->Information( I_CHANGED_FLAGS, NULL ) ;
-            popup->Add(edit);
-            generate = new UIW_POP_UP_ITEM("Generate Script File", 
-                                           MNIF_NO_FLAGS, BTF_NO_3D,
-                                           WNF_NO_FLAGS, 
-                                           (ZIL_USER_FUNCTION) NULL,
-                                           0);
-            generate->Add(item = new UIW_POP_UP_ITEM("Connect", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                                  WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
-                                                  10039));
-            generate->Add(item = new UIW_POP_UP_ITEM("Location", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                                  WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
-                                                  11035));
-            if ( !_template ) {
-                generate->Add(item = new UIW_POP_UP_ITEM("Modem", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                                  WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
-                                                  11053));
-                // generate->woFlags |= _template ? WOF_NON_SELECTABLE : 0;
-                // generate->Information( I_CHANGED_FLAGS, NULL ) ;
-            }
-            popup->Add(generate);
-            K_STATUS * status = K_STATUS::Find(_name);
-            if ( status && status->_state != K_STATUS::IDLE ) {
-                popup->Add(item = new UIW_POP_UP_ITEM("Hangup", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                           WNF_NO_FLAGS, 
-                                           (ZIL_USER_FUNCTION) NULL,
-                                           10004));
-                // item->woFlags = (!status || status->_state == K_STATUS::IDLE) ? WOF_NON_SELECTABLE : 0;
-                // item->Information( I_CHANGED_FLAGS, NULL ) ;
-            }
-            if ( _userdefined ) {
-                popup->Add(item = new UIW_POP_UP_ITEM("Remove", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                            WNF_NO_FLAGS, 
-                                            (ZIL_USER_FUNCTION) NULL,
-                                            10002));
-                // item->woFlags |= !_userdefined ? WOF_NON_SELECTABLE : 0;
-                // item->Information( I_CHANGED_FLAGS, NULL );
-            }
-            if ( !_template ) {
-                popup->Add(item = new UIW_POP_UP_ITEM("Shortcut", MNIF_SEND_MESSAGE, BTF_NO_3D,
-                                            WNF_NO_FLAGS, 
-                                            (ZIL_USER_FUNCTION) NULL,
-                                            10089));
-                // item->woFlags |= _template ? WOF_NON_SELECTABLE : 0;
-                // item->Information( I_CHANGED_FLAGS, NULL ) ;
-            }
-            *windowManager + popup;
+            ShowContextMenu(left, top);
 #else
             retval = UIW_BUTTON::Event(event);
 #endif
@@ -3433,4 +3297,169 @@ KD_LIST_ITEM :: Event( const UI_EVENT & event )
     
     return retval ; 
 
+}
+
+void KD_LIST_ITEM :: ShowContextMenu(int left, int top) {
+
+    UIW_POP_UP_MENU *popup;
+    UIW_POP_UP_ITEM *edit, *generate, *item;
+    popup = new UIW_POP_UP_MENU(left, top, WNF_NO_FLAGS, WOF_NO_FLAGS, WOAF_NO_FLAGS);
+    popup->woStatus |= WOS_GRAPHICS;
+    popup->woAdvancedFlags |= WOAF_TEMPORARY;
+
+    popup->Add(item = new UIW_POP_UP_ITEM("Add", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                          WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
+                                          10000));
+    popup->Add(item = new UIW_POP_UP_ITEM("Clone", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                          WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
+                                          10001));
+    if ( !_template ) {
+        popup->Add(item = new UIW_POP_UP_ITEM("Connect", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                              WNF_NO_FLAGS,
+                                              (ZIL_USER_FUNCTION) NULL,
+                                              10003));
+        //item->woFlags |= _template ? WOF_NON_SELECTABLE : 0;
+        //item->Information( I_CHANGED_FLAGS, NULL ) ;
+    }
+    edit = new UIW_POP_UP_ITEM("Edit", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                               WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
+                               10008);
+    edit->Add(item = new UIW_POP_UP_ITEM("General", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                         WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
+                                         10138));
+    edit->Add(item = new UIW_POP_UP_ITEM("Terminal", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                         WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
+                                         10139));
+    edit->Add(item = new UIW_POP_UP_ITEM("File Transfer", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                         WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
+                                         10140));
+    if ( !(_access != PHONE && _access != DIRECT) ) {
+        edit->Add(item = new UIW_POP_UP_ITEM("Serial", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                             WNF_NO_FLAGS,
+                                             (ZIL_USER_FUNCTION) NULL,
+                                             10141));
+        // item->woFlags |= (_access != PHONE && _access != DIRECT) ? WOF_NON_SELECTABLE : 0;
+        // item->Information( I_CHANGED_FLAGS, NULL ) ;
+    }
+    if ( !(_access == PHONE || _access == SUPERLAT || _access == DIRECT || _access == SSH
+           || _access == SSH) ) {
+        edit->Add(item = new UIW_POP_UP_ITEM("Telnet", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                             WNF_NO_FLAGS,
+                                             (ZIL_USER_FUNCTION) NULL,
+                                             10142));
+        // item->woFlags |= (_access == PHONE || _access == SUPERLAT || _access == DIRECT) ?
+        // WOF_NON_SELECTABLE : 0;
+        //item->Information( I_CHANGED_FLAGS, NULL ) ;
+    }
+    if ( _access == FTP ) {
+        edit->Add(item = new UIW_POP_UP_ITEM("FTP", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                             WNF_NO_FLAGS,
+                                             (ZIL_USER_FUNCTION) NULL,
+                                             10170));
+        // item->woFlags |= _access != FTP ? WOF_NON_SELECTABLE : 0;
+        // item->Information( I_CHANGED_FLAGS, NULL ) ;
+    }
+    if ( _access == SSH && connector->_libeay_avail ) {
+        edit->Add(item = new UIW_POP_UP_ITEM("SSH", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                             WNF_NO_FLAGS,
+                                             (ZIL_USER_FUNCTION) NULL,
+                                             10149));
+        // item->woFlags |= _access != SSH ? WOF_NON_SELECTABLE : 0;
+        // item->Information( I_CHANGED_FLAGS, NULL ) ;
+    }
+    if ( !(_access == PHONE || _access == SUPERLAT || _access == DIRECT) ) {
+        edit->Add(item = new UIW_POP_UP_ITEM("TCP/IP", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                             WNF_NO_FLAGS,
+                                             (ZIL_USER_FUNCTION) NULL,
+                                             10173));
+        // item->woFlags |= (_access == PHONE || _access == SUPERLAT || _access == DIRECT) ?
+        // WOF_NON_SELECTABLE : 0;
+        //item->Information( I_CHANGED_FLAGS, NULL ) ;
+    }
+    if ( !(_access == PHONE || _access == SUPERLAT || _access == DIRECT) &&
+         (connector->_krb5_avail || connector->_krb4_avail)) {
+        edit->Add(item = new UIW_POP_UP_ITEM("Kerberos", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                             WNF_NO_FLAGS,
+                                             (ZIL_USER_FUNCTION) NULL,
+                                             10143));
+        // item->woFlags |=  (_access == PHONE || _access == SUPERLAT || _access == DIRECT) ?
+        //     WOF_NON_SELECTABLE : 0;
+        // item->Information( I_CHANGED_FLAGS, NULL ) ;
+    }
+    if ( !(_access == PHONE || _access == SUPERLAT || _access == DIRECT) &&
+         connector->_libeay_avail ) {
+        edit->Add(item = new UIW_POP_UP_ITEM("SSL/TLS", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                             WNF_NO_FLAGS,
+                                             (ZIL_USER_FUNCTION) NULL,
+                                             10144));
+        // item->woFlags |=  (_access == PHONE || _access == SUPERLAT || _access == DIRECT) ?
+        //   WOF_NON_SELECTABLE : 0;
+        // item->Information( I_CHANGED_FLAGS, NULL ) ;
+    }
+    edit->Add(item = new UIW_POP_UP_ITEM("Keyboard", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                         WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
+                                         10145));
+    edit->Add(item = new UIW_POP_UP_ITEM("Login", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                         WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
+                                         10146));
+    edit->Add(item = new UIW_POP_UP_ITEM("Printer", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                         WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
+                                         10147));
+    edit->Add(item = new UIW_POP_UP_ITEM("Logs", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                         WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
+                                         10148));
+#ifdef WIN32
+    edit->Add(item = new UIW_POP_UP_ITEM("GUI", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                           WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
+                                           10154));
+#endif /* WIN32 */
+    // item->woFlags = WOF_NON_SELECTABLE;
+    // item->Information( I_CHANGED_FLAGS, NULL ) ;
+    popup->Add(edit);
+    generate = new UIW_POP_UP_ITEM("Generate Script File",
+                                   MNIF_NO_FLAGS, BTF_NO_3D,
+                                   WNF_NO_FLAGS,
+                                   (ZIL_USER_FUNCTION) NULL,
+                                   0);
+    generate->Add(item = new UIW_POP_UP_ITEM("Connect", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                             WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
+                                             10039));
+    generate->Add(item = new UIW_POP_UP_ITEM("Location", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                             WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
+                                             11035));
+    if ( !_template ) {
+        generate->Add(item = new UIW_POP_UP_ITEM("Modem", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                                 WNF_NO_FLAGS, (ZIL_USER_FUNCTION) NULL,
+                                                 11053));
+        // generate->woFlags |= _template ? WOF_NON_SELECTABLE : 0;
+        // generate->Information( I_CHANGED_FLAGS, NULL ) ;
+    }
+    popup->Add(generate);
+    K_STATUS * status = K_STATUS::Find(_name);
+    if ( status && status->_state != K_STATUS::IDLE ) {
+        popup->Add(item = new UIW_POP_UP_ITEM("Hangup", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                              WNF_NO_FLAGS,
+                                              (ZIL_USER_FUNCTION) NULL,
+                                              10004));
+        // item->woFlags = (!status || status->_state == K_STATUS::IDLE) ? WOF_NON_SELECTABLE : 0;
+        // item->Information( I_CHANGED_FLAGS, NULL ) ;
+    }
+    if ( _userdefined ) {
+        popup->Add(item = new UIW_POP_UP_ITEM("Remove", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                              WNF_NO_FLAGS,
+                                              (ZIL_USER_FUNCTION) NULL,
+                                              10002));
+        // item->woFlags |= !_userdefined ? WOF_NON_SELECTABLE : 0;
+        // item->Information( I_CHANGED_FLAGS, NULL );
+    }
+    if ( !_template ) {
+        popup->Add(item = new UIW_POP_UP_ITEM("Shortcut", MNIF_SEND_MESSAGE, BTF_NO_3D,
+                                              WNF_NO_FLAGS,
+                                              (ZIL_USER_FUNCTION) NULL,
+                                              10089));
+        // item->woFlags |= _template ? WOF_NON_SELECTABLE : 0;
+        // item->Information( I_CHANGED_FLAGS, NULL ) ;
+    }
+
+    *windowManager + popup;
 }
