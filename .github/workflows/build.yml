@@ -215,7 +215,9 @@ jobs:
     - name: Get OpenWatcom 1.9 and Dependencies
       if: steps.cache-watcom-zinc.outputs.cache-hit != 'true'
       run: |
-        rm watcom -r -force
+        if (Test-Path watcom) {
+            Remove-Item watcom -Force
+        }
         mkdir watcom
         cd watcom
         wget https://github.com/open-watcom/open-watcom-1.9/releases/download/ow1.9/open-watcom-c-win32-1.9.exe -outfile open-watcom-c-win32-1.9.exe
