@@ -206,7 +206,7 @@ jobs:
       # decompress.
     - name: Cache OpenWatcom and Dependencies
       uses: actions/cache@v3.0.5
-      id: cache-watcom
+      id: cache-watcom-zinc
       with:
         path: |
           ${{github.workspace}}\watcom
