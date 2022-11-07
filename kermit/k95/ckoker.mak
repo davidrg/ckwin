@@ -232,7 +232,7 @@ telnet:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_CONSOLE)" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE)" \
 	DEF="wtelnet.def"
 
 
@@ -248,7 +248,7 @@ rlogin:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_CONSOLE)" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE)" \
 	DEF="wrlogin.def"
 
 # release version
@@ -264,7 +264,7 @@ test:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_CONSOLE)" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE)" \
 	DEF="wtest.def"
 
 winsetup:
@@ -279,7 +279,7 @@ winsetup:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /OPT:REF" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /OPT:REF" \
 	DEF="wsetup.def"
 
 # release version
@@ -373,7 +373,7 @@ msvcp:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /FIXED:NO /PROFILE" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /FIXED:NO /PROFILE" \
 	DEF="cknker.def"
 
 # kui debug version
@@ -389,7 +389,7 @@ kuid:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /DEBUG:full /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
+    LINKFLAGS="/nologo /DEBUG:full /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
 	DEF="cknker.def"
 
 kui:
@@ -404,7 +404,7 @@ kui:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
 	DEF="cknker.def"
 
 # k95g debug version
@@ -420,7 +420,7 @@ k95gd:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /MAP /DEBUG:full /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
+    LINKFLAGS="/nologo /MAP /DEBUG:full /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
 	DEF="cknker.def"
 
 k95g:
@@ -435,7 +435,7 @@ k95g:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /align:0x1000 /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
 	DEF="cknker.def"
 
 ################### OS/2 TARGETS ###################

@@ -43,11 +43,11 @@ WNT_CPP_OPTS=$(WNT_CPP_OPTS) -DNODIAL -DCKT_NT31
 # The OpenWatcom 1.9 linker fails with an internal error using the normal linker options.
 WNT_LINK_OPTS=-subsystem:windows /MAP
 !else
-WNT_LINK_OPTS=-align:0x1000 -subsystem:windows -entry:WinMainCRTStartup /MAP /NODEFAULTLIB:libc
+WNT_LINK_OPTS=-subsystem:windows -entry:WinMainCRTStartup /MAP /NODEFAULTLIB:libc
 !endif
 #WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -I..\k95 /Zi -noBool
 #WNT_LINK_OPTS=-align:0x1000 -subsystem:windows -entry:WinMainCRTStartup /MAP /NODEFAULTLIB:libc /Debug:full /Debugtype:cv 
-WNT_CON_LINK_OPTS=-align:0x1000 -subsystem:console -entry:mainCRTStartup 
+WNT_CON_LINK_OPTS=-subsystem:console -entry:mainCRTStartup
 WNT_LIB_OPTS=/machine:i386 /subsystem:WINDOWS
 
 WNT_OBJS=
