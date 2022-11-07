@@ -18,6 +18,14 @@ can not be supported due to the lack of support for threading.
 The CI system is set-up to do builds with Visual C++ 2022, 
 Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
 
+The Dialer is currently known to build fine with Visual C++ 2.0-7.0 (2002) and
+OpenWatcom 1.9. Visual C++ 6.0 SP6 is the recommended compiler as newer versions
+lack ctl3d32 - without this the application tends to look a little like
+something from Windows 3.1. Compilers newer than 2002 may work but OpenZinc is
+known to be incompatible with Visual C++ 14.x at this time.
+
+The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
+
 <table>
 <tr>
     <th>Compiler</th>
@@ -29,6 +37,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <th>TAPI</th>
     <th>GUI</th>
     <th>Console</th>
+    <th>Dialer</th>
     <th>Notes</th>
 </tr>
 <tr>
@@ -41,6 +50,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td>❌</td> <!-- Dialer -->
     <td></td> <!-- Notes -->
 </tr>
 <tr>
@@ -53,6 +63,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td>❌</td> <!-- Dialer -->
     <td></td> <!-- Notes -->
 </tr>
 <tr>
@@ -65,6 +76,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td>❌</td> <!-- Dialer -->
     <td></td> <!-- Notes -->
 </tr>
 <tr>
@@ -77,6 +89,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td>❌</td> <!-- Dialer -->
     <td></td> <!-- Notes -->
 </tr>
 <tr>
@@ -89,6 +102,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td>❔</td> <!-- Dialer -->
     <td></td> <!-- Notes -->
 </tr>
 <tr>
@@ -101,6 +115,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td>❔</td> <!-- Dialer -->
     <td></td> <!-- Notes -->
 </tr>
 <tr>
@@ -113,6 +128,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td>❔</td> <!-- Dialer -->
     <td></td> <!-- Notes -->
 </tr>
 <tr>
@@ -125,6 +141,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td>❔</td> <!-- Dialer -->
     <td></td> <!-- Notes -->
 </tr>
 <tr>
@@ -138,6 +155,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td>❔</td> <!-- Dialer -->
     <td>Express Edition + Server 2003 Platform SDK is free</td>
 </tr>
 <tr>
@@ -151,9 +169,10 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td>❔</td> <!-- Dialer -->
     <td>Visual C++ 2003 Toolkit + 
         Server 2003 Platform SDK is free.
-        Static CRT only.</td>
+        Static CRT only. Can not build dialer (no lib.exe)</td>
 </tr>
 <tr>
     <td>Visual C++ 2002</td>
@@ -166,6 +185,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td>✅</td> <!-- Dialer -->
     <td></td> <!-- Notes -->
 </tr>
 <tr>
@@ -179,6 +199,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td>✅</td> <!-- Dialer -->
     <td></td> <!-- Notes -->
 </tr>
 <tr>
@@ -192,6 +213,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td>✅</td> <!-- Dialer -->
     <td></td> <!-- Notes -->
 </tr>
 <tr>
@@ -206,6 +228,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td>✅</td> <!-- Dialer -->
     <td></td> <!-- Notes -->
 </tr>
 <tr>
@@ -218,8 +241,40 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>❌</td> <!-- TAPI -->
     <td>✅*</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td>✅</td> <!-- Dialer -->
     <td>No toolbar or some GUI dialogs, window resizing scales font doesn't
-        currently work well.</td>
+        currently work well. Dialer builds but is largely untested and some
+        non-functional TAPI/modem-dialing stuff may be visible.
+    </td>
+</tr>
+<tr>
+    <td>Visual C++ 1.5x</td>
+    <td>Windows 3.x</td>
+    <td>❌</td> <!-- Free -->
+    <td>❌</td> <!-- PTY -->
+    <td>❌</td> <!-- SSH -->
+    <td>❌</td> <!-- NTLM/Auth -->
+    <td>❌</td> <!-- TAPI -->
+    <td>❌</td> <!-- GUI -->
+    <td>❌</td> <!-- Console -->
+    <td>❌</td> <!-- Dialer -->
+    <td>This compiler is supported for building the k95cinit.exe utility only.
+    </td>
+</tr>
+<tr>
+    <td>Visual C++ 1.0 32-bit Edition</td>
+    <td>Windows NT 3.1, Win32s 1.1</td>
+    <td>❌</td> <!-- Free -->
+    <td>❌</td> <!-- PTY -->
+    <td>❌</td> <!-- SSH -->
+    <td>❌</td> <!-- NTLM/Auth -->
+    <td>❌</td> <!-- TAPI -->
+    <td>❌</td> <!-- GUI -->
+    <td>❌</td> <!-- Console -->
+    <td>❌</td> <!-- Dialer -->
+    <td>
+        This compiler does not work currently
+    </td>
 </tr>
 <tr>
     <td>OpenWatcom 1.9</td>
@@ -232,7 +287,9 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
-    <td>To target NT 3.50, <tt>set CKT_NT31=yes</tt> before building</td>
+    <td>✅</td> <!-- Dialer -->
+    <td>To target NT 3.50, <tt>set CKT_NT31=yes</tt> before building.
+    </td>
 </tr>
 <tr>
     <td>OpenWatcom 2.0</td>
@@ -245,6 +302,7 @@ Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
+    <td>❔</td> <!-- Dialer -->
     <td>2022-08-01 build tested, targeting 32bit win32</td> <!-- Notes -->
 </tr>
 </table>
