@@ -1273,11 +1273,15 @@ ckstrcmp(s1,s2,n,c) char *s1, *s2; register int n, c; {
     t2buf[1] = NUL;
 #endif /* HAVE_LOCALE */
 
+    debug(F111,"CKSTRLEN s1",s1,n);
+
     if (n == 0) return(0);
     if (!s1) s1 = "";			/* Watch out for null pointers. */
     if (!s2) s2 = "";
     if (!*s1) return(*s2 ? -1 : 0);
     if (!*s2) return(1);
+
+    debug(F111,"CKSTRLEN s2",s2,n);
     while (n--) {
 	t1 = (CHAR) *s1++;		/* Get next character from each. */
 	t2 = (CHAR) *s2++;
@@ -1287,19 +1291,25 @@ ckstrcmp(s1,s2,n,c) char *s1, *s2; register int n, c; {
 	    if (isupper(t1)) t1 = tolower(t1); /* Convert case. */
 	    if (isupper(t2)) t2 = tolower(t2);
 	}
+        debug(F111,"CKSTRLEN A","",0);
 #ifdef HAVE_LOCALE
 /*
   This only works for single-byte character sets but it's better than
   nothing, because previously this routine worked right only for ASCII.
 */
+        debug(F111,"CKSTRLEN B","",0);
         t1buf[0] = t1; 			/* Convert chars to strings */
         t2buf[0] = t2;
+        debug(F111,"CKSTRLEN B2","",0);
 	if ((rc = strcoll(t1buf,t2buf))) return(rc);
+        debug(F111,"CKSTRLEN C","",0);
 #else
 	if (t1 < t2) return(-1);	/* s1 < s2 */
 	if (t1 > t2) return(1);		/* s1 > s2 */
+        debug(F111,"CKSTRLEN D","",0);
 #endif /* HAVE_LOCALE */
     }
+    debug(F111,"CKSTRLEN E","",0);
     return(0);				/* They're equal */
 }
 

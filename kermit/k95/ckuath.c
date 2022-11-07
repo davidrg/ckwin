@@ -1,8 +1,8 @@
-char *ckathv = "Authentication, 10.0.238, 23 Sep 2022";
+char *ckathv = "Authentication, 10.0.239, 30 Sep 2022";
 /*
   C K U A T H . C  --  Authentication for C-Kermit
 
-  Copyright (C) 1999, 2021,
+  Copyright (C) 1999, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -156,7 +156,7 @@ int accept_complete = 0;
 #include "krb5.h"
 #ifdef BETATEST
 #include "profile.h"
-#endif
+#endif /* BETATEST */
 #include "com_err.h"
 #ifdef KRB5_GET_INIT_CREDS_OPT_TKT_LIFE
 #define KRB5_HAVE_GET_INIT_CREDS
@@ -5528,7 +5528,11 @@ k5_auth_is(how,data,cnt) int how; unsigned char *data; int cnt;
         if ((how & AUTH_HOW_MASK) == AUTH_HOW_MUTUAL) {
             /* do ap_rep stuff here */
             if ((r = krb5_mk_rep(k5_context,
+#ifdef HEIMDAL                          /* Greg Troxel 29 Sep 2022 */
+                                  &auth_context,
+#else /* HEIMDAL */
                                   auth_context,
+#endif /* HEIMDAL */
                                   &outbuf))) {
                 debug(F111,"k5_auth_is","krb5_mk_rep",r);
                 (void) ckstrncpy(errbuf, "Make reply failed: ",sizeof(errbuf));
