@@ -61,7 +61,7 @@ Event( const UI_EVENT & event )
         break;
     case K95_START_MENU:
         success = CreateShortcut("C-Kermit","k95g.exe",0,1,1,0);
-        success &= CreateShortcut("C-Kermit (console)","k95.exe",1,0,1,0);
+        success &= CreateShortcut("C-Kermit (console)","k95.exe",0,1,1,0);
         break;
     case DOCS_START_MENU:
         success = CreateDocAssociations();
