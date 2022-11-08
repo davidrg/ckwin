@@ -66,7 +66,7 @@ Event( const UI_EVENT & event )
     case DOCS_START_MENU:
         success = CreateDocAssociations();
         success &= CreateShortcut("C-Kermit for Windows Manual",
-                                   "docs\\manual\\ckwin.htm",0,2,0,0);
+                                   "docs\\manual\\ckwin.htm",0,2,0,0, FALSE);
         /*
         success &= CreateShortcut("Read Me!","docs\\manual\\readme.htm",0,2,0,0);
         success &= CreateShortcut("Known Bugs","docs\\manual\\k95bugs.htm",0,2,0,0);
@@ -681,7 +681,7 @@ VerifyAssociations( void )
 ZIL_UINT32 K_WINDOW::
 CreateShortcut( ZIL_ICHAR * username, ZIL_ICHAR * exename, 
                 ZIL_INT8 Desktop, ZIL_INT8 StartMenu,
-                ZIL_INT8 IconID,  ZIL_INT8 UseNotepad)
+                ZIL_INT8 IconID,  ZIL_INT8 UseNotepad, BOOL UseIcon)
 {
     FILE  *OutFile      = NULL;
     DWORD  BytesWritten = 0;                    /* Used for i/o */
@@ -706,9 +706,13 @@ CreateShortcut( ZIL_ICHAR * username, ZIL_ICHAR * exename,
     ZIL_ICHAR K95ExeDir[256];
     strcpy( K95ExeDir, Path );
 
-    ZIL_ICHAR K95Icon[256];
-    strcpy( K95Icon, Path );
-    strcat( K95Icon, "K95dial.exe" );
+    ZIL_ICHAR K95Icon[256] = "\0";
+    if (UseIcon) {
+        strcpy(K95Icon, Path);
+        strcat(K95Icon, "K95dial.exe");
+    } else {
+        IconID = 0;
+    }
 
     if ( UseNotepad ) {
         sprintf(Path, "notepad.exe %s%s",K95ExeDir,exename);

@@ -21,7 +21,7 @@ class ZIL_EXPORT_CLASS K_WINDOW : public UIW_WINDOW
 
     ZIL_UINT32 CreateShortcut( ZIL_ICHAR *, ZIL_ICHAR *, 
                                ZIL_INT8=1, ZIL_INT8=0,
-                               ZIL_INT8=1, ZIL_INT8=0 );
+                               ZIL_INT8=1, ZIL_INT8=0, BOOL=TRUE );
     ZIL_UINT8  VerifyAssociations( void );
     ZIL_UINT8  CreateAssociations( void );
     ZIL_UINT8  CreateDocAssociations( void );
