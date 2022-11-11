@@ -19,6 +19,11 @@ env:
   # But we don't want to waste the resources of the generous OpenZinc developer,
   # so we grab it from a mirror
   OPENZINC: https://ftp.zx.net.nz/pub/dev/openzinc/oz1/OZ1.zip
+  # The C-Kermit version CKW is currently based on. The Version number is used
+  # as a cache key, and the code URL is where to grab that version from if its
+  # not cached. It should be a .tar.gz file.
+  C_KERMIT_VERSION: 10.0b06
+  C_KERMIT_CODE: https://www.kermitproject.org/ftp/kermit/test/tar/x.tar.gz
 
 jobs:
   Build-VisualCxx:
@@ -518,3 +523,74 @@ jobs:
           path: ${{ github.workspace }}\ckwin
           if-no-files-found: error
           retention-days: 7
+
+  ##############################################################################
+  # Build C-Kermit on Windows with the latest CKW changes                      #
+  ##############################################################################
+  # C-Kermit for Windows shares a substantial amount of code with C-Kermit for
+  # UNIX and OpenVMS. To make sure Windows or OS/2 changes haven't broken
+  # anything on Linux, this build pulls in the missing Linux bits and does a
+  # regular Linux build of C-Kermit. No artifacts are published. This isn't a
+  # GUI version of C-Kermit for Linux or anything like that. Ideally we'd do a
+  # build for OpenVMS too but... no OpenVMS build servers.
+  C-Kermit-Linux-Build-Test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        openssl_version:
+          - 3.0.7
+    steps:
+      - uses: actions/checkout@v3
+
+        # Cache the C-Kermit code so that we're not hitting the C-Kermit website
+        # for every build.
+      - name: Cache code
+        uses: actions/cache@v3.0.11
+        id: cache-code
+        with:
+          path: |
+            ${{github.workspace}}\ckermit
+            ${{github.workspace}}\openssl
+          key: ${{ runner.os }}-ckermit${{ env.C_KERMIT_VERSION }}-openssl${{matrix.openssl_version}}
+      - name: Get C-Kermit ${{env.C_KERMIT_VERSION}} and OpenSSL ${{matrix.openssl_version}}
+        if: steps.cache-code.outputs.cache-hit != 'true'
+        run: |
+          wget ${{ env.C_KERMIT_CODE }} -O ckermit.tar.gz
+          mkdir -p ckermit
+          pushd ckermit
+          tar -zxvf ../ckermit.tar.gz
+          popd
+          rm ckermit.tar.gz
+          
+          mkdir -p openssl
+          pushd openssl
+          wget https://www.openssl.org/source/openssl-${{matrix.openssl_version}}.tar.gz -O openssl.tar.gz
+          tar -zxvf openssl.tar.gz
+          mv openssl-${{matrix.OPENSSL_VERSION}} ${{matrix.OPENSSL_VERSION}}
+          popd
+        shell: bash
+      - name: Build OpenSSL ${{matrix.openssl_version}}
+        if: steps.cache-code.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p openssl/ssl
+          pushd openssl/openssl-${{matrix.OPENSSL_VERSION}}
+          ./Configure --openssldir=${{github.workspace}}/openssl/ssl --prefix=${{github.workspace}}/openssl/ssl 
+          make
+          make install
+          popd
+        shell: bash
+      - name: Copy C-Kermit for Unix files
+        run: |
+          pushd ckermit
+          # Ignored: android.*, ckcdebu.h, ckcnet-BEFORE-NONET-FIX.c, ckcpro.c, 
+          #          ckuus5-sms.c, ckuus7-beta02.c, ckuus7-save.c, ckpker.mak
+          # Maybe not required: ckuker.nr, ckustr.sed
+          cp ckufio.c ckutio.c ckutiox.c makefile ckuker.nr ckustr.sed ../kermit/k95/
+          popd
+        shell: bash
+      - name: Build C-Kermit
+        run: |
+          pushd kermit/k95
+          make linux+ssl
+          popd
+        shell: bash
