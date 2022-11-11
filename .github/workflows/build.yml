@@ -42,7 +42,7 @@ jobs:
     - name: Enable Developer Command Prompt
       # You may pin to the exact commit or the version.
       # uses: ilammy/msvc-dev-cmd@d8610e2b41c6d0f0c3b4c46dad8df0fd826c68e1
-      uses: ilammy/msvc-dev-cmd@v1.10.0
+      uses: ilammy/msvc-dev-cmd@v1.12.0
       with:
         arch: ${{ matrix.arch }}
         toolset: ${{ matrix.toolset }}
@@ -53,7 +53,7 @@ jobs:
       # Build optional dependencies (zlib, openssl, libssh)                    #
       ##########################################################################
     - name: Cache Optional Dependencies
-      uses: actions/cache@v3.0.5
+      uses: actions/cache@v3.0.11
       id: cache-optional-dependencies
       with:
         path: |
@@ -183,7 +183,7 @@ jobs:
       run: |
         move dist ${{ github.workspace }}\ckwin
     - name: Upload Artifact
-      uses: actions/upload-artifact@v2.2.4
+      uses: actions/upload-artifact@v3.1.1
       with:
         name: ckwin-vc${{ matrix.toolset }}-${{ matrix.arch }}
         path: ${{ github.workspace }}\ckwin
@@ -205,7 +205,7 @@ jobs:
       # Cache OpenWatcom because it takes quite a while to download and
       # decompress.
     - name: Cache OpenWatcom and Dependencies
-      uses: actions/cache@v3.0.5
+      uses: actions/cache@v3.0.11
       id: cache-watcom-zinc
       with:
         path: |
@@ -288,14 +288,14 @@ jobs:
         move dist ${{ github.workspace }}\ckwin
         move ..\dialer\dist ${{ github.workspace }}\dialer
     - name: Upload CKW Artifact
-      uses: actions/upload-artifact@v2.2.4
+      uses: actions/upload-artifact@v3.1.1
       with:
         name: ckwin-ow1.9-x86
         path: ${{ github.workspace }}\ckwin
         if-no-files-found: error
         retention-days: 7
     - name: Upload Dialer Artifact
-      uses: actions/upload-artifact@v2.2.4
+      uses: actions/upload-artifact@v3.1.1
       with:
         name: dialer-ow1.9-x86
         path: ${{ github.workspace }}\dialer
@@ -311,7 +311,7 @@ jobs:
         # Cache OpenWatcom because it takes quite a while to download and
         # decompress.
       - name: Cache OpenWatcom
-        uses: actions/cache@v3.0.5
+        uses: actions/cache@v3.0.11
         id: cache-watcom
         with:
           path: |
@@ -364,7 +364,7 @@ jobs:
         run: |
           move dist ${{ github.workspace }}\ckwin
       - name: Upload Artifact
-        uses: actions/upload-artifact@v2.2.4
+        uses: actions/upload-artifact@v3.1.1
         with:
           name: ckwin-ow1.9-x86-nt350
           path: ${{ github.workspace }}\ckwin
@@ -383,7 +383,7 @@ jobs:
         # Cache OpenWatcom because it takes quite a while to download and
         # decompress.
       - name: Cache OpenWatcom
-        uses: actions/cache@v3.0.5
+        uses: actions/cache@v3.0.11
         id: cache-watcom
         with:
           path: |
@@ -429,7 +429,7 @@ jobs:
         run: |
           move dist-os2 ${{ github.workspace }}\ckos2
       - name: Upload Artifact
-        uses: actions/upload-artifact@v2.2.4
+        uses: actions/upload-artifact@v3.1.1
         with:
           name: ckos2-ow1.9-x86
           path: ${{ github.workspace }}\ckos2
@@ -454,7 +454,7 @@ jobs:
       - name: Enable Developer Command Prompt
         # You may pin to the exact commit or the version.
         # uses: ilammy/msvc-dev-cmd@d8610e2b41c6d0f0c3b4c46dad8df0fd826c68e1
-        uses: ilammy/msvc-dev-cmd@v1.10.0
+        uses: ilammy/msvc-dev-cmd@v1.12.0
         with:
           arch: x86
           toolset: 14.0
@@ -463,7 +463,7 @@ jobs:
         # quite a while to download and decompress and I don't want my FTP
         # server being hit constantly to download this whenever a build runs.
       - name: Cache VCT2003
-        uses: actions/cache@v3.0.5
+        uses: actions/cache@v3.0.11
         id: cache-vct2003
         with:
           path: |
@@ -512,7 +512,7 @@ jobs:
         run: |
           move dist ${{ github.workspace }}\ckwin
       - name: Upload Artifact
-        uses: actions/upload-artifact@v2.2.4
+        uses: actions/upload-artifact@v3.1.1
         with:
           name: ckwin-vc7.1-x86
           path: ${{ github.workspace }}\ckwin
