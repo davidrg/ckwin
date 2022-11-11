@@ -551,12 +551,12 @@ jobs:
           path: |
             ${{github.workspace}}\ckermit
             ${{github.workspace}}\openssl
-          key: ${{ runner.os }}-ckermit${{ env.C_KERMIT_VERSION }}-openssl${{matrix.openssl_version}}
+          key: ${{ runner.os }}-ckermit${{ env.C_KERMIT_VERSION }}-openssl${{matrix.openssl_version}}-r1
       - name: Get C-Kermit ${{env.C_KERMIT_VERSION}} and OpenSSL ${{matrix.openssl_version}}
         if: steps.cache-code.outputs.cache-hit != 'true'
         run: |
           wget ${{ env.C_KERMIT_CODE }} -O ckermit.tar.gz
-          mkdir -p ckermit
+          mkdir -p ${{github.workspace}}ckermit
           pushd ckermit
           tar -zxvf ../ckermit.tar.gz
           popd
@@ -573,7 +573,7 @@ jobs:
         if: steps.cache-code.outputs.cache-hit != 'true'
         run: |
           mkdir -p openssl/ssl
-          pushd openssl/openssl-${{matrix.OPENSSL_VERSION}}
+          pushd openssl/${{matrix.OPENSSL_VERSION}}
           ./Configure --openssldir=${{github.workspace}}/openssl/ssl --prefix=${{github.workspace}}/openssl/ssl 
           make
           make install
