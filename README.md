@@ -72,7 +72,7 @@ with ConPTY and SSH support you'll need to use Visual C++ 2019 or newer.
 To build C-Kermit for OS/2, see the [OS/2 Build Instructions](doc/os2-building.md).
 
 ### Making Changes
-Any files matching the pattern ck[cu]*.[cwh] are shared by implementations of 
+Any files matching the pattern `ck[cu]*.[cwh]` are shared by implementations of 
 C-Kermit for other platforms (UNIX, Linux, VMS, and others) and are not 
 specific to the Windows and OS/2 port in this repository. Any changes to these 
 files should be sent to [The Kermit Project](https://www.kermitproject.org/)
@@ -80,9 +80,8 @@ to be included in future C-Kermit releases for other platforms. If your changes
 are not intended to affect other platforms, make sure they're ifdef'd for either
 OS2 (OS/2+Windows) or NT (Windows only).
 
-Files matching starting with ck[on]*.* can be safely modified as they are only
-used by the OS/2 and Windows targets.
-
+Files matching `ck[on]*.*` can be safely modified as they are only used by the 
+OS/2 and Windows targets.
 
 History
 -------
