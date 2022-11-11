@@ -518,3 +518,178 @@ jobs:
           path: ${{ github.workspace }}\ckwin
           if-no-files-found: error
           retention-days: 7
+
+  ##############################################################################
+  # Build with Visual C++ Latest and OpenSSL 3                                 #
+  ##############################################################################
+  # Current release builds are done with the OpenSSL 1.1.1 series as it retains
+  # Windows XP support. To ensure we don't accidentally break OpenSSL 3.x
+  # support, we'll also do builds with that too.
+  Build-VisualCxx-openssl3:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        arch:
+          - x86
+        toolset:
+          - 14.3
+        openssl_version:
+          - 3.0.5
+        # no-crypto=yes: builds version with all crypto disabled
+        # no-crypto=no: builds version with all crypto enabled (where required dependencies are available)
+        no_crypto:
+          - no
+        #  - yes
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Enable Developer Command Prompt
+        # You may pin to the exact commit or the version.
+        # uses: ilammy/msvc-dev-cmd@d8610e2b41c6d0f0c3b4c46dad8df0fd826c68e1
+        uses: ilammy/msvc-dev-cmd@v1.12.0
+        with:
+          arch: ${{ matrix.arch }}
+          toolset: ${{ matrix.toolset }}
+          #sdk:   # use the latest
+          #spectre: # set true to use VC libraries with sepctre mitigations
+
+        ##########################################################################
+        # Build optional dependencies (zlib, openssl, libssh)                    #
+        ##########################################################################
+      - name: Cache Optional Dependencies
+        uses: actions/cache@v3.0.11
+        id: cache-optional-dependencies
+        with:
+          path: |
+            ${{github.workspace}}\zlib 
+            ${{github.workspace}}\openssl 
+            ${{github.workspace}}\libssh 
+            ${{github.workspace}}\tools
+          key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{matrix.openssl_version}}+libssh-${{env.LIBSSH_VERSION}}rel+nasm+xp+dsa
+
+      - name: Get dependencies
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+        run: |
+          # Get and unpack zlib
+          mkdir zlib
+          cd zlib
+          wget https://zlib.net/zlib-${{env.ZLIB_VERSION}}.tar.gz -outfile zlib-${{env.ZLIB_VERSION}}.tar.gz
+          7z x zlib-${{env.ZLIB_VERSION}}.tar.gz
+          7z x zlib-${{env.ZLIB_VERSION}}.tar
+          ren zlib-${{env.ZLIB_VERSION}} ${{env.ZLIB_VERSION}}
+          del *.tar 
+          del *.gz
+          cd ..
+          
+          # Get and unpack openssl
+          mkdir openssl
+          cd openssl
+          wget https://www.openssl.org/source/openssl-${{matrix.openssl_version}}.tar.gz -outfile openssl-${{matrix.openssl_version}}.tar.gz
+          7z x openssl-${{matrix.openssl_version}}.tar.gz
+          7z x openssl-${{matrix.openssl_version}}.tar
+          ren openssl-${{matrix.openssl_version}} ${{matrix.openssl_version}}
+          del *.tar 
+          del *.gz
+          cd ..
+          
+          # Get and unpack libssh
+          mkdir libssh
+          cd libssh
+          wget ${{env.LIBSSH_SOURCE}}libssh-${{env.LIBSSH_VERSION}}.tar.xz -outfile libssh-${{env.LIBSSH_VERSION}}.tar.xz
+          7z x libssh-${{env.LIBSSH_VERSION}}.tar.xz
+          7z x libssh-${{env.LIBSSH_VERSION}}.tar
+          ren libssh-${{env.LIBSSH_VERSION}} ${{env.LIBSSH_VERSION}}
+          del *.tar 
+          del *.xz
+          cd ${{env.LIBSSH_VERSION}}
+          mkdir build
+          cd ..
+          cd ..
+          
+          # Get and unpack nasm
+          mkdir tools
+          cd tools
+          wget https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/win32/nasm-2.15.05-win32.zip -outfile nasm-2.15.05-win32.zip
+          7z x nasm-2.15.05-win32.zip
+          ren nasm-2.15.05 nasm
+          del *.zip
+          dir
+          cd nasm
+          dir
+          cd ..
+          cd ..          
+          
+          # Install perl modules required by OpenSSL build
+          cpan -i Text::Template
+        shell: powershell
+
+      - name: Build zlib
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+        shell: cmd
+        run: |
+          cd zlib\${{env.ZLIB_VERSION}}
+          cmake .
+          nmake -f win32\Makefile.msc
+
+      - name: Build openssl
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+        shell: powershell
+        run: |
+          cd openssl\${{matrix.openssl_version}}
+          $env:Path += ";${{github.workspace}}\tools\nasm"
+          $env:Path
+          perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}
+          nmake
+
+      - name: Build libssh
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+        shell: powershell
+        run: |
+          cd libssh\${{env.LIBSSH_VERSION}}\build
+          cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{matrix.openssl_version}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}\ -DWITH_DSA=ON
+          nmake
+
+        ##########################################################################
+        # Build K95, K95G and other bits for redistribution                      #
+        ##########################################################################
+      - name: Full Build
+        run: |
+          call ..\..\setenv.bat
+          call mk.bat
+          call mkdist.bat
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95
+        env:
+          ROOT: ${{ github.workspace }}
+          # CKF_NO_CRYPTO=yes causes all crypto features to be excluded from the
+          # build. Undefined or CKF_NO_CRYPTO=no leaves crypto features enabled
+          # where the required dependencies exist.
+          CKF_NO_CRYPTO: ${{ matrix.no_crypto }}
+      - name: Fetch CA Certs bundle
+        run: |
+          wget https://curl.se/ca/cacert.pem -outfile ca_certs.pem
+          wget https://www.mozilla.org/media/MPL/2.0/index.815ca599c9df.txt -outfile ca_certs.license
+          
+          $readme = @"
+          ca_certs.pem was exported from the Mozilla CA Certificate Store and is licensed
+          under the MPL version 2.0.
+          
+          For more information and updates, see: https://curl.se/docs/caextract.html
+          "@
+          
+          New-Item ca_certs.readme
+          Set-Content ca_certs.readme $readme
+        shell: powershell
+        working-directory: ${{ github.workspace }}\kermit\k95\dist
+      - name: Prepare Artifact
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95
+        run: |
+          move dist ${{ github.workspace }}\ckwin
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: ckwin-vc${{ matrix.toolset }}-${{ matrix.arch }}-openssl${{ matrix.openssl_version }}
+          path: ${{ github.workspace }}\ckwin
+          if-no-files-found: error
+          retention-days: 7
