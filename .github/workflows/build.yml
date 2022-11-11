@@ -156,7 +156,11 @@ jobs:
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95
       env:
-        ROOT: ${{ github.workspace }}
+        CI_ROOT: ${{ github.workspace }}
+        CI_ZLIB_ROOT: ${{ github.workspace }}\zlib\${{env.ZLIB_VERSION}}
+        CI_OPENSSL_ROOT: ${{ github.workspace }}\openssl\${{env.OPENSSL_VERSION}}
+        CI_LIBSSH_ROOT: ${{ github.workspace }}\libssh\${{env.LIBSSH_VERSION}}
+        CI_LIBSSH_BUILD: ${{ github.workspace }}\libssh\${{env.LIBSSH_VERSION}}\build
         # CKF_NO_CRYPTO=yes causes all crypto features to be excluded from the
         # build. Undefined or CKF_NO_CRYPTO=no leaves crypto features enabled
         # where the required dependencies exist.
@@ -250,7 +254,7 @@ jobs:
       shell: cmd
       working-directory: ${{ github.workspace }}
       env:
-        ROOT: ${{ github.workspace }}
+        CI_ROOT: ${{ github.workspace }}
         WATCOM: ${{ github.workspace }}\watcom
     - name: Dialer Build
       run: |
@@ -272,14 +276,14 @@ jobs:
       shell: cmd
       working-directory: ${{ github.workspace }}
       env:
-        ROOT: ${{ github.workspace }}
+        CI_ROOT: ${{ github.workspace }}
         WATCOM: ${{ github.workspace }}\watcom
     - name: Make Distribution
       run: mkdist.bat
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95
       env:
-        ROOT: ${{ github.workspace }}
+        CI_ROOT: ${{ github.workspace }}
         WATCOM: ${{ github.workspace }}\watcom
     - name: Prepare Artifacts
       shell: cmd
@@ -349,14 +353,14 @@ jobs:
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit\k95
         env:
-          ROOT: ${{ github.workspace }}
+          CI_ROOT: ${{ github.workspace }}
           WATCOM: ${{ github.workspace }}\watcom
       - name: Make Distribution
         run: mkdist.bat
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit\k95
         env:
-          ROOT: ${{ github.workspace }}
+          CI_ROOT: ${{ github.workspace }}
           WATCOM: ${{ github.workspace }}\watcom
       - name: Prepare Artifact
         shell: cmd
@@ -414,14 +418,14 @@ jobs:
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit\k95
         env:
-          ROOT: ${{ github.workspace }}
+          CI_ROOT: ${{ github.workspace }}
           WATCOM: ${{ github.workspace }}\watcom
       - name: Make Distribution
         run: mkdist-os2.bat
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit\k95
         env:
-          ROOT: ${{ github.workspace }}
+          CI_ROOT: ${{ github.workspace }}
           WATCOM: ${{ github.workspace }}\watcom
       - name: Prepare Artifact
         shell: cmd
@@ -498,14 +502,14 @@ jobs:
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit\k95
         env:
-          ROOT: ${{ github.workspace }}
+          CI_ROOT: ${{ github.workspace }}
           VCT2003: ${{ github.workspace }}\VCT2003
       - name: Make Distribution
         run: mkdist.bat
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit\k95
         env:
-          ROOT: ${{ github.workspace }}
+          CI_ROOT: ${{ github.workspace }}
       - name: Prepare Artifact
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit\k95
@@ -534,7 +538,7 @@ jobs:
         toolset:
           - 14.3
         openssl_version:
-          - 3.0.5
+          - 3.0.7
         # no-crypto=yes: builds version with all crypto disabled
         # no-crypto=no: builds version with all crypto enabled (where required dependencies are available)
         no_crypto:
@@ -660,7 +664,11 @@ jobs:
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit\k95
         env:
-          ROOT: ${{ github.workspace }}
+          CI_ROOT: ${{ github.workspace }}
+          CI_ZLIB_ROOT: ${{ github.workspace }}\zlib\${{env.ZLIB_VERSION}}
+          CI_OPENSSL_ROOT: ${{ github.workspace }}\openssl\${{matrix.openssl_version}}
+          CI_LIBSSH_ROOT: ${{ github.workspace }}\libssh\${{env.LIBSSH_VERSION}}
+          CI_LIBSSH_BUILD: ${{ github.workspace }}\libssh\${{env.LIBSSH_VERSION}}\build
           # CKF_NO_CRYPTO=yes causes all crypto features to be excluded from the
           # build. Undefined or CKF_NO_CRYPTO=no leaves crypto features enabled
           # where the required dependencies exist.

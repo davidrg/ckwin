@@ -49,6 +49,13 @@ REM ============================================================================
 REM ================== No changes required beyond this point ===================
 REM ============================================================================
 
+REM Let the CI system override optional dependency paths
+if not "%ci_root%"=="" set root=%ci_root%
+if not "%ci_zlib_root%"=="" set zlib_root=%ci_zlib_root%
+if not "%ci_openssl_root%"=="" set openssl_root=%ci_openssl_root%
+if not "%ci_libssh_root%"=="" set libssh_root=%ci_libssh_root%
+if not "%ci_libssh_build%"=="" set libssh_build=%ci_libssh_build%
+
 REM base include path - this is required for both Windows and OS/2
 set ckinclude=%root%\kermit\k95
 
