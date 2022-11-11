@@ -556,7 +556,7 @@ jobs:
         if: steps.cache-code.outputs.cache-hit != 'true'
         run: |
           wget ${{ env.C_KERMIT_CODE }} -O ckermit.tar.gz
-          mkdir -p ${{github.workspace}}ckermit
+          mkdir -p ckermit
           pushd ckermit
           tar -zxvf ../ckermit.tar.gz
           popd
