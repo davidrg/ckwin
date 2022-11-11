@@ -183,7 +183,7 @@ jobs:
       run: |
         move dist ${{ github.workspace }}\ckwin
     - name: Upload Artifact
-      uses: actions/upload-artifact@v2.2.4
+      uses: actions/upload-artifact@v3.1.1
       with:
         name: ckwin-vc${{ matrix.toolset }}-${{ matrix.arch }}
         path: ${{ github.workspace }}\ckwin
@@ -288,14 +288,14 @@ jobs:
         move dist ${{ github.workspace }}\ckwin
         move ..\dialer\dist ${{ github.workspace }}\dialer
     - name: Upload CKW Artifact
-      uses: actions/upload-artifact@v2.2.4
+      uses: actions/upload-artifact@v3.1.1
       with:
         name: ckwin-ow1.9-x86
         path: ${{ github.workspace }}\ckwin
         if-no-files-found: error
         retention-days: 7
     - name: Upload Dialer Artifact
-      uses: actions/upload-artifact@v2.2.4
+      uses: actions/upload-artifact@v3.1.1
       with:
         name: dialer-ow1.9-x86
         path: ${{ github.workspace }}\dialer
@@ -364,7 +364,7 @@ jobs:
         run: |
           move dist ${{ github.workspace }}\ckwin
       - name: Upload Artifact
-        uses: actions/upload-artifact@v2.2.4
+        uses: actions/upload-artifact@v3.1.1
         with:
           name: ckwin-ow1.9-x86-nt350
           path: ${{ github.workspace }}\ckwin
@@ -429,7 +429,7 @@ jobs:
         run: |
           move dist-os2 ${{ github.workspace }}\ckos2
       - name: Upload Artifact
-        uses: actions/upload-artifact@v2.2.4
+        uses: actions/upload-artifact@v3.1.1
         with:
           name: ckos2-ow1.9-x86
           path: ${{ github.workspace }}\ckos2
@@ -512,7 +512,7 @@ jobs:
         run: |
           move dist ${{ github.workspace }}\ckwin
       - name: Upload Artifact
-        uses: actions/upload-artifact@v2.2.4
+        uses: actions/upload-artifact@v3.1.1
         with:
           name: ckwin-vc7.1-x86
           path: ${{ github.workspace }}\ckwin
