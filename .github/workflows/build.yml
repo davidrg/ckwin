@@ -536,7 +536,8 @@ jobs:
         arch:
           - x86
         toolset:
-          - 14.3
+          - 14.2
+          #- 14.3  # Visual C++ 2022 can't build with OpenSSL 3.0.x due to this bug: https://github.com/openssl/openssl/issues/18310
         openssl_version:
           - 3.0.7
         # no-crypto=yes: builds version with all crypto disabled
