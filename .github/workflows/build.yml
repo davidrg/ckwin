@@ -587,6 +587,9 @@ jobs:
       - name: Copy C-Kermit for Unix files
         run: |
           pushd ckermit
+          # Copy files from the C-Kermit for Unix distribution that are not
+          # present in the Windows and OS/2 codebase
+          #
           # Ignored: android.*, ckcdebu.h, ckcnet-BEFORE-NONET-FIX.c, ckcpro.c, 
           #          ckuus5-sms.c, ckuus7-beta02.c, ckuus7-save.c, ckpker.mak
           # Maybe not required: ckuker.nr, ckustr.sed
@@ -596,6 +599,7 @@ jobs:
       - name: Build C-Kermit
         run: |
           pushd kermit/k95
+          env PREFIX=${{github.workspace}}/openssl LD_LIBRARY_PATH=${{github.workspace}}/openssl/ssl/lib64:${LD_LIBRARY_PATH} make show
           env PREFIX=${{github.workspace}}/openssl LD_LIBRARY_PATH=${{github.workspace}}/openssl/ssl/lib64:${LD_LIBRARY_PATH} make linux+ssl
           popd
         shell: bash
