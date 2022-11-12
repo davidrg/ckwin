@@ -554,8 +554,8 @@ jobs:
         id: cache-code
         with:
           path: |
-            ${{github.workspace}}\ckermit
-            ${{github.workspace}}\openssl
+            ${{github.workspace}}/ckermit
+            ${{github.workspace}}/openssl
           key: ${{ runner.os }}-ckermit${{ env.C_KERMIT_VERSION }}-openssl${{matrix.openssl_version}}-r1
       - name: Get C-Kermit ${{env.C_KERMIT_VERSION}} and OpenSSL ${{matrix.openssl_version}}
         if: steps.cache-code.outputs.cache-hit != 'true'
