@@ -542,6 +542,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Install dependencies
+        run: |
+          apt update
+          apt install libpam0g
+
         # Cache the C-Kermit code so that we're not hitting the C-Kermit website
         # for every build.
       - name: Cache code
