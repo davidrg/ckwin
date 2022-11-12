@@ -624,7 +624,11 @@ char *m_purge = "run purge \\%*";
 #endif /* VMS */
 
 #ifdef OS2
-char *m_manual = "browse \\v(exedir)docs/manual/kermit95.htm";
+#ifdef NT
+char *m_manual = "browse \\v(exedir)docs/manual/ckwin.htm";
+#else
+char *m_manual = "browse \\v(exedir)docs/manual/ckos2.htm";
+#endif
 #endif /* OS2 */
 
 /* Now the multiline macros, defined with addmmac()... */
