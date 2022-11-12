@@ -5801,10 +5801,16 @@ shomou() {
         if (mousemap[button][event].type != error)
           switch (mousemap[button][event].type) {
             case key:
-              printf("   %s = Character: %c \\%d\n",
-                     mousename(button,event),
-                     mousemap[button][event].key.scancode,
-                     mousemap[button][event].key.scancode );
+                if (isprint(mousemap[button][event].key.scancode)) {
+                  printf("   %s = Character: %c \\%d\n",
+                         mousename(button,event),
+                         mousemap[button][event].key.scancode,
+                         mousemap[button][event].key.scancode );
+                } else {
+                  printf("   %s = Character: \\%d\n",
+                         mousename(button,event),
+                         mousemap[button][event].key.scancode);
+                }
               break;
             case kverb:
               id = mousemap[button][event].kverb.id & ~(F_KVERB);
