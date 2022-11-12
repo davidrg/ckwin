@@ -545,7 +545,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install libpam0g
+          sudo apt-get install libpam-dev
 
         # Cache the C-Kermit code so that we're not hitting the C-Kermit website
         # for every build.
