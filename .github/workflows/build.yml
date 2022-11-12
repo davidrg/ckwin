@@ -596,6 +596,6 @@ jobs:
       - name: Build C-Kermit
         run: |
           pushd kermit/k95
-          make linux+ssl
+          env PREFIX=${{github.workspace}}/openssl make linux+ssl
           popd
         shell: bash
