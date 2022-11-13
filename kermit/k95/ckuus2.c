@@ -993,7 +993,7 @@ static char *hmxyssh[] = {
 "    diffie-hellman-group14-sha256 diffie-hellman-group14-sha1 ",
 "    diffie-hellman-group1-sha1 ext-info-c",
 " ",
-"SET SSH V2 MACS { HMAC-MD5, HMAC-SHA1-ETM@OPENSSH.COM, HMAC-SHA2-256, ",
+"SET SSH V2 MACS { HMAC-SHA1, HMAC-SHA1-ETM@OPENSSH.COM, HMAC-SHA2-256, ",
 "     HMAC-SHA2-256-ETM@OPENSSH.COM, HMAC-SHA2-512, ",
 "     HMAC-SHA2-512-ETM@OPENSSH.COM, NONE }",
 "  Specifies an ordered list of Message Authentication Code algorithms to",
