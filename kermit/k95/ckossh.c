@@ -406,6 +406,7 @@ static int get_ssh_error() {
  */
 int ssh_open() {
     ssh_parameters_t* parameters;
+    char* user = NULL;
     int pty_height, pty_width;
     int rc;
 
@@ -426,9 +427,37 @@ int ssh_open() {
     }
 
     if (strlen(uidbuf) == 0) {
-        debug(F100, "ssh_open() - error - username not specified", "", 0);
-        debug(F100, "Error - username not specified (uidbuf is null)", "", 0);
-        return SSH_ERR_USER_NOT_SPECIFIED;
+        /* Username is not set - prompt for one */
+        char tmp[BUFSIZ] = {'\0', '\0'};
+        char prompt[256];
+        char *myname;
+        int ok;
+
+        /* This returns a statically allocated char* so we don't need to free
+         * the result when we're done with it */
+        myname = whoami();
+
+        if (!myname) {
+            myname = "";
+        }
+
+        if (myname[0]) {
+            ckmakxmsg(prompt, sizeof(prompt), " Name (", myname, "): ",
+                      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+        } else {
+            strcpy(prompt, " Name: ");
+        }
+
+        ok = uq_txt("Username required for SSH\n", prompt, 1, NULL,
+                    tmp, sizeof(tmp), NULL, 0);
+
+        if (!ok || (*tmp == '\0')) {
+            user = _strdup(myname);
+        } else {
+            user = _strdup(tmp);
+        }
+    } else {
+        user = _strdup(uidbuf);
     }
 
     /* Check if the client thread is alive. If it is we'll need a successful
@@ -471,7 +500,7 @@ int ssh_open() {
             ssh_shk,  /* Strict Host Key Checking */
             ssh2_unh, /* User known hosts file */
             ssh2_gnh, /* Global known hosts file*/
-            uidbuf,   /* Username */
+            user,     /* Username */
             pwflg ? pwbuf : NULL, /* Password (if supplied) */
             get_current_terminal_type(),
             pty_width,
@@ -485,6 +514,9 @@ int ssh_open() {
             tcp_nodelay,/* Enable/disable Nagle's algorithm */
             ssh_pxc     /* Proxy Command */
             );
+
+    if (user) free(user);
+
     if (parameters == NULL) {
         debug(F100, "ssh_open() - failed to construct parameters struct", "", 0);
         return SSH_ERR_MALLOC_FAILED;
@@ -865,8 +897,6 @@ const char * ssh_errorstr(int error) {
             return "Feature not implemented";
         case SSH_ERR_ACCESS_DENIED:
             return "Access denied";
-        case SSH_ERR_USER_NOT_SPECIFIED:
-            return "Username not specified";
         case SSH_ERR_STATE_MALLOC_FAILED:
             return "SSH state malloc failed";
         case SSH_ERR_NO_INSTANCE:

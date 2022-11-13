@@ -62,7 +62,7 @@
 /* -13 : not used */
 #define SSH_ERR_NOT_IMPLEMENTED -14     /* Feature not implemented yet */
 #define SSH_ERR_ACCESS_DENIED -15       /* Login failed */
-#define SSH_ERR_USER_NOT_SPECIFIED -16  /* No username specified */
+/* -16 : not used */
 #define SSH_ERR_STATE_MALLOC_FAILED -17 /* Failed to create ssh client state struct */
 /* -18 : not used  */
 #define SSH_ERR_NO_INSTANCE -19         /* No current SSH Client instance */
