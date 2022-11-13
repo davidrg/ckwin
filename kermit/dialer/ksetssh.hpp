@@ -20,7 +20,7 @@ class ZIL_EXPORT_CLASS K_DIALOG_SSH_SETTINGS : public K95_SETTINGS_DIALOG
     KD_LIST_ITEM * _entry ;
     void ApplyChangesToEntry(void) ; 
 
-    void InitSSH1CipherList(KD_LIST_ITEM *);
+    //void InitSSH1CipherList(KD_LIST_ITEM *);
     void InitSSH2CipherList(KD_LIST_ITEM *);
     void InitSSH2AuthList(KD_LIST_ITEM *);
     void InitSSH2MacList(KD_LIST_ITEM *);

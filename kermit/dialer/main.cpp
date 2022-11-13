@@ -39,7 +39,12 @@ extern HWND hwndConsole;
 K_CONNECTOR  *connector = NULL ;
 UIW_TOOL_BAR *toolbar = NULL ;
 UID_TIMER * timer = NULL ;
-ZIL_UINT8 kd_major = 1, kd_minor = 36;
+
+/* Dialer 1.37 = Final Kermit 95 release
+ * Dialer 1.38 = First proper release for C-Kermit for Windows (10.0 beta 4)
+ */
+ZIL_UINT8 kd_major = 1, kd_minor = 38;
+
 ZIL_ICHAR * pathname = "";
 ZIL_UINT8    TapiAvail = 0;
 ZIL_UINT8    StartMenu = 0;

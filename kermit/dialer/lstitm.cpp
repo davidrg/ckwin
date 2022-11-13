@@ -252,29 +252,66 @@ KD_LIST_ITEM::KD_LIST_ITEM():
 
     _ssh_compress = 1;
     _ssh_x11 = 0;
-    _ssh1_cipher = SSH1_CIPHER_3DES;
+    _ssh1_cipher = SSH1_CIPHER_3DES; /* OBSOLETE */
     _ssh_host_check = HC_ASK;
-    _ssh2_auth_external_keyx = 1;
+
+    _ssh2_auth_external_keyx = 0; /* OBSOLETE */
     _ssh2_auth_gssapi = 1;
-    _ssh2_auth_hostbased = 1;
+    _ssh2_auth_hostbased = 0; /* OBSOLETE */
     _ssh2_auth_keyboard_interactive = 1;
     _ssh2_auth_password = 1;
     _ssh2_auth_publickey = 1;
-    _ssh2_auth_srp_gex_sha1 = 1;
+    _ssh2_auth_srp_gex_sha1 = 0; /* OBSOLETE */
+
     _ssh2_cipher_3des = 1;
     _ssh2_cipher_aes128 = 1;
     _ssh2_cipher_aes192 = 1;
     _ssh2_cipher_aes256 = 1;
-    _ssh2_cipher_arcfour = 1;
-    _ssh2_cipher_blowfish = 1;
-    _ssh2_cipher_cast128 = 1;
+    _ssh2_cipher_arcfour = 0; /* OBSOLETE */
+    _ssh2_cipher_blowfish = 0; /* OBSOLETE */
+    _ssh2_cipher_cast128 = 0; /* OBSOLETE */
+    _ssh2_cipher_aes128ctr = 1;
+    _ssh2_cipher_aes192ctr = 1;
+    _ssh2_cipher_aes256ctr = 1;
+    _ssh2_cipher_aes256_gcm_openssh = 1;
+    _ssh2_cipher_chachae20_poly1305 = 1;
+    _ssh2_cipher_aes128_gcm_openssh = 1;
+
     _ssh2_mac_md5 = 1;
-    _ssh2_mac_md5_96 = 1;
-    _ssh2_mac_ripemd160 = 1;
+    _ssh2_mac_md5_96 = 0; /* OBSOLETE */
+    _ssh2_mac_ripemd160 = 0; /* OBSOLETE */
     _ssh2_mac_sha1 = 1;
-    _ssh2_mac_sha1_96 = 1;
-    _ssh2_hka_dss = 1;
+    _ssh2_mac_sha1_96 = 0; /* OBSOLETE */
+    _ssh2_mac_none = 0;
+    _ssh2_mac_sha2_512 = 1;
+    _ssh2_mac_sha2_256 = 1;
+    _ssh2_mac_sha1_etm_openssh = 1;
+    _ssh2_mac_sha2_512_etm_openssh = 1;
+    _ssh2_mac_sha2_256_etm_openssh = 1;
+
+    _ssh2_hka_dss = 0; /* deprecated as of CKWIN */
     _ssh2_hka_rsa = 1;
+    _ssh2_hka_ssh_ed25519 = 1;
+    _ssh2_hka_ecdsa_sha2_nistp521 = 1;
+    _ssh2_hka_ecdsa_sha2_nistp384 = 1;
+    _ssh2_hka_ecdsa_sha2_nistp256 = 1;
+    _ssh2_hka_rsa_sha2_512 = 1;
+    _ssh2_hka_rsa_sha2_256 = 1;
+
+    _ssh2_kex_curve25519_sha256 = 1;
+    _ssh2_kex_curve25519_sha256_libssh = 1;
+    _ssh2_kex_ecdh_sha2_nistp256 = 1;
+    _ssh2_kex_ecdh_sha2_nistp384 = 1;
+    _ssh2_kex_ecdh_sha2_nistp521 = 1;
+    _ssh2_kex_dh_group18_sha512 = 1;
+    _ssh2_kex_dh_group16_sha512 = 1;
+    _ssh2_kex_dh_group_exchange_sha256 = 1;
+    _ssh2_kex_dh_group14_sha256 = 1;
+    _ssh2_kex_dh_group14_sha1 = 1;
+    _ssh2_kex_dh_group1_sha1 = 1;
+    _ssh2_kex_ext_info_c = 1;
+    _ssh2_kex_dh_group_exchange_sha1 = 1;
+
     _ssh1_id_file[0] = '\0';
     _ssh1_kh_file[0] = '\0';
     _ssh2_id_file[0] = '\0';
@@ -562,20 +599,56 @@ KD_LIST_ITEM::KD_LIST_ITEM(KD_LIST_ITEM & item):
     _ssh2_auth_password = item._ssh2_auth_password;
     _ssh2_auth_publickey = item._ssh2_auth_publickey;
     _ssh2_auth_srp_gex_sha1 = item._ssh2_auth_srp_gex_sha1;
+
     _ssh2_cipher_3des = item._ssh2_cipher_3des;
     _ssh2_cipher_aes128 = item._ssh2_cipher_aes128;
     _ssh2_cipher_aes192 = item._ssh2_cipher_aes192;
     _ssh2_cipher_aes256 = item._ssh2_cipher_aes256;
-    _ssh2_cipher_arcfour = item._ssh2_cipher_arcfour;
-    _ssh2_cipher_blowfish = item._ssh2_cipher_blowfish;
-    _ssh2_cipher_cast128 = item._ssh2_cipher_cast128;
+    _ssh2_cipher_arcfour = item._ssh2_cipher_arcfour; /* OBSOLETE */
+    _ssh2_cipher_blowfish = item._ssh2_cipher_blowfish; /* OBSOLETE */
+    _ssh2_cipher_cast128 = item._ssh2_cipher_cast128; /* OBSOLETE */
+    _ssh2_cipher_aes128ctr = item._ssh2_cipher_aes128ctr;
+    _ssh2_cipher_aes192ctr = item._ssh2_cipher_aes192ctr;
+    _ssh2_cipher_aes256ctr = item._ssh2_cipher_aes256ctr;
+    _ssh2_cipher_aes256_gcm_openssh = item._ssh2_cipher_aes256_gcm_openssh;
+    _ssh2_cipher_chachae20_poly1305 = item._ssh2_cipher_chachae20_poly1305;
+    _ssh2_cipher_aes128_gcm_openssh = item._ssh2_cipher_aes128_gcm_openssh;
+
     _ssh2_mac_md5 = item._ssh2_mac_md5;
     _ssh2_mac_md5_96 = item._ssh2_mac_md5_96;
     _ssh2_mac_ripemd160 = item._ssh2_mac_ripemd160;
     _ssh2_mac_sha1 = item._ssh2_mac_sha1;
     _ssh2_mac_sha1_96 = item._ssh2_mac_sha1_96;
-    _ssh2_hka_dss = item._ssh2_hka_dss;
+    _ssh2_mac_none = item._ssh2_mac_none;
+    _ssh2_mac_sha2_512 = item._ssh2_mac_sha2_512;
+    _ssh2_mac_sha2_256 = item._ssh2_mac_sha2_256;
+    _ssh2_mac_sha1_etm_openssh = item._ssh2_mac_sha1_etm_openssh;
+    _ssh2_mac_sha2_512_etm_openssh = item._ssh2_mac_sha2_512_etm_openssh;
+    _ssh2_mac_sha2_256_etm_openssh = item._ssh2_mac_sha2_256_etm_openssh;
+
+    _ssh2_hka_dss = item._ssh2_hka_dss; /* deprecated as of CKWIN */
     _ssh2_hka_rsa = item._ssh2_hka_rsa;
+    _ssh2_hka_ssh_ed25519 = item._ssh2_hka_ssh_ed25519;
+    _ssh2_hka_ecdsa_sha2_nistp521 = item._ssh2_hka_ecdsa_sha2_nistp521;
+    _ssh2_hka_ecdsa_sha2_nistp384 = item._ssh2_hka_ecdsa_sha2_nistp384;
+    _ssh2_hka_ecdsa_sha2_nistp256 = item._ssh2_hka_ecdsa_sha2_nistp256;
+    _ssh2_hka_rsa_sha2_512 = item._ssh2_hka_rsa_sha2_512;
+    _ssh2_hka_rsa_sha2_256 = item._ssh2_hka_rsa_sha2_256;
+
+    _ssh2_kex_curve25519_sha256 = item._ssh2_kex_curve25519_sha256;
+    _ssh2_kex_curve25519_sha256_libssh = item._ssh2_kex_curve25519_sha256_libssh;
+    _ssh2_kex_ecdh_sha2_nistp256 = item._ssh2_kex_ecdh_sha2_nistp256;
+    _ssh2_kex_ecdh_sha2_nistp384 = item._ssh2_kex_ecdh_sha2_nistp384;
+    _ssh2_kex_ecdh_sha2_nistp521 = item._ssh2_kex_ecdh_sha2_nistp521;
+    _ssh2_kex_dh_group18_sha512 = item._ssh2_kex_dh_group18_sha512;
+    _ssh2_kex_dh_group16_sha512 = item._ssh2_kex_dh_group16_sha512;
+    _ssh2_kex_dh_group_exchange_sha256 = item._ssh2_kex_dh_group_exchange_sha256;
+    _ssh2_kex_dh_group14_sha256 = item._ssh2_kex_dh_group14_sha256;
+    _ssh2_kex_dh_group14_sha1 = item._ssh2_kex_dh_group14_sha1;
+    _ssh2_kex_dh_group1_sha1 = item._ssh2_kex_dh_group1_sha1;
+    _ssh2_kex_ext_info_c = item._ssh2_kex_ext_info_c;
+    _ssh2_kex_dh_group_exchange_sha1 = item._ssh2_kex_dh_group_exchange_sha1;
+
     strcpy(_ssh1_id_file,item._ssh1_id_file);
     strcpy(_ssh1_kh_file,item._ssh1_kh_file);
     strcpy(_ssh2_id_file,item._ssh2_id_file);
@@ -852,27 +925,63 @@ KD_LIST_ITEM::KD_LIST_ITEM(TRANSPORT tType,
     _ssh_x11 = 0;
     _ssh1_cipher = SSH1_CIPHER_3DES;
     _ssh_host_check = HC_ASK;
-    _ssh2_auth_external_keyx = 1;
+    _ssh2_auth_external_keyx = 0; /* OBSOLETE */
     _ssh2_auth_gssapi = 1;
-    _ssh2_auth_hostbased = 1;
+    _ssh2_auth_hostbased = 0; /* OBSOLETE */
     _ssh2_auth_keyboard_interactive = 1;
     _ssh2_auth_password = 1;
     _ssh2_auth_publickey = 1;
-    _ssh2_auth_srp_gex_sha1 = 1;
+    _ssh2_auth_srp_gex_sha1 = 0; /* OBSOLETE */
+
     _ssh2_cipher_3des = 1;
     _ssh2_cipher_aes128 = 1;
     _ssh2_cipher_aes192 = 1;
     _ssh2_cipher_aes256 = 1;
-    _ssh2_cipher_arcfour = 1;
-    _ssh2_cipher_blowfish = 1;
-    _ssh2_cipher_cast128 = 1;
+    _ssh2_cipher_arcfour = 0; /* OBSOLETE */
+    _ssh2_cipher_blowfish = 0; /* OBSOLETE */
+    _ssh2_cipher_cast128 = 0; /* OBSOLETE */
+    _ssh2_cipher_aes128ctr = 1;
+    _ssh2_cipher_aes192ctr = 1;
+    _ssh2_cipher_aes256ctr = 1;
+    _ssh2_cipher_aes256_gcm_openssh = 1;
+    _ssh2_cipher_chachae20_poly1305 = 1;
+    _ssh2_cipher_aes128_gcm_openssh = 1;
+
     _ssh2_mac_md5 = 1;
-    _ssh2_mac_md5_96 = 1;
-    _ssh2_mac_ripemd160 = 1;
+    _ssh2_mac_md5_96 = 0; /* OBSOLETE */
+    _ssh2_mac_ripemd160 = 0; /* OBSOLETE */
     _ssh2_mac_sha1 = 1;
-    _ssh2_mac_sha1_96 = 1;
-    _ssh2_hka_dss = 1;
+    _ssh2_mac_sha1_96 = 0; /* OBSOLETE */
+    _ssh2_mac_none = 0;
+    _ssh2_mac_sha2_512 = 1;
+    _ssh2_mac_sha2_256 = 1;
+    _ssh2_mac_sha1_etm_openssh = 1;
+    _ssh2_mac_sha2_512_etm_openssh = 1;
+    _ssh2_mac_sha2_256_etm_openssh = 1;
+
+    _ssh2_hka_dss = 0; /* deprecated as of CKWIN */
     _ssh2_hka_rsa = 1;
+    _ssh2_hka_ssh_ed25519 = 1;
+    _ssh2_hka_ecdsa_sha2_nistp521 = 1;
+    _ssh2_hka_ecdsa_sha2_nistp384 = 1;
+    _ssh2_hka_ecdsa_sha2_nistp256 = 1;
+    _ssh2_hka_rsa_sha2_512 = 1;
+    _ssh2_hka_rsa_sha2_256 = 1;
+
+    _ssh2_kex_curve25519_sha256 = 1;
+    _ssh2_kex_curve25519_sha256_libssh = 1;
+    _ssh2_kex_ecdh_sha2_nistp256 = 1;
+    _ssh2_kex_ecdh_sha2_nistp384 = 1;
+    _ssh2_kex_ecdh_sha2_nistp521 = 1;
+    _ssh2_kex_dh_group18_sha512 = 1;
+    _ssh2_kex_dh_group16_sha512 = 1;
+    _ssh2_kex_dh_group_exchange_sha256 = 1;
+    _ssh2_kex_dh_group14_sha256 = 1;
+    _ssh2_kex_dh_group14_sha1 = 1;
+    _ssh2_kex_dh_group1_sha1 = 1;
+    _ssh2_kex_ext_info_c = 1;
+    _ssh2_kex_dh_group_exchange_sha1 = 1;
+
     _ssh1_id_file[0] = '\0';
     _ssh1_kh_file[0] = '\0';
     _ssh2_id_file[0] = '\0';
@@ -1441,27 +1550,64 @@ KD_LIST_ITEM::KD_LIST_ITEM(const ZIL_ICHAR *name, ZIL_STORAGE_READ_ONLY *directo
     _ssh_x11 = 0;
     _ssh1_cipher = SSH1_CIPHER_3DES;
     _ssh_host_check = HC_ASK;
-    _ssh2_auth_external_keyx = 1;
+
+    _ssh2_auth_external_keyx = 0; /* OBSOLETE */
     _ssh2_auth_gssapi = 1;
-    _ssh2_auth_hostbased = 1;
+    _ssh2_auth_hostbased = 0; /* OBSOLETE */
     _ssh2_auth_keyboard_interactive = 1;
     _ssh2_auth_password = 1;
     _ssh2_auth_publickey = 1;
-    _ssh2_auth_srp_gex_sha1 = 1;
+    _ssh2_auth_srp_gex_sha1 = 0; /* OBSOLETE */
+
     _ssh2_cipher_3des = 1;
     _ssh2_cipher_aes128 = 1;
     _ssh2_cipher_aes192 = 1;
     _ssh2_cipher_aes256 = 1;
-    _ssh2_cipher_arcfour = 1;
-    _ssh2_cipher_blowfish = 1;
-    _ssh2_cipher_cast128 = 1;
+    _ssh2_cipher_arcfour = 0; /* OBSOLETE */
+    _ssh2_cipher_blowfish = 0; /* OBSOLETE */
+    _ssh2_cipher_cast128 = 0; /* OBSOLETE */
+    _ssh2_cipher_aes128ctr = 1;
+    _ssh2_cipher_aes192ctr = 1;
+    _ssh2_cipher_aes256ctr = 1;
+    _ssh2_cipher_aes256_gcm_openssh = 1;
+    _ssh2_cipher_chachae20_poly1305 = 1;
+    _ssh2_cipher_aes128_gcm_openssh = 1;
+
     _ssh2_mac_md5 = 1;
-    _ssh2_mac_md5_96 = 1;
-    _ssh2_mac_ripemd160 = 1;
+    _ssh2_mac_md5_96 = 0; /* OBSOLETE */
+    _ssh2_mac_ripemd160 = 0; /* OBSOLETE */
     _ssh2_mac_sha1 = 1;
-    _ssh2_mac_sha1_96 = 1;
-    _ssh2_hka_dss = 1;
+    _ssh2_mac_sha1_96 = 0; /* OBSOLETE */
+    _ssh2_mac_none = 0;
+    _ssh2_mac_sha2_512 = 1;
+    _ssh2_mac_sha2_256 = 1;
+    _ssh2_mac_sha1_etm_openssh = 1;
+    _ssh2_mac_sha2_512_etm_openssh = 1;
+    _ssh2_mac_sha2_256_etm_openssh = 1;
+
+    _ssh2_hka_dss = 0; /* deprecated as of CKWIN */
     _ssh2_hka_rsa = 1;
+    _ssh2_hka_ssh_ed25519 = 1;
+    _ssh2_hka_ecdsa_sha2_nistp521 = 1;
+    _ssh2_hka_ecdsa_sha2_nistp384 = 1;
+    _ssh2_hka_ecdsa_sha2_nistp256 = 1;
+    _ssh2_hka_rsa_sha2_512 = 1;
+    _ssh2_hka_rsa_sha2_256 = 1;
+
+    _ssh2_kex_curve25519_sha256 = 1;
+    _ssh2_kex_curve25519_sha256_libssh = 1;
+    _ssh2_kex_ecdh_sha2_nistp256 = 1;
+    _ssh2_kex_ecdh_sha2_nistp384 = 1;
+    _ssh2_kex_ecdh_sha2_nistp521 = 1;
+    _ssh2_kex_dh_group18_sha512 = 1;
+    _ssh2_kex_dh_group16_sha512 = 1;
+    _ssh2_kex_dh_group_exchange_sha256 = 1;
+    _ssh2_kex_dh_group14_sha256 = 1;
+    _ssh2_kex_dh_group14_sha1 = 1;
+    _ssh2_kex_dh_group1_sha1 = 1;
+    _ssh2_kex_ext_info_c = 1;
+    _ssh2_kex_dh_group_exchange_sha1 = 1;
+
     _ssh1_id_file[0] = '\0';
     _ssh1_kh_file[0] = '\0';
     _ssh2_id_file[0] = '\0';
@@ -2739,6 +2885,79 @@ void KD_LIST_ITEM::Load(const ZIL_ICHAR *name, ZIL_STORAGE_READ_ONLY *directory,
         file->Load(&Enum) ;
         _printer_charset = (enum TERMCSET) Enum ;
     }
+
+  ver_1_37:
+    if ( itemMinor < 37 ) {
+        _ssh2_cipher_aes128ctr = 1;
+        _ssh2_cipher_aes192ctr = 1;
+        _ssh2_cipher_aes256ctr = 1;
+        _ssh2_cipher_aes256_gcm_openssh = 1;
+        _ssh2_cipher_chachae20_poly1305 = 1;
+        _ssh2_cipher_aes128_gcm_openssh = 1;
+
+        _ssh2_mac_none = 0;
+        _ssh2_mac_sha2_512 = 1;
+        _ssh2_mac_sha2_256 = 1;
+        _ssh2_mac_sha1_etm_openssh = 1;
+        _ssh2_mac_sha2_512_etm_openssh = 1;
+        _ssh2_mac_sha2_256_etm_openssh = 1;
+
+        _ssh2_hka_ssh_ed25519 = 1;
+        _ssh2_hka_ecdsa_sha2_nistp521 = 1;
+        _ssh2_hka_ecdsa_sha2_nistp384 = 1;
+        _ssh2_hka_ecdsa_sha2_nistp256 = 1;
+        _ssh2_hka_rsa_sha2_512 = 1;
+        _ssh2_hka_rsa_sha2_256 = 1;
+
+        _ssh2_kex_curve25519_sha256 = 1;
+        _ssh2_kex_curve25519_sha256_libssh = 1;
+        _ssh2_kex_ecdh_sha2_nistp256 = 1;
+        _ssh2_kex_ecdh_sha2_nistp384 = 1;
+        _ssh2_kex_ecdh_sha2_nistp521 = 1;
+        _ssh2_kex_dh_group18_sha512 = 1;
+        _ssh2_kex_dh_group16_sha512 = 1;
+        _ssh2_kex_dh_group_exchange_sha256 = 1;
+        _ssh2_kex_dh_group14_sha256 = 1;
+        _ssh2_kex_dh_group14_sha1 = 1;
+        _ssh2_kex_dh_group1_sha1 = 1;
+        _ssh2_kex_ext_info_c = 1;
+        _ssh2_kex_dh_group_exchange_sha1 = 1;
+    } else {
+        file->Load(&_ssh2_cipher_aes128ctr);
+        file->Load(&_ssh2_cipher_aes192ctr);
+        file->Load(&_ssh2_cipher_aes256ctr);
+        file->Load(&_ssh2_cipher_aes256_gcm_openssh);
+        file->Load(&_ssh2_cipher_chachae20_poly1305);
+        file->Load(&_ssh2_cipher_aes128_gcm_openssh);
+
+        file->Load(&_ssh2_mac_none);
+        file->Load(&_ssh2_mac_sha2_512);
+        file->Load(&_ssh2_mac_sha2_256);
+        file->Load(&_ssh2_mac_sha1_etm_openssh);
+        file->Load(&_ssh2_mac_sha2_512_etm_openssh);
+        file->Load(&_ssh2_mac_sha2_256_etm_openssh);
+
+        file->Load(&_ssh2_hka_ssh_ed25519);
+        file->Load(&_ssh2_hka_ecdsa_sha2_nistp521);
+        file->Load(&_ssh2_hka_ecdsa_sha2_nistp384);
+        file->Load(&_ssh2_hka_ecdsa_sha2_nistp256);
+        file->Load(&_ssh2_hka_rsa_sha2_512);
+        file->Load(&_ssh2_hka_rsa_sha2_256);
+
+        file->Load(&_ssh2_kex_curve25519_sha256);
+        file->Load(&_ssh2_kex_curve25519_sha256_libssh);
+        file->Load(&_ssh2_kex_ecdh_sha2_nistp256);
+        file->Load(&_ssh2_kex_ecdh_sha2_nistp384);
+        file->Load(&_ssh2_kex_ecdh_sha2_nistp521);
+        file->Load(&_ssh2_kex_dh_group18_sha512);
+        file->Load(&_ssh2_kex_dh_group16_sha512);
+        file->Load(&_ssh2_kex_dh_group_exchange_sha256);
+        file->Load(&_ssh2_kex_dh_group14_sha256);
+        file->Load(&_ssh2_kex_dh_group14_sha1);
+        file->Load(&_ssh2_kex_dh_group1_sha1);
+        file->Load(&_ssh2_kex_ext_info_c);
+        file->Load(&_ssh2_kex_dh_group_exchange_sha1);
+    }
 }
 #endif
 
@@ -3229,6 +3448,39 @@ void KD_LIST_ITEM::Store(const ZIL_ICHAR *name, ZIL_STORAGE *directory,
 
     // itemMinor = 36
     file->Store(Enum = _printer_charset) ;
+
+    // itemMinor = 37
+    file->Store(_ssh2_cipher_aes128ctr);
+    file->Store(_ssh2_cipher_aes192ctr);
+    file->Store(_ssh2_cipher_aes256ctr);
+    file->Store(_ssh2_cipher_aes256_gcm_openssh);
+    file->Store(_ssh2_cipher_chachae20_poly1305);
+    file->Store(_ssh2_cipher_aes128_gcm_openssh);
+    file->Store(_ssh2_mac_none);
+    file->Store(_ssh2_mac_sha2_512);
+    file->Store(_ssh2_mac_sha2_256);
+    file->Store(_ssh2_mac_sha1_etm_openssh);
+    file->Store(_ssh2_mac_sha2_512_etm_openssh);
+    file->Store(_ssh2_mac_sha2_256_etm_openssh);
+    file->Store(_ssh2_hka_ssh_ed25519);
+    file->Store(_ssh2_hka_ecdsa_sha2_nistp521);
+    file->Store(_ssh2_hka_ecdsa_sha2_nistp384);
+    file->Store(_ssh2_hka_ecdsa_sha2_nistp256);
+    file->Store(_ssh2_hka_rsa_sha2_512);
+    file->Store(_ssh2_hka_rsa_sha2_256);
+    file->Store(_ssh2_kex_curve25519_sha256);
+    file->Store(_ssh2_kex_curve25519_sha256_libssh);
+    file->Store(_ssh2_kex_ecdh_sha2_nistp256);
+    file->Store(_ssh2_kex_ecdh_sha2_nistp384);
+    file->Store(_ssh2_kex_ecdh_sha2_nistp521);
+    file->Store(_ssh2_kex_dh_group18_sha512);
+    file->Store(_ssh2_kex_dh_group16_sha512);
+    file->Store(_ssh2_kex_dh_group_exchange_sha256);
+    file->Store(_ssh2_kex_dh_group14_sha256);
+    file->Store(_ssh2_kex_dh_group14_sha1);
+    file->Store(_ssh2_kex_dh_group1_sha1);
+    file->Store(_ssh2_kex_ext_info_c);
+    file->Store(_ssh2_kex_dh_group_exchange_sha1);
 }
 #endif
 

@@ -201,32 +201,67 @@ public:
 
    ZIL_UINT8            _ssh_compress;
    ZIL_UINT8            _ssh_x11;
-   enum SSH1_CIPHER     _ssh1_cipher;
+   enum SSH1_CIPHER     _ssh1_cipher;  /* OBSOLETE */
    enum SSH_HOST_CHECK  _ssh_host_check;
-   ZIL_UINT8            _ssh2_auth_external_keyx,
+   ZIL_UINT8            _ssh2_auth_external_keyx,  /* OBSOLETE */
                         _ssh2_auth_gssapi,
-                        _ssh2_auth_hostbased,
+                        _ssh2_auth_hostbased,  /* OBSOLETE */
                         _ssh2_auth_keyboard_interactive,
                         _ssh2_auth_password,
                         _ssh2_auth_publickey,
-                        _ssh2_auth_srp_gex_sha1;
+                        _ssh2_auth_srp_gex_sha1;  /* OBSOLETE */
    ZIL_UINT8            _ssh2_cipher_3des,
                         _ssh2_cipher_aes128,
                         _ssh2_cipher_aes192,
                         _ssh2_cipher_aes256,
-                        _ssh2_cipher_arcfour,
-                        _ssh2_cipher_blowfish,
-                        _ssh2_cipher_cast128;
-   ZIL_UINT8            _ssh2_mac_md5,
-                        _ssh2_mac_md5_96,
-                        _ssh2_mac_ripemd160,
-                        _ssh2_mac_sha1,
-                        _ssh2_mac_sha1_96;
-   ZIL_UINT8            _ssh2_hka_dss,
+                        _ssh2_cipher_arcfour,  /* OBSOLETE */
+                        _ssh2_cipher_blowfish,  /* OBSOLETE */
+                        _ssh2_cipher_cast128,  /* OBSOLETE */
+                    _ssh2_cipher_aes128ctr, /* TODO */
+                    _ssh2_cipher_aes192ctr, /* TODO */
+                    _ssh2_cipher_aes256ctr, /* TODO */
+                    _ssh2_cipher_aes256_gcm_openssh, /* TODO */
+                    _ssh2_cipher_chachae20_poly1305, /* TODO */
+                    _ssh2_cipher_aes128_gcm_openssh /* TODO */
+                        ;
+   ZIL_UINT8            _ssh2_mac_md5, /* OBSOLETE */
+                   _ssh2_mac_none, /* TODO */
+                   _ssh2_mac_sha2_512, /* TODO */
+                   _ssh2_mac_sha2_256, /* TODO */
+                   _ssh2_mac_sha1_etm_openssh, /* TODO */
+                   _ssh2_mac_sha2_512_etm_openssh, /* TODO */
+                   _ssh2_mac_sha2_256_etm_openssh, /* TODO */
+                        _ssh2_mac_md5_96,  /* OBSOLETE */
+                        _ssh2_mac_ripemd160,  /* OBSOLETE */
+                        _ssh2_mac_sha1,  /* old */
+                        _ssh2_mac_sha1_96;  /* OBSOLETE */
+
+   ZIL_UINT8            _ssh2_hka_dss,/* deprecated */
+                   _ssh2_hka_ssh_ed25519, /* TODO */
+                   _ssh2_hka_ecdsa_sha2_nistp521, /* TODO */
+                   _ssh2_hka_ecdsa_sha2_nistp384, /* TODO */
+                   _ssh2_hka_ecdsa_sha2_nistp256, /* TODO */
+                   _ssh2_hka_rsa_sha2_512, /* TODO */
+                   _ssh2_hka_rsa_sha2_256, /* TODO */
                         _ssh2_hka_rsa;
 
-   ZIL_ICHAR            _ssh1_id_file[257];
-   ZIL_ICHAR            _ssh1_kh_file[257];
+   ZIL_UINT8       _ssh2_kex_curve25519_sha256, /* TODO */
+                   _ssh2_kex_curve25519_sha256_libssh, /* TODO */
+                   _ssh2_kex_ecdh_sha2_nistp256, /* TODO */
+                   _ssh2_kex_ecdh_sha2_nistp384, /* TODO */
+                   _ssh2_kex_ecdh_sha2_nistp521, /* TODO */
+                   _ssh2_kex_dh_group18_sha512, /* TODO */
+                   _ssh2_kex_dh_group16_sha512, /* TODO */
+                   _ssh2_kex_dh_group_exchange_sha256, /* TODO */
+                   _ssh2_kex_dh_group14_sha256, /* TODO */
+                   _ssh2_kex_dh_group14_sha1, /* TODO */
+                   _ssh2_kex_dh_group1_sha1, /* TODO */
+                   _ssh2_kex_ext_info_c, /* TODO */
+                   _ssh2_kex_dh_group_exchange_sha1 /* TODO */
+                   ;
+
+   ZIL_ICHAR            _ssh1_id_file[257];  /* OBSOLETE */
+   ZIL_ICHAR            _ssh1_kh_file[257];  /* OBSOLETE */
    ZIL_ICHAR            _ssh2_id_file[257];
    ZIL_ICHAR            _ssh2_kh_file[257];
 

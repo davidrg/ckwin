@@ -81,7 +81,11 @@ are not intended to affect other platforms, make sure they're ifdef'd for either
 OS2 (OS/2+Windows) or NT (Windows only).
 
 Files matching `ck[on]*.*` can be safely modified as they are only used by the 
-OS/2 and Windows targets.
+OS/2 and Windows targets
+
+The dialer data files (dialer.dat, registry.dat) are binary files edited by the
+zinc designer. It's not possible to merge these files, so it's probably best to
+get in touch before making changes to these files.
 
 History
 -------

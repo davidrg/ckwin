@@ -261,6 +261,16 @@ K_DIALOG_SSH_SETTINGS(void)
 //
 //
 
+void setListItemState(UIW_VT_LIST * list, const char* listItemValue, ZIL_UINT8 state) {
+    UIW_BUTTON *  button = (UIW_BUTTON *) list->Get(listItemValue);
+    if ( state ) {
+        button->woStatus |= WOS_SELECTED;
+    } else {
+        button->woStatus &= ~WOS_SELECTED;
+    }
+    button->Information(I_CHANGED_STATUS,NULL);
+}
+
 K_DIALOG_SSH_SETTINGS::
 K_DIALOG_SSH_SETTINGS( KD_LIST_ITEM * entry, enum ENTRYMODE mode )
    : K95_SETTINGS_DIALOG("DIALOG_SSH_SETTINGS",mode),
@@ -279,7 +289,7 @@ K_DIALOG_SSH_SETTINGS( KD_LIST_ITEM * entry, enum ENTRYMODE mode )
     // Fill in details here for configuring the dialog controls
     // based upon the entry settings
 
-    InitSSH1CipherList(entry);
+    //InitSSH1CipherList(entry);
     InitSSH2AuthList(entry);
     InitSSH2CipherList(entry);
     InitSSH2MacList(entry);
@@ -312,7 +322,7 @@ K_DIALOG_SSH_SETTINGS( KD_LIST_ITEM * entry, enum ENTRYMODE mode )
         button->woStatus &= ~WOS_SELECTED;
     button->Information(I_CHANGED_STATUS,NULL);
 
-    UIW_COMBO_BOX * combo = (UIW_COMBO_BOX *) Get( COMBO_SSH_V1_CIPHER ) ;
+    /*UIW_COMBO_BOX * combo = (UIW_COMBO_BOX *) Get( COMBO_SSH_V1_CIPHER ) ;
     UIW_VT_LIST * list = (UIW_VT_LIST *) Get(LIST_SSH_V1_CIPHER);
     switch ( entry->_ssh1_cipher ) {
     case SSH1_CIPHER_3DES:
@@ -332,10 +342,10 @@ K_DIALOG_SSH_SETTINGS( KD_LIST_ITEM * entry, enum ENTRYMODE mode )
         combo->woFlags &= ~WOF_NON_SELECTABLE ;
     else
         combo->woFlags |= WOF_NON_SELECTABLE;
-    combo->Information(I_CHANGED_FLAGS,NULL) ;
+    combo->Information(I_CHANGED_FLAGS,NULL) ;*/
 
-    combo = (UIW_COMBO_BOX *) Get( COMBO_SSH_HOST_CHECK ) ;
-    list = (UIW_VT_LIST *) Get( LIST_SSH_HOST_CHECK );
+    UIW_COMBO_BOX * combo = (UIW_COMBO_BOX *) Get( COMBO_SSH_HOST_CHECK ) ;
+    UIW_VT_LIST * list = (UIW_VT_LIST *) Get( LIST_SSH_HOST_CHECK );
     switch ( entry->_ssh_host_check ) {
     case HC_STRICT:
         button = (UIW_BUTTON *) list->Get(BUTTON_SSH_STRICT);
@@ -357,13 +367,13 @@ K_DIALOG_SSH_SETTINGS( KD_LIST_ITEM * entry, enum ENTRYMODE mode )
     combo->Information(I_CHANGED_FLAGS,NULL) ;
 
     list = (UIW_VT_LIST *) Get(LIST_SSH_V2_AUTH);
-    button = (UIW_BUTTON *) list->Get("external-keyx");
+    /*button = (UIW_BUTTON *) list->Get("external-keyx");
     if ( entry->_ssh2_auth_external_keyx ) {
         button->woStatus |= WOS_SELECTED;
     } else {
         button->woStatus &= ~WOS_SELECTED;
     }
-    button->Information(I_CHANGED_STATUS,NULL);
+    button->Information(I_CHANGED_STATUS,NULL);*/
 
     button = (UIW_BUTTON *) list->Get("gssapi");
     if ( entry->_ssh2_auth_gssapi ) {
@@ -373,13 +383,13 @@ K_DIALOG_SSH_SETTINGS( KD_LIST_ITEM * entry, enum ENTRYMODE mode )
     }
     button->Information(I_CHANGED_STATUS,NULL);
 
-    button = (UIW_BUTTON *) list->Get("hostbased");
+    /*button = (UIW_BUTTON *) list->Get("hostbased");
     if ( entry->_ssh2_auth_hostbased ) {
         button->woStatus |= WOS_SELECTED;
     } else {
         button->woStatus &= ~WOS_SELECTED;
     }
-    button->Information(I_CHANGED_STATUS,NULL);
+    button->Information(I_CHANGED_STATUS,NULL);*/
 
     button = (UIW_BUTTON *) list->Get("keyboard-interactive");
     if ( entry->_ssh2_auth_keyboard_interactive ) {
@@ -405,13 +415,13 @@ K_DIALOG_SSH_SETTINGS( KD_LIST_ITEM * entry, enum ENTRYMODE mode )
     }
     button->Information(I_CHANGED_STATUS,NULL);
 
-    button = (UIW_BUTTON *) list->Get("srp-gex-sha1");
+    /*button = (UIW_BUTTON *) list->Get("srp-gex-sha1");
     if ( entry->_ssh2_auth_srp_gex_sha1 ) {
         button->woStatus |= WOS_SELECTED;
     } else {
         button->woStatus &= ~WOS_SELECTED;
     }
-    button->Information(I_CHANGED_STATUS,NULL);
+    button->Information(I_CHANGED_STATUS,NULL);*/
 
     list = (UIW_VT_LIST *) Get(LIST_SSH_V2_CIPHERS);
     button = (UIW_BUTTON *) list->Get("3des-cbc");
@@ -446,6 +456,14 @@ K_DIALOG_SSH_SETTINGS( KD_LIST_ITEM * entry, enum ENTRYMODE mode )
     }
     button->Information(I_CHANGED_STATUS,NULL);
 
+    setListItemState(list, "aes128-ctr", entry->_ssh2_cipher_aes128ctr);
+    setListItemState(list, "aes192-ctr", entry->_ssh2_cipher_aes192ctr);
+    setListItemState(list, "aes256-ctr", entry->_ssh2_cipher_aes256ctr);
+    setListItemState(list, "aes256-gcm@openssh.com", entry->_ssh2_cipher_aes256_gcm_openssh);
+    setListItemState(list, "chachae20-poly1305", entry->_ssh2_cipher_chachae20_poly1305);
+    setListItemState(list, "aes128-gcm@openssh.com", entry->_ssh2_cipher_aes128_gcm_openssh);
+
+    /*
     button = (UIW_BUTTON *) list->Get("arcfour");
     if ( entry->_ssh2_cipher_arcfour ) {
         button->woStatus |= WOS_SELECTED;
@@ -468,10 +486,10 @@ K_DIALOG_SSH_SETTINGS( KD_LIST_ITEM * entry, enum ENTRYMODE mode )
     } else {
         button->woStatus &= ~WOS_SELECTED;
     }
-    button->Information(I_CHANGED_STATUS,NULL);
+    button->Information(I_CHANGED_STATUS,NULL);*/
 
     list = (UIW_VT_LIST *) Get(LIST_SSH_V2_MACS);
-    button = (UIW_BUTTON *) list->Get("hmac-md5");
+    /*button = (UIW_BUTTON *) list->Get("hmac-md5");
     if ( entry->_ssh2_mac_md5 ) {
         button->woStatus |= WOS_SELECTED;
     } else {
@@ -493,7 +511,7 @@ K_DIALOG_SSH_SETTINGS( KD_LIST_ITEM * entry, enum ENTRYMODE mode )
     } else {
         button->woStatus &= ~WOS_SELECTED;
     }
-    button->Information(I_CHANGED_STATUS,NULL);
+    button->Information(I_CHANGED_STATUS,NULL);*/
 
     button = (UIW_BUTTON *) list->Get("hmac-sha1");
     if ( entry->_ssh2_mac_sha1 ) {
@@ -503,13 +521,20 @@ K_DIALOG_SSH_SETTINGS( KD_LIST_ITEM * entry, enum ENTRYMODE mode )
     }
     button->Information(I_CHANGED_STATUS,NULL);
 
-    button = (UIW_BUTTON *) list->Get("hmac-sha1-96");
+    /*button = (UIW_BUTTON *) list->Get("hmac-sha1-96");
     if ( entry->_ssh2_mac_sha1_96 ) {
         button->woStatus |= WOS_SELECTED;
     } else {
         button->woStatus &= ~WOS_SELECTED;
     }
-    button->Information(I_CHANGED_STATUS,NULL);
+    button->Information(I_CHANGED_STATUS,NULL);*/
+
+    setListItemState(list, "hmac-sha2-256-etm@openssh.com", entry->_ssh2_mac_sha2_256_etm_openssh);
+    setListItemState(list, "hmac-sha2-512-etm@openssh.com", entry->_ssh2_mac_sha2_512_etm_openssh);
+    setListItemState(list, "hmac-sha1-etm@openssh.com", entry->_ssh2_mac_sha1_etm_openssh);
+    setListItemState(list, "hmac-sha2-256", entry->_ssh2_mac_sha2_256);
+    setListItemState(list, "hmac-sha2-512", entry->_ssh2_mac_sha2_512);
+    setListItemState(list, "none", entry->_ssh2_mac_none);
 
     list = (UIW_VT_LIST *) Get(LIST_SSH_V2_HKA);
     button = (UIW_BUTTON *) list->Get("ssh-dss");
@@ -528,7 +553,14 @@ K_DIALOG_SSH_SETTINGS( KD_LIST_ITEM * entry, enum ENTRYMODE mode )
     }
     button->Information(I_CHANGED_STATUS,NULL);
 
-    UIW_STRING * string = (UIW_STRING *) Get( FIELD_SSH_V1_ID_FILE ) ;
+    setListItemState(list, "ssh-ed25519", entry->_ssh2_hka_ssh_ed25519);
+    setListItemState(list, "ecdsa-sha2-nistp521", entry->_ssh2_hka_ecdsa_sha2_nistp521);
+    setListItemState(list, "ecdsa-sha2-nistp384", entry->_ssh2_hka_ecdsa_sha2_nistp384);
+    setListItemState(list, "ecdsa-sha2-nistp256", entry->_ssh2_hka_ecdsa_sha2_nistp256);
+    setListItemState(list, "rsa-sha2-512", entry->_ssh2_hka_rsa_sha2_512);
+    setListItemState(list, "rsa-sha2-256", entry->_ssh2_hka_rsa_sha2_256);
+
+    /*UIW_STRING * string = (UIW_STRING *) Get( FIELD_SSH_V1_ID_FILE ) ;
     string->DataSet( entry->_ssh1_id_file, 256 ) ;
     string->woFlags |= (entry->_access != SSH ? WOF_NON_SELECTABLE : 0) | WOF_AUTO_CLEAR ;
     string->Information(I_CHANGED_FLAGS,NULL) ;
@@ -536,9 +568,9 @@ K_DIALOG_SSH_SETTINGS( KD_LIST_ITEM * entry, enum ENTRYMODE mode )
     string = (UIW_STRING *) Get( FIELD_SSH_V1_KNOWN_HOSTS ) ;
     string->DataSet( entry->_ssh1_kh_file, 256 ) ;
     string->woFlags |= (entry->_access != SSH ? WOF_NON_SELECTABLE : 0) | WOF_AUTO_CLEAR ;
-    string->Information(I_CHANGED_FLAGS,NULL) ;
+    string->Information(I_CHANGED_FLAGS,NULL) ;*/
 
-    string = (UIW_STRING *) Get( FIELD_SSH_V2_ID_FILE ) ;
+    UIW_STRING * string = (UIW_STRING *) Get( FIELD_SSH_V2_ID_FILE ) ;
     string->DataSet( entry->_ssh2_id_file, 256 ) ;
     string->woFlags |= (entry->_access != SSH ? WOF_NON_SELECTABLE : 0) | WOF_AUTO_CLEAR ;
     string->Information(I_CHANGED_FLAGS,NULL) ;
@@ -548,12 +580,12 @@ K_DIALOG_SSH_SETTINGS( KD_LIST_ITEM * entry, enum ENTRYMODE mode )
     string->woFlags |= (entry->_access != SSH ? WOF_NON_SELECTABLE : 0) | WOF_AUTO_CLEAR ;
     string->Information(I_CHANGED_FLAGS,NULL) ;
 
-    button = (UIW_BUTTON *) Get(BUTTON_SSH1_BROWSE_IDF);
+    /*button = (UIW_BUTTON *) Get(BUTTON_SSH1_BROWSE_IDF);
     if ( entry->_access == SSH )
         button->woFlags &= ~WOF_NON_SELECTABLE ;
     else
         button->woFlags |= WOF_NON_SELECTABLE;
-    button->Information(I_CHANGED_FLAGS,NULL) ;
+    button->Information(I_CHANGED_FLAGS,NULL) ;*/
 
     button = (UIW_BUTTON *) Get(BUTTON_SSH2_BROWSE_IDF);
     if ( entry->_access == SSH )
@@ -562,12 +594,12 @@ K_DIALOG_SSH_SETTINGS( KD_LIST_ITEM * entry, enum ENTRYMODE mode )
         button->woFlags |= WOF_NON_SELECTABLE;
     button->Information(I_CHANGED_FLAGS,NULL) ;
 
-    button = (UIW_BUTTON *) Get(BUTTON_SSH1_BROWSE_KNF);
+    /*button = (UIW_BUTTON *) Get(BUTTON_SSH1_BROWSE_KNF);
     if ( entry->_access == SSH )
         button->woFlags &= ~WOF_NON_SELECTABLE ;
     else
         button->woFlags |= WOF_NON_SELECTABLE;
-    button->Information(I_CHANGED_FLAGS,NULL) ;
+    button->Information(I_CHANGED_FLAGS,NULL) ;*/
 
     button = (UIW_BUTTON *) Get(BUTTON_SSH2_BROWSE_KHF);
     if ( entry->_access == SSH )
@@ -666,8 +698,8 @@ EVENT_TYPE K_DIALOG_SSH_SETTINGS::Event( const UI_EVENT & event )
         eventManager->Put(event);
         break;
     }
-    case OPT_BROWSE_SSH1_IDF:
-    case OPT_BROWSE_SSH1_KHF:
+    //case OPT_BROWSE_SSH1_IDF:
+    //case OPT_BROWSE_SSH1_KHF:
     case OPT_BROWSE_SSH2_IDF:
     case OPT_BROWSE_SSH2_KHF:
     {
@@ -696,14 +728,14 @@ EVENT_TYPE K_DIALOG_SSH_SETTINGS::Event( const UI_EVENT & event )
             }
         }
         switch ( DirServRequestor ) {
-        case OPT_BROWSE_SSH1_IDF:
+        /*case OPT_BROWSE_SSH1_IDF:
             string = (UIW_STRING *) Get( FIELD_SSH_V1_ID_FILE ) ;
             string->Information(I_SET_TEXT,tmp);
             break;
         case OPT_BROWSE_SSH1_KHF:
             string = (UIW_STRING *) Get( FIELD_SSH_V1_KNOWN_HOSTS ) ;
             string->Information(I_SET_TEXT,tmp);
-            break;
+            break;*/
         case OPT_BROWSE_SSH2_IDF:
             string = (UIW_STRING *) Get( FIELD_SSH_V2_ID_FILE ) ;
             string->Information(I_SET_TEXT,tmp);
@@ -740,16 +772,16 @@ ApplyChangesToEntry( void )
     button = (UIW_BUTTON *) Get( CHECK_SSH_FWD_CRED ) ;
     _entry->_ssh_credfwd = button->woStatus & WOS_SELECTED;
 
-    UIW_COMBO_BOX * combo = (UIW_COMBO_BOX *) Get( COMBO_SSH_V1_CIPHER ) ;
+    /*UIW_COMBO_BOX * combo = (UIW_COMBO_BOX *) Get( COMBO_SSH_V1_CIPHER ) ;
     button = (UIW_BUTTON *) combo->Current();
     if ( !strcmp(button->StringID(), "3des") )
         _entry->_ssh1_cipher = SSH1_CIPHER_3DES;
     else if ( !strcmp(button->StringID(), "blowfish") )
         _entry->_ssh1_cipher = SSH1_CIPHER_BLOWFISH;
     else if ( !strcmp(button->StringID(), "des") )
-        _entry->_ssh1_cipher = SSH1_CIPHER_DES;
+        _entry->_ssh1_cipher = SSH1_CIPHER_DES;*/
 
-    combo = (UIW_COMBO_BOX *) Get( COMBO_SSH_HOST_CHECK ) ;
+    UIW_COMBO_BOX * combo = (UIW_COMBO_BOX *) Get( COMBO_SSH_HOST_CHECK ) ;
     button = (UIW_BUTTON *) combo->Current();
     switch (button->NumberID()) {
     case BUTTON_SSH_STRICT:
@@ -764,14 +796,15 @@ ApplyChangesToEntry( void )
     }
 
     UIW_VT_LIST * list = (UIW_VT_LIST *) Get(LIST_SSH_V2_AUTH);
-    button = (UIW_BUTTON *) list->Get("external-keyx");
-    _entry->_ssh2_auth_external_keyx = button->woStatus & WOS_SELECTED;
+
+    /*button = (UIW_BUTTON *) list->Get("external-keyx");
+    _entry->_ssh2_auth_external_keyx = button->woStatus & WOS_SELECTED;*/
 
     button = (UIW_BUTTON *) list->Get("gssapi");
     _entry->_ssh2_auth_gssapi = button->woStatus & WOS_SELECTED;
 
-    button = (UIW_BUTTON *) list->Get("hostbased");
-    _entry->_ssh2_auth_hostbased = button->woStatus & WOS_SELECTED;
+    /*button = (UIW_BUTTON *) list->Get("hostbased");
+    _entry->_ssh2_auth_hostbased = button->woStatus & WOS_SELECTED;*/
 
     button = (UIW_BUTTON *) list->Get("keyboard-interactive");
     _entry->_ssh2_auth_keyboard_interactive = button->woStatus & WOS_SELECTED;
@@ -782,8 +815,8 @@ ApplyChangesToEntry( void )
     button = (UIW_BUTTON *) list->Get("publickey");
     _entry->_ssh2_auth_publickey = button->woStatus & WOS_SELECTED;
 
-    button = (UIW_BUTTON *) list->Get("srp-gex-sha1");
-    _entry->_ssh2_auth_srp_gex_sha1 = button->woStatus & WOS_SELECTED;
+    /*button = (UIW_BUTTON *) list->Get("srp-gex-sha1");
+    _entry->_ssh2_auth_srp_gex_sha1 = button->woStatus & WOS_SELECTED;*/
 
     list = (UIW_VT_LIST *) Get(LIST_SSH_V2_CIPHERS);
     button = (UIW_BUTTON *) list->Get("3des-cbc");
@@ -798,20 +831,56 @@ ApplyChangesToEntry( void )
     button = (UIW_BUTTON *) list->Get("aes256-cbc");
     _entry->_ssh2_cipher_aes256 = button->woStatus & WOS_SELECTED;
 
-    button = (UIW_BUTTON *) list->Get("arcfour");
+    button = (UIW_BUTTON *) list->Get("chachae20-poly1305");
+    _entry->_ssh2_cipher_chachae20_poly1305 = button->woStatus & WOS_SELECTED;
+
+    button = (UIW_BUTTON *) list->Get("aes256-gcm@openssh.com");
+    _entry->_ssh2_cipher_aes256_gcm_openssh = button->woStatus & WOS_SELECTED;
+
+    button = (UIW_BUTTON *) list->Get("aes128-gcm@openssh.com");
+    _entry->_ssh2_cipher_aes128_gcm_openssh = button->woStatus & WOS_SELECTED;
+
+    button = (UIW_BUTTON *) list->Get("aes256-ctr");
+    _entry->_ssh2_cipher_aes256ctr = button->woStatus & WOS_SELECTED;
+
+    button = (UIW_BUTTON *) list->Get("aes192-ctr");
+    _entry->_ssh2_cipher_aes192ctr = button->woStatus & WOS_SELECTED;
+
+    button = (UIW_BUTTON *) list->Get("aes128-ctr");
+    _entry->_ssh2_cipher_aes128ctr = button->woStatus & WOS_SELECTED;
+
+    /*button = (UIW_BUTTON *) list->Get("arcfour");
     _entry->_ssh2_cipher_arcfour = button->woStatus & WOS_SELECTED;
 
     button = (UIW_BUTTON *) list->Get("blowfish-cbc");
     _entry->_ssh2_cipher_blowfish = button->woStatus & WOS_SELECTED;
 
     button = (UIW_BUTTON *) list->Get("cast128-cbc");
-    _entry->_ssh2_cipher_cast128 = button->woStatus & WOS_SELECTED;
+    _entry->_ssh2_cipher_cast128 = button->woStatus & WOS_SELECTED;*/
 
     list = (UIW_VT_LIST *) Get(LIST_SSH_V2_MACS);
-    button = (UIW_BUTTON *) list->Get("hmac-md5");
-    _entry->_ssh2_mac_md5 = button->woStatus & WOS_SELECTED;
+    /*button = (UIW_BUTTON *) list->Get("hmac-md5");
+    _entry->_ssh2_mac_md5 = button->woStatus & WOS_SELECTED;*/
 
-    button = (UIW_BUTTON *) list->Get("hmac-md5-96");
+    button = (UIW_BUTTON *) list->Get("hmac-sha2-256-etm@openssh.com");
+    _entry->_ssh2_mac_sha2_256_etm_openssh = button->woStatus & WOS_SELECTED;
+
+    button = (UIW_BUTTON *) list->Get("hmac-sha2-512-etm@openssh.com");
+    _entry->_ssh2_mac_sha2_512_etm_openssh = button->woStatus & WOS_SELECTED;
+
+    button = (UIW_BUTTON *) list->Get("hmac-sha1-etm@openssh.com");
+    _entry->_ssh2_mac_sha1_etm_openssh = button->woStatus & WOS_SELECTED;
+
+    button = (UIW_BUTTON *) list->Get("hmac-sha2-256");
+    _entry->_ssh2_mac_sha2_256 = button->woStatus & WOS_SELECTED;
+
+    button = (UIW_BUTTON *) list->Get("hmac-sha2-512");
+    _entry->_ssh2_mac_sha2_512 = button->woStatus & WOS_SELECTED;
+
+    button = (UIW_BUTTON *) list->Get("none");
+    _entry->_ssh2_mac_none = button->woStatus & WOS_SELECTED;
+
+    /*button = (UIW_BUTTON *) list->Get("hmac-md5-96");
     _entry->_ssh2_mac_md5_96 = button->woStatus & WOS_SELECTED;
 
     button = (UIW_BUTTON *) list->Get("hmac-ripemd160");
@@ -821,7 +890,7 @@ ApplyChangesToEntry( void )
     _entry->_ssh2_mac_sha1 = button->woStatus & WOS_SELECTED;
 
     button = (UIW_BUTTON *) list->Get("hmac-sha1-96");
-    _entry->_ssh2_mac_sha1_96 = button->woStatus & WOS_SELECTED;
+    _entry->_ssh2_mac_sha1_96 = button->woStatus & WOS_SELECTED;*/
 
     list = (UIW_VT_LIST *) Get(LIST_SSH_V2_HKA);
     button = (UIW_BUTTON *) list->Get("ssh-dss");
@@ -830,20 +899,38 @@ ApplyChangesToEntry( void )
     button = (UIW_BUTTON *) list->Get("ssh-rsa");
     _entry->_ssh2_hka_rsa = button->woStatus & WOS_SELECTED;
 
-    UIW_STRING * string = (UIW_STRING *) Get( FIELD_SSH_V1_ID_FILE ) ;
+    button = (UIW_BUTTON *) list->Get("ssh-ed25519");
+    _entry->_ssh2_hka_ssh_ed25519 = button->woStatus & WOS_SELECTED;
+
+    button = (UIW_BUTTON *) list->Get("ecdsa-sha2-nistp521");
+    _entry->_ssh2_hka_ecdsa_sha2_nistp521 = button->woStatus & WOS_SELECTED;
+
+    button = (UIW_BUTTON *) list->Get("ecdsa-sha2-nistp384");
+    _entry->_ssh2_hka_ecdsa_sha2_nistp384 = button->woStatus & WOS_SELECTED;
+
+    button = (UIW_BUTTON *) list->Get("ecdsa-sha2-nistp256");
+    _entry->_ssh2_hka_ecdsa_sha2_nistp256 = button->woStatus & WOS_SELECTED;
+
+    button = (UIW_BUTTON *) list->Get("rsa-sha2-512");
+    _entry->_ssh2_hka_rsa_sha2_512 = button->woStatus & WOS_SELECTED;
+
+    button = (UIW_BUTTON *) list->Get("rsa-sha2-256");
+    _entry->_ssh2_hka_rsa_sha2_256 = button->woStatus & WOS_SELECTED;
+
+    /*UIW_STRING * string = (UIW_STRING *) Get( FIELD_SSH_V1_ID_FILE ) ;
     strcpy(_entry->_ssh1_id_file, string->DataGet()) ;
 
     string = (UIW_STRING *) Get( FIELD_SSH_V1_KNOWN_HOSTS ) ;
-    strcpy(_entry->_ssh1_kh_file, string->DataGet() ) ;
+    strcpy(_entry->_ssh1_kh_file, string->DataGet() ) ;*/
 
-    string = (UIW_STRING *) Get( FIELD_SSH_V2_ID_FILE ) ;
+    UIW_STRING * string = (UIW_STRING *) Get( FIELD_SSH_V2_ID_FILE ) ;
     strcpy(_entry->_ssh2_id_file, string->DataGet() ) ;
 
     string = (UIW_STRING *) Get( FIELD_SSH_V2_KNOWN_HOSTS ) ;
     strcpy(_entry->_ssh2_kh_file, string->DataGet() ) ;
 }
 
-void K_DIALOG_SSH_SETTINGS::
+/*void K_DIALOG_SSH_SETTINGS::
 InitSSH1CipherList( KD_LIST_ITEM * entry )
 {
     UIW_VT_LIST * list = (UIW_VT_LIST *) Get( LIST_SSH_V1_CIPHER ) ;
@@ -866,7 +953,7 @@ InitSSH1CipherList( KD_LIST_ITEM * entry )
     else
         list->woFlags |= WOF_NON_SELECTABLE;
     list->Information(I_CHANGED_FLAGS,NULL) ;
-}
+}*/
 
 void K_DIALOG_SSH_SETTINGS::
 InitSSH2CipherList( KD_LIST_ITEM * entry )
@@ -876,16 +963,44 @@ InitSSH2CipherList( KD_LIST_ITEM * entry )
     button = new UIW_BUTTON( 0,0,0,"3des-cbc",BTF_NO_3D, WOF_NO_FLAGS );
     button->StringID(button->DataGet());
     *list + button;
+
     button = new UIW_BUTTON( 0,0,0,"aes128-cbc",BTF_NO_3D, WOF_NO_FLAGS );
     button->StringID(button->DataGet());
     *list + button;
+
+    button = new UIW_BUTTON( 0,0,0,"aes128-ctr",BTF_NO_3D, WOF_NO_FLAGS );
+    button->StringID(button->DataGet());
+    *list + button;
+
+    button = new UIW_BUTTON( 0,0,0,"aes128-gcm@openssh.com",BTF_NO_3D, WOF_NO_FLAGS );
+    button->StringID(button->DataGet());
+    *list + button;
+
     button = new UIW_BUTTON( 0,0,0,"aes192-cbc",BTF_NO_3D, WOF_NO_FLAGS );
     button->StringID(button->DataGet());
     *list + button;
+
+    button = new UIW_BUTTON( 0,0,0,"aes192-ctr",BTF_NO_3D, WOF_NO_FLAGS );
+    button->StringID(button->DataGet());
+    *list + button;
+
     button = new UIW_BUTTON( 0,0,0,"aes256-cbc",BTF_NO_3D, WOF_NO_FLAGS );
     button->StringID(button->DataGet());
     *list + button;
-    button = new UIW_BUTTON( 0,0,0,"arcfour",BTF_NO_3D, WOF_NO_FLAGS );
+
+    button = new UIW_BUTTON( 0,0,0,"aes256-ctr",BTF_NO_3D, WOF_NO_FLAGS );
+    button->StringID(button->DataGet());
+    *list + button;
+
+    button = new UIW_BUTTON( 0,0,0,"aes256-gcm@openssh.com",BTF_NO_3D, WOF_NO_FLAGS );
+    button->StringID(button->DataGet());
+    *list + button;
+
+    button = new UIW_BUTTON( 0,0,0,"chachae20-poly1305",BTF_NO_3D, WOF_NO_FLAGS );
+    button->StringID(button->DataGet());
+    *list + button;
+
+    /*button = new UIW_BUTTON( 0,0,0,"arcfour",BTF_NO_3D, WOF_NO_FLAGS );
     button->StringID(button->DataGet());
     *list + button;
     button = new UIW_BUTTON( 0,0,0,"blowfish-cbc",BTF_NO_3D, WOF_NO_FLAGS );
@@ -893,7 +1008,7 @@ InitSSH2CipherList( KD_LIST_ITEM * entry )
     *list + button;
     button = new UIW_BUTTON( 0,0,0,"cast128-cbc",BTF_NO_3D, WOF_NO_FLAGS );
     button->StringID(button->DataGet());
-    *list + button;
+    *list + button;*/
 
     if ( entry->_access == SSH )
         list->woFlags &= ~WOF_NON_SELECTABLE ;
@@ -907,15 +1022,15 @@ InitSSH2AuthList(KD_LIST_ITEM * entry)
 {
     UIW_BUTTON * button;
     UIW_VT_LIST * list = (UIW_VT_LIST *) Get( LIST_SSH_V2_AUTH ) ;
-    button = new UIW_BUTTON( 0,0,0,"external-keyx",BTF_NO_3D, WOF_NO_FLAGS );
+    /*button = new UIW_BUTTON( 0,0,0,"external-keyx",BTF_NO_3D, WOF_NO_FLAGS );
     button->StringID(button->DataGet());
-    *list + button;
+    *list + button;*/
     button = new UIW_BUTTON( 0,0,0,"gssapi",BTF_NO_3D, WOF_NO_FLAGS );
     button->StringID(button->DataGet());
     *list + button;
-    button = new UIW_BUTTON( 0,0,0,"hostbased",BTF_NO_3D, WOF_NO_FLAGS );
+    /*button = new UIW_BUTTON( 0,0,0,"hostbased",BTF_NO_3D, WOF_NO_FLAGS );
     button->StringID(button->DataGet());
-    *list + button;
+    *list + button;*/
     button = new UIW_BUTTON( 0,0,0,"keyboard-interactive",BTF_NO_3D, WOF_NO_FLAGS );
     button->StringID(button->DataGet());
     *list + button;
@@ -925,9 +1040,9 @@ InitSSH2AuthList(KD_LIST_ITEM * entry)
     button = new UIW_BUTTON( 0,0,0,"publickey",BTF_NO_3D, WOF_NO_FLAGS );
     button->StringID(button->DataGet());
     *list + button;
-    button = new UIW_BUTTON( 0,0,0,"srp-gex-sha1",BTF_NO_3D, WOF_NO_FLAGS );
+    /*button = new UIW_BUTTON( 0,0,0,"srp-gex-sha1",BTF_NO_3D, WOF_NO_FLAGS );
     button->StringID(button->DataGet());
-    *list + button;
+    *list + button;*/
 
     if ( entry->_access == SSH )
         list->woFlags &= ~WOF_NON_SELECTABLE ;
@@ -941,7 +1056,8 @@ InitSSH2MacList(KD_LIST_ITEM * entry)
 {
     UIW_BUTTON * button;
     UIW_VT_LIST * list = (UIW_VT_LIST *) Get( LIST_SSH_V2_MACS ) ;
-    button = new UIW_BUTTON( 0,0,0,"hmac-md5",BTF_NO_3D, WOF_NO_FLAGS );
+
+    /*button = new UIW_BUTTON( 0,0,0,"hmac-md5",BTF_NO_3D, WOF_NO_FLAGS );
     button->StringID(button->DataGet());
     *list + button;
     button = new UIW_BUTTON( 0,0,0,"hmac-md5-96",BTF_NO_3D, WOF_NO_FLAGS );
@@ -949,13 +1065,39 @@ InitSSH2MacList(KD_LIST_ITEM * entry)
     *list + button;
     button = new UIW_BUTTON( 0,0,0,"hmac-ripemd160",BTF_NO_3D, WOF_NO_FLAGS );
     button->StringID(button->DataGet());
-    *list + button;
+    *list + button;*/
+
     button = new UIW_BUTTON( 0,0,0,"hmac-sha1",BTF_NO_3D, WOF_NO_FLAGS );
     button->StringID(button->DataGet());
     *list + button;
-    button = new UIW_BUTTON( 0,0,0,"hmac-sha1-96",BTF_NO_3D, WOF_NO_FLAGS );
+
+    button = new UIW_BUTTON( 0,0,0,"hmac-sha1-etm@openssh.com",BTF_NO_3D, WOF_NO_FLAGS );
     button->StringID(button->DataGet());
     *list + button;
+
+    button = new UIW_BUTTON( 0,0,0,"hmac-sha2-256",BTF_NO_3D, WOF_NO_FLAGS );
+    button->StringID(button->DataGet());
+    *list + button;
+
+    button = new UIW_BUTTON( 0,0,0,"hmac-sha2-256-etm@openssh.com",BTF_NO_3D, WOF_NO_FLAGS );
+    button->StringID(button->DataGet());
+    *list + button;
+
+    button = new UIW_BUTTON( 0,0,0,"hmac-sha2-512",BTF_NO_3D, WOF_NO_FLAGS );
+    button->StringID(button->DataGet());
+    *list + button;
+
+    button = new UIW_BUTTON( 0,0,0,"hmac-sha2-512-etm@openssh.com",BTF_NO_3D, WOF_NO_FLAGS );
+    button->StringID(button->DataGet());
+    *list + button;
+
+    button = new UIW_BUTTON( 0,0,0,"none",BTF_NO_3D, WOF_NO_FLAGS );
+    button->StringID(button->DataGet());
+    *list + button;
+
+    /*button = new UIW_BUTTON( 0,0,0,"hmac-sha1-96",BTF_NO_3D, WOF_NO_FLAGS );
+    button->StringID(button->DataGet());
+    *list + button;*/
 
     if ( entry->_access == SSH )
         list->woFlags &= ~WOF_NON_SELECTABLE ;
@@ -969,9 +1111,35 @@ InitSSH2HKAList(KD_LIST_ITEM * entry)
 {
     UIW_BUTTON * button;
     UIW_VT_LIST * list = (UIW_VT_LIST *) Get( LIST_SSH_V2_HKA ) ;
+
+    button = new UIW_BUTTON( 0,0,0,"ecdsa-sha2-nistp256",BTF_NO_3D, WOF_NO_FLAGS );
+    button->StringID(button->DataGet());
+    *list + button;
+
+    button = new UIW_BUTTON( 0,0,0,"ecdsa-sha2-nistp384",BTF_NO_3D, WOF_NO_FLAGS );
+    button->StringID(button->DataGet());
+    *list + button;
+
+    button = new UIW_BUTTON( 0,0,0,"ecdsa-sha2-nistp521",BTF_NO_3D, WOF_NO_FLAGS );
+    button->StringID(button->DataGet());
+    *list + button;
+
+    button = new UIW_BUTTON( 0,0,0,"rsa-sha2-256",BTF_NO_3D, WOF_NO_FLAGS );
+    button->StringID(button->DataGet());
+    *list + button;
+
+    button = new UIW_BUTTON( 0,0,0,"rsa-sha2-512",BTF_NO_3D, WOF_NO_FLAGS );
+    button->StringID(button->DataGet());
+    *list + button;
+
     button = new UIW_BUTTON( 0,0,0,"ssh-dss",BTF_NO_3D, WOF_NO_FLAGS );
     button->StringID(button->DataGet());
     *list + button;
+
+    button = new UIW_BUTTON( 0,0,0,"ssh-ed25519",BTF_NO_3D, WOF_NO_FLAGS );
+    button->StringID(button->DataGet());
+    *list + button;
+
     button = new UIW_BUTTON( 0,0,0,"ssh-rsa",BTF_NO_3D, WOF_NO_FLAGS );
     button->StringID(button->DataGet());
     *list + button;

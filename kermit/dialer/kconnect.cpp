@@ -6466,9 +6466,9 @@ GenerateScript( KD_LIST_ITEM * entry, KD_CONFIG * config,
         case SSH_AUTO:
             OUTFILE("set ssh version automatic\n");
             break;
-        case SSH_V1:
+        /*case SSH_V1:
             OUTFILE("set ssh version 1\n");
-            break;
+            break;*/
         case SSH_V2:
             OUTFILE("set ssh version 2\n");
             break;
@@ -6484,7 +6484,7 @@ GenerateScript( KD_LIST_ITEM * entry, KD_CONFIG * config,
         } else {
             OUTFILE("set ssh x11-forwarding off\n");
         }
-        switch ( entry->_ssh1_cipher ) {
+        /*switch ( entry->_ssh1_cipher ) {
         case SSH1_CIPHER_3DES:
             OUTFILE("set ssh v1 cipher 3des\n");
             break;
@@ -6496,7 +6496,7 @@ GenerateScript( KD_LIST_ITEM * entry, KD_CONFIG * config,
             break;
         default:
             OUTFILE("end 1 unknown set ssh v1 cipher\n");
-        }
+        }*/
 
         switch ( entry->_ssh_host_check ) {
         case HC_STRICT:
@@ -6512,7 +6512,7 @@ GenerateScript( KD_LIST_ITEM * entry, KD_CONFIG * config,
             OUTFILE("end 1 unknown set strict-host-key-check\n");
         }
 
-        if ( entry->_ssh1_id_file[0] && entry->_ssh2_id_file[0] ) 
+        if ( entry->_ssh1_id_file[0] && entry->_ssh2_id_file[0] )
         {
             sprintf(tmp, "set ssh identity-file {%s} {%s}", 
                      entry->_ssh1_id_file, entry->_ssh2_id_file ) ;
@@ -6528,11 +6528,11 @@ GenerateScript( KD_LIST_ITEM * entry, KD_CONFIG * config,
             OUTFILE(BuildOutFileStr(buf, "", tmp));
         }
 
-        if ( entry->_ssh1_kh_file[0] ) {
+        /*if ( entry->_ssh1_kh_file[0] ) {
             sprintf(tmp, "set ssh v1 user-known-hosts-file {%s}", 
                      entry->_ssh1_kh_file ) ;
             OUTFILE(BuildOutFileStr(buf, "", tmp));
-        }
+        }*/
 
         if ( entry->_ssh2_kh_file[0] ) {
             sprintf(tmp, "set ssh v2 user-known-hosts-file {%s}", 
@@ -6540,37 +6540,93 @@ GenerateScript( KD_LIST_ITEM * entry, KD_CONFIG * config,
             OUTFILE(BuildOutFileStr(buf, "", tmp));
         }
 
-        sprintf(buf,"set ssh v2 authentication %s%s%s%s%s%s%s\n",
+        /* The following is no longer supported as of C-Kermit for Windows:
+         *   external-keyx, srp-gex-sha1, hostbased
+         * sprintf(buf,"set ssh v2 authentication %s%s%s%s%s%s%s\n",
                  entry->_ssh2_auth_external_keyx ? "external-keyx " : "",
                  entry->_ssh2_auth_gssapi ? "gssapi " : "",
                  entry->_ssh2_auth_srp_gex_sha1 ? "srp-gex-sha1 " : "",
                  entry->_ssh2_auth_publickey ? "publickey " : "",
                  entry->_ssh2_auth_password ? "password " : "",
                  entry->_ssh2_auth_keyboard_interactive ? "keyboard-interactive " : "",
-                 entry->_ssh2_auth_hostbased ? "hostbased " : "");
+                 entry->_ssh2_auth_hostbased ? "hostbased " : "");*/
+        sprintf(buf,"set ssh v2 authentication %s%s%s%s\n",
+                entry->_ssh2_auth_gssapi ? "gssapi " : "",
+                entry->_ssh2_auth_publickey ? "publickey " : "",
+                entry->_ssh2_auth_password ? "password " : "",
+                entry->_ssh2_auth_keyboard_interactive ? "keyboard-interactive " : "");
         OUTFILE(buf);
 
-        sprintf(buf,"set ssh v2 ciphers %s%s%s%s%s%s%s\n",
-                 entry->_ssh2_cipher_aes128 ? "aes128-cbc " : "",
-                 entry->_ssh2_cipher_3des ? "3des-cbc " : "",
-                 entry->_ssh2_cipher_blowfish ? "blowfish-cbc " : "",
-                 entry->_ssh2_cipher_cast128 ? "cast128-cbc " : "",
-                 entry->_ssh2_cipher_arcfour ? "arcfour " : "",
-                 entry->_ssh2_cipher_aes192 ? "aes192-cbc " : "",
-                 entry->_ssh2_cipher_aes256 ? "aes256-cbc " : "");
+        /* Changes for C-Kermit for Windows (from Kermit 95 v2.1):
+         * Removed: blowfish-cbc, cast128-cbc, arcfour
+         * Retained (for now): aes128-cbc, 3des-cbc, aes192-cbc, aes256-cbc
+         * New: aes128-ctr              aes256-gcm@openssh.com
+         *      aes192-ctr              chachae20-poly1305
+         *      aes256-ctr              aes128-gcm@openssh.com
+         */
+        sprintf(buf,"set ssh v2 ciphers %s%s%s%s%s%s%s%s%s%s\n",
+                 entry->_ssh2_cipher_chachae20_poly1305 ? "chachae20-poly1305 " : "",
+                 entry->_ssh2_cipher_aes256_gcm_openssh ? "aes256-gcm@openssh.com " : "",
+                 entry->_ssh2_cipher_aes128_gcm_openssh ? "aes128-gcm@openssh.com " : "",
+                 entry->_ssh2_cipher_aes256ctr ? "aes256-ctr " : "",
+                 entry->_ssh2_cipher_aes192ctr ? "aes192-ctr " : "",
+                 entry->_ssh2_cipher_aes128ctr ? "aes128-ctr " : "",
+                 entry->_ssh2_cipher_aes256 ? "aes256-cbc " : "", /* old */
+                 entry->_ssh2_cipher_aes192 ? "aes192-cbc " : "", /* old */
+                 entry->_ssh2_cipher_aes128 ? "aes128-cbc " : "", /* old */
+                 entry->_ssh2_cipher_3des ? "3des-cbc " : "" /* old */
+                 //entry->_ssh2_cipher_blowfish ? "blowfish-cbc " : "", /* gone */
+                 //entry->_ssh2_cipher_cast128 ? "cast128-cbc " : "", /* gone */
+                 //entry->_ssh2_cipher_arcfour ? "arcfour " : "", /* gone */
+                 );
         OUTFILE(buf);
 
-        sprintf(buf,"set ssh v2 macs %s%s%s%s%s\n",
-                 entry->_ssh2_mac_md5 ? "hmac-md5 " : "",
-                 entry->_ssh2_mac_sha1 ? "hmac-sha1 " : "",
-                 entry->_ssh2_mac_ripemd160 ? "hmac-ripemd160 " : "",
-                 entry->_ssh2_mac_sha1_96 ? "hmac-sha1-96 " : "",
-                 entry->_ssh2_mac_md5_96 ? "hmac-md5-96 " : "");
+        sprintf(buf,"set ssh v2 macs %s%s%s%s%s%s%s\n",
+                 entry->_ssh2_mac_sha2_256_etm_openssh ? "hmac-sha2-256-etm@openssh.com " : "",
+                 entry->_ssh2_mac_sha2_512_etm_openssh ? "hmac-sha2-512-etm@openssh.com " : "",
+                 entry->_ssh2_mac_sha1_etm_openssh ? "hmac-sha1-etm@openssh.com " : "",
+                 entry->_ssh2_mac_sha2_256 ? "hmac-sha2-256 " : "",
+                 entry->_ssh2_mac_sha2_512 ? "hmac-sha2-512 " : "",
+                 entry->_ssh2_mac_sha1 ? "hmac-sha1 " : "", /* old */
+                 entry->_ssh2_mac_none ? "none " : ""
+
+                //entry->_ssh2_mac_md5 ? "hmac-md5 " : "", /* gone */
+                 //entry->_ssh2_mac_ripemd160 ? "hmac-ripemd160 " : "", /* gone */
+                 //entry->_ssh2_mac_sha1_96 ? "hmac-sha1-96 " : "", /* gone */
+                 //entry->_ssh2_mac_md5_96 ? "hmac-md5-96 " : "" /* gone */
+                 );
         OUTFILE(buf);
 
-        sprintf(buf, "set ssh v2 hostkey-algorithms %s%s\n",
-                 entry->_ssh2_hka_rsa ? "ssh-rsa " : "",
-                 entry->_ssh2_hka_dss ? "ssh-dss " : "");
+        sprintf(buf, "set ssh v2 hostkey-algorithms %s%s%s%s%s%s%s%s\n",
+                 entry->_ssh2_hka_ssh_ed25519 ? "ssh-ed25519 " : "",
+                 entry->_ssh2_hka_ecdsa_sha2_nistp521 ? "ecdsa-sha2-nistp521 " : "",
+                 entry->_ssh2_hka_ecdsa_sha2_nistp384 ? "ecdsa-sha2-nistp384 " : "",
+                 entry->_ssh2_hka_ecdsa_sha2_nistp256 ? "ecdsa-sha2-nistp256 " : "",
+                 entry->_ssh2_hka_rsa_sha2_512 ? "rsa-sha2-512 " : "",
+                 entry->_ssh2_hka_rsa_sha2_256 ? "rsa-sha2-256 " : "",
+                 entry->_ssh2_hka_rsa ? "ssh-rsa " : "",  /* Old */
+                 entry->_ssh2_hka_dss ? "ssh-dss " : ""); /* Deprecated */
+        OUTFILE(buf);
+
+        /* New in C-Kermit for Windows */
+        /* TODO: Build a UI to configure this
+         *  Until then we'll comment out the command so as to not override the
+         *  defaults */
+        sprintf(buf,"; set ssh v2 key-exchange-methods %s\n",
+                entry->_ssh2_kex_curve25519_sha256 ? "curve25519-sha256 " : "",
+                entry->_ssh2_kex_curve25519_sha256_libssh ? "curve25519-sha256@libssh.org " : "",
+                entry->_ssh2_kex_ecdh_sha2_nistp256 ? "ecdh-sha2-nistp256 " : "",
+                entry->_ssh2_kex_ecdh_sha2_nistp384 ? "ecdh-sha2-nistp384 " : "",
+                entry->_ssh2_kex_ecdh_sha2_nistp521 ? "ecdh-sha2-nistp521 " : "",
+                entry->_ssh2_kex_dh_group18_sha512 ? "diffie-hellman-group18-sha512 " : "",
+                entry->_ssh2_kex_dh_group16_sha512 ? "diffie-hellman-group16-sha512 " : "",
+                entry->_ssh2_kex_dh_group_exchange_sha256 ? "diffie-hellman-group-exchange-sha256 " : "",
+                entry->_ssh2_kex_dh_group14_sha256 ? "diffie-hellman-group14-sha256 " : "",
+                entry->_ssh2_kex_dh_group14_sha1 ? "diffie-hellman-group14-sha1 " : "",
+                entry->_ssh2_kex_dh_group1_sha1 ? "diffie-hellman-group1-sha1 " : "",
+                entry->_ssh2_kex_ext_info_c ? "ext-info-c " : "",
+                entry->_ssh2_kex_dh_group_exchange_sha1 ? "diffie-hellman-group-exchange-sha1 " : ""
+        );
         OUTFILE(buf);
 
         if ( entry->_ssh_credfwd && entry->_ssh2_auth_gssapi &&
@@ -6580,13 +6636,13 @@ GenerateScript( KD_LIST_ITEM * entry, KD_CONFIG * config,
         } else {
             OUTFILE("set ssh gssapi delegate-credentials off\n");
         }
-        if ( entry->_ssh_credfwd && entry->_sshproto != SSH_V2 ) {
+        /*if ( entry->_ssh_credfwd && entry->_sshproto != SSH_V2 ) {
             OUTFILE("set ssh kerberos5 tgt-passing on\n");
             OUTFILE("set ssh kerberos4 tgt-passing on\n");
         } else {
             OUTFILE("set ssh kerberos5 tgt-passing off\n");
             OUTFILE("set ssh kerberos4 tgt-passing off\n");
-        }
+        }*/
 
         p = entry->_ipaddress;
         while ( *p == ' ' )
