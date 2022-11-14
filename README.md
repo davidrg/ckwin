@@ -12,10 +12,12 @@ Major features include:
    rlogin, modem, serial port and pty
  * Scriptable file transfer via Kermit, HTTP, HTTPS, FTP and FTPS protocols
  * International character set translation
- * Virtual Terminal connections over LAT and CTERM (Pathworks 32 required)
+ * Pathworks supported for LAT and CTERM Virtual Terminal connections. 
+   Can optionally be built with SuperLAT support as well (not enabled by
+   default)
 
 Windows XP or newer is required for SSH, secure telnet, https and ftps support.
-Windows 10 version 1809 is required for PTY support. 
+Windows 10 version 1809 is required for PTY support.
 
 This software is currently based on C-Kermit version 10.0 Beta.06 of
 14-OCT-2022 and is available under the 3-clause BSD license.
@@ -102,7 +104,8 @@ obsolete 3rd party libraries, cryptography export regulations, or unavailability
 of the required tools. Some of these may return someday, others likely will not.
 This includes:
 
-* LAT support provided by SuperLAT (requires SuperLAT SDK)
+* Meridian SuperLAT support is available if you build C-Kermit for Windows 
+  yourself. 
 * Kerberos (provided by a very old version of MIT Kerberos for Windows)
 * SRP (provided by the Stanford SRP distribution, unmaintained for over a decade now)
 * Telnet Encryption Option

@@ -50,7 +50,7 @@
 ENABLED_FEATURES = Network-Connections
 ENABLED_FEATURE_DEFS = -DNETCONN
 
-DISABLED_FEATURES = SuperLAT Kerberos SRP
+DISABLED_FEATURES = Kerberos SRP
 DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNO_SRP
 
 # type /interpret doesn't work on windows currently.
@@ -162,10 +162,6 @@ CKF_SSH=no
 #      OR: Reimplementing using SRP support in OpenSSL
 #          (libssh has no SRP support and the SRP patches for OpenSSH are a
 #           decade or two out of date making this not very useful)
-# SuperLAT:
-#   Turn on with: -DSUPERLAT
-#   Requires: The SuperLAT SDK
-#      OR: Reimplementing with code from the DECnet-Linux userspace LAT package
 
 !if "$(CKF_NO_CRYPTO)" == "yes"
 # A No-crypto build has been requested regardless of what libraries may have
@@ -288,6 +284,16 @@ DISABLED_FEATURES = $(DISABLED_FEATURES) DECnet
 !else
 ENABLED_FEATURES = $(ENABLED_FEATURES) DECnet
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DDECNET
+!endif
+
+# Meridian SuperLAT
+#   Turn on with: -DSUPERLAT
+#   Requires: The Meridian SuperLAT SDK
+!if "$(CKF_SUPERLAT)" == "yes"
+ENABLED_FEATURES = $(ENABLED_FEATURES) SuperLAT
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DSUPERLAT
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) SuperLAT
 !endif
 
 # KUI Toolbar:

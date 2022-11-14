@@ -52,6 +52,11 @@ REM ============================================================================
 REM base include path - this is required for both Windows and OS/2
 set ckinclude=%root%\kermit\k95
 
+REM See if the user has the SuperLAT SDK (*extremely* unlikely)
+set CKF_SUPERLAT=no
+if exist %root%\superlat\include\latioc.h set CKF_SUPERLAT=yes
+if exist %root%\superlat\include\latioc.h set ckinclude=%ckinclude%;%root%\superlat\include
+
 REM This and everything else is windows-specific.
 set ckwinclude=%ckinclude%;%root%\kermit\k95\kui
 
@@ -195,6 +200,9 @@ goto :cvcdone
 :vc116
 set CK_COMPILER_NAME=Visual C++ 1.0 (16-bit)
 set ZINCBUILD=mvcpp150
+set CKF_SUPERLAT=unsupported
+set CKF_SSH=unsupported
+set CKF_SSL=unsupported
 goto :semisupported
 
 :vc1
@@ -205,16 +213,22 @@ goto :unsupported
 set CK_COMPILER_NAME=Visual C++ 2.0
 REM TODO - try to find msvcrt20.dll and add it to distdlls
 set ZINCBUILD=mvcpp200mt
+set CKF_SSH=unsupported
+set CKF_SSL=unsupported
 goto :cvcdone
 
 :vc4
 set CK_COMPILER_NAME=Visual C++ 4.0
 set ZINCBUILD=mvcpp400mt
+set CKF_SSH=unsupported
+set CKF_SSL=unsupported
 goto :cvcdone
 
 :vc5
 set CK_COMPILER_NAME=Visual C++ 5.0 (Visual Studio 97)
 set ZINCBUILD=mvcpp500mt
+set CKF_SSH=unsupported
+set CKF_SSL=unsupported
 goto :cvcdone
 
 :vc6
@@ -237,36 +251,47 @@ goto :cvcdone
 
 :vc9
 set CK_COMPILER_NAME=Visual C++ 2008 (9.0)
+set CKF_SUPERLAT=unsupported
 goto :cvcdone
 
 :vc10
 set CK_COMPILER_NAME=Visual C++ 2010 (10.0)
 set ZINCBUILD=mvcpp10
+set CKF_SUPERLAT=unsupported
 goto :cvcdone
 
 :vc11
 set CK_COMPILER_NAME=Visual C++ 2012 (11.0)
+set CKF_SUPERLAT=unsupported
 goto :cvcdone
 
 :vc12
 set CK_COMPILER_NAME=Visual C++ 2013 (12.0)
+set CKF_SUPERLAT=unsupported
 goto :cvcdone
 
 :vc140
 set CK_COMPILER_NAME=Visual C++ 2015 (14.0)
+set CKF_SUPERLAT=unsupported
 goto :cvcdone
 
 :vc141
 set CK_COMPILER_NAME=Visual C++ 2017 (14.1)
+set CKF_SUPERLAT=unsupported
 goto :cvcdone
 
 :vc142
 set CK_COMPILER_NAME=Visual C++ 2019 (14.2)
+set CKF_SUPERLAT=unsupported
 goto :cvcdone
 
 :vc143
 set CK_COMPILER_NAME=Visual C++ 2022 (14.3)
+set CKF_SUPERLAT=unsupported
 goto :cvcdone
+
+REM Meridian SuperLAT requires Visual C++ 2005 or older as the product itself
+REM requires Windows NT 3.5x or 4.0 (2000 and newer are unsupported)
 
 :unsupported
 echo.
@@ -345,11 +370,12 @@ echo.
 echo Dist files set to:
 echo    %CK_DIST_DLLS%
 echo.
-echo Optional Dependencies Found:
-echo    zlib: %CKF_ZLIB%
-echo OpenSSL: %CKF_SSL%
-echo  libssh: %CKF_SSH%
-echo    zinc: %CKF_ZINC%
+echo Optional Dependencies:
+echo     zlib: %CKF_ZLIB%
+echo  OpenSSL: %CKF_SSL%
+echo   libssh: %CKF_SSH%
+echo     zinc: %CKF_ZINC%
+echo SuperLAT: %CKF_SUPERLAT%
 echo.
 if "%BUILD_ZINC%" == "yes" echo OpenZinc is required for building the dialer. You can build it by extracting
 if "%BUILD_ZINC%" == "yes" echo the OpenZinc distribution to %root%\zinc and running

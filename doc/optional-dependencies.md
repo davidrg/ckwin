@@ -58,6 +58,9 @@ Normally everything is arranged into directories as follows:
    - libssh\
      - 0.9.6\
        - files & directories from libssh 0.9.6
+   - superlat\
+     - include\
+       - SuperLAT header files
 ```
 
 Once you've built the dependencies you want you can uncomment the associated
@@ -110,6 +113,32 @@ cd ..\..\..\
 Note that this does not build libssh with GSSAPI support. If you're building
 libssh 0.10.x and want DSA support (ssh-dss), add `-DWITH_DSA=ON` to the end
 of the cmake command.
+
+## Building with Meridian SuperLAT support
+
+On Windows NT, C-Kermit for Windows can be built with support for making LAT 
+connections through [SuperLAT](https://web.archive.org/web/20000619044544/http://www.meridian.com/superlat.html)
+by Meridian Technology Corporation. Standard builds for vintage Windows provided
+by The Kermit Project do not include SuperLAT due to the SDK not being freely
+available under an open-source license.
+
+But you can build it yourself easily enough if you need it! If the SuperLAT 
+headers are found in `\superlat\include` and you're building with Visual C++
+2005 or older SuperLAT support will be automatically enabled when you run the
+`setenv.bat` script.
+
+The specific header files required to be in this directory are: `LATIOC.H`, 
+`NETTYPES.H`, `NTDDTDI.H`, `PACKOFF.H`, `PACKON.H`, `TDI.H`, `TIHDR.H`.
+
+These can be obtained from the SuperLAT SDK. If you don't have a copy of that,
+they can also be found in the `TESTSVC` directory inside the 
+[slatfio.zip](https://web.archive.org/web/20000929005919/http://www.meridian.com/slatfio.zip)
+archive originally distributed by Meridian on their website ("SuperLAT File I/O" 
+on [this page](https://web.archive.org/web/20010830141239/http://www.meridian.com/DownloadSL.html)).
+
+To actually use SuperLAT support, you'll need a licensed copy of the SuperLAT
+product. This has not been commercially available or supported since 
+31 December 2000 so is probably extremely difficult to find today.
 
 ## Building with Older OpenSSL Versions
 If you want to build with older **_INSECURE_** versions of OpenSSL for some
