@@ -195,7 +195,7 @@ jobs:
   # Build with OpenWatcom 1.9 which allows targeting older versions of Windows #
   ##############################################################################
   # It is also likely to be upset by the same sorts of things as Visual C++ 6
-  # which reduces the liklihood of accidentally breaking that compiler.
+  # which reduces the likelihood of accidentally breaking that compiler.
   Build-OpenWatcom19-Win32:
     runs-on: windows-latest
 

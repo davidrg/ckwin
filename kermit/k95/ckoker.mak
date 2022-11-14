@@ -635,7 +635,6 @@ DEFINES = -DOS2 -DDYNAMIC -DKANJI -DTCPSOCKET \
 # producing 32bit OS/2 binaries fine as-is.
 
 # zlib support:  -DZLIB
-# DECnet (Pathworks32) support: -DDECNET
            
 !else if "$(PLATFORM)" == "NT"
 !ifndef K95BUILD

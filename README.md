@@ -12,6 +12,7 @@ Major features include:
    rlogin, modem, serial port and pty
  * Scriptable file transfer via Kermit, HTTP, HTTPS, FTP and FTPS protocols
  * International character set translation
+ * Virtual Terminal connections over LAT and CTERM (Pathworks 32 required)
 
 Windows XP or newer is required for SSH, secure telnet, https and ftps support.
 Windows 10 version 1809 is required for PTY support. 
@@ -101,8 +102,7 @@ obsolete 3rd party libraries, cryptography export regulations, or unavailability
 of the required tools. Some of these may return someday, others likely will not.
 This includes:
 
-* DECnet (formerly provided by DEC PATHWORKS)
-* LAT (formerly provided by either SuperLAT or PATHWORKS)
+* LAT support provided by SuperLAT (requires SuperLAT SDK)
 * Kerberos (provided by a very old version of MIT Kerberos for Windows)
 * SRP (provided by the Stanford SRP distribution, unmaintained for over a decade now)
 * Telnet Encryption Option

@@ -50,7 +50,7 @@
 ENABLED_FEATURES = Network-Connections
 ENABLED_FEATURE_DEFS = -DNETCONN
 
-DISABLED_FEATURES = SuperLAT DECnet Kerberos SRP
+DISABLED_FEATURES = SuperLAT Kerberos SRP
 DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNO_SRP
 
 # type /interpret doesn't work on windows currently.
@@ -166,11 +166,6 @@ CKF_SSH=no
 #   Turn on with: -DSUPERLAT
 #   Requires: The SuperLAT SDK
 #      OR: Reimplementing with code from the DECnet-Linux userspace LAT package
-# DECnet:
-#   Turn on with: -DDECNET
-#   Requires: The Pathworks32 SDK
-#      OR: Reimplement in userspace using pcap? Though probably not due to the
-#          whole changing MAC address thing.
 
 !if "$(CKF_NO_CRYPTO)" == "yes"
 # A No-crypto build has been requested regardless of what libraries may have
@@ -283,6 +278,16 @@ ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) XYZMODEM
 !else
 DISABLED_FEATURES = $(DISABLED_FEATURES) XYZMODEM
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOCKXYZ
+!endif
+
+# DECnet
+#   Turn on with: -DDECNET
+#   Requires: Pathworks32 to be installed to use DECnet features
+!if "$(CKF_DECNET)" == "no"
+DISABLED_FEATURES = $(DISABLED_FEATURES) DECnet
+!else
+ENABLED_FEATURES = $(ENABLED_FEATURES) DECnet
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DDECNET
 !endif
 
 # KUI Toolbar:
