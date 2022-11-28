@@ -6936,6 +6936,22 @@ setproto() {                            /* Select a file transfer protocol */
      "Optional command to send to host prior to uploading in binary mode",
                p1)) < 0) {
         if (x == -3) {
+            /* DavidG 2022-11-29: If the protocol is internal and P is not
+             * available, bail. Otherwise, the user is able to set the protocol
+             * to xmodem (which won't work) and receives an error if they try
+             * to change it back to kermit.
+             *
+             * I have no idea *why* we don't just jump to protoexit in this case
+             * like all the others which is why the existing behaviour is being
+             * left as-is for now.
+             * */
+#ifdef XYZ_INTERNAL
+            if (!p_avail) {
+                bleep(BP_WARN);
+                printf("\n?X,Y, and Zmodem are unavailable\n");
+                return(success = 0);
+            }
+#endif /* XYZ_INTERNAL */
             protocol = y;               /* Set protocol but don't change */
             return(1);                  /* anything else */
         } else
