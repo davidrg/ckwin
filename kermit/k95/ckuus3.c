@@ -13627,8 +13627,10 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
 #ifndef NOPUSH
 #ifdef CK_REDIR
 #ifndef NOXFER
+#ifndef XYZ_INTERNAL
       case XYEXTRN:			/* SET EXTERNAL-PROTOCOL */
 	return(setextern());
+#endif /* XYZ_INTERNAL */
 #endif	/* NOXFER */
 #endif	/* CK_REDIR */
 #endif	/* NOPUSH */
