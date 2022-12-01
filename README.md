@@ -98,6 +98,12 @@ features were added for 2.2. A full list of these is available here:
 
 http://www.kermitproject.org/k95-fixes-since-213.txt
 
+Due to the way Kermit 95 was open-sourced, not all changes documented above for
+Kermit 95 2.2 are included in C-Kermit for Windows. In particular, the version
+of the Dialer included here comes from the Kermit 95 v2.1.3 codebase and so 
+doesn't include any of the 2.2 enhancements. The original SSH subsystem was not
+open-sourced so of course any listed SSH enhancements to that don't apply.
+
 ### Missing Kermit 95 Features
 When Kermit 95 was open-sourced a number of features were disabled due to
 obsolete 3rd party libraries, cryptography export regulations, or unavailability
