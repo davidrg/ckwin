@@ -5,6 +5,13 @@
 #include "ckucmd.h"
 #include "ckcxla.h"
 
+#ifdef CK_ANSIC
+/* prototypes for static functions - fdc 30 November 2022 */
+static int jpnxas( int, int[] );
+static int jpnxkn( int[], int[] );
+static int jpnxkt( int, int[] );
+#endif /* C_ANSIC */
+
 #ifdef NOXFER
 #define zdstuff(a)
 #endif /* NOXFER */
@@ -5324,9 +5331,12 @@ xeglg(c) CHAR c;
   Returns 0 on success, -1 on failure.
 */
 
+#ifdef COMMENT
+/* Replaced by new prototypes above */
 _PROTOTYP(static int jpnxas, (int, int[]) );
 _PROTOTYP(static int jpnxkt, (int, int[]) );
 _PROTOTYP(static int jpnxkn, (int[], int[]) );
+#endif  /* COMMENT */
 
 static int jpncnt;			/* Byte count for Japanese */
 static int jpnlst;			/* Last status (for JIS7) */

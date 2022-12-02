@@ -1,4 +1,4 @@
-char *cknetv = "Network support, 10.0.299, 26 Sep 2022";
+char *cknetv = "Network support, 10.0.301, 01 Dec 2022";
 
 /*  C K C N E T  --  Network support  */
 
@@ -3441,6 +3441,12 @@ setnproto(p) char * p;
 /* service taking into account the use of DNS SRV records.         */
 
 static struct servent servrec;
+
+#ifdef CK_ANSIC
+/* prototype for static functions - fdc 01 December 2022 */
+static struct servent * ckgetservice( char *, char *, char *, int );
+#endif /* CK_ANSIC */
+
 static struct servent *
 ckgetservice(hostname, servicename, ip, iplen)
     char *hostname; char * servicename; char * ip; int iplen;
@@ -11369,8 +11375,6 @@ http_inc(timo) int timo; {
                 break;
             }
         }
-#else /* !IBMSELECT */
-        SELECT is required for this code
 #endif /* IBMSELECT */
 #endif /* BSDSELECT */
     }
@@ -13762,6 +13766,13 @@ locate_txt_rr(prefix, name, retstr)
                       + strlen ((ptr)->sun_path))
 #endif
 #endif /* UNIX */
+
+#ifdef CK_ANSIC
+/* prototypes for static functions - fdc 30 November 2022 */
+static SIGTYP rlogoobh( int );
+static int rlog_oob( CHAR *, int );
+#endif /* CK_ANSIC */
+
 int
 fwdx_create_listen_socket(screen) int screen; {
 #ifdef NOPUTENV

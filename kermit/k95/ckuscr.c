@@ -1,4 +1,5 @@
 #include "ckcsym.h"
+#include "ckcdeb.h"
 
 #ifndef NOICP
 #ifndef NOSCRIPT
@@ -33,7 +34,6 @@ char *loginv = "Script Command, 10.0.032, 23 Sep 2022";
   Manual, and thus should be portable to all systems that implement those
   functions, and where alarm() and signal() work as they do in UNIX.
 */
-#include "ckcdeb.h"
 #include <signal.h>
 #ifdef NT
 #include <setjmpex.h>

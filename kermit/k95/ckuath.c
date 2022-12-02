@@ -1,4 +1,4 @@
-char *ckathv = "Authentication, 10.0.239, 30 Sep 2022";
+char *ckathv = "Authentication, 10.0.240, 22 Nov 2022";
 /*
   C K U A T H . C  --  Authentication for C-Kermit
 
@@ -147,7 +147,18 @@ int accept_complete = 0;
 #endif /* printf */
 #include "krb5.h"
 
+/* ifdefs -fdc 22 November 2022 */
+#ifdef XX_COM_ERR_H
 #include "com_err.h"
+#else
+#ifdef K5_COM_ERR_H
+#include "krb5/com_err.h"
+#else
+#ifdef ET_COM_ERR_H
+#include "et/com_err.h"
+#endif /* ET_COM_ERR_H */
+#endif /* K5_COM_ERR_H */
+#endif /* COM_ERR_H */
 
 #ifdef saveprintf
 #define printf saveprintf
@@ -157,7 +168,7 @@ int accept_complete = 0;
 #ifdef BETATEST
 #include "profile.h"
 #endif /* BETATEST */
-#include "com_err.h"
+/* #include "com_err.h" */ /* already done just above */
 #ifdef KRB5_GET_INIT_CREDS_OPT_TKT_LIFE
 #define KRB5_HAVE_GET_INIT_CREDS
 #else

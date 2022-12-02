@@ -228,7 +228,6 @@ pip-log.txt
 *.obn
 *.obw
 kermit/k95/dist*
-kermit/k95/ckcpro.c
 
 # IntelliJ Project
 .idea

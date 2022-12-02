@@ -1,12 +1,12 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "14 Oct 2022"       /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20221014"          /* Keep them in sync */
-/* Fri Oct 14 15:56:49 2022 */
+#define EDITDATE  "01 Dec 2022"       /* Last edit date dd mmm yyyy */
+#define EDITNDATE "20221201"          /* Keep them in sync */
+/* Thu Dec  1 06:56:49 2022 */
 
 /*
-  IMPORTANT: as of 27 September 2022 BETATEST is defined in ckcdeb.h, 
-  not here, because it's also used in other modules.
+  As of 27 September 2022 BETATEST is defined in ckcdeb.h, not here, 
+  because it's also used in other modules.
 */
 
 /*
@@ -59,10 +59,10 @@ char * ck_cryear = "2022"; 		/* C-Kermit copyright year */
    The Windows and non-Windows Betas happen at different times.
 */
 char *ck_s_test = "Pre-Beta";
-char *ck_s_tver = "06/Windows-04";
+char *ck_s_tver = "07/Windows-04";
 #else
-char *ck_s_test = "Beta";		/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "06";			/* Test version number */
+char *ck_s_test = "Pre-Beta";		/* "Dev","Alpha","Beta","RC", or "" */
+char *ck_s_tver = "07";			/* Test version number */
 #endif /* OS2 */
 #else /* BETATEST */
 char *ck_s_test = "";			/* Not development */
@@ -575,9 +575,7 @@ ACKNOWLEDGMENTS:
 #include "ck_ssl.h"
 #endif /* CK_SSL */
 
-#ifndef NOSPL
 #include "ckuusr.h"
-#endif /* NOSPL */
 
 #ifdef OS2ONLY
 #define INCL_VIO                        /* Needed for ckocon.h */
@@ -1453,6 +1451,8 @@ int ckxsyslog = SYSLG_DF;               /* Default logging level */
 _PROTOTYP( VOID iniopthlp, (void) );    /* Command-line help initializer */
 #endif /* NOCMDL */
 #endif /* NOHELP */
+
+_PROTOTYP( VOID initfloat, (void) );    /* Floating-point initializer */
 
 _PROTOTYP( VOID makever, (void) );
 _PROTOTYP( VOID getexedir, (void) );
@@ -3190,11 +3190,11 @@ main(argc,argv) int argc; char **argv;
 
     initflow();                         /* Initialize flow-control table */
 
-#ifndef NOICP
+#ifndef NOSPL
 #ifdef CKFLOAT
     initfloat();                        /* Deduce floating-point precision */
 #endif /* CKFLOAT */
-#endif /* NOICP */
+#endif /* NOSPL */
 
 #ifndef NOXFER
     initxlist();			/* Init exception lists */
@@ -3334,13 +3334,13 @@ main(argc,argv) int argc; char **argv;
         extern int ckxech, ttnet, ttnproto, cmdmsk;
 #ifdef SO_SNDBUF
         extern int tcp_sendbuf;
-#endif
+#endif /* SO_SNDBUF */
 #ifdef SO_RCVBUF
         extern int tcp_recvbuf;
-#endif
+#endif /* SO_RCVBUF */
 #ifdef SO_KEEPALIVE
         extern int tcp_keepalive;
-#endif
+#endif /* SO_KEEPALIVE */
 #ifdef SO_LINGER
         extern int tcp_linger, tcp_linger_tmo;
 #endif /* SO_LINGER */
@@ -3539,6 +3539,7 @@ main(argc,argv) int argc; char **argv;
     }
     debug(F111,"howcalled",myname,howcalled);
 
+#ifndef NOICP
 #ifdef NOCCTRAP
     dotakeini(0);
 #else /* NOCCTRAP */
@@ -3546,15 +3547,18 @@ main(argc,argv) int argc; char **argv;
     setint();
     cc_execute( ckjaddr(cmjbuf), dotakeini, failtakeini );
 #endif /* NOCCTRAP */
+#endif /* NOICP */
 
     debug(F111,"main 2 cfilef",cmdfil,cfilef);
     if (cmdfil[0]) {                    /* If we got one (see prescan())... */
+#ifndef NOICP
 #ifdef NOCCTRAP
         docmdfile(0);                   /* execute it. */
 #else /* NOCCTRAP */
         setint();
         cc_execute( ckjaddr(cmjbuf), docmdfile, failcmdfile );
 #endif /* NOCCTRAP */
+#endif /* NOICP */
     }
 #ifndef OS2                             /* Preserve name so we can delete it */
     *cmdfil = '\0';                     /* Done, nullify the file name */

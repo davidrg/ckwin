@@ -8803,6 +8803,16 @@ dosetsftp() {
 #include "ikui.h"
 extern ULONG RGBTable[16];
 
+#ifdef CK_ANSIC
+/* Prototypes for static functions - fdc 30 November 2022 */
+static char * sexpdebug( char * );
+static int setdial ( int ); 
+static int dialstr( char **, char * );
+static int parsdir( int );
+static int protofield( char *, char *, char * );
+static int setprinter( int );
+#endif /* CK_ANSIC */
+
 #define GUI_RGB  1
 #define GUI_WIN  2
 #define GUI_FON  3
@@ -11026,8 +11036,10 @@ case XYCARR:                            /* CARRIER-WATCH */
             y = cmnum("Error message verbosity level, 0-3","1",10,&x,xxstring);
             return(setnum(&cmd_err,x,y,3));
 
+#ifndef NOSPL
 	  case SCMD_VAR:
 	    return(setvareval());
+#endif /* NOSPL */
 
           default:
             return(-2);
@@ -11653,7 +11665,7 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
 
         if (x < 0) {
             if (x == -3) printf("?value required\n");
-#ifdef USETCSETSPEED
+#ifdef USETCSETSPEED               /* SCO Unixware 7 only */
             /* In this case, any number can be tried */
             /* There's a parse error message but the request still goes thru */
             if (rdigits(atmbuf))
@@ -11680,12 +11692,11 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
             printf("\n?Speed cannot be set for network connections\n");
             return(success = 0);
         }
-
 /*
   Note: This way of handling speeds is not 16-bit safe for speeds greater
   than 230400.  The argument to ttsspd() should have been a long.
 */
-#ifdef USETCSETSPEED
+#ifdef USETCSETSPEED               /* SCO Unixware 7 only */
         if (zz > -1L)
           x = zz / 10L;
 #endif /* USETCSETSPEED */

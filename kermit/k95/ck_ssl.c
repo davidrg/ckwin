@@ -1,4 +1,4 @@
-char *cksslv = "SSL/TLS support, 10.0.236, 24 Sep 2022";
+char *cksslv = "SSL/TLS support, 10.0.237, 01 Dec 2022";
 /*
   C K _ S S L . C --  OpenSSL Interface for C-Kermit
 
@@ -1766,10 +1766,10 @@ ssl_tn_init(mode) int mode;
             tls_ctx=(SSL_CTX *)SSL_CTX_new(TLS_client_method());
 #else /* OPENSSL_VERSION_NUMBER < 0x10100000L */
 #if OPENSSL_VERSION_NUMBER >= 0x10001000L
-            /* OpenSSL >= 1.0.1: Use TLS 1.2 - not yet deprecated as of 2022-09-06 */
+/* OpenSSL >= 1.0.1: Use TLS 1.2 - not yet deprecated as of 2022-09-06 */
             tls_ctx=(SSL_CTX *)SSL_CTX_new(TLSv1_2_client_method());
 #else
-            /* OpenSSL 0.9.8 and 1.0.0 can't handle anything newer than TSL 1.0 */
+/* OpenSSL 0.9.8 and 1.0.0 can't handle anything newer than TSL 1.0 */
             tls_ctx=(SSL_CTX *)SSL_CTX_new(TLSv1_client_method());
 #endif /* OPENSSL_VERSION_NUMBER >= 0x10001000L */
 #endif /* OPENSSL_VERSION_NUMBER >= 0x10100000L */
@@ -1804,12 +1804,11 @@ ssl_tn_init(mode) int mode;
             /* We are a server */
 
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
-            /* Since OpenSSL 1.1.0, SSLv23_server_method() has been renamed to
-             * TLS_server_method with the old name #defined to the new one. This
-             * is still the case in OpenSSL 3.1 but perhaps someday the old name
-             * will disappear so for OpenSSL 1.1.0 and newer we'll just use the
-             * new name. */
-
+/* Since OpenSSL 1.1.0, SSLv23_server_method() has been renamed to
+ * TLS_server_method with the old name #defined to the new one. This is still
+ * the case in OpenSSL 3.1 but perhaps someday the old name will disappear so
+ * for OpenSSL 1.1.0 and newer we'll just use the new name.
+ */
             ssl_ctx=(SSL_CTX *)SSL_CTX_new(TLS_server_method());
             /* This can fail because we do not have RSA available */
             if ( !ssl_ctx ) {
@@ -1817,7 +1816,6 @@ ssl_tn_init(mode) int mode;
                 last_ssl_mode = -1;
                 return(0);
             }
-
             tls_ctx=(SSL_CTX *)SSL_CTX_new(TLS_server_method());
 
             if ( !tls_ctx ) {

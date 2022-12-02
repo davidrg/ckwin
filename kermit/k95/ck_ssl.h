@@ -10,7 +10,7 @@
                Secure Endpoints Inc., New York City
               David Goodwin, New Zealand
               SMS
-    Last update: Tue Oct  4 16:01:53 2022
+    Last update: Tue Nov 15 15:09:05 2022
 */
 
 #ifdef CK_SSL
@@ -44,9 +44,17 @@
  * definitions there is no reason to have it included by openssl/evp.h
  */
 #define OPENSSL_NO_MDC2
-#ifdef OPENSSL_100
-#define OPENSSL_098
 
+#ifdef OPENSSL_300                     /* sms 15 November 2022 */
+#ifndef OPENSSL_100
+#define OPENSSL_100
+#endif  /* OPENSSL_100 */
+#endif /* def OPENSSL_300 */
+
+#ifdef OPENSSL_100
+#ifndef OPENSSL_098                     /* sms 15 November 2022 */
+#define OPENSSL_098
+#endif /* OPENSSL_098 */
 /* Different major/minor version or development version of OpenSSL
  * means ABI may break compatibility.
  * Modified by Adam Friedlander for OpenSSL >= 1.0.0
@@ -60,7 +68,9 @@
 #endif	/* OPENSSL_100 */
 
 #ifdef OPENSSL_098
+#ifndef OPENSSL_097                     /* sms 15 November 2022 */
 #define OPENSSL_097
+#endif  /* OPENSSL_097 */
 #endif /* OPENSSL_098 */
 #ifdef CK_DES
 #include <openssl/des.h>

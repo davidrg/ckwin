@@ -14,15 +14,15 @@
     copyright text in the ckcmai.c module for disclaimer and permissions.
     Last updates: 22 Aug 2022 (HELP TYPE adds /INTERPRET switch).
                   20 Sep 2022 (HELP COPY adds /INTERPRET, /TOSCREEN switches).
+                  06 Nov 2022 (fixed formatting of HELP SET TELNET).
+                  12 Nov 2022 (converted four function help strings to arrays).
 
   This module contains HELP command and other long text strings.
 
-  IMPORTANT: Character string constants longer than about 250 are not portable.
-  Longer strings should be broken up into arrays of strings and accessed with
-  hmsga() rather than hmsg().  (This statement was true in the 1980s and
-  probably is not a big concern in the 21st Century, but you never know;
-  there still might exist some 16-bit platforms and C compilers that have
-  restrictions like this.
+  IMPORTANT: As of 2022, character string constants longer than about 509 are
+  not portable.  Longer strings should be broken up into arrays of strings and
+  accessed with hmsga() rather than hmsg().  The length limit might be lower
+  in older C compilers.
 */
 #include "ckcsym.h"
 #include "ckcdeb.h"
@@ -49,7 +49,10 @@
 #include "ckokey.h"
 #endif /* OS2 */
 
+#ifdef CK_ANSIC
+static int dohfile( int );              /* Prototyp for static func */
 extern char * ck_cryear;		/* For copyright notice */
+#endif /* CK_ANSIC */
 
 extern xx_strp xxstring;
 extern char * ccntab[];
@@ -603,6 +606,66 @@ Press the key or key-combination shown after \"Command:\" in the status line",
 "For information about technical support please visit this page:",
 " ",
 "  http://www.kermitproject.org/support.html",
+""
+};
+
+static char * hmfstrcmp[] = {
+"\\fstrcmp(s1,s2[,case[,start[,length]]])",
+"  s1, s2 = strings",
+"  case, start, length = numbers or arithmetic expressions.",
+"    case = 0 [default] means to do a case-independent comparison;",
+"    nonzero case requests a case-sensitive comparison.",
+"    The optional start and length arguments apply to both s1 and s2",
+"    and allow specification of substrings if it is not desired to compare",
+"    the whole strings.  Results for non-ASCII strings are implentation-",
+"    and locale-dependent.",
+"  Returns a number:",
+"    -1: s1 is lexically less than s2;",
+"     0: s1 and s2 are lexically equal;",
+"     2: s1 is lexically greater than s2.",
+""
+};
+
+static char * hmffileinfo[] = {
+"\\ffileinfo(s1,&a)",
+"  s1 = file specification string",
+"  &a = array designator for results (required)",
+"  Returns a number:",
+"     0: File not found or not accessible or bad arguments;",
+"    >0: The number of attributes returned in the array, normally 7 or 8",
+" 1. The file's name",
+" 2. The full path of the directory where the file resides",
+" 3. The file's modification date-time yyyymmdd hh:mm:ss",
+" 4. Platform-specific permissions string, e.g. drwxrwxr-x or RWED,RWE,RE,E",
+" 5. Platform-specific permissions code, e.g. an octal number like 40775",
+" 6. The file's size in bytes",
+" 7. Type: regular file, executable, directory, link, or unknown",
+" 8. If link, the name of the file linked to",
+" 9. Transfer mode for file: text or binary.",
+""
+};
+
+static char * hmfdayname[] = {
+"\\fdayname(s1,n)",
+"  s1 = free-format date OR day-of-week number 1-7 OR leave blank.",
+"  n  = function code: 0 to return full name; nonzero to return abbreviation.",
+"  Returns a string: the name of the weekday for the given date or weekday",
+"    number or, if s1 was omitted, of the current date, in the language and",
+"    character-set specified by the locale.  If n is nonzero, the result",
+"    is abbreviated in the locale-appropriate way.  If given inappropriate",
+"    arguments, the result is empty and an error message is printed.",
+""
+};
+
+static char * hmfmonname[] = {
+"\\fmonthname(s1,n)",
+"  s1 = free-format date OR month-of-year number 1-12 OR leave blank.",
+"  n  = function code: 0 to return full name; nonzero to return abbreviation.",
+"  Returns a string: the name of the month for the given date or month",
+"    number or, if s1 was omitted, of the current date, in the language and",
+"    character-set specified by the locale.  If n is nonzero, the result",
+"    is abbreviated in the locale-appropriate way.  If given inappropriate",
+"    arguments, the result is empty and an error message is printed.",
 ""
 };
 
@@ -1471,7 +1534,7 @@ static char *hxxinp[] = {
 "  with IF FAILURE or IF SUCCESS, which tell whether the desired text arrived",
 "  within the given amount of time.",
 " ",
-"  The text, if given, can be a regular text or it can be a \\pattern()",
+"  The text, if given, can be a regular text or it can be a \\fpattern()",
 "  invocation, in which case it is treated as a pattern rather than a literal",
 "  string (HELP PATTERNS for details).",
 " ",
@@ -3090,7 +3153,7 @@ static char *hmxxget[] = {
 "  directed to a pipeline.",
 " ",
 "/QUIET",
-"  When sending in local mode, this suppresses the file-transfer display.",
+"  Suppresses the file-transfer display.",
 " ",
 "/RECOVER",
 "  Used to recover from a previously interrupted transfer; GET /RECOVER",
@@ -3102,8 +3165,8 @@ static char *hmxxget[] = {
 " ",
 "/RENAME-TO:string",
 "  Specifies that each file that arrives should be renamed as specified",
-"  after, and only if, it has been received successfully.  The string should",
-"  normally contain variables like \\v(filename) or \\v(filenum).",
+"  after, and only if, it has been received successfully.  The string can",
+"  be a filename, a directory name, an expression involving variables, etc.",
 " ",
 "/TEXT",
 "  Performs this transfer in text mode without affecting the global",
@@ -3617,7 +3680,7 @@ static char *hmxxrc[] = {
 "  Use the given protocol to receive the incoming file(s).",
 " ",
 "/QUIET",
-"  When sending in local mode, this suppresses the file-transfer display.",
+"  When receiving in local mode, this suppresses the file-transfer display.",
 " ",
 "/RECURSIVE",
 "  Equivalent to /PATHNAMES:RELATIVE.",
@@ -4563,7 +4626,7 @@ static char *hmhrmt[] = {
 static char *ifhlp[] = { "Syntax: IF [NOT] condition commandlist",
 " ",
 "If the condition is (is not) true, do the commandlist.  The commandlist",
-"can be a single command, or a list of commands separated by commas and",
+"can be a single command, or a list of commands separated by commas or",
 "enclosed in braces.  The condition can be a single condition or a group of",
 "conditions separated by AND (&&) or OR (||) and enclosed in parentheses.",
 "If parentheses are used they must be surrounded by spaces.  Examples:",
@@ -5195,18 +5258,18 @@ static char *hxxxmit[] = {
 
 #ifndef NOCSETS
 static char *hxxxla[] = {
-"Syntax: TRANSLATE file1 cs1 cs2 [ file2 ]",
-"  Translates file1 from the character set cs1 into the character set cs2",
+"Syntax: CONVERT file1 cs1 cs2 [ file2 ]",
+"Synonym: TRANSLATE",
+"  Converts file1 from the character set cs1 into the character set cs2",
 "  and stores the result in file2.  The character sets can be any of",
 "  C-Kermit's file character sets.  If file2 is omitted, the translation",
 "  is displayed on the screen.  An appropriate intermediate character-set",
 "  is chosen automatically, if necessary.  Synonym: XLATE.  Example:",
 " ",
-"    TRANSLATE lasagna.txt latin1 utf8 lasagna-utf8.txt",
+"    CONVERT lasagna.txt latin1 utf8 lasagna-utf8.txt",
 " ",
 "  Multiple files can be translated if file2 is a directory or device name,",
-"  rather than a filename, or if file2 is omitted.  Note: CONVERT would",
-"  would be a better name for this command but it's too late now.",
+"  rather than a filename, or if file2 is omitted.",
 "" };
 #endif /* NOCSETS */
 
@@ -5775,7 +5838,7 @@ static char * hmxxren[] = {
 "     -: (before a digit) Occurrences are counted from the right.",
 "     ~: (before occurrence) All occurences BUT the one given are changed.",
 " ",
-"  /CONVERT:cset1:cset1",
+"  /CONVERT:cset1:cset2",
 "    Converts each matching filename from character-set 1 to character-set 2.",
 "    Character sets are the same as for SET FILE CHARACTER-SET.",
 " ",
@@ -9428,7 +9491,7 @@ static char *hxytel[] = {
 "SET TELNET FORWARD-X XAUTHORITY-FILE <file>",
 "  If your X Server requires X authentication and the location of the",
 "  .Xauthority file is not defined by the XAUTHORITY environment variable,",
-"  use this command to specify the location of the .Xauthority file."
+"  use this command to specify the location of the .Xauthority file.",
 "  ",
 #endif /* CK_FORWARD_X */
 #ifdef CK_SNDLOC
@@ -10863,9 +10926,10 @@ case XYTIMER:
   case XYVAREV:
     return(hmsg("Syntax: SET VARIABLE-EVALUATION { RECURSIVE, SIMPLE }\n\
   Tells Kermit weather to evaluate \\%x and \\&x[] variables recursively\n\
-  (which is the default for historical reasons) or by simple string\n\
-  replacement, which lets you use these variables safely to store strings\n\
-  (such as Windows pathnames) that might contain backslashes."));
+  In C-Kermit 10.0 the default is SIMPLE, meaning variables return their\n\
+  values like in any other programming language, making life much easier\n\
+  when those values happen to be Windows or DOS pathnames, which contain\n\
+  backslashes."));
 #endif	/* NOSPL */
 
 #ifdef HAVE_LOCALE
@@ -12197,38 +12261,12 @@ represent.\n");
     other than 7BIT, 8BIT, or UTF8 (this probably will never appear).\n");
         break;
 
-      case FN_STRCMP:
-        printf("\\fstrcmp(s1,s2[,case[,start[,length]]])\n\
-  s1, s2 = strings\n\
-  case, start, length = numbers or arithmetic expressions.\n\
-    case = 0 [default] means to do a case-independent comparison;\n\
-    nonzero case requests a case-sensitive comparison.\n\
-    The optional start and length arguments apply to both s1 and s2\n\
-    and allow specification of substrings if it is not desired to compare\n\
-    the whole strings.  Results for non-ASCII strings are implentation-\n\
-    and locale-dependent.\n\
-  Returns a number:\n\
-    -1: s1 is lexically less than s2;\n\
-     0: s1 and s2 are lexically equal;\n\
-     2: s1 is lexically greater than s2.\n");
+      case FN_STRCMP:                   /* fdc 12 November 2022 */
+        hmsga(hmfstrcmp);               /* Literal string was too long */
         break;
 
-      case FN_FILEINF:
-        printf("\\ffileinfo(s1,&a)\n\
-  s1 = file specification string\n\
-  &a = array designator for results (required)\n\
-  Returns a number:\n\
-     0: File not found or not accessible or bad arguments;\n\
-    >0: The number of attributes returned in the array, normally 7 or 8:\n");
-        printf(" 1. The file's name\n\
- 2. The full path of the directory where the file resides\n\
- 3. The file's modification date-time yyyymmdd hh:mm:ss\n\
- 4. Platform-specific permissions string, e.g. drwxrwxr-x or RWED,RWE,RE,E\n\
- 5. Platform-specific permissions code, e.g. an octal number like 40775\n\
- 6. The file's size in bytes\n\
- 7. Type: regular file, executable, directory, link, or unknown\n\
- 8. If link, the name of the file linked to.\n\
- 9. Transfer mode for file: text or binary\n");
+      case FN_FILEINF:                  /* fdc 12 November 2022 */
+        hmsga(hmffileinfo);             /* Literal string was too long */
         break;
 
       case FN_FILECMP:
@@ -12241,26 +12279,12 @@ represent.\n");
     -1: Error opening or reading either file.\n");
         break;
 
-      case FN_DAYNAME:
-        printf("\\fdayname(s1,n)\n\
-  s1 = free-format date OR day-of-week number 1-7 OR leave blank.\n\
-  n  = function code: 0 to return full name; nonzero to return abbreviation.\n\
-  Returns a string: the name of the weekday for the given date or weekday\n\
-    number or, if s1 was omitted, of the current date, in the language and\n\
-    character-set specified by the locale.  If n is nonzero, the result\n\
-    is abbreviated in the locale-appropriate way.  If given inappropriate\n\
-    arguments, the result is empty and an error message is printed.\n");
+      case FN_DAYNAME:                  /* fdc 12 November 2022 */
+        hmsga(hmfdayname);              /* Literal string was too long */
         break;
 
-      case FN_MONNAME:
-        printf("\\fmonthname(s1,n)\n\
-  s1 = free-format date OR month-of-year number 1-12 OR leave blank.\n\
-  n  = function code: 0 to return full name; nonzero to return abbreviation.\n\
-  Returns a string: the name of the month for the given date or month\n\
-    number or, if s1 was omitted, of the current date, in the language and\n\
-    character-set specified by the locale.  If n is nonzero, the result\n\
-    is abbreviated in the locale-appropriate way.  If given inappropriate\n\
-    arguments, the result is empty and an error message is printed.\n");
+      case FN_MONNAME:                  /* fdc 12 November 2022 */
+        hmsga(hmfmonname);              /* Literal string was too long */
         break;
 
       default:
