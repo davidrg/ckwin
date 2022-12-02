@@ -256,3 +256,14 @@ ckuker.nr
 ckustr.sed
 ckutiox.c
 kermit/k95/makefile
+
+# These files belong to C-Kermit for OpenVMS,
+ckvvms.h
+ckvtio.c
+ckvrtl.h
+ckvrtl.c
+ckvrms.h
+ckvioc.h
+ckvioc.c
+ckvfio.c
+ckvcvt.c
