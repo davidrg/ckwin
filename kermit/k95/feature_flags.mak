@@ -265,15 +265,15 @@ DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNODEBUG
 !endif
 
 # XYZMODEM:
-#   Turn on with: Maybe -DCK_XYZ
+#   On by default
 #   Turn off with: -DNOCKXYZ
-#   Requires: A currently proprietary library ('P')
-!if "$(CKF_XYZ)" == "yes"
-ENABLED_FEATURES = $(ENABLED_FEATURES) XYZMODEM
-#ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_XYZ
-!else
+#   Requires: An external library ('P')
+!if "$(CKF_XYZ)" == "no"
 DISABLED_FEATURES = $(DISABLED_FEATURES) XYZMODEM
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOCKXYZ
+!else
+ENABLED_FEATURES = $(ENABLED_FEATURES) XYZMODEM
+CKF_XYZ = yes
 !endif
 
 # DECnet

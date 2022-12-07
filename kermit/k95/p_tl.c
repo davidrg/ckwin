@@ -37,7 +37,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#ifndef CKOKER_H
+/* ckoker.h defines kfree, kmalloc and krealloc */
 #include <malloc.h>
+#endif /* CKOKER_H */
 #include <string.h>
 
 #ifdef OS2

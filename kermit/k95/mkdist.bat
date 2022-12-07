@@ -18,6 +18,7 @@ move dist\ckwart.exe .\
 @echo Copy manual...
 copy ..\..\doc\manual\ckwin.htm dist\docs\manual\
 if exist dist\ssh.dll copy ..\..\doc\ssh-readme.md dist\ssh-readme.txt
+if exist ..\p95\p95.dll copy ..\p95\p95.dll dist\
 
 @echo Copy resources...
 copy k95.ini dist
