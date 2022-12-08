@@ -84,7 +84,7 @@ DEFS = p95.def
 	$(CC) $(CFLAGS) $(CFLAGSO) /Fo$@ $<
 
 CC = cl
-CFLAGS = /nologo /LD /J /c /MD -DOS2 -DNT -DCK_ANSIC -I.. -DXYZ_DLL /Zi
+CFLAGS = /nologo /LD /J /c /MD -DOS2 -DNT -DCK_ANSIC -I.. -DXYZ_DLL -DWIN32=1 /Zi
 CFLAGSO = /Ot /Og /Oi /G5
 CFLAGSD = /Zi
 #CFLAGS = /J /c /MT -DOS2 -DNT -DCK_ANSIC -I.. /Zi
