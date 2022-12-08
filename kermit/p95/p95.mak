@@ -30,6 +30,22 @@
 #									                                          #
 ###############################################################################
 
+!message Attempting to detect compiler...
+!include ..\k95\compiler_detect.mak
+
+!message
+!message
+!message ===============================================================================
+!message P95 Build Configuration
+!message ===============================================================================
+!message  Architecture:             $(TARGET_CPU)
+!message  Compiler:                 $(COMPILER)
+!message  Compiler Version:         $(COMPILER_VERSION)
+!message  Compiler Target Platform: $(TARGET_PLATFORM)
+!message ===============================================================================
+!message
+!message
+
 COMPILER = MSVC
 
 P_SRCS = \
@@ -80,16 +96,43 @@ LIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
         winmm.lib vdmdbg.lib
 DEFS = p95.def
 
+# Visual C++ 2015 refactored the C runtime .lib files - from 2015 onwards we
+# must link against ucrt.lib and vcruntime.lib
+!if ($(MSC_VER) >= 190)
+LIBS = $(LIBS) ucrt.lib vcruntime.lib
+!endif
+
 .c.obj:
 	$(CC) $(CFLAGS) $(CFLAGSO) /Fo$@ $<
 
 CC = cl
 CFLAGS = /nologo /LD /J /c /MD -DOS2 -DNT -DCK_ANSIC -I.. -DXYZ_DLL -DWIN32=1 /Zi
-CFLAGSO = /Ot /Og /Oi /G5
+CFLAGSO = /Ot /Oi
 CFLAGSD = /Zi
 #CFLAGS = /J /c /MT -DOS2 -DNT -DCK_ANSIC -I.. /Zi
 LD = link
-LDFLAGS = /nologo /dll /nod /align:0x1000 /map /debug:full
+LDFLAGS = /nologo /dll /nod /map /debug:full
+# /align:0x1000 - removed from LDFLAGS as the linker warns about it since
+#                 Visual C++ 5.0 SP3 and its almost just a leftover of the
+#                 default Visual C++ 4.0 makefile settings
+
+!if ($(MSC_VER) < 140)
+# These flags and options are deprecated or unsupported
+# from Visual C++ 2005 (v8.0) and up.
+
+# Optimise for Pentium
+CFLAGSO = $(CFLAGSO) /G5
+
+# Global Optimizations: This been deprecated since at least Visual C++ 2005.
+# Unsure about its status in Visual C++ 2003, but its fine to use in 2002.
+CFLAGSO = $(CFLAGSO) /Og
+
+!else
+
+# Docs suggest using /O1 (Minimize Size) or /O2 (Maximise Speed) instead of
+# /Og (General Optimizations)
+CFLAGSO = $(CFLAGSO) /O2
+!endif
 
 p95.dll: $(OBJS) $(DEFS)
 	$(LD) @<<
