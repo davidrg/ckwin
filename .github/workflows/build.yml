@@ -150,11 +150,14 @@ jobs:
       ##########################################################################
     - name: Full Build
       run: |
-        call ..\..\setenv.bat
+        call ..\setenv.bat
+        cd p95
+        call mknt.bat
+        cd ..\k95
         call mk.bat
         call mkdist.bat
       shell: cmd
-      working-directory: ${{ github.workspace }}\kermit\k95
+      working-directory: ${{ github.workspace }}\kermit\
       env:
         ROOT: ${{ github.workspace }}
         # CKF_NO_CRYPTO=yes causes all crypto features to be excluded from the
@@ -245,7 +248,9 @@ jobs:
         SET WIPFC=%WATCOM%\WIPFC
 
         call setenv.bat
-        cd kermit\k95
+        cd kermit\p95
+        call mknt.bat
+        cd ..\k95
         call mk.bat
       shell: cmd
       working-directory: ${{ github.workspace }}
@@ -344,10 +349,13 @@ jobs:
           REM Build for Windows NT 3.50 (and, someday, NT 3.1)
           set CKT_NT31=yes
           
-          call ..\..\setenv.bat
+          call ..\setenv.bat
+          cd p95
+          call mknt.bat
+          cd ..\k95
           call mk.bat
         shell: cmd
-        working-directory: ${{ github.workspace }}\kermit\k95
+        working-directory: ${{ github.workspace }}\kermit
         env:
           ROOT: ${{ github.workspace }}
           WATCOM: ${{ github.workspace }}\watcom
