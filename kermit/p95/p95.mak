@@ -157,9 +157,9 @@ CFLAGSO = $(CFLAGSO) /Og
 CFLAGSO = $(CFLAGSO) /O2
 !endif
 
-p95.dll: $(OBJS) $(DEFS)
+p95.dll: $(OBJS) $(DEFS) p95.res
 	$(LD) @<<
-   $(LDFLAGS) /DEF:$(DEFS) /OUT:$@ $(OBJS) $(LIBS)
+   $(LDFLAGS) /DEF:$(DEFS) /OUT:$@ $(OBJS) p95.res $(LIBS)
 <<
 
 pdll_common.obj: ../k95/p_type.h pdll_common.h pdll_defs.h pdll_dev.h pdll_os2incl.h pdll_error.h \
@@ -216,3 +216,5 @@ pdll_z.obj: ../k95/p_type.h pdll_common.h pdll_crc.h pdll_defs.h pdll_dev.h pdll
 
 pdll_z_global.obj: ../k95/p_type.h
 
+p95.res: p95.rc
+        rc -r p95.rc
