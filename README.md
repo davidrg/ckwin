@@ -18,8 +18,8 @@ Major features include:
 
 To get the latest most stable release as well as other news and information, 
 visit the [C-Kermit for Windows Beta website](https://www.kermitproject.org/ckw10beta.html).
-This software is currently based on C-Kermit version 10.0 Beta.06 of
-14-OCT-2022 and is available under the 3-clause BSD license.
+This software is currently based on C-Kermit version 10.0 Beta.07 of
+7-DEC-2022 and is available under the 3-clause BSD license.
 
 ![Screenshot](doc/screenshot-w10.png)
 
