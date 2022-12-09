@@ -425,8 +425,10 @@ hasnopath(s) char * s; {
 
 /*  C K S P R E A D  --  Print string double-spaced  */
 
+#ifdef CK_ANSIC
 /* static function prototypes - fdc 30 November 2022 */
 static char * ckspread( char * );
+#endif /* CK_ANSIC */
 static char * sprptr = NULL;
 
 static char *

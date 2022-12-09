@@ -13,7 +13,7 @@
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: 30 November 2022
+    Last update: 3 December 2022
 */
 
 /*
@@ -9559,8 +9559,10 @@ freeslot(n) int n; {
 #include <fcntl.h>			/* For creat() */
 #endif	/* UNIX */
 
+#ifdef CK_ANSIC
 /* prototype for static function - fdc 30 November 2022 */
 static void ck_termset( int );
+#endif  /* CK_ANSIC */
 
 int
 getslot() {                             /* Find a free slot for us */

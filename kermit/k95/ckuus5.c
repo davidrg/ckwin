@@ -15,6 +15,7 @@ int cmdsrc() { return(0); }
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
     Last update: Oct 10-11 2022 (fdc and sms)
+    Last update: Dec 02 2022 (David Goodwin - SHOW MOUSE)
 
   Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
@@ -5820,7 +5821,7 @@ shomou() {
                          mousename(button,event),
                          mousemap[button][event].key.scancode);
                 }
-              break;
+                break;
             case kverb:
               id = mousemap[button][event].kverb.id & ~(F_KVERB);
               if (id != K_IGNORE) {
@@ -6387,7 +6388,7 @@ shotapi(int option) {
                 tapiusecfg?"on ":"off", tapipass?"(n/a)":"");
         printf("\n");
 
-#ifdef BETATEST
+#ifdef TAPI_BETATEST
         if (tapipass) {
 printf("K-95 uses the TAPI Line in an exclusive mode.  Other applications\n");
 printf("may open the device but may not place calls nor answer calls.\n");
@@ -6420,7 +6421,7 @@ printf(
 printf("the TAPI Dialing Properties are altered or when the TAPI Location\n");
 printf("is changed.\n\n");
         }
-#endif /* BETATEST */
+#endif /* TAPI_BETATEST */
 
         if (tapipass) {
             printf("Type SHOW MODEM to see MODEM configuration.\n");
@@ -11308,7 +11309,7 @@ initoptlist() {
     makestr(&(optlist[noptlist++]),"VMSORUNIX");
 #endif /* VMSORUNIX */
 #ifdef VMS64BIT
-    makestr(&(optlist[noptlist++]),"VMS64BIT");	/* VMS on Alpha or IA64 */
+    makestr(&(optlist[noptlist++]),"VMS64BIT");	/* VMS on non-VAX */
 #endif /* VMS64BIT */
 #ifdef VMSI64
     makestr(&(optlist[noptlist++]),"VMSI64"); /* VMS on IA64 */

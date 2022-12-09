@@ -2,7 +2,7 @@
 
 /*
   For recent additions search below for "2021" and "2022".
-  Most recent update: Sun Nov 13 06:22:27 2022
+  Most recent update: Tue Dec  6 06:55:11 2022
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
   compatible with C preprocessors that support only #ifdef, #else, #endif,
@@ -1341,21 +1341,40 @@ extern int errno;                       /* fdc 1 November 2022 */
 #endif	/* __DECC */
 
 #ifdef VMS
-#ifdef __ia64				/* VMS on Itanium */
-#ifndef VMSI64
-#define VMSI64
-#endif	/* VMSI64 */
-#endif	/* __ia64 */
-#ifndef VMS64BIT			/* 64-bit VMS on Itanium or Alpha */
-#ifdef __ia64
-#define VMS64BIT
-#else
+/* 2022-12-05  SMS.  All hardware architectures after VAX are 64-bit. 
+ * Testing for (32-bit) VAX is safer in the long term than testing for
+ * __ALPHA, __ia64, __x86_64, et al.
+ */
+#ifndef VMS64                           /* Belt. */
 #ifdef __ALPHA
-#define VMS64BIT
-#endif	/* __ia64 */
-#endif	/* __ALPHA */
-#endif	/* VMS64BIT */
-#endif	/* VMS */
+#define VMS64
+#else /* def __ALPHA */
+#ifdef __ia64
+#define VMS64
+#ifndef VMSI64
+#define VMSI64                          /* See ckvtio.c.  Pointless now? */
+#endif /* ndef VMSI64 */
+#else /* def __ia64 */
+#ifdef __x86_64
+#define VMS64
+#endif /* def __x86_64 */
+#endif /* def __ia64 [else] */
+#endif /* def __ALPHA [else] */
+#endif /* ndef VMS64 */
+
+#ifndef VMS64                           /* Suspenders. */
+#ifndef __VAX
+#ifndef vax
+#ifndef __vax
+#ifndef __vax__
+#define VMS64
+#endif /* ndef __vax__ */
+#endif /* ndef __vax */
+#endif /* ndef vax */
+#endif /* ndef __VAX */
+#endif /* ndef VMS64 */
+
+#endif /* def VMS */
 
 #ifdef apollo				/* May be ANSI-C, check further */
 #ifdef __STDCPP__

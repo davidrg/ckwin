@@ -1,3 +1,4 @@
+/* Prototypes for static functions defined in ckcftp.c */
 #ifdef CK_ANSIC
 
 static VOID bytswap( int *, int * );
@@ -41,9 +42,5 @@ static int xlatec( int, int, int, int );
 static sigtype cancelrecv( int );
 static sigtype cancelsend( int );
 static sigtype cmdcancel( int );
-VOID lset( char *, char *, int, int );
-VOID makelist( char *, char *[], int );
-VOID rset( char *, char *, int, int );
-VOID sh_sort( char **, char **, int, int, int, int );
 
 #endif  /* CK_ANSIC */

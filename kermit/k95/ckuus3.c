@@ -14,7 +14,7 @@
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: 23 September 2022
+    Last update: Fri Dec  2 07:26:48 2022 (changes for XYZMODEM internal)
 */
 
 /*  SET command (but much material has been split off into ckuus7.c). */
@@ -6936,15 +6936,15 @@ setproto() {                            /* Select a file transfer protocol */
      "Optional command to send to host prior to uploading in binary mode",
                p1)) < 0) {
         if (x == -3) {
-            /* DavidG 2022-11-29: If the protocol is internal and P is not
-             * available, bail. Otherwise, the user is able to set the protocol
-             * to xmodem (which won't work) and receives an error if they try
-             * to change it back to kermit.
-             *
-             * I have no idea *why* we don't just jump to protoexit in this case
-             * like all the others which is why the existing behaviour is being
-             * left as-is for now.
-             * */
+          /* DavidG 2022-11-29: If the protocol is internal and P is not
+           * available, bail. Otherwise, the user is able to set the protocol
+           * to xmodem (which won't work) and receives an error if they try
+           * to change it back to kermit.
+           *
+           * I have no idea *why* we don't just jump to protoexit in this case
+           * like all the others which is why the existing behaviour is being
+           * left as-is for now.
+           * */
 #ifdef XYZ_INTERNAL
             if (!p_avail) {
                 bleep(BP_WARN);

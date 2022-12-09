@@ -16,6 +16,8 @@
                   20 Sep 2022 (HELP COPY adds /INTERPRET, /TOSCREEN switches).
                   06 Nov 2022 (fixed formatting of HELP SET TELNET).
                   12 Nov 2022 (converted four function help strings to arrays).
+                  02 Dec 2022 (changed ssh v2 macs list in windows "help ssh").
+                  03 Dec 2022 (fixed misplaced definition of cr_year).
 
   This module contains HELP command and other long text strings.
 
@@ -50,10 +52,10 @@
 #endif /* OS2 */
 
 #ifdef CK_ANSIC
-static int dohfile( int );              /* Prototyp for static func */
-extern char * ck_cryear;		/* For copyright notice */
+static int dohfile( int );              /* Prototype for static func */
 #endif /* CK_ANSIC */
 
+extern char * ck_cryear;		/* For copyright notice */
 extern xx_strp xxstring;
 extern char * ccntab[];
 /*

@@ -1,4 +1,4 @@
-char *cknetv = "Network support, 10.0.301, 01 Dec 2022";
+char *cknetv = "Network support, 10.0.302, 06 Dec 2022";
 
 /*  C K C N E T  --  Network support  */
 
@@ -12,7 +12,10 @@ char *cknetv = "Network support, 10.0.301, 01 Dec 2022";
 /*
   REMINDER: Any changes made to this file that other modules depend must
   also be made to cklnet.c (for VOS) until such time as cklnet.c and this
-  module are merged back together.
+  module are merged back together.  (Update 2022-12-06: VOS C-Kermit has
+  not been released since 7.0.197 08 Feb 2000, so if the VOS version is
+  ever to be resurrected, it should start with the current ckcnet.c and 
+  then merge back any VOS dependencies.)
 
   NOTE TO CONTRIBUTORS: This file, and all the other shared (ckc and cku)
   C-Kermit source files, must be compatible with C preprocessors that support
@@ -39,11 +42,12 @@ char *cknetv = "Network support, 10.0.301, 01 Dec 2022";
   MultiNet code adapted to WIN/TCP by Ray Hunter of TWG.
   MultiNet code adapted to DEC TCP/IP by Lee Tibbert of DEC and Frank da Cruz.
   TCP/IP support adapted to IBM TCP/IP 1.2.1,2.0 for OS/2 by Kai Uwe Rommel.
-  CMU-OpenVMS/IP modifications by Mike O'Malley, Digital (DEC).
+  CMU-OpenVMS/IP modifications by Mike O'Malley, Digital (DEC),
+    with subsequent improvements by Steven M Schweda (SMS).
   X.25 support by Marcello Frutig, Catholic University,
     Rio de Janeiro, Brazil (frutig@rnp.impa.br) with fixes from
     Stefaan Eeckels, Eurokom, Luxembourg.
-    David Lane added support for Stratus VOS X.25 1996.
+    David Lane added support for Stratus VOS X.25 1996 (in cklnet.c).
     Stephen Riehm added support for IBM AIX X.25 in April 1998.
   Other contributions as indicated in the code.
 */
@@ -13945,7 +13949,21 @@ fwdx_open_client_channel(channel) int channel; {
 
         debug(F110,"fwdx_create_client_channel() ip-address",buf,0);
         saddr.sin_addr.s_addr = inet_addr(buf);
-        if ( saddr.sin_addr.s_addr == (unsigned long) -1
+
+        /* 2022-12-05  SMS.  64-bit "long" miscompares with 32-bit
+         * "in_addr_t".  (Why use "(unsigned long) -1" if INADDR_NONE
+         * _is_ available?  Note, too, use of "(unsigned int) -1L",
+         * above.)  In any case, any system new enough to have a 64-bit
+         * "long" should define __LP64__, so we can avoid the problem
+         * with minimal disturbance to existing (gooofy?) code.
+         */
+#ifdef __LP64__
+#define ADDR_TYPE unsigned int
+#else /* def __LP64__ */
+#define ADDR_TYPE unsigned long
+#endif /* def __LP64__ [else] */
+
+        if ( saddr.sin_addr.s_addr == (ADDR_TYPE) -1
 #ifdef INADDR_NONE
              || saddr.sin_addr.s_addr == INADDR_NONE
 #endif /* INADDR_NONE */
@@ -14082,7 +14100,7 @@ fwdx_server_avail() {
 
     debug(F110,"fwdx_server_avail() ip-address",buf,0);
     saddr.sin_addr.s_addr = inet_addr(buf);
-    if ( saddr.sin_addr.s_addr == (unsigned long) -1
+    if ( saddr.sin_addr.s_addr == (ADDR_TYPE) -1
 #ifdef INADDR_NONE
          || saddr.sin_addr.s_addr == INADDR_NONE
 #endif /* INADDR_NONE */
@@ -14358,9 +14376,9 @@ fwdx_write_data_to_channel(channel, data, len)
     if ((count = socket_write(sock,data,len)) < 0) {
         int s_errno = socket_errno; /* maybe a function */
         debug(F101,"fwdx_write_data_to_channel socket_write error","",s_errno);
-#ifdef BETATEST
+#ifdef COMMENT
         printf("fwdx_write_data_to_channel error\r\n");
-#endif /* BETATEST */
+#endif /* COMMENT */
 #ifdef OS2
         if (os2socketerror(s_errno) < 0)
             return(-2);

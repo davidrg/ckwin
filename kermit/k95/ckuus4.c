@@ -14,7 +14,7 @@
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
     Last update:
-    Fri Sep 23 16:29:47 2022
+    Sat Dec  3 05:28:43 2022
 */
 
 /*
@@ -4105,6 +4105,7 @@ debopn(s,disp) char *s; int disp; {
 
 
 #ifndef NOICP
+
 /*  C K D A T E  --  Returns current date/time in standard format  */
 
 static char nowbuf[18];
@@ -7868,7 +7869,6 @@ static int
 ckcindex(char c, char *s)
 #else
 ckcindex(c,s) char c, *s;
-trtrap(foo) int foo;
 #endif /* CK_ANSIC */
 {
     int rc;
