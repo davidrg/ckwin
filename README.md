@@ -7,7 +7,7 @@ University from 1994 to 2011. For more information on Kermit, visit the
 Kermit Project website: http://www.kermitproject.org.
 
 Major features include:
- * More than 40 terminal emulations
+ * More than [40 terminal emulations](#supported-terminal-emulations)
  * Virtual Terminal connections over SSH, Telnet (including TLS support), 
    rlogin, modem, serial port and pty
  * Scriptable file transfer via Kermit, X/Y/Z Modem, HTTP, HTTPS, FTP and FTPS protocols
