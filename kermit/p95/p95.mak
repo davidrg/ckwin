@@ -97,7 +97,14 @@ DEFS = p95.def
 
 # Visual C++ only libraries
 !if "$(CMP)" == "VCXX"
-LIBS = $(LIBS) msvcrt.lib vdmdbg.lib
+!if "$(CKB_STATIC_CRT)"=="yes"
+LIBS = $(LIBS) libcmt.lib
+!else
+LIBS = $(LIBS) msvcrt.lib
+!endif
+
+# I doubt we actually need this
+LIBS = $(LIBS) vdmdbg.lib
 
 # Visual C++ 2015 refactored the C runtime .lib files - from 2015 onwards we
 # must link against ucrt.lib and vcruntime.lib
@@ -111,7 +118,7 @@ LIBS = $(LIBS) ucrt.lib vcruntime.lib
 	$(CC) $(CFLAGS) $(CFLAGSO) /Fo$@ $<
 
 CC = cl
-CFLAGS = /nologo /LD /J /c /MD -DOS2 -DNT -DCK_ANSIC -I.. -DXYZ_DLL -DWIN32=1 /Zi
+CFLAGS = /nologo /LD /J /c -DOS2 -DNT -DCK_ANSIC -I.. -DXYZ_DLL -DWIN32=1 /Zi
 CFLAGSO = /Ot /Oi
 CFLAGSD = /Zi
 #CFLAGS = /J /c /MT -DOS2 -DNT -DCK_ANSIC -I.. /Zi
@@ -120,6 +127,12 @@ LDFLAGS = /nologo /dll /nod /map /debug:full
 # /align:0x1000 - removed from LDFLAGS as the linker warns about it since
 #                 Visual C++ 5.0 SP3 and its almost just a leftover of the
 #                 default Visual C++ 4.0 makefile settings
+
+!if "$(CKB_STATIC_CRT)"=="yes"
+CFLAGS = $(CFLAGS) /MT
+!else
+CFLAGS = $(CFLAGS) /MD
+!endif
 
 !if "$(CMP)" == "OWCL"
 # The OpenWatcom 1.9 linker doesn't know what /nod is.

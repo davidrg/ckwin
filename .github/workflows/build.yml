@@ -495,16 +495,20 @@ jobs:
           Set INCLUDE=%VCT2003%\include
           Set LIB=%VCT2003%\lib
   
-          call ..\..\setenv.bat
+          call ..\setenv.bat
           
           REM The Visual C++ 2003 Toolkit can only statically link the C Runtime
           REM (though apparently you can get the required import library for
           REM dynamic linking from the .NET SDK 1.1)
           set CKB_STATIC_CRT=yes
           
+          cd p95
+          call mknt.bat
+          
+          cd ..\k95
           call mk.bat
         shell: cmd
-        working-directory: ${{ github.workspace }}\kermit\k95
+        working-directory: ${{ github.workspace }}\kermit
         env:
           ROOT: ${{ github.workspace }}
           VCT2003: ${{ github.workspace }}\VCT2003
