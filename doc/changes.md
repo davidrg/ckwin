@@ -266,11 +266,14 @@ It was based on C-Kermit 10.0 beta.04 and is best built with Visual C++ 6 though
 
 ## Kermit 95 v2.2 - never publicly released
 Kermit 95 v2.2 was never publicly released, but 
-[this file](../kermit/k95/CHANGES.TXT) documents what's new since Kermit 95 
-v2.1.3.
+[this file](https://www.kermitproject.org/k95-fixes-since-213.txt) documents 
+what's new since Kermit 95 v2.1.3.
 
 Not every change for K95 v2.2 has made it in to C-Kermit for Windows due to the 
-removal of some components that could not be open-sourced..
+removal of some components that could not be open-sourced. In particular,
+changes for the Dialer in K95 v2.2 do not apply as the CKW dialer is based on
+K95 v2.1.3, and changes for the SSH subsystem don't apply to CKW as CKW uses an
+entirely new SSH implementation.
 
 ## Previous Kermit 95 releases
  * [1.1.21 to 2.1.3 Change Log](http://www.columbia.edu/kermit/k95news.html)
