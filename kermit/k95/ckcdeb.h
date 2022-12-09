@@ -1236,7 +1236,9 @@
 #endif /* OSKORUNIX */
 
 #ifdef OS2
+#ifndef CK_ANSIC
 #define CK_ANSIC		 /* OS/2 supports ANSIC and more extensions */
+#endif /* CK_ANSIC */
 #endif /* OS2 */
 
 #ifdef OSF50			   /* Newer OSF/1 versions imply older ones */
@@ -5680,7 +5682,9 @@ _PROTOTYP( int ttinl, (CHAR *, int, int, CHAR) );
 #define CK_XYZ
 #ifndef NOXYZDLL
 #define XYZ_INTERNAL			/* Internal and DLL */
+#ifndef XYZ_DLL
 #define XYZ_DLL
+#endif /* XYZ_DLL */
 #endif /* NOXYZDLL */
 #endif /* OS2 */
 #endif /* UNIX */

@@ -92,14 +92,19 @@ SRCS = $(P_SRCS)
 OBJS = $(P_OBJS)
 LIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
         advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib \
-        msvcrt.lib rpcrt4.lib rpcns4.lib wsock32.lib \
-        winmm.lib vdmdbg.lib
+        rpcrt4.lib rpcns4.lib wsock32.lib winmm.lib
 DEFS = p95.def
+
+# Visual C++ only libraries
+!if "$(CMP)" == "VCXX"
+LIBS = $(LIBS) msvcrt.lib vdmdbg.lib
 
 # Visual C++ 2015 refactored the C runtime .lib files - from 2015 onwards we
 # must link against ucrt.lib and vcruntime.lib
 !if ($(MSC_VER) >= 190)
 LIBS = $(LIBS) ucrt.lib vcruntime.lib
+!endif
+
 !endif
 
 .c.obj:
@@ -115,6 +120,11 @@ LDFLAGS = /nologo /dll /nod /map /debug:full
 # /align:0x1000 - removed from LDFLAGS as the linker warns about it since
 #                 Visual C++ 5.0 SP3 and its almost just a leftover of the
 #                 default Visual C++ 4.0 makefile settings
+
+!if "$(CMP)" == "OWCL"
+# The OpenWatcom 1.9 linker doesn't know what /nod is.
+LDFLAGS = /nologo /dll /map /debug:full
+!endif
 
 !if ($(MSC_VER) < 140)
 # These flags and options are deprecated or unsupported

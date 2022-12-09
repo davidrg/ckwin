@@ -46,7 +46,9 @@ typedef unsigned long   BOOLEAN;
 
 #ifdef XYZ_DLL
 #ifdef NT
+#ifndef __WATCOMC__
 typedef long APIRET ;
+#endif /* __WATCOMC__ */
 #define DosSleep Sleep
 #endif
 #else /* XYZ_DLL */
